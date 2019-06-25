@@ -57,6 +57,14 @@ void TextEditor::setDefaultStyle()
   setHighlightBackgroundColor(backgroundColor);
 }
 
+void TextEditor::clear()
+{
+  m_filename.clear();
+  m_encoding.clear();
+  setPlainText("");
+  dirty(false);
+}
+
 bool TextEditor::load(const QString& filename)
 {
   m_filename = filename;

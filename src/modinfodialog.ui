@@ -426,7 +426,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
                  <string>ESPs in the data directory and thus visible to the game.</string>
                 </property>
                 <property name="whatsThis">
-                 <string>These are the mod files that are in the (virtual) data directory of your game and will thus be selectable in the esp list in the main window.</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These are the mod files that are in the (virtual) data directory of your game and will thus be selectable in the esp list in the main window.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="uniformItemSizes">
                  <bool>true</bool>

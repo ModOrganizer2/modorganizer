@@ -185,6 +185,7 @@ void GenericFilesTab::onSelection(
 void GenericFilesTab::select(const QModelIndex& index)
 {
   if (!index.isValid()) {
+    m_editor->clear();
     m_editor->setEnabled(false);
     return;
   }

@@ -166,9 +166,9 @@ void FileTreeTab::onDelete()
 
   if (rows.count() == 1) {
     QString fileName = m_fs->fileName(rows[0]);
-    message = tr("Are sure you want to delete \"%1\"?").arg(fileName);
+    message = tr("Are you sure you want to delete \"%1\"?").arg(fileName);
   } else {
-    message = tr("Are sure you want to delete the selected files?");
+    message = tr("Are you sure you want to delete the selected files?");
   }
 
   if (QMessageBox::question(parentWidget(), tr("Confirm"), message) != QMessageBox::Yes) {

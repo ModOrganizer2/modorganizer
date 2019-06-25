@@ -91,6 +91,7 @@ public:
 
   void setupToolbar();
 
+  void clear();
   bool load(const QString& filename);
   bool save();
 
