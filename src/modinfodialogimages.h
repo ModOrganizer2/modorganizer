@@ -91,17 +91,49 @@ private:
     }
   };
 
+  struct PaintContext
+  {
+    QPainter painter;
+    int thumbSize;
+    QRect topRect;
+
+    PaintContext(QWidget* w)
+      : painter(w), thumbSize(0)
+    {
+    }
+  };
+
   ScalableImage* m_image;
   std::vector<File> m_files;
   std::vector<QString> m_supportedFormats;
   int m_margins, m_padding, m_border;
 
+  void getSupportedFormats();
+
   void scrollAreaResized(const QSize& s);
   void paintThumbnails(QPaintEvent* e);
   void thumbnailsMouseEvent(QMouseEvent* e);
 
-  bool needsReload(const File& file, const QSize& thumbSize) const;
-  QSize scaledImageSize(const QSize& originalSize, const QSize& thumbSize) const;
+  int calcThumbSize(int availableWidth) const;
+  int calcWidgetHeight(int availableWidth) const;
+  QRect calcTopThumbRect(int thumbSize) const;
+  std::pair<std::size_t, std::size_t> calcVisibleRange(
+    int top, int bottom, int thumbSize) const;
+
+  QRect calcBorderRect(const QRect& topRect, int thumbSize, std::size_t i) const;
+  QRect calcImageRect(const QRect& topRect, int thumbSize, std::size_t i) const;
+  QSize calcScaledImageSize(
+    const QSize& originalSize, const QSize& imageSize) const;
+
+  void paintThumbnail(PaintContext& cx, std::size_t i);
+  void paintThumbnailBorder(PaintContext& cx, std::size_t i);
+  void paintThumbnailImage(PaintContext& cx, std::size_t i);
+
+  const File* fileAtPos(const QPoint& p) const;
+
+  bool needsReload(const File& file, const QSize& imageSize) const;
+  void reload(File& file, const QSize& imageSize);
+  void resizeWidget();
 };
 
 #endif // MODINFODIALOGIMAGES_H

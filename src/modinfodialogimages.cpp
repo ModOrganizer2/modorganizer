@@ -1,6 +1,285 @@
 #include "modinfodialogimages.h"
 #include "ui_modinfodialog.h"
 
+ImagesTab::ImagesTab(
+  OrganizerCore& oc, PluginContainer& plugin,
+  QWidget* parent, Ui::ModInfoDialog* ui, int id) :
+    ModInfoDialogTab(oc, plugin, parent, ui, id),
+    m_image(new ScalableImage), m_margins(3), m_padding(5), m_border(1)
+{
+  ui->imagesImage->layout()->addWidget(m_image);
+  delete ui->imagesThumbnails->layout();
+
+  ui->tabImagesSplitter->setSizes({128, 1});
+  ui->tabImagesSplitter->setStretchFactor(0, 0);
+  ui->tabImagesSplitter->setStretchFactor(1, 1);
+
+  ui->imagesScrollArea->setWidgetResizable(false);
+  ui->imagesScrollArea->setTab(this);
+  ui->imagesThumbnails->setTab(this);
+
+  getSupportedFormats();
+}
+
+void ImagesTab::clear()
+{
+  m_image->clear();
+  m_files.clear();
+  setHasData(false);
+}
+
+bool ImagesTab::feedFile(const QString& rootPath, const QString& fullPath)
+{
+  for (const auto& ext : m_supportedFormats) {
+    if (fullPath.endsWith(ext, Qt::CaseInsensitive)) {
+      m_files.push_back({fullPath});
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void ImagesTab::update()
+{
+  setHasData(!m_files.empty());
+  resizeWidget();
+  ui->imagesThumbnails->update();
+}
+
+void ImagesTab::getSupportedFormats()
+{
+  for (const auto& entry : QImageReader::supportedImageFormats()) {
+    QString s(entry);
+    if (s.isNull() || s.isEmpty()) {
+      continue;
+    }
+
+    // make sure it starts with a dot
+    if (s[0] != ".") {
+      s = "." + s;
+    }
+
+    m_supportedFormats.emplace_back(std::move(s));
+  }
+}
+
+int ImagesTab::calcThumbSize(int availableWidth) const
+{
+  return availableWidth - (m_margins * 2);
+}
+
+int ImagesTab::calcWidgetHeight(int availableWidth) const
+{
+  if (m_files.empty()) {
+    return 0;
+  }
+
+  const auto thumbSize = calcThumbSize(availableWidth);
+
+  int h = 0;
+
+  // first thumb
+  h = thumbSize;
+
+  // subsequent thumbs with padding before each
+  const auto thumbWithPadding = m_padding + thumbSize;
+  h += static_cast<int>(thumbWithPadding * (m_files.size() - 1));
+
+  // margin top and bottom
+  h += m_margins * 2;
+
+  return h;
+}
+
+QRect ImagesTab::calcTopThumbRect(int thumbSize) const
+{
+  return {m_margins, m_margins, thumbSize, thumbSize};
+}
+
+std::pair<std::size_t, std::size_t> ImagesTab::calcVisibleRange(
+  int top, int bottom, int thumbSize) const
+{
+  const std::size_t begin = top / (thumbSize + m_padding);
+  const std::size_t end = bottom / (thumbSize + m_padding) + 1;
+
+  return {begin, end};
+}
+
+QRect ImagesTab::calcBorderRect(
+  const QRect& topRect, int thumbSize, std::size_t i) const
+{
+  return {
+    topRect.left(),
+    static_cast<int>(topRect.top() + (i * (thumbSize + m_padding))),
+    thumbSize,
+    thumbSize
+  };
+}
+
+QRect ImagesTab::calcImageRect(
+  const QRect& topRect, int thumbSize, std::size_t i) const
+{
+  return calcBorderRect(topRect, thumbSize, i).adjusted(
+    m_border, m_border, -m_border, -m_border);
+}
+
+QSize ImagesTab::calcScaledImageSize(
+  const QSize& originalSize, const QSize& imageSize) const
+{
+  const auto ratio = std::min({
+    1.0,
+    static_cast<double>(imageSize.width()) / originalSize.width(),
+    static_cast<double>(imageSize.height()) / originalSize.height()});
+
+  const QSize scaledSize(
+    static_cast<int>(std::round(originalSize.width() * ratio)),
+    static_cast<int>(std::round(originalSize.height() * ratio)));
+
+  return scaledSize;
+}
+
+void ImagesTab::paintThumbnails(QPaintEvent* e)
+{
+  PaintContext cx(ui->imagesThumbnails);
+  cx.thumbSize = calcThumbSize(ui->imagesThumbnails->width());
+  cx.topRect = calcTopThumbRect(cx.thumbSize);
+
+  const auto [begin, end] = calcVisibleRange(
+    e->rect().top(), e->rect().bottom(), cx.thumbSize);
+
+  for (std::size_t i=begin; i<end && i<m_files.size(); ++i) {
+    paintThumbnail(cx, i);
+  }
+}
+
+void ImagesTab::paintThumbnail(PaintContext& cx, std::size_t i)
+{
+  paintThumbnailBorder(cx, i);
+  paintThumbnailImage(cx, i);
+}
+
+void ImagesTab::paintThumbnailBorder(PaintContext& cx, std::size_t i)
+{
+  const auto borderRect = calcBorderRect(cx.topRect, cx.thumbSize, i);
+
+  cx.painter.setPen(QColor(Qt::black));
+  cx.painter.drawRect(borderRect);
+}
+
+void ImagesTab::paintThumbnailImage(PaintContext& cx, std::size_t i)
+{
+  auto& file = m_files[i];
+  if (file.failed) {
+    return;
+  }
+
+  const auto imageRect = calcImageRect(cx.topRect, cx.thumbSize, i);
+
+  if (needsReload(file, imageRect.size())) {
+    reload(file, imageRect.size());
+  }
+
+  if (file.thumbnail.isNull()) {
+    return;
+  }
+
+  // center scaled image in rect
+  const QRect scaledThumbRect(
+    (imageRect.left()+imageRect.width()/2) - file.thumbnail.width()/2,
+    (imageRect.top()+imageRect.height()/2) - file.thumbnail.height()/2,
+    file.thumbnail.width(),
+    file.thumbnail.height());
+
+  cx.painter.drawImage(scaledThumbRect, file.thumbnail);
+}
+
+const ImagesTab::File* ImagesTab::fileAtPos(const QPoint& p) const
+{
+  const auto thumbSize = calcThumbSize(ui->imagesThumbnails->width());
+
+  // calculate index purely based on y position
+  const std::size_t i = p.y() / (thumbSize + m_padding);
+  if (i >= m_files.size()) {
+    return nullptr;
+  }
+
+  // get actual rect
+  const auto topRect = calcTopThumbRect(thumbSize);
+  const auto rect = calcBorderRect(topRect, thumbSize, i);
+
+  if (!rect.contains(p)) {
+    return nullptr;
+  }
+
+  return &m_files[i];
+}
+
+void ImagesTab::scrollAreaResized(const QSize&)
+{
+  resizeWidget();
+}
+
+void ImagesTab::thumbnailsMouseEvent(QMouseEvent* e)
+{
+  if (e->button() != Qt::LeftButton) {
+    return;
+  }
+
+  if (const auto* file=fileAtPos(e->pos())) {
+    m_image->setImage(file->original);
+  }
+}
+
+bool ImagesTab::needsReload(const File& file, const QSize& imageSize) const
+{
+  if (file.failed) {
+    return false;
+  }
+
+  if (file.original.isNull() || file.thumbnail.isNull()) {
+    return true;
+  }
+
+  const auto scaledSize = calcScaledImageSize(file.original.size(), imageSize);
+  if (file.thumbnail.size() != scaledSize) {
+    return true;
+  }
+
+  return false;
+}
+
+void ImagesTab::reload(File& file, const QSize& scaledSize)
+{
+  file.original = {};
+  file.thumbnail = {};
+  file.failed = false;
+
+  if (!file.original.load(file.path)) {
+    qCritical() << "failed to load image from " << file.path;
+    file.failed = true;
+    return;
+  }
+
+  file.thumbnail = file.original.scaled(
+    calcScaledImageSize(file.original.size(), scaledSize),
+    Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+}
+
+void ImagesTab::resizeWidget()
+{
+  if (m_files.empty()) {
+    ui->imagesThumbnails->setGeometry(QRect());
+    return;
+  }
+
+  const auto availableWidth = ui->imagesScrollArea->viewport()->width();
+
+  const int widgetHeight = calcWidgetHeight(availableWidth);
+  ui->imagesThumbnails->setGeometry(QRect(0, 0, availableWidth, widgetHeight));
+}
+
+
 void ImagesScrollArea::setTab(ImagesTab* tab)
 {
   m_tab = tab;
@@ -121,192 +400,4 @@ void ScalableImage::paintEvent(QPaintEvent* e)
   painter.setPen(QColor(Qt::black));
   painter.drawRect(drawBorderRect);
   painter.drawImage(drawImageRect, m_scaled);
-}
-
-
-ImagesTab::ImagesTab(
-  OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int id) :
-    ModInfoDialogTab(oc, plugin, parent, ui, id),
-    m_image(new ScalableImage), m_margins(3), m_padding(5), m_border(1)
-{
-  ui->imagesImage->layout()->addWidget(m_image);
-  delete ui->imagesThumbnails->layout();
-
-  ui->tabImagesSplitter->setSizes({128, 1});
-  ui->tabImagesSplitter->setStretchFactor(0, 0);
-  ui->tabImagesSplitter->setStretchFactor(1, 1);
-
-  ui->imagesScrollArea->setWidgetResizable(false);
-  ui->imagesScrollArea->setTab(this);
-  ui->imagesThumbnails->setTab(this);
-
-  const auto list = QImageReader::supportedImageFormats();
-  for (const auto& entry : list) {
-    QString s(entry);
-    if (!s.isEmpty()) {
-      if (s[0] != ".") {
-        s = "." + s;
-      }
-
-      m_supportedFormats.emplace_back(std::move(s));
-    }
-  }
-}
-
-void ImagesTab::clear()
-{
-  m_image->clear();
-  m_files.clear();
-  setHasData(false);
-}
-
-bool ImagesTab::feedFile(const QString& rootPath, const QString& fullPath)
-{
-  for (const auto& ext : m_supportedFormats) {
-    if (fullPath.endsWith(ext, Qt::CaseInsensitive)) {
-      m_files.push_back({fullPath});
-      return true;
-    }
-  }
-
-  return false;
-}
-
-void ImagesTab::update()
-{
-  setHasData(!m_files.empty());
-}
-
-void ImagesTab::scrollAreaResized(const QSize& s)
-{
-  const int availableWidth = s.width();
-
-  const int thumbSize = availableWidth - (m_margins * 2);
-
-  int height = 0;
-  if (!m_files.empty()) {
-    height = thumbSize + static_cast<int>((m_padding + thumbSize) * (m_files.size() - 1));
-  }
-
-  height += (m_margins * 2);
-
-  qDebug() << "new size: " << availableWidth << "x" << height;
-
-  ui->imagesThumbnails->setGeometry(QRect(0, 0, availableWidth, height));
-}
-
-void ImagesTab::paintThumbnails(QPaintEvent* e)
-{
-  const auto availableRect = ui->imagesThumbnails->rect();
-  const int thumbSize = availableRect.width() - (m_margins * 2);
-
-  const QRect topRect(
-    availableRect.left() + m_margins,
-    availableRect.top() + m_margins,
-    thumbSize, thumbSize);
-
-  const std::size_t begin = e->rect().top() / (thumbSize + m_padding);
-  const std::size_t end = e->rect().bottom() / (thumbSize + m_padding) + 1;
-
-  QPainter painter(ui->imagesThumbnails);
-
-  for (std::size_t i=begin; i<end && i<m_files.size(); ++i) {
-    QRect borderRect(
-      topRect.left(),
-      static_cast<int>(topRect.top() + (i * (thumbSize + m_padding))),
-      thumbSize, thumbSize);
-
-    painter.setPen(QColor(Qt::black));
-    painter.drawRect(borderRect);
-
-    auto& file = m_files[i];
-    if (file.failed) {
-      continue;
-    }
-
-    const QRect thumbRect = borderRect.adjusted(
-      m_border, m_border, -m_border, -m_border);
-
-    if (needsReload(file, thumbRect.size())) {
-      if (!file.original.load(file.path)) {
-        qCritical() << "failed to load image from " << file.path;
-        file.failed = true;
-        continue;
-      }
-
-      file.thumbnail = file.original.scaled(
-        scaledImageSize(file.original.size(), thumbRect.size()),
-        Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-    }
-
-    if (file.thumbnail.isNull()) {
-      continue;
-    }
-
-    const QRect scaledThumbRect(
-      (thumbRect.left()+thumbRect.width()/2) - file.thumbnail.width()/2,
-      (thumbRect.top()+thumbRect.height()/2) - file.thumbnail.height()/2,
-      file.thumbnail.width(), file.thumbnail.height());
-
-    painter.drawImage(scaledThumbRect, file.thumbnail);
-  }
-}
-
-void ImagesTab::thumbnailsMouseEvent(QMouseEvent* e)
-{
-  if (e->button() != Qt::LeftButton) {
-    return;
-  }
-
-  const auto availableRect = ui->imagesThumbnails->rect();
-  const int thumbSize = availableRect.width() - (m_margins * 2);
-
-  const QRect topRect(
-    availableRect.left() + m_margins,
-    availableRect.top() + m_margins,
-    thumbSize, thumbSize);
-
-  const std::size_t i = e->y() / (thumbSize + m_padding);
-  if (i >= m_files.size()) {
-    return;
-  }
-
-  if (e->x() < topRect.left() || e->x() > (topRect.right() + 1)) {
-    return;
-  }
-
-  m_image->setImage(m_files[i].original);
-}
-
-bool ImagesTab::needsReload(const File& file, const QSize& thumbSize) const
-{
-  if (file.failed) {
-    return false;
-  }
-
-  if (file.original.isNull() || file.thumbnail.isNull()) {
-    return true;
-  }
-
-  if (file.thumbnail.size() != scaledImageSize(file.original.size(), thumbSize)) {
-    return true;
-  }
-
-  return false;
-}
-
-QSize ImagesTab::scaledImageSize(
-  const QSize& originalSize, const QSize& thumbSize) const
-{
-  const auto ratio = std::min({
-    1.0,
-    static_cast<double>(thumbSize.width()) / originalSize.width(),
-    static_cast<double>(thumbSize.height()) / originalSize.height()});
-
-  const QSize scaledSize(
-    static_cast<int>(std::round(originalSize.width() * ratio)),
-    static_cast<int>(std::round(originalSize.height() * ratio)));
-
-  return scaledSize;
 }
