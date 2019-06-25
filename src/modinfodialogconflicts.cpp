@@ -887,7 +887,6 @@ ConflictItem GeneralConflictsTab::createOverwriteItem(
   const FileEntry::AlternativesVector& alternatives)
 {
   const auto& ds = *m_core.directoryStructure();
-
   QString altString;
 
   for (const auto& alt : alternatives) {
@@ -897,9 +896,6 @@ ConflictItem GeneralConflictsTab::createOverwriteItem(
 
     altString += ToQString(ds.getOriginByID(alt.first).getName());
   }
-
-  QStringList fields(relativeName);
-  fields.append(altString);
 
   const auto origin = ToQString(ds.getOriginByID(alternatives.back().first).getName());
 
@@ -918,11 +914,7 @@ ConflictItem GeneralConflictsTab::createOverwrittenItem(
   const QString& fileName, const QString& relativeName)
 {
   const auto& ds = *m_core.directoryStructure();
-
   const FilesOrigin &realOrigin = ds.getOriginByID(fileOrigin);
-
-  QStringList fields(relativeName);
-  fields.append(ToQString(realOrigin.getName()));
 
   return {
     "", relativeName, ToQString(realOrigin.getName()),

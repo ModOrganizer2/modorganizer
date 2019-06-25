@@ -177,11 +177,8 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="QScrollArea" name="imagesScrollArea">
-             <property name="widgetResizable">
-              <bool>true</bool>
-             </property>
-             <widget class="QWidget" name="imagesThumbnails">
+            <widget class="ImagesScrollArea" name="imagesScrollArea">
+             <widget class="ImagesThumbnails" name="imagesThumbnails">
               <property name="geometry">
                <rect>
                 <x>0</x>
@@ -1162,6 +1159,18 @@ p, li { white-space: pre-wrap; }
    <class>HTMLEditor</class>
    <extends>QTextEdit</extends>
    <header>texteditor.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ImagesScrollArea</class>
+   <extends>QScrollArea</extends>
+   <header>modinfodialogimages.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ImagesThumbnails</class>
+   <extends>QWidget</extends>
+   <header>modinfodialogimages.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>
