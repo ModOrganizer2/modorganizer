@@ -45,6 +45,20 @@ FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString &oldNa
 int naturalCompare(const QString& a, const QString& b);
 
 
+class ElideLeftDelegate : public QStyledItemDelegate
+{
+public:
+  using QStyledItemDelegate::QStyledItemDelegate;
+
+protected:
+  void initStyleOption(QStyleOptionViewItem* o, const QModelIndex& i) const
+  {
+    QStyledItemDelegate::initStyleOption(o, i);
+    o->textElideMode = Qt::ElideLeft;
+  }
+};
+
+
 /**
  * this is a larger dialog used to visualise information about the mod.
  * @todo this would probably a good place for a plugin-system

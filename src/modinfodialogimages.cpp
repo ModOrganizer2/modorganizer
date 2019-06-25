@@ -1,13 +1,18 @@
 #include "modinfodialogimages.h"
 #include "ui_modinfodialog.h"
+#include "utility.h"
 
 ImagesTab::ImagesTab(
   OrganizerCore& oc, PluginContainer& plugin,
   QWidget* parent, Ui::ModInfoDialog* ui, int id) :
     ModInfoDialogTab(oc, plugin, parent, ui, id),
-    m_image(new ScalableImage), m_margins(3), m_padding(5), m_border(1)
+    m_image(new ScalableImage), m_margins(3), m_padding(5), m_border(1),
+    m_selection(nullptr)
 {
-  ui->imagesImage->layout()->addWidget(m_image);
+  auto* ly = new QVBoxLayout(ui->imagesImage);
+  ly->setContentsMargins({0, 0, 0, 0});
+  ly->addWidget(m_image);
+
   delete ui->imagesThumbnails->layout();
 
   ui->tabImagesSplitter->setSizes({128, 1});
@@ -18,13 +23,15 @@ ImagesTab::ImagesTab(
   ui->imagesScrollArea->setTab(this);
   ui->imagesThumbnails->setTab(this);
 
+  connect(ui->imagesExplore, &QAbstractButton::clicked, [&]{ onExplore(); });
+
   getSupportedFormats();
 }
 
 void ImagesTab::clear()
 {
-  m_image->clear();
   m_files.clear();
+  select(nullptr);
   setHasData(false);
 }
 
@@ -62,6 +69,21 @@ void ImagesTab::getSupportedFormats()
 
     m_supportedFormats.emplace_back(std::move(s));
   }
+}
+
+void ImagesTab::select(const File* f)
+{
+  if (f) {
+    ui->imagesPath->setText(f->path);
+    ui->imagesExplore->setEnabled(true);
+    m_image->setImage(f->original);
+  } else {
+    ui->imagesPath->clear();
+    ui->imagesExplore->setEnabled(false);
+    m_image->clear();
+  }
+
+  m_selection = f;
 }
 
 int ImagesTab::calcThumbSize(int availableWidth) const
@@ -227,8 +249,17 @@ void ImagesTab::thumbnailsMouseEvent(QMouseEvent* e)
   }
 
   if (const auto* file=fileAtPos(e->pos())) {
-    m_image->setImage(file->original);
+    select(file);
   }
+}
+
+void ImagesTab::onExplore()
+{
+  if (!m_selection) {
+    return;
+  }
+
+  MOBase::shell::ExploreFile(m_selection->path);
 }
 
 bool ImagesTab::needsReload(const File& file, const QSize& imageSize) const

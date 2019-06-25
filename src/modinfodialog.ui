@@ -192,8 +192,11 @@
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="imagesImage" native="true">
-          <layout class="QVBoxLayout" name="verticalLayout_18">
+         <widget class="QWidget" name="imagesContainer" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_18" stretch="0,1">
+           <property name="spacing">
+            <number>3</number>
+           </property>
            <property name="leftMargin">
             <number>0</number>
            </property>
@@ -206,6 +209,41 @@
            <property name="bottomMargin">
             <number>0</number>
            </property>
+           <item>
+            <widget class="QWidget" name="widget_12" native="true">
+             <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QToolButton" name="imagesExplore">
+                <property name="text">
+                 <string>Open in Explorer</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="imagesPath">
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="imagesImage" native="true"/>
+           </item>
           </layout>
          </widget>
         </widget>
@@ -403,7 +441,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
        <item>
         <widget class="QTabWidget" name="tabConflictsTabs">
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="tab">
           <attribute name="title">

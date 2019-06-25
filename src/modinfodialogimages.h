@@ -107,12 +107,15 @@ private:
   std::vector<File> m_files;
   std::vector<QString> m_supportedFormats;
   int m_margins, m_padding, m_border;
+  const File* m_selection;
 
   void getSupportedFormats();
+  void select(const File* file);
 
   void scrollAreaResized(const QSize& s);
   void paintThumbnails(QPaintEvent* e);
   void thumbnailsMouseEvent(QMouseEvent* e);
+  void onExplore();
 
   int calcThumbSize(int availableWidth) const;
   int calcWidgetHeight(int availableWidth) const;

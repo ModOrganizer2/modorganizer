@@ -13,20 +13,6 @@ using namespace MOBase;
 const std::size_t max_small_selection = 50;
 
 
-class ElideLeftDelegate : public QStyledItemDelegate
-{
-public:
-  using QStyledItemDelegate::QStyledItemDelegate;
-
-protected:
-  void initStyleOption(QStyleOptionViewItem* o, const QModelIndex& i) const
-  {
-    QStyledItemDelegate::initStyleOption(o, i);
-    o->textElideMode = Qt::ElideLeft;
-  }
-};
-
-
 class ConflictItem
 {
 public:
@@ -263,6 +249,10 @@ private:
 
   void doSort()
   {
+    if (m_items.empty()) {
+      return;
+    }
+
     if (m_sortColumn < 0) {
       return;
     }
