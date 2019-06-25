@@ -21,9 +21,13 @@ public:
   ModInfoDialogTab& operator=(ModInfoDialogTab&&) = default;
   virtual ~ModInfoDialogTab() = default;
 
+  void activated();
+  void resetFirstActivation();
+
   virtual void clear() = 0;
   virtual void update();
   virtual bool feedFile(const QString& rootPath, const QString& filename);
+  virtual void firstActivation();
   virtual bool canClose();
   virtual void saveState(Settings& s);
   virtual void restoreState(const Settings& s);
@@ -70,6 +74,7 @@ private:
   MOShared::FilesOrigin* m_origin;
   int m_tabID;
   bool m_hasData;
+  bool m_firstActivation;
 };
 
 

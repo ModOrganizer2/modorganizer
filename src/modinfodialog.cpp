@@ -157,6 +157,8 @@ ModInfoDialog::ModInfoDialog(
         update();
       });
   }
+
+  connect(ui->tabWidget, &QTabWidget::currentChanged, [&]{ onTabChanged(); });
 }
 
 ModInfoDialog::~ModInfoDialog() = default;
@@ -196,6 +198,10 @@ int ModInfoDialog::exec()
 void ModInfoDialog::setMod(ModInfo::Ptr mod)
 {
   m_mod = mod;
+
+  for (auto& tabInfo : m_tabs) {
+    tabInfo.tab->resetFirstActivation();
+  }
 }
 
 void ModInfoDialog::setMod(const QString& name)
@@ -225,8 +231,25 @@ void ModInfoDialog::setTab(ETabs id)
   switchToTab(id);
 }
 
+ModInfoDialog::TabInfo* ModInfoDialog::currentTab()
+{
+  const auto index = ui->tabWidget->currentIndex();
+  if (index < 0) {
+    return nullptr;
+  }
+
+  const auto i = static_cast<std::size_t>(index);
+  if (i >= m_tabs.size()) {
+    return nullptr;
+  }
+
+  return &m_tabs[i];
+}
+
 void ModInfoDialog::update(bool firstTime)
 {
+  const int oldTab = ui->tabWidget->currentIndex();
+
   setWindowTitle(m_mod->name());
   setTabsVisibility(firstTime);
 
@@ -235,6 +258,12 @@ void ModInfoDialog::update(bool firstTime)
   if (m_initialTab >= 0) {
     switchToTab(m_initialTab);
     m_initialTab = ETabs(-1);
+  }
+
+  if (ui->tabWidget->currentIndex() == oldTab) {
+    if (auto* tabInfo=currentTab()) {
+      tabInfo->tab->activated();
+    }
   }
 }
 
@@ -533,8 +562,11 @@ void ModInfoDialog::on_closeButton_clicked()
   close();
 }
 
-void ModInfoDialog::on_tabWidget_currentChanged(int index)
+void ModInfoDialog::onTabChanged()
 {
+  if (auto* tabInfo=currentTab()) {
+    tabInfo->tab->activated();
+  }
 }
 
 void ModInfoDialog::on_nextButton_clicked()

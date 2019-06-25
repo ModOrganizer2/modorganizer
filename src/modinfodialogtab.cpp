@@ -7,8 +7,21 @@ ModInfoDialogTab::ModInfoDialogTab(
   OrganizerCore& oc, PluginContainer& plugin,
   QWidget* parent, Ui::ModInfoDialog* ui, int id) :
     ui(ui), m_core(oc), m_plugin(plugin), m_parent(parent),
-    m_origin(nullptr), m_tabID(id), m_hasData(false)
+    m_origin(nullptr), m_tabID(id), m_hasData(false), m_firstActivation(true)
 {
+}
+
+void ModInfoDialogTab::activated()
+{
+  if (m_firstActivation) {
+    m_firstActivation = false;
+    firstActivation();
+  }
+}
+
+void ModInfoDialogTab::resetFirstActivation()
+{
+  m_firstActivation = true;
 }
 
 void ModInfoDialogTab::update()
@@ -20,6 +33,11 @@ bool ModInfoDialogTab::feedFile(const QString&, const QString&)
 {
   // no-op
   return false;
+}
+
+void ModInfoDialogTab::firstActivation()
+{
+  // no-op
 }
 
 bool ModInfoDialogTab::canClose()

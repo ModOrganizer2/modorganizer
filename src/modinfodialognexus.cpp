@@ -26,7 +26,7 @@ NexusTab::NexusTab(
   connect(ui->openInBrowser, &QToolButton::clicked, [&]{ onOpenLink(); });
   connect(ui->url, &QLineEdit::editingFinished, [&]{ onUrlChanged(); });
   connect(ui->endorse, &QToolButton::clicked, [&]{ onEndorse(); });
-  connect(ui->refresh, &QToolButton::clicked, [&]{ updateWebpage(); });
+  connect(ui->refresh, &QToolButton::clicked, [&]{ onRefreshBrowser(); });
 
   connect(
     ui->sourceGame,
@@ -96,8 +96,12 @@ void NexusTab::update()
     (mod()->endorsedState() == ModInfo::ENDORSED_FALSE) ||
     (mod()->endorsedState() == ModInfo::ENDORSED_NEVER));
 
-  updateWebpage();
   setHasData(mod()->getNexusID() >= 0);
+}
+
+void NexusTab::firstActivation()
+{
+  updateWebpage();
 }
 
 void NexusTab::setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin)
@@ -265,9 +269,11 @@ void NexusTab::onRefreshBrowser()
   const auto modID = mod()->getNexusID();
 
   if (isValidModID(modID)) {
-    refreshData(modID);
-  } else
+    mod()->setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
+    updateWebpage();
+  } else {
     qInfo("Mod has no valid Nexus ID, info can't be updated.");
+  }
 }
 
 void NexusTab::onEndorse()
@@ -286,17 +292,12 @@ void NexusTab::refreshData(int modID)
 
 bool NexusTab::tryRefreshData(int modID)
 {
-  if (!isValidModID(modID)) {
-    return false;
+  if (isValidModID(modID) && !m_requestStarted) {
+    if (mod()->updateNXMInfo()) {
+      ui->browser->setHtml("");
+      return true;
+    }
   }
 
-  if (m_requestStarted) {
-    return false;
-  }
-
-  if (!mod()->updateNXMInfo()) {
-    return false;
-  }
-
-  return true;
+  return false;
 }

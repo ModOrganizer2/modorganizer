@@ -41,6 +41,7 @@ public:
 
   void clear() override;
   void update() override;
+  void firstActivation() override;
   void setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin) override;
   bool usesOriginFiles() const override;
 

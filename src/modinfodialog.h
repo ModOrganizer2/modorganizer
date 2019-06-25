@@ -118,7 +118,6 @@ signals:
 
 private slots:
   void on_closeButton_clicked();
-  void on_tabWidget_currentChanged(int index);
   void on_nextButton_clicked();
   void on_prevButton_clicked();
 
@@ -144,6 +143,7 @@ private:
   ETabs m_initialTab;
 
   std::vector<TabInfo> createTabs();
+  TabInfo* currentTab();
   void restoreTabState(const QString& state);
   QString saveTabState() const;
   void update(bool firstTime=false);
@@ -157,6 +157,7 @@ private:
   void reAddTabs(const std::vector<bool>& visibility, ETabs sel);
   std::vector<QString> getOrderedTabNames() const;
   void onOriginModified(std::size_t tabIndex, int originID);
+  void onTabChanged();
 
   template <class T>
   std::unique_ptr<ModInfoDialogTab> createTab(int index)
