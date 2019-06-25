@@ -137,7 +137,7 @@ function getTutorialSteps()
 
     function() {
         tutorial.text = qsTr("A single mod may contain zero, one or multiple esps. Some or all may be optional. "
-                              + "If in doubt, please consult the documentation of the indiviual mod. "
+                              + "If in doubt, please consult the documentation of the individual mod. "
                               + "To do so, right-click the mod and select \"Information\".")
         highlightItem("modList", true)
         manager.activateTutorial("ModInfoDialog", "tutorial_firststeps_modinfo.js")

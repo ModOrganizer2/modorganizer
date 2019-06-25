@@ -337,7 +337,7 @@
               </item>
               <item>
                <property name="text">
-                <string>Jax (Swedish)</string>
+                <string>Jax, Nubbie (Swedish)</string>
                </property>
               </item>
               <item>
@@ -361,7 +361,7 @@
          <item row="0" column="2" rowspan="2">
           <widget class="QGroupBox" name="groupBox_4">
            <property name="title">
-            <string>Other Supporters &amp;&amp; Contributors</string>
+            <string>Other Supporters &amp; Contributors</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_71">
             <item>

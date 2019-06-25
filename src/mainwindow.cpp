@@ -6796,7 +6796,7 @@ void MainWindow::on_bossButton_clicked()
   }
 
   if (errorMessages.length() > 0) {
-    QMessageBox *warn = new QMessageBox(QMessageBox::Warning, tr("Errors occured"), errorMessages.c_str(), QMessageBox::Ok, this);
+    QMessageBox *warn = new QMessageBox(QMessageBox::Warning, tr("Errors occurred"), errorMessages.c_str(), QMessageBox::Ok, this);
     warn->setModal(false);
     warn->show();
   }
@@ -6899,7 +6899,7 @@ void MainWindow::on_saveModsButton_clicked()
   m_OrganizerCore.currentProfile()->writeModlistNow(true);
   QDateTime now = QDateTime::currentDateTime();
   if (createBackup(m_OrganizerCore.currentProfile()->getModlistFileName(), now)) {
-    MessageDialog::showMessage(tr("Backup of modlist created"), this);
+    MessageDialog::showMessage(tr("Backup of mod list created"), this);
   }
 }
 
