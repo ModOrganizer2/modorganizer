@@ -5,7 +5,7 @@
 TextEditor::TextEditor(QWidget* parent) :
   QPlainTextEdit(parent),
   m_toolbar(nullptr), m_lineNumbers(nullptr), m_highlighter(nullptr),
-  m_dirty(false)
+  m_dirty(false), m_loading(false)
 {
   m_toolbar = new TextEditorToolbar(*this);
   m_lineNumbers = new TextEditorLineNumbers(*this);
@@ -59,16 +59,24 @@ void TextEditor::setDefaultStyle()
 
 void TextEditor::clear()
 {
+  QScopedValueRollback loading(m_loading, true);
+
   m_filename.clear();
   m_encoding.clear();
   setPlainText("");
   dirty(false);
+  document()->setModified(false);
+
+  emit loaded("");
 }
 
 bool TextEditor::load(const QString& filename)
 {
-  m_filename = filename;
   clear();
+
+  QScopedValueRollback loading(m_loading, true);
+
+  m_filename = filename;
 
   const QString s = MOBase::readFileText(filename, &m_encoding);
 
@@ -80,6 +88,8 @@ bool TextEditor::load(const QString& filename)
     // above when the text being set is empty
     onModified(false);
   }
+
+  emit loaded(m_filename);
 
   return true;
 }
@@ -180,8 +190,21 @@ void TextEditor::setHighlightBackgroundColor(const QColor& c)
   update();
 }
 
+void TextEditor::explore()
+{
+  if (m_filename.isEmpty()) {
+    return;
+  }
+
+  MOBase::shell::ExploreFile(m_filename);
+}
+
 void TextEditor::onModified(bool b)
 {
+  if (m_loading) {
+    return;
+  }
+
   dirty(b);
   emit modified(b);
 }
@@ -431,15 +454,27 @@ void TextEditorLineNumbers::updateArea(const QRect &rect, int dy)
 }
 
 
-TextEditorToolbar::TextEditorToolbar(TextEditor& editor) :
-  m_editor(editor),
-  m_save(new QAction(QIcon(":/MO/gui/save"), QObject::tr("&Save"))),
-  m_wordWrap(new QAction(QIcon(":/MO/gui/word-wrap"), QObject::tr("&Word wrap")))
+TextEditorToolbar::TextEditorToolbar(TextEditor& editor)
+  : m_editor(editor), m_save(nullptr), m_wordWrap(nullptr), m_explore(nullptr)
 {
-  QObject::connect(m_save, &QAction::triggered, [&]{ m_editor.save(); });
+  m_save = new QAction(
+    QIcon(":/MO/gui/save"), QObject::tr("&Save"), &editor);
+
+  m_save->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+  m_save->setShortcut(Qt::CTRL + Qt::Key_S);
+  m_editor.addAction(m_save);
+
+  m_wordWrap = new QAction(
+    QIcon(":/MO/gui/word-wrap"), QObject::tr("&Word wrap"), &editor);
+
+  m_explore = new QAction(
+    QObject::tr("&Open in Explorer"), &editor);
 
   m_wordWrap->setCheckable(true);
+
+  QObject::connect(m_save, &QAction::triggered, [&]{ m_editor.save(); });
   QObject::connect(m_wordWrap, &QAction::triggered, [&]{ m_editor.toggleWordWrap(); });
+  QObject::connect(m_explore, &QAction::triggered, [&]{ m_editor.explore(); });
 
   auto* layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
@@ -453,8 +488,13 @@ TextEditorToolbar::TextEditorToolbar(TextEditor& editor) :
   b->setDefaultAction(m_wordWrap);
   layout->addWidget(b);
 
+  b = new QToolButton;
+  b->setDefaultAction(m_explore);
+  layout->addWidget(b);
+
   QObject::connect(&m_editor, &TextEditor::modified, [&](bool b){ onTextModified(b); });
   QObject::connect(&m_editor, &TextEditor::wordWrapChanged, [&](bool b){ onWordWrap(b); });
+  QObject::connect(&m_editor, &TextEditor::loaded, [&](QString f){ onLoaded(f); });
 }
 
 void TextEditorToolbar::onTextModified(bool b)
@@ -467,6 +507,13 @@ void TextEditorToolbar::onWordWrap(bool b)
   m_wordWrap->setChecked(b);
 }
 
+void TextEditorToolbar::onLoaded(const QString& s)
+{
+  const auto hasDoc = !s.isEmpty();
+
+  m_explore->setEnabled(hasDoc);
+  m_wordWrap->setEnabled(hasDoc);
+}
 
 void HTMLEditor::focusOutEvent(QFocusEvent* e)
 {

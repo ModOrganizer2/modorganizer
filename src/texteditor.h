@@ -16,9 +16,11 @@ private:
   TextEditor& m_editor;
   QAction* m_save;
   QAction* m_wordWrap;
+  QAction* m_explore;
 
   void onTextModified(bool b);
   void onWordWrap(bool b);
+  void onLoaded(const QString& s);
 };
 
 
@@ -112,7 +114,10 @@ public:
   QColor highlightBackgroundColor() const;
   void setHighlightBackgroundColor(const QColor& c);
 
+  void explore();
+
 signals:
+  void loaded(QString filename);
   void modified(bool b);
   void wordWrapChanged(bool b);
 
@@ -127,6 +132,7 @@ private:
   QString m_filename;
   QString m_encoding;
   bool m_dirty;
+  bool m_loading;
 
   void setDefaultStyle();
   void onModified(bool b);

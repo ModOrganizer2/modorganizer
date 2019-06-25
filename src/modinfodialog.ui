@@ -168,6 +168,9 @@
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
+         <property name="childrenCollapsible">
+          <bool>false</bool>
+         </property>
          <widget class="QWidget" name="widget_8" native="true">
           <layout class="QVBoxLayout" name="verticalLayout_2">
            <property name="leftMargin">
@@ -184,6 +187,9 @@
            </property>
            <item>
             <widget class="ImagesScrollArea" name="imagesScrollArea">
+             <property name="verticalScrollBarPolicy">
+              <enum>Qt::ScrollBarAlwaysOn</enum>
+             </property>
              <widget class="ImagesThumbnails" name="imagesThumbnails">
               <property name="geometry">
                <rect>
