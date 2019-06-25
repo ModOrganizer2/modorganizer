@@ -23,6 +23,9 @@ ImagesTab::ImagesTab(
   ui->imagesScrollArea->setTab(this);
   ui->imagesThumbnails->setTab(this);
 
+  m_filter.setEdit(ui->imagesFilter);
+  connect(&m_filter, &FilterWidget::changed, [&]{ onFilterChanged(); });
+
   connect(ui->imagesExplore, &QAbstractButton::clicked, [&]{ onExplore(); });
 
   getSupportedFormats();
@@ -31,6 +34,8 @@ ImagesTab::ImagesTab(
 void ImagesTab::clear()
 {
   m_files.clear();
+  m_filteredFiles.clear();
+
   select(nullptr);
   setHasData(false);
 }
@@ -50,8 +55,60 @@ bool ImagesTab::feedFile(const QString& rootPath, const QString& fullPath)
 void ImagesTab::update()
 {
   setHasData(!m_files.empty());
+
+  filterImages();
   resizeWidget();
   ui->imagesThumbnails->update();
+}
+
+void ImagesTab::filterImages()
+{
+  m_filteredFiles.clear();
+
+  if (m_filter.empty()) {
+    return;
+  }
+
+  for (auto& f : m_files) {
+    const auto m = m_filter.matches([&](auto&& what) {
+      return f.path.contains(what, Qt::CaseInsensitive);
+    });
+
+    if (m) {
+      m_filteredFiles.push_back(&f);
+    }
+  }
+}
+
+std::size_t ImagesTab::fileCount() const
+{
+  if (m_filter.empty()) {
+    return m_files.size();
+  } else {
+    return m_filteredFiles.size();
+  }
+}
+
+const ImagesTab::File* ImagesTab::getFile(std::size_t i) const
+{
+  if (m_filter.empty()) {
+    if (i >= m_files.size()) {
+      return nullptr;
+    }
+
+    return &m_files[i];
+  } else {
+    if (i >= m_filteredFiles.size()) {
+      return nullptr;
+    }
+
+    return m_filteredFiles[i];
+  }
+}
+
+ImagesTab::File* ImagesTab::getFile(std::size_t i)
+{
+  return const_cast<File*>(std::as_const(*this).getFile(i));
 }
 
 void ImagesTab::getSupportedFormats()
@@ -74,7 +131,7 @@ void ImagesTab::getSupportedFormats()
 void ImagesTab::select(const File* f)
 {
   if (f) {
-    ui->imagesPath->setText(f->path);
+    ui->imagesPath->setText(QDir::toNativeSeparators(f->path));
     ui->imagesExplore->setEnabled(true);
     m_image->setImage(f->original);
   } else {
@@ -93,7 +150,7 @@ int ImagesTab::calcThumbSize(int availableWidth) const
 
 int ImagesTab::calcWidgetHeight(int availableWidth) const
 {
-  if (m_files.empty()) {
+  if (fileCount() == 0) {
     return 0;
   }
 
@@ -106,7 +163,7 @@ int ImagesTab::calcWidgetHeight(int availableWidth) const
 
   // subsequent thumbs with padding before each
   const auto thumbWithPadding = m_padding + thumbSize;
-  h += static_cast<int>(thumbWithPadding * (m_files.size() - 1));
+  h += static_cast<int>(thumbWithPadding * (fileCount() - 1));
 
   // margin top and bottom
   h += m_margins * 2;
@@ -170,7 +227,8 @@ void ImagesTab::paintThumbnails(QPaintEvent* e)
   const auto [begin, end] = calcVisibleRange(
     e->rect().top(), e->rect().bottom(), cx.thumbSize);
 
-  for (std::size_t i=begin; i<end && i<m_files.size(); ++i) {
+  const auto n = fileCount();
+  for (std::size_t i=begin; i<end && i<n; ++i) {
     paintThumbnail(cx, i);
   }
 }
@@ -191,29 +249,34 @@ void ImagesTab::paintThumbnailBorder(PaintContext& cx, std::size_t i)
 
 void ImagesTab::paintThumbnailImage(PaintContext& cx, std::size_t i)
 {
-  auto& file = m_files[i];
-  if (file.failed) {
+  auto* file = getFile(i);
+  if (!file) {
+    qCritical() << "ImagesTab: no file at index " << i;
+    return;
+  }
+
+  if (file->failed) {
     return;
   }
 
   const auto imageRect = calcImageRect(cx.topRect, cx.thumbSize, i);
 
-  if (needsReload(file, imageRect.size())) {
-    reload(file, imageRect.size());
+  if (needsReload(*file, imageRect.size())) {
+    reload(*file, imageRect.size());
   }
 
-  if (file.thumbnail.isNull()) {
+  if (file->thumbnail.isNull()) {
     return;
   }
 
   // center scaled image in rect
   const QRect scaledThumbRect(
-    (imageRect.left()+imageRect.width()/2) - file.thumbnail.width()/2,
-    (imageRect.top()+imageRect.height()/2) - file.thumbnail.height()/2,
-    file.thumbnail.width(),
-    file.thumbnail.height());
+    (imageRect.left()+imageRect.width()/2) - file->thumbnail.width()/2,
+    (imageRect.top()+imageRect.height()/2) - file->thumbnail.height()/2,
+    file->thumbnail.width(),
+    file->thumbnail.height());
 
-  cx.painter.drawImage(scaledThumbRect, file.thumbnail);
+  cx.painter.drawImage(scaledThumbRect, file->thumbnail);
 }
 
 const ImagesTab::File* ImagesTab::fileAtPos(const QPoint& p) const
@@ -222,7 +285,7 @@ const ImagesTab::File* ImagesTab::fileAtPos(const QPoint& p) const
 
   // calculate index purely based on y position
   const std::size_t i = p.y() / (thumbSize + m_padding);
-  if (i >= m_files.size()) {
+  if (i >= fileCount()) {
     return nullptr;
   }
 
@@ -234,7 +297,7 @@ const ImagesTab::File* ImagesTab::fileAtPos(const QPoint& p) const
     return nullptr;
   }
 
-  return &m_files[i];
+  return getFile(i);
 }
 
 void ImagesTab::scrollAreaResized(const QSize&)
@@ -248,9 +311,7 @@ void ImagesTab::thumbnailsMouseEvent(QMouseEvent* e)
     return;
   }
 
-  if (const auto* file=fileAtPos(e->pos())) {
-    select(file);
-  }
+  select(fileAtPos(e->pos()));
 }
 
 void ImagesTab::onExplore()
@@ -260,6 +321,11 @@ void ImagesTab::onExplore()
   }
 
   MOBase::shell::ExploreFile(m_selection->path);
+}
+
+void ImagesTab::onFilterChanged()
+{
+  update();
 }
 
 bool ImagesTab::needsReload(const File& file, const QSize& imageSize) const
@@ -299,14 +365,17 @@ void ImagesTab::reload(File& file, const QSize& scaledSize)
 
 void ImagesTab::resizeWidget()
 {
-  if (m_files.empty()) {
+  if (fileCount() == 0) {
     ui->imagesThumbnails->setGeometry(QRect());
     return;
   }
 
   const auto availableWidth = ui->imagesScrollArea->viewport()->width();
 
-  const int widgetHeight = calcWidgetHeight(availableWidth);
+  const int widgetHeight = std::max(
+    calcWidgetHeight(availableWidth),
+    ui->imagesScrollArea->viewport()->height());
+
   ui->imagesThumbnails->setGeometry(QRect(0, 0, availableWidth, widgetHeight));
 }
 

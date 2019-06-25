@@ -196,6 +196,9 @@
              </widget>
             </widget>
            </item>
+           <item>
+            <widget class="QLineEdit" name="imagesFilter"/>
+           </item>
           </layout>
          </widget>
          <widget class="QWidget" name="imagesContainer" native="true">

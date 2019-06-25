@@ -38,6 +38,7 @@ public:
   void setEdit(QLineEdit* edit);
   void setList(QAbstractItemView* list);
   void clear();
+  bool empty() const;
 
   QModelIndex map(const QModelIndex& index);
 

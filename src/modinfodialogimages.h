@@ -2,6 +2,7 @@
 #define MODINFODIALOGIMAGES_H
 
 #include "modinfodialogtab.h"
+#include "filterwidget.h"
 #include <QScrollArea>
 
 class ImagesTab;
@@ -105,9 +106,11 @@ private:
 
   ScalableImage* m_image;
   std::vector<File> m_files;
+  std::vector<File*> m_filteredFiles;
   std::vector<QString> m_supportedFormats;
   int m_margins, m_padding, m_border;
   const File* m_selection;
+  FilterWidget m_filter;
 
   void getSupportedFormats();
   void select(const File* file);
@@ -116,6 +119,7 @@ private:
   void paintThumbnails(QPaintEvent* e);
   void thumbnailsMouseEvent(QMouseEvent* e);
   void onExplore();
+  void onFilterChanged();
 
   int calcThumbSize(int availableWidth) const;
   int calcWidgetHeight(int availableWidth) const;
@@ -134,6 +138,11 @@ private:
 
   const File* fileAtPos(const QPoint& p) const;
 
+  std::size_t fileCount() const;
+  const File* getFile(std::size_t i) const;
+  File* getFile(std::size_t i);
+
+  void filterImages();
   bool needsReload(const File& file, const QSize& imageSize) const;
   void reload(File& file, const QSize& imageSize);
   void resizeWidget();

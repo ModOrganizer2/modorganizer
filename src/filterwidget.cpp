@@ -70,6 +70,11 @@ void FilterWidget::clear()
   m_edit->clear();
 }
 
+bool FilterWidget::empty() const
+{
+  return m_text.isEmpty();
+}
+
 QModelIndex FilterWidget::map(const QModelIndex& index)
 {
   if (m_proxy) {
