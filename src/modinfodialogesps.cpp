@@ -18,7 +18,7 @@ public:
       m_active = true;
     }
 
-    updateFilename();
+    pathChanged();
   }
 
   const QString& rootPath() const
@@ -50,9 +50,9 @@ public:
     return m_inactivePath;
   }
 
-  QFileInfo fileInfo() const
+  const QFileInfo& fileInfo() const
   {
-    return m_rootPath + QDir::separator() + relativePath();
+    return m_fileInfo;
   }
 
   bool isActive() const
@@ -73,7 +73,7 @@ public:
         m_inactivePath = QFileInfo(m_inactivePath).path() + QDir::separator() + newName;
       }
 
-      updateFilename();
+      pathChanged();
 
       return true;
     }
@@ -88,7 +88,7 @@ public:
     if (root.rename(m_activePath, newName)) {
       m_active = false;
       m_inactivePath = newName;
-      updateFilename();
+      pathChanged();
       return true;
     }
 
@@ -100,11 +100,13 @@ private:
   QString m_activePath;
   QString m_inactivePath;
   QString m_filename;
+  QFileInfo m_fileInfo;
   bool m_active;
 
-  void updateFilename()
+  void pathChanged()
   {
-    m_filename = fileInfo().fileName();
+    m_fileInfo.setFile(m_rootPath + QDir::separator() + relativePath());
+    m_filename = m_fileInfo.fileName();
   }
 };
 
@@ -246,15 +248,11 @@ void ESPsTab::clear()
 
 bool ESPsTab::feedFile(const QString& rootPath, const QString& fullPath)
 {
-  static constexpr const char* extensions[] = {
-    ".esp", ".esm", ".esl"
-  };
+  static const QString extensions[] = {".esp", ".esm", ".esl"};
 
-  for (const auto* e : extensions) {
+  for (const auto& e : extensions) {
     if (fullPath.endsWith(e, Qt::CaseInsensitive)) {
-      QString relativePath = fullPath.mid(rootPath.length() + 1);
-
-      ESPItem esp(rootPath, relativePath);
+      ESPItem esp(rootPath, fullPath.mid(rootPath.length() + 1));
 
       if (esp.isActive()) {
         m_activeModel->add(std::move(esp));

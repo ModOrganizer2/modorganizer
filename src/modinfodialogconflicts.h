@@ -47,16 +47,16 @@ private:
 
   ConflictItem createOverwriteItem(
     MOShared::FileEntry::Index index, bool archive,
-    const QString& fileName, const QString& relativeName,
+    QString fileName, QString relativeName,
     const MOShared::FileEntry::AlternativesVector& alternatives);
 
   ConflictItem createNoConflictItem(
     MOShared::FileEntry::Index index, bool archive,
-    const QString& fileName, const QString& relativeName);
+    QString fileName, QString relativeName);
 
   ConflictItem createOverwrittenItem(
     MOShared::FileEntry::Index index, int fileOrigin, bool archive,
-    const QString& fileName, const QString& relativeName);
+    QString fileName, QString relativeName);
 
   void onOverwriteActivated(const QModelIndex& index);
   void onOverwrittenActivated(const QModelIndex& index);
@@ -93,7 +93,7 @@ private:
 
   std::optional<ConflictItem> createItem(
     MOShared::FileEntry::Index index, int fileOrigin, bool archive,
-    const QString& fileName, const QString& relativeName,
+    QString fileName, QString relativeName,
     const MOShared::FileEntry::AlternativesVector& alternatives);
 };
 

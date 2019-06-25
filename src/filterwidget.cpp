@@ -30,21 +30,29 @@ void FilterWidget::clear()
   m_edit->clear();
 }
 
-bool FilterWidget::matches(std::function<bool (const QString& what)> pred) const
+void FilterWidget::compile()
 {
+  m_compiled.clear();
+
   const QStringList ORList = [&] {
     QString filterCopy = QString(m_text);
     filterCopy.replace("||", ";").replace("OR", ";").replace("|", ";");
     return filterCopy.split(";", QString::SkipEmptyParts);
   }();
 
-  if (ORList.isEmpty() || !pred) {
+  // split in ORSegments that internally use AND logic
+  for (auto& ORSegment : ORList) {
+    m_compiled.push_back(ORSegment.split(" ", QString::SkipEmptyParts));
+  }
+}
+
+bool FilterWidget::matches(std::function<bool (const QString& what)> pred) const
+{
+  if (m_compiled.isEmpty() || !pred) {
     return true;
   }
 
-  // split in ORSegments that internally use AND logic
-  for (auto& ORSegment : ORList) {
-    QStringList ANDKeywords = ORSegment.split(" ", QString::SkipEmptyParts);
+  for (auto& ANDKeywords : m_compiled) {
     bool segmentGood = true;
 
     // check each word in the segment for match, each word needs to be matched
@@ -115,6 +123,7 @@ void FilterWidget::onTextChanged()
 
   if (text != m_text) {
     m_text = text;
+    compile();
 
     if (changed) {
       changed();

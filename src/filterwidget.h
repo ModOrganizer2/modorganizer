@@ -20,6 +20,7 @@ private:
   EventFilter* m_eventFilter;
   QToolButton* m_clear;
   QString m_text;
+  QList<QList<QString>> m_compiled;
 
   void unhook();
   void createClear();
@@ -28,6 +29,8 @@ private:
 
   void onTextChanged();
   void onResized();
+
+  void compile();
 };
 
 #endif // FILTERWIDGET_H

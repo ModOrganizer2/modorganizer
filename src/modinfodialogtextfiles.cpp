@@ -202,11 +202,9 @@ TextFilesTab::TextFilesTab(
 
 bool TextFilesTab::wantsFile(const QString& rootPath, const QString& fullPath) const
 {
-  static constexpr const char* extensions[] = {
-    ".txt"
-  };
+  static const QString extensions[] = {".txt"};
 
-  for (const auto* e : extensions) {
+  for (const auto& e : extensions) {
     if (fullPath.endsWith(e, Qt::CaseInsensitive)) {
       return true;
     }
@@ -226,13 +224,12 @@ IniFilesTab::IniFilesTab(
 
 bool IniFilesTab::wantsFile(const QString& rootPath, const QString& fullPath) const
 {
-  static constexpr const char* extensions[] = {
-    ".ini", ".cfg"
-  };
+  static const QString extensions[] = {".ini", ".cfg"};
+  static const QString meta("meta.ini");
 
-  for (const auto* e : extensions) {
+  for (const auto& e : extensions) {
     if (fullPath.endsWith(e, Qt::CaseInsensitive)) {
-      if (!fullPath.endsWith("meta.ini")) {
+      if (!fullPath.endsWith(meta)) {
         return true;
       }
     }

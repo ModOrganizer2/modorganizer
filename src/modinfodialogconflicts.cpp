@@ -126,8 +126,9 @@ public:
     const QString& (ConflictItem::*getText)() const;
   };
 
-  ConflictListModel(QTreeView* tree, std::vector<Column> columns)
-    : m_tree(tree), m_columns(std::move(columns))
+  ConflictListModel(QTreeView* tree, std::vector<Column> columns) :
+    m_tree(tree), m_columns(std::move(columns)),
+    m_sortColumn(-1), m_sortOrder(Qt::AscendingOrder)
   {
     m_tree->setModel(this);
   }
@@ -226,32 +227,10 @@ public:
 
   void sort(int colIndex, Qt::SortOrder order=Qt::AscendingOrder)
   {
-    if (colIndex < 0) {
-      return;
-    }
+    m_sortColumn = colIndex;
+    m_sortOrder = order;
 
-    const auto c = static_cast<std::size_t>(colIndex);
-    if (c >= m_columns.size()) {
-      return;
-    }
-
-    const auto& col = m_columns[c];
-
-    // avoids branching on sort order while sorting
-    auto sortAsc = [&](const auto& a, const auto& b) {
-      return (naturalCompare((a.*col.getText)(), (b.*col.getText)()) < 0);
-    };
-
-    auto sortDesc = [&](const auto& a, const auto& b) {
-      return (naturalCompare((a.*col.getText)(), (b.*col.getText)()) > 0);
-    };
-
-    if (order == Qt::AscendingOrder) {
-      std::sort(m_items.begin(), m_items.end(), sortAsc);
-    } else {
-      std::sort(m_items.begin(), m_items.end(), sortDesc);
-    }
-
+    doSort();
     emit layoutChanged({}, QAbstractItemModel::VerticalSortHint);
   }
 
@@ -263,6 +242,7 @@ public:
   void finished()
   {
     endResetModel();
+    doSort();
   }
 
   const ConflictItem* getItem(std::size_t row) const
@@ -278,6 +258,37 @@ private:
   QTreeView* m_tree;
   std::vector<Column> m_columns;
   std::vector<ConflictItem> m_items;
+  int m_sortColumn;
+  Qt::SortOrder m_sortOrder;
+
+  void doSort()
+  {
+    if (m_sortColumn < 0) {
+      return;
+    }
+
+    const auto c = static_cast<std::size_t>(m_sortColumn);
+    if (c >= m_columns.size()) {
+      return;
+    }
+
+    const auto& col = m_columns[c];
+
+    // avoids branching on sort order while sorting
+    auto sortAsc = [&](const auto& a, const auto& b) {
+      return (naturalCompare((a.*col.getText)(), (b.*col.getText)()) < 0);
+    };
+
+    auto sortDesc = [&](const auto& a, const auto& b) {
+      return (naturalCompare((a.*col.getText)(), (b.*col.getText)()) > 0);
+    };
+
+    if (m_sortOrder == Qt::AscendingOrder) {
+      std::sort(m_items.begin(), m_items.end(), sortAsc);
+    } else {
+      std::sort(m_items.begin(), m_items.end(), sortDesc);
+    }
+  }
 };
 
 
@@ -841,8 +852,9 @@ bool GeneralConflictsTab::update()
     const auto rootPath = m_tab->mod()->absolutePath();
 
     for (const auto& file : m_tab->origin()->getFiles()) {
-      const QString relativeName = QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
-      const QString fileName = relativeName.mid(0).prepend(rootPath);
+      // careful: these two strings are moved into createXItem() below
+      QString relativeName = QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
+      QString fileName = rootPath + relativeName;
 
       bool archive = false;
       const int fileOrigin = file->getOrigin(archive);
@@ -851,28 +863,31 @@ bool GeneralConflictsTab::update()
       if (fileOrigin == m_tab->origin()->getID()) {
         if (!alternatives.empty()) {
           m_overwriteModel->add(createOverwriteItem(
-              file->getIndex(), archive, fileName, relativeName, alternatives));
+              file->getIndex(), archive,
+              std::move(fileName), std::move(relativeName), alternatives));
 
           ++numOverwrite;
         } else {
           // otherwise, put the file in the noconflict tree
             m_noConflictModel->add(createNoConflictItem(
-            file->getIndex(), archive, fileName, relativeName));
+            file->getIndex(), archive,
+              std::move(fileName), std::move(relativeName)));
 
           ++numNonConflicting;
         }
       } else {
         m_overwrittenModel->add(createOverwrittenItem(
-          file->getIndex(), fileOrigin, archive, fileName, relativeName));
+          file->getIndex(), fileOrigin, archive,
+          std::move(fileName), std::move(relativeName)));
 
         ++numOverwritten;
       }
     }
-  }
 
-  m_overwriteModel->finished();
-  m_overwrittenModel->finished();
-  m_noConflictModel->finished();
+    m_overwriteModel->finished();
+    m_overwrittenModel->finished();
+    m_noConflictModel->finished();
+  }
 
   ui->overwriteCount->display(numOverwrite);
   ui->overwrittenCount->display(numOverwritten);
@@ -882,43 +897,48 @@ bool GeneralConflictsTab::update()
 }
 
 ConflictItem GeneralConflictsTab::createOverwriteItem(
-  FileEntry::Index index, bool archive,
-  const QString& fileName, const QString& relativeName,
+  FileEntry::Index index, bool archive, QString fileName, QString relativeName,
   const FileEntry::AlternativesVector& alternatives)
 {
   const auto& ds = *m_core.directoryStructure();
-  QString altString;
+  std::wstring altString;
 
   for (const auto& alt : alternatives) {
-    if (!altString.isEmpty()) {
-      altString += ", ";
+    if (!altString.empty()) {
+      altString += L", ";
     }
 
-    altString += ToQString(ds.getOriginByID(alt.first).getName());
+    altString += ds.getOriginByID(alt.first).getName();
   }
 
-  const auto origin = ToQString(ds.getOriginByID(alternatives.back().first).getName());
+  auto origin = ToQString(ds.getOriginByID(alternatives.back().first).getName());
 
-  return {altString, relativeName, "", index, fileName, true, origin, archive};
+  return ConflictItem(
+    ToQString(altString), std::move(relativeName), QString::null, index,
+    std::move(fileName), true, std::move(origin), archive);
 }
 
 ConflictItem GeneralConflictsTab::createNoConflictItem(
-  FileEntry::Index index, bool archive,
-  const QString& fileName, const QString& relativeName)
+  FileEntry::Index index, bool archive, QString fileName, QString relativeName)
 {
-  return {"", relativeName, "", index, fileName, false, "", archive};
+  return ConflictItem(
+    QString::null, std::move(relativeName), QString::null, index,
+    std::move(fileName), false, QString::null, archive);
 }
 
 ConflictItem GeneralConflictsTab::createOverwrittenItem(
   FileEntry::Index index, int fileOrigin, bool archive,
-  const QString& fileName, const QString& relativeName)
+  QString fileName, QString relativeName)
 {
   const auto& ds = *m_core.directoryStructure();
-  const FilesOrigin &realOrigin = ds.getOriginByID(fileOrigin);
+  const FilesOrigin& realOrigin = ds.getOriginByID(fileOrigin);
 
-  return {
-    "", relativeName, ToQString(realOrigin.getName()),
-    index, fileName, true, ToQString(realOrigin.getName()), archive};
+  QString after = ToQString(realOrigin.getName());
+  QString altOrigin = after;
+
+  return ConflictItem(
+    QString::null, std::move(relativeName), std::move(after),
+    index, std::move(fileName), true, std::move(altOrigin), archive);
 }
 
 void GeneralConflictsTab::onOverwriteActivated(const QModelIndex& index)
@@ -1048,8 +1068,9 @@ void AdvancedConflictsTab::update()
     m_model->reserve(files.size());
 
     for (const auto& file : files) {
-      const QString relativeName = QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
-      const QString fileName = relativeName.mid(0).prepend(rootPath);
+      // careful: these two strings are moved into createItem() below
+      QString relativeName = QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
+      QString fileName = rootPath + relativeName;
 
       bool archive = false;
       const int fileOrigin = file->getOrigin(archive);
@@ -1057,7 +1078,7 @@ void AdvancedConflictsTab::update()
 
       auto item = createItem(
         file->getIndex(), fileOrigin, archive,
-        fileName, relativeName, alternatives);
+        std::move(fileName), std::move(relativeName), alternatives);
 
       if (item) {
         m_model->add(std::move(*item));
@@ -1070,39 +1091,41 @@ void AdvancedConflictsTab::update()
 
 std::optional<ConflictItem> AdvancedConflictsTab::createItem(
   FileEntry::Index index, int fileOrigin, bool archive,
-  const QString& fileName, const QString& relativeName,
+  QString fileName, QString relativeName,
   const MOShared::FileEntry::AlternativesVector& alternatives)
 {
   const auto& ds = *m_core.directoryStructure();
 
-  QString before, after;
+  std::wstring before, after;
 
   if (!alternatives.empty()) {
+    const bool showAllAlts = ui->conflictsAdvancedShowAll->isChecked();
+
     int beforePrio = 0;
     int afterPrio = std::numeric_limits<int>::max();
 
     for (const auto& alt : alternatives)
     {
-      const auto altOrigin = ds.getOriginByID(alt.first);
+      const auto& altOrigin = ds.getOriginByID(alt.first);
 
-      if (ui->conflictsAdvancedShowAll->isChecked()) {
+      if (showAllAlts) {
         // fills 'before' and 'after' with all the alternatives that come
         // before and after this mod in terms of priority
 
         if (altOrigin.getPriority() < m_tab->origin()->getPriority()) {
           // add all the mods having a lower priority than this one
-          if (!before.isEmpty()) {
-            before += ", ";
+          if (!before.empty()) {
+            before += L", ";
           }
 
-          before += ToQString(altOrigin.getName());
+          before += altOrigin.getName();
         } else if (altOrigin.getPriority() > m_tab->origin()->getPriority()) {
           // add all the mods having a higher priority than this one
-          if (!after.isEmpty()) {
-            after += ", ";
+          if (!after.empty()) {
+            after += L", ";
           }
 
-          after += ToQString(altOrigin.getName());
+          after += altOrigin.getName();
         }
       } else {
         // keep track of the nearest mods that come before and after this one
@@ -1114,7 +1137,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
           if (altOrigin.getPriority() > beforePrio) {
             // the alternative has a higher priority and therefore is closer
             // to this mod, use it
-            before = ToQString(altOrigin.getName());
+            before = altOrigin.getName();
             beforePrio = altOrigin.getPriority();
           }
         }
@@ -1125,7 +1148,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
           if (altOrigin.getPriority() < afterPrio) {
             // the alternative has a lower priority and there is closer
             // to this mod, use it
-            after = ToQString(altOrigin.getName());
+            after = altOrigin.getName();
             afterPrio = altOrigin.getPriority();
           }
         }
@@ -1140,41 +1163,46 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
     // nearest mods, it's not worth checking for the primary origin because it
     // will always have a higher priority than the alternatives (or it wouldn't
     // be the primary)
-    if (after.isEmpty() || ui->conflictsAdvancedShowAll->isChecked()) {
-      FilesOrigin &realOrigin = ds.getOriginByID(fileOrigin);
+    if (after.empty() || showAllAlts) {
+      const FilesOrigin& realOrigin = ds.getOriginByID(fileOrigin);
 
       // if no mods overwrite this file, the primary origin is the same as this
       // mod, so ignore that
       if (realOrigin.getID() != m_tab->origin()->getID()) {
-        if (!after.isEmpty()) {
-          after += ", ";
+        if (!after.empty()) {
+          after += L", ";
         }
 
-        after += ToQString(realOrigin.getName());
+        after += realOrigin.getName();
       }
     }
   }
 
-  bool hasAlts = !before.isEmpty() || !after.isEmpty();
+  const bool hasAlts = !before.empty() || !after.empty();
 
-  if (!ui->conflictsAdvancedShowNoConflict->isChecked()) {
+  if (!hasAlts) {
     // if both before and after are empty, it means this file has no conflicts
     // at all, only display it if the user wants it
-    if (!hasAlts) {
+    if (!ui->conflictsAdvancedShowNoConflict->isChecked()) {
       return {};
     }
   }
 
-  bool matched = m_filter.matches([&](auto&& what) {
+  auto beforeQS = QString::fromStdWString(before);
+  auto afterQS = QString::fromStdWString(after);
+
+  const bool matched = m_filter.matches([&](auto&& what) {
     return
-      before.contains(what, Qt::CaseInsensitive) ||
+      beforeQS.contains(what, Qt::CaseInsensitive) ||
       relativeName.contains(what, Qt::CaseInsensitive) ||
-      after.contains(what, Qt::CaseInsensitive);
+      afterQS.contains(what, Qt::CaseInsensitive);
     });
 
   if (!matched) {
     return {};
   }
 
-  return ConflictItem{before, relativeName, after, index, fileName, hasAlts, "", archive};
+  return ConflictItem(
+    std::move(beforeQS), std::move(relativeName), std::move(afterQS),
+    index, std::move(fileName), hasAlts, QString::null, archive);
 }

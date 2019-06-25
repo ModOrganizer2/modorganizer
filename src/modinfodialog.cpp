@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfodialogcategories.h"
 #include "modinfodialognexus.h"
 #include "modinfodialogfiletree.h"
+#include <filesystem>
 
 using namespace MOBase;
 using namespace MOShared;
@@ -310,12 +311,17 @@ void ModInfoDialog::updateTabs(bool becauseOriginChanged)
 
 void ModInfoDialog::feedFiles(bool becauseOriginChanged)
 {
+  namespace fs = std::filesystem;
   const auto rootPath = m_mod->absolutePath();
 
   if (rootPath.length() > 0) {
-    QDirIterator dirIterator(rootPath, QDir::Files, QDirIterator::Subdirectories);
-    while (dirIterator.hasNext()) {
-      QString fileName = dirIterator.next();
+
+    for (const auto& entry : fs::recursive_directory_iterator(rootPath.toStdString())) {
+      if (!entry.is_regular_file()) {
+        continue;
+      }
+
+      const auto fileName = QString::fromWCharArray(entry.path().c_str());
 
       for (auto& tabInfo : m_tabs) {
         if (!tabInfo.isVisible()) {
