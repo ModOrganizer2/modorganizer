@@ -140,6 +140,18 @@ ImagesTab::ImagesTab(
   ui->imagesScrollArea->setWidgetResizable(false);
   ui->imagesScrollArea->setTab(this);
   ui->imagesThumbnails->setTab(this);
+
+  const auto list = QImageReader::supportedImageFormats();
+  for (const auto& entry : list) {
+    QString s(entry);
+    if (!s.isEmpty()) {
+      if (s[0] != ".") {
+        s = "." + s;
+      }
+
+      m_supportedFormats.emplace_back(std::move(s));
+    }
+  }
 }
 
 void ImagesTab::clear()
@@ -151,10 +163,11 @@ void ImagesTab::clear()
 
 bool ImagesTab::feedFile(const QString& rootPath, const QString& fullPath)
 {
-  QImageReader reader(fullPath);
-  if (reader.canRead()) {
-    m_files.push_back({fullPath});
-    return true;
+  for (const auto& ext : m_supportedFormats) {
+    if (fullPath.endsWith(ext, Qt::CaseInsensitive)) {
+      m_files.push_back({fullPath});
+      return true;
+    }
   }
 
   return false;

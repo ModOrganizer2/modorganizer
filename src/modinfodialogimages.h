@@ -93,6 +93,7 @@ private:
 
   ScalableImage* m_image;
   std::vector<File> m_files;
+  std::vector<QString> m_supportedFormats;
   int m_margins, m_padding, m_border;
 
   void scrollAreaResized(const QSize& s);
