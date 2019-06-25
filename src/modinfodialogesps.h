@@ -4,6 +4,7 @@
 #include "modinfodialogtab.h"
 
 class ESPItem;
+class ESPListModel;
 
 class ESPsTab : public ModInfoDialogTab
 {
@@ -16,13 +17,15 @@ public:
 
   void clear() override;
   bool feedFile(const QString& rootPath, const QString& fullPath) override;
+  void update();
 
 private:
+  ESPListModel* m_inactiveModel;
+  ESPListModel* m_activeModel;
+
   void onActivate();
   void onDeactivate();
-
-  ESPItem* selectedInactive();
-  ESPItem* selectedActive();
+  void selectRow(QListView* list, int row);
 };
 
 #endif // MODINFODIALOGESPS_H

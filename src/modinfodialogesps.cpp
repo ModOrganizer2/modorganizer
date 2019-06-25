@@ -1,13 +1,14 @@
 #include "modinfodialogesps.h"
 #include "ui_modinfodialog.h"
+#include "modinfodialog.h"
 #include <report.h>
 
 using MOBase::reportError;
 
-class ESP
+class ESPItem
 {
 public:
-  ESP(QString rootPath, QString relativePath)
+  ESPItem(QString rootPath, QString relativePath)
     : m_rootPath(std::move(rootPath)), m_active(false)
   {
     if (relativePath.contains('/')) {
@@ -16,6 +17,8 @@ public:
       m_activePath = relativePath;
       m_active = true;
     }
+
+    updateFilename();
   }
 
   const QString& rootPath() const
@@ -30,6 +33,11 @@ public:
     } else {
       return m_inactivePath;
     }
+  }
+
+  const QString& filename() const
+  {
+    return m_filename;
   }
 
   const QString& activePath() const
@@ -65,6 +73,8 @@ public:
         m_inactivePath = QFileInfo(m_inactivePath).path() + QDir::separator() + newName;
       }
 
+      updateFilename();
+
       return true;
     }
 
@@ -78,6 +88,7 @@ public:
     if (root.rename(m_activePath, newName)) {
       m_active = false;
       m_inactivePath = newName;
+      updateFilename();
       return true;
     }
 
@@ -88,45 +99,137 @@ private:
   QString m_rootPath;
   QString m_activePath;
   QString m_inactivePath;
+  QString m_filename;
   bool m_active;
+
+  void updateFilename()
+  {
+    m_filename = fileInfo().fileName();
+  }
 };
 
 
-class ESPItem : public QListWidgetItem
+class ESPListModel : public QAbstractItemModel
 {
 public:
-  ESPItem(ESP esp)
-    : m_esp(std::move(esp))
+  void clear()
   {
-    updateText();
+    m_esps.clear();
+    endResetModel();
   }
 
-  const ESP& esp() const
+  QModelIndex index(int row, int col, const QModelIndex& ={}) const override
   {
-    return m_esp;
+    return createIndex(row, col);
   }
 
-  void setESP(ESP esp)
+  QModelIndex parent(const QModelIndex&) const override
   {
-    m_esp = esp;
-    updateText();
+    return {};
+  }
+
+  int rowCount(const QModelIndex& ={}) const override
+  {
+    return static_cast<int>(m_esps.size());
+  }
+
+  int columnCount(const QModelIndex& ={}) const override
+  {
+    return 1;
+  }
+
+  QVariant data(const QModelIndex& index, int role) const override
+  {
+    if (role == Qt::DisplayRole) {
+      if (auto* esp=getESP(index)) {
+        return esp->filename();
+      }
+    }
+
+    return {};
+  }
+
+
+  void add(ESPItem esp)
+  {
+    m_esps.emplace_back(std::move(esp));
+  }
+
+  void addOne(ESPItem esp)
+  {
+    const auto i = m_esps.size();
+
+    beginInsertRows({}, static_cast<int>(i), static_cast<int>(i));
+    add(std::move(esp));
+    endInsertRows();
+  }
+
+  bool removeRows(int row, int count, const QModelIndex& = {}) override
+  {
+    if (row < 0) {
+      return false;
+    }
+
+    const auto start = static_cast<std::size_t>(row);
+    if (start >= m_esps.size()) {
+      return false;
+    }
+
+    const auto end = std::min(
+      start + static_cast<std::size_t>(count),
+      m_esps.size());
+
+    beginRemoveRows({}, static_cast<int>(start), static_cast<int>(end));
+    m_esps.erase(m_esps.begin() + start, m_esps.begin() + end);
+    endRemoveRows();
+
+    return true;
+  }
+
+  void finished()
+  {
+    std::sort(m_esps.begin(), m_esps.end(), [](const auto& a, const auto& b) {
+      return (naturalCompare(a.filename(), b.filename()) < 0);
+    });
+
+    endResetModel();
+  }
+
+  const ESPItem* getESP(const QModelIndex& index) const
+  {
+    const auto row = index.row();
+    if (row < 0) {
+      return nullptr;
+    }
+
+    const auto i = static_cast<std::size_t>(row);
+    if (i >= m_esps.size()) {
+      return nullptr;
+    }
+
+    return &m_esps[i];
+  }
+
+  ESPItem* getESP(const QModelIndex& index)
+  {
+    return const_cast<ESPItem*>(std::as_const(*this).getESP(index));
   }
 
 private:
-  ESP m_esp;
-
-  void updateText()
-  {
-    setText(m_esp.fileInfo().fileName());
-  }
+  std::deque<ESPItem> m_esps;
 };
+
 
 
 ESPsTab::ESPsTab(
   OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int id)
-    : ModInfoDialogTab(oc, plugin, parent, ui, id)
+  QWidget* parent, Ui::ModInfoDialog* ui, int id) :
+    ModInfoDialogTab(oc, plugin, parent, ui, id),
+    m_inactiveModel(new ESPListModel), m_activeModel(new ESPListModel)
 {
+  ui->inactiveESPList->setModel(m_inactiveModel);
+  ui->activeESPList->setModel(m_activeModel);
+
   QObject::connect(
     ui->activateESP, &QToolButton::clicked, [&]{ onActivate(); });
 
@@ -136,8 +239,8 @@ ESPsTab::ESPsTab(
 
 void ESPsTab::clear()
 {
-  ui->inactiveESPList->clear();
-  ui->activeESPList->clear();
+  m_inactiveModel->clear();
+  m_activeModel->clear();
   setHasData(false);
 }
 
@@ -151,12 +254,12 @@ bool ESPsTab::feedFile(const QString& rootPath, const QString& fullPath)
     if (fullPath.endsWith(e, Qt::CaseInsensitive)) {
       QString relativePath = fullPath.mid(rootPath.length() + 1);
 
-      auto* item = new ESPItem({rootPath, relativePath});
+      ESPItem esp(rootPath, relativePath);
 
-      if (item->esp().isActive()) {
-        ui->activeESPList->addItem(item);
+      if (esp.isActive()) {
+        m_activeModel->add(std::move(esp));
       } else {
-        ui->inactiveESPList->addItem(item);
+        m_inactiveModel->add(std::move(esp));
       }
 
       setHasData(true);
@@ -167,23 +270,31 @@ bool ESPsTab::feedFile(const QString& rootPath, const QString& fullPath)
   return false;
 }
 
+void ESPsTab::update()
+{
+  m_inactiveModel->finished();
+  m_activeModel->finished();
+}
+
 void ESPsTab::onActivate()
 {
-  auto* item = selectedInactive();
-  if (!item) {
-    qWarning("ESPsTab::onActivate(): no selection");
+  const auto index = ui->inactiveESPList->currentIndex();
+  if (!index.isValid()) {
     return;
   }
 
-  ESP esp = item->esp();
+  auto* esp = m_inactiveModel->getESP(index);
+  if (!esp) {
+    return;
+  }
 
-  if (esp.isActive()) {
+  if (esp->isActive()) {
     qWarning("ESPsTab::onActive(): item is already active");
     return;
   }
 
-  QDir root(esp.rootPath());
-  const QFileInfo file(esp.fileInfo());
+  QDir root(esp->rootPath());
+  const QFileInfo file(esp->fileInfo());
 
   QString newName = file.fileName();
 
@@ -205,10 +316,12 @@ void ESPsTab::onActivate()
     }
   }
 
-  if (esp.activate(newName)) {
-    ui->inactiveESPList->takeItem(ui->inactiveESPList->row(item));
-    ui->activeESPList->addItem(item);
-    item->setESP(esp);
+  if (esp->activate(newName)) {
+    // copy esp, original will be destroyed
+    auto copy = *esp;
+    m_inactiveModel->removeRow(index.row());
+    m_activeModel->addOne(std::move(copy));
+    selectRow(ui->inactiveESPList, index.row());
   } else {
     reportError(QObject::tr("Failed to move file"));
   }
@@ -216,26 +329,28 @@ void ESPsTab::onActivate()
 
 void ESPsTab::onDeactivate()
 {
-  auto* item = selectedActive();
-  if (!item) {
-    qWarning("ESPsTab::onDeactivate(): no selection");
+  const auto index = ui->activeESPList->currentIndex();
+  if (!index.isValid()) {
     return;
   }
 
-  ESP esp = item->esp();
+  auto* esp = m_activeModel->getESP(index);
+  if (!esp) {
+    return;
+  }
 
-  if (!esp.isActive()) {
+  if (!esp->isActive()) {
     qWarning("ESPsTab::onDeactivate(): item is already inactive");
     return;
   }
 
-  QDir root(esp.rootPath());
+  QDir root(esp->rootPath());
 
   // if we moved the file from optional to active in this session, we move the
   // file back to where it came from. Otherwise, it is moved to the new folder
   // "optional"
 
-  QString newName = esp.inactivePath();
+  QString newName = esp->inactivePath();
 
   if (newName.isEmpty()) {
     if (!root.exists("optional")) {
@@ -245,46 +360,32 @@ void ESPsTab::onDeactivate()
       }
     }
 
-    newName = QString("optional") + QDir::separator() + esp.fileInfo().fileName();
+    newName = QString("optional") + QDir::separator() + esp->fileInfo().fileName();
   }
 
-  if (esp.deactivate(newName)) {
-    ui->activeESPList->takeItem(ui->activeESPList->row(item));
-    ui->inactiveESPList->addItem(item);
-    item->setESP(esp);
+  if (esp->deactivate(newName)) {
+    // copy esp, original will be destroyed
+    auto copy = *esp;
+
+    m_activeModel->removeRow(index.row());
+    m_inactiveModel->addOne(std::move(copy));
+    selectRow(ui->activeESPList, index.row());
   } else {
     reportError(QObject::tr("Failed to move file"));
   }
 }
 
-ESPItem* ESPsTab::selectedInactive()
+void ESPsTab::selectRow(QListView* list, int row)
 {
-  auto* item = ui->inactiveESPList->currentItem();
-  if (!item) {
-    return nullptr;
+  const auto* model = list->model();
+  const auto count = model->rowCount();
+  if (count == 0) {
+    return;
   }
 
-  auto* esp = dynamic_cast<ESPItem*>(item);
-  if (!esp) {
-    qCritical("ESPsTab: inactive item is not an ESPItem");
-    return nullptr;
+  if (row >= count) {
+    list->setCurrentIndex(model->index(count - 1, 0));
+  } else {
+    list->setCurrentIndex(model->index(row, 0));
   }
-
-  return esp;
-}
-
-ESPItem* ESPsTab::selectedActive()
-{
-  auto* item = ui->activeESPList->currentItem();
-  if (!item) {
-    return nullptr;
-  }
-
-  auto* esp = dynamic_cast<ESPItem*>(item);
-  if (!esp) {
-    qCritical("ESPsTab: active item is not an ESPItem");
-    return nullptr;
-  }
-
-  return esp;
 }

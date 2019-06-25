@@ -244,7 +244,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QListWidget" name="inactiveESPList">
+            <widget class="QListView" name="inactiveESPList">
              <property name="toolTip">
               <string>List of esps, esms, and esls that can not be loaded by the game.</string>
              </property>
@@ -374,7 +374,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
                </widget>
               </item>
               <item>
-               <widget class="QListWidget" name="activeESPList">
+               <widget class="QListView" name="activeESPList">
                 <property name="toolTip">
                  <string>ESPs in the data directory and thus visible to the game.</string>
                 </property>

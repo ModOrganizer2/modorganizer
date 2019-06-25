@@ -9,6 +9,7 @@ public:
   void clear()
   {
     m_files.clear();
+    endResetModel();
   }
 
   QModelIndex index(int row, int col, const QModelIndex& ={}) const override
@@ -62,7 +63,7 @@ public:
       return (naturalCompare(a.text, b.text) < 0);
     });
 
-    emit dataChanged(index(0, 0), index(0, rowCount()));
+    endResetModel();
   }
 
   QString fullPath(const QModelIndex& index) const

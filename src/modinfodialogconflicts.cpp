@@ -135,6 +135,7 @@ public:
   void clear()
   {
     m_items.clear();
+    endResetModel();
   }
 
   void reserve(std::size_t s)
@@ -261,7 +262,6 @@ public:
 
   void finished()
   {
-    beginResetModel();
     endResetModel();
   }
 
