@@ -999,8 +999,8 @@ AdvancedConflictsTab::AdvancedConflictsTab(
     ui->conflictsAdvancedList, &QTreeView::customContextMenuRequested,
     [&](const QPoint& p){ m_tab->showContextMenu(p, ui->conflictsAdvancedList); });
 
-  m_filter.set(ui->conflictsAdvancedFilter);
-  m_filter.changed = [&]{ update(); };
+  m_filter.setEdit(ui->conflictsAdvancedFilter);
+  QObject::connect(&m_filter, &FilterWidget::changed, [&]{ update(); });
 }
 
 void AdvancedConflictsTab::clear()

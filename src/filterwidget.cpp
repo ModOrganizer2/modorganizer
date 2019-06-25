@@ -1,12 +1,41 @@
 #include "filterwidget.h"
 #include "eventfilter.h"
 
-FilterWidget::FilterWidget()
-  : m_edit(nullptr), m_eventFilter(nullptr), m_clear(nullptr)
+FilterWidgetProxyModel::FilterWidgetProxyModel(FilterWidget& fw, QWidget* parent)
+  : QSortFilterProxyModel(parent), m_filter(fw)
+{
+  connect(&fw, &FilterWidget::changed, [&]{ invalidateFilter(); });
+}
+
+bool FilterWidgetProxyModel::filterAcceptsRow(
+  int sourceRow, const QModelIndex& sourceParent) const
+{
+  const auto cols = sourceModel()->columnCount();
+
+  const auto m = m_filter.matches([&](auto&& what) {
+    for (int c=0; c<cols; ++c) {
+      QModelIndex index = sourceModel()->index(sourceRow, c, sourceParent);
+      const auto text = sourceModel()->data(index, Qt::DisplayRole).toString();
+
+      if (text.contains(what, Qt::CaseInsensitive)) {
+        return true;
+      }
+    }
+
+    return false;
+    });
+
+  return m;
+}
+
+
+FilterWidget::FilterWidget() :
+  m_edit(nullptr), m_list(nullptr), m_proxy(nullptr),
+  m_eventFilter(nullptr), m_clear(nullptr)
 {
 }
 
-void FilterWidget::set(QLineEdit* edit)
+void FilterWidget::setEdit(QLineEdit* edit)
 {
   unhook();
 
@@ -16,9 +45,20 @@ void FilterWidget::set(QLineEdit* edit)
     return;
   }
 
+  m_edit->setPlaceholderText(QObject::tr("Filter"));
+
   createClear();
   hookEvents();
   clear();
+}
+
+void FilterWidget::setList(QAbstractItemView* list)
+{
+  m_list = list;
+
+  m_proxy = new FilterWidgetProxyModel(*this);
+  m_proxy->setSourceModel(m_list->model());
+  m_list->setModel(m_proxy);
 }
 
 void FilterWidget::clear()
@@ -28,6 +68,16 @@ void FilterWidget::clear()
   }
 
   m_edit->clear();
+}
+
+QModelIndex FilterWidget::map(const QModelIndex& index)
+{
+  if (m_proxy) {
+    return m_proxy->mapToSource(index);
+  } else {
+    qCritical() << "FilterWidget::map() called, but proxy isn't set up";
+    return index;
+  }
 }
 
 void FilterWidget::compile()
@@ -83,6 +133,14 @@ void FilterWidget::unhook()
   if (m_edit) {
     m_edit->removeEventFilter(m_eventFilter);
   }
+
+  if (m_proxy && m_list) {
+    auto* model = m_proxy->sourceModel();
+    m_proxy->setSourceModel(nullptr);
+    delete m_proxy;
+
+    m_list->setModel(model);
+  }
 }
 
 void FilterWidget::createClear()
@@ -125,9 +183,11 @@ void FilterWidget::onTextChanged()
     m_text = text;
     compile();
 
-    if (changed) {
-      changed();
+    if (m_proxy) {
+      m_proxy->invalidateFilter();
     }
+
+    emit changed();
   }
 }
 

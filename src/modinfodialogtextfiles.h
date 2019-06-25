@@ -2,6 +2,7 @@
 #define MODINFODIALOGTEXTFILES_H
 
 #include "modinfodialogtab.h"
+#include "filterwidget.h"
 #include <QSplitter>
 #include <QListView>
 
@@ -23,11 +24,12 @@ protected:
   QListView* m_list;
   TextEditor* m_editor;
   FileListModel* m_model;
+  FilterWidget m_filter;
 
   GenericFilesTab(
     OrganizerCore& oc, PluginContainer& plugin,
     QWidget* parent, Ui::ModInfoDialog* ui, int id,
-    QListView* list, QSplitter* splitter, TextEditor* editor);
+    QListView* list, QSplitter* splitter, TextEditor* editor, QLineEdit* filter);
 
   virtual bool wantsFile(const QString& rootPath, const QString& fullPath) const = 0;
 

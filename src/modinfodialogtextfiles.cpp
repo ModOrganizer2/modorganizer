@@ -100,7 +100,7 @@ private:
 GenericFilesTab::GenericFilesTab(
   OrganizerCore& oc, PluginContainer& plugin,
   QWidget* parent, Ui::ModInfoDialog* ui, int id,
-  QListView* list, QSplitter* sp, TextEditor* e) :
+  QListView* list, QSplitter* sp, TextEditor* e, QLineEdit* filter) :
     ModInfoDialogTab(oc, plugin, parent, ui, id),
     m_list(list), m_editor(e), m_model(new FileListModel)
 {
@@ -110,6 +110,9 @@ GenericFilesTab::GenericFilesTab(
   sp->setSizes({200, 1});
   sp->setStretchFactor(0, 0);
   sp->setStretchFactor(1, 1);
+
+  m_filter.setEdit(filter);
+  m_filter.setList(m_list);
 
   QObject::connect(
     m_list->selectionModel(), &QItemSelectionModel::currentRowChanged,
@@ -187,7 +190,7 @@ void GenericFilesTab::select(const QModelIndex& index)
   }
 
   m_editor->setEnabled(true);
-  m_editor->load(m_model->fullPath(index));
+  m_editor->load(m_model->fullPath(m_filter.map(index)));
 }
 
 
@@ -196,7 +199,8 @@ TextFilesTab::TextFilesTab(
   QWidget* parent, Ui::ModInfoDialog* ui, int id)
     : GenericFilesTab(
         oc, plugin, parent, ui, id,
-        ui->textFileList, ui->tabTextSplitter, ui->textFileEditor)
+        ui->textFileList, ui->tabTextSplitter,
+        ui->textFileEditor, ui->textFileFilter)
 {
 }
 
@@ -218,7 +222,8 @@ IniFilesTab::IniFilesTab(
   QWidget* parent, Ui::ModInfoDialog* ui, int id)
     : GenericFilesTab(
         oc, plugin, parent, ui, id,
-        ui->iniFileList, ui->tabIniSplitter, ui->iniFileEditor)
+        ui->iniFileList, ui->tabIniSplitter,
+        ui->iniFileEditor, ui->iniFileFilter)
 {
 }
 
