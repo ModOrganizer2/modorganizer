@@ -12,7 +12,7 @@ public:
   ESPItem(QString rootPath, QString relativePath)
     : m_rootPath(std::move(rootPath)), m_active(false)
   {
-    if (relativePath.contains('/')) {
+    if (relativePath.contains('/') || relativePath.contains('\\')) {
       m_inactivePath = relativePath;
     } else {
       m_activePath = relativePath;
