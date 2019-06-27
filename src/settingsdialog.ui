@@ -441,7 +441,7 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
        <item>
         <widget class="QLabel" name="label_23">
          <property name="text">
-          <string>Important: All directories have to be writeable!</string>
+          <string>Important: All directories have to be writable!</string>
          </property>
         </widget>
        </item>
@@ -1297,7 +1297,7 @@ programs you are intentionally running.</string>
            <property name="whatsThis">
             <string>
                                     Decides the amount of data printed to &quot;ModOrganizer.log&quot;.
-                                    &quot;Debug&quot; produces very useful information for finding problems. There is usually no noteworthy performance impact but the file may become rather large. If this is a problem you may prefer the &quot;Info&quot; level for regluar use. On the &quot;Error&quot; level the log file usually remains empty.
+                                    &quot;Debug&quot; produces very useful information for finding problems. There is usually no noteworthy performance impact but the file may become rather large. If this is a problem you may prefer the &quot;Info&quot; level for regular use. On the &quot;Error&quot; level the log file usually remains empty.
                                 </string>
            </property>
            <item>

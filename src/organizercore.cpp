@@ -391,7 +391,7 @@ void OrganizerCore::storeSettings()
     if (!shellCopy(iniFile, iniFile + ".new", true, qApp->activeWindow())) {
       QMessageBox::critical(
           qApp->activeWindow(), tr("Failed to write settings"),
-          tr("An error occured trying to update MO settings to %1: %2")
+          tr("An error occurred trying to update MO settings to %1: %2")
               .arg(iniFile, windowsErrorString(::GetLastError())));
       return;
     }
@@ -418,7 +418,7 @@ void OrganizerCore::storeSettings()
                                : tr("Unknown error %1").arg(result);
     QMessageBox::critical(
         qApp->activeWindow(), tr("Failed to write settings"),
-        tr("An error occured trying to write back MO settings to %1: %2")
+        tr("An error occurred trying to write back MO settings to %1: %2")
             .arg(writeTarget, reason));
   }
 }
@@ -1570,7 +1570,7 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
                   tr("MO was denied access to the Steam process.  This normally indicates that "
                      "Steam is being run as administrator while MO is not.  This can cause issues "
                      "launching the game.  It is recommended to not run Steam as administrator unless "
-                     "absolutely neccessary.\n\n"
+                     "absolutely necessary.\n\n"
                      "Restart MO as administrator?"),
                   QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
       if (result == QDialogButtonBox::Yes) {

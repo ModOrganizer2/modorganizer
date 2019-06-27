@@ -1670,13 +1670,13 @@ void ModInfoDialog::delete_activated()
 			}
 			else if (selection->selectedRows().count() == 1) {
 				QString fileName = m_FileSystemModel->fileName(selection->selectedRows().at(0));
-				if (QMessageBox::question(this, tr("Confirm"), tr("Are sure you want to delete \"%1\"?").arg(fileName),
+				if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete \"%1\"?").arg(fileName),
 					QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
 					return;
 				}
 			}
 			else {
-				if (QMessageBox::question(this, tr("Confirm"), tr("Are sure you want to delete the selected files?"),
+				if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete the selected files?"),
 					QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
 					return;
 				}
@@ -1695,12 +1695,12 @@ void ModInfoDialog::deleteTriggered()
     return;
   } else if (m_FileSelection.count() == 1) {
     QString fileName = m_FileSystemModel->fileName(m_FileSelection.at(0));
-    if (QMessageBox::question(this, tr("Confirm"), tr("Are sure you want to delete \"%1\"?").arg(fileName),
+    if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete \"%1\"?").arg(fileName),
                               QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
       return;
     }
   } else {
-    if (QMessageBox::question(this, tr("Confirm"), tr("Are sure you want to delete the selected files?"),
+    if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete the selected files?"),
                               QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
       return;
     }
