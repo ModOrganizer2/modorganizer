@@ -227,6 +227,16 @@ private:
       : path(std::move(path))
     {
     }
+
+    void ensureOriginalLoaded()
+    {
+      if (original.isNull()) {
+        if (!original.load(path)) {
+          qCritical() << "failed to load image from " << path;
+          failed = true;
+        }
+      }
+    }
   };
 
   struct Colors
@@ -258,6 +268,7 @@ private:
     void add(File f);
     void addFiltered(File* f);
 
+    bool empty() const;
     std::size_t size() const;
 
     void switchToAll();
@@ -308,7 +319,7 @@ private:
   void onFilterChanged();
 
   void select(std::size_t i);
-  void moveSelection(int direction);
+  void moveSelection(int by);
   void ensureVisible(std::size_t i);
 
   std::size_t fileIndexAtPos(const QPoint& p) const;

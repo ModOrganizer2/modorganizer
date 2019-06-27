@@ -50,7 +50,6 @@ ImagesTab::ImagesTab(
   ui->imagesThumbnails->setTab(this);
 
   ui->imagesScrollerVBar->setTab(this);
-  ui->imagesScrollerVBar->setSingleStep(1);
   connect(ui->imagesScrollerVBar, &QScrollBar::valueChanged, [&]{ onScrolled(); });
 
   ui->imagesShowDDS->setEnabled(m_ddsAvailable);
@@ -80,6 +79,7 @@ ImagesTab::ImagesTab(
 
 void ImagesTab::clear()
 {
+  m_files.clear();
   ui->imagesScrollerVBar->setValue(0);
   select(BadIndex);
   setHasData(false);
@@ -221,7 +221,12 @@ void ImagesTab::select(std::size_t i)
 {
   m_files.select(i);
 
-  if (const auto* f=m_files.selectedFile()) {
+  if (auto* f=m_files.selectedFile()) {
+    // when jumping elsewhere in the list, such as with page down/up, the file
+    // might not be visible yet, which means it hasn't been loaded and would
+    // pass a null image in setImage() below
+    f->ensureOriginalLoaded();
+
     ui->imagesPath->setText(QDir::toNativeSeparators(f->path));
     ui->imagesExplore->setEnabled(true);
     m_image->setImage(f->original);
@@ -235,29 +240,36 @@ void ImagesTab::select(std::size_t i)
   ui->imagesThumbnails->update();
 }
 
-void ImagesTab::moveSelection(int direction)
+void ImagesTab::moveSelection(int by)
 {
-  const auto i = m_files.selectedIndex();
-
-  if (i == BadIndex) {
-    if (m_files.size() > 0) {
-      select(0);
-    }
-
+  if (m_files.empty()) {
     return;
   }
 
-  if (direction > 0) {
+  auto i = m_files.selectedIndex();
+  if (i == BadIndex) {
+    i = 0;
+  }
+
+  if (by > 0) {
     // moving down
-    if (i < (m_files.size() - 1)) {
-      select(i + 1);
+    i += static_cast<std::size_t>(by);
+
+    if (i >= m_files.size()) {
+      i = (m_files.size() - 1);
     }
-  } else {
+  } else if (by < 0) {
     // moving up
-    if (i > 0) {
-      select(i - 1);
+    const auto abs_by = static_cast<std::size_t>(std::abs(by));
+
+    if (abs_by > i) {
+      i = 0;
+    } else {
+      i -= abs_by;
     }
   }
+
+  select(i);
 }
 
 void ImagesTab::ensureVisible(std::size_t i)
@@ -406,7 +418,10 @@ void ImagesTab::thumbnailAreaMouseEvent(QMouseEvent* e)
     return;
   }
 
-  select(fileIndexAtPos(e->pos()));
+  const auto i = fileIndexAtPos(e->pos());
+  if (i != BadIndex) {
+    select(i);
+  }
 }
 
 void ImagesTab::thumbnailAreaWheelEvent(QWheelEvent* e)
@@ -419,12 +434,39 @@ void ImagesTab::thumbnailAreaWheelEvent(QWheelEvent* e)
 
 bool ImagesTab::thumbnailAreaKeyPressEvent(QKeyEvent* e)
 {
-  if (e->key() == Qt::Key_Down) {
-    moveSelection(+1);
-    return true;
-  } else if (e->key() == Qt::Key_Up) {
-    moveSelection(-1);
-    return true;
+  switch (e->key()) {
+    case Qt::Key_Down: {
+      moveSelection(ui->imagesScrollerVBar->singleStep());
+      return true;
+    }
+
+    case Qt::Key_Up: {
+      moveSelection(-ui->imagesScrollerVBar->singleStep());
+      return true;
+    }
+
+    case Qt::Key_PageDown: {
+      moveSelection(ui->imagesScrollerVBar->pageStep());
+      return true;
+    }
+
+    case Qt::Key_PageUp: {
+      moveSelection(-ui->imagesScrollerVBar->pageStep());
+      return true;
+    }
+
+    case Qt::Key_Home: {
+      select(0);
+      return true;
+    }
+
+    case Qt::Key_End: {
+      if (!m_files.empty()) {
+        select(m_files.size() - 1);
+      }
+
+      return true;
+    }
   }
 
   return false;
@@ -487,13 +529,10 @@ bool ImagesTab::needsReload(const ImagesGeometry& geo, const File& file) const
 void ImagesTab::reload(const ImagesGeometry& geo, File& file)
 {
   file.failed = false;
+  file.ensureOriginalLoaded();
 
-  if (file.original.isNull()) {
-    if (!file.original.load(file.path)) {
-      qCritical() << "failed to load image from " << file.path;
-      file.failed = true;
-      return;
-    }
+  if (file.failed) {
+    return;
   }
 
   file.thumbnail = file.original.scaled(
@@ -519,6 +558,8 @@ void ImagesTab::updateScrollbar()
   } else {
     const auto d = m_files.size() - fullyVisible;
     ui->imagesScrollerVBar->setRange(0, static_cast<int>(d));
+    ui->imagesScrollerVBar->setSingleStep(1);
+    ui->imagesScrollerVBar->setPageStep(static_cast<int>(fullyVisible));
     ui->imagesScrollerVBar->setEnabled(true);
   }
 }
@@ -671,12 +712,12 @@ void ScalableImage::paintEvent(QPaintEvent* e)
 
   QPainter painter(this);
 
-  // background
-  painter.fillRect(drawBorderRect, m_backgroundColor);
-
   // border
   painter.setPen(m_borderColor);
   painter.drawRect(drawBorderRect);
+
+  // background
+  painter.fillRect(drawImageRect, m_backgroundColor);
 
   // image
   painter.drawImage(drawImageRect, m_scaled);
@@ -784,6 +825,7 @@ void ImagesTab::Files::clear()
 {
   m_allFiles.clear();
   m_filteredFiles.clear();
+  m_selection = BadIndex;
   m_filtered = false;
 }
 
@@ -795,6 +837,15 @@ void ImagesTab::Files::add(File f)
 void ImagesTab::Files::addFiltered(File* f)
 {
   m_filteredFiles.push_back(f);
+}
+
+bool ImagesTab::Files::empty() const
+{
+  if (m_filtered) {
+    return m_filteredFiles.empty();
+  } else {
+    return m_allFiles.empty();
+  }
 }
 
 std::size_t ImagesTab::Files::size() const
