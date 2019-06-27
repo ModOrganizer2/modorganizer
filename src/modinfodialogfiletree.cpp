@@ -24,8 +24,9 @@ FileTreeTab::FileTreeTab(
   ui->filetree->setColumnWidth(0, 300);
 
   m_actions.newFolder = new QAction(tr("&New Folder"), ui->filetree);
-  m_actions.open = new QAction(tr("&Open"), ui->filetree);
+  m_actions.open = new QAction(tr("&Open/Execute"), ui->filetree);
   m_actions.preview = new QAction(tr("&Preview"), ui->filetree);
+  m_actions.explore = new QAction(tr("Open in &Explorer"), ui->filetree);
   m_actions.rename = new QAction(tr("&Rename"), ui->filetree);
   m_actions.del = new QAction(tr("&Delete"), ui->filetree);
   m_actions.hide = new QAction(tr("&Hide"), ui->filetree);
@@ -34,6 +35,7 @@ FileTreeTab::FileTreeTab(
   connect(m_actions.newFolder, &QAction::triggered, [&]{ onCreateDirectory(); });
   connect(m_actions.open, &QAction::triggered, [&]{ onOpen(); });
   connect(m_actions.preview, &QAction::triggered, [&]{ onPreview(); });
+  connect(m_actions.explore, &QAction::triggered, [&]{ onExplore(); });
   connect(m_actions.rename, &QAction::triggered, [&]{ onRename(); });
   connect(m_actions.del, &QAction::triggered, [&]{ onDelete(); });
   connect(m_actions.hide, &QAction::triggered, [&]{ onHide(); });
@@ -138,6 +140,17 @@ void FileTreeTab::onPreview()
   }
 
   core().previewFile(parentWidget(), mod()->name(), m_fs->filePath(selection));
+}
+
+void FileTreeTab::onExplore()
+{
+  auto selection = singleSelection();
+
+  if (selection.isValid()) {
+    shell::ExploreFile(m_fs->filePath(selection));
+  } else {
+    shell::ExploreFile(mod()->absolutePath());
+  }
 }
 
 void FileTreeTab::onRename()
@@ -316,103 +329,118 @@ void FileTreeTab::onContextMenu(const QPoint &pos)
 
   QMenu menu(ui->filetree);
 
-  menu.addAction(m_actions.newFolder);
+  bool enableNewFolder = true;
+  bool enableOpen = true;
+  bool enablePreview = true;
+  bool enableExplore = true;
+  bool enableRename = true;
+  bool enableDelete = true;
+  bool enableHide = true;
+  bool enableUnhide = true;
 
-  if (selection.size() > 0) {
-    bool enableOpen = true;
-    bool enablePreview = true;
-    bool enableRename = true;
-    bool enableDelete = true;
-    bool enableHide = true;
-    bool enableUnhide = true;
+  if (selection.size() == 0) {
+    // no selection, only new folder and explore
+    enableOpen = false;
+    enablePreview = false;
+    enableRename = false;
+    enableDelete = false;
+    enableHide = false;
+    enableUnhide = false;
+  } else if (selection.size() == 1) {
+    // single selection
 
-    if (selection.size() == 1) {
-      // single selection
+    // only enable open action if a file is selected
+    bool hasFiles = false;
 
-      // only enable open action if a file is selected
-      bool hasFiles = false;
+    for (auto index : selection) {
+      if (m_fs->fileInfo(index).isFile()) {
+        hasFiles = true;
+        break;
+      }
+    }
 
-      for (auto index : selection) {
-        if (m_fs->fileInfo(index).isFile()) {
-          hasFiles = true;
+    if (!hasFiles) {
+      enableOpen = false;
+      enablePreview = false;
+    }
+
+    const QString fileName = m_fs->fileName(selection[0]);
+
+    if (!canPreviewFile(plugin(), false, fileName)) {
+      enablePreview = false;
+    }
+
+    if (!canExploreFile(false, fileName)) {
+      enableExplore = false;
+    }
+
+    if (!canHideFile(false, fileName)) {
+      enableHide = false;
+    }
+
+    if (!canUnhideFile(false, fileName)) {
+      enableUnhide = false;
+    }
+  } else {
+    // this is a multiple selection, don't show open action so users don't open
+    // a thousand files
+    enableOpen = false;
+    enablePreview = false;
+
+    // can't explore multiple files
+    enableExplore = false;
+
+    // can't rename multiple files
+    enableRename = false;
+
+    if (selection.size() < max_scan_for_context_menu) {
+      // if the number of selected items is low, checking them to accurately
+      // show the menu items is worth it
+      enableHide = false;
+      enableUnhide = false;
+
+      for (const auto& index : selection) {
+        const QString fileName = m_fs->fileName(index);
+
+        if (canHideFile(false, fileName)) {
+          enableHide = true;
+        }
+
+        if (canUnhideFile(false, fileName)) {
+          enableUnhide = true;
+        }
+
+        if (enableHide && enableUnhide) {
+          // found both, no need to check more
           break;
         }
       }
-
-      if (!hasFiles) {
-        enableOpen = false;
-        enablePreview = false;
-      }
-
-      const QString fileName = m_fs->fileName(selection[0]);
-
-      if (!canPreviewFile(plugin(), false, fileName)) {
-        enablePreview = false;
-      }
-
-      if (!canHideFile(false, fileName)) {
-        enableHide = false;
-      }
-
-      if (!canUnhideFile(false, fileName)) {
-        enableUnhide = false;
-      }
-    } else {
-      // this is a multiple selection, don't show open action so users don't open
-      // a thousand files
-      enableOpen = false;
-      enablePreview = false;
-      enableRename = false;
-
-      if (selection.size() < max_scan_for_context_menu) {
-        // if the number of selected items is low, checking them to accurately
-        // show the menu items is worth it
-        enableHide = false;
-        enableUnhide = false;
-
-        for (const auto& index : selection) {
-          const QString fileName = m_fs->fileName(index);
-
-          if (canHideFile(false, fileName)) {
-            enableHide = true;
-          }
-
-          if (canUnhideFile(false, fileName)) {
-            enableUnhide = true;
-          }
-
-          if (enableHide && enableUnhide) {
-            // found both, no need to check more
-            break;
-          }
-        }
-      }
-    }
-
-    if (enableOpen) {
-      menu.addAction(m_actions.open);
-    }
-
-    if (enablePreview) {
-      menu.addAction(m_actions.preview);
-    }
-
-    if (enableRename) {
-      menu.addAction(m_actions.rename);
-    }
-
-    if (enableDelete) {
-      menu.addAction(m_actions.del);
-    }
-
-    if (enableHide) {
-      menu.addAction(m_actions.hide);
-    }
-
-    if (enableUnhide) {
-      menu.addAction(m_actions.unhide);
     }
   }
+
+  menu.addAction(m_actions.newFolder);
+  m_actions.newFolder->setEnabled(enableNewFolder);
+
+  menu.addAction(m_actions.open);
+  m_actions.open->setEnabled(enableOpen);
+
+  menu.addAction(m_actions.preview);
+  m_actions.preview->setEnabled(enablePreview);
+
+  menu.addAction(m_actions.explore);
+  m_actions.explore->setEnabled(enableExplore);
+
+  menu.addAction(m_actions.rename);
+  m_actions.rename->setEnabled(enableRename);
+
+  menu.addAction(m_actions.del);
+  m_actions.del->setEnabled(enableDelete);
+
+  menu.addAction(m_actions.hide);
+  m_actions.hide->setEnabled(enableHide);
+
+  menu.addAction(m_actions.unhide);
+  m_actions.unhide->setEnabled(enableUnhide);
 
   menu.exec(ui->filetree->viewport()->mapToGlobal(pos));
 }

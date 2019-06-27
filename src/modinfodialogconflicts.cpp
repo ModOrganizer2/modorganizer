@@ -7,6 +7,7 @@
 
 using namespace MOShared;
 using namespace MOBase;
+namespace shell = MOBase::shell;
 
 // if there are more than 50 selected items in the conflict tree, don't bother
 // checking whether menu items apply to them, just show all of them
@@ -89,6 +90,11 @@ public:
   bool canPreview(PluginContainer& pluginContainer) const
   {
     return canPreviewFile(pluginContainer, isArchive(), fileName());
+  }
+
+  bool canExplore() const
+  {
+    return canExploreFile(isArchive(), fileName());
   }
 
 private:
@@ -533,6 +539,16 @@ void ConflictsTab::previewItems(QTreeView* tree)
   });
 }
 
+void ConflictsTab::exploreItems(QTreeView* tree)
+{
+  // the menu item is only shown for a single selection, but handle all of them
+  // in case this changes
+  for_each_in_selection(tree, [&](const ConflictItem* item) {
+    shell::ExploreFile(item->fileName());
+    return true;
+  });
+}
+
 void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
 {
   auto actions = createMenuActions(tree);
@@ -555,6 +571,15 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
     });
 
     menu.addAction(actions.preview);
+  }
+
+  // explore
+  if (actions.explore) {
+    connect(actions.explore, &QAction::triggered, [&]{
+      exploreItems(tree);
+    });
+
+    menu.addAction(actions.explore);
   }
 
   // hide
@@ -603,6 +628,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
   bool enableUnhide = true;
   bool enableOpen = true;
   bool enablePreview = true;
+  bool enableExplore = true;
   bool enableGoto = true;
 
   const auto n = smallSelectionSize(tree);
@@ -626,6 +652,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
     enableUnhide = item->canUnhide();
     enableOpen = item->canOpen();
     enablePreview = item->canPreview(plugin());
+    enableExplore = item->canExplore();
     enableGoto = item->hasAlts();
   }
   else {
@@ -633,6 +660,9 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
     // a thousand files
     enableOpen = false;
     enablePreview = false;
+
+    // can't explore multiple files
+    enableExplore = false;
 
     // don't bother with this on multiple selection, at least for now
     enableGoto = false;
@@ -664,21 +694,24 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
 
   Actions actions;
 
-  actions.hide = new QAction(tr("Hide"), parentWidget());
+  actions.hide = new QAction(tr("&Hide"), parentWidget());
   actions.hide->setEnabled(enableHide);
 
   // note that it is possible for hidden files to appear if they override other
   // hidden files from another mod
-  actions.unhide = new QAction(tr("Unhide"), parentWidget());
+  actions.unhide = new QAction(tr("&Unhide"), parentWidget());
   actions.unhide->setEnabled(enableUnhide);
 
-  actions.open = new QAction(tr("Open/Execute"), parentWidget());
+  actions.open = new QAction(tr("&Open/Execute"), parentWidget());
   actions.open->setEnabled(enableOpen);
 
-  actions.preview = new QAction(tr("Preview"), parentWidget());
+  actions.preview = new QAction(tr("&Preview"), parentWidget());
   actions.preview->setEnabled(enablePreview);
 
-  actions.gotoMenu = new QMenu(tr("Go to..."), parentWidget());
+  actions.explore = new QAction(tr("Open in &Explorer"), parentWidget());
+  actions.explore->setEnabled(enableExplore);
+
+  actions.gotoMenu = new QMenu(tr("&Go to..."), parentWidget());
   actions.gotoMenu->setEnabled(enableGoto);
 
   if (enableGoto && n == 1) {

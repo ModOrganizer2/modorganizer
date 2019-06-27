@@ -66,6 +66,12 @@ bool canOpenFile(bool isArchive, const QString&)
   return !isArchive;
 }
 
+bool canExploreFile(bool isArchive, const QString&)
+{
+  // can explore anything as long as it's not in an archive
+  return !isArchive;
+}
+
 bool canHideFile(bool isArchive, const QString& filename)
 {
   if (isArchive) {

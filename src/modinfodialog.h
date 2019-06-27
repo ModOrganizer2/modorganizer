@@ -36,6 +36,7 @@ class MainWindow;
 
 bool canPreviewFile(PluginContainer& pluginContainer, bool isArchive, const QString& filename);
 bool canOpenFile(bool isArchive, const QString& filename);
+bool canExploreFile(bool isArchive, const QString& filename);
 bool canHideFile(bool isArchive, const QString& filename);
 bool canUnhideFile(bool isArchive, const QString& filename);
 

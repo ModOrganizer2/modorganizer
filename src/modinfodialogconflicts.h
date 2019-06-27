@@ -115,6 +115,7 @@ public:
 
   void openItems(QTreeView* tree);
   void previewItems(QTreeView* tree);
+  void exploreItems(QTreeView* tree);
 
   void changeItemsVisibility(QTreeView* tree, bool visible);
 
@@ -127,7 +128,9 @@ private:
     QAction* unhide = nullptr;
     QAction* open = nullptr;
     QAction* preview = nullptr;
+    QAction* explore = nullptr;
     QMenu* gotoMenu = nullptr;
+
     std::vector<QAction*> gotoActions;
   };
 

@@ -20,6 +20,7 @@ private:
     QAction *newFolder = nullptr;
     QAction *open = nullptr;
     QAction *preview = nullptr;
+    QAction *explore = nullptr;
     QAction *rename = nullptr;
     QAction *del = nullptr;
     QAction *hide = nullptr;
@@ -32,6 +33,7 @@ private:
   void onCreateDirectory();
   void onOpen();
   void onPreview();
+  void onExplore();
   void onRename();
   void onDelete();
   void onHide();
