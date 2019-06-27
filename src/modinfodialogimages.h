@@ -54,6 +54,10 @@ protected:
   //
   void resizeEvent(QResizeEvent* e) override;
 
+  // forwards to ImagesTab::thumbnailAreaKeyPressEvent()
+  //
+  void keyPressEvent(QKeyEvent* e) override;
+
   // forwards to ImagesTab::showTooltip for tooltip events
   //
   bool event(QEvent* e) override;
@@ -210,6 +214,9 @@ public:
   void restoreState(const Settings& s) override;
 
 private:
+  static constexpr std::size_t BadIndex =
+    std::numeric_limits<std::size_t>::max();
+
   struct File
   {
     QString path;
@@ -227,25 +234,72 @@ private:
     QColor border, background, selection;
   };
 
+  struct PaintContext
+  {
+    mutable QPainter painter;
+    ImagesGeometry geo;
+    File* file;
+    std::size_t thumbIndex;
+    std::size_t fileIndex;
+
+    PaintContext(QWidget* w, ImagesGeometry geo)
+      : painter(w), geo(geo), file(nullptr), thumbIndex(0), fileIndex(0)
+    {
+    }
+  };
+
+  class Files
+  {
+  public:
+    Files();
+
+    void clear();
+
+    void add(File f);
+    void addFiltered(File* f);
+
+    std::size_t size() const;
+
+    void switchToAll();
+    void switchToFiltered();
+
+    const File* get(std::size_t i) const;
+    File* get(std::size_t i);
+    std::size_t indexOf(const File* f) const;
+
+    const File* selectedFile() const;
+    File* selectedFile();
+    std::size_t selectedIndex() const;
+    void select(std::size_t i);
+
+    std::vector<File>& allFiles();
+
+    bool isFiltered() const;
+
+  private:
+    std::vector<File> m_allFiles;
+    std::vector<File*> m_filteredFiles;
+    std::size_t m_selection;
+    bool m_filtered;
+  };
+
+
   ScalableImage* m_image;
-  std::vector<File> m_files;
-  std::vector<File*> m_filteredFiles;
   std::vector<QString> m_supportedFormats;
+  Files m_files;
   int m_margins, m_border, m_padding, m_spacing;
-  const File* m_selection;
   FilterWidget m_filter;
   bool m_ddsAvailable, m_ddsEnabled;
   Colors m_colors;
 
   void getSupportedFormats();
   void enableDDS(bool b);
-  void select(const File* file);
-  bool needsFiltering() const;
 
   void scrollAreaResized(const QSize& s);
   void paintThumbnailsArea(QPaintEvent* e);
   void thumbnailAreaMouseEvent(QMouseEvent* e);
   void thumbnailAreaWheelEvent(QWheelEvent* e);
+  bool thumbnailAreaKeyPressEvent(QKeyEvent* e);
   void onScrolled();
 
   void showTooltip(QHelpEvent* e);
@@ -253,31 +307,23 @@ private:
   void onShowDDS();
   void onFilterChanged();
 
-  ImagesGeometry makeGeometry() const;
+  void select(std::size_t i);
+  void moveSelection(int direction);
+  void ensureVisible(std::size_t i);
 
-  void paintThumbnail(
-    QPainter& painter, const ImagesGeometry& geo,
-    File& file, std::size_t i);
-
-  void paintThumbnailBackground(
-    QPainter& painter, const ImagesGeometry& geo,
-    File& file, std::size_t i);
-
-  void paintThumbnailBorder(
-    QPainter& painter, const ImagesGeometry& geo,
-    std::size_t i);
-
-  void paintThumbnailImage(
-    QPainter& painter, const ImagesGeometry& geo,
-    File& file, std::size_t i);
-
+  std::size_t fileIndexAtPos(const QPoint& p) const;
   const File* fileAtPos(const QPoint& p) const;
 
-  std::size_t fileCount() const;
-  const File* getFile(std::size_t i) const;
-  File* getFile(std::size_t i);
+  ImagesGeometry makeGeometry() const;
 
-  void filterImages();
+  void paintThumbnail(const PaintContext& cx);
+  void paintThumbnailBackground(const PaintContext& cx);
+  void paintThumbnailBorder(const PaintContext& cx);
+  void paintThumbnailImage(const PaintContext& cx);
+
+  void checkFiltering();
+  void switchToAll();
+  void switchToFiltered();
   bool needsReload(const ImagesGeometry& geo, const File& file) const;
   void reload(const ImagesGeometry& geo, File& file);
   void updateScrollbar();

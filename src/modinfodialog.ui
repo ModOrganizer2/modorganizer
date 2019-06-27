@@ -207,7 +207,11 @@
                <number>0</number>
               </property>
               <item>
-               <widget class="ImagesThumbnails" name="imagesThumbnails" native="true"/>
+               <widget class="ImagesThumbnails" name="imagesThumbnails" native="true">
+                <property name="focusPolicy">
+                 <enum>Qt::StrongFocus</enum>
+                </property>
+               </widget>
               </item>
               <item>
                <widget class="ImagesScrollbar" name="imagesScrollerVBar">

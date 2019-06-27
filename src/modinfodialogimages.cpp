@@ -33,7 +33,7 @@ ImagesTab::ImagesTab(
     ModInfoDialogTab(oc, plugin, parent, ui, id),
     m_image(new ScalableImage),
     m_margins(3), m_border(1), m_padding(0), m_spacing(5),
-    m_selection(nullptr), m_ddsAvailable(false), m_ddsEnabled(false)
+    m_ddsAvailable(false), m_ddsEnabled(false)
 {
   getSupportedFormats();
 
@@ -80,11 +80,8 @@ ImagesTab::ImagesTab(
 
 void ImagesTab::clear()
 {
-  m_files.clear();
-  m_filteredFiles.clear();
   ui->imagesScrollerVBar->setValue(0);
-
-  select(nullptr);
+  select(BadIndex);
   setHasData(false);
 }
 
@@ -92,7 +89,7 @@ bool ImagesTab::feedFile(const QString& rootPath, const QString& fullPath)
 {
   for (const auto& ext : m_supportedFormats) {
     if (fullPath.endsWith(ext, Qt::CaseInsensitive)) {
-      m_files.push_back({fullPath});
+      m_files.add({fullPath});
       return true;
     }
   }
@@ -102,11 +99,11 @@ bool ImagesTab::feedFile(const QString& rootPath, const QString& fullPath)
 
 void ImagesTab::update()
 {
-  filterImages();
+  checkFiltering();
   updateScrollbar();
   ui->imagesThumbnails->update();
 
-  setHasData(fileCount() > 0);
+  setHasData(m_files.size() > 0);
 }
 
 void ImagesTab::saveState(Settings& s)
@@ -121,88 +118,79 @@ void ImagesTab::restoreState(const Settings& s)
     .value("mod_info_dialog_images_show_dds", false).toBool());
 }
 
-void ImagesTab::filterImages()
+void ImagesTab::checkFiltering()
 {
-  if (!needsFiltering()) {
-    return;
+  if (m_filter.empty() && m_ddsEnabled) {
+    // no filtering needed
+
+    if (m_files.isFiltered()) {
+      // was filtered, needs switch
+      switchToAll();
+    }
+  } else {
+    // filtering is needed
+    switchToFiltered();
   }
+}
 
-  m_filteredFiles.clear();
+void ImagesTab::switchToAll()
+{
+  // remember selection
+  const auto* oldSelection = m_files.selectedFile();
 
-  bool hasTextFilter = !m_filter.empty();
-  bool sawSelection = false;
+  // switch
+  m_files.switchToAll();
 
-  for (auto& f : m_files) {
+  // reselect old
+  if (oldSelection) {
+    m_files.select(m_files.indexOf(oldSelection));
+  } else {
+    m_files.select(BadIndex);
+  }
+}
+
+void ImagesTab::switchToFiltered()
+{
+  // remember old selection, will be checked when building the filtered list
+  // below
+  const auto* oldSelection = m_files.selectedFile();
+  std::size_t newSelection = BadIndex;
+
+  // switch, also clears list
+  m_files.switchToFiltered();
+
+  const bool hasTextFilter = !m_filter.empty();
+
+  for (auto& f : m_files.allFiles()) {
     if (hasTextFilter) {
+      // check filter widget
       const auto m = m_filter.matches([&](auto&& what) {
         return f.path.contains(what, Qt::CaseInsensitive);
-      });
+        });
 
       if (!m) {
+        // no match, skip
         continue;
       }
     }
 
     if (!m_ddsEnabled) {
+      // skip .dds files
       if (f.path.endsWith(".dds", Qt::CaseInsensitive)) {
         continue;
       }
     }
 
-    if (&f == m_selection) {
-      sawSelection = true;
+    if (&f == oldSelection) {
+      // found the old selection, remember its index
+      newSelection = m_files.size();
     }
 
-    m_filteredFiles.push_back(&f);
+    m_files.addFiltered(&f);
   }
 
-  if (!sawSelection) {
-    select(nullptr);
-  }
-}
-
-std::size_t ImagesTab::fileCount() const
-{
-  if (needsFiltering()) {
-    return m_filteredFiles.size();
-  } else {
-    return m_files.size();
-  }
-}
-
-const ImagesTab::File* ImagesTab::getFile(std::size_t i) const
-{
-  if (needsFiltering()) {
-    if (i >= m_filteredFiles.size()) {
-      return nullptr;
-    }
-
-    return m_filteredFiles[i];
-  } else {
-    if (i >= m_files.size()) {
-      return nullptr;
-    }
-
-    return &m_files[i];
-  }
-}
-
-ImagesTab::File* ImagesTab::getFile(std::size_t i)
-{
-  return const_cast<File*>(std::as_const(*this).getFile(i));
-}
-
-bool ImagesTab::needsFiltering() const
-{
-  if (!m_filter.empty()) {
-    return true;
-  }
-
-  if (!m_ddsEnabled) {
-    return true;
-  }
-
-  return false;
+  // reselect old, or clear if it wasn't found
+  select(newSelection);
 }
 
 void ImagesTab::getSupportedFormats()
@@ -229,20 +217,99 @@ void ImagesTab::getSupportedFormats()
   }
 }
 
-void ImagesTab::select(const File* f)
+void ImagesTab::select(std::size_t i)
 {
-  if (f) {
+  m_files.select(i);
+
+  if (const auto* f=m_files.selectedFile()) {
     ui->imagesPath->setText(QDir::toNativeSeparators(f->path));
     ui->imagesExplore->setEnabled(true);
     m_image->setImage(f->original);
+    ensureVisible(i);
   } else {
     ui->imagesPath->clear();
     ui->imagesExplore->setEnabled(false);
     m_image->clear();
   }
 
-  m_selection = f;
   ui->imagesThumbnails->update();
+}
+
+void ImagesTab::moveSelection(int direction)
+{
+  const auto i = m_files.selectedIndex();
+
+  if (i == BadIndex) {
+    if (m_files.size() > 0) {
+      select(0);
+    }
+
+    return;
+  }
+
+  if (direction > 0) {
+    // moving down
+    if (i < (m_files.size() - 1)) {
+      select(i + 1);
+    }
+  } else {
+    // moving up
+    if (i > 0) {
+      select(i - 1);
+    }
+  }
+}
+
+void ImagesTab::ensureVisible(std::size_t i)
+{
+  const auto geo = makeGeometry();
+
+  const auto fullyVisible = geo.fullyVisibleCount();
+  const auto first = ui->imagesScrollerVBar->value();
+
+  if (i < first) {
+    // go up
+    ui->imagesScrollerVBar->setValue(static_cast<int>(i));
+  } else if (i >= first + fullyVisible) {
+    // go down
+
+    if (i >= fullyVisible) {
+      ui->imagesScrollerVBar->setValue(static_cast<int>(i - fullyVisible + 1));
+    }
+  }
+}
+
+std::size_t ImagesTab::fileIndexAtPos(const QPoint& p) const
+{
+  const auto geo = makeGeometry();
+
+  // this is the index relative to the top
+  const auto offset = geo.indexAt(p);
+  if (offset == ImagesGeometry::BadIndex) {
+    return BadIndex;
+  }
+
+  const auto first = ui->imagesScrollerVBar->value();
+  if (first < 0) {
+    return BadIndex;
+  }
+
+  const auto i = static_cast<std::size_t>(first) + offset;
+  if (i >= m_files.size()) {
+    return BadIndex;
+  }
+
+  return i;
+}
+
+const ImagesTab::File* ImagesTab::fileAtPos(const QPoint& p) const
+{
+  const auto i = fileIndexAtPos(p);
+  if (i >= m_files.size()) {
+    return nullptr;
+  }
+
+  return m_files.get(i);
 }
 
 ImagesGeometry ImagesTab::makeGeometry() const
@@ -254,105 +321,78 @@ ImagesGeometry ImagesTab::makeGeometry() const
 
 void ImagesTab::paintThumbnailsArea(QPaintEvent* e)
 {
-  const auto geo = makeGeometry();
+  PaintContext cx(ui->imagesThumbnails, makeGeometry());
 
-  QPainter painter(ui->imagesThumbnails);
-
-  painter.fillRect(
+  cx.painter.fillRect(
     ui->imagesThumbnails->rect(),
     ui->imagesThumbnails->palette().color(QPalette::Window));
 
-  const auto visible = geo.fullyVisibleCount() + 1;
+  const auto visible = cx.geo.fullyVisibleCount() + 1;
   const auto first = ui->imagesScrollerVBar->value();
 
   for (std::size_t i=0; i<visible; ++i) {
     const auto fileIndex = first + i;
-    auto* file = getFile(fileIndex);
+    auto* file = m_files.get(fileIndex);
     if (!file) {
       break;
     }
 
-    paintThumbnail(painter, geo, *file, i);
+    cx.file = file;
+    cx.thumbIndex = i;
+    cx.fileIndex = fileIndex;
+
+    paintThumbnail(cx);
   }
 }
 
-void ImagesTab::paintThumbnail(
-  QPainter& painter, const ImagesGeometry& geo,
-  File& file, std::size_t i)
+void ImagesTab::paintThumbnail(const PaintContext& cx)
 {
-  paintThumbnailBackground(painter, geo, file, i);
-  paintThumbnailBorder(painter, geo, i);
-  paintThumbnailImage(painter, geo, file, i);
+  paintThumbnailBackground(cx);
+  paintThumbnailBorder(cx);
+  paintThumbnailImage(cx);
 }
 
-void ImagesTab::paintThumbnailBackground(
-  QPainter& painter, const ImagesGeometry& geo,
-  File& file, std::size_t i)
+void ImagesTab::paintThumbnailBackground(const PaintContext& cx)
 {
-  if (&file == m_selection) {
-    const auto rect = geo.thumbRect(i);
-    painter.fillRect(rect, m_colors.selection);
+  if (m_files.selectedIndex() == cx.fileIndex) {
+    const auto rect = cx.geo.thumbRect(cx.thumbIndex);
+    cx.painter.fillRect(rect, m_colors.selection);
   }
 }
 
-void ImagesTab::paintThumbnailBorder(
-  QPainter& painter, const ImagesGeometry& geo, std::size_t i)
+void ImagesTab::paintThumbnailBorder(const PaintContext& cx)
 {
-  auto borderRect = geo.borderRect(i);
+  auto borderRect = cx.geo.borderRect(cx.thumbIndex);
 
   // rects don't include the bottom right corner, but drawRect() does, so
   // resize it
   borderRect.setRight(borderRect.right() - 1);
   borderRect.setBottom(borderRect.bottom() - 1);
 
-  painter.setPen(m_colors.border);
-  painter.drawRect(borderRect);
+  cx.painter.setPen(m_colors.border);
+  cx.painter.drawRect(borderRect);
 }
 
-void ImagesTab::paintThumbnailImage(
-  QPainter& painter, const ImagesGeometry& geo,
-  File& file, std::size_t i)
+void ImagesTab::paintThumbnailImage(const PaintContext& cx)
 {
-  if (file.failed) {
+  if (cx.file->failed) {
     return;
   }
 
-  if (needsReload(geo, file)) {
-    reload(geo, file);
+  if (needsReload(cx.geo, *cx.file)) {
+    reload(cx.geo, *cx.file);
   }
 
-  if (file.thumbnail.isNull()) {
+  if (cx.file->thumbnail.isNull()) {
     return;
   }
 
-  const auto imageRect = geo.imageRect(i);
-  const auto scaledThumbRect = centeredRect(imageRect, file.thumbnail.size());
+  const auto imageRect = cx.geo.imageRect(cx.thumbIndex);
+  const auto scaledThumbRect = centeredRect(
+    imageRect, cx.file->thumbnail.size());
 
-  painter.fillRect(scaledThumbRect, m_colors.background);
-  painter.drawImage(scaledThumbRect, file.thumbnail);
-}
-
-const ImagesTab::File* ImagesTab::fileAtPos(const QPoint& p) const
-{
-  const auto geo = makeGeometry();
-
-  // this is the index relative to the top
-  const auto offset = geo.indexAt(p);
-  if (offset == ImagesGeometry::BadIndex) {
-    return nullptr;
-  }
-
-  const auto first = ui->imagesScrollerVBar->value();
-  if (first < 0) {
-    return nullptr;
-  }
-
-  const auto i = static_cast<std::size_t>(first) + offset;
-  if (i >= fileCount()) {
-    return nullptr;
-  }
-
-  return getFile(i);
+  cx.painter.fillRect(scaledThumbRect, m_colors.background);
+  cx.painter.drawImage(scaledThumbRect, cx.file->thumbnail);
 }
 
 void ImagesTab::scrollAreaResized(const QSize&)
@@ -366,7 +406,7 @@ void ImagesTab::thumbnailAreaMouseEvent(QMouseEvent* e)
     return;
   }
 
-  select(fileAtPos(e->pos()));
+  select(fileIndexAtPos(e->pos()));
 }
 
 void ImagesTab::thumbnailAreaWheelEvent(QWheelEvent* e)
@@ -375,6 +415,19 @@ void ImagesTab::thumbnailAreaWheelEvent(QWheelEvent* e)
 
   ui->imagesScrollerVBar->setValue(
     ui->imagesScrollerVBar->value() + (d > 0 ? -1 : 1));
+}
+
+bool ImagesTab::thumbnailAreaKeyPressEvent(QKeyEvent* e)
+{
+  if (e->key() == Qt::Key_Down) {
+    moveSelection(+1);
+    return true;
+  } else if (e->key() == Qt::Key_Up) {
+    moveSelection(-1);
+    return true;
+  }
+
+  return false;
 }
 
 void ImagesTab::onScrolled()
@@ -398,11 +451,9 @@ void ImagesTab::showTooltip(QHelpEvent* e)
 
 void ImagesTab::onExplore()
 {
-  if (!m_selection) {
-    return;
+  if (auto* f=m_files.selectedFile()) {
+    MOBase::shell::ExploreFile(f->path);
   }
-
-  MOBase::shell::ExploreFile(m_selection->path);
 }
 
 void ImagesTab::onShowDDS()
@@ -452,7 +503,7 @@ void ImagesTab::reload(const ImagesGeometry& geo, File& file)
 
 void ImagesTab::updateScrollbar()
 {
-  if (fileCount() == 0) {
+  if (m_files.size() == 0) {
     ui->imagesScrollerVBar->setRange(0, 0);
     ui->imagesScrollerVBar->setEnabled(false);
     return;
@@ -462,11 +513,11 @@ void ImagesTab::updateScrollbar()
   const auto availableSize = ui->imagesThumbnails->size();
   const auto fullyVisible = geo.fullyVisibleCount();
 
-  if (fullyVisible >= fileCount()) {
+  if (fullyVisible >= m_files.size()) {
     ui->imagesScrollerVBar->setRange(0, 0);
     ui->imagesScrollerVBar->setEnabled(false);
   } else {
-    const auto d = fileCount() - fullyVisible;
+    const auto d = m_files.size() - fullyVisible;
     ui->imagesScrollerVBar->setRange(0, static_cast<int>(d));
     ui->imagesScrollerVBar->setEnabled(true);
   }
@@ -504,6 +555,17 @@ void ImagesThumbnails::resizeEvent(QResizeEvent* e)
   if (m_tab) {
     m_tab->scrollAreaResized(e->size());
   }
+}
+
+void ImagesThumbnails::keyPressEvent(QKeyEvent* e)
+{
+  if (m_tab) {
+    if (m_tab->thumbnailAreaKeyPressEvent(e)) {
+      return;
+    }
+  }
+
+  QWidget::keyPressEvent(e);
 }
 
 bool ImagesThumbnails::event(QEvent* e)
@@ -710,4 +772,117 @@ void ImagesGeometry::dump() const
     << "  . padding: " << m_padding << "\n"
     << "  . spacing: " << m_spacing << "\n"
     << "  . top rect: " << m_topRect;
+}
+
+
+ImagesTab::Files::Files()
+  : m_selection(BadIndex), m_filtered(false)
+{
+}
+
+void ImagesTab::Files::clear()
+{
+  m_allFiles.clear();
+  m_filteredFiles.clear();
+  m_filtered = false;
+}
+
+void ImagesTab::Files::add(File f)
+{
+  m_allFiles.emplace_back(std::move(f));
+}
+
+void ImagesTab::Files::addFiltered(File* f)
+{
+  m_filteredFiles.push_back(f);
+}
+
+std::size_t ImagesTab::Files::size() const
+{
+  if (m_filtered) {
+    return m_filteredFiles.size();
+  } else {
+    return m_allFiles.size();
+  }
+}
+
+void ImagesTab::Files::switchToAll()
+{
+  m_filtered = false;
+  m_filteredFiles.clear();
+}
+
+void ImagesTab::Files::switchToFiltered()
+{
+  m_filtered = true;
+  m_filteredFiles.clear();
+}
+
+const ImagesTab::File* ImagesTab::Files::get(std::size_t i) const
+{
+  if (m_filtered) {
+    if (i < m_filteredFiles.size()) {
+      return m_filteredFiles[i];
+    }
+  } else {
+    if (i < m_allFiles.size()) {
+      return &m_allFiles[i];
+    }
+  }
+
+  return nullptr;
+}
+
+ImagesTab::File* ImagesTab::Files::get(std::size_t i)
+{
+  return const_cast<File*>(std::as_const(*this).get(i));
+}
+
+std::size_t ImagesTab::Files::indexOf(const File* f) const
+{
+  if (m_filtered) {
+    for (std::size_t i=0; i<m_filteredFiles.size(); ++i) {
+      if (m_filteredFiles[i] == f) {
+        return i;
+      }
+    }
+  } else {
+    for (std::size_t i=0; i<m_allFiles.size(); ++i) {
+      if (&m_allFiles[i] == f) {
+        return i;
+      }
+    }
+  }
+
+  return BadIndex;
+}
+
+const ImagesTab::File* ImagesTab::Files::selectedFile() const
+{
+  return get(m_selection);
+}
+
+ImagesTab::File* ImagesTab::Files::selectedFile()
+{
+  return get(m_selection);
+}
+
+std::size_t ImagesTab::Files::selectedIndex() const
+{
+  return m_selection;
+}
+
+void ImagesTab::Files::select(std::size_t i)
+{
+  m_selection = i;
+}
+
+std::vector<ImagesTab::File>& ImagesTab::Files::allFiles()
+{
+  return m_allFiles;
+}
+
+bool ImagesTab::Files::isFiltered() const
+{
+  return m_filtered;
 }
