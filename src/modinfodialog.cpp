@@ -427,10 +427,14 @@ void ModInfoDialog::saveState(Settings& s) const
     s.directInterface().setValue("mod_info_tab_order", tabState);
   }
 
-  // remove old settings
-  if (s.directInterface().contains("mod_info_tabs")) {
-    s.directInterface().remove("mod_info_tabs");
-  }
+  // remove 2.2.0 settings
+  s.directInterface().remove("mod_info_tabs");
+  s.directInterface().remove("mod_info_conflict_expanders");
+  s.directInterface().remove("mod_info_conflicts");
+  s.directInterface().remove("mod_info_advanced_conflicts");
+  s.directInterface().remove("mod_info_conflicts_overwrite");
+  s.directInterface().remove("mod_info_conflicts_noconflict");
+  s.directInterface().remove("mod_info_conflicts_overwritten");
 
   for (const auto& tabInfo : m_tabs) {
     tabInfo.tab->saveState(s);

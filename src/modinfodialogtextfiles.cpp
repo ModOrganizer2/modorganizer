@@ -1,6 +1,7 @@
 #include "modinfodialogtextfiles.h"
 #include "ui_modinfodialog.h"
 #include "modinfodialog.h"
+#include "settings.h"
 #include <QMessageBox>
 
 class FileListModel : public QAbstractItemModel
@@ -102,14 +103,14 @@ GenericFilesTab::GenericFilesTab(
   QWidget* parent, Ui::ModInfoDialog* ui, int id,
   QListView* list, QSplitter* sp, TextEditor* e, QLineEdit* filter) :
     ModInfoDialogTab(oc, plugin, parent, ui, id),
-    m_list(list), m_editor(e), m_model(new FileListModel)
+    m_list(list), m_editor(e), m_splitter(sp), m_model(new FileListModel)
 {
   m_list->setModel(m_model);
   m_editor->setupToolbar();
 
-  sp->setSizes({200, 1});
-  sp->setStretchFactor(0, 0);
-  sp->setStretchFactor(1, 1);
+  m_splitter->setSizes({200, 1});
+  m_splitter->setStretchFactor(0, 0);
+  m_splitter->setStretchFactor(1, 1);
 
   m_filter.setEdit(filter);
   m_filter.setList(m_list);
@@ -169,6 +170,16 @@ void GenericFilesTab::update()
 {
   m_model->finished();
   setHasData(m_model->rowCount() > 0);
+}
+
+void GenericFilesTab::saveState(Settings& s)
+{
+  saveWidgetState(s.directInterface(), m_splitter);
+}
+
+void GenericFilesTab::restoreState(const Settings& s)
+{
+  restoreWidgetState(s.directInterface(), m_splitter);
 }
 
 void GenericFilesTab::onSelection(

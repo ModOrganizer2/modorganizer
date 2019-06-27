@@ -18,6 +18,8 @@ public:
   void clear() override;
   bool feedFile(const QString& rootPath, const QString& fullPath) override;
   void update();
+  void saveState(Settings& s) override;
+  void restoreState(const Settings& s) override;
 
 private:
   ESPListModel* m_inactiveModel;

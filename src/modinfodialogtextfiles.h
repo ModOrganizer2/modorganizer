@@ -19,10 +19,13 @@ public:
   bool canClose() override;
   bool feedFile(const QString& rootPath, const QString& fullPath) override;
   void update() override;
+  void saveState(Settings& s) override;
+  void restoreState(const Settings& s) override;
 
 protected:
   QListView* m_list;
   TextEditor* m_editor;
+  QSplitter* m_splitter;
   FileListModel* m_model;
   FilterWidget m_filter;
 

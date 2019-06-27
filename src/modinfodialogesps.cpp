@@ -1,6 +1,7 @@
 #include "modinfodialogesps.h"
 #include "ui_modinfodialog.h"
 #include "modinfodialog.h"
+#include "settings.h"
 #include <report.h>
 
 using MOBase::reportError;
@@ -273,6 +274,16 @@ void ESPsTab::update()
   m_activeModel->finished();
 
   setHasData(m_inactiveModel->rowCount() > 0 || m_activeModel->rowCount() > 0);
+}
+
+void ESPsTab::saveState(Settings& s)
+{
+  saveWidgetState(s.directInterface(), ui->ESPsSplitter);
+}
+
+void ESPsTab::restoreState(const Settings& s)
+{
+  restoreWidgetState(s.directInterface(), ui->ESPsSplitter);
 }
 
 void ESPsTab::onActivate()

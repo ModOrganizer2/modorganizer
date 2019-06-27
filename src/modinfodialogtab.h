@@ -67,6 +67,23 @@ protected:
   void emitModOpen(QString name);
   void setHasData(bool b);
 
+  // this needs to be a template because saveState() and restoreState() are
+  // not in QWidget, but they're in various widgets
+  //
+  template <class Widget>
+  void saveWidgetState(QSettings& s, Widget* w)
+  {
+    s.setValue(settingName(w), w->saveState());
+  }
+
+  template <class Widget>
+  void restoreWidgetState(const QSettings& s, Widget* w)
+  {
+    if (s.contains(settingName(w))) {
+      w->restoreState(s.value(settingName(w)).toByteArray());
+    }
+  }
+
 private:
   OrganizerCore& m_core;
   PluginContainer& m_plugin;
@@ -76,6 +93,12 @@ private:
   int m_tabID;
   bool m_hasData;
   bool m_firstActivation;
+
+
+  QString settingName(QWidget* w)
+  {
+    return "geometry/modinfodialog_" + w->objectName();
+  }
 };
 
 
