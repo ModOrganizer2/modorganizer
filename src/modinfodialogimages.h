@@ -83,6 +83,9 @@ public:
   bool hasHeightForWidth() const override;
   int heightForWidth(int w) const override;
 
+  // sets the colors
+  void setColors(const QColor& border, const QColor& background);
+
 protected:
   void paintEvent(QPaintEvent* e) override;
 
@@ -90,6 +93,7 @@ private:
   QString m_path;
   QImage m_original, m_scaled;
   int m_border;
+  QColor m_borderColor, m_backgroundColor;
 };
 
 
@@ -218,6 +222,11 @@ private:
     }
   };
 
+  struct Colors
+  {
+    QColor border, background, selection;
+  };
+
   ScalableImage* m_image;
   std::vector<File> m_files;
   std::vector<File*> m_filteredFiles;
@@ -226,6 +235,7 @@ private:
   const File* m_selection;
   FilterWidget m_filter;
   bool m_ddsAvailable, m_ddsEnabled;
+  Colors m_colors;
 
   void getSupportedFormats();
   void enableDDS(bool b);
@@ -249,6 +259,10 @@ private:
     QPainter& painter, const ImagesGeometry& geo,
     File& file, std::size_t i);
 
+  void paintThumbnailBackground(
+    QPainter& painter, const ImagesGeometry& geo,
+    File& file, std::size_t i);
+
   void paintThumbnailBorder(
     QPainter& painter, const ImagesGeometry& geo,
     std::size_t i);
@@ -266,7 +280,7 @@ private:
   void filterImages();
   bool needsReload(const ImagesGeometry& geo, const File& file) const;
   void reload(const ImagesGeometry& geo, File& file);
-  void resizeWidget();
+  void updateScrollbar();
 };
 
 #endif // MODINFODIALOGIMAGES_H

@@ -65,6 +65,17 @@ ImagesTab::ImagesTab(
 
   ui->imagesThumbnails->setAutoFillBackground(false);
   ui->imagesThumbnails->setAttribute(Qt::WA_OpaquePaintEvent, true);
+
+  {
+    auto list = std::make_unique<QListWidget>();
+    parentWidget()->style()->polish(list.get());
+
+    m_colors.border = QColor(Qt::black);
+    m_colors.background = QColor(Qt::black);
+    m_colors.selection = list->palette().color(QPalette::Highlight);
+
+    m_image->setColors(m_colors.border, m_colors.background);
+  }
 }
 
 void ImagesTab::clear()
@@ -92,7 +103,7 @@ bool ImagesTab::feedFile(const QString& rootPath, const QString& fullPath)
 void ImagesTab::update()
 {
   filterImages();
-  resizeWidget();
+  updateScrollbar();
   ui->imagesThumbnails->update();
 
   setHasData(fileCount() > 0);
@@ -231,6 +242,7 @@ void ImagesTab::select(const File* f)
   }
 
   m_selection = f;
+  ui->imagesThumbnails->update();
 }
 
 ImagesGeometry ImagesTab::makeGeometry() const
@@ -268,8 +280,19 @@ void ImagesTab::paintThumbnail(
   QPainter& painter, const ImagesGeometry& geo,
   File& file, std::size_t i)
 {
+  paintThumbnailBackground(painter, geo, file, i);
   paintThumbnailBorder(painter, geo, i);
   paintThumbnailImage(painter, geo, file, i);
+}
+
+void ImagesTab::paintThumbnailBackground(
+  QPainter& painter, const ImagesGeometry& geo,
+  File& file, std::size_t i)
+{
+  if (&file == m_selection) {
+    const auto rect = geo.thumbRect(i);
+    painter.fillRect(rect, m_colors.selection);
+  }
 }
 
 void ImagesTab::paintThumbnailBorder(
@@ -282,7 +305,7 @@ void ImagesTab::paintThumbnailBorder(
   borderRect.setRight(borderRect.right() - 1);
   borderRect.setBottom(borderRect.bottom() - 1);
 
-  painter.setPen(QColor(Qt::black));
+  painter.setPen(m_colors.border);
   painter.drawRect(borderRect);
 }
 
@@ -305,6 +328,7 @@ void ImagesTab::paintThumbnailImage(
   const auto imageRect = geo.imageRect(i);
   const auto scaledThumbRect = centeredRect(imageRect, file.thumbnail.size());
 
+  painter.fillRect(scaledThumbRect, m_colors.background);
   painter.drawImage(scaledThumbRect, file.thumbnail);
 }
 
@@ -333,7 +357,7 @@ const ImagesTab::File* ImagesTab::fileAtPos(const QPoint& p) const
 
 void ImagesTab::scrollAreaResized(const QSize&)
 {
-  resizeWidget();
+  updateScrollbar();
 }
 
 void ImagesTab::thumbnailAreaMouseEvent(QMouseEvent* e)
@@ -426,7 +450,7 @@ void ImagesTab::reload(const ImagesGeometry& geo, File& file)
     Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 }
 
-void ImagesTab::resizeWidget()
+void ImagesTab::updateScrollbar()
 {
   if (fileCount() == 0) {
     ui->imagesScrollerVBar->setRange(0, 0);
@@ -547,6 +571,12 @@ int ScalableImage::heightForWidth(int w) const
   return w;
 }
 
+void ScalableImage::setColors(const QColor& border, const QColor& background)
+{
+  m_borderColor = border;
+  m_backgroundColor = background;
+}
+
 void ScalableImage::paintEvent(QPaintEvent* e)
 {
   if (m_original.isNull()) {
@@ -578,8 +608,15 @@ void ScalableImage::paintEvent(QPaintEvent* e)
   const QRect drawImageRect = centeredRect(imageRect, m_scaled.size());
 
   QPainter painter(this);
-  painter.setPen(QColor(Qt::black));
+
+  // background
+  painter.fillRect(drawBorderRect, m_backgroundColor);
+
+  // border
+  painter.setPen(m_borderColor);
   painter.drawRect(drawBorderRect);
+
+  // image
   painter.drawImage(drawImageRect, m_scaled);
 }
 
@@ -594,11 +631,14 @@ ImagesGeometry::ImagesGeometry(
 
 QRect ImagesGeometry::calcTopRect() const
 {
-  const auto thumbWidth = m_widgetSize.width() - (m_margins * 2);
-  const auto imageSize = thumbWidth - (m_border * 2) - (m_padding * 2);
-  const auto thumbHeight = m_padding + m_border + imageSize + m_border + m_padding;
+  const auto thumbWidth = m_widgetSize.width();
+  const auto imageSize = thumbWidth - (m_margins * 2) - (m_border * 2) - (m_padding * 2);
+  const auto thumbHeight =
+    m_margins + m_border + m_padding +
+    imageSize +
+    m_border + m_padding + m_margins;
 
-  return {m_margins, m_margins, thumbWidth, thumbHeight};
+  return {0, 0, thumbWidth, thumbHeight};
 }
 
 std::size_t ImagesGeometry::fullyVisibleCount() const
@@ -624,8 +664,9 @@ QRect ImagesGeometry::borderRect(std::size_t i) const
 {
   auto r = thumbRect(i);
 
-  // border rect is currently the same as thumb rect, but may change if
-  // captions are added
+  // remove margins
+  const auto m = m_margins;
+  r.adjust(m, m, -m, -m);
 
   return r;
 }
