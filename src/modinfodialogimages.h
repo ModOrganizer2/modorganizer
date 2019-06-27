@@ -79,6 +79,8 @@ public:
   void clear() override;
   bool feedFile(const QString& rootPath, const QString& fullPath) override;
   void update() override;
+  void saveState(Settings& s) override;
+  void restoreState(const Settings& s) override;
 
 private:
   struct File
@@ -112,15 +114,19 @@ private:
   int m_margins, m_padding, m_border;
   const File* m_selection;
   FilterWidget m_filter;
+  bool m_ddsAvailable, m_ddsEnabled;
 
   void getSupportedFormats();
+  void enableDDS(bool b);
   void select(const File* file);
+  bool needsFiltering() const;
 
   void scrollAreaResized(const QSize& s);
   void paintThumbnails(QPaintEvent* e);
   void thumbnailsMouseEvent(QMouseEvent* e);
   void showTooltip(QHelpEvent* e);
   void onExplore();
+  void onShowDDS();
   void onFilterChanged();
 
   int calcThumbSize(int availableWidth) const;

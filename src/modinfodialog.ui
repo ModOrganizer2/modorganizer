@@ -173,6 +173,9 @@
          </property>
          <widget class="QWidget" name="widget_8" native="true">
           <layout class="QVBoxLayout" name="verticalLayout_2">
+           <property name="spacing">
+            <number>3</number>
+           </property>
            <property name="leftMargin">
             <number>0</number>
            </property>
@@ -200,6 +203,13 @@
                </rect>
               </property>
              </widget>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="imagesShowDDS">
+             <property name="text">
+              <string>Show .dds files</string>
+             </property>
             </widget>
            </item>
            <item>

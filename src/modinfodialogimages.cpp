@@ -1,5 +1,6 @@
 #include "modinfodialogimages.h"
 #include "ui_modinfodialog.h"
+#include "settings.h"
 #include "utility.h"
 
 ImagesTab::ImagesTab(
@@ -7,8 +8,10 @@ ImagesTab::ImagesTab(
   QWidget* parent, Ui::ModInfoDialog* ui, int id) :
     ModInfoDialogTab(oc, plugin, parent, ui, id),
     m_image(new ScalableImage), m_margins(3), m_padding(5), m_border(1),
-    m_selection(nullptr)
+    m_selection(nullptr), m_ddsAvailable(false), m_ddsEnabled(false)
 {
+  getSupportedFormats();
+
   auto* ly = new QVBoxLayout(ui->imagesImage);
   ly->setContentsMargins({0, 0, 0, 0});
   ly->addWidget(m_image);
@@ -23,12 +26,15 @@ ImagesTab::ImagesTab(
   ui->imagesScrollArea->setTab(this);
   ui->imagesThumbnails->setTab(this);
 
+  ui->imagesShowDDS->setEnabled(m_ddsAvailable);
+
   m_filter.setEdit(ui->imagesFilter);
   connect(&m_filter, &FilterWidget::changed, [&]{ onFilterChanged(); });
 
   connect(ui->imagesExplore, &QAbstractButton::clicked, [&]{ onExplore(); });
+  connect(ui->imagesShowDDS, &QCheckBox::toggled, [&]{ onShowDDS(); });
 
-  getSupportedFormats();
+  ui->imagesShowDDS->setEnabled(m_ddsAvailable);
 }
 
 void ImagesTab::clear()
@@ -54,55 +60,88 @@ bool ImagesTab::feedFile(const QString& rootPath, const QString& fullPath)
 
 void ImagesTab::update()
 {
-  setHasData(!m_files.empty());
-
   filterImages();
   resizeWidget();
   ui->imagesThumbnails->update();
+
+  setHasData(fileCount() > 0);
+}
+
+void ImagesTab::saveState(Settings& s)
+{
+  s.directInterface().setValue(
+    "mod_info_dialog_images_show_dds", m_ddsEnabled);
+}
+
+void ImagesTab::restoreState(const Settings& s)
+{
+  ui->imagesShowDDS->setChecked(s.directInterface()
+    .value("mod_info_dialog_images_show_dds", false).toBool());
 }
 
 void ImagesTab::filterImages()
 {
-  m_filteredFiles.clear();
-
-  if (m_filter.empty()) {
+  if (!needsFiltering()) {
     return;
   }
 
-  for (auto& f : m_files) {
-    const auto m = m_filter.matches([&](auto&& what) {
-      return f.path.contains(what, Qt::CaseInsensitive);
-    });
+  m_filteredFiles.clear();
 
-    if (m) {
-      m_filteredFiles.push_back(&f);
+  bool hasTextFilter = !m_filter.empty();
+  bool sawSelection = false;
+
+  for (auto& f : m_files) {
+    if (hasTextFilter) {
+      const auto m = m_filter.matches([&](auto&& what) {
+        return f.path.contains(what, Qt::CaseInsensitive);
+      });
+
+      if (!m) {
+        continue;
+      }
     }
+
+    if (!m_ddsEnabled) {
+      if (f.path.endsWith(".dds", Qt::CaseInsensitive)) {
+        continue;
+      }
+    }
+
+    if (&f == m_selection) {
+      sawSelection = true;
+    }
+
+    m_filteredFiles.push_back(&f);
+  }
+
+  if (!sawSelection) {
+    select(nullptr);
   }
 }
 
 std::size_t ImagesTab::fileCount() const
 {
-  if (m_filter.empty()) {
-    return m_files.size();
-  } else {
+  if (needsFiltering()) {
     return m_filteredFiles.size();
+  } else {
+    return m_files.size();
   }
 }
 
 const ImagesTab::File* ImagesTab::getFile(std::size_t i) const
 {
-  if (m_filter.empty()) {
-    if (i >= m_files.size()) {
-      return nullptr;
-    }
-
-    return &m_files[i];
-  } else {
+  if (needsFiltering()) {
     if (i >= m_filteredFiles.size()) {
       return nullptr;
     }
 
     return m_filteredFiles[i];
+  } else {
+    if (i >= m_files.size()) {
+      return nullptr;
+    }
+
+    return &m_files[i];
   }
 }
 
@@ -111,12 +150,32 @@ ImagesTab::File* ImagesTab::getFile(std::size_t i)
   return const_cast<File*>(std::as_const(*this).getFile(i));
 }
 
+bool ImagesTab::needsFiltering() const
+{
+  if (!m_filter.empty()) {
+    return true;
+  }
+
+  if (!m_ddsEnabled) {
+    return true;
+  }
+
+  return false;
+}
+
 void ImagesTab::getSupportedFormats()
 {
+  m_ddsAvailable = false;
+
   for (const auto& entry : QImageReader::supportedImageFormats()) {
     QString s(entry);
     if (s.isNull() || s.isEmpty()) {
       continue;
+    }
+
+    // used to enable the checkbox
+    if (s.compare("dds", Qt::CaseInsensitive) == 0) {
+      m_ddsAvailable = true;
     }
 
     // make sure it starts with a dot
@@ -335,6 +394,15 @@ void ImagesTab::onExplore()
   }
 
   MOBase::shell::ExploreFile(m_selection->path);
+}
+
+void ImagesTab::onShowDDS()
+{
+  const auto b = ui->imagesShowDDS->isChecked();
+  if (b != m_ddsEnabled) {
+    m_ddsEnabled = b;
+    update();
+  }
 }
 
 void ImagesTab::onFilterChanged()
