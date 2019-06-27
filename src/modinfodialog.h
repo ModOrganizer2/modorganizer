@@ -158,8 +158,10 @@ private:
   void switchToTab(ETabs id);
   void reAddTabs(const std::vector<bool>& visibility, ETabs sel);
   std::vector<QString> getOrderedTabNames() const;
+
   void onOriginModified(std::size_t tabIndex, int originID);
   void onTabChanged();
+  void onTabMoved();
 
   template <class T>
   std::unique_ptr<ModInfoDialogTab> createTab(int index)

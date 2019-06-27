@@ -170,6 +170,7 @@ ModInfoDialog::ModInfoDialog(
   }
 
   connect(ui->tabWidget, &QTabWidget::currentChanged, [&]{ onTabChanged(); });
+  connect(ui->tabWidget->tabBar(), &QTabBar::tabMoved, [&]{ onTabMoved(); });
 }
 
 ModInfoDialog::~ModInfoDialog() = default;
@@ -249,12 +250,14 @@ ModInfoDialog::TabInfo* ModInfoDialog::currentTab()
     return nullptr;
   }
 
-  const auto i = static_cast<std::size_t>(index);
-  if (i >= m_tabs.size()) {
-    return nullptr;
+  for (auto& tabInfo : m_tabs) {
+    if (tabInfo.realPos == index) {
+      return &tabInfo;
+    }
   }
 
-  return &m_tabs[i];
+  qCritical() << "tab index " << index << " not found";
+  return nullptr;
 }
 
 void ModInfoDialog::update(bool firstTime)
@@ -272,6 +275,7 @@ void ModInfoDialog::update(bool firstTime)
   }
 
   if (ui->tabWidget->currentIndex() == oldTab) {
+    // manually fire activated() because the tab index hasn't been changed
     if (auto* tabInfo=currentTab()) {
       tabInfo->tab->activated();
     }
@@ -597,6 +601,34 @@ void ModInfoDialog::onTabChanged()
 
   if (auto* tabInfo=currentTab()) {
     tabInfo->tab->activated();
+  }
+}
+
+void ModInfoDialog::onTabMoved()
+{
+  // reset
+  for (auto& tabInfo : m_tabs) {
+    tabInfo.realPos = -1;
+  }
+
+  // for each tab in the widget
+  for (int i=0; i<ui->tabWidget->count(); ++i) {
+    const auto* w = ui->tabWidget->widget(i);
+
+    bool found = false;
+
+    // find the corresponding tab info
+    for (auto& tabInfo : m_tabs) {
+      if (tabInfo.widget == w) {
+        tabInfo.realPos = i;
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      qCritical() << "unknown tab at index " << i;
+    }
   }
 }
 
