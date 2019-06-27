@@ -174,7 +174,7 @@
          <widget class="QWidget" name="widget_8" native="true">
           <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,0,0">
            <property name="spacing">
-            <number>3</number>
+            <number>6</number>
            </property>
            <property name="leftMargin">
             <number>0</number>
@@ -278,6 +278,13 @@
                <widget class="QLineEdit" name="imagesPath">
                 <property name="readOnly">
                  <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="imagesSize">
+                <property name="text">
+                 <string>0x0</string>
                 </property>
                </widget>
               </item>

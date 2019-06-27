@@ -356,7 +356,7 @@ private:
   void onShowDDS();
   void onFilterChanged();
 
-  void select(std::size_t i);
+  void select(std::size_t i, bool ensureVisible=true);
   void moveSelection(int by);
   void ensureVisible(std::size_t i);
 

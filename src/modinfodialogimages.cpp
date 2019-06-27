@@ -28,6 +28,12 @@ QRect centeredRect(const QRect& rect, const QSize& size)
     size.height());
 }
 
+QString dimensionString(const QSize& s)
+{
+  return QString::fromUtf8("%1 \xc3\x97 %2")
+    .arg(s.width()).arg(s.height());
+}
+
 
 ImagesTab::ImagesTab(
   OrganizerCore& oc, PluginContainer& plugin,
@@ -152,9 +158,9 @@ void ImagesTab::switchToAll()
 
   // reselect old
   if (oldSelection) {
-    m_files.select(m_files.indexOf(oldSelection));
+    select(m_files.indexOf(oldSelection));
   } else {
-    m_files.select(BadIndex);
+    select(BadIndex);
   }
 }
 
@@ -226,7 +232,7 @@ void ImagesTab::getSupportedFormats()
   }
 }
 
-void ImagesTab::select(std::size_t i)
+void ImagesTab::select(std::size_t i, bool ev)
 {
   m_files.select(i);
 
@@ -238,11 +244,17 @@ void ImagesTab::select(std::size_t i)
 
     ui->imagesPath->setText(QDir::toNativeSeparators(f->path()));
     ui->imagesExplore->setEnabled(true);
+    ui->imagesSize->setText(dimensionString(f->original().size()));
+
     m_image->setImage(f->original());
-    ensureVisible(i);
+
+    if (ev) {
+      ensureVisible(i);
+    }
   } else {
     ui->imagesPath->clear();
     ui->imagesExplore->setEnabled(false);
+    ui->imagesSize->clear();
     m_image->clear();
   }
 
@@ -444,7 +456,12 @@ void ImagesTab::thumbnailAreaMouseEvent(QMouseEvent* e)
 
   const auto i = fileIndexAtPos(e->pos());
   if (i != BadIndex) {
-    select(i);
+    // 'false' so the selection is not made visible
+    //
+    // the only way to click on a thumbnail is if it's already visible, so the
+    // only thing that can happen is a click on a partially visible thumbnail,
+    // which would scroll so it is fully visible, and that's just annoying
+    select(i, false);
   }
 }
 
@@ -510,9 +527,11 @@ void ImagesTab::showTooltip(QHelpEvent* e)
     return;
   }
 
-  QToolTip::showText(
-    e->globalPos(), QDir::toNativeSeparators(f->path()),
-    ui->imagesThumbnails);
+  const auto s = QString("%1 (%2)")
+    .arg(QDir::toNativeSeparators(f->path()))
+    .arg(dimensionString(f->original().size()));
+
+  QToolTip::showText(e->globalPos(), s, ui->imagesThumbnails);
 }
 
 void ImagesTab::onExplore()
