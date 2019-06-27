@@ -64,7 +64,6 @@ private:
   void onVersionChanged();
   void onRefreshBrowser();
   void onEndorse();
-  void onUrlChanged();
 };
 
 #endif // MODINFODIALOGNEXUS_H

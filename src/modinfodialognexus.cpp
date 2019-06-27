@@ -24,7 +24,6 @@ NexusTab::NexusTab(
   connect(ui->modID, &QLineEdit::editingFinished, [&]{ onModIDChanged(); });
   connect(ui->version, &QLineEdit::editingFinished, [&]{ onVersionChanged(); });
   connect(ui->openInBrowser, &QToolButton::clicked, [&]{ onOpenLink(); });
-  connect(ui->url, &QLineEdit::editingFinished, [&]{ onUrlChanged(); });
   connect(ui->endorse, &QToolButton::clicked, [&]{ onEndorse(); });
   connect(ui->refresh, &QToolButton::clicked, [&]{ onRefreshBrowser(); });
 
@@ -240,16 +239,6 @@ void NexusTab::onVersionChanged()
   MOBase::VersionInfo version(ui->version->text());
   mod()->setVersion(version);
   updateVersionColor();
-}
-
-void NexusTab::onUrlChanged()
-{
-  if (m_loading) {
-    return;
-  }
-
-  mod()->setURL(ui->url->text());
-  mod()->setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
 }
 
 void NexusTab::onOpenLink()

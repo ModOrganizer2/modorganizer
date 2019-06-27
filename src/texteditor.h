@@ -17,6 +17,7 @@ private:
   QAction* m_save;
   QAction* m_wordWrap;
   QAction* m_explore;
+  QLineEdit* m_path;
 
   void onTextModified(bool b);
   void onWordWrap(bool b);

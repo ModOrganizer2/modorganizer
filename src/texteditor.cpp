@@ -454,8 +454,9 @@ void TextEditorLineNumbers::updateArea(const QRect &rect, int dy)
 }
 
 
-TextEditorToolbar::TextEditorToolbar(TextEditor& editor)
-  : m_editor(editor), m_save(nullptr), m_wordWrap(nullptr), m_explore(nullptr)
+TextEditorToolbar::TextEditorToolbar(TextEditor& editor) :
+  m_editor(editor), m_save(nullptr), m_wordWrap(nullptr), m_explore(nullptr),
+  m_path(nullptr)
 {
   m_save = new QAction(
     QIcon(":/MO/gui/save"), QObject::tr("&Save"), &editor);
@@ -467,10 +468,13 @@ TextEditorToolbar::TextEditorToolbar(TextEditor& editor)
   m_wordWrap = new QAction(
     QIcon(":/MO/gui/word-wrap"), QObject::tr("&Word wrap"), &editor);
 
+  m_wordWrap->setCheckable(true);
+
   m_explore = new QAction(
     QObject::tr("&Open in Explorer"), &editor);
 
-  m_wordWrap->setCheckable(true);
+  m_path = new QLineEdit;
+  m_path->setReadOnly(true);
 
   QObject::connect(m_save, &QAction::triggered, [&]{ m_editor.save(); });
   QObject::connect(m_wordWrap, &QAction::triggered, [&]{ m_editor.toggleWordWrap(); });
@@ -492,6 +496,8 @@ TextEditorToolbar::TextEditorToolbar(TextEditor& editor)
   b->setDefaultAction(m_explore);
   layout->addWidget(b);
 
+  layout->addWidget(m_path);
+
   QObject::connect(&m_editor, &TextEditor::modified, [&](bool b){ onTextModified(b); });
   QObject::connect(&m_editor, &TextEditor::wordWrapChanged, [&](bool b){ onWordWrap(b); });
   QObject::connect(&m_editor, &TextEditor::loaded, [&](QString f){ onLoaded(f); });
@@ -507,12 +513,14 @@ void TextEditorToolbar::onWordWrap(bool b)
   m_wordWrap->setChecked(b);
 }
 
-void TextEditorToolbar::onLoaded(const QString& s)
+void TextEditorToolbar::onLoaded(const QString& path)
 {
-  const auto hasDoc = !s.isEmpty();
+  const auto hasDoc = !path.isEmpty();
 
   m_explore->setEnabled(hasDoc);
   m_wordWrap->setEnabled(hasDoc);
+  m_path->setEnabled(hasDoc);
+  m_path->setText(path);
 }
 
 void HTMLEditor::focusOutEvent(QFocusEvent* e)
