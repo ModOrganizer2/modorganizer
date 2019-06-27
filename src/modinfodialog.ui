@@ -172,7 +172,7 @@
           <bool>false</bool>
          </property>
          <widget class="QWidget" name="widget_8" native="true">
-          <layout class="QVBoxLayout" name="verticalLayout_2">
+          <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,0,0">
            <property name="spacing">
             <number>3</number>
            </property>
@@ -189,20 +189,34 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="ImagesScrollArea" name="imagesScrollArea">
-             <property name="verticalScrollBarPolicy">
-              <enum>Qt::ScrollBarAlwaysOn</enum>
-             </property>
-             <widget class="ImagesThumbnails" name="imagesThumbnails">
-              <property name="geometry">
-               <rect>
-                <x>0</x>
-                <y>0</y>
-                <width>686</width>
-                <height>436</height>
-               </rect>
+            <widget class="QWidget" name="imagesScroller" native="true">
+             <layout class="QHBoxLayout" name="horizontalLayout_4">
+              <property name="spacing">
+               <number>0</number>
               </property>
-             </widget>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="ImagesThumbnails" name="imagesThumbnails" native="true"/>
+              </item>
+              <item>
+               <widget class="ImagesScrollbar" name="imagesScrollerVBar">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </widget>
            </item>
            <item>
@@ -1221,16 +1235,15 @@ p, li { white-space: pre-wrap; }
    <header>texteditor.h</header>
   </customwidget>
   <customwidget>
-   <class>ImagesScrollArea</class>
-   <extends>QScrollArea</extends>
-   <header>modinfodialogimages.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>ImagesThumbnails</class>
    <extends>QWidget</extends>
    <header>modinfodialogimages.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ImagesScrollbar</class>
+   <extends>QScrollBar</extends>
+   <header>modinfodialogimages.h</header>
   </customwidget>
  </customwidgets>
  <resources>

@@ -3,26 +3,32 @@
 
 #include "modinfodialogtab.h"
 #include "filterwidget.h"
-#include <QScrollArea>
+#include <QScrollBar>
 
 class ImagesTab;
 
-class ImagesScrollArea : public QScrollArea
+// vertical scrollbar, this is only to handle wheel events to scroll by one
+// instead of the system's scroll setting
+//
+class ImagesScrollbar : public QScrollBar
 {
-  Q_OBJECT;
-
 public:
-  using QScrollArea::QScrollArea;
+  using QScrollBar::QScrollBar;
   void setTab(ImagesTab* tab);
 
 protected:
-  void resizeEvent(QResizeEvent* e) override;
+  // forwards to ImagesTab::thumbnailAreaWheelEvent()
+  //
+  void wheelEvent(QWheelEvent* event) override;
 
 private:
   ImagesTab* m_tab = nullptr;
 };
 
 
+// widget inside the scroller, calls ImagesTab::paintThumbnailArea() when
+// needed and also forwards mouse clicks and tooltip events
+//
 class ImagesThumbnails : public QWidget
 {
   Q_OBJECT;
@@ -32,8 +38,24 @@ public:
   void setTab(ImagesTab* tab);
 
 protected:
+  // forwards to ImagesTab::paintThumbnailArea()
+  //
   void paintEvent(QPaintEvent* e) override;
+
+  // forwards to ImagesTab::thumbnailAreaMouseEvent()
+  //
   void mousePressEvent(QMouseEvent* e) override;
+
+  // forwards to ImagesTab::thumbnailAreaWheelEvent()
+  //
+  void wheelEvent(QWheelEvent* e);
+
+  // forwards to ImagesTab::scrollAreaResized()
+  //
+  void resizeEvent(QResizeEvent* e) override;
+
+  // forwards to ImagesTab::showTooltip for tooltip events
+  //
   bool event(QEvent* e) override;
 
 private:
@@ -41,6 +63,8 @@ private:
 };
 
 
+// a widget that draws an image scaled to fit while keeping the aspect ratio
+//
 class ScalableImage : public QWidget
 {
   Q_OBJECT;
@@ -48,12 +72,16 @@ class ScalableImage : public QWidget
 public:
   ScalableImage(QString path={});
 
+  // sets the image to draw
   void setImage(const QString& path);
   void setImage(QImage image);
+
+  // removes the image, won't draw the border nor the image
   void clear();
 
-  bool hasHeightForWidth() const;
-  int heightForWidth(int w) const;
+  // tells the QWidget's layout manager this widget is always square
+  bool hasHeightForWidth() const override;
+  int heightForWidth(int w) const override;
 
 protected:
   void paintEvent(QPaintEvent* e) override;
@@ -65,10 +93,105 @@ private:
 };
 
 
+// handles all the geometry calculations by ImagesTab for painting or handling
+// mouse clicks
+//
+// a thumbnail looks like this:
+//
+//   +-----------------------+ <-- thumb rect
+//   |   margins             |
+//   |                       |
+//   |   +-border--------+ <------ border rect
+//   |   | padding       |   |
+//   |   |               |   |
+//   |   |   +-------+ <----------- image rect
+//   |   |   |       |   |   |
+//   |   |   | image |   |   |
+//   |   |   |       |   |   |
+//   |   |   +-------+   |   |
+//   |   |               |   |
+//   |   +---------------+   |
+//   |                       |
+//   +-----------------------+
+//
+//   spacing
+//
+//   +-----------------------+ <-- thumb rect
+//   |   margins             |
+//   |                       |
+//     ....
+//
+//
+class ImagesGeometry
+{
+public:
+  // returned by indexAt() if the point is outside any possible thumbnail
+  static constexpr std::size_t BadIndex =
+    std::numeric_limits<std::size_t>::max();
+
+  ImagesGeometry(
+    const QSize& widgetSize, int margins, int border, int padding, int spacing);
+
+  // returns the number of images fully visible in the widget
+  //
+  std::size_t fullyVisibleCount() const;
+
+  // rectangle around the whole thumbnail
+  //
+  QRect thumbRect(std::size_t i) const;
+
+  // rectangle of the border for the given thumbnail
+  //
+  QRect borderRect(std::size_t i) const;
+
+  // rectangle of the image for the given thumbnail
+  //
+  QRect imageRect(std::size_t i) const;
+
+  // returns the index of the image at the given point; this does not take into
+  // account any scrolling, the image at the top of widget is always 0
+  //
+  std::size_t indexAt(const QPoint& p) const;
+
+  // returns the size of the image that fits in imageRect() while keeping the
+  // same aspect ratio as the given one
+  //
+  QSize scaledImageSize(const QSize& originalSize) const;
+
+  // dumps stuff to qDebug()
+  //
+  void dump() const;
+
+private:
+  // size of the widget containing all the thumbnails
+  const QSize m_widgetSize;
+
+  // space outside the thumbnail border
+  const int m_margins;
+
+  // size of the border
+  const int m_border;
+
+  // space between the border and the image
+  const int m_padding;
+
+  // spacing between thumbnails
+  const int m_spacing;
+
+  // rectangle of the first thumbnail on top
+  const QRect m_topRect;
+
+
+  // calculates the top rectangle
+  //
+  QRect calcTopRect() const;
+};
+
+
 class ImagesTab : public ModInfoDialogTab
 {
   Q_OBJECT;
-  friend class ImagesScrollArea;
+  friend class ImagesScrollbar;
   friend class ImagesThumbnails;
 
 public:
@@ -95,23 +218,11 @@ private:
     }
   };
 
-  struct PaintContext
-  {
-    QPainter painter;
-    int thumbSize;
-    QRect topRect;
-
-    PaintContext(QWidget* w)
-      : painter(w), thumbSize(0)
-    {
-    }
-  };
-
   ScalableImage* m_image;
   std::vector<File> m_files;
   std::vector<File*> m_filteredFiles;
   std::vector<QString> m_supportedFormats;
-  int m_margins, m_padding, m_border;
+  int m_margins, m_border, m_padding, m_spacing;
   const File* m_selection;
   FilterWidget m_filter;
   bool m_ddsAvailable, m_ddsEnabled;
@@ -122,27 +233,29 @@ private:
   bool needsFiltering() const;
 
   void scrollAreaResized(const QSize& s);
-  void paintThumbnails(QPaintEvent* e);
-  void thumbnailsMouseEvent(QMouseEvent* e);
+  void paintThumbnailsArea(QPaintEvent* e);
+  void thumbnailAreaMouseEvent(QMouseEvent* e);
+  void thumbnailAreaWheelEvent(QWheelEvent* e);
+  void onScrolled();
+
   void showTooltip(QHelpEvent* e);
   void onExplore();
   void onShowDDS();
   void onFilterChanged();
 
-  int calcThumbSize(int availableWidth) const;
-  int calcWidgetHeight(int availableWidth) const;
-  QRect calcTopThumbRect(int thumbSize) const;
-  std::pair<std::size_t, std::size_t> calcVisibleRange(
-    int top, int bottom, int thumbSize) const;
+  ImagesGeometry makeGeometry() const;
 
-  QRect calcBorderRect(const QRect& topRect, int thumbSize, std::size_t i) const;
-  QRect calcImageRect(const QRect& topRect, int thumbSize, std::size_t i) const;
-  QSize calcScaledImageSize(
-    const QSize& originalSize, const QSize& imageSize) const;
+  void paintThumbnail(
+    QPainter& painter, const ImagesGeometry& geo,
+    File& file, std::size_t i);
 
-  void paintThumbnail(PaintContext& cx, std::size_t i);
-  void paintThumbnailBorder(PaintContext& cx, std::size_t i);
-  void paintThumbnailImage(PaintContext& cx, std::size_t i);
+  void paintThumbnailBorder(
+    QPainter& painter, const ImagesGeometry& geo,
+    std::size_t i);
+
+  void paintThumbnailImage(
+    QPainter& painter, const ImagesGeometry& geo,
+    File& file, std::size_t i);
 
   const File* fileAtPos(const QPoint& p) const;
 
@@ -151,8 +264,8 @@ private:
   File* getFile(std::size_t i);
 
   void filterImages();
-  bool needsReload(const File& file, const QSize& imageSize) const;
-  void reload(File& file, const QSize& imageSize);
+  bool needsReload(const ImagesGeometry& geo, const File& file) const;
+  void reload(const ImagesGeometry& geo, File& file);
   void resizeWidget();
 };
 
