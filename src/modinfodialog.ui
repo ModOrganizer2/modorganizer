@@ -207,14 +207,14 @@
                <number>0</number>
               </property>
               <item>
-               <widget class="ImagesThumbnails" name="imagesThumbnails" native="true">
+               <widget class="ImagesTabHelpers::ThumbnailsWidget" name="imagesThumbnails" native="true">
                 <property name="focusPolicy">
                  <enum>Qt::StrongFocus</enum>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="ImagesScrollbar" name="imagesScrollerVBar">
+               <widget class="ImagesTabHelpers::Scrollbar" name="imagesScrollerVBar">
                 <property name="orientation">
                  <enum>Qt::Vertical</enum>
                 </property>
@@ -1239,13 +1239,13 @@ p, li { white-space: pre-wrap; }
    <header>texteditor.h</header>
   </customwidget>
   <customwidget>
-   <class>ImagesThumbnails</class>
+   <class>ImagesTabHelpers::ThumbnailsWidget</class>
    <extends>QWidget</extends>
    <header>modinfodialogimages.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>ImagesScrollbar</class>
+   <class>ImagesTabHelpers::Scrollbar</class>
    <extends>QScrollBar</extends>
    <header>modinfodialogimages.h</header>
   </customwidget>

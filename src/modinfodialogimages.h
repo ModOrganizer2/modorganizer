@@ -7,10 +7,15 @@
 
 class ImagesTab;
 
+namespace ImagesTabHelpers
+{
+
+static constexpr std::size_t BadIndex = std::numeric_limits<std::size_t>::max();
+
 // vertical scrollbar, this is only to handle wheel events to scroll by one
 // instead of the system's scroll setting
 //
-class ImagesScrollbar : public QScrollBar
+class Scrollbar : public QScrollBar
 {
 public:
   using QScrollBar::QScrollBar;
@@ -29,7 +34,7 @@ private:
 // widget inside the scroller, calls ImagesTab::paintThumbnailArea() when
 // needed and also forwards mouse clicks and tooltip events
 //
-class ImagesThumbnails : public QWidget
+class ThumbnailsWidget : public QWidget
 {
   Q_OBJECT;
 
@@ -101,15 +106,47 @@ private:
 };
 
 
+struct Theme
+{
+  QColor borderColor, backgroundColor, textColor;
+  QColor highlightBackgroundColor, highlightTextColor;
+  QFont font;
+};
+
+
+struct Metrics
+{
+  // space outside the thumbnail border
+  int margins;
+
+  // size of the border
+  int border;
+
+  // space between the border and the image
+  int padding;
+
+  // spacing between the thumbnail and the text
+  int textSpacing;
+
+  // height of the text
+  int textHeight;
+
+  // spacing between thumbnails
+  int spacing;
+
+  Metrics();
+};
+
+
 // handles all the geometry calculations by ImagesTab for painting or handling
 // mouse clicks
 //
 // a thumbnail looks like this:
 //
-//   +-----------------------+ <-- thumb rect
+//   +-----------------------+ <--- thumb rect
 //   |   margins             |
 //   |                       |
-//   |   +-border--------+ <------ border rect
+//   |   +-border--------+ <------- border rect
 //   |   | padding       |   |
 //   |   |               |   |
 //   |   |   +-------+ <----------- image rect
@@ -118,6 +155,10 @@ private:
 //   |   |   |       |   |   |
 //   |   |   +-------+   |   |
 //   |   |               |   |
+//   |   +---------------+   |
+//   |      text spacing     |
+//   |   +---------------+ <------- text rect
+//   |   |     text      |   |
 //   |   +---------------+   |
 //   |                       |
 //   +-----------------------+
@@ -130,15 +171,10 @@ private:
 //     ....
 //
 //
-class ImagesGeometry
+class Geometry
 {
 public:
-  // returned by indexAt() if the point is outside any possible thumbnail
-  static constexpr std::size_t BadIndex =
-    std::numeric_limits<std::size_t>::max();
-
-  ImagesGeometry(
-    const QSize& widgetSize, int margins, int border, int padding, int spacing);
+  Geometry(QSize widgetSize, Metrics metrics);
 
   // returns the number of images fully visible in the widget
   //
@@ -156,8 +192,19 @@ public:
   //
   QRect imageRect(std::size_t i) const;
 
+  // rectangle of the text for the given thumbnail
+  //
+  QRect textRect(std::size_t i) const;
+
+  // rectangle that responds to selection: includes the border and extends down
+  // to the text
+  //
+  QRect selectionRect(std::size_t i) const;
+
   // returns the index of the image at the given point; this does not take into
   // account any scrolling, the image at the top of widget is always 0
+  //
+  // returns BadIndex if there's no thumbnail at this point
   //
   std::size_t indexAt(const QPoint& p) const;
 
@@ -166,25 +213,12 @@ public:
   //
   QSize scaledImageSize(const QSize& originalSize) const;
 
-  // dumps stuff to qDebug()
-  //
-  void dump() const;
-
 private:
   // size of the widget containing all the thumbnails
   const QSize m_widgetSize;
 
-  // space outside the thumbnail border
-  const int m_margins;
-
-  // size of the border
-  const int m_border;
-
-  // space between the border and the image
-  const int m_padding;
-
-  // spacing between thumbnails
-  const int m_spacing;
+  // metrics
+  const Metrics m_metrics;
 
   // rectangle of the first thumbnail on top
   const QRect m_topRect;
@@ -196,11 +230,88 @@ private:
 };
 
 
+class File
+{
+public:
+  File(QString path);
+
+  void ensureOriginalLoaded();
+
+  const QString& path() const;
+  const QString& filename() const;
+  const QImage& original() const;
+  const QImage& thumbnail() const;
+  bool failed() const;
+
+  void loadIfNeeded(const Geometry& geo);
+
+private:
+  QString m_path;
+  mutable QString m_filename;
+  QImage m_original, m_thumbnail;
+  bool m_failed;
+
+  bool needsLoad(const Geometry& geo) const;
+  void load(const Geometry& geo);
+};
+
+
+class Files
+{
+public:
+  Files();
+
+  void clear();
+
+  void add(File f);
+  void addFiltered(File* f);
+
+  bool empty() const;
+  std::size_t size() const;
+
+  void switchToAll();
+  void switchToFiltered();
+
+  const File* get(std::size_t i) const;
+  File* get(std::size_t i);
+  std::size_t indexOf(const File* f) const;
+
+  const File* selectedFile() const;
+  File* selectedFile();
+  std::size_t selectedIndex() const;
+  void select(std::size_t i);
+
+  std::vector<File>& allFiles();
+
+  bool isFiltered() const;
+
+private:
+  std::vector<File> m_allFiles;
+  std::vector<File*> m_filteredFiles;
+  std::size_t m_selection;
+  bool m_filtered;
+};
+
+
+struct PaintContext
+{
+  mutable QPainter painter;
+  Geometry geo;
+  File* file;
+  std::size_t thumbIndex;
+  std::size_t fileIndex;
+
+  PaintContext(QWidget* w, Geometry geo);
+};
+
+} // namespace
+
+
 class ImagesTab : public ModInfoDialogTab
 {
   Q_OBJECT;
-  friend class ImagesScrollbar;
-  friend class ImagesThumbnails;
+  friend class ImagesTabHelpers::Scrollbar;
+  friend class ImagesTabHelpers::ThumbnailsWidget;
 
 public:
   ImagesTab(
@@ -214,94 +325,21 @@ public:
   void restoreState(const Settings& s) override;
 
 private:
-  static constexpr std::size_t BadIndex =
-    std::numeric_limits<std::size_t>::max();
-
-  struct File
-  {
-    QString path;
-    QImage original, thumbnail;
-    bool failed = false;
-
-    File(QString path)
-      : path(std::move(path))
-    {
-    }
-
-    void ensureOriginalLoaded()
-    {
-      if (original.isNull()) {
-        if (!original.load(path)) {
-          qCritical() << "failed to load image from " << path;
-          failed = true;
-        }
-      }
-    }
-  };
-
-  struct Colors
-  {
-    QColor border, background, selection;
-  };
-
-  struct PaintContext
-  {
-    mutable QPainter painter;
-    ImagesGeometry geo;
-    File* file;
-    std::size_t thumbIndex;
-    std::size_t fileIndex;
-
-    PaintContext(QWidget* w, ImagesGeometry geo)
-      : painter(w), geo(geo), file(nullptr), thumbIndex(0), fileIndex(0)
-    {
-    }
-  };
-
-  class Files
-  {
-  public:
-    Files();
-
-    void clear();
-
-    void add(File f);
-    void addFiltered(File* f);
-
-    bool empty() const;
-    std::size_t size() const;
-
-    void switchToAll();
-    void switchToFiltered();
-
-    const File* get(std::size_t i) const;
-    File* get(std::size_t i);
-    std::size_t indexOf(const File* f) const;
-
-    const File* selectedFile() const;
-    File* selectedFile();
-    std::size_t selectedIndex() const;
-    void select(std::size_t i);
-
-    std::vector<File>& allFiles();
-
-    bool isFiltered() const;
-
-  private:
-    std::vector<File> m_allFiles;
-    std::vector<File*> m_filteredFiles;
-    std::size_t m_selection;
-    bool m_filtered;
-  };
-
+  using ScalableImage = ImagesTabHelpers::ScalableImage;
+  using Files = ImagesTabHelpers::Files;
+  using File = ImagesTabHelpers::File;
+  using Theme = ImagesTabHelpers::Theme;
+  using Metrics = ImagesTabHelpers::Metrics;
+  using PaintContext = ImagesTabHelpers::PaintContext;
+  using Geometry = ImagesTabHelpers::Geometry;
 
   ScalableImage* m_image;
   std::vector<QString> m_supportedFormats;
   Files m_files;
-  int m_margins, m_border, m_padding, m_spacing;
   FilterWidget m_filter;
   bool m_ddsAvailable, m_ddsEnabled;
-  Colors m_colors;
+  Theme m_theme;
+  Metrics m_metrics;
 
   void getSupportedFormats();
   void enableDDS(bool b);
@@ -325,18 +363,17 @@ private:
   std::size_t fileIndexAtPos(const QPoint& p) const;
   const File* fileAtPos(const QPoint& p) const;
 
-  ImagesGeometry makeGeometry() const;
+  Geometry makeGeometry() const;
 
   void paintThumbnail(const PaintContext& cx);
   void paintThumbnailBackground(const PaintContext& cx);
   void paintThumbnailBorder(const PaintContext& cx);
   void paintThumbnailImage(const PaintContext& cx);
+  void paintThumbnailText(const PaintContext& cx);
 
   void checkFiltering();
   void switchToAll();
   void switchToFiltered();
-  bool needsReload(const ImagesGeometry& geo, const File& file) const;
-  void reload(const ImagesGeometry& geo, File& file);
   void updateScrollbar();
 };
 

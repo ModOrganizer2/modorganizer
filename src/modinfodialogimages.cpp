@@ -3,6 +3,8 @@
 #include "settings.h"
 #include "utility.h"
 
+using namespace ImagesTabHelpers;
+
 QSize resizeWithAspectRatio(const QSize& original, const QSize& available)
 {
   const auto ratio = std::min({
@@ -32,7 +34,6 @@ ImagesTab::ImagesTab(
   QWidget* parent, Ui::ModInfoDialog* ui, int id) :
     ModInfoDialogTab(oc, plugin, parent, ui, id),
     m_image(new ScalableImage),
-    m_margins(3), m_border(1), m_padding(0), m_spacing(5),
     m_ddsAvailable(false), m_ddsEnabled(false)
 {
   getSupportedFormats();
@@ -69,11 +70,19 @@ ImagesTab::ImagesTab(
     auto list = std::make_unique<QListWidget>();
     parentWidget()->style()->polish(list.get());
 
-    m_colors.border = QColor(Qt::black);
-    m_colors.background = QColor(Qt::black);
-    m_colors.selection = list->palette().color(QPalette::Highlight);
+    m_theme.borderColor = QColor(Qt::black);
+    m_theme.backgroundColor = QColor(Qt::black);
+    m_theme.textColor = list->palette().color(QPalette::WindowText);
 
-    m_image->setColors(m_colors.border, m_colors.background);
+    m_theme.highlightBackgroundColor = list->palette().color(QPalette::Highlight);
+    m_theme.highlightTextColor = list->palette().color(QPalette::HighlightedText);
+
+    m_theme.font = list->font();
+
+    const QFontMetrics fm(m_theme.font);
+    m_metrics.textHeight = fm.height();
+
+    m_image->setColors(m_theme.borderColor, m_theme.backgroundColor);
   }
 }
 
@@ -165,8 +174,8 @@ void ImagesTab::switchToFiltered()
     if (hasTextFilter) {
       // check filter widget
       const auto m = m_filter.matches([&](auto&& what) {
-        return f.path.contains(what, Qt::CaseInsensitive);
-        });
+        return f.path().contains(what, Qt::CaseInsensitive);
+      });
 
       if (!m) {
         // no match, skip
@@ -176,7 +185,7 @@ void ImagesTab::switchToFiltered()
 
     if (!m_ddsEnabled) {
       // skip .dds files
-      if (f.path.endsWith(".dds", Qt::CaseInsensitive)) {
+      if (f.path().endsWith(".dds", Qt::CaseInsensitive)) {
         continue;
       }
     }
@@ -227,9 +236,9 @@ void ImagesTab::select(std::size_t i)
     // pass a null image in setImage() below
     f->ensureOriginalLoaded();
 
-    ui->imagesPath->setText(QDir::toNativeSeparators(f->path));
+    ui->imagesPath->setText(QDir::toNativeSeparators(f->path()));
     ui->imagesExplore->setEnabled(true);
-    m_image->setImage(f->original);
+    m_image->setImage(f->original());
     ensureVisible(i);
   } else {
     ui->imagesPath->clear();
@@ -297,7 +306,7 @@ std::size_t ImagesTab::fileIndexAtPos(const QPoint& p) const
 
   // this is the index relative to the top
   const auto offset = geo.indexAt(p);
-  if (offset == ImagesGeometry::BadIndex) {
+  if (offset == BadIndex) {
     return BadIndex;
   }
 
@@ -314,7 +323,7 @@ std::size_t ImagesTab::fileIndexAtPos(const QPoint& p) const
   return i;
 }
 
-const ImagesTab::File* ImagesTab::fileAtPos(const QPoint& p) const
+const File* ImagesTab::fileAtPos(const QPoint& p) const
 {
   const auto i = fileIndexAtPos(p);
   if (i >= m_files.size()) {
@@ -324,11 +333,9 @@ const ImagesTab::File* ImagesTab::fileAtPos(const QPoint& p) const
   return m_files.get(i);
 }
 
-ImagesGeometry ImagesTab::makeGeometry() const
+Geometry ImagesTab::makeGeometry() const
 {
-  return ImagesGeometry(
-    ui->imagesThumbnails->size(),
-    m_margins, m_border, m_padding, m_spacing);
+  return Geometry(ui->imagesThumbnails->size(), m_metrics);
 }
 
 void ImagesTab::paintThumbnailsArea(QPaintEvent* e)
@@ -362,13 +369,14 @@ void ImagesTab::paintThumbnail(const PaintContext& cx)
   paintThumbnailBackground(cx);
   paintThumbnailBorder(cx);
   paintThumbnailImage(cx);
+  paintThumbnailText(cx);
 }
 
 void ImagesTab::paintThumbnailBackground(const PaintContext& cx)
 {
   if (m_files.selectedIndex() == cx.fileIndex) {
     const auto rect = cx.geo.thumbRect(cx.thumbIndex);
-    cx.painter.fillRect(rect, m_colors.selection);
+    cx.painter.fillRect(rect, m_theme.highlightBackgroundColor);
   }
 }
 
@@ -381,30 +389,46 @@ void ImagesTab::paintThumbnailBorder(const PaintContext& cx)
   borderRect.setRight(borderRect.right() - 1);
   borderRect.setBottom(borderRect.bottom() - 1);
 
-  cx.painter.setPen(m_colors.border);
+  cx.painter.setPen(m_theme.borderColor);
   cx.painter.drawRect(borderRect);
 }
 
 void ImagesTab::paintThumbnailImage(const PaintContext& cx)
 {
-  if (cx.file->failed) {
+  if (cx.file->failed()) {
     return;
   }
 
-  if (needsReload(cx.geo, *cx.file)) {
-    reload(cx.geo, *cx.file);
-  }
-
-  if (cx.file->thumbnail.isNull()) {
-    return;
-  }
+  cx.file->loadIfNeeded(cx.geo);
 
   const auto imageRect = cx.geo.imageRect(cx.thumbIndex);
   const auto scaledThumbRect = centeredRect(
-    imageRect, cx.file->thumbnail.size());
+    imageRect, cx.file->thumbnail().size());
 
-  cx.painter.fillRect(scaledThumbRect, m_colors.background);
-  cx.painter.drawImage(scaledThumbRect, cx.file->thumbnail);
+  cx.painter.fillRect(scaledThumbRect, m_theme.backgroundColor);
+  cx.painter.drawImage(scaledThumbRect, cx.file->thumbnail());
+}
+
+void ImagesTab::paintThumbnailText(const PaintContext& cx)
+{
+  const auto tr = cx.geo.textRect(cx.thumbIndex);
+
+  if (cx.fileIndex == m_files.selectedIndex()) {
+    cx.painter.setPen(m_theme.highlightTextColor);
+  } else {
+    cx.painter.setPen(m_theme.textColor);
+  }
+
+  cx.painter.setFont(m_theme.font);
+
+  QFontMetrics fm(m_theme.font);
+
+  const auto text = fm.elidedText(
+    cx.file->filename(), Qt::ElideRight, tr.width());
+
+  const auto flags = Qt::AlignHCenter | Qt::AlignVCenter | Qt::TextSingleLine;
+
+  cx.painter.drawText(tr, flags, text);
 }
 
 void ImagesTab::scrollAreaResized(const QSize&)
@@ -487,14 +511,14 @@ void ImagesTab::showTooltip(QHelpEvent* e)
   }
 
   QToolTip::showText(
-    e->globalPos(), QDir::toNativeSeparators(f->path),
+    e->globalPos(), QDir::toNativeSeparators(f->path()),
     ui->imagesThumbnails);
 }
 
 void ImagesTab::onExplore()
 {
   if (auto* f=m_files.selectedFile()) {
-    MOBase::shell::ExploreFile(f->path);
+    MOBase::shell::ExploreFile(f->path());
   }
 }
 
@@ -510,34 +534,6 @@ void ImagesTab::onShowDDS()
 void ImagesTab::onFilterChanged()
 {
   update();
-}
-
-bool ImagesTab::needsReload(const ImagesGeometry& geo, const File& file) const
-{
-  if (file.failed) {
-    return false;
-  }
-
-  if (file.original.isNull() || file.thumbnail.isNull()) {
-    return true;
-  }
-
-  const auto scaledSize = geo.scaledImageSize(file.original.size());
-  return (file.thumbnail.size() != scaledSize);
-}
-
-void ImagesTab::reload(const ImagesGeometry& geo, File& file)
-{
-  file.failed = false;
-  file.ensureOriginalLoaded();
-
-  if (file.failed) {
-    return;
-  }
-
-  file.thumbnail = file.original.scaled(
-    geo.scaledImageSize(file.original.size()),
-    Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 }
 
 void ImagesTab::updateScrollbar()
@@ -565,40 +561,56 @@ void ImagesTab::updateScrollbar()
 }
 
 
-void ImagesThumbnails::setTab(ImagesTab* tab)
+namespace ImagesTabHelpers
+{
+
+void Scrollbar::setTab(ImagesTab* tab)
 {
   m_tab = tab;
 }
 
-void ImagesThumbnails::paintEvent(QPaintEvent* e)
-{
-  if (m_tab) {
-    m_tab->paintThumbnailsArea(e);
-  }
-}
-
-void ImagesThumbnails::mousePressEvent(QMouseEvent* e)
-{
-  if (m_tab) {
-    m_tab->thumbnailAreaMouseEvent(e);
-  }
-}
-
-void ImagesThumbnails::wheelEvent(QWheelEvent* e)
+void Scrollbar::wheelEvent(QWheelEvent* e)
 {
   if (m_tab) {
     m_tab->thumbnailAreaWheelEvent(e);
   }
 }
 
-void ImagesThumbnails::resizeEvent(QResizeEvent* e)
+
+void ThumbnailsWidget::setTab(ImagesTab* tab)
+{
+  m_tab = tab;
+}
+
+void ThumbnailsWidget::paintEvent(QPaintEvent* e)
+{
+  if (m_tab) {
+    m_tab->paintThumbnailsArea(e);
+  }
+}
+
+void ThumbnailsWidget::mousePressEvent(QMouseEvent* e)
+{
+  if (m_tab) {
+    m_tab->thumbnailAreaMouseEvent(e);
+  }
+}
+
+void ThumbnailsWidget::wheelEvent(QWheelEvent* e)
+{
+  if (m_tab) {
+    m_tab->thumbnailAreaWheelEvent(e);
+  }
+}
+
+void ThumbnailsWidget::resizeEvent(QResizeEvent* e)
 {
   if (m_tab) {
     m_tab->scrollAreaResized(e->size());
   }
 }
 
-void ImagesThumbnails::keyPressEvent(QKeyEvent* e)
+void ThumbnailsWidget::keyPressEvent(QKeyEvent* e)
 {
   if (m_tab) {
     if (m_tab->thumbnailAreaKeyPressEvent(e)) {
@@ -609,7 +621,7 @@ void ImagesThumbnails::keyPressEvent(QKeyEvent* e)
   QWidget::keyPressEvent(e);
 }
 
-bool ImagesThumbnails::event(QEvent* e)
+bool ThumbnailsWidget::event(QEvent* e)
 {
   if (e->type() == QEvent::ToolTip) {
     m_tab->showTooltip(static_cast<QHelpEvent*>(e));
@@ -617,19 +629,6 @@ bool ImagesThumbnails::event(QEvent* e)
   }
 
   return QWidget::event(e);
-}
-
-
-void ImagesScrollbar::setTab(ImagesTab* tab)
-{
-  m_tab = tab;
-}
-
-void ImagesScrollbar::wheelEvent(QWheelEvent* e)
-{
-  if (m_tab) {
-    m_tab->thumbnailAreaWheelEvent(e);
-  }
 }
 
 
@@ -724,104 +723,220 @@ void ScalableImage::paintEvent(QPaintEvent* e)
 }
 
 
-ImagesGeometry::ImagesGeometry(
-  const QSize& widgetSize, int margins, int border, int padding, int spacing) :
-    m_widgetSize(widgetSize),
-    m_margins(margins), m_padding(padding), m_border(border),
-    m_spacing(spacing), m_topRect(calcTopRect())
+Metrics::Metrics() :
+  margins(3),
+  border(1),
+  padding(0),
+  spacing(5),
+  textSpacing(2),
+  textHeight(0)
 {
 }
 
-QRect ImagesGeometry::calcTopRect() const
+
+Geometry::Geometry(QSize widgetSize, Metrics metrics)
+  : m_widgetSize(widgetSize), m_metrics(metrics), m_topRect(calcTopRect())
+{
+}
+
+QRect Geometry::calcTopRect() const
 {
   const auto thumbWidth = m_widgetSize.width();
-  const auto imageSize = thumbWidth - (m_margins * 2) - (m_border * 2) - (m_padding * 2);
+  const auto& m = m_metrics;
+
+  const auto imageSize =
+    thumbWidth -
+    (m.margins * 2) -
+    (m.border * 2) -
+    (m.padding * 2);
+
   const auto thumbHeight =
-    m_margins + m_border + m_padding +
+    m.margins +
+    m.border + m.padding +
     imageSize +
-    m_border + m_padding + m_margins;
+    m.padding + m.border +
+    m.textSpacing + m.textHeight +
+    m.margins;
 
   return {0, 0, thumbWidth, thumbHeight};
 }
 
-std::size_t ImagesGeometry::fullyVisibleCount() const
+std::size_t Geometry::fullyVisibleCount() const
 {
   const auto r = thumbRect(0);
-  const auto visible = (m_widgetSize.height() / (r.height() + m_spacing));
+
+  const auto thumbWithSpacing = r.height() + m_metrics.spacing;
+  const auto visible = (m_widgetSize.height() / thumbWithSpacing);
+
   return static_cast<std::size_t>(visible);
 }
 
-QRect ImagesGeometry::thumbRect(std::size_t i) const
+QRect Geometry::thumbRect(std::size_t i) const
 {
   // rect for the top thumbnail
   QRect r = m_topRect;
 
   // move down
-  const auto thumbWithSpacing = m_spacing + r.height();
+  const auto thumbWithSpacing = m_metrics.spacing + r.height();
   r.translate(0, static_cast<int>(i * thumbWithSpacing));
 
   return r;
 }
 
-QRect ImagesGeometry::borderRect(std::size_t i) const
+QRect Geometry::borderRect(std::size_t i) const
 {
   auto r = thumbRect(i);
+  const auto& m = m_metrics;
 
-  // remove margins
-  const auto m = m_margins;
-  r.adjust(m, m, -m, -m);
+  // remove margins and text
+  r.adjust(m.margins, m.margins, -m.margins, -m.margins);
+
+  // remove text
+  r.adjust(0, 0, 0, -(m.textSpacing + m.textHeight));
 
   return r;
 }
 
-QRect ImagesGeometry::imageRect(std::size_t i) const
+QRect Geometry::imageRect(std::size_t i) const
 {
   auto r = borderRect(i);
 
   // remove border and padding
-  const auto m = m_border + m_padding;
+  const auto m = m_metrics.border + m_metrics.padding;
   r.adjust(m, m, -m, -m);
 
   return r;
 }
 
-std::size_t ImagesGeometry::indexAt(const QPoint& p) const
+QRect Geometry::textRect(std::size_t i) const
+{
+  const auto r = borderRect(i);
+
+  return QRect(
+    r.left(),
+    r.bottom() + m_metrics.textSpacing,
+    r.width(),
+    m_metrics.textHeight);
+}
+
+QRect Geometry::selectionRect(std::size_t i) const
+{
+  const auto br = borderRect(i);
+  const auto tr = textRect(i);
+
+  return QRect(
+    br.left(),
+    br.top(),
+    br.width(),
+    tr.bottom() - br.top());
+}
+
+std::size_t Geometry::indexAt(const QPoint& p) const
 {
   // calculate index purely based on y position
-  const std::size_t offset = p.y() / (m_topRect.height() + m_spacing);
+  const std::size_t offset = p.y() / (m_topRect.height() + m_metrics.spacing);
 
-  if (!borderRect(offset).contains(p)) {
+  if (!selectionRect(offset).contains(p)) {
     return BadIndex;
   }
 
   return offset;
 }
 
-QSize ImagesGeometry::scaledImageSize(const QSize& originalSize) const
+QSize Geometry::scaledImageSize(const QSize& originalSize) const
 {
   const auto availableSize = imageRect(0).size();
   return resizeWithAspectRatio(originalSize, availableSize);
 }
 
-void ImagesGeometry::dump() const
+
+File::File(QString path)
+  : m_path(std::move(path)), m_failed(false)
 {
-  qDebug()
-    << "ImagesTab geometry:\n"
-    << "  . widget size: " << m_widgetSize << "\n"
-    << "  . margins: " << m_margins << "\n"
-    << "  . border: " << m_border << "\n"
-    << "  . padding: " << m_padding << "\n"
-    << "  . spacing: " << m_spacing << "\n"
-    << "  . top rect: " << m_topRect;
+}
+
+void File::ensureOriginalLoaded()
+{
+  if (m_original.isNull()) {
+    if (!m_original.load(m_path)) {
+      qCritical() << "failed to load image from " << m_path;
+      m_failed = true;
+    }
+  }
+}
+
+const QString& File::path() const
+{
+  return m_path;
+}
+
+const QString& File::filename() const
+{
+  if (m_filename.isEmpty()) {
+    m_filename = QFileInfo(m_path).fileName();
+  }
+
+  return m_filename;
+}
+
+const QImage& File::original() const
+{
+  return m_original;
+}
+
+const QImage& File::thumbnail() const
+{
+  return m_thumbnail;
+}
+
+bool File::failed() const
+{
+  return m_failed;
+}
+
+void File::loadIfNeeded(const Geometry& geo)
+{
+  if (needsLoad(geo)) {
+    load(geo);
+  }
+}
+
+bool File::needsLoad(const Geometry& geo) const
+{
+  if (m_failed) {
+    return false;
+  }
+
+  if (m_original.isNull() || m_thumbnail.isNull()) {
+    return true;
+  }
+
+  const auto scaledSize = geo.scaledImageSize(m_original.size());
+  return (m_thumbnail.size() != scaledSize);
+}
+
+void File::load(const Geometry& geo)
+{
+  m_failed = false;
+  ensureOriginalLoaded();
+
+  if (m_failed) {
+    return;
+  }
+
+  const auto scaledSize = geo.scaledImageSize(m_original.size());
+
+  m_thumbnail = m_original.scaled(
+    scaledSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 }
 
 
-ImagesTab::Files::Files()
+Files::Files()
   : m_selection(BadIndex), m_filtered(false)
 {
 }
 
-void ImagesTab::Files::clear()
+void Files::clear()
 {
   m_allFiles.clear();
   m_filteredFiles.clear();
@@ -829,17 +944,17 @@ void ImagesTab::Files::clear()
   m_filtered = false;
 }
 
-void ImagesTab::Files::add(File f)
+void Files::add(File f)
 {
   m_allFiles.emplace_back(std::move(f));
 }
 
-void ImagesTab::Files::addFiltered(File* f)
+void Files::addFiltered(File* f)
 {
   m_filteredFiles.push_back(f);
 }
 
-bool ImagesTab::Files::empty() const
+bool Files::empty() const
 {
   if (m_filtered) {
     return m_filteredFiles.empty();
@@ -848,7 +963,7 @@ bool ImagesTab::Files::empty() const
   }
 }
 
-std::size_t ImagesTab::Files::size() const
+std::size_t Files::size() const
 {
   if (m_filtered) {
     return m_filteredFiles.size();
@@ -857,19 +972,19 @@ std::size_t ImagesTab::Files::size() const
   }
 }
 
-void ImagesTab::Files::switchToAll()
+void Files::switchToAll()
 {
   m_filtered = false;
   m_filteredFiles.clear();
 }
 
-void ImagesTab::Files::switchToFiltered()
+void Files::switchToFiltered()
 {
   m_filtered = true;
   m_filteredFiles.clear();
 }
 
-const ImagesTab::File* ImagesTab::Files::get(std::size_t i) const
+const File* Files::get(std::size_t i) const
 {
   if (m_filtered) {
     if (i < m_filteredFiles.size()) {
@@ -884,12 +999,12 @@ const ImagesTab::File* ImagesTab::Files::get(std::size_t i) const
   return nullptr;
 }
 
-ImagesTab::File* ImagesTab::Files::get(std::size_t i)
+File* Files::get(std::size_t i)
 {
   return const_cast<File*>(std::as_const(*this).get(i));
 }
 
-std::size_t ImagesTab::Files::indexOf(const File* f) const
+std::size_t Files::indexOf(const File* f) const
 {
   if (m_filtered) {
     for (std::size_t i=0; i<m_filteredFiles.size(); ++i) {
@@ -908,32 +1023,40 @@ std::size_t ImagesTab::Files::indexOf(const File* f) const
   return BadIndex;
 }
 
-const ImagesTab::File* ImagesTab::Files::selectedFile() const
+const File* Files::selectedFile() const
 {
   return get(m_selection);
 }
 
-ImagesTab::File* ImagesTab::Files::selectedFile()
+File* Files::selectedFile()
 {
   return get(m_selection);
 }
 
-std::size_t ImagesTab::Files::selectedIndex() const
+std::size_t Files::selectedIndex() const
 {
   return m_selection;
 }
 
-void ImagesTab::Files::select(std::size_t i)
+void Files::select(std::size_t i)
 {
   m_selection = i;
 }
 
-std::vector<ImagesTab::File>& ImagesTab::Files::allFiles()
+std::vector<File>& Files::allFiles()
 {
   return m_allFiles;
 }
 
-bool ImagesTab::Files::isFiltered() const
+bool Files::isFiltered() const
 {
   return m_filtered;
 }
+
+
+PaintContext::PaintContext(QWidget* w, Geometry geo)
+  : painter(w), geo(geo), file(nullptr), thumbIndex(0), fileIndex(0)
+{
+}
+
+} // namespace
