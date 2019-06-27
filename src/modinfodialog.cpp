@@ -345,7 +345,9 @@ void ModInfoDialog::updateTabs(bool becauseOriginChanged)
   feedFiles(becauseOriginChanged);
 
   for (auto& tabInfo : m_tabs) {
-    tabInfo.tab->update();
+    if (tabInfo.isVisible()) {
+      tabInfo.tab->update();
+    }
   }
 
   setTabsColors();
