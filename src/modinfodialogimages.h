@@ -325,6 +325,13 @@ public:
   void restoreState(const Settings& s) override;
 
 private:
+  enum class Visibility
+  {
+    Ignore = 0,
+    Full,
+    Partial
+  };
+
   using ScalableImage = ImagesTabHelpers::ScalableImage;
   using Files = ImagesTabHelpers::Files;
   using File = ImagesTabHelpers::File;
@@ -356,9 +363,9 @@ private:
   void onShowDDS();
   void onFilterChanged();
 
-  void select(std::size_t i, bool ensureVisible=true);
+  void select(std::size_t i, Visibility v=Visibility::Full);
   void moveSelection(int by);
-  void ensureVisible(std::size_t i);
+  void ensureVisible(std::size_t i, Visibility v);
 
   std::size_t fileIndexAtPos(const QPoint& p) const;
   const File* fileAtPos(const QPoint& p) const;

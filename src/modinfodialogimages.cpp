@@ -116,6 +116,14 @@ void ImagesTab::update()
 {
   checkFiltering();
   updateScrollbar();
+
+  // visibility needs to be rechecked here because the scrollbar configuration
+  // may have changed in updateScrollbar(), in which case any ensureVisible()
+  // calls in checkFiltering() might have been incorrect
+  if (m_files.selectedIndex() != BadIndex) {
+    ensureVisible(m_files.selectedIndex(), Visibility::Partial);
+  }
+
   ui->imagesThumbnails->update();
 
   setHasData(m_files.size() > 0);
@@ -232,7 +240,7 @@ void ImagesTab::getSupportedFormats()
   }
 }
 
-void ImagesTab::select(std::size_t i, bool ev)
+void ImagesTab::select(std::size_t i, Visibility v)
 {
   m_files.select(i);
 
@@ -247,10 +255,7 @@ void ImagesTab::select(std::size_t i, bool ev)
     ui->imagesSize->setText(dimensionString(f->original().size()));
 
     m_image->setImage(f->original());
-
-    if (ev) {
-      ensureVisible(i);
-    }
+    ensureVisible(i, v);
   } else {
     ui->imagesPath->clear();
     ui->imagesExplore->setEnabled(false);
@@ -293,17 +298,25 @@ void ImagesTab::moveSelection(int by)
   select(i);
 }
 
-void ImagesTab::ensureVisible(std::size_t i)
+void ImagesTab::ensureVisible(std::size_t i, Visibility v)
 {
+  if (v == Visibility::Ignore) {
+    return;
+  }
+
   const auto geo = makeGeometry();
 
   const auto fullyVisible = geo.fullyVisibleCount();
+  const auto partiallyVisible = fullyVisible + 1;
+
   const auto first = ui->imagesScrollerVBar->value();
+  const auto last = (v == Visibility::Full ?
+    first + fullyVisible : first + partiallyVisible);
 
   if (i < first) {
     // go up
     ui->imagesScrollerVBar->setValue(static_cast<int>(i));
-  } else if (i >= first + fullyVisible) {
+  } else if (i >= last) {
     // go down
 
     if (i >= fullyVisible) {
@@ -456,12 +469,10 @@ void ImagesTab::thumbnailAreaMouseEvent(QMouseEvent* e)
 
   const auto i = fileIndexAtPos(e->pos());
   if (i != BadIndex) {
-    // 'false' so the selection is not made visible
-    //
     // the only way to click on a thumbnail is if it's already visible, so the
     // only thing that can happen is a click on a partially visible thumbnail,
     // which would scroll so it is fully visible, and that's just annoying
-    select(i, false);
+    select(i, Visibility::Ignore);
   }
 }
 
@@ -574,7 +585,7 @@ void ImagesTab::updateScrollbar()
     const auto d = m_files.size() - fullyVisible;
     ui->imagesScrollerVBar->setRange(0, static_cast<int>(d));
     ui->imagesScrollerVBar->setSingleStep(1);
-    ui->imagesScrollerVBar->setPageStep(static_cast<int>(fullyVisible));
+    ui->imagesScrollerVBar->setPageStep(static_cast<int>(fullyVisible - 1));
     ui->imagesScrollerVBar->setEnabled(true);
   }
 }
