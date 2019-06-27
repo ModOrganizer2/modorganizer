@@ -427,6 +427,11 @@ void ModInfoDialog::saveState(Settings& s) const
     s.directInterface().setValue("mod_info_tab_order", tabState);
   }
 
+  // remove old settings
+  if (s.directInterface().contains("mod_info_tabs")) {
+    s.directInterface().remove("mod_info_tabs");
+  }
+
   for (const auto& tabInfo : m_tabs) {
     tabInfo.tab->saveState(s);
   }
