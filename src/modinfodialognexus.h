@@ -53,17 +53,24 @@ private:
   void cleanup();
   void updateVersionColor();
   void updateWebpage();
+  void updateTracking();
 
   void refreshData(int modID);
   bool tryRefreshData(int modID);
-
   void onModChanged();
-  void onOpenLink();
+
   void onModIDChanged();
   void onSourceGameChanged();
   void onVersionChanged();
+
   void onRefreshBrowser();
+  void onVisitNexus();
   void onEndorse();
+  void onTrack();
+
+  void onCustomURLToggled();
+  void onCustomURLChanged();
+  void onVisitCustomURL();
 };
 
 #endif // MODINFODIALOGNEXUS_H

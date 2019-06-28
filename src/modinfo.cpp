@@ -520,3 +520,22 @@ void ModInfo::testValid()
     dirIter.next();
   }
 }
+
+QUrl ModInfo::parseCustomURL() const
+{
+  if (!hasCustomURL() || getCustomURL().isEmpty()) {
+    return {};
+  }
+
+  const auto url = QUrl::fromUserInput(getCustomURL());
+
+  if (!url.isValid()) {
+    qCritical()
+      << "mod '" << name() << "' has an invalid custom url "
+      << "'" << getCustomURL() << "'";
+
+    return {};
+  }
+
+  return url;
+}

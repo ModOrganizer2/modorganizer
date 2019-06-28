@@ -7,6 +7,8 @@
 #include <versioninfo.h>
 #include <utility.h>
 
+namespace shell = MOBase::shell;
+
 bool isValidModID(int id)
 {
   return (id > 0);
@@ -22,15 +24,20 @@ NexusTab::NexusTab(
   ui->endorse->setVisible(core().settings().endorsementIntegration());
 
   connect(ui->modID, &QLineEdit::editingFinished, [&]{ onModIDChanged(); });
-  connect(ui->version, &QLineEdit::editingFinished, [&]{ onVersionChanged(); });
-  connect(ui->openInBrowser, &QToolButton::clicked, [&]{ onOpenLink(); });
-  connect(ui->endorse, &QToolButton::clicked, [&]{ onEndorse(); });
-  connect(ui->refresh, &QToolButton::clicked, [&]{ onRefreshBrowser(); });
-
   connect(
     ui->sourceGame,
     static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
     [&]{ onSourceGameChanged(); });
+  connect(ui->version, &QLineEdit::editingFinished, [&]{ onVersionChanged(); });
+
+  connect(ui->refresh, &QPushButton::clicked, [&]{ onRefreshBrowser(); });
+  connect(ui->visitNexus, &QPushButton::clicked, [&]{ onVisitNexus(); });
+  connect(ui->endorse, &QPushButton::clicked, [&]{ onEndorse(); });
+  connect(ui->track, &QPushButton::clicked, [&]{ onTrack(); });
+
+  connect(ui->hasCustomURL, &QCheckBox::toggled, [&]{ onCustomURLToggled(); });
+  connect(ui->customURL, &QLineEdit::editingFinished, [&]{ onCustomURLChanged(); });
+  connect(ui->visitCustomURL, &QPushButton::clicked, [&]{ onVisitCustomURL(); });
 }
 
 NexusTab::~NexusTab()
@@ -52,7 +59,8 @@ void NexusTab::clear()
   ui->sourceGame->clear();
   ui->version->clear();
   ui->browser->setPage(new NexusTabWebpage(ui->browser));
-  ui->url->clear();
+  ui->hasCustomURL->setChecked(false);
+  ui->customURL->clear();
   setHasData(false);
 }
 
@@ -89,7 +97,7 @@ void NexusTab::update()
 
   connect(
     page, &NexusTabWebpage::linkClicked,
-    [&](const QUrl& url){ MOBase::shell::OpenLink(url); });
+    [&](const QUrl& url){ shell::OpenLink(url); });
 
   ui->endorse->setEnabled(
     (mod()->endorsedState() == ModInfo::ENDORSED_FALSE) ||
@@ -138,15 +146,52 @@ void NexusTab::updateWebpage()
     const QString nexusLink = NexusInterface::instance(&plugin())
       ->getModURL(modID, mod()->getGameName());
 
-    ui->openInBrowser->setToolTip(nexusLink);
-    mod()->setURL(nexusLink);
+    ui->visitNexus->setToolTip(nexusLink);
     refreshData(modID);
   } else {
     onModChanged();
   }
 
   ui->version->setText(mod()->getVersion().displayString());
-  ui->url->setText(mod()->getURL());
+  ui->hasCustomURL->setChecked(mod()->hasCustomURL());
+  ui->customURL->setText(mod()->getCustomURL());
+  ui->customURL->setEnabled(mod()->hasCustomURL());
+  ui->visitCustomURL->setEnabled(mod()->hasCustomURL());
+  ui->visitCustomURL->setToolTip(mod()->parseCustomURL().toString());
+
+  updateTracking();
+}
+
+void NexusTab::updateTracking()
+{
+  if (mod()->trackedState() == ModInfo::TRACKED_TRUE) {
+    ui->track->setChecked(true);
+    ui->track->setText(tr("Tracked"));
+  } else {
+    ui->track->setChecked(false);
+    ui->track->setText(tr("Untracked"));
+  }
+}
+
+void NexusTab::refreshData(int modID)
+{
+  if (tryRefreshData(modID)) {
+    m_requestStarted = true;
+  } else {
+    onModChanged();
+  }
+}
+
+bool NexusTab::tryRefreshData(int modID)
+{
+  if (isValidModID(modID) && !m_requestStarted) {
+    if (mod()->updateNXMInfo()) {
+      ui->browser->setHtml("");
+      return true;
+    }
+  }
+
+  return false;
 }
 
 void NexusTab::onModChanged()
@@ -165,6 +210,9 @@ void NexusTab::onModChanged()
       font-size: 14px;
       background: #404040;
       color: #f1f1f1;
+      max-width: 1060px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     a
@@ -178,12 +226,11 @@ void NexusTab::onModChanged()
 </html>)";
 
   if (nexusDescription.isEmpty()) {
-    descriptionAsHTML = descriptionAsHTML.arg(tr(
-      "<div style=\"text-align: center;\">"
-      "<h1>Uh oh!</h1>"
-      "<p>Sorry, there is no description available for this mod. :(</p>"
-      "</div>"));
-
+    descriptionAsHTML = descriptionAsHTML.arg(tr(R"(
+      <div style="text-align: center;">
+      <p>This mod does not have a valid Nexus ID. You can add a custom web
+      page for it in the "Custom URL" box below.</p>
+      </div>)"));
   } else {
     descriptionAsHTML = descriptionAsHTML.arg(
       BBCode::convertToHTML(nexusDescription));
@@ -191,6 +238,7 @@ void NexusTab::onModChanged()
 
   ui->browser->page()->setHtml(descriptionAsHTML);
   updateVersionColor();
+  updateTracking();
 }
 
 void NexusTab::onModIDChanged()
@@ -241,18 +289,6 @@ void NexusTab::onVersionChanged()
   updateVersionColor();
 }
 
-void NexusTab::onOpenLink()
-{
-  const int modID = mod()->getNexusID();
-
-  if (isValidModID(modID)) {
-    const QString nexusLink = NexusInterface::instance(&plugin())
-     ->getModURL(modID, mod()->getGameName());
-
-    MOBase::shell::OpenLink(QUrl(nexusLink));
-  }
-}
-
 void NexusTab::onRefreshBrowser()
 {
   const auto modID = mod()->getNexusID();
@@ -265,28 +301,59 @@ void NexusTab::onRefreshBrowser()
   }
 }
 
+void NexusTab::onVisitNexus()
+{
+  const int modID = mod()->getNexusID();
+
+  if (isValidModID(modID)) {
+    const QString nexusLink = NexusInterface::instance(&plugin())
+      ->getModURL(modID, mod()->getGameName());
+
+    shell::OpenLink(QUrl(nexusLink));
+  }
+}
+
 void NexusTab::onEndorse()
 {
   core().loggedInAction(parentWidget(), [m=mod()]{ m->endorse(true); });
 }
 
-void NexusTab::refreshData(int modID)
+void NexusTab::onTrack()
 {
-  if (tryRefreshData(modID)) {
-    m_requestStarted = true;
-  } else {
-    onModChanged();
-  }
+  core().loggedInAction(parentWidget(), [m=mod()] {
+    if (m->trackedState() == ModInfo::TRACKED_TRUE) {
+      m->track(false);
+    } else {
+      m->track(true);
+    }
+  });
 }
 
-bool NexusTab::tryRefreshData(int modID)
+void NexusTab::onCustomURLToggled()
 {
-  if (isValidModID(modID) && !m_requestStarted) {
-    if (mod()->updateNXMInfo()) {
-      ui->browser->setHtml("");
-      return true;
-    }
+  if (m_loading) {
+    return;
   }
 
-  return false;
+  mod()->setHasCustomURL(ui->hasCustomURL->isChecked());
+  ui->customURL->setEnabled(mod()->hasCustomURL());
+  ui->visitCustomURL->setEnabled(mod()->hasCustomURL());
+}
+
+void NexusTab::onCustomURLChanged()
+{
+  if (m_loading) {
+    return;
+  }
+
+  mod()->setCustomURL(ui->customURL->text());
+  ui->visitCustomURL->setToolTip(mod()->parseCustomURL().toString());
+}
+
+void NexusTab::onVisitCustomURL()
+{
+  const auto url = mod()->parseCustomURL();
+  if (url.isValid()) {
+    shell::OpenLink(url);
+  }
 }

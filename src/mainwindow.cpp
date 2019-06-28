@@ -3429,18 +3429,16 @@ void MainWindow::visitOnNexus_clicked()
     int row_idx;
     ModInfo::Ptr info;
     QString gameName;
-    QString webUrl;
+
     for (QModelIndex idx : selection->selectedRows()) {
       row_idx = idx.data(Qt::UserRole + 1).toInt();
       info = ModInfo::getByIndex(row_idx);
       int modID = info->getNexusID();
-      webUrl = info->getURL();
       gameName = info->getGameName();
       if (modID > 0)  {
         linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
-      }
-      else if (webUrl != "") {
-        linkClicked(webUrl);
+      } else {
+        qCritical() << "mod '" << info->name() << "' has no nexus id";
       }
     }
   }
@@ -3450,14 +3448,13 @@ void MainWindow::visitOnNexus_clicked()
     if (modID > 0)  {
       linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
     } else {
-      MessageDialog::showMessage(tr("Nexus ID for this Mod is unknown"), this);
+      MessageDialog::showMessage(tr("Nexus ID for this mod is unknown"), this);
     }
   }
 }
 
 void MainWindow::visitWebPage_clicked()
 {
-
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     int count = selection->selectedRows().count();
@@ -3471,28 +3468,22 @@ void MainWindow::visitWebPage_clicked()
     int row_idx;
     ModInfo::Ptr info;
     QString gameName;
-    QString webUrl;
     for (QModelIndex idx : selection->selectedRows()) {
       row_idx = idx.data(Qt::UserRole + 1).toInt();
       info = ModInfo::getByIndex(row_idx);
-      int modID = info->getNexusID();
-      webUrl = info->getURL();
-      gameName = info->getGameName();
-      if (modID > 0) {
-        linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
-      }
-      else if (webUrl != "") {
-        linkClicked(webUrl);
+
+      const auto url = info->parseCustomURL();
+      if (url.isValid()) {
+        linkClicked(url.toString());
       }
     }
   }
   else {
     ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-    if (info->getURL() != "") {
-      linkClicked(info->getURL());
-    }
-    else {
-      MessageDialog::showMessage(tr("Web page for this mod is unknown"), this);
+
+    const auto url = info->parseCustomURL();
+    if (url.isValid()) {
+      linkClicked(url.toString());
     }
   }
 }
@@ -4711,7 +4702,7 @@ void MainWindow::exportModListCSV()
 			builder.writeHeader();
 
       auto indexesByPriority = m_OrganizerCore.currentProfile()->getAllIndexesByPriority();
-      for (auto& iter : indexesByPriority) {        
+      for (auto& iter : indexesByPriority) {
 				ModInfo::Ptr info = ModInfo::getByIndex(iter.second);
 				bool enabled = m_OrganizerCore.currentProfile()->modEnabled(iter.second);
 				if ((selectedRowID == 1) && !enabled) {
@@ -4991,8 +4982,13 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
         if (info->getNexusID() > 0)  {
           menu.addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
-        } else if ((info->getURL() != "")) {
-          menu.addAction(tr("Visit web page"), this, SLOT(visitWebPage_clicked()));
+        }
+
+        const auto url = info->parseCustomURL();
+        if (url.isValid()) {
+          menu.addAction(
+            tr("Visit on %1").arg(url.host()),
+            this, SLOT(visitWebPage_clicked()));
         }
 
         menu.addAction(tr("Open in Explorer"), this, SLOT(openExplorer_clicked()));
