@@ -55,6 +55,8 @@ public:
     explicit Module(QString path, std::size_t fileSize);
 
     const QString& path() const;
+    QString displayPath() const;
+
     std::size_t fileSize() const;
     const QString& version() const;
     const QString& versionString() const;
@@ -74,11 +76,13 @@ public:
     QString m_version;
     QDateTime m_timestamp;
     QString m_versionString;
+    QString m_md5;
 
     FileInfo getFileInfo() const;
 
     QString getVersion(const VS_FIXEDFILEINFO& fi) const;
     QDateTime getTimestamp(const VS_FIXEDFILEINFO& fi) const;
+    QString getMD5() const;
 
     VS_FIXEDFILEINFO getFixedFileInfo(std::byte* buffer) const;
     QString getFileDescription(std::byte* buffer) const;

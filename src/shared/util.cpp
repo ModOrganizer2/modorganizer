@@ -287,7 +287,7 @@ void Environment::getLoadedModules()
   {
     const auto e = GetLastError();
 
-    qCritical().nospace()
+    qCritical().nospace().noquote()
       << "CreateToolhelp32Snapshot() failed, "
       << formatSystemMessage(e);
 
@@ -304,7 +304,7 @@ void Environment::getLoadedModules()
   {
     const auto e = GetLastError();
 
-    qCritical().nospace()
+    qCritical().nospace().noquote()
       << "Module32First() failed, " << formatSystemMessage(e);
 
     return;
@@ -324,12 +324,17 @@ void Environment::getLoadedModules()
       const auto e = GetLastError();
 
       if (e != ERROR_NO_MORE_FILES) {
-        qCritical() << "Module32Next() failed, " << formatSystemMessage(e);
+        qCritical().nospace().noquote()
+          << "Module32Next() failed, " << formatSystemMessage(e);
       }
 
       break;
     }
   }
+
+  std::sort(m_modules.begin(), m_modules.end(), [](auto&& a, auto&& b) {
+    return (a.displayPath().compare(b.displayPath(), Qt::CaseInsensitive) < 0);
+  });
 }
 
 
@@ -341,11 +346,17 @@ Environment::Module::Module(QString path, std::size_t fileSize)
   m_version = getVersion(fi.ffi);
   m_timestamp = getTimestamp(fi.ffi);
   m_versionString = fi.fileDescription;
+  m_md5 = getMD5();
 }
 
 const QString& Environment::Module::path() const
 {
   return m_path;
+}
+
+QString Environment::Module::displayPath() const
+{
+  return QDir::fromNativeSeparators(m_path.toLower());
 }
 
 std::size_t Environment::Module::fileSize() const
@@ -376,7 +387,7 @@ QString Environment::Module::toString() const
 {
   QStringList sl;
 
-  sl.push_back(m_path);
+  sl.push_back(displayPath());
   sl.push_back(QString("%1 B").arg(m_fileSize));
 
   if (m_version.isEmpty() && m_versionString.isEmpty()) {
@@ -395,6 +406,10 @@ QString Environment::Module::toString() const
     sl.push_back(m_timestamp.toString(Qt::DateFormat::ISODate));
   } else {
     sl.push_back("(no timestamp)");
+  }
+
+  if (!m_md5.isEmpty()) {
+    sl.push_back(m_md5);
   }
 
   return sl.join(", ");
@@ -543,7 +558,7 @@ QDateTime Environment::Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
     if (h.get() == INVALID_HANDLE_VALUE) {
       const auto e = GetLastError();
 
-      qCritical()
+      qCritical().nospace().noquote()
         << "can't open file '" << m_path << "' for timestamp, "
         << formatSystemMessage(e);
 
@@ -552,7 +567,7 @@ QDateTime Environment::Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
 
     if (!GetFileTime(h.get(), &ft, nullptr, nullptr)) {
       const auto e = GetLastError();
-      qCritical()
+      qCritical().nospace().noquote()
         << "can't get file time for '" << m_path << "', "
         << formatSystemMessage(e);
 
@@ -566,7 +581,7 @@ QDateTime Environment::Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
 
   SYSTEMTIME utc = {};
   if (!FileTimeToSystemTime(&ft, &utc)) {
-    qCritical()
+    qCritical().nospace().noquote()
       << "FileTimeToSystemTime() failed on timestamp "
       << "high=0x" << hex << ft.dwHighDateTime << " "
       << "low=0x" << hex << ft.dwLowDateTime << " for "
@@ -578,6 +593,34 @@ QDateTime Environment::Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
   return QDateTime(
     QDate(utc.wYear, utc.wMonth, utc.wDay),
     QTime(utc.wHour, utc.wMinute, utc.wSecond, utc.wMilliseconds));
+}
+
+QString Environment::Module::getMD5() const
+{
+  if (m_path.contains("\\windows\\", Qt::CaseInsensitive)) {
+    // don't calculate md5 for system files, it's not really relevant and
+    // it takes a while
+    return {};
+  }
+
+  QFile f(m_path);
+
+  if (!f.open(QFile::ReadOnly)) {
+    qCritical().nospace().noquote()
+      << "failed to open file '" << m_path << "' for md5";
+
+    return {};
+  }
+
+  QCryptographicHash hash(QCryptographicHash::Md5);
+  if (!hash.addData(&f)) {
+    qCritical().nospace().noquote()
+      << "failed to calculate md5 for '" << m_path << "'";
+
+    return {};
+  }
+
+  return hash.result().toHex();
 }
 
 } // namespace MOShared
