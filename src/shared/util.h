@@ -46,8 +46,54 @@ std::wstring ToLower(const std::wstring &text);
 
 bool CaseInsensitiveEqual(const std::wstring &lhs, const std::wstring &rhs);
 
-VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName);
-std::wstring GetFileVersionString(const std::wstring &fileName);
+class Environment
+{
+public:
+  class Module
+  {
+  public:
+    explicit Module(QString path, std::size_t fileSize);
+
+    const QString& path() const;
+    std::size_t fileSize() const;
+    const QString& version() const;
+    const QString& versionString() const;
+    QString timestampString() const;
+
+    QString toString() const;
+
+  private:
+    struct FileInfo
+    {
+      VS_FIXEDFILEINFO ffi;
+      QString fileDescription;
+    };
+
+    QString m_path;
+    std::size_t m_fileSize;
+    QString m_version;
+    QDateTime m_timestamp;
+    QString m_versionString;
+
+    FileInfo getFileInfo() const;
+
+    QString getVersion(const VS_FIXEDFILEINFO& fi) const;
+    QDateTime getTimestamp(const VS_FIXEDFILEINFO& fi) const;
+
+    VS_FIXEDFILEINFO getFixedFileInfo(std::byte* buffer) const;
+    QString getFileDescription(std::byte* buffer) const;
+  };
+
+  Environment();
+
+  const std::vector<Module>& loadedModules();
+
+private:
+  std::vector<Module> m_modules;
+
+  void getLoadedModules();
+};
+
 MOBase::VersionInfo createVersionInfo();
 
 } // namespace MOShared

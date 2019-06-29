@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "util.h"
 #include "windows_error.h"
 #include "error_report.h"
+#include <utility.h>
 
 #include <sstream>
 #include <locale>
@@ -28,6 +29,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <set>
 #include <boost/scoped_array.hpp>
 #include <QApplication>
+
+using MOBase::formatSystemMessage;
 
 namespace MOShared {
 
@@ -252,5 +255,329 @@ MOBase::VersionInfo createVersionInfo()
   }
 }
 
+
+struct HandleCloser
+{
+  using pointer = HANDLE;
+  void operator()(HANDLE h)
+  {
+    if (h != INVALID_HANDLE_VALUE) {
+      ::CloseHandle(h);
+    }
+  }
+};
+
+
+Environment::Environment()
+{
+  getLoadedModules();
+}
+
+const std::vector<Environment::Module>& Environment::loadedModules()
+{
+  return m_modules;
+}
+
+void Environment::getLoadedModules()
+{
+  std::unique_ptr<HANDLE, HandleCloser> snapshot(CreateToolhelp32Snapshot(
+    TH32CS_SNAPMODULE32 | TH32CS_SNAPMODULE, GetCurrentProcessId()));
+
+  if (snapshot.get() == INVALID_HANDLE_VALUE)
+  {
+    const auto e = GetLastError();
+
+    qCritical().nospace()
+      << "CreateToolhelp32Snapshot() failed, "
+      << formatSystemMessage(e);
+
+    return;
+  }
+
+  //  Set the size of the structure before using it.
+  MODULEENTRY32 me = {};
+  me.dwSize = sizeof(me);
+
+  //  Retrieve information about the first module,
+  //  and exit if unsuccessful
+  if (!Module32First(snapshot.get(), &me))
+  {
+    const auto e = GetLastError();
+
+    qCritical().nospace()
+      << "Module32First() failed, " << formatSystemMessage(e);
+
+    return;
+  }
+
+  //  Now walk the module list of the process,
+  //  and display information about each module
+  qInfo() << "modules loaded in process:";
+
+  for (;;)
+  {
+    const auto path = QString::fromWCharArray(me.szExePath);
+
+    m_modules.push_back(Module(path, me.modBaseSize));
+
+    if (!Module32Next(snapshot.get(), &me)) {
+      const auto e = GetLastError();
+
+      if (e != ERROR_NO_MORE_FILES) {
+        qCritical() << "Module32Next() failed, " << formatSystemMessage(e);
+      }
+
+      break;
+    }
+  }
+}
+
+
+Environment::Module::Module(QString path, std::size_t fileSize)
+  : m_path(std::move(path)), m_fileSize(fileSize)
+{
+  const auto fi = getFileInfo();
+
+  m_version = getVersion(fi.ffi);
+  m_timestamp = getTimestamp(fi.ffi);
+  m_versionString = fi.fileDescription;
+}
+
+const QString& Environment::Module::path() const
+{
+  return m_path;
+}
+
+std::size_t Environment::Module::fileSize() const
+{
+  return m_fileSize;
+}
+
+const QString& Environment::Module::version() const
+{
+  return m_version;
+}
+
+const QString& Environment::Module::versionString() const
+{
+  return m_versionString;
+}
+
+QString Environment::Module::timestampString() const
+{
+  if (!m_timestamp.isValid()) {
+    return "(no timestamp)";
+  }
+
+  return m_timestamp.toString(Qt::DateFormat::ISODate);
+}
+
+QString Environment::Module::toString() const
+{
+  QStringList sl;
+
+  sl.push_back(m_path);
+  sl.push_back(QString("%1 B").arg(m_fileSize));
+
+  if (m_version.isEmpty() && m_versionString.isEmpty()) {
+    sl.push_back("(no version)");
+  } else {
+    if (!m_version.isEmpty()) {
+      sl.push_back(m_version);
+    }
+
+    if (m_versionString != m_version) {
+      sl.push_back(versionString());
+    }
+  }
+
+  if (m_timestamp.isValid()) {
+    sl.push_back(m_timestamp.toString(Qt::DateFormat::ISODate));
+  } else {
+    sl.push_back("(no timestamp)");
+  }
+
+  return sl.join(", ");
+}
+
+Environment::Module::FileInfo Environment::Module::getFileInfo() const
+{
+  const auto wspath = m_path.toStdWString();
+
+  DWORD dummy = 0;
+  const DWORD size = GetFileVersionInfoSizeW(wspath.c_str(), &dummy);
+
+  if (size == 0) {
+    const auto e = GetLastError();
+
+    if (e == ERROR_RESOURCE_TYPE_NOT_FOUND) {
+      // not an error, no version information built into that module
+      return {};
+    }
+
+    qCritical().nospace().noquote()
+      << "GetFileVersionInfoSizeW() failed on '" << m_path << "', "
+      << formatSystemMessage(e);
+
+    return {};
+  }
+
+  auto buffer = std::make_unique<std::byte[]>(size);
+
+  if (!GetFileVersionInfoW(wspath.c_str(), 0, size, buffer.get())) {
+    const auto e = GetLastError();
+
+    qCritical().nospace().noquote()
+      << "GetFileVersionInfoW() failed on '" << m_path << "', "
+      << formatSystemMessage(e);
+
+    return {};
+  }
+
+
+  FileInfo fi;
+  fi.ffi = getFixedFileInfo(buffer.get());
+  fi.fileDescription = getFileDescription(buffer.get());
+
+  return fi;
+}
+
+VS_FIXEDFILEINFO Environment::Module::getFixedFileInfo(std::byte* buffer) const
+{
+  void* valuePointer = nullptr;
+  unsigned int valueSize = 0;
+
+  const auto ret = VerQueryValueW(buffer, L"\\", &valuePointer, &valueSize);
+
+  if (!ret || !valuePointer || valueSize == 0) {
+    // not an error, no fixed file info
+    return {};
+  }
+
+  const auto* fi = reinterpret_cast<VS_FIXEDFILEINFO*>(valuePointer);
+
+  if (fi->dwSignature != 0xfeef04bd) {
+    qCritical().nospace().noquote()
+      << "bad file info signature 0x" << hex << fi->dwSignature << " for "
+      << "'" << m_path << "'";
+
+    return {};
+  }
+
+  return *fi;
+}
+
+QString Environment::Module::getFileDescription(std::byte* buffer) const
+{
+  struct LANGANDCODEPAGE
+  {
+    WORD wLanguage;
+    WORD wCodePage;
+  };
+
+  void* valuePointer = nullptr;
+  unsigned int valueSize = 0;
+
+  auto ret = VerQueryValueW(
+    buffer, L"\\VarFileInfo\\Translation", &valuePointer, &valueSize);
+
+  if (!ret || !valuePointer || valueSize == 0) {
+    qCritical().nospace().noquote()
+      << "VerQueryValueW() for translations failed on '" << m_path << "'";
+
+    return {};
+  }
+
+  const auto count = valueSize / sizeof(LANGANDCODEPAGE);
+  if (count == 0) {
+    return {};
+  }
+
+  const auto* lcp = reinterpret_cast<LANGANDCODEPAGE*>(valuePointer);
+
+  const auto subBlock = QString("\\StringFileInfo\\%1%2\\FileVersion")
+    .arg(lcp->wLanguage, 4, 16, QChar('0'))
+    .arg(lcp->wCodePage, 4, 16, QChar('0'));
+
+  ret = VerQueryValueW(
+    buffer, subBlock.toStdWString().c_str(), &valuePointer, &valueSize);
+
+  if (!ret || !valuePointer || valueSize == 0) {
+    // not an error, no file version
+    return {};
+  }
+
+  // valueSize includes the null terminator
+  return QString::fromWCharArray(
+    reinterpret_cast<wchar_t*>(valuePointer), valueSize - 1);
+}
+
+QString Environment::Module::getVersion(const VS_FIXEDFILEINFO& fi) const
+{
+  if (fi.dwSignature == 0) {
+    return {};
+  }
+
+  const DWORD major = (fi.dwFileVersionMS >> 16 ) & 0xffff;
+  const DWORD minor = (fi.dwFileVersionMS >>  0 ) & 0xffff;
+  const DWORD maintenance = (fi.dwFileVersionLS >> 16 ) & 0xffff;
+  const DWORD build = (fi.dwFileVersionLS >>  0 ) & 0xffff;
+
+  if (major == 0 && minor == 0 && maintenance == 0 && build == 0) {
+    return {};
+  }
+
+  return QString("%1.%2.%3.%4")
+    .arg(major).arg(minor).arg(maintenance).arg(build);
+}
+
+QDateTime Environment::Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
+{
+  FILETIME ft = {};
+
+  if (fi.dwSignature == 0 || (fi.dwFileDateMS == 0 && fi.dwFileDateLS == 0)) {
+    std::unique_ptr<HANDLE, HandleCloser> h(CreateFileW(
+      m_path.toStdWString().c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
+      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0));
+
+    if (h.get() == INVALID_HANDLE_VALUE) {
+      const auto e = GetLastError();
+
+      qCritical()
+        << "can't open file '" << m_path << "' for timestamp, "
+        << formatSystemMessage(e);
+
+      return {};
+    }
+
+    if (!GetFileTime(h.get(), &ft, nullptr, nullptr)) {
+      const auto e = GetLastError();
+      qCritical()
+        << "can't get file time for '" << m_path << "', "
+        << formatSystemMessage(e);
+
+      return {};
+    }
+  } else {
+    ft.dwHighDateTime = fi.dwFileDateMS;
+    ft.dwLowDateTime = fi.dwFileDateLS;
+  }
+
+
+  SYSTEMTIME utc = {};
+  if (!FileTimeToSystemTime(&ft, &utc)) {
+    qCritical()
+      << "FileTimeToSystemTime() failed on timestamp "
+      << "high=0x" << hex << ft.dwHighDateTime << " "
+      << "low=0x" << hex << ft.dwLowDateTime << " for "
+      << "'" << m_path << "'";
+
+    return {};
+  }
+
+  return QDateTime(
+    QDate(utc.wYear, utc.wMonth, utc.wDay),
+    QTime(utc.wHour, utc.wMinute, utc.wSecond, utc.wMilliseconds));
+}
 
 } // namespace MOShared
