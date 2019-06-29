@@ -653,6 +653,18 @@ WindowsVersion::WindowsVersion() :
   getElevated();
 }
 
+bool WindowsVersion::compatibilityMode() const
+{
+  if (m_realMajor == 0 && m_realMinor == 0 && m_realBuild == 0) {
+    return false;
+  }
+
+  return
+    m_realMajor != m_major ||
+    m_realMinor != m_minor ||
+    m_realBuild != m_build;
+}
+
 QString WindowsVersion::toString() const
 {
   QStringList sl;
@@ -665,7 +677,7 @@ QString WindowsVersion::toString() const
 
   sl.push_back("version: " + version);
 
-  if (m_realMajor != m_major || m_realMinor != m_minor || m_realBuild != m_build) {
+  if (compatibilityMode()) {
     sl.push_back("real version: " + realVersion);
   }
 

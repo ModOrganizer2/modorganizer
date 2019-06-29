@@ -97,6 +97,7 @@ class WindowsVersion
 public:
   WindowsVersion();
 
+  bool compatibilityMode() const;
   QString toString() const;
 
 private:

@@ -472,12 +472,14 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     qInfo().nospace().noquote()
       << "windows: " << env.windowsVersion().toString();
 
+    if (env.windowsVersion().compatibilityMode()) {
+      qWarning() << "MO seems to be running in compatibility mode";
+    }
+
     qInfo() << "modules loaded in process:";
     for (const auto& m : env.loadedModules()) {
       qInfo().nospace().noquote() << " . " << m.toString();
     }
-
-    return 0;
   }
 
   QString dataPath = application.property("dataPath").toString();
