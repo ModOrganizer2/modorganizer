@@ -467,8 +467,12 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 #endif
 
   {
-    Environment env;
+    env::Environment env;
 
+    qInfo().nospace().noquote()
+      << "windows: " << env.windowsVersion().toString();
+
+    qInfo() << "modules loaded in process:";
     for (const auto& m : env.loadedModules()) {
       qInfo().nospace().noquote() << " . " << m.toString();
     }

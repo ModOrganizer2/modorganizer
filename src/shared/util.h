@@ -22,6 +22,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include <string>
+#include <optional>
+
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
@@ -46,57 +48,89 @@ std::wstring ToLower(const std::wstring &text);
 
 bool CaseInsensitiveEqual(const std::wstring &lhs, const std::wstring &rhs);
 
+
+namespace env
+{
+
+class Module
+{
+public:
+  explicit Module(QString path, std::size_t fileSize);
+
+  const QString& path() const;
+  QString displayPath() const;
+
+  std::size_t fileSize() const;
+  const QString& version() const;
+  const QString& versionString() const;
+  QString timestampString() const;
+
+  QString toString() const;
+
+private:
+  struct FileInfo
+  {
+    VS_FIXEDFILEINFO ffi;
+    QString fileDescription;
+  };
+
+  QString m_path;
+  std::size_t m_fileSize;
+  QString m_version;
+  QDateTime m_timestamp;
+  QString m_versionString;
+  QString m_md5;
+
+  FileInfo getFileInfo() const;
+
+  QString getVersion(const VS_FIXEDFILEINFO& fi) const;
+  QDateTime getTimestamp(const VS_FIXEDFILEINFO& fi) const;
+  QString getMD5() const;
+
+  VS_FIXEDFILEINFO getFixedFileInfo(std::byte* buffer) const;
+  QString getFileDescription(std::byte* buffer) const;
+};
+
+
+class WindowsVersion
+{
+public:
+  WindowsVersion();
+
+  QString toString() const;
+
+private:
+  DWORD m_realMajor, m_realMinor, m_realBuild;
+  DWORD m_major, m_minor, m_build;
+  QString m_buildLab, m_productName, m_releaseID;
+  DWORD m_UBR;
+  std::optional<bool> m_elevated;
+
+  void getVersion();
+  void getRealVersion(HINSTANCE ntdll);
+  void getReportedVersion(HINSTANCE ntdll);
+  void getRelease();
+  void getElevated();
+};
+
+
 class Environment
 {
 public:
-  class Module
-  {
-  public:
-    explicit Module(QString path, std::size_t fileSize);
-
-    const QString& path() const;
-    QString displayPath() const;
-
-    std::size_t fileSize() const;
-    const QString& version() const;
-    const QString& versionString() const;
-    QString timestampString() const;
-
-    QString toString() const;
-
-  private:
-    struct FileInfo
-    {
-      VS_FIXEDFILEINFO ffi;
-      QString fileDescription;
-    };
-
-    QString m_path;
-    std::size_t m_fileSize;
-    QString m_version;
-    QDateTime m_timestamp;
-    QString m_versionString;
-    QString m_md5;
-
-    FileInfo getFileInfo() const;
-
-    QString getVersion(const VS_FIXEDFILEINFO& fi) const;
-    QDateTime getTimestamp(const VS_FIXEDFILEINFO& fi) const;
-    QString getMD5() const;
-
-    VS_FIXEDFILEINFO getFixedFileInfo(std::byte* buffer) const;
-    QString getFileDescription(std::byte* buffer) const;
-  };
-
   Environment();
 
   const std::vector<Module>& loadedModules();
+  const WindowsVersion& windowsVersion() const;
 
 private:
   std::vector<Module> m_modules;
+  WindowsVersion m_windows;
 
   void getLoadedModules();
 };
+
+} // namespace env
+
 
 MOBase::VersionInfo createVersionInfo();
 

@@ -256,13 +256,29 @@ MOBase::VersionInfo createVersionInfo()
 }
 
 
+namespace env
+{
+
 struct HandleCloser
 {
   using pointer = HANDLE;
+
   void operator()(HANDLE h)
   {
     if (h != INVALID_HANDLE_VALUE) {
       ::CloseHandle(h);
+    }
+  }
+};
+
+struct LibraryFreer
+{
+  using pointer = HINSTANCE;
+
+  void operator()(HINSTANCE h)
+  {
+    if (h != 0) {
+      ::FreeLibrary(h);
     }
   }
 };
@@ -273,9 +289,14 @@ Environment::Environment()
   getLoadedModules();
 }
 
-const std::vector<Environment::Module>& Environment::loadedModules()
+const std::vector<Module>& Environment::loadedModules()
 {
   return m_modules;
+}
+
+const WindowsVersion& Environment::windowsVersion() const
+{
+  return m_windows;
 }
 
 void Environment::getLoadedModules()
@@ -312,7 +333,6 @@ void Environment::getLoadedModules()
 
   //  Now walk the module list of the process,
   //  and display information about each module
-  qInfo() << "modules loaded in process:";
 
   for (;;)
   {
@@ -338,7 +358,7 @@ void Environment::getLoadedModules()
 }
 
 
-Environment::Module::Module(QString path, std::size_t fileSize)
+Module::Module(QString path, std::size_t fileSize)
   : m_path(std::move(path)), m_fileSize(fileSize)
 {
   const auto fi = getFileInfo();
@@ -349,32 +369,32 @@ Environment::Module::Module(QString path, std::size_t fileSize)
   m_md5 = getMD5();
 }
 
-const QString& Environment::Module::path() const
+const QString& Module::path() const
 {
   return m_path;
 }
 
-QString Environment::Module::displayPath() const
+QString Module::displayPath() const
 {
   return QDir::fromNativeSeparators(m_path.toLower());
 }
 
-std::size_t Environment::Module::fileSize() const
+std::size_t Module::fileSize() const
 {
   return m_fileSize;
 }
 
-const QString& Environment::Module::version() const
+const QString& Module::version() const
 {
   return m_version;
 }
 
-const QString& Environment::Module::versionString() const
+const QString& Module::versionString() const
 {
   return m_versionString;
 }
 
-QString Environment::Module::timestampString() const
+QString Module::timestampString() const
 {
   if (!m_timestamp.isValid()) {
     return "(no timestamp)";
@@ -383,7 +403,7 @@ QString Environment::Module::timestampString() const
   return m_timestamp.toString(Qt::DateFormat::ISODate);
 }
 
-QString Environment::Module::toString() const
+QString Module::toString() const
 {
   QStringList sl;
 
@@ -415,7 +435,7 @@ QString Environment::Module::toString() const
   return sl.join(", ");
 }
 
-Environment::Module::FileInfo Environment::Module::getFileInfo() const
+Module::FileInfo Module::getFileInfo() const
 {
   const auto wspath = m_path.toStdWString();
 
@@ -457,7 +477,7 @@ Environment::Module::FileInfo Environment::Module::getFileInfo() const
   return fi;
 }
 
-VS_FIXEDFILEINFO Environment::Module::getFixedFileInfo(std::byte* buffer) const
+VS_FIXEDFILEINFO Module::getFixedFileInfo(std::byte* buffer) const
 {
   void* valuePointer = nullptr;
   unsigned int valueSize = 0;
@@ -482,7 +502,7 @@ VS_FIXEDFILEINFO Environment::Module::getFixedFileInfo(std::byte* buffer) const
   return *fi;
 }
 
-QString Environment::Module::getFileDescription(std::byte* buffer) const
+QString Module::getFileDescription(std::byte* buffer) const
 {
   struct LANGANDCODEPAGE
   {
@@ -527,7 +547,7 @@ QString Environment::Module::getFileDescription(std::byte* buffer) const
     reinterpret_cast<wchar_t*>(valuePointer), valueSize - 1);
 }
 
-QString Environment::Module::getVersion(const VS_FIXEDFILEINFO& fi) const
+QString Module::getVersion(const VS_FIXEDFILEINFO& fi) const
 {
   if (fi.dwSignature == 0) {
     return {};
@@ -546,7 +566,7 @@ QString Environment::Module::getVersion(const VS_FIXEDFILEINFO& fi) const
     .arg(major).arg(minor).arg(maintenance).arg(build);
 }
 
-QDateTime Environment::Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
+QDateTime Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
 {
   FILETIME ft = {};
 
@@ -595,7 +615,7 @@ QDateTime Environment::Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
     QTime(utc.wHour, utc.wMinute, utc.wSecond, utc.wMilliseconds));
 }
 
-QString Environment::Module::getMD5() const
+QString Module::getMD5() const
 {
   if (m_path.contains("\\windows\\", Qt::CaseInsensitive)) {
     // don't calculate md5 for system files, it's not really relevant and
@@ -622,5 +642,164 @@ QString Environment::Module::getMD5() const
 
   return hash.result().toHex();
 }
+
+
+WindowsVersion::WindowsVersion() :
+  m_realMajor(0), m_realMinor(0), m_realBuild(0),
+  m_major(0), m_minor(0), m_build(0), m_UBR(0)
+{
+  getVersion();
+  getRelease();
+  getElevated();
+}
+
+QString WindowsVersion::toString() const
+{
+  QStringList sl;
+
+  const QString version = QString("%1.%2.%3")
+    .arg(m_major).arg(m_minor).arg(m_build);
+
+  const QString realVersion = QString("%1.%2.%3")
+    .arg(m_realMajor).arg(m_realMinor).arg(m_realBuild);
+
+  sl.push_back("version: " + version);
+
+  if (m_realMajor != m_major || m_realMinor != m_minor || m_realBuild != m_build) {
+    sl.push_back("real version: " + realVersion);
+  }
+
+  if (!m_buildLab.isEmpty()) {
+    sl.push_back(m_buildLab);
+  }
+
+  if (!m_productName.isEmpty()) {
+    sl.push_back(m_productName);
+  }
+
+  if (!m_releaseID.isEmpty()) {
+    sl.push_back("build " + m_releaseID);
+  }
+
+  if (m_UBR != 0) {
+    sl.push_back(QString("%1").arg(m_UBR));
+  }
+
+  QString elevated = "?";
+  if (m_elevated.has_value()) {
+    elevated = (*m_elevated ? "yes" : "no");
+  }
+
+  sl.push_back("elevated: " + elevated);
+
+  return sl.join(", ");
+}
+
+void WindowsVersion::getVersion()
+{
+  std::unique_ptr<HINSTANCE, LibraryFreer> ntdll(LoadLibraryW(L"ntdll.dll"));
+
+  if (!ntdll) {
+    qCritical() << "failed to load ntdll.dll while getting version";
+    return;
+  }
+
+  getRealVersion(ntdll.get());
+  getReportedVersion(ntdll.get());
+}
+
+void WindowsVersion::getRealVersion(HINSTANCE ntdll)
+{
+  using RtlGetNtVersionNumbersType = void (NTAPI)(DWORD*, DWORD*, DWORD*);
+
+  auto* RtlGetNtVersionNumbers = reinterpret_cast<RtlGetNtVersionNumbersType*>(
+    GetProcAddress(ntdll, "RtlGetNtVersionNumbers"));
+
+  if (RtlGetNtVersionNumbers) {
+    DWORD build = 0;
+    RtlGetNtVersionNumbers(&m_realMajor, &m_realMinor, &build);
+
+    m_realBuild = 0x0fffffff & build;
+  }
+}
+
+void WindowsVersion::getReportedVersion(HINSTANCE ntdll)
+{
+  using RtlGetVersionType = NTSTATUS (NTAPI)(PRTL_OSVERSIONINFOW);
+
+  auto* RtlGetVersion = reinterpret_cast<RtlGetVersionType*>(
+    GetProcAddress(ntdll, "RtlGetVersion"));
+
+  if (!RtlGetVersion) {
+    qCritical() << "RtlGetVersion() not found in ntdll.dll";
+    return;
+  }
+
+  OSVERSIONINFOEX vi = {};
+  vi.dwOSVersionInfoSize = sizeof(vi);
+
+  RtlGetVersion((RTL_OSVERSIONINFOW*)&vi);
+
+  m_major = vi.dwMajorVersion;
+  m_minor = vi.dwMinorVersion;
+  m_build = vi.dwBuildNumber;
+}
+
+void WindowsVersion::getRelease()
+{
+  QSettings settings(
+    R"(HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion)",
+    QSettings::NativeFormat);
+
+  m_buildLab = settings.value("BuildLabEx", "").toString();
+  if (m_buildLab.isEmpty()) {
+    m_buildLab = settings.value("BuildLab", "").toString();
+    if (m_buildLab.isEmpty()) {
+      m_buildLab = settings.value("BuildBranch", "").toString();
+    }
+  }
+
+  m_productName = settings.value("ProductName", "").toString();
+  m_releaseID = settings.value("ReleaseId", "").toString();
+  m_UBR = settings.value("UBR", 0).toUInt();
+}
+
+void WindowsVersion::getElevated()
+{
+  std::unique_ptr<HANDLE, HandleCloser> token;
+
+  {
+    HANDLE rawToken = 0;
+
+    if (!OpenProcessToken(GetCurrentProcess( ), TOKEN_QUERY, &rawToken)) {
+      const auto e = GetLastError();
+
+      qCritical()
+        << "while trying to check if process is elevated, "
+        << "OpenProcessToken() failed: " << formatSystemMessage(e);
+
+      return;
+    }
+
+    token.reset(rawToken);
+  }
+
+  TOKEN_ELEVATION e = {};
+  DWORD size = sizeof(TOKEN_ELEVATION);
+
+  if (!GetTokenInformation(token.get(), TokenElevation, &e, sizeof(e), &size)) {
+    const auto e = GetLastError();
+
+    qCritical()
+      << "while trying to check if process is elevated, "
+      << "GetTokenInformation() failed: " << formatSystemMessage(e);
+
+    return;
+  }
+
+  m_elevated = (e.TokenIsElevated != 0);
+}
+
+} // namespace env
 
 } // namespace MOShared
