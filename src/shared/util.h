@@ -52,22 +52,55 @@ bool CaseInsensitiveEqual(const std::wstring &lhs, const std::wstring &rhs);
 namespace env
 {
 
+// represents one module
+//
 class Module
 {
 public:
   explicit Module(QString path, std::size_t fileSize);
 
+  // returns the module's path
+  //
   const QString& path() const;
+
+  // returns the module's path in lowercase and using forward slashes
+  //
   QString displayPath() const;
 
+  // returns the size in bytes, may be 0
+  //
   std::size_t fileSize() const;
+
+  // returns the x.x.x.x version embedded from the version info, may be empty
+  //
   const QString& version() const;
+
+  // returns the FileVersion entry from the resource file, returns
+  // "(no version)" if not available
+  //
   const QString& versionString() const;
+
+  // returns the build date from the version info, or the creation time of the
+  // file on the filesystem, may be empty
+  //
+  const QDateTime& timestamp() const;
+
+  // returns the md5 of the file, may be empty for system files
+  //
+  const QString& md5() const;
+
+  // converts timestamp() to a string for display, returns "(no timestamp)" if
+  // not available
+  //
   QString timestampString() const;
 
+  // returns a string with all the above information on one line
+  //
   QString toString() const;
 
 private:
+  // contains the information from the version resource
+  //
   struct FileInfo
   {
     VS_FIXEDFILEINFO ffi;
@@ -81,51 +114,151 @@ private:
   QString m_versionString;
   QString m_md5;
 
+  // returns information from the version resource
+  //
   FileInfo getFileInfo() const;
 
+  // uses VS_FIXEDFILEINFO to build the version string
+  //
   QString getVersion(const VS_FIXEDFILEINFO& fi) const;
+
+  // uses the file date from VS_FIXEDFILEINFO if available, or gets the
+  // creation date on the file
+  //
   QDateTime getTimestamp(const VS_FIXEDFILEINFO& fi) const;
+
+  // returns the md5 hash unless the path contains "\windows\"
+  //
   QString getMD5() const;
 
+  // gets VS_FIXEDFILEINFO from the file version info buffer
+  //
   VS_FIXEDFILEINFO getFixedFileInfo(std::byte* buffer) const;
+
+  // gets FileVersion from the file version info buffer
+  //
   QString getFileDescription(std::byte* buffer) const;
 };
 
 
-class WindowsVersion
+// a variety of information on windows
+//
+class WindowsInfo
 {
 public:
-  WindowsVersion();
+  struct Version
+  {
+    DWORD major=0, minor=0, build=0;
 
+    QString toString() const
+    {
+      return QString("%1.%2.%3").arg(major).arg(minor).arg(build);
+    }
+
+    friend bool operator==(const Version& a, const Version& b)
+    {
+      return
+        a.major == b.major &&
+        a.minor == b.minor &&
+        a.build == b.build;
+    }
+
+    friend bool operator!=(const Version& a, const Version& b)
+    {
+      return !(a == b);
+    }
+  };
+
+  struct Release
+  {
+    // the BuildLab entry from the registry, may be empty
+    QString buildLab;
+
+    // product name such as "Windows 10 Pro", may not be in English, may be
+    // empty
+    QString productName;
+
+    // release ID such as 1809, may be mepty
+    QString ID;
+
+    // some sub-build number, undocumented, may be empty
+    DWORD UBR;
+
+    Release()
+      : UBR(0)
+    {
+    }
+  };
+
+
+  WindowsInfo();
+
+  // tries to guess whether this process is running in compatibility mode
+  //
   bool compatibilityMode() const;
+
+  // returns the Windows version, may not correspond to the actual version
+  // if the process is running in compatibility mode
+  //
+  const Version& reportedVersion() const;
+
+  // tries to guess the real Windows version that's running, can be empty
+  //
+  const Version& realVersion() const;
+
+  // various information about the current release
+  //
+  const Release& release() const;
+
+  // whether this process is running as administrator, may be empty if the
+  // information is not available
+  std::optional<bool> isElevated() const;
+
+  // returns a string with all the above information on one line
+  //
   QString toString() const;
 
 private:
-  DWORD m_realMajor, m_realMinor, m_realBuild;
-  DWORD m_major, m_minor, m_build;
-  QString m_buildLab, m_productName, m_releaseID;
-  DWORD m_UBR;
+  Version m_reported, m_real;
+  Release m_release;
   std::optional<bool> m_elevated;
 
-  void getVersion();
-  void getRealVersion(HINSTANCE ntdll);
-  void getReportedVersion(HINSTANCE ntdll);
-  void getRelease();
-  void getElevated();
+  // uses RtlGetVersion() to get the version number as reported by Windows
+  //
+  Version getReportedVersion(HINSTANCE ntdll) const;
+
+  // uses RtlGetNtVersionNumbers() to get the real version number
+  //
+  Version getRealVersion(HINSTANCE ntdll) const;
+
+  // gets various information from the registry
+  //
+  Release getRelease() const;
+
+  // gets whether the process is elevated
+  //
+  std::optional<bool> getElevated() const;
 };
 
 
+// represents the process's environment
+//
 class Environment
 {
 public:
   Environment();
 
+  // list of loaded modules in the current process
+  //
   const std::vector<Module>& loadedModules();
-  const WindowsVersion& windowsVersion() const;
+
+  // information about the operating system
+  //
+  const WindowsInfo& windowsInfo() const;
 
 private:
   std::vector<Module> m_modules;
-  WindowsVersion m_windows;
+  WindowsInfo m_windows;
 
   void getLoadedModules();
 };

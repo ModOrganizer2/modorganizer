@@ -469,16 +469,16 @@ int runApplication(MOApplication &application, SingleInstance &instance,
   {
     env::Environment env;
 
-    qInfo().nospace().noquote()
-      << "windows: " << env.windowsVersion().toString();
+    qDebug().nospace().noquote()
+      << "windows: " << env.windowsInfo().toString();
 
-    if (env.windowsVersion().compatibilityMode()) {
+    if (env.windowsInfo().compatibilityMode()) {
       qWarning() << "MO seems to be running in compatibility mode";
     }
 
-    qInfo() << "modules loaded in process:";
+    qDebug() << "modules loaded in process:";
     for (const auto& m : env.loadedModules()) {
-      qInfo().nospace().noquote() << " . " << m.toString();
+      qDebug().nospace().noquote() << " . " << m.toString();
     }
   }
 

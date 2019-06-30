@@ -294,7 +294,7 @@ const std::vector<Module>& Environment::loadedModules()
   return m_modules;
 }
 
-const WindowsVersion& Environment::windowsVersion() const
+const WindowsInfo& Environment::windowsInfo() const
 {
   return m_windows;
 }
@@ -315,12 +315,10 @@ void Environment::getLoadedModules()
     return;
   }
 
-  //  Set the size of the structure before using it.
   MODULEENTRY32 me = {};
   me.dwSize = sizeof(me);
 
-  //  Retrieve information about the first module,
-  //  and exit if unsuccessful
+  // first module, this shouldn't fail because there's at least the executable
   if (!Module32First(snapshot.get(), &me))
   {
     const auto e = GetLastError();
@@ -331,27 +329,29 @@ void Environment::getLoadedModules()
     return;
   }
 
-  //  Now walk the module list of the process,
-  //  and display information about each module
-
   for (;;)
   {
     const auto path = QString::fromWCharArray(me.szExePath);
 
     m_modules.push_back(Module(path, me.modBaseSize));
 
+    // next module
     if (!Module32Next(snapshot.get(), &me)) {
       const auto e = GetLastError();
 
-      if (e != ERROR_NO_MORE_FILES) {
-        qCritical().nospace().noquote()
-          << "Module32Next() failed, " << formatSystemMessage(e);
+      if (e == ERROR_NO_MORE_FILES) {
+        // not an error
+        break;
       }
+
+       qCritical().nospace().noquote()
+        << "Module32Next() failed, " << formatSystemMessage(e);
 
       break;
     }
   }
 
+  // sorting by display name
   std::sort(m_modules.begin(), m_modules.end(), [](auto&& a, auto&& b) {
     return (a.displayPath().compare(b.displayPath(), Qt::CaseInsensitive) < 0);
   });
@@ -394,6 +394,16 @@ const QString& Module::versionString() const
   return m_versionString;
 }
 
+const QDateTime& Module::timestamp() const
+{
+  return m_timestamp;
+}
+
+const QString& Module::md5() const
+{
+  return m_md5;
+}
+
 QString Module::timestampString() const
 {
   if (!m_timestamp.isValid()) {
@@ -407,9 +417,11 @@ QString Module::toString() const
 {
   QStringList sl;
 
+  // file size
   sl.push_back(displayPath());
   sl.push_back(QString("%1 B").arg(m_fileSize));
 
+  // version
   if (m_version.isEmpty() && m_versionString.isEmpty()) {
     sl.push_back("(no version)");
   } else {
@@ -417,17 +429,19 @@ QString Module::toString() const
       sl.push_back(m_version);
     }
 
-    if (m_versionString != m_version) {
+    if (!m_versionString.isEmpty() && m_versionString != m_version) {
       sl.push_back(versionString());
     }
   }
 
+  // timestamp
   if (m_timestamp.isValid()) {
     sl.push_back(m_timestamp.toString(Qt::DateFormat::ISODate));
   } else {
     sl.push_back("(no timestamp)");
   }
 
+  // md5
   if (!m_md5.isEmpty()) {
     sl.push_back(m_md5);
   }
@@ -439,6 +453,7 @@ Module::FileInfo Module::getFileInfo() const
 {
   const auto wspath = m_path.toStdWString();
 
+  // getting version info size
   DWORD dummy = 0;
   const DWORD size = GetFileVersionInfoSizeW(wspath.c_str(), &dummy);
 
@@ -457,6 +472,7 @@ Module::FileInfo Module::getFileInfo() const
     return {};
   }
 
+  // getting version info
   auto buffer = std::make_unique<std::byte[]>(size);
 
   if (!GetFileVersionInfoW(wspath.c_str(), 0, size, buffer.get())) {
@@ -469,6 +485,8 @@ Module::FileInfo Module::getFileInfo() const
     return {};
   }
 
+  // the version info has two major parts: a fixed version and a localizable
+  // set of strings
 
   FileInfo fi;
   fi.ffi = getFixedFileInfo(buffer.get());
@@ -482,6 +500,7 @@ VS_FIXEDFILEINFO Module::getFixedFileInfo(std::byte* buffer) const
   void* valuePointer = nullptr;
   unsigned int valueSize = 0;
 
+  // the fixed version info is in the root
   const auto ret = VerQueryValueW(buffer, L"\\", &valuePointer, &valueSize);
 
   if (!ret || !valuePointer || valueSize == 0) {
@@ -491,6 +510,7 @@ VS_FIXEDFILEINFO Module::getFixedFileInfo(std::byte* buffer) const
 
   const auto* fi = reinterpret_cast<VS_FIXEDFILEINFO*>(valuePointer);
 
+  // signature is always 0xfeef04bd
   if (fi->dwSignature != 0xfeef04bd) {
     qCritical().nospace().noquote()
       << "bad file info signature 0x" << hex << fi->dwSignature << " for "
@@ -513,6 +533,7 @@ QString Module::getFileDescription(std::byte* buffer) const
   void* valuePointer = nullptr;
   unsigned int valueSize = 0;
 
+  // getting list of available languages
   auto ret = VerQueryValueW(
     buffer, L"\\VarFileInfo\\Translation", &valuePointer, &valueSize);
 
@@ -523,11 +544,13 @@ QString Module::getFileDescription(std::byte* buffer) const
     return {};
   }
 
+  // number of languages
   const auto count = valueSize / sizeof(LANGANDCODEPAGE);
   if (count == 0) {
     return {};
   }
 
+  // using the first language in the list to get FileVersion
   const auto* lcp = reinterpret_cast<LANGANDCODEPAGE*>(valuePointer);
 
   const auto subBlock = QString("\\StringFileInfo\\%1%2\\FileVersion")
@@ -571,6 +594,10 @@ QDateTime Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
   FILETIME ft = {};
 
   if (fi.dwSignature == 0 || (fi.dwFileDateMS == 0 && fi.dwFileDateLS == 0)) {
+    // if the file info is invalid or doesn't have a date, use the creation
+    // time on the file
+
+    // opening the file
     std::unique_ptr<HANDLE, HandleCloser> h(CreateFileW(
       m_path.toStdWString().c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0));
@@ -585,6 +612,7 @@ QDateTime Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
       return {};
     }
 
+    // getting the file time
     if (!GetFileTime(h.get(), &ft, nullptr, nullptr)) {
       const auto e = GetLastError();
       qCritical().nospace().noquote()
@@ -594,12 +622,15 @@ QDateTime Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
       return {};
     }
   } else {
+    // use the time from the file info
     ft.dwHighDateTime = fi.dwFileDateMS;
     ft.dwLowDateTime = fi.dwFileDateLS;
   }
 
 
+  // converting to SYSTEMTIME
   SYSTEMTIME utc = {};
+
   if (!FileTimeToSystemTime(&ft, &utc)) {
     qCritical().nospace().noquote()
       << "FileTimeToSystemTime() failed on timestamp "
@@ -623,6 +654,7 @@ QString Module::getMD5() const
     return {};
   }
 
+  // opening the file
   QFile f(m_path);
 
   if (!f.open(QFile::ReadOnly)) {
@@ -632,6 +664,7 @@ QString Module::getMD5() const
     return {};
   }
 
+  // hashing
   QCryptographicHash hash(QCryptographicHash::Md5);
   if (!hash.addData(&f)) {
     qCritical().nospace().noquote()
@@ -644,59 +677,97 @@ QString Module::getMD5() const
 }
 
 
-WindowsVersion::WindowsVersion() :
-  m_realMajor(0), m_realMinor(0), m_realBuild(0),
-  m_major(0), m_minor(0), m_build(0), m_UBR(0)
+WindowsInfo::WindowsInfo()
 {
-  getVersion();
-  getRelease();
-  getElevated();
+  // loading ntdll.dll, the functions will be found with GetProcAddress()
+  std::unique_ptr<HINSTANCE, LibraryFreer> ntdll(LoadLibraryW(L"ntdll.dll"));
+
+  if (!ntdll) {
+    qCritical() << "failed to load ntdll.dll while getting version";
+    return;
+  } else {
+    m_reported = getReportedVersion(ntdll.get());
+    m_real = getRealVersion(ntdll.get());
+  }
+
+  m_release = getRelease();
+  m_elevated = getElevated();
 }
 
-bool WindowsVersion::compatibilityMode() const
+bool WindowsInfo::compatibilityMode() const
 {
-  if (m_realMajor == 0 && m_realMinor == 0 && m_realBuild == 0) {
+  if (m_real == Version()) {
+    // don't know the real version, can't guess compatibility mode
     return false;
   }
 
-  return
-    m_realMajor != m_major ||
-    m_realMinor != m_minor ||
-    m_realBuild != m_build;
+  return (m_real != m_reported);
 }
 
-QString WindowsVersion::toString() const
+const WindowsInfo::Version& WindowsInfo::reportedVersion() const
+{
+  return m_reported;
+}
+
+const WindowsInfo::Version& WindowsInfo::realVersion() const
+{
+  return m_real;
+}
+
+const WindowsInfo::Release& WindowsInfo::release() const
+{
+  return m_release;
+}
+
+std::optional<bool> WindowsInfo::isElevated() const
+{
+  return m_elevated;
+}
+
+QString WindowsInfo::toString() const
 {
   QStringList sl;
 
-  const QString version = QString("%1.%2.%3")
-    .arg(m_major).arg(m_minor).arg(m_build);
+  const QString reported = m_reported.toString();
+  const QString real = m_real.toString();
 
-  const QString realVersion = QString("%1.%2.%3")
-    .arg(m_realMajor).arg(m_realMinor).arg(m_realBuild);
+  // version
+  sl.push_back("version: " + reported);
 
-  sl.push_back("version: " + version);
-
+  // real version if different
   if (compatibilityMode()) {
-    sl.push_back("real version: " + realVersion);
+    sl.push_back("real version: " + real);
   }
 
-  if (!m_buildLab.isEmpty()) {
-    sl.push_back(m_buildLab);
+  // build.UBR, such as 17763.557
+  if (m_release.UBR != 0) {
+    DWORD build = 0;
+
+    if (compatibilityMode()) {
+      build = m_real.build;
+    } else {
+      build = m_reported.build;
+    }
+
+    sl.push_back(QString("%1.%2").arg(build).arg(m_release.UBR));
   }
 
-  if (!m_productName.isEmpty()) {
-    sl.push_back(m_productName);
+  // release ID
+  if (!m_release.ID.isEmpty()) {
+    sl.push_back("release " + m_release.ID);
   }
 
-  if (!m_releaseID.isEmpty()) {
-    sl.push_back("build " + m_releaseID);
+  // buildlab string
+  if (!m_release.buildLab.isEmpty()) {
+    sl.push_back(m_release.buildLab);
   }
 
-  if (m_UBR != 0) {
-    sl.push_back(QString("%1").arg(m_UBR));
+  // product name
+  if (!m_release.productName.isEmpty()) {
+    sl.push_back(m_release.productName);
   }
 
+  // elevated
   QString elevated = "?";
   if (m_elevated.has_value()) {
     elevated = (*m_elevated ? "yes" : "no");
@@ -707,36 +778,14 @@ QString WindowsVersion::toString() const
   return sl.join(", ");
 }
 
-void WindowsVersion::getVersion()
+WindowsInfo::Version WindowsInfo::getReportedVersion(HINSTANCE ntdll) const
 {
-  std::unique_ptr<HINSTANCE, LibraryFreer> ntdll(LoadLibraryW(L"ntdll.dll"));
+  // windows has been deprecating pretty much all the functions having to do
+  // with getting version information because apparently, people keep misusing
+  // them for feature detection
+  //
+  // there's still RtlGetVersion() though
 
-  if (!ntdll) {
-    qCritical() << "failed to load ntdll.dll while getting version";
-    return;
-  }
-
-  getRealVersion(ntdll.get());
-  getReportedVersion(ntdll.get());
-}
-
-void WindowsVersion::getRealVersion(HINSTANCE ntdll)
-{
-  using RtlGetNtVersionNumbersType = void (NTAPI)(DWORD*, DWORD*, DWORD*);
-
-  auto* RtlGetNtVersionNumbers = reinterpret_cast<RtlGetNtVersionNumbersType*>(
-    GetProcAddress(ntdll, "RtlGetNtVersionNumbers"));
-
-  if (RtlGetNtVersionNumbers) {
-    DWORD build = 0;
-    RtlGetNtVersionNumbers(&m_realMajor, &m_realMinor, &build);
-
-    m_realBuild = 0x0fffffff & build;
-  }
-}
-
-void WindowsVersion::getReportedVersion(HINSTANCE ntdll)
-{
   using RtlGetVersionType = NTSTATUS (NTAPI)(PRTL_OSVERSIONINFOW);
 
   auto* RtlGetVersion = reinterpret_cast<RtlGetVersionType*>(
@@ -744,39 +793,81 @@ void WindowsVersion::getReportedVersion(HINSTANCE ntdll)
 
   if (!RtlGetVersion) {
     qCritical() << "RtlGetVersion() not found in ntdll.dll";
-    return;
+    return {};
   }
 
   OSVERSIONINFOEX vi = {};
   vi.dwOSVersionInfoSize = sizeof(vi);
 
+  // this apparently never fails
   RtlGetVersion((RTL_OSVERSIONINFOW*)&vi);
 
-  m_major = vi.dwMajorVersion;
-  m_minor = vi.dwMinorVersion;
-  m_build = vi.dwBuildNumber;
+  return {vi.dwMajorVersion, vi.dwMinorVersion, vi.dwBuildNumber};
 }
 
-void WindowsVersion::getRelease()
+WindowsInfo::Version WindowsInfo::getRealVersion(HINSTANCE ntdll) const
 {
+  // getting the actual windows version is more difficult because all the
+  // functions are lying when running in compatibility mode
+  //
+  // RtlGetNtVersionNumbers() is an undocumented function that seems to work
+  // fine, but it might not in the future
+
+  using RtlGetNtVersionNumbersType = void (NTAPI)(DWORD*, DWORD*, DWORD*);
+
+  auto* RtlGetNtVersionNumbers = reinterpret_cast<RtlGetNtVersionNumbersType*>(
+    GetProcAddress(ntdll, "RtlGetNtVersionNumbers"));
+
+  if (!RtlGetNtVersionNumbers) {
+    qCritical() << "RtlGetNtVersionNumbers not found in ntdll.dll";
+    return {};
+  }
+
+  DWORD major=0, minor=0, build=0;
+  RtlGetNtVersionNumbers(&major, &minor, &build);
+
+  // for whatever reason, the build number has 0xf0000000 set
+  build = 0x0fffffff & build;
+
+  return {major, minor, build};
+}
+
+WindowsInfo::Release WindowsInfo::getRelease() const
+{
+  // there are several interesting items in the registry, but most of them
+  // are undocumented, not always available, and localizable
+  //
+  // most of them are used to provide as much information as possible in case
+  // any of the other versions fail to work
+
   QSettings settings(
     R"(HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion)",
     QSettings::NativeFormat);
 
-  m_buildLab = settings.value("BuildLabEx", "").toString();
-  if (m_buildLab.isEmpty()) {
-    m_buildLab = settings.value("BuildLab", "").toString();
-    if (m_buildLab.isEmpty()) {
-      m_buildLab = settings.value("BuildBranch", "").toString();
+  Release r;
+
+  // buildlab seems to be an internal name from the build system
+  r.buildLab = settings.value("BuildLabEx", "").toString();
+  if (r.buildLab.isEmpty()) {
+    r.buildLab = settings.value("BuildLab", "").toString();
+    if (r.buildLab.isEmpty()) {
+      r.buildLab = settings.value("BuildBranch", "").toString();
     }
   }
 
-  m_productName = settings.value("ProductName", "").toString();
-  m_releaseID = settings.value("ReleaseId", "").toString();
-  m_UBR = settings.value("UBR", 0).toUInt();
+  // localized name of windows, such as "Windows 10 Pro"
+  r.productName = settings.value("ProductName", "").toString();
+
+  // release ID, such as 1803
+  r.ID = settings.value("ReleaseId", "").toString();
+
+  // some other build number, shown in winver.exe
+  r.UBR = settings.value("UBR", 0).toUInt();
+
+  return r;
 }
 
-void WindowsVersion::getElevated()
+std::optional<bool> WindowsInfo::getElevated() const
 {
   std::unique_ptr<HANDLE, HandleCloser> token;
 
@@ -790,7 +881,7 @@ void WindowsVersion::getElevated()
         << "while trying to check if process is elevated, "
         << "OpenProcessToken() failed: " << formatSystemMessage(e);
 
-      return;
+      return {};
     }
 
     token.reset(rawToken);
@@ -806,10 +897,10 @@ void WindowsVersion::getElevated()
       << "while trying to check if process is elevated, "
       << "GetTokenInformation() failed: " << formatSystemMessage(e);
 
-    return;
+    return {};
   }
 
-  m_elevated = (e.TokenIsElevated != 0);
+  return (e.TokenIsElevated != 0);
 }
 
 } // namespace env
