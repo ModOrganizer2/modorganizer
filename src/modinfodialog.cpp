@@ -360,16 +360,18 @@ void ModInfoDialog::updateTabs(bool becauseOriginChanged)
 void ModInfoDialog::feedFiles(bool becauseOriginChanged)
 {
   namespace fs = std::filesystem;
+
   const auto rootPath = m_mod->absolutePath();
 
   if (rootPath.length() > 0) {
-
-    for (const auto& entry : fs::recursive_directory_iterator(rootPath.toStdString())) {
+    fs::path path(rootPath.toStdWString());
+    for (const auto& entry : fs::recursive_directory_iterator(path)) {
       if (!entry.is_regular_file()) {
         continue;
       }
 
-      const auto fileName = QString::fromWCharArray(entry.path().c_str());
+      const auto fileName = QString::fromWCharArray(
+        entry.path().native().c_str());
 
       for (auto& tabInfo : m_tabs) {
         if (!tabInfo.isVisible()) {
