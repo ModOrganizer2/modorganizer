@@ -476,10 +476,17 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       qWarning() << "MO seems to be running in compatibility mode";
     }
 
+    qDebug().nospace().noquote() << "security features:";
+    for (const auto& sf : env.securityFeatures()) {
+      qDebug().nospace().noquote() << " . " << sf.toString();
+    }
+
     qDebug() << "modules loaded in process:";
     for (const auto& m : env.loadedModules()) {
       qDebug().nospace().noquote() << " . " << m.toString();
     }
+
+    return 0;
   }
 
   QString dataPath = application.property("dataPath").toString();

@@ -30,6 +30,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/scoped_array.hpp>
 #include <QApplication>
 
+#include <comdef.h>
+#include <Wbemidl.h>
+#include <wscapi.h>
+#pragma comment(lib, "Wbemuuid.lib")
+
 using MOBase::formatSystemMessage;
 
 namespace MOShared {
@@ -283,10 +288,153 @@ struct LibraryFreer
   }
 };
 
+struct COMReleaser
+{
+  void operator()(IUnknown* p)
+  {
+    if (p) {
+      p->Release();
+    }
+  }
+};
+
+
+class WMI
+{
+public:
+  class failed {};
+
+  WMI(const std::string& ns)
+  {
+    try
+    {
+      createLocator();
+      createService(ns);
+      setSecurity();
+    }
+    catch(failed&)
+    {
+    }
+  }
+
+  template <class F>
+  void query(const std::string& q, F&& f)
+  {
+    if (!m_locator || !m_service) {
+      return;
+    }
+
+    auto enumerator = getEnumerator(q);
+
+    for (;;)
+    {
+      std::unique_ptr<IWbemClassObject, COMReleaser> object;
+
+      {
+        IWbemClassObject* rawObject = nullptr;
+        ULONG count = 0;
+        auto ret = enumerator->Next(WBEM_INFINITE, 1, &rawObject, &count);
+
+        if (count == 0) {
+          break;
+        }
+
+        object.reset(rawObject);
+      }
+
+      f(object.get());
+    }
+  }
+
+  std::unique_ptr<IEnumWbemClassObject, COMReleaser> getEnumerator(
+    const std::string& query)
+  {
+    IEnumWbemClassObject* rawEnumerator = NULL;
+
+    auto ret = m_service->ExecQuery(
+      bstr_t("WQL"),
+      bstr_t(query.c_str()),
+      WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+      NULL,
+      &rawEnumerator);
+
+    if (FAILED(ret))
+    {
+      qCritical()
+        << "query '" << QString::fromStdString(query) << "' failed, "
+        << formatSystemMessage(ret);
+
+      return {};
+    }
+
+    return std::unique_ptr<IEnumWbemClassObject, COMReleaser>(rawEnumerator);
+  }
+
+private:
+  std::unique_ptr<IWbemLocator, COMReleaser> m_locator;
+  std::unique_ptr<IWbemServices, COMReleaser> m_service;
+
+  void createLocator()
+  {
+    void* rawLocator = nullptr;
+
+    const auto ret = CoCreateInstance(
+      CLSID_WbemLocator, nullptr, CLSCTX_INPROC_SERVER,
+      IID_IWbemLocator, &rawLocator);
+
+    if (FAILED(ret)) {
+      qCritical()
+        << "CoCreateInstance for WbemLocator failed, "
+        << formatSystemMessage(ret);
+
+      throw failed();
+    }
+
+    m_locator.reset(static_cast<IWbemLocator*>(rawLocator));
+  }
+
+  void createService(const std::string& ns)
+  {
+    IWbemServices* rawService = nullptr;
+
+    const auto res = m_locator->ConnectServer(
+      _bstr_t(ns.c_str()),
+      nullptr, nullptr, nullptr, 0, nullptr, nullptr,
+      &rawService);
+
+    if (FAILED(res)) {
+      qCritical()
+        << "locator->ConnectServer() failed for namespace "
+        << "'" << QString::fromStdString(ns) << "', "
+        << formatSystemMessage(res);
+
+      throw failed();
+    }
+
+    m_service.reset(rawService);
+  }
+
+  void setSecurity()
+  {
+    auto ret = CoSetProxyBlanket(
+      m_service.get(), RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, nullptr,
+      RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, 0, EOAC_NONE);
+
+    if (FAILED(ret))
+    {
+      qCritical()
+        << "CoSetProxyBlanket() failed, " << formatSystemMessage(ret);
+
+      throw failed();
+    }
+  }
+};
+
 
 Environment::Environment()
 {
   getLoadedModules();
+  getSecurityFeatures();
 }
 
 const std::vector<Module>& Environment::loadedModules()
@@ -297,6 +445,11 @@ const std::vector<Module>& Environment::loadedModules()
 const WindowsInfo& Environment::windowsInfo() const
 {
   return m_windows;
+}
+
+const std::vector<SecurityFeature>& Environment::securityFeatures() const
+{
+  return m_security;
 }
 
 void Environment::getLoadedModules()
@@ -355,6 +508,59 @@ void Environment::getLoadedModules()
   std::sort(m_modules.begin(), m_modules.end(), [](auto&& a, auto&& b) {
     return (a.displayPath().compare(b.displayPath(), Qt::CaseInsensitive) < 0);
   });
+}
+
+void Environment::getSecurityFeatures()
+{
+  WMI wmi("root\\SecurityCenter2");
+  std::map<QUuid, SecurityFeature> map;
+
+  auto handleProduct = [&](auto* o) {
+    VARIANT prop;
+
+    auto ret = o->Get(L"displayName", 0, &prop, 0, 0);
+    if (FAILED(ret)) {
+      qCritical() << "failed to get displayName, " << formatSystemMessage(ret);
+      return;
+    }
+
+    const std::wstring name = prop.bstrVal;
+    VariantClear(&prop);
+
+    ret = o->Get(L"productState", 0, &prop, 0, 0);
+    if (FAILED(ret)) {
+      qCritical() << "failed to get productState, " << formatSystemMessage(ret);
+      return;
+    }
+
+    const DWORD state = prop.ulVal;
+    VariantClear(&prop);
+
+    ret = o->Get(L"instanceGuid", 0, &prop, 0, 0);
+    if (FAILED(ret)) {
+      qCritical() << "failed to get instanceGuid, " << formatSystemMessage(ret);
+      return;
+    }
+
+    const QUuid guid(QString::fromWCharArray(prop.bstrVal));
+    VariantClear(&prop);
+
+
+    auto itor = map.find(guid);
+
+    if (itor == map.end()) {
+      map.insert({
+        guid, SecurityFeature(QString::fromStdWString(name), state)});
+    }
+  };
+
+  wmi.query("select * from AntivirusProduct", handleProduct);
+  wmi.query("select * from FirewallProduct", handleProduct);
+  wmi.query("select * from AntiSpywareProduct", handleProduct);
+
+  for (auto&& p : map) {
+    m_security.push_back(p.second);
+  }
 }
 
 
@@ -508,7 +714,7 @@ VS_FIXEDFILEINFO Module::getFixedFileInfo(std::byte* buffer) const
     return {};
   }
 
-  const auto* fi = reinterpret_cast<VS_FIXEDFILEINFO*>(valuePointer);
+  const auto* fi = static_cast<VS_FIXEDFILEINFO*>(valuePointer);
 
   // signature is always 0xfeef04bd
   if (fi->dwSignature != 0xfeef04bd) {
@@ -551,7 +757,7 @@ QString Module::getFileDescription(std::byte* buffer) const
   }
 
   // using the first language in the list to get FileVersion
-  const auto* lcp = reinterpret_cast<LANGANDCODEPAGE*>(valuePointer);
+  const auto* lcp = static_cast<LANGANDCODEPAGE*>(valuePointer);
 
   const auto subBlock = QString("\\StringFileInfo\\%1%2\\FileVersion")
     .arg(lcp->wLanguage, 4, 16, QChar('0'))
@@ -567,7 +773,7 @@ QString Module::getFileDescription(std::byte* buffer) const
 
   // valueSize includes the null terminator
   return QString::fromWCharArray(
-    reinterpret_cast<wchar_t*>(valuePointer), valueSize - 1);
+    static_cast<wchar_t*>(valuePointer), valueSize - 1);
 }
 
 QString Module::getVersion(const VS_FIXEDFILEINFO& fi) const
@@ -901,6 +1107,77 @@ std::optional<bool> WindowsInfo::getElevated() const
   }
 
   return (e.TokenIsElevated != 0);
+}
+
+
+SecurityFeature::SecurityFeature(QString name, DWORD state)
+  : m_name(std::move(name)), m_state(state)
+{
+}
+
+const QString& SecurityFeature::name() const
+{
+  return m_name;
+}
+
+QString SecurityFeature::toString() const
+{
+  QString s;
+
+  s += m_name + " ";
+
+  const auto provider = (m_state >> 16) & 0xff;
+  const auto scanner = (m_state >> 8) & 0xff;
+  const auto definitions = m_state & 0xff;
+
+  QStringList ps;
+  if (provider & WSC_SECURITY_PROVIDER_FIREWALL) {
+    ps.push_back("firewall");
+  }
+
+  if (provider & WSC_SECURITY_PROVIDER_AUTOUPDATE_SETTINGS) {
+    ps.push_back("autoupdate");
+  }
+
+  if (provider & WSC_SECURITY_PROVIDER_ANTIVIRUS) {
+    ps.push_back("antivirus");
+  }
+
+  if (provider & WSC_SECURITY_PROVIDER_ANTISPYWARE) {
+    ps.push_back("antispyware");
+  }
+
+  if (provider & WSC_SECURITY_PROVIDER_INTERNET_SETTINGS) {
+    ps.push_back("settings");
+  }
+
+  if (provider & WSC_SECURITY_PROVIDER_USER_ACCOUNT_CONTROL) {
+    ps.push_back("uac");
+  }
+
+  if (provider & WSC_SECURITY_PROVIDER_SERVICE) {
+    ps.push_back("service");
+  }
+
+  if (ps.empty()) {
+    s += "(doesn't provide anything)";
+  } else {
+    s += "(" + ps.join("|") + ")";
+  }
+
+  if (scanner & 0x10) {
+    s += ", active";
+  } else {
+    s += ", inactive";
+  }
+
+  if (definitions == 0) {
+    s += ", definitions up to date";
+  } else {
+    s += ", definitions outdated";
+  }
+
+  return s;
 }
 
 } // namespace env

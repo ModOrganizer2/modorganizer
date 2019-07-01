@@ -241,6 +241,21 @@ private:
 };
 
 
+class SecurityFeature
+{
+public:
+  SecurityFeature(QString name, DWORD state);
+
+  const QString& name() const;
+
+  QString toString() const;
+
+private:
+  QString m_name;
+  DWORD m_state;
+};
+
+
 // represents the process's environment
 //
 class Environment
@@ -256,11 +271,17 @@ public:
   //
   const WindowsInfo& windowsInfo() const;
 
+  // information about the installed antivirus
+  //
+  const std::vector<SecurityFeature>& securityFeatures() const;
+
 private:
   std::vector<Module> m_modules;
   WindowsInfo m_windows;
+  std::vector<SecurityFeature> m_security;
 
   void getLoadedModules();
+  void getSecurityFeatures();
 };
 
 } // namespace env
