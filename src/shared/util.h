@@ -241,18 +241,25 @@ private:
 };
 
 
-class SecurityFeature
+class SecurityProduct
 {
 public:
-  SecurityFeature(QString name, DWORD state);
+  SecurityProduct(
+    QString name, int provider,
+    bool active, bool upToDate);
 
   const QString& name() const;
+  int provider() const;
+  bool active() const;
+  bool upToDate() const;
 
   QString toString() const;
 
 private:
   QString m_name;
-  DWORD m_state;
+  int m_provider;
+  bool m_active;
+  bool m_upToDate;
 };
 
 
@@ -271,17 +278,20 @@ public:
   //
   const WindowsInfo& windowsInfo() const;
 
-  // information about the installed antivirus
+  // information about the installed security products
   //
-  const std::vector<SecurityFeature>& securityFeatures() const;
+  const std::vector<SecurityProduct>& securityProducts() const;
 
 private:
   std::vector<Module> m_modules;
   WindowsInfo m_windows;
-  std::vector<SecurityFeature> m_security;
+  std::vector<SecurityProduct> m_security;
 
-  void getLoadedModules();
-  void getSecurityFeatures();
+  std::vector<Module> getLoadedModules() const;
+  std::vector<SecurityProduct> getSecurityProducts() const;
+
+  std::vector<SecurityProduct> getSecurityProductsFromWMI() const;
+  std::optional<SecurityProduct> getWindowsFirewall() const;
 };
 
 

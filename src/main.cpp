@@ -493,9 +493,9 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       qWarning() << "MO seems to be running in compatibility mode";
     }
 
-    qDebug().nospace().noquote() << "security features:";
-    for (const auto& sf : env.securityFeatures()) {
-      qDebug().nospace().noquote() << " . " << sf.toString();
+    qDebug().nospace().noquote() << "security products:";
+    for (const auto& sp : env.securityProducts()) {
+      qDebug().nospace().noquote() << " . " << sp.toString();
     }
 
     qDebug() << "modules loaded in process:";

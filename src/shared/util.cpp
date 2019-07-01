@@ -35,6 +35,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <comdef.h>
 #include <Wbemidl.h>
 #include <wscapi.h>
+#include <netfw.h>
+
 #pragma comment(lib, "Wbemuuid.lib")
 
 using MOBase::formatSystemMessage;
@@ -305,6 +307,9 @@ struct COMReleaser
   }
 };
 
+template <class T>
+using COMPtr = std::unique_ptr<T, COMReleaser>;
+
 
 class WMI
 {
@@ -332,17 +337,26 @@ public:
     }
 
     auto enumerator = getEnumerator(q);
+    if (!enumerator) {
+      return;
+    }
 
     for (;;)
     {
-      std::unique_ptr<IWbemClassObject, COMReleaser> object;
+      COMPtr<IWbemClassObject> object;
 
       {
         IWbemClassObject* rawObject = nullptr;
         ULONG count = 0;
         auto ret = enumerator->Next(WBEM_INFINITE, 1, &rawObject, &count);
 
-        if (count == 0) {
+        if (count == 0 || !rawObject) {
+          break;
+        }
+
+        if (FAILED(ret)) {
+          qCritical()
+            << "enumerator->next() failed, " << formatSystemMessageQ(ret);
           break;
         }
 
@@ -353,33 +367,9 @@ public:
     }
   }
 
-  std::unique_ptr<IEnumWbemClassObject, COMReleaser> getEnumerator(
-    const std::string& query)
-  {
-    IEnumWbemClassObject* rawEnumerator = NULL;
-
-    auto ret = m_service->ExecQuery(
-      bstr_t("WQL"),
-      bstr_t(query.c_str()),
-      WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
-      NULL,
-      &rawEnumerator);
-
-    if (FAILED(ret))
-    {
-      qCritical()
-        << "query '" << QString::fromStdString(query) << "' failed, "
-        << formatSystemMessageQ(ret);
-
-      return {};
-    }
-
-    return std::unique_ptr<IEnumWbemClassObject, COMReleaser>(rawEnumerator);
-  }
-
 private:
-  std::unique_ptr<IWbemLocator, COMReleaser> m_locator;
-  std::unique_ptr<IWbemServices, COMReleaser> m_service;
+  COMPtr<IWbemLocator> m_locator;
+  COMPtr<IWbemServices> m_service;
 
   void createLocator()
   {
@@ -389,7 +379,7 @@ private:
       CLSID_WbemLocator, nullptr, CLSCTX_INPROC_SERVER,
       IID_IWbemLocator, &rawLocator);
 
-    if (FAILED(ret)) {
+    if (FAILED(ret) || !rawLocator) {
       qCritical()
         << "CoCreateInstance for WbemLocator failed, "
         << formatSystemMessageQ(ret);
@@ -409,7 +399,7 @@ private:
       nullptr, nullptr, nullptr, 0, nullptr, nullptr,
       &rawService);
 
-    if (FAILED(res)) {
+    if (FAILED(res) || !rawService) {
       qCritical()
         << "locator->ConnectServer() failed for namespace "
         << "'" << QString::fromStdString(ns) << "', "
@@ -435,13 +425,37 @@ private:
       throw failed();
     }
   }
+
+  COMPtr<IEnumWbemClassObject> getEnumerator(
+    const std::string& query)
+  {
+    IEnumWbemClassObject* rawEnumerator = NULL;
+
+    auto ret = m_service->ExecQuery(
+      bstr_t("WQL"),
+      bstr_t(query.c_str()),
+      WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+      NULL,
+      &rawEnumerator);
+
+    if (FAILED(ret) || !rawEnumerator)
+    {
+      qCritical()
+        << "query '" << QString::fromStdString(query) << "' failed, "
+        << formatSystemMessageQ(ret);
+
+      return {};
+    }
+
+    return COMPtr<IEnumWbemClassObject>(rawEnumerator);
+  }
 };
 
 
 Environment::Environment()
 {
-  getLoadedModules();
-  getSecurityFeatures();
+  m_modules = getLoadedModules();
+  m_security = getSecurityProducts();
 }
 
 const std::vector<Module>& Environment::loadedModules()
@@ -454,12 +468,12 @@ const WindowsInfo& Environment::windowsInfo() const
   return m_windows;
 }
 
-const std::vector<SecurityFeature>& Environment::securityFeatures() const
+const std::vector<SecurityProduct>& Environment::securityProducts() const
 {
   return m_security;
 }
 
-void Environment::getLoadedModules()
+std::vector<Module> Environment::getLoadedModules() const
 {
   HandlePtr snapshot(CreateToolhelp32Snapshot(
     TH32CS_SNAPMODULE32 | TH32CS_SNAPMODULE, GetCurrentProcessId()));
@@ -472,7 +486,7 @@ void Environment::getLoadedModules()
       << "CreateToolhelp32Snapshot() failed, "
       << formatSystemMessageQ(e);
 
-    return;
+    return {};
   }
 
   MODULEENTRY32 me = {};
@@ -486,54 +500,88 @@ void Environment::getLoadedModules()
     qCritical().nospace().noquote()
       << "Module32First() failed, " << formatSystemMessageQ(e);
 
-    return;
+    return {};
   }
+
+  std::vector<Module> v;
 
   for (;;)
   {
     const auto path = QString::fromWCharArray(me.szExePath);
-
-    m_modules.push_back(Module(path, me.modBaseSize));
+    if (!path.isEmpty()) {
+      v.push_back(Module(path, me.modBaseSize));
+    }
 
     // next module
     if (!Module32Next(snapshot.get(), &me)) {
       const auto e = GetLastError();
 
-      if (e == ERROR_NO_MORE_FILES) {
-        // not an error
-        break;
-      }
-
+      // no more modules is not an error
+      if (e != ERROR_NO_MORE_FILES) {
        qCritical().nospace().noquote()
         << "Module32Next() failed, " << formatSystemMessageQ(e);
+      }
 
       break;
     }
   }
 
   // sorting by display name
-  std::sort(m_modules.begin(), m_modules.end(), [](auto&& a, auto&& b) {
+  std::sort(v.begin(), v.end(), [](auto&& a, auto&& b) {
     return (a.displayPath().compare(b.displayPath(), Qt::CaseInsensitive) < 0);
   });
+
+  return v;
 }
 
-void Environment::getSecurityFeatures()
+std::vector<SecurityProduct> Environment::getSecurityProducts() const
 {
-  WMI wmi("root\\SecurityCenter2");
-  std::map<QUuid, SecurityFeature> map;
+  std::vector<SecurityProduct> v;
+
+  {
+    auto fromWMI = getSecurityProductsFromWMI();
+    v.insert(
+      v.end(),
+      std::make_move_iterator(fromWMI.begin()),
+      std::make_move_iterator(fromWMI.end()));
+  }
+
+  if (auto p=getWindowsFirewall()) {
+    v.push_back(std::move(*p));
+  }
+
+  return v;
+}
+
+std::vector<SecurityProduct> Environment::getSecurityProductsFromWMI() const
+{
+  // some products may be present in multiple queries, such as a product marked
+  // as both antivirus and antispyware, but they'll have the same GUID, so use
+  // that to avoid duplicating entries
+  std::map<QUuid, SecurityProduct> map;
 
   auto handleProduct = [&](auto* o) {
     VARIANT prop;
 
+    // display name
     auto ret = o->Get(L"displayName", 0, &prop, 0, 0);
     if (FAILED(ret)) {
-      qCritical() << "failed to get displayName, " << formatSystemMessageQ(ret);
+      qCritical()
+        << "failed to get displayName, "
+        << formatSystemMessageQ(ret);
+
+      return;
+    }
+
+    if (prop.vt != VT_BSTR) {
+      qCritical() << "displayName is a " << prop.vt << ", not a bstr";
       return;
     }
 
     const std::wstring name = prop.bstrVal;
     VariantClear(&prop);
 
+    // product state
     ret = o->Get(L"productState", 0, &prop, 0, 0);
     if (FAILED(ret)) {
       qCritical()
@@ -543,9 +591,21 @@ void Environment::getSecurityFeatures()
       return;
     }
 
-    const DWORD state = prop.ulVal;
+    if (prop.vt != VT_UI4 && prop.vt != VT_I4) {
+      qCritical() << "productState is a " << prop.vt << ", is not a VT_UI4";
+      return;
+    }
+
+    DWORD state = 0;
+    if (prop.vt == VT_I4) {
+      state = prop.lVal;
+    } else {
+      state = prop.ulVal;
+    }
+
     VariantClear(&prop);
 
+    // guid
     ret = o->Get(L"instanceGuid", 0, &prop, 0, 0);
     if (FAILED(ret)) {
       qCritical()
@@ -555,25 +615,94 @@ void Environment::getSecurityFeatures()
       return;
     }
 
+    if (prop.vt != VT_BSTR) {
+      qCritical() << "instanceGuid is a " << prop.vt << ", is not a bstr";
+      return;
+    }
+
     const QUuid guid(QString::fromWCharArray(prop.bstrVal));
     VariantClear(&prop);
 
+    const auto provider = static_cast<int>((state >> 16) & 0xff);
+    const auto scanner = (state >> 8) & 0xff;
+    const auto definitions = state & 0xff;
 
-    auto itor = map.find(guid);
+    const bool active = ((scanner & 0x10) != 0);
+    const bool upToDate = (definitions == 0);
 
-    if (itor == map.end()) {
-      map.insert({
-        guid, SecurityFeature(QString::fromStdWString(name), state)});
-    }
+    map.insert({
+      guid,
+      {QString::fromStdWString(name), provider, active, upToDate}});
   };
 
-  wmi.query("select * from AntivirusProduct", handleProduct);
-  wmi.query("select * from FirewallProduct", handleProduct);
-  wmi.query("select * from AntiSpywareProduct", handleProduct);
+  {
+    WMI wmi("root\\SecurityCenter2");
+    wmi.query("select * from AntivirusProduct", handleProduct);
+    wmi.query("select * from FirewallProduct", handleProduct);
+    wmi.query("select * from AntiSpywareProduct", handleProduct);
+  }
+
+  {
+    WMI wmi("root\\SecurityCenter");
+    wmi.query("select * from AntivirusProduct", handleProduct);
+    wmi.query("select * from FirewallProduct", handleProduct);
+    wmi.query("select * from AntiSpywareProduct", handleProduct);
+  }
+
+  std::vector<SecurityProduct> v;
 
   for (auto&& p : map) {
-    m_security.push_back(p.second);
+    v.push_back(p.second);
   }
+
+  return v;
+}
+
+std::optional<SecurityProduct> Environment::getWindowsFirewall() const
+{
+  HRESULT hr = 0;
+
+  COMPtr<INetFwPolicy2> policy;
+
+  {
+    void* rawPolicy = nullptr;
+
+    hr = CoCreateInstance(
+      __uuidof(NetFwPolicy2), nullptr, CLSCTX_INPROC_SERVER,
+      __uuidof(INetFwPolicy2), &rawPolicy);
+
+    if (FAILED(hr) || !rawPolicy) {
+      qCritical()
+        << "CoCreateInstance for NetFwPolicy2 failed, "
+        << formatSystemMessage(hr);
+
+      return {};
+    }
+
+    policy.reset(static_cast<INetFwPolicy2*>(rawPolicy));
+  }
+
+  VARIANT_BOOL enabledVariant;
+
+  if (policy) {
+    hr = policy->get_FirewallEnabled(NET_FW_PROFILE2_PUBLIC, &enabledVariant);
+    if (FAILED(hr))
+    {
+      qCritical()
+        << "get_FirewallEnabled failed, "
+        << formatSystemMessage(hr);
+
+      return {};
+    }
+  }
+
+  const auto enabled = (enabledVariant != VARIANT_FALSE);
+  if (!enabled) {
+    return {};
+  }
+
+  return SecurityProduct(
+    "Windows Firewall", WSC_SECURITY_PROVIDER_FIREWALL, true, true);
 }
 
 
@@ -1123,52 +1252,67 @@ std::optional<bool> WindowsInfo::getElevated() const
 }
 
 
-SecurityFeature::SecurityFeature(QString name, DWORD state)
-  : m_name(std::move(name)), m_state(state)
+SecurityProduct::SecurityProduct(
+  QString name, int provider,
+  bool active, bool upToDate) :
+    m_name(std::move(name)), m_provider(provider),
+    m_active(active), m_upToDate(upToDate)
 {
 }
 
-const QString& SecurityFeature::name() const
+const QString& SecurityProduct::name() const
 {
   return m_name;
 }
 
-QString SecurityFeature::toString() const
+int SecurityProduct::provider() const
+{
+  return m_provider;
+}
+
+bool SecurityProduct::active() const
+{
+  return m_active;
+}
+
+bool SecurityProduct::upToDate() const
+{
+  return m_upToDate;
+}
+
+QString SecurityProduct::toString() const
 {
   QString s;
 
   s += m_name + " ";
 
-  const auto provider = (m_state >> 16) & 0xff;
-  const auto scanner = (m_state >> 8) & 0xff;
-  const auto definitions = m_state & 0xff;
 
   QStringList ps;
-  if (provider & WSC_SECURITY_PROVIDER_FIREWALL) {
+  if (m_provider & WSC_SECURITY_PROVIDER_FIREWALL) {
     ps.push_back("firewall");
   }
 
-  if (provider & WSC_SECURITY_PROVIDER_AUTOUPDATE_SETTINGS) {
+  if (m_provider & WSC_SECURITY_PROVIDER_AUTOUPDATE_SETTINGS) {
     ps.push_back("autoupdate");
   }
 
-  if (provider & WSC_SECURITY_PROVIDER_ANTIVIRUS) {
+  if (m_provider & WSC_SECURITY_PROVIDER_ANTIVIRUS) {
     ps.push_back("antivirus");
   }
 
-  if (provider & WSC_SECURITY_PROVIDER_ANTISPYWARE) {
+  if (m_provider & WSC_SECURITY_PROVIDER_ANTISPYWARE) {
     ps.push_back("antispyware");
   }
 
-  if (provider & WSC_SECURITY_PROVIDER_INTERNET_SETTINGS) {
+  if (m_provider & WSC_SECURITY_PROVIDER_INTERNET_SETTINGS) {
     ps.push_back("settings");
   }
 
-  if (provider & WSC_SECURITY_PROVIDER_USER_ACCOUNT_CONTROL) {
+  if (m_provider & WSC_SECURITY_PROVIDER_USER_ACCOUNT_CONTROL) {
     ps.push_back("uac");
   }
 
-  if (provider & WSC_SECURITY_PROVIDER_SERVICE) {
+  if (m_provider & WSC_SECURITY_PROVIDER_SERVICE) {
     ps.push_back("service");
   }
 
@@ -1178,15 +1322,13 @@ QString SecurityFeature::toString() const
     s += "(" + ps.join("|") + ")";
   }
 
-  if (scanner & 0x10) {
+  if (m_active) {
     s += ", active";
   } else {
     s += ", inactive";
   }
 
-  if (definitions == 0) {
-    s += ", definitions up to date";
-  } else {
+  if (!m_upToDate) {
     s += ", definitions outdated";
   }
 
