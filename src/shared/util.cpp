@@ -1205,11 +1205,16 @@ struct Process
   }
 };
 
+// returns the filename of the given process or the current one
+//
 std::wstring processFilename(HANDLE process=INVALID_HANDLE_VALUE)
 {
+  // double the buffer size 10 times
+  const int MaxTries = 10;
+
   DWORD bufferSize = MAX_PATH;
 
-  for (int tries=0; tries<10; ++tries)
+  for (int tries=0; tries<MaxTries; ++tries)
   {
     auto buffer = std::make_unique<wchar_t[]>(bufferSize + 1);
     std::fill(buffer.get(), buffer.get() + bufferSize + 1, 0);
@@ -1225,6 +1230,7 @@ std::wstring processFilename(HANDLE process=INVALID_HANDLE_VALUE)
     }
 
     if (writtenSize == 0) {
+      // hard failure
       const auto e = GetLastError();
       std::wcerr << formatSystemMessage(e) << L"\n";
       break;
@@ -1241,6 +1247,7 @@ std::wstring processFilename(HANDLE process=INVALID_HANDLE_VALUE)
     }
   }
 
+  // something failed or the path is way too long to make sense
 
   std::wstring what;
   if (process == INVALID_HANDLE_VALUE) {
@@ -1255,10 +1262,13 @@ std::wstring processFilename(HANDLE process=INVALID_HANDLE_VALUE)
 
 std::vector<DWORD> runningProcessesIds()
 {
+  // double the buffer size 10 times
+  const int MaxTries = 10;
+
   // initial size of 300 processes, unlikely to be more than that
   std::size_t size = 300;
 
-  for (int tries=0; tries<10; ++tries) {
+  for (int tries=0; tries<MaxTries; ++tries) {
     auto ids = std::make_unique<DWORD[]>(size);
     std::fill(ids.get(), ids.get() + size, 0);
 
@@ -1277,6 +1287,8 @@ std::vector<DWORD> runningProcessesIds()
     }
 
     if (bytesWritten == bytesGiven) {
+      // no way to distinguish between an exact fit and not enough space,
+      // just try again
       size *= 2;
       continue;
     }
@@ -1296,7 +1308,7 @@ std::vector<Process> runningProcesses()
 
   for (const auto& pid : pids) {
     if (pid == 0) {
-      // the idle process seems to be picked up by EnumProcesses()
+      // the idle process has pid 0 and seems to be picked up by EnumProcesses()
       continue;
     }
 
@@ -1307,7 +1319,8 @@ std::vector<Process> runningProcesses()
       const auto e = GetLastError();
 
       if (e != ERROR_ACCESS_DENIED) {
-        // don't log access denied, will happen a lot when not elevated
+        // don't log access denied, will happen a lot for system processes, even
+        // when elevated
         std::wcerr
           << L"failed to open process " << pid << L", "
           << formatSystemMessage(e) << L"\n";
@@ -1331,9 +1344,12 @@ DWORD findOtherPid()
 
   std::wclog << L"looking for the other process...\n";
 
+  // used to skip the current process below
   const auto thisPid = GetCurrentProcessId();
   std::wclog << L"this process id is " << thisPid << L"\n";
 
+  // getting the filename for this process, assumes the other process has the
+  // smae one
   auto filename = processFilename();
   if (filename.empty()) {
     std::wcerr
@@ -1345,9 +1361,12 @@ DWORD findOtherPid()
     std::wclog << L"this process filename is " << filename << L"\n";
   }
 
+  // getting all running processes
   const auto processes = runningProcesses();
   std::wclog << L"there are " << processes.size() << L" processes running\n";
 
+  // going through processes, trying to find one with the same name and a
+  // different pid than this process has
   for (const auto& p : processes) {
     if (p.filename == filename) {
       if (p.pid != thisPid) {
@@ -1363,7 +1382,6 @@ DWORD findOtherPid()
 
   return 0;
 }
-
 
 std::wstring tempDir()
 {
@@ -1386,9 +1404,15 @@ std::wstring tempDir()
 
 HandlePtr tempFile(const std::wstring dir)
 {
+  // maximum tries of incrementing the counter
+  const int MaxTries = 100;
+
+  // UTC time and date will be in the filename
   const auto now = std::time(0);
   const auto tm = std::gmtime(&now);
 
+  // "ModOrganizer-YYYYMMDDThhmmss.dmp", with a possible "-i" appended, where
+  // i can go until MaxTries
   std::wostringstream oss;
   oss
     << L"ModOrganizer-"
@@ -1402,8 +1426,10 @@ HandlePtr tempFile(const std::wstring dir)
   const std::wstring prefix = oss.str();
   const std::wstring ext = L".dmp";
 
+  // first path to try, without counter in it
   std::wstring path = dir + L"\\" + prefix + ext;
-  for (int i=0; i<100; ++i) {
+
+  for (int i=0; i<MaxTries; ++i) {
     std::wclog << L"trying file '" << path << L"'\n";
 
     HandlePtr h (CreateFileW(
@@ -1411,10 +1437,12 @@ HandlePtr tempFile(const std::wstring dir)
       CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr));
 
     if (h.get() != INVALID_HANDLE_VALUE) {
+      // worked
       return h;
     }
 
     const auto e = GetLastError();
+
     if (e != ERROR_FILE_EXISTS) {
       // probably no write access
       std::wcerr
@@ -1423,6 +1451,7 @@ HandlePtr tempFile(const std::wstring dir)
       return {};
     }
 
+    // try again with "-i"
     path = dir + L"\\" + prefix + L"-" + std::to_wstring(i + 1) + ext;
   }
 
@@ -1443,16 +1472,13 @@ HandlePtr dumpFile()
   // try the temp directory
   const auto dir = tempDir();
 
-  if (dir.empty()) {
-     std::wclog << L"can't get the temp directory\n";
-  } else {
+  if (!dir.empty()) {
     h = tempFile(dir.c_str());
     if (h.get() != INVALID_HANDLE_VALUE) {
       return h;
     }
   }
 
-  std::wcerr << L"nowhere to write the dump file\n";
   return {};
 }
 
@@ -1462,6 +1488,7 @@ bool createMiniDump(HANDLE process, CoreDumpTypes type)
 
   const HandlePtr file = dumpFile();
   if (!file) {
+    std::wcerr << L"nowhere to write the dump file\n";
     return false;
   }
 
