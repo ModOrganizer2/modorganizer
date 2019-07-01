@@ -506,7 +506,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
                <height>100</height>
               </size>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_11" stretch="0,0,0,0,0,0,0">
+             <layout class="QVBoxLayout" name="verticalLayout_11" stretch="0,1,0,1,0,1,0">
               <property name="leftMargin">
                <number>0</number>
               </property>
