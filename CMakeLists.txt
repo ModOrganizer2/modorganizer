@@ -29,3 +29,5 @@ if(NOT EXISTS ${vcxproj_user_file})
 			  "</PropertyGroup>\n"
 			"</Project>\n")
 endif()
+
+INSTALL(FILES dump_running_process.bat DESTINATION bin)

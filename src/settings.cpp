@@ -82,37 +82,6 @@ private:
 };
 
 
-QString formatSystemMessage(DWORD id)
-{
-  wchar_t* message = nullptr;
-
-  const auto ret = FormatMessageW(
-    FORMAT_MESSAGE_ALLOCATE_BUFFER |
-    FORMAT_MESSAGE_FROM_SYSTEM |
-    FORMAT_MESSAGE_IGNORE_INSERTS,
-    NULL,
-    id,
-    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-    reinterpret_cast<LPWSTR>(&message),
-    0, NULL);
-
-  QString s;
-  const QString idString = QString("0x%1").arg(id, 0, 16);
-
-  if (ret == 0 || !message) {
-    s = idString;
-  } else {
-    s = QString("%1 (%2)")
-      .arg(QString::fromStdWString(message).trimmed())
-      .arg(idString);
-  }
-
-  LocalFree(message);
-
-  return s;
-}
-
-
 Settings *Settings::s_Instance = nullptr;
 
 
@@ -253,7 +222,7 @@ QString Settings::deObfuscate(const QString key)
     if (e != ERROR_NOT_FOUND) {
       qCritical().nospace()
         << "Retrieving encrypted data failed: "
-        << formatSystemMessage(e);
+        << formatSystemMessageQ(e);
     }
   }
   delete[] keyData;
@@ -398,7 +367,11 @@ bool Settings::setNexusApiKey(const QString& apiKey)
 {
   if (!obfuscate("APIKEY", apiKey)) {
     const auto e = GetLastError();
-    qCritical().nospace() << "Storing API key failed: " << formatSystemMessage(e);
+
+    qCritical().nospace()
+      << "Storing API key failed: "
+      << formatSystemMessageQ(e);
+
     return false;
   }
 
@@ -516,7 +489,7 @@ void Settings::setSteamLogin(QString username, QString password)
     const auto e = GetLastError();
     qCritical().nospace()
       << "Storing or deleting password failed: "
-      << formatSystemMessage(e);
+      << formatSystemMessageQ(e);
   }
 }
 

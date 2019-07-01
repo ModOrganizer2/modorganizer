@@ -371,8 +371,25 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
       } else if(possibleGames.count() == 1) {
         return selectGame(settings, gameDir, possibleGames[0]);
       } else {
-        reportError(gameConfigured ? QObject::tr("%1 not identified in \"%2\". The directory is required to contain the game binary.").arg(gameName).arg(gamePath)
-                                   : QObject::tr("No game identified in \"%1\". The directory is required to contain the game binary.").arg(gamePath));
+        if (gameConfigured) {
+          reportError(QObject::tr("%1 not identified in \"%2\". The directory is required to contain the game binary.").arg(gameName).arg(gamePath));
+        } else {
+          QString supportedGames;
+
+          for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
+            supportedGames += "<li>" + game->gameName() + "</li>";
+          }
+
+          QString text = QObject::tr(
+            "No game identified in \"%1\". The directory is required to "
+            "contain the game binary.<br><br>"
+            "<b>These are the games supported by Mod Organizer:</b>"
+            "<ul>%2</ul>")
+            .arg(gamePath)
+            .arg(supportedGames);
+
+          reportError(text);
+        }
       }
     }
   }
@@ -411,27 +428,39 @@ void setupPath()
   ::SetEnvironmentVariableW(L"PATH", newPath.c_str());
 }
 
-static void preloadSsl()
+void preloadDll(const QString& filename)
 {
-  QString appPath = QDir::toNativeSeparators(QCoreApplication::applicationDirPath());
-  if (GetModuleHandleA("libeay32.dll"))
-    qWarning("libeay32.dll already loaded?!");
-  else {
-    QString libeay32 = appPath + "\\libeay32.dll";
-    if (!QFile::exists(libeay32))
-      qWarning("libeay32.dll not found: %s", qUtf8Printable(libeay32));
-    else if (!LoadLibraryW(libeay32.toStdWString().c_str()))
-      qWarning("failed to load: %s, %d", qUtf8Printable(libeay32), GetLastError());
+  qDebug().nospace() << "preloading " << filename;
+
+  if (!GetModuleHandleW(filename.toStdWString().c_str())) {
+    // already loaded, this can happen when "restarting" MO by switching
+    // instances, for example
+    return;
   }
-  if (GetModuleHandleA("ssleay32.dll"))
-    qWarning("ssleay32.dll already loaded?!");
-  else {
-    QString ssleay32 = appPath + "\\ssleay32.dll";
-    if (!QFile::exists(ssleay32))
-      qWarning("ssleay32.dll not found: %s", qUtf8Printable(ssleay32));
-    else if (!LoadLibraryW(ssleay32.toStdWString().c_str()))
-      qWarning("failed to load: %s, %d", qUtf8Printable(ssleay32), GetLastError());
+
+  const auto appPath = QDir::toNativeSeparators(
+    QCoreApplication::applicationDirPath());
+
+  const auto dllPath = appPath + "\\" + filename;
+
+  if (!QFile::exists(dllPath)) {
+    qWarning().nospace() << dllPath << "not found";
+    return;
   }
+
+  if (!LoadLibraryW(dllPath.toStdWString().c_str())) {
+    const auto e = GetLastError();
+
+    qWarning().nospace()
+      << "failed to load " << dllPath << ": "
+      << formatSystemMessage(e);
+  }
+}
+
+void preloadSsl()
+{
+  preloadDll("libeay32.dll");
+  preloadDll("ssleay32.dll");
 }
 
 static QString getVersionDisplayString()
@@ -443,15 +472,9 @@ int runApplication(MOApplication &application, SingleInstance &instance,
                    const QString &splashPath)
 {
 
-  qDebug("Starting Mod Organizer version %s revision %s", qUtf8Printable(getVersionDisplayString()),
-#if defined(HGID)
-    HGID
-#elif defined(GITID)
-    GITID
-#else
-    "unknown"
-#endif
-  );
+  qDebug().nospace()
+    << "Starting Mod Organizer version "
+    << getVersionDisplayString() << " revision " << GITID;
 
 #if !defined(QT_NO_SSL)
   preloadSsl();
@@ -459,6 +482,27 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 #else
   qDebug("non-ssl build");
 #endif
+
+  {
+    env::Environment env;
+
+    qDebug().nospace().noquote()
+      << "windows: " << env.windowsInfo().toString();
+
+    if (env.windowsInfo().compatibilityMode()) {
+      qWarning() << "MO seems to be running in compatibility mode";
+    }
+
+    qDebug().nospace().noquote() << "security products:";
+    for (const auto& sp : env.securityProducts()) {
+      qDebug().nospace().noquote() << " . " << sp.toString();
+    }
+
+    qDebug() << "modules loaded in process:";
+    for (const auto& m : env.loadedModules()) {
+      qDebug().nospace().noquote() << " . " << m.toString();
+    }
+  }
 
   QString dataPath = application.property("dataPath").toString();
   qDebug("data path: %s", qUtf8Printable(dataPath));
@@ -653,9 +697,52 @@ int runApplication(MOApplication &application, SingleInstance &instance,
   }
 }
 
+int doCoreDump(env::CoreDumpTypes type)
+{
+  // open a console
+  AllocConsole();
+
+  // redirect stdin, stdout and stderr to it
+  FILE* in=nullptr;
+  FILE* out=nullptr;
+  FILE* err=nullptr;
+  freopen_s(&in, "CONIN$", "r", stdin);
+  freopen_s(&out, "CONOUT$", "w", stdout);
+  freopen_s(&err, "CONOUT$", "w", stderr);
+
+  // dump
+  const auto b = env::coredumpOther(type);
+  if (!b) {
+    std::wcerr << L"\n>>>> a minidump file was not written\n\n";
+  }
+
+  std::wcerr << L"Press enter to continue...";
+  std::wcin.get();
+
+  // close redirected handles
+  std::fclose(err);
+  std::fclose(out);
+  std::fclose(in);
+
+  // close console
+  FreeConsole();
+
+  return (b ? 0 : 1);
+}
 
 int main(int argc, char *argv[])
 {
+  // handle --crashdump first
+  for (int i=1; i<argc; ++i) {
+    if (std::strcmp(argv[i], "--crashdump") == 0) {
+      return doCoreDump(env::CoreDumpTypes::Mini);
+    } else if (std::strcmp(argv[i], "--crashdump-data") == 0) {
+      return doCoreDump(env::CoreDumpTypes::Data);
+    } else if (std::strcmp(argv[i], "--crashdump-full") == 0) {
+      return doCoreDump(env::CoreDumpTypes::Full);
+    }
+  }
+
   //Make sure the configured temp folder exists
   QDir tempDir = QDir::temp();
   if (!tempDir.exists())
