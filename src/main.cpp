@@ -371,8 +371,25 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
       } else if(possibleGames.count() == 1) {
         return selectGame(settings, gameDir, possibleGames[0]);
       } else {
-        reportError(gameConfigured ? QObject::tr("%1 not identified in \"%2\". The directory is required to contain the game binary.").arg(gameName).arg(gamePath)
-                                   : QObject::tr("No game identified in \"%1\". The directory is required to contain the game binary.").arg(gamePath));
+        if (gameConfigured) {
+          reportError(QObject::tr("%1 not identified in \"%2\". The directory is required to contain the game binary.").arg(gameName).arg(gamePath));
+        } else {
+          QString supportedGames;
+
+          for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
+            supportedGames += "<li>" + game->gameName() + "</li>";
+          }
+
+          QString text = QObject::tr(
+            "No game identified in \"%1\". The directory is required to "
+            "contain the game binary.<br><br>"
+            "<b>These are the games supported by Mod Organizer:</b>"
+            "<ul>%2</ul>")
+            .arg(gamePath)
+            .arg(supportedGames);
+
+          reportError(text);
+        }
       }
     }
   }
