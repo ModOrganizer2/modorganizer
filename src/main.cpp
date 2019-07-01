@@ -485,8 +485,6 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     for (const auto& m : env.loadedModules()) {
       qDebug().nospace().noquote() << " . " << m.toString();
     }
-
-    return 0;
   }
 
   QString dataPath = application.property("dataPath").toString();
@@ -682,9 +680,52 @@ int runApplication(MOApplication &application, SingleInstance &instance,
   }
 }
 
+int doCoreDump(env::CoreDumpTypes type)
+{
+  // open a console
+  AllocConsole();
+
+  // redirect stdin, stdout and stderr to it
+  FILE* in=nullptr;
+  FILE* out=nullptr;
+  FILE* err=nullptr;
+  freopen_s(&in, "CONIN$", "r", stdin);
+  freopen_s(&out, "CONOUT$", "w", stdout);
+  freopen_s(&err, "CONOUT$", "w", stderr);
+
+  // dump
+  const auto b = env::coredumpOther(type);
+  if (!b) {
+    std::wcerr << L"\n>>>> a minidump file was not written\n\n";
+  }
+
+  std::wcerr << L"Press enter to continue...";
+  std::wcin.get();
+
+  // close redirected handles
+  std::fclose(err);
+  std::fclose(out);
+  std::fclose(in);
+
+  // close console
+  FreeConsole();
+
+  return (b ? 0 : 1);
+}
 
 int main(int argc, char *argv[])
 {
+  // handle --crashdump first
+  for (int i=1; i<argc; ++i) {
+    if (std::strcmp(argv[i], "--crashdump") == 0) {
+      return doCoreDump(env::CoreDumpTypes::Mini);
+    } else if (std::strcmp(argv[i], "--crashdump-data") == 0) {
+      return doCoreDump(env::CoreDumpTypes::Data);
+    } else if (std::strcmp(argv[i], "--crashdump-full") == 0) {
+      return doCoreDump(env::CoreDumpTypes::Full);
+    }
+  }
+
   //Make sure the configured temp folder exists
   QDir tempDir = QDir::temp();
   if (!tempDir.exists())

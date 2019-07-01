@@ -25,8 +25,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <sstream>
 #include <locale>
 #include <algorithm>
-#include <DbgHelp.h>
 #include <set>
+#include <filesystem>
+
+#include <DbgHelp.h>
 #include <boost/scoped_array.hpp>
 #include <QApplication>
 
@@ -36,6 +38,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #pragma comment(lib, "Wbemuuid.lib")
 
 using MOBase::formatSystemMessage;
+using MOBase::formatSystemMessageQ;
+namespace fs = std::filesystem;
 
 namespace MOShared {
 
@@ -276,6 +280,9 @@ struct HandleCloser
   }
 };
 
+using HandlePtr = std::unique_ptr<HANDLE, HandleCloser>;
+
+
 struct LibraryFreer
 {
   using pointer = HINSTANCE;
@@ -362,7 +369,7 @@ public:
     {
       qCritical()
         << "query '" << QString::fromStdString(query) << "' failed, "
-        << formatSystemMessage(ret);
+        << formatSystemMessageQ(ret);
 
       return {};
     }
@@ -385,7 +392,7 @@ private:
     if (FAILED(ret)) {
       qCritical()
         << "CoCreateInstance for WbemLocator failed, "
-        << formatSystemMessage(ret);
+        << formatSystemMessageQ(ret);
 
       throw failed();
     }
@@ -406,7 +413,7 @@ private:
       qCritical()
         << "locator->ConnectServer() failed for namespace "
         << "'" << QString::fromStdString(ns) << "', "
-        << formatSystemMessage(res);
+        << formatSystemMessageQ(res);
 
       throw failed();
     }
@@ -423,7 +430,7 @@ private:
     if (FAILED(ret))
     {
       qCritical()
-        << "CoSetProxyBlanket() failed, " << formatSystemMessage(ret);
+        << "CoSetProxyBlanket() failed, " << formatSystemMessageQ(ret);
 
       throw failed();
     }
@@ -454,7 +461,7 @@ const std::vector<SecurityFeature>& Environment::securityFeatures() const
 
 void Environment::getLoadedModules()
 {
-  std::unique_ptr<HANDLE, HandleCloser> snapshot(CreateToolhelp32Snapshot(
+  HandlePtr snapshot(CreateToolhelp32Snapshot(
     TH32CS_SNAPMODULE32 | TH32CS_SNAPMODULE, GetCurrentProcessId()));
 
   if (snapshot.get() == INVALID_HANDLE_VALUE)
@@ -463,7 +470,7 @@ void Environment::getLoadedModules()
 
     qCritical().nospace().noquote()
       << "CreateToolhelp32Snapshot() failed, "
-      << formatSystemMessage(e);
+      << formatSystemMessageQ(e);
 
     return;
   }
@@ -477,7 +484,7 @@ void Environment::getLoadedModules()
     const auto e = GetLastError();
 
     qCritical().nospace().noquote()
-      << "Module32First() failed, " << formatSystemMessage(e);
+      << "Module32First() failed, " << formatSystemMessageQ(e);
 
     return;
   }
@@ -498,7 +505,7 @@ void Environment::getLoadedModules()
       }
 
        qCritical().nospace().noquote()
-        << "Module32Next() failed, " << formatSystemMessage(e);
+        << "Module32Next() failed, " << formatSystemMessageQ(e);
 
       break;
     }
@@ -520,7 +527,7 @@ void Environment::getSecurityFeatures()
 
     auto ret = o->Get(L"displayName", 0, &prop, 0, 0);
     if (FAILED(ret)) {
-      qCritical() << "failed to get displayName, " << formatSystemMessage(ret);
+      qCritical() << "failed to get displayName, " << formatSystemMessageQ(ret);
       return;
     }
 
@@ -529,7 +536,10 @@ void Environment::getSecurityFeatures()
 
     ret = o->Get(L"productState", 0, &prop, 0, 0);
     if (FAILED(ret)) {
-      qCritical() << "failed to get productState, " << formatSystemMessage(ret);
+      qCritical()
+        << "failed to get productState, "
+        << formatSystemMessageQ(ret);
+
       return;
     }
 
@@ -538,7 +548,10 @@ void Environment::getSecurityFeatures()
 
     ret = o->Get(L"instanceGuid", 0, &prop, 0, 0);
     if (FAILED(ret)) {
-      qCritical() << "failed to get instanceGuid, " << formatSystemMessage(ret);
+      qCritical()
+        << "failed to get instanceGuid, "
+        << formatSystemMessageQ(ret);
+
       return;
     }
 
@@ -673,7 +686,7 @@ Module::FileInfo Module::getFileInfo() const
 
     qCritical().nospace().noquote()
       << "GetFileVersionInfoSizeW() failed on '" << m_path << "', "
-      << formatSystemMessage(e);
+      << formatSystemMessageQ(e);
 
     return {};
   }
@@ -686,7 +699,7 @@ Module::FileInfo Module::getFileInfo() const
 
     qCritical().nospace().noquote()
       << "GetFileVersionInfoW() failed on '" << m_path << "', "
-      << formatSystemMessage(e);
+      << formatSystemMessageQ(e);
 
     return {};
   }
@@ -804,7 +817,7 @@ QDateTime Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
     // time on the file
 
     // opening the file
-    std::unique_ptr<HANDLE, HandleCloser> h(CreateFileW(
+    HandlePtr h(CreateFileW(
       m_path.toStdWString().c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0));
 
@@ -813,7 +826,7 @@ QDateTime Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
 
       qCritical().nospace().noquote()
         << "can't open file '" << m_path << "' for timestamp, "
-        << formatSystemMessage(e);
+        << formatSystemMessageQ(e);
 
       return {};
     }
@@ -823,7 +836,7 @@ QDateTime Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
       const auto e = GetLastError();
       qCritical().nospace().noquote()
         << "can't get file time for '" << m_path << "', "
-        << formatSystemMessage(e);
+        << formatSystemMessageQ(e);
 
       return {};
     }
@@ -1075,7 +1088,7 @@ WindowsInfo::Release WindowsInfo::getRelease() const
 
 std::optional<bool> WindowsInfo::getElevated() const
 {
-  std::unique_ptr<HANDLE, HandleCloser> token;
+  HandlePtr token;
 
   {
     HANDLE rawToken = 0;
@@ -1085,7 +1098,7 @@ std::optional<bool> WindowsInfo::getElevated() const
 
       qCritical()
         << "while trying to check if process is elevated, "
-        << "OpenProcessToken() failed: " << formatSystemMessage(e);
+        << "OpenProcessToken() failed: " << formatSystemMessageQ(e);
 
       return {};
     }
@@ -1101,7 +1114,7 @@ std::optional<bool> WindowsInfo::getElevated() const
 
     qCritical()
       << "while trying to check if process is elevated, "
-      << "GetTokenInformation() failed: " << formatSystemMessage(e);
+      << "GetTokenInformation() failed: " << formatSystemMessageQ(e);
 
     return {};
   }
@@ -1178,6 +1191,345 @@ QString SecurityFeature::toString() const
   }
 
   return s;
+}
+
+
+struct Process
+{
+  std::wstring filename;
+  DWORD pid;
+
+  Process(std::wstring f, DWORD id)
+    : filename(std::move(f)), pid(id)
+  {
+  }
+};
+
+std::wstring processFilename(HANDLE process=INVALID_HANDLE_VALUE)
+{
+  DWORD bufferSize = MAX_PATH;
+
+  for (int tries=0; tries<10; ++tries)
+  {
+    auto buffer = std::make_unique<wchar_t[]>(bufferSize + 1);
+    std::fill(buffer.get(), buffer.get() + bufferSize + 1, 0);
+
+    DWORD writtenSize = 0;
+
+    if (process == INVALID_HANDLE_VALUE) {
+      // query this process
+      writtenSize = GetModuleFileNameW(0, buffer.get(), bufferSize);
+    } else {
+      // query another process
+      writtenSize = GetModuleBaseNameW(process, 0, buffer.get(), bufferSize);
+    }
+
+    if (writtenSize == 0) {
+      const auto e = GetLastError();
+      std::wcerr << formatSystemMessage(e) << L"\n";
+      break;
+    } else if (writtenSize >= bufferSize) {
+      // buffer is too small, try again
+      bufferSize *= 2;
+    } else {
+      // if GetModuleFileName() works, `writtenSize` does not include the null
+      // terminator
+      const std::wstring s(buffer.get(), writtenSize);
+      const fs::path path(s);
+
+      return path.filename().native();
+    }
+  }
+
+
+  std::wstring what;
+  if (process == INVALID_HANDLE_VALUE) {
+    what = L"the current process";
+  } else {
+    what = L"pid " + std::to_wstring(reinterpret_cast<std::uintptr_t>(process));
+  }
+
+  std::wcerr << L"failed to get filename for " << what << L"\n";
+  return {};
+}
+
+std::vector<DWORD> runningProcessesIds()
+{
+  // initial size of 300 processes, unlikely to be more than that
+  std::size_t size = 300;
+
+  for (int tries=0; tries<10; ++tries) {
+    auto ids = std::make_unique<DWORD[]>(size);
+    std::fill(ids.get(), ids.get() + size, 0);
+
+    DWORD bytesGiven = static_cast<DWORD>(size * sizeof(ids[0]));
+    DWORD bytesWritten = 0;
+
+    if (!EnumProcesses(ids.get(), bytesGiven, &bytesWritten))
+    {
+      const auto e = GetLastError();
+
+      std::wcerr
+        << L"failed to enumerate processes, "
+        << formatSystemMessage(e) << L"\n";
+
+      return {};
+    }
+
+    if (bytesWritten == bytesGiven) {
+      size *= 2;
+      continue;
+    }
+
+    const auto count = bytesWritten / sizeof(ids[0]);
+    return std::vector<DWORD>(ids.get(), ids.get() + count);
+  }
+
+  std::cerr << L"too many processes to enumerate";
+  return {};
+}
+
+std::vector<Process> runningProcesses()
+{
+  const auto pids = runningProcessesIds();
+  std::vector<Process> v;
+
+  for (const auto& pid : pids) {
+    if (pid == 0) {
+      // the idle process seems to be picked up by EnumProcesses()
+      continue;
+    }
+
+    HandlePtr h(OpenProcess(
+      PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid));
+
+    if (!h) {
+      const auto e = GetLastError();
+
+      if (e != ERROR_ACCESS_DENIED) {
+        // don't log access denied, will happen a lot when not elevated
+        std::wcerr
+          << L"failed to open process " << pid << L", "
+          << formatSystemMessage(e) << L"\n";
+      }
+
+      continue;
+    }
+
+    auto filename = processFilename(h.get());
+    if (!filename.empty()) {
+      v.emplace_back(std::move(filename), pid);
+    }
+  }
+
+  return v;
+}
+
+DWORD findOtherPid()
+{
+  const std::wstring defaultName = L"ModOrganizer.exe";
+
+  std::wclog << L"looking for the other process...\n";
+
+  const auto thisPid = GetCurrentProcessId();
+  std::wclog << L"this process id is " << thisPid << L"\n";
+
+  auto filename = processFilename();
+  if (filename.empty()) {
+    std::wcerr
+      << L"can't get current process filename, defaulting to "
+      << defaultName << L"\n";
+
+    filename = defaultName;
+  } else {
+    std::wclog << L"this process filename is " << filename << L"\n";
+  }
+
+  const auto processes = runningProcesses();
+  std::wclog << L"there are " << processes.size() << L" processes running\n";
+
+  for (const auto& p : processes) {
+    if (p.filename == filename) {
+      if (p.pid != thisPid) {
+        return p.pid;
+      }
+    }
+  }
+
+  std::wclog
+    << L"no process with this filename\n"
+    << L"MO may not be running, or it may be running as administrator\n"
+    << L"you can try running this again as administrator\n";
+
+  return 0;
+}
+
+
+std::wstring tempDir()
+{
+  const DWORD bufferSize = MAX_PATH + 1;
+  wchar_t buffer[bufferSize + 1] = {};
+
+  const auto written = GetTempPathW(bufferSize, buffer);
+  if (written == 0) {
+    const auto e = GetLastError();
+
+    std::wcerr
+      << L"failed to get temp path, " << formatSystemMessage(e) << L"\n";
+
+    return {};
+  }
+
+  // `written` does not include the null terminator
+  return std::wstring(buffer, buffer + written);
+}
+
+HandlePtr tempFile(const std::wstring dir)
+{
+  const auto now = std::time(0);
+  const auto tm = std::gmtime(&now);
+
+  std::wostringstream oss;
+  oss
+    << L"ModOrganizer-"
+    << std::setw(4) << (1900 + tm->tm_year)
+    << std::setw(2) << std::setfill(L'0') << (tm->tm_mon + 1)
+    << std::setw(2) << std::setfill(L'0') << tm->tm_mday << "T"
+    << std::setw(2) << std::setfill(L'0') << tm->tm_hour
+    << std::setw(2) << std::setfill(L'0') << tm->tm_min
+    << std::setw(2) << std::setfill(L'0') << tm->tm_sec;
+
+  const std::wstring prefix = oss.str();
+  const std::wstring ext = L".dmp";
+
+  std::wstring path = dir + L"\\" + prefix + ext;
+  for (int i=0; i<100; ++i) {
+    std::wclog << L"trying file '" << path << L"'\n";
+
+    HandlePtr h (CreateFileW(
+      path.c_str(), GENERIC_WRITE, 0, nullptr,
+      CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr));
+
+    if (h.get() != INVALID_HANDLE_VALUE) {
+      return h;
+    }
+
+    const auto e = GetLastError();
+    if (e != ERROR_FILE_EXISTS) {
+      // probably no write access
+      std::wcerr
+        << L"failed to create dump file, " << formatSystemMessage(e) << L"\n";
+
+      return {};
+    }
+
+    path = dir + L"\\" + prefix + L"-" + std::to_wstring(i + 1) + ext;
+  }
+
+  std::wcerr << L"can't create dump file, ran out of filenames\n";
+  return {};
+}
+
+HandlePtr dumpFile()
+{
+  // try the current directory
+  HandlePtr h = tempFile(L".");
+  if (h.get() != INVALID_HANDLE_VALUE) {
+    return h;
+  }
+
+  std::wclog << L"cannot write dump file in current directory\n";
+
+  // try the temp directory
+  const auto dir = tempDir();
+
+  if (dir.empty()) {
+     std::wclog << L"can't get the temp directory\n";
+  } else {
+    h = tempFile(dir.c_str());
+    if (h.get() != INVALID_HANDLE_VALUE) {
+      return h;
+    }
+  }
+
+  std::wcerr << L"nowhere to write the dump file\n";
+  return {};
+}
+
+bool createMiniDump(HANDLE process, CoreDumpTypes type)
+{
+  const DWORD pid = GetProcessId(process);
+
+  const HandlePtr file = dumpFile();
+  if (!file) {
+    return false;
+  }
+
+  auto flags = _MINIDUMP_TYPE(
+    MiniDumpNormal |
+    MiniDumpWithHandleData |
+    MiniDumpWithUnloadedModules |
+    MiniDumpWithProcessThreadData);
+
+  if (type == CoreDumpTypes::Data) {
+    std::wclog << L"writing minidump with data\n";
+    flags = _MINIDUMP_TYPE(flags | MiniDumpWithDataSegs);
+  } else if (type ==  CoreDumpTypes::Full) {
+    std::wclog << L"writing full minidump\n";
+    flags = _MINIDUMP_TYPE(flags | MiniDumpWithFullMemory);
+  } else {
+    std::wclog << L"writing mini minidump\n";
+  }
+
+  const auto ret = MiniDumpWriteDump(
+    process, pid, file.get(), flags, nullptr, nullptr, nullptr);
+
+  if (!ret) {
+    const auto e = GetLastError();
+
+    std::wcerr
+      << L"failed to write mini dump, " << formatSystemMessage(e) << L"\n";
+
+    return false;
+  }
+
+  std::wclog << L"minidump written correctly\n";
+  return true;
+}
+
+
+bool coredump(CoreDumpTypes type)
+{
+  std::wclog << L"creating minidump for the current process\n";
+  return createMiniDump(GetCurrentProcess(), type);
+}
+
+bool coredumpOther(CoreDumpTypes type)
+{
+  std::wclog << L"creating minidump for an running process\n";
+
+  const auto pid = findOtherPid();
+  if (pid == 0) {
+    std::wcerr << L"no other process found\n";
+    return false;
+  }
+
+  std::wclog << L"found other process with pid " << pid << L"\n";
+
+  HandlePtr handle(OpenProcess(
+    PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid));
+
+  if (!handle) {
+    const auto e = GetLastError();
+
+    std::wcerr
+      << L"failed to open process " << pid << L", "
+      << formatSystemMessage(e) << L"\n";
+
+    return false;
+  }
+
+  return createMiniDump(handle.get(), type);
 }
 
 } // namespace env

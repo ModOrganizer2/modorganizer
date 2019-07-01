@@ -284,6 +284,23 @@ private:
   void getSecurityFeatures();
 };
 
+
+enum class CoreDumpTypes
+{
+  Mini = 1,
+  Data,
+  Full
+};
+
+// creates a minidump file for the given process
+//
+bool coredump(CoreDumpTypes type);
+
+// finds another process with the same name as this one and creates a minidump
+// file for it
+//
+bool coredumpOther(CoreDumpTypes type);
+
 } // namespace env
 
 

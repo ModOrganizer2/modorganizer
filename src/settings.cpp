@@ -222,7 +222,7 @@ QString Settings::deObfuscate(const QString key)
     if (e != ERROR_NOT_FOUND) {
       qCritical().nospace()
         << "Retrieving encrypted data failed: "
-        << formatSystemMessage(e);
+        << formatSystemMessageQ(e);
     }
   }
   delete[] keyData;
@@ -367,7 +367,11 @@ bool Settings::setNexusApiKey(const QString& apiKey)
 {
   if (!obfuscate("APIKEY", apiKey)) {
     const auto e = GetLastError();
-    qCritical().nospace() << "Storing API key failed: " << formatSystemMessage(e);
+
+    qCritical().nospace()
+      << "Storing API key failed: "
+      << formatSystemMessageQ(e);
+
     return false;
   }
 
@@ -485,7 +489,7 @@ void Settings::setSteamLogin(QString username, QString password)
     const auto e = GetLastError();
     qCritical().nospace()
       << "Storing or deleting password failed: "
-      << formatSystemMessage(e);
+      << formatSystemMessageQ(e);
   }
 }
 
