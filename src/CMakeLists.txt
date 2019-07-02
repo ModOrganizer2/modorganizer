@@ -166,6 +166,7 @@ SET(organizer_HDRS
 	modinfodialogconflicts.h
 	modinfodialogesps.h
 	modinfodialogfiletree.h
+	modinfodialogfwd.h
 	modinfodialogimages.h
 	modinfodialognexus.h
 	modinfodialogtab.h
@@ -379,6 +380,7 @@ set(modinfo\\dialog
 	modinfodialogconflicts
 	modinfodialogesps
 	modinfodialogfiletree
+	modinfodialogfwd
 	modinfodialogimages
 	modinfodialognexus
 	modinfodialogtab

@@ -2,6 +2,7 @@
 #include "ui_modinfodialog.h"
 #include "texteditor.h"
 #include "directoryentry.h"
+#include "modinfo.h"
 
 ModInfoDialogTab::ModInfoDialogTab(ModInfoDialogTabContext cx) :
   ui(cx.ui), m_core(cx.core), m_plugin(cx.plugin), m_parent(cx.parent),
@@ -74,7 +75,7 @@ bool ModInfoDialogTab::usesOriginFiles() const
   return true;
 }
 
-void ModInfoDialogTab::setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin)
+void ModInfoDialogTab::setMod(ModInfoPtr mod, MOShared::FilesOrigin* origin)
 {
   m_mod = mod;
   m_origin = origin;
@@ -86,7 +87,7 @@ ModInfo& ModInfoDialogTab::mod() const
   return *m_mod;
 }
 
-ModInfo::Ptr ModInfoDialogTab::modPtr() const
+ModInfoPtr ModInfoDialogTab::modPtr() const
 {
   Q_ASSERT(m_mod);
   return m_mod;
@@ -97,7 +98,7 @@ MOShared::FilesOrigin* ModInfoDialogTab::origin() const
   return m_origin;
 }
 
-int ModInfoDialogTab::tabID() const
+ModInfoTabIDs ModInfoDialogTab::tabID() const
 {
   return m_tabID;
 }

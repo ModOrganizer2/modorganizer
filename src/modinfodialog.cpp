@@ -131,7 +131,7 @@ ModInfoDialog::ModInfoDialog(
   ModInfo::Ptr mod) :
     TutorableDialog("ModInfoDialog", mw),
     ui(new Ui::ModInfoDialog), m_mainWindow(mw),
-    m_core(core), m_plugin(plugin), m_initialTab(ETabs(-1)),
+    m_core(core), m_plugin(plugin), m_initialTab(ModInfoTabIDs::None),
     m_arrangingTabs(false)
 {
   ui->setupUi(this);
@@ -155,16 +155,11 @@ ModInfoDialog::ModInfoDialog(
 
     connect(
       tabInfo.tab.get(), &ModInfoDialogTab::originModified,
-      [this, i](int originID) {
-        onOriginModified(originID);
-      });
+      [this](int originID){ onOriginModified(originID); });
 
     connect(
       tabInfo.tab.get(), &ModInfoDialogTab::modOpen,
-      [&](const QString& name){
-        setMod(name);
-        update();
-      });
+      [&](const QString& name){ setMod(name); update(); });
 
     connect(
       tabInfo.tab.get(), &ModInfoDialogTab::hasDataChanged,
@@ -172,12 +167,7 @@ ModInfoDialog::ModInfoDialog(
 
     connect(
       tabInfo.tab.get(), &ModInfoDialogTab::wantsFocus,
-      [&, i=static_cast<std::size_t>(i)]
-      {
-        if (i < m_tabs.size()) {
-          switchToTab(ETabs(m_tabs[i].tab->tabID()));
-        }
-      });
+      [&, id=tabInfo.tab->tabID()]{ switchToTab(id); });
   }
 
   connect(ui->tabWidget, &QTabWidget::currentChanged, [&]{ onTabChanged(); });
@@ -187,32 +177,32 @@ ModInfoDialog::ModInfoDialog(
 ModInfoDialog::~ModInfoDialog() = default;
 
 template <class T>
-std::unique_ptr<ModInfoDialogTab> createTab(ModInfoDialog& d, int index)
+std::unique_ptr<ModInfoDialogTab> createTab(ModInfoDialog& d, ModInfoTabIDs id)
 {
   return std::make_unique<T>(ModInfoDialogTabContext(
-    *d.m_core, *d.m_plugin, &d, d.ui.get(), index, d.m_mod, d.getOrigin()));
+    *d.m_core, *d.m_plugin, &d, d.ui.get(), id, d.m_mod, d.getOrigin()));
 }
 
 std::vector<ModInfoDialog::TabInfo> ModInfoDialog::createTabs()
 {
   std::vector<TabInfo> v;
 
-  v.push_back(createTab<TextFilesTab>(*this, TAB_TEXTFILES));
-  v.push_back(createTab<IniFilesTab>(*this, TAB_INIFILES));
-  v.push_back(createTab<ImagesTab>(*this, TAB_IMAGES));
-  v.push_back(createTab<ESPsTab>(*this, TAB_ESPS));
-  v.push_back(createTab<ConflictsTab>(*this, TAB_CONFLICTS));
-  v.push_back(createTab<CategoriesTab>(*this, TAB_CATEGORIES));
-  v.push_back(createTab<NexusTab>(*this, TAB_NEXUS));
-  v.push_back(createTab<NotesTab>(*this, TAB_NOTES));
-  v.push_back(createTab<FileTreeTab>(*this, TAB_FILETREE));
+  v.push_back(createTab<TextFilesTab>(*this, ModInfoTabIDs::TextFiles));
+  v.push_back(createTab<IniFilesTab>(*this, ModInfoTabIDs::IniFiles));
+  v.push_back(createTab<ImagesTab>(*this, ModInfoTabIDs::Images));
+  v.push_back(createTab<ESPsTab>(*this, ModInfoTabIDs::Esps));
+  v.push_back(createTab<ConflictsTab>(*this, ModInfoTabIDs::Conflicts));
+  v.push_back(createTab<CategoriesTab>(*this, ModInfoTabIDs::Categories));
+  v.push_back(createTab<NexusTab>(*this, ModInfoTabIDs::Nexus));
+  v.push_back(createTab<NotesTab>(*this, ModInfoTabIDs::Notes));
+  v.push_back(createTab<FileTreeTab>(*this, ModInfoTabIDs::Filetree));
 
   return v;
 }
 
 int ModInfoDialog::exec()
 {
-  const auto selectFirst = (m_initialTab == -1);
+  const auto selectFirst = (m_initialTab == ModInfoTabIDs::None);
 
   update(true);
 
@@ -252,7 +242,7 @@ void ModInfoDialog::setMod(const QString& name)
   setMod(mod);
 }
 
-void ModInfoDialog::setTab(ETabs id)
+void ModInfoDialog::setTab(ModInfoTabIDs id)
 {
   if (!isVisible()) {
     m_initialTab = id;
@@ -288,9 +278,9 @@ void ModInfoDialog::update(bool firstTime)
 
   updateTabs();
 
-  if (m_initialTab >= 0) {
+  if (m_initialTab != ModInfoTabIDs::None) {
     switchToTab(m_initialTab);
-    m_initialTab = ETabs(-1);
+    m_initialTab = ModInfoTabIDs::None;
   }
 
   if (ui->tabWidget->currentIndex() == oldTab) {
@@ -335,11 +325,11 @@ void ModInfoDialog::setTabsVisibility(bool firstTime)
 
   // remember selection
   const int selIndex = ui->tabWidget->currentIndex();
-  ETabs sel = ETabs(-1);
+  auto sel = ModInfoTabIDs::None;
 
   for (const auto& tabInfo : m_tabs) {
     if (tabInfo.realPos == selIndex) {
-      sel = ETabs(tabInfo.tab->tabID());
+      sel = tabInfo.tab->tabID();
       break;
     }
   }
@@ -420,7 +410,7 @@ void ModInfoDialog::setTabsColors()
   }
 }
 
-void ModInfoDialog::switchToTab(ETabs id)
+void ModInfoDialog::switchToTab(ModInfoTabIDs id)
 {
   for (const auto& tabInfo : m_tabs) {
     if (tabInfo.tab->tabID() == id) {
@@ -429,7 +419,8 @@ void ModInfoDialog::switchToTab(ETabs id)
     }
   }
 
-  qDebug() << "can't switch to tab " << id << ", not available";
+  qDebug()
+    << "can't switch to tab ID " << static_cast<int>(id) << ", not available";
 }
 
 MOShared::FilesOrigin* ModInfoDialog::getOrigin()
@@ -525,7 +516,8 @@ std::vector<QString> ModInfoDialog::getOrderedTabNames() const
   return v;
 }
 
-void ModInfoDialog::reAddTabs(const std::vector<bool>& visibility, ETabs sel)
+void ModInfoDialog::reAddTabs(
+  const std::vector<bool>& visibility, ModInfoTabIDs sel)
 {
   Q_ASSERT(visibility.size() == m_tabs.size());
 

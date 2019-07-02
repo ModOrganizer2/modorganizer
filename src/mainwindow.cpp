@@ -3192,7 +3192,8 @@ void MainWindow::overwriteClosed(int)
 }
 
 
-void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab)
+void MainWindow::displayModInformation(
+  ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tabID)
 {
   if (!m_OrganizerCore.modList()->modInfoAboutToChange(modInfo)) {
     qDebug("A different mod information dialog is open. If this is incorrect, please restart MO");
@@ -3227,8 +3228,8 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     connect(&dialog, SIGNAL(originModified(int)), this, SLOT(originModified(int)));
 
 	  //Open the tab first if we want to use the standard indexes of the tabs.
-	  if (tab != -1) {
-		  dialog.setTab(ModInfoDialog::ETabs(tab));
+	  if (tabID != ModInfoTabIDs::None) {
+		  dialog.setTab(tabID);
 	  }
 
     dialog.restoreState(m_OrganizerCore.settings());
@@ -3247,7 +3248,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     m_OrganizerCore.modList()->modInfoChanged(modInfo);
   }
 
-  if (m_OrganizerCore.currentProfile()->modEnabled(index)
+  if (m_OrganizerCore.currentProfile()->modEnabled(modIndex)
       && !modInfo->hasFlag(ModInfo::FLAG_FOREIGN)) {
     FilesOrigin& origin = m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(modInfo->name()));
     origin.enable(false);
@@ -3258,7 +3259,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
 
       m_OrganizerCore.directoryRefresher()->addModToStructure(m_OrganizerCore.directoryStructure()
                                              , modInfo->name()
-                                             , m_OrganizerCore.currentProfile()->getModPriority(index)
+                                             , m_OrganizerCore.currentProfile()->getModPriority(modIndex)
                                              , modInfo->absolutePath()
                                              , modInfo->stealFiles()
                                              , modInfo->archives());
@@ -3347,7 +3348,7 @@ ModInfo::Ptr MainWindow::previousModInList()
   return {};
 }
 
-void MainWindow::displayModInformation(const QString &modName, int tab)
+void MainWindow::displayModInformation(const QString &modName, ModInfoTabIDs tabID)
 {
   unsigned int index = ModInfo::getIndex(modName);
   if (index == UINT_MAX) {
@@ -3356,14 +3357,14 @@ void MainWindow::displayModInformation(const QString &modName, int tab)
   }
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-  displayModInformation(modInfo, index, tab);
+  displayModInformation(modInfo, index, tabID);
 }
 
 
-void MainWindow::displayModInformation(int row, int tab)
+void MainWindow::displayModInformation(int row, ModInfoTabIDs tabID)
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
-  displayModInformation(modInfo, row, tab);
+  displayModInformation(modInfo, row, tabID);
 }
 
 
@@ -4048,16 +4049,18 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
     try {
       m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
       sourceIdx.column();
-      int tab = -1;
+
+      auto tab = ModInfoTabIDs::None;
+
       switch (sourceIdx.column()) {
-        case ModList::COL_NOTES: tab = ModInfoDialog::TAB_NOTES; break;
-        case ModList::COL_VERSION: tab = ModInfoDialog::TAB_NEXUS; break;
-        case ModList::COL_MODID: tab = ModInfoDialog::TAB_NEXUS; break;
-        case ModList::COL_GAME: tab = ModInfoDialog::TAB_NEXUS; break;
-        case ModList::COL_CATEGORY: tab = ModInfoDialog::TAB_CATEGORIES; break;
-        case ModList::COL_FLAGS: tab = ModInfoDialog::TAB_CONFLICTS; break;
-        default: tab = -1;
+        case ModList::COL_NOTES: tab = ModInfoTabIDs::Notes; break;
+        case ModList::COL_VERSION: tab = ModInfoTabIDs::Nexus; break;
+        case ModList::COL_MODID: tab = ModInfoTabIDs::Nexus; break;
+        case ModList::COL_GAME: tab = ModInfoTabIDs::Nexus; break;
+        case ModList::COL_CATEGORY: tab = ModInfoTabIDs::Categories; break;
+        case ModList::COL_FLAGS: tab = ModInfoTabIDs::Conflicts; break;
       }
+
       displayModInformation(sourceIdx.row(), tab);
       // workaround to cancel the editor that might have opened because of
       // selection-click

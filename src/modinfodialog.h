@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfo.h"
 #include "tutorabledialog.h"
 #include "filerenamer.h"
+#include "modinfodialogfwd.h"
 
 namespace Ui { class ModInfoDialog; }
 namespace MOShared { class FilesOrigin; }
@@ -33,32 +34,6 @@ class OrganizerCore;
 class Settings;
 class ModInfoDialogTab;
 class MainWindow;
-
-bool canPreviewFile(PluginContainer& pluginContainer, bool isArchive, const QString& filename);
-bool canOpenFile(bool isArchive, const QString& filename);
-bool canExploreFile(bool isArchive, const QString& filename);
-bool canHideFile(bool isArchive, const QString& filename);
-bool canUnhideFile(bool isArchive, const QString& filename);
-
-FileRenamer::RenameResults hideFile(FileRenamer& renamer, const QString &oldName);
-FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString &oldName);
-
-int naturalCompare(const QString& a, const QString& b);
-
-
-class ElideLeftDelegate : public QStyledItemDelegate
-{
-public:
-  using QStyledItemDelegate::QStyledItemDelegate;
-
-protected:
-  void initStyleOption(QStyleOptionViewItem* o, const QModelIndex& i) const
-  {
-    QStyledItemDelegate::initStyleOption(o, i);
-    o->textElideMode = Qt::ElideLeft;
-  }
-};
-
 
 /**
  * this is a larger dialog used to visualise information about the mod.
@@ -70,21 +45,9 @@ class ModInfoDialog : public MOBase::TutorableDialog
 
   template <class T>
   friend std::unique_ptr<ModInfoDialogTab> createTab(
-    ModInfoDialog& d, int index);
+    ModInfoDialog& d, ModInfoTabIDs index);
 
 public:
-  enum ETabs {
-    TAB_TEXTFILES,
-    TAB_INIFILES,
-    TAB_IMAGES,
-    TAB_ESPS,
-    TAB_CONFLICTS,
-    TAB_CATEGORIES,
-    TAB_NEXUS,
-    TAB_NOTES,
-    TAB_FILETREE
-  };
-
   ModInfoDialog(
     MainWindow* mw, OrganizerCore* core, PluginContainer* plugin,
     ModInfo::Ptr mod);
@@ -93,7 +56,8 @@ public:
 
   void setMod(ModInfo::Ptr mod);
   void setMod(const QString& name);
-  void setTab(ETabs id);
+
+  void setTab(ModInfoTabIDs id);
 
   int exec() override;
 
@@ -130,7 +94,7 @@ private:
   OrganizerCore* m_core;
   PluginContainer* m_plugin;
   std::vector<TabInfo> m_tabs;
-  ETabs m_initialTab;
+  ModInfoTabIDs m_initialTab;
   bool m_arrangingTabs;
 
   std::vector<TabInfo> createTabs();
@@ -144,8 +108,8 @@ private:
   void updateTabs(bool becauseOriginChanged=false);
   void feedFiles(bool becauseOriginChanged);
   void setTabsColors();
-  void switchToTab(ETabs id);
-  void reAddTabs(const std::vector<bool>& visibility, ETabs sel);
+  void switchToTab(ModInfoTabIDs id);
+  void reAddTabs(const std::vector<bool>& visibility, ModInfoTabIDs sel);
   std::vector<QString> getOrderedTabNames() const;
   bool tryClose();
 

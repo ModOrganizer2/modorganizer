@@ -1,7 +1,7 @@
 #ifndef MODINFODIALOGTAB_H
 #define MODINFODIALOGTAB_H
 
-#include "modinfo.h"
+#include "modinfodialogfwd.h"
 #include <QObject>
 
 namespace MOShared { class FilesOrigin; }
@@ -18,8 +18,8 @@ struct ModInfoDialogTabContext
   PluginContainer& plugin;
   QWidget* parent;
   Ui::ModInfoDialog* ui;
-  int id;
-  ModInfo::Ptr mod;
+  ModInfoTabIDs id;
+  ModInfoPtr mod;
   MOShared::FilesOrigin* origin;
 
   ModInfoDialogTabContext(
@@ -27,8 +27,8 @@ struct ModInfoDialogTabContext
     PluginContainer& plugin,
     QWidget* parent,
     Ui::ModInfoDialog* ui,
-    int id,
-    ModInfo::Ptr mod,
+    ModInfoTabIDs id,
+    ModInfoPtr mod,
     MOShared::FilesOrigin* origin) :
       core(core), plugin(plugin), parent(parent), ui(ui), id(id),
       mod(mod), origin(origin)
@@ -96,7 +96,7 @@ public:
   // derived classes can override this to connect to events on the mod for
   // examples (see NexusTab), but must call the base class implementation
   //
-  virtual void setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin);
+  virtual void setMod(ModInfoPtr mod, MOShared::FilesOrigin* origin);
 
   // this tab should clear its user interface; clear() will always be called
   // before feedFile() and update()
@@ -195,7 +195,7 @@ public:
 
   // returns the currently selected mod, can never be empty
   //
-  ModInfo::Ptr modPtr() const;
+  ModInfoPtr modPtr() const;
 
   // returns the origin of the selected mod; this can be null for mods that
   // don't have an origin, like deactivated mods
@@ -203,7 +203,7 @@ public:
   MOShared::FilesOrigin* origin() const;
 
 
-  int tabID() const;
+  ModInfoTabIDs tabID() const;
   bool hasData() const;
 
 signals:
@@ -249,9 +249,9 @@ private:
   OrganizerCore& m_core;
   PluginContainer& m_plugin;
   QWidget* m_parent;
-  ModInfo::Ptr m_mod;
+  ModInfoPtr m_mod;
   MOShared::FilesOrigin* m_origin;
-  int m_tabID;
+  ModInfoTabIDs m_tabID;
   bool m_hasData;
   bool m_firstActivation;
 

@@ -151,7 +151,8 @@ public:
 
   virtual void disconnectPlugins();
 
-  void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab);
+  void displayModInformation(
+    ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tabID) override;
 
   bool confirmExit();
 
@@ -235,7 +236,7 @@ private:
   QList<MOBase::IOrganizer::FileInfo> findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const;
 
   bool modifyExecutablesDialog();
-  void displayModInformation(int row, int tab = -1);
+  void displayModInformation(int row, ModInfoTabIDs tab=ModInfoTabIDs::None);
   void testExtractBSA(int modIndex);
 
   void writeDataToFile(QFile &file, const QString &directory, const MOShared::DirectoryEntry &directoryEntry);
@@ -551,7 +552,7 @@ private slots:
   void editCategories();
   void deselectFilters();
 
-  void displayModInformation(const QString &modName, int tab);
+  void displayModInformation(const QString &modName, ModInfoTabIDs tabID);
 
   void modRenamed(const QString &oldName, const QString &newName);
   void modRemoved(const QString &fileName);

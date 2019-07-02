@@ -966,8 +966,8 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
                                        "want to configure them now?"),
                                     QMessageBox::Yes | QMessageBox::No)
               == QMessageBox::Yes)) {
-        m_UserInterface->displayModInformation(modInfo, modIndex,
-                                               ModInfoDialog::TAB_INIFILES);
+        m_UserInterface->displayModInformation(
+          modInfo, modIndex, ModInfoTabIDs::IniFiles);
       }
       m_ModInstalled(modName);
       m_DownloadManager.markInstalled(fileName);
@@ -1033,8 +1033,8 @@ void OrganizerCore::installDownload(int index)
                                          "want to configure them now?"),
                                       QMessageBox::Yes | QMessageBox::No)
                 == QMessageBox::Yes)) {
-          m_UserInterface->displayModInformation(modInfo, modIndex,
-                                                 ModInfoDialog::TAB_INIFILES);
+          m_UserInterface->displayModInformation(
+            modInfo, modIndex, ModInfoTabIDs::IniFiles);
         }
 
         m_ModInstalled(modName);
