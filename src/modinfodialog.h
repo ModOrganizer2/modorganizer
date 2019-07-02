@@ -141,9 +141,9 @@ private:
   bool m_arrangingTabs;
 
 
-  // creates all the tabs
+  // creates all the tabs and connects events
   //
-  std::vector<TabInfo> createTabs();
+  void createTabs();
 
 
   // sets the currently selected mod; resets first activation, but doesn't
@@ -155,16 +155,15 @@ private:
   //
   void setMod(const QString& name);
 
+  // returns the origin of the current mod, may be null
+  //
+  MOShared::FilesOrigin* getOrigin();
+
 
   // returns the currently selected tab, taking re-ordering in to account;
   // shouldn't be null, but could be
   //
   TabInfo* currentTab();
-
-  // returns a list of tab object names in their visual order, used by
-  // saveState()
-  //
-  void saveTabOrder(Settings& s) const;
 
 
   // fully updates the dialog; sets the title, the tab visibility and updates
@@ -179,16 +178,50 @@ private:
   void setTabsVisibility(bool firstTime);
 
   // clears the tab widgets and re-adds the tabs having the visible flag in
-  // the given vector, following the
+  // the given vector, following the tab order from the settings
+  //
   void reAddTabs(const std::vector<bool>& visibility, ModInfoTabIDs sel);
 
-  void onDeleteShortcut();
-  MOShared::FilesOrigin* getOrigin();
+  // called by update(); clears tabs, feeds files and calls update() on all
+  // tabs, then setTabsColors()
+  //
   void updateTabs(bool becauseOriginChanged=false);
-  void feedFiles(bool becauseOriginChanged);
+
+  // goes through all files on the filesystem for the current mod and calls
+  // feedFile() on every tab until one accepts it
+  //
+  void feedFiles(std::vector<TabInfo*>& interestedTabs);
+
+  // goes through all tabs and sets the tab text colour depending on whether
+  // they have data or not
+  //
   void setTabsColors();
+
+
+  // called when the delete key is pressed anywhere in the dialog; forwards to
+  // ModInfoDialogTab::deleteRequest() for the currently selected tab
+  //
+  void onDeleteShortcut();
+
+
+  // finds the tab with the given id and selects it
+  //
   void switchToTab(ModInfoTabIDs id);
+
+
+  // saves the current tab order; used by saveState(), but also by
+  // setTabsVisibility() to make sure any changes to order are saved before
+  // re-adding tabs
+  //
+  void saveTabOrder(Settings& s) const;
+
+  // returns a list of tab names in the order they should appear on the widget
+  //
   std::vector<QString> getOrderedTabNames() const;
+
+  // asks all the tabs if they accept closing the dialog, returns false if one
+  // objected
+  //
   bool tryClose();
 
 

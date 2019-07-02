@@ -314,7 +314,6 @@ void FileTreeTab::changeVisibility(bool visible)
   qDebug().nospace() << (visible ? "unhiding" : "hiding") << " filetree files done";
 
   if (changed) {
-    qDebug().nospace() << "triggering refresh";
     if (origin()) {
       emitOriginModified();
     }
