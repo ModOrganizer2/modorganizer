@@ -43,6 +43,9 @@ class ModInfoDialog : public MOBase::TutorableDialog
 {
   Q_OBJECT;
 
+  // creates a tab, it's a friend because it uses a bunch of member variables
+  // to create ModInfoDialogTabContext
+  //
   template <class T>
   friend std::unique_ptr<ModInfoDialogTab> createTab(
     ModInfoDialog& d, ModInfoTabIDs index);
@@ -54,37 +57,67 @@ public:
 
   ~ModInfoDialog();
 
-  void setMod(ModInfo::Ptr mod);
-  void setMod(const QString& name);
+  // switches to the tab with the given id
+  //
+  void selectTab(ModInfoTabIDs id);
 
-  void setTab(ModInfoTabIDs id);
-
+  // updates all tabs, selects the initial tab and opens the dialog
+  //
   int exec() override;
 
+  // saves the dialog state and calls saveState() on all tabs
+  //
   void saveState(Settings& s) const;
+
+  // restores the dialog state and calls restoreState() on all tabs
+  //
   void restoreState(const Settings& s);
 
 signals:
+  // emitted when a tab changes the origin
+  //
   void originModified(int originID);
 
 protected:
+  // forwards to tryClose()
+  //
   void closeEvent(QCloseEvent* e);
 
-private slots:
-  void on_closeButton_clicked();
-  void on_nextButton_clicked();
-  void on_prevButton_clicked();
-
 private:
+  // represents a single tab
+  //
   struct TabInfo
   {
+    // tab implementation
     std::unique_ptr<ModInfoDialogTab> tab;
+
+    // actual position in the tab bar, updated every time a tab is moved
     int realPos;
+
+    // widget used by the QTabWidget for this tab
+    //
+    // because QTabWidget doesn't support simply hiding tabs, they have to be
+    // completely removed from the widget when they don't support the current
+    // mod
+    //
+    // therefore, `widget, `caption` and `icon` are remembered so tabs can be
+    // removed and re-added when navigating between mods
+    //
+    // `widget` is also used figure out which tab is where when they're
+    // re-ordered
     QWidget* widget;
+
+    // caption for this tab, see `widget`
     QString caption;
+
+    // icon for this tab, see `widget`
     QIcon icon;
 
+
     TabInfo(std::unique_ptr<ModInfoDialogTab> tab);
+
+    // returns whether this tab is part of the tab widget
+    //
     bool isVisible() const;
   };
 
@@ -94,28 +127,99 @@ private:
   OrganizerCore* m_core;
   PluginContainer* m_plugin;
   std::vector<TabInfo> m_tabs;
+
+  // initial tab requested by the main window when the dialog is opened; whether
+  // the request can be honoured depends on what tabs are present
   ModInfoTabIDs m_initialTab;
+
+  // set to true when tabs are being removed and re-added while navigating
+  // between mods; since the current index changes while this is happening,
+  // onTabSelectionChanged() will be called repeatedly
+  //
+  // however, it will check this flag and ignore the event so first activations
+  // are not fired incorrectly
   bool m_arrangingTabs;
 
+
+  // creates all the tabs
+  //
   std::vector<TabInfo> createTabs();
+
+
+  // sets the currently selected mod; resets first activation, but doesn't
+  // update anything
+  //
+  void setMod(ModInfo::Ptr mod);
+
+  // sets the currently selected mod, if found; forwards to setMod() above
+  //
+  void setMod(const QString& name);
+
+
+  // returns the currently selected tab, taking re-ordering in to account;
+  // shouldn't be null, but could be
+  //
   TabInfo* currentTab();
-  void restoreTabState(const QString& state);
-  QString saveTabState() const;
+
+  // returns a list of tab object names in their visual order, used by
+  // saveState()
+  //
+  void saveTabOrder(Settings& s) const;
+
+
+  // fully updates the dialog; sets the title, the tab visibility and updates
+  // all the tabs; used when the current mod changes
+  //
+  // see setTabsVisibility() for firstTime
+  //
   void update(bool firstTime=false);
+
+  // builds the list of visible tabs; if the list is different from what's
+  // currently displayed, or firstTime is true, forwards to reAddTabs()
+  void setTabsVisibility(bool firstTime);
+
+  // clears the tab widgets and re-adds the tabs having the visible flag in
+  // the given vector, following the
+  void reAddTabs(const std::vector<bool>& visibility, ModInfoTabIDs sel);
+
   void onDeleteShortcut();
   MOShared::FilesOrigin* getOrigin();
-  void setTabsVisibility(bool firstTime);
   void updateTabs(bool becauseOriginChanged=false);
   void feedFiles(bool becauseOriginChanged);
   void setTabsColors();
   void switchToTab(ModInfoTabIDs id);
-  void reAddTabs(const std::vector<bool>& visibility, ModInfoTabIDs sel);
   std::vector<QString> getOrderedTabNames() const;
   bool tryClose();
 
-  void onOriginModified(int originID);
-  void onTabChanged();
+
+  // called when the user clicks the close button; closing the dialog by other
+  // means ends up in closeEvent(); forwards to tryClose()
+  //
+  void onCloseButton();
+
+  // called when the user clicks the previous button; asks the main window for
+  // the previous mod in the list and loads it
+  //
+  void onPreviousMod();
+
+  // called when the user clicks the next button; asks the main window for the
+  // next mod in the list and loads it
+  //
+  void onNextMod();
+
+  // called when the selects a tab; handles first activation
+  //
+  void onTabSelectionChanged();
+
+  // called when the user re-orders tabs; sets the correct TabInfo::realPos for
+  // all tabs
+  //
   void onTabMoved();
+
+  // called when a tab has modified the origin; emits originModified() and
+  // updates all the tabs that use origin files
+  //
+  void onOriginModified(int originID);
 };
 
 #endif // MODINFODIALOG_H

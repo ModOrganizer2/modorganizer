@@ -203,13 +203,29 @@ public:
   MOShared::FilesOrigin* origin() const;
 
 
+  // return this tab's ID
+  //
   ModInfoTabIDs tabID() const;
+
+  // returns whether this tab has data; derived classes should call setHasData()
+  //
   bool hasData() const;
 
 signals:
+  // emitted when a tab modified the files in a mod
+  //
   void originModified(int originID);
+
+  // emitted when a tab wants to open a mod by name
+  //
   void modOpen(QString name);
+
+  // emitted when a tab used to have data and is now empty, or vice versa
+  //
   void hasDataChanged();
+
+  // emitted when a tab wants focus
+  //
   void wantsFocus();
 
 protected:
@@ -219,15 +235,27 @@ protected:
 
   OrganizerCore& core();
   PluginContainer& plugin();
-
   QWidget* parentWidget();
 
+  // emits originModified
+  //
   void emitOriginModified();
+
+  // emits modOpen
+  //
   void emitModOpen(QString name);
+
+  // emits hasDataChanged
+  //
   void setHasData(bool b);
 
+  // emits wantsFocus
+  //
   void setFocus();
 
+
+  // saves the sate of the given widget in geometry/modinfodialog_[objectname]
+  //
   // this needs to be a template because saveState() and restoreState() are
   // not in QWidget, but they're in various widgets
   //
@@ -237,6 +265,12 @@ protected:
     s.setValue(settingName(w), w->saveState());
   }
 
+  // restores the sate of the given widget from
+  // geometry/modinfodialog_[objectname]
+  //
+  // this needs to be a template because saveState() and restoreState() are
+  // not in QWidget, but they're in various widgets
+  //
   template <class Widget>
   void restoreWidgetState(const QSettings& s, Widget* w)
   {
@@ -246,16 +280,33 @@ protected:
   }
 
 private:
+  // core
   OrganizerCore& m_core;
+
+  // plugin
   PluginContainer& m_plugin;
+
+  // parent widget, used to display modal dialogs
   QWidget* m_parent;
+
+  // current mod, never null
   ModInfoPtr m_mod;
+
+  // current mod origin, may be null
   MOShared::FilesOrigin* m_origin;
+
+  // tab ID
   ModInfoTabIDs m_tabID;
+
+  // whether the tab has data
   bool m_hasData;
+
+  // true if the tab has never been selected for the current mod
   bool m_firstActivation;
 
 
+  // used by saveWidgetState() and restoreWidgetState()
+  //
   QString settingName(QWidget* w)
   {
     return "geometry/modinfodialog_" + w->objectName();
@@ -263,6 +314,8 @@ private:
 };
 
 
+// the Notes tab
+//
 class NotesTab : public ModInfoDialogTab
 {
 public:
@@ -270,7 +323,13 @@ public:
 
   void clear() override;
   void update() override;
+
+  // returns true, separators can have notes
+  //
   bool canHandleSeparators() const override;
+
+  // returns false, notes don't use files
+  //
   bool usesOriginFiles() const override;
 
 private:

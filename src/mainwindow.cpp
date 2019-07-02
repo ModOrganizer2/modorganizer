@@ -3229,7 +3229,7 @@ void MainWindow::displayModInformation(
 
 	  //Open the tab first if we want to use the standard indexes of the tabs.
 	  if (tabID != ModInfoTabIDs::None) {
-		  dialog.setTab(tabID);
+		  dialog.selectTab(tabID);
 	  }
 
     dialog.restoreState(m_OrganizerCore.settings());

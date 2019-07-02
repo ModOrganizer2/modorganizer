@@ -1260,7 +1260,7 @@ p, li { white-space: pre-wrap; }
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QPushButton" name="prevButton">
+      <widget class="QPushButton" name="previousMod">
        <property name="text">
         <string>Previous</string>
        </property>
@@ -1270,7 +1270,7 @@ p, li { white-space: pre-wrap; }
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="nextButton">
+      <widget class="QPushButton" name="nextMod">
        <property name="text">
         <string>Next</string>
        </property>
@@ -1293,7 +1293,7 @@ p, li { white-space: pre-wrap; }
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="closeButton">
+      <widget class="QPushButton" name="close">
        <property name="text">
         <string>Close</string>
        </property>

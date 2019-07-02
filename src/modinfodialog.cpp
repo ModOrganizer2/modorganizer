@@ -170,8 +170,11 @@ ModInfoDialog::ModInfoDialog(
       [&, id=tabInfo.tab->tabID()]{ switchToTab(id); });
   }
 
-  connect(ui->tabWidget, &QTabWidget::currentChanged, [&]{ onTabChanged(); });
+  connect(ui->tabWidget, &QTabWidget::currentChanged, [&]{ onTabSelectionChanged(); });
   connect(ui->tabWidget->tabBar(), &QTabBar::tabMoved, [&]{ onTabMoved(); });
+  connect(ui->close, &QPushButton::clicked, [&]{ onCloseButton(); });
+  connect(ui->previousMod, &QPushButton::clicked, [&]{ onPreviousMod(); });
+  connect(ui->nextMod, &QPushButton::clicked, [&]{ onNextMod(); });
 }
 
 ModInfoDialog::~ModInfoDialog() = default;
@@ -242,7 +245,7 @@ void ModInfoDialog::setMod(const QString& name)
   setMod(mod);
 }
 
-void ModInfoDialog::setTab(ModInfoTabIDs id)
+void ModInfoDialog::selectTab(ModInfoTabIDs id)
 {
   if (!isVisible()) {
     m_initialTab = id;
@@ -323,6 +326,10 @@ void ModInfoDialog::setTabsVisibility(bool firstTime)
     return;
   }
 
+  // something changed; save the current order (if necessary) because some tabs
+  // will be removed and others added
+  saveTabOrder(Settings::instance());
+
   // remember selection
   const int selIndex = ui->tabWidget->currentIndex();
   auto sel = ModInfoTabIDs::None;
@@ -335,6 +342,68 @@ void ModInfoDialog::setTabsVisibility(bool firstTime)
   }
 
   reAddTabs(visibility, sel);
+}
+
+void ModInfoDialog::reAddTabs(
+  const std::vector<bool>& visibility, ModInfoTabIDs sel)
+{
+  Q_ASSERT(visibility.size() == m_tabs.size());
+
+  // ordered tab names from settings
+  const auto orderedNames = getOrderedTabNames();
+
+  bool canSort = true;
+
+  // gathering visible tabs
+  std::vector<TabInfo*> visibleTabs;
+  for (std::size_t i=0; i<m_tabs.size(); ++i) {
+    if (visibility[i]) {
+      visibleTabs.push_back(&m_tabs[i]);
+
+      if (canSort) {
+        const auto objectName = m_tabs[i].widget->objectName();
+        auto itor = std::find(orderedNames.begin(), orderedNames.end(), objectName);
+        if (itor == orderedNames.end()) {
+          qCritical() << "can't sort tabs, '" << objectName << "' not found";
+          canSort = false;
+        }
+      }
+    }
+  }
+
+  // sorting tabs
+  if (canSort) {
+    std::sort(visibleTabs.begin(), visibleTabs.end(), [&](auto&& a, auto&& b){
+      auto aItor = std::find(orderedNames.begin(), orderedNames.end(), a->widget->objectName());
+      auto bItor = std::find(orderedNames.begin(), orderedNames.end(), b->widget->objectName());
+
+      // this was checked above
+      Q_ASSERT(aItor != orderedNames.end() && bItor != orderedNames.end());
+
+      return (aItor < bItor);
+    });
+  }
+
+
+  // removing all tabs
+  ui->tabWidget->clear();
+
+  // reset real positions
+  for (auto& tabInfo : m_tabs) {
+    tabInfo.realPos = -1;
+  }
+
+  // add visible tabs
+  for (std::size_t i=0; i<visibleTabs.size(); ++i) {
+    auto& tabInfo = *visibleTabs[i];
+
+    tabInfo.realPos = static_cast<int>(i);
+    ui->tabWidget->addTab(tabInfo.widget, tabInfo.icon, tabInfo.caption);
+
+    if (tabInfo.tab->tabID() == sel) {
+      ui->tabWidget->setCurrentIndex(static_cast<int>(i));
+    }
+  }
 }
 
 void ModInfoDialog::updateTabs(bool becauseOriginChanged)
@@ -440,10 +509,7 @@ MOShared::FilesOrigin* ModInfoDialog::getOrigin()
 
 void ModInfoDialog::saveState(Settings& s) const
 {
-  const auto tabState = saveTabState();
-  if (!tabState.isEmpty()) {
-    s.directInterface().setValue("mod_info_tab_order", tabState);
-  }
+  saveTabOrder(s);
 
   // remove 2.2.0 settings
   s.directInterface().remove("mod_info_tabs");
@@ -466,21 +532,24 @@ void ModInfoDialog::restoreState(const Settings& s)
   }
 }
 
-QString ModInfoDialog::saveTabState() const
+void ModInfoDialog::saveTabOrder(Settings& s) const
 {
   if (static_cast<int>(m_tabs.size()) != ui->tabWidget->count()) {
     // only save tab state when all tabs are visible
-    return {};
+    return;
   }
 
-  QString result;
-  QTextStream stream(&result);
+  QString names;
 
   for (int i=0; i<ui->tabWidget->count(); ++i) {
-    stream << ui->tabWidget->widget(i)->objectName() << " ";
+    if (!names.isEmpty()) {
+      names += " ";
+    }
+
+    names += ui->tabWidget->widget(i)->objectName();
   }
 
-  return result.trimmed();
+  s.directInterface().setValue("mod_info_tab_order", names);
 }
 
 std::vector<QString> ModInfoDialog::getOrderedTabNames() const
@@ -516,68 +585,6 @@ std::vector<QString> ModInfoDialog::getOrderedTabNames() const
   return v;
 }
 
-void ModInfoDialog::reAddTabs(
-  const std::vector<bool>& visibility, ModInfoTabIDs sel)
-{
-  Q_ASSERT(visibility.size() == m_tabs.size());
-
-  // ordered tab names from settings
-  const auto orderedNames = getOrderedTabNames();
-
-  bool canSort = true;
-
-  // gathering visible tabs
-  std::vector<TabInfo*> visibleTabs;
-  for (std::size_t i=0; i<m_tabs.size(); ++i) {
-    if (visibility[i]) {
-      visibleTabs.push_back(&m_tabs[i]);
-
-      if (canSort) {
-        const auto objectName = m_tabs[i].widget->objectName();
-        auto itor = std::find(orderedNames.begin(), orderedNames.end(), objectName);
-        if (itor == orderedNames.end()) {
-          qCritical() << "can't sort tabs, '" << objectName << "' not found";
-          canSort = false;
-        }
-      }
-    }
-  }
-
-  // sorting tabs
-  if (canSort) {
-    std::sort(visibleTabs.begin(), visibleTabs.end(), [&](auto&& a, auto&& b){
-      auto aItor = std::find(orderedNames.begin(), orderedNames.end(), a->widget->objectName());
-      auto bItor = std::find(orderedNames.begin(), orderedNames.end(), b->widget->objectName());
-
-      // this was checked above
-      Q_ASSERT(aItor != orderedNames.end() && bItor != orderedNames.end());
-
-      return (aItor < bItor);
-    });
-  }
-
-
-  // removing all tabs
-  ui->tabWidget->clear();
-
-  // reset real positions
-  for (auto& tabInfo : m_tabs) {
-    tabInfo.realPos = -1;
-  }
-
-  // add visible tabs
-  for (std::size_t i=0; i<visibleTabs.size(); ++i) {
-    auto& tabInfo = *visibleTabs[i];
-
-    tabInfo.realPos = static_cast<int>(i);
-    ui->tabWidget->addTab(tabInfo.widget, tabInfo.icon, tabInfo.caption);
-
-    if (tabInfo.tab->tabID() == sel) {
-      ui->tabWidget->setCurrentIndex(static_cast<int>(i));
-    }
-  }
-}
-
 void ModInfoDialog::onOriginModified(int originID)
 {
   emit originModified(originID);
@@ -600,7 +607,7 @@ void ModInfoDialog::closeEvent(QCloseEvent* e)
   }
 }
 
-void ModInfoDialog::on_closeButton_clicked()
+void ModInfoDialog::onCloseButton()
 {
   if (tryClose()) {
     close();
@@ -618,7 +625,7 @@ bool ModInfoDialog::tryClose()
   return true;
 }
 
-void ModInfoDialog::onTabChanged()
+void ModInfoDialog::onTabSelectionChanged()
 {
   if (m_arrangingTabs) {
     // this can be fired while re-arranging tabs, which happens before mods
@@ -660,7 +667,7 @@ void ModInfoDialog::onTabMoved()
   }
 }
 
-void ModInfoDialog::on_nextButton_clicked()
+void ModInfoDialog::onNextMod()
 {
   auto mod = m_mainWindow->nextModInList();
   if (!mod || mod == m_mod) {
@@ -671,7 +678,7 @@ void ModInfoDialog::on_nextButton_clicked()
   update();
 }
 
-void ModInfoDialog::on_prevButton_clicked()
+void ModInfoDialog::onPreviousMod()
 {
   auto mod = m_mainWindow->previousModInList();
   if (!mod || mod == m_mod) {
