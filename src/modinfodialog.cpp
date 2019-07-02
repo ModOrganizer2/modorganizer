@@ -154,7 +154,7 @@ ModInfoDialog::ModInfoDialog(
     connect(
       tabInfo.tab.get(), &ModInfoDialogTab::originModified,
       [this, i](int originID) {
-        onOriginModified(static_cast<std::size_t>(i), originID);
+        onOriginModified(originID);
       });
 
     connect(
@@ -167,6 +167,15 @@ ModInfoDialog::ModInfoDialog(
     connect(
       tabInfo.tab.get(), &ModInfoDialogTab::hasDataChanged,
       [&]{ setTabsColors(); });
+
+    connect(
+      tabInfo.tab.get(), &ModInfoDialogTab::wantsFocus,
+      [&, i=static_cast<std::size_t>(i)]
+      {
+        if (i < m_tabs.size()) {
+          switchToTab(ETabs(m_tabs[i].tab->tabID()));
+        }
+      });
   }
 
   connect(ui->tabWidget, &QTabWidget::currentChanged, [&]{ onTabChanged(); });
@@ -546,6 +555,7 @@ void ModInfoDialog::reAddTabs(const std::vector<bool>& visibility, ETabs sel)
   }
 
 
+  // removing all tabs
   ui->tabWidget->clear();
 
   // reset real positions
@@ -566,7 +576,7 @@ void ModInfoDialog::reAddTabs(const std::vector<bool>& visibility, ETabs sel)
   }
 }
 
-void ModInfoDialog::onOriginModified(std::size_t tabIndex, int originID)
+void ModInfoDialog::onOriginModified(int originID)
 {
   emit originModified(originID);
   updateTabs(true);
@@ -581,15 +591,31 @@ void ModInfoDialog::onDeleteShortcut()
   }
 }
 
+void ModInfoDialog::closeEvent(QCloseEvent* e)
+{
+  if (tryClose()) {
+    e->accept();
+  } else {
+    e->ignore();
+  }
+}
+
 void ModInfoDialog::on_closeButton_clicked()
+{
+  if (tryClose()) {
+    close();
+  }
+}
+
+bool ModInfoDialog::tryClose()
 {
   for (auto& tabInfo : m_tabs) {
     if (!tabInfo.tab->canClose()) {
-      return;
+      return false;
     }
   }
 
-  close();
+  return true;
 }
 
 void ModInfoDialog::onTabChanged()

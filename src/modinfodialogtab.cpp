@@ -137,6 +137,11 @@ void ModInfoDialogTab::setHasData(bool b)
   }
 }
 
+void ModInfoDialogTab::setFocus()
+{
+  emit wantsFocus();
+}
+
 
 NotesTab::NotesTab(
   OrganizerCore& oc, PluginContainer& plugin,

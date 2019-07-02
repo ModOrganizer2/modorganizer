@@ -133,6 +133,8 @@ bool GenericFilesTab::canClose()
     return true;
   }
 
+  setFocus();
+
   const int res = QMessageBox::question(
     parentWidget(),
     QObject::tr("Save changes?"),

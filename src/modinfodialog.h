@@ -117,6 +117,9 @@ public:
 signals:
   void originModified(int originID);
 
+protected:
+  void closeEvent(QCloseEvent* e);
+
 private slots:
   void on_closeButton_clicked();
   void on_nextButton_clicked();
@@ -158,8 +161,9 @@ private:
   void switchToTab(ETabs id);
   void reAddTabs(const std::vector<bool>& visibility, ETabs sel);
   std::vector<QString> getOrderedTabNames() const;
+  bool tryClose();
 
-  void onOriginModified(std::size_t tabIndex, int originID);
+  void onOriginModified(int originID);
   void onTabChanged();
   void onTabMoved();
 
