@@ -888,11 +888,20 @@ File::File(QString path)
 
 void File::ensureOriginalLoaded()
 {
-  if (m_original.isNull()) {
-    if (!m_original.load(m_path)) {
-      qCritical() << "failed to load image from " << m_path;
-      m_failed = true;
-    }
+  if (!m_original.isNull()) {
+    // already loaded
+    return;
+  }
+
+  QImageReader reader(m_path);
+
+  if (!reader.read(&m_original)) {
+    qCritical().noquote().nospace()
+      << "failed to load '" << m_path << "'\n"
+      << reader.errorString() << " "
+      << "(error " << static_cast<int>(reader.error()) << ")";
+
+    m_failed = true;
   }
 }
 
