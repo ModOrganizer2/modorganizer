@@ -314,9 +314,7 @@ class ImagesTab : public ModInfoDialogTab
   friend class ImagesTabHelpers::ThumbnailsWidget;
 
 public:
-  ImagesTab(
-    OrganizerCore& oc, PluginContainer& plugin,
-    QWidget* parent, Ui::ModInfoDialog* ui, int id);
+  ImagesTab(ModInfoDialogTabContext cx);
 
   void clear() override;
   bool feedFile(const QString& rootPath, const QString& fullPath) override;

@@ -66,7 +66,11 @@ protected:
  **/
 class ModInfoDialog : public MOBase::TutorableDialog
 {
-    Q_OBJECT
+  Q_OBJECT;
+
+  template <class T>
+  friend std::unique_ptr<ModInfoDialogTab> createTab(
+    ModInfoDialog& d, int index);
 
 public:
   enum ETabs {
@@ -81,29 +85,11 @@ public:
     TAB_FILETREE
   };
 
- /**
-  * @brief constructor
-  *
-  * @param modInfo info structure about the mod to display
-  * @param parent parend widget
-  **/
-  ModInfoDialog(MainWindow* mw, OrganizerCore* core, PluginContainer* plugin);
+  ModInfoDialog(
+    MainWindow* mw, OrganizerCore* core, PluginContainer* plugin,
+    ModInfo::Ptr mod);
 
   ~ModInfoDialog();
-
-  /**
-   * @brief retrieve the (user-modified) version of the mod
-   *
-   * @return the (user-modified) version of the mod
-   **/
-  QString getModVersion() const;
-
-  /**
-   * @brief retrieve the (user-modified) mod id
-   *
-   * @return the (user-modified) id of the mod
-   **/
-  const int getModID() const;
 
   void setMod(ModInfo::Ptr mod);
   void setMod(const QString& name);
@@ -166,12 +152,6 @@ private:
   void onOriginModified(int originID);
   void onTabChanged();
   void onTabMoved();
-
-  template <class T>
-  std::unique_ptr<ModInfoDialogTab> createTab(int index)
-  {
-    return std::make_unique<T>(*m_core, *m_plugin, this, ui.get(), index);
-  }
 };
 
 #endif // MODINFODIALOG_H

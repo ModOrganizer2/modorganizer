@@ -382,11 +382,9 @@ void for_each_in_selection(QTreeView* tree, F&& f)
 }
 
 
-ConflictsTab::ConflictsTab(
-  OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int id) :
-    ModInfoDialogTab(oc, plugin, parent, ui, id),
-    m_general(this, ui, oc), m_advanced(this, ui, oc)
+ConflictsTab::ConflictsTab(ModInfoDialogTabContext cx) :
+  ModInfoDialogTab(cx), // don't move, cx is used again
+  m_general(this, cx.ui, cx.core), m_advanced(this, cx.ui, cx.core)
 {
   connect(
     &m_general, &GeneralConflictsTab::modOpen,
@@ -872,7 +870,7 @@ bool GeneralConflictsTab::update()
   int numOverwritten = 0;
 
   if (m_tab->origin() != nullptr) {
-    const auto rootPath = m_tab->mod()->absolutePath();
+    const auto rootPath = m_tab->mod().absolutePath();
 
     for (const auto& file : m_tab->origin()->getFiles()) {
       // careful: these two strings are moved into createXItem() below
@@ -1085,7 +1083,7 @@ void AdvancedConflictsTab::update()
   clear();
 
   if (m_tab->origin() != nullptr) {
-    const auto rootPath = m_tab->mod()->absolutePath();
+    const auto rootPath = m_tab->mod().absolutePath();
 
     const auto& files = m_tab->origin()->getFiles();
     m_model->reserve(files.size());

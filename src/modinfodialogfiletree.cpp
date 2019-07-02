@@ -13,10 +13,8 @@ namespace shell = MOBase::shell;
 // checking whether menu items apply to them, just show all of them
 const int max_scan_for_context_menu = 50;
 
-FileTreeTab::FileTreeTab(
-  OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int id)
-    : ModInfoDialogTab(oc, plugin, parent, ui, id), m_fs(nullptr)
+FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
+  : ModInfoDialogTab(std::move(cx)), m_fs(nullptr)
 {
   m_fs = new QFileSystemModel(this);
   m_fs->setReadOnly(false);
@@ -58,7 +56,7 @@ void FileTreeTab::clear()
 
 void FileTreeTab::update()
 {
-  const auto rootPath = mod()->absolutePath();
+  const auto rootPath = mod().absolutePath();
 
   m_fs->setRootPath(rootPath);
   ui->filetree->setRootIndex(m_fs->index(rootPath));
@@ -139,7 +137,7 @@ void FileTreeTab::onPreview()
     return;
   }
 
-  core().previewFile(parentWidget(), mod()->name(), m_fs->filePath(selection));
+  core().previewFile(parentWidget(), mod().name(), m_fs->filePath(selection));
 }
 
 void FileTreeTab::onExplore()
@@ -149,7 +147,7 @@ void FileTreeTab::onExplore()
   if (selection.isValid()) {
     shell::ExploreFile(m_fs->filePath(selection));
   } else {
-    shell::ExploreFile(mod()->absolutePath());
+    shell::ExploreFile(mod().absolutePath());
   }
 }
 
@@ -205,7 +203,7 @@ void FileTreeTab::onUnhide()
 
 void FileTreeTab::onOpenInExplorer()
 {
-  shell::ExploreFile(mod()->absolutePath());
+  shell::ExploreFile(mod().absolutePath());
 }
 
 bool FileTreeTab::deleteFile(const QModelIndex& index)

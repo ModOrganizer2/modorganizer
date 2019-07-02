@@ -35,12 +35,9 @@ QString dimensionString(const QSize& s)
 }
 
 
-ImagesTab::ImagesTab(
-  OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int id) :
-    ModInfoDialogTab(oc, plugin, parent, ui, id),
-    m_image(new ScalableImage),
-    m_ddsAvailable(false), m_ddsEnabled(false)
+ImagesTab::ImagesTab(ModInfoDialogTabContext cx) :
+  ModInfoDialogTab(std::move(cx)), m_image(new ScalableImage),
+  m_ddsAvailable(false), m_ddsEnabled(false)
 {
   getSupportedFormats();
 

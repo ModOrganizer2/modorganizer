@@ -3,10 +3,8 @@
 #include "categories.h"
 #include "modinfo.h"
 
-CategoriesTab::CategoriesTab(
-  OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int id)
-    : ModInfoDialogTab(oc, plugin, parent, ui, id)
+CategoriesTab::CategoriesTab(ModInfoDialogTabContext cx)
+  : ModInfoDialogTab(std::move(cx))
 {
   connect(
     ui->categories, &QTreeWidget::itemChanged,
@@ -30,7 +28,7 @@ void CategoriesTab::update()
   clear();
 
   add(
-    CategoryFactory::instance(), mod()->getCategories(),
+    CategoryFactory::instance(), mod().getCategories(),
     ui->categories->invisibleRootItem(), 0);
 
   updatePrimary();
@@ -81,7 +79,7 @@ void CategoriesTab::updatePrimary()
 {
   ui->primaryCategories->clear();
 
-  int primaryCategory = mod()->getPrimaryCategory();
+  int primaryCategory = mod().getPrimaryCategory();
 
   addChecked(ui->categories->invisibleRootItem());
 
@@ -111,7 +109,7 @@ void CategoriesTab::save(QTreeWidgetItem* currentNode)
   for (int i = 0; i < currentNode->childCount(); ++i) {
     QTreeWidgetItem *childNode = currentNode->child(i);
 
-    mod()->setCategory(
+    mod().setCategory(
       childNode->data(0, Qt::UserRole).toInt(), childNode->checkState(0));
 
     save(childNode);
@@ -134,6 +132,6 @@ void CategoriesTab::onCategoryChanged(QTreeWidgetItem* item, int)
 void CategoriesTab::onPrimaryChanged(int index)
 {
   if (index != -1) {
-    mod()->setPrimaryCategory(ui->primaryCategories->itemData(index).toInt());
+    mod().setPrimaryCategory(ui->primaryCategories->itemData(index).toInt());
   }
 }

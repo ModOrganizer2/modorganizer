@@ -5,9 +5,7 @@ class CategoryFactory;
 class CategoriesTab : public ModInfoDialogTab
 {
 public:
-  CategoriesTab(
-    OrganizerCore& oc, PluginContainer& plugin,
-    QWidget* parent, Ui::ModInfoDialog* ui, int id);
+  CategoriesTab(ModInfoDialogTabContext cx);
 
   void clear() override;
   void update() override;

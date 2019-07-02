@@ -14,11 +14,8 @@ bool isValidModID(int id)
   return (id > 0);
 }
 
-NexusTab::NexusTab(
-  OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int id) :
-    ModInfoDialogTab(oc, plugin, parent, ui, id), m_requestStarted(false),
-    m_loading(false)
+NexusTab::NexusTab(ModInfoDialogTabContext cx) :
+  ModInfoDialogTab(std::move(cx)), m_requestStarted(false), m_loading(false)
 {
   ui->modID->setValidator(new QIntValidator(ui->modID));
   ui->endorse->setVisible(core().settings().endorsementIntegration());
@@ -70,9 +67,9 @@ void NexusTab::update()
 
   clear();
 
-  ui->modID->setText(QString("%1").arg(mod()->getNexusID()));
+  ui->modID->setText(QString("%1").arg(mod().getNexusID()));
 
-  QString gameName = mod()->getGameName();
+  QString gameName = mod().getGameName();
   ui->sourceGame->addItem(
     core().managedGame()->gameName(),
     core().managedGame()->gameShortName());
@@ -100,10 +97,10 @@ void NexusTab::update()
     [&](const QUrl& url){ shell::OpenLink(url); });
 
   ui->endorse->setEnabled(
-    (mod()->endorsedState() == ModInfo::ENDORSED_FALSE) ||
-    (mod()->endorsedState() == ModInfo::ENDORSED_NEVER));
+    (mod().endorsedState() == ModInfo::ENDORSED_FALSE) ||
+    (mod().endorsedState() == ModInfo::ENDORSED_NEVER));
 
-  setHasData(mod()->getNexusID() >= 0);
+  setHasData(mod().getNexusID() >= 0);
 }
 
 void NexusTab::firstActivation()
@@ -128,10 +125,10 @@ bool NexusTab::usesOriginFiles() const
 
 void NexusTab::updateVersionColor()
 {
-  if (mod()->getVersion() != mod()->getNewestVersion()) {
+  if (mod().getVersion() != mod().getNewestVersion()) {
     ui->version->setStyleSheet("color: red");
     ui->version->setToolTip(tr("Current Version: %1").arg(
-      mod()->getNewestVersion().canonicalString()));
+      mod().getNewestVersion().canonicalString()));
   } else {
     ui->version->setStyleSheet("color: green");
     ui->version->setToolTip(tr("No update available"));
@@ -140,11 +137,11 @@ void NexusTab::updateVersionColor()
 
 void NexusTab::updateWebpage()
 {
-  const int modID = mod()->getNexusID();
+  const int modID = mod().getNexusID();
 
   if (isValidModID(modID)) {
     const QString nexusLink = NexusInterface::instance(&plugin())
-      ->getModURL(modID, mod()->getGameName());
+      ->getModURL(modID, mod().getGameName());
 
     ui->visitNexus->setToolTip(nexusLink);
     refreshData(modID);
@@ -152,19 +149,19 @@ void NexusTab::updateWebpage()
     onModChanged();
   }
 
-  ui->version->setText(mod()->getVersion().displayString());
-  ui->hasCustomURL->setChecked(mod()->hasCustomURL());
-  ui->customURL->setText(mod()->getCustomURL());
-  ui->customURL->setEnabled(mod()->hasCustomURL());
-  ui->visitCustomURL->setEnabled(mod()->hasCustomURL());
-  ui->visitCustomURL->setToolTip(mod()->parseCustomURL().toString());
+  ui->version->setText(mod().getVersion().displayString());
+  ui->hasCustomURL->setChecked(mod().hasCustomURL());
+  ui->customURL->setText(mod().getCustomURL());
+  ui->customURL->setEnabled(mod().hasCustomURL());
+  ui->visitCustomURL->setEnabled(mod().hasCustomURL());
+  ui->visitCustomURL->setToolTip(mod().parseCustomURL().toString());
 
   updateTracking();
 }
 
 void NexusTab::updateTracking()
 {
-  if (mod()->trackedState() == ModInfo::TRACKED_TRUE) {
+  if (mod().trackedState() == ModInfo::TRACKED_TRUE) {
     ui->track->setChecked(true);
     ui->track->setText(tr("Tracked"));
   } else {
@@ -185,7 +182,7 @@ void NexusTab::refreshData(int modID)
 bool NexusTab::tryRefreshData(int modID)
 {
   if (isValidModID(modID) && !m_requestStarted) {
-    if (mod()->updateNXMInfo()) {
+    if (mod().updateNXMInfo()) {
       ui->browser->setHtml("");
       return true;
     }
@@ -198,7 +195,7 @@ void NexusTab::onModChanged()
 {
   m_requestStarted = false;
 
-  const QString nexusDescription = mod()->getNexusDescription();
+  const QString nexusDescription = mod().getNexusDescription();
 
   QString descriptionAsHTML = R"(
 <html>
@@ -247,12 +244,12 @@ void NexusTab::onModIDChanged()
     return;
   }
 
-  const int oldID = mod()->getNexusID();
+  const int oldID = mod().getNexusID();
   const int newID = ui->modID->text().toInt();
 
   if (oldID != newID){
-    mod()->setNexusID(newID);
-    mod()->setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
+    mod().setNexusID(newID);
+    mod().setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
 
     ui->browser->page()->setHtml("");
 
@@ -270,9 +267,9 @@ void NexusTab::onSourceGameChanged()
 
   for (auto game : plugin().plugins<MOBase::IPluginGame>()) {
     if (game->gameName() == ui->sourceGame->currentText()) {
-      mod()->setGameName(game->gameShortName());
-      mod()->setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
-      refreshData(mod()->getNexusID());
+      mod().setGameName(game->gameShortName());
+      mod().setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
+      refreshData(mod().getNexusID());
       return;
     }
   }
@@ -285,16 +282,16 @@ void NexusTab::onVersionChanged()
   }
 
   MOBase::VersionInfo version(ui->version->text());
-  mod()->setVersion(version);
+  mod().setVersion(version);
   updateVersionColor();
 }
 
 void NexusTab::onRefreshBrowser()
 {
-  const auto modID = mod()->getNexusID();
+  const auto modID = mod().getNexusID();
 
   if (isValidModID(modID)) {
-    mod()->setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
+    mod().setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
     updateWebpage();
   } else {
     qInfo("Mod has no valid Nexus ID, info can't be updated.");
@@ -303,11 +300,11 @@ void NexusTab::onRefreshBrowser()
 
 void NexusTab::onVisitNexus()
 {
-  const int modID = mod()->getNexusID();
+  const int modID = mod().getNexusID();
 
   if (isValidModID(modID)) {
     const QString nexusLink = NexusInterface::instance(&plugin())
-      ->getModURL(modID, mod()->getGameName());
+      ->getModURL(modID, mod().getGameName());
 
     shell::OpenLink(QUrl(nexusLink));
   }
@@ -315,12 +312,16 @@ void NexusTab::onVisitNexus()
 
 void NexusTab::onEndorse()
 {
-  core().loggedInAction(parentWidget(), [m=mod()]{ m->endorse(true); });
+  // use modPtr() instead of mod() or this because the callback may be
+  // executed after the dialog is closed
+  core().loggedInAction(parentWidget(), [m=modPtr()]{ m->endorse(true); });
 }
 
 void NexusTab::onTrack()
 {
-  core().loggedInAction(parentWidget(), [m=mod()] {
+  // use modPtr() instead of mod() or this because the callback may be
+  // executed after the dialog is closed
+  core().loggedInAction(parentWidget(), [m=modPtr()] {
     if (m->trackedState() == ModInfo::TRACKED_TRUE) {
       m->track(false);
     } else {
@@ -335,9 +336,9 @@ void NexusTab::onCustomURLToggled()
     return;
   }
 
-  mod()->setHasCustomURL(ui->hasCustomURL->isChecked());
-  ui->customURL->setEnabled(mod()->hasCustomURL());
-  ui->visitCustomURL->setEnabled(mod()->hasCustomURL());
+  mod().setHasCustomURL(ui->hasCustomURL->isChecked());
+  ui->customURL->setEnabled(mod().hasCustomURL());
+  ui->visitCustomURL->setEnabled(mod().hasCustomURL());
 }
 
 void NexusTab::onCustomURLChanged()
@@ -346,13 +347,13 @@ void NexusTab::onCustomURLChanged()
     return;
   }
 
-  mod()->setCustomURL(ui->customURL->text());
-  ui->visitCustomURL->setToolTip(mod()->parseCustomURL().toString());
+  mod().setCustomURL(ui->customURL->text());
+  ui->visitCustomURL->setToolTip(mod().parseCustomURL().toString());
 }
 
 void NexusTab::onVisitCustomURL()
 {
-  const auto url = mod()->parseCustomURL();
+  const auto url = mod().parseCustomURL();
   if (url.isValid()) {
     shell::OpenLink(url);
   }

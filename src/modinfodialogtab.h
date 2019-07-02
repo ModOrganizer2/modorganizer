@@ -10,6 +10,33 @@ namespace Ui { class ModInfoDialog; }
 class Settings;
 class OrganizerCore;
 
+// helper struct to avoid passing too much stuff to tab constructors
+//
+struct ModInfoDialogTabContext
+{
+  OrganizerCore& core;
+  PluginContainer& plugin;
+  QWidget* parent;
+  Ui::ModInfoDialog* ui;
+  int id;
+  ModInfo::Ptr mod;
+  MOShared::FilesOrigin* origin;
+
+  ModInfoDialogTabContext(
+    OrganizerCore& core,
+    PluginContainer& plugin,
+    QWidget* parent,
+    Ui::ModInfoDialog* ui,
+    int id,
+    ModInfo::Ptr mod,
+    MOShared::FilesOrigin* origin) :
+      core(core), plugin(plugin), parent(parent), ui(ui), id(id),
+      mod(mod), origin(origin)
+  {
+  }
+};
+
+
 // base class for all tabs in the mod info dialog
 //
 // when the dialog is opened or when next/previous is clicked, the sequence is:
@@ -38,7 +65,7 @@ class OrganizerCore;
 // tabs can call emitModOpen() to request showing a different mod
 //
 // hasDataChanged() should be called when a tab goes from having data to being
-// empty or vice versa; this will update the tab text color
+// empty or vice versa; this will update the tab text colour
 //
 class ModInfoDialogTab : public QObject
 {
@@ -107,19 +134,74 @@ public:
   //
   virtual void firstActivation();
 
+  // called when closing the dialog, can return false to stop the dialog from
+  // closing
+  //
+  // this is typically used by tabs that require manual saving, like text files;
+  // tabs that refuse to close should focus themselves before showing whatever
+  // confirmation they have
   //
   virtual bool canClose();
+
+
+  // called after the dialog is closed, tabs should save whatever UI state they
+  // want
+  //
   virtual void saveState(Settings& s);
+
+  // called before the is shown, tabs should restore whatever UI state they
+  // saved in saveState()
+  //
   virtual void restoreState(const Settings& s);
 
+
+  // called on the selected tab when the Delete key is pressed on the keyboard;
+  // tabs _must_ check which widget currently has focus to decide whether this
+  // should be handled or not; do not blindly delete stuff when this is called
+  //
+  // if the delete request was handled, this should return true
+  //
   virtual bool deleteRequested();
 
+
+  // return true if this tab can handle a separator mod, defaults to false;
+  // when this returns false, the tab is removed from the widget entirely
+  //
+  // if a tab can show meaningful information about a separator (like
+  // categories or notes), it should return true
+  //
   virtual bool canHandleSeparators() const;
+
+  // return true if this tab can handle unmanaged mods, defaults to false;
+  // when this returns false, the tab is removed from the widget entirely
+  //
   virtual bool canHandleUnmanaged() const;
+
+  // return true if this tab uses the files from the mod's origin, defaults to
+  // false
+  //
+  // tabs that do not care about the files inside a mod should return false,
+  // such as the notes or categories tab
+  //
+  // mods that return true will be updated anytime a tab calls
+  // emitOriginModifed()
+  //
   virtual bool usesOriginFiles() const;
 
-  ModInfo::Ptr mod() const;
+
+  // returns the currently selected mod
+  //
+  ModInfo& mod() const;
+
+  // returns the currently selected mod, can never be empty
+  //
+  ModInfo::Ptr modPtr() const;
+
+  // returns the origin of the selected mod; this can be null for mods that
+  // don't have an origin, like deactivated mods
+  //
   MOShared::FilesOrigin* origin() const;
+
 
   int tabID() const;
   bool hasData() const;
@@ -133,9 +215,7 @@ signals:
 protected:
   Ui::ModInfoDialog* ui;
 
-  ModInfoDialogTab(
-    OrganizerCore& oc, PluginContainer& plugin,
-    QWidget* parent, Ui::ModInfoDialog* ui, int id);
+  ModInfoDialogTab(ModInfoDialogTabContext cx);
 
   OrganizerCore& core();
   PluginContainer& plugin();
@@ -186,9 +266,7 @@ private:
 class NotesTab : public ModInfoDialogTab
 {
 public:
-  NotesTab(
-    OrganizerCore& oc, PluginContainer& plugin,
-    QWidget* parent, Ui::ModInfoDialog* ui, int index);
+  NotesTab(ModInfoDialogTabContext cx);
 
   void clear() override;
   void update() override;

@@ -3223,10 +3223,8 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
   } else {
     modInfo->saveMeta();
 
-    ModInfoDialog dialog(this, &m_OrganizerCore, &m_PluginContainer);
+    ModInfoDialog dialog(this, &m_OrganizerCore, &m_PluginContainer, modInfo);
     connect(&dialog, SIGNAL(originModified(int)), this, SLOT(originModified(int)));
-
-    dialog.setMod(modInfo);
 
 	  //Open the tab first if we want to use the standard indexes of the tabs.
 	  if (tab != -1) {

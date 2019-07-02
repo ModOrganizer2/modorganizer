@@ -11,9 +11,7 @@ class ESPsTab : public ModInfoDialogTab
   Q_OBJECT;
 
 public:
-  ESPsTab(
-    OrganizerCore& oc, PluginContainer& plugin,
-    QWidget* parent, Ui::ModInfoDialog* ui, int id);
+  ESPsTab(ModInfoDialogTabContext cx);
 
   void clear() override;
   bool feedFile(const QString& rootPath, const QString& fullPath) override;

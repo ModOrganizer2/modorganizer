@@ -99,10 +99,10 @@ private:
 
 
 GenericFilesTab::GenericFilesTab(
-  OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int id,
-  QListView* list, QSplitter* sp, TextEditor* e, QLineEdit* filter) :
-    ModInfoDialogTab(oc, plugin, parent, ui, id),
+  ModInfoDialogTabContext cx,
+  QListView* list, QSplitter* sp,
+  TextEditor* e, QLineEdit* filter) :
+    ModInfoDialogTab(std::move(cx)),
     m_list(list), m_editor(e), m_splitter(sp), m_model(new FileListModel)
 {
   m_list->setModel(m_model);
@@ -208,13 +208,10 @@ void GenericFilesTab::select(const QModelIndex& index)
 }
 
 
-TextFilesTab::TextFilesTab(
-  OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int id)
-    : GenericFilesTab(
-        oc, plugin, parent, ui, id,
-        ui->textFileList, ui->tabTextSplitter,
-        ui->textFileEditor, ui->textFileFilter)
+TextFilesTab::TextFilesTab(ModInfoDialogTabContext cx)
+  : GenericFilesTab(cx,
+      cx.ui->textFileList, cx.ui->tabTextSplitter,
+      cx.ui->textFileEditor, cx.ui->textFileFilter)
 {
 }
 
@@ -231,13 +228,10 @@ bool TextFilesTab::wantsFile(const QString& rootPath, const QString& fullPath) c
   return false;
 }
 
-IniFilesTab::IniFilesTab(
-  OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int id)
-    : GenericFilesTab(
-        oc, plugin, parent, ui, id,
-        ui->iniFileList, ui->tabIniSplitter,
-        ui->iniFileEditor, ui->iniFileFilter)
+IniFilesTab::IniFilesTab(ModInfoDialogTabContext cx)
+  : GenericFilesTab(cx,
+      cx.ui->iniFileList, cx.ui->tabIniSplitter,
+      cx.ui->iniFileEditor, cx.ui->iniFileFilter)
 {
 }
 

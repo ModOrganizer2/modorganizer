@@ -127,7 +127,8 @@ bool ModInfoDialog::TabInfo::isVisible() const
 
 
 ModInfoDialog::ModInfoDialog(
-  MainWindow* mw, OrganizerCore* core, PluginContainer* plugin) :
+  MainWindow* mw, OrganizerCore* core, PluginContainer* plugin,
+  ModInfo::Ptr mod) :
     TutorableDialog("ModInfoDialog", mw),
     ui(new Ui::ModInfoDialog), m_mainWindow(mw),
     m_core(core), m_plugin(plugin), m_initialTab(ETabs(-1)),
@@ -138,6 +139,7 @@ ModInfoDialog::ModInfoDialog(
   auto* sc = new QShortcut(QKeySequence::Delete, this);
   connect(sc, &QShortcut::activated, [&]{ onDeleteShortcut(); });
 
+  setMod(mod);
   m_tabs = createTabs();
 
   for (int i=0; i<ui->tabWidget->count(); ++i) {
@@ -184,19 +186,26 @@ ModInfoDialog::ModInfoDialog(
 
 ModInfoDialog::~ModInfoDialog() = default;
 
+template <class T>
+std::unique_ptr<ModInfoDialogTab> createTab(ModInfoDialog& d, int index)
+{
+  return std::make_unique<T>(ModInfoDialogTabContext(
+    *d.m_core, *d.m_plugin, &d, d.ui.get(), index, d.m_mod, d.getOrigin()));
+}
+
 std::vector<ModInfoDialog::TabInfo> ModInfoDialog::createTabs()
 {
   std::vector<TabInfo> v;
 
-  v.push_back(createTab<TextFilesTab>(TAB_TEXTFILES));
-  v.push_back(createTab<IniFilesTab>(TAB_INIFILES));
-  v.push_back(createTab<ImagesTab>(TAB_IMAGES));
-  v.push_back(createTab<ESPsTab>(TAB_ESPS));
-  v.push_back(createTab<ConflictsTab>(TAB_CONFLICTS));
-  v.push_back(createTab<CategoriesTab>(TAB_CATEGORIES));
-  v.push_back(createTab<NexusTab>(TAB_NEXUS));
-  v.push_back(createTab<NotesTab>(TAB_NOTES));
-  v.push_back(createTab<FileTreeTab>(TAB_FILETREE));
+  v.push_back(createTab<TextFilesTab>(*this, TAB_TEXTFILES));
+  v.push_back(createTab<IniFilesTab>(*this, TAB_INIFILES));
+  v.push_back(createTab<ImagesTab>(*this, TAB_IMAGES));
+  v.push_back(createTab<ESPsTab>(*this, TAB_ESPS));
+  v.push_back(createTab<ConflictsTab>(*this, TAB_CONFLICTS));
+  v.push_back(createTab<CategoriesTab>(*this, TAB_CATEGORIES));
+  v.push_back(createTab<NexusTab>(*this, TAB_NEXUS));
+  v.push_back(createTab<NotesTab>(*this, TAB_NOTES));
+  v.push_back(createTab<FileTreeTab>(*this, TAB_FILETREE));
 
   return v;
 }
@@ -218,6 +227,7 @@ int ModInfoDialog::exec()
 
 void ModInfoDialog::setMod(ModInfo::Ptr mod)
 {
+  Q_ASSERT(mod);
   m_mod = mod;
 
   for (auto& tabInfo : m_tabs) {
@@ -584,10 +594,8 @@ void ModInfoDialog::onOriginModified(int originID)
 
 void ModInfoDialog::onDeleteShortcut()
 {
-  for (auto& tabInfo : m_tabs) {
-    if (tabInfo.tab->deleteRequested()) {
-      break;
-    }
+  if (auto* tabInfo=currentTab()) {
+    tabInfo->tab->deleteRequested();
   }
 }
 
@@ -663,7 +671,7 @@ void ModInfoDialog::onTabMoved()
 void ModInfoDialog::on_nextButton_clicked()
 {
   auto mod = m_mainWindow->nextModInList();
-  if (mod == m_mod) {
+  if (!mod || mod == m_mod) {
     return;
   }
 
@@ -674,7 +682,7 @@ void ModInfoDialog::on_nextButton_clicked()
 void ModInfoDialog::on_prevButton_clicked()
 {
   auto mod = m_mainWindow->previousModInList();
-  if (mod == m_mod) {
+  if (!mod || mod == m_mod) {
     return;
   }
 

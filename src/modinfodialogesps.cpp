@@ -224,11 +224,9 @@ private:
 
 
 
-ESPsTab::ESPsTab(
-  OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int id) :
-    ModInfoDialogTab(oc, plugin, parent, ui, id),
-    m_inactiveModel(new ESPListModel), m_activeModel(new ESPListModel)
+ESPsTab::ESPsTab(ModInfoDialogTabContext cx) :
+  ModInfoDialogTab(std::move(cx)),
+  m_inactiveModel(new ESPListModel), m_activeModel(new ESPListModel)
 {
   ui->inactiveESPList->setModel(m_inactiveModel);
   ui->activeESPList->setModel(m_activeModel);

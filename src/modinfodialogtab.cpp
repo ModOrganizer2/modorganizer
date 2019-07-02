@@ -3,11 +3,9 @@
 #include "texteditor.h"
 #include "directoryentry.h"
 
-ModInfoDialogTab::ModInfoDialogTab(
-  OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int id) :
-    ui(ui), m_core(oc), m_plugin(plugin), m_parent(parent),
-    m_origin(nullptr), m_tabID(id), m_hasData(false), m_firstActivation(true)
+ModInfoDialogTab::ModInfoDialogTab(ModInfoDialogTabContext cx) :
+  ui(cx.ui), m_core(cx.core), m_plugin(cx.plugin), m_parent(cx.parent),
+  m_origin(cx.origin), m_tabID(cx.id), m_hasData(false), m_firstActivation(true)
 {
 }
 
@@ -82,8 +80,15 @@ void ModInfoDialogTab::setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin)
   m_origin = origin;
 }
 
-ModInfo::Ptr ModInfoDialogTab::mod() const
+ModInfo& ModInfoDialogTab::mod() const
 {
+  Q_ASSERT(m_mod);
+  return *m_mod;
+}
+
+ModInfo::Ptr ModInfoDialogTab::modPtr() const
+{
+  Q_ASSERT(m_mod);
   return m_mod;
 }
 
@@ -143,10 +148,8 @@ void ModInfoDialogTab::setFocus()
 }
 
 
-NotesTab::NotesTab(
-  OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int index)
-   : ModInfoDialogTab(oc, plugin, parent, ui, index)
+NotesTab::NotesTab(ModInfoDialogTabContext cx)
+   : ModInfoDialogTab(std::move(cx))
 {
   connect(ui->comments, &QLineEdit::editingFinished, [&]{ onComments(); });
   connect(ui->notes, &HTMLEditor::editingFinished, [&]{ onNotes(); });
@@ -161,8 +164,8 @@ void NotesTab::clear()
 
 void NotesTab::update()
 {
-  const auto comments = mod()->comments();
-  const auto notes = mod()->notes();
+  const auto comments = mod().comments();
+  const auto notes = mod().notes();
 
   ui->comments->setText(comments);
   ui->notes->setText(notes);
@@ -176,7 +179,7 @@ bool NotesTab::canHandleSeparators() const
 
 void NotesTab::onComments()
 {
-  mod()->setComments(ui->comments->text());
+  mod().setComments(ui->comments->text());
   checkHasData();
 }
 
@@ -184,9 +187,9 @@ void NotesTab::onNotes()
 {
   // Avoid saving html stub if notes field is empty.
   if (ui->notes->toPlainText().isEmpty()) {
-    mod()->setNotes({});
+    mod().setNotes({});
   } else {
-    mod()->setNotes(ui->notes->toHtml());
+    mod().setNotes(ui->notes->toHtml());
   }
 
   checkHasData();
