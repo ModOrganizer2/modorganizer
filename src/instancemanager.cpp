@@ -217,6 +217,8 @@ QString InstanceManager::chooseInstance(const QStringList &instanceList) const
                         QObject::tr("Delete an Instance."),
                         static_cast<uint8_t>(Special::Manage));
 
+  selection.setWindowFlags(selection.windowFlags() | Qt::WindowStaysOnTopHint);
+
   if (selection.exec() == QDialog::Rejected) {
     qDebug("rejected");
     throw MOBase::MyException(QObject::tr("Canceled"));
