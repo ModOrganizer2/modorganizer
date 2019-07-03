@@ -432,7 +432,7 @@ void preloadDll(const QString& filename)
 {
   qDebug().nospace() << "preloading " << filename;
 
-  if (!GetModuleHandleW(filename.toStdWString().c_str())) {
+  if (GetModuleHandleW(filename.toStdWString().c_str())) {
     // already loaded, this can happen when "restarting" MO by switching
     // instances, for example
     return;
