@@ -2,7 +2,7 @@
 #define IUSERINTERFACE_H
 
 
-#include "modinfo.h"
+#include "modinfodialogfwd.h"
 #include "ilockedwaitingforprocess.h"
 #include <iplugintool.h>
 #include <ipluginmodpage.h>
@@ -29,7 +29,8 @@ public:
   virtual bool closeWindow() = 0;
   virtual void setWindowEnabled(bool enabled) = 0;
 
-  virtual void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab) = 0;
+  virtual void displayModInformation(
+    ModInfoPtr modInfo, unsigned int modIndex, ModInfoTabIDs tabID) = 0;
 
   virtual void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives) = 0;
 

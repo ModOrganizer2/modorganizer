@@ -23,463 +23,236 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "modinfo.h"
 #include "tutorabledialog.h"
-#include "plugincontainer.h"
-#include "organizercore.h"
-#include "filterwidget.h"
+#include "filerenamer.h"
+#include "modinfodialogfwd.h"
 
-#include <QDialog>
-#include <QSignalMapper>
-#include <QSettings>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QModelIndex>
-#include <QAction>
-#include <QListWidgetItem>
-#include <QTreeWidgetItem>
-#include <QTextCodec>
-#include <set>
-#include <directoryentry.h>
+namespace Ui { class ModInfoDialog; }
+namespace MOShared { class FilesOrigin; }
 
-
-namespace Ui {
-    class ModInfoDialog;
-}
-
-class QFileSystemModel;
-class QTreeView;
-class CategoryFactory;
+class PluginContainer;
+class OrganizerCore;
+class Settings;
+class ModInfoDialogTab;
+class MainWindow;
 
 /**
-* Renames individual files and handles dialog boxes to confirm replacements and
-* failures with the user
-**/
-class FileRenamer
-{
-public:
-  /**
-  * controls appearance and replacement behaviour; if RENAME_REPLACE_ALL and
-  * RENAME_REPLACE_NONE are not provided, the user will have the option to
-  * choose on the first replacement
-  **/
-  enum RenameFlags
-  {
-    /**
-    * this renamer will be used on multiple files, so display additional
-    * buttons to replace all and for canceling
-    **/
-    MULTIPLE      = 0x01,
-
-    /**
-    * customizes some of the text shown on dialog to mention that files are
-    * being hidden
-    **/
-    HIDE          = 0x02,
-
-    /**
-    * customizes some of the text shown on dialog to mention that files are
-    * being unhidden
-    **/
-    UNHIDE        = 0x04,
-
-    /**
-    * silently replaces all existing files
-    **/
-    REPLACE_ALL   = 0x08,
-
-    /**
-    * silently skips all existing files
-    **/
-    REPLACE_NONE  = 0x10,
-  };
-
-
-  /** result of a single rename
-  *
-  **/
-  enum RenameResults
-  {
-    /**
-    * the user skipped this file
-    */
-    RESULT_SKIP,
-
-    /**
-    * the file was successfully renamed
-    */
-    RESULT_OK,
-
-    /**
-    * the user wants to cancel
-    */
-    RESULT_CANCEL
-  };
-
-
-  /**
-  * @param parent Parent widget for dialog boxes
-  **/
-  FileRenamer(QWidget* parent, QFlags<RenameFlags> flags);
-
-  /**
-  * renames the given file
-  * @param oldName current filename
-  * @param newName new filename
-  * @return whether the file was renamed, skipped or the user wants to cancel
-  **/
-  RenameResults rename(const QString& oldName, const QString& newName);
-
-private:
-  /**
-  *user's decision when replacing
-  **/
-  enum RenameDecision
-  {
-    /**
-    * replace the file
-    **/
-    DECISION_REPLACE,
-
-    /**
-    * skip the file
-    **/
-    DECISION_SKIP,
-
-    /**
-    * cancel the whole thing
-    **/
-    DECISION_CANCEL
-  };
-
-  /**
-  * parent widget for dialog boxes
-  **/
-  QWidget* m_parent;
-
-  /**
-  * flags
-  **/
-  QFlags<RenameFlags> m_flags;
-
-  /**
-  * asks the user to replace an existing file, may return early if the user
-  * has already selected to replace all/none
-  * @return whether to replace, skip or cancel
-  **/
-  RenameDecision confirmReplace(const QString& newName);
-
-  /**
-  * removal of a file failed, ask the user to continue or cancel
-  * @param name The name of the file that failed to be removed
-  * @return true to continue, false to stop
-  **/
-  bool removeFailed(const QString& name);
-
-  /**
-  * renaming a file failed, ask the user to continue or cancel
-  * @param oldName current filename
-  * @param newName new filename
-  * @return true to continue, false to stop
-  **/
-  bool renameFailed(const QString& oldName, const QString& newName);
-};
-
-
-/* Takes a QToolButton and a widget and creates an expandable widget.
- **/
-class ExpanderWidget
-{
-public:
-  /** empty expander, use set()
-   **/
-  ExpanderWidget();
-
-  /** see set()
-   **/
-  ExpanderWidget(QToolButton* button, QWidget* content);
-
-  /** @brief sets the button and content widgets to use
-    * the button will be given an arrow icon, clicking it will toggle the
-    * visibility of the given widget
-    * @param button the button that toggles the content
-    * @param content the widget that will be shown or hidden
-    * @param opened initial state, defaults to closed
-    **/
-  void set(QToolButton* button, QWidget* content, bool opened=false);
-
-  /** either opens or closes the expander depending on the current state
-   **/
-  void toggle();
-
-  /** sets the current state of the expander
-   **/
-  void toggle(bool b);
-
-  /** returns whether the expander is currently opened
-   **/
-  bool opened() const;
-
-private:
-  QToolButton* m_button;
-  QWidget* m_content;
-  bool opened_;
-};
-
-
-/**
- * this is a larger dialog used to visualise information abount the mod.
+ * this is a larger dialog used to visualise information about the mod.
  * @todo this would probably a good place for a plugin-system
  **/
 class ModInfoDialog : public MOBase::TutorableDialog
 {
-    Q_OBJECT
+  Q_OBJECT;
+
+  // creates a tab, it's a friend because it uses a bunch of member variables
+  // to create ModInfoDialogTabContext
+  //
+  template <class T>
+  friend std::unique_ptr<ModInfoDialogTab> createTab(
+    ModInfoDialog& d, ModInfoTabIDs index);
 
 public:
-
-  enum ETabs {
-    TAB_TEXTFILES,
-    TAB_INIFILES,
-    TAB_IMAGES,
-    TAB_ESPS,
-    TAB_CONFLICTS,
-    TAB_CATEGORIES,
-    TAB_NEXUS,
-    TAB_NOTES,
-    TAB_FILETREE
-  };
-
-public:
-
- /**
-  * @brief constructor
-  *
-  * @param modInfo info structure about the mod to display
-  * @param parent parend widget
-  **/
-  explicit ModInfoDialog(ModInfo::Ptr modInfo, const MOShared::DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent = 0);
+  ModInfoDialog(
+    MainWindow* mw, OrganizerCore* core, PluginContainer* plugin,
+    ModInfo::Ptr mod);
 
   ~ModInfoDialog();
 
-  /**
-   * @brief retrieve the (user-modified) version of the mod
-   *
-   * @return the (user-modified) version of the mod
-   **/
-  QString getModVersion() const;
+  // switches to the tab with the given id
+  //
+  void selectTab(ModInfoTabIDs id);
 
-  /**
-   * @brief retrieve the (user-modified) mod id
-   *
-   * @return the (user-modified) id of the mod
-   **/
-  const int getModID() const;
-
-  /**
-   * @brief open the specified tab in the dialog if it's enabled
-   *
-   * @param tab the tab to activate
-   **/
-  void openTab(int tab);
-
+  // updates all tabs, selects the initial tab and opens the dialog
+  //
   int exec() override;
 
+  // saves the dialog state and calls saveState() on all tabs
+  //
   void saveState(Settings& s) const;
+
+  // restores the dialog state and calls restoreState() on all tabs
+  //
   void restoreState(const Settings& s);
 
 signals:
-
-  void thumbnailClickedSignal(const QString &filename);
-  void linkActivated(const QString &link);
-  void downloadRequest(const QString &link);
-  void modOpen(const QString &modName, int tab);
-  void modOpenNext(int tab=-1);
-  void modOpenPrev(int tab=-1);
+  // emitted when a tab changes the origin
+  //
   void originModified(int originID);
-  void endorseMod(ModInfo::Ptr nexusID);
 
-public slots:
-
-  void modDetailsUpdated(bool success);
+protected:
+  // forwards to tryClose()
+  //
+  void closeEvent(QCloseEvent* e);
 
 private:
-
-  void initFiletree(ModInfo::Ptr modInfo);
-  void initINITweaks();
-
-  void refreshLists();
-
-  void addCategories(const CategoryFactory &factory, const std::set<int> &enabledCategories, QTreeWidgetItem *root, int rootLevel);
-
-  void updateVersionColor();
-
-  void refreshNexusData(int modID);
-  void activateNexusTab();
-  QString getFileCategory(int categoryID);
-  bool recursiveDelete(const QModelIndex &index);
-  void deleteFile(const QModelIndex &index);
-  void saveIniTweaks();
-  void saveCategories(QTreeWidgetItem *currentNode);
-  void saveCurrentTextFile();
-  void saveCurrentIniFile();
-  void openTextFile(const QString &fileName);
-  void openIniFile(const QString &fileName);
-  bool allowNavigateFromTXT();
-  bool allowNavigateFromINI();
-  FileRenamer::RenameResults hideFile(FileRenamer& renamer, const QString &oldName);
-  FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString &oldName);
-  void addCheckedCategories(QTreeWidgetItem *tree);
-  void refreshPrimaryCategoriesBox();
-
-  int tabIndex(const QString &tabId);
-
-private slots:
-  void thumbnailClicked(const QString &fileName);
-  void linkClicked(const QUrl &url);
-  void linkClicked(QString url);
-
-  void delete_activated();
-
-  void createDirectoryTriggered();
-  void openTriggered();
-  void previewTriggered();
-  void renameTriggered();
-  void deleteTriggered();
-  void hideTriggered();
-  void unhideTriggered();
-
-  void on_openInExplorerButton_clicked();
-  void on_closeButton_clicked();
-  void on_saveButton_clicked();
-  void on_activateESP_clicked();
-  void on_deactivateESP_clicked();
-  void on_saveTXTButton_clicked();
-  void on_visitNexusLabel_linkActivated(const QString &link);
-  void on_modIDEdit_editingFinished();
-  void on_sourceGameEdit_currentIndexChanged(int);
-  void on_versionEdit_editingFinished();
-  void on_customUrlLineEdit_editingFinished();
-  void on_iniFileView_textChanged();
-  void on_textFileView_textChanged();
-  void on_tabWidget_currentChanged(int index);
-  void on_primaryCategoryBox_currentIndexChanged(int index);
-  void on_categoriesTree_itemChanged(QTreeWidgetItem *item, int column);
-  void on_textFileList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
-  void on_iniFileList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
-  void on_iniTweaksList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
-  void on_overwriteTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
-  void on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
-  void on_overwriteTree_customContextMenuRequested(const QPoint &pos);
-  void on_overwrittenTree_customContextMenuRequested(const QPoint &pos);
-  void on_noConflictTree_customContextMenuRequested(const QPoint &pos);
-  void on_conflictsAdvancedList_customContextMenuRequested(const QPoint &pos);
-  void on_fileTree_customContextMenuRequested(const QPoint &pos);
-
-  void on_refreshButton_clicked();
-
-  void on_endorseBtn_clicked();
-
-  void on_nextButton_clicked();
-
-  void on_prevButton_clicked();
-
-  void on_iniTweaksList_customContextMenuRequested(const QPoint &pos);
-
-  void createTweak();
-private:
-  using FileEntry = MOShared::FileEntry;
-
-  struct ConflictActions
+  // represents a single tab
+  //
+  struct TabInfo
   {
-    QAction* hide;
-    QAction* unhide;
-    QAction* open;
-    QAction* preview;
-    QMenu* gotoMenu;
-    std::vector<QAction*> gotoActions;
+    // tab implementation
+    std::unique_ptr<ModInfoDialogTab> tab;
 
-    ConflictActions() :
-      hide(nullptr), unhide(nullptr), open(nullptr), preview(nullptr),
-      gotoMenu(nullptr)
-    {
-    }
+    // actual position in the tab bar, updated every time a tab is moved
+    int realPos;
+
+    // widget used by the QTabWidget for this tab
+    //
+    // because QTabWidget doesn't support simply hiding tabs, they have to be
+    // completely removed from the widget when they don't support the current
+    // mod
+    //
+    // therefore, `widget, `caption` and `icon` are remembered so tabs can be
+    // removed and re-added when navigating between mods
+    //
+    // `widget` is also used figure out which tab is where when they're
+    // re-ordered
+    QWidget* widget;
+
+    // caption for this tab, see `widget`
+    QString caption;
+
+    // icon for this tab, see `widget`
+    QIcon icon;
+
+
+    TabInfo(std::unique_ptr<ModInfoDialogTab> tab);
+
+    // returns whether this tab is part of the tab widget
+    //
+    bool isVisible() const;
   };
 
-  Ui::ModInfoDialog *ui;
+  std::unique_ptr<Ui::ModInfoDialog> ui;
+  MainWindow* m_mainWindow;
+  ModInfo::Ptr m_mod;
+  OrganizerCore* m_core;
+  PluginContainer* m_plugin;
+  std::vector<TabInfo> m_tabs;
 
-  ModInfo::Ptr m_ModInfo;
+  // initial tab requested by the main window when the dialog is opened; whether
+  // the request can be honoured depends on what tabs are present
+  ModInfoTabIDs m_initialTab;
 
-  QSignalMapper m_ThumbnailMapper;
-  QString m_RootPath;
-
-  OrganizerCore *m_OrganizerCore;
-  PluginContainer *m_PluginContainer;
-
-  QFileSystemModel *m_FileSystemModel;
-  QTreeView *m_FileTree;
-  QModelIndexList m_FileSelection;
-
-  QSettings *m_Settings;
-
-  std::set<int> m_RequestIDs;
-  bool m_RequestStarted;
-
-  QAction *m_NewFolderAction;
-  QAction *m_OpenAction;
-  QAction *m_PreviewAction;
-  QAction *m_RenameAction;
-  QAction *m_DeleteAction;
-  QAction *m_HideAction;
-  QAction *m_UnhideAction;
-
-  const MOShared::DirectoryEntry *m_Directory;
-  MOShared::FilesOrigin *m_Origin;
-
-  std::map<int, int> m_RealTabPos;
-
-  ExpanderWidget m_overwriteExpander, m_overwrittenExpander, m_nonconflictExpander;
-  FilterWidget m_advancedConflictFilter;
+  // set to true when tabs are being removed and re-added while navigating
+  // between mods; since the current index changes while this is happening,
+  // onTabSelectionChanged() will be called repeatedly
+  //
+  // however, it will check this flag and ignore the event so first activations
+  // are not fired incorrectly
+  bool m_arrangingTabs;
 
 
-  void refreshConflictLists(bool refreshGeneral, bool refreshAdvanced);
-  void refreshFiles();
+  // creates all the tabs and connects events
+  //
+  void createTabs();
 
-  QTreeWidgetItem* createOverwriteItem(
-    FileEntry::Index index, bool archive,
-    const QString& fileName, const QString& relativeName,
-    const MOShared::FileEntry::AlternativesVector& alternatives);
 
-  QTreeWidgetItem* createNoConflictItem(
-    FileEntry::Index index, bool archive,
-    const QString& fileName, const QString& relativeName);
+  // sets the currently selected mod; resets first activation, but doesn't
+  // update anything
+  //
+  void setMod(ModInfo::Ptr mod);
 
-  QTreeWidgetItem* createOverwrittenItem(
-    FileEntry::Index index, int fileOrigin, bool archive,
-    const QString& fileName, const QString& relativeName);
+  // sets the currently selected mod, if found; forwards to setMod() above
+  //
+  void setMod(const QString& name);
 
-  QTreeWidgetItem* createAdvancedConflictItem(
-    FileEntry::Index index, int fileOrigin, bool archive,
-    const QString& fileName, const QString& relativeName,
-    const MOShared::FileEntry::AlternativesVector& alternatives);
+  // returns the origin of the current mod, may be null
+  //
+  MOShared::FilesOrigin* getOrigin();
 
-  void restoreTabState(const QByteArray &state);
-  void restoreConflictsState(const QByteArray &state);
 
-  QByteArray saveTabState() const;
-  QByteArray saveConflictsState() const;
+  // returns the currently selected tab, taking re-ordering in to account;
+  // shouldn't be null, but could be
+  //
+  TabInfo* currentTab();
 
-  void changeFiletreeVisibility(bool visible);
 
-  void openConflictItems(const QList<QTreeWidgetItem*>& items);
-  void previewConflictItems(const QList<QTreeWidgetItem*>& items);
-  void changeConflictItemsVisibility(
-    const QList<QTreeWidgetItem*>& items, bool visible);
+  // fully updates the dialog; sets the title, the tab visibility and updates
+  // all the tabs; used when the current mod changes
+  //
+  // see setTabsVisibility() for firstTime
+  //
+  void update(bool firstTime=false);
 
-  void showConflictMenu(const QPoint &pos, QTreeWidget* tree);
+  // builds the list of visible tabs; if the list is different from what's
+  // currently displayed, or firstTime is true, forwards to reAddTabs()
+  void setTabsVisibility(bool firstTime);
 
-  ConflictActions createConflictMenuActions(
-    const QList<QTreeWidgetItem*>& selection);
+  // clears the tab widgets and re-adds the tabs having the visible flag in
+  // the given vector, following the tab order from the settings
+  //
+  void reAddTabs(const std::vector<bool>& visibility, ModInfoTabIDs sel);
 
-  std::vector<QAction*> createGotoActions(
-    const QList<QTreeWidgetItem*>& selection);
+  // called by update(); clears tabs, feeds files and calls update() on all
+  // tabs, then setTabsColors()
+  //
+  void updateTabs(bool becauseOriginChanged=false);
+
+  // goes through all files on the filesystem for the current mod and calls
+  // feedFile() on every tab until one accepts it
+  //
+  void feedFiles(std::vector<TabInfo*>& interestedTabs);
+
+  // goes through all tabs and sets the tab text colour depending on whether
+  // they have data or not
+  //
+  void setTabsColors();
+
+
+  // called when the delete key is pressed anywhere in the dialog; forwards to
+  // ModInfoDialogTab::deleteRequest() for the currently selected tab
+  //
+  void onDeleteShortcut();
+
+
+  // finds the tab with the given id and selects it
+  //
+  void switchToTab(ModInfoTabIDs id);
+
+
+  // saves the current tab order; used by saveState(), but also by
+  // setTabsVisibility() to make sure any changes to order are saved before
+  // re-adding tabs
+  //
+  void saveTabOrder(Settings& s) const;
+
+  // returns a list of tab names in the order they should appear on the widget
+  //
+  std::vector<QString> getOrderedTabNames() const;
+
+  // asks all the tabs if they accept closing the dialog, returns false if one
+  // objected
+  //
+  bool tryClose();
+
+
+  // called when the user clicks the close button; closing the dialog by other
+  // means ends up in closeEvent(); forwards to tryClose()
+  //
+  void onCloseButton();
+
+  // called when the user clicks the previous button; asks the main window for
+  // the previous mod in the list and loads it
+  //
+  void onPreviousMod();
+
+  // called when the user clicks the next button; asks the main window for the
+  // next mod in the list and loads it
+  //
+  void onNextMod();
+
+  // called when the selects a tab; handles first activation
+  //
+  void onTabSelectionChanged();
+
+  // called when the user re-orders tabs; sets the correct TabInfo::realPos for
+  // all tabs
+  //
+  void onTabMoved();
+
+  // called when a tab has modified the origin; emits originModified() and
+  // updates all the tabs that use origin files
+  //
+  void onOriginModified(int originID);
 };
 
 #endif // MODINFODIALOG_H

@@ -3073,66 +3073,34 @@ void MainWindow::backupMod_clicked()
 
 void MainWindow::resumeDownload(int downloadIndex)
 {
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
+  m_OrganizerCore.loggedInAction(this, [this, downloadIndex] {
     m_OrganizerCore.downloadManager()->resumeDownload(downloadIndex);
-  } else {
-    QString apiKey;
-    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-      m_OrganizerCore.doAfterLogin([this, downloadIndex] () {
-        this->resumeDownload(downloadIndex);
-      });
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-    } else {
-      MessageDialog::showMessage(tr("You need to be logged in with Nexus to resume a download"), this);
-    }
-  }
+  });
 }
 
 
 void MainWindow::endorseMod(ModInfo::Ptr mod)
 {
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
+  m_OrganizerCore.loggedInAction(this, [this, mod] {
     mod->endorse(true);
-  } else {
-    QString apiKey;
-    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-      m_OrganizerCore.doAfterLogin([&]() { this->endorseMod(mod); });
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-    } else {
-      MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
-    }
-  }
+  });
 }
 
 
 void MainWindow::endorse_clicked()
 {
   QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
+
+  m_OrganizerCore.loggedInAction(this, [this] {
+    QItemSelectionModel *selection = ui->modList->selectionModel();
+    if (selection->hasSelection() && selection->selectedRows().count() > 1) {
       MessageDialog::showMessage(tr("Endorsing multiple mods will take a while. Please wait..."), this);
-      for (QModelIndex idx : selection->selectedRows()) {
-        ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(true);
-      }
     }
-    else {
-      QString apiKey;
-      if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-        MessageDialog::showMessage(tr("Endorsing multiple mods will take a while. Please wait..."), this);
-        for (QModelIndex idx : selection->selectedRows()) {
-          ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-          m_OrganizerCore.doAfterLogin([&]() { this->endorseMod(modInfo); });
-        }
-        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-      } else {
-        MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
-        return;
-      }
+
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(true);
     }
-  }
-  else {
-    endorseMod(ModInfo::getByIndex(m_ContextRow));
-  }
+  });
 }
 
 void MainWindow::dontendorse_clicked()
@@ -3151,114 +3119,53 @@ void MainWindow::dontendorse_clicked()
 
 void MainWindow::unendorseMod(ModInfo::Ptr mod)
 {
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
-    ModInfo::getByIndex(m_ContextRow)->endorse(false);
-  } else {
-    QString apiKey;
-    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-      m_OrganizerCore.doAfterLogin([&]() { this->unendorseMod(mod); });
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-    } else {
-      MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
-    }
-  }
+  m_OrganizerCore.loggedInAction(this, [mod] {
+    mod->endorse(false);
+  });
 }
 
 
 void MainWindow::unendorse_clicked()
 {
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
+  m_OrganizerCore.loggedInAction(this, [this] {
+    QItemSelectionModel *selection = ui->modList->selectionModel();
+    if (selection->hasSelection() && selection->selectedRows().count() > 1) {
       MessageDialog::showMessage(tr("Unendorsing multiple mods will take a while. Please wait..."), this);
-      for (QModelIndex idx : selection->selectedRows()) {
-        ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(false);
-      }
-    } else {
-      QString apiKey;
-      if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-        MessageDialog::showMessage(tr("Unendorsing multiple mods will take a while. Please wait..."), this);
-        for (QModelIndex idx : selection->selectedRows()) {
-          ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-          m_OrganizerCore.doAfterLogin([&]() { this->unendorseMod(modInfo); });
-        }
-        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-      } else {
-        MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
-        return;
-      }
     }
-  }
-  else {
-    unendorseMod(ModInfo::getByIndex(m_ContextRow));
-  }
+
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(false);
+    }
+  });
 }
 
 
 void MainWindow::trackMod(ModInfo::Ptr mod, bool doTrack)
 {
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
-    ModInfo::getByIndex(m_ContextRow)->track(doTrack);
-  } else {
-    QString apiKey;
-    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-      m_OrganizerCore.doAfterLogin([&]() { this->trackMod(mod, doTrack); });
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-    } else {
-      MessageDialog::showMessage(tr("You need to be logged in with Nexus to track"), this);
-    }
-  }
+  m_OrganizerCore.loggedInAction(this, [mod, doTrack] {
+    mod->track(doTrack);
+  });
 }
 
 
 void MainWindow::track_clicked()
 {
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
-      for (auto idx : selection->selectedRows()) {
-        ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->track(true);
-      }
-    } else {
-      QString apiKey;
-      if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-        for (auto idx : selection->selectedRows()) {
-          auto modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-          m_OrganizerCore.doAfterLogin([&]() { this->trackMod(modInfo, true); });
-        }
-        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-      } else {
-        MessageDialog::showMessage(tr("You need to be logged in with Nexus to track"), this);
-      }
+  m_OrganizerCore.loggedInAction(this, [this] {
+    QItemSelectionModel *selection = ui->modList->selectionModel();
+    for (auto idx : selection->selectedRows()) {
+      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->track(true);
     }
-  } else {
-    trackMod(ModInfo::getByIndex(m_ContextRow), true);
-  }
+  });
 }
 
 void MainWindow::untrack_clicked()
 {
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
-      for (auto idx : selection->selectedRows()) {
-        ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->track(false);
-      }
-    } else {
-      QString apiKey;
-      if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-        for (auto idx : selection->selectedRows()) {
-          auto modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-          m_OrganizerCore.doAfterLogin([&]() { this->trackMod(modInfo, false); });
-        }
-        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-      } else {
-        MessageDialog::showMessage(tr("You need to be logged in with Nexus to track"), this);
-      }
+  m_OrganizerCore.loggedInAction(this, [this] {
+    QItemSelectionModel *selection = ui->modList->selectionModel();
+    for (auto idx : selection->selectedRows()) {
+      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->track(false);
     }
-  } else {
-    trackMod(ModInfo::getByIndex(m_ContextRow), false);
-  }
+  });
 }
 
 void MainWindow::validationFailed(const QString &error)
@@ -3285,7 +3192,8 @@ void MainWindow::overwriteClosed(int)
 }
 
 
-void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab)
+void MainWindow::displayModInformation(
+  ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tabID)
 {
   if (!m_OrganizerCore.modList()->modInfoAboutToChange(modInfo)) {
     qDebug("A different mod information dialog is open. If this is incorrect, please restart MO");
@@ -3315,36 +3223,21 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     }
   } else {
     modInfo->saveMeta();
-    ModInfoDialog dialog(modInfo, m_OrganizerCore.directoryStructure(), modInfo->hasFlag(ModInfo::FLAG_FOREIGN), &m_OrganizerCore, &m_PluginContainer, this);
-    connect(&dialog, SIGNAL(linkActivated(QString)), this, SLOT(linkClicked(QString)));
-    connect(&dialog, SIGNAL(downloadRequest(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
-    connect(&dialog, SIGNAL(modOpen(QString, int)), this, SLOT(displayModInformation(QString, int)), Qt::QueuedConnection);
-    connect(&dialog, SIGNAL(modOpenNext(int)), this, SLOT(modOpenNext(int)), Qt::QueuedConnection);
-    connect(&dialog, SIGNAL(modOpenPrev(int)), this, SLOT(modOpenPrev(int)), Qt::QueuedConnection);
+
+    ModInfoDialog dialog(this, &m_OrganizerCore, &m_PluginContainer, modInfo);
     connect(&dialog, SIGNAL(originModified(int)), this, SLOT(originModified(int)));
-    connect(&dialog, SIGNAL(endorseMod(ModInfo::Ptr)), this, SLOT(endorseMod(ModInfo::Ptr)));
 
-	//Open the tab first if we want to use the standard indexes of the tabs.
-	if (tab != -1) {
-		dialog.openTab(tab);
-	}
+	  //Open the tab first if we want to use the standard indexes of the tabs.
+	  if (tabID != ModInfoTabIDs::None) {
+		  dialog.selectTab(tabID);
+	  }
 
-  dialog.restoreState(m_OrganizerCore.settings());
-  QSettings &settings = m_OrganizerCore.settings().directInterface();
-  QString key = QString("geometry/%1").arg(dialog.objectName());
-  if (settings.contains(key)) {
-    dialog.restoreGeometry(settings.value(key).toByteArray());
-  }
-
-	//If no tab was specified use the first tab from the left based on the user order.
-	if (tab == -1) {
-		for (int i = 0; i < dialog.findChild<QTabWidget*>("tabWidget")->count(); ++i) {
-			if (dialog.findChild<QTabWidget*>("tabWidget")->isTabEnabled(i)) {
-				dialog.findChild<QTabWidget*>("tabWidget")->setCurrentIndex(i);
-				break;
-			}
-		}
-	}
+    dialog.restoreState(m_OrganizerCore.settings());
+    QSettings &settings = m_OrganizerCore.settings().directInterface();
+    QString key = QString("geometry/%1").arg(dialog.objectName());
+    if (settings.contains(key)) {
+      dialog.restoreGeometry(settings.value(key).toByteArray());
+    }
 
     dialog.exec();
     dialog.saveState(m_OrganizerCore.settings());
@@ -3355,7 +3248,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     m_OrganizerCore.modList()->modInfoChanged(modInfo);
   }
 
-  if (m_OrganizerCore.currentProfile()->modEnabled(index)
+  if (m_OrganizerCore.currentProfile()->modEnabled(modIndex)
       && !modInfo->hasFlag(ModInfo::FLAG_FOREIGN)) {
     FilesOrigin& origin = m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(modInfo->name()));
     origin.enable(false);
@@ -3366,7 +3259,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
 
       m_OrganizerCore.directoryRefresher()->addModToStructure(m_OrganizerCore.directoryStructure()
                                              , modInfo->name()
-                                             , m_OrganizerCore.currentProfile()->getModPriority(index)
+                                             , m_OrganizerCore.currentProfile()->getModPriority(modIndex)
                                              , modInfo->absolutePath()
                                              , modInfo->stealFiles()
                                              , modInfo->archives());
@@ -3388,46 +3281,74 @@ void MainWindow::setWindowEnabled(bool enabled)
 }
 
 
-void MainWindow::modOpenNext(int tab)
+ModInfo::Ptr MainWindow::nextModInList()
 {
-  QModelIndex index = m_ModListSortProxy->mapFromSource(m_OrganizerCore.modList()->index(m_ContextRow, 0));
-  index = m_ModListSortProxy->index((index.row() + 1) % m_ModListSortProxy->rowCount(), 0);
+  const QModelIndex start = m_ModListSortProxy->mapFromSource(
+    m_OrganizerCore.modList()->index(m_ContextRow, 0));
 
-  m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
-  ModInfo::Ptr mod = ModInfo::getByIndex(m_ContextRow);
-  std::vector<ModInfo::EFlag> flags = mod->getFlags();
-  if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) ||
-      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) ||
-      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())) {
+  auto index = start;
+
+  for (;;) {
+    index = m_ModListSortProxy->index((index.row() + 1) % m_ModListSortProxy->rowCount(), 0);
+    m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
+
+    if (index == start || !index.isValid()) {
+      // wrapped around, give up
+      break;
+    }
+
+    ModInfo::Ptr mod = ModInfo::getByIndex(m_ContextRow);
+
     // skip overwrite and backups and separators
-    modOpenNext(tab);
-  } else {
-    displayModInformation(m_ContextRow,tab);
+    if (mod->hasFlag(ModInfo::FLAG_OVERWRITE) ||
+        mod->hasFlag(ModInfo::FLAG_BACKUP) ||
+        mod->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+      continue;
+    }
+
+    return mod;
   }
+
+  return {};
 }
 
-void MainWindow::modOpenPrev(int tab)
+ModInfo::Ptr MainWindow::previousModInList()
 {
-  QModelIndex index = m_ModListSortProxy->mapFromSource(m_OrganizerCore.modList()->index(m_ContextRow, 0));
-  int row = index.row() - 1;
-  if (row == -1) {
-    row = m_ModListSortProxy->rowCount() - 1;
+  const QModelIndex start = m_ModListSortProxy->mapFromSource(
+    m_OrganizerCore.modList()->index(m_ContextRow, 0));
+
+  auto index = start;
+
+  for (;;) {
+    int row = index.row() - 1;
+    if (row == -1) {
+      row = m_ModListSortProxy->rowCount() - 1;
+    }
+
+    index = m_ModListSortProxy->index(row, 0);
+    m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
+
+    if (index == start || !index.isValid()) {
+      // wrapped around, give up
+      break;
+    }
+
+    // skip overwrite and backups and separators
+    ModInfo::Ptr mod = ModInfo::getByIndex(m_ContextRow);
+
+    if (mod->hasFlag(ModInfo::FLAG_OVERWRITE) ||
+        mod->hasFlag(ModInfo::FLAG_BACKUP) ||
+        mod->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+      continue;
+    }
+
+    return mod;
   }
 
-  m_ContextRow = m_ModListSortProxy->mapToSource(m_ModListSortProxy->index(row, 0)).row();
-  ModInfo::Ptr mod = ModInfo::getByIndex(m_ContextRow);
-  std::vector<ModInfo::EFlag> flags = mod->getFlags();
-  if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) ||
-      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) ||
-      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())) {
-    // skip overwrite and backups and separators
-    modOpenPrev(tab);
-  } else {
-    displayModInformation(m_ContextRow,tab);
-  }
+  return {};
 }
 
-void MainWindow::displayModInformation(const QString &modName, int tab)
+void MainWindow::displayModInformation(const QString &modName, ModInfoTabIDs tabID)
 {
   unsigned int index = ModInfo::getIndex(modName);
   if (index == UINT_MAX) {
@@ -3436,14 +3357,14 @@ void MainWindow::displayModInformation(const QString &modName, int tab)
   }
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-  displayModInformation(modInfo, index, tab);
+  displayModInformation(modInfo, index, tabID);
 }
 
 
-void MainWindow::displayModInformation(int row, int tab)
+void MainWindow::displayModInformation(int row, ModInfoTabIDs tabID)
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
-  displayModInformation(modInfo, row, tab);
+  displayModInformation(modInfo, row, tabID);
 }
 
 
@@ -3507,18 +3428,16 @@ void MainWindow::visitOnNexus_clicked()
     int row_idx;
     ModInfo::Ptr info;
     QString gameName;
-    QString webUrl;
+
     for (QModelIndex idx : selection->selectedRows()) {
       row_idx = idx.data(Qt::UserRole + 1).toInt();
       info = ModInfo::getByIndex(row_idx);
       int modID = info->getNexusID();
-      webUrl = info->getURL();
       gameName = info->getGameName();
       if (modID > 0)  {
         linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
-      }
-      else if (webUrl != "") {
-        linkClicked(webUrl);
+      } else {
+        qCritical() << "mod '" << info->name() << "' has no nexus id";
       }
     }
   }
@@ -3528,14 +3447,13 @@ void MainWindow::visitOnNexus_clicked()
     if (modID > 0)  {
       linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
     } else {
-      MessageDialog::showMessage(tr("Nexus ID for this Mod is unknown"), this);
+      MessageDialog::showMessage(tr("Nexus ID for this mod is unknown"), this);
     }
   }
 }
 
 void MainWindow::visitWebPage_clicked()
 {
-
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     int count = selection->selectedRows().count();
@@ -3549,28 +3467,22 @@ void MainWindow::visitWebPage_clicked()
     int row_idx;
     ModInfo::Ptr info;
     QString gameName;
-    QString webUrl;
     for (QModelIndex idx : selection->selectedRows()) {
       row_idx = idx.data(Qt::UserRole + 1).toInt();
       info = ModInfo::getByIndex(row_idx);
-      int modID = info->getNexusID();
-      webUrl = info->getURL();
-      gameName = info->getGameName();
-      if (modID > 0) {
-        linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
-      }
-      else if (webUrl != "") {
-        linkClicked(webUrl);
+
+      const auto url = info->parseCustomURL();
+      if (url.isValid()) {
+        linkClicked(url.toString());
       }
     }
   }
   else {
     ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-    if (info->getURL() != "") {
-      linkClicked(info->getURL());
-    }
-    else {
-      MessageDialog::showMessage(tr("Web page for this mod is unknown"), this);
+
+    const auto url = info->parseCustomURL();
+    if (url.isValid()) {
+      linkClicked(url.toString());
     }
   }
 }
@@ -4137,16 +4049,18 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
     try {
       m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
       sourceIdx.column();
-      int tab = -1;
+
+      auto tab = ModInfoTabIDs::None;
+
       switch (sourceIdx.column()) {
-        case ModList::COL_NOTES: tab = ModInfoDialog::TAB_NOTES; break;
-        case ModList::COL_VERSION: tab = ModInfoDialog::TAB_NEXUS; break;
-        case ModList::COL_MODID: tab = ModInfoDialog::TAB_NEXUS; break;
-        case ModList::COL_GAME: tab = ModInfoDialog::TAB_NEXUS; break;
-        case ModList::COL_CATEGORY: tab = ModInfoDialog::TAB_CATEGORIES; break;
-        case ModList::COL_FLAGS: tab = ModInfoDialog::TAB_CONFLICTS; break;
-        default: tab = -1;
+        case ModList::COL_NOTES: tab = ModInfoTabIDs::Notes; break;
+        case ModList::COL_VERSION: tab = ModInfoTabIDs::Nexus; break;
+        case ModList::COL_MODID: tab = ModInfoTabIDs::Nexus; break;
+        case ModList::COL_GAME: tab = ModInfoTabIDs::Nexus; break;
+        case ModList::COL_CATEGORY: tab = ModInfoTabIDs::Categories; break;
+        case ModList::COL_FLAGS: tab = ModInfoTabIDs::Conflicts; break;
       }
+
       displayModInformation(sourceIdx.row(), tab);
       // workaround to cancel the editor that might have opened because of
       // selection-click
@@ -4789,7 +4703,7 @@ void MainWindow::exportModListCSV()
 			builder.writeHeader();
 
       auto indexesByPriority = m_OrganizerCore.currentProfile()->getAllIndexesByPriority();
-      for (auto& iter : indexesByPriority) {        
+      for (auto& iter : indexesByPriority) {
 				ModInfo::Ptr info = ModInfo::getByIndex(iter.second);
 				bool enabled = m_OrganizerCore.currentProfile()->modEnabled(iter.second);
 				if ((selectedRowID == 1) && !enabled) {
@@ -5069,8 +4983,13 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
         if (info->getNexusID() > 0)  {
           menu.addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
-        } else if ((info->getURL() != "")) {
-          menu.addAction(tr("Visit web page"), this, SLOT(visitWebPage_clicked()));
+        }
+
+        const auto url = info->parseCustomURL();
+        if (url.isValid()) {
+          menu.addAction(
+            tr("Visit on %1").arg(url.host()),
+            this, SLOT(visitWebPage_clicked()));
         }
 
         menu.addAction(tr("Open in Explorer"), this, SLOT(openExplorer_clicked()));

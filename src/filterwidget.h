@@ -1,25 +1,60 @@
 #ifndef FILTERWIDGET_H
 #define FILTERWIDGET_H
 
-class EventFilter;
+#include <QObject>
+#include <QLineEdit>
+#include <QToolButton>
+#include <QList>
+#include <QAbstractItemView>
 
-class FilterWidget
+class EventFilter;
+class FilterWidget;
+
+class FilterWidgetProxyModel : public QSortFilterProxyModel
 {
+  Q_OBJECT;
+
 public:
-  std::function<void ()> changed;
+  FilterWidgetProxyModel(FilterWidget& fw, QWidget* parent=nullptr);
+  using QSortFilterProxyModel::invalidateFilter;
+
+protected:
+  bool filterAcceptsRow(int row, const QModelIndex& parent) const override;
+
+private:
+  FilterWidget& m_filter;
+};
+
+
+class FilterWidget : public QObject
+{
+  Q_OBJECT;
+
+public:
+  using predFun = std::function<bool (const QString& what)>;
 
   FilterWidget();
 
-  void set(QLineEdit* edit);
+  void setEdit(QLineEdit* edit);
+  void setList(QAbstractItemView* list);
   void clear();
+  bool empty() const;
 
-  bool matches(std::function<bool (const QString& what)> pred) const;
+  QModelIndex map(const QModelIndex& index);
+
+  bool matches(predFun pred) const;
+
+signals:
+  void changed();
 
 private:
   QLineEdit* m_edit;
+  QAbstractItemView* m_list;
+  FilterWidgetProxyModel* m_proxy;
   EventFilter* m_eventFilter;
   QToolButton* m_clear;
   QString m_text;
+  QList<QList<QString>> m_compiled;
 
   void unhook();
   void createClear();
@@ -28,6 +63,8 @@ private:
 
   void onTextChanged();
   void onResized();
+
+  void compile();
 };
 
 #endif // FILTERWIDGET_H

@@ -54,6 +54,14 @@ SET(organizer_SRCS
     modlist.cpp
     modidlineedit.cpp
     modinfodialog.cpp
+	modinfodialogcategories.cpp
+	modinfodialogconflicts.cpp
+	modinfodialogesps.cpp
+	modinfodialogfiletree.cpp
+	modinfodialogimages.cpp
+	modinfodialognexus.cpp
+	modinfodialogtab.cpp
+	modinfodialogtextfiles.cpp
     modinfo.cpp
     modinfobackup.cpp
     modinfoforeign.cpp
@@ -118,6 +126,9 @@ SET(organizer_SRCS
 	filterwidget.cpp
 	statusbar.cpp
 	apiuseraccount.cpp
+	filerenamer.cpp
+	texteditor.cpp
+	expanderwidget.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -151,6 +162,15 @@ SET(organizer_HDRS
     modlist.h
     modidlineedit.h
     modinfodialog.h
+	modinfodialogcategories.h
+	modinfodialogconflicts.h
+	modinfodialogesps.h
+	modinfodialogfiletree.h
+	modinfodialogfwd.h
+	modinfodialogimages.h
+	modinfodialognexus.h
+	modinfodialogtab.h
+	modinfodialogtextfiles.h
     modinfo.h
     modinfobackup.h
     modinfoforeign.h
@@ -208,7 +228,6 @@ SET(organizer_HDRS
     instancemanager.h
     usvfsconnector.h
     eventfilter.h
-    descriptionpage.h
     moshortcut.h
     listdialog.h
     lcdnumber.h
@@ -217,6 +236,9 @@ SET(organizer_HDRS
 	filterwidget.h
 	statusbar.h
 	apiuseraccount.h
+	filerenamer.h
+	texteditor.h
+	expanderwidget.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -345,7 +367,6 @@ set(locking
 set(modinfo
 	modinfo
 	modinfobackup
-	modinfodialog
 	modinfoforeign
 	modinfooverwrite
 	modinforegular
@@ -353,6 +374,18 @@ set(modinfo
 	modinfowithconflictinfo
 )
 
+set(modinfo\\dialog
+	modinfodialog
+	modinfodialogcategories
+	modinfodialogconflicts
+	modinfodialogesps
+	modinfodialogfiletree
+	modinfodialogfwd
+	modinfodialogimages
+	modinfodialognexus
+	modinfodialogtab
+	modinfodialogtextfiles
+)
 set(modlist
 	modlist
 	modlistsortproxy
@@ -400,8 +433,9 @@ set(utilities
 )
 
 set(widgets
-	descriptionpage
+	expanderwidget
 	genericicondelegate
+	filerenamer
 	filterwidget
 	icondelegate
 	lcdnumber
@@ -411,11 +445,12 @@ set(widgets
 	modidlineedit
 	noeditdelegate
 	qtgroupingproxy
+	texteditor
 	viewmarkingscrollbar
 )
 
 set(src_filters
-	application core browser dialogs downloads executables locking modinfo
+	application core browser dialogs downloads executables locking modinfo modinfo\\dialog
 	modlist plugins previews profiles settings utilities widgets
 )
 

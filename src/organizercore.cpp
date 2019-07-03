@@ -966,8 +966,8 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
                                        "want to configure them now?"),
                                     QMessageBox::Yes | QMessageBox::No)
               == QMessageBox::Yes)) {
-        m_UserInterface->displayModInformation(modInfo, modIndex,
-                                               ModInfoDialog::TAB_INIFILES);
+        m_UserInterface->displayModInformation(
+          modInfo, modIndex, ModInfoTabIDs::IniFiles);
       }
       m_ModInstalled(modName);
       m_DownloadManager.markInstalled(fileName);
@@ -1033,8 +1033,8 @@ void OrganizerCore::installDownload(int index)
                                          "want to configure them now?"),
                                       QMessageBox::Yes | QMessageBox::No)
                 == QMessageBox::Yes)) {
-          m_UserInterface->displayModInformation(modInfo, modIndex,
-                                                 ModInfoDialog::TAB_INIFILES);
+          m_UserInterface->displayModInformation(
+            modInfo, modIndex, ModInfoTabIDs::IniFiles);
         }
 
         m_ModInstalled(modName);
@@ -2201,6 +2201,21 @@ void OrganizerCore::updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::P
       m_DirectoryStructure, modInfo[idx]->name(),
       m_CurrentProfile->getModPriority(idx), modInfo[idx]->absolutePath(),
       modInfo[idx]->archives());
+  }
+}
+
+void OrganizerCore::loggedInAction(QWidget* parent, std::function<void ()> f)
+{
+  if (NexusInterface::instance(m_PluginContainer)->getAccessManager()->validated()) {
+    f();
+  } else {
+    QString apiKey;
+    if (settings().getNexusApiKey(apiKey)) {
+      doAfterLogin([f]{ f(); });
+      NexusInterface::instance(m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
+    } else {
+      MessageDialog::showMessage(tr("You need to be logged in with Nexus"), parent);
+    }
   }
 }
 

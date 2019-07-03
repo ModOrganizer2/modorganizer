@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>790</width>
+    <width>735</width>
     <height>534</height>
    </rect>
   </property>
@@ -27,162 +27,134 @@
      </property>
      <widget class="QWidget" name="tabText">
       <attribute name="title">
-       <string>Textfiles</string>
+       <string>Text Files</string>
       </attribute>
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <layout class="QVBoxLayout" name="verticalLayout_15">
        <item>
-        <widget class="QListWidget" name="textFileList">
-         <property name="maximumSize">
-          <size>
-           <width>192</width>
-           <height>16777215</height>
-          </size>
+        <widget class="QSplitter" name="tabTextSplitter">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
          </property>
-         <property name="toolTip">
-          <string>A list of text-files in the mod directory.</string>
+         <property name="childrenCollapsible">
+          <bool>false</bool>
          </property>
-         <property name="whatsThis">
-          <string>A list of text-files in the mod directory like readmes. </string>
-         </property>
+         <widget class="QWidget" name="widget_6" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_16">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>Text Files</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListView" name="textFileList">
+             <property name="toolTip">
+              <string>A list of text-files in the mod directory.</string>
+             </property>
+             <property name="whatsThis">
+              <string>A list of text-files in the mod directory like readmes. </string>
+             </property>
+             <property name="uniformItemSizes">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="textFileFilter"/>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="widget_7" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_17">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="TextEditor" name="textFileEditor"/>
+           </item>
+          </layout>
+         </widget>
         </widget>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_9">
-         <item>
-          <widget class="QTextEdit" name="textFileView">
-           <property name="toolTip">
-            <string/>
-           </property>
-           <property name="whatsThis">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="saveTXTButton">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="text">
-            <string>Save</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
        </item>
       </layout>
      </widget>
      <widget class="QWidget" name="tabIni">
       <attribute name="title">
-       <string>INI-Files</string>
+       <string>INI Files</string>
       </attribute>
-      <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <layout class="QVBoxLayout" name="verticalLayout_9">
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,0,0,0">
-         <property name="spacing">
-          <number>6</number>
+        <widget class="QSplitter" name="tabIniSplitter">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
          </property>
-         <property name="sizeConstraint">
-          <enum>QLayout::SetMinimumSize</enum>
-         </property>
-         <item>
-          <widget class="QLabel" name="label_6">
-           <property name="text">
-            <string>Ini Files</string>
+         <widget class="QWidget" name="layoutWidget">
+          <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,0,0">
+           <property name="spacing">
+            <number>6</number>
            </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QListWidget" name="iniFileList">
-           <property name="maximumSize">
-            <size>
-             <width>228</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>This is a list of .ini files in the mod.</string>
-           </property>
-           <property name="whatsThis">
-            <string>This is a list of .ini files in the mod. These are usually used to configure the behaviour of mods if there are configurable parameters.</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_5">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="text">
-            <string>Ini Tweaks *This feature is non-functional*</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QListWidget" name="iniTweaksList">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>228</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="contextMenuPolicy">
-            <enum>Qt::CustomContextMenu</enum>
-           </property>
-           <property name="toolTip">
-            <string>This is a list of ini tweaks (ini modifications that can be toggled).</string>
-           </property>
-           <property name="whatsThis">
-            <string>This is a list of ini tweaks. Ini Tweaks are (usually small) fragments of ini files that are applied over existing settings in skyrim.ini/skyrimprefs.ini. Each tweak can be toggled individually. You should check the description of the mod whether the tweaks are really optional.</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,0">
-         <item>
-          <widget class="QTextBrowser" name="iniFileView">
-           <property name="toolTip">
-            <string/>
-           </property>
-           <property name="whatsThis">
-            <string/>
-           </property>
-           <property name="undoRedoEnabled">
-            <bool>true</bool>
-           </property>
-           <property name="readOnly">
-            <bool>false</bool>
-           </property>
-           <property name="acceptRichText">
-            <bool>false</bool>
-           </property>
-           <property name="openLinks">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="saveButton">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="toolTip">
-            <string>Save changes to the file.</string>
-           </property>
-           <property name="whatsThis">
-            <string>Save changes to the file. This overwrites the original. There is no automatic backup!</string>
-           </property>
-           <property name="text">
-            <string>Save</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
+           <item>
+            <widget class="QLabel" name="label_6">
+             <property name="text">
+              <string>Ini Files</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListView" name="iniFileList">
+             <property name="toolTip">
+              <string>This is a list of .ini files in the mod.</string>
+             </property>
+             <property name="whatsThis">
+              <string>This is a list of .ini files in the mod. These are usually used to configure the behaviour of mods if there are configurable parameters.</string>
+             </property>
+             <property name="uniformItemSizes">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="iniFileFilter"/>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="layoutWidget1">
+          <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0">
+           <item>
+            <widget class="TextEditor" name="iniFileEditor">
+             <property name="toolTip">
+              <string/>
+             </property>
+             <property name="whatsThis">
+              <string/>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -190,67 +162,19 @@
       <attribute name="title">
        <string>Images</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
+      <layout class="QVBoxLayout" name="verticalLayout_19">
        <item>
-        <widget class="QLabel" name="imageLabel">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+        <widget class="QSplitter" name="tabImagesSplitter">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
          </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>0</height>
-          </size>
+         <property name="childrenCollapsible">
+          <bool>false</bool>
          </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="layoutDirection">
-          <enum>Qt::LeftToRight</enum>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QScrollArea" name="scrollArea">
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>128</height>
-          </size>
-         </property>
-         <property name="widgetResizable">
-          <bool>true</bool>
-         </property>
-         <widget class="QWidget" name="scrollAreaWidgetContents">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>746</width>
-            <height>126</height>
-           </rect>
-          </property>
-          <property name="toolTip">
-           <string>Images located in the mod.</string>
-          </property>
-          <property name="whatsThis">
-           <string>This lists all the images (.jpg and .png) in the mod directory, like screenshots and such. Click one to get a larger view.</string>
-          </property>
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <widget class="QWidget" name="widget_8" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,0,0">
            <property name="spacing">
-            <number>0</number>
+            <number>6</number>
            </property>
            <property name="leftMargin">
             <number>0</number>
@@ -265,11 +189,110 @@
             <number>0</number>
            </property>
            <item>
-            <layout class="QHBoxLayout" name="thumbnailArea">
-             <property name="spacing">
-              <number>0</number>
+            <widget class="QWidget" name="imagesScroller" native="true">
+             <layout class="QHBoxLayout" name="horizontalLayout_4">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="ImagesTabHelpers::ThumbnailsWidget" name="imagesThumbnails" native="true">
+                <property name="focusPolicy">
+                 <enum>Qt::StrongFocus</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="ImagesTabHelpers::Scrollbar" name="imagesScrollerVBar">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="imagesShowDDS">
+             <property name="text">
+              <string>Show .dds files</string>
              </property>
-            </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="imagesFilter"/>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="imagesContainer" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_18" stretch="0,1">
+           <property name="spacing">
+            <number>3</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QWidget" name="widget_12" native="true">
+             <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QToolButton" name="imagesExplore">
+                <property name="text">
+                 <string>Open in Explorer</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="imagesPath">
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="imagesSize">
+                <property name="text">
+                 <string>0x0</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="imagesImage" native="true"/>
            </item>
           </layout>
          </widget>
@@ -281,117 +304,181 @@
       <attribute name="title">
        <string>Optional ESPs</string>
       </attribute>
-      <layout class="QFormLayout" name="formLayout">
-       <item row="1" column="1">
-        <widget class="QListWidget" name="inactiveESPList">
-         <property name="toolTip">
-          <string>List of esps, esms, and esls that can not be loaded by the game.</string>
-         </property>
-         <property name="whatsThis">
-          <string>List of esps, esms, and esls contained in this plugin that currently can not be loaded by the game. They will not even appear in the esp-list in the main MO-window.
-They usually contain optional functionality, see the readme.
-
-Most mods do not have optional esps, so chances are good you are looking at an empty list.</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_2">
-         <property name="text">
-          <string>Optional ESPs</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1">
-        <layout class="QHBoxLayout" name="horizontalLayout_5">
-         <item>
-          <widget class="QToolButton" name="deactivateESP">
-           <property name="minimumSize">
-            <size>
-             <width>96</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>Make the selected mod in the lower list unavailable.</string>
-           </property>
-           <property name="whatsThis">
-            <string>The selected esp (in the lower list) will be pushed into a subdirectory of the mod and will thus become &quot;invisible&quot; to the game. It can then no longer be activated.</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="resources.qrc">
-             <normaloff>:/MO/gui/resources/go-up.png</normaloff>:/MO/gui/resources/go-up.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>22</width>
-             <height>22</height>
-            </size>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QToolButton" name="activateESP">
-           <property name="minimumSize">
-            <size>
-             <width>96</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>Move a file to the data directory.</string>
-           </property>
-           <property name="whatsThis">
-            <string>This moves a esp to the esp directory so it can be enabled in the main window. Please note that the ESP merely becomes &quot;available&quot;, it will not necessarily be loaded! That is configured in the main window of omo.</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="resources.qrc">
-             <normaloff>:/MO/gui/resources/go-down.png</normaloff>:/MO/gui/resources/go-down.png</iconset>
-           </property>
-           <property name="iconSize">
-            <size>
-             <width>22</width>
-             <height>22</height>
-            </size>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="2" column="0">
-        <spacer name="horizontalSpacer_2">
+      <layout class="QVBoxLayout" name="verticalLayout_23">
+       <item>
+        <widget class="QSplitter" name="ESPsSplitter">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="3" column="1">
-        <widget class="QListWidget" name="activeESPList">
-         <property name="toolTip">
-          <string>ESPs in the data directory and thus visible to the game.</string>
-         </property>
-         <property name="whatsThis">
-          <string>These are the mod files that are in the (virtual) data directory of your game and will thus be selectable in the esp list in the main window.</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>Available ESPs</string>
-         </property>
+         <widget class="QWidget" name="widget_9" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_20">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string>Optional ESPs</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListView" name="inactiveESPList">
+             <property name="toolTip">
+              <string>List of esps, esms, and esls that can not be loaded by the game.</string>
+             </property>
+             <property name="whatsThis">
+              <string>List of esps, esms, and esls contained in this plugin that currently can not be loaded by the game. They will not even appear in the esp-list in the main MO-window.
+They usually contain optional functionality, see the readme.
+
+Most mods do not have optional esps, so chances are good you are looking at an empty list.</string>
+             </property>
+             <property name="uniformItemSizes">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="widget_11" native="true">
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_22">
+             <item>
+              <spacer name="verticalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QToolButton" name="activateESP">
+               <property name="toolTip">
+                <string>Move a file to the data directory.</string>
+               </property>
+               <property name="whatsThis">
+                <string>This moves a esp to the esp directory so it can be enabled in the main window. Please note that the ESP merely becomes &quot;available&quot;, it will not necessarily be loaded! That is configured in the main window of omo.</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset resource="resources.qrc">
+                 <normaloff>:/MO/gui/next</normaloff>:/MO/gui/next</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>22</width>
+                 <height>22</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QToolButton" name="deactivateESP">
+               <property name="toolTip">
+                <string>Make the selected mod in the lower list unavailable.</string>
+               </property>
+               <property name="whatsThis">
+                <string>The selected esp (in the lower list) will be pushed into a subdirectory of the mod and will thus become &quot;invisible&quot; to the game. It can then no longer be activated.</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset resource="resources.qrc">
+                 <normaloff>:/MO/gui/previous</normaloff>:/MO/gui/previous</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>22</width>
+                 <height>22</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="verticalSpacer_3">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QWidget" name="widget_10" native="true">
+             <layout class="QVBoxLayout" name="verticalLayout_21">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="label">
+                <property name="text">
+                 <string>Available ESPs</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QListView" name="activeESPList">
+                <property name="toolTip">
+                 <string>ESPs in the data directory and thus visible to the game.</string>
+                </property>
+                <property name="whatsThis">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These are the mod files that are in the (virtual) data directory of your game and will thus be selectable in the esp list in the main window.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="uniformItemSizes">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </widget>
        </item>
       </layout>
@@ -471,7 +558,7 @@ text-align: left;</string>
                </layout>
               </item>
               <item>
-               <widget class="QTreeWidget" name="overwriteTree">
+               <widget class="QTreeView" name="overwriteTree">
                 <property name="contextMenuPolicy">
                  <enum>Qt::CustomContextMenu</enum>
                 </property>
@@ -487,28 +574,6 @@ text-align: left;</string>
                 <property name="sortingEnabled">
                  <bool>true</bool>
                 </property>
-                <property name="animated">
-                 <bool>true</bool>
-                </property>
-                <property name="columnCount">
-                 <number>2</number>
-                </property>
-                <attribute name="headerDefaultSectionSize">
-                 <number>365</number>
-                </attribute>
-                <attribute name="headerMinimumSectionSize">
-                 <number>200</number>
-                </attribute>
-                <column>
-                 <property name="text">
-                  <string>File</string>
-                 </property>
-                </column>
-                <column>
-                 <property name="text">
-                  <string>Overwritten Mods</string>
-                 </property>
-                </column>
                </widget>
               </item>
               <item>
@@ -547,7 +612,7 @@ text-align: left;</string>
                </layout>
               </item>
               <item>
-               <widget class="QTreeWidget" name="overwrittenTree">
+               <widget class="QTreeView" name="overwrittenTree">
                 <property name="contextMenuPolicy">
                  <enum>Qt::CustomContextMenu</enum>
                 </property>
@@ -563,28 +628,6 @@ text-align: left;</string>
                 <property name="sortingEnabled">
                  <bool>true</bool>
                 </property>
-                <property name="animated">
-                 <bool>true</bool>
-                </property>
-                <property name="columnCount">
-                 <number>2</number>
-                </property>
-                <attribute name="headerDefaultSectionSize">
-                 <number>365</number>
-                </attribute>
-                <attribute name="headerMinimumSectionSize">
-                 <number>200</number>
-                </attribute>
-                <column>
-                 <property name="text">
-                  <string>File</string>
-                 </property>
-                </column>
-                <column>
-                 <property name="text">
-                  <string>Providing Mod</string>
-                 </property>
-                </column>
                </widget>
               </item>
               <item>
@@ -623,7 +666,7 @@ text-align: left;</string>
                </layout>
               </item>
               <item>
-               <widget class="QTreeWidget" name="noConflictTree">
+               <widget class="QTreeView" name="noConflictTree">
                 <property name="contextMenuPolicy">
                  <enum>Qt::CustomContextMenu</enum>
                 </property>
@@ -639,17 +682,6 @@ text-align: left;</string>
                 <property name="sortingEnabled">
                  <bool>true</bool>
                 </property>
-                <property name="animated">
-                 <bool>true</bool>
-                </property>
-                <property name="columnCount">
-                 <number>1</number>
-                </property>
-                <column>
-                 <property name="text">
-                  <string>File</string>
-                 </property>
-                </column>
                </widget>
               </item>
               <item>
@@ -706,7 +738,7 @@ text-align: left;</string>
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="QTreeWidget" name="conflictsAdvancedList">
+                  <widget class="QTreeView" name="conflictsAdvancedList">
                    <property name="contextMenuPolicy">
                     <enum>Qt::CustomContextMenu</enum>
                    </property>
@@ -719,27 +751,6 @@ text-align: left;</string>
                    <property name="sortingEnabled">
                     <bool>true</bool>
                    </property>
-                   <property name="columnCount">
-                    <number>3</number>
-                   </property>
-                   <attribute name="headerDefaultSectionSize">
-                    <number>243</number>
-                   </attribute>
-                   <column>
-                    <property name="text">
-                     <string>Overwrites</string>
-                    </property>
-                   </column>
-                   <column>
-                    <property name="text">
-                     <string>File</string>
-                    </property>
-                   </column>
-                   <column>
-                    <property name="text">
-                     <string>Overwritten by</string>
-                    </property>
-                   </column>
                   </widget>
                  </item>
                 </layout>
@@ -839,10 +850,7 @@ text-align: left;</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_7">
        <item>
-        <widget class="QTreeWidget" name="categoriesTree">
-         <property name="animated">
-          <bool>true</bool>
-         </property>
+        <widget class="QTreeWidget" name="categories">
          <attribute name="headerVisible">
           <bool>false</bool>
          </attribute>
@@ -863,7 +871,7 @@ text-align: left;</string>
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="primaryCategoryBox"/>
+          <widget class="QComboBox" name="primaryCategories"/>
          </item>
         </layout>
        </item>
@@ -879,202 +887,268 @@ text-align: left;</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_6">
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_6">
-         <item>
-          <widget class="QLabel" name="label_3">
-           <property name="text">
-            <string>Mod ID</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="ModIDLineEdit" name="modIDEdit">
-           <property name="toolTip">
-            <string>Mod ID for this mod on Nexus.</string>
-           </property>
-           <property name="whatsThis">
-            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+        <widget class="QWidget" name="widget_14" native="true">
+         <layout class="QVBoxLayout" name="verticalLayout_25">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,0,0,0,0,0,1">
+            <item>
+             <widget class="QLabel" name="label_3">
+              <property name="text">
+               <string>Mod ID</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="ModIDLineEdit" name="modID">
+              <property name="toolTip">
+               <string>Mod ID for this mod on Nexus.</string>
+              </property>
+              <property name="whatsThis">
+               <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Mod ID for this mod on Nexus. This is filled in automatically if you downloaded and installed the mod from inside MO. Otherwise you can enter it manually. To find the correct id, find the mod on nexus. The URL will look like this: &lt;a href=&quot; https://www.nexusmods.com/skyrimspecialedition/mods/6194&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;https://www.nexusmods.com/skyrimspecialedition/mods/6194&lt;/span&gt;&lt;/a&gt;. In this example, 6194 is the id you're looking for. Besides: The above is the link to Mod Organizer 2 on Nexus. Why not go there now and endorse us?&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer_4">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType">
-            <enum>QSizePolicy::Fixed</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>10</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_10">
-           <property name="text">
-            <string>Source Game</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QComboBox" name="sourceGameEdit">
-           <property name="toolTip">
-            <string>Source game for this mod.</string>
-           </property>
-           <property name="whatsThis">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Source game for this mod. This determines where the mod was downloaded from and decides where to fetch info, version updates, and send endorsements. Changing this will likely require you to enter a new Mod ID.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer_3">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="QLabel" name="versionLabel">
-           <property name="whatsThis">
-            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_10">
+              <property name="text">
+               <string>Source Game</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="sourceGame">
+              <property name="toolTip">
+               <string>Source game for this mod.</string>
+              </property>
+              <property name="whatsThis">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Source game for this mod. This determines where the mod was downloaded from and decides where to fetch info, version updates, and send endorsements. Changing this will likely require you to enter a new Mod ID.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="versionLabel">
+              <property name="whatsThis">
+               <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Installed Version of the Mod. The tooltip will contain the current version available on nexus. The installed version is only set if you installed the mod through MO.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Version</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="versionEdit">
-           <property name="maximumSize">
-            <size>
-             <width>150</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="maxLength">
-            <number>32</number>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_11" stretch="0,1">
-         <item>
-          <widget class="QPushButton" name="refreshButton">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="toolTip">
-            <string>Refresh</string>
-           </property>
-           <property name="whatsThis">
-            <string>Refresh all information from Nexus.</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="resources.qrc">
-             <normaloff>:/MO/gui/refresh</normaloff>:/MO/gui/refresh</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_4">
-           <property name="text">
-            <string>Description</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QWebEngineView" name="descriptionView" native="true">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>200</height>
-          </size>
-         </property>
-         <property name="url" stdset="0">
-          <url>
-           <string>about:blank</string>
-          </url>
-         </property>
+              </property>
+              <property name="text">
+               <string>Version</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="version">
+              <property name="maxLength">
+               <number>32</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QWidget" name="widget_15" native="true">
+            <layout class="QHBoxLayout" name="horizontalLayout_7">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="refresh">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Refresh</string>
+               </property>
+               <property name="whatsThis">
+                <string>Refresh all information from Nexus.</string>
+               </property>
+               <property name="text">
+                <string>Refresh</string>
+               </property>
+               <property name="icon">
+                <iconset resource="resources.qrc">
+                 <normaloff>:/MO/gui/refresh</normaloff>:/MO/gui/refresh</iconset>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="visitNexus">
+               <property name="text">
+                <string>Open in Browser</string>
+               </property>
+               <property name="icon">
+                <iconset resource="resources.qrc">
+                 <normaloff>:/MO/gui/resources/internet-web-browser.png</normaloff>:/MO/gui/resources/internet-web-browser.png</iconset>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="endorse">
+               <property name="text">
+                <string>Endorse</string>
+               </property>
+               <property name="icon">
+                <iconset resource="resources.qrc">
+                 <normaloff>:/MO/gui/icon_favorite</normaloff>:/MO/gui/icon_favorite</iconset>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="track">
+               <property name="text">
+                <string>Track</string>
+               </property>
+               <property name="icon">
+                <iconset resource="resources.qrc">
+                 <normaloff>:/MO/gui/tracked</normaloff>:/MO/gui/tracked</iconset>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_3">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_7">
-         <item>
-          <widget class="QLabel" name="visitNexusLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>1</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="openExternalLinks">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="endorseBtn">
-           <property name="text">
-            <string>Endorse</string>
-           </property>
-           <property name="icon">
-            <iconset resource="resources.qrc">
-             <normaloff>:/MO/gui/icon_favorite</normaloff>:/MO/gui/icon_favorite</iconset>
-           </property>
-          </widget>
-         </item>
-        </layout>
+        <widget class="QFrame" name="frame">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Sunken</enum>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_24">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QWebEngineView" name="browser">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>200</height>
+             </size>
+            </property>
+            <property name="url">
+             <url>
+              <string>about:blank</string>
+             </url>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_14">
-         <item>
-          <widget class="QLabel" name="label_11">
-           <property name="text">
-            <string>Web page URL (only used if invalid Nexus ID) :</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="customUrlLineEdit"/>
-         </item>
-        </layout>
+        <widget class="QWidget" name="widget_13" native="true">
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QCheckBox" name="hasCustomURL">
+            <property name="text">
+             <string>Use Custom URL</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="customURL"/>
+          </item>
+          <item>
+           <widget class="QPushButton" name="visitCustomURL">
+            <property name="text">
+             <string>Open in Browser</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -1084,7 +1158,7 @@ p, li { white-space: pre-wrap; }
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_10">
        <item>
-        <widget class="QLineEdit" name="commentsEdit">
+        <widget class="QLineEdit" name="comments">
          <property name="toolTip">
           <string>Enter comments about the mod here.  These are displayed in the notes column of the mod list.</string>
          </property>
@@ -1097,7 +1171,7 @@ p, li { white-space: pre-wrap; }
         </widget>
        </item>
        <item>
-        <widget class="QTextEdit" name="notesEdit">
+        <widget class="HTMLEditor" name="notes">
          <property name="toolTip">
           <string>Enter notes about the mod here.  These can be viewed in the mod list by hovering over the notes column or the flags column.</string>
          </property>
@@ -1122,7 +1196,7 @@ p, li { white-space: pre-wrap; }
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_13">
          <item>
-          <widget class="QPushButton" name="openInExplorerButton">
+          <widget class="QToolButton" name="openInExplorer">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -1150,7 +1224,7 @@ p, li { white-space: pre-wrap; }
         </layout>
        </item>
        <item>
-        <widget class="QTreeView" name="fileTree">
+        <widget class="QTreeView" name="filetree">
          <property name="contextMenuPolicy">
           <enum>Qt::CustomContextMenu</enum>
          </property>
@@ -1174,6 +1248,9 @@ p, li { white-space: pre-wrap; }
          <property name="selectionMode">
           <enum>QAbstractItemView::ExtendedSelection</enum>
          </property>
+         <property name="uniformRowHeights">
+          <bool>true</bool>
+         </property>
         </widget>
        </item>
       </layout>
@@ -1183,16 +1260,22 @@ p, li { white-space: pre-wrap; }
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QPushButton" name="prevButton">
+      <widget class="QPushButton" name="previousMod">
        <property name="text">
         <string>Previous</string>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="nextButton">
+      <widget class="QPushButton" name="nextMod">
        <property name="text">
         <string>Next</string>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
        </property>
       </widget>
      </item>
@@ -1210,9 +1293,12 @@ p, li { white-space: pre-wrap; }
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="closeButton">
+      <widget class="QPushButton" name="close">
        <property name="text">
         <string>Close</string>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
        </property>
       </widget>
      </item>
@@ -1230,6 +1316,27 @@ p, li { white-space: pre-wrap; }
    <class>ModIDLineEdit</class>
    <extends>QLineEdit</extends>
    <header>modidlineedit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>TextEditor</class>
+   <extends>QPlainTextEdit</extends>
+   <header>texteditor.h</header>
+  </customwidget>
+  <customwidget>
+   <class>HTMLEditor</class>
+   <extends>QTextEdit</extends>
+   <header>texteditor.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ImagesTabHelpers::ThumbnailsWidget</class>
+   <extends>QWidget</extends>
+   <header>modinfodialogimages.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ImagesTabHelpers::Scrollbar</class>
+   <extends>QScrollBar</extends>
+   <header>modinfodialogimages.h</header>
   </customwidget>
  </customwidgets>
  <resources>

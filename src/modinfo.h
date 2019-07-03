@@ -733,14 +733,31 @@ public:
   virtual void doConflictCheck() const {}
 
   /**
-   * @brief set the URL for a mod
-   */
-  virtual void setURL(QString const &) {}
+   * @brief sets whether this mod uses a custom url
+   **/
+  virtual void setHasCustomURL(bool) {}
 
   /**
-   * @returns the URL for a mod
-   */
-  virtual QString getURL() const { return ""; }
+   * @brief returns whether this mod uses a custom url
+   **/
+  virtual bool hasCustomURL() const { return false; }
+
+  /**
+   * @brief sets the custom url
+   **/
+  virtual void setCustomURL(QString const &) {}
+
+  /**
+   * @brief returns the custom url
+   **/
+  virtual QString getCustomURL() const { return ""; }
+
+  /**
+   * If hasCustomURL() is true and getCustomURL() is not empty, tries to parse
+   * the url using QUrl::fromUserInput() and returns it. Otherwise, returns an
+   * empty QUrl.
+   **/
+  QUrl parseCustomURL() const;
 
 signals:
 

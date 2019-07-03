@@ -397,15 +397,10 @@ public:
 
   void readMeta();
 
-  /**
-   * @brief set the URL for a mod
-   */
-  virtual void setURL(QString const &);
-
-  /**
-   * @returns the URL for a mod
-   */
-  virtual QString getURL() const;
+  virtual void setHasCustomURL(bool b) override;
+  virtual bool hasCustomURL() const override;
+  virtual void setCustomURL(QString const &) override;
+  virtual QString getCustomURL() const override;
 
 private:
 
@@ -432,7 +427,8 @@ private:
   QString m_Notes;
   QString m_NexusDescription;
   QString m_Repository;
-  QString m_URL;
+  QString m_CustomURL;
+  bool m_HasCustomURL;
   QString m_GameName;
 
   mutable QStringList m_Archives;
@@ -464,6 +460,7 @@ private:
   mutable std::vector<ModInfo::EContent> m_CachedContent;
   mutable QTime m_LastContentCheck;
 
+  bool needsDescriptionUpdate() const;
 };
 
 
