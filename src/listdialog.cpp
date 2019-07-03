@@ -61,7 +61,7 @@ void ListDialog::on_filterEdit_textChanged(QString filter)
 
   if (newChoices.length() == 1) {
     QListWidgetItem *item = ui->choiceList->item(0);
-    ui->choiceList->setItemSelected(item, true);
+    item->setSelected(true);
     ui->choiceList->setCurrentItem(item);
   }
 

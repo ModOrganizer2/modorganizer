@@ -646,8 +646,8 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       const int monitor = settings.value("window_monitor").toInt();
 
       if (monitor != -1) {
-        QDesktopWidget* desktop = QApplication::desktop();
-        const QPoint center = desktop->availableGeometry(monitor).center();
+        QGuiApplication::screens().at(monitor)->geometry().center();
+        const QPoint center = QGuiApplication::screens().at(monitor)->geometry().center();
         splash.move(center - splash.rect().center());
       }
     }

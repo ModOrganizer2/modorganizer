@@ -138,9 +138,8 @@ void BrowserDialog::maximizeWidth()
 
   int contentWidth = getCurrentView()->page()->contentsSize().width();
 
-  QDesktopWidget screen;
-  int currentScreen = screen.screenNumber(this);
-  int screenWidth = screen.screenGeometry(currentScreen).size().width();
+  QScreen* screen = this->window()->windowHandle()->screen();
+  int screenWidth = screen->geometry().size().width();
 
   int targetWidth = std::min<int>(std::max<int>(viewportWidth, contentWidth) + frameWidth, screenWidth);
   this->resize(targetWidth, height());

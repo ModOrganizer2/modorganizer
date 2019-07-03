@@ -899,7 +899,7 @@ void Profile::rename(const QString &newName)
 {
   QDir profileDir(Settings::instance().getProfileDirectory());
   profileDir.rename(name(), newName);
-  m_Directory = profileDir.absoluteFilePath(newName);
+  m_Directory.setPath(profileDir.absoluteFilePath(newName));
 }
 
 QVariant Profile::setting(const QString &section, const QString &name,

@@ -61,7 +61,7 @@ public:
 
   virtual QDateTime getCreationTime() const override
   {
-    return QFileInfo(m_File).created();
+    return QFileInfo(m_File).birthTime();
   }
 
   virtual QString getSaveGroupIdentifier() const override

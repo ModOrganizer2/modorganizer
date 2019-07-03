@@ -32,7 +32,6 @@ using namespace MOBase;
 
 
 class MyFileSystemModel : public QFileSystemModel {
-
 public:
   MyFileSystemModel(QObject *parent)
     : QFileSystemModel(parent), m_RegularColumnCount(0) {}
