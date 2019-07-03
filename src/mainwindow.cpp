@@ -99,7 +99,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QCoreApplication>
 #include <QCursor>
 #include <QDebug>
-#include <QDesktopWidget>
 #include <QDesktopServices>
 #include <QDialog>
 #include <QDirIterator>
@@ -1340,7 +1339,7 @@ void MainWindow::displaySaveGameInfo(QListWidgetItem *newItem)
   }
   m_CurrentSaveView->setSave(save);
 
-  QRect screenRect = QApplication::desktop()->availableGeometry(m_CurrentSaveView);
+  QRect screenRect = m_CurrentSaveView->window()->windowHandle()->screen()->geometry();
 
   QPoint pos = QCursor::pos();
   if (pos.x() + m_CurrentSaveView->width() > screenRect.right()) {
@@ -2279,7 +2278,9 @@ void MainWindow::storeSettings(QSettings &settings) {
     settings.setValue("menubar_visible", m_menuBarVisible);
     settings.setValue("statusbar_visible", m_statusBarVisible);
     settings.setValue("window_split", ui->splitter->saveState());
-    settings.setValue("window_monitor", QApplication::desktop()->screenNumber(this));
+    QScreen *screen = this->window()->windowHandle()->screen();
+    int screenId = QGuiApplication::screens().indexOf(screen);
+    settings.setValue("window_monitor", screenId);
     settings.setValue("log_split", ui->topLevelSplitter->saveState());
     settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
     settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());

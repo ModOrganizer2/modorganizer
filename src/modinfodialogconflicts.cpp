@@ -1224,5 +1224,5 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
 
   return ConflictItem(
     std::move(beforeQS), std::move(relativeName), std::move(afterQS),
-    index, std::move(fileName), hasAlts, QString::null, archive);
+    index, std::move(fileName), hasAlts, QString(), archive);
 }

@@ -645,9 +645,12 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     if (settings.contains("window_monitor")) {
       const int monitor = settings.value("window_monitor").toInt();
 
-      if (monitor != -1) {
+      if (monitor != -1 && QGuiApplication::screens().size() > monitor) {
         QGuiApplication::screens().at(monitor)->geometry().center();
         const QPoint center = QGuiApplication::screens().at(monitor)->geometry().center();
+        splash.move(center - splash.rect().center());
+      } else {
+        const QPoint center = QGuiApplication::primaryScreen()->geometry().center();
         splash.move(center - splash.rect().center());
       }
     }
