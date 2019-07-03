@@ -353,7 +353,11 @@ void ModInfoDialog::setTabsVisibility(bool firstTime)
 
   // save the current order (if necessary) because some tabs will be removed and
   // others added
-  saveTabOrder(Settings::instance());
+  if (!firstTime) {
+    // but don't do it the first time visibility is set because the tabs are
+    // in the default order, which will clobber the current settings
+    saveTabOrder(Settings::instance());
+  }
 
   // remember selection, if any
   auto sel = ModInfoTabIDs::None;
