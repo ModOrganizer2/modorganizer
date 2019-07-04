@@ -1339,7 +1339,12 @@ void MainWindow::displaySaveGameInfo(QListWidgetItem *newItem)
   }
   m_CurrentSaveView->setSave(save);
 
-  QRect screenRect = m_CurrentSaveView->window()->windowHandle()->screen()->geometry();
+  QWindow *window = m_CurrentSaveView->window()->windowHandle();
+  QRect screenRect;
+  if (window == nullptr)
+    screenRect = QGuiApplication::primaryScreen()->geometry();
+  else
+    screenRect = window->screen()->geometry();
 
   QPoint pos = QCursor::pos();
   if (pos.x() + m_CurrentSaveView->width() > screenRect.right()) {
