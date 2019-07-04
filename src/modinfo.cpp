@@ -310,10 +310,10 @@ bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
     }
   }
 
-  if (latest < QDateTime::currentDateTimeUtc().addDays(-30)) {
+  if (latest < QDateTime::currentDateTimeUtc().addMonths(-1)) {
     std::set<std::pair<QString, int>> organizedGames;
     for (auto mod : s_Collection) {
-      if (mod->canBeUpdated() && mod->getLastNexusUpdate() < QDateTime::currentDateTimeUtc().addDays(-30)) {
+      if (mod->canBeUpdated() && mod->getLastNexusUpdate() < QDateTime::currentDateTimeUtc().addMonths(-1)) {
         organizedGames.insert(std::make_pair<QString, int>(mod->getGameName().toLower(), mod->getNexusID()));
       }
     }
@@ -330,7 +330,7 @@ bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
 
     for (auto game : organizedGames)
       NexusInterface::instance(pluginContainer)->requestUpdates(game.second, receiver, QVariant(), game.first, QString());
-  } else if (earliest < QDateTime::currentDateTimeUtc().addDays(-30)) {
+  } else if (earliest < QDateTime::currentDateTimeUtc().addMonths(-1)) {
     for (auto gameName : games)
       NexusInterface::instance(pluginContainer)->requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::MONTH, receiver, QVariant(true), QString());
   } else if (earliest < QDateTime::currentDateTimeUtc().addDays(-7)) {
@@ -362,7 +362,7 @@ std::set<QSharedPointer<ModInfo>> ModInfo::filteredMods(QString gameName, QVaria
 
   if (addOldMods)
     for (auto mod : s_Collection)
-      if (mod->getLastNexusUpdate() < QDateTime::currentDateTimeUtc().addDays(-30) && mod->getGameName().compare(gameName, Qt::CaseInsensitive) == 0)
+      if (mod->getLastNexusUpdate() < QDateTime::currentDateTimeUtc().addMonths(-1) && mod->getGameName().compare(gameName, Qt::CaseInsensitive) == 0)
         finalMods.insert(mod);
 
   if (markUpdated) {

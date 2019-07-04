@@ -253,7 +253,6 @@ SET(organizer_HDRS
 SET(organizer_UIS
     transfersavesdialog.ui
     syncoverwritedialog.ui
-    simpleinstalldialog.ui
     settingsdialog.ui
     selectiondialog.ui
     queryoverwritedialog.ui
@@ -265,8 +264,6 @@ SET(organizer_UIS
     mainwindow.ui
     lockeddialog.ui
     waitingonclosedialog.ui
-    installdialog.ui
-    finddialog.ui
     editexecutablesdialog.ui
     credentialsdialog.ui
     categoriesdialog.ui
@@ -293,7 +290,7 @@ SET(organizer_RCS
 	)
 
 
-source_group(src REGULAR_EXPRESSION ".*\\.(h|cpp)")
+source_group(src REGULAR_EXPRESSION ".*\\.(h|cpp|ui)")
 
 set(application
 	iuserinterface
@@ -457,7 +454,7 @@ set(src_filters
 foreach(filter in list ${src_filters})
 	set(files)
 	foreach(d in lists ${${filter}})
-		set(files ${files} ${d}.cpp ${d}.h ${d}.inc)
+		set(files ${files} ${d}.cpp ${d}.h ${d}.inc ${d}.ui)
 	endforeach()
 
 	source_group(src\\${filter} FILES ${files})
@@ -553,7 +550,7 @@ ELSE()
   SET(usvfs_name usvfs_x86)
 ENDIF()
 
-ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_RCS} ${organizer_QRCS} ${organizer_translations_qm})
+ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIS} ${organizer_RCS} ${organizer_QRCS} ${organizer_translations_qm})
 TARGET_LINK_LIBRARIES(ModOrganizer
                       Qt5::Widgets Qt5::WinExtras Qt5::WebEngineWidgets Qt5::Quick
                       Qt5::Qml Qt5::QuickWidgets Qt5::Network Qt5::WebSockets
