@@ -459,8 +459,13 @@ void preloadDll(const QString& filename)
 
 void preloadSsl()
 {
-  preloadDll("libeay32.dll");
-  preloadDll("ssleay32.dll");
+#if Q_PROCESSOR_WORDSIZE == 8
+  preloadDll("libcrypto-1_1-x64.dll");
+  preloadDll("libssl-1_1-x64.dll");
+#elif Q_PROCESSOR_WORDSIZE == 4
+  preloadDll("libcrypto-1_1.dll");
+  preloadDll("libssl-1_1.dll");
+#endif
 }
 
 static QString getVersionDisplayString()
