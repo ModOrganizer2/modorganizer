@@ -17,7 +17,6 @@
     <message>
         <location filename="aboutdialog.ui" line="156"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Source code can be found at &lt;a href=&quot;https://github.com/ModOrganizer2/modorganizer&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;GitHub&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <oldsource>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Source code can be found at &lt;a href=&quot;https://github.com/Modorganizer2/modorganizer&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;GitHub&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -33,7 +32,6 @@
     <message>
         <location filename="aboutdialog.ui" line="183"/>
         <source>Lead Developers &amp;&amp; Maintainers</source>
-        <oldsource>Lead Developers/ Maintainers</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -69,6 +67,11 @@
     <message>
         <location filename="aboutdialog.ui" line="315"/>
         <source>Faron (German)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="aboutdialog.ui" line="325"/>
+        <source>yohru (Japanese)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -109,11 +112,6 @@
     <message>
         <location filename="aboutdialog.ui" line="397"/>
         <source>Other Supporters &amp;&amp; Contributors</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="aboutdialog.ui" line="325"/>
-        <source>yohru (Japanese)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1573,7 +1571,7 @@ This is likely due to a corrupted or incompatible download or unrecognized archi
 <context>
     <name>MOBase::TutorialControl</name>
     <message>
-        <location filename="../../uibase/src/tutorialcontrol.cpp" line="145"/>
+        <location filename="../../uibase/src/tutorialcontrol.cpp" line="146"/>
         <source>Tutorial failed to start, please check &quot;mo_interface.log&quot; for details.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4163,123 +4161,123 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1101"/>
+        <location filename="modlist.cpp" line="1103"/>
         <source>drag&amp;drop failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1180"/>
+        <location filename="modlist.cpp" line="1182"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1181"/>
+        <location filename="modlist.cpp" line="1183"/>
         <source>Are you sure you want to remove &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1248"/>
+        <location filename="modlist.cpp" line="1250"/>
         <source>Flags</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1249"/>
+        <location filename="modlist.cpp" line="1251"/>
         <source>Content</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1250"/>
+        <location filename="modlist.cpp" line="1252"/>
         <source>Mod Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1251"/>
+        <location filename="modlist.cpp" line="1253"/>
         <source>Version</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1252"/>
+        <location filename="modlist.cpp" line="1254"/>
         <source>Priority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1253"/>
+        <location filename="modlist.cpp" line="1255"/>
         <source>Category</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1254"/>
+        <location filename="modlist.cpp" line="1256"/>
         <source>Source Game</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1255"/>
+        <location filename="modlist.cpp" line="1257"/>
         <source>Nexus ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1256"/>
+        <location filename="modlist.cpp" line="1258"/>
         <source>Installation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1257"/>
+        <location filename="modlist.cpp" line="1259"/>
         <source>Notes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1258"/>
-        <location filename="modlist.cpp" line="1294"/>
+        <location filename="modlist.cpp" line="1260"/>
+        <location filename="modlist.cpp" line="1296"/>
         <source>unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1266"/>
+        <location filename="modlist.cpp" line="1268"/>
         <source>Name of your mods</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1267"/>
+        <location filename="modlist.cpp" line="1269"/>
         <source>Version of the mod (if available)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1268"/>
+        <location filename="modlist.cpp" line="1270"/>
         <source>Installation priority of your mod. The higher, the more &quot;important&quot; it is and thus overwrites files from mods with lower priority.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1270"/>
+        <location filename="modlist.cpp" line="1272"/>
         <source>Category of the mod.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1271"/>
+        <location filename="modlist.cpp" line="1273"/>
         <source>The source game which was the origin of this mod.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1272"/>
+        <location filename="modlist.cpp" line="1274"/>
         <source>Id of the mod as used on Nexus.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1273"/>
+        <location filename="modlist.cpp" line="1275"/>
         <source>Emblemes to highlight things that might require attention.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1274"/>
+        <location filename="modlist.cpp" line="1276"/>
         <source>Depicts the content of the mod:&lt;br&gt;&lt;table cellspacing=7&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/plugin&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Game plugins (esp/esm/esl)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/interface&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Interface&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/mesh&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Meshes&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/bsa&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;BSA&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/texture&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Textures&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/sound&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Sounds&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/music&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Music&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/string&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Strings&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/script&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Scripts (Papyrus)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/skse&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Script Extender plugins&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/skyproc&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;SkyProc Patcher&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/menu&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Mod Configuration Menu&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/inifile&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;INI files&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/modgroup&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;ModGroup files&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1292"/>
+        <location filename="modlist.cpp" line="1294"/>
         <source>Time this mod was installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1293"/>
+        <location filename="modlist.cpp" line="1295"/>
         <source>User notes about the mod</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5825,33 +5823,33 @@ If the folder was still in use, restart MO and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="577"/>
+        <location filename="main.cpp" line="582"/>
         <source>Please select the game edition you have (MO can&apos;t start the game correctly if this is set incorrectly!)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="614"/>
+        <location filename="main.cpp" line="619"/>
         <source>failed to start shortcut: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="636"/>
+        <location filename="main.cpp" line="641"/>
         <source>failed to start application: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="784"/>
+        <location filename="main.cpp" line="789"/>
         <location filename="settings.cpp" line="1186"/>
         <source>Mod Organizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="785"/>
+        <location filename="main.cpp" line="790"/>
         <source>An instance of Mod Organizer is already running</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="800"/>
+        <location filename="main.cpp" line="805"/>
         <source>Failed to set up instance</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7532,107 +7530,197 @@ Please open the &quot;Nexus&quot;-tab</source>
 <context>
     <name>tutorial_primer_main</name>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="71"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="72"/>
         <source>This window shows all the mods that are installed. The column headers can be used for sorting. Only checked mods are active in the current profile.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="72"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="73"/>
         <source>Each profile is a separate set of enabled mods and ini settings.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="73"/>
-        <source>The dropdown allows various ways of grouping the mods shown in the mod list.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="tutorials/tutorial_primer_main.js" line="74"/>
-        <source>Show/hide the category pane.</source>
+        <source>Perform various actions on your mod list, such as refreshing data and checking for mod updates.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_primer_main.js" line="75"/>
-        <source>Quickly filter the mod list as you type.</source>
+        <source>Quick access to various directories, such as your MO2 mods, profiles, saves, and your active game location.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_primer_main.js" line="76"/>
-        <source>Switch between information views.</source>
+        <source>Restore a mod list backup.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_primer_main.js" line="77"/>
-        <source>This shows mod categories and some meta categories (in angle-brackets). Select some to filter the mod list. For example select &quot;&lt;Checked&gt;&quot; to show only active mods.</source>
+        <source>Create a backup of your current mod list.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_primer_main.js" line="78"/>
-        <source>Customizable list for choosing the program to run.</source>
+        <source>Running counter of your active mods. Hover to see a more detailed breakdown.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_primer_main.js" line="79"/>
-        <source>When this button is clicked, Mod Organizer creates a virtual directory structure then runs the program selected to the left.</source>
+        <source>The dropdown allows various ways of grouping the mods shown in the mod list.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_primer_main.js" line="80"/>
-        <source>Will create a shortcut for quick access. The shortcut can be placed in the toolbar at the top, in the Start Menu or on the Windows Desktop.</source>
+        <source>Show/hide the category pane.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_primer_main.js" line="81"/>
-        <source>Log messages produced by MO. Please note that messages with a light bulb usually don&apos;t require your attention.</source>
+        <source>Quickly filter the mod list as you type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="82"/>
+        <source>Switch between information views.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_primer_main.js" line="83"/>
-        <source>Configure Mod Organizer.</source>
+        <source>This shows mod categories and some meta categories (in angle-brackets). Select some to filter the mod list. For example select &quot;&lt;Checked&gt;&quot; to show only active mods.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_primer_main.js" line="84"/>
-        <source>Notifications about the current setup.</source>
+        <source>Customizable list for choosing the program to run.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_primer_main.js" line="85"/>
-        <source>Activates if there is an update for MO. Please note that if, for any reason, MO can&apos;t communicate with NMM, this will not work either.</source>
+        <source>When this button is clicked, Mod Organizer creates a virtual directory structure then runs the program selected to the left.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="89"/>
-        <source>Plugins (esp/esm/esl files) of the mods in the current profile. They need to be checked to be loaded.</source>
+        <location filename="tutorials/tutorial_primer_main.js" line="86"/>
+        <source>Will create a shortcut for quick access. The shortcut can be placed in the toolbar at the top, in the Start Menu or on the Windows Desktop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="87"/>
+        <source>Log messages produced by MO. Please note that messages with a light bulb usually don&apos;t require your attention.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="88"/>
+        <source>Indicator of your current NexusMods API request limits.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_primer_main.js" line="90"/>
-        <source>Automatically sort plugins using the bundled LOOT application.</source>
+        <source>Change/manage MO2 instances or switch to portable mode.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_primer_main.js" line="91"/>
-        <source>Quickly filter plugin list as you type.</source>
+        <source>Browse to and manually install a mod from an archive on your computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="92"/>
+        <source>Automatically open NexusMods to browse and install mods via the API.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="93"/>
+        <source>Manage your MO2 profiles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="94"/>
+        <source>Open the executable editor to add and modify applications you wish to run with MO2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="95"/>
+        <source>Select from a collection of additional tools, such as an INI editor, integrated FNIS updater, and more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="96"/>
+        <source>Configure Mod Organizer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_primer_main.js" line="97"/>
-        <source>The directory tree and all files that the program will see.</source>
+        <source>See the status of and/or endorse MO2 on NexusMods.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="98"/>
+        <source>Notifications about the current setup.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="99"/>
+        <source>Activates if there is an update for MO. Please note that if, for any reason, MO can&apos;t communicate with NMM, this will not work either.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_primer_main.js" line="100"/>
+        <source>Access more information about MO2, including these tutorials, a link to the development discord, information about the devs and dependencies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="104"/>
+        <source>Plugins (esp/esm/esl files) of the mods in the current profile. They need to be checked to be loaded.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="105"/>
+        <source>Automatically sort plugins using the bundled LOOT application.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="106"/>
+        <source>Restore a backup of your plugin list order.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="107"/>
+        <source>Save a backup of your plugin list order.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="108"/>
+        <source>Counter of your total active plugins. Hover to see a breakdown of plugin types.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="109"/>
+        <source>Quickly filter plugin list as you type.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="112"/>
+        <source>All the asset archives (.bsa files) for all active mods.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="115"/>
+        <source>The directory tree and all files that the program will see.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="tutorials/tutorial_primer_main.js" line="118"/>
         <source>Save game browser. Shows all the saves for the current profile and whether or not the current mod-load status is correct.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="103"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="121"/>
         <source>Shows the mods that have been downloaded and if theyâ€™ve been installed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="111"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="129"/>
         <source>Click to quit</source>
         <translation type="unfinished"></translation>
     </message>
