@@ -235,9 +235,9 @@ void DownloadListWidget::onCustomContextMenu(const QPoint &point)
 
     menu.addSeparator();
   }
-  menu.addAction(tr("Delete Installed..."), this, SLOT(issueDeleteCompleted()));
-  menu.addAction(tr("Delete Uninstalled..."), this, SLOT(issueDeleteUninstalled()));
-  menu.addAction(tr("Delete All..."), this, SLOT(issueDeleteAll()));
+  menu.addAction(tr("Delete Installed Downloads..."), this, SLOT(issueDeleteCompleted()));
+  menu.addAction(tr("Delete Uninstalled Downloads..."), this, SLOT(issueDeleteUninstalled()));
+  menu.addAction(tr("Delete All Downloads..."), this, SLOT(issueDeleteAll()));
 
   menu.addSeparator();
   if (!hidden) {

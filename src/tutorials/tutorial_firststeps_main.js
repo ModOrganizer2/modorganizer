@@ -122,7 +122,7 @@ function getTutorialSteps()
         tutorial.text = qsTr("...but most contain plugins. These are plugins for the game and are required "
                             +"to add stuff to the game (new weapons, armors, quests, areas, ...). "
                             +"Please open the \"Plugins\"-tab to get a list of plugins.")
-        if (tutorialControl.waitForTabOpen("tabWidget", 0)) {
+        if (tutorialControl.waitForTabOpen("tabWidget", "espTab")) {
             highlightItem("tabWidget", true)
         } else {
             waitForClick()

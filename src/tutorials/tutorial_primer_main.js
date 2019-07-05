@@ -99,8 +99,8 @@ function setupTooptips() {
   tooltipAction("actionUpdate", qsTr("Activates if there is an update for MO. Please note that if, for any reason, MO can't communicate with NMM, this will not work either."))
   tooltipAction("actionHelp", qsTr("Access more information about MO2, including these tutorials, a link to the development discord, information about the devs and dependencies."))
 
-  switch (manager.findControl("tabWidget").currentIndex) {
-    case 0:
+  switch (tutorialControl.getTabName("tabWidget")) {
+    case "espTab":
       tooltipWidget("espList", qsTr("Plugins (esp/esm/esl files) of the mods in the current profile. They need to be checked to be loaded."))
       tooltipWidget("bossButton", qsTr("Automatically sort plugins using the bundled LOOT application."))
       tooltipWidget("restoreButton", qsTr("Restore a backup of your plugin list order."))
@@ -108,16 +108,16 @@ function setupTooptips() {
       tooltipWidget("activePluginsCounter", qsTr("Counter of your total active plugins. Hover to see a breakdown of plugin types."))
       tooltipWidget("espFilterEdit", qsTr("Quickly filter plugin list as you type."))
       break
-    case 1:
+    case "bsaTab":
       tooltipWidget("bsaList", qsTr("All the asset archives (.bsa files) for all active mods."))
       break
-    case 2:
+    case "dataTab":
       tooltipWidget("dataTree", qsTr("The directory tree and all files that the program will see."))
       break
-    case 3:
+    case "savesTab":
       tooltipWidget("savegameList", qsTr("Save game browser. Shows all the saves for the current profile and whether or not the current mod-load status is correct."))
       break
-    case 4:
+    case "downloadTab":
       tooltipWidget("downloadView", qsTr("Shows the mods that have been downloaded and if they’ve been installed."))
       break
   }
