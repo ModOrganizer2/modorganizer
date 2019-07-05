@@ -27,8 +27,8 @@ function getTutorialSteps()
     function() {
         console.log("next")
         tutorial.text = qsTr("This button provides multiple sources of information and further tutorials.")
-        if (tutorialControl.waitForButton("actionHelp")) {
-          highlightItem("actionHelp", true)
+        if (tutorialControl.waitForAction("actionHelp")) {
+          highlightAction("actionHelp", true)
         } else {
           console.error("help button broken")
           waitForClick()
@@ -36,6 +36,7 @@ function getTutorialSteps()
     },
 
     function() {
+        unhighlight()
         tutorial.text = qsTr("Finally there are tooltips on almost every part of Mod Organizer. If there is a control "
                            + "in MO you don't understand, please try hovering over it to get a short description or "
                            + "use \"Help on UI\" from the help menu to get a longer explanation")
