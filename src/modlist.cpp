@@ -561,6 +561,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
       m_Modified = true;
       m_LastCheck.restart();
       emit modlistChanged(index, role);
+      emit tutorialModlistUpdate();
     }
     result = true;
     emit dataChanged(index, index);
@@ -596,6 +597,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
         if (ok) {
           info->setNexusID(newID);
           emit modlistChanged(index, role);
+          emit tutorialModlistUpdate();
           result = true;
         } else {
           result = false;
@@ -1375,6 +1377,7 @@ bool ModList::toggleSelection(QAbstractItemView *itemView)
   m_Profile->setModsEnabled(modsToEnable, modsToDisable);
 
   emit modlistChanged(dirtyMods, 0);
+  emit tutorialModlistUpdate();
 
   m_Modified = true;
   m_LastCheck.restart();

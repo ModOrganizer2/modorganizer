@@ -108,11 +108,11 @@ function getTutorialSteps()
         tutorial.text = qsTr("Install a few more mods if you want, then enable mods by checking them in the left pane. "
                              + "Mods that aren't enabled have no effect on the game whatsoever. ")
         highlightItem("modList", true)
-        modList.modlist_changed.connect(nextStep)
+        modList.tutorialModlistUpdate.connect(nextStep)
     },
 
     function() {
-        modList.modlist_changed.disconnect(nextStep)
+        modList.tutorialModlistUpdate.disconnect(nextStep)
         unhighlight()
         tutorial.text = qsTr("For some mods, enabling it on the left pane is all you have to do...")
         waitForClick()
