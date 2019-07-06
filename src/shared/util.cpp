@@ -20,6 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "util.h"
 #include "windows_error.h"
 #include "error_report.h"
+#include "executableslist.h"
+#include "instancemanager.h"
 #include <utility.h>
 
 #include <sstream>
@@ -307,8 +309,322 @@ struct COMReleaser
   }
 };
 
+
 template <class T>
 using COMPtr = std::unique_ptr<T, COMReleaser>;
+
+
+class ShellLinkException {};
+
+// just a wrapper around IShellLink operations that throws ShellLinkException
+// on errors
+//
+class ShellLinkWrapper
+{
+public:
+  ShellLinkWrapper()
+  {
+    m_link = createShellLink();
+    m_file = createPersistFile();
+  }
+
+  void setPath(const QString& s)
+  {
+    if (s.isEmpty()) {
+      critical() << "path cannot be empty";
+      throw ShellLinkException();
+    }
+
+    const auto r = m_link->SetPath(s.toStdWString().c_str());
+    throwOnFail(r, QString("failed to set target path '%1'").arg(s));
+  }
+
+  void setArguments(const QString& s)
+  {
+    const auto r = m_link->SetArguments(s.toStdWString().c_str());
+    throwOnFail(r, QString("failed to set arguments '%1'").arg(s));
+  }
+
+  void setDescription(const QString& s)
+  {
+    if (s.isEmpty()) {
+      return;
+    }
+
+    const auto r = m_link->SetDescription(s.toStdWString().c_str());
+    throwOnFail(r, QString("failed to set description '%1'").arg(s));
+  }
+
+  void setIcon(const QString& file, int i)
+  {
+    if (file.isEmpty()) {
+      return;
+    }
+
+    const auto r = m_link->SetIconLocation(file.toStdWString().c_str(), i);
+    throwOnFail(r, QString("failed to set icon '%1' @ %2").arg(file).arg(i));
+  }
+
+  void setWorkingDirectory(const QString& s)
+  {
+    if (s.isEmpty()) {
+      return;
+    }
+
+    const auto r = m_link->SetWorkingDirectory(s.toStdWString().c_str());
+    throwOnFail(r, QString("failed to set working directory '%1'").arg(s));
+  }
+
+  void save(const QString& path)
+  {
+    const auto r = m_file->Save(path.toStdWString().c_str(), TRUE);
+    throwOnFail(r, QString("failed to save link '%1'").arg(path));
+  }
+
+private:
+  COMPtr<IShellLink> m_link;
+  COMPtr<IPersistFile> m_file;
+
+  QDebug critical()
+  {
+    return qCritical().noquote().nospace() << "system shortcut: ";
+  }
+
+  void throwOnFail(HRESULT r, const QString& s)
+  {
+    if (FAILED(r)) {
+      critical() << s << ", " << formatSystemMessageQ(r);
+      throw ShellLinkException();
+    }
+  }
+
+  COMPtr<IShellLink> createShellLink()
+  {
+    void* link = nullptr;
+
+    const auto r = CoCreateInstance(
+      CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER,
+      IID_IShellLink, &link);
+
+    throwOnFail(r, "failed to create IShellLink instance");
+
+    if (!link) {
+      critical() << "creating IShellLink worked, but pointer is null";
+      throw ShellLinkException();
+    }
+
+    return COMPtr<IShellLink>(static_cast<IShellLink*>(link));
+  }
+
+  COMPtr<IPersistFile> createPersistFile()
+  {
+    void* file = nullptr;
+
+    const auto r = m_link->QueryInterface(IID_IPersistFile, &file);
+    throwOnFail(r, "failed to get IPersistFile interface");
+
+    if (!file) {
+      critical() << "querying IPersistFile worked, but pointer is null";
+      throw ShellLinkException();
+    }
+
+    return COMPtr<IPersistFile>(static_cast<IPersistFile*>(file));
+  }
+};
+
+
+Shortcut::Shortcut()
+  : m_iconIndex(0)
+{
+}
+
+Shortcut::Shortcut(const Executable& exe)
+  : Shortcut()
+{
+  m_name = exe.title();
+  m_target = QFileInfo(qApp->applicationFilePath()).absoluteFilePath();
+
+  m_arguments = QString("\"moshortcut://%1:%2\"")
+      .arg(InstanceManager::instance().currentInstance())
+      .arg(exe.title());
+
+  m_description = QString("Run %1 with ModOrganizer").arg(exe.title());
+
+  if (exe.usesOwnIcon()) {
+    m_icon = exe.binaryInfo().absoluteFilePath();
+  }
+
+  m_workingDirectory = qApp->applicationDirPath();
+}
+
+Shortcut& Shortcut::name(const QString& s)
+{
+  m_name = s;
+  return *this;
+}
+
+Shortcut& Shortcut::target(const QString& s)
+{
+  m_target = s;
+  return *this;
+}
+
+Shortcut& Shortcut::arguments(const QString& s)
+{
+  m_arguments = s;
+  return *this;
+}
+
+Shortcut& Shortcut::description(const QString& s)
+{
+  m_description = s;
+  return *this;
+}
+
+Shortcut& Shortcut::icon(const QString& s, int index)
+{
+  m_icon = s;
+  m_iconIndex = index;
+  return *this;
+}
+
+Shortcut& Shortcut::workingDirectory(const QString& s)
+{
+  m_workingDirectory = s;
+  return *this;
+}
+
+bool Shortcut::exists(Locations loc) const
+{
+  const auto path = shortcutPath(loc);
+  if (path.isEmpty()) {
+    return false;
+  }
+
+  return QFileInfo(path).exists();
+}
+
+bool Shortcut::toggle(Locations loc)
+{
+  if (exists(loc)) {
+    return remove(loc);
+  } else {
+    return add(loc);
+  }
+}
+
+bool Shortcut::add(Locations loc)
+{
+  const auto path = shortcutPath(loc);
+  if (path.isEmpty()) {
+    return false;
+  }
+
+  if (m_target.isEmpty()) {
+    qCritical() << "system shortcut: target is empty";
+    return false;
+  }
+
+  try
+  {
+    ShellLinkWrapper link;
+
+    link.setPath(m_target);
+    link.setArguments(m_arguments);
+    link.setDescription(m_description);
+    link.setIcon(m_icon, m_iconIndex);
+    link.setWorkingDirectory(m_workingDirectory);
+
+    link.save(path);
+
+    return true;
+  }
+  catch(ShellLinkException&)
+  {
+  }
+
+  return false;
+}
+
+bool Shortcut::remove(Locations loc)
+{
+  const auto path = shortcutPath(loc);
+  if (path.isEmpty()) {
+    return false;
+  }
+
+  if (!QFile::exists(path)) {
+    qCritical().nospace().noquote()
+      << "system shortcut: can't remove '" << path << "', file not found";
+
+    return false;
+  }
+
+  if (!QFile::remove(path)) {
+    qCritical().nospace().noquote()
+      << "system shortcut: failed to remove '" << path << "'";
+
+    return false;
+  }
+
+  return true;
+}
+
+QString Shortcut::shortcutPath(Locations loc) const
+{
+  const auto dir = shortcutDirectory(loc);
+  if (dir.isEmpty()) {
+    return {};
+  }
+
+  const auto file = shortcutFilename();
+  if (file.isEmpty()) {
+    return {};
+  }
+
+  return dir + QDir::separator() + file;
+}
+
+QString Shortcut::shortcutDirectory(Locations loc) const
+{
+  QString dir;
+
+  try
+  {
+    switch (loc)
+    {
+      case Desktop:
+        dir = MOBase::getDesktopDirectory();
+        break;
+
+      case StartMenu:
+        dir = MOBase::getStartMenuDirectory();
+        break;
+
+      case None:
+      default:
+        qCritical() << "system shortcut: bad location " << loc;
+        return {};
+    }
+  }
+  catch(std::exception&)
+  {
+    return {};
+  }
+
+  return QDir::toNativeSeparators(dir);
+}
+
+QString Shortcut::shortcutFilename() const
+{
+  if (m_name.isEmpty()) {
+    qCritical() << "system shortcut: name is empty";
+    return {};
+  }
+
+  return m_name + ".lnk";
+}
+
 
 
 class WMI
@@ -674,7 +990,7 @@ std::optional<SecurityProduct> Environment::getWindowsFirewall() const
     if (FAILED(hr) || !rawPolicy) {
       qCritical()
         << "CoCreateInstance for NetFwPolicy2 failed, "
-        << formatSystemMessage(hr);
+        << formatSystemMessageQ(hr);
 
       return {};
     }
@@ -690,7 +1006,7 @@ std::optional<SecurityProduct> Environment::getWindowsFirewall() const
     {
       qCritical()
         << "get_FirewallEnabled failed, "
-        << formatSystemMessage(hr);
+        << formatSystemMessageQ(hr);
 
       return {};
     }

@@ -220,6 +220,9 @@ MainWindow::MainWindow(QSettings &initSettings
   , m_PluginContainer(pluginContainer)
   , m_DidUpdateMasterList(false)
   , m_ArchiveListWriter(std::bind(&MainWindow::saveArchiveList, this))
+  , m_LinkToolbar(nullptr)
+  , m_LinkDesktop(nullptr)
+  , m_LinkStartMenu(nullptr)
 {
   QWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
   QWebEngineProfile::defaultProfile()->setHttpCacheMaximumSize(52428800);
@@ -335,9 +338,9 @@ MainWindow::MainWindow(QSettings &initSettings
   resizeLists(modListAdjusted, pluginListAdjusted);
 
   QMenu *linkMenu = new QMenu(this);
-  linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Toolbar and Menu"), this, SLOT(linkToolbar()));
-  linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Desktop"), this, SLOT(linkDesktop()));
-  linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Start Menu"), this, SLOT(linkMenu()));
+  m_LinkToolbar = linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Toolbar and Menu"), this, SLOT(linkToolbar()));
+  m_LinkDesktop = linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Desktop"), this, SLOT(linkDesktop()));
+  m_LinkStartMenu = linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Start Menu"), this, SLOT(linkMenu()));
   ui->linkButton->setMenu(linkMenu);
 
   QMenu *listOptionsMenu = new QMenu(ui->listOptionsBtn);
@@ -2396,88 +2399,6 @@ void MainWindow::on_startButton_clicked() {
   }
   ui->startButton->setEnabled(true);
 }
-
-static HRESULT CreateShortcut(LPCWSTR targetFileName, LPCWSTR arguments,
-                              LPCSTR linkFileName, LPCWSTR description,
-                              LPCTSTR iconFileName, int iconNumber,
-                              LPCWSTR currentDirectory)
-{
-  HRESULT result = E_INVALIDARG;
-  if ((targetFileName != nullptr) && (wcslen(targetFileName) > 0) &&
-       (arguments != nullptr) &&
-       (linkFileName != nullptr) && (strlen(linkFileName) > 0) &&
-       (description != nullptr) &&
-       (currentDirectory != nullptr)) {
-
-    IShellLink* shellLink;
-    result = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER,
-                              IID_IShellLink, (LPVOID*)&shellLink);
-
-    if (!SUCCEEDED(result)) {
-      qCritical("failed to create IShellLink instance");
-      return result;
-    }
-
-    result = shellLink->SetPath(targetFileName);
-    if (!SUCCEEDED(result)) {
-      qCritical("failed to set target path %ls", targetFileName);
-      shellLink->Release();
-      return result;
-    }
-
-    result = shellLink->SetArguments(arguments);
-    if (!SUCCEEDED(result)) {
-      qCritical("failed to set arguments: %ls", arguments);
-      shellLink->Release();
-      return result;
-    }
-
-    if (wcslen(description) > 0) {
-      result = shellLink->SetDescription(description);
-      if (!SUCCEEDED(result)) {
-        qCritical("failed to set description: %ls", description);
-        shellLink->Release();
-        return result;
-      }
-    }
-
-    if (wcslen(currentDirectory) > 0) {
-      result = shellLink->SetWorkingDirectory(currentDirectory);
-      if (!SUCCEEDED(result)) {
-        qCritical("failed to set working directory: %ls", currentDirectory);
-        shellLink->Release();
-        return result;
-      }
-    }
-
-    if (iconFileName != nullptr) {
-      result = shellLink->SetIconLocation(iconFileName, iconNumber);
-      if (!SUCCEEDED(result)) {
-        qCritical("failed to load program icon: %ls %d", iconFileName, iconNumber);
-        shellLink->Release();
-        return result;
-      }
-    }
-
-    IPersistFile *persistFile;
-    result = shellLink->QueryInterface(IID_IPersistFile, (LPVOID*)&persistFile);
-    if (SUCCEEDED(result)) {
-      wchar_t linkFileNameW[MAX_PATH];
-      if (MultiByteToWideChar(CP_ACP, 0, linkFileName, -1, linkFileNameW, MAX_PATH) > 0) {
-        result = persistFile->Save(linkFileNameW, TRUE);
-      } else {
-        qCritical("failed to create link: %s", linkFileName);
-      }
-      persistFile->Release();
-    } else {
-      qCritical("failed to create IPersistFile instance");
-    }
-
-    shellLink->Release();
-  }
-  return result;
-}
-
 
 bool MainWindow::modifyExecutablesDialog()
 {
@@ -5144,74 +5065,39 @@ void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
 
 void MainWindow::linkToolbar()
 {
-  Executable &exe(getSelectedExecutable());
+  Executable& exe = getSelectedExecutable();
+
   exe.setShownOnToolbar(!exe.isShownOnToolbar());
-  ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::Toolbar))->setIcon(exe.isShownOnToolbar() ? QIcon(":/MO/gui/remove") : QIcon(":/MO/gui/link"));
   updatePinnedExecutables();
-}
-
-namespace {
-QString getLinkfile(const QString &dir, const Executable &exec)
-{
-  return QDir::fromNativeSeparators(dir) + "/" + exec.title() + ".lnk";
-}
-
-QString getDesktopLinkfile(const Executable &exec)
-{
-  return getLinkfile(getDesktopDirectory(), exec);
-}
-
-QString getStartMenuLinkfile(const Executable &exec)
-{
-  return getLinkfile(getStartMenuDirectory(), exec);
-}
-}
-
-void MainWindow::addWindowsLink(const ShortcutType mapping)
-{
-  const Executable &selectedExecutable(getSelectedExecutable());
-  QString const linkName = getLinkfile(mapping == ShortcutType::Desktop ? getDesktopDirectory() : getStartMenuDirectory(),
-                                       selectedExecutable);
-
-  if (QFile::exists(linkName)) {
-    if (QFile::remove(linkName)) {
-      ui->linkButton->menu()->actions().at(static_cast<int>(mapping))->setIcon(QIcon(":/MO/gui/link"));
-    } else {
-      reportError(tr("failed to remove %1").arg(linkName));
-    }
-  } else {
-    QFileInfo const exeInfo(qApp->applicationFilePath());
-    // create link
-    QString executable = QDir::toNativeSeparators(selectedExecutable.binaryInfo().absoluteFilePath());
-
-    std::wstring targetFile       = ToWString(exeInfo.absoluteFilePath());
-    std::wstring parameter        = ToWString(
-      QString("\"moshortcut://%1:%2\"").arg(InstanceManager::instance().currentInstance(),selectedExecutable.title()));
-    std::wstring description      = ToWString(QString("Run %1 with ModOrganizer").arg(selectedExecutable.title()));
-    std::wstring iconFile         = ToWString(executable);
-    std::wstring currentDirectory = ToWString(QDir::toNativeSeparators(qApp->applicationDirPath()));
-
-    if (CreateShortcut(targetFile.c_str()
-                       , parameter.c_str()
-                       , QDir::toNativeSeparators(linkName).toUtf8().constData()
-                       , description.c_str()
-                       , (selectedExecutable.usesOwnIcon() ? iconFile.c_str() : nullptr), 0
-                       , currentDirectory.c_str()) == 0) {
-      ui->linkButton->menu()->actions().at(static_cast<int>(mapping))->setIcon(QIcon(":/MO/gui/remove"));
-    } else {
-      reportError(tr("failed to create %1").arg(linkName));
-    }
-  }
 }
 
 void MainWindow::linkDesktop()
 {
-  addWindowsLink(ShortcutType::Desktop);
+  env::Shortcut(getSelectedExecutable()).toggle(env::Shortcut::Desktop);
 }
 
 void MainWindow::linkMenu()
 {
-  addWindowsLink(ShortcutType::StartMenu);
+  env::Shortcut(getSelectedExecutable()).toggle(env::Shortcut::StartMenu);
+}
+
+void MainWindow::on_linkButton_pressed()
+{
+  const Executable& exe = getSelectedExecutable();
+
+  const QIcon addIcon(":/MO/gui/link");
+  const QIcon removeIcon(":/MO/gui/remove");
+
+  env::Shortcut shortcut(exe);
+
+  m_LinkToolbar->setIcon(
+    exe.isShownOnToolbar() ? removeIcon : addIcon);
+
+  m_LinkDesktop->setIcon(
+    shortcut.exists(env::Shortcut::Desktop) ? removeIcon : addIcon);
+
+  m_LinkStartMenu->setIcon(
+    shortcut.exists(env::Shortcut::StartMenu) ? removeIcon : addIcon);
 }
 
 void MainWindow::on_actionSettings_triggered()
@@ -6474,21 +6360,6 @@ Executable &MainWindow::getSelectedExecutable()
 {
   const QString name = ui->executablesListBox->itemText(ui->executablesListBox->currentIndex());
   return m_OrganizerCore.executablesList()->get(name);
-}
-
-void MainWindow::on_linkButton_pressed()
-{
-  const Executable &selectedExecutable(getSelectedExecutable());
-
-  const QIcon addIcon(":/MO/gui/link");
-  const QIcon removeIcon(":/MO/gui/remove");
-
-  const QFileInfo linkDesktopFile(getDesktopLinkfile(selectedExecutable));
-  const QFileInfo linkMenuFile(getStartMenuLinkfile(selectedExecutable));
-
-  ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::Toolbar))->setIcon(selectedExecutable.isShownOnToolbar() ? removeIcon : addIcon);
-  ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::Desktop))->setIcon(linkDesktopFile.exists() ? removeIcon : addIcon);
-  ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::StartMenu))->setIcon(linkMenuFile.exists() ? removeIcon : addIcon);
 }
 
 void MainWindow::on_showHiddenBox_toggled(bool checked)
