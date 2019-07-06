@@ -133,6 +133,14 @@ private:
   int m_iconIndex;
   QString m_workingDirectory;
 
+  // returns a qCritical() logger with a prefix already logged
+  //
+  QDebug critical() const;
+
+  // returns a qDebug() logger with a prefix already logged
+  //
+  QDebug debug() const;
+
 
   // returns the path where the shortcut file should be saved
   //
@@ -146,6 +154,11 @@ private:
   //
   QString shortcutFilename() const;
 };
+
+
+// returns a string representation of the given location
+//
+QString toString(Shortcut::Locations loc);
 
 
 // represents one module

@@ -314,7 +314,22 @@ template <class T>
 using COMPtr = std::unique_ptr<T, COMReleaser>;
 
 
-class ShellLinkException {};
+class ShellLinkException
+{
+public:
+  ShellLinkException(QString s)
+    : m_what(std::move(s))
+  {
+  }
+
+  const QString& what() const
+  {
+    return m_what;
+  }
+
+private:
+  QString m_what;
+};
 
 // just a wrapper around IShellLink operations that throws ShellLinkException
 // on errors
@@ -331,8 +346,7 @@ public:
   void setPath(const QString& s)
   {
     if (s.isEmpty()) {
-      critical() << "path cannot be empty";
-      throw ShellLinkException();
+      throw ShellLinkException("path cannot be empty");
     }
 
     const auto r = m_link->SetPath(s.toStdWString().c_str());
@@ -385,16 +399,12 @@ private:
   COMPtr<IShellLink> m_link;
   COMPtr<IPersistFile> m_file;
 
-  QDebug critical()
-  {
-    return qCritical().noquote().nospace() << "system shortcut: ";
-  }
-
   void throwOnFail(HRESULT r, const QString& s)
   {
     if (FAILED(r)) {
-      critical() << s << ", " << formatSystemMessageQ(r);
-      throw ShellLinkException();
+      throw ShellLinkException(QString("%1, %2")
+        .arg(s)
+        .arg(formatSystemMessageQ(r)));
     }
   }
 
@@ -409,8 +419,7 @@ private:
     throwOnFail(r, "failed to create IShellLink instance");
 
     if (!link) {
-      critical() << "creating IShellLink worked, but pointer is null";
-      throw ShellLinkException();
+      throw ShellLinkException("creating IShellLink worked, pointer is null");
     }
 
     return COMPtr<IShellLink>(static_cast<IShellLink*>(link));
@@ -424,8 +433,7 @@ private:
     throwOnFail(r, "failed to get IPersistFile interface");
 
     if (!file) {
-      critical() << "querying IPersistFile worked, but pointer is null";
-      throw ShellLinkException();
+      throw ShellLinkException("querying IPersistFile worked, pointer is null");
     }
 
     return COMPtr<IPersistFile>(static_cast<IPersistFile*>(file));
@@ -515,15 +523,26 @@ bool Shortcut::toggle(Locations loc)
 
 bool Shortcut::add(Locations loc)
 {
+  debug()
+    << "adding shortcut to " << toString(loc) << ":\n"
+    << "  . name: '" << m_name << "'\n"
+    << "  . target: '" << m_target << "'\n"
+    << "  . arguments: '" << m_arguments << "'\n"
+    << "  . description: '" << m_description << "'\n"
+    << "  . icon: '" << m_icon << "' @ " << m_iconIndex << "\n"
+    << "  . working directory: '" << m_workingDirectory << "'";
+
+  if (m_target.isEmpty()) {
+    critical() << "target is empty";
+    return false;
+  }
+
   const auto path = shortcutPath(loc);
   if (path.isEmpty()) {
     return false;
   }
 
-  if (m_target.isEmpty()) {
-    qCritical() << "system shortcut: target is empty";
-    return false;
-  }
+  debug() << "shorcut file will be saved at '" << path << "'";
 
   try
   {
@@ -539,8 +558,9 @@ bool Shortcut::add(Locations loc)
 
     return true;
   }
-  catch(ShellLinkException&)
+  catch(ShellLinkException& e)
   {
+    critical() << e.what() << "\nshortcut file was not saved";
   }
 
   return false;
@@ -548,21 +568,26 @@ bool Shortcut::add(Locations loc)
 
 bool Shortcut::remove(Locations loc)
 {
+  debug() << "removing shortcut for '" << m_name << "' from " << toString(loc);
+
   const auto path = shortcutPath(loc);
   if (path.isEmpty()) {
     return false;
   }
 
-  if (!QFile::exists(path)) {
-    qCritical().nospace().noquote()
-      << "system shortcut: can't remove '" << path << "', file not found";
+  debug() << "path to shortcut file is '" << path << "'";
 
+  if (!QFile::exists(path)) {
+    critical() << "can't remove '" << path << "', file not found";
     return false;
   }
 
-  if (!QFile::remove(path)) {
-    qCritical().nospace().noquote()
-      << "system shortcut: failed to remove '" << path << "'";
+  if (!MOBase::shellDelete({path})) {
+    const auto e = ::GetLastError();
+
+    critical()
+      << "failed to remove '" << path << "', "
+      << formatSystemMessageQ(e);
 
     return false;
   }
@@ -603,13 +628,12 @@ QString Shortcut::shortcutDirectory(Locations loc) const
 
       case None:
       default:
-        qCritical() << "system shortcut: bad location " << loc;
-        return {};
+        critical() << "bad location " << loc;
+        break;
     }
   }
   catch(std::exception&)
   {
-    return {};
   }
 
   return QDir::toNativeSeparators(dir);
@@ -618,11 +642,40 @@ QString Shortcut::shortcutDirectory(Locations loc) const
 QString Shortcut::shortcutFilename() const
 {
   if (m_name.isEmpty()) {
-    qCritical() << "system shortcut: name is empty";
+    critical() << "name is empty";
     return {};
   }
 
   return m_name + ".lnk";
+}
+
+QDebug Shortcut::debug() const
+{
+  return qDebug().noquote().nospace() << "system shortcut: ";
+}
+
+QDebug Shortcut::critical() const
+{
+  return qCritical().noquote().nospace() << "system shortcut: ";
+}
+
+
+QString toString(Shortcut::Locations loc)
+{
+  switch (loc)
+  {
+    case Shortcut::None:
+      return "none";
+
+    case Shortcut::Desktop:
+      return "desktop";
+
+    case Shortcut::StartMenu:
+      return "start menu";
+
+    default:
+      return QString("? (%1)").arg(static_cast<int>(loc));
+  }
 }
 
 
