@@ -1733,7 +1733,7 @@ p, li { white-space: pre-wrap; }
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>St&amp;atus bar</string>
+    <string>Status &amp;bar</string>
    </property>
   </action>
  </widget>
