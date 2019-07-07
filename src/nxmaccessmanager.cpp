@@ -40,16 +40,20 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QJsonArray>
 
 using namespace MOBase;
+using namespace std::chrono_literals;
 
 const QString NexusBaseUrl("https://api.nexusmods.com/v1");
-const std::chrono::seconds ValidationTimeout(10);
+const auto ValidationTimeout = 10s;
 
 
-ValidationProgressDialog::ValidationProgressDialog()
-  : m_dialogHolder(new QDialog), m_dialog(nullptr), m_bar(nullptr)
+ValidationProgressDialog::ValidationProgressDialog(std::chrono::seconds t)
+  : m_timeout(t), m_dialog(nullptr), m_bar(nullptr), m_timer(nullptr)
 {
+  m_dialogHolder.reset(new QDialog);
   m_dialog = m_dialogHolder.get();
+
   m_bar = new QProgressBar;
+  m_bar->setTextVisible(false);
 
   auto* label = new QLabel(tr("Validating Nexus Connection"));
   label->setAlignment(Qt::AlignHCenter);
@@ -76,13 +80,24 @@ void ValidationProgressDialog::setParentWidget(QWidget* w)
   m_dialog->setVisible(wasVisible);
 }
 
-void ValidationProgressDialog::show()
+void ValidationProgressDialog::start()
 {
+  if (!m_timer) {
+    m_timer = new QTimer(m_dialog);
+    connect(m_timer, &QTimer::timeout, [&]{ onTimer(); });
+    m_timer->setInterval(100ms);
+  }
+
+  m_bar->setRange(0, m_timeout.count());
+  m_elapsed.start();
+  m_timer->start();
+
   m_dialog->show();
 }
 
-void ValidationProgressDialog::hide()
+void ValidationProgressDialog::stop()
 {
+  m_timer->stop();
   m_dialog->hide();
 }
 
@@ -90,10 +105,16 @@ void ValidationProgressDialog::onButton(QAbstractButton* b)
 {
 }
 
+void ValidationProgressDialog::onTimer()
+{
+  m_bar->setValue(m_elapsed.elapsed() / 1000);
+}
+
 
 NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
   : QNetworkAccessManager(parent)
   , m_ValidateReply(nullptr)
+  , m_ProgressDialog(ValidationTimeout)
   , m_MOVersion(moVersion)
 {
   m_ValidateTimeout.setSingleShot(true);
@@ -176,7 +197,7 @@ void NXMAccessManager::startValidationCheck()
   request.setRawHeader("Application-Name", "MO2");
   request.setRawHeader("Application-Version", m_MOVersion.toUtf8());
 
-  m_ProgressDialog.show();
+  m_ProgressDialog.start();
 
   QCoreApplication::processEvents(); // for some reason the whole app hangs during the login. This way the user has at least a little feedback
 
@@ -191,14 +212,14 @@ void NXMAccessManager::startValidationCheck()
 bool NXMAccessManager::validated() const
 {
   if (m_ValidateState == VALIDATE_CHECKING) {
-    m_ProgressDialog.show();
+    m_ProgressDialog.start();
 
     while (m_ValidateState == VALIDATE_CHECKING) {
       QCoreApplication::processEvents();
       QThread::msleep(100);
     }
 
-    m_ProgressDialog.hide();
+    m_ProgressDialog.stop();
   }
 
   return m_ValidateState == VALIDATE_VALID;
@@ -277,7 +298,7 @@ void NXMAccessManager::clearApiKey()
 void NXMAccessManager::validateTimeout()
 {
   m_ValidateTimeout.stop();
-  m_ProgressDialog.hide();
+  m_ProgressDialog.stop();
 
   m_ApiKey.clear();
   m_ValidateState = VALIDATE_NOT_VALID;
@@ -294,7 +315,7 @@ void NXMAccessManager::validateTimeout()
 void NXMAccessManager::validateError(QNetworkReply::NetworkError)
 {
   m_ValidateTimeout.stop();
-  m_ProgressDialog.hide();
+  m_ProgressDialog.stop();
 
   m_ApiKey.clear();
   m_ValidateState = VALIDATE_NOT_VALID;
@@ -314,7 +335,7 @@ void NXMAccessManager::validateError(QNetworkReply::NetworkError)
 void NXMAccessManager::validateFinished()
 {
   m_ValidateTimeout.stop();
-  m_ProgressDialog.hide();
+  m_ProgressDialog.stop();
 
   if (m_ValidateReply != nullptr) {
     QJsonDocument jdoc = QJsonDocument::fromJson(m_ValidateReply->readAll());
