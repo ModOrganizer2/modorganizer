@@ -41,6 +41,8 @@ public:
 
   ~NXMAccessManager();
 
+  void setTopLevelWidget(QWidget* w);
+
   bool validated() const;
 
   bool validateAttempted() const;
@@ -94,9 +96,10 @@ protected:
       QIODevice *device);
 
 private:
+  QWidget* m_TopLevel;
   QTimer m_ValidateTimeout;
   QNetworkReply *m_ValidateReply;
-  QProgressDialog *m_ProgressDialog { nullptr };
+  mutable QProgressDialog* m_ProgressDialog;
 
   QString m_MOVersion;
 

@@ -697,6 +697,9 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       // set up main window and its data structures
       MainWindow mainWindow(settings, organizer, pluginContainer);
 
+      NexusInterface::instance(&pluginContainer)
+        ->getAccessManager()->setTopLevelWidget(&mainWindow);
+
       QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), &application,
                        SLOT(setStyleFile(QString)));
       QObject::connect(&instance, SIGNAL(messageSent(QString)), &organizer,

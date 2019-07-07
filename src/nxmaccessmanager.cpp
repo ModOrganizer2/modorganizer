@@ -47,7 +47,9 @@ namespace {
 
 NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
   : QNetworkAccessManager(parent)
+  , m_TopLevel(nullptr)
   , m_ValidateReply(nullptr)
+  , m_ProgressDialog(nullptr)
   , m_MOVersion(moVersion)
 {
   m_ValidateTimeout.setSingleShot(true);
@@ -67,6 +69,20 @@ NXMAccessManager::~NXMAccessManager()
   if (m_ValidateReply != nullptr) {
     m_ValidateReply->deleteLater();
     m_ValidateReply = nullptr;
+  }
+}
+
+void NXMAccessManager::setTopLevelWidget(QWidget* w)
+{
+  m_TopLevel = w;
+
+  if (m_ProgressDialog) {
+    const auto wasVisible = m_ProgressDialog->isVisible();
+
+    m_ProgressDialog->hide();
+    m_ProgressDialog->setParent(w, m_ProgressDialog->windowFlags() | Qt::Dialog);
+    m_ProgressDialog->setModal(false);
+    m_ProgressDialog->setVisible(wasVisible);
   }
 }
 
@@ -124,7 +140,11 @@ void NXMAccessManager::startValidationCheck()
   request.setRawHeader("Application-Name", "MO2");
   request.setRawHeader("Application-Version", m_MOVersion.toUtf8());
 
-  m_ProgressDialog = new QProgressDialog(nullptr);
+  if (!m_ProgressDialog) {
+    m_ProgressDialog = new QProgressDialog(m_TopLevel);
+    m_ProgressDialog->setModal(false);
+  }
+
   m_ProgressDialog->setLabelText(tr("Validating Nexus Connection"));
   QList<QPushButton*> buttons = m_ProgressDialog->findChildren<QPushButton*>();
   buttons.at(0)->setEnabled(false);
@@ -142,16 +162,23 @@ void NXMAccessManager::startValidationCheck()
 bool NXMAccessManager::validated() const
 {
   if (m_ValidateState == VALIDATE_CHECKING) {
-    QProgressDialog progress;
-    progress.setLabelText(tr("Validating Nexus Connection"));
+    if (!m_ProgressDialog) {
+      m_ProgressDialog = new QProgressDialog(m_TopLevel);
+      m_ProgressDialog->setModal(false);
+    }
+
+    m_ProgressDialog->setLabelText(tr("Validating Nexus Connection"));
     QList<QPushButton*> buttons = m_ProgressDialog->findChildren<QPushButton*>();
     buttons.at(0)->setEnabled(false);
-    progress.show();
+    m_ProgressDialog->show();
     while (m_ValidateState == VALIDATE_CHECKING) {
       QCoreApplication::processEvents();
       QThread::msleep(100);
     }
-    progress.hide();
+
+    m_ProgressDialog->hide();
+    m_ProgressDialog->deleteLater();
+    m_ProgressDialog = nullptr;
   }
 
   return m_ValidateState == VALIDATE_VALID;
