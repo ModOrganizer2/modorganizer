@@ -23,7 +23,7 @@ StatusBar::StatusBar(QStatusBar* bar, Ui::MainWindow* ui) :
   m_bar->addPermanentWidget(m_notifications);
   m_bar->addPermanentWidget(m_update);
   m_bar->addPermanentWidget(m_api);
-  
+
 
   m_progress->setTextVisible(true);
   m_progress->setRange(0, 100);
@@ -72,8 +72,8 @@ void StatusBar::setAPI(const APIStats& stats, const APIUserAccount& user)
 
   if (user.type() == APIUserAccountTypes::None) {
     text = "API: not logged in";
-    textColor = "initial";
-    backgroundColor = "transparent";
+    textColor = "";
+    backgroundColor = "";
   } else {
     text = QString("API: Queued: %1 | Daily: %2 | Hourly: %3")
       .arg(stats.requestsQueued)
@@ -94,20 +94,25 @@ void StatusBar::setAPI(const APIStats& stats, const APIUserAccount& user)
 
   m_api->setText(text);
 
-  m_api->setStyleSheet(QString(R"(
+  QString ss(R"(
     QLabel
     {
       padding-left: 0.1em;
       padding-right: 0.1em;
       padding-top: 0;
-      padding-bottom: 0;
-      color: %1;
-      background-color: %2;
-    }
-    )")
-    .arg(textColor)
-    .arg(backgroundColor));
+      padding-bottom: 0;)");
 
+  if (!textColor.isEmpty()) {
+    ss += QString("\ncolor: %1;").arg(textColor);
+  }
+
+  if (!backgroundColor.isEmpty()) {
+    ss += QString("\nbackground-color: %2;").arg(backgroundColor);
+  }
+
+  ss += "\n}";
+
+  m_api->setStyleSheet(ss);
   m_api->setAutoFillBackground(true);
 }
 
