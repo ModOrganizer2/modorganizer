@@ -399,7 +399,6 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(requestNXMDownload(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(QString,int,int,QVariant,QVariant,int)));
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusApi()));
-  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(validateFailed(QString)), this, SLOT(validationFailed(QString)));
 
   connect(
     NexusInterface::instance(&pluginContainer)->getAccessManager(),
@@ -3093,11 +3092,6 @@ void MainWindow::untrack_clicked()
       ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->track(false);
     }
   });
-}
-
-void MainWindow::validationFailed(const QString &error)
-{
-  qDebug("Nexus API validation failed: %s", qUtf8Printable(error));
 }
 
 void MainWindow::windowTutorialFinished(const QString &windowName)

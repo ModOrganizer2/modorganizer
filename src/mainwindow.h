@@ -510,8 +510,6 @@ private slots:
   // nexus related
   void checkModsForUpdates();
 
-  void validationFailed(const QString &message);
-
   void linkClicked(const QString &url);
 
   void updateAvailable();
