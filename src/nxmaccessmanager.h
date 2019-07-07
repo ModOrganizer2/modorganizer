@@ -26,11 +26,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QNetworkReply>
 #include <QProgressDialog>
 #include <QElapsedTimer>
+#include <QDialogButtonBox>
 #include <set>
 
 namespace MOBase { class IPluginGame; }
 
-class ValidationProgressDialog : QObject
+class ValidationProgressDialog : private QDialog
 {
   Q_OBJECT;
 
@@ -38,14 +39,19 @@ public:
   ValidationProgressDialog(std::chrono::seconds timeout);
 
   void setParentWidget(QWidget* w);
+
   void start();
   void stop();
 
+  using QDialog::show;
+
+protected:
+  void closeEvent(QCloseEvent* e) override;
+
 private:
   std::chrono::seconds m_timeout;
-  std::unique_ptr<QDialog> m_dialogHolder;
-  QDialog* m_dialog;
   QProgressBar* m_bar;
+  QDialogButtonBox* m_buttons;
   QTimer* m_timer;
   QElapsedTimer m_elapsed;
 

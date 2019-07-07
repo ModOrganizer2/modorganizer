@@ -46,63 +46,72 @@ const QString NexusBaseUrl("https://api.nexusmods.com/v1");
 const auto ValidationTimeout = 10s;
 
 
-ValidationProgressDialog::ValidationProgressDialog(std::chrono::seconds t)
-  : m_timeout(t), m_dialog(nullptr), m_bar(nullptr), m_timer(nullptr)
+ValidationProgressDialog::ValidationProgressDialog(std::chrono::seconds t) :
+  m_timeout(t), m_bar(nullptr), m_buttons(nullptr),
+  m_timer(nullptr)
 {
-  m_dialogHolder.reset(new QDialog);
-  m_dialog = m_dialogHolder.get();
-
   m_bar = new QProgressBar;
   m_bar->setTextVisible(false);
 
   auto* label = new QLabel(tr("Validating Nexus Connection"));
   label->setAlignment(Qt::AlignHCenter);
 
-  auto* vbox = new QVBoxLayout(m_dialog);
+  auto* vbox = new QVBoxLayout(this);
   vbox->addWidget(label);
   vbox->addWidget(m_bar);
 
-  auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel);
-  connect(buttons, &QDialogButtonBox::clicked, [&](auto* b){ onButton(b); });
-  vbox->addWidget(buttons);
+  m_buttons = new QDialogButtonBox;
+  m_buttons->addButton(tr("Hide"), QDialogButtonBox::RejectRole);
+  connect(m_buttons, &QDialogButtonBox::clicked, [&](auto* b){ onButton(b); });
+  vbox->addWidget(m_buttons);
 }
 
 void ValidationProgressDialog::setParentWidget(QWidget* w)
 {
-  // will be deleted by the parent
-  m_dialogHolder.release();
+  const auto wasVisible = isVisible();
 
-  const auto wasVisible = m_dialog->isVisible();
-
-  m_dialog->hide();
-  m_dialog->setParent(w, m_dialog->windowFlags() | Qt::Dialog);
-  m_dialog->setModal(false);
-  m_dialog->setVisible(wasVisible);
+  hide();
+  setParent(w, windowFlags() | Qt::Dialog);
+  setModal(false);
+  setVisible(wasVisible);
 }
 
 void ValidationProgressDialog::start()
 {
   if (!m_timer) {
-    m_timer = new QTimer(m_dialog);
+    m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, [&]{ onTimer(); });
     m_timer->setInterval(100ms);
   }
 
   m_bar->setRange(0, m_timeout.count());
+  m_bar->setValue(0);
+
   m_elapsed.start();
   m_timer->start();
 
-  m_dialog->show();
+  show();
 }
 
 void ValidationProgressDialog::stop()
 {
   m_timer->stop();
-  m_dialog->hide();
+  hide();
+}
+
+void ValidationProgressDialog::closeEvent(QCloseEvent* e)
+{
+  hide();
+  e->ignore();
 }
 
 void ValidationProgressDialog::onButton(QAbstractButton* b)
 {
+  if (m_buttons->buttonRole(b) == QDialogButtonBox::RejectRole) {
+    hide();
+  } else {
+    qCritical() << "validation dialog: unknown button pressed";
+  }
 }
 
 void ValidationProgressDialog::onTimer()
@@ -212,14 +221,7 @@ void NXMAccessManager::startValidationCheck()
 bool NXMAccessManager::validated() const
 {
   if (m_ValidateState == VALIDATE_CHECKING) {
-    m_ProgressDialog.start();
-
-    while (m_ValidateState == VALIDATE_CHECKING) {
-      QCoreApplication::processEvents();
-      QThread::msleep(100);
-    }
-
-    m_ProgressDialog.stop();
+    m_ProgressDialog.show();
   }
 
   return m_ValidateState == VALIDATE_VALID;
