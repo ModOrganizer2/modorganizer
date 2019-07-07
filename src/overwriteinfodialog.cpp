@@ -290,5 +290,6 @@ void OverwriteInfoDialog::on_filesView_customContextMenuRequested(const QPoint &
     m_FileSelection.clear();
     m_FileSelection.append(m_FileSystemModel->index(m_FileSystemModel->rootPath(), 0));
   }
-  menu.exec(ui->filesView->mapToGlobal(pos));
+
+  menu.exec(ui->filesView->viewport()->mapToGlobal(pos));
 }
