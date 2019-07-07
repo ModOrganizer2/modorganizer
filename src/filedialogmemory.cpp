@@ -66,7 +66,7 @@ QString FileDialogMemory::getOpenFileName(
   if (currentDir.isEmpty()) {
     auto itor = instance().m_Cache.find(dirID);
     if (itor != instance().m_Cache.end()) {
-      currentDir = itor->first;
+      currentDir = itor->second;
     }
   }
 
@@ -90,7 +90,7 @@ QString FileDialogMemory::getExistingDirectory(
   if (currentDir.isEmpty()) {
     auto itor = instance().m_Cache.find(dirID);
     if (itor != instance().m_Cache.end()) {
-      currentDir = itor->first;
+      currentDir = itor->second;
     }
   }
 
