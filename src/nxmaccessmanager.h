@@ -29,6 +29,26 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace MOBase { class IPluginGame; }
 
+class ValidationProgressDialog : QObject
+{
+  Q_OBJECT;
+
+public:
+  ValidationProgressDialog();
+
+  void setParentWidget(QWidget* w);
+  void show();
+  void hide();
+
+private:
+  std::unique_ptr<QDialog> m_dialogHolder;
+  QDialog* m_dialog;
+  QProgressBar* m_bar;
+
+  void onButton(QAbstractButton* b);
+};
+
+
 /**
  * @brief access manager extended to handle nxm links
  **/
@@ -99,7 +119,7 @@ private:
   QWidget* m_TopLevel;
   QTimer m_ValidateTimeout;
   QNetworkReply *m_ValidateReply;
-  mutable QProgressDialog* m_ProgressDialog;
+  mutable ValidationProgressDialog m_ProgressDialog;
 
   QString m_MOVersion;
 

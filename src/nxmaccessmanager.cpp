@@ -41,19 +41,64 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-namespace {
-  QString const nexusBaseUrl("https://api.nexusmods.com/v1");
+const QString NexusBaseUrl("https://api.nexusmods.com/v1");
+const std::chrono::seconds ValidationTimeout(10);
+
+
+ValidationProgressDialog::ValidationProgressDialog()
+  : m_dialogHolder(new QDialog), m_dialog(nullptr), m_bar(nullptr)
+{
+  m_dialog = m_dialogHolder.get();
+  m_bar = new QProgressBar;
+
+  auto* label = new QLabel(tr("Validating Nexus Connection"));
+  label->setAlignment(Qt::AlignHCenter);
+
+  auto* vbox = new QVBoxLayout(m_dialog);
+  vbox->addWidget(label);
+  vbox->addWidget(m_bar);
+
+  auto* buttons = new QDialogButtonBox(QDialogButtonBox::Cancel);
+  connect(buttons, &QDialogButtonBox::clicked, [&](auto* b){ onButton(b); });
+  vbox->addWidget(buttons);
 }
+
+void ValidationProgressDialog::setParentWidget(QWidget* w)
+{
+  // will be deleted by the parent
+  m_dialogHolder.release();
+
+  const auto wasVisible = m_dialog->isVisible();
+
+  m_dialog->hide();
+  m_dialog->setParent(w, m_dialog->windowFlags() | Qt::Dialog);
+  m_dialog->setModal(false);
+  m_dialog->setVisible(wasVisible);
+}
+
+void ValidationProgressDialog::show()
+{
+  m_dialog->show();
+}
+
+void ValidationProgressDialog::hide()
+{
+  m_dialog->hide();
+}
+
+void ValidationProgressDialog::onButton(QAbstractButton* b)
+{
+}
+
 
 NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
   : QNetworkAccessManager(parent)
-  , m_TopLevel(nullptr)
   , m_ValidateReply(nullptr)
-  , m_ProgressDialog(nullptr)
   , m_MOVersion(moVersion)
 {
   m_ValidateTimeout.setSingleShot(true);
-  m_ValidateTimeout.setInterval(30000);
+  m_ValidateTimeout.setInterval(ValidationTimeout);
+
   connect(&m_ValidateTimeout, SIGNAL(timeout()), this, SLOT(validateTimeout()));
   setCookieJar(new PersistentCookieJar(
       QDir::fromNativeSeparators(Settings::instance().getCacheDirectory() + "/nexus_cookies.dat")));
@@ -74,16 +119,7 @@ NXMAccessManager::~NXMAccessManager()
 
 void NXMAccessManager::setTopLevelWidget(QWidget* w)
 {
-  m_TopLevel = w;
-
-  if (m_ProgressDialog) {
-    const auto wasVisible = m_ProgressDialog->isVisible();
-
-    m_ProgressDialog->hide();
-    m_ProgressDialog->setParent(w, m_ProgressDialog->windowFlags() | Qt::Dialog);
-    m_ProgressDialog->setModal(false);
-    m_ProgressDialog->setVisible(wasVisible);
-  }
+  m_ProgressDialog.setParentWidget(w);
 }
 
 QNetworkReply *NXMAccessManager::createRequest(
@@ -109,7 +145,7 @@ QNetworkReply *NXMAccessManager::createRequest(
 
 void NXMAccessManager::showCookies() const
 {
-  QUrl url(nexusBaseUrl + "/");
+  QUrl url(NexusBaseUrl + "/");
   for (const QNetworkCookie &cookie : cookieJar()->cookiesForUrl(url)) {
     qDebug("%s - %s (expires: %s)",
            cookie.name().constData(), cookie.value().constData(),
@@ -130,7 +166,7 @@ void NXMAccessManager::clearCookies()
 void NXMAccessManager::startValidationCheck()
 {
   qDebug("Checking Nexus API Key...");
-  QString requestString = nexusBaseUrl + "/users/validate";
+  QString requestString = NexusBaseUrl + "/users/validate";
 
   QNetworkRequest request(requestString);
   request.setRawHeader("APIKEY", m_ApiKey.toUtf8());
@@ -140,15 +176,8 @@ void NXMAccessManager::startValidationCheck()
   request.setRawHeader("Application-Name", "MO2");
   request.setRawHeader("Application-Version", m_MOVersion.toUtf8());
 
-  if (!m_ProgressDialog) {
-    m_ProgressDialog = new QProgressDialog(m_TopLevel);
-    m_ProgressDialog->setModal(false);
-  }
+  m_ProgressDialog.show();
 
-  m_ProgressDialog->setLabelText(tr("Validating Nexus Connection"));
-  QList<QPushButton*> buttons = m_ProgressDialog->findChildren<QPushButton*>();
-  buttons.at(0)->setEnabled(false);
-  m_ProgressDialog->show();
   QCoreApplication::processEvents(); // for some reason the whole app hangs during the login. This way the user has at least a little feedback
 
   m_ValidateReply = get(request);
@@ -162,23 +191,14 @@ void NXMAccessManager::startValidationCheck()
 bool NXMAccessManager::validated() const
 {
   if (m_ValidateState == VALIDATE_CHECKING) {
-    if (!m_ProgressDialog) {
-      m_ProgressDialog = new QProgressDialog(m_TopLevel);
-      m_ProgressDialog->setModal(false);
-    }
+    m_ProgressDialog.show();
 
-    m_ProgressDialog->setLabelText(tr("Validating Nexus Connection"));
-    QList<QPushButton*> buttons = m_ProgressDialog->findChildren<QPushButton*>();
-    buttons.at(0)->setEnabled(false);
-    m_ProgressDialog->show();
     while (m_ValidateState == VALIDATE_CHECKING) {
       QCoreApplication::processEvents();
       QThread::msleep(100);
     }
 
-    m_ProgressDialog->hide();
-    m_ProgressDialog->deleteLater();
-    m_ProgressDialog = nullptr;
+    m_ProgressDialog.hide();
   }
 
   return m_ValidateState == VALIDATE_VALID;
@@ -257,11 +277,8 @@ void NXMAccessManager::clearApiKey()
 void NXMAccessManager::validateTimeout()
 {
   m_ValidateTimeout.stop();
-  if (m_ProgressDialog != nullptr) {
-    m_ProgressDialog->hide();
-    m_ProgressDialog->deleteLater();
-    m_ProgressDialog = nullptr;
-  }
+  m_ProgressDialog.hide();
+
   m_ApiKey.clear();
   m_ValidateState = VALIDATE_NOT_VALID;
 
@@ -277,11 +294,8 @@ void NXMAccessManager::validateTimeout()
 void NXMAccessManager::validateError(QNetworkReply::NetworkError)
 {
   m_ValidateTimeout.stop();
-  if (m_ProgressDialog != nullptr) {
-    m_ProgressDialog->hide();
-    m_ProgressDialog->deleteLater();
-    m_ProgressDialog = nullptr;
-  }
+  m_ProgressDialog.hide();
+
   m_ApiKey.clear();
   m_ValidateState = VALIDATE_NOT_VALID;
 
@@ -300,10 +314,7 @@ void NXMAccessManager::validateError(QNetworkReply::NetworkError)
 void NXMAccessManager::validateFinished()
 {
   m_ValidateTimeout.stop();
-  if (m_ProgressDialog != nullptr) {
-    m_ProgressDialog->deleteLater();
-    m_ProgressDialog = nullptr;
-  }
+  m_ProgressDialog.hide();
 
   if (m_ValidateReply != nullptr) {
     QJsonDocument jdoc = QJsonDocument::fromJson(m_ValidateReply->readAll());
