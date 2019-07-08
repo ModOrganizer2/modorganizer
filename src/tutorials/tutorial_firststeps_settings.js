@@ -16,10 +16,10 @@ function getTutorialSteps()
 
         function() {
             highlightItem("nexusBox", false)
-            tutorial.text = qsTr("Use this interface to obtain an API key from NexusMods."
-                                +"This is used for all API connections - downloads, updates"
-                                +"etc. MO2 uses the Windows Credential Manager to store"
-                                +"this data securely. If the SSO page on Nexus is failing,"
+            tutorial.text = qsTr("Use this interface to obtain an API key from NexusMods. "
+                                +"This is used for all API connections - downloads, updates "
+                                +"etc. MO2 uses the Windows Credential Manager to store "
+                                +"this data securely. If the SSO page on Nexus is failing, "
                                 +"use the manual entry and copy the API key from your profile.")
             waitForClick()
         }
