@@ -79,6 +79,14 @@ QString SelectionDialog::getChoiceString()
   }
 }
 
+QString SelectionDialog::getChoiceDescription()
+{
+  if (m_Choice == nullptr)
+    return QString();
+  else
+    return m_Choice->accessibleDescription();
+}
+
 void SelectionDialog::disableCancel()
 {
   ui->cancelButton->setEnabled(false);

@@ -52,6 +52,7 @@ public:
 
   QVariant getChoiceData();
   QString getChoiceString();
+  QString getChoiceDescription();
 
   void disableCancel();
 

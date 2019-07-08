@@ -183,6 +183,7 @@ public:
   void loginFailedUpdate(const QString &message);
 
   static bool createAndMakeWritable(const QString &path);
+  bool checkPathSymlinks();
   bool bootstrap();
   void createDefaultProfile();
 

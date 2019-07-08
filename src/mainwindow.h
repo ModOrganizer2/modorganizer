@@ -403,17 +403,13 @@ private:
 
   MOBase::DelayedFileWriter m_ArchiveListWriter;
 
+  QAction* m_LinkToolbar;
+  QAction* m_LinkDesktop;
+  QAction* m_LinkStartMenu;
+
   // icon set by the stylesheet, used to remember its original appearance
   // when painting the count
   QIcon m_originalNotificationIcon;
-
-  enum class ShortcutType {
-    Toolbar,
-    Desktop,
-    StartMenu
-  };
-
-  void addWindowsLink(ShortcutType const);
 
   Executable const &getSelectedExecutable() const;
   Executable &getSelectedExecutable();
