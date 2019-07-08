@@ -691,12 +691,27 @@ bool OrganizerCore::createDirectory(const QString &path) {
   }
 }
 
+bool OrganizerCore::checkPathSymlinks() {
+  bool hasSymlink = (QFileInfo(m_Settings.getProfileDirectory()).isSymLink() ||
+    QFileInfo(m_Settings.getModDirectory()).isSymLink() ||
+    QFileInfo(m_Settings.getOverwriteDirectory()).isSymLink());
+  if (hasSymlink) {
+    QMessageBox::critical(nullptr, QObject::tr("Error"),
+      QObject::tr("One of the configured MO2 directories (profiles, mods, or overwrite) "
+        "is on a path containing a symbolic (or other) link. This is incompatible "
+        "with MO2's VFS system."));
+    return false;
+  }
+  return true;
+}
+
 bool OrganizerCore::bootstrap() {
   return createDirectory(m_Settings.getProfileDirectory()) &&
          createDirectory(m_Settings.getModDirectory()) &&
          createDirectory(m_Settings.getDownloadDirectory()) &&
          createDirectory(m_Settings.getOverwriteDirectory()) &&
-         createDirectory(QString::fromStdWString(crashDumpsPath())) && cycleDiagnostics();
+         createDirectory(QString::fromStdWString(crashDumpsPath())) &&
+         checkPathSymlinks() && cycleDiagnostics();
 }
 
 void OrganizerCore::createDefaultProfile()

@@ -303,6 +303,11 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
       gamePath = game->gameDirectory().absolutePath();
     }
     QDir gameDir(gamePath);
+    QFileInfo directoryInfo(gameDir.path());
+    if (directoryInfo.isSymLink()) {
+      reportError(QObject::tr("The configured path to the game directory (%1) appears to be a symbolic (or other) link. "
+        "This setup is incompatible with MO2's VFS and will not run correctly.").arg(gamePath));
+    }
     if (game->looksValid(gameDir)) {
       return selectGame(settings, gameDir, game);
     }
@@ -335,15 +340,26 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
 
   while (selection.exec() != QDialog::Rejected) {
     IPluginGame * game = selection.getChoiceData().value<IPluginGame *>();
+    QString gamePath = selection.getChoiceDescription();
+    QFileInfo directoryInfo(gamePath);
+    if (directoryInfo.isSymLink()) {
+      reportError(QObject::tr("The configured path to the game directory (%1) appears to be a symbolic (or other) link. "
+        "This setup is incompatible with MO2's VFS and will not run correctly.").arg(gamePath));
+    }
     if (game != nullptr) {
       return selectGame(settings, game->gameDirectory(), game);
     }
 
-    QString gamePath = QFileDialog::getExistingDirectory(nullptr, gameConfigured ? QObject::tr("Please select the installation of %1 to manage").arg(gameName)
+    gamePath = QFileDialog::getExistingDirectory(nullptr, gameConfigured ? QObject::tr("Please select the installation of %1 to manage").arg(gameName)
                                                                                  : QObject::tr("Please select the game to manage"),
                                                          QString(), QFileDialog::ShowDirsOnly);
     if (!gamePath.isEmpty()) {
       QDir gameDir(gamePath);
+      QFileInfo directoryInfo(gamePath);
+      if (directoryInfo.isSymLink()) {
+        reportError(QObject::tr("The configured path to the game directory (%1) appears to be a symbolic (or other) link. "
+          "This setup is incompatible with MO2's VFS and will not run correctly.").arg(gamePath));
+      }
       QList<IPluginGame *> possibleGames;
       for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
         //If a game is already configured, skip any plugins that are not for that game
