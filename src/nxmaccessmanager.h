@@ -130,7 +130,7 @@ private:
   QWidget* m_TopLevel;
   QTimer m_ValidateTimeout;
   QNetworkReply *m_ValidateReply;
-  mutable ValidationProgressDialog m_ProgressDialog;
+  mutable ValidationProgressDialog* m_ProgressDialog;
 
   QString m_MOVersion;
 
