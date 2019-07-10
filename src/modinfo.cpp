@@ -323,7 +323,7 @@ bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
       updatesAvailable = false;
     } else {
       qInfo() << tr(
-        "You have mods that haven't been checked within 30 days using the new API. These mods must be checked before we can use the bulk update API. "
+        "You have mods that haven't been checked within the last month using the new API. These mods must be checked before we can use the bulk update API. "
         "This will consume significantly more API requests than usual. You will need to rerun the update check once complete in order to parse the remaining mods."
       );
     }
