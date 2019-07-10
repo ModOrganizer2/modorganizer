@@ -210,6 +210,14 @@ void NexusTab::onModChanged()
       max-width: 1060px;
       margin-left: auto;
       margin-right: auto;
+      padding-right: 7px;
+      padding-left: 7px;
+      padding-top: 20px;
+      padding-bottom: 20px;
+    }
+    
+    img {
+      max-width: 100%;
     }
 
     a
