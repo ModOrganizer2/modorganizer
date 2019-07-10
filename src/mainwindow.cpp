@@ -2563,8 +2563,14 @@ void MainWindow::directory_refreshed()
 {
   // some problem-reports may rely on the virtual directory tree so they need to be updated
   // now
-  refreshDataTreeKeepExpandedNodes();
   updateProblemsButton();
+
+
+  //Some better check for the current tab is needed.
+  if (ui->tabWidget->currentIndex() == 2) {
+      refreshDataTreeKeepExpandedNodes();
+  }
+ 
 }
 
 void MainWindow::esplist_changed()
