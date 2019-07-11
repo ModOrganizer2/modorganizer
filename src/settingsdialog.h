@@ -35,6 +35,52 @@ namespace Ui {
     class SettingsDialog;
 }
 
+class NexusSSOLogin
+{
+public:
+  enum States
+  {
+    Idle,
+    ConnectingToSSO,
+    WaitingForToken,
+    WaitingForBrowser,
+    Finished,
+    Timeout,
+    ClosedByRemote,
+    Cancelled,
+    Error
+  };
+
+  std::function<void (QString)> keyChanged;
+  std::function<void (States, QString)> stateChanged;
+
+  NexusSSOLogin();
+
+  void start();
+  void cancel();
+
+  bool isActive() const;
+
+private:
+  QWebSocket m_socket;
+  QString m_guid;
+  bool m_keyReceived;
+  QString m_token;
+  bool m_active;
+  QTimer m_timeout;
+
+  void setState(States s, const QString& error={});
+
+  void close();
+  void abort();
+
+  void onConnected();
+  void onMessage(const QString& s);
+  void onDisconnected();
+  void onError(QAbstractSocket::SocketError e);
+  void onTimeout();
+};
+
 /**
  * dialog used to change settings for Mod Organizer. On top of the
  * settings managed by the "Settings" class, this offers a button to open the
@@ -127,11 +173,6 @@ private slots:
   void on_resetGeometryBtn_clicked();
 
   void deleteBlacklistItem();
-  void dispatchLogin();
-  void loginPing();
-  void authError(QAbstractSocket::SocketError error);
-  void receiveApiKey(const QString &apiKey);
-  void completeApiConnection();
 
 private:
   Ui::SettingsDialog *ui;
@@ -145,16 +186,11 @@ private:
   QColor m_ContainsColor;
   QColor m_ContainedColor;
 
-  bool m_KeyReceived;
-  bool m_KeyCleared;
   bool m_GeometriesReset;
-  QString m_UUID;
-  QString m_AuthToken;
+  bool m_keyChanged;
 
   QString m_ExecutableBlacklist;
-  QWebSocket *m_nexusLogin;
-  QTimer m_loginTimer;
-  int m_totalPings = 0;
+  NexusSSOLogin m_nexusLogin;
 
   bool setKey(const QString& key);
   bool clearKey();
@@ -162,6 +198,8 @@ private:
 
   void fetchNexusApiKey();
   void testApiKey();
+  void onKeyChanged(const QString& key);
+  void onStateChanged(NexusSSOLogin::States s, const QString& e);
 };
 
 #endif // SETTINGSDIALOG_H

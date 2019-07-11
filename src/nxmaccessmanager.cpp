@@ -43,7 +43,7 @@ using namespace MOBase;
 using namespace std::chrono_literals;
 
 const QString NexusBaseUrl("https://api.nexusmods.com/v1");
-const auto ValidationTimeout = 10s;
+const std::chrono::seconds NXMAccessManager::ValidationTimeout = 10s;
 
 
 ValidationProgressDialog::ValidationProgressDialog(std::chrono::seconds t)

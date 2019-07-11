@@ -67,6 +67,7 @@ class NXMAccessManager : public QNetworkAccessManager
 {
   Q_OBJECT
 public:
+  static const std::chrono::seconds ValidationTimeout;
 
   explicit NXMAccessManager(QObject *parent, const QString &moVersion);
 
