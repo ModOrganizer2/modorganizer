@@ -27,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QProgressDialog>
 #include <QElapsedTimer>
 #include <QDialogButtonBox>
+#include <QWebSocket>
 #include <set>
 
 namespace MOBase { class IPluginGame; }
@@ -60,6 +61,52 @@ private:
 };
 
 
+class NexusSSOLogin
+{
+public:
+  enum States
+  {
+    ConnectingToSSO,
+    WaitingForToken,
+    WaitingForBrowser,
+    Finished,
+    Timeout,
+    ClosedByRemote,
+    Cancelled,
+    Error
+  };
+
+  std::function<void (QString)> keyChanged;
+  std::function<void (States, QString)> stateChanged;
+
+  NexusSSOLogin();
+
+  void start();
+  void cancel();
+
+  bool isActive() const;
+
+private:
+  QWebSocket m_socket;
+  QString m_guid;
+  bool m_keyReceived;
+  QString m_token;
+  bool m_active;
+  QTimer m_timeout;
+
+  void setState(States s, const QString& error={});
+
+  void close();
+  void abort();
+
+  void onConnected();
+  void onMessage(const QString& s);
+  void onDisconnected();
+  void onError(QAbstractSocket::SocketError e);
+  void onTimeout();
+};
+
+
 /**
  * @brief access manager extended to handle nxm links
  **/
@@ -67,6 +114,15 @@ class NXMAccessManager : public QNetworkAccessManager
 {
   Q_OBJECT
 public:
+  enum ApiCheckFlagsEnum
+  {
+    NoFlags = 0,
+    Force,
+    HideProgress
+  };
+
+  Q_DECLARE_FLAGS(ApiCheckFlags, ApiCheckFlagsEnum)
+
   static const std::chrono::seconds ValidationTimeout;
 
   explicit NXMAccessManager(QObject *parent, const QString &moVersion);
@@ -80,7 +136,7 @@ public:
   bool validateAttempted() const;
   bool validateWaiting() const;
 
-  void apiCheck(const QString &apiKey, bool force=false);
+  void apiCheck(const QString &apiKey, ApiCheckFlags flags=NoFlags);
 
   void showCookies() const;
 
@@ -90,8 +146,6 @@ public:
 
   QString apiKey() const;
   void clearApiKey();
-
-  void startValidationCheck();
 
   void refuseValidation();
 
@@ -145,6 +199,10 @@ private:
     VALIDATE_REFUSED,
     VALIDATE_VALID
   } m_ValidateState = VALIDATE_NOT_CHECKED;
+
+  void startValidationCheck(bool showProgress);
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(NXMAccessManager::ApiCheckFlags);
 
 #endif // NXMACCESSMANAGER_H

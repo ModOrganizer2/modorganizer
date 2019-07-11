@@ -21,12 +21,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SETTINGSDIALOG_H
 
 #include "tutorabledialog.h"
+#include "nxmaccessmanager.h"
 #include <iplugin.h>
-#include <QComboBox>
-#include <QDialog>
-#include <QWebSocket>
 #include <QListWidgetItem>
-#include <QTimer>
 
 class PluginContainer;
 class Settings;
@@ -35,51 +32,6 @@ namespace Ui {
     class SettingsDialog;
 }
 
-class NexusSSOLogin
-{
-public:
-  enum States
-  {
-    Idle,
-    ConnectingToSSO,
-    WaitingForToken,
-    WaitingForBrowser,
-    Finished,
-    Timeout,
-    ClosedByRemote,
-    Cancelled,
-    Error
-  };
-
-  std::function<void (QString)> keyChanged;
-  std::function<void (States, QString)> stateChanged;
-
-  NexusSSOLogin();
-
-  void start();
-  void cancel();
-
-  bool isActive() const;
-
-private:
-  QWebSocket m_socket;
-  QString m_guid;
-  bool m_keyReceived;
-  QString m_token;
-  bool m_active;
-  QTimer m_timeout;
-
-  void setState(States s, const QString& error={});
-
-  void close();
-  void abort();
-
-  void onConnected();
-  void onMessage(const QString& s);
-  void onDisconnected();
-  void onError(QAbstractSocket::SocketError e);
-  void onTimeout();
-};
 
 /**
  * dialog used to change settings for Mod Organizer. On top of the
@@ -197,9 +149,9 @@ private:
   void updateNexusButtons();
 
   void fetchNexusApiKey();
-  void testApiKey();
   void onKeyChanged(const QString& key);
   void onStateChanged(NexusSSOLogin::States s, const QString& e);
+  void onManualKeyValidation(bool success, const QString& e);
 };
 
 #endif // SETTINGSDIALOG_H

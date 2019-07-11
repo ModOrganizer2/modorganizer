@@ -44,6 +44,8 @@ using namespace std::chrono_literals;
 
 const QString NexusBaseUrl("https://api.nexusmods.com/v1");
 const std::chrono::seconds NXMAccessManager::ValidationTimeout = 10s;
+const QString NexusSSO("wss://sso.nexusmods.com");
+const QString NexusSSOPage("https://www.nexusmods.com/sso?id=%1&application=modorganizer2");
 
 
 ValidationProgressDialog::ValidationProgressDialog(std::chrono::seconds t)
@@ -94,7 +96,10 @@ void ValidationProgressDialog::start()
 
 void ValidationProgressDialog::stop()
 {
-  m_timer->stop();
+  if (m_timer) {
+    m_timer->stop();
+  }
+
   hide();
 }
 
@@ -116,6 +121,153 @@ void ValidationProgressDialog::onButton(QAbstractButton* b)
 void ValidationProgressDialog::onTimer()
 {
   m_bar->setValue(m_elapsed.elapsed() / 1000);
+}
+
+
+NexusSSOLogin::NexusSSOLogin()
+  : m_keyReceived(false), m_active(false)
+{
+  QObject::connect(
+    &m_socket, &QWebSocket::connected,
+    [&]{ onConnected(); });
+
+  QObject::connect(
+    &m_socket, qOverload<QAbstractSocket::SocketError>(&QWebSocket::error),
+    [&](auto&& e){ onError(e); });
+
+  QObject::connect(
+    &m_socket, &QWebSocket::textMessageReceived,
+    [&](auto&& s){ onMessage(s); });
+
+  QObject::connect(
+    &m_socket, &QWebSocket::disconnected,
+    [&]{ onDisconnected(); });
+
+  QObject::connect(&m_timeout, &QTimer::timeout, [&]{ onTimeout(); });
+}
+
+void NexusSSOLogin::start()
+{
+  m_active = true;
+  setState(ConnectingToSSO);
+  m_timeout.start(NXMAccessManager::ValidationTimeout);
+  m_socket.open(NexusSSO);
+}
+
+void NexusSSOLogin::cancel()
+{
+  abort();
+  setState(Cancelled);
+}
+
+void NexusSSOLogin::close()
+{
+  m_active = false;
+  m_timeout.stop();
+  m_socket.close();
+}
+
+void NexusSSOLogin::abort()
+{
+  m_active = false;
+  m_timeout.stop();
+  m_socket.abort();
+}
+
+bool NexusSSOLogin::isActive() const
+{
+  return m_active;
+}
+
+void NexusSSOLogin::setState(States s, const QString& error)
+{
+  if (stateChanged) {
+    stateChanged(s, error);
+  }
+}
+
+void NexusSSOLogin::onConnected()
+{
+  setState(WaitingForToken);
+
+  m_keyReceived = false;
+
+  //if (m_guid.isEmpty()) {
+  boost::uuids::random_generator generator;
+  boost::uuids::uuid sessionId = generator();
+  m_guid = boost::uuids::to_string(sessionId).c_str();
+  //}
+
+  QJsonObject data;
+  data.insert(QString("id"), QJsonValue(m_guid));
+  //data.insert(QString("token"), QJsonValue(m_token));
+  data.insert(QString("protocol"), 2);
+
+  const QString message = QJsonDocument(data).toJson();
+  m_socket.sendTextMessage(message);
+}
+
+void NexusSSOLogin::onMessage(const QString& s)
+{
+  const QJsonDocument doc = QJsonDocument::fromJson(s.toUtf8());
+  const QVariantMap root = doc.object().toVariantMap();
+
+  if (!root["success"].toBool()) {
+    close();
+
+    setState(Error, QString("There was a problem with SSO initialization: %1")
+      .arg(root["error"].toString()));
+
+    return;
+  }
+
+  const QVariantMap data = root["data"].toMap();
+
+  if (data.contains("connection_token")) {
+    // first answer
+    m_token = data["connection_token"].toString();
+
+    // open browser
+    const auto url = NexusSSOPage.arg(m_guid);
+    shell::OpenLink(url);
+
+    m_timeout.stop();
+    setState(WaitingForBrowser);
+  } else {
+    // second answer
+    const auto key = data["api_key"].toString();
+    close();
+
+    if (keyChanged) {
+      keyChanged(key);
+    }
+
+    setState(Finished);
+  }
+}
+
+void NexusSSOLogin::onDisconnected()
+{
+  if (m_active) {
+    m_active = false;
+
+    if (!m_keyReceived) {
+      setState(ClosedByRemote);
+    }
+  }
+}
+
+void NexusSSOLogin::onError(QAbstractSocket::SocketError e)
+{
+  if (m_active) {
+    setState(Error, m_socket.errorString());
+  }
+}
+
+void NexusSSOLogin::onTimeout()
+{
+  abort();
+  setState(Timeout);
 }
 
 
@@ -192,7 +344,7 @@ void NXMAccessManager::clearCookies()
   }
 }
 
-void NXMAccessManager::startValidationCheck()
+void NXMAccessManager::startValidationCheck(bool showProgress)
 {
   qDebug("Checking Nexus API Key...");
   QString requestString = NexusBaseUrl + "/users/validate";
@@ -205,7 +357,9 @@ void NXMAccessManager::startValidationCheck()
   request.setRawHeader("Application-Name", "MO2");
   request.setRawHeader("Application-Version", m_MOVersion.toUtf8());
 
-  m_ProgressDialog->start();
+  if (showProgress) {
+    m_ProgressDialog->start();
+  }
 
   QCoreApplication::processEvents(); // for some reason the whole app hangs during the login. This way the user has at least a little feedback
 
@@ -245,13 +399,13 @@ bool NXMAccessManager::validateWaiting() const
 }
 
 
-void NXMAccessManager::apiCheck(const QString &apiKey, bool force)
+void NXMAccessManager::apiCheck(const QString &apiKey, ApiCheckFlags flags)
 {
   if (m_ValidateReply != nullptr) {
     return;
   }
 
-  if (force) {
+  if (flags & Force) {
     m_ValidateState = VALIDATE_NOT_CHECKED;
   }
 
@@ -261,7 +415,7 @@ void NXMAccessManager::apiCheck(const QString &apiKey, bool force)
   }
 
   m_ApiKey = apiKey;
-  startValidationCheck();
+  startValidationCheck((flags & HideProgress) == 0);
 }
 
 
