@@ -153,6 +153,45 @@ NexusSSOLogin::NexusSSOLogin()
   QObject::connect(&m_timeout, &QTimer::timeout, [&]{ onTimeout(); });
 }
 
+QString NexusSSOLogin::stateToString(States s, const QString& e)
+{
+  switch (s)
+  {
+    case ConnectingToSSO:
+      return QObject::tr("Connecting to Nexus...");
+
+    case WaitingForToken:
+      return QObject::tr("Waiting for Nexus...");
+
+    case WaitingForBrowser:
+      return QObject::tr("Opened browser, waiting for user...");
+
+    case Finished:
+      return QObject::tr("Connected.");
+
+    case Timeout:
+      return QObject::tr(
+        "No answer from Nexus.\n"
+        "A firewall might be blocking Mod Organizer.");
+
+    case ClosedByRemote:
+      return QObject::tr("Nexus closed the connection.");
+
+    case Cancelled:
+      return QObject::tr("Cancelled.");
+
+    case Error:  // fall-through
+    default:
+    {
+      if (e.isEmpty()) {
+        return QString("%1").arg(s);
+      } else {
+        return e;
+      }
+    }
+  }
+}
+
 void NexusSSOLogin::start()
 {
   m_active = true;
@@ -304,6 +343,40 @@ NexusKeyValidator::NexusKeyValidator(NXMAccessManager& am)
 NexusKeyValidator::~NexusKeyValidator()
 {
   abort();
+}
+
+QString NexusKeyValidator::stateToString(States s, const QString& e)
+{
+  switch (s)
+  {
+    case NexusKeyValidator::Connecting:
+      return QObject::tr("Connecting to Nexus...");
+
+    case NexusKeyValidator::Finished:
+      return QObject::tr("Finished.");
+
+    case NexusKeyValidator::InvalidJson:
+      return QObject::tr("Invalid JSON");
+
+    case NexusKeyValidator::BadResponse:
+      return QObject::tr("Bad response");
+
+    case NexusKeyValidator::Timeout:
+      return QObject::tr("There was a timeout during the request");
+
+    case NexusKeyValidator::Cancelled:
+      return QObject::tr("Cancelled");
+
+    case NexusKeyValidator::Error:  // fall-through
+    default:
+    {
+      if (e.isEmpty()) {
+        return QString("%1").arg(s);
+      } else {
+        return e;
+      }
+    }
+  }
 }
 
 void NexusKeyValidator::start(const QString& key)
@@ -558,45 +631,14 @@ void NXMAccessManager::startValidationCheck(const QString& key, bool showProgres
 void NXMAccessManager::onValidatorState(
   NexusKeyValidator::States s, const QString& e)
 {
-  switch (s)
-  {
-    case NexusKeyValidator::Connecting:  // fall-through
-    case NexusKeyValidator::Finished:
-    {
-      // no-op, success is handled in onValidatorFinished()
-      break;
-    }
-
-    case NexusKeyValidator::InvalidJson:
-    {
-      onValidatorError(tr("Invalid JSON"));
-      break;
-    }
-
-    case NexusKeyValidator::BadResponse:
-    {
-      onValidatorError(tr("Bad response"));
-      break;
-    }
-
-    case NexusKeyValidator::Timeout:
-    {
-      onValidatorError(tr("There was a timeout during the request"));
-      break;
-    }
-
-    case NexusKeyValidator::Cancelled:
-    {
-      onValidatorError(tr("Cancelled"));
-      break;
-    }
-
-    case NexusKeyValidator::Error:
-    {
-      onValidatorError(e);
-      break;
-    }
+  if (s == NexusKeyValidator::Connecting || s == NexusKeyValidator::Finished) {
+    // no-op, success is handled in onValidatorFinished()
+    return;
   }
+
+  m_ProgressDialog->stop();
+  m_validationState = Invalid;
+  emit validateFailed(NexusKeyValidator::stateToString(s, e));
 }
 
 void NXMAccessManager::onValidatorFinished(const APIUserAccount& user)
@@ -606,13 +648,6 @@ void NXMAccessManager::onValidatorFinished(const APIUserAccount& user)
   m_validationState = Valid;
   emit credentialsReceived(user);
   emit validateSuccessful(true);
-}
-
-void NXMAccessManager::onValidatorError(const QString& e)
-{
-  m_ProgressDialog->stop();
-  m_validationState = Invalid;
-  emit validateFailed(e);
 }
 
 bool NXMAccessManager::validated() const

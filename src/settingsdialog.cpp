@@ -450,66 +450,10 @@ void SettingsDialog::onSSOKeyChanged(const QString& key)
 
 void SettingsDialog::onSSOStateChanged(NexusSSOLogin::States s, const QString& e)
 {
-  QString log;
+  const auto log = NexusSSOLogin::stateToString(s, e);
 
-  switch (s)
-  {
-    case NexusSSOLogin::ConnectingToSSO:
-    {
-      log = tr("Connecting to Nexus...");
-      break;
-    }
-
-    case NexusSSOLogin::WaitingForToken:
-    {
-      log = tr("Waiting for Nexus...");
-      break;
-    }
-
-    case NexusSSOLogin::WaitingForBrowser:
-    {
-      log = tr("Opened browser, waiting for user...");
-      break;
-    }
-
-    case NexusSSOLogin::Finished:
-    {
-      log = tr("Connected.");
-      break;
-    }
-
-    case NexusSSOLogin::Timeout:
-    {
-      log = QObject::tr(
-        "No answer from Nexus.\n"
-        "A firewall might be blocking Mod Organizer.");
-
-      break;
-    }
-
-    case NexusSSOLogin::ClosedByRemote:
-    {
-      log = QObject::tr("Nexus closed the connection.");
-      break;
-    }
-
-    case NexusSSOLogin::Cancelled:
-    {
-      log = QObject::tr("Cancelled.");
-      break;
-    }
-
-    case NexusSSOLogin::Error:
-    {
-      log = tr("Error: %1.").arg(e);
-      break;
-    }
-  }
-
-  if (!log.isEmpty()) {
-    for (auto&& line : log.split("\n")) {
-      ui->nexusLog->addItem(line);
-    }
+  for (auto&& line : log.split("\n")) {
+    ui->nexusLog->addItem(line);
   }
 
   updateNexusButtons();
@@ -518,60 +462,10 @@ void SettingsDialog::onSSOStateChanged(NexusSSOLogin::States s, const QString& e
 void SettingsDialog::onValidatorStateChanged(
   NexusKeyValidator::States s, const QString& e)
 {
-  QString log;
+  const auto log = NexusKeyValidator::stateToString(s, e);
 
-  switch (s)
-  {
-    case NexusKeyValidator::Connecting:
-    {
-      log = tr("Connecting to Nexus...");
-      break;
-    }
-
-    case NexusKeyValidator::Finished:
-    {
-      log = tr("Connected.");
-      break;
-    }
-
-    case NexusKeyValidator::InvalidJson:
-    {
-      log = tr("Invalid JSON");
-      break;
-    }
-
-    case NexusKeyValidator::BadResponse:
-    {
-      log = tr("Bad response");
-      break;
-    }
-
-    case NexusKeyValidator::Timeout:
-    {
-      log = QObject::tr(
-        "No answer from Nexus.\n"
-        "A firewall might be blocking Mod Organizer.");
-
-      break;
-    }
-
-    case NexusKeyValidator::Cancelled:
-    {
-      log = QObject::tr("Cancelled.");
-      break;
-    }
-
-    case NexusKeyValidator::Error:
-    {
-      log = tr("Error: %1.").arg(e);
-      break;
-    }
-  }
-
-  if (!log.isEmpty()) {
-    for (auto&& line : log.split("\n")) {
-      ui->nexusLog->addItem(line);
-    }
+  for (auto&& line : log.split("\n")) {
+    ui->nexusLog->addItem(line);
   }
 
   updateNexusButtons();

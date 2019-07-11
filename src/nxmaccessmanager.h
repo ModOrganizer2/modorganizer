@@ -80,6 +80,8 @@ public:
   std::function<void (QString)> keyChanged;
   std::function<void (States, QString)> stateChanged;
 
+  static QString stateToString(States s, const QString& e);
+
   NexusSSOLogin();
 
   void start();
@@ -125,6 +127,8 @@ public:
 
   std::function<void (APIUserAccount)> finished;
   std::function<void (States, QString)> stateChanged;
+
+  static QString stateToString(States s, const QString& e);
 
   NexusKeyValidator(NXMAccessManager& am);
   ~NexusKeyValidator();
@@ -236,7 +240,6 @@ private:
   void startValidationCheck(const QString& key, bool showProgress);
   void onValidatorState(NexusKeyValidator::States s, const QString& e);
   void onValidatorFinished(const APIUserAccount& user);
-  void onValidatorError(const QString& e);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(NXMAccessManager::ApiCheckFlags);
