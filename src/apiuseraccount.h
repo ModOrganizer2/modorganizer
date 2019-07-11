@@ -60,6 +60,12 @@ public:
 
   APIUserAccount();
 
+
+  /**
+  * api key
+  */
+  const QString& apiKey() const;
+
   /**
   * user id
   */
@@ -80,6 +86,11 @@ public:
   */
   const APILimits& limits() const;
 
+
+  /**
+   * sets the api key
+   */
+  APIUserAccount& apiKey(const QString& key);
 
   /**
   * sets the user id
@@ -120,7 +131,7 @@ public:
   bool exhausted() const;
 
 private:
-  QString m_id, m_name;
+  QString m_key, m_id, m_name;
   APIUserAccountTypes m_type;
   APILimits m_limits;
   APIStats m_stats;

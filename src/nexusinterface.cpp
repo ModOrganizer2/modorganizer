@@ -208,12 +208,27 @@ APILimits NexusInterface::defaultAPILimits()
 
 APILimits NexusInterface::parseLimits(const QNetworkReply* reply)
 {
+  return parseLimits(reply->rawHeaderPairs());
+}
+
+APILimits NexusInterface::parseLimits(
+  const QList<QNetworkReply::RawHeaderPair>& headers)
+{
   APILimits limits;
 
-  limits.maxDailyRequests = reply->rawHeader("x-rl-daily-limit").toInt();
-  limits.remainingDailyRequests = reply->rawHeader("x-rl-daily-remaining").toInt();
-  limits.maxHourlyRequests = reply->rawHeader("x-rl-hourly-limit").toInt();
-  limits.remainingHourlyRequests = reply->rawHeader("x-rl-hourly-remaining").toInt();
+  for (const auto& pair : headers) {
+    const auto name = QString(pair.first).toLower();
+
+    if (name == "x-rl-daily-limit") {
+      limits.maxDailyRequests = pair.second.toInt();
+    } else if (name == "x-rl-daily-remaining") {
+      limits.remainingDailyRequests = pair.second.toInt();
+    } else if (name == "x-rl-hourly-limit") {
+      limits.maxHourlyRequests = pair.second.toInt();
+    } else if (name == "x-rl-hourly-remaining") {
+      limits.remainingHourlyRequests = pair.second.toInt();
+    }
+  }
 
   return limits;
 }
@@ -765,7 +780,7 @@ void NexusInterface::nextRequest()
   QNetworkRequest request(url);
   request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
   request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
-  request.setRawHeader("APIKEY", m_AccessManager->apiKey().toUtf8());
+  request.setRawHeader("APIKEY", m_User.apiKey().toUtf8());
   request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader, m_AccessManager->userAgent(info.m_SubModule));
   request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
   request.setRawHeader("Protocol-Version", "1.0.0");

@@ -127,6 +127,9 @@ void ValidationProgressDialog::onTimer()
 NexusSSOLogin::NexusSSOLogin()
   : m_keyReceived(false), m_active(false)
 {
+  m_timeout.setInterval(NXMAccessManager::ValidationTimeout);
+  m_timeout.setSingleShot(true);
+
   QObject::connect(
     &m_socket, &QWebSocket::connected,
     [&]{ onConnected(); });
@@ -134,6 +137,10 @@ NexusSSOLogin::NexusSSOLogin()
   QObject::connect(
     &m_socket, qOverload<QAbstractSocket::SocketError>(&QWebSocket::error),
     [&](auto&& e){ onError(e); });
+
+  QObject::connect(
+    &m_socket, &QWebSocket::sslErrors,
+    [&](auto&& errors){ onSslErrors(errors); });
 
   QObject::connect(
     &m_socket, &QWebSocket::textMessageReceived,
@@ -150,21 +157,25 @@ void NexusSSOLogin::start()
 {
   m_active = true;
   setState(ConnectingToSSO);
-  m_timeout.start(NXMAccessManager::ValidationTimeout);
+  m_timeout.start();
   m_socket.open(NexusSSO);
 }
 
 void NexusSSOLogin::cancel()
 {
-  abort();
-  setState(Cancelled);
+  if (m_active) {
+    abort();
+    setState(Cancelled);
+  }
 }
 
 void NexusSSOLogin::close()
 {
-  m_active = false;
-  m_timeout.stop();
-  m_socket.close();
+  if (m_active) {
+    m_active = false;
+    m_timeout.stop();
+    m_socket.close();
+  }
 }
 
 void NexusSSOLogin::abort()
@@ -261,6 +272,16 @@ void NexusSSOLogin::onError(QAbstractSocket::SocketError e)
 {
   if (m_active) {
     setState(Error, m_socket.errorString());
+    close();
+  }
+}
+
+void NexusSSOLogin::onSslErrors(const QList<QSslError>& errors)
+{
+  if (m_active) {
+    for (const auto& e : errors) {
+      setState(Error, e.errorString());
+    }
   }
 }
 
@@ -271,30 +292,211 @@ void NexusSSOLogin::onTimeout()
 }
 
 
+NexusKeyValidator::NexusKeyValidator(NXMAccessManager& am)
+  : m_manager(am), m_reply(nullptr), m_active(false)
+{
+  m_timeout.setInterval(NXMAccessManager::ValidationTimeout);
+  m_timeout.setSingleShot(true);
+
+  QObject::connect(&m_timeout, &QTimer::timeout, [&]{ onTimeout(); });
+}
+
+NexusKeyValidator::~NexusKeyValidator()
+{
+  abort();
+}
+
+void NexusKeyValidator::start(const QString& key)
+{
+  if (m_reply) {
+    abort();
+    return;
+  }
+
+  qDebug("Checking Nexus API Key...");
+  setState(Connecting);
+
+  const QString requestUrl(NexusBaseUrl + "/users/validate");
+  QNetworkRequest request(requestUrl);
+
+  request.setRawHeader("APIKEY", key.toUtf8());
+  request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader, m_manager.userAgent().toUtf8());
+  request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
+  request.setRawHeader("Protocol-Version", "1.0.0");
+  request.setRawHeader("Application-Name", "MO2");
+  request.setRawHeader("Application-Version", m_manager.MOVersion().toUtf8());
+
+  m_reply = m_manager.get(request);
+  if (!m_reply) {
+    setState(Error, QObject::tr("Failed to request %1").arg(requestUrl));
+    return;
+  }
+
+  m_active = true;
+  m_timeout.start(NXMAccessManager::ValidationTimeout);
+
+  QObject::connect(
+    m_reply, &QNetworkReply::finished,
+    [&]{ onFinished(); });
+
+  QObject::connect(
+    m_reply, &QNetworkReply::sslErrors,
+    [&](auto&& errors){ onSslErrors(errors); });
+}
+
+void NexusKeyValidator::cancel()
+{
+  if (m_active) {
+    abort();
+    setState(Cancelled);
+  }
+}
+
+bool NexusKeyValidator::isActive() const
+{
+  return m_active;
+}
+
+void NexusKeyValidator::close()
+{
+  m_active = false;
+  m_timeout.stop();
+
+  if (m_reply) {
+    m_reply->disconnect();
+    m_reply->deleteLater();
+    m_reply = nullptr;
+  }
+}
+
+void NexusKeyValidator::abort()
+{
+  m_active = false;
+  m_timeout.stop();
+
+  if (m_reply) {
+    m_reply->disconnect();
+    m_reply->abort();
+    m_reply->deleteLater();
+    m_reply = nullptr;
+  }
+}
+
+void NexusKeyValidator::setState(States s, const QString& error)
+{
+  if (stateChanged) {
+    stateChanged(s, error);
+  }
+}
+
+void NexusKeyValidator::onFinished()
+{
+  if (!m_reply) {
+    // shouldn't happen
+    return;
+  }
+
+  m_timeout.stop();
+
+  const auto code = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+  const auto doc = QJsonDocument::fromJson(m_reply->readAll());
+  const auto headers = m_reply->rawHeaderPairs();
+  const auto error = m_reply->errorString();
+
+  close();
+
+  const QJsonObject data = doc.object();
+
+  if (code != 200) {
+    handleError(code, data.value("message").toString(), error);
+    return;
+  }
+
+  if (doc.isNull()) {
+    setState(InvalidJson);
+    return;
+  }
+
+  if (!data.contains("user_id")) {
+    setState(BadResponse);
+    return;
+  }
+
+  const int id = data.value("user_id").toInt();
+  const QString key = data.value("key").toString();
+  const QString name = data.value("name").toString();
+  const bool premium = data.value("is_premium").toBool();
+
+  const auto user = APIUserAccount()
+    .apiKey(key)
+    .id(QString("%1").arg(id))
+    .name(name)
+    .type(premium ? APIUserAccountTypes::Premium : APIUserAccountTypes::Regular)
+    .limits(NexusInterface::parseLimits(headers));
+
+  if (finished) {
+    setState(Finished);
+    finished(user);
+  }
+}
+
+void NexusKeyValidator::onSslErrors(const QList<QSslError>& errors)
+{
+  if (m_active) {
+    for (const auto& e : errors) {
+      setState(Error, e.errorString());
+    }
+  }
+}
+
+void NexusKeyValidator::onTimeout()
+{
+  abort();
+  setState(Timeout);
+}
+
+void NexusKeyValidator::handleError(
+  int code, const QString& nexusMessage, const QString& httpError)
+{
+  QString s = httpError;
+
+  if (!nexusMessage.isEmpty()) {
+    if (!s.isEmpty()) {
+      s += ", ";
+    }
+
+    s += nexusMessage;
+  }
+
+  if (code != 0) {
+    if (s.isEmpty()) {
+      s = QString("HTTP code %1").arg(code);
+    } else {
+      s += QString(" (%1)").arg(code);
+    }
+  }
+
+  setState(Error, s);
+}
+
+
+
 NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
   : QNetworkAccessManager(parent)
-  , m_ValidateReply(nullptr)
   , m_ProgressDialog(new ValidationProgressDialog(ValidationTimeout))
   , m_MOVersion(moVersion)
+  , m_validator(*this)
+  , m_validationState(NotChecked)
 {
-  m_ValidateTimeout.setSingleShot(true);
-  m_ValidateTimeout.setInterval(ValidationTimeout);
+  m_validator.stateChanged = [&](auto&& s, auto&& e){ onValidatorState(s, e); };
+  m_validator.finished = [&](auto&& user){ onValidatorFinished(user); };
 
-  connect(&m_ValidateTimeout, SIGNAL(timeout()), this, SLOT(validateTimeout()));
-  setCookieJar(new PersistentCookieJar(
-      QDir::fromNativeSeparators(Settings::instance().getCacheDirectory() + "/nexus_cookies.dat")));
+  setCookieJar(new PersistentCookieJar(QDir::fromNativeSeparators(
+    Settings::instance().getCacheDirectory() + "/nexus_cookies.dat")));
 
   if (networkAccessible() == QNetworkAccessManager::UnknownAccessibility) {
     // why is this necessary all of a sudden?
     setNetworkAccessible(QNetworkAccessManager::Accessible);
-  }
-}
-
-NXMAccessManager::~NXMAccessManager()
-{
-  if (m_ValidateReply != nullptr) {
-    m_ValidateReply->deleteLater();
-    m_ValidateReply = nullptr;
   }
 }
 
@@ -323,7 +525,6 @@ QNetworkReply *NXMAccessManager::createRequest(
   }
 }
 
-
 void NXMAccessManager::showCookies() const
 {
   QUrl url(NexusBaseUrl + "/");
@@ -344,80 +545,122 @@ void NXMAccessManager::clearCookies()
   }
 }
 
-void NXMAccessManager::startValidationCheck(bool showProgress)
+void NXMAccessManager::startValidationCheck(const QString& key, bool showProgress)
 {
-  qDebug("Checking Nexus API Key...");
-  QString requestString = NexusBaseUrl + "/users/validate";
-
-  QNetworkRequest request(requestString);
-  request.setRawHeader("APIKEY", m_ApiKey.toUtf8());
-  request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader, userAgent().toUtf8());
-  request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
-  request.setRawHeader("Protocol-Version", "1.0.0");
-  request.setRawHeader("Application-Name", "MO2");
-  request.setRawHeader("Application-Version", m_MOVersion.toUtf8());
+  m_validationState = NotChecked;
+  m_validator.start(key);
 
   if (showProgress) {
     m_ProgressDialog->start();
   }
-
-  QCoreApplication::processEvents(); // for some reason the whole app hangs during the login. This way the user has at least a little feedback
-
-  m_ValidateReply = get(request);
-  m_ValidateTimeout.start();
-  m_ValidateState = VALIDATE_CHECKING;
-  connect(m_ValidateReply, SIGNAL(finished()), this, SLOT(validateFinished()));
-  connect(m_ValidateReply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(validateError(QNetworkReply::NetworkError)));
 }
 
+void NXMAccessManager::onValidatorState(
+  NexusKeyValidator::States s, const QString& e)
+{
+  switch (s)
+  {
+    case NexusKeyValidator::Connecting:  // fall-through
+    case NexusKeyValidator::Finished:
+    {
+      // no-op, success is handled in onValidatorFinished()
+      break;
+    }
+
+    case NexusKeyValidator::InvalidJson:
+    {
+      onValidatorError(tr("Invalid JSON"));
+      break;
+    }
+
+    case NexusKeyValidator::BadResponse:
+    {
+      onValidatorError(tr("Bad response"));
+      break;
+    }
+
+    case NexusKeyValidator::Timeout:
+    {
+      onValidatorError(tr("There was a timeout during the request"));
+      break;
+    }
+
+    case NexusKeyValidator::Cancelled:
+    {
+      onValidatorError(tr("Cancelled"));
+      break;
+    }
+
+    case NexusKeyValidator::Error:
+    {
+      onValidatorError(e);
+      break;
+    }
+  }
+}
+
+void NXMAccessManager::onValidatorFinished(const APIUserAccount& user)
+{
+  m_ProgressDialog->stop();
+
+  m_validationState = Valid;
+  emit credentialsReceived(user);
+  emit validateSuccessful(true);
+}
+
+void NXMAccessManager::onValidatorError(const QString& e)
+{
+  m_ProgressDialog->stop();
+  m_validationState = Invalid;
+  emit validateFailed(e);
+}
 
 bool NXMAccessManager::validated() const
 {
-  if (m_ValidateState == VALIDATE_CHECKING) {
+  if (m_validator.isActive()) {
     m_ProgressDialog->show();
   }
 
-  return m_ValidateState == VALIDATE_VALID;
+  return (m_validationState == Valid);
 }
-
 
 void NXMAccessManager::refuseValidation()
 {
-  m_ValidateState = VALIDATE_REFUSED;
+  m_validationState = Invalid;
 }
-
 
 bool NXMAccessManager::validateAttempted() const
 {
-  return m_ValidateState != VALIDATE_NOT_CHECKED;
+  return (m_validationState != NotChecked);
 }
-
 
 bool NXMAccessManager::validateWaiting() const
 {
-  return m_ValidateReply != nullptr;
+  return m_validator.isActive();
 }
-
 
 void NXMAccessManager::apiCheck(const QString &apiKey, ApiCheckFlags flags)
 {
-  if (m_ValidateReply != nullptr) {
+  if (m_validator.isActive()) {
     return;
   }
 
   if (flags & Force) {
-    m_ValidateState = VALIDATE_NOT_CHECKED;
+    m_validationState = NotChecked;
   }
 
-  if (m_ValidateState == VALIDATE_VALID) {
+  if (m_validationState == Valid) {
     emit validateSuccessful(false);
     return;
   }
 
-  m_ApiKey = apiKey;
-  startValidationCheck((flags & HideProgress) == 0);
+  startValidationCheck(apiKey, (flags & HideProgress) == 0);
 }
 
+const QString& NXMAccessManager::MOVersion() const
+{
+  return m_MOVersion;
+}
 
 QString NXMAccessManager::userAgent(const QString &subModule) const
 {
@@ -436,100 +679,8 @@ QString NXMAccessManager::userAgent(const QString &subModule) const
   return  QString("Mod Organizer/%1 (%2) Qt/%3").arg(m_MOVersion, comments.join("; "), qVersion());
 }
 
-
-QString NXMAccessManager::apiKey() const
-{
-  return m_ApiKey;
-}
-
 void NXMAccessManager::clearApiKey()
 {
-  m_ApiKey = "";
-  m_ValidateState = VALIDATE_NOT_VALID;
-
+  m_validator.cancel();
   emit credentialsReceived(APIUserAccount());
-}
-
-void NXMAccessManager::validateTimeout()
-{
-  m_ValidateTimeout.stop();
-  m_ProgressDialog->stop();
-
-  m_ApiKey.clear();
-  m_ValidateState = VALIDATE_NOT_VALID;
-
-  if (m_ValidateReply != nullptr) {
-    m_ValidateReply->deleteLater();
-    m_ValidateReply = nullptr;
-  }
-
-  emit validateFailed(tr("There was a timeout during the request"));
-}
-
-
-void NXMAccessManager::validateError(QNetworkReply::NetworkError)
-{
-  m_ValidateTimeout.stop();
-  m_ProgressDialog->stop();
-
-  m_ApiKey.clear();
-  m_ValidateState = VALIDATE_NOT_VALID;
-
-  if (m_ValidateReply != nullptr) {
-    m_ValidateReply->disconnect();
-    QString error = m_ValidateReply->errorString();
-    m_ValidateReply->deleteLater();
-    m_ValidateReply = nullptr;
-    emit validateFailed(error);
-  } else {
-    emit validateFailed(tr("Unknown error"));
-  }
-}
-
-
-void NXMAccessManager::validateFinished()
-{
-  m_ValidateTimeout.stop();
-  m_ProgressDialog->stop();
-
-  if (m_ValidateReply != nullptr) {
-    QJsonDocument jdoc = QJsonDocument::fromJson(m_ValidateReply->readAll());
-    if (!jdoc.isNull()) {
-      QJsonObject credentialsData = jdoc.object();
-      if (credentialsData.contains("user_id")) {
-        int id = credentialsData.value("user_id").toInt();
-        QString name = credentialsData.value("name").toString();
-        bool premium = credentialsData.value("is_premium").toBool();
-
-        const auto user = APIUserAccount()
-          .id(QString("%1").arg(id))
-          .name(name)
-          .type(premium ? APIUserAccountTypes::Premium : APIUserAccountTypes::Regular)
-          .limits(NexusInterface::parseLimits(m_ValidateReply));
-
-
-        emit credentialsReceived(user);
-
-        m_ValidateReply->deleteLater();
-        m_ValidateReply = nullptr;
-
-        m_ValidateState = VALIDATE_VALID;
-        emit validateSuccessful(true);
-
-      } else {
-        m_ApiKey.clear();
-        m_ValidateState = VALIDATE_NOT_VALID;
-        emit validateFailed(tr("Validation failed, please reauthenticate in the Settings -> Nexus tab: %1").arg(credentialsData.value("message").toString()));
-      }
-    } else {
-      m_ApiKey.clear();
-      m_ValidateState = VALIDATE_NOT_CHECKED;
-      emit validateFailed(tr("Could not parse response. Invalid JSON."));
-    }
-  }
-  else {
-    m_ApiKey.clear();
-    m_ValidateState = VALIDATE_NOT_CHECKED;
-    emit validateFailed(tr("Unknown error."));
-  }
 }

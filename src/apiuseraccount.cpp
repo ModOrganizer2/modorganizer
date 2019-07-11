@@ -5,6 +5,11 @@ APIUserAccount::APIUserAccount()
 {
 }
 
+const QString& APIUserAccount::apiKey() const
+{
+  return m_key;
+}
+
 const QString& APIUserAccount::id() const
 {
   return m_id;
@@ -23,6 +28,12 @@ APIUserAccountTypes APIUserAccount::type() const
 const APILimits& APIUserAccount::limits() const
 {
   return m_limits;
+}
+
+APIUserAccount& APIUserAccount::apiKey(const QString& key)
+{
+  m_key = key;
+  return *this;
 }
 
 APIUserAccount& APIUserAccount::id(const QString& id)

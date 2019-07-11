@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <set>
 
 namespace MOBase { class IPluginGame; }
+class NXMAccessManager;
 
 class ValidationProgressDialog : private QDialog
 {
@@ -103,7 +104,53 @@ private:
   void onMessage(const QString& s);
   void onDisconnected();
   void onError(QAbstractSocket::SocketError e);
+  void onSslErrors(const QList<QSslError>& errors);
   void onTimeout();
+};
+
+
+class NexusKeyValidator
+{
+public:
+  enum States
+  {
+    Connecting,
+    Finished,
+    InvalidJson,
+    BadResponse,
+    Timeout,
+    Cancelled,
+    Error
+  };
+
+  std::function<void (APIUserAccount)> finished;
+  std::function<void (States, QString)> stateChanged;
+
+  NexusKeyValidator(NXMAccessManager& am);
+  ~NexusKeyValidator();
+
+  void start(const QString& key);
+  void cancel();
+
+  bool isActive() const;
+
+private:
+  NXMAccessManager& m_manager;
+  QNetworkReply* m_reply;
+  QTimer m_timeout;
+  bool m_active;
+
+  void setState(States s, const QString& error={});
+
+  void close();
+  void abort();
+
+  void onFinished();
+  void onSslErrors(const QList<QSslError>& errors);
+  void onTimeout();
+
+  void handleError(
+    int code, const QString& nexusMessage, const QString& httpError);
 };
 
 
@@ -127,7 +174,6 @@ public:
 
   explicit NXMAccessManager(QObject *parent, const QString &moVersion);
 
-  ~NXMAccessManager();
 
   void setTopLevelWidget(QWidget* w);
 
@@ -143,8 +189,8 @@ public:
   void clearCookies();
 
   QString userAgent(const QString &subModule = QString()) const;
+  const QString& MOVersion() const;
 
-  QString apiKey() const;
   void clearApiKey();
 
   void refuseValidation();
@@ -164,16 +210,8 @@ signals:
    * @param necessary true if a login was necessary and succeeded, false if the user is still logged in
    **/
   void validateSuccessful(bool necessary);
-
   void validateFailed(const QString &message);
-
   void credentialsReceived(const APIUserAccount& user);
-
-private slots:
-
-  void validateFinished();
-  void validateError(QNetworkReply::NetworkError errorCode);
-  void validateTimeout();
 
 protected:
 
@@ -182,25 +220,23 @@ protected:
       QIODevice *device);
 
 private:
+  enum States
+  {
+    NotChecked,
+    Valid,
+    Invalid
+  };
+
   QWidget* m_TopLevel;
-  QTimer m_ValidateTimeout;
-  QNetworkReply *m_ValidateReply;
   mutable ValidationProgressDialog* m_ProgressDialog;
-
   QString m_MOVersion;
+  NexusKeyValidator m_validator;
+  States m_validationState;
 
-  QString m_ApiKey;
-
-  enum {
-    VALIDATE_NOT_CHECKED,
-    VALIDATE_CHECKING,
-    VALIDATE_NOT_VALID,
-    VALIDATE_ATTEMPT_FAILED,
-    VALIDATE_REFUSED,
-    VALIDATE_VALID
-  } m_ValidateState = VALIDATE_NOT_CHECKED;
-
-  void startValidationCheck(bool showProgress);
+  void startValidationCheck(const QString& key, bool showProgress);
+  void onValidatorState(NexusKeyValidator::States s, const QString& e);
+  void onValidatorFinished(const APIUserAccount& user);
+  void onValidatorError(const QString& e);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(NXMAccessManager::ApiCheckFlags);
