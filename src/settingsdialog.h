@@ -142,16 +142,18 @@ private:
   bool m_keyChanged;
 
   QString m_ExecutableBlacklist;
-  NexusSSOLogin m_nexusLogin;
+  std::unique_ptr<NexusSSOLogin> m_nexusLogin;
+  std::unique_ptr<NexusKeyValidator> m_nexusValidator;
 
   bool setKey(const QString& key);
   bool clearKey();
   void updateNexusButtons();
 
-  void fetchNexusApiKey();
-  void onKeyChanged(const QString& key);
-  void onStateChanged(NexusSSOLogin::States s, const QString& e);
-  void onManualKeyValidation(bool success, const QString& e);
+  void onSSOKeyChanged(const QString& key);
+  void onSSOStateChanged(NexusSSOLogin::States s, const QString& e);
+
+  void onValidatorStateChanged(NexusKeyValidator::States s, const QString& e);
+  void onValidatorFinished(const APIUserAccount& user);
 };
 
 #endif // SETTINGSDIALOG_H

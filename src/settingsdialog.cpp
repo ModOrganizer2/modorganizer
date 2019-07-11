@@ -104,20 +104,6 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings* setti
   , m_keyChanged(false)
   , m_GeometriesReset(false)
 {
-  m_nexusLogin.keyChanged = [&](auto&& s){ onKeyChanged(s); };
-  m_nexusLogin.stateChanged = [&](auto&& s, auto&& e){ onStateChanged(s, e); };
-
-  connect(
-    NexusInterface::instance(m_PluginContainer)->getAccessManager(),
-    &NXMAccessManager::validateSuccessful,
-    [&]{ onManualKeyValidation(true, ""); });
-
-  connect(
-    NexusInterface::instance(m_PluginContainer)->getAccessManager(),
-    &NXMAccessManager::validateFailed,
-    [&](auto&& e){ onManualKeyValidation(false, e); });
-
-
   ui->setupUi(this);
   ui->pluginSettingsList->setStyleSheet("QTreeWidget::item {padding-right: 10px;}");
 
@@ -394,44 +380,66 @@ void SettingsDialog::on_resetDialogsButton_clicked()
 
 void SettingsDialog::on_nexusConnect_clicked()
 {
-  if (m_nexusLogin.isActive()) {
-    m_nexusLogin.cancel();
-  } else {
-    fetchNexusApiKey();
+  if (m_nexusLogin && m_nexusLogin->isActive()) {
+    m_nexusLogin->cancel();
+    return;
   }
+
+  if (!m_nexusLogin) {
+    m_nexusLogin.reset(new NexusSSOLogin);
+
+    m_nexusLogin->keyChanged = [&](auto&& s){
+      onSSOKeyChanged(s);
+    };
+
+    m_nexusLogin->stateChanged = [&](auto&& s, auto&& e){
+      onSSOStateChanged(s, e);
+    };
+  }
+
+  ui->nexusLog->clear();
+  m_nexusLogin->start();
+  updateNexusButtons();
 }
 
 void SettingsDialog::on_nexusManualKey_clicked()
 {
-  NexusManualKeyDialog dialog(this);
+  if (m_nexusValidator && m_nexusValidator->isActive()) {
+    m_nexusValidator->cancel();
+    return;
+  }
 
+  NexusManualKeyDialog dialog(this);
   if (dialog.exec() != QDialog::Accepted) {
     return;
   }
 
   const auto key = dialog.key();
-
   if (key.isEmpty()) {
     clearKey();
-  } else {
-    if (setKey(key)) {
-      ui->nexusLog->clear();
-      ui->nexusLog->addItem(tr("Checking API key..."));
-
-      NexusInterface::instance(m_PluginContainer)->getAccessManager()->apiCheck(
-        key, NXMAccessManager::Force | NXMAccessManager::HideProgress);
-    }
+    return;
   }
-}
 
-void SettingsDialog::fetchNexusApiKey()
-{
   ui->nexusLog->clear();
-  m_nexusLogin.start();
-  updateNexusButtons();
+  ui->nexusLog->addItem(tr("Checking API key..."));
+
+  if (!m_nexusValidator) {
+    m_nexusValidator.reset(new NexusKeyValidator(
+      *NexusInterface::instance(m_PluginContainer)->getAccessManager()));
+
+    m_nexusValidator->stateChanged = [&](auto&& s, auto&& e){
+      onValidatorStateChanged(s, e);
+    };
+
+    m_nexusValidator->finished = [&](auto&& user) {
+      onValidatorFinished(user);
+    };
+  }
+
+  m_nexusValidator->start(key);
 }
 
-void SettingsDialog::onKeyChanged(const QString& key)
+void SettingsDialog::onSSOKeyChanged(const QString& key)
 {
   if (key.isEmpty()) {
     clearKey();
@@ -440,7 +448,7 @@ void SettingsDialog::onKeyChanged(const QString& key)
   }
 }
 
-void SettingsDialog::onStateChanged(NexusSSOLogin::States s, const QString& e)
+void SettingsDialog::onSSOStateChanged(NexusSSOLogin::States s, const QString& e)
 {
   QString log;
 
@@ -507,12 +515,72 @@ void SettingsDialog::onStateChanged(NexusSSOLogin::States s, const QString& e)
   updateNexusButtons();
 }
 
-void SettingsDialog::onManualKeyValidation(bool success, const QString& e)
+void SettingsDialog::onValidatorStateChanged(
+  NexusKeyValidator::States s, const QString& e)
 {
-  if (success) {
-    ui->nexusLog->addItem("Connected.");
-  } else {
-    ui->nexusLog->addItem("Error: " + e);
+  QString log;
+
+  switch (s)
+  {
+    case NexusKeyValidator::Connecting:
+    {
+      log = tr("Connecting to Nexus...");
+      break;
+    }
+
+    case NexusKeyValidator::Finished:
+    {
+      log = tr("Connected.");
+      break;
+    }
+
+    case NexusKeyValidator::InvalidJson:
+    {
+      log = tr("Invalid JSON");
+      break;
+    }
+
+    case NexusKeyValidator::BadResponse:
+    {
+      log = tr("Bad response");
+      break;
+    }
+
+    case NexusKeyValidator::Timeout:
+    {
+      log = QObject::tr(
+        "No answer from Nexus.\n"
+        "A firewall might be blocking Mod Organizer.");
+
+      break;
+    }
+
+    case NexusKeyValidator::Cancelled:
+    {
+      log = QObject::tr("Cancelled.");
+      break;
+    }
+
+    case NexusKeyValidator::Error:
+    {
+      log = tr("Error: %1.").arg(e);
+      break;
+    }
+  }
+
+  if (!log.isEmpty()) {
+    for (auto&& line : log.split("\n")) {
+      ui->nexusLog->addItem(line);
+    }
+  }
+
+  updateNexusButtons();
+}
+
+void SettingsDialog::onValidatorFinished(const APIUserAccount& user)
+{
+  if (!user.apiKey().isEmpty()) {
+    setKey(user.apiKey());
   }
 }
 
@@ -537,24 +605,35 @@ bool SettingsDialog::clearKey()
 
 void SettingsDialog::updateNexusButtons()
 {
-  if (m_nexusLogin.isActive()) {
+  if (m_nexusLogin && m_nexusLogin->isActive()) {
     // api key is in the process of being retrieved
     ui->nexusConnect->setText(tr("Cancel"));
     ui->nexusConnect->setEnabled(true);
     ui->nexusDisconnect->setEnabled(false);
+    ui->nexusManualKey->setText(tr("Enter API Key Manually"));
     ui->nexusManualKey->setEnabled(false);
+  }
+  else if (m_nexusValidator && m_nexusValidator->isActive()) {
+    // api key is in the process of being tested
+    ui->nexusConnect->setText(tr("Connect to Nexus"));
+    ui->nexusConnect->setEnabled(false);
+    ui->nexusDisconnect->setEnabled(false);
+    ui->nexusManualKey->setText(tr("Cancel"));
+    ui->nexusManualKey->setEnabled(true);
   }
   else if (m_settings->hasNexusApiKey()) {
     // api key is present
     ui->nexusConnect->setText(tr("Connect to Nexus"));
     ui->nexusConnect->setEnabled(false);
     ui->nexusDisconnect->setEnabled(true);
+    ui->nexusManualKey->setText(tr("Enter API Key Manually"));
     ui->nexusManualKey->setEnabled(false);
   } else {
     // api key not present
     ui->nexusConnect->setText(tr("Connect to Nexus"));
     ui->nexusConnect->setEnabled(true);
     ui->nexusDisconnect->setEnabled(false);
+    ui->nexusManualKey->setText(tr("Enter API Key Manually"));
     ui->nexusManualKey->setEnabled(true);
   }
 }

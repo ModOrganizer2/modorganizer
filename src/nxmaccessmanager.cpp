@@ -313,7 +313,7 @@ void NexusKeyValidator::start(const QString& key)
     return;
   }
 
-  qDebug("Checking Nexus API Key...");
+  m_active = true;
   setState(Connecting);
 
   const QString requestUrl(NexusBaseUrl + "/users/validate");
@@ -328,11 +328,11 @@ void NexusKeyValidator::start(const QString& key)
 
   m_reply = m_manager.get(request);
   if (!m_reply) {
+    close();
     setState(Error, QObject::tr("Failed to request %1").arg(requestUrl));
     return;
   }
 
-  m_active = true;
   m_timeout.start(NXMAccessManager::ValidationTimeout);
 
   QObject::connect(
