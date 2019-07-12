@@ -165,15 +165,6 @@ class NXMAccessManager : public QNetworkAccessManager
 {
   Q_OBJECT
 public:
-  enum ApiCheckFlagsEnum
-  {
-    NoFlags = 0,
-    Force,
-    HideProgress
-  };
-
-  Q_DECLARE_FLAGS(ApiCheckFlags, ApiCheckFlagsEnum)
-
   static const std::chrono::seconds ValidationTimeout;
 
   explicit NXMAccessManager(QObject *parent, const QString &moVersion);
@@ -186,7 +177,7 @@ public:
   bool validateAttempted() const;
   bool validateWaiting() const;
 
-  void apiCheck(const QString &apiKey, ApiCheckFlags flags=NoFlags);
+  void apiCheck(const QString &apiKey, bool force=false);
 
   void showCookies() const;
 
@@ -237,11 +228,9 @@ private:
   NexusKeyValidator m_validator;
   States m_validationState;
 
-  void startValidationCheck(const QString& key, bool showProgress);
+  void startValidationCheck(const QString& key);
   void onValidatorState(NexusKeyValidator::States s, const QString& e);
   void onValidatorFinished(const APIUserAccount& user);
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(NXMAccessManager::ApiCheckFlags);
 
 #endif // NXMACCESSMANAGER_H

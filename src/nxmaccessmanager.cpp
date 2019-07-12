@@ -618,14 +618,11 @@ void NXMAccessManager::clearCookies()
   }
 }
 
-void NXMAccessManager::startValidationCheck(const QString& key, bool showProgress)
+void NXMAccessManager::startValidationCheck(const QString& key)
 {
   m_validationState = NotChecked;
   m_validator.start(key);
-
-  if (showProgress) {
-    m_ProgressDialog->start();
-  }
+  m_ProgressDialog->start();
 }
 
 void NXMAccessManager::onValidatorState(
@@ -674,13 +671,13 @@ bool NXMAccessManager::validateWaiting() const
   return m_validator.isActive();
 }
 
-void NXMAccessManager::apiCheck(const QString &apiKey, ApiCheckFlags flags)
+void NXMAccessManager::apiCheck(const QString &apiKey, bool force)
 {
   if (m_validator.isActive()) {
     return;
   }
 
-  if (flags & Force) {
+  if (force) {
     m_validationState = NotChecked;
   }
 
@@ -689,7 +686,7 @@ void NXMAccessManager::apiCheck(const QString &apiKey, ApiCheckFlags flags)
     return;
   }
 
-  startValidationCheck(apiKey, (flags & HideProgress) == 0);
+  startValidationCheck(apiKey);
 }
 
 const QString& NXMAccessManager::MOVersion() const
