@@ -195,6 +195,102 @@ const QSize MediumToolbarSize(32, 32);
 const QSize LargeToolbarSize(42, 36);
 
 
+// this attempts to fix https://bugreports.qt.io/browse/QTBUG-46620 where dock
+// sizes are not restored when the main window is maximized; it is used in
+// MainWindow::readSettings() and MainWindow::storeSettings()
+//
+// there's also https://stackoverflow.com/questions/44005852, which has what
+// seems to be a popular fix, but it breaks the restored size of the window
+// by setting it to the desktop's resolution, so that doesn't work
+//
+// the only fix I could find is to remember the sizes of the docks and manually
+// setting them back; saving is straightforward, but restoring is messy
+//
+// this also depends on the window being visible before the timer in restore()
+// is fired and the timer must be processed by application.exec(); therefore,
+// the splash screen _must_ be closed before readSettings() is called, because
+// it has its own event loop, which seems to interfere with this
+//
+// all of this should become unnecessary when QTBUG-46620 is fixed
+//
+class DockFixer
+{
+public:
+  static void save(MainWindow* mw, QSettings& settings)
+  {
+    const auto docks = mw->findChildren<QDockWidget*>();
+
+    // saves the size of each dock
+    for (int i=0; i<docks.size(); ++i) {
+      int size = 0;
+
+      // save the width for horizontal docks, or the height for vertical
+      if (orientation(mw, docks[i]) == Qt::Horizontal) {
+        size = docks[i]->size().width();
+      } else {
+        size = docks[i]->size().height();
+      }
+
+      settings.setValue(settingName(docks[i]), size);
+    }
+  }
+
+  static void restore(MainWindow* mw, const QSettings& settings)
+  {
+    struct DockInfo
+    {
+      QDockWidget* d;
+      int size = 0;
+      Qt::Orientation ori;
+    };
+
+    std::vector<DockInfo> dockInfos;
+
+    const auto docks = mw->findChildren<QDockWidget*>();
+
+    // for each dock
+    for (int i=0; i<docks.size(); ++i) {
+      const QString name = settingName(docks[i]);
+
+      if (settings.contains(name)) {
+        // remember this dock, its size and orientation
+        const auto size = settings.value(name).toInt();
+        dockInfos.push_back({docks[i], size, orientation(mw, docks[i])});
+      }
+    }
+
+    // the main window must have had time to process the settings from
+    // readSettings() or it seems to override whatever is set here
+    //
+    // some people said a single processEvents() call is enough, but it doesn't
+    // look like it
+    QTimer::singleShot(1, [=] {
+      for (const auto& info : dockInfos) {
+        mw->resizeDocks({info.d}, {info.size}, info.ori);
+      }
+      });
+  }
+
+  static Qt::Orientation orientation(QMainWindow* mw, QDockWidget* d)
+  {
+    // docks in these areas are horizontal
+    const auto horizontalAreas =
+      Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea;
+
+    if (mw->dockWidgetArea(d) & horizontalAreas) {
+      return Qt::Horizontal;
+    } else {
+      return Qt::Vertical;
+    }
+  }
+
+  static QString settingName(QDockWidget* d)
+  {
+    return "geometry/" + d->objectName() + "_size";
+  }
+};
+
+
 MainWindow::MainWindow(QSettings &initSettings
                        , OrganizerCore &organizerCore
                        , PluginContainer &pluginContainer
@@ -422,7 +518,8 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(ui->tabWidget, SIGNAL(currentChanged(int)), &TutorialManager::instance(), SIGNAL(tabChanged(int)));
   connect(ui->modList->header(), SIGNAL(sortIndicatorChanged(int,Qt::SortOrder)), this, SLOT(modListSortIndicatorChanged(int,Qt::SortOrder)));
   connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(toolBar_customContextMenuRequested(QPoint)));
-  connect(ui->menuToolbars, &QMenu::aboutToShow, [&]{ toolbarMenu_aboutToShow(); });
+  connect(ui->menuToolbars, &QMenu::aboutToShow, [&]{ updateToolbarMenu(); });
+  connect(ui->menuView, &QMenu::aboutToShow, [&]{ updateViewMenu(); });
 
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this, &MainWindow::modInstalled);
   connect(&m_OrganizerCore, &OrganizerCore::close, this, &QMainWindow::close);
@@ -764,7 +861,7 @@ void MainWindow::updatePinnedExecutables()
   ui->menuRun->menuAction()->setVisible(hasLinks);
 }
 
-void MainWindow::toolbarMenu_aboutToShow()
+void MainWindow::updateToolbarMenu()
 {
   // well, this is a bit of a hack to allow the same toolbar menu to be shown
   // in both the main menu and the context menu
@@ -786,6 +883,11 @@ void MainWindow::toolbarMenu_aboutToShow()
   ui->actionToolBarIconsOnly->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonIconOnly);
   ui->actionToolBarTextOnly->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonTextOnly);
   ui->actionToolBarIconsAndText->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonTextUnderIcon);
+}
+
+void MainWindow::updateViewMenu()
+{
+  ui->actionViewLog->setChecked(ui->logDock->isVisible());
 }
 
 QMenu* MainWindow::createPopupMenu()
@@ -836,6 +938,11 @@ void MainWindow::on_actionToolBarTextOnly_triggered()
 void MainWindow::on_actionToolBarIconsAndText_triggered()
 {
   setToolbarButtonStyle(Qt::ToolButtonTextUnderIcon);
+}
+
+void MainWindow::on_actionViewLog_triggered()
+{
+  ui->logDock->setVisible(!ui->logDock->isVisible());
 }
 
 void MainWindow::setToolbarSize(const QSize& s)
@@ -1257,7 +1364,7 @@ void MainWindow::showEvent(QShowEvent *event)
 
     m_OrganizerCore.settings().registerAsNXMHandler(false);
     m_WasVisible = true;
-	updateProblemsButton();
+	  updateProblemsButton();
   }
 }
 
@@ -2204,6 +2311,8 @@ void MainWindow::readSettings()
   if (settings.value("Settings/use_proxy", false).toBool()) {
     activateProxy(true);
   }
+
+  DockFixer::restore(this, settings);
 }
 
 void MainWindow::processUpdates() {
@@ -2285,10 +2394,13 @@ void MainWindow::storeSettings(QSettings &settings) {
     settings.setValue("log_split", ui->topLevelSplitter->saveState());
     settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
     settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
+
     for (const std::pair<QString, QHeaderView*> kv : m_PersistedGeometry) {
       QString key = QString("geometry/") + kv.first;
       settings.setValue(key, kv.second->saveState());
     }
+
+    DockFixer::save(this, settings);
   }
 }
 
@@ -2569,7 +2681,7 @@ void MainWindow::directory_refreshed()
   if (ui->tabWidget->currentIndex() == 2) {
       refreshDataTreeKeepExpandedNodes();
   }
- 
+
 }
 
 void MainWindow::esplist_changed()

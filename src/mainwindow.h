@@ -219,7 +219,9 @@ private:
   void updatePinnedExecutables();
   void setToolbarSize(const QSize& s);
   void setToolbarButtonStyle(Qt::ToolButtonStyle s);
-  void toolbarMenu_aboutToShow();
+
+  void updateToolbarMenu();
+  void updateViewMenu();
 
   QMenu* createPopupMenu() override;
   void activateSelectedProfile();
@@ -654,6 +656,7 @@ private slots: // ui slots
   void on_actionToolBarIconsOnly_triggered();
   void on_actionToolBarTextOnly_triggered();
   void on_actionToolBarIconsAndText_triggered();
+  void on_actionViewLog_triggered();
 
   void on_centralWidget_customContextMenuRequested(const QPoint &pos);
   void on_bsaList_customContextMenuRequested(const QPoint &pos);

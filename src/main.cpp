@@ -706,6 +706,10 @@ int runApplication(MOApplication &application, SingleInstance &instance,
                        SLOT(externalMessage(QString)));
 
       mainWindow.processUpdates();
+
+      // this must be before readSettings(), see DockFixer in mainwindow.cpp
+      splash.finish(&mainWindow);
+
       mainWindow.readSettings();
 
       qDebug("displaying main window");

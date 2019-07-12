@@ -1286,23 +1286,6 @@ p, li { white-space: pre-wrap; }
         </item>
        </layout>
       </widget>
-      <widget class="QTreeView" name="logList">
-       <property name="contextMenuPolicy">
-        <enum>Qt::ActionsContextMenu</enum>
-       </property>
-       <property name="selectionMode">
-        <enum>QAbstractItemView::NoSelection</enum>
-       </property>
-       <property name="uniformRowHeights">
-        <bool>true</bool>
-       </property>
-       <property name="itemsExpandable">
-        <bool>false</bool>
-       </property>
-       <property name="headerHidden">
-        <bool>true</bool>
-       </property>
-      </widget>
      </widget>
     </item>
    </layout>
@@ -1403,6 +1386,7 @@ p, li { white-space: pre-wrap; }
      <addaction name="actionToolBarIconsAndText"/>
     </widget>
     <addaction name="menuToolbars"/>
+    <addaction name="actionViewLog"/>
     <addaction name="separator"/>
     <addaction name="actionNotifications"/>
    </widget>
@@ -1416,6 +1400,49 @@ p, li { white-space: pre-wrap; }
    <addaction name="menuTools"/>
    <addaction name="menuRun"/>
    <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QDockWidget" name="logDock">
+   <property name="windowTitle">
+    <string>Log</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QVBoxLayout" name="verticalLayout_6">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QTreeView" name="logList">
+       <property name="contextMenuPolicy">
+        <enum>Qt::ActionsContextMenu</enum>
+       </property>
+       <property name="selectionMode">
+        <enum>QAbstractItemView::NoSelection</enum>
+       </property>
+       <property name="uniformRowHeights">
+        <bool>true</bool>
+       </property>
+       <property name="itemsExpandable">
+        <bool>false</bool>
+       </property>
+       <property name="headerHidden">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <action name="actionInstallMod">
    <property name="icon">
@@ -1734,6 +1761,14 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="text">
     <string>Status &amp;bar</string>
+   </property>
+  </action>
+  <action name="actionViewLog">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Log</string>
    </property>
   </action>
  </widget>
