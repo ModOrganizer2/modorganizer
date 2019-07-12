@@ -93,7 +93,6 @@ private:
   QWebSocket m_socket;
   QString m_guid;
   bool m_keyReceived;
-  QString m_token;
   bool m_active;
   QTimer m_timeout;
 

@@ -242,15 +242,12 @@ void NexusSSOLogin::onConnected()
 
   m_keyReceived = false;
 
-  //if (m_guid.isEmpty()) {
   boost::uuids::random_generator generator;
   boost::uuids::uuid sessionId = generator();
   m_guid = boost::uuids::to_string(sessionId).c_str();
-  //}
 
   QJsonObject data;
   data.insert(QString("id"), QJsonValue(m_guid));
-  //data.insert(QString("token"), QJsonValue(m_token));
   data.insert(QString("protocol"), 2);
 
   const QString message = QJsonDocument(data).toJson();
@@ -275,7 +272,6 @@ void NexusSSOLogin::onMessage(const QString& s)
 
   if (data.contains("connection_token")) {
     // first answer
-    m_token = data["connection_token"].toString();
 
     // open browser
     const auto url = NexusSSOPage.arg(m_guid);
