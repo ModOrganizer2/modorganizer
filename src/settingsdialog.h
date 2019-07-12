@@ -145,15 +145,21 @@ private:
   std::unique_ptr<NexusSSOLogin> m_nexusLogin;
   std::unique_ptr<NexusKeyValidator> m_nexusValidator;
 
+  void validateKey(const QString& key);
   bool setKey(const QString& key);
   bool clearKey();
+
+  void updateNexusState();
   void updateNexusButtons();
+  void updateNexusData();
 
   void onSSOKeyChanged(const QString& key);
   void onSSOStateChanged(NexusSSOLogin::States s, const QString& e);
 
   void onValidatorStateChanged(NexusKeyValidator::States s, const QString& e);
   void onValidatorFinished(const APIUserAccount& user);
+
+  void addNexusLog(const QString& s);
 };
 
 #endif // SETTINGSDIALOG_H

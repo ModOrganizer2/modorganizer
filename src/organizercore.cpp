@@ -2484,7 +2484,7 @@ void OrganizerCore::loginSuccessfulUpdate(bool necessary)
 
 void OrganizerCore::loginFailed(const QString &message)
 {
-  qDebug().nospace().noquote()
+  qCritical().nospace().noquote()
     << "Nexus API validation failed: " << message;
 
   if (QMessageBox::question(qApp->activeWindow(), tr("Login failed"),

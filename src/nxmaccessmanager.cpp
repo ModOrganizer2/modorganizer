@@ -167,7 +167,7 @@ QString NexusSSOLogin::stateToString(States s, const QString& e)
       return QObject::tr("Opened browser, waiting for user...");
 
     case Finished:
-      return QObject::tr("Connected.");
+      return QObject::tr("Finished.");
 
     case Timeout:
       return QObject::tr(

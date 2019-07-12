@@ -1,8 +1,30 @@
 #include "apiuseraccount.h"
 
+QString localizedUserAccountType(APIUserAccountTypes t)
+{
+  switch (t)
+  {
+    case APIUserAccountTypes::Regular:
+      return QObject::tr("Regular");
+
+    case APIUserAccountTypes::Premium:
+      return QObject::tr("Premium");
+
+    case APIUserAccountTypes::None:  // fall-through
+    default:
+      return QObject::tr("None");
+  }
+}
+
+
 APIUserAccount::APIUserAccount()
   : m_type(APIUserAccountTypes::None)
 {
+}
+
+bool APIUserAccount::isValid() const
+{
+  return !m_key.isEmpty();
 }
 
 const QString& APIUserAccount::apiKey() const

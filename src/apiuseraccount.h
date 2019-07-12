@@ -18,6 +18,8 @@ enum class APIUserAccountTypes
   Premium
 };
 
+QString localizedUserAccountType(APIUserAccountTypes t);
+
 
 /**
 * current limits imposed on the user account
@@ -60,6 +62,11 @@ public:
 
   APIUserAccount();
 
+
+  /**
+   * whether the user is logged in
+   */
+  bool isValid() const;
 
   /**
   * api key
@@ -134,7 +141,6 @@ private:
   QString m_key, m_id, m_name;
   APIUserAccountTypes m_type;
   APILimits m_limits;
-  APIStats m_stats;
 };
 
 #endif // APIUSERACCOUNT_H
