@@ -140,6 +140,8 @@ private:
                                         "<figure class=\"quote\"><blockquote>\\1</blockquote></figure>");
     m_TagMap["quote="] = std::make_pair(QRegExp("\\[quote=([^\\]]*)\\](.*)\\[/quote\\]"),
                                         "<figure class=\"quote\"><blockquote>\\2</blockquote></figure>");
+    m_TagMap["spoiler"] = std::make_pair(QRegExp("\\[spoiler\\](.*)\\[/spoiler\\]"),
+      "<details><summary>Spoiler:  <div class=\"bbc_spoiler_show\">Show</div></summary><div class=\"spoiler_content\">\\1</div></details>");
     m_TagMap["code"]   = std::make_pair(QRegExp("\\[code\\](.*)\\[/code\\]"),
                                         "<code>\\1</code>");
     m_TagMap["heading"]= std::make_pair(QRegExp("\\[heading\\](.*)\\[/heading\\]"),

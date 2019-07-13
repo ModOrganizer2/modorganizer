@@ -238,6 +238,32 @@ void NexusTab::onModChanged()
       padding: 0;
     }
 
+    div.spoiler_content {
+      background: #262626;
+      border: 1px dashed #3b3b3b;
+      padding: 5px;
+      margin: 5px;
+    }
+
+    div.bbc_spoiler_show{
+      border: 1px solid black;
+      background-color: #454545;
+      font-size: 11px;
+      padding: 3px;
+      color: #E6E6E6;
+      border-radius: 3px;
+      display: inline-block;
+      cursor: pointer;
+    }
+  
+    details summary::-webkit-details-marker {
+      display:none;
+    }
+
+    summary:focus {
+      outline: 0;
+    }
+
     a
     {
       /*should avoid overflow with long links forcing wordwrap regardless of spaces*/  
