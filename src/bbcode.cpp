@@ -183,7 +183,7 @@ private:
     m_TagMap["email="]  = std::make_pair(QRegExp("\\[email=\"?([^\\]]*)\"?\\](.*)\\[/email\\]"),
                                          "<a href=\"mailto:\\1\">\\2</a>");
     m_TagMap["youtube"] = std::make_pair(QRegExp("\\[youtube\\](.*)\\[/youtube\\]"),
-                                         "<a href=\"https://youtu.be./\\1\">https://youtu.be/\\1</a>");
+                                         "<a href=\"https://www.youtube.com/watch?v=\\1\">https://www.youtube.com/watch?v=\\1</a>");
 
 
     // make all patterns non-greedy and case-insensitive
