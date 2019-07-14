@@ -164,7 +164,9 @@ QString NexusSSOLogin::stateToString(States s, const QString& e)
       return QObject::tr("Waiting for Nexus...");
 
     case WaitingForBrowser:
-      return QObject::tr("Opened browser, waiting for user...");
+      return QObject::tr(
+        "Opened Nexus in browser.\n"
+        "Switch to your browser and accept the request.");
 
     case Finished:
       return QObject::tr("Finished.");
