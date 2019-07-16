@@ -37,6 +37,7 @@ public:
   static LogModel& instance();
 
   void add(MOBase::log::Entry e);
+  const std::deque<MOBase::log::Entry>& entries() const;
 
 protected:
   QModelIndex index(int row, int column, const QModelIndex& parent) const override;
@@ -44,7 +45,7 @@ protected:
   int rowCount(const QModelIndex &parent) const override;
   int columnCount(const QModelIndex &parent) const override;
   QVariant data(const QModelIndex &index, int role) const override;
-  
+
   QVariant headerData(
     int section, Qt::Orientation ori, int role=Qt::DisplayRole) const override;
 
@@ -52,10 +53,19 @@ signals:
   void entryAdded(MOBase::log::Entry e);
 
 private:
-  std::deque<MOBase::log::Entry> m_messages;
+  std::deque<MOBase::log::Entry> m_entries;
 
   LogModel();
   void onEntryAdded(MOBase::log::Entry e);
+};
+
+
+class LogList : public QTreeView
+{
+public:
+  LogList(QWidget* parent=nullptr);
+
+  void copyToClipboard();
 };
 
 #endif // LOGBUFFER_H

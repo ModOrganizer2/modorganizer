@@ -357,7 +357,7 @@ MainWindow::MainWindow(QSettings &initSettings
 
   m_CategoryFactory.loadCategories();
 
-  setupLogList();
+  ui->logList->addAction(ui->actionCopy_Log_to_Clipboard);
 
   int splitterSize = this->size().height(); // actually total window size, but the splitter doesn't seem to return the true value
   ui->topLevelSplitter->setSizes(QList<int>() << splitterSize - 100 << 100);
@@ -584,30 +584,6 @@ MainWindow::MainWindow(QSettings &initSettings
   resetActionIcons();
   updatePluginCount();
   updateModCount();
-}
-
-void MainWindow::setupLogList()
-{
-  ui->logList->setModel(&LogModel::instance());
-
-  const int timestampWidth =
-    QFontMetrics(ui->logList->font()).width("00:00:00.000");
-
-  ui->logList->header()->setMinimumSectionSize(0);
-  ui->logList->header()->resizeSection(0, 20);
-  ui->logList->header()->resizeSection(1, timestampWidth + 8);
-
-  ui->logList->setAutoScroll(true);
-  ui->logList->scrollToBottom();
-  ui->logList->addAction(ui->actionCopy_Log_to_Clipboard);
-
-  connect(
-    ui->logList->model(), SIGNAL(rowsInserted(const QModelIndex &, int, int)),
-    ui->logList, SLOT(scrollToBottom()));
-
-  connect(
-    ui->logList->model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)),
-    ui->logList, SLOT(scrollToBottom()));
 }
 
 void MainWindow::resetActionIcons()
@@ -6837,14 +6813,7 @@ void MainWindow::on_restoreModsButton_clicked()
 
 void MainWindow::on_actionCopy_Log_to_Clipboard_triggered()
 {
-  QStringList lines;
-  QAbstractItemModel *model = ui->logList->model();
-  for (int i = 0; i < model->rowCount(); ++i) {
-    lines.append(QString("%1 [%2] %3").arg(model->index(i, 0).data().toString())
-                                      .arg(model->index(i, 1).data(Qt::UserRole).toString())
-                                      .arg(model->index(i, 1).data().toString()));
-  }
-  QApplication::clipboard()->setText(lines.join("\n"));
+  ui->logList->copyToClipboard();
 }
 
 void MainWindow::on_categoriesAndBtn_toggled(bool checked)

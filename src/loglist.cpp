@@ -52,21 +52,26 @@ void LogModel::add(MOBase::log::Entry e)
   emit entryAdded(std::move(e));
 }
 
+const std::deque<MOBase::log::Entry>& LogModel::entries() const
+{
+  return m_entries;
+}
+
 void LogModel::onEntryAdded(MOBase::log::Entry e)
 {
   bool full = false;
-  if (m_messages.size() > MaxLines) {
-    m_messages.pop_front();
+  if (m_entries.size() > MaxLines) {
+    m_entries.pop_front();
     full = true;
   }
 
-  const int row = static_cast<int>(m_messages.size());
+  const int row = static_cast<int>(m_entries.size());
 
   if (!full) {
     beginInsertRows(QModelIndex(), row, row + 1);
   }
 
-  m_messages.emplace_back(std::move(e));
+  m_entries.emplace_back(std::move(e));
 
   if (!full) {
     endInsertRows();
@@ -92,7 +97,7 @@ int LogModel::rowCount(const QModelIndex& parent) const
   if (parent.isValid())
     return 0;
   else
-    return static_cast<int>(m_messages.size());
+    return static_cast<int>(m_entries.size());
 }
 
 int LogModel::columnCount(const QModelIndex&) const
@@ -105,11 +110,11 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
   using namespace std::chrono;
 
   const auto row = static_cast<std::size_t>(index.row());
-  if (row >= m_messages.size()) {
+  if (row >= m_entries.size()) {
     return {};
   }
 
-  const auto& e = m_messages[row];
+  const auto& e = m_entries[row];
 
   if (role == Qt::DisplayRole) {
     if (index.column() == 1) {
@@ -152,6 +157,48 @@ QVariant LogModel::headerData(int, Qt::Orientation, int) const
 {
   return {};
 }
+
+
+LogList::LogList(QWidget* parent)
+  : QTreeView(parent)
+{
+  setModel(&LogModel::instance());
+
+  const int timestampWidth = QFontMetrics(font()).width("00:00:00.000");
+
+  header()->setMinimumSectionSize(0);
+  header()->resizeSection(0, 20);
+  header()->resizeSection(1, timestampWidth + 8);
+
+  setAutoScroll(true);
+  scrollToBottom();
+
+  connect(
+    model(), SIGNAL(rowsInserted(const QModelIndex &, int, int)),
+    this, SLOT(scrollToBottom()));
+
+  connect(
+    model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)),
+    this, SLOT(scrollToBottom()));
+}
+
+void LogList::copyToClipboard()
+{
+  std::string s;
+
+  auto* m = static_cast<LogModel*>(model());
+  for (const auto& e : m->entries()) {
+    s += e.formattedMessage + "\n";
+  }
+
+  if (!s.empty()) {
+    // last newline
+    s.pop_back();
+  }
+
+  QApplication::clipboard()->setText(QString::fromStdString(s));
+}
+
 
 void vlog(const char *format, ...)
 {
