@@ -342,7 +342,6 @@ OrganizerCore::~OrganizerCore()
   m_CurrentProfile = nullptr;
 
   ModInfo::clear();
-  LogBuffer::cleanQuit();
   m_ModList.setProfile(nullptr);
   //  NexusInterface::instance()->cleanup();
 

@@ -636,6 +636,7 @@ private slots:
   void resetActionIcons();
   void updateModCount();
   void updatePluginCount();
+  void setupLogList();
 
 private slots: // ui slots
   // actions

@@ -26,70 +26,36 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStringListModel>
 #include <QTime>
 #include <vector>
+#include <log.h>
 
-
-class LogBuffer : public QAbstractItemModel
+class LogModel : public QAbstractItemModel
 {
   Q_OBJECT
 
 public:
+  static void create();
+  static LogModel& instance();
 
-  static void init(int messageCount, QtMsgType minMsgType, const QString &outputFileName);
-  static void log(QtMsgType type, const QMessageLogContext &context, const QString &message);
+  void add(MOBase::log::Entry e);
 
-  static void writeNow();
-  static void cleanQuit();
-
-  static LogBuffer *instance() { return s_Instance.data(); }
-
-public:
-
-  virtual ~LogBuffer();
-
-  void logMessage(QtMsgType type, const QString &message);
-
-  // QAbstractItemModel interface
-public:
-  QModelIndex index(int row, int column, const QModelIndex &parent) const;
-  QModelIndex parent(const QModelIndex &child) const;
-  int rowCount(const QModelIndex &parent) const;
-  int columnCount(const QModelIndex &parent) const;
-  QVariant data(const QModelIndex &index, int role) const;
+protected:
+  QModelIndex index(int row, int column, const QModelIndex& parent) const override;
+  QModelIndex parent(const QModelIndex &child) const override;
+  int rowCount(const QModelIndex &parent) const override;
+  int columnCount(const QModelIndex &parent) const override;
+  QVariant data(const QModelIndex &index, int role) const override;
+  
+  QVariant headerData(
+    int section, Qt::Orientation ori, int role=Qt::DisplayRole) const override;
 
 signals:
-
-public slots:
-
-private:
-
-  explicit LogBuffer(int messageCount, QtMsgType minMsgType, const QString &outputFileName);
-  LogBuffer(const LogBuffer &reference); // not implemented
-  LogBuffer &operator=(const LogBuffer &reference); // not implemented
-
-  void write() const;
-
-  static char msgTypeID(QtMsgType type);
+  void entryAdded(MOBase::log::Entry e);
 
 private:
+  std::deque<MOBase::log::Entry> m_messages;
 
-  struct Message {
-    QtMsgType type;
-    QTime time;
-    QString message;
-    QString toString() const;
-  };
-
-private:
-
-  static QScopedPointer<LogBuffer> s_Instance;
-  static QMutex s_Mutex;
-
-  QString m_OutFileName;
-  bool m_ShutDown;
-  QtMsgType m_MinMsgType;
-  size_t m_NumMessages;
-  std::vector<Message> m_Messages;
-  
+  LogModel();
+  void onEntryAdded(MOBase::log::Entry e);
 };
 
 #endif // LOGBUFFER_H

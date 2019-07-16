@@ -51,6 +51,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <eh.h>
 #include <windows_error.h>
 #include <usvfs.h>
+#include <log.h>
 
 #include <QApplication>
 #include <QPushButton>
@@ -731,18 +732,46 @@ int runApplication(MOApplication &application, SingleInstance &instance,
   }
 }
 
+class Console
+{
+public:
+  Console()
+  {
+    // open a console
+    AllocConsole();
+
+    // redirect stdin, stdout and stderr to it
+    freopen_s(&m_in, "CONIN$", "r", stdin);
+    freopen_s(&m_out, "CONOUT$", "w", stdout);
+    freopen_s(&m_err, "CONOUT$", "w", stderr);
+  }
+
+  ~Console()
+  {
+    // close redirected handles
+    std::fclose(m_err);
+    std::fclose(m_out);
+    std::fclose(m_in);
+
+    // close console
+    FreeConsole();
+
+    // redirect stdin, stdout and stderr to NUL, don't bother closing the
+    // handles
+    freopen_s(&m_in, "NUL", "r", stdin);
+    freopen_s(&m_out, "NUL", "w", stdout);
+    freopen_s(&m_err, "NUL", "w", stderr);
+  }
+
+private:
+  FILE* m_in = nullptr;
+  FILE* m_out = nullptr;
+  FILE* m_err = nullptr;
+};
+
 int doCoreDump(env::CoreDumpTypes type)
 {
-  // open a console
-  AllocConsole();
-
-  // redirect stdin, stdout and stderr to it
-  FILE* in=nullptr;
-  FILE* out=nullptr;
-  FILE* err=nullptr;
-  freopen_s(&in, "CONIN$", "r", stdin);
-  freopen_s(&out, "CONOUT$", "w", stdout);
-  freopen_s(&err, "CONOUT$", "w", stderr);
+  Console c;
 
   // dump
   const auto b = env::coredumpOther(type);
@@ -753,15 +782,66 @@ int doCoreDump(env::CoreDumpTypes type)
   std::wcerr << L"Press enter to continue...";
   std::wcin.get();
 
-  // close redirected handles
-  std::fclose(err);
-  std::fclose(out);
-  std::fclose(in);
-
-  // close console
-  FreeConsole();
-
   return (b ? 0 : 1);
+}
+
+log::Levels convertQtLevel(QtMsgType t)
+{
+  switch (t)
+  {
+    case QtDebugMsg:
+      return log::Debug;
+
+    case QtWarningMsg:
+      return log::Warning;
+
+    case QtCriticalMsg:  // fall-through
+    case QtFatalMsg:
+      return log::Error;
+
+    case QtInfoMsg:  // fall-through
+    default:
+      return log::Info;
+  }
+}
+
+void qtLogCallback(
+  QtMsgType type, const QMessageLogContext& context, const QString& message)
+{
+  std::string_view file = "";
+
+  if (type != QtDebugMsg) {
+    if (context.file) {
+      file = context.file;
+
+      const auto lastSep = file.find_last_of("/\\");
+      if (lastSep != std::string_view::npos) {
+        file = {context.file + lastSep + 1};
+      }
+    }
+  }
+
+  if (file.empty()) {
+    log::log(
+      convertQtLevel(type), "{}",
+      message.toStdString());
+  } else {
+    log::log(
+      convertQtLevel(type), "[{}:{}] {}",
+      file, context.line, message.toStdString());
+  }
+}
+
+void initLogging(const QString& logFile)
+{
+  LogModel::create();
+
+  log::init(
+    true, MOBase::log::File::rotating(logFile.toStdWString(), 5*1024*1024, 5),
+    MOBase::log::Debug, "%^[%m-%d %H:%M:%S.%e %L] %v%$",
+    [](log::Entry e){ LogModel::instance().add(e); });
+
+  qInstallMessageHandler(qtLogCallback);
 }
 
 int main(int argc, char *argv[])
@@ -839,7 +919,7 @@ int main(int argc, char *argv[])
     // initialize dump collection only after "dataPath" since the crashes are stored under it
     prevUnhandledExceptionFilter = SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
-    LogBuffer::init(1000000, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
+    initLogging(qApp->property("dataPath").toString() + "/logs/mo_interface.log");
 
     QString splash = dataPath + "/splash.png";
     if (!QFile::exists(dataPath + "/splash.png")) {

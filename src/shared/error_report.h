@@ -24,28 +24,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Windows.h>
 #include <string>
 
-namespace std {
-#ifdef UNICODE
-typedef wstring tstring;
-#else
-typedef string tstring;
-#endif
-}
-
-extern void log(const char* format, ...);
-
 namespace MOShared {
 
 void reportError(LPCSTR format, ...);
 void reportError(LPCWSTR format, ...);
 
-std::string getCurrentErrorStringA();
-std::wstring getCurrentErrorStringW();
-
-#ifdef UNICODE
-#define getCurrentErrorString getCurrentErrorStringW
-#else
-#define getCurrentErrorString getCurrentErrorStringA
-#endif
-
 } // namespace MOShared
+
+void vlog(const char* format, ...);

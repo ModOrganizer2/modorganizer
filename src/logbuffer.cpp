@@ -20,239 +20,140 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "logbuffer.h"
 #include <scopeguard.h>
 #include <report.h>
+#include <log.h>
 #include <QMutexLocker>
 #include <QFile>
 #include <QIcon>
 #include <QDateTime>
 #include <Windows.h>
 
-using MOBase::reportError;
+using namespace MOBase;
 
-QScopedPointer<LogBuffer> LogBuffer::s_Instance;
-QMutex LogBuffer::s_Mutex;
+static LogModel* g_instance = nullptr;
+const std::size_t MaxLines = 1000;
 
-LogBuffer::LogBuffer(int messageCount, QtMsgType minMsgType,
-                     const QString &outputFileName)
-  : QAbstractItemModel(nullptr)
-  , m_OutFileName(outputFileName)
-  , m_ShutDown(false)
-  , m_MinMsgType(minMsgType)
-  , m_NumMessages(0)
+LogModel::LogModel()
 {
-  m_Messages.resize(messageCount);
+  connect(this, &LogModel::entryAdded, [&](auto&& e){ onEntryAdded(e); });
 }
 
-LogBuffer::~LogBuffer()
+void LogModel::create()
 {
-  qInstallMessageHandler(0);
-  write();
+  g_instance = new LogModel;
 }
 
-void LogBuffer::logMessage(QtMsgType type, const QString &message)
+LogModel& LogModel::instance()
 {
-  if (type >= m_MinMsgType) {
-    QStringList messagelist = message.split("\n");
-    for (auto split_message : messagelist) {
-      Message msg = {type, QTime::currentTime(), split_message};
-      if (m_NumMessages < m_Messages.size()) {
-        beginInsertRows(QModelIndex(), static_cast<int>(m_NumMessages),
-                        static_cast<int>(m_NumMessages) + 1);
-      }
-      m_Messages.at(m_NumMessages % m_Messages.size()) = msg;
-      if (m_NumMessages < m_Messages.size()) {
-        endInsertRows();
-      } else {
-        emit dataChanged(createIndex(0, 0),
-                         createIndex(static_cast<int>(m_Messages.size()), 0));
-      }
-      ++m_NumMessages;
-      if (type >= QtCriticalMsg) {
-        write();
-      }
-    }
-  }
+  return *g_instance;
 }
 
-void LogBuffer::write() const
+void LogModel::add(MOBase::log::Entry e)
 {
-  if (m_NumMessages == 0) {
-    return;
-  }
-
-  DWORD lastError = ::GetLastError();
-
-  QFile file(m_OutFileName);
-  if (!file.open(QIODevice::WriteOnly)) {
-    reportError(tr("failed to write log to %1: %2")
-                    .arg(m_OutFileName)
-                    .arg(file.errorString()));
-    return;
-  }
-
-  unsigned int i
-      = (m_NumMessages > m_Messages.size())
-            ? static_cast<unsigned int>(m_NumMessages - m_Messages.size())
-            : 0U;
-  for (; i < m_NumMessages; ++i) {
-    file.write(m_Messages.at(i % m_Messages.size()).toString().toUtf8());
-    file.write("\r\n");
-  }
-  ::SetLastError(lastError);
+  emit entryAdded(std::move(e));
 }
 
-void LogBuffer::init(int messageCount, QtMsgType minMsgType,
-                     const QString &outputFileName)
+void LogModel::onEntryAdded(MOBase::log::Entry e)
 {
-  QMutexLocker guard(&s_Mutex);
-
-  s_Instance.reset(new LogBuffer(messageCount, minMsgType, outputFileName));
-  qInstallMessageHandler(LogBuffer::log);
-}
-
-char LogBuffer::msgTypeID(QtMsgType type)
-{
-  switch (type) {
-    case QtDebugMsg:
-      return 'D';
-    case QtInfoMsg:
-      return 'I';
-    case QtWarningMsg:
-      return 'W';
-    case QtCriticalMsg:
-      return 'C';
-    case QtFatalMsg:
-      return 'F';
-    default:
-      return '?';
-  }
-}
-
-void LogBuffer::log(QtMsgType type, const QMessageLogContext &context,
-                    const QString &message)
-{
-  // QMutexLocker doesn't support timeout...
-  if (!s_Mutex.tryLock(100)) {
-    fprintf(stderr, "failed to log: %s", qUtf8Printable(message));
-    return;
-  }
-  ON_BLOCK_EXIT([]() { s_Mutex.unlock(); });
-
-  if (!s_Instance.isNull()) {
-    s_Instance->logMessage(type, message);
+  bool full = false;
+  if (m_messages.size() > MaxLines) {
+    m_messages.pop_front();
+    full = true;
   }
 
-  if (type == QtDebugMsg) {
-    fprintf(stdout, "%s [%c] %s\n", qUtf8Printable(QTime::currentTime().toString()),
-            msgTypeID(type), qUtf8Printable(message));
+  const int row = static_cast<int>(m_messages.size());
+
+  if (!full) {
+    beginInsertRows(QModelIndex(), row, row + 1);
+  }
+
+  m_messages.emplace_back(std::move(e));
+
+  if (!full) {
+    endInsertRows();
   } else {
-    if (context.line != 0) {
-      fprintf(stdout, "%s [%c] (%s:%u) %s\n",
-              qUtf8Printable(QTime::currentTime().toString()), msgTypeID(type),
-              context.file, context.line, qUtf8Printable(message));
-    } else {
-      fprintf(stdout, "%s [%c] %s\n",
-              qUtf8Printable(QTime::currentTime().toString()), msgTypeID(type),
-              qUtf8Printable(message));
-    }
+    emit dataChanged(
+      createIndex(row, 0),
+      createIndex(row + 1, columnCount({})));
   }
-  fflush(stdout);
 }
 
-QModelIndex LogBuffer::index(int row, int column, const QModelIndex &) const
+QModelIndex LogModel::index(int row, int column, const QModelIndex&) const
 {
   return createIndex(row, column, row);
 }
 
-QModelIndex LogBuffer::parent(const QModelIndex &) const
+QModelIndex LogModel::parent(const QModelIndex&) const
 {
   return QModelIndex();
 }
 
-int LogBuffer::rowCount(const QModelIndex &parent) const
+int LogModel::rowCount(const QModelIndex& parent) const
 {
   if (parent.isValid())
     return 0;
   else
-    return static_cast<int>(std::min(m_NumMessages, m_Messages.size()));
+    return static_cast<int>(m_messages.size());
 }
 
-int LogBuffer::columnCount(const QModelIndex &) const
+int LogModel::columnCount(const QModelIndex&) const
 {
-  return 2;
+  return 3;
 }
 
-QVariant LogBuffer::data(const QModelIndex &index, int role) const
+QVariant LogModel::data(const QModelIndex& index, int role) const
 {
-  unsigned int offset
-      = m_NumMessages < m_Messages.size()
-            ? 0
-            : static_cast<unsigned int>(m_NumMessages - m_Messages.size());
-  unsigned int msgIndex = (offset + index.row() + 1) % m_Messages.size();
-  switch (role) {
-    case Qt::DisplayRole: {
-      if (index.column() == 0) {
-        return m_Messages[msgIndex].time.toString("H: mm: ss");
-      } else if (index.column() == 1) {
-        const QString &msg = m_Messages[msgIndex].message;
-        if (msg.length() < 200) {
-          return msg;
-        } else {
-          return msg.mid(0, 200) + "...";
-        }
-      }
-    } break;
-    case Qt::DecorationRole: {
-      if (index.column() == 1) {
-        switch (m_Messages[msgIndex].type) {
-          case QtDebugMsg:
-          case QtInfoMsg:
-            return QIcon(":/MO/gui/information");
-          case QtWarningMsg:
-            return QIcon(":/MO/gui/warning");
-          case QtCriticalMsg:
-            return QIcon(":/MO/gui/important");
-          case QtFatalMsg:
-            return QIcon(":/MO/gui/problem");
-        }
-      }
-    } break;
-    case Qt::UserRole: {
-      if (index.column() == 1) {
-        switch (m_Messages[msgIndex].type) {
-          case QtDebugMsg:
-            return "D";
-          case QtInfoMsg:
-            return "I";
-          case QtWarningMsg:
-            return "W";
-          case QtCriticalMsg:
-            return "C";
-          case QtFatalMsg:
-            return "F";
-        }
-      }
-    } break;
+  using namespace std::chrono;
+
+  const auto row = static_cast<std::size_t>(index.row());
+  if (row >= m_messages.size()) {
+    return {};
   }
+
+  const auto& e = m_messages[row];
+
+  if (role == Qt::DisplayRole) {
+    if (index.column() == 1) {
+      const auto ms = duration_cast<milliseconds>(e.time.time_since_epoch());
+      const auto s = duration_cast<seconds>(ms);
+
+      const std::time_t t = s.count();
+      const std::size_t frac = ms.count() % 1000;
+
+      auto time = QDateTime::fromTime_t(t).time();
+      time = time.addMSecs(frac);
+
+      return time.toString("hh:mm:ss.zzz");
+    } else if (index.column() == 2) {
+      return QString::fromStdString(e.message);
+    }
+  }
+
+  if (role == Qt::DecorationRole) {
+    if (index.column() == 0) {
+      switch (e.level) {
+        case log::Warning:
+          return QIcon(":/MO/gui/warning");
+
+        case log::Error:
+          return QIcon(":/MO/gui/problem");
+
+        case log::Debug:  // fall-through
+        case log::Info:
+        default:
+          return {};
+      }
+    }
+  }
+
   return QVariant();
 }
 
-void LogBuffer::writeNow()
+QVariant LogModel::headerData(int, Qt::Orientation, int) const
 {
-  QMutexLocker guard(&s_Mutex);
-  if (!s_Instance.isNull()) {
-    s_Instance->write();
-  }
+  return {};
 }
 
-void LogBuffer::cleanQuit()
-{
-  QMutexLocker guard(&s_Mutex);
-  if (!s_Instance.isNull()) {
-    s_Instance->m_ShutDown = true;
-  }
-}
-
-void log(const char *format, ...)
+void vlog(const char *format, ...)
 {
   va_list argList;
   va_start(argList, format);
@@ -267,12 +168,4 @@ void log(const char *format, ...)
   qCritical("%s", buffer);
 
   va_end(argList);
-}
-
-QString LogBuffer::Message::toString() const
-{
-  return QString("%1 [%2] %3")
-      .arg(time.toString())
-      .arg(msgTypeID(type))
-      .arg(message);
 }

@@ -357,17 +357,10 @@ MainWindow::MainWindow(QSettings &initSettings
 
   m_CategoryFactory.loadCategories();
 
-  ui->logList->setModel(LogBuffer::instance());
-  ui->logList->setColumnWidth(0, 100);
-  ui->logList->setAutoScroll(true);
-  ui->logList->scrollToBottom();
-  ui->logList->addAction(ui->actionCopy_Log_to_Clipboard);
+  setupLogList();
+
   int splitterSize = this->size().height(); // actually total window size, but the splitter doesn't seem to return the true value
   ui->topLevelSplitter->setSizes(QList<int>() << splitterSize - 100 << 100);
-  connect(ui->logList->model(), SIGNAL(rowsInserted(const QModelIndex &, int, int)),
-          ui->logList, SLOT(scrollToBottom()));
-  connect(ui->logList->model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)),
-          ui->logList, SLOT(scrollToBottom()));
 
   updateProblemsButton();
 
@@ -591,6 +584,30 @@ MainWindow::MainWindow(QSettings &initSettings
   resetActionIcons();
   updatePluginCount();
   updateModCount();
+}
+
+void MainWindow::setupLogList()
+{
+  ui->logList->setModel(&LogModel::instance());
+
+  const int timestampWidth =
+    QFontMetrics(ui->logList->font()).width("00:00:00.000");
+
+  ui->logList->header()->setMinimumSectionSize(0);
+  ui->logList->header()->resizeSection(0, 20);
+  ui->logList->header()->resizeSection(1, timestampWidth + 8);
+
+  ui->logList->setAutoScroll(true);
+  ui->logList->scrollToBottom();
+  ui->logList->addAction(ui->actionCopy_Log_to_Clipboard);
+
+  connect(
+    ui->logList->model(), SIGNAL(rowsInserted(const QModelIndex &, int, int)),
+    ui->logList, SLOT(scrollToBottom()));
+
+  connect(
+    ui->logList->model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)),
+    ui->logList, SLOT(scrollToBottom()));
 }
 
 void MainWindow::resetActionIcons()

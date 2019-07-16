@@ -103,7 +103,7 @@ public:
       m_OriginsNameMap.erase(iter);
       m_OriginsNameMap[newName] = idx;
     } else {
-      log("failed to change name lookup from %ls to %ls", oldName.c_str(), newName.c_str());
+      vlog("failed to change name lookup from %ls to %ls", oldName.c_str(), newName.c_str());
     }
   }
 
@@ -714,12 +714,12 @@ void DirectoryEntry::removeFile(FileEntry::Index index)
     if (iter != m_Files.end()) {
       m_Files.erase(iter);
     } else {
-      log("file \"%ls\" not in directory \"%ls\"",
+      vlog("file \"%ls\" not in directory \"%ls\"",
           m_FileRegister->getFile(index)->getName().c_str(),
           this->getName().c_str());
     }
   } else {
-    log("file \"%ls\" not in directory \"%ls\", directory empty",
+    vlog("file \"%ls\" not in directory \"%ls\", directory empty",
         m_FileRegister->getFile(index)->getName().c_str(),
         this->getName().c_str());
   }
@@ -844,7 +844,7 @@ const FileEntry::Ptr DirectoryEntry::searchFile(const std::wstring &path, const 
     DirectoryEntry *temp = findSubDirectory(pathComponent);
     if (temp != nullptr) {
       if (len >= path.size()) {
-        log("unexpected end of path");
+        vlog("unexpected end of path");
         return FileEntry::Ptr();
       }
       return temp->searchFile(path.substr(len + 1), directory);
@@ -988,7 +988,7 @@ bool FileRegister::removeFile(FileEntry::Index index)
     m_Files.erase(index);
     return true;
   } else {
-    log("invalid file index for remove: %lu", index);
+    vlog("invalid file index for remove: %lu", index);
     return false;
   }
 }
@@ -1002,7 +1002,7 @@ void FileRegister::removeOrigin(FileEntry::Index index, int originID)
       m_Files.erase(iter);
     }
   } else {
-    log("invalid file index for remove (for origin): %lu", index);
+    vlog("invalid file index for remove (for origin): %lu", index);
   }
 }
 

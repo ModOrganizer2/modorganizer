@@ -1402,6 +1402,9 @@ p, li { white-space: pre-wrap; }
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QDockWidget" name="logDock">
+   <property name="features">
+    <set>QDockWidget::AllDockWidgetFeatures</set>
+   </property>
    <property name="windowTitle">
     <string>Log</string>
    </property>
@@ -1428,17 +1431,17 @@ p, li { white-space: pre-wrap; }
         <enum>Qt::ActionsContextMenu</enum>
        </property>
        <property name="selectionMode">
-        <enum>QAbstractItemView::NoSelection</enum>
+        <enum>QAbstractItemView::ExtendedSelection</enum>
+       </property>
+       <property name="rootIsDecorated">
+        <bool>false</bool>
        </property>
        <property name="uniformRowHeights">
         <bool>true</bool>
        </property>
-       <property name="itemsExpandable">
+       <attribute name="headerVisible">
         <bool>false</bool>
-       </property>
-       <property name="headerHidden">
-        <bool>true</bool>
-       </property>
+       </attribute>
       </widget>
      </item>
     </layout>

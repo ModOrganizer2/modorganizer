@@ -520,6 +520,9 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 FIND_PACKAGE(zlib REQUIRED)
 # TODO FindZlib doesn't find the static zlib library
 
+# fmt
+find_package(fmt REQUIRED)
+
 INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/bsatk/src
                     ${project_path}/esptk/src
@@ -551,10 +554,11 @@ ELSE()
 ENDIF()
 
 ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIS} ${organizer_RCS} ${organizer_QRCS} ${organizer_translations_qm})
+
 TARGET_LINK_LIBRARIES(ModOrganizer
                       Qt5::Widgets Qt5::WinExtras Qt5::WebEngineWidgets Qt5::Quick
                       Qt5::Qml Qt5::QuickWidgets Qt5::Network Qt5::WebSockets
-                      ${Boost_LIBRARIES}
+                      ${Boost_LIBRARIES} fmt::fmt
                       zlibstatic
                       uibase esptk bsatk githubpp
                       ${usvfs_name}
