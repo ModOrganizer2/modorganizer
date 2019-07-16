@@ -59,7 +59,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "installationmanager.h"
 #include "lockeddialog.h"
 #include "waitingonclosedialog.h"
-#include "logbuffer.h"
+#include "loglist.h"
 #include "downloadlistsortproxy.h"
 #include "motddialog.h"
 #include "filedialogmemory.h"

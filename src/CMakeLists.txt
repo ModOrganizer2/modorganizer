@@ -73,7 +73,7 @@ SET(organizer_SRCS
     mainwindow.cpp
     main.cpp
     loghighlighter.cpp
-    logbuffer.cpp
+    loglist.cpp
     lockeddialogbase.cpp
     lockeddialog.cpp
     waitingonclosedialog.cpp
@@ -181,7 +181,7 @@ SET(organizer_HDRS
     messagedialog.h
     mainwindow.h
     loghighlighter.h
-    logbuffer.h
+    loglist.h
     lockeddialogbase.h
     lockeddialog.h
     waitingonclosedialog.h
@@ -436,7 +436,7 @@ set(widgets
 	filterwidget
 	icondelegate
 	lcdnumber
-	logbuffer
+	loglist
 	loghighlighter
 	modflagicondelegate
 	modidlineedit

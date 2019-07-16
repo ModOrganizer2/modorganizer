@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "logbuffer.h"
+#include "loglist.h"
 #include <scopeguard.h>
 #include <report.h>
 #include <log.h>

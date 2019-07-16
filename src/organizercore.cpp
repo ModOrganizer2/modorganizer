@@ -14,7 +14,6 @@
 #include "plugincontainer.h"
 #include "pluginlistsortproxy.h"
 #include "profile.h"
-#include "logbuffer.h"
 #include "credentialsdialog.h"
 #include "filedialogmemory.h"
 #include "modinfodialog.h"
