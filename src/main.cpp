@@ -253,17 +253,17 @@ QString determineProfile(QStringList &arguments, const QSettings &settings)
   { // see if there is a profile on the command line
     int profileIndex = arguments.indexOf("-p", 1);
     if ((profileIndex != -1) && (profileIndex < arguments.size() - 1)) {
-      qDebug("profile overwritten on command line");
+      log::debug("profile overwritten on command line");
       selectedProfileName = arguments.at(profileIndex + 1);
     }
     arguments.removeAt(profileIndex);
     arguments.removeAt(profileIndex);
   }
   if (selectedProfileName.isEmpty()) {
-    qDebug("no configured profile");
+    log::debug("no configured profile");
     selectedProfileName = "Default";
   } else {
-    qDebug("configured profile: %s", qUtf8Printable(selectedProfileName));
+    log::debug("configured profile: {}", selectedProfileName);
   }
 
   return selectedProfileName;
@@ -425,8 +425,7 @@ void setupPath()
 {
   static const int BUFSIZE = 4096;
 
-  qDebug("MO at: %s", qUtf8Printable(QDir::toNativeSeparators(
-                          QCoreApplication::applicationDirPath())));
+  log::debug("MO at {}", QCoreApplication::applicationDirPath());
 
   QCoreApplication::setLibraryPaths(QStringList(QCoreApplication::applicationDirPath() + "/dlls") + QCoreApplication::libraryPaths());
 
@@ -447,7 +446,7 @@ void setupPath()
 
 void preloadDll(const QString& filename)
 {
-  qDebug().nospace() << "preloading " << filename;
+  log::debug("preloading {}", filename);
 
   if (GetModuleHandleW(filename.toStdWString().c_str())) {
     // already loaded, this can happen when "restarting" MO by switching
@@ -490,41 +489,43 @@ static QString getVersionDisplayString()
   return createVersionInfo().displayString(3);
 }
 
+void dumpEnvironment()
+{
+  env::Environment env;
+
+  log::debug("windows: {}", env.windowsInfo().toString());
+
+  if (env.windowsInfo().compatibilityMode()) {
+    log::warn("MO seems to be running in compatibility mode");
+  }
+
+  log::debug("security products:");
+  for (const auto& sp : env.securityProducts()) {
+    log::debug("  . {}", sp.toString());
+  }
+
+  log::debug("modules loaded in process:");
+  for (const auto& m : env.loadedModules()) {
+    log::debug(" . {}", m.toString());
+  }
+}
+
 int runApplication(MOApplication &application, SingleInstance &instance,
                    const QString &splashPath)
 {
 
-  qDebug().nospace()
-    << "Starting Mod Organizer version "
-    << getVersionDisplayString() << " revision " << GITID;
+  log::info(
+    "Starting Mod Organizer version {} revision {}",
+    getVersionDisplayString(), GITID);
 
 #if !defined(QT_NO_SSL)
   preloadSsl();
-  qDebug("ssl support: %d", QSslSocket::supportsSsl());
+  log::info("ssl support: {}", QSslSocket::supportsSsl());
 #else
-  qDebug("non-ssl build");
+  log::info("non-ssl build");
 #endif
 
-  {
-    env::Environment env;
-
-    qDebug().nospace().noquote()
-      << "windows: " << env.windowsInfo().toString();
-
-    if (env.windowsInfo().compatibilityMode()) {
-      qWarning() << "MO seems to be running in compatibility mode";
-    }
-
-    qDebug().nospace().noquote() << "security products:";
-    for (const auto& sp : env.securityProducts()) {
-      qDebug().nospace().noquote() << " . " << sp.toString();
-    }
-
-    qDebug() << "modules loaded in process:";
-    for (const auto& m : env.loadedModules()) {
-      qDebug().nospace().noquote() << " . " << m.toString();
-    }
-  }
+  dumpEnvironment();
 
   QString dataPath = application.property("dataPath").toString();
   qDebug("data path: %s", qUtf8Printable(dataPath));
@@ -795,17 +796,18 @@ void qtLogCallback(
   }
 }
 
-void initLogging(const QString& logFile)
+void initLogging()
 {
   LogModel::create();
 
-  log::init(
-    true, MOBase::log::File::rotating(logFile.toStdWString(), 5*1024*1024, 5),
-    MOBase::log::Debug, "%^[%m-%d %H:%M:%S.%e %L] %v%$",
+  log::createDefault(MOBase::log::Debug, "%^[%m-%d %H:%M:%S.%e %L] %v%$");
+
+  log::getDefault().setCallback(
     [](log::Entry e){ LogModel::instance().add(e); });
 
   qInstallMessageHandler(qtLogCallback);
 }
+
 
 int main(int argc, char *argv[])
 {
@@ -819,6 +821,8 @@ int main(int argc, char *argv[])
       return doCoreDump(env::CoreDumpTypes::Full);
     }
   }
+
+  initLogging();
 
   //Make sure the configured temp folder exists
   QDir tempDir = QDir::temp();
@@ -882,7 +886,11 @@ int main(int argc, char *argv[])
     // initialize dump collection only after "dataPath" since the crashes are stored under it
     prevUnhandledExceptionFilter = SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
-    initLogging(qApp->property("dataPath").toString() + "/logs/mo_interface.log");
+    const auto logFile =
+      qApp->property("dataPath").toString() + "/logs/mo_interface.log";
+
+    log::getDefault().setFile(MOBase::log::File::rotating(
+      logFile.toStdWString(), 5*1024*1024, 5));
 
     QString splash = dataPath + "/splash.png";
     if (!QFile::exists(dataPath + "/splash.png")) {
