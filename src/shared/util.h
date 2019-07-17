@@ -54,6 +54,20 @@ bool CaseInsensitiveEqual(const std::wstring &lhs, const std::wstring &rhs);
 namespace env
 {
 
+class Console
+{
+public:
+  Console();
+  ~Console();
+
+private:
+  bool m_hasConsole;
+  FILE* m_in;
+  FILE* m_out;
+  FILE* m_err;
+};
+
+
 // an application shortcut that can be either on the desktop or the start menu
 //
 class Shortcut

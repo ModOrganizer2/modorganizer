@@ -732,46 +732,9 @@ int runApplication(MOApplication &application, SingleInstance &instance,
   }
 }
 
-class Console
-{
-public:
-  Console()
-  {
-    // open a console
-    AllocConsole();
-
-    // redirect stdin, stdout and stderr to it
-    freopen_s(&m_in, "CONIN$", "r", stdin);
-    freopen_s(&m_out, "CONOUT$", "w", stdout);
-    freopen_s(&m_err, "CONOUT$", "w", stderr);
-  }
-
-  ~Console()
-  {
-    // close redirected handles
-    std::fclose(m_err);
-    std::fclose(m_out);
-    std::fclose(m_in);
-
-    // close console
-    FreeConsole();
-
-    // redirect stdin, stdout and stderr to NUL, don't bother closing the
-    // handles
-    freopen_s(&m_in, "NUL", "r", stdin);
-    freopen_s(&m_out, "NUL", "w", stdout);
-    freopen_s(&m_err, "NUL", "w", stderr);
-  }
-
-private:
-  FILE* m_in = nullptr;
-  FILE* m_out = nullptr;
-  FILE* m_err = nullptr;
-};
-
 int doCoreDump(env::CoreDumpTypes type)
 {
-  Console c;
+  env::Console c;
 
   // dump
   const auto b = env::coredumpOther(type);

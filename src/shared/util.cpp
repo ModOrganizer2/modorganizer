@@ -441,6 +441,49 @@ private:
 };
 
 
+Console::Console()
+  : m_hasConsole(false), m_in(nullptr), m_out(nullptr), m_err(nullptr)
+{
+  // open a console
+  if (!AllocConsole()) {
+    // failed, ignore
+  }
+
+  m_hasConsole = true;
+
+  // redirect stdin, stdout and stderr to it
+  freopen_s(&m_in, "CONIN$", "r", stdin);
+  freopen_s(&m_out, "CONOUT$", "w", stdout);
+  freopen_s(&m_err, "CONOUT$", "w", stderr);
+}
+
+Console::~Console()
+{
+  // close redirected handles and redirect standard stream to NUL in case
+  // they're used after this
+
+  if (m_err) {
+    std::fclose(m_err);
+    freopen_s(&m_err, "NUL", "w", stderr);
+  }
+
+  if (m_out) {
+    std::fclose(m_out);
+    freopen_s(&m_out, "NUL", "w", stdout);
+  }
+
+  if (m_in) {
+    std::fclose(m_in);
+    freopen_s(&m_in, "NUL", "r", stdin);
+  }
+
+  // close console
+  if (m_hasConsole) {
+    FreeConsole();
+  }
+}
+
+
 Shortcut::Shortcut()
   : m_iconIndex(0)
 {
