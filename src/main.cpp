@@ -503,6 +503,27 @@ void dumpEnvironment()
   }
 }
 
+void dumpSettings(QSettings& settings)
+{
+  static QStringList ignore({
+    "username", "password", "nexus_api_key"
+  });
+
+  log::debug("settings:");
+
+  settings.beginGroup("Settings");
+
+  for (auto k : settings.allKeys()) {
+    if (ignore.contains(k, Qt::CaseInsensitive)) {
+      continue;
+    }
+
+    log::debug("  . {}={}", k, settings.value(k).toString());
+  }
+
+  settings.endGroup();
+}
+
 int runApplication(MOApplication &application, SingleInstance &instance,
                    const QString &splashPath)
 {
@@ -538,22 +559,12 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     Settings settings(initSettings);
     log::getDefault().setLevel(settings.logLevel());
 
-    dumpEnvironment();
-
     // global crashDumpType sits in OrganizerCore to make a bit less ugly to
     // update it when the settings are changed during runtime
     OrganizerCore::setGlobalCrashDumpsType(settings.crashDumpsType());
 
-    log::debug("Loaded settings:");
-
-    initSettings.beginGroup("Settings");
-    for (auto k : initSettings.allKeys()) {
-      if (!k.contains("username") && !k.contains("password") && !k.contains("nexus_api_key")) {
-        log::debug("  {}={}", k, initSettings.value(k).toString());
-      }
-    }
-    initSettings.endGroup();
-
+    dumpEnvironment();
+    dumpSettings(initSettings);
 
     log::debug("initializing core");
     OrganizerCore organizer(settings);

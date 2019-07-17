@@ -214,6 +214,10 @@ private:
    * called when MO is still using the old custom executables from 2.2.0
    **/
   void upgradeFromCustom(const MOBase::IPluginGame* game);
+
+  // logs all executables
+  //
+  void dump() const;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Executable::Flags)

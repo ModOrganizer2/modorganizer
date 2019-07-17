@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "iplugingame.h"
 #include "utility.h"
+#include <log.h>
 
 #include <QFileInfo>
 #include <QDir>
@@ -65,7 +66,7 @@ bool ExecutablesList::empty() const
 
 void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
 {
-  qDebug("setting up configured executables");
+  log::debug("loading executables");
 
   m_Executables.clear();
 
@@ -103,6 +104,8 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
 
   if (needsUpgrade)
     upgradeFromCustom(game);
+
+  dump();
 }
 
 void ExecutablesList::store(QSettings& settings)
@@ -329,6 +332,31 @@ void ExecutablesList::upgradeFromCustom(MOBase::IPluginGame const *game)
     if (itor->workingDirectory().isEmpty()) {
       itor->workingDirectory(exe.workingDirectory());
     }
+  }
+}
+
+void ExecutablesList::dump() const
+{
+  for (const auto& e : m_Executables) {
+    QStringList flags;
+
+    if (e.flags() & Executable::ShowInToolbar) {
+      flags.push_back("toolbar");
+    }
+
+    if (e.flags() & Executable::UseApplicationIcon) {
+      flags.push_back("icon");
+    }
+
+    log::debug(
+      " . executable '{}'\n"
+      "    binary: {}\n"
+      "    arguments: {}\n"
+      "    steam ID: {}\n"
+      "    directory: {}\n"
+      "    flags: {} ({})",
+      e.title(), e.binaryInfo().absoluteFilePath(), e.arguments(),
+      e.steamAppID(), e.workingDirectory(), flags.join("|"), e.flags());
   }
 }
 
