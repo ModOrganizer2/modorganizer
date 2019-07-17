@@ -21,6 +21,7 @@
 #include <delayedfilewriter.h>
 #include <boost/signals2.hpp>
 #include "executableinfo.h"
+#include <log.h>
 
 class ModListSortProxy;
 class PluginListSortProxy;
@@ -191,7 +192,9 @@ public:
 
   void prepareVFS();
 
-  void updateVFSParams(int logLevel, int crashDumpsType, QString executableBlacklist);
+  void updateVFSParams(
+    MOBase::log::Levels logLevel, int crashDumpsType,
+    QString executableBlacklist);
 
   bool cycleDiagnostics();
 

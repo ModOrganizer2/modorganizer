@@ -32,7 +32,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <qstandardpaths.h>
 
 static const char SHMID[] = "mod_organizer_instance";
-
+using namespace MOBase;
 
 std::string to_hex(void *bufferIn, size_t bufferSize)
 {
@@ -90,15 +90,16 @@ void LogWorker::exit()
   m_QuitRequested = true;
 }
 
-LogLevel logLevel(int level)
+LogLevel toUsvfsLogLevel(log::Levels level)
 {
-  switch (static_cast<LogLevel>(level)) {
-    case LogLevel::Info:
+  switch (level) {
+    case log::Info:
       return LogLevel::Info;
-    case LogLevel::Warning:
+    case log::Warning:
       return LogLevel::Warning;
-    case LogLevel::Error:
+    case log::Error:
       return LogLevel::Error;
+    case log::Debug:  // fall-through
     default:
       return LogLevel::Debug;
   }
@@ -121,7 +122,7 @@ CrashDumpsType crashDumpsType(int type)
 UsvfsConnector::UsvfsConnector()
 {
   USVFSParameters params;
-  LogLevel level = logLevel(Settings::instance().logLevel());
+  LogLevel level = toUsvfsLogLevel(Settings::instance().logLevel());
   CrashDumpsType dumpType = crashDumpsType(Settings::instance().crashDumpsType());
 
   std::string dumpPath = MOShared::ToString(OrganizerCore::crashDumpsPath(), true);
@@ -205,9 +206,10 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
   */
 }
 
-void UsvfsConnector::updateParams(int logLevel, int crashDumpsType, QString executableBlacklist) 
+void UsvfsConnector::updateParams(
+  MOBase::log::Levels logLevel, int crashDumpsType, QString executableBlacklist)
 {
-  USVFSUpdateParams(::logLevel(logLevel), ::crashDumpsType(crashDumpsType));
+  USVFSUpdateParams(toUsvfsLogLevel(logLevel), ::crashDumpsType(crashDumpsType));
   ClearExecutableBlacklist();
   for (auto exec : executableBlacklist.split(";")) {
     std::wstring buf = exec.toStdWString();

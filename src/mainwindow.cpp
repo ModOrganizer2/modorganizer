@@ -357,7 +357,7 @@ MainWindow::MainWindow(QSettings &initSettings
 
   m_CategoryFactory.loadCategories();
 
-  ui->logList->addAction(ui->actionCopy_Log_to_Clipboard);
+  setupLogMenu();
 
   int splitterSize = this->size().height(); // actually total window size, but the splitter doesn't seem to return the true value
   ui->topLevelSplitter->setSizes(QList<int>() << splitterSize - 100 << 100);
@@ -810,6 +810,36 @@ void MainWindow::setupActionMenu(QAction* a)
   auto* w = ui->toolBar->widgetForAction(a);
   if (auto* tb=dynamic_cast<QToolButton*>(w))
     tb->setPopupMode(QToolButton::InstantPopup);
+}
+
+void MainWindow::setupLogMenu()
+{
+  connect(ui->logList, &QWidget::customContextMenuRequested, [&](auto&& pos){
+    auto* menu = new QMenu(ui->logList);
+
+    menu->addAction(tr("Copy& Log"), [&]{ ui->logList->copyToClipboard(); });
+    menu->addSeparator();
+
+    auto* levels = new QMenu(tr("&Level"));
+    menu->addMenu(levels);
+
+    auto* ag = new QActionGroup(menu);
+
+    auto addAction = [&](auto&& text, auto&& level) {
+      auto* a = new QAction(text, ag);
+      a->setCheckable(true);
+      a->setChecked(log::getDefault().level() == level);
+      connect(a, &QAction::triggered, [this, level]{ setLogLevel(level); });
+      levels->addAction(a);
+    };
+
+    addAction(tr("&Errors"), log::Error);
+    addAction(tr("&Warnings"), log::Warning);
+    addAction(tr("&Info"), log::Info);
+    addAction(tr("&Debug"), log::Debug);
+
+    menu->popup(ui->logList->viewport()->mapToGlobal(pos));
+  });
 }
 
 void MainWindow::updatePinnedExecutables()
@@ -5287,12 +5317,23 @@ void MainWindow::on_actionSettings_triggered()
   m_statusBar->checkSettings(m_OrganizerCore.settings());
   updateDownloadView();
 
-  m_OrganizerCore.updateVFSParams(settings.logLevel(), settings.crashDumpsType(), settings.executablesBlacklist());
+  setLogLevel(settings.logLevel());
   m_OrganizerCore.cycleDiagnostics();
 
   toggleMO2EndorseState();
 }
 
+void MainWindow::setLogLevel(log::Levels level)
+{
+  auto& s = m_OrganizerCore.settings();
+
+  s.setLogLevel(level);
+
+  m_OrganizerCore.updateVFSParams(
+    s.logLevel(), s.crashDumpsType(), s.executablesBlacklist());
+
+  log::getDefault().setLevel(s.logLevel());
+}
 
 void MainWindow::on_actionNexus_triggered()
 {
@@ -6811,7 +6852,7 @@ void MainWindow::on_restoreModsButton_clicked()
   }
 }
 
-void MainWindow::on_actionCopy_Log_to_Clipboard_triggered()
+void MainWindow::on_actionLogCopy_triggered()
 {
   ui->logList->copyToClipboard();
 }

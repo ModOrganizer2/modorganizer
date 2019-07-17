@@ -726,7 +726,9 @@ void OrganizerCore::prepareVFS()
   m_USVFS.updateMapping(fileMapping(m_CurrentProfile->name(), QString()));
 }
 
-void OrganizerCore::updateVFSParams(int logLevel, int crashDumpsType, QString executableBlacklist) {
+void OrganizerCore::updateVFSParams(
+  log::Levels logLevel, int crashDumpsType, QString executableBlacklist)
+{
   setGlobalCrashDumpsType(crashDumpsType);
   m_USVFS.updateParams(logLevel, crashDumpsType, executableBlacklist);
 }

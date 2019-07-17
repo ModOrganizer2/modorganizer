@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SETTINGS_H
 
 #include "loadmechanism.h"
+#include <log.h>
 
 #include <QList>
 #include <QMap>
@@ -232,7 +233,12 @@ public:
   /**
    * @return the configured log level
    */
-  int logLevel() const;
+  MOBase::log::Levels logLevel() const;
+
+  /**
+   * sets the log level setting
+   */
+  void setLogLevel(MOBase::log::Levels level);
 
   /**
   * @return the configured crash dumps type
@@ -481,6 +487,8 @@ private:
     QComboBox *m_dumpsTypeBox;
     QSpinBox *m_dumpsMaxEdit;
     QLabel *m_diagnosticsExplainedLabel;
+
+    void setLevelsBox();
   };
 
   /** Display/store the configuration in the 'nexus' tab of the settings dialogue */

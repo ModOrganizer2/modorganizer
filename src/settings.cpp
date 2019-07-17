@@ -415,9 +415,14 @@ bool Settings::offlineMode() const
   return m_Settings.value("Settings/offline_mode", false).toBool();
 }
 
-int Settings::logLevel() const
+log::Levels Settings::logLevel() const
 {
-  return m_Settings.value("Settings/log_level", static_cast<int>(LogLevel::Info)).toInt();
+  return static_cast<log::Levels>(m_Settings.value("Settings/log_level").toInt());
+}
+
+void Settings::setLogLevel(log::Levels level)
+{
+  m_Settings.setValue("Settings/log_level", static_cast<int>(level));
 }
 
 int Settings::crashDumpsType() const
@@ -1000,7 +1005,7 @@ Settings::DiagnosticsTab::DiagnosticsTab(Settings *m_parent, SettingsDialog &m_d
   , m_dumpsMaxEdit(m_dialog.findChild<QSpinBox *>("dumpsMaxEdit"))
   , m_diagnosticsExplainedLabel(m_dialog.findChild<QLabel *>("diagnosticsExplainedLabel"))
 {
-  m_logLevelBox->setCurrentIndex(m_parent->logLevel());
+  setLevelsBox();
   m_dumpsTypeBox->setCurrentIndex(m_parent->crashDumpsType());
   m_dumpsMaxEdit->setValue(m_parent->crashDumpsMax());
   QString logsPath = qApp->property("dataPath").toString()
@@ -1016,9 +1021,26 @@ Settings::DiagnosticsTab::DiagnosticsTab(Settings *m_parent, SettingsDialog &m_d
 
 void Settings::DiagnosticsTab::update()
 {
-  m_Settings.setValue("Settings/log_level", m_logLevelBox->currentIndex());
+  m_Settings.setValue("Settings/log_level", m_logLevelBox->currentData().toInt());
   m_Settings.setValue("Settings/crash_dumps_type", m_dumpsTypeBox->currentIndex());
   m_Settings.setValue("Settings/crash_dumps_max", m_dumpsMaxEdit->value());
+}
+
+void Settings::DiagnosticsTab::setLevelsBox()
+{
+  m_logLevelBox->clear();
+
+  m_logLevelBox->addItem(tr("Debug"), log::Debug);
+  m_logLevelBox->addItem(tr("Info (recommended)"), log::Info);
+  m_logLevelBox->addItem(tr("Warning"), log::Warning);
+  m_logLevelBox->addItem(tr("Error"), log::Error);
+
+  for (int i=0; i<m_logLevelBox->count(); ++i) {
+    if (m_logLevelBox->itemData(i) == m_parent->logLevel()) {
+      m_logLevelBox->setCurrentIndex(i);
+      break;
+    }
+  }
 }
 
 Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)

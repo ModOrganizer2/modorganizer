@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 #include <QList>
 #include <usvfsparameters.h>
+#include <log.h>
 #include "executableinfo.h"
 
 
@@ -84,7 +85,11 @@ public:
   ~UsvfsConnector();
 
   void updateMapping(const MappingType &mapping);
-  void updateParams(int logLevel, int crashDumpsType, QString executableBlacklist);
+
+  void updateParams(
+    MOBase::log::Levels logLevel, int crashDumpsType,
+    QString executableBlacklist);
+
   void updateForcedLibraries(const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries);
 
 private:
