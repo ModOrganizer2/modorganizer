@@ -1492,11 +1492,11 @@ QString WindowsInfo::toString() const
   const QString real = m_real.toString();
 
   // version
-  sl.push_back("version: " + reported);
+  sl.push_back("version " + reported);
 
   // real version if different
   if (compatibilityMode()) {
-    sl.push_back("real version: " + real);
+    sl.push_back("real version " + real);
   }
 
   // build.UBR, such as 17763.557

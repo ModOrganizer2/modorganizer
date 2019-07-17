@@ -268,12 +268,12 @@ bool checkService()
 }
 
 
-OrganizerCore::OrganizerCore(const QSettings &initSettings)
+OrganizerCore::OrganizerCore(Settings &settings)
   : m_UserInterface(nullptr)
   , m_PluginContainer(nullptr)
   , m_GameName()
   , m_CurrentProfile(nullptr)
-  , m_Settings(initSettings)
+  , m_Settings(settings)
   , m_Updater(NexusInterface::instance(m_PluginContainer))
   , m_AboutToRun()
   , m_FinishedRun()
@@ -294,7 +294,7 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
 
   NexusInterface::instance(m_PluginContainer)->setCacheDirectory(m_Settings.getCacheDirectory());
 
-  MOBase::QuestionBoxMemory::init(initSettings.fileName());
+  MOBase::QuestionBoxMemory::init(m_Settings.directInterface().fileName());
 
   m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
   m_InstallationManager.setDownloadDirectory(m_Settings.getDownloadDirectory());

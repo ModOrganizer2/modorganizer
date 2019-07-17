@@ -97,7 +97,7 @@ public:
 
   static bool isNxmLink(const QString &link) { return link.startsWith("nxm://", Qt::CaseInsensitive); }
 
-  OrganizerCore(const QSettings &initSettings);
+  OrganizerCore(Settings &settings);
 
   ~OrganizerCore();
 
@@ -336,7 +336,7 @@ private:
 
   Profile *m_CurrentProfile;
 
-  Settings m_Settings;
+  Settings& m_Settings;
 
   SelfUpdater m_Updater;
 
