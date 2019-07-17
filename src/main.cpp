@@ -529,7 +529,7 @@ void checkNahimic(const env::Environment& e)
   for (auto&& m : e.loadedModules()) {
     const QFileInfo file(m.path());
 
-    if (file.fileName().compare("NahimicOSD.dll", Qt::CaseInsensitive)) {
+    if (file.fileName().compare("NahimicOSD.dll", Qt::CaseInsensitive) == 0) {
       log::warn(
         "NahimicOSD.dll is loaded. Nahimic is known to cause issues with "
         "Mod Organizer, such as freezing or blank windows. Consider "

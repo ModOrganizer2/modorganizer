@@ -401,6 +401,28 @@ private:
 };
 
 
+class Metrics
+{
+public:
+  struct Display
+  {
+    int resX=0, resY=0, dpi=0;
+    bool primary=false;
+    int refreshRate = 0;
+    QString monitor, adapter;
+
+    QString toString() const;
+  };
+
+  Metrics();
+
+  const std::vector<Display>& displays() const;
+
+private:
+  std::vector<Display> m_displays;
+};
+
+
 // represents the process's environment
 //
 class Environment
@@ -420,6 +442,10 @@ public:
   //
   const std::vector<SecurityProduct>& securityProducts() const;
 
+  // information about displays
+  //
+  const Metrics& metrics() const;
+
   // logs the environment
   //
   void dump() const;
@@ -428,6 +454,7 @@ private:
   std::vector<Module> m_modules;
   WindowsInfo m_windows;
   std::vector<SecurityProduct> m_security;
+  Metrics m_metrics;
 
   std::vector<Module> getLoadedModules() const;
   std::vector<SecurityProduct> getSecurityProducts() const;
