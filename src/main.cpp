@@ -505,7 +505,7 @@ void dumpEnvironment()
 
 void dumpSettings(QSettings& settings)
 {
-  static QStringList ignore({
+  static const QStringList ignore({
     "username", "password", "nexus_api_key"
   });
 
@@ -524,11 +524,33 @@ void dumpSettings(QSettings& settings)
   settings.endGroup();
 }
 
+void sanityChecks()
+{
+  // files that are likely to be eaten
+  static const QStringList files({
+    "helper.exe", "nxmhandler.exe",
+    "usvfs_proxy_x64.exe", "usvfs_proxy_x86.exe",
+    "usvfs_x64.dll", "usvfs_x86.dll"
+  });
+
+  const auto dir = QCoreApplication::applicationDirPath();
+
+  for (const auto& name : files) {
+    const QFileInfo file(dir + QDir::separator() + name);
+    if (!file.exists()) {
+      log::warn(
+        "'{}' seems to be missing, an antivirus may have deleted it",
+        file.absoluteFilePath());
+    }
+  }
+}
+
+
 int runApplication(MOApplication &application, SingleInstance &instance,
                    const QString &splashPath)
 {
   log::info(
-    "Starting Mod Organizer version {} revision {} in {}",
+    "starting Mod Organizer version {} revision {} in {}",
     getVersionDisplayString(), GITID, QCoreApplication::applicationDirPath());
 
   preloadSsl();
@@ -565,6 +587,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
     dumpEnvironment();
     dumpSettings(initSettings);
+    sanityChecks();
 
     log::debug("initializing core");
     OrganizerCore organizer(settings);
