@@ -1976,9 +1976,7 @@ QString SecurityProduct::toString() const
     s += "(" + ps.join("|") + ")";
   }
 
-  if (m_active) {
-    s += ", active";
-  } else {
+  if (!m_active) {
     s += ", inactive";
   }
 
