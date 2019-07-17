@@ -133,9 +133,9 @@ static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *except
   int dumpRes =
     CreateMiniDump(exceptionPtrs, OrganizerCore::getGlobalCrashDumpsType(), dumpPath.c_str());
   if (!dumpRes)
-    qCritical("ModOrganizer has crashed, crash dump created.");
+    log::error("ModOrganizer has crashed, crash dump created.");
   else
-    qCritical("ModOrganizer has crashed, CreateMiniDump failed (%d, error %lu).", dumpRes, GetLastError());
+    log::error("ModOrganizer has crashed, CreateMiniDump failed ({}, error {}).", dumpRes, GetLastError());
 
   if (prevUnhandledExceptionFilter)
     return prevUnhandledExceptionFilter(exceptionPtrs);
@@ -456,16 +456,13 @@ void preloadDll(const QString& filename)
   const auto dllPath = appPath + "\\" + filename;
 
   if (!QFile::exists(dllPath)) {
-    qWarning().nospace() << dllPath << "not found";
+    log::warn("{} not found", dllPath);
     return;
   }
 
   if (!LoadLibraryW(dllPath.toStdWString().c_str())) {
     const auto e = GetLastError();
-
-    qWarning().nospace()
-      << "failed to load " << dllPath << ": "
-      << formatSystemMessage(e);
+    log::warn("failed to load {}: {}", dllPath, formatSystemMessageQ(e));
   }
 }
 

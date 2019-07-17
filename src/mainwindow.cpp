@@ -833,10 +833,10 @@ void MainWindow::setupLogMenu()
       levels->addAction(a);
     };
 
-    addAction(tr("&Errors"), log::Error);
-    addAction(tr("&Warnings"), log::Warning);
-    addAction(tr("&Info"), log::Info);
     addAction(tr("&Debug"), log::Debug);
+    addAction(tr("&Info"), log::Info);
+    addAction(tr("&Warnings"), log::Warning);
+    addAction(tr("&Errors"), log::Error);
 
     menu->popup(ui->logList->viewport()->mapToGlobal(pos));
   });
