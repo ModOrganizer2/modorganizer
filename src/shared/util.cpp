@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "executableslist.h"
 #include "instancemanager.h"
 #include <utility.h>
+#include <log.h>
 
 #include <sstream>
 #include <locale>
@@ -41,8 +42,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma comment(lib, "Wbemuuid.lib")
 
-using MOBase::formatSystemMessage;
-using MOBase::formatSystemMessageQ;
+using namespace MOBase;
 namespace fs = std::filesystem;
 
 namespace MOShared {
@@ -870,7 +870,7 @@ Environment::Environment()
   m_security = getSecurityProducts();
 }
 
-const std::vector<Module>& Environment::loadedModules()
+const std::vector<Module>& Environment::loadedModules() const
 {
   return m_modules;
 }
@@ -883,6 +883,25 @@ const WindowsInfo& Environment::windowsInfo() const
 const std::vector<SecurityProduct>& Environment::securityProducts() const
 {
   return m_security;
+}
+
+void Environment::dump() const
+{
+  log::debug("windows: {}", windowsInfo().toString());
+
+  if (windowsInfo().compatibilityMode()) {
+    log::warn("MO seems to be running in compatibility mode");
+  }
+
+  log::debug("security products:");
+  for (const auto& sp : securityProducts()) {
+    log::debug("  . {}", sp.toString());
+  }
+
+  log::debug("modules loaded in process:");
+  for (const auto& m : loadedModules()) {
+    log::debug(" . {}", m.toString());
+  }
 }
 
 std::vector<Module> Environment::getLoadedModules() const

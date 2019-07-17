@@ -482,27 +482,6 @@ static QString getVersionDisplayString()
   return createVersionInfo().displayString(3);
 }
 
-void dumpEnvironment()
-{
-  env::Environment env;
-
-  log::debug("windows: {}", env.windowsInfo().toString());
-
-  if (env.windowsInfo().compatibilityMode()) {
-    log::warn("MO seems to be running in compatibility mode");
-  }
-
-  log::debug("security products:");
-  for (const auto& sp : env.securityProducts()) {
-    log::debug("  . {}", sp.toString());
-  }
-
-  log::debug("modules loaded in process:");
-  for (const auto& m : env.loadedModules()) {
-    log::debug(" . {}", m.toString());
-  }
-}
-
 void dumpSettings(QSettings& settings)
 {
   static const QStringList ignore({
@@ -524,7 +503,7 @@ void dumpSettings(QSettings& settings)
   settings.endGroup();
 }
 
-void sanityChecks()
+void checkMissingFiles()
 {
   // files that are likely to be eaten
   static const QStringList files({
@@ -543,6 +522,28 @@ void sanityChecks()
         file.absoluteFilePath());
     }
   }
+}
+
+void checkNahimic(const env::Environment& e)
+{
+  for (auto&& m : e.loadedModules()) {
+    const QFileInfo file(m.path());
+
+    if (file.fileName().compare("NahimicOSD.dll", Qt::CaseInsensitive)) {
+      log::warn(
+        "NahimicOSD.dll is loaded. Nahimic is known to cause issues with "
+        "Mod Organizer, such as freezing or blank windows. Consider "
+        "uninstalling it.");
+
+      break;
+    }
+  }
+}
+
+void sanityChecks(const env::Environment& e)
+{
+  checkMissingFiles();
+  checkNahimic(e);
 }
 
 
@@ -585,9 +586,11 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     // update it when the settings are changed during runtime
     OrganizerCore::setGlobalCrashDumpsType(settings.crashDumpsType());
 
-    dumpEnvironment();
+    env::Environment env;
+
+    env.dump();
     dumpSettings(initSettings);
-    sanityChecks();
+    sanityChecks(env);
 
     log::debug("initializing core");
     OrganizerCore organizer(settings);

@@ -410,7 +410,7 @@ public:
 
   // list of loaded modules in the current process
   //
-  const std::vector<Module>& loadedModules();
+  const std::vector<Module>& loadedModules() const;
 
   // information about the operating system
   //
@@ -419,6 +419,10 @@ public:
   // information about the installed security products
   //
   const std::vector<SecurityProduct>& securityProducts() const;
+
+  // logs the environment
+  //
+  void dump() const;
 
 private:
   std::vector<Module> m_modules;
