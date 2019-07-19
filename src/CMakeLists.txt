@@ -129,6 +129,12 @@ SET(organizer_SRCS
 	filerenamer.cpp
 	texteditor.cpp
 	expanderwidget.cpp
+	env.cpp
+	envmetrics.cpp
+	envmodule.cpp
+	envsecurity.cpp
+	envshortcut.cpp
+	envwindows.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -239,6 +245,12 @@ SET(organizer_HDRS
 	filerenamer.h
 	texteditor.h
 	expanderwidget.h
+	env.h
+	envmetrics.h
+	envmodule.h
+	envsecurity.h
+	envshortcut.h
+	envwindows.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -350,6 +362,15 @@ set(downloads
 	downloadmanager
 )
 
+set(env
+	env
+	envmetrics
+	envmodule
+	envsecurity
+	envshortcut
+	envwindows
+)
+
 set(executables
 	executableslist
 	editexecutablesdialog
@@ -447,8 +468,8 @@ set(widgets
 )
 
 set(src_filters
-	application core browser dialogs downloads executables locking modinfo modinfo\\dialog
-	modlist plugins previews profiles settings utilities widgets
+	application core browser dialogs downloads env executables locking modinfo
+	modinfo\\dialog modlist plugins previews profiles settings utilities widgets
 )
 
 foreach(filter in list ${src_filters})

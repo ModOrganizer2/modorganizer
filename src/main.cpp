@@ -47,6 +47,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "instancemanager.h"
 #include "moshortcut.h"
 #include "organizercore.h"
+#include "env.h"
+#include "envmodule.h"
 
 #include <eh.h>
 #include <windows_error.h>

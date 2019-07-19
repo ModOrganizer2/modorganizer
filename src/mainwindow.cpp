@@ -86,6 +86,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <usvfs.h>
 #include "localsavegames.h"
 #include "listdialog.h"
+#include "envshortcut.h"
 
 #include <QAbstractItemDelegate>
 #include <QAbstractProxyModel>
