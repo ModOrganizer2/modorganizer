@@ -24,9 +24,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "messagedialog.h"
 #include "report.h"
 #include "persistentcookiejar.h"
+#include "settings.h"
 
 #include <utility.h>
-#include "settings.h"
+#include <log.h>
 
 #include <QWebEngineSettings>
 #include <QNetworkCookieJar>
@@ -38,6 +39,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDesktopWidget>
 #include <QKeyEvent>
 
+using namespace MOBase;
 
 
 BrowserDialog::BrowserDialog(QWidget *parent)
@@ -192,12 +194,12 @@ void BrowserDialog::unsupportedContent(QNetworkReply *reply)
   try {
     QWebEnginePage *page = qobject_cast<QWebEnginePage*>(sender());
     if (page == nullptr) {
-      qCritical("sender not a page");
+      log::error("sender not a page");
       return;
     }
     BrowserView *view = qobject_cast<BrowserView*>(page->view());
     if (view == nullptr) {
-      qCritical("no view?");
+      log::error("no view?");
       return;
     }
 
@@ -206,14 +208,14 @@ void BrowserDialog::unsupportedContent(QNetworkReply *reply)
     if (isVisible()) {
       MessageDialog::showMessage(tr("failed to start download"), this);
     }
-    qCritical("exception downloading unsupported content: %s", e.what());
+    log::error("exception downloading unsupported content: {}", e.what());
   }
 }
 
 
 void BrowserDialog::downloadRequested(const QNetworkRequest &request)
 {
-  qCritical("download request %s ignored", request.url().toString().toUtf8().constData());
+  log::error("download request {} ignored", request.url().toString());
 }
 
 

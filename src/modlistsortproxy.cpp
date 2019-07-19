@@ -196,7 +196,7 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
             QString rightCatName = categories.getCategoryName(categories.getCategoryIndex(rightMod->getPrimaryCategory()));
             lt = leftCatName < rightCatName;
           } catch (const std::exception &e) {
-            qCritical("failed to compare categories: %s", e.what());
+            log::error("failed to compare categories: {}", e.what());
           }
         }
       }

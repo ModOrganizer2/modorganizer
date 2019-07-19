@@ -196,21 +196,3 @@ void LogList::copyToClipboard()
 
   QApplication::clipboard()->setText(QString::fromStdString(s));
 }
-
-
-void vlog(const char *format, ...)
-{
-  va_list argList;
-  va_start(argList, format);
-
-  static const int BUFFERSIZE = 1000;
-
-  char buffer[BUFFERSIZE + 1];
-  buffer[BUFFERSIZE] = '\0';
-
-  vsnprintf(buffer, BUFFERSIZE, format, argList);
-
-  qCritical("%s", buffer);
-
-  va_end(argList);
-}

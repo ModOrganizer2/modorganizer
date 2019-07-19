@@ -1212,14 +1212,14 @@ void MainWindow::createHelpMenu()
 
     QFile file(dirIter.filePath());
     if (!file.open(QIODevice::ReadOnly)) {
-      qCritical() << "Failed to open " << fileName;
+      log::error("Failed to open {}", fileName);
       continue;
     }
     QString firstLine = QString::fromUtf8(file.readLine());
     if (firstLine.startsWith("//TL")) {
       QStringList params = firstLine.mid(4).trimmed().split('#');
       if (params.size() != 2) {
-        qCritical() << "invalid header line for tutorial " << fileName << " expected 2 parameters";
+        log::error("invalid header line for tutorial {}, expected 2 parameters", fileName);
         continue;
       }
       QAction *tutAction = new QAction(params.at(0), tutorialMenu);
@@ -1323,7 +1323,7 @@ void MainWindow::hookUpWindowTutorials()
     QString fileName = dirIter.fileName();
     QFile file(dirIter.filePath());
     if (!file.open(QIODevice::ReadOnly)) {
-      qCritical() << "Failed to open " << fileName;
+      log::error("Failed to open {}", fileName);
       continue;
     }
     QString firstLine = QString::fromUtf8(file.readLine());
@@ -1369,7 +1369,7 @@ void MainWindow::showEvent(QShowEvent *event)
           TutorialManager::instance().activateTutorial("MainWindow", firstStepsTutorial);
         }
       } else {
-        qCritical() << firstStepsTutorial << " missing";
+        log::error("{} missing", firstStepsTutorial);
         QPoint pos = ui->toolBar->mapToGlobal(QPoint());
         pos.rx() += ui->toolBar->width() / 2;
         pos.ry() += ui->toolBar->height();
@@ -1636,7 +1636,7 @@ void MainWindow::startExeAction()
   QAction *action = qobject_cast<QAction*>(sender());
 
   if (action == nullptr) {
-    qCritical("not an action?");
+    log::error("not an action?");
     return;
   }
 
@@ -3415,7 +3415,7 @@ void MainWindow::displayModInformation(const QString &modName, ModInfoTabIDs tab
 {
   unsigned int index = ModInfo::getIndex(modName);
   if (index == UINT_MAX) {
-    qCritical("failed to resolve mod name %s", qUtf8Printable(modName));
+    log::error("failed to resolve mod name {}", modName);
     return;
   }
 
@@ -3500,7 +3500,7 @@ void MainWindow::visitOnNexus_clicked()
       if (modID > 0)  {
         linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
       } else {
-        qCritical() << "mod '" << info->name() << "' has no nexus id";
+        log::error("mod '{}' has no nexus id", info->name());
       }
     }
   }
@@ -4038,7 +4038,7 @@ void MainWindow::doMoveOverwriteContentToMod(const QString &modAbsolutePath)
     MessageDialog::showMessage(tr("Move successful."), this);
   }
   else {
-    qCritical("Move operation failed: %s", qUtf8Printable(windowsErrorString(::GetLastError())));
+    log::error("Move operation failed: {}", windowsErrorString(::GetLastError()));
   }
 
   m_OrganizerCore.refreshModList();
@@ -4067,7 +4067,7 @@ void MainWindow::clearOverwrite()
         updateProblemsButton();
         m_OrganizerCore.refreshModList();
       } else {
-        qCritical("Delete operation failed: %s", qUtf8Printable(windowsErrorString(::GetLastError())));
+        log::error("Delete operation failed: {}", windowsErrorString(::GetLastError()));
       }
     }
   }
@@ -4311,7 +4311,7 @@ void MainWindow::addRemoveCategoriesFromMenu(QMenu *menu, int modRow, int refere
 void MainWindow::addRemoveCategories_MenuHandler() {
   QMenu *menu = qobject_cast<QMenu*>(sender());
   if (menu == nullptr) {
-    qCritical("not a menu?");
+    log::error("not a menu?");
     return;
   }
 
@@ -4352,7 +4352,7 @@ void MainWindow::addRemoveCategories_MenuHandler() {
 void MainWindow::replaceCategories_MenuHandler() {
   QMenu *menu = qobject_cast<QMenu*>(sender());
   if (menu == nullptr) {
-    qCritical("not a menu?");
+    log::error("not a menu?");
     return;
   }
 
@@ -4547,7 +4547,7 @@ void MainWindow::addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu,
       categoryBox->setChecked(categoryID == info->getPrimaryCategory());
       action->setDefaultWidget(categoryBox);
     } catch (const std::exception &e) {
-      qCritical("failed to create category checkbox: %s", e.what());
+      log::error("failed to create category checkbox: {}", e.what());
     }
 
     action->setData(categoryID);
@@ -4559,7 +4559,7 @@ void MainWindow::addPrimaryCategoryCandidates()
 {
   QMenu *menu = qobject_cast<QMenu*>(sender());
   if (menu == nullptr) {
-    qCritical("not a menu?");
+    log::error("not a menu?");
     return;
   }
   menu->clear();
@@ -6067,7 +6067,7 @@ void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultDa
   toggleMO2EndorseState();
   if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
     this, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)))) {
-    qCritical("failed to disconnect endorsement slot");
+    log::error("failed to disconnect endorsement slot");
   }
 }
 
@@ -6527,11 +6527,11 @@ void MainWindow::createStdoutPipe(HANDLE *stdOutRead, HANDLE *stdOutWrite)
   secAttributes.lpSecurityDescriptor = nullptr;
 
   if (!::CreatePipe(stdOutRead, stdOutWrite, &secAttributes, 0)) {
-    qCritical("failed to create stdout reroute");
+    log::error("failed to create stdout reroute");
   }
 
   if (!::SetHandleInformation(*stdOutRead, HANDLE_FLAG_INHERIT, 0)) {
-    qCritical("failed to correctly set up the stdout reroute");
+    log::error("failed to correctly set up the stdout reroute");
     *stdOutWrite = *stdOutRead = INVALID_HANDLE_VALUE;
   }
 }
@@ -6965,7 +6965,7 @@ void MainWindow::dropLocalFile(const QUrl &url, const QString &outputDir, bool m
     success = shellCopy(file.absoluteFilePath(), target, true, this);
   }
   if (!success) {
-    qCritical("file operation failed: %s", qUtf8Printable(windowsErrorString(::GetLastError())));
+    log::error("file operation failed: {}", windowsErrorString(::GetLastError()));
   }
 }
 

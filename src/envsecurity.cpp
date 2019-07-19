@@ -1,6 +1,7 @@
 #include "envsecurity.h"
 #include "env.h"
 #include <utility.h>
+#include <log.h>
 
 #include <Wbemidl.h>
 #include <wscapi.h>
@@ -57,8 +58,7 @@ public:
         }
 
         if (FAILED(ret)) {
-          qCritical()
-            << "enumerator->next() failed, " << formatSystemMessageQ(ret);
+          log::error("enum->next() failed, {}", formatSystemMessageQ(ret));
           break;
         }
 
@@ -82,9 +82,9 @@ private:
       IID_IWbemLocator, &rawLocator);
 
     if (FAILED(ret) || !rawLocator) {
-      qCritical()
-        << "CoCreateInstance for WbemLocator failed, "
-        << formatSystemMessageQ(ret);
+      log::error(
+        "CoCreateInstance for WbemLocator failed, {}",
+        formatSystemMessageQ(ret));
 
       throw failed();
     }
@@ -102,10 +102,9 @@ private:
       &rawService);
 
     if (FAILED(res) || !rawService) {
-      qCritical()
-        << "locator->ConnectServer() failed for namespace "
-        << "'" << QString::fromStdString(ns) << "', "
-        << formatSystemMessageQ(res);
+      log::error(
+        "locator->ConnectServer() failed for namespace '{}', {}",
+        ns, formatSystemMessageQ(res));
 
       throw failed();
     }
@@ -121,9 +120,7 @@ private:
 
     if (FAILED(ret))
     {
-      qCritical()
-        << "CoSetProxyBlanket() failed, " << formatSystemMessageQ(ret);
-
+      log::error("CoSetProxyBlanket() failed, {}", formatSystemMessageQ(ret));
       throw failed();
     }
   }
@@ -142,10 +139,7 @@ private:
 
     if (FAILED(ret) || !rawEnumerator)
     {
-      qCritical()
-        << "query '" << QString::fromStdString(query) << "' failed, "
-        << formatSystemMessageQ(ret);
-
+      log::error("query '{}' failed, {}", query, formatSystemMessageQ(ret));
       return {};
     }
 
@@ -256,15 +250,12 @@ std::vector<SecurityProduct> getSecurityProductsFromWMI()
     // display name
     auto ret = o->Get(L"displayName", 0, &prop, 0, 0);
     if (FAILED(ret)) {
-      qCritical()
-        << "failed to get displayName, "
-        << formatSystemMessageQ(ret);
-
+      log::error("failed to get displayName, {}", formatSystemMessageQ(ret));
       return;
     }
 
     if (prop.vt != VT_BSTR) {
-      qCritical() << "displayName is a " << prop.vt << ", not a bstr";
+      log::error("displayName is a {}, not a bstr", prop.vt);
       return;
     }
 
@@ -274,15 +265,12 @@ std::vector<SecurityProduct> getSecurityProductsFromWMI()
     // product state
     ret = o->Get(L"productState", 0, &prop, 0, 0);
     if (FAILED(ret)) {
-      qCritical()
-        << "failed to get productState, "
-        << formatSystemMessageQ(ret);
-
+      log::error("failed to get productState, {}", formatSystemMessageQ(ret));
       return;
     }
 
     if (prop.vt != VT_UI4 && prop.vt != VT_I4) {
-      qCritical() << "productState is a " << prop.vt << ", is not a VT_UI4";
+      log::error("productState is a {}, is not a VT_UI4", prop.vt);
       return;
     }
 
@@ -298,15 +286,12 @@ std::vector<SecurityProduct> getSecurityProductsFromWMI()
     // guid
     ret = o->Get(L"instanceGuid", 0, &prop, 0, 0);
     if (FAILED(ret)) {
-      qCritical()
-        << "failed to get instanceGuid, "
-        << formatSystemMessageQ(ret);
-
+      log::error("failed to get instanceGuid, {}", formatSystemMessageQ(ret));
       return;
     }
 
     if (prop.vt != VT_BSTR) {
-      qCritical() << "instanceGuid is a " << prop.vt << ", is not a bstr";
+      log::error("instanceGuid is a {}, is not a bstr", prop.vt);
       return;
     }
 
@@ -362,9 +347,9 @@ std::optional<SecurityProduct> getWindowsFirewall()
       __uuidof(INetFwPolicy2), &rawPolicy);
 
     if (FAILED(hr) || !rawPolicy) {
-      qCritical()
-        << "CoCreateInstance for NetFwPolicy2 failed, "
-        << formatSystemMessageQ(hr);
+      log::error(
+        "CoCreateInstance for NetFwPolicy2 failed, {}",
+        formatSystemMessageQ(hr));
 
       return {};
     }
@@ -378,10 +363,7 @@ std::optional<SecurityProduct> getWindowsFirewall()
     hr = policy->get_FirewallEnabled(NET_FW_PROFILE2_PUBLIC, &enabledVariant);
     if (FAILED(hr))
     {
-      qCritical()
-        << "get_FirewallEnabled failed, "
-        << formatSystemMessageQ(hr);
-
+      log::error("get_FirewallEnabled failed, {}", formatSystemMessageQ(hr));
       return {};
     }
   }

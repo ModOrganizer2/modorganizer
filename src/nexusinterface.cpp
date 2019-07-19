@@ -41,12 +41,11 @@ using namespace MOShared;
 
 void throttledWarning(const APIUserAccount& user)
 {
-  qCritical() <<
-    QString(
-      "You have fewer than %1 requests remaining (%2). Only downloads and "
-      "login validation are being allowed.")
-    .arg(APIUserAccount::ThrottleThreshold)
-    .arg(user.remainingRequests());
+  log::error(
+    "You have fewer than {} requests remaining ({}). Only downloads and "
+    "login validation are being allowed.",
+    APIUserAccount::ThrottleThreshold,
+    user.remainingRequests());
 }
 
 
@@ -344,7 +343,7 @@ QString NexusInterface::getGameURL(QString gameName) const
   if (game != nullptr) {
     return "https://www.nexusmods.com/" + game->gameNexusName().toLower();
   } else {
-    qCritical("getGameURL can't find plugin for %s", qUtf8Printable(gameName));
+    log::error("getGameURL can't find plugin for {}", gameName);
     return "";
   }
 }
@@ -355,7 +354,7 @@ QString NexusInterface::getOldModsURL(QString gameName) const
   if (game != nullptr) {
     return "https://" + game->gameNexusName().toLower() + ".nexusmods.com/mods";
   } else {
-    qCritical("getOldModsURL can't find plugin for %s", qUtf8Printable(gameName));
+    log::error("getOldModsURL can't find plugin for {}", gameName);
     return "";
   }
 }
@@ -464,7 +463,7 @@ int NexusInterface::requestUpdates(const int &modID, QObject *receiver, QVariant
 
   IPluginGame *game = getGame(gameName);
   if (game == nullptr) {
-    qCritical("requestUpdates can't find plugin for %s", qUtf8Printable(gameName));
+    log::error("requestUpdates can't find plugin for {}", gameName);
     return -1;
   }
 
@@ -521,7 +520,7 @@ int NexusInterface::requestFileInfo(QString gameName, int modID, int fileID, QOb
 {
   IPluginGame *gamePlugin = getGame(gameName);
   if (gamePlugin == nullptr) {
-    qCritical("requestFileInfo can't find plugin for %s", qUtf8Printable(gameName));
+    log::error("requestFileInfo can't find plugin for {}", gameName);
     return -1;
   }
 
@@ -687,7 +686,7 @@ void NexusInterface::nextRequest()
     } else if (getAccessManager()->validateWaiting()) {
       return;
     } else {
-      qCritical() << tr("You must authorize MO2 in Settings -> Nexus to use the Nexus API.");
+      log::error("{}", tr("You must authorize MO2 in Settings -> Nexus to use the Nexus API."));
     }
   }
 
@@ -949,10 +948,9 @@ void NexusInterface::requestError(QNetworkReply::NetworkError)
     return;
   }
 
-  qCritical("request (%s) error: %s (%d)",
-            qUtf8Printable(reply->url().toString()),
-            qUtf8Printable(reply->errorString()),
-            reply->error());
+  log::error(
+    "request ({}) error: {} ({})",
+    reply->url().toString(), reply->errorString(), reply->error());
 }
 
 

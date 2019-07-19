@@ -271,7 +271,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
               int categoryIdx = categoryFactory.getCategoryIndex(category);
               return categoryFactory.getCategoryName(categoryIdx);
             } catch (const std::exception &e) {
-              qCritical("failed to retrieve category name: %s", e.what());
+              log::error("failed to retrieve category name: {}", e.what());
               return QString();
             }
           } else {
@@ -449,7 +449,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       try {
         return modInfo->getDescription();
       } catch (const std::exception &e) {
-        qCritical("invalid mod description: %s", e.what());
+        log::error("invalid mod description: {}", e.what());
         return QString();
       }
     } else if (column == COL_VERSION) {
@@ -488,7 +488,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         try {
           categoryString << "<span style=\"white-space: nowrap;\"><i>" << ToWString(categoryFactory.getCategoryName(categoryFactory.getCategoryIndex(*catIter))) << "</font></span>";
         } catch (const std::exception &e) {
-          qCritical("failed to generate tooltip: %s", e.what());
+          log::error("failed to generate tooltip: {}", e.what());
           return QString();
         }
       }
@@ -636,9 +636,9 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
     try {
       m_ModStateChanged(info->name(), newState);
     } catch (const std::exception &e) {
-      qCritical("failed to invoke state changed notification: %s", e.what());
+      log::error("failed to invoke state changed notification: {}", e.what());
     } catch (...) {
-      qCritical("failed to invoke state changed notification: unknown exception");
+      log::error("failed to invoke state changed notification: unknown exception");
     }
   }
 
@@ -834,7 +834,7 @@ void ModList::modInfoChanged(ModInfo::Ptr info)
     emit dataChanged(index(row, 0), index(row, columnCount()));
     emit postDataChanged();
   } else {
-    qCritical("modInfoChanged not called after modInfoAboutToChange");
+    log::error("modInfoChanged not called after modInfoAboutToChange");
   }
   m_ChangeInfo.name = QString();
 }

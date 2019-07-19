@@ -121,18 +121,18 @@ bool OverwriteInfoDialog::recursiveDelete(const QModelIndex &index)
     QModelIndex childIndex = m_FileSystemModel->index(childRow, 0, index);
     if (m_FileSystemModel->isDir(childIndex)) {
       if (!recursiveDelete(childIndex)) {
-        qCritical("failed to delete %s", m_FileSystemModel->fileName(childIndex).toUtf8().constData());
+        log::error("failed to delete {}", m_FileSystemModel->fileName(childIndex));
         return false;
       }
     } else {
       if (!m_FileSystemModel->remove(childIndex)) {
-        qCritical("failed to delete %s", m_FileSystemModel->fileName(childIndex).toUtf8().constData());
+        log::error("failed to delete {}", m_FileSystemModel->fileName(childIndex));
         return false;
       }
     }
   }
   if (!m_FileSystemModel->remove(index)) {
-    qCritical("failed to delete %s", m_FileSystemModel->fileName(index).toUtf8().constData());
+    log::error("failed to delete {}", m_FileSystemModel->fileName(index));
     return false;
   }
   return true;

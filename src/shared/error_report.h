@@ -30,5 +30,3 @@ void reportError(LPCSTR format, ...);
 void reportError(LPCWSTR format, ...);
 
 } // namespace MOShared
-
-void vlog(const char* format, ...);

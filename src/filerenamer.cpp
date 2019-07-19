@@ -10,7 +10,7 @@ FileRenamer::FileRenamer(QWidget* parent, QFlags<RenameFlags> flags)
 {
   // sanity check for flags
   if ((m_flags & (HIDE|UNHIDE)) == 0) {
-    qCritical("renameFile() missing hide flag");
+    log::error("renameFile() missing hide flag");
     // doesn't really matter, it's just for text
     m_flags = HIDE;
   }

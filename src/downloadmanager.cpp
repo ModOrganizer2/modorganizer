@@ -660,7 +660,7 @@ void DownloadManager::removeFile(int index, bool deleteFile)
   if ((download->m_State == STATE_STARTED) ||
       (download->m_State == STATE_DOWNLOADING)) {
     // shouldn't have been possible
-    qCritical("tried to remove active download");
+    log::error("tried to remove active download");
     endDisableDirWatcher();
     return;
   }
@@ -798,7 +798,7 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
     emit update(-1);
     endDisableDirWatcher();
   } catch (const std::exception &e) {
-    qCritical("failed to remove download: %s", e.what());
+    log::error("failed to remove download: {}", e.what());
   }
   refreshList();
 }
@@ -2069,7 +2069,11 @@ void DownloadManager::writeData(DownloadInfo *info)
     if (ret < info->m_Reply->size()) {
       QString fileName = info->m_FileName; // m_FileName may be destroyed after setState
       setState(info, DownloadState::STATE_CANCELED);
-      qCritical(QString("Unable to write download \"%2\" to drive (return %1)").arg(ret).arg(info->m_FileName).toLocal8Bit());
+
+      log::error(
+        "Unable to write download \"{}\" to drive (return {})",
+        info->m_FileName, ret);
+
       reportError(tr("Unable to write download to drive (return %1).\n"
                      "Check the drive's available storage.\n\n"
                      "Canceling download \"%2\"...").arg(ret).arg(fileName));

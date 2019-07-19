@@ -1,6 +1,7 @@
 #include "envmodule.h"
 #include "env.h"
 #include <utility.h>
+#include <log.h>
 
 namespace env
 {
@@ -114,9 +115,9 @@ Module::FileInfo Module::getFileInfo() const
       return {};
     }
 
-    qCritical().nospace().noquote()
-      << "GetFileVersionInfoSizeW() failed on '" << m_path << "', "
-      << formatSystemMessageQ(e);
+    log::error(
+      "GetFileVersionInfoSizeW() failed on '{}', {}",
+      m_path, formatSystemMessageQ(e));
 
     return {};
   }
@@ -127,9 +128,9 @@ Module::FileInfo Module::getFileInfo() const
   if (!GetFileVersionInfoW(wspath.c_str(), 0, size, buffer.get())) {
     const auto e = GetLastError();
 
-    qCritical().nospace().noquote()
-      << "GetFileVersionInfoW() failed on '" << m_path << "', "
-      << formatSystemMessageQ(e);
+    log::error(
+      "GetFileVersionInfoW() failed on '{}', {}",
+      m_path, formatSystemMessageQ(e));
 
     return {};
   }
@@ -161,9 +162,9 @@ VS_FIXEDFILEINFO Module::getFixedFileInfo(std::byte* buffer) const
 
   // signature is always 0xfeef04bd
   if (fi->dwSignature != 0xfeef04bd) {
-    qCritical().nospace().noquote()
-      << "bad file info signature 0x" << hex << fi->dwSignature << " for "
-      << "'" << m_path << "'";
+    log::error(
+      "bad file info signature {:#x} for '{}'",
+      fi->dwSignature, m_path);
 
     return {};
   }
@@ -187,9 +188,7 @@ QString Module::getFileDescription(std::byte* buffer) const
     buffer, L"\\VarFileInfo\\Translation", &valuePointer, &valueSize);
 
   if (!ret || !valuePointer || valueSize == 0) {
-    qCritical().nospace().noquote()
-      << "VerQueryValueW() for translations failed on '" << m_path << "'";
-
+    log::error("VerQueryValueW() for translations failed on '{}'", m_path);
     return {};
   }
 
@@ -254,9 +253,9 @@ QDateTime Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
     if (h.get() == INVALID_HANDLE_VALUE) {
       const auto e = GetLastError();
 
-      qCritical().nospace().noquote()
-        << "can't open file '" << m_path << "' for timestamp, "
-        << formatSystemMessageQ(e);
+      log::error(
+        "can't open file '{}' for timestamp, {}",
+        m_path, formatSystemMessageQ(e));
 
       return {};
     }
@@ -264,9 +263,10 @@ QDateTime Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
     // getting the file time
     if (!GetFileTime(h.get(), &ft, nullptr, nullptr)) {
       const auto e = GetLastError();
-      qCritical().nospace().noquote()
-        << "can't get file time for '" << m_path << "', "
-        << formatSystemMessageQ(e);
+
+      log::error(
+        "can't get file time for '{}', {}",
+        m_path, formatSystemMessageQ(e));
 
       return {};
     }
@@ -281,11 +281,9 @@ QDateTime Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
   SYSTEMTIME utc = {};
 
   if (!FileTimeToSystemTime(&ft, &utc)) {
-    qCritical().nospace().noquote()
-      << "FileTimeToSystemTime() failed on timestamp "
-      << "high=0x" << hex << ft.dwHighDateTime << " "
-      << "low=0x" << hex << ft.dwLowDateTime << " for "
-      << "'" << m_path << "'";
+    log::error(
+      "FileTimeToSystemTime() failed on timestamp high={:#x} low={:#x} for '{}'",
+      ft.dwHighDateTime, ft.dwLowDateTime, m_path);
 
     return {};
   }
@@ -307,18 +305,14 @@ QString Module::getMD5() const
   QFile f(m_path);
 
   if (!f.open(QFile::ReadOnly)) {
-    qCritical().nospace().noquote()
-      << "failed to open file '" << m_path << "' for md5";
-
+    log::error("failed to open file '{}' for md5", m_path);
     return {};
   }
 
   // hashing
   QCryptographicHash hash(QCryptographicHash::Md5);
   if (!hash.addData(&f)) {
-    qCritical().nospace().noquote()
-      << "failed to calculate md5 for '" << m_path << "'";
-
+    log::error("failed to calculate md5 for '{}'", m_path);
     return {};
   }
 
@@ -334,11 +328,7 @@ std::vector<Module> getLoadedModules()
   if (snapshot.get() == INVALID_HANDLE_VALUE)
   {
     const auto e = GetLastError();
-
-    qCritical().nospace().noquote()
-      << "CreateToolhelp32Snapshot() failed, "
-      << formatSystemMessageQ(e);
-
+    log::error("CreateToolhelp32Snapshot() failed, {}", formatSystemMessageQ(e));
     return {};
   }
 
@@ -349,10 +339,7 @@ std::vector<Module> getLoadedModules()
   if (!Module32First(snapshot.get(), &me))
   {
     const auto e = GetLastError();
-
-    qCritical().nospace().noquote()
-      << "Module32First() failed, " << formatSystemMessageQ(e);
-
+    log::error("Module32First() failed, {}", formatSystemMessageQ(e));
     return {};
   }
 
@@ -371,8 +358,7 @@ std::vector<Module> getLoadedModules()
 
       // no more modules is not an error
       if (e != ERROR_NO_MORE_FILES) {
-        qCritical().nospace().noquote()
-          << "Module32Next() failed, " << formatSystemMessageQ(e);
+        log::error("Module32Next() failed, {}", formatSystemMessageQ(e));
       }
 
       break;

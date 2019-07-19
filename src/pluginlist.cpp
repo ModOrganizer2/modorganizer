@@ -309,7 +309,7 @@ int PluginList::findPluginByPriority(int priority)
       return i;
     }
   }
-  qCritical(QString("No plugin with priority %1").arg(priority).toLocal8Bit());
+  log::error("No plugin with priority {}", priority);
   return -1;
 }
 
@@ -824,7 +824,7 @@ void PluginList::updateIndices()
       continue;
     }
     if (m_ESPs[i].m_Priority >= static_cast<int>(m_ESPs.size())) {
-      qCritical("invalid plugin priority: %d", m_ESPs[i].m_Priority);
+      log::error("invalid plugin priority: {}", m_ESPs[i].m_Priority);
       continue;
     }
     m_ESPsByName[m_ESPs[i].m_Name.toLower()] = i;
@@ -1067,9 +1067,9 @@ bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int
           this->index(0, 0),
           this->index(static_cast<int>(m_ESPs.size()), columnCount()));
     } catch (const std::exception &e) {
-      qCritical("failed to invoke state changed notification: %s", e.what());
+      log::error("failed to invoke state changed notification: {}", e.what());
     } catch (...) {
-      qCritical("failed to invoke state changed notification: unknown exception");
+      log::error("failed to invoke state changed notification: unknown exception");
     }
   }
 
@@ -1368,7 +1368,7 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
       m_Masters.insert(QString(iter->c_str()));
     }
   } catch (const std::exception &e) {
-    qCritical("failed to parse plugin file %s: %s", qUtf8Printable(fullPath), e.what());
+    log::error("failed to parse plugin file {}: {}", fullPath, e.what());
     m_IsMaster = false;
     m_IsLight = false;
     m_IsLightFlagged = false;

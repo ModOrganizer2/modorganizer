@@ -530,10 +530,7 @@ QUrl ModInfo::parseCustomURL() const
   const auto url = QUrl::fromUserInput(getCustomURL());
 
   if (!url.isValid()) {
-    qCritical()
-      << "mod '" << name() << "' has an invalid custom url "
-      << "'" << getCustomURL() << "'";
-
+    log::error("mod '{}' has an invalid custom url '{}'", name(), getCustomURL());
     return {};
   }
 

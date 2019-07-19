@@ -263,7 +263,7 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
           targetFile = wcsrchr(origFile/*data[i]->getFileName()*/, '/');
         }
         if (targetFile == nullptr) {
-          qCritical() << "Failed to find backslash in " << data[i]->getFileName();
+          log::error("Failed to find backslash in {}", data[i]->getFileName());
           continue;
         } else {
           // skip the slash
@@ -527,7 +527,7 @@ bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *me
           settingsFile.write(originalSettings);
           settingsFile.close();
         } else {
-          qCritical("failed to restore original settings: %s", qUtf8Printable(metaFilename));
+          log::error("failed to restore original settings: {}", metaFilename);
         }
         return true;
       } else if (overwriteDialog.action() == QueryOverwriteDialog::ACT_MERGE) {
@@ -856,8 +856,7 @@ bool InstallationManager::install(const QString &fileName,
         }
       }
     } catch (const IncompatibilityException &e) {
-      qCritical("plugin \"%s\" incompatible: %s",
-                qUtf8Printable(installer->name()), e.what());
+      log::error("plugin \"{}\" incompatible: {}", installer->name(), e.what());
     }
 
     // act upon the installation result. at this point the files have already been

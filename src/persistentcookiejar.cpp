@@ -1,8 +1,10 @@
 #include "persistentcookiejar.h"
+#include <log.h>
 #include <QTemporaryFile>
 #include <QDataStream>
 #include <QNetworkCookie>
 
+using namespace MOBase;
 
 PersistentCookieJar::PersistentCookieJar(const QString &fileName, QObject *parent)
 : QNetworkCookieJar(parent), m_FileName(fileName)
@@ -24,7 +26,7 @@ void PersistentCookieJar::clear() {
 void PersistentCookieJar::save() {
   QTemporaryFile file;
   if (!file.open()) {
-    qCritical("failed to save cookies: couldn't create temporary file");
+    log::error("failed to save cookies: couldn't create temporary file");
     return;
   }
   QDataStream data(&file);
@@ -40,14 +42,14 @@ void PersistentCookieJar::save() {
     QFile oldCookies(m_FileName);
     if (oldCookies.exists()) {
       if (!oldCookies.remove()) {
-        qCritical("failed to save cookies: failed to remove %s", qUtf8Printable(m_FileName));
+        log::error("failed to save cookies: failed to remove {}", m_FileName);
         return;
       }
     } // if it doesn't exists that's fine
   }
 
   if (!file.copy(m_FileName)) {
-    qCritical("failed to save cookies: failed to write %s", qUtf8Printable(m_FileName));
+    log::error("failed to save cookies: failed to write {}", m_FileName);
   }
 }
 

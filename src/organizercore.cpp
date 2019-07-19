@@ -224,7 +224,7 @@ bool checkService()
     }
 
     if (serviceConfig->dwStartType == SERVICE_DISABLED) {
-      qCritical("Windows Event Log service is disabled!");
+      log::error("Windows Event Log service is disabled!");
       serviceRunning = false;
     }
 
@@ -242,7 +242,7 @@ bool checkService()
     }
 
     if (serviceStatus->dwCurrentState != SERVICE_RUNNING) {
-      qCritical("Windows Event Log service is not running");
+      log::error("Windows Event Log service is not running");
       serviceRunning = false;
     }
   }
@@ -437,7 +437,7 @@ bool OrganizerCore::testForSteam(bool *found, bool *access)
   hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
   if (hProcessSnap == INVALID_HANDLE_VALUE) {
     lastError = GetLastError();
-    qCritical("unable to get snapshot of processes (error %d)", lastError);
+    log::error("unable to get snapshot of processes (error {})", lastError);
     return false;
   }
 
@@ -446,7 +446,7 @@ bool OrganizerCore::testForSteam(bool *found, bool *access)
   pe32.dwSize = sizeof(PROCESSENTRY32);
   if (!Process32First(hProcessSnap, &pe32)) {
     lastError = GetLastError();
-    qCritical("unable to get first process (error %d)", lastError);
+    log::error("unable to get first process (error {})", lastError);
     CloseHandle(hProcessSnap);
     return false;
   }
@@ -486,7 +486,7 @@ return true;
 void OrganizerCore::updateExecutablesList(QSettings &settings)
 {
   if (m_PluginContainer == nullptr) {
-    qCritical("can't update executables list now");
+    log::error("can't update executables list now");
     return;
   }
 
@@ -657,7 +657,7 @@ void OrganizerCore::downloadRequested(QNetworkReply *reply, QString gameName, in
     }
   } catch (const std::exception &e) {
     MessageDialog::showMessage(tr("Download failed"), qApp->activeWindow());
-    qCritical("exception starting download: %s", e.what());
+    log::error("exception starting download: {}", e.what());
   }
 }
 
@@ -1552,7 +1552,7 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
     bool steamFound = true;
     bool steamAccess = true;
     if (!testForSteam(&steamFound, &steamAccess)) {
-      qCritical("unable to determine state of Steam");
+      log::error("unable to determine state of Steam");
     }
 
     if (!steamFound) {
@@ -1569,9 +1569,9 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
         steamFound = true;
         steamAccess = true;
         if (!testForSteam(&steamFound, &steamAccess)) {
-          qCritical("unable to determine state of Steam");
+          log::error("unable to determine state of Steam");
         } else if (!steamFound) {
-          qCritical("could not find Steam");
+          log::error("could not find Steam");
         }
 
       } else if (result == QDialogButtonBox::Cancel) {
@@ -1592,14 +1592,14 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
       if (result == QDialogButtonBox::Yes) {
         WCHAR cwd[MAX_PATH];
         if (!GetCurrentDirectory(MAX_PATH, cwd)) {
-          qCritical("unable to get current directory (error %d)", GetLastError());
+          log::error("unable to get current directory (error {})", GetLastError());
           cwd[0] = L'\0';
         }
         if (!Helper::adminLaunch(
           qApp->applicationDirPath().toStdWString(),
           qApp->applicationFilePath().toStdWString(),
           std::wstring(cwd))) {
-          qCritical("unable to relaunch MO as admin");
+          log::error("unable to relaunch MO as admin");
           return INVALID_HANDLE_VALUE;
         }
         qApp->exit(0);

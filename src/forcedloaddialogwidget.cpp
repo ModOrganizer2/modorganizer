@@ -1,9 +1,8 @@
 #include "forcedloaddialogwidget.h"
 #include "ui_forcedloaddialogwidget.h"
-
-#include <QFileDialog>
-
 #include "executableinfo.h"
+#include <log.h>
+#include <QFileDialog>
 
 using namespace MOBase;
 
@@ -85,7 +84,7 @@ void ForcedLoadDialogWidget::on_libraryPathBrowseButton_clicked()
     if (fileInfo.exists()) {
       ui->libraryPathEdit->setText(filePath);
     } else {
-      qCritical("%ls does not exist", filePath.toStdWString().c_str());
+      log::error("{} does not exist", filePath);
     }
   }
 }
@@ -102,7 +101,7 @@ void ForcedLoadDialogWidget::on_processBrowseButton_clicked()
     if (fileInfo.exists()) {
       ui->processEdit->setText(fileName);
     } else {
-      qCritical("%ls does not exist", fileInfo.filePath().toStdWString().c_str());
+      log::error("{} does not exist", fileInfo.filePath());
     }
   }
 }

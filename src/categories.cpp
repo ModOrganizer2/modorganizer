@@ -62,8 +62,9 @@ void CategoryFactory::loadCategories()
       ++lineNum;
       QList<QByteArray> cells = line.split('|');
       if (cells.count() != 4) {
-        qCritical("invalid category line %d: %s (%d cells)",
-                  lineNum, line.constData(), cells.count());
+        log::error(
+          "invalid category line {}: {} ({} cells)",
+          lineNum, line.constData(), cells.count());
       } else {
         std::vector<int> nexusIDs;
         if (cells[2].length() > 0) {
@@ -73,7 +74,7 @@ void CategoryFactory::loadCategories()
             bool ok = false;
             int temp = iter->toInt(&ok);
             if (!ok) {
-              qCritical("invalid category id %s", iter->constData());
+              log::error("invalid category id {}", iter->constData());
             }
             nexusIDs.push_back(temp);
           }
@@ -83,8 +84,7 @@ void CategoryFactory::loadCategories()
         int id = cells[0].toInt(&cell0Ok);
         int parentID = cells[3].trimmed().toInt(&cell3Ok);
         if (!cell0Ok || !cell3Ok) {
-          qCritical("invalid category line %d: %s",
-                    lineNum, line.constData());
+          log::error("invalid category line {}: {}", lineNum, line.constData());
         }
         addCategory(id, QString::fromUtf8(cells[1].constData()), nexusIDs, parentID);
       }

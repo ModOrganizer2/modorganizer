@@ -291,8 +291,9 @@ void PluginContainer::loadPlugins()
       std::unique_ptr<QPluginLoader> pluginLoader(new QPluginLoader(pluginName, this));
       if (pluginLoader->instance() == nullptr) {
         m_FailedPlugins.push_back(pluginName);
-        qCritical("failed to load plugin %s: %s",
-                  qUtf8Printable(pluginName), qUtf8Printable(pluginLoader->errorString()));
+        log::error(
+          "failed to load plugin {}: {}",
+          pluginName, pluginLoader->errorString());
       } else {
         if (registerPlugin(pluginLoader->instance(), pluginName)) {
           qDebug("loaded plugin \"%s\"", qUtf8Printable(QFileInfo(pluginName).fileName()));

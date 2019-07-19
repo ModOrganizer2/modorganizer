@@ -1,5 +1,8 @@
 #include "filterwidget.h"
 #include "eventfilter.h"
+#include <log.h>
+
+using namespace MOBase;
 
 FilterWidgetProxyModel::FilterWidgetProxyModel(FilterWidget& fw, QWidget* parent)
   : QSortFilterProxyModel(parent), m_filter(fw)
@@ -80,7 +83,7 @@ QModelIndex FilterWidget::map(const QModelIndex& index)
   if (m_proxy) {
     return m_proxy->mapToSource(index);
   } else {
-    qCritical() << "FilterWidget::map() called, but proxy isn't set up";
+    log::error("FilterWidget::map() called, but proxy isn't set up");
     return index;
   }
 }

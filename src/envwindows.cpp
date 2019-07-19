@@ -1,6 +1,7 @@
 #include "envwindows.h"
 #include "env.h"
 #include <utility.h>
+#include <log.h>
 
 namespace env
 {
@@ -13,7 +14,7 @@ WindowsInfo::WindowsInfo()
   LibraryPtr ntdll(LoadLibraryW(L"ntdll.dll"));
 
   if (!ntdll) {
-    qCritical() << "failed to load ntdll.dll while getting version";
+    log::error("failed to load ntdll.dll while getting version");
     return;
   } else {
     m_reported = getReportedVersion(ntdll.get());
@@ -122,7 +123,7 @@ WindowsInfo::Version WindowsInfo::getReportedVersion(HINSTANCE ntdll) const
     GetProcAddress(ntdll, "RtlGetVersion"));
 
   if (!RtlGetVersion) {
-    qCritical() << "RtlGetVersion() not found in ntdll.dll";
+    log::error("RtlGetVersion() not found in ntdll.dll");
     return {};
   }
 
@@ -149,7 +150,7 @@ WindowsInfo::Version WindowsInfo::getRealVersion(HINSTANCE ntdll) const
     GetProcAddress(ntdll, "RtlGetNtVersionNumbers"));
 
   if (!RtlGetNtVersionNumbers) {
-    qCritical() << "RtlGetNtVersionNumbers not found in ntdll.dll";
+    log::error("RtlGetNtVersionNumbers not found in ntdll.dll");
     return {};
   }
 
@@ -207,9 +208,9 @@ std::optional<bool> WindowsInfo::getElevated() const
     if (!OpenProcessToken(GetCurrentProcess( ), TOKEN_QUERY, &rawToken)) {
       const auto e = GetLastError();
 
-      qCritical()
-        << "while trying to check if process is elevated, "
-        << "OpenProcessToken() failed: " << formatSystemMessageQ(e);
+      log::error(
+        "while trying to check if process is elevated, "
+        "OpenProcessToken() failed: {}", formatSystemMessageQ(e));
 
       return {};
     }
@@ -223,9 +224,9 @@ std::optional<bool> WindowsInfo::getElevated() const
   if (!GetTokenInformation(token.get(), TokenElevation, &e, sizeof(e), &size)) {
     const auto e = GetLastError();
 
-    qCritical()
-      << "while trying to check if process is elevated, "
-      << "GetTokenInformation() failed: " << formatSystemMessageQ(e);
+    log::error(
+      "while trying to check if process is elevated, "
+      "GetTokenInformation() failed: {}", formatSystemMessageQ(e));
 
     return {};
   }

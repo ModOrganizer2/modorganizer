@@ -572,7 +572,7 @@ void Profile::setModsEnabled(const QList<unsigned int> &modsToEnable, const QLis
   QList<unsigned int> dirtyMods;
   for (auto idx : modsToEnable) {
     if (idx >= m_ModStatus.size()) {
-      qCritical() << tr("invalid mod index: %1").arg(idx);
+      log::error("invalid mod index: {}", idx);
       continue;
     }
     if (!m_ModStatus[idx].m_Enabled) {
@@ -582,7 +582,7 @@ void Profile::setModsEnabled(const QList<unsigned int> &modsToEnable, const QLis
   }
   for (auto idx : modsToDisable) {
     if (idx >= m_ModStatus.size()) {
-      qCritical() << tr("invalid mod index: %1").arg(idx);
+      log::error("invalid mod index: {}", idx);
       continue;
     }
     if (ModInfo::getByIndex(idx)->alwaysEnabled()) {

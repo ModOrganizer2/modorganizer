@@ -3,6 +3,7 @@
 #include "executableslist.h"
 #include "instancemanager.h"
 #include <utility.h>
+#include <log.h>
 
 namespace env
 {
@@ -218,17 +219,24 @@ bool Shortcut::toggle(Locations loc)
 
 bool Shortcut::add(Locations loc)
 {
-  debug()
-    << "adding shortcut to " << toString(loc) << ":\n"
-    << "  . name: '" << m_name << "'\n"
-    << "  . target: '" << m_target << "'\n"
-    << "  . arguments: '" << m_arguments << "'\n"
-    << "  . description: '" << m_description << "'\n"
-    << "  . icon: '" << m_icon << "' @ " << m_iconIndex << "\n"
-    << "  . working directory: '" << m_workingDirectory << "'";
+  log::debug(
+    "adding shortcut to {}:\n"
+    "  . name: '{}'\n"
+    "  . target: '{}'\n"
+    "  . arguments: '{}'\n"
+    "  . description: '{}'\n"
+    "  . icon: '{}' @ {}\n"
+    "  . working directory: '{}'",
+    toString(loc),
+    m_name,
+    m_target,
+    m_arguments,
+    m_description,
+    m_icon, m_iconIndex,
+    m_workingDirectory);
 
   if (m_target.isEmpty()) {
-    critical() << "target is empty";
+    log::error("shortcut: target is empty");
     return false;
   }
 
@@ -237,7 +245,7 @@ bool Shortcut::add(Locations loc)
     return false;
   }
 
-  debug() << "shorcut file will be saved at '" << path << "'";
+  log::debug("shorcut file will be saved at '{}'", path);
 
   try
   {
@@ -255,7 +263,7 @@ bool Shortcut::add(Locations loc)
   }
   catch(ShellLinkException& e)
   {
-    critical() << e.what() << "\nshortcut file was not saved";
+    log::error("{}\nshortcut file was not saved", e.what());
   }
 
   return false;
@@ -263,26 +271,26 @@ bool Shortcut::add(Locations loc)
 
 bool Shortcut::remove(Locations loc)
 {
-  debug() << "removing shortcut for '" << m_name << "' from " << toString(loc);
+  log::debug("removing shortcut for '{}' from {}", m_name, toString(loc));
 
   const auto path = shortcutPath(loc);
   if (path.isEmpty()) {
     return false;
   }
 
-  debug() << "path to shortcut file is '" << path << "'";
+  log::debug("path to shortcut file is '{}'", path);
 
   if (!QFile::exists(path)) {
-    critical() << "can't remove '" << path << "', file not found";
+    log::error("can't remove shortcut '{}', file not found", path);
     return false;
   }
 
   if (!MOBase::shellDelete({path})) {
     const auto e = ::GetLastError();
 
-    critical()
-      << "failed to remove '" << path << "', "
-      << formatSystemMessageQ(e);
+    log::error(
+      "failed to remove shortcut '{}', {}",
+      path, formatSystemMessageQ(e));
 
     return false;
   }
@@ -323,7 +331,7 @@ QString Shortcut::shortcutDirectory(Locations loc) const
 
       case None:
       default:
-        critical() << "bad location " << loc;
+        log::error("shortcut: bad location {}", loc);
         break;
     }
   }
@@ -337,21 +345,11 @@ QString Shortcut::shortcutDirectory(Locations loc) const
 QString Shortcut::shortcutFilename() const
 {
   if (m_name.isEmpty()) {
-    critical() << "name is empty";
+    log::error("shortcut name is empty");
     return {};
   }
 
   return m_name + ".lnk";
-}
-
-QDebug Shortcut::debug() const
-{
-  return qDebug().noquote().nospace() << "system shortcut: ";
-}
-
-QDebug Shortcut::critical() const
-{
-  return qCritical().noquote().nospace() << "system shortcut: ";
 }
 
 

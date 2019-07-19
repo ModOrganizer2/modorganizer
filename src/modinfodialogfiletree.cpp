@@ -5,8 +5,9 @@
 #include "filerenamer.h"
 #include <utility.h>
 #include <report.h>
+#include <log.h>
 
-using MOBase::reportError;
+using namespace MOBase;
 namespace shell = MOBase::shell;
 
 // if there are more than 50 selected items in the filetree, don't bother
@@ -230,19 +231,19 @@ bool FileTreeTab::deleteFileRecursive(const QModelIndex& parent)
 
     if (m_fs->isDir(index)) {
       if (!deleteFileRecursive(index)) {
-        qCritical() << "failed to delete" << m_fs->fileName(index);
+        log::error("failed to delete {}", m_fs->fileName(index));
         return false;
       }
     } else {
       if (!m_fs->remove(index)) {
-        qCritical() << "failed to delete", m_fs->fileName(index);
+        log::error("failed to delete {}", m_fs->fileName(index));
         return false;
       }
     }
   }
 
   if (!m_fs->remove(parent)) {
-    qCritical() << "failed to delete" << m_fs->fileName(parent);
+    log::error("failed to delete {}", m_fs->fileName(parent));
     return false;
   }
 

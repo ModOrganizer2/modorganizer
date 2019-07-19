@@ -365,7 +365,7 @@ void for_each_in_selection(QTreeView* tree, F&& f)
   const auto* model = dynamic_cast<ConflictListModel*>(tree->model());
 
   if (!model) {
-    qCritical() << "tree doesn't have a ConflictListModel";
+    log::error("tree doesn't have a ConflictListModel");
     return;
   }
 
@@ -454,7 +454,7 @@ void ConflictsTab::changeItemsVisibility(QTreeView* tree, bool visible)
 
   auto* model = dynamic_cast<ConflictListModel*>(tree->model());
   if (!model) {
-    qCritical() << "list doesn't have a ConflictListModel";
+    log::error("list doesn't have a ConflictListModel");
     return;
   }
 
@@ -633,7 +633,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
 
   const auto* model = dynamic_cast<ConflictListModel*>(tree->model());
   if (!model) {
-    qCritical() << "tree doesn't have a ConflictListModel";
+    log::error("tree doesn't have a ConflictListModel");
     return {};
   }
 

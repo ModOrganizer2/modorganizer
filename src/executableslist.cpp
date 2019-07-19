@@ -243,9 +243,9 @@ void ExecutablesList::setExecutable(const Executable &exe, SetFlags flags)
     if (flags == MoveExisting) {
       const auto newTitle = makeNonConflictingTitle(exe.title());
       if (!newTitle) {
-        qCritical().nospace()
-          << "executable '" << exe.title() << "' was in the way but could "
-          << "not be renamed";
+        log::error(
+          "executable '{}' was in the way but could not be renamed",
+          exe.title());
 
         return;
       }
@@ -289,9 +289,7 @@ std::optional<QString> ExecutablesList::makeNonConflictingTitle(
     title = prefix + QString(" (%1)").arg(i);
   }
 
-  qCritical().nospace()
-    << "ran out of executable titles for prefix '" << prefix << "'";
-
+  log::error("ran out of executable titles for prefix '{}'", prefix);
   return {};
 }
 
