@@ -1264,7 +1264,7 @@ std::vector<SecurityProduct> Environment::getSecurityProductsFromWMI() const
 
     map.insert({
       guid,
-      {QString::fromStdWString(name), provider, active, upToDate}});
+      {guid, QString::fromStdWString(name), provider, active, upToDate}});
   };
 
   {
@@ -1334,7 +1334,7 @@ std::optional<SecurityProduct> Environment::getWindowsFirewall() const
   }
 
   return SecurityProduct(
-    "Windows Firewall", WSC_SECURITY_PROVIDER_FIREWALL, true, true);
+    {}, "Windows Firewall", WSC_SECURITY_PROVIDER_FIREWALL, true, true);
 }
 
 
@@ -1907,9 +1907,9 @@ std::optional<bool> WindowsInfo::getElevated() const
 
 
 SecurityProduct::SecurityProduct(
-  QString name, int provider,
+  QUuid guid, QString name, int provider,
   bool active, bool upToDate) :
-    m_name(std::move(name)), m_provider(provider),
+    m_guid(std::move(guid)), m_name(std::move(name)), m_provider(provider),
     m_active(active), m_upToDate(upToDate)
 {
 }
@@ -1938,10 +1938,27 @@ QString SecurityProduct::toString() const
 {
   QString s;
 
-  s += m_name + " ";
+  s += m_name + " (" + providerToString() + ")";
 
+  if (!m_active) {
+    s += ", inactive";
+  }
 
+  if (!m_upToDate) {
+    s += ", definitions outdated";
+  }
+
+  if (!m_guid.isNull()) {
+    s += ", " + m_guid.toString(QUuid::QUuid::WithoutBraces);
+  }
+
+  return s;
+}
+
+QString SecurityProduct::providerToString() const
+{
   QStringList ps;
+
   if (m_provider & WSC_SECURITY_PROVIDER_FIREWALL) {
     ps.push_back("firewall");
   }
@@ -1971,20 +1988,10 @@ QString SecurityProduct::toString() const
   }
 
   if (ps.empty()) {
-    s += "(doesn't provide anything)";
-  } else {
-    s += "(" + ps.join("|") + ")";
+    return "doesn't provider anything";
   }
 
-  if (!m_active) {
-    s += ", inactive";
-  }
-
-  if (!m_upToDate) {
-    s += ", definitions outdated";
-  }
-
-  return s;
+  return ps.join("|");
 }
 
 

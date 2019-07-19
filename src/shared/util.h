@@ -28,6 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Windows.h>
 
 #include <versioninfo.h>
+#include <QUuid>
 
 class Executable;
 
@@ -370,7 +371,7 @@ class SecurityProduct
 {
 public:
   SecurityProduct(
-    QString name, int provider,
+    QUuid guid, QString name, int provider,
     bool active, bool upToDate);
 
   // display name of the product
@@ -394,10 +395,13 @@ public:
   QString toString() const;
 
 private:
+  QUuid m_guid;
   QString m_name;
   int m_provider;
   bool m_active;
   bool m_upToDate;
+
+  QString providerToString() const;
 };
 
 
