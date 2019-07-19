@@ -58,7 +58,7 @@ public:
         }
 
         if (FAILED(ret)) {
-          log::error("enum->next() failed, {}", formatSystemMessageQ(ret));
+          log::error("enum->next() failed, {}", formatSystemMessage(ret));
           break;
         }
 
@@ -84,7 +84,7 @@ private:
     if (FAILED(ret) || !rawLocator) {
       log::error(
         "CoCreateInstance for WbemLocator failed, {}",
-        formatSystemMessageQ(ret));
+        formatSystemMessage(ret));
 
       throw failed();
     }
@@ -104,7 +104,7 @@ private:
     if (FAILED(res) || !rawService) {
       log::error(
         "locator->ConnectServer() failed for namespace '{}', {}",
-        ns, formatSystemMessageQ(res));
+        ns, formatSystemMessage(res));
 
       throw failed();
     }
@@ -120,7 +120,7 @@ private:
 
     if (FAILED(ret))
     {
-      log::error("CoSetProxyBlanket() failed, {}", formatSystemMessageQ(ret));
+      log::error("CoSetProxyBlanket() failed, {}", formatSystemMessage(ret));
       throw failed();
     }
   }
@@ -139,7 +139,7 @@ private:
 
     if (FAILED(ret) || !rawEnumerator)
     {
-      log::error("query '{}' failed, {}", query, formatSystemMessageQ(ret));
+      log::error("query '{}' failed, {}", query, formatSystemMessage(ret));
       return {};
     }
 
@@ -250,7 +250,7 @@ std::vector<SecurityProduct> getSecurityProductsFromWMI()
     // display name
     auto ret = o->Get(L"displayName", 0, &prop, 0, 0);
     if (FAILED(ret)) {
-      log::error("failed to get displayName, {}", formatSystemMessageQ(ret));
+      log::error("failed to get displayName, {}", formatSystemMessage(ret));
       return;
     }
 
@@ -265,7 +265,7 @@ std::vector<SecurityProduct> getSecurityProductsFromWMI()
     // product state
     ret = o->Get(L"productState", 0, &prop, 0, 0);
     if (FAILED(ret)) {
-      log::error("failed to get productState, {}", formatSystemMessageQ(ret));
+      log::error("failed to get productState, {}", formatSystemMessage(ret));
       return;
     }
 
@@ -286,7 +286,7 @@ std::vector<SecurityProduct> getSecurityProductsFromWMI()
     // guid
     ret = o->Get(L"instanceGuid", 0, &prop, 0, 0);
     if (FAILED(ret)) {
-      log::error("failed to get instanceGuid, {}", formatSystemMessageQ(ret));
+      log::error("failed to get instanceGuid, {}", formatSystemMessage(ret));
       return;
     }
 
@@ -349,7 +349,7 @@ std::optional<SecurityProduct> getWindowsFirewall()
     if (FAILED(hr) || !rawPolicy) {
       log::error(
         "CoCreateInstance for NetFwPolicy2 failed, {}",
-        formatSystemMessageQ(hr));
+        formatSystemMessage(hr));
 
       return {};
     }
@@ -363,7 +363,7 @@ std::optional<SecurityProduct> getWindowsFirewall()
     hr = policy->get_FirewallEnabled(NET_FW_PROFILE2_PUBLIC, &enabledVariant);
     if (FAILED(hr))
     {
-      log::error("get_FirewallEnabled failed, {}", formatSystemMessageQ(hr));
+      log::error("get_FirewallEnabled failed, {}", formatSystemMessage(hr));
       return {};
     }
   }

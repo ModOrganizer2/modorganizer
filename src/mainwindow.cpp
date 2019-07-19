@@ -4029,7 +4029,8 @@ void MainWindow::doMoveOverwriteContentToMod(const QString &modAbsolutePath)
     MessageDialog::showMessage(tr("Move successful."), this);
   }
   else {
-    log::error("Move operation failed: {}", windowsErrorString(::GetLastError()));
+    const auto e = GetLastError();
+    log::error("Move operation failed: {}", formatSystemMessage(e));
   }
 
   m_OrganizerCore.refreshModList();
@@ -4058,7 +4059,8 @@ void MainWindow::clearOverwrite()
         updateProblemsButton();
         m_OrganizerCore.refreshModList();
       } else {
-        log::error("Delete operation failed: {}", windowsErrorString(::GetLastError()));
+        const auto e = GetLastError();
+        log::error("Delete operation failed: {}", formatSystemMessage(e));
       }
     }
   }
@@ -6819,8 +6821,13 @@ void MainWindow::on_restoreButton_clicked()
     if (!shellCopy(pluginName    + "." + choice, pluginName, true, this) ||
         !shellCopy(loadOrderName + "." + choice, loadOrderName, true, this) ||
         !shellCopy(lockedName    + "." + choice, lockedName, true, this)) {
-      QMessageBox::critical(this, tr("Restore failed"),
-                            tr("Failed to restore the backup. Errorcode: %1").arg(windowsErrorString(::GetLastError())));
+
+      const auto e = GetLastError();
+
+      QMessageBox::critical(
+        this, tr("Restore failed"),
+        tr("Failed to restore the backup. Errorcode: %1")
+          .arg(QString::fromStdWString(formatSystemMessage(e))));
     }
     m_OrganizerCore.refreshESPList(true);
   }
@@ -6841,8 +6848,11 @@ void MainWindow::on_restoreModsButton_clicked()
   QString choice = queryRestore(modlistName);
   if (!choice.isEmpty()) {
     if (!shellCopy(modlistName + "." + choice, modlistName, true, this)) {
-      QMessageBox::critical(this, tr("Restore failed"),
-                            tr("Failed to restore the backup. Errorcode: %1").arg(windowsErrorString(::GetLastError())));
+      const auto e = GetLastError();
+      QMessageBox::critical(
+        this, tr("Restore failed"),
+        tr("Failed to restore the backup. Errorcode: %1")
+          .arg(formatSystemMessage(e)));
     }
     m_OrganizerCore.refreshModList(false);
   }
@@ -6956,7 +6966,8 @@ void MainWindow::dropLocalFile(const QUrl &url, const QString &outputDir, bool m
     success = shellCopy(file.absoluteFilePath(), target, true, this);
   }
   if (!success) {
-    log::error("file operation failed: {}", windowsErrorString(::GetLastError()));
+    const auto e = GetLastError();
+    log::error("file operation failed: {}", formatSystemMessage(e));
   }
 }
 

@@ -19,7 +19,7 @@ int getDesktopDpi()
 
   if (!dc) {
     const auto e = GetLastError();
-    log::error("can't get desktop DC, {}", formatSystemMessageQ(e));
+    log::error("can't get desktop DC, {}", formatSystemMessage(e));
     return 0;
   }
 
@@ -52,7 +52,7 @@ HMONITOR findMonitor(const QString& name)
       const auto e = GetLastError();
       log::error(
         "GetMonitorInfo() failed for '{}', {}",
-        data.name, formatSystemMessageQ(e));
+        data.name, formatSystemMessage(e));
 
       // error for this monitor, but continue
       return TRUE;
@@ -121,7 +121,7 @@ int getDpi(const QString& monitorDevice)
   if (FAILED(r)) {
     log::error(
       "GetDpiForMonitor() failed for '{}', {}",
-      monitorDevice, formatSystemMessageQ(r));
+      monitorDevice, formatSystemMessage(r));
 
     return 0;
   }

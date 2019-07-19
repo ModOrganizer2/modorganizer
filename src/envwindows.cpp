@@ -210,7 +210,7 @@ std::optional<bool> WindowsInfo::getElevated() const
 
       log::error(
         "while trying to check if process is elevated, "
-        "OpenProcessToken() failed: {}", formatSystemMessageQ(e));
+        "OpenProcessToken() failed: {}", formatSystemMessage(e));
 
       return {};
     }
@@ -226,7 +226,7 @@ std::optional<bool> WindowsInfo::getElevated() const
 
     log::error(
       "while trying to check if process is elevated, "
-      "GetTokenInformation() failed: {}", formatSystemMessageQ(e));
+      "GetTokenInformation() failed: {}", formatSystemMessage(e));
 
     return {};
   }

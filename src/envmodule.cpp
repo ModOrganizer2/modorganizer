@@ -117,7 +117,7 @@ Module::FileInfo Module::getFileInfo() const
 
     log::error(
       "GetFileVersionInfoSizeW() failed on '{}', {}",
-      m_path, formatSystemMessageQ(e));
+      m_path, formatSystemMessage(e));
 
     return {};
   }
@@ -130,7 +130,7 @@ Module::FileInfo Module::getFileInfo() const
 
     log::error(
       "GetFileVersionInfoW() failed on '{}', {}",
-      m_path, formatSystemMessageQ(e));
+      m_path, formatSystemMessage(e));
 
     return {};
   }
@@ -255,7 +255,7 @@ QDateTime Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
 
       log::error(
         "can't open file '{}' for timestamp, {}",
-        m_path, formatSystemMessageQ(e));
+        m_path, formatSystemMessage(e));
 
       return {};
     }
@@ -266,7 +266,7 @@ QDateTime Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
 
       log::error(
         "can't get file time for '{}', {}",
-        m_path, formatSystemMessageQ(e));
+        m_path, formatSystemMessage(e));
 
       return {};
     }
@@ -328,7 +328,7 @@ std::vector<Module> getLoadedModules()
   if (snapshot.get() == INVALID_HANDLE_VALUE)
   {
     const auto e = GetLastError();
-    log::error("CreateToolhelp32Snapshot() failed, {}", formatSystemMessageQ(e));
+    log::error("CreateToolhelp32Snapshot() failed, {}", formatSystemMessage(e));
     return {};
   }
 
@@ -339,7 +339,7 @@ std::vector<Module> getLoadedModules()
   if (!Module32First(snapshot.get(), &me))
   {
     const auto e = GetLastError();
-    log::error("Module32First() failed, {}", formatSystemMessageQ(e));
+    log::error("Module32First() failed, {}", formatSystemMessage(e));
     return {};
   }
 
@@ -358,7 +358,7 @@ std::vector<Module> getLoadedModules()
 
       // no more modules is not an error
       if (e != ERROR_NO_MORE_FILES) {
-        log::error("Module32Next() failed, {}", formatSystemMessageQ(e));
+        log::error("Module32Next() failed, {}", formatSystemMessage(e));
       }
 
       break;

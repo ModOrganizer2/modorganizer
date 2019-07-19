@@ -354,7 +354,7 @@ QString OrganizerCore::commitSettings(const QString &iniFile)
     // make a second attempt using qt functions but if that fails print the
     // error from the first attempt
     if (!renameFile(iniFile + ".new", iniFile)) {
-      return windowsErrorString(err);
+      return QString::fromStdWString(formatSystemMessage(err));
     }
   }
   return QString();
@@ -387,10 +387,12 @@ void OrganizerCore::storeSettings()
                     + QString::fromStdWString(AppConfig::iniFileName());
   if (QFileInfo(iniFile).exists()) {
     if (!shellCopy(iniFile, iniFile + ".new", true, qApp->activeWindow())) {
+      const auto e = GetLastError();
       QMessageBox::critical(
           qApp->activeWindow(), tr("Failed to write settings"),
           tr("An error occurred trying to update MO settings to %1: %2")
-              .arg(iniFile, windowsErrorString(::GetLastError())));
+              .arg(iniFile)
+              .arg(QString::fromStdWString(formatSystemMessage(e))));
       return;
     }
   }

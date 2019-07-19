@@ -265,7 +265,10 @@ void Profile::createTweakedIniFile()
   QString tweakedIni = m_Directory.absoluteFilePath("initweaks.ini");
 
   if (QFile::exists(tweakedIni) && !shellDeleteQuiet(tweakedIni)) {
-    reportError(tr("failed to update tweaked ini file, wrong settings may be used: %1").arg(windowsErrorString(::GetLastError())));
+    const auto e = GetLastError();
+    reportError(
+      tr("failed to update tweaked ini file, wrong settings may be used: %1")
+        .arg(QString::fromStdWString(formatSystemMessage(e))));
     return;
   }
 
@@ -287,7 +290,7 @@ void Profile::createTweakedIniFile()
   if (error) {
     const auto e = ::GetLastError();
     reportError(tr("failed to create tweaked ini: %1")
-      .arg(formatSystemMessageQ(e)));
+      .arg(QString::fromStdWString(formatSystemMessage(e))));
   }
 
   log::debug("{} saved", QDir::toNativeSeparators(tweakedIni));

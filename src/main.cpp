@@ -464,7 +464,7 @@ void preloadDll(const QString& filename)
 
   if (!LoadLibraryW(dllPath.toStdWString().c_str())) {
     const auto e = GetLastError();
-    log::warn("failed to load {}: {}", dllPath, formatSystemMessageQ(e));
+    log::warn("failed to load {}: {}", dllPath, formatSystemMessage(e));
   }
 }
 

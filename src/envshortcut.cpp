@@ -100,7 +100,7 @@ private:
     if (FAILED(r)) {
       throw ShellLinkException(QString("%1, %2")
         .arg(s)
-        .arg(formatSystemMessageQ(r)));
+        .arg(formatSystemMessage(r)));
     }
   }
 
@@ -290,7 +290,7 @@ bool Shortcut::remove(Locations loc)
 
     log::error(
       "failed to remove shortcut '{}', {}",
-      path, formatSystemMessageQ(e));
+      path, formatSystemMessage(e));
 
     return false;
   }
