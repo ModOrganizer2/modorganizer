@@ -4,25 +4,69 @@
 namespace env
 {
 
+// information about a monitor
+//
+class Display
+{
+public:
+  Display(QString adapter, QString monitorDevice, bool primary);
+
+  // display name of the adapter running the monitor
+  //
+  const QString& adapter() const;
+
+  // internal device name of the monitor, this is not a display name
+  //
+  const QString& monitorDevice() const;
+
+  // whether this monitor is the primary
+  //
+  bool primary();
+
+  // resolution
+  //
+  int resX() const;
+  int resY() const;
+
+  // dpi
+  //
+  int dpi();
+
+  // refresh rate in hz
+  //
+  int refreshRate() const;
+
+  // string representation
+  //
+  QString toString() const;
+
+private:
+  QString m_adapter;
+  QString m_monitorDevice;
+  bool m_primary;
+  int m_resX, m_resY;
+  int m_dpi;
+  int m_refreshRate;
+
+  void getSettings();
+};
+
+
+// holds various information about Windows metrics
+//
 class Metrics
 {
 public:
-  struct Display
-  {
-    int resX=0, resY=0, dpi=0;
-    bool primary=false;
-    int refreshRate = 0;
-    QString monitor, adapter;
-
-    QString toString() const;
-  };
-
   Metrics();
 
+  // list of displays on the system
+  //
   const std::vector<Display>& displays() const;
 
 private:
   std::vector<Display> m_displays;
+
+  void getDisplays();
 };
 
 } // namespace

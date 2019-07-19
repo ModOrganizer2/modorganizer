@@ -10,7 +10,7 @@ using namespace MOBase;
 WindowsInfo::WindowsInfo()
 {
   // loading ntdll.dll, the functions will be found with GetProcAddress()
-  std::unique_ptr<HINSTANCE, LibraryFreer> ntdll(LoadLibraryW(L"ntdll.dll"));
+  LibraryPtr ntdll(LoadLibraryW(L"ntdll.dll"));
 
   if (!ntdll) {
     qCritical() << "failed to load ntdll.dll while getting version";

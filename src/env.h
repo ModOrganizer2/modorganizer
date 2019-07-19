@@ -6,6 +6,9 @@ class SecurityProduct;
 class WindowsInfo;
 class Metrics;
 
+
+// used by HandlePtr, calls CloseHandle() as the deleter
+//
 struct HandleCloser
 {
   using pointer = HANDLE;
@@ -21,6 +24,25 @@ struct HandleCloser
 using HandlePtr = std::unique_ptr<HANDLE, HandleCloser>;
 
 
+// used by DesktopDCPtr, calls ReleaseDC(0, dc) as the deleter
+//
+struct DesktopDCReleaser
+{
+  using pointer = HDC;
+
+  void operator()(HDC dc)
+  {
+    if (dc != 0) {
+      ::ReleaseDC(0, dc);
+    }
+  }
+};
+
+using DesktopDCPtr = std::unique_ptr<HDC, DesktopDCReleaser>;
+
+
+// used by LibraryPtr, calls FreeLibrary as the deleter
+//
 struct LibraryFreer
 {
   using pointer = HINSTANCE;
@@ -33,6 +55,11 @@ struct LibraryFreer
   }
 };
 
+using LibraryPtr = std::unique_ptr<HINSTANCE, LibraryFreer>;
+
+
+// used by COMPtr, calls Release() as the deleter
+//
 struct COMReleaser
 {
   void operator()(IUnknown* p)
@@ -43,19 +70,29 @@ struct COMReleaser
   }
 };
 
-
 template <class T>
 using COMPtr = std::unique_ptr<T, COMReleaser>;
 
 
+// creates a console in the constructor and destroys it in the destructor,
+// also redirects standard streams
+//
 class Console
 {
 public:
+  // opens the console and redirects standard streams to it
+  //
   Console();
+
+  // destroys the console and redirects the standard stream to NUL
+  //
   ~Console();
 
 private:
+  // whether the console was allocated successfully
   bool m_hasConsole;
+
+  // standard streams
   FILE* m_in;
   FILE* m_out;
   FILE* m_err;
