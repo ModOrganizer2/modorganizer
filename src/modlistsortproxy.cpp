@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "profile.h"
 #include "messagedialog.h"
 #include "qtgroupingproxy.h"
+#include <log.h>
 #include <QMenu>
 #include <QCheckBox>
 #include <QWidgetAction>
@@ -30,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 #include <QTreeView>
 
+using namespace MOBase;
 
 ModListSortProxy::ModListSortProxy(Profile* profile, QObject *parent)
   : QSortFilterProxyModel(parent)
@@ -240,7 +242,7 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
       // nop, already compared by priority
     } break;
     default: {
-      qWarning() << "Sorting is not defined for column " << left.column();
+      log::warn("Sorting is not defined for column {}", left.column());
     } break;
   }
   return lt;
@@ -474,7 +476,7 @@ bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) cons
   }
 
   if (row >= static_cast<int>(m_Profile->numMods())) {
-    qWarning("invalid row index: %d", row);
+    log::warn("invalid row index: {}", row);
     return false;
   }
 

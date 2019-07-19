@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <utility.h>
 #include <report.h>
+#include <log.h>
 
 #include <QObject>
 #include <QFile>
@@ -294,7 +295,7 @@ bool CategoryFactory::isDecendantOf(int id, int parentID) const
       return isDecendantOf(m_Categories[index].m_ParentID, parentID);
     }
   } else {
-    qWarning("%d is no valid category id", id);
+    log::warn("{} is no valid category id", id);
     return false;
   }
 }

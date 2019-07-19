@@ -612,7 +612,7 @@ void NXMAccessManager::clearCookies()
   if (jar != nullptr) {
     jar->clear();
   } else {
-    qWarning("failed to clear cookies, invalid cookie jar");
+    log::warn("failed to clear cookies, invalid cookie jar");
   }
 }
 

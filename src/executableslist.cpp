@@ -250,9 +250,9 @@ void ExecutablesList::setExecutable(const Executable &exe, SetFlags flags)
         return;
       }
 
-      qWarning().nospace()
-        << "executable '" << itor->title() << "' was in the way and was "
-        << "renamed to '" << *newTitle << "'";
+      log::warn(
+        "executable '{}' was in the way and was renamed to '{}'",
+        itor->title(), *newTitle);
 
       itor->title(*newTitle);
       itor = end();

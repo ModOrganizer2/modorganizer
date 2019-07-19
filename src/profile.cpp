@@ -125,7 +125,7 @@ Profile::Profile(const QDir &directory, IPluginGame const *gamePlugin)
   findProfileSettings();
 
   if (!QFile::exists(m_Directory.filePath("modlist.txt"))) {
-    qWarning("missing modlist.txt in %s", qUtf8Printable(directory.path()));
+    log::warn("missing modlist.txt in {}", directory.path());
     touchFile(m_Directory.filePath("modlist.txt"));
   }
 
@@ -307,7 +307,7 @@ void Profile::renameModInAllProfiles(const QString& oldName, const QString& newN
     if (modList.exists())
       renameModInList(modList, oldName, newName);
     else
-      qWarning("Profile has no modlist.txt : %s", qUtf8Printable(profileIter.filePath()));
+      log::warn("Profile has no modlist.txt: {}", profileIter.filePath());
   }
 }
 
@@ -328,7 +328,7 @@ void Profile::renameModInList(QFile &modList, const QString &oldName, const QStr
 
     if (line.length() == 0) {
       // ignore empty lines
-      qWarning("mod list contained invalid data: empty line");
+      log::warn("mod list contained invalid data: empty line");
       continue;
     }
 
@@ -343,7 +343,7 @@ void Profile::renameModInList(QFile &modList, const QString &oldName, const QStr
 
     if (modName.isEmpty()) {
       // file broken?
-      qWarning("mod list contained invalid data: missing mod name");
+      log::warn("mod list contained invalid data: missing mod name");
       continue;
     }
 
@@ -424,8 +424,9 @@ void Profile::refreshModStatus()
             m_ModStatus[modIndex].m_Priority = index++;
           }
         } else {
-          qWarning("no mod state for \"%s\" (profile \"%s\")",
-                   qUtf8Printable(modName), qUtf8Printable(m_Directory.path()));
+          log::warn(
+            "no mod state for \"{}\" (profile \"{}\")",
+            modName, m_Directory.path());
           // need to rewrite the modlist to fix this
           modStatusModified = true;
         }
@@ -495,8 +496,10 @@ void Profile::dumpModStatus() const
 {
   for (unsigned int i = 0; i < m_ModStatus.size(); ++i) {
     ModInfo::Ptr info = ModInfo::getByIndex(i);
-    qWarning("%d: %s - %d (%s)", i, info->name().toUtf8().constData(), m_ModStatus[i].m_Priority,
-             m_ModStatus[i].m_Enabled ? "enabled" : "disabled");
+    log::warn(
+      "{}: {} - {} ({})",
+      i, info->name(), m_ModStatus[i].m_Priority,
+      m_ModStatus[i].m_Enabled ? "enabled" : "disabled");
   }
 }
 
@@ -803,7 +806,7 @@ bool Profile::localSettingsEnabled() const
     QStringList missingFiles;
     for (QString file : m_GamePlugin->iniFiles()) {
       if (!QFile::exists(m_Directory.filePath(file))) {
-        qWarning("missing %s in %s", qUtf8Printable(file), qUtf8Printable(m_Directory.path()));
+        log::warn("missing {} in {}", file, m_Directory.path());
         missingFiles << file;
       }
     }

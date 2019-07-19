@@ -3,8 +3,9 @@
 #include "modinfodialog.h"
 #include "settings.h"
 #include <report.h>
+#include <log.h>
 
-using MOBase::reportError;
+using namespace MOBase;
 
 class ESPItem
 {
@@ -297,7 +298,7 @@ void ESPsTab::onActivate()
   }
 
   if (esp->isActive()) {
-    qWarning("ESPsTab::onActive(): item is already active");
+    log::warn("ESPsTab::onActive(): item is already active");
     return;
   }
 
@@ -348,7 +349,7 @@ void ESPsTab::onDeactivate()
   }
 
   if (!esp->isActive()) {
-    qWarning("ESPsTab::onDeactivate(): item is already inactive");
+    log::warn("ESPsTab::onDeactivate(): item is already inactive");
     return;
   }
 

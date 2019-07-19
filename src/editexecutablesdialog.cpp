@@ -101,9 +101,7 @@ ExecutablesList EditExecutablesDialog::getExecutablesList() const
     auto itor = m_executablesList.find(title);
 
     if (itor == m_executablesList.end()) {
-      qWarning().nospace()
-        << "getExecutablesList(): executable '" << title << "' not found";
-
+      log::warn("getExecutablesList(): executable '{}' not found", title);
       continue;
     }
 
@@ -293,9 +291,10 @@ void EditExecutablesDialog::setEdits(const Executable& e)
       modIndex = ui->mods->findText(modName->value);
 
       if (modIndex == -1) {
-        qWarning().nospace()
-          << "executable '" << e.title() << "' uses mod '" << modName->value << "' "
-          << "as a custom overwrite, but that mod doesn't exist";
+        log::warn(
+          "executable '{}' uses mod '{}' as a custom overwrite, but that mod "
+          "doesn't exist",
+          e.title(), modName->value);
       }
     }
 
@@ -335,7 +334,7 @@ void EditExecutablesDialog::save()
 
   auto* e = selectedExe();
   if (!e) {
-    qWarning("trying to save but nothing is selected");
+    log::warn("trying to save but nothing is selected");
     return;
   }
 
@@ -475,13 +474,13 @@ void EditExecutablesDialog::on_remove_clicked()
 {
   auto* item = selectedItem();
   if (!item) {
-    qWarning("trying to remove entry but nothing is selected");
+    log::warn("trying to remove entry but nothing is selected");
     return;
   }
 
   auto* exe = selectedExe();
   if (!exe) {
-    qWarning("trying to remove entry but nothing is selected");
+    log::warn("trying to remove entry but nothing is selected");
     return;
   }
 
@@ -646,7 +645,7 @@ void EditExecutablesDialog::on_configureLibraries_clicked()
 {
   auto* e = selectedExe();
   if (!e) {
-    qWarning("trying to configure libraries but nothing is selected");
+    log::warn("trying to configure libraries but nothing is selected");
     return;
   }
 

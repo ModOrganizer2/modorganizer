@@ -275,7 +275,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
               return QString();
             }
           } else {
-            qWarning("category %d doesn't exist (may have been removed)", category);
+            log::warn("category {} doesn't exist (may have been removed)", category);
             modInfo->setCategory(category, false);
             return QString();
           }
@@ -618,8 +618,9 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
         result = true;
       } break;
       default: {
-        qWarning("edit on column \"%s\" not supported",
-                 getColumnName(index.column()).toUtf8().constData());
+        log::warn(
+          "edit on column \"{}\" not supported",
+          getColumnName(index.column()).toUtf8().constData());
         result = false;
       } break;
     }

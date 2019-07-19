@@ -1,6 +1,9 @@
 #include "filerenamer.h"
+#include <log.h>
 #include <QMessageBox>
 #include <QFileInfo>
+
+using namespace MOBase;
 
 FileRenamer::FileRenamer(QWidget* parent, QFlags<RenameFlags> flags)
   : m_parent(parent), m_flags(flags)
@@ -34,7 +37,7 @@ FileRenamer::RenameResults FileRenamer::rename(const QString& oldName, const QSt
         qDebug().nospace() << "removing " << newName;
         // user wants to replace the file, so remove it
         if (!QFile(newName).remove()) {
-          qWarning().nospace() << "failed to remove " << newName;
+          log::warn("failed to remove '{}'", newName);
           // removal failed, warn the user and allow canceling
           if (!removeFailed(newName)) {
             qDebug().nospace() << "canceling " << oldName;
@@ -62,7 +65,7 @@ FileRenamer::RenameResults FileRenamer::rename(const QString& oldName, const QSt
   // target either didn't exist or was removed correctly
 
   if (!QFile::rename(oldName, newName)) {
-    qWarning().nospace() << "failed to rename " << oldName << " to " << newName;
+    log::warn("failed to rename '{}' to '{}'", oldName, newName);
 
     // renaming failed, warn the user and allow canceling
     if (!renameFailed(oldName, newName)) {

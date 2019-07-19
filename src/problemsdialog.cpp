@@ -96,7 +96,7 @@ void ProblemsDialog::startFix()
 {
   QObject *fixButton = QObject::sender();
   if (fixButton == NULL) {
-    qWarning("no button");
+    log::warn("no button");
     return;
   }
   IPluginDiagnose *plugin = reinterpret_cast<IPluginDiagnose*>(fixButton ->property("fix").value<void*>());

@@ -69,7 +69,7 @@ bool PluginContainer::verifyPlugin(IPlugin *plugin)
   if (plugin == nullptr) {
     return false;
   } else if (!plugin->init(new OrganizerProxy(m_Organizer, this, plugin->name()))) {
-    qWarning("plugin failed to initialize");
+    log::warn("plugin failed to initialize");
     return false;
   }
   return true;
@@ -167,9 +167,10 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
                 qDebug("loaded plugin \"%s\"", qUtf8Printable(QFileInfo(pluginName).fileName()));
               }
               else {
-                qWarning("plugin \"%s\" failed to load. If this plugin is for an older version of MO "
-                         "you have to update it or delete it if no update exists.",
-                         qUtf8Printable(pluginName));
+                log::warn(
+                  "plugin \"{}\" failed to load. If this plugin is for an older version of MO "
+                  "you have to update it or delete it if no update exists.",
+                  pluginName);
               }
             }
           }
@@ -298,7 +299,7 @@ void PluginContainer::loadPlugins()
           m_PluginLoaders.push_back(pluginLoader.release());
         } else {
           m_FailedPlugins.push_back(pluginName);
-          qWarning("plugin \"%s\" failed to load (may be outdated)", qUtf8Printable(pluginName));
+          log::warn("plugin \"{}\" failed to load (may be outdated)", pluginName);
         }
       }
     }

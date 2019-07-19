@@ -800,7 +800,7 @@ void MainWindow::setupToolbar()
     ui->toolBar->insertWidget(m_linksSeparator, spacer);
 
   } else {
-    qWarning("no separator found on the toolbar, icons won't be right-aligned");
+    log::warn("no separator found on the toolbar, icons won't be right-aligned");
   }
 }
 
@@ -1646,9 +1646,7 @@ void MainWindow::startExeAction()
   auto itor = list.find(title);
 
   if (itor == list.end()) {
-    qWarning().nospace()
-      << "startExeAction(): executable '" << title << "' not found";
-
+    log::warn("startExeAction(): executable '{}' not found", title);
     return;
   }
 
@@ -1874,17 +1872,18 @@ void MainWindow::expandDataTreeItem(QTreeWidgetItem *item)
   if ((item->childCount() == 1) && (item->child(0)->data(0, Qt::UserRole).toString() == "__loaded_on_demand__")) {
     // read the data we need from the sub-item, then dispose of it
     QTreeWidgetItem *onDemandDataItem = item->child(0);
-    std::wstring path = ToWString(onDemandDataItem->data(0, Qt::UserRole + 1).toString());
+    const QString path = onDemandDataItem->data(0, Qt::UserRole + 1).toString();
+    std::wstring wspath = path.toStdWString();
     bool conflictsOnly = onDemandDataItem->data(0, Qt::UserRole + 2).toBool();
 
-    std::wstring virtualPath = (path + L"\\").substr(6) + ToWString(item->text(0));
+    std::wstring virtualPath = (wspath + L"\\").substr(6) + ToWString(item->text(0));
     DirectoryEntry *dir = m_OrganizerCore.directoryStructure()->findSubDirectoryRecursive(virtualPath);
     if (dir != nullptr) {
       QIcon folderIcon = (new QFileIconProvider())->icon(QFileIconProvider::Folder);
       QIcon fileIcon = (new QFileIconProvider())->icon(QFileIconProvider::File);
-      updateTo(item, path, *dir, conflictsOnly, &fileIcon, &folderIcon);
+      updateTo(item, wspath, *dir, conflictsOnly, &fileIcon, &folderIcon);
     } else {
-      qWarning("failed to update view of %ls", path.c_str());
+      log::warn("failed to update view of {}", path);
     }
     m_RemoveWidget.push_back(item);
     QTimer::singleShot(5, this, SLOT(delayedRemove()));
@@ -2380,10 +2379,17 @@ void MainWindow::processUpdates() {
 
   if (currentVersion > lastVersion) {
     //NOP
-  } else if (currentVersion < lastVersion)
-    qWarning() << tr("Notice: Your current MO version (%1) is lower than the previously used one (%2). "
-                     "The GUI may not downgrade gracefully, so you may experience oddities. "
-                     "However, there should be no serious issues.").arg(currentVersion.toString()).arg(lastVersion.toString()).toStdWString();
+  } else if (currentVersion < lastVersion) {
+    const auto text = tr(
+      "Notice: Your current MO version (%1) is lower than the previously used one (%2). "
+      "The GUI may not downgrade gracefully, so you may experience oddities. "
+      "However, there should be no serious issues.")
+      .arg(currentVersion.toString())
+      .arg(lastVersion.toString());
+
+    log::warn("{}", text);
+  }
+
   //save version in all case
   settings.setValue("version", currentVersion.toString());
 }
@@ -2924,7 +2930,7 @@ void MainWindow::refreshFilters()
       while (currentID != 0) {
         categoriesUsed.insert(currentID);
         if (!cycleTest.insert(currentID).second) {
-          qWarning("cycle in categories: %s", qUtf8Printable(SetJoin(cycleTest, ", ")));
+          log::warn("cycle in categories: {}", SetJoin(cycleTest, ", "));
           break;
         }
         currentID = m_CategoryFactory.getParentID(m_CategoryFactory.getCategoryIndex(currentID));
@@ -4008,7 +4014,7 @@ void MainWindow::moveOverwriteContentToExistingMod()
       }
 
       if (modAbsolutePath.isNull()) {
-        qWarning("Mod %s has not been found, for some reason", qUtf8Printable(result));
+        log::warn("Mod {} has not been found, for some reason", result);
         return;
       }
 
@@ -4404,7 +4410,7 @@ void MainWindow::saveArchiveList()
       qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(m_OrganizerCore.currentProfile()->getArchivesFileName())));
     }
   } else {
-    qWarning("archive list not initialised");
+    log::warn("archive list not initialised");
   }
 }
 
@@ -4421,7 +4427,7 @@ void MainWindow::checkModsForUpdates()
       m_OrganizerCore.doAfterLogin([this] () { this->checkModsForUpdates(); });
       NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else {
-      qWarning("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.");
+      log::warn("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.");
     }
   }
 
@@ -5802,7 +5808,7 @@ void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
       m_OrganizerCore.doAfterLogin([=]() { this->modUpdateCheck(IDs); });
       NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else
-      qWarning("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.");
+      log::warn("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.");
   }
 }
 
@@ -5918,7 +5924,7 @@ void MainWindow::finishUpdateInfo()
   }
 
   if (!finalMods.empty() && organizedGames.empty())
-    qWarning("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.");
+    log::warn("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.");
 
   for (auto game : organizedGames)
     NexusInterface::instance(&m_PluginContainer)->requestUpdates(game.second, this, QVariant(), game.first, QString());
@@ -6368,9 +6374,7 @@ void MainWindow::removeFromToolbar()
 
   auto itor = list.find(title);
   if (itor == list.end()) {
-    qWarning().nospace()
-      << "removeFromToolbar(): executable '" << title << "' not found";
-
+    log::warn("removeFromToolbar(): executable '{}' not found", title);
     return;
   }
 
@@ -6570,7 +6574,7 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &errorMe
       if (progidx != std::string::npos) {
         dialog.setLabelText(line.substr(progidx + 11).c_str());
       } else if (erroridx != std::string::npos) {
-        qWarning("%s", line.c_str());
+        log::warn("{}", line);
         errorMessages.append(boost::algorithm::trim_copy(line.substr(erroridx + 8)) + "\n");
       } else {
         std::smatch match;
@@ -6928,7 +6932,7 @@ void MainWindow::dropLocalFile(const QUrl &url, const QString &outputDir, bool m
 {
   QFileInfo file(url.toLocalFile());
   if (!file.exists()) {
-    qWarning("invalid source file: %s", qUtf8Printable(file.absoluteFilePath()));
+    log::warn("invalid source file: {}", file.absoluteFilePath());
     return;
   }
   QString target = outputDir + "/" + file.fileName();

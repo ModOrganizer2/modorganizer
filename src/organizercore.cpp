@@ -200,26 +200,26 @@ bool checkService()
   try {
     serviceManagerHandle = OpenSCManager(NULL, NULL, SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG);
     if (!serviceManagerHandle) {
-      qWarning("failed to open service manager (query status) (error %d)", GetLastError());
+      log::warn("failed to open service manager (query status) (error {})", GetLastError());
       throw 1;
     }
 
     serviceHandle = OpenService(serviceManagerHandle, L"EventLog", SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG);
     if (!serviceHandle) {
-      qWarning("failed to open EventLog service (query status) (error %d)", GetLastError());
+      log::warn("failed to open EventLog service (query status) (error {})", GetLastError());
       throw 2;
     }
 
     if (QueryServiceConfig(serviceHandle, NULL, 0, &bytesNeeded)
       || (GetLastError() != ERROR_INSUFFICIENT_BUFFER)) {
-      qWarning("failed to get size of service config (error %d)", GetLastError());
+      log::warn("failed to get size of service config (error {})", GetLastError());
       throw 3;
     }
 
     DWORD serviceConfigSize = bytesNeeded;
     serviceConfig = (LPQUERY_SERVICE_CONFIG)LocalAlloc(LMEM_FIXED, serviceConfigSize);
     if (!QueryServiceConfig(serviceHandle, serviceConfig, serviceConfigSize, &bytesNeeded)) {
-      qWarning("failed to query service config (error %d)", GetLastError());
+      log::warn("failed to query service config (error {})", GetLastError());
       throw 4;
     }
 
@@ -230,14 +230,14 @@ bool checkService()
 
     if (QueryServiceStatusEx(serviceHandle, SC_STATUS_PROCESS_INFO, NULL, 0, &bytesNeeded)
       || (GetLastError() != ERROR_INSUFFICIENT_BUFFER)) {
-      qWarning("failed to get size of service status (error %d)", GetLastError());
+      log::warn("failed to get size of service status (error {})", GetLastError());
       throw 5;
     }
 
     DWORD serviceStatusSize = bytesNeeded;
     serviceStatus = (LPSERVICE_STATUS_PROCESS)LocalAlloc(LMEM_FIXED, serviceStatusSize);
     if (!QueryServiceStatusEx(serviceHandle, SC_STATUS_PROCESS_INFO, (LPBYTE)serviceStatus, serviceStatusSize, &bytesNeeded)) {
-      qWarning("failed to query service status (error %d)", GetLastError());
+      log::warn("failed to query service status (error {})", GetLastError());
       throw 6;
     }
 
@@ -402,8 +402,9 @@ void OrganizerCore::storeSettings()
   if (result == QSettings::NoError) {
     QString errMsg = commitSettings(iniFile);
     if (!errMsg.isEmpty()) {
-      qWarning("settings file not writable, may be locked by another "
-               "application, trying direct write");
+      log::warn(
+        "settings file not writable, may be locked by another "
+        "application, trying direct write");
       writeTarget = iniFile;
       result = storeSettings(iniFile);
     }
@@ -1381,9 +1382,9 @@ bool OrganizerCore::previewFileWithAlternatives(
       // sanity check, this shouldn't happen unless the caller passed an
       // incorrect id
 
-      qWarning().nospace()
-        << "selected preview origin " << selectedOrigin << " not found in "
-        << "list of alternatives";
+      log::warn(
+        "selected preview origin {} not found in list of alternatives",
+        selectedOrigin);
     }
 
     for (int id : origins) {
@@ -1798,8 +1799,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
         currentDirectory = exe.workingDirectory();
       }
     } catch (const std::runtime_error &) {
-      qWarning("\"%s\" not set up as executable",
-               qUtf8Printable(executable));
+      log::warn("\"{}\" not set up as executable", executable);
       binary = QFileInfo(executable);
     }
   }
@@ -1881,7 +1881,7 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, IL
     // Wait for a an event on the handle, a key press, mouse click or timeout
     res = MsgWaitForMultipleObjects(1, &handle, FALSE, 200, QS_KEY | QS_MOUSEBUTTON);
     if (res == WAIT_FAILED) {
-      qWarning() << "Failed waiting for process completion : MsgWaitForMultipleObjects WAIT_FAILED" << GetLastError();
+      log::warn("Failed waiting for process completion : MsgWaitForMultipleObjects WAIT_FAILED {}", GetLastError());
       break;
     }
 
@@ -1897,7 +1897,7 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, IL
     if (res == WAIT_OBJECT_0) {
       // process we were waiting on has completed
       if (originalHandle && exitCode && !::GetExitCodeProcess(handle, exitCode))
-        qWarning() << "Failed getting exit code of complete process :" << GetLastError();
+        log::warn("Failed getting exit code of complete process: {}", GetLastError());
       CloseHandle(handle);
       handle = INVALID_HANDLE_VALUE;
       originalHandle = false;
@@ -1962,7 +1962,7 @@ HANDLE OrganizerCore::findAndOpenAUSVFSProcess(const std::vector<QString>& hidde
   DWORD pids[querySize];
   size_t found = querySize;
   if (!::GetVFSProcessList(&found, pids)) {
-    qWarning() << "Failed seeking USVFS processes : GetVFSProcessList failed?!";
+    log::warn("Failed seeking USVFS processes : GetVFSProcessList failed?!");
     return INVALID_HANDLE_VALUE;
   }
 
@@ -1974,7 +1974,7 @@ HANDLE OrganizerCore::findAndOpenAUSVFSProcess(const std::vector<QString>& hidde
 
     HANDLE handle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, FALSE, pids[i]);
     if (handle == INVALID_HANDLE_VALUE) {
-      qWarning() << "Failed openning USVFS process " << pids[i] << " : OpenProcess failed" << GetLastError();
+      log::warn("Failed opening USVFS process {}: OpenProcess failed {}", pids[i], GetLastError());
       continue;
     }
 
@@ -2118,7 +2118,7 @@ void OrganizerCore::updateModsActiveState(const QList<unsigned int> &modIndices,
       dir.entryList(QStringList() << "*.esm", QDir::Files)) {
       const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esm));
       if (file.get() == nullptr) {
-        qWarning("failed to activate %s", qUtf8Printable(esm));
+        log::warn("failed to activate {}", esm);
         continue;
       }
 
@@ -2134,7 +2134,7 @@ void OrganizerCore::updateModsActiveState(const QList<unsigned int> &modIndices,
       dir.entryList(QStringList() << "*.esl", QDir::Files)) {
       const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esl));
       if (file.get() == nullptr) {
-        qWarning("failed to activate %s", qUtf8Printable(esl));
+        log::warn("failed to activate {}", esl);
         continue;
       }
 
@@ -2150,7 +2150,7 @@ void OrganizerCore::updateModsActiveState(const QList<unsigned int> &modIndices,
     for (const QString &esp : esps) {
       const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esp));
       if (file.get() == nullptr) {
-        qWarning("failed to activate %s", qUtf8Printable(esp));
+        log::warn("failed to activate {}", esp);
         continue;
       }
 
@@ -2558,7 +2558,7 @@ std::vector<unsigned int> OrganizerCore::activeProblems() const
     // of a "log spam". But since this is a sevre error which will most likely make the
     // game crash/freeze/etc. and is very hard to diagnose,  this "log spam" will make it
     // easier for the user to notice the warning.
-    qWarning("hook.dll found in game folder: %s", qUtf8Printable(hookdll));
+    log::warn("hook.dll found in game folder: {}", hookdll);
     problems.push_back(PROBLEM_MO1SCRIPTEXTENDERWORKAROUND);
   }
   return problems;
@@ -2604,7 +2604,7 @@ void OrganizerCore::startGuidedFix(unsigned int) const
 bool OrganizerCore::saveCurrentLists()
 {
   if (m_DirectoryUpdate) {
-    qWarning("not saving lists during directory update");
+    log::warn("not saving lists during directory update");
     return false;
   }
 
@@ -2698,7 +2698,7 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString &profileName,
       result.reserve(result.size() + saveMap.size());
       result.insert(result.end(), saveMap.begin(), saveMap.end());
     } else {
-      qWarning("local save games not supported by this game plugin");
+      log::warn("local save games not supported by this game plugin");
     }
   }
 

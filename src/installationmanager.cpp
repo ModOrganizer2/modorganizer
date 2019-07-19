@@ -693,7 +693,7 @@ void InstallationManager::postInstallCleanup()
         QFile::setPermissions(fileInfo.absoluteFilePath(), QFile::ReadOther | QFile::WriteOther);
       }
       if (!QFile::remove(fileInfo.absoluteFilePath())) {
-        qWarning() << "Unable to delete " << fileInfo.absoluteFilePath();
+        log::warn("Unable to delete {}", fileInfo.absoluteFilePath());
       }
     }
     directoriesToRemove.insert(fileInfo.absolutePath());

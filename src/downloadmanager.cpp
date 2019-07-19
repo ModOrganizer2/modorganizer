@@ -924,7 +924,7 @@ void DownloadManager::queryInfo(int index)
   DownloadInfo *info = m_ActiveDownloads[index];
 
   if (info->m_FileInfo->repository != "Nexus") {
-    qWarning("re-querying file info is currently only possible with Nexus");
+    log::warn("re-querying file info is currently only possible with Nexus");
     return;
   }
 
@@ -976,7 +976,7 @@ void DownloadManager::queryInfoMd5(int index)
   DownloadInfo *info = m_ActiveDownloads[index];
 
   if (info->m_FileInfo->repository != "Nexus") {
-    qWarning("re-querying file info is currently only possible with Nexus");
+    log::warn("re-querying file info is currently only possible with Nexus");
     return;
   }
 
@@ -1016,7 +1016,7 @@ void DownloadManager::visitOnNexus(int index)
   DownloadInfo *info = m_ActiveDownloads[index];
 
   if (info->m_FileInfo->repository != "Nexus") {
-    qWarning("Visiting mod page is currently only possible with Nexus");
+    log::warn("Visiting mod page is currently only possible with Nexus");
     return;
   }
 
@@ -1614,8 +1614,9 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
     }
   } else {
     if (info->m_FileInfo->fileID == 0) {
-      qWarning("could not determine file id for %s (state %d)",
-               qUtf8Printable(info->m_FileName), info->m_State);
+      log::warn(
+        "could not determine file id for {} (state {})",
+        info->m_FileName, info->m_State);
     }
   }
 
@@ -1999,7 +2000,7 @@ void DownloadManager::downloadFinished(int index)
       resumeDownloadInt(index);
     }
   } else {
-    qWarning("no download index %d", index);
+    log::warn("no download index {}", index);
   }
 }
 
@@ -2008,9 +2009,9 @@ void DownloadManager::downloadError(QNetworkReply::NetworkError error)
 {
   if (error != QNetworkReply::OperationCanceledError) {
     QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
-    qWarning("%s (%d)", reply != nullptr ? qUtf8Printable(reply->errorString())
-                                         : "Download error occured",
-             error);
+    log::warn("{} ({})",
+      reply != nullptr ? reply->errorString() : "Download error occured",
+      error);
   }
 }
 
@@ -2033,7 +2034,7 @@ void DownloadManager::metaDataChanged()
       }
     }
   } else {
-    qWarning("meta data event for unknown download");
+    log::warn("meta data event for unknown download");
   }
 }
 

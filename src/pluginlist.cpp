@@ -417,7 +417,7 @@ void PluginList::addInformation(const QString &name, const QString &message)
   if (iter != m_ESPsByName.end()) {
     m_AdditionalInfo[name.toLower()].m_Messages.append(message);
   } else {
-    qWarning("failed to associate message for \"%s\"", qUtf8Printable(name));
+    log::warn("failed to associate message for \"{}\"", name);
   }
 }
 
@@ -694,7 +694,7 @@ void PluginList::setState(const QString &name, PluginStates state) {
     m_ESPs[iter->second].m_Enabled = (state == IPluginList::STATE_ACTIVE) ||
                                      m_ESPs[iter->second].m_ForceEnabled;
   } else {
-    qWarning("Plugin not found: %s", qUtf8Printable(name));
+    log::warn("Plugin not found: {}", name);
   }
 }
 

@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "moapplication.h"
 #include <report.h>
 #include <utility.h>
+#include <log.h>
 #include <appconfig.h>
 #include <QFile>
 #include <QStringList>
@@ -36,7 +37,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 
 
-using MOBase::reportError;
+using namespace MOBase;
 
 
 class ProxyStyle : public QProxyStyle {
@@ -137,7 +138,7 @@ void MOApplication::updateStyle(const QString &fileName)
     if (QFile::exists(fileName)) {
       setStyleSheet(QString("file:///%1").arg(fileName));
     } else {
-      qWarning("invalid stylesheet: %s", qUtf8Printable(fileName));
+      log::warn("invalid stylesheet: {}", fileName);
     }
   }
 }

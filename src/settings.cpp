@@ -165,8 +165,9 @@ void Settings::registerPlugin(IPlugin *plugin)
   for (const PluginSetting &setting : plugin->settings()) {
     QVariant temp = m_Settings.value("Plugins/" + plugin->name() + "/" + setting.key, setting.defaultValue);
     if (!temp.convert(setting.defaultValue.type())) {
-      qWarning("failed to interpret \"%s\" as correct type for \"%s\" in plugin \"%s\", using default",
-               qUtf8Printable(temp.toString()), qUtf8Printable(setting.key), qUtf8Printable(plugin->name()));
+      log::warn(
+        "failed to interpret \"{}\" as correct type for \"{}\" in plugin \"{}\", using default",
+        temp.toString(), setting.key, plugin->name());
       temp = setting.defaultValue;
     }
     m_PluginSettings[plugin->name()][setting.key] = temp;

@@ -320,7 +320,7 @@ bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
     }
 
     if (organizedGames.empty()) {
-      qWarning() << tr("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.");
+      log::warn("{}", tr("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests."));
       updatesAvailable = false;
     } else {
       log::info("{}", tr(
