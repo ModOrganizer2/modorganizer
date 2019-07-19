@@ -398,7 +398,7 @@ bool InstallationManager::isSimpleArchiveTopLayer(const DirectoryTree::Node *nod
   for (DirectoryTree::const_node_iterator iter = node->nodesBegin(); iter != node->nodesEnd(); ++iter) {
     if ((bainStyle && InstallationTester::isTopLevelDirectoryBain((*iter)->getData().name)) ||
         (!bainStyle && InstallationTester::isTopLevelDirectory((*iter)->getData().name))) {
-      qDebug("%s on the top level", (*iter)->getData().name.toUtf8().constData());
+      log::debug("{} on the top level", (*iter)->getData().name.toQString());
       return true;
     }
   }
@@ -424,7 +424,7 @@ DirectoryTree::Node *InstallationManager::getSimpleArchiveBase(DirectoryTree *da
                (currentNode->numNodes() == 1)) {
       currentNode = *currentNode->nodesBegin();
     } else {
-      qDebug("not a simple archive");
+      log::debug("not a simple archive");
       return nullptr;
     }
   }
@@ -576,7 +576,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString game
   QString targetDirectory = QDir(m_ModsDirectory + "/" + modName).canonicalPath();
   QString targetDirectoryNative = QDir::toNativeSeparators(targetDirectory);
 
-  qDebug("installing to \"%s\"", qUtf8Printable(targetDirectoryNative));
+  log::debug("installing to \"{}\"", targetDirectoryNative);
 
   m_InstallationProgress = new QProgressDialog(m_ParentWidget);
   ON_BLOCK_EXIT([this] () {
@@ -764,7 +764,7 @@ bool InstallationManager::install(const QString &fileName,
     if ((modID == 0) && (guessedModID != -1)) {
       modID = guessedModID;
     } else if (modID != guessedModID) {
-      qDebug("passed mod id: %d, guessed id: %d", modID, guessedModID);
+      log::debug("passed mod id: {}, guessed id: {}", modID, guessedModID);
     }
 
     modName.update(guessedModName, GUESS_GOOD);
@@ -774,7 +774,7 @@ bool InstallationManager::install(const QString &fileName,
   if (fileInfo.dir() == QDir(m_DownloadsDirectory)) {
     m_CurrentFile = fileInfo.fileName();
   }
-  qDebug("using mod name \"%s\" (id %d) -> %s", qUtf8Printable(modName), modID, qUtf8Printable(m_CurrentFile));
+  log::debug("using mod name \"{}\" (id {}) -> {}", QString(modName), modID, m_CurrentFile);
 
   //If there's an archive already open, close it. This happens with the bundle
   //installer when it uncompresses a split archive, then finds it has a real archive
@@ -785,9 +785,9 @@ bool InstallationManager::install(const QString &fileName,
   bool archiveOpen = m_ArchiveHandler->open(fileName,
                                             new MethodCallback<InstallationManager, void, QString *>(this, &InstallationManager::queryPassword));
   if (!archiveOpen) {
-    qDebug("integrated archiver can't open %s: %s (%d)",
-           qUtf8Printable(fileName),
-           qUtf8Printable(getErrorString(m_ArchiveHandler->getLastError())),
+    log::debug("integrated archiver can't open {}: {} ({})",
+           fileName,
+           getErrorString(m_ArchiveHandler->getLastError()),
            m_ArchiveHandler->getLastError());
   }
   ON_BLOCK_EXIT(std::bind(&InstallationManager::postInstallCleanup, this));

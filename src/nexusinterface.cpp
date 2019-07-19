@@ -316,15 +316,15 @@ void NexusInterface::interpretNexusFileName(const QString &fileName, QString &mo
     } else {
       modID = strtol(candidate.c_str(), nullptr, 10);
     }
-    qDebug("mod id guessed: %s -> %d", qUtf8Printable(fileName), modID);
+    log::debug("mod id guessed: {} -> {}", fileName, modID);
   } else if (std::regex_search(fileNameUTF8.constData(), result, simpleexp)) {
-    qDebug("simple expression matched, using name only");
+    log::debug("simple expression matched, using name only");
     modName = QString::fromUtf8(result[1].str().c_str());
     modName = modName.replace('_', ' ').trimmed();
 
     modID = -1;
   } else {
-    qDebug("no expression matched!");
+    log::debug("no expression matched!");
     modName.clear();
     modID = -1;
   }
@@ -860,7 +860,7 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
       if (nexusError.length() == 0) {
         nexusError = tr("empty response");
       }
-      qDebug("nexus error: %s", qUtf8Printable(nexusError));
+      log::debug("nexus error: {}", nexusError);
       emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, reply->error(), nexusError);
     } else {
       QJsonDocument responseDoc = QJsonDocument::fromJson(data);

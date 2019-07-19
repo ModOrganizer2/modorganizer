@@ -224,7 +224,7 @@ QString InstanceManager::chooseInstance(const QStringList &instanceList) const
   selection.setWindowFlags(selection.windowFlags() | Qt::WindowStaysOnTopHint);
 
   if (selection.exec() == QDialog::Rejected) {
-    qDebug("rejected");
+    log::debug("rejected");
     throw MOBase::MyException(QObject::tr("Canceled"));
   }
 

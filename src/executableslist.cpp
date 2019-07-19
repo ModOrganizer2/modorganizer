@@ -166,7 +166,7 @@ std::vector<Executable> ExecutablesList::getPluginExecutables(
 
 void ExecutablesList::resetFromPlugin(MOBase::IPluginGame const *game)
 {
-  qDebug("resetting plugin executables");
+  log::debug("resetting plugin executables");
 
   Q_ASSERT(game != nullptr);
 
@@ -295,7 +295,7 @@ std::optional<QString> ExecutablesList::makeNonConflictingTitle(
 
 void ExecutablesList::upgradeFromCustom(MOBase::IPluginGame const *game)
 {
-  qDebug() << "upgrading executables list";
+  log::debug("upgrading executables list");
 
   Q_ASSERT(game != nullptr);
 

@@ -482,7 +482,7 @@ bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) cons
 
   QModelIndex idx = sourceModel()->index(row, 0, parent);
   if (!idx.isValid()) {
-    qDebug("invalid mod index");
+    log::debug("invalid mod index");
     return false;
   }
   if (sourceModel()->hasChildren(idx)) {

@@ -352,7 +352,7 @@ void DownloadManager::refreshList()
       }
     }
     if (orphans.size() > 0) {
-      qDebug("%d orphaned meta files will be deleted", orphans.size());
+      log::debug("{} orphaned meta files will be deleted", orphans.size());
       shellDelete(orphans, true);
     }
 
@@ -379,7 +379,7 @@ void DownloadManager::refreshList()
     }
 
     //if (m_ActiveDownloads.size() != downloadsBefore) {
-      qDebug("Downloads after refresh: %d", m_ActiveDownloads.size());
+      log::debug("Downloads after refresh: {}", m_ActiveDownloads.size());
     //}
     emit update(-1);
 
@@ -401,7 +401,7 @@ bool DownloadManager::addDownload(const QStringList &URLs, QString gameName,
   }
 
   QUrl preferredUrl = QUrl::fromEncoded(URLs.first().toLocal8Bit());
-  qDebug("selected download url: %s", qUtf8Printable(preferredUrl.toString()));
+  log::debug("selected download url: {}", preferredUrl.toString());
   QNetworkRequest request(preferredUrl);
   request.setHeader(QNetworkRequest::UserAgentHeader, m_NexusInterface->getAccessManager()->userAgent());
   return addDownload(m_NexusInterface->getAccessManager()->get(request), URLs, fileName, gameName, modID, fileID, fileInfo);
@@ -562,9 +562,9 @@ void DownloadManager::addNXMDownload(const QString &url)
       break;
     }
   }
-  qDebug("add nxm download: %s", qUtf8Printable(url));
+  log::debug("add nxm download: {}", url);
   if (foundGame == nullptr) {
-    qDebug("download requested for wrong game (game: %s, url: %s)", qUtf8Printable(m_ManagedGame->gameShortName()), qUtf8Printable(nxmInfo.game()));
+    log::debug("download requested for wrong game (game: {}, url: {})", m_ManagedGame->gameShortName(), nxmInfo.game());
     QMessageBox::information(nullptr, tr("Wrong Game"), tr("The download link is for a mod for \"%1\" but this instance of MO "
     "has been set up for \"%2\".").arg(nxmInfo.game()).arg(m_ManagedGame->gameShortName()), QMessageBox::Ok);
     return;
@@ -572,13 +572,14 @@ void DownloadManager::addNXMDownload(const QString &url)
 
   for (auto tuple : m_PendingDownloads) {
     if (std::get<0>(tuple).compare(foundGame->gameShortName(), Qt::CaseInsensitive) == 0, std::get<1>(tuple) == nxmInfo.modId() && std::get<2>(tuple) == nxmInfo.fileId()) {
-      QString debugStr("download requested is already queued (mod: %1, file: %2)");
-      QString infoStr(tr("There is already a download queued for this file.\n\nMod %1\nFile %2"));
+      const auto infoStr =
+        tr("There is already a download queued for this file.\n\nMod %1\nFile %2")
+        .arg(nxmInfo.modId()).arg(nxmInfo.fileId());
 
-      debugStr = debugStr.arg(nxmInfo.modId()).arg(nxmInfo.fileId());
-      infoStr = infoStr.arg(nxmInfo.modId()).arg(nxmInfo.fileId());
+      log::debug(
+        "download requested is already queued (mod: {}, file: {})",
+        nxmInfo.modId(), nxmInfo.fileId());
 
-      qDebug(qUtf8Printable(debugStr));
       QMessageBox::information(nullptr, tr("Already Queued"), infoStr, QMessageBox::Ok);
       return;
     }
@@ -622,7 +623,7 @@ void DownloadManager::addNXMDownload(const QString &url)
           infoStr = infoStr.arg(QStringLiteral("<blank>"));
         }
 
-        qDebug(qUtf8Printable(debugStr));
+        log::debug("{}", debugStr);
         QMessageBox::information(nullptr, tr("Already Started"), infoStr, QMessageBox::Ok);
         return;
       }
@@ -883,7 +884,7 @@ void DownloadManager::resumeDownloadInt(int index)
     if (info->m_State == STATE_ERROR) {
       info->m_CurrentUrl = (info->m_CurrentUrl + 1) % info->m_Urls.count();
     }
-    qDebug("request resume from url %s", qUtf8Printable(info->currentURL()));
+    log::debug("request resume from url {}", info->currentURL());
     QNetworkRequest request(QUrl::fromEncoded(info->currentURL().toLocal8Bit()));
     request.setHeader(QNetworkRequest::UserAgentHeader, m_NexusInterface->getAccessManager()->userAgent());
     if (info->m_State != STATE_ERROR) {
@@ -896,7 +897,7 @@ void DownloadManager::resumeDownloadInt(int index)
     std::get<2>(info->m_SpeedDiff) = 0;
     std::get<3>(info->m_SpeedDiff) = 0;
     std::get<4>(info->m_SpeedDiff) = 0;
-    qDebug("resume at %lld bytes", info->m_ResumePos);
+    log::debug("resume at {} bytes", info->m_ResumePos);
     startDownload(m_NexusInterface->getAccessManager()->get(request), info, true);
   }
   emit update(index);
@@ -993,11 +994,11 @@ void DownloadManager::queryInfoMd5(int index)
     downloadFile.setFileName(m_OrganizerCore->downloadsPath() + "\\" + info->m_FileName);
   }
   if (!downloadFile.exists()) {
-    qDebug("Can't find download file %s", info->m_FileName);
+    log::debug("Can't find download file {}", info->m_FileName);
     return;
   }
   if (!downloadFile.open(QIODevice::ReadOnly)) {
-    qDebug("Can't open download file %s", info->m_FileName);
+    log::debug("Can't open download file {}", info->m_FileName);
     return;
   }
   info->m_Hash = QCryptographicHash::hash(downloadFile.readAll(), QCryptographicHash::Md5);
@@ -1384,7 +1385,7 @@ void DownloadManager::setState(DownloadManager::DownloadInfo *info, DownloadMana
       m_RequestIDs.insert(m_NexusInterface->requestFiles(info->m_FileInfo->gameName, info->m_FileInfo->modID, this, info->m_DownloadID, QString()));
     } break;
     case STATE_FETCHINGMODINFO_MD5: {
-      qDebug(qUtf8Printable(QString("Searching %1 for MD5 of %2").arg(info->m_GamesToQuery[0]).arg(QString(info->m_Hash.toHex()))));
+      log::debug("Searching {} for MD5 of {}", info->m_GamesToQuery[0], QString(info->m_Hash.toHex()));
       m_RequestIDs.insert(m_NexusInterface->requestInfoFromMd5(info->m_GamesToQuery[0], info->m_Hash, this, info->m_DownloadID, QString()));
     } break;
     case STATE_READY: {
@@ -1780,7 +1781,7 @@ void DownloadManager::nxmFileInfoFromMd5Available(QString gameName, QVariant use
         if (chosenIdx < 0) {
           chosenIdx = i; //intentional to not break in order to check other results
         } else {
-          qDebug("Multiple active files found during MD5 search.  Defaulting to time stamps...");
+          log::debug("Multiple active files found during MD5 search.  Defaulting to time stamps...");
           chosenIdx = -1;
           break;
         }

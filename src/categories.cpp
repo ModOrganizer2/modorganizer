@@ -360,10 +360,10 @@ unsigned int CategoryFactory::resolveNexusID(int nexusID) const
 {
   std::map<int, unsigned int>::const_iterator iter = m_NexusMap.find(nexusID);
   if (iter != m_NexusMap.end()) {
-    qDebug("nexus category id %d maps to internal %d", nexusID, iter->second);
+    log::debug("nexus category id {} maps to internal {}", nexusID, iter->second);
     return iter->second;
   } else {
-    qDebug("nexus category id %d not mapped", nexusID);
+    log::debug("nexus category id {} not mapped", nexusID);
     return 0U;
   }
 }

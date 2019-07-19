@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <iplugingame.h>
 #include <scriptextender.h>
 #include <appconfig.h>
+#include <log.h>
 #include <QFile>
 #include <QFileInfo>
 #include <QDir>
@@ -141,7 +142,7 @@ void LoadMechanism::deactivateScriptExtender()
 	{
 		vfsDLLName = ToQString(AppConfig::vfs64DLLName());
 	}
-	qDebug("USVFS DLL Name: " + vfsDLLName.toLatin1());
+	log::debug("USVFS DLL Name: {}", vfsDLLName);
 	if (vfsDLLName != "") {
 		if (QFile(pluginsDir.absoluteFilePath(vfsDLLName)).exists()) {
 			// remove dll from SE plugins directory
@@ -215,8 +216,8 @@ void LoadMechanism::activateScriptExtender()
 		QString targetPath = pluginsDir.absoluteFilePath(ToQString(vfsDLL));
 		QString vfsDLLPath = qApp->applicationDirPath() + "/" + QString::fromStdWString(vfsDLL);
 
-		qDebug("DLL USVFS Target Path: " + targetPath.toLatin1());
-		qDebug("DLL USVFS VFS DLL Path: " + vfsDLLPath.toLatin1());
+		log::debug("DLL USVFS Target Path: {}", targetPath);
+		log::debug("DLL USVFS VFS DLL Path: {}", vfsDLLPath);
 
 		QFile dllFile(targetPath);
 
@@ -297,17 +298,17 @@ void LoadMechanism::activate(EMechanism mechanism)
 {
   switch (mechanism) {
     case LOAD_MODORGANIZER: {
-		qDebug("Load Mechanism: Mod Organizer");
+		log::debug("Load Mechanism: Mod Organizer");
       deactivateProxyDLL();
       deactivateScriptExtender();
     } break;
     case LOAD_SCRIPTEXTENDER: {
-		qDebug("Load Mechanism: ScriptExtender");
+		log::debug("Load Mechanism: ScriptExtender");
       deactivateProxyDLL();
       activateScriptExtender();
     } break;
     case LOAD_PROXYDLL: {
-		qDebug("Load Mechanism: Proxy DLL");
+		log::debug("Load Mechanism: Proxy DLL");
       deactivateScriptExtender();
       activateProxyDLL();
     } break;

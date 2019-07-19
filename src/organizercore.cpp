@@ -89,9 +89,9 @@ static bool isOnline()
       if (addresses.count() == 0) {
         continue;
       }
-      qDebug("interface %s seems to be up (address: %s)",
-             qUtf8Printable(iter->humanReadableName()),
-             qUtf8Printable(addresses[0].ip().toString()));
+      log::debug("interface {} seems to be up (address: {})",
+             iter->humanReadableName(),
+             addresses[0].ip().toString());
       connected = true;
     }
   }
@@ -543,7 +543,7 @@ void OrganizerCore::setUserInterface(IUserInterface *userInterface,
     if (isOnline() && !m_Settings.offlineMode()) {
       m_Updater.testForUpdate();
     } else {
-      qDebug("user doesn't seem to be connected to the internet");
+      log::debug("user doesn't seem to be connected to the internet");
     }
   }
 }
@@ -605,7 +605,7 @@ bool OrganizerCore::nexusApi(bool retry)
     QString apiKey;
     if (m_Settings.getNexusApiKey(apiKey)) {
       // credentials stored or user entered them manually
-      qDebug("attempt to verify nexus api key");
+      log::debug("attempt to verify nexus api key");
       accessManager->apiCheck(apiKey);
       return true;
     } else {
@@ -627,7 +627,7 @@ void OrganizerCore::startMOUpdate()
 
 void OrganizerCore::downloadRequestedNXM(const QString &url)
 {
-  qDebug("download requested: %s", qUtf8Printable(url));
+  log::debug("download requested: {}", url);
   if (nexusApi()) {
     m_PendingDownloads.append(url);
   } else {
@@ -1208,7 +1208,9 @@ QString OrganizerCore::findJavaInstallation(const QString& jarFile)
     if (::FindExecutableW(jarFileW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
       DWORD binaryType = 0UL;
       if (!::GetBinaryTypeW(buffer, &binaryType)) {
-        qDebug("failed to determine binary type of \"%ls\": %lu", buffer, ::GetLastError());
+        log::debug(
+          "failed to determine binary type of \"{}\": {}",
+          QString::fromWCharArray(buffer), ::GetLastError());
       } else if (binaryType == SCS_32BIT_BINARY || binaryType == SCS_64BIT_BINARY) {
         return QString::fromWCharArray(buffer);
       }
@@ -1459,7 +1461,7 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary,
     // need to remove our stored load order because it may be outdated if a foreign tool changed the
     // file time. After removing that file, refreshESPList will use the file time as the order
     if (managedGame()->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
-      qDebug("removing loadorder.txt");
+      log::debug("removing loadorder.txt");
       QFile::remove(m_CurrentProfile->getLoadOrderFileName());
     }
     refreshDirectoryStructure();
@@ -1627,7 +1629,7 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
       m_USVFS.updateForcedLibraries(forcedLibraries);
 
     } catch (const UsvfsConnectorException &e) {
-      qDebug(e.what());
+      log::debug(e.what());
       return INVALID_HANDLE_VALUE;
     } catch (const std::exception &e) {
       QMessageBox::warning(window, tr("Error"), e.what());
@@ -1694,17 +1696,16 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
                 .arg(QDir::toNativeSeparators(cwdPath),
                      QDir::toNativeSeparators(binPath), arguments);
 
-      qDebug() << "Spawning proxyed process <" << cmdline << ">";
+      log::debug("Spawning proxyed process <{}>", cmdline);
 
       return startBinary(QFileInfo(QCoreApplication::applicationFilePath()),
                          cmdline, QCoreApplication::applicationDirPath(), true);
     } else {
-      qDebug() << "Spawning direct process <" << binPath << "," << arguments << "," << cwdPath << ">";
+      log::debug("Spawning direct process <{}, {}, {}>", binPath, arguments, cwdPath);
       return startBinary(binary, arguments, currentDirectory, true);
     }
   } else {
-    qDebug("start of \"%s\" canceled by plugin",
-           qUtf8Printable(binary.absoluteFilePath()));
+    log::debug("start of \"{}\" canceled by plugin", binary.absoluteFilePath());
     return INVALID_HANDLE_VALUE;
   }
 }
@@ -1872,9 +1873,11 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, IL
       processName += QString(" (%1)").arg(currentPID);
       if (uilock)
         uilock->setProcessName(processName);
-      qDebug() << "Waiting for"
-        << (originalHandle ? "spawned" : "usvfs")
-        << "process completion :" << qUtf8Printable(processName);
+
+      log::debug(
+        "Waiting for {} process completion: {}",
+        (originalHandle ? "spawned" : "usvfs"), processName);
+
       newHandle = false;
     }
 
@@ -1943,11 +1946,11 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, IL
   }
 
   if (res == WAIT_OBJECT_0)
-    qDebug() << "Waiting for process completion successfull";
+    log::debug("Waiting for process completion successfull");
   else if (uiunlocked)
-    qDebug() << "Waiting for process completion aborted by UI";
+    log::debug("Waiting for process completion aborted by UI");
   else
-    qDebug() << "Waiting for process completion not successfull :" << res;
+    log::debug("Waiting for process completion not successfull: {}", res);
 
   if (handle != INVALID_HANDLE_VALUE)
     ::CloseHandle(handle);

@@ -60,8 +60,7 @@ LogWorker::LogWorker()
                         "yyyy-MM-dd_hh-mm-ss")))
 {
   m_LogFile.open(QIODevice::WriteOnly);
-  qDebug("usvfs log messages are written to %s",
-         qUtf8Printable(m_LogFile.fileName()));
+  log::debug("usvfs log messages are written to {}", m_LogFile.fileName());
 }
 
 LogWorker::~LogWorker()
@@ -129,7 +128,10 @@ UsvfsConnector::UsvfsConnector()
   USVFSInitParameters(&params, SHMID, false, level, dumpType, dumpPath.c_str());
   InitLogging(false);
 
-  qDebug("Initializing VFS <%s, %d, %d, %s>", params.instanceName, params.logLevel, params.crashDumpsType, params.crashDumpsPath);
+  log::debug(
+    "Initializing VFS <{}, {}, {}, {}>",
+    params.instanceName, static_cast<int>(params.logLevel),
+    static_cast<int>(params.crashDumpsType), params.crashDumpsPath);
 
   CreateVFS(&params);
 
@@ -168,7 +170,7 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
   int files = 0;
   int dirs = 0;
 
-  qDebug("Updating VFS mappings...");
+  log::debug("Updating VFS mappings...");
 
   ClearVirtualMappings();
 
@@ -196,14 +198,7 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
     }
   }
 
-  qDebug("VFS mappings updated <linked %d dirs, %d files>", dirs, files);
-  /*
-    size_t dumpSize = 0;
-    CreateVFSDump(nullptr, &dumpSize);
-    std::unique_ptr<char[]> buffer(new char[dumpSize]);
-    CreateVFSDump(buffer.get(), &dumpSize);
-    qDebug(buffer.get());
-  */
+  log::debug("VFS mappings updated <linked {} dirs, {} files>", dirs, files);
 }
 
 void UsvfsConnector::updateParams(

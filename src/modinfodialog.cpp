@@ -556,9 +556,7 @@ void ModInfoDialog::switchToTab(ModInfoTabIDs id)
   }
 
   // this could happen if the tab is not visible right now
-  qDebug()
-    << "can't switch to tab ID " << static_cast<int>(id)
-    << ", not available";
+  log::debug("can't switch to tab ID {}, not available", static_cast<int>(id));
 }
 
 MOShared::FilesOrigin* ModInfoDialog::getOrigin()

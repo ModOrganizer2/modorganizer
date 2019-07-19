@@ -600,9 +600,9 @@ void NXMAccessManager::showCookies() const
 {
   QUrl url(NexusBaseUrl + "/");
   for (const QNetworkCookie &cookie : cookieJar()->cookiesForUrl(url)) {
-    qDebug("%s - %s (expires: %s)",
+    log::debug("{} - {} (expires: {})",
            cookie.name().constData(), cookie.value().constData(),
-           qUtf8Printable(cookie.expirationDate().toString()));
+           cookie.expirationDate().toString());
   }
 }
 

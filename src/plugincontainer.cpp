@@ -91,7 +91,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
   { // generic treatment for all plugins
     IPlugin *pluginObj = qobject_cast<IPlugin*>(plugin);
     if (pluginObj == nullptr) {
-      qDebug("not an IPlugin");
+      log::debug("not an IPlugin");
       return false;
     }
     plugin->setProperty("filename", fileName);
@@ -164,7 +164,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
           for (QObject *proxiedPlugin : matchingPlugins) {
             if (proxiedPlugin != nullptr) {
               if (registerPlugin(proxiedPlugin, pluginName)) {
-                qDebug("loaded plugin \"%s\"", qUtf8Printable(QFileInfo(pluginName).fileName()));
+                log::debug("loaded plugin \"{}\"", QFileInfo(pluginName).fileName());
               }
               else {
                 log::warn(
@@ -191,7 +191,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
     }
   }
 
-  qDebug("no matching plugin interface");
+  log::debug("no matching plugin interface");
 
   return false;
 }
@@ -225,7 +225,7 @@ void PluginContainer::unloadPlugins()
     QPluginLoader *loader = m_PluginLoaders.back();
     m_PluginLoaders.pop_back();
     if ((loader != nullptr) && !loader->unload()) {
-      qDebug("failed to unload %s: %s", qUtf8Printable(loader->fileName()), qUtf8Printable(loader->errorString()));
+      log::debug("failed to unload {}: {}", loader->fileName(), loader->errorString());
     }
     delete loader;
   }
@@ -274,13 +274,13 @@ void PluginContainer::loadPlugins()
   loadCheck.open(QIODevice::WriteOnly);
 
   QString pluginPath = qApp->applicationDirPath() + "/" + ToQString(AppConfig::pluginPath());
-  qDebug("looking for plugins in %s", QDir::toNativeSeparators(pluginPath).toUtf8().constData());
+  log::debug("looking for plugins in {}", QDir::toNativeSeparators(pluginPath));
   QDirIterator iter(pluginPath, QDir::Files | QDir::NoDotAndDotDot);
 
   while (iter.hasNext()) {
     iter.next();
     if (m_Organizer->settings().pluginBlacklisted(iter.fileName())) {
-      qDebug("plugin \"%s\" blacklisted", qUtf8Printable(iter.fileName()));
+      log::debug("plugin \"{}\" blacklisted", iter.fileName());
       continue;
     }
     loadCheck.write(iter.fileName().toUtf8());
@@ -296,7 +296,7 @@ void PluginContainer::loadPlugins()
           pluginName, pluginLoader->errorString());
       } else {
         if (registerPlugin(pluginLoader->instance(), pluginName)) {
-          qDebug("loaded plugin \"%s\"", qUtf8Printable(QFileInfo(pluginName).fileName()));
+          log::debug("loaded plugin \"{}\"", QFileInfo(pluginName).fileName());
           m_PluginLoaders.push_back(pluginLoader.release());
         } else {
           m_FailedPlugins.push_back(pluginName);

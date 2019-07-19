@@ -19,9 +19,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "messagedialog.h"
 #include "ui_messagedialog.h"
+#include <log.h>
 #include <QTimer>
 #include <QResizeEvent>
 #include <Windows.h>
+
+using namespace MOBase;
 
 MessageDialog::MessageDialog(const QString &text, QWidget *reference) :
     QDialog(reference),
@@ -81,7 +84,8 @@ void MessageDialog::resizeEvent(QResizeEvent *event)
 
 void MessageDialog::showMessage(const QString &text, QWidget *reference, bool bringToFront)
 {
-  qDebug("%s", qUtf8Printable(text));
+  log::debug("{}", text);
+
   if (reference != nullptr) {
     if (bringToFront || (qApp->activeWindow() != nullptr)) {
       MessageDialog *dialog = new MessageDialog(text, reference);

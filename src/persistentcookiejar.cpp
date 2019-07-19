@@ -13,7 +13,7 @@ PersistentCookieJar::PersistentCookieJar(const QString &fileName, QObject *paren
 }
 
 PersistentCookieJar::~PersistentCookieJar() {
-  qDebug("save %s", qUtf8Printable(m_FileName));
+  log::debug("save {}", m_FileName);
   save();
 }
 

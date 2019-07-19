@@ -481,7 +481,7 @@ void PluginList::writeLockedOrder(const QString &fileName) const
     file->write(QString("%1|%2\r\n").arg(iter->first).arg(iter->second).toUtf8());
   }
   file.commit();
-  qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(fileName)));
+  log::debug("{} saved", QDir::toNativeSeparators(fileName));
 }
 
 
@@ -506,7 +506,7 @@ void PluginList::saveTo(const QString &lockedOrderFileName
       }
     }
     if (deleterFile.commitIfDifferent(m_LastSaveHash[deleterFileName])) {
-      qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(deleterFileName)));
+      log::debug("{} saved", QDir::toNativeSeparators(deleterFileName));
     }
   } else if (QFile::exists(deleterFileName)) {
     shellDelete(QStringList() << deleterFileName);
@@ -521,7 +521,7 @@ bool PluginList::saveLoadOrder(DirectoryEntry &directoryStructure)
     return true;
   }
 
-  qDebug("setting file times on esps");
+  log::debug("setting file times on esps");
 
   for (ESPInfo &esp : m_ESPs) {
     std::wstring espName = ToWString(esp.m_Name);

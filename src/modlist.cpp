@@ -1013,9 +1013,8 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
   QString overwriteName = ModInfo::getByIndex(overwriteIndex)->name();
 
   for (auto url : mimeData->urls()) {
-    //qDebug("URL drop requested: %s -> %s", qUtf8Printable(url.url()), qUtf8Printable(modDir.canonicalPath()));
     if (!url.isLocalFile()) {
-      qDebug("URL drop ignored: \"%s\" is not a local file", qUtf8Printable(url.url()));
+      log::debug("URL drop ignored: \"{}\" is not a local file", url.url());
       continue;
     }
 
@@ -1035,7 +1034,7 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
       originName = overwriteName;
       relativePath = overwriteDir.relativeFilePath(sourceFile);
     } else {
-      qDebug("URL drop ignored: \"%s\" is not a known file to MO", qUtf8Printable(sourceFile));
+      log::debug("URL drop ignored: \"{}\" is not a known file to MO", sourceFile);
       continue;
     }
 
@@ -1047,7 +1046,7 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
 
   if (sourceList.count()) {
     if (!shellMove(sourceList, targetList)) {
-      qDebug("Failed to move file (error %d)", ::GetLastError());
+      log::debug("Failed to move file (error {})", ::GetLastError());
       return false;
     }
   }

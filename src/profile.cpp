@@ -40,7 +40,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 #include <QScopedArrayPointer>
 #include <QStringList>                             // for QStringList
-#include <QtDebug>                                 // for qDebug, qWarning, etc
 #include <QtGlobal>                                // for qUtf8Printable
 #include <QBuffer>
 #include <QDirIterator>
@@ -232,7 +231,6 @@ void Profile::doWriteModlist()
     }
 
     for (std::map<int, unsigned int>::const_reverse_iterator iter = m_ModIndexByPriority.crbegin(); iter != m_ModIndexByPriority.crend(); iter++ ) {
-      //qDebug(QString("write mod %1 to priority %2").arg(iter->first).arg(iter->second).toLocal8Bit());
       // the priority order was inverted on load so it has to be inverted again
       unsigned int index = iter->second;
       if (index != UINT_MAX) {
@@ -253,7 +251,7 @@ void Profile::doWriteModlist()
     }
 
     if (file.commitIfDifferent(m_LastModlistHash)) {
-      qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(fileName)));
+      log::debug("{} saved", QDir::toNativeSeparators(fileName));
     }
   } catch (const std::exception &e) {
     reportError(tr("failed to write mod list: %1").arg(e.what()));
@@ -292,7 +290,7 @@ void Profile::createTweakedIniFile()
       .arg(formatSystemMessageQ(e)));
   }
 
-  qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(tweakedIni)));
+  log::debug("{} saved", QDir::toNativeSeparators(tweakedIni));
 }
 
 // static
@@ -364,8 +362,9 @@ void Profile::renameModInList(QFile &modList, const QString &oldName, const QStr
   }
 
   if (renamed)
-    qDebug("Renamed %d \"%s\" mod to \"%s\" in %s",
-      renamed, qUtf8Printable(oldName), qUtf8Printable(newName), qUtf8Printable(modList.fileName()));
+    log::debug(
+      "Renamed {} \"{}\" mod to \"{}\" in {}",
+      renamed, oldName, newName, modList.fileName());
 }
 
 void Profile::refreshModStatus()
@@ -431,8 +430,9 @@ void Profile::refreshModStatus()
           modStatusModified = true;
         }
       } else {
-        qDebug("mod not found: \"%s\" (profile \"%s\")",
-               qUtf8Printable(modName), qUtf8Printable(m_Directory.path()));
+        log::debug(
+          "mod not found: \"{}\" (profile \"{}\")",
+          modName, m_Directory.path());
         // need to rewrite the modlist to fix this
         modStatusModified = true;
       }

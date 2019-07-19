@@ -257,9 +257,9 @@ void FileTreeTab::changeVisibility(bool visible)
   bool changed = false;
   bool stop = false;
 
-  qDebug().nospace()
-    << (visible ? "unhiding" : "hiding") << " "
-    << selection.size() << " filetree files";
+  log::debug(
+    "{} {} filetree files",
+    (visible ? "unhiding" : "hiding"), selection.size());
 
   QFlags<FileRenamer::RenameFlags> flags =
     (visible ? FileRenamer::UNHIDE : FileRenamer::HIDE);
@@ -280,13 +280,13 @@ void FileTreeTab::changeVisibility(bool visible)
 
     if (visible) {
       if (!canUnhideFile(false, path)) {
-        qDebug().nospace() << "cannot unhide " << path << ", skipping";
+        log::debug("cannot unhide {}, skipping", path);
         continue;
       }
       result = unhideFile(renamer, path);
     } else {
       if (!canHideFile(false, path)) {
-        qDebug().nospace() << "cannot hide " << path << ", skipping";
+        log::debug("cannot hide {}, skipping", path);
         continue;
       }
       result = hideFile(renamer, path);
@@ -312,7 +312,7 @@ void FileTreeTab::changeVisibility(bool visible)
     }
   }
 
-  qDebug().nospace() << (visible ? "unhiding" : "hiding") << " filetree files done";
+  log::debug("{} filetree files done", (visible ? "unhiding" : "hiding"));
 
   if (changed) {
     if (origin()) {

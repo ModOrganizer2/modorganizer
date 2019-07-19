@@ -883,8 +883,9 @@ std::vector<QString> ModInfoRegular::getIniTweaks() const
   int numTweaks = metaFile.beginReadArray("INI Tweaks");
 
   if (numTweaks != 0) {
-    qDebug("%d active ini tweaks in %s",
-           numTweaks, QDir::toNativeSeparators(metaFileName).toUtf8().constData());
+    log::debug(
+      "{} active ini tweaks in {}",
+      numTweaks, QDir::toNativeSeparators(metaFileName));
   }
 
   for (int i = 0; i < numTweaks; ++i) {

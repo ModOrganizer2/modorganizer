@@ -867,7 +867,7 @@ void MainWindow::updatePinnedExecutables()
       exeAction->setStatusTip(exe.binaryInfo().filePath());
 
       if (!connect(exeAction, SIGNAL(triggered()), this, SLOT(startExeAction()))) {
-        qDebug("failed to connect trigger?");
+        log::debug("failed to connect trigger?");
       }
 
       if (m_linksSeparator) {
@@ -1711,7 +1711,7 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 
     // ensure the new index is valid
     if (index < 0 || index >= ui->profileBox->count()) {
-      qDebug("invalid profile index, using last profile");
+      log::debug("invalid profile index, using last profile");
       ui->profileBox->setCurrentIndex(ui->profileBox->count() - 1);
     }
 
@@ -2060,7 +2060,7 @@ void MainWindow::refreshSaveList()
 
   QDir savesDir = currentSavesDir();
   savesDir.setNameFilters(filters);
-  qDebug("reading save games from %s", qUtf8Printable(savesDir.absolutePath()));
+  log::debug("reading save games from {}", savesDir.absolutePath());
 
   QFileInfoList files = savesDir.entryInfoList(QDir::Files, QDir::Time);
   for (const QFileInfo &file : files) {
@@ -2261,15 +2261,6 @@ void MainWindow::fixCategories()
 void MainWindow::setupNetworkProxy(bool activate)
 {
   QNetworkProxyFactory::setUseSystemConfiguration(activate);
-/*  QNetworkProxyQuery query(QUrl("http://www.google.com"), QNetworkProxyQuery::UrlRequest);
-  query.setProtocolTag("http");
-  QList<QNetworkProxy> proxies = QNetworkProxyFactory::systemProxyForQuery(query);
-  if ((proxies.size() > 0) && (proxies.at(0).type() != QNetworkProxy::NoProxy)) {
-    qDebug("Using proxy: %s", qUtf8Printable(proxies.at(0).hostName()));
-    QNetworkProxy::setApplicationProxy(proxies[0]);
-  } else {
-    qDebug("Not using proxy");
-  }*/
 }
 
 
@@ -2456,7 +2447,7 @@ void MainWindow::unlock()
 {
   //If you come through here with a null lock pointer, it's a bug!
   if (m_LockDialog == nullptr) {
-    qDebug("Unlocking main window when already unlocked");
+    log::debug("Unlocking main window when already unlocked");
     return;
   }
   --m_LockCount;
@@ -3259,7 +3250,7 @@ void MainWindow::displayModInformation(
   ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tabID)
 {
   if (!m_OrganizerCore.modList()->modInfoAboutToChange(modInfo)) {
-    qDebug("A different mod information dialog is open. If this is incorrect, please restart MO");
+    log::debug("A different mod information dialog is open. If this is incorrect, please restart MO");
     return;
   }
   std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
@@ -4325,7 +4316,7 @@ void MainWindow::addRemoveCategories_MenuHandler() {
     int maxRow = -1;
 
     for (const QPersistentModelIndex &idx : selected) {
-      qDebug("change categories on: %s", qUtf8Printable(idx.data().toString()));
+      log::debug("change categories on: {}", idx.data().toString());
       QModelIndex modIdx = mapToModel(m_OrganizerCore.modList(), idx);
       if (modIdx.row() != m_ContextIdx.row()) {
         addRemoveCategoriesFromMenu(menu, modIdx.row(), m_ContextIdx.row());
@@ -4407,7 +4398,7 @@ void MainWindow::saveArchiveList()
       }
     }
     if (archiveFile.commitIfDifferent(m_ArchiveListHash)) {
-      qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(m_OrganizerCore.currentProfile()->getArchivesFileName())));
+      log::debug("{} saved", QDir::toNativeSeparators(m_OrganizerCore.currentProfile()->getArchivesFileName()));
     }
   } else {
     log::warn("archive list not initialised");
@@ -5364,7 +5355,7 @@ void MainWindow::installTranslator(const QString &name)
   QString fileName = name + "_" + m_CurrentLanguage;
   if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
     if (m_CurrentLanguage.contains(QRegularExpression("^.*_(EN|en)(-.*)?$"))) {
-      qDebug("localization file %s not found", qUtf8Printable(fileName));
+      log::debug("localization file %s not found", fileName);
     } // we don't actually expect localization files for English (en, en-us, en-uk, and any variation thereof)
   }
 
@@ -5389,7 +5380,7 @@ void MainWindow::languageChange(const QString &newLanguage)
     installTranslator(QFileInfo(fileName).baseName());
   }
   ui->retranslateUi(this);
-  qDebug("loaded language %s", qUtf8Printable(newLanguage));
+  log::debug("loaded language {}", newLanguage);
 
   ui->profileBox->setItemText(0, QObject::tr("<Manage...>"));
 
@@ -5634,7 +5625,7 @@ void MainWindow::openDataOriginExplorer_clicked()
 
   const auto fullPath = m_ContextItem->data(0, Qt::UserRole).toString();
 
-  qDebug().nospace() << "opening in explorer: " << fullPath;
+  log::debug("opening in explorer: {}", fullPath);
   shell::ExploreFile(fullPath);
 }
 
@@ -6120,7 +6111,7 @@ void MainWindow::nxmDownloadURLs(QString, int, int, QVariant, QVariant resultDat
 void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, int, QNetworkReply::NetworkError error, const QString &errorString)
 {
   if (error == QNetworkReply::ContentAccessDenied || error == QNetworkReply::ContentNotFoundError) {
-    qDebug(qUtf8Printable(tr("Mod ID %1 no longer seems to be available on Nexus.").arg(modID)));
+    log::debug("{}", tr("Mod ID %1 no longer seems to be available on Nexus.").arg(modID));
   } else {
     MessageDialog::showMessage(tr("Request to Nexus failed: %1").arg(errorString), this);
   }
@@ -6587,7 +6578,7 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &errorMe
           std::string dependency(match[2].first, match[2].second);
           m_OrganizerCore.pluginList()->addInformation(modName.c_str(), tr("incompatible with \"%1\"").arg(dependency.c_str()));
         } else {
-          qDebug("[loot] %s", line.c_str());
+          log::debug("[loot] {}", line);
         }
       }
     }
@@ -6632,7 +6623,7 @@ void MainWindow::on_bossButton_clicked()
     try {
       m_OrganizerCore.prepareVFS();
     } catch (const UsvfsConnectorException &e) {
-      qDebug(e.what());
+      log::debug("{}", e.what());
       return;
     } catch (const std::exception &e) {
       QMessageBox::warning(qApp->activeWindow(), tr("Error"), e.what());
@@ -6662,7 +6653,7 @@ void MainWindow::on_bossButton_clicked()
         if (isJobHandle) {
           if (::QueryInformationJobObject(loot, JobObjectBasicProcessIdList, &info, sizeof(info), &retLen) > 0) {
             if (info.NumberOfProcessIdsInList == 0) {
-              qDebug("no more processes in job");
+              log::debug("no more processes in job");
               break;
             } else {
               if (lastProcessID != info.ProcessIdList[0]) {

@@ -54,7 +54,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPalette>
 
 #include <Qt> // for Qt::UserRole, etc
-#include <QtDebug> // for qDebug, qWarning
 
 #include <Windows.h> // For ShellExecuteW, HINSTANCE, etc
 #include <wincred.h> // For storage
@@ -635,7 +634,7 @@ void Settings::updateServers(const QList<ServerInfo> &servers)
     QVariantMap val = m_Settings.value(key).toMap();
     QDate lastSeen = val["lastSeen"].toDate();
     if (lastSeen.daysTo(now) > 30) {
-      qDebug("removing server %s since it hasn't been available for downloads in over a month", qUtf8Printable(key));
+      log::debug("removing server {} since it hasn't been available for downloads in over a month", key);
       m_Settings.remove(key);
     }
   }
@@ -758,10 +757,10 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
       if (m_Settings.value(k).toString() != before[k] && !k.contains("username") && !k.contains("password"))
       {
         if (first_update) {
-          qDebug("Changed settings:");
+          log::debug("Changed settings:");
           first_update = false;
         }
-        qDebug("  %s=%s", k.toUtf8().data(), m_Settings.value(k).toString().toUtf8().data());
+        log::debug("  {}={}", k, m_Settings.value(k).toString());
       }
     m_Settings.endGroup();
   }
