@@ -5907,7 +5907,7 @@ void MainWindow::finishUpdateInfo()
   auto finalMods = watcher->result();
 
   if (finalMods.empty()) {
-    qInfo("None of your mods appear to have had recent file updates.");
+    log::info("None of your mods appear to have had recent file updates.");
   }
 
   std::set<std::pair<QString, int>> organizedGames;

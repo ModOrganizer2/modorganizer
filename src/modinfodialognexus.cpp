@@ -6,8 +6,9 @@
 #include "bbcode.h"
 #include <versioninfo.h>
 #include <utility.h>
+#include <log.h>
 
-namespace shell = MOBase::shell;
+using namespace MOBase;
 
 bool isValidModID(int id)
 {
@@ -350,7 +351,7 @@ void NexusTab::onRefreshBrowser()
     mod().setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
     updateWebpage();
   } else {
-    qInfo("Mod has no valid Nexus ID, info can't be updated.");
+    log::info("Mod has no valid Nexus ID, info can't be updated.");
   }
 }
 
