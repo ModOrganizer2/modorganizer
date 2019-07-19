@@ -378,9 +378,6 @@ void DownloadManager::refreshList()
       }
     }
 
-    //if (m_ActiveDownloads.size() != downloadsBefore) {
-      log::debug("Downloads after refresh: {}", m_ActiveDownloads.size());
-    //}
     emit update(-1);
 
     //let watcher trigger refreshes again

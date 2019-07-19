@@ -623,8 +623,6 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       QImage image(pluginSplash);
       if (!image.isNull()) {
         image.save(dataPath + "/splash.png");
-      } else {
-        log::debug("no plugin splash");
       }
     }
 

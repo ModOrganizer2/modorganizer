@@ -77,26 +77,21 @@ CrashDumpsType OrganizerCore::m_globalCrashDumpsType = CrashDumpsType::None;
 
 static bool isOnline()
 {
-  QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
+  const auto runningFlags =
+    QNetworkInterface::IsUp | QNetworkInterface::IsRunning;
 
-  bool connected = false;
-  for (auto iter = interfaces.begin(); iter != interfaces.end() && !connected;
-       ++iter) {
-    if ((iter->flags() & QNetworkInterface::IsUp)
-        && (iter->flags() & QNetworkInterface::IsRunning)
-        && !(iter->flags() & QNetworkInterface::IsLoopBack)) {
-      auto addresses = iter->addressEntries();
-      if (addresses.count() == 0) {
-        continue;
+  for (auto&& i : QNetworkInterface::allInterfaces()) {
+    if (!(i.flags() & QNetworkInterface::IsLoopBack)) {
+      if (i.flags() & runningFlags) {
+        auto addresses = i.addressEntries();
+        if (!addresses.empty()) {
+          return true;
+        }
       }
-      log::debug("interface {} seems to be up (address: {})",
-             iter->humanReadableName(),
-             addresses[0].ip().toString());
-      connected = true;
     }
   }
 
-  return connected;
+  return false;
 }
 
 static bool renameFile(const QString &oldName, const QString &newName,

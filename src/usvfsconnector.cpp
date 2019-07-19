@@ -118,6 +118,48 @@ CrashDumpsType crashDumpsType(int type)
   }
 }
 
+QString toString(LogLevel lv)
+{
+  switch (lv)
+  {
+    case LogLevel::Debug:
+      return "debug";
+
+    case LogLevel::Info:
+      return "info";
+
+    case LogLevel::Warning:
+      return "warning";
+
+    case LogLevel::Error:
+      return "error";
+
+    default:
+      return QString("%1").arg(static_cast<int>(lv));
+  }
+}
+
+QString toString(CrashDumpsType t)
+{
+  switch (t)
+  {
+    case CrashDumpsType::None:
+      return "none";
+
+    case CrashDumpsType::Mini:
+      return "mini";
+
+    case CrashDumpsType::Data:
+      return "data";
+
+    case CrashDumpsType::Full:
+      return "full";
+
+    default:
+      return QString("%1").arg(static_cast<int>(t));
+  }
+}
+
 UsvfsConnector::UsvfsConnector()
 {
   USVFSParameters params;
@@ -129,9 +171,14 @@ UsvfsConnector::UsvfsConnector()
   InitLogging(false);
 
   log::debug(
-    "Initializing VFS <{}, {}, {}, {}>",
-    params.instanceName, static_cast<int>(params.logLevel),
-    static_cast<int>(params.crashDumpsType), params.crashDumpsPath);
+    "initializing usvfs:\n"
+    " . instance: {}\n"
+    " . log: {}\n"
+    " . dump: {} ({})",
+    params.instanceName,
+    toString(params.logLevel),
+    params.crashDumpsPath,
+    toString(params.crashDumpsType));
 
   CreateVFS(&params);
 
