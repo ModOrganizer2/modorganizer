@@ -215,9 +215,9 @@ QMenu* LogList::createMenu(QWidget* parent)
 {
   auto* menu = new QMenu(parent);
 
-  menu->addAction(tr("&Copy"), [&]{ copyToClipboard(); });
+  menu->addAction(tr("&Copy all"), [&]{ copyToClipboard(); });
   menu->addSeparator();
-  menu->addAction(tr("C&lear"), [&]{ clear(); });
+  menu->addAction(tr("C&lear all"), [&]{ clear(); });
 
   auto* levels = new QMenu(tr("&Level"));
   menu->addMenu(levels);
