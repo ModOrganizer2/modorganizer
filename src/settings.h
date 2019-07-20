@@ -70,6 +70,7 @@ public:
   virtual ~SettingsTab();
 
   virtual void update() = 0;
+  virtual void closing() {}
 
 protected:
   Settings *m_parent;
@@ -426,8 +427,13 @@ public:
    */
   bool colorSeparatorScrollbar() const;
 
+  // temp
   QSettings& settingsRef() { return m_Settings; }
   MOBase::IPluginGame const *gamePlugin() { return m_GamePlugin; }
+  QMap<QString, QVariantMap> m_PluginSettings;
+  QMap<QString, QVariantMap> m_PluginDescriptions;
+  QSet<QString> m_PluginBlacklist;
+  void writePluginBlacklist();
 
 public slots:
 
@@ -440,7 +446,6 @@ private:
   static QString deObfuscate(const QString key);
 
   void readPluginBlacklist();
-  void writePluginBlacklist();
   QString getConfigurablePath(const QString &key, const QString &def, bool resolve) const;
 
 
@@ -459,19 +464,6 @@ private:
     QLabel *m_diagnosticsExplainedLabel;
 
     void setLevelsBox();
-  };
-
-  /** Display/store the configuration in the 'plugins' tab of the settings dialogue */
-  class PluginsTab : public SettingsTab
-  {
-  public:
-    PluginsTab(Settings *m_parent, SettingsDialog &m_dialog);
-
-    void update();
-
-  private:
-    QListWidget *m_pluginsList;
-    QListWidget *m_pluginBlacklistList;
   };
 
   /** Display/store the configuration in the 'workarounds' tab of the settings dialogue */
@@ -511,11 +503,6 @@ private:
   LoadMechanism m_LoadMechanism;
 
   std::vector<MOBase::IPlugin*> m_Plugins;
-
-  QMap<QString, QVariantMap> m_PluginSettings;
-  QMap<QString, QVariantMap> m_PluginDescriptions;
-
-  QSet<QString> m_PluginBlacklist;
 
 };
 

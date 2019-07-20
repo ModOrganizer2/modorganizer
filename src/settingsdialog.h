@@ -62,9 +62,6 @@ public:
 public slots:
   virtual void accept();
 
-private:
-  void storeSettings(QListWidgetItem *pluginItem);
-
 public:
   QString getExecutableBlacklist() { return m_ExecutableBlacklist; }
   void setExecutableBlacklist(QString blacklist) { m_ExecutableBlacklist = blacklist; }
@@ -74,7 +71,6 @@ public:
 private slots:
   void on_bsaDateBtn_clicked();
   void on_execBlacklistBtn_clicked();
-  void on_pluginsList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
   void on_resetGeometryBtn_clicked();
 
   void deleteBlacklistItem();

@@ -40,6 +40,7 @@ SET(organizer_SRCS
 	settingsdialoggeneral.cpp
 	settingsdialognexus.cpp
 	settingsdialogpaths.cpp
+	settingsdialogplugins.cpp
 	settingsdialogsteam.cpp
     settings.cpp
     selfupdater.cpp
@@ -158,6 +159,7 @@ SET(organizer_HDRS
 	settingsdialoggeneral.h
 	settingsdialognexus.h
 	settingsdialogpaths.h
+	settingsdialogplugins.h
 	settingsdialogsteam.h
     settings.h
     selfupdater.h
@@ -442,6 +444,7 @@ set(settings
 	settingsdialoggeneral
 	settingsdialognexus
 	settingsdialogpaths
+	settingsdialogplugins
 	settingsdialogsteam
 )
 

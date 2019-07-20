@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settingsdialoggeneral.h"
 #include "settingsdialognexus.h"
 #include "settingsdialogpaths.h"
+#include "settingsdialogplugins.h"
 #include "settingsdialogsteam.h"
 #include "versioninfo.h"
 #include "appconfig.h"
@@ -677,7 +678,7 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
   tabs.push_back(std::unique_ptr<SettingsTab>(new DiagnosticsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new NexusSettingsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new SteamSettingsTab(this, dialog)));
-  tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsTab(this, dialog)));
+  tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsSettingsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsTab(this, dialog)));
 
 
@@ -687,6 +688,11 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
   }
 
   if (dialog.exec() == QDialog::Accepted) {
+
+    for (auto&& tab : tabs) {
+      tab->closing();
+    }
+
     // remember settings before change
     QMap<QString, QString> before;
     m_Settings.beginGroup("Settings");
@@ -765,52 +771,6 @@ void Settings::DiagnosticsTab::update()
   m_Settings.setValue("Settings/crash_dumps_max", m_dumpsMaxEdit->value());
 }
 
-
-Settings::PluginsTab::PluginsTab(Settings *m_parent, SettingsDialog &m_dialog)
-  : SettingsTab(m_parent, m_dialog)
-  , m_pluginsList(m_dialog.findChild<QListWidget *>("pluginsList"))
-  , m_pluginBlacklistList(m_dialog.findChild<QListWidget *>("pluginBlacklist"))
-{
-  // display plugin settings
-  QSet<QString> handledNames;
-  for (IPlugin *plugin : m_parent->m_Plugins) {
-    if (handledNames.contains(plugin->name()))
-      continue;
-    QListWidgetItem *listItem = new QListWidgetItem(plugin->name(), m_pluginsList);
-    listItem->setData(Qt::UserRole, QVariant::fromValue((void*)plugin));
-    listItem->setData(Qt::UserRole + 1, m_parent->m_PluginSettings[plugin->name()]);
-    listItem->setData(Qt::UserRole + 2, m_parent->m_PluginDescriptions[plugin->name()]);
-    m_pluginsList->addItem(listItem);
-    handledNames.insert(plugin->name());
-  }
-
-  // display plugin blacklist
-  for (const QString &pluginName : m_parent->m_PluginBlacklist) {
-    m_pluginBlacklistList->addItem(pluginName);
-  }
-}
-
-void Settings::PluginsTab::update()
-{
-  // transfer plugin settings to in-memory structure
-  for (int i = 0; i < m_pluginsList->count(); ++i) {
-    QListWidgetItem *item = m_pluginsList->item(i);
-    m_parent->m_PluginSettings[item->text()] = item->data(Qt::UserRole + 1).toMap();
-  }
-  // store plugin settings on disc
-  for (auto iterPlugins = m_parent->m_PluginSettings.begin(); iterPlugins != m_parent->m_PluginSettings.end(); ++iterPlugins) {
-    for (auto iterSettings = iterPlugins->begin(); iterSettings != iterPlugins->end(); ++iterSettings) {
-      m_Settings.setValue("Plugins/" + iterPlugins.key() + "/" + iterSettings.key(), iterSettings.value());
-    }
-  }
-
-  // store plugin blacklist
-  m_parent->m_PluginBlacklist.clear();
-  for (QListWidgetItem *item : m_pluginBlacklistList->findItems("*", Qt::MatchWildcard)) {
-    m_parent->m_PluginBlacklist.insert(item->text());
-  }
-  m_parent->writePluginBlacklist();
-}
 
 Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
                                          SettingsDialog &m_dialog)
