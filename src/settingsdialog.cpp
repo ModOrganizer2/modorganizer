@@ -200,80 +200,6 @@ void SettingsDialog::on_bsaDateBtn_clicked()
                        dir.absolutePath().toStdWString());
 }
 
-void SettingsDialog::on_browseBaseDirBtn_clicked()
-{
-  QString temp = QFileDialog::getExistingDirectory(
-      this, tr("Select base directory"), ui->baseDirEdit->text());
-  if (!temp.isEmpty()) {
-    ui->baseDirEdit->setText(temp);
-  }
-}
-
-void SettingsDialog::on_browseDownloadDirBtn_clicked()
-{
-  QString searchPath = ui->downloadDirEdit->text();
-  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
-
-  QString temp = QFileDialog::getExistingDirectory(this, tr("Select download directory"), searchPath);
-  if (!temp.isEmpty()) {
-    ui->downloadDirEdit->setText(temp);
-  }
-}
-
-void SettingsDialog::on_browseModDirBtn_clicked()
-{
-  QString searchPath = ui->modDirEdit->text();
-  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
-
-  QString temp = QFileDialog::getExistingDirectory(this, tr("Select mod directory"), searchPath);
-  if (!temp.isEmpty()) {
-    ui->modDirEdit->setText(temp);
-  }
-}
-
-void SettingsDialog::on_browseCacheDirBtn_clicked()
-{
-  QString searchPath = ui->cacheDirEdit->text();
-  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
-
-  QString temp = QFileDialog::getExistingDirectory(this, tr("Select cache directory"), searchPath);
-  if (!temp.isEmpty()) {
-    ui->cacheDirEdit->setText(temp);
-  }
-}
-
-void SettingsDialog::on_browseProfilesDirBtn_clicked()
-{
-  QString searchPath = ui->profilesDirEdit->text();
-  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
-
-  QString temp = QFileDialog::getExistingDirectory(this, tr("Select profiles directory"), searchPath);
-  if (!temp.isEmpty()) {
-    ui->profilesDirEdit->setText(temp);
-  }
-}
-
-void SettingsDialog::on_browseOverwriteDirBtn_clicked()
-{
-  QString searchPath = ui->overwriteDirEdit->text();
-  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
-
-  QString temp = QFileDialog::getExistingDirectory(this, tr("Select overwrite directory"), searchPath);
-  if (!temp.isEmpty()) {
-    ui->overwriteDirEdit->setText(temp);
-  }
-}
-
-void SettingsDialog::on_browseGameDirBtn_clicked()
-{
-  QFileInfo oldGameExe(ui->managedGameDirEdit->text());
-
-  QString temp = QFileDialog::getOpenFileName(this, tr("Select game executable"), oldGameExe.absolutePath(), oldGameExe.fileName());
-  if (!temp.isEmpty()) {
-    ui->managedGameDirEdit->setText(temp);
-  }
-}
-
 void SettingsDialog::on_nexusConnect_clicked()
 {
   if (m_nexusLogin && m_nexusLogin->isActive()) {
@@ -553,45 +479,6 @@ void SettingsDialog::on_clearCacheButton_clicked()
 {
   QDir(Settings::instance().getCacheDirectory()).removeRecursively();
   NexusInterface::instance(m_PluginContainer)->clearCache();
-}
-
-void SettingsDialog::normalizePath(QLineEdit *lineEdit)
-{
-  QString text = lineEdit->text();
-  while (text.endsWith('/') || text.endsWith('\\')) {
-    text.chop(1);
-  }
-  lineEdit->setText(text);
-}
-
-void SettingsDialog::on_baseDirEdit_editingFinished()
-{
-  normalizePath(ui->baseDirEdit);
-}
-
-void SettingsDialog::on_downloadDirEdit_editingFinished()
-{
-  normalizePath(ui->downloadDirEdit);
-}
-
-void SettingsDialog::on_modDirEdit_editingFinished()
-{
-  normalizePath(ui->modDirEdit);
-}
-
-void SettingsDialog::on_cacheDirEdit_editingFinished()
-{
-  normalizePath(ui->cacheDirEdit);
-}
-
-void SettingsDialog::on_profilesDirEdit_editingFinished()
-{
-  normalizePath(ui->profilesDirEdit);
-}
-
-void SettingsDialog::on_overwriteDirEdit_editingFinished()
-{
-  normalizePath(ui->overwriteDirEdit);
 }
 
 void SettingsDialog::on_resetGeometryBtn_clicked()

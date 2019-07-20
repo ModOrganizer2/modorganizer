@@ -427,6 +427,7 @@ public:
   bool colorSeparatorScrollbar() const;
 
   QSettings& settingsRef() { return m_Settings; }
+  MOBase::IPluginGame const *gamePlugin() { return m_GamePlugin; }
 
 public slots:
 
@@ -443,22 +444,6 @@ private:
   QString getConfigurablePath(const QString &key, const QString &def, bool resolve) const;
 
 
-  class PathsTab : public SettingsTab
-  {
-  public:
-    PathsTab(Settings *parent, SettingsDialog &dialog);
-
-    void update();
-
-  private:
-    QLineEdit *m_baseDirEdit;
-    QLineEdit *m_downloadDirEdit;
-    QLineEdit *m_modDirEdit;
-    QLineEdit *m_cacheDirEdit;
-    QLineEdit *m_profilesDirEdit;
-    QLineEdit *m_overwriteDirEdit;
-    QLineEdit *m_managedGameDirEdit;
-  };
 
   class DiagnosticsTab : public SettingsTab
   {

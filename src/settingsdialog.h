@@ -67,7 +67,6 @@ signals:
 private:
 
   void storeSettings(QListWidgetItem *pluginItem);
-  void normalizePath(QLineEdit *lineEdit);
 
 public:
   QString getExecutableBlacklist() { return m_ExecutableBlacklist; }
@@ -77,26 +76,13 @@ public:
 
 private slots:
   void on_associateButton_clicked();
-  void on_baseDirEdit_editingFinished();
-  void on_browseBaseDirBtn_clicked();
-  void on_browseCacheDirBtn_clicked();
-  void on_browseDownloadDirBtn_clicked();
-  void on_browseGameDirBtn_clicked();
-  void on_browseModDirBtn_clicked();
-  void on_browseOverwriteDirBtn_clicked();
-  void on_browseProfilesDirBtn_clicked();
   void on_bsaDateBtn_clicked();
-  void on_cacheDirEdit_editingFinished();
   void on_clearCacheButton_clicked();
-  void on_downloadDirEdit_editingFinished();
   void on_execBlacklistBtn_clicked();
-  void on_modDirEdit_editingFinished();
   void on_nexusConnect_clicked();
   void on_nexusDisconnect_clicked();
   void on_nexusManualKey_clicked();
-  void on_overwriteDirEdit_editingFinished();
   void on_pluginsList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
-  void on_profilesDirEdit_editingFinished();
   void on_resetGeometryBtn_clicked();
 
   void deleteBlacklistItem();

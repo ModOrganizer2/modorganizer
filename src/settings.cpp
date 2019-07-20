@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "serverinfo.h"
 #include "settingsdialog.h"
 #include "settingsdialoggeneral.h"
+#include "settingsdialogpaths.h"
 #include "versioninfo.h"
 #include "appconfig.h"
 #include "organizercore.h"
@@ -751,86 +752,6 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
 
 }
 
-
-Settings::PathsTab::PathsTab(Settings *parent, SettingsDialog &dialog)
-  : SettingsTab(parent, dialog)
-  , m_baseDirEdit(m_dialog.findChild<QLineEdit *>("baseDirEdit"))
-  , m_downloadDirEdit(m_dialog.findChild<QLineEdit *>("downloadDirEdit"))
-  , m_modDirEdit(m_dialog.findChild<QLineEdit *>("modDirEdit"))
-  , m_cacheDirEdit(m_dialog.findChild<QLineEdit *>("cacheDirEdit"))
-  , m_profilesDirEdit(m_dialog.findChild<QLineEdit *>("profilesDirEdit"))
-  , m_overwriteDirEdit(m_dialog.findChild<QLineEdit *>("overwriteDirEdit"))
-  , m_managedGameDirEdit(m_dialog.findChild<QLineEdit *>("managedGameDirEdit"))
-{
-  m_baseDirEdit->setText(m_parent->getBaseDirectory());
-  m_managedGameDirEdit->setText(m_parent->m_GamePlugin->gameDirectory().absoluteFilePath(m_parent->m_GamePlugin->binaryName()));
-  QString basePath = parent->getBaseDirectory();
-  QDir baseDir(basePath);
-  for (const auto &dir : {
-       std::make_pair(m_downloadDirEdit, m_parent->getDownloadDirectory(false)),
-       std::make_pair(m_modDirEdit, m_parent->getModDirectory(false)),
-       std::make_pair(m_cacheDirEdit, m_parent->getCacheDirectory(false)),
-       std::make_pair(m_profilesDirEdit, m_parent->getProfileDirectory(false)),
-       std::make_pair(m_overwriteDirEdit, m_parent->getOverwriteDirectory(false))
-      }) {
-    QString storePath = baseDir.relativeFilePath(dir.second);
-    storePath = dir.second;
-    dir.first->setText(storePath);
-  }
-}
-
-void Settings::PathsTab::update()
-{
-  typedef std::tuple<QString, QString, std::wstring> Directory;
-
-  QString basePath = m_parent->getBaseDirectory();
-
-  for (const Directory &dir :{
-       Directory{m_downloadDirEdit->text(), "download_directory", AppConfig::downloadPath()},
-       Directory{m_cacheDirEdit->text(), "cache_directory", AppConfig::cachePath()},
-       Directory{m_modDirEdit->text(), "mod_directory", AppConfig::modsPath()},
-       Directory{m_overwriteDirEdit->text(), "overwrite_directory", AppConfig::overwritePath()},
-       Directory{m_profilesDirEdit->text(), "profiles_directory", AppConfig::profilesPath()}
-      }) {
-    QString path, settingsKey;
-    std::wstring defaultName;
-    std::tie(path, settingsKey, defaultName) = dir;
-
-    settingsKey = QString("Settings/%1").arg(settingsKey);
-
-    QString realPath = path;
-    realPath.replace("%BASE_DIR%", m_baseDirEdit->text());
-
-    if (!QDir(realPath).exists()) {
-      if (!QDir().mkpath(realPath)) {
-        QMessageBox::warning(qApp->activeWindow(), tr("Error"),
-                             tr("Failed to create \"%1\", you may not have the "
-                                "necessary permission. path remains unchanged.")
-                                 .arg(realPath));
-      }
-    }
-
-    if (QFileInfo(realPath)
-        != QFileInfo(basePath + "/" + QString::fromStdWString(defaultName))) {
-      m_Settings.setValue(settingsKey, path);
-    } else {
-      m_Settings.remove(settingsKey);
-    }
-  }
-
-  if (QFileInfo(m_baseDirEdit->text()) !=
-      QFileInfo(qApp->property("dataPath").toString())) {
-    m_Settings.setValue("Settings/base_directory", m_baseDirEdit->text());
-  } else {
-    m_Settings.remove("Settings/base_directory");
-  }
-
-  QFileInfo oldGameExe(m_parent->m_GamePlugin->gameDirectory().absoluteFilePath(m_parent->m_GamePlugin->binaryName()));
-  QFileInfo newGameExe(m_managedGameDirEdit->text());
-  if (oldGameExe != newGameExe) {
-    m_Settings.setValue("gamePath", newGameExe.absolutePath());
-  }
-}
 
 Settings::DiagnosticsTab::DiagnosticsTab(Settings *m_parent, SettingsDialog &m_dialog)
   : SettingsTab(m_parent, m_dialog)
