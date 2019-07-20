@@ -636,12 +636,9 @@ private slots:
   void search_activated();
   void searchClear_activated();
 
-  void setupLogMenu();
   void resetActionIcons();
   void updateModCount();
   void updatePluginCount();
-
-  void setLogLevel(MOBase::log::Levels level);
 
 private slots: // ui slots
   // actions
@@ -696,7 +693,6 @@ private slots: // ui slots
   void on_restoreButton_clicked();
   void on_restoreModsButton_clicked();
   void on_saveModsButton_clicked();
-  void on_actionLogCopy_triggered();
   void on_categoriesAndBtn_toggled(bool checked);
   void on_categoriesOrBtn_toggled(bool checked);
   void on_managedArchiveLabel_linkHovered(const QString &link);

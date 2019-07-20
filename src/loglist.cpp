@@ -18,14 +18,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "loglist.h"
-#include <scopeguard.h>
-#include <report.h>
-#include <log.h>
-#include <QMutexLocker>
-#include <QFile>
-#include <QIcon>
-#include <QDateTime>
-#include <Windows.h>
+#include "organizercore.h"
 
 using namespace MOBase;
 
@@ -158,7 +151,7 @@ QVariant LogModel::headerData(int, Qt::Orientation, int) const
 
 
 LogList::LogList(QWidget* parent)
-  : QTreeView(parent)
+  : QTreeView(parent), m_core(nullptr)
 {
   setModel(&LogModel::instance());
 
@@ -172,12 +165,21 @@ LogList::LogList(QWidget* parent)
   scrollToBottom();
 
   connect(
+    this, &QWidget::customContextMenuRequested,
+    [&](auto&& pos){ onContextMenu(pos); });
+
+  connect(
     model(), SIGNAL(rowsInserted(const QModelIndex &, int, int)),
     this, SLOT(scrollToBottom()));
 
   connect(
     model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)),
     this, SLOT(scrollToBottom()));
+}
+
+void LogList::setCore(OrganizerCore& core)
+{
+  m_core = &core;
 }
 
 void LogList::copyToClipboard()
@@ -195,4 +197,45 @@ void LogList::copyToClipboard()
   }
 
   QApplication::clipboard()->setText(QString::fromStdString(s));
+}
+
+QMenu* LogList::createMenu(QWidget* parent)
+{
+  auto* menu = new QMenu(parent);
+
+  menu->addAction(tr("Copy& Log"), [&]{ copyToClipboard(); });
+  menu->addSeparator();
+
+  auto* levels = new QMenu(tr("&Level"));
+  menu->addMenu(levels);
+
+  auto* ag = new QActionGroup(menu);
+
+  auto addAction = [&](auto&& text, auto&& level) {
+    auto* a = new QAction(text, ag);
+
+    a->setCheckable(true);
+    a->setChecked(log::getDefault().level() == level);
+
+    connect(a, &QAction::triggered, [this, level]{
+      if (m_core) {
+        m_core->setLogLevel(level);
+      }
+    });
+
+    levels->addAction(a);
+  };
+
+  addAction(tr("&Debug"), log::Debug);
+  addAction(tr("&Info"), log::Info);
+  addAction(tr("&Warnings"), log::Warning);
+  addAction(tr("&Errors"), log::Error);
+
+  return menu;
+}
+
+void LogList::onContextMenu(const QPoint& pos)
+{
+  auto* menu = createMenu(this);
+  menu->popup(viewport()->mapToGlobal(pos));
 }

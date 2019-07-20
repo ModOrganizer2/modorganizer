@@ -196,6 +196,8 @@ public:
     MOBase::log::Levels logLevel, int crashDumpsType,
     QString executableBlacklist);
 
+  void setLogLevel(MOBase::log::Levels level);
+
   bool cycleDiagnostics();
 
   static CrashDumpsType getGlobalCrashDumpsType() { return m_globalCrashDumpsType; }

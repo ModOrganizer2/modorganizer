@@ -731,6 +731,18 @@ void OrganizerCore::updateVFSParams(
   m_USVFS.updateParams(logLevel, crashDumpsType, executableBlacklist);
 }
 
+void OrganizerCore::setLogLevel(log::Levels level)
+{
+  m_Settings.setLogLevel(level);
+
+  updateVFSParams(
+    m_Settings.logLevel(),
+    m_Settings.crashDumpsType(),
+    m_Settings.executablesBlacklist());
+
+  log::getDefault().setLevel(m_Settings.logLevel());
+}
+
 bool OrganizerCore::cycleDiagnostics() {
   if (int maxDumps = settings().crashDumpsMax())
     removeOldFiles(QString::fromStdWString(crashDumpsPath()), "*.dmp", maxDumps, QDir::Time|QDir::Reversed);

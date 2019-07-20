@@ -20,13 +20,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef LOGBUFFER_H
 #define LOGBUFFER_H
 
-#include <QObject>
-#include <QMutex>
-#include <QScopedPointer>
-#include <QStringListModel>
-#include <QTime>
-#include <vector>
+#include <QTreeView>
 #include <log.h>
+
+class OrganizerCore;
 
 class LogModel : public QAbstractItemModel
 {
@@ -65,7 +62,14 @@ class LogList : public QTreeView
 public:
   LogList(QWidget* parent=nullptr);
 
+  void setCore(OrganizerCore& core);
+
   void copyToClipboard();
+  QMenu* createMenu(QWidget* parent=nullptr);
+
+private:
+  OrganizerCore* m_core;
+  void onContextMenu(const QPoint& pos);
 };
 
 #endif // LOGBUFFER_H

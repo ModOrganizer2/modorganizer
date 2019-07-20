@@ -59,7 +59,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "installationmanager.h"
 #include "lockeddialog.h"
 #include "waitingonclosedialog.h"
-#include "loglist.h"
 #include "downloadlistsortproxy.h"
 #include "motddialog.h"
 #include "filedialogmemory.h"
@@ -358,7 +357,7 @@ MainWindow::MainWindow(QSettings &initSettings
 
   m_CategoryFactory.loadCategories();
 
-  setupLogMenu();
+  ui->logList->setCore(m_OrganizerCore);
 
   int splitterSize = this->size().height(); // actually total window size, but the splitter doesn't seem to return the true value
   ui->topLevelSplitter->setSizes(QList<int>() << splitterSize - 100 << 100);
@@ -811,36 +810,6 @@ void MainWindow::setupActionMenu(QAction* a)
   auto* w = ui->toolBar->widgetForAction(a);
   if (auto* tb=dynamic_cast<QToolButton*>(w))
     tb->setPopupMode(QToolButton::InstantPopup);
-}
-
-void MainWindow::setupLogMenu()
-{
-  connect(ui->logList, &QWidget::customContextMenuRequested, [&](auto&& pos){
-    auto* menu = new QMenu(ui->logList);
-
-    menu->addAction(tr("Copy& Log"), [&]{ ui->logList->copyToClipboard(); });
-    menu->addSeparator();
-
-    auto* levels = new QMenu(tr("&Level"));
-    menu->addMenu(levels);
-
-    auto* ag = new QActionGroup(menu);
-
-    auto addAction = [&](auto&& text, auto&& level) {
-      auto* a = new QAction(text, ag);
-      a->setCheckable(true);
-      a->setChecked(log::getDefault().level() == level);
-      connect(a, &QAction::triggered, [this, level]{ setLogLevel(level); });
-      levels->addAction(a);
-    };
-
-    addAction(tr("&Debug"), log::Debug);
-    addAction(tr("&Info"), log::Info);
-    addAction(tr("&Warnings"), log::Warning);
-    addAction(tr("&Errors"), log::Error);
-
-    menu->popup(ui->logList->viewport()->mapToGlobal(pos));
-  });
 }
 
 void MainWindow::updatePinnedExecutables()
@@ -1432,11 +1401,6 @@ bool MainWindow::confirmExit()
 
 void MainWindow::cleanup()
 {
-  if (ui->logList->model() != nullptr) {
-    disconnect(ui->logList->model(), nullptr, nullptr, nullptr);
-    ui->logList->setModel(nullptr);
-  }
-
   QWebEngineProfile::defaultProfile()->clearAllVisitedLinks();
   m_IntegratedBrowser.close();
   m_SaveMetaTimer.stop();
@@ -5317,22 +5281,10 @@ void MainWindow::on_actionSettings_triggered()
   m_statusBar->checkSettings(m_OrganizerCore.settings());
   updateDownloadView();
 
-  setLogLevel(settings.logLevel());
+  m_OrganizerCore.setLogLevel(settings.logLevel());
   m_OrganizerCore.cycleDiagnostics();
 
   toggleMO2EndorseState();
-}
-
-void MainWindow::setLogLevel(log::Levels level)
-{
-  auto& s = m_OrganizerCore.settings();
-
-  s.setLogLevel(level);
-
-  m_OrganizerCore.updateVFSParams(
-    s.logLevel(), s.crashDumpsType(), s.executablesBlacklist());
-
-  log::getDefault().setLevel(s.logLevel());
 }
 
 void MainWindow::on_actionNexus_triggered()
@@ -6856,11 +6808,6 @@ void MainWindow::on_restoreModsButton_clicked()
     }
     m_OrganizerCore.refreshModList(false);
   }
-}
-
-void MainWindow::on_actionLogCopy_triggered()
-{
-  ui->logList->copyToClipboard();
 }
 
 void MainWindow::on_categoriesAndBtn_toggled(bool checked)
