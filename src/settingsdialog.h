@@ -21,14 +21,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SETTINGSDIALOG_H
 
 #include "tutorabledialog.h"
-#include "nxmaccessmanager.h"
-#include <iplugin.h>
-#include <QListWidgetItem>
 
 class PluginContainer;
 class Settings;
 class SettingsDialog;
 namespace Ui { class SettingsDialog; }
+
 
 class SettingsTab
 {

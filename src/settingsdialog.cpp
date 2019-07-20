@@ -18,17 +18,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "settingsdialog.h"
-
 #include "ui_settingsdialog.h"
-#include "categoriesdialog.h"
-#include "helper.h"
-#include "noeditdelegate.h"
-#include "iplugingame.h"
-#include "settings.h"
-#include "instancemanager.h"
-#include "nexusinterface.h"
-#include "plugincontainer.h"
-
 #include "settingsdialogdiagnostics.h"
 #include "settingsdialoggeneral.h"
 #include "settingsdialognexus.h"
@@ -36,22 +26,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settingsdialogplugins.h"
 #include "settingsdialogsteam.h"
 #include "settingsdialogworkarounds.h"
-
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
-
-#include <QDirIterator>
-#include <QFileDialog>
-#include <QMessageBox>
-#include <QShortcut>
-#include <QColorDialog>
-#include <QInputDialog>
-#include <QJsonDocument>
-#include <QDesktopServices>
-
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-
 
 using namespace MOBase;
 

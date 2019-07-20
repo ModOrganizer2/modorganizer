@@ -33,28 +33,6 @@ GeneralSettingsTab::GeneralSettingsTab(Settings *m_parent, SettingsDialog &m_dia
       ui->styleBox->setCurrentIndex(currentID);
     }
   }
-  /* verision using palette only works with fusion theme for some stupid reason...
-  m_overwritingBtn->setAutoFillBackground(true);
-  m_overwrittenBtn->setAutoFillBackground(true);
-  m_containsBtn->setAutoFillBackground(true);
-  m_containedBtn->setAutoFillBackground(true);
-  m_overwritingBtn->setPalette(QPalette(m_parent->modlistOverwritingLooseColor()));
-  m_overwrittenBtn->setPalette(QPalette(m_parent->modlistOverwrittenLooseColor()));
-  m_containsBtn->setPalette(QPalette(m_parent->modlistContainsPluginColor()));
-  m_containedBtn->setPalette(QPalette(m_parent->pluginListContainedColor()));
-  QPalette palette1 = m_overwritingBtn->palette();
-  QPalette palette2 = m_overwrittenBtn->palette();
-  QPalette palette3 = m_containsBtn->palette();
-  QPalette palette4 = m_containedBtn->palette();
-  palette1.setColor(QPalette::Background, m_parent->modlistOverwritingLooseColor());
-  palette2.setColor(QPalette::Background, m_parent->modlistOverwrittenLooseColor());
-  palette3.setColor(QPalette::Background, m_parent->modlistContainsPluginColor());
-  palette4.setColor(QPalette::Background, m_parent->pluginListContainedColor());
-  m_overwritingBtn->setPalette(palette1);
-  m_overwrittenBtn->setPalette(palette2);
-  m_containsBtn->setPalette(palette3);
-  m_containedBtn->setPalette(palette4);
-  */
 
   //version with stylesheet
   setButtonColor(ui->overwritingBtn, m_parent->modlistOverwritingLooseColor());
@@ -137,12 +115,10 @@ void GeneralSettingsTab::addLanguages()
         }
       }
       languages.push_back(std::make_pair(QString("%1").arg(languageString), exp.cap(1)));
-      //languageBox->addItem(QString("%1").arg(languageString), exp.cap(1));
     }
   }
   if (!ui->languageBox->findText("English")) {
     languages.push_back(std::make_pair(QString("English"), QString("en_US")));
-    //languageBox->addItem("English", "en_US");
   }
   std::sort(languages.begin(), languages.end());
   for (const auto &lang : languages) {

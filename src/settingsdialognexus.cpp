@@ -114,17 +114,6 @@ NexusSettingsTab::NexusSettingsTab(Settings *parent, SettingsDialog &dialog)
 
 void NexusSettingsTab::update()
 {
-  /*
-  if (m_loginCheckBox->isChecked()) {
-  m_Settings.setValue("Settings/nexus_login", true);
-  m_Settings.setValue("Settings/nexus_username", m_usernameEdit->text());
-  m_Settings.setValue("Settings/nexus_password", obfuscate(m_passwordEdit->text()));
-  } else {
-  m_Settings.setValue("Settings/nexus_login", false);
-  m_Settings.remove("Settings/nexus_username");
-  m_Settings.remove("Settings/nexus_password");
-  }
-  */
   m_Settings.setValue("Settings/offline_mode", ui->offlineBox->isChecked());
   m_Settings.setValue("Settings/use_proxy", ui->proxyBox->isChecked());
   m_Settings.setValue("Settings/endorsement_integration", ui->endorsementBox->isChecked());

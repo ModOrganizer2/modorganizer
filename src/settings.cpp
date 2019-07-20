@@ -18,57 +18,15 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "settings.h"
-
-#include "pluginsetting.h"
 #include "serverinfo.h"
-#include "versioninfo.h"
 #include "appconfig.h"
-#include "organizercore.h"
 #include <utility.h>
-#include <iplugin.h>
 #include <iplugingame.h>
-#include <questionboxmemory.h>
 #include <usvfsparameters.h>
-
-#include <QCheckBox>
-#include <QCoreApplication>
-#include <QComboBox>
-#include <QDate>
-#include <QDialog>
-#include <QDir>
-#include <QDirIterator>
-#include <QFileInfo>
-#include <QLineEdit>
-#include <QSpinBox>
-#include <QListWidgetItem>
-#include <QLocale>
-#include <QMessageBox>
-#include <QApplication>
-#include <QRegExp>
-#include <QDir>
-#include <QStringList>
-#include <QVariantMap>
-#include <QLabel>
-#include <QPushButton>
-#include <QPalette>
-
-#include <Qt> // for Qt::UserRole, etc
-
-#include <Windows.h> // For ShellExecuteW, HINSTANCE, etc
-#include <wincred.h> // For storage
-
-#include <algorithm> // for sort
-#include <memory>
-#include <stdexcept> // for runtime_error
-#include <string>
-#include <utility> // for pair, make_pair
-
 
 using namespace MOBase;
 
-
 Settings *Settings::s_Instance = nullptr;
-
 
 Settings::Settings(const QSettings &settingsSource)
   : m_Settings(settingsSource.fileName(), settingsSource.format())
@@ -80,12 +38,10 @@ Settings::Settings(const QSettings &settingsSource)
   }
 }
 
-
 Settings::~Settings()
 {
   s_Instance = nullptr;
 }
-
 
 Settings &Settings::instance()
 {

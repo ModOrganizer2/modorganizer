@@ -3,6 +3,7 @@
 
 #include "settings.h"
 #include "settingsdialog.h"
+#include "nxmaccessmanager.h"
 
 class NexusSettingsTab : public SettingsTab
 {

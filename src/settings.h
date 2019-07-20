@@ -23,17 +23,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "loadmechanism.h"
 #include <log.h>
 
-#include <QList>
-#include <QMap>
-#include <QObject>
-#include <QSet>
-#include <QSettings>
-#include <QString>
-#include <QVariant>
-#include <QColor>
-#include <map>
-#include <vector>
-
 namespace MOBase {
   class IPlugin;
   class IPluginGame;
@@ -376,6 +365,8 @@ public:
    */
   bool colorSeparatorScrollbar() const;
 
+  static QColor getIdealTextColor(const QColor&  rBackgroundColor);
+
   // temp
   QSettings& settingsRef() { return m_Settings; }
   MOBase::IPluginGame const *gamePlugin() { return m_GamePlugin; }
@@ -386,37 +377,24 @@ public:
   const LoadMechanism& loadMechanism() const { return m_LoadMechanism; }
 
 public slots:
-
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
-public:
-  static QColor getIdealTextColor(const QColor&  rBackgroundColor);
+
+signals:
+  void languageChanged(const QString &newLanguage);
+  void styleChanged(const QString &newStyle);
+
 private:
+  static Settings *s_Instance;
+  MOBase::IPluginGame const *m_GamePlugin;
+  QSettings m_Settings;
+  LoadMechanism m_LoadMechanism;
+  std::vector<MOBase::IPlugin*> m_Plugins;
 
   static bool obfuscate(const QString key, const QString data);
   static QString deObfuscate(const QString key);
 
   void readPluginBlacklist();
   QString getConfigurablePath(const QString &key, const QString &def, bool resolve) const;
-
-private slots:
-
-signals:
-
-  void languageChanged(const QString &newLanguage);
-  void styleChanged(const QString &newStyle);
-
-private:
-
-  static Settings *s_Instance;
-
-  MOBase::IPluginGame const *m_GamePlugin;
-
-  QSettings m_Settings;
-
-  LoadMechanism m_LoadMechanism;
-
-  std::vector<MOBase::IPlugin*> m_Plugins;
-
 };
 
 #endif // SETTINGS_H
