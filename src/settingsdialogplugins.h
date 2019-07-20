@@ -14,6 +14,7 @@ public:
 
 private:
   void on_pluginsList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+  void deleteBlacklistItem();
   void storeSettings(QListWidgetItem *pluginItem);
 };
 

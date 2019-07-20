@@ -434,6 +434,7 @@ public:
   QMap<QString, QVariantMap> m_PluginDescriptions;
   QSet<QString> m_PluginBlacklist;
   void writePluginBlacklist();
+  const LoadMechanism& loadMechanism() const { return m_LoadMechanism; }
 
 public slots:
 
@@ -464,25 +465,6 @@ private:
     QLabel *m_diagnosticsExplainedLabel;
 
     void setLevelsBox();
-  };
-
-  /** Display/store the configuration in the 'workarounds' tab of the settings dialogue */
-  class WorkaroundsTab : public SettingsTab
-  {
-  public:
-    WorkaroundsTab(Settings *m_parent, SettingsDialog &m_dialog);
-
-    void update();
-
-  private:
-    QLineEdit *m_appIDEdit;
-    QComboBox *m_mechanismBox;
-    QCheckBox *m_hideUncheckedBox;
-    QCheckBox *m_forceEnableBox;
-    QCheckBox *m_displayForeignBox;
-    QCheckBox *m_lockGUIBox;
-    QCheckBox *m_enableArchiveParsingBox;
-    QPushButton *m_resetGeometriesBtn;
   };
 
 private slots:

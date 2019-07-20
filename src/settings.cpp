@@ -27,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settingsdialogpaths.h"
 #include "settingsdialogplugins.h"
 #include "settingsdialogsteam.h"
+#include "settingsdialogworkarounds.h"
 #include "versioninfo.h"
 #include "appconfig.h"
 #include "organizercore.h"
@@ -679,7 +680,7 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
   tabs.push_back(std::unique_ptr<SettingsTab>(new NexusSettingsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new SteamSettingsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsSettingsTab(this, dialog)));
-  tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsTab(this, dialog)));
+  tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsSettingsTab(this, dialog)));
 
 
   QString key = QString("geometry/%1").arg(dialog.objectName());
@@ -769,74 +770,4 @@ void Settings::DiagnosticsTab::update()
   m_Settings.setValue("Settings/log_level", m_logLevelBox->currentData().toInt());
   m_Settings.setValue("Settings/crash_dumps_type", m_dumpsTypeBox->currentIndex());
   m_Settings.setValue("Settings/crash_dumps_max", m_dumpsMaxEdit->value());
-}
-
-
-Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
-                                         SettingsDialog &m_dialog)
-  : SettingsTab(m_parent, m_dialog)
-  , m_appIDEdit(m_dialog.findChild<QLineEdit *>("appIDEdit"))
-  , m_mechanismBox(m_dialog.findChild<QComboBox *>("mechanismBox"))
-  , m_hideUncheckedBox(m_dialog.findChild<QCheckBox *>("hideUncheckedBox"))
-  , m_forceEnableBox(m_dialog.findChild<QCheckBox *>("forceEnableBox"))
-  , m_displayForeignBox(m_dialog.findChild<QCheckBox *>("displayForeignBox"))
-  , m_lockGUIBox(m_dialog.findChild<QCheckBox *>("lockGUIBox"))
-  , m_enableArchiveParsingBox(m_dialog.findChild<QCheckBox *>("enableArchiveParsingBox"))
-  , m_resetGeometriesBtn(m_dialog.findChild<QPushButton *>("resetGeometryBtn"))
-{
-  m_appIDEdit->setText(m_parent->getSteamAppID());
-
-  LoadMechanism::EMechanism mechanismID = m_parent->getLoadMechanism();
-  int index = 0;
-
-  if (m_parent->m_LoadMechanism.isDirectLoadingSupported()) {
-    m_mechanismBox->addItem(QObject::tr("Mod Organizer"), LoadMechanism::LOAD_MODORGANIZER);
-    if (mechanismID == LoadMechanism::LOAD_MODORGANIZER) {
-      index = m_mechanismBox->count() - 1;
-    }
-  }
-
-  if (m_parent->m_LoadMechanism.isScriptExtenderSupported()) {
-    m_mechanismBox->addItem(QObject::tr("Script Extender"), LoadMechanism::LOAD_SCRIPTEXTENDER);
-    if (mechanismID == LoadMechanism::LOAD_SCRIPTEXTENDER) {
-      index = m_mechanismBox->count() - 1;
-    }
-  }
-
-  if (m_parent->m_LoadMechanism.isProxyDLLSupported()) {
-    m_mechanismBox->addItem(QObject::tr("Proxy DLL"), LoadMechanism::LOAD_PROXYDLL);
-    if (mechanismID == LoadMechanism::LOAD_PROXYDLL) {
-      index = m_mechanismBox->count() - 1;
-    }
-  }
-
-  m_mechanismBox->setCurrentIndex(index);
-
-  m_hideUncheckedBox->setChecked(m_parent->hideUncheckedPlugins());
-  m_forceEnableBox->setChecked(m_parent->forceEnableCoreFiles());
-  m_displayForeignBox->setChecked(m_parent->displayForeign());
-  m_lockGUIBox->setChecked(m_parent->lockGUI());
-  m_enableArchiveParsingBox->setChecked(m_parent->archiveParsing());
-
-  m_resetGeometriesBtn->setChecked(m_parent->directInterface().value("reset_geometry", false).toBool());
-
-  m_dialog.setExecutableBlacklist(m_parent->executablesBlacklist());
-
-}
-
-void Settings::WorkaroundsTab::update()
-{
-  if (m_appIDEdit->text() != m_parent->m_GamePlugin->steamAPPId()) {
-    m_Settings.setValue("Settings/app_id", m_appIDEdit->text());
-  } else {
-    m_Settings.remove("Settings/app_id");
-  }
-  m_Settings.setValue("Settings/load_mechanism", m_mechanismBox->itemData(m_mechanismBox->currentIndex()).toInt());
-  m_Settings.setValue("Settings/hide_unchecked_plugins", m_hideUncheckedBox->isChecked());
-  m_Settings.setValue("Settings/force_enable_core_files", m_forceEnableBox->isChecked());
-  m_Settings.setValue("Settings/display_foreign", m_displayForeignBox->isChecked());
-  m_Settings.setValue("Settings/lock_gui", m_lockGUIBox->isChecked());
-  m_Settings.setValue("Settings/archive_parsing_experimental", m_enableArchiveParsingBox->isChecked());
-
-  m_Settings.setValue("Settings/executable_blacklist", m_dialog.getExecutableBlacklist());
 }

@@ -58,10 +58,6 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings* setti
 {
   ui->setupUi(this);
   ui->pluginSettingsList->setStyleSheet("QTreeWidget::item {padding-right: 10px;}");
-
-  QShortcut *delShortcut = new QShortcut(
-    QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
-  connect(delShortcut, SIGNAL(activated()), this, SLOT(deleteBlacklistItem()));
 }
 
 SettingsDialog::~SettingsDialog()
@@ -110,51 +106,4 @@ bool SettingsDialog::getResetGeometries()
 bool SettingsDialog::getApiKeyChanged()
 {
   return m_keyChanged;
-}
-
-void SettingsDialog::on_execBlacklistBtn_clicked()
-{
-  bool ok = false;
-  QString result = QInputDialog::getMultiLineText(
-    this,
-    tr("Executables Blacklist"),
-    tr("Enter one executable per line to be blacklisted from the virtual file system.\n"
-       "Mods and other virtualized files will not be visible to these executables and\n"
-       "any executables launched by them.\n\n"
-       "Example:\n"
-       "    Chrome.exe\n"
-       "    Firefox.exe"),
-    m_ExecutableBlacklist.split(";").join("\n"),
-    &ok
-    );
-  if (ok) {
-    QStringList blacklist;
-    for (auto exec : result.split("\n")) {
-      if (exec.trimmed().endsWith(".exe", Qt::CaseInsensitive)) {
-        blacklist << exec.trimmed();
-      }
-    }
-    m_ExecutableBlacklist = blacklist.join(";");
-  }
-}
-
-void SettingsDialog::on_bsaDateBtn_clicked()
-{
-  IPluginGame const *game
-      = qApp->property("managed_game").value<IPluginGame *>();
-  QDir dir = game->dataDirectory();
-
-  Helper::backdateBSAs(qApp->applicationDirPath().toStdWString(),
-                       dir.absolutePath().toStdWString());
-}
-
-void SettingsDialog::deleteBlacklistItem()
-{
-  ui->pluginBlacklist->takeItem(ui->pluginBlacklist->currentIndex().row());
-}
-
-void SettingsDialog::on_resetGeometryBtn_clicked()
-{
-  m_GeometriesReset = true;
-  ui->resetGeometryBtn->setChecked(true);
 }

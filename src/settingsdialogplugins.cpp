@@ -29,6 +29,10 @@ PluginsSettingsTab::PluginsSettingsTab(Settings *m_parent, SettingsDialog &m_dia
   QObject::connect(
     ui->pluginsList, &QListWidget::currentItemChanged,
     [&](auto* current, auto* previous) { on_pluginsList_currentItemChanged(current, previous); });
+
+  QShortcut *delShortcut = new QShortcut(
+    QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
+  QObject::connect(delShortcut, &QShortcut::activated, parentWidget(), [&]{ deleteBlacklistItem(); });
 }
 
 void PluginsSettingsTab::update()
@@ -93,6 +97,11 @@ void PluginsSettingsTab::on_pluginsList_currentItemChanged(QListWidgetItem *curr
 
   ui->pluginSettingsList->resizeColumnToContents(0);
   ui->pluginSettingsList->resizeColumnToContents(1);
+}
+
+void PluginsSettingsTab::deleteBlacklistItem()
+{
+  ui->pluginBlacklist->takeItem(ui->pluginBlacklist->currentIndex().row());
 }
 
 void PluginsSettingsTab::storeSettings(QListWidgetItem *pluginItem)

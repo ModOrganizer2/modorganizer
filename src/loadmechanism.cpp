@@ -63,7 +63,7 @@ void LoadMechanism::removeHintFile(QDir targetDirectory)
 }
 
 
-bool LoadMechanism::isDirectLoadingSupported()
+bool LoadMechanism::isDirectLoadingSupported() const
 {
   //FIXME: Seriously? isn't there a 'do i need steam' thing?
   IPluginGame const *game = qApp->property("managed_game").value<IPluginGame*>();
@@ -76,7 +76,7 @@ bool LoadMechanism::isDirectLoadingSupported()
   }
 }
 
-bool LoadMechanism::isScriptExtenderSupported()
+bool LoadMechanism::isScriptExtenderSupported() const
 {
   IPluginGame const *game = qApp->property("managed_game").value<IPluginGame*>();
   ScriptExtender *extender = game->feature<ScriptExtender>();
@@ -85,7 +85,7 @@ bool LoadMechanism::isScriptExtenderSupported()
   return extender != nullptr && extender->isInstalled();
 }
 
-bool LoadMechanism::isProxyDLLSupported()
+bool LoadMechanism::isProxyDLLSupported() const
 {
   // using steam_api.dll as the proxy is way too game specific as many games will have different
   // versions of that dll.

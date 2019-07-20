@@ -57,30 +57,20 @@ public:
   // temp
   Ui::SettingsDialog *ui;
   bool m_keyChanged;
+  bool m_GeometriesReset;
   PluginContainer *m_PluginContainer;
 
 public slots:
   virtual void accept();
 
 public:
-  QString getExecutableBlacklist() { return m_ExecutableBlacklist; }
-  void setExecutableBlacklist(QString blacklist) { m_ExecutableBlacklist = blacklist; }
-  bool getResetGeometries();
   bool getApiKeyChanged();
-
-private slots:
-  void on_bsaDateBtn_clicked();
-  void on_execBlacklistBtn_clicked();
-  void on_resetGeometryBtn_clicked();
-
-  void deleteBlacklistItem();
+  bool getResetGeometries();
 
 private:
   Settings* m_settings;
 
-  bool m_GeometriesReset;
 
-  QString m_ExecutableBlacklist;
 };
 
 #endif // SETTINGSDIALOG_H

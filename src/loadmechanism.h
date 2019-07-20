@@ -68,21 +68,21 @@ public:
    *
    * @return true if the load mechanism is supported
    **/
-  bool isDirectLoadingSupported();
+  bool isDirectLoadingSupported() const;
 
   /**
    * @brief test whether the "Script Extender" load mechanism is supported for the current game
    *
    * @return true if the load mechanism is supported
    **/
-  bool isScriptExtenderSupported();
+  bool isScriptExtenderSupported() const;
 
   /**
    * @brief test whether the "Proxy DLL" load mechanism is supported for the current game
    *
    * @return true if the load mechanism is supported
    **/
-  bool isProxyDLLSupported();
+  bool isProxyDLLSupported() const;
 
 private:
 
