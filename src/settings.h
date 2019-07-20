@@ -449,24 +449,6 @@ private:
   void readPluginBlacklist();
   QString getConfigurablePath(const QString &key, const QString &def, bool resolve) const;
 
-
-
-  class DiagnosticsTab : public SettingsTab
-  {
-  public:
-    DiagnosticsTab(Settings *parent, SettingsDialog &dialog);
-
-    void update();
-
-  private:
-    QComboBox *m_logLevelBox;
-    QComboBox *m_dumpsTypeBox;
-    QSpinBox *m_dumpsMaxEdit;
-    QLabel *m_diagnosticsExplainedLabel;
-
-    void setLevelsBox();
-  };
-
 private slots:
 
 signals:

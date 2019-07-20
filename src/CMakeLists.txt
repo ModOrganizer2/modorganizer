@@ -37,6 +37,7 @@ SET(organizer_SRCS
     spawn.cpp
     singleinstance.cpp
     settingsdialog.cpp
+	settingsdialogdiagnostics.cpp
 	settingsdialoggeneral.cpp
 	settingsdialognexus.cpp
 	settingsdialogpaths.cpp
@@ -157,6 +158,7 @@ SET(organizer_HDRS
     spawn.h
     singleinstance.h
     settingsdialog.h
+	settingsdialogdiagnostics.h
 	settingsdialoggeneral.h
 	settingsdialognexus.h
 	settingsdialogpaths.h
@@ -443,6 +445,7 @@ set(profiles
 set(settings
 	settings
 	settingsdialog
+	settingsdialogdiagnostics
 	settingsdialoggeneral
 	settingsdialognexus
 	settingsdialogpaths

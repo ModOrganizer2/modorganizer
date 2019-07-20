@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "pluginsetting.h"
 #include "serverinfo.h"
 #include "settingsdialog.h"
+#include "settingsdialogdiagnostics.h"
 #include "settingsdialoggeneral.h"
 #include "settingsdialognexus.h"
 #include "settingsdialogpaths.h"
@@ -676,7 +677,7 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
 
   tabs.push_back(std::unique_ptr<SettingsTab>(new GeneralSettingsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new PathsSettingsTab(this, dialog)));
-  tabs.push_back(std::unique_ptr<SettingsTab>(new DiagnosticsTab(this, dialog)));
+  tabs.push_back(std::unique_ptr<SettingsTab>(new DiagnosticsSettingsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new NexusSettingsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new SteamSettingsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsSettingsTab(this, dialog)));
@@ -741,33 +742,4 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
     }
   }
 
-}
-
-
-Settings::DiagnosticsTab::DiagnosticsTab(Settings *m_parent, SettingsDialog &m_dialog)
-  : SettingsTab(m_parent, m_dialog)
-  , m_logLevelBox(m_dialog.findChild<QComboBox *>("logLevelBox"))
-  , m_dumpsTypeBox(m_dialog.findChild<QComboBox *>("dumpsTypeBox"))
-  , m_dumpsMaxEdit(m_dialog.findChild<QSpinBox *>("dumpsMaxEdit"))
-  , m_diagnosticsExplainedLabel(m_dialog.findChild<QLabel *>("diagnosticsExplainedLabel"))
-{
-  setLevelsBox();
-  m_dumpsTypeBox->setCurrentIndex(m_parent->crashDumpsType());
-  m_dumpsMaxEdit->setValue(m_parent->crashDumpsMax());
-  QString logsPath = qApp->property("dataPath").toString()
-    + "/" + QString::fromStdWString(AppConfig::logPath());
-  m_diagnosticsExplainedLabel->setText(
-    m_diagnosticsExplainedLabel->text()
-    .replace("LOGS_FULL_PATH", logsPath)
-    .replace("LOGS_DIR", QString::fromStdWString(AppConfig::logPath()))
-    .replace("DUMPS_FULL_PATH", QString::fromStdWString(OrganizerCore::crashDumpsPath()))
-    .replace("DUMPS_DIR", QString::fromStdWString(AppConfig::dumpsDir()))
-  );
-}
-
-void Settings::DiagnosticsTab::update()
-{
-  m_Settings.setValue("Settings/log_level", m_logLevelBox->currentData().toInt());
-  m_Settings.setValue("Settings/crash_dumps_type", m_dumpsTypeBox->currentIndex());
-  m_Settings.setValue("Settings/crash_dumps_max", m_dumpsMaxEdit->value());
 }
