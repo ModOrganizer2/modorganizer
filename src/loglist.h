@@ -34,6 +34,8 @@ public:
   static LogModel& instance();
 
   void add(MOBase::log::Entry e);
+  void clear();
+
   const std::deque<MOBase::log::Entry>& entries() const;
 
 protected:
@@ -65,6 +67,8 @@ public:
   void setCore(OrganizerCore& core);
 
   void copyToClipboard();
+  void clear();
+
   QMenu* createMenu(QWidget* parent=nullptr);
 
 private:

@@ -45,6 +45,13 @@ void LogModel::add(MOBase::log::Entry e)
   emit entryAdded(std::move(e));
 }
 
+void LogModel::clear()
+{
+  beginResetModel();
+  m_entries.clear();
+  endResetModel();
+}
+
 const std::deque<MOBase::log::Entry>& LogModel::entries() const
 {
   return m_entries;
@@ -199,12 +206,18 @@ void LogList::copyToClipboard()
   QApplication::clipboard()->setText(QString::fromStdString(s));
 }
 
+void LogList::clear()
+{
+  static_cast<LogModel*>(model())->clear();
+}
+
 QMenu* LogList::createMenu(QWidget* parent)
 {
   auto* menu = new QMenu(parent);
 
-  menu->addAction(tr("Copy& Log"), [&]{ copyToClipboard(); });
+  menu->addAction(tr("&Copy"), [&]{ copyToClipboard(); });
   menu->addSeparator();
+  menu->addAction(tr("C&lear"), [&]{ clear(); });
 
   auto* levels = new QMenu(tr("&Level"));
   menu->addMenu(levels);
