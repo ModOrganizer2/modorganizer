@@ -429,12 +429,21 @@ void Settings::setSteamLogin(QString username, QString password)
 
 LoadMechanism::EMechanism Settings::getLoadMechanism() const
 {
-  switch (m_Settings.value("Settings/load_mechanism").toInt()) {
-    case LoadMechanism::LOAD_MODORGANIZER: return LoadMechanism::LOAD_MODORGANIZER;
-    case LoadMechanism::LOAD_SCRIPTEXTENDER: return LoadMechanism::LOAD_SCRIPTEXTENDER;
-    case LoadMechanism::LOAD_PROXYDLL: return LoadMechanism::LOAD_PROXYDLL;
+  const auto i = m_Settings.value("Settings/load_mechanism").toInt();
+
+  switch (i)
+  {
+    case LoadMechanism::LOAD_MODORGANIZER:
+      return LoadMechanism::LOAD_MODORGANIZER;
+
+    default:
+      qCritical().nospace().noquote()
+        << "invalid load mechanism " << i << ", reverting to modorganizer";
+
+      m_Settings.setValue("Settings/load_mechanism", LoadMechanism::LOAD_MODORGANIZER);
+
+      return LoadMechanism::LOAD_MODORGANIZER;
   }
-  throw std::runtime_error("invalid load mechanism");
 }
 
 

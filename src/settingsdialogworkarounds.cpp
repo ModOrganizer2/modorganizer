@@ -18,20 +18,6 @@ WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings *m_parent, SettingsDialo
     }
   }
 
-  if (m_parent->loadMechanism().isScriptExtenderSupported()) {
-    ui->mechanismBox->addItem(QObject::tr("Script Extender"), LoadMechanism::LOAD_SCRIPTEXTENDER);
-    if (mechanismID == LoadMechanism::LOAD_SCRIPTEXTENDER) {
-      index = ui->mechanismBox->count() - 1;
-    }
-  }
-
-  if (m_parent->loadMechanism().isProxyDLLSupported()) {
-    ui->mechanismBox->addItem(QObject::tr("Proxy DLL"), LoadMechanism::LOAD_PROXYDLL);
-    if (mechanismID == LoadMechanism::LOAD_PROXYDLL) {
-      index = ui->mechanismBox->count() - 1;
-    }
-  }
-
   ui->mechanismBox->setCurrentIndex(index);
 
   ui->hideUncheckedBox->setChecked(m_parent->hideUncheckedPlugins());

@@ -367,14 +367,14 @@ public:
 
   static QColor getIdealTextColor(const QColor&  rBackgroundColor);
 
-  // temp
-  QSettings& settingsRef() { return m_Settings; }
   MOBase::IPluginGame const *gamePlugin() { return m_GamePlugin; }
+  const LoadMechanism& loadMechanism() const { return m_LoadMechanism; }
+
+  // temp
   QMap<QString, QVariantMap> m_PluginSettings;
   QMap<QString, QVariantMap> m_PluginDescriptions;
   QSet<QString> m_PluginBlacklist;
   void writePluginBlacklist();
-  const LoadMechanism& loadMechanism() const { return m_LoadMechanism; }
 
 public slots:
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
@@ -386,7 +386,7 @@ signals:
 private:
   static Settings *s_Instance;
   MOBase::IPluginGame const *m_GamePlugin;
-  QSettings m_Settings;
+  mutable QSettings m_Settings;
   LoadMechanism m_LoadMechanism;
   std::vector<MOBase::IPlugin*> m_Plugins;
 

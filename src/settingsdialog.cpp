@@ -169,7 +169,7 @@ bool SettingsDialog::getApiKeyChanged()
 
 SettingsTab::SettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
   : m_parent(m_parent)
-  , m_Settings(m_parent->settingsRef())
+  , m_Settings(m_parent->directInterface())
   , m_dialog(m_dialog)
   , ui(m_dialog.ui)
 {
