@@ -20,7 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settingsdialog.h"
 
 #include "ui_settingsdialog.h"
-#include "ui_nexusmanualkey.h"
 #include "categoriesdialog.h"
 #include "helper.h"
 #include "noeditdelegate.h"
@@ -48,62 +47,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-class NexusManualKeyDialog : public QDialog
-{
-public:
-  NexusManualKeyDialog(QWidget* parent)
-    : QDialog(parent), ui(new Ui::NexusManualKeyDialog)
-  {
-    ui->setupUi(this);
-    ui->key->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
-
-    connect(ui->openBrowser, &QPushButton::clicked, [&]{ openBrowser(); });
-    connect(ui->paste, &QPushButton::clicked, [&]{ paste(); });
-    connect(ui->clear, &QPushButton::clicked, [&]{ clear(); });
-  }
-
-  void accept() override
-  {
-    m_key = ui->key->toPlainText();
-    QDialog::accept();
-  }
-
-  const QString& key() const
-  {
-    return m_key;
-  }
-
-  void openBrowser()
-  {
-    shell::OpenLink(QUrl("https://www.nexusmods.com/users/myaccount?tab=api"));
-  }
-
-  void paste()
-  {
-    const auto text = QApplication::clipboard()->text();
-    if (!text.isEmpty()) {
-      ui->key->setPlainText(text);
-    }
-  }
-
-  void clear()
-  {
-    ui->key->clear();
-  }
-
-private:
-  std::unique_ptr<Ui::NexusManualKeyDialog> ui;
-  QString m_key;
-};
-
 
 SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings* settings, QWidget *parent)
   : TutorableDialog("SettingsDialog", parent)
   , ui(new Ui::SettingsDialog)
   , m_settings(settings)
   , m_PluginContainer(pluginContainer)
-  , m_keyChanged(false)
   , m_GeometriesReset(false)
+  , m_keyChanged(false)
 {
   ui->setupUi(this);
   ui->pluginSettingsList->setStyleSheet("QTreeWidget::item {padding-right: 10px;}");
@@ -111,8 +62,6 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings* setti
   QShortcut *delShortcut = new QShortcut(
     QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
   connect(delShortcut, SIGNAL(activated()), this, SLOT(deleteBlacklistItem()));
-
-  updateNexusState();
 }
 
 SettingsDialog::~SettingsDialog()
@@ -200,220 +149,6 @@ void SettingsDialog::on_bsaDateBtn_clicked()
                        dir.absolutePath().toStdWString());
 }
 
-void SettingsDialog::on_nexusConnect_clicked()
-{
-  if (m_nexusLogin && m_nexusLogin->isActive()) {
-    m_nexusLogin->cancel();
-    return;
-  }
-
-  if (!m_nexusLogin) {
-    m_nexusLogin.reset(new NexusSSOLogin);
-
-    m_nexusLogin->keyChanged = [&](auto&& s){
-      onSSOKeyChanged(s);
-    };
-
-    m_nexusLogin->stateChanged = [&](auto&& s, auto&& e){
-      onSSOStateChanged(s, e);
-    };
-  }
-
-  ui->nexusLog->clear();
-  m_nexusLogin->start();
-  updateNexusState();
-}
-
-void SettingsDialog::on_nexusManualKey_clicked()
-{
-  if (m_nexusValidator && m_nexusValidator->isActive()) {
-    m_nexusValidator->cancel();
-    return;
-  }
-
-  NexusManualKeyDialog dialog(this);
-  if (dialog.exec() != QDialog::Accepted) {
-    return;
-  }
-
-  const auto key = dialog.key();
-  if (key.isEmpty()) {
-    clearKey();
-    return;
-  }
-
-  ui->nexusLog->clear();
-  validateKey(key);
-}
-
-void SettingsDialog::on_nexusDisconnect_clicked()
-{
-  clearKey();
-  ui->nexusLog->clear();
-  addNexusLog(tr("Disconnected."));
-}
-
-void SettingsDialog::validateKey(const QString& key)
-{
-  if (!m_nexusValidator) {
-    m_nexusValidator.reset(new NexusKeyValidator(
-      *NexusInterface::instance(m_PluginContainer)->getAccessManager()));
-
-    m_nexusValidator->stateChanged = [&](auto&& s, auto&& e){
-      onValidatorStateChanged(s, e);
-    };
-
-    m_nexusValidator->finished = [&](auto&& user) {
-      onValidatorFinished(user);
-    };
-  }
-
-  addNexusLog(tr("Checking API key..."));
-  m_nexusValidator->start(key);
-}
-
-void SettingsDialog::onSSOKeyChanged(const QString& key)
-{
-  if (key.isEmpty()) {
-    clearKey();
-  } else {
-    addNexusLog(tr("Received API key."));
-    validateKey(key);
-  }
-}
-
-void SettingsDialog::onSSOStateChanged(NexusSSOLogin::States s, const QString& e)
-{
-  if (s != NexusSSOLogin::Finished) {
-    // finished state is handled in onSSOKeyChanged()
-    const auto log = NexusSSOLogin::stateToString(s, e);
-
-    for (auto&& line : log.split("\n")) {
-      addNexusLog(line);
-    }
-  }
-
-  updateNexusState();
-}
-
-void SettingsDialog::onValidatorStateChanged(
-  NexusKeyValidator::States s, const QString& e)
-{
-  if (s != NexusKeyValidator::Finished) {
-    // finished state is handled in onValidatorFinished()
-    const auto log = NexusKeyValidator::stateToString(s, e);
-
-    for (auto&& line : log.split("\n")) {
-      addNexusLog(line);
-    }
-  }
-
-  updateNexusState();
-}
-
-void SettingsDialog::onValidatorFinished(const APIUserAccount& user)
-{
-  NexusInterface::instance(m_PluginContainer)->setUserAccount(user);
-
-  if (!user.apiKey().isEmpty()) {
-    if (setKey(user.apiKey())) {
-      addNexusLog(tr("Linked with Nexus successfully."));
-    }
-  }
-}
-
-void SettingsDialog::addNexusLog(const QString& s)
-{
-  ui->nexusLog->addItem(s);
-  ui->nexusLog->scrollToBottom();
-}
-
-bool SettingsDialog::setKey(const QString& key)
-{
-  m_keyChanged = true;
-  const bool ret = m_settings->setNexusApiKey(key);
-  updateNexusState();
-  return ret;
-}
-
-bool SettingsDialog::clearKey()
-{
-  m_keyChanged = true;
-  const auto ret = m_settings->clearNexusApiKey();
-
-  NexusInterface::instance(m_PluginContainer)->getAccessManager()->clearApiKey();
-  updateNexusState();
-
-  return ret;
-}
-
-void SettingsDialog::updateNexusState()
-{
-  updateNexusButtons();
-  updateNexusData();
-}
-
-void SettingsDialog::updateNexusButtons()
-{
-  if (m_nexusLogin && m_nexusLogin->isActive()) {
-    // api key is in the process of being retrieved
-    ui->nexusConnect->setText(tr("Cancel"));
-    ui->nexusConnect->setEnabled(true);
-    ui->nexusDisconnect->setEnabled(false);
-    ui->nexusManualKey->setText(tr("Enter API Key Manually"));
-    ui->nexusManualKey->setEnabled(false);
-  }
-  else if (m_nexusValidator && m_nexusValidator->isActive()) {
-    // api key is in the process of being tested
-    ui->nexusConnect->setText(tr("Connect to Nexus"));
-    ui->nexusConnect->setEnabled(false);
-    ui->nexusDisconnect->setEnabled(false);
-    ui->nexusManualKey->setText(tr("Cancel"));
-    ui->nexusManualKey->setEnabled(true);
-  }
-  else if (m_settings->hasNexusApiKey()) {
-    // api key is present
-    ui->nexusConnect->setText(tr("Connect to Nexus"));
-    ui->nexusConnect->setEnabled(false);
-    ui->nexusDisconnect->setEnabled(true);
-    ui->nexusManualKey->setText(tr("Enter API Key Manually"));
-    ui->nexusManualKey->setEnabled(false);
-  } else {
-    // api key not present
-    ui->nexusConnect->setText(tr("Connect to Nexus"));
-    ui->nexusConnect->setEnabled(true);
-    ui->nexusDisconnect->setEnabled(false);
-    ui->nexusManualKey->setText(tr("Enter API Key Manually"));
-    ui->nexusManualKey->setEnabled(true);
-  }
-}
-
-void SettingsDialog::updateNexusData()
-{
-  const auto user = NexusInterface::instance(m_PluginContainer)
-    ->getAPIUserAccount();
-
-  if (user.isValid()) {
-    ui->nexusUserID->setText(user.id());
-    ui->nexusName->setText(user.name());
-    ui->nexusAccount->setText(localizedUserAccountType(user.type()));
-
-    ui->nexusDailyRequests->setText(QString("%1/%2")
-      .arg(user.limits().remainingDailyRequests)
-      .arg(user.limits().maxDailyRequests));
-
-    ui->nexusHourlyRequests->setText(QString("%1/%2")
-      .arg(user.limits().remainingHourlyRequests)
-      .arg(user.limits().maxHourlyRequests));
-  } else {
-    ui->nexusUserID->setText(tr("N/A"));
-    ui->nexusName->setText(tr("N/A"));
-    ui->nexusAccount->setText(tr("N/A"));
-    ui->nexusDailyRequests->setText(tr("N/A"));
-    ui->nexusHourlyRequests->setText(tr("N/A"));
-  }
-}
-
 void SettingsDialog::storeSettings(QListWidgetItem *pluginItem)
 {
   if (pluginItem != nullptr) {
@@ -468,17 +203,6 @@ void SettingsDialog::on_pluginsList_currentItemChanged(QListWidgetItem *current,
 void SettingsDialog::deleteBlacklistItem()
 {
   ui->pluginBlacklist->takeItem(ui->pluginBlacklist->currentIndex().row());
-}
-
-void SettingsDialog::on_associateButton_clicked()
-{
-  Settings::instance().registerAsNXMHandler(true);
-}
-
-void SettingsDialog::on_clearCacheButton_clicked()
-{
-  QDir(Settings::instance().getCacheDirectory()).removeRecursively();
-  NexusInterface::instance(m_PluginContainer)->clearCache();
 }
 
 void SettingsDialog::on_resetGeometryBtn_clicked()

@@ -4,10 +4,10 @@
 #include "settingsdialog.h"
 #include "settings.h"
 
-class GeneralTab : public SettingsTab
+class GeneralSettingsTab : public SettingsTab
 {
 public:
-  GeneralTab(Settings *m_parent, SettingsDialog &m_dialog);
+  GeneralSettingsTab(Settings *m_parent, SettingsDialog &m_dialog);
 
   void update();
 

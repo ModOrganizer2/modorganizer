@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "serverinfo.h"
 #include "settingsdialog.h"
 #include "settingsdialoggeneral.h"
+#include "settingsdialognexus.h"
 #include "settingsdialogpaths.h"
 #include "versioninfo.h"
 #include "appconfig.h"
@@ -68,19 +69,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 using namespace MOBase;
-
-template <typename T>
-class QListWidgetItemEx : public QListWidgetItem {
-public:
-  QListWidgetItemEx(const QString &text, int sortRole = Qt::DisplayRole, QListWidget *parent = 0, int type = Type)
-    : QListWidgetItem(text, parent, type), m_SortRole(sortRole) {}
-
-  virtual bool operator< ( const QListWidgetItem & other ) const {
-    return this->data(m_SortRole).value<T>() < other.data(m_SortRole).value<T>();
-  }
-private:
-  int m_SortRole;
-};
 
 
 SettingsTab::SettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
@@ -688,10 +676,10 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
 
   std::vector<std::unique_ptr<SettingsTab>> tabs;
 
-  tabs.push_back(std::unique_ptr<SettingsTab>(new GeneralTab(this, dialog)));
-  tabs.push_back(std::unique_ptr<SettingsTab>(new PathsTab(this, dialog)));
+  tabs.push_back(std::unique_ptr<SettingsTab>(new GeneralSettingsTab(this, dialog)));
+  tabs.push_back(std::unique_ptr<SettingsTab>(new PathsSettingsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new DiagnosticsTab(this, dialog)));
-  tabs.push_back(std::unique_ptr<SettingsTab>(new NexusTab(this, dialog)));
+  tabs.push_back(std::unique_ptr<SettingsTab>(new NexusSettingsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new SteamTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsTab(this, dialog)));
@@ -781,100 +769,6 @@ void Settings::DiagnosticsTab::update()
   m_Settings.setValue("Settings/crash_dumps_max", m_dumpsMaxEdit->value());
 }
 
-void Settings::DiagnosticsTab::setLevelsBox()
-{
-  m_logLevelBox->clear();
-
-  m_logLevelBox->addItem(tr("Debug"), log::Debug);
-  m_logLevelBox->addItem(tr("Info (recommended)"), log::Info);
-  m_logLevelBox->addItem(tr("Warning"), log::Warning);
-  m_logLevelBox->addItem(tr("Error"), log::Error);
-
-  for (int i=0; i<m_logLevelBox->count(); ++i) {
-    if (m_logLevelBox->itemData(i) == m_parent->logLevel()) {
-      m_logLevelBox->setCurrentIndex(i);
-      break;
-    }
-  }
-}
-
-Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
-  : SettingsTab(parent, dialog)
-  , m_offlineBox(dialog.findChild<QCheckBox *>("offlineBox"))
-  , m_proxyBox(dialog.findChild<QCheckBox *>("proxyBox"))
-  , m_knownServersList(dialog.findChild<QListWidget *>("knownServersList"))
-  , m_preferredServersList(
-        dialog.findChild<QListWidget *>("preferredServersList"))
-  , m_endorsementBox(dialog.findChild<QCheckBox *>("endorsementBox"))
-  , m_hideAPICounterBox(dialog.findChild<QCheckBox *>("hideAPICounterBox"))
-{
-  m_offlineBox->setChecked(parent->offlineMode());
-  m_proxyBox->setChecked(parent->useProxy());
-  m_endorsementBox->setChecked(parent->endorsementIntegration());
-  m_hideAPICounterBox->setChecked(parent->hideAPICounter());
-
-  // display server preferences
-  m_Settings.beginGroup("Servers");
-  for (const QString &key : m_Settings.childKeys()) {
-    QVariantMap val = m_Settings.value(key).toMap();
-    QString descriptor = key;
-    if (!descriptor.compare("CDN", Qt::CaseInsensitive)) {
-      descriptor += QStringLiteral(" (automatic)");
-    }
-    if (val.contains("downloadSpeed") && val.contains("downloadCount") && (val["downloadCount"].toInt() > 0)) {
-      int bps = static_cast<int>(val["downloadSpeed"].toDouble() / val["downloadCount"].toInt());
-      descriptor += QString(" (%1 kbps)").arg(bps / 1024);
-    }
-
-    QListWidgetItem *newItem = new QListWidgetItemEx<int>(descriptor, Qt::UserRole + 1);
-
-    newItem->setData(Qt::UserRole, key);
-    newItem->setData(Qt::UserRole + 1, val["preferred"].toInt());
-    if (val["preferred"].toInt() > 0) {
-      m_preferredServersList->addItem(newItem);
-    } else {
-      m_knownServersList->addItem(newItem);
-    }
-    m_preferredServersList->sortItems(Qt::DescendingOrder);
-  }
-  m_Settings.endGroup();
-}
-
-void Settings::NexusTab::update()
-{
-  /*
-  if (m_loginCheckBox->isChecked()) {
-    m_Settings.setValue("Settings/nexus_login", true);
-    m_Settings.setValue("Settings/nexus_username", m_usernameEdit->text());
-    m_Settings.setValue("Settings/nexus_password", obfuscate(m_passwordEdit->text()));
-  } else {
-    m_Settings.setValue("Settings/nexus_login", false);
-    m_Settings.remove("Settings/nexus_username");
-    m_Settings.remove("Settings/nexus_password");
-  }
-  */
-  m_Settings.setValue("Settings/offline_mode", m_offlineBox->isChecked());
-  m_Settings.setValue("Settings/use_proxy", m_proxyBox->isChecked());
-  m_Settings.setValue("Settings/endorsement_integration", m_endorsementBox->isChecked());
-  m_Settings.setValue("Settings/hide_api_counter", m_hideAPICounterBox->isChecked());
-
-  // store server preference
-  m_Settings.beginGroup("Servers");
-  for (int i = 0; i < m_knownServersList->count(); ++i) {
-    QString key = m_knownServersList->item(i)->data(Qt::UserRole).toString();
-    QVariantMap val = m_Settings.value(key).toMap();
-    val["preferred"] = 0;
-    m_Settings.setValue(key, val);
-  }
-  int count = m_preferredServersList->count();
-  for (int i = 0; i < count; ++i) {
-    QString key = m_preferredServersList->item(i)->data(Qt::UserRole).toString();
-    QVariantMap val = m_Settings.value(key).toMap();
-    val["preferred"] = count - i;
-    m_Settings.setValue(key, val);
-  }
-  m_Settings.endGroup();
-}
 
 Settings::SteamTab::SteamTab(Settings *m_parent, SettingsDialog &m_dialog)
   : SettingsTab(m_parent, m_dialog)

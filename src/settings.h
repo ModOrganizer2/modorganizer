@@ -461,22 +461,6 @@ private:
     void setLevelsBox();
   };
 
-  /** Display/store the configuration in the 'nexus' tab of the settings dialogue */
-  class NexusTab : public SettingsTab
-  {
-  public:
-    NexusTab(Settings *m_parent, SettingsDialog &m_dialog);
-    void update();
-
-  private:
-    QCheckBox *m_offlineBox;
-    QCheckBox *m_proxyBox;
-    QListWidget *m_knownServersList;
-    QListWidget *m_preferredServersList;
-    QCheckBox *m_endorsementBox;
-    QCheckBox *m_hideAPICounterBox;
-  };
-
   /** Display/store the configuration in the 'steam' tab of the settings dialogue */
   class SteamTab : public SettingsTab
   {

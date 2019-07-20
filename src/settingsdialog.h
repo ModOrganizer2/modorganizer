@@ -54,18 +54,15 @@ public:
   */
   QString getColoredButtonStyleSheet() const;
 
+  // temp
   Ui::SettingsDialog *ui;
+  bool m_keyChanged;
+  PluginContainer *m_PluginContainer;
 
 public slots:
-
   virtual void accept();
 
-signals:
-
-  void retryApiConnection();
-
 private:
-
   void storeSettings(QListWidgetItem *pluginItem);
 
 public:
@@ -75,13 +72,8 @@ public:
   bool getApiKeyChanged();
 
 private slots:
-  void on_associateButton_clicked();
   void on_bsaDateBtn_clicked();
-  void on_clearCacheButton_clicked();
   void on_execBlacklistBtn_clicked();
-  void on_nexusConnect_clicked();
-  void on_nexusDisconnect_clicked();
-  void on_nexusManualKey_clicked();
   void on_pluginsList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
   void on_resetGeometryBtn_clicked();
 
@@ -89,30 +81,10 @@ private slots:
 
 private:
   Settings* m_settings;
-  PluginContainer *m_PluginContainer;
 
   bool m_GeometriesReset;
-  bool m_keyChanged;
 
   QString m_ExecutableBlacklist;
-  std::unique_ptr<NexusSSOLogin> m_nexusLogin;
-  std::unique_ptr<NexusKeyValidator> m_nexusValidator;
-
-  void validateKey(const QString& key);
-  bool setKey(const QString& key);
-  bool clearKey();
-
-  void updateNexusState();
-  void updateNexusButtons();
-  void updateNexusData();
-
-  void onSSOKeyChanged(const QString& key);
-  void onSSOStateChanged(NexusSSOLogin::States s, const QString& e);
-
-  void onValidatorStateChanged(NexusKeyValidator::States s, const QString& e);
-  void onValidatorFinished(const APIUserAccount& user);
-
-  void addNexusLog(const QString& s);
 };
 
 #endif // SETTINGSDIALOG_H

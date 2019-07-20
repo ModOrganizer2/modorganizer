@@ -3,7 +3,7 @@
 #include "appconfig.h"
 #include <iplugingame.h>
 
-PathsTab::PathsTab(Settings *parent, SettingsDialog &dialog)
+PathsSettingsTab::PathsSettingsTab(Settings *parent, SettingsDialog &dialog)
   : SettingsTab(parent, dialog)
 {
   ui->baseDirEdit->setText(m_parent->getBaseDirectory());
@@ -38,7 +38,7 @@ PathsTab::PathsTab(Settings *parent, SettingsDialog &dialog)
   QObject::connect(ui->profilesDirEdit, &QLineEdit::editingFinished, [&]{ on_profilesDirEdit_editingFinished(); });
 }
 
-void PathsTab::update()
+void PathsSettingsTab::update()
 {
   typedef std::tuple<QString, QString, std::wstring> Directory;
 
@@ -91,7 +91,7 @@ void PathsTab::update()
   }
 }
 
-void PathsTab::on_browseBaseDirBtn_clicked()
+void PathsSettingsTab::on_browseBaseDirBtn_clicked()
 {
   QString temp = QFileDialog::getExistingDirectory(
     parentWidget(), QObject::tr("Select base directory"), ui->baseDirEdit->text());
@@ -100,7 +100,7 @@ void PathsTab::on_browseBaseDirBtn_clicked()
   }
 }
 
-void PathsTab::on_browseDownloadDirBtn_clicked()
+void PathsSettingsTab::on_browseDownloadDirBtn_clicked()
 {
   QString searchPath = ui->downloadDirEdit->text();
   searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
@@ -111,7 +111,7 @@ void PathsTab::on_browseDownloadDirBtn_clicked()
   }
 }
 
-void PathsTab::on_browseModDirBtn_clicked()
+void PathsSettingsTab::on_browseModDirBtn_clicked()
 {
   QString searchPath = ui->modDirEdit->text();
   searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
@@ -122,7 +122,7 @@ void PathsTab::on_browseModDirBtn_clicked()
   }
 }
 
-void PathsTab::on_browseCacheDirBtn_clicked()
+void PathsSettingsTab::on_browseCacheDirBtn_clicked()
 {
   QString searchPath = ui->cacheDirEdit->text();
   searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
@@ -133,7 +133,7 @@ void PathsTab::on_browseCacheDirBtn_clicked()
   }
 }
 
-void PathsTab::on_browseProfilesDirBtn_clicked()
+void PathsSettingsTab::on_browseProfilesDirBtn_clicked()
 {
   QString searchPath = ui->profilesDirEdit->text();
   searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
@@ -144,7 +144,7 @@ void PathsTab::on_browseProfilesDirBtn_clicked()
   }
 }
 
-void PathsTab::on_browseOverwriteDirBtn_clicked()
+void PathsSettingsTab::on_browseOverwriteDirBtn_clicked()
 {
   QString searchPath = ui->overwriteDirEdit->text();
   searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
@@ -155,7 +155,7 @@ void PathsTab::on_browseOverwriteDirBtn_clicked()
   }
 }
 
-void PathsTab::on_browseGameDirBtn_clicked()
+void PathsSettingsTab::on_browseGameDirBtn_clicked()
 {
   QFileInfo oldGameExe(ui->managedGameDirEdit->text());
 
@@ -165,37 +165,37 @@ void PathsTab::on_browseGameDirBtn_clicked()
   }
 }
 
-void PathsTab::on_baseDirEdit_editingFinished()
+void PathsSettingsTab::on_baseDirEdit_editingFinished()
 {
   normalizePath(ui->baseDirEdit);
 }
 
-void PathsTab::on_downloadDirEdit_editingFinished()
+void PathsSettingsTab::on_downloadDirEdit_editingFinished()
 {
   normalizePath(ui->downloadDirEdit);
 }
 
-void PathsTab::on_modDirEdit_editingFinished()
+void PathsSettingsTab::on_modDirEdit_editingFinished()
 {
   normalizePath(ui->modDirEdit);
 }
 
-void PathsTab::on_cacheDirEdit_editingFinished()
+void PathsSettingsTab::on_cacheDirEdit_editingFinished()
 {
   normalizePath(ui->cacheDirEdit);
 }
 
-void PathsTab::on_profilesDirEdit_editingFinished()
+void PathsSettingsTab::on_profilesDirEdit_editingFinished()
 {
   normalizePath(ui->profilesDirEdit);
 }
 
-void PathsTab::on_overwriteDirEdit_editingFinished()
+void PathsSettingsTab::on_overwriteDirEdit_editingFinished()
 {
   normalizePath(ui->overwriteDirEdit);
 }
 
-void PathsTab::normalizePath(QLineEdit *lineEdit)
+void PathsSettingsTab::normalizePath(QLineEdit *lineEdit)
 {
   QString text = lineEdit->text();
   while (text.endsWith('/') || text.endsWith('\\')) {

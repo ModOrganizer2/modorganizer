@@ -4,10 +4,10 @@
 #include "settings.h"
 #include "settingsdialog.h"
 
-class PathsTab : public SettingsTab
+class PathsSettingsTab : public SettingsTab
 {
 public:
-  PathsTab(Settings *parent, SettingsDialog &dialog);
+  PathsSettingsTab(Settings *parent, SettingsDialog &dialog);
 
   void update();
 

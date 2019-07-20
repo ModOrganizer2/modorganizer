@@ -6,7 +6,7 @@
 
 using MOBase::QuestionBoxMemory;
 
-GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
+GeneralSettingsTab::GeneralSettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
   : SettingsTab(m_parent, m_dialog)
 {
   addLanguages();
@@ -87,7 +87,7 @@ GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
   QObject::connect(ui->resetDialogsButton, &QPushButton::clicked, [&]{ on_resetDialogsButton_clicked(); });
 }
 
-void GeneralTab::update()
+void GeneralSettingsTab::update()
 {
   QString oldLanguage = m_parent->language();
   QString newLanguage = ui->languageBox->itemData(ui->languageBox->currentIndex()).toString();
@@ -115,7 +115,7 @@ void GeneralTab::update()
   m_Settings.setValue("Settings/colorSeparatorScrollbars", ui->colorSeparatorsBox->isChecked());
 }
 
-void GeneralTab::addLanguages()
+void GeneralSettingsTab::addLanguages()
 {
   std::vector<std::pair<QString, QString>> languages;
 
@@ -150,7 +150,7 @@ void GeneralTab::addLanguages()
   }
 }
 
-void GeneralTab::addStyles()
+void GeneralSettingsTab::addStyles()
 {
   ui->styleBox->addItem("None", "");
   ui->styleBox->addItem("Fusion", "Fusion");
@@ -163,12 +163,12 @@ void GeneralTab::addStyles()
   }
 }
 
-void GeneralTab::resetDialogs()
+void GeneralSettingsTab::resetDialogs()
 {
   QuestionBoxMemory::resetDialogs();
 }
 
-void GeneralTab::setButtonColor(QPushButton *button, const QColor &color)
+void GeneralSettingsTab::setButtonColor(QPushButton *button, const QColor &color)
 {
   button->setStyleSheet(
     QString("QPushButton {"
@@ -185,7 +185,7 @@ void GeneralTab::setButtonColor(QPushButton *button, const QColor &color)
   );
 };
 
-void GeneralTab::on_containsBtn_clicked()
+void GeneralSettingsTab::on_containsBtn_clicked()
 {
   QColor result = QColorDialog::getColor(m_ContainsColor, parentWidget(), "Color Picker: Mod contains selected plugin", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
@@ -194,7 +194,7 @@ void GeneralTab::on_containsBtn_clicked()
   }
 }
 
-void GeneralTab::on_containedBtn_clicked()
+void GeneralSettingsTab::on_containedBtn_clicked()
 {
   QColor result = QColorDialog::getColor(m_ContainedColor, parentWidget(), "ColorPicker: Plugin is Contained in selected Mod", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
@@ -203,7 +203,7 @@ void GeneralTab::on_containedBtn_clicked()
   }
 }
 
-void GeneralTab::on_overwrittenBtn_clicked()
+void GeneralSettingsTab::on_overwrittenBtn_clicked()
 {
   QColor result = QColorDialog::getColor(m_OverwrittenColor, parentWidget(), "ColorPicker: Is overwritten (loose files)", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
@@ -212,7 +212,7 @@ void GeneralTab::on_overwrittenBtn_clicked()
   }
 }
 
-void GeneralTab::on_overwritingBtn_clicked()
+void GeneralSettingsTab::on_overwritingBtn_clicked()
 {
   QColor result = QColorDialog::getColor(m_OverwritingColor, parentWidget(), "ColorPicker: Is overwriting (loose files)", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
@@ -221,7 +221,7 @@ void GeneralTab::on_overwritingBtn_clicked()
   }
 }
 
-void GeneralTab::on_overwrittenArchiveBtn_clicked()
+void GeneralSettingsTab::on_overwrittenArchiveBtn_clicked()
 {
   QColor result = QColorDialog::getColor(m_OverwrittenArchiveColor, parentWidget(), "ColorPicker: Is overwritten (archive files)", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
@@ -230,7 +230,7 @@ void GeneralTab::on_overwrittenArchiveBtn_clicked()
   }
 }
 
-void GeneralTab::on_overwritingArchiveBtn_clicked()
+void GeneralSettingsTab::on_overwritingArchiveBtn_clicked()
 {
   QColor result = QColorDialog::getColor(m_OverwritingArchiveColor, parentWidget(), "ColorPicker: Is overwriting (archive files)", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
@@ -239,7 +239,7 @@ void GeneralTab::on_overwritingArchiveBtn_clicked()
   }
 }
 
-void GeneralTab::on_resetColorsBtn_clicked()
+void GeneralSettingsTab::on_resetColorsBtn_clicked()
 {
   m_OverwritingColor = QColor(255, 0, 0, 64);
   m_OverwrittenColor = QColor(0, 255, 0, 64);
@@ -256,7 +256,7 @@ void GeneralTab::on_resetColorsBtn_clicked()
   setButtonColor(ui->containedBtn, m_ContainedColor);
 }
 
-void GeneralTab::on_resetDialogsButton_clicked()
+void GeneralSettingsTab::on_resetDialogsButton_clicked()
 {
   if (QMessageBox::question(parentWidget(), QObject::tr("Confirm?"),
     QObject::tr("This will make all dialogs show up again where you checked the \"Remember selection\"-box. Continue?"),
@@ -265,7 +265,7 @@ void GeneralTab::on_resetDialogsButton_clicked()
   }
 }
 
-void GeneralTab::on_categoriesBtn_clicked()
+void GeneralSettingsTab::on_categoriesBtn_clicked()
 {
   CategoriesDialog dialog(parentWidget());
   if (dialog.exec() == QDialog::Accepted) {
