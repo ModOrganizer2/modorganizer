@@ -131,23 +131,6 @@ QString SettingsDialog::getColoredButtonStyleSheet() const
     "}");
 }
 
-void SettingsDialog::setButtonColor(QPushButton *button, const QColor &color)
-{
-  button->setStyleSheet(
-    QString("QPushButton {"
-      "background-color: rgba(%1, %2, %3, %4);"
-      "color: %5;"
-      "border: 1px solid;"
-      "padding: 3px;"
-      "}")
-    .arg(color.red())
-    .arg(color.green())
-    .arg(color.blue())
-    .arg(color.alpha())
-    .arg(Settings::getIdealTextColor(color).name())
-    );
-};
-
 void SettingsDialog::accept()
 {
   QString newModPath = ui->modDirEdit->text();
@@ -179,14 +162,6 @@ bool SettingsDialog::getResetGeometries()
 bool SettingsDialog::getApiKeyChanged()
 {
   return m_keyChanged;
-}
-
-void SettingsDialog::on_categoriesBtn_clicked()
-{
-  CategoriesDialog dialog(this);
-  if (dialog.exec() == QDialog::Accepted) {
-    dialog.commitChanges();
-  }
 }
 
 void SettingsDialog::on_execBlacklistBtn_clicked()
@@ -296,86 +271,6 @@ void SettingsDialog::on_browseGameDirBtn_clicked()
   QString temp = QFileDialog::getOpenFileName(this, tr("Select game executable"), oldGameExe.absolutePath(), oldGameExe.fileName());
   if (!temp.isEmpty()) {
     ui->managedGameDirEdit->setText(temp);
-  }
-}
-
-void SettingsDialog::on_containsBtn_clicked()
-{
-  QColor result = QColorDialog::getColor(m_ContainsColor, this, "Color Picker: Mod contains selected plugin", QColorDialog::ShowAlphaChannel);
-  if (result.isValid()) {
-    m_ContainsColor = result;
-    setButtonColor(ui->containsBtn, result);
-  }
-}
-
-void SettingsDialog::on_containedBtn_clicked()
-{
-  QColor result = QColorDialog::getColor(m_ContainedColor, this, "ColorPicker: Plugin is Contained in selected Mod", QColorDialog::ShowAlphaChannel);
-  if (result.isValid()) {
-    m_ContainedColor = result;
-    setButtonColor(ui->containedBtn, result);
-  }
-}
-
-void SettingsDialog::on_overwrittenBtn_clicked()
-{
-  QColor result = QColorDialog::getColor(m_OverwrittenColor, this, "ColorPicker: Is overwritten (loose files)", QColorDialog::ShowAlphaChannel);
-  if (result.isValid()) {
-    m_OverwrittenColor = result;
-    setButtonColor(ui->overwrittenBtn, result);
-  }
-}
-
-void SettingsDialog::on_overwritingBtn_clicked()
-{
-  QColor result = QColorDialog::getColor(m_OverwritingColor, this, "ColorPicker: Is overwriting (loose files)", QColorDialog::ShowAlphaChannel);
-  if (result.isValid()) {
-    m_OverwritingColor = result;
-    setButtonColor(ui->overwritingBtn, result);
-  }
-}
-
-void SettingsDialog::on_overwrittenArchiveBtn_clicked()
-{
-  QColor result = QColorDialog::getColor(m_OverwrittenArchiveColor, this, "ColorPicker: Is overwritten (archive files)", QColorDialog::ShowAlphaChannel);
-  if (result.isValid()) {
-    m_OverwrittenArchiveColor = result;
-    setButtonColor(ui->overwrittenArchiveBtn, result);
-  }
-}
-
-void SettingsDialog::on_overwritingArchiveBtn_clicked()
-{
-  QColor result = QColorDialog::getColor(m_OverwritingArchiveColor, this, "ColorPicker: Is overwriting (archive files)", QColorDialog::ShowAlphaChannel);
-  if (result.isValid()) {
-    m_OverwritingArchiveColor = result;
-    setButtonColor(ui->overwritingArchiveBtn, result);
-  }
-}
-
-void SettingsDialog::on_resetColorsBtn_clicked()
-{
-  m_OverwritingColor = QColor(255, 0, 0, 64);
-  m_OverwrittenColor = QColor(0, 255, 0, 64);
-  m_OverwritingArchiveColor = QColor(255, 0, 255, 64);
-  m_OverwrittenArchiveColor = QColor(0, 255, 255, 64);
-  m_ContainsColor = QColor(0, 0, 255, 64);
-  m_ContainedColor = QColor(0, 0, 255, 64);
-
-  setButtonColor(ui->overwritingBtn, m_OverwritingColor);
-  setButtonColor(ui->overwrittenBtn, m_OverwrittenColor);
-  setButtonColor(ui->overwritingArchiveBtn, m_OverwritingArchiveColor);
-  setButtonColor(ui->overwrittenArchiveBtn, m_OverwrittenArchiveColor);
-  setButtonColor(ui->containsBtn, m_ContainsColor);
-  setButtonColor(ui->containedBtn, m_ContainedColor);
-}
-
-void SettingsDialog::on_resetDialogsButton_clicked()
-{
-  if (QMessageBox::question(this, tr("Confirm?"),
-          tr("This will make all dialogs show up again where you checked the \"Remember selection\"-box. Continue?"),
-          QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    emit resetDialogs();
   }
 }
 

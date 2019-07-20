@@ -55,8 +55,30 @@ namespace MOBase {
   class IPluginGame;
 }
 
+namespace Ui {
+  class SettingsDialog;
+}
+
 class SettingsDialog;
 class PluginContainer;
+class Settings;
+
+class SettingsTab
+{
+public:
+  SettingsTab(Settings *m_parent, SettingsDialog &m_dialog);
+  virtual ~SettingsTab();
+
+  virtual void update() = 0;
+
+protected:
+  Settings *m_parent;
+  QSettings &m_Settings;
+  SettingsDialog &m_dialog;
+  Ui::SettingsDialog* ui;
+
+  QWidget* parentWidget();
+};
 
 /**
  * manages the settings for Mod Organizer. The settings are not cached
@@ -404,6 +426,8 @@ public:
    */
   bool colorSeparatorScrollbar() const;
 
+  QSettings& settingsRef() { return m_Settings; }
+
 public slots:
 
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
@@ -414,49 +438,10 @@ private:
   static bool obfuscate(const QString key, const QString data);
   static QString deObfuscate(const QString key);
 
-  void addLanguages(QComboBox *languageBox);
-  void addStyles(QComboBox *styleBox);
   void readPluginBlacklist();
   void writePluginBlacklist();
   QString getConfigurablePath(const QString &key, const QString &def, bool resolve) const;
 
-  class SettingsTab
-  {
-  public:
-    SettingsTab(Settings *m_parent, SettingsDialog &m_dialog);
-    virtual ~SettingsTab();
-
-    virtual void update() = 0;
-
-  protected:
-    Settings *m_parent;
-    QSettings &m_Settings;
-    SettingsDialog &m_dialog;
-
-  };
-
-  /** Display/store the configuration in the 'general' tab of the settings dialogue */
-  class GeneralTab : public SettingsTab
-  {
-  public:
-    GeneralTab(Settings *m_parent, SettingsDialog &m_dialog);
-
-    void update();
-
-  private:
-    QComboBox *m_languageBox;
-    QComboBox *m_styleBox;
-    QCheckBox *m_compactBox;
-    QCheckBox *m_showMetaBox;
-    QCheckBox *m_usePrereleaseBox;
-    QPushButton *m_overwritingBtn;
-    QPushButton *m_overwrittenBtn;
-    QPushButton *m_overwritingArchiveBtn;
-    QPushButton *m_overwrittenArchiveBtn;
-    QPushButton *m_containsBtn;
-    QPushButton *m_containedBtn;
-    QCheckBox *m_colorSeparatorsBox;
-  };
 
   class PathsTab : public SettingsTab
   {
@@ -553,8 +538,6 @@ private:
   };
 
 private slots:
-
-  void resetDialogs();
 
 signals:
 

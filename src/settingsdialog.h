@@ -54,7 +54,7 @@ public:
   */
   QString getColoredButtonStyleSheet() const;
 
-  void setButtonColor(QPushButton *button, const QColor &color);
+  Ui::SettingsDialog *ui;
 
 public slots:
 
@@ -62,7 +62,6 @@ public slots:
 
 signals:
 
-  void resetDialogs();
   void retryApiConnection();
 
 private:
@@ -71,72 +70,40 @@ private:
   void normalizePath(QLineEdit *lineEdit);
 
 public:
-
-  QColor getOverwritingColor() { return m_OverwritingColor; }
-  QColor getOverwrittenColor() { return m_OverwrittenColor; }
-  QColor getOverwritingArchiveColor() { return m_OverwritingArchiveColor; }
-  QColor getOverwrittenArchiveColor() { return m_OverwrittenArchiveColor; }
-  QColor getContainsColor() { return m_ContainsColor; }
-  QColor getContainedColor() { return m_ContainedColor; }
   QString getExecutableBlacklist() { return m_ExecutableBlacklist; }
+  void setExecutableBlacklist(QString blacklist) { m_ExecutableBlacklist = blacklist; }
   bool getResetGeometries();
   bool getApiKeyChanged();
 
-  void setOverwritingColor(QColor col) { m_OverwritingColor = col; }
-  void setOverwrittenColor(QColor col) { m_OverwrittenColor = col; }
-  void setOverwritingArchiveColor(QColor col) { m_OverwritingArchiveColor = col; }
-  void setOverwrittenArchiveColor(QColor col) { m_OverwrittenArchiveColor = col; }
-  void setContainsColor(QColor col) { m_ContainsColor = col; }
-  void setContainedColor(QColor col) { m_ContainedColor = col; }
-  void setExecutableBlacklist(QString blacklist) { m_ExecutableBlacklist = blacklist; }
-
-
 private slots:
-  void on_categoriesBtn_clicked();
-  void on_execBlacklistBtn_clicked();
-  void on_bsaDateBtn_clicked();
-  void on_browseDownloadDirBtn_clicked();
-  void on_browseModDirBtn_clicked();
-  void on_browseCacheDirBtn_clicked();
-  void on_resetDialogsButton_clicked();
-  void on_pluginsList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
   void on_associateButton_clicked();
-  void on_clearCacheButton_clicked();
-  void on_nexusDisconnect_clicked();
+  void on_baseDirEdit_editingFinished();
   void on_browseBaseDirBtn_clicked();
+  void on_browseCacheDirBtn_clicked();
+  void on_browseDownloadDirBtn_clicked();
+  void on_browseGameDirBtn_clicked();
+  void on_browseModDirBtn_clicked();
   void on_browseOverwriteDirBtn_clicked();
   void on_browseProfilesDirBtn_clicked();
-  void on_browseGameDirBtn_clicked();
-  void on_overwritingBtn_clicked();
-  void on_overwrittenBtn_clicked();
-  void on_overwritingArchiveBtn_clicked();
-  void on_overwrittenArchiveBtn_clicked();
-  void on_containsBtn_clicked();
-  void on_containedBtn_clicked();
-  void on_resetColorsBtn_clicked();
-  void on_baseDirEdit_editingFinished();
-  void on_downloadDirEdit_editingFinished();
-  void on_modDirEdit_editingFinished();
+  void on_bsaDateBtn_clicked();
   void on_cacheDirEdit_editingFinished();
-  void on_profilesDirEdit_editingFinished();
-  void on_overwriteDirEdit_editingFinished();
+  void on_clearCacheButton_clicked();
+  void on_downloadDirEdit_editingFinished();
+  void on_execBlacklistBtn_clicked();
+  void on_modDirEdit_editingFinished();
   void on_nexusConnect_clicked();
+  void on_nexusDisconnect_clicked();
   void on_nexusManualKey_clicked();
+  void on_overwriteDirEdit_editingFinished();
+  void on_pluginsList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+  void on_profilesDirEdit_editingFinished();
   void on_resetGeometryBtn_clicked();
 
   void deleteBlacklistItem();
 
 private:
-  Ui::SettingsDialog *ui;
   Settings* m_settings;
   PluginContainer *m_PluginContainer;
-
-  QColor m_OverwritingColor;
-  QColor m_OverwrittenColor;
-  QColor m_OverwritingArchiveColor;
-  QColor m_OverwrittenArchiveColor;
-  QColor m_ContainsColor;
-  QColor m_ContainedColor;
 
   bool m_GeometriesReset;
   bool m_keyChanged;

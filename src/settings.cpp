@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "pluginsetting.h"
 #include "serverinfo.h"
 #include "settingsdialog.h"
+#include "settingsdialoggeneral.h"
 #include "versioninfo.h"
 #include "appconfig.h"
 #include "organizercore.h"
@@ -79,6 +80,23 @@ public:
 private:
   int m_SortRole;
 };
+
+
+SettingsTab::SettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
+  : m_parent(m_parent)
+  , m_Settings(m_parent->settingsRef())
+  , m_dialog(m_dialog)
+  , ui(m_dialog.ui)
+{
+}
+
+SettingsTab::~SettingsTab()
+{}
+
+QWidget* SettingsTab::parentWidget()
+{
+  return &m_dialog;
+}
 
 
 Settings *Settings::s_Instance = nullptr;
@@ -663,63 +681,9 @@ void Settings::writePluginBlacklist()
   m_Settings.endArray();
 }
 
-void Settings::addLanguages(QComboBox *languageBox)
-{
-  std::vector<std::pair<QString, QString>> languages;
-
-  QDirIterator langIter(QCoreApplication::applicationDirPath() + "/translations", QDir::Files);
-  QString pattern = ToQString(AppConfig::translationPrefix()) +  "_([a-z]{2,3}(_[A-Z]{2,2})?).qm";
-  QRegExp exp(pattern);
-  while (langIter.hasNext()) {
-    langIter.next();
-    QString file = langIter.fileName();
-    if (exp.exactMatch(file)) {
-      QString languageCode = exp.cap(1);
-      QLocale locale(languageCode);
-      QString languageString = QString("%1 (%2)").arg(locale.nativeLanguageName()).arg(locale.nativeCountryName());  //QLocale::languageToString(locale.language());
-      if (locale.language() == QLocale::Chinese) {
-        if (languageCode == "zh_TW") {
-          languageString = "Chinese (traditional)";
-        } else {
-          languageString = "Chinese (simplified)";
-        }
-      }
-      languages.push_back(std::make_pair(QString("%1").arg(languageString), exp.cap(1)));
-      //languageBox->addItem(QString("%1").arg(languageString), exp.cap(1));
-    }
-  }
-  if (!languageBox->findText("English")) {
-    languages.push_back(std::make_pair(QString("English"), QString("en_US")));
-    //languageBox->addItem("English", "en_US");
-  }
-  std::sort(languages.begin(), languages.end());
-  for (const auto &lang : languages) {
-    languageBox->addItem(lang.first, lang.second);
-  }
-}
-
-void Settings::addStyles(QComboBox *styleBox)
-{
-  styleBox->addItem("None", "");
-  styleBox->addItem("Fusion", "Fusion");
-
-  QDirIterator langIter(QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::stylesheetsPath()), QStringList("*.qss"), QDir::Files);
-  while (langIter.hasNext()) {
-    langIter.next();
-    QString style = langIter.fileName();
-    styleBox->addItem(style, style);
-  }
-}
-
-void Settings::resetDialogs()
-{
-  QuestionBoxMemory::resetDialogs();
-}
-
 void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
 {
   SettingsDialog dialog(pluginContainer, this, parent);
-  connect(&dialog, SIGNAL(resetDialogs()), this, SLOT(resetDialogs()));
 
   std::vector<std::unique_ptr<SettingsTab>> tabs;
 
@@ -787,128 +751,6 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
 
 }
 
-Settings::SettingsTab::SettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
-  : m_parent(m_parent)
-  , m_Settings(m_parent->m_Settings)
-  , m_dialog(m_dialog)
-{
-}
-
-Settings::SettingsTab::~SettingsTab()
-{}
-
-Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
-  : Settings::SettingsTab(m_parent, m_dialog)
-  , m_languageBox(m_dialog.findChild<QComboBox *>("languageBox"))
-  , m_styleBox(m_dialog.findChild<QComboBox *>("styleBox"))
-  , m_compactBox(m_dialog.findChild<QCheckBox *>("compactBox"))
-  , m_showMetaBox(m_dialog.findChild<QCheckBox *>("showMetaBox"))
-  , m_usePrereleaseBox(m_dialog.findChild<QCheckBox *>("usePrereleaseBox"))
-  , m_overwritingBtn(m_dialog.findChild<QPushButton *>("overwritingBtn"))
-  , m_overwrittenBtn(m_dialog.findChild<QPushButton *>("overwrittenBtn"))
-  , m_overwritingArchiveBtn(m_dialog.findChild<QPushButton *>("overwritingArchiveBtn"))
-  , m_overwrittenArchiveBtn(m_dialog.findChild<QPushButton *>("overwrittenArchiveBtn"))
-  , m_containsBtn(m_dialog.findChild<QPushButton *>("containsBtn"))
-  , m_containedBtn(m_dialog.findChild<QPushButton *>("containedBtn"))
-  , m_colorSeparatorsBox(m_dialog.findChild<QCheckBox *>("colorSeparatorsBox"))
-{
-  // FIXME I think 'addLanguages' lives in here not in parent
-  m_parent->addLanguages(m_languageBox);
-  {
-    QString languageCode = m_parent->language();
-    int currentID        = m_languageBox->findData(languageCode);
-    // I made a mess. :( Most languages are stored with only the iso country
-    // code (2 characters like "de") but chinese
-    // with the exact language variant (zh_TW) so I have to search for both
-    // variants
-    if (currentID == -1) {
-      currentID = m_languageBox->findData(languageCode.mid(0, 2));
-    }
-    if (currentID != -1) {
-      m_languageBox->setCurrentIndex(currentID);
-    }
-  }
-
-  // FIXME I think addStyles lives in here not in parent
-  m_parent->addStyles(m_styleBox);
-  {
-    int currentID = m_styleBox->findData(
-        m_Settings.value("Settings/style", "").toString());
-    if (currentID != -1) {
-      m_styleBox->setCurrentIndex(currentID);
-    }
-  }
-  /* verision using palette only works with fusion theme for some stupid reason...
-  m_overwritingBtn->setAutoFillBackground(true);
-  m_overwrittenBtn->setAutoFillBackground(true);
-  m_containsBtn->setAutoFillBackground(true);
-  m_containedBtn->setAutoFillBackground(true);
-  m_overwritingBtn->setPalette(QPalette(m_parent->modlistOverwritingLooseColor()));
-  m_overwrittenBtn->setPalette(QPalette(m_parent->modlistOverwrittenLooseColor()));
-  m_containsBtn->setPalette(QPalette(m_parent->modlistContainsPluginColor()));
-  m_containedBtn->setPalette(QPalette(m_parent->pluginListContainedColor()));
-  QPalette palette1 = m_overwritingBtn->palette();
-  QPalette palette2 = m_overwrittenBtn->palette();
-  QPalette palette3 = m_containsBtn->palette();
-  QPalette palette4 = m_containedBtn->palette();
-  palette1.setColor(QPalette::Background, m_parent->modlistOverwritingLooseColor());
-  palette2.setColor(QPalette::Background, m_parent->modlistOverwrittenLooseColor());
-  palette3.setColor(QPalette::Background, m_parent->modlistContainsPluginColor());
-  palette4.setColor(QPalette::Background, m_parent->pluginListContainedColor());
-  m_overwritingBtn->setPalette(palette1);
-  m_overwrittenBtn->setPalette(palette2);
-  m_containsBtn->setPalette(palette3);
-  m_containedBtn->setPalette(palette4);
-  */
-
-  //version with stylesheet
-  m_dialog.setButtonColor(m_overwritingBtn, m_parent->modlistOverwritingLooseColor());
-  m_dialog.setButtonColor(m_overwrittenBtn, m_parent->modlistOverwrittenLooseColor());
-  m_dialog.setButtonColor(m_overwritingArchiveBtn, m_parent->modlistOverwritingArchiveColor());
-  m_dialog.setButtonColor(m_overwrittenArchiveBtn, m_parent->modlistOverwrittenArchiveColor());
-  m_dialog.setButtonColor(m_containsBtn, m_parent->modlistContainsPluginColor());
-  m_dialog.setButtonColor(m_containedBtn, m_parent->pluginListContainedColor());
-
-  m_dialog.setOverwritingColor(m_parent->modlistOverwritingLooseColor());
-  m_dialog.setOverwrittenColor(m_parent->modlistOverwrittenLooseColor());
-  m_dialog.setOverwritingArchiveColor(m_parent->modlistOverwritingArchiveColor());
-  m_dialog.setOverwrittenArchiveColor(m_parent->modlistOverwrittenArchiveColor());
-  m_dialog.setContainsColor(m_parent->modlistContainsPluginColor());
-  m_dialog.setContainedColor(m_parent->pluginListContainedColor());
-
-  m_compactBox->setChecked(m_parent->compactDownloads());
-  m_showMetaBox->setChecked(m_parent->metaDownloads());
-  m_usePrereleaseBox->setChecked(m_parent->usePrereleases());
-  m_colorSeparatorsBox->setChecked(m_parent->colorSeparatorScrollbar());
-}
-
-void Settings::GeneralTab::update()
-{
-  QString oldLanguage = m_parent->language();
-  QString newLanguage = m_languageBox->itemData(m_languageBox->currentIndex()).toString();
-  if (newLanguage != oldLanguage) {
-    m_Settings.setValue("Settings/language", newLanguage);
-    emit m_parent->languageChanged(newLanguage);
-  }
-
-  QString oldStyle = m_Settings.value("Settings/style", "").toString();
-  QString newStyle = m_styleBox->itemData(m_styleBox->currentIndex()).toString();
-  if (oldStyle != newStyle) {
-    m_Settings.setValue("Settings/style", newStyle);
-    emit m_parent->styleChanged(newStyle);
-  }
-
-  m_Settings.setValue("Settings/overwritingLooseFilesColor", m_dialog.getOverwritingColor());
-  m_Settings.setValue("Settings/overwrittenLooseFilesColor", m_dialog.getOverwrittenColor());
-  m_Settings.setValue("Settings/overwritingArchiveFilesColor", m_dialog.getOverwritingArchiveColor());
-  m_Settings.setValue("Settings/overwrittenArchiveFilesColor", m_dialog.getOverwrittenArchiveColor());
-  m_Settings.setValue("Settings/containsPluginColor", m_dialog.getContainsColor());
-  m_Settings.setValue("Settings/containedColor", m_dialog.getContainedColor());
-  m_Settings.setValue("Settings/compact_downloads", m_compactBox->isChecked());
-  m_Settings.setValue("Settings/meta_downloads", m_showMetaBox->isChecked());
-  m_Settings.setValue("Settings/use_prereleases", m_usePrereleaseBox->isChecked());
-  m_Settings.setValue("Settings/colorSeparatorScrollbars", m_colorSeparatorsBox->isChecked());
-}
 
 Settings::PathsTab::PathsTab(Settings *parent, SettingsDialog &dialog)
   : SettingsTab(parent, dialog)
@@ -991,7 +833,7 @@ void Settings::PathsTab::update()
 }
 
 Settings::DiagnosticsTab::DiagnosticsTab(Settings *m_parent, SettingsDialog &m_dialog)
-  : Settings::SettingsTab(m_parent, m_dialog)
+  : SettingsTab(m_parent, m_dialog)
   , m_logLevelBox(m_dialog.findChild<QComboBox *>("logLevelBox"))
   , m_dumpsTypeBox(m_dialog.findChild<QComboBox *>("dumpsTypeBox"))
   , m_dumpsMaxEdit(m_dialog.findChild<QSpinBox *>("dumpsMaxEdit"))
@@ -1036,7 +878,7 @@ void Settings::DiagnosticsTab::setLevelsBox()
 }
 
 Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
-  : Settings::SettingsTab(parent, dialog)
+  : SettingsTab(parent, dialog)
   , m_offlineBox(dialog.findChild<QCheckBox *>("offlineBox"))
   , m_proxyBox(dialog.findChild<QCheckBox *>("proxyBox"))
   , m_knownServersList(dialog.findChild<QListWidget *>("knownServersList"))
@@ -1114,7 +956,7 @@ void Settings::NexusTab::update()
 }
 
 Settings::SteamTab::SteamTab(Settings *m_parent, SettingsDialog &m_dialog)
-  : Settings::SettingsTab(m_parent, m_dialog)
+  : SettingsTab(m_parent, m_dialog)
   , m_steamUserEdit(m_dialog.findChild<QLineEdit *>("steamUserEdit"))
   , m_steamPassEdit(m_dialog.findChild<QLineEdit *>("steamPassEdit"))
 {
@@ -1134,7 +976,7 @@ void Settings::SteamTab::update()
 }
 
 Settings::PluginsTab::PluginsTab(Settings *m_parent, SettingsDialog &m_dialog)
-  : Settings::SettingsTab(m_parent, m_dialog)
+  : SettingsTab(m_parent, m_dialog)
   , m_pluginsList(m_dialog.findChild<QListWidget *>("pluginsList"))
   , m_pluginBlacklistList(m_dialog.findChild<QListWidget *>("pluginBlacklist"))
 {
@@ -1181,7 +1023,7 @@ void Settings::PluginsTab::update()
 
 Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
                                          SettingsDialog &m_dialog)
-  : Settings::SettingsTab(m_parent, m_dialog)
+  : SettingsTab(m_parent, m_dialog)
   , m_appIDEdit(m_dialog.findChild<QLineEdit *>("appIDEdit"))
   , m_mechanismBox(m_dialog.findChild<QComboBox *>("mechanismBox"))
   , m_hideUncheckedBox(m_dialog.findChild<QCheckBox *>("hideUncheckedBox"))

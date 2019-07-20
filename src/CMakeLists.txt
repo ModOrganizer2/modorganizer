@@ -37,6 +37,7 @@ SET(organizer_SRCS
     spawn.cpp
     singleinstance.cpp
     settingsdialog.cpp
+	settingsdialoggeneral.cpp
     settings.cpp
     selfupdater.cpp
     selectiondialog.cpp
@@ -151,6 +152,7 @@ SET(organizer_HDRS
     spawn.h
     singleinstance.h
     settingsdialog.h
+	settingsdialoggeneral.h
     settings.h
     selfupdater.h
     selectiondialog.h
@@ -431,6 +433,7 @@ set(profiles
 set(settings
 	settings
 	settingsdialog
+	settingsdialoggeneral
 )
 
 set(utilities
