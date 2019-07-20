@@ -72,6 +72,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "previewdialog.h"
 #include "browserdialog.h"
 #include "aboutdialog.h"
+#include "settingsdialog.h"
 #include <safewritefile.h>
 #include "nxmaccessmanager.h"
 #include "appconfig.h"
@@ -5217,7 +5218,9 @@ void MainWindow::on_actionSettings_triggered()
   bool proxy = settings.useProxy();
   DownloadManager *dlManager = m_OrganizerCore.downloadManager();
 
-  settings.query(&m_PluginContainer, this);
+
+  SettingsDialog dialog(&m_PluginContainer, &settings, this);
+  dialog.exec();
 
   if (oldManagedGameDirectory != settings.getManagedGameDirectory()) {
     QMessageBox::about(this, tr("Restarting MO"),

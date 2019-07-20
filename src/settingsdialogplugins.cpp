@@ -8,6 +8,8 @@ using MOBase::IPlugin;
 PluginsSettingsTab::PluginsSettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
   : SettingsTab(m_parent, m_dialog)
 {
+  ui->pluginSettingsList->setStyleSheet("QTreeWidget::item {padding-right: 10px;}");
+
   // display plugin settings
   QSet<QString> handledNames;
   for (IPlugin *plugin : m_parent->plugins()) {

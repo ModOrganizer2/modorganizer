@@ -29,6 +29,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nexusinterface.h"
 #include "plugincontainer.h"
 
+#include "settingsdialogdiagnostics.h"
+#include "settingsdialoggeneral.h"
+#include "settingsdialognexus.h"
+#include "settingsdialogpaths.h"
+#include "settingsdialogplugins.h"
+#include "settingsdialogsteam.h"
+#include "settingsdialogworkarounds.h"
+
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
@@ -47,7 +55,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-
 SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings* settings, QWidget *parent)
   : TutorableDialog("SettingsDialog", parent)
   , ui(new Ui::SettingsDialog)
@@ -57,7 +64,84 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings* setti
   , m_keyChanged(false)
 {
   ui->setupUi(this);
-  ui->pluginSettingsList->setStyleSheet("QTreeWidget::item {padding-right: 10px;}");
+
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(new GeneralSettingsTab(settings, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(new PathsSettingsTab(settings, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(new DiagnosticsSettingsTab(settings, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(new NexusSettingsTab(settings, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(new SteamSettingsTab(settings, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsSettingsTab(settings, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsSettingsTab(settings, *this)));
+
+  auto& qsettings = settings->directInterface();
+
+  QString key = QString("geometry/%1").arg(objectName());
+  if (qsettings.contains(key)) {
+    restoreGeometry(qsettings.value(key).toByteArray());
+  }
+}
+
+int SettingsDialog::exec()
+{
+  auto& qsettings = m_settings->directInterface();
+  auto ret = TutorableDialog::exec();
+
+  if (ret == QDialog::Accepted) {
+
+    for (auto&& tab : m_tabs) {
+      tab->closing();
+    }
+
+    // remember settings before change
+    QMap<QString, QString> before;
+    qsettings.beginGroup("Settings");
+    for (auto k : qsettings.allKeys())
+      before[k] = qsettings.value(k).toString();
+    qsettings.endGroup();
+
+    // transfer modified settings to configuration file
+    for (std::unique_ptr<SettingsTab> const &tab: m_tabs) {
+      tab->update();
+    }
+
+    // print "changed" settings
+    qsettings.beginGroup("Settings");
+    bool first_update = true;
+    for (auto k : qsettings.allKeys())
+      if (qsettings.value(k).toString() != before[k] && !k.contains("username") && !k.contains("password"))
+      {
+        if (first_update) {
+          qDebug("Changed settings:");
+          first_update = false;
+        }
+        qDebug("  %s=%s", k.toUtf8().data(), qsettings.value(k).toString().toUtf8().data());
+      }
+    qsettings.endGroup();
+  }
+
+  QString key = QString("geometry/%1").arg(objectName());
+  qsettings.setValue(key, saveGeometry());
+
+  // These changes happen regardless of accepted or rejected
+  bool restartNeeded = false;
+  if (getApiKeyChanged()) {
+    restartNeeded = true;
+  }
+  if (getResetGeometries()) {
+    restartNeeded = true;
+    qsettings.setValue("reset_geometry", true);
+  }
+  if (restartNeeded) {
+    if (QMessageBox::question(nullptr,
+      tr("Restart Mod Organizer?"),
+      tr("In order to finish configuration changes, MO must be restarted.\n"
+        "Restart it now?"),
+      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+      qApp->exit(INT_MAX);
+    }
+  }
+
+  return ret;
 }
 
 SettingsDialog::~SettingsDialog()
@@ -106,4 +190,21 @@ bool SettingsDialog::getResetGeometries()
 bool SettingsDialog::getApiKeyChanged()
 {
   return m_keyChanged;
+}
+
+
+SettingsTab::SettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
+  : m_parent(m_parent)
+  , m_Settings(m_parent->settingsRef())
+  , m_dialog(m_dialog)
+  , ui(m_dialog.ui)
+{
+}
+
+SettingsTab::~SettingsTab()
+{}
+
+QWidget* SettingsTab::parentWidget()
+{
+  return &m_dialog;
 }

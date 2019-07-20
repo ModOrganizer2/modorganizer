@@ -21,14 +21,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "pluginsetting.h"
 #include "serverinfo.h"
-#include "settingsdialog.h"
-#include "settingsdialogdiagnostics.h"
-#include "settingsdialoggeneral.h"
-#include "settingsdialognexus.h"
-#include "settingsdialogpaths.h"
-#include "settingsdialogplugins.h"
-#include "settingsdialogsteam.h"
-#include "settingsdialogworkarounds.h"
 #include "versioninfo.h"
 #include "appconfig.h"
 #include "organizercore.h"
@@ -73,23 +65,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 using namespace MOBase;
-
-
-SettingsTab::SettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
-  : m_parent(m_parent)
-  , m_Settings(m_parent->settingsRef())
-  , m_dialog(m_dialog)
-  , ui(m_dialog.ui)
-{
-}
-
-SettingsTab::~SettingsTab()
-{}
-
-QWidget* SettingsTab::parentWidget()
-{
-  return &m_dialog;
-}
 
 
 Settings *Settings::s_Instance = nullptr;
@@ -667,79 +642,4 @@ void Settings::writePluginBlacklist()
   }
 
   m_Settings.endArray();
-}
-
-void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
-{
-  SettingsDialog dialog(pluginContainer, this, parent);
-
-  std::vector<std::unique_ptr<SettingsTab>> tabs;
-
-  tabs.push_back(std::unique_ptr<SettingsTab>(new GeneralSettingsTab(this, dialog)));
-  tabs.push_back(std::unique_ptr<SettingsTab>(new PathsSettingsTab(this, dialog)));
-  tabs.push_back(std::unique_ptr<SettingsTab>(new DiagnosticsSettingsTab(this, dialog)));
-  tabs.push_back(std::unique_ptr<SettingsTab>(new NexusSettingsTab(this, dialog)));
-  tabs.push_back(std::unique_ptr<SettingsTab>(new SteamSettingsTab(this, dialog)));
-  tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsSettingsTab(this, dialog)));
-  tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsSettingsTab(this, dialog)));
-
-
-  QString key = QString("geometry/%1").arg(dialog.objectName());
-  if (m_Settings.contains(key)) {
-    dialog.restoreGeometry(m_Settings.value(key).toByteArray());
-  }
-
-  if (dialog.exec() == QDialog::Accepted) {
-
-    for (auto&& tab : tabs) {
-      tab->closing();
-    }
-
-    // remember settings before change
-    QMap<QString, QString> before;
-    m_Settings.beginGroup("Settings");
-    for (auto k : m_Settings.allKeys())
-      before[k] = m_Settings.value(k).toString();
-    m_Settings.endGroup();
-
-    // transfer modified settings to configuration file
-    for (std::unique_ptr<SettingsTab> const &tab: tabs) {
-      tab->update();
-    }
-
-    // print "changed" settings
-    m_Settings.beginGroup("Settings");
-    bool first_update = true;
-    for (auto k : m_Settings.allKeys())
-      if (m_Settings.value(k).toString() != before[k] && !k.contains("username") && !k.contains("password"))
-      {
-        if (first_update) {
-          log::debug("Changed settings:");
-          first_update = false;
-        }
-        log::debug("  {}={}", k, m_Settings.value(k).toString());
-      }
-    m_Settings.endGroup();
-  }
-  m_Settings.setValue(key, dialog.saveGeometry());
-
-  // These changes happen regardless of accepted or rejected
-  bool restartNeeded = false;
-  if (dialog.getApiKeyChanged()) {
-    restartNeeded = true;
-  }
-  if (dialog.getResetGeometries()) {
-    restartNeeded = true;
-    m_Settings.setValue("reset_geometry", true);
-  }
-  if (restartNeeded) {
-    if (QMessageBox::question(nullptr,
-      tr("Restart Mod Organizer?"),
-      tr("In order to finish configuration changes, MO must be restarted.\n"
-        "Restart it now?"),
-      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      qApp->exit(INT_MAX);
-    }
-  }
-
 }

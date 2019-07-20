@@ -26,60 +26,21 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QList>
 #include <QMap>
 #include <QObject>
-#include <QPushButton>
 #include <QSet>
 #include <QSettings>
 #include <QString>
 #include <QVariant>
 #include <QColor>
-#include <QMetaType>
-
-#include <QtGlobal> //for uint
-
 #include <map>
 #include <vector>
-
-class QCheckBox;
-class QComboBox;
-class QLineEdit;
-class QSpinBox;
-class QListWidget;
-class QWidget;
-class QLabel;
-class QPushButton;
-
-struct ServerInfo;
 
 namespace MOBase {
   class IPlugin;
   class IPluginGame;
 }
 
-namespace Ui {
-  class SettingsDialog;
-}
-
-class SettingsDialog;
 class PluginContainer;
-class Settings;
-
-class SettingsTab
-{
-public:
-  SettingsTab(Settings *m_parent, SettingsDialog &m_dialog);
-  virtual ~SettingsTab();
-
-  virtual void update() = 0;
-  virtual void closing() {}
-
-protected:
-  Settings *m_parent;
-  QSettings &m_Settings;
-  SettingsDialog &m_dialog;
-  Ui::SettingsDialog* ui;
-
-  QWidget* parentWidget();
-};
+struct ServerInfo;
 
 /**
  * manages the settings for Mod Organizer. The settings are not cached
@@ -87,17 +48,11 @@ protected:
  **/
 class Settings : public QObject
 {
-
   Q_OBJECT
 
 public:
-
-  /**
-   * @brief constructor
-   **/
   Settings(const QSettings &settingsSource);
-
-  virtual ~Settings();
+  ~Settings();
 
   static Settings &instance();
 
@@ -112,12 +67,6 @@ public:
    * @return true if the plugin may be registered, false if it is blacklisted
    */
   void registerPlugin(MOBase::IPlugin *plugin);
-
-  /**
-   * displays a SettingsDialog that allows the user to change settings. If the
-   * user accepts the changes, the settings are immediately written
-   **/
-  void query(PluginContainer *pluginContainer, QWidget *parent);
 
   /**
    * set up the settings for the specified plugins

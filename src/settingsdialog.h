@@ -27,10 +27,26 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 class PluginContainer;
 class Settings;
+class SettingsDialog;
+namespace Ui { class SettingsDialog; }
 
-namespace Ui {
-    class SettingsDialog;
-}
+class SettingsTab
+{
+public:
+  SettingsTab(Settings *m_parent, SettingsDialog &m_dialog);
+  virtual ~SettingsTab();
+
+  virtual void update() = 0;
+  virtual void closing() {}
+
+protected:
+  Settings *m_parent;
+  QSettings &m_Settings;
+  SettingsDialog &m_dialog;
+  Ui::SettingsDialog* ui;
+
+  QWidget* parentWidget();
+};
 
 
 /**
@@ -60,6 +76,8 @@ public:
   bool m_GeometriesReset;
   PluginContainer *m_PluginContainer;
 
+  int exec() override;
+
 public slots:
   virtual void accept();
 
@@ -69,7 +87,7 @@ public:
 
 private:
   Settings* m_settings;
-
+  std::vector<std::unique_ptr<SettingsTab>> m_tabs;
 
 };
 
