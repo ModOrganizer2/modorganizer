@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settingsdialoggeneral.h"
 #include "settingsdialognexus.h"
 #include "settingsdialogpaths.h"
+#include "settingsdialogsteam.h"
 #include "versioninfo.h"
 #include "appconfig.h"
 #include "organizercore.h"
@@ -391,15 +392,10 @@ bool Settings::hasNexusApiKey() const
 
 bool Settings::getSteamLogin(QString &username, QString &password) const
 {
-  if (m_Settings.contains("Settings/steam_username")) {
-    QString tempPass = deObfuscate("steam_password");
-    if (!tempPass.isEmpty()) {
-      username = m_Settings.value("Settings/steam_username").toString();
-      password = tempPass;
-      return true;
-    }
-  }
-  return false;
+  username = m_Settings.value("Settings/steam_username", "").toString();
+  password = deObfuscate("steam_password");
+
+  return !username.isEmpty() && !password.isEmpty();
 }
 bool Settings::compactDownloads() const
 {
@@ -680,7 +676,7 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
   tabs.push_back(std::unique_ptr<SettingsTab>(new PathsSettingsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new DiagnosticsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new NexusSettingsTab(this, dialog)));
-  tabs.push_back(std::unique_ptr<SettingsTab>(new SteamTab(this, dialog)));
+  tabs.push_back(std::unique_ptr<SettingsTab>(new SteamSettingsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsTab(this, dialog)));
 
@@ -769,26 +765,6 @@ void Settings::DiagnosticsTab::update()
   m_Settings.setValue("Settings/crash_dumps_max", m_dumpsMaxEdit->value());
 }
 
-
-Settings::SteamTab::SteamTab(Settings *m_parent, SettingsDialog &m_dialog)
-  : SettingsTab(m_parent, m_dialog)
-  , m_steamUserEdit(m_dialog.findChild<QLineEdit *>("steamUserEdit"))
-  , m_steamPassEdit(m_dialog.findChild<QLineEdit *>("steamPassEdit"))
-{
-  if (m_Settings.contains("Settings/steam_username")) {
-    m_steamUserEdit->setText(m_Settings.value("Settings/steam_username", "").toString());
-    QString password = deObfuscate("steam_password");
-    if (!password.isEmpty()) {
-      m_steamPassEdit->setText(password);
-    }
-  }
-}
-
-void Settings::SteamTab::update()
-{
-  //FIXME this should be inlined here?
-  m_parent->setSteamLogin(m_steamUserEdit->text(), m_steamPassEdit->text());
-}
 
 Settings::PluginsTab::PluginsTab(Settings *m_parent, SettingsDialog &m_dialog)
   : SettingsTab(m_parent, m_dialog)

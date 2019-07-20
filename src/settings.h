@@ -461,19 +461,6 @@ private:
     void setLevelsBox();
   };
 
-  /** Display/store the configuration in the 'steam' tab of the settings dialogue */
-  class SteamTab : public SettingsTab
-  {
-  public:
-    SteamTab(Settings *m_parent, SettingsDialog &m_dialog);
-
-    void update();
-
-  private:
-    QLineEdit *m_steamUserEdit;
-    QLineEdit *m_steamPassEdit;
-  };
-
   /** Display/store the configuration in the 'plugins' tab of the settings dialogue */
   class PluginsTab : public SettingsTab
   {
