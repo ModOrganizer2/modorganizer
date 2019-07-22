@@ -137,11 +137,13 @@ private:
     m_TagMap["center"] = std::make_pair(QRegExp("\\[center\\](.*)\\[/center\\]"),
                                         "<div align=\"center\">\\1</div>");
     m_TagMap["quote"]  = std::make_pair(QRegExp("\\[quote\\](.*)\\[/quote\\]"),
-                                        "<blockquote>\"\\1\"</blockquote>");
+                                        "<figure class=\"quote\"><blockquote>\\1</blockquote></figure>");
     m_TagMap["quote="] = std::make_pair(QRegExp("\\[quote=([^\\]]*)\\](.*)\\[/quote\\]"),
-                                        "<blockquote>\"\\2\"<br/><span>--\\1</span></blockquote></p>");
+                                        "<figure class=\"quote\"><blockquote>\\2</blockquote></figure>");
+    m_TagMap["spoiler"] = std::make_pair(QRegExp("\\[spoiler\\](.*)\\[/spoiler\\]"),
+      "<details><summary>Spoiler:  <div class=\"bbc_spoiler_show\">Show</div></summary><div class=\"spoiler_content\">\\1</div></details>");
     m_TagMap["code"]   = std::make_pair(QRegExp("\\[code\\](.*)\\[/code\\]"),
-                                        "<pre>\\1</pre>");
+                                        "<code>\\1</code>");
     m_TagMap["heading"]= std::make_pair(QRegExp("\\[heading\\](.*)\\[/heading\\]"),
                                         "<h2><strong>\\1</strong></h2>");
     m_TagMap["line"]   = std::make_pair(QRegExp("\\[line\\]"),
@@ -181,7 +183,7 @@ private:
     m_TagMap["email="]  = std::make_pair(QRegExp("\\[email=\"?([^\\]]*)\"?\\](.*)\\[/email\\]"),
                                          "<a href=\"mailto:\\1\">\\2</a>");
     m_TagMap["youtube"] = std::make_pair(QRegExp("\\[youtube\\](.*)\\[/youtube\\]"),
-                                         "<a href=\"http://www.youtube.com/v/\\1\">http://www.youtube.com/v/\\1</a>");
+                                         "<a href=\"https://www.youtube.com/watch?v=\\1\">https://www.youtube.com/watch?v=\\1</a>");
 
 
     // make all patterns non-greedy and case-insensitive
