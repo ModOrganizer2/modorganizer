@@ -95,7 +95,7 @@ QTreeView {
 }
 
 QTreeView::branch:hover {
-	background: #008F8F; 
+	background: #008F8F;
 	color: #F7F6CF;
 }
 
@@ -109,13 +109,13 @@ QTreeView::item:selected {
 	color: #F7F6CF;
 }
 
-QTreeView::branch:has-children:!has-siblings:closed, 
-QTreeView::branch:closed:has-children:has-siblings {	
+QTreeView::branch:has-children:!has-siblings:closed,
+QTreeView::branch:closed:has-children:has-siblings {
 	image: url(:/stylesheet/branch-closed.png);
 	border: 0px;
 }
 
-QTreeView::branch:open:has-children:!has-siblings, 
+QTreeView::branch:open:has-children:!has-siblings,
 QTreeView::branch:open:has-children:has-siblings  {
 	image: url(:/stylesheet/branch-open.png);
 	border: 0px;
@@ -168,7 +168,7 @@ QCheckBox::indicator {
   background-color: transparent;
   border: none;
   width: 14px;
-  height: 14px; 
+  height: 14px;
 }
 
 QGroupBox::indicator:checked, QGroupBox::indicator:indeterminate,
@@ -177,7 +177,7 @@ QTreeView::indicator:indeterminate,
 QCheckBox::indicator:checked,
 
 QCheckBox::indicator:indeterminate {
-	image: url(./Parchment/checkbox-checked.png); 
+	image: url(./Parchment/checkbox-checked.png);
 }
 
 QGroupBox::indicator:checked:hover, QGroupBox::indicator:indeterminate:hover,
@@ -186,7 +186,7 @@ QTreeView::indicator:indeterminate:hover,
 QCheckBox::indicator:checked:hover,
 
 QCheckBox::indicator:indeterminate:hover {
-	image: url(./Parchment/checkbox-checked-hover.png); 
+	image: url(./Parchment/checkbox-checked-hover.png);
 }
 
     QGroupBox::indicator:checked:disabled, QGroupBox::indicator:indeterminate:disabled,
@@ -195,28 +195,28 @@ QCheckBox::indicator:indeterminate:hover {
     QCheckBox::indicator:checked:disabled,
 
     QCheckBox::indicator:indeterminate:disabled {
-      image: url(./Parchment/checkbox-checked-disabled.png); 
+      image: url(./Parchment/checkbox-checked-disabled.png);
 }
 
   QGroupBox::indicator:unchecked,
   QTreeView::indicator:unchecked,
 
   QCheckBox::indicator:unchecked {
-    image: url(./Parchment/checkbox.png); 
+    image: url(./Parchment/checkbox.png);
 }
 
     QGroupBox::indicator:unchecked:hover,
     QTreeView::indicator:unchecked:hover,
 
     QCheckBox::indicator:unchecked:hover {
-      image: url(./Parchment/checkbox-hover.png); 
+      image: url(./Parchment/checkbox-hover.png);
 }
 
     QGroupBox::indicator:unchecked:disabled,
     QTreeView::indicator:unchecked:disabled,
 
     QCheckBox::indicator:unchecked:disabled {
-	image: url(./Parchment/checkbox-disabled.png); 
+	image: url(./Parchment/checkbox-disabled.png);
 }
 
 /* Search Boxes */
@@ -323,7 +323,7 @@ QScrollBar::add-line:horizontal {
 	margin: 0px -2px -2px 0px;
 }
 
-QScrollBar::sub-line:horizontal {	
+QScrollBar::sub-line:horizontal {
 	background: #F7F6CF;
 	width: 23px;
 	subcontrol-position: left;
@@ -359,7 +359,7 @@ QScrollBar::add-line:vertical {
 	margin: 0px -2px -2px 0px;
 }
 
-QScrollBar::sub-line:vertical {    
+QScrollBar::sub-line:vertical {
     background: #F7F6CF;
     height: 23px;
     subcontrol-position: top;
@@ -371,37 +371,37 @@ QScrollBar::sub-line:vertical {
 
 /* Combined */
 
-QScrollBar::handle:horizontal:hover, 
+QScrollBar::handle:horizontal:hover,
 QScrollBar::handle:vertical:hover,
-QScrollBar::add-line:horizontal:hover, 
-QScrollBar::sub-line:horizontal:hover, 
-QScrollBar::add-line:vertical:hover, 
+QScrollBar::add-line:horizontal:hover,
+QScrollBar::sub-line:horizontal:hover,
+QScrollBar::add-line:vertical:hover,
 QScrollBar::sub-line:vertical:hover {
 	background: #008F8F;
 }
 
-QScrollBar::handle:horizontal:pressed, 
+QScrollBar::handle:horizontal:pressed,
 QScrollBar::handle:vertical:pressed,
-QScrollBar::add-line:horizontal:pressed, 
-QScrollBar::sub-line:horizontal:pressed, 
-QScrollBar::add-line:vertical:pressed, 
+QScrollBar::add-line:horizontal:pressed,
+QScrollBar::sub-line:horizontal:pressed,
+QScrollBar::add-line:vertical:pressed,
 QScrollBar::sub-line:vertical:pressed {
 	background: #0CA6FF;
 }
 
-QScrollBar::add-page:horizontal, 
-QScrollBar::sub-page:horizontal, 
-QScrollBar::add-page:vertical, 
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal,
+QScrollBar::add-page:vertical,
 QScrollBar::sub-page:vertical {
     background: transparent;
 }
 
-QScrollBar::up-arrow:vertical, 
+QScrollBar::up-arrow:vertical,
 QScrollBar::right-arrow:horizontal,
-QScrollBar::down-arrow:vertical,  
+QScrollBar::down-arrow:vertical,
 QScrollBar::left-arrow:horizontal {
 	height: 1px;
-    width: 1px;  
+    width: 1px;
 	border: 1px solid #DBD399;
 }
 
@@ -443,6 +443,16 @@ QHeaderView::down-arrow {
 
 /* Context Menus, Toolbar Dropdowns, & Tooltips */
 
+QMenuBar {
+	background: #DBD399;
+	border: 1px solid #DBD399;
+}
+
+QMenuBar::item:selected {
+	background: #008F8F;
+	color: #F7F6CF;
+}
+
 QMenu {
 	background: #F7F6CF;
 	selection-color: #F7F6CF;
@@ -465,7 +475,7 @@ QMenu::item:disabled {
 	color: #444444;
 }
 
-QMenu::separator {   
+QMenu::separator {
     background: #DBD399;
 	height: 2px;
 }
@@ -481,9 +491,11 @@ QToolTip {
 	border: 0px;
 }
 
+QStatusBar::item {border: None;}
+
 /* Progress Bars (Downloads) */
 
-QProgressBar {  
+QProgressBar {
 	background: #F7F6CF;
     text-align: center;
     border: 0px;

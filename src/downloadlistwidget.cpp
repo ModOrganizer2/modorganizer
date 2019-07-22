@@ -123,6 +123,15 @@ DownloadListWidget::~DownloadListWidget()
 void DownloadListWidget::setManager(DownloadManager *manager)
 {
   m_Manager = manager;
+
+  // hide these columns by default
+  //
+  // note that this is overridden by the ini if MO has been started at least
+  // once before, which is handled in MainWindow::processUpdates() for older
+  // versions
+  header()->hideSection(DownloadList::COL_MODNAME);
+  header()->hideSection(DownloadList::COL_VERSION);
+  header()->hideSection(DownloadList::COL_ID);
 }
 
 void DownloadListWidget::setSourceModel(DownloadList *sourceModel)
@@ -199,7 +208,7 @@ void DownloadListWidget::onCustomContextMenu(const QPoint &point)
 
     if (state >= DownloadManager::STATE_READY) {
       menu.addAction(tr("Install"), this, SLOT(issueInstall()));
-      if (m_Manager->isInfoIncomplete(m_ContextRow)) 
+      if (m_Manager->isInfoIncomplete(m_ContextRow))
         menu.addAction(tr("Query Info"), this, SLOT(issueQueryInfoMd5()));
       else
         menu.addAction(tr("Visit on Nexus"), this, SLOT(issueVisitOnNexus()));
@@ -226,9 +235,9 @@ void DownloadListWidget::onCustomContextMenu(const QPoint &point)
 
     menu.addSeparator();
   }
-  menu.addAction(tr("Delete Installed..."), this, SLOT(issueDeleteCompleted()));
-  menu.addAction(tr("Delete Uninstalled..."), this, SLOT(issueDeleteUninstalled()));
-  menu.addAction(tr("Delete All..."), this, SLOT(issueDeleteAll()));
+  menu.addAction(tr("Delete Installed Downloads..."), this, SLOT(issueDeleteCompleted()));
+  menu.addAction(tr("Delete Uninstalled Downloads..."), this, SLOT(issueDeleteUninstalled()));
+  menu.addAction(tr("Delete All Downloads..."), this, SLOT(issueDeleteAll()));
 
   menu.addSeparator();
   if (!hidden) {
@@ -259,8 +268,8 @@ void DownloadListWidget::issueQueryInfoMd5()
 
 void DownloadListWidget::issueDelete()
 {
-  if (QMessageBox::question(nullptr, tr("Delete Files?"),
-                            tr("This will permanently delete the selected download."),
+  if (QMessageBox::warning(nullptr, tr("Delete Files?"),
+                            tr("This will permanently delete the selected download.\n\nAre you absolutely sure you want to proceed?"),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     emit removeDownload(m_ContextRow, true);
   }
@@ -314,8 +323,8 @@ void DownloadListWidget::issueResume()
 
 void DownloadListWidget::issueDeleteAll()
 {
-  if (QMessageBox::question(nullptr, tr("Delete Files?"),
-                            tr("This will remove all finished downloads from this list and from disk."),
+  if (QMessageBox::warning(nullptr, tr("Delete Files?"),
+                            tr("This will remove all finished downloads from this list and from disk.\n\nAre you absolutely sure you want to proceed?"),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     emit removeDownload(-1, true);
   }
@@ -323,8 +332,8 @@ void DownloadListWidget::issueDeleteAll()
 
 void DownloadListWidget::issueDeleteCompleted()
 {
-  if (QMessageBox::question(nullptr, tr("Delete Files?"),
-                            tr("This will remove all installed downloads from this list and from disk."),
+  if (QMessageBox::warning(nullptr, tr("Delete Files?"),
+                            tr("This will remove all installed downloads from this list and from disk.\n\nAre you absolutely sure you want to proceed?"),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     emit removeDownload(-2, true);
   }
@@ -332,8 +341,8 @@ void DownloadListWidget::issueDeleteCompleted()
 
 void DownloadListWidget::issueDeleteUninstalled()
 {
-  if (QMessageBox::question(nullptr, tr("Delete Files?"),
-                            tr("This will remove all uninstalled downloads from this list and from disk."),
+  if (QMessageBox::warning(nullptr, tr("Delete Files?"),
+                            tr("This will remove all uninstalled downloads from this list and from disk.\n\nAre you absolutely sure you want to proceed?"),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     emit removeDownload(-3, true);
   }
@@ -341,7 +350,7 @@ void DownloadListWidget::issueDeleteUninstalled()
 
 void DownloadListWidget::issueRemoveFromViewAll()
 {
-  if (QMessageBox::question(nullptr, tr("Are you sure?"),
+  if (QMessageBox::question(nullptr, tr("Hide Files?"),
                             tr("This will remove all finished downloads from this list (but NOT from disk)."),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     emit removeDownload(-1, false);
@@ -350,7 +359,7 @@ void DownloadListWidget::issueRemoveFromViewAll()
 
 void DownloadListWidget::issueRemoveFromViewCompleted()
 {
-  if (QMessageBox::question(nullptr, tr("Are you sure?"),
+  if (QMessageBox::question(nullptr, tr("Hide Files?"),
                             tr("This will remove all installed downloads from this list (but NOT from disk)."),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     emit removeDownload(-2, false);
@@ -359,7 +368,7 @@ void DownloadListWidget::issueRemoveFromViewCompleted()
 
 void DownloadListWidget::issueRemoveFromViewUninstalled()
 {
-  if (QMessageBox::question(nullptr, tr("Are you sure?"),
+  if (QMessageBox::question(nullptr, tr("Hide Files?"),
                             tr("This will remove all uninstalled downloads from this list (but NOT from disk)."),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     emit removeDownload(-3, false);

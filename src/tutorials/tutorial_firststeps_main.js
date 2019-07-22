@@ -27,8 +27,8 @@ function getTutorialSteps()
     function() {
         console.log("next")
         tutorial.text = qsTr("This button provides multiple sources of information and further tutorials.")
-        if (tutorialControl.waitForButton("actionHelp")) {
-          highlightItem("actionHelp", true)
+        if (tutorialControl.waitForAction("actionHelp")) {
+          highlightAction("actionHelp", true)
         } else {
           console.error("help button broken")
           waitForClick()
@@ -36,6 +36,7 @@ function getTutorialSteps()
     },
 
     function() {
+        unhighlight()
         tutorial.text = qsTr("Finally there are tooltips on almost every part of Mod Organizer. If there is a control "
                            + "in MO you don't understand, please try hovering over it to get a short description or "
                            + "use \"Help on UI\" from the help menu to get a longer explanation")
@@ -108,11 +109,11 @@ function getTutorialSteps()
         tutorial.text = qsTr("Install a few more mods if you want, then enable mods by checking them in the left pane. "
                              + "Mods that aren't enabled have no effect on the game whatsoever. ")
         highlightItem("modList", true)
-        modList.modlist_changed.connect(nextStep)
+        modList.tutorialModlistUpdate.connect(nextStep)
     },
 
     function() {
-        modList.modlist_changed.disconnect(nextStep)
+        modList.tutorialModlistUpdate.disconnect(nextStep)
         unhighlight()
         tutorial.text = qsTr("For some mods, enabling it on the left pane is all you have to do...")
         waitForClick()
@@ -122,7 +123,7 @@ function getTutorialSteps()
         tutorial.text = qsTr("...but most contain plugins. These are plugins for the game and are required "
                             +"to add stuff to the game (new weapons, armors, quests, areas, ...). "
                             +"Please open the \"Plugins\"-tab to get a list of plugins.")
-        if (tutorialControl.waitForTabOpen("tabWidget", 0)) {
+        if (tutorialControl.waitForTabOpen("tabWidget", "espTab")) {
             highlightItem("tabWidget", true)
         } else {
             waitForClick()
@@ -137,7 +138,7 @@ function getTutorialSteps()
 
     function() {
         tutorial.text = qsTr("A single mod may contain zero, one or multiple esps. Some or all may be optional. "
-                              + "If in doubt, please consult the documentation of the indiviual mod. "
+                              + "If in doubt, please consult the documentation of the individual mod. "
                               + "To do so, right-click the mod and select \"Information\".")
         highlightItem("modList", true)
         manager.activateTutorial("ModInfoDialog", "tutorial_firststeps_modinfo.js")

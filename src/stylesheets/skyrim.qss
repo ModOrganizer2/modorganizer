@@ -488,6 +488,14 @@ QHeaderView {
     image: url(./skyrim/arrow-down.png); }
 
 /* Context menus, toolbar drop-downs #QMenu  */
+QMenuBar {
+	background-color: #000;
+}
+
+QMenuBar::item:selected {
+	background-color: #121212;
+}
+
 QMenu {
   background-color: transparent; }
   QMenu::item,
@@ -528,6 +536,8 @@ QToolTip {
 SaveGameInfoWidget {
   background-color: #121212;
   color: #C0C0C0; }
+
+QStatusBar::item {border: None;}
 
 /* Progress Bars (Downloads) #QProgressBar */
 QProgressBar {

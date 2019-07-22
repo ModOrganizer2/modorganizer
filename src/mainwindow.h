@@ -33,10 +33,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 //Note the commented headers here can be replaced with forward references,
 //when I get round to cleaning up main.cpp
-struct Executable;
+class Executable;
 class CategoryFactory;
 class LockedDialogBase;
 class OrganizerCore;
+class StatusBar;
 #include "plugincontainer.h" //class PluginContainer;
 class PluginListSortProxy;
 namespace BSA { class Archive; }
@@ -75,7 +76,6 @@ class QListWidgetItem;
 class QMenu;
 class QModelIndex;
 class QPoint;
-class QProgressBar;
 class QProgressDialog;
 class QTranslator;
 class QTreeWidgetItem;
@@ -151,12 +151,18 @@ public:
 
   virtual void disconnectPlugins();
 
-  void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab);
+  void displayModInformation(
+    ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tabID) override;
+
+  bool confirmExit();
 
   virtual bool closeWindow();
   virtual void setWindowEnabled(bool enabled);
 
   virtual MOBase::DelayedFileWriterBase &archivesWriter() override { return m_ArchiveListWriter; }
+
+  ModInfo::Ptr nextModInList();
+  ModInfo::Ptr previousModInList();
 
 public slots:
 
@@ -193,6 +199,7 @@ protected:
   virtual void resizeEvent(QResizeEvent *event);
   virtual void dragEnterEvent(QDragEnterEvent *event);
   virtual void dropEvent(QDropEvent *event);
+  void keyReleaseEvent(QKeyEvent *event) override;
 
 private slots:
   void on_actionChange_Game_triggered();
@@ -204,9 +211,17 @@ private:
 
   void cleanup();
 
-  void actionToToolButton(QAction *&sourceAction);
+  void setupToolbar();
+  void setupActionMenu(QAction* a);
+  void createHelpMenu();
+  void createEndorseMenu();
 
-  void updateToolBar();
+  void updatePinnedExecutables();
+  void setToolbarSize(const QSize& s);
+  void setToolbarButtonStyle(Qt::ToolButtonStyle s);
+  void toolbarMenu_aboutToShow();
+
+  QMenu* createPopupMenu() override;
   void activateSelectedProfile();
 
   void setExecutableIndex(int index);
@@ -221,7 +236,7 @@ private:
   QList<MOBase::IOrganizer::FileInfo> findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const;
 
   bool modifyExecutablesDialog();
-  void displayModInformation(int row, int tab = -1);
+  void displayModInformation(int row, ModInfoTabIDs tab=ModInfoTabIDs::None);
   void testExtractBSA(int modIndex);
 
   void writeDataToFile(QFile &file, const QString &directory, const MOShared::DirectoryEntry &directoryEntry);
@@ -253,14 +268,10 @@ private:
   // remove invalid category-references from mods
   void fixCategories();
 
-  void createEndorseWidget();
-  void createHelpWidget();
-
   bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
 
   size_t checkForProblems();
 
-  int getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments);
   QTreeWidgetItem *addFilterItem(QTreeWidgetItem *root, const QString &name, int categoryID, ModListSortProxy::FilterType type);
   void addContentFilters();
   void addCategoryFilters(QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID);
@@ -316,16 +327,23 @@ private:
 
   Ui::MainWindow *ui;
 
-  QAction *m_Sep; // Executable Shortcuts are added after this. Non owning.
-
   bool m_WasVisible;
+
+  // this has to be remembered because by the time storeSettings() is called,
+  // the window is closed and the all bars are hidden
+  bool m_menuBarVisible, m_statusBarVisible;
+
+  std::unique_ptr<StatusBar> m_statusBar;
+
+  // last separator on the toolbar, used to add spacer for right-alignment and
+  // as an insert point for executables
+  QAction* m_linksSeparator;
 
   MOBase::TutorialControl m_Tutorial;
 
   int m_OldProfileIndex;
 
   std::vector<QString> m_ModNameList; // the mod-list to go with the directory structure
-  QProgressBar *m_RefreshProgress;
   bool m_Refreshing;
 
   QStringList m_DefaultArchives;
@@ -341,6 +359,8 @@ private:
   QPersistentModelIndex m_ContextIdx;
   QTreeWidgetItem *m_ContextItem;
   QAction *m_ContextAction;
+
+  QAction* m_browseModPage;
 
   CategoryFactory &m_CategoryFactory;
 
@@ -383,21 +403,20 @@ private:
 
   MOBase::DelayedFileWriter m_ArchiveListWriter;
 
-  enum class ShortcutType {
-    Toolbar,
-    Desktop,
-    StartMenu
-  };
+  QAction* m_LinkToolbar;
+  QAction* m_LinkDesktop;
+  QAction* m_LinkStartMenu;
 
-  void addWindowsLink(ShortcutType const);
+  // icon set by the stylesheet, used to remember its original appearance
+  // when painting the count
+  QIcon m_originalNotificationIcon;
 
   Executable const &getSelectedExecutable() const;
   Executable &getSelectedExecutable();
 
 private slots:
 
-  void updateWindowTitle(const QString &accountName, bool premium);
-
+  void updateWindowTitle(const APIUserAccount& user);
   void showMessage(const QString &message);
   void showError(const QString &message);
 
@@ -435,7 +454,7 @@ private slots:
   void visitOnNexus_clicked();
   void visitWebPage_clicked();
   void openExplorer_clicked();
-  void openOriginExplorer_clicked();
+  void openPluginOriginExplorer_clicked();
   void openOriginInformation_clicked();
   void information_clicked();
   void enableSelectedMods_clicked();
@@ -454,6 +473,7 @@ private slots:
   void previewDataFile();
   void hideFile();
   void unhideFile();
+  void openDataOriginExplorer_clicked();
 
   // pluginlist context menu
   void enableSelectedPlugins_clicked();
@@ -523,14 +543,12 @@ private slots:
   void nxmDownloadURLs(QString, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
 
-  void updateAPICounter(int queueCount, std::tuple<int, int, int, int> limits);
+  void onRequestsChanged(const APIStats& stats, const APIUserAccount& user);
 
   void editCategories();
   void deselectFilters();
 
-  void displayModInformation(const QString &modName, int tab);
-  void modOpenNext(int tab=-1);
-  void modOpenPrev(int tab=-1);
+  void displayModInformation(const QString &modName, ModInfoTabIDs tabID);
 
   void modRenamed(const QString &oldName, const QString &newName);
   void modRemoved(const QString &fileName);
@@ -615,6 +633,7 @@ private slots:
   void search_activated();
   void searchClear_activated();
 
+  void resetActionIcons();
   void updateModCount();
   void updatePluginCount();
 
@@ -627,7 +646,18 @@ private slots: // ui slots
   void on_actionNotifications_triggered();
   void on_actionSettings_triggered();
   void on_actionUpdate_triggered();
+  void on_actionExit_triggered();
+  void on_actionMainMenuToggle_triggered();
+  void on_actionToolBarMainToggle_triggered();
+  void on_actionStatusBarToggle_triggered();
+  void on_actionToolBarSmallIcons_triggered();
+  void on_actionToolBarMediumIcons_triggered();
+  void on_actionToolBarLargeIcons_triggered();
+  void on_actionToolBarIconsOnly_triggered();
+  void on_actionToolBarTextOnly_triggered();
+  void on_actionToolBarIconsAndText_triggered();
 
+  void on_centralWidget_customContextMenuRequested(const QPoint &pos);
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_clearFiltersButton_clicked();
   void on_btnRefreshData_clicked();
@@ -663,6 +693,9 @@ private slots: // ui slots
   void on_categoriesAndBtn_toggled(bool checked);
   void on_categoriesOrBtn_toggled(bool checked);
   void on_managedArchiveLabel_linkHovered(const QString &link);
+
+  void showMenuBar(bool b);
+  void showStatusBar(bool b);
 };
 
 

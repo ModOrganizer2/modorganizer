@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_overwriteinfodialog.h"
 #include "report.h"
 #include "utility.h"
+#include "organizercore.h"
 #include <QMessageBox>
 #include <QMenu>
 #include <QShortcut>
@@ -161,13 +162,13 @@ void OverwriteInfoDialog::delete_activated()
 			}
 			else if (selection->selectedRows().count() == 1) {
 				QString fileName = m_FileSystemModel->fileName(selection->selectedRows().at(0));
-				if (QMessageBox::question(this, tr("Confirm"), tr("Are sure you want to delete \"%1\"?").arg(fileName),
+				if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete \"%1\"?").arg(fileName),
 					QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
 					return;
 				}
 			}
 			else {
-				if (QMessageBox::question(this, tr("Confirm"), tr("Are sure you want to delete the selected files?"),
+				if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete the selected files?"),
 					QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
 					return;
 				}
@@ -186,12 +187,12 @@ void OverwriteInfoDialog::deleteTriggered()
     return;
   } else if (m_FileSelection.count() == 1) {
     QString fileName = m_FileSystemModel->fileName(m_FileSelection.at(0));
-    if (QMessageBox::question(this, tr("Confirm"), tr("Are sure you want to delete \"%1\"?").arg(fileName),
+    if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete \"%1\"?").arg(fileName),
                               QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
       return;
     }
   } else {
-    if (QMessageBox::question(this, tr("Confirm"), tr("Are sure you want to delete the selected files?"),
+    if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete the selected files?"),
                               QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
       return;
     }
@@ -217,12 +218,7 @@ void OverwriteInfoDialog::renameTriggered()
 
 void OverwriteInfoDialog::openFile(const QModelIndex &index)
 {
-  QString fileName = m_FileSystemModel->filePath(index);
-
-  HINSTANCE res = ::ShellExecuteW(nullptr, L"open", ToWString(fileName).c_str(), nullptr, nullptr, SW_SHOW);
-  if ((INT_PTR)res <= 32) {
-    qCritical("failed to invoke %s: %d", qUtf8Printable(fileName), res);
-  }
+  shell::OpenFile(m_FileSystemModel->filePath(index));
 }
 
 
@@ -263,7 +259,7 @@ void OverwriteInfoDialog::createDirectoryTriggered()
 
 void OverwriteInfoDialog::on_explorerButton_clicked()
 {
-  ::ShellExecuteW(nullptr, L"explore", ToWString(m_ModInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(m_ModInfo->absolutePath());
 }
 
 void OverwriteInfoDialog::on_filesView_customContextMenuRequested(const QPoint &pos)
@@ -294,5 +290,6 @@ void OverwriteInfoDialog::on_filesView_customContextMenuRequested(const QPoint &
     m_FileSelection.clear();
     m_FileSelection.append(m_FileSystemModel->index(m_FileSystemModel->rootPath(), 0));
   }
-  menu.exec(ui->filesView->mapToGlobal(pos));
+
+  menu.exec(ui->filesView->viewport()->mapToGlobal(pos));
 }

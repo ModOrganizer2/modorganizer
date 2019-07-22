@@ -30,7 +30,22 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
+   <property name="contextMenuPolicy">
+    <enum>Qt::CustomContextMenu</enum>
+   </property>
    <layout class="QHBoxLayout" name="horizontalLayout_8">
+    <property name="leftMargin">
+     <number>6</number>
+    </property>
+    <property name="topMargin">
+     <number>6</number>
+    </property>
+    <property name="rightMargin">
+     <number>6</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
     <item>
      <widget class="QSplitter" name="topLevelSplitter">
       <property name="orientation">
@@ -206,8 +221,8 @@
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Create profiles here. Each profile contains its own list of active mods and esps. This way you can quickly switch between setups for different play throughs.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Please note that right now your esp load order is not kept seperate for different profiles.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Create profiles here. Each profile contains its own list of active mods and esps. This way you can quickly switch between setups for different playthroughs.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Please note that right now your esp load order is not kept separate for different profiles.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                </widget>
               </item>
@@ -397,7 +412,7 @@ p, li { white-space: pre-wrap; }
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,0,1,1,0,0,1,1,1">
+             <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,0,1,1,0,1,1">
               <item>
                <widget class="QPushButton" name="displayCategoriesBtn">
                 <property name="maximumSize">
@@ -456,37 +471,6 @@ p, li { white-space: pre-wrap; }
                 </property>
                </spacer>
               </item>
-              <item>
-               <widget class="QLabel" name="apiRequests">
-                <property name="toolTip">
-                 <string>Nexus API Queued and Remaining Requests</string>
-                </property>
-                <property name="whatsThis">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This tracks the number of queued Nexus API requests on the left (&lt;span style=&quot; font-weight:600;&quot;&gt;Q&lt;/span&gt;) and the remaining daily (&lt;span style=&quot; font-weight:600;&quot;&gt;D&lt;/span&gt;) and hourly (&lt;span style=&quot; font-weight:600;&quot;&gt;H&lt;/span&gt;) requests on the right. The Nexus API limits you to a pool of requests per day and requests per hour. It is dynamically updated every time a request is completed. If you run out of requests, you will be unable to queue downloads, check updates, parse mod info, or even log in. Both pools must be consumed before this happens.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::StyledPanel</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Sunken</enum>
-                </property>
-                <property name="lineWidth">
-                 <number>2</number>
-                </property>
-                <property name="midLineWidth">
-                 <number>1</number>
-                </property>
-                <property name="text">
-                 <string>API: Q: 0 | D: 0 | H: 0</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-                <property name="margin">
-                 <number>2</number>
-                </property>
-               </widget>
-              </item>
               <item alignment="Qt::AlignLeft">
                <widget class="QPushButton" name="clearFiltersButton">
                 <property name="sizePolicy">
@@ -530,19 +514,6 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_4">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
               </item>
               <item>
                <widget class="QComboBox" name="groupCombo">
@@ -1337,14 +1308,11 @@ p, li { white-space: pre-wrap; }
    </layout>
   </widget>
   <widget class="QToolBar" name="toolBar">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
    <property name="contextMenuPolicy">
     <enum>Qt::CustomContextMenu</enum>
    </property>
    <property name="windowTitle">
-    <string>Tool Bar</string>
+    <string>Main ToolBar</string>
    </property>
    <property name="movable">
     <bool>false</bool>
@@ -1354,12 +1322,6 @@ p, li { white-space: pre-wrap; }
      <width>42</width>
      <height>36</height>
     </size>
-   </property>
-   <property name="toolButtonStyle">
-    <enum>Qt::ToolButtonIconOnly</enum>
-   </property>
-   <property name="floatable">
-    <bool>false</bool>
    </property>
    <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
@@ -1381,18 +1343,95 @@ p, li { white-space: pre-wrap; }
    <addaction name="actionHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>926</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="actionChange_Game"/>
+    <addaction name="actionInstallMod"/>
+    <addaction name="actionNexus"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>&amp;Tools</string>
+    </property>
+    <addaction name="actionAdd_Profile"/>
+    <addaction name="actionModify_Executables"/>
+    <addaction name="separator"/>
+    <addaction name="actionTool"/>
+    <addaction name="separator"/>
+    <addaction name="actionSettings"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="actionHelp"/>
+    <addaction name="actionUpdate"/>
+    <addaction name="separator"/>
+    <addaction name="actionEndorseMO"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>&amp;View</string>
+    </property>
+    <widget class="QMenu" name="menuToolbars">
+     <property name="title">
+      <string>&amp;Toolbars</string>
+     </property>
+     <addaction name="actionMainMenuToggle"/>
+     <addaction name="actionToolBarMainToggle"/>
+     <addaction name="actionStatusBarToggle"/>
+     <addaction name="separator"/>
+     <addaction name="actionToolBarSmallIcons"/>
+     <addaction name="actionToolBarMediumIcons"/>
+     <addaction name="actionToolBarLargeIcons"/>
+     <addaction name="separator"/>
+     <addaction name="actionToolBarIconsOnly"/>
+     <addaction name="actionToolBarTextOnly"/>
+     <addaction name="actionToolBarIconsAndText"/>
+    </widget>
+    <addaction name="menuToolbars"/>
+    <addaction name="separator"/>
+    <addaction name="actionNotifications"/>
+   </widget>
+   <widget class="QMenu" name="menuRun">
+    <property name="title">
+     <string>&amp;Run</string>
+    </property>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuView"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuRun"/>
+   <addaction name="menuHelp"/>
+  </widget>
   <action name="actionInstallMod">
    <property name="icon">
     <iconset resource="resources.qrc">
      <normaloff>:/MO/gui/resources/system-installer.png</normaloff>:/MO/gui/resources/system-installer.png</iconset>
    </property>
    <property name="text">
-    <string>Install Mod</string>
+    <string>Install &amp;Mod...</string>
    </property>
    <property name="iconText">
     <string>Install &amp;Mod</string>
    </property>
    <property name="toolTip">
+    <string>Install a new mod from an archive</string>
+   </property>
+   <property name="statusTip">
     <string>Install a new mod from an archive</string>
    </property>
    <property name="shortcut">
@@ -1405,13 +1444,16 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/profiles</normaloff>:/MO/gui/profiles</iconset>
    </property>
    <property name="text">
-    <string>Profiles</string>
+    <string>&amp;Profiles...</string>
    </property>
    <property name="iconText">
     <string>&amp;Profiles</string>
    </property>
    <property name="toolTip">
-    <string>Configure Profiles</string>
+    <string>Configure profiles</string>
+   </property>
+   <property name="statusTip">
+    <string>Configure profiles</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+P</string>
@@ -1423,12 +1465,15 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/icon_executable</normaloff>:/MO/gui/icon_executable</iconset>
    </property>
    <property name="text">
-    <string>Executables</string>
+    <string>&amp;Executables...</string>
    </property>
    <property name="iconText">
     <string>&amp;Executables</string>
    </property>
    <property name="toolTip">
+    <string>Configure the executables that can be started through Mod Organizer</string>
+   </property>
+   <property name="statusTip">
     <string>Configure the executables that can be started through Mod Organizer</string>
    </property>
    <property name="shortcut">
@@ -1441,7 +1486,7 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/plugins</normaloff>:/MO/gui/plugins</iconset>
    </property>
    <property name="text">
-    <string>Tools</string>
+    <string>&amp;Tool Plugins</string>
    </property>
    <property name="iconText">
     <string>&amp;Tools</string>
@@ -1459,12 +1504,15 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/settings</normaloff>:/MO/gui/settings</iconset>
    </property>
    <property name="text">
-    <string>Settings</string>
+    <string>&amp;Settings...</string>
    </property>
    <property name="iconText">
     <string>&amp;Settings</string>
    </property>
    <property name="toolTip">
+    <string>Configure settings and workarounds</string>
+   </property>
+   <property name="statusTip">
     <string>Configure settings and workarounds</string>
    </property>
    <property name="shortcut">
@@ -1477,10 +1525,16 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/resources/internet-web-browser.png</normaloff>:/MO/gui/resources/internet-web-browser.png</iconset>
    </property>
    <property name="text">
-    <string>Nexus</string>
+    <string>Visit &amp;Nexus</string>
+   </property>
+   <property name="iconText">
+    <string>Visit &amp;Nexus</string>
    </property>
    <property name="toolTip">
-    <string>Search nexus network for more mods</string>
+    <string>Visit the Nexus website in your browser for more mods</string>
+   </property>
+   <property name="statusTip">
+    <string>Visit the Nexus website in your browser for more mods</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
@@ -1495,25 +1549,34 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/update</normaloff>:/MO/gui/update</iconset>
    </property>
    <property name="text">
-    <string>Update</string>
+    <string>&amp;Update Mod Organizer</string>
+   </property>
+   <property name="iconText">
+    <string>&amp;Update Mod Organizer</string>
    </property>
    <property name="toolTip">
     <string>Mod Organizer is up-to-date</string>
    </property>
+   <property name="statusTip">
+    <string>Mod Organizer is up-to-date</string>
+   </property>
   </action>
   <action name="actionNotifications">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
    <property name="icon">
     <iconset resource="resources.qrc">
      <normaloff>:/MO/gui/warning</normaloff>:/MO/gui/warning</iconset>
    </property>
    <property name="text">
-    <string>No Notifications</string>
+    <string>&amp;Notifications...</string>
+   </property>
+   <property name="toolTip">
+    <string>Open the notifications dialog</string>
+   </property>
+   <property name="statusTip">
+    <string>Open the notifications dialog</string>
    </property>
    <property name="whatsThis">
-    <string>This button will be highlighted if MO discovered potential problems in your setup and provide tips on how to fix them.</string>
+    <string>This button will be highlighted on the toolbar if MO discovered potential problems in your setup and provide tips on how to fix them.</string>
    </property>
   </action>
   <action name="actionHelp">
@@ -1522,10 +1585,16 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/help</normaloff>:/MO/gui/help</iconset>
    </property>
    <property name="text">
-    <string>Help</string>
+    <string>&amp;Help</string>
+   </property>
+   <property name="iconText">
+    <string>&amp;Help</string>
    </property>
    <property name="toolTip">
-    <string>Help</string>
+    <string>Show help options</string>
+   </property>
+   <property name="statusTip">
+    <string>Show help options</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+H</string>
@@ -1537,15 +1606,30 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/icon_favorite</normaloff>:/MO/gui/icon_favorite</iconset>
    </property>
    <property name="text">
-    <string>Endorse MO</string>
+    <string>&amp;Endorse ModOrganizer</string>
+   </property>
+   <property name="iconText">
+    <string>&amp;Endorse ModOrganizer</string>
    </property>
    <property name="toolTip">
+    <string>Endorse Mod Organizer</string>
+   </property>
+   <property name="statusTip">
     <string>Endorse Mod Organizer</string>
    </property>
   </action>
   <action name="actionCopy_Log_to_Clipboard">
    <property name="text">
-    <string>Copy Log to Clipboard</string>
+    <string>Copy &amp;Log</string>
+   </property>
+   <property name="iconText">
+    <string>Copy &amp;Log</string>
+   </property>
+   <property name="toolTip">
+    <string>Copy log to clipboard</string>
+   </property>
+   <property name="statusTip">
+    <string>Copy log to clipboard</string>
    </property>
   </action>
   <action name="actionChange_Game">
@@ -1554,10 +1638,102 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/instance_switch</normaloff>:/MO/gui/instance_switch</iconset>
    </property>
    <property name="text">
-    <string>Change Game</string>
+    <string>&amp;Change Game...</string>
+   </property>
+   <property name="iconText">
+    <string>&amp;Change Game</string>
    </property>
    <property name="toolTip">
     <string>Open the Instance selection dialog to manage a different Game</string>
+   </property>
+   <property name="statusTip">
+    <string>Open the Instance selection dialog to manage a different Game</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>E&amp;xit</string>
+   </property>
+   <property name="iconText">
+    <string>E&amp;xit</string>
+   </property>
+   <property name="toolTip">
+    <string>Exits Mod Organizer</string>
+   </property>
+   <property name="statusTip">
+    <string>Exits Mod Organizer</string>
+   </property>
+  </action>
+  <action name="actionToolBarMainToggle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>M&amp;ain Toolbar</string>
+   </property>
+  </action>
+  <action name="actionToolBarSmallIcons">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Small Icons</string>
+   </property>
+  </action>
+  <action name="actionToolBarLargeIcons">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Lar&amp;ge Icons</string>
+   </property>
+  </action>
+  <action name="actionToolBarIconsOnly">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Icons Only</string>
+   </property>
+  </action>
+  <action name="actionToolBarTextOnly">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Text Only</string>
+   </property>
+  </action>
+  <action name="actionToolBarIconsAndText">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>I&amp;cons and Text</string>
+   </property>
+  </action>
+  <action name="actionToolBarMediumIcons">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>M&amp;edium Icons</string>
+   </property>
+  </action>
+  <action name="actionMainMenuToggle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Menu</string>
+   </property>
+  </action>
+  <action name="actionStatusBarToggle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Status &amp;bar</string>
    </property>
   </action>
  </widget>

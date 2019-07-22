@@ -56,6 +56,7 @@ namespace MOBase {
   class IPluginGame;
 }
 
+
 class OrganizerCore : public QObject, public MOBase::IPluginDiagnose
 {
 
@@ -87,6 +88,12 @@ private:
   typedef boost::signals2::signal<void (const QString&)> SignalModInstalled;
 
 public:
+  enum class FileExecutionTypes
+  {
+    Executable = 1,
+    Other = 2
+  };
+
   static bool isNxmLink(const QString &link) { return link.startsWith("nxm://", Qt::CaseInsensitive); }
 
   OrganizerCore(const QSettings &initSettings);
@@ -139,6 +146,17 @@ public:
   void updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::Ptr> modInfos);
 
   void doAfterLogin(const std::function<void()> &function) { m_PostLoginTasks.append(function); }
+  void loggedInAction(QWidget* parent, std::function<void ()> f);
+
+  static QString findJavaInstallation(const QString& jarFile={});
+
+  static bool getFileExecutionContext(
+    QWidget* parent,  const QFileInfo &targetInfo,
+    QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type);
+
+  bool executeFileVirtualized(QWidget* parent, const QFileInfo& targetInfo);
+  bool previewFileWithAlternatives(QWidget* parent, QString filename, int selectedOrigin=-1);
+  bool previewFile(QWidget* parent, const QString& originName, const QString& path);
 
   void spawnBinary(const QFileInfo &binary, const QString &arguments = "",
                    const QDir &currentDirectory = QDir(),
@@ -165,6 +183,7 @@ public:
   void loginFailedUpdate(const QString &message);
 
   static bool createAndMakeWritable(const QString &path);
+  bool checkPathSymlinks();
   bool bootstrap();
   void createDefaultProfile();
 

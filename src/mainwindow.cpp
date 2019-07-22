@@ -77,6 +77,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nxmaccessmanager.h"
 #include "appconfig.h"
 #include "eventfilter.h"
+#include "statusbar.h"
 #include <utility.h>
 #include <dataarchives.h>
 #include <bsainvalidation.h>
@@ -189,6 +190,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
+const QSize SmallToolbarSize(24, 24);
+const QSize MediumToolbarSize(32, 32);
+const QSize LargeToolbarSize(42, 36);
+
 
 MainWindow::MainWindow(QSettings &initSettings
                        , OrganizerCore &organizerCore
@@ -197,6 +202,9 @@ MainWindow::MainWindow(QSettings &initSettings
   : QMainWindow(parent)
   , ui(new Ui::MainWindow)
   , m_WasVisible(false)
+  , m_menuBarVisible(true)
+  , m_statusBarVisible(true)
+  , m_linksSeparator(nullptr)
   , m_Tutorial(this, "MainWindow")
   , m_OldProfileIndex(-1)
   , m_ModListGroupingProxy(nullptr)
@@ -206,18 +214,48 @@ MainWindow::MainWindow(QSettings &initSettings
   , m_ContextItem(nullptr)
   , m_ContextAction(nullptr)
   , m_ContextRow(-1)
+  , m_browseModPage(nullptr)
   , m_CurrentSaveView(nullptr)
   , m_OrganizerCore(organizerCore)
   , m_PluginContainer(pluginContainer)
   , m_DidUpdateMasterList(false)
   , m_ArchiveListWriter(std::bind(&MainWindow::saveArchiveList, this))
+  , m_LinkToolbar(nullptr)
+  , m_LinkDesktop(nullptr)
+  , m_LinkStartMenu(nullptr)
 {
   QWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
   QWebEngineProfile::defaultProfile()->setHttpCacheMaximumSize(52428800);
   QWebEngineProfile::defaultProfile()->setCachePath(m_OrganizerCore.settings().getCacheDirectory());
   QWebEngineProfile::defaultProfile()->setPersistentStoragePath(m_OrganizerCore.settings().getCacheDirectory());
+
   ui->setupUi(this);
-  updateWindowTitle(QString(), false);
+  m_statusBar.reset(new StatusBar(statusBar(), ui));
+
+  {
+    auto* ni = NexusInterface::instance(&m_PluginContainer);
+
+    // there are two ways to get here:
+    //  1) the user just started MO, and
+    //  2) the user has changed some setting that required a restart
+    //
+    // "restarting" MO doesn't actually re-execute the binary, it just basically
+    // executes most of main() again, so a bunch of things are actually not
+    // reset
+    //
+    // one of these things is the api status, which will have fired its events
+    // long before the execution gets here because stuff is still cached and no
+    // real request to nexus is actually done
+    //
+    // therefore, when the user starts MO normally, the user account and stats
+    // will be empty (which is fine) and populated later on when the api key
+    // check has finished
+    //
+    // in the rare case where the user restarts MO through the settings, this
+    // will correctly pick up the previous values
+    updateWindowTitle(ni->getAPIUserAccount());
+    m_statusBar->setAPI(ni->getAPIStats(), ni->getAPIUserAccount());
+  }
 
   languageChange(m_OrganizerCore.settings().language());
 
@@ -235,44 +273,10 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(ui->logList->model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)),
           ui->logList, SLOT(scrollToBottom()));
 
-  m_RefreshProgress = new QProgressBar(statusBar());
-  m_RefreshProgress->setTextVisible(true);
-  m_RefreshProgress->setRange(0, 100);
-  m_RefreshProgress->setValue(0);
-  m_RefreshProgress->setVisible(false);
-  statusBar()->addWidget(m_RefreshProgress, 1000);
-  statusBar()->clearMessage();
-  statusBar()->hide();
-
   updateProblemsButton();
 
-  // Setup toolbar
-  QWidget *spacer = new QWidget(ui->toolBar);
-  spacer->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
-  QWidget *widget = ui->toolBar->widgetForAction(ui->actionTool);
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(widget);
-
-  if (toolBtn->menu() == nullptr) {
-    actionToToolButton(ui->actionTool);
-  }
-
-  actionToToolButton(ui->actionHelp);
-  createHelpWidget();
-
-  actionToToolButton(ui->actionEndorseMO);
-  createEndorseWidget();
-
+  setupToolbar();
   toggleMO2EndorseState();
-
-  for (QAction *action : ui->toolBar->actions()) {
-    if (action->isSeparator()) {
-      // insert spacers
-      ui->toolBar->insertWidget(action, spacer);
-      m_Sep = action;
-      // m_Sep would only use the last separator anyway, and we only have the one anyway?
-      break;
-    }
-  }
 
   TaskProgressManager::instance().tryCreateTaskbar();
 
@@ -334,9 +338,9 @@ MainWindow::MainWindow(QSettings &initSettings
   resizeLists(modListAdjusted, pluginListAdjusted);
 
   QMenu *linkMenu = new QMenu(this);
-  linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Toolbar"), this, SLOT(linkToolbar()));
-  linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Desktop"), this, SLOT(linkDesktop()));
-  linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Start Menu"), this, SLOT(linkMenu()));
+  m_LinkToolbar = linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Toolbar and Menu"), this, SLOT(linkToolbar()));
+  m_LinkDesktop = linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Desktop"), this, SLOT(linkDesktop()));
+  m_LinkStartMenu = linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Start Menu"), this, SLOT(linkMenu()));
   ui->linkButton->setMenu(linkMenu);
 
   QMenu *listOptionsMenu = new QMenu(ui->listOptionsBtn);
@@ -363,13 +367,6 @@ MainWindow::MainWindow(QSettings &initSettings
     ui->bossButton->setDisabled(true);
     ui->bossButton->setToolTip(tr("There is no supported sort mechanism for this game. You will probably have to use a third-party tool."));
   }
-
-  ui->apiRequests->setAutoFillBackground(true);
-  QPalette palette = ui->apiRequests->palette();
-  palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkGreen);
-  palette.setColor(ui->apiRequests->foregroundRole(), Qt::white);
-  ui->apiRequests->setPalette(palette);
-  ui->apiRequests->setVisible(!m_OrganizerCore.settings().hideAPICounter());
 
   connect(&m_PluginContainer, SIGNAL(diagnosisUpdate()), this, SLOT(updateProblemsButton()));
 
@@ -403,23 +400,35 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(QString,int,int,QVariant,QVariant,int)));
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusApi()));
   connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(validateFailed(QString)), this, SLOT(validationFailed(QString)));
-  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool, std::tuple<int, int, int, int>)),
-          this, SLOT(updateWindowTitle(const QString&, bool)));
-  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool, std::tuple<int, int, int, int>)),
-    NexusInterface::instance(&m_PluginContainer), SLOT(setRateMax(const QString&, bool, std::tuple<int, int, int, int>)));
-  connect(NexusInterface::instance(&pluginContainer), SIGNAL(requestsChanged(int, std::tuple<int, int, int, int>)), this, SLOT(updateAPICounter(int, std::tuple<int, int, int, int>)));
+
+  connect(
+    NexusInterface::instance(&pluginContainer)->getAccessManager(),
+    SIGNAL(credentialsReceived(const APIUserAccount&)),
+    this,
+    SLOT(updateWindowTitle(const APIUserAccount&)));
+
+  connect(
+    NexusInterface::instance(&pluginContainer)->getAccessManager(),
+    SIGNAL(credentialsReceived(const APIUserAccount&)),
+    NexusInterface::instance(&m_PluginContainer),
+    SLOT(setUserAccount(const APIUserAccount&)));
+
+  connect(
+    NexusInterface::instance(&pluginContainer),
+    SIGNAL(requestsChanged(const APIStats&, const APIUserAccount&)),
+    this,
+    SLOT(onRequestsChanged(const APIStats&, const APIUserAccount&)));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
   connect(ui->tabWidget, SIGNAL(currentChanged(int)), &TutorialManager::instance(), SIGNAL(tabChanged(int)));
   connect(ui->modList->header(), SIGNAL(sortIndicatorChanged(int,Qt::SortOrder)), this, SLOT(modListSortIndicatorChanged(int,Qt::SortOrder)));
   connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(toolBar_customContextMenuRequested(QPoint)));
+  connect(ui->menuToolbars, &QMenu::aboutToShow, [&]{ toolbarMenu_aboutToShow(); });
 
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this, &MainWindow::modInstalled);
   connect(&m_OrganizerCore, &OrganizerCore::close, this, &QMainWindow::close);
 
   connect(&m_IntegratedBrowser, SIGNAL(requestDownload(QUrl,QNetworkReply*)), &m_OrganizerCore, SLOT(requestDownload(QUrl,QNetworkReply*)));
-
-  connect(this, SIGNAL(styleChanged(QString)), this, SLOT(updateStyle(QString)));
 
   m_CheckBSATimer.setSingleShot(true);
   connect(&m_CheckBSATimer, SIGNAL(timeout()), this, SLOT(checkBSAList()));
@@ -482,18 +491,77 @@ MainWindow::MainWindow(QSettings &initSettings
   }
 
   refreshExecutablesList();
-  updateToolBar();
-
-  for (QAction *action : ui->toolBar->actions()) {
-    // set the name of the widget to the name of the action to allow styling
-    QWidget *actionWidget = ui->toolBar->widgetForAction(action);
-    actionWidget->setObjectName(action->objectName());
-    actionWidget->style()->unpolish(actionWidget);
-    actionWidget->style()->polish(actionWidget);
-  }
-
+  updatePinnedExecutables();
+  resetActionIcons();
   updatePluginCount();
   updateModCount();
+}
+
+void MainWindow::resetActionIcons()
+{
+  // this is a bit of a hack
+  //
+  // the .qss files have historically set qproperty-icon by id and these ids
+  // correspond to the QActions created in the .ui file
+  //
+  // the problem is that QActions do not support having their icon property
+  // set from a .qss because they're not widgets (they don't inherit from
+  // QWidget), and styling only works on widget
+  //
+  // a QAction _does_ have an associated icon, it just can't be set from a .qss
+  // file
+  //
+  // so here, a dummy QToolButton widget is created for each QAction and is
+  // given the same name as the action, which makes it pick up the icon
+  // specified in the .qss file
+  //
+  // that icon is then given to the widget used by the QAction (if it's some
+  // sort of button, which typically happens on the toolbar) _and_ to the
+  // QAction itself, which is used in the menu bar
+
+  // clearing the notification, will be set below if the stylesheet has set
+  // anything for it
+  m_originalNotificationIcon = {};
+
+  // QActions created from the .ui file are children of the main window
+  for (QAction* action : findChildren<QAction*>()) {
+    // creating a dummy button
+    auto dummy = std::make_unique<QToolButton>();
+
+    // reusing the action name
+    dummy->setObjectName(action->objectName());
+
+    // styling the button, this has to be done manually because the button is
+    // never added anywhere
+    style()->polish(dummy.get());
+
+    // the button's icon may be null if it wasn't specified in the .qss file,
+    // which can happen if the stylesheet just doesn't override icons, or for
+    // other actions like the pinned custom executables
+    const auto icon = dummy->icon();
+    if (icon.isNull()) {
+      continue;
+    }
+
+    // button associated with the action on the toolbar
+    QWidget* actionWidget = ui->toolBar->widgetForAction(action);
+
+    if (auto* actionButton=dynamic_cast<QAbstractButton*>(actionWidget)) {
+      actionButton->setIcon(icon);
+    }
+
+    // the action's icon is used by the menu bar
+    action->setIcon(icon);
+
+    if (action == ui->actionNotifications) {
+      // if the stylesheet has set a notification icon, remember it here so it
+      // can be used in updateProblemsButton()
+      m_originalNotificationIcon = icon;
+    }
+  }
+
+  // update the button for the potentially new icon
+  updateProblemsButton();
 }
 
 
@@ -514,17 +582,24 @@ MainWindow::~MainWindow()
 }
 
 
-void MainWindow::updateWindowTitle(const QString &accountName, bool premium)
+void MainWindow::updateWindowTitle(const APIUserAccount& user)
 {
   QString title = QString("%1 Mod Organizer v%2").arg(
         m_OrganizerCore.managedGame()->gameName(),
         m_OrganizerCore.getVersion().displayString(3));
 
-  if (!accountName.isEmpty()) {
-    title.append(QString(" (%1%2)").arg(accountName, premium ? "*" : ""));
+  if (!user.name().isEmpty()) {
+    const QString premium = (user.type() == APIUserAccountTypes::Premium ? "*" : "");
+    title.append(QString(" (%1%2)").arg(user.name(), premium));
   }
 
   this->setWindowTitle(title);
+}
+
+
+void MainWindow::onRequestsChanged(const APIStats& stats, const APIUserAccount& user)
+{
+  m_statusBar->setAPI(stats, user);
 }
 
 
@@ -583,8 +658,7 @@ void MainWindow::allowListResize()
 
 void MainWindow::updateStyle(const QString&)
 {
-  // no effect?
-  ensurePolished();
+  resetActionIcons();
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)
@@ -612,55 +686,223 @@ static QModelIndex mapToModel(const QAbstractItemModel *targetModel, QModelIndex
   return result;
 }
 
-
-void MainWindow::actionToToolButton(QAction *&sourceAction)
+void MainWindow::setupToolbar()
 {
-  QToolButton *button = new QToolButton(ui->toolBar);
-  button->setObjectName(sourceAction->objectName());
-  button->setIcon(sourceAction->icon());
-  button->setText(sourceAction->text());
-  button->setPopupMode(QToolButton::InstantPopup);
-  button->setToolButtonStyle(ui->toolBar->toolButtonStyle());
-  button->setToolTip(sourceAction->toolTip());
-  button->setShortcut(sourceAction->shortcut());
-  QMenu *buttonMenu = new QMenu(sourceAction->text(), button);
-  button->setMenu(buttonMenu);
-  QAction *newAction = ui->toolBar->insertWidget(sourceAction, button);
-  newAction->setObjectName(sourceAction->objectName());
-  newAction->setIcon(sourceAction->icon());
-  newAction->setText(sourceAction->text());
-  newAction->setToolTip(sourceAction->toolTip());
-  newAction->setShortcut(sourceAction->shortcut());
-  ui->toolBar->removeAction(sourceAction);
-  sourceAction->deleteLater();
-  sourceAction = newAction;
-}
+  setupActionMenu(ui->actionTool);
+  setupActionMenu(ui->actionHelp);
+  setupActionMenu(ui->actionEndorseMO);
 
-void MainWindow::updateToolBar()
-{
-  for (QAction *action : ui->toolBar->actions()) {
-    if (action->objectName().startsWith("custom__")) {
-      ui->toolBar->removeAction(action);
-      action->deleteLater();
+  createHelpMenu();
+  createEndorseMenu();
+
+  // find last separator, add a spacer just before it so the icons are
+  // right-aligned
+  m_linksSeparator = nullptr;
+  for (auto* a : ui->toolBar->actions()) {
+    if (a->isSeparator()) {
+      m_linksSeparator = a;
     }
   }
 
-  std::vector<Executable>::iterator begin, end;
-  m_OrganizerCore.executablesList()->getExecutables(begin, end);
-  for (auto iter = begin; iter != end; ++iter) {
-    if (iter->isShownOnToolbar()) {
-      QAction *exeAction = new QAction(iconForExecutable(iter->m_BinaryInfo.filePath()),
-                                        iter->m_Title,
-                                        ui->toolBar);
-      exeAction->setObjectName(QString("custom__") + iter->m_Title);
+  if (m_linksSeparator) {
+    auto* spacer = new QWidget(ui->toolBar);
+    spacer->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
+    ui->toolBar->insertWidget(m_linksSeparator, spacer);
+
+  } else {
+    qWarning("no separator found on the toolbar, icons won't be right-aligned");
+  }
+}
+
+void MainWindow::setupActionMenu(QAction* a)
+{
+  a->setMenu(new QMenu(this));
+
+  auto* w = ui->toolBar->widgetForAction(a);
+  if (auto* tb=dynamic_cast<QToolButton*>(w))
+    tb->setPopupMode(QToolButton::InstantPopup);
+}
+
+void MainWindow::updatePinnedExecutables()
+{
+  for (auto* a : ui->toolBar->actions()) {
+    if (a->objectName().startsWith("custom__")) {
+      ui->toolBar->removeAction(a);
+      a->deleteLater();
+    }
+  }
+
+  ui->menuRun->clear();
+
+  bool hasLinks = false;
+
+  for (const auto& exe : *m_OrganizerCore.executablesList()) {
+    if (exe.isShownOnToolbar()) {
+      hasLinks = true;
+
+      QAction *exeAction = new QAction(
+        iconForExecutable(exe.binaryInfo().filePath()), exe.title());
+
+      exeAction->setObjectName(QString("custom__") + exe.title());
+      exeAction->setStatusTip(exe.binaryInfo().filePath());
+
       if (!connect(exeAction, SIGNAL(triggered()), this, SLOT(startExeAction()))) {
         qDebug("failed to connect trigger?");
       }
-      ui->toolBar->insertAction(m_Sep, exeAction);
+
+      if (m_linksSeparator) {
+        ui->toolBar->insertAction(m_linksSeparator, exeAction);
+      } else {
+        // separator wasn't found, add it to the end
+        ui->toolBar->addAction(exeAction);
+      }
+
+      ui->menuRun->addAction(exeAction);
     }
+  }
+
+  // don't show the menu if there are no links
+  ui->menuRun->menuAction()->setVisible(hasLinks);
+}
+
+void MainWindow::toolbarMenu_aboutToShow()
+{
+  // well, this is a bit of a hack to allow the same toolbar menu to be shown
+  // in both the main menu and the context menu
+  //
+  // the toolbar menu is returned by createPopupMenu(), but Qt takes ownership
+  // of it and deletes it by setting the WA_DeleteOnClose attribute on it
+  //
+  // to avoid deleting the menu, the attribute is removed here
+  ui->menuToolbars->setAttribute(Qt::WA_DeleteOnClose, false);
+
+  ui->actionMainMenuToggle->setChecked(ui->menuBar->isVisible());
+  ui->actionToolBarMainToggle->setChecked(ui->toolBar->isVisible());
+  ui->actionStatusBarToggle->setChecked(ui->statusBar->isVisible());
+
+  ui->actionToolBarSmallIcons->setChecked(ui->toolBar->iconSize() == SmallToolbarSize);
+  ui->actionToolBarMediumIcons->setChecked(ui->toolBar->iconSize() == MediumToolbarSize);
+  ui->actionToolBarLargeIcons->setChecked(ui->toolBar->iconSize() == LargeToolbarSize);
+
+  ui->actionToolBarIconsOnly->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonIconOnly);
+  ui->actionToolBarTextOnly->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonTextOnly);
+  ui->actionToolBarIconsAndText->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonTextUnderIcon);
+}
+
+QMenu* MainWindow::createPopupMenu()
+{
+  return ui->menuToolbars;
+}
+
+void MainWindow::on_actionMainMenuToggle_triggered()
+{
+  showMenuBar(!ui->menuBar->isVisible());
+}
+
+void MainWindow::on_actionToolBarMainToggle_triggered()
+{
+  ui->toolBar->setVisible(!ui->toolBar->isVisible());
+}
+
+void MainWindow::on_actionStatusBarToggle_triggered()
+{
+  showStatusBar(!ui->statusBar->isVisible());
+}
+
+void MainWindow::on_actionToolBarSmallIcons_triggered()
+{
+  setToolbarSize(SmallToolbarSize);
+}
+
+void MainWindow::on_actionToolBarMediumIcons_triggered()
+{
+  setToolbarSize(MediumToolbarSize);
+}
+
+void MainWindow::on_actionToolBarLargeIcons_triggered()
+{
+  setToolbarSize(LargeToolbarSize);
+}
+
+void MainWindow::on_actionToolBarIconsOnly_triggered()
+{
+  setToolbarButtonStyle(Qt::ToolButtonIconOnly);
+}
+
+void MainWindow::on_actionToolBarTextOnly_triggered()
+{
+  setToolbarButtonStyle(Qt::ToolButtonTextOnly);
+}
+
+void MainWindow::on_actionToolBarIconsAndText_triggered()
+{
+  setToolbarButtonStyle(Qt::ToolButtonTextUnderIcon);
+}
+
+void MainWindow::setToolbarSize(const QSize& s)
+{
+  for (auto* tb : findChildren<QToolBar*>()) {
+    tb->setIconSize(s);
   }
 }
 
+void MainWindow::setToolbarButtonStyle(Qt::ToolButtonStyle s)
+{
+  for (auto* tb : findChildren<QToolBar*>()) {
+    tb->setToolButtonStyle(s);
+  }
+}
+
+void MainWindow::showMenuBar(bool b)
+{
+  ui->menuBar->setVisible(b);
+  m_menuBarVisible = b;
+}
+
+void MainWindow::showStatusBar(bool b)
+{
+  ui->statusBar->setVisible(b);
+  m_statusBarVisible = b;
+
+  // the central widget typically has no bottom padding because the status bar
+  // is more than enough, but when it's hidden, the bottom widget (currently
+  // the log) touches the bottom border of the window, which looks ugly
+  //
+  // when hiding the statusbar, the central widget is given the same border
+  // margin as it has on the top (which is typically 6, as it's the default from
+  // the qt designer)
+
+  auto m = ui->centralWidget->layout()->contentsMargins();
+
+  if (b) {
+    m.setBottom(0);
+  } else {
+    m.setBottom(m.top());
+  }
+
+  ui->centralWidget->layout()->setContentsMargins(m);
+}
+
+void MainWindow::on_centralWidget_customContextMenuRequested(const QPoint &pos)
+{
+  // this allows for getting the context menu even if both the menubar and all
+  // the toolbars are hidden; an alternative is the Alt key handled in
+  // keyPressEvent() below
+
+  // the custom context menu event bubbles up to here if widgets don't actually
+  // process this, which would show the menu when right-clicking button, labels,
+  // etc.
+  //
+  // only show the context menu when right-clicking on the central widget
+  // itself, which is basically just the outer edges of the main window
+  auto* w = childAt(pos);
+  if (w != ui->centralWidget) {
+    return;
+  }
+
+  auto* m = createPopupMenu();
+  m->exec(ui->centralWidget->mapToGlobal(pos));
+}
 
 void MainWindow::scheduleUpdateButton()
 {
@@ -669,27 +911,61 @@ void MainWindow::scheduleUpdateButton()
   }
 }
 
-
 void MainWindow::updateProblemsButton()
 {
-  size_t numProblems = checkForProblems();
+  // if the current stylesheet doesn't provide an icon, this is used instead
+  const char* DefaultIconName = ":/MO/gui/warning";
+
+  const std::size_t numProblems = checkForProblems();
+
+  // original icon without a count painted on it
+  const QIcon original = m_originalNotificationIcon.isNull() ?
+    QIcon(DefaultIconName) : m_originalNotificationIcon;
+
+  // final icon
+  QIcon final;
+
   if (numProblems > 0) {
-    ui->actionNotifications->setEnabled(true);
-    ui->actionNotifications->setIconText(tr("Notifications"));
     ui->actionNotifications->setToolTip(tr("There are notifications to read"));
 
-    QPixmap mergedIcon = QPixmap(":/MO/gui/warning").scaled(64, 64);
+    // will contain the original icon, plus a notification count; this also
+    // makes sure the pixmap is exactly 64x64 by requesting the icon that's
+    // as close to 64x64 as possible, and then scaling it up if it's too small
+    QPixmap merged = original.pixmap(64, 64).scaled(64, 64);
+
     {
-      QPainter painter(&mergedIcon);
-      std::string badgeName = std::string(":/MO/gui/badge_") + (numProblems < 10 ? std::to_string(static_cast<long long>(numProblems)) : "more");
+      QPainter painter(&merged);
+
+      const std::string badgeName =
+        std::string(":/MO/gui/badge_") +
+        (numProblems < 10 ? std::to_string(static_cast<long long>(numProblems)) : "more");
+
       painter.drawPixmap(32, 32, 32, 32, QPixmap(badgeName.c_str()));
     }
-    ui->actionNotifications->setIcon(QIcon(mergedIcon));
+
+    final = QIcon(merged);
   } else {
-    ui->actionNotifications->setEnabled(false);
-    ui->actionNotifications->setIconText(tr("No Notifications"));
     ui->actionNotifications->setToolTip(tr("There are no notifications"));
-    ui->actionNotifications->setIcon(QIcon(":/MO/gui/warning"));
+
+    // no change
+    final = original;
+  }
+
+  ui->actionNotifications->setEnabled(numProblems > 0);
+
+  // setting the icon on the action (shown on the menu)
+  ui->actionNotifications->setIcon(final);
+
+  // setting the icon on the toolbar button
+  if (auto* actionWidget=ui->toolBar->widgetForAction(ui->actionNotifications)) {
+    if (auto* button=dynamic_cast<QAbstractButton*>(actionWidget)) {
+      button->setIcon(final);
+    }
+  }
+
+  // updating the status bar, may be null very early when MO is starting
+  if (m_statusBar) {
+    m_statusBar->setNotifications(numProblems > 0);
   }
 }
 
@@ -746,51 +1022,54 @@ void MainWindow::about()
 }
 
 
-void MainWindow::createEndorseWidget()
+void MainWindow::createEndorseMenu()
 {
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionEndorseMO));
-  QMenu *buttonMenu = toolBtn->menu();
-  if (buttonMenu == nullptr) {
+  auto* menu = ui->actionEndorseMO->menu();
+  if (!menu) {
+    // shouldn't happen
     return;
   }
-  buttonMenu->clear();
 
-  QAction *endorseAction = new QAction(tr("Endorse"), buttonMenu);
+  menu->clear();
+
+  QAction *endorseAction = new QAction(tr("Endorse"), menu);
   connect(endorseAction, SIGNAL(triggered()), this, SLOT(actionEndorseMO()));
-  buttonMenu->addAction(endorseAction);
+  menu->addAction(endorseAction);
 
-  QAction *wontEndorseAction = new QAction(tr("Won't Endorse"), buttonMenu);
+  QAction *wontEndorseAction = new QAction(tr("Won't Endorse"), menu);
   connect(wontEndorseAction, SIGNAL(triggered()), this, SLOT(actionWontEndorseMO()));
-  buttonMenu->addAction(wontEndorseAction);
+  menu->addAction(wontEndorseAction);
 }
 
 
-void MainWindow::createHelpWidget()
+void MainWindow::createHelpMenu()
 {
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionHelp));
-  QMenu *buttonMenu = toolBtn->menu();
-  if (buttonMenu == nullptr) {
+  auto* menu = ui->actionHelp->menu();
+  if (!menu) {
+    // this happens on startup because languageChanged() (which calls this) is
+    // called before the menus are actually created
     return;
   }
-  buttonMenu->clear();
 
-  QAction *helpAction = new QAction(tr("Help on UI"), buttonMenu);
+  menu->clear();
+
+  QAction *helpAction = new QAction(tr("Help on UI"), menu);
   connect(helpAction, SIGNAL(triggered()), this, SLOT(helpTriggered()));
-  buttonMenu->addAction(helpAction);
+  menu->addAction(helpAction);
 
-  QAction *wikiAction = new QAction(tr("Documentation"), buttonMenu);
+  QAction *wikiAction = new QAction(tr("Documentation"), menu);
   connect(wikiAction, SIGNAL(triggered()), this, SLOT(wikiTriggered()));
-  buttonMenu->addAction(wikiAction);
+  menu->addAction(wikiAction);
 
-  QAction *discordAction = new QAction(tr("Chat on Discord"), buttonMenu);
+  QAction *discordAction = new QAction(tr("Chat on Discord"), menu);
   connect(discordAction, SIGNAL(triggered()), this, SLOT(discordTriggered()));
-  buttonMenu->addAction(discordAction);
+  menu->addAction(discordAction);
 
-  QAction *issueAction = new QAction(tr("Report Issue"), buttonMenu);
+  QAction *issueAction = new QAction(tr("Report Issue"), menu);
   connect(issueAction, SIGNAL(triggered()), this, SLOT(issueTriggered()));
-  buttonMenu->addAction(issueAction);
+  menu->addAction(issueAction);
 
-  QMenu *tutorialMenu = new QMenu(tr("Tutorials"), buttonMenu);
+  QMenu *tutorialMenu = new QMenu(tr("Tutorials"), menu);
 
   typedef std::vector<std::pair<int, QAction*> > ActionList;
 
@@ -828,9 +1107,9 @@ void MainWindow::createHelpWidget()
     tutorialMenu->addAction(iter->second);
   }
 
-  buttonMenu->addMenu(tutorialMenu);
-  buttonMenu->addAction(tr("About"), this, SLOT(about()));
-  buttonMenu->addAction(tr("About Qt"), qApp, SLOT(aboutQt()));
+  menu->addMenu(tutorialMenu);
+  menu->addAction(tr("About"), this, SLOT(about()));
+  menu->addAction(tr("About Qt"), qApp, SLOT(aboutQt()));
 }
 
 void MainWindow::modFilterActive(bool filterActive)
@@ -934,6 +1213,16 @@ void MainWindow::showEvent(QShowEvent *event)
   QMainWindow::showEvent(event);
 
   if (!m_WasVisible) {
+    // this needs to be connected here instead of in the constructor because the
+    // actual changing of the stylesheet is done by MOApplication, which
+    // connects its signal in runApplication() (in main.cpp), and that happens
+    // _after_ the MainWindow is constructed, but _before_ it is shown
+    //
+    // by connecting the event here, changing the style setting will first be
+    // handled by MOApplication, and then in updateStyle(), at which point the
+    // stylesheet has already been set correctly
+    connect(this, SIGNAL(styleChanged(QString)), this, SLOT(updateStyle(QString)));
+
     // only the first time the window becomes visible
     m_Tutorial.registerControl();
 
@@ -976,14 +1265,21 @@ void MainWindow::showEvent(QShowEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
+  if (!confirmExit()) {
+    event->ignore();
+  }
+}
+
+bool MainWindow::confirmExit()
+{
   m_closing = true;
 
   if (m_OrganizerCore.downloadManager()->downloadsInProgressNoPause()) {
     if (QMessageBox::question(this, tr("Downloads in progress"),
                           tr("There are still downloads in progress, do you really want to quit?"),
                           QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Cancel) {
-      event->ignore();
-      return;
+      m_closing = false;
+      return false;
     } else {
       m_OrganizerCore.downloadManager()->pauseAll();
     }
@@ -996,12 +1292,12 @@ void MainWindow::closeEvent(QCloseEvent* event)
   {
     m_OrganizerCore.waitForApplication(injected_process_still_running);
     if (!m_closing) { // if operation cancelled
-      event->ignore();
-      return;
+      return false;
     }
   }
 
   setCursor(Qt::WaitCursor);
+  return true;
 }
 
 void MainWindow::cleanup()
@@ -1025,6 +1321,15 @@ void MainWindow::setBrowserGeometry(const QByteArray &geometry)
 
 void MainWindow::displaySaveGameInfo(QListWidgetItem *newItem)
 {
+  // don't display the widget if the main window doesn't have focus
+  //
+  // this goes against the standard behaviour for tooltips, which are displayed
+  // on hover regardless of focus, but this widget is so large and busy that
+  // it's probably better this way
+  if (!isActiveWindow()){
+    return;
+  }
+
   QString const &save = newItem->data(Qt::UserRole).toString();
   if (m_CurrentSaveView == nullptr) {
     IPluginGame const *game = m_OrganizerCore.managedGame();
@@ -1056,8 +1361,6 @@ void MainWindow::displaySaveGameInfo(QListWidgetItem *newItem)
 
   m_CurrentSaveView->show();
   m_CurrentSaveView->setProperty("displayItem", qVariantFromValue(static_cast<void *>(newItem)));
-
-  ui->savegameList->activateWindow();
 }
 
 
@@ -1120,21 +1423,20 @@ void MainWindow::modPagePluginInvoke()
 
 void MainWindow::registerPluginTool(IPluginTool *tool, QString name, QMenu *menu)
 {
+  if (!menu) {
+    menu = ui->actionTool->menu();
+  }
+
   if (name.isEmpty())
     name = tool->displayName();
 
-  QAction *action = new QAction(tool->icon(), name, ui->toolBar);
+  QAction *action = new QAction(tool->icon(), name, menu);
   action->setToolTip(tool->tooltip());
   tool->setParentWidget(this);
   action->setData(qVariantFromValue((QObject*)tool));
   connect(action, SIGNAL(triggered()), this, SLOT(toolPluginInvoke()), Qt::QueuedConnection);
 
-  if (menu == nullptr) {
-    QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionTool));
-    toolBtn->menu()->addAction(action);
-  } else {
-    menu->addAction(action);
-  }
+  menu->addAction(action);
 }
 
 void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
@@ -1168,8 +1470,7 @@ void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
       for (auto info : submenuMap[submenuKey]) {
         registerPluginTool(info.second, info.first, submenu);
       }
-      QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionTool));
-      toolBtn->menu()->addMenu(submenu);
+      ui->actionTool->menu()->addMenu(submenu);
     }
     else {
       registerPluginTool(submenuMap[submenuKey].front().second);
@@ -1180,49 +1481,68 @@ void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
 void MainWindow::registerModPage(IPluginModPage *modPage)
 {
   // turn the browser action into a drop-down menu if necessary
-  if (ui->actionNexus->menu() == nullptr) {
-    QAction *nexusAction = ui->actionNexus;
-    // TODO: use a different icon for nexus!
-    ui->actionNexus = new QAction(nexusAction->icon(), tr("Browse Mod Page"), ui->toolBar);
-    ui->toolBar->insertAction(nexusAction, ui->actionNexus);
-    ui->toolBar->removeAction(nexusAction);
-    actionToToolButton(ui->actionNexus);
+  if (!m_browseModPage) {
+    m_browseModPage = new QAction(ui->actionNexus->icon(), tr("Browse Mod Page"), this);
+    setupActionMenu(m_browseModPage);
 
-    QToolButton *browserBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
-    browserBtn->menu()->addAction(nexusAction);
+    m_browseModPage->menu()->addAction(ui->actionNexus);
+
+    ui->toolBar->insertAction(ui->actionNexus, m_browseModPage);
+    ui->toolBar->removeAction(ui->actionNexus);
   }
 
-  QAction *action = new QAction(modPage->icon(), modPage->displayName(), ui->toolBar);
+  QAction *action = new QAction(modPage->icon(), modPage->displayName(), this);
   modPage->setParentWidget(this);
   action->setData(qVariantFromValue(reinterpret_cast<QObject*>(modPage)));
 
   connect(action, SIGNAL(triggered()), this, SLOT(modPagePluginInvoke()), Qt::QueuedConnection);
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
-  toolBtn->menu()->addAction(action);
+
+  m_browseModPage->menu()->addAction(action);
 }
 
 
 void MainWindow::startExeAction()
 {
   QAction *action = qobject_cast<QAction*>(sender());
-  if (action != nullptr) {
-    const Executable &selectedExecutable(m_OrganizerCore.executablesList()->find(action->text()));
-    QString customOverwrite = m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.m_Title).toString();
-    auto forcedLibraries = m_OrganizerCore.currentProfile()->determineForcedLibraries(selectedExecutable.m_Title);
-    if (!m_OrganizerCore.currentProfile()->forcedLibrariesEnabled(selectedExecutable.m_Title)) {
-      forcedLibraries.clear();
-    }
-    m_OrganizerCore.spawnBinary(
-        selectedExecutable.m_BinaryInfo, selectedExecutable.m_Arguments,
-        selectedExecutable.m_WorkingDirectory.length() != 0
-            ? selectedExecutable.m_WorkingDirectory
-            : selectedExecutable.m_BinaryInfo.absolutePath(),
-        selectedExecutable.m_SteamAppID,
-        customOverwrite,
-        forcedLibraries);
-  } else {
+
+  if (action == nullptr) {
     qCritical("not an action?");
+    return;
   }
+
+  const auto& list = *m_OrganizerCore.executablesList();
+
+  const auto title = action->text();
+  auto itor = list.find(title);
+
+  if (itor == list.end()) {
+    qWarning().nospace()
+      << "startExeAction(): executable '" << title << "' not found";
+
+    return;
+  }
+
+  action->setEnabled(false);
+  const Executable& exe = *itor;
+  auto& profile = *m_OrganizerCore.currentProfile();
+
+  QString customOverwrite = profile.setting("custom_overwrites", exe.title()).toString();
+  auto forcedLibraries = profile.determineForcedLibraries(exe.title());
+
+  if (!profile.forcedLibrariesEnabled(exe.title())) {
+    forcedLibraries.clear();
+  }
+
+  m_OrganizerCore.spawnBinary(
+      exe.binaryInfo(), exe.arguments(),
+      exe.workingDirectory().length() != 0
+          ? exe.workingDirectory()
+          : exe.binaryInfo().absolutePath(),
+      exe.steamAppID(),
+      customOverwrite,
+      forcedLibraries);
+  action->setEnabled(true);
+
 }
 
 
@@ -1490,12 +1810,12 @@ void MainWindow::refreshExecutablesList()
 
   QAbstractItemModel *model = executablesList->model();
 
-  std::vector<Executable>::const_iterator current, end;
-  m_OrganizerCore.executablesList()->getExecutables(current, end);
-  for(int i = 0; current != end; ++current, ++i) {
-    QIcon icon = iconForExecutable(current->m_BinaryInfo.filePath());
-    executablesList->addItem(icon, current->m_Title);
+  int i = 0;
+  for (const auto& exe : *m_OrganizerCore.executablesList()) {
+    QIcon icon = iconForExecutable(exe.binaryInfo().filePath());
+    executablesList->addItem(icon, exe.title());
     model->setData(model->index(i, 0), QSize(0, executablesList->iconSize().height() + 4), Qt::SizeHintRole);
+    ++i;
   }
 
   setExecutableIndex(1);
@@ -1846,6 +2166,27 @@ void MainWindow::readSettings()
     restoreGeometry(settings.value("window_geometry").toByteArray());
   }
 
+  if (settings.contains("window_state")) {
+    restoreState(settings.value("window_state").toByteArray());
+  }
+
+  if (settings.contains("toolbar_size")) {
+    setToolbarSize(settings.value("toolbar_size").toSize());
+  }
+
+  if (settings.contains("toolbar_button_style")) {
+    setToolbarButtonStyle(static_cast<Qt::ToolButtonStyle>(
+      settings.value("toolbar_button_style").toInt()));
+  }
+
+  if (settings.contains("menubar_visible")) {
+    showMenuBar(settings.value("menubar_visible").toBool());
+  }
+
+  if (settings.contains("statusbar_visible")) {
+    showStatusBar(settings.value("statusbar_visible").toBool());
+  }
+
   if (settings.contains("window_split")) {
     ui->splitter->restoreState(settings.value("window_split").toByteArray());
   }
@@ -1897,6 +2238,12 @@ void MainWindow::processUpdates() {
       instance.remove("");
       instance.endGroup();
     }
+    if (lastVersion < QVersionNumber(2, 2, 1)) {
+      // hide new columns by default
+      for (int i=DownloadList::COL_MODNAME; i<DownloadList::COL_COUNT; ++i) {
+        ui->downloadView->header()->hideSection(i);
+      }
+    }
   }
 
   if (currentVersion > lastVersion) {
@@ -1916,7 +2263,12 @@ void MainWindow::storeSettings(QSettings &settings) {
 
   if (settings.value("reset_geometry", false).toBool()) {
     settings.remove("window_geometry");
+    settings.remove("window_state");
+    settings.remove("toolbar_size");
+    settings.remove("toolbar_button_style");
+    settings.remove("menubar_visible");
     settings.remove("window_split");
+    settings.remove("window_monitor");
     settings.remove("log_split");
     settings.remove("filters_visible");
     settings.remove("browser_geometry");
@@ -1924,7 +2276,13 @@ void MainWindow::storeSettings(QSettings &settings) {
     settings.remove("reset_geometry");
   } else {
     settings.setValue("window_geometry", saveGeometry());
+    settings.setValue("window_state", saveState());
+    settings.setValue("toolbar_size", ui->toolBar->iconSize());
+    settings.setValue("toolbar_button_style", static_cast<int>(ui->toolBar->toolButtonStyle()));
+    settings.setValue("menubar_visible", m_menuBarVisible);
+    settings.setValue("statusbar_visible", m_statusBarVisible);
     settings.setValue("window_split", ui->splitter->saveState());
+    settings.setValue("window_monitor", QApplication::desktop()->screenNumber(this));
     settings.setValue("log_split", ui->topLevelSplitter->saveState());
     settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
     settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
@@ -2022,17 +2380,17 @@ void MainWindow::on_startButton_clicked() {
   ui->startButton->setEnabled(false);
   try {
     const Executable &selectedExecutable(getSelectedExecutable());
-    QString customOverwrite = m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.m_Title).toString();
-    auto forcedLibraries = m_OrganizerCore.currentProfile()->determineForcedLibraries(selectedExecutable.m_Title);
-    if (!m_OrganizerCore.currentProfile()->forcedLibrariesEnabled(selectedExecutable.m_Title)) {
+    QString customOverwrite = m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.title()).toString();
+    auto forcedLibraries = m_OrganizerCore.currentProfile()->determineForcedLibraries(selectedExecutable.title());
+    if (!m_OrganizerCore.currentProfile()->forcedLibrariesEnabled(selectedExecutable.title())) {
       forcedLibraries.clear();
     }
     m_OrganizerCore.spawnBinary(
-        selectedExecutable.m_BinaryInfo, selectedExecutable.m_Arguments,
-        selectedExecutable.m_WorkingDirectory.length() != 0
-            ? selectedExecutable.m_WorkingDirectory
-            : selectedExecutable.m_BinaryInfo.absolutePath(),
-        selectedExecutable.m_SteamAppID,
+        selectedExecutable.binaryInfo(), selectedExecutable.arguments(),
+        selectedExecutable.workingDirectory().length() != 0
+            ? selectedExecutable.workingDirectory()
+            : selectedExecutable.binaryInfo().absolutePath(),
+        selectedExecutable.steamAppID(),
         customOverwrite,
         forcedLibraries);
   } catch (...) {
@@ -2042,107 +2400,27 @@ void MainWindow::on_startButton_clicked() {
   ui->startButton->setEnabled(true);
 }
 
-static HRESULT CreateShortcut(LPCWSTR targetFileName, LPCWSTR arguments,
-                              LPCSTR linkFileName, LPCWSTR description,
-                              LPCTSTR iconFileName, int iconNumber,
-                              LPCWSTR currentDirectory)
-{
-  HRESULT result = E_INVALIDARG;
-  if ((targetFileName != nullptr) && (wcslen(targetFileName) > 0) &&
-       (arguments != nullptr) &&
-       (linkFileName != nullptr) && (strlen(linkFileName) > 0) &&
-       (description != nullptr) &&
-       (currentDirectory != nullptr)) {
-
-    IShellLink* shellLink;
-    result = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER,
-                              IID_IShellLink, (LPVOID*)&shellLink);
-
-    if (!SUCCEEDED(result)) {
-      qCritical("failed to create IShellLink instance");
-      return result;
-    }
-
-    result = shellLink->SetPath(targetFileName);
-    if (!SUCCEEDED(result)) {
-      qCritical("failed to set target path %ls", targetFileName);
-      shellLink->Release();
-      return result;
-    }
-
-    result = shellLink->SetArguments(arguments);
-    if (!SUCCEEDED(result)) {
-      qCritical("failed to set arguments: %ls", arguments);
-      shellLink->Release();
-      return result;
-    }
-
-    if (wcslen(description) > 0) {
-      result = shellLink->SetDescription(description);
-      if (!SUCCEEDED(result)) {
-        qCritical("failed to set description: %ls", description);
-        shellLink->Release();
-        return result;
-      }
-    }
-
-    if (wcslen(currentDirectory) > 0) {
-      result = shellLink->SetWorkingDirectory(currentDirectory);
-      if (!SUCCEEDED(result)) {
-        qCritical("failed to set working directory: %ls", currentDirectory);
-        shellLink->Release();
-        return result;
-      }
-    }
-
-    if (iconFileName != nullptr) {
-      result = shellLink->SetIconLocation(iconFileName, iconNumber);
-      if (!SUCCEEDED(result)) {
-        qCritical("failed to load program icon: %ls %d", iconFileName, iconNumber);
-        shellLink->Release();
-        return result;
-      }
-    }
-
-    IPersistFile *persistFile;
-    result = shellLink->QueryInterface(IID_IPersistFile, (LPVOID*)&persistFile);
-    if (SUCCEEDED(result)) {
-      wchar_t linkFileNameW[MAX_PATH];
-      if (MultiByteToWideChar(CP_ACP, 0, linkFileName, -1, linkFileNameW, MAX_PATH) > 0) {
-        result = persistFile->Save(linkFileNameW, TRUE);
-      } else {
-        qCritical("failed to create link: %s", linkFileName);
-      }
-      persistFile->Release();
-    } else {
-      qCritical("failed to create IPersistFile instance");
-    }
-
-    shellLink->Release();
-  }
-  return result;
-}
-
-
 bool MainWindow::modifyExecutablesDialog()
 {
   bool result = false;
+
   try {
-    EditExecutablesDialog dialog(*m_OrganizerCore.executablesList(),
-                                 *m_OrganizerCore.modList(),
-                                 m_OrganizerCore.currentProfile(),
-                                 m_OrganizerCore.managedGame());
+    const auto oldExecutables = *m_OrganizerCore.executablesList();
+
+    EditExecutablesDialog dialog(m_OrganizerCore, this);
+
     QSettings &settings = m_OrganizerCore.settings().directInterface();
     QString key = QString("geometry/%1").arg(dialog.objectName());
+
     if (settings.contains(key)) {
       dialog.restoreGeometry(settings.value(key).toByteArray());
     }
-    if (dialog.exec() == QDialog::Accepted) {
-      m_OrganizerCore.setExecutablesList(dialog.getExecutablesList());
-      result = true;
-    }
+
+    result = (dialog.exec() == QDialog::Accepted);
+
     settings.setValue(key, dialog.saveGeometry());
     refreshExecutablesList();
+    updatePinnedExecutables();
   } catch (const std::exception &e) {
     reportError(e.what());
   }
@@ -2277,26 +2555,22 @@ void MainWindow::setESPListSorting(int index)
 
 void MainWindow::refresher_progress(int percent)
 {
-  if (percent == 100) {
-    m_RefreshProgress->setVisible(false);
-    statusBar()->hide();
-    this->setEnabled(true);
-  } else if (!m_RefreshProgress->isVisible()) {
-    this->setEnabled(false);
-    statusBar()->show();
-    m_RefreshProgress->setVisible(true);
-    m_RefreshProgress->setRange(0, 100);
-    m_RefreshProgress->setValue(percent);
-  }
+  setEnabled(percent == 100);
+  m_statusBar->setProgress(percent);
 }
 
 void MainWindow::directory_refreshed()
 {
   // some problem-reports may rely on the virtual directory tree so they need to be updated
   // now
-  refreshDataTreeKeepExpandedNodes();
   updateProblemsButton();
-  statusBar()->hide();
+
+
+  //Some better check for the current tab is needed.
+  if (ui->tabWidget->currentIndex() == 2) {
+      refreshDataTreeKeepExpandedNodes();
+  }
+ 
 }
 
 void MainWindow::esplist_changed()
@@ -2628,18 +2902,34 @@ void MainWindow::modListSectionResized(int logicalIndex, int oldSize, int newSiz
 
 void MainWindow::removeMod_clicked()
 {
+  const int max_items = 20;
+
   try {
     QItemSelectionModel *selection = ui->modList->selectionModel();
     if (selection->hasSelection() && selection->selectedRows().count() > 1) {
       QString mods;
       QStringList modNames;
+
+      int i = 0;
       for (QModelIndex idx : selection->selectedRows()) {
         QString name = idx.data().toString();
         if (!ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->isRegular()) {
           continue;
         }
-        mods += "<li>" + name + "</li>";
+
+        // adds an item for the mod name until `i` reaches `max_items`, which
+        // adds one "..." item; subsequent mods are not shown on the list but
+        // are still added to `modNames` below so they can be removed correctly
+
+        if (i < max_items) {
+          mods += "<li>" + name + "</li>";
+        }
+        else if (i == max_items) {
+          mods += "<li>...</li>";
+        }
+
         modNames.append(ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->name());
+        ++i;
       }
       if (QMessageBox::question(this, tr("Confirm"),
                                 tr("Remove the following mods?<br><ul>%1</ul>").arg(mods),
@@ -2710,66 +3000,34 @@ void MainWindow::backupMod_clicked()
 
 void MainWindow::resumeDownload(int downloadIndex)
 {
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
+  m_OrganizerCore.loggedInAction(this, [this, downloadIndex] {
     m_OrganizerCore.downloadManager()->resumeDownload(downloadIndex);
-  } else {
-    QString apiKey;
-    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-      m_OrganizerCore.doAfterLogin([this, downloadIndex] () {
-        this->resumeDownload(downloadIndex);
-      });
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-    } else {
-      MessageDialog::showMessage(tr("You need to be logged in with Nexus to resume a download"), this);
-    }
-  }
+  });
 }
 
 
 void MainWindow::endorseMod(ModInfo::Ptr mod)
 {
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
+  m_OrganizerCore.loggedInAction(this, [this, mod] {
     mod->endorse(true);
-  } else {
-    QString apiKey;
-    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-      m_OrganizerCore.doAfterLogin([&]() { this->endorseMod(mod); });
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-    } else {
-      MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
-    }
-  }
+  });
 }
 
 
 void MainWindow::endorse_clicked()
 {
   QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
+
+  m_OrganizerCore.loggedInAction(this, [this] {
+    QItemSelectionModel *selection = ui->modList->selectionModel();
+    if (selection->hasSelection() && selection->selectedRows().count() > 1) {
       MessageDialog::showMessage(tr("Endorsing multiple mods will take a while. Please wait..."), this);
-      for (QModelIndex idx : selection->selectedRows()) {
-        ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(true);
-      }
     }
-    else {
-      QString apiKey;
-      if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-        MessageDialog::showMessage(tr("Endorsing multiple mods will take a while. Please wait..."), this);
-        for (QModelIndex idx : selection->selectedRows()) {
-          ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-          m_OrganizerCore.doAfterLogin([&]() { this->endorseMod(modInfo); });
-        }
-        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-      } else {
-        MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
-        return;
-      }
+
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(true);
     }
-  }
-  else {
-    endorseMod(ModInfo::getByIndex(m_ContextRow));
-  }
+  });
 }
 
 void MainWindow::dontendorse_clicked()
@@ -2788,120 +3046,58 @@ void MainWindow::dontendorse_clicked()
 
 void MainWindow::unendorseMod(ModInfo::Ptr mod)
 {
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
-    ModInfo::getByIndex(m_ContextRow)->endorse(false);
-  } else {
-    QString apiKey;
-    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-      m_OrganizerCore.doAfterLogin([&]() { this->unendorseMod(mod); });
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-    } else {
-      MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
-    }
-  }
+  m_OrganizerCore.loggedInAction(this, [mod] {
+    mod->endorse(false);
+  });
 }
 
 
 void MainWindow::unendorse_clicked()
 {
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
+  m_OrganizerCore.loggedInAction(this, [this] {
+    QItemSelectionModel *selection = ui->modList->selectionModel();
+    if (selection->hasSelection() && selection->selectedRows().count() > 1) {
       MessageDialog::showMessage(tr("Unendorsing multiple mods will take a while. Please wait..."), this);
-      for (QModelIndex idx : selection->selectedRows()) {
-        ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(false);
-      }
-    } else {
-      QString apiKey;
-      if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-        MessageDialog::showMessage(tr("Unendorsing multiple mods will take a while. Please wait..."), this);
-        for (QModelIndex idx : selection->selectedRows()) {
-          ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-          m_OrganizerCore.doAfterLogin([&]() { this->unendorseMod(modInfo); });
-        }
-        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-      } else {
-        MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
-        return;
-      }
     }
-  }
-  else {
-    unendorseMod(ModInfo::getByIndex(m_ContextRow));
-  }
+
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(false);
+    }
+  });
 }
 
 
 void MainWindow::trackMod(ModInfo::Ptr mod, bool doTrack)
 {
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
-    ModInfo::getByIndex(m_ContextRow)->track(doTrack);
-  } else {
-    QString apiKey;
-    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-      m_OrganizerCore.doAfterLogin([&]() { this->trackMod(mod, doTrack); });
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-    } else {
-      MessageDialog::showMessage(tr("You need to be logged in with Nexus to track"), this);
-    }
-  }
+  m_OrganizerCore.loggedInAction(this, [mod, doTrack] {
+    mod->track(doTrack);
+  });
 }
 
 
 void MainWindow::track_clicked()
 {
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
-      for (auto idx : selection->selectedRows()) {
-        ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->track(true);
-      }
-    } else {
-      QString apiKey;
-      if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-        for (auto idx : selection->selectedRows()) {
-          auto modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-          m_OrganizerCore.doAfterLogin([&]() { this->trackMod(modInfo, true); });
-        }
-        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-      } else {
-        MessageDialog::showMessage(tr("You need to be logged in with Nexus to track"), this);
-      }
+  m_OrganizerCore.loggedInAction(this, [this] {
+    QItemSelectionModel *selection = ui->modList->selectionModel();
+    for (auto idx : selection->selectedRows()) {
+      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->track(true);
     }
-  } else {
-    trackMod(ModInfo::getByIndex(m_ContextRow), true);
-  }
+  });
 }
 
 void MainWindow::untrack_clicked()
 {
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
-      for (auto idx : selection->selectedRows()) {
-        ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->track(false);
-      }
-    } else {
-      QString apiKey;
-      if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-        for (auto idx : selection->selectedRows()) {
-          auto modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-          m_OrganizerCore.doAfterLogin([&]() { this->trackMod(modInfo, false); });
-        }
-        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-      } else {
-        MessageDialog::showMessage(tr("You need to be logged in with Nexus to track"), this);
-      }
+  m_OrganizerCore.loggedInAction(this, [this] {
+    QItemSelectionModel *selection = ui->modList->selectionModel();
+    for (auto idx : selection->selectedRows()) {
+      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->track(false);
     }
-  } else {
-    trackMod(ModInfo::getByIndex(m_ContextRow), false);
-  }
+  });
 }
 
 void MainWindow::validationFailed(const QString &error)
 {
   qDebug("Nexus API validation failed: %s", qUtf8Printable(error));
-  statusBar()->hide();
 }
 
 void MainWindow::windowTutorialFinished(const QString &windowName)
@@ -2923,7 +3119,8 @@ void MainWindow::overwriteClosed(int)
 }
 
 
-void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab)
+void MainWindow::displayModInformation(
+  ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tabID)
 {
   if (!m_OrganizerCore.modList()->modInfoAboutToChange(modInfo)) {
     qDebug("A different mod information dialog is open. If this is incorrect, please restart MO");
@@ -2953,39 +3150,24 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     }
   } else {
     modInfo->saveMeta();
-    ModInfoDialog dialog(modInfo, m_OrganizerCore.directoryStructure(), modInfo->hasFlag(ModInfo::FLAG_FOREIGN), &m_OrganizerCore, &m_PluginContainer, this);
-    connect(&dialog, SIGNAL(linkActivated(QString)), this, SLOT(linkClicked(QString)));
-    connect(&dialog, SIGNAL(downloadRequest(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
-    connect(&dialog, SIGNAL(modOpen(QString, int)), this, SLOT(displayModInformation(QString, int)), Qt::QueuedConnection);
-    connect(&dialog, SIGNAL(modOpenNext(int)), this, SLOT(modOpenNext(int)), Qt::QueuedConnection);
-    connect(&dialog, SIGNAL(modOpenPrev(int)), this, SLOT(modOpenPrev(int)), Qt::QueuedConnection);
+
+    ModInfoDialog dialog(this, &m_OrganizerCore, &m_PluginContainer, modInfo);
     connect(&dialog, SIGNAL(originModified(int)), this, SLOT(originModified(int)));
-    connect(&dialog, SIGNAL(endorseMod(ModInfo::Ptr)), this, SLOT(endorseMod(ModInfo::Ptr)));
 
-	//Open the tab first if we want to use the standard indexes of the tabs.
-	if (tab != -1) {
-		dialog.openTab(tab);
-	}
+	  //Open the tab first if we want to use the standard indexes of the tabs.
+	  if (tabID != ModInfoTabIDs::None) {
+		  dialog.selectTab(tabID);
+	  }
 
-  dialog.restoreTabState(m_OrganizerCore.settings().directInterface().value("mod_info_tabs").toByteArray());
-  QSettings &settings = m_OrganizerCore.settings().directInterface();
-  QString key = QString("geometry/%1").arg(dialog.objectName());
-  if (settings.contains(key)) {
-    dialog.restoreGeometry(settings.value(key).toByteArray());
-  }
-
-	//If no tab was specified use the first tab from the left based on the user order.
-	if (tab == -1) {
-		for (int i = 0; i < dialog.findChild<QTabWidget*>("tabWidget")->count(); ++i) {
-			if (dialog.findChild<QTabWidget*>("tabWidget")->isTabEnabled(i)) {
-				dialog.findChild<QTabWidget*>("tabWidget")->setCurrentIndex(i);
-				break;
-			}
-		}
-	}
+    dialog.restoreState(m_OrganizerCore.settings());
+    QSettings &settings = m_OrganizerCore.settings().directInterface();
+    QString key = QString("geometry/%1").arg(dialog.objectName());
+    if (settings.contains(key)) {
+      dialog.restoreGeometry(settings.value(key).toByteArray());
+    }
 
     dialog.exec();
-    m_OrganizerCore.settings().directInterface().setValue("mod_info_tabs", dialog.saveTabState());
+    dialog.saveState(m_OrganizerCore.settings());
     settings.setValue(key, dialog.saveGeometry());
 
     modInfo->saveMeta();
@@ -2993,7 +3175,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     m_OrganizerCore.modList()->modInfoChanged(modInfo);
   }
 
-  if (m_OrganizerCore.currentProfile()->modEnabled(index)
+  if (m_OrganizerCore.currentProfile()->modEnabled(modIndex)
       && !modInfo->hasFlag(ModInfo::FLAG_FOREIGN)) {
     FilesOrigin& origin = m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(modInfo->name()));
     origin.enable(false);
@@ -3004,7 +3186,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
 
       m_OrganizerCore.directoryRefresher()->addModToStructure(m_OrganizerCore.directoryStructure()
                                              , modInfo->name()
-                                             , m_OrganizerCore.currentProfile()->getModPriority(index)
+                                             , m_OrganizerCore.currentProfile()->getModPriority(modIndex)
                                              , modInfo->absolutePath()
                                              , modInfo->stealFiles()
                                              , modInfo->archives());
@@ -3026,46 +3208,74 @@ void MainWindow::setWindowEnabled(bool enabled)
 }
 
 
-void MainWindow::modOpenNext(int tab)
+ModInfo::Ptr MainWindow::nextModInList()
 {
-  QModelIndex index = m_ModListSortProxy->mapFromSource(m_OrganizerCore.modList()->index(m_ContextRow, 0));
-  index = m_ModListSortProxy->index((index.row() + 1) % m_ModListSortProxy->rowCount(), 0);
+  const QModelIndex start = m_ModListSortProxy->mapFromSource(
+    m_OrganizerCore.modList()->index(m_ContextRow, 0));
 
-  m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
-  ModInfo::Ptr mod = ModInfo::getByIndex(m_ContextRow);
-  std::vector<ModInfo::EFlag> flags = mod->getFlags();
-  if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) ||
-      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) ||
-      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())) {
+  auto index = start;
+
+  for (;;) {
+    index = m_ModListSortProxy->index((index.row() + 1) % m_ModListSortProxy->rowCount(), 0);
+    m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
+
+    if (index == start || !index.isValid()) {
+      // wrapped around, give up
+      break;
+    }
+
+    ModInfo::Ptr mod = ModInfo::getByIndex(m_ContextRow);
+
     // skip overwrite and backups and separators
-    modOpenNext(tab);
-  } else {
-    displayModInformation(m_ContextRow,tab);
+    if (mod->hasFlag(ModInfo::FLAG_OVERWRITE) ||
+        mod->hasFlag(ModInfo::FLAG_BACKUP) ||
+        mod->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+      continue;
+    }
+
+    return mod;
   }
+
+  return {};
 }
 
-void MainWindow::modOpenPrev(int tab)
+ModInfo::Ptr MainWindow::previousModInList()
 {
-  QModelIndex index = m_ModListSortProxy->mapFromSource(m_OrganizerCore.modList()->index(m_ContextRow, 0));
-  int row = index.row() - 1;
-  if (row == -1) {
-    row = m_ModListSortProxy->rowCount() - 1;
+  const QModelIndex start = m_ModListSortProxy->mapFromSource(
+    m_OrganizerCore.modList()->index(m_ContextRow, 0));
+
+  auto index = start;
+
+  for (;;) {
+    int row = index.row() - 1;
+    if (row == -1) {
+      row = m_ModListSortProxy->rowCount() - 1;
+    }
+
+    index = m_ModListSortProxy->index(row, 0);
+    m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
+
+    if (index == start || !index.isValid()) {
+      // wrapped around, give up
+      break;
+    }
+
+    // skip overwrite and backups and separators
+    ModInfo::Ptr mod = ModInfo::getByIndex(m_ContextRow);
+
+    if (mod->hasFlag(ModInfo::FLAG_OVERWRITE) ||
+        mod->hasFlag(ModInfo::FLAG_BACKUP) ||
+        mod->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+      continue;
+    }
+
+    return mod;
   }
 
-  m_ContextRow = m_ModListSortProxy->mapToSource(m_ModListSortProxy->index(row, 0)).row();
-  ModInfo::Ptr mod = ModInfo::getByIndex(m_ContextRow);
-  std::vector<ModInfo::EFlag> flags = mod->getFlags();
-  if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) ||
-      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) ||
-      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())) {
-    // skip overwrite and backups and separators
-    modOpenPrev(tab);
-  } else {
-    displayModInformation(m_ContextRow,tab);
-  }
+  return {};
 }
 
-void MainWindow::displayModInformation(const QString &modName, int tab)
+void MainWindow::displayModInformation(const QString &modName, ModInfoTabIDs tabID)
 {
   unsigned int index = ModInfo::getIndex(modName);
   if (index == UINT_MAX) {
@@ -3074,14 +3284,14 @@ void MainWindow::displayModInformation(const QString &modName, int tab)
   }
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-  displayModInformation(modInfo, index, tab);
+  displayModInformation(modInfo, index, tabID);
 }
 
 
-void MainWindow::displayModInformation(int row, int tab)
+void MainWindow::displayModInformation(int row, ModInfoTabIDs tabID)
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
-  displayModInformation(modInfo, row, tab);
+  displayModInformation(modInfo, row, tabID);
 }
 
 
@@ -3145,18 +3355,16 @@ void MainWindow::visitOnNexus_clicked()
     int row_idx;
     ModInfo::Ptr info;
     QString gameName;
-    QString webUrl;
+
     for (QModelIndex idx : selection->selectedRows()) {
       row_idx = idx.data(Qt::UserRole + 1).toInt();
       info = ModInfo::getByIndex(row_idx);
       int modID = info->getNexusID();
-      webUrl = info->getURL();
       gameName = info->getGameName();
       if (modID > 0)  {
         linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
-      }
-      else if (webUrl != "") {
-        linkClicked(webUrl);
+      } else {
+        qCritical() << "mod '" << info->name() << "' has no nexus id";
       }
     }
   }
@@ -3166,14 +3374,13 @@ void MainWindow::visitOnNexus_clicked()
     if (modID > 0)  {
       linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
     } else {
-      MessageDialog::showMessage(tr("Nexus ID for this Mod is unknown"), this);
+      MessageDialog::showMessage(tr("Nexus ID for this mod is unknown"), this);
     }
   }
 }
 
 void MainWindow::visitWebPage_clicked()
 {
-
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     int count = selection->selectedRows().count();
@@ -3187,28 +3394,22 @@ void MainWindow::visitWebPage_clicked()
     int row_idx;
     ModInfo::Ptr info;
     QString gameName;
-    QString webUrl;
     for (QModelIndex idx : selection->selectedRows()) {
       row_idx = idx.data(Qt::UserRole + 1).toInt();
       info = ModInfo::getByIndex(row_idx);
-      int modID = info->getNexusID();
-      webUrl = info->getURL();
-      gameName = info->getGameName();
-      if (modID > 0) {
-        linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
-      }
-      else if (webUrl != "") {
-        linkClicked(webUrl);
+
+      const auto url = info->parseCustomURL();
+      if (url.isValid()) {
+        linkClicked(url.toString());
       }
     }
   }
   else {
     ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-    if (info->getURL() != "") {
-      linkClicked(info->getURL());
-    }
-    else {
-      MessageDialog::showMessage(tr("Web page for this mod is unknown"), this);
+
+    const auto url = info->parseCustomURL();
+    if (url.isValid()) {
+      linkClicked(url.toString());
     }
   }
 }
@@ -3219,16 +3420,16 @@ void MainWindow::openExplorer_clicked()
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
       ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-      ::ShellExecuteW(nullptr, L"explore", ToWString(info->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+      shell::ExploreFile(info->absolutePath());
     }
   }
   else {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
-    ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    shell::ExploreFile(modInfo->absolutePath());
   }
 }
 
-void MainWindow::openOriginExplorer_clicked()
+void MainWindow::openPluginOriginExplorer_clicked()
 {
   QItemSelectionModel *selection = ui->espList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 0) {
@@ -3239,18 +3440,14 @@ void MainWindow::openOriginExplorer_clicked()
         continue;
       }
       ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-      std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-
-      ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+      shell::ExploreFile(modInfo->absolutePath());
     }
   }
   else {
     QModelIndex idx = selection->currentIndex();
     QString fileName = idx.data().toString();
     ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
-    std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-
-    ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    shell::ExploreFile(modInfo->absolutePath());
   }
 }
 
@@ -3265,7 +3462,7 @@ void MainWindow::openExplorer_activated()
 			std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
 			if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-				::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+        shell::ExploreFile(modInfo->absolutePath());
 			}
 
 		}
@@ -3286,7 +3483,7 @@ void MainWindow::openExplorer_activated()
         std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
         if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-          ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+          shell::ExploreFile(modInfo->absolutePath());
         }
       }
 		}
@@ -3779,16 +3976,18 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
     try {
       m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
       sourceIdx.column();
-      int tab = -1;
+
+      auto tab = ModInfoTabIDs::None;
+
       switch (sourceIdx.column()) {
-        case ModList::COL_NOTES: tab = ModInfoDialog::TAB_NOTES; break;
-        case ModList::COL_VERSION: tab = ModInfoDialog::TAB_NEXUS; break;
-        case ModList::COL_MODID: tab = ModInfoDialog::TAB_NEXUS; break;
-        case ModList::COL_GAME: tab = ModInfoDialog::TAB_NEXUS; break;
-        case ModList::COL_CATEGORY: tab = ModInfoDialog::TAB_CATEGORIES; break;
-        case ModList::COL_FLAGS: tab = ModInfoDialog::TAB_CONFLICTS; break;
-        default: tab = -1;
+        case ModList::COL_NOTES: tab = ModInfoTabIDs::Notes; break;
+        case ModList::COL_VERSION: tab = ModInfoTabIDs::Nexus; break;
+        case ModList::COL_MODID: tab = ModInfoTabIDs::Nexus; break;
+        case ModList::COL_GAME: tab = ModInfoTabIDs::Nexus; break;
+        case ModList::COL_CATEGORY: tab = ModInfoTabIDs::Categories; break;
+        case ModList::COL_FLAGS: tab = ModInfoTabIDs::Conflicts; break;
       }
+
       displayModInformation(sourceIdx.row(), tab);
       // workaround to cancel the editor that might have opened because of
       // selection-click
@@ -4090,7 +4289,6 @@ void MainWindow::checkModsForUpdates()
     QString apiKey;
     if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
       m_OrganizerCore.doAfterLogin([this] () { this->checkModsForUpdates(); });
-      statusBar()->show();
       NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else {
       qWarning("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.");
@@ -4253,64 +4451,61 @@ void MainWindow::disableVisibleMods()
 void MainWindow::openInstanceFolder()
 {
   QString dataPath = qApp->property("dataPath").toString();
-  ::ShellExecuteW(nullptr, L"explore", ToWString(dataPath).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
-
-  //opens BaseDirectory instead
-	//::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getBaseDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(dataPath);
 }
 
 void MainWindow::openLogsFolder()
 {
 	QString logsPath = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath());
-	::ShellExecuteW(nullptr, L"explore", ToWString(logsPath).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(logsPath);
 }
 
 void MainWindow::openInstallFolder()
 {
-	::ShellExecuteW(nullptr, L"explore", ToWString(qApp->applicationDirPath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(qApp->applicationDirPath());
 }
 
 void MainWindow::openPluginsFolder()
 {
 	QString pluginsPath = QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath());
-	::ShellExecuteW(nullptr, L"explore", ToWString(pluginsPath).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(pluginsPath);
 }
 
 
 void MainWindow::openProfileFolder()
 {
-	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.currentProfile()->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(m_OrganizerCore.currentProfile()->absolutePath());
 }
 
 void MainWindow::openIniFolder()
 {
   if (m_OrganizerCore.currentProfile()->localSettingsEnabled())
   {
-    ::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.currentProfile()->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    shell::ExploreFile(m_OrganizerCore.currentProfile()->absolutePath());
   }
   else {
-    ::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.managedGame()->documentsDirectory().absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    shell::ExploreFile(m_OrganizerCore.managedGame()->documentsDirectory());
   }
 }
 
 void MainWindow::openDownloadsFolder()
 {
-	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getDownloadDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(m_OrganizerCore.settings().getDownloadDirectory());
 }
 
 void MainWindow::openModsFolder()
 {
-  ::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getModDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(m_OrganizerCore.settings().getModDirectory());
 }
 
 void MainWindow::openGameFolder()
 {
-	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.managedGame()->gameDirectory().absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(m_OrganizerCore.managedGame()->gameDirectory());
 }
 
 void MainWindow::openMyGamesFolder()
 {
-	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.managedGame()->documentsDirectory().absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(m_OrganizerCore.managedGame()->documentsDirectory());
 }
 
 
@@ -4363,6 +4558,7 @@ void MainWindow::exportModListCSV()
 	mod_Name->setChecked(true);
   QCheckBox *mod_Note = new QCheckBox(tr("Notes_column"));
 	QCheckBox *mod_Status = new QCheckBox(tr("Mod_Status"));
+  mod_Status->setChecked(true);
 	QCheckBox *primary_Category = new QCheckBox(tr("Primary_Category"));
 	QCheckBox *nexus_ID = new QCheckBox(tr("Nexus_ID"));
 	QCheckBox *mod_Nexus_URL = new QCheckBox(tr("Mod_Nexus_URL"));
@@ -4410,10 +4606,10 @@ void MainWindow::exportModListCSV()
 			std::vector<std::pair<QString, CSVBuilder::EFieldType> > fields;
 			if (mod_Priority->isChecked())
 				fields.push_back(std::make_pair(QString("#Mod_Priority"), CSVBuilder::TYPE_STRING));
+      if (mod_Status->isChecked())
+        fields.push_back(std::make_pair(QString("#Mod_Status"), CSVBuilder::TYPE_STRING));
 			if (mod_Name->isChecked())
 				fields.push_back(std::make_pair(QString("#Mod_Name"), CSVBuilder::TYPE_STRING));
-			if (mod_Status->isChecked())
-				fields.push_back(std::make_pair(QString("#Mod_Status"), CSVBuilder::TYPE_STRING));
       if (mod_Note->isChecked())
         fields.push_back(std::make_pair(QString("#Note"), CSVBuilder::TYPE_STRING));
 			if (primary_Category->isChecked())
@@ -4433,9 +4629,10 @@ void MainWindow::exportModListCSV()
 
 			builder.writeHeader();
 
-			for (unsigned int i = 0; i < numMods; ++i) {
-				ModInfo::Ptr info = ModInfo::getByIndex(i);
-				bool enabled = m_OrganizerCore.currentProfile()->modEnabled(i);
+      auto indexesByPriority = m_OrganizerCore.currentProfile()->getAllIndexesByPriority();
+      for (auto& iter : indexesByPriority) {
+				ModInfo::Ptr info = ModInfo::getByIndex(iter.second);
+				bool enabled = m_OrganizerCore.currentProfile()->modEnabled(iter.second);
 				if ((selectedRowID == 1) && !enabled) {
 					continue;
 				}
@@ -4446,11 +4643,11 @@ void MainWindow::exportModListCSV()
 				if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) == flags.end()) &&
 					(std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) == flags.end())) {
 					if (mod_Priority->isChecked())
-						builder.setRowField("#Mod_Priority", QString("%1").arg(m_OrganizerCore.currentProfile()->getModPriority(i), 4, 10, QChar('0')));
+						builder.setRowField("#Mod_Priority", QString("%1").arg(iter.first, 4, 10, QChar('0')));
+          if (mod_Status->isChecked())
+            builder.setRowField("#Mod_Status", (enabled) ? "+" : "-");
 					if (mod_Name->isChecked())
 						builder.setRowField("#Mod_Name", info->name());
-					if (mod_Status->isChecked())
-						builder.setRowField("#Mod_Status", (enabled)? "Enabled" : "Disabled");
           if (mod_Note->isChecked())
             builder.setRowField("#Note", QString("%1").arg(info->comments().remove(',')));
 					if (primary_Category->isChecked())
@@ -4580,7 +4777,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
       // no selection
       QMenu menu(this);
       initModListContextMenu(&menu);
-      menu.exec(modList->mapToGlobal(pos));
+      menu.exec(modList->viewport()->mapToGlobal(pos));
     } else {
       QMenu menu(this);
 
@@ -4713,8 +4910,13 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
         if (info->getNexusID() > 0)  {
           menu.addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
-        } else if ((info->getURL() != "")) {
-          menu.addAction(tr("Visit web page"), this, SLOT(visitWebPage_clicked()));
+        }
+
+        const auto url = info->parseCustomURL();
+        if (url.isValid()) {
+          menu.addAction(
+            tr("Visit on %1").arg(url.host()),
+            this, SLOT(visitWebPage_clicked()));
         }
 
         menu.addAction(tr("Open in Explorer"), this, SLOT(openExplorer_clicked()));
@@ -4725,7 +4927,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu.setDefaultAction(infoAction);
       }
 
-      menu.exec(modList->mapToGlobal(pos));
+      menu.exec(modList->viewport()->mapToGlobal(pos));
     }
   } catch (const std::exception &e) {
     reportError(tr("Exception: ").arg(e.what()));
@@ -4864,79 +5066,44 @@ void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
 
   menu.addAction(deleteMenuLabel, this, SLOT(deleteSavegame_clicked()));
 
-  menu.exec(ui->savegameList->mapToGlobal(pos));
+  menu.exec(ui->savegameList->viewport()->mapToGlobal(pos));
 }
 
 void MainWindow::linkToolbar()
 {
-  Executable &exe(getSelectedExecutable());
-  exe.showOnToolbar(!exe.isShownOnToolbar());
-  ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::Toolbar))->setIcon(exe.isShownOnToolbar() ? QIcon(":/MO/gui/remove") : QIcon(":/MO/gui/link"));
-  updateToolBar();
-}
+  Executable& exe = getSelectedExecutable();
 
-namespace {
-QString getLinkfile(const QString &dir, const Executable &exec)
-{
-  return QDir::fromNativeSeparators(dir) + "/" + exec.m_Title + ".lnk";
-}
-
-QString getDesktopLinkfile(const Executable &exec)
-{
-  return getLinkfile(getDesktopDirectory(), exec);
-}
-
-QString getStartMenuLinkfile(const Executable &exec)
-{
-  return getLinkfile(getStartMenuDirectory(), exec);
-}
-}
-
-void MainWindow::addWindowsLink(const ShortcutType mapping)
-{
-  const Executable &selectedExecutable(getSelectedExecutable());
-  QString const linkName = getLinkfile(mapping == ShortcutType::Desktop ? getDesktopDirectory() : getStartMenuDirectory(),
-                                       selectedExecutable);
-
-  if (QFile::exists(linkName)) {
-    if (QFile::remove(linkName)) {
-      ui->linkButton->menu()->actions().at(static_cast<int>(mapping))->setIcon(QIcon(":/MO/gui/link"));
-    } else {
-      reportError(tr("failed to remove %1").arg(linkName));
-    }
-  } else {
-    QFileInfo const exeInfo(qApp->applicationFilePath());
-    // create link
-    QString executable = QDir::toNativeSeparators(selectedExecutable.m_BinaryInfo.absoluteFilePath());
-
-    std::wstring targetFile       = ToWString(exeInfo.absoluteFilePath());
-    std::wstring parameter        = ToWString(
-      QString("\"moshortcut://%1:%2\"").arg(InstanceManager::instance().currentInstance(),selectedExecutable.m_Title));
-    std::wstring description      = ToWString(QString("Run %1 with ModOrganizer").arg(selectedExecutable.m_Title));
-    std::wstring iconFile         = ToWString(executable);
-    std::wstring currentDirectory = ToWString(QDir::toNativeSeparators(qApp->applicationDirPath()));
-
-    if (CreateShortcut(targetFile.c_str()
-                       , parameter.c_str()
-                       , QDir::toNativeSeparators(linkName).toUtf8().constData()
-                       , description.c_str()
-                       , (selectedExecutable.usesOwnIcon() ? iconFile.c_str() : nullptr), 0
-                       , currentDirectory.c_str()) == 0) {
-      ui->linkButton->menu()->actions().at(static_cast<int>(mapping))->setIcon(QIcon(":/MO/gui/remove"));
-    } else {
-      reportError(tr("failed to create %1").arg(linkName));
-    }
-  }
+  exe.setShownOnToolbar(!exe.isShownOnToolbar());
+  updatePinnedExecutables();
 }
 
 void MainWindow::linkDesktop()
 {
-  addWindowsLink(ShortcutType::Desktop);
+  env::Shortcut(getSelectedExecutable()).toggle(env::Shortcut::Desktop);
 }
 
 void MainWindow::linkMenu()
 {
-  addWindowsLink(ShortcutType::StartMenu);
+  env::Shortcut(getSelectedExecutable()).toggle(env::Shortcut::StartMenu);
+}
+
+void MainWindow::on_linkButton_pressed()
+{
+  const Executable& exe = getSelectedExecutable();
+
+  const QIcon addIcon(":/MO/gui/link");
+  const QIcon removeIcon(":/MO/gui/remove");
+
+  env::Shortcut shortcut(exe);
+
+  m_LinkToolbar->setIcon(
+    exe.isShownOnToolbar() ? removeIcon : addIcon);
+
+  m_LinkDesktop->setIcon(
+    shortcut.exists(env::Shortcut::Desktop) ? removeIcon : addIcon);
+
+  m_LinkStartMenu->setIcon(
+    shortcut.exists(env::Shortcut::StartMenu) ? removeIcon : addIcon);
 }
 
 void MainWindow::on_actionSettings_triggered()
@@ -5018,12 +5185,13 @@ void MainWindow::on_actionSettings_triggered()
     activateProxy(settings.useProxy());
   }
 
-  ui->apiRequests->setVisible(!settings.hideAPICounter());
-
+  m_statusBar->checkSettings(m_OrganizerCore.settings());
   updateDownloadView();
 
   m_OrganizerCore.updateVFSParams(settings.logLevel(), settings.crashDumpsType(), settings.executablesBlacklist());
   m_OrganizerCore.cycleDiagnostics();
+
+  toggleMO2EndorseState();
 }
 
 
@@ -5078,7 +5246,7 @@ void MainWindow::languageChange(const QString &newLanguage)
 
   ui->profileBox->setItemText(0, QObject::tr("<Manage...>"));
 
-  createHelpWidget();
+  createHelpMenu();
 
   updateDownloadView();
   updateProblemsButton();
@@ -5131,91 +5299,49 @@ void MainWindow::writeDataToFile()
   }
 }
 
-
-int MainWindow::getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments)
-{
-  QString extension = targetInfo.suffix();
-  if ((extension.compare("cmd", Qt::CaseInsensitive) == 0) ||
-      (extension.compare("com", Qt::CaseInsensitive) == 0) ||
-      (extension.compare("bat", Qt::CaseInsensitive) == 0)) {
-    binaryInfo = QFileInfo("C:\\Windows\\System32\\cmd.exe");
-    arguments = QString("/C \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    return 1;
-  } else if (extension.compare("exe", Qt::CaseInsensitive) == 0) {
-    binaryInfo = targetInfo;
-    return 1;
-  } else if (extension.compare("jar", Qt::CaseInsensitive) == 0) {
-    // types that need to be injected into
-    std::wstring targetPathW = ToWString(targetInfo.absoluteFilePath());
-    QString binaryPath;
-
-    { // try to find java automatically
-      WCHAR buffer[MAX_PATH];
-      if (::FindExecutableW(targetPathW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
-        DWORD binaryType = 0UL;
-        if (!::GetBinaryTypeW(buffer, &binaryType)) {
-          qDebug("failed to determine binary type of \"%ls\": %lu", buffer, ::GetLastError());
-        } else if (binaryType == SCS_32BIT_BINARY) {
-          binaryPath = ToQString(buffer);
-        }
-      }
-    }
-    if (binaryPath.isEmpty() && (extension == "jar")) {
-      // second attempt: look to the registry
-      QSettings javaReg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
-      if (javaReg.contains("CurrentVersion")) {
-        QString currentVersion = javaReg.value("CurrentVersion").toString();
-        binaryPath = javaReg.value(QString("%1/JavaHome").arg(currentVersion)).toString().append("\\bin\\javaw.exe");
-      }
-    }
-    if (binaryPath.isEmpty()) {
-      binaryPath = QFileDialog::getOpenFileName(this, tr("Select binary"), QString(), tr("Binary") + " (*.exe)");
-    }
-    if (binaryPath.isEmpty()) {
-      return 0;
-    }
-    binaryInfo = QFileInfo(binaryPath);
-    if (extension == "jar") {
-      arguments = QString("-jar \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    } else {
-      arguments = QString("\"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    }
-    return 1;
-  } else {
-    return 2;
-  }
-}
-
-
 void MainWindow::addAsExecutable()
 {
-  if (m_ContextItem != nullptr) {
-    QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
-    QFileInfo binaryInfo;
-    QString arguments;
-    switch (getBinaryExecuteInfo(targetInfo, binaryInfo, arguments)) {
-      case 1: {
+  if (m_ContextItem == nullptr) {
+    return;
+  }
+
+  using FileExecutionTypes = OrganizerCore::FileExecutionTypes;
+
+  QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
+  QFileInfo binaryInfo;
+  QString arguments;
+  FileExecutionTypes type;
+
+  if (!OrganizerCore::getFileExecutionContext(this, targetInfo, binaryInfo, arguments, type)) {
+    return;
+  }
+
+  switch (type)
+  {
+    case FileExecutionTypes::Executable: {
         QString name = QInputDialog::getText(this, tr("Enter Name"),
               tr("Please enter a name for the executable"), QLineEdit::Normal,
               targetInfo.baseName());
+
         if (!name.isEmpty()) {
           //Note: If this already exists, you'll lose custom settings
-          m_OrganizerCore.executablesList()->addExecutable(name,
-                                                           binaryInfo.absoluteFilePath(),
-                                                           arguments,
-                                                           targetInfo.absolutePath(),
-                                                           QString(),
-                                                           Executable::CustomExecutable);
+          m_OrganizerCore.executablesList()->setExecutable(Executable()
+            .title(name)
+            .binaryInfo(binaryInfo)
+            .arguments(arguments)
+            .workingDirectory(targetInfo.absolutePath()));
+
           refreshExecutablesList();
         }
-      } break;
-      case 2: {
+
+        break;
+      }
+
+    case FileExecutionTypes::Other:  // fall-through
+    default: {
         QMessageBox::information(this, tr("Not an executable"), tr("This is not a recognized executable."));
-      } break;
-      default: {
-        // nop
-      } break;
-    }
+        break;
+      }
   }
 }
 
@@ -5333,103 +5459,43 @@ void MainWindow::disableSelectedMods_clicked()
 void MainWindow::previewDataFile()
 {
   QString fileName = QDir::fromNativeSeparators(m_ContextItem->data(0, Qt::UserRole).toString());
-
-  // what we have is an absolute path to the file in its actual location (for the primary origin)
-  // what we want is the path relative to the virtual data directory
-
-  // we need to look in the virtual directory for the file to make sure the info is up to date.
-
-  // check if the file comes from the actual data folder instead of a mod
-  QDir gameDirectory = m_OrganizerCore.managedGame()->dataDirectory().absolutePath();
-  QString relativePath = gameDirectory.relativeFilePath(fileName);
-  QDir dirRelativePath = gameDirectory.relativeFilePath(fileName);
-  // if the file is on a different drive the dirRelativePath will actually be an absolute path so we make sure that is not the case
-  if (!dirRelativePath.isAbsolute() && !relativePath.startsWith("..")) {
-	  fileName = relativePath;
-  }
-  else {
-	  // crude: we search for the next slash after the base mod directory to skip everything up to the data-relative directory
-	  int offset = m_OrganizerCore.settings().getModDirectory().size() + 1;
-	  offset = fileName.indexOf("/", offset);
-	  fileName = fileName.mid(offset + 1);
-  }
-
-
-
-  const FileEntry::Ptr file = m_OrganizerCore.directoryStructure()->searchFile(ToWString(fileName), nullptr);
-
-  if (file.get() == nullptr) {
-    reportError(tr("file not found: %1").arg(qUtf8Printable(fileName)));
-    return;
-  }
-
-  // set up preview dialog
-  PreviewDialog preview(fileName);
-  auto addFunc = [&] (int originId) {
-      FilesOrigin &origin = m_OrganizerCore.directoryStructure()->getOriginByID(originId);
-      QString filePath = QDir::fromNativeSeparators(ToQString(origin.getPath())) + "/" + fileName;
-      if (QFile::exists(filePath)) {
-        // it's very possible the file doesn't exist, because it's inside an archive. we don't support that
-        QWidget *wid = m_PluginContainer.previewGenerator().genPreview(filePath);
-        if (wid == nullptr) {
-          reportError(tr("failed to generate preview for %1").arg(filePath));
-        } else {
-          preview.addVariant(ToQString(origin.getName()), wid);
-        }
-      }
-    };
-
-  addFunc(file->getOrigin());
-  for (auto alt : file->getAlternatives()) {
-    addFunc(alt.first);
-  }
-  if (preview.numVariants() > 0) {
-    QSettings &settings = m_OrganizerCore.settings().directInterface();
-    QString key = QString("geometry/%1").arg(preview.objectName());
-    if (settings.contains(key)) {
-      preview.restoreGeometry(settings.value(key).toByteArray());
-    }
-    preview.exec();
-    settings.setValue(key, preview.saveGeometry());
-  } else {
-    QMessageBox::information(this, tr("Sorry"), tr("Sorry, can't preview anything. This function currently does not support extracting from bsas."));
-  }
+  m_OrganizerCore.previewFileWithAlternatives(this, fileName);
 }
 
 void MainWindow::openDataFile()
 {
-  if (m_ContextItem != nullptr) {
-    QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
-    QFileInfo binaryInfo;
-    QString arguments;
-    switch (getBinaryExecuteInfo(targetInfo, binaryInfo, arguments)) {
-      case 1: {
-        m_OrganizerCore.spawnBinaryDirect(
-            binaryInfo, arguments, m_OrganizerCore.currentProfile()->name(),
-            targetInfo.absolutePath(), "", "");
-      } break;
-      case 2: {
-        ::ShellExecuteW(nullptr, L"open",
-                        ToWString(targetInfo.absoluteFilePath()).c_str(),
-                        nullptr, nullptr, SW_SHOWNORMAL);
-      } break;
-      default: {
-        // nop
-      } break;
-    }
+  if (m_ContextItem == nullptr) {
+    return;
   }
+
+  QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
+  m_OrganizerCore.executeFileVirtualized(this, targetInfo);
 }
 
+void MainWindow::openDataOriginExplorer_clicked()
+{
+  if (m_ContextItem == nullptr) {
+    return;
+  }
+
+  const auto isArchive = m_ContextItem->data(0, Qt::UserRole + 1).toBool();
+  const auto isDirectory = m_ContextItem->data(0, Qt::UserRole + 3).toBool();
+
+  if (isArchive || isDirectory) {
+    return;
+  }
+
+  const auto fullPath = m_ContextItem->data(0, Qt::UserRole).toString();
+
+  qDebug().nospace() << "opening in explorer: " << fullPath;
+  shell::ExploreFile(fullPath);
+}
 
 void MainWindow::updateAvailable()
 {
-  for (QAction *action : ui->toolBar->actions()) {
-    if (action->text() == tr("Update")) {
-      action->setEnabled(true);
-      action->setToolTip(tr("Update available"));
-      break;
-    }
-  }
+  ui->actionUpdate->setEnabled(true);
+  ui->actionUpdate->setToolTip(tr("Update available"));
+  m_statusBar->setUpdateAvailable(true);
 }
 
 
@@ -5463,8 +5529,15 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
       menu.addAction(tr("Preview"), this, SLOT(previewDataFile()));
     }
 
+    const auto isArchive = m_ContextItem->data(0, Qt::UserRole + 1).toBool();
+    const auto isDirectory = m_ContextItem->data(0, Qt::UserRole + 3).toBool();
+
+    if (!isArchive && !isDirectory) {
+      menu.addAction("Open Origin in Explorer", this, SLOT(openDataOriginExplorer_clicked()));
+    }
+
     // offer to hide/unhide file, but not for files from archives
-    if (!m_ContextItem->data(0, Qt::UserRole + 1).toBool()) {
+    if (!isArchive) {
       if (m_ContextItem->text(0).endsWith(ModInfo::s_HiddenExt)) {
         menu.addAction(tr("Un-Hide"), this, SLOT(unhideFile()));
       } else {
@@ -5477,7 +5550,7 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
   menu.addAction(tr("Write To File..."), this, SLOT(writeDataToFile()));
   menu.addAction(tr("Refresh"), this, SLOT(on_btnRefreshData_clicked()));
 
-  menu.exec(dataTree->mapToGlobal(pos));
+  menu.exec(dataTree->viewport()->mapToGlobal(pos));
 }
 
 void MainWindow::on_conflictsCheckBox_toggled(bool)
@@ -5485,12 +5558,17 @@ void MainWindow::on_conflictsCheckBox_toggled(bool)
   refreshDataTreeKeepExpandedNodes();
 }
 
-
 void MainWindow::on_actionUpdate_triggered()
 {
   m_OrganizerCore.startMOUpdate();
 }
 
+void MainWindow::on_actionExit_triggered()
+{
+  if (confirmExit()) {
+    qApp->exit();
+  }
+}
 
 void MainWindow::actionEndorseMO()
 {
@@ -5589,20 +5667,19 @@ void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
 
 void MainWindow::toggleMO2EndorseState()
 {
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionEndorseMO));
   if (Settings::instance().endorsementIntegration()) {
     ui->actionEndorseMO->setVisible(true);
     if (Settings::instance().directInterface().contains("endorse_state")) {
-      ui->actionEndorseMO->setEnabled(false);
+      ui->actionEndorseMO->menu()->setEnabled(false);
       if (Settings::instance().directInterface().value("endorse_state").toString() == "Endorsed") {
         ui->actionEndorseMO->setToolTip(tr("Thank you for endorsing MO2! :)"));
-        toolBtn->setToolTip(tr("Thank you for endorsing MO2! :)"));
+        ui->actionEndorseMO->setStatusTip(tr("Thank you for endorsing MO2! :)"));
       } else if (Settings::instance().directInterface().value("endorse_state").toString() == "Abstained") {
         ui->actionEndorseMO->setToolTip(tr("Please reconsider endorsing MO2 on Nexus!"));
-        toolBtn->setToolTip(tr("Please reconsider endorsing MO2 on Nexus!"));
+        ui->actionEndorseMO->setStatusTip(tr("Please reconsider endorsing MO2 on Nexus!"));
       }
     } else {
-      ui->actionEndorseMO->setEnabled(true);
+      ui->actionEndorseMO->menu()->setEnabled(true);
     }
   } else
     ui->actionEndorseMO->setVisible(false);
@@ -5903,26 +5980,6 @@ void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, in
 }
 
 
-void MainWindow::updateAPICounter(int queueCount, std::tuple<int, int, int, int> limits)
-{
-  ui->apiRequests->setText(QString("API: Q: %1 | D: %2 | H: %3").arg(queueCount).arg(std::get<0>(limits)).arg(std::get<2>(limits)));
-  int requestsRemaining = std::get<0>(limits) + std::get<2>(limits);
-  if (requestsRemaining > 300) {
-    QPalette palette = ui->apiRequests->palette();
-    palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkGreen);
-    ui->apiRequests->setPalette(palette);
-  } else if (requestsRemaining < 150) {
-    QPalette palette = ui->apiRequests->palette();
-    palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkRed);
-    ui->apiRequests->setPalette(palette);
-  } else {
-    QPalette palette = ui->apiRequests->palette();
-    palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkYellow);
-    ui->apiRequests->setPalette(palette);
-  }
-}
-
-
 BSA::EErrorCode MainWindow::extractBSA(BSA::Archive &archive, BSA::Folder::Ptr folder, const QString &destination,
                            QProgressDialog &progress)
 {
@@ -6055,7 +6112,7 @@ void MainWindow::on_bsaList_customContextMenuRequested(const QPoint &pos)
   QMenu menu;
   menu.addAction(tr("Extract..."), this, SLOT(extractBSATriggered()));
 
-  menu.exec(ui->bsaList->mapToGlobal(pos));
+  menu.exec(ui->bsaList->viewport()->mapToGlobal(pos));
 }
 
 void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
@@ -6068,16 +6125,15 @@ void MainWindow::on_actionNotifications_triggered()
 {
   updateProblemsButton();
   ProblemsDialog problems(m_PluginContainer.plugins<QObject>(), this);
-  if (problems.hasProblems()) {
-    QSettings &settings = m_OrganizerCore.settings().directInterface();
-    QString key = QString("geometry/%1").arg(problems.objectName());
-    if (settings.contains(key)) {
-      problems.restoreGeometry(settings.value(key).toByteArray());
-    }
-    problems.exec();
-    settings.setValue(key, problems.saveGeometry());
-    updateProblemsButton();
+
+  QSettings &settings = m_OrganizerCore.settings().directInterface();
+  QString key = QString("geometry/%1").arg(problems.objectName());
+  if (settings.contains(key)) {
+    problems.restoreGeometry(settings.value(key).toByteArray());
   }
+  problems.exec();
+  settings.setValue(key, problems.saveGeometry());
+  updateProblemsButton();
 }
 
 void MainWindow::on_actionChange_Game_triggered()
@@ -6133,7 +6189,7 @@ void MainWindow::on_categoriesList_customContextMenuRequested(const QPoint &pos)
   menu.addAction(tr("Edit Categories..."), this, SLOT(editCategories()));
   menu.addAction(tr("Deselect filter"), this, SLOT(deselectFilters()));
 
-  menu.exec(ui->categoriesList->mapToGlobal(pos));
+  menu.exec(ui->categoriesList->viewport()->mapToGlobal(pos));
 }
 
 
@@ -6166,28 +6222,39 @@ void MainWindow::unlockESPIndex()
 
 void MainWindow::removeFromToolbar()
 {
-  try {
-    Executable &exe = m_OrganizerCore.executablesList()->find(m_ContextAction->text());
-    exe.showOnToolbar(false);
-  } catch (const std::runtime_error&) {
-    qDebug("executable doesn't exist any more");
+  const auto& title = m_ContextAction->text();
+  auto& list = *m_OrganizerCore.executablesList();
+
+  auto itor = list.find(title);
+  if (itor == list.end()) {
+    qWarning().nospace()
+      << "removeFromToolbar(): executable '" << title << "' not found";
+
+    return;
   }
 
-  updateToolBar();
+  itor->setShownOnToolbar(false);
+  updatePinnedExecutables();
 }
 
 
 void MainWindow::toolBar_customContextMenuRequested(const QPoint &point)
 {
   QAction *action = ui->toolBar->actionAt(point);
+
   if (action != nullptr) {
     if (action->objectName().startsWith("custom_")) {
       m_ContextAction = action;
       QMenu menu;
-      menu.addAction(tr("Remove"), this, SLOT(removeFromToolbar()));
+      menu.addAction(tr("Remove '%1' from the toolbar").arg(action->text()), this, SLOT(removeFromToolbar()));
       menu.exec(ui->toolBar->mapToGlobal(point));
+      return;
     }
   }
+
+  // did not click a link button, show the default context menu
+  auto* m = createPopupMenu();
+  m->exec(ui->toolBar->mapToGlobal(point));
 }
 
 void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
@@ -6235,7 +6302,7 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
   unsigned int modInfoIndex = ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(idx.data().toString()));
   //this is to avoid showing the option on game files like skyrim.esm
   if (modInfoIndex != UINT_MAX) {
-    menu.addAction(tr("Open Origin in Explorer"), this, SLOT(openOriginExplorer_clicked()));
+    menu.addAction(tr("Open Origin in Explorer"), this, SLOT(openPluginOriginExplorer_clicked()));
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modInfoIndex);
     std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
@@ -6246,7 +6313,7 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
   }
 
   try {
-    menu.exec(ui->espList->mapToGlobal(pos));
+    menu.exec(ui->espList->viewport()->mapToGlobal(pos));
   } catch (const std::exception &e) {
     reportError(tr("Exception: ").arg(e.what()));
   } catch (...) {
@@ -6291,29 +6358,14 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
 
 const Executable &MainWindow::getSelectedExecutable() const
 {
-  QString name = ui->executablesListBox->itemText(ui->executablesListBox->currentIndex());
-  return m_OrganizerCore.executablesList()->find(name);
+  const QString name = ui->executablesListBox->itemText(ui->executablesListBox->currentIndex());
+  return m_OrganizerCore.executablesList()->get(name);
 }
 
 Executable &MainWindow::getSelectedExecutable()
 {
-  QString name = ui->executablesListBox->itemText(ui->executablesListBox->currentIndex());
-  return m_OrganizerCore.executablesList()->find(name);
-}
-
-void MainWindow::on_linkButton_pressed()
-{
-  const Executable &selectedExecutable(getSelectedExecutable());
-
-  const QIcon addIcon(":/MO/gui/link");
-  const QIcon removeIcon(":/MO/gui/remove");
-
-  const QFileInfo linkDesktopFile(getDesktopLinkfile(selectedExecutable));
-  const QFileInfo linkMenuFile(getStartMenuLinkfile(selectedExecutable));
-
-  ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::Toolbar))->setIcon(selectedExecutable.isShownOnToolbar() ? removeIcon : addIcon);
-  ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::Desktop))->setIcon(linkDesktopFile.exists() ? removeIcon : addIcon);
-  ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::StartMenu))->setIcon(linkMenuFile.exists() ? removeIcon : addIcon);
+  const QString name = ui->executablesListBox->itemText(ui->executablesListBox->currentIndex());
+  return m_OrganizerCore.executablesList()->get(name);
 }
 
 void MainWindow::on_showHiddenBox_toggled(bool checked)
@@ -6540,7 +6592,7 @@ void MainWindow::on_bossButton_clicked()
   }
 
   if (errorMessages.length() > 0) {
-    QMessageBox *warn = new QMessageBox(QMessageBox::Warning, tr("Errors occured"), errorMessages.c_str(), QMessageBox::Ok, this);
+    QMessageBox *warn = new QMessageBox(QMessageBox::Warning, tr("Errors occurred"), errorMessages.c_str(), QMessageBox::Ok, this);
     warn->setModal(false);
     warn->show();
   }
@@ -6643,7 +6695,7 @@ void MainWindow::on_saveModsButton_clicked()
   m_OrganizerCore.currentProfile()->writeModlistNow(true);
   QDateTime now = QDateTime::currentDateTime();
   if (createBackup(m_OrganizerCore.currentProfile()->getModlistFileName(), now)) {
-    MessageDialog::showMessage(tr("Backup of modlist created"), this);
+    MessageDialog::showMessage(tr("Backup of mod list created"), this);
   }
 }
 
@@ -6822,6 +6874,17 @@ void MainWindow::dropEvent(QDropEvent *event)
   event->accept();
 }
 
+void MainWindow::keyReleaseEvent(QKeyEvent *event)
+{
+  // if the menubar is hidden, pressing Alt will make it visible
+  if (event->key() == Qt::Key_Alt) {
+    if (!ui->menuBar->isVisible()) {
+      showMenuBar(true);
+    }
+  }
+
+  QMainWindow::keyReleaseEvent(event);
+}
 
 void MainWindow::on_clickBlankButton_clicked()
 {

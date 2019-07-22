@@ -47,7 +47,7 @@ int DownloadList::rowCount(const QModelIndex&) const
 
 int DownloadList::columnCount(const QModelIndex&) const
 {
-  return 4;
+  return COL_COUNT;
 }
 
 
@@ -69,6 +69,9 @@ QVariant DownloadList::headerData(int section, Qt::Orientation orientation, int 
       (orientation == Qt::Horizontal)) {
     switch (section) {
       case COL_NAME: return tr("Name");
+      case COL_MODNAME: return tr("Mod name");
+      case COL_VERSION: return tr("Version");
+      case COL_ID: return tr("Nexus ID");
       case COL_SIZE: return tr("Size");
       case COL_STATUS: return tr("Status");
       case COL_FILETIME: return tr("Filetime");
@@ -93,6 +96,30 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
     } else {
       switch (index.column()) {
         case COL_NAME: return m_MetaDisplay ? m_Manager->getDisplayName(index.row()) : m_Manager->getFileName(index.row());
+        case COL_MODNAME: {
+          if (m_Manager->isInfoIncomplete(index.row())) {
+            return {};
+          } else {
+            const MOBase::ModRepositoryFileInfo *info = m_Manager->getFileInfo(index.row());
+            return info->modName;
+          }
+        }
+        case COL_VERSION: {
+          if (m_Manager->isInfoIncomplete(index.row())) {
+            return {};
+          } else {
+            const MOBase::ModRepositoryFileInfo *info = m_Manager->getFileInfo(index.row());
+            return info->version.canonicalString();
+          }
+        }
+        case COL_ID: {
+          if (m_Manager->isInfoIncomplete(index.row())) {
+            return {};
+          } else {
+            const MOBase::ModRepositoryFileInfo *info = m_Manager->getFileInfo(index.row());
+            return QString("%1").arg(m_Manager->getModID(index.row()));
+          }
+        }
         case COL_SIZE: return sizeFormat(m_Manager->getFileSize(index.row()));
         case COL_FILETIME: return m_Manager->getFileTime(index.row());
         case COL_STATUS:
@@ -143,10 +170,10 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
         && m_Manager->isInfoIncomplete(index.row()))
       return QIcon(":/MO/gui/warning_16");
   } else if (role == Qt::TextAlignmentRole) {
-    if (index.column() == COL_NAME)
-      return QVariant(Qt::AlignVCenter | Qt::AlignLeft);
-    else
+    if (index.column() == COL_SIZE)
       return QVariant(Qt::AlignVCenter | Qt::AlignRight);
+    else
+      return QVariant(Qt::AlignVCenter | Qt::AlignLeft);
   }
   return QVariant();
 }

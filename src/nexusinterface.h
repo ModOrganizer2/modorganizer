@@ -20,6 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef NEXUSINTERFACE_H
 #define NEXUSINTERFACE_H
 
+#include "apiuseraccount.h"
+
 #include <utility.h>
 #include <versioninfo.h>
 #include <imodrepositorybridge.h>
@@ -39,6 +41,7 @@ namespace MOBase { class IPluginGame; }
 class NexusInterface;
 class NXMAccessManager;
 
+
 /**
  * @brief convenience class to make nxm requests easier
  * usually, all objects that started a nxm request will be signaled if one finished.
@@ -53,7 +56,6 @@ class NexusBridge : public MOBase::IModRepositoryBridge
   Q_OBJECT
 
 public:
-
   NexusBridge(PluginContainer *pluginContainer, const QString &subModule = "");
 
   /**
@@ -147,6 +149,8 @@ public:
   };
 
 public:
+  static APILimits defaultAPILimits();
+  static APILimits parseLimits(const QNetworkReply* reply);
 
   ~NexusInterface();
 
@@ -380,7 +384,7 @@ public:
   /**
    *
    */
-  int requestInfoFromMd5(QString gameName, QByteArray &hash, QObject *receiver, QVariant userData, const QString &subModule, 
+  int requestInfoFromMd5(QString gameName, QByteArray &hash, QObject *receiver, QVariant userData, const QString &subModule,
                          MOBase::IPluginGame const *game);
 
   /**
@@ -394,6 +398,9 @@ public:
   void loginCompleted();
 
   std::vector<std::pair<QString, QString>> getGameChoices(const MOBase::IPluginGame *game);
+
+  APIUserAccount getAPIUserAccount() const;
+  APIStats getAPIStats() const;
 
 public:
 
@@ -459,11 +466,11 @@ signals:
   void nxmTrackedModsAvailable(QVariant userData, QVariant resultData, int requestID);
   void nxmTrackingToggled(QString gameName, int modID, QVariant userData, bool tracked, int requestID);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
-  void requestsChanged(int queueCount, std::tuple<int,int,int,int> requestsRemaining);
+  void requestsChanged(const APIStats& stats, const APIUserAccount& user);
 
 public slots:
 
-  void setRateMax(const QString&, bool, std::tuple<int,int,int,int> limits);
+  void setUserAccount(const APIUserAccount& user);
 
 private slots:
 
@@ -534,23 +541,13 @@ private:
   QString getOldModsURL(QString gameName) const;
 
 private:
-
   QNetworkDiskCache *m_DiskCache;
-
   NXMAccessManager *m_AccessManager;
-
   std::list<NXMRequestInfo> m_ActiveRequest;
   QQueue<NXMRequestInfo> m_RequestQueue;
-
   MOBase::VersionInfo m_MOVersion;
-
   PluginContainer *m_PluginContainer;
-
-  int m_RemainingDailyRequests;
-  int m_RemainingHourlyRequests;
-  int m_MaxDailyRequests;
-  int m_MaxHourlyRequests;
-
+  APIUserAccount m_User;
 };
 
 #endif // NEXUSINTERFACE_H

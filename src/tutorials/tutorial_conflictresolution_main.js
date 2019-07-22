@@ -56,7 +56,7 @@ function getTutorialSteps() {
             waitForClick()
         },
         function() {
-            tutorial.text = qsTr("<img src=\"qrc:///MO/gui/emblem_conflict_redundant\" /> indicates that the mod is completely overwrtten by another. You could as well disable it.");
+            tutorial.text = qsTr("<img src=\"qrc:///MO/gui/emblem_conflict_redundant\" /> indicates that the mod is completely overwritten by another. You could as well disable it.");
             waitForClick()
         },
         function() {
@@ -65,7 +65,7 @@ function getTutorialSteps() {
         },
         function() {
             tutorial.text = qsTr("Option A: Switch to the \"Data\"-tab if necessary")
-            if (!tutorialControl.waitForTabOpen("tabWidget", 2)) {
+            if (!tutorialControl.waitForTabOpen("tabWidget", "dataTab")) {
                 highlightItem("tabWidget", false)
                 waitForClick()
             } else {
@@ -107,7 +107,7 @@ function getTutorialSteps() {
         function() {
             tutorial.text = qsTr("Please open the \"Plugins\"-tab...")
             highlightItem("tabWidget", true)
-            if (!tutorialControl.waitForTabOpen("tabWidget", 0)) {
+            if (!tutorialControl.waitForTabOpen("tabWidget", "espTab")) {
                 nextStep()
             }
         },

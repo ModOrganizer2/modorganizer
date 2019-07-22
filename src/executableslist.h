@@ -23,41 +23,61 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "executableinfo.h"
 
 #include <vector>
+#include <optional>
 
 #include <QFileInfo>
 #include <QMetaType>
 
-namespace MOBase { class IPluginGame; }
+namespace MOBase { class IPluginGame; class ExecutableInfo; }
 
 /*!
  * @brief Information about an executable
  **/
-struct Executable {
-  QString m_Title;
-  QFileInfo m_BinaryInfo;
-  QString m_Arguments;
-  QString m_SteamAppID;
-  QString m_WorkingDirectory;
-
-  enum Flag {
-    CustomExecutable = 0x01,
+class Executable
+{
+public:
+  enum Flag
+  {
     ShowInToolbar = 0x02,
-    UseApplicationIcon = 0x04,
-
-    AllFlags = 0xff //I know, I know
+    UseApplicationIcon = 0x04
   };
 
-  Q_DECLARE_FLAGS(Flags, Flag)
+  Q_DECLARE_FLAGS(Flags, Flag);
 
-  Flags m_Flags;
+  Executable(QString title={});
 
-  bool isCustom() const { return m_Flags.testFlag(CustomExecutable); }
+  /**
+  * @brief Executable from plugin
+  */
+  Executable(const MOBase::ExecutableInfo& info, Flags flags);
 
-  bool isShownOnToolbar() const { return m_Flags.testFlag(ShowInToolbar); }
+  const QString& title() const;
+  const QFileInfo& binaryInfo() const;
+  const QString& arguments() const;
+  const QString& steamAppID() const;
+  const QString& workingDirectory() const;
+  Flags flags() const;
 
-  void showOnToolbar(bool state);
+  Executable& title(const QString& s);
+  Executable& binaryInfo(const QFileInfo& fi);
+  Executable& arguments(const QString& s);
+  Executable& steamAppID(const QString& s);
+  Executable& workingDirectory(const QString& s);
+  Executable& flags(Flags f);
 
-  bool usesOwnIcon() const { return  m_Flags.testFlag(UseApplicationIcon); }
+  bool isShownOnToolbar() const;
+  void setShownOnToolbar(bool state);
+  bool usesOwnIcon() const;
+
+  void mergeFrom(const Executable& other);
+
+private:
+  QString m_title;
+  QFileInfo m_binaryInfo;
+  QString m_arguments;
+  QString m_steamAppID;
+  QString m_workingDirectory;
+  Flags m_flags;
 };
 
 
@@ -66,19 +86,44 @@ struct Executable {
  **/
 class ExecutablesList {
 public:
+  using vector_type = std::vector<Executable>;
+  using iterator = vector_type::iterator;
+  using const_iterator = vector_type::const_iterator;
 
   /**
-   * @brief constructor
+   * standard container interface
+   */
+  iterator begin();
+  const_iterator begin() const;
+  iterator end();
+  const_iterator end() const;
+  std::size_t size() const;
+  bool empty() const;
+
+  /**
+   * @brief initializes the list from the settings and the given plugin
+   **/
+  void load(const MOBase::IPluginGame* game, QSettings& settings);
+
+  /**
+   * @brief re-adds all the executables from the plugin and renames existing
+   *        executables that are in the way
+   **/
+  void resetFromPlugin(MOBase::IPluginGame const *game);
+
+  /**
+   * @brief writes the current list to the settings
+   */
+  void store(QSettings& settings);
+
+  /**
+   * @brief get an executable by name
    *
+   * @param title the title of the executable to look up
+   * @return the executable
+   * @exception runtime_error will throw an exception if the executable is not found
    **/
-  ExecutablesList();
-
-  ~ExecutablesList();
-
-  /**
-   * @brief initialise the list with the executables preconfigured for this game
-   **/
-  void init(MOBase::IPluginGame const *game);
+  const Executable &get(const QString &title) const;
 
   /**
    * @brief find an executable by its name
@@ -87,16 +132,7 @@ public:
    * @return the executable
    * @exception runtime_error will throw an exception if the name is not correct
    **/
-  const Executable &find(const QString &title) const;
-
-  /**
-   * @brief find an executable by its name
-   *
-   * @param title the title of the executable to look up
-   * @return the executable
-   * @exception runtime_error will throw an exception if the name is not correct
-   **/
-  Executable &find(const QString &title);
+  Executable &get(const QString &title);
 
   /**
    * @brief find an executable by a fileinfo structure
@@ -104,7 +140,13 @@ public:
    * @return the executable
    * @exception runtime_error will throw an exception if the name is not correct
    */
-  Executable &findByBinary(const QFileInfo &info);
+  Executable &getByBinary(const QFileInfo &info);
+
+  /**
+   * @brief returns an iterator for the given executable by title, or end()
+   */
+  iterator find(const QString &title);
+  const_iterator find(const QString &title) const;
 
   /**
    * @brief determine if an executable exists
@@ -117,85 +159,61 @@ public:
    * @brief add a new executable to the list
    * @param executable
    */
-  void addExecutable(const Executable &executable);
+  void setExecutable(const Executable &executable);
 
   /**
-   * @brief add a new executable to the list
-   *
-   * @param title name displayed in the UI
-   * @param executableName the actual filename to execute
-   * @param arguments arguments to pass to the executable
-   **/
-  void addExecutable(const QString &title,
-                     const QString &executableName,
-                     const QString &arguments,
-                     const QString &workingDirectory,
-                     const QString &steamAppID,
-                     Executable::Flags flags)
-  {
-    updateExecutable(title, executableName, arguments, workingDirectory,
-                     steamAppID, Executable::AllFlags, flags);
-  }
-
-  /**
-   * @brief Update an executable to the list
-   *
-   * @param title name displayed in the UI
-   * @param executableName the actual filename to execute
-   * @param arguments arguments to pass to the executable
-   * @param closeMO if true, MO will be closed when the binary is started
-   **/
-  void updateExecutable(const QString &title,
-                        const QString &executableName,
-                        const QString &arguments,
-                        const QString &workingDirectory,
-                        const QString &steamAppID,
-                        Executable::Flags mask,
-                        Executable::Flags flags);
-
-  /**
-   * @brief remove the executable with the specified file name. This needs to be an absolute file path
+   * @brief remove the executable with the specified file name. This needs to
+   *        be an absolute file path
    *
    * @param title title of the executable to remove
-   * @note if the executable name is invalid, nothing happens. There is no way to determine if this was successful
+   * @note if the executable name is invalid, nothing happens. There is no way
+   *       to determine if this was successful
    **/
   void remove(const QString &title);
 
   /**
-   * @brief retrieve begin and end iterators of the configured executables
-   *
-   * @param begin iterator to the first executable
-   * @param end iterator one past the last executable
-   **/
-  void getExecutables(std::vector<Executable>::const_iterator &begin, std::vector<Executable>::const_iterator &end) const;
-
-  /**
-   * @brief retrieve begin and end iterators of the configured executables
-   *
-   * @param begin iterator to the first executable
-   * @param end iterator one past the last executable
-   **/
-  void getExecutables(std::vector<Executable>::iterator &begin, std::vector<Executable>::iterator &end);
-
-  /**
-   * @brief get the number of executables (custom or otherwise)
-   **/
-  size_t size() const {
-    return m_Executables.size();
-  }
+   * returns a title that starts with the given prefix and does not clash with
+   * an existing executable, may fail
+   */
+  std::optional<QString> makeNonConflictingTitle(const QString& prefix);
 
 private:
+  enum SetFlags
+  {
+    // executables having the same name as existing ones are ignored
+    IgnoreExisting = 1,
 
-  std::vector<Executable>::iterator findExe(const QString &title);
+    // executables having the same name are merged
+    MergeExisting,
 
-  void addExecutableInternal(const QString &title, const QString &executableName, const QString &arguments,
-                             const QString &workingDirectory,
-                             const QString &steamAppID);
-
-private:
+    // an existing executable with the same name is renamed
+    MoveExisting
+  };
 
   std::vector<Executable> m_Executables;
 
+
+  /**
+   * @brief add the executables preconfigured for this game
+   **/
+  void addFromPlugin(MOBase::IPluginGame const *game, SetFlags flags);
+
+  /**
+   * @brief add a new executable to the list
+   * @param executable
+   */
+  void setExecutable(const Executable &exe, SetFlags flags);
+
+  /**
+   * returns the executables provided by the game plugin
+   **/
+  std::vector<Executable> getPluginExecutables(
+    MOBase::IPluginGame const *game) const;
+
+  /**
+   * called when MO is still using the old custom executables from 2.2.0
+   **/
+  void upgradeFromCustom(const MOBase::IPluginGame* game);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Executable::Flags)

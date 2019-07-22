@@ -106,15 +106,15 @@ QTreeView::item:selected
 	color: #FFCC88;
 }
 
-QTreeView::branch:has-children:!has-siblings:closed, 
+QTreeView::branch:has-children:!has-siblings:closed,
 QTreeView::branch:closed:has-children:has-siblings
 {
 	image: url(:/stylesheet/branch-closed.png);
 	border: 0px;
 }
 
-QTreeView::branch:open:has-children:!has-siblings, 
-QTreeView::branch:open:has-children:has-siblings 
+QTreeView::branch:open:has-children:!has-siblings,
+QTreeView::branch:open:has-children:has-siblings
 {
 	image: url(:/stylesheet/branch-open.png);
 	border: 0px;
@@ -342,41 +342,41 @@ QScrollBar::sub-line:vertical
 
 /* Combined */
 
-QScrollBar::handle:horizontal:hover, 
+QScrollBar::handle:horizontal:hover,
 QScrollBar::handle:vertical:hover,
-QScrollBar::add-line:horizontal:hover, 
-QScrollBar::sub-line:horizontal:hover, 
-QScrollBar::add-line:vertical:hover, 
+QScrollBar::add-line:horizontal:hover,
+QScrollBar::sub-line:horizontal:hover,
+QScrollBar::add-line:vertical:hover,
 QScrollBar::sub-line:vertical:hover
 {
 	background: #242424;
 }
 
-QScrollBar::handle:horizontal:pressed, 
+QScrollBar::handle:horizontal:pressed,
 QScrollBar::handle:vertical:pressed,
-QScrollBar::add-line:horizontal:pressed, 
-QScrollBar::sub-line:horizontal:pressed, 
-QScrollBar::add-line:vertical:pressed, 
+QScrollBar::add-line:horizontal:pressed,
+QScrollBar::sub-line:horizontal:pressed,
+QScrollBar::add-line:vertical:pressed,
 QScrollBar::sub-line:vertical:pressed
 {
 	background: #181818;
 }
 
-QScrollBar::add-page:horizontal, 
-QScrollBar::sub-page:horizontal, 
-QScrollBar::add-page:vertical, 
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal,
+QScrollBar::add-page:vertical,
 QScrollBar::sub-page:vertical
 {
     background: transparent;
 }
 
-QScrollBar::up-arrow:vertical, 
+QScrollBar::up-arrow:vertical,
 QScrollBar::right-arrow:horizontal,
-QScrollBar::down-arrow:vertical,  
+QScrollBar::down-arrow:vertical,
 QScrollBar::left-arrow:horizontal
 {
 	height: 1px;
-    width: 1px;  
+    width: 1px;
 	border: 1px solid #181818;
 }
 
@@ -426,6 +426,16 @@ QHeaderView::down-arrow
 
 /* Context Menus, Toolbar Dropdowns, & Tooltips ------------------------------- */
 
+QMenuBar {
+	background: #181818;
+	border: 1px solid #181818;
+}
+
+QMenuBar::item:selected {
+	background: #242424;
+	color: #FFCC88;
+}
+
 QMenu
 {
 	background: #141414;
@@ -471,6 +481,7 @@ QToolTip
 	border: 0px;
 }
 
+QStatusBar::item {border: None;}
 
 /* Progress Bars (Downloads) -------------------------------------------------- */
 
@@ -615,8 +626,8 @@ QWidget#downloadTab QAbstractScrollArea
 	background: #242424;
 }
 
-DownloadListWidget QFrame, 
-DownloadListWidgetCompact, 
+DownloadListWidget QFrame,
+DownloadListWidgetCompact,
 DownloadListWidgetCompact QLabel
 {
 	/* an entry on the Downloads tab */
@@ -641,7 +652,7 @@ DownloadListWidget QFrame:clicked
 
 /* compact downloads view */
 
-DownloadListWidgetCompact, 
+DownloadListWidgetCompact,
 DownloadListWidgetCompact QLabel
 {
 	/* an entry on the Downloads tab */

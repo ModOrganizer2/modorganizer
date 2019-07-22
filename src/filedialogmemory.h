@@ -29,30 +29,25 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 class FileDialogMemory
 {
-
 public:
-
   static void save(QSettings &settings);
   static void restore(QSettings &settings);
 
-  static QString getOpenFileName(const QString &dirID, QWidget *parent = 0, const QString &caption = QString(),
-                                 const QString &dir = QString(), const QString &filter = QString(),
-                                 QString *selectedFilter = 0, QFileDialog::Options options = 0);
+  static QString getOpenFileName(
+    const QString &dirID, QWidget *parent = 0, const QString &caption = QString(),
+    const QString &dir = QString(), const QString &filter = QString(),
+    QString *selectedFilter = 0, QFileDialog::Options options = 0);
 
-  static QString getExistingDirectory(const QString &dirID, QWidget *parent = 0, const QString &caption = QString(),
-                                      const QString &dir = QString(),
-                                      QFileDialog::Options options = QFileDialog::ShowDirsOnly);
-
-private:
-
-  FileDialogMemory();
-
-  static FileDialogMemory &instance();
+  static QString getExistingDirectory(
+    const QString &dirID, QWidget *parent = 0, const QString &caption = QString(),
+    const QString &dir = QString(),
+    QFileDialog::Options options = QFileDialog::ShowDirsOnly);
 
 private:
-
   std::map<QString, QString> m_Cache;
 
+  FileDialogMemory();
+  static FileDialogMemory &instance();
 };
 
 #endif // FILEDIALOGMEMORY_H

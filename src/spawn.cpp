@@ -94,7 +94,6 @@ static bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory,
   PROCESS_INFORMATION pi;
   BOOL success = FALSE;
   if (hooked) {
-    qDebug() << "Creating process hooked: <" << QString::fromWCharArray(commandLine, static_cast<int>(length)) <<">";
     success = ::CreateProcessHooked(nullptr,
                                     commandLine,
                                     nullptr, nullptr,       // no special process or thread attributes
@@ -151,7 +150,7 @@ HANDLE startBinary(const QFileInfo &binary,
     if (e.getErrorCode() == ERROR_ELEVATION_REQUIRED) {
       if (QMessageBox::question(QApplication::activeModalWidget(), QObject::tr("Elevation required"),
                                 QObject::tr("This process requires elevation to run.\n"
-                                    "This is a potential security risk so I highly advice you to investigate if\n"
+                                    "This is a potential security risk so I highly advise you to investigate if\n"
                                     "\"%1\"\n"
                                     "can be installed to work without elevation.\n\n"
                                     "Restart Mod Organizer as an elevated process?\n"

@@ -115,7 +115,7 @@ void AboutDialog::on_creditsList_currentItemChanged(QListWidgetItem *current, QL
   }
 }
 
-void AboutDialog::on_copyrightText_linkActivated(const QString &link)
+void AboutDialog::on_sourceText_linkActivated(const QString &link)
 {
   emit linkClicked(link);
 }

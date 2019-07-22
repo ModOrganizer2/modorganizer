@@ -35,6 +35,7 @@
 #include "instancemanager.h"
 #include <scriptextender.h>
 #include "helper.h"
+#include "previewdialog.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -111,7 +112,7 @@ static bool renameFile(const QString &oldName, const QString &newName,
 static std::wstring getProcessName(HANDLE process)
 {
   wchar_t buffer[MAX_PATH];
-  wchar_t *fileName = L"unknown";
+  const wchar_t *fileName = L"unknown";
 
   if (process == nullptr) return fileName;
 
@@ -267,6 +268,7 @@ bool checkService()
   return serviceRunning;
 }
 
+
 OrganizerCore::OrganizerCore(const QSettings &initSettings)
   : m_UserInterface(nullptr)
   , m_PluginContainer(nullptr)
@@ -363,34 +365,17 @@ QString OrganizerCore::commitSettings(const QString &iniFile)
 QSettings::Status OrganizerCore::storeSettings(const QString &fileName)
 {
   QSettings settings(fileName, QSettings::IniFormat);
+
   if (m_UserInterface != nullptr) {
     m_UserInterface->storeSettings(settings);
   }
+
   if (m_CurrentProfile != nullptr) {
     settings.setValue("selected_profile",
                       m_CurrentProfile->name().toUtf8().constData());
   }
 
-  settings.remove("customExecutables");
-  settings.beginWriteArray("customExecutables");
-  std::vector<Executable>::const_iterator current, end;
-  m_ExecutablesList.getExecutables(current, end);
-  int count = 0;
-  for (; current != end; ++current) {
-    const Executable &item = *current;
-    settings.setArrayIndex(count++);
-    settings.setValue("title", item.m_Title);
-    settings.setValue("custom", item.isCustom());
-    settings.setValue("toolbar", item.isShownOnToolbar());
-    settings.setValue("ownicon", item.usesOwnIcon());
-    if (item.isCustom()) {
-      settings.setValue("binary", item.m_BinaryInfo.absoluteFilePath());
-      settings.setValue("arguments", item.m_Arguments);
-      settings.setValue("workingDirectory", item.m_WorkingDirectory);
-      settings.setValue("steamAppID", item.m_SteamAppID);
-    }
-  }
-  settings.endArray();
+  m_ExecutablesList.store(settings);
 
   FileDialogMemory::save(settings);
 
@@ -406,7 +391,7 @@ void OrganizerCore::storeSettings()
     if (!shellCopy(iniFile, iniFile + ".new", true, qApp->activeWindow())) {
       QMessageBox::critical(
           qApp->activeWindow(), tr("Failed to write settings"),
-          tr("An error occured trying to update MO settings to %1: %2")
+          tr("An error occurred trying to update MO settings to %1: %2")
               .arg(iniFile, windowsErrorString(::GetLastError())));
       return;
     }
@@ -433,7 +418,7 @@ void OrganizerCore::storeSettings()
                                : tr("Unknown error %1").arg(result);
     QMessageBox::critical(
         qApp->activeWindow(), tr("Failed to write settings"),
-        tr("An error occured trying to write back MO settings to %1: %2")
+        tr("An error occurred trying to write back MO settings to %1: %2")
             .arg(writeTarget, reason));
   }
 }
@@ -506,30 +491,7 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
     return;
   }
 
-  m_ExecutablesList.init(managedGame());
-
-  qDebug("setting up configured executables");
-
-  int numCustomExecutables = settings.beginReadArray("customExecutables");
-  for (int i = 0; i < numCustomExecutables; ++i) {
-    settings.setArrayIndex(i);
-
-    Executable::Flags flags;
-    if (settings.value("custom", true).toBool())
-      flags |= Executable::CustomExecutable;
-    if (settings.value("toolbar", false).toBool())
-      flags |= Executable::ShowInToolbar;
-    if (settings.value("ownicon", false).toBool())
-      flags |= Executable::UseApplicationIcon;
-
-    m_ExecutablesList.addExecutable(
-        settings.value("title").toString(), settings.value("binary").toString(),
-        settings.value("arguments").toString(),
-        settings.value("workingDirectory", "").toString(),
-        settings.value("steamAppID", "").toString(), flags);
-  }
-
-  settings.endArray();
+  m_ExecutablesList.load(managedGame(), settings);
 
   // TODO this has nothing to do with executables list move to an appropriate
   // function!
@@ -729,12 +691,27 @@ bool OrganizerCore::createDirectory(const QString &path) {
   }
 }
 
+bool OrganizerCore::checkPathSymlinks() {
+  bool hasSymlink = (QFileInfo(m_Settings.getProfileDirectory()).isSymLink() ||
+    QFileInfo(m_Settings.getModDirectory()).isSymLink() ||
+    QFileInfo(m_Settings.getOverwriteDirectory()).isSymLink());
+  if (hasSymlink) {
+    QMessageBox::critical(nullptr, QObject::tr("Error"),
+      QObject::tr("One of the configured MO2 directories (profiles, mods, or overwrite) "
+        "is on a path containing a symbolic (or other) link. This is incompatible "
+        "with MO2's VFS system."));
+    return false;
+  }
+  return true;
+}
+
 bool OrganizerCore::bootstrap() {
   return createDirectory(m_Settings.getProfileDirectory()) &&
          createDirectory(m_Settings.getModDirectory()) &&
          createDirectory(m_Settings.getDownloadDirectory()) &&
          createDirectory(m_Settings.getOverwriteDirectory()) &&
-         createDirectory(QString::fromStdWString(crashDumpsPath())) && cycleDiagnostics();
+         createDirectory(QString::fromStdWString(crashDumpsPath())) &&
+         checkPathSymlinks() && cycleDiagnostics();
 }
 
 void OrganizerCore::createDefaultProfile()
@@ -1004,8 +981,8 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
                                        "want to configure them now?"),
                                     QMessageBox::Yes | QMessageBox::No)
               == QMessageBox::Yes)) {
-        m_UserInterface->displayModInformation(modInfo, modIndex,
-                                               ModInfoDialog::TAB_INIFILES);
+        m_UserInterface->displayModInformation(
+          modInfo, modIndex, ModInfoTabIDs::IniFiles);
       }
       m_ModInstalled(modName);
       m_DownloadManager.markInstalled(fileName);
@@ -1071,8 +1048,8 @@ void OrganizerCore::installDownload(int index)
                                          "want to configure them now?"),
                                       QMessageBox::Yes | QMessageBox::No)
                 == QMessageBox::Yes)) {
-          m_UserInterface->displayModInformation(modInfo, modIndex,
-                                                 ModInfoDialog::TAB_INIFILES);
+          m_UserInterface->displayModInformation(
+            modInfo, modIndex, ModInfoTabIDs::IniFiles);
         }
 
         m_ModInstalled(modName);
@@ -1220,6 +1197,253 @@ QStringList OrganizerCore::modsSortedByProfilePriority() const
   return res;
 }
 
+QString OrganizerCore::findJavaInstallation(const QString& jarFile)
+{
+  if (!jarFile.isEmpty()) {
+    // try to find java automatically based on the given jar file
+    std::wstring jarFileW = jarFile.toStdWString();
+
+    WCHAR buffer[MAX_PATH];
+    if (::FindExecutableW(jarFileW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
+      DWORD binaryType = 0UL;
+      if (!::GetBinaryTypeW(buffer, &binaryType)) {
+        qDebug("failed to determine binary type of \"%ls\": %lu", buffer, ::GetLastError());
+      } else if (binaryType == SCS_32BIT_BINARY || binaryType == SCS_64BIT_BINARY) {
+        return QString::fromWCharArray(buffer);
+      }
+    }
+  }
+
+  // second attempt: look to the registry
+  QSettings reg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
+  if (reg.contains("CurrentVersion")) {
+    QString currentVersion = reg.value("CurrentVersion").toString();
+    return reg.value(QString("%1/JavaHome").arg(currentVersion)).toString().append("\\bin\\javaw.exe");
+  }
+
+  // not found
+  return {};
+}
+
+bool OrganizerCore::getFileExecutionContext(
+  QWidget* parent, const QFileInfo &targetInfo,
+  QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type)
+{
+  QString extension = targetInfo.suffix();
+  if ((extension.compare("cmd", Qt::CaseInsensitive) == 0) ||
+    (extension.compare("com", Qt::CaseInsensitive) == 0) ||
+    (extension.compare("bat", Qt::CaseInsensitive) == 0)) {
+    binaryInfo = QFileInfo("C:\\Windows\\System32\\cmd.exe");
+    arguments = QString("/C \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
+    type = FileExecutionTypes::Executable;
+    return true;
+  } else if (extension.compare("exe", Qt::CaseInsensitive) == 0) {
+    binaryInfo = targetInfo;
+    type = FileExecutionTypes::Executable;
+    return true;
+  } else if (extension.compare("jar", Qt::CaseInsensitive) == 0) {
+    auto java = findJavaInstallation(targetInfo.absoluteFilePath());
+
+    if (java.isEmpty()) {
+      java = QFileDialog::getOpenFileName(
+        parent, QObject::tr("Select binary"),
+        QString(), QObject::tr("Binary") + " (*.exe)");
+    }
+
+    if (java.isEmpty()) {
+      return false;
+    }
+
+    binaryInfo = QFileInfo(java);
+    arguments = QString("-jar \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
+    type = FileExecutionTypes::Executable;
+
+    return true;
+  } else {
+    type = FileExecutionTypes::Other;
+    return true;
+  }
+}
+
+bool OrganizerCore::executeFileVirtualized(
+  QWidget* parent, const QFileInfo& targetInfo)
+{
+  QFileInfo binaryInfo;
+  QString arguments;
+  FileExecutionTypes type;
+
+  if (!getFileExecutionContext(parent, targetInfo, binaryInfo, arguments, type)) {
+    return false;
+  }
+
+  switch (type)
+  {
+    case FileExecutionTypes::Executable: {
+      spawnBinaryDirect(
+        binaryInfo, arguments, currentProfile()->name(),
+        targetInfo.absolutePath(), "", "");
+
+      return true;
+    }
+
+    case FileExecutionTypes::Other: {
+      ::ShellExecuteW(nullptr, L"open",
+        ToWString(targetInfo.absoluteFilePath()).c_str(),
+        nullptr, nullptr, SW_SHOWNORMAL);
+
+      return true;
+    }
+  }
+
+  // nop
+  return false;
+}
+
+bool OrganizerCore::previewFileWithAlternatives(
+  QWidget* parent, QString fileName, int selectedOrigin)
+{
+  fileName = QDir::fromNativeSeparators(fileName);
+
+  // what we have is an absolute path to the file in its actual location (for the primary origin)
+  // what we want is the path relative to the virtual data directory
+
+  // we need to look in the virtual directory for the file to make sure the info is up to date.
+
+  // check if the file comes from the actual data folder instead of a mod
+  QDir gameDirectory = managedGame()->dataDirectory().absolutePath();
+  QString relativePath = gameDirectory.relativeFilePath(fileName);
+  QDir dirRelativePath = gameDirectory.relativeFilePath(fileName);
+
+  // if the file is on a different drive the dirRelativePath will actually be an
+  // absolute path so we make sure that is not the case
+  if (!dirRelativePath.isAbsolute() && !relativePath.startsWith("..")) {
+    fileName = relativePath;
+  }
+  else {
+    // crude: we search for the next slash after the base mod directory to skip
+    // everything up to the data-relative directory
+    int offset = settings().getModDirectory().size() + 1;
+    offset = fileName.indexOf("/", offset);
+    fileName = fileName.mid(offset + 1);
+  }
+
+
+
+  const FileEntry::Ptr file = directoryStructure()->searchFile(ToWString(fileName), nullptr);
+
+  if (file.get() == nullptr) {
+    reportError(tr("file not found: %1").arg(qUtf8Printable(fileName)));
+    return false;
+  }
+
+  // set up preview dialog
+  PreviewDialog preview(fileName);
+  auto addFunc = [&](int originId) {
+    FilesOrigin &origin = directoryStructure()->getOriginByID(originId);
+    QString filePath = QDir::fromNativeSeparators(ToQString(origin.getPath())) + "/" + fileName;
+    if (QFile::exists(filePath)) {
+      // it's very possible the file doesn't exist, because it's inside an archive. we don't support that
+      QWidget *wid = m_PluginContainer->previewGenerator().genPreview(filePath);
+      if (wid == nullptr) {
+        reportError(tr("failed to generate preview for %1").arg(filePath));
+      }
+      else {
+        preview.addVariant(ToQString(origin.getName()), wid);
+      }
+    }
+  };
+
+  if (selectedOrigin == -1) {
+    // don't bother with the vector of origins, just add them as they come
+    addFunc(file->getOrigin());
+    for (auto alt : file->getAlternatives()) {
+      addFunc(alt.first);
+    }
+  } else {
+    std::vector<int> origins;
+
+    // start with the primary origin
+    origins.push_back(file->getOrigin());
+
+    // add other origins, push to front if it's the selected one
+    for (auto alt : file->getAlternatives()) {
+      if (alt.first == selectedOrigin) {
+        origins.insert(origins.begin(), alt.first);
+      } else {
+        origins.push_back(alt.first);
+      }
+    }
+
+    // can't be empty; either the primary origin was the selected one, or it
+    // was one of the alternatives, which got inserted in front
+
+    if (origins[0] != selectedOrigin) {
+      // sanity check, this shouldn't happen unless the caller passed an
+      // incorrect id
+
+      qWarning().nospace()
+        << "selected preview origin " << selectedOrigin << " not found in "
+        << "list of alternatives";
+    }
+
+    for (int id : origins) {
+      addFunc(id);
+    }
+  }
+
+  if (preview.numVariants() > 0) {
+    QSettings &s = settings().directInterface();
+    QString key = QString("geometry/%1").arg(preview.objectName());
+    if (s.contains(key)) {
+      preview.restoreGeometry(s.value(key).toByteArray());
+    }
+
+    preview.exec();
+
+    s.setValue(key, preview.saveGeometry());
+
+    return true;
+  }
+  else {
+    QMessageBox::information(
+      parent, tr("Sorry"),
+      tr("Sorry, can't preview anything. This function currently does not support extracting from bsas."));
+
+    return false;
+  }
+}
+
+bool OrganizerCore::previewFile(
+  QWidget* parent, const QString& originName, const QString& path)
+{
+  if (!QFile::exists(path)) {
+    reportError(tr("File '%1' not found.").arg(path));
+    return false;
+  }
+
+  PreviewDialog preview(path);
+
+  QWidget *wid = m_PluginContainer->previewGenerator().genPreview(path);
+  if (wid == nullptr) {
+    reportError(tr("Failed to generate preview for %1").arg(path));
+    return false;
+  }
+
+  preview.addVariant(originName, wid);
+
+  QSettings &s = settings().directInterface();
+  QString key = QString("geometry/%1").arg(preview.objectName());
+  if (s.contains(key)) {
+    preview.restoreGeometry(s.value(key).toByteArray());
+  }
+
+  preview.exec();
+
+  s.setValue(key, preview.saveGeometry());
+
+  return true;
+}
+
 void OrganizerCore::spawnBinary(const QFileInfo &binary,
                                 const QString &arguments,
                                 const QDir &currentDirectory,
@@ -1361,7 +1585,7 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
                   tr("MO was denied access to the Steam process.  This normally indicates that "
                      "Steam is being run as administrator while MO is not.  This can cause issues "
                      "launching the game.  It is recommended to not run Steam as administrator unless "
-                     "absolutely neccessary.\n\n"
+                     "absolutely necessary.\n\n"
                      "Restart MO as administrator?"),
                   QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
       if (result == QDialogButtonBox::Yes) {
@@ -1492,19 +1716,20 @@ HANDLE OrganizerCore::runShortcut(const MOShortcut& shortcut)
       .arg(shortcut.instance(),shortcut.executable())
       .toLocal8Bit().constData());
 
-  Executable& exe = m_ExecutablesList.find(shortcut.executable());
+  const Executable& exe = m_ExecutablesList.get(shortcut.executable());
+
   auto forcedLibaries = m_CurrentProfile->determineForcedLibraries(shortcut.executable());
   if (!m_CurrentProfile->forcedLibrariesEnabled(shortcut.executable())) {
     forcedLibaries.clear();
   }
 
   return spawnBinaryDirect(
-    exe.m_BinaryInfo, exe.m_Arguments,
+    exe.binaryInfo(), exe.arguments(),
     m_CurrentProfile->name(),
-    exe.m_WorkingDirectory.length() != 0
-    ? exe.m_WorkingDirectory
-    : exe.m_BinaryInfo.absolutePath(),
-    exe.m_SteamAppID,
+    exe.workingDirectory().length() != 0
+    ? exe.workingDirectory()
+    : exe.binaryInfo().absolutePath(),
+    exe.steamAppID(),
     "",
     forcedLibaries);
 }
@@ -1543,13 +1768,13 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
       currentDirectory = binary.absolutePath();
     }
     try {
-      const Executable &exe = m_ExecutablesList.findByBinary(binary);
-      steamAppID = exe.m_SteamAppID;
+      const Executable &exe = m_ExecutablesList.getByBinary(binary);
+      steamAppID = exe.steamAppID();
       customOverwrite
-          = m_CurrentProfile->setting("custom_overwrites", exe.m_Title)
+          = m_CurrentProfile->setting("custom_overwrites", exe.title())
                 .toString();
-      if (m_CurrentProfile->forcedLibrariesEnabled(exe.m_Title)) {
-        forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.m_Title);
+      if (m_CurrentProfile->forcedLibrariesEnabled(exe.title())) {
+        forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.title());
       }
     } catch (const std::runtime_error &) {
       // nop
@@ -1557,20 +1782,20 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
   } else {
     // only a file name, search executables list
     try {
-      const Executable &exe = m_ExecutablesList.find(executable);
-      steamAppID = exe.m_SteamAppID;
+      const Executable &exe = m_ExecutablesList.get(executable);
+      steamAppID = exe.steamAppID();
       customOverwrite
-          = m_CurrentProfile->setting("custom_overwrites", exe.m_Title)
+          = m_CurrentProfile->setting("custom_overwrites", exe.title())
                 .toString();
-      if (m_CurrentProfile->forcedLibrariesEnabled(exe.m_Title)) {
-        forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.m_Title);
+      if (m_CurrentProfile->forcedLibrariesEnabled(exe.title())) {
+        forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.title());
       }
       if (arguments == "") {
-        arguments = exe.m_Arguments;
+        arguments = exe.arguments();
       }
-      binary = exe.m_BinaryInfo;
+      binary = exe.binaryInfo();
       if (cwd.length() == 0) {
-        currentDirectory = exe.m_WorkingDirectory;
+        currentDirectory = exe.workingDirectory();
       }
     } catch (const std::runtime_error &) {
       qWarning("\"%s\" not set up as executable",
@@ -1991,6 +2216,21 @@ void OrganizerCore::updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::P
       m_DirectoryStructure, modInfo[idx]->name(),
       m_CurrentProfile->getModPriority(idx), modInfo[idx]->absolutePath(),
       modInfo[idx]->archives());
+  }
+}
+
+void OrganizerCore::loggedInAction(QWidget* parent, std::function<void ()> f)
+{
+  if (NexusInterface::instance(m_PluginContainer)->getAccessManager()->validated()) {
+    f();
+  } else {
+    QString apiKey;
+    if (settings().getNexusApiKey(apiKey)) {
+      doAfterLogin([f]{ f(); });
+      NexusInterface::instance(m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
+    } else {
+      MessageDialog::showMessage(tr("You need to be logged in with Nexus"), parent);
+    }
   }
 }
 

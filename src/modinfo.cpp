@@ -310,23 +310,27 @@ bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
     }
   }
 
-  if (latest < QDateTime::currentDateTimeUtc().addDays(-30)) {
+  if (latest < QDateTime::currentDateTimeUtc().addMonths(-1)) {
     std::set<std::pair<QString, int>> organizedGames;
     for (auto mod : s_Collection) {
-      if (mod->canBeUpdated()) {
+      if (mod->canBeUpdated() && mod->getLastNexusUpdate() < QDateTime::currentDateTimeUtc().addMonths(-1)) {
         organizedGames.insert(std::make_pair<QString, int>(mod->getGameName().toLower(), mod->getNexusID()));
       }
     }
 
     if (organizedGames.empty()) {
-      qWarning("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.");
+      qWarning() << tr("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.");
       updatesAvailable = false;
+    } else {
+      qInfo() << tr(
+        "You have mods that haven't been checked within the last month using the new API. These mods must be checked before we can use the bulk update API. "
+        "This will consume significantly more API requests than usual. You will need to rerun the update check once complete in order to parse the remaining mods."
+      );
     }
 
-    for (auto game : organizedGames) {
+    for (auto game : organizedGames)
       NexusInterface::instance(pluginContainer)->requestUpdates(game.second, receiver, QVariant(), game.first, QString());
-    }
-  } else if (earliest < QDateTime::currentDateTimeUtc().addDays(-30)) {
+  } else if (earliest < QDateTime::currentDateTimeUtc().addMonths(-1)) {
     for (auto gameName : games)
       NexusInterface::instance(pluginContainer)->requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::MONTH, receiver, QVariant(true), QString());
   } else if (earliest < QDateTime::currentDateTimeUtc().addDays(-7)) {
@@ -358,7 +362,7 @@ std::set<QSharedPointer<ModInfo>> ModInfo::filteredMods(QString gameName, QVaria
 
   if (addOldMods)
     for (auto mod : s_Collection)
-      if (mod->getLastNexusUpdate() < QDateTime::currentDateTimeUtc().addDays(-30) && mod->getGameName().compare(gameName, Qt::CaseInsensitive) == 0)
+      if (mod->getLastNexusUpdate() < QDateTime::currentDateTimeUtc().addMonths(-1) && mod->getGameName().compare(gameName, Qt::CaseInsensitive) == 0)
         finalMods.insert(mod);
 
   if (markUpdated) {
@@ -515,4 +519,23 @@ void ModInfo::testValid()
   while (dirIter.hasNext()) {
     dirIter.next();
   }
+}
+
+QUrl ModInfo::parseCustomURL() const
+{
+  if (!hasCustomURL() || getCustomURL().isEmpty()) {
+    return {};
+  }
+
+  const auto url = QUrl::fromUserInput(getCustomURL());
+
+  if (!url.isValid()) {
+    qCritical()
+      << "mod '" << name() << "' has an invalid custom url "
+      << "'" << getCustomURL() << "'";
+
+    return {};
+  }
+
+  return url;
 }

@@ -81,6 +81,7 @@ private:
   int m_SortRole;
 };
 
+
 Settings *Settings::s_Instance = nullptr;
 
 
@@ -130,18 +131,19 @@ bool Settings::pluginBlacklisted(const QString &fileName) const
 
 void Settings::registerAsNXMHandler(bool force)
 {
-  std::wstring nxmPath = ToWString(QCoreApplication::applicationDirPath() + "/nxmhandler.exe");
-  std::wstring executable = ToWString(QCoreApplication::applicationFilePath());
-  std::wstring mode = force ? L"forcereg" : L"reg";
-  std::wstring parameters = mode + L" " + m_GamePlugin->gameShortName().toStdWString();
-  for (QString altGame : m_GamePlugin->validShortNames()) {
-    parameters += L"," + altGame.toStdWString();
+  const auto nxmPath = QCoreApplication::applicationDirPath() + "/nxmhandler.exe";
+  const auto executable = QCoreApplication::applicationFilePath();
+
+  QString mode = force ? "forcereg" : "reg";
+  QString parameters = mode + " " + m_GamePlugin->gameShortName();
+  for (const QString& altGame : m_GamePlugin->validShortNames()) {
+    parameters += "," + altGame;
   }
-  parameters += L" \"" + executable + L"\"";
-  HINSTANCE res = ::ShellExecuteW(nullptr, L"open", nxmPath.c_str(), parameters.c_str(), nullptr, SW_SHOWNORMAL);
-  if ((INT_PTR)res <= 32) {
-    QMessageBox::critical(nullptr, tr("Failed"),
-                          tr("Sorry, failed to start the helper application"));
+  parameters += " \"" + executable + "\"";
+
+  if (!shell::Execute(nxmPath, parameters)) {
+    QMessageBox::critical(
+      nullptr, tr("Failed"), tr("Failed to start the helper application"));
   }
 }
 
@@ -216,12 +218,11 @@ QString Settings::deObfuscate(const QString key)
     result = QString::fromWCharArray(charData, creds->CredentialBlobSize / sizeof(wchar_t));
     CredFree(creds);
   } else {
-    if (GetLastError() != ERROR_NOT_FOUND) {
-      wchar_t buffer[256];
-      FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        buffer, (sizeof(buffer) / sizeof(wchar_t)), NULL);
-      qCritical() << "Retrieving encrypted data failed:" << buffer;
+    const auto e = GetLastError();
+    if (e != ERROR_NOT_FOUND) {
+      qCritical().nospace()
+        << "Retrieving encrypted data failed: "
+        << formatSystemMessageQ(e);
     }
   }
   delete[] keyData;
@@ -362,6 +363,31 @@ bool Settings::getNexusApiKey(QString &apiKey) const
   return true;
 }
 
+bool Settings::setNexusApiKey(const QString& apiKey)
+{
+  if (!obfuscate("APIKEY", apiKey)) {
+    const auto e = GetLastError();
+
+    qCritical().nospace()
+      << "Storing API key failed: "
+      << formatSystemMessageQ(e);
+
+    return false;
+  }
+
+  return true;
+}
+
+bool Settings::clearNexusApiKey()
+{
+  return setNexusApiKey("");
+}
+
+bool Settings::hasNexusApiKey() const
+{
+  return !deObfuscate("APIKEY").isEmpty();
+}
+
 bool Settings::getSteamLogin(QString &username, QString &password) const
 {
   if (m_Settings.contains("Settings/steam_username")) {
@@ -451,17 +477,6 @@ QString Settings::executablesBlacklist() const
   ).toString();
 }
 
-void Settings::setNexusApiKey(QString apiKey)
-{
-  if (!obfuscate("APIKEY", apiKey)) {
-    wchar_t buffer[256];
-    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-      NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-      buffer, (sizeof(buffer) / sizeof(wchar_t)), NULL);
-    qCritical() << "Storing API key failed:" << buffer;
-  }
-}
-
 void Settings::setSteamLogin(QString username, QString password)
 {
   if (username == "") {
@@ -471,11 +486,10 @@ void Settings::setSteamLogin(QString username, QString password)
     m_Settings.setValue("Settings/steam_username", username);
   }
   if (!obfuscate("steam_password", password)) {
-    wchar_t buffer[256];
-    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-      NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-      buffer, (sizeof(buffer) / sizeof(wchar_t)), NULL);
-    qCritical() << "Storing or deleting password failed:" << buffer;
+    const auto e = GetLastError();
+    qCritical().nospace()
+      << "Storing or deleting password failed: "
+      << formatSystemMessageQ(e);
   }
 }
 
@@ -705,43 +719,10 @@ void Settings::resetDialogs()
   QuestionBoxMemory::resetDialogs();
 }
 
-void Settings::processApiKey(const QString &apiKey)
-{
-  if (!obfuscate("APIKEY", apiKey)) {
-    wchar_t buffer[256];
-    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-      NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-      buffer, (sizeof(buffer) / sizeof(wchar_t)), NULL);
-    qCritical() << "Storing or deleting API key failed:" << buffer;
-  }
-}
-
-void Settings::clearApiKey(QPushButton *nexusButton)
-{
-  obfuscate("APIKEY", "");
-  nexusButton->setEnabled(true);
-  nexusButton->setText("Connect to Nexus");
-}
-
-void Settings::checkApiKey(QPushButton *nexusButton)
-{
-  if (deObfuscate("APIKEY").isEmpty()) {
-    nexusButton->setEnabled(true);
-    nexusButton->setText("Connect to Nexus");
-    QMessageBox::warning(qApp->activeWindow(), tr("Error"),
-      tr("Failed to retrieve a Nexus API key! Please try again. "
-        "A browser window should open asking you to authorize."));
-  }
-}
-
 void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
 {
-  SettingsDialog dialog(pluginContainer, parent);
-
+  SettingsDialog dialog(pluginContainer, this, parent);
   connect(&dialog, SIGNAL(resetDialogs()), this, SLOT(resetDialogs()));
-  connect(&dialog, SIGNAL(processApiKey(const QString &)), this, SLOT(processApiKey(const QString &)));
-  connect(&dialog, SIGNAL(closeApiConnection(QPushButton *)), this, SLOT(checkApiKey(QPushButton *)));
-  connect(&dialog, SIGNAL(revokeApiKey(QPushButton *)), this, SLOT(clearApiKey(QPushButton *)));
 
   std::vector<std::unique_ptr<SettingsTab>> tabs;
 
@@ -1042,7 +1023,6 @@ void Settings::DiagnosticsTab::update()
 
 Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
   : Settings::SettingsTab(parent, dialog)
-  , m_nexusConnect(dialog.findChild<QPushButton *>("nexusConnect"))
   , m_offlineBox(dialog.findChild<QCheckBox *>("offlineBox"))
   , m_proxyBox(dialog.findChild<QCheckBox *>("proxyBox"))
   , m_knownServersList(dialog.findChild<QListWidget *>("knownServersList"))
@@ -1051,11 +1031,6 @@ Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
   , m_endorsementBox(dialog.findChild<QCheckBox *>("endorsementBox"))
   , m_hideAPICounterBox(dialog.findChild<QCheckBox *>("hideAPICounterBox"))
 {
-  if (!deObfuscate("APIKEY").isEmpty()) {
-    m_nexusConnect->setText("Nexus API Key Stored");
-    m_nexusConnect->setDisabled(true);
-  }
-
   m_offlineBox->setChecked(parent->offlineMode());
   m_proxyBox->setChecked(parent->useProxy());
   m_endorsementBox->setChecked(parent->endorsementIntegration());

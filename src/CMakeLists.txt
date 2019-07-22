@@ -9,6 +9,28 @@ IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
   SET(PROJ_ARCH x64)
 ENDIF()
 
+macro(add_msvc_precompiled_header PrecompiledHeader PrecompiledSource SourcesVar HeadersVar)
+  if(MSVC)
+    get_filename_component(PrecompiledBasename ${PrecompiledHeader} NAME_WE)
+    set(PrecompiledBinary "${CMAKE_CURRENT_BINARY_DIR}/${PrecompiledBasename}.pch")
+    set(Sources ${${SourcesVar}})
+
+    set_source_files_properties(
+		${PrecompiledSource} PROPERTIES
+		COMPILE_FLAGS "/Yc\"${PrecompiledHeader}\" /Fp\"${PrecompiledBinary}\""
+		OBJECT_OUTPUTS "${PrecompiledBinary}")
+
+    set_source_files_properties(
+		${Sources} PROPERTIES
+		COMPILE_FLAGS "/Yu\"${PrecompiledHeader}\" /FI\"${PrecompiledHeader}\" /Fp\"${PrecompiledBinary}\""
+		OBJECT_DEPENDS "${PrecompiledBinary}")
+
+    list(APPEND ${SourcesVar} ${PrecompiledSource})
+	list(APPEND ${HeadersVar} ${PrecompiledHeader})
+  endif(MSVC)
+endmacro(add_msvc_precompiled_header)
+
+
 SET(organizer_SRCS
     transfersavesdialog.cpp
     syncoverwritedialog.cpp
@@ -32,6 +54,14 @@ SET(organizer_SRCS
     modlist.cpp
     modidlineedit.cpp
     modinfodialog.cpp
+	modinfodialogcategories.cpp
+	modinfodialogconflicts.cpp
+	modinfodialogesps.cpp
+	modinfodialogfiletree.cpp
+	modinfodialogimages.cpp
+	modinfodialognexus.cpp
+	modinfodialogtab.cpp
+	modinfodialogtextfiles.cpp
     modinfo.cpp
     modinfobackup.cpp
     modinfoforeign.cpp
@@ -93,6 +123,12 @@ SET(organizer_SRCS
     lcdnumber.cpp
     forcedloaddialog.cpp
     forcedloaddialogwidget.cpp
+	filterwidget.cpp
+	statusbar.cpp
+	apiuseraccount.cpp
+	filerenamer.cpp
+	texteditor.cpp
+	expanderwidget.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -126,6 +162,15 @@ SET(organizer_HDRS
     modlist.h
     modidlineedit.h
     modinfodialog.h
+	modinfodialogcategories.h
+	modinfodialogconflicts.h
+	modinfodialogesps.h
+	modinfodialogfiletree.h
+	modinfodialogfwd.h
+	modinfodialogimages.h
+	modinfodialognexus.h
+	modinfodialogtab.h
+	modinfodialogtextfiles.h
     modinfo.h
     modinfobackup.h
     modinfoforeign.h
@@ -183,12 +228,17 @@ SET(organizer_HDRS
     instancemanager.h
     usvfsconnector.h
     eventfilter.h
-    descriptionpage.h
     moshortcut.h
     listdialog.h
     lcdnumber.h
     forcedloaddialog.h
     forcedloaddialogwidget.h
+	filterwidget.h
+	statusbar.h
+	apiuseraccount.h
+	filerenamer.h
+	texteditor.h
+	expanderwidget.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -203,7 +253,6 @@ SET(organizer_HDRS
 SET(organizer_UIS
     transfersavesdialog.ui
     syncoverwritedialog.ui
-    simpleinstalldialog.ui
     settingsdialog.ui
     selectiondialog.ui
     queryoverwritedialog.ui
@@ -215,8 +264,6 @@ SET(organizer_UIS
     mainwindow.ui
     lockeddialog.ui
     waitingonclosedialog.ui
-    installdialog.ui
-    finddialog.ui
     editexecutablesdialog.ui
     credentialsdialog.ui
     categoriesdialog.ui
@@ -243,16 +290,191 @@ SET(organizer_RCS
 	)
 
 
-SOURCE_GROUP(Source FILES ${organizer_SRCS})
-SOURCE_GROUP(Headers FILES ${organizer_HDRS})
-SOURCE_GROUP(UI FILES ${organizer_UIS})
+source_group(src REGULAR_EXPRESSION ".*\\.(h|cpp|ui)")
+
+set(application
+	iuserinterface
+	main
+	mainwindow
+	moapplication
+	moshortcut
+	selfupdater
+	singleinstance
+	statusbar
+)
+
+set(browser
+	browserdialog
+	browserview
+)
+
+set(core
+	categories
+	shared/directoryentry
+	directoryrefresher
+	installationmanager
+	instancemanager
+	loadmechanism
+	nexusinterface
+	nxmaccessmanager
+	organizercore
+	organizerproxy
+	apiuseraccount
+)
+
+set(dialogs
+	aboutdialog
+	activatemodsdialog
+	categoriesdialog
+	credentialsdialog
+	filedialogmemory
+	forcedloaddialog
+	forcedloaddialogwidget
+	listdialog
+	messagedialog
+	motddialog
+	overwriteinfodialog
+	queryoverwritedialog
+	problemsdialog
+	savetextasdialog
+	selectiondialog
+	syncoverwritedialog
+	transfersavesdialog
+	waitingonclosedialog
+)
+
+set(downloads
+	downloadlist
+	downloadlistsortproxy
+	downloadlistwidget
+	downloadmanager
+)
+
+set(executables
+	executableslist
+	editexecutablesdialog
+)
+
+set(locking
+	ilockedwaitingforprocess
+	lockeddialog
+	lockeddialogbase
+)
+
+set(modinfo
+	modinfo
+	modinfobackup
+	modinfoforeign
+	modinfooverwrite
+	modinforegular
+	modinfoseparator
+	modinfowithconflictinfo
+)
+
+set(modinfo\\dialog
+	modinfodialog
+	modinfodialogcategories
+	modinfodialogconflicts
+	modinfodialogesps
+	modinfodialogfiletree
+	modinfodialogfwd
+	modinfodialogimages
+	modinfodialognexus
+	modinfodialogtab
+	modinfodialogtextfiles
+)
+set(modlist
+	modlist
+	modlistsortproxy
+	modlistview
+)
+
+set(plugins
+	plugincontainer
+	pluginlist
+	pluginlistsortproxy
+	pluginlistview
+)
+
+set(previews
+	previewdialog
+	previewgenerator
+)
+
+set(profiles
+	profile
+	profileinputdialog
+	profilesdialog
+)
+
+set(settings
+	settings
+	settingsdialog
+)
+
+set(utilities
+	shared/appconfig
+	bbcode
+	csvbuilder
+	shared/error_report
+	eventfilter
+	helper
+	shared/leaktrace
+	persistentcookiejar
+	serverinfo
+	spawn
+	shared/stackdata
+	shared/util
+	usvfsconnector
+	shared/windows_error
+)
+
+set(widgets
+	expanderwidget
+	genericicondelegate
+	filerenamer
+	filterwidget
+	icondelegate
+	lcdnumber
+	logbuffer
+	loghighlighter
+	modflagicondelegate
+	modidlineedit
+	noeditdelegate
+	qtgroupingproxy
+	texteditor
+	viewmarkingscrollbar
+)
+
+set(src_filters
+	application core browser dialogs downloads executables locking modinfo modinfo\\dialog
+	modlist plugins previews profiles settings utilities widgets
+)
+
+foreach(filter in list ${src_filters})
+	set(files)
+	foreach(d in lists ${${filter}})
+		set(files ${files} ${d}.cpp ${d}.h ${d}.inc ${d}.ui)
+	endforeach()
+
+	source_group(src\\${filter} FILES ${files})
+endforeach()
+
+file(GLOB_RECURSE rule_files ../vsbuild/CMakeFiles/*.rule)
+file(GLOB qm_files ../vsbuild/src/*.qm)
+
+source_group(cmake FILES CMakeLists.txt)
+source_group(autogen FILES ${rule_files} ${qm_files})
+source_group(resources FILES ${organizer_RCS} ${organizer_QRCS})
 
 # MO projects
 SET(dependency_project_path "${DEPENDENCIES_DIR}")
 SET(default_project_path "${DEPENDENCIES_DIR}/modorganizer_super")
 GET_FILENAME_COMPONENT(${default_project_path} ${default_project_path} REALPATH)
-
 SET(project_path "${default_project_path}" CACHE PATH "path to the other mo projects")
+
+add_msvc_precompiled_header("pch.h" "pch.cpp" organizer_SRCS organizer_HDRS)
+
 #TODO this should not be a hardcoded path
 SET(lib_path "${project_path}/../../install/libs")
 
@@ -260,6 +482,8 @@ SET(lib_path "${project_path}/../../install/libs")
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 SET(CMAKE_AUTOMOC ON)
 SET(CMAKE_AUTOUIC ON)
+SET(CMAKE_AUTORCC ON)
+
 FIND_PACKAGE(Qt5Widgets REQUIRED)
 FIND_PACKAGE(Qt5QuickWidgets REQUIRED)
 FIND_PACKAGE(Qt5Quick REQUIRED)
@@ -269,10 +493,14 @@ FIND_PACKAGE(Qt5WebEngineWidgets REQUIRED)
 FIND_PACKAGE(Qt5WebSockets REQUIRED)
 FIND_PACKAGE(Qt5Qml REQUIRED)
 FIND_PACKAGE(Qt5LinguistTools)
-QT5_WRAP_UI(organizer_UIHDRS ${organizer_UIS})
-QT5_ADD_RESOURCES(organizer_RCCPPS ${organizer_QRCS})
+
 SET(mo_translation_sources ${CMAKE_SOURCE_DIR}/src ${project_path}/uibase/src)
-QT5_CREATE_TRANSLATION(organizer_translations_qm ${mo_translation_sources} ${CMAKE_SOURCE_DIR}/src/organizer_en.ts)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set_property(GLOBAL PROPERTY AUTOGEN_SOURCE_GROUP autogen)
+set_property(GLOBAL PROPERTY AUTOMOC_SOURCE_GROUP autogen)
+set_property(GLOBAL PROPERTY AUTORCC_SOURCE_GROUP autogen)
+
+QT5_CREATE_TRANSLATION(organizer_translations_qm ${mo_translation_sources} ${CMAKE_SOURCE_DIR}/src/organizer_en.ts OPTIONS -silent)
 ADD_CUSTOM_TARGET(translations DEPENDS ${organizer_translations_qm})
 
 INCLUDE_DIRECTORIES(${Qt5Declarative_INCLUDES})
@@ -301,12 +529,12 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/game_gamebryo/src/creation
                     ${project_path}/game_features/src
                     ${project_path}/githubpp/src
-                    ${LZ4_ROOT}/include)
+                    ${LZ4_ROOT}/lib)
 
 INCLUDE_DIRECTORIES(shared ${ZLIB_INCLUDE_DIRS})
 LINK_DIRECTORIES(${lib_path}
                  ${ZLIB_ROOT}/lib
-                 ${LZ4_ROOT}/dll)
+                 ${LZ4_ROOT}/bin)
 EXECUTE_PROCESS(
   COMMAND git log -1 --format=%h
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -322,7 +550,7 @@ ELSE()
   SET(usvfs_name usvfs_x86)
 ENDIF()
 
-ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIHDRS} ${organizer_RCS} ${organizer_RCCPPS} ${organizer_translations_qm})
+ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIS} ${organizer_RCS} ${organizer_QRCS} ${organizer_translations_qm})
 TARGET_LINK_LIBRARIES(ModOrganizer
                       Qt5::Widgets Qt5::WinExtras Qt5::WebEngineWidgets Qt5::Quick
                       Qt5::Qml Qt5::QuickWidgets Qt5::Network Qt5::WebSockets
@@ -333,7 +561,7 @@ TARGET_LINK_LIBRARIES(ModOrganizer
                       Dbghelp advapi32 Version Shlwapi liblz4 Crypt32)
 
 IF (MSVC)
-  SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES COMPILE_FLAGS "/std:c++latest")
+  SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES COMPILE_FLAGS "/std:c++latest /permissive-")
 ENDIF()
 IF (MSVC AND "${CMAKE_SIZEOF_VOID_P}" EQUAL 4)
   # 32 bits
@@ -375,11 +603,11 @@ SET(windeploy_parameters "--no-translations --plugindir qtplugins --libdir dlls 
 INSTALL(
     CODE
     "EXECUTE_PROCESS(COMMAND
-        ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets --websockets ${windeploy_parameters}
+        ${qt5bin}/windeployqt.exe --verbose 0 ModOrganizer.exe --webenginewidgets --websockets ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
     )
     EXECUTE_PROCESS(COMMAND
-        ${qt5bin}/windeployqt.exe uibase.dll ${windeploy_parameters}
+        ${qt5bin}/windeployqt.exe --verbose 0 uibase.dll ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
     )
     file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/platforms)

@@ -3,7 +3,7 @@ function getTutorialSteps() {
         function() {
             tutorial.text = qsTr("Please switch to the \"Conflicts\"-Tab.")
             highlightItem("tabWidget", true)
-            if (!tutorialControl.waitForTabOpen("tabWidget", 4)) {
+            if (!tutorialControl.waitForTabOpen("tabWidget", "tabConflicts")) {
                 nextStep()
             }
         },

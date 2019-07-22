@@ -18,8 +18,9 @@ function highlightItem(widgetName, click) {
 
 function highlightAction(actionName, click) {
     var rect = tutorialControl.getActionRect(actionName)
+    var offsetRect = tutorialControl.getMenuRect(actionName)
     highlight.x = rect.x - 1
-    highlight.y = rect.y - 1
+    highlight.y = rect.y + offsetRect.height
     highlight.width = rect.width + 2
     highlight.height = rect.height + 2
     if (click) {

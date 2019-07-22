@@ -21,7 +21,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "bbcode.h"
 #include "utility.h"
 #include "ui_motddialog.h"
+#include "organizercore.h"
+#include <utility.h>
 #include <Shlwapi.h>
+
+using namespace MOBase;
 
 MotDDialog::MotDDialog(const QString &message, QWidget *parent)
   : QDialog(parent), ui(new Ui::MotDDialog)
@@ -43,5 +47,5 @@ void MotDDialog::on_okButton_clicked()
 
 void MotDDialog::linkClicked(const QUrl &url)
 {
-  ::ShellExecuteW(nullptr, L"open", MOBase::ToWString(url.toString()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::OpenLink(url);
 }

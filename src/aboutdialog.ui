@@ -120,17 +120,40 @@
          <item>
           <widget class="QLabel" name="label_3">
            <property name="text">
-            <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright 2011-2016 Sebastian Herbord&lt;/p&gt;&lt;p&gt;Copyright 2016-2018 Mod Organizer 2 contributors&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright © 2011-2016 Sebastian Herbord&lt;br/&gt;Copyright © 2016-2019 Mod Organizer 2 Contributors&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QLabel" name="copyrightText">
            <property name="text">
-            <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.&lt;/p&gt;&lt;p&gt;See the GNU General Public License for more details.&lt;/p&gt;&lt;p&gt;Source code can be found at &lt;a href=&quot;https://github.com/Modorganizer2/modorganizer&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;GitHub&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.&lt;/p&gt;&lt;p&gt;See the GNU General Public License for more details.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="wordWrap">
             <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Minimum</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="sourceText">
+           <property name="text">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Source code can be found at &lt;a href=&quot;https://github.com/ModOrganizer2/modorganizer&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;GitHub&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
@@ -157,7 +180,7 @@
          <item row="0" column="0">
           <widget class="QGroupBox" name="groupBox">
            <property name="title">
-            <string>Lead Developers/ Maintainers</string>
+            <string>Lead Developers &amp;&amp; Maintainers</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_6">
             <item>
@@ -173,11 +196,6 @@
               <item>
                <property name="text">
                 <string notr="true">AL12</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">erasmux</string>
                </property>
               </item>
               <item>
@@ -198,7 +216,7 @@
          <item row="1" column="0">
           <widget class="QGroupBox" name="groupBox_2">
            <property name="title">
-            <string>Mo2 devs and Contributors</string>
+            <string>MO2 Developers &amp;&amp; Contributors</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0">
             <item>
@@ -213,12 +231,22 @@
               </item>
               <item>
                <property name="text">
-                <string>Project579</string>
+                <string notr="true">erasmux</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>przester</string>
+                <string notr="true">isanae</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Project579</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">przester</string>
                </property>
               </item>
              </widget>
@@ -294,6 +322,11 @@
               </item>
               <item>
                <property name="text">
+                <string>yohru (Japanese)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string>Mordan (Greek)</string>
                </property>
               </item>
@@ -342,12 +375,12 @@
               </item>
               <item>
                <property name="text">
-                <string>yohru (Japanese)</string>
+                <string>Nubbie (Swedish)</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>...and all other Transifex contributors!</string>
+                <string>...and all other contributors!</string>
                </property>
                <property name="toolTip">
                 <string/>

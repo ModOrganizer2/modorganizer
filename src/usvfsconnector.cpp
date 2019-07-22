@@ -92,7 +92,7 @@ void LogWorker::exit()
 
 LogLevel logLevel(int level)
 {
-  switch (level) {
+  switch (static_cast<LogLevel>(level)) {
     case LogLevel::Info:
       return LogLevel::Info;
     case LogLevel::Warning:
@@ -106,7 +106,7 @@ LogLevel logLevel(int level)
 
 CrashDumpsType crashDumpsType(int type)
 {
-  switch (type) {
+  switch (static_cast<CrashDumpsType>(type)) {
   case CrashDumpsType::Mini:
     return CrashDumpsType::Mini;
   case CrashDumpsType::Data:

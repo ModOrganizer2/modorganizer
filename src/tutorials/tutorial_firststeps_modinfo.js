@@ -16,7 +16,7 @@ function getTutorialSteps()
         },
         function() {
             unhighlight()
-            tutorial.text = qsTr("We may re-visit this screen in later tutorials.")
+            tutorial.text = qsTr("We may revisit this screen in later tutorials.")
             waitForClick()
         }
     ]

@@ -250,6 +250,11 @@ signals:
   void modlistChanged(const QModelIndexList &indicies, int role);
 
   /**
+   * @brief QML seems to handle overloaded signals poorly - create unique signal for tutorials
+   */
+  void tutorialModlistUpdate();
+
+  /**
    * @brief emitted to have all selected mods deleted
    */
   void removeSelectedMods();

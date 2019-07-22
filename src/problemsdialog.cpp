@@ -1,5 +1,6 @@
 #include "problemsdialog.h"
 #include "ui_problemsdialog.h"
+#include "organizercore.h"
 #include <utility.h>
 #include <iplugin.h>
 #include <iplugindiagnose.h>
@@ -10,8 +11,9 @@
 using namespace MOBase;
 
 
-ProblemsDialog::ProblemsDialog(std::vector<QObject *> pluginObjects, QWidget *parent)
-  : QDialog(parent), ui(new Ui::ProblemsDialog), m_PluginObjects(pluginObjects)
+ProblemsDialog::ProblemsDialog(std::vector<QObject *> pluginObjects, QWidget *parent) :
+  QDialog(parent), ui(new Ui::ProblemsDialog), m_PluginObjects(pluginObjects),
+  m_hasProblems(false)
 {
   ui->setupUi(this);
 
@@ -29,7 +31,9 @@ ProblemsDialog::~ProblemsDialog()
 
 void ProblemsDialog::runDiagnosis()
 {
+  m_hasProblems = false;
   ui->problemsWidget->clear();
+
   for(QObject *pluginObj : m_PluginObjects) {
     IPlugin *plugin = qobject_cast<IPlugin*>(pluginObj);
     if (plugin != nullptr && !plugin->isActive())
@@ -46,6 +50,7 @@ void ProblemsDialog::runDiagnosis()
       newItem->setData(0, Qt::UserRole, diagnose->fullDescription(key));
 
       ui->problemsWidget->addTopLevelItem(newItem);
+      m_hasProblems = true;
 
       if (diagnose->hasGuidedFix(key)) {
         newItem->setText(1, tr("Fix"));
@@ -59,11 +64,25 @@ void ProblemsDialog::runDiagnosis()
       }
     }
   }
+
+  if (!m_hasProblems) {
+    auto* item = new QTreeWidgetItem;
+
+    item->setText(0, tr("(There are no notifications)"));
+    item->setText(1, "");
+    item->setData(0, Qt::UserRole, QString());
+
+    QFont font = item->font(0);
+    font.setItalic(true);
+    item->setFont(0, font);
+
+    ui->problemsWidget->addTopLevelItem(item);
+  }
 }
 
 bool ProblemsDialog::hasProblems() const
 {
-  return ui->problemsWidget->topLevelItemCount() != 0;
+  return m_hasProblems;
 }
 
 void ProblemsDialog::selectionChanged()
@@ -87,5 +106,5 @@ void ProblemsDialog::startFix()
 
 void ProblemsDialog::urlClicked(const QUrl &url)
 {
-  ::ShellExecuteW(nullptr, L"open", ToWString(url.toString()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::OpenLink(url);
 }

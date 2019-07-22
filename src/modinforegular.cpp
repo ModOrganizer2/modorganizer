@@ -100,7 +100,70 @@ void ModInfoRegular::readMeta()
   m_Repository       = metaFile.value("repository", "Nexus").toString();
   m_Converted        = metaFile.value("converted", false).toBool();
   m_Validated        = metaFile.value("validated", false).toBool();
-  m_URL              = metaFile.value("url", "").toString();
+
+  // this handles changes to how the URL works after 2.2.0
+  //
+  // in 2.2.0, "hasCustomUrl" does not exist and "url" is only used when the mod
+  // id is invalid, although it can be set at any time in the mod info dialog
+  //
+  // post 2.2.0, a custom url can be set on any mod, whether the mod id is
+  // valid or not, so an additional flag "hasCustomURL" is required, with a
+  // corresponding checkbox in the mod info dialog
+  //
+  // there are several cases to handle to make sure no data is lost and to
+  // determine whether the user has set a custom url before:
+  //
+  //   1) some mods have an incorrect url set along with a valid mod id;
+  //      there is apparently a bug with the fomod installer that can set the
+  //      url of a mod to a value used by a _previous_ installation
+  //
+  //   2) it is possible to set the url even if the mod id is valid, in which
+  //      case it is saved, but never used in 2.2.0
+  //
+  //   3) opening the mod info dialog on the nexus tab for a mod that has a
+  //      valid id will force the url to be the same as what the plugin gives
+  //      back
+  //
+  // the algorithm is as follows:
+  //   always read the url from the meta file and store it so this piece of data
+  //   is never lost; the problem then only becomes about whether to enable
+  //   hasCustomURL
+  //
+  //   if hasCustomURL is present in the meta file, just read that and be
+  //   done with it
+  //
+  //   if not, then the flag depends on the mod id and the url
+  //      if the mod id is valid, the custom url is disabled; although the url
+  //      could be _set_ by the user when a mod id was valid, it was never
+  //      _used_, so the behaviour won't change
+  //
+  //      if the mod id is invalid, the url should normally be empty, unless the
+  //      user specified one, in which case hasCustomURL should be true
+  //        (the only case where this fails is if a mod id was valid before and
+  //        the user visited the nexus tab, in which case the url was set
+  //        automatically, but then the id was manually changed to 0
+  //
+  //        in that case, the mod id is invalid and the url is not empty, but it
+  //        was never set by the user; this case is impossible to distinguish
+  //        from a user manually entering a url, and so is handled as such)
+
+  // always read the url
+  m_CustomURL = metaFile.value("url").toString();
+
+  if (metaFile.contains("hasCustomURL")) {
+    m_HasCustomURL = metaFile.value("hasCustomURL").toBool();
+  } else {
+    if (m_NexusID > 0) {
+      // the mod id is valid, disable the custom url
+      m_HasCustomURL = false;
+    } else {
+      if (!m_CustomURL.isEmpty()) {
+        // the mod id is invalid and the url is not empty, enable it
+        m_HasCustomURL = true;
+      }
+    }
+  }
+
   m_LastNexusQuery   = QDateTime::fromString(metaFile.value("lastNexusQuery", "").toString(), Qt::ISODate);
   m_LastNexusUpdate  = QDateTime::fromString(metaFile.value("lastNexusUpdate", "").toString(), Qt::ISODate);
   m_NexusLastModified = QDateTime::fromString(metaFile.value("nexusLastModified", QDateTime::currentDateTimeUtc()).toString(), Qt::ISODate);
@@ -118,7 +181,7 @@ void ModInfoRegular::readMeta()
       m_EndorsedState = metaFile.value("endorsed", false).toBool() ? ENDORSED_TRUE : ENDORSED_FALSE;
     }
   }
-  
+
   QString categoriesString = metaFile.value("category", "").toString();
 
   QStringList categories = categoriesString.split(',', QString::SkipEmptyParts);
@@ -166,7 +229,8 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("comments", m_Comments);
       metaFile.setValue("notes", m_Notes);
       metaFile.setValue("nexusDescription", m_NexusDescription);
-      metaFile.setValue("url", m_URL);
+      metaFile.setValue("url", m_CustomURL);
+      metaFile.setValue("hasCustomURL", m_HasCustomURL);
       metaFile.setValue("nexusFileStatus", m_NexusFileStatus);
       metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
       metaFile.setValue("lastNexusUpdate", m_LastNexusUpdate.toString(Qt::ISODate));
@@ -194,10 +258,14 @@ void ModInfoRegular::saveMeta()
       if (metaFile.status() == QSettings::NoError) {
         m_MetaInfoChanged = false;
       } else {
-        reportError(tr("failed to write %1/meta.ini: error %2").arg(absolutePath()).arg(metaFile.status()));
+        qCritical()
+          << QString("failed to write %1/meta.ini: error %2")
+            .arg(absolutePath()).arg(metaFile.status());
       }
     } else {
-      reportError(tr("failed to write %1/meta.ini: error %2").arg(absolutePath()).arg(metaFile.status()));
+      qCritical()
+        << QString("failed to write %1/meta.ini: error %2")
+          .arg(absolutePath()).arg(metaFile.status());
     }
   }
 }
@@ -291,15 +359,27 @@ void ModInfoRegular::nxmRequestFailed(QString, int, int, QVariant userData, QNet
 
 bool ModInfoRegular::updateNXMInfo()
 {
-  QDateTime time = QDateTime::currentDateTimeUtc();
-  QDateTime target = m_LastNexusQuery.addDays(1);
-  if (m_NexusID > 0 && time >= target) {
+  if (needsDescriptionUpdate()) {
     m_NexusBridge.requestDescription(m_GameName, m_NexusID, QVariant());
     return true;
   }
+
   return false;
 }
 
+bool ModInfoRegular::needsDescriptionUpdate() const
+{
+  if (m_NexusID > 0) {
+    QDateTime time = QDateTime::currentDateTimeUtc();
+    QDateTime target = m_LastNexusQuery.addDays(1);
+
+    if (time >= target) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 void ModInfoRegular::setCategory(int categoryID, bool active)
 {
@@ -753,18 +833,27 @@ void ModInfoRegular::setNexusLastModified(QDateTime time)
   emit modDetailsUpdated(true);
 }
 
-void ModInfoRegular::setURL(QString const &url)
+void ModInfoRegular::setCustomURL(QString const &url)
 {
-  m_URL = url;
+  m_CustomURL = url;
   m_MetaInfoChanged = true;
 }
 
-QString ModInfoRegular::getURL() const
+QString ModInfoRegular::getCustomURL() const
 {
-  return m_URL;
+  return m_CustomURL;
 }
 
+void ModInfoRegular::setHasCustomURL(bool b)
+{
+  m_HasCustomURL = b;
+  m_MetaInfoChanged = true;
+}
 
+bool ModInfoRegular::hasCustomURL() const
+{
+  return m_HasCustomURL;
+}
 
 QStringList ModInfoRegular::archives(bool checkOnDisk)
 {

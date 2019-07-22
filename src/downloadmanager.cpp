@@ -549,10 +549,21 @@ void DownloadManager::addNXMDownload(const QString &url)
   NXMUrl nxmInfo(url);
 
   QStringList validGames;
+  MOBase::IPluginGame* foundGame = nullptr;
   validGames.append(m_ManagedGame->gameShortName());
   validGames.append(m_ManagedGame->validShortNames());
+  for (auto game : validGames) {
+    MOBase::IPluginGame* gamePlugin = m_OrganizerCore->getGame(game);
+    if (
+        nxmInfo.game().compare(gamePlugin->gameShortName(), Qt::CaseInsensitive) == 0 ||
+        nxmInfo.game().compare(gamePlugin->gameNexusName(), Qt::CaseInsensitive) == 0
+      ) {
+      foundGame = gamePlugin;
+      break;
+    }
+  }
   qDebug("add nxm download: %s", qUtf8Printable(url));
-  if (!validGames.contains(nxmInfo.game(), Qt::CaseInsensitive)) {
+  if (foundGame == nullptr) {
     qDebug("download requested for wrong game (game: %s, url: %s)", qUtf8Printable(m_ManagedGame->gameShortName()), qUtf8Printable(nxmInfo.game()));
     QMessageBox::information(nullptr, tr("Wrong Game"), tr("The download link is for a mod for \"%1\" but this instance of MO "
     "has been set up for \"%2\".").arg(nxmInfo.game()).arg(m_ManagedGame->gameShortName()), QMessageBox::Ok);
@@ -560,7 +571,7 @@ void DownloadManager::addNXMDownload(const QString &url)
   }
 
   for (auto tuple : m_PendingDownloads) {
-    if (std::get<0>(tuple).compare(nxmInfo.game(), Qt::CaseInsensitive) == 0, std::get<1>(tuple) == nxmInfo.modId() && std::get<2>(tuple) == nxmInfo.fileId()) {
+    if (std::get<0>(tuple).compare(foundGame->gameShortName(), Qt::CaseInsensitive) == 0, std::get<1>(tuple) == nxmInfo.modId() && std::get<2>(tuple) == nxmInfo.fileId()) {
       QString debugStr("download requested is already queued (mod: %1, file: %2)");
       QString infoStr(tr("There is already a download queued for this file.\n\nMod %1\nFile %2"));
 
@@ -620,7 +631,7 @@ void DownloadManager::addNXMDownload(const QString &url)
 
   emit aboutToUpdate();
 
-  m_PendingDownloads.append(std::make_tuple(nxmInfo.game(), nxmInfo.modId(), nxmInfo.fileId()));
+  m_PendingDownloads.append(std::make_tuple(foundGame->gameShortName(), nxmInfo.modId(), nxmInfo.fileId()));
 
   emit update(-1);
   emit downloadAdded();
@@ -628,9 +639,10 @@ void DownloadManager::addNXMDownload(const QString &url)
 
   info->nexusKey = nxmInfo.key();
   info->nexusExpires = nxmInfo.expires();
+  info->nexusDownloadUser = nxmInfo.userId();
 
   QObject *test = info;
-  m_RequestIDs.insert(m_NexusInterface->requestFileInfo(nxmInfo.game(), nxmInfo.modId(), nxmInfo.fileId(), this, qVariantFromValue(test), ""));
+  m_RequestIDs.insert(m_NexusInterface->requestFileInfo(foundGame->gameShortName(), nxmInfo.modId(), nxmInfo.fileId(), this, qVariantFromValue(test), ""));
 }
 
 
@@ -1029,14 +1041,14 @@ void DownloadManager::openFile(int index)
     reportError(tr("OpenFile: invalid download index %1").arg(index));
     return;
   }
+
   QDir path = QDir(m_OutputDirectory);
   if (path.exists(getFileName(index))) {
-
-    ::ShellExecuteW(nullptr, L"open", ToWString(QDir::toNativeSeparators(getFilePath(index))).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    shell::OpenFile(getFilePath(index));
     return;
   }
 
-  ::ShellExecuteW(nullptr, L"explore", ToWString(QDir::toNativeSeparators(m_OutputDirectory)).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(m_OutputDirectory);
   return;
 }
 
@@ -1046,23 +1058,22 @@ void DownloadManager::openInDownloadsFolder(int index)
     reportError(tr("OpenFileInDownloadsFolder: invalid download index %1").arg(index));
     return;
   }
-  QString params = "/select,\"";
-  QDir path = QDir(m_OutputDirectory);
-  if (path.exists(getFileName(index))) {
-    params = params + QDir::toNativeSeparators(getFilePath(index)) + "\"";
 
-    ::ShellExecuteW(nullptr, nullptr, L"explorer", ToWString(params).c_str(), nullptr, SW_SHOWNORMAL);
+  const auto path = getFilePath(index);
+
+  if (QFile::exists(path)) {
+    shell::ExploreFile(path);
     return;
   }
-  else if (path.exists(getFileName(index) + ".unfinished")) {
-    params = params + QDir::toNativeSeparators(getFilePath(index)+".unfinished") + "\"";
-
-    ::ShellExecuteW(nullptr, nullptr, L"explorer", ToWString(params).c_str(), nullptr, SW_SHOWNORMAL);
-    return;
+  else {
+    const auto unfinished = path + ".unfinished";
+    if (QFile::exists(unfinished)) {
+      shell::ExploreFile(unfinished);
+      return;
+    }
   }
 
-  ::ShellExecuteW(nullptr, L"explore", ToWString(QDir::toNativeSeparators(m_OutputDirectory)).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
-  return;
+  shell::ExploreFile(m_OutputDirectory);
 }
 
 

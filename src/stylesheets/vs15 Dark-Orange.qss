@@ -50,7 +50,9 @@ QTreeWidget#categoriesTree::item,
 
 QListView::item,
 QTreeView#espList::item {
-  padding: 0.3em; }
+  padding-top: 0.3em;
+  padding-bottom: 0.3em;
+}
 
 /* to enable border color */
 QTreeView,
@@ -202,8 +204,7 @@ QToolBar::separator {
   width: 0; }
 
 QToolButton {
-  margin: 0 4px 0 4px;
-  padding: 5px; }
+  padding: 4px; }
   QToolButton:hover, QToolButton:focus {
     background-color: #3E3E40; }
   QToolButton:pressed {
@@ -436,13 +437,13 @@ QScrollBar::sub-line {
   background-color: #3E3E42;
   border: none; }
 
-/*QScrollBar::add-line:horizontal:hover, 
-QScrollBar::sub-line:horizontal:hover, 
-QScrollBar::add-line:vertical:hover, 
+/*QScrollBar::add-line:horizontal:hover,
+QScrollBar::sub-line:horizontal:hover,
+QScrollBar::add-line:vertical:hover,
 QScrollBar::sub-line:vertical:hover,
-QScrollBar::add-line:horizontal:pressed, 
-QScrollBar::sub-line:horizontal:pressed, 
-QScrollBar::add-line:vertical:pressed, 
+QScrollBar::add-line:horizontal:pressed,
+QScrollBar::sub-line:horizontal:pressed,
+QScrollBar::add-line:vertical:pressed,
 QScrollBar::sub-line:vertical:pressed { }*/
 QScrollBar::handle:hover {
   background: #9E9E9E; }
@@ -552,7 +553,7 @@ QMenu::item {
   background: transparent;
   padding: 4px 20px; }
 
-QMenu::item:selected {
+QMenu::item:selected, QMenuBar::item:selected {
   background-color: #333334; }
 
 QMenu::item:disabled {
@@ -591,6 +592,8 @@ SaveGameInfoWidget {
   border-style: solid;
   border-width: 1px;
   padding: 2px; }
+
+  QStatusBar::item {border: None;}
 
 /* Progress Bars (Downloads) #QProgressBar */
 QProgressBar {

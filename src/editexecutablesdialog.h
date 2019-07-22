@@ -22,17 +22,118 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "tutorabledialog.h"
 #include <QListWidgetItem>
-#include <QTimer>
 #include "executableslist.h"
 #include "profile.h"
 #include "iplugingame.h"
+#include <QTimer>
+#include <QAbstractButton>
+#include <optional>
 
 namespace Ui {
     class EditExecutablesDialog;
 }
 
-
 class ModList;
+class OrganizerCore;
+
+/** helper class to manage custom overwrites within the edit executables
+ *  dialog, stores a T and a bool in map indexed by a QString
+ **/
+template <class T>
+class ToggableMap
+{
+public:
+  struct Value
+  {
+    bool enabled;
+    T value;
+
+    Value(bool b, T&& v)
+      : enabled(b), value(std::forward<T>(v))
+    {
+    }
+  };
+
+  /**
+   * returns the Value associated with the given title, or empty
+   **/
+  std::optional<Value> find(const QString& title) const
+  {
+    auto itor = m_map.find(title);
+    if (itor == m_map.end()) {
+      return {};
+    }
+
+    return itor->second;
+  }
+
+  /**
+   * sets the given value, adds it if not found
+   **/
+  void set(QString title, bool b, T value)
+  {
+    m_map.insert_or_assign(std::move(title), Value(b, std::move(value)));
+  }
+
+  /**
+   * sets whether the given value is enabled, inserts it if not found
+   **/
+  void setEnabled(const QString& title, bool b)
+  {
+    auto itor = m_map.find(title);
+
+    if (itor == m_map.end()) {
+      m_map.emplace(title, Value(b, {}));
+    } else {
+      itor->second.enabled = b;
+    }
+  }
+
+  /**
+   * sets the given value, inserts it enabled if not found
+   **/
+  void setValue(const QString& title, T value)
+  {
+    auto itor = m_map.find(title);
+
+    if (itor == m_map.end()) {
+      m_map.emplace(title, Value(true, std::move(value)));
+    } else {
+      itor->second.value = std::move(value);
+    }
+  }
+
+  /**
+   * renames the given value, ignored if not found
+   **/
+  void rename(const QString& oldTitle, QString newTitle)
+  {
+    auto itor = m_map.find(oldTitle);
+    if (itor == m_map.end()) {
+      return;
+    }
+
+    // move to new title, erase old
+    m_map.emplace(std::move(newTitle), std::move(itor->second));
+    m_map.erase(itor);
+  }
+
+  /**
+   * removes the given value, ignored if not found
+   **/
+  void remove(const QString& title)
+  {
+    auto itor = m_map.find(title);
+    if (itor == m_map.end()) {
+      return;
+    }
+
+    m_map.erase(itor);
+  }
+
+private:
+  std::map<QString, Value> m_map;
+};
 
 
 /**
@@ -43,85 +144,79 @@ class EditExecutablesDialog : public MOBase::TutorableDialog
     Q_OBJECT
 
 public:
+  using CustomOverwrites = ToggableMap<QString>;
+  using ForcedLibraries = ToggableMap<QList<MOBase::ExecutableForcedLoadSetting>>;
 
-  /**
-   * @brief constructor
-   *
-   * @param executablesList current list of executables
-   * @param parent parent widget
-   **/
-  explicit EditExecutablesDialog(const ExecutablesList &executablesList,
-                                 const ModList &modList,
-                                 Profile *profile,
-                                 const MOBase::IPluginGame *game,
-                                 QWidget *parent = 0);
+  explicit EditExecutablesDialog(OrganizerCore& oc, QWidget* parent=nullptr);
 
   ~EditExecutablesDialog();
 
-  /**
-   * @brief retrieve the updated list of executables
-   *
-   * @return updated list of executables
-   **/
   ExecutablesList getExecutablesList() const;
-
-  void saveExecutable();
-
-private slots:
-  void on_newFilesModCheckBox_toggled(bool checked);
+  const CustomOverwrites& getCustomOverwrites() const;
+  const ForcedLibraries& getForcedLibraries() const;
 
 private slots:
+  void on_list_itemSelectionChanged();
 
-  void on_binaryEdit_textChanged(const QString &arg1);
+  void on_reset_clicked();
+  void on_add_clicked();
+  void on_remove_clicked();
+  void on_up_clicked();
+  void on_down_clicked();
 
-  void on_workingDirEdit_textChanged(const QString &arg1);
+  void on_title_textChanged(const QString& s);
+  void on_overwriteSteamAppID_toggled(bool checked);
+  void on_createFilesInMod_toggled(bool checked);
+  void on_forceLoadLibraries_toggled(bool checked);
 
-  void on_addButton_clicked();
+  void on_browseBinary_clicked();
+  void on_browseWorkingDirectory_clicked();
+  void on_configureLibraries_clicked();
 
-  void on_browseButton_clicked();
-
-  void on_removeButton_clicked();
-
-  void on_titleEdit_textChanged(const QString &arg1);
-
-  void on_overwriteAppIDBox_toggled(bool checked);
-
-  void on_browseDirButton_clicked();
-
-  void on_closeButton_clicked();
-
-  void delayedRefresh();
-
-  void on_executablesListBox_itemSelectionChanged();
-
-  void on_executablesListBox_clicked(const QModelIndex &index);
-
-  void on_forceLoadButton_clicked();
-
-  void on_forceLoadCheckBox_toggled();
+  void on_buttons_clicked(QAbstractButton* b);
 
 private:
+  std::unique_ptr<Ui::EditExecutablesDialog> ui;
+  OrganizerCore& m_organizerCore;
 
-  void resetInput();
+  // copy of the original executables, used to clear the current settings when
+  // committing changes
+  const ExecutablesList m_originalExecutables;
 
-  void refreshExecutablesWidget();
+  // current executable list
+  ExecutablesList m_executablesList;
 
-  bool executableChanged();
+  // custom overwrites set in the dialog
+  CustomOverwrites m_customOverwrites;
 
-  void updateButtonStates();
+  // forced libraries set in the dialog
+  ForcedLibraries m_forcedLibraries;
 
-private:
-  Ui::EditExecutablesDialog *ui;
+  // true when the change events being triggered are in response to loading
+  // the executable's data into the UI, not from a user change
+  bool m_settingUI;
 
-  QListWidgetItem *m_CurrentItem;
 
-  ExecutablesList m_ExecutablesList;
+  void loadCustomOverwrites();
+  void loadForcedLibraries();
 
-  Profile *m_Profile;
+  QListWidgetItem* selectedItem();
+  Executable* selectedExe();
 
-  QList<MOBase::ExecutableForcedLoadSetting> m_ForcedLibraries;
-
-  const MOBase::IPluginGame *m_GamePlugin;
+  void fillList();
+  QListWidgetItem* createListItem(const Executable& exe);
+  void updateUI(const QListWidgetItem* item, const Executable* e);
+  void clearEdits();
+  void setEdits(const Executable& e);
+  void setButtons(const QListWidgetItem* item, const Executable* e);
+  void save();
+  void saveOrder();
+  bool canMove(const QListWidgetItem* item, int direction);
+  void move(QListWidgetItem* item, int direction);
+  void setJarBinary(const QString& binaryName);
+  bool isTitleConflicting(const QString& s);
+  void commitChanges();
+  void setDirty(bool b);
 };
 
 #endif // EDITEXECUTABLESDIALOG_H

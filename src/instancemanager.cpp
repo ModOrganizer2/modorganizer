@@ -102,7 +102,7 @@ QString InstanceManager::manageInstances(const QStringList &instanceList) const
 	SelectionDialog selection(
 		QString("<h3>%1</h3><br>%2")
 		.arg(QObject::tr("Choose Instance to Delete"))
-		.arg(QObject::tr("Be Carefull! Deleting an Instance will remove all your files for that Instance (mods, downloads, profiles, configuration, ...). Custom paths outside of the instance folder for downloads, mods, etc. will be left untoched.")),
+		.arg(QObject::tr("Be Careful! Deleting an Instance will remove all your files for that Instance (mods, downloads, profiles, configuration, ...). Custom paths outside of the instance folder for downloads, mods, etc. will be left untoched.")),
 		nullptr);
 	for (const QString &instance : instanceList)
 	{
@@ -217,6 +217,8 @@ QString InstanceManager::chooseInstance(const QStringList &instanceList) const
                         QObject::tr("Delete an Instance."),
                         static_cast<uint8_t>(Special::Manage));
 
+  selection.setWindowFlags(selection.windowFlags() | Qt::WindowStaysOnTopHint);
+
   if (selection.exec() == QDialog::Rejected) {
     qDebug("rejected");
     throw MOBase::MyException(QObject::tr("Canceled"));
@@ -227,7 +229,7 @@ QString InstanceManager::chooseInstance(const QStringList &instanceList) const
   if (choice.type() == QVariant::String) {
     return choice.toString();
   } else {
-    switch (choice.value<uint8_t>()) {
+    switch (static_cast<Special>(choice.value<uint8_t>())) {
       case Special::NewInstance: return queryInstanceName(instanceList);
       case Special::Portable: return QString();
       case Special::Manage: {

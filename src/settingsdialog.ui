@@ -441,7 +441,7 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
        <item>
         <widget class="QLabel" name="label_23">
          <property name="text">
-          <string>Important: All directories have to be writeable!</string>
+          <string>Important: All directories have to be writable!</string>
          </property>
         </widget>
        </item>
@@ -495,12 +495,28 @@ p, li { white-space: pre-wrap; }
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="revokeNexusAuthButton">
+             <widget class="QPushButton" name="nexusManualKey">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>Manually enter the API key and try to login</string>
+              </property>
+              <property name="text">
+               <string>Enter API Key Manually</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="nexusDisconnect">
               <property name="toolTip">
                <string>Clear the stored Nexus API key and force reauthorization.</string>
               </property>
               <property name="text">
-               <string>Revoke Nexus Authorization</string>
+               <string>Disconnect from Nexus</string>
               </property>
               <property name="icon">
                <iconset resource="resources.qrc">
@@ -1281,7 +1297,7 @@ programs you are intentionally running.</string>
            <property name="whatsThis">
             <string>
                                     Decides the amount of data printed to &quot;ModOrganizer.log&quot;.
-                                    &quot;Debug&quot; produces very useful information for finding problems. There is usually no noteworthy performance impact but the file may become rather large. If this is a problem you may prefer the &quot;Info&quot; level for regluar use. On the &quot;Error&quot; level the log file usually remains empty.
+                                    &quot;Debug&quot; produces very useful information for finding problems. There is usually no noteworthy performance impact but the file may become rather large. If this is a problem you may prefer the &quot;Info&quot; level for regular use. On the &quot;Error&quot; level the log file usually remains empty.
                                 </string>
            </property>
            <item>

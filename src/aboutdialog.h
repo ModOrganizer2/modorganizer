@@ -74,7 +74,7 @@ private:
 
 private slots:
   void on_creditsList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
-  void on_copyrightText_linkActivated(const QString &link);
+  void on_sourceText_linkActivated(const QString &link);
 
 private:
 
