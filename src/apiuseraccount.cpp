@@ -1,8 +1,35 @@
 #include "apiuseraccount.h"
 
+QString localizedUserAccountType(APIUserAccountTypes t)
+{
+  switch (t)
+  {
+    case APIUserAccountTypes::Regular:
+      return QObject::tr("Regular");
+
+    case APIUserAccountTypes::Premium:
+      return QObject::tr("Premium");
+
+    case APIUserAccountTypes::None:  // fall-through
+    default:
+      return QObject::tr("None");
+  }
+}
+
+
 APIUserAccount::APIUserAccount()
   : m_type(APIUserAccountTypes::None)
 {
+}
+
+bool APIUserAccount::isValid() const
+{
+  return !m_key.isEmpty();
+}
+
+const QString& APIUserAccount::apiKey() const
+{
+  return m_key;
 }
 
 const QString& APIUserAccount::id() const
@@ -23,6 +50,12 @@ APIUserAccountTypes APIUserAccount::type() const
 const APILimits& APIUserAccount::limits() const
 {
   return m_limits;
+}
+
+APIUserAccount& APIUserAccount::apiKey(const QString& key)
+{
+  m_key = key;
+  return *this;
 }
 
 APIUserAccount& APIUserAccount::id(const QString& id)

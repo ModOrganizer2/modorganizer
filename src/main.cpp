@@ -697,6 +697,9 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       // set up main window and its data structures
       MainWindow mainWindow(settings, organizer, pluginContainer);
 
+      NexusInterface::instance(&pluginContainer)
+        ->getAccessManager()->setTopLevelWidget(&mainWindow);
+
       QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), &application,
                        SLOT(setStyleFile(QString)));
       QObject::connect(&instance, SIGNAL(messageSent(QString)), &organizer,
@@ -710,7 +713,13 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       mainWindow.activateWindow();
 
       splash.finish(&mainWindow);
-      return application.exec();
+
+      const auto ret = application.exec();
+
+      NexusInterface::instance(&pluginContainer)
+        ->getAccessManager()->setTopLevelWidget(nullptr);
+
+      return ret;
     }
   } catch (const std::exception &e) {
     reportError(e.what());

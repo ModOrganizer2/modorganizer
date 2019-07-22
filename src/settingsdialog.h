@@ -21,12 +21,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SETTINGSDIALOG_H
 
 #include "tutorabledialog.h"
+#include "nxmaccessmanager.h"
 #include <iplugin.h>
-#include <QComboBox>
-#include <QDialog>
-#include <QWebSocket>
 #include <QListWidgetItem>
-#include <QTimer>
 
 class PluginContainer;
 class Settings;
@@ -34,6 +31,7 @@ class Settings;
 namespace Ui {
     class SettingsDialog;
 }
+
 
 /**
  * dialog used to change settings for Mod Organizer. On top of the
@@ -127,11 +125,6 @@ private slots:
   void on_resetGeometryBtn_clicked();
 
   void deleteBlacklistItem();
-  void dispatchLogin();
-  void loginPing();
-  void authError(QAbstractSocket::SocketError error);
-  void receiveApiKey(const QString &apiKey);
-  void completeApiConnection();
 
 private:
   Ui::SettingsDialog *ui;
@@ -145,23 +138,28 @@ private:
   QColor m_ContainsColor;
   QColor m_ContainedColor;
 
-  bool m_KeyReceived;
-  bool m_KeyCleared;
   bool m_GeometriesReset;
-  QString m_UUID;
-  QString m_AuthToken;
+  bool m_keyChanged;
 
   QString m_ExecutableBlacklist;
-  QWebSocket *m_nexusLogin;
-  QTimer m_loginTimer;
-  int m_totalPings = 0;
+  std::unique_ptr<NexusSSOLogin> m_nexusLogin;
+  std::unique_ptr<NexusKeyValidator> m_nexusValidator;
 
+  void validateKey(const QString& key);
   bool setKey(const QString& key);
   bool clearKey();
-  void updateNexusButtons();
 
-  void fetchNexusApiKey();
-  void testApiKey();
+  void updateNexusState();
+  void updateNexusButtons();
+  void updateNexusData();
+
+  void onSSOKeyChanged(const QString& key);
+  void onSSOStateChanged(NexusSSOLogin::States s, const QString& e);
+
+  void onValidatorStateChanged(NexusKeyValidator::States s, const QString& e);
+  void onValidatorFinished(const APIUserAccount& user);
+
+  void addNexusLog(const QString& s);
 };
 
 #endif // SETTINGSDIALOG_H

@@ -130,7 +130,7 @@ void SelfUpdater::testForUpdate()
     m_GitHub.releases(GitHub::Repository("Modorganizer2", "modorganizer"),
                       [this](const QJsonArray &releases) {
       if (releases.isEmpty()) {
-        qDebug("Unable to connect to github.com to check version");
+        // error message already logged
         return;
       }
 

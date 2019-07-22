@@ -151,6 +151,7 @@ public:
 public:
   static APILimits defaultAPILimits();
   static APILimits parseLimits(const QNetworkReply* reply);
+  static APILimits parseLimits(const QList<QNetworkReply::RawHeaderPair>& headers);
 
   ~NexusInterface();
 

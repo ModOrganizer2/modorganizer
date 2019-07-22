@@ -28,7 +28,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "instancemanager.h"
 #include "nexusinterface.h"
-#include "nxmaccessmanager.h"
 #include "plugincontainer.h"
 
 #include <boost/uuid/uuid_generators.hpp>
@@ -49,7 +48,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-
 class NexusManualKeyDialog : public QDialog
 {
 public:
@@ -57,6 +55,7 @@ public:
     : QDialog(parent), ui(new Ui::NexusManualKeyDialog)
   {
     ui->setupUi(this);
+    ui->key->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
 
     connect(ui->openBrowser, &QPushButton::clicked, [&]{ openBrowser(); });
     connect(ui->paste, &QPushButton::clicked, [&]{ paste(); });
@@ -103,30 +102,21 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings* setti
   , ui(new Ui::SettingsDialog)
   , m_settings(settings)
   , m_PluginContainer(pluginContainer)
-  , m_nexusLogin(new QWebSocket)
-  , m_KeyReceived(false)
-  , m_KeyCleared(false)
+  , m_keyChanged(false)
   , m_GeometriesReset(false)
 {
   ui->setupUi(this);
   ui->pluginSettingsList->setStyleSheet("QTreeWidget::item {padding-right: 10px;}");
 
-  QShortcut *delShortcut
-      = new QShortcut(QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
+  QShortcut *delShortcut = new QShortcut(
+    QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
   connect(delShortcut, SIGNAL(activated()), this, SLOT(deleteBlacklistItem()));
-  connect(m_nexusLogin, SIGNAL(connected()), this, SLOT(dispatchLogin()));
-  connect(m_nexusLogin, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(authError(QAbstractSocket::SocketError)));
-  connect(m_nexusLogin, SIGNAL(textMessageReceived(const QString &)), this, SLOT(receiveApiKey(const QString &)));
-  connect(m_nexusLogin, SIGNAL(disconnected()), this, SLOT(completeApiConnection()));
-  m_loginTimer.callOnTimeout(this, &SettingsDialog::loginPing);
 
-  updateNexusButtons();
+  updateNexusState();
 }
 
 SettingsDialog::~SettingsDialog()
 {
-  m_loginTimer.stop();
-  m_nexusLogin->close();
   disconnect(this);
   delete ui;
 }
@@ -188,7 +178,7 @@ bool SettingsDialog::getResetGeometries()
 
 bool SettingsDialog::getApiKeyChanged()
 {
-  return m_KeyReceived || m_KeyCleared;
+  return m_keyChanged;
 }
 
 void SettingsDialog::on_categoriesBtn_clicked()
@@ -391,164 +381,215 @@ void SettingsDialog::on_resetDialogsButton_clicked()
 
 void SettingsDialog::on_nexusConnect_clicked()
 {
-  fetchNexusApiKey();
+  if (m_nexusLogin && m_nexusLogin->isActive()) {
+    m_nexusLogin->cancel();
+    return;
+  }
+
+  if (!m_nexusLogin) {
+    m_nexusLogin.reset(new NexusSSOLogin);
+
+    m_nexusLogin->keyChanged = [&](auto&& s){
+      onSSOKeyChanged(s);
+    };
+
+    m_nexusLogin->stateChanged = [&](auto&& s, auto&& e){
+      onSSOStateChanged(s, e);
+    };
+  }
+
+  ui->nexusLog->clear();
+  m_nexusLogin->start();
+  updateNexusState();
 }
 
 void SettingsDialog::on_nexusManualKey_clicked()
 {
-  NexusManualKeyDialog dialog(this);
+  if (m_nexusValidator && m_nexusValidator->isActive()) {
+    m_nexusValidator->cancel();
+    return;
+  }
 
+  NexusManualKeyDialog dialog(this);
   if (dialog.exec() != QDialog::Accepted) {
     return;
   }
 
   const auto key = dialog.key();
+  if (key.isEmpty()) {
+    clearKey();
+    return;
+  }
 
+  ui->nexusLog->clear();
+  validateKey(key);
+}
+
+void SettingsDialog::on_nexusDisconnect_clicked()
+{
+  clearKey();
+  ui->nexusLog->clear();
+  addNexusLog(tr("Disconnected."));
+}
+
+void SettingsDialog::validateKey(const QString& key)
+{
+  if (!m_nexusValidator) {
+    m_nexusValidator.reset(new NexusKeyValidator(
+      *NexusInterface::instance(m_PluginContainer)->getAccessManager()));
+
+    m_nexusValidator->stateChanged = [&](auto&& s, auto&& e){
+      onValidatorStateChanged(s, e);
+    };
+
+    m_nexusValidator->finished = [&](auto&& user) {
+      onValidatorFinished(user);
+    };
+  }
+
+  addNexusLog(tr("Checking API key..."));
+  m_nexusValidator->start(key);
+}
+
+void SettingsDialog::onSSOKeyChanged(const QString& key)
+{
   if (key.isEmpty()) {
     clearKey();
   } else {
-    if (setKey(key)) {
-      testApiKey();
+    addNexusLog(tr("Received API key."));
+    validateKey(key);
+  }
+}
+
+void SettingsDialog::onSSOStateChanged(NexusSSOLogin::States s, const QString& e)
+{
+  if (s != NexusSSOLogin::Finished) {
+    // finished state is handled in onSSOKeyChanged()
+    const auto log = NexusSSOLogin::stateToString(s, e);
+
+    for (auto&& line : log.split("\n")) {
+      addNexusLog(line);
+    }
+  }
+
+  updateNexusState();
+}
+
+void SettingsDialog::onValidatorStateChanged(
+  NexusKeyValidator::States s, const QString& e)
+{
+  if (s != NexusKeyValidator::Finished) {
+    // finished state is handled in onValidatorFinished()
+    const auto log = NexusKeyValidator::stateToString(s, e);
+
+    for (auto&& line : log.split("\n")) {
+      addNexusLog(line);
+    }
+  }
+
+  updateNexusState();
+}
+
+void SettingsDialog::onValidatorFinished(const APIUserAccount& user)
+{
+  NexusInterface::instance(m_PluginContainer)->setUserAccount(user);
+
+  if (!user.apiKey().isEmpty()) {
+    if (setKey(user.apiKey())) {
+      addNexusLog(tr("Linked with Nexus successfully."));
     }
   }
 }
 
-void SettingsDialog::fetchNexusApiKey()
+void SettingsDialog::addNexusLog(const QString& s)
 {
-  QUrl url = QUrl("wss://sso.nexusmods.com");
-  m_nexusLogin->open(url);
-  updateNexusButtons();
-}
-
-void SettingsDialog::dispatchLogin()
-{
-  m_KeyReceived = false;
-  QJsonObject login;
-  if (m_UUID.isEmpty()) {
-    boost::uuids::random_generator generator;
-    boost::uuids::uuid sessionId = generator();
-    m_UUID = boost::uuids::to_string(sessionId).c_str();
-  }
-  login.insert(QString("id"), QJsonValue(m_UUID));
-  login.insert(QString("token"), QJsonValue(m_AuthToken));
-  login.insert(QString("protocol"), 2);
-  QJsonDocument loginDoc(login);
-  QString finalMessage(loginDoc.toJson());
-  m_nexusLogin->sendTextMessage(finalMessage);
-  QDesktopServices::openUrl(QUrl(QString("https://www.nexusmods.com/sso?id=%1&application=%2").arg(m_UUID).arg("modorganizer2")));
-  m_loginTimer.start(30000);
-}
-
-void SettingsDialog::loginPing()
-{
-  if (m_nexusLogin->isValid()) {
-    m_nexusLogin->ping();
-    m_totalPings++;
-  }
-  if (m_totalPings >= 60) {
-    m_loginTimer.stop();
-    m_totalPings = 0;
-    m_nexusLogin->close(QWebSocketProtocol::CloseCodeGoingAway, "Timeout: No response received after thirty minutes. Cancelling request.");
-  }
-}
-
-void SettingsDialog::authError(QAbstractSocket::SocketError error)
-{
-  auto errorInfo = m_nexusLogin->errorString();
-  qCritical() << "An error occurred: " << errorInfo;
-}
-
-void SettingsDialog::receiveApiKey(const QString &response)
-{
-  QJsonDocument responseDoc = QJsonDocument::fromJson(response.toUtf8());
-  QVariantMap responseData = responseDoc.object().toVariantMap();
-  if (responseData["success"].toBool()) {
-    QVariantMap data = responseData["data"].toMap();
-    if (data.contains("connection_token")) {
-      m_AuthToken = data["connection_token"].toString();
-    } else {
-      const auto key = data["api_key"].toString();
-
-      m_nexusLogin->close();
-      m_loginTimer.stop();
-      m_totalPings = 0;
-
-      if (key.isEmpty()) {
-        clearKey();
-      } else {
-        setKey(key);
-      }
-    }
-  } else {
-    QString error("There was a problem with SSO initialization: %1");
-    qCritical() << error.arg(responseData["error"].toString());
-    m_nexusLogin->close();
-  }
-}
-
-void SettingsDialog::completeApiConnection()
-{
-  if (!m_KeyReceived && !m_loginTimer.isActive()) {
-    QMessageBox::warning(qApp->activeWindow(), tr("Error"),
-      tr("Failed to retrieve a Nexus API key! Please try again. "
-        "A browser window should open asking you to authorize."));
-
-    // try again
-    fetchNexusApiKey();
-  }
+  ui->nexusLog->addItem(s);
+  ui->nexusLog->scrollToBottom();
 }
 
 bool SettingsDialog::setKey(const QString& key)
 {
-  m_KeyReceived = true;
+  m_keyChanged = true;
   const bool ret = m_settings->setNexusApiKey(key);
-  updateNexusButtons();
+  updateNexusState();
   return ret;
 }
 
 bool SettingsDialog::clearKey()
 {
-  m_KeyCleared = true;
+  m_keyChanged = true;
   const auto ret = m_settings->clearNexusApiKey();
-  updateNexusButtons();
 
   NexusInterface::instance(m_PluginContainer)->getAccessManager()->clearApiKey();
+  updateNexusState();
 
   return ret;
 }
 
-void SettingsDialog::testApiKey()
+void SettingsDialog::updateNexusState()
 {
-  QString key;
-  if (!m_settings->getNexusApiKey(key)) {
-    qWarning().nospace() << "can't test API key, nothing stored";
-    return;
-  }
-
-  NexusInterface::instance(m_PluginContainer)->getAccessManager()->apiCheck(key, true);
+  updateNexusButtons();
+  updateNexusData();
 }
 
 void SettingsDialog::updateNexusButtons()
 {
-  if (m_nexusLogin->state() != QAbstractSocket::UnconnectedState) {
+  if (m_nexusLogin && m_nexusLogin->isActive()) {
     // api key is in the process of being retrieved
-    ui->nexusConnect->setText("Connecting the API. Please login within the browser and accept the request. This will time out after 30 minutes.");
+    ui->nexusConnect->setText(tr("Cancel"));
+    ui->nexusConnect->setEnabled(true);
+    ui->nexusDisconnect->setEnabled(false);
+    ui->nexusManualKey->setText(tr("Enter API Key Manually"));
+    ui->nexusManualKey->setEnabled(false);
+  }
+  else if (m_nexusValidator && m_nexusValidator->isActive()) {
+    // api key is in the process of being tested
+    ui->nexusConnect->setText(tr("Connect to Nexus"));
     ui->nexusConnect->setEnabled(false);
     ui->nexusDisconnect->setEnabled(false);
-    ui->nexusManualKey->setEnabled(false);
+    ui->nexusManualKey->setText(tr("Cancel"));
+    ui->nexusManualKey->setEnabled(true);
   }
   else if (m_settings->hasNexusApiKey()) {
     // api key is present
-    ui->nexusConnect->setText("Nexus API Key Stored");
+    ui->nexusConnect->setText(tr("Connect to Nexus"));
     ui->nexusConnect->setEnabled(false);
     ui->nexusDisconnect->setEnabled(true);
+    ui->nexusManualKey->setText(tr("Enter API Key Manually"));
     ui->nexusManualKey->setEnabled(false);
   } else {
     // api key not present
-    ui->nexusConnect->setText("Connect to Nexus");
+    ui->nexusConnect->setText(tr("Connect to Nexus"));
     ui->nexusConnect->setEnabled(true);
     ui->nexusDisconnect->setEnabled(false);
+    ui->nexusManualKey->setText(tr("Enter API Key Manually"));
     ui->nexusManualKey->setEnabled(true);
+  }
+}
+
+void SettingsDialog::updateNexusData()
+{
+  const auto user = NexusInterface::instance(m_PluginContainer)
+    ->getAPIUserAccount();
+
+  if (user.isValid()) {
+    ui->nexusUserID->setText(user.id());
+    ui->nexusName->setText(user.name());
+    ui->nexusAccount->setText(localizedUserAccountType(user.type()));
+
+    ui->nexusDailyRequests->setText(QString("%1/%2")
+      .arg(user.limits().remainingDailyRequests)
+      .arg(user.limits().maxDailyRequests));
+
+    ui->nexusHourlyRequests->setText(QString("%1/%2")
+      .arg(user.limits().remainingHourlyRequests)
+      .arg(user.limits().maxHourlyRequests));
+  } else {
+    ui->nexusUserID->setText(tr("N/A"));
+    ui->nexusName->setText(tr("N/A"));
+    ui->nexusAccount->setText(tr("N/A"));
+    ui->nexusDailyRequests->setText(tr("N/A"));
+    ui->nexusHourlyRequests->setText(tr("N/A"));
   }
 }
 
@@ -617,11 +658,6 @@ void SettingsDialog::on_clearCacheButton_clicked()
 {
   QDir(Settings::instance().getCacheDirectory()).removeRecursively();
   NexusInterface::instance(m_PluginContainer)->clearCache();
-}
-
-void SettingsDialog::on_nexusDisconnect_clicked()
-{
-  clearKey();
 }
 
 void SettingsDialog::normalizePath(QLineEdit *lineEdit)
