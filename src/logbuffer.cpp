@@ -191,7 +191,7 @@ QVariant LogBuffer::data(const QModelIndex &index, int role) const
   switch (role) {
     case Qt::DisplayRole: {
       if (index.column() == 0) {
-        return m_Messages[msgIndex].time;
+        return m_Messages[msgIndex].time.toString("H: mm: ss");
       } else if (index.column() == 1) {
         const QString &msg = m_Messages[msgIndex].message;
         if (msg.length() < 200) {
