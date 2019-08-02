@@ -85,10 +85,10 @@ int SettingsDialog::exec()
       if (qsettings.value(k).toString() != before[k] && !k.contains("username") && !k.contains("password"))
       {
         if (first_update) {
-          qDebug("Changed settings:");
+          log::debug("Changed settings:");
           first_update = false;
         }
-        qDebug("  %s=%s", k.toUtf8().data(), qsettings.value(k).toString().toUtf8().data());
+        log::debug("  {}={}", k, qsettings.value(k).toString());
       }
     qsettings.endGroup();
   }

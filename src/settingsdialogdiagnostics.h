@@ -12,6 +12,7 @@ public:
   void update();
 
 private:
+  void setLevelsBox();
 };
 
 #endif // SETTINGSDIALOGDIAGNOSTICS_H
