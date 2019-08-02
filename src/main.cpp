@@ -120,10 +120,6 @@ bool bootstrap()
   removeOldFiles(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath()),
                  "usvfs*.log", 5, QDir::Name);
 
-  if (!createAndMakeWritable(AppConfig::logPath())) {
-    return false;
-  }
-
   return true;
 }
 
@@ -906,6 +902,10 @@ int main(int argc, char *argv[])
   } // we continue for the primary instance OR if MO was called with parameters
 
   do {
+    // make sure the log file isn't locked in case MO was restarted and
+    // the previous instance gets deleted
+    log::getDefault().setFile({});
+
     QString dataPath;
 
     try {
@@ -926,8 +926,12 @@ int main(int argc, char *argv[])
     const auto logFile =
       qApp->property("dataPath").toString() + "/logs/mo_interface.log";
 
-    log::getDefault().setFile(MOBase::log::File::rotating(
-      logFile.toStdWString(), 5*1024*1024, 5));
+    if (!createAndMakeWritable(AppConfig::logPath())) {
+      reportError("Failed to create log folder");
+      return 1;
+    }
+
+    log::getDefault().setFile(MOBase::log::File::single(logFile.toStdWString()));
 
     QString splash = dataPath + "/splash.png";
     if (!QFile::exists(dataPath + "/splash.png")) {
