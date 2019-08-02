@@ -76,11 +76,7 @@ p, li { white-space: pre-wrap; }
           <string>Update to non-stable releases.</string>
          </property>
          <property name="whatsThis">
-          <string>If this is enabled, the integrated update mechanism will notify of all releases, including pre-releases (alphas, betas).
-
-Please use this only if you're sufficiently tech-savvy to investigate issues, look for known problems in the issue tracker and create meaningful reports.
-
-If you use pre-releases, never contact me directly by e-mail or via private messages!</string>
+          <string>If this is enabled, the integrated update mechanism will notify of all releases, including pre-releases (alphas, betas). Please use this only if you're sufficiently tech-savvy to investigate issues, look for known problems in the issue tracker and create meaningful reports.</string>
          </property>
          <property name="text">
           <string>Install Pre-releases (Betas)</string>

@@ -162,7 +162,8 @@ LogList::LogList(QWidget* parent)
 {
   setModel(&LogModel::instance());
 
-  const int timestampWidth = QFontMetrics(font()).width("00:00:00.000");
+  const QFontMetrics fm(font());
+  const int timestampWidth = fm.horizontalAdvance("00:00:00.000");
 
   header()->setMinimumSectionSize(0);
   header()->resizeSection(0, 20);
