@@ -485,6 +485,7 @@ void SettingsDialog::onValidatorStateChanged(
     for (auto&& line : log.split("\n")) {
       addNexusLog(line);
     }
+  }
 
   updateNexusState();
 }
