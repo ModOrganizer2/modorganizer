@@ -32,6 +32,8 @@ signals:
 
 class NexusTab : public ModInfoDialogTab
 {
+  Q_OBJECT;
+
 public:
   NexusTab(ModInfoDialogTabContext cx);
 

@@ -7,7 +7,6 @@
 
 using namespace MOShared;
 using namespace MOBase;
-namespace shell = MOBase::shell;
 
 // if there are more than 50 selected items in the conflict tree, don't bother
 // checking whether menu items apply to them, just show all of them
@@ -935,7 +934,7 @@ ConflictItem GeneralConflictsTab::createOverwriteItem(
   auto origin = ToQString(ds.getOriginByID(alternatives.back().first).getName());
 
   return ConflictItem(
-    ToQString(altString), std::move(relativeName), QString::null, index,
+    ToQString(altString), std::move(relativeName), QString(), index,
     std::move(fileName), true, std::move(origin), archive);
 }
 
@@ -943,8 +942,8 @@ ConflictItem GeneralConflictsTab::createNoConflictItem(
   FileEntry::Index index, bool archive, QString fileName, QString relativeName)
 {
   return ConflictItem(
-    QString::null, std::move(relativeName), QString::null, index,
-    std::move(fileName), false, QString::null, archive);
+    QString(), std::move(relativeName), QString(), index,
+    std::move(fileName), false, QString(), archive);
 }
 
 ConflictItem GeneralConflictsTab::createOverwrittenItem(
@@ -958,7 +957,7 @@ ConflictItem GeneralConflictsTab::createOverwrittenItem(
   QString altOrigin = after;
 
   return ConflictItem(
-    QString::null, std::move(relativeName), std::move(after),
+    QString(), std::move(relativeName), std::move(after),
     index, std::move(fileName), true, std::move(altOrigin), archive);
 }
 
@@ -1225,5 +1224,5 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
 
   return ConflictItem(
     std::move(beforeQS), std::move(relativeName), std::move(afterQS),
-    index, std::move(fileName), hasAlts, QString::null, archive);
+    index, std::move(fileName), hasAlts, QString(), archive);
 }

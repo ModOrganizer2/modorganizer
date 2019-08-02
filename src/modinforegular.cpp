@@ -39,7 +39,7 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGa
   , m_NexusBridge(pluginContainer)
 {
   testValid();
-  m_CreationTime = QFileInfo(path.absolutePath()).created();
+  m_CreationTime = QFileInfo(path.absolutePath()).birthTime();
   // read out the meta-file for information
   readMeta();
   if (m_GameName.compare(game->gameShortName(), Qt::CaseInsensitive) != 0)

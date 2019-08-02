@@ -717,7 +717,7 @@ void DownloadManager::refreshAlphabeticalTranslation()
     m_AlphabeticalTranslation.push_back(pos);
   }
 
-  qSort(m_AlphabeticalTranslation.begin(), m_AlphabeticalTranslation.end(), LessThanWrapper(this));
+  std::sort(m_AlphabeticalTranslation.begin(), m_AlphabeticalTranslation.end(), LessThanWrapper(this));
 }
 
 
@@ -1155,7 +1155,12 @@ QDateTime DownloadManager::getFileTime(int index) const
 
   DownloadInfo *info = m_ActiveDownloads.at(index);
   if (!info->m_Created.isValid()) {
-    info->m_Created = QFileInfo(info->m_Output).created();
+    QFileInfo fileInfo(info->m_Output);
+    info->m_Created = fileInfo.birthTime();
+    if (!info->m_Created.isValid())
+      info->m_Created = fileInfo.metadataChangeTime();
+    if (!info->m_Created.isValid())
+      info->m_Created = fileInfo.lastModified();
   }
 
   return info->m_Created;

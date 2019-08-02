@@ -1324,7 +1324,7 @@ bool ModList::moveSelection(QAbstractItemView *itemView, int direction)
   QModelIndexList rows = selectionModel->selectedRows();
   if (direction > 0) {
     for (int i = 0; i < rows.size() / 2; ++i) {
-      rows.swap(i, rows.size() - i - 1);
+      rows.swapItemsAt(i, rows.size() - i - 1);
     }
   }
   for (QModelIndex idx : rows) {

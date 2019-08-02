@@ -91,7 +91,6 @@
 #include <QDateTime>
 #include <QDebug>
 #include <QDesktopServices>
-#include <QDesktopWidget>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QDir>

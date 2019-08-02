@@ -50,7 +50,7 @@ public:
     if(element == QStyle::PE_IndicatorItemViewItemDrop) {
       painter->setRenderHint(QPainter::Antialiasing, true);
 
-      QColor col(option->palette.foreground().color());
+      QColor col(option->palette.windowText().color());
       QPen pen(col);
       pen.setWidth(2);
       col.setAlpha(50);

@@ -2,9 +2,12 @@
 #define MODINFODIALOGFILETREE_H
 
 #include "modinfodialogtab.h"
+#include <QFileSystemModel>
 
 class FileTreeTab : public ModInfoDialogTab
 {
+  Q_OBJECT;
+
 public:
   FileTreeTab(ModInfoDialogTabContext cx);
 

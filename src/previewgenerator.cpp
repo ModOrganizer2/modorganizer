@@ -22,14 +22,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QLabel>
 #include <QImageReader>
 #include <QTextEdit>
-#include <QDesktopWidget>
 #include <utility.h>
 
 PreviewGenerator::PreviewGenerator()
 {
-
-  QDesktopWidget desk;
-  m_MaxSize = desk.screenGeometry().size() * 0.8;
+  m_MaxSize = QGuiApplication::primaryScreen()->size() * 0.8;
 }
 
 void PreviewGenerator::registerPlugin(MOBase::IPluginPreview *plugin)
