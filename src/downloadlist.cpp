@@ -19,12 +19,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "downloadlist.h"
 #include "downloadmanager.h"
+#include <log.h>
 #include <QEvent>
 #include <QColor>
 #include <QIcon>
-
 #include <QSortFilterProxyModel>
 
+using namespace MOBase;
 
 DownloadList::DownloadList(DownloadManager *manager, QObject *parent)
   : QAbstractTableModel(parent), m_Manager(manager)
@@ -192,7 +193,7 @@ void DownloadList::update(int row)
   else if (row < this->rowCount())
     emit dataChanged(this->index(row, 0, QModelIndex()), this->index(row, this->columnCount(QModelIndex())-1, QModelIndex()));
   else
-    qCritical("invalid row %d in download list, update failed", row);
+    log::error("invalid row {} in download list, update failed", row);
 }
 
 QString DownloadList::sizeFormat(quint64 size) const

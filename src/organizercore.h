@@ -21,6 +21,7 @@
 #include <delayedfilewriter.h>
 #include <boost/signals2.hpp>
 #include "executableinfo.h"
+#include <log.h>
 
 class ModListSortProxy;
 class PluginListSortProxy;
@@ -96,7 +97,7 @@ public:
 
   static bool isNxmLink(const QString &link) { return link.startsWith("nxm://", Qt::CaseInsensitive); }
 
-  OrganizerCore(const QSettings &initSettings);
+  OrganizerCore(Settings &settings);
 
   ~OrganizerCore();
 
@@ -191,7 +192,11 @@ public:
 
   void prepareVFS();
 
-  void updateVFSParams(int logLevel, int crashDumpsType, QString executableBlacklist);
+  void updateVFSParams(
+    MOBase::log::Levels logLevel, int crashDumpsType,
+    QString executableBlacklist);
+
+  void setLogLevel(MOBase::log::Levels level);
 
   bool cycleDiagnostics();
 
@@ -333,7 +338,7 @@ private:
 
   Profile *m_CurrentProfile;
 
-  Settings m_Settings;
+  Settings& m_Settings;
 
   SelfUpdater m_Updater;
 

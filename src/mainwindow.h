@@ -30,6 +30,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modlistsortproxy.h"
 #include "savegameinfo.h"
 #include "tutorialcontrol.h"
+#include "plugincontainer.h" //class PluginContainer;
+#include "iplugingame.h" //namespace MOBase { class IPluginGame; }
+#include <log.h>
 
 //Note the commented headers here can be replaced with forward references,
 //when I get round to cleaning up main.cpp
@@ -38,10 +41,10 @@ class CategoryFactory;
 class LockedDialogBase;
 class OrganizerCore;
 class StatusBar;
-#include "plugincontainer.h" //class PluginContainer;
+
 class PluginListSortProxy;
 namespace BSA { class Archive; }
-#include "iplugingame.h" //namespace MOBase { class IPluginGame; }
+
 namespace MOBase { class IPluginModPage; }
 namespace MOBase { class IPluginTool; }
 namespace MOBase { class ISaveGame; }
@@ -219,7 +222,9 @@ private:
   void updatePinnedExecutables();
   void setToolbarSize(const QSize& s);
   void setToolbarButtonStyle(Qt::ToolButtonStyle s);
-  void toolbarMenu_aboutToShow();
+
+  void updateToolbarMenu();
+  void updateViewMenu();
 
   QMenu* createPopupMenu() override;
   void activateSelectedProfile();
@@ -654,6 +659,7 @@ private slots: // ui slots
   void on_actionToolBarIconsOnly_triggered();
   void on_actionToolBarTextOnly_triggered();
   void on_actionToolBarIconsAndText_triggered();
+  void on_actionViewLog_triggered();
 
   void on_centralWidget_customContextMenuRequested(const QPoint &pos);
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
@@ -687,7 +693,6 @@ private slots: // ui slots
   void on_restoreButton_clicked();
   void on_restoreModsButton_clicked();
   void on_saveModsButton_clicked();
-  void on_actionCopy_Log_to_Clipboard_triggered();
   void on_categoriesAndBtn_toggled(bool checked);
   void on_categoriesOrBtn_toggled(bool checked);
   void on_managedArchiveLabel_linkHovered(const QString &link);

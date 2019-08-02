@@ -40,7 +40,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 #include <QScopedArrayPointer>
 #include <QStringList>                             // for QStringList
-#include <QtDebug>                                 // for qDebug, qWarning, etc
 #include <QtGlobal>                                // for qUtf8Printable
 #include <QBuffer>
 #include <QDirIterator>
@@ -125,7 +124,7 @@ Profile::Profile(const QDir &directory, IPluginGame const *gamePlugin)
   findProfileSettings();
 
   if (!QFile::exists(m_Directory.filePath("modlist.txt"))) {
-    qWarning("missing modlist.txt in %s", qUtf8Printable(directory.path()));
+    log::warn("missing modlist.txt in {}", directory.path());
     touchFile(m_Directory.filePath("modlist.txt"));
   }
 
@@ -232,7 +231,6 @@ void Profile::doWriteModlist()
     }
 
     for (std::map<int, unsigned int>::const_reverse_iterator iter = m_ModIndexByPriority.crbegin(); iter != m_ModIndexByPriority.crend(); iter++ ) {
-      //qDebug(QString("write mod %1 to priority %2").arg(iter->first).arg(iter->second).toLocal8Bit());
       // the priority order was inverted on load so it has to be inverted again
       unsigned int index = iter->second;
       if (index != UINT_MAX) {
@@ -253,7 +251,7 @@ void Profile::doWriteModlist()
     }
 
     if (file.commitIfDifferent(m_LastModlistHash)) {
-      qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(fileName)));
+      log::debug("{} saved", QDir::toNativeSeparators(fileName));
     }
   } catch (const std::exception &e) {
     reportError(tr("failed to write mod list: %1").arg(e.what()));
@@ -267,7 +265,10 @@ void Profile::createTweakedIniFile()
   QString tweakedIni = m_Directory.absoluteFilePath("initweaks.ini");
 
   if (QFile::exists(tweakedIni) && !shellDeleteQuiet(tweakedIni)) {
-    reportError(tr("failed to update tweaked ini file, wrong settings may be used: %1").arg(windowsErrorString(::GetLastError())));
+    const auto e = GetLastError();
+    reportError(
+      tr("failed to update tweaked ini file, wrong settings may be used: %1")
+        .arg(QString::fromStdWString(formatSystemMessage(e))));
     return;
   }
 
@@ -287,9 +288,12 @@ void Profile::createTweakedIniFile()
   }
 
   if (error) {
-    reportError(tr("failed to create tweaked ini: %1").arg(getCurrentErrorString().c_str()));
+    const auto e = ::GetLastError();
+    reportError(tr("failed to create tweaked ini: %1")
+      .arg(QString::fromStdWString(formatSystemMessage(e))));
   }
-  qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(tweakedIni)));
+
+  log::debug("{} saved", QDir::toNativeSeparators(tweakedIni));
 }
 
 // static
@@ -304,7 +308,7 @@ void Profile::renameModInAllProfiles(const QString& oldName, const QString& newN
     if (modList.exists())
       renameModInList(modList, oldName, newName);
     else
-      qWarning("Profile has no modlist.txt : %s", qUtf8Printable(profileIter.filePath()));
+      log::warn("Profile has no modlist.txt: {}", profileIter.filePath());
   }
 }
 
@@ -325,7 +329,7 @@ void Profile::renameModInList(QFile &modList, const QString &oldName, const QStr
 
     if (line.length() == 0) {
       // ignore empty lines
-      qWarning("mod list contained invalid data: empty line");
+      log::warn("mod list contained invalid data: empty line");
       continue;
     }
 
@@ -340,7 +344,7 @@ void Profile::renameModInList(QFile &modList, const QString &oldName, const QStr
 
     if (modName.isEmpty()) {
       // file broken?
-      qWarning("mod list contained invalid data: missing mod name");
+      log::warn("mod list contained invalid data: missing mod name");
       continue;
     }
 
@@ -361,8 +365,9 @@ void Profile::renameModInList(QFile &modList, const QString &oldName, const QStr
   }
 
   if (renamed)
-    qDebug("Renamed %d \"%s\" mod to \"%s\" in %s",
-      renamed, qUtf8Printable(oldName), qUtf8Printable(newName), qUtf8Printable(modList.fileName()));
+    log::debug(
+      "Renamed {} \"{}\" mod to \"{}\" in {}",
+      renamed, oldName, newName, modList.fileName());
 }
 
 void Profile::refreshModStatus()
@@ -421,14 +426,16 @@ void Profile::refreshModStatus()
             m_ModStatus[modIndex].m_Priority = index++;
           }
         } else {
-          qWarning("no mod state for \"%s\" (profile \"%s\")",
-                   qUtf8Printable(modName), qUtf8Printable(m_Directory.path()));
+          log::warn(
+            "no mod state for \"{}\" (profile \"{}\")",
+            modName, m_Directory.path());
           // need to rewrite the modlist to fix this
           modStatusModified = true;
         }
       } else {
-        qDebug("mod not found: \"%s\" (profile \"%s\")",
-               qUtf8Printable(modName), qUtf8Printable(m_Directory.path()));
+        log::debug(
+          "mod not found: \"{}\" (profile \"{}\")",
+          modName, m_Directory.path());
         // need to rewrite the modlist to fix this
         modStatusModified = true;
       }
@@ -492,8 +499,10 @@ void Profile::dumpModStatus() const
 {
   for (unsigned int i = 0; i < m_ModStatus.size(); ++i) {
     ModInfo::Ptr info = ModInfo::getByIndex(i);
-    qWarning("%d: %s - %d (%s)", i, info->name().toUtf8().constData(), m_ModStatus[i].m_Priority,
-             m_ModStatus[i].m_Enabled ? "enabled" : "disabled");
+    log::warn(
+      "{}: {} - {} ({})",
+      i, info->name(), m_ModStatus[i].m_Priority,
+      m_ModStatus[i].m_Enabled ? "enabled" : "disabled");
   }
 }
 
@@ -566,7 +575,7 @@ void Profile::setModsEnabled(const QList<unsigned int> &modsToEnable, const QLis
   QList<unsigned int> dirtyMods;
   for (auto idx : modsToEnable) {
     if (idx >= m_ModStatus.size()) {
-      qCritical() << tr("invalid mod index: %1").arg(idx);
+      log::error("invalid mod index: {}", idx);
       continue;
     }
     if (!m_ModStatus[idx].m_Enabled) {
@@ -576,7 +585,7 @@ void Profile::setModsEnabled(const QList<unsigned int> &modsToEnable, const QLis
   }
   for (auto idx : modsToDisable) {
     if (idx >= m_ModStatus.size()) {
-      qCritical() << tr("invalid mod index: %1").arg(idx);
+      log::error("invalid mod index: {}", idx);
       continue;
     }
     if (ModInfo::getByIndex(idx)->alwaysEnabled()) {
@@ -800,7 +809,7 @@ bool Profile::localSettingsEnabled() const
     QStringList missingFiles;
     for (QString file : m_GamePlugin->iniFiles()) {
       if (!QFile::exists(m_Directory.filePath(file))) {
-        qWarning("missing %s in %s", qUtf8Printable(file), qUtf8Printable(m_Directory.path()));
+        log::warn("missing {} in {}", file, m_Directory.path());
         missingFiles << file;
       }
     }

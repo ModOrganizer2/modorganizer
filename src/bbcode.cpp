@@ -18,13 +18,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "bbcode.h"
-
+#include <log.h>
 #include <QRegExp>
 #include <map>
 
-
 namespace BBCode {
 
+namespace log = MOBase::log;
 
 class BBCodeMap {
 
@@ -88,7 +88,7 @@ public:
                 return temp.replace(tagIter->second.first, QString("<font style=\"color: #%1;\">%2</font>").arg(color, content));
               }
             } else {
-              qWarning("don't know how to deal with tag %s", qUtf8Printable(tagName));
+              log::warn("don't know how to deal with tag {}", tagName);
             }
           } else {
             if (tagName == "*") {
@@ -99,8 +99,7 @@ public:
         } else {
           // expression doesn't match. either the input string is invalid
           // or the expression is
-          qWarning("%s doesn't match the expression for %s",
-                   qUtf8Printable(temp), qUtf8Printable(tagName));
+          log::warn("{} doesn't match the expression for {}", temp, tagName);
           length = 0;
           return QString();
         }

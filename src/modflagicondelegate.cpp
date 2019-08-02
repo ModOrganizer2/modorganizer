@@ -1,6 +1,8 @@
 #include "modflagicondelegate.h"
+#include <log.h>
 #include <QList>
 
+using namespace MOBase;
 
 ModInfo::EFlag ModFlagIconDelegate::m_ConflictFlags[4] = { ModInfo::FLAG_CONFLICT_MIXED
                                                          , ModInfo::FLAG_CONFLICT_OVERWRITE
@@ -117,7 +119,7 @@ QString ModFlagIconDelegate::getFlagIcon(ModInfo::EFlag flag) const
     case ModInfo::FLAG_PLUGIN_SELECTED: return QString();
     case ModInfo::FLAG_TRACKED: return QStringLiteral(":/MO/gui/tracked");
     default:
-      qWarning("ModInfo flag %d has no defined icon", flag);
+      log::warn("ModInfo flag {} has no defined icon", flag);
       return QString();
   }
 }

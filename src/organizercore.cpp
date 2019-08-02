@@ -14,7 +14,6 @@
 #include "plugincontainer.h"
 #include "pluginlistsortproxy.h"
 #include "profile.h"
-#include "logbuffer.h"
 #include "credentialsdialog.h"
 #include "filedialogmemory.h"
 #include "modinfodialog.h"
@@ -78,26 +77,21 @@ CrashDumpsType OrganizerCore::m_globalCrashDumpsType = CrashDumpsType::None;
 
 static bool isOnline()
 {
-  QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
+  const auto runningFlags =
+    QNetworkInterface::IsUp | QNetworkInterface::IsRunning;
 
-  bool connected = false;
-  for (auto iter = interfaces.begin(); iter != interfaces.end() && !connected;
-       ++iter) {
-    if ((iter->flags() & QNetworkInterface::IsUp)
-        && (iter->flags() & QNetworkInterface::IsRunning)
-        && !(iter->flags() & QNetworkInterface::IsLoopBack)) {
-      auto addresses = iter->addressEntries();
-      if (addresses.count() == 0) {
-        continue;
+  for (auto&& i : QNetworkInterface::allInterfaces()) {
+    if (!(i.flags() & QNetworkInterface::IsLoopBack)) {
+      if (i.flags() & runningFlags) {
+        auto addresses = i.addressEntries();
+        if (!addresses.empty()) {
+          return true;
+        }
       }
-      qDebug("interface %s seems to be up (address: %s)",
-             qUtf8Printable(iter->humanReadableName()),
-             qUtf8Printable(addresses[0].ip().toString()));
-      connected = true;
     }
   }
 
-  return connected;
+  return false;
 }
 
 static bool renameFile(const QString &oldName, const QString &newName,
@@ -201,49 +195,49 @@ bool checkService()
   try {
     serviceManagerHandle = OpenSCManager(NULL, NULL, SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG);
     if (!serviceManagerHandle) {
-      qWarning("failed to open service manager (query status) (error %d)", GetLastError());
+      log::warn("failed to open service manager (query status) (error {})", GetLastError());
       throw 1;
     }
 
     serviceHandle = OpenService(serviceManagerHandle, L"EventLog", SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG);
     if (!serviceHandle) {
-      qWarning("failed to open EventLog service (query status) (error %d)", GetLastError());
+      log::warn("failed to open EventLog service (query status) (error {})", GetLastError());
       throw 2;
     }
 
     if (QueryServiceConfig(serviceHandle, NULL, 0, &bytesNeeded)
       || (GetLastError() != ERROR_INSUFFICIENT_BUFFER)) {
-      qWarning("failed to get size of service config (error %d)", GetLastError());
+      log::warn("failed to get size of service config (error {})", GetLastError());
       throw 3;
     }
 
     DWORD serviceConfigSize = bytesNeeded;
     serviceConfig = (LPQUERY_SERVICE_CONFIG)LocalAlloc(LMEM_FIXED, serviceConfigSize);
     if (!QueryServiceConfig(serviceHandle, serviceConfig, serviceConfigSize, &bytesNeeded)) {
-      qWarning("failed to query service config (error %d)", GetLastError());
+      log::warn("failed to query service config (error {})", GetLastError());
       throw 4;
     }
 
     if (serviceConfig->dwStartType == SERVICE_DISABLED) {
-      qCritical("Windows Event Log service is disabled!");
+      log::error("Windows Event Log service is disabled!");
       serviceRunning = false;
     }
 
     if (QueryServiceStatusEx(serviceHandle, SC_STATUS_PROCESS_INFO, NULL, 0, &bytesNeeded)
       || (GetLastError() != ERROR_INSUFFICIENT_BUFFER)) {
-      qWarning("failed to get size of service status (error %d)", GetLastError());
+      log::warn("failed to get size of service status (error {})", GetLastError());
       throw 5;
     }
 
     DWORD serviceStatusSize = bytesNeeded;
     serviceStatus = (LPSERVICE_STATUS_PROCESS)LocalAlloc(LMEM_FIXED, serviceStatusSize);
     if (!QueryServiceStatusEx(serviceHandle, SC_STATUS_PROCESS_INFO, (LPBYTE)serviceStatus, serviceStatusSize, &bytesNeeded)) {
-      qWarning("failed to query service status (error %d)", GetLastError());
+      log::warn("failed to query service status (error {})", GetLastError());
       throw 6;
     }
 
     if (serviceStatus->dwCurrentState != SERVICE_RUNNING) {
-      qCritical("Windows Event Log service is not running");
+      log::error("Windows Event Log service is not running");
       serviceRunning = false;
     }
   }
@@ -269,12 +263,12 @@ bool checkService()
 }
 
 
-OrganizerCore::OrganizerCore(const QSettings &initSettings)
+OrganizerCore::OrganizerCore(Settings &settings)
   : m_UserInterface(nullptr)
   , m_PluginContainer(nullptr)
   , m_GameName()
   , m_CurrentProfile(nullptr)
-  , m_Settings(initSettings)
+  , m_Settings(settings)
   , m_Updater(NexusInterface::instance(m_PluginContainer))
   , m_AboutToRun()
   , m_FinishedRun()
@@ -295,7 +289,7 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
 
   NexusInterface::instance(m_PluginContainer)->setCacheDirectory(m_Settings.getCacheDirectory());
 
-  MOBase::QuestionBoxMemory::init(initSettings.fileName());
+  MOBase::QuestionBoxMemory::init(m_Settings.directInterface().fileName());
 
   m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
   m_InstallationManager.setDownloadDirectory(m_Settings.getDownloadDirectory());
@@ -342,7 +336,6 @@ OrganizerCore::~OrganizerCore()
   m_CurrentProfile = nullptr;
 
   ModInfo::clear();
-  LogBuffer::cleanQuit();
   m_ModList.setProfile(nullptr);
   //  NexusInterface::instance()->cleanup();
 
@@ -356,7 +349,7 @@ QString OrganizerCore::commitSettings(const QString &iniFile)
     // make a second attempt using qt functions but if that fails print the
     // error from the first attempt
     if (!renameFile(iniFile + ".new", iniFile)) {
-      return windowsErrorString(err);
+      return QString::fromStdWString(formatSystemMessage(err));
     }
   }
   return QString();
@@ -389,10 +382,12 @@ void OrganizerCore::storeSettings()
                     + QString::fromStdWString(AppConfig::iniFileName());
   if (QFileInfo(iniFile).exists()) {
     if (!shellCopy(iniFile, iniFile + ".new", true, qApp->activeWindow())) {
+      const auto e = GetLastError();
       QMessageBox::critical(
           qApp->activeWindow(), tr("Failed to write settings"),
           tr("An error occurred trying to update MO settings to %1: %2")
-              .arg(iniFile, windowsErrorString(::GetLastError())));
+              .arg(iniFile)
+              .arg(QString::fromStdWString(formatSystemMessage(e))));
       return;
     }
   }
@@ -404,8 +399,9 @@ void OrganizerCore::storeSettings()
   if (result == QSettings::NoError) {
     QString errMsg = commitSettings(iniFile);
     if (!errMsg.isEmpty()) {
-      qWarning("settings file not writable, may be locked by another "
-               "application, trying direct write");
+      log::warn(
+        "settings file not writable, may be locked by another "
+        "application, trying direct write");
       writeTarget = iniFile;
       result = storeSettings(iniFile);
     }
@@ -438,7 +434,7 @@ bool OrganizerCore::testForSteam(bool *found, bool *access)
   hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
   if (hProcessSnap == INVALID_HANDLE_VALUE) {
     lastError = GetLastError();
-    qCritical("unable to get snapshot of processes (error %d)", lastError);
+    log::error("unable to get snapshot of processes (error {})", lastError);
     return false;
   }
 
@@ -447,7 +443,7 @@ bool OrganizerCore::testForSteam(bool *found, bool *access)
   pe32.dwSize = sizeof(PROCESSENTRY32);
   if (!Process32First(hProcessSnap, &pe32)) {
     lastError = GetLastError();
-    qCritical("unable to get first process (error %d)", lastError);
+    log::error("unable to get first process (error {})", lastError);
     CloseHandle(hProcessSnap);
     return false;
   }
@@ -487,7 +483,7 @@ return true;
 void OrganizerCore::updateExecutablesList(QSettings &settings)
 {
   if (m_PluginContainer == nullptr) {
-    qCritical("can't update executables list now");
+    log::error("can't update executables list now");
     return;
   }
 
@@ -544,7 +540,7 @@ void OrganizerCore::setUserInterface(IUserInterface *userInterface,
     if (isOnline() && !m_Settings.offlineMode()) {
       m_Updater.testForUpdate();
     } else {
-      qDebug("user doesn't seem to be connected to the internet");
+      log::debug("user doesn't seem to be connected to the internet");
     }
   }
 }
@@ -606,7 +602,7 @@ bool OrganizerCore::nexusApi(bool retry)
     QString apiKey;
     if (m_Settings.getNexusApiKey(apiKey)) {
       // credentials stored or user entered them manually
-      qDebug("attempt to verify nexus api key");
+      log::debug("attempt to verify nexus api key");
       accessManager->apiCheck(apiKey);
       return true;
     } else {
@@ -628,7 +624,7 @@ void OrganizerCore::startMOUpdate()
 
 void OrganizerCore::downloadRequestedNXM(const QString &url)
 {
-  qDebug("download requested: %s", qUtf8Printable(url));
+  log::debug("download requested: {}", url);
   if (nexusApi()) {
     m_PendingDownloads.append(url);
   } else {
@@ -658,7 +654,7 @@ void OrganizerCore::downloadRequested(QNetworkReply *reply, QString gameName, in
     }
   } catch (const std::exception &e) {
     MessageDialog::showMessage(tr("Download failed"), qApp->activeWindow());
-    qCritical("exception starting download: %s", e.what());
+    log::error("exception starting download: {}", e.what());
   }
 }
 
@@ -728,9 +724,23 @@ void OrganizerCore::prepareVFS()
   m_USVFS.updateMapping(fileMapping(m_CurrentProfile->name(), QString()));
 }
 
-void OrganizerCore::updateVFSParams(int logLevel, int crashDumpsType, QString executableBlacklist) {
+void OrganizerCore::updateVFSParams(
+  log::Levels logLevel, int crashDumpsType, QString executableBlacklist)
+{
   setGlobalCrashDumpsType(crashDumpsType);
   m_USVFS.updateParams(logLevel, crashDumpsType, executableBlacklist);
+}
+
+void OrganizerCore::setLogLevel(log::Levels level)
+{
+  m_Settings.setLogLevel(level);
+
+  updateVFSParams(
+    m_Settings.logLevel(),
+    m_Settings.crashDumpsType(),
+    m_Settings.executablesBlacklist());
+
+  log::getDefault().setLevel(m_Settings.logLevel());
 }
 
 bool OrganizerCore::cycleDiagnostics() {
@@ -1207,7 +1217,9 @@ QString OrganizerCore::findJavaInstallation(const QString& jarFile)
     if (::FindExecutableW(jarFileW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
       DWORD binaryType = 0UL;
       if (!::GetBinaryTypeW(buffer, &binaryType)) {
-        qDebug("failed to determine binary type of \"%ls\": %lu", buffer, ::GetLastError());
+        log::debug(
+          "failed to determine binary type of \"{}\": {}",
+          QString::fromWCharArray(buffer), ::GetLastError());
       } else if (binaryType == SCS_32BIT_BINARY || binaryType == SCS_64BIT_BINARY) {
         return QString::fromWCharArray(buffer);
       }
@@ -1381,9 +1393,9 @@ bool OrganizerCore::previewFileWithAlternatives(
       // sanity check, this shouldn't happen unless the caller passed an
       // incorrect id
 
-      qWarning().nospace()
-        << "selected preview origin " << selectedOrigin << " not found in "
-        << "list of alternatives";
+      log::warn(
+        "selected preview origin {} not found in list of alternatives",
+        selectedOrigin);
     }
 
     for (int id : origins) {
@@ -1458,7 +1470,7 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary,
     // need to remove our stored load order because it may be outdated if a foreign tool changed the
     // file time. After removing that file, refreshESPList will use the file time as the order
     if (managedGame()->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
-      qDebug("removing loadorder.txt");
+      log::debug("removing loadorder.txt");
       QFile::remove(m_CurrentProfile->getLoadOrderFileName());
     }
     refreshDirectoryStructure();
@@ -1551,7 +1563,7 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
     bool steamFound = true;
     bool steamAccess = true;
     if (!testForSteam(&steamFound, &steamAccess)) {
-      qCritical("unable to determine state of Steam");
+      log::error("unable to determine state of Steam");
     }
 
     if (!steamFound) {
@@ -1568,9 +1580,9 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
         steamFound = true;
         steamAccess = true;
         if (!testForSteam(&steamFound, &steamAccess)) {
-          qCritical("unable to determine state of Steam");
+          log::error("unable to determine state of Steam");
         } else if (!steamFound) {
-          qCritical("could not find Steam");
+          log::error("could not find Steam");
         }
 
       } else if (result == QDialogButtonBox::Cancel) {
@@ -1591,14 +1603,14 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
       if (result == QDialogButtonBox::Yes) {
         WCHAR cwd[MAX_PATH];
         if (!GetCurrentDirectory(MAX_PATH, cwd)) {
-          qCritical("unable to get current directory (error %d)", GetLastError());
+          log::error("unable to get current directory (error {})", GetLastError());
           cwd[0] = L'\0';
         }
         if (!Helper::adminLaunch(
           qApp->applicationDirPath().toStdWString(),
           qApp->applicationFilePath().toStdWString(),
           std::wstring(cwd))) {
-          qCritical("unable to relaunch MO as admin");
+          log::error("unable to relaunch MO as admin");
           return INVALID_HANDLE_VALUE;
         }
         qApp->exit(0);
@@ -1626,7 +1638,7 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
       m_USVFS.updateForcedLibraries(forcedLibraries);
 
     } catch (const UsvfsConnectorException &e) {
-      qDebug(e.what());
+      log::debug(e.what());
       return INVALID_HANDLE_VALUE;
     } catch (const std::exception &e) {
       QMessageBox::warning(window, tr("Error"), e.what());
@@ -1693,17 +1705,16 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
                 .arg(QDir::toNativeSeparators(cwdPath),
                      QDir::toNativeSeparators(binPath), arguments);
 
-      qDebug() << "Spawning proxyed process <" << cmdline << ">";
+      log::debug("Spawning proxyed process <{}>", cmdline);
 
       return startBinary(QFileInfo(QCoreApplication::applicationFilePath()),
                          cmdline, QCoreApplication::applicationDirPath(), true);
     } else {
-      qDebug() << "Spawning direct process <" << binPath << "," << arguments << "," << cwdPath << ">";
+      log::debug("Spawning direct process <{}, {}, {}>", binPath, arguments, cwdPath);
       return startBinary(binary, arguments, currentDirectory, true);
     }
   } else {
-    qDebug("start of \"%s\" canceled by plugin",
-           qUtf8Printable(binary.absoluteFilePath()));
+    log::debug("start of \"{}\" canceled by plugin", binary.absoluteFilePath());
     return INVALID_HANDLE_VALUE;
   }
 }
@@ -1798,8 +1809,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
         currentDirectory = exe.workingDirectory();
       }
     } catch (const std::runtime_error &) {
-      qWarning("\"%s\" not set up as executable",
-               qUtf8Printable(executable));
+      log::warn("\"{}\" not set up as executable", executable);
       binary = QFileInfo(executable);
     }
   }
@@ -1872,16 +1882,18 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, IL
       processName += QString(" (%1)").arg(currentPID);
       if (uilock)
         uilock->setProcessName(processName);
-      qDebug() << "Waiting for"
-        << (originalHandle ? "spawned" : "usvfs")
-        << "process completion :" << qUtf8Printable(processName);
+
+      log::debug(
+        "Waiting for {} process completion: {}",
+        (originalHandle ? "spawned" : "usvfs"), processName);
+
       newHandle = false;
     }
 
     // Wait for a an event on the handle, a key press, mouse click or timeout
     res = MsgWaitForMultipleObjects(1, &handle, FALSE, 200, QS_KEY | QS_MOUSEBUTTON);
     if (res == WAIT_FAILED) {
-      qWarning() << "Failed waiting for process completion : MsgWaitForMultipleObjects WAIT_FAILED" << GetLastError();
+      log::warn("Failed waiting for process completion : MsgWaitForMultipleObjects WAIT_FAILED {}", GetLastError());
       break;
     }
 
@@ -1897,7 +1909,7 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, IL
     if (res == WAIT_OBJECT_0) {
       // process we were waiting on has completed
       if (originalHandle && exitCode && !::GetExitCodeProcess(handle, exitCode))
-        qWarning() << "Failed getting exit code of complete process :" << GetLastError();
+        log::warn("Failed getting exit code of complete process: {}", GetLastError());
       CloseHandle(handle);
       handle = INVALID_HANDLE_VALUE;
       originalHandle = false;
@@ -1943,11 +1955,11 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, IL
   }
 
   if (res == WAIT_OBJECT_0)
-    qDebug() << "Waiting for process completion successfull";
+    log::debug("Waiting for process completion successfull");
   else if (uiunlocked)
-    qDebug() << "Waiting for process completion aborted by UI";
+    log::debug("Waiting for process completion aborted by UI");
   else
-    qDebug() << "Waiting for process completion not successfull :" << res;
+    log::debug("Waiting for process completion not successfull: {}", res);
 
   if (handle != INVALID_HANDLE_VALUE)
     ::CloseHandle(handle);
@@ -1962,7 +1974,7 @@ HANDLE OrganizerCore::findAndOpenAUSVFSProcess(const std::vector<QString>& hidde
   DWORD pids[querySize];
   size_t found = querySize;
   if (!::GetVFSProcessList(&found, pids)) {
-    qWarning() << "Failed seeking USVFS processes : GetVFSProcessList failed?!";
+    log::warn("Failed seeking USVFS processes : GetVFSProcessList failed?!");
     return INVALID_HANDLE_VALUE;
   }
 
@@ -1974,7 +1986,7 @@ HANDLE OrganizerCore::findAndOpenAUSVFSProcess(const std::vector<QString>& hidde
 
     HANDLE handle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, FALSE, pids[i]);
     if (handle == INVALID_HANDLE_VALUE) {
-      qWarning() << "Failed openning USVFS process " << pids[i] << " : OpenProcess failed" << GetLastError();
+      log::warn("Failed opening USVFS process {}: OpenProcess failed {}", pids[i], GetLastError());
       continue;
     }
 
@@ -2118,7 +2130,7 @@ void OrganizerCore::updateModsActiveState(const QList<unsigned int> &modIndices,
       dir.entryList(QStringList() << "*.esm", QDir::Files)) {
       const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esm));
       if (file.get() == nullptr) {
-        qWarning("failed to activate %s", qUtf8Printable(esm));
+        log::warn("failed to activate {}", esm);
         continue;
       }
 
@@ -2134,7 +2146,7 @@ void OrganizerCore::updateModsActiveState(const QList<unsigned int> &modIndices,
       dir.entryList(QStringList() << "*.esl", QDir::Files)) {
       const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esl));
       if (file.get() == nullptr) {
-        qWarning("failed to activate %s", qUtf8Printable(esl));
+        log::warn("failed to activate {}", esl);
         continue;
       }
 
@@ -2150,7 +2162,7 @@ void OrganizerCore::updateModsActiveState(const QList<unsigned int> &modIndices,
     for (const QString &esp : esps) {
       const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esp));
       if (file.get() == nullptr) {
-        qWarning("failed to activate %s", qUtf8Printable(esp));
+        log::warn("failed to activate {}", esp);
         continue;
       }
 
@@ -2558,7 +2570,7 @@ std::vector<unsigned int> OrganizerCore::activeProblems() const
     // of a "log spam". But since this is a sevre error which will most likely make the
     // game crash/freeze/etc. and is very hard to diagnose,  this "log spam" will make it
     // easier for the user to notice the warning.
-    qWarning("hook.dll found in game folder: %s", qUtf8Printable(hookdll));
+    log::warn("hook.dll found in game folder: {}", hookdll);
     problems.push_back(PROBLEM_MO1SCRIPTEXTENDERWORKAROUND);
   }
   return problems;
@@ -2604,7 +2616,7 @@ void OrganizerCore::startGuidedFix(unsigned int) const
 bool OrganizerCore::saveCurrentLists()
 {
   if (m_DirectoryUpdate) {
-    qWarning("not saving lists during directory update");
+    log::warn("not saving lists during directory update");
     return false;
   }
 
@@ -2698,7 +2710,7 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString &profileName,
       result.reserve(result.size() + saveMap.size());
       result.insert(result.end(), saveMap.begin(), saveMap.end());
     } else {
-      qWarning("local save games not supported by this game plugin");
+      log::warn("local save games not supported by this game plugin");
     }
   }
 

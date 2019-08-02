@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "windows_error.h"
 #include "leaktrace.h"
 #include "error_report.h"
+#include <log.h>
 #include <bsatk.h>
 #include <boost/bind.hpp>
 #include <boost/scoped_array.hpp>
@@ -34,6 +35,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 namespace MOShared {
+
+namespace log = MOBase::log;
 
 static const int MAXPATH_UNICODE = 32767;
 
@@ -103,7 +106,7 @@ public:
       m_OriginsNameMap.erase(iter);
       m_OriginsNameMap[newName] = idx;
     } else {
-      log("failed to change name lookup from %ls to %ls", oldName.c_str(), newName.c_str());
+      log::error("failed to change name lookup from {} to {}", oldName, newName);
     }
   }
 
@@ -714,14 +717,14 @@ void DirectoryEntry::removeFile(FileEntry::Index index)
     if (iter != m_Files.end()) {
       m_Files.erase(iter);
     } else {
-      log("file \"%ls\" not in directory \"%ls\"",
-          m_FileRegister->getFile(index)->getName().c_str(),
-          this->getName().c_str());
+      log::error(
+        "file \"{}\" not in directory \"{}\"",
+        m_FileRegister->getFile(index)->getName(), this->getName());
     }
   } else {
-    log("file \"%ls\" not in directory \"%ls\", directory empty",
-        m_FileRegister->getFile(index)->getName().c_str(),
-        this->getName().c_str());
+    log::error(
+      "file \"{}\" not in directory \"{}\", directory empty",
+      m_FileRegister->getFile(index)->getName(), this->getName());
   }
 }
 
@@ -844,7 +847,7 @@ const FileEntry::Ptr DirectoryEntry::searchFile(const std::wstring &path, const 
     DirectoryEntry *temp = findSubDirectory(pathComponent);
     if (temp != nullptr) {
       if (len >= path.size()) {
-        log("unexpected end of path");
+        log::error("unexpected end of path");
         return FileEntry::Ptr();
       }
       return temp->searchFile(path.substr(len + 1), directory);
@@ -988,7 +991,7 @@ bool FileRegister::removeFile(FileEntry::Index index)
     m_Files.erase(index);
     return true;
   } else {
-    log("invalid file index for remove: %lu", index);
+    log::error("invalid file index for remove: {}", index);
     return false;
   }
 }
@@ -1002,7 +1005,7 @@ void FileRegister::removeOrigin(FileEntry::Index index, int originID)
       m_Files.erase(iter);
     }
   } else {
-    log("invalid file index for remove (for origin): %lu", index);
+    log::error("invalid file index for remove (for origin): {}", index);
   }
 }
 

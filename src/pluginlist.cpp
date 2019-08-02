@@ -309,7 +309,7 @@ int PluginList::findPluginByPriority(int priority)
       return i;
     }
   }
-  qCritical(QString("No plugin with priority %1").arg(priority).toLocal8Bit());
+  log::error("No plugin with priority {}", priority);
   return -1;
 }
 
@@ -417,7 +417,7 @@ void PluginList::addInformation(const QString &name, const QString &message)
   if (iter != m_ESPsByName.end()) {
     m_AdditionalInfo[name.toLower()].m_Messages.append(message);
   } else {
-    qWarning("failed to associate message for \"%s\"", qUtf8Printable(name));
+    log::warn("failed to associate message for \"{}\"", name);
   }
 }
 
@@ -481,7 +481,7 @@ void PluginList::writeLockedOrder(const QString &fileName) const
     file->write(QString("%1|%2\r\n").arg(iter->first).arg(iter->second).toUtf8());
   }
   file.commit();
-  qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(fileName)));
+  log::debug("{} saved", QDir::toNativeSeparators(fileName));
 }
 
 
@@ -506,7 +506,7 @@ void PluginList::saveTo(const QString &lockedOrderFileName
       }
     }
     if (deleterFile.commitIfDifferent(m_LastSaveHash[deleterFileName])) {
-      qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(deleterFileName)));
+      log::debug("{} saved", QDir::toNativeSeparators(deleterFileName));
     }
   } else if (QFile::exists(deleterFileName)) {
     shellDelete(QStringList() << deleterFileName);
@@ -521,7 +521,7 @@ bool PluginList::saveLoadOrder(DirectoryEntry &directoryStructure)
     return true;
   }
 
-  qDebug("setting file times on esps");
+  log::debug("setting file times on esps");
 
   for (ESPInfo &esp : m_ESPs) {
     std::wstring espName = ToWString(esp.m_Name);
@@ -694,7 +694,7 @@ void PluginList::setState(const QString &name, PluginStates state) {
     m_ESPs[iter->second].m_Enabled = (state == IPluginList::STATE_ACTIVE) ||
                                      m_ESPs[iter->second].m_ForceEnabled;
   } else {
-    qWarning("Plugin not found: %s", qUtf8Printable(name));
+    log::warn("Plugin not found: {}", name);
   }
 }
 
@@ -824,7 +824,7 @@ void PluginList::updateIndices()
       continue;
     }
     if (m_ESPs[i].m_Priority >= static_cast<int>(m_ESPs.size())) {
-      qCritical("invalid plugin priority: %d", m_ESPs[i].m_Priority);
+      log::error("invalid plugin priority: {}", m_ESPs[i].m_Priority);
       continue;
     }
     m_ESPsByName[m_ESPs[i].m_Name.toLower()] = i;
@@ -1067,9 +1067,9 @@ bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int
           this->index(0, 0),
           this->index(static_cast<int>(m_ESPs.size()), columnCount()));
     } catch (const std::exception &e) {
-      qCritical("failed to invoke state changed notification: %s", e.what());
+      log::error("failed to invoke state changed notification: {}", e.what());
     } catch (...) {
-      qCritical("failed to invoke state changed notification: unknown exception");
+      log::error("failed to invoke state changed notification: unknown exception");
     }
   }
 
@@ -1368,7 +1368,7 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
       m_Masters.insert(QString(iter->c_str()));
     }
   } catch (const std::exception &e) {
-    qCritical("failed to parse plugin file %s: %s", qUtf8Printable(fullPath), e.what());
+    log::error("failed to parse plugin file {}: {}", fullPath, e.what());
     m_IsMaster = false;
     m_IsLight = false;
     m_IsLightFlagged = false;

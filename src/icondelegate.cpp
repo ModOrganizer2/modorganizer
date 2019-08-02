@@ -18,12 +18,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "icondelegate.h"
+#include <log.h>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPainter>
 #include <QDebug>
 #include <QPixmapCache>
 
+using namespace MOBase;
 
 IconDelegate::IconDelegate(QObject *parent)
   : QStyledItemDelegate(parent)
@@ -54,7 +56,7 @@ void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
     if (!QPixmapCache::find(fullIconId, &icon)) {
       icon = QIcon(iconId).pixmap(iconWidth, iconWidth);
       if (icon.isNull()) {
-        qWarning("failed to load icon %s", qUtf8Printable(iconId));
+        log::warn("failed to load icon {}", iconId);
       }
       QPixmapCache::insert(fullIconId, icon);
     }

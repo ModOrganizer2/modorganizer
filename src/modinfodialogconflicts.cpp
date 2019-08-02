@@ -364,7 +364,7 @@ void for_each_in_selection(QTreeView* tree, F&& f)
   const auto* model = dynamic_cast<ConflictListModel*>(tree->model());
 
   if (!model) {
-    qCritical() << "tree doesn't have a ConflictListModel";
+    log::error("tree doesn't have a ConflictListModel");
     return;
   }
 
@@ -437,10 +437,18 @@ void ConflictsTab::changeItemsVisibility(QTreeView* tree, bool visible)
 
   const auto n = smallSelectionSize(tree);
 
-  qDebug().nospace().noquote()
-    << (visible ? "unhiding" : "hiding") << " "
-    << (n > max_small_selection ? "a lot of" : QString("%1").arg(n))
-    << " conflict files";
+  // logging
+  {
+    const QString action = (visible ? "unhiding" : "hiding");
+
+    QString files;
+    if (n > max_small_selection)
+      files = "a lot of";
+    else
+      files = QString("%1").arg(n);
+
+    log::debug("{} {} conflict files", action, files);
+  }
 
   QFlags<FileRenamer::RenameFlags> flags =
     (visible ? FileRenamer::UNHIDE : FileRenamer::HIDE);
@@ -453,7 +461,7 @@ void ConflictsTab::changeItemsVisibility(QTreeView* tree, bool visible)
 
   auto* model = dynamic_cast<ConflictListModel*>(tree->model());
   if (!model) {
-    qCritical() << "list doesn't have a ConflictListModel";
+    log::error("list doesn't have a ConflictListModel");
     return;
   }
 
@@ -466,7 +474,7 @@ void ConflictsTab::changeItemsVisibility(QTreeView* tree, bool visible)
 
     if (visible) {
       if (!item->canUnhide()) {
-        qDebug().nospace() << "cannot unhide " << item->relativeName() << ", skipping";
+        log::debug("cannot unhide {}, skipping", item->relativeName());
         return true;
       }
 
@@ -474,7 +482,7 @@ void ConflictsTab::changeItemsVisibility(QTreeView* tree, bool visible)
 
     } else {
       if (!item->canHide()) {
-        qDebug().nospace() << "cannot hide " << item->relativeName() << ", skipping";
+        log::debug("cannot hide {}, skipping", item->relativeName());
         return true;
       }
 
@@ -503,10 +511,10 @@ void ConflictsTab::changeItemsVisibility(QTreeView* tree, bool visible)
     return true;
   });
 
-  qDebug().nospace() << (visible ? "unhiding" : "hiding") << " conflict files done";
+  log::debug("{} conflict files done", (visible ? "unhiding" : "hiding"));
 
   if (changed) {
-    qDebug().nospace() << "triggering refresh";
+    log::debug("triggering refresh");
 
     if (origin()) {
       emitOriginModified();
@@ -632,7 +640,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
 
   const auto* model = dynamic_cast<ConflictListModel*>(tree->model());
   if (!model) {
-    qCritical() << "tree doesn't have a ConflictListModel";
+    log::error("tree doesn't have a ConflictListModel");
     return {};
   }
 

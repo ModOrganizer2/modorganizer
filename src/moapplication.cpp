@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "moapplication.h"
 #include <report.h>
 #include <utility.h>
+#include <log.h>
 #include <appconfig.h>
 #include <QFile>
 #include <QStringList>
@@ -36,7 +37,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 
 
-using MOBase::reportError;
+using namespace MOBase;
 
 
 class ProxyStyle : public QProxyStyle {
@@ -114,13 +115,15 @@ bool MOApplication::notify(QObject *receiver, QEvent *event)
   try {
     return QApplication::notify(receiver, event);
   } catch (const std::exception &e) {
-    qCritical("uncaught exception in handler (object %s, eventtype %d): %s",
-              receiver->objectName().toUtf8().constData(), event->type(), e.what());
+    log::error(
+      "uncaught exception in handler (object {}, eventtype {}): {}",
+      receiver->objectName(), event->type(), e.what());
     reportError(tr("an error occurred: %1").arg(e.what()));
     return false;
   } catch (...) {
-    qCritical("uncaught non-std exception in handler (object %s, eventtype %d)",
-              receiver->objectName().toUtf8().constData(), event->type());
+    log::error(
+      "uncaught non-std exception in handler (object {}, eventtype {})",
+      receiver->objectName(), event->type());
     reportError(tr("an error occurred"));
     return false;
   }
@@ -137,7 +140,7 @@ void MOApplication::updateStyle(const QString &fileName)
     if (QFile::exists(fileName)) {
       setStyleSheet(QString("file:///%1").arg(fileName));
     } else {
-      qWarning("invalid stylesheet: %s", qUtf8Printable(fileName));
+      log::warn("invalid stylesheet: {}", fileName);
     }
   }
 }

@@ -54,7 +54,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPalette>
 
 #include <Qt> // for Qt::UserRole, etc
-#include <QtDebug> // for qDebug, qWarning
 
 #include <Windows.h> // For ShellExecuteW, HINSTANCE, etc
 #include <wincred.h> // For storage
@@ -165,8 +164,9 @@ void Settings::registerPlugin(IPlugin *plugin)
   for (const PluginSetting &setting : plugin->settings()) {
     QVariant temp = m_Settings.value("Plugins/" + plugin->name() + "/" + setting.key, setting.defaultValue);
     if (!temp.convert(setting.defaultValue.type())) {
-      qWarning("failed to interpret \"%s\" as correct type for \"%s\" in plugin \"%s\", using default",
-               qUtf8Printable(temp.toString()), qUtf8Printable(setting.key), qUtf8Printable(plugin->name()));
+      log::warn(
+        "failed to interpret \"{}\" as correct type for \"{}\" in plugin \"{}\", using default",
+        temp.toString(), setting.key, plugin->name());
       temp = setting.defaultValue;
     }
     m_PluginSettings[plugin->name()][setting.key] = temp;
@@ -220,9 +220,7 @@ QString Settings::deObfuscate(const QString key)
   } else {
     const auto e = GetLastError();
     if (e != ERROR_NOT_FOUND) {
-      qCritical().nospace()
-        << "Retrieving encrypted data failed: "
-        << formatSystemMessageQ(e);
+      log::error("Retrieving encrypted data failed: {}", formatSystemMessage(e));
     }
   }
   delete[] keyData;
@@ -367,11 +365,7 @@ bool Settings::setNexusApiKey(const QString& apiKey)
 {
   if (!obfuscate("APIKEY", apiKey)) {
     const auto e = GetLastError();
-
-    qCritical().nospace()
-      << "Storing API key failed: "
-      << formatSystemMessageQ(e);
-
+    log::error("Storing API key failed: {}", formatSystemMessage(e));
     return false;
   }
 
@@ -415,9 +409,14 @@ bool Settings::offlineMode() const
   return m_Settings.value("Settings/offline_mode", false).toBool();
 }
 
-int Settings::logLevel() const
+log::Levels Settings::logLevel() const
 {
-  return m_Settings.value("Settings/log_level", static_cast<int>(LogLevel::Info)).toInt();
+  return static_cast<log::Levels>(m_Settings.value("Settings/log_level").toInt());
+}
+
+void Settings::setLogLevel(log::Levels level)
+{
+  m_Settings.setValue("Settings/log_level", static_cast<int>(level));
 }
 
 int Settings::crashDumpsType() const
@@ -487,9 +486,7 @@ void Settings::setSteamLogin(QString username, QString password)
   }
   if (!obfuscate("steam_password", password)) {
     const auto e = GetLastError();
-    qCritical().nospace()
-      << "Storing or deleting password failed: "
-      << formatSystemMessageQ(e);
+    log::error("Storing or deleting password failed: {}", formatSystemMessage(e));
   }
 }
 
@@ -637,7 +634,7 @@ void Settings::updateServers(const QList<ServerInfo> &servers)
     QVariantMap val = m_Settings.value(key).toMap();
     QDate lastSeen = val["lastSeen"].toDate();
     if (lastSeen.daysTo(now) > 30) {
-      qDebug("removing server %s since it hasn't been available for downloads in over a month", qUtf8Printable(key));
+      log::debug("removing server {} since it hasn't been available for downloads in over a month", key);
       m_Settings.remove(key);
     }
   }
@@ -760,10 +757,10 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
       if (m_Settings.value(k).toString() != before[k] && !k.contains("username") && !k.contains("password"))
       {
         if (first_update) {
-          qDebug("Changed settings:");
+          log::debug("Changed settings:");
           first_update = false;
         }
-        qDebug("  %s=%s", k.toUtf8().data(), m_Settings.value(k).toString().toUtf8().data());
+        log::debug("  {}={}", k, m_Settings.value(k).toString());
       }
     m_Settings.endGroup();
   }
@@ -1000,7 +997,7 @@ Settings::DiagnosticsTab::DiagnosticsTab(Settings *m_parent, SettingsDialog &m_d
   , m_dumpsMaxEdit(m_dialog.findChild<QSpinBox *>("dumpsMaxEdit"))
   , m_diagnosticsExplainedLabel(m_dialog.findChild<QLabel *>("diagnosticsExplainedLabel"))
 {
-  m_logLevelBox->setCurrentIndex(m_parent->logLevel());
+  setLevelsBox();
   m_dumpsTypeBox->setCurrentIndex(m_parent->crashDumpsType());
   m_dumpsMaxEdit->setValue(m_parent->crashDumpsMax());
   QString logsPath = qApp->property("dataPath").toString()
@@ -1016,9 +1013,26 @@ Settings::DiagnosticsTab::DiagnosticsTab(Settings *m_parent, SettingsDialog &m_d
 
 void Settings::DiagnosticsTab::update()
 {
-  m_Settings.setValue("Settings/log_level", m_logLevelBox->currentIndex());
+  m_Settings.setValue("Settings/log_level", m_logLevelBox->currentData().toInt());
   m_Settings.setValue("Settings/crash_dumps_type", m_dumpsTypeBox->currentIndex());
   m_Settings.setValue("Settings/crash_dumps_max", m_dumpsMaxEdit->value());
+}
+
+void Settings::DiagnosticsTab::setLevelsBox()
+{
+  m_logLevelBox->clear();
+
+  m_logLevelBox->addItem(tr("Debug"), log::Debug);
+  m_logLevelBox->addItem(tr("Info (recommended)"), log::Info);
+  m_logLevelBox->addItem(tr("Warning"), log::Warning);
+  m_logLevelBox->addItem(tr("Error"), log::Error);
+
+  for (int i=0; i<m_logLevelBox->count(); ++i) {
+    if (m_logLevelBox->itemData(i) == m_parent->logLevel()) {
+      m_logLevelBox->setCurrentIndex(i);
+      break;
+    }
+  }
 }
 
 Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)

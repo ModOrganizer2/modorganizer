@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "downloadlist.h"
 #include "downloadlistwidget.h"
+#include <log.h>
 #include <QPainter>
 #include <QMouseEvent>
 #include <QMenu>
@@ -28,6 +29,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QHeaderView>
 #include <QCheckBox>
 #include <QWidgetAction>
+
+using namespace MOBase;
 
 void DownloadProgressDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
@@ -286,7 +289,7 @@ void DownloadListWidget::issueDelete()
 
 void DownloadListWidget::issueRemoveFromView()
 {
-  qDebug() << "removing from view: " << m_ContextRow;
+  log::debug("removing from view: {}", m_ContextRow);
   emit removeDownload(m_ContextRow, false);
 }
 

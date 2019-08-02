@@ -32,7 +32,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <qstandardpaths.h>
 
 static const char SHMID[] = "mod_organizer_instance";
-
+using namespace MOBase;
 
 std::string to_hex(void *bufferIn, size_t bufferSize)
 {
@@ -60,8 +60,7 @@ LogWorker::LogWorker()
                         "yyyy-MM-dd_hh-mm-ss")))
 {
   m_LogFile.open(QIODevice::WriteOnly);
-  qDebug("usvfs log messages are written to %s",
-         qUtf8Printable(m_LogFile.fileName()));
+  log::debug("usvfs log messages are written to {}", m_LogFile.fileName());
 }
 
 LogWorker::~LogWorker()
@@ -90,15 +89,16 @@ void LogWorker::exit()
   m_QuitRequested = true;
 }
 
-LogLevel logLevel(int level)
+LogLevel toUsvfsLogLevel(log::Levels level)
 {
-  switch (static_cast<LogLevel>(level)) {
-    case LogLevel::Info:
+  switch (level) {
+    case log::Info:
       return LogLevel::Info;
-    case LogLevel::Warning:
+    case log::Warning:
       return LogLevel::Warning;
-    case LogLevel::Error:
+    case log::Error:
       return LogLevel::Error;
+    case log::Debug:  // fall-through
     default:
       return LogLevel::Debug;
   }
@@ -118,17 +118,67 @@ CrashDumpsType crashDumpsType(int type)
   }
 }
 
+QString toString(LogLevel lv)
+{
+  switch (lv)
+  {
+    case LogLevel::Debug:
+      return "debug";
+
+    case LogLevel::Info:
+      return "info";
+
+    case LogLevel::Warning:
+      return "warning";
+
+    case LogLevel::Error:
+      return "error";
+
+    default:
+      return QString("%1").arg(static_cast<int>(lv));
+  }
+}
+
+QString toString(CrashDumpsType t)
+{
+  switch (t)
+  {
+    case CrashDumpsType::None:
+      return "none";
+
+    case CrashDumpsType::Mini:
+      return "mini";
+
+    case CrashDumpsType::Data:
+      return "data";
+
+    case CrashDumpsType::Full:
+      return "full";
+
+    default:
+      return QString("%1").arg(static_cast<int>(t));
+  }
+}
+
 UsvfsConnector::UsvfsConnector()
 {
   USVFSParameters params;
-  LogLevel level = logLevel(Settings::instance().logLevel());
+  LogLevel level = toUsvfsLogLevel(Settings::instance().logLevel());
   CrashDumpsType dumpType = crashDumpsType(Settings::instance().crashDumpsType());
 
   std::string dumpPath = MOShared::ToString(OrganizerCore::crashDumpsPath(), true);
   USVFSInitParameters(&params, SHMID, false, level, dumpType, dumpPath.c_str());
   InitLogging(false);
 
-  qDebug("Initializing VFS <%s, %d, %d, %s>", params.instanceName, params.logLevel, params.crashDumpsType, params.crashDumpsPath);
+  log::debug(
+    "initializing usvfs:\n"
+    " . instance: {}\n"
+    " . log: {}\n"
+    " . dump: {} ({})",
+    params.instanceName,
+    toString(params.logLevel),
+    params.crashDumpsPath,
+    toString(params.crashDumpsType));
 
   CreateVFS(&params);
 
@@ -167,7 +217,7 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
   int files = 0;
   int dirs = 0;
 
-  qDebug("Updating VFS mappings...");
+  log::debug("Updating VFS mappings...");
 
   ClearVirtualMappings();
 
@@ -195,19 +245,13 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
     }
   }
 
-  qDebug("VFS mappings updated <linked %d dirs, %d files>", dirs, files);
-  /*
-    size_t dumpSize = 0;
-    CreateVFSDump(nullptr, &dumpSize);
-    std::unique_ptr<char[]> buffer(new char[dumpSize]);
-    CreateVFSDump(buffer.get(), &dumpSize);
-    qDebug(buffer.get());
-  */
+  log::debug("VFS mappings updated <linked {} dirs, {} files>", dirs, files);
 }
 
-void UsvfsConnector::updateParams(int logLevel, int crashDumpsType, QString executableBlacklist) 
+void UsvfsConnector::updateParams(
+  MOBase::log::Levels logLevel, int crashDumpsType, QString executableBlacklist)
 {
-  USVFSUpdateParams(::logLevel(logLevel), ::crashDumpsType(crashDumpsType));
+  USVFSUpdateParams(toUsvfsLogLevel(logLevel), ::crashDumpsType(crashDumpsType));
   ClearExecutableBlacklist();
   for (auto exec : executableBlacklist.split(";")) {
     std::wstring buf = exec.toStdWString();

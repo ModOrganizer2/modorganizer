@@ -73,7 +73,7 @@ SET(organizer_SRCS
     mainwindow.cpp
     main.cpp
     loghighlighter.cpp
-    logbuffer.cpp
+    loglist.cpp
     lockeddialogbase.cpp
     lockeddialog.cpp
     waitingonclosedialog.cpp
@@ -129,6 +129,12 @@ SET(organizer_SRCS
 	filerenamer.cpp
 	texteditor.cpp
 	expanderwidget.cpp
+	env.cpp
+	envmetrics.cpp
+	envmodule.cpp
+	envsecurity.cpp
+	envshortcut.cpp
+	envwindows.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -181,7 +187,7 @@ SET(organizer_HDRS
     messagedialog.h
     mainwindow.h
     loghighlighter.h
-    logbuffer.h
+    loglist.h
     lockeddialogbase.h
     lockeddialog.h
     waitingonclosedialog.h
@@ -239,6 +245,12 @@ SET(organizer_HDRS
 	filerenamer.h
 	texteditor.h
 	expanderwidget.h
+	env.h
+	envmetrics.h
+	envmodule.h
+	envsecurity.h
+	envshortcut.h
+	envwindows.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -350,6 +362,15 @@ set(downloads
 	downloadmanager
 )
 
+set(env
+	env
+	envmetrics
+	envmodule
+	envsecurity
+	envshortcut
+	envwindows
+)
+
 set(executables
 	executableslist
 	editexecutablesdialog
@@ -436,7 +457,7 @@ set(widgets
 	filterwidget
 	icondelegate
 	lcdnumber
-	logbuffer
+	loglist
 	loghighlighter
 	modflagicondelegate
 	modidlineedit
@@ -447,8 +468,8 @@ set(widgets
 )
 
 set(src_filters
-	application core browser dialogs downloads executables locking modinfo modinfo\\dialog
-	modlist plugins previews profiles settings utilities widgets
+	application core browser dialogs downloads env executables locking modinfo
+	modinfo\\dialog modlist plugins previews profiles settings utilities widgets
 )
 
 foreach(filter in list ${src_filters})
@@ -520,6 +541,9 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 FIND_PACKAGE(zlib REQUIRED)
 # TODO FindZlib doesn't find the static zlib library
 
+# fmt
+find_package(fmt REQUIRED)
+
 INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/bsatk/src
                     ${project_path}/esptk/src
@@ -551,10 +575,11 @@ ELSE()
 ENDIF()
 
 ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIS} ${organizer_RCS} ${organizer_QRCS} ${organizer_translations_qm})
+
 TARGET_LINK_LIBRARIES(ModOrganizer
                       Qt5::Widgets Qt5::WinExtras Qt5::WebEngineWidgets Qt5::Quick
                       Qt5::Qml Qt5::QuickWidgets Qt5::Network Qt5::WebSockets
-                      ${Boost_LIBRARIES}
+                      ${Boost_LIBRARIES} fmt::fmt
                       zlibstatic
                       uibase esptk bsatk githubpp
                       ${usvfs_name}

@@ -37,6 +37,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <appconfig.h>
 #include <scriptextender.h>
 #include <unmanagedmods.h>
+#include <log.h>
 
 #include <QApplication>
 #include <QDirIterator>
@@ -319,13 +320,12 @@ bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
     }
 
     if (organizedGames.empty()) {
-      qWarning() << tr("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.");
+      log::warn("{}", tr("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests."));
       updatesAvailable = false;
     } else {
-      qInfo() << tr(
+      log::info("{}", tr(
         "You have mods that haven't been checked within the last month using the new API. These mods must be checked before we can use the bulk update API. "
-        "This will consume significantly more API requests than usual. You will need to rerun the update check once complete in order to parse the remaining mods."
-      );
+        "This will consume significantly more API requests than usual. You will need to rerun the update check once complete in order to parse the remaining mods."));
     }
 
     for (auto game : organizedGames)
@@ -412,7 +412,7 @@ void ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *recei
   });
 
   if (mods.size()) {
-    qInfo("Checking updates for %d mods...", mods.size());
+    log::info("Checking updates for {} mods...", mods.size());
 
     for (auto mod : mods) {
       organizedGames.insert(std::make_pair<QString, int>(mod->getGameName().toLower(), mod->getNexusID()));
@@ -422,7 +422,7 @@ void ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *recei
       NexusInterface::instance(pluginContainer)->requestUpdates(game.second, receiver, QVariant(), game.first, QString());
     }
   } else {
-    qInfo("None of the selected mods can be updated.");
+    log::info("None of the selected mods can be updated.");
   }
 }
 
@@ -530,10 +530,7 @@ QUrl ModInfo::parseCustomURL() const
   const auto url = QUrl::fromUserInput(getCustomURL());
 
   if (!url.isValid()) {
-    qCritical()
-      << "mod '" << name() << "' has an invalid custom url "
-      << "'" << getCustomURL() << "'";
-
+    log::error("mod '{}' has an invalid custom url '{}'", name(), getCustomURL());
     return {};
   }
 

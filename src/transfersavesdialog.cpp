@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "isavegame.h"
 #include "savegameinfo.h"
 #include <utility.h>
+#include <log.h>
 
 #include <QtDebug>
 #include <QDateTime>
@@ -186,7 +187,7 @@ void TransferSavesDialog::on_moveToLocalBtn_clicked()
           [this](const QString &source, const QString &destination) -> bool {
             return shellMove(source, destination, this);
           },
-          "Failed to move %s to %s")) {
+          "Failed to move {} to {}")) {
     refreshGlobalSaves();
     refreshGlobalCharacters();
     refreshLocalSaves();
@@ -203,7 +204,7 @@ void TransferSavesDialog::on_copyToLocalBtn_clicked()
           [this](const QString &source, const QString &destination) -> bool {
             return shellCopy(source, destination, this);
           },
-          "Failed to copy %s to %s")) {
+          "Failed to copy {} to {}")) {
     refreshLocalSaves();
     refreshLocalCharacters();
   }
@@ -218,7 +219,7 @@ void TransferSavesDialog::on_moveToGlobalBtn_clicked()
           [this](const QString &source, const QString &destination) -> bool {
             return shellMove(source, destination, this);
           },
-          "Failed to move %s to %s")) {
+          "Failed to move {} to {}")) {
     refreshGlobalSaves();
     refreshGlobalCharacters();
     refreshLocalSaves();
@@ -235,7 +236,7 @@ void TransferSavesDialog::on_copyToGlobalBtn_clicked()
           [this](const QString &source, const QString &destination) -> bool {
             return shellCopy(source, destination, this);
           },
-          "Failed to copy %s to %s")) {
+          "Failed to copy {} to {}")) {
     refreshGlobalSaves();
     refreshGlobalCharacters();
   }
@@ -340,9 +341,7 @@ bool TransferSavesDialog::transferCharacters(
       }
 
       if (!method(sourceFile.absoluteFilePath(), destinationFile)) {
-        qCritical(errmsg,
-                  sourceFile.absoluteFilePath().toUtf8().constData(),
-                  qUtf8Printable(destinationFile));
+        log::error(errmsg, sourceFile.absoluteFilePath(), destinationFile);
       }
     }
   }

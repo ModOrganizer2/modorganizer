@@ -39,7 +39,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "singleinstance.h"
 #include "utility.h"
 #include "helper.h"
-#include "logbuffer.h"
+#include "loglist.h"
 #include "selectiondialog.h"
 #include "moapplication.h"
 #include "tutorialmanager.h"
@@ -47,10 +47,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "instancemanager.h"
 #include "moshortcut.h"
 #include "organizercore.h"
+#include "env.h"
+#include "envmodule.h"
 
 #include <eh.h>
 #include <windows_error.h>
 #include <usvfs.h>
+#include <log.h>
 
 #include <QApplication>
 #include <QPushButton>
@@ -132,9 +135,9 @@ static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *except
   int dumpRes =
     CreateMiniDump(exceptionPtrs, OrganizerCore::getGlobalCrashDumpsType(), dumpPath.c_str());
   if (!dumpRes)
-    qCritical("ModOrganizer has crashed, crash dump created.");
+    log::error("ModOrganizer has crashed, crash dump created.");
   else
-    qCritical("ModOrganizer has crashed, CreateMiniDump failed (%d, error %lu).", dumpRes, GetLastError());
+    log::error("ModOrganizer has crashed, CreateMiniDump failed ({}, error {}).", dumpRes, GetLastError());
 
   if (prevUnhandledExceptionFilter)
     return prevUnhandledExceptionFilter(exceptionPtrs);
@@ -252,17 +255,17 @@ QString determineProfile(QStringList &arguments, const QSettings &settings)
   { // see if there is a profile on the command line
     int profileIndex = arguments.indexOf("-p", 1);
     if ((profileIndex != -1) && (profileIndex < arguments.size() - 1)) {
-      qDebug("profile overwritten on command line");
+      log::debug("profile overwritten on command line");
       selectedProfileName = arguments.at(profileIndex + 1);
     }
     arguments.removeAt(profileIndex);
     arguments.removeAt(profileIndex);
   }
   if (selectedProfileName.isEmpty()) {
-    qDebug("no configured profile");
+    log::debug("no configured profile");
     selectedProfileName = "Default";
   } else {
-    qDebug("configured profile: %s", qUtf8Printable(selectedProfileName));
+    log::debug("configured profile: {}", selectedProfileName);
   }
 
   return selectedProfileName;
@@ -424,9 +427,6 @@ void setupPath()
 {
   static const int BUFSIZE = 4096;
 
-  qDebug("MO at: %s", qUtf8Printable(QDir::toNativeSeparators(
-                          QCoreApplication::applicationDirPath())));
-
   QCoreApplication::setLibraryPaths(QStringList(QCoreApplication::applicationDirPath() + "/dlls") + QCoreApplication::libraryPaths());
 
   boost::scoped_array<TCHAR> oldPath(new TCHAR[BUFSIZE]);
@@ -446,8 +446,6 @@ void setupPath()
 
 void preloadDll(const QString& filename)
 {
-  qDebug().nospace() << "preloading " << filename;
-
   if (GetModuleHandleW(filename.toStdWString().c_str())) {
     // already loaded, this can happen when "restarting" MO by switching
     // instances, for example
@@ -460,16 +458,13 @@ void preloadDll(const QString& filename)
   const auto dllPath = appPath + "\\" + filename;
 
   if (!QFile::exists(dllPath)) {
-    qWarning().nospace() << dllPath << "not found";
+    log::warn("{} not found", dllPath);
     return;
   }
 
   if (!LoadLibraryW(dllPath.toStdWString().c_str())) {
     const auto e = GetLastError();
-
-    qWarning().nospace()
-      << "failed to load " << dllPath << ": "
-      << formatSystemMessage(e);
+    log::warn("failed to load {}: {}", dllPath, formatSystemMessage(e));
   }
 }
 
@@ -489,84 +484,129 @@ static QString getVersionDisplayString()
   return createVersionInfo().displayString(3);
 }
 
+void dumpSettings(QSettings& settings)
+{
+  static const QStringList ignore({
+    "username", "password", "nexus_api_key"
+  });
+
+  log::debug("settings:");
+
+  settings.beginGroup("Settings");
+
+  for (auto k : settings.allKeys()) {
+    if (ignore.contains(k, Qt::CaseInsensitive)) {
+      continue;
+    }
+
+    log::debug("  . {}={}", k, settings.value(k).toString());
+  }
+
+  settings.endGroup();
+}
+
+void checkMissingFiles()
+{
+  // files that are likely to be eaten
+  static const QStringList files({
+    "helper.exe", "nxmhandler.exe",
+    "usvfs_proxy_x64.exe", "usvfs_proxy_x86.exe",
+    "usvfs_x64.dll", "usvfs_x86.dll"
+  });
+
+  const auto dir = QCoreApplication::applicationDirPath();
+
+  for (const auto& name : files) {
+    const QFileInfo file(dir + QDir::separator() + name);
+    if (!file.exists()) {
+      log::warn(
+        "'{}' seems to be missing, an antivirus may have deleted it",
+        file.absoluteFilePath());
+    }
+  }
+}
+
+void checkNahimic(const env::Environment& e)
+{
+  for (auto&& m : e.loadedModules()) {
+    const QFileInfo file(m.path());
+
+    if (file.fileName().compare("NahimicOSD.dll", Qt::CaseInsensitive) == 0) {
+      log::warn(
+        "NahimicOSD.dll is loaded. Nahimic is known to cause issues with "
+        "Mod Organizer, such as freezing or blank windows. Consider "
+        "uninstalling it.");
+
+      break;
+    }
+  }
+}
+
+void sanityChecks(const env::Environment& e)
+{
+  checkMissingFiles();
+  checkNahimic(e);
+}
+
+
 int runApplication(MOApplication &application, SingleInstance &instance,
                    const QString &splashPath)
 {
+  log::info(
+    "starting Mod Organizer version {} revision {} in {}",
+    getVersionDisplayString(), GITID, QCoreApplication::applicationDirPath());
 
-  qDebug().nospace()
-    << "Starting Mod Organizer version "
-    << getVersionDisplayString() << " revision " << GITID;
-
-#if !defined(QT_NO_SSL)
   preloadSsl();
-  qDebug("ssl support: %d", QSslSocket::supportsSsl());
-#else
-  qDebug("non-ssl build");
-#endif
-
-  {
-    env::Environment env;
-
-    qDebug().nospace().noquote()
-      << "windows: " << env.windowsInfo().toString();
-
-    if (env.windowsInfo().compatibilityMode()) {
-      qWarning() << "MO seems to be running in compatibility mode";
-    }
-
-    qDebug().nospace().noquote() << "security products:";
-    for (const auto& sp : env.securityProducts()) {
-      qDebug().nospace().noquote() << " . " << sp.toString();
-    }
-
-    qDebug() << "modules loaded in process:";
-    for (const auto& m : env.loadedModules()) {
-      qDebug().nospace().noquote() << " . " << m.toString();
-    }
+  if (!QSslSocket::supportsSsl()) {
+    log::warn("no ssl support");
   }
 
   QString dataPath = application.property("dataPath").toString();
-  qDebug("data path: %s", qUtf8Printable(dataPath));
+  log::info("data path: {}", dataPath);
 
   if (!bootstrap()) {
     reportError("failed to set up data paths");
     return 1;
   }
 
-  QWindowsWindowFunctions::setWindowActivationBehavior(QWindowsWindowFunctions::AlwaysActivateWindow);
+  QWindowsWindowFunctions::setWindowActivationBehavior(
+    QWindowsWindowFunctions::AlwaysActivateWindow);
 
   QStringList arguments = application.arguments();
 
   try {
-    qDebug("Working directory: %s", qUtf8Printable(QDir::toNativeSeparators(QDir::currentPath())));
+    log::info("working directory: {}", QDir::currentPath());
 
-    QSettings settings(dataPath + "/"
-                           + QString::fromStdWString(AppConfig::iniFileName()),
-                       QSettings::IniFormat);
+    QSettings initSettings(
+      dataPath + "/" + QString::fromStdWString(AppConfig::iniFileName()),
+      QSettings::IniFormat);
 
-    // global crashDumpType sits in OrganizerCore to make a bit less ugly to update it when the settings are changed during runtime
-    OrganizerCore::setGlobalCrashDumpsType(settings.value("Settings/crash_dumps_type", static_cast<int>(CrashDumpsType::Mini)).toInt());
+    Settings settings(initSettings);
+    log::getDefault().setLevel(settings.logLevel());
 
-    qDebug("Loaded settings:");
-    settings.beginGroup("Settings");
-    for (auto k : settings.allKeys())
-      if (!k.contains("username") && !k.contains("password") && !k.contains("nexus_api_key"))
-        qDebug("  %s=%s", k.toUtf8().data(), settings.value(k).toString().toUtf8().data());
-    settings.endGroup();
+    // global crashDumpType sits in OrganizerCore to make a bit less ugly to
+    // update it when the settings are changed during runtime
+    OrganizerCore::setGlobalCrashDumpsType(settings.crashDumpsType());
 
+    env::Environment env;
 
-    qDebug("initializing core");
+    env.dump();
+    dumpSettings(initSettings);
+    sanityChecks(env);
+
+    log::debug("initializing core");
     OrganizerCore organizer(settings);
     if (!organizer.bootstrap()) {
       reportError("failed to set up data paths");
       return 1;
     }
-    qDebug("initialize plugins");
+
+    log::debug("initializing plugins");
     PluginContainer pluginContainer(&organizer);
     pluginContainer.loadPlugins();
 
     MOBase::IPluginGame *game = determineCurrentGame(
-        application.applicationDirPath(), settings, pluginContainer);
+        application.applicationDirPath(), initSettings, pluginContainer);
     if (game == nullptr) {
       InstanceManager &instance = InstanceManager::instance();
       QString instanceName = instance.currentInstance();
@@ -583,15 +623,13 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       QImage image(pluginSplash);
       if (!image.isNull()) {
         image.save(dataPath + "/splash.png");
-      } else {
-        qDebug("no plugin splash");
       }
     }
 
     organizer.setManagedGame(game);
     organizer.createDefaultProfile();
 
-    if (!settings.contains("game_edition")) {
+    if (!initSettings.contains("game_edition")) {
       QStringList editions = game->gameVariants();
       if (editions.size() > 1) {
         SelectionDialog selection(
@@ -607,18 +645,17 @@ int runApplication(MOApplication &application, SingleInstance &instance,
         if (selection.exec() == QDialog::Rejected) {
           return 1;
         } else {
-          settings.setValue("game_edition", selection.getChoiceString());
+          initSettings.setValue("game_edition", selection.getChoiceString());
         }
       }
     }
-    game->setGameVariant(settings.value("game_edition").toString());
+    game->setGameVariant(initSettings.value("game_edition").toString());
 
-    qDebug("managing game at %s", qUtf8Printable(QDir::toNativeSeparators(
-                                      game->gameDirectory().absolutePath())));
+    log::info("managing game at {}", game->gameDirectory().absolutePath());
 
-    organizer.updateExecutablesList(settings);
+    organizer.updateExecutablesList(initSettings);
 
-    QString selectedProfileName = determineProfile(arguments, settings);
+    QString selectedProfileName = determineProfile(arguments, initSettings);
     organizer.setCurrentProfile(selectedProfileName);
 
     // if we have a command line parameter, it is either a nxm link or
@@ -638,13 +675,12 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 			}
 		}
 		else if (OrganizerCore::isNxmLink(arguments.at(1))) {
-			qDebug("starting download from command line: %s",
-				qUtf8Printable(arguments.at(1)));
+			log::debug("starting download from command line: {}", arguments.at(1));
 			organizer.externalMessage(arguments.at(1));
 		}
 		else {
 			QString exeName = arguments.at(1);
-			qDebug("starting %s from command line", qUtf8Printable(exeName));
+			log::debug("starting {} from command line", exeName);
 			arguments.removeFirst(); // remove application name (ModOrganizer.exe)
 			arguments.removeFirst(); // remove binary name
 			// pass the remaining parameters to the binary
@@ -663,8 +699,8 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     QPixmap pixmap(splashPath);
     QSplashScreen splash(pixmap);
 
-    if (settings.contains("window_monitor")) {
-      const int monitor = settings.value("window_monitor").toInt();
+    if (initSettings.contains("window_monitor")) {
+      const int monitor = initSettings.value("window_monitor").toInt();
 
       if (monitor != -1 && QGuiApplication::screens().size() > monitor) {
         QGuiApplication::screens().at(monitor)->geometry().center();
@@ -684,21 +720,21 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       NexusInterface::instance(&pluginContainer)->getAccessManager()->apiCheck(apiKey);
     }
 
-    qDebug("initializing tutorials");
+    log::debug("initializing tutorials");
     TutorialManager::init(
         qApp->applicationDirPath() + "/"
             + QString::fromStdWString(AppConfig::tutorialsPath()) + "/",
         &organizer);
 
-    if (!application.setStyleFile(settings.value("Settings/style", "").toString())) {
+    if (!application.setStyleFile(initSettings.value("Settings/style", "").toString())) {
       // disable invalid stylesheet
-      settings.setValue("Settings/style", "");
+      initSettings.setValue("Settings/style", "");
     }
 
     int res = 1;
     { // scope to control lifetime of mainwindow
       // set up main window and its data structures
-      MainWindow mainWindow(settings, organizer, pluginContainer);
+      MainWindow mainWindow(initSettings, organizer, pluginContainer);
 
       NexusInterface::instance(&pluginContainer)
         ->getAccessManager()->setTopLevelWidget(&mainWindow);
@@ -709,9 +745,13 @@ int runApplication(MOApplication &application, SingleInstance &instance,
                        SLOT(externalMessage(QString)));
 
       mainWindow.processUpdates();
+
+      // this must be before readSettings(), see DockFixer in mainwindow.cpp
+      splash.finish(&mainWindow);
+
       mainWindow.readSettings();
 
-      qDebug("displaying main window");
+      log::debug("displaying main window");
       mainWindow.show();
       mainWindow.activateWindow();
 
@@ -732,16 +772,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
 int doCoreDump(env::CoreDumpTypes type)
 {
-  // open a console
-  AllocConsole();
-
-  // redirect stdin, stdout and stderr to it
-  FILE* in=nullptr;
-  FILE* out=nullptr;
-  FILE* err=nullptr;
-  freopen_s(&in, "CONIN$", "r", stdin);
-  freopen_s(&out, "CONOUT$", "w", stdout);
-  freopen_s(&err, "CONOUT$", "w", stderr);
+  env::Console c;
 
   // dump
   const auto b = env::coredumpOther(type);
@@ -752,16 +783,68 @@ int doCoreDump(env::CoreDumpTypes type)
   std::wcerr << L"Press enter to continue...";
   std::wcin.get();
 
-  // close redirected handles
-  std::fclose(err);
-  std::fclose(out);
-  std::fclose(in);
-
-  // close console
-  FreeConsole();
-
   return (b ? 0 : 1);
 }
+
+log::Levels convertQtLevel(QtMsgType t)
+{
+  switch (t)
+  {
+    case QtDebugMsg:
+      return log::Debug;
+
+    case QtWarningMsg:
+      return log::Warning;
+
+    case QtCriticalMsg:  // fall-through
+    case QtFatalMsg:
+      return log::Error;
+
+    case QtInfoMsg:  // fall-through
+    default:
+      return log::Info;
+  }
+}
+
+void qtLogCallback(
+  QtMsgType type, const QMessageLogContext& context, const QString& message)
+{
+  std::string_view file = "";
+
+  if (type != QtDebugMsg) {
+    if (context.file) {
+      file = context.file;
+
+      const auto lastSep = file.find_last_of("/\\");
+      if (lastSep != std::string_view::npos) {
+        file = {context.file + lastSep + 1};
+      }
+    }
+  }
+
+  if (file.empty()) {
+    log::log(
+      convertQtLevel(type), "{}",
+      message.toStdString());
+  } else {
+    log::log(
+      convertQtLevel(type), "[{}:{}] {}",
+      file, context.line, message.toStdString());
+  }
+}
+
+void initLogging()
+{
+  LogModel::create();
+
+  log::createDefault(MOBase::log::Debug, "%^[%m-%d %H:%M:%S.%e %L] %v%$");
+
+  log::getDefault().setCallback(
+    [](log::Entry e){ LogModel::instance().add(e); });
+
+  qInstallMessageHandler(qtLogCallback);
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -775,6 +858,8 @@ int main(int argc, char *argv[])
       return doCoreDump(env::CoreDumpTypes::Full);
     }
   }
+
+  initLogging();
 
   //Make sure the configured temp folder exists
   QDir tempDir = QDir::temp();
@@ -809,7 +894,7 @@ int main(int argc, char *argv[])
     if (moshortcut ||
         arguments.size() > 1 && OrganizerCore::isNxmLink(arguments.at(1)))
     {
-      qDebug("not primary instance, sending shortcut/download message");
+      log::debug("not primary instance, sending shortcut/download message");
       instance.sendMessage(arguments.at(1));
       return 0;
     } else if (arguments.size() == 1) {
@@ -838,7 +923,11 @@ int main(int argc, char *argv[])
     // initialize dump collection only after "dataPath" since the crashes are stored under it
     prevUnhandledExceptionFilter = SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
-    LogBuffer::init(1000000, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
+    const auto logFile =
+      qApp->property("dataPath").toString() + "/logs/mo_interface.log";
+
+    log::getDefault().setFile(MOBase::log::File::rotating(
+      logFile.toStdWString(), 5*1024*1024, 5));
 
     QString splash = dataPath + "/splash.png";
     if (!QFile::exists(dataPath + "/splash.png")) {

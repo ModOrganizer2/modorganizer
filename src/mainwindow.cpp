@@ -59,7 +59,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "installationmanager.h"
 #include "lockeddialog.h"
 #include "waitingonclosedialog.h"
-#include "logbuffer.h"
 #include "downloadlistsortproxy.h"
 #include "motddialog.h"
 #include "filedialogmemory.h"
@@ -86,6 +85,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <usvfs.h>
 #include "localsavegames.h"
 #include "listdialog.h"
+#include "envshortcut.h"
 
 #include <QAbstractItemDelegate>
 #include <QAbstractProxyModel>
@@ -194,6 +194,102 @@ const QSize MediumToolbarSize(32, 32);
 const QSize LargeToolbarSize(42, 36);
 
 
+// this attempts to fix https://bugreports.qt.io/browse/QTBUG-46620 where dock
+// sizes are not restored when the main window is maximized; it is used in
+// MainWindow::readSettings() and MainWindow::storeSettings()
+//
+// there's also https://stackoverflow.com/questions/44005852, which has what
+// seems to be a popular fix, but it breaks the restored size of the window
+// by setting it to the desktop's resolution, so that doesn't work
+//
+// the only fix I could find is to remember the sizes of the docks and manually
+// setting them back; saving is straightforward, but restoring is messy
+//
+// this also depends on the window being visible before the timer in restore()
+// is fired and the timer must be processed by application.exec(); therefore,
+// the splash screen _must_ be closed before readSettings() is called, because
+// it has its own event loop, which seems to interfere with this
+//
+// all of this should become unnecessary when QTBUG-46620 is fixed
+//
+class DockFixer
+{
+public:
+  static void save(MainWindow* mw, QSettings& settings)
+  {
+    const auto docks = mw->findChildren<QDockWidget*>();
+
+    // saves the size of each dock
+    for (int i=0; i<docks.size(); ++i) {
+      int size = 0;
+
+      // save the width for horizontal docks, or the height for vertical
+      if (orientation(mw, docks[i]) == Qt::Horizontal) {
+        size = docks[i]->size().width();
+      } else {
+        size = docks[i]->size().height();
+      }
+
+      settings.setValue(settingName(docks[i]), size);
+    }
+  }
+
+  static void restore(MainWindow* mw, const QSettings& settings)
+  {
+    struct DockInfo
+    {
+      QDockWidget* d;
+      int size = 0;
+      Qt::Orientation ori;
+    };
+
+    std::vector<DockInfo> dockInfos;
+
+    const auto docks = mw->findChildren<QDockWidget*>();
+
+    // for each dock
+    for (int i=0; i<docks.size(); ++i) {
+      const QString name = settingName(docks[i]);
+
+      if (settings.contains(name)) {
+        // remember this dock, its size and orientation
+        const auto size = settings.value(name).toInt();
+        dockInfos.push_back({docks[i], size, orientation(mw, docks[i])});
+      }
+    }
+
+    // the main window must have had time to process the settings from
+    // readSettings() or it seems to override whatever is set here
+    //
+    // some people said a single processEvents() call is enough, but it doesn't
+    // look like it
+    QTimer::singleShot(1, [=] {
+      for (const auto& info : dockInfos) {
+        mw->resizeDocks({info.d}, {info.size}, info.ori);
+      }
+      });
+  }
+
+  static Qt::Orientation orientation(QMainWindow* mw, QDockWidget* d)
+  {
+    // docks in these areas are horizontal
+    const auto horizontalAreas =
+      Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea;
+
+    if (mw->dockWidgetArea(d) & horizontalAreas) {
+      return Qt::Horizontal;
+    } else {
+      return Qt::Vertical;
+    }
+  }
+
+  static QString settingName(QDockWidget* d)
+  {
+    return "geometry/" + d->objectName() + "_size";
+  }
+};
+
+
 MainWindow::MainWindow(QSettings &initSettings
                        , OrganizerCore &organizerCore
                        , PluginContainer &pluginContainer
@@ -260,17 +356,10 @@ MainWindow::MainWindow(QSettings &initSettings
 
   m_CategoryFactory.loadCategories();
 
-  ui->logList->setModel(LogBuffer::instance());
-  ui->logList->setColumnWidth(0, 100);
-  ui->logList->setAutoScroll(true);
-  ui->logList->scrollToBottom();
-  ui->logList->addAction(ui->actionCopy_Log_to_Clipboard);
+  ui->logList->setCore(m_OrganizerCore);
+
   int splitterSize = this->size().height(); // actually total window size, but the splitter doesn't seem to return the true value
   ui->topLevelSplitter->setSizes(QList<int>() << splitterSize - 100 << 100);
-  connect(ui->logList->model(), SIGNAL(rowsInserted(const QModelIndex &, int, int)),
-          ui->logList, SLOT(scrollToBottom()));
-  connect(ui->logList->model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)),
-          ui->logList, SLOT(scrollToBottom()));
 
   updateProblemsButton();
 
@@ -421,7 +510,8 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(ui->tabWidget, SIGNAL(currentChanged(int)), &TutorialManager::instance(), SIGNAL(tabChanged(int)));
   connect(ui->modList->header(), SIGNAL(sortIndicatorChanged(int,Qt::SortOrder)), this, SLOT(modListSortIndicatorChanged(int,Qt::SortOrder)));
   connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(toolBar_customContextMenuRequested(QPoint)));
-  connect(ui->menuToolbars, &QMenu::aboutToShow, [&]{ toolbarMenu_aboutToShow(); });
+  connect(ui->menuToolbars, &QMenu::aboutToShow, [&]{ updateToolbarMenu(); });
+  connect(ui->menuView, &QMenu::aboutToShow, [&]{ updateViewMenu(); });
 
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this, &MainWindow::modInstalled);
   connect(&m_OrganizerCore, &OrganizerCore::close, this, &QMainWindow::close);
@@ -708,7 +798,7 @@ void MainWindow::setupToolbar()
     ui->toolBar->insertWidget(m_linksSeparator, spacer);
 
   } else {
-    qWarning("no separator found on the toolbar, icons won't be right-aligned");
+    log::warn("no separator found on the toolbar, icons won't be right-aligned");
   }
 }
 
@@ -745,7 +835,7 @@ void MainWindow::updatePinnedExecutables()
       exeAction->setStatusTip(exe.binaryInfo().filePath());
 
       if (!connect(exeAction, SIGNAL(triggered()), this, SLOT(startExeAction()))) {
-        qDebug("failed to connect trigger?");
+        log::debug("failed to connect trigger?");
       }
 
       if (m_linksSeparator) {
@@ -763,7 +853,7 @@ void MainWindow::updatePinnedExecutables()
   ui->menuRun->menuAction()->setVisible(hasLinks);
 }
 
-void MainWindow::toolbarMenu_aboutToShow()
+void MainWindow::updateToolbarMenu()
 {
   // well, this is a bit of a hack to allow the same toolbar menu to be shown
   // in both the main menu and the context menu
@@ -785,6 +875,11 @@ void MainWindow::toolbarMenu_aboutToShow()
   ui->actionToolBarIconsOnly->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonIconOnly);
   ui->actionToolBarTextOnly->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonTextOnly);
   ui->actionToolBarIconsAndText->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonTextUnderIcon);
+}
+
+void MainWindow::updateViewMenu()
+{
+  ui->actionViewLog->setChecked(ui->logDock->isVisible());
 }
 
 QMenu* MainWindow::createPopupMenu()
@@ -835,6 +930,11 @@ void MainWindow::on_actionToolBarTextOnly_triggered()
 void MainWindow::on_actionToolBarIconsAndText_triggered()
 {
   setToolbarButtonStyle(Qt::ToolButtonTextUnderIcon);
+}
+
+void MainWindow::on_actionViewLog_triggered()
+{
+  ui->logDock->setVisible(!ui->logDock->isVisible());
 }
 
 void MainWindow::setToolbarSize(const QSize& s)
@@ -1080,14 +1180,14 @@ void MainWindow::createHelpMenu()
 
     QFile file(dirIter.filePath());
     if (!file.open(QIODevice::ReadOnly)) {
-      qCritical() << "Failed to open " << fileName;
+      log::error("Failed to open {}", fileName);
       continue;
     }
     QString firstLine = QString::fromUtf8(file.readLine());
     if (firstLine.startsWith("//TL")) {
       QStringList params = firstLine.mid(4).trimmed().split('#');
       if (params.size() != 2) {
-        qCritical() << "invalid header line for tutorial " << fileName << " expected 2 parameters";
+        log::error("invalid header line for tutorial {}, expected 2 parameters", fileName);
         continue;
       }
       QAction *tutAction = new QAction(params.at(0), tutorialMenu);
@@ -1191,7 +1291,7 @@ void MainWindow::hookUpWindowTutorials()
     QString fileName = dirIter.fileName();
     QFile file(dirIter.filePath());
     if (!file.open(QIODevice::ReadOnly)) {
-      qCritical() << "Failed to open " << fileName;
+      log::error("Failed to open {}", fileName);
       continue;
     }
     QString firstLine = QString::fromUtf8(file.readLine());
@@ -1237,7 +1337,7 @@ void MainWindow::showEvent(QShowEvent *event)
           TutorialManager::instance().activateTutorial("MainWindow", firstStepsTutorial);
         }
       } else {
-        qCritical() << firstStepsTutorial << " missing";
+        log::error("{} missing", firstStepsTutorial);
         QPoint pos = ui->toolBar->mapToGlobal(QPoint());
         pos.rx() += ui->toolBar->width() / 2;
         pos.ry() += ui->toolBar->height();
@@ -1256,7 +1356,7 @@ void MainWindow::showEvent(QShowEvent *event)
 
     m_OrganizerCore.settings().registerAsNXMHandler(false);
     m_WasVisible = true;
-	updateProblemsButton();
+	  updateProblemsButton();
   }
 }
 
@@ -1300,11 +1400,6 @@ bool MainWindow::confirmExit()
 
 void MainWindow::cleanup()
 {
-  if (ui->logList->model() != nullptr) {
-    disconnect(ui->logList->model(), nullptr, nullptr, nullptr);
-    ui->logList->setModel(nullptr);
-  }
-
   QWebEngineProfile::defaultProfile()->clearAllVisitedLinks();
   m_IntegratedBrowser.close();
   m_SaveMetaTimer.stop();
@@ -1509,7 +1604,7 @@ void MainWindow::startExeAction()
   QAction *action = qobject_cast<QAction*>(sender());
 
   if (action == nullptr) {
-    qCritical("not an action?");
+    log::error("not an action?");
     return;
   }
 
@@ -1519,9 +1614,7 @@ void MainWindow::startExeAction()
   auto itor = list.find(title);
 
   if (itor == list.end()) {
-    qWarning().nospace()
-      << "startExeAction(): executable '" << title << "' not found";
-
+    log::warn("startExeAction(): executable '{}' not found", title);
     return;
   }
 
@@ -1586,7 +1679,7 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 
     // ensure the new index is valid
     if (index < 0 || index >= ui->profileBox->count()) {
-      qDebug("invalid profile index, using last profile");
+      log::debug("invalid profile index, using last profile");
       ui->profileBox->setCurrentIndex(ui->profileBox->count() - 1);
     }
 
@@ -1747,17 +1840,18 @@ void MainWindow::expandDataTreeItem(QTreeWidgetItem *item)
   if ((item->childCount() == 1) && (item->child(0)->data(0, Qt::UserRole).toString() == "__loaded_on_demand__")) {
     // read the data we need from the sub-item, then dispose of it
     QTreeWidgetItem *onDemandDataItem = item->child(0);
-    std::wstring path = ToWString(onDemandDataItem->data(0, Qt::UserRole + 1).toString());
+    const QString path = onDemandDataItem->data(0, Qt::UserRole + 1).toString();
+    std::wstring wspath = path.toStdWString();
     bool conflictsOnly = onDemandDataItem->data(0, Qt::UserRole + 2).toBool();
 
-    std::wstring virtualPath = (path + L"\\").substr(6) + ToWString(item->text(0));
+    std::wstring virtualPath = (wspath + L"\\").substr(6) + ToWString(item->text(0));
     DirectoryEntry *dir = m_OrganizerCore.directoryStructure()->findSubDirectoryRecursive(virtualPath);
     if (dir != nullptr) {
       QIcon folderIcon = (new QFileIconProvider())->icon(QFileIconProvider::Folder);
       QIcon fileIcon = (new QFileIconProvider())->icon(QFileIconProvider::File);
-      updateTo(item, path, *dir, conflictsOnly, &fileIcon, &folderIcon);
+      updateTo(item, wspath, *dir, conflictsOnly, &fileIcon, &folderIcon);
     } else {
-      qWarning("failed to update view of %ls", path.c_str());
+      log::warn("failed to update view of {}", path);
     }
     m_RemoveWidget.push_back(item);
     QTimer::singleShot(5, this, SLOT(delayedRemove()));
@@ -1934,7 +2028,7 @@ void MainWindow::refreshSaveList()
 
   QDir savesDir = currentSavesDir();
   savesDir.setNameFilters(filters);
-  qDebug("reading save games from %s", qUtf8Printable(savesDir.absolutePath()));
+  log::debug("reading save games from {}", savesDir.absolutePath());
 
   QFileInfoList files = savesDir.entryInfoList(QDir::Files, QDir::Time);
   for (const QFileInfo &file : files) {
@@ -2135,15 +2229,6 @@ void MainWindow::fixCategories()
 void MainWindow::setupNetworkProxy(bool activate)
 {
   QNetworkProxyFactory::setUseSystemConfiguration(activate);
-/*  QNetworkProxyQuery query(QUrl("http://www.google.com"), QNetworkProxyQuery::UrlRequest);
-  query.setProtocolTag("http");
-  QList<QNetworkProxy> proxies = QNetworkProxyFactory::systemProxyForQuery(query);
-  if ((proxies.size() > 0) && (proxies.at(0).type() != QNetworkProxy::NoProxy)) {
-    qDebug("Using proxy: %s", qUtf8Printable(proxies.at(0).hostName()));
-    QNetworkProxy::setApplicationProxy(proxies[0]);
-  } else {
-    qDebug("Not using proxy");
-  }*/
 }
 
 
@@ -2208,6 +2293,8 @@ void MainWindow::readSettings()
   if (settings.value("Settings/use_proxy", false).toBool()) {
     activateProxy(true);
   }
+
+  DockFixer::restore(this, settings);
 }
 
 void MainWindow::processUpdates() {
@@ -2251,10 +2338,17 @@ void MainWindow::processUpdates() {
 
   if (currentVersion > lastVersion) {
     //NOP
-  } else if (currentVersion < lastVersion)
-    qWarning() << tr("Notice: Your current MO version (%1) is lower than the previously used one (%2). "
-                     "The GUI may not downgrade gracefully, so you may experience oddities. "
-                     "However, there should be no serious issues.").arg(currentVersion.toString()).arg(lastVersion.toString()).toStdWString();
+  } else if (currentVersion < lastVersion) {
+    const auto text = tr(
+      "Notice: Your current MO version (%1) is lower than the previously used one (%2). "
+      "The GUI may not downgrade gracefully, so you may experience oddities. "
+      "However, there should be no serious issues.")
+      .arg(currentVersion.toString())
+      .arg(lastVersion.toString());
+
+    log::warn("{}", text);
+  }
+
   //save version in all case
   settings.setValue("version", currentVersion.toString());
 }
@@ -2291,10 +2385,13 @@ void MainWindow::storeSettings(QSettings &settings) {
     settings.setValue("log_split", ui->topLevelSplitter->saveState());
     settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
     settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
+
     for (const std::pair<QString, QHeaderView*> kv : m_PersistedGeometry) {
       QString key = QString("geometry/") + kv.first;
       settings.setValue(key, kv.second->saveState());
     }
+
+    DockFixer::save(this, settings);
   }
 }
 
@@ -2320,7 +2417,7 @@ void MainWindow::unlock()
 {
   //If you come through here with a null lock pointer, it's a bug!
   if (m_LockDialog == nullptr) {
-    qDebug("Unlocking main window when already unlocked");
+    log::debug("Unlocking main window when already unlocked");
     return;
   }
   --m_LockCount;
@@ -2575,7 +2672,7 @@ void MainWindow::directory_refreshed()
   if (ui->tabWidget->currentIndex() == 2) {
       refreshDataTreeKeepExpandedNodes();
   }
- 
+
 }
 
 void MainWindow::esplist_changed()
@@ -2794,7 +2891,7 @@ void MainWindow::refreshFilters()
       while (currentID != 0) {
         categoriesUsed.insert(currentID);
         if (!cycleTest.insert(currentID).second) {
-          qWarning("cycle in categories: %s", qUtf8Printable(SetJoin(cycleTest, ", ")));
+          log::warn("cycle in categories: {}", SetJoin(cycleTest, ", "));
           break;
         }
         currentID = m_CategoryFactory.getParentID(m_CategoryFactory.getCategoryIndex(currentID));
@@ -3123,7 +3220,7 @@ void MainWindow::displayModInformation(
   ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tabID)
 {
   if (!m_OrganizerCore.modList()->modInfoAboutToChange(modInfo)) {
-    qDebug("A different mod information dialog is open. If this is incorrect, please restart MO");
+    log::debug("A different mod information dialog is open. If this is incorrect, please restart MO");
     return;
   }
   std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
@@ -3279,7 +3376,7 @@ void MainWindow::displayModInformation(const QString &modName, ModInfoTabIDs tab
 {
   unsigned int index = ModInfo::getIndex(modName);
   if (index == UINT_MAX) {
-    qCritical("failed to resolve mod name %s", qUtf8Printable(modName));
+    log::error("failed to resolve mod name {}", modName);
     return;
   }
 
@@ -3364,7 +3461,7 @@ void MainWindow::visitOnNexus_clicked()
       if (modID > 0)  {
         linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
       } else {
-        qCritical() << "mod '" << info->name() << "' has no nexus id";
+        log::error("mod '{}' has no nexus id", info->name());
       }
     }
   }
@@ -3878,7 +3975,7 @@ void MainWindow::moveOverwriteContentToExistingMod()
       }
 
       if (modAbsolutePath.isNull()) {
-        qWarning("Mod %s has not been found, for some reason", qUtf8Printable(result));
+        log::warn("Mod {} has not been found, for some reason", result);
         return;
       }
 
@@ -3902,7 +3999,8 @@ void MainWindow::doMoveOverwriteContentToMod(const QString &modAbsolutePath)
     MessageDialog::showMessage(tr("Move successful."), this);
   }
   else {
-    qCritical("Move operation failed: %s", qUtf8Printable(windowsErrorString(::GetLastError())));
+    const auto e = GetLastError();
+    log::error("Move operation failed: {}", formatSystemMessage(e));
   }
 
   m_OrganizerCore.refreshModList();
@@ -3931,7 +4029,8 @@ void MainWindow::clearOverwrite()
         updateProblemsButton();
         m_OrganizerCore.refreshModList();
       } else {
-        qCritical("Delete operation failed: %s", qUtf8Printable(windowsErrorString(::GetLastError())));
+        const auto e = GetLastError();
+        log::error("Delete operation failed: {}", formatSystemMessage(e));
       }
     }
   }
@@ -4175,7 +4274,7 @@ void MainWindow::addRemoveCategoriesFromMenu(QMenu *menu, int modRow, int refere
 void MainWindow::addRemoveCategories_MenuHandler() {
   QMenu *menu = qobject_cast<QMenu*>(sender());
   if (menu == nullptr) {
-    qCritical("not a menu?");
+    log::error("not a menu?");
     return;
   }
 
@@ -4189,7 +4288,7 @@ void MainWindow::addRemoveCategories_MenuHandler() {
     int maxRow = -1;
 
     for (const QPersistentModelIndex &idx : selected) {
-      qDebug("change categories on: %s", qUtf8Printable(idx.data().toString()));
+      log::debug("change categories on: {}", idx.data().toString());
       QModelIndex modIdx = mapToModel(m_OrganizerCore.modList(), idx);
       if (modIdx.row() != m_ContextIdx.row()) {
         addRemoveCategoriesFromMenu(menu, modIdx.row(), m_ContextIdx.row());
@@ -4216,7 +4315,7 @@ void MainWindow::addRemoveCategories_MenuHandler() {
 void MainWindow::replaceCategories_MenuHandler() {
   QMenu *menu = qobject_cast<QMenu*>(sender());
   if (menu == nullptr) {
-    qCritical("not a menu?");
+    log::error("not a menu?");
     return;
   }
 
@@ -4271,10 +4370,10 @@ void MainWindow::saveArchiveList()
       }
     }
     if (archiveFile.commitIfDifferent(m_ArchiveListHash)) {
-      qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(m_OrganizerCore.currentProfile()->getArchivesFileName())));
+      log::debug("{} saved", QDir::toNativeSeparators(m_OrganizerCore.currentProfile()->getArchivesFileName()));
     }
   } else {
-    qWarning("archive list not initialised");
+    log::warn("archive list not initialised");
   }
 }
 
@@ -4291,7 +4390,7 @@ void MainWindow::checkModsForUpdates()
       m_OrganizerCore.doAfterLogin([this] () { this->checkModsForUpdates(); });
       NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else {
-      qWarning("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.");
+      log::warn("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.");
     }
   }
 
@@ -4411,7 +4510,7 @@ void MainWindow::addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu,
       categoryBox->setChecked(categoryID == info->getPrimaryCategory());
       action->setDefaultWidget(categoryBox);
     } catch (const std::exception &e) {
-      qCritical("failed to create category checkbox: %s", e.what());
+      log::error("failed to create category checkbox: {}", e.what());
     }
 
     action->setData(categoryID);
@@ -4423,7 +4522,7 @@ void MainWindow::addPrimaryCategoryCandidates()
 {
   QMenu *menu = qobject_cast<QMenu*>(sender());
   if (menu == nullptr) {
-    qCritical("not a menu?");
+    log::error("not a menu?");
     return;
   }
   menu->clear();
@@ -5188,12 +5287,11 @@ void MainWindow::on_actionSettings_triggered()
   m_statusBar->checkSettings(m_OrganizerCore.settings());
   updateDownloadView();
 
-  m_OrganizerCore.updateVFSParams(settings.logLevel(), settings.crashDumpsType(), settings.executablesBlacklist());
+  m_OrganizerCore.setLogLevel(settings.logLevel());
   m_OrganizerCore.cycleDiagnostics();
 
   toggleMO2EndorseState();
 }
-
 
 void MainWindow::on_actionNexus_triggered()
 {
@@ -5217,7 +5315,7 @@ void MainWindow::installTranslator(const QString &name)
   QString fileName = name + "_" + m_CurrentLanguage;
   if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
     if (m_CurrentLanguage.contains(QRegularExpression("^.*_(EN|en)(-.*)?$"))) {
-      qDebug("localization file %s not found", qUtf8Printable(fileName));
+      log::debug("localization file %s not found", fileName);
     } // we don't actually expect localization files for English (en, en-us, en-uk, and any variation thereof)
   }
 
@@ -5242,7 +5340,7 @@ void MainWindow::languageChange(const QString &newLanguage)
     installTranslator(QFileInfo(fileName).baseName());
   }
   ui->retranslateUi(this);
-  qDebug("loaded language %s", qUtf8Printable(newLanguage));
+  log::debug("loaded language {}", newLanguage);
 
   ui->profileBox->setItemText(0, QObject::tr("<Manage...>"));
 
@@ -5487,7 +5585,7 @@ void MainWindow::openDataOriginExplorer_clicked()
 
   const auto fullPath = m_ContextItem->data(0, Qt::UserRole).toString();
 
-  qDebug().nospace() << "opening in explorer: " << fullPath;
+  log::debug("opening in explorer: {}", fullPath);
   shell::ExploreFile(fullPath);
 }
 
@@ -5661,7 +5759,7 @@ void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
       m_OrganizerCore.doAfterLogin([=]() { this->modUpdateCheck(IDs); });
       NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else
-      qWarning("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.");
+      log::warn("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.");
   }
 }
 
@@ -5766,7 +5864,7 @@ void MainWindow::finishUpdateInfo()
   auto finalMods = watcher->result();
 
   if (finalMods.empty()) {
-    qInfo("None of your mods appear to have had recent file updates.");
+    log::info("None of your mods appear to have had recent file updates.");
   }
 
   std::set<std::pair<QString, int>> organizedGames;
@@ -5777,7 +5875,7 @@ void MainWindow::finishUpdateInfo()
   }
 
   if (!finalMods.empty() && organizedGames.empty())
-    qWarning("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.");
+    log::warn("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.");
 
   for (auto game : organizedGames)
     NexusInterface::instance(&m_PluginContainer)->requestUpdates(game.second, this, QVariant(), game.first, QString());
@@ -5920,7 +6018,7 @@ void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultDa
   toggleMO2EndorseState();
   if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
     this, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)))) {
-    qCritical("failed to disconnect endorsement slot");
+    log::error("failed to disconnect endorsement slot");
   }
 }
 
@@ -5973,7 +6071,7 @@ void MainWindow::nxmDownloadURLs(QString, int, int, QVariant, QVariant resultDat
 void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, int, QNetworkReply::NetworkError error, const QString &errorString)
 {
   if (error == QNetworkReply::ContentAccessDenied || error == QNetworkReply::ContentNotFoundError) {
-    qDebug(qUtf8Printable(tr("Mod ID %1 no longer seems to be available on Nexus.").arg(modID)));
+    log::debug("{}", tr("Mod ID %1 no longer seems to be available on Nexus.").arg(modID));
   } else {
     MessageDialog::showMessage(tr("Request to Nexus failed: %1").arg(errorString), this);
   }
@@ -6227,9 +6325,7 @@ void MainWindow::removeFromToolbar()
 
   auto itor = list.find(title);
   if (itor == list.end()) {
-    qWarning().nospace()
-      << "removeFromToolbar(): executable '" << title << "' not found";
-
+    log::warn("removeFromToolbar(): executable '{}' not found", title);
     return;
   }
 
@@ -6382,11 +6478,11 @@ void MainWindow::createStdoutPipe(HANDLE *stdOutRead, HANDLE *stdOutWrite)
   secAttributes.lpSecurityDescriptor = nullptr;
 
   if (!::CreatePipe(stdOutRead, stdOutWrite, &secAttributes, 0)) {
-    qCritical("failed to create stdout reroute");
+    log::error("failed to create stdout reroute");
   }
 
   if (!::SetHandleInformation(*stdOutRead, HANDLE_FLAG_INHERIT, 0)) {
-    qCritical("failed to correctly set up the stdout reroute");
+    log::error("failed to correctly set up the stdout reroute");
     *stdOutWrite = *stdOutRead = INVALID_HANDLE_VALUE;
   }
 }
@@ -6429,7 +6525,7 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &errorMe
       if (progidx != std::string::npos) {
         dialog.setLabelText(line.substr(progidx + 11).c_str());
       } else if (erroridx != std::string::npos) {
-        qWarning("%s", line.c_str());
+        log::warn("{}", line);
         errorMessages.append(boost::algorithm::trim_copy(line.substr(erroridx + 8)) + "\n");
       } else {
         std::smatch match;
@@ -6442,7 +6538,7 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &errorMe
           std::string dependency(match[2].first, match[2].second);
           m_OrganizerCore.pluginList()->addInformation(modName.c_str(), tr("incompatible with \"%1\"").arg(dependency.c_str()));
         } else {
-          qDebug("[loot] %s", line.c_str());
+          log::debug("[loot] {}", line);
         }
       }
     }
@@ -6487,7 +6583,7 @@ void MainWindow::on_bossButton_clicked()
     try {
       m_OrganizerCore.prepareVFS();
     } catch (const UsvfsConnectorException &e) {
-      qDebug(e.what());
+      log::debug("{}", e.what());
       return;
     } catch (const std::exception &e) {
       QMessageBox::warning(qApp->activeWindow(), tr("Error"), e.what());
@@ -6517,7 +6613,7 @@ void MainWindow::on_bossButton_clicked()
         if (isJobHandle) {
           if (::QueryInformationJobObject(loot, JobObjectBasicProcessIdList, &info, sizeof(info), &retLen) > 0) {
             if (info.NumberOfProcessIdsInList == 0) {
-              qDebug("no more processes in job");
+              log::debug("no more processes in job");
               break;
             } else {
               if (lastProcessID != info.ProcessIdList[0]) {
@@ -6683,8 +6779,13 @@ void MainWindow::on_restoreButton_clicked()
     if (!shellCopy(pluginName    + "." + choice, pluginName, true, this) ||
         !shellCopy(loadOrderName + "." + choice, loadOrderName, true, this) ||
         !shellCopy(lockedName    + "." + choice, lockedName, true, this)) {
-      QMessageBox::critical(this, tr("Restore failed"),
-                            tr("Failed to restore the backup. Errorcode: %1").arg(windowsErrorString(::GetLastError())));
+
+      const auto e = GetLastError();
+
+      QMessageBox::critical(
+        this, tr("Restore failed"),
+        tr("Failed to restore the backup. Errorcode: %1")
+          .arg(QString::fromStdWString(formatSystemMessage(e))));
     }
     m_OrganizerCore.refreshESPList(true);
   }
@@ -6705,23 +6806,14 @@ void MainWindow::on_restoreModsButton_clicked()
   QString choice = queryRestore(modlistName);
   if (!choice.isEmpty()) {
     if (!shellCopy(modlistName + "." + choice, modlistName, true, this)) {
-      QMessageBox::critical(this, tr("Restore failed"),
-                            tr("Failed to restore the backup. Errorcode: %1").arg(windowsErrorString(::GetLastError())));
+      const auto e = GetLastError();
+      QMessageBox::critical(
+        this, tr("Restore failed"),
+        tr("Failed to restore the backup. Errorcode: %1")
+          .arg(formatSystemMessage(e)));
     }
     m_OrganizerCore.refreshModList(false);
   }
-}
-
-void MainWindow::on_actionCopy_Log_to_Clipboard_triggered()
-{
-  QStringList lines;
-  QAbstractItemModel *model = ui->logList->model();
-  for (int i = 0; i < model->rowCount(); ++i) {
-    lines.append(QString("%1 [%2] %3").arg(model->index(i, 0).data().toString())
-                                      .arg(model->index(i, 1).data(Qt::UserRole).toString())
-                                      .arg(model->index(i, 1).data().toString()));
-  }
-  QApplication::clipboard()->setText(lines.join("\n"));
 }
 
 void MainWindow::on_categoriesAndBtn_toggled(bool checked)
@@ -6794,7 +6886,7 @@ void MainWindow::dropLocalFile(const QUrl &url, const QString &outputDir, bool m
 {
   QFileInfo file(url.toLocalFile());
   if (!file.exists()) {
-    qWarning("invalid source file: %s", qUtf8Printable(file.absoluteFilePath()));
+    log::warn("invalid source file: {}", file.absoluteFilePath());
     return;
   }
   QString target = outputDir + "/" + file.fileName();
@@ -6827,7 +6919,8 @@ void MainWindow::dropLocalFile(const QUrl &url, const QString &outputDir, bool m
     success = shellCopy(file.absoluteFilePath(), target, true, this);
   }
   if (!success) {
-    qCritical("file operation failed: %s", qUtf8Printable(windowsErrorString(::GetLastError())));
+    const auto e = GetLastError();
+    log::error("file operation failed: {}", formatSystemMessage(e));
   }
 }
 

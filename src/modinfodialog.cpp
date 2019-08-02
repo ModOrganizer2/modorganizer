@@ -176,7 +176,7 @@ void ModInfoDialog::createTabs()
   // check for tabs in the ui not having a corresponding tab in the list
   int count = ui->tabWidget->count();
   if (count < 0 || count > static_cast<int>(m_tabs.size())) {
-    qCritical() << "mod info dialog has more tabs than expected";
+    log::error("mod info dialog has more tabs than expected");
     count = static_cast<int>(m_tabs.size());
   }
 
@@ -239,13 +239,13 @@ void ModInfoDialog::setMod(const QString& name)
 {
   unsigned int index = ModInfo::getIndex(name);
   if (index == UINT_MAX) {
-    qCritical() << "failed to resolve mod name " << name;
+    log::error("failed to resolve mod name {}", name);
     return;
   }
 
   auto mod = ModInfo::getByIndex(index);
   if (!mod) {
-    qCritical() << "mod by index " << index << " is null";
+    log::error("mod by index {} is null", index);
     return;
   }
 
@@ -307,7 +307,7 @@ void ModInfoDialog::update(bool firstTime)
       // changed
       tabInfo->tab->activated();
     } else {
-      qCritical() << "tab index " << oldTab << " not found";
+      log::error("tab index {} not found", oldTab);
     }
   }
 }
@@ -400,7 +400,7 @@ void ModInfoDialog::reAddTabs(
       if (itor == orderedNames.end()) {
         // this shouldn't happen, it means there's a tab in the UI that's no
         // in the list
-        qCritical() << "can't sort tabs, '" << objectName << "' not found";
+        log::error("can't sort tabs, '{}' not found", objectName);
         canSort = false;
       }
     }
@@ -556,9 +556,7 @@ void ModInfoDialog::switchToTab(ModInfoTabIDs id)
   }
 
   // this could happen if the tab is not visible right now
-  qDebug()
-    << "can't switch to tab ID " << static_cast<int>(id)
-    << ", not available";
+  log::debug("can't switch to tab ID {}, not available", static_cast<int>(id));
 }
 
 MOShared::FilesOrigin* ModInfoDialog::getOrigin()
@@ -753,7 +751,7 @@ void ModInfoDialog::onTabMoved()
     }
 
     if (!found) {
-      qCritical() << "unknown tab at index " << i;
+      log::error("unknown tab at index {}", i);
     }
   }
 }

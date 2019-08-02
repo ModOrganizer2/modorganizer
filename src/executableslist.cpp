@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "iplugingame.h"
 #include "utility.h"
+#include <log.h>
 
 #include <QFileInfo>
 #include <QDir>
@@ -65,7 +66,7 @@ bool ExecutablesList::empty() const
 
 void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
 {
-  qDebug("setting up configured executables");
+  log::debug("loading executables");
 
   m_Executables.clear();
 
@@ -103,6 +104,8 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
 
   if (needsUpgrade)
     upgradeFromCustom(game);
+
+  dump();
 }
 
 void ExecutablesList::store(QSettings& settings)
@@ -163,7 +166,7 @@ std::vector<Executable> ExecutablesList::getPluginExecutables(
 
 void ExecutablesList::resetFromPlugin(MOBase::IPluginGame const *game)
 {
-  qDebug("resetting plugin executables");
+  log::debug("resetting plugin executables");
 
   Q_ASSERT(game != nullptr);
 
@@ -240,16 +243,16 @@ void ExecutablesList::setExecutable(const Executable &exe, SetFlags flags)
     if (flags == MoveExisting) {
       const auto newTitle = makeNonConflictingTitle(exe.title());
       if (!newTitle) {
-        qCritical().nospace()
-          << "executable '" << exe.title() << "' was in the way but could "
-          << "not be renamed";
+        log::error(
+          "executable '{}' was in the way but could not be renamed",
+          exe.title());
 
         return;
       }
 
-      qWarning().nospace()
-        << "executable '" << itor->title() << "' was in the way and was "
-        << "renamed to '" << *newTitle << "'";
+      log::warn(
+        "executable '{}' was in the way and was renamed to '{}'",
+        itor->title(), *newTitle);
 
       itor->title(*newTitle);
       itor = end();
@@ -286,15 +289,13 @@ std::optional<QString> ExecutablesList::makeNonConflictingTitle(
     title = prefix + QString(" (%1)").arg(i);
   }
 
-  qCritical().nospace()
-    << "ran out of executable titles for prefix '" << prefix << "'";
-
+  log::error("ran out of executable titles for prefix '{}'", prefix);
   return {};
 }
 
 void ExecutablesList::upgradeFromCustom(MOBase::IPluginGame const *game)
 {
-  qDebug() << "upgrading executables list";
+  log::debug("upgrading executables list");
 
   Q_ASSERT(game != nullptr);
 
@@ -329,6 +330,31 @@ void ExecutablesList::upgradeFromCustom(MOBase::IPluginGame const *game)
     if (itor->workingDirectory().isEmpty()) {
       itor->workingDirectory(exe.workingDirectory());
     }
+  }
+}
+
+void ExecutablesList::dump() const
+{
+  for (const auto& e : m_Executables) {
+    QStringList flags;
+
+    if (e.flags() & Executable::ShowInToolbar) {
+      flags.push_back("toolbar");
+    }
+
+    if (e.flags() & Executable::UseApplicationIcon) {
+      flags.push_back("icon");
+    }
+
+    log::debug(
+      " . executable '{}'\n"
+      "    binary: {}\n"
+      "    arguments: {}\n"
+      "    steam ID: {}\n"
+      "    directory: {}\n"
+      "    flags: {} ({})",
+      e.title(), e.binaryInfo().absoluteFilePath(), e.arguments(),
+      e.steamAppID(), e.workingDirectory(), flags.join("|"), e.flags());
   }
 }
 

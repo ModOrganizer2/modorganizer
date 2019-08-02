@@ -2,7 +2,9 @@
 #include "ui_modinfodialog.h"
 #include "settings.h"
 #include "utility.h"
+#include <log.h>
 
+using namespace MOBase;
 using namespace ImagesTabHelpers;
 
 QSize resizeWithAspectRatio(const QSize& original, const QSize& available)
@@ -896,10 +898,9 @@ void File::ensureOriginalLoaded()
   QImageReader reader(m_path);
 
   if (!reader.read(&m_original)) {
-    qCritical().noquote().nospace()
-      << "failed to load '" << m_path << "'\n"
-      << reader.errorString() << " "
-      << "(error " << static_cast<int>(reader.error()) << ")";
+    log::error(
+      "failed to load '{}'\n{} (error {})",
+      m_path, reader.errorString(), static_cast<int>(reader.error()));
 
     m_failed = true;
   }

@@ -68,8 +68,7 @@ ModInfoRegular::~ModInfoRegular()
   try {
     saveMeta();
   } catch (const std::exception &e) {
-    qCritical("failed to save meta information for \"%s\": %s",
-              qUtf8Printable(m_Name), e.what());
+    log::error("failed to save meta information for \"{}\": {}", m_Name, e.what());
   }
 }
 
@@ -258,14 +257,14 @@ void ModInfoRegular::saveMeta()
       if (metaFile.status() == QSettings::NoError) {
         m_MetaInfoChanged = false;
       } else {
-        qCritical()
-          << QString("failed to write %1/meta.ini: error %2")
-            .arg(absolutePath()).arg(metaFile.status());
+        log::error(
+          "failed to write {}/meta.ini: error {}",
+          absolutePath(), metaFile.status());
       }
     } else {
-      qCritical()
-        << QString("failed to write %1/meta.ini: error %2")
-          .arg(absolutePath()).arg(metaFile.status());
+      log::error(
+        "failed to write {}/meta.ini: error {}",
+        absolutePath(), metaFile.status());
     }
   }
 }
@@ -425,14 +424,13 @@ bool ModInfoRegular::setName(const QString &name)
       return false;
     }
     if (!modDir.rename(tempName, name)) {
-      qCritical("rename to final name failed after successful rename to intermediate name");
+      log::error("rename to final name failed after successful rename to intermediate name");
       modDir.rename(tempName, m_Name);
       return false;
     }
   } else {
     if (!shellRename(modDir.absoluteFilePath(m_Name), modDir.absoluteFilePath(name))) {
-      qCritical("failed to rename mod %s (errorcode %d)",
-                qUtf8Printable(name), ::GetLastError());
+      log::error("failed to rename mod {} (errorcode {})", name, ::GetLastError());
       return false;
     }
   }
@@ -885,8 +883,9 @@ std::vector<QString> ModInfoRegular::getIniTweaks() const
   int numTweaks = metaFile.beginReadArray("INI Tweaks");
 
   if (numTweaks != 0) {
-    qDebug("%d active ini tweaks in %s",
-           numTweaks, QDir::toNativeSeparators(metaFileName).toUtf8().constData());
+    log::debug(
+      "{} active ini tweaks in {}",
+      numTweaks, QDir::toNativeSeparators(metaFileName));
   }
 
   for (int i = 0; i < numTweaks; ++i) {
