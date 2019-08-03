@@ -31,19 +31,48 @@ namespace MOBase {
 class PluginContainer;
 struct ServerInfo;
 
+
+class GeometrySettings
+{
+public:
+  GeometrySettings(QSettings& s);
+
+  std::optional<QByteArray> getMainWindow() const;
+  std::optional<QByteArray> getMainWindowState() const;
+  std::optional<QSize> getToolbarSize() const;
+  std::optional<Qt::ToolButtonStyle> getToolbarButtonStyle() const;
+  std::optional<bool> getMenubarVisible() const;
+  std::optional<bool> getStatusbarVisible() const;
+  std::optional<QByteArray> getMainSplitterState() const;
+  std::optional<bool> getFiltersVisible() const;
+
+  std::optional<int> getMainWindowMonitor() const;
+  void setDockSize(const QString& name, int size);
+
+  std::optional<int> getDockSize(const QString& name) const;
+
+  std::optional<bool> isCategoryListVisible() const;
+
+private:
+  QSettings& m_Settings;
+};
+
+
 /**
  * manages the settings for Mod Organizer. The settings are not cached
  * inside the class but read/written directly from/to disc
  **/
 class Settings : public QObject
 {
-  Q_OBJECT
+  Q_OBJECT;
 
 public:
   Settings(const QString& path);
   ~Settings();
 
   static Settings &instance();
+
+  QString getFilename() const;
 
   /**
    * unregister all plugins from settings
@@ -122,25 +151,26 @@ public:
   /**
    * retrieve the directory where the managed game is stored (with native separators)
    **/
-  QString getManagedGameDirectory() const;
+  std::optional<QString> getManagedGameDirectory() const;
   void setManagedGameDirectory(const QString& path);
 
-  QString getManagedGameName() const;
+  std::optional<QString> getManagedGameName() const;
   void setManagedGameName(const QString& name);
 
-  QString getManagedGameEdition() const;
+  std::optional<QString> getManagedGameEdition() const;
   void setManagedGameEdition(const QString& name);
 
-  QString getSelectedProfileName() const;
+  std::optional<QString> getSelectedProfileName() const;
+  void setSelectedProfileName(const QString& name);
 
-  // returns -1 if not set
-  //
-  int getMainWindowMonitor() const;
-
-  QString getStyleName() const;
+  std::optional<QString> getStyleName() const;
   void setStyleName(const QString& name);
 
-  bool isCategoryListVisible() const;
+  std::optional<int> getSelectedExecutable() const;
+  std::optional<bool> getUseProxy() const;
+
+  GeometrySettings& geometry();
+  const GeometrySettings& geometry() const;
 
   /**
    * retrieve the directory where profiles stored (with native separators)
@@ -388,6 +418,8 @@ public:
   MOBase::IPluginGame const *gamePlugin() { return m_GamePlugin; }
   const LoadMechanism& loadMechanism() const { return m_LoadMechanism; }
 
+  QSettings::Status sync() const;
+
   void dump() const;
 
   // temp
@@ -407,6 +439,7 @@ private:
   static Settings *s_Instance;
   MOBase::IPluginGame const *m_GamePlugin;
   mutable QSettings m_Settings;
+  GeometrySettings m_Geometry;
   LoadMechanism m_LoadMechanism;
   std::vector<MOBase::IPlugin*> m_Plugins;
 

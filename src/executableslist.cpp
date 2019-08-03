@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "iplugingame.h"
 #include "utility.h"
+#include "settings.h"
 #include <log.h>
 
 #include <QFileInfo>
@@ -64,7 +65,7 @@ bool ExecutablesList::empty() const
   return m_Executables.empty();
 }
 
-void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
+void ExecutablesList::load(const MOBase::IPluginGame* game, const Settings& s)
 {
   log::debug("loading executables");
 
@@ -73,6 +74,8 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
   // whether the executable list in the .ini is still using the old custom
   // executables from 2.2.0, see upgradeFromCustom()
   bool needsUpgrade = false;
+
+  auto& settings = const_cast<QSettings&>(s.directInterface());
 
   int numCustomExecutables = settings.beginReadArray("customExecutables");
   for (int i = 0; i < numCustomExecutables; ++i) {
@@ -108,8 +111,10 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
   dump();
 }
 
-void ExecutablesList::store(QSettings& settings)
+void ExecutablesList::store(Settings& s)
 {
+  auto& settings = s.directInterface();
+
   settings.remove("customExecutables");
   settings.beginWriteArray("customExecutables");
 

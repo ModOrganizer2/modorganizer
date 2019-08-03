@@ -26,10 +26,56 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
+template <class T>
+T convertVariant(const QVariant& v);
+
+template <>
+QByteArray convertVariant<QByteArray>(const QVariant& v)
+{
+  return v.toByteArray();
+}
+
+template <>
+QString convertVariant<QString>(const QVariant& v)
+{
+  return v.toString();
+}
+
+template <>
+int convertVariant<int>(const QVariant& v)
+{
+  return v.toInt();
+}
+
+template <>
+bool convertVariant<bool>(const QVariant& v)
+{
+  return v.toBool();
+}
+
+template <>
+QSize convertVariant<QSize>(const QVariant& v)
+{
+  return v.toSize();
+}
+
+
+
+template <class T>
+std::optional<T> getOptional(const QSettings& s, const QString& name)
+{
+  if (s.contains(name)) {
+    return convertVariant<T>(s.value(name));
+  }
+
+  return {};
+}
+
+
 Settings *Settings::s_Instance = nullptr;
 
 Settings::Settings(const QString& path)
-  : m_Settings(path, QSettings::IniFormat)
+  : m_Settings(path, QSettings::IniFormat), m_Geometry(m_Settings)
 {
   if (s_Instance != nullptr) {
     throw std::runtime_error("second instance of \"Settings\" created");
@@ -49,6 +95,11 @@ Settings &Settings::instance()
     throw std::runtime_error("no instance of \"Settings\"");
   }
   return *s_Instance;
+}
+
+QString Settings::getFilename() const
+{
+  return m_Settings.fileName();
 }
 
 void Settings::clearPlugins()
@@ -278,9 +329,13 @@ QString Settings::getModDirectory(bool resolve) const
   return getConfigurablePath("mod_directory", ToQString(AppConfig::modsPath()), resolve);
 }
 
-QString Settings::getManagedGameDirectory() const
+std::optional<QString> Settings::getManagedGameDirectory() const
 {
-  return QString::fromUtf8(m_Settings.value("gamePath", "").toByteArray());
+  if (auto v=getOptional<QByteArray>(m_Settings, "gamePath")) {
+    return QString::fromUtf8(*v);
+  }
+
+  return {};
 }
 
 void Settings::setManagedGameDirectory(const QString& path)
@@ -288,9 +343,9 @@ void Settings::setManagedGameDirectory(const QString& path)
   m_Settings.setValue("gamePath", QDir::toNativeSeparators(path).toUtf8());
 }
 
-QString Settings::getManagedGameName() const
+std::optional<QString> Settings::getManagedGameName() const
 {
-  return m_Settings.value("gameName", "").toString();
+  return getOptional<QString>(m_Settings, "gameName");
 }
 
 void Settings::setManagedGameName(const QString& name)
@@ -298,9 +353,9 @@ void Settings::setManagedGameName(const QString& name)
   m_Settings.setValue("gameName", name);
 }
 
-QString Settings::getManagedGameEdition() const
+std::optional<QString> Settings::getManagedGameEdition() const
 {
-  return m_Settings.value("game_edition", "").toString();
+  return getOptional<QString>(m_Settings, "game_edition");
 }
 
 void Settings::setManagedGameEdition(const QString& name)
@@ -308,19 +363,23 @@ void Settings::setManagedGameEdition(const QString& name)
   m_Settings.setValue("game_edition", name);
 }
 
-QString Settings::getSelectedProfileName() const
+std::optional<QString> Settings::getSelectedProfileName() const
 {
-  return QString::fromUtf8(m_Settings.value("selected_profile", "").toByteArray());
+  if (auto v=getOptional<QByteArray>(m_Settings, "selected_profile")) {
+    return QString::fromUtf8(*v);
+  }
+
+  return {};
 }
 
-int Settings::getMainWindowMonitor() const
+void Settings::setSelectedProfileName(const QString& name)
 {
-  return m_Settings.value("window_monitor", -1).toInt();
+  m_Settings.setValue("selected_profile", name.toUtf8());
 }
 
-QString Settings::getStyleName() const
+std::optional<QString> Settings::getStyleName() const
 {
-  return m_Settings.value("Settings/style", "").toString();
+  return getOptional<QString>(m_Settings, "Settings/style");
 }
 
 void Settings::setStyleName(const QString& name)
@@ -328,9 +387,14 @@ void Settings::setStyleName(const QString& name)
   m_Settings.setValue("Settings/style", name);
 }
 
-bool Settings::isCategoryListVisible() const
+std::optional<int> Settings::getSelectedExecutable() const
 {
-  return m_Settings.value("categorylist_visible", true).toBool();
+  return getOptional<int>(m_Settings, "selected_executable");
+}
+
+std::optional<bool> Settings::getUseProxy() const
+{
+  return getOptional<bool>(m_Settings, "Settings/use_proxy");
 }
 
 QString Settings::getProfileDirectory(bool resolve) const
@@ -659,6 +723,22 @@ void Settings::writePluginBlacklist()
   m_Settings.endArray();
 }
 
+GeometrySettings& Settings::geometry()
+{
+  return m_Geometry;
+}
+
+const GeometrySettings& Settings::geometry() const
+{
+  return m_Geometry;
+}
+
+QSettings::Status Settings::sync() const
+{
+  m_Settings.sync();
+  return m_Settings.status();
+}
+
 void Settings::dump() const
 {
   static const QStringList ignore({
@@ -678,4 +758,74 @@ void Settings::dump() const
   }
 
   m_Settings.endGroup();
+}
+
+
+GeometrySettings::GeometrySettings(QSettings& s)
+  : m_Settings(s)
+{
+}
+
+std::optional<QByteArray> GeometrySettings::getMainWindow() const
+{
+  return getOptional<QByteArray>(m_Settings, "window_geometry");
+}
+
+std::optional<QByteArray> GeometrySettings::getMainWindowState() const
+{
+  return getOptional<QByteArray>(m_Settings, "window_state");
+}
+
+std::optional<QSize> GeometrySettings::getToolbarSize() const
+{
+  return getOptional<QSize>(m_Settings, "toolbar_size");
+}
+
+std::optional<Qt::ToolButtonStyle> GeometrySettings::getToolbarButtonStyle() const
+{
+  if (auto v=getOptional<int>(m_Settings, "toolbar_button_style")) {
+    return static_cast<Qt::ToolButtonStyle>(*v);
+  }
+
+  return {};
+}
+
+std::optional<bool> GeometrySettings::getMenubarVisible() const
+{
+  return getOptional<bool>(m_Settings, "menubar_visible");
+}
+
+std::optional<bool> GeometrySettings::getStatusbarVisible() const
+{
+  return getOptional<bool>(m_Settings, "statusbar_visible");
+}
+
+std::optional<QByteArray> GeometrySettings::getMainSplitterState() const
+{
+  return getOptional<QByteArray>(m_Settings, "window_split");
+}
+
+std::optional<bool> GeometrySettings::getFiltersVisible() const
+{
+  return getOptional<bool>(m_Settings, "filters_visible");
+}
+
+std::optional<int> GeometrySettings::getMainWindowMonitor() const
+{
+  return getOptional<int>(m_Settings, "window_monitor");
+}
+
+void GeometrySettings::setDockSize(const QString& name, int size)
+{
+  m_Settings.setValue("geometry/" + name + "_size", size);
+}
+
+std::optional<int> GeometrySettings::getDockSize(const QString& name) const
+{
+  return getOptional<int>(m_Settings, "geometry/" + name + "_size");
+}
+
+std::optional<bool> GeometrySettings::isCategoryListVisible() const
+{
+  return getOptional<bool>(m_Settings, "categorylist_visible");
 }

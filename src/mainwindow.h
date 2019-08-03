@@ -119,8 +119,8 @@ public:
                       QWidget *parent = 0);
   ~MainWindow();
 
-  void storeSettings(QSettings &settings) override;
-  void readSettings();
+  void storeSettings(Settings& settings) override;
+  void readSettings(const Settings& settings);
   void processUpdates();
 
   virtual ILockedWaitingForProcess* lock() override;

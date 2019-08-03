@@ -23,7 +23,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <map>
 #include <QString>
-#include <QSettings>
 #include <QFileDialog>
 
 class Settings;
@@ -31,8 +30,8 @@ class Settings;
 class FileDialogMemory
 {
 public:
-  static void save(QSettings &settings);
-  static void restore(QSettings &settings);
+  static void save(Settings& settings);
+  static void restore(const Settings& settings);
 
   static QString getOpenFileName(
     const QString &dirID, QWidget *parent = 0, const QString &caption = QString(),

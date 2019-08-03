@@ -94,15 +94,6 @@ static bool isOnline()
   return false;
 }
 
-static bool renameFile(const QString &oldName, const QString &newName,
-                       bool overwrite = true)
-{
-  if (overwrite && QFile::exists(newName)) {
-    QFile::remove(newName);
-  }
-  return QFile::rename(oldName, newName);
-}
-
 static std::wstring getProcessName(HANDLE process)
 {
   wchar_t buffer[MAX_PATH];
@@ -342,80 +333,37 @@ OrganizerCore::~OrganizerCore()
   delete m_DirectoryStructure;
 }
 
-QString OrganizerCore::commitSettings(const QString &iniFile)
+void OrganizerCore::storeSettings()
 {
-  if (!shellRename(iniFile + ".new", iniFile, true, qApp->activeWindow())) {
-    DWORD err = ::GetLastError();
-    // make a second attempt using qt functions but if that fails print the
-    // error from the first attempt
-    if (!renameFile(iniFile + ".new", iniFile)) {
-      return QString::fromStdWString(formatSystemMessage(err));
-    }
-  }
-  return QString();
-}
-
-QSettings::Status OrganizerCore::storeSettings(const QString &fileName)
-{
-  QSettings settings(fileName, QSettings::IniFormat);
-
   if (m_UserInterface != nullptr) {
-    m_UserInterface->storeSettings(settings);
+    m_UserInterface->storeSettings(m_Settings);
   }
 
   if (m_CurrentProfile != nullptr) {
-    settings.setValue("selected_profile",
-                      m_CurrentProfile->name().toUtf8().constData());
+    m_Settings.setSelectedProfileName(m_CurrentProfile->name());
   }
 
-  m_ExecutablesList.store(settings);
+  m_ExecutablesList.store(m_Settings);
 
-  FileDialogMemory::save(settings);
+  FileDialogMemory::save(m_Settings);
 
-  settings.sync();
-  return settings.status();
-}
+  const auto result = m_Settings.sync();
 
-void OrganizerCore::storeSettings()
-{
-  QString iniFile = qApp->property("dataPath").toString() + "/"
-                    + QString::fromStdWString(AppConfig::iniFileName());
-  if (QFileInfo(iniFile).exists()) {
-    if (!shellCopy(iniFile, iniFile + ".new", true, qApp->activeWindow())) {
-      const auto e = GetLastError();
-      QMessageBox::critical(
-          qApp->activeWindow(), tr("Failed to write settings"),
-          tr("An error occurred trying to update MO settings to %1: %2")
-              .arg(iniFile)
-              .arg(QString::fromStdWString(formatSystemMessage(e))));
-      return;
-    }
-  }
-
-  QString writeTarget = iniFile + ".new";
-
-  QSettings::Status result = storeSettings(writeTarget);
-
-  if (result == QSettings::NoError) {
-    QString errMsg = commitSettings(iniFile);
-    if (!errMsg.isEmpty()) {
-      log::warn(
-        "settings file not writable, may be locked by another "
-        "application, trying direct write");
-      writeTarget = iniFile;
-      result = storeSettings(iniFile);
-    }
-  }
   if (result != QSettings::NoError) {
-    QString reason = result == QSettings::AccessError
-                         ? tr("File is write protected")
-                         : result == QSettings::FormatError
-                               ? tr("Invalid file format (probably a bug)")
-                               : tr("Unknown error %1").arg(result);
+    QString reason;
+
+    if (result == QSettings::AccessError) {
+      reason = tr("File is write protected");
+    } else if (result == QSettings::FormatError) {
+      reason = tr("Invalid file format (probably a bug)");
+    } else {
+      reason = tr("Unknown error %1").arg(result);
+    }
+
     QMessageBox::critical(
-        qApp->activeWindow(), tr("Failed to write settings"),
-        tr("An error occurred trying to write back MO settings to %1: %2")
-            .arg(writeTarget, reason));
+      qApp->activeWindow(), tr("Failed to write settings"),
+      tr("An error occurred trying to write back MO settings to %1: %2")
+      .arg(m_Settings.getFilename(), reason));
   }
 }
 
@@ -487,7 +435,7 @@ void OrganizerCore::updateExecutablesList()
     return;
   }
 
-  m_ExecutablesList.load(managedGame(), m_Settings.directInterface());
+  m_ExecutablesList.load(managedGame(), m_Settings);
 
   // TODO this has nothing to do with executables list move to an appropriate
   // function!

@@ -47,10 +47,6 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="QSplitter" name="topLevelSplitter">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
       <widget class="QWidget" name="horizontalLayoutWidget_2">
        <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="0,2">
         <item>
@@ -1286,7 +1282,6 @@ p, li { white-space: pre-wrap; }
         </item>
        </layout>
       </widget>
-     </widget>
     </item>
    </layout>
   </widget>

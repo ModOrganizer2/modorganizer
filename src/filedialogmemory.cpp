@@ -27,8 +27,10 @@ FileDialogMemory::FileDialogMemory()
 }
 
 
-void FileDialogMemory::save(QSettings &settings)
+void FileDialogMemory::save(Settings& s)
 {
+  auto& settings = s.directInterface();
+
   settings.remove("recentDirectories");
   settings.beginWriteArray("recentDirectories");
   int index = 0;
@@ -42,8 +44,10 @@ void FileDialogMemory::save(QSettings &settings)
 }
 
 
-void FileDialogMemory::restore(QSettings &settings)
+void FileDialogMemory::restore(const Settings& s)
 {
+  auto& settings = const_cast<QSettings&>(s.directInterface());
+
   int size = settings.beginReadArray("recentDirectories");
   for (int i = 0; i < size; ++i) {
     settings.setArrayIndex(i);

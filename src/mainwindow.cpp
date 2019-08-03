@@ -216,26 +216,24 @@ const QSize LargeToolbarSize(42, 36);
 class DockFixer
 {
 public:
-  static void save(MainWindow* mw, QSettings& settings)
+  static void save(MainWindow* mw, Settings& settings)
   {
-    const auto docks = mw->findChildren<QDockWidget*>();
-
     // saves the size of each dock
-    for (int i=0; i<docks.size(); ++i) {
+    for (const auto* dock : mw->findChildren<QDockWidget*>()) {
       int size = 0;
 
       // save the width for horizontal docks, or the height for vertical
-      if (orientation(mw, docks[i]) == Qt::Horizontal) {
-        size = docks[i]->size().width();
+      if (orientation(mw, dock) == Qt::Horizontal) {
+        size = dock->size().width();
       } else {
-        size = docks[i]->size().height();
+        size = dock->size().height();
       }
 
-      settings.setValue(settingName(docks[i]), size);
+      settings.geometry().setDockSize(dock->objectName(), size);
     }
   }
 
-  static void restore(MainWindow* mw, const QSettings& settings)
+  static void restore(MainWindow* mw, const Settings& settings)
   {
     struct DockInfo
     {
@@ -246,16 +244,11 @@ public:
 
     std::vector<DockInfo> dockInfos;
 
-    const auto docks = mw->findChildren<QDockWidget*>();
-
     // for each dock
-    for (int i=0; i<docks.size(); ++i) {
-      const QString name = settingName(docks[i]);
-
-      if (settings.contains(name)) {
+    for (auto* dock : mw->findChildren<QDockWidget*>()) {
+      if (auto size=settings.geometry().getDockSize(dock->objectName())) {
         // remember this dock, its size and orientation
-        const auto size = settings.value(name).toInt();
-        dockInfos.push_back({docks[i], size, orientation(mw, docks[i])});
+        dockInfos.push_back({dock, *size, orientation(mw, dock)});
       }
     }
 
@@ -264,29 +257,24 @@ public:
     //
     // some people said a single processEvents() call is enough, but it doesn't
     // look like it
-    QTimer::singleShot(1, [=] {
+    QTimer::singleShot(5, [=] {
       for (const auto& info : dockInfos) {
         mw->resizeDocks({info.d}, {info.size}, info.ori);
       }
-      });
+    });
   }
 
-  static Qt::Orientation orientation(QMainWindow* mw, QDockWidget* d)
+  static Qt::Orientation orientation(QMainWindow* mw, const QDockWidget* d)
   {
     // docks in these areas are horizontal
     const auto horizontalAreas =
       Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea;
 
-    if (mw->dockWidgetArea(d) & horizontalAreas) {
+    if (mw->dockWidgetArea(const_cast<QDockWidget*>(d)) & horizontalAreas) {
       return Qt::Horizontal;
     } else {
       return Qt::Vertical;
     }
-  }
-
-  static QString settingName(QDockWidget* d)
-  {
-    return "geometry/" + d->objectName() + "_size";
   }
 };
 
@@ -358,9 +346,6 @@ MainWindow::MainWindow(Settings &settings
   m_CategoryFactory.loadCategories();
 
   ui->logList->setCore(m_OrganizerCore);
-
-  int splitterSize = this->size().height(); // actually total window size, but the splitter doesn't seem to return the true value
-  ui->topLevelSplitter->setSizes(QList<int>() << splitterSize - 100 << 100);
 
   updateProblemsButton();
 
@@ -540,8 +525,7 @@ MainWindow::MainWindow(Settings &settings
   connect(&m_SaveMetaTimer, SIGNAL(timeout()), this, SLOT(saveModMetas()));
   m_SaveMetaTimer.start(5000);
 
-  setCategoryListVisible(settings.isCategoryListVisible());
-  FileDialogMemory::restore(settings.directInterface());
+  FileDialogMemory::restore(settings);
 
   fixCategories();
 
@@ -2247,52 +2231,50 @@ void MainWindow::activateProxy(bool activate)
   busyDialog.hide();
 }
 
-void MainWindow::readSettings()
+void MainWindow::readSettings(const Settings& settings)
 {
-  QSettings settings(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::iniFileName()), QSettings::IniFormat);
-
-  if (settings.contains("window_geometry")) {
-    restoreGeometry(settings.value("window_geometry").toByteArray());
+  if (auto v=settings.geometry().getMainWindow()) {
+    restoreGeometry(*v);
   }
 
-  if (settings.contains("window_state")) {
-    restoreState(settings.value("window_state").toByteArray());
+  if (auto v=settings.geometry().getMainWindowState()) {
+    restoreState(*v);
   }
 
-  if (settings.contains("toolbar_size")) {
-    setToolbarSize(settings.value("toolbar_size").toSize());
+  if (auto v=settings.geometry().getToolbarSize()) {
+    setToolbarSize(*v);
   }
 
-  if (settings.contains("toolbar_button_style")) {
-    setToolbarButtonStyle(static_cast<Qt::ToolButtonStyle>(
-      settings.value("toolbar_button_style").toInt()));
+  if (auto v=settings.geometry().getToolbarButtonStyle()) {
+    setToolbarButtonStyle(*v);
   }
 
-  if (settings.contains("menubar_visible")) {
-    showMenuBar(settings.value("menubar_visible").toBool());
+  if (auto v=settings.geometry().getMenubarVisible()) {
+    showMenuBar(*v);
   }
 
-  if (settings.contains("statusbar_visible")) {
-    showStatusBar(settings.value("statusbar_visible").toBool());
+  if (auto v=settings.geometry().getStatusbarVisible()) {
+    showStatusBar(*v);
   }
 
-  if (settings.contains("window_split")) {
-    ui->splitter->restoreState(settings.value("window_split").toByteArray());
+  if (auto v=settings.geometry().getMainSplitterState()) {
+    ui->splitter->restoreState(*v);
   }
 
-  if (settings.contains("log_split")) {
-    ui->topLevelSplitter->restoreState(settings.value("log_split").toByteArray());
+  {
+    auto v = settings.geometry().getFiltersVisible().value_or(false);
+    setCategoryListVisible(v);
+    ui->displayCategoriesBtn->setChecked(v);
   }
 
-  bool filtersVisible = settings.value("filters_visible", false).toBool();
-  setCategoryListVisible(filtersVisible);
-  ui->displayCategoriesBtn->setChecked(filtersVisible);
+  if (auto v=settings.getSelectedExecutable()) {
+    setExecutableIndex(*v);
+  }
 
-  int selectedExecutable = settings.value("selected_executable").toInt();
-  setExecutableIndex(selectedExecutable);
-
-  if (settings.value("Settings/use_proxy", false).toBool()) {
-    activateProxy(true);
+  if (auto v=settings.getUseProxy()) {
+    if (*v) {
+      activateProxy(true);
+    }
   }
 
   DockFixer::restore(this, settings);
@@ -2335,6 +2317,12 @@ void MainWindow::processUpdates() {
         ui->downloadView->header()->hideSection(i);
       }
     }
+    if (lastVersion < QVersionNumber(2, 2, 2)) {
+      QSettings &instance = Settings::instance().directInterface();
+
+      // log splitter is gone, it's a dock now
+      instance.remove("log_split");
+    }
   }
 
   if (currentVersion > lastVersion) {
@@ -2354,7 +2342,9 @@ void MainWindow::processUpdates() {
   settings.setValue("version", currentVersion.toString());
 }
 
-void MainWindow::storeSettings(QSettings &settings) {
+void MainWindow::storeSettings(Settings& s) {
+  auto& settings = s.directInterface();
+
   settings.setValue("group_state", ui->groupCombo->currentIndex());
   settings.setValue("selected_executable",
                     ui->executablesListBox->currentIndex());
@@ -2367,7 +2357,6 @@ void MainWindow::storeSettings(QSettings &settings) {
     settings.remove("menubar_visible");
     settings.remove("window_split");
     settings.remove("window_monitor");
-    settings.remove("log_split");
     settings.remove("filters_visible");
     settings.remove("browser_geometry");
     settings.remove("geometry");
@@ -2383,7 +2372,6 @@ void MainWindow::storeSettings(QSettings &settings) {
     QScreen *screen = this->window()->windowHandle()->screen();
     int screenId = QGuiApplication::screens().indexOf(screen);
     settings.setValue("window_monitor", screenId);
-    settings.setValue("log_split", ui->topLevelSplitter->saveState());
     settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
     settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
 
@@ -2392,7 +2380,7 @@ void MainWindow::storeSettings(QSettings &settings) {
       settings.setValue(key, kv.second->saveState());
     }
 
-    DockFixer::save(this, settings);
+    DockFixer::save(this, s);
   }
 }
 
@@ -5213,7 +5201,7 @@ void MainWindow::on_actionSettings_triggered()
   QString oldModDirectory(settings.getModDirectory());
   QString oldCacheDirectory(settings.getCacheDirectory());
   QString oldProfilesDirectory(settings.getProfileDirectory());
-  QString oldManagedGameDirectory(settings.getManagedGameDirectory());
+  QString oldManagedGameDirectory(settings.getManagedGameDirectory().value_or(""));
   bool oldDisplayForeign(settings.displayForeign());
   bool proxy = settings.useProxy();
   DownloadManager *dlManager = m_OrganizerCore.downloadManager();

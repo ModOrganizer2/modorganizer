@@ -10,13 +10,13 @@
 
 #include <QMenu>
 
-class QSettings;
+class Settings;
 
 class IUserInterface
 {
 public:
 
-  virtual void storeSettings(QSettings &settings) = 0;
+  virtual void storeSettings(Settings &settings) = 0;
 
   virtual void registerPluginTool(MOBase::IPluginTool *tool, QString name = QString(), QMenu *menu = nullptr) = 0;
   virtual void registerPluginTools(std::vector<MOBase::IPluginTool *> toolPlugins) = 0;

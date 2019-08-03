@@ -288,10 +288,6 @@ private:
 
   void storeSettings();
 
-  QSettings::Status storeSettings(const QString &fileName);
-
-  QString commitSettings(const QString &iniFile);
-
   bool queryApi(QString &apiKey);
 
   void updateModActiveState(int index, bool active);
