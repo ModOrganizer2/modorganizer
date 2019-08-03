@@ -23,40 +23,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "loadmechanism.h"
 #include <log.h>
 
-#include <QList>
-#include <QMap>
-#include <QObject>
-#include <QPushButton>
-#include <QSet>
-#include <QSettings>
-#include <QString>
-#include <QVariant>
-#include <QColor>
-#include <QMetaType>
-
-#include <QtGlobal> //for uint
-
-#include <map>
-#include <vector>
-
-class QCheckBox;
-class QComboBox;
-class QLineEdit;
-class QSpinBox;
-class QListWidget;
-class QWidget;
-class QLabel;
-class QPushButton;
-
-struct ServerInfo;
-
 namespace MOBase {
   class IPlugin;
   class IPluginGame;
 }
 
-class SettingsDialog;
 class PluginContainer;
+struct ServerInfo;
 
 /**
  * manages the settings for Mod Organizer. The settings are not cached
@@ -64,17 +37,11 @@ class PluginContainer;
  **/
 class Settings : public QObject
 {
-
   Q_OBJECT
 
 public:
-
-  /**
-   * @brief constructor
-   **/
   Settings(const QSettings &settingsSource);
-
-  virtual ~Settings();
+  ~Settings();
 
   static Settings &instance();
 
@@ -89,12 +56,6 @@ public:
    * @return true if the plugin may be registered, false if it is blacklisted
    */
   void registerPlugin(MOBase::IPlugin *plugin);
-
-  /**
-   * displays a SettingsDialog that allows the user to change settings. If the
-   * user accepts the changes, the settings are immediately written
-   **/
-  void query(PluginContainer *pluginContainer, QWidget *parent);
 
   /**
    * set up the settings for the specified plugins
@@ -404,180 +365,36 @@ public:
    */
   bool colorSeparatorScrollbar() const;
 
-public slots:
-
-  void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
-public:
   static QColor getIdealTextColor(const QColor&  rBackgroundColor);
-private:
 
-  static bool obfuscate(const QString key, const QString data);
-  static QString deObfuscate(const QString key);
+  MOBase::IPluginGame const *gamePlugin() { return m_GamePlugin; }
+  const LoadMechanism& loadMechanism() const { return m_LoadMechanism; }
 
-  void addLanguages(QComboBox *languageBox);
-  void addStyles(QComboBox *styleBox);
-  void readPluginBlacklist();
+  // temp
+  QMap<QString, QVariantMap> m_PluginSettings;
+  QMap<QString, QVariantMap> m_PluginDescriptions;
+  QSet<QString> m_PluginBlacklist;
   void writePluginBlacklist();
-  QString getConfigurablePath(const QString &key, const QString &def, bool resolve) const;
 
-  class SettingsTab
-  {
-  public:
-    SettingsTab(Settings *m_parent, SettingsDialog &m_dialog);
-    virtual ~SettingsTab();
-
-    virtual void update() = 0;
-
-  protected:
-    Settings *m_parent;
-    QSettings &m_Settings;
-    SettingsDialog &m_dialog;
-
-  };
-
-  /** Display/store the configuration in the 'general' tab of the settings dialogue */
-  class GeneralTab : public SettingsTab
-  {
-  public:
-    GeneralTab(Settings *m_parent, SettingsDialog &m_dialog);
-
-    void update();
-
-  private:
-    QComboBox *m_languageBox;
-    QComboBox *m_styleBox;
-    QCheckBox *m_compactBox;
-    QCheckBox *m_showMetaBox;
-    QCheckBox *m_usePrereleaseBox;
-    QPushButton *m_overwritingBtn;
-    QPushButton *m_overwrittenBtn;
-    QPushButton *m_overwritingArchiveBtn;
-    QPushButton *m_overwrittenArchiveBtn;
-    QPushButton *m_containsBtn;
-    QPushButton *m_containedBtn;
-    QCheckBox *m_colorSeparatorsBox;
-  };
-
-  class PathsTab : public SettingsTab
-  {
-  public:
-    PathsTab(Settings *parent, SettingsDialog &dialog);
-
-    void update();
-
-  private:
-    QLineEdit *m_baseDirEdit;
-    QLineEdit *m_downloadDirEdit;
-    QLineEdit *m_modDirEdit;
-    QLineEdit *m_cacheDirEdit;
-    QLineEdit *m_profilesDirEdit;
-    QLineEdit *m_overwriteDirEdit;
-    QLineEdit *m_managedGameDirEdit;
-  };
-
-  class DiagnosticsTab : public SettingsTab
-  {
-  public:
-    DiagnosticsTab(Settings *parent, SettingsDialog &dialog);
-
-    void update();
-
-  private:
-    QComboBox *m_logLevelBox;
-    QComboBox *m_dumpsTypeBox;
-    QSpinBox *m_dumpsMaxEdit;
-    QLabel *m_diagnosticsExplainedLabel;
-
-    void setLevelsBox();
-  };
-
-  /** Display/store the configuration in the 'nexus' tab of the settings dialogue */
-  class NexusTab : public SettingsTab
-  {
-  public:
-    NexusTab(Settings *m_parent, SettingsDialog &m_dialog);
-    void update();
-
-  private:
-    QCheckBox *m_offlineBox;
-    QCheckBox *m_proxyBox;
-    QListWidget *m_knownServersList;
-    QListWidget *m_preferredServersList;
-    QCheckBox *m_endorsementBox;
-    QCheckBox *m_hideAPICounterBox;
-  };
-
-  /** Display/store the configuration in the 'steam' tab of the settings dialogue */
-  class SteamTab : public SettingsTab
-  {
-  public:
-    SteamTab(Settings *m_parent, SettingsDialog &m_dialog);
-
-    void update();
-
-  private:
-    QLineEdit *m_steamUserEdit;
-    QLineEdit *m_steamPassEdit;
-  };
-
-  /** Display/store the configuration in the 'plugins' tab of the settings dialogue */
-  class PluginsTab : public SettingsTab
-  {
-  public:
-    PluginsTab(Settings *m_parent, SettingsDialog &m_dialog);
-
-    void update();
-
-  private:
-    QListWidget *m_pluginsList;
-    QListWidget *m_pluginBlacklistList;
-  };
-
-  /** Display/store the configuration in the 'workarounds' tab of the settings dialogue */
-  class WorkaroundsTab : public SettingsTab
-  {
-  public:
-    WorkaroundsTab(Settings *m_parent, SettingsDialog &m_dialog);
-
-    void update();
-
-  private:
-    QLineEdit *m_appIDEdit;
-    QComboBox *m_mechanismBox;
-    QCheckBox *m_hideUncheckedBox;
-    QCheckBox *m_forceEnableBox;
-    QCheckBox *m_displayForeignBox;
-    QCheckBox *m_lockGUIBox;
-    QCheckBox *m_enableArchiveParsingBox;
-    QPushButton *m_resetGeometriesBtn;
-  };
-
-private slots:
-
-  void resetDialogs();
+public slots:
+  void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
 signals:
-
   void languageChanged(const QString &newLanguage);
   void styleChanged(const QString &newStyle);
 
 private:
-
   static Settings *s_Instance;
-
   MOBase::IPluginGame const *m_GamePlugin;
-
-  QSettings m_Settings;
-
+  mutable QSettings m_Settings;
   LoadMechanism m_LoadMechanism;
-
   std::vector<MOBase::IPlugin*> m_Plugins;
 
-  QMap<QString, QVariantMap> m_PluginSettings;
-  QMap<QString, QVariantMap> m_PluginDescriptions;
+  static bool obfuscate(const QString key, const QString data);
+  static QString deObfuscate(const QString key);
 
-  QSet<QString> m_PluginBlacklist;
-
+  void readPluginBlacklist();
+  QString getConfigurablePath(const QString &key, const QString &def, bool resolve) const;
 };
 
 #endif // SETTINGS_H

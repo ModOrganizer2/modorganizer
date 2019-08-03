@@ -21,16 +21,30 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SETTINGSDIALOG_H
 
 #include "tutorabledialog.h"
-#include "nxmaccessmanager.h"
-#include <iplugin.h>
-#include <QListWidgetItem>
 
 class PluginContainer;
 class Settings;
+class SettingsDialog;
+namespace Ui { class SettingsDialog; }
 
-namespace Ui {
-    class SettingsDialog;
-}
+
+class SettingsTab
+{
+public:
+  SettingsTab(Settings *m_parent, SettingsDialog &m_dialog);
+  virtual ~SettingsTab();
+
+  virtual void update() = 0;
+  virtual void closing() {}
+
+protected:
+  Settings *m_parent;
+  QSettings &m_Settings;
+  SettingsDialog &m_dialog;
+  Ui::SettingsDialog* ui;
+
+  QWidget* parentWidget();
+};
 
 
 /**
@@ -54,112 +68,25 @@ public:
   */
   QString getColoredButtonStyleSheet() const;
 
-  void setButtonColor(QPushButton *button, const QColor &color);
-
-public slots:
-
-  virtual void accept();
-
-signals:
-
-  void resetDialogs();
-  void retryApiConnection();
-
-private:
-
-  void storeSettings(QListWidgetItem *pluginItem);
-  void normalizePath(QLineEdit *lineEdit);
-
-public:
-
-  QColor getOverwritingColor() { return m_OverwritingColor; }
-  QColor getOverwrittenColor() { return m_OverwrittenColor; }
-  QColor getOverwritingArchiveColor() { return m_OverwritingArchiveColor; }
-  QColor getOverwrittenArchiveColor() { return m_OverwrittenArchiveColor; }
-  QColor getContainsColor() { return m_ContainsColor; }
-  QColor getContainedColor() { return m_ContainedColor; }
-  QString getExecutableBlacklist() { return m_ExecutableBlacklist; }
-  bool getResetGeometries();
-  bool getApiKeyChanged();
-
-  void setOverwritingColor(QColor col) { m_OverwritingColor = col; }
-  void setOverwrittenColor(QColor col) { m_OverwrittenColor = col; }
-  void setOverwritingArchiveColor(QColor col) { m_OverwritingArchiveColor = col; }
-  void setOverwrittenArchiveColor(QColor col) { m_OverwrittenArchiveColor = col; }
-  void setContainsColor(QColor col) { m_ContainsColor = col; }
-  void setContainedColor(QColor col) { m_ContainedColor = col; }
-  void setExecutableBlacklist(QString blacklist) { m_ExecutableBlacklist = blacklist; }
-
-
-private slots:
-  void on_categoriesBtn_clicked();
-  void on_execBlacklistBtn_clicked();
-  void on_bsaDateBtn_clicked();
-  void on_browseDownloadDirBtn_clicked();
-  void on_browseModDirBtn_clicked();
-  void on_browseCacheDirBtn_clicked();
-  void on_resetDialogsButton_clicked();
-  void on_pluginsList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
-  void on_associateButton_clicked();
-  void on_clearCacheButton_clicked();
-  void on_nexusDisconnect_clicked();
-  void on_browseBaseDirBtn_clicked();
-  void on_browseOverwriteDirBtn_clicked();
-  void on_browseProfilesDirBtn_clicked();
-  void on_browseGameDirBtn_clicked();
-  void on_overwritingBtn_clicked();
-  void on_overwrittenBtn_clicked();
-  void on_overwritingArchiveBtn_clicked();
-  void on_overwrittenArchiveBtn_clicked();
-  void on_containsBtn_clicked();
-  void on_containedBtn_clicked();
-  void on_resetColorsBtn_clicked();
-  void on_baseDirEdit_editingFinished();
-  void on_downloadDirEdit_editingFinished();
-  void on_modDirEdit_editingFinished();
-  void on_cacheDirEdit_editingFinished();
-  void on_profilesDirEdit_editingFinished();
-  void on_overwriteDirEdit_editingFinished();
-  void on_nexusConnect_clicked();
-  void on_nexusManualKey_clicked();
-  void on_resetGeometryBtn_clicked();
-
-  void deleteBlacklistItem();
-
-private:
+  // temp
   Ui::SettingsDialog *ui;
-  Settings* m_settings;
+  bool m_keyChanged;
+  bool m_GeometriesReset;
   PluginContainer *m_PluginContainer;
 
-  QColor m_OverwritingColor;
-  QColor m_OverwrittenColor;
-  QColor m_OverwritingArchiveColor;
-  QColor m_OverwrittenArchiveColor;
-  QColor m_ContainsColor;
-  QColor m_ContainedColor;
+  int exec() override;
 
-  bool m_GeometriesReset;
-  bool m_keyChanged;
+public slots:
+  virtual void accept();
 
-  QString m_ExecutableBlacklist;
-  std::unique_ptr<NexusSSOLogin> m_nexusLogin;
-  std::unique_ptr<NexusKeyValidator> m_nexusValidator;
+public:
+  bool getApiKeyChanged();
+  bool getResetGeometries();
 
-  void validateKey(const QString& key);
-  bool setKey(const QString& key);
-  bool clearKey();
+private:
+  Settings* m_settings;
+  std::vector<std::unique_ptr<SettingsTab>> m_tabs;
 
-  void updateNexusState();
-  void updateNexusButtons();
-  void updateNexusData();
-
-  void onSSOKeyChanged(const QString& key);
-  void onSSOStateChanged(NexusSSOLogin::States s, const QString& e);
-
-  void onValidatorStateChanged(NexusKeyValidator::States s, const QString& e);
-  void onValidatorFinished(const APIUserAccount& user);
-
-  void addNexusLog(const QString& s);
 };
 
 #endif // SETTINGSDIALOG_H
