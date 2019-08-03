@@ -84,6 +84,21 @@ ProfilesDialog::~ProfilesDialog()
   delete ui;
 }
 
+int ProfilesDialog::exec()
+{
+  auto& settings = Settings::instance();
+
+  if (auto v=settings.geometry().getProfilesDialog()) {
+    restoreGeometry(*v);
+  }
+
+  const int r = QDialog::exec();
+
+  settings.geometry().setProfilesDialog(saveGeometry());
+
+  return r;
+}
+
 void ProfilesDialog::showEvent(QShowEvent *event)
 {
   TutorableDialog::showEvent(event);

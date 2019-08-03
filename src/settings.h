@@ -45,8 +45,12 @@ public:
   std::optional<bool> getStatusbarVisible() const;
   std::optional<QByteArray> getMainSplitterState() const;
   std::optional<bool> getFiltersVisible() const;
+
   std::optional<QByteArray> getExecutablesDialog() const;
   void setExecutablesDialog(const QByteArray& v);
+
+  std::optional<QByteArray> getProfilesDialog() const;
+  void setProfilesDialog(const QByteArray& v);
 
   std::optional<int> getMainWindowMonitor() const;
   void setDockSize(const QString& name, int size);

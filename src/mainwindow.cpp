@@ -2554,17 +2554,13 @@ void MainWindow::on_actionAdd_Profile_triggered()
     ProfilesDialog profilesDialog(m_OrganizerCore.currentProfile()->name(),
                                   m_OrganizerCore.managedGame(),
                                   this);
-    QSettings &settings = m_OrganizerCore.settings().directInterface();
-    QString key = QString("geometry/%1").arg(profilesDialog.objectName());
-    if (settings.contains(key)) {
-      profilesDialog.restoreGeometry(settings.value(key).toByteArray());
-    }
+
     // workaround: need to disable monitoring of the saves directory, otherwise the active
     // profile directory is locked
     stopMonitorSaves();
     profilesDialog.exec();
-    settings.setValue(key, profilesDialog.saveGeometry());
     refreshSaveList(); // since the save list may now be outdated we have to refresh it completely
+
     if (refreshProfiles() && !profilesDialog.failed()) {
       break;
     }

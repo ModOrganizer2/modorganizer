@@ -866,6 +866,16 @@ void GeometrySettings::setExecutablesDialog(const QByteArray& v)
   m_Settings.setValue("geometry/EditExecutablesDialog", v);
 }
 
+std::optional<QByteArray> GeometrySettings::getProfilesDialog() const
+{
+  return getOptional<QByteArray>(m_Settings, "geometry/ProfilesDialog");
+}
+
+void GeometrySettings::setProfilesDialog(const QByteArray& v)
+{
+  m_Settings.setValue("geometry/ProfilesDialog", v);
+}
+
 std::optional<int> GeometrySettings::getMainWindowMonitor() const
 {
   return getOptional<int>(m_Settings, "window_monitor");
