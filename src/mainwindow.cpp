@@ -2480,21 +2480,14 @@ bool MainWindow::modifyExecutablesDialog()
 
     EditExecutablesDialog dialog(m_OrganizerCore, this);
 
-    QSettings &settings = m_OrganizerCore.settings().directInterface();
-    QString key = QString("geometry/%1").arg(dialog.objectName());
-
-    if (settings.contains(key)) {
-      dialog.restoreGeometry(settings.value(key).toByteArray());
-    }
-
     result = (dialog.exec() == QDialog::Accepted);
 
-    settings.setValue(key, dialog.saveGeometry());
     refreshExecutablesList();
     updatePinnedExecutables();
   } catch (const std::exception &e) {
     reportError(e.what());
   }
+
   return result;
 }
 

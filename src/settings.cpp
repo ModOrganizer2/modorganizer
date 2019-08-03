@@ -856,6 +856,16 @@ std::optional<bool> GeometrySettings::getFiltersVisible() const
   return getOptional<bool>(m_Settings, "filters_visible");
 }
 
+std::optional<QByteArray> GeometrySettings::getExecutablesDialog() const
+{
+  return getOptional<QByteArray>(m_Settings, "geometry/EditExecutablesDialog");
+}
+
+void GeometrySettings::setExecutablesDialog(const QByteArray& v)
+{
+  m_Settings.setValue("geometry/EditExecutablesDialog", v);
+}
+
 std::optional<int> GeometrySettings::getMainWindowMonitor() const
 {
   return getOptional<int>(m_Settings, "window_monitor");

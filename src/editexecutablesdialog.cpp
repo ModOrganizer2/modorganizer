@@ -65,6 +65,20 @@ EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, QWidget* parent)
 
 EditExecutablesDialog::~EditExecutablesDialog() = default;
 
+int EditExecutablesDialog::exec()
+{
+  auto& settings = m_organizerCore.settings();
+
+  if (auto v=settings.geometry().getExecutablesDialog()) {
+    restoreGeometry(*v);
+  }
+
+  const int r = QDialog::exec();
+
+  settings.geometry().setExecutablesDialog(saveGeometry());
+
+  return r;
+}
 
 void EditExecutablesDialog::loadCustomOverwrites()
 {
