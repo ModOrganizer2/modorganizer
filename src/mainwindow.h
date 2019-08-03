@@ -121,7 +121,7 @@ public:
 
   void storeSettings(Settings& settings) override;
   void readSettings(const Settings& settings);
-  void processUpdates();
+  void processUpdates(Settings& settings);
 
   virtual ILockedWaitingForProcess* lock() override;
   virtual void unlock() override;

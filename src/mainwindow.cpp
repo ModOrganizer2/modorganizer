@@ -2280,11 +2280,15 @@ void MainWindow::readSettings(const Settings& settings)
   DockFixer::restore(this, settings);
 }
 
-void MainWindow::processUpdates() {
-  QSettings settings(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::iniFileName()), QSettings::IniFormat);
-  QVersionNumber lastVersion = QVersionNumber::fromString(settings.value("version", "2.1.2").toString()).normalized();
-  QVersionNumber currentVersion = QVersionNumber::fromString(m_OrganizerCore.getVersion().displayString()).normalized();
-  if (!m_OrganizerCore.settings().directInterface().value("first_start", true).toBool()) {
+void MainWindow::processUpdates(Settings& settings) {
+  const auto earliest = QVersionNumber::fromString("2.1.2").normalized();
+
+  const auto lastVersion = settings.getVersion().value_or(earliest);
+  const auto currentVersion = m_OrganizerCore.getVersion().asQVersionNumber();
+
+  settings.processUpdates(currentVersion, lastVersion);
+
+  if (!settings.getFirstStart()) {
     if (lastVersion < QVersionNumber(2, 1, 3)) {
       bool lastHidden = true;
       for (int i = ModList::COL_GAME; i < ui->modList->model()->columnCount(); ++i) {
@@ -2293,41 +2297,20 @@ void MainWindow::processUpdates() {
         lastHidden = hidden;
       }
     }
+
     if (lastVersion < QVersionNumber(2, 1, 6)) {
       ui->modList->header()->setSectionHidden(ModList::COL_NOTES, true);
     }
-    if (lastVersion < QVersionNumber(2, 2, 0)) {
-      QSettings &instance = Settings::instance().directInterface();
-      instance.beginGroup("Settings");
-      instance.remove("steam_password");
-      instance.remove("nexus_username");
-      instance.remove("nexus_password");
-      instance.remove("nexus_login");
-      instance.remove("nexus_api_key");
-      instance.remove("ask_for_nexuspw");
-      instance.remove("nmm_version");
-      instance.endGroup();
-      instance.beginGroup("Servers");
-      instance.remove("");
-      instance.endGroup();
-    }
+
     if (lastVersion < QVersionNumber(2, 2, 1)) {
       // hide new columns by default
       for (int i=DownloadList::COL_MODNAME; i<DownloadList::COL_COUNT; ++i) {
         ui->downloadView->header()->hideSection(i);
       }
     }
-    if (lastVersion < QVersionNumber(2, 2, 2)) {
-      QSettings &instance = Settings::instance().directInterface();
-
-      // log splitter is gone, it's a dock now
-      instance.remove("log_split");
-    }
   }
 
-  if (currentVersion > lastVersion) {
-    //NOP
-  } else if (currentVersion < lastVersion) {
+  if (currentVersion < lastVersion) {
     const auto text = tr(
       "Notice: Your current MO version (%1) is lower than the previously used one (%2). "
       "The GUI may not downgrade gracefully, so you may experience oddities. "
@@ -2337,9 +2320,6 @@ void MainWindow::processUpdates() {
 
     log::warn("{}", text);
   }
-
-  //save version in all case
-  settings.setValue("version", currentVersion.toString());
 }
 
 void MainWindow::storeSettings(Settings& s) {

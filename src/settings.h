@@ -72,6 +72,9 @@ public:
 
   static Settings &instance();
 
+  void processUpdates(
+    const QVersionNumber& currentVersion, const QVersionNumber& lastVersion);
+
   QString getFilename() const;
 
   /**
@@ -169,8 +172,12 @@ public:
   std::optional<int> getSelectedExecutable() const;
   std::optional<bool> getUseProxy() const;
 
+  std::optional<QVersionNumber> getVersion() const;
+  bool getFirstStart() const;
+
   GeometrySettings& geometry();
   const GeometrySettings& geometry() const;
+
 
   /**
    * retrieve the directory where profiles stored (with native separators)

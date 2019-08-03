@@ -739,7 +739,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       QObject::connect(&instance, SIGNAL(messageSent(QString)), &organizer,
                        SLOT(externalMessage(QString)));
 
-      mainWindow.processUpdates();
+      mainWindow.processUpdates(settings);
 
       // this must be before readSettings(), see DockFixer in mainwindow.cpp
       splash.finish(&mainWindow);

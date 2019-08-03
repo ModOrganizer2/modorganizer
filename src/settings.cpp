@@ -97,6 +97,38 @@ Settings &Settings::instance()
   return *s_Instance;
 }
 
+void Settings::processUpdates(
+  const QVersionNumber& currentVersion, const QVersionNumber& lastVersion)
+{
+  if (getFirstStart()) {
+    return;
+  }
+
+  if (lastVersion < QVersionNumber(2, 2, 0)) {
+    m_Settings.beginGroup("Settings");
+    m_Settings.remove("steam_password");
+    m_Settings.remove("nexus_username");
+    m_Settings.remove("nexus_password");
+    m_Settings.remove("nexus_login");
+    m_Settings.remove("nexus_api_key");
+    m_Settings.remove("ask_for_nexuspw");
+    m_Settings.remove("nmm_version");
+    m_Settings.endGroup();
+
+    m_Settings.beginGroup("Servers");
+    m_Settings.remove("");
+    m_Settings.endGroup();
+  }
+
+  if (lastVersion < QVersionNumber(2, 2, 2)) {
+    // log splitter is gone, it's a dock now
+    m_Settings.remove("log_split");
+  }
+
+  //save version in all case
+  m_Settings.setValue("version", currentVersion.toString());
+}
+
 QString Settings::getFilename() const
 {
   return m_Settings.fileName();
@@ -395,6 +427,20 @@ std::optional<int> Settings::getSelectedExecutable() const
 std::optional<bool> Settings::getUseProxy() const
 {
   return getOptional<bool>(m_Settings, "Settings/use_proxy");
+}
+
+std::optional<QVersionNumber> Settings::getVersion() const
+{
+  if (auto v=getOptional<QString>(m_Settings, "version")) {
+    return QVersionNumber::fromString(*v).normalized();
+  }
+
+  return {};
+}
+
+bool Settings::getFirstStart() const
+{
+  return getOptional<bool>(m_Settings, "first_start").value_or(true);
 }
 
 QString Settings::getProfileDirectory(bool resolve) const
