@@ -104,6 +104,25 @@ OverwriteInfoDialog::~OverwriteInfoDialog()
   delete ui;
 }
 
+void OverwriteInfoDialog::showEvent(QShowEvent* e)
+{
+  const auto& settings = Settings::instance();
+
+  if (auto v=settings.geometry().getOverwriteDialog()) {
+    restoreGeometry(*v);
+  }
+
+  QDialog::showEvent(e);
+}
+
+void OverwriteInfoDialog::done(int r)
+{
+  auto& settings = Settings::instance();
+  settings.geometry().setOverwriteDialog(saveGeometry());
+
+  QDialog::done(r);
+}
+
 void OverwriteInfoDialog::setModInfo(ModInfo::Ptr modInfo)
 {
   m_ModInfo = modInfo;

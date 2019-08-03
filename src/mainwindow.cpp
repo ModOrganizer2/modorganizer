@@ -3165,9 +3165,6 @@ void MainWindow::overwriteClosed(int)
   OverwriteInfoDialog *dialog = this->findChild<OverwriteInfoDialog*>("__overwriteDialog");
   if (dialog != nullptr) {
     m_OrganizerCore.modList()->modInfoChanged(dialog->modInfo());
-    QSettings &settings = m_OrganizerCore.settings().directInterface();
-    QString key = QString("geometry/%1").arg(dialog->objectName());
-    settings.setValue(key, dialog->saveGeometry());
     dialog->deleteLater();
   }
   m_OrganizerCore.refreshDirectoryStructure();
@@ -3191,11 +3188,7 @@ void MainWindow::displayModInformation(
       } else {
         qobject_cast<OverwriteInfoDialog*>(dialog)->setModInfo(modInfo);
       }
-      QSettings &settings = m_OrganizerCore.settings().directInterface();
-      QString key = QString("geometry/%1").arg(dialog->objectName());
-      if (settings.contains(key)) {
-        dialog->restoreGeometry(settings.value(key).toByteArray());
-      }
+
       dialog->show();
       dialog->raise();
       dialog->activateWindow();
@@ -3214,16 +3207,7 @@ void MainWindow::displayModInformation(
 		  dialog.selectTab(tabID);
 	  }
 
-    dialog.restoreState(m_OrganizerCore.settings());
-    QSettings &settings = m_OrganizerCore.settings().directInterface();
-    QString key = QString("geometry/%1").arg(dialog.objectName());
-    if (settings.contains(key)) {
-      dialog.restoreGeometry(settings.value(key).toByteArray());
-    }
-
     dialog.exec();
-    dialog.saveState(m_OrganizerCore.settings());
-    settings.setValue(key, dialog.saveGeometry());
 
     modInfo->saveMeta();
     emit modInfoDisplayed();

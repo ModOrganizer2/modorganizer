@@ -31,7 +31,7 @@ class OverwriteInfoDialog;
 class OverwriteInfoDialog : public QDialog
 {
   Q_OBJECT
-  
+
 public:
 
   explicit OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget *parent = 0);
@@ -39,7 +39,16 @@ public:
 
   ModInfo::Ptr modInfo() const { return m_ModInfo; }
 
+  // saves geometry
+  //
+  void done(int r) override;
+
   void setModInfo(ModInfo::Ptr modInfo);
+
+protected:
+  // restores geometry
+  //
+  void showEvent(QShowEvent* e) override;
 
 private:
 

@@ -52,6 +52,15 @@ public:
   std::optional<QByteArray> getProfilesDialog() const;
   void setProfilesDialog(const QByteArray& v);
 
+  std::optional<QByteArray> getOverwriteDialog() const;
+  void setOverwriteDialog(const QByteArray& v);
+
+  std::optional<QByteArray> getModInfoDialog() const;
+  void setModInfoDialog(const QByteArray& v) const;
+
+  QStringList getModInfoTabOrder() const;
+  void setModInfoTabOrder(const QString& names);
+
   std::optional<int> getMainWindowMonitor() const;
   void setDockSize(const QString& name, int size);
 

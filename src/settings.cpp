@@ -120,6 +120,16 @@ void Settings::processUpdates(
     m_Settings.endGroup();
   }
 
+  if (lastVersion < QVersionNumber(2, 2, 1)) {
+    m_Settings.remove("mod_info_tabs");
+    m_Settings.remove("mod_info_conflict_expanders");
+    m_Settings.remove("mod_info_conflicts");
+    m_Settings.remove("mod_info_advanced_conflicts");
+    m_Settings.remove("mod_info_conflicts_overwrite");
+    m_Settings.remove("mod_info_conflicts_noconflict");
+    m_Settings.remove("mod_info_conflicts_overwritten");
+  }
+
   if (lastVersion < QVersionNumber(2, 2, 2)) {
     // log splitter is gone, it's a dock now
     m_Settings.remove("log_split");
@@ -874,6 +884,62 @@ std::optional<QByteArray> GeometrySettings::getProfilesDialog() const
 void GeometrySettings::setProfilesDialog(const QByteArray& v)
 {
   m_Settings.setValue("geometry/ProfilesDialog", v);
+}
+
+std::optional<QByteArray> GeometrySettings::getOverwriteDialog() const
+{
+  return getOptional<QByteArray>(m_Settings, "geometry/__overwriteDialog");
+}
+
+void GeometrySettings::setOverwriteDialog(const QByteArray& v)
+{
+  m_Settings.setValue("geometry/__overwriteDialog", v);
+}
+
+std::optional<QByteArray> GeometrySettings::getModInfoDialog() const
+{
+  return getOptional<QByteArray>(m_Settings, "geometry/ModInfoDialog");
+}
+
+void GeometrySettings::setModInfoDialog(const QByteArray& v) const
+{
+  m_Settings.setValue("geometry/ModInfoDialog", v);
+}
+
+QStringList GeometrySettings::getModInfoTabOrder() const
+{
+  QStringList v;
+
+  if (m_Settings.contains("mod_info_tabs")) {
+    // old byte array from 2.2.0
+    QDataStream stream(m_Settings.value("mod_info_tabs").toByteArray());
+
+    int count = 0;
+    stream >> count;
+
+    for (int i=0; i<count; ++i) {
+      QString s;
+      stream >> s;
+      v.push_back(s);
+    }
+  } else {
+    // string list since 2.2.1
+    QString string = m_Settings.value("mod_info_tab_order").toString();
+    QTextStream stream(&string);
+
+    while (!stream.atEnd()) {
+      QString s;
+      stream >> s;
+      v.push_back(s);
+    }
+  }
+
+  return v;
+}
+
+void GeometrySettings::setModInfoTabOrder(const QString& names)
+{
+  m_Settings.setValue("mod_info_tab_order", names);
 }
 
 std::optional<int> GeometrySettings::getMainWindowMonitor() const
