@@ -3786,32 +3786,37 @@ void MainWindow::createSeparator_clicked()
   {
     m_OrganizerCore.modList()->changeModPriority(ModInfo::getIndex(name), newPriority);
   }
-  QSettings &settings = m_OrganizerCore.settings().directInterface();
-  QColor previousColor = settings.value("previousSeparatorColor", QColor()).value<QColor>();
-  if (previousColor.isValid()) {
-    ModInfo::getByIndex(ModInfo::getIndex(name))->setColor(previousColor);
-  }
 
+  if (auto c=m_OrganizerCore.settings().getPreviousSeparatorColor()) {
+    ModInfo::getByIndex(ModInfo::getIndex(name))->setColor(*c);
+  }
 }
 
 void MainWindow::setColor_clicked()
 {
-  QSettings &settings = m_OrganizerCore.settings().directInterface();
+  auto& settings = m_OrganizerCore.settings();
   ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
+
   QColorDialog dialog(this);
   dialog.setOption(QColorDialog::ShowAlphaChannel);
+
   QColor currentColor = modInfo->getColor();
-  QColor previousColor = settings.value("previousSeparatorColor", QColor()).value<QColor>();
-  if (currentColor.isValid())
+  if (currentColor.isValid()) {
     dialog.setCurrentColor(currentColor);
-  else
-    dialog.setCurrentColor(previousColor);
+  }
+  else if (auto c=settings.getPreviousSeparatorColor()) {
+    dialog.setCurrentColor(*c);
+  }
+
   if (!dialog.exec())
     return;
+
   currentColor = dialog.currentColor();
   if (!currentColor.isValid())
     return;
-  settings.setValue("previousSeparatorColor", currentColor);
+
+  settings.setPreviousSeparatorColor(currentColor);
+
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
@@ -3846,7 +3851,8 @@ void MainWindow::resetColor_clicked()
   else {
     modInfo->setColor(color);
   }
-  Settings::instance().directInterface().remove("previousSeparatorColor");
+
+  m_OrganizerCore.settings().removePreviousSeparatorColor();
 }
 
 void MainWindow::createModFromOverwrite()

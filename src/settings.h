@@ -190,6 +190,10 @@ public:
   std::optional<QVersionNumber> getVersion() const;
   bool getFirstStart() const;
 
+  std::optional<QColor> getPreviousSeparatorColor() const;
+  void setPreviousSeparatorColor(const QColor& c) const;
+  void removePreviousSeparatorColor();
+
   GeometrySettings& geometry();
   const GeometrySettings& geometry() const;
 

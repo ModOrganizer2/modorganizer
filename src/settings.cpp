@@ -27,45 +27,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 
 template <class T>
-T convertVariant(const QVariant& v);
-
-template <>
-QByteArray convertVariant<QByteArray>(const QVariant& v)
-{
-  return v.toByteArray();
-}
-
-template <>
-QString convertVariant<QString>(const QVariant& v)
-{
-  return v.toString();
-}
-
-template <>
-int convertVariant<int>(const QVariant& v)
-{
-  return v.toInt();
-}
-
-template <>
-bool convertVariant<bool>(const QVariant& v)
-{
-  return v.toBool();
-}
-
-template <>
-QSize convertVariant<QSize>(const QVariant& v)
-{
-  return v.toSize();
-}
-
-
-
-template <class T>
 std::optional<T> getOptional(const QSettings& s, const QString& name)
 {
   if (s.contains(name)) {
-    return convertVariant<T>(s.value(name));
+    return s.value(name).value<T>();
   }
 
   return {};
@@ -451,6 +416,26 @@ std::optional<QVersionNumber> Settings::getVersion() const
 bool Settings::getFirstStart() const
 {
   return getOptional<bool>(m_Settings, "first_start").value_or(true);
+}
+
+std::optional<QColor> Settings::getPreviousSeparatorColor() const
+{
+  const auto c = getOptional<QColor>(m_Settings, "previousSeparatorColor");
+  if (c && c->isValid()) {
+    return c;
+  }
+
+  return {};
+}
+
+void Settings::setPreviousSeparatorColor(const QColor& c) const
+{
+  m_Settings.setValue("previousSeparatorColor", c);
+}
+
+void Settings::removePreviousSeparatorColor()
+{
+  m_Settings.remove("previousSeparatorColor");
 }
 
 QString Settings::getProfileDirectory(bool resolve) const
