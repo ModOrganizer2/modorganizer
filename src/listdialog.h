@@ -15,6 +15,10 @@ public:
   explicit ListDialog(QWidget *parent = nullptr);
   ~ListDialog();
 
+  // also saves and restores geometry
+  //
+  int exec() override;
+
   void setChoices(QStringList choices);
   QString getChoice() const;
 

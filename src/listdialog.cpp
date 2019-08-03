@@ -17,6 +17,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "listdialog.h"
 #include "ui_listdialog.h"
+#include "settings.h"
 
 ListDialog::ListDialog(QWidget *parent)
   : QDialog(parent)
@@ -30,6 +31,21 @@ ListDialog::ListDialog(QWidget *parent)
 ListDialog::~ListDialog()
 {
   delete ui;
+}
+
+int ListDialog::exec()
+{
+  auto& settings = Settings::instance();
+
+  if (auto v=settings.geometry().getListDialog()) {
+    restoreGeometry(*v);
+  }
+
+  const int r = QDialog::exec();
+
+  settings.geometry().setListDialog(saveGeometry());
+
+  return r;
 }
 
 void ListDialog::setChoices(QStringList choices)

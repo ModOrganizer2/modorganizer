@@ -61,6 +61,9 @@ public:
   QStringList getModInfoTabOrder() const;
   void setModInfoTabOrder(const QString& names);
 
+  std::optional<QByteArray> getListDialog() const;
+  void setListDialog(const QByteArray& v);
+
   std::optional<int> getMainWindowMonitor() const;
   void setDockSize(const QString& name, int size);
 

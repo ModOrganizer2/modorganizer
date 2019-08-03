@@ -3898,17 +3898,10 @@ void MainWindow::moveOverwriteContentToExistingMod()
   }
 
   ListDialog dialog(this);
-  QSettings &settings = m_OrganizerCore.settings().directInterface();
-  QString key = QString("geometry/%1").arg(dialog.objectName());
-
   dialog.setWindowTitle("Select a mod...");
   dialog.setChoices(mods);
 
-  if (settings.contains(key)) {
-    dialog.restoreGeometry(settings.value(key).toByteArray());
-  }
   if (dialog.exec() == QDialog::Accepted) {
-
     QString result = dialog.getChoice();
     if (!result.isEmpty()) {
 
@@ -3930,7 +3923,6 @@ void MainWindow::moveOverwriteContentToExistingMod()
       doMoveOverwriteContentToMod(modAbsolutePath);
     }
   }
-  settings.setValue(key, dialog.saveGeometry());
 }
 
 void MainWindow::doMoveOverwriteContentToMod(const QString &modAbsolutePath)

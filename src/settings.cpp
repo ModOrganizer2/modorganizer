@@ -927,6 +927,16 @@ void GeometrySettings::setModInfoTabOrder(const QString& names)
   m_Settings.setValue("mod_info_tab_order", names);
 }
 
+std::optional<QByteArray> GeometrySettings::getListDialog() const
+{
+  return getOptional<QByteArray>(m_Settings, "geometry/ListDialog");
+}
+
+void GeometrySettings::setListDialog(const QByteArray& v)
+{
+  m_Settings.setValue("geometry/ListDialog", v);
+}
+
 std::optional<int> GeometrySettings::getMainWindowMonitor() const
 {
   return getOptional<int>(m_Settings, "window_monitor");
