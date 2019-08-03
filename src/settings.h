@@ -40,7 +40,7 @@ class Settings : public QObject
   Q_OBJECT
 
 public:
-  Settings(const QSettings &settingsSource);
+  Settings(const QString& path);
   ~Settings();
 
   static Settings &instance();
@@ -123,6 +123,24 @@ public:
    * retrieve the directory where the managed game is stored (with native separators)
    **/
   QString getManagedGameDirectory() const;
+  void setManagedGameDirectory(const QString& path);
+
+  QString getManagedGameName() const;
+  void setManagedGameName(const QString& name);
+
+  QString getManagedGameEdition() const;
+  void setManagedGameEdition(const QString& name);
+
+  QString getSelectedProfileName() const;
+
+  // returns -1 if not set
+  //
+  int getMainWindowMonitor() const;
+
+  QString getStyleName() const;
+  void setStyleName(const QString& name);
+
+  bool isCategoryListVisible() const;
 
   /**
    * retrieve the directory where profiles stored (with native separators)
@@ -369,6 +387,8 @@ public:
 
   MOBase::IPluginGame const *gamePlugin() { return m_GamePlugin; }
   const LoadMechanism& loadMechanism() const { return m_LoadMechanism; }
+
+  void dump() const;
 
   // temp
   QMap<QString, QVariantMap> m_PluginSettings;

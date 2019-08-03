@@ -480,14 +480,14 @@ return true;
 
 }
 
-void OrganizerCore::updateExecutablesList(QSettings &settings)
+void OrganizerCore::updateExecutablesList()
 {
   if (m_PluginContainer == nullptr) {
     log::error("can't update executables list now");
     return;
   }
 
-  m_ExecutablesList.load(managedGame(), settings);
+  m_ExecutablesList.load(managedGame(), m_Settings.directInterface());
 
   // TODO this has nothing to do with executables list move to an appropriate
   // function!

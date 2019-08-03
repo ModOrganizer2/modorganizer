@@ -28,8 +28,8 @@ using namespace MOBase;
 
 Settings *Settings::s_Instance = nullptr;
 
-Settings::Settings(const QSettings &settingsSource)
-  : m_Settings(settingsSource.fileName(), settingsSource.format())
+Settings::Settings(const QString& path)
+  : m_Settings(path, QSettings::IniFormat)
 {
   if (s_Instance != nullptr) {
     throw std::runtime_error("second instance of \"Settings\" created");
@@ -280,7 +280,57 @@ QString Settings::getModDirectory(bool resolve) const
 
 QString Settings::getManagedGameDirectory() const
 {
-  return m_Settings.value("gamePath", "").toString();
+  return QString::fromUtf8(m_Settings.value("gamePath", "").toByteArray());
+}
+
+void Settings::setManagedGameDirectory(const QString& path)
+{
+  m_Settings.setValue("gamePath", QDir::toNativeSeparators(path).toUtf8());
+}
+
+QString Settings::getManagedGameName() const
+{
+  return m_Settings.value("gameName", "").toString();
+}
+
+void Settings::setManagedGameName(const QString& name)
+{
+  m_Settings.setValue("gameName", name);
+}
+
+QString Settings::getManagedGameEdition() const
+{
+  return m_Settings.value("game_edition", "").toString();
+}
+
+void Settings::setManagedGameEdition(const QString& name)
+{
+  m_Settings.setValue("game_edition", name);
+}
+
+QString Settings::getSelectedProfileName() const
+{
+  return QString::fromUtf8(m_Settings.value("selected_profile", "").toByteArray());
+}
+
+int Settings::getMainWindowMonitor() const
+{
+  return m_Settings.value("window_monitor", -1).toInt();
+}
+
+QString Settings::getStyleName() const
+{
+  return m_Settings.value("Settings/style", "").toString();
+}
+
+void Settings::setStyleName(const QString& name)
+{
+  m_Settings.setValue("Settings/style", name);
+}
+
+bool Settings::isCategoryListVisible() const
+{
+  return m_Settings.value("categorylist_visible", true).toBool();
 }
 
 QString Settings::getProfileDirectory(bool resolve) const
@@ -607,4 +657,25 @@ void Settings::writePluginBlacklist()
   }
 
   m_Settings.endArray();
+}
+
+void Settings::dump() const
+{
+  static const QStringList ignore({
+    "username", "password", "nexus_api_key"
+    });
+
+  log::debug("settings:");
+
+  m_Settings.beginGroup("Settings");
+
+  for (auto k : m_Settings.allKeys()) {
+    if (ignore.contains(k, Qt::CaseInsensitive)) {
+      continue;
+    }
+
+    log::debug("  . {}={}", k, m_Settings.value(k).toString());
+  }
+
+  m_Settings.endGroup();
 }

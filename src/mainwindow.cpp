@@ -291,7 +291,7 @@ public:
 };
 
 
-MainWindow::MainWindow(QSettings &initSettings
+MainWindow::MainWindow(Settings &settings
                        , OrganizerCore &organizerCore
                        , PluginContainer &pluginContainer
                        , QWidget *parent)
@@ -540,8 +540,8 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(&m_SaveMetaTimer, SIGNAL(timeout()), this, SLOT(saveModMetas()));
   m_SaveMetaTimer.start(5000);
 
-  setCategoryListVisible(initSettings.value("categorylist_visible", true).toBool());
-  FileDialogMemory::restore(initSettings);
+  setCategoryListVisible(settings.isCategoryListVisible());
+  FileDialogMemory::restore(settings.directInterface());
 
   fixCategories();
 

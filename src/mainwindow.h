@@ -103,6 +103,7 @@ namespace Ui {
     class MainWindow;
 }
 
+class Settings;
 
 
 class MainWindow : public QMainWindow, public IUserInterface
@@ -113,7 +114,7 @@ class MainWindow : public QMainWindow, public IUserInterface
 
 public:
 
-  explicit MainWindow(QSettings &initSettings,
+  explicit MainWindow(Settings &settings,
                       OrganizerCore &organizerCore, PluginContainer &pluginContainer,
                       QWidget *parent = 0);
   ~MainWindow();

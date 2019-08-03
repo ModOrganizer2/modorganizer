@@ -107,7 +107,7 @@ public:
 
   void setManagedGame(MOBase::IPluginGame *game);
 
-  void updateExecutablesList(QSettings &settings);
+  void updateExecutablesList();
 
   void startMOUpdate();
 
