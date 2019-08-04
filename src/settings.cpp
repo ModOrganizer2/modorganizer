@@ -764,6 +764,45 @@ void Settings::writePluginBlacklist()
   m_Settings.endArray();
 }
 
+std::map<QString, QString> Settings::getRecentDirectories() const
+{
+  std::map<QString, QString> map;
+
+  const int size = m_Settings.beginReadArray("recentDirectories");
+
+  for (int i=0; i<size; ++i) {
+    m_Settings.setArrayIndex(i);
+
+    const QVariant name = m_Settings.value("name");
+    const QVariant dir = m_Settings.value("directory");
+
+    if (name.isValid() && dir.isValid()) {
+      map.emplace(name.toString(), dir.toString());
+    }
+  }
+
+  m_Settings.endArray();
+
+  return map;
+}
+
+void Settings::setRecentDirectories(const std::map<QString, QString>& map)
+{
+  m_Settings.remove("recentDirectories");
+  m_Settings.beginWriteArray("recentDirectories");
+
+  int index = 0;
+  for (auto&& p : map) {
+    m_Settings.setArrayIndex(index);
+    m_Settings.setValue("name", p.first);
+    m_Settings.setValue("directory", p.second);
+
+    ++index;
+  }
+
+  m_Settings.endArray();
+}
+
 GeometrySettings& Settings::geometry()
 {
   return m_Geometry;

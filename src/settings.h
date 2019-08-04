@@ -218,6 +218,9 @@ public:
   void setPreviousSeparatorColor(const QColor& c) const;
   void removePreviousSeparatorColor();
 
+  std::map<QString, QString> getRecentDirectories() const;
+  void setRecentDirectories(const std::map<QString, QString>& map);
+
   GeometrySettings& geometry();
   const GeometrySettings& geometry() const;
 

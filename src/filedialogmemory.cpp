@@ -21,45 +21,17 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include <QFileDialog>
 
-
-FileDialogMemory::FileDialogMemory()
-{
-}
-
+static std::map<QString, QString> g_Cache;
 
 void FileDialogMemory::save(Settings& s)
 {
-  auto& settings = s.directInterface();
-
-  settings.remove("recentDirectories");
-  settings.beginWriteArray("recentDirectories");
-  int index = 0;
-  for (std::map<QString, QString>::const_iterator iter = instance().m_Cache.begin();
-       iter != instance().m_Cache.end(); ++iter) {
-    settings.setArrayIndex(index++);
-    settings.setValue("name", iter->first);
-    settings.setValue("directory", iter->second);
-  }
-  settings.endArray();
+  s.setRecentDirectories(g_Cache);
 }
-
 
 void FileDialogMemory::restore(const Settings& s)
 {
-  auto& settings = const_cast<QSettings&>(s.directInterface());
-
-  int size = settings.beginReadArray("recentDirectories");
-  for (int i = 0; i < size; ++i) {
-    settings.setArrayIndex(i);
-    QVariant name = settings.value("name");
-    QVariant dir  = settings.value("directory");
-    if (name.isValid() && dir.isValid()) {
-      instance().m_Cache.insert(std::make_pair(name.toString(), dir.toString()));
-    }
-  }
-  settings.endArray();
+  g_Cache = s.getRecentDirectories();
 }
-
 
 QString FileDialogMemory::getOpenFileName(
   const QString &dirID, QWidget *parent, const QString &caption,
@@ -69,8 +41,8 @@ QString FileDialogMemory::getOpenFileName(
   QString currentDir = dir;
 
   if (currentDir.isEmpty()) {
-    auto itor = instance().m_Cache.find(dirID);
-    if (itor != instance().m_Cache.end()) {
+    auto itor = g_Cache.find(dirID);
+    if (itor != g_Cache.end()) {
       currentDir = itor->second;
     }
   }
@@ -79,7 +51,7 @@ QString FileDialogMemory::getOpenFileName(
     parent, caption, currentDir, filter, selectedFilter, options);
 
   if (!result.isNull()) {
-    instance().m_Cache[dirID] = QFileInfo(result).path();
+    g_Cache[dirID] = QFileInfo(result).path();
   }
 
   return result;
@@ -93,8 +65,8 @@ QString FileDialogMemory::getExistingDirectory(
   QString currentDir = dir;
 
   if (currentDir.isEmpty()) {
-    auto itor = instance().m_Cache.find(dirID);
-    if (itor != instance().m_Cache.end()) {
+    auto itor = g_Cache.find(dirID);
+    if (itor != g_Cache.end()) {
       currentDir = itor->second;
     }
   }
@@ -103,15 +75,8 @@ QString FileDialogMemory::getExistingDirectory(
     parent, caption, currentDir, options);
 
   if (!result.isNull()) {
-    instance().m_Cache[dirID] = QFileInfo(result).path();
+    g_Cache[dirID] = result;
   }
 
   return result;
-}
-
-
-FileDialogMemory &FileDialogMemory::instance()
-{
-  static FileDialogMemory instance;
-  return instance;
 }
