@@ -937,6 +937,26 @@ void GeometrySettings::setListDialog(const QByteArray& v)
   m_Settings.setValue("geometry/ListDialog", v);
 }
 
+std::optional<QByteArray> GeometrySettings::getProblemsDialog() const
+{
+  return getOptional<QByteArray>(m_Settings, "geometry/ProblemsDialog");
+}
+
+void GeometrySettings::setProblemsDialog(const QByteArray& v)
+{
+  m_Settings.setValue("geometry/ProblemsDialog", v);
+}
+
+std::optional<QByteArray> GeometrySettings::getCategoriesDialog() const
+{
+  return getOptional<QByteArray>(m_Settings, "geometry/CategoriesDialog");
+}
+
+void GeometrySettings::setCategoriesDialog(const QByteArray& v)
+{
+  m_Settings.setValue("geometry/CategoriesDialog", v);
+}
+
 std::optional<int> GeometrySettings::getMainWindowMonitor() const
 {
   return getOptional<int>(m_Settings, "window_monitor");

@@ -29,6 +29,21 @@ ProblemsDialog::~ProblemsDialog()
   delete ui;
 }
 
+int ProblemsDialog::exec()
+{
+  auto& settings = Settings::instance();
+
+  if (auto v=settings.geometry().getProblemsDialog()) {
+    restoreGeometry(*v);
+  }
+
+  const int r = QDialog::exec();
+
+  settings.geometry().setProblemsDialog(saveGeometry());
+
+  return r;
+}
+
 void ProblemsDialog::runDiagnosis()
 {
   m_hasProblems = false;

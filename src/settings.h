@@ -64,6 +64,12 @@ public:
   std::optional<QByteArray> getListDialog() const;
   void setListDialog(const QByteArray& v);
 
+  std::optional<QByteArray> getProblemsDialog() const;
+  void setProblemsDialog(const QByteArray& v);
+
+  std::optional<QByteArray> getCategoriesDialog() const;
+  void setCategoriesDialog(const QByteArray& v);
+
   std::optional<int> getMainWindowMonitor() const;
   void setDockSize(const QString& name, int size);
 

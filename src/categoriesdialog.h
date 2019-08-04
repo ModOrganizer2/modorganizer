@@ -33,11 +33,15 @@ class CategoriesDialog;
 class CategoriesDialog : public MOBase::TutorableDialog
 {
   Q_OBJECT
-  
+
 public:
 
   explicit CategoriesDialog(QWidget *parent = 0);
   ~CategoriesDialog();
+
+  // also saves and restores geometry
+  //
+  int exec() override;
 
   /**
    * @brief store changes here to the global categories store (categories.h)

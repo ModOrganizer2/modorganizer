@@ -6164,24 +6164,20 @@ void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
 void MainWindow::on_actionNotifications_triggered()
 {
   updateProblemsButton();
-  ProblemsDialog problems(m_PluginContainer.plugins<QObject>(), this);
 
-  QSettings &settings = m_OrganizerCore.settings().directInterface();
-  QString key = QString("geometry/%1").arg(problems.objectName());
-  if (settings.contains(key)) {
-    problems.restoreGeometry(settings.value(key).toByteArray());
-  }
+  ProblemsDialog problems(m_PluginContainer.plugins<QObject>(), this);
   problems.exec();
-  settings.setValue(key, problems.saveGeometry());
+
   updateProblemsButton();
 }
 
 void MainWindow::on_actionChange_Game_triggered()
 {
-  if (QMessageBox::question(this, tr("Are you sure?"),
-                            tr("This will restart MO, continue?"),
-                            QMessageBox::Yes | QMessageBox::Cancel)
-      == QMessageBox::Yes) {
+  const auto r = QMessageBox::question(
+    this, tr("Are you sure?"), tr("This will restart MO, continue?"),
+    QMessageBox::Yes | QMessageBox::Cancel);
+
+  if (r == QMessageBox::Yes) {
     InstanceManager::instance().clearCurrentInstance();
     qApp->exit(INT_MAX);
   }
@@ -6206,16 +6202,10 @@ void MainWindow::on_displayCategoriesBtn_toggled(bool checked)
 void MainWindow::editCategories()
 {
   CategoriesDialog dialog(this);
-  QSettings &settings = m_OrganizerCore.settings().directInterface();
-  QString key = QString("geometry/%1").arg(dialog.objectName());
-  if (settings.contains(key)) {
-    dialog.restoreGeometry(settings.value(key).toByteArray());
-  }
+
   if (dialog.exec() == QDialog::Accepted) {
     dialog.commitChanges();
   }
-  settings.setValue(key, dialog.saveGeometry());
-
 }
 
 void MainWindow::deselectFilters()
