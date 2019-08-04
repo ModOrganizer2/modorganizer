@@ -354,41 +354,7 @@ MainWindow::MainWindow(Settings &settings
 
   TaskProgressManager::instance().tryCreateTaskbar();
 
-  // set up mod list
-  m_ModListSortProxy = m_OrganizerCore.createModListProxyModel();
-
-  ui->modList->setModel(m_ModListSortProxy);
-
-  GenericIconDelegate *contentDelegate = new GenericIconDelegate(ui->modList, Qt::UserRole + 3, ModList::COL_CONTENT, 150);
-  connect(ui->modList->header(), SIGNAL(sectionResized(int,int,int)), contentDelegate, SLOT(columnResized(int,int,int)));
-  ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
-  ModFlagIconDelegate *flagDelegate = new ModFlagIconDelegate(ui->modList, ModList::COL_FLAGS, 120);
-  connect(ui->modList->header(), SIGNAL(sectionResized(int,int,int)), flagDelegate, SLOT(columnResized(int,int,int)));
-  ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, flagDelegate);
-  ui->modList->setItemDelegateForColumn(ModList::COL_CONTENT, contentDelegate);
-  ui->modList->header()->installEventFilter(m_OrganizerCore.modList());
-  connect(ui->modList->header(), SIGNAL(sectionResized(int, int, int)), this, SLOT(modListSectionResized(int, int, int)));
-
-  bool modListAdjusted = registerWidgetState(ui->modList->objectName(), ui->modList->header(), "mod_list_state");
-
-  if (modListAdjusted) {
-    // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
-    for (int column = 0; column <= ModList::COL_LASTCOLUMN; ++column) {
-      int sectionSize = ui->modList->header()->sectionSize(column);
-      ui->modList->header()->resizeSection(column, sectionSize + 1);
-      ui->modList->header()->resizeSection(column, sectionSize);
-    }
-  } else {
-    // hide these columns by default
-    ui->modList->header()->setSectionHidden(ModList::COL_CONTENT, true);
-    ui->modList->header()->setSectionHidden(ModList::COL_MODID, true);
-    ui->modList->header()->setSectionHidden(ModList::COL_GAME, true);
-    ui->modList->header()->setSectionHidden(ModList::COL_INSTALLTIME, true);
-    ui->modList->header()->setSectionHidden(ModList::COL_NOTES, true);
-  }
-
-  ui->modList->header()->setSectionHidden(ModList::COL_NAME, false); // prevent the name-column from being hidden
-  ui->modList->installEventFilter(m_OrganizerCore.modList());
+  setupModList();
 
   // set up plugin list
   m_PluginListSortProxy = m_OrganizerCore.createPluginListProxyModel();
@@ -401,10 +367,14 @@ MainWindow::MainWindow(Settings &settings
   ui->bsaList->setLocalMoveOnly(true);
 
   initDownloadView();
-  bool pluginListAdjusted = registerWidgetState(ui->espList->objectName(), ui->espList->header(), "plugin_list_state");
+
+  bool pluginListAdjusted = registerWidgetState(
+    ui->espList->objectName(), ui->espList->header(), "plugin_list_state");
+
   registerWidgetState(ui->dataTree->objectName(), ui->dataTree->header());
-  registerWidgetState(ui->downloadView->objectName(),
-                      ui->downloadView->header());
+
+  registerWidgetState(
+    ui->downloadView->objectName(), ui->downloadView->header());
 
   ui->splitter->setStretchFactor(0, 3);
   ui->splitter->setStretchFactor(1, 2);
@@ -445,8 +415,6 @@ MainWindow::MainWindow(Settings &settings
   connect(&m_PluginContainer, SIGNAL(diagnosisUpdate()), this, SLOT(updateProblemsButton()));
 
   connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(saveSelectionChanged(QListWidgetItem*)));
-
-  connect(ui->modList, SIGNAL(dropModeUpdate(bool)), m_OrganizerCore.modList(), SLOT(dropModeUpdate(bool)));
 
   connect(m_ModListSortProxy, SIGNAL(filterActive(bool)), this, SLOT(modFilterActive(bool)));
   connect(m_ModListSortProxy, SIGNAL(layoutChanged()), this, SLOT(updateModCount()));
@@ -494,7 +462,6 @@ MainWindow::MainWindow(Settings &settings
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
   connect(ui->tabWidget, SIGNAL(currentChanged(int)), &TutorialManager::instance(), SIGNAL(tabChanged(int)));
-  connect(ui->modList->header(), SIGNAL(sortIndicatorChanged(int,Qt::SortOrder)), this, SLOT(modListSortIndicatorChanged(int,Qt::SortOrder)));
   connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(toolBar_customContextMenuRequested(QPoint)));
   connect(ui->menuToolbars, &QMenu::aboutToShow, [&]{ updateToolbarMenu(); });
   connect(ui->menuView, &QMenu::aboutToShow, [&]{ updateViewMenu(); });
@@ -508,7 +475,6 @@ MainWindow::MainWindow(Settings &settings
   connect(&m_CheckBSATimer, SIGNAL(timeout()), this, SLOT(checkBSAList()));
 
   connect(ui->espList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(esplistSelectionsChanged(QItemSelection)));
-  connect(ui->modList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(modlistSelectionsChanged(QItemSelection)));
 
   new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Enter), this, SLOT(openExplorer_activated()));
   new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Return), this, SLOT(openExplorer_activated()));
@@ -568,6 +534,76 @@ MainWindow::MainWindow(Settings &settings
   resetActionIcons();
   updatePluginCount();
   updateModCount();
+}
+
+void MainWindow::setupModList()
+{
+  m_ModListSortProxy = m_OrganizerCore.createModListProxyModel();
+  ui->modList->setModel(m_ModListSortProxy);
+  ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
+
+
+  connect(
+    ui->modList, SIGNAL(dropModeUpdate(bool)),
+    m_OrganizerCore.modList(), SLOT(dropModeUpdate(bool)));
+
+  connect(
+    ui->modList->header(), SIGNAL(sortIndicatorChanged(int,Qt::SortOrder)),
+    this, SLOT(modListSortIndicatorChanged(int,Qt::SortOrder)));
+
+  connect(
+    ui->modList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)),
+    this, SLOT(modlistSelectionsChanged(QItemSelection)));
+
+  connect(
+    ui->modList->header(), SIGNAL(sectionResized(int, int, int)),
+    this, SLOT(modListSectionResized(int, int, int)));
+
+
+  GenericIconDelegate *contentDelegate = new GenericIconDelegate(
+    ui->modList, Qt::UserRole + 3, ModList::COL_CONTENT, 150);
+
+  connect(
+    ui->modList->header(), SIGNAL(sectionResized(int,int,int)),
+    contentDelegate, SLOT(columnResized(int,int,int)));
+
+
+  ModFlagIconDelegate *flagDelegate = new ModFlagIconDelegate(
+    ui->modList, ModList::COL_FLAGS, 120);
+
+  connect(
+    ui->modList->header(), SIGNAL(sectionResized(int,int,int)),
+    flagDelegate, SLOT(columnResized(int,int,int)));
+
+
+  ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, flagDelegate);
+  ui->modList->setItemDelegateForColumn(ModList::COL_CONTENT, contentDelegate);
+  ui->modList->header()->installEventFilter(m_OrganizerCore.modList());
+
+
+  const bool modListAdjusted = registerWidgetState(
+    ui->modList->objectName(), ui->modList->header(), "mod_list_state");
+
+  if (modListAdjusted) {
+    // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
+    for (int column = 0; column <= ModList::COL_LASTCOLUMN; ++column) {
+      int sectionSize = ui->modList->header()->sectionSize(column);
+      ui->modList->header()->resizeSection(column, sectionSize + 1);
+      ui->modList->header()->resizeSection(column, sectionSize);
+    }
+  } else {
+    // hide these columns by default
+    ui->modList->header()->setSectionHidden(ModList::COL_CONTENT, true);
+    ui->modList->header()->setSectionHidden(ModList::COL_MODID, true);
+    ui->modList->header()->setSectionHidden(ModList::COL_GAME, true);
+    ui->modList->header()->setSectionHidden(ModList::COL_INSTALLTIME, true);
+    ui->modList->header()->setSectionHidden(ModList::COL_NOTES, true);
+  }
+
+  // prevent the name-column from being hidden
+  ui->modList->header()->setSectionHidden(ModList::COL_NAME, false);
+
+  ui->modList->installEventFilter(m_OrganizerCore.modList());
 }
 
 void MainWindow::resetActionIcons()

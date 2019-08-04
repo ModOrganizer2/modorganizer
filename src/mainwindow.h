@@ -698,6 +698,7 @@ private slots: // ui slots
   void on_categoriesOrBtn_toggled(bool checked);
   void on_managedArchiveLabel_linkHovered(const QString &link);
 
+  void setupModList();
   void showMenuBar(bool b);
   void showStatusBar(bool b);
 };
