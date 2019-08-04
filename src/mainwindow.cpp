@@ -368,18 +368,24 @@ MainWindow::MainWindow(Settings &settings
 
   initDownloadView();
 
-  bool pluginListAdjusted = registerWidgetState(
-    ui->espList->objectName(), ui->espList->header(), "plugin_list_state");
+  bool pluginListAdjusted = false;
+  if (auto v=m_OrganizerCore.settings().geometry().getPluginListHeader()) {
+    ui->espList->header()->restoreState(*v);
+    pluginListAdjusted = true;
+  }
 
-  registerWidgetState(ui->dataTree->objectName(), ui->dataTree->header());
+  if (auto v=m_OrganizerCore.settings().geometry().getDataTreeHeader()) {
+    ui->dataTree->header()->restoreState(*v);
+  }
 
-  registerWidgetState(
-    ui->downloadView->objectName(), ui->downloadView->header());
+  if (auto v=m_OrganizerCore.settings().geometry().getDownloadViewHeader()) {
+    ui->downloadView->header()->restoreState(*v);
+  }
 
   ui->splitter->setStretchFactor(0, 3);
   ui->splitter->setStretchFactor(1, 2);
 
-  resizeLists(modListAdjusted, pluginListAdjusted);
+  resizeLists(pluginListAdjusted);
 
   QMenu *linkMenu = new QMenu(this);
   m_LinkToolbar = linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Toolbar and Menu"), this, SLOT(linkToolbar()));
@@ -581,10 +587,9 @@ void MainWindow::setupModList()
   ui->modList->header()->installEventFilter(m_OrganizerCore.modList());
 
 
-  const bool modListAdjusted = registerWidgetState(
-    ui->modList->objectName(), ui->modList->header(), "mod_list_state");
+  if (auto v=m_OrganizerCore.settings().geometry().getModListHeader()) {
+    ui->modList->header()->restoreState(*v);
 
-  if (modListAdjusted) {
     // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
     for (int column = 0; column <= ModList::COL_LASTCOLUMN; ++column) {
       int sectionSize = ui->modList->header()->sectionSize(column);
@@ -598,6 +603,13 @@ void MainWindow::setupModList()
     ui->modList->header()->setSectionHidden(ModList::COL_GAME, true);
     ui->modList->header()->setSectionHidden(ModList::COL_INSTALLTIME, true);
     ui->modList->header()->setSectionHidden(ModList::COL_NOTES, true);
+
+    // resize mod list to fit content
+    for (int i = 0; i < ui->modList->header()->count(); ++i) {
+      ui->modList->header()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
+    }
+
+    ui->modList->header()->setSectionResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
   }
 
   // prevent the name-column from being hidden
@@ -720,16 +732,8 @@ void MainWindow::disconnectPlugins()
 }
 
 
-void MainWindow::resizeLists(bool modListCustom, bool pluginListCustom)
+void MainWindow::resizeLists(bool pluginListCustom)
 {
-  if (!modListCustom) {
-    // resize mod list to fit content
-    for (int i = 0; i < ui->modList->header()->count(); ++i) {
-      ui->modList->header()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
-    }
-    ui->modList->header()->setSectionResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
-  }
-
   // ensure the columns aren't so small you can't see them any more
   for (int i = 0; i < ui->modList->header()->count(); ++i) {
     if (ui->modList->header()->sectionSize(i) < 10) {
@@ -2391,10 +2395,10 @@ void MainWindow::storeSettings(Settings& s) {
     settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
     settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
 
-    for (const std::pair<QString, QHeaderView*> kv : m_PersistedGeometry) {
-      QString key = QString("geometry/") + kv.first;
-      settings.setValue(key, kv.second->saveState());
-    }
+    s.geometry().setPluginListHeader(ui->espList->header()->saveState());
+    s.geometry().setDataTreeHeader(ui->dataTree->header()->saveState());
+    s.geometry().setDownloadViewHeader(ui->downloadView->header()->saveState());
+    s.geometry().setModListHeader(ui->modList->header()->saveState());
 
     DockFixer::save(this, s);
   }
@@ -6889,31 +6893,6 @@ void MainWindow::dropLocalFile(const QUrl &url, const QString &outputDir, bool m
   if (!success) {
     const auto e = GetLastError();
     log::error("file operation failed: {}", formatSystemMessage(e));
-  }
-}
-
-bool MainWindow::registerWidgetState(const QString &name, QHeaderView *view, const char *oldSettingName) {
-  // register the view so it's geometry gets saved at exit
-  m_PersistedGeometry.push_back(std::make_pair(name, view));
-
-  // also, restore the geometry if it was saved before
-  QSettings &settings = m_OrganizerCore.settings().directInterface();
-
-  QString key = QString("geometry/%1").arg(name);
-  QByteArray data;
-
-  if ((oldSettingName != nullptr) && settings.contains(oldSettingName)) {
-    data = settings.value(oldSettingName).toByteArray();
-    settings.remove(oldSettingName);
-  } else if (settings.contains(key)) {
-    data = settings.value(key).toByteArray();
-  }
-
-  if (!data.isEmpty()) {
-    view->restoreState(data);
-    return true;
-  } else {
-    return false;
   }
 }
 

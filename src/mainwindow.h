@@ -316,8 +316,6 @@ private:
 
   void dropLocalFile(const QUrl &url, const QString &outputDir, bool move);
 
-  bool registerWidgetState(const QString &name, QHeaderView *view, const char *oldSettingName = nullptr);
-
   void sendSelectedModsToPriority(int newPriority);
   void sendSelectedPluginsToPriority(int newPriority);
 
@@ -404,8 +402,6 @@ private:
   bool m_closing{ false };
 
   bool m_showArchiveData{ true };
-
-  std::vector<std::pair<QString, QHeaderView*>> m_PersistedGeometry;
 
   MOBase::DelayedFileWriter m_ArchiveListWriter;
 
@@ -604,10 +600,7 @@ private slots:
 
   void expandModList(const QModelIndex &index);
 
-  /**
-   * @brief resize columns in mod list and plugin list to content
-   */
-  void resizeLists(bool modListCustom, bool pluginListCustom);
+  void resizeLists(bool pluginListCustom);
 
   /**
    * @brief allow columns in mod list and plugin list to be resized

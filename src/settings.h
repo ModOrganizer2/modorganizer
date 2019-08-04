@@ -70,6 +70,18 @@ public:
   std::optional<QByteArray> getCategoriesDialog() const;
   void setCategoriesDialog(const QByteArray& v);
 
+  std::optional<QByteArray> getPluginListHeader() const;
+  void setPluginListHeader(const QByteArray& v) const;
+
+  std::optional<QByteArray> getDataTreeHeader() const;
+  void setDataTreeHeader(const QByteArray& v) const;
+
+  std::optional<QByteArray> getDownloadViewHeader() const;
+  void setDownloadViewHeader(const QByteArray& v) const;
+
+  std::optional<QByteArray> getModListHeader() const;
+  void setModListHeader(const QByteArray& v) const;
+
   std::optional<int> getMainWindowMonitor() const;
   void setDockSize(const QString& name, int size);
 

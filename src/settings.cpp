@@ -957,6 +957,46 @@ void GeometrySettings::setCategoriesDialog(const QByteArray& v)
   m_Settings.setValue("geometry/CategoriesDialog", v);
 }
 
+std::optional<QByteArray> GeometrySettings::getPluginListHeader() const
+{
+  return getOptional<QByteArray>(m_Settings, "geometry/espList");
+}
+
+void GeometrySettings::setPluginListHeader(const QByteArray& v) const
+{
+  m_Settings.setValue("geometry/espList", v);
+}
+
+std::optional<QByteArray> GeometrySettings::getDataTreeHeader() const
+{
+  return getOptional<QByteArray>(m_Settings, "geometry/dataTree");
+}
+
+void GeometrySettings::setDataTreeHeader(const QByteArray& v) const
+{
+  m_Settings.setValue("geometry/dataTree", v);
+}
+
+std::optional<QByteArray> GeometrySettings::getDownloadViewHeader() const
+{
+  return getOptional<QByteArray>(m_Settings, "geometry/downloadView");
+}
+
+void GeometrySettings::setDownloadViewHeader(const QByteArray& v) const
+{
+  m_Settings.setValue("geometry/downloadView", v);
+}
+
+std::optional<QByteArray> GeometrySettings::getModListHeader() const
+{
+  return getOptional<QByteArray>(m_Settings, "geometry/modList");
+}
+
+void GeometrySettings::setModListHeader(const QByteArray& v) const
+{
+  m_Settings.setValue("geometry/modList", v);
+}
+
 std::optional<int> GeometrySettings::getMainWindowMonitor() const
 {
   return getOptional<int>(m_Settings, "window_monitor");
