@@ -83,7 +83,6 @@ class QProgressDialog;
 class QTranslator;
 class QTreeWidgetItem;
 class QUrl;
-class QSettings;
 class QWidget;
 
 #ifndef Q_MOC_RUN

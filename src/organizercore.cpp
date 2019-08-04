@@ -1297,7 +1297,8 @@ bool OrganizerCore::previewFileWithAlternatives(
   }
 
   // set up preview dialog
-  PreviewDialog preview(fileName);
+  PreviewDialog preview(fileName, parent);
+
   auto addFunc = [&](int originId) {
     FilesOrigin &origin = directoryStructure()->getOriginByID(originId);
     QString filePath = QDir::fromNativeSeparators(ToQString(origin.getPath())) + "/" + fileName;
@@ -1352,16 +1353,7 @@ bool OrganizerCore::previewFileWithAlternatives(
   }
 
   if (preview.numVariants() > 0) {
-    QSettings &s = settings().directInterface();
-    QString key = QString("geometry/%1").arg(preview.objectName());
-    if (s.contains(key)) {
-      preview.restoreGeometry(s.value(key).toByteArray());
-    }
-
     preview.exec();
-
-    s.setValue(key, preview.saveGeometry());
-
     return true;
   }
   else {
@@ -1381,7 +1373,7 @@ bool OrganizerCore::previewFile(
     return false;
   }
 
-  PreviewDialog preview(path);
+  PreviewDialog preview(path, parent);
 
   QWidget *wid = m_PluginContainer->previewGenerator().genPreview(path);
   if (wid == nullptr) {
@@ -1390,16 +1382,7 @@ bool OrganizerCore::previewFile(
   }
 
   preview.addVariant(originName, wid);
-
-  QSettings &s = settings().directInterface();
-  QString key = QString("geometry/%1").arg(preview.objectName());
-  if (s.contains(key)) {
-    preview.restoreGeometry(s.value(key).toByteArray());
-  }
-
   preview.exec();
-
-  s.setValue(key, preview.saveGeometry());
 
   return true;
 }

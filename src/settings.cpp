@@ -957,6 +957,16 @@ void GeometrySettings::setCategoriesDialog(const QByteArray& v)
   m_Settings.setValue("geometry/CategoriesDialog", v);
 }
 
+std::optional<QByteArray> GeometrySettings::getPreviewDialog() const
+{
+  return getOptional<QByteArray>(m_Settings, "geometry/PreviewDialog");
+}
+
+void GeometrySettings::setPreviewDialog(const QByteArray& v)
+{
+  m_Settings.setValue("geometry/PreviewDialog", v);
+}
+
 std::optional<QByteArray> GeometrySettings::getPluginListHeader() const
 {
   return getOptional<QByteArray>(m_Settings, "geometry/espList");

@@ -70,6 +70,9 @@ public:
   std::optional<QByteArray> getCategoriesDialog() const;
   void setCategoriesDialog(const QByteArray& v);
 
+  std::optional<QByteArray> getPreviewDialog() const;
+  void setPreviewDialog(const QByteArray& v);
+
   std::optional<QByteArray> getPluginListHeader() const;
   void setPluginListHeader(const QByteArray& v) const;
 
