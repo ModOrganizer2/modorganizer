@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "settings.h"
 #include "serverinfo.h"
+#include "executableslist.h"
 #include "appconfig.h"
 #include <utility.h>
 #include <iplugingame.h>
@@ -798,6 +799,49 @@ void Settings::setRecentDirectories(const std::map<QString, QString>& map)
     m_Settings.setValue("directory", p.second);
 
     ++index;
+  }
+
+  m_Settings.endArray();
+}
+
+std::vector<std::map<QString, QVariant>> Settings::getExecutables() const
+{
+  const int count = m_Settings.beginReadArray("customExecutables");
+  std::vector<std::map<QString, QVariant>> v;
+
+  for (int i=0; i<count; ++i) {
+    m_Settings.setArrayIndex(i);
+
+    std::map<QString, QVariant> map;
+
+    const auto keys = m_Settings.childKeys();
+    for (auto&& key : keys) {
+      map[key] = m_Settings.value(key);
+    }
+
+    v.push_back(map);
+  }
+
+  m_Settings.endArray();
+
+  return v;
+}
+
+void Settings::setExecutables(const std::vector<std::map<QString, QVariant>>& v)
+{
+  m_Settings.remove("customExecutables");
+  m_Settings.beginWriteArray("customExecutables");
+
+  int i = 0;
+
+  for (const auto& map : v) {
+    m_Settings.setArrayIndex(i);
+
+    for (auto&& p : map) {
+      m_Settings.setValue(p.first, p.second);
+    }
+
+    ++i;
   }
 
   m_Settings.endArray();

@@ -75,33 +75,28 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, const Settings& s)
   // executables from 2.2.0, see upgradeFromCustom()
   bool needsUpgrade = false;
 
-  auto& settings = const_cast<QSettings&>(s.directInterface());
-
-  int numCustomExecutables = settings.beginReadArray("customExecutables");
-  for (int i = 0; i < numCustomExecutables; ++i) {
-    settings.setArrayIndex(i);
-
+  for (auto& map : s.getExecutables()) {
     Executable::Flags flags;
-    if (settings.value("toolbar", false).toBool())
+
+    if (map["toolbar"].toBool())
       flags |= Executable::ShowInToolbar;
-    if (settings.value("ownicon", false).toBool())
+
+    if (map["ownicon"].toBool())
       flags |= Executable::UseApplicationIcon;
 
-    if (settings.contains("custom")) {
+    if (map.contains("custom")) {
       // the "custom" setting only exists in older versions
       needsUpgrade = true;
     }
 
     setExecutable(Executable()
-      .title(settings.value("title").toString())
-      .binaryInfo(settings.value("binary").toString())
-      .arguments(settings.value("arguments").toString())
-      .steamAppID(settings.value("steamAppID", "").toString())
-      .workingDirectory(settings.value("workingDirectory", "").toString())
+      .title(map["title"].toString())
+      .binaryInfo(map["binary"].toString())
+      .arguments(map["arguments"].toString())
+      .steamAppID(map["steamAppID"].toString())
+      .workingDirectory(map["workingDirectory"].toString())
       .flags(flags));
   }
-
-  settings.endArray();
 
   addFromPlugin(game, IgnoreExisting);
 
@@ -113,26 +108,23 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, const Settings& s)
 
 void ExecutablesList::store(Settings& s)
 {
-  auto& settings = s.directInterface();
-
-  settings.remove("customExecutables");
-  settings.beginWriteArray("customExecutables");
-
-  int count = 0;
+  std::vector<std::map<QString, QVariant>> v;
 
   for (const auto& item : *this) {
-    settings.setArrayIndex(count++);
+    std::map<QString, QVariant> map;
 
-    settings.setValue("title", item.title());
-    settings.setValue("toolbar", item.isShownOnToolbar());
-    settings.setValue("ownicon", item.usesOwnIcon());
-    settings.setValue("binary", item.binaryInfo().absoluteFilePath());
-    settings.setValue("arguments", item.arguments());
-    settings.setValue("workingDirectory", item.workingDirectory());
-    settings.setValue("steamAppID", item.steamAppID());
+    map["title"] = item.title();
+    map["toolbar"] = item.isShownOnToolbar();
+    map["ownicon"] = item.usesOwnIcon();
+    map["binary"] = item.binaryInfo().absoluteFilePath();
+    map["arguments"] = item.arguments();
+    map["workingDirectory"] = item.workingDirectory();
+    map["steamAppID"] = item.steamAppID();
+
+    v.push_back(std::move(map));
   }
 
-  settings.endArray();
+  s.setExecutables(v);
 }
 
 std::vector<Executable> ExecutablesList::getPluginExecutables(

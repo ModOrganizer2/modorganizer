@@ -221,6 +221,9 @@ public:
   std::map<QString, QString> getRecentDirectories() const;
   void setRecentDirectories(const std::map<QString, QString>& map);
 
+  std::vector<std::map<QString, QVariant>> getExecutables() const;
+  void setExecutables(const std::vector<std::map<QString, QVariant>>& v);
+
   GeometrySettings& geometry();
   const GeometrySettings& geometry() const;
 
