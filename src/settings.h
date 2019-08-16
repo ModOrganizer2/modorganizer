@@ -30,6 +30,18 @@ namespace MOBase {
 
 class PluginContainer;
 struct ServerInfo;
+class Settings;
+
+class GeometrySaver
+{
+public:
+  GeometrySaver(Settings& s, QDialog* dialog);
+  ~GeometrySaver();
+
+private:
+  Settings& m_settings;
+  QDialog* m_dialog;
+};
 
 
 class GeometrySettings
@@ -37,53 +49,16 @@ class GeometrySettings
 public:
   GeometrySettings(QSettings& s);
 
-  std::optional<QByteArray> getMainWindow() const;
-  std::optional<QByteArray> getMainWindowState() const;
   std::optional<QSize> getToolbarSize() const;
   std::optional<Qt::ToolButtonStyle> getToolbarButtonStyle() const;
+
   std::optional<bool> getMenubarVisible() const;
   std::optional<bool> getStatusbarVisible() const;
   std::optional<QByteArray> getMainSplitterState() const;
   std::optional<bool> getFiltersVisible() const;
 
-  std::optional<QByteArray> getExecutablesDialog() const;
-  void setExecutablesDialog(const QByteArray& v);
-
-  std::optional<QByteArray> getProfilesDialog() const;
-  void setProfilesDialog(const QByteArray& v);
-
-  std::optional<QByteArray> getOverwriteDialog() const;
-  void setOverwriteDialog(const QByteArray& v);
-
-  std::optional<QByteArray> getModInfoDialog() const;
-  void setModInfoDialog(const QByteArray& v) const;
-
   QStringList getModInfoTabOrder() const;
   void setModInfoTabOrder(const QString& names);
-
-  std::optional<QByteArray> getListDialog() const;
-  void setListDialog(const QByteArray& v);
-
-  std::optional<QByteArray> getProblemsDialog() const;
-  void setProblemsDialog(const QByteArray& v);
-
-  std::optional<QByteArray> getCategoriesDialog() const;
-  void setCategoriesDialog(const QByteArray& v);
-
-  std::optional<QByteArray> getPreviewDialog() const;
-  void setPreviewDialog(const QByteArray& v);
-
-  std::optional<QByteArray> getPluginListHeader() const;
-  void setPluginListHeader(const QByteArray& v) const;
-
-  std::optional<QByteArray> getDataTreeHeader() const;
-  void setDataTreeHeader(const QByteArray& v) const;
-
-  std::optional<QByteArray> getDownloadViewHeader() const;
-  void setDownloadViewHeader(const QByteArray& v) const;
-
-  std::optional<QByteArray> getModListHeader() const;
-  void setModListHeader(const QByteArray& v) const;
 
   std::optional<int> getMainWindowMonitor() const;
   void setDockSize(const QString& name, int size);
@@ -226,6 +201,19 @@ public:
 
   GeometrySettings& geometry();
   const GeometrySettings& geometry() const;
+
+
+  void saveGeometry(const QWidget* w);
+  bool restoreGeometry(QWidget* w) const;
+
+  void saveState(const QMainWindow* window);
+  bool restoreState(QMainWindow* window) const;
+
+  void saveState(const QHeaderView* header);
+  bool restoreState(QHeaderView* header) const;
+
+  void saveState(const QToolBar* toolbar);
+  bool restoreState(QToolBar* toolbar) const;
 
 
   /**

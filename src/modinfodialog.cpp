@@ -210,10 +210,8 @@ void ModInfoDialog::createTabs()
 
 int ModInfoDialog::exec()
 {
+  GeometrySaver gs(Settings::instance(), this);
   restoreState();
-  if (auto v=m_core->settings().geometry().getModInfoDialog()) {
-    restoreGeometry(*v);
-  }
 
   // whether to select the first tab; if the main window requested a specific
   // tab, it is selected when encountered in update()
@@ -226,9 +224,7 @@ int ModInfoDialog::exec()
   }
 
   const int r = TutorableDialog::exec();
-
   saveState();
-  m_core->settings().geometry().setModInfoDialog(saveGeometry());
 
   return r;
 }

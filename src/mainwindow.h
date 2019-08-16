@@ -347,11 +347,9 @@ private:
   int m_OldProfileIndex;
 
   std::vector<QString> m_ModNameList; // the mod-list to go with the directory structure
-  bool m_Refreshing;
 
   QStringList m_DefaultArchives;
 
-  QAbstractItemModel *m_ModListGroupingProxy;
   ModListSortProxy *m_ModListSortProxy;
 
   PluginListSortProxy *m_PluginListSortProxy;
@@ -366,8 +364,6 @@ private:
   QAction* m_browseModPage;
 
   CategoryFactory &m_CategoryFactory;
-
-  bool m_LoginAttempted;
 
   QTimer m_CheckBSATimer;
   QTimer m_SaveMetaTimer;

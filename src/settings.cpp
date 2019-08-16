@@ -884,20 +884,112 @@ void Settings::dump() const
   m_Settings.endGroup();
 }
 
+QString widgetNameWithTopLevel(const QWidget* widget)
+{
+  QStringList components;
+
+  auto* tl = widget->window();
+
+  if (tl == widget) {
+    // this is a top level widget, such as a dialog
+    components.push_back(widget->objectName());
+  } else {
+    // this is a widget
+    const auto toplevelName = tl->objectName();
+    if (!toplevelName.isEmpty()) {
+      components.push_back(toplevelName);
+    }
+
+    const auto widgetName = widget->objectName();
+    if (!widgetName.isEmpty()) {
+      components.push_back(widgetName);
+    }
+  }
+
+  if (components.isEmpty()) {
+    // can't do much
+    return "unknown_widget";
+  }
+
+  return components.join("_");
+}
+
+QString widgetName(const QMainWindow* w)
+{
+  return w->objectName();
+}
+
+QString widgetName(const QHeaderView* w)
+{
+  return widgetNameWithTopLevel(w->parentWidget());
+}
+
+QString widgetName(const QWidget* w)
+{
+  return widgetNameWithTopLevel(w);
+}
+
+template <class Widget>
+QString geoSettingName(const Widget* widget)
+{
+  return "geometry/" + widgetName(widget) + "_geometry";
+}
+
+template <class Widget>
+QString stateSettingName(const Widget* widget)
+{
+  return "geometry/" + widgetName(widget) + "_state";
+}
+
+void Settings::saveGeometry(const QWidget* w)
+{
+  m_Settings.setValue(geoSettingName(w), w->saveGeometry());
+}
+
+bool Settings::restoreGeometry(QWidget* w) const
+{
+  if (auto v=getOptional<QByteArray>(m_Settings, geoSettingName(w))) {
+    w->restoreGeometry(*v);
+    return true;
+  }
+
+  return false;
+}
+
+void Settings::saveState(const QMainWindow* w)
+{
+  m_Settings.setValue(stateSettingName(w), w->saveGeometry());
+}
+
+bool Settings::restoreState(QMainWindow* w) const
+{
+  if (auto v=getOptional<QByteArray>(m_Settings, stateSettingName(w))) {
+    w->restoreState(*v);
+    return true;
+  }
+
+  return false;
+}
+
+void Settings::saveState(const QHeaderView* w)
+{
+  m_Settings.setValue(stateSettingName(w), w->saveState());
+}
+
+bool Settings::restoreState(QHeaderView* w) const
+{
+  if (auto v=getOptional<QByteArray>(m_Settings, stateSettingName(w))) {
+    w->restoreState(*v);
+    return true;
+  }
+
+  return false;
+}
+
 
 GeometrySettings::GeometrySettings(QSettings& s)
   : m_Settings(s)
 {
-}
-
-std::optional<QByteArray> GeometrySettings::getMainWindow() const
-{
-  return getOptional<QByteArray>(m_Settings, "window_geometry");
-}
-
-std::optional<QByteArray> GeometrySettings::getMainWindowState() const
-{
-  return getOptional<QByteArray>(m_Settings, "window_state");
 }
 
 std::optional<QSize> GeometrySettings::getToolbarSize() const
@@ -932,46 +1024,6 @@ std::optional<QByteArray> GeometrySettings::getMainSplitterState() const
 std::optional<bool> GeometrySettings::getFiltersVisible() const
 {
   return getOptional<bool>(m_Settings, "filters_visible");
-}
-
-std::optional<QByteArray> GeometrySettings::getExecutablesDialog() const
-{
-  return getOptional<QByteArray>(m_Settings, "geometry/EditExecutablesDialog");
-}
-
-void GeometrySettings::setExecutablesDialog(const QByteArray& v)
-{
-  m_Settings.setValue("geometry/EditExecutablesDialog", v);
-}
-
-std::optional<QByteArray> GeometrySettings::getProfilesDialog() const
-{
-  return getOptional<QByteArray>(m_Settings, "geometry/ProfilesDialog");
-}
-
-void GeometrySettings::setProfilesDialog(const QByteArray& v)
-{
-  m_Settings.setValue("geometry/ProfilesDialog", v);
-}
-
-std::optional<QByteArray> GeometrySettings::getOverwriteDialog() const
-{
-  return getOptional<QByteArray>(m_Settings, "geometry/__overwriteDialog");
-}
-
-void GeometrySettings::setOverwriteDialog(const QByteArray& v)
-{
-  m_Settings.setValue("geometry/__overwriteDialog", v);
-}
-
-std::optional<QByteArray> GeometrySettings::getModInfoDialog() const
-{
-  return getOptional<QByteArray>(m_Settings, "geometry/ModInfoDialog");
-}
-
-void GeometrySettings::setModInfoDialog(const QByteArray& v) const
-{
-  m_Settings.setValue("geometry/ModInfoDialog", v);
 }
 
 QStringList GeometrySettings::getModInfoTabOrder() const
@@ -1010,86 +1062,6 @@ void GeometrySettings::setModInfoTabOrder(const QString& names)
   m_Settings.setValue("mod_info_tab_order", names);
 }
 
-std::optional<QByteArray> GeometrySettings::getListDialog() const
-{
-  return getOptional<QByteArray>(m_Settings, "geometry/ListDialog");
-}
-
-void GeometrySettings::setListDialog(const QByteArray& v)
-{
-  m_Settings.setValue("geometry/ListDialog", v);
-}
-
-std::optional<QByteArray> GeometrySettings::getProblemsDialog() const
-{
-  return getOptional<QByteArray>(m_Settings, "geometry/ProblemsDialog");
-}
-
-void GeometrySettings::setProblemsDialog(const QByteArray& v)
-{
-  m_Settings.setValue("geometry/ProblemsDialog", v);
-}
-
-std::optional<QByteArray> GeometrySettings::getCategoriesDialog() const
-{
-  return getOptional<QByteArray>(m_Settings, "geometry/CategoriesDialog");
-}
-
-void GeometrySettings::setCategoriesDialog(const QByteArray& v)
-{
-  m_Settings.setValue("geometry/CategoriesDialog", v);
-}
-
-std::optional<QByteArray> GeometrySettings::getPreviewDialog() const
-{
-  return getOptional<QByteArray>(m_Settings, "geometry/PreviewDialog");
-}
-
-void GeometrySettings::setPreviewDialog(const QByteArray& v)
-{
-  m_Settings.setValue("geometry/PreviewDialog", v);
-}
-
-std::optional<QByteArray> GeometrySettings::getPluginListHeader() const
-{
-  return getOptional<QByteArray>(m_Settings, "geometry/espList");
-}
-
-void GeometrySettings::setPluginListHeader(const QByteArray& v) const
-{
-  m_Settings.setValue("geometry/espList", v);
-}
-
-std::optional<QByteArray> GeometrySettings::getDataTreeHeader() const
-{
-  return getOptional<QByteArray>(m_Settings, "geometry/dataTree");
-}
-
-void GeometrySettings::setDataTreeHeader(const QByteArray& v) const
-{
-  m_Settings.setValue("geometry/dataTree", v);
-}
-
-std::optional<QByteArray> GeometrySettings::getDownloadViewHeader() const
-{
-  return getOptional<QByteArray>(m_Settings, "geometry/downloadView");
-}
-
-void GeometrySettings::setDownloadViewHeader(const QByteArray& v) const
-{
-  m_Settings.setValue("geometry/downloadView", v);
-}
-
-std::optional<QByteArray> GeometrySettings::getModListHeader() const
-{
-  return getOptional<QByteArray>(m_Settings, "geometry/modList");
-}
-
-void GeometrySettings::setModListHeader(const QByteArray& v) const
-{
-  m_Settings.setValue("geometry/modList", v);
-}
-
 std::optional<int> GeometrySettings::getMainWindowMonitor() const
 {
   return getOptional<int>(m_Settings, "window_monitor");
@@ -1108,4 +1080,16 @@ std::optional<int> GeometrySettings::getDockSize(const QString& name) const
 std::optional<bool> GeometrySettings::isCategoryListVisible() const
 {
   return getOptional<bool>(m_Settings, "categorylist_visible");
+}
+
+
+GeometrySaver::GeometrySaver(Settings& s, QDialog* dialog)
+  : m_settings(s), m_dialog(dialog)
+{
+  m_settings.restoreGeometry(m_dialog);
+}
+
+GeometrySaver::~GeometrySaver()
+{
+  m_settings.saveGeometry(m_dialog);
 }

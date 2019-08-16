@@ -86,17 +86,8 @@ ProfilesDialog::~ProfilesDialog()
 
 int ProfilesDialog::exec()
 {
-  auto& settings = Settings::instance();
-
-  if (auto v=settings.geometry().getProfilesDialog()) {
-    restoreGeometry(*v);
-  }
-
-  const int r = QDialog::exec();
-
-  settings.geometry().setProfilesDialog(saveGeometry());
-
-  return r;
+  GeometrySaver gs(Settings::instance(), this);
+  return QDialog::exec();
 }
 
 void ProfilesDialog::showEvent(QShowEvent *event)

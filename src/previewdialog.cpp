@@ -20,17 +20,8 @@ PreviewDialog::~PreviewDialog()
 
 int PreviewDialog::exec()
 {
-  auto& settings = Settings::instance();
-
-  if (auto v=settings.geometry().getPreviewDialog()) {
-    restoreGeometry(*v);
-  }
-
-  const int r = QDialog::exec();
-
-  settings.geometry().setPreviewDialog(saveGeometry());
-
-  return r;
+  GeometrySaver gs(Settings::instance(), this);
+  return QDialog::exec();
 }
 
 void PreviewDialog::addVariant(const QString &modName, QWidget *widget)

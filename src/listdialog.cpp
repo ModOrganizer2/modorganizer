@@ -35,17 +35,8 @@ ListDialog::~ListDialog()
 
 int ListDialog::exec()
 {
-  auto& settings = Settings::instance();
-
-  if (auto v=settings.geometry().getListDialog()) {
-    restoreGeometry(*v);
-  }
-
-  const int r = QDialog::exec();
-
-  settings.geometry().setListDialog(saveGeometry());
-
-  return r;
+  GeometrySaver gs(Settings::instance(), this);
+  return QDialog::exec();
 }
 
 void ListDialog::setChoices(QStringList choices)

@@ -31,17 +31,8 @@ ProblemsDialog::~ProblemsDialog()
 
 int ProblemsDialog::exec()
 {
-  auto& settings = Settings::instance();
-
-  if (auto v=settings.geometry().getProblemsDialog()) {
-    restoreGeometry(*v);
-  }
-
-  const int r = QDialog::exec();
-
-  settings.geometry().setProblemsDialog(saveGeometry());
-
-  return r;
+  GeometrySaver gs(Settings::instance(), this);
+  return QDialog::exec();
 }
 
 void ProblemsDialog::runDiagnosis()

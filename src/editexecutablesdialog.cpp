@@ -67,17 +67,8 @@ EditExecutablesDialog::~EditExecutablesDialog() = default;
 
 int EditExecutablesDialog::exec()
 {
-  auto& settings = m_organizerCore.settings();
-
-  if (auto v=settings.geometry().getExecutablesDialog()) {
-    restoreGeometry(*v);
-  }
-
-  const int r = QDialog::exec();
-
-  settings.geometry().setExecutablesDialog(saveGeometry());
-
-  return r;
+  GeometrySaver gs(Settings::instance(), this);
+  return QDialog::exec();
 }
 
 void EditExecutablesDialog::loadCustomOverwrites()

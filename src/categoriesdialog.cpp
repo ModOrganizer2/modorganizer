@@ -112,17 +112,8 @@ CategoriesDialog::~CategoriesDialog()
 
 int CategoriesDialog::exec()
 {
-  auto& settings = Settings::instance();
-
-  if (auto v=settings.geometry().getCategoriesDialog()) {
-    restoreGeometry(*v);
-  }
-
-  const int r = QDialog::exec();
-
-  settings.geometry().setCategoriesDialog(saveGeometry());
-
-  return r;
+  GeometrySaver gs(Settings::instance(), this);
+  return QDialog::exec();
 }
 
 

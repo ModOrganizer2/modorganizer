@@ -290,7 +290,6 @@ MainWindow::MainWindow(Settings &settings
   , m_linksSeparator(nullptr)
   , m_Tutorial(this, "MainWindow")
   , m_OldProfileIndex(-1)
-  , m_ModListGroupingProxy(nullptr)
   , m_ModListSortProxy(nullptr)
   , m_OldExecutableIndex(-1)
   , m_CategoryFactory(CategoryFactory::instance())
@@ -309,8 +308,8 @@ MainWindow::MainWindow(Settings &settings
 {
   QWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
   QWebEngineProfile::defaultProfile()->setHttpCacheMaximumSize(52428800);
-  QWebEngineProfile::defaultProfile()->setCachePath(m_OrganizerCore.settings().getCacheDirectory());
-  QWebEngineProfile::defaultProfile()->setPersistentStoragePath(m_OrganizerCore.settings().getCacheDirectory());
+  QWebEngineProfile::defaultProfile()->setCachePath(settings.getCacheDirectory());
+  QWebEngineProfile::defaultProfile()->setPersistentStoragePath(settings.getCacheDirectory());
 
   ui->setupUi(this);
   m_statusBar.reset(new StatusBar(statusBar(), ui));
@@ -340,7 +339,7 @@ MainWindow::MainWindow(Settings &settings
     m_statusBar->setAPI(ni->getAPIStats(), ni->getAPIUserAccount());
   }
 
-  languageChange(m_OrganizerCore.settings().language());
+  languageChange(settings.language());
 
   m_CategoryFactory.loadCategories();
 
@@ -367,19 +366,9 @@ MainWindow::MainWindow(Settings &settings
 
   initDownloadView();
 
-  bool pluginListAdjusted = false;
-  if (auto v=m_OrganizerCore.settings().geometry().getPluginListHeader()) {
-    ui->espList->header()->restoreState(*v);
-    pluginListAdjusted = true;
-  }
-
-  if (auto v=m_OrganizerCore.settings().geometry().getDataTreeHeader()) {
-    ui->dataTree->header()->restoreState(*v);
-  }
-
-  if (auto v=m_OrganizerCore.settings().geometry().getDownloadViewHeader()) {
-    ui->downloadView->header()->restoreState(*v);
-  }
+  const bool pluginListAdjusted = settings.restoreState(ui->espList->header());
+  settings.restoreState(ui->dataTree->header());
+  settings.restoreState(ui->downloadView->header());
 
   ui->splitter->setStretchFactor(0, 3);
   ui->splitter->setStretchFactor(1, 2);
@@ -586,9 +575,7 @@ void MainWindow::setupModList()
   ui->modList->header()->installEventFilter(m_OrganizerCore.modList());
 
 
-  if (auto v=m_OrganizerCore.settings().geometry().getModListHeader()) {
-    ui->modList->header()->restoreState(*v);
-
+  if (m_OrganizerCore.settings().restoreState(ui->modList->header())) {
     // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
     for (int column = 0; column <= ModList::COL_LASTCOLUMN; ++column) {
       int sectionSize = ui->modList->header()->sectionSize(column);
@@ -2272,13 +2259,8 @@ void MainWindow::activateProxy(bool activate)
 
 void MainWindow::readSettings(const Settings& settings)
 {
-  if (auto v=settings.geometry().getMainWindow()) {
-    restoreGeometry(*v);
-  }
-
-  if (auto v=settings.geometry().getMainWindowState()) {
-    restoreState(*v);
-  }
+  settings.restoreGeometry(this);
+  settings.restoreState(this);
 
   if (auto v=settings.geometry().getToolbarSize()) {
     setToolbarSize(*v);
@@ -2381,8 +2363,9 @@ void MainWindow::storeSettings(Settings& s) {
     settings.remove("geometry");
     settings.remove("reset_geometry");
   } else {
-    settings.setValue("window_geometry", saveGeometry());
-    settings.setValue("window_state", saveState());
+    s.saveState(this);
+    s.saveGeometry(this);
+
     settings.setValue("toolbar_size", ui->toolBar->iconSize());
     settings.setValue("toolbar_button_style", static_cast<int>(ui->toolBar->toolButtonStyle()));
     settings.setValue("menubar_visible", m_menuBarVisible);
@@ -2394,10 +2377,10 @@ void MainWindow::storeSettings(Settings& s) {
     settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
     settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
 
-    s.geometry().setPluginListHeader(ui->espList->header()->saveState());
-    s.geometry().setDataTreeHeader(ui->dataTree->header()->saveState());
-    s.geometry().setDownloadViewHeader(ui->downloadView->header()->saveState());
-    s.geometry().setModListHeader(ui->modList->header()->saveState());
+    s.saveState(ui->espList->header());
+    s.saveState(ui->dataTree->header());
+    s.saveState(ui->downloadView->header());
+    s.saveState(ui->modList->header());
 
     DockFixer::save(this, s);
   }
