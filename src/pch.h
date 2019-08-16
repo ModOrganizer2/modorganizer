@@ -189,6 +189,7 @@
 #include <QSize>
 #include <QSizePolicy>
 #include <QSortFilterProxyModel>
+#include <QSplitter>
 #include <QSpinBox>
 #include <QSplashScreen>
 #include <QSslSocket>

@@ -958,7 +958,7 @@ bool Settings::restoreGeometry(QWidget* w) const
 
 void Settings::saveState(const QMainWindow* w)
 {
-  m_Settings.setValue(stateSettingName(w), w->saveGeometry());
+  m_Settings.setValue(stateSettingName(w), w->saveState());
 }
 
 bool Settings::restoreState(QMainWindow* w) const
@@ -986,24 +986,61 @@ bool Settings::restoreState(QHeaderView* w) const
   return false;
 }
 
+void Settings::saveState(const QSplitter* w)
+{
+  m_Settings.setValue(stateSettingName(w), w->saveState());
+}
+
+bool Settings::restoreState(QSplitter* w) const
+{
+  if (auto v=getOptional<QByteArray>(m_Settings, stateSettingName(w))) {
+    w->restoreState(*v);
+    return true;
+  }
+
+  return false;
+}
+
 
 GeometrySettings::GeometrySettings(QSettings& s)
   : m_Settings(s)
 {
 }
 
-std::optional<QSize> GeometrySettings::getToolbarSize() const
+bool GeometrySettings::restoreToolbars(QMainWindow* w) const
 {
-  return getOptional<QSize>(m_Settings, "toolbar_size");
-}
+  const auto size = getOptional<QSize>(m_Settings, "toolbar_size");
+  const auto style = getOptional<int>(m_Settings, "toolbar_button_style");
 
-std::optional<Qt::ToolButtonStyle> GeometrySettings::getToolbarButtonStyle() const
-{
-  if (auto v=getOptional<int>(m_Settings, "toolbar_button_style")) {
-    return static_cast<Qt::ToolButtonStyle>(*v);
+  if (!size && !style) {
+    return false;
   }
 
-  return {};
+  for (auto* tb : w->findChildren<QToolBar*>()) {
+    if (size) {
+      tb->setIconSize(*size);
+    }
+
+    if (style) {
+      tb->setToolButtonStyle(static_cast<Qt::ToolButtonStyle>(*style));
+    }
+  }
+
+  return true;
+}
+
+void GeometrySettings::saveToolbars(const QMainWindow* w)
+{
+  // all toolbars are identical, just save the first one
+  const auto tbs = w->findChildren<QToolBar*>();
+  if (tbs.isEmpty()) {
+    return;
+  }
+
+  const auto* tb = tbs[0];
+
+  m_Settings.setValue("toolbar_size", tb->iconSize());
+  m_Settings.setValue("toolbar_button_style", static_cast<int>(tb->toolButtonStyle()));
 }
 
 std::optional<bool> GeometrySettings::getMenubarVisible() const
@@ -1011,14 +1048,19 @@ std::optional<bool> GeometrySettings::getMenubarVisible() const
   return getOptional<bool>(m_Settings, "menubar_visible");
 }
 
+void GeometrySettings::setMenubarVisible(bool b)
+{
+  m_Settings.setValue("menubar_visible", b);
+}
+
 std::optional<bool> GeometrySettings::getStatusbarVisible() const
 {
   return getOptional<bool>(m_Settings, "statusbar_visible");
 }
 
-std::optional<QByteArray> GeometrySettings::getMainSplitterState() const
+void GeometrySettings::setStatusbarVisible(bool b)
 {
-  return getOptional<QByteArray>(m_Settings, "window_split");
+  m_Settings.setValue("statusbar_visible", b);
 }
 
 std::optional<bool> GeometrySettings::getFiltersVisible() const
@@ -1064,7 +1106,31 @@ void GeometrySettings::setModInfoTabOrder(const QString& names)
 
 std::optional<int> GeometrySettings::getMainWindowMonitor() const
 {
-  return getOptional<int>(m_Settings, "window_monitor");
+  return getOptional<int>(m_Settings, "geometry/window_monitor");
+}
+
+void GeometrySettings::centerOnMainWindowMonitor(QWidget* w)
+{
+  const auto monitor = getMainWindowMonitor();
+  QPoint center;
+
+  if (monitor && QGuiApplication::screens().size() > *monitor) {
+    center = QGuiApplication::screens().at(*monitor)->geometry().center();
+  } else {
+    center = QGuiApplication::primaryScreen()->geometry().center();
+  }
+
+  w->move(center - w->rect().center());
+}
+
+void GeometrySettings::saveMainWindowMonitor(const QMainWindow* w)
+{
+  if (auto* handle=w->windowHandle()) {
+    if (auto* screen = handle->screen()) {
+      const int screenId = QGuiApplication::screens().indexOf(screen);
+      m_Settings.setValue("geometry/window_monitor", screenId);
+    }
+  }
 }
 
 void GeometrySettings::setDockSize(const QString& name, int size)

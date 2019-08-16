@@ -48,6 +48,7 @@ public:
   using QDialog::show;
 
 protected:
+  void showEvent(QShowEvent* e) override;
   void closeEvent(QCloseEvent* e) override;
 
 private:
@@ -56,6 +57,7 @@ private:
   QDialogButtonBox* m_buttons;
   QTimer* m_timer;
   QElapsedTimer m_elapsed;
+  bool m_first;
 
   void onButton(QAbstractButton* b);
   void onTimer();

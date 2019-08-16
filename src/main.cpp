@@ -697,16 +697,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     QPixmap pixmap(splashPath);
     QSplashScreen splash(pixmap);
 
-    const auto monitor = settings.geometry().getMainWindowMonitor();
-    if (monitor && QGuiApplication::screens().size() > *monitor) {
-      QGuiApplication::screens().at(*monitor)->geometry().center();
-      const QPoint center = QGuiApplication::screens().at(*monitor)->geometry().center();
-      splash.move(center - splash.rect().center());
-    } else {
-      const QPoint center = QGuiApplication::primaryScreen()->geometry().center();
-      splash.move(center - splash.rect().center());
-    }
-
+    settings.geometry().centerOnMainWindowMonitor(&splash);
     splash.show();
     splash.activateWindow();
 

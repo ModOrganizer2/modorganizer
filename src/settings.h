@@ -28,6 +28,8 @@ namespace MOBase {
   class IPluginGame;
 }
 
+class QSplitter;
+
 class PluginContainer;
 struct ServerInfo;
 class Settings;
@@ -49,18 +51,24 @@ class GeometrySettings
 public:
   GeometrySettings(QSettings& s);
 
-  std::optional<QSize> getToolbarSize() const;
-  std::optional<Qt::ToolButtonStyle> getToolbarButtonStyle() const;
-
   std::optional<bool> getMenubarVisible() const;
+  void setMenubarVisible(bool b);
+
+  bool restoreToolbars(QMainWindow* w) const;
+  void saveToolbars(const QMainWindow* w);
+
   std::optional<bool> getStatusbarVisible() const;
-  std::optional<QByteArray> getMainSplitterState() const;
+  void setStatusbarVisible(bool b);
+
   std::optional<bool> getFiltersVisible() const;
 
   QStringList getModInfoTabOrder() const;
   void setModInfoTabOrder(const QString& names);
 
   std::optional<int> getMainWindowMonitor() const;
+  void centerOnMainWindowMonitor(QWidget* w);
+  void saveMainWindowMonitor(const QMainWindow* w);
+
   void setDockSize(const QString& name, int size);
 
   std::optional<int> getDockSize(const QString& name) const;
@@ -214,6 +222,9 @@ public:
 
   void saveState(const QToolBar* toolbar);
   bool restoreState(QToolBar* toolbar) const;
+
+  void saveState(const QSplitter* splitter);
+  bool restoreState(QSplitter* splitter) const;
 
 
   /**

@@ -2261,14 +2261,8 @@ void MainWindow::readSettings(const Settings& settings)
 {
   settings.restoreGeometry(this);
   settings.restoreState(this);
-
-  if (auto v=settings.geometry().getToolbarSize()) {
-    setToolbarSize(*v);
-  }
-
-  if (auto v=settings.geometry().getToolbarButtonStyle()) {
-    setToolbarButtonStyle(*v);
-  }
+  settings.geometry().restoreToolbars(this);
+  settings.restoreState(ui->splitter);
 
   if (auto v=settings.geometry().getMenubarVisible()) {
     showMenuBar(*v);
@@ -2276,10 +2270,6 @@ void MainWindow::readSettings(const Settings& settings)
 
   if (auto v=settings.geometry().getStatusbarVisible()) {
     showStatusBar(*v);
-  }
-
-  if (auto v=settings.geometry().getMainSplitterState()) {
-    ui->splitter->restoreState(*v);
   }
 
   {
@@ -2366,14 +2356,12 @@ void MainWindow::storeSettings(Settings& s) {
     s.saveState(this);
     s.saveGeometry(this);
 
-    settings.setValue("toolbar_size", ui->toolBar->iconSize());
-    settings.setValue("toolbar_button_style", static_cast<int>(ui->toolBar->toolButtonStyle()));
-    settings.setValue("menubar_visible", m_menuBarVisible);
-    settings.setValue("statusbar_visible", m_statusBarVisible);
-    settings.setValue("window_split", ui->splitter->saveState());
-    QScreen *screen = this->window()->windowHandle()->screen();
-    int screenId = QGuiApplication::screens().indexOf(screen);
-    settings.setValue("window_monitor", screenId);
+    s.geometry().setMenubarVisible(m_menuBarVisible);
+    s.geometry().saveToolbars(this);
+    s.geometry().setStatusbarVisible(m_statusBarVisible);
+    s.saveState(ui->splitter);
+    s.geometry().saveMainWindowMonitor(this);
+
     settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
     settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
 

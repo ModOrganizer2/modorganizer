@@ -48,8 +48,9 @@ const QString NexusSSO("wss://sso.nexusmods.com");
 const QString NexusSSOPage("https://www.nexusmods.com/sso?id=%1&application=modorganizer2");
 
 
-ValidationProgressDialog::ValidationProgressDialog(std::chrono::seconds t)
-  : m_timeout(t), m_bar(nullptr), m_buttons(nullptr), m_timer(nullptr)
+ValidationProgressDialog::ValidationProgressDialog(std::chrono::seconds t) :
+  m_timeout(t), m_bar(nullptr), m_buttons(nullptr), m_timer(nullptr),
+  m_first(true)
 {
   m_bar = new QProgressBar;
   m_bar->setTextVisible(false);
@@ -101,6 +102,14 @@ void ValidationProgressDialog::stop()
   }
 
   hide();
+}
+
+void ValidationProgressDialog::showEvent(QShowEvent* e)
+{
+  if (m_first) {
+    Settings::instance().geometry().centerOnMainWindowMonitor(this);
+    m_first = false;
+  }
 }
 
 void ValidationProgressDialog::closeEvent(QCloseEvent* e)
