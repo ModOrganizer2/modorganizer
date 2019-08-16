@@ -335,10 +335,6 @@ OrganizerCore::~OrganizerCore()
 
 void OrganizerCore::storeSettings()
 {
-  if (m_UserInterface != nullptr) {
-    m_UserInterface->storeSettings(m_Settings);
-  }
-
   if (m_CurrentProfile != nullptr) {
     m_Settings.setSelectedProfileName(m_CurrentProfile->name());
   }

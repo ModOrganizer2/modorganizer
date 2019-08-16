@@ -942,6 +942,12 @@ QString stateSettingName(const Widget* widget)
   return "geometry/" + widgetName(widget) + "_state";
 }
 
+template <class Widget>
+QString visibilitySettingName(const Widget* widget)
+{
+  return "geometry/" + widgetName(widget) + "_visibility";
+}
+
 
 GeometrySettings::GeometrySettings(QSettings& s)
   : m_Settings(s), m_Reset(false)
@@ -962,18 +968,6 @@ void GeometrySettings::resetIfNeeded()
   m_Settings.beginGroup("geometry");
   m_Settings.remove("");
   m_Settings.endGroup();
-
-  /*settings.remove("window_geometry");
-  settings.remove("window_state");
-  settings.remove("toolbar_size");
-  settings.remove("toolbar_button_style");
-  settings.remove("menubar_visible");
-  settings.remove("window_split");
-  settings.remove("window_monitor");
-  settings.remove("filters_visible");
-  settings.remove("browser_geometry");
-  settings.remove("geometry");
-  settings.remove("reset_geometry");*/
 }
 
 void GeometrySettings::saveGeometry(const QWidget* w)
@@ -1036,14 +1030,31 @@ bool GeometrySettings::restoreState(QSplitter* w) const
   return false;
 }
 
-bool GeometrySettings::restoreToolbars(QMainWindow* w) const
+void GeometrySettings::saveVisibility(const QWidget* w)
 {
+  m_Settings.setValue(visibilitySettingName(w), w->isVisible());
+}
+
+bool GeometrySettings::restoreVisibility(QWidget* w, std::optional<bool> def) const
+{
+  auto v = getOptional<bool>(m_Settings, visibilitySettingName(w));
+  if (!v) {
+    v = def;
+  }
+
+  if (v) {
+    w->setVisible(*v);
+    return true;
+  }
+
+  return false;
+}
+
+void GeometrySettings::restoreToolbars(QMainWindow* w) const
+{
+  // all toolbars have the same size and button style settings
   const auto size = getOptional<QSize>(m_Settings, "toolbar_size");
   const auto style = getOptional<int>(m_Settings, "toolbar_button_style");
-
-  if (!size && !style) {
-    return false;
-  }
 
   for (auto* tb : w->findChildren<QToolBar*>()) {
     if (size) {
@@ -1053,53 +1064,28 @@ bool GeometrySettings::restoreToolbars(QMainWindow* w) const
     if (style) {
       tb->setToolButtonStyle(static_cast<Qt::ToolButtonStyle>(*style));
     }
-  }
 
-  return true;
+    restoreVisibility(tb);
+  }
 }
 
 void GeometrySettings::saveToolbars(const QMainWindow* w)
 {
-  // all toolbars are identical, just save the first one
   const auto tbs = w->findChildren<QToolBar*>();
-  if (tbs.isEmpty()) {
-    return;
+
+  // save visibility for all
+  for (auto* tb : tbs) {
+    saveVisibility(tb);
   }
 
-  const auto* tb = tbs[0];
+  // all toolbars have the same size and button style settings, just save the
+  // first one
+  if (!tbs.isEmpty()) {
+    const auto* tb = tbs[0];
 
-  m_Settings.setValue("toolbar_size", tb->iconSize());
-  m_Settings.setValue("toolbar_button_style", static_cast<int>(tb->toolButtonStyle()));
-}
-
-std::optional<bool> GeometrySettings::getMenubarVisible() const
-{
-  return getOptional<bool>(m_Settings, "menubar_visible");
-}
-
-void GeometrySettings::setMenubarVisible(bool b)
-{
-  m_Settings.setValue("menubar_visible", b);
-}
-
-std::optional<bool> GeometrySettings::getStatusbarVisible() const
-{
-  return getOptional<bool>(m_Settings, "statusbar_visible");
-}
-
-void GeometrySettings::setStatusbarVisible(bool b)
-{
-  m_Settings.setValue("statusbar_visible", b);
-}
-
-std::optional<bool> GeometrySettings::getFiltersVisible() const
-{
-  return getOptional<bool>(m_Settings, "filters_visible");
-}
-
-void GeometrySettings::setFiltersVisible(bool b)
-{
-  m_Settings.setValue("filters_visible", b);
+    m_Settings.setValue("toolbar_size", tb->iconSize());
+    m_Settings.setValue("toolbar_button_style", static_cast<int>(tb->toolButtonStyle()));
+  }
 }
 
 QStringList GeometrySettings::getModInfoTabOrder() const

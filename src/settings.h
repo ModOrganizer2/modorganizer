@@ -54,6 +54,7 @@ public:
   void requestReset();
   void resetIfNeeded();
 
+
   void saveGeometry(const QWidget* w);
   bool restoreGeometry(QWidget* w) const;
 
@@ -69,17 +70,13 @@ public:
   void saveState(const QSplitter* splitter);
   bool restoreState(QSplitter* splitter) const;
 
-  std::optional<bool> getMenubarVisible() const;
-  void setMenubarVisible(bool b);
 
-  bool restoreToolbars(QMainWindow* w) const;
+  void saveVisibility(const QWidget* w);
+  bool restoreVisibility(QWidget* w, std::optional<bool> defaultValue={}) const;
+
+
   void saveToolbars(const QMainWindow* w);
-
-  std::optional<bool> getStatusbarVisible() const;
-  void setStatusbarVisible(bool b);
-
-  std::optional<bool> getFiltersVisible() const;
-  void setFiltersVisible(bool b);
+  void restoreToolbars(QMainWindow* w) const;
 
   QStringList getModInfoTabOrder() const;
   void setModInfoTabOrder(const QString& names);

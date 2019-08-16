@@ -736,8 +736,6 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       // this must be before readSettings(), see DockFixer in mainwindow.cpp
       splash.finish(&mainWindow);
 
-      mainWindow.readSettings(settings);
-
       log::debug("displaying main window");
       mainWindow.show();
       mainWindow.activateWindow();

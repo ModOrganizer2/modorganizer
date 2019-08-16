@@ -29,10 +29,12 @@ private:
 };
 
 
-class StatusBar
+class StatusBar : public QStatusBar
 {
 public:
-  StatusBar(QStatusBar* bar, Ui::MainWindow* ui);
+  StatusBar(QWidget* parent=nullptr);
+
+  void setup(Ui::MainWindow* ui);
 
   void setProgress(int percent);
   void setNotifications(bool hasNotifications);
@@ -40,12 +42,18 @@ public:
   void setUpdateAvailable(bool b);
   void checkSettings(const Settings& settings);
 
+protected:
+  void showEvent(QShowEvent* e);
+  void hideEvent(QHideEvent* e);
+
 private:
-  QStatusBar* m_bar;
+  Ui::MainWindow* ui;
   QProgressBar* m_progress;
   StatusBarAction* m_notifications;
   StatusBarAction* m_update;
   QLabel* m_api;
+
+  void visibilityChanged(bool visible);
 };
 
 #endif // MO_STATUSBAR_H

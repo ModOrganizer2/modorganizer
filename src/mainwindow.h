@@ -40,7 +40,6 @@ class Executable;
 class CategoryFactory;
 class LockedDialogBase;
 class OrganizerCore;
-class StatusBar;
 
 class PluginListSortProxy;
 namespace BSA { class Archive; }
@@ -118,8 +117,6 @@ public:
                       QWidget *parent = 0);
   ~MainWindow();
 
-  void storeSettings(Settings& settings) override;
-  void readSettings(const Settings& settings);
   void processUpdates(Settings& settings);
 
   virtual ILockedWaitingForProcess* lock() override;
@@ -330,12 +327,6 @@ private:
   Ui::MainWindow *ui;
 
   bool m_WasVisible;
-
-  // this has to be remembered because by the time storeSettings() is called,
-  // the window is closed and the all bars are hidden
-  bool m_menuBarVisible, m_statusBarVisible;
-
-  std::unique_ptr<StatusBar> m_statusBar;
 
   // last separator on the toolbar, used to add spacer for right-alignment and
   // as an insert point for executables
@@ -685,11 +676,9 @@ private slots: // ui slots
   void on_categoriesOrBtn_toggled(bool checked);
   void on_managedArchiveLabel_linkHovered(const QString &link);
 
+  void storeSettings(Settings& settings);
+  void readSettings(const Settings& settings);
   void setupModList();
-  void showMenuBar(bool b);
-  void showStatusBar(bool b);
 };
-
-
 
 #endif // MAINWINDOW_H

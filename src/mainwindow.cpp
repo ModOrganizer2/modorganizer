@@ -285,8 +285,6 @@ MainWindow::MainWindow(Settings &settings
   : QMainWindow(parent)
   , ui(new Ui::MainWindow)
   , m_WasVisible(false)
-  , m_menuBarVisible(true)
-  , m_statusBarVisible(true)
   , m_linksSeparator(nullptr)
   , m_Tutorial(this, "MainWindow")
   , m_OldProfileIndex(-1)
@@ -312,7 +310,7 @@ MainWindow::MainWindow(Settings &settings
   QWebEngineProfile::defaultProfile()->setPersistentStoragePath(settings.getCacheDirectory());
 
   ui->setupUi(this);
-  m_statusBar.reset(new StatusBar(statusBar(), ui));
+  ui->statusBar->setup(ui);
 
   {
     auto* ni = NexusInterface::instance(&m_PluginContainer);
@@ -336,7 +334,7 @@ MainWindow::MainWindow(Settings &settings
     // in the rare case where the user restarts MO through the settings, this
     // will correctly pick up the previous values
     updateWindowTitle(ni->getAPIUserAccount());
-    m_statusBar->setAPI(ni->getAPIStats(), ni->getAPIUserAccount());
+    ui->statusBar->setAPI(ni->getAPIStats(), ni->getAPIUserAccount());
   }
 
   languageChange(settings.language());
@@ -708,7 +706,7 @@ void MainWindow::updateWindowTitle(const APIUserAccount& user)
 
 void MainWindow::onRequestsChanged(const APIStats& stats, const APIUserAccount& user)
 {
-  m_statusBar->setAPI(stats, user);
+  ui->statusBar->setAPI(stats, user);
 }
 
 
@@ -902,7 +900,7 @@ QMenu* MainWindow::createPopupMenu()
 
 void MainWindow::on_actionMainMenuToggle_triggered()
 {
-  showMenuBar(!ui->menuBar->isVisible());
+  ui->menuBar->setVisible(!ui->menuBar->isVisible());
 }
 
 void MainWindow::on_actionToolBarMainToggle_triggered()
@@ -912,7 +910,7 @@ void MainWindow::on_actionToolBarMainToggle_triggered()
 
 void MainWindow::on_actionStatusBarToggle_triggered()
 {
-  showStatusBar(!ui->statusBar->isVisible());
+  ui->statusBar->setVisible(!ui->statusBar->isVisible());
 }
 
 void MainWindow::on_actionToolBarSmallIcons_triggered()
@@ -962,36 +960,6 @@ void MainWindow::setToolbarButtonStyle(Qt::ToolButtonStyle s)
   for (auto* tb : findChildren<QToolBar*>()) {
     tb->setToolButtonStyle(s);
   }
-}
-
-void MainWindow::showMenuBar(bool b)
-{
-  ui->menuBar->setVisible(b);
-  m_menuBarVisible = b;
-}
-
-void MainWindow::showStatusBar(bool b)
-{
-  ui->statusBar->setVisible(b);
-  m_statusBarVisible = b;
-
-  // the central widget typically has no bottom padding because the status bar
-  // is more than enough, but when it's hidden, the bottom widget (currently
-  // the log) touches the bottom border of the window, which looks ugly
-  //
-  // when hiding the statusbar, the central widget is given the same border
-  // margin as it has on the top (which is typically 6, as it's the default from
-  // the qt designer)
-
-  auto m = ui->centralWidget->layout()->contentsMargins();
-
-  if (b) {
-    m.setBottom(0);
-  } else {
-    m.setBottom(m.top());
-  }
-
-  ui->centralWidget->layout()->setContentsMargins(m);
 }
 
 void MainWindow::on_centralWidget_customContextMenuRequested(const QPoint &pos)
@@ -1075,8 +1043,8 @@ void MainWindow::updateProblemsButton()
   }
 
   // updating the status bar, may be null very early when MO is starting
-  if (m_statusBar) {
-    m_statusBar->setNotifications(numProblems > 0);
+  if (ui->statusBar) {
+    ui->statusBar->setNotifications(numProblems > 0);
   }
 }
 
@@ -1319,6 +1287,8 @@ void MainWindow::hookUpWindowTutorials()
 
 void MainWindow::showEvent(QShowEvent *event)
 {
+  readSettings(m_OrganizerCore.settings());
+
   refreshFilters();
 
   QMainWindow::showEvent(event);
@@ -1378,7 +1348,10 @@ void MainWindow::closeEvent(QCloseEvent* event)
 {
   if (!confirmExit()) {
     event->ignore();
+    return;
   }
+
+  storeSettings(m_OrganizerCore.settings());
 }
 
 bool MainWindow::confirmExit()
@@ -2259,17 +2232,12 @@ void MainWindow::readSettings(const Settings& settings)
   settings.geometry().restoreState(this);
   settings.geometry().restoreToolbars(this);
   settings.geometry().restoreState(ui->splitter);
-
-  if (auto v=settings.geometry().getMenubarVisible()) {
-    showMenuBar(*v);
-  }
-
-  if (auto v=settings.geometry().getStatusbarVisible()) {
-    showStatusBar(*v);
-  }
+  settings.geometry().restoreVisibility(ui->menuBar);
+  settings.geometry().restoreVisibility(ui->statusBar);
 
   {
-    auto v = settings.geometry().getFiltersVisible().value_or(false);
+    settings.geometry().restoreVisibility(ui->categoriesGroup, false);
+    const auto v = ui->categoriesGroup->isVisible();
     setCategoryListVisible(v);
     ui->displayCategoriesBtn->setChecked(v);
   }
@@ -2339,12 +2307,12 @@ void MainWindow::storeSettings(Settings& s) {
   s.geometry().saveState(this);
   s.geometry().saveGeometry(this);
 
-  s.geometry().setMenubarVisible(m_menuBarVisible);
+  s.geometry().saveVisibility(ui->menuBar);
+  s.geometry().saveVisibility(ui->statusBar);
   s.geometry().saveToolbars(this);
-  s.geometry().setStatusbarVisible(m_statusBarVisible);
   s.geometry().saveState(ui->splitter);
   s.geometry().saveMainWindowMonitor(this);
-  s.geometry().setFiltersVisible(ui->displayCategoriesBtn->isChecked());
+  s.geometry().saveVisibility(ui->categoriesGroup);
 
   s.geometry().saveState(ui->espList->header());
   s.geometry().saveState(ui->dataTree->header());
@@ -2606,7 +2574,7 @@ void MainWindow::setESPListSorting(int index)
 void MainWindow::refresher_progress(int percent)
 {
   setEnabled(percent == 100);
-  m_statusBar->setProgress(percent);
+  ui->statusBar->setProgress(percent);
 }
 
 void MainWindow::directory_refreshed()
@@ -5216,7 +5184,7 @@ void MainWindow::on_actionSettings_triggered()
     activateProxy(settings.useProxy());
   }
 
-  m_statusBar->checkSettings(m_OrganizerCore.settings());
+  ui->statusBar->checkSettings(m_OrganizerCore.settings());
   updateDownloadView();
 
   m_OrganizerCore.setLogLevel(settings.logLevel());
@@ -5525,7 +5493,7 @@ void MainWindow::updateAvailable()
 {
   ui->actionUpdate->setEnabled(true);
   ui->actionUpdate->setToolTip(tr("Update available"));
-  m_statusBar->setUpdateAvailable(true);
+  ui->statusBar->setUpdateAvailable(true);
 }
 
 
@@ -6858,7 +6826,7 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
   // if the menubar is hidden, pressing Alt will make it visible
   if (event->key() == Qt::Key_Alt) {
     if (!ui->menuBar->isVisible()) {
-      showMenuBar(true);
+      ui->menuBar->show();
     }
   }
 
