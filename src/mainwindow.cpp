@@ -194,90 +194,6 @@ const QSize MediumToolbarSize(32, 32);
 const QSize LargeToolbarSize(42, 36);
 
 
-// this attempts to fix https://bugreports.qt.io/browse/QTBUG-46620 where dock
-// sizes are not restored when the main window is maximized; it is used in
-// MainWindow::readSettings() and MainWindow::storeSettings()
-//
-// there's also https://stackoverflow.com/questions/44005852, which has what
-// seems to be a popular fix, but it breaks the restored size of the window
-// by setting it to the desktop's resolution, so that doesn't work
-//
-// the only fix I could find is to remember the sizes of the docks and manually
-// setting them back; saving is straightforward, but restoring is messy
-//
-// this also depends on the window being visible before the timer in restore()
-// is fired and the timer must be processed by application.exec(); therefore,
-// the splash screen _must_ be closed before readSettings() is called, because
-// it has its own event loop, which seems to interfere with this
-//
-// all of this should become unnecessary when QTBUG-46620 is fixed
-//
-class DockFixer
-{
-public:
-  static void save(MainWindow* mw, Settings& settings)
-  {
-    // saves the size of each dock
-    for (const auto* dock : mw->findChildren<QDockWidget*>()) {
-      int size = 0;
-
-      // save the width for horizontal docks, or the height for vertical
-      if (orientation(mw, dock) == Qt::Horizontal) {
-        size = dock->size().width();
-      } else {
-        size = dock->size().height();
-      }
-
-      settings.geometry().setDockSize(dock->objectName(), size);
-    }
-  }
-
-  static void restore(MainWindow* mw, const Settings& settings)
-  {
-    struct DockInfo
-    {
-      QDockWidget* d;
-      int size = 0;
-      Qt::Orientation ori;
-    };
-
-    std::vector<DockInfo> dockInfos;
-
-    // for each dock
-    for (auto* dock : mw->findChildren<QDockWidget*>()) {
-      if (auto size=settings.geometry().getDockSize(dock->objectName())) {
-        // remember this dock, its size and orientation
-        dockInfos.push_back({dock, *size, orientation(mw, dock)});
-      }
-    }
-
-    // the main window must have had time to process the settings from
-    // readSettings() or it seems to override whatever is set here
-    //
-    // some people said a single processEvents() call is enough, but it doesn't
-    // look like it
-    QTimer::singleShot(5, [=] {
-      for (const auto& info : dockInfos) {
-        mw->resizeDocks({info.d}, {info.size}, info.ori);
-      }
-    });
-  }
-
-  static Qt::Orientation orientation(QMainWindow* mw, const QDockWidget* d)
-  {
-    // docks in these areas are horizontal
-    const auto horizontalAreas =
-      Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea;
-
-    if (mw->dockWidgetArea(const_cast<QDockWidget*>(d)) & horizontalAreas) {
-      return Qt::Horizontal;
-    } else {
-      return Qt::Vertical;
-    }
-  }
-};
-
-
 MainWindow::MainWindow(Settings &settings
                        , OrganizerCore &organizerCore
                        , PluginContainer &pluginContainer
@@ -1328,12 +1244,10 @@ void MainWindow::showEvent(QShowEvent *event)
             QObject::tr("Please use \"Help\" from the toolbar to get usage instructions to all elements"));
       }
 
-    m_OrganizerCore.settings().directInterface().setValue("first_start", false);
+      m_OrganizerCore.settings().directInterface().setValue("first_start", false);
     }
 
-    // this has no visible impact when called before the ui is visible
-    int grouping = m_OrganizerCore.settings().directInterface().value("group_state").toInt();
-    ui->groupCombo->setCurrentIndex(grouping);
+    m_OrganizerCore.settings().restoreIndex(ui->groupCombo);
 
     allowListResize();
 
@@ -1621,18 +1535,6 @@ void MainWindow::startExeAction()
 
 }
 
-
-void MainWindow::setExecutableIndex(int index)
-{
-  QComboBox *executableBox = findChild<QComboBox*>("executablesListBox");
-
-  if ((index != 0) && (executableBox->count() > index)) {
-    executableBox->setCurrentIndex(index);
-  } else {
-    executableBox->setCurrentIndex(1);
-  }
-}
-
 void MainWindow::activateSelectedProfile()
 {
   m_OrganizerCore.setCurrentProfile(ui->profileBox->currentText());
@@ -1895,7 +1797,7 @@ void MainWindow::refreshExecutablesList()
     ++i;
   }
 
-  setExecutableIndex(1);
+  ui->executablesListBox->setCurrentIndex(1);
   executablesList->setEnabled(true);
 }
 
@@ -2230,10 +2132,23 @@ void MainWindow::readSettings(const Settings& settings)
 {
   settings.geometry().restoreGeometry(this);
   settings.geometry().restoreState(this);
+  settings.geometry().restoreDocks(this);
   settings.geometry().restoreToolbars(this);
   settings.geometry().restoreState(ui->splitter);
   settings.geometry().restoreVisibility(ui->menuBar);
   settings.geometry().restoreVisibility(ui->statusBar);
+
+  {
+    // special case in case someone puts 0 in the INI
+    auto v = settings.getIndex(ui->executablesListBox);
+    if (!v || v == 0) {
+      v = 1;
+    }
+
+    ui->executablesListBox->setCurrentIndex(*v);
+  }
+
+  settings.restoreIndex(ui->groupCombo);
 
   {
     settings.geometry().restoreVisibility(ui->categoriesGroup, false);
@@ -2242,17 +2157,11 @@ void MainWindow::readSettings(const Settings& settings)
     ui->displayCategoriesBtn->setChecked(v);
   }
 
-  if (auto v=settings.getSelectedExecutable()) {
-    setExecutableIndex(*v);
-  }
-
   if (auto v=settings.getUseProxy()) {
     if (*v) {
       activateProxy(true);
     }
   }
-
-  DockFixer::restore(this, settings);
 }
 
 void MainWindow::processUpdates(Settings& settings) {
@@ -2297,15 +2206,11 @@ void MainWindow::processUpdates(Settings& settings) {
   }
 }
 
-void MainWindow::storeSettings(Settings& s) {
-  auto& settings = s.directInterface();
-
-  settings.setValue("group_state", ui->groupCombo->currentIndex());
-  settings.setValue("selected_executable",
-                    ui->executablesListBox->currentIndex());
-
+void MainWindow::storeSettings(Settings& s)
+{
   s.geometry().saveState(this);
   s.geometry().saveGeometry(this);
+  s.geometry().saveDocks(this);
 
   s.geometry().saveVisibility(ui->menuBar);
   s.geometry().saveVisibility(ui->statusBar);
@@ -2319,7 +2224,8 @@ void MainWindow::storeSettings(Settings& s) {
   s.geometry().saveState(ui->downloadView->header());
   s.geometry().saveState(ui->modList->header());
 
-  DockFixer::save(this, s);
+  s.saveIndex(ui->groupCombo);
+  s.saveIndex(ui->executablesListBox);
 }
 
 ILockedWaitingForProcess* MainWindow::lock()
@@ -2451,20 +2357,16 @@ bool MainWindow::modifyExecutablesDialog()
 
 void MainWindow::on_executablesListBox_currentIndexChanged(int index)
 {
-  QComboBox* executablesList = findChild<QComboBox*>("executablesListBox");
+  if (!ui->executablesListBox->isEnabled()) {
+    return;
+  }
 
-  int previousIndex = m_OldExecutableIndex;
+  const int previousIndex = m_OldExecutableIndex;
   m_OldExecutableIndex = index;
 
-  if (executablesList->isEnabled()) {
-    //I think the 2nd test is impossible
-    if ((index == 0) || (index > static_cast<int>(m_OrganizerCore.executablesList()->size()))) {
-      if (modifyExecutablesDialog()) {
-        setExecutableIndex(previousIndex);
-      }
-    } else {
-      setExecutableIndex(index);
-    }
+  if (index == 0) {
+    modifyExecutablesDialog();
+    ui->executablesListBox->setCurrentIndex(previousIndex);
   }
 }
 
@@ -2540,7 +2442,7 @@ void MainWindow::on_actionAdd_Profile_triggered()
 void MainWindow::on_actionModify_Executables_triggered()
 {
   if (modifyExecutablesDialog()) {
-    setExecutableIndex(m_OldExecutableIndex);
+    ui->executablesListBox->setCurrentIndex(m_OldExecutableIndex);
   }
 }
 

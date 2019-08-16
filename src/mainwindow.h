@@ -226,8 +226,6 @@ private:
   QMenu* createPopupMenu() override;
   void activateSelectedProfile();
 
-  void setExecutableIndex(int index);
-
   void startSteam();
 
   void updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const MOShared::DirectoryEntry &directoryEntry, bool conflictsOnly, QIcon *fileIcon, QIcon *folderIcon);

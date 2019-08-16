@@ -28,13 +28,88 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 
 template <class T>
-std::optional<T> getOptional(const QSettings& s, const QString& name)
+std::optional<T> getOptional(
+  const QSettings& s, const QString& name, std::optional<T> def={})
 {
   if (s.contains(name)) {
     return s.value(name).value<T>();
   }
 
-  return {};
+  return def;
+}
+
+
+QString widgetNameWithTopLevel(const QWidget* widget)
+{
+  QStringList components;
+
+  auto* tl = widget->window();
+
+  if (tl == widget) {
+    // this is a top level widget, such as a dialog
+    components.push_back(widget->objectName());
+  } else {
+    // this is a widget
+    const auto toplevelName = tl->objectName();
+    if (!toplevelName.isEmpty()) {
+      components.push_back(toplevelName);
+    }
+
+    const auto widgetName = widget->objectName();
+    if (!widgetName.isEmpty()) {
+      components.push_back(widgetName);
+    }
+  }
+
+  if (components.isEmpty()) {
+    // can't do much
+    return "unknown_widget";
+  }
+
+  return components.join("_");
+}
+
+QString widgetName(const QMainWindow* w)
+{
+  return w->objectName();
+}
+
+QString widgetName(const QHeaderView* w)
+{
+  return widgetNameWithTopLevel(w->parentWidget());
+}
+
+QString widgetName(const QWidget* w)
+{
+  return widgetNameWithTopLevel(w);
+}
+
+template <class Widget>
+QString geoSettingName(const Widget* widget)
+{
+  return "geometry/" + widgetName(widget) + "_geometry";
+}
+
+template <class Widget>
+QString stateSettingName(const Widget* widget)
+{
+  return "geometry/" + widgetName(widget) + "_state";
+}
+
+template <class Widget>
+QString visibilitySettingName(const Widget* widget)
+{
+  return "geometry/" + widgetName(widget) + "_visibility";
+}
+
+QString dockSettingName(const QDockWidget* dock)
+{
+  return "geometry/MainWindow_docks_" + dock->objectName() + "_size";
+}
+
+QString indexSettingName(const QWidget* widget)
+{
+  return widgetNameWithTopLevel(widget) + "_index";
 }
 
 
@@ -393,11 +468,6 @@ std::optional<QString> Settings::getStyleName() const
 void Settings::setStyleName(const QString& name)
 {
   m_Settings.setValue("Settings/style", name);
-}
-
-std::optional<int> Settings::getSelectedExecutable() const
-{
-  return getOptional<int>(m_Settings, "selected_executable");
 }
 
 std::optional<bool> Settings::getUseProxy() const
@@ -847,6 +917,23 @@ void Settings::setExecutables(const std::vector<std::map<QString, QVariant>>& v)
   m_Settings.endArray();
 }
 
+std::optional<int> Settings::getIndex(QComboBox* cb) const
+{
+  return getOptional<int>(m_Settings, indexSettingName(cb));
+}
+
+void Settings::saveIndex(const QComboBox* cb)
+{
+  m_Settings.setValue(indexSettingName(cb), cb->currentIndex());
+}
+
+void Settings::restoreIndex(QComboBox* cb, std::optional<int> def) const
+{
+  if (auto v=getOptional<int>(m_Settings, indexSettingName(cb), def)) {
+    cb->setCurrentIndex(*v);
+  }
+}
+
 GeometrySettings& Settings::geometry()
 {
   return m_Geometry;
@@ -882,70 +969,6 @@ void Settings::dump() const
   }
 
   m_Settings.endGroup();
-}
-
-
-QString widgetNameWithTopLevel(const QWidget* widget)
-{
-  QStringList components;
-
-  auto* tl = widget->window();
-
-  if (tl == widget) {
-    // this is a top level widget, such as a dialog
-    components.push_back(widget->objectName());
-  } else {
-    // this is a widget
-    const auto toplevelName = tl->objectName();
-    if (!toplevelName.isEmpty()) {
-      components.push_back(toplevelName);
-    }
-
-    const auto widgetName = widget->objectName();
-    if (!widgetName.isEmpty()) {
-      components.push_back(widgetName);
-    }
-  }
-
-  if (components.isEmpty()) {
-    // can't do much
-    return "unknown_widget";
-  }
-
-  return components.join("_");
-}
-
-QString widgetName(const QMainWindow* w)
-{
-  return w->objectName();
-}
-
-QString widgetName(const QHeaderView* w)
-{
-  return widgetNameWithTopLevel(w->parentWidget());
-}
-
-QString widgetName(const QWidget* w)
-{
-  return widgetNameWithTopLevel(w);
-}
-
-template <class Widget>
-QString geoSettingName(const Widget* widget)
-{
-  return "geometry/" + widgetName(widget) + "_geometry";
-}
-
-template <class Widget>
-QString stateSettingName(const Widget* widget)
-{
-  return "geometry/" + widgetName(widget) + "_state";
-}
-
-template <class Widget>
-QString visibilitySettingName(const Widget* widget)
-{
-  return "geometry/" + widgetName(widget) + "_visibility";
 }
 
 
@@ -1037,12 +1060,7 @@ void GeometrySettings::saveVisibility(const QWidget* w)
 
 bool GeometrySettings::restoreVisibility(QWidget* w, std::optional<bool> def) const
 {
-  auto v = getOptional<bool>(m_Settings, visibilitySettingName(w));
-  if (!v) {
-    v = def;
-  }
-
-  if (v) {
+  if (auto v=getOptional<bool>(m_Settings, visibilitySettingName(w), def)) {
     w->setVisible(*v);
     return true;
   }
@@ -1124,14 +1142,10 @@ void GeometrySettings::setModInfoTabOrder(const QString& names)
   m_Settings.setValue("mod_info_tab_order", names);
 }
 
-std::optional<int> GeometrySettings::getMainWindowMonitor() const
-{
-  return getOptional<int>(m_Settings, "geometry/MainWindow_monitor");
-}
-
 void GeometrySettings::centerOnMainWindowMonitor(QWidget* w)
 {
-  const auto monitor = getMainWindowMonitor();
+  const auto monitor = getOptional<int>(m_Settings, "geometry/MainWindow_monitor");
+
   QPoint center;
 
   if (monitor && QGuiApplication::screens().size() > *monitor) {
@@ -1153,14 +1167,84 @@ void GeometrySettings::saveMainWindowMonitor(const QMainWindow* w)
   }
 }
 
-void GeometrySettings::setDockSize(const QString& name, int size)
+Qt::Orientation dockOrientation(const QMainWindow* mw, const QDockWidget* d)
 {
-  m_Settings.setValue("geometry/MainWindow_docks_" + name + "_size", size);
+  // docks in these areas are horizontal
+  const auto horizontalAreas =
+    Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea;
+
+  if (mw->dockWidgetArea(const_cast<QDockWidget*>(d)) & horizontalAreas) {
+    return Qt::Horizontal;
+  } else {
+    return Qt::Vertical;
+  }
 }
 
-std::optional<int> GeometrySettings::getDockSize(const QString& name) const
+void GeometrySettings::saveDocks(const QMainWindow* mw)
 {
-  return getOptional<int>(m_Settings, "geometry/MainWindow_docks_" + name + "_size");
+  // this attempts to fix https://bugreports.qt.io/browse/QTBUG-46620 where dock
+  // sizes are not restored when the main window is maximized; it is used in
+  // MainWindow::readSettings() and MainWindow::storeSettings()
+  //
+  // there's also https://stackoverflow.com/questions/44005852, which has what
+  // seems to be a popular fix, but it breaks the restored size of the window
+  // by setting it to the desktop's resolution, so that doesn't work
+  //
+  // the only fix I could find is to remember the sizes of the docks and manually
+  // setting them back; saving is straightforward, but restoring is messy
+  //
+  // this also depends on the window being visible before the timer in restore()
+  // is fired and the timer must be processed by application.exec(); therefore,
+  // the splash screen _must_ be closed before readSettings() is called, because
+  // it has its own event loop, which seems to interfere with this
+  //
+  // all of this should become unnecessary when QTBUG-46620 is fixed
+  //
+
+  // saves the size of each dock
+  for (const auto* dock : mw->findChildren<QDockWidget*>()) {
+    int size = 0;
+
+    // save the width for horizontal docks, or the height for vertical
+    if (dockOrientation(mw, dock) == Qt::Horizontal) {
+      size = dock->size().width();
+    } else {
+      size = dock->size().height();
+    }
+
+    m_Settings.setValue(dockSettingName(dock), size);
+  }
+}
+
+void GeometrySettings::restoreDocks(QMainWindow* mw) const
+{
+  struct DockInfo
+  {
+    QDockWidget* d;
+    int size = 0;
+    Qt::Orientation ori;
+  };
+
+  std::vector<DockInfo> dockInfos;
+
+  // for each dock
+  for (auto* dock : mw->findChildren<QDockWidget*>()) {
+    if (auto size=getOptional<int>(m_Settings, dockSettingName(dock))) {
+      // remember this dock, its size and orientation
+      dockInfos.push_back({dock, *size, dockOrientation(mw, dock)});
+    }
+  }
+
+  // the main window must have had time to process the settings from
+  // readSettings() or it seems to override whatever is set here
+  //
+  // some people said a single processEvents() call is enough, but it doesn't
+  // look like it
+  QTimer::singleShot(5, [=] {
+    for (const auto& info : dockInfos) {
+      mw->resizeDocks({info.d}, {info.size}, info.ori);
+    }
+  });
 }
 
 

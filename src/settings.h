@@ -70,24 +70,20 @@ public:
   void saveState(const QSplitter* splitter);
   bool restoreState(QSplitter* splitter) const;
 
-
   void saveVisibility(const QWidget* w);
-  bool restoreVisibility(QWidget* w, std::optional<bool> defaultValue={}) const;
-
+  bool restoreVisibility(QWidget* w, std::optional<bool> def={}) const;
 
   void saveToolbars(const QMainWindow* w);
   void restoreToolbars(QMainWindow* w) const;
 
+  void saveDocks(const QMainWindow* w);
+  void restoreDocks(QMainWindow* w) const;
+
   QStringList getModInfoTabOrder() const;
   void setModInfoTabOrder(const QString& names);
 
-  std::optional<int> getMainWindowMonitor() const;
   void centerOnMainWindowMonitor(QWidget* w);
   void saveMainWindowMonitor(const QMainWindow* w);
-
-  void setDockSize(const QString& name, int size);
-
-  std::optional<int> getDockSize(const QString& name) const;
 
 private:
   QSettings& m_Settings;
@@ -206,7 +202,6 @@ public:
   std::optional<QString> getStyleName() const;
   void setStyleName(const QString& name);
 
-  std::optional<int> getSelectedExecutable() const;
   std::optional<bool> getUseProxy() const;
 
   std::optional<QVersionNumber> getVersion() const;
@@ -221,6 +216,11 @@ public:
 
   std::vector<std::map<QString, QVariant>> getExecutables() const;
   void setExecutables(const std::vector<std::map<QString, QVariant>>& v);
+
+
+  std::optional<int> getIndex(QComboBox* cb) const;
+  void saveIndex(const QComboBox* cb);
+  void restoreIndex(QComboBox* cb, std::optional<int> def={}) const;
 
   GeometrySettings& geometry();
   const GeometrySettings& geometry() const;
