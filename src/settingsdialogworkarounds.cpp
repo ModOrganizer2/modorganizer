@@ -26,8 +26,6 @@ WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings *m_parent, SettingsDialo
   ui->lockGUIBox->setChecked(m_parent->lockGUI());
   ui->enableArchiveParsingBox->setChecked(m_parent->archiveParsing());
 
-  ui->resetGeometryBtn->setChecked(m_parent->directInterface().value("reset_geometry", false).toBool());
-
   setExecutableBlacklist(m_parent->executablesBlacklist());
 
   QObject::connect(ui->bsaDateBtn, &QPushButton::clicked, [&]{ on_bsaDateBtn_clicked(); });
@@ -89,6 +87,16 @@ void WorkaroundsSettingsTab::on_bsaDateBtn_clicked()
 
 void WorkaroundsSettingsTab::on_resetGeometryBtn_clicked()
 {
-  m_dialog.m_GeometriesReset = true;
-  ui->resetGeometryBtn->setChecked(true);
+  const auto caption = QObject::tr("Restart Mod Organizer?");
+  const auto text = QObject::tr(
+    "In order to reset the geometry, Mod Organizer must be restarted.\n"
+    "Restart now?");
+
+  const auto res = QMessageBox::question(
+    nullptr, caption, text, QMessageBox::Yes | QMessageBox::Cancel);
+
+  if (res == QMessageBox::Yes) {
+    m_parent->geometry().requestReset();
+    qApp->exit(INT_MAX);
+  }
 }

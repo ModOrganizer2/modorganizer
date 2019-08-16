@@ -884,6 +884,7 @@ void Settings::dump() const
   m_Settings.endGroup();
 }
 
+
 QString widgetNameWithTopLevel(const QWidget* widget)
 {
   QStringList components;
@@ -941,12 +942,46 @@ QString stateSettingName(const Widget* widget)
   return "geometry/" + widgetName(widget) + "_state";
 }
 
-void Settings::saveGeometry(const QWidget* w)
+
+GeometrySettings::GeometrySettings(QSettings& s)
+  : m_Settings(s), m_Reset(false)
+{
+}
+
+void GeometrySettings::requestReset()
+{
+  m_Reset = true;
+}
+
+void GeometrySettings::resetIfNeeded()
+{
+  if (!m_Reset) {
+    return;
+  }
+
+  m_Settings.beginGroup("geometry");
+  m_Settings.remove("");
+  m_Settings.endGroup();
+
+  /*settings.remove("window_geometry");
+  settings.remove("window_state");
+  settings.remove("toolbar_size");
+  settings.remove("toolbar_button_style");
+  settings.remove("menubar_visible");
+  settings.remove("window_split");
+  settings.remove("window_monitor");
+  settings.remove("filters_visible");
+  settings.remove("browser_geometry");
+  settings.remove("geometry");
+  settings.remove("reset_geometry");*/
+}
+
+void GeometrySettings::saveGeometry(const QWidget* w)
 {
   m_Settings.setValue(geoSettingName(w), w->saveGeometry());
 }
 
-bool Settings::restoreGeometry(QWidget* w) const
+bool GeometrySettings::restoreGeometry(QWidget* w) const
 {
   if (auto v=getOptional<QByteArray>(m_Settings, geoSettingName(w))) {
     w->restoreGeometry(*v);
@@ -956,12 +991,12 @@ bool Settings::restoreGeometry(QWidget* w) const
   return false;
 }
 
-void Settings::saveState(const QMainWindow* w)
+void GeometrySettings::saveState(const QMainWindow* w)
 {
   m_Settings.setValue(stateSettingName(w), w->saveState());
 }
 
-bool Settings::restoreState(QMainWindow* w) const
+bool GeometrySettings::restoreState(QMainWindow* w) const
 {
   if (auto v=getOptional<QByteArray>(m_Settings, stateSettingName(w))) {
     w->restoreState(*v);
@@ -971,12 +1006,12 @@ bool Settings::restoreState(QMainWindow* w) const
   return false;
 }
 
-void Settings::saveState(const QHeaderView* w)
+void GeometrySettings::saveState(const QHeaderView* w)
 {
   m_Settings.setValue(stateSettingName(w), w->saveState());
 }
 
-bool Settings::restoreState(QHeaderView* w) const
+bool GeometrySettings::restoreState(QHeaderView* w) const
 {
   if (auto v=getOptional<QByteArray>(m_Settings, stateSettingName(w))) {
     w->restoreState(*v);
@@ -986,12 +1021,12 @@ bool Settings::restoreState(QHeaderView* w) const
   return false;
 }
 
-void Settings::saveState(const QSplitter* w)
+void GeometrySettings::saveState(const QSplitter* w)
 {
   m_Settings.setValue(stateSettingName(w), w->saveState());
 }
 
-bool Settings::restoreState(QSplitter* w) const
+bool GeometrySettings::restoreState(QSplitter* w) const
 {
   if (auto v=getOptional<QByteArray>(m_Settings, stateSettingName(w))) {
     w->restoreState(*v);
@@ -999,12 +1034,6 @@ bool Settings::restoreState(QSplitter* w) const
   }
 
   return false;
-}
-
-
-GeometrySettings::GeometrySettings(QSettings& s)
-  : m_Settings(s)
-{
 }
 
 bool GeometrySettings::restoreToolbars(QMainWindow* w) const
@@ -1068,6 +1097,11 @@ std::optional<bool> GeometrySettings::getFiltersVisible() const
   return getOptional<bool>(m_Settings, "filters_visible");
 }
 
+void GeometrySettings::setFiltersVisible(bool b)
+{
+  m_Settings.setValue("filters_visible", b);
+}
+
 QStringList GeometrySettings::getModInfoTabOrder() const
 {
   QStringList v;
@@ -1106,7 +1140,7 @@ void GeometrySettings::setModInfoTabOrder(const QString& names)
 
 std::optional<int> GeometrySettings::getMainWindowMonitor() const
 {
-  return getOptional<int>(m_Settings, "geometry/window_monitor");
+  return getOptional<int>(m_Settings, "geometry/MainWindow_monitor");
 }
 
 void GeometrySettings::centerOnMainWindowMonitor(QWidget* w)
@@ -1128,34 +1162,29 @@ void GeometrySettings::saveMainWindowMonitor(const QMainWindow* w)
   if (auto* handle=w->windowHandle()) {
     if (auto* screen = handle->screen()) {
       const int screenId = QGuiApplication::screens().indexOf(screen);
-      m_Settings.setValue("geometry/window_monitor", screenId);
+      m_Settings.setValue("geometry/MainWindow_monitor", screenId);
     }
   }
 }
 
 void GeometrySettings::setDockSize(const QString& name, int size)
 {
-  m_Settings.setValue("geometry/" + name + "_size", size);
+  m_Settings.setValue("geometry/MainWindow_docks_" + name + "_size", size);
 }
 
 std::optional<int> GeometrySettings::getDockSize(const QString& name) const
 {
-  return getOptional<int>(m_Settings, "geometry/" + name + "_size");
-}
-
-std::optional<bool> GeometrySettings::isCategoryListVisible() const
-{
-  return getOptional<bool>(m_Settings, "categorylist_visible");
+  return getOptional<int>(m_Settings, "geometry/MainWindow_docks_" + name + "_size");
 }
 
 
 GeometrySaver::GeometrySaver(Settings& s, QDialog* dialog)
   : m_settings(s), m_dialog(dialog)
 {
-  m_settings.restoreGeometry(m_dialog);
+  m_settings.geometry().restoreGeometry(m_dialog);
 }
 
 GeometrySaver::~GeometrySaver()
 {
-  m_settings.saveGeometry(m_dialog);
+  m_settings.geometry().saveGeometry(m_dialog);
 }

@@ -34,7 +34,6 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings* setti
   , ui(new Ui::SettingsDialog)
   , m_settings(settings)
   , m_PluginContainer(pluginContainer)
-  , m_GeometriesReset(false)
   , m_keyChanged(false)
 {
   ui->setupUi(this);
@@ -101,10 +100,7 @@ int SettingsDialog::exec()
   if (getApiKeyChanged()) {
     restartNeeded = true;
   }
-  if (getResetGeometries()) {
-    restartNeeded = true;
-    qsettings.setValue("reset_geometry", true);
-  }
+
   if (restartNeeded) {
     if (QMessageBox::question(nullptr,
       tr("Restart Mod Organizer?"),
@@ -154,11 +150,6 @@ void SettingsDialog::accept()
   }
 
   TutorableDialog::accept();
-}
-
-bool SettingsDialog::getResetGeometries()
-{
-  return ui->resetGeometryBtn->isChecked();
 }
 
 bool SettingsDialog::getApiKeyChanged()

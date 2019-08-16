@@ -366,9 +366,11 @@ MainWindow::MainWindow(Settings &settings
 
   initDownloadView();
 
-  const bool pluginListAdjusted = settings.restoreState(ui->espList->header());
-  settings.restoreState(ui->dataTree->header());
-  settings.restoreState(ui->downloadView->header());
+  const bool pluginListAdjusted =
+    settings.geometry().restoreState(ui->espList->header());
+
+  settings.geometry().restoreState(ui->dataTree->header());
+  settings.geometry().restoreState(ui->downloadView->header());
 
   ui->splitter->setStretchFactor(0, 3);
   ui->splitter->setStretchFactor(1, 2);
@@ -575,7 +577,7 @@ void MainWindow::setupModList()
   ui->modList->header()->installEventFilter(m_OrganizerCore.modList());
 
 
-  if (m_OrganizerCore.settings().restoreState(ui->modList->header())) {
+  if (m_OrganizerCore.settings().geometry().restoreState(ui->modList->header())) {
     // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
     for (int column = 0; column <= ModList::COL_LASTCOLUMN; ++column) {
       int sectionSize = ui->modList->header()->sectionSize(column);
@@ -1417,12 +1419,6 @@ void MainWindow::cleanup()
   m_MetaSave.waitForFinished();
 }
 
-
-void MainWindow::setBrowserGeometry(const QByteArray &geometry)
-{
-  m_IntegratedBrowser.restoreGeometry(geometry);
-}
-
 void MainWindow::displaySaveGameInfo(QListWidgetItem *newItem)
 {
   // don't display the widget if the main window doesn't have focus
@@ -2259,10 +2255,10 @@ void MainWindow::activateProxy(bool activate)
 
 void MainWindow::readSettings(const Settings& settings)
 {
-  settings.restoreGeometry(this);
-  settings.restoreState(this);
+  settings.geometry().restoreGeometry(this);
+  settings.geometry().restoreState(this);
   settings.geometry().restoreToolbars(this);
-  settings.restoreState(ui->splitter);
+  settings.geometry().restoreState(ui->splitter);
 
   if (auto v=settings.geometry().getMenubarVisible()) {
     showMenuBar(*v);
@@ -2340,38 +2336,22 @@ void MainWindow::storeSettings(Settings& s) {
   settings.setValue("selected_executable",
                     ui->executablesListBox->currentIndex());
 
-  if (settings.value("reset_geometry", false).toBool()) {
-    settings.remove("window_geometry");
-    settings.remove("window_state");
-    settings.remove("toolbar_size");
-    settings.remove("toolbar_button_style");
-    settings.remove("menubar_visible");
-    settings.remove("window_split");
-    settings.remove("window_monitor");
-    settings.remove("filters_visible");
-    settings.remove("browser_geometry");
-    settings.remove("geometry");
-    settings.remove("reset_geometry");
-  } else {
-    s.saveState(this);
-    s.saveGeometry(this);
+  s.geometry().saveState(this);
+  s.geometry().saveGeometry(this);
 
-    s.geometry().setMenubarVisible(m_menuBarVisible);
-    s.geometry().saveToolbars(this);
-    s.geometry().setStatusbarVisible(m_statusBarVisible);
-    s.saveState(ui->splitter);
-    s.geometry().saveMainWindowMonitor(this);
+  s.geometry().setMenubarVisible(m_menuBarVisible);
+  s.geometry().saveToolbars(this);
+  s.geometry().setStatusbarVisible(m_statusBarVisible);
+  s.geometry().saveState(ui->splitter);
+  s.geometry().saveMainWindowMonitor(this);
+  s.geometry().setFiltersVisible(ui->displayCategoriesBtn->isChecked());
 
-    settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
-    settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
+  s.geometry().saveState(ui->espList->header());
+  s.geometry().saveState(ui->dataTree->header());
+  s.geometry().saveState(ui->downloadView->header());
+  s.geometry().saveState(ui->modList->header());
 
-    s.saveState(ui->espList->header());
-    s.saveState(ui->dataTree->header());
-    s.saveState(ui->downloadView->header());
-    s.saveState(ui->modList->header());
-
-    DockFixer::save(this, s);
-  }
+  DockFixer::save(this, s);
 }
 
 ILockedWaitingForProcess* MainWindow::lock()
@@ -6489,7 +6469,6 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &errorMe
 
 void MainWindow::on_bossButton_clicked()
 {
-  std::string reportURL;
   std::string errorMessages;
 
   //m_OrganizerCore.currentProfile()->writeModlistNow();
@@ -6637,16 +6616,6 @@ void MainWindow::on_bossButton_clicked()
 
   if (success) {
     m_DidUpdateMasterList = true;
-    if (reportURL.length() > 0) {
-      m_IntegratedBrowser.setWindowTitle("LOOT Report");
-      QString report(reportURL.c_str());
-      QStringList temp = report.split("?");
-      QUrl url = QUrl::fromLocalFile(temp.at(0));
-      if (temp.size() > 1) {
-        url.setQuery(temp.at(1).toUtf8());
-      }
-      m_IntegratedBrowser.openUrl(url);
-    }
     m_OrganizerCore.refreshESPList(false);
     m_OrganizerCore.savePluginList();
   }

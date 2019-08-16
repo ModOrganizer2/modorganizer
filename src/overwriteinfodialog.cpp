@@ -106,13 +106,13 @@ OverwriteInfoDialog::~OverwriteInfoDialog()
 
 void OverwriteInfoDialog::showEvent(QShowEvent* e)
 {
-  Settings::instance().restoreGeometry(this);
+  Settings::instance().geometry().restoreGeometry(this);
   QDialog::showEvent(e);
 }
 
 void OverwriteInfoDialog::done(int r)
 {
-  Settings::instance().saveGeometry(this);
+  Settings::instance().geometry().saveGeometry(this);
   QDialog::done(r);
 }
 

@@ -1233,9 +1233,6 @@ programs you are intentionally running.</string>
          <property name="text">
           <string>Reset Window Geometries</string>
          </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
         </widget>
        </item>
        <item>

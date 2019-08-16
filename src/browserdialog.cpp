@@ -72,7 +72,7 @@ BrowserDialog::~BrowserDialog()
 
 void BrowserDialog::closeEvent(QCloseEvent *event)
 {
-//  m_AccessManager->showCookies();
+  Settings::instance().geometry().saveGeometry(this);
   QDialog::closeEvent(event);
 }
 
@@ -126,6 +126,7 @@ void BrowserDialog::urlChanged(const QUrl &url)
 void BrowserDialog::openUrl(const QUrl &url)
 {
   if (isHidden()) {
+    Settings::instance().geometry().restoreGeometry(this);
     show();
   }
   openInNewTab(url);

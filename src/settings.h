@@ -51,6 +51,24 @@ class GeometrySettings
 public:
   GeometrySettings(QSettings& s);
 
+  void requestReset();
+  void resetIfNeeded();
+
+  void saveGeometry(const QWidget* w);
+  bool restoreGeometry(QWidget* w) const;
+
+  void saveState(const QMainWindow* window);
+  bool restoreState(QMainWindow* window) const;
+
+  void saveState(const QHeaderView* header);
+  bool restoreState(QHeaderView* header) const;
+
+  void saveState(const QToolBar* toolbar);
+  bool restoreState(QToolBar* toolbar) const;
+
+  void saveState(const QSplitter* splitter);
+  bool restoreState(QSplitter* splitter) const;
+
   std::optional<bool> getMenubarVisible() const;
   void setMenubarVisible(bool b);
 
@@ -61,6 +79,7 @@ public:
   void setStatusbarVisible(bool b);
 
   std::optional<bool> getFiltersVisible() const;
+  void setFiltersVisible(bool b);
 
   QStringList getModInfoTabOrder() const;
   void setModInfoTabOrder(const QString& names);
@@ -73,10 +92,9 @@ public:
 
   std::optional<int> getDockSize(const QString& name) const;
 
-  std::optional<bool> isCategoryListVisible() const;
-
 private:
   QSettings& m_Settings;
+  bool m_Reset;
 };
 
 
@@ -209,23 +227,6 @@ public:
 
   GeometrySettings& geometry();
   const GeometrySettings& geometry() const;
-
-
-  void saveGeometry(const QWidget* w);
-  bool restoreGeometry(QWidget* w) const;
-
-  void saveState(const QMainWindow* window);
-  bool restoreState(QMainWindow* window) const;
-
-  void saveState(const QHeaderView* header);
-  bool restoreState(QHeaderView* header) const;
-
-  void saveState(const QToolBar* toolbar);
-  bool restoreState(QToolBar* toolbar) const;
-
-  void saveState(const QSplitter* splitter);
-  bool restoreState(QSplitter* splitter) const;
-
 
   /**
    * retrieve the directory where profiles stored (with native separators)

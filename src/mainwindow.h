@@ -293,7 +293,6 @@ private:
 
   static void setupNetworkProxy(bool activate);
   void activateProxy(bool activate);
-  void setBrowserGeometry(const QByteArray &geometry);
 
   bool createBackup(const QString &filePath, const QDateTime &time);
   QString queryRestore(const QString &filePath);

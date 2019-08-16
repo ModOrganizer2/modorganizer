@@ -718,6 +718,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     }
 
     int res = 1;
+
     { // scope to control lifetime of mainwindow
       // set up main window and its data structures
       MainWindow mainWindow(settings, organizer, pluginContainer);
@@ -743,17 +744,20 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
       splash.finish(&mainWindow);
 
-      const auto ret = application.exec();
+      res = application.exec();
 
       NexusInterface::instance(&pluginContainer)
         ->getAccessManager()->setTopLevelWidget(nullptr);
-
-      return ret;
     }
+
+    settings.geometry().resetIfNeeded();
+    return res;
+
   } catch (const std::exception &e) {
     reportError(e.what());
-    return 1;
   }
+
+  return 1;
 }
 
 int doCoreDump(env::CoreDumpTypes type)

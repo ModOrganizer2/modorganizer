@@ -71,7 +71,6 @@ public:
   // temp
   Ui::SettingsDialog *ui;
   bool m_keyChanged;
-  bool m_GeometriesReset;
   PluginContainer *m_PluginContainer;
 
   int exec() override;
@@ -81,7 +80,6 @@ public slots:
 
 public:
   bool getApiKeyChanged();
-  bool getResetGeometries();
 
 private:
   Settings* m_settings;
