@@ -91,6 +91,13 @@ private:
 };
 
 
+enum class EndorsementState
+{
+  Accepted = 1,
+  Refused,
+  NoDecision
+};
+
 /**
  * manages the settings for Mod Organizer. The settings are not cached
  * inside the class but read/written directly from/to disc
@@ -205,7 +212,9 @@ public:
   std::optional<bool> getUseProxy() const;
 
   std::optional<QVersionNumber> getVersion() const;
+
   bool getFirstStart() const;
+  void setFirstStart(bool b);
 
   std::optional<QColor> getPreviousSeparatorColor() const;
   void setPreviousSeparatorColor(const QColor& c) const;
@@ -353,6 +362,8 @@ public:
    * @return true if endorsement integration is enabled
    */
   bool endorsementIntegration() const;
+
+  EndorsementState endorsementState() const;
 
   /**
    * @return true if the API counter should be hidden

@@ -1225,7 +1225,7 @@ void MainWindow::showEvent(QShowEvent *event)
 
     hookUpWindowTutorials();
 
-    if (m_OrganizerCore.settings().directInterface().value("first_start", true).toBool()) {
+    if (m_OrganizerCore.settings().getFirstStart()) {
       QString firstStepsTutorial = ToQString(AppConfig::firstStepsTutorial());
       if (TutorialManager::instance().hasTutorial(firstStepsTutorial)) {
         if (QMessageBox::question(this, tr("Show tutorial?"),
@@ -1244,7 +1244,7 @@ void MainWindow::showEvent(QShowEvent *event)
             QObject::tr("Please use \"Help\" from the toolbar to get usage instructions to all elements"));
       }
 
-      m_OrganizerCore.settings().directInterface().setValue("first_start", false);
+      m_OrganizerCore.settings().setFirstStart(false);
     }
 
     m_OrganizerCore.settings().restoreIndex(ui->groupCombo);
@@ -5567,22 +5567,42 @@ void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
 
 void MainWindow::toggleMO2EndorseState()
 {
-  if (Settings::instance().endorsementIntegration()) {
-    ui->actionEndorseMO->setVisible(true);
-    if (Settings::instance().directInterface().contains("endorse_state")) {
-      ui->actionEndorseMO->menu()->setEnabled(false);
-      if (Settings::instance().directInterface().value("endorse_state").toString() == "Endorsed") {
-        ui->actionEndorseMO->setToolTip(tr("Thank you for endorsing MO2! :)"));
-        ui->actionEndorseMO->setStatusTip(tr("Thank you for endorsing MO2! :)"));
-      } else if (Settings::instance().directInterface().value("endorse_state").toString() == "Abstained") {
-        ui->actionEndorseMO->setToolTip(tr("Please reconsider endorsing MO2 on Nexus!"));
-        ui->actionEndorseMO->setStatusTip(tr("Please reconsider endorsing MO2 on Nexus!"));
-      }
-    } else {
-      ui->actionEndorseMO->menu()->setEnabled(true);
-    }
-  } else
+  const auto& s = m_OrganizerCore.settings();
+
+  if (!s.endorsementIntegration()) {
     ui->actionEndorseMO->setVisible(false);
+    return;
+  }
+
+  ui->actionEndorseMO->setVisible(true);
+
+  bool enabled = false;
+  QString text;
+
+  switch (s.endorsementState())
+  {
+    case EndorsementState::Accepted:
+    {
+      text = tr("Thank you for endorsing MO2! :)");
+      break;
+    }
+
+    case EndorsementState::Refused:
+    {
+      text = tr("Please reconsider endorsing MO2 on Nexus!");
+      break;
+    }
+
+    case EndorsementState::NoDecision:
+    {
+      enabled = true;
+      break;
+    }
+  }
+
+  ui->actionEndorseMO->menu()->setEnabled(enabled);
+  ui->actionEndorseMO->setToolTip(text);
+  ui->actionEndorseMO->setStatusTip(text);
 }
 
 void MainWindow::nxmEndorsementsAvailable(QVariant userData, QVariant resultData, int)

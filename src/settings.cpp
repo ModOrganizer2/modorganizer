@@ -489,6 +489,11 @@ bool Settings::getFirstStart() const
   return getOptional<bool>(m_Settings, "first_start").value_or(true);
 }
 
+void Settings::setFirstStart(bool b)
+{
+  m_Settings.setValue("first_start", b);
+}
+
 std::optional<QColor> Settings::getPreviousSeparatorColor() const
 {
   const auto c = getOptional<QColor>(m_Settings, "previousSeparatorColor");
@@ -687,6 +692,19 @@ bool Settings::useProxy() const
 bool Settings::endorsementIntegration() const
 {
   return m_Settings.value("Settings/endorsement_integration", true).toBool();
+}
+
+EndorsementState Settings::endorsementState() const
+{
+  const auto v = getOptional<QString>(m_Settings, "endorse_state");
+
+  if (!v) {
+    return EndorsementState::NoDecision;
+  } else if (*v == "Abstained") {
+    return EndorsementState::Refused;
+  } else {
+    return EndorsementState::Accepted;
+  }
 }
 
 bool Settings::hideAPICounter() const
