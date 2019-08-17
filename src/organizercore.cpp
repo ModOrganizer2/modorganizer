@@ -745,16 +745,11 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
     m_CurrentProfile->deactivateInvalidation();
   }
 
+  m_Settings.setSelectedProfileName(m_CurrentProfile->name());
+
   connect(m_CurrentProfile, SIGNAL(modStatusChanged(uint)), this, SLOT(modStatusChanged(uint)));
   connect(m_CurrentProfile, SIGNAL(modStatusChanged(QList<uint>)), this, SLOT(modStatusChanged(QList<uint>)));
   refreshDirectoryStructure();
-
-  //This line is not actually needed and was only added to allow some
-  //outside detection of Mo2 profile change. (like BaobobMiller utility)
-  if (m_CurrentProfile != nullptr) {
-    settings().directInterface().setValue("selected_profile",
-      m_CurrentProfile->name().toUtf8().constData());
-  }
 }
 
 MOBase::IModRepositoryBridge *OrganizerCore::createNexusBridge() const

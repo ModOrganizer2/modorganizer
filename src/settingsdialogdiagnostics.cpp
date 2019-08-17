@@ -6,12 +6,12 @@
 
 using namespace MOBase;
 
-DiagnosticsSettingsTab::DiagnosticsSettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
-  : SettingsTab(m_parent, m_dialog)
+DiagnosticsSettingsTab::DiagnosticsSettingsTab(Settings& s, SettingsDialog& d)
+  : SettingsTab(s, d)
 {
   setLevelsBox();
-  ui->dumpsTypeBox->setCurrentIndex(m_parent->crashDumpsType());
-  ui->dumpsMaxEdit->setValue(m_parent->crashDumpsMax());
+  ui->dumpsTypeBox->setCurrentIndex(settings().crashDumpsType());
+  ui->dumpsMaxEdit->setValue(settings().crashDumpsMax());
   QString logsPath = qApp->property("dataPath").toString()
     + "/" + QString::fromStdWString(AppConfig::logPath());
   ui->diagnosticsExplainedLabel->setText(
@@ -33,7 +33,7 @@ void DiagnosticsSettingsTab::setLevelsBox()
   ui->logLevelBox->addItem(QObject::tr("Error"), log::Error);
 
   for (int i=0; i<ui->logLevelBox->count(); ++i) {
-    if (ui->logLevelBox->itemData(i) == m_parent->logLevel()) {
+    if (ui->logLevelBox->itemData(i) == settings().logLevel()) {
       ui->logLevelBox->setCurrentIndex(i);
       break;
     }
@@ -42,7 +42,7 @@ void DiagnosticsSettingsTab::setLevelsBox()
 
 void DiagnosticsSettingsTab::update()
 {
-  m_Settings.setValue("Settings/log_level", ui->logLevelBox->currentData().toInt());
-  m_Settings.setValue("Settings/crash_dumps_type", ui->dumpsTypeBox->currentIndex());
-  m_Settings.setValue("Settings/crash_dumps_max", ui->dumpsMaxEdit->value());
+  qsettings().setValue("Settings/log_level", ui->logLevelBox->currentData().toInt());
+  qsettings().setValue("Settings/crash_dumps_type", ui->dumpsTypeBox->currentIndex());
+  qsettings().setValue("Settings/crash_dumps_max", ui->dumpsMaxEdit->value());
 }

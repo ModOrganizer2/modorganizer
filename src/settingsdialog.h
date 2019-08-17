@@ -31,19 +31,23 @@ namespace Ui { class SettingsDialog; }
 class SettingsTab
 {
 public:
-  SettingsTab(Settings *m_parent, SettingsDialog &m_dialog);
+  SettingsTab(Settings& settings, SettingsDialog& m_dialog);
   virtual ~SettingsTab();
 
   virtual void update() = 0;
   virtual void closing() {}
 
 protected:
-  Settings *m_parent;
-  QSettings &m_Settings;
-  SettingsDialog &m_dialog;
   Ui::SettingsDialog* ui;
 
-  QWidget* parentWidget();
+  Settings& settings();
+  QSettings& qsettings();
+  SettingsDialog& dialog();
+
+private:
+  Settings& m_settings;
+  QSettings& m_qsettings;
+  SettingsDialog& m_dialog;
 };
 
 
@@ -58,7 +62,7 @@ class SettingsDialog : public MOBase::TutorableDialog
 
 public:
   explicit SettingsDialog(
-    PluginContainer *pluginContainer, Settings* settings, QWidget *parent = 0);
+    PluginContainer *pluginContainer, Settings& settings, QWidget *parent = 0);
 
   ~SettingsDialog();
 
@@ -82,7 +86,7 @@ public:
   bool getApiKeyChanged();
 
 private:
-  Settings* m_settings;
+  Settings& m_settings;
   std::vector<std::unique_ptr<SettingsTab>> m_tabs;
 
 };

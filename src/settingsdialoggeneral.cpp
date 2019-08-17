@@ -6,12 +6,12 @@
 
 using MOBase::QuestionBoxMemory;
 
-GeneralSettingsTab::GeneralSettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
-  : SettingsTab(m_parent, m_dialog)
+GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
+  : SettingsTab(s, d)
 {
   addLanguages();
   {
-    QString languageCode = m_parent->language();
+    QString languageCode = settings().language();
     int currentID        = ui->languageBox->findData(languageCode);
     // I made a mess. :( Most languages are stored with only the iso country
     // code (2 characters like "de") but chinese
@@ -28,31 +28,31 @@ GeneralSettingsTab::GeneralSettingsTab(Settings *m_parent, SettingsDialog &m_dia
   addStyles();
   {
     int currentID = ui->styleBox->findData(
-      m_Settings.value("Settings/style", "").toString());
+      qsettings().value("Settings/style", "").toString());
     if (currentID != -1) {
       ui->styleBox->setCurrentIndex(currentID);
     }
   }
 
   //version with stylesheet
-  setButtonColor(ui->overwritingBtn, m_parent->modlistOverwritingLooseColor());
-  setButtonColor(ui->overwrittenBtn, m_parent->modlistOverwrittenLooseColor());
-  setButtonColor(ui->overwritingArchiveBtn, m_parent->modlistOverwritingArchiveColor());
-  setButtonColor(ui->overwrittenArchiveBtn, m_parent->modlistOverwrittenArchiveColor());
-  setButtonColor(ui->containsBtn, m_parent->modlistContainsPluginColor());
-  setButtonColor(ui->containedBtn, m_parent->pluginListContainedColor());
+  setButtonColor(ui->overwritingBtn, settings().modlistOverwritingLooseColor());
+  setButtonColor(ui->overwrittenBtn, settings().modlistOverwrittenLooseColor());
+  setButtonColor(ui->overwritingArchiveBtn, settings().modlistOverwritingArchiveColor());
+  setButtonColor(ui->overwrittenArchiveBtn, settings().modlistOverwrittenArchiveColor());
+  setButtonColor(ui->containsBtn, settings().modlistContainsPluginColor());
+  setButtonColor(ui->containedBtn, settings().pluginListContainedColor());
 
-  setOverwritingColor(m_parent->modlistOverwritingLooseColor());
-  setOverwrittenColor(m_parent->modlistOverwrittenLooseColor());
-  setOverwritingArchiveColor(m_parent->modlistOverwritingArchiveColor());
-  setOverwrittenArchiveColor(m_parent->modlistOverwrittenArchiveColor());
-  setContainsColor(m_parent->modlistContainsPluginColor());
-  setContainedColor(m_parent->pluginListContainedColor());
+  setOverwritingColor(settings().modlistOverwritingLooseColor());
+  setOverwrittenColor(settings().modlistOverwrittenLooseColor());
+  setOverwritingArchiveColor(settings().modlistOverwritingArchiveColor());
+  setOverwrittenArchiveColor(settings().modlistOverwrittenArchiveColor());
+  setContainsColor(settings().modlistContainsPluginColor());
+  setContainedColor(settings().pluginListContainedColor());
 
-  ui->compactBox->setChecked(m_parent->compactDownloads());
-  ui->showMetaBox->setChecked(m_parent->metaDownloads());
-  ui->usePrereleaseBox->setChecked(m_parent->usePrereleases());
-  ui->colorSeparatorsBox->setChecked(m_parent->colorSeparatorScrollbar());
+  ui->compactBox->setChecked(settings().compactDownloads());
+  ui->showMetaBox->setChecked(settings().metaDownloads());
+  ui->usePrereleaseBox->setChecked(settings().usePrereleases());
+  ui->colorSeparatorsBox->setChecked(settings().colorSeparatorScrollbar());
 
   QObject::connect(ui->overwritingArchiveBtn, &QPushButton::clicked, [&]{ on_overwritingArchiveBtn_clicked(); });
   QObject::connect(ui->overwritingBtn, &QPushButton::clicked, [&]{ on_overwritingBtn_clicked(); });
@@ -67,30 +67,30 @@ GeneralSettingsTab::GeneralSettingsTab(Settings *m_parent, SettingsDialog &m_dia
 
 void GeneralSettingsTab::update()
 {
-  QString oldLanguage = m_parent->language();
+  QString oldLanguage = settings().language();
   QString newLanguage = ui->languageBox->itemData(ui->languageBox->currentIndex()).toString();
   if (newLanguage != oldLanguage) {
-    m_Settings.setValue("Settings/language", newLanguage);
-    emit m_parent->languageChanged(newLanguage);
+    qsettings().setValue("Settings/language", newLanguage);
+    emit settings().languageChanged(newLanguage);
   }
 
-  QString oldStyle = m_Settings.value("Settings/style", "").toString();
+  QString oldStyle = qsettings().value("Settings/style", "").toString();
   QString newStyle = ui->styleBox->itemData(ui->styleBox->currentIndex()).toString();
   if (oldStyle != newStyle) {
-    m_Settings.setValue("Settings/style", newStyle);
-    emit m_parent->styleChanged(newStyle);
+    qsettings().setValue("Settings/style", newStyle);
+    emit settings().styleChanged(newStyle);
   }
 
-  m_Settings.setValue("Settings/overwritingLooseFilesColor", getOverwritingColor());
-  m_Settings.setValue("Settings/overwrittenLooseFilesColor", getOverwrittenColor());
-  m_Settings.setValue("Settings/overwritingArchiveFilesColor", getOverwritingArchiveColor());
-  m_Settings.setValue("Settings/overwrittenArchiveFilesColor", getOverwrittenArchiveColor());
-  m_Settings.setValue("Settings/containsPluginColor", getContainsColor());
-  m_Settings.setValue("Settings/containedColor", getContainedColor());
-  m_Settings.setValue("Settings/compact_downloads", ui->compactBox->isChecked());
-  m_Settings.setValue("Settings/meta_downloads", ui->showMetaBox->isChecked());
-  m_Settings.setValue("Settings/use_prereleases", ui->usePrereleaseBox->isChecked());
-  m_Settings.setValue("Settings/colorSeparatorScrollbars", ui->colorSeparatorsBox->isChecked());
+  qsettings().setValue("Settings/overwritingLooseFilesColor", getOverwritingColor());
+  qsettings().setValue("Settings/overwrittenLooseFilesColor", getOverwrittenColor());
+  qsettings().setValue("Settings/overwritingArchiveFilesColor", getOverwritingArchiveColor());
+  qsettings().setValue("Settings/overwrittenArchiveFilesColor", getOverwrittenArchiveColor());
+  qsettings().setValue("Settings/containsPluginColor", getContainsColor());
+  qsettings().setValue("Settings/containedColor", getContainedColor());
+  qsettings().setValue("Settings/compact_downloads", ui->compactBox->isChecked());
+  qsettings().setValue("Settings/meta_downloads", ui->showMetaBox->isChecked());
+  qsettings().setValue("Settings/use_prereleases", ui->usePrereleaseBox->isChecked());
+  qsettings().setValue("Settings/colorSeparatorScrollbars", ui->colorSeparatorsBox->isChecked());
 }
 
 void GeneralSettingsTab::addLanguages()
@@ -141,7 +141,7 @@ void GeneralSettingsTab::addStyles()
 
 void GeneralSettingsTab::resetDialogs()
 {
-  m_parent->resetQuestionButtons();
+  settings().resetQuestionButtons();
 }
 
 void GeneralSettingsTab::setButtonColor(QPushButton *button, const QColor &color)
@@ -163,7 +163,7 @@ void GeneralSettingsTab::setButtonColor(QPushButton *button, const QColor &color
 
 void GeneralSettingsTab::on_containsBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_ContainsColor, parentWidget(), "Color Picker: Mod contains selected plugin", QColorDialog::ShowAlphaChannel);
+  QColor result = QColorDialog::getColor(m_ContainsColor, &dialog(), "Color Picker: Mod contains selected plugin", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_ContainsColor = result;
     setButtonColor(ui->containsBtn, result);
@@ -172,7 +172,7 @@ void GeneralSettingsTab::on_containsBtn_clicked()
 
 void GeneralSettingsTab::on_containedBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_ContainedColor, parentWidget(), "ColorPicker: Plugin is Contained in selected Mod", QColorDialog::ShowAlphaChannel);
+  QColor result = QColorDialog::getColor(m_ContainedColor, &dialog(), "ColorPicker: Plugin is Contained in selected Mod", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_ContainedColor = result;
     setButtonColor(ui->containedBtn, result);
@@ -181,7 +181,7 @@ void GeneralSettingsTab::on_containedBtn_clicked()
 
 void GeneralSettingsTab::on_overwrittenBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_OverwrittenColor, parentWidget(), "ColorPicker: Is overwritten (loose files)", QColorDialog::ShowAlphaChannel);
+  QColor result = QColorDialog::getColor(m_OverwrittenColor, &dialog(), "ColorPicker: Is overwritten (loose files)", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_OverwrittenColor = result;
     setButtonColor(ui->overwrittenBtn, result);
@@ -190,7 +190,7 @@ void GeneralSettingsTab::on_overwrittenBtn_clicked()
 
 void GeneralSettingsTab::on_overwritingBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_OverwritingColor, parentWidget(), "ColorPicker: Is overwriting (loose files)", QColorDialog::ShowAlphaChannel);
+  QColor result = QColorDialog::getColor(m_OverwritingColor, &dialog(), "ColorPicker: Is overwriting (loose files)", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_OverwritingColor = result;
     setButtonColor(ui->overwritingBtn, result);
@@ -199,7 +199,7 @@ void GeneralSettingsTab::on_overwritingBtn_clicked()
 
 void GeneralSettingsTab::on_overwrittenArchiveBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_OverwrittenArchiveColor, parentWidget(), "ColorPicker: Is overwritten (archive files)", QColorDialog::ShowAlphaChannel);
+  QColor result = QColorDialog::getColor(m_OverwrittenArchiveColor, &dialog(), "ColorPicker: Is overwritten (archive files)", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_OverwrittenArchiveColor = result;
     setButtonColor(ui->overwrittenArchiveBtn, result);
@@ -208,7 +208,7 @@ void GeneralSettingsTab::on_overwrittenArchiveBtn_clicked()
 
 void GeneralSettingsTab::on_overwritingArchiveBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_OverwritingArchiveColor, parentWidget(), "ColorPicker: Is overwriting (archive files)", QColorDialog::ShowAlphaChannel);
+  QColor result = QColorDialog::getColor(m_OverwritingArchiveColor, &dialog(), "ColorPicker: Is overwriting (archive files)", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_OverwritingArchiveColor = result;
     setButtonColor(ui->overwritingArchiveBtn, result);
@@ -234,7 +234,7 @@ void GeneralSettingsTab::on_resetColorsBtn_clicked()
 
 void GeneralSettingsTab::on_resetDialogsButton_clicked()
 {
-  if (QMessageBox::question(parentWidget(), QObject::tr("Confirm?"),
+  if (QMessageBox::question(&dialog(), QObject::tr("Confirm?"),
     QObject::tr("This will make all dialogs show up again where you checked the \"Remember selection\"-box. Continue?"),
     QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     resetDialogs();
@@ -243,7 +243,7 @@ void GeneralSettingsTab::on_resetDialogsButton_clicked()
 
 void GeneralSettingsTab::on_categoriesBtn_clicked()
 {
-  CategoriesDialog dialog(parentWidget());
+  CategoriesDialog dialog(&dialog());
   if (dialog.exec() == QDialog::Accepted) {
     dialog.commitChanges();
   }

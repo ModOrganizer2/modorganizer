@@ -5018,7 +5018,7 @@ void MainWindow::on_actionSettings_triggered()
   DownloadManager *dlManager = m_OrganizerCore.downloadManager();
 
 
-  SettingsDialog dialog(&m_PluginContainer, &settings, this);
+  SettingsDialog dialog(&m_PluginContainer, settings, this);
   dialog.exec();
 
   if (oldManagedGameDirectory != settings.getManagedGameDirectory()) {

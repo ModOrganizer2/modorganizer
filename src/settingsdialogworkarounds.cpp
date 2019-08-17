@@ -3,15 +3,15 @@
 #include "helper.h"
 #include <iplugingame.h>
 
-WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
-  : SettingsTab(m_parent, m_dialog)
+WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
+  : SettingsTab(s, d)
 {
-  ui->appIDEdit->setText(m_parent->getSteamAppID());
+  ui->appIDEdit->setText(settings().getSteamAppID());
 
-  LoadMechanism::EMechanism mechanismID = m_parent->getLoadMechanism();
+  LoadMechanism::EMechanism mechanismID = settings().getLoadMechanism();
   int index = 0;
 
-  if (m_parent->loadMechanism().isDirectLoadingSupported()) {
+  if (settings().loadMechanism().isDirectLoadingSupported()) {
     ui->mechanismBox->addItem(QObject::tr("Mod Organizer"), LoadMechanism::LOAD_MODORGANIZER);
     if (mechanismID == LoadMechanism::LOAD_MODORGANIZER) {
       index = ui->mechanismBox->count() - 1;
@@ -20,13 +20,13 @@ WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings *m_parent, SettingsDialo
 
   ui->mechanismBox->setCurrentIndex(index);
 
-  ui->hideUncheckedBox->setChecked(m_parent->hideUncheckedPlugins());
-  ui->forceEnableBox->setChecked(m_parent->forceEnableCoreFiles());
-  ui->displayForeignBox->setChecked(m_parent->displayForeign());
-  ui->lockGUIBox->setChecked(m_parent->lockGUI());
-  ui->enableArchiveParsingBox->setChecked(m_parent->archiveParsing());
+  ui->hideUncheckedBox->setChecked(settings().hideUncheckedPlugins());
+  ui->forceEnableBox->setChecked(settings().forceEnableCoreFiles());
+  ui->displayForeignBox->setChecked(settings().displayForeign());
+  ui->lockGUIBox->setChecked(settings().lockGUI());
+  ui->enableArchiveParsingBox->setChecked(settings().archiveParsing());
 
-  setExecutableBlacklist(m_parent->executablesBlacklist());
+  setExecutableBlacklist(settings().executablesBlacklist());
 
   QObject::connect(ui->bsaDateBtn, &QPushButton::clicked, [&]{ on_bsaDateBtn_clicked(); });
   QObject::connect(ui->execBlacklistBtn, &QPushButton::clicked, [&]{ on_execBlacklistBtn_clicked(); });
@@ -35,26 +35,26 @@ WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings *m_parent, SettingsDialo
 
 void WorkaroundsSettingsTab::update()
 {
-  if (ui->appIDEdit->text() != m_parent->gamePlugin()->steamAPPId()) {
-    m_Settings.setValue("Settings/app_id", ui->appIDEdit->text());
+  if (ui->appIDEdit->text() != settings().gamePlugin()->steamAPPId()) {
+    qsettings().setValue("Settings/app_id", ui->appIDEdit->text());
   } else {
-    m_Settings.remove("Settings/app_id");
+    qsettings().remove("Settings/app_id");
   }
-  m_Settings.setValue("Settings/load_mechanism", ui->mechanismBox->itemData(ui->mechanismBox->currentIndex()).toInt());
-  m_Settings.setValue("Settings/hide_unchecked_plugins", ui->hideUncheckedBox->isChecked());
-  m_Settings.setValue("Settings/force_enable_core_files", ui->forceEnableBox->isChecked());
-  m_Settings.setValue("Settings/display_foreign", ui->displayForeignBox->isChecked());
-  m_Settings.setValue("Settings/lock_gui", ui->lockGUIBox->isChecked());
-  m_Settings.setValue("Settings/archive_parsing_experimental", ui->enableArchiveParsingBox->isChecked());
+  qsettings().setValue("Settings/load_mechanism", ui->mechanismBox->itemData(ui->mechanismBox->currentIndex()).toInt());
+  qsettings().setValue("Settings/hide_unchecked_plugins", ui->hideUncheckedBox->isChecked());
+  qsettings().setValue("Settings/force_enable_core_files", ui->forceEnableBox->isChecked());
+  qsettings().setValue("Settings/display_foreign", ui->displayForeignBox->isChecked());
+  qsettings().setValue("Settings/lock_gui", ui->lockGUIBox->isChecked());
+  qsettings().setValue("Settings/archive_parsing_experimental", ui->enableArchiveParsingBox->isChecked());
 
-  m_Settings.setValue("Settings/executable_blacklist", getExecutableBlacklist());
+  qsettings().setValue("Settings/executable_blacklist", getExecutableBlacklist());
 }
 
 void WorkaroundsSettingsTab::on_execBlacklistBtn_clicked()
 {
   bool ok = false;
   QString result = QInputDialog::getMultiLineText(
-    parentWidget(),
+    &dialog(),
     QObject::tr("Executables Blacklist"),
     QObject::tr("Enter one executable per line to be blacklisted from the virtual file system.\n"
       "Mods and other virtualized files will not be visible to these executables and\n"
@@ -96,7 +96,7 @@ void WorkaroundsSettingsTab::on_resetGeometryBtn_clicked()
     nullptr, caption, text, QMessageBox::Yes | QMessageBox::Cancel);
 
   if (res == QMessageBox::Yes) {
-    m_parent->geometry().requestReset();
+    settings().geometry().requestReset();
     qApp->exit(INT_MAX);
   }
 }

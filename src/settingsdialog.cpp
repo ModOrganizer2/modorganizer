@@ -29,7 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings* settings, QWidget *parent)
+SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings& settings, QWidget *parent)
   : TutorableDialog("SettingsDialog", parent)
   , ui(new Ui::SettingsDialog)
   , m_settings(settings)
@@ -45,18 +45,13 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings* setti
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new SteamSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsSettingsTab(settings, *this)));
-
-  auto& qsettings = settings->directInterface();
-
-  QString key = QString("geometry/%1").arg(objectName());
-  if (qsettings.contains(key)) {
-    restoreGeometry(qsettings.value(key).toByteArray());
-  }
 }
 
 int SettingsDialog::exec()
 {
-  auto& qsettings = m_settings->directInterface();
+  GeometrySaver gs(m_settings, this);
+
+  auto& qsettings = m_settings.directInterface();
   auto ret = TutorableDialog::exec();
 
   if (ret == QDialog::Accepted) {
@@ -91,9 +86,6 @@ int SettingsDialog::exec()
       }
     qsettings.endGroup();
   }
-
-  QString key = QString("geometry/%1").arg(objectName());
-  qsettings.setValue(key, saveGeometry());
 
   // These changes happen regardless of accepted or rejected
   bool restartNeeded = false;
@@ -158,18 +150,24 @@ bool SettingsDialog::getApiKeyChanged()
 }
 
 
-SettingsTab::SettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
-  : m_parent(m_parent)
-  , m_Settings(m_parent->directInterface())
-  , m_dialog(m_dialog)
-  , ui(m_dialog.ui)
+SettingsTab::SettingsTab(Settings& s, SettingsDialog& d)
+  : ui(d.ui), m_settings(s), m_qsettings(s.directInterface()), m_dialog(d)
 {
 }
 
-SettingsTab::~SettingsTab()
-{}
+SettingsTab::~SettingsTab() = default;
 
-QWidget* SettingsTab::parentWidget()
+Settings& SettingsTab::settings()
 {
-  return &m_dialog;
+  return m_settings;
+}
+
+QSettings& SettingsTab::qsettings()
+{
+  return m_qsettings;
+}
+
+SettingsDialog& SettingsTab::dialog()
+{
+  return m_dialog;
 }

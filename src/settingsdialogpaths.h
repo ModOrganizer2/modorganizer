@@ -7,8 +7,7 @@
 class PathsSettingsTab : public SettingsTab
 {
 public:
-  PathsSettingsTab(Settings *parent, SettingsDialog &dialog);
-
+  PathsSettingsTab(Settings& settings, SettingsDialog& dialog);
   void update();
 
 private:

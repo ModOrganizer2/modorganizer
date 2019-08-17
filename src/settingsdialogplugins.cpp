@@ -5,26 +5,26 @@
 
 using MOBase::IPlugin;
 
-PluginsSettingsTab::PluginsSettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
-  : SettingsTab(m_parent, m_dialog)
+PluginsSettingsTab::PluginsSettingsTab(Settings& s, SettingsDialog& d)
+  : SettingsTab(s, d)
 {
   ui->pluginSettingsList->setStyleSheet("QTreeWidget::item {padding-right: 10px;}");
 
   // display plugin settings
   QSet<QString> handledNames;
-  for (IPlugin *plugin : m_parent->plugins()) {
+  for (IPlugin *plugin : settings().plugins()) {
     if (handledNames.contains(plugin->name()))
       continue;
     QListWidgetItem *listItem = new QListWidgetItem(plugin->name(), ui->pluginsList);
     listItem->setData(Qt::UserRole, QVariant::fromValue((void*)plugin));
-    listItem->setData(Qt::UserRole + 1, m_parent->m_PluginSettings[plugin->name()]);
-    listItem->setData(Qt::UserRole + 2, m_parent->m_PluginDescriptions[plugin->name()]);
+    listItem->setData(Qt::UserRole + 1, settings().m_PluginSettings[plugin->name()]);
+    listItem->setData(Qt::UserRole + 2, settings().m_PluginDescriptions[plugin->name()]);
     ui->pluginsList->addItem(listItem);
     handledNames.insert(plugin->name());
   }
 
   // display plugin blacklist
-  for (const QString &pluginName : m_parent->m_PluginBlacklist) {
+  for (const QString &pluginName : settings().m_PluginBlacklist) {
     ui->pluginBlacklist->addItem(pluginName);
   }
 
@@ -34,7 +34,7 @@ PluginsSettingsTab::PluginsSettingsTab(Settings *m_parent, SettingsDialog &m_dia
 
   QShortcut *delShortcut = new QShortcut(
     QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
-  QObject::connect(delShortcut, &QShortcut::activated, parentWidget(), [&]{ deleteBlacklistItem(); });
+  QObject::connect(delShortcut, &QShortcut::activated, &dialog(), [&]{ deleteBlacklistItem(); });
 }
 
 void PluginsSettingsTab::update()
@@ -42,21 +42,21 @@ void PluginsSettingsTab::update()
   // transfer plugin settings to in-memory structure
   for (int i = 0; i < ui->pluginsList->count(); ++i) {
     QListWidgetItem *item = ui->pluginsList->item(i);
-    m_parent->m_PluginSettings[item->text()] = item->data(Qt::UserRole + 1).toMap();
+    settings().m_PluginSettings[item->text()] = item->data(Qt::UserRole + 1).toMap();
   }
   // store plugin settings on disc
-  for (auto iterPlugins = m_parent->m_PluginSettings.begin(); iterPlugins != m_parent->m_PluginSettings.end(); ++iterPlugins) {
+  for (auto iterPlugins = settings().m_PluginSettings.begin(); iterPlugins != settings().m_PluginSettings.end(); ++iterPlugins) {
     for (auto iterSettings = iterPlugins->begin(); iterSettings != iterPlugins->end(); ++iterSettings) {
-      m_Settings.setValue("Plugins/" + iterPlugins.key() + "/" + iterSettings.key(), iterSettings.value());
+      qsettings().setValue("Plugins/" + iterPlugins.key() + "/" + iterSettings.key(), iterSettings.value());
     }
   }
 
   // store plugin blacklist
-  m_parent->m_PluginBlacklist.clear();
+  settings().m_PluginBlacklist.clear();
   for (QListWidgetItem *item : ui->pluginBlacklist->findItems("*", Qt::MatchWildcard)) {
-    m_parent->m_PluginBlacklist.insert(item->text());
+    settings().m_PluginBlacklist.insert(item->text());
   }
-  m_parent->writePluginBlacklist();
+  settings().writePluginBlacklist();
 }
 
 void PluginsSettingsTab::closing()
