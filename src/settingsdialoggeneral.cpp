@@ -141,7 +141,7 @@ void GeneralSettingsTab::addStyles()
 
 void GeneralSettingsTab::resetDialogs()
 {
-  QuestionBoxMemory::resetDialogs();
+  m_parent->resetQuestionButtons();
 }
 
 void GeneralSettingsTab::setButtonColor(QPushButton *button, const QColor &color)

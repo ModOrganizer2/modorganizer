@@ -280,8 +280,6 @@ OrganizerCore::OrganizerCore(Settings &settings)
 
   NexusInterface::instance(m_PluginContainer)->setCacheDirectory(m_Settings.getCacheDirectory());
 
-  MOBase::QuestionBoxMemory::init(m_Settings.directInterface().fileName());
-
   m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
   m_InstallationManager.setDownloadDirectory(m_Settings.getDownloadDirectory());
 

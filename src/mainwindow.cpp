@@ -2340,8 +2340,6 @@ bool MainWindow::modifyExecutablesDialog()
   bool result = false;
 
   try {
-    const auto oldExecutables = *m_OrganizerCore.executablesList();
-
     EditExecutablesDialog dialog(m_OrganizerCore, this);
 
     result = (dialog.exec() == QDialog::Accepted);
@@ -2361,7 +2359,9 @@ void MainWindow::on_executablesListBox_currentIndexChanged(int index)
     return;
   }
 
-  const int previousIndex = m_OldExecutableIndex;
+  const int previousIndex =
+    (m_OldExecutableIndex > 0 ? m_OldExecutableIndex : 1);
+
   m_OldExecutableIndex = index;
 
   if (index == 0) {

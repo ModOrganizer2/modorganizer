@@ -476,13 +476,18 @@ QString InstallationManager::generateBackupName(const QString &directoryName) co
 bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *merge) const
 {
   QString targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory + "\\" + modName);
+
   while (QDir(targetDirectory).exists()) {
     Settings &settings(Settings::instance());
-    bool backup = settings.directInterface().value("backup_install", false).toBool();
-    QueryOverwriteDialog overwriteDialog(m_ParentWidget,
-                                         backup ? QueryOverwriteDialog::BACKUP_YES : QueryOverwriteDialog::BACKUP_NO);
+
+    const bool backup = settings.keepBackupOnInstall();
+    QueryOverwriteDialog overwriteDialog(
+      m_ParentWidget,
+      backup ? QueryOverwriteDialog::BACKUP_YES : QueryOverwriteDialog::BACKUP_NO);
+
     if (overwriteDialog.exec()) {
-      settings.directInterface().setValue("backup_install", overwriteDialog.backup());
+      settings.setKeepBackupOnInstall(overwriteDialog.backup());
+
       if (overwriteDialog.backup()) {
         QString backupDirectory = generateBackupName(targetDirectory);
         if (!copyDir(targetDirectory, backupDirectory, false)) {

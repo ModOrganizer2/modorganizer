@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SETTINGS_H
 
 #include "loadmechanism.h"
+#include <questionboxmemory.h>
 #include <log.h>
 
 namespace MOBase {
@@ -232,6 +233,21 @@ public:
 
   bool isTutorialCompleted(const QString& windowName) const;
   void setTutorialCompleted(const QString& windowName, bool b=true);
+
+  bool keepBackupOnInstall() const;
+  void setKeepBackupOnInstall(bool b);
+
+  MOBase::QuestionBoxMemory::Button getQuestionButton(
+    const QString& windowName, const QString& filename) const;
+
+  void setQuestionWindowButton(
+    const QString& windowName, MOBase::QuestionBoxMemory::Button button);
+
+  void setQuestionFileButton(
+    const QString& windowName, const QString& filename,
+    MOBase::QuestionBoxMemory::Button choice);
+
+  void resetQuestionButtons();
 
   std::optional<int> getIndex(QComboBox* cb) const;
   void saveIndex(const QComboBox* cb);

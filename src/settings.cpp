@@ -151,10 +151,16 @@ Settings::Settings(const QString& path)
   } else {
     s_Instance = this;
   }
+
+  MOBase::QuestionBoxMemory::setCallbacks(
+    [this](auto&& w, auto&& f){ return getQuestionButton(w, f); },
+    [this](auto&& w, auto&& b){ setQuestionWindowButton(w, b); },
+    [this](auto&& w, auto&& f, auto&& b){ setQuestionFileButton(w, f, b); });
 }
 
 Settings::~Settings()
 {
+  MOBase::QuestionBoxMemory::setCallbacks({}, {}, {});
   s_Instance = nullptr;
 }
 
@@ -978,6 +984,68 @@ bool Settings::isTutorialCompleted(const QString& windowName) const
 void Settings::setTutorialCompleted(const QString& windowName, bool b)
 {
   m_Settings.setValue("CompletedWindowTutorials/" + windowName, true);
+}
+
+bool Settings::keepBackupOnInstall() const
+{
+  return getOptional<bool>(m_Settings, "backup_install").value_or(false);
+}
+
+void Settings::setKeepBackupOnInstall(bool b)
+{
+  m_Settings.setValue("backup_install", b);
+}
+
+QuestionBoxMemory::Button Settings::getQuestionButton(
+  const QString& windowName, const QString& filename) const
+{
+  const QString windowSetting("DialogChoices/" + windowName);
+
+  if (!filename.isEmpty()) {
+    const auto fileSetting = windowSetting + "/" + filename;
+
+    if (auto v=getOptional<int>(m_Settings, fileSetting)) {
+      return static_cast<QuestionBoxMemory::Button>(*v);
+    }
+  }
+
+  if (auto v=getOptional<int>(m_Settings, windowSetting)) {
+    return static_cast<QuestionBoxMemory::Button>(*v);
+  }
+
+  return QuestionBoxMemory::NoButton;
+}
+
+void Settings::setQuestionWindowButton(
+  const QString& windowName, QuestionBoxMemory::Button button)
+{
+  const QString settingName("DialogChoices/" + windowName);
+
+  if (button == QuestionBoxMemory::NoButton) {
+    m_Settings.remove(settingName);
+  } else {
+    m_Settings.setValue(settingName, static_cast<int>(button));
+  }
+}
+
+void Settings::setQuestionFileButton(
+  const QString& windowName, const QString& filename,
+  QuestionBoxMemory::Button button)
+{
+  const QString settingName("DialogChoices/" + windowName + "/" + filename);
+
+  if (button == QuestionBoxMemory::NoButton) {
+    m_Settings.remove(settingName);
+  } else {
+    m_Settings.setValue(settingName, static_cast<int>(button));
+  }
+}
+
+void Settings::resetQuestionButtons()
+{
+  m_Settings.beginGroup("DialogChoices");
+  m_Settings.remove("");
+  m_Settings.endGroup();
 }
 
 std::optional<int> Settings::getIndex(QComboBox* cb) const
