@@ -1194,7 +1194,7 @@ void MainWindow::hookUpWindowTutorials()
     QString firstLine = QString::fromUtf8(file.readLine());
     if (firstLine.startsWith("//WIN")) {
       QString windowName = firstLine.mid(6).trimmed();
-      if (!m_OrganizerCore.settings().directInterface().value("CompletedWindowTutorials/" + windowName, false).toBool()) {
+      if (!m_OrganizerCore.settings().isTutorialCompleted(windowName)) {
         TutorialManager::instance().activateTutorial(windowName, fileName);
       }
     }
@@ -3017,7 +3017,7 @@ void MainWindow::untrack_clicked()
 
 void MainWindow::windowTutorialFinished(const QString &windowName)
 {
-  m_OrganizerCore.settings().directInterface().setValue(QString("CompletedWindowTutorials/") + windowName, true);
+  m_OrganizerCore.settings().setTutorialCompleted(windowName);
 }
 
 void MainWindow::overwriteClosed(int)
@@ -5636,7 +5636,9 @@ void MainWindow::nxmEndorsementsAvailable(QVariant userData, QVariant resultData
 
       if (Settings::instance().endorsementIntegration()) {
         if (result->first == "skyrimspecialedition" && result->second.first == gamePlugin->nexusModOrganizerID()) {
-          Settings::instance().directInterface().setValue("endorse_state", result->second.second);
+          m_OrganizerCore.settings().setEndorsementState(
+            endorsementStateFromString(result->second.second));
+
           toggleMO2EndorseState();
         }
       }
@@ -5649,7 +5651,9 @@ void MainWindow::nxmEndorsementsAvailable(QVariant userData, QVariant resultData
       auto iter = sorted.equal_range(gamePlugin->gameNexusName());
       for (auto result = iter.first; result != iter.second; ++result) {
         if (result->second.first == gamePlugin->nexusModOrganizerID()) {
-          Settings::instance().directInterface().setValue("endorse_state", result->second.second);
+          m_OrganizerCore.settings().setEndorsementState(
+            endorsementStateFromString(result->second.second));
+
           toggleMO2EndorseState();
           break;
         }
@@ -5829,15 +5833,41 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
 
 void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int)
 {
-  QMap results = resultData.toMap();
-  if (results["status"].toString().compare("Endorsed") == 0) {
-    QMessageBox::information(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
-    Settings::instance().directInterface().setValue("endorse_state", "Endorsed");
-  } else if (results["status"].toString().compare("Abstained") == 0) {
-    QMessageBox::information(this, tr("Okay."), tr("This mod will not be endorsed and will no longer ask you to endorse."));
-    Settings::instance().directInterface().setValue("endorse_state", "Abstained");
+  const QMap results = resultData.toMap();
+
+  auto itor = results.find("status");
+  if (itor == results.end()) {
+    log::error("endorsement response has no status");
+    return;
   }
+
+  const auto s = endorsementStateFromString(itor->toString());
+
+  switch (s)
+  {
+    case EndorsementState::Accepted:
+    {
+      QMessageBox::information(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
+      break;
+    }
+
+    case EndorsementState::Refused:
+    {
+      // don't spam message boxes if the user doesn't want to endorse
+      log::info("Mod Organizer will not be endorsed and will no longer ask you to endorse.");
+      break;
+    }
+
+    case EndorsementState::NoDecision:
+    {
+      log::error("bad status '{}' in endorsement response", itor->toString());
+      return;
+    }
+  }
+
+  m_OrganizerCore.settings().setEndorsementState(s);
   toggleMO2EndorseState();
+
   if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
     this, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)))) {
     log::error("failed to disconnect endorsement slot");

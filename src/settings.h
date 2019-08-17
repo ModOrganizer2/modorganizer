@@ -98,6 +98,10 @@ enum class EndorsementState
   NoDecision
 };
 
+EndorsementState endorsementStateFromString(const QString& s);
+QString toString(EndorsementState s);
+
+
 /**
  * manages the settings for Mod Organizer. The settings are not cached
  * inside the class but read/written directly from/to disc
@@ -226,6 +230,8 @@ public:
   std::vector<std::map<QString, QVariant>> getExecutables() const;
   void setExecutables(const std::vector<std::map<QString, QVariant>>& v);
 
+  bool isTutorialCompleted(const QString& windowName) const;
+  void setTutorialCompleted(const QString& windowName, bool b=true);
 
   std::optional<int> getIndex(QComboBox* cb) const;
   void saveIndex(const QComboBox* cb);
@@ -364,6 +370,8 @@ public:
   bool endorsementIntegration() const;
 
   EndorsementState endorsementState() const;
+  void setEndorsementState(EndorsementState s);
+  void setEndorsementState(const QString& s);
 
   /**
    * @return true if the API counter should be hidden

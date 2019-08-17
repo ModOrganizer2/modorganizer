@@ -39,6 +39,34 @@ std::optional<T> getOptional(
 }
 
 
+EndorsementState endorsementStateFromString(const QString& s)
+{
+  if (s == "Endorsed") {
+    return EndorsementState::Accepted;
+  } else if (s == "Abstained") {
+    return EndorsementState::Refused;
+  } else {
+    return EndorsementState::NoDecision;
+  }
+}
+
+QString toString(EndorsementState s)
+{
+  switch (s)
+  {
+    case EndorsementState::Accepted:
+      return "Endorsed";
+
+    case EndorsementState::Refused:
+      return "Abstained";
+
+    case EndorsementState::NoDecision: // fall-through
+    default:
+      return {};
+  }
+}
+
+
 QString widgetNameWithTopLevel(const QWidget* widget)
 {
   QStringList components;
@@ -697,13 +725,17 @@ bool Settings::endorsementIntegration() const
 EndorsementState Settings::endorsementState() const
 {
   const auto v = getOptional<QString>(m_Settings, "endorse_state");
+  return endorsementStateFromString(v.value_or(""));
+}
 
-  if (!v) {
-    return EndorsementState::NoDecision;
-  } else if (*v == "Abstained") {
-    return EndorsementState::Refused;
+void Settings::setEndorsementState(EndorsementState s)
+{
+  const auto v = toString(s);
+
+  if (v.isEmpty()) {
+    m_Settings.remove("endorse_state");
   } else {
-    return EndorsementState::Accepted;
+    m_Settings.setValue("endorse_state", v);
   }
 }
 
@@ -933,6 +965,19 @@ void Settings::setExecutables(const std::vector<std::map<QString, QVariant>>& v)
   }
 
   m_Settings.endArray();
+}
+
+bool Settings::isTutorialCompleted(const QString& windowName) const
+{
+  const auto v = getOptional<bool>(
+    m_Settings, "CompletedWindowTutorials/" + windowName);
+
+  return v.value_or(false);
+}
+
+void Settings::setTutorialCompleted(const QString& windowName, bool b)
+{
+  m_Settings.setValue("CompletedWindowTutorials/" + windowName, true);
 }
 
 std::optional<int> Settings::getIndex(QComboBox* cb) const
