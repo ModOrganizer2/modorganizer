@@ -52,3 +52,30 @@ bool ExpanderWidget::opened() const
 {
   return opened_;
 }
+
+QByteArray ExpanderWidget::saveState() const
+{
+  QByteArray result;
+  QDataStream stream(&result, QIODevice::WriteOnly);
+
+  stream << opened();
+
+  return result;
+}
+
+void ExpanderWidget::restoreState(const QByteArray& a)
+{
+  QDataStream stream(a);
+
+  bool opened = false;
+  stream >> opened;
+
+  if (stream.status() == QDataStream::Ok) {
+    toggle(opened);
+  }
+}
+
+QToolButton* ExpanderWidget::button() const
+{
+  return m_button;
+}

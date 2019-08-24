@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "serverinfo.h"
 #include "executableslist.h"
 #include "appconfig.h"
+#include "expanderwidget.h"
 #include <utility.h>
 #include <iplugingame.h>
 #include <usvfsparameters.h>
@@ -107,6 +108,11 @@ QString widgetName(const QHeaderView* w)
   return widgetNameWithTopLevel(w->parentWidget());
 }
 
+QString widgetName(const ExpanderWidget* w)
+{
+  return widgetNameWithTopLevel(w->button());
+}
+
 QString widgetName(const QWidget* w)
 {
   return widgetNameWithTopLevel(w);
@@ -140,6 +146,19 @@ QString indexSettingName(const QWidget* widget)
   return widgetNameWithTopLevel(widget) + "_index";
 }
 
+QString checkedSettingName(const QAbstractButton* b)
+{
+  return widgetNameWithTopLevel(b) + "_checked";
+}
+
+void warnIfNotCheckable(const QAbstractButton* b)
+{
+  if (!b->isCheckable()) {
+    log::warn(
+      "button '{}' used in the settings as a checkbox or radio button "
+      "but is not checkable", b->objectName());
+  }
+}
 
 Settings *Settings::s_Instance = nullptr;
 
@@ -1048,7 +1067,7 @@ void Settings::resetQuestionButtons()
   m_Settings.endGroup();
 }
 
-std::optional<int> Settings::getIndex(QComboBox* cb) const
+std::optional<int> Settings::getIndex(const QComboBox* cb) const
 {
   return getOptional<int>(m_Settings, indexSettingName(cb));
 }
@@ -1062,6 +1081,44 @@ void Settings::restoreIndex(QComboBox* cb, std::optional<int> def) const
 {
   if (auto v=getOptional<int>(m_Settings, indexSettingName(cb), def)) {
     cb->setCurrentIndex(*v);
+  }
+}
+
+std::optional<int> Settings::getIndex(const QTabWidget* w) const
+{
+  return getOptional<int>(m_Settings, indexSettingName(w));
+}
+
+void Settings::saveIndex(const QTabWidget* w)
+{
+  m_Settings.setValue(indexSettingName(w), w->currentIndex());
+}
+
+void Settings::restoreIndex(QTabWidget* w, std::optional<int> def) const
+{
+  if (auto v=getOptional<int>(m_Settings, indexSettingName(w), def)) {
+    w->setCurrentIndex(*v);
+  }
+}
+
+std::optional<bool> Settings::getChecked(const QAbstractButton* w) const
+{
+  warnIfNotCheckable(w);
+  return getOptional<bool>(m_Settings, checkedSettingName(w));
+}
+
+void Settings::saveChecked(const QAbstractButton* w)
+{
+  warnIfNotCheckable(w);
+  m_Settings.setValue(checkedSettingName(w), w->isChecked());
+}
+
+void Settings::restoreChecked(QAbstractButton* w, std::optional<bool> def) const
+{
+  warnIfNotCheckable(w);
+
+  if (auto v=getOptional<bool>(m_Settings, checkedSettingName(w), def)) {
+    w->setChecked(*v);
   }
 }
 
@@ -1178,6 +1235,21 @@ bool GeometrySettings::restoreState(QSplitter* w) const
 {
   if (auto v=getOptional<QByteArray>(m_Settings, stateSettingName(w))) {
     w->restoreState(*v);
+    return true;
+  }
+
+  return false;
+}
+
+void GeometrySettings::saveState(const ExpanderWidget* expander)
+{
+  m_Settings.setValue(stateSettingName(expander), expander->saveState());
+}
+
+bool GeometrySettings::restoreState(ExpanderWidget* expander) const
+{
+  if (auto v=getOptional<QByteArray>(m_Settings, stateSettingName(expander))) {
+    expander->restoreState(*v);
     return true;
   }
 

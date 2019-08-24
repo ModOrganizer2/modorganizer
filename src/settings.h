@@ -34,6 +34,7 @@ class QSplitter;
 class PluginContainer;
 struct ServerInfo;
 class Settings;
+class ExpanderWidget;
 
 class GeometrySaver
 {
@@ -70,6 +71,9 @@ public:
 
   void saveState(const QSplitter* splitter);
   bool restoreState(QSplitter* splitter) const;
+
+  void saveState(const ExpanderWidget* expander);
+  bool restoreState(ExpanderWidget* expander) const;
 
   void saveVisibility(const QWidget* w);
   bool restoreVisibility(QWidget* w, std::optional<bool> def={}) const;
@@ -249,9 +253,17 @@ public:
 
   void resetQuestionButtons();
 
-  std::optional<int> getIndex(QComboBox* cb) const;
+  std::optional<int> getIndex(const QComboBox* cb) const;
   void saveIndex(const QComboBox* cb);
   void restoreIndex(QComboBox* cb, std::optional<int> def={}) const;
+
+  std::optional<int> getIndex(const QTabWidget* w) const;
+  void saveIndex(const QTabWidget* w);
+  void restoreIndex(QTabWidget* w, std::optional<int> def={}) const;
+
+  std::optional<bool> getChecked(const QAbstractButton* w) const;
+  void saveChecked(const QAbstractButton* w);
+  void restoreChecked(QAbstractButton* w, std::optional<bool> def={}) const;
 
   GeometrySettings& geometry();
   const GeometrySettings& geometry() const;
