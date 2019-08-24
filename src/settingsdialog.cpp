@@ -51,43 +51,19 @@ int SettingsDialog::exec()
 {
   GeometrySaver gs(m_settings, this);
 
-  auto& qsettings = m_settings.directInterface();
   auto ret = TutorableDialog::exec();
 
   if (ret == QDialog::Accepted) {
-
     for (auto&& tab : m_tabs) {
       tab->closing();
     }
 
-    // remember settings before change
-    QMap<QString, QString> before;
-    qsettings.beginGroup("Settings");
-    for (auto k : qsettings.allKeys())
-      before[k] = qsettings.value(k).toString();
-    qsettings.endGroup();
-
-    // transfer modified settings to configuration file
+    // update settings for each tab
     for (std::unique_ptr<SettingsTab> const &tab: m_tabs) {
       tab->update();
     }
-
-    // print "changed" settings
-    qsettings.beginGroup("Settings");
-    bool first_update = true;
-    for (auto k : qsettings.allKeys())
-      if (qsettings.value(k).toString() != before[k] && !k.contains("username") && !k.contains("password"))
-      {
-        if (first_update) {
-          log::debug("Changed settings:");
-          first_update = false;
-        }
-        log::debug("  {}={}", k, qsettings.value(k).toString());
-      }
-    qsettings.endGroup();
   }
 
-  // These changes happen regardless of accepted or rejected
   bool restartNeeded = false;
   if (getApiKeyChanged()) {
     restartNeeded = true;

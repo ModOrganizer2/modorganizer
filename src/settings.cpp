@@ -24,7 +24,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "expanderwidget.h"
 #include <utility.h>
 #include <iplugingame.h>
-#include <usvfsparameters.h>
 
 using namespace MOBase;
 
@@ -33,7 +32,13 @@ std::optional<T> getOptional(
   const QSettings& s, const QString& name, std::optional<T> def={})
 {
   if (s.contains(name)) {
-    return s.value(name).value<T>();
+    const auto v = s.value(name);
+
+    if constexpr (std::is_enum_v<T>) {
+      return static_cast<T>(v.value<std::underlying_type_t<T>>());
+    } else {
+      return v.value<T>();
+    }
   }
 
   return def;
@@ -160,10 +165,12 @@ void warnIfNotCheckable(const QAbstractButton* b)
   }
 }
 
+
 Settings *Settings::s_Instance = nullptr;
 
-Settings::Settings(const QString& path)
-  : m_Settings(path, QSettings::IniFormat), m_Geometry(m_Settings)
+Settings::Settings(const QString& path) :
+  m_Settings(path, QSettings::IniFormat),
+  m_Geometry(m_Settings), m_Colors(m_Settings)
 {
   if (s_Instance != nullptr) {
     throw std::runtime_error("second instance of \"Settings\" created");
@@ -278,6 +285,11 @@ void Settings::registerAsNXMHandler(bool force)
 bool Settings::colorSeparatorScrollbar() const
 {
   return m_Settings.value("Settings/colorSeparatorScrollbars", true).toBool();
+}
+
+void Settings::setColorSeparatorScrollbar(bool b)
+{
+  m_Settings.setValue("Settings/colorSeparatorScrollbars", b);
 }
 
 void Settings::managedGameChanged(IPluginGame const *gamePlugin)
@@ -395,6 +407,11 @@ QString Settings::getSteamAppID() const
 bool Settings::usePrereleases() const
 {
   return m_Settings.value("Settings/use_prereleases", false).toBool();
+}
+
+void Settings::setUsePrereleases(bool b)
+{
+  m_Settings.setValue("Settings/use_prereleases", b);
 }
 
 void Settings::setDownloadSpeed(const QString &serverName, int bytesPerSecond)
@@ -615,14 +632,25 @@ bool Settings::getSteamLogin(QString &username, QString &password) const
 
   return !username.isEmpty() && !password.isEmpty();
 }
+
 bool Settings::compactDownloads() const
 {
   return m_Settings.value("Settings/compact_downloads", false).toBool();
 }
 
+void Settings::setCompactDownloads(bool b)
+{
+  m_Settings.setValue("Settings/compact_downloads", b);
+}
+
 bool Settings::metaDownloads() const
 {
   return m_Settings.value("Settings/meta_downloads", false).toBool();
+}
+
+void Settings::setMetaDownloads(bool b)
+{
+  m_Settings.setValue("Settings/meta_downloads", b);
 }
 
 bool Settings::offlineMode() const
@@ -640,9 +668,15 @@ void Settings::setLogLevel(log::Levels level)
   m_Settings.setValue("Settings/log_level", static_cast<int>(level));
 }
 
-int Settings::crashDumpsType() const
+CrashDumpsType Settings::crashDumpsType() const
 {
-  return m_Settings.value("Settings/crash_dumps_type", static_cast<int>(CrashDumpsType::Mini)).toInt();
+  const auto v = getOptional<CrashDumpsType>(m_Settings, "Settings/crash_dumps_type");
+  return v.value_or(CrashDumpsType::Mini);
+}
+
+void Settings::setCrashDumpsType(CrashDumpsType type)
+{
+  m_Settings.setValue("Settings/crash_dumps_type", static_cast<int>(type));
 }
 
 int Settings::crashDumpsMax() const
@@ -650,34 +684,9 @@ int Settings::crashDumpsMax() const
   return m_Settings.value("Settings/crash_dumps_max", 5).toInt();
 }
 
-QColor Settings::modlistOverwrittenLooseColor() const
+void Settings::setCrashDumpsMax(int n)
 {
-  return m_Settings.value("Settings/overwrittenLooseFilesColor", QColor(0, 255, 0, 64)).value<QColor>();
-}
-
-QColor Settings::modlistOverwritingLooseColor() const
-{
-  return m_Settings.value("Settings/overwritingLooseFilesColor", QColor(255, 0, 0, 64)).value<QColor>();
-}
-
-QColor Settings::modlistOverwrittenArchiveColor() const
-{
-  return m_Settings.value("Settings/overwrittenArchiveFilesColor", QColor(0, 255, 255, 64)).value<QColor>();
-}
-
-QColor Settings::modlistOverwritingArchiveColor() const
-{
-  return m_Settings.value("Settings/overwritingArchiveFilesColor", QColor(255, 0, 255, 64)).value<QColor>();
-}
-
-QColor Settings::modlistContainsPluginColor() const
-{
-  return m_Settings.value("Settings/containsPluginColor", QColor(0, 0, 255, 64)).value<QColor>();
-}
-
-QColor Settings::pluginListContainedColor() const
-{
-  return m_Settings.value("Settings/containedColor", QColor(0, 0, 255, 64)).value<QColor>();
+  return m_Settings.setValue("Settings/crash_dumps_max", n);
 }
 
 QString Settings::executablesBlacklist() const
@@ -848,6 +857,11 @@ QString Settings::language()
     }
   }
   return result;
+}
+
+void Settings::setLanguage(const QString& name)
+{
+  m_Settings.setValue("Settings/language", name);
 }
 
 void Settings::updateServers(const QList<ServerInfo> &servers)
@@ -1130,6 +1144,16 @@ GeometrySettings& Settings::geometry()
 const GeometrySettings& Settings::geometry() const
 {
   return m_Geometry;
+}
+
+ColorSettings& Settings::colors()
+{
+  return m_Colors;
+}
+
+const ColorSettings& Settings::colors() const
+{
+  return m_Colors;
 }
 
 QSettings::Status Settings::sync() const
@@ -1448,6 +1472,78 @@ void GeometrySettings::restoreDocks(QMainWindow* mw) const
       mw->resizeDocks({info.d}, {info.size}, info.ori);
     }
   });
+}
+
+
+ColorSettings::ColorSettings(QSettings& s)
+  : m_Settings(s)
+{
+}
+
+QColor ColorSettings::modlistOverwrittenLoose() const
+{
+  return getOptional<QColor>(m_Settings, "Settings/overwrittenLooseFilesColor")
+    .value_or(QColor(0, 255, 0, 64));
+}
+
+void ColorSettings::setModlistOverwrittenLoose(const QColor& c)
+{
+  m_Settings.setValue("Settings/overwrittenLooseFilesColor", c);
+}
+
+QColor ColorSettings::modlistOverwritingLoose() const
+{
+  return getOptional<QColor>(m_Settings, "Settings/overwritingLooseFilesColor")
+    .value_or(QColor(255, 0, 0, 64));
+}
+
+void ColorSettings::setModlistOverwritingLoose(const QColor& c)
+{
+  m_Settings.setValue("Settings/overwritingLooseFilesColor", c);
+}
+
+QColor ColorSettings::modlistOverwrittenArchive() const
+{
+  return getOptional<QColor>(m_Settings, "Settings/overwrittenArchiveFilesColor")
+    .value_or(QColor(0, 255, 255, 64));
+}
+
+void ColorSettings::setModlistOverwrittenArchive(const QColor& c)
+{
+  m_Settings.setValue("Settings/overwrittenArchiveFilesColor", c);
+}
+
+QColor ColorSettings::modlistOverwritingArchive() const
+{
+  return getOptional<QColor>(m_Settings, "Settings/overwritingArchiveFilesColor")
+    .value_or(QColor(255, 0, 255, 64));
+}
+
+void ColorSettings::setModlistOverwritingArchive(const QColor& c)
+{
+  m_Settings.setValue("Settings/overwritingArchiveFilesColor", c);
+}
+
+QColor ColorSettings::modlistContainsPlugin() const
+{
+  return getOptional<QColor>(m_Settings, "Settings/containsPluginColor")
+    .value_or(QColor(0, 0, 255, 64));
+}
+
+void ColorSettings::setModlistContainsPlugin(const QColor& c)
+{
+  m_Settings.setValue("Settings/containsPluginColor", c);
+}
+
+QColor ColorSettings::pluginListContained() const
+{
+  return getOptional<QColor>(m_Settings, "Settings/containedColor")
+    .value_or(QColor(0, 0, 255, 64));
+}
+
+void ColorSettings::setPluginListContained(const QColor& c)
+{
+  m_Settings.setValue("Settings/containedColor", c);
 }
 
 

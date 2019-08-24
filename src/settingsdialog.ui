@@ -1346,26 +1346,6 @@ programs you are intentionally running.</string>
                                     &quot;Full&quot; Even larger dumps with a full memory dump of the process.
                                 </string>
            </property>
-           <item>
-            <property name="text">
-             <string>None</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Mini (recommended)</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Data</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Full</string>
-            </property>
-           </item>
           </widget>
          </item>
         </layout>

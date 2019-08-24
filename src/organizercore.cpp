@@ -667,7 +667,7 @@ void OrganizerCore::prepareVFS()
 }
 
 void OrganizerCore::updateVFSParams(
-  log::Levels logLevel, int crashDumpsType, QString executableBlacklist)
+  log::Levels logLevel, CrashDumpsType crashDumpsType, QString executableBlacklist)
 {
   setGlobalCrashDumpsType(crashDumpsType);
   m_USVFS.updateParams(logLevel, crashDumpsType, executableBlacklist);
@@ -692,8 +692,8 @@ bool OrganizerCore::cycleDiagnostics() {
 }
 
 //static
-void OrganizerCore::setGlobalCrashDumpsType(int crashDumpsType) {
-  m_globalCrashDumpsType = ::crashDumpsType(crashDumpsType);
+void OrganizerCore::setGlobalCrashDumpsType(CrashDumpsType type) {
+  m_globalCrashDumpsType = type;
 }
 
 //static

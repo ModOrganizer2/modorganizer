@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "loadmechanism.h"
 #include <questionboxmemory.h>
 #include <log.h>
+#include <usvfsparameters.h>
 
 namespace MOBase {
   class IPlugin;
@@ -93,6 +94,36 @@ public:
 private:
   QSettings& m_Settings;
   bool m_Reset;
+};
+
+
+class ColorSettings
+{
+public:
+  ColorSettings(QSettings& s);
+
+  void setCrashDumpsMax(int i) const;
+
+  QColor modlistOverwrittenLoose() const;
+  void setModlistOverwrittenLoose(const QColor& c);
+
+  QColor modlistOverwritingLoose() const;
+  void setModlistOverwritingLoose(const QColor& c);
+
+  QColor modlistOverwrittenArchive() const;
+  void setModlistOverwrittenArchive(const QColor& c);
+
+  QColor modlistOverwritingArchive() const;
+  void setModlistOverwritingArchive(const QColor& c);
+
+  QColor modlistContainsPlugin() const;
+  void setModlistContainsPlugin(const QColor& c);
+
+  QColor pluginListContained() const;
+  void setPluginListContained(const QColor& c) ;
+
+private:
+  QSettings& m_Settings;
 };
 
 
@@ -268,6 +299,10 @@ public:
   GeometrySettings& geometry();
   const GeometrySettings& geometry() const;
 
+  ColorSettings& colors();
+  const ColorSettings& colors() const;
+
+
   /**
    * retrieve the directory where profiles stored (with native separators)
    **/
@@ -329,43 +364,22 @@ public:
    * @return true if the user chose compact downloads
    */
   bool compactDownloads() const;
+  void setCompactDownloads(bool b);
 
   /**
    * @return true if the user chose meta downloads
    */
   bool metaDownloads() const;
+  void setMetaDownloads(bool b);
 
-  /**
-   * @return the configured log level
-   */
   MOBase::log::Levels logLevel() const;
-
-  /**
-   * sets the log level setting
-   */
   void setLogLevel(MOBase::log::Levels level);
 
-  /**
-  * @return the configured crash dumps type
-  */
-  int crashDumpsType() const;
+  CrashDumpsType crashDumpsType() const;
+  void setCrashDumpsType(CrashDumpsType type);
 
-  /**
-  * @return the configured crash dumps max
-  */
   int crashDumpsMax() const;
-
-  QColor modlistOverwrittenLooseColor() const;
-
-  QColor modlistOverwritingLooseColor() const;
-
-  QColor modlistOverwrittenArchiveColor() const;
-
-  QColor modlistOverwritingArchiveColor() const;
-
-  QColor modlistContainsPluginColor() const;
-
-  QColor pluginListContainedColor() const;
+  void setCrashDumpsMax(int n);
 
   QString executablesBlacklist() const;
 
@@ -473,6 +487,7 @@ public:
    * @return short code of the configured language (corresponding to the translation files)
    */
   QString language();
+  void setLanguage(const QString& name);
 
   /**
    * @brief updates the list of known servers
@@ -499,6 +514,7 @@ public:
   std::vector<MOBase::IPlugin*> plugins() const { return m_Plugins; }
 
   bool usePrereleases() const;
+  void setUsePrereleases(bool b);
 
   /**
    * @brief register MO as the handler for nxm links
@@ -512,6 +528,7 @@ public:
    * @return the state of the setting
    */
   bool colorSeparatorScrollbar() const;
+  void setColorSeparatorScrollbar(bool b);
 
   static QColor getIdealTextColor(const QColor&  rBackgroundColor);
 
@@ -540,6 +557,7 @@ private:
   MOBase::IPluginGame const *m_GamePlugin;
   mutable QSettings m_Settings;
   GeometrySettings m_Geometry;
+  ColorSettings m_Colors;
   LoadMechanism m_LoadMechanism;
   std::vector<MOBase::IPlugin*> m_Plugins;
 

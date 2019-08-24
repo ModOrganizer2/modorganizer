@@ -10,10 +10,13 @@ DiagnosticsSettingsTab::DiagnosticsSettingsTab(Settings& s, SettingsDialog& d)
   : SettingsTab(s, d)
 {
   setLevelsBox();
-  ui->dumpsTypeBox->setCurrentIndex(settings().crashDumpsType());
+  setCrashDumpTypesBox();
+
   ui->dumpsMaxEdit->setValue(settings().crashDumpsMax());
+
   QString logsPath = qApp->property("dataPath").toString()
     + "/" + QString::fromStdWString(AppConfig::logPath());
+
   ui->diagnosticsExplainedLabel->setText(
     ui->diagnosticsExplainedLabel->text()
     .replace("LOGS_FULL_PATH", logsPath)
@@ -40,9 +43,36 @@ void DiagnosticsSettingsTab::setLevelsBox()
   }
 }
 
+void DiagnosticsSettingsTab::setCrashDumpTypesBox()
+{
+  ui->dumpsTypeBox->clear();
+
+  auto add = [&](auto&& text, auto&& type) {
+    ui->dumpsTypeBox->addItem(text, static_cast<int>(type));
+  };
+
+  add(QObject::tr("None"), CrashDumpsType::None);
+  add(QObject::tr("Mini (recommended)"), CrashDumpsType::Mini);
+  add(QObject::tr("Data"), CrashDumpsType::Data);
+  add(QObject::tr("Full"), CrashDumpsType::Full);
+
+  const auto current = static_cast<int>(settings().crashDumpsType());
+
+  for (int i=0; i<ui->dumpsTypeBox->count(); ++i) {
+    if (ui->dumpsTypeBox->itemData(i) == current) {
+      ui->dumpsTypeBox->setCurrentIndex(i);
+      break;
+    }
+  }
+}
+
 void DiagnosticsSettingsTab::update()
 {
-  qsettings().setValue("Settings/log_level", ui->logLevelBox->currentData().toInt());
-  qsettings().setValue("Settings/crash_dumps_type", ui->dumpsTypeBox->currentIndex());
-  qsettings().setValue("Settings/crash_dumps_max", ui->dumpsMaxEdit->value());
+  settings().setLogLevel(
+    static_cast<log::Levels>(ui->logLevelBox->currentData().toInt()));
+
+  settings().setCrashDumpsType(
+    static_cast<CrashDumpsType>(ui->dumpsTypeBox->currentData().toInt()));
+
+  settings().setCrashDumpsMax(ui->dumpsMaxEdit->value());
 }

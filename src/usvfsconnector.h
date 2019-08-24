@@ -87,7 +87,7 @@ public:
   void updateMapping(const MappingType &mapping);
 
   void updateParams(
-    MOBase::log::Levels logLevel, int crashDumpsType,
+    MOBase::log::Levels logLevel, CrashDumpsType crashDumpsType,
     QString executableBlacklist);
 
   void updateForcedLibraries(const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries);

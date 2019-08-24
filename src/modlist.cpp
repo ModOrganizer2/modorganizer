@@ -416,15 +416,15 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     bool archiveOverwritten = m_ArchiveOverwritten.find(modIndex) != m_ArchiveOverwritten.end();
     bool archiveLooseOverwritten = m_ArchiveLooseOverwritten.find(modIndex) != m_ArchiveLooseOverwritten.end();
     if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
-      return Settings::instance().modlistContainsPluginColor();
+      return Settings::instance().colors().modlistContainsPlugin();
     } else if (overwritten || archiveLooseOverwritten) {
-      return Settings::instance().modlistOverwritingLooseColor();
+      return Settings::instance().colors().modlistOverwritingLoose();
     } else if (overwrite || archiveLooseOverwrite) {
-      return Settings::instance().modlistOverwrittenLooseColor();
+      return Settings::instance().colors().modlistOverwrittenLoose();
     } else if (archiveOverwritten) {
-      return Settings::instance().modlistOverwritingArchiveColor();
+      return Settings::instance().colors().modlistOverwritingArchive();
     } else if (archiveOverwrite) {
-      return Settings::instance().modlistOverwrittenArchiveColor();
+      return Settings::instance().colors().modlistOverwrittenArchive();
     } else if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)
                && modInfo->getColor().isValid()
                && ((role != ViewMarkingScrollBar::DEFAULT_ROLE)

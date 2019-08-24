@@ -26,28 +26,30 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
   }
 
   addStyles();
+
   {
-    int currentID = ui->styleBox->findData(
-      qsettings().value("Settings/style", "").toString());
+    const int currentID = ui->styleBox->findData(
+      settings().getStyleName().value_or(""));
+
     if (currentID != -1) {
       ui->styleBox->setCurrentIndex(currentID);
     }
   }
 
   //version with stylesheet
-  setButtonColor(ui->overwritingBtn, settings().modlistOverwritingLooseColor());
-  setButtonColor(ui->overwrittenBtn, settings().modlistOverwrittenLooseColor());
-  setButtonColor(ui->overwritingArchiveBtn, settings().modlistOverwritingArchiveColor());
-  setButtonColor(ui->overwrittenArchiveBtn, settings().modlistOverwrittenArchiveColor());
-  setButtonColor(ui->containsBtn, settings().modlistContainsPluginColor());
-  setButtonColor(ui->containedBtn, settings().pluginListContainedColor());
+  setButtonColor(ui->overwritingBtn, settings().colors().modlistOverwritingLoose());
+  setButtonColor(ui->overwrittenBtn, settings().colors().modlistOverwrittenLoose());
+  setButtonColor(ui->overwritingArchiveBtn, settings().colors().modlistOverwritingArchive());
+  setButtonColor(ui->overwrittenArchiveBtn, settings().colors().modlistOverwrittenArchive());
+  setButtonColor(ui->containsBtn, settings().colors().modlistContainsPlugin());
+  setButtonColor(ui->containedBtn, settings().colors().pluginListContained());
 
-  setOverwritingColor(settings().modlistOverwritingLooseColor());
-  setOverwrittenColor(settings().modlistOverwrittenLooseColor());
-  setOverwritingArchiveColor(settings().modlistOverwritingArchiveColor());
-  setOverwrittenArchiveColor(settings().modlistOverwrittenArchiveColor());
-  setContainsColor(settings().modlistContainsPluginColor());
-  setContainedColor(settings().pluginListContainedColor());
+  setOverwritingColor(settings().colors().modlistOverwritingLoose());
+  setOverwrittenColor(settings().colors().modlistOverwrittenLoose());
+  setOverwritingArchiveColor(settings().colors().modlistOverwritingArchive());
+  setOverwrittenArchiveColor(settings().colors().modlistOverwrittenArchive());
+  setContainsColor(settings().colors().modlistContainsPlugin());
+  setContainedColor(settings().colors().pluginListContained());
 
   ui->compactBox->setChecked(settings().compactDownloads());
   ui->showMetaBox->setChecked(settings().metaDownloads());
@@ -67,30 +69,32 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
 
 void GeneralSettingsTab::update()
 {
-  QString oldLanguage = settings().language();
-  QString newLanguage = ui->languageBox->itemData(ui->languageBox->currentIndex()).toString();
+  const QString oldLanguage = settings().language();
+  const QString newLanguage = ui->languageBox->itemData(ui->languageBox->currentIndex()).toString();
+
   if (newLanguage != oldLanguage) {
-    qsettings().setValue("Settings/language", newLanguage);
+    settings().setLanguage(newLanguage);
     emit settings().languageChanged(newLanguage);
   }
 
-  QString oldStyle = qsettings().value("Settings/style", "").toString();
-  QString newStyle = ui->styleBox->itemData(ui->styleBox->currentIndex()).toString();
+  const QString oldStyle = settings().getStyleName().value_or("");
+  const QString newStyle = ui->styleBox->itemData(ui->styleBox->currentIndex()).toString();
   if (oldStyle != newStyle) {
-    qsettings().setValue("Settings/style", newStyle);
+    settings().setStyleName(newStyle);
     emit settings().styleChanged(newStyle);
   }
 
-  qsettings().setValue("Settings/overwritingLooseFilesColor", getOverwritingColor());
-  qsettings().setValue("Settings/overwrittenLooseFilesColor", getOverwrittenColor());
-  qsettings().setValue("Settings/overwritingArchiveFilesColor", getOverwritingArchiveColor());
-  qsettings().setValue("Settings/overwrittenArchiveFilesColor", getOverwrittenArchiveColor());
-  qsettings().setValue("Settings/containsPluginColor", getContainsColor());
-  qsettings().setValue("Settings/containedColor", getContainedColor());
-  qsettings().setValue("Settings/compact_downloads", ui->compactBox->isChecked());
-  qsettings().setValue("Settings/meta_downloads", ui->showMetaBox->isChecked());
-  qsettings().setValue("Settings/use_prereleases", ui->usePrereleaseBox->isChecked());
-  qsettings().setValue("Settings/colorSeparatorScrollbars", ui->colorSeparatorsBox->isChecked());
+  settings().colors().setModlistOverwritingLoose(getOverwritingColor());
+  settings().colors().setModlistOverwrittenLoose(getOverwrittenColor());
+  settings().colors().setModlistOverwritingArchive(getOverwritingArchiveColor());
+  settings().colors().setModlistOverwrittenArchive(getOverwrittenArchiveColor());
+  settings().colors().setModlistContainsPlugin(getContainsColor());
+  settings().colors().setPluginListContained(getContainedColor());
+
+  settings().setCompactDownloads(ui->compactBox->isChecked());
+  settings().setMetaDownloads(ui->showMetaBox->isChecked());
+  settings().setUsePrereleases(ui->usePrereleaseBox->isChecked());
+  settings().setColorSeparatorScrollbar(ui->colorSeparatorsBox->isChecked());
 }
 
 void GeneralSettingsTab::addLanguages()

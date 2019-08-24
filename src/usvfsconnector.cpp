@@ -164,7 +164,7 @@ UsvfsConnector::UsvfsConnector()
 {
   USVFSParameters params;
   LogLevel level = toUsvfsLogLevel(Settings::instance().logLevel());
-  CrashDumpsType dumpType = crashDumpsType(Settings::instance().crashDumpsType());
+  CrashDumpsType dumpType = Settings::instance().crashDumpsType();
 
   std::string dumpPath = MOShared::ToString(OrganizerCore::crashDumpsPath(), true);
   USVFSInitParameters(&params, SHMID, false, level, dumpType, dumpPath.c_str());
@@ -249,9 +249,10 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
 }
 
 void UsvfsConnector::updateParams(
-  MOBase::log::Levels logLevel, int crashDumpsType, QString executableBlacklist)
+  MOBase::log::Levels logLevel, CrashDumpsType crashDumpsType,
+  QString executableBlacklist)
 {
-  USVFSUpdateParams(toUsvfsLogLevel(logLevel), ::crashDumpsType(crashDumpsType));
+  USVFSUpdateParams(toUsvfsLogLevel(logLevel), crashDumpsType);
   ClearExecutableBlacklist();
   for (auto exec : executableBlacklist.split(";")) {
     std::wstring buf = exec.toStdWString();
