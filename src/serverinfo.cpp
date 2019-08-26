@@ -3,17 +3,23 @@
 
 using namespace MOBase;
 
+const std::size_t MaxDownloadCount = 5;
+
+
 ServerInfo::ServerInfo()
-  : ServerInfo({}, false, {}, 0, 0, 0.0)
+  : ServerInfo({}, false, {}, 0, {})
 {
 }
 
 ServerInfo::ServerInfo(
   QString name, bool premium, QDate last, int preferred,
-  int count, double speed) :
+  SpeedList lastDownloads) :
     m_name(std::move(name)), m_premium(premium), m_lastSeen(std::move(last)),
-    m_preferred(preferred), m_downloadCount(count), m_downloadSpeed(speed)
+    m_preferred(preferred), m_lastDownloads(std::move(lastDownloads))
 {
+  if (m_lastDownloads.size() > MaxDownloadCount) {
+    m_lastDownloads.resize(MaxDownloadCount);
+  }
 }
 
 const QString& ServerInfo::name() const
@@ -26,9 +32,19 @@ bool ServerInfo::isPremium() const
   return m_premium;
 }
 
+void ServerInfo::setPremium(bool b)
+{
+  m_premium = b;
+}
+
 const QDate& ServerInfo::lastSeen() const
 {
   return m_lastSeen;
+}
+
+void ServerInfo::updateLastSeen()
+{
+  m_lastSeen = QDate::currentDate();
 }
 
 int ServerInfo::preferred() const
@@ -36,19 +52,57 @@ int ServerInfo::preferred() const
   return m_preferred;
 }
 
-int ServerInfo::downloadCount() const
-{
-  return m_downloadCount;
-}
-
-double ServerInfo::downloadSpeed() const
-{
-  return m_downloadSpeed;
-}
-
 void ServerInfo::setPreferred(int i)
 {
   m_preferred = i;
+}
+
+const ServerInfo::SpeedList& ServerInfo::lastDownloads() const
+{
+  return m_lastDownloads;
+}
+
+int ServerInfo::averageSpeed() const
+{
+  int count = 0;
+  int total = 0;
+
+  for (const auto& s : m_lastDownloads) {
+    if (s > 0) {
+      ++count;
+      total += s;
+    }
+  }
+
+  if (count > 0) {
+    return static_cast<double>(total) / count;
+  }
+
+  return 0;
+}
+
+void ServerInfo::addDownload(int bytesPerSecond)
+{
+  if (bytesPerSecond <= 0) {
+    log::error(
+      "trying to add download with {} B/s to server '{}'; ignoring",
+      bytesPerSecond, m_name);
+
+    return;
+  }
+
+  if (m_lastDownloads.size() == MaxDownloadCount) {
+    std::rotate(
+      m_lastDownloads.begin(),
+      m_lastDownloads.begin() + 1,
+      m_lastDownloads.end());
+
+    m_lastDownloads.back() = bytesPerSecond;
+  } else {
+    m_lastDownloads.push_back(bytesPerSecond);
+  }
+
+  log::debug("added download at {} B/s to server '{}'", bytesPerSecond, m_name);
 }
 
 

@@ -175,11 +175,6 @@ public:
   QString getOutputDirectory() const { return m_OutputDirectory; }
 
   /**
-   * @brief sets the list of servers
-   */
-  void setServers(const ServerList& servers);
-
-  /**
    * @brief set the list of supported extensions
    * @param extensions list of supported extensions
    */
@@ -361,17 +356,6 @@ public:
    */
   void refreshList();
 
-  /**
-   * @brief Sort function for download servers
-   * @param LHS
-   * @param RHS
-   * @return
-   */
-  static bool ServerByPreference(
-    const QList<ServerInfo>& preferredServers,
-    const QVariant &LHS, const QVariant &RHS);
-
-
   virtual int startDownloadURLs(const QStringList &urls);
 
   virtual int startDownloadNexusFile(int modID, int fileID);
@@ -551,7 +535,6 @@ private:
   QVector<DownloadInfo*> m_ActiveDownloads;
 
   QString m_OutputDirectory;
-  ServerList m_Servers;
   QStringList m_SupportedExtensions;
   std::set<int> m_RequestIDs;
   QVector<int> m_AlphabeticalTranslation;

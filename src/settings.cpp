@@ -850,21 +850,21 @@ void Settings::setLanguage(const QString& name)
   m_Settings.setValue("Settings/language", name);
 }
 
-void Settings::setDownloadSpeed(const QString &serverName, int bytesPerSecond)
+void Settings::setDownloadSpeed(const QString& name, int bytesPerSecond)
 {
-  m_Settings.beginGroup("Servers");
+  auto servers = getServers();
 
-  for (const QString &serverKey : m_Settings.childKeys()) {
-    QVariantMap data = m_Settings.value(serverKey).toMap();
-    if (serverKey == serverName) {
-      data["downloadCount"] = data["downloadCount"].toInt() + 1;
-      data["downloadSpeed"] = data["downloadSpeed"].toDouble() + static_cast<double>(bytesPerSecond);
-      m_Settings.setValue(serverKey, data);
+  for (auto& server : servers) {
+    if (server.name() == name) {
+      server.addDownload(bytesPerSecond);
+      updateServers(servers);
+      return;
     }
   }
 
-  m_Settings.endGroup();
-  m_Settings.sync();
+  log::error(
+    "server '{}' not found while trying to add a download with bps {}",
+    name, bytesPerSecond);
 }
 
 ServerList Settings::getServers() const
@@ -885,6 +885,7 @@ ServerList Settings::getServers() const
     return getServersFromOldMap();
   }
 
+  // post 2.2.1 format, array of values
 
   ServerList list;
 
@@ -893,13 +894,22 @@ ServerList Settings::getServers() const
   for (int i=0; i<size; ++i) {
     m_Settings.setArrayIndex(i);
 
+    ServerInfo::SpeedList lastDownloads;
+
+    const auto lastDownloadsString = m_Settings.value("lastDownloads").toString();
+    for (const auto& s : lastDownloadsString.split(" ")) {
+      const auto bytesPerSecond = s.toInt();
+      if (bytesPerSecond > 0) {
+        lastDownloads.push_back(bytesPerSecond);
+      }
+    }
+
     ServerInfo server(
       m_Settings.value("name").toString(),
       m_Settings.value("premium").toBool(),
       QDate::fromString(m_Settings.value("lastSeen").toString(), Qt::ISODate),
       m_Settings.value("preferred").toInt(),
-      m_Settings.value("downloadCount").toInt(),
-      m_Settings.value("downloadSpeed").toDouble());
+      lastDownloads);
 
     list.add(std::move(server));
   }
@@ -925,8 +935,10 @@ ServerList Settings::getServersFromOldMap() const
       data["premium"].toBool(),
       data["lastSeen"].toDate(),
       data["preferred"].toInt(),
-      data["downloadCount"].toInt(),
-      data["downloadSpeed"].toDouble());
+      {});
+
+    // ignoring download count and speed, it's now a list of values instead of
+    // a total
 
     list.add(std::move(server));
   }
@@ -955,8 +967,15 @@ void Settings::updateServers(ServerList servers)
     m_Settings.setValue("premium", server.isPremium());
     m_Settings.setValue("lastSeen", server.lastSeen().toString(Qt::ISODate));
     m_Settings.setValue("preferred", server.preferred());
-    m_Settings.setValue("downloadCount", server.downloadCount());
-    m_Settings.setValue("downloadSpeed", server.downloadSpeed());
+
+    QString lastDownloads;
+    for (const auto& speed : server.lastDownloads()) {
+      if (speed > 0) {
+        lastDownloads += QString("%1 ").arg(speed);
+      }
+    }
+
+    m_Settings.setValue("lastDownloads", lastDownloads.trimmed());
 
     ++i;
   }

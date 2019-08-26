@@ -8,27 +8,34 @@
 class ServerInfo
 {
 public:
+  using SpeedList = std::vector<int>;
+
   ServerInfo();
   ServerInfo(
     QString name, bool premium, QDate lastSeen, int preferred,
-    int downloadCount, double downloadSpeed);
+    SpeedList lastDownloads);
 
   const QString& name() const;
-  bool isPremium() const;
-  const QDate& lastSeen() const;
-  int preferred() const;
-  int downloadCount() const;
-  double downloadSpeed() const;
 
+  bool isPremium() const;
+  void setPremium(bool b);
+
+  const QDate& lastSeen() const;
+  void updateLastSeen();
+
+  int preferred() const;
   void setPreferred(int i);
+
+  const SpeedList& lastDownloads() const;
+  int averageSpeed() const;
+  void addDownload(int bytesPerSecond);
 
 private:
   QString m_name;
   bool m_premium;
   QDate m_lastSeen;
   int m_preferred;
-  int m_downloadCount;
-  double m_downloadSpeed;
+  SpeedList m_lastDownloads;
 };
 
 Q_DECLARE_METATYPE(ServerInfo)
@@ -37,7 +44,7 @@ Q_DECLARE_METATYPE(ServerInfo)
 class ServerList
 {
 public:
-  using container = QList<ServerInfo>;
+  using container = std::vector<ServerInfo>;
   using iterator = container::iterator;
   using const_iterator = container::const_iterator;
 

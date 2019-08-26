@@ -288,12 +288,6 @@ void DownloadManager::setOutputDirectory(const QString &outputDirectory)
 }
 
 
-void DownloadManager::setServers(const ServerList& servers)
-{
-  m_Servers = servers;
-}
-
-
 void DownloadManager::setSupportedExtensions(const QStringList &extensions)
 {
   m_SupportedExtensions = extensions;
@@ -1669,7 +1663,7 @@ void DownloadManager::nxmFileInfoAvailable(QString gameName, int modID, int file
 
 static int evaluateFileInfoMap(
   const QVariantMap &map,
-  const QList<ServerInfo>& preferredServers)
+  const ServerList::container& preferredServers)
 {
   int preference = 0;
   bool found = false;
@@ -1692,8 +1686,9 @@ static int evaluateFileInfoMap(
 }
 
 // sort function to sort by best download server
-bool DownloadManager::ServerByPreference(
-  const QList<ServerInfo>& preferredServers,
+//
+bool ServerByPreference(
+  const ServerList::container& preferredServers,
   const QVariant &LHS, const QVariant &RHS)
 {
   const auto a = evaluateFileInfoMap(LHS.toMap(), preferredServers);
@@ -1747,10 +1742,12 @@ void DownloadManager::nxmDownloadURLsAvailable(QString gameName, int modID, int 
     return;
   }
 
+  const auto servers = m_OrganizerCore->settings().getServers();
+
   std::sort(
     resultList.begin(),
     resultList.end(),
-    boost::bind(&DownloadManager::ServerByPreference, m_Servers.getPreferred(), _1, _2));
+    boost::bind(&ServerByPreference, servers.getPreferred(), _1, _2));
 
   info->userData["downloadMap"] = resultList;
 

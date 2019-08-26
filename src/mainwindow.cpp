@@ -5050,7 +5050,6 @@ void MainWindow::on_actionSettings_triggered()
       dlManager->setOutputDirectory(settings.getDownloadDirectory());
     }
   }
-  dlManager->setServers(settings.getServers());
 
   if ((settings.getModDirectory() != oldModDirectory)
       || (settings.displayForeign() != oldDisplayForeign)) {
@@ -5904,20 +5903,32 @@ void MainWindow::nxmTrackedModsAvailable(QVariant userData, QVariant resultData,
 
 void MainWindow::nxmDownloadURLs(QString, int, int, QVariant, QVariant resultData, int)
 {
-  ServerList servers;
+  auto servers = m_OrganizerCore.settings().getServers();
 
   for (const QVariant &var : resultData.toList()) {
     const QVariantMap map = var.toMap();
 
-    ServerInfo server(
-      map["short_name"].toString(),
-      map["name"].toString().contains("Premium", Qt::CaseInsensitive),
-      QDate::currentDate(),
-      map["short_name"].toString().contains("CDN", Qt::CaseInsensitive) ? 1 : 0,
-      map["downloadCount"].toInt(),
-      map["downloadSpeed"].toDouble());
+    const auto name = map["short_name"].toString();
+    const auto isPremium = map["name"].toString().contains("Premium", Qt::CaseInsensitive);
+    const auto isCDN = map["short_name"].toString().contains("CDN", Qt::CaseInsensitive);
 
-    servers.add(std::move(server));
+    bool found = false;
+
+    for (auto& server : servers) {
+      if (server.name() == name) {
+        // already exists, update
+        server.setPremium(isPremium);
+        server.updateLastSeen();
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      // new server
+      ServerInfo server(name, isPremium, QDate::currentDate(), isCDN ? 1 : 0, {});
+      servers.add(std::move(server));
+    }
   }
 
   m_OrganizerCore.settings().updateServers(servers);

@@ -87,9 +87,9 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
       descriptor += QStringLiteral(" (automatic)");
     }
 
-    if (server.downloadSpeed() > 0 && server.downloadCount() > 0) {
-      const int bps = static_cast<int>(server.downloadSpeed() / server.downloadCount());
-      descriptor += QString(" (%1 kbps)").arg(bps / 1024);
+    const auto averageSpeed = server.averageSpeed();
+    if (averageSpeed > 0) {
+      descriptor += QString(" (%1 kbps)").arg(averageSpeed / 1024);
     }
 
     QListWidgetItem *newItem = new ServerItem<int>(descriptor, Qt::UserRole + 1);
