@@ -5904,18 +5904,22 @@ void MainWindow::nxmTrackedModsAvailable(QVariant userData, QVariant resultData,
 
 void MainWindow::nxmDownloadURLs(QString, int, int, QVariant, QVariant resultData, int)
 {
-  QVariantList serverList = resultData.toList();
+  ServerList servers;
 
-  QList<ServerInfo> servers;
-  for (const QVariant &server : serverList) {
-    QVariantMap serverInfo = server.toMap();
-    ServerInfo info(
-      serverInfo["short_name"].toString(),
-      serverInfo["name"].toString().contains("Premium", Qt::CaseInsensitive),
+  for (const QVariant &var : resultData.toList()) {
+    const QVariantMap map = var.toMap();
+
+    ServerInfo server(
+      map["short_name"].toString(),
+      map["name"].toString().contains("Premium", Qt::CaseInsensitive),
       QDate::currentDate(),
-      serverInfo["short_name"].toString().contains("CDN", Qt::CaseInsensitive));
-    servers.append(info);
+      map["short_name"].toString().contains("CDN", Qt::CaseInsensitive) ? 1 : 0,
+      map["downloadCount"].toInt(),
+      map["downloadSpeed"].toDouble());
+
+    servers.add(std::move(server));
   }
+
   m_OrganizerCore.settings().updateServers(servers);
 }
 

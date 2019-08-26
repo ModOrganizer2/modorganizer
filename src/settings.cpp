@@ -884,17 +884,42 @@ std::map<QString, int> Settings::getPreferredServers()
   return result;
 }
 
-void Settings::updateServers(const QList<ServerInfo> &servers)
+ServerList Settings::getServers() const
+{
+  ServerList list;
+
+  m_Settings.beginGroup("Servers");
+
+  for (const QString &serverKey : m_Settings.childKeys()) {
+    QVariantMap data = m_Settings.value(serverKey).toMap();
+
+    ServerInfo server(
+      serverKey,
+      data["premium"].toBool(),
+      data["lastSeen"].toDate(),
+      data["preferred"].toInt(),
+      data["downloadCount"].toInt(),
+      data["downloadSpeed"].toDouble());
+
+    list.add(std::move(server));
+  }
+
+  m_Settings.endGroup();
+
+  return list;
+}
+
+void Settings::updateServers(const ServerList& servers)
 {
   m_Settings.beginGroup("Servers");
   QStringList oldServerKeys = m_Settings.childKeys();
 
-  for (const ServerInfo &server : servers) {
+  for (const auto& server : servers) {
     if (!oldServerKeys.contains(server.name())) {
       // not yet known server
       QVariantMap newVal;
       newVal["premium"] = server.isPremium();
-      newVal["preferred"] = server.isPreferred() ? 1 : 0;
+      newVal["preferred"] = server.preferred();
       newVal["lastSeen"] = server.lastSeen();
       newVal["downloadCount"] = 0;
       newVal["downloadSpeed"] = 0.0;
@@ -902,12 +927,13 @@ void Settings::updateServers(const QList<ServerInfo> &servers)
       m_Settings.setValue(server.name(), newVal);
     } else {
       QVariantMap data = m_Settings.value(server.name()).toMap();
-      data["lastSeen"] = server.lastSeen();
       data["premium"] = server.isPremium();
+      data["lastSeen"] = server.lastSeen();
+      data["preferred"] = server.preferred();
 
       m_Settings.setValue(server.name(), data);
-      }
     }
+  }
 
   // clean up unavailable servers
   QDate now = QDate::currentDate();

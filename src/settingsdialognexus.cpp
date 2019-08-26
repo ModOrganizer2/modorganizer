@@ -2,9 +2,11 @@
 #include "ui_settingsdialog.h"
 #include "ui_nexusmanualkey.h"
 #include "nexusinterface.h"
+#include "serverinfo.h"
+#include "log.h"
 #include <utility.h>
 
-namespace shell = MOBase::shell;
+using namespace MOBase;
 
 template <typename T>
 class ServerItem : public QListWidgetItem {
@@ -78,30 +80,31 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
   ui->hideAPICounterBox->setChecked(settings().hideAPICounter());
 
   // display server preferences
-  qsettings().beginGroup("Servers");
-  for (const QString &key : qsettings().childKeys()) {
-    QVariantMap val = qsettings().value(key).toMap();
-    QString descriptor = key;
+  for (const auto& server : s.getServers()) {
+    QString descriptor = server.name();
+
     if (!descriptor.compare("CDN", Qt::CaseInsensitive)) {
       descriptor += QStringLiteral(" (automatic)");
     }
-    if (val.contains("downloadSpeed") && val.contains("downloadCount") && (val["downloadCount"].toInt() > 0)) {
-      int bps = static_cast<int>(val["downloadSpeed"].toDouble() / val["downloadCount"].toInt());
+
+    if (server.downloadSpeed() > 0 && server.downloadCount() > 0) {
+      const int bps = static_cast<int>(server.downloadSpeed() / server.downloadCount());
       descriptor += QString(" (%1 kbps)").arg(bps / 1024);
     }
 
     QListWidgetItem *newItem = new ServerItem<int>(descriptor, Qt::UserRole + 1);
 
-    newItem->setData(Qt::UserRole, key);
-    newItem->setData(Qt::UserRole + 1, val["preferred"].toInt());
-    if (val["preferred"].toInt() > 0) {
+    newItem->setData(Qt::UserRole, server.name());
+    newItem->setData(Qt::UserRole + 1, server.preferred());
+
+    if (server.preferred() > 0) {
       ui->preferredServersList->addItem(newItem);
     } else {
       ui->knownServersList->addItem(newItem);
     }
+
     ui->preferredServersList->sortItems(Qt::DescendingOrder);
   }
-  qsettings().endGroup();
 
   QObject::connect(ui->nexusConnect, &QPushButton::clicked, [&]{ on_nexusConnect_clicked(); });
   QObject::connect(ui->nexusManualKey, &QPushButton::clicked, [&]{ on_nexusManualKey_clicked(); });
@@ -119,22 +122,52 @@ void NexusSettingsTab::update()
   settings().setEndorsementIntegration(ui->endorsementBox->isChecked());
   settings().setHideAPICounter(ui->hideAPICounterBox->isChecked());
 
+  auto servers = settings().getServers();
+
   // store server preference
-  qsettings().beginGroup("Servers");
   for (int i = 0; i < ui->knownServersList->count(); ++i) {
-    QString key = ui->knownServersList->item(i)->data(Qt::UserRole).toString();
-    QVariantMap val = qsettings().value(key).toMap();
-    val["preferred"] = 0;
-    qsettings().setValue(key, val);
-    }
-  int count = ui->preferredServersList->count();
-  for (int i = 0; i < count; ++i) {
-    QString key = ui->preferredServersList->item(i)->data(Qt::UserRole).toString();
-    QVariantMap val = qsettings().value(key).toMap();
-    val["preferred"] = count - i;
-    qsettings().setValue(key, val);
+    const QString key = ui->knownServersList->item(i)->data(Qt::UserRole).toString();
+
+    bool found = false;
+
+    for (auto& server : servers) {
+      if (server.name() == key) {
+        server.setPreferred(0);
+        found = true;
+        break;
       }
-  qsettings().endGroup();
+    }
+
+    if (!found) {
+      log::error("while setting preferred to 0, server '{}' not found", key);
+    }
+  }
+
+  const int count = ui->preferredServersList->count();
+
+  for (int i = 0; i < count; ++i) {
+    const QString key = ui->preferredServersList->item(i)->data(Qt::UserRole).toString();
+    const int newPreferred = count - i;
+
+    bool found = false;
+
+    for (auto& server : servers) {
+
+      if (server.name() == key) {
+        server.setPreferred(newPreferred);
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      log::error(
+        "while setting preference to {}, server '{}' not found",
+        newPreferred, key);
+    }
+  }
+
+  settings().updateServers(servers);
 }
 
 void NexusSettingsTab::on_nexusConnect_clicked()

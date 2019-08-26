@@ -34,6 +34,7 @@ class QSplitter;
 
 class PluginContainer;
 class ServerInfo;
+class ServerList;
 class Settings;
 class ExpanderWidget;
 
@@ -493,11 +494,13 @@ public:
   */
   std::map<QString, int> getPreferredServers();
 
+  ServerList getServers() const;
+
   /**
    * @brief updates the list of known servers
    * @param list of servers from a recent query
    */
-  void updateServers(const QList<ServerInfo> &servers);
+  void updateServers(const ServerList& servers);
 
   /**
    * @brief add a plugin that is to be blacklisted
