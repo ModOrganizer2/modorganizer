@@ -51,7 +51,11 @@ int SettingsDialog::exec()
 {
   GeometrySaver gs(m_settings, this);
 
+  m_settings.restoreIndex(ui->tabWidget);
+
   auto ret = TutorableDialog::exec();
+
+  m_settings.saveIndex(ui->tabWidget);
 
   if (ret == QDialog::Accepted) {
     for (auto&& tab : m_tabs) {

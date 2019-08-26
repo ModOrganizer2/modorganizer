@@ -359,6 +359,7 @@ public:
    * @return true if the user disabled internet features
    */
   bool offlineMode() const;
+  void setOfflineMode(bool b);
 
   /**
    * @return true if the user chose compact downloads
@@ -405,11 +406,13 @@ public:
    * @return true if the user configured the use of a network proxy
    */
   bool useProxy() const;
+  void setUseProxy(bool b);
 
   /**
    * @return true if endorsement integration is enabled
    */
   bool endorsementIntegration() const;
+  void setEndorsementIntegration(bool b) const;
 
   EndorsementState endorsementState() const;
   void setEndorsementState(EndorsementState s);
@@ -419,6 +422,7 @@ public:
    * @return true if the API counter should be hidden
    */
   bool hideAPICounter() const;
+  void setHideAPICounter(bool b);
 
   /**
    * @return true if the user wants to see non-official plugins installed outside MO in his mod list

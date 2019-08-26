@@ -545,6 +545,11 @@ std::optional<bool> Settings::getUseProxy() const
   return getOptional<bool>(m_Settings, "Settings/use_proxy");
 }
 
+void Settings::setUseProxy(bool b)
+{
+  m_Settings.setValue("Settings/use_proxy", b);
+}
+
 std::optional<QVersionNumber> Settings::getVersion() const
 {
   if (auto v=getOptional<QString>(m_Settings, "version")) {
@@ -658,6 +663,11 @@ bool Settings::offlineMode() const
   return m_Settings.value("Settings/offline_mode", false).toBool();
 }
 
+void Settings::setOfflineMode(bool b)
+{
+  m_Settings.setValue("Settings/offline_mode", b);
+}
+
 log::Levels Settings::logLevel() const
 {
   return static_cast<log::Levels>(m_Settings.value("Settings/log_level").toInt());
@@ -756,6 +766,11 @@ bool Settings::endorsementIntegration() const
   return m_Settings.value("Settings/endorsement_integration", true).toBool();
 }
 
+void Settings::setEndorsementIntegration(bool b) const
+{
+  m_Settings.setValue("Settings/endorsement_integration", b);
+}
+
 EndorsementState Settings::endorsementState() const
 {
   const auto v = getOptional<QString>(m_Settings, "endorse_state");
@@ -776,6 +791,11 @@ void Settings::setEndorsementState(EndorsementState s)
 bool Settings::hideAPICounter() const
 {
   return m_Settings.value("Settings/hide_api_counter", false).toBool();
+}
+
+void Settings::setHideAPICounter(bool b)
+{
+  m_Settings.setValue("Settings/hide_api_counter", b);
 }
 
 bool Settings::displayForeign() const
@@ -886,8 +906,8 @@ void Settings::updateServers(const QList<ServerInfo> &servers)
       data["premium"] = server.premium;
 
       m_Settings.setValue(server.name, data);
+      }
     }
-  }
 
   // clean up unavailable servers
   QDate now = QDate::currentDate();
@@ -1166,7 +1186,7 @@ void Settings::dump() const
 {
   static const QStringList ignore({
     "username", "password", "nexus_api_key"
-    });
+  });
 
   log::debug("settings:");
 

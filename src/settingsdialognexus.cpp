@@ -114,10 +114,10 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
 
 void NexusSettingsTab::update()
 {
-  qsettings().setValue("Settings/offline_mode", ui->offlineBox->isChecked());
-  qsettings().setValue("Settings/use_proxy", ui->proxyBox->isChecked());
-  qsettings().setValue("Settings/endorsement_integration", ui->endorsementBox->isChecked());
-  qsettings().setValue("Settings/hide_api_counter", ui->hideAPICounterBox->isChecked());
+  settings().setOfflineMode(ui->offlineBox->isChecked());
+  settings().setUseProxy(ui->proxyBox->isChecked());
+  settings().setEndorsementIntegration(ui->endorsementBox->isChecked());
+  settings().setHideAPICounter(ui->hideAPICounterBox->isChecked());
 
   // store server preference
   qsettings().beginGroup("Servers");
@@ -126,14 +126,14 @@ void NexusSettingsTab::update()
     QVariantMap val = qsettings().value(key).toMap();
     val["preferred"] = 0;
     qsettings().setValue(key, val);
-  }
+    }
   int count = ui->preferredServersList->count();
   for (int i = 0; i < count; ++i) {
     QString key = ui->preferredServersList->item(i)->data(Qt::UserRole).toString();
     QVariantMap val = qsettings().value(key).toMap();
     val["preferred"] = count - i;
     qsettings().setValue(key, val);
-  }
+      }
   qsettings().endGroup();
 }
 
