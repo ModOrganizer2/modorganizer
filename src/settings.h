@@ -33,7 +33,7 @@ namespace MOBase {
 class QSplitter;
 
 class PluginContainer;
-struct ServerInfo;
+class ServerInfo;
 class Settings;
 class ExpanderWidget;
 
@@ -191,13 +191,6 @@ public:
   bool lockGUI() const;
 
   /**
-   * @brief register download speed
-   * @param url complete download url
-   * @param bytesPerSecond download size in bytes per second
-   */
-  void setDownloadSpeed(const QString &serverName, int bytesPerSecond);
-
-  /**
    * the steam appid is assigned by the steam platform to each product sold there.
    * The appid may differ between different versions of a game so it may be impossible
    * for Mod Organizer to automatically recognize it, though usually it does
@@ -215,11 +208,6 @@ public:
    * retrieve the directory where downloads are stored (with native separators)
    **/
   QString getDownloadDirectory(bool resolve = true) const;
-
-  /**
-   * retrieve a sorted list of preferred servers
-   */
-  std::map<QString, int> getPreferredServers();
 
   /**
    * retrieve the directory where mods are stored (with native separators)
@@ -492,6 +480,18 @@ public:
    */
   QString language();
   void setLanguage(const QString& name);
+
+  /**
+  * @brief register download speed
+  * @param url complete download url
+  * @param bytesPerSecond download size in bytes per second
+  */
+  void setDownloadSpeed(const QString &serverName, int bytesPerSecond);
+
+  /**
+  * retrieve a sorted list of preferred servers
+  */
+  std::map<QString, int> getPreferredServers();
 
   /**
    * @brief updates the list of known servers

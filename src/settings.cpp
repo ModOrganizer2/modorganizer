@@ -414,40 +414,6 @@ void Settings::setUsePrereleases(bool b)
   m_Settings.setValue("Settings/use_prereleases", b);
 }
 
-void Settings::setDownloadSpeed(const QString &serverName, int bytesPerSecond)
-{
-  m_Settings.beginGroup("Servers");
-
-  for (const QString &serverKey : m_Settings.childKeys()) {
-    QVariantMap data = m_Settings.value(serverKey).toMap();
-    if (serverKey == serverName) {
-      data["downloadCount"] = data["downloadCount"].toInt() + 1;
-      data["downloadSpeed"] = data["downloadSpeed"].toDouble() + static_cast<double>(bytesPerSecond);
-      m_Settings.setValue(serverKey, data);
-    }
-  }
-
-  m_Settings.endGroup();
-  m_Settings.sync();
-}
-
-std::map<QString, int> Settings::getPreferredServers()
-{
-  std::map<QString, int> result;
-  m_Settings.beginGroup("Servers");
-
-  for (const QString &serverKey : m_Settings.childKeys()) {
-    QVariantMap data = m_Settings.value(serverKey).toMap();
-    int preference = data["preferred"].toInt();
-    if (preference > 0) {
-      result[serverKey] = preference;
-    }
-  }
-  m_Settings.endGroup();
-
-  return result;
-}
-
 QString Settings::getConfigurablePath(const QString &key,
                                       const QString &def,
                                       bool resolve) const
@@ -884,28 +850,62 @@ void Settings::setLanguage(const QString& name)
   m_Settings.setValue("Settings/language", name);
 }
 
+void Settings::setDownloadSpeed(const QString &serverName, int bytesPerSecond)
+{
+  m_Settings.beginGroup("Servers");
+
+  for (const QString &serverKey : m_Settings.childKeys()) {
+    QVariantMap data = m_Settings.value(serverKey).toMap();
+    if (serverKey == serverName) {
+      data["downloadCount"] = data["downloadCount"].toInt() + 1;
+      data["downloadSpeed"] = data["downloadSpeed"].toDouble() + static_cast<double>(bytesPerSecond);
+      m_Settings.setValue(serverKey, data);
+    }
+  }
+
+  m_Settings.endGroup();
+  m_Settings.sync();
+}
+
+std::map<QString, int> Settings::getPreferredServers()
+{
+  std::map<QString, int> result;
+  m_Settings.beginGroup("Servers");
+
+  for (const QString &serverKey : m_Settings.childKeys()) {
+    QVariantMap data = m_Settings.value(serverKey).toMap();
+    int preference = data["preferred"].toInt();
+    if (preference > 0) {
+      result[serverKey] = preference;
+    }
+  }
+  m_Settings.endGroup();
+
+  return result;
+}
+
 void Settings::updateServers(const QList<ServerInfo> &servers)
 {
   m_Settings.beginGroup("Servers");
   QStringList oldServerKeys = m_Settings.childKeys();
 
   for (const ServerInfo &server : servers) {
-    if (!oldServerKeys.contains(server.name)) {
+    if (!oldServerKeys.contains(server.name())) {
       // not yet known server
       QVariantMap newVal;
-      newVal["premium"] = server.premium;
-      newVal["preferred"] = server.preferred ? 1 : 0;
-      newVal["lastSeen"] = server.lastSeen;
+      newVal["premium"] = server.isPremium();
+      newVal["preferred"] = server.isPreferred() ? 1 : 0;
+      newVal["lastSeen"] = server.lastSeen();
       newVal["downloadCount"] = 0;
       newVal["downloadSpeed"] = 0.0;
 
-      m_Settings.setValue(server.name, newVal);
+      m_Settings.setValue(server.name(), newVal);
     } else {
-      QVariantMap data = m_Settings.value(server.name).toMap();
-      data["lastSeen"] = server.lastSeen;
-      data["premium"] = server.premium;
+      QVariantMap data = m_Settings.value(server.name()).toMap();
+      data["lastSeen"] = server.lastSeen();
+      data["premium"] = server.isPremium();
 
-      m_Settings.setValue(server.name, data);
+      m_Settings.setValue(server.name(), data);
       }
     }
 
