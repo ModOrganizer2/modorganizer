@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DOWNLOADMANAGER_H
 #define DOWNLOADMANAGER_H
 
+#include "serverinfo.h"
 #include <idownloadmanager.h>
 #include <modrepositoryfileinfo.h>
 #include <set>
@@ -174,9 +175,9 @@ public:
   QString getOutputDirectory() const { return m_OutputDirectory; }
 
   /**
-   * @brief setPreferredServers set the list of preferred servers
+   * @brief sets the list of servers
    */
-  void setPreferredServers(const std::map<QString, int> &preferredServers);
+  void setServers(const ServerList& servers);
 
   /**
    * @brief set the list of supported extensions
@@ -366,7 +367,9 @@ public:
    * @param RHS
    * @return
    */
-  static bool ServerByPreference(const std::map<QString, int> &preferredServers, const QVariant &LHS, const QVariant &RHS);
+  static bool ServerByPreference(
+    const QList<ServerInfo>& preferredServers,
+    const QVariant &LHS, const QVariant &RHS);
 
 
   virtual int startDownloadURLs(const QStringList &urls);
@@ -548,7 +551,7 @@ private:
   QVector<DownloadInfo*> m_ActiveDownloads;
 
   QString m_OutputDirectory;
-  std::map<QString, int> m_PreferredServers;
+  ServerList m_Servers;
   QStringList m_SupportedExtensions;
   std::set<int> m_RequestIDs;
   QVector<int> m_AlphabeticalTranslation;

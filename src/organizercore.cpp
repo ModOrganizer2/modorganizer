@@ -276,7 +276,7 @@ OrganizerCore::OrganizerCore(Settings &settings)
   , m_PluginListsWriter(std::bind(&OrganizerCore::savePluginList, this))
 {
   m_DownloadManager.setOutputDirectory(m_Settings.getDownloadDirectory());
-  m_DownloadManager.setPreferredServers(m_Settings.getPreferredServers());
+  m_DownloadManager.setServers(m_Settings.getServers());
 
   NexusInterface::instance(m_PluginContainer)->setCacheDirectory(m_Settings.getCacheDirectory());
 

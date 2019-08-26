@@ -288,9 +288,9 @@ void DownloadManager::setOutputDirectory(const QString &outputDirectory)
 }
 
 
-void DownloadManager::setPreferredServers(const std::map<QString, int> &preferredServers)
+void DownloadManager::setServers(const ServerList& servers)
 {
-  m_PreferredServers = preferredServers;
+  m_Servers = servers;
 }
 
 
@@ -1667,23 +1667,38 @@ void DownloadManager::nxmFileInfoAvailable(QString gameName, int modID, int file
   m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(info->gameName, info->modID, info->fileID, this, qVariantFromValue(test), QString()));
 }
 
-static int evaluateFileInfoMap(const QVariantMap &map, const std::map<QString, int> &preferredServers)
+static int evaluateFileInfoMap(
+  const QVariantMap &map,
+  const QList<ServerInfo>& preferredServers)
 {
-  int result = 0;
+  int preference = 0;
+  bool found = false;
+  const auto name = map["short_name"].toString();
 
-  auto preference = preferredServers.find(map["short_name"].toString());
-
-  if (preference != preferredServers.end()) {
-    result += 100 + preference->second * 20;
+  for (const auto& server : preferredServers) {
+    if (server.name() == name) {
+      preference = server.preferred();
+      found = true;
+      break;
+    }
   }
 
-  return result;
+  if (!found) {
+    log::error("server '{}' not found while sorting by preference", name);
+    return 0;
+  }
+
+  return  100 + preference * 20;
 }
 
 // sort function to sort by best download server
-bool DownloadManager::ServerByPreference(const std::map<QString, int> &preferredServers, const QVariant &LHS, const QVariant &RHS)
+bool DownloadManager::ServerByPreference(
+  const QList<ServerInfo>& preferredServers,
+  const QVariant &LHS, const QVariant &RHS)
 {
-  return evaluateFileInfoMap(LHS.toMap(), preferredServers) > evaluateFileInfoMap(RHS.toMap(), preferredServers);
+  const auto a = evaluateFileInfoMap(LHS.toMap(), preferredServers);
+  const auto b = evaluateFileInfoMap(RHS.toMap(), preferredServers);
+  return (a > b);
 }
 
 int DownloadManager::startDownloadURLs(const QStringList &urls)
@@ -1732,7 +1747,10 @@ void DownloadManager::nxmDownloadURLsAvailable(QString gameName, int modID, int 
     return;
   }
 
-  std::sort(resultList.begin(), resultList.end(), boost::bind(&DownloadManager::ServerByPreference, m_PreferredServers, _1, _2));
+  std::sort(
+    resultList.begin(),
+    resultList.end(),
+    boost::bind(&DownloadManager::ServerByPreference, m_Servers.getPreferred(), _1, _2));
 
   info->userData["downloadMap"] = resultList;
 

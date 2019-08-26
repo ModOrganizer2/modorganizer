@@ -5050,7 +5050,7 @@ void MainWindow::on_actionSettings_triggered()
       dlManager->setOutputDirectory(settings.getDownloadDirectory());
     }
   }
-  dlManager->setPreferredServers(settings.getPreferredServers());
+  dlManager->setServers(settings.getServers());
 
   if ((settings.getModDirectory() != oldModDirectory)
       || (settings.displayForeign() != oldDisplayForeign)) {

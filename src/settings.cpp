@@ -867,23 +867,6 @@ void Settings::setDownloadSpeed(const QString &serverName, int bytesPerSecond)
   m_Settings.sync();
 }
 
-std::map<QString, int> Settings::getPreferredServers()
-{
-  std::map<QString, int> result;
-  m_Settings.beginGroup("Servers");
-
-  for (const QString &serverKey : m_Settings.childKeys()) {
-    QVariantMap data = m_Settings.value(serverKey).toMap();
-    int preference = data["preferred"].toInt();
-    if (preference > 0) {
-      result[serverKey] = preference;
-    }
-  }
-  m_Settings.endGroup();
-
-  return result;
-}
-
 ServerList Settings::getServers() const
 {
   ServerList list;

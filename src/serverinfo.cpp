@@ -52,6 +52,10 @@ void ServerInfo::setPreferred(int i)
 void ServerList::add(ServerInfo s)
 {
   m_servers.push_back(std::move(s));
+
+  std::sort(m_servers.begin(), m_servers.end(), [](auto&& a, auto&& b){
+    return (a.preferred() < b.preferred());
+  });
 }
 
 ServerList::iterator ServerList::begin()
@@ -82,4 +86,17 @@ std::size_t ServerList::size() const
 bool ServerList::empty() const
 {
   return m_servers.empty();
+}
+
+ServerList::container ServerList::getPreferred() const
+{
+  container v;
+
+  for (const auto& server : m_servers) {
+    if (server.preferred() > 0) {
+      v.push_back(server);
+    }
+  }
+
+  return v;
 }

@@ -482,24 +482,8 @@ public:
   QString language();
   void setLanguage(const QString& name);
 
-  /**
-  * @brief register download speed
-  * @param url complete download url
-  * @param bytesPerSecond download size in bytes per second
-  */
   void setDownloadSpeed(const QString &serverName, int bytesPerSecond);
-
-  /**
-  * retrieve a sorted list of preferred servers
-  */
-  std::map<QString, int> getPreferredServers();
-
   ServerList getServers() const;
-
-  /**
-   * @brief updates the list of known servers
-   * @param list of servers from a recent query
-   */
   void updateServers(const ServerList& servers);
 
   /**

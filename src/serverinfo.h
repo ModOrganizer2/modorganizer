@@ -50,6 +50,8 @@ public:
   std::size_t size() const;
   bool empty() const;
 
+  container getPreferred() const;
+
 private:
   container m_servers;
 };
