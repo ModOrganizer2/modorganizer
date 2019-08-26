@@ -27,6 +27,78 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
+class ScopedGroup
+{
+public:
+  ScopedGroup(QSettings& s, const QString& name)
+    : m_settings(s)
+  {
+    m_settings.beginGroup(name);
+  }
+
+  ~ScopedGroup()
+  {
+    m_settings.endGroup();
+  }
+
+  ScopedGroup(const ScopedGroup&) = delete;
+  ScopedGroup& operator=(const ScopedGroup&) = delete;
+
+private:
+  QSettings& m_settings;
+};
+
+
+class ScopedReadArray
+{
+public:
+  ScopedReadArray(QSettings& s, const QString& name)
+    : m_settings(s), m_count(0)
+  {
+    m_count = m_settings.beginReadArray(name);
+  }
+
+  ~ScopedReadArray()
+  {
+    m_settings.endArray();
+  }
+
+  ScopedReadArray(const ScopedReadArray&) = delete;
+  ScopedReadArray& operator=(const ScopedReadArray&) = delete;
+
+  int count() const
+  {
+    return m_count;
+  }
+
+private:
+  QSettings& m_settings;
+  int m_count;
+};
+
+
+class ScopedWriteArray
+{
+public:
+  ScopedWriteArray(QSettings& s, const QString& name)
+    : m_settings(s)
+  {
+    m_settings.beginWriteArray(name);
+  }
+
+  ~ScopedWriteArray()
+  {
+    m_settings.endArray();
+  }
+
+  ScopedWriteArray(const ScopedWriteArray&) = delete;
+  ScopedWriteArray& operator=(const ScopedWriteArray&) = delete;
+
+private:
+  QSettings& m_settings;
+};
+
+
 template <class T>
 std::optional<T> getOptional(
   const QSettings& s, const QString& name, std::optional<T> def={})
@@ -206,19 +278,21 @@ void Settings::processUpdates(
   }
 
   if (lastVersion < QVersionNumber(2, 2, 0)) {
-    m_Settings.beginGroup("Settings");
-    m_Settings.remove("steam_password");
-    m_Settings.remove("nexus_username");
-    m_Settings.remove("nexus_password");
-    m_Settings.remove("nexus_login");
-    m_Settings.remove("nexus_api_key");
-    m_Settings.remove("ask_for_nexuspw");
-    m_Settings.remove("nmm_version");
-    m_Settings.endGroup();
+    {
+      ScopedGroup sg(m_Settings, "Settings");
+      m_Settings.remove("steam_password");
+      m_Settings.remove("nexus_username");
+      m_Settings.remove("nexus_password");
+      m_Settings.remove("nexus_login");
+      m_Settings.remove("nexus_api_key");
+      m_Settings.remove("ask_for_nexuspw");
+      m_Settings.remove("nmm_version");
+    }
 
-    m_Settings.beginGroup("Servers");
-    m_Settings.remove("");
-    m_Settings.endGroup();
+    {
+      ScopedGroup sg(m_Settings, "Servers");
+      m_Settings.remove("");
+    }
   }
 
   if (lastVersion < QVersionNumber(2, 2, 1)) {
@@ -251,12 +325,12 @@ void Settings::clearPlugins()
   m_PluginSettings.clear();
 
   m_PluginBlacklist.clear();
-  int count = m_Settings.beginReadArray("pluginBlacklist");
-  for (int i = 0; i < count; ++i) {
+
+  ScopedReadArray sra(m_Settings, "pluginBlacklist");
+  for (int i = 0; i < sra.count(); ++i) {
     m_Settings.setArrayIndex(i);
     m_PluginBlacklist.insert(m_Settings.value("name").toString());
   }
-  m_Settings.endArray();
 }
 
 bool Settings::pluginBlacklisted(const QString &fileName) const
@@ -876,45 +950,49 @@ ServerList Settings::getServers() const
   // in 2.2.1, one key per server is returned
 
   // getting the keys
-  m_Settings.beginGroup("Servers");
-  const auto keys = m_Settings.childKeys();
-  m_Settings.endGroup();
+  QStringList keys;
+
+  {
+    ScopedGroup sg(m_Settings, "Servers");
+    keys = m_Settings.childKeys();
+  }
 
   if (!keys.empty() && keys[0] != "size") {
     // old format
     return getServersFromOldMap();
   }
 
+
   // post 2.2.1 format, array of values
 
   ServerList list;
 
-  const int size = m_Settings.beginReadArray("Servers");
+  {
+    ScopedReadArray sra(m_Settings, "Servers");
 
-  for (int i=0; i<size; ++i) {
-    m_Settings.setArrayIndex(i);
+    for (int i=0; i<sra.count(); ++i) {
+      m_Settings.setArrayIndex(i);
 
-    ServerInfo::SpeedList lastDownloads;
+      ServerInfo::SpeedList lastDownloads;
 
-    const auto lastDownloadsString = m_Settings.value("lastDownloads").toString();
-    for (const auto& s : lastDownloadsString.split(" ")) {
-      const auto bytesPerSecond = s.toInt();
-      if (bytesPerSecond > 0) {
-        lastDownloads.push_back(bytesPerSecond);
+      const auto lastDownloadsString = m_Settings.value("lastDownloads").toString();
+      for (const auto& s : lastDownloadsString.split(" ")) {
+        const auto bytesPerSecond = s.toInt();
+        if (bytesPerSecond > 0) {
+          lastDownloads.push_back(bytesPerSecond);
+        }
       }
+
+      ServerInfo server(
+        m_Settings.value("name").toString(),
+        m_Settings.value("premium").toBool(),
+        QDate::fromString(m_Settings.value("lastSeen").toString(), Qt::ISODate),
+        m_Settings.value("preferred").toInt(),
+        lastDownloads);
+
+      list.add(std::move(server));
     }
-
-    ServerInfo server(
-      m_Settings.value("name").toString(),
-      m_Settings.value("premium").toBool(),
-      QDate::fromString(m_Settings.value("lastSeen").toString(), Qt::ISODate),
-      m_Settings.value("preferred").toInt(),
-      lastDownloads);
-
-    list.add(std::move(server));
   }
-
-  m_Settings.endArray();
 
   return list;
 }
@@ -924,8 +1002,7 @@ ServerList Settings::getServersFromOldMap() const
   // for 2.2.1 and before
 
   ServerList list;
-
-  m_Settings.beginGroup("Servers");
+  ScopedGroup sg(m_Settings, "Servers");
 
   for (const QString &serverKey : m_Settings.childKeys()) {
     QVariantMap data = m_Settings.value(serverKey).toMap();
@@ -943,8 +1020,6 @@ ServerList Settings::getServersFromOldMap() const
     list.add(std::move(server));
   }
 
-  m_Settings.endGroup();
-
   return list;
 }
 
@@ -953,34 +1028,35 @@ void Settings::updateServers(ServerList servers)
   // clean up unavailable servers
   servers.cleanup();
 
-  m_Settings.beginGroup("Servers");
-  m_Settings.remove("");
-  m_Settings.endGroup();
-
-  m_Settings.beginWriteArray("Servers");
-
-  int i=0;
-  for (const auto& server : servers) {
-    m_Settings.setArrayIndex(i);
-
-    m_Settings.setValue("name", server.name());
-    m_Settings.setValue("premium", server.isPremium());
-    m_Settings.setValue("lastSeen", server.lastSeen().toString(Qt::ISODate));
-    m_Settings.setValue("preferred", server.preferred());
-
-    QString lastDownloads;
-    for (const auto& speed : server.lastDownloads()) {
-      if (speed > 0) {
-        lastDownloads += QString("%1 ").arg(speed);
-      }
-    }
-
-    m_Settings.setValue("lastDownloads", lastDownloads.trimmed());
-
-    ++i;
+  {
+    ScopedGroup sg(m_Settings, "Servers");
+    m_Settings.remove("");
   }
 
-  m_Settings.endArray();
+  {
+    ScopedWriteArray swa(m_Settings, "Servers");
+
+    int i=0;
+    for (const auto& server : servers) {
+      m_Settings.setArrayIndex(i);
+
+      m_Settings.setValue("name", server.name());
+      m_Settings.setValue("premium", server.isPremium());
+      m_Settings.setValue("lastSeen", server.lastSeen().toString(Qt::ISODate));
+      m_Settings.setValue("preferred", server.preferred());
+
+      QString lastDownloads;
+      for (const auto& speed : server.lastDownloads()) {
+        if (speed > 0) {
+          lastDownloads += QString("%1 ").arg(speed);
+        }
+      }
+
+      m_Settings.setValue("lastDownloads", lastDownloads.trimmed());
+
+      ++i;
+    }
+  }
 }
 
 void Settings::addBlacklistPlugin(const QString &fileName)
@@ -992,23 +1068,22 @@ void Settings::addBlacklistPlugin(const QString &fileName)
 void Settings::writePluginBlacklist()
 {
   m_Settings.remove("pluginBlacklist");
-  m_Settings.beginWriteArray("pluginBlacklist");
+
+  ScopedWriteArray swa(m_Settings, "pluginBlacklist");
   int idx = 0;
   for (const QString &plugin : m_PluginBlacklist) {
     m_Settings.setArrayIndex(idx++);
     m_Settings.setValue("name", plugin);
   }
-
-  m_Settings.endArray();
 }
 
 std::map<QString, QString> Settings::getRecentDirectories() const
 {
   std::map<QString, QString> map;
 
-  const int size = m_Settings.beginReadArray("recentDirectories");
+  ScopedReadArray sra(m_Settings, "recentDirectories");
 
-  for (int i=0; i<size; ++i) {
+  for (int i=0; i<sra.count(); ++i) {
     m_Settings.setArrayIndex(i);
 
     const QVariant name = m_Settings.value("name");
@@ -1019,15 +1094,14 @@ std::map<QString, QString> Settings::getRecentDirectories() const
     }
   }
 
-  m_Settings.endArray();
-
   return map;
 }
 
 void Settings::setRecentDirectories(const std::map<QString, QString>& map)
 {
   m_Settings.remove("recentDirectories");
-  m_Settings.beginWriteArray("recentDirectories");
+
+  ScopedWriteArray swa(m_Settings, "recentDirectories");
 
   int index = 0;
   for (auto&& p : map) {
@@ -1037,16 +1111,14 @@ void Settings::setRecentDirectories(const std::map<QString, QString>& map)
 
     ++index;
   }
-
-  m_Settings.endArray();
 }
 
 std::vector<std::map<QString, QVariant>> Settings::getExecutables() const
 {
-  const int count = m_Settings.beginReadArray("customExecutables");
+  ScopedReadArray sra(m_Settings, "customExecutables");
   std::vector<std::map<QString, QVariant>> v;
 
-  for (int i=0; i<count; ++i) {
+  for (int i=0; i<sra.count(); ++i) {
     m_Settings.setArrayIndex(i);
 
     std::map<QString, QVariant> map;
@@ -1059,15 +1131,14 @@ std::vector<std::map<QString, QVariant>> Settings::getExecutables() const
     v.push_back(map);
   }
 
-  m_Settings.endArray();
-
   return v;
 }
 
 void Settings::setExecutables(const std::vector<std::map<QString, QVariant>>& v)
 {
   m_Settings.remove("customExecutables");
-  m_Settings.beginWriteArray("customExecutables");
+
+  ScopedWriteArray swa(m_Settings, "customExecutables");
 
   int i = 0;
 
@@ -1080,8 +1151,6 @@ void Settings::setExecutables(const std::vector<std::map<QString, QVariant>>& v)
 
     ++i;
   }
-
-  m_Settings.endArray();
 }
 
 bool Settings::isTutorialCompleted(const QString& windowName) const
@@ -1154,9 +1223,8 @@ void Settings::setQuestionFileButton(
 
 void Settings::resetQuestionButtons()
 {
-  m_Settings.beginGroup("DialogChoices");
+  ScopedGroup sg(m_Settings, "DialogChoices");
   m_Settings.remove("");
-  m_Settings.endGroup();
 }
 
 std::optional<int> Settings::getIndex(const QComboBox* cb) const
@@ -1248,17 +1316,34 @@ void Settings::dump() const
 
   log::debug("settings:");
 
-  m_Settings.beginGroup("Settings");
+  {
+    ScopedGroup sg(m_Settings, "Settings");
 
-  for (auto k : m_Settings.allKeys()) {
-    if (ignore.contains(k, Qt::CaseInsensitive)) {
-      continue;
+    for (auto k : m_Settings.allKeys()) {
+      if (ignore.contains(k, Qt::CaseInsensitive)) {
+        continue;
+      }
+
+      log::debug("  . {}={}", k, m_Settings.value(k).toString());
     }
-
-    log::debug("  . {}={}", k, m_Settings.value(k).toString());
   }
 
-  m_Settings.endGroup();
+  log::debug("servers:");
+
+  for (const auto& server : getServers()) {
+    QString lastDownloads;
+    for (auto speed : server.lastDownloads()) {
+      lastDownloads += QString("%1 ").arg(speed);
+    }
+
+    log::debug(
+      "  . {} premium={} lastSeen={} preferred={} lastDownloads={}",
+      server.name(),
+      server.isPremium() ? "yes" : "no",
+      server.lastSeen().toString(Qt::ISODate),
+      server.preferred(),
+      lastDownloads.trimmed());
+  }
 }
 
 
@@ -1278,9 +1363,8 @@ void GeometrySettings::resetIfNeeded()
     return;
   }
 
-  m_Settings.beginGroup("geometry");
+  ScopedGroup sg(m_Settings, "geometry");
   m_Settings.remove("");
-  m_Settings.endGroup();
 }
 
 void GeometrySettings::saveGeometry(const QWidget* w)

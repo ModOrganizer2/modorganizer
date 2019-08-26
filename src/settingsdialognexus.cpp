@@ -89,7 +89,7 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
 
     const auto averageSpeed = server.averageSpeed();
     if (averageSpeed > 0) {
-      descriptor += QString(" (%1 kbps)").arg(averageSpeed / 1024);
+      descriptor += QString(" (%1)").arg(MOBase::localizedByteSpeed(averageSpeed));
     }
 
     QListWidgetItem *newItem = new ServerItem<int>(descriptor, Qt::UserRole + 1);

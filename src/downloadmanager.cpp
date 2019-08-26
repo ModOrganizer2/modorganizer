@@ -1441,22 +1441,11 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
         std::get<4>(info->m_SpeedDiff) = ((calc*0.5) + (std::get<4>(info->m_SpeedDiff)*1.5)) / 2;
 
         // calculate the download speed
-        double speed = (std::get<4>(info->m_SpeedDiff) * 1000.0) / (5 * 1000);
+        const double speed = (std::get<4>(info->m_SpeedDiff) * 1000.0) / (5 * 1000);
 
-        QString unit;
-        if (speed < 1000) {
-          unit = "B/s";
-        }
-        else if (speed < 1000*1024) {
-          speed /= 1024;
-          unit = "KB/s";
-        }
-        else {
-          speed /= 1024 * 1024;
-          unit = "MB/s";
-        }
-
-        info->m_Progress.second = QString::fromLatin1("%1% - %2 %3").arg(info->m_Progress.first).arg(QString::number(speed, 'f', 1)).arg(unit);
+        info->m_Progress.second = QString::fromLatin1("%1% - %2")
+          .arg(info->m_Progress.first)
+          .arg(MOBase::localizedByteSpeed(speed));
 
         TaskProgressManager::instance().updateProgress(info->m_TaskProgressId, bytesReceived, bytesTotal);
         emit update(index);
