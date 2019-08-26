@@ -492,34 +492,108 @@ QString Settings::getConfigurablePath(const QString &key,
                                       const QString &def,
                                       bool resolve) const
 {
+  const QString settingName = "Settings/" + key;
+
   QString result = QDir::fromNativeSeparators(
-      m_Settings.value(QString("settings/") + key, QString("%BASE_DIR%/") + def)
-          .toString());
+      m_Settings.value(settingName, QString("%BASE_DIR%/") + def).toString());
+
   if (resolve) {
     result.replace("%BASE_DIR%", getBaseDirectory());
   }
+
   return result;
+}
+
+void Settings::setConfigurablePath(const QString &key, const QString& path)
+{
+  const QString settingName = "Settings/" + key;
+
+  if (path.isEmpty()) {
+    m_Settings.remove(settingName);
+  } else {
+    m_Settings.setValue(settingName, path);
+  }
 }
 
 QString Settings::getBaseDirectory() const
 {
   return QDir::fromNativeSeparators(m_Settings.value(
-      "settings/base_directory", qApp->property("dataPath").toString()).toString());
+    "settings/base_directory",
+    qApp->property("dataPath").toString()).toString());
 }
 
 QString Settings::getDownloadDirectory(bool resolve) const
 {
-  return getConfigurablePath("download_directory", ToQString(AppConfig::downloadPath()), resolve);
+  return getConfigurablePath(
+    "download_directory",
+    ToQString(AppConfig::downloadPath()),
+    resolve);
 }
 
 QString Settings::getCacheDirectory(bool resolve) const
 {
-  return getConfigurablePath("cache_directory", ToQString(AppConfig::cachePath()), resolve);
+  return getConfigurablePath(
+    "cache_directory",
+    ToQString(AppConfig::cachePath()),
+    resolve);
 }
 
 QString Settings::getModDirectory(bool resolve) const
 {
-  return getConfigurablePath("mod_directory", ToQString(AppConfig::modsPath()), resolve);
+  return getConfigurablePath(
+    "mod_directory",
+    ToQString(AppConfig::modsPath()),
+    resolve);
+}
+
+QString Settings::getProfileDirectory(bool resolve) const
+{
+  return getConfigurablePath(
+    "profiles_directory",
+    ToQString(AppConfig::profilesPath()),
+    resolve);
+}
+
+QString Settings::getOverwriteDirectory(bool resolve) const
+{
+  return getConfigurablePath(
+    "overwrite_directory",
+    ToQString(AppConfig::overwritePath()),
+    resolve);
+}
+
+void Settings::setBaseDirectory(const QString& path)
+{
+  if (path.isEmpty()) {
+    m_Settings.remove("Settings/base_directory");
+  } else {
+    m_Settings.setValue("Settings/base_directory", path);
+  }
+}
+
+void Settings::setDownloadDirectory(const QString& path)
+{
+  setConfigurablePath("download_directory", path);
+}
+
+void Settings::setModDirectory(const QString& path)
+{
+  setConfigurablePath("mod_directory", path);
+}
+
+void Settings::setCacheDirectory(const QString& path)
+{
+  setConfigurablePath("cache_directory", path);
+}
+
+void Settings::setProfileDirectory(const QString& path)
+{
+  setConfigurablePath("profiles_directory", path);
+}
+
+void Settings::setOverwriteDirectory(const QString& path)
+{
+  setConfigurablePath("overwrite_directory", path);
 }
 
 std::optional<QString> Settings::getManagedGameDirectory() const
@@ -627,17 +701,6 @@ void Settings::setPreviousSeparatorColor(const QColor& c) const
 void Settings::removePreviousSeparatorColor()
 {
   m_Settings.remove("previousSeparatorColor");
-}
-
-QString Settings::getProfileDirectory(bool resolve) const
-{
-  return getConfigurablePath("profiles_directory", ToQString(AppConfig::profilesPath()), resolve);
-}
-
-QString Settings::getOverwriteDirectory(bool resolve) const
-{
-  return getConfigurablePath("overwrite_directory",
-                             ToQString(AppConfig::overwritePath()), resolve);
 }
 
 bool Settings::getNexusApiKey(QString &apiKey) const

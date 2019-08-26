@@ -40,22 +40,22 @@ PathsSettingsTab::PathsSettingsTab(Settings& s, SettingsDialog& d)
 
 void PathsSettingsTab::update()
 {
-  typedef std::tuple<QString, QString, std::wstring> Directory;
+  using Setter = void (Settings::*)(const QString&);
+  using Directory = std::tuple<QString, Setter, std::wstring>;
 
   QString basePath = settings().getBaseDirectory();
 
   for (const Directory &dir :{
-    Directory{ui->downloadDirEdit->text(), "download_directory", AppConfig::downloadPath()},
-    Directory{ui->cacheDirEdit->text(), "cache_directory", AppConfig::cachePath()},
-    Directory{ui->modDirEdit->text(), "mod_directory", AppConfig::modsPath()},
-    Directory{ui->overwriteDirEdit->text(), "overwrite_directory", AppConfig::overwritePath()},
-    Directory{ui->profilesDirEdit->text(), "profiles_directory", AppConfig::profilesPath()}
+    Directory{ui->downloadDirEdit->text(), &Settings::setDownloadDirectory, AppConfig::downloadPath()},
+    Directory{ui->cacheDirEdit->text(), &Settings::setCacheDirectory, AppConfig::cachePath()},
+    Directory{ui->modDirEdit->text(), &Settings::setModDirectory, AppConfig::modsPath()},
+    Directory{ui->overwriteDirEdit->text(), &Settings::setOverwriteDirectory, AppConfig::overwritePath()},
+    Directory{ui->profilesDirEdit->text(), &Settings::setProfileDirectory, AppConfig::profilesPath()}
     }) {
-    QString path, settingsKey;
+    QString path;
+    Setter setter;
     std::wstring defaultName;
-    std::tie(path, settingsKey, defaultName) = dir;
-
-    settingsKey = QString("Settings/%1").arg(settingsKey);
+    std::tie(path, setter, defaultName) = dir;
 
     QString realPath = path;
     realPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
@@ -69,25 +69,23 @@ void PathsSettingsTab::update()
       }
     }
 
-    if (QFileInfo(realPath)
-      != QFileInfo(basePath + "/" + QString::fromStdWString(defaultName))) {
-      qsettings().setValue(settingsKey, path);
+    if (QFileInfo(realPath) != QFileInfo(basePath + "/" + QString::fromStdWString(defaultName))) {
+      (settings().*setter)(path);
     } else {
-      qsettings().remove(settingsKey);
+      (settings().*setter)("");
     }
   }
 
-  if (QFileInfo(ui->baseDirEdit->text()) !=
-    QFileInfo(qApp->property("dataPath").toString())) {
-    qsettings().setValue("Settings/base_directory", ui->baseDirEdit->text());
+  if (QFileInfo(ui->baseDirEdit->text()) != QFileInfo(qApp->property("dataPath").toString())) {
+    settings().setBaseDirectory(ui->baseDirEdit->text());
   } else {
-    qsettings().remove("Settings/base_directory");
+    settings().setBaseDirectory("");
   }
 
   QFileInfo oldGameExe(settings().gamePlugin()->gameDirectory().absoluteFilePath(settings().gamePlugin()->binaryName()));
   QFileInfo newGameExe(ui->managedGameDirEdit->text());
   if (oldGameExe != newGameExe) {
-    qsettings().setValue("gamePath", newGameExe.absolutePath());
+    settings().setManagedGameDirectory(newGameExe.absolutePath());
   }
 }
 

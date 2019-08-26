@@ -199,26 +199,19 @@ public:
    **/
   QString getSteamAppID() const;
 
-  /**
-   * retrieves the base directory under which the other directories usually
-   * reside
-   */
   QString getBaseDirectory() const;
-
-  /**
-   * retrieve the directory where downloads are stored (with native separators)
-   **/
   QString getDownloadDirectory(bool resolve = true) const;
-
-  /**
-   * retrieve the directory where mods are stored (with native separators)
-   **/
   QString getModDirectory(bool resolve = true) const;
-
-  /**
-   * retrieve the directory where the web cache is stored (with native separators)
-   **/
   QString getCacheDirectory(bool resolve = true) const;
+  QString getProfileDirectory(bool resolve = true) const;
+  QString getOverwriteDirectory(bool resolve = true) const;
+
+  void setBaseDirectory(const QString& path);
+  void setDownloadDirectory(const QString& path);
+  void setModDirectory(const QString& path);
+  void setCacheDirectory(const QString& path);
+  void setProfileDirectory(const QString& path);
+  void setOverwriteDirectory(const QString& path);
 
   /**
    * retrieve the directory where the managed game is stored (with native separators)
@@ -291,17 +284,6 @@ public:
   ColorSettings& colors();
   const ColorSettings& colors() const;
 
-
-  /**
-   * retrieve the directory where profiles stored (with native separators)
-   **/
-  QString getProfileDirectory(bool resolve = true) const;
-
-  /**
-   * retrieve the directory were new files are stored that can't be assigned
-   * to a mod (with native separators)
-   */
-  QString getOverwriteDirectory(bool resolve = true) const;
 
   /**
    * @return true if the user has set up automatic login to nexus
@@ -558,6 +540,7 @@ private:
 
   void readPluginBlacklist();
   QString getConfigurablePath(const QString &key, const QString &def, bool resolve) const;
+  void setConfigurablePath(const QString &key, const QString& path);
 };
 
 #endif // SETTINGS_H
