@@ -484,7 +484,8 @@ public:
 
   void setDownloadSpeed(const QString &serverName, int bytesPerSecond);
   ServerList getServers() const;
-  void updateServers(const ServerList& servers);
+  ServerList getServersFromOldMap() const;
+  void updateServers(ServerList servers);
 
   /**
    * @brief add a plugin that is to be blacklisted

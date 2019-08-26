@@ -869,6 +869,50 @@ void Settings::setDownloadSpeed(const QString &serverName, int bytesPerSecond)
 
 ServerList Settings::getServers() const
 {
+  // servers used to be a map of byte arrays until 2.2.1, it's now an array of
+  // individual values instead
+  //
+  // so post 2.2.1, only one key is returned: "size", the size of the arrays;
+  // in 2.2.1, one key per server is returned
+
+  // getting the keys
+  m_Settings.beginGroup("Servers");
+  const auto keys = m_Settings.childKeys();
+  m_Settings.endGroup();
+
+  if (!keys.empty() && keys[0] != "size") {
+    // old format
+    return getServersFromOldMap();
+  }
+
+
+  ServerList list;
+
+  const int size = m_Settings.beginReadArray("Servers");
+
+  for (int i=0; i<size; ++i) {
+    m_Settings.setArrayIndex(i);
+
+    ServerInfo server(
+      m_Settings.value("name").toString(),
+      m_Settings.value("premium").toBool(),
+      QDate::fromString(m_Settings.value("lastSeen").toString(), Qt::ISODate),
+      m_Settings.value("preferred").toInt(),
+      m_Settings.value("downloadCount").toInt(),
+      m_Settings.value("downloadSpeed").toDouble());
+
+    list.add(std::move(server));
+  }
+
+  m_Settings.endArray();
+
+  return list;
+}
+
+ServerList Settings::getServersFromOldMap() const
+{
+  // for 2.2.1 and before
+
   ServerList list;
 
   m_Settings.beginGroup("Servers");
@@ -892,46 +936,32 @@ ServerList Settings::getServers() const
   return list;
 }
 
-void Settings::updateServers(const ServerList& servers)
+void Settings::updateServers(ServerList servers)
 {
-  m_Settings.beginGroup("Servers");
-  QStringList oldServerKeys = m_Settings.childKeys();
-
-  for (const auto& server : servers) {
-    if (!oldServerKeys.contains(server.name())) {
-      // not yet known server
-      QVariantMap newVal;
-      newVal["premium"] = server.isPremium();
-      newVal["preferred"] = server.preferred();
-      newVal["lastSeen"] = server.lastSeen();
-      newVal["downloadCount"] = 0;
-      newVal["downloadSpeed"] = 0.0;
-
-      m_Settings.setValue(server.name(), newVal);
-    } else {
-      QVariantMap data = m_Settings.value(server.name()).toMap();
-      data["premium"] = server.isPremium();
-      data["lastSeen"] = server.lastSeen();
-      data["preferred"] = server.preferred();
-
-      m_Settings.setValue(server.name(), data);
-    }
-  }
-
   // clean up unavailable servers
-  QDate now = QDate::currentDate();
-  for (const QString &key : m_Settings.childKeys()) {
-    QVariantMap val = m_Settings.value(key).toMap();
-    QDate lastSeen = val["lastSeen"].toDate();
-    if (lastSeen.daysTo(now) > 30) {
-      log::debug("removing server {} since it hasn't been available for downloads in over a month", key);
-      m_Settings.remove(key);
-    }
-  }
+  servers.cleanup();
 
+  m_Settings.beginGroup("Servers");
+  m_Settings.remove("");
   m_Settings.endGroup();
 
-  m_Settings.sync();
+  m_Settings.beginWriteArray("Servers");
+
+  int i=0;
+  for (const auto& server : servers) {
+    m_Settings.setArrayIndex(i);
+
+    m_Settings.setValue("name", server.name());
+    m_Settings.setValue("premium", server.isPremium());
+    m_Settings.setValue("lastSeen", server.lastSeen().toString(Qt::ISODate));
+    m_Settings.setValue("preferred", server.preferred());
+    m_Settings.setValue("downloadCount", server.downloadCount());
+    m_Settings.setValue("downloadSpeed", server.downloadSpeed());
+
+    ++i;
+  }
+
+  m_Settings.endArray();
 }
 
 void Settings::addBlacklistPlugin(const QString &fileName)

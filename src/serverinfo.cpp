@@ -1,4 +1,7 @@
 #include "serverinfo.h"
+#include "log.h"
+
+using namespace MOBase;
 
 ServerInfo::ServerInfo()
   : ServerInfo({}, false, {}, 0, 0, 0.0)
@@ -99,4 +102,23 @@ ServerList::container ServerList::getPreferred() const
   }
 
   return v;
+}
+
+void ServerList::cleanup()
+{
+  QDate now = QDate::currentDate();
+
+  for (auto itor=m_servers.begin(); itor!=m_servers.end(); ) {
+    const QDate lastSeen = itor->lastSeen();
+
+    if (lastSeen.daysTo(now) > 30) {
+      log::debug(
+        "removing server {} since it hasn't been available for downloads "
+        "in over a month", itor->name());
+
+      itor = m_servers.erase(itor);
+    } else {
+      ++itor;
+    }
+  }
 }

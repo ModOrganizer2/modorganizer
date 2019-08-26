@@ -52,6 +52,10 @@ public:
 
   container getPreferred() const;
 
+  // removes servers that haven't been seen in a while
+  //
+  void cleanup();
+
 private:
   container m_servers;
 };
