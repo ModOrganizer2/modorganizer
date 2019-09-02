@@ -36,18 +36,20 @@ WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
 void WorkaroundsSettingsTab::update()
 {
   if (ui->appIDEdit->text() != settings().gamePlugin()->steamAPPId()) {
-    qsettings().setValue("Settings/app_id", ui->appIDEdit->text());
+    settings().setSteamAppID(ui->appIDEdit->text());
   } else {
-    qsettings().remove("Settings/app_id");
+    settings().setSteamAppID("");
   }
-  qsettings().setValue("Settings/load_mechanism", ui->mechanismBox->itemData(ui->mechanismBox->currentIndex()).toInt());
-  qsettings().setValue("Settings/hide_unchecked_plugins", ui->hideUncheckedBox->isChecked());
-  qsettings().setValue("Settings/force_enable_core_files", ui->forceEnableBox->isChecked());
-  qsettings().setValue("Settings/display_foreign", ui->displayForeignBox->isChecked());
-  qsettings().setValue("Settings/lock_gui", ui->lockGUIBox->isChecked());
-  qsettings().setValue("Settings/archive_parsing_experimental", ui->enableArchiveParsingBox->isChecked());
 
-  qsettings().setValue("Settings/executable_blacklist", getExecutableBlacklist());
+  settings().setLoadMechanism(static_cast<LoadMechanism::EMechanism>(
+    ui->mechanismBox->itemData(ui->mechanismBox->currentIndex()).toInt()));
+
+  settings().setHideUncheckedPlugins(ui->hideUncheckedBox->isChecked());
+  settings().setForceEnableCoreFiles(ui->forceEnableBox->isChecked());
+  settings().setDisplayForeign(ui->displayForeignBox->isChecked());
+  settings().setLockGUI(ui->lockGUIBox->isChecked());
+  settings().setArchiveParsing(ui->enableArchiveParsingBox->isChecked());
+  settings().setExecutablesBlacklist(getExecutableBlacklist());
 }
 
 void WorkaroundsSettingsTab::on_execBlacklistBtn_clicked()

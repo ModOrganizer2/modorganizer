@@ -203,16 +203,19 @@ public:
    *         the virtual dat adirectory
    **/
   bool hideUncheckedPlugins() const;
+  void setHideUncheckedPlugins(bool b);
 
   /**
    * @return true if files of the core game are forced-enabled so the user can't accidentally disable them
    */
   bool forceEnableCoreFiles() const;
+  void setForceEnableCoreFiles(bool b);
 
   /**
    * @return true if the GUI should be locked when running executables
    */
   bool lockGUI() const;
+  void setLockGUI(bool b);
 
   /**
    * the steam appid is assigned by the steam platform to each product sold there.
@@ -221,6 +224,7 @@ public:
    * @return the steam appid for the game
    **/
   QString getSteamAppID() const;
+  void setSteamAppID(const QString& id);
 
   QString getBaseDirectory() const;
   QString getDownloadDirectory(bool resolve = true) const;
@@ -380,6 +384,7 @@ public:
   void setCrashDumpsMax(int n);
 
   QString executablesBlacklist() const;
+  void setExecutablesBlacklist(const QString& s);
 
   /**
    * @brief set the steam login information
@@ -393,6 +398,7 @@ public:
    * @return the load mechanism to be used
    **/
   LoadMechanism::EMechanism getLoadMechanism() const;
+  void setLoadMechanism(LoadMechanism::EMechanism m);
 
   /**
    * @brief activate the load mechanism selected by the user
@@ -425,6 +431,7 @@ public:
    * @return true if the user wants to see non-official plugins installed outside MO in his mod list
    */
   bool displayForeign() const;
+  void setDisplayForeign(bool b);
 
   /**
    * @brief sets the new motd hash
@@ -435,6 +442,7 @@ public:
   * @return true if the user wants to have archives being parsed to show conflicts and contents
   */
   bool archiveParsing() const;
+  void setArchiveParsing(bool b);
 
   /**
    * @return hash of the last displayed message of the day

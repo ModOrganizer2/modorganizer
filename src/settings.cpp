@@ -421,14 +421,29 @@ bool Settings::hideUncheckedPlugins() const
   return m_Settings.value("Settings/hide_unchecked_plugins", false).toBool();
 }
 
+void Settings::setHideUncheckedPlugins(bool b)
+{
+  m_Settings.setValue("Settings/hide_unchecked_plugins", b);
+}
+
 bool Settings::forceEnableCoreFiles() const
 {
   return m_Settings.value("Settings/force_enable_core_files", true).toBool();
 }
 
+void Settings::setForceEnableCoreFiles(bool b)
+{
+  m_Settings.setValue("Settings/force_enable_core_files", b);
+}
+
 bool Settings::lockGUI() const
 {
   return m_Settings.value("Settings/lock_gui", true).toBool();
+}
+
+void Settings::setLockGUI(bool b)
+{
+  m_Settings.setValue("Settings/lock_gui", b);
 }
 
 bool Settings::automaticLoginEnabled() const
@@ -439,6 +454,15 @@ bool Settings::automaticLoginEnabled() const
 QString Settings::getSteamAppID() const
 {
   return m_Settings.value("Settings/app_id", m_GamePlugin->steamAPPId()).toString();
+}
+
+void Settings::setSteamAppID(const QString& id)
+{
+  if (id.isEmpty()) {
+    m_Settings.remove("Settings/app_id");
+  } else {
+    m_Settings.setValue("Settings/app_id", id);
+  }
 }
 
 bool Settings::usePrereleases() const
@@ -782,6 +806,11 @@ QString Settings::executablesBlacklist() const
   ).toString();
 }
 
+void Settings::setExecutablesBlacklist(const QString& s)
+{
+  m_Settings.setValue("Settings/executable_blacklist", s);
+}
+
 void Settings::setSteamLogin(QString username, QString password)
 {
   if (username == "") {
@@ -815,6 +844,10 @@ LoadMechanism::EMechanism Settings::getLoadMechanism() const
   }
 }
 
+void Settings::setLoadMechanism(LoadMechanism::EMechanism m)
+{
+  m_Settings.setValue("Settings/load_mechanism", static_cast<int>(m));
+}
 
 void Settings::setupLoadMechanism()
 {
@@ -869,6 +902,11 @@ bool Settings::displayForeign() const
   return m_Settings.value("Settings/display_foreign", true).toBool();
 }
 
+void Settings::setDisplayForeign(bool b)
+{
+  m_Settings.setValue("Settings/display_foreign", b);
+}
+
 void Settings::setMotDHash(uint hash)
 {
   m_Settings.setValue("motd_hash", hash);
@@ -882,6 +920,11 @@ uint Settings::getMotDHash() const
 bool Settings::archiveParsing() const
 {
   return m_Settings.value("Settings/archive_parsing_experimental", false).toBool();
+}
+
+void Settings::setArchiveParsing(bool b)
+{
+  m_Settings.setValue("Settings/archive_parsing_experimental", b);
 }
 
 QString Settings::language()
