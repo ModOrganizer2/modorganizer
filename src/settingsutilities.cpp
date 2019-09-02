@@ -100,10 +100,12 @@ QStringList ScopedReadArray::keys() const
 }
 
 
-ScopedWriteArray::ScopedWriteArray(QSettings& s, const QString& section)
-  : m_settings(s), m_section(section), m_i(0)
+ScopedWriteArray::ScopedWriteArray(
+  QSettings& s, const QString& section, std::size_t size)
+    : m_settings(s), m_section(section), m_i(0)
 {
-  m_settings.beginWriteArray(section);
+  m_settings.beginWriteArray(
+    section, size == NoSize ? -1 : static_cast<int>(size));
 }
 
 ScopedWriteArray::~ScopedWriteArray()

@@ -221,9 +221,19 @@ std::vector<std::map<QString, QVariant>> Settings::executables() const
 
 void Settings::setExecutables(const std::vector<std::map<QString, QVariant>>& v)
 {
-  removeSection(m_Settings, "customExecutables");
+  const auto current = executables();
 
-  ScopedWriteArray swa(m_Settings, "customExecutables");
+  if (current == v) {
+    // no change
+    return;
+  }
+
+  if (current.size() > v.size()) {
+    // Qt can't remove array elements, the section must be cleared
+    removeSection(m_Settings, "customExecutables");
+  }
+
+  ScopedWriteArray swa(m_Settings, "customExecutables", v.size());
 
   for (const auto& map : v) {
     swa.next();
@@ -1156,9 +1166,9 @@ void PluginSettings::addBlacklistPlugin(const QString &fileName)
 
 void PluginSettings::writePluginBlacklist()
 {
-  removeSection(m_Settings, "PluginBlacklist");
+  removeSection(m_Settings, "pluginBlacklist");
 
-  ScopedWriteArray swa(m_Settings, "PluginBlacklist");
+  ScopedWriteArray swa(m_Settings, "pluginBlacklist");
 
   for (const QString &plugin : m_PluginBlacklist) {
     swa.next();
@@ -1222,7 +1232,7 @@ std::map<QString, QString> PathSettings::recent() const
 {
   std::map<QString, QString> map;
 
-  ScopedReadArray sra(m_Settings, "RecentDirectories");
+  ScopedReadArray sra(m_Settings, "recentDirectories");
 
   sra.for_each([&] {
     const QVariant name = sra.get<QVariant>("name");
@@ -1238,9 +1248,14 @@ std::map<QString, QString> PathSettings::recent() const
 
 void PathSettings::setRecent(const std::map<QString, QString>& map)
 {
-  removeSection(m_Settings, "RecentDirectories");
+  const auto current = recent();
 
-  ScopedWriteArray swa(m_Settings, "recentDirectories");
+  if (current.size() > map.size()) {
+    // Qt can't remove array elements, the section must be cleared
+    removeSection(m_Settings, "recentDirectories");
+  }
+
+  ScopedWriteArray swa(m_Settings, "recentDirectories", map.size());
 
   for (auto&& p : map) {
     swa.next();
@@ -1472,33 +1487,37 @@ ServerList NetworkSettings::serversFromOldMap() const
   return list;
 }
 
-void NetworkSettings::updateServers(ServerList servers)
+void NetworkSettings::updateServers(ServerList newServers)
 {
   // clean up unavailable servers
-  servers.cleanup();
+  newServers.cleanup();
 
-  removeSection(m_Settings, "Servers");
+  const auto current = servers();
 
-  {
-    ScopedWriteArray swa(m_Settings, "Servers");
+  if (current.size() > newServers.size()) {
+    // Qt can't remove array elements, the section must be cleared
+    removeSection(m_Settings, "Servers");
+  }
 
-    for (const auto& server : servers) {
-      swa.next();
 
-      swa.set("name", server.name());
-      swa.set("premium", server.isPremium());
-      swa.set("lastSeen", server.lastSeen().toString(Qt::ISODate));
-      swa.set("preferred", server.preferred());
+  ScopedWriteArray swa(m_Settings, "Servers", newServers.size());
 
-      QString lastDownloads;
-      for (const auto& speed : server.lastDownloads()) {
-        if (speed > 0) {
-          lastDownloads += QString("%1 ").arg(speed);
-        }
+  for (const auto& server : newServers) {
+    swa.next();
+
+    swa.set("name", server.name());
+    swa.set("premium", server.isPremium());
+    swa.set("lastSeen", server.lastSeen().toString(Qt::ISODate));
+    swa.set("preferred", server.preferred());
+
+    QString lastDownloads;
+    for (const auto& speed : server.lastDownloads()) {
+      if (speed > 0) {
+        lastDownloads += QString("%1 ").arg(speed);
       }
-
-      swa.set("lastDownloads", lastDownloads.trimmed());
     }
+
+    swa.set("lastDownloads", lastDownloads.trimmed());
   }
 }
 

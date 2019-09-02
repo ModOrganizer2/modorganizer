@@ -204,7 +204,9 @@ private:
 class ScopedWriteArray
 {
 public:
-  ScopedWriteArray(QSettings& s, const QString& section);
+  static const auto NoSize = std::numeric_limits<std::size_t>::max();
+
+  ScopedWriteArray(QSettings& s, const QString& section, std::size_t size=NoSize);
   ~ScopedWriteArray();
 
   ScopedWriteArray(const ScopedWriteArray&) = delete;
