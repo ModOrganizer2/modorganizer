@@ -41,12 +41,10 @@ protected:
   Ui::SettingsDialog* ui;
 
   Settings& settings();
-  QSettings& qsettings();
   SettingsDialog& dialog();
 
 private:
   Settings& m_settings;
-  QSettings& m_qsettings;
   SettingsDialog& m_dialog;
 };
 

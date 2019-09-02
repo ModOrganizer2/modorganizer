@@ -450,13 +450,6 @@ public:
   uint getMotDHash() const;
 
   /**
-   * @brief allows direct access to the wrapped QSettings object
-   * @return the wrapped QSettings object
-   */
-  QSettings &directInterface() { return m_Settings; }
-  const QSettings &directInterface() const { return m_Settings; }
-
-  /**
    * @return short code of the configured language (corresponding to the translation files)
    */
   QString language();

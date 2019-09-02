@@ -131,7 +131,7 @@ bool SettingsDialog::getApiKeyChanged()
 
 
 SettingsTab::SettingsTab(Settings& s, SettingsDialog& d)
-  : ui(d.ui), m_settings(s), m_qsettings(s.directInterface()), m_dialog(d)
+  : ui(d.ui), m_settings(s), m_dialog(d)
 {
 }
 
@@ -140,11 +140,6 @@ SettingsTab::~SettingsTab() = default;
 Settings& SettingsTab::settings()
 {
   return m_settings;
-}
-
-QSettings& SettingsTab::qsettings()
-{
-  return m_qsettings;
 }
 
 SettingsDialog& SettingsTab::dialog()
