@@ -24,10 +24,16 @@ struct ValueConverter<T, std::enable_if_t<std::is_enum_v<T>>>
 };
 
 
+bool shouldLogSetting(const QString& displayName);
+
 template <class T>
 void logChange(
   const QString& displayName, std::optional<T> oldValue, const T& newValue)
 {
+  if (!shouldLogSetting(displayName)) {
+    return;
+  }
+
   using VC = ValueConverter<T>;
 
   if (oldValue) {

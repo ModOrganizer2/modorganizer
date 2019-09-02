@@ -210,7 +210,7 @@ std::vector<std::map<QString, QVariant>> Settings::executables() const
     std::map<QString, QVariant> map;
 
     for (auto&& key : sra.keys()) {
-      map[key] = m_Settings.value(key);
+      map[key] = sra.get<QVariant>(key);
     }
 
     v.push_back(map);
@@ -693,7 +693,7 @@ QStringList GeometrySettings::modInfoTabOrder() const
     }
   } else {
     // string list since 2.2.1
-    QString string = m_Settings.value("mod_info_tab_order").toString();
+    QString string = get<QString>(m_Settings, "Widgets", "ModInfoTabOrder", "");
     QTextStream stream(&string);
 
     while (!stream.atEnd()) {
@@ -708,7 +708,7 @@ QStringList GeometrySettings::modInfoTabOrder() const
 
 void GeometrySettings::setModInfoTabOrder(const QString& names)
 {
-  set(m_Settings, "Geometry", "mod_info_tab_order", names);
+  set(m_Settings, "Widgets", "ModInfoTabOrder", names);
 }
 
 void GeometrySettings::centerOnMainWindowMonitor(QWidget* w)
@@ -1061,13 +1061,21 @@ void PluginSettings::clearPlugins()
 {
   m_Plugins.clear();
   m_PluginSettings.clear();
-
   m_PluginBlacklist.clear();
+
+  m_PluginBlacklist = readPluginBlacklist();
+}
+
+QSet<QString> PluginSettings::readPluginBlacklist() const
+{
+  QSet<QString> set;
 
   ScopedReadArray sra(m_Settings, "pluginBlacklist");
   sra.for_each([&]{
-    m_PluginBlacklist.insert(sra.get<QString>("name"));
+    set.insert(sra.get<QString>("name"));
   });
+
+  return set;
 }
 
 void PluginSettings::registerPlugin(IPlugin *plugin)
@@ -1166,9 +1174,14 @@ void PluginSettings::addBlacklistPlugin(const QString &fileName)
 
 void PluginSettings::writePluginBlacklist()
 {
-  removeSection(m_Settings, "pluginBlacklist");
+  const auto current = readPluginBlacklist();
 
-  ScopedWriteArray swa(m_Settings, "pluginBlacklist");
+  if (current.size() > m_PluginBlacklist.size()) {
+    // Qt can't remove array elements, the section must be cleared
+    removeSection(m_Settings, "pluginBlacklist");
+  }
+
+  ScopedWriteArray swa(m_Settings, "pluginBlacklist", m_PluginBlacklist.size());
 
   for (const QString &plugin : m_PluginBlacklist) {
     swa.next();

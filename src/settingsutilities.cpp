@@ -4,8 +4,26 @@
 
 using namespace MOBase;
 
+bool shouldLogSetting(const QString& displayName)
+{
+  // don't log Geometry/ and Widgets/, too noisy and not very useful
+  static const QStringList ignorePrefixes = {"Geometry/", "Widgets/"};
+
+  for (auto&& prefix : ignorePrefixes) {
+    if (displayName.startsWith(prefix, Qt::CaseInsensitive)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 void logRemoval(const QString& name)
 {
+  if (!shouldLogSetting(name)) {
+    return;
+  }
+
   log::debug("setting '{}' removed", name);
 }
 

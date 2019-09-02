@@ -261,8 +261,8 @@ private:
   QMap<QString, QVariantMap> m_PluginDescriptions;
   QSet<QString> m_PluginBlacklist;
 
-  void readPluginBlacklist();
   void writePluginBlacklist();
+  QSet<QString> readPluginBlacklist() const;
 };
 
 

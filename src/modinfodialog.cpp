@@ -383,9 +383,12 @@ void ModInfoDialog::reAddTabs(
   // ordered tab names from settings
   const auto orderedNames = m_core->settings().geometry().modInfoTabOrder();
 
-  // whether the tabs can be sorted; if the object name of a tab widget is not
-  // found in orderedNames, the list cannot be sorted safely
-  bool canSort = true;
+  // whether the tabs can be sorted
+  //
+  // if the object name of a tab widget is not found in orderedNames, the list
+  // cannot be sorted safely; if the list is empty, it's probably a first run
+  // and there's nothing to sort
+  bool canSort = !orderedNames.empty();
 
   // gathering visible tabs
   std::vector<TabInfo*> visibleTabs;
