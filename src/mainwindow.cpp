@@ -2157,10 +2157,8 @@ void MainWindow::readSettings(const Settings& settings)
     ui->displayCategoriesBtn->setChecked(v);
   }
 
-  if (auto v=settings.getUseProxy()) {
-    if (*v) {
-      activateProxy(true);
-    }
+  if (settings.getUseProxy()) {
+    activateProxy(true);
   }
 }
 
@@ -5014,7 +5012,7 @@ void MainWindow::on_actionSettings_triggered()
   QString oldProfilesDirectory(settings.getProfileDirectory());
   QString oldManagedGameDirectory(settings.getManagedGameDirectory().value_or(""));
   bool oldDisplayForeign(settings.displayForeign());
-  bool proxy = settings.useProxy();
+  bool proxy = settings.getUseProxy();
   DownloadManager *dlManager = m_OrganizerCore.downloadManager();
 
 
@@ -5081,8 +5079,8 @@ void MainWindow::on_actionSettings_triggered()
     NexusInterface::instance(&m_PluginContainer)->setCacheDirectory(settings.getCacheDirectory());
   }
 
-  if (proxy != settings.useProxy()) {
-    activateProxy(settings.useProxy());
+  if (proxy != settings.getUseProxy()) {
+    activateProxy(settings.getUseProxy());
   }
 
   ui->statusBar->checkSettings(m_OrganizerCore.settings());

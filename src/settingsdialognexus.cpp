@@ -75,7 +75,7 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
   : SettingsTab(s, d)
 {
   ui->offlineBox->setChecked(settings().offlineMode());
-  ui->proxyBox->setChecked(settings().useProxy());
+  ui->proxyBox->setChecked(settings().getUseProxy());
   ui->endorsementBox->setChecked(settings().endorsementIntegration());
   ui->hideAPICounterBox->setChecked(settings().hideAPICounter());
 

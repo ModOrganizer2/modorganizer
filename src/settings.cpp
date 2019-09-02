@@ -27,13 +27,164 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
+template <class T, class=void>
+struct ValueConverter
+{
+  static const T& convert(const T& t)
+  {
+    return t;
+  }
+};
+
+template <class T>
+struct ValueConverter<T, std::enable_if_t<std::is_enum_v<T>>>
+{
+  static QString convert(const T& t)
+  {
+    return QString("%1").arg(static_cast<std::underlying_type_t<T>>(t));
+  }
+};
+
+
+template <class T>
+void logChange(
+  const QString& displayName, std::optional<T> oldValue, const T& newValue)
+{
+  using VC = ValueConverter<T>;
+
+  if (oldValue) {
+    log::debug(
+      "setting '{}' changed from '{}' to '{}'",
+      displayName, VC::convert(*oldValue), VC::convert(newValue));
+  } else {
+    log::debug(
+      "setting '{}' set to '{}'",
+      displayName, VC::convert(newValue));
+  }
+}
+
+void logRemoval(const QString& name)
+{
+  log::debug("setting '{}' removed", name);
+}
+
+
+QString settingName(const QString& section, const QString& key)
+{
+  if (section.isEmpty()) {
+    return key;
+  } else if (key.isEmpty()) {
+    return section;
+  } else {
+    if (section.compare("General", Qt::CaseInsensitive) == 0) {
+      return key;
+    } else {
+      return section + "/" + key;
+    }
+  }
+}
+
+template <class T>
+void setImpl(
+  QSettings& settings, const QString& displayName,
+  const QString& section, const QString& key, const T& value)
+{
+  const auto current = getOptional<T>(settings, section, key);
+
+  if (current && *current == value) {
+    // no change
+    return;
+  }
+
+  const auto name = settingName(section, key);
+
+  logChange(displayName, current, value);
+
+  if constexpr (std::is_enum_v<T>) {
+    settings.setValue(
+      name, static_cast<std::underlying_type_t<T>>(value));
+  } else {
+    settings.setValue(name, value);
+  }
+}
+
+void removeImpl(
+  QSettings& settings, const QString& displayName,
+  const QString& section, const QString& key)
+{
+  if (key.isEmpty()) {
+    if (!settings.childGroups().contains(section, Qt::CaseInsensitive)) {
+      // not there
+      return;
+    }
+  } else {
+    if (!settings.contains(settingName(section, key))) {
+      // not there
+      return;
+    }
+  }
+
+  logRemoval(displayName);
+  settings.remove(settingName(section, key));
+}
+
+
+template <class T>
+std::optional<T> getOptional(
+  const QSettings& settings,
+  const QString& section, const QString& key, std::optional<T> def={})
+{
+  if (settings.contains(settingName(section, key))) {
+    const auto v = settings.value(settingName(section, key));
+
+    if constexpr (std::is_enum_v<T>) {
+      return static_cast<T>(v.value<std::underlying_type_t<T>>());
+    } else {
+      return v.value<T>();
+    }
+  }
+
+  return def;
+}
+
+template <class T>
+T get(
+  const QSettings& settings,
+  const QString& section, const QString& key, T def={})
+{
+  if (auto v=getOptional<T>(settings, section, key)) {
+    return *v;
+  } else {
+    return def;
+  }
+}
+
+template <class T>
+void set(
+  QSettings& settings,
+  const QString& section, const QString& key, const T& value)
+{
+  setImpl(settings, settingName(section, key), section, key, value);
+}
+
+void remove(QSettings& settings, const QString& section, const QString& key)
+{
+  removeImpl(settings, settingName(section, key), section, key);
+}
+
+void removeSection(QSettings& settings, const QString& section)
+{
+  removeImpl(settings, section, section, "");
+}
+
+
 class ScopedGroup
 {
 public:
   ScopedGroup(QSettings& s, const QString& name)
-    : m_settings(s)
+    : m_settings(s), m_name(name)
   {
-    m_settings.beginGroup(name);
+    m_settings.beginGroup(m_name);
   }
 
   ~ScopedGroup()
@@ -44,18 +195,55 @@ public:
   ScopedGroup(const ScopedGroup&) = delete;
   ScopedGroup& operator=(const ScopedGroup&) = delete;
 
+  template <class T>
+  void set(const QString& key, const T& value)
+  {
+    setImpl(m_settings, settingName(m_name, key), "", key, value);
+  }
+
+  void remove(const QString& key)
+  {
+    removeImpl(m_settings, settingName(m_name, key), "", key);
+  }
+
+  QStringList keys() const
+  {
+    return m_settings.childKeys();
+  }
+
+  template <class F>
+  void for_each(F&& f) const
+  {
+    for (const QString& key : keys()) {
+      f(key);
+    }
+  }
+
+  template <class T>
+  std::optional<T> getOptional(const QString& key, std::optional<T> def={}) const
+  {
+    return ::getOptional<T>(m_settings, "", key, def);
+  }
+
+  template <class T>
+  T get(const QString& key, T def={}) const
+  {
+    return ::get<T>(m_settings, "", key, def);
+  }
+
 private:
   QSettings& m_settings;
+  QString m_name;
 };
 
 
 class ScopedReadArray
 {
 public:
-  ScopedReadArray(QSettings& s, const QString& name)
+  ScopedReadArray(QSettings& s, const QString& section)
     : m_settings(s), m_count(0)
   {
-    m_count = m_settings.beginReadArray(name);
+    m_count = m_settings.beginReadArray(section);
   }
 
   ~ScopedReadArray()
@@ -66,9 +254,35 @@ public:
   ScopedReadArray(const ScopedReadArray&) = delete;
   ScopedReadArray& operator=(const ScopedReadArray&) = delete;
 
+  template <class F>
+  void for_each(F&& f) const
+  {
+    for (int i=0; i<count(); ++i) {
+      m_settings.setArrayIndex(i);
+      f();
+    }
+  }
+
+  template <class T>
+  std::optional<T> getOptional(const QString& key, std::optional<T> def={}) const
+  {
+    return ::getOptional<T>(m_settings, "", key, def);
+  }
+
+  template <class T>
+  T get(const QString& key, T def={}) const
+  {
+    return ::get<T>(m_settings, "", key, def);
+  }
+
   int count() const
   {
     return m_count;
+  }
+
+  QStringList keys() const
+  {
+    return m_settings.childKeys();
   }
 
 private:
@@ -80,10 +294,10 @@ private:
 class ScopedWriteArray
 {
 public:
-  ScopedWriteArray(QSettings& s, const QString& name)
-    : m_settings(s)
+  ScopedWriteArray(QSettings& s, const QString& section)
+    : m_settings(s), m_section(section), m_i(0)
   {
-    m_settings.beginWriteArray(name);
+    m_settings.beginWriteArray(section);
   }
 
   ~ScopedWriteArray()
@@ -94,27 +308,28 @@ public:
   ScopedWriteArray(const ScopedWriteArray&) = delete;
   ScopedWriteArray& operator=(const ScopedWriteArray&) = delete;
 
-private:
-  QSettings& m_settings;
-};
-
-
-template <class T>
-std::optional<T> getOptional(
-  const QSettings& s, const QString& name, std::optional<T> def={})
-{
-  if (s.contains(name)) {
-    const auto v = s.value(name);
-
-    if constexpr (std::is_enum_v<T>) {
-      return static_cast<T>(v.value<std::underlying_type_t<T>>());
-    } else {
-      return v.value<T>();
-    }
+  void next()
+  {
+    m_settings.setArrayIndex(m_i);
+    ++m_i;
   }
 
-  return def;
-}
+  template <class T>
+  void set(const QString& key, const T& value)
+  {
+    const auto displayName = QString("%1/%2\\%3")
+      .arg(m_section)
+      .arg(m_i)
+      .arg(key);
+
+    setImpl(m_settings, displayName, "", key, value);
+  }
+
+private:
+  QSettings& m_settings;
+  QString m_section;
+  int m_i;
+};
 
 
 EndorsementState endorsementStateFromString(const QString& s)
@@ -132,15 +347,15 @@ QString toString(EndorsementState s)
 {
   switch (s)
   {
-    case EndorsementState::Accepted:
-      return "Endorsed";
+  case EndorsementState::Accepted:
+    return "Endorsed";
 
-    case EndorsementState::Refused:
-      return "Abstained";
+  case EndorsementState::Refused:
+    return "Abstained";
 
-    case EndorsementState::NoDecision: // fall-through
-    default:
-      return {};
+  case EndorsementState::NoDecision: // fall-through
+  default:
+    return {};
   }
 }
 
@@ -198,24 +413,24 @@ QString widgetName(const QWidget* w)
 template <class Widget>
 QString geoSettingName(const Widget* widget)
 {
-  return "geometry/" + widgetName(widget) + "_geometry";
+  return widgetName(widget) + "_geometry";
 }
 
 template <class Widget>
 QString stateSettingName(const Widget* widget)
 {
-  return "geometry/" + widgetName(widget) + "_state";
+  return widgetName(widget) + "_state";
 }
 
 template <class Widget>
 QString visibilitySettingName(const Widget* widget)
 {
-  return "geometry/" + widgetName(widget) + "_visibility";
+  return widgetName(widget) + "_visibility";
 }
 
 QString dockSettingName(const QDockWidget* dock)
 {
-  return "geometry/MainWindow_docks_" + dock->objectName() + "_size";
+  return "MainWindow_docks_" + dock->objectName() + "_size";
 }
 
 QString indexSettingName(const QWidget* widget)
@@ -278,40 +493,34 @@ void Settings::processUpdates(
   }
 
   if (lastVersion < QVersionNumber(2, 2, 0)) {
-    {
-      ScopedGroup sg(m_Settings, "Settings");
-      m_Settings.remove("steam_password");
-      m_Settings.remove("nexus_username");
-      m_Settings.remove("nexus_password");
-      m_Settings.remove("nexus_login");
-      m_Settings.remove("nexus_api_key");
-      m_Settings.remove("ask_for_nexuspw");
-      m_Settings.remove("nmm_version");
-    }
+    remove(m_Settings, "Settings", "steam_password");
+    remove(m_Settings, "Settings", "nexus_username");
+    remove(m_Settings, "Settings", "nexus_password");
+    remove(m_Settings, "Settings", "nexus_login");
+    remove(m_Settings, "Settings", "nexus_api_key");
+    remove(m_Settings, "Settings", "ask_for_nexuspw");
+    remove(m_Settings, "Settings", "nmm_version");
 
-    {
-      ScopedGroup sg(m_Settings, "Servers");
-      m_Settings.remove("");
-    }
+    removeSection(m_Settings, "Servers");
   }
 
   if (lastVersion < QVersionNumber(2, 2, 1)) {
-    m_Settings.remove("mod_info_tabs");
-    m_Settings.remove("mod_info_conflict_expanders");
-    m_Settings.remove("mod_info_conflicts");
-    m_Settings.remove("mod_info_advanced_conflicts");
-    m_Settings.remove("mod_info_conflicts_overwrite");
-    m_Settings.remove("mod_info_conflicts_noconflict");
-    m_Settings.remove("mod_info_conflicts_overwritten");
+    remove(m_Settings, "General", "mod_info_tabs");
+    remove(m_Settings, "General", "mod_info_conflict_expanders");
+    remove(m_Settings, "General", "mod_info_conflicts");
+    remove(m_Settings, "General", "mod_info_advanced_conflicts");
+    remove(m_Settings, "General", "mod_info_conflicts_overwrite");
+    remove(m_Settings, "General", "mod_info_conflicts_noconflict");
+    remove(m_Settings, "General", "mod_info_conflicts_overwritten");
   }
 
   if (lastVersion < QVersionNumber(2, 2, 2)) {
     // log splitter is gone, it's a dock now
-    m_Settings.remove("log_split");
+    remove(m_Settings, "General", "log_split");
   }
 
   //save version in all case
-  m_Settings.setValue("version", currentVersion.toString());
+  set(m_Settings, "General", "version", currentVersion.toString());
 }
 
 QString Settings::getFilename() const
@@ -339,12 +548,12 @@ void Settings::registerAsNXMHandler(bool force)
 
 bool Settings::colorSeparatorScrollbar() const
 {
-  return m_Settings.value("Settings/colorSeparatorScrollbars", true).toBool();
+  return get<bool>(m_Settings, "Settings", "colorSeparatorScrollbars", true);
 }
 
 void Settings::setColorSeparatorScrollbar(bool b)
 {
-  m_Settings.setValue("Settings/colorSeparatorScrollbars", b);
+  set(m_Settings, "Settings", "colorSeparatorScrollbars", b);
 }
 
 void Settings::managedGameChanged(IPluginGame const *gamePlugin)
@@ -418,71 +627,69 @@ QColor Settings::getIdealTextColor(const QColor& rBackgroundColor)
 
 bool Settings::hideUncheckedPlugins() const
 {
-  return m_Settings.value("Settings/hide_unchecked_plugins", false).toBool();
+  return get<bool>(m_Settings, "Settings", "hide_unchecked_plugins", false);
 }
 
 void Settings::setHideUncheckedPlugins(bool b)
 {
-  m_Settings.setValue("Settings/hide_unchecked_plugins", b);
+  set(m_Settings, "Settings", "hide_unchecked_plugins", b);
 }
 
 bool Settings::forceEnableCoreFiles() const
 {
-  return m_Settings.value("Settings/force_enable_core_files", true).toBool();
+  return get<bool>(m_Settings, "Settings", "force_enable_core_files", true);
 }
 
 void Settings::setForceEnableCoreFiles(bool b)
 {
-  m_Settings.setValue("Settings/force_enable_core_files", b);
+  set(m_Settings, "Settings", "force_enable_core_files", b);
 }
 
 bool Settings::lockGUI() const
 {
-  return m_Settings.value("Settings/lock_gui", true).toBool();
+  return get<bool>(m_Settings, "Settings", "lock_gui", true);
 }
 
 void Settings::setLockGUI(bool b)
 {
-  m_Settings.setValue("Settings/lock_gui", b);
+  set(m_Settings, "Settings", "lock_gui", b);
 }
 
 bool Settings::automaticLoginEnabled() const
 {
-  return m_Settings.value("Settings/nexus_login", false).toBool();
+  return get<bool>(m_Settings, "Settings", "nexus_login", false);
 }
 
 QString Settings::getSteamAppID() const
 {
-  return m_Settings.value("Settings/app_id", m_GamePlugin->steamAPPId()).toString();
+  return get<QString>(m_Settings, "Settings", "app_id", m_GamePlugin->steamAPPId());
 }
 
 void Settings::setSteamAppID(const QString& id)
 {
   if (id.isEmpty()) {
-    m_Settings.remove("Settings/app_id");
+    remove(m_Settings, "Settings", "app_id");
   } else {
-    m_Settings.setValue("Settings/app_id", id);
+    set(m_Settings, "Settings", "app_id", id);
   }
 }
 
 bool Settings::usePrereleases() const
 {
-  return m_Settings.value("Settings/use_prereleases", false).toBool();
+  return get<bool>(m_Settings, "Settings", "use_prereleases", false);
 }
 
 void Settings::setUsePrereleases(bool b)
 {
-  m_Settings.setValue("Settings/use_prereleases", b);
+  set(m_Settings, "Settings", "use_prereleases", b);
 }
 
 QString Settings::getConfigurablePath(const QString &key,
-                                      const QString &def,
-                                      bool resolve) const
+  const QString &def,
+  bool resolve) const
 {
-  const QString settingName = "Settings/" + key;
-
   QString result = QDir::fromNativeSeparators(
-      m_Settings.value(settingName, QString("%BASE_DIR%/") + def).toString());
+    get<QString>(m_Settings, "Settings", key, QString("%BASE_DIR%/") + def));
 
   if (resolve) {
     result.replace("%BASE_DIR%", getBaseDirectory());
@@ -493,20 +700,17 @@ QString Settings::getConfigurablePath(const QString &key,
 
 void Settings::setConfigurablePath(const QString &key, const QString& path)
 {
-  const QString settingName = "Settings/" + key;
-
   if (path.isEmpty()) {
-    m_Settings.remove(settingName);
+    remove(m_Settings, "Settings", key);
   } else {
-    m_Settings.setValue(settingName, path);
+    set(m_Settings, "Settings", key, path);
   }
 }
 
 QString Settings::getBaseDirectory() const
 {
-  return QDir::fromNativeSeparators(m_Settings.value(
-    "settings/base_directory",
-    qApp->property("dataPath").toString()).toString());
+  return QDir::fromNativeSeparators(get<QString>(m_Settings,
+    "Settings", "base_directory", qApp->property("dataPath").toString()));
 }
 
 QString Settings::getDownloadDirectory(bool resolve) const
@@ -552,9 +756,9 @@ QString Settings::getOverwriteDirectory(bool resolve) const
 void Settings::setBaseDirectory(const QString& path)
 {
   if (path.isEmpty()) {
-    m_Settings.remove("Settings/base_directory");
+    remove(m_Settings, "Settings", "base_directory");
   } else {
-    m_Settings.setValue("Settings/base_directory", path);
+    set(m_Settings, "Settings", "base_directory", path);
   }
 }
 
@@ -585,7 +789,7 @@ void Settings::setOverwriteDirectory(const QString& path)
 
 std::optional<QString> Settings::getManagedGameDirectory() const
 {
-  if (auto v=getOptional<QByteArray>(m_Settings, "gamePath")) {
+  if (auto v=getOptional<QByteArray>(m_Settings, "General", "gamePath")) {
     return QString::fromUtf8(*v);
   }
 
@@ -594,32 +798,32 @@ std::optional<QString> Settings::getManagedGameDirectory() const
 
 void Settings::setManagedGameDirectory(const QString& path)
 {
-  m_Settings.setValue("gamePath", QDir::toNativeSeparators(path).toUtf8());
+  set(m_Settings, "General", "gamePath", QDir::toNativeSeparators(path).toUtf8());
 }
 
 std::optional<QString> Settings::getManagedGameName() const
 {
-  return getOptional<QString>(m_Settings, "gameName");
+  return getOptional<QString>(m_Settings, "General", "gameName");
 }
 
 void Settings::setManagedGameName(const QString& name)
 {
-  m_Settings.setValue("gameName", name);
+  set(m_Settings, "General", "gameName", name);
 }
 
 std::optional<QString> Settings::getManagedGameEdition() const
 {
-  return getOptional<QString>(m_Settings, "game_edition");
+  return getOptional<QString>(m_Settings, "General", "game_edition");
 }
 
 void Settings::setManagedGameEdition(const QString& name)
 {
-  m_Settings.setValue("game_edition", name);
+  set(m_Settings, "General", "game_edition", name);
 }
 
 std::optional<QString> Settings::getSelectedProfileName() const
 {
-  if (auto v=getOptional<QByteArray>(m_Settings, "selected_profile")) {
+  if (auto v=getOptional<QByteArray>(m_Settings, "General", "selected_profile")) {
     return QString::fromUtf8(*v);
   }
 
@@ -628,32 +832,32 @@ std::optional<QString> Settings::getSelectedProfileName() const
 
 void Settings::setSelectedProfileName(const QString& name)
 {
-  m_Settings.setValue("selected_profile", name.toUtf8());
+  set(m_Settings, "General", "selected_profile", name.toUtf8());
 }
 
 std::optional<QString> Settings::getStyleName() const
 {
-  return getOptional<QString>(m_Settings, "Settings/style");
+  return getOptional<QString>(m_Settings, "Settings", "style");
 }
 
 void Settings::setStyleName(const QString& name)
 {
-  m_Settings.setValue("Settings/style", name);
+  set(m_Settings, "Settings", "style", name);
 }
 
-std::optional<bool> Settings::getUseProxy() const
+bool Settings::getUseProxy() const
 {
-  return getOptional<bool>(m_Settings, "Settings/use_proxy");
+  return get<bool>(m_Settings, "Settings", "use_proxy", false);
 }
 
 void Settings::setUseProxy(bool b)
 {
-  m_Settings.setValue("Settings/use_proxy", b);
+  set(m_Settings, "Settings", "use_proxy", b);
 }
 
 std::optional<QVersionNumber> Settings::getVersion() const
 {
-  if (auto v=getOptional<QString>(m_Settings, "version")) {
+  if (auto v=getOptional<QString>(m_Settings, "General", "version")) {
     return QVersionNumber::fromString(*v).normalized();
   }
 
@@ -662,17 +866,17 @@ std::optional<QVersionNumber> Settings::getVersion() const
 
 bool Settings::getFirstStart() const
 {
-  return getOptional<bool>(m_Settings, "first_start").value_or(true);
+  return get<bool>(m_Settings, "General", "first_start", true);
 }
 
 void Settings::setFirstStart(bool b)
 {
-  m_Settings.setValue("first_start", b);
+  set(m_Settings, "General", "first_start", b);
 }
 
 std::optional<QColor> Settings::getPreviousSeparatorColor() const
 {
-  const auto c = getOptional<QColor>(m_Settings, "previousSeparatorColor");
+  const auto c = getOptional<QColor>(m_Settings, "General", "previousSeparatorColor");
   if (c && c->isValid()) {
     return c;
   }
@@ -682,12 +886,12 @@ std::optional<QColor> Settings::getPreviousSeparatorColor() const
 
 void Settings::setPreviousSeparatorColor(const QColor& c) const
 {
-  m_Settings.setValue("previousSeparatorColor", c);
+  set(m_Settings, "General", "previousSeparatorColor", c);
 }
 
 void Settings::removePreviousSeparatorColor()
 {
-  m_Settings.remove("previousSeparatorColor");
+  remove(m_Settings, "General", "previousSeparatorColor");
 }
 
 bool Settings::getNexusApiKey(QString &apiKey) const
@@ -695,6 +899,7 @@ bool Settings::getNexusApiKey(QString &apiKey) const
   QString tempKey = deObfuscate("APIKEY");
   if (tempKey.isEmpty())
     return false;
+
   apiKey = tempKey;
   return true;
 }
@@ -722,7 +927,7 @@ bool Settings::hasNexusApiKey() const
 
 bool Settings::getSteamLogin(QString &username, QString &password) const
 {
-  username = m_Settings.value("Settings/steam_username", "").toString();
+  username = get<QString>(m_Settings, "Settings", "steam_username", "");
   password = deObfuscate("steam_password");
 
   return !username.isEmpty() && !password.isEmpty();
@@ -730,95 +935,96 @@ bool Settings::getSteamLogin(QString &username, QString &password) const
 
 bool Settings::compactDownloads() const
 {
-  return m_Settings.value("Settings/compact_downloads", false).toBool();
+  return get<bool>(m_Settings, "Settings", "compact_downloads", false);
 }
 
 void Settings::setCompactDownloads(bool b)
 {
-  m_Settings.setValue("Settings/compact_downloads", b);
+  set(m_Settings, "Settings", "compact_downloads", b);
 }
 
 bool Settings::metaDownloads() const
 {
-  return m_Settings.value("Settings/meta_downloads", false).toBool();
+  return get<bool>(m_Settings, "Settings", "meta_downloads", false);
 }
 
 void Settings::setMetaDownloads(bool b)
 {
-  m_Settings.setValue("Settings/meta_downloads", b);
+  set(m_Settings, "Settings", "meta_downloads", b);
 }
 
 bool Settings::offlineMode() const
 {
-  return m_Settings.value("Settings/offline_mode", false).toBool();
+  return get<bool>(m_Settings, "Settings/offline_mode", false);
 }
 
 void Settings::setOfflineMode(bool b)
 {
-  m_Settings.setValue("Settings/offline_mode", b);
+  set(m_Settings, "Settings", "offline_mode", b);
 }
 
 log::Levels Settings::logLevel() const
 {
-  return static_cast<log::Levels>(m_Settings.value("Settings/log_level").toInt());
+  return get<log::Levels>(m_Settings, "Settings", "log_level", log::Levels::Info);
 }
 
 void Settings::setLogLevel(log::Levels level)
 {
-  m_Settings.setValue("Settings/log_level", static_cast<int>(level));
+  set(m_Settings, "Settings", "log_level", level);
 }
 
 CrashDumpsType Settings::crashDumpsType() const
 {
-  const auto v = getOptional<CrashDumpsType>(m_Settings, "Settings/crash_dumps_type");
-  return v.value_or(CrashDumpsType::Mini);
+  return get<CrashDumpsType>(m_Settings,
+    "Settings", "crash_dumps_type", CrashDumpsType::Mini);
 }
 
 void Settings::setCrashDumpsType(CrashDumpsType type)
 {
-  m_Settings.setValue("Settings/crash_dumps_type", static_cast<int>(type));
+  set(m_Settings, "Settings", "crash_dumps_type", type);
 }
 
 int Settings::crashDumpsMax() const
 {
-  return m_Settings.value("Settings/crash_dumps_max", 5).toInt();
+  return get<int>(m_Settings, "Settings", "crash_dumps_max", 5);
 }
 
 void Settings::setCrashDumpsMax(int n)
 {
-  return m_Settings.setValue("Settings/crash_dumps_max", n);
+  set(m_Settings, "Settings", "crash_dumps_max", n);
 }
 
 QString Settings::executablesBlacklist() const
 {
-  return m_Settings.value("Settings/executable_blacklist", (
-    QStringList()
-        << "Chrome.exe"
-        << "Firefox.exe"
-        << "TSVNCache.exe"
-        << "TGitCache.exe"
-        << "Steam.exe"
-        << "GameOverlayUI.exe"
-        << "Discord.exe"
-        << "GalaxyClient.exe"
-        << "Spotify.exe"
-    ).join(";")
-  ).toString();
+  static const QString def = (QStringList()
+    << "Chrome.exe"
+    << "Firefox.exe"
+    << "TSVNCache.exe"
+    << "TGitCache.exe"
+    << "Steam.exe"
+    << "GameOverlayUI.exe"
+    << "Discord.exe"
+    << "GalaxyClient.exe"
+    << "Spotify.exe"
+    ).join(";");
+
+  return get<QString>(m_Settings, "Settings", "executable_blacklist", def);
 }
 
 void Settings::setExecutablesBlacklist(const QString& s)
 {
-  m_Settings.setValue("Settings/executable_blacklist", s);
+  set(m_Settings, "Settings", "executable_blacklist", s);
 }
 
 void Settings::setSteamLogin(QString username, QString password)
 {
   if (username == "") {
-    m_Settings.remove("Settings/steam_username");
+    remove(m_Settings, "Settings", "steam_username");
     password = "";
   } else {
-    m_Settings.setValue("Settings/steam_username", username);
+    set(m_Settings, "Settings", "steam_username", username);
   }
+
   if (!obfuscate("steam_password", password)) {
     const auto e = GetLastError();
     log::error("Storing or deleting password failed: {}", formatSystemMessage(e));
@@ -827,26 +1033,37 @@ void Settings::setSteamLogin(QString username, QString password)
 
 LoadMechanism::EMechanism Settings::getLoadMechanism() const
 {
-  const auto i = m_Settings.value("Settings/load_mechanism").toInt();
+  const auto def = LoadMechanism::LOAD_MODORGANIZER;
+
+  const auto i = get<LoadMechanism::EMechanism>(m_Settings,
+    "Settings", "load_mechanism", def);
 
   switch (i)
   {
-    case LoadMechanism::LOAD_MODORGANIZER:
-      return LoadMechanism::LOAD_MODORGANIZER;
-
-    default:
-      qCritical().nospace().noquote()
-        << "invalid load mechanism " << i << ", reverting to modorganizer";
-
-      m_Settings.setValue("Settings/load_mechanism", LoadMechanism::LOAD_MODORGANIZER);
-
-      return LoadMechanism::LOAD_MODORGANIZER;
+    // ok
+  case LoadMechanism::LOAD_MODORGANIZER:  // fall-through
+  {
+    break;
   }
+
+  default:
+  {
+    log::error(
+      "invalid load mechanism {}, reverting to {}",
+      static_cast<int>(i), toString(def));
+
+    set(m_Settings, "Settings", "load_mechanism", def);
+
+    return def;
+  }
+  }
+
+  return i;
 }
 
 void Settings::setLoadMechanism(LoadMechanism::EMechanism m)
 {
-  m_Settings.setValue("Settings/load_mechanism", static_cast<int>(m));
+  set(m_Settings, "Settings", "load_mechanism", m);
 }
 
 void Settings::setupLoadMechanism()
@@ -854,26 +1071,20 @@ void Settings::setupLoadMechanism()
   m_LoadMechanism.activate(getLoadMechanism());
 }
 
-
-bool Settings::useProxy() const
-{
-  return m_Settings.value("Settings/use_proxy", false).toBool();
-}
-
 bool Settings::endorsementIntegration() const
 {
-  return m_Settings.value("Settings/endorsement_integration", true).toBool();
+  return get<bool>(m_Settings, "Settings", "endorsement_integration", true);
 }
 
 void Settings::setEndorsementIntegration(bool b) const
 {
-  m_Settings.setValue("Settings/endorsement_integration", b);
+  set(m_Settings, "Settings", "endorsement_integration", b);
 }
 
 EndorsementState Settings::endorsementState() const
 {
-  const auto v = getOptional<QString>(m_Settings, "endorse_state");
-  return endorsementStateFromString(v.value_or(""));
+  return endorsementStateFromString(
+    get<QString>(m_Settings, "General", "endorse_state", ""));
 }
 
 void Settings::setEndorsementState(EndorsementState s)
@@ -881,57 +1092,59 @@ void Settings::setEndorsementState(EndorsementState s)
   const auto v = toString(s);
 
   if (v.isEmpty()) {
-    m_Settings.remove("endorse_state");
+    remove(m_Settings, "General", "endorse_state");
   } else {
-    m_Settings.setValue("endorse_state", v);
+    set(m_Settings, "General", "endorse_state", v);
   }
 }
 
 bool Settings::hideAPICounter() const
 {
-  return m_Settings.value("Settings/hide_api_counter", false).toBool();
+  return get<bool>(m_Settings, "Settings", "hide_api_counter", false);
 }
 
 void Settings::setHideAPICounter(bool b)
 {
-  m_Settings.setValue("Settings/hide_api_counter", b);
+  set(m_Settings, "Settings", "hide_api_counter", b);
 }
 
 bool Settings::displayForeign() const
 {
-  return m_Settings.value("Settings/display_foreign", true).toBool();
+  return get<bool>(m_Settings, "Settings", "display_foreign", true);
 }
 
 void Settings::setDisplayForeign(bool b)
 {
-  m_Settings.setValue("Settings/display_foreign", b);
+  set(m_Settings, "Settings", "display_foreign", b);
 }
 
 void Settings::setMotDHash(uint hash)
 {
-  m_Settings.setValue("motd_hash", hash);
+  set(m_Settings, "General", "motd_hash", hash);
 }
 
-uint Settings::getMotDHash() const
+unsigned int Settings::getMotDHash() const
 {
-  return m_Settings.value("motd_hash", 0).toUInt();
+  return get<unsigned int>(m_Settings, "motd_hash", 0);
 }
 
 bool Settings::archiveParsing() const
 {
-  return m_Settings.value("Settings/archive_parsing_experimental", false).toBool();
+  return get<bool>(m_Settings, "Settings", "archive_parsing_experimental", false);
 }
 
 void Settings::setArchiveParsing(bool b)
 {
-  m_Settings.setValue("Settings/archive_parsing_experimental", b);
+  set(m_Settings, "Settings", "archive_parsing_experimental", b);
 }
 
 QString Settings::language()
 {
-  QString result = m_Settings.value("Settings/language", "").toString();
+  QString result = get<QString>(m_Settings, "Settings", "language", "");
+
   if (result.isEmpty()) {
     QStringList languagePreferences = QLocale::system().uiLanguages();
+
     if (languagePreferences.length() > 0) {
       // the users most favoritest language
       result = languagePreferences.at(0);
@@ -940,12 +1153,13 @@ QString Settings::language()
       result = QLocale::system().name();
     }
   }
+
   return result;
 }
 
 void Settings::setLanguage(const QString& name)
 {
-  m_Settings.setValue("Settings/language", name);
+  set(m_Settings, "Settings", "language", name);
 }
 
 void Settings::setDownloadSpeed(const QString& name, int bytesPerSecond)
@@ -972,18 +1186,13 @@ ServerList Settings::getServers() const
   //
   // so post 2.2.1, only one key is returned: "size", the size of the arrays;
   // in 2.2.1, one key per server is returned
-
-  // getting the keys
-  QStringList keys;
-
   {
-    ScopedGroup sg(m_Settings, "Servers");
-    keys = m_Settings.childKeys();
-  }
+    const QStringList keys = ScopedGroup(m_Settings, "Servers").keys();
 
-  if (!keys.empty() && keys[0] != "size") {
-    // old format
-    return getServersFromOldMap();
+    if (!keys.empty() && keys[0] != "size") {
+      // old format
+      return getServersFromOldMap();
+    }
   }
 
 
@@ -994,12 +1203,11 @@ ServerList Settings::getServers() const
   {
     ScopedReadArray sra(m_Settings, "Servers");
 
-    for (int i=0; i<sra.count(); ++i) {
-      m_Settings.setArrayIndex(i);
-
+    sra.for_each([&] {
       ServerInfo::SpeedList lastDownloads;
 
-      const auto lastDownloadsString = m_Settings.value("lastDownloads").toString();
+      const auto lastDownloadsString = sra.get<QString>("lastDownloads", "");
+
       for (const auto& s : lastDownloadsString.split(" ")) {
         const auto bytesPerSecond = s.toInt();
         if (bytesPerSecond > 0) {
@@ -1008,14 +1216,14 @@ ServerList Settings::getServers() const
       }
 
       ServerInfo server(
-        m_Settings.value("name").toString(),
-        m_Settings.value("premium").toBool(),
-        QDate::fromString(m_Settings.value("lastSeen").toString(), Qt::ISODate),
-        m_Settings.value("preferred").toInt(),
+        sra.get<QString>("name", ""),
+        sra.get<bool>("premium", false),
+        QDate::fromString(sra.get<QString>("lastSeen", ""), Qt::ISODate),
+        sra.get<int>("preferred", 0),
         lastDownloads);
 
       list.add(std::move(server));
-    }
+    });
   }
 
   return list;
@@ -1026,10 +1234,10 @@ ServerList Settings::getServersFromOldMap() const
   // for 2.2.1 and before
 
   ServerList list;
-  ScopedGroup sg(m_Settings, "Servers");
+  const ScopedGroup sg(m_Settings, "Servers");
 
-  for (const QString &serverKey : m_Settings.childKeys()) {
-    QVariantMap data = m_Settings.value(serverKey).toMap();
+  sg.for_each([&](auto&& serverKey) {
+    QVariantMap data = sg.get<QVariantMap>(serverKey);
 
     ServerInfo server(
       serverKey,
@@ -1042,7 +1250,7 @@ ServerList Settings::getServersFromOldMap() const
     // a total
 
     list.add(std::move(server));
-  }
+  });
 
   return list;
 }
@@ -1052,22 +1260,18 @@ void Settings::updateServers(ServerList servers)
   // clean up unavailable servers
   servers.cleanup();
 
-  {
-    ScopedGroup sg(m_Settings, "Servers");
-    m_Settings.remove("");
-  }
+  removeSection(m_Settings, "Servers");
 
   {
     ScopedWriteArray swa(m_Settings, "Servers");
 
-    int i=0;
     for (const auto& server : servers) {
-      m_Settings.setArrayIndex(i);
+      swa.next();
 
-      m_Settings.setValue("name", server.name());
-      m_Settings.setValue("premium", server.isPremium());
-      m_Settings.setValue("lastSeen", server.lastSeen().toString(Qt::ISODate));
-      m_Settings.setValue("preferred", server.preferred());
+      swa.set("name", server.name());
+      swa.set("premium", server.isPremium());
+      swa.set("lastSeen", server.lastSeen().toString(Qt::ISODate));
+      swa.set("preferred", server.preferred());
 
       QString lastDownloads;
       for (const auto& speed : server.lastDownloads()) {
@@ -1076,9 +1280,7 @@ void Settings::updateServers(ServerList servers)
         }
       }
 
-      m_Settings.setValue("lastDownloads", lastDownloads.trimmed());
-
-      ++i;
+      swa.set("lastDownloads", lastDownloads.trimmed());
     }
   }
 }
@@ -1087,35 +1289,31 @@ std::map<QString, QString> Settings::getRecentDirectories() const
 {
   std::map<QString, QString> map;
 
-  ScopedReadArray sra(m_Settings, "recentDirectories");
+  ScopedReadArray sra(m_Settings, "RecentDirectories");
 
-  for (int i=0; i<sra.count(); ++i) {
-    m_Settings.setArrayIndex(i);
-
-    const QVariant name = m_Settings.value("name");
-    const QVariant dir = m_Settings.value("directory");
+  sra.for_each([&] {
+    const QVariant name = sra.get<QVariant>("name");
+    const QVariant dir = sra.get<QVariant>("directory");
 
     if (name.isValid() && dir.isValid()) {
       map.emplace(name.toString(), dir.toString());
     }
-  }
+  });
 
   return map;
 }
 
 void Settings::setRecentDirectories(const std::map<QString, QString>& map)
 {
-  m_Settings.remove("recentDirectories");
+  removeSection(m_Settings, "RecentDirectories");
 
   ScopedWriteArray swa(m_Settings, "recentDirectories");
 
-  int index = 0;
   for (auto&& p : map) {
-    m_Settings.setArrayIndex(index);
-    m_Settings.setValue("name", p.first);
-    m_Settings.setValue("directory", p.second);
+    swa.next();
 
-    ++index;
+    swa.set("name", p.first);
+    swa.set("directory", p.second);
   }
 }
 
@@ -1124,78 +1322,67 @@ std::vector<std::map<QString, QVariant>> Settings::getExecutables() const
   ScopedReadArray sra(m_Settings, "customExecutables");
   std::vector<std::map<QString, QVariant>> v;
 
-  for (int i=0; i<sra.count(); ++i) {
-    m_Settings.setArrayIndex(i);
-
+  sra.for_each([&]{
     std::map<QString, QVariant> map;
 
-    const auto keys = m_Settings.childKeys();
-    for (auto&& key : keys) {
+    for (auto&& key : sra.keys()) {
       map[key] = m_Settings.value(key);
     }
 
     v.push_back(map);
-  }
+  });
 
   return v;
 }
 
 void Settings::setExecutables(const std::vector<std::map<QString, QVariant>>& v)
 {
-  m_Settings.remove("customExecutables");
+  removeSection(m_Settings, "customExecutables");
 
   ScopedWriteArray swa(m_Settings, "customExecutables");
 
-  int i = 0;
-
   for (const auto& map : v) {
-    m_Settings.setArrayIndex(i);
+    swa.next();
 
     for (auto&& p : map) {
-      m_Settings.setValue(p.first, p.second);
+      swa.set(p.first, p.second);
     }
-
-    ++i;
   }
 }
 
 bool Settings::isTutorialCompleted(const QString& windowName) const
 {
-  const auto v = getOptional<bool>(
-    m_Settings, "CompletedWindowTutorials/" + windowName);
-
-  return v.value_or(false);
+  return get<bool>(m_Settings, "CompletedWindowTutorials", windowName, false);
 }
 
 void Settings::setTutorialCompleted(const QString& windowName, bool b)
 {
-  m_Settings.setValue("CompletedWindowTutorials/" + windowName, true);
+  set(m_Settings, "CompletedWindowTutorials", windowName, b);
 }
 
 bool Settings::keepBackupOnInstall() const
 {
-  return getOptional<bool>(m_Settings, "backup_install").value_or(false);
+  return get<bool>(m_Settings, "backup_install", false);
 }
 
 void Settings::setKeepBackupOnInstall(bool b)
 {
-  m_Settings.setValue("backup_install", b);
+  set(m_Settings, "General", "backup_install", b);
 }
 
 QuestionBoxMemory::Button Settings::getQuestionButton(
   const QString& windowName, const QString& filename) const
 {
-  const QString windowSetting("DialogChoices/" + windowName);
+  const QString sectionName("DialogChoices");
 
   if (!filename.isEmpty()) {
-    const auto fileSetting = windowSetting + "/" + filename;
-
-    if (auto v=getOptional<int>(m_Settings, fileSetting)) {
+    const auto fileSetting = windowName + "/" + filename;
+    if (auto v=getOptional<int>(m_Settings, sectionName, filename)) {
       return static_cast<QuestionBoxMemory::Button>(*v);
     }
   }
 
-  if (auto v=getOptional<int>(m_Settings, windowSetting)) {
+  if (auto v=getOptional<int>(m_Settings, sectionName, windowName)) {
     return static_cast<QuestionBoxMemory::Button>(*v);
   }
 
@@ -1205,12 +1392,12 @@ QuestionBoxMemory::Button Settings::getQuestionButton(
 void Settings::setQuestionWindowButton(
   const QString& windowName, QuestionBoxMemory::Button button)
 {
-  const QString settingName("DialogChoices/" + windowName);
+  const QString sectionName("DialogChoices/");
 
   if (button == QuestionBoxMemory::NoButton) {
-    m_Settings.remove(settingName);
+    remove(m_Settings, sectionName, windowName);
   } else {
-    m_Settings.setValue(settingName, static_cast<int>(button));
+    set(m_Settings, sectionName, windowName, button);
   }
 }
 
@@ -1218,51 +1405,51 @@ void Settings::setQuestionFileButton(
   const QString& windowName, const QString& filename,
   QuestionBoxMemory::Button button)
 {
-  const QString settingName("DialogChoices/" + windowName + "/" + filename);
+  const QString sectionName("DialogChoices");
+  const QString settingName(windowName + "/" + filename);
 
   if (button == QuestionBoxMemory::NoButton) {
-    m_Settings.remove(settingName);
+    remove(m_Settings, sectionName, settingName);
   } else {
-    m_Settings.setValue(settingName, static_cast<int>(button));
+    set(m_Settings, sectionName, settingName, button);
   }
 }
 
 void Settings::resetQuestionButtons()
 {
-  ScopedGroup sg(m_Settings, "DialogChoices");
-  m_Settings.remove("");
+  removeSection(m_Settings, "DialogChoices");
 }
 
 std::optional<int> Settings::getIndex(const QComboBox* cb) const
 {
-  return getOptional<int>(m_Settings, indexSettingName(cb));
+  return getOptional<int>(m_Settings, "Widgets", indexSettingName(cb));
 }
 
 void Settings::saveIndex(const QComboBox* cb)
 {
-  m_Settings.setValue(indexSettingName(cb), cb->currentIndex());
+  set(m_Settings, "Widgets", indexSettingName(cb), cb->currentIndex());
 }
 
 void Settings::restoreIndex(QComboBox* cb, std::optional<int> def) const
 {
-  if (auto v=getOptional<int>(m_Settings, indexSettingName(cb), def)) {
+  if (auto v=getOptional<int>(m_Settings, "Widgets", indexSettingName(cb), def)) {
     cb->setCurrentIndex(*v);
   }
 }
 
 std::optional<int> Settings::getIndex(const QTabWidget* w) const
 {
-  return getOptional<int>(m_Settings, indexSettingName(w));
+  return getOptional<int>(m_Settings, "Widgets", indexSettingName(w));
 }
 
 void Settings::saveIndex(const QTabWidget* w)
 {
-  m_Settings.setValue(indexSettingName(w), w->currentIndex());
+  set(m_Settings, "Widgets", indexSettingName(w), w->currentIndex());
 }
 
 void Settings::restoreIndex(QTabWidget* w, std::optional<int> def) const
 {
-  if (auto v=getOptional<int>(m_Settings, indexSettingName(w), def)) {
+  if (auto v=getOptional<int>(m_Settings, "Widgets", indexSettingName(w), def)) {
     w->setCurrentIndex(*v);
   }
 }
@@ -1270,20 +1457,20 @@ void Settings::restoreIndex(QTabWidget* w, std::optional<int> def) const
 std::optional<bool> Settings::getChecked(const QAbstractButton* w) const
 {
   warnIfNotCheckable(w);
-  return getOptional<bool>(m_Settings, checkedSettingName(w));
+  return getOptional<bool>(m_Settings, "Widgets", checkedSettingName(w));
 }
 
 void Settings::saveChecked(const QAbstractButton* w)
 {
   warnIfNotCheckable(w);
-  m_Settings.setValue(checkedSettingName(w), w->isChecked());
+  set(m_Settings, "Widgets", checkedSettingName(w), w->isChecked());
 }
 
 void Settings::restoreChecked(QAbstractButton* w, std::optional<bool> def) const
 {
   warnIfNotCheckable(w);
 
-  if (auto v=getOptional<bool>(m_Settings, checkedSettingName(w), def)) {
+  if (auto v=getOptional<bool>(m_Settings, "Widgets", checkedSettingName(w), def)) {
     w->setChecked(*v);
   }
 }
@@ -1328,7 +1515,7 @@ void Settings::dump() const
 {
   static const QStringList ignore({
     "username", "password", "nexus_api_key"
-  });
+    });
 
   log::debug("settings:");
 
@@ -1379,18 +1566,17 @@ void GeometrySettings::resetIfNeeded()
     return;
   }
 
-  ScopedGroup sg(m_Settings, "geometry");
-  m_Settings.remove("");
+  removeSection(m_Settings, "Geometry");
 }
 
 void GeometrySettings::saveGeometry(const QWidget* w)
 {
-  m_Settings.setValue(geoSettingName(w), w->saveGeometry());
+  set(m_Settings, "Geometry", geoSettingName(w), w->saveGeometry());
 }
 
 bool GeometrySettings::restoreGeometry(QWidget* w) const
 {
-  if (auto v=getOptional<QByteArray>(m_Settings, geoSettingName(w))) {
+  if (auto v=getOptional<QByteArray>(m_Settings, "Geometry", geoSettingName(w))) {
     w->restoreGeometry(*v);
     return true;
   }
@@ -1400,12 +1586,12 @@ bool GeometrySettings::restoreGeometry(QWidget* w) const
 
 void GeometrySettings::saveState(const QMainWindow* w)
 {
-  m_Settings.setValue(stateSettingName(w), w->saveState());
+  set(m_Settings, "Geometry", stateSettingName(w), w->saveState());
 }
 
 bool GeometrySettings::restoreState(QMainWindow* w) const
 {
-  if (auto v=getOptional<QByteArray>(m_Settings, stateSettingName(w))) {
+  if (auto v=getOptional<QByteArray>(m_Settings, "Geometry", stateSettingName(w))) {
     w->restoreState(*v);
     return true;
   }
@@ -1415,12 +1601,12 @@ bool GeometrySettings::restoreState(QMainWindow* w) const
 
 void GeometrySettings::saveState(const QHeaderView* w)
 {
-  m_Settings.setValue(stateSettingName(w), w->saveState());
+  set(m_Settings, "Geometry", stateSettingName(w), w->saveState());
 }
 
 bool GeometrySettings::restoreState(QHeaderView* w) const
 {
-  if (auto v=getOptional<QByteArray>(m_Settings, stateSettingName(w))) {
+  if (auto v=getOptional<QByteArray>(m_Settings, "Geometry", stateSettingName(w))) {
     w->restoreState(*v);
     return true;
   }
@@ -1430,12 +1616,12 @@ bool GeometrySettings::restoreState(QHeaderView* w) const
 
 void GeometrySettings::saveState(const QSplitter* w)
 {
-  m_Settings.setValue(stateSettingName(w), w->saveState());
+  set(m_Settings, "Geometry", stateSettingName(w), w->saveState());
 }
 
 bool GeometrySettings::restoreState(QSplitter* w) const
 {
-  if (auto v=getOptional<QByteArray>(m_Settings, stateSettingName(w))) {
+  if (auto v=getOptional<QByteArray>(m_Settings, "Geometry", stateSettingName(w))) {
     w->restoreState(*v);
     return true;
   }
@@ -1445,12 +1631,12 @@ bool GeometrySettings::restoreState(QSplitter* w) const
 
 void GeometrySettings::saveState(const ExpanderWidget* expander)
 {
-  m_Settings.setValue(stateSettingName(expander), expander->saveState());
+  set(m_Settings, "Geometry", stateSettingName(expander), expander->saveState());
 }
 
 bool GeometrySettings::restoreState(ExpanderWidget* expander) const
 {
-  if (auto v=getOptional<QByteArray>(m_Settings, stateSettingName(expander))) {
+  if (auto v=getOptional<QByteArray>(m_Settings, "Geometry", stateSettingName(expander))) {
     expander->restoreState(*v);
     return true;
   }
@@ -1460,12 +1646,12 @@ bool GeometrySettings::restoreState(ExpanderWidget* expander) const
 
 void GeometrySettings::saveVisibility(const QWidget* w)
 {
-  m_Settings.setValue(visibilitySettingName(w), w->isVisible());
+  set(m_Settings, "Geometry", visibilitySettingName(w), w->isVisible());
 }
 
 bool GeometrySettings::restoreVisibility(QWidget* w, std::optional<bool> def) const
 {
-  if (auto v=getOptional<bool>(m_Settings, visibilitySettingName(w), def)) {
+  if (auto v=getOptional<bool>(m_Settings, "Geometry", visibilitySettingName(w), def)) {
     w->setVisible(*v);
     return true;
   }
@@ -1476,8 +1662,8 @@ bool GeometrySettings::restoreVisibility(QWidget* w, std::optional<bool> def) co
 void GeometrySettings::restoreToolbars(QMainWindow* w) const
 {
   // all toolbars have the same size and button style settings
-  const auto size = getOptional<QSize>(m_Settings, "toolbar_size");
-  const auto style = getOptional<int>(m_Settings, "toolbar_button_style");
+  const auto size = getOptional<QSize>(m_Settings, "Geometry", "toolbar_size");
+  const auto style = getOptional<int>(m_Settings, "Geometry", "toolbar_button_style");
 
   for (auto* tb : w->findChildren<QToolBar*>()) {
     if (size) {
@@ -1506,8 +1692,8 @@ void GeometrySettings::saveToolbars(const QMainWindow* w)
   if (!tbs.isEmpty()) {
     const auto* tb = tbs[0];
 
-    m_Settings.setValue("toolbar_size", tb->iconSize());
-    m_Settings.setValue("toolbar_button_style", static_cast<int>(tb->toolButtonStyle()));
+    set(m_Settings, "Geometry", "toolbar_size", tb->iconSize());
+    set(m_Settings, "Geometry", "toolbar_button_style", static_cast<int>(tb->toolButtonStyle()));
   }
 }
 
@@ -1544,12 +1730,13 @@ QStringList GeometrySettings::getModInfoTabOrder() const
 
 void GeometrySettings::setModInfoTabOrder(const QString& names)
 {
-  m_Settings.setValue("mod_info_tab_order", names);
+  set(m_Settings, "Geometry", "mod_info_tab_order", names);
 }
 
 void GeometrySettings::centerOnMainWindowMonitor(QWidget* w)
 {
-  const auto monitor = getOptional<int>(m_Settings, "geometry/MainWindow_monitor");
+  const auto monitor = getOptional<int>(
+    m_Settings, "Geometry", "MainWindow_monitor");
 
   QPoint center;
 
@@ -1567,7 +1754,7 @@ void GeometrySettings::saveMainWindowMonitor(const QMainWindow* w)
   if (auto* handle=w->windowHandle()) {
     if (auto* screen = handle->screen()) {
       const int screenId = QGuiApplication::screens().indexOf(screen);
-      m_Settings.setValue("geometry/MainWindow_monitor", screenId);
+      set(m_Settings, "Geometry", "MainWindow_monitor", screenId);
     }
   }
 }
@@ -1617,7 +1804,7 @@ void GeometrySettings::saveDocks(const QMainWindow* mw)
       size = dock->size().height();
     }
 
-    m_Settings.setValue(dockSettingName(dock), size);
+    set(m_Settings, "Geometry", dockSettingName(dock), size);
   }
 }
 
@@ -1634,7 +1821,7 @@ void GeometrySettings::restoreDocks(QMainWindow* mw) const
 
   // for each dock
   for (auto* dock : mw->findChildren<QDockWidget*>()) {
-    if (auto size=getOptional<int>(m_Settings, dockSettingName(dock))) {
+    if (auto size=getOptional<int>(m_Settings, "Geometry", dockSettingName(dock))) {
       // remember this dock, its size and orientation
       dockInfos.push_back({dock, *size, dockOrientation(mw, dock)});
     }
@@ -1649,7 +1836,7 @@ void GeometrySettings::restoreDocks(QMainWindow* mw) const
     for (const auto& info : dockInfos) {
       mw->resizeDocks({info.d}, {info.size}, info.ori);
     }
-  });
+    });
 }
 
 
@@ -1660,68 +1847,74 @@ ColorSettings::ColorSettings(QSettings& s)
 
 QColor ColorSettings::modlistOverwrittenLoose() const
 {
-  return getOptional<QColor>(m_Settings, "Settings/overwrittenLooseFilesColor")
-    .value_or(QColor(0, 255, 0, 64));
+  return get<QColor>(
+    m_Settings, "Settings", "overwrittenLooseFilesColor",
+    QColor(0, 255, 0, 64));
 }
 
 void ColorSettings::setModlistOverwrittenLoose(const QColor& c)
 {
-  m_Settings.setValue("Settings/overwrittenLooseFilesColor", c);
+  set(m_Settings, "Settings", "overwrittenLooseFilesColor", c);
 }
 
 QColor ColorSettings::modlistOverwritingLoose() const
 {
-  return getOptional<QColor>(m_Settings, "Settings/overwritingLooseFilesColor")
-    .value_or(QColor(255, 0, 0, 64));
+  return get<QColor>(
+    m_Settings, "Settings", "overwritingLooseFilesColor",
+    QColor(255, 0, 0, 64));
 }
 
 void ColorSettings::setModlistOverwritingLoose(const QColor& c)
 {
-  m_Settings.setValue("Settings/overwritingLooseFilesColor", c);
+  set(m_Settings, "Settings", "overwritingLooseFilesColor", c);
 }
 
 QColor ColorSettings::modlistOverwrittenArchive() const
 {
-  return getOptional<QColor>(m_Settings, "Settings/overwrittenArchiveFilesColor")
-    .value_or(QColor(0, 255, 255, 64));
+  return get<QColor>(
+    m_Settings, "Settings", "overwrittenArchiveFilesColor",
+    QColor(0, 255, 255, 64));
 }
 
 void ColorSettings::setModlistOverwrittenArchive(const QColor& c)
 {
-  m_Settings.setValue("Settings/overwrittenArchiveFilesColor", c);
+  set(m_Settings, "Settings", "overwrittenArchiveFilesColor", c);
 }
 
 QColor ColorSettings::modlistOverwritingArchive() const
 {
-  return getOptional<QColor>(m_Settings, "Settings/overwritingArchiveFilesColor")
-    .value_or(QColor(255, 0, 255, 64));
+  return get<QColor>(
+    m_Settings, "Settings", "overwritingArchiveFilesColor",
+    QColor(255, 0, 255, 64));
 }
 
 void ColorSettings::setModlistOverwritingArchive(const QColor& c)
 {
-  m_Settings.setValue("Settings/overwritingArchiveFilesColor", c);
+  set(m_Settings, "Settings", "overwritingArchiveFilesColor", c);
 }
 
 QColor ColorSettings::modlistContainsPlugin() const
 {
-  return getOptional<QColor>(m_Settings, "Settings/containsPluginColor")
-    .value_or(QColor(0, 0, 255, 64));
+  return get<QColor>(
+    m_Settings, "Settings", "containsPluginColor",
+    QColor(0, 0, 255, 64));
 }
 
 void ColorSettings::setModlistContainsPlugin(const QColor& c)
 {
-  m_Settings.setValue("Settings/containsPluginColor", c);
+  set(m_Settings, "Settings", "containsPluginColor", c);
 }
 
 QColor ColorSettings::pluginListContained() const
 {
-  return getOptional<QColor>(m_Settings, "Settings/containedColor")
-    .value_or(QColor(0, 0, 255, 64));
+  return get<QColor>(
+    m_Settings, "Settings", "containedColor",
+    QColor(0, 0, 255, 64));
 }
 
 void ColorSettings::setPluginListContained(const QColor& c)
 {
-  m_Settings.setValue("Settings/containedColor", c);
+  set(m_Settings, "Settings", "containedColor", c);
 }
 
 
@@ -1738,10 +1931,9 @@ void PluginSettings::clearPlugins()
   m_PluginBlacklist.clear();
 
   ScopedReadArray sra(m_Settings, "pluginBlacklist");
-  for (int i = 0; i < sra.count(); ++i) {
-    m_Settings.setArrayIndex(i);
-    m_PluginBlacklist.insert(m_Settings.value("name").toString());
-  }
+  sra.for_each([&]{
+    m_PluginBlacklist.insert(sra.get<QString>("name"));
+  });
 }
 
 void PluginSettings::registerPlugin(IPlugin *plugin)
@@ -1749,16 +1941,26 @@ void PluginSettings::registerPlugin(IPlugin *plugin)
   m_Plugins.push_back(plugin);
   m_PluginSettings.insert(plugin->name(), QVariantMap());
   m_PluginDescriptions.insert(plugin->name(), QVariantMap());
+
   for (const PluginSetting &setting : plugin->settings()) {
-    QVariant temp = m_Settings.value("Plugins/" + plugin->name() + "/" + setting.key, setting.defaultValue);
+    const QString settingName = plugin->name() + "/" + setting.key;
+
+    QVariant temp = get<QVariant>(
+      m_Settings, "Plugins", settingName, setting.defaultValue);
+
     if (!temp.convert(setting.defaultValue.type())) {
       log::warn(
         "failed to interpret \"{}\" as correct type for \"{}\" in plugin \"{}\", using default",
         temp.toString(), setting.key, plugin->name());
+
       temp = setting.defaultValue;
     }
+
     m_PluginSettings[plugin->name()][setting.key] = temp;
-    m_PluginDescriptions[plugin->name()][setting.key] = QString("%1 (default: %2)").arg(setting.description).arg(setting.defaultValue.toString());
+
+    m_PluginDescriptions[plugin->name()][setting.key] = QString("%1 (default: %2)")
+      .arg(setting.description)
+      .arg(setting.defaultValue.toString());
   }
 }
 
@@ -1773,6 +1975,7 @@ QVariant PluginSettings::pluginSetting(const QString &pluginName, const QString 
   if (iterPlugin == m_PluginSettings.end()) {
     return QVariant();
   }
+
   auto iterSetting = iterPlugin->find(key);
   if (iterSetting == iterPlugin->end()) {
     return QVariant();
@@ -1784,13 +1987,16 @@ QVariant PluginSettings::pluginSetting(const QString &pluginName, const QString 
 void PluginSettings::setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value)
 {
   auto iterPlugin = m_PluginSettings.find(pluginName);
+
   if (iterPlugin == m_PluginSettings.end()) {
-    throw MyException(QObject::tr("attempt to store setting for unknown plugin \"%1\"").arg(pluginName));
+    throw MyException(
+      QObject::tr("attempt to store setting for unknown plugin \"%1\"")
+      .arg(pluginName));
   }
 
   // store the new setting both in memory and in the ini
   m_PluginSettings[pluginName][key] = value;
-  m_Settings.setValue("Plugins/" + pluginName + "/" + key, value);
+  set(m_Settings, "Plugins", pluginName + "/" + key, value);
 }
 
 QVariant PluginSettings::pluginPersistent(const QString &pluginName, const QString &key, const QVariant &def) const
@@ -1798,15 +2004,21 @@ QVariant PluginSettings::pluginPersistent(const QString &pluginName, const QStri
   if (!m_PluginSettings.contains(pluginName)) {
     return def;
   }
-  return m_Settings.value("PluginPersistance/" + pluginName + "/" + key, def);
+
+  return get<QVariant>(m_Settings, "PluginPersistance", pluginName + "/" + key, def);
 }
 
-void PluginSettings::setPluginPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync)
+void PluginSettings::setPluginPersistent(
+  const QString &pluginName, const QString &key, const QVariant &value, bool sync)
 {
   if (!m_PluginSettings.contains(pluginName)) {
-    throw MyException(QObject::tr("attempt to store setting for unknown plugin \"%1\"").arg(pluginName));
+    throw MyException(
+      QObject::tr("attempt to store setting for unknown plugin \"%1\"")
+      .arg(pluginName));
   }
-  m_Settings.setValue("PluginPersistance/" + pluginName + "/" + key, value);
+
+  set(m_Settings, "PluginPersistance", pluginName + "/" + key, value);
+
   if (sync) {
     m_Settings.sync();
   }
@@ -1820,13 +2032,13 @@ void PluginSettings::addBlacklistPlugin(const QString &fileName)
 
 void PluginSettings::writePluginBlacklist()
 {
-  m_Settings.remove("pluginBlacklist");
+  removeSection(m_Settings, "PluginBlacklist");
 
-  ScopedWriteArray swa(m_Settings, "pluginBlacklist");
-  int idx = 0;
+  ScopedWriteArray swa(m_Settings, "PluginBlacklist");
+
   for (const QString &plugin : m_PluginBlacklist) {
-    m_Settings.setArrayIndex(idx++);
-    m_Settings.setValue("name", plugin);
+    swa.next();
+    swa.set("name", plugin);
   }
 }
 
@@ -1868,8 +2080,8 @@ void PluginSettings::save()
 {
   for (auto iterPlugins=m_PluginSettings.begin(); iterPlugins!=m_PluginSettings.end(); ++iterPlugins) {
     for (auto iterSettings=iterPlugins->begin(); iterSettings!=iterPlugins->end(); ++iterSettings) {
-      const auto key = "Plugins/" + iterPlugins.key() + "/" + iterSettings.key();
-      m_Settings.setValue(key, iterSettings.value());
+      const auto key = iterPlugins.key() + "/" + iterSettings.key();
+      set(m_Settings, "Plugins", key, iterSettings.value());
     }
   }
 

@@ -68,9 +68,6 @@ public:
   void saveState(const QHeaderView* header);
   bool restoreState(QHeaderView* header) const;
 
-  void saveState(const QToolBar* toolbar);
-  bool restoreState(QToolBar* toolbar) const;
-
   void saveState(const QSplitter* splitter);
   bool restoreState(QSplitter* splitter) const;
 
@@ -258,8 +255,6 @@ public:
   std::optional<QString> getStyleName() const;
   void setStyleName(const QString& name);
 
-  std::optional<bool> getUseProxy() const;
-
   std::optional<QVersionNumber> getVersion() const;
 
   bool getFirstStart() const;
@@ -408,7 +403,7 @@ public:
   /**
    * @return true if the user configured the use of a network proxy
    */
-  bool useProxy() const;
+  bool getUseProxy() const;
   void setUseProxy(bool b);
 
   /**
@@ -419,7 +414,6 @@ public:
 
   EndorsementState endorsementState() const;
   void setEndorsementState(EndorsementState s);
-  void setEndorsementState(const QString& s);
 
   /**
    * @return true if the API counter should be hidden
@@ -436,18 +430,14 @@ public:
   /**
    * @brief sets the new motd hash
    **/
-  void setMotDHash(uint hash);
+  unsigned int getMotDHash() const;
+  void setMotDHash(unsigned int hash);
 
   /**
   * @return true if the user wants to have archives being parsed to show conflicts and contents
   */
   bool archiveParsing() const;
   void setArchiveParsing(bool b);
-
-  /**
-   * @return hash of the last displayed message of the day
-   **/
-  uint getMotDHash() const;
 
   /**
    * @return short code of the configured language (corresponding to the translation files)
