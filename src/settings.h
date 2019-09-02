@@ -128,6 +128,46 @@ private:
 };
 
 
+class PluginSettings
+{
+public:
+  PluginSettings(QSettings& settings);
+
+  void clearPlugins();
+  void registerPlugin(MOBase::IPlugin *plugin);
+  void addPluginSettings(const std::vector<MOBase::IPlugin*> &plugins);
+
+  QVariant pluginSetting(const QString &pluginName, const QString &key) const;
+  void setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value);
+  QVariant pluginPersistent(const QString &pluginName, const QString &key, const QVariant &def) const;
+  void setPluginPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync);
+  void addBlacklistPlugin(const QString &fileName);
+  bool pluginBlacklisted(const QString &fileName) const;
+  void setPluginBlacklist(const QStringList& pluginNames);
+  std::vector<MOBase::IPlugin*> plugins() const { return m_Plugins; }
+
+  QVariantMap pluginSettings(const QString &pluginName) const;
+  void setPluginSettings(const QString &pluginName, const QVariantMap& map);
+
+  QVariantMap pluginDescriptions(const QString &pluginName) const;
+  void pluginDescriptions(const QString &pluginName, const QVariantMap& map);
+
+  const QSet<QString>& pluginBlacklist() const;
+
+  void save();
+
+private:
+  QSettings& m_Settings;
+  std::vector<MOBase::IPlugin*> m_Plugins;
+  QMap<QString, QVariantMap> m_PluginSettings;
+  QMap<QString, QVariantMap> m_PluginDescriptions;
+  QSet<QString> m_PluginBlacklist;
+
+  void readPluginBlacklist();
+  void writePluginBlacklist();
+};
+
+
 enum class EndorsementState
 {
   Accepted = 1,
@@ -157,23 +197,6 @@ public:
     const QVersionNumber& currentVersion, const QVersionNumber& lastVersion);
 
   QString getFilename() const;
-
-  /**
-   * unregister all plugins from settings
-   */
-  void clearPlugins();
-
-  /**
-   * @brief register plugin to be configurable
-   * @param plugin the plugin to register
-   * @return true if the plugin may be registered, false if it is blacklisted
-   */
-  void registerPlugin(MOBase::IPlugin *plugin);
-
-  /**
-   * set up the settings for the specified plugins
-   **/
-  void addPluginSettings(const std::vector<MOBase::IPlugin*> &plugins);
 
   /**
    * @return true if the user wants unchecked plugins (esp, esm) should be hidden from
@@ -283,6 +306,9 @@ public:
 
   ColorSettings& colors();
   const ColorSettings& colors() const;
+
+  PluginSettings& plugins();
+  const PluginSettings& plugins() const;
 
 
   /**
@@ -423,42 +449,6 @@ public:
   const QSettings &directInterface() const { return m_Settings; }
 
   /**
-   * @brief retrieve a setting for one of the installed plugins
-   * @param pluginName name of the plugin
-   * @param key name of the setting to retrieve
-   * @return the requested value as a QVariant
-   * @note an invalid QVariant is returned if the the plugin/setting is not declared
-   */
-  QVariant pluginSetting(const QString &pluginName, const QString &key) const;
-
-  /**
-   * @brief set a setting for one of the installed mods
-   * @param pluginName name of the plugin
-   * @param key name of the setting to change
-   * @param value the new value to set
-   * @throw an exception is thrown if pluginName is invalid
-   */
-  void setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value);
-
-  /**
-   * @brief retrieve a persistent value for a plugin
-   * @param pluginName name of the plugin to store data for
-   * @param key id of the value to retrieve
-   * @param def default value to return if the value is not set
-   * @return the requested value
-   */
-  QVariant pluginPersistent(const QString &pluginName, const QString &key, const QVariant &def) const;
-
-  /**
-   * @brief set a persistent value for a plugin
-   * @param pluginName name of the plugin to store data for
-   * @param key id of the value to retrieve
-   * @param value value to set
-   * @throw an exception is thrown if pluginName is invalid
-   */
-  void setPluginPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync);
-
-  /**
    * @return short code of the configured language (corresponding to the translation files)
    */
   QString language();
@@ -468,24 +458,6 @@ public:
   ServerList getServers() const;
   ServerList getServersFromOldMap() const;
   void updateServers(ServerList servers);
-
-  /**
-   * @brief add a plugin that is to be blacklisted
-   * @param fileName name of the plugin to blacklist
-   */
-  void addBlacklistPlugin(const QString &fileName);
-
-  /**
-   * @brief test if a plugin is blacklisted and shouldn't be loaded
-   * @param fileName name of the plugin
-   * @return true if the file is blacklisted
-   */
-  bool pluginBlacklisted(const QString &fileName) const;
-
-  /**
-   * @return all loaded MO plugins
-   */
-  std::vector<MOBase::IPlugin*> plugins() const { return m_Plugins; }
 
   bool usePrereleases() const;
   void setUsePrereleases(bool b);
@@ -513,12 +485,6 @@ public:
 
   void dump() const;
 
-  // temp
-  QMap<QString, QVariantMap> m_PluginSettings;
-  QMap<QString, QVariantMap> m_PluginDescriptions;
-  QSet<QString> m_PluginBlacklist;
-  void writePluginBlacklist();
-
 public slots:
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
@@ -532,13 +498,12 @@ private:
   mutable QSettings m_Settings;
   GeometrySettings m_Geometry;
   ColorSettings m_Colors;
+  PluginSettings m_Plugins;
   LoadMechanism m_LoadMechanism;
-  std::vector<MOBase::IPlugin*> m_Plugins;
 
   static bool obfuscate(const QString key, const QString data);
   static QString deObfuscate(const QString key);
 
-  void readPluginBlacklist();
   QString getConfigurablePath(const QString &key, const QString &def, bool resolve) const;
   void setConfigurablePath(const QString &key, const QString& path);
 };

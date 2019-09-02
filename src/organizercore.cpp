@@ -512,7 +512,7 @@ void OrganizerCore::disconnectPlugins()
   m_DownloadManager.setPluginContainer(nullptr);
   m_ModList.setPluginContainer(nullptr);
 
-  m_Settings.clearPlugins();
+  m_Settings.plugins().clearPlugins();
   m_GamePlugin      = nullptr;
   m_PluginContainer = nullptr;
 }
@@ -864,26 +864,26 @@ void OrganizerCore::modDataChanged(MOBase::IModInterface *)
 QVariant OrganizerCore::pluginSetting(const QString &pluginName,
                                       const QString &key) const
 {
-  return m_Settings.pluginSetting(pluginName, key);
+  return m_Settings.plugins().pluginSetting(pluginName, key);
 }
 
 void OrganizerCore::setPluginSetting(const QString &pluginName,
                                      const QString &key, const QVariant &value)
 {
-  m_Settings.setPluginSetting(pluginName, key, value);
+  m_Settings.plugins().setPluginSetting(pluginName, key, value);
 }
 
 QVariant OrganizerCore::persistent(const QString &pluginName,
                                    const QString &key,
                                    const QVariant &def) const
 {
-  return m_Settings.pluginPersistent(pluginName, key, def);
+  return m_Settings.plugins().pluginPersistent(pluginName, key, def);
 }
 
 void OrganizerCore::setPersistent(const QString &pluginName, const QString &key,
                                   const QVariant &value, bool sync)
 {
-  m_Settings.setPluginPersistent(pluginName, key, value, sync);
+  m_Settings.plugins().setPluginPersistent(pluginName, key, value, sync);
 }
 
 QString OrganizerCore::pluginDataPath() const

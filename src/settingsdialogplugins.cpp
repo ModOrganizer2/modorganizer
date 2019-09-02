@@ -12,19 +12,19 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, SettingsDialog& d)
 
   // display plugin settings
   QSet<QString> handledNames;
-  for (IPlugin *plugin : settings().plugins()) {
+  for (IPlugin *plugin : settings().plugins().plugins()) {
     if (handledNames.contains(plugin->name()))
       continue;
     QListWidgetItem *listItem = new QListWidgetItem(plugin->name(), ui->pluginsList);
     listItem->setData(Qt::UserRole, QVariant::fromValue((void*)plugin));
-    listItem->setData(Qt::UserRole + 1, settings().m_PluginSettings[plugin->name()]);
-    listItem->setData(Qt::UserRole + 2, settings().m_PluginDescriptions[plugin->name()]);
+    listItem->setData(Qt::UserRole + 1, settings().plugins().pluginSettings(plugin->name()));
+    listItem->setData(Qt::UserRole + 2, settings().plugins().pluginDescriptions(plugin->name()));
     ui->pluginsList->addItem(listItem);
     handledNames.insert(plugin->name());
   }
 
   // display plugin blacklist
-  for (const QString &pluginName : settings().m_PluginBlacklist) {
+  for (const QString &pluginName : settings().plugins().pluginBlacklist()) {
     ui->pluginBlacklist->addItem(pluginName);
   }
 
@@ -42,21 +42,19 @@ void PluginsSettingsTab::update()
   // transfer plugin settings to in-memory structure
   for (int i = 0; i < ui->pluginsList->count(); ++i) {
     QListWidgetItem *item = ui->pluginsList->item(i);
-    settings().m_PluginSettings[item->text()] = item->data(Qt::UserRole + 1).toMap();
-  }
-  // store plugin settings on disc
-  for (auto iterPlugins = settings().m_PluginSettings.begin(); iterPlugins != settings().m_PluginSettings.end(); ++iterPlugins) {
-    for (auto iterSettings = iterPlugins->begin(); iterSettings != iterPlugins->end(); ++iterSettings) {
-      qsettings().setValue("Plugins/" + iterPlugins.key() + "/" + iterSettings.key(), iterSettings.value());
-    }
+    settings().plugins().setPluginSettings(
+      item->text(), item->data(Qt::UserRole + 1).toMap());
   }
 
-  // store plugin blacklist
-  settings().m_PluginBlacklist.clear();
+  // set plugin blacklist
+  QStringList names;
   for (QListWidgetItem *item : ui->pluginBlacklist->findItems("*", Qt::MatchWildcard)) {
-    settings().m_PluginBlacklist.insert(item->text());
+    names.push_back(item->text());
   }
-  settings().writePluginBlacklist();
+
+  settings().plugins().setPluginBlacklist(names);
+
+  settings().plugins().save();
 }
 
 void PluginsSettingsTab::closing()

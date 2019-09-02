@@ -242,7 +242,7 @@ Settings *Settings::s_Instance = nullptr;
 
 Settings::Settings(const QString& path) :
   m_Settings(path, QSettings::IniFormat),
-  m_Geometry(m_Settings), m_Colors(m_Settings)
+  m_Geometry(m_Settings), m_Colors(m_Settings), m_Plugins(m_Settings)
 {
   if (s_Instance != nullptr) {
     throw std::runtime_error("second instance of \"Settings\" created");
@@ -319,25 +319,6 @@ QString Settings::getFilename() const
   return m_Settings.fileName();
 }
 
-void Settings::clearPlugins()
-{
-  m_Plugins.clear();
-  m_PluginSettings.clear();
-
-  m_PluginBlacklist.clear();
-
-  ScopedReadArray sra(m_Settings, "pluginBlacklist");
-  for (int i = 0; i < sra.count(); ++i) {
-    m_Settings.setArrayIndex(i);
-    m_PluginBlacklist.insert(m_Settings.value("name").toString());
-  }
-}
-
-bool Settings::pluginBlacklisted(const QString &fileName) const
-{
-  return m_PluginBlacklist.contains(fileName);
-}
-
 void Settings::registerAsNXMHandler(bool force)
 {
   const auto nxmPath = QCoreApplication::applicationDirPath() + "/nxmhandler.exe";
@@ -369,24 +350,6 @@ void Settings::setColorSeparatorScrollbar(bool b)
 void Settings::managedGameChanged(IPluginGame const *gamePlugin)
 {
   m_GamePlugin = gamePlugin;
-}
-
-void Settings::registerPlugin(IPlugin *plugin)
-{
-  m_Plugins.push_back(plugin);
-  m_PluginSettings.insert(plugin->name(), QVariantMap());
-  m_PluginDescriptions.insert(plugin->name(), QVariantMap());
-  for (const PluginSetting &setting : plugin->settings()) {
-    QVariant temp = m_Settings.value("Plugins/" + plugin->name() + "/" + setting.key, setting.defaultValue);
-    if (!temp.convert(setting.defaultValue.type())) {
-      log::warn(
-        "failed to interpret \"{}\" as correct type for \"{}\" in plugin \"{}\", using default",
-        temp.toString(), setting.key, plugin->name());
-      temp = setting.defaultValue;
-    }
-    m_PluginSettings[plugin->name()][setting.key] = temp;
-    m_PluginDescriptions[plugin->name()][setting.key] = QString("%1 (default: %2)").arg(setting.description).arg(setting.defaultValue.toString());
-  }
 }
 
 bool Settings::obfuscate(const QString key, const QString data)
@@ -921,51 +884,6 @@ bool Settings::archiveParsing() const
   return m_Settings.value("Settings/archive_parsing_experimental", false).toBool();
 }
 
-QVariant Settings::pluginSetting(const QString &pluginName, const QString &key) const
-{
-  auto iterPlugin = m_PluginSettings.find(pluginName);
-  if (iterPlugin == m_PluginSettings.end()) {
-    return QVariant();
-  }
-  auto iterSetting = iterPlugin->find(key);
-  if (iterSetting == iterPlugin->end()) {
-    return QVariant();
-  }
-
-  return *iterSetting;
-}
-
-void Settings::setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value)
-{
-  auto iterPlugin = m_PluginSettings.find(pluginName);
-  if (iterPlugin == m_PluginSettings.end()) {
-    throw MyException(tr("attempt to store setting for unknown plugin \"%1\"").arg(pluginName));
-  }
-
-  // store the new setting both in memory and in the ini
-  m_PluginSettings[pluginName][key] = value;
-  m_Settings.setValue("Plugins/" + pluginName + "/" + key, value);
-}
-
-QVariant Settings::pluginPersistent(const QString &pluginName, const QString &key, const QVariant &def) const
-{
-  if (!m_PluginSettings.contains(pluginName)) {
-    return def;
-  }
-  return m_Settings.value("PluginPersistance/" + pluginName + "/" + key, def);
-}
-
-void Settings::setPluginPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync)
-{
-  if (!m_PluginSettings.contains(pluginName)) {
-    throw MyException(tr("attempt to store setting for unknown plugin \"%1\"").arg(pluginName));
-  }
-  m_Settings.setValue("PluginPersistance/" + pluginName + "/" + key, value);
-  if (sync) {
-    m_Settings.sync();
-  }
-}
-
 QString Settings::language()
 {
   QString result = m_Settings.value("Settings/language", "").toString();
@@ -1119,24 +1037,6 @@ void Settings::updateServers(ServerList servers)
 
       ++i;
     }
-  }
-}
-
-void Settings::addBlacklistPlugin(const QString &fileName)
-{
-  m_PluginBlacklist.insert(fileName);
-  writePluginBlacklist();
-}
-
-void Settings::writePluginBlacklist()
-{
-  m_Settings.remove("pluginBlacklist");
-
-  ScopedWriteArray swa(m_Settings, "pluginBlacklist");
-  int idx = 0;
-  for (const QString &plugin : m_PluginBlacklist) {
-    m_Settings.setArrayIndex(idx++);
-    m_Settings.setValue("name", plugin);
   }
 }
 
@@ -1363,6 +1263,16 @@ ColorSettings& Settings::colors()
 const ColorSettings& Settings::colors() const
 {
   return m_Colors;
+}
+
+PluginSettings& Settings::plugins()
+{
+  return m_Plugins;
+}
+
+const PluginSettings& Settings::plugins() const
+{
+  return m_Plugins;
 }
 
 QSettings::Status Settings::sync() const
@@ -1769,6 +1679,158 @@ QColor ColorSettings::pluginListContained() const
 void ColorSettings::setPluginListContained(const QColor& c)
 {
   m_Settings.setValue("Settings/containedColor", c);
+}
+
+
+PluginSettings::PluginSettings(QSettings& settings)
+  : m_Settings(settings)
+{
+}
+
+void PluginSettings::clearPlugins()
+{
+  m_Plugins.clear();
+  m_PluginSettings.clear();
+
+  m_PluginBlacklist.clear();
+
+  ScopedReadArray sra(m_Settings, "pluginBlacklist");
+  for (int i = 0; i < sra.count(); ++i) {
+    m_Settings.setArrayIndex(i);
+    m_PluginBlacklist.insert(m_Settings.value("name").toString());
+  }
+}
+
+void PluginSettings::registerPlugin(IPlugin *plugin)
+{
+  m_Plugins.push_back(plugin);
+  m_PluginSettings.insert(plugin->name(), QVariantMap());
+  m_PluginDescriptions.insert(plugin->name(), QVariantMap());
+  for (const PluginSetting &setting : plugin->settings()) {
+    QVariant temp = m_Settings.value("Plugins/" + plugin->name() + "/" + setting.key, setting.defaultValue);
+    if (!temp.convert(setting.defaultValue.type())) {
+      log::warn(
+        "failed to interpret \"{}\" as correct type for \"{}\" in plugin \"{}\", using default",
+        temp.toString(), setting.key, plugin->name());
+      temp = setting.defaultValue;
+    }
+    m_PluginSettings[plugin->name()][setting.key] = temp;
+    m_PluginDescriptions[plugin->name()][setting.key] = QString("%1 (default: %2)").arg(setting.description).arg(setting.defaultValue.toString());
+  }
+}
+
+bool PluginSettings::pluginBlacklisted(const QString &fileName) const
+{
+  return m_PluginBlacklist.contains(fileName);
+}
+
+QVariant PluginSettings::pluginSetting(const QString &pluginName, const QString &key) const
+{
+  auto iterPlugin = m_PluginSettings.find(pluginName);
+  if (iterPlugin == m_PluginSettings.end()) {
+    return QVariant();
+  }
+  auto iterSetting = iterPlugin->find(key);
+  if (iterSetting == iterPlugin->end()) {
+    return QVariant();
+  }
+
+  return *iterSetting;
+}
+
+void PluginSettings::setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value)
+{
+  auto iterPlugin = m_PluginSettings.find(pluginName);
+  if (iterPlugin == m_PluginSettings.end()) {
+    throw MyException(QObject::tr("attempt to store setting for unknown plugin \"%1\"").arg(pluginName));
+  }
+
+  // store the new setting both in memory and in the ini
+  m_PluginSettings[pluginName][key] = value;
+  m_Settings.setValue("Plugins/" + pluginName + "/" + key, value);
+}
+
+QVariant PluginSettings::pluginPersistent(const QString &pluginName, const QString &key, const QVariant &def) const
+{
+  if (!m_PluginSettings.contains(pluginName)) {
+    return def;
+  }
+  return m_Settings.value("PluginPersistance/" + pluginName + "/" + key, def);
+}
+
+void PluginSettings::setPluginPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync)
+{
+  if (!m_PluginSettings.contains(pluginName)) {
+    throw MyException(QObject::tr("attempt to store setting for unknown plugin \"%1\"").arg(pluginName));
+  }
+  m_Settings.setValue("PluginPersistance/" + pluginName + "/" + key, value);
+  if (sync) {
+    m_Settings.sync();
+  }
+}
+
+void PluginSettings::addBlacklistPlugin(const QString &fileName)
+{
+  m_PluginBlacklist.insert(fileName);
+  writePluginBlacklist();
+}
+
+void PluginSettings::writePluginBlacklist()
+{
+  m_Settings.remove("pluginBlacklist");
+
+  ScopedWriteArray swa(m_Settings, "pluginBlacklist");
+  int idx = 0;
+  for (const QString &plugin : m_PluginBlacklist) {
+    m_Settings.setArrayIndex(idx++);
+    m_Settings.setValue("name", plugin);
+  }
+}
+
+QVariantMap PluginSettings::pluginSettings(const QString &pluginName) const
+{
+  return m_PluginSettings[pluginName];
+}
+
+void PluginSettings::setPluginSettings(const QString &pluginName, const QVariantMap& map)
+{
+  m_PluginSettings[pluginName] = map;
+}
+
+QVariantMap PluginSettings::pluginDescriptions(const QString &pluginName) const
+{
+  return m_PluginDescriptions[pluginName];
+}
+
+void PluginSettings::pluginDescriptions(const QString &pluginName, const QVariantMap& map)
+{
+  m_PluginDescriptions[pluginName] = map;
+}
+
+const QSet<QString>& PluginSettings::pluginBlacklist() const
+{
+  return m_PluginBlacklist;
+}
+
+void PluginSettings::setPluginBlacklist(const QStringList& pluginNames)
+{
+  m_PluginBlacklist.clear();
+
+  for (const auto& name : pluginNames) {
+    m_PluginBlacklist.insert(name);
+  }
+}
+
+void PluginSettings::save()
+{
+  for (auto iterPlugins=m_PluginSettings.begin(); iterPlugins!=m_PluginSettings.end(); ++iterPlugins) {
+    for (auto iterSettings=iterPlugins->begin(); iterSettings!=iterPlugins->end(); ++iterSettings) {
+      const auto key = "Plugins/" + iterPlugins.key() + "/" + iterSettings.key();
+      m_Settings.setValue(key, iterSettings.value());
+    }
+  }
+
+  writePluginBlacklist();
 }
 
 
