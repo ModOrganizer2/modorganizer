@@ -36,8 +36,6 @@ namespace MOBase {
 
 class QSplitter;
 
-class PluginContainer;
-class ServerInfo;
 class ServerList;
 class Settings;
 class ExpanderWidget;
@@ -503,7 +501,6 @@ public:
 private:
   QSettings& m_Settings;
 };
-
 
 
 /**
