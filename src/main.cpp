@@ -246,7 +246,7 @@ static bool HaveWriteAccess(const std::wstring &path)
 
 QString determineProfile(QStringList &arguments, const Settings &settings)
 {
-  auto selectedProfileName = settings.getSelectedProfileName();
+  auto selectedProfileName = settings.game().selectedProfileName();
 
   { // see if there is a profile on the command line
     int profileIndex = arguments.indexOf("-p", 1);
@@ -271,12 +271,12 @@ QString determineProfile(QStringList &arguments, const Settings &settings)
 MOBase::IPluginGame *selectGame(
   Settings &settings, QDir const &gamePath, MOBase::IPluginGame *game)
 {
-  settings.setManagedGameName(game->gameName());
+  settings.game().setName(game->gameName());
 
   QString gameDir = gamePath.absolutePath();
   game->setGamePath(gameDir);
 
-  settings.setManagedGameDirectory(gameDir);
+  settings.game().setDirectory(gameDir);
 
   return game;
 }
@@ -289,7 +289,7 @@ MOBase::IPluginGame *determineCurrentGame(
   //user has done something odd.
 
   //If the game name has been set up, try to use that.
-  const auto gameName = settings.getManagedGameName();
+  const auto gameName = settings.game().name();
   const bool gameConfigured = (gameName.has_value() && *gameName != "");
 
   if (gameConfigured) {
@@ -299,7 +299,7 @@ MOBase::IPluginGame *determineCurrentGame(
       return nullptr;
     }
 
-    auto gamePath = settings.getManagedGameDirectory();
+    auto gamePath = settings.game().directory();
     if (!gamePath || *gamePath == "") {
       gamePath = game->gameDirectory().absolutePath();
     }
@@ -320,7 +320,7 @@ MOBase::IPluginGame *determineCurrentGame(
   //If we've made it this far and the instance is already configured for a game, something has gone wrong.
   //Tell the user about it.
   if (gameConfigured) {
-    const auto gamePath = settings.getManagedGameDirectory();
+    const auto gamePath = settings.game().directory();
 
     reportError(
       QObject::tr("Could not use configuration settings for game \"%1\", path \"%2\".")
@@ -570,11 +570,11 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     log::info("working directory: {}", QDir::currentPath());
 
     Settings settings(dataPath + "/" + QString::fromStdWString(AppConfig::iniFileName()));
-    log::getDefault().setLevel(settings.logLevel());
+    log::getDefault().setLevel(settings.diagnostics().logLevel());
 
     // global crashDumpType sits in OrganizerCore to make a bit less ugly to
     // update it when the settings are changed during runtime
-    OrganizerCore::setGlobalCrashDumpsType(settings.crashDumpsType());
+    OrganizerCore::setGlobalCrashDumpsType(settings.diagnostics().crashDumpsType());
 
     env::Environment env;
 
@@ -621,7 +621,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
     QString edition;
 
-    if (auto v=settings.getManagedGameEdition()) {
+    if (auto v=settings.game().edition()) {
       edition = *v;
     } else {
       QStringList editions = game->gameVariants();
@@ -640,7 +640,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
           return 1;
         } else {
           edition = selection.getChoiceString();
-          settings.setManagedGameEdition(edition);
+          settings.game().setEdition(edition);
         }
       }
     }
@@ -702,7 +702,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     splash.activateWindow();
 
     QString apiKey;
-    if (settings.getNexusApiKey(apiKey)) {
+    if (settings.nexus().apiKey(apiKey)) {
       NexusInterface::instance(&pluginContainer)->getAccessManager()->apiCheck(apiKey);
     }
 
@@ -712,9 +712,9 @@ int runApplication(MOApplication &application, SingleInstance &instance,
             + QString::fromStdWString(AppConfig::tutorialsPath()) + "/",
         &organizer);
 
-    if (!application.setStyleFile(settings.getStyleName().value_or(""))) {
+    if (!application.setStyleFile(settings.interface().styleName().value_or(""))) {
       // disable invalid stylesheet
-      settings.setStyleName("");
+      settings.interface().setStyleName("");
     }
 
     int res = 1;

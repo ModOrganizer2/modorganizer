@@ -25,12 +25,12 @@ static std::map<QString, QString> g_Cache;
 
 void FileDialogMemory::save(Settings& s)
 {
-  s.setRecentDirectories(g_Cache);
+  s.paths().setRecent(g_Cache);
 }
 
 void FileDialogMemory::restore(const Settings& s)
 {
-  g_Cache = s.getRecentDirectories();
+  g_Cache = s.paths().recent();
 }
 
 QString FileDialogMemory::getOpenFileName(

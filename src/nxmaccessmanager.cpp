@@ -572,7 +572,7 @@ NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
   m_validator.finished = [&](auto&& user){ onValidatorFinished(user); };
 
   setCookieJar(new PersistentCookieJar(QDir::fromNativeSeparators(
-    Settings::instance().getCacheDirectory() + "/nexus_cookies.dat")));
+    Settings::instance().paths().cache() + "/nexus_cookies.dat")));
 
   if (networkAccessible() == QNetworkAccessManager::UnknownAccessibility) {
     // why is this necessary all of a sudden?

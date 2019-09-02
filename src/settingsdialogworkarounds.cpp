@@ -6,12 +6,12 @@
 WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
   : SettingsTab(s, d)
 {
-  ui->appIDEdit->setText(settings().getSteamAppID());
+  ui->appIDEdit->setText(settings().steam().appID());
 
-  LoadMechanism::EMechanism mechanismID = settings().getLoadMechanism();
+  LoadMechanism::EMechanism mechanismID = settings().game().loadMechanismType();
   int index = 0;
 
-  if (settings().loadMechanism().isDirectLoadingSupported()) {
+  if (settings().game().loadMechanism().isDirectLoadingSupported()) {
     ui->mechanismBox->addItem(QObject::tr("Mod Organizer"), LoadMechanism::LOAD_MODORGANIZER);
     if (mechanismID == LoadMechanism::LOAD_MODORGANIZER) {
       index = ui->mechanismBox->count() - 1;
@@ -20,10 +20,10 @@ WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
 
   ui->mechanismBox->setCurrentIndex(index);
 
-  ui->hideUncheckedBox->setChecked(settings().hideUncheckedPlugins());
-  ui->forceEnableBox->setChecked(settings().forceEnableCoreFiles());
-  ui->displayForeignBox->setChecked(settings().displayForeign());
-  ui->lockGUIBox->setChecked(settings().lockGUI());
+  ui->hideUncheckedBox->setChecked(settings().game().hideUncheckedPlugins());
+  ui->forceEnableBox->setChecked(settings().game().forceEnableCoreFiles());
+  ui->displayForeignBox->setChecked(settings().interface().displayForeign());
+  ui->lockGUIBox->setChecked(settings().interface().lockGUI());
   ui->enableArchiveParsingBox->setChecked(settings().archiveParsing());
 
   setExecutableBlacklist(settings().executablesBlacklist());
@@ -35,19 +35,19 @@ WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
 
 void WorkaroundsSettingsTab::update()
 {
-  if (ui->appIDEdit->text() != settings().gamePlugin()->steamAPPId()) {
-    settings().setSteamAppID(ui->appIDEdit->text());
+  if (ui->appIDEdit->text() != settings().game().plugin()->steamAPPId()) {
+    settings().steam().setAppID(ui->appIDEdit->text());
   } else {
-    settings().setSteamAppID("");
+    settings().steam().setAppID("");
   }
 
-  settings().setLoadMechanism(static_cast<LoadMechanism::EMechanism>(
+  settings().game().setLoadMechanism(static_cast<LoadMechanism::EMechanism>(
     ui->mechanismBox->itemData(ui->mechanismBox->currentIndex()).toInt()));
 
-  settings().setHideUncheckedPlugins(ui->hideUncheckedBox->isChecked());
-  settings().setForceEnableCoreFiles(ui->forceEnableBox->isChecked());
-  settings().setDisplayForeign(ui->displayForeignBox->isChecked());
-  settings().setLockGUI(ui->lockGUIBox->isChecked());
+  settings().game().setHideUncheckedPlugins(ui->hideUncheckedBox->isChecked());
+  settings().game().setForceEnableCoreFiles(ui->forceEnableBox->isChecked());
+  settings().interface().setDisplayForeign(ui->displayForeignBox->isChecked());
+  settings().interface().setLockGUI(ui->lockGUIBox->isChecked());
   settings().setArchiveParsing(ui->enableArchiveParsingBox->isChecked());
   settings().setExecutablesBlacklist(getExecutableBlacklist());
 }

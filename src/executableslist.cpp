@@ -75,7 +75,7 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, const Settings& s)
   // executables from 2.2.0, see upgradeFromCustom()
   bool needsUpgrade = false;
 
-  for (auto& map : s.getExecutables()) {
+  for (auto& map : s.executables()) {
     Executable::Flags flags;
 
     if (map["toolbar"].toBool())

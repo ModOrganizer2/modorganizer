@@ -19,7 +19,7 @@ NexusTab::NexusTab(ModInfoDialogTabContext cx) :
   ModInfoDialogTab(std::move(cx)), m_requestStarted(false), m_loading(false)
 {
   ui->modID->setValidator(new QIntValidator(ui->modID));
-  ui->endorse->setVisible(core().settings().endorsementIntegration());
+  ui->endorse->setVisible(core().settings().nexus().endorsementIntegration());
 
   connect(ui->modID, &QLineEdit::editingFinished, [&]{ onModIDChanged(); });
   connect(

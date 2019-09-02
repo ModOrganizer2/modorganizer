@@ -51,11 +51,11 @@ int SettingsDialog::exec()
 {
   GeometrySaver gs(m_settings, this);
 
-  m_settings.restoreIndex(ui->tabWidget);
+  m_settings.widgets().restoreIndex(ui->tabWidget);
 
   auto ret = TutorableDialog::exec();
 
-  m_settings.saveIndex(ui->tabWidget);
+  m_settings.widgets().saveIndex(ui->tabWidget);
 
   if (ret == QDialog::Accepted) {
     for (auto&& tab : m_tabs) {
@@ -109,7 +109,7 @@ void SettingsDialog::accept()
 
   if ((QDir::fromNativeSeparators(newModPath) !=
        QDir::fromNativeSeparators(
-           Settings::instance().getModDirectory(true))) &&
+           Settings::instance().paths().mods(true))) &&
       (QMessageBox::question(
            nullptr, tr("Confirm"),
            tr("Changing the mod directory affects all your profiles! "

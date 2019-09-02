@@ -631,7 +631,7 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
   std::vector<ModInfo::EFlag> result = ModInfoWithConflictInfo::getFlags();
   if ((m_NexusID > 0) &&
       (endorsedState() == ENDORSED_FALSE) &&
-      Settings::instance().endorsementIntegration()) {
+      Settings::instance().nexus().endorsementIntegration()) {
     result.push_back(ModInfo::FLAG_NOTENDORSED);
   }
   if ((m_NexusID > 0) &&

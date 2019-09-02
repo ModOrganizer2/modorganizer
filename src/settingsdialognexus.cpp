@@ -74,13 +74,13 @@ private:
 NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
   : SettingsTab(s, d)
 {
-  ui->offlineBox->setChecked(settings().offlineMode());
-  ui->proxyBox->setChecked(settings().getUseProxy());
-  ui->endorsementBox->setChecked(settings().endorsementIntegration());
-  ui->hideAPICounterBox->setChecked(settings().hideAPICounter());
+  ui->offlineBox->setChecked(settings().network().offlineMode());
+  ui->proxyBox->setChecked(settings().network().useProxy());
+  ui->endorsementBox->setChecked(settings().nexus().endorsementIntegration());
+  ui->hideAPICounterBox->setChecked(settings().interface().hideAPICounter());
 
   // display server preferences
-  for (const auto& server : s.getServers()) {
+  for (const auto& server : s.network().servers()) {
     QString descriptor = server.name();
 
     if (!descriptor.compare("CDN", Qt::CaseInsensitive)) {
@@ -117,12 +117,12 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
 
 void NexusSettingsTab::update()
 {
-  settings().setOfflineMode(ui->offlineBox->isChecked());
-  settings().setUseProxy(ui->proxyBox->isChecked());
-  settings().setEndorsementIntegration(ui->endorsementBox->isChecked());
-  settings().setHideAPICounter(ui->hideAPICounterBox->isChecked());
+  settings().network().setOfflineMode(ui->offlineBox->isChecked());
+  settings().network().setUseProxy(ui->proxyBox->isChecked());
+  settings().nexus().setEndorsementIntegration(ui->endorsementBox->isChecked());
+  settings().interface().setHideAPICounter(ui->hideAPICounterBox->isChecked());
 
-  auto servers = settings().getServers();
+  auto servers = settings().network().servers();
 
   // store server preference
   for (int i = 0; i < ui->knownServersList->count(); ++i) {
@@ -167,7 +167,7 @@ void NexusSettingsTab::update()
     }
   }
 
-  settings().updateServers(servers);
+  settings().network().updateServers(servers);
 }
 
 void NexusSettingsTab::on_nexusConnect_clicked()
@@ -225,13 +225,13 @@ void NexusSettingsTab::on_nexusDisconnect_clicked()
 
 void NexusSettingsTab::on_clearCacheButton_clicked()
 {
-  QDir(Settings::instance().getCacheDirectory()).removeRecursively();
+  QDir(Settings::instance().paths().cache()).removeRecursively();
   NexusInterface::instance(dialog().m_PluginContainer)->clearCache();
 }
 
 void NexusSettingsTab::on_associateButton_clicked()
 {
-  Settings::instance().registerAsNXMHandler(true);
+  Settings::instance().nexus().registerAsNXMHandler(true);
 }
 
 void NexusSettingsTab::validateKey(const QString& key)
@@ -312,7 +312,7 @@ void NexusSettingsTab::addNexusLog(const QString& s)
 bool NexusSettingsTab::setKey(const QString& key)
 {
   dialog().m_keyChanged = true;
-  const bool ret = settings().setNexusApiKey(key);
+  const bool ret = settings().nexus().setApiKey(key);
   updateNexusState();
   return ret;
 }
@@ -320,7 +320,7 @@ bool NexusSettingsTab::setKey(const QString& key)
 bool NexusSettingsTab::clearKey()
 {
   dialog().m_keyChanged = true;
-  const auto ret = settings().clearNexusApiKey();
+  const auto ret = settings().nexus().clearApiKey();
 
   NexusInterface::instance(dialog().m_PluginContainer)->getAccessManager()->clearApiKey();
   updateNexusState();
@@ -352,7 +352,7 @@ void NexusSettingsTab::updateNexusButtons()
     ui->nexusManualKey->setText(QObject::tr("Cancel"));
     ui->nexusManualKey->setEnabled(true);
   }
-  else if (settings().hasNexusApiKey()) {
+  else if (settings().nexus().hasApiKey()) {
     // api key is present
     ui->nexusConnect->setText(QObject::tr("Connect to Nexus"));
     ui->nexusConnect->setEnabled(false);

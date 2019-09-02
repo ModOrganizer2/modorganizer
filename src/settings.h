@@ -25,6 +25,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <log.h>
 #include <usvfsparameters.h>
 
+#ifdef interface
+  #undef interface
+#endif
+
 namespace MOBase {
   class IPlugin;
   class IPluginGame;
@@ -47,6 +51,58 @@ public:
 private:
   Settings& m_settings;
   QDialog* m_dialog;
+};
+
+
+class GameSettings
+{
+public:
+  GameSettings(QSettings& setting);
+
+  const MOBase::IPluginGame* plugin();
+  void setPlugin(const MOBase::IPluginGame* gamePlugin);
+
+  /**
+  * whether files of the core game are forced-enabled so the user can't
+  * accidentally disable them
+  */
+  bool forceEnableCoreFiles() const;
+  void setForceEnableCoreFiles(bool b);
+
+  /**
+  * the directory where the managed game is stored (with native separators)
+  **/
+  std::optional<QString> directory() const;
+  void setDirectory(const QString& path);
+
+  std::optional<QString> name() const;
+  void setName(const QString& name);
+
+  std::optional<QString> edition() const;
+  void setEdition(const QString& name);
+
+  std::optional<QString> selectedProfileName() const;
+  void setSelectedProfileName(const QString& name);
+
+  /**
+  * @return the load mechanism to be used
+  **/
+  LoadMechanism::EMechanism loadMechanismType() const;
+  void setLoadMechanism(LoadMechanism::EMechanism m);
+  const LoadMechanism& loadMechanism() const;
+  void setupLoadMechanism();
+
+  /**
+  * @return true if the user wants unchecked plugins (esp, esm) should be hidden from
+  *         the virtual data directory
+  **/
+  bool hideUncheckedPlugins() const;
+  void setHideUncheckedPlugins(bool b);
+
+private:
+  QSettings& m_Settings;
+  const MOBase::IPluginGame* m_GamePlugin;
+  LoadMechanism m_LoadMechanism;
 };
 
 
@@ -83,7 +139,7 @@ public:
   void saveDocks(const QMainWindow* w);
   void restoreDocks(QMainWindow* w) const;
 
-  QStringList getModInfoTabOrder() const;
+  QStringList modInfoTabOrder() const;
   void setModInfoTabOrder(const QString& names);
 
   void centerOnMainWindowMonitor(QWidget* w);
@@ -92,6 +148,40 @@ public:
 private:
   QSettings& m_Settings;
   bool m_Reset;
+};
+
+
+class WidgetSettings
+{
+public:
+  WidgetSettings(QSettings& s);
+
+  std::optional<int> index(const QComboBox* cb) const;
+  void saveIndex(const QComboBox* cb);
+  void restoreIndex(QComboBox* cb, std::optional<int> def={}) const;
+
+  std::optional<int> index(const QTabWidget* w) const;
+  void saveIndex(const QTabWidget* w);
+  void restoreIndex(QTabWidget* w, std::optional<int> def={}) const;
+
+  std::optional<bool> checked(const QAbstractButton* w) const;
+  void saveChecked(const QAbstractButton* w);
+  void restoreChecked(QAbstractButton* w, std::optional<bool> def={}) const;
+
+  MOBase::QuestionBoxMemory::Button questionButton(
+    const QString& windowName, const QString& filename) const;
+
+  void setQuestionWindowButton(
+    const QString& windowName, MOBase::QuestionBoxMemory::Button button);
+
+  void setQuestionFileButton(
+    const QString& windowName, const QString& filename,
+    MOBase::QuestionBoxMemory::Button choice);
+
+  void resetQuestionButtons();
+
+private:
+  QSettings& m_Settings;
 };
 
 
@@ -119,6 +209,19 @@ public:
 
   QColor pluginListContained() const;
   void setPluginListContained(const QColor& c) ;
+
+  std::optional<QColor> previousSeparatorColor() const;
+  void setPreviousSeparatorColor(const QColor& c) const;
+  void removePreviousSeparatorColor();
+
+  /**
+  * @brief color the scrollbar of the mod list for custom separator colors?
+  * @return the state of the setting
+  */
+  bool colorSeparatorScrollbar() const;
+  void setColorSeparatorScrollbar(bool b);
+
+  static QColor idealTextColor(const QColor&  rBackgroundColor);
 
 private:
   QSettings& m_Settings;
@@ -165,6 +268,66 @@ private:
 };
 
 
+class PathSettings
+{
+public:
+  PathSettings(QSettings& settings);
+
+  QString base() const;
+  QString downloads(bool resolve = true) const;
+  QString mods(bool resolve = true) const;
+  QString cache(bool resolve = true) const;
+  QString profiles(bool resolve = true) const;
+  QString overwrite(bool resolve = true) const;
+
+  void setBase(const QString& path);
+  void setDownloads(const QString& path);
+  void setMods(const QString& path);
+  void setCache(const QString& path);
+  void setProfiles(const QString& path);
+  void setOverwrite(const QString& path);
+
+  std::map<QString, QString> recent() const;
+  void setRecent(const std::map<QString, QString>& map);
+
+private:
+  QSettings& m_Settings;
+
+  QString getConfigurablePath(const QString &key, const QString &def, bool resolve) const;
+  void setConfigurablePath(const QString &key, const QString& path);
+};
+
+
+class NetworkSettings
+{
+public:
+  NetworkSettings(QSettings& settings);
+
+  /**
+  * @return true if the user disabled internet features
+  */
+  bool offlineMode() const;
+  void setOfflineMode(bool b);
+
+  /**
+  * @return true if the user configured the use of a network proxy
+  */
+  bool useProxy() const;
+  void setUseProxy(bool b);
+
+  void setDownloadSpeed(const QString &serverName, int bytesPerSecond);
+  ServerList servers() const;
+  void updateServers(ServerList servers);
+
+  void dump() const;
+
+private:
+  QSettings& m_Settings;
+
+  ServerList serversFromOldMap() const;
+};
+
+
 enum class EndorsementState
 {
   Accepted = 1,
@@ -174,6 +337,173 @@ enum class EndorsementState
 
 EndorsementState endorsementStateFromString(const QString& s);
 QString toString(EndorsementState s);
+
+class NexusSettings
+{
+public:
+  NexusSettings(Settings& parent, QSettings& settings);
+
+  /**
+  * @return true if the user has set up automatic login to nexus
+  **/
+  bool automaticLoginEnabled() const;
+
+  /**
+  * @brief retrieve the login information for nexus
+  *
+  * @param username (out) receives the user name for nexus
+  * @param password (out) received the password for nexus
+  * @return true if automatic login is active, false otherwise
+  **/
+  bool apiKey(QString &apiKey) const;
+
+  /**
+  * @brief set the nexus login information
+  *
+  * @param username username
+  * @param password password
+  */
+  bool setApiKey(const QString& apiKey);
+
+  /**
+  * @brief clears the nexus login information
+  */
+  bool clearApiKey();
+
+  /**
+  * @brief returns whether an API key is currently stored
+  */
+  bool hasApiKey() const;
+
+  /**
+  * @return true if endorsement integration is enabled
+  */
+  bool endorsementIntegration() const;
+  void setEndorsementIntegration(bool b) const;
+
+  EndorsementState endorsementState() const;
+  void setEndorsementState(EndorsementState s);
+
+  /**
+  * @brief register MO as the handler for nxm links
+  * @param force set to true to enforce the registration dialog to show up,
+  *              even if the user said earlier not to
+  */
+  void registerAsNXMHandler(bool force);
+
+private:
+  Settings& m_Parent;
+  QSettings& m_Settings;
+};
+
+
+class SteamSettings
+{
+public:
+  SteamSettings(Settings& parent, QSettings& settings);
+
+  /**
+  * the steam appid is assigned by the steam platform to each product sold there.
+  * The appid may differ between different versions of a game so it may be impossible
+  * for Mod Organizer to automatically recognize it, though usually it does
+  * @return the steam appid for the game
+  **/
+  QString appID() const;
+  void setAppID(const QString& id);
+
+  /**
+  * @brief retrieve the login information for steam
+  *
+  * @param username (out) receives the user name for nexus
+  * @param password (out) received the password for nexus
+  * @return true if a username has been specified, false otherwise
+  **/
+  bool login(QString &username, QString &password) const;
+
+  /**
+  * @brief set the steam login information
+  *
+  * @param username username
+  * @param password password
+  */
+  void setLogin(QString username, QString password);
+
+private:
+  Settings& m_Parent;
+  QSettings& m_Settings;
+};
+
+
+class InterfaceSettings
+{
+public:
+  InterfaceSettings(QSettings& settings);
+
+  /**
+  * @return true if the GUI should be locked when running executables
+  */
+  bool lockGUI() const;
+  void setLockGUI(bool b);
+
+  std::optional<QString> styleName() const;
+  void setStyleName(const QString& name);
+
+  /**
+  * @return true if the user chose compact downloads
+  */
+  bool compactDownloads() const;
+  void setCompactDownloads(bool b);
+
+  /**
+  * @return true if the user chose meta downloads
+  */
+  bool metaDownloads() const;
+  void setMetaDownloads(bool b);
+
+  /**
+  * @return true if the API counter should be hidden
+  */
+  bool hideAPICounter() const;
+  void setHideAPICounter(bool b);
+
+  /**
+  * @return true if the user wants to see non-official plugins installed outside MO in his mod list
+  */
+  bool displayForeign() const;
+  void setDisplayForeign(bool b);
+
+  /**
+  * @return short code of the configured language (corresponding to the translation files)
+  */
+  QString language();
+  void setLanguage(const QString& name);
+
+  bool isTutorialCompleted(const QString& windowName) const;
+  void setTutorialCompleted(const QString& windowName, bool b=true);
+
+private:
+  QSettings& m_Settings;
+};
+
+
+class DiagnosticsSettings
+{
+public:
+  DiagnosticsSettings(QSettings& settings);
+
+  MOBase::log::Levels logLevel() const;
+  void setLogLevel(MOBase::log::Levels level);
+
+  CrashDumpsType crashDumpsType() const;
+  void setCrashDumpsType(CrashDumpsType type);
+
+  int crashDumpsMax() const;
+  void setCrashDumpsMax(int n);
+
+private:
+  QSettings& m_Settings;
+};
+
 
 
 /**
@@ -190,248 +520,28 @@ public:
 
   static Settings &instance();
 
-  void processUpdates(
-    const QVersionNumber& currentVersion, const QVersionNumber& lastVersion);
+  QString filename() const;
 
-  QString getFilename() const;
+  std::optional<QVersionNumber> version() const;
+  void processUpdates(const QVersionNumber& current, const QVersionNumber& last);
 
-  /**
-   * @return true if the user wants unchecked plugins (esp, esm) should be hidden from
-   *         the virtual dat adirectory
-   **/
-  bool hideUncheckedPlugins() const;
-  void setHideUncheckedPlugins(bool b);
-
-  /**
-   * @return true if files of the core game are forced-enabled so the user can't accidentally disable them
-   */
-  bool forceEnableCoreFiles() const;
-  void setForceEnableCoreFiles(bool b);
-
-  /**
-   * @return true if the GUI should be locked when running executables
-   */
-  bool lockGUI() const;
-  void setLockGUI(bool b);
-
-  /**
-   * the steam appid is assigned by the steam platform to each product sold there.
-   * The appid may differ between different versions of a game so it may be impossible
-   * for Mod Organizer to automatically recognize it, though usually it does
-   * @return the steam appid for the game
-   **/
-  QString getSteamAppID() const;
-  void setSteamAppID(const QString& id);
-
-  QString getBaseDirectory() const;
-  QString getDownloadDirectory(bool resolve = true) const;
-  QString getModDirectory(bool resolve = true) const;
-  QString getCacheDirectory(bool resolve = true) const;
-  QString getProfileDirectory(bool resolve = true) const;
-  QString getOverwriteDirectory(bool resolve = true) const;
-
-  void setBaseDirectory(const QString& path);
-  void setDownloadDirectory(const QString& path);
-  void setModDirectory(const QString& path);
-  void setCacheDirectory(const QString& path);
-  void setProfileDirectory(const QString& path);
-  void setOverwriteDirectory(const QString& path);
-
-  /**
-   * retrieve the directory where the managed game is stored (with native separators)
-   **/
-  std::optional<QString> getManagedGameDirectory() const;
-  void setManagedGameDirectory(const QString& path);
-
-  std::optional<QString> getManagedGameName() const;
-  void setManagedGameName(const QString& name);
-
-  std::optional<QString> getManagedGameEdition() const;
-  void setManagedGameEdition(const QString& name);
-
-  std::optional<QString> getSelectedProfileName() const;
-  void setSelectedProfileName(const QString& name);
-
-  std::optional<QString> getStyleName() const;
-  void setStyleName(const QString& name);
-
-  std::optional<QVersionNumber> getVersion() const;
-
-  bool getFirstStart() const;
+  bool firstStart() const;
   void setFirstStart(bool b);
 
-  std::optional<QColor> getPreviousSeparatorColor() const;
-  void setPreviousSeparatorColor(const QColor& c) const;
-  void removePreviousSeparatorColor();
-
-  std::map<QString, QString> getRecentDirectories() const;
-  void setRecentDirectories(const std::map<QString, QString>& map);
-
-  std::vector<std::map<QString, QVariant>> getExecutables() const;
+  std::vector<std::map<QString, QVariant>> executables() const;
   void setExecutables(const std::vector<std::map<QString, QVariant>>& v);
-
-  bool isTutorialCompleted(const QString& windowName) const;
-  void setTutorialCompleted(const QString& windowName, bool b=true);
 
   bool keepBackupOnInstall() const;
   void setKeepBackupOnInstall(bool b);
-
-  MOBase::QuestionBoxMemory::Button getQuestionButton(
-    const QString& windowName, const QString& filename) const;
-
-  void setQuestionWindowButton(
-    const QString& windowName, MOBase::QuestionBoxMemory::Button button);
-
-  void setQuestionFileButton(
-    const QString& windowName, const QString& filename,
-    MOBase::QuestionBoxMemory::Button choice);
-
-  void resetQuestionButtons();
-
-  std::optional<int> getIndex(const QComboBox* cb) const;
-  void saveIndex(const QComboBox* cb);
-  void restoreIndex(QComboBox* cb, std::optional<int> def={}) const;
-
-  std::optional<int> getIndex(const QTabWidget* w) const;
-  void saveIndex(const QTabWidget* w);
-  void restoreIndex(QTabWidget* w, std::optional<int> def={}) const;
-
-  std::optional<bool> getChecked(const QAbstractButton* w) const;
-  void saveChecked(const QAbstractButton* w);
-  void restoreChecked(QAbstractButton* w, std::optional<bool> def={}) const;
-
-  GeometrySettings& geometry();
-  const GeometrySettings& geometry() const;
-
-  ColorSettings& colors();
-  const ColorSettings& colors() const;
-
-  PluginSettings& plugins();
-  const PluginSettings& plugins() const;
-
-
-  /**
-   * @return true if the user has set up automatic login to nexus
-   **/
-  bool automaticLoginEnabled() const;
-
-  /**
-   * @brief retrieve the login information for nexus
-   *
-   * @param username (out) receives the user name for nexus
-   * @param password (out) received the password for nexus
-   * @return true if automatic login is active, false otherwise
-   **/
-  bool getNexusApiKey(QString &apiKey) const;
-
-  /**
-  * @brief set the nexus login information
-  *
-  * @param username username
-  * @param password password
-  */
-  bool setNexusApiKey(const QString& apiKey);
-
-  /**
-  * @brief clears the nexus login information
-  */
-  bool clearNexusApiKey();
-
-  /**
-   * @brief returns whether an API key is currently stored
-   */
-  bool hasNexusApiKey() const;
-
-  /**
-   * @brief retrieve the login information for steam
-   *
-   * @param username (out) receives the user name for nexus
-   * @param password (out) received the password for nexus
-   * @return true if a username has been specified, false otherwise
-   **/
-  bool getSteamLogin(QString &username, QString &password) const;
-
-  /**
-   * @return true if the user disabled internet features
-   */
-  bool offlineMode() const;
-  void setOfflineMode(bool b);
-
-  /**
-   * @return true if the user chose compact downloads
-   */
-  bool compactDownloads() const;
-  void setCompactDownloads(bool b);
-
-  /**
-   * @return true if the user chose meta downloads
-   */
-  bool metaDownloads() const;
-  void setMetaDownloads(bool b);
-
-  MOBase::log::Levels logLevel() const;
-  void setLogLevel(MOBase::log::Levels level);
-
-  CrashDumpsType crashDumpsType() const;
-  void setCrashDumpsType(CrashDumpsType type);
-
-  int crashDumpsMax() const;
-  void setCrashDumpsMax(int n);
 
   QString executablesBlacklist() const;
   void setExecutablesBlacklist(const QString& s);
 
   /**
-   * @brief set the steam login information
-   *
-   * @param username username
-   * @param password password
-   */
-  void setSteamLogin(QString username, QString password);
-
-  /**
-   * @return the load mechanism to be used
-   **/
-  LoadMechanism::EMechanism getLoadMechanism() const;
-  void setLoadMechanism(LoadMechanism::EMechanism m);
-
-  /**
-   * @brief activate the load mechanism selected by the user
-   **/
-  void setupLoadMechanism();
-
-  /**
-   * @return true if the user configured the use of a network proxy
-   */
-  bool getUseProxy() const;
-  void setUseProxy(bool b);
-
-  /**
-   * @return true if endorsement integration is enabled
-   */
-  bool endorsementIntegration() const;
-  void setEndorsementIntegration(bool b) const;
-
-  EndorsementState endorsementState() const;
-  void setEndorsementState(EndorsementState s);
-
-  /**
-   * @return true if the API counter should be hidden
-   */
-  bool hideAPICounter() const;
-  void setHideAPICounter(bool b);
-
-  /**
-   * @return true if the user wants to see non-official plugins installed outside MO in his mod list
-   */
-  bool displayForeign() const;
-  void setDisplayForeign(bool b);
-
-  /**
    * @brief sets the new motd hash
    **/
-  unsigned int getMotDHash() const;
-  void setMotDHash(unsigned int hash);
+  unsigned int motdHash() const;
+  void setMotdHash(unsigned int hash);
 
   /**
   * @return true if the user wants to have archives being parsed to show conflicts and contents
@@ -439,41 +549,45 @@ public:
   bool archiveParsing() const;
   void setArchiveParsing(bool b);
 
-  /**
-   * @return short code of the configured language (corresponding to the translation files)
-   */
-  QString language();
-  void setLanguage(const QString& name);
-
-  void setDownloadSpeed(const QString &serverName, int bytesPerSecond);
-  ServerList getServers() const;
-  ServerList getServersFromOldMap() const;
-  void updateServers(ServerList servers);
-
   bool usePrereleases() const;
   void setUsePrereleases(bool b);
 
-  /**
-   * @brief register MO as the handler for nxm links
-   * @param force set to true to enforce the registration dialog to show up,
-   *              even if the user said earlier not to
-   */
-  void registerAsNXMHandler(bool force);
 
-  /**
-   * @brief color the scrollbar of the mod list for custom separator colors?
-   * @return the state of the setting
-   */
-  bool colorSeparatorScrollbar() const;
-  void setColorSeparatorScrollbar(bool b);
+  GameSettings& game();
+  const GameSettings& game() const;
 
-  static QColor getIdealTextColor(const QColor&  rBackgroundColor);
+  GeometrySettings& geometry();
+  const GeometrySettings& geometry() const;
 
-  MOBase::IPluginGame const *gamePlugin() { return m_GamePlugin; }
-  const LoadMechanism& loadMechanism() const { return m_LoadMechanism; }
+  WidgetSettings& widgets();
+  const WidgetSettings& widgets() const;
+
+  ColorSettings& colors();
+  const ColorSettings& colors() const;
+
+  PluginSettings& plugins();
+  const PluginSettings& plugins() const;
+
+  PathSettings& paths();
+  const PathSettings& paths() const;
+
+  NetworkSettings& network();
+  const NetworkSettings& network() const;
+
+  NexusSettings& nexus();
+  const NexusSettings& nexus() const;
+
+  SteamSettings& steam();
+  const SteamSettings& steam() const;
+
+  InterfaceSettings& interface();
+  const InterfaceSettings& interface() const;
+
+  DiagnosticsSettings& diagnostics();
+  const DiagnosticsSettings& diagnostics() const;
+
 
   QSettings::Status sync() const;
-
   void dump() const;
 
 public slots:
@@ -485,18 +599,19 @@ signals:
 
 private:
   static Settings *s_Instance;
-  MOBase::IPluginGame const *m_GamePlugin;
   mutable QSettings m_Settings;
+
+  GameSettings m_Game;
   GeometrySettings m_Geometry;
+  WidgetSettings m_Widgets;
   ColorSettings m_Colors;
   PluginSettings m_Plugins;
-  LoadMechanism m_LoadMechanism;
-
-  static bool obfuscate(const QString key, const QString data);
-  static QString deObfuscate(const QString key);
-
-  QString getConfigurablePath(const QString &key, const QString &def, bool resolve) const;
-  void setConfigurablePath(const QString &key, const QString& path);
+  PathSettings m_Paths;
+  NetworkSettings m_Network;
+  NexusSettings m_Nexus;
+  SteamSettings m_Steam;
+  InterfaceSettings m_Interface;
+  DiagnosticsSettings m_Diagnostics;
 };
 
 #endif // SETTINGS_H

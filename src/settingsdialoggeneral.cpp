@@ -11,7 +11,7 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
 {
   addLanguages();
   {
-    QString languageCode = settings().language();
+    QString languageCode = settings().interface().language();
     int currentID        = ui->languageBox->findData(languageCode);
     // I made a mess. :( Most languages are stored with only the iso country
     // code (2 characters like "de") but chinese
@@ -29,7 +29,7 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
 
   {
     const int currentID = ui->styleBox->findData(
-      settings().getStyleName().value_or(""));
+      settings().interface().styleName().value_or(""));
 
     if (currentID != -1) {
       ui->styleBox->setCurrentIndex(currentID);
@@ -51,10 +51,10 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
   setContainsColor(settings().colors().modlistContainsPlugin());
   setContainedColor(settings().colors().pluginListContained());
 
-  ui->compactBox->setChecked(settings().compactDownloads());
-  ui->showMetaBox->setChecked(settings().metaDownloads());
+  ui->compactBox->setChecked(settings().interface().compactDownloads());
+  ui->showMetaBox->setChecked(settings().interface().metaDownloads());
   ui->usePrereleaseBox->setChecked(settings().usePrereleases());
-  ui->colorSeparatorsBox->setChecked(settings().colorSeparatorScrollbar());
+  ui->colorSeparatorsBox->setChecked(settings().colors().colorSeparatorScrollbar());
 
   QObject::connect(ui->overwritingArchiveBtn, &QPushButton::clicked, [&]{ on_overwritingArchiveBtn_clicked(); });
   QObject::connect(ui->overwritingBtn, &QPushButton::clicked, [&]{ on_overwritingBtn_clicked(); });
@@ -69,18 +69,18 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
 
 void GeneralSettingsTab::update()
 {
-  const QString oldLanguage = settings().language();
+  const QString oldLanguage = settings().interface().language();
   const QString newLanguage = ui->languageBox->itemData(ui->languageBox->currentIndex()).toString();
 
   if (newLanguage != oldLanguage) {
-    settings().setLanguage(newLanguage);
+    settings().interface().setLanguage(newLanguage);
     emit settings().languageChanged(newLanguage);
   }
 
-  const QString oldStyle = settings().getStyleName().value_or("");
+  const QString oldStyle = settings().interface().styleName().value_or("");
   const QString newStyle = ui->styleBox->itemData(ui->styleBox->currentIndex()).toString();
   if (oldStyle != newStyle) {
-    settings().setStyleName(newStyle);
+    settings().interface().setStyleName(newStyle);
     emit settings().styleChanged(newStyle);
   }
 
@@ -91,10 +91,10 @@ void GeneralSettingsTab::update()
   settings().colors().setModlistContainsPlugin(getContainsColor());
   settings().colors().setPluginListContained(getContainedColor());
 
-  settings().setCompactDownloads(ui->compactBox->isChecked());
-  settings().setMetaDownloads(ui->showMetaBox->isChecked());
+  settings().interface().setCompactDownloads(ui->compactBox->isChecked());
+  settings().interface().setMetaDownloads(ui->showMetaBox->isChecked());
   settings().setUsePrereleases(ui->usePrereleaseBox->isChecked());
-  settings().setColorSeparatorScrollbar(ui->colorSeparatorsBox->isChecked());
+  settings().colors().setColorSeparatorScrollbar(ui->colorSeparatorsBox->isChecked());
 }
 
 void GeneralSettingsTab::addLanguages()
@@ -145,7 +145,7 @@ void GeneralSettingsTab::addStyles()
 
 void GeneralSettingsTab::resetDialogs()
 {
-  settings().resetQuestionButtons();
+  settings().widgets().resetQuestionButtons();
 }
 
 void GeneralSettingsTab::setButtonColor(QPushButton *button, const QColor &color)
@@ -161,7 +161,7 @@ void GeneralSettingsTab::setButtonColor(QPushButton *button, const QColor &color
     .arg(color.green())
     .arg(color.blue())
     .arg(color.alpha())
-    .arg(Settings::getIdealTextColor(color).name())
+    .arg(ColorSettings::idealTextColor(color).name())
   );
 };
 

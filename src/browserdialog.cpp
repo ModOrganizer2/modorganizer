@@ -49,7 +49,7 @@ BrowserDialog::BrowserDialog(QWidget *parent)
   ui->setupUi(this);
 
   m_AccessManager->setCookieJar(new PersistentCookieJar(
-      QDir::fromNativeSeparators(Settings::instance().getCacheDirectory() + "/cookies.dat")));
+    QDir::fromNativeSeparators(Settings::instance().paths().cache() + "/cookies.dat")));
 
   Qt::WindowFlags flags = windowFlags() | Qt::WindowMaximizeButtonHint | Qt::WindowMinimizeButtonHint;
   Qt::WindowFlags helpFlag = Qt::WindowContextHelpButtonHint;

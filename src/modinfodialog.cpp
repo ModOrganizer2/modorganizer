@@ -381,7 +381,7 @@ void ModInfoDialog::reAddTabs(
   Q_ASSERT(visibility.size() == m_tabs.size());
 
   // ordered tab names from settings
-  const auto orderedNames = m_core->settings().geometry().getModInfoTabOrder();
+  const auto orderedNames = m_core->settings().geometry().modInfoTabOrder();
 
   // whether the tabs can be sorted; if the object name of a tab widget is not
   // found in orderedNames, the list cannot be sorted safely

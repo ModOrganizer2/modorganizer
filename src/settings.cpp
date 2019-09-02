@@ -150,7 +150,7 @@ std::optional<T> getOptional(
 template <class T>
 T get(
   const QSettings& settings,
-  const QString& section, const QString& key, T def={})
+  const QString& section, const QString& key, T def)
 {
   if (auto v=getOptional<T>(settings, section, key)) {
     return *v;
@@ -453,22 +453,74 @@ void warnIfNotCheckable(const QAbstractButton* b)
 }
 
 
+bool setWindowsCredential(const QString key, const QString data)
+{
+  QString finalKey("ModOrganizer2_" + key);
+  wchar_t* keyData = new wchar_t[finalKey.size()+1];
+  finalKey.toWCharArray(keyData);
+  keyData[finalKey.size()] = L'\0';
+  bool result = false;
+  if (data.isEmpty()) {
+    result = CredDeleteW(keyData, CRED_TYPE_GENERIC, 0);
+    if (!result)
+      if (GetLastError() == ERROR_NOT_FOUND)
+        result = true;
+  } else {
+    wchar_t* charData = new wchar_t[data.size()];
+    data.toWCharArray(charData);
+
+    CREDENTIALW cred = {};
+    cred.Flags = 0;
+    cred.Type = CRED_TYPE_GENERIC;
+    cred.TargetName = keyData;
+    cred.CredentialBlob = (LPBYTE)charData;
+    cred.CredentialBlobSize = sizeof(wchar_t) * data.size();
+    cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
+
+    result = CredWriteW(&cred, 0);
+    delete[] charData;
+  }
+  delete[] keyData;
+  return result;
+}
+
+QString getWindowsCredential(const QString key)
+{
+  QString result;
+  QString finalKey("ModOrganizer2_" + key);
+  wchar_t* keyData = new wchar_t[finalKey.size()+1];
+  finalKey.toWCharArray(keyData);
+  keyData[finalKey.size()] = L'\0';
+  PCREDENTIALW creds;
+  if (CredReadW(keyData, 1, 0, &creds)) {
+    wchar_t *charData = (wchar_t *)creds->CredentialBlob;
+    result = QString::fromWCharArray(charData, creds->CredentialBlobSize / sizeof(wchar_t));
+    CredFree(creds);
+  } else {
+    const auto e = GetLastError();
+    if (e != ERROR_NOT_FOUND) {
+      log::error("Retrieving encrypted data failed: {}", formatSystemMessage(e));
+    }
+  }
+  delete[] keyData;
+  return result;
+}
+
+
 Settings *Settings::s_Instance = nullptr;
 
 Settings::Settings(const QString& path) :
   m_Settings(path, QSettings::IniFormat),
-  m_Geometry(m_Settings), m_Colors(m_Settings), m_Plugins(m_Settings)
+  m_Game(m_Settings), m_Geometry(m_Settings), m_Widgets(m_Settings),
+  m_Colors(m_Settings), m_Plugins(m_Settings), m_Paths(m_Settings),
+  m_Network(m_Settings), m_Nexus(*this, m_Settings), m_Steam(*this, m_Settings),
+  m_Interface(m_Settings), m_Diagnostics(m_Settings)
 {
   if (s_Instance != nullptr) {
     throw std::runtime_error("second instance of \"Settings\" created");
   } else {
     s_Instance = this;
   }
-
-  MOBase::QuestionBoxMemory::setCallbacks(
-    [this](auto&& w, auto&& f){ return getQuestionButton(w, f); },
-    [this](auto&& w, auto&& b){ setQuestionWindowButton(w, b); },
-    [this](auto&& w, auto&& f, auto&& b){ setQuestionFileButton(w, f, b); });
 }
 
 Settings::~Settings()
@@ -488,7 +540,7 @@ Settings &Settings::instance()
 void Settings::processUpdates(
   const QVersionNumber& currentVersion, const QVersionNumber& lastVersion)
 {
-  if (getFirstStart()) {
+  if (firstStart()) {
     return;
   }
 
@@ -523,155 +575,9 @@ void Settings::processUpdates(
   set(m_Settings, "General", "version", currentVersion.toString());
 }
 
-QString Settings::getFilename() const
+QString Settings::filename() const
 {
   return m_Settings.fileName();
-}
-
-void Settings::registerAsNXMHandler(bool force)
-{
-  const auto nxmPath = QCoreApplication::applicationDirPath() + "/nxmhandler.exe";
-  const auto executable = QCoreApplication::applicationFilePath();
-
-  QString mode = force ? "forcereg" : "reg";
-  QString parameters = mode + " " + m_GamePlugin->gameShortName();
-  for (const QString& altGame : m_GamePlugin->validShortNames()) {
-    parameters += "," + altGame;
-  }
-  parameters += " \"" + executable + "\"";
-
-  if (!shell::Execute(nxmPath, parameters)) {
-    QMessageBox::critical(
-      nullptr, tr("Failed"), tr("Failed to start the helper application"));
-  }
-}
-
-bool Settings::colorSeparatorScrollbar() const
-{
-  return get<bool>(m_Settings, "Settings", "colorSeparatorScrollbars", true);
-}
-
-void Settings::setColorSeparatorScrollbar(bool b)
-{
-  set(m_Settings, "Settings", "colorSeparatorScrollbars", b);
-}
-
-void Settings::managedGameChanged(IPluginGame const *gamePlugin)
-{
-  m_GamePlugin = gamePlugin;
-}
-
-bool Settings::obfuscate(const QString key, const QString data)
-{
-  QString finalKey("ModOrganizer2_" + key);
-  wchar_t* keyData = new wchar_t[finalKey.size()+1];
-  finalKey.toWCharArray(keyData);
-  keyData[finalKey.size()] = L'\0';
-  bool result = false;
-  if (data.isEmpty()) {
-    result = CredDeleteW(keyData, CRED_TYPE_GENERIC, 0);
-    if (!result)
-      if (GetLastError() == ERROR_NOT_FOUND)
-        result = true;
-  } else {
-    wchar_t* charData = new wchar_t[data.size()];
-    data.toWCharArray(charData);
-
-    CREDENTIALW cred = {};
-    cred.Flags = 0;
-    cred.Type = CRED_TYPE_GENERIC;
-    cred.TargetName = keyData;
-    cred.CredentialBlob = (LPBYTE)charData;
-    cred.CredentialBlobSize = sizeof(wchar_t) * data.size();
-    cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
-
-    result = CredWriteW(&cred, 0);
-    delete[] charData;
-  }
-  delete[] keyData;
-  return result;
-}
-
-QString Settings::deObfuscate(const QString key)
-{
-  QString result;
-  QString finalKey("ModOrganizer2_" + key);
-  wchar_t* keyData = new wchar_t[finalKey.size()+1];
-  finalKey.toWCharArray(keyData);
-  keyData[finalKey.size()] = L'\0';
-  PCREDENTIALW creds;
-  if (CredReadW(keyData, 1, 0, &creds)) {
-    wchar_t *charData = (wchar_t *)creds->CredentialBlob;
-    result = QString::fromWCharArray(charData, creds->CredentialBlobSize / sizeof(wchar_t));
-    CredFree(creds);
-  } else {
-    const auto e = GetLastError();
-    if (e != ERROR_NOT_FOUND) {
-      log::error("Retrieving encrypted data failed: {}", formatSystemMessage(e));
-    }
-  }
-  delete[] keyData;
-  return result;
-}
-
-QColor Settings::getIdealTextColor(const QColor& rBackgroundColor)
-{
-  if (rBackgroundColor.alpha() == 0)
-    return QColor(Qt::black);
-
-  const int THRESHOLD = 106 * 255.0f / rBackgroundColor.alpha();
-  int BackgroundDelta = (rBackgroundColor.red() * 0.299) + (rBackgroundColor.green() * 0.587) + (rBackgroundColor.blue() * 0.114);
-  return QColor((255 - BackgroundDelta <= THRESHOLD) ? Qt::black : Qt::white);
-}
-
-
-bool Settings::hideUncheckedPlugins() const
-{
-  return get<bool>(m_Settings, "Settings", "hide_unchecked_plugins", false);
-}
-
-void Settings::setHideUncheckedPlugins(bool b)
-{
-  set(m_Settings, "Settings", "hide_unchecked_plugins", b);
-}
-
-bool Settings::forceEnableCoreFiles() const
-{
-  return get<bool>(m_Settings, "Settings", "force_enable_core_files", true);
-}
-
-void Settings::setForceEnableCoreFiles(bool b)
-{
-  set(m_Settings, "Settings", "force_enable_core_files", b);
-}
-
-bool Settings::lockGUI() const
-{
-  return get<bool>(m_Settings, "Settings", "lock_gui", true);
-}
-
-void Settings::setLockGUI(bool b)
-{
-  set(m_Settings, "Settings", "lock_gui", b);
-}
-
-bool Settings::automaticLoginEnabled() const
-{
-  return get<bool>(m_Settings, "Settings", "nexus_login", false);
-}
-
-QString Settings::getSteamAppID() const
-{
-  return get<QString>(m_Settings, "Settings", "app_id", m_GamePlugin->steamAPPId());
-}
-
-void Settings::setSteamAppID(const QString& id)
-{
-  if (id.isEmpty()) {
-    remove(m_Settings, "Settings", "app_id");
-  } else {
-    set(m_Settings, "Settings", "app_id", id);
-  }
 }
 
 bool Settings::usePrereleases() const
@@ -684,178 +590,7 @@ void Settings::setUsePrereleases(bool b)
   set(m_Settings, "Settings", "use_prereleases", b);
 }
 
-QString Settings::getConfigurablePath(const QString &key,
-  const QString &def,
-  bool resolve) const
-{
-  QString result = QDir::fromNativeSeparators(
-    get<QString>(m_Settings, "Settings", key, QString("%BASE_DIR%/") + def));
-
-  if (resolve) {
-    result.replace("%BASE_DIR%", getBaseDirectory());
-  }
-
-  return result;
-}
-
-void Settings::setConfigurablePath(const QString &key, const QString& path)
-{
-  if (path.isEmpty()) {
-    remove(m_Settings, "Settings", key);
-  } else {
-    set(m_Settings, "Settings", key, path);
-  }
-}
-
-QString Settings::getBaseDirectory() const
-{
-  return QDir::fromNativeSeparators(get<QString>(m_Settings,
-    "Settings", "base_directory", qApp->property("dataPath").toString()));
-}
-
-QString Settings::getDownloadDirectory(bool resolve) const
-{
-  return getConfigurablePath(
-    "download_directory",
-    ToQString(AppConfig::downloadPath()),
-    resolve);
-}
-
-QString Settings::getCacheDirectory(bool resolve) const
-{
-  return getConfigurablePath(
-    "cache_directory",
-    ToQString(AppConfig::cachePath()),
-    resolve);
-}
-
-QString Settings::getModDirectory(bool resolve) const
-{
-  return getConfigurablePath(
-    "mod_directory",
-    ToQString(AppConfig::modsPath()),
-    resolve);
-}
-
-QString Settings::getProfileDirectory(bool resolve) const
-{
-  return getConfigurablePath(
-    "profiles_directory",
-    ToQString(AppConfig::profilesPath()),
-    resolve);
-}
-
-QString Settings::getOverwriteDirectory(bool resolve) const
-{
-  return getConfigurablePath(
-    "overwrite_directory",
-    ToQString(AppConfig::overwritePath()),
-    resolve);
-}
-
-void Settings::setBaseDirectory(const QString& path)
-{
-  if (path.isEmpty()) {
-    remove(m_Settings, "Settings", "base_directory");
-  } else {
-    set(m_Settings, "Settings", "base_directory", path);
-  }
-}
-
-void Settings::setDownloadDirectory(const QString& path)
-{
-  setConfigurablePath("download_directory", path);
-}
-
-void Settings::setModDirectory(const QString& path)
-{
-  setConfigurablePath("mod_directory", path);
-}
-
-void Settings::setCacheDirectory(const QString& path)
-{
-  setConfigurablePath("cache_directory", path);
-}
-
-void Settings::setProfileDirectory(const QString& path)
-{
-  setConfigurablePath("profiles_directory", path);
-}
-
-void Settings::setOverwriteDirectory(const QString& path)
-{
-  setConfigurablePath("overwrite_directory", path);
-}
-
-std::optional<QString> Settings::getManagedGameDirectory() const
-{
-  if (auto v=getOptional<QByteArray>(m_Settings, "General", "gamePath")) {
-    return QString::fromUtf8(*v);
-  }
-
-  return {};
-}
-
-void Settings::setManagedGameDirectory(const QString& path)
-{
-  set(m_Settings, "General", "gamePath", QDir::toNativeSeparators(path).toUtf8());
-}
-
-std::optional<QString> Settings::getManagedGameName() const
-{
-  return getOptional<QString>(m_Settings, "General", "gameName");
-}
-
-void Settings::setManagedGameName(const QString& name)
-{
-  set(m_Settings, "General", "gameName", name);
-}
-
-std::optional<QString> Settings::getManagedGameEdition() const
-{
-  return getOptional<QString>(m_Settings, "General", "game_edition");
-}
-
-void Settings::setManagedGameEdition(const QString& name)
-{
-  set(m_Settings, "General", "game_edition", name);
-}
-
-std::optional<QString> Settings::getSelectedProfileName() const
-{
-  if (auto v=getOptional<QByteArray>(m_Settings, "General", "selected_profile")) {
-    return QString::fromUtf8(*v);
-  }
-
-  return {};
-}
-
-void Settings::setSelectedProfileName(const QString& name)
-{
-  set(m_Settings, "General", "selected_profile", name.toUtf8());
-}
-
-std::optional<QString> Settings::getStyleName() const
-{
-  return getOptional<QString>(m_Settings, "Settings", "style");
-}
-
-void Settings::setStyleName(const QString& name)
-{
-  set(m_Settings, "Settings", "style", name);
-}
-
-bool Settings::getUseProxy() const
-{
-  return get<bool>(m_Settings, "Settings", "use_proxy", false);
-}
-
-void Settings::setUseProxy(bool b)
-{
-  set(m_Settings, "Settings", "use_proxy", b);
-}
-
-std::optional<QVersionNumber> Settings::getVersion() const
+std::optional<QVersionNumber> Settings::version() const
 {
   if (auto v=getOptional<QString>(m_Settings, "General", "version")) {
     return QVersionNumber::fromString(*v).normalized();
@@ -864,7 +599,7 @@ std::optional<QVersionNumber> Settings::getVersion() const
   return {};
 }
 
-bool Settings::getFirstStart() const
+bool Settings::firstStart() const
 {
   return get<bool>(m_Settings, "General", "first_start", true);
 }
@@ -872,126 +607,6 @@ bool Settings::getFirstStart() const
 void Settings::setFirstStart(bool b)
 {
   set(m_Settings, "General", "first_start", b);
-}
-
-std::optional<QColor> Settings::getPreviousSeparatorColor() const
-{
-  const auto c = getOptional<QColor>(m_Settings, "General", "previousSeparatorColor");
-  if (c && c->isValid()) {
-    return c;
-  }
-
-  return {};
-}
-
-void Settings::setPreviousSeparatorColor(const QColor& c) const
-{
-  set(m_Settings, "General", "previousSeparatorColor", c);
-}
-
-void Settings::removePreviousSeparatorColor()
-{
-  remove(m_Settings, "General", "previousSeparatorColor");
-}
-
-bool Settings::getNexusApiKey(QString &apiKey) const
-{
-  QString tempKey = deObfuscate("APIKEY");
-  if (tempKey.isEmpty())
-    return false;
-
-  apiKey = tempKey;
-  return true;
-}
-
-bool Settings::setNexusApiKey(const QString& apiKey)
-{
-  if (!obfuscate("APIKEY", apiKey)) {
-    const auto e = GetLastError();
-    log::error("Storing API key failed: {}", formatSystemMessage(e));
-    return false;
-  }
-
-  return true;
-}
-
-bool Settings::clearNexusApiKey()
-{
-  return setNexusApiKey("");
-}
-
-bool Settings::hasNexusApiKey() const
-{
-  return !deObfuscate("APIKEY").isEmpty();
-}
-
-bool Settings::getSteamLogin(QString &username, QString &password) const
-{
-  username = get<QString>(m_Settings, "Settings", "steam_username", "");
-  password = deObfuscate("steam_password");
-
-  return !username.isEmpty() && !password.isEmpty();
-}
-
-bool Settings::compactDownloads() const
-{
-  return get<bool>(m_Settings, "Settings", "compact_downloads", false);
-}
-
-void Settings::setCompactDownloads(bool b)
-{
-  set(m_Settings, "Settings", "compact_downloads", b);
-}
-
-bool Settings::metaDownloads() const
-{
-  return get<bool>(m_Settings, "Settings", "meta_downloads", false);
-}
-
-void Settings::setMetaDownloads(bool b)
-{
-  set(m_Settings, "Settings", "meta_downloads", b);
-}
-
-bool Settings::offlineMode() const
-{
-  return get<bool>(m_Settings, "Settings/offline_mode", false);
-}
-
-void Settings::setOfflineMode(bool b)
-{
-  set(m_Settings, "Settings", "offline_mode", b);
-}
-
-log::Levels Settings::logLevel() const
-{
-  return get<log::Levels>(m_Settings, "Settings", "log_level", log::Levels::Info);
-}
-
-void Settings::setLogLevel(log::Levels level)
-{
-  set(m_Settings, "Settings", "log_level", level);
-}
-
-CrashDumpsType Settings::crashDumpsType() const
-{
-  return get<CrashDumpsType>(m_Settings,
-    "Settings", "crash_dumps_type", CrashDumpsType::Mini);
-}
-
-void Settings::setCrashDumpsType(CrashDumpsType type)
-{
-  set(m_Settings, "Settings", "crash_dumps_type", type);
-}
-
-int Settings::crashDumpsMax() const
-{
-  return get<int>(m_Settings, "Settings", "crash_dumps_max", 5);
-}
-
-void Settings::setCrashDumpsMax(int n)
-{
-  set(m_Settings, "Settings", "crash_dumps_max", n);
 }
 
 QString Settings::executablesBlacklist() const
@@ -1016,116 +631,14 @@ void Settings::setExecutablesBlacklist(const QString& s)
   set(m_Settings, "Settings", "executable_blacklist", s);
 }
 
-void Settings::setSteamLogin(QString username, QString password)
-{
-  if (username == "") {
-    remove(m_Settings, "Settings", "steam_username");
-    password = "";
-  } else {
-    set(m_Settings, "Settings", "steam_username", username);
-  }
-
-  if (!obfuscate("steam_password", password)) {
-    const auto e = GetLastError();
-    log::error("Storing or deleting password failed: {}", formatSystemMessage(e));
-  }
-}
-
-LoadMechanism::EMechanism Settings::getLoadMechanism() const
-{
-  const auto def = LoadMechanism::LOAD_MODORGANIZER;
-
-  const auto i = get<LoadMechanism::EMechanism>(m_Settings,
-    "Settings", "load_mechanism", def);
-
-  switch (i)
-  {
-    // ok
-  case LoadMechanism::LOAD_MODORGANIZER:  // fall-through
-  {
-    break;
-  }
-
-  default:
-  {
-    log::error(
-      "invalid load mechanism {}, reverting to {}",
-      static_cast<int>(i), toString(def));
-
-    set(m_Settings, "Settings", "load_mechanism", def);
-
-    return def;
-  }
-  }
-
-  return i;
-}
-
-void Settings::setLoadMechanism(LoadMechanism::EMechanism m)
-{
-  set(m_Settings, "Settings", "load_mechanism", m);
-}
-
-void Settings::setupLoadMechanism()
-{
-  m_LoadMechanism.activate(getLoadMechanism());
-}
-
-bool Settings::endorsementIntegration() const
-{
-  return get<bool>(m_Settings, "Settings", "endorsement_integration", true);
-}
-
-void Settings::setEndorsementIntegration(bool b) const
-{
-  set(m_Settings, "Settings", "endorsement_integration", b);
-}
-
-EndorsementState Settings::endorsementState() const
-{
-  return endorsementStateFromString(
-    get<QString>(m_Settings, "General", "endorse_state", ""));
-}
-
-void Settings::setEndorsementState(EndorsementState s)
-{
-  const auto v = toString(s);
-
-  if (v.isEmpty()) {
-    remove(m_Settings, "General", "endorse_state");
-  } else {
-    set(m_Settings, "General", "endorse_state", v);
-  }
-}
-
-bool Settings::hideAPICounter() const
-{
-  return get<bool>(m_Settings, "Settings", "hide_api_counter", false);
-}
-
-void Settings::setHideAPICounter(bool b)
-{
-  set(m_Settings, "Settings", "hide_api_counter", b);
-}
-
-bool Settings::displayForeign() const
-{
-  return get<bool>(m_Settings, "Settings", "display_foreign", true);
-}
-
-void Settings::setDisplayForeign(bool b)
-{
-  set(m_Settings, "Settings", "display_foreign", b);
-}
-
-void Settings::setMotDHash(uint hash)
+void Settings::setMotdHash(uint hash)
 {
   set(m_Settings, "General", "motd_hash", hash);
 }
 
-unsigned int Settings::getMotDHash() const
+unsigned int Settings::motdHash() const
 {
-  return get<unsigned int>(m_Settings, "motd_hash", 0);
+  return get<unsigned int>(m_Settings, "General", "motd_hash", 0);
 }
 
 bool Settings::archiveParsing() const
@@ -1138,186 +651,7 @@ void Settings::setArchiveParsing(bool b)
   set(m_Settings, "Settings", "archive_parsing_experimental", b);
 }
 
-QString Settings::language()
-{
-  QString result = get<QString>(m_Settings, "Settings", "language", "");
-
-  if (result.isEmpty()) {
-    QStringList languagePreferences = QLocale::system().uiLanguages();
-
-    if (languagePreferences.length() > 0) {
-      // the users most favoritest language
-      result = languagePreferences.at(0);
-    } else {
-      // fallback system locale
-      result = QLocale::system().name();
-    }
-  }
-
-  return result;
-}
-
-void Settings::setLanguage(const QString& name)
-{
-  set(m_Settings, "Settings", "language", name);
-}
-
-void Settings::setDownloadSpeed(const QString& name, int bytesPerSecond)
-{
-  auto servers = getServers();
-
-  for (auto& server : servers) {
-    if (server.name() == name) {
-      server.addDownload(bytesPerSecond);
-      updateServers(servers);
-      return;
-    }
-  }
-
-  log::error(
-    "server '{}' not found while trying to add a download with bps {}",
-    name, bytesPerSecond);
-}
-
-ServerList Settings::getServers() const
-{
-  // servers used to be a map of byte arrays until 2.2.1, it's now an array of
-  // individual values instead
-  //
-  // so post 2.2.1, only one key is returned: "size", the size of the arrays;
-  // in 2.2.1, one key per server is returned
-  {
-    const QStringList keys = ScopedGroup(m_Settings, "Servers").keys();
-
-    if (!keys.empty() && keys[0] != "size") {
-      // old format
-      return getServersFromOldMap();
-    }
-  }
-
-
-  // post 2.2.1 format, array of values
-
-  ServerList list;
-
-  {
-    ScopedReadArray sra(m_Settings, "Servers");
-
-    sra.for_each([&] {
-      ServerInfo::SpeedList lastDownloads;
-
-      const auto lastDownloadsString = sra.get<QString>("lastDownloads", "");
-
-      for (const auto& s : lastDownloadsString.split(" ")) {
-        const auto bytesPerSecond = s.toInt();
-        if (bytesPerSecond > 0) {
-          lastDownloads.push_back(bytesPerSecond);
-        }
-      }
-
-      ServerInfo server(
-        sra.get<QString>("name", ""),
-        sra.get<bool>("premium", false),
-        QDate::fromString(sra.get<QString>("lastSeen", ""), Qt::ISODate),
-        sra.get<int>("preferred", 0),
-        lastDownloads);
-
-      list.add(std::move(server));
-    });
-  }
-
-  return list;
-}
-
-ServerList Settings::getServersFromOldMap() const
-{
-  // for 2.2.1 and before
-
-  ServerList list;
-  const ScopedGroup sg(m_Settings, "Servers");
-
-  sg.for_each([&](auto&& serverKey) {
-    QVariantMap data = sg.get<QVariantMap>(serverKey);
-
-    ServerInfo server(
-      serverKey,
-      data["premium"].toBool(),
-      data["lastSeen"].toDate(),
-      data["preferred"].toInt(),
-      {});
-
-    // ignoring download count and speed, it's now a list of values instead of
-    // a total
-
-    list.add(std::move(server));
-  });
-
-  return list;
-}
-
-void Settings::updateServers(ServerList servers)
-{
-  // clean up unavailable servers
-  servers.cleanup();
-
-  removeSection(m_Settings, "Servers");
-
-  {
-    ScopedWriteArray swa(m_Settings, "Servers");
-
-    for (const auto& server : servers) {
-      swa.next();
-
-      swa.set("name", server.name());
-      swa.set("premium", server.isPremium());
-      swa.set("lastSeen", server.lastSeen().toString(Qt::ISODate));
-      swa.set("preferred", server.preferred());
-
-      QString lastDownloads;
-      for (const auto& speed : server.lastDownloads()) {
-        if (speed > 0) {
-          lastDownloads += QString("%1 ").arg(speed);
-        }
-      }
-
-      swa.set("lastDownloads", lastDownloads.trimmed());
-    }
-  }
-}
-
-std::map<QString, QString> Settings::getRecentDirectories() const
-{
-  std::map<QString, QString> map;
-
-  ScopedReadArray sra(m_Settings, "RecentDirectories");
-
-  sra.for_each([&] {
-    const QVariant name = sra.get<QVariant>("name");
-    const QVariant dir = sra.get<QVariant>("directory");
-
-    if (name.isValid() && dir.isValid()) {
-      map.emplace(name.toString(), dir.toString());
-    }
-  });
-
-  return map;
-}
-
-void Settings::setRecentDirectories(const std::map<QString, QString>& map)
-{
-  removeSection(m_Settings, "RecentDirectories");
-
-  ScopedWriteArray swa(m_Settings, "recentDirectories");
-
-  for (auto&& p : map) {
-    swa.next();
-
-    swa.set("name", p.first);
-    swa.set("directory", p.second);
-  }
-}
-
-std::vector<std::map<QString, QVariant>> Settings::getExecutables() const
+std::vector<std::map<QString, QVariant>> Settings::executables() const
 {
   ScopedReadArray sra(m_Settings, "customExecutables");
   std::vector<std::map<QString, QVariant>> v;
@@ -1350,19 +684,9 @@ void Settings::setExecutables(const std::vector<std::map<QString, QVariant>>& v)
   }
 }
 
-bool Settings::isTutorialCompleted(const QString& windowName) const
-{
-  return get<bool>(m_Settings, "CompletedWindowTutorials", windowName, false);
-}
-
-void Settings::setTutorialCompleted(const QString& windowName, bool b)
-{
-  set(m_Settings, "CompletedWindowTutorials", windowName, b);
-}
-
 bool Settings::keepBackupOnInstall() const
 {
-  return get<bool>(m_Settings, "backup_install", false);
+  return get<bool>(m_Settings, "General", "backup_install", false);
 }
 
 void Settings::setKeepBackupOnInstall(bool b)
@@ -1370,109 +694,14 @@ void Settings::setKeepBackupOnInstall(bool b)
   set(m_Settings, "General", "backup_install", b);
 }
 
-QuestionBoxMemory::Button Settings::getQuestionButton(
-  const QString& windowName, const QString& filename) const
+GameSettings& Settings::game()
 {
-  const QString sectionName("DialogChoices");
-
-  if (!filename.isEmpty()) {
-    const auto fileSetting = windowName + "/" + filename;
-    if (auto v=getOptional<int>(m_Settings, sectionName, filename)) {
-      return static_cast<QuestionBoxMemory::Button>(*v);
-    }
-  }
-
-  if (auto v=getOptional<int>(m_Settings, sectionName, windowName)) {
-    return static_cast<QuestionBoxMemory::Button>(*v);
-  }
-
-  return QuestionBoxMemory::NoButton;
+  return m_Game;
 }
 
-void Settings::setQuestionWindowButton(
-  const QString& windowName, QuestionBoxMemory::Button button)
+const GameSettings& Settings::game() const
 {
-  const QString sectionName("DialogChoices/");
-
-  if (button == QuestionBoxMemory::NoButton) {
-    remove(m_Settings, sectionName, windowName);
-  } else {
-    set(m_Settings, sectionName, windowName, button);
-  }
-}
-
-void Settings::setQuestionFileButton(
-  const QString& windowName, const QString& filename,
-  QuestionBoxMemory::Button button)
-{
-  const QString sectionName("DialogChoices");
-  const QString settingName(windowName + "/" + filename);
-
-  if (button == QuestionBoxMemory::NoButton) {
-    remove(m_Settings, sectionName, settingName);
-  } else {
-    set(m_Settings, sectionName, settingName, button);
-  }
-}
-
-void Settings::resetQuestionButtons()
-{
-  removeSection(m_Settings, "DialogChoices");
-}
-
-std::optional<int> Settings::getIndex(const QComboBox* cb) const
-{
-  return getOptional<int>(m_Settings, "Widgets", indexSettingName(cb));
-}
-
-void Settings::saveIndex(const QComboBox* cb)
-{
-  set(m_Settings, "Widgets", indexSettingName(cb), cb->currentIndex());
-}
-
-void Settings::restoreIndex(QComboBox* cb, std::optional<int> def) const
-{
-  if (auto v=getOptional<int>(m_Settings, "Widgets", indexSettingName(cb), def)) {
-    cb->setCurrentIndex(*v);
-  }
-}
-
-std::optional<int> Settings::getIndex(const QTabWidget* w) const
-{
-  return getOptional<int>(m_Settings, "Widgets", indexSettingName(w));
-}
-
-void Settings::saveIndex(const QTabWidget* w)
-{
-  set(m_Settings, "Widgets", indexSettingName(w), w->currentIndex());
-}
-
-void Settings::restoreIndex(QTabWidget* w, std::optional<int> def) const
-{
-  if (auto v=getOptional<int>(m_Settings, "Widgets", indexSettingName(w), def)) {
-    w->setCurrentIndex(*v);
-  }
-}
-
-std::optional<bool> Settings::getChecked(const QAbstractButton* w) const
-{
-  warnIfNotCheckable(w);
-  return getOptional<bool>(m_Settings, "Widgets", checkedSettingName(w));
-}
-
-void Settings::saveChecked(const QAbstractButton* w)
-{
-  warnIfNotCheckable(w);
-  set(m_Settings, "Widgets", checkedSettingName(w), w->isChecked());
-}
-
-void Settings::restoreChecked(QAbstractButton* w, std::optional<bool> def) const
-{
-  warnIfNotCheckable(w);
-
-  if (auto v=getOptional<bool>(m_Settings, "Widgets", checkedSettingName(w), def)) {
-    w->setChecked(*v);
-  }
+  return m_Game;
 }
 
 GeometrySettings& Settings::geometry()
@@ -1483,6 +712,16 @@ GeometrySettings& Settings::geometry()
 const GeometrySettings& Settings::geometry() const
 {
   return m_Geometry;
+}
+
+WidgetSettings& Settings::widgets()
+{
+  return m_Widgets;
+}
+
+const WidgetSettings& Settings::widgets() const
+{
+  return m_Widgets;
 }
 
 ColorSettings& Settings::colors()
@@ -1503,6 +742,66 @@ PluginSettings& Settings::plugins()
 const PluginSettings& Settings::plugins() const
 {
   return m_Plugins;
+}
+
+PathSettings& Settings::paths()
+{
+  return m_Paths;
+}
+
+const PathSettings& Settings::paths() const
+{
+  return m_Paths;
+}
+
+NetworkSettings& Settings::network()
+{
+  return m_Network;
+}
+
+const NetworkSettings& Settings::network() const
+{
+  return m_Network;
+}
+
+NexusSettings& Settings::nexus()
+{
+  return m_Nexus;
+}
+
+const NexusSettings& Settings::nexus() const
+{
+  return m_Nexus;
+}
+
+SteamSettings& Settings::steam()
+{
+  return m_Steam;
+}
+
+const SteamSettings& Settings::steam() const
+{
+  return m_Steam;
+}
+
+InterfaceSettings& Settings::interface()
+{
+  return m_Interface;
+}
+
+const InterfaceSettings& Settings::interface() const
+{
+  return m_Interface;
+}
+
+DiagnosticsSettings& Settings::diagnostics()
+{
+  return m_Diagnostics;
+}
+
+const DiagnosticsSettings& Settings::diagnostics() const
+{
+  return m_Diagnostics;
 }
 
 QSettings::Status Settings::sync() const
@@ -1531,22 +830,141 @@ void Settings::dump() const
     }
   }
 
-  log::debug("servers:");
+  m_Network.dump();
+}
 
-  for (const auto& server : getServers()) {
-    QString lastDownloads;
-    for (auto speed : server.lastDownloads()) {
-      lastDownloads += QString("%1 ").arg(speed);
+void Settings::managedGameChanged(IPluginGame const *gamePlugin)
+{
+  m_Game.setPlugin(gamePlugin);
+}
+
+
+GameSettings::GameSettings(QSettings& settings)
+  : m_Settings(settings), m_GamePlugin(nullptr)
+{
+}
+
+const MOBase::IPluginGame* GameSettings::plugin()
+{
+  return m_GamePlugin;
+}
+
+void GameSettings::setPlugin(const MOBase::IPluginGame* gamePlugin)
+{
+  m_GamePlugin = gamePlugin;
+}
+
+bool GameSettings::forceEnableCoreFiles() const
+{
+  return get<bool>(m_Settings, "Settings", "force_enable_core_files", true);
+}
+
+void GameSettings::setForceEnableCoreFiles(bool b)
+{
+  set(m_Settings, "Settings", "force_enable_core_files", b);
+}
+
+std::optional<QString> GameSettings::directory() const
+{
+  if (auto v=getOptional<QByteArray>(m_Settings, "General", "gamePath")) {
+    return QString::fromUtf8(*v);
+  }
+
+  return {};
+}
+
+void GameSettings::setDirectory(const QString& path)
+{
+  set(m_Settings, "General", "gamePath", QDir::toNativeSeparators(path).toUtf8());
+}
+
+std::optional<QString> GameSettings::name() const
+{
+  return getOptional<QString>(m_Settings, "General", "gameName");
+}
+
+void GameSettings::setName(const QString& name)
+{
+  set(m_Settings, "General", "gameName", name);
+}
+
+std::optional<QString> GameSettings::edition() const
+{
+  return getOptional<QString>(m_Settings, "General", "game_edition");
+}
+
+void GameSettings::setEdition(const QString& name)
+{
+  set(m_Settings, "General", "game_edition", name);
+}
+
+std::optional<QString> GameSettings::selectedProfileName() const
+{
+  if (auto v=getOptional<QByteArray>(m_Settings, "General", "selected_profile")) {
+    return QString::fromUtf8(*v);
+  }
+
+  return {};
+}
+
+void GameSettings::setSelectedProfileName(const QString& name)
+{
+  set(m_Settings, "General", "selected_profile", name.toUtf8());
+}
+
+LoadMechanism::EMechanism GameSettings::loadMechanismType() const
+{
+  const auto def = LoadMechanism::LOAD_MODORGANIZER;
+
+  const auto i = get<LoadMechanism::EMechanism>(m_Settings,
+    "Settings", "load_mechanism", def);
+
+  switch (i)
+  {
+    // ok
+    case LoadMechanism::LOAD_MODORGANIZER:  // fall-through
+    {
+      break;
     }
 
-    log::debug(
-      "  . {} premium={} lastSeen={} preferred={} lastDownloads={}",
-      server.name(),
-      server.isPremium() ? "yes" : "no",
-      server.lastSeen().toString(Qt::ISODate),
-      server.preferred(),
-      lastDownloads.trimmed());
+    default:
+    {
+      log::error(
+        "invalid load mechanism {}, reverting to {}",
+        static_cast<int>(i), toString(def));
+
+      set(m_Settings, "Settings", "load_mechanism", def);
+
+      return def;
+    }
   }
+
+  return i;
+}
+
+void GameSettings::setLoadMechanism(LoadMechanism::EMechanism m)
+{
+  set(m_Settings, "Settings", "load_mechanism", m);
+}
+
+const LoadMechanism& GameSettings::loadMechanism() const
+{
+  return m_LoadMechanism;
+}
+
+void GameSettings::setupLoadMechanism()
+{
+  m_LoadMechanism.activate(loadMechanismType());
+}
+
+bool GameSettings::hideUncheckedPlugins() const
+{
+  return get<bool>(m_Settings, "Settings", "hide_unchecked_plugins", false);
+}
+
+void GameSettings::setHideUncheckedPlugins(bool b)
+{
+  set(m_Settings, "Settings", "hide_unchecked_plugins", b);
 }
 
 
@@ -1697,7 +1115,7 @@ void GeometrySettings::saveToolbars(const QMainWindow* w)
   }
 }
 
-QStringList GeometrySettings::getModInfoTabOrder() const
+QStringList GeometrySettings::modInfoTabOrder() const
 {
   QStringList v;
 
@@ -1840,6 +1258,121 @@ void GeometrySettings::restoreDocks(QMainWindow* mw) const
 }
 
 
+WidgetSettings::WidgetSettings(QSettings& s)
+  : m_Settings(s)
+{
+  MOBase::QuestionBoxMemory::setCallbacks(
+    [this](auto&& w, auto&& f){ return questionButton(w, f); },
+    [this](auto&& w, auto&& b){ setQuestionWindowButton(w, b); },
+    [this](auto&& w, auto&& f, auto&& b){ setQuestionFileButton(w, f, b); });
+}
+
+std::optional<int> WidgetSettings::index(const QComboBox* cb) const
+{
+  return getOptional<int>(m_Settings, "Widgets", indexSettingName(cb));
+}
+
+void WidgetSettings::saveIndex(const QComboBox* cb)
+{
+  set(m_Settings, "Widgets", indexSettingName(cb), cb->currentIndex());
+}
+
+void WidgetSettings::restoreIndex(QComboBox* cb, std::optional<int> def) const
+{
+  if (auto v=getOptional<int>(m_Settings, "Widgets", indexSettingName(cb), def)) {
+    cb->setCurrentIndex(*v);
+  }
+}
+
+std::optional<int> WidgetSettings::index(const QTabWidget* w) const
+{
+  return getOptional<int>(m_Settings, "Widgets", indexSettingName(w));
+}
+
+void WidgetSettings::saveIndex(const QTabWidget* w)
+{
+  set(m_Settings, "Widgets", indexSettingName(w), w->currentIndex());
+}
+
+void WidgetSettings::restoreIndex(QTabWidget* w, std::optional<int> def) const
+{
+  if (auto v=getOptional<int>(m_Settings, "Widgets", indexSettingName(w), def)) {
+    w->setCurrentIndex(*v);
+  }
+}
+
+std::optional<bool> WidgetSettings::checked(const QAbstractButton* w) const
+{
+  warnIfNotCheckable(w);
+  return getOptional<bool>(m_Settings, "Widgets", checkedSettingName(w));
+}
+
+void WidgetSettings::saveChecked(const QAbstractButton* w)
+{
+  warnIfNotCheckable(w);
+  set(m_Settings, "Widgets", checkedSettingName(w), w->isChecked());
+}
+
+void WidgetSettings::restoreChecked(QAbstractButton* w, std::optional<bool> def) const
+{
+  warnIfNotCheckable(w);
+
+  if (auto v=getOptional<bool>(m_Settings, "Widgets", checkedSettingName(w), def)) {
+    w->setChecked(*v);
+  }
+}
+
+QuestionBoxMemory::Button WidgetSettings::questionButton(
+  const QString& windowName, const QString& filename) const
+{
+  const QString sectionName("DialogChoices");
+
+  if (!filename.isEmpty()) {
+    const auto fileSetting = windowName + "/" + filename;
+    if (auto v=getOptional<int>(m_Settings, sectionName, filename)) {
+      return static_cast<QuestionBoxMemory::Button>(*v);
+    }
+  }
+
+  if (auto v=getOptional<int>(m_Settings, sectionName, windowName)) {
+    return static_cast<QuestionBoxMemory::Button>(*v);
+  }
+
+  return QuestionBoxMemory::NoButton;
+}
+
+void WidgetSettings::setQuestionWindowButton(
+  const QString& windowName, QuestionBoxMemory::Button button)
+{
+  const QString sectionName("DialogChoices");
+
+  if (button == QuestionBoxMemory::NoButton) {
+    remove(m_Settings, sectionName, windowName);
+  } else {
+    set(m_Settings, sectionName, windowName, button);
+  }
+}
+
+void WidgetSettings::setQuestionFileButton(
+  const QString& windowName, const QString& filename,
+  QuestionBoxMemory::Button button)
+{
+  const QString sectionName("DialogChoices");
+  const QString settingName(windowName + "/" + filename);
+
+  if (button == QuestionBoxMemory::NoButton) {
+    remove(m_Settings, sectionName, settingName);
+  } else {
+    set(m_Settings, sectionName, settingName, button);
+  }
+}
+
+void WidgetSettings::resetQuestionButtons()
+{
+  removeSection(m_Settings, "DialogChoices");
+}
+
+
 ColorSettings::ColorSettings(QSettings& s)
   : m_Settings(s)
 {
@@ -1916,6 +1449,47 @@ void ColorSettings::setPluginListContained(const QColor& c)
 {
   set(m_Settings, "Settings", "containedColor", c);
 }
+
+std::optional<QColor> ColorSettings::previousSeparatorColor() const
+{
+  const auto c = getOptional<QColor>(m_Settings, "General", "previousSeparatorColor");
+  if (c && c->isValid()) {
+    return c;
+  }
+
+  return {};
+}
+
+void ColorSettings::setPreviousSeparatorColor(const QColor& c) const
+{
+  set(m_Settings, "General", "previousSeparatorColor", c);
+}
+
+void ColorSettings::removePreviousSeparatorColor()
+{
+  remove(m_Settings, "General", "previousSeparatorColor");
+}
+
+bool ColorSettings::colorSeparatorScrollbar() const
+{
+  return get<bool>(m_Settings, "Settings", "colorSeparatorScrollbars", true);
+}
+
+void ColorSettings::setColorSeparatorScrollbar(bool b)
+{
+  set(m_Settings, "Settings", "colorSeparatorScrollbars", b);
+}
+
+QColor ColorSettings::idealTextColor(const QColor& rBackgroundColor)
+{
+  if (rBackgroundColor.alpha() == 0)
+    return QColor(Qt::black);
+
+  const int THRESHOLD = 106 * 255.0f / rBackgroundColor.alpha();
+  int BackgroundDelta = (rBackgroundColor.red() * 0.299) + (rBackgroundColor.green() * 0.587) + (rBackgroundColor.blue() * 0.114);
+  return QColor((255 - BackgroundDelta <= THRESHOLD) ? Qt::black : Qt::white);
+}
+
 
 
 PluginSettings::PluginSettings(QSettings& settings)
@@ -2086,6 +1660,585 @@ void PluginSettings::save()
   }
 
   writePluginBlacklist();
+}
+
+
+PathSettings::PathSettings(QSettings& settings)
+  : m_Settings(settings)
+{
+}
+
+std::map<QString, QString> PathSettings::recent() const
+{
+  std::map<QString, QString> map;
+
+  ScopedReadArray sra(m_Settings, "RecentDirectories");
+
+  sra.for_each([&] {
+    const QVariant name = sra.get<QVariant>("name");
+    const QVariant dir = sra.get<QVariant>("directory");
+
+    if (name.isValid() && dir.isValid()) {
+      map.emplace(name.toString(), dir.toString());
+    }
+    });
+
+  return map;
+}
+
+void PathSettings::setRecent(const std::map<QString, QString>& map)
+{
+  removeSection(m_Settings, "RecentDirectories");
+
+  ScopedWriteArray swa(m_Settings, "recentDirectories");
+
+  for (auto&& p : map) {
+    swa.next();
+
+    swa.set("name", p.first);
+    swa.set("directory", p.second);
+  }
+}
+
+QString PathSettings::getConfigurablePath(const QString &key,
+  const QString &def,
+  bool resolve) const
+{
+  QString result = QDir::fromNativeSeparators(
+    get<QString>(m_Settings, "Settings", key, QString("%BASE_DIR%/") + def));
+
+  if (resolve) {
+    result.replace("%BASE_DIR%", base());
+  }
+
+  return result;
+}
+
+void PathSettings::setConfigurablePath(const QString &key, const QString& path)
+{
+  if (path.isEmpty()) {
+    remove(m_Settings, "Settings", key);
+  } else {
+    set(m_Settings, "Settings", key, path);
+  }
+}
+
+QString PathSettings::base() const
+{
+  return QDir::fromNativeSeparators(get<QString>(m_Settings,
+    "Settings", "base_directory", qApp->property("dataPath").toString()));
+}
+
+QString PathSettings::downloads(bool resolve) const
+{
+  return getConfigurablePath(
+    "download_directory",
+    ToQString(AppConfig::downloadPath()),
+    resolve);
+}
+
+QString PathSettings::cache(bool resolve) const
+{
+  return getConfigurablePath(
+    "cache_directory",
+    ToQString(AppConfig::cachePath()),
+    resolve);
+}
+
+QString PathSettings::mods(bool resolve) const
+{
+  return getConfigurablePath(
+    "mod_directory",
+    ToQString(AppConfig::modsPath()),
+    resolve);
+}
+
+QString PathSettings::profiles(bool resolve) const
+{
+  return getConfigurablePath(
+    "profiles_directory",
+    ToQString(AppConfig::profilesPath()),
+    resolve);
+}
+
+QString PathSettings::overwrite(bool resolve) const
+{
+  return getConfigurablePath(
+    "overwrite_directory",
+    ToQString(AppConfig::overwritePath()),
+    resolve);
+}
+
+void PathSettings::setBase(const QString& path)
+{
+  if (path.isEmpty()) {
+    remove(m_Settings, "Settings", "base_directory");
+  } else {
+    set(m_Settings, "Settings", "base_directory", path);
+  }
+}
+
+void PathSettings::setDownloads(const QString& path)
+{
+  setConfigurablePath("download_directory", path);
+}
+
+void PathSettings::setMods(const QString& path)
+{
+  setConfigurablePath("mod_directory", path);
+}
+
+void PathSettings::setCache(const QString& path)
+{
+  setConfigurablePath("cache_directory", path);
+}
+
+void PathSettings::setProfiles(const QString& path)
+{
+  setConfigurablePath("profiles_directory", path);
+}
+
+void PathSettings::setOverwrite(const QString& path)
+{
+  setConfigurablePath("overwrite_directory", path);
+}
+
+
+NetworkSettings::NetworkSettings(QSettings& settings)
+  : m_Settings(settings)
+{
+}
+
+bool NetworkSettings::offlineMode() const
+{
+  return get<bool>(m_Settings, "Settings", "offline_mode", false);
+}
+
+void NetworkSettings::setOfflineMode(bool b)
+{
+  set(m_Settings, "Settings", "offline_mode", b);
+}
+
+bool NetworkSettings::useProxy() const
+{
+  return get<bool>(m_Settings, "Settings", "use_proxy", false);
+}
+
+void NetworkSettings::setUseProxy(bool b)
+{
+  set(m_Settings, "Settings", "use_proxy", b);
+}
+
+void NetworkSettings::setDownloadSpeed(const QString& name, int bytesPerSecond)
+{
+  auto current = servers();
+
+  for (auto& server : current) {
+    if (server.name() == name) {
+      server.addDownload(bytesPerSecond);
+      updateServers(current);
+      return;
+    }
+  }
+
+  log::error(
+    "server '{}' not found while trying to add a download with bps {}",
+    name, bytesPerSecond);
+}
+
+ServerList NetworkSettings::servers() const
+{
+  // servers used to be a map of byte arrays until 2.2.1, it's now an array of
+  // individual values instead
+  //
+  // so post 2.2.1, only one key is returned: "size", the size of the arrays;
+  // in 2.2.1, one key per server is returned
+  {
+    const QStringList keys = ScopedGroup(m_Settings, "Servers").keys();
+
+    if (!keys.empty() && keys[0] != "size") {
+      // old format
+      return serversFromOldMap();
+    }
+  }
+
+
+  // post 2.2.1 format, array of values
+
+  ServerList list;
+
+  {
+    ScopedReadArray sra(m_Settings, "Servers");
+
+    sra.for_each([&] {
+      ServerInfo::SpeedList lastDownloads;
+
+      const auto lastDownloadsString = sra.get<QString>("lastDownloads", "");
+
+      for (const auto& s : lastDownloadsString.split(" ")) {
+        const auto bytesPerSecond = s.toInt();
+        if (bytesPerSecond > 0) {
+          lastDownloads.push_back(bytesPerSecond);
+        }
+      }
+
+      ServerInfo server(
+        sra.get<QString>("name", ""),
+        sra.get<bool>("premium", false),
+        QDate::fromString(sra.get<QString>("lastSeen", ""), Qt::ISODate),
+        sra.get<int>("preferred", 0),
+        lastDownloads);
+
+      list.add(std::move(server));
+      });
+  }
+
+  return list;
+}
+
+ServerList NetworkSettings::serversFromOldMap() const
+{
+  // for 2.2.1 and before
+
+  ServerList list;
+  const ScopedGroup sg(m_Settings, "Servers");
+
+  sg.for_each([&](auto&& serverKey) {
+    QVariantMap data = sg.get<QVariantMap>(serverKey);
+
+    ServerInfo server(
+      serverKey,
+      data["premium"].toBool(),
+      data["lastSeen"].toDate(),
+      data["preferred"].toInt(),
+      {});
+
+    // ignoring download count and speed, it's now a list of values instead of
+    // a total
+
+    list.add(std::move(server));
+    });
+
+  return list;
+}
+
+void NetworkSettings::updateServers(ServerList servers)
+{
+  // clean up unavailable servers
+  servers.cleanup();
+
+  removeSection(m_Settings, "Servers");
+
+  {
+    ScopedWriteArray swa(m_Settings, "Servers");
+
+    for (const auto& server : servers) {
+      swa.next();
+
+      swa.set("name", server.name());
+      swa.set("premium", server.isPremium());
+      swa.set("lastSeen", server.lastSeen().toString(Qt::ISODate));
+      swa.set("preferred", server.preferred());
+
+      QString lastDownloads;
+      for (const auto& speed : server.lastDownloads()) {
+        if (speed > 0) {
+          lastDownloads += QString("%1 ").arg(speed);
+        }
+      }
+
+      swa.set("lastDownloads", lastDownloads.trimmed());
+    }
+  }
+}
+
+void NetworkSettings::dump() const
+{
+  log::debug("servers:");
+
+  for (const auto& server : servers()) {
+    QString lastDownloads;
+    for (auto speed : server.lastDownloads()) {
+      lastDownloads += QString("%1 ").arg(speed);
+    }
+
+    log::debug(
+      "  . {} premium={} lastSeen={} preferred={} lastDownloads={}",
+      server.name(),
+      server.isPremium() ? "yes" : "no",
+      server.lastSeen().toString(Qt::ISODate),
+      server.preferred(),
+      lastDownloads.trimmed());
+  }
+}
+
+
+NexusSettings::NexusSettings(Settings& parent, QSettings& settings)
+  : m_Parent(parent), m_Settings(settings)
+{
+}
+
+bool NexusSettings::automaticLoginEnabled() const
+{
+  return get<bool>(m_Settings, "Settings", "nexus_login", false);
+}
+
+bool NexusSettings::apiKey(QString &apiKey) const
+{
+  QString tempKey = getWindowsCredential("APIKEY");
+  if (tempKey.isEmpty())
+    return false;
+
+  apiKey = tempKey;
+  return true;
+}
+
+bool NexusSettings::setApiKey(const QString& apiKey)
+{
+  if (!setWindowsCredential("APIKEY", apiKey)) {
+    const auto e = GetLastError();
+    log::error("Storing API key failed: {}", formatSystemMessage(e));
+    return false;
+  }
+
+  return true;
+}
+
+bool NexusSettings::clearApiKey()
+{
+  return setApiKey("");
+}
+
+bool NexusSettings::hasApiKey() const
+{
+  return !getWindowsCredential("APIKEY").isEmpty();
+}
+
+bool NexusSettings::endorsementIntegration() const
+{
+  return get<bool>(m_Settings, "Settings", "endorsement_integration", true);
+}
+
+void NexusSettings::setEndorsementIntegration(bool b) const
+{
+  set(m_Settings, "Settings", "endorsement_integration", b);
+}
+
+EndorsementState NexusSettings::endorsementState() const
+{
+  return endorsementStateFromString(
+    get<QString>(m_Settings, "General", "endorse_state", ""));
+}
+
+void NexusSettings::setEndorsementState(EndorsementState s)
+{
+  const auto v = toString(s);
+
+  if (v.isEmpty()) {
+    remove(m_Settings, "General", "endorse_state");
+  } else {
+    set(m_Settings, "General", "endorse_state", v);
+  }
+}
+
+void NexusSettings::registerAsNXMHandler(bool force)
+{
+  const auto nxmPath = QCoreApplication::applicationDirPath() + "/nxmhandler.exe";
+  const auto executable = QCoreApplication::applicationFilePath();
+
+  QString mode = force ? "forcereg" : "reg";
+  QString parameters = mode + " " + m_Parent.game().plugin()->gameShortName();
+  for (const QString& altGame : m_Parent.game().plugin()->validShortNames()) {
+    parameters += "," + altGame;
+  }
+  parameters += " \"" + executable + "\"";
+
+  if (!shell::Execute(nxmPath, parameters)) {
+    QMessageBox::critical(
+      nullptr, QObject::tr("Failed"),
+      QObject::tr("Failed to start the helper application"));
+  }
+}
+
+
+SteamSettings::SteamSettings(Settings& parent, QSettings& settings)
+  : m_Parent(parent), m_Settings(settings)
+{
+}
+
+QString SteamSettings::appID() const
+{
+  return get<QString>(
+    m_Settings, "Settings", "app_id", m_Parent.game().plugin()->steamAPPId());
+}
+
+void SteamSettings::setAppID(const QString& id)
+{
+  if (id.isEmpty()) {
+    remove(m_Settings, "Settings", "app_id");
+  } else {
+    set(m_Settings, "Settings", "app_id", id);
+  }
+}
+
+bool SteamSettings::login(QString &username, QString &password) const
+{
+  username = get<QString>(m_Settings, "Settings", "steam_username", "");
+  password = getWindowsCredential("steam_password");
+
+  return !username.isEmpty() && !password.isEmpty();
+}
+
+void SteamSettings::setLogin(QString username, QString password)
+{
+  if (username == "") {
+    remove(m_Settings, "Settings", "steam_username");
+    password = "";
+  } else {
+    set(m_Settings, "Settings", "steam_username", username);
+  }
+
+  if (!setWindowsCredential("steam_password", password)) {
+    const auto e = GetLastError();
+    log::error("Storing or deleting password failed: {}", formatSystemMessage(e));
+  }
+}
+
+
+InterfaceSettings::InterfaceSettings(QSettings& settings)
+  : m_Settings(settings)
+{
+}
+
+bool InterfaceSettings::lockGUI() const
+{
+  return get<bool>(m_Settings, "Settings", "lock_gui", true);
+}
+
+void InterfaceSettings::setLockGUI(bool b)
+{
+  set(m_Settings, "Settings", "lock_gui", b);
+}
+
+std::optional<QString> InterfaceSettings::styleName() const
+{
+  return getOptional<QString>(m_Settings, "Settings", "style");
+}
+
+void InterfaceSettings::setStyleName(const QString& name)
+{
+  set(m_Settings, "Settings", "style", name);
+}
+
+bool InterfaceSettings::compactDownloads() const
+{
+  return get<bool>(m_Settings, "Settings", "compact_downloads", false);
+}
+
+void InterfaceSettings::setCompactDownloads(bool b)
+{
+  set(m_Settings, "Settings", "compact_downloads", b);
+}
+
+bool InterfaceSettings::metaDownloads() const
+{
+  return get<bool>(m_Settings, "Settings", "meta_downloads", false);
+}
+
+void InterfaceSettings::setMetaDownloads(bool b)
+{
+  set(m_Settings, "Settings", "meta_downloads", b);
+}
+
+bool InterfaceSettings::hideAPICounter() const
+{
+  return get<bool>(m_Settings, "Settings", "hide_api_counter", false);
+}
+
+void InterfaceSettings::setHideAPICounter(bool b)
+{
+  set(m_Settings, "Settings", "hide_api_counter", b);
+}
+
+bool InterfaceSettings::displayForeign() const
+{
+  return get<bool>(m_Settings, "Settings", "display_foreign", true);
+}
+
+void InterfaceSettings::setDisplayForeign(bool b)
+{
+  set(m_Settings, "Settings", "display_foreign", b);
+}
+
+QString InterfaceSettings::language()
+{
+  QString result = get<QString>(m_Settings, "Settings", "language", "");
+
+  if (result.isEmpty()) {
+    QStringList languagePreferences = QLocale::system().uiLanguages();
+
+    if (languagePreferences.length() > 0) {
+      // the users most favoritest language
+      result = languagePreferences.at(0);
+    } else {
+      // fallback system locale
+      result = QLocale::system().name();
+    }
+  }
+
+  return result;
+}
+
+void InterfaceSettings::setLanguage(const QString& name)
+{
+  set(m_Settings, "Settings", "language", name);
+}
+
+bool InterfaceSettings::isTutorialCompleted(const QString& windowName) const
+{
+  return get<bool>(m_Settings, "CompletedWindowTutorials", windowName, false);
+}
+
+void InterfaceSettings::setTutorialCompleted(const QString& windowName, bool b)
+{
+  set(m_Settings, "CompletedWindowTutorials", windowName, b);
+}
+
+
+DiagnosticsSettings::DiagnosticsSettings(QSettings& settings)
+  : m_Settings(settings)
+{
+}
+
+log::Levels DiagnosticsSettings::logLevel() const
+{
+  return get<log::Levels>(m_Settings, "Settings", "log_level", log::Levels::Info);
+}
+
+void DiagnosticsSettings::setLogLevel(log::Levels level)
+{
+  set(m_Settings, "Settings", "log_level", level);
+}
+
+CrashDumpsType DiagnosticsSettings::crashDumpsType() const
+{
+  return get<CrashDumpsType>(m_Settings,
+    "Settings", "crash_dumps_type", CrashDumpsType::Mini);
+}
+
+void DiagnosticsSettings::setCrashDumpsType(CrashDumpsType type)
+{
+  set(m_Settings, "Settings", "crash_dumps_type", type);
+}
+
+int DiagnosticsSettings::crashDumpsMax() const
+{
+  return get<int>(m_Settings, "Settings", "crash_dumps_max", 5);
+}
+
+void DiagnosticsSettings::setCrashDumpsMax(int n)
+{
+  set(m_Settings, "Settings", "crash_dumps_max", n);
 }
 
 

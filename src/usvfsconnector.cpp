@@ -163,8 +163,8 @@ QString toString(CrashDumpsType t)
 UsvfsConnector::UsvfsConnector()
 {
   USVFSParameters params;
-  LogLevel level = toUsvfsLogLevel(Settings::instance().logLevel());
-  CrashDumpsType dumpType = Settings::instance().crashDumpsType();
+  LogLevel level = toUsvfsLogLevel(Settings::instance().diagnostics().logLevel());
+  CrashDumpsType dumpType = Settings::instance().diagnostics().crashDumpsType();
 
   std::string dumpPath = MOShared::ToString(OrganizerCore::crashDumpsPath(), true);
   USVFSInitParameters(&params, SHMID, false, level, dumpType, dumpPath.c_str());

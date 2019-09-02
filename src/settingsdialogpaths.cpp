@@ -6,17 +6,23 @@
 PathsSettingsTab::PathsSettingsTab(Settings& s, SettingsDialog& d)
   : SettingsTab(s, d)
 {
-  ui->baseDirEdit->setText(settings().getBaseDirectory());
-  ui->managedGameDirEdit->setText(settings().gamePlugin()->gameDirectory().absoluteFilePath(settings().gamePlugin()->binaryName()));
-  QString basePath = settings().getBaseDirectory();
+  ui->baseDirEdit->setText(settings().paths().base());
+
+  ui->managedGameDirEdit->setText(
+    settings().game().plugin()->gameDirectory().absoluteFilePath(
+      settings().game().plugin()->binaryName()));
+
+  QString basePath = settings().paths().base();
   QDir baseDir(basePath);
+
   for (const auto &dir : {
-    std::make_pair(ui->downloadDirEdit, settings().getDownloadDirectory(false)),
-    std::make_pair(ui->modDirEdit, settings().getModDirectory(false)),
-    std::make_pair(ui->cacheDirEdit, settings().getCacheDirectory(false)),
-    std::make_pair(ui->profilesDirEdit, settings().getProfileDirectory(false)),
-    std::make_pair(ui->overwriteDirEdit, settings().getOverwriteDirectory(false))
+    std::make_pair(ui->downloadDirEdit, settings().paths().downloads(false)),
+    std::make_pair(ui->modDirEdit, settings().paths().mods(false)),
+    std::make_pair(ui->cacheDirEdit, settings().paths().cache(false)),
+    std::make_pair(ui->profilesDirEdit, settings().paths().profiles(false)),
+    std::make_pair(ui->overwriteDirEdit, settings().paths().overwrite(false))
     }) {
+
     QString storePath = baseDir.relativeFilePath(dir.second);
     storePath = dir.second;
     dir.first->setText(storePath);
@@ -40,17 +46,17 @@ PathsSettingsTab::PathsSettingsTab(Settings& s, SettingsDialog& d)
 
 void PathsSettingsTab::update()
 {
-  using Setter = void (Settings::*)(const QString&);
+  using Setter = void (PathSettings::*)(const QString&);
   using Directory = std::tuple<QString, Setter, std::wstring>;
 
-  QString basePath = settings().getBaseDirectory();
+  QString basePath = settings().paths().base();
 
   for (const Directory &dir :{
-    Directory{ui->downloadDirEdit->text(), &Settings::setDownloadDirectory, AppConfig::downloadPath()},
-    Directory{ui->cacheDirEdit->text(), &Settings::setCacheDirectory, AppConfig::cachePath()},
-    Directory{ui->modDirEdit->text(), &Settings::setModDirectory, AppConfig::modsPath()},
-    Directory{ui->overwriteDirEdit->text(), &Settings::setOverwriteDirectory, AppConfig::overwritePath()},
-    Directory{ui->profilesDirEdit->text(), &Settings::setProfileDirectory, AppConfig::profilesPath()}
+    Directory{ui->downloadDirEdit->text(), &PathSettings::setDownloads, AppConfig::downloadPath()},
+    Directory{ui->cacheDirEdit->text(), &PathSettings::setCache, AppConfig::cachePath()},
+    Directory{ui->modDirEdit->text(), &PathSettings::setMods, AppConfig::modsPath()},
+    Directory{ui->overwriteDirEdit->text(), &PathSettings::setOverwrite, AppConfig::overwritePath()},
+    Directory{ui->profilesDirEdit->text(), &PathSettings::setProfiles, AppConfig::profilesPath()}
     }) {
     QString path;
     Setter setter;
@@ -70,22 +76,26 @@ void PathsSettingsTab::update()
     }
 
     if (QFileInfo(realPath) != QFileInfo(basePath + "/" + QString::fromStdWString(defaultName))) {
-      (settings().*setter)(path);
+      (settings().paths().*setter)(path);
     } else {
-      (settings().*setter)("");
+      (settings().paths().*setter)("");
     }
   }
 
   if (QFileInfo(ui->baseDirEdit->text()) != QFileInfo(qApp->property("dataPath").toString())) {
-    settings().setBaseDirectory(ui->baseDirEdit->text());
+    settings().paths().setBase(ui->baseDirEdit->text());
   } else {
-    settings().setBaseDirectory("");
+    settings().paths().setBase("");
   }
 
-  QFileInfo oldGameExe(settings().gamePlugin()->gameDirectory().absoluteFilePath(settings().gamePlugin()->binaryName()));
+  QFileInfo oldGameExe(
+    settings().game().plugin()->gameDirectory().absoluteFilePath(
+      settings().game().plugin()->binaryName()));
+
   QFileInfo newGameExe(ui->managedGameDirEdit->text());
+
   if (oldGameExe != newGameExe) {
-    settings().setManagedGameDirectory(newGameExe.absolutePath());
+    settings().game().setDirectory(newGameExe.absolutePath());
   }
 }
 

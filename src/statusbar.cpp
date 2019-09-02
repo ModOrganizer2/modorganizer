@@ -129,7 +129,7 @@ void StatusBar::setUpdateAvailable(bool b)
 
 void StatusBar::checkSettings(const Settings& settings)
 {
-  m_api->setVisible(!settings.hideAPICounter());
+  m_api->setVisible(!settings.interface().hideAPICounter());
 }
 
 void StatusBar::showEvent(QShowEvent*)

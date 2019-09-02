@@ -409,7 +409,7 @@ void ConflictsTab::clear()
 
 void ConflictsTab::saveState(Settings& s)
 {
-  s.saveIndex(ui->tabConflictsTabs);
+  s.widgets().saveIndex(ui->tabConflictsTabs);
 
   m_general.saveState(s);
   m_advanced.saveState(s);
@@ -417,7 +417,7 @@ void ConflictsTab::saveState(Settings& s)
 
 void ConflictsTab::restoreState(const Settings& s)
 {
-  s.restoreIndex(ui->tabConflictsTabs, 0);
+  s.widgets().restoreIndex(ui->tabConflictsTabs, 0);
 
   m_general.restoreState(s);
   m_advanced.restoreState(s);
@@ -1014,17 +1014,17 @@ void AdvancedConflictsTab::clear()
 void AdvancedConflictsTab::saveState(Settings& s)
 {
   s.geometry().saveState(ui->conflictsAdvancedList->header());
-  s.saveChecked(ui->conflictsAdvancedShowNoConflict);
-  s.saveChecked(ui->conflictsAdvancedShowAll);
-  s.saveChecked(ui->conflictsAdvancedShowNearest);
+  s.widgets().saveChecked(ui->conflictsAdvancedShowNoConflict);
+  s.widgets().saveChecked(ui->conflictsAdvancedShowAll);
+  s.widgets().saveChecked(ui->conflictsAdvancedShowNearest);
 }
 
 void AdvancedConflictsTab::restoreState(const Settings& s)
 {
   s.geometry().restoreState(ui->conflictsAdvancedList->header());
-  s.restoreChecked(ui->conflictsAdvancedShowNoConflict);
-  s.restoreChecked(ui->conflictsAdvancedShowAll);
-  s.restoreChecked(ui->conflictsAdvancedShowNearest);
+  s.widgets().restoreChecked(ui->conflictsAdvancedShowNoConflict);
+  s.widgets().restoreChecked(ui->conflictsAdvancedShowAll);
+  s.widgets().restoreChecked(ui->conflictsAdvancedShowNearest);
 }
 
 void AdvancedConflictsTab::update()

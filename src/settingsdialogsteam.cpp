@@ -5,7 +5,7 @@ SteamSettingsTab::SteamSettingsTab(Settings& s, SettingsDialog& d)
   : SettingsTab(s, d)
 {
   QString username, password;
-  settings().getSteamLogin(username, password);
+  settings().steam().login(username, password);
 
   ui->steamUserEdit->setText(username);
   ui->steamPassEdit->setText(password);
@@ -13,5 +13,5 @@ SteamSettingsTab::SteamSettingsTab(Settings& s, SettingsDialog& d)
 
 void SteamSettingsTab::update()
 {
-  settings().setSteamLogin(ui->steamUserEdit->text(), ui->steamPassEdit->text());
+  settings().steam().setLogin(ui->steamUserEdit->text(), ui->steamPassEdit->text());
 }

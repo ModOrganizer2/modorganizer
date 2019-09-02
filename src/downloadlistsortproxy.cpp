@@ -110,7 +110,7 @@ bool DownloadListSortProxy::filterAcceptsRow(int sourceRow, const QModelIndex&) 
   if (m_CurrentFilter.length() == 0) {
     return true;
   } else if (sourceRow < m_Manager->numTotalDownloads()) {
-    QString displayedName = Settings::instance().metaDownloads()
+    QString displayedName = Settings::instance().interface().metaDownloads()
         ? m_Manager->getDisplayName(sourceRow)
         : m_Manager->getFileName(sourceRow);
     return displayedName.contains(m_CurrentFilter, Qt::CaseInsensitive);

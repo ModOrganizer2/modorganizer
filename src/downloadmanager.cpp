@@ -1731,7 +1731,7 @@ void DownloadManager::nxmDownloadURLsAvailable(QString gameName, int modID, int 
     return;
   }
 
-  const auto servers = m_OrganizerCore->settings().getServers();
+  const auto servers = m_OrganizerCore->settings().network().servers();
 
   std::sort(
     resultList.begin(),

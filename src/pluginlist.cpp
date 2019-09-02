@@ -191,7 +191,7 @@ void PluginList::refresh(const QString &profileName
         continue;
       }
 
-      bool forceEnabled = Settings::instance().forceEnableCoreFiles() &&
+      bool forceEnabled = Settings::instance().game().forceEnableCoreFiles() &&
         primaryPlugins.contains(filename, Qt::CaseInsensitive);
         //(std::find(primaryPlugins.begin(), primaryPlugins.end(), filename.toLower()) != primaryPlugins.end());
 

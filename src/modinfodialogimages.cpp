@@ -130,13 +130,13 @@ void ImagesTab::update()
 
 void ImagesTab::saveState(Settings& s)
 {
-  s.saveChecked(ui->imagesShowDDS);
+  s.widgets().saveChecked(ui->imagesShowDDS);
   s.geometry().saveState(ui->tabImagesSplitter);
 }
 
 void ImagesTab::restoreState(const Settings& s)
 {
-  s.restoreChecked(ui->imagesShowDDS);
+  s.widgets().restoreChecked(ui->imagesShowDDS);
   s.geometry().restoreState(ui->tabImagesSplitter);
 }
 
