@@ -158,6 +158,10 @@ void Settings::processUpdates(
     remove(m_Settings, "General", "browser_geometry");
     remove(m_Settings, "General", "filters_visible");
 
+    // this was supposed to have been removed above when updating from 2.2.0,
+    // but it wasn't in Settings, it was in General
+    remove(m_Settings, "General", "ask_for_nexuspw");
+
     m_Network.updateFromOldMap();
   });
 
