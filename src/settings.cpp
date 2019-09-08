@@ -94,7 +94,22 @@ void Settings::processUpdates(
     return;
   }
 
-  if (lastVersion < QVersionNumber(2, 2, 0)) {
+  if (currentVersion == lastVersion) {
+    return;
+  }
+
+  log::info(
+    "updating from {} to {}",
+    lastVersion.toString(), currentVersion.toString());
+
+  auto version = [&](const QVersionNumber& v, auto&& f) {
+    if (lastVersion < v) {
+      log::info("processing updates for {}", v.toString());
+      f();
+    }
+  };
+
+  version({2, 2, 0}, [&]{
     remove(m_Settings, "Settings", "steam_password");
     remove(m_Settings, "Settings", "nexus_username");
     remove(m_Settings, "Settings", "nexus_password");
@@ -104,9 +119,9 @@ void Settings::processUpdates(
     remove(m_Settings, "Settings", "nmm_version");
 
     removeSection(m_Settings, "Servers");
-  }
+  });
 
-  if (lastVersion < QVersionNumber(2, 2, 1)) {
+  version({2, 2, 1}, [&]{
     remove(m_Settings, "General", "mod_info_tabs");
     remove(m_Settings, "General", "mod_info_conflict_expanders");
     remove(m_Settings, "General", "mod_info_conflicts");
@@ -114,15 +129,39 @@ void Settings::processUpdates(
     remove(m_Settings, "General", "mod_info_conflicts_overwrite");
     remove(m_Settings, "General", "mod_info_conflicts_noconflict");
     remove(m_Settings, "General", "mod_info_conflicts_overwritten");
-  }
+  });
 
-  if (lastVersion < QVersionNumber(2, 2, 2)) {
+  version({2, 2, 2}, [&]{
     // log splitter is gone, it's a dock now
     remove(m_Settings, "General", "log_split");
-  }
+
+    // moved to widgets
+    remove(m_Settings, "General", "mod_info_conflicts_tab");
+    remove(m_Settings, "General", "mod_info_conflicts_general_expanders");
+    remove(m_Settings, "General", "mod_info_conflicts_general_overwrite");
+    remove(m_Settings, "General", "mod_info_conflicts_general_noconflict");
+    remove(m_Settings, "General", "mod_info_conflicts_general_overwritten");
+    remove(m_Settings, "General", "mod_info_conflicts_advanced_list");
+    remove(m_Settings, "General", "mod_info_conflicts_advanced_options");
+    remove(m_Settings, "General", "mod_info_tab_order");
+    remove(m_Settings, "General", "mod_info_dialog_images_show_dds");
+
+    // moved to geometry
+    remove(m_Settings, "General", "window_geometry");
+    remove(m_Settings, "General", "window_state");
+    remove(m_Settings, "General", "toolbar_size");
+    remove(m_Settings, "General", "toolbar_button_style");
+    remove(m_Settings, "General", "menubar_visible");
+    remove(m_Settings, "General", "window_split");
+    remove(m_Settings, "General", "window_monitor");
+    remove(m_Settings, "General", "browser_geometry");
+    remove(m_Settings, "General", "filters_visible");
+  });
 
   //save version in all case
   set(m_Settings, "General", "version", currentVersion.toString());
+
+  log::debug("updating done");
 }
 
 QString Settings::filename() const
