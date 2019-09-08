@@ -443,6 +443,10 @@ public:
   //
   void updateServers(ServerList servers);
 
+  // for 2.2.1 and before, rewrites the old byte array map to the new format
+  //
+  void updateFromOldMap();
+
   void dump() const;
 
 private:

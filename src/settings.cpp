@@ -104,7 +104,7 @@ void Settings::processUpdates(
 
   auto version = [&](const QVersionNumber& v, auto&& f) {
     if (lastVersion < v) {
-      log::info("processing updates for {}", v.toString());
+      log::debug("processing updates for {}", v.toString());
       f();
     }
   };
@@ -152,10 +152,13 @@ void Settings::processUpdates(
     remove(m_Settings, "General", "toolbar_size");
     remove(m_Settings, "General", "toolbar_button_style");
     remove(m_Settings, "General", "menubar_visible");
+    remove(m_Settings, "General", "statusbar_visible");
     remove(m_Settings, "General", "window_split");
     remove(m_Settings, "General", "window_monitor");
     remove(m_Settings, "General", "browser_geometry");
     remove(m_Settings, "General", "filters_visible");
+
+    m_Network.updateFromOldMap();
   });
 
   //save version in all case
@@ -1469,23 +1472,6 @@ void NetworkSettings::setDownloadSpeed(const QString& name, int bytesPerSecond)
 
 ServerList NetworkSettings::servers() const
 {
-  // servers used to be a map of byte arrays until 2.2.1, it's now an array of
-  // individual values instead
-  //
-  // so post 2.2.1, only one key is returned: "size", the size of the arrays;
-  // in 2.2.1, one key per server is returned
-  {
-    const QStringList keys = ScopedGroup(m_Settings, "Servers").keys();
-
-    if (!keys.empty() && keys[0] != "size") {
-      // old format
-      return serversFromOldMap();
-    }
-  }
-
-
-  // post 2.2.1 format, array of values
-
   ServerList list;
 
   {
@@ -1513,32 +1499,6 @@ ServerList NetworkSettings::servers() const
       list.add(std::move(server));
       });
   }
-
-  return list;
-}
-
-ServerList NetworkSettings::serversFromOldMap() const
-{
-  // for 2.2.1 and before
-
-  ServerList list;
-  const ScopedGroup sg(m_Settings, "Servers");
-
-  sg.for_each([&](auto&& serverKey) {
-    QVariantMap data = sg.get<QVariantMap>(serverKey);
-
-    ServerInfo server(
-      serverKey,
-      data["premium"].toBool(),
-      data["lastSeen"].toDate(),
-      data["preferred"].toInt(),
-      {});
-
-    // ignoring download count and speed, it's now a list of values instead of
-    // a total
-
-    list.add(std::move(server));
-    });
 
   return list;
 }
@@ -1575,6 +1535,57 @@ void NetworkSettings::updateServers(ServerList newServers)
 
     swa.set("lastDownloads", lastDownloads.trimmed());
   }
+}
+
+void NetworkSettings::updateFromOldMap()
+{
+  // servers used to be a map of byte arrays until 2.2.1, it's now an array of
+  // individual values instead
+  //
+  // so post 2.2.1, only one key is returned: "size", the size of the arrays;
+  // in 2.2.1, one key per server is returned
+
+  // sanity check that this is really 2.2.1
+  {
+    const QStringList keys = ScopedGroup(m_Settings, "Servers").keys();
+
+    for (auto&& k : keys) {
+      if (k == "size") {
+        // this looks like an array, so the upgrade was probably already done
+        return;
+      }
+    }
+  }
+
+  const auto servers = serversFromOldMap();
+  removeSection(m_Settings, "Servers");
+  updateServers(servers);
+}
+
+ServerList NetworkSettings::serversFromOldMap() const
+{
+  // for 2.2.1 and before
+
+  ServerList list;
+  const ScopedGroup sg(m_Settings, "Servers");
+
+  sg.for_each([&](auto&& serverKey) {
+    QVariantMap data = sg.get<QVariantMap>(serverKey);
+
+    ServerInfo server(
+      serverKey,
+      data["premium"].toBool(),
+      data["lastSeen"].toDate(),
+      data["preferred"].toInt(),
+      {});
+
+    // ignoring download count and speed, it's now a list of values instead of
+    // a total
+
+    list.add(std::move(server));
+  });
+
+  return list;
 }
 
 void NetworkSettings::dump() const
