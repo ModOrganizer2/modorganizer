@@ -66,6 +66,10 @@ public:
   //
   const std::vector<Display>& displays() const;
 
+  // full resolution
+  //
+  QRect desktopGeometry() const;
+
 private:
   std::vector<Display> m_displays;
 

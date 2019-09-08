@@ -1219,6 +1219,7 @@ void PluginSettings::setPersistent(
     m_Settings.sync();
   }
 }
+
 void PluginSettings::addBlacklist(const QString &fileName)
 {
   m_PluginBlacklist.insert(fileName);

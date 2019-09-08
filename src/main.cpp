@@ -648,7 +648,10 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
     game->setGameVariant(edition);
 
-    log::info("managing game at {}", game->gameDirectory().absolutePath());
+    log::info(
+      "using game plugin '{}' ('{}', steam id '{}') at {}",
+      game->gameName(), game->gameShortName(), game->steamAPPId(),
+      game->gameDirectory().absolutePath());
 
     organizer.updateExecutablesList();
 

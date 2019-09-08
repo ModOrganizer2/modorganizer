@@ -109,6 +109,11 @@ void Environment::dump(const Settings& s) const
     log::debug(" . {}", d.toString());
   }
 
+  const auto r = m_metrics->desktopGeometry();
+  log::debug(
+    "desktop geometry: ({},{})-({},{})",
+    r.left(), r.top(), r.right(), r.bottom());
+
   dumpDisks(s);
 }
 
