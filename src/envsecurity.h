@@ -1,3 +1,6 @@
+#ifndef ENV_SECURITY_H
+#define ENV_SECURITY_H
+
 #include <QUuid>
 #include <QString>
 
@@ -47,3 +50,5 @@ private:
 std::vector<SecurityProduct> getSecurityProducts();
 
 } // namespace env
+
+#endif // ENV_SECURITY_H

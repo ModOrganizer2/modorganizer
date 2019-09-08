@@ -1,3 +1,8 @@
+#ifndef ENV_ENV_H
+#define ENV_ENV_H
+
+class Settings;
+
 namespace env
 {
 
@@ -125,13 +130,17 @@ public:
 
   // logs the environment
   //
-  void dump() const;
+  void dump(const Settings& s) const;
 
 private:
   std::vector<Module> m_modules;
   std::unique_ptr<WindowsInfo> m_windows;
   std::vector<SecurityProduct> m_security;
   std::unique_ptr<Metrics> m_metrics;
+
+  // dumps all the disks involved in the settings
+  //
+  void dumpDisks(const Settings& s) const;
 };
 
 
@@ -152,3 +161,5 @@ bool coredump(CoreDumpTypes type);
 bool coredumpOther(CoreDumpTypes type);
 
 } // namespace env
+
+#endif // ENV_ENV_H

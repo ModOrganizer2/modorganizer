@@ -1,3 +1,6 @@
+#ifndef ENV_MODULE_H
+#define ENV_MODULE_H
+
 #include <QString>
 #include <QDateTime>
 
@@ -96,3 +99,5 @@ private:
 std::vector<Module> getLoadedModules();
 
 } // namespace env
+
+#endif // ENV_MODULE_H

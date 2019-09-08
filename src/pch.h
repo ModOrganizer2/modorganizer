@@ -255,3 +255,4 @@
 #include <QWhatsThisClickedEvent>
 #include <QWidget>
 #include <QWidgetAction>
+#include <QStorageInfo>

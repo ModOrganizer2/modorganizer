@@ -1,3 +1,6 @@
+#ifndef ENV_METRICS_H
+#define ENV_METRICS_H
+
 #include <QString>
 #include <vector>
 
@@ -70,3 +73,5 @@ private:
 };
 
 } // namespace
+
+#endif // ENV_METRICS_H

@@ -4,6 +4,7 @@
 #include "envsecurity.h"
 #include "envshortcut.h"
 #include "envwindows.h"
+#include "settings.h"
 #include <log.h>
 #include <utility.h>
 
@@ -85,7 +86,7 @@ const Metrics& Environment::metrics() const
   return *m_metrics;
 }
 
-void Environment::dump() const
+void Environment::dump(const Settings& s) const
 {
   log::debug("windows: {}", m_windows->toString());
 
@@ -107,6 +108,43 @@ void Environment::dump() const
   for (const auto& d : m_metrics->displays()) {
     log::debug(" . {}", d.toString());
   }
+
+  dumpDisks(s);
+}
+
+void Environment::dumpDisks(const Settings& s) const
+{
+  std::set<QString> rootPaths;
+
+  auto dump = [&](auto&& path) {
+    const QFileInfo fi(path);
+    const QStorageInfo si(fi.absoluteFilePath());
+
+    if (rootPaths.contains(si.rootPath())) {
+      // already seen
+      return;
+    }
+
+    // remember
+    rootPaths.insert(si.rootPath());
+
+    log::debug(
+      "  . {} free={} MB{}",
+      si.rootPath(),
+      (si.bytesFree() / 1000 / 1000),
+      (si.isReadOnly() ? " (readonly)" : ""));
+  };
+
+  log::debug("drives:");
+
+  dump(QStorageInfo::root().rootPath());
+  dump(s.paths().base());
+  dump(s.paths().downloads());
+  dump(s.paths().mods());
+  dump(s.paths().cache());
+  dump(s.paths().profiles());
+  dump(s.paths().overwrite());
+  dump(QCoreApplication::applicationDirPath());
 }
 
 

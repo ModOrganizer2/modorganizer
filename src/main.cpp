@@ -577,8 +577,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     OrganizerCore::setGlobalCrashDumpsType(settings.diagnostics().crashDumpsType());
 
     env::Environment env;
-
-    env.dump();
+    env.dump(settings);
     settings.dump();
     sanityChecks(env);
 
