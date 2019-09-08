@@ -40,6 +40,10 @@ class ServerList;
 class Settings;
 class ExpanderWidget;
 
+
+// helper class that calls restoreGeometry() in the constructor and
+// saveGeometry() in the destructor
+//
 class GeometrySaver
 {
 public:
@@ -52,48 +56,57 @@ private:
 };
 
 
+// setting for the currently managed game
+//
 class GameSettings
 {
 public:
   GameSettings(QSettings& setting);
 
+  // game plugin
+  //
   const MOBase::IPluginGame* plugin();
   void setPlugin(const MOBase::IPluginGame* gamePlugin);
 
-  /**
-  * whether files of the core game are forced-enabled so the user can't
-  * accidentally disable them
-  */
+  // whether files of the core game are forced-enabled so the user can't
+  // accidentally disable them
+  //
   bool forceEnableCoreFiles() const;
   void setForceEnableCoreFiles(bool b);
 
-  /**
-  * the directory where the managed game is stored (with native separators)
-  **/
+  // the directory where the managed game is stored
+  //
   std::optional<QString> directory() const;
   void setDirectory(const QString& path);
 
+  // the name of the managed game
+  //
   std::optional<QString> name() const;
   void setName(const QString& name);
 
+  // the edition of the managed game
+  //
   std::optional<QString> edition() const;
   void setEdition(const QString& name);
 
+  // the current profile name
+  //
   std::optional<QString> selectedProfileName() const;
   void setSelectedProfileName(const QString& name);
 
-  /**
-  * @return the load mechanism to be used
-  **/
+  // load mechanism type
+  //
   LoadMechanism::EMechanism loadMechanismType() const;
   void setLoadMechanism(LoadMechanism::EMechanism m);
-  const LoadMechanism& loadMechanism() const;
-  void setupLoadMechanism();
 
-  /**
-  * @return true if the user wants unchecked plugins (esp, esm) should be hidden from
-  *         the virtual data directory
-  **/
+  // load mechanism object
+  //
+  const LoadMechanism& loadMechanism() const;
+  LoadMechanism& loadMechanism();
+
+  // whether the user wants unchecked plugins (esp, esm) to be hidden from
+  // the virtual data directory
+  //
   bool hideUncheckedPlugins() const;
   void setHideUncheckedPlugins(bool b);
 
@@ -104,11 +117,26 @@ private:
 };
 
 
+// geometry settings for various widgets; this should contain any setting that
+// can get invalid through UI changes or when users change display settings
+// (resolution, monitors, etc.); see WidgetSettings for the counterpart
+//
+// all these settings are stored under [Geometry] and get wiped when the
+// "reset geometry settings" button is clicked in the settings
+//
+// saveGeometry(), restoreGeometry(), saveState() and restoreState() call the
+// same functions on the given widget
+//
 class GeometrySettings
 {
 public:
   GeometrySettings(QSettings& s);
 
+  // asks the settings to get reset
+  //
+  // this gets called from the settings dialog and gets picked up in
+  // resetIfNeeded(), called from runApplication() just before exiting
+  //
   void requestReset();
   void resetIfNeeded();
 
@@ -137,10 +165,18 @@ public:
   void saveDocks(const QMainWindow* w);
   void restoreDocks(QMainWindow* w) const;
 
+  // this should be a generic "tab order" setting, but it only happens for the
+  // mod info dialog right now
+  //
   QStringList modInfoTabOrder() const;
   void setModInfoTabOrder(const QString& names);
 
+  // assumes the given widget is a top-level
+  //
   void centerOnMainWindowMonitor(QWidget* w);
+
+  // saves the monitor number of the given window
+  //
   void saveMainWindowMonitor(const QMainWindow* w);
 
 private:
@@ -149,33 +185,52 @@ private:
 };
 
 
+// widget settings that should stay valid regardless of UI changes or when users
+// change display settings (resolution, monitors, etc.); see GeometrySettings
+// for the counterpart
+//
 class WidgetSettings
 {
 public:
   WidgetSettings(QSettings& s);
 
+  // selected index for a combobox
+  //
   std::optional<int> index(const QComboBox* cb) const;
   void saveIndex(const QComboBox* cb);
   void restoreIndex(QComboBox* cb, std::optional<int> def={}) const;
 
+  // selected tab index for a tab widget
+  //
   std::optional<int> index(const QTabWidget* w) const;
   void saveIndex(const QTabWidget* w);
   void restoreIndex(QTabWidget* w, std::optional<int> def={}) const;
 
+  // check state for a checkable button
+  //
   std::optional<bool> checked(const QAbstractButton* w) const;
   void saveChecked(const QAbstractButton* w);
   void restoreChecked(QAbstractButton* w, std::optional<bool> def={}) const;
 
+  // returns the remembered button for a question dialog, or NoButton if the
+  // user hasn't saved the choice
+  //
   MOBase::QuestionBoxMemory::Button questionButton(
     const QString& windowName, const QString& filename) const;
 
+  // sets the button to be remembered for the given window
+  //
   void setQuestionWindowButton(
     const QString& windowName, MOBase::QuestionBoxMemory::Button button);
 
+  // sets the button to be remembered for the given file
+  //
   void setQuestionFileButton(
     const QString& windowName, const QString& filename,
     MOBase::QuestionBoxMemory::Button choice);
 
+  // wipes all the remembered buttons
+  //
   void resetQuestionButtons();
 
 private:
@@ -183,12 +238,12 @@ private:
 };
 
 
+// various color settings
+//
 class ColorSettings
 {
 public:
   ColorSettings(QSettings& s);
-
-  void setCrashDumpsMax(int i) const;
 
   QColor modlistOverwrittenLoose() const;
   void setModlistOverwrittenLoose(const QColor& c);
@@ -212,46 +267,91 @@ public:
   void setPreviousSeparatorColor(const QColor& c) const;
   void removePreviousSeparatorColor();
 
-  /**
-  * @brief color the scrollbar of the mod list for custom separator colors?
-  * @return the state of the setting
-  */
+  // whether the scrollbar of the mod list should have colors for custom
+  // separator colors
+  //
   bool colorSeparatorScrollbar() const;
   void setColorSeparatorScrollbar(bool b);
 
-  static QColor idealTextColor(const QColor&  rBackgroundColor);
+  // returns a color with a good contrast for the given background
+  //
+  static QColor idealTextColor(const QColor& rBackgroundColor);
 
 private:
   QSettings& m_Settings;
 };
 
 
+// settings about plugins
+//
 class PluginSettings
 {
 public:
   PluginSettings(QSettings& settings);
 
+
+  // forgets all the plugins
+  //
   void clearPlugins();
+
+  // adds the given plugin to the list and loads all of its settings
+  //
   void registerPlugin(MOBase::IPlugin *plugin);
-  void addPluginSettings(const std::vector<MOBase::IPlugin*> &plugins);
 
-  QVariant pluginSetting(const QString &pluginName, const QString &key) const;
-  void setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value);
-  QVariant pluginPersistent(const QString &pluginName, const QString &key, const QVariant &def) const;
-  void setPluginPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync);
-  void addBlacklistPlugin(const QString &fileName);
-  bool pluginBlacklisted(const QString &fileName) const;
-  void setPluginBlacklist(const QStringList& pluginNames);
-  std::vector<MOBase::IPlugin*> plugins() const { return m_Plugins; }
+  // returns all the registered plugins
+  //
+  std::vector<MOBase::IPlugin*> plugins() const;
 
-  QVariantMap pluginSettings(const QString &pluginName) const;
-  void setPluginSettings(const QString &pluginName, const QVariantMap& map);
 
-  QVariantMap pluginDescriptions(const QString &pluginName) const;
-  void pluginDescriptions(const QString &pluginName, const QVariantMap& map);
+  // returns the plugin setting for the given key
+  //
+  QVariant setting(const QString &pluginName, const QString &key) const;
 
-  const QSet<QString>& pluginBlacklist() const;
+  // sets the plugin setting for the given key
+  //
+  void setSetting(const QString &pluginName, const QString &key, const QVariant &value);
 
+  // returns all settings
+  //
+  QVariantMap settings(const QString &pluginName) const;
+
+  // overwrites all settings
+  //
+  void setSettings(const QString &pluginName, const QVariantMap& map);
+
+  // returns all descriptions
+  //
+  QVariantMap descriptions(const QString &pluginName) const;
+
+  // overwrites all descriptions
+  //
+  void setDescriptions(const QString &pluginName, const QVariantMap& map);
+
+
+  // ?
+  QVariant persistent(const QString &pluginName, const QString &key, const QVariant &def) const;
+  void setPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync);
+
+
+  // adds the given plugin to the blacklist
+  //
+  void addBlacklist(const QString &fileName);
+
+  // returns whether the given plugin is blacklisted
+  //
+  bool blacklisted(const QString &fileName) const;
+
+  // overwrites the whole blacklist
+  //
+  void setBlacklist(const QStringList& pluginNames);
+
+  // returns the blacklist
+  //
+  const QSet<QString>& blacklist() const;
+
+
+  // commits all the settings to the ini
+  //
   void save();
 
 private:
@@ -261,8 +361,13 @@ private:
   QMap<QString, QVariantMap> m_PluginDescriptions;
   QSet<QString> m_PluginBlacklist;
 
-  void writePluginBlacklist();
-  QSet<QString> readPluginBlacklist() const;
+  // commits the blacklist to the ini
+  //
+  void writeBlacklist();
+
+  // reads the blacklist from the ini
+  //
+  QSet<QString> readBlacklist() const;
 };
 
 

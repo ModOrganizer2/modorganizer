@@ -17,14 +17,14 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, SettingsDialog& d)
       continue;
     QListWidgetItem *listItem = new QListWidgetItem(plugin->name(), ui->pluginsList);
     listItem->setData(Qt::UserRole, QVariant::fromValue((void*)plugin));
-    listItem->setData(Qt::UserRole + 1, settings().plugins().pluginSettings(plugin->name()));
-    listItem->setData(Qt::UserRole + 2, settings().plugins().pluginDescriptions(plugin->name()));
+    listItem->setData(Qt::UserRole + 1, settings().plugins().settings(plugin->name()));
+    listItem->setData(Qt::UserRole + 2, settings().plugins().descriptions(plugin->name()));
     ui->pluginsList->addItem(listItem);
     handledNames.insert(plugin->name());
   }
 
   // display plugin blacklist
-  for (const QString &pluginName : settings().plugins().pluginBlacklist()) {
+  for (const QString &pluginName : settings().plugins().blacklist()) {
     ui->pluginBlacklist->addItem(pluginName);
   }
 
@@ -42,7 +42,7 @@ void PluginsSettingsTab::update()
   // transfer plugin settings to in-memory structure
   for (int i = 0; i < ui->pluginsList->count(); ++i) {
     QListWidgetItem *item = ui->pluginsList->item(i);
-    settings().plugins().setPluginSettings(
+    settings().plugins().setSettings(
       item->text(), item->data(Qt::UserRole + 1).toMap());
   }
 
@@ -52,7 +52,7 @@ void PluginsSettingsTab::update()
     names.push_back(item->text());
   }
 
-  settings().plugins().setPluginBlacklist(names);
+  settings().plugins().setBlacklist(names);
 
   settings().plugins().save();
 }

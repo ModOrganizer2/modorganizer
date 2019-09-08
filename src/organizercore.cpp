@@ -866,26 +866,26 @@ void OrganizerCore::modDataChanged(MOBase::IModInterface *)
 QVariant OrganizerCore::pluginSetting(const QString &pluginName,
                                       const QString &key) const
 {
-  return m_Settings.plugins().pluginSetting(pluginName, key);
+  return m_Settings.plugins().setting(pluginName, key);
 }
 
 void OrganizerCore::setPluginSetting(const QString &pluginName,
                                      const QString &key, const QVariant &value)
 {
-  m_Settings.plugins().setPluginSetting(pluginName, key, value);
+  m_Settings.plugins().setSetting(pluginName, key, value);
 }
 
 QVariant OrganizerCore::persistent(const QString &pluginName,
                                    const QString &key,
                                    const QVariant &def) const
 {
-  return m_Settings.plugins().pluginPersistent(pluginName, key, def);
+  return m_Settings.plugins().persistent(pluginName, key, def);
 }
 
 void OrganizerCore::setPersistent(const QString &pluginName, const QString &key,
                                   const QVariant &value, bool sync)
 {
-  m_Settings.plugins().setPluginPersistent(pluginName, key, value, sync);
+  m_Settings.plugins().setPersistent(pluginName, key, value, sync);
 }
 
 QString OrganizerCore::pluginDataPath() const
@@ -2580,7 +2580,7 @@ void OrganizerCore::prepareStart()
   m_CurrentProfile->writeModlist();
   m_CurrentProfile->createTweakedIniFile();
   saveCurrentLists();
-  m_Settings.game().setupLoadMechanism();
+  m_Settings.game().loadMechanism().activate(m_Settings.game().loadMechanismType());
   storeSettings();
 }
 

@@ -512,9 +512,9 @@ const LoadMechanism& GameSettings::loadMechanism() const
   return m_LoadMechanism;
 }
 
-void GameSettings::setupLoadMechanism()
+LoadMechanism& GameSettings::loadMechanism()
 {
-  m_LoadMechanism.activate(loadMechanismType());
+  return m_LoadMechanism;
 }
 
 bool GameSettings::hideUncheckedPlugins() const
@@ -1063,19 +1063,7 @@ void PluginSettings::clearPlugins()
   m_PluginSettings.clear();
   m_PluginBlacklist.clear();
 
-  m_PluginBlacklist = readPluginBlacklist();
-}
-
-QSet<QString> PluginSettings::readPluginBlacklist() const
-{
-  QSet<QString> set;
-
-  ScopedReadArray sra(m_Settings, "pluginBlacklist");
-  sra.for_each([&]{
-    set.insert(sra.get<QString>("name"));
-  });
-
-  return set;
+  m_PluginBlacklist = readBlacklist();
 }
 
 void PluginSettings::registerPlugin(IPlugin *plugin)
@@ -1106,12 +1094,12 @@ void PluginSettings::registerPlugin(IPlugin *plugin)
   }
 }
 
-bool PluginSettings::pluginBlacklisted(const QString &fileName) const
+std::vector<MOBase::IPlugin*> PluginSettings::plugins() const
 {
-  return m_PluginBlacklist.contains(fileName);
+  return m_Plugins;
 }
 
-QVariant PluginSettings::pluginSetting(const QString &pluginName, const QString &key) const
+QVariant PluginSettings::setting(const QString &pluginName, const QString &key) const
 {
   auto iterPlugin = m_PluginSettings.find(pluginName);
   if (iterPlugin == m_PluginSettings.end()) {
@@ -1126,7 +1114,7 @@ QVariant PluginSettings::pluginSetting(const QString &pluginName, const QString 
   return *iterSetting;
 }
 
-void PluginSettings::setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value)
+void PluginSettings::setSetting(const QString &pluginName, const QString &key, const QVariant &value)
 {
   auto iterPlugin = m_PluginSettings.find(pluginName);
 
@@ -1141,7 +1129,27 @@ void PluginSettings::setPluginSetting(const QString &pluginName, const QString &
   set(m_Settings, "Plugins", pluginName + "/" + key, value);
 }
 
-QVariant PluginSettings::pluginPersistent(const QString &pluginName, const QString &key, const QVariant &def) const
+QVariantMap PluginSettings::settings(const QString &pluginName) const
+{
+  return m_PluginSettings[pluginName];
+}
+
+void PluginSettings::setSettings(const QString &pluginName, const QVariantMap& map)
+{
+  m_PluginSettings[pluginName] = map;
+}
+
+QVariantMap PluginSettings::descriptions(const QString &pluginName) const
+{
+  return m_PluginDescriptions[pluginName];
+}
+
+void PluginSettings::setDescriptions(const QString &pluginName, const QVariantMap& map)
+{
+  m_PluginDescriptions[pluginName] = map;
+}
+
+QVariant PluginSettings::persistent(const QString &pluginName, const QString &key, const QVariant &def) const
 {
   if (!m_PluginSettings.contains(pluginName)) {
     return def;
@@ -1150,7 +1158,7 @@ QVariant PluginSettings::pluginPersistent(const QString &pluginName, const QStri
   return get<QVariant>(m_Settings, "PluginPersistance", pluginName + "/" + key, def);
 }
 
-void PluginSettings::setPluginPersistent(
+void PluginSettings::setPersistent(
   const QString &pluginName, const QString &key, const QVariant &value, bool sync)
 {
   if (!m_PluginSettings.contains(pluginName)) {
@@ -1165,16 +1173,46 @@ void PluginSettings::setPluginPersistent(
     m_Settings.sync();
   }
 }
-
-void PluginSettings::addBlacklistPlugin(const QString &fileName)
+void PluginSettings::addBlacklist(const QString &fileName)
 {
   m_PluginBlacklist.insert(fileName);
-  writePluginBlacklist();
+  writeBlacklist();
 }
 
-void PluginSettings::writePluginBlacklist()
+bool PluginSettings::blacklisted(const QString &fileName) const
 {
-  const auto current = readPluginBlacklist();
+  return m_PluginBlacklist.contains(fileName);
+}
+
+void PluginSettings::setBlacklist(const QStringList& pluginNames)
+{
+  m_PluginBlacklist.clear();
+
+  for (const auto& name : pluginNames) {
+    m_PluginBlacklist.insert(name);
+  }
+}
+
+const QSet<QString>& PluginSettings::blacklist() const
+{
+  return m_PluginBlacklist;
+}
+
+void PluginSettings::save()
+{
+  for (auto iterPlugins=m_PluginSettings.begin(); iterPlugins!=m_PluginSettings.end(); ++iterPlugins) {
+    for (auto iterSettings=iterPlugins->begin(); iterSettings!=iterPlugins->end(); ++iterSettings) {
+      const auto key = iterPlugins.key() + "/" + iterSettings.key();
+      set(m_Settings, "Plugins", key, iterSettings.value());
+    }
+  }
+
+  writeBlacklist();
+}
+
+void PluginSettings::writeBlacklist()
+{
+  const auto current = readBlacklist();
 
   if (current.size() > m_PluginBlacklist.size()) {
     // Qt can't remove array elements, the section must be cleared
@@ -1189,50 +1227,16 @@ void PluginSettings::writePluginBlacklist()
   }
 }
 
-QVariantMap PluginSettings::pluginSettings(const QString &pluginName) const
+QSet<QString> PluginSettings::readBlacklist() const
 {
-  return m_PluginSettings[pluginName];
-}
+  QSet<QString> set;
 
-void PluginSettings::setPluginSettings(const QString &pluginName, const QVariantMap& map)
-{
-  m_PluginSettings[pluginName] = map;
-}
+  ScopedReadArray sra(m_Settings, "pluginBlacklist");
+  sra.for_each([&]{
+    set.insert(sra.get<QString>("name"));
+    });
 
-QVariantMap PluginSettings::pluginDescriptions(const QString &pluginName) const
-{
-  return m_PluginDescriptions[pluginName];
-}
-
-void PluginSettings::pluginDescriptions(const QString &pluginName, const QVariantMap& map)
-{
-  m_PluginDescriptions[pluginName] = map;
-}
-
-const QSet<QString>& PluginSettings::pluginBlacklist() const
-{
-  return m_PluginBlacklist;
-}
-
-void PluginSettings::setPluginBlacklist(const QStringList& pluginNames)
-{
-  m_PluginBlacklist.clear();
-
-  for (const auto& name : pluginNames) {
-    m_PluginBlacklist.insert(name);
-  }
-}
-
-void PluginSettings::save()
-{
-  for (auto iterPlugins=m_PluginSettings.begin(); iterPlugins!=m_PluginSettings.end(); ++iterPlugins) {
-    for (auto iterSettings=iterPlugins->begin(); iterSettings!=iterPlugins->end(); ++iterSettings) {
-      const auto key = iterPlugins.key() + "/" + iterSettings.key();
-      set(m_Settings, "Plugins", key, iterSettings.value());
-    }
-  }
-
-  writePluginBlacklist();
+  return set;
 }
 
 
