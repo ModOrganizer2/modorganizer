@@ -1564,12 +1564,7 @@ NexusSettings::NexusSettings(Settings& parent, QSettings& settings)
 {
 }
 
-bool NexusSettings::automaticLoginEnabled() const
-{
-  return get<bool>(m_Settings, "Settings", "nexus_login", false);
-}
-
-bool NexusSettings::apiKey(QString &apiKey) const
+bool NexusSettings::apiKey(QString& apiKey) const
 {
   QString tempKey = getWindowsCredential("APIKEY");
   if (tempKey.isEmpty())

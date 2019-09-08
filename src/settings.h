@@ -371,25 +371,38 @@ private:
 };
 
 
+// paths for the game and various components
+//
+// if the 'resolve' parameter is true, %BASE_DIR% is expanded; it's set to
+// false mostly in the settings dialog
+//
 class PathSettings
 {
 public:
   PathSettings(QSettings& settings);
 
   QString base() const;
-  QString downloads(bool resolve = true) const;
-  QString mods(bool resolve = true) const;
-  QString cache(bool resolve = true) const;
-  QString profiles(bool resolve = true) const;
-  QString overwrite(bool resolve = true) const;
-
   void setBase(const QString& path);
+
+  QString downloads(bool resolve = true) const;
   void setDownloads(const QString& path);
+
+  QString mods(bool resolve = true) const;
   void setMods(const QString& path);
+
+  QString cache(bool resolve = true) const;
   void setCache(const QString& path);
+
+  QString profiles(bool resolve = true) const;
   void setProfiles(const QString& path);
+
+  QString overwrite(bool resolve = true) const;
   void setOverwrite(const QString& path);
 
+
+  // map of names to directories, used to remember the last directory used in
+  // various file pickers
+  //
   std::map<QString, QString> recent() const;
   void setRecent(const std::map<QString, QString>& map);
 
@@ -406,20 +419,28 @@ class NetworkSettings
 public:
   NetworkSettings(QSettings& settings);
 
-  /**
-  * @return true if the user disabled internet features
-  */
+  // whether the user has disabled online features
+  //
   bool offlineMode() const;
   void setOfflineMode(bool b);
 
-  /**
-  * @return true if the user configured the use of a network proxy
-  */
+  // whether the user wants to use the system proxy
+  //
   bool useProxy() const;
   void setUseProxy(bool b);
 
+  // add a new download speed to the list for the given server; each server
+  // remembers the last couple of download speeds and displays the average in
+  // the network settings
+  //
   void setDownloadSpeed(const QString &serverName, int bytesPerSecond);
+
+  // known servers
+  //
   ServerList servers() const;
+
+  // sets the servers
+  //
   void updateServers(ServerList servers);
 
   void dump() const;
@@ -427,6 +448,8 @@ public:
 private:
   QSettings& m_Settings;
 
+  // for pre 2.2.1 ini files
+  //
   ServerList serversFromOldMap() const;
 };
 
@@ -441,57 +464,45 @@ enum class EndorsementState
 EndorsementState endorsementStateFromString(const QString& s);
 QString toString(EndorsementState s);
 
+
 class NexusSettings
 {
 public:
   NexusSettings(Settings& parent, QSettings& settings);
 
-  /**
-  * @return true if the user has set up automatic login to nexus
-  **/
-  bool automaticLoginEnabled() const;
+  // if the key exists from the credentials store, puts it in `apiKey` and
+  // returns true; otherwise, returns false and leaves `apiKey` untouched
+  //
+  bool apiKey(QString& apiKey) const;
 
-  /**
-  * @brief retrieve the login information for nexus
-  *
-  * @param username (out) receives the user name for nexus
-  * @param password (out) received the password for nexus
-  * @return true if automatic login is active, false otherwise
-  **/
-  bool apiKey(QString &apiKey) const;
-
-  /**
-  * @brief set the nexus login information
-  *
-  * @param username username
-  * @param password password
-  */
+  // sets the api key in the credentials store, removes it if empty; returns
+  // false on errors
+  //
   bool setApiKey(const QString& apiKey);
 
-  /**
-  * @brief clears the nexus login information
-  */
+  // removes the api key from the credentials store; returns false on errors
+  //
   bool clearApiKey();
 
-  /**
-  * @brief returns whether an API key is currently stored
-  */
+  // returns whether an API key is currently stored
+  //
   bool hasApiKey() const;
 
-  /**
-  * @return true if endorsement integration is enabled
-  */
+  // returns whether endorsement integration is enabled
+  //
   bool endorsementIntegration() const;
   void setEndorsementIntegration(bool b) const;
 
+  // returns the endorsement state of MO itself
+  //
   EndorsementState endorsementState() const;
   void setEndorsementState(EndorsementState s);
 
-  /**
-  * @brief register MO as the handler for nxm links
-  * @param force set to true to enforce the registration dialog to show up,
-  *              even if the user said earlier not to
-  */
+  // registers MO as the handler for nxm links
+  //
+  // if 'force' is true, the registration dialog will be shown even if the user
+  // said earlier not to
+  //
   void registerAsNXMHandler(bool force);
 
 private:
@@ -505,30 +516,34 @@ class SteamSettings
 public:
   SteamSettings(Settings& parent, QSettings& settings);
 
-  /**
-  * the steam appid is assigned by the steam platform to each product sold there.
-  * The appid may differ between different versions of a game so it may be impossible
-  * for Mod Organizer to automatically recognize it, though usually it does
-  * @return the steam appid for the game
-  **/
+  // the steam appid is assigned by the steam platform to each product sold
+  // there.
+  //
+  // the appid may differ between different versions of a game so it may be
+  // impossible for MO to automatically recognize it, though usually it does
+  //
   QString appID() const;
   void setAppID(const QString& id);
 
-  /**
-  * @brief retrieve the login information for steam
-  *
-  * @param username (out) receives the user name for nexus
-  * @param password (out) received the password for nexus
-  * @return true if a username has been specified, false otherwise
-  **/
+  // the steam username is stored in the ini, but the password is in the
+  // windows credentials store; both values are independent and either can be
+  // empty
+  //
+  // if the username exists in the ini, it is assigned to `username`; if not
+  // `username` is set to an empty string
+  //
+  // if the password exists in the credentials store, it is assigned to
+  // `password`; if not, `password` is set to an empty string
+  //
+  // returns whether _both_ the username and password have a value
+  //
   bool login(QString &username, QString &password) const;
 
-  /**
-  * @brief set the steam login information
-  *
-  * @param username username
-  * @param password password
-  */
+  // sets the steam login; the username is saved in the ini file and the
+  // password in the credentials store
+  //
+  // if a value is empty, it is removed from its backing store
+  //
   void setLogin(QString username, QString password);
 
 private:
@@ -542,45 +557,45 @@ class InterfaceSettings
 public:
   InterfaceSettings(QSettings& settings);
 
-  /**
-  * @return true if the GUI should be locked when running executables
-  */
+  // whether the GUI should be locked when running executables
+  //
   bool lockGUI() const;
   void setLockGUI(bool b);
 
+  // filename of the theme
+  //
   std::optional<QString> styleName() const;
   void setStyleName(const QString& name);
 
-  /**
-  * @return true if the user chose compact downloads
-  */
+  // whether to show compact downloads
+  //
   bool compactDownloads() const;
   void setCompactDownloads(bool b);
 
-  /**
-  * @return true if the user chose meta downloads
-  */
+  // whether to show meta information for downloads
+  //
   bool metaDownloads() const;
   void setMetaDownloads(bool b);
 
-  /**
-  * @return true if the API counter should be hidden
-  */
+  // whether the API counter should be hidden
+  //
   bool hideAPICounter() const;
   void setHideAPICounter(bool b);
 
-  /**
-  * @return true if the user wants to see non-official plugins installed outside MO in his mod list
-  */
+  // whether the user wants to see non-official plugins installed outside MO in
+  // the mod list
+  //
   bool displayForeign() const;
   void setDisplayForeign(bool b);
 
-  /**
-  * @return short code of the configured language (corresponding to the translation files)
-  */
+  // short code of the configured language (corresponding to the translation
+  // files)
+  //
   QString language();
   void setLanguage(const QString& name);
 
+  // whether the given tutorial has been completed
+  //
   bool isTutorialCompleted(const QString& windowName) const;
   void setTutorialCompleted(const QString& windowName, bool b=true);
 
@@ -594,12 +609,18 @@ class DiagnosticsSettings
 public:
   DiagnosticsSettings(QSettings& settings);
 
+  // log level for both MO and usvfs
+  //
   MOBase::log::Levels logLevel() const;
   void setLogLevel(MOBase::log::Levels level);
 
+  // crash dump type for both MO and usvfs
+  //
   CrashDumpsType crashDumpsType() const;
   void setCrashDumpsType(CrashDumpsType type);
 
+  // maximum number of dump files keps, for both MO and usvfs
+  //
   int crashDumpsMax() const;
   void setCrashDumpsMax(int n);
 
@@ -608,10 +629,9 @@ private:
 };
 
 
-/**
- * manages the settings for Mod Organizer. The settings are not cached
- * inside the class but read/written directly from/to disc
- **/
+// manages the settings for MO; the settings are accessed directly through a
+// QSettings and so are not cached here
+//
 class Settings : public QObject
 {
   Q_OBJECT;
@@ -622,35 +642,52 @@ public:
 
   static Settings &instance();
 
+  // name of the ini file
+  //
   QString filename() const;
 
+  // version of MO stored in the ini; this may be different from the current
+  // version if the user just updated
+  //
   std::optional<QVersionNumber> version() const;
+
+  // updates the settings to bring them up to date
+  //
   void processUpdates(const QVersionNumber& current, const QVersionNumber& last);
 
+  // whether MO has been started for the first time
+  //
   bool firstStart() const;
   void setFirstStart(bool b);
 
+  // configured executables
+  //
   std::vector<std::map<QString, QVariant>> executables() const;
   void setExecutables(const std::vector<std::map<QString, QVariant>>& v);
 
+  // whether to backup existing mods on install
+  //
   bool keepBackupOnInstall() const;
   void setKeepBackupOnInstall(bool b);
 
+  // blacklisted executables do not get hooked by usvfs; this list is managed
+  // by MO but given to usvfs when starting an executable
+  //
   QString executablesBlacklist() const;
   void setExecutablesBlacklist(const QString& s);
 
-  /**
-   * @brief sets the new motd hash
-   **/
+  // ? looks obsolete, only used by dead code
+  //
   unsigned int motdHash() const;
   void setMotdHash(unsigned int hash);
 
-  /**
-  * @return true if the user wants to have archives being parsed to show conflicts and contents
-  */
+  // whether archives should be parsed to show conflicts and contents
+  //
   bool archiveParsing() const;
   void setArchiveParsing(bool b);
 
+  // whether the user wants to upgrade to pre-releases
+  //
   bool usePrereleases() const;
   void setUsePrereleases(bool b);
 
@@ -688,14 +725,20 @@ public:
   DiagnosticsSettings& diagnostics();
   const DiagnosticsSettings& diagnostics() const;
 
-
+  // makes sure the ini file is written to disk
+  //
   QSettings::Status sync() const;
+
   void dump() const;
 
 public slots:
+  // this slot is connected to by various parts of MO
+  //
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
 signals:
+  // these are fired from outside the settings, mostly by the settings dialog
+  //
   void languageChanged(const QString &newLanguage);
   void styleChanged(const QString &newStyle);
 
