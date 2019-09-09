@@ -827,7 +827,12 @@ void initLogging()
 {
   LogModel::create();
 
-  log::createDefault(MOBase::log::Debug, "%^[%m-%d %H:%M:%S.%e %L] %v%$");
+  log::LoggerConfiguration conf;
+  conf.maxLevel = MOBase::log::Debug;
+  conf.pattern = "%^[%Y-%m-%d %H:%M:%S.%e %L] %v%$";
+  conf.utc = true;
+
+  log::createDefault(conf);
 
   log::getDefault().setCallback(
     [](log::Entry e){ LogModel::instance().add(e); });
