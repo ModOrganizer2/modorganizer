@@ -107,7 +107,7 @@ public:
 
   void setManagedGame(MOBase::IPluginGame *game);
 
-  void updateExecutablesList(QSettings &settings);
+  void updateExecutablesList();
 
   void startMOUpdate();
 
@@ -193,7 +193,7 @@ public:
   void prepareVFS();
 
   void updateVFSParams(
-    MOBase::log::Levels logLevel, int crashDumpsType,
+    MOBase::log::Levels logLevel, CrashDumpsType crashDumpsType,
     QString executableBlacklist);
 
   void setLogLevel(MOBase::log::Levels level);
@@ -201,7 +201,7 @@ public:
   bool cycleDiagnostics();
 
   static CrashDumpsType getGlobalCrashDumpsType() { return m_globalCrashDumpsType; }
-  static void setGlobalCrashDumpsType(int crashDumpsType);
+  static void setGlobalCrashDumpsType(CrashDumpsType crashDumpsType);
   static std::wstring crashDumpsPath();
 
 public:
@@ -287,10 +287,6 @@ signals:
 private:
 
   void storeSettings();
-
-  QSettings::Status storeSettings(const QString &fileName);
-
-  QString commitSettings(const QString &iniFile);
 
   bool queryApi(QString &apiKey);
 

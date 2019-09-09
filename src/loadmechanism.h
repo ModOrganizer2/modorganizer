@@ -56,4 +56,6 @@ private:
 };
 
 
+QString toString(LoadMechanism::EMechanism e);
+
 #endif // LOADMECHANISM_H

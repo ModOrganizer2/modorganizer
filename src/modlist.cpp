@@ -390,7 +390,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     return QVariant();
   } else if (role == Qt::ForegroundRole) {
     if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR) && modInfo->getColor().isValid()) {
-      return Settings::getIdealTextColor(modInfo->getColor());
+      return ColorSettings::idealTextColor(modInfo->getColor());
     } else if (column == COL_NAME) {
       int highlight = modInfo->getHighlight();
       if (highlight & ModInfo::HIGHLIGHT_IMPORTANT)
@@ -416,19 +416,19 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     bool archiveOverwritten = m_ArchiveOverwritten.find(modIndex) != m_ArchiveOverwritten.end();
     bool archiveLooseOverwritten = m_ArchiveLooseOverwritten.find(modIndex) != m_ArchiveLooseOverwritten.end();
     if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
-      return Settings::instance().modlistContainsPluginColor();
+      return Settings::instance().colors().modlistContainsPlugin();
     } else if (overwritten || archiveLooseOverwritten) {
-      return Settings::instance().modlistOverwritingLooseColor();
+      return Settings::instance().colors().modlistOverwritingLoose();
     } else if (overwrite || archiveLooseOverwrite) {
-      return Settings::instance().modlistOverwrittenLooseColor();
+      return Settings::instance().colors().modlistOverwrittenLoose();
     } else if (archiveOverwritten) {
-      return Settings::instance().modlistOverwritingArchiveColor();
+      return Settings::instance().colors().modlistOverwritingArchive();
     } else if (archiveOverwrite) {
-      return Settings::instance().modlistOverwrittenArchiveColor();
+      return Settings::instance().colors().modlistOverwrittenArchive();
     } else if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)
                && modInfo->getColor().isValid()
                && ((role != ViewMarkingScrollBar::DEFAULT_ROLE)
-                    || Settings::instance().colorSeparatorScrollbar())) {
+                    || Settings::instance().colors().colorSeparatorScrollbar())) {
       return modInfo->getColor();
     } else {
       return QVariant();
@@ -999,8 +999,8 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
   QDir modDir = QDir(modInfo->absolutePath());
 
-  QDir allModsDir(Settings::instance().getModDirectory());
-  QDir overwriteDir(Settings::instance().getOverwriteDirectory());
+  QDir allModsDir(Settings::instance().paths().mods());
+  QDir overwriteDir(Settings::instance().paths().overwrite());
 
   QStringList sourceList;
   QStringList targetList;

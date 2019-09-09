@@ -20,6 +20,10 @@ public:
   explicit ProblemsDialog(std::vector<QObject*> pluginObjects, QWidget *parent = 0);
   ~ProblemsDialog();
 
+  // also saves and restores geometry
+  //
+  int exec() override;
+
   bool hasProblems() const;
 
 private:

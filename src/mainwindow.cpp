@@ -138,7 +138,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QRect>
 #include <QRegExp>
 #include <QResizeEvent>
-#include <QSettings>
 #include <QScopedPointer>
 #include <QSizePolicy>
 #include <QSize>
@@ -195,115 +194,16 @@ const QSize MediumToolbarSize(32, 32);
 const QSize LargeToolbarSize(42, 36);
 
 
-// this attempts to fix https://bugreports.qt.io/browse/QTBUG-46620 where dock
-// sizes are not restored when the main window is maximized; it is used in
-// MainWindow::readSettings() and MainWindow::storeSettings()
-//
-// there's also https://stackoverflow.com/questions/44005852, which has what
-// seems to be a popular fix, but it breaks the restored size of the window
-// by setting it to the desktop's resolution, so that doesn't work
-//
-// the only fix I could find is to remember the sizes of the docks and manually
-// setting them back; saving is straightforward, but restoring is messy
-//
-// this also depends on the window being visible before the timer in restore()
-// is fired and the timer must be processed by application.exec(); therefore,
-// the splash screen _must_ be closed before readSettings() is called, because
-// it has its own event loop, which seems to interfere with this
-//
-// all of this should become unnecessary when QTBUG-46620 is fixed
-//
-class DockFixer
-{
-public:
-  static void save(MainWindow* mw, QSettings& settings)
-  {
-    const auto docks = mw->findChildren<QDockWidget*>();
-
-    // saves the size of each dock
-    for (int i=0; i<docks.size(); ++i) {
-      int size = 0;
-
-      // save the width for horizontal docks, or the height for vertical
-      if (orientation(mw, docks[i]) == Qt::Horizontal) {
-        size = docks[i]->size().width();
-      } else {
-        size = docks[i]->size().height();
-      }
-
-      settings.setValue(settingName(docks[i]), size);
-    }
-  }
-
-  static void restore(MainWindow* mw, const QSettings& settings)
-  {
-    struct DockInfo
-    {
-      QDockWidget* d;
-      int size = 0;
-      Qt::Orientation ori;
-    };
-
-    std::vector<DockInfo> dockInfos;
-
-    const auto docks = mw->findChildren<QDockWidget*>();
-
-    // for each dock
-    for (int i=0; i<docks.size(); ++i) {
-      const QString name = settingName(docks[i]);
-
-      if (settings.contains(name)) {
-        // remember this dock, its size and orientation
-        const auto size = settings.value(name).toInt();
-        dockInfos.push_back({docks[i], size, orientation(mw, docks[i])});
-      }
-    }
-
-    // the main window must have had time to process the settings from
-    // readSettings() or it seems to override whatever is set here
-    //
-    // some people said a single processEvents() call is enough, but it doesn't
-    // look like it
-    QTimer::singleShot(1, [=] {
-      for (const auto& info : dockInfos) {
-        mw->resizeDocks({info.d}, {info.size}, info.ori);
-      }
-      });
-  }
-
-  static Qt::Orientation orientation(QMainWindow* mw, QDockWidget* d)
-  {
-    // docks in these areas are horizontal
-    const auto horizontalAreas =
-      Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea;
-
-    if (mw->dockWidgetArea(d) & horizontalAreas) {
-      return Qt::Horizontal;
-    } else {
-      return Qt::Vertical;
-    }
-  }
-
-  static QString settingName(QDockWidget* d)
-  {
-    return "geometry/" + d->objectName() + "_size";
-  }
-};
-
-
-MainWindow::MainWindow(QSettings &initSettings
+MainWindow::MainWindow(Settings &settings
                        , OrganizerCore &organizerCore
                        , PluginContainer &pluginContainer
                        , QWidget *parent)
   : QMainWindow(parent)
   , ui(new Ui::MainWindow)
   , m_WasVisible(false)
-  , m_menuBarVisible(true)
-  , m_statusBarVisible(true)
   , m_linksSeparator(nullptr)
   , m_Tutorial(this, "MainWindow")
   , m_OldProfileIndex(-1)
-  , m_ModListGroupingProxy(nullptr)
   , m_ModListSortProxy(nullptr)
   , m_OldExecutableIndex(-1)
   , m_CategoryFactory(CategoryFactory::instance())
@@ -322,11 +222,11 @@ MainWindow::MainWindow(QSettings &initSettings
 {
   QWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
   QWebEngineProfile::defaultProfile()->setHttpCacheMaximumSize(52428800);
-  QWebEngineProfile::defaultProfile()->setCachePath(m_OrganizerCore.settings().getCacheDirectory());
-  QWebEngineProfile::defaultProfile()->setPersistentStoragePath(m_OrganizerCore.settings().getCacheDirectory());
+  QWebEngineProfile::defaultProfile()->setCachePath(settings.paths().cache());
+  QWebEngineProfile::defaultProfile()->setPersistentStoragePath(settings.paths().cache());
 
   ui->setupUi(this);
-  m_statusBar.reset(new StatusBar(statusBar(), ui));
+  ui->statusBar->setup(ui);
 
   {
     auto* ni = NexusInterface::instance(&m_PluginContainer);
@@ -350,17 +250,14 @@ MainWindow::MainWindow(QSettings &initSettings
     // in the rare case where the user restarts MO through the settings, this
     // will correctly pick up the previous values
     updateWindowTitle(ni->getAPIUserAccount());
-    m_statusBar->setAPI(ni->getAPIStats(), ni->getAPIUserAccount());
+    ui->statusBar->setAPI(ni->getAPIStats(), ni->getAPIUserAccount());
   }
 
-  languageChange(m_OrganizerCore.settings().language());
+  languageChange(settings.interface().language());
 
   m_CategoryFactory.loadCategories();
 
   ui->logList->setCore(m_OrganizerCore);
-
-  int splitterSize = this->size().height(); // actually total window size, but the splitter doesn't seem to return the true value
-  ui->topLevelSplitter->setSizes(QList<int>() << splitterSize - 100 << 100);
 
   updateProblemsButton();
 
@@ -369,41 +266,7 @@ MainWindow::MainWindow(QSettings &initSettings
 
   TaskProgressManager::instance().tryCreateTaskbar();
 
-  // set up mod list
-  m_ModListSortProxy = m_OrganizerCore.createModListProxyModel();
-
-  ui->modList->setModel(m_ModListSortProxy);
-
-  GenericIconDelegate *contentDelegate = new GenericIconDelegate(ui->modList, Qt::UserRole + 3, ModList::COL_CONTENT, 150);
-  connect(ui->modList->header(), SIGNAL(sectionResized(int,int,int)), contentDelegate, SLOT(columnResized(int,int,int)));
-  ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
-  ModFlagIconDelegate *flagDelegate = new ModFlagIconDelegate(ui->modList, ModList::COL_FLAGS, 120);
-  connect(ui->modList->header(), SIGNAL(sectionResized(int,int,int)), flagDelegate, SLOT(columnResized(int,int,int)));
-  ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, flagDelegate);
-  ui->modList->setItemDelegateForColumn(ModList::COL_CONTENT, contentDelegate);
-  ui->modList->header()->installEventFilter(m_OrganizerCore.modList());
-  connect(ui->modList->header(), SIGNAL(sectionResized(int, int, int)), this, SLOT(modListSectionResized(int, int, int)));
-
-  bool modListAdjusted = registerWidgetState(ui->modList->objectName(), ui->modList->header(), "mod_list_state");
-
-  if (modListAdjusted) {
-    // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
-    for (int column = 0; column <= ModList::COL_LASTCOLUMN; ++column) {
-      int sectionSize = ui->modList->header()->sectionSize(column);
-      ui->modList->header()->resizeSection(column, sectionSize + 1);
-      ui->modList->header()->resizeSection(column, sectionSize);
-    }
-  } else {
-    // hide these columns by default
-    ui->modList->header()->setSectionHidden(ModList::COL_CONTENT, true);
-    ui->modList->header()->setSectionHidden(ModList::COL_MODID, true);
-    ui->modList->header()->setSectionHidden(ModList::COL_GAME, true);
-    ui->modList->header()->setSectionHidden(ModList::COL_INSTALLTIME, true);
-    ui->modList->header()->setSectionHidden(ModList::COL_NOTES, true);
-  }
-
-  ui->modList->header()->setSectionHidden(ModList::COL_NAME, false); // prevent the name-column from being hidden
-  ui->modList->installEventFilter(m_OrganizerCore.modList());
+  setupModList();
 
   // set up plugin list
   m_PluginListSortProxy = m_OrganizerCore.createPluginListProxyModel();
@@ -416,15 +279,17 @@ MainWindow::MainWindow(QSettings &initSettings
   ui->bsaList->setLocalMoveOnly(true);
 
   initDownloadView();
-  bool pluginListAdjusted = registerWidgetState(ui->espList->objectName(), ui->espList->header(), "plugin_list_state");
-  registerWidgetState(ui->dataTree->objectName(), ui->dataTree->header());
-  registerWidgetState(ui->downloadView->objectName(),
-                      ui->downloadView->header());
+
+  const bool pluginListAdjusted =
+    settings.geometry().restoreState(ui->espList->header());
+
+  settings.geometry().restoreState(ui->dataTree->header());
+  settings.geometry().restoreState(ui->downloadView->header());
 
   ui->splitter->setStretchFactor(0, 3);
   ui->splitter->setStretchFactor(1, 2);
 
-  resizeLists(modListAdjusted, pluginListAdjusted);
+  resizeLists(pluginListAdjusted);
 
   QMenu *linkMenu = new QMenu(this);
   m_LinkToolbar = linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Toolbar and Menu"), this, SLOT(linkToolbar()));
@@ -460,8 +325,6 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(&m_PluginContainer, SIGNAL(diagnosisUpdate()), this, SLOT(updateProblemsButton()));
 
   connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(saveSelectionChanged(QListWidgetItem*)));
-
-  connect(ui->modList, SIGNAL(dropModeUpdate(bool)), m_OrganizerCore.modList(), SLOT(dropModeUpdate(bool)));
 
   connect(m_ModListSortProxy, SIGNAL(filterActive(bool)), this, SLOT(modFilterActive(bool)));
   connect(m_ModListSortProxy, SIGNAL(layoutChanged()), this, SLOT(updateModCount()));
@@ -509,7 +372,6 @@ MainWindow::MainWindow(QSettings &initSettings
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
   connect(ui->tabWidget, SIGNAL(currentChanged(int)), &TutorialManager::instance(), SIGNAL(tabChanged(int)));
-  connect(ui->modList->header(), SIGNAL(sortIndicatorChanged(int,Qt::SortOrder)), this, SLOT(modListSortIndicatorChanged(int,Qt::SortOrder)));
   connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(toolBar_customContextMenuRequested(QPoint)));
   connect(ui->menuToolbars, &QMenu::aboutToShow, [&]{ updateToolbarMenu(); });
   connect(ui->menuView, &QMenu::aboutToShow, [&]{ updateViewMenu(); });
@@ -523,7 +385,6 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(&m_CheckBSATimer, SIGNAL(timeout()), this, SLOT(checkBSAList()));
 
   connect(ui->espList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(esplistSelectionsChanged(QItemSelection)));
-  connect(ui->modList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(modlistSelectionsChanged(QItemSelection)));
 
   new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Enter), this, SLOT(openExplorer_activated()));
   new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Return), this, SLOT(openExplorer_activated()));
@@ -540,8 +401,7 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(&m_SaveMetaTimer, SIGNAL(timeout()), this, SLOT(saveModMetas()));
   m_SaveMetaTimer.start(5000);
 
-  setCategoryListVisible(initSettings.value("categorylist_visible", true).toBool());
-  FileDialogMemory::restore(initSettings);
+  FileDialogMemory::restore(settings);
 
   fixCategories();
 
@@ -584,6 +444,80 @@ MainWindow::MainWindow(QSettings &initSettings
   resetActionIcons();
   updatePluginCount();
   updateModCount();
+}
+
+void MainWindow::setupModList()
+{
+  m_ModListSortProxy = m_OrganizerCore.createModListProxyModel();
+  ui->modList->setModel(m_ModListSortProxy);
+  ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
+
+
+  connect(
+    ui->modList, SIGNAL(dropModeUpdate(bool)),
+    m_OrganizerCore.modList(), SLOT(dropModeUpdate(bool)));
+
+  connect(
+    ui->modList->header(), SIGNAL(sortIndicatorChanged(int,Qt::SortOrder)),
+    this, SLOT(modListSortIndicatorChanged(int,Qt::SortOrder)));
+
+  connect(
+    ui->modList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)),
+    this, SLOT(modlistSelectionsChanged(QItemSelection)));
+
+  connect(
+    ui->modList->header(), SIGNAL(sectionResized(int, int, int)),
+    this, SLOT(modListSectionResized(int, int, int)));
+
+
+  GenericIconDelegate *contentDelegate = new GenericIconDelegate(
+    ui->modList, Qt::UserRole + 3, ModList::COL_CONTENT, 150);
+
+  connect(
+    ui->modList->header(), SIGNAL(sectionResized(int,int,int)),
+    contentDelegate, SLOT(columnResized(int,int,int)));
+
+
+  ModFlagIconDelegate *flagDelegate = new ModFlagIconDelegate(
+    ui->modList, ModList::COL_FLAGS, 120);
+
+  connect(
+    ui->modList->header(), SIGNAL(sectionResized(int,int,int)),
+    flagDelegate, SLOT(columnResized(int,int,int)));
+
+
+  ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, flagDelegate);
+  ui->modList->setItemDelegateForColumn(ModList::COL_CONTENT, contentDelegate);
+  ui->modList->header()->installEventFilter(m_OrganizerCore.modList());
+
+
+  if (m_OrganizerCore.settings().geometry().restoreState(ui->modList->header())) {
+    // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
+    for (int column = 0; column <= ModList::COL_LASTCOLUMN; ++column) {
+      int sectionSize = ui->modList->header()->sectionSize(column);
+      ui->modList->header()->resizeSection(column, sectionSize + 1);
+      ui->modList->header()->resizeSection(column, sectionSize);
+    }
+  } else {
+    // hide these columns by default
+    ui->modList->header()->setSectionHidden(ModList::COL_CONTENT, true);
+    ui->modList->header()->setSectionHidden(ModList::COL_MODID, true);
+    ui->modList->header()->setSectionHidden(ModList::COL_GAME, true);
+    ui->modList->header()->setSectionHidden(ModList::COL_INSTALLTIME, true);
+    ui->modList->header()->setSectionHidden(ModList::COL_NOTES, true);
+
+    // resize mod list to fit content
+    for (int i = 0; i < ui->modList->header()->count(); ++i) {
+      ui->modList->header()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
+    }
+
+    ui->modList->header()->setSectionResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
+  }
+
+  // prevent the name-column from being hidden
+  ui->modList->header()->setSectionHidden(ModList::COL_NAME, false);
+
+  ui->modList->installEventFilter(m_OrganizerCore.modList());
 }
 
 void MainWindow::resetActionIcons()
@@ -688,7 +622,7 @@ void MainWindow::updateWindowTitle(const APIUserAccount& user)
 
 void MainWindow::onRequestsChanged(const APIStats& stats, const APIUserAccount& user)
 {
-  m_statusBar->setAPI(stats, user);
+  ui->statusBar->setAPI(stats, user);
 }
 
 
@@ -700,16 +634,8 @@ void MainWindow::disconnectPlugins()
 }
 
 
-void MainWindow::resizeLists(bool modListCustom, bool pluginListCustom)
+void MainWindow::resizeLists(bool pluginListCustom)
 {
-  if (!modListCustom) {
-    // resize mod list to fit content
-    for (int i = 0; i < ui->modList->header()->count(); ++i) {
-      ui->modList->header()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
-    }
-    ui->modList->header()->setSectionResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
-  }
-
   // ensure the columns aren't so small you can't see them any more
   for (int i = 0; i < ui->modList->header()->count(); ++i) {
     if (ui->modList->header()->sectionSize(i) < 10) {
@@ -890,7 +816,7 @@ QMenu* MainWindow::createPopupMenu()
 
 void MainWindow::on_actionMainMenuToggle_triggered()
 {
-  showMenuBar(!ui->menuBar->isVisible());
+  ui->menuBar->setVisible(!ui->menuBar->isVisible());
 }
 
 void MainWindow::on_actionToolBarMainToggle_triggered()
@@ -900,7 +826,7 @@ void MainWindow::on_actionToolBarMainToggle_triggered()
 
 void MainWindow::on_actionStatusBarToggle_triggered()
 {
-  showStatusBar(!ui->statusBar->isVisible());
+  ui->statusBar->setVisible(!ui->statusBar->isVisible());
 }
 
 void MainWindow::on_actionToolBarSmallIcons_triggered()
@@ -950,36 +876,6 @@ void MainWindow::setToolbarButtonStyle(Qt::ToolButtonStyle s)
   for (auto* tb : findChildren<QToolBar*>()) {
     tb->setToolButtonStyle(s);
   }
-}
-
-void MainWindow::showMenuBar(bool b)
-{
-  ui->menuBar->setVisible(b);
-  m_menuBarVisible = b;
-}
-
-void MainWindow::showStatusBar(bool b)
-{
-  ui->statusBar->setVisible(b);
-  m_statusBarVisible = b;
-
-  // the central widget typically has no bottom padding because the status bar
-  // is more than enough, but when it's hidden, the bottom widget (currently
-  // the log) touches the bottom border of the window, which looks ugly
-  //
-  // when hiding the statusbar, the central widget is given the same border
-  // margin as it has on the top (which is typically 6, as it's the default from
-  // the qt designer)
-
-  auto m = ui->centralWidget->layout()->contentsMargins();
-
-  if (b) {
-    m.setBottom(0);
-  } else {
-    m.setBottom(m.top());
-  }
-
-  ui->centralWidget->layout()->setContentsMargins(m);
 }
 
 void MainWindow::on_centralWidget_customContextMenuRequested(const QPoint &pos)
@@ -1063,8 +959,8 @@ void MainWindow::updateProblemsButton()
   }
 
   // updating the status bar, may be null very early when MO is starting
-  if (m_statusBar) {
-    m_statusBar->setNotifications(numProblems > 0);
+  if (ui->statusBar) {
+    ui->statusBar->setNotifications(numProblems > 0);
   }
 }
 
@@ -1298,7 +1194,7 @@ void MainWindow::hookUpWindowTutorials()
     QString firstLine = QString::fromUtf8(file.readLine());
     if (firstLine.startsWith("//WIN")) {
       QString windowName = firstLine.mid(6).trimmed();
-      if (!m_OrganizerCore.settings().directInterface().value("CompletedWindowTutorials/" + windowName, false).toBool()) {
+      if (!m_OrganizerCore.settings().interface().isTutorialCompleted(windowName)) {
         TutorialManager::instance().activateTutorial(windowName, fileName);
       }
     }
@@ -1307,6 +1203,8 @@ void MainWindow::hookUpWindowTutorials()
 
 void MainWindow::showEvent(QShowEvent *event)
 {
+  readSettings(m_OrganizerCore.settings());
+
   refreshFilters();
 
   QMainWindow::showEvent(event);
@@ -1327,7 +1225,7 @@ void MainWindow::showEvent(QShowEvent *event)
 
     hookUpWindowTutorials();
 
-    if (m_OrganizerCore.settings().directInterface().value("first_start", true).toBool()) {
+    if (m_OrganizerCore.settings().firstStart()) {
       QString firstStepsTutorial = ToQString(AppConfig::firstStepsTutorial());
       if (TutorialManager::instance().hasTutorial(firstStepsTutorial)) {
         if (QMessageBox::question(this, tr("Show tutorial?"),
@@ -1346,16 +1244,14 @@ void MainWindow::showEvent(QShowEvent *event)
             QObject::tr("Please use \"Help\" from the toolbar to get usage instructions to all elements"));
       }
 
-    m_OrganizerCore.settings().directInterface().setValue("first_start", false);
+      m_OrganizerCore.settings().setFirstStart(false);
     }
 
-    // this has no visible impact when called before the ui is visible
-    int grouping = m_OrganizerCore.settings().directInterface().value("group_state").toInt();
-    ui->groupCombo->setCurrentIndex(grouping);
+    m_OrganizerCore.settings().widgets().restoreIndex(ui->groupCombo);
 
     allowListResize();
 
-    m_OrganizerCore.settings().registerAsNXMHandler(false);
+    m_OrganizerCore.settings().nexus().registerAsNXMHandler(false);
     m_WasVisible = true;
 	  updateProblemsButton();
   }
@@ -1366,7 +1262,10 @@ void MainWindow::closeEvent(QCloseEvent* event)
 {
   if (!confirmExit()) {
     event->ignore();
+    return;
   }
+
+  storeSettings(m_OrganizerCore.settings());
 }
 
 bool MainWindow::confirmExit()
@@ -1405,12 +1304,6 @@ void MainWindow::cleanup()
   m_IntegratedBrowser.close();
   m_SaveMetaTimer.stop();
   m_MetaSave.waitForFinished();
-}
-
-
-void MainWindow::setBrowserGeometry(const QByteArray &geometry)
-{
-  m_IntegratedBrowser.restoreGeometry(geometry);
 }
 
 void MainWindow::displaySaveGameInfo(QListWidgetItem *newItem)
@@ -1642,18 +1535,6 @@ void MainWindow::startExeAction()
 
 }
 
-
-void MainWindow::setExecutableIndex(int index)
-{
-  QComboBox *executableBox = findChild<QComboBox*>("executablesListBox");
-
-  if ((index != 0) && (executableBox->count() > index)) {
-    executableBox->setCurrentIndex(index);
-  } else {
-    executableBox->setCurrentIndex(1);
-  }
-}
-
 void MainWindow::activateSelectedProfile()
 {
   m_OrganizerCore.setCurrentProfile(ui->profileBox->currentText());
@@ -1870,7 +1751,7 @@ bool MainWindow::refreshProfiles(bool selectProfile)
   profileBox->clear();
   profileBox->addItem(QObject::tr("<Manage...>"));
 
-  QDir profilesDir(Settings::instance().getProfileDirectory());
+  QDir profilesDir(Settings::instance().paths().profiles());
   profilesDir.setFilter(QDir::AllDirs | QDir::NoDotAndDotDot);
 
   QDirIterator profileIter(profilesDir);
@@ -1916,7 +1797,7 @@ void MainWindow::refreshExecutablesList()
     ++i;
   }
 
-  setExecutableIndex(1);
+  ui->executablesListBox->setCurrentIndex(1);
   executablesList->setEnabled(true);
 }
 
@@ -2109,7 +1990,7 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
       newItem->setFlags(newItem->flags() & ~(Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable));
       newItem->setCheckState(0, (index != -1) ? Qt::Checked : Qt::Unchecked);
       newItem->setData(0, Qt::UserRole, false);
-      if (m_OrganizerCore.settings().forceEnableCoreFiles()
+      if (m_OrganizerCore.settings().game().forceEnableCoreFiles()
         && defaultArchives.contains(fileInfo.fileName())) {
         newItem->setCheckState(0, Qt::Checked);
         newItem->setDisabled(true);
@@ -2247,62 +2128,49 @@ void MainWindow::activateProxy(bool activate)
   busyDialog.hide();
 }
 
-void MainWindow::readSettings()
+void MainWindow::readSettings(const Settings& settings)
 {
-  QSettings settings(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::iniFileName()), QSettings::IniFormat);
+  settings.geometry().restoreGeometry(this);
+  settings.geometry().restoreState(this);
+  settings.geometry().restoreDocks(this);
+  settings.geometry().restoreToolbars(this);
+  settings.geometry().restoreState(ui->splitter);
+  settings.geometry().restoreVisibility(ui->menuBar);
+  settings.geometry().restoreVisibility(ui->statusBar);
 
-  if (settings.contains("window_geometry")) {
-    restoreGeometry(settings.value("window_geometry").toByteArray());
+  {
+    // special case in case someone puts 0 in the INI
+    auto v = settings.widgets().index(ui->executablesListBox);
+    if (!v || v == 0) {
+      v = 1;
+    }
+
+    ui->executablesListBox->setCurrentIndex(*v);
   }
 
-  if (settings.contains("window_state")) {
-    restoreState(settings.value("window_state").toByteArray());
+  settings.widgets().restoreIndex(ui->groupCombo);
+
+  {
+    settings.geometry().restoreVisibility(ui->categoriesGroup, false);
+    const auto v = ui->categoriesGroup->isVisible();
+    setCategoryListVisible(v);
+    ui->displayCategoriesBtn->setChecked(v);
   }
 
-  if (settings.contains("toolbar_size")) {
-    setToolbarSize(settings.value("toolbar_size").toSize());
-  }
-
-  if (settings.contains("toolbar_button_style")) {
-    setToolbarButtonStyle(static_cast<Qt::ToolButtonStyle>(
-      settings.value("toolbar_button_style").toInt()));
-  }
-
-  if (settings.contains("menubar_visible")) {
-    showMenuBar(settings.value("menubar_visible").toBool());
-  }
-
-  if (settings.contains("statusbar_visible")) {
-    showStatusBar(settings.value("statusbar_visible").toBool());
-  }
-
-  if (settings.contains("window_split")) {
-    ui->splitter->restoreState(settings.value("window_split").toByteArray());
-  }
-
-  if (settings.contains("log_split")) {
-    ui->topLevelSplitter->restoreState(settings.value("log_split").toByteArray());
-  }
-
-  bool filtersVisible = settings.value("filters_visible", false).toBool();
-  setCategoryListVisible(filtersVisible);
-  ui->displayCategoriesBtn->setChecked(filtersVisible);
-
-  int selectedExecutable = settings.value("selected_executable").toInt();
-  setExecutableIndex(selectedExecutable);
-
-  if (settings.value("Settings/use_proxy", false).toBool()) {
+  if (settings.network().useProxy()) {
     activateProxy(true);
   }
-
-  DockFixer::restore(this, settings);
 }
 
-void MainWindow::processUpdates() {
-  QSettings settings(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::iniFileName()), QSettings::IniFormat);
-  QVersionNumber lastVersion = QVersionNumber::fromString(settings.value("version", "2.1.2").toString()).normalized();
-  QVersionNumber currentVersion = QVersionNumber::fromString(m_OrganizerCore.getVersion().displayString()).normalized();
-  if (!m_OrganizerCore.settings().directInterface().value("first_start", true).toBool()) {
+void MainWindow::processUpdates(Settings& settings) {
+  const auto earliest = QVersionNumber::fromString("2.1.2").normalized();
+
+  const auto lastVersion = settings.version().value_or(earliest);
+  const auto currentVersion = m_OrganizerCore.getVersion().asQVersionNumber();
+
+  settings.processUpdates(currentVersion, lastVersion);
+
+  if (!settings.firstStart()) {
     if (lastVersion < QVersionNumber(2, 1, 3)) {
       bool lastHidden = true;
       for (int i = ModList::COL_GAME; i < ui->modList->model()->columnCount(); ++i) {
@@ -2311,24 +2179,11 @@ void MainWindow::processUpdates() {
         lastHidden = hidden;
       }
     }
+
     if (lastVersion < QVersionNumber(2, 1, 6)) {
       ui->modList->header()->setSectionHidden(ModList::COL_NOTES, true);
     }
-    if (lastVersion < QVersionNumber(2, 2, 0)) {
-      QSettings &instance = Settings::instance().directInterface();
-      instance.beginGroup("Settings");
-      instance.remove("steam_password");
-      instance.remove("nexus_username");
-      instance.remove("nexus_password");
-      instance.remove("nexus_login");
-      instance.remove("nexus_api_key");
-      instance.remove("ask_for_nexuspw");
-      instance.remove("nmm_version");
-      instance.endGroup();
-      instance.beginGroup("Servers");
-      instance.remove("");
-      instance.endGroup();
-    }
+
     if (lastVersion < QVersionNumber(2, 2, 1)) {
       // hide new columns by default
       for (int i=DownloadList::COL_MODNAME; i<DownloadList::COL_COUNT; ++i) {
@@ -2337,9 +2192,7 @@ void MainWindow::processUpdates() {
     }
   }
 
-  if (currentVersion > lastVersion) {
-    //NOP
-  } else if (currentVersion < lastVersion) {
+  if (currentVersion < lastVersion) {
     const auto text = tr(
       "Notice: Your current MO version (%1) is lower than the previously used one (%2). "
       "The GUI may not downgrade gracefully, so you may experience oddities. "
@@ -2349,51 +2202,28 @@ void MainWindow::processUpdates() {
 
     log::warn("{}", text);
   }
-
-  //save version in all case
-  settings.setValue("version", currentVersion.toString());
 }
 
-void MainWindow::storeSettings(QSettings &settings) {
-  settings.setValue("group_state", ui->groupCombo->currentIndex());
-  settings.setValue("selected_executable",
-                    ui->executablesListBox->currentIndex());
+void MainWindow::storeSettings(Settings& s)
+{
+  s.geometry().saveState(this);
+  s.geometry().saveGeometry(this);
+  s.geometry().saveDocks(this);
 
-  if (settings.value("reset_geometry", false).toBool()) {
-    settings.remove("window_geometry");
-    settings.remove("window_state");
-    settings.remove("toolbar_size");
-    settings.remove("toolbar_button_style");
-    settings.remove("menubar_visible");
-    settings.remove("window_split");
-    settings.remove("window_monitor");
-    settings.remove("log_split");
-    settings.remove("filters_visible");
-    settings.remove("browser_geometry");
-    settings.remove("geometry");
-    settings.remove("reset_geometry");
-  } else {
-    settings.setValue("window_geometry", saveGeometry());
-    settings.setValue("window_state", saveState());
-    settings.setValue("toolbar_size", ui->toolBar->iconSize());
-    settings.setValue("toolbar_button_style", static_cast<int>(ui->toolBar->toolButtonStyle()));
-    settings.setValue("menubar_visible", m_menuBarVisible);
-    settings.setValue("statusbar_visible", m_statusBarVisible);
-    settings.setValue("window_split", ui->splitter->saveState());
-    QScreen *screen = this->window()->windowHandle()->screen();
-    int screenId = QGuiApplication::screens().indexOf(screen);
-    settings.setValue("window_monitor", screenId);
-    settings.setValue("log_split", ui->topLevelSplitter->saveState());
-    settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
-    settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
+  s.geometry().saveVisibility(ui->menuBar);
+  s.geometry().saveVisibility(ui->statusBar);
+  s.geometry().saveToolbars(this);
+  s.geometry().saveState(ui->splitter);
+  s.geometry().saveMainWindowMonitor(this);
+  s.geometry().saveVisibility(ui->categoriesGroup);
 
-    for (const std::pair<QString, QHeaderView*> kv : m_PersistedGeometry) {
-      QString key = QString("geometry/") + kv.first;
-      settings.setValue(key, kv.second->saveState());
-    }
+  s.geometry().saveState(ui->espList->header());
+  s.geometry().saveState(ui->dataTree->header());
+  s.geometry().saveState(ui->downloadView->header());
+  s.geometry().saveState(ui->modList->header());
 
-    DockFixer::save(this, settings);
-  }
+  s.widgets().saveIndex(ui->groupCombo);
+  s.widgets().saveIndex(ui->executablesListBox);
 }
 
 ILockedWaitingForProcess* MainWindow::lock()
@@ -2508,44 +2338,33 @@ bool MainWindow::modifyExecutablesDialog()
   bool result = false;
 
   try {
-    const auto oldExecutables = *m_OrganizerCore.executablesList();
-
     EditExecutablesDialog dialog(m_OrganizerCore, this);
-
-    QSettings &settings = m_OrganizerCore.settings().directInterface();
-    QString key = QString("geometry/%1").arg(dialog.objectName());
-
-    if (settings.contains(key)) {
-      dialog.restoreGeometry(settings.value(key).toByteArray());
-    }
 
     result = (dialog.exec() == QDialog::Accepted);
 
-    settings.setValue(key, dialog.saveGeometry());
     refreshExecutablesList();
     updatePinnedExecutables();
   } catch (const std::exception &e) {
     reportError(e.what());
   }
+
   return result;
 }
 
 void MainWindow::on_executablesListBox_currentIndexChanged(int index)
 {
-  QComboBox* executablesList = findChild<QComboBox*>("executablesListBox");
+  if (!ui->executablesListBox->isEnabled()) {
+    return;
+  }
 
-  int previousIndex = m_OldExecutableIndex;
+  const int previousIndex =
+    (m_OldExecutableIndex > 0 ? m_OldExecutableIndex : 1);
+
   m_OldExecutableIndex = index;
 
-  if (executablesList->isEnabled()) {
-    //I think the 2nd test is impossible
-    if ((index == 0) || (index > static_cast<int>(m_OrganizerCore.executablesList()->size()))) {
-      if (modifyExecutablesDialog()) {
-        setExecutableIndex(previousIndex);
-      }
-    } else {
-      setExecutableIndex(index);
-    }
+  if (index == 0) {
+    modifyExecutablesDialog();
+    ui->executablesListBox->setCurrentIndex(previousIndex);
   }
 }
 
@@ -2593,17 +2412,13 @@ void MainWindow::on_actionAdd_Profile_triggered()
     ProfilesDialog profilesDialog(m_OrganizerCore.currentProfile()->name(),
                                   m_OrganizerCore.managedGame(),
                                   this);
-    QSettings &settings = m_OrganizerCore.settings().directInterface();
-    QString key = QString("geometry/%1").arg(profilesDialog.objectName());
-    if (settings.contains(key)) {
-      profilesDialog.restoreGeometry(settings.value(key).toByteArray());
-    }
+
     // workaround: need to disable monitoring of the saves directory, otherwise the active
     // profile directory is locked
     stopMonitorSaves();
     profilesDialog.exec();
-    settings.setValue(key, profilesDialog.saveGeometry());
     refreshSaveList(); // since the save list may now be outdated we have to refresh it completely
+
     if (refreshProfiles() && !profilesDialog.failed()) {
       break;
     }
@@ -2625,7 +2440,7 @@ void MainWindow::on_actionAdd_Profile_triggered()
 void MainWindow::on_actionModify_Executables_triggered()
 {
   if (modifyExecutablesDialog()) {
-    setExecutableIndex(m_OldExecutableIndex);
+    ui->executablesListBox->setCurrentIndex(m_OldExecutableIndex);
   }
 }
 
@@ -2659,7 +2474,7 @@ void MainWindow::setESPListSorting(int index)
 void MainWindow::refresher_progress(int percent)
 {
   setEnabled(percent == 100);
-  m_statusBar->setProgress(percent);
+  ui->statusBar->setProgress(percent);
 }
 
 void MainWindow::directory_refreshed()
@@ -2936,7 +2751,7 @@ void MainWindow::restoreBackup_clicked()
   ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
   if (backupRegEx.indexIn(modInfo->name()) != -1) {
     QString regName = backupRegEx.cap(1);
-    QDir modDir(QDir::fromNativeSeparators(m_OrganizerCore.settings().getModDirectory()));
+    QDir modDir(QDir::fromNativeSeparators(m_OrganizerCore.settings().paths().mods()));
     if (!modDir.exists(regName) ||
         (QMessageBox::question(this, tr("Overwrite?"),
           tr("This will replace the existing mod \"%1\". Continue?").arg(regName),
@@ -2944,7 +2759,7 @@ void MainWindow::restoreBackup_clicked()
       if (modDir.exists(regName) && !shellDelete(QStringList(modDir.absoluteFilePath(regName)))) {
         reportError(tr("failed to remove mod \"%1\"").arg(regName));
       } else {
-        QString destinationPath = QDir::fromNativeSeparators(m_OrganizerCore.settings().getModDirectory()) + "/" + regName;
+        QString destinationPath = QDir::fromNativeSeparators(m_OrganizerCore.settings().paths().mods()) + "/" + regName;
         if (!modDir.rename(modInfo->absolutePath(), destinationPath)) {
           reportError(tr("failed to rename \"%1\" to \"%2\"").arg(modInfo->absolutePath()).arg(destinationPath));
         }
@@ -3200,7 +3015,7 @@ void MainWindow::untrack_clicked()
 
 void MainWindow::windowTutorialFinished(const QString &windowName)
 {
-  m_OrganizerCore.settings().directInterface().setValue(QString("CompletedWindowTutorials/") + windowName, true);
+  m_OrganizerCore.settings().interface().setTutorialCompleted(windowName);
 }
 
 void MainWindow::overwriteClosed(int)
@@ -3208,9 +3023,6 @@ void MainWindow::overwriteClosed(int)
   OverwriteInfoDialog *dialog = this->findChild<OverwriteInfoDialog*>("__overwriteDialog");
   if (dialog != nullptr) {
     m_OrganizerCore.modList()->modInfoChanged(dialog->modInfo());
-    QSettings &settings = m_OrganizerCore.settings().directInterface();
-    QString key = QString("geometry/%1").arg(dialog->objectName());
-    settings.setValue(key, dialog->saveGeometry());
     dialog->deleteLater();
   }
   m_OrganizerCore.refreshDirectoryStructure();
@@ -3234,11 +3046,7 @@ void MainWindow::displayModInformation(
       } else {
         qobject_cast<OverwriteInfoDialog*>(dialog)->setModInfo(modInfo);
       }
-      QSettings &settings = m_OrganizerCore.settings().directInterface();
-      QString key = QString("geometry/%1").arg(dialog->objectName());
-      if (settings.contains(key)) {
-        dialog->restoreGeometry(settings.value(key).toByteArray());
-      }
+
       dialog->show();
       dialog->raise();
       dialog->activateWindow();
@@ -3257,16 +3065,7 @@ void MainWindow::displayModInformation(
 		  dialog.selectTab(tabID);
 	  }
 
-    dialog.restoreState(m_OrganizerCore.settings());
-    QSettings &settings = m_OrganizerCore.settings().directInterface();
-    QString key = QString("geometry/%1").arg(dialog.objectName());
-    if (settings.contains(key)) {
-      dialog.restoreGeometry(settings.value(key).toByteArray());
-    }
-
     dialog.exec();
-    dialog.saveState(m_OrganizerCore.settings());
-    settings.setValue(key, dialog.saveGeometry());
 
     modInfo->saveMeta();
     emit modInfoDisplayed();
@@ -3845,32 +3644,37 @@ void MainWindow::createSeparator_clicked()
   {
     m_OrganizerCore.modList()->changeModPriority(ModInfo::getIndex(name), newPriority);
   }
-  QSettings &settings = m_OrganizerCore.settings().directInterface();
-  QColor previousColor = settings.value("previousSeparatorColor", QColor()).value<QColor>();
-  if (previousColor.isValid()) {
-    ModInfo::getByIndex(ModInfo::getIndex(name))->setColor(previousColor);
-  }
 
+  if (auto c=m_OrganizerCore.settings().colors().previousSeparatorColor()) {
+    ModInfo::getByIndex(ModInfo::getIndex(name))->setColor(*c);
+  }
 }
 
 void MainWindow::setColor_clicked()
 {
-  QSettings &settings = m_OrganizerCore.settings().directInterface();
+  auto& settings = m_OrganizerCore.settings();
   ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
+
   QColorDialog dialog(this);
   dialog.setOption(QColorDialog::ShowAlphaChannel);
+
   QColor currentColor = modInfo->getColor();
-  QColor previousColor = settings.value("previousSeparatorColor", QColor()).value<QColor>();
-  if (currentColor.isValid())
+  if (currentColor.isValid()) {
     dialog.setCurrentColor(currentColor);
-  else
-    dialog.setCurrentColor(previousColor);
+  }
+  else if (auto c=settings.colors().previousSeparatorColor()) {
+    dialog.setCurrentColor(*c);
+  }
+
   if (!dialog.exec())
     return;
+
   currentColor = dialog.currentColor();
   if (!currentColor.isValid())
     return;
-  settings.setValue("previousSeparatorColor", currentColor);
+
+  settings.colors().setPreviousSeparatorColor(currentColor);
+
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
@@ -3905,7 +3709,8 @@ void MainWindow::resetColor_clicked()
   else {
     modInfo->setColor(color);
   }
-  Settings::instance().directInterface().remove("previousSeparatorColor");
+
+  m_OrganizerCore.settings().colors().removePreviousSeparatorColor();
 }
 
 void MainWindow::createModFromOverwrite()
@@ -3951,17 +3756,10 @@ void MainWindow::moveOverwriteContentToExistingMod()
   }
 
   ListDialog dialog(this);
-  QSettings &settings = m_OrganizerCore.settings().directInterface();
-  QString key = QString("geometry/%1").arg(dialog.objectName());
-
   dialog.setWindowTitle("Select a mod...");
   dialog.setChoices(mods);
 
-  if (settings.contains(key)) {
-    dialog.restoreGeometry(settings.value(key).toByteArray());
-  }
   if (dialog.exec() == QDialog::Accepted) {
-
     QString result = dialog.getChoice();
     if (!result.isEmpty()) {
 
@@ -3983,7 +3781,6 @@ void MainWindow::moveOverwriteContentToExistingMod()
       doMoveOverwriteContentToMod(modAbsolutePath);
     }
   }
-  settings.setValue(key, dialog.saveGeometry());
 }
 
 void MainWindow::doMoveOverwriteContentToMod(const QString &modAbsolutePath)
@@ -4387,7 +4184,7 @@ void MainWindow::checkModsForUpdates()
     NexusInterface::instance(&m_PluginContainer)->requestTrackingInfo(this, QVariant(), QString());
   } else {
     QString apiKey;
-    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
+    if (m_OrganizerCore.settings().nexus().apiKey(apiKey)) {
       m_OrganizerCore.doAfterLogin([this] () { this->checkModsForUpdates(); });
       NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else {
@@ -4590,12 +4387,12 @@ void MainWindow::openIniFolder()
 
 void MainWindow::openDownloadsFolder()
 {
-  shell::ExploreFile(m_OrganizerCore.settings().getDownloadDirectory());
+  shell::ExploreFile(m_OrganizerCore.settings().paths().downloads());
 }
 
 void MainWindow::openModsFolder()
 {
-  shell::ExploreFile(m_OrganizerCore.settings().getModDirectory());
+  shell::ExploreFile(m_OrganizerCore.settings().paths().mods());
 }
 
 void MainWindow::openGameFolder()
@@ -4961,7 +4758,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
         menu.addSeparator();
 
-        if (info->getNexusID() > 0 && Settings::instance().endorsementIntegration()) {
+        if (info->getNexusID() > 0 && Settings::instance().nexus().endorsementIntegration()) {
           switch (info->endorsedState()) {
             case ModInfo::ENDORSED_TRUE: {
               menu.addAction(tr("Un-Endorse"), this, SLOT(unendorse_clicked()));
@@ -5210,19 +5007,19 @@ void MainWindow::on_actionSettings_triggered()
 {
   Settings &settings = m_OrganizerCore.settings();
 
-  QString oldModDirectory(settings.getModDirectory());
-  QString oldCacheDirectory(settings.getCacheDirectory());
-  QString oldProfilesDirectory(settings.getProfileDirectory());
-  QString oldManagedGameDirectory(settings.getManagedGameDirectory());
-  bool oldDisplayForeign(settings.displayForeign());
-  bool proxy = settings.useProxy();
+  QString oldModDirectory(settings.paths().mods());
+  QString oldCacheDirectory(settings.paths().cache());
+  QString oldProfilesDirectory(settings.paths().profiles());
+  QString oldManagedGameDirectory(settings.game().directory().value_or(""));
+  bool oldDisplayForeign(settings.interface().displayForeign());
+  bool proxy = settings.network().useProxy();
   DownloadManager *dlManager = m_OrganizerCore.downloadManager();
 
 
-  SettingsDialog dialog(&m_PluginContainer, &settings, this);
+  SettingsDialog dialog(&m_PluginContainer, settings, this);
   dialog.exec();
 
-  if (oldManagedGameDirectory != settings.getManagedGameDirectory()) {
+  if (oldManagedGameDirectory != settings.game().directory()) {
     QMessageBox::about(this, tr("Restarting MO"),
       tr("Changing the managed game directory requires restarting MO.\n"
          "Any pending downloads will be paused.\n\n"
@@ -5232,29 +5029,28 @@ void MainWindow::on_actionSettings_triggered()
   }
 
   InstallationManager *instManager = m_OrganizerCore.installationManager();
-  instManager->setModsDirectory(settings.getModDirectory());
-  instManager->setDownloadDirectory(settings.getDownloadDirectory());
+  instManager->setModsDirectory(settings.paths().mods());
+  instManager->setDownloadDirectory(settings.paths().downloads());
 
   fixCategories();
   refreshFilters();
 
-  if (settings.getProfileDirectory() != oldProfilesDirectory) {
+  if (settings.paths().profiles() != oldProfilesDirectory) {
     refreshProfiles();
   }
 
-  if (dlManager->getOutputDirectory() != settings.getDownloadDirectory()) {
+  if (dlManager->getOutputDirectory() != settings.paths().downloads()) {
     if (dlManager->downloadsInProgress()) {
       MessageDialog::showMessage(tr("Can't change download directory while "
                                     "downloads are in progress!"),
                                  this);
     } else {
-      dlManager->setOutputDirectory(settings.getDownloadDirectory());
+      dlManager->setOutputDirectory(settings.paths().downloads());
     }
   }
-  dlManager->setPreferredServers(settings.getPreferredServers());
 
-  if ((settings.getModDirectory() != oldModDirectory)
-      || (settings.displayForeign() != oldDisplayForeign)) {
+  if ((settings.paths().mods() != oldModDirectory)
+      || (settings.interface().displayForeign() != oldDisplayForeign)) {
     m_OrganizerCore.profileRefresh();
   }
 
@@ -5279,18 +5075,19 @@ void MainWindow::on_actionSettings_triggered()
     m_OrganizerCore.refreshLists();
   }
 
-  if (settings.getCacheDirectory() != oldCacheDirectory) {
-    NexusInterface::instance(&m_PluginContainer)->setCacheDirectory(settings.getCacheDirectory());
+  if (settings.paths().cache() != oldCacheDirectory) {
+    NexusInterface::instance(&m_PluginContainer)->setCacheDirectory(
+      settings.paths().cache());
   }
 
-  if (proxy != settings.useProxy()) {
-    activateProxy(settings.useProxy());
+  if (proxy != settings.network().useProxy()) {
+    activateProxy(settings.network().useProxy());
   }
 
-  m_statusBar->checkSettings(m_OrganizerCore.settings());
+  ui->statusBar->checkSettings(m_OrganizerCore.settings());
   updateDownloadView();
 
-  m_OrganizerCore.setLogLevel(settings.logLevel());
+  m_OrganizerCore.setLogLevel(settings.diagnostics().logLevel());
   m_OrganizerCore.cycleDiagnostics();
 
   toggleMO2EndorseState();
@@ -5596,7 +5393,7 @@ void MainWindow::updateAvailable()
 {
   ui->actionUpdate->setEnabled(true);
   ui->actionUpdate->setToolTip(tr("Update available"));
-  m_statusBar->setUpdateAvailable(true);
+  ui->statusBar->setUpdateAvailable(true);
 }
 
 
@@ -5606,10 +5403,10 @@ void MainWindow::motdReceived(const QString &motd)
   // internet connection is faster next time
   if (m_StartTime.secsTo(QTime::currentTime()) < 5) {
     uint hash = qHash(motd);
-    if (hash != m_OrganizerCore.settings().getMotDHash()) {
+    if (hash != m_OrganizerCore.settings().motdHash()) {
       MotDDialog dialog(motd);
       dialog.exec();
-      m_OrganizerCore.settings().setMotDHash(hash);
+      m_OrganizerCore.settings().setMotdHash(hash);
     }
   }
 }
@@ -5732,7 +5529,7 @@ void MainWindow::initDownloadView()
 void MainWindow::updateDownloadView()
 {
   // set the view attribute and default row sizes
-  if (m_OrganizerCore.settings().compactDownloads()) {
+  if (m_OrganizerCore.settings().interface().compactDownloads()) {
     ui->downloadView->setProperty("downloadView", "compact");
     setStyleSheet("DownloadListWidget::item { padding: 4px 2px; }");
   } else {
@@ -5745,7 +5542,7 @@ void MainWindow::updateDownloadView()
   // reapply global stylesheet on the widget level (!) to override the defaults
   //ui->downloadView->setStyleSheet(styleSheet());
 
-  ui->downloadView->setMetaDisplay(m_OrganizerCore.settings().metaDownloads());
+  ui->downloadView->setMetaDisplay(m_OrganizerCore.settings().interface().metaDownloads());
   ui->downloadView->style()->unpolish(ui->downloadView);
   ui->downloadView->style()->polish(ui->downloadView);
   qobject_cast<DownloadListHeader*>(ui->downloadView->header())->customResizeSections();
@@ -5758,7 +5555,7 @@ void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
     ModInfo::manualUpdateCheck(&m_PluginContainer, this, IDs);
   } else {
     QString apiKey;
-    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
+    if (m_OrganizerCore.settings().nexus().apiKey(apiKey)) {
       m_OrganizerCore.doAfterLogin([=]() { this->modUpdateCheck(IDs); });
       NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else
@@ -5768,22 +5565,42 @@ void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
 
 void MainWindow::toggleMO2EndorseState()
 {
-  if (Settings::instance().endorsementIntegration()) {
-    ui->actionEndorseMO->setVisible(true);
-    if (Settings::instance().directInterface().contains("endorse_state")) {
-      ui->actionEndorseMO->menu()->setEnabled(false);
-      if (Settings::instance().directInterface().value("endorse_state").toString() == "Endorsed") {
-        ui->actionEndorseMO->setToolTip(tr("Thank you for endorsing MO2! :)"));
-        ui->actionEndorseMO->setStatusTip(tr("Thank you for endorsing MO2! :)"));
-      } else if (Settings::instance().directInterface().value("endorse_state").toString() == "Abstained") {
-        ui->actionEndorseMO->setToolTip(tr("Please reconsider endorsing MO2 on Nexus!"));
-        ui->actionEndorseMO->setStatusTip(tr("Please reconsider endorsing MO2 on Nexus!"));
-      }
-    } else {
-      ui->actionEndorseMO->menu()->setEnabled(true);
-    }
-  } else
+  const auto& s = m_OrganizerCore.settings();
+
+  if (!s.nexus().endorsementIntegration()) {
     ui->actionEndorseMO->setVisible(false);
+    return;
+  }
+
+  ui->actionEndorseMO->setVisible(true);
+
+  bool enabled = false;
+  QString text;
+
+  switch (s.nexus().endorsementState())
+  {
+    case EndorsementState::Accepted:
+    {
+      text = tr("Thank you for endorsing MO2! :)");
+      break;
+    }
+
+    case EndorsementState::Refused:
+    {
+      text = tr("Please reconsider endorsing MO2 on Nexus!");
+      break;
+    }
+
+    case EndorsementState::NoDecision:
+    {
+      enabled = true;
+      break;
+    }
+  }
+
+  ui->actionEndorseMO->menu()->setEnabled(enabled);
+  ui->actionEndorseMO->setToolTip(text);
+  ui->actionEndorseMO->setStatusTip(text);
 }
 
 void MainWindow::nxmEndorsementsAvailable(QVariant userData, QVariant resultData, int)
@@ -5815,22 +5632,26 @@ void MainWindow::nxmEndorsementsAvailable(QVariant userData, QVariant resultData
           mod->setIsEndorsed(false);
       }
 
-      if (Settings::instance().endorsementIntegration()) {
+      if (Settings::instance().nexus().endorsementIntegration()) {
         if (result->first == "skyrimspecialedition" && result->second.first == gamePlugin->nexusModOrganizerID()) {
-          Settings::instance().directInterface().setValue("endorse_state", result->second.second);
+          m_OrganizerCore.settings().nexus().setEndorsementState(
+            endorsementStateFromString(result->second.second));
+
           toggleMO2EndorseState();
         }
       }
     }
   }
 
-  if (!searchedMO2NexusGame && Settings::instance().endorsementIntegration()) {
+  if (!searchedMO2NexusGame && Settings::instance().nexus().endorsementIntegration()) {
     auto gamePlugin = m_OrganizerCore.getGame("SkyrimSE");
     if (gamePlugin) {
       auto iter = sorted.equal_range(gamePlugin->gameNexusName());
       for (auto result = iter.first; result != iter.second; ++result) {
         if (result->second.first == gamePlugin->nexusModOrganizerID()) {
-          Settings::instance().directInterface().setValue("endorse_state", result->second.second);
+          m_OrganizerCore.settings().nexus().setEndorsementState(
+            endorsementStateFromString(result->second.second));
+
           toggleMO2EndorseState();
           break;
         }
@@ -6010,15 +5831,41 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
 
 void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int)
 {
-  QMap results = resultData.toMap();
-  if (results["status"].toString().compare("Endorsed") == 0) {
-    QMessageBox::information(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
-    Settings::instance().directInterface().setValue("endorse_state", "Endorsed");
-  } else if (results["status"].toString().compare("Abstained") == 0) {
-    QMessageBox::information(this, tr("Okay."), tr("This mod will not be endorsed and will no longer ask you to endorse."));
-    Settings::instance().directInterface().setValue("endorse_state", "Abstained");
+  const QMap results = resultData.toMap();
+
+  auto itor = results.find("status");
+  if (itor == results.end()) {
+    log::error("endorsement response has no status");
+    return;
   }
+
+  const auto s = endorsementStateFromString(itor->toString());
+
+  switch (s)
+  {
+    case EndorsementState::Accepted:
+    {
+      QMessageBox::information(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
+      break;
+    }
+
+    case EndorsementState::Refused:
+    {
+      // don't spam message boxes if the user doesn't want to endorse
+      log::info("Mod Organizer will not be endorsed and will no longer ask you to endorse.");
+      break;
+    }
+
+    case EndorsementState::NoDecision:
+    {
+      log::error("bad status '{}' in endorsement response", itor->toString());
+      return;
+    }
+  }
+
+  m_OrganizerCore.settings().nexus().setEndorsementState(s);
   toggleMO2EndorseState();
+
   if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
     this, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)))) {
     log::error("failed to disconnect endorsement slot");
@@ -6055,19 +5902,35 @@ void MainWindow::nxmTrackedModsAvailable(QVariant userData, QVariant resultData,
 
 void MainWindow::nxmDownloadURLs(QString, int, int, QVariant, QVariant resultData, int)
 {
-  QVariantList serverList = resultData.toList();
+  auto servers = m_OrganizerCore.settings().network().servers();
 
-  QList<ServerInfo> servers;
-  for (const QVariant &server : serverList) {
-    QVariantMap serverInfo = server.toMap();
-    ServerInfo info;
-    info.name = serverInfo["short_name"].toString();
-    info.premium = serverInfo["name"].toString().contains("Premium", Qt::CaseInsensitive);
-    info.lastSeen = QDate::currentDate();
-    info.preferred = serverInfo["short_name"].toString().contains("CDN", Qt::CaseInsensitive);
-    servers.append(info);
+  for (const QVariant &var : resultData.toList()) {
+    const QVariantMap map = var.toMap();
+
+    const auto name = map["short_name"].toString();
+    const auto isPremium = map["name"].toString().contains("Premium", Qt::CaseInsensitive);
+    const auto isCDN = map["short_name"].toString().contains("CDN", Qt::CaseInsensitive);
+
+    bool found = false;
+
+    for (auto& server : servers) {
+      if (server.name() == name) {
+        // already exists, update
+        server.setPremium(isPremium);
+        server.updateLastSeen();
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      // new server
+      ServerInfo server(name, isPremium, QDate::currentDate(), isCDN ? 1 : 0, {});
+      servers.add(std::move(server));
+    }
   }
-  m_OrganizerCore.settings().updateServers(servers);
+
+  m_OrganizerCore.settings().network().updateServers(servers);
 }
 
 
@@ -6225,24 +6088,20 @@ void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
 void MainWindow::on_actionNotifications_triggered()
 {
   updateProblemsButton();
-  ProblemsDialog problems(m_PluginContainer.plugins<QObject>(), this);
 
-  QSettings &settings = m_OrganizerCore.settings().directInterface();
-  QString key = QString("geometry/%1").arg(problems.objectName());
-  if (settings.contains(key)) {
-    problems.restoreGeometry(settings.value(key).toByteArray());
-  }
+  ProblemsDialog problems(m_PluginContainer.plugins<QObject>(), this);
   problems.exec();
-  settings.setValue(key, problems.saveGeometry());
+
   updateProblemsButton();
 }
 
 void MainWindow::on_actionChange_Game_triggered()
 {
-  if (QMessageBox::question(this, tr("Are you sure?"),
-                            tr("This will restart MO, continue?"),
-                            QMessageBox::Yes | QMessageBox::Cancel)
-      == QMessageBox::Yes) {
+  const auto r = QMessageBox::question(
+    this, tr("Are you sure?"), tr("This will restart MO, continue?"),
+    QMessageBox::Yes | QMessageBox::Cancel);
+
+  if (r == QMessageBox::Yes) {
     InstanceManager::instance().clearCurrentInstance();
     qApp->exit(INT_MAX);
   }
@@ -6267,16 +6126,10 @@ void MainWindow::on_displayCategoriesBtn_toggled(bool checked)
 void MainWindow::editCategories()
 {
   CategoriesDialog dialog(this);
-  QSettings &settings = m_OrganizerCore.settings().directInterface();
-  QString key = QString("geometry/%1").arg(dialog.objectName());
-  if (settings.contains(key)) {
-    dialog.restoreGeometry(settings.value(key).toByteArray());
-  }
+
   if (dialog.exec() == QDialog::Accepted) {
     dialog.commitChanges();
   }
-  settings.setValue(key, dialog.saveGeometry());
-
 }
 
 void MainWindow::deselectFilters()
@@ -6550,7 +6403,6 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &errorMe
 
 void MainWindow::on_bossButton_clicked()
 {
-  std::string reportURL;
   std::string errorMessages;
 
   //m_OrganizerCore.currentProfile()->writeModlistNow();
@@ -6698,16 +6550,6 @@ void MainWindow::on_bossButton_clicked()
 
   if (success) {
     m_DidUpdateMasterList = true;
-    if (reportURL.length() > 0) {
-      m_IntegratedBrowser.setWindowTitle("LOOT Report");
-      QString report(reportURL.c_str());
-      QStringList temp = report.split("?");
-      QUrl url = QUrl::fromLocalFile(temp.at(0));
-      if (temp.size() > 1) {
-        url.setQuery(temp.at(1).toUtf8());
-      }
-      m_IntegratedBrowser.openUrl(url);
-    }
     m_OrganizerCore.refreshESPList(false);
     m_OrganizerCore.savePluginList();
   }
@@ -6927,31 +6769,6 @@ void MainWindow::dropLocalFile(const QUrl &url, const QString &outputDir, bool m
   }
 }
 
-bool MainWindow::registerWidgetState(const QString &name, QHeaderView *view, const char *oldSettingName) {
-  // register the view so it's geometry gets saved at exit
-  m_PersistedGeometry.push_back(std::make_pair(name, view));
-
-  // also, restore the geometry if it was saved before
-  QSettings &settings = m_OrganizerCore.settings().directInterface();
-
-  QString key = QString("geometry/%1").arg(name);
-  QByteArray data;
-
-  if ((oldSettingName != nullptr) && settings.contains(oldSettingName)) {
-    data = settings.value(oldSettingName).toByteArray();
-    settings.remove(oldSettingName);
-  } else if (settings.contains(key)) {
-    data = settings.value(key).toByteArray();
-  }
-
-  if (!data.isEmpty()) {
-    view->restoreState(data);
-    return true;
-  } else {
-    return false;
-  }
-}
-
 void MainWindow::dropEvent(QDropEvent *event)
 {
   Qt::DropAction action = event->proposedAction();
@@ -6975,7 +6792,7 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
   // if the menubar is hidden, pressing Alt will make it visible
   if (event->key() == Qt::Key_Alt) {
     if (!ui->menuBar->isVisible()) {
-      showMenuBar(true);
+      ui->menuBar->show();
     }
   }
 
@@ -7042,12 +6859,9 @@ void MainWindow::sendSelectedModsToSeparator_clicked()
   }
 
   ListDialog dialog(this);
-  QSettings &settings = m_OrganizerCore.settings().directInterface();
-  QString key = QString("geometry/%1").arg(dialog.objectName());
-
   dialog.setWindowTitle("Select a separator...");
   dialog.setChoices(separators);
-  dialog.restoreGeometry(settings.value(key).toByteArray());
+
   if (dialog.exec() == QDialog::Accepted) {
     QString result = dialog.getChoice();
     if (!result.isEmpty()) {
@@ -7081,7 +6895,6 @@ void MainWindow::sendSelectedModsToSeparator_clicked()
       }
     }
   }
-  settings.setValue(key, dialog.saveGeometry());
 }
 
 void MainWindow::on_showArchiveDataCheckBox_toggled(const bool checked)

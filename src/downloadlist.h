@@ -99,8 +99,6 @@ private:
 
   DownloadManager *m_Manager;
   bool m_MetaDisplay;
-
-  QString sizeFormat(quint64 size) const;
 };
 
 #endif // DOWNLOADLIST_H

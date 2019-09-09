@@ -23,7 +23,7 @@ bool ModInfoOverwrite::isEmpty() const
 
 QString ModInfoOverwrite::absolutePath() const
 {
-  return Settings::instance().getOverwriteDirectory();
+  return Settings::instance().paths().overwrite();
 }
 
 std::vector<ModInfo::EFlag> ModInfoOverwrite::getFlags() const

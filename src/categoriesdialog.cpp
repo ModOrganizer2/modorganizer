@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_categoriesdialog.h"
 #include "categories.h"
 #include "utility.h"
+#include "settings.h"
 #include <QItemDelegate>
 #include <QRegExpValidator>
 #include <QLineEdit>
@@ -107,6 +108,12 @@ CategoriesDialog::CategoriesDialog(QWidget *parent)
 CategoriesDialog::~CategoriesDialog()
 {
   delete ui;
+}
+
+int CategoriesDialog::exec()
+{
+  GeometrySaver gs(Settings::instance(), this);
+  return QDialog::exec();
 }
 
 

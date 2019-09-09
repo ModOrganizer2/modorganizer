@@ -191,7 +191,7 @@ void PluginList::refresh(const QString &profileName
         continue;
       }
 
-      bool forceEnabled = Settings::instance().forceEnableCoreFiles() &&
+      bool forceEnabled = Settings::instance().game().forceEnableCoreFiles() &&
         primaryPlugins.contains(filename, Qt::CaseInsensitive);
         //(std::find(primaryPlugins.begin(), primaryPlugins.end(), filename.toLower()) != primaryPlugins.end());
 
@@ -931,7 +931,7 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
   } else if (role == Qt::BackgroundRole
     || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
     if (m_ESPs[index].m_ModSelected) {
-      return Settings::instance().pluginListContainedColor();
+      return Settings::instance().colors().pluginListContained();
     } else {
       return QVariant();
     }

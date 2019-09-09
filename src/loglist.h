@@ -61,6 +61,8 @@ private:
 
 class LogList : public QTreeView
 {
+  Q_OBJECT;
+
 public:
   LogList(QWidget* parent=nullptr);
 

@@ -29,6 +29,12 @@ ProblemsDialog::~ProblemsDialog()
   delete ui;
 }
 
+int ProblemsDialog::exec()
+{
+  GeometrySaver gs(Settings::instance(), this);
+  return QDialog::exec();
+}
+
 void ProblemsDialog::runDiagnosis()
 {
   m_hasProblems = false;

@@ -40,7 +40,6 @@ class Executable;
 class CategoryFactory;
 class LockedDialogBase;
 class OrganizerCore;
-class StatusBar;
 
 class PluginListSortProxy;
 namespace BSA { class Archive; }
@@ -83,7 +82,6 @@ class QProgressDialog;
 class QTranslator;
 class QTreeWidgetItem;
 class QUrl;
-class QSettings;
 class QWidget;
 
 #ifndef Q_MOC_RUN
@@ -103,6 +101,7 @@ namespace Ui {
     class MainWindow;
 }
 
+class Settings;
 
 
 class MainWindow : public QMainWindow, public IUserInterface
@@ -113,14 +112,12 @@ class MainWindow : public QMainWindow, public IUserInterface
 
 public:
 
-  explicit MainWindow(QSettings &initSettings,
+  explicit MainWindow(Settings &settings,
                       OrganizerCore &organizerCore, PluginContainer &pluginContainer,
                       QWidget *parent = 0);
   ~MainWindow();
 
-  void storeSettings(QSettings &settings) override;
-  void readSettings();
-  void processUpdates();
+  void processUpdates(Settings& settings);
 
   virtual ILockedWaitingForProcess* lock() override;
   virtual void unlock() override;
@@ -229,8 +226,6 @@ private:
   QMenu* createPopupMenu() override;
   void activateSelectedProfile();
 
-  void setExecutableIndex(int index);
-
   void startSteam();
 
   void updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const MOShared::DirectoryEntry &directoryEntry, bool conflictsOnly, QIcon *fileIcon, QIcon *folderIcon);
@@ -293,7 +288,6 @@ private:
 
   static void setupNetworkProxy(bool activate);
   void activateProxy(bool activate);
-  void setBrowserGeometry(const QByteArray &geometry);
 
   bool createBackup(const QString &filePath, const QDateTime &time);
   QString queryRestore(const QString &filePath);
@@ -315,8 +309,6 @@ private:
 
   void dropLocalFile(const QUrl &url, const QString &outputDir, bool move);
 
-  bool registerWidgetState(const QString &name, QHeaderView *view, const char *oldSettingName = nullptr);
-
   void sendSelectedModsToPriority(int newPriority);
   void sendSelectedPluginsToPriority(int newPriority);
 
@@ -334,12 +326,6 @@ private:
 
   bool m_WasVisible;
 
-  // this has to be remembered because by the time storeSettings() is called,
-  // the window is closed and the all bars are hidden
-  bool m_menuBarVisible, m_statusBarVisible;
-
-  std::unique_ptr<StatusBar> m_statusBar;
-
   // last separator on the toolbar, used to add spacer for right-alignment and
   // as an insert point for executables
   QAction* m_linksSeparator;
@@ -349,11 +335,9 @@ private:
   int m_OldProfileIndex;
 
   std::vector<QString> m_ModNameList; // the mod-list to go with the directory structure
-  bool m_Refreshing;
 
   QStringList m_DefaultArchives;
 
-  QAbstractItemModel *m_ModListGroupingProxy;
   ModListSortProxy *m_ModListSortProxy;
 
   PluginListSortProxy *m_PluginListSortProxy;
@@ -368,8 +352,6 @@ private:
   QAction* m_browseModPage;
 
   CategoryFactory &m_CategoryFactory;
-
-  bool m_LoginAttempted;
 
   QTimer m_CheckBSATimer;
   QTimer m_SaveMetaTimer;
@@ -403,8 +385,6 @@ private:
   bool m_closing{ false };
 
   bool m_showArchiveData{ true };
-
-  std::vector<std::pair<QString, QHeaderView*>> m_PersistedGeometry;
 
   MOBase::DelayedFileWriter m_ArchiveListWriter;
 
@@ -603,10 +583,7 @@ private slots:
 
   void expandModList(const QModelIndex &index);
 
-  /**
-   * @brief resize columns in mod list and plugin list to content
-   */
-  void resizeLists(bool modListCustom, bool pluginListCustom);
+  void resizeLists(bool pluginListCustom);
 
   /**
    * @brief allow columns in mod list and plugin list to be resized
@@ -697,10 +674,9 @@ private slots: // ui slots
   void on_categoriesOrBtn_toggled(bool checked);
   void on_managedArchiveLabel_linkHovered(const QString &link);
 
-  void showMenuBar(bool b);
-  void showStatusBar(bool b);
+  void storeSettings(Settings& settings);
+  void readSettings(const Settings& settings);
+  void setupModList();
 };
-
-
 
 #endif // MAINWINDOW_H

@@ -7,7 +7,7 @@
 class GeneralSettingsTab : public SettingsTab
 {
 public:
-  GeneralSettingsTab(Settings *m_parent, SettingsDialog &m_dialog);
+  GeneralSettingsTab(Settings& settings, SettingsDialog& dialog);
 
   void update();
 

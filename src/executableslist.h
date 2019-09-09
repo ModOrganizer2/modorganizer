@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMetaType>
 
 namespace MOBase { class IPluginGame; class ExecutableInfo; }
+class Settings;
 
 /*!
  * @brief Information about an executable
@@ -103,7 +104,7 @@ public:
   /**
    * @brief initializes the list from the settings and the given plugin
    **/
-  void load(const MOBase::IPluginGame* game, QSettings& settings);
+  void load(const MOBase::IPluginGame* game, const Settings& settings);
 
   /**
    * @brief re-adds all the executables from the plugin and renames existing
@@ -114,7 +115,7 @@ public:
   /**
    * @brief writes the current list to the settings
    */
-  void store(QSettings& settings);
+  void store(Settings& settings);
 
   /**
    * @brief get an executable by name

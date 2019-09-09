@@ -2,9 +2,11 @@
 #include "ui_settingsdialog.h"
 #include "ui_nexusmanualkey.h"
 #include "nexusinterface.h"
+#include "serverinfo.h"
+#include "log.h"
 #include <utility.h>
 
-namespace shell = MOBase::shell;
+using namespace MOBase;
 
 template <typename T>
 class ServerItem : public QListWidgetItem {
@@ -69,39 +71,40 @@ private:
 };
 
 
-NexusSettingsTab::NexusSettingsTab(Settings *parent, SettingsDialog &dialog)
-  : SettingsTab(parent, dialog)
+NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
+  : SettingsTab(s, d)
 {
-  ui->offlineBox->setChecked(parent->offlineMode());
-  ui->proxyBox->setChecked(parent->useProxy());
-  ui->endorsementBox->setChecked(parent->endorsementIntegration());
-  ui->hideAPICounterBox->setChecked(parent->hideAPICounter());
+  ui->offlineBox->setChecked(settings().network().offlineMode());
+  ui->proxyBox->setChecked(settings().network().useProxy());
+  ui->endorsementBox->setChecked(settings().nexus().endorsementIntegration());
+  ui->hideAPICounterBox->setChecked(settings().interface().hideAPICounter());
 
   // display server preferences
-  m_Settings.beginGroup("Servers");
-  for (const QString &key : m_Settings.childKeys()) {
-    QVariantMap val = m_Settings.value(key).toMap();
-    QString descriptor = key;
+  for (const auto& server : s.network().servers()) {
+    QString descriptor = server.name();
+
     if (!descriptor.compare("CDN", Qt::CaseInsensitive)) {
       descriptor += QStringLiteral(" (automatic)");
     }
-    if (val.contains("downloadSpeed") && val.contains("downloadCount") && (val["downloadCount"].toInt() > 0)) {
-      int bps = static_cast<int>(val["downloadSpeed"].toDouble() / val["downloadCount"].toInt());
-      descriptor += QString(" (%1 kbps)").arg(bps / 1024);
+
+    const auto averageSpeed = server.averageSpeed();
+    if (averageSpeed > 0) {
+      descriptor += QString(" (%1)").arg(MOBase::localizedByteSpeed(averageSpeed));
     }
 
     QListWidgetItem *newItem = new ServerItem<int>(descriptor, Qt::UserRole + 1);
 
-    newItem->setData(Qt::UserRole, key);
-    newItem->setData(Qt::UserRole + 1, val["preferred"].toInt());
-    if (val["preferred"].toInt() > 0) {
+    newItem->setData(Qt::UserRole, server.name());
+    newItem->setData(Qt::UserRole + 1, server.preferred());
+
+    if (server.preferred() > 0) {
       ui->preferredServersList->addItem(newItem);
     } else {
       ui->knownServersList->addItem(newItem);
     }
+
     ui->preferredServersList->sortItems(Qt::DescendingOrder);
   }
-  m_Settings.endGroup();
 
   QObject::connect(ui->nexusConnect, &QPushButton::clicked, [&]{ on_nexusConnect_clicked(); });
   QObject::connect(ui->nexusManualKey, &QPushButton::clicked, [&]{ on_nexusManualKey_clicked(); });
@@ -114,27 +117,57 @@ NexusSettingsTab::NexusSettingsTab(Settings *parent, SettingsDialog &dialog)
 
 void NexusSettingsTab::update()
 {
-  m_Settings.setValue("Settings/offline_mode", ui->offlineBox->isChecked());
-  m_Settings.setValue("Settings/use_proxy", ui->proxyBox->isChecked());
-  m_Settings.setValue("Settings/endorsement_integration", ui->endorsementBox->isChecked());
-  m_Settings.setValue("Settings/hide_api_counter", ui->hideAPICounterBox->isChecked());
+  settings().network().setOfflineMode(ui->offlineBox->isChecked());
+  settings().network().setUseProxy(ui->proxyBox->isChecked());
+  settings().nexus().setEndorsementIntegration(ui->endorsementBox->isChecked());
+  settings().interface().setHideAPICounter(ui->hideAPICounterBox->isChecked());
+
+  auto servers = settings().network().servers();
 
   // store server preference
-  m_Settings.beginGroup("Servers");
   for (int i = 0; i < ui->knownServersList->count(); ++i) {
-    QString key = ui->knownServersList->item(i)->data(Qt::UserRole).toString();
-    QVariantMap val = m_Settings.value(key).toMap();
-    val["preferred"] = 0;
-    m_Settings.setValue(key, val);
+    const QString key = ui->knownServersList->item(i)->data(Qt::UserRole).toString();
+
+    bool found = false;
+
+    for (auto& server : servers) {
+      if (server.name() == key) {
+        server.setPreferred(0);
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      log::error("while setting preferred to 0, server '{}' not found", key);
+    }
   }
-  int count = ui->preferredServersList->count();
+
+  const int count = ui->preferredServersList->count();
+
   for (int i = 0; i < count; ++i) {
-    QString key = ui->preferredServersList->item(i)->data(Qt::UserRole).toString();
-    QVariantMap val = m_Settings.value(key).toMap();
-    val["preferred"] = count - i;
-    m_Settings.setValue(key, val);
+    const QString key = ui->preferredServersList->item(i)->data(Qt::UserRole).toString();
+    const int newPreferred = count - i;
+
+    bool found = false;
+
+    for (auto& server : servers) {
+
+      if (server.name() == key) {
+        server.setPreferred(newPreferred);
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      log::error(
+        "while setting preference to {}, server '{}' not found",
+        newPreferred, key);
+    }
   }
-  m_Settings.endGroup();
+
+  settings().network().updateServers(servers);
 }
 
 void NexusSettingsTab::on_nexusConnect_clicked()
@@ -168,12 +201,12 @@ void NexusSettingsTab::on_nexusManualKey_clicked()
     return;
   }
 
-  NexusManualKeyDialog dialog(parentWidget());
-  if (dialog.exec() != QDialog::Accepted) {
+  NexusManualKeyDialog d(&dialog());
+  if (d.exec() != QDialog::Accepted) {
     return;
   }
 
-  const auto key = dialog.key();
+  const auto key = d.key();
   if (key.isEmpty()) {
     clearKey();
     return;
@@ -192,20 +225,20 @@ void NexusSettingsTab::on_nexusDisconnect_clicked()
 
 void NexusSettingsTab::on_clearCacheButton_clicked()
 {
-  QDir(Settings::instance().getCacheDirectory()).removeRecursively();
-  NexusInterface::instance(m_dialog.m_PluginContainer)->clearCache();
+  QDir(Settings::instance().paths().cache()).removeRecursively();
+  NexusInterface::instance(dialog().m_PluginContainer)->clearCache();
 }
 
 void NexusSettingsTab::on_associateButton_clicked()
 {
-  Settings::instance().registerAsNXMHandler(true);
+  Settings::instance().nexus().registerAsNXMHandler(true);
 }
 
 void NexusSettingsTab::validateKey(const QString& key)
 {
   if (!m_nexusValidator) {
     m_nexusValidator.reset(new NexusKeyValidator(
-      *NexusInterface::instance(m_dialog.m_PluginContainer)->getAccessManager()));
+      *NexusInterface::instance(dialog().m_PluginContainer)->getAccessManager()));
 
     m_nexusValidator->stateChanged = [&](auto&& s, auto&& e){
       onValidatorStateChanged(s, e);
@@ -261,7 +294,7 @@ void NexusSettingsTab::onValidatorStateChanged(
 
 void NexusSettingsTab::onValidatorFinished(const APIUserAccount& user)
 {
-  NexusInterface::instance(m_dialog.m_PluginContainer)->setUserAccount(user);
+  NexusInterface::instance(dialog().m_PluginContainer)->setUserAccount(user);
 
   if (!user.apiKey().isEmpty()) {
     if (setKey(user.apiKey())) {
@@ -278,18 +311,18 @@ void NexusSettingsTab::addNexusLog(const QString& s)
 
 bool NexusSettingsTab::setKey(const QString& key)
 {
-  m_dialog.m_keyChanged = true;
-  const bool ret = m_parent->setNexusApiKey(key);
+  dialog().m_keyChanged = true;
+  const bool ret = settings().nexus().setApiKey(key);
   updateNexusState();
   return ret;
 }
 
 bool NexusSettingsTab::clearKey()
 {
-  m_dialog.m_keyChanged = true;
-  const auto ret = m_parent->clearNexusApiKey();
+  dialog().m_keyChanged = true;
+  const auto ret = settings().nexus().clearApiKey();
 
-  NexusInterface::instance(m_dialog.m_PluginContainer)->getAccessManager()->clearApiKey();
+  NexusInterface::instance(dialog().m_PluginContainer)->getAccessManager()->clearApiKey();
   updateNexusState();
 
   return ret;
@@ -319,7 +352,7 @@ void NexusSettingsTab::updateNexusButtons()
     ui->nexusManualKey->setText(QObject::tr("Cancel"));
     ui->nexusManualKey->setEnabled(true);
   }
-  else if (m_parent->hasNexusApiKey()) {
+  else if (settings().nexus().hasApiKey()) {
     // api key is present
     ui->nexusConnect->setText(QObject::tr("Connect to Nexus"));
     ui->nexusConnect->setEnabled(false);
@@ -338,7 +371,7 @@ void NexusSettingsTab::updateNexusButtons()
 
 void NexusSettingsTab::updateNexusData()
 {
-  const auto user = NexusInterface::instance(m_dialog.m_PluginContainer)
+  const auto user = NexusInterface::instance(dialog().m_PluginContainer)
     ->getAPIUserAccount();
 
   if (user.isValid()) {

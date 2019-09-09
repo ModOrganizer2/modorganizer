@@ -8,7 +8,7 @@
 class NexusSettingsTab : public SettingsTab
 {
 public:
-  NexusSettingsTab(Settings *m_parent, SettingsDialog &m_dialog);
+  NexusSettingsTab(Settings& settings, SettingsDialog& dialog);
   void update();
 
 private:

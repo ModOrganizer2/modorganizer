@@ -95,6 +95,7 @@
 #include <QDialogButtonBox>
 #include <QDir>
 #include <QDirIterator>
+#include <QDockWidget>
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QElapsedTimer>
@@ -189,6 +190,7 @@
 #include <QSize>
 #include <QSizePolicy>
 #include <QSortFilterProxyModel>
+#include <QSplitter>
 #include <QSpinBox>
 #include <QSplashScreen>
 #include <QSslSocket>

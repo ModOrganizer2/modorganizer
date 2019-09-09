@@ -62,7 +62,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QCheckBox>
 #include <QDir>
 #include <QFileInfo>
-#include <QSettings>
 #include <QWhatsThis>
 #include <QToolBar>
 #include <QFileDialog>
@@ -116,7 +115,7 @@ bool bootstrap()
     shellDelete(QStringList(backupDirectory));
   }
 
-  // cycle logfile
+  // cycle log file
   removeOldFiles(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath()),
                  "usvfs*.log", 5, QDir::Name);
 
@@ -245,9 +244,10 @@ static bool HaveWriteAccess(const std::wstring &path)
 }
 
 
-QString determineProfile(QStringList &arguments, const QSettings &settings)
+QString determineProfile(QStringList &arguments, const Settings &settings)
 {
-  QString selectedProfileName = QString::fromUtf8(settings.value("selected_profile", "").toByteArray());
+  auto selectedProfileName = settings.game().selectedProfileName();
+
   { // see if there is a profile on the command line
     int profileIndex = arguments.indexOf("-p", 1);
     if ((profileIndex != -1) && (profileIndex < arguments.size() - 1)) {
@@ -257,56 +257,61 @@ QString determineProfile(QStringList &arguments, const QSettings &settings)
     arguments.removeAt(profileIndex);
     arguments.removeAt(profileIndex);
   }
-  if (selectedProfileName.isEmpty()) {
+
+  if (!selectedProfileName) {
     log::debug("no configured profile");
     selectedProfileName = "Default";
   } else {
-    log::debug("configured profile: {}", selectedProfileName);
+    log::debug("configured profile: {}", *selectedProfileName);
   }
 
-  return selectedProfileName;
+  return *selectedProfileName;
 }
 
-MOBase::IPluginGame *selectGame(QSettings &settings, QDir const &gamePath, MOBase::IPluginGame *game)
+MOBase::IPluginGame *selectGame(
+  Settings &settings, QDir const &gamePath, MOBase::IPluginGame *game)
 {
-  settings.setValue("gameName", game->gameName());
-  //Sadly, hookdll needs gamePath in order to run. So following code block is
-  //commented out
-  /*if (gamePath == game->gameDirectory()) {
-    settings.remove("gamePath");
-  } else*/ {
-    QString gameDir = gamePath.absolutePath();
-    game->setGamePath(gameDir);
-    settings.setValue("gamePath", QDir::toNativeSeparators(gameDir).toUtf8().constData());
-  }
-  return game; //Woot
+  settings.game().setName(game->gameName());
+
+  QString gameDir = gamePath.absolutePath();
+  game->setGamePath(gameDir);
+
+  settings.game().setDirectory(gameDir);
+
+  return game;
 }
 
 
-MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &settings, PluginContainer const &plugins)
+MOBase::IPluginGame *determineCurrentGame(
+  QString const &moPath, Settings &settings, PluginContainer const &plugins)
 {
   //Determine what game we are running where. Be very paranoid in case the
   //user has done something odd.
 
   //If the game name has been set up, try to use that.
-  QString gameName = settings.value("gameName", "").toString();
-  bool gameConfigured = !gameName.isEmpty();
+  const auto gameName = settings.game().name();
+  const bool gameConfigured = (gameName.has_value() && *gameName != "");
+
   if (gameConfigured) {
-    MOBase::IPluginGame *game = plugins.managedGame(gameName);
+    MOBase::IPluginGame *game = plugins.managedGame(*gameName);
     if (game == nullptr) {
-      reportError(QObject::tr("Plugin to handle %1 no longer installed").arg(gameName));
+      reportError(QObject::tr("Plugin to handle %1 no longer installed").arg(*gameName));
       return nullptr;
     }
-    QString gamePath = QString::fromUtf8(settings.value("gamePath", "").toByteArray());
-    if (gamePath == "") {
+
+    auto gamePath = settings.game().directory();
+    if (!gamePath || *gamePath == "") {
       gamePath = game->gameDirectory().absolutePath();
     }
-    QDir gameDir(gamePath);
+
+    QDir gameDir(*gamePath);
     QFileInfo directoryInfo(gameDir.path());
+
     if (directoryInfo.isSymLink()) {
       reportError(QObject::tr("The configured path to the game directory (%1) appears to be a symbolic (or other) link. "
-        "This setup is incompatible with MO2's VFS and will not run correctly.").arg(gamePath));
+        "This setup is incompatible with MO2's VFS and will not run correctly.").arg(*gamePath));
     }
+
     if (game->looksValid(gameDir)) {
       return selectGame(settings, gameDir, game);
     }
@@ -315,17 +320,20 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
   //If we've made it this far and the instance is already configured for a game, something has gone wrong.
   //Tell the user about it.
   if (gameConfigured) {
-    QString gamePath = QString::fromUtf8(settings.value("gamePath", "").toByteArray());
-    reportError(QObject::tr("Could not use configuration settings for game \"%1\", path \"%2\".").
-                                                   arg(gameName).arg(gamePath));
+    const auto gamePath = settings.game().directory();
+
+    reportError(
+      QObject::tr("Could not use configuration settings for game \"%1\", path \"%2\".")
+      .arg(*gameName).arg(gamePath ? *gamePath : ""));
   }
 
-  SelectionDialog selection(gameConfigured ? QObject::tr("Please select the installation of %1 to manage").arg(gameName)
-                                           : QObject::tr("Please select the game to manage"), nullptr, QSize(32, 32));
+  SelectionDialog selection(gameConfigured ?
+    QObject::tr("Please select the installation of %1 to manage").arg(*gameName) :
+    QObject::tr("Please select the game to manage"), nullptr, QSize(32, 32));
 
   for (IPluginGame *game : plugins.plugins<IPluginGame>()) {
     //If a game is already configured, skip any plugins that are not for that game
-    if (gameConfigured && gameName.compare(game->gameName(), Qt::CaseInsensitive) != 0)
+    if (gameConfigured && gameName->compare(game->gameName(), Qt::CaseInsensitive) != 0)
       continue;
 
     //Only add games that are installed
@@ -349,9 +357,11 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
       return selectGame(settings, game->gameDirectory(), game);
     }
 
-    gamePath = QFileDialog::getExistingDirectory(nullptr, gameConfigured ? QObject::tr("Please select the installation of %1 to manage").arg(gameName)
-                                                                                 : QObject::tr("Please select the game to manage"),
-                                                         QString(), QFileDialog::ShowDirsOnly);
+    gamePath = QFileDialog::getExistingDirectory(nullptr, gameConfigured ?
+        QObject::tr("Please select the installation of %1 to manage").arg(*gameName) :
+        QObject::tr("Please select the game to manage"),
+      QString(), QFileDialog::ShowDirsOnly);
+
     if (!gamePath.isEmpty()) {
       QDir gameDir(gamePath);
       QFileInfo directoryInfo(gamePath);
@@ -362,7 +372,7 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
       QList<IPluginGame *> possibleGames;
       for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
         //If a game is already configured, skip any plugins that are not for that game
-        if (gameConfigured && gameName.compare(game->gameName(), Qt::CaseInsensitive) != 0)
+        if (gameConfigured && gameName->compare(game->gameName(), Qt::CaseInsensitive) != 0)
           continue;
 
         //Only try plugins that look valid for this directory
@@ -370,24 +380,31 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
           possibleGames.append(game);
         }
       }
+
       if (possibleGames.count() > 1) {
-        SelectionDialog browseSelection(gameConfigured ? QObject::tr("Please select the installation of %1 to manage").arg(gameName)
-                                                       : QObject::tr("Please select the game to manage"),
-                                        nullptr, QSize(32, 32));
+        SelectionDialog browseSelection(gameConfigured ?
+            QObject::tr("Please select the installation of %1 to manage").arg(*gameName) :
+            QObject::tr("Please select the game to manage"),
+          nullptr, QSize(32, 32));
+
         for (IPluginGame *game : possibleGames) {
           browseSelection.addChoice(game->gameIcon(), game->gameName(), gamePath, QVariant::fromValue(game));
         }
+
         if (browseSelection.exec() == QDialog::Accepted) {
           return selectGame(settings, gameDir, browseSelection.getChoiceData().value<IPluginGame *>());
         } else {
-          reportError(gameConfigured ? QObject::tr("Canceled finding %1 in \"%2\".").arg(gameName).arg(gamePath)
-                                     : QObject::tr("Canceled finding game in \"%1\".").arg(gamePath));
+          reportError(gameConfigured ?
+            QObject::tr("Canceled finding %1 in \"%2\".").arg(*gameName).arg(gamePath) :
+            QObject::tr("Canceled finding game in \"%1\".").arg(gamePath));
         }
       } else if(possibleGames.count() == 1) {
         return selectGame(settings, gameDir, possibleGames[0]);
       } else {
         if (gameConfigured) {
-          reportError(QObject::tr("%1 not identified in \"%2\". The directory is required to contain the game binary.").arg(gameName).arg(gamePath));
+          reportError(
+            QObject::tr("%1 not identified in \"%2\". The directory is required to contain the game binary.")
+            .arg(*gameName).arg(gamePath));
         } else {
           QString supportedGames;
 
@@ -480,27 +497,6 @@ static QString getVersionDisplayString()
   return createVersionInfo().displayString(3);
 }
 
-void dumpSettings(QSettings& settings)
-{
-  static const QStringList ignore({
-    "username", "password", "nexus_api_key"
-  });
-
-  log::debug("settings:");
-
-  settings.beginGroup("Settings");
-
-  for (auto k : settings.allKeys()) {
-    if (ignore.contains(k, Qt::CaseInsensitive)) {
-      continue;
-    }
-
-    log::debug("  . {}={}", k, settings.value(k).toString());
-  }
-
-  settings.endGroup();
-}
-
 void checkMissingFiles()
 {
   // files that are likely to be eaten
@@ -557,7 +553,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     log::warn("no ssl support");
   }
 
-  QString dataPath = application.property("dataPath").toString();
+  const QString dataPath = application.property("dataPath").toString();
   log::info("data path: {}", dataPath);
 
   if (!bootstrap()) {
@@ -573,21 +569,17 @@ int runApplication(MOApplication &application, SingleInstance &instance,
   try {
     log::info("working directory: {}", QDir::currentPath());
 
-    QSettings initSettings(
-      dataPath + "/" + QString::fromStdWString(AppConfig::iniFileName()),
-      QSettings::IniFormat);
-
-    Settings settings(initSettings);
-    log::getDefault().setLevel(settings.logLevel());
+    Settings settings(dataPath + "/" + QString::fromStdWString(AppConfig::iniFileName()));
+    log::getDefault().setLevel(settings.diagnostics().logLevel());
 
     // global crashDumpType sits in OrganizerCore to make a bit less ugly to
     // update it when the settings are changed during runtime
-    OrganizerCore::setGlobalCrashDumpsType(settings.crashDumpsType());
+    OrganizerCore::setGlobalCrashDumpsType(settings.diagnostics().crashDumpsType());
 
     env::Environment env;
 
     env.dump();
-    dumpSettings(initSettings);
+    settings.dump();
     sanityChecks(env);
 
     log::debug("initializing core");
@@ -602,7 +594,8 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     pluginContainer.loadPlugins();
 
     MOBase::IPluginGame *game = determineCurrentGame(
-        application.applicationDirPath(), initSettings, pluginContainer);
+        application.applicationDirPath(), settings, pluginContainer);
+
     if (game == nullptr) {
       InstanceManager &instance = InstanceManager::instance();
       QString instanceName = instance.currentInstance();
@@ -612,6 +605,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       }
       return 1;
     }
+
     if (splashPath.startsWith(':')) {
       // currently using MO splash, see if the plugin contains one
       QString pluginSplash
@@ -625,7 +619,11 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     organizer.setManagedGame(game);
     organizer.createDefaultProfile();
 
-    if (!initSettings.contains("game_edition")) {
+    QString edition;
+
+    if (auto v=settings.game().edition()) {
+      edition = *v;
+    } else {
       QStringList editions = game->gameVariants();
       if (editions.size() > 1) {
         SelectionDialog selection(
@@ -641,78 +639,70 @@ int runApplication(MOApplication &application, SingleInstance &instance,
         if (selection.exec() == QDialog::Rejected) {
           return 1;
         } else {
-          initSettings.setValue("game_edition", selection.getChoiceString());
+          edition = selection.getChoiceString();
+          settings.game().setEdition(edition);
         }
       }
     }
-    game->setGameVariant(initSettings.value("game_edition").toString());
+
+    Q_ASSERT(!edition.isEmpty());
+
+    game->setGameVariant(edition);
 
     log::info("managing game at {}", game->gameDirectory().absolutePath());
 
-    organizer.updateExecutablesList(initSettings);
+    organizer.updateExecutablesList();
 
-    QString selectedProfileName = determineProfile(arguments, initSettings);
+    QString selectedProfileName = determineProfile(arguments, settings);
     organizer.setCurrentProfile(selectedProfileName);
 
     // if we have a command line parameter, it is either a nxm link or
     // a binary to start
-	if (arguments.size() > 1) {
-		if (MOShortcut shortcut{ arguments.at(1) }) {
-			if (shortcut.hasExecutable()) {
-				try {
-					organizer.runShortcut(shortcut);
-					return 0;
-				}
-				catch (const std::exception &e) {
-					reportError(
-						QObject::tr("failed to start shortcut: %1").arg(e.what()));
-					return 1;
-				}
-			}
-		}
-		else if (OrganizerCore::isNxmLink(arguments.at(1))) {
-			log::debug("starting download from command line: {}", arguments.at(1));
-			organizer.externalMessage(arguments.at(1));
-		}
-		else {
-			QString exeName = arguments.at(1);
-			log::debug("starting {} from command line", exeName);
-			arguments.removeFirst(); // remove application name (ModOrganizer.exe)
-			arguments.removeFirst(); // remove binary name
-			// pass the remaining parameters to the binary
-			try {
-				organizer.startApplication(exeName, arguments, QString(), QString());
-				return 0;
-			}
-			catch (const std::exception &e) {
-				reportError(
-					QObject::tr("failed to start application: %1").arg(e.what()));
-				return 1;
-			}
-		}
-	}
+	  if (arguments.size() > 1) {
+		  if (MOShortcut shortcut{ arguments.at(1) }) {
+			  if (shortcut.hasExecutable()) {
+				  try {
+					  organizer.runShortcut(shortcut);
+					  return 0;
+				  }
+				  catch (const std::exception &e) {
+					  reportError(
+						  QObject::tr("failed to start shortcut: %1").arg(e.what()));
+					  return 1;
+				  }
+			  }
+		  }
+		  else if (OrganizerCore::isNxmLink(arguments.at(1))) {
+			  log::debug("starting download from command line: {}", arguments.at(1));
+			  organizer.externalMessage(arguments.at(1));
+		  }
+		  else {
+			  QString exeName = arguments.at(1);
+			  log::debug("starting {} from command line", exeName);
+			  arguments.removeFirst(); // remove application name (ModOrganizer.exe)
+			  arguments.removeFirst(); // remove binary name
+			  // pass the remaining parameters to the binary
+			  try {
+				  organizer.startApplication(exeName, arguments, QString(), QString());
+				  return 0;
+			  }
+			  catch (const std::exception &e) {
+				  reportError(
+					  QObject::tr("failed to start application: %1").arg(e.what()));
+				  return 1;
+			  }
+		  }
+	  }
 
     QPixmap pixmap(splashPath);
     QSplashScreen splash(pixmap);
 
-    if (initSettings.contains("window_monitor")) {
-      const int monitor = initSettings.value("window_monitor").toInt();
-
-      if (monitor != -1 && QGuiApplication::screens().size() > monitor) {
-        QGuiApplication::screens().at(monitor)->geometry().center();
-        const QPoint center = QGuiApplication::screens().at(monitor)->geometry().center();
-        splash.move(center - splash.rect().center());
-      } else {
-        const QPoint center = QGuiApplication::primaryScreen()->geometry().center();
-        splash.move(center - splash.rect().center());
-      }
-    }
-
+    settings.geometry().centerOnMainWindowMonitor(&splash);
     splash.show();
     splash.activateWindow();
 
     QString apiKey;
-    if (organizer.settings().getNexusApiKey(apiKey)) {
+    if (settings.nexus().apiKey(apiKey)) {
       NexusInterface::instance(&pluginContainer)->getAccessManager()->apiCheck(apiKey);
     }
 
@@ -722,15 +712,16 @@ int runApplication(MOApplication &application, SingleInstance &instance,
             + QString::fromStdWString(AppConfig::tutorialsPath()) + "/",
         &organizer);
 
-    if (!application.setStyleFile(initSettings.value("Settings/style", "").toString())) {
+    if (!application.setStyleFile(settings.interface().styleName().value_or(""))) {
       // disable invalid stylesheet
-      initSettings.setValue("Settings/style", "");
+      settings.interface().setStyleName("");
     }
 
     int res = 1;
+
     { // scope to control lifetime of mainwindow
       // set up main window and its data structures
-      MainWindow mainWindow(initSettings, organizer, pluginContainer);
+      MainWindow mainWindow(settings, organizer, pluginContainer);
 
       NexusInterface::instance(&pluginContainer)
         ->getAccessManager()->setTopLevelWidget(&mainWindow);
@@ -740,12 +731,10 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       QObject::connect(&instance, SIGNAL(messageSent(QString)), &organizer,
                        SLOT(externalMessage(QString)));
 
-      mainWindow.processUpdates();
+      mainWindow.processUpdates(settings);
 
       // this must be before readSettings(), see DockFixer in mainwindow.cpp
       splash.finish(&mainWindow);
-
-      mainWindow.readSettings();
 
       log::debug("displaying main window");
       mainWindow.show();
@@ -753,17 +742,20 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
       splash.finish(&mainWindow);
 
-      const auto ret = application.exec();
+      res = application.exec();
 
       NexusInterface::instance(&pluginContainer)
         ->getAccessManager()->setTopLevelWidget(nullptr);
-
-      return ret;
     }
+
+    settings.geometry().resetIfNeeded();
+    return res;
+
   } catch (const std::exception &e) {
     reportError(e.what());
-    return 1;
   }
+
+  return 1;
 }
 
 int doCoreDump(env::CoreDumpTypes type)

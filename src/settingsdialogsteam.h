@@ -7,11 +7,8 @@
 class SteamSettingsTab : public SettingsTab
 {
 public:
-  SteamSettingsTab(Settings *m_parent, SettingsDialog &m_dialog);
-
+  SteamSettingsTab(Settings& settings, SettingsDialog& dialog);
   void update();
-
-private:
 };
 
 #endif // SETTINGSDIALOGSTEAM_H

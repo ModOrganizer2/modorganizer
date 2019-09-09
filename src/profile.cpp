@@ -73,7 +73,7 @@ Profile::Profile(const QString &name, IPluginGame const *gamePlugin, bool useDef
   : m_ModListWriter(std::bind(&Profile::doWriteModlist, this))
   , m_GamePlugin(gamePlugin)
 {
-  QString profilesDir = Settings::instance().getProfileDirectory();
+  QString profilesDir = Settings::instance().paths().profiles();
   QDir profileBase(profilesDir);
   QString fixedName = name;
   if (!fixDirectoryName(fixedName)) {
@@ -299,7 +299,7 @@ void Profile::createTweakedIniFile()
 // static
 void Profile::renameModInAllProfiles(const QString& oldName, const QString& newName)
 {
-  QDir profilesDir(Settings::instance().getProfileDirectory());
+  QDir profilesDir(Settings::instance().paths().profiles());
   profilesDir.setFilter(QDir::AllDirs | QDir::NoDotAndDotDot);
   QDirIterator profileIter(profilesDir);
   while (profileIter.hasNext()) {
@@ -655,7 +655,7 @@ void Profile::setModPriority(unsigned int index, int &newPriority)
 
 Profile *Profile::createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame const *gamePlugin)
 {
-  QString profileDirectory = Settings::instance().getProfileDirectory() + "/" + name;
+  QString profileDirectory = Settings::instance().paths().profiles() + "/" + name;
   reference.copyFilesTo(profileDirectory);
   return new Profile(QDir(profileDirectory), gamePlugin);
 }
@@ -906,7 +906,7 @@ QString Profile::savePath() const
 
 void Profile::rename(const QString &newName)
 {
-  QDir profileDir(Settings::instance().getProfileDirectory());
+  QDir profileDir(Settings::instance().paths().profiles());
   profileDir.rename(name(), newName);
   m_Directory.setPath(profileDir.absoluteFilePath(newName));
 }

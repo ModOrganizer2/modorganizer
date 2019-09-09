@@ -31,19 +31,21 @@ namespace Ui { class SettingsDialog; }
 class SettingsTab
 {
 public:
-  SettingsTab(Settings *m_parent, SettingsDialog &m_dialog);
+  SettingsTab(Settings& settings, SettingsDialog& m_dialog);
   virtual ~SettingsTab();
 
   virtual void update() = 0;
   virtual void closing() {}
 
 protected:
-  Settings *m_parent;
-  QSettings &m_Settings;
-  SettingsDialog &m_dialog;
   Ui::SettingsDialog* ui;
 
-  QWidget* parentWidget();
+  Settings& settings();
+  SettingsDialog& dialog();
+
+private:
+  Settings& m_settings;
+  SettingsDialog& m_dialog;
 };
 
 
@@ -58,7 +60,7 @@ class SettingsDialog : public MOBase::TutorableDialog
 
 public:
   explicit SettingsDialog(
-    PluginContainer *pluginContainer, Settings* settings, QWidget *parent = 0);
+    PluginContainer *pluginContainer, Settings& settings, QWidget *parent = 0);
 
   ~SettingsDialog();
 
@@ -71,7 +73,6 @@ public:
   // temp
   Ui::SettingsDialog *ui;
   bool m_keyChanged;
-  bool m_GeometriesReset;
   PluginContainer *m_PluginContainer;
 
   int exec() override;
@@ -81,10 +82,9 @@ public slots:
 
 public:
   bool getApiKeyChanged();
-  bool getResetGeometries();
 
 private:
-  Settings* m_settings;
+  Settings& m_settings;
   std::vector<std::unique_ptr<SettingsTab>> m_tabs;
 
 };

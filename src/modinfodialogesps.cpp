@@ -277,12 +277,12 @@ void ESPsTab::update()
 
 void ESPsTab::saveState(Settings& s)
 {
-  saveWidgetState(s.directInterface(), ui->ESPsSplitter);
+  s.geometry().saveState(ui->ESPsSplitter);
 }
 
 void ESPsTab::restoreState(const Settings& s)
 {
-  restoreWidgetState(s.directInterface(), ui->ESPsSplitter);
+  s.geometry().restoreState(ui->ESPsSplitter);
 }
 
 void ESPsTab::onActivate()

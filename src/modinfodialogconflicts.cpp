@@ -409,8 +409,7 @@ void ConflictsTab::clear()
 
 void ConflictsTab::saveState(Settings& s)
 {
-  s.directInterface().setValue(
-    "mod_info_conflicts_tab", ui->tabConflictsTabs->currentIndex());
+  s.widgets().saveIndex(ui->tabConflictsTabs);
 
   m_general.saveState(s);
   m_advanced.saveState(s);
@@ -418,8 +417,7 @@ void ConflictsTab::saveState(Settings& s)
 
 void ConflictsTab::restoreState(const Settings& s)
 {
-  ui->tabConflictsTabs->setCurrentIndex(
-    s.directInterface().value("mod_info_conflicts_tab", 0).toInt());
+  s.widgets().restoreIndex(ui->tabConflictsTabs, 0);
 
   m_general.restoreState(s);
   m_advanced.restoreState(s);
@@ -817,55 +815,22 @@ void GeneralConflictsTab::clear()
 
 void GeneralConflictsTab::saveState(Settings& s)
 {
-  QByteArray result;
-  QDataStream stream(&result, QIODevice::WriteOnly);
-
-  stream
-    << m_expanders.overwrite.opened()
-    << m_expanders.overwritten.opened()
-    << m_expanders.nonconflict.opened();
-
-  s.directInterface().setValue(
-    "mod_info_conflicts_general_expanders", result);
-
-  s.directInterface().setValue(
-    "mod_info_conflicts_general_overwrite",
-    ui->overwriteTree->header()->saveState());
-
-  s.directInterface().setValue(
-    "mod_info_conflicts_general_noconflict",
-    ui->noConflictTree->header()->saveState());
-
-  s.directInterface().setValue(
-    "mod_info_conflicts_general_overwritten",
-    ui->overwrittenTree->header()->saveState());
+  s.geometry().saveState(&m_expanders.overwrite);
+  s.geometry().saveState(&m_expanders.overwritten);
+  s.geometry().saveState(&m_expanders.nonconflict);
+  s.geometry().saveState(ui->overwriteTree->header());
+  s.geometry().saveState(ui->noConflictTree->header());
+  s.geometry().saveState(ui->overwrittenTree->header());
 }
 
 void GeneralConflictsTab::restoreState(const Settings& s)
 {
-  QDataStream stream(s.directInterface()
-    .value("mod_info_conflicts_general_expanders").toByteArray());
-
-  bool overwriteExpanded = false;
-  bool overwrittenExpanded = false;
-  bool noConflictExpanded = false;
-
-  stream >> overwriteExpanded >> overwrittenExpanded >> noConflictExpanded;
-
-  if (stream.status() == QDataStream::Ok) {
-    m_expanders.overwrite.toggle(overwriteExpanded);
-    m_expanders.overwritten.toggle(overwrittenExpanded);
-    m_expanders.nonconflict.toggle(noConflictExpanded);
-  }
-
-  ui->overwriteTree->header()->restoreState(s.directInterface()
-    .value("mod_info_conflicts_general_overwrite").toByteArray());
-
-  ui->noConflictTree->header()->restoreState(s.directInterface()
-    .value("mod_info_conflicts_general_noconflict").toByteArray());
-
-  ui->overwrittenTree->header()->restoreState(s.directInterface()
-    .value("mod_info_conflicts_general_overwritten").toByteArray());
+  s.geometry().restoreState(&m_expanders.overwrite);
+  s.geometry().restoreState(&m_expanders.overwritten);
+  s.geometry().restoreState(&m_expanders.nonconflict);
+  s.geometry().restoreState(ui->overwriteTree->header());
+  s.geometry().restoreState(ui->noConflictTree->header());
+  s.geometry().restoreState(ui->overwrittenTree->header());
 }
 
 bool GeneralConflictsTab::update()
@@ -1048,41 +1013,18 @@ void AdvancedConflictsTab::clear()
 
 void AdvancedConflictsTab::saveState(Settings& s)
 {
-  s.directInterface().setValue(
-    "mod_info_conflicts_advanced_list",
-    ui->conflictsAdvancedList->header()->saveState());
-
-  QByteArray result;
-  QDataStream stream(&result, QIODevice::WriteOnly);
-
-  stream
-    << ui->conflictsAdvancedShowNoConflict->isChecked()
-    << ui->conflictsAdvancedShowAll->isChecked()
-    << ui->conflictsAdvancedShowNearest->isChecked();
-
-  s.directInterface().setValue(
-    "mod_info_conflicts_advanced_options", result);
+  s.geometry().saveState(ui->conflictsAdvancedList->header());
+  s.widgets().saveChecked(ui->conflictsAdvancedShowNoConflict);
+  s.widgets().saveChecked(ui->conflictsAdvancedShowAll);
+  s.widgets().saveChecked(ui->conflictsAdvancedShowNearest);
 }
 
 void AdvancedConflictsTab::restoreState(const Settings& s)
 {
-  ui->conflictsAdvancedList->header()->restoreState(
-    s.directInterface().value("mod_info_conflicts_advanced_list").toByteArray());
-
-  QDataStream stream(s.directInterface()
-    .value("mod_info_conflicts_advanced_options").toByteArray());
-
-  bool noConflictChecked = false;
-  bool showAllChecked = false;
-  bool showNearestChecked = false;
-
-  stream >> noConflictChecked >> showAllChecked >> showNearestChecked;
-
-  if (stream.status() == QDataStream::Ok) {
-    ui->conflictsAdvancedShowNoConflict->setChecked(noConflictChecked);
-    ui->conflictsAdvancedShowAll->setChecked(showAllChecked);
-    ui->conflictsAdvancedShowNearest->setChecked(showNearestChecked);
-  }
+  s.geometry().restoreState(ui->conflictsAdvancedList->header());
+  s.widgets().restoreChecked(ui->conflictsAdvancedShowNoConflict);
+  s.widgets().restoreChecked(ui->conflictsAdvancedShowAll);
+  s.widgets().restoreChecked(ui->conflictsAdvancedShowNearest);
 }
 
 void AdvancedConflictsTab::update()

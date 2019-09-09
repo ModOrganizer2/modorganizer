@@ -1,11 +1,11 @@
 #include "settingsdialogsteam.h"
 #include "ui_settingsdialog.h"
 
-SteamSettingsTab::SteamSettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
-  : SettingsTab(m_parent, m_dialog)
+SteamSettingsTab::SteamSettingsTab(Settings& s, SettingsDialog& d)
+  : SettingsTab(s, d)
 {
   QString username, password;
-  m_parent->getSteamLogin(username, password);
+  settings().steam().login(username, password);
 
   ui->steamUserEdit->setText(username);
   ui->steamPassEdit->setText(password);
@@ -13,5 +13,5 @@ SteamSettingsTab::SteamSettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
 
 void SteamSettingsTab::update()
 {
-  m_parent->setSteamLogin(ui->steamUserEdit->text(), ui->steamPassEdit->text());
+  settings().steam().setLogin(ui->steamUserEdit->text(), ui->steamPassEdit->text());
 }

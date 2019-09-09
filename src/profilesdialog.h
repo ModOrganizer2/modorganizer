@@ -51,6 +51,10 @@ public:
  explicit ProfilesDialog(const QString &profileName, MOBase::IPluginGame const *game, QWidget *parent = 0);
   ~ProfilesDialog();
 
+  // also saves and restores geometry
+  //
+  int exec() override;
+
   /**
    * @return true if creation of a new profile failed
    * @todo the notion of a fail state makes little sense in the current dialog

@@ -6,14 +6,17 @@
 
 using namespace MOBase;
 
-DiagnosticsSettingsTab::DiagnosticsSettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
-  : SettingsTab(m_parent, m_dialog)
+DiagnosticsSettingsTab::DiagnosticsSettingsTab(Settings& s, SettingsDialog& d)
+  : SettingsTab(s, d)
 {
   setLevelsBox();
-  ui->dumpsTypeBox->setCurrentIndex(m_parent->crashDumpsType());
-  ui->dumpsMaxEdit->setValue(m_parent->crashDumpsMax());
+  setCrashDumpTypesBox();
+
+  ui->dumpsMaxEdit->setValue(settings().diagnostics().crashDumpsMax());
+
   QString logsPath = qApp->property("dataPath").toString()
     + "/" + QString::fromStdWString(AppConfig::logPath());
+
   ui->diagnosticsExplainedLabel->setText(
     ui->diagnosticsExplainedLabel->text()
     .replace("LOGS_FULL_PATH", logsPath)
@@ -33,8 +36,32 @@ void DiagnosticsSettingsTab::setLevelsBox()
   ui->logLevelBox->addItem(QObject::tr("Error"), log::Error);
 
   for (int i=0; i<ui->logLevelBox->count(); ++i) {
-    if (ui->logLevelBox->itemData(i) == m_parent->logLevel()) {
+    if (ui->logLevelBox->itemData(i) == settings().diagnostics().logLevel()) {
       ui->logLevelBox->setCurrentIndex(i);
+      break;
+    }
+  }
+}
+
+void DiagnosticsSettingsTab::setCrashDumpTypesBox()
+{
+  ui->dumpsTypeBox->clear();
+
+  auto add = [&](auto&& text, auto&& type) {
+    ui->dumpsTypeBox->addItem(text, static_cast<int>(type));
+  };
+
+  add(QObject::tr("None"), CrashDumpsType::None);
+  add(QObject::tr("Mini (recommended)"), CrashDumpsType::Mini);
+  add(QObject::tr("Data"), CrashDumpsType::Data);
+  add(QObject::tr("Full"), CrashDumpsType::Full);
+
+  const auto current = static_cast<int>(
+    settings().diagnostics().crashDumpsType());
+
+  for (int i=0; i<ui->dumpsTypeBox->count(); ++i) {
+    if (ui->dumpsTypeBox->itemData(i) == current) {
+      ui->dumpsTypeBox->setCurrentIndex(i);
       break;
     }
   }
@@ -42,7 +69,11 @@ void DiagnosticsSettingsTab::setLevelsBox()
 
 void DiagnosticsSettingsTab::update()
 {
-  m_Settings.setValue("Settings/log_level", ui->logLevelBox->currentData().toInt());
-  m_Settings.setValue("Settings/crash_dumps_type", ui->dumpsTypeBox->currentIndex());
-  m_Settings.setValue("Settings/crash_dumps_max", ui->dumpsMaxEdit->value());
+  settings().diagnostics().setLogLevel(
+    static_cast<log::Levels>(ui->logLevelBox->currentData().toInt()));
+
+  settings().diagnostics().setCrashDumpsType(
+    static_cast<CrashDumpsType>(ui->dumpsTypeBox->currentData().toInt()));
+
+  settings().diagnostics().setCrashDumpsMax(ui->dumpsMaxEdit->value());
 }

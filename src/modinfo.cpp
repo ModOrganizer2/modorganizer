@@ -42,7 +42,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QApplication>
 #include <QDirIterator>
 #include <QMutexLocker>
-#include <QSettings>
 
 using namespace MOBase;
 using namespace MOShared;

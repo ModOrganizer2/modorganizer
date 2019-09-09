@@ -95,7 +95,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
       return false;
     }
     plugin->setProperty("filename", fileName);
-    m_Organizer->settings().registerPlugin(pluginObj);
+    m_Organizer->settings().plugins().registerPlugin(pluginObj);
   }
 
   { // diagnosis plugin
@@ -266,7 +266,7 @@ void PluginContainer::loadPlugins()
          "(Please note: If this is the first time you see this message for this plugin you may want to give it another try. "
          "The plugin may be able to recover from the problem)").arg(fileName),
           QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes) {
-      m_Organizer->settings().addBlacklistPlugin(fileName);
+      m_Organizer->settings().plugins().addBlacklist(fileName);
     }
     loadCheck.close();
   }
@@ -279,7 +279,7 @@ void PluginContainer::loadPlugins()
 
   while (iter.hasNext()) {
     iter.next();
-    if (m_Organizer->settings().pluginBlacklisted(iter.fileName())) {
+    if (m_Organizer->settings().plugins().blacklisted(iter.fileName())) {
       log::debug("plugin \"{}\" blacklisted", iter.fileName());
       continue;
     }

@@ -57,7 +57,7 @@ ProfilesDialog::ProfilesDialog(const QString &profileName, MOBase::IPluginGame c
 {
   ui->setupUi(this);
 
-  QDir profilesDir(Settings::instance().getProfileDirectory());
+  QDir profilesDir(Settings::instance().paths().profiles());
   profilesDir.setFilter(QDir::AllDirs | QDir::NoDotAndDotDot);
 
   QDirIterator profileIter(profilesDir);
@@ -82,6 +82,12 @@ ProfilesDialog::ProfilesDialog(const QString &profileName, MOBase::IPluginGame c
 ProfilesDialog::~ProfilesDialog()
 {
   delete ui;
+}
+
+int ProfilesDialog::exec()
+{
+  GeometrySaver gs(Settings::instance(), this);
+  return QDialog::exec();
 }
 
 void ProfilesDialog::showEvent(QShowEvent *event)
@@ -197,7 +203,7 @@ void ProfilesDialog::on_removeProfileButton_clicked()
   if (confirmBox.exec() == QMessageBox::Yes) {
     QString profilePath;
     if (profileToDelete.get() == nullptr) {
-      profilePath = Settings::instance().getProfileDirectory()
+      profilePath = Settings::instance().paths().profiles()
                   + "/" + ui->profilesList->currentItem()->text();
       if (QMessageBox::question(this, tr("Profile broken"),
             tr("This profile you're about to delete seems to be broken or the path is invalid. "

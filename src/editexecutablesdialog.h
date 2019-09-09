@@ -151,6 +151,10 @@ public:
 
   ~EditExecutablesDialog();
 
+  // also saves and restores geometry
+  //
+  int exec() override;
+
   ExecutablesList getExecutablesList() const;
   const CustomOverwrites& getCustomOverwrites() const;
   const ForcedLibraries& getForcedLibraries() const;

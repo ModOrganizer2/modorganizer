@@ -130,18 +130,14 @@ void ImagesTab::update()
 
 void ImagesTab::saveState(Settings& s)
 {
-  s.directInterface().setValue(
-    "mod_info_dialog_images_show_dds", m_ddsEnabled);
-
-  saveWidgetState(s.directInterface(), ui->tabImagesSplitter);
+  s.widgets().saveChecked(ui->imagesShowDDS);
+  s.geometry().saveState(ui->tabImagesSplitter);
 }
 
 void ImagesTab::restoreState(const Settings& s)
 {
-  ui->imagesShowDDS->setChecked(s.directInterface()
-    .value("mod_info_dialog_images_show_dds", false).toBool());
-
-  restoreWidgetState(s.directInterface(), ui->tabImagesSplitter);
+  s.widgets().restoreChecked(ui->imagesShowDDS);
+  s.geometry().restoreState(ui->tabImagesSplitter);
 }
 
 void ImagesTab::checkFiltering()

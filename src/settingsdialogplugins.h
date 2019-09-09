@@ -7,7 +7,7 @@
 class PluginsSettingsTab : public SettingsTab
 {
 public:
-  PluginsSettingsTab(Settings *m_parent, SettingsDialog &m_dialog);
+  PluginsSettingsTab(Settings& settings, SettingsDialog& dialog);
 
   void update();
   void closing() override;

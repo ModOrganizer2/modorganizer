@@ -45,6 +45,7 @@ SET(organizer_SRCS
 	settingsdialogsteam.cpp
 	settingsdialogworkarounds.cpp
     settings.cpp
+	settingsutilities.cpp
     selfupdater.cpp
     selectiondialog.cpp
     queryoverwritedialog.cpp
@@ -166,6 +167,7 @@ SET(organizer_HDRS
 	settingsdialogsteam.h
 	settingsdialogworkarounds.h
     settings.h
+	settingsutilities.h
     selfupdater.h
     selectiondialog.h
     queryoverwritedialog.h
@@ -444,6 +446,10 @@ set(profiles
 
 set(settings
 	settings
+	settingsutilities
+)
+
+set(settingsdialog
 	settingsdialog
 	settingsdialogdiagnostics
 	settingsdialoggeneral
@@ -490,7 +496,8 @@ set(widgets
 
 set(src_filters
 	application core browser dialogs downloads env executables locking modinfo
-	modinfo\\dialog modlist plugins previews profiles settings utilities widgets
+	modinfo\\dialog modlist plugins previews profiles settings settingsdialog
+	utilities widgets
 )
 
 foreach(filter in list ${src_filters})

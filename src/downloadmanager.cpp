@@ -288,12 +288,6 @@ void DownloadManager::setOutputDirectory(const QString &outputDirectory)
 }
 
 
-void DownloadManager::setPreferredServers(const std::map<QString, int> &preferredServers)
-{
-  m_PreferredServers = preferredServers;
-}
-
-
 void DownloadManager::setSupportedExtensions(const QStringList &extensions)
 {
   m_SupportedExtensions = extensions;
@@ -1447,22 +1441,11 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
         std::get<4>(info->m_SpeedDiff) = ((calc*0.5) + (std::get<4>(info->m_SpeedDiff)*1.5)) / 2;
 
         // calculate the download speed
-        double speed = (std::get<4>(info->m_SpeedDiff) * 1000.0) / (5 * 1000);
+        const double speed = (std::get<4>(info->m_SpeedDiff) * 1000.0) / (5 * 1000);
 
-        QString unit;
-        if (speed < 1000) {
-          unit = "B/s";
-        }
-        else if (speed < 1000*1024) {
-          speed /= 1024;
-          unit = "KB/s";
-        }
-        else {
-          speed /= 1024 * 1024;
-          unit = "MB/s";
-        }
-
-        info->m_Progress.second = QString::fromLatin1("%1% - %2 %3").arg(info->m_Progress.first).arg(QString::number(speed, 'f', 1)).arg(unit);
+        info->m_Progress.second = QString::fromLatin1("%1% - %2")
+          .arg(info->m_Progress.first)
+          .arg(MOBase::localizedByteSpeed(speed));
 
         TaskProgressManager::instance().updateProgress(info->m_TaskProgressId, bytesReceived, bytesTotal);
         emit update(index);
@@ -1667,23 +1650,39 @@ void DownloadManager::nxmFileInfoAvailable(QString gameName, int modID, int file
   m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(info->gameName, info->modID, info->fileID, this, qVariantFromValue(test), QString()));
 }
 
-static int evaluateFileInfoMap(const QVariantMap &map, const std::map<QString, int> &preferredServers)
+static int evaluateFileInfoMap(
+  const QVariantMap &map,
+  const ServerList::container& preferredServers)
 {
-  int result = 0;
+  int preference = 0;
+  bool found = false;
+  const auto name = map["short_name"].toString();
 
-  auto preference = preferredServers.find(map["short_name"].toString());
-
-  if (preference != preferredServers.end()) {
-    result += 100 + preference->second * 20;
+  for (const auto& server : preferredServers) {
+    if (server.name() == name) {
+      preference = server.preferred();
+      found = true;
+      break;
+    }
   }
 
-  return result;
+  if (!found) {
+    log::error("server '{}' not found while sorting by preference", name);
+    return 0;
+  }
+
+  return  100 + preference * 20;
 }
 
 // sort function to sort by best download server
-bool DownloadManager::ServerByPreference(const std::map<QString, int> &preferredServers, const QVariant &LHS, const QVariant &RHS)
+//
+bool ServerByPreference(
+  const ServerList::container& preferredServers,
+  const QVariant &LHS, const QVariant &RHS)
 {
-  return evaluateFileInfoMap(LHS.toMap(), preferredServers) > evaluateFileInfoMap(RHS.toMap(), preferredServers);
+  const auto a = evaluateFileInfoMap(LHS.toMap(), preferredServers);
+  const auto b = evaluateFileInfoMap(RHS.toMap(), preferredServers);
+  return (a > b);
 }
 
 int DownloadManager::startDownloadURLs(const QStringList &urls)
@@ -1732,7 +1731,12 @@ void DownloadManager::nxmDownloadURLsAvailable(QString gameName, int modID, int 
     return;
   }
 
-  std::sort(resultList.begin(), resultList.end(), boost::bind(&DownloadManager::ServerByPreference, m_PreferredServers, _1, _2));
+  const auto servers = m_OrganizerCore->settings().network().servers();
+
+  std::sort(
+    resultList.begin(),
+    resultList.end(),
+    boost::bind(&ServerByPreference, servers.getPreferred(), _1, _2));
 
   info->userData["downloadMap"] = resultList;
 

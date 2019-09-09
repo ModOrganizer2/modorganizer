@@ -7,12 +7,13 @@
 class DiagnosticsSettingsTab : public SettingsTab
 {
 public:
-  DiagnosticsSettingsTab(Settings *parent, SettingsDialog &dialog);
+  DiagnosticsSettingsTab(Settings& settings, SettingsDialog& dialog);
 
   void update();
 
 private:
   void setLevelsBox();
+  void setCrashDumpTypesBox();
 };
 
 #endif // SETTINGSDIALOGDIAGNOSTICS_H

@@ -37,6 +37,11 @@ public:
   **/
   bool opened() const;
 
+  QByteArray saveState() const;
+  void restoreState(const QByteArray& a);
+
+  QToolButton* button() const;
+
 private:
   QToolButton* m_button;
   QWidget* m_content;

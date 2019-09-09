@@ -7,8 +7,7 @@
 class WorkaroundsSettingsTab : public SettingsTab
 {
 public:
-  WorkaroundsSettingsTab(Settings *m_parent, SettingsDialog &m_dialog);
-
+  WorkaroundsSettingsTab(Settings& settings, SettingsDialog& dialog);
   void update();
 
 private:

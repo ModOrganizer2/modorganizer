@@ -3,20 +3,26 @@
 #include "appconfig.h"
 #include <iplugingame.h>
 
-PathsSettingsTab::PathsSettingsTab(Settings *parent, SettingsDialog &dialog)
-  : SettingsTab(parent, dialog)
+PathsSettingsTab::PathsSettingsTab(Settings& s, SettingsDialog& d)
+  : SettingsTab(s, d)
 {
-  ui->baseDirEdit->setText(m_parent->getBaseDirectory());
-  ui->managedGameDirEdit->setText(m_parent->gamePlugin()->gameDirectory().absoluteFilePath(m_parent->gamePlugin()->binaryName()));
-  QString basePath = parent->getBaseDirectory();
+  ui->baseDirEdit->setText(settings().paths().base());
+
+  ui->managedGameDirEdit->setText(
+    settings().game().plugin()->gameDirectory().absoluteFilePath(
+      settings().game().plugin()->binaryName()));
+
+  QString basePath = settings().paths().base();
   QDir baseDir(basePath);
+
   for (const auto &dir : {
-    std::make_pair(ui->downloadDirEdit, m_parent->getDownloadDirectory(false)),
-    std::make_pair(ui->modDirEdit, m_parent->getModDirectory(false)),
-    std::make_pair(ui->cacheDirEdit, m_parent->getCacheDirectory(false)),
-    std::make_pair(ui->profilesDirEdit, m_parent->getProfileDirectory(false)),
-    std::make_pair(ui->overwriteDirEdit, m_parent->getOverwriteDirectory(false))
+    std::make_pair(ui->downloadDirEdit, settings().paths().downloads(false)),
+    std::make_pair(ui->modDirEdit, settings().paths().mods(false)),
+    std::make_pair(ui->cacheDirEdit, settings().paths().cache(false)),
+    std::make_pair(ui->profilesDirEdit, settings().paths().profiles(false)),
+    std::make_pair(ui->overwriteDirEdit, settings().paths().overwrite(false))
     }) {
+
     QString storePath = baseDir.relativeFilePath(dir.second);
     storePath = dir.second;
     dir.first->setText(storePath);
@@ -40,22 +46,22 @@ PathsSettingsTab::PathsSettingsTab(Settings *parent, SettingsDialog &dialog)
 
 void PathsSettingsTab::update()
 {
-  typedef std::tuple<QString, QString, std::wstring> Directory;
+  using Setter = void (PathSettings::*)(const QString&);
+  using Directory = std::tuple<QString, Setter, std::wstring>;
 
-  QString basePath = m_parent->getBaseDirectory();
+  QString basePath = settings().paths().base();
 
   for (const Directory &dir :{
-    Directory{ui->downloadDirEdit->text(), "download_directory", AppConfig::downloadPath()},
-    Directory{ui->cacheDirEdit->text(), "cache_directory", AppConfig::cachePath()},
-    Directory{ui->modDirEdit->text(), "mod_directory", AppConfig::modsPath()},
-    Directory{ui->overwriteDirEdit->text(), "overwrite_directory", AppConfig::overwritePath()},
-    Directory{ui->profilesDirEdit->text(), "profiles_directory", AppConfig::profilesPath()}
+    Directory{ui->downloadDirEdit->text(), &PathSettings::setDownloads, AppConfig::downloadPath()},
+    Directory{ui->cacheDirEdit->text(), &PathSettings::setCache, AppConfig::cachePath()},
+    Directory{ui->modDirEdit->text(), &PathSettings::setMods, AppConfig::modsPath()},
+    Directory{ui->overwriteDirEdit->text(), &PathSettings::setOverwrite, AppConfig::overwritePath()},
+    Directory{ui->profilesDirEdit->text(), &PathSettings::setProfiles, AppConfig::profilesPath()}
     }) {
-    QString path, settingsKey;
+    QString path;
+    Setter setter;
     std::wstring defaultName;
-    std::tie(path, settingsKey, defaultName) = dir;
-
-    settingsKey = QString("Settings/%1").arg(settingsKey);
+    std::tie(path, setter, defaultName) = dir;
 
     QString realPath = path;
     realPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
@@ -69,32 +75,34 @@ void PathsSettingsTab::update()
       }
     }
 
-    if (QFileInfo(realPath)
-      != QFileInfo(basePath + "/" + QString::fromStdWString(defaultName))) {
-      m_Settings.setValue(settingsKey, path);
+    if (QFileInfo(realPath) != QFileInfo(basePath + "/" + QString::fromStdWString(defaultName))) {
+      (settings().paths().*setter)(path);
     } else {
-      m_Settings.remove(settingsKey);
+      (settings().paths().*setter)("");
     }
   }
 
-  if (QFileInfo(ui->baseDirEdit->text()) !=
-    QFileInfo(qApp->property("dataPath").toString())) {
-    m_Settings.setValue("Settings/base_directory", ui->baseDirEdit->text());
+  if (QFileInfo(ui->baseDirEdit->text()) != QFileInfo(qApp->property("dataPath").toString())) {
+    settings().paths().setBase(ui->baseDirEdit->text());
   } else {
-    m_Settings.remove("Settings/base_directory");
+    settings().paths().setBase("");
   }
 
-  QFileInfo oldGameExe(m_parent->gamePlugin()->gameDirectory().absoluteFilePath(m_parent->gamePlugin()->binaryName()));
+  QFileInfo oldGameExe(
+    settings().game().plugin()->gameDirectory().absoluteFilePath(
+      settings().game().plugin()->binaryName()));
+
   QFileInfo newGameExe(ui->managedGameDirEdit->text());
+
   if (oldGameExe != newGameExe) {
-    m_Settings.setValue("gamePath", newGameExe.absolutePath());
+    settings().game().setDirectory(newGameExe.absolutePath());
   }
 }
 
 void PathsSettingsTab::on_browseBaseDirBtn_clicked()
 {
   QString temp = QFileDialog::getExistingDirectory(
-    parentWidget(), QObject::tr("Select base directory"), ui->baseDirEdit->text());
+    &dialog(), QObject::tr("Select base directory"), ui->baseDirEdit->text());
   if (!temp.isEmpty()) {
     ui->baseDirEdit->setText(temp);
   }
@@ -105,7 +113,7 @@ void PathsSettingsTab::on_browseDownloadDirBtn_clicked()
   QString searchPath = ui->downloadDirEdit->text();
   searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
 
-  QString temp = QFileDialog::getExistingDirectory(parentWidget(), QObject::tr("Select download directory"), searchPath);
+  QString temp = QFileDialog::getExistingDirectory(&dialog(), QObject::tr("Select download directory"), searchPath);
   if (!temp.isEmpty()) {
     ui->downloadDirEdit->setText(temp);
   }
@@ -116,7 +124,7 @@ void PathsSettingsTab::on_browseModDirBtn_clicked()
   QString searchPath = ui->modDirEdit->text();
   searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
 
-  QString temp = QFileDialog::getExistingDirectory(parentWidget(), QObject::tr("Select mod directory"), searchPath);
+  QString temp = QFileDialog::getExistingDirectory(&dialog(), QObject::tr("Select mod directory"), searchPath);
   if (!temp.isEmpty()) {
     ui->modDirEdit->setText(temp);
   }
@@ -127,7 +135,7 @@ void PathsSettingsTab::on_browseCacheDirBtn_clicked()
   QString searchPath = ui->cacheDirEdit->text();
   searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
 
-  QString temp = QFileDialog::getExistingDirectory(parentWidget(), QObject::tr("Select cache directory"), searchPath);
+  QString temp = QFileDialog::getExistingDirectory(&dialog(), QObject::tr("Select cache directory"), searchPath);
   if (!temp.isEmpty()) {
     ui->cacheDirEdit->setText(temp);
   }
@@ -138,7 +146,7 @@ void PathsSettingsTab::on_browseProfilesDirBtn_clicked()
   QString searchPath = ui->profilesDirEdit->text();
   searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
 
-  QString temp = QFileDialog::getExistingDirectory(parentWidget(), QObject::tr("Select profiles directory"), searchPath);
+  QString temp = QFileDialog::getExistingDirectory(&dialog(), QObject::tr("Select profiles directory"), searchPath);
   if (!temp.isEmpty()) {
     ui->profilesDirEdit->setText(temp);
   }
@@ -149,7 +157,7 @@ void PathsSettingsTab::on_browseOverwriteDirBtn_clicked()
   QString searchPath = ui->overwriteDirEdit->text();
   searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
 
-  QString temp = QFileDialog::getExistingDirectory(parentWidget(), QObject::tr("Select overwrite directory"), searchPath);
+  QString temp = QFileDialog::getExistingDirectory(&dialog(), QObject::tr("Select overwrite directory"), searchPath);
   if (!temp.isEmpty()) {
     ui->overwriteDirEdit->setText(temp);
   }
@@ -159,7 +167,7 @@ void PathsSettingsTab::on_browseGameDirBtn_clicked()
 {
   QFileInfo oldGameExe(ui->managedGameDirEdit->text());
 
-  QString temp = QFileDialog::getOpenFileName(parentWidget(), QObject::tr("Select game executable"), oldGameExe.absolutePath(), oldGameExe.fileName());
+  QString temp = QFileDialog::getOpenFileName(&dialog(), QObject::tr("Select game executable"), oldGameExe.absolutePath(), oldGameExe.fileName());
   if (!temp.isEmpty()) {
     ui->managedGameDirEdit->setText(temp);
   }

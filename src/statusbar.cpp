@@ -3,26 +3,32 @@
 #include "settings.h"
 #include "ui_mainwindow.h"
 
-StatusBar::StatusBar(QStatusBar* bar, Ui::MainWindow* ui) :
-  m_bar(bar), m_progress(new QProgressBar),
-  m_notifications(new StatusBarAction(ui->actionNotifications)),
-  m_update(new StatusBarAction(ui->actionUpdate)),
-  m_api(new QLabel)
+StatusBar::StatusBar(QWidget* parent) :
+  QStatusBar(parent), ui(nullptr), m_progress(new QProgressBar),
+  m_notifications(nullptr), m_update(nullptr), m_api(new QLabel)
 {
+}
+
+void StatusBar::setup(Ui::MainWindow* mainWindowUI)
+{
+  ui = mainWindowUI;
+  m_notifications = new StatusBarAction(ui->actionNotifications);
+  m_update = new StatusBarAction(ui->actionUpdate);
+
   QWidget* spacer1 = new QWidget;
   spacer1->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   spacer1->setHidden(true);
   spacer1->setVisible(true);
-  m_bar->addPermanentWidget(spacer1, 0);
-  m_bar->addPermanentWidget(m_progress);
+  addPermanentWidget(spacer1, 0);
+  addPermanentWidget(m_progress);
   QWidget* spacer2 = new QWidget;
   spacer2->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   spacer2->setHidden(true);
   spacer2->setVisible(true);
-  m_bar->addPermanentWidget(spacer2,0);
-  m_bar->addPermanentWidget(m_notifications);
-  m_bar->addPermanentWidget(m_update);
-  m_bar->addPermanentWidget(m_api);
+  addPermanentWidget(spacer2,0);
+  addPermanentWidget(m_notifications);
+  addPermanentWidget(m_update);
+  addPermanentWidget(m_api);
 
 
   m_progress->setTextVisible(true);
@@ -42,7 +48,7 @@ StatusBar::StatusBar(QStatusBar* bar, Ui::MainWindow* ui) :
     "be unable to queue downloads, check updates, parse mod info, or even log "
     "in. Both pools must be consumed before this happens."));
 
-  m_bar->clearMessage();
+  clearMessage();
   setProgress(-1);
   setAPI({}, {});
 }
@@ -50,10 +56,10 @@ StatusBar::StatusBar(QStatusBar* bar, Ui::MainWindow* ui) :
 void StatusBar::setProgress(int percent)
 {
   if (percent < 0 || percent >= 100) {
-    m_bar->clearMessage();
+    clearMessage();
     m_progress->setVisible(false);
   } else {
-    m_bar->showMessage(QObject::tr("Loading..."));
+    showMessage(QObject::tr("Loading..."));
     m_progress->setVisible(true);
     m_progress->setValue(percent);
   }
@@ -123,7 +129,38 @@ void StatusBar::setUpdateAvailable(bool b)
 
 void StatusBar::checkSettings(const Settings& settings)
 {
-  m_api->setVisible(!settings.hideAPICounter());
+  m_api->setVisible(!settings.interface().hideAPICounter());
+}
+
+void StatusBar::showEvent(QShowEvent*)
+{
+  visibilityChanged(true);
+}
+
+void StatusBar::hideEvent(QHideEvent*)
+{
+  visibilityChanged(false);
+}
+
+void StatusBar::visibilityChanged(bool visible)
+{
+  // the central widget typically has no bottom padding because the status bar
+  // is more than enough, but when it's hidden, the bottom widget (currently
+  // the log) touches the bottom border of the window, which looks ugly
+  //
+  // when hiding the statusbar, the central widget is given the same border
+  // margin as it has on the top (which is typically 6, as it's the default from
+  // the qt designer)
+
+  auto m = ui->centralWidget->layout()->contentsMargins();
+
+  if (visible) {
+    m.setBottom(0);
+  } else {
+    m.setBottom(m.top());
+  }
+
+  ui->centralWidget->layout()->setContentsMargins(m);
 }
 
 

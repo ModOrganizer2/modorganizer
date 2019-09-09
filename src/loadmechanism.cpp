@@ -49,3 +49,16 @@ void LoadMechanism::activate(EMechanism)
 {
   // no-op
 }
+
+
+QString toString(LoadMechanism::EMechanism e)
+{
+  switch (e)
+  {
+    case LoadMechanism::LOAD_MODORGANIZER:
+      return "ModOrganizer";
+
+    default:
+      return QString("unknown (%1)").arg(static_cast<int>(e));
+  }
+}

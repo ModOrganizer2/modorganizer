@@ -29,12 +29,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings* settings, QWidget *parent)
+SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings& settings, QWidget *parent)
   : TutorableDialog("SettingsDialog", parent)
   , ui(new Ui::SettingsDialog)
   , m_settings(settings)
   , m_PluginContainer(pluginContainer)
-  , m_GeometriesReset(false)
   , m_keyChanged(false)
 {
   ui->setupUi(this);
@@ -46,65 +45,34 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings* setti
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new SteamSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsSettingsTab(settings, *this)));
-
-  auto& qsettings = settings->directInterface();
-
-  QString key = QString("geometry/%1").arg(objectName());
-  if (qsettings.contains(key)) {
-    restoreGeometry(qsettings.value(key).toByteArray());
-  }
 }
 
 int SettingsDialog::exec()
 {
-  auto& qsettings = m_settings->directInterface();
+  GeometrySaver gs(m_settings, this);
+
+  m_settings.widgets().restoreIndex(ui->tabWidget);
+
   auto ret = TutorableDialog::exec();
 
-  if (ret == QDialog::Accepted) {
+  m_settings.widgets().saveIndex(ui->tabWidget);
 
+  if (ret == QDialog::Accepted) {
     for (auto&& tab : m_tabs) {
       tab->closing();
     }
 
-    // remember settings before change
-    QMap<QString, QString> before;
-    qsettings.beginGroup("Settings");
-    for (auto k : qsettings.allKeys())
-      before[k] = qsettings.value(k).toString();
-    qsettings.endGroup();
-
-    // transfer modified settings to configuration file
+    // update settings for each tab
     for (std::unique_ptr<SettingsTab> const &tab: m_tabs) {
       tab->update();
     }
-
-    // print "changed" settings
-    qsettings.beginGroup("Settings");
-    bool first_update = true;
-    for (auto k : qsettings.allKeys())
-      if (qsettings.value(k).toString() != before[k] && !k.contains("username") && !k.contains("password"))
-      {
-        if (first_update) {
-          log::debug("Changed settings:");
-          first_update = false;
-        }
-        log::debug("  {}={}", k, qsettings.value(k).toString());
-      }
-    qsettings.endGroup();
   }
 
-  QString key = QString("geometry/%1").arg(objectName());
-  qsettings.setValue(key, saveGeometry());
-
-  // These changes happen regardless of accepted or rejected
   bool restartNeeded = false;
   if (getApiKeyChanged()) {
     restartNeeded = true;
   }
-  if (getResetGeometries()) {
-    restartNeeded = true;
-    qsettings.setValue("reset_geometry", true);
-  }
+
   if (restartNeeded) {
     if (QMessageBox::question(nullptr,
       tr("Restart Mod Organizer?"),
@@ -141,7 +109,7 @@ void SettingsDialog::accept()
 
   if ((QDir::fromNativeSeparators(newModPath) !=
        QDir::fromNativeSeparators(
-           Settings::instance().getModDirectory(true))) &&
+           Settings::instance().paths().mods(true))) &&
       (QMessageBox::question(
            nullptr, tr("Confirm"),
            tr("Changing the mod directory affects all your profiles! "
@@ -156,29 +124,25 @@ void SettingsDialog::accept()
   TutorableDialog::accept();
 }
 
-bool SettingsDialog::getResetGeometries()
-{
-  return ui->resetGeometryBtn->isChecked();
-}
-
 bool SettingsDialog::getApiKeyChanged()
 {
   return m_keyChanged;
 }
 
 
-SettingsTab::SettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
-  : m_parent(m_parent)
-  , m_Settings(m_parent->directInterface())
-  , m_dialog(m_dialog)
-  , ui(m_dialog.ui)
+SettingsTab::SettingsTab(Settings& s, SettingsDialog& d)
+  : ui(d.ui), m_settings(s), m_dialog(d)
 {
 }
 
-SettingsTab::~SettingsTab()
-{}
+SettingsTab::~SettingsTab() = default;
 
-QWidget* SettingsTab::parentWidget()
+Settings& SettingsTab::settings()
 {
-  return &m_dialog;
+  return m_settings;
+}
+
+SettingsDialog& SettingsTab::dialog()
+{
+  return m_dialog;
 }
