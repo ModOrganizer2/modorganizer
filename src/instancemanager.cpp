@@ -186,6 +186,10 @@ QString InstanceManager::queryInstanceName(const QStringList &instanceList) cons
 
 QString InstanceManager::chooseInstance(const QStringList &instanceList) const
 {
+  if (portableInstallIsLocked()) {
+    return QString();
+  }
+
   enum class Special : uint8_t {
     NewInstance,
     Portable,
@@ -266,6 +270,19 @@ bool InstanceManager::portableInstall() const
 }
 
 
+bool InstanceManager::portableInstallIsLocked() const
+{
+  return QFile::exists(qApp->applicationDirPath() + "/" +
+                       QString::fromStdWString(AppConfig::portableLockFileName()));
+}
+
+
+bool InstanceManager::allowedToChangeInstance() const
+{
+  return !portableInstallIsLocked();
+}
+
+
 void InstanceManager::createDataPath(const QString &dataPath) const
 {
   if (!QDir(dataPath).exists()) {
@@ -286,6 +303,10 @@ void InstanceManager::createDataPath(const QString &dataPath) const
 QString InstanceManager::determineDataPath()
 {
   QString instanceId = currentInstance();
+  if (portableInstallIsLocked()) 
+  {
+    instanceId.clear();
+  }
   if (instanceId.isEmpty() && !m_Reset && (m_overrideInstance || portableInstall()))
   {
     // startup, apparently using portable mode before
