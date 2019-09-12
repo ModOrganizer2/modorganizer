@@ -136,7 +136,6 @@ SET(organizer_SRCS
 	apiuseraccount.cpp
 	filerenamer.cpp
 	texteditor.cpp
-	expanderwidget.cpp
 	env.cpp
 	envmetrics.cpp
 	envmodule.cpp
@@ -260,7 +259,6 @@ SET(organizer_HDRS
 	apiuseraccount.h
 	filerenamer.h
 	texteditor.h
-	expanderwidget.h
 	env.h
 	envmetrics.h
 	envmodule.h
@@ -478,7 +476,6 @@ set(utilities
 )
 
 set(widgets
-	expanderwidget
 	genericicondelegate
 	filerenamer
 	filterwidget

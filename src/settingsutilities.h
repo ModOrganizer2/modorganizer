@@ -3,7 +3,9 @@
 
 #include <log.h>
 
-class ExpanderWidget;
+namespace MOBase {
+  class ExpanderWidget;
+}
 
 template <class T, class=void>
 struct ValueConverter
@@ -241,7 +243,7 @@ private:
 QString widgetNameWithTopLevel(const QWidget* widget);
 QString widgetName(const QMainWindow* w);
 QString widgetName(const QHeaderView* w);
-QString widgetName(const ExpanderWidget* w);
+QString widgetName(const MOBase::ExpanderWidget* w);
 QString widgetName(const QWidget* w);
 
 template <class Widget>

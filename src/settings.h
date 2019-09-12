@@ -32,13 +32,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace MOBase {
   class IPlugin;
   class IPluginGame;
+  class ExpanderWidget;
 }
 
 class QSplitter;
 
 class ServerList;
 class Settings;
-class ExpanderWidget;
 
 
 // helper class that calls restoreGeometry() in the constructor and
@@ -153,8 +153,8 @@ public:
   void saveState(const QSplitter* splitter);
   bool restoreState(QSplitter* splitter) const;
 
-  void saveState(const ExpanderWidget* expander);
-  bool restoreState(ExpanderWidget* expander) const;
+  void saveState(const MOBase::ExpanderWidget* expander);
+  bool restoreState(MOBase::ExpanderWidget* expander) const;
 
   void saveVisibility(const QWidget* w);
   bool restoreVisibility(QWidget* w, std::optional<bool> def={}) const;

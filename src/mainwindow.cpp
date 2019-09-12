@@ -2561,17 +2561,6 @@ void MainWindow::modInstalled(const QString &modName)
   modUpdateCheck(IDs);
 }
 
-void MainWindow::procError(QProcess::ProcessError error)
-{
-  reportError(tr("failed to spawn notepad.exe: %1").arg(error));
-  this->sender()->deleteLater();
-}
-
-void MainWindow::procFinished(int, QProcess::ExitStatus)
-{
-  this->sender()->deleteLater();
-}
-
 void MainWindow::showMessage(const QString &message)
 {
   MessageDialog::showMessage(message, this);

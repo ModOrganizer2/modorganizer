@@ -33,7 +33,7 @@ signals:
 private:
   struct Expanders
   {
-    ExpanderWidget overwrite, overwritten, nonconflict;
+    MOBase::ExpanderWidget overwrite, overwritten, nonconflict;
   };
 
   ConflictsTab* m_tab;
