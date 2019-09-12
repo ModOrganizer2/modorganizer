@@ -49,6 +49,23 @@ private:
 
 std::vector<SecurityProduct> getSecurityProducts();
 
+
+struct FileRights
+{
+  QStringList list;
+  bool hasExecute = false;
+  bool normalRights = false;
+};
+
+struct FileSecurity
+{
+  QString owner;
+  FileRights rights;
+  QString error;
+};
+
+FileSecurity getFileSecurity(const QString& file);
+
 } // namespace env
 
 #endif // ENV_SECURITY_H

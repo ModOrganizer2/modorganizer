@@ -57,10 +57,7 @@ Console::~Console()
 
 
 Environment::Environment()
-  : m_windows(new WindowsInfo), m_metrics(new Metrics)
 {
-  m_modules = getLoadedModules();
-  m_security = getSecurityProducts();
 }
 
 // anchor
@@ -68,48 +65,64 @@ Environment::~Environment() = default;
 
 const std::vector<Module>& Environment::loadedModules() const
 {
+  if (m_modules.empty()){
+    m_modules = getLoadedModules();
+  }
+
   return m_modules;
 }
 
 const WindowsInfo& Environment::windowsInfo() const
 {
+  if (!m_windows) {
+    m_windows.reset(new WindowsInfo);
+  }
+
   return *m_windows;
 }
 
 const std::vector<SecurityProduct>& Environment::securityProducts() const
 {
+  if (m_security.empty()) {
+    m_security = getSecurityProducts();
+  }
+
   return m_security;
 }
 
 const Metrics& Environment::metrics() const
 {
+  if (!m_metrics) {
+    m_metrics.reset(new Metrics);
+  }
+
   return *m_metrics;
 }
 
 void Environment::dump(const Settings& s) const
 {
-  log::debug("windows: {}", m_windows->toString());
+  log::debug("windows: {}", windowsInfo().toString());
 
-  if (m_windows->compatibilityMode()) {
+  if (windowsInfo().compatibilityMode()) {
     log::warn("MO seems to be running in compatibility mode");
   }
 
   log::debug("security products:");
-  for (const auto& sp : m_security) {
+  for (const auto& sp : securityProducts()) {
     log::debug("  . {}", sp.toString());
   }
 
   log::debug("modules loaded in process:");
-  for (const auto& m : m_modules) {
+  for (const auto& m : loadedModules()) {
     log::debug(" . {}", m.toString());
   }
 
   log::debug("displays:");
-  for (const auto& d : m_metrics->displays()) {
+  for (const auto& d : metrics().displays()) {
     log::debug(" . {}", d.toString());
   }
 
-  const auto r = m_metrics->desktopGeometry();
+  const auto r = metrics().desktopGeometry();
   log::debug(
     "desktop geometry: ({},{})-({},{})",
     r.left(), r.top(), r.right(), r.bottom());

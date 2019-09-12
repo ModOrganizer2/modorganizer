@@ -79,6 +79,19 @@ template <class T>
 using COMPtr = std::unique_ptr<T, COMReleaser>;
 
 
+// used by MallocPtr, calls std::free() as the deleter
+//
+struct MallocFreer
+{
+  void operator()(void* p)
+  {
+    std::free(p);
+  }
+};
+
+template <class T>
+using MallocPtr = std::unique_ptr<T, MallocFreer>;
+
 // creates a console in the constructor and destroys it in the destructor,
 // also redirects standard streams
 //
@@ -133,10 +146,10 @@ public:
   void dump(const Settings& s) const;
 
 private:
-  std::vector<Module> m_modules;
-  std::unique_ptr<WindowsInfo> m_windows;
-  std::vector<SecurityProduct> m_security;
-  std::unique_ptr<Metrics> m_metrics;
+  mutable std::vector<Module> m_modules;
+  mutable std::unique_ptr<WindowsInfo> m_windows;
+  mutable std::vector<SecurityProduct> m_security;
+  mutable std::unique_ptr<Metrics> m_metrics;
 
   // dumps all the disks involved in the settings
   //
