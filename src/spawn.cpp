@@ -329,7 +329,9 @@ void startBinaryAdmin(const SpawnParameters& sp)
   if (Helper::adminLaunch(
     qApp->applicationDirPath().toStdWString(),
     qApp->applicationFilePath().toStdWString(),
-    std::wstring(cwd))) {
+    std::wstring(cwd)))
+  {
+    log::debug("exiting MO");
     qApp->exit(0);
   }
 }
@@ -347,129 +349,198 @@ bool checkBinary(QWidget* parent, const SpawnParameters& sp)
   return true;
 }
 
-bool testForSteam(bool *found, bool *access)
+struct SteamStatus
 {
-  if (found == nullptr || access == nullptr) {
-    return false;
-  }
+  bool running=false;
+  bool accessible=false;
+};
+
+SteamStatus getSteamStatus()
+{
+  SteamStatus ss;
 
   const auto ps = env::Environment().runningProcesses();
-  *found = false;
 
   for (const auto& p : ps) {
     if ((p.name().compare("Steam.exe", Qt::CaseInsensitive) == 0) ||
         (p.name().compare("SteamService.exe", Qt::CaseInsensitive) == 0))
     {
-      *found = true;
-      *access = p.canAccess();
+      ss.running = true;
+      ss.accessible = p.canAccess();
+
+      log::debug(
+        "'{}' is running, accessible={}",
+        p.name(), (ss.accessible ? "yes" : "no"));
+
       break;
     }
   }
 
+  return ss;
+}
+
+bool startSteam(QWidget *widget)
+{
+  log::debug("starting steam");
+
+  const QString keyName = "HKEY_CURRENT_USER\\Software\\Valve\\Steam";
+  const QString valueName = "SteamExe";
+
+  const QSettings steamSettings(keyName, QSettings::NativeFormat);
+  const QString exe = steamSettings.value(valueName, "").toString();
+
+  if (exe.isEmpty()) {
+    log::error(
+      "can't start steam, registry value at '{}' is empty",
+      keyName + "\\" + valueName);
+
+    return false;
+  }
+
+  const QString program = QString("\"%1\"").arg(exe);
+
+  // See if username and password supplied. If so, pass them into steam.
+  QStringList args;
+  QString username, password;
+  if (Settings::instance().steam().login(username, password)) {
+    args.push_back("-login");
+    args.push_back(username);
+
+    if (password != "") {
+      args.push_back(password);
+    }
+  }
+
+  log::debug(
+    "starting steam process:\n"
+    " . program: '{}'\n"
+    " . username={}, password={}",
+    program,
+    (username.isEmpty() ? "no" : "yes"),
+    (password.isEmpty() ? "no" : "yes"));
+
+  if (!QProcess::startDetached(program, args)) {
+    reportError(QObject::tr("Failed to start \"%1\"").arg(program));
+    return false;
+  }
+
+  QMessageBox::information(
+    widget, QObject::tr("Waiting"),
+    QObject::tr("Please press OK once you're logged into steam."));
+
   return true;
 }
 
-void startSteam(QWidget *widget)
+bool gameRequiresSteam(const QDir& gameDirectory, const Settings& settings)
 {
-  QSettings steamSettings("HKEY_CURRENT_USER\\Software\\Valve\\Steam",
-    QSettings::NativeFormat);
-  QString exe = steamSettings.value("SteamExe", "").toString();
-  if (!exe.isEmpty()) {
-    exe = QString("\"%1\"").arg(exe);
-    // See if username and password supplied. If so, pass them into steam.
-    QStringList args;
-    QString username;
-    QString password;
-    if (Settings::instance().steam().login(username, password)) {
-      args << "-login";
-      args << username;
-      if (password != "") {
-        args << password;
-      }
-    }
-    if (!QProcess::startDetached(exe, args)) {
-      reportError(QObject::tr("Failed to start \"%1\"").arg(exe));
-    } else {
-      QMessageBox::information(
-        widget, QObject::tr("Waiting"),
-        QObject::tr("Please press OK once you're logged into steam."));
+  static const std::vector<QString> files = {
+    "steam_api.dll", "steam_api64.dll"
+  };
+
+  for (const auto& file : files) {
+    const QFileInfo fi(gameDirectory.absoluteFilePath(file));
+    if (fi.exists()) {
+      log::debug("found '{}'", fi.absoluteFilePath());
+      return true;
     }
   }
+
+  return false;
+}
+
+QuestionBoxMemory::Button confirmStartSteam(QWidget* parent, const SpawnParameters& sp)
+{
+  return QuestionBoxMemory::query(
+    parent, "steamQuery", sp.binary.fileName(),
+    QObject::tr("Start Steam?"),
+    QObject::tr("Steam is required to be running already to correctly start the game. "
+      "Should MO try to start steam now?"),
+    QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
+}
+
+QuestionBoxMemory::Button confirmRestartAsAdminForSteam(QWidget* parent, const SpawnParameters& sp)
+{
+  return QuestionBoxMemory::query(
+    parent, "steamAdminQuery", sp.binary.fileName(),
+    QObject::tr("Steam: Access Denied"),
+    QObject::tr("MO was denied access to the Steam process.  This normally indicates that "
+      "Steam is being run as administrator while MO is not.  This can cause issues "
+      "launching the game.  It is recommended to not run Steam as administrator unless "
+      "absolutely necessary.\n\n"
+      "Restart MO as administrator?"),
+    QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
 }
 
 bool checkSteam(
   QWidget* parent, const SpawnParameters& sp,
   const QDir& gameDirectory, const QString &steamAppID, const Settings& settings)
 {
+  log::debug("checking steam");
+
   if (!steamAppID.isEmpty()) {
-    ::SetEnvironmentVariableW(L"SteamAPPId", ToWString(steamAppID).c_str());
+    ::SetEnvironmentVariableW(L"SteamAPPId", steamAppID.toStdWString().c_str());
   } else {
-    ::SetEnvironmentVariableW(L"SteamAPPId",
-      ToWString(settings.steam().appID()).c_str());
+    ::SetEnvironmentVariableW(L"SteamAPPId", settings.steam().appID().toStdWString().c_str());
   }
 
-  if ((QFileInfo(gameDirectory.absoluteFilePath("steam_api.dll")).exists() ||
-       QFileInfo(gameDirectory.absoluteFilePath("steam_api64.dll")).exists())
-    && (settings.game().loadMechanismType() == LoadMechanism::LOAD_MODORGANIZER)) {
+  if (!gameRequiresSteam(gameDirectory, settings)) {
+    log::debug("games doesn't seem to require steam");
+    return true;
+  }
 
-    bool steamFound = true;
-    bool steamAccess = true;
-    if (!testForSteam(&steamFound, &steamAccess)) {
-      log::error("unable to determine state of Steam");
-    }
+  auto ss = getSteamStatus();
 
-    if (!steamFound) {
-      QDialogButtonBox::StandardButton result;
-      result = QuestionBoxMemory::query(parent, "steamQuery", sp.binary.fileName(),
-        QObject::tr("Start Steam?"),
-        QObject::tr("Steam is required to be running already to correctly start the game. "
-          "Should MO try to start steam now?"),
-        QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
-      if (result == QDialogButtonBox::Yes) {
-        startSteam(parent);
+  if (!ss.running) {
+    log::debug("steam isn't running, asking to start steam");
+    const auto c = confirmStartSteam(parent, sp);
 
-        // double-check that Steam is started and MO has access
-        steamFound = true;
-        steamAccess = true;
-        if (!testForSteam(&steamFound, &steamAccess)) {
-          log::error("unable to determine state of Steam");
-        } else if (!steamFound) {
-          log::error("could not find Steam");
-        }
+    if (c == QDialogButtonBox::Yes) {
+      log::debug("user wants to start steam");
+      startSteam(parent);
 
-      } else if (result == QDialogButtonBox::Cancel) {
-        return false;
+      // double-check that Steam is started
+      ss = getSteamStatus();
+      if (!ss.running) {
+        log::error("could not start steam, continuing and hoping for the best");
+        return true;
       }
+    } else if (c == QDialogButtonBox::No) {
+      log::debug("user declined to start steam");
+      return true;
+    } else {
+      log::debug("user cancelled");
+      return false;
     }
+  }
 
-    if (!steamAccess) {
-      QDialogButtonBox::StandardButton result;
-      result = QuestionBoxMemory::query(parent, "steamAdminQuery", sp.binary.fileName(),
-        QObject::tr("Steam: Access Denied"),
-        QObject::tr("MO was denied access to the Steam process.  This normally indicates that "
-          "Steam is being run as administrator while MO is not.  This can cause issues "
-          "launching the game.  It is recommended to not run Steam as administrator unless "
-          "absolutely necessary.\n\n"
-          "Restart MO as administrator?"),
-        QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
-      if (result == QDialogButtonBox::Yes) {
-        WCHAR cwd[MAX_PATH];
-        if (!GetCurrentDirectory(MAX_PATH, cwd)) {
-          log::error("unable to get current directory (error {})", GetLastError());
-          cwd[0] = L'\0';
-        }
-        if (!Helper::adminLaunch(
-          qApp->applicationDirPath().toStdWString(),
-          qApp->applicationFilePath().toStdWString(),
-          std::wstring(cwd))) {
-          log::error("unable to relaunch MO as admin");
-          return false;
-        }
+  if (ss.running && !ss.accessible) {
+    log::debug("steam is running but is not accessible, asking to restart MO");
+    const auto c = confirmRestartAsAdminForSteam(parent, sp);
+
+    if (c == QDialogButtonBox::Yes) {
+      WCHAR cwd[MAX_PATH];
+      if (!GetCurrentDirectory(MAX_PATH, cwd)) {
+        cwd[0] = L'\0';
+      }
+
+      if (Helper::adminLaunch(
+        qApp->applicationDirPath().toStdWString(),
+        qApp->applicationFilePath().toStdWString(),
+        std::wstring(cwd)))
+      {
+        log::debug("exiting MO");
         qApp->exit(0);
         return false;
-      } else if (result == QDialogButtonBox::Cancel) {
-        return false;
       }
+
+      log::error("unable to relaunch MO as admin");
+      return false;
+    } else if (c == QDialogButtonBox::No) {
+      log::debug("user declined to restart MO, continuing");
+      return true;
+    } else {
+      log::debug("user cancelled");
+      return false;
     }
   }
 
