@@ -26,25 +26,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileInfo>
 #include <QDir>
 
-
-/**
- * @brief a dirty little trick so we can issue a clean restart from startBinary
- * @note unused
- */
-/*class ExitProxy : public QObject {
-  Q_OBJECT
-public:
-  static ExitProxy *instance();
-  void emitExit();
-signals:
-  void exit();
-private:
-  ExitProxy() {}
-private:
-  static ExitProxy *s_Instance;
-};*/
-
-
 /**
  * @brief spawn a binary with Mod Organizer injected
  *
