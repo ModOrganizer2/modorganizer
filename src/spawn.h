@@ -31,20 +31,7 @@ class Settings;
 namespace spawn
 {
 
-bool checkBinary(const QFileInfo& binary);
-
-bool checkSteam(
-  QWidget* parent, const QDir& gameDirectory,
-  const QFileInfo &binary, const QString &steamAppID, const Settings& settings);
-
-bool checkEnvironment(QWidget* parent, const QFileInfo& binary);
-
-bool checkBlacklist(
-  QWidget* parent, const Settings& settings, const QFileInfo& binary);
-
-/**
- * @brief spawn a binary with Mod Organizer injected
- *
+/*
  * @param binary the binary to spawn
  * @param arguments arguments to pass to the binary
  * @param profileName name of the active profile
@@ -53,13 +40,34 @@ bool checkBlacklist(
  * @param hooked if set, the binary is started with mo injected
  * @param stdout if not equal to INVALID_HANDLE_VALUE, this is used as stdout for the process
  * @param stderr if not equal to INVALID_HANDLE_VALUE, this is used as stderr for the process
+*/
+struct SpawnParameters
+{
+  QFileInfo binary;
+  QString arguments;
+  QDir currentDirectory;
+  bool hooked = false;
+  HANDLE stdOut = INVALID_HANDLE_VALUE;
+  HANDLE stdErr = INVALID_HANDLE_VALUE;
+};
+
+
+bool checkBinary(QWidget* parent, const SpawnParameters& sp);
+
+bool checkSteam(
+  QWidget* parent, const SpawnParameters& sp,
+  const QDir& gameDirectory, const QString &steamAppID, const Settings& settings);
+
+bool checkEnvironment(QWidget* parent, const SpawnParameters& sp);
+
+bool checkBlacklist(
+  QWidget* parent, const SpawnParameters& sp, const Settings& settings);
+
+/**
+ * @brief spawn a binary with Mod Organizer injected
  * @return the process handle
- * @todo is the profile name even used any more?
- * @todo is the hooked parameter used?
  **/
-HANDLE startBinary(const QFileInfo &binary, const QString &arguments,
-                   const QDir &currentDirectory, bool hooked,
-                   HANDLE stdOut = INVALID_HANDLE_VALUE, HANDLE stdErr = INVALID_HANDLE_VALUE);
+HANDLE startBinary(QWidget* parent, const SpawnParameters& sp);
 
 } // namespace
 

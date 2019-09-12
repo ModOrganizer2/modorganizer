@@ -49,17 +49,6 @@ namespace spawn
 namespace
 {
 
-struct SpawnParameters
-{
-  std::wstring binary;
-  std::wstring arguments;
-  std::wstring currentDirectory;
-  bool suspended = false;
-  bool hooked = false;
-  HANDLE stdOut = INVALID_HANDLE_VALUE;
-  HANDLE stdErr = INVALID_HANDLE_VALUE;
-};
-
 
 std::wstring pathEnv()
 {
@@ -103,12 +92,11 @@ DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle, HANDLE& threadHand
     si.dwFlags |= STARTF_USESTDHANDLES;
   }
 
-  std::wstring commandLine;
+  const auto bin = QDir::toNativeSeparators(sp.binary.absoluteFilePath()).toStdWString();
 
+  std::wstring commandLine = L"\"" + bin + L"\"";
   if (sp.arguments[0] != L'\0') {
-    commandLine = L"\"" + sp.binary + L"\" " + sp.arguments;
-  } else {
-    commandLine = L"\"" + sp.binary + L"\"";
+    commandLine +=  L" " + sp.arguments.toStdWString();
   }
 
   QString moPath = QCoreApplication::applicationDirPath();
@@ -119,16 +107,18 @@ DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle, HANDLE& threadHand
   PROCESS_INFORMATION pi;
   BOOL success = FALSE;
 
+  const auto cwd = QDir::toNativeSeparators(sp.currentDirectory.absolutePath()).toStdWString();
+
   if (sp.hooked) {
     success = ::CreateProcessHooked(
       nullptr, const_cast<wchar_t*>(commandLine.c_str()), nullptr, nullptr,
       inheritHandles, CREATE_BREAKAWAY_FROM_JOB, nullptr,
-      sp.currentDirectory.c_str(), &si, &pi);
+      cwd.c_str(), &si, &pi);
   } else {
     success = ::CreateProcess(
       nullptr, const_cast<wchar_t*>(commandLine.c_str()), nullptr, nullptr,
       inheritHandles, CREATE_BREAKAWAY_FROM_JOB, nullptr,
-      sp.currentDirectory.c_str(), &si, &pi);
+      cwd.c_str(), &si, &pi);
   }
 
   const auto e = GetLastError();
@@ -164,11 +154,10 @@ std::wstring makeRightsDetails(const env::FileSecurity& fs)
 
 std::wstring makeDetails(const SpawnParameters& sp, DWORD code)
 {
-  const QFileInfo bin(QString::fromStdWString(sp.binary));
   std::wstring owner, rights;
 
-  if (bin.isFile()) {
-    const auto fs = env::getFileSecurity(bin.absoluteFilePath());
+  if (sp.binary.isFile()) {
+    const auto fs = env::getFileSecurity(sp.binary.absoluteFilePath());
 
     if (fs.error.isEmpty()) {
       owner = fs.owner.toStdWString();
@@ -182,8 +171,8 @@ std::wstring makeDetails(const SpawnParameters& sp, DWORD code)
     rights = L"(file not found)";
   }
 
-  const bool cwdExists = (sp.currentDirectory.empty() ?
-    true : QFileInfo(QString::fromStdWString(sp.currentDirectory)).isDir());
+  const bool cwdExists = (sp.currentDirectory.isEmpty() ?
+    true : sp.currentDirectory.exists());
 
   const auto appDir = QCoreApplication::applicationDirPath();
   const auto sep = QDir::separator();
@@ -214,21 +203,20 @@ std::wstring makeDetails(const SpawnParameters& sp, DWORD code)
     L" . rights: {rights}\n"
     L" . arguments: '{args}'\n"
     L" . cwd: '{cwd}'{cwdexists}\n"
-    L" . stdout: {stdout}, stderr: {stderr}, suspended: {susp}, hooked: {hooked}\n"
+    L" . stdout: {stdout}, stderr: {stderr}, hooked: {hooked}\n"
     L" . usvfs x86:{x86_dll} x64:{x64_dll} proxy_x86:{x86_proxy} proxy_x64:{x64_proxy}\n"
     L" . MO elevated: {elevated}",
     fmt::arg(L"code", code),
     fmt::arg(L"codename", errorCodeName(code)),
-    fmt::arg(L"bin", sp.binary),
+    fmt::arg(L"bin", QDir::toNativeSeparators(sp.binary.absoluteFilePath()).toStdWString()),
     fmt::arg(L"owner", owner),
     fmt::arg(L"rights", rights),
     fmt::arg(L"error", formatSystemMessage(code)),
-    fmt::arg(L"args", sp.arguments),
-    fmt::arg(L"cwd", sp.currentDirectory),
+    fmt::arg(L"args", sp.arguments.toStdWString()),
+    fmt::arg(L"cwd", QDir::toNativeSeparators(sp.currentDirectory.absolutePath()).toStdWString()),
     fmt::arg(L"cwdexists", (cwdExists ? L"" : L" (not found)")),
     fmt::arg(L"stdout", (sp.stdOut == INVALID_HANDLE_VALUE ? L"no" : L"yes")),
     fmt::arg(L"stderr", (sp.stdErr == INVALID_HANDLE_VALUE ? L"no" : L"yes")),
-    fmt::arg(L"susp", (sp.suspended ? L"yes" : L"no")),
     fmt::arg(L"hooked", (sp.hooked ? L"yes" : L"no")),
     fmt::arg(L"x86_dll", usvfs_x86_dll),
     fmt::arg(L"x64_dll", usvfs_x64_dll),
@@ -242,12 +230,10 @@ void spawnFailed(const SpawnParameters& sp, DWORD code)
   const auto details = QString::fromStdWString(makeDetails(sp, code));
   log::error("{}", details);
 
-  const auto binary = QFileInfo(QString::fromStdWString(sp.binary));
-
   const auto title = QObject::tr("Cannot launch program");
 
   const auto mainText = QObject::tr("Cannot start %1")
-    .arg(binary.fileName());
+    .arg(sp.binary.fileName());
 
   QString content;
 
@@ -286,12 +272,10 @@ bool confirmRestartAsAdmin(const SpawnParameters& sp)
 
   log::error("{}", details);
 
-  const auto binary = QFileInfo(QString::fromStdWString(sp.binary));
-
   const auto title = QObject::tr("Elevation required");
 
   const auto mainText = QObject::tr("Cannot start %1")
-    .arg(binary.fileName());
+    .arg(sp.binary.fileName());
 
   const auto content = QObject::tr(
     "This program is requesting to run as administrator but Mod Organizer "
@@ -350,12 +334,12 @@ void startBinaryAdmin(const SpawnParameters& sp)
 } // namespace
 
 
-bool checkBinary(const QFileInfo& binary)
+bool checkBinary(QWidget* parent, const SpawnParameters& sp)
 {
-  if (!binary.exists()) {
+  if (!sp.binary.exists()) {
     reportError(
       QObject::tr("Executable not found: %1")
-      .arg(qUtf8Printable(binary.absoluteFilePath())));
+      .arg(sp.binary.absoluteFilePath()));
 
     return false;
   }
@@ -452,8 +436,8 @@ void startSteam(QWidget *widget)
 }
 
 bool checkSteam(
-  QWidget* parent, const QDir& gameDirectory,
-  const QFileInfo &binary, const QString &steamAppID, const Settings& settings)
+  QWidget* parent, const SpawnParameters& sp,
+  const QDir& gameDirectory, const QString &steamAppID, const Settings& settings)
 {
   if (!steamAppID.isEmpty()) {
     ::SetEnvironmentVariableW(L"SteamAPPId", ToWString(steamAppID).c_str());
@@ -474,7 +458,7 @@ bool checkSteam(
 
     if (!steamFound) {
       QDialogButtonBox::StandardButton result;
-      result = QuestionBoxMemory::query(parent, "steamQuery", binary.fileName(),
+      result = QuestionBoxMemory::query(parent, "steamQuery", sp.binary.fileName(),
         QObject::tr("Start Steam?"),
         QObject::tr("Steam is required to be running already to correctly start the game. "
           "Should MO try to start steam now?"),
@@ -498,7 +482,7 @@ bool checkSteam(
 
     if (!steamAccess) {
       QDialogButtonBox::StandardButton result;
-      result = QuestionBoxMemory::query(parent, "steamAdminQuery", binary.fileName(),
+      result = QuestionBoxMemory::query(parent, "steamAdminQuery", sp.binary.fileName(),
         QObject::tr("Steam: Access Denied"),
         QObject::tr("MO was denied access to the Steam process.  This normally indicates that "
           "Steam is being run as administrator while MO is not.  This can cause issues "
@@ -609,17 +593,17 @@ bool checkService()
   return serviceRunning;
 }
 
-bool checkEnvironment(QWidget* parent, const QFileInfo& binary)
+bool checkEnvironment(QWidget* parent, const SpawnParameters& sp)
 {
   // Check if the Windows Event Logging service is running.  For some reason, this seems to be
   // critical to the successful running of usvfs.
   if (!checkService()) {
-    if (QuestionBoxMemory::query(parent, QString("eventLogService"), binary.fileName(),
+    if (QuestionBoxMemory::query(parent, QString("eventLogService"), sp.binary.fileName(),
       QObject::tr("Windows Event Log Error"),
       QObject::tr("The Windows Event Log service is disabled and/or not running.  This prevents"
         " USVFS from running properly.  Your mods may not be working in the executable"
         " that you are launching.  Note that you may have to restart MO and/or your PC"
-        " after the service is fixed.\n\nContinue launching %1?").arg(binary.fileName()),
+        " after the service is fixed.\n\nContinue launching %1?").arg(sp.binary.fileName()),
       QDialogButtonBox::Yes | QDialogButtonBox::No) == QDialogButtonBox::No) {
       return false;
     }
@@ -628,16 +612,16 @@ bool checkEnvironment(QWidget* parent, const QFileInfo& binary)
   return true;
 }
 
-bool checkBlacklist(QWidget* parent, const Settings& settings, const QFileInfo& binary)
+bool checkBlacklist(QWidget* parent, const SpawnParameters& sp, const Settings& settings)
 {
   for (auto exec : settings.executablesBlacklist().split(";")) {
-    if (exec.compare(binary.fileName(), Qt::CaseInsensitive) == 0) {
-      if (QuestionBoxMemory::query(parent, QString("blacklistedExecutable"), binary.fileName(),
+    if (exec.compare(sp.binary.fileName(), Qt::CaseInsensitive) == 0) {
+      if (QuestionBoxMemory::query(parent, QString("blacklistedExecutable"), sp.binary.fileName(),
         QObject::tr("Blacklisted Executable"),
         QObject::tr("The executable you are attempted to launch is blacklisted in the virtual file"
           " system.  This will likely prevent the executable, and any executables that are"
           " launched by this one, from seeing any mods.  This could extend to INI files, save"
-          " games and any other virtualized files.\n\nContinue launching %1?").arg(binary.fileName()),
+          " games and any other virtualized files.\n\nContinue launching %1?").arg(sp.binary.fileName()),
         QDialogButtonBox::Yes | QDialogButtonBox::No) == QDialogButtonBox::No) {
         return false;
       }
@@ -648,20 +632,8 @@ bool checkBlacklist(QWidget* parent, const Settings& settings, const QFileInfo& 
 }
 
 
-HANDLE startBinary(
-  const QFileInfo &binary, const QString &arguments, const QDir &currentDirectory,
-  bool hooked, HANDLE stdOut, HANDLE stdErr)
+HANDLE startBinary(QWidget* parent, const SpawnParameters& sp)
 {
-  SpawnParameters sp;
-
-  sp.binary = QDir::toNativeSeparators(binary.absoluteFilePath()).toStdWString();
-  sp.arguments = arguments.toStdWString();
-  sp.currentDirectory = QDir::toNativeSeparators(currentDirectory.absolutePath()).toStdWString();
-  sp.suspended = true;
-  sp.hooked = hooked;
-  sp.stdOut = stdOut;
-  sp.stdErr = stdErr;
-
   HANDLE processHandle, threadHandle;
   const auto e = spawn(sp, processHandle, threadHandle);
 

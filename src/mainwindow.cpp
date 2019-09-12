@@ -6434,11 +6434,13 @@ void MainWindow::on_bossButton_clicked()
       return;
     }
 
-    HANDLE loot = spawn::startBinary(QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe"),
-                              parameters.join(" "),
-                              qApp->applicationDirPath() + "/loot",
-                              true,
-                              stdOutWrite);
+    spawn::SpawnParameters sp;
+    sp.binary = QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe");
+    sp.arguments = parameters.join(" ");
+    sp.currentDirectory.setPath(qApp->applicationDirPath() + "/loot");
+    sp.stdOut = stdOutWrite;
+
+    HANDLE loot = spawn::startBinary(this, sp);
 
     // we don't use the write end
     ::CloseHandle(stdOutWrite);

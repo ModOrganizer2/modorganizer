@@ -1282,6 +1282,13 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
                                          const QString &customOverwrite,
                                          const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries)
 {
+  spawn::SpawnParameters sp;
+  sp.binary = binary;
+  sp.arguments = arguments;
+  sp.currentDirectory = currentDirectory;
+  sp.hooked = true;
+
+
   prepareStart();
 
   QWidget *window = qApp->activeWindow();
@@ -1290,11 +1297,11 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
   }
 
 
-  if (!spawn::checkBinary(binary)) {
+  if (!spawn::checkBinary(window, sp)) {
     return INVALID_HANDLE_VALUE;
   }
 
-  if (!spawn::checkSteam(window, managedGame()->gameDirectory(), binary, steamAppID, m_Settings)) {
+  if (!spawn::checkSteam(window, sp, managedGame()->gameDirectory(), steamAppID, m_Settings)) {
     return INVALID_HANDLE_VALUE;
   }
 
@@ -1322,11 +1329,11 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
       return INVALID_HANDLE_VALUE;
     }
 
-    if (!spawn::checkEnvironment(window, binary)) {
+    if (!spawn::checkEnvironment(window, sp)) {
       return INVALID_HANDLE_VALUE;
     }
 
-    if (!spawn::checkBlacklist(window, m_Settings, binary)) {
+    if (!spawn::checkBlacklist(window, sp, m_Settings)) {
       return INVALID_HANDLE_VALUE;
     }
 
@@ -1364,11 +1371,14 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
 
       log::debug("Spawning proxyed process <{}>", cmdline);
 
-      return spawn::startBinary(QFileInfo(QCoreApplication::applicationFilePath()),
-                         cmdline, QCoreApplication::applicationDirPath(), true);
+      sp.binary = QFileInfo(QCoreApplication::applicationFilePath());
+      sp.arguments = cmdline;
+      sp.currentDirectory.setPath(QCoreApplication::applicationDirPath());
+
+      return spawn::startBinary(window, sp);
     } else {
       log::debug("Spawning direct process <{}, {}, {}>", binPath, arguments, cwdPath);
-      return spawn::startBinary(binary, arguments, currentDirectory, true);
+      return spawn::startBinary(window, sp);
     }
   } else {
     log::debug("start of \"{}\" canceled by plugin", binary.absoluteFilePath());
