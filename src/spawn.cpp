@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "env.h"
 #include "envwindows.h"
 #include "envsecurity.h"
+#include "envmodule.h"
 #include "settings.h"
 #include <errorcodes.h>
 #include <report.h>
@@ -48,7 +49,6 @@ namespace spawn
 // details
 namespace
 {
-
 
 std::wstring pathEnv()
 {
@@ -249,6 +249,9 @@ void spawnFailed(const SpawnParameters& sp, DWORD code)
       "This error typically happens because an antivirus is preventing Mod "
       "Organizer from starting programs. Add an exclusion for Mod Organizer's "
       "installation folder in your antivirus and try again.");
+  } else if (code == ERROR_FILE_NOT_FOUND) {
+    content = QObject::tr("The file '%1' does not exist.")
+      .arg(QDir::toNativeSeparators(sp.binary.absoluteFilePath()));
   } else {
     content = QString::fromStdWString(formatSystemMessage(code));
   }
@@ -337,10 +340,7 @@ void startBinaryAdmin(const SpawnParameters& sp)
 bool checkBinary(QWidget* parent, const SpawnParameters& sp)
 {
   if (!sp.binary.exists()) {
-    reportError(
-      QObject::tr("Executable not found: %1")
-      .arg(sp.binary.absoluteFilePath()));
-
+    spawnFailed(sp, ERROR_FILE_NOT_FOUND);
     return false;
   }
 
@@ -349,61 +349,23 @@ bool checkBinary(QWidget* parent, const SpawnParameters& sp)
 
 bool testForSteam(bool *found, bool *access)
 {
-  HANDLE hProcessSnap;
-  HANDLE hProcess;
-  PROCESSENTRY32 pe32;
-  DWORD lastError;
-
   if (found == nullptr || access == nullptr) {
     return false;
   }
 
-  // Take a snapshot of all processes in the system.
-  hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-  if (hProcessSnap == INVALID_HANDLE_VALUE) {
-    lastError = GetLastError();
-    log::error("unable to get snapshot of processes (error {})", lastError);
-    return false;
-  }
-
-  // Retrieve information about the first process,
-  // and exit if unsuccessful
-  pe32.dwSize = sizeof(PROCESSENTRY32);
-  if (!Process32First(hProcessSnap, &pe32)) {
-    lastError = GetLastError();
-    log::error("unable to get first process (error {})", lastError);
-    CloseHandle(hProcessSnap);
-    return false;
-  }
-
+  const auto ps = env::Environment().runningProcesses();
   *found = false;
-  *access = true;
 
-  // Now walk the snapshot of processes, and
-  // display information about each process in turn
-  do {
-    if ((_tcsicmp(pe32.szExeFile, L"Steam.exe") == 0) ||
-      (_tcsicmp(pe32.szExeFile, L"SteamService.exe") == 0)) {
-
+  for (const auto& p : ps) {
+    if ((p.name().compare("Steam.exe", Qt::CaseInsensitive) == 0) ||
+        (p.name().compare("SteamService.exe", Qt::CaseInsensitive) == 0))
+    {
       *found = true;
-
-      // Try to open the process to determine if MO has the proper access
-      hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-        FALSE, pe32.th32ProcessID);
-      if (hProcess == NULL) {
-        lastError = GetLastError();
-        if (lastError == ERROR_ACCESS_DENIED) {
-          *access = false;
-        }
-      } else {
-        CloseHandle(hProcess);
-      }
+      *access = p.canAccess();
       break;
     }
+  }
 
-  } while(Process32Next(hProcessSnap, &pe32));
-
-  CloseHandle(hProcessSnap);
   return true;
 }
 

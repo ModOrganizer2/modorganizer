@@ -7,6 +7,7 @@ namespace env
 {
 
 class Module;
+class Process;
 class SecurityProduct;
 class WindowsInfo;
 class Metrics;
@@ -128,6 +129,10 @@ public:
   // list of loaded modules in the current process
   //
   const std::vector<Module>& loadedModules() const;
+
+  // list of running processes; not cached
+  //
+  std::vector<Process> runningProcesses() const;
 
   // information about the operating system
   //

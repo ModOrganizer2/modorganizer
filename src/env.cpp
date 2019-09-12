@@ -72,6 +72,11 @@ const std::vector<Module>& Environment::loadedModules() const
   return m_modules;
 }
 
+std::vector<Process> Environment::runningProcesses() const
+{
+  return getRunningProcesses();
+}
+
 const WindowsInfo& Environment::windowsInfo() const
 {
   if (!m_windows) {
@@ -166,18 +171,6 @@ void Environment::dumpDisks(const Settings& s) const
 }
 
 
-struct Process
-{
-  std::wstring filename;
-  DWORD pid;
-
-  Process(std::wstring f, DWORD id)
-    : filename(std::move(f)), pid(id)
-  {
-  }
-};
-
-
 // returns the filename of the given process or the current one
 //
 std::wstring processFilename(HANDLE process=INVALID_HANDLE_VALUE)
@@ -233,84 +226,6 @@ std::wstring processFilename(HANDLE process=INVALID_HANDLE_VALUE)
   return {};
 }
 
-std::vector<DWORD> runningProcessesIds()
-{
-  // double the buffer size 10 times
-  const int MaxTries = 10;
-
-  // initial size of 300 processes, unlikely to be more than that
-  std::size_t size = 300;
-
-  for (int tries=0; tries<MaxTries; ++tries) {
-    auto ids = std::make_unique<DWORD[]>(size);
-    std::fill(ids.get(), ids.get() + size, 0);
-
-    DWORD bytesGiven = static_cast<DWORD>(size * sizeof(ids[0]));
-    DWORD bytesWritten = 0;
-
-    if (!EnumProcesses(ids.get(), bytesGiven, &bytesWritten))
-    {
-      const auto e = GetLastError();
-
-      std::wcerr
-        << L"failed to enumerate processes, "
-        << formatSystemMessage(e) << L"\n";
-
-      return {};
-    }
-
-    if (bytesWritten == bytesGiven) {
-      // no way to distinguish between an exact fit and not enough space,
-      // just try again
-      size *= 2;
-      continue;
-    }
-
-    const auto count = bytesWritten / sizeof(ids[0]);
-    return std::vector<DWORD>(ids.get(), ids.get() + count);
-  }
-
-  std::cerr << L"too many processes to enumerate";
-  return {};
-}
-
-std::vector<Process> runningProcesses()
-{
-  const auto pids = runningProcessesIds();
-  std::vector<Process> v;
-
-  for (const auto& pid : pids) {
-    if (pid == 0) {
-      // the idle process has pid 0 and seems to be picked up by EnumProcesses()
-      continue;
-    }
-
-    HandlePtr h(OpenProcess(
-      PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid));
-
-    if (!h) {
-      const auto e = GetLastError();
-
-      if (e != ERROR_ACCESS_DENIED) {
-        // don't log access denied, will happen a lot for system processes, even
-        // when elevated
-        std::wcerr
-          << L"failed to open process " << pid << L", "
-          << formatSystemMessage(e) << L"\n";
-      }
-
-      continue;
-    }
-
-    auto filename = processFilename(h.get());
-    if (!filename.empty()) {
-      v.emplace_back(std::move(filename), pid);
-    }
-  }
-
-  return v;
-}
-
 DWORD findOtherPid()
 {
   const std::wstring defaultName = L"ModOrganizer.exe";
@@ -322,7 +237,7 @@ DWORD findOtherPid()
   std::wclog << L"this process id is " << thisPid << L"\n";
 
   // getting the filename for this process, assumes the other process has the
-  // smae one
+  // same one
   auto filename = processFilename();
   if (filename.empty()) {
     std::wcerr
@@ -335,15 +250,15 @@ DWORD findOtherPid()
   }
 
   // getting all running processes
-  const auto processes = runningProcesses();
+  const auto processes = getRunningProcesses();
   std::wclog << L"there are " << processes.size() << L" processes running\n";
 
   // going through processes, trying to find one with the same name and a
   // different pid than this process has
   for (const auto& p : processes) {
-    if (p.filename == filename) {
-      if (p.pid != thisPid) {
-        return p.pid;
+    if (p.name() == filename) {
+      if (p.pid() != thisPid) {
+        return p.pid();
       }
     }
   }
