@@ -26,6 +26,22 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileInfo>
 #include <QDir>
 
+class Settings;
+
+namespace spawn
+{
+
+bool checkBinary(const QFileInfo& binary);
+
+bool checkSteam(
+  QWidget* parent, const QDir& gameDirectory,
+  const QFileInfo &binary, const QString &steamAppID, const Settings& settings);
+
+bool checkEnvironment(QWidget* parent, const QFileInfo& binary);
+
+bool checkBlacklist(
+  QWidget* parent, const Settings& settings, const QFileInfo& binary);
+
 /**
  * @brief spawn a binary with Mod Organizer injected
  *
@@ -44,6 +60,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 HANDLE startBinary(const QFileInfo &binary, const QString &arguments,
                    const QDir &currentDirectory, bool hooked,
                    HANDLE stdOut = INVALID_HANDLE_VALUE, HANDLE stdErr = INVALID_HANDLE_VALUE);
+
+} // namespace
 
 #endif // SPAWN_H
 

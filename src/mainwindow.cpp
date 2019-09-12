@@ -6434,7 +6434,7 @@ void MainWindow::on_bossButton_clicked()
       return;
     }
 
-    HANDLE loot = startBinary(QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe"),
+    HANDLE loot = spawn::startBinary(QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe"),
                               parameters.join(" "),
                               qApp->applicationDirPath() + "/loot",
                               true,

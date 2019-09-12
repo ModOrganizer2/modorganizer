@@ -135,34 +135,6 @@ static DWORD getProcessParentID(DWORD pid)
   return res;
 }
 
-static void startSteam(QWidget *widget)
-{
-  QSettings steamSettings("HKEY_CURRENT_USER\\Software\\Valve\\Steam",
-                          QSettings::NativeFormat);
-  QString exe = steamSettings.value("SteamExe", "").toString();
-  if (!exe.isEmpty()) {
-    exe = QString("\"%1\"").arg(exe);
-    // See if username and password supplied. If so, pass them into steam.
-    QStringList args;
-    QString username;
-    QString password;
-    if (Settings::instance().steam().login(username, password)) {
-      args << "-login";
-      args << username;
-      if (password != "") {
-        args << password;
-      }
-    }
-    if (!QProcess::startDetached(exe, args)) {
-      reportError(QObject::tr("Failed to start \"%1\"").arg(exe));
-    } else {
-      QMessageBox::information(
-          widget, QObject::tr("Waiting"),
-          QObject::tr("Please press OK once you're logged into steam."));
-    }
-  }
-}
-
 template <typename InputIterator>
 QStringList toStringList(InputIterator current, InputIterator end)
 {
@@ -171,86 +143,6 @@ QStringList toStringList(InputIterator current, InputIterator end)
     result.append(*current);
   }
   return result;
-}
-
-bool checkService()
-{
-  SC_HANDLE serviceManagerHandle = NULL;
-  SC_HANDLE serviceHandle = NULL;
-  LPSERVICE_STATUS_PROCESS serviceStatus = NULL;
-  LPQUERY_SERVICE_CONFIG serviceConfig = NULL;
-  bool serviceRunning = true;
-
-  DWORD bytesNeeded;
-
-  try {
-    serviceManagerHandle = OpenSCManager(NULL, NULL, SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG);
-    if (!serviceManagerHandle) {
-      log::warn("failed to open service manager (query status) (error {})", GetLastError());
-      throw 1;
-    }
-
-    serviceHandle = OpenService(serviceManagerHandle, L"EventLog", SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG);
-    if (!serviceHandle) {
-      log::warn("failed to open EventLog service (query status) (error {})", GetLastError());
-      throw 2;
-    }
-
-    if (QueryServiceConfig(serviceHandle, NULL, 0, &bytesNeeded)
-      || (GetLastError() != ERROR_INSUFFICIENT_BUFFER)) {
-      log::warn("failed to get size of service config (error {})", GetLastError());
-      throw 3;
-    }
-
-    DWORD serviceConfigSize = bytesNeeded;
-    serviceConfig = (LPQUERY_SERVICE_CONFIG)LocalAlloc(LMEM_FIXED, serviceConfigSize);
-    if (!QueryServiceConfig(serviceHandle, serviceConfig, serviceConfigSize, &bytesNeeded)) {
-      log::warn("failed to query service config (error {})", GetLastError());
-      throw 4;
-    }
-
-    if (serviceConfig->dwStartType == SERVICE_DISABLED) {
-      log::error("Windows Event Log service is disabled!");
-      serviceRunning = false;
-    }
-
-    if (QueryServiceStatusEx(serviceHandle, SC_STATUS_PROCESS_INFO, NULL, 0, &bytesNeeded)
-      || (GetLastError() != ERROR_INSUFFICIENT_BUFFER)) {
-      log::warn("failed to get size of service status (error {})", GetLastError());
-      throw 5;
-    }
-
-    DWORD serviceStatusSize = bytesNeeded;
-    serviceStatus = (LPSERVICE_STATUS_PROCESS)LocalAlloc(LMEM_FIXED, serviceStatusSize);
-    if (!QueryServiceStatusEx(serviceHandle, SC_STATUS_PROCESS_INFO, (LPBYTE)serviceStatus, serviceStatusSize, &bytesNeeded)) {
-      log::warn("failed to query service status (error {})", GetLastError());
-      throw 6;
-    }
-
-    if (serviceStatus->dwCurrentState != SERVICE_RUNNING) {
-      log::error("Windows Event Log service is not running");
-      serviceRunning = false;
-    }
-  }
-  catch (int e) {
-    UNUSED_VAR(e);
-    serviceRunning = false;
-  }
-
-  if (serviceStatus) {
-    LocalFree(serviceStatus);
-  }
-  if (serviceConfig) {
-    LocalFree(serviceConfig);
-  }
-  if (serviceHandle) {
-    CloseServiceHandle(serviceHandle);
-  }
-  if (serviceManagerHandle) {
-    CloseServiceHandle(serviceManagerHandle);
-  }
-
-  return serviceRunning;
 }
 
 
@@ -359,67 +251,6 @@ void OrganizerCore::storeSettings()
       tr("An error occurred trying to write back MO settings to %1: %2")
       .arg(m_Settings.filename(), reason));
   }
-}
-
-bool OrganizerCore::testForSteam(bool *found, bool *access)
-{
-  HANDLE hProcessSnap;
-  HANDLE hProcess;
-  PROCESSENTRY32 pe32;
-  DWORD lastError;
-
-  if (found == nullptr || access == nullptr) {
-    return false;
-  }
-
-  // Take a snapshot of all processes in the system.
-  hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-  if (hProcessSnap == INVALID_HANDLE_VALUE) {
-    lastError = GetLastError();
-    log::error("unable to get snapshot of processes (error {})", lastError);
-    return false;
-  }
-
-  // Retrieve information about the first process,
-  // and exit if unsuccessful
-  pe32.dwSize = sizeof(PROCESSENTRY32);
-  if (!Process32First(hProcessSnap, &pe32)) {
-    lastError = GetLastError();
-    log::error("unable to get first process (error {})", lastError);
-    CloseHandle(hProcessSnap);
-    return false;
-  }
-
-  *found = false;
-  *access = true;
-
-  // Now walk the snapshot of processes, and
-  // display information about each process in turn
-  do {
-    if ((_tcsicmp(pe32.szExeFile, L"Steam.exe") == 0) ||
-        (_tcsicmp(pe32.szExeFile, L"SteamService.exe") == 0)) {
-
-      *found = true;
-
-      // Try to open the process to determine if MO has the proper access
-      hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-                             FALSE, pe32.th32ProcessID);
-      if (hProcess == NULL) {
-        lastError = GetLastError();
-        if (lastError == ERROR_ACCESS_DENIED) {
-          *access = false;
-        }
-      } else {
-        CloseHandle(hProcess);
-      }
-      break;
-    }
-
-} while(Process32Next(hProcessSnap, &pe32));
-
-CloseHandle(hProcessSnap);
-return true;
-
 }
 
 void OrganizerCore::updateExecutablesList()
@@ -1453,93 +1284,18 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
 {
   prepareStart();
 
-  if (!binary.exists()) {
-    reportError(
-        tr("Executable not found: %1").arg(qUtf8Printable(binary.absoluteFilePath())));
-    return INVALID_HANDLE_VALUE;
-  }
-
-  if (!steamAppID.isEmpty()) {
-    ::SetEnvironmentVariableW(L"SteamAPPId", ToWString(steamAppID).c_str());
-  } else {
-    ::SetEnvironmentVariableW(L"SteamAPPId",
-                              ToWString(m_Settings.steam().appID()).c_str());
-  }
-
   QWidget *window = qApp->activeWindow();
   if ((window != nullptr) && (!window->isVisible())) {
     window = nullptr;
   }
 
-  // This could possibly be extracted somewhere else but it's probably for when
-  // we have more than one provider of game registration.
-  if ((QFileInfo(
-           managedGame()->gameDirectory().absoluteFilePath("steam_api.dll"))
-           .exists()
-       || QFileInfo(managedGame()->gameDirectory().absoluteFilePath(
-                        "steam_api64.dll"))
-              .exists())
-      && (m_Settings.game().loadMechanismType() == LoadMechanism::LOAD_MODORGANIZER)) {
 
-    bool steamFound = true;
-    bool steamAccess = true;
-    if (!testForSteam(&steamFound, &steamAccess)) {
-      log::error("unable to determine state of Steam");
-    }
+  if (!spawn::checkBinary(binary)) {
+    return INVALID_HANDLE_VALUE;
+  }
 
-    if (!steamFound) {
-      QDialogButtonBox::StandardButton result;
-      result = QuestionBoxMemory::query(window, "steamQuery", binary.fileName(),
-                  tr("Start Steam?"),
-                  tr("Steam is required to be running already to correctly start the game. "
-                    "Should MO try to start steam now?"),
-                  QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
-      if (result == QDialogButtonBox::Yes) {
-        startSteam(window);
-
-        // double-check that Steam is started and MO has access
-        steamFound = true;
-        steamAccess = true;
-        if (!testForSteam(&steamFound, &steamAccess)) {
-          log::error("unable to determine state of Steam");
-        } else if (!steamFound) {
-          log::error("could not find Steam");
-        }
-
-      } else if (result == QDialogButtonBox::Cancel) {
-        return INVALID_HANDLE_VALUE;
-      }
-    }
-
-    if (!steamAccess) {
-      QDialogButtonBox::StandardButton result;
-      result = QuestionBoxMemory::query(window, "steamAdminQuery", binary.fileName(),
-                  tr("Steam: Access Denied"),
-                  tr("MO was denied access to the Steam process.  This normally indicates that "
-                     "Steam is being run as administrator while MO is not.  This can cause issues "
-                     "launching the game.  It is recommended to not run Steam as administrator unless "
-                     "absolutely necessary.\n\n"
-                     "Restart MO as administrator?"),
-                  QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
-      if (result == QDialogButtonBox::Yes) {
-        WCHAR cwd[MAX_PATH];
-        if (!GetCurrentDirectory(MAX_PATH, cwd)) {
-          log::error("unable to get current directory (error {})", GetLastError());
-          cwd[0] = L'\0';
-        }
-        if (!Helper::adminLaunch(
-          qApp->applicationDirPath().toStdWString(),
-          qApp->applicationFilePath().toStdWString(),
-          std::wstring(cwd))) {
-          log::error("unable to relaunch MO as admin");
-          return INVALID_HANDLE_VALUE;
-        }
-        qApp->exit(0);
-        return INVALID_HANDLE_VALUE;
-      } else if (result == QDialogButtonBox::Cancel) {
-        return INVALID_HANDLE_VALUE;
-      }
-    }
+  if (!spawn::checkSteam(window, managedGame()->gameDirectory(), binary, steamAppID, m_Settings)) {
+    return INVALID_HANDLE_VALUE;
   }
 
   while (m_DirectoryUpdate) {
@@ -1566,32 +1322,12 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
       return INVALID_HANDLE_VALUE;
     }
 
-    // Check if the Windows Event Logging service is running.  For some reason, this seems to be
-    // critical to the successful running of usvfs.
-    if (!checkService()) {
-      if (QuestionBoxMemory::query(window, QString("eventLogService"), binary.fileName(),
-            tr("Windows Event Log Error"),
-            tr("The Windows Event Log service is disabled and/or not running.  This prevents"
-              " USVFS from running properly.  Your mods may not be working in the executable"
-              " that you are launching.  Note that you may have to restart MO and/or your PC"
-              " after the service is fixed.\n\nContinue launching %1?").arg(binary.fileName()),
-            QDialogButtonBox::Yes | QDialogButtonBox::No) == QDialogButtonBox::No) {
-        return INVALID_HANDLE_VALUE;
-      }
+    if (!spawn::checkEnvironment(window, binary)) {
+      return INVALID_HANDLE_VALUE;
     }
 
-    for (auto exec : settings().executablesBlacklist().split(";")) {
-      if (exec.compare(binary.fileName(), Qt::CaseInsensitive) == 0) {
-        if (QuestionBoxMemory::query(window, QString("blacklistedExecutable"), binary.fileName(),
-              tr("Blacklisted Executable"),
-              tr("The executable you are attempted to launch is blacklisted in the virtual file"
-                 " system.  This will likely prevent the executable, and any executables that are"
-                 " launched by this one, from seeing any mods.  This could extend to INI files, save"
-                 " games and any other virtualized files.\n\nContinue launching %1?").arg(binary.fileName()),
-              QDialogButtonBox::Yes | QDialogButtonBox::No) == QDialogButtonBox::No) {
-          return INVALID_HANDLE_VALUE;
-        }
-      }
+    if (!spawn::checkBlacklist(window, m_Settings, binary)) {
+      return INVALID_HANDLE_VALUE;
     }
 
     QString modsPath = settings().paths().mods();
@@ -1628,11 +1364,11 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
 
       log::debug("Spawning proxyed process <{}>", cmdline);
 
-      return startBinary(QFileInfo(QCoreApplication::applicationFilePath()),
+      return spawn::startBinary(QFileInfo(QCoreApplication::applicationFilePath()),
                          cmdline, QCoreApplication::applicationDirPath(), true);
     } else {
       log::debug("Spawning direct process <{}, {}, {}>", binPath, arguments, cwdPath);
-      return startBinary(binary, arguments, currentDirectory, true);
+      return spawn::startBinary(binary, arguments, currentDirectory, true);
     }
   } else {
     log::debug("start of \"{}\" canceled by plugin", binary.absoluteFilePath());
