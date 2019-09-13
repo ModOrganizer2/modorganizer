@@ -43,96 +43,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
-namespace spawn
+namespace spawn::dialogs
 {
-
-// details
-namespace
-{
-
-std::wstring pathEnv()
-{
-  std::wstring s(4000, L' ');
-
-  DWORD realSize = ::GetEnvironmentVariableW(
-    L"PATH", s.data(), static_cast<DWORD>(s.size()));
-
-  if (realSize > s.size()) {
-    s.resize(realSize);
-
-    ::GetEnvironmentVariableW(
-      TEXT("PATH"), s.data(), static_cast<DWORD>(s.size()));
-  }
-
-  return s;
-}
-
-void setPathEnv(const std::wstring& s)
-{
-  ::SetEnvironmentVariableW(L"PATH", s.c_str());
-}
-
-DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle, HANDLE& threadHandle)
-{
-  BOOL inheritHandles = FALSE;
-
-  STARTUPINFO si = {};
-  si.cb = sizeof(si);
-
-  // inherit handles if we plan to use stdout or stderr reroute
-  if (sp.stdOut != INVALID_HANDLE_VALUE) {
-    si.hStdOutput = sp.stdOut;
-    inheritHandles = TRUE;
-    si.dwFlags |= STARTF_USESTDHANDLES;
-  }
-
-  if (sp.stdErr != INVALID_HANDLE_VALUE) {
-    si.hStdError = sp.stdErr;
-    inheritHandles = TRUE;
-    si.dwFlags |= STARTF_USESTDHANDLES;
-  }
-
-  const auto bin = QDir::toNativeSeparators(sp.binary.absoluteFilePath()).toStdWString();
-
-  std::wstring commandLine = L"\"" + bin + L"\"";
-  if (sp.arguments[0] != L'\0') {
-    commandLine +=  L" " + sp.arguments.toStdWString();
-  }
-
-  QString moPath = QCoreApplication::applicationDirPath();
-
-  const auto oldPath = pathEnv();
-  setPathEnv(oldPath + L";" + QDir::toNativeSeparators(moPath).toStdWString());
-
-  PROCESS_INFORMATION pi;
-  BOOL success = FALSE;
-
-  const auto cwd = QDir::toNativeSeparators(sp.currentDirectory.absolutePath()).toStdWString();
-
-  if (sp.hooked) {
-    success = ::CreateProcessHooked(
-      nullptr, const_cast<wchar_t*>(commandLine.c_str()), nullptr, nullptr,
-      inheritHandles, CREATE_BREAKAWAY_FROM_JOB, nullptr,
-      cwd.c_str(), &si, &pi);
-  } else {
-    success = ::CreateProcess(
-      nullptr, const_cast<wchar_t*>(commandLine.c_str()), nullptr, nullptr,
-      inheritHandles, CREATE_BREAKAWAY_FROM_JOB, nullptr,
-      cwd.c_str(), &si, &pi);
-  }
-
-  const auto e = GetLastError();
-  setPathEnv(oldPath);
-
-  if (!success) {
-    return e;
-  }
-
-  processHandle = pi.hProcess;
-  threadHandle = pi.hThread;
-
-  return ERROR_SUCCESS;
-}
 
 std::wstring makeRightsDetails(const env::FileSecurity& fs)
 {
@@ -196,7 +108,7 @@ std::wstring makeDetails(const SpawnParameters& sp, DWORD code)
     elevated = L"(not available)";
   }
 
-  return fmt::format(
+  std::wstring f =
     L"Error {code} {codename}: {error}\n"
     L" . binary: '{bin}'\n"
     L" . owner: {owner}\n"
@@ -204,8 +116,13 @@ std::wstring makeDetails(const SpawnParameters& sp, DWORD code)
     L" . arguments: '{args}'\n"
     L" . cwd: '{cwd}'{cwdexists}\n"
     L" . stdout: {stdout}, stderr: {stderr}, hooked: {hooked}\n"
-    L" . usvfs x86:{x86_dll} x64:{x64_dll} proxy_x86:{x86_proxy} proxy_x64:{x64_proxy}\n"
-    L" . MO elevated: {elevated}",
+    L" . MO elevated: {elevated}";
+
+  if (sp.hooked) {
+    f += L"\n . usvfs x86:{x86_dll} x64:{x64_dll} proxy_x86:{x86_proxy} proxy_x64:{x64_proxy}";
+  }
+
+  return fmt::format(f,
     fmt::arg(L"code", code),
     fmt::arg(L"codename", errorCodeName(code)),
     fmt::arg(L"bin", QDir::toNativeSeparators(sp.binary.absoluteFilePath()).toStdWString()),
@@ -225,6 +142,73 @@ std::wstring makeDetails(const SpawnParameters& sp, DWORD code)
     fmt::arg(L"elevated", elevated));
 }
 
+QString makeContent(const SpawnParameters& sp, DWORD code)
+{
+  if (code == ERROR_INVALID_PARAMETER) {
+    return QObject::tr(
+      "This error typically happens because an antivirus has deleted critical "
+      "files from Mod Organizer's installation folder or has made them "
+      "generally inaccessible. Add an exclusion for Mod Organizer's "
+      "installation folder in your antivirus, reinstall Mod Organizer and try "
+      "again.");
+  } else if (code == ERROR_ACCESS_DENIED) {
+    return QObject::tr(
+      "This error typically happens because an antivirus is preventing Mod "
+      "Organizer from starting programs. Add an exclusion for Mod Organizer's "
+      "installation folder in your antivirus and try again.");
+  } else if (code == ERROR_FILE_NOT_FOUND) {
+    return QObject::tr("The file '%1' does not exist.")
+      .arg(QDir::toNativeSeparators(sp.binary.absoluteFilePath()));
+  } else {
+    return QString::fromStdWString(formatSystemMessage(code));
+  }
+}
+
+QMessageBox::StandardButton badSteamReg(
+  QWidget* parent, const QString& keyName, const QString& valueName)
+{
+  const auto details = QString(
+    "can't start steam, registry value at '%1' is empty or doesn't exist")
+    .arg(keyName + "\\" + valueName);
+
+  log::error("{}", details);
+
+  return MOBase::TaskDialog(parent, QObject::tr("Cannot start Steam"))
+    .main(QObject::tr("Cannot start Steam"))
+    .content(QObject::tr(
+      "The path to the Steam executable cannot be found. You might try "
+      "reinstalling Steam."))
+    .details(details)
+    .button({
+    QObject::tr("Continue without starting Steam"),
+    QObject::tr("The program may fail to launch."),
+    QMessageBox::Yes})
+    .button({
+    QObject::tr("Cancel"),
+    QMessageBox::Cancel})
+    .exec();
+}
+
+QMessageBox::StandardButton startSteamFailed(
+  QWidget* parent, const SpawnParameters& sp, DWORD e)
+{
+  const auto details = makeDetails(sp, e);
+  log::error("{}", details);
+
+  return MOBase::TaskDialog(parent, QObject::tr("Cannot start Steam"))
+    .main(QObject::tr("Cannot start Steam"))
+    .content(makeContent(sp, e))
+    .details(QString::fromStdWString(details))
+    .button({
+    QObject::tr("Continue without starting Steam"),
+    QObject::tr("The program may fail to launch."),
+    QMessageBox::Yes})
+    .button({
+    QObject::tr("Cancel"),
+    QMessageBox::Cancel})
+    .exec();
+}
+
 void spawnFailed(const SpawnParameters& sp, DWORD code)
 {
   const auto details = QString::fromStdWString(makeDetails(sp, code));
@@ -235,27 +219,6 @@ void spawnFailed(const SpawnParameters& sp, DWORD code)
   const auto mainText = QObject::tr("Cannot start %1")
     .arg(sp.binary.fileName());
 
-  QString content;
-
-  if (code == ERROR_INVALID_PARAMETER) {
-    content = QObject::tr(
-      "This error typically happens because an antivirus has deleted critical "
-      "files from Mod Organizer's installation folder or has made them "
-      "generally inaccessible. Add an exclusion for Mod Organizer's "
-      "installation folder in your antivirus, reinstall Mod Organizer and try "
-      "again.");
-  } else if (code == ERROR_ACCESS_DENIED) {
-    content = QObject::tr(
-      "This error typically happens because an antivirus is preventing Mod "
-      "Organizer from starting programs. Add an exclusion for Mod Organizer's "
-      "installation folder in your antivirus and try again.");
-  } else if (code == ERROR_FILE_NOT_FOUND) {
-    content = QObject::tr("The file '%1' does not exist.")
-      .arg(QDir::toNativeSeparators(sp.binary.absoluteFilePath()));
-  } else {
-    content = QString::fromStdWString(formatSystemMessage(code));
-  }
-
   QWidget *window = qApp->activeWindow();
   if ((window != nullptr) && (!window->isVisible())) {
     window = nullptr;
@@ -263,7 +226,7 @@ void spawnFailed(const SpawnParameters& sp, DWORD code)
 
   MOBase::TaskDialog(window, title)
     .main(mainText)
-    .content(content)
+    .content(makeContent(sp, code))
     .details(details)
     .exec();
 }
@@ -301,48 +264,143 @@ bool confirmRestartAsAdmin(const SpawnParameters& sp)
     .content(content)
     .details(details)
     .button({
-      QObject::tr("Restart Mod Organizer as administrator"),
-      QObject::tr("You must allow \"helper.exe\" to make changes to the system."),
-      QMessageBox::Yes})
+    QObject::tr("Restart Mod Organizer as administrator"),
+    QObject::tr("You must allow \"helper.exe\" to make changes to the system."),
+    QMessageBox::Yes})
     .button({
-      QObject::tr("Cancel"),
-      QMessageBox::Cancel})
+    QObject::tr("Cancel"),
+    QMessageBox::Cancel})
     .exec();
 
   return (r == QMessageBox::Yes);
 }
 
-void startBinaryAdmin(const SpawnParameters& sp)
+QuestionBoxMemory::Button confirmStartSteam(QWidget* parent, const SpawnParameters& sp)
 {
-  if (!confirmRestartAsAdmin(sp)) {
-    log::debug("user declined");
-    return;
+  return QuestionBoxMemory::query(
+    parent, "steamQuery", sp.binary.fileName(),
+    QObject::tr("Start Steam?"),
+    QObject::tr("Steam is required to be running already to correctly start the game. "
+      "Should MO try to start steam now?"),
+    QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
+}
+
+QuestionBoxMemory::Button confirmRestartAsAdminForSteam(QWidget* parent, const SpawnParameters& sp)
+{
+  return QuestionBoxMemory::query(
+    parent, "steamAdminQuery", sp.binary.fileName(),
+    QObject::tr("Steam: Access Denied"),
+    QObject::tr("MO was denied access to the Steam process.  This normally indicates that "
+      "Steam is being run as administrator while MO is not.  This can cause issues "
+      "launching the game.  It is recommended to not run Steam as administrator unless "
+      "absolutely necessary.\n\n"
+      "Restart MO as administrator?"),
+    QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
+}
+
+} // namepsace
+
+
+namespace spawn
+{
+
+DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle, HANDLE& threadHandle)
+{
+  BOOL inheritHandles = FALSE;
+
+  STARTUPINFO si = {};
+  si.cb = sizeof(si);
+
+  // inherit handles if we plan to use stdout or stderr reroute
+  if (sp.stdOut != INVALID_HANDLE_VALUE) {
+    si.hStdOutput = sp.stdOut;
+    inheritHandles = TRUE;
+    si.dwFlags |= STARTF_USESTDHANDLES;
   }
 
-  log::info("restarting MO as administrator");
+  if (sp.stdErr != INVALID_HANDLE_VALUE) {
+    si.hStdError = sp.stdErr;
+    inheritHandles = TRUE;
+    si.dwFlags |= STARTF_USESTDHANDLES;
+  }
 
+  const auto bin = QDir::toNativeSeparators(sp.binary.absoluteFilePath()).toStdWString();
+  const auto cwd = QDir::toNativeSeparators(sp.currentDirectory.absolutePath()).toStdWString();
+
+  std::wstring commandLine = L"\"" + bin + L"\"";
+  if (sp.arguments[0] != L'\0') {
+    commandLine +=  L" " + sp.arguments.toStdWString();
+  }
+
+  QString moPath = QCoreApplication::applicationDirPath();
+  const auto oldPath = env::addPath(QDir::toNativeSeparators(moPath));
+
+  PROCESS_INFORMATION pi;
+  BOOL success = FALSE;
+
+  if (sp.hooked) {
+    success = ::CreateProcessHooked(
+      nullptr, const_cast<wchar_t*>(commandLine.c_str()), nullptr, nullptr,
+      inheritHandles, CREATE_BREAKAWAY_FROM_JOB, nullptr,
+      cwd.c_str(), &si, &pi);
+  } else {
+    success = ::CreateProcess(
+      nullptr, const_cast<wchar_t*>(commandLine.c_str()), nullptr, nullptr,
+      inheritHandles, CREATE_BREAKAWAY_FROM_JOB, nullptr,
+      cwd.c_str(), &si, &pi);
+  }
+
+  const auto e = GetLastError();
+  env::setPath(oldPath);
+
+  if (!success) {
+    return e;
+  }
+
+  processHandle = pi.hProcess;
+  threadHandle = pi.hThread;
+
+  return ERROR_SUCCESS;
+}
+
+bool restartAsAdmin()
+{
   WCHAR cwd[MAX_PATH] = {};
   if (!GetCurrentDirectory(MAX_PATH, cwd)) {
     cwd[0] = L'\0';
   }
 
-  if (Helper::adminLaunch(
+  if (!Helper::adminLaunch(
     qApp->applicationDirPath().toStdWString(),
     qApp->applicationFilePath().toStdWString(),
     std::wstring(cwd)))
   {
-    log::debug("exiting MO");
-    qApp->exit(0);
+    // todo
+    log::error("admin launch failed");
+    return false;
   }
+
+  log::debug("exiting MO");
+  qApp->exit(0);
+  return true;
 }
 
-} // namespace
+void startBinaryAdmin(const SpawnParameters& sp)
+{
+  if (!dialogs::confirmRestartAsAdmin(sp)) {
+    log::debug("user declined");
+    return;
+  }
+
+  log::info("restarting MO as administrator");
+  restartAsAdmin();
+}
 
 
 bool checkBinary(QWidget* parent, const SpawnParameters& sp)
 {
   if (!sp.binary.exists()) {
-    spawnFailed(sp, ERROR_FILE_NOT_FOUND);
+    dialogs::spawnFailed(sp, ERROR_FILE_NOT_FOUND);
     return false;
   }
 
@@ -379,10 +437,23 @@ SteamStatus getSteamStatus()
   return ss;
 }
 
-bool startSteam(QWidget *widget)
+QString makeSteamArguments(const QString& username, const QString& password)
 {
-  log::debug("starting steam");
+  QString args;
 
+  if (username != "") {
+    args += "-login " + username;
+
+    if (password != "") {
+      args += " " + password;
+    }
+  }
+
+  return args;
+}
+
+bool startSteam(QWidget* parent)
+{
   const QString keyName = "HKEY_CURRENT_USER\\Software\\Valve\\Steam";
   const QString valueName = "SteamExe";
 
@@ -390,42 +461,41 @@ bool startSteam(QWidget *widget)
   const QString exe = steamSettings.value(valueName, "").toString();
 
   if (exe.isEmpty()) {
-    log::error(
-      "can't start steam, registry value at '{}' is empty",
-      keyName + "\\" + valueName);
-
-    return false;
+    return (dialogs::badSteamReg(parent, keyName, valueName) == QMessageBox::Yes);
   }
 
-  const QString program = QString("\"%1\"").arg(exe);
+  SpawnParameters sp;
+  sp.binary = exe;
 
   // See if username and password supplied. If so, pass them into steam.
-  QStringList args;
   QString username, password;
   if (Settings::instance().steam().login(username, password)) {
-    args.push_back("-login");
-    args.push_back(username);
-
-    if (password != "") {
-      args.push_back(password);
-    }
+    sp.arguments = makeSteamArguments(username, password);
   }
 
   log::debug(
     "starting steam process:\n"
     " . program: '{}'\n"
     " . username={}, password={}",
-    program,
+    sp.binary.filePath().toStdString(),
     (username.isEmpty() ? "no" : "yes"),
     (password.isEmpty() ? "no" : "yes"));
 
-  if (!QProcess::startDetached(program, args)) {
-    reportError(QObject::tr("Failed to start \"%1\"").arg(program));
-    return false;
+  HANDLE ph = INVALID_HANDLE_VALUE;
+  HANDLE th = INVALID_HANDLE_VALUE;
+  const auto e = spawn(sp, ph, th);
+
+  if (e != ERROR_SUCCESS) {
+    // make sure username and passwords are not shown
+    sp.arguments = makeSteamArguments(
+      (username.isEmpty() ? "" : "USERNAME"),
+      (password.isEmpty() ? "" : "PASSWORD"));
+
+    return (dialogs::startSteamFailed(parent, sp, e) == QMessageBox::Yes);
   }
 
   QMessageBox::information(
-    widget, QObject::tr("Waiting"),
+    parent, QObject::tr("Waiting"),
     QObject::tr("Please press OK once you're logged into steam."));
 
   return true;
@@ -446,29 +516,6 @@ bool gameRequiresSteam(const QDir& gameDirectory, const Settings& settings)
   }
 
   return false;
-}
-
-QuestionBoxMemory::Button confirmStartSteam(QWidget* parent, const SpawnParameters& sp)
-{
-  return QuestionBoxMemory::query(
-    parent, "steamQuery", sp.binary.fileName(),
-    QObject::tr("Start Steam?"),
-    QObject::tr("Steam is required to be running already to correctly start the game. "
-      "Should MO try to start steam now?"),
-    QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
-}
-
-QuestionBoxMemory::Button confirmRestartAsAdminForSteam(QWidget* parent, const SpawnParameters& sp)
-{
-  return QuestionBoxMemory::query(
-    parent, "steamAdminQuery", sp.binary.fileName(),
-    QObject::tr("Steam: Access Denied"),
-    QObject::tr("MO was denied access to the Steam process.  This normally indicates that "
-      "Steam is being run as administrator while MO is not.  This can cause issues "
-      "launching the game.  It is recommended to not run Steam as administrator unless "
-      "absolutely necessary.\n\n"
-      "Restart MO as administrator?"),
-    QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
 }
 
 bool checkSteam(
@@ -492,16 +539,20 @@ bool checkSteam(
 
   if (!ss.running) {
     log::debug("steam isn't running, asking to start steam");
-    const auto c = confirmStartSteam(parent, sp);
+    const auto c = dialogs::confirmStartSteam(parent, sp);
 
     if (c == QDialogButtonBox::Yes) {
       log::debug("user wants to start steam");
-      startSteam(parent);
+
+      if (!startSteam(parent)) {
+        // cancel
+        return false;
+      }
 
       // double-check that Steam is started
       ss = getSteamStatus();
       if (!ss.running) {
-        log::error("could not start steam, continuing and hoping for the best");
+        log::error("steam is still not running, continuing and hoping for the best");
         return true;
       }
     } else if (c == QDialogButtonBox::No) {
@@ -515,25 +566,10 @@ bool checkSteam(
 
   if (ss.running && !ss.accessible) {
     log::debug("steam is running but is not accessible, asking to restart MO");
-    const auto c = confirmRestartAsAdminForSteam(parent, sp);
+    const auto c = dialogs::confirmRestartAsAdminForSteam(parent, sp);
 
     if (c == QDialogButtonBox::Yes) {
-      WCHAR cwd[MAX_PATH];
-      if (!GetCurrentDirectory(MAX_PATH, cwd)) {
-        cwd[0] = L'\0';
-      }
-
-      if (Helper::adminLaunch(
-        qApp->applicationDirPath().toStdWString(),
-        qApp->applicationFilePath().toStdWString(),
-        std::wstring(cwd)))
-      {
-        log::debug("exiting MO");
-        qApp->exit(0);
-        return false;
-      }
-
-      log::error("unable to relaunch MO as admin");
+      restartAsAdmin();
       return false;
     } else if (c == QDialogButtonBox::No) {
       log::debug("user declined to restart MO, continuing");
@@ -686,7 +722,7 @@ HANDLE startBinary(QWidget* parent, const SpawnParameters& sp)
 
     default:
     {
-      spawnFailed(sp, e);
+      dialogs::spawnFailed(sp, e);
       return INVALID_HANDLE_VALUE;
     }
   }

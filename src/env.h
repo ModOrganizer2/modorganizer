@@ -162,6 +162,16 @@ private:
 };
 
 
+// environment variables
+//
+QString get(const QString& name);
+QString set(const QString& name, const QString& value);
+
+QString path();
+QString addPath(const QString& s);
+QString setPath(const QString& s);
+
+
 enum class CoreDumpTypes
 {
   Mini = 1,
@@ -169,7 +179,7 @@ enum class CoreDumpTypes
   Full
 };
 
-// creates a minidump file for the given process
+// creates a minidump file for this process
 //
 bool coredump(CoreDumpTypes type);
 

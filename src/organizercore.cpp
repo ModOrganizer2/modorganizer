@@ -1288,14 +1288,12 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
   sp.currentDirectory = currentDirectory;
   sp.hooked = true;
 
-
   prepareStart();
 
   QWidget *window = qApp->activeWindow();
   if ((window != nullptr) && (!window->isVisible())) {
     window = nullptr;
   }
-
 
   if (!spawn::checkBinary(window, sp)) {
     return INVALID_HANDLE_VALUE;
@@ -1368,8 +1366,6 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
           = QString("launch \"%1\" \"%2\" %3")
                 .arg(QDir::toNativeSeparators(cwdPath),
                      QDir::toNativeSeparators(binPath), arguments);
-
-      log::debug("Spawning proxyed process <{}>", cmdline);
 
       sp.binary = QFileInfo(QCoreApplication::applicationFilePath());
       sp.arguments = cmdline;

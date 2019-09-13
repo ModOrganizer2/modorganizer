@@ -171,6 +171,48 @@ void Environment::dumpDisks(const Settings& s) const
 }
 
 
+QString path()
+{
+  return get("PATH");
+}
+
+QString addPath(const QString& s)
+{
+  auto old = path();
+  set("PATH", get("PATH") + ";" + s);
+ return old;
+}
+
+QString setPath(const QString& s)
+{
+  return set("PATH", s);
+}
+
+QString get(const QString& name)
+{
+  std::wstring s(4000, L' ');
+
+  DWORD realSize = ::GetEnvironmentVariableW(
+    name.toStdWString().c_str(), s.data(), static_cast<DWORD>(s.size()));
+
+  if (realSize > s.size()) {
+    s.resize(realSize);
+
+    ::GetEnvironmentVariableW(
+      name.toStdWString().c_str(), s.data(), static_cast<DWORD>(s.size()));
+  }
+
+  return QString::fromStdWString(s);
+}
+
+QString set(const QString& n, const QString& v)
+{
+  auto old = get(n);
+  ::SetEnvironmentVariableW(n.toStdWString().c_str(), v.toStdWString().c_str());
+  return old;
+}
+
+
 // returns the filename of the given process or the current one
 //
 std::wstring processFilename(HANDLE process=INVALID_HANDLE_VALUE)
