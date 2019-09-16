@@ -17,6 +17,7 @@ APPPARAM(std::wstring, proxyDLLOrig, L"steam_api_orig.dll") // needs to be ident
 APPPARAM(std::wstring, proxyDLLSource, L"proxy.dll")
 APPPARAM(std::wstring, vfs32DLLName, L"usvfs_x86.dll")
 APPPARAM(std::wstring, vfs64DLLName, L"usvfs_x64.dll")
+APPPARAM(std::wstring, portableLockFileName, L"portable.txt")
 APPPARAM(const wchar_t*, localSavePlaceholder, L"__MOProfileSave__\\")
 
 APPPARAM(std::wstring, firstStepsTutorial, L"tutorial_firststeps_main.js")
