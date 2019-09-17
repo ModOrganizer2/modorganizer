@@ -619,8 +619,9 @@ void EditExecutablesDialog::on_browseBinary_clicked()
     ui->binary->setText(QDir::toNativeSeparators(binaryName));
   }
 
-  // setting title if currently empty
-  if (ui->title->text().isEmpty()) {
+  // setting title if currently empty or some variation of "New Executable"
+  if (ui->title->text().isEmpty() || 
+      ui->title->text().startsWith("New Executable", Qt::CaseInsensitive)) {
     const auto prefix = QFileInfo(binaryName).baseName();
     const auto newTitle = m_executablesList.makeNonConflictingTitle(prefix);
 
