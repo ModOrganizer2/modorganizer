@@ -33,8 +33,8 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings& setti
   : TutorableDialog("SettingsDialog", parent)
   , ui(new Ui::SettingsDialog)
   , m_settings(settings)
-  , m_PluginContainer(pluginContainer)
-  , m_keyChanged(false)
+  , m_pluginContainer(pluginContainer)
+  , m_restartNeeded(false)
 {
   ui->setupUi(this);
 
@@ -45,6 +45,25 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings& setti
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new SteamSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsSettingsTab(settings, *this)));
+}
+
+PluginContainer* SettingsDialog::pluginContainer()
+{
+  return m_pluginContainer;
+}
+
+QWidget* SettingsDialog::parentWidgetForDialogs()
+{
+  if (isVisible()) {
+    return this;
+  } else {
+    return parentWidget();
+  }
+}
+
+void SettingsDialog::setRestartNeeded()
+{
+  m_restartNeeded = true;
 }
 
 int SettingsDialog::exec()
@@ -68,13 +87,8 @@ int SettingsDialog::exec()
     }
   }
 
-  bool restartNeeded = false;
-  if (getApiKeyChanged()) {
-    restartNeeded = true;
-  }
-
-  if (restartNeeded) {
-    if (QMessageBox::question(nullptr,
+  if (m_restartNeeded) {
+    if (QMessageBox::question(parentWidgetForDialogs(),
       tr("Restart Mod Organizer?"),
       tr("In order to finish configuration changes, MO must be restarted.\n"
         "Restart it now?"),
@@ -111,7 +125,7 @@ void SettingsDialog::accept()
        QDir::fromNativeSeparators(
            Settings::instance().paths().mods(true))) &&
       (QMessageBox::question(
-           nullptr, tr("Confirm"),
+        parentWidgetForDialogs(), tr("Confirm"),
            tr("Changing the mod directory affects all your profiles! "
               "Mods not present (or named differently) in the new location "
               "will be disabled in all profiles. "
@@ -122,11 +136,6 @@ void SettingsDialog::accept()
   }
 
   TutorableDialog::accept();
-}
-
-bool SettingsDialog::getApiKeyChanged()
-{
-  return m_keyChanged;
 }
 
 
@@ -145,4 +154,9 @@ Settings& SettingsTab::settings()
 SettingsDialog& SettingsTab::dialog()
 {
   return m_dialog;
+}
+
+QWidget* SettingsTab::parentWidget()
+{
+  return m_dialog.parentWidgetForDialogs();
 }

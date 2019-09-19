@@ -83,7 +83,9 @@ void WorkaroundsSettingsTab::on_bsaDateBtn_clicked()
   const auto* game = qApp->property("managed_game").value<MOBase::IPluginGame*>();
   QDir dir = game->dataDirectory();
 
-  helper::backdateBSAs(qApp->applicationDirPath().toStdWString(),
+  helper::backdateBSAs(
+    parentWidget(),
+    qApp->applicationDirPath().toStdWString(),
     dir.absolutePath().toStdWString());
 }
 
@@ -95,7 +97,7 @@ void WorkaroundsSettingsTab::on_resetGeometryBtn_clicked()
     "Restart now?");
 
   const auto res = QMessageBox::question(
-    nullptr, caption, text, QMessageBox::Yes | QMessageBox::Cancel);
+    parentWidget(), caption, text, QMessageBox::Yes | QMessageBox::Cancel);
 
   if (res == QMessageBox::Yes) {
     settings().geometry().requestReset();

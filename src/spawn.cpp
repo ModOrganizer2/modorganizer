@@ -215,7 +215,7 @@ QMessageBox::StandardButton startSteamFailed(
     .exec();
 }
 
-void spawnFailed(const SpawnParameters& sp, DWORD code)
+void spawnFailed(QWidget* parent, const SpawnParameters& sp, DWORD code)
 {
   const auto details = makeDetails(sp, code);
   log::error("{}", details);
@@ -225,12 +225,7 @@ void spawnFailed(const SpawnParameters& sp, DWORD code)
   const auto mainText = QObject::tr("Cannot start %1")
     .arg(sp.binary.fileName());
 
-  QWidget *window = qApp->activeWindow();
-  if ((window != nullptr) && (!window->isVisible())) {
-    window = nullptr;
-  }
-
-  MOBase::TaskDialog(window, title)
+  MOBase::TaskDialog(parent, title)
     .main(mainText)
     .content(makeContent(sp, code))
     .details(details)
@@ -239,7 +234,7 @@ void spawnFailed(const SpawnParameters& sp, DWORD code)
 }
 
 void helperFailed(
-  DWORD code, const QString& why, const std::wstring& binary,
+  QWidget* parent, DWORD code, const QString& why, const std::wstring& binary,
   const std::wstring& cwd, const std::wstring& args)
 {
   SpawnParameters sp;
@@ -255,12 +250,7 @@ void helperFailed(
   const auto mainText = QObject::tr("Cannot start %1")
     .arg(sp.binary.fileName());
 
-  QWidget *window = qApp->activeWindow();
-  if ((window != nullptr) && (!window->isVisible())) {
-    window = nullptr;
-  }
-
-  MOBase::TaskDialog(window, title)
+  MOBase::TaskDialog(parent, title)
     .main(mainText)
     .content(makeContent(sp, code))
     .details(details)
@@ -268,7 +258,7 @@ void helperFailed(
     .exec();
 }
 
-bool confirmRestartAsAdmin(const SpawnParameters& sp)
+bool confirmRestartAsAdmin(QWidget* parent, const SpawnParameters& sp)
 {
   const auto details = makeDetails(sp, ERROR_ELEVATION_REQUIRED);
 
@@ -287,15 +277,9 @@ bool confirmRestartAsAdmin(const SpawnParameters& sp)
     "You can restart Mod Organizer as administrator and try launching the "
     "program again.");
 
-
-  QWidget *window = qApp->activeWindow();
-  if ((window != nullptr) && (!window->isVisible())) {
-    window = nullptr;
-  }
-
   log::debug("asking user to restart MO as administrator");
 
-  const auto r = MOBase::TaskDialog(window, title)
+  const auto r = MOBase::TaskDialog(parent, title)
     .main(mainText)
     .content(content)
     .details(details)
@@ -313,7 +297,7 @@ bool confirmRestartAsAdmin(const SpawnParameters& sp)
 }
 
 QMessageBox::StandardButton confirmStartSteam(
-  QWidget* window, const SpawnParameters& sp, const QString& details)
+  QWidget* parent, const SpawnParameters& sp, const QString& details)
 {
   const auto title = QObject::tr("Launch Steam");
   const auto mainText = QObject::tr("This program requires Steam");
@@ -321,7 +305,7 @@ QMessageBox::StandardButton confirmStartSteam(
     "Mod Organizer has detected that this program likely requires Steam to be "
     "running to function properly.");
 
-  return MOBase::TaskDialog(window, title)
+  return MOBase::TaskDialog(parent, title)
     .main(mainText)
     .content(content)
     .details(details)
@@ -340,17 +324,35 @@ QMessageBox::StandardButton confirmStartSteam(
     .exec();
 }
 
-QuestionBoxMemory::Button confirmRestartAsAdminForSteam(QWidget* parent, const SpawnParameters& sp)
+QMessageBox::StandardButton confirmRestartAsAdminForSteam(
+  QWidget* parent, const SpawnParameters& sp)
 {
-  return QuestionBoxMemory::query(
-    parent, "steamAdminQuery", sp.binary.fileName(),
-    QObject::tr("Steam: Access Denied"),
-    QObject::tr("MO was denied access to the Steam process.  This normally indicates that "
-      "Steam is being run as administrator while MO is not.  This can cause issues "
-      "launching the game.  It is recommended to not run Steam as administrator unless "
-      "absolutely necessary.\n\n"
-      "Restart MO as administrator?"),
-    QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
+  const auto title = QObject::tr("Elevation required");
+  const auto mainText = QObject::tr("Steam is running as administrator");
+  const auto content = QObject::tr(
+    "Running Steam as administrator is typically unnecessary and can cause "
+    "problems when Mod Organizer is not running as administrato\r\n\r\n"
+    "You can restart Mod Organizer as administrator and try launching the "
+    "program again.");
+
+  return MOBase::TaskDialog(parent, title)
+    .main(mainText)
+    .content(content)
+    .details("")
+    .icon(QMessageBox::Question)
+    .button({
+        QObject::tr("Restart Mod Organizer as administrator"),
+        QObject::tr("You must allow \"helper.exe\" to make changes to the system."),
+        QMessageBox::Yes})
+    .button({
+      QObject::tr("Continue"),
+      QObject::tr("The program might fail to run."),
+      QMessageBox::No})
+    .button({
+      QObject::tr("Cancel"),
+      QMessageBox::Cancel})
+    .remember("steamAdminQuery", sp.binary.fileName())
+    .exec();
 }
 
 bool eventLogNotRunning(
@@ -447,7 +449,7 @@ DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle, HANDLE& threadHand
   return ERROR_SUCCESS;
 }
 
-bool restartAsAdmin()
+bool restartAsAdmin(QWidget* parent)
 {
   WCHAR cwd[MAX_PATH] = {};
   if (!GetCurrentDirectory(MAX_PATH, cwd)) {
@@ -455,6 +457,7 @@ bool restartAsAdmin()
   }
 
   if (!helper::adminLaunch(
+    parent,
     qApp->applicationDirPath().toStdWString(),
     qApp->applicationFilePath().toStdWString(),
     std::wstring(cwd)))
@@ -469,21 +472,21 @@ bool restartAsAdmin()
   return true;
 }
 
-void startBinaryAdmin(const SpawnParameters& sp)
+void startBinaryAdmin(QWidget* parent, const SpawnParameters& sp)
 {
-  if (!dialogs::confirmRestartAsAdmin(sp)) {
+  if (!dialogs::confirmRestartAsAdmin(parent, sp)) {
     log::debug("user declined");
     return;
   }
 
   log::info("restarting MO as administrator");
-  restartAsAdmin();
+  restartAsAdmin(parent);
 }
 
 bool checkBinary(QWidget* parent, const SpawnParameters& sp)
 {
   if (!sp.binary.exists()) {
-    dialogs::spawnFailed(sp, ERROR_FILE_NOT_FOUND);
+    dialogs::spawnFailed(parent, sp, ERROR_FILE_NOT_FOUND);
     return false;
   }
 
@@ -660,7 +663,7 @@ bool checkSteam(
     const auto c = dialogs::confirmRestartAsAdminForSteam(parent, sp);
 
     if (c == QDialogButtonBox::Yes) {
-      restartAsAdmin();
+      restartAsAdmin(parent);
       return false;
     } else if (c == QDialogButtonBox::No) {
       log::debug("user declined to restart MO, continuing");
@@ -720,13 +723,13 @@ HANDLE startBinary(QWidget* parent, const SpawnParameters& sp)
 
     case ERROR_ELEVATION_REQUIRED:
     {
-      startBinaryAdmin(sp);
+      startBinaryAdmin(parent, sp);
       return INVALID_HANDLE_VALUE;
     }
 
     default:
     {
-      dialogs::spawnFailed(sp, e);
+      dialogs::spawnFailed(parent, sp, e);
       return INVALID_HANDLE_VALUE;
     }
   }
@@ -740,6 +743,7 @@ namespace helper
 {
 
 bool helperExec(
+  QWidget* parent,
   const std::wstring& moDirectory, const std::wstring& commandLine, BOOL async)
 {
   const std::wstring fileName = moDirectory + L"\\helper.exe";
@@ -766,7 +770,7 @@ bool helperExec(
       const auto e = GetLastError();
 
       spawn::dialogs::helperFailed(
-        e, "ShellExecuteExW()", fileName, moDirectory, commandLine);
+        parent, e, "ShellExecuteExW()", fileName, moDirectory, commandLine);
 
       return false;
     }
@@ -788,7 +792,8 @@ bool helperExec(
       ERROR_ABANDONED_WAIT_0 : GetLastError());
 
     spawn::dialogs::helperFailed(
-      code, "WaitForSingleObject()", fileName, moDirectory, commandLine);
+      parent, code, "WaitForSingleObject()",
+      fileName, moDirectory, commandLine);
 
     return false;
   }
@@ -798,7 +803,7 @@ bool helperExec(
     const auto e = GetLastError();
 
     spawn::dialogs::helperFailed(
-      e, "GetExitCodeProcess()", fileName, moDirectory, commandLine);
+      parent, e, "GetExitCodeProcess()", fileName, moDirectory, commandLine);
 
     return false;
   }
@@ -806,21 +811,24 @@ bool helperExec(
   return (exitCode == 0);
 }
 
-bool backdateBSAs(const std::wstring &moPath, const std::wstring &dataPath)
+bool backdateBSAs(
+  QWidget* parent, const std::wstring &moPath, const std::wstring &dataPath)
 {
   const std::wstring commandLine = fmt::format(
     L"backdateBSA \"{}\"", dataPath);
 
-  return helperExec(moPath, commandLine, FALSE);
+  return helperExec(parent, moPath, commandLine, FALSE);
 }
 
-bool adminLaunch(const std::wstring &moPath, const std::wstring &moFile, const std::wstring &workingDir)
+bool adminLaunch(
+  QWidget* parent, const std::wstring &moPath,
+  const std::wstring &moFile, const std::wstring &workingDir)
 {
   const std::wstring commandLine = fmt::format(
     L"adminLaunch {} \"{}\" \"{}\"",
     ::GetCurrentProcessId(), moFile, workingDir);
 
-  return helperExec(moPath, commandLine, true);
+  return helperExec(parent, moPath, commandLine, true);
 }
 
 } // namespace
