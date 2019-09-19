@@ -338,12 +338,11 @@ QMessageBox::StandardButton confirmRestartAsAdminForSteam(
   return MOBase::TaskDialog(parent, title)
     .main(mainText)
     .content(content)
-    .details("")
     .icon(QMessageBox::Question)
     .button({
-        QObject::tr("Restart Mod Organizer as administrator"),
-        QObject::tr("You must allow \"helper.exe\" to make changes to the system."),
-        QMessageBox::Yes})
+      QObject::tr("Restart Mod Organizer as administrator"),
+      QObject::tr("You must allow \"helper.exe\" to make changes to the system."),
+      QMessageBox::Yes})
     .button({
       QObject::tr("Continue"),
       QObject::tr("The program might fail to run."),
@@ -358,16 +357,29 @@ QMessageBox::StandardButton confirmRestartAsAdminForSteam(
 bool eventLogNotRunning(
   QWidget* parent, const env::Service& s, const SpawnParameters& sp)
 {
-  const auto r = QuestionBoxMemory::query(
-    parent, QString("eventLogService"), sp.binary.fileName(),
-    QObject::tr("Windows Event Log Error"),
-    QObject::tr("The Windows Event Log service is disabled and/or not running.  This prevents"
-      " USVFS from running properly.  Your mods may not be working in the executable"
-      " that you are launching.  Note that you may have to restart MO and/or your PC"
-      " after the service is fixed.\n\nContinue launching %1?").arg(sp.binary.fileName()),
-    QDialogButtonBox::Yes | QDialogButtonBox::No);
+  const auto title = QObject::tr("Event Log not running");
+  const auto mainText = QObject::tr("The Event Log service is not running");
+  const auto content = QObject::tr(
+    "The Windows Event Log service is not running. This can prevent USVFS from "
+    "running properly and your mods may not be recognized by the program being "
+    "launched.");
 
-  return (r != QDialogButtonBox::No);
+  const auto r = MOBase::TaskDialog(parent, title)
+    .main(mainText)
+    .content(content)
+    .details(s.toString())
+    .icon(QMessageBox::Question)
+    .remember("eventLogService", sp.binary.fileName())
+    .button({
+      QObject::tr("Continue"),
+      QObject::tr("Your mods might not work."),
+      QMessageBox::Yes})
+    .button({
+      QObject::tr("Cancel"),
+      QMessageBox::Cancel})
+    .exec();
+
+  return (r == QDialogButtonBox::Yes);
 }
 
 bool confirmBlacklisted(QWidget* parent, const SpawnParameters& sp)
@@ -681,11 +693,15 @@ bool checkEnvironment(QWidget* parent, const SpawnParameters& sp)
 {
   // check if the Windows Event Logging service is running; for some reason,
   // this seems to be critical to the successful running of usvfs.
+  const auto serviceName = "EventLog";
 
-  const auto s = env::getService("EventLog");
+  const auto s = env::getService(serviceName);
 
   if (!s.isValid()) {
-    log::error("cannot determine the status of the EventLog, continuing");
+    log::error(
+      "cannot determine the status of the {} service, continuing",
+      serviceName);
+
     return true;
   }
 
