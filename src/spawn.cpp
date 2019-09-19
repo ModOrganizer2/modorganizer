@@ -33,7 +33,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Shellapi.h>
 #include <appconfig.h>
 #include <windows_error.h>
-#include "helper.h"
 #include <QApplication>
 #include <QMessageBox>
 #include <QtDebug>

@@ -33,7 +33,6 @@
 #include "lockeddialog.h"
 #include "instancemanager.h"
 #include <scriptextender.h>
-#include "helper.h"
 #include "previewdialog.h"
 
 #include <QApplication>

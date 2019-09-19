@@ -1,6 +1,6 @@
 #include "settingsdialogworkarounds.h"
 #include "ui_settingsdialog.h"
-#include "helper.h"
+#include "spawn.h"
 #include <iplugingame.h>
 
 WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)

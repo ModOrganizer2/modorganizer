@@ -87,7 +87,6 @@ SET(organizer_SRCS
     waitingonclosedialog.cpp
     loadmechanism.cpp
     installationmanager.cpp
-    helper.cpp
     filedialogmemory.cpp
     executableslist.cpp
     editexecutablesdialog.cpp
@@ -208,7 +207,6 @@ SET(organizer_HDRS
     waitingonclosedialog.h
     loadmechanism.h
     installationmanager.h
-    helper.h
     filedialogmemory.h
     executableslist.h
     editexecutablesdialog.h
@@ -464,7 +462,6 @@ set(utilities
 	csvbuilder
 	shared/error_report
 	eventfilter
-	helper
 	shared/leaktrace
 	persistentcookiejar
 	serverinfo

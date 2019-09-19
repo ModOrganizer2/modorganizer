@@ -38,7 +38,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "executableslist.h"
 #include "singleinstance.h"
 #include "utility.h"
-#include "helper.h"
 #include "loglist.h"
 #include "selectiondialog.h"
 #include "moapplication.h"
