@@ -213,6 +213,234 @@ QString set(const QString& n, const QString& v)
 }
 
 
+Service::Service(QString name)
+  : Service(std::move(name), StartType::None, Status::None)
+{
+}
+
+Service::Service(QString name, StartType st, Status s)
+  : m_name(std::move(name)), m_startType(st), m_status(s)
+{
+}
+
+const QString& Service::name() const
+{
+  return m_name;
+}
+
+bool Service::isValid() const
+{
+  return (m_startType != StartType::None) && (m_status != Status::None);
+}
+
+Service::StartType Service::startType() const
+{
+  return m_startType;
+}
+
+Service::Status Service::status() const
+{
+  return m_status;
+}
+
+QString Service::toString() const
+{
+  return QString("service '%1', start=%2, status=%3")
+    .arg(m_name)
+    .arg(env::toString(m_startType))
+    .arg(env::toString(m_status));
+}
+
+
+QString toString(Service::StartType st)
+{
+  using ST = Service::StartType;
+
+  switch (st)
+  {
+    case ST::None:
+      return "none";
+
+    case ST::Disabled:
+      return "disabled";
+
+    case ST::Enabled:
+      return "enabled";
+
+    default:
+      return QString("unknown %1").arg(static_cast<int>(st));
+  }
+}
+
+QString toString(Service::Status st)
+{
+  using S = Service::Status;
+
+  switch (st)
+  {
+    case S::None:
+      return "none";
+
+    case S::Stopped:
+      return "stopped";
+
+    case S::Running:
+      return "running";
+
+    default:
+      return QString("unknown %1").arg(static_cast<int>(st));
+  }
+}
+
+Service::StartType getServiceStartType(SC_HANDLE s, const QString& name)
+{
+  DWORD needed = 0;
+
+  if (!QueryServiceConfig(s, NULL, 0, &needed)) {
+    const auto e = GetLastError();
+
+    if (e != ERROR_INSUFFICIENT_BUFFER) {
+      log::error(
+        "QueryServiceConfig() for size for '{}' failed, {}",
+        name, GetLastError());
+
+      return Service::StartType::None;
+    }
+  }
+
+  const auto size = needed;
+  MallocPtr<QUERY_SERVICE_CONFIG> config(
+    static_cast<QUERY_SERVICE_CONFIG*>(std::malloc(size)));
+
+  if (!QueryServiceConfig(s, config.get(), size, &needed)) {
+    const auto e = GetLastError();
+
+    log::error(
+      "QueryServiceConfig() for '{}' failed", name, formatSystemMessage(e));
+
+    return Service::StartType::None;
+  }
+
+
+  switch (config->dwStartType)
+  {
+    case SERVICE_AUTO_START:   // fall-through
+    case SERVICE_BOOT_START:
+    case SERVICE_DEMAND_START:
+    case SERVICE_SYSTEM_START:
+    {
+      return Service::StartType::Enabled;
+    }
+
+    case SERVICE_DISABLED:
+    {
+      return Service::StartType::Disabled;
+    }
+
+    default:
+    {
+      log::error(
+        "unknown service start type {} for '{}'",
+        config->dwStartType, name);
+
+      return Service::StartType::None;
+    }
+  }
+}
+
+Service::Status getServiceStatus(SC_HANDLE s, const QString& name)
+{
+  DWORD needed = 0;
+
+  if (!QueryServiceStatusEx(s, SC_STATUS_PROCESS_INFO, NULL, 0, &needed)) {
+    const auto e = GetLastError();
+
+    if (e != ERROR_INSUFFICIENT_BUFFER) {
+      log::error(
+        "QueryServiceStatusEx() for size for '{}' failed, {}",
+        name, GetLastError());
+
+      return Service::Status::None;
+    }
+  }
+
+  const auto size = needed;
+  MallocPtr<SERVICE_STATUS_PROCESS> status(
+    static_cast<SERVICE_STATUS_PROCESS*>(std::malloc(size)));
+
+  const auto r = QueryServiceStatusEx(
+    s, SC_STATUS_PROCESS_INFO, reinterpret_cast<BYTE*>(status.get()),
+    size, &needed);
+
+  if (!r) {
+    const auto e = GetLastError();
+
+    log::error(
+      "QueryServiceStatusEx() failed for '{}', {}",
+      name, formatSystemMessage(e));
+
+    return Service::Status::None;
+  }
+
+
+  switch (status->dwCurrentState)
+  {
+    case SERVICE_START_PENDING:    // fall-through
+    case SERVICE_CONTINUE_PENDING:
+    case SERVICE_RUNNING:
+    {
+      return Service::Status::Running;
+    }
+
+    case SERVICE_STOPPED:          // fall-through
+    case SERVICE_STOP_PENDING:
+    case SERVICE_PAUSE_PENDING:
+    case SERVICE_PAUSED:
+    {
+      return Service::Status::Stopped;
+    }
+
+    default:
+    {
+      log::error(
+        "unknown service status {} for '{}'",
+        status->dwCurrentState, name);
+
+      return Service::Status::None;
+    }
+  }
+}
+
+Service getService(const QString& name)
+{
+  // service manager
+  const LocalPtr<SC_HANDLE> scm(OpenSCManager(
+    NULL, NULL, SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG));
+
+  if (!scm) {
+    const auto e = GetLastError();
+    log::error("OpenSCManager() failed, {}", formatSystemMessage(e));
+    return Service(name);
+  }
+
+  // service
+  const LocalPtr<SC_HANDLE> s(OpenService(
+    scm.get(), name.toStdWString().c_str(),
+    SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG));
+
+  if (!s) {
+    const auto e = GetLastError();
+    log::error("OpenService() failed for '{}', {}", name, formatSystemMessage(e));
+    return Service(name);
+  }
+
+  const auto startType = getServiceStartType(s.get(), name);
+  const auto status = getServiceStatus(s.get(), name);
+
+  return {name, startType, status};
+}
+
+
 // returns the filename of the given process or the current one
 //
 std::wstring processFilename(HANDLE process=INVALID_HANDLE_VALUE)

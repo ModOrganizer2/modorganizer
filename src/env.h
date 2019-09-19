@@ -93,6 +93,24 @@ struct MallocFreer
 template <class T>
 using MallocPtr = std::unique_ptr<T, MallocFreer>;
 
+
+// used by LocalPtr, calls LocalFree() as the deleter
+//
+template <class T>
+struct LocalFreer
+{
+  using pointer = T;
+
+  void operator()(T p)
+  {
+    ::LocalFree(p);
+  }
+};
+
+template <class T>
+using LocalPtr = std::unique_ptr<T, LocalFreer<T>>;
+
+
 // creates a console in the constructor and destroys it in the destructor,
 // also redirects standard streams
 //
@@ -171,6 +189,46 @@ QString path();
 QString addPath(const QString& s);
 QString setPath(const QString& s);
 
+
+class Service
+{
+public:
+  enum class StartType
+  {
+    None = 0,
+    Disabled,
+    Enabled
+  };
+
+  enum class Status
+  {
+    None = 0,
+    Stopped,
+    Running
+  };
+
+
+  explicit Service(QString name);
+  Service(QString name, StartType st, Status s);
+
+  bool isValid() const;
+
+  const QString& name() const;
+  StartType startType() const;
+  Status status() const;
+
+  QString toString() const;
+
+private:
+  QString m_name;
+  StartType m_startType;
+  Status m_status;
+};
+
+
+Service getService(const QString& name);
+QString toString(Service::StartType st);
+QString toString(Service::Status st);
 
 enum class CoreDumpTypes
 {

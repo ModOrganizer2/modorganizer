@@ -428,7 +428,6 @@ void startBinaryAdmin(const SpawnParameters& sp)
   restartAsAdmin();
 }
 
-
 bool checkBinary(QWidget* parent, const SpawnParameters& sp)
 {
   if (!sp.binary.exists()) {
@@ -557,9 +556,9 @@ bool checkSteam(
   log::debug("checking steam");
 
   if (!steamAppID.isEmpty()) {
-    ::SetEnvironmentVariableW(L"SteamAPPId", steamAppID.toStdWString().c_str());
+    env::set("SteamAPPId", steamAppID);
   } else {
-    ::SetEnvironmentVariableW(L"SteamAPPId", settings.steam().appID().toStdWString().c_str());
+    env::set("SteamAPPId", settings.steam().appID());
   }
 
   if (!gameRequiresSteam(gameDirectory, settings)) {
@@ -584,7 +583,7 @@ bool checkSteam(
       // double-check that Steam is started
       ss = getSteamStatus();
       if (!ss.running) {
-        log::error("steam is still not running, continuing and hoping for the best");
+        log::error("steam is still not running, hoping for the best");
         return true;
       }
     } else if (c == QDialogButtonBox::No) {
@@ -615,90 +614,29 @@ bool checkSteam(
   return true;
 }
 
-bool checkService()
+bool checkEventLogService()
 {
-  SC_HANDLE serviceManagerHandle = NULL;
-  SC_HANDLE serviceHandle = NULL;
-  LPSERVICE_STATUS_PROCESS serviceStatus = NULL;
-  LPQUERY_SERVICE_CONFIG serviceConfig = NULL;
-  bool serviceRunning = true;
+  const auto s = env::getService("EventLog");
 
-  DWORD bytesNeeded;
-
-  try {
-    serviceManagerHandle = OpenSCManager(NULL, NULL, SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG);
-    if (!serviceManagerHandle) {
-      log::warn("failed to open service manager (query status) (error {})", GetLastError());
-      throw 1;
-    }
-
-    serviceHandle = OpenService(serviceManagerHandle, L"EventLog", SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG);
-    if (!serviceHandle) {
-      log::warn("failed to open EventLog service (query status) (error {})", GetLastError());
-      throw 2;
-    }
-
-    if (QueryServiceConfig(serviceHandle, NULL, 0, &bytesNeeded)
-      || (GetLastError() != ERROR_INSUFFICIENT_BUFFER)) {
-      log::warn("failed to get size of service config (error {})", GetLastError());
-      throw 3;
-    }
-
-    DWORD serviceConfigSize = bytesNeeded;
-    serviceConfig = (LPQUERY_SERVICE_CONFIG)LocalAlloc(LMEM_FIXED, serviceConfigSize);
-    if (!QueryServiceConfig(serviceHandle, serviceConfig, serviceConfigSize, &bytesNeeded)) {
-      log::warn("failed to query service config (error {})", GetLastError());
-      throw 4;
-    }
-
-    if (serviceConfig->dwStartType == SERVICE_DISABLED) {
-      log::error("Windows Event Log service is disabled!");
-      serviceRunning = false;
-    }
-
-    if (QueryServiceStatusEx(serviceHandle, SC_STATUS_PROCESS_INFO, NULL, 0, &bytesNeeded)
-      || (GetLastError() != ERROR_INSUFFICIENT_BUFFER)) {
-      log::warn("failed to get size of service status (error {})", GetLastError());
-      throw 5;
-    }
-
-    DWORD serviceStatusSize = bytesNeeded;
-    serviceStatus = (LPSERVICE_STATUS_PROCESS)LocalAlloc(LMEM_FIXED, serviceStatusSize);
-    if (!QueryServiceStatusEx(serviceHandle, SC_STATUS_PROCESS_INFO, (LPBYTE)serviceStatus, serviceStatusSize, &bytesNeeded)) {
-      log::warn("failed to query service status (error {})", GetLastError());
-      throw 6;
-    }
-
-    if (serviceStatus->dwCurrentState != SERVICE_RUNNING) {
-      log::error("Windows Event Log service is not running");
-      serviceRunning = false;
-    }
-  }
-  catch (int) {
-    serviceRunning = false;
+  if (!s.isValid()) {
+    log::error("cannot determine the status of the EventLog, continuing");
+    return true;
   }
 
-  if (serviceStatus) {
-    LocalFree(serviceStatus);
+  if (s.status() == env::Service::Status::Running) {
+    log::debug("{}", s.toString());
+    return true;
+  } else {
+    log::error("{}", s.toString());
+    return false;
   }
-  if (serviceConfig) {
-    LocalFree(serviceConfig);
-  }
-  if (serviceHandle) {
-    CloseServiceHandle(serviceHandle);
-  }
-  if (serviceManagerHandle) {
-    CloseServiceHandle(serviceManagerHandle);
-  }
-
-  return serviceRunning;
 }
 
 bool checkEnvironment(QWidget* parent, const SpawnParameters& sp)
 {
   // Check if the Windows Event Logging service is running.  For some reason, this seems to be
   // critical to the successful running of usvfs.
-  if (!checkService()) {
+  if (!checkEventLogService()) {
     if (QuestionBoxMemory::query(parent, QString("eventLogService"), sp.binary.fileName(),
       QObject::tr("Windows Event Log Error"),
       QObject::tr("The Windows Event Log service is disabled and/or not running.  This prevents"
