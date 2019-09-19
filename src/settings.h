@@ -678,6 +678,7 @@ public:
   // by MO but given to usvfs when starting an executable
   //
   QString executablesBlacklist() const;
+  bool isExecutableBlacklisted(const QString& s) const;
   void setExecutablesBlacklist(const QString& s);
 
   // ? looks obsolete, only used by dead code

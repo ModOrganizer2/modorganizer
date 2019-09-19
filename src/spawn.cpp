@@ -345,6 +345,20 @@ bool eventLogNotRunning(
   return (r != QDialogButtonBox::No);
 }
 
+bool confirmBlacklisted(QWidget* parent, const SpawnParameters& sp)
+{
+  const auto r = QuestionBoxMemory::query(
+    parent, QString("blacklistedExecutable"), sp.binary.fileName(),
+    QObject::tr("Blacklisted Executable"),
+    QObject::tr("The executable you are attempted to launch is blacklisted in the virtual file"
+      " system.  This will likely prevent the executable, and any executables that are"
+      " launched by this one, from seeing any mods.  This could extend to INI files, save"
+      " games and any other virtualized files.\n\nContinue launching %1?").arg(sp.binary.fileName()),
+    QDialogButtonBox::Yes | QDialogButtonBox::No);
+
+  return (r != QDialogButtonBox::No);
+}
+
 } // namespace
 
 
@@ -652,18 +666,8 @@ bool checkEnvironment(QWidget* parent, const SpawnParameters& sp)
 
 bool checkBlacklist(QWidget* parent, const SpawnParameters& sp, const Settings& settings)
 {
-  for (auto exec : settings.executablesBlacklist().split(";")) {
-    if (exec.compare(sp.binary.fileName(), Qt::CaseInsensitive) == 0) {
-      if (QuestionBoxMemory::query(parent, QString("blacklistedExecutable"), sp.binary.fileName(),
-        QObject::tr("Blacklisted Executable"),
-        QObject::tr("The executable you are attempted to launch is blacklisted in the virtual file"
-          " system.  This will likely prevent the executable, and any executables that are"
-          " launched by this one, from seeing any mods.  This could extend to INI files, save"
-          " games and any other virtualized files.\n\nContinue launching %1?").arg(sp.binary.fileName()),
-        QDialogButtonBox::Yes | QDialogButtonBox::No) == QDialogButtonBox::No) {
-        return false;
-      }
-    }
+  if (settings.isExecutableBlacklisted(sp.binary.fileName())) {
+    return dialogs::confirmBlacklisted(parent, sp);
   }
 
   return true;
@@ -778,7 +782,6 @@ bool backdateBSAs(const std::wstring &moPath, const std::wstring &dataPath)
 
   return helperExec(moPath, commandLine, FALSE);
 }
-
 
 bool adminLaunch(const std::wstring &moPath, const std::wstring &moFile, const std::wstring &workingDir)
 {

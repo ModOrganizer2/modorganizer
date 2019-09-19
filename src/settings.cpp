@@ -222,6 +222,17 @@ QString Settings::executablesBlacklist() const
   return get<QString>(m_Settings, "Settings", "executable_blacklist", def);
 }
 
+bool Settings::isExecutableBlacklisted(const QString& s) const
+{
+  for (auto exec : executablesBlacklist().split(";")) {
+    if (exec.compare(s, Qt::CaseInsensitive) == 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 void Settings::setExecutablesBlacklist(const QString& s)
 {
   set(m_Settings, "Settings", "executable_blacklist", s);
