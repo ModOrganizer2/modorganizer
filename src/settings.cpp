@@ -946,7 +946,7 @@ QuestionBoxMemory::Button WidgetSettings::questionButton(
 
   if (!filename.isEmpty()) {
     const auto fileSetting = windowName + "/" + filename;
-    if (auto v=getOptional<int>(m_Settings, sectionName, filename)) {
+    if (auto v=getOptional<int>(m_Settings, sectionName, fileSetting)) {
       return static_cast<QuestionBoxMemory::Button>(*v);
     }
   }

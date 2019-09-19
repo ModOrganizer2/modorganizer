@@ -183,6 +183,7 @@ QMessageBox::StandardButton badSteamReg(
       "The path to the Steam executable cannot be found. You might try "
       "reinstalling Steam."))
     .details(details)
+    .icon(QMessageBox::Critical)
     .button({
     QObject::tr("Continue without starting Steam"),
     QObject::tr("The program may fail to launch."),
@@ -203,6 +204,7 @@ QMessageBox::StandardButton startSteamFailed(
     .main(QObject::tr("Cannot start Steam"))
     .content(makeContent(sp, e))
     .details(details)
+    .icon(QMessageBox::Critical)
     .button({
     QObject::tr("Continue without starting Steam"),
     QObject::tr("The program may fail to launch."),
@@ -232,6 +234,7 @@ void spawnFailed(const SpawnParameters& sp, DWORD code)
     .main(mainText)
     .content(makeContent(sp, code))
     .details(details)
+    .icon(QMessageBox::Critical)
     .exec();
 }
 
@@ -261,6 +264,7 @@ void helperFailed(
     .main(mainText)
     .content(makeContent(sp, code))
     .details(details)
+    .icon(QMessageBox::Critical)
     .exec();
 }
 
@@ -295,26 +299,45 @@ bool confirmRestartAsAdmin(const SpawnParameters& sp)
     .main(mainText)
     .content(content)
     .details(details)
+    .icon(QMessageBox::Question)
     .button({
-    QObject::tr("Restart Mod Organizer as administrator"),
-    QObject::tr("You must allow \"helper.exe\" to make changes to the system."),
-    QMessageBox::Yes})
+      QObject::tr("Restart Mod Organizer as administrator"),
+      QObject::tr("You must allow \"helper.exe\" to make changes to the system."),
+      QMessageBox::Yes})
     .button({
-    QObject::tr("Cancel"),
-    QMessageBox::Cancel})
+      QObject::tr("Cancel"),
+      QMessageBox::Cancel})
     .exec();
 
   return (r == QMessageBox::Yes);
 }
 
-QuestionBoxMemory::Button confirmStartSteam(QWidget* parent, const SpawnParameters& sp)
+QMessageBox::StandardButton confirmStartSteam(
+  QWidget* window, const SpawnParameters& sp, const QString& details)
 {
-  return QuestionBoxMemory::query(
-    parent, "steamQuery", sp.binary.fileName(),
-    QObject::tr("Start Steam?"),
-    QObject::tr("Steam is required to be running already to correctly start the game. "
-      "Should MO try to start steam now?"),
-    QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
+  const auto title = QObject::tr("Launch Steam");
+  const auto mainText = QObject::tr("This program requires Steam");
+  const auto content = QObject::tr(
+    "Mod Organizer has detected that this program likely requires Steam to be "
+    "running to function properly.");
+
+  return MOBase::TaskDialog(window, title)
+    .main(mainText)
+    .content(content)
+    .details(details)
+    .icon(QMessageBox::Question)
+    .button({
+      QObject::tr("Start Steam"),
+      QMessageBox::Yes})
+    .button({
+      QObject::tr("Continue without starting Steam"),
+      QObject::tr("The program might fail to run."),
+      QMessageBox::No})
+    .button({
+      QObject::tr("Cancel"),
+      QMessageBox::Cancel})
+    .remember("steamQuery", sp.binary.fileName())
+    .exec();
 }
 
 QuestionBoxMemory::Button confirmRestartAsAdminForSteam(QWidget* parent, const SpawnParameters& sp)
@@ -561,27 +584,14 @@ bool startSteam(QWidget* parent)
   return true;
 }
 
-bool gameRequiresSteam(const QDir& gameDirectory, const Settings& settings)
-{
-  static const std::vector<QString> files = {
-    "steam_api.dll", "steam_api64.dll"
-  };
-
-  for (const auto& file : files) {
-    const QFileInfo fi(gameDirectory.absoluteFilePath(file));
-    if (fi.exists()) {
-      log::debug("found '{}'", fi.absoluteFilePath());
-      return true;
-    }
-  }
-
-  return false;
-}
-
 bool checkSteam(
   QWidget* parent, const SpawnParameters& sp,
   const QDir& gameDirectory, const QString &steamAppID, const Settings& settings)
 {
+  static const std::vector<QString> steamFiles = {
+    "steam_api.dll", "steam_api64.dll"
+  };
+
   log::debug("checking steam");
 
   if (!steamAppID.isEmpty()) {
@@ -590,16 +600,37 @@ bool checkSteam(
     env::set("SteamAPPId", settings.steam().appID());
   }
 
-  if (!gameRequiresSteam(gameDirectory, settings)) {
-    log::debug("games doesn't seem to require steam");
+
+  bool steamRequired = false;
+  QString details;
+
+  for (const auto& file : steamFiles) {
+    const QFileInfo fi(gameDirectory.absoluteFilePath(file));
+    if (fi.exists()) {
+      details = QString(
+        "managed game is located at '%1' and file '%2' exists")
+        .arg(gameDirectory.absolutePath())
+        .arg(fi.absoluteFilePath());
+
+      log::debug("{}", details);
+      steamRequired = true;
+
+      break;
+    }
+  }
+
+  if (!steamRequired) {
+    log::debug("program doesn't seem to require steam");
     return true;
   }
+
 
   auto ss = getSteamStatus();
 
   if (!ss.running) {
     log::debug("steam isn't running, asking to start steam");
-    const auto c = dialogs::confirmStartSteam(parent, sp);
+
+    const auto c = dialogs::confirmStartSteam(parent, sp, details);
 
     if (c == QDialogButtonBox::Yes) {
       log::debug("user wants to start steam");
