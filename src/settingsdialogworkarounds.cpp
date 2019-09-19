@@ -1,6 +1,7 @@
 #include "settingsdialogworkarounds.h"
 #include "ui_settingsdialog.h"
 #include "spawn.h"
+#include "settings.h"
 #include <iplugingame.h>
 
 WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
@@ -26,7 +27,7 @@ WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
   ui->lockGUIBox->setChecked(settings().interface().lockGUI());
   ui->enableArchiveParsingBox->setChecked(settings().archiveParsing());
 
-  setExecutableBlacklist(settings().executablesBlacklist());
+  m_ExecutableBlacklist = settings().executablesBlacklist();
 
   QObject::connect(ui->bsaDateBtn, &QPushButton::clicked, [&]{ on_bsaDateBtn_clicked(); });
   QObject::connect(ui->execBlacklistBtn, &QPushButton::clicked, [&]{ on_execBlacklistBtn_clicked(); });
@@ -49,14 +50,29 @@ void WorkaroundsSettingsTab::update()
   settings().interface().setDisplayForeign(ui->displayForeignBox->isChecked());
   settings().interface().setLockGUI(ui->lockGUIBox->isChecked());
   settings().setArchiveParsing(ui->enableArchiveParsingBox->isChecked());
-  settings().setExecutablesBlacklist(getExecutableBlacklist());
+  settings().setExecutablesBlacklist(m_ExecutableBlacklist);
 }
 
-void WorkaroundsSettingsTab::on_execBlacklistBtn_clicked()
+bool WorkaroundsSettingsTab::changeBlacklistNow(
+  QWidget* parent, Settings& settings)
+{
+  const auto current = settings.executablesBlacklist();
+
+  if (auto s=changeBlacklistLater(parent, current)) {
+    settings.setExecutablesBlacklist(*s);
+    return true;
+  }
+
+  return false;
+}
+
+std::optional<QString> WorkaroundsSettingsTab::changeBlacklistLater(
+  QWidget* parent, const QString& current)
 {
   bool ok = false;
+
   QString result = QInputDialog::getMultiLineText(
-    &dialog(),
+    parent,
     QObject::tr("Executables Blacklist"),
     QObject::tr("Enter one executable per line to be blacklisted from the virtual file system.\n"
       "Mods and other virtualized files will not be visible to these executables and\n"
@@ -64,17 +80,28 @@ void WorkaroundsSettingsTab::on_execBlacklistBtn_clicked()
       "Example:\n"
       "    Chrome.exe\n"
       "    Firefox.exe"),
-    m_ExecutableBlacklist.split(";").join("\n"),
+    current.split(";").join("\n"),
     &ok
   );
-  if (ok) {
-    QStringList blacklist;
-    for (auto exec : result.split("\n")) {
-      if (exec.trimmed().endsWith(".exe", Qt::CaseInsensitive)) {
-        blacklist << exec.trimmed();
-      }
+
+  if (!ok) {
+    return {};
+  }
+
+  QStringList blacklist;
+  for (auto exec : result.split("\n")) {
+    if (exec.trimmed().endsWith(".exe", Qt::CaseInsensitive)) {
+      blacklist << exec.trimmed();
     }
-    m_ExecutableBlacklist = blacklist.join(";");
+  }
+
+  return blacklist.join(";");
+}
+
+void WorkaroundsSettingsTab::on_execBlacklistBtn_clicked()
+{
+  if (auto s=changeBlacklistLater(parentWidget(), m_ExecutableBlacklist)) {
+    m_ExecutableBlacklist = *s;
   }
 }
 

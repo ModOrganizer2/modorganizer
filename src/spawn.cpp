@@ -26,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "envsecurity.h"
 #include "envmodule.h"
 #include "settings.h"
+#include "settingsdialogworkarounds.h"
 #include <errorcodes.h>
 #include <report.h>
 #include <log.h>
@@ -379,21 +380,45 @@ bool eventLogNotRunning(
       QMessageBox::Cancel})
     .exec();
 
-  return (r == QDialogButtonBox::Yes);
+  return (r == QMessageBox::Yes);
 }
 
-bool confirmBlacklisted(QWidget* parent, const SpawnParameters& sp)
+QMessageBox::StandardButton confirmBlacklisted(
+  QWidget* parent, const SpawnParameters& sp)
 {
-  const auto r = QuestionBoxMemory::query(
-    parent, QString("blacklistedExecutable"), sp.binary.fileName(),
-    QObject::tr("Blacklisted Executable"),
-    QObject::tr("The executable you are attempted to launch is blacklisted in the virtual file"
-      " system.  This will likely prevent the executable, and any executables that are"
-      " launched by this one, from seeing any mods.  This could extend to INI files, save"
-      " games and any other virtualized files.\n\nContinue launching %1?").arg(sp.binary.fileName()),
-    QDialogButtonBox::Yes | QDialogButtonBox::No);
+  const auto title = QObject::tr("Blacklisted program");
+  const auto mainText = QObject::tr("The program %1 is blacklisted")
+    .arg(sp.binary.fileName());
+  const auto content = QObject::tr(
+    "The program you are attempting to launch is blacklisted in the virtual "
+    "filesystem. This will likely prevent it from seeing any mods, INI files "
+    "or any other virtualized files.");
 
-  return (r != QDialogButtonBox::No);
+  auto r = MOBase::TaskDialog(parent, title)
+    .main(mainText)
+    .content(content)
+    .details("")
+    .icon(QMessageBox::Question)
+    .remember("blacklistedExecutable", sp.binary.fileName())
+    .button({
+      QObject::tr("Continue"),
+      QObject::tr("Your mods might not work"),
+      QMessageBox::Yes})
+    .button({
+      QObject::tr("Change the blacklist"),
+      QMessageBox::Retry})
+    .button({
+      QObject::tr("Cancel"),
+      QMessageBox::Cancel})
+    .exec();
+
+  if (r == QMessageBox::Retry) {
+    if (!WorkaroundsSettingsTab::changeBlacklistNow(parent, Settings::instance())) {
+      r = QMessageBox::Cancel;
+    }
+  }
+
+  return r;
 }
 
 } // namespace
@@ -716,11 +741,17 @@ bool checkEnvironment(QWidget* parent, const SpawnParameters& sp)
 
 bool checkBlacklist(QWidget* parent, const SpawnParameters& sp, const Settings& settings)
 {
-  if (settings.isExecutableBlacklisted(sp.binary.fileName())) {
-    return dialogs::confirmBlacklisted(parent, sp);
-  }
+  for (;;) {
+    if (!settings.isExecutableBlacklisted(sp.binary.fileName())) {
+      return true;
+    }
 
-  return true;
+    const auto r = dialogs::confirmBlacklisted(parent, sp);
+
+    if (r != QMessageBox::Retry) {
+      return (r == QMessageBox::Yes);
+    }
+  }
 }
 
 
