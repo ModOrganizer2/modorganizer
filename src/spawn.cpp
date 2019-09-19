@@ -384,7 +384,7 @@ bool eventLogNotRunning(
 }
 
 QMessageBox::StandardButton confirmBlacklisted(
-  QWidget* parent, const SpawnParameters& sp)
+  QWidget* parent, const SpawnParameters& sp, Settings& settings)
 {
   const auto title = QObject::tr("Blacklisted program");
   const auto mainText = QObject::tr("The program %1 is blacklisted")
@@ -394,10 +394,14 @@ QMessageBox::StandardButton confirmBlacklisted(
     "filesystem. This will likely prevent it from seeing any mods, INI files "
     "or any other virtualized files.");
 
+  const auto details =
+    "Executable: " + sp.binary.fileName() + "\n"
+    "Current blacklist: " + settings.executablesBlacklist();
+
   auto r = MOBase::TaskDialog(parent, title)
     .main(mainText)
     .content(content)
-    .details("")
+    .details(details)
     .icon(QMessageBox::Question)
     .remember("blacklistedExecutable", sp.binary.fileName())
     .button({
@@ -413,7 +417,7 @@ QMessageBox::StandardButton confirmBlacklisted(
     .exec();
 
   if (r == QMessageBox::Retry) {
-    if (!WorkaroundsSettingsTab::changeBlacklistNow(parent, Settings::instance())) {
+    if (!WorkaroundsSettingsTab::changeBlacklistNow(parent, settings)) {
       r = QMessageBox::Cancel;
     }
   }
@@ -739,14 +743,15 @@ bool checkEnvironment(QWidget* parent, const SpawnParameters& sp)
   return dialogs::eventLogNotRunning(parent, s, sp);
 }
 
-bool checkBlacklist(QWidget* parent, const SpawnParameters& sp, const Settings& settings)
+bool checkBlacklist(
+  QWidget* parent, const SpawnParameters& sp, Settings& settings)
 {
   for (;;) {
     if (!settings.isExecutableBlacklisted(sp.binary.fileName())) {
       return true;
     }
 
-    const auto r = dialogs::confirmBlacklisted(parent, sp);
+    const auto r = dialogs::confirmBlacklisted(parent, sp, settings);
 
     if (r != QMessageBox::Retry) {
       return (r == QMessageBox::Yes);

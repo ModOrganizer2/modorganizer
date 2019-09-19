@@ -61,7 +61,7 @@ bool checkSteam(
 bool checkEnvironment(QWidget* parent, const SpawnParameters& sp);
 
 bool checkBlacklist(
-  QWidget* parent, const SpawnParameters& sp, const Settings& settings);
+  QWidget* parent, const SpawnParameters& sp, Settings& settings);
 
 /**
  * @brief spawn a binary with Mod Organizer injected
