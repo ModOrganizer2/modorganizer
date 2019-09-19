@@ -83,7 +83,7 @@ void WorkaroundsSettingsTab::on_bsaDateBtn_clicked()
   const auto* game = qApp->property("managed_game").value<MOBase::IPluginGame*>();
   QDir dir = game->dataDirectory();
 
-  Helper::backdateBSAs(qApp->applicationDirPath().toStdWString(),
+  helper::backdateBSAs(qApp->applicationDirPath().toStdWString(),
     dir.absolutePath().toStdWString());
 }
 

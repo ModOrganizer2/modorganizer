@@ -64,7 +64,7 @@ std::wstring makeRightsDetails(const env::FileSecurity& fs)
   return s;
 }
 
-std::wstring makeDetails(const SpawnParameters& sp, DWORD code)
+QString makeDetails(const SpawnParameters& sp, DWORD code, const QString& more={})
 {
   std::wstring owner, rights;
 
@@ -109,7 +109,7 @@ std::wstring makeDetails(const SpawnParameters& sp, DWORD code)
   }
 
   std::wstring f =
-    L"Error {code} {codename}: {error}\n"
+    L"Error {code} {codename}{more}: {error}\n"
     L" . binary: '{bin}'\n"
     L" . owner: {owner}\n"
     L" . rights: {rights}\n"
@@ -122,9 +122,12 @@ std::wstring makeDetails(const SpawnParameters& sp, DWORD code)
     f += L"\n . usvfs x86:{x86_dll} x64:{x64_dll} proxy_x86:{x86_proxy} proxy_x64:{x64_proxy}";
   }
 
-  return fmt::format(f,
+  const std::wstring wmore = (more.isEmpty() ? L"" : (", " + more).toStdWString());
+
+  const auto s = fmt::format(f,
     fmt::arg(L"code", code),
     fmt::arg(L"codename", errorCodeName(code)),
+    fmt::arg(L"more", wmore),
     fmt::arg(L"bin", QDir::toNativeSeparators(sp.binary.absoluteFilePath()).toStdWString()),
     fmt::arg(L"owner", owner),
     fmt::arg(L"rights", rights),
@@ -140,6 +143,8 @@ std::wstring makeDetails(const SpawnParameters& sp, DWORD code)
     fmt::arg(L"x86_proxy", usvfs_x86_proxy),
     fmt::arg(L"x64_proxy", usvfs_x64_proxy),
     fmt::arg(L"elevated", elevated));
+
+  return QString::fromStdWString(s);
 }
 
 QString makeContent(const SpawnParameters& sp, DWORD code)
@@ -198,7 +203,7 @@ QMessageBox::StandardButton startSteamFailed(
   return MOBase::TaskDialog(parent, QObject::tr("Cannot start Steam"))
     .main(QObject::tr("Cannot start Steam"))
     .content(makeContent(sp, e))
-    .details(QString::fromStdWString(details))
+    .details(details)
     .button({
     QObject::tr("Continue without starting Steam"),
     QObject::tr("The program may fail to launch."),
@@ -211,7 +216,7 @@ QMessageBox::StandardButton startSteamFailed(
 
 void spawnFailed(const SpawnParameters& sp, DWORD code)
 {
-  const auto details = QString::fromStdWString(makeDetails(sp, code));
+  const auto details = makeDetails(sp, code);
   log::error("{}", details);
 
   const auto title = QObject::tr("Cannot launch program");
@@ -231,10 +236,38 @@ void spawnFailed(const SpawnParameters& sp, DWORD code)
     .exec();
 }
 
+void helperFailed(
+  DWORD code, const QString& why, const std::wstring& binary,
+  const std::wstring& cwd, const std::wstring& args)
+{
+  SpawnParameters sp;
+  sp.binary = QString::fromStdWString(binary);
+  sp.currentDirectory.setPath(QString::fromStdWString(cwd));
+  sp.arguments = QString::fromStdWString(args);
+
+  const auto details = makeDetails(sp, code, "in " + why);
+  log::error("{}", details);
+
+  const auto title = QObject::tr("Cannot launch helper");
+
+  const auto mainText = QObject::tr("Cannot start %1")
+    .arg(sp.binary.fileName());
+
+  QWidget *window = qApp->activeWindow();
+  if ((window != nullptr) && (!window->isVisible())) {
+    window = nullptr;
+  }
+
+  MOBase::TaskDialog(window, title)
+    .main(mainText)
+    .content(makeContent(sp, code))
+    .details(details)
+    .exec();
+}
+
 bool confirmRestartAsAdmin(const SpawnParameters& sp)
 {
-  const auto details = QString::fromStdWString(
-    makeDetails(sp, ERROR_ELEVATION_REQUIRED));
+  const auto details = makeDetails(sp, ERROR_ELEVATION_REQUIRED);
 
   log::error("{}", details);
 
@@ -370,18 +403,18 @@ bool restartAsAdmin()
     cwd[0] = L'\0';
   }
 
-  if (!Helper::adminLaunch(
+  if (!helper::adminLaunch(
     qApp->applicationDirPath().toStdWString(),
     qApp->applicationFilePath().toStdWString(),
     std::wstring(cwd)))
   {
-    // todo
     log::error("admin launch failed");
     return false;
   }
 
   log::debug("exiting MO");
   qApp->exit(0);
+
   return true;
 }
 
@@ -726,6 +759,98 @@ HANDLE startBinary(QWidget* parent, const SpawnParameters& sp)
       return INVALID_HANDLE_VALUE;
     }
   }
+}
+
+} // namespace
+
+
+
+namespace helper
+{
+
+bool helperExec(
+  const std::wstring& moDirectory, const std::wstring& commandLine, BOOL async)
+{
+  const std::wstring fileName = moDirectory + L"\\helper.exe";
+
+  env::HandlePtr process;
+
+  {
+    SHELLEXECUTEINFOW execInfo = {};
+
+    ULONG flags = SEE_MASK_FLAG_NO_UI ;
+    if (!async)
+      flags |= SEE_MASK_NOCLOSEPROCESS;
+
+    execInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
+    execInfo.fMask = flags;
+    execInfo.hwnd = 0;
+    execInfo.lpVerb = L"runas";
+    execInfo.lpFile = fileName.c_str();
+    execInfo.lpParameters = commandLine.c_str();
+    execInfo.lpDirectory = moDirectory.c_str();
+    execInfo.nShow = SW_SHOW;
+
+    if (!::ShellExecuteExW(&execInfo) && execInfo.hProcess == 0) {
+      const auto e = GetLastError();
+
+      spawn::dialogs::helperFailed(
+        e, "ShellExecuteExW()", fileName, moDirectory, commandLine);
+
+      return false;
+    }
+
+    if (async) {
+      return true;
+    }
+
+    process.reset(execInfo.hProcess);
+  }
+
+  const auto r = ::WaitForSingleObject(process.get(), INFINITE);
+
+  if (r != WAIT_OBJECT_0) {
+    // for WAIT_ABANDONED, the documentation doesn't mention that GetLastError()
+    // returns something meaningful, but code ERROR_ABANDONED_WAIT_0 exists, so
+    // use that instead
+    const auto code = (r == WAIT_ABANDONED ?
+      ERROR_ABANDONED_WAIT_0 : GetLastError());
+
+    spawn::dialogs::helperFailed(
+      code, "WaitForSingleObject()", fileName, moDirectory, commandLine);
+
+    return false;
+  }
+
+  DWORD exitCode = 0;
+  if (!GetExitCodeProcess(process.get(), &exitCode)) {
+    const auto e = GetLastError();
+
+    spawn::dialogs::helperFailed(
+      e, "GetExitCodeProcess()", fileName, moDirectory, commandLine);
+
+    return false;
+  }
+
+  return (exitCode == 0);
+}
+
+bool backdateBSAs(const std::wstring &moPath, const std::wstring &dataPath)
+{
+  const std::wstring commandLine = fmt::format(
+    L"backdateBSA \"{}\"", dataPath);
+
+  return helperExec(moPath, commandLine, FALSE);
+}
+
+
+bool adminLaunch(const std::wstring &moPath, const std::wstring &moFile, const std::wstring &workingDir)
+{
+  const std::wstring commandLine = fmt::format(
+    L"adminLaunch {} \"{}\" \"{}\"",
+    ::GetCurrentProcessId(), moFile, workingDir);
+
+  return helperExec(moPath, commandLine, true);
 }
 
 } // namespace

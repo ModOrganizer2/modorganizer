@@ -224,16 +224,18 @@ bool deleteWindowsCredential(const QString& key)
 
   if (!CredDeleteW(credName.toStdWString().c_str(), CRED_TYPE_GENERIC, 0)) {
     const auto e = GetLastError();
+
+    // not an error if the key already doesn't exist, and don't log it because
+    // it happens all the time when the settings dialog is closed since it
+    // doesn't check first
     if (e == ERROR_NOT_FOUND) {
-      // not an error if the key already doesn't exist
-      log::debug("can't delete windows credential {}, doesn't exist", credName);
       return true;
-    } else {
-      log::error(
-        "failed to delete windows credential {}, {}",
-        credName, formatSystemMessage(e));
-      return false;
     }
+
+    log::error(
+      "failed to delete windows credential {}, {}",
+      credName, formatSystemMessage(e));
+    return false;
   }
 
   log::debug("deleted windows credential {}", credName);
@@ -269,7 +271,7 @@ bool addWindowsCredential(const QString& key, const QString& data)
     return false;
   }
 
-  log::debug("added windows credential {}", credName);
+  log::debug("set windows credential {}", credName);
 
   return true;
 }

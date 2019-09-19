@@ -275,7 +275,7 @@ std::vector<SecurityProduct> getSecurityProductsFromWMI()
     }
 
     if (prop.vt != VT_UI4 && prop.vt != VT_I4) {
-      log::error("productState is a {}, is not a VT_UI4", prop.vt);
+      log::error("productState is a {}, not a VT_UI4", prop.vt);
       return;
     }
 
