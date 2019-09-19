@@ -330,7 +330,22 @@ QuestionBoxMemory::Button confirmRestartAsAdminForSteam(QWidget* parent, const S
     QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
 }
 
-} // namepsace
+bool eventLogNotRunning(
+  QWidget* parent, const env::Service& s, const SpawnParameters& sp)
+{
+  const auto r = QuestionBoxMemory::query(
+    parent, QString("eventLogService"), sp.binary.fileName(),
+    QObject::tr("Windows Event Log Error"),
+    QObject::tr("The Windows Event Log service is disabled and/or not running.  This prevents"
+      " USVFS from running properly.  Your mods may not be working in the executable"
+      " that you are launching.  Note that you may have to restart MO and/or your PC"
+      " after the service is fixed.\n\nContinue launching %1?").arg(sp.binary.fileName()),
+    QDialogButtonBox::Yes | QDialogButtonBox::No);
+
+  return (r != QDialogButtonBox::No);
+}
+
+} // namespace
 
 
 namespace spawn
@@ -614,8 +629,11 @@ bool checkSteam(
   return true;
 }
 
-bool checkEventLogService()
+bool checkEnvironment(QWidget* parent, const SpawnParameters& sp)
 {
+  // check if the Windows Event Logging service is running; for some reason,
+  // this seems to be critical to the successful running of usvfs.
+
   const auto s = env::getService("EventLog");
 
   if (!s.isValid()) {
@@ -626,29 +644,10 @@ bool checkEventLogService()
   if (s.status() == env::Service::Status::Running) {
     log::debug("{}", s.toString());
     return true;
-  } else {
-    log::error("{}", s.toString());
-    return false;
-  }
-}
-
-bool checkEnvironment(QWidget* parent, const SpawnParameters& sp)
-{
-  // Check if the Windows Event Logging service is running.  For some reason, this seems to be
-  // critical to the successful running of usvfs.
-  if (!checkEventLogService()) {
-    if (QuestionBoxMemory::query(parent, QString("eventLogService"), sp.binary.fileName(),
-      QObject::tr("Windows Event Log Error"),
-      QObject::tr("The Windows Event Log service is disabled and/or not running.  This prevents"
-        " USVFS from running properly.  Your mods may not be working in the executable"
-        " that you are launching.  Note that you may have to restart MO and/or your PC"
-        " after the service is fixed.\n\nContinue launching %1?").arg(sp.binary.fileName()),
-      QDialogButtonBox::Yes | QDialogButtonBox::No) == QDialogButtonBox::No) {
-      return false;
-    }
   }
 
-  return true;
+  log::error("{}", s.toString());
+  return dialogs::eventLogNotRunning(parent, s, sp);
 }
 
 bool checkBlacklist(QWidget* parent, const SpawnParameters& sp, const Settings& settings)
