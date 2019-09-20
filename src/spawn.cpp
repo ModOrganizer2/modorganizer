@@ -196,9 +196,17 @@ QMessageBox::StandardButton badSteamReg(
 }
 
 QMessageBox::StandardButton startSteamFailed(
-  QWidget* parent, const SpawnParameters& sp, DWORD e)
+  QWidget* parent,
+  const QString& keyName, const QString& valueName, const QString& exe,
+  const SpawnParameters& sp, DWORD e)
 {
-  const auto details = makeDetails(sp, e);
+  auto details = QString(
+    "a steam install was found in the registry at '%1': '%2'\n\n")
+    .arg(keyName + "\\" + valueName)
+    .arg(exe);
+
+  details += makeDetails(sp, e);
+
   log::error("{}", details);
 
   return MOBase::TaskDialog(parent, QObject::tr("Cannot start Steam"))
@@ -332,7 +340,8 @@ QMessageBox::StandardButton confirmRestartAsAdminForSteam(
   const auto mainText = QObject::tr("Steam is running as administrator");
   const auto content = QObject::tr(
     "Running Steam as administrator is typically unnecessary and can cause "
-    "problems when Mod Organizer is not running as administrato\r\n\r\n"
+    "problems when Mod Organizer itself is not running as administrator."
+    "\r\n\r\n"
     "You can restart Mod Organizer as administrator and try launching the "
     "program again.");
 
@@ -618,7 +627,10 @@ bool startSteam(QWidget* parent)
       (username.isEmpty() ? "" : "USERNAME"),
       (password.isEmpty() ? "" : "PASSWORD"));
 
-    return (dialogs::startSteamFailed(parent, sp, e) == QMessageBox::Yes);
+    const auto r = dialogs::startSteamFailed(
+      parent, keyName, valueName, exe, sp, e);
+
+    return (r == QMessageBox::Yes);
   }
 
   QMessageBox::information(
