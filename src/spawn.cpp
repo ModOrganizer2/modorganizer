@@ -415,7 +415,7 @@ QMessageBox::StandardButton confirmBlacklisted(
     .remember("blacklistedExecutable", sp.binary.fileName())
     .button({
       QObject::tr("Continue"),
-      QObject::tr("Your mods might not work"),
+      QObject::tr("Your mods might not work."),
       QMessageBox::Yes})
     .button({
       QObject::tr("Change the blacklist"),
