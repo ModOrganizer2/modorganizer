@@ -16,6 +16,10 @@ public:
     QUuid guid, QString name, int provider,
     bool active, bool upToDate);
 
+  // guid
+  //
+  const QUuid& guid() const;
+
   // display name of the product
   //
   const QString& name() const;

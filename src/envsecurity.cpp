@@ -161,6 +161,11 @@ SecurityProduct::SecurityProduct(
 {
 }
 
+const QUuid& SecurityProduct::guid() const
+{
+  return m_guid;
+}
+
 const QString& SecurityProduct::name() const
 {
   return m_name;
@@ -185,7 +190,13 @@ QString SecurityProduct::toString() const
 {
   QString s;
 
-  s += m_name + " (" + providerToString() + ")";
+  if (m_name.isEmpty()) {
+    s += "(no name)";
+  } else {
+    s += m_name;
+  }
+
+  s += " (" + providerToString() + ")";
 
   if (!m_active) {
     s += ", inactive";
@@ -195,7 +206,9 @@ QString SecurityProduct::toString() const
     s += ", definitions outdated";
   }
 
-  if (!m_guid.isNull()) {
+  if (m_guid.isNull()) {
+    s += ", (no guid)";
+  } else {
     s += ", " + m_guid.toString(QUuid::QUuid::WithoutBraces);
   }
 
@@ -242,6 +255,73 @@ QString SecurityProduct::providerToString() const
 }
 
 
+std::optional<SecurityProduct> handleProduct(IWbemClassObject* o)
+{
+  VARIANT prop;
+
+
+  // guid
+  auto ret = o->Get(L"instanceGuid", 0, &prop, 0, 0);
+  if (FAILED(ret)) {
+    log::error("failed to get instanceGuid, {}", formatSystemMessage(ret));
+    return {};
+  }
+
+  if (prop.vt != VT_BSTR) {
+    log::error("instanceGuid is a {}, not a bstr", prop.vt);
+    return {};
+  }
+
+  const QUuid guid(QString::fromWCharArray(prop.bstrVal));
+  VariantClear(&prop);
+
+
+  // display name
+  QString displayName;
+  ret = o->Get(L"displayName", 0, &prop, 0, 0);
+
+  if (FAILED(ret)) {
+    log::error("failed to get displayName, {}", formatSystemMessage(ret));
+  } else if (prop.vt != VT_BSTR) {
+    log::error("displayName is a {}, not a bstr", prop.vt);
+  } else {
+    displayName = QString::fromWCharArray(prop.bstrVal);
+  }
+
+  VariantClear(&prop);
+
+
+  // product state
+  DWORD state = 0;
+  ret = o->Get(L"productState", 0, &prop, 0, 0);
+
+  if (FAILED(ret)) {
+    log::error("failed to get productState, {}", formatSystemMessage(ret));
+  } else {
+    if (prop.vt == VT_I4) {
+      state = prop.lVal;
+    } else if (prop.vt == VT_UI4) {
+      state = prop.ulVal;
+    } else if (prop.vt == VT_NULL) {
+      log::warn("productState is null");
+    } else {
+      log::error("productState is a {}, not a VT_I4 or a VT_UI4", prop.vt);
+    }
+  }
+
+  VariantClear(&prop);
+
+
+  const auto provider = static_cast<int>((state >> 16) & 0xff);
+  const auto scanner = (state >> 8) & 0xff;
+  const auto definitions = state & 0xff;
+
+  const bool active = ((scanner & 0x10) != 0);
+  const bool upToDate = (definitions == 0);
+
+  return SecurityProduct(guid, displayName, provider, active, upToDate);
+}
+
 std::vector<SecurityProduct> getSecurityProductsFromWMI()
 {
   // some products may be present in multiple queries, such as a product marked
@@ -249,84 +329,24 @@ std::vector<SecurityProduct> getSecurityProductsFromWMI()
   // that to avoid duplicating entries
   std::map<QUuid, SecurityProduct> map;
 
-  auto handleProduct = [&](auto* o) {
-    VARIANT prop;
-
-    // display name
-    auto ret = o->Get(L"displayName", 0, &prop, 0, 0);
-    if (FAILED(ret)) {
-      log::error("failed to get displayName, {}", formatSystemMessage(ret));
-      return;
+  auto f = [&](auto* o) {
+    if (auto p=handleProduct(o)) {
+      map.emplace(p->guid(), std::move(*p));
     }
-
-    if (prop.vt != VT_BSTR) {
-      log::error("displayName is a {}, not a bstr", prop.vt);
-      return;
-    }
-
-    const std::wstring name = prop.bstrVal;
-    VariantClear(&prop);
-
-    // product state
-    ret = o->Get(L"productState", 0, &prop, 0, 0);
-    if (FAILED(ret)) {
-      log::error("failed to get productState, {}", formatSystemMessage(ret));
-      return;
-    }
-
-    if (prop.vt != VT_UI4 && prop.vt != VT_I4) {
-      log::error("productState is a {}, not a VT_UI4", prop.vt);
-      return;
-    }
-
-    DWORD state = 0;
-    if (prop.vt == VT_I4) {
-      state = prop.lVal;
-    } else {
-      state = prop.ulVal;
-    }
-
-    VariantClear(&prop);
-
-    // guid
-    ret = o->Get(L"instanceGuid", 0, &prop, 0, 0);
-    if (FAILED(ret)) {
-      log::error("failed to get instanceGuid, {}", formatSystemMessage(ret));
-      return;
-    }
-
-    if (prop.vt != VT_BSTR) {
-      log::error("instanceGuid is a {}, is not a bstr", prop.vt);
-      return;
-    }
-
-    const QUuid guid(QString::fromWCharArray(prop.bstrVal));
-    VariantClear(&prop);
-
-    const auto provider = static_cast<int>((state >> 16) & 0xff);
-    const auto scanner = (state >> 8) & 0xff;
-    const auto definitions = state & 0xff;
-
-    const bool active = ((scanner & 0x10) != 0);
-    const bool upToDate = (definitions == 0);
-
-    map.insert({
-      guid,
-      {guid, QString::fromStdWString(name), provider, active, upToDate}});
   };
 
   {
     WMI wmi("root\\SecurityCenter2");
-    wmi.query("select * from AntivirusProduct", handleProduct);
-    wmi.query("select * from FirewallProduct", handleProduct);
-    wmi.query("select * from AntiSpywareProduct", handleProduct);
+    wmi.query("select * from AntivirusProduct", f);
+    wmi.query("select * from FirewallProduct", f);
+    wmi.query("select * from AntiSpywareProduct", f);
   }
 
   {
     WMI wmi("root\\SecurityCenter");
-    wmi.query("select * from AntivirusProduct", handleProduct);
-    wmi.query("select * from FirewallProduct", handleProduct);
-    wmi.query("select * from AntiSpywareProduct", handleProduct);
+    wmi.query("select * from AntivirusProduct", f);
+    wmi.query("select * from FirewallProduct", f);
+    wmi.query("select * from AntiSpywareProduct", f);
   }
 
   std::vector<SecurityProduct> v;
