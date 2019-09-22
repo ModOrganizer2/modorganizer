@@ -191,7 +191,7 @@ p, li { white-space: pre-wrap; }
              <string>This will make all dialogs show up again where you checked the &quot;Remember selection&quot;-box.</string>
             </property>
             <property name="text">
-             <string>Reset Dialogs</string>
+             <string>Reset Dialog Choices</string>
             </property>
            </widget>
           </item>

@@ -38,7 +38,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "executableslist.h"
 #include "singleinstance.h"
 #include "utility.h"
-#include "helper.h"
 #include "loglist.h"
 #include "selectiondialog.h"
 #include "moapplication.h"
@@ -577,8 +576,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     OrganizerCore::setGlobalCrashDumpsType(settings.diagnostics().crashDumpsType());
 
     env::Environment env;
-
-    env.dump();
+    env.dump(settings);
     settings.dump();
     sanityChecks(env);
 
@@ -649,7 +647,10 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
     game->setGameVariant(edition);
 
-    log::info("managing game at {}", game->gameDirectory().absolutePath());
+    log::info(
+      "using game plugin '{}' ('{}', steam id '{}') at {}",
+      game->gameName(), game->gameShortName(), game->steamAPPId(),
+      game->gameDirectory().absolutePath());
 
     organizer.updateExecutablesList();
 
@@ -825,7 +826,12 @@ void initLogging()
 {
   LogModel::create();
 
-  log::createDefault(MOBase::log::Debug, "%^[%m-%d %H:%M:%S.%e %L] %v%$");
+  log::LoggerConfiguration conf;
+  conf.maxLevel = MOBase::log::Debug;
+  conf.pattern = "%^[%Y-%m-%d %H:%M:%S.%e %L] %v%$";
+  conf.utc = true;
+
+  log::createDefault(conf);
 
   log::getDefault().setCallback(
     [](log::Entry e){ LogModel::instance().add(e); });

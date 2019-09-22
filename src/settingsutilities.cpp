@@ -213,55 +213,119 @@ void warnIfNotCheckable(const QAbstractButton* b)
 }
 
 
-bool setWindowsCredential(const QString key, const QString data)
+QString credentialName(const QString& key)
 {
-  QString finalKey("ModOrganizer2_" + key);
-  wchar_t* keyData = new wchar_t[finalKey.size()+1];
-  finalKey.toWCharArray(keyData);
-  keyData[finalKey.size()] = L'\0';
-  bool result = false;
-  if (data.isEmpty()) {
-    result = CredDeleteW(keyData, CRED_TYPE_GENERIC, 0);
-    if (!result)
-      if (GetLastError() == ERROR_NOT_FOUND)
-        result = true;
-  } else {
-    wchar_t* charData = new wchar_t[data.size()];
-    data.toWCharArray(charData);
-
-    CREDENTIALW cred = {};
-    cred.Flags = 0;
-    cred.Type = CRED_TYPE_GENERIC;
-    cred.TargetName = keyData;
-    cred.CredentialBlob = (LPBYTE)charData;
-    cred.CredentialBlobSize = sizeof(wchar_t) * data.size();
-    cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
-
-    result = CredWriteW(&cred, 0);
-    delete[] charData;
-  }
-  delete[] keyData;
-  return result;
+  return "ModOrganizer2_" + key;
 }
 
-QString getWindowsCredential(const QString key)
+bool deleteWindowsCredential(const QString& key)
 {
-  QString result;
-  QString finalKey("ModOrganizer2_" + key);
-  wchar_t* keyData = new wchar_t[finalKey.size()+1];
-  finalKey.toWCharArray(keyData);
-  keyData[finalKey.size()] = L'\0';
-  PCREDENTIALW creds;
-  if (CredReadW(keyData, 1, 0, &creds)) {
-    wchar_t *charData = (wchar_t *)creds->CredentialBlob;
-    result = QString::fromWCharArray(charData, creds->CredentialBlobSize / sizeof(wchar_t));
-    CredFree(creds);
-  } else {
+  const auto credName = credentialName(key);
+
+  if (!CredDeleteW(credName.toStdWString().c_str(), CRED_TYPE_GENERIC, 0)) {
     const auto e = GetLastError();
-    if (e != ERROR_NOT_FOUND) {
-      log::error("Retrieving encrypted data failed: {}", formatSystemMessage(e));
+
+    // not an error if the key already doesn't exist, and don't log it because
+    // it happens all the time when the settings dialog is closed since it
+    // doesn't check first
+    if (e == ERROR_NOT_FOUND) {
+      return true;
+    }
+
+    log::error(
+      "failed to delete windows credential {}, {}",
+      credName, formatSystemMessage(e));
+    return false;
+  }
+
+  log::debug("deleted windows credential {}", credName);
+
+  return true;
+}
+
+bool addWindowsCredential(const QString& key, const QString& data)
+{
+  const auto credName = credentialName(key);
+
+  const auto wname = credName.toStdWString();
+  const auto wdata = data.toStdWString();
+
+  const auto* blob = reinterpret_cast<const BYTE*>(wdata.data());
+  const auto blobSize = wdata.size() * sizeof(decltype(wdata)::value_type);
+
+  CREDENTIALW cred = {};
+  cred.Flags = 0;
+  cred.Type = CRED_TYPE_GENERIC;
+  cred.TargetName = const_cast<wchar_t*>(wname.c_str());
+  cred.CredentialBlob = const_cast<BYTE*>(blob);
+  cred.CredentialBlobSize = static_cast<DWORD>(blobSize);
+  cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
+
+  if (!CredWriteW(&cred, 0)) {
+    const auto e = GetLastError();
+
+    log::error(
+      "failed to delete windows credential {}, {}",
+      credName, formatSystemMessage(e));
+
+    return false;
+  }
+
+  log::debug("set windows credential {}", credName);
+
+  return true;
+}
+
+struct CredentialFreer
+{
+  void operator()(CREDENTIALW* c)
+  {
+    if (c) {
+      CredFree(c);
     }
   }
-  delete[] keyData;
-  return result;
+};
+
+using CredentialPtr = std::unique_ptr<CREDENTIALW, CredentialFreer>;
+
+QString getWindowsCredential(const QString& key)
+{
+  const QString credName = credentialName(key);
+
+  CREDENTIALW* rawCreds = nullptr;
+
+  const auto ret = CredReadW(
+    credName.toStdWString().c_str(), CRED_TYPE_GENERIC, 0, &rawCreds);
+
+  CredentialPtr creds(rawCreds);
+
+  if (!ret) {
+    const auto e = GetLastError();
+
+    if (e != ERROR_NOT_FOUND) {
+      log::error(
+        "failed to retrieve windows credential {}: {}",
+        credName, formatSystemMessage(e));
+    }
+
+    return {};
+  }
+
+  QString value;
+  if (creds->CredentialBlob) {
+    value = QString::fromWCharArray(
+      reinterpret_cast<const wchar_t*>(creds->CredentialBlob),
+      creds->CredentialBlobSize / sizeof(wchar_t));
+  }
+
+  return value;
+}
+
+bool setWindowsCredential(const QString& key, const QString& data)
+{
+  if (data.isEmpty()) {
+    return deleteWindowsCredential(key);
+  } else {
+    return addWindowsCredential(key, data);
+  }
 }

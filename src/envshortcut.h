@@ -1,3 +1,6 @@
+#ifndef ENV_SHORTCUT_H
+#define ENV_SHORTCUT_H
+
 #include <QString>
 
 class Executable;
@@ -103,3 +106,5 @@ private:
 QString toString(Shortcut::Locations loc);
 
 } // namespace
+
+#endif // ENV_SHORTCUT_H

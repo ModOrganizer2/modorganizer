@@ -68,10 +68,12 @@ void PathsSettingsTab::update()
 
     if (!QDir(realPath).exists()) {
       if (!QDir().mkpath(realPath)) {
-        QMessageBox::warning(qApp->activeWindow(), QObject::tr("Error"),
+        QMessageBox::warning(parentWidget(), QObject::tr("Error"),
           QObject::tr("Failed to create \"%1\", you may not have the "
-            "necessary permission. path remains unchanged.")
+            "necessary permissions. Path remains unchanged.")
           .arg(realPath));
+
+        continue;
       }
     }
 

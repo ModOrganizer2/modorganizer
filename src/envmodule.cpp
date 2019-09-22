@@ -320,6 +320,40 @@ QString Module::getMD5() const
 }
 
 
+Process::Process(DWORD pid, QString name)
+  : m_pid(pid), m_name(std::move(name))
+{
+}
+
+DWORD Process::pid() const
+{
+  return m_pid;
+}
+
+const QString& Process::name() const
+{
+  return m_name;
+}
+
+// whether this process can be accessed; fails if the current process doesn't
+// have the proper permissions
+//
+bool Process::canAccess() const
+{
+  HandlePtr h(OpenProcess(
+    PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, m_pid));
+
+  if (!h) {
+    const auto e = GetLastError();
+    if (e == ERROR_ACCESS_DENIED) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
 std::vector<Module> getLoadedModules()
 {
   HandlePtr snapshot(CreateToolhelp32Snapshot(
@@ -369,6 +403,53 @@ std::vector<Module> getLoadedModules()
   std::sort(v.begin(), v.end(), [](auto&& a, auto&& b) {
     return (a.displayPath().compare(b.displayPath(), Qt::CaseInsensitive) < 0);
     });
+
+  return v;
+}
+
+
+std::vector<Process> getRunningProcesses()
+{
+  HandlePtr snapshot(CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
+
+  if (snapshot.get() == INVALID_HANDLE_VALUE)
+  {
+    const auto e = GetLastError();
+    log::error("CreateToolhelp32Snapshot() failed, {}", formatSystemMessage(e));
+    return {};
+  }
+
+  PROCESSENTRY32 entry = {};
+  entry.dwSize = sizeof(entry);
+
+  // first process, this shouldn't fail because there's at least one process
+  // running
+  if (!Process32First(snapshot.get(), &entry)) {
+    const auto e = GetLastError();
+    log::error("Process32First() failed, {}", formatSystemMessage(e));
+    return {};
+  }
+
+  std::vector<Process> v;
+
+  for (;;)
+  {
+    v.push_back(Process(
+      entry.th32ProcessID,
+      QString::fromStdWString(entry.szExeFile)));
+
+    // next process
+    if (!Process32Next(snapshot.get(), &entry))
+    {
+      const auto e = GetLastError();
+
+      // no more processes is not an error
+      if (e != ERROR_NO_MORE_FILES)
+        log::error("Process32Next() failed, {}", formatSystemMessage(e));
+
+      break;
+    }
+  }
 
   return v;
 }

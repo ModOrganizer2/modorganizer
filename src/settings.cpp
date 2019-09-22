@@ -222,6 +222,17 @@ QString Settings::executablesBlacklist() const
   return get<QString>(m_Settings, "Settings", "executable_blacklist", def);
 }
 
+bool Settings::isExecutableBlacklisted(const QString& s) const
+{
+  for (auto exec : executablesBlacklist().split(";")) {
+    if (exec.compare(s, Qt::CaseInsensitive) == 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 void Settings::setExecutablesBlacklist(const QString& s)
 {
   set(m_Settings, "Settings", "executable_blacklist", s);
@@ -935,7 +946,7 @@ QuestionBoxMemory::Button WidgetSettings::questionButton(
 
   if (!filename.isEmpty()) {
     const auto fileSetting = windowName + "/" + filename;
-    if (auto v=getOptional<int>(m_Settings, sectionName, filename)) {
+    if (auto v=getOptional<int>(m_Settings, sectionName, fileSetting)) {
       return static_cast<QuestionBoxMemory::Button>(*v);
     }
   }
@@ -1219,6 +1230,7 @@ void PluginSettings::setPersistent(
     m_Settings.sync();
   }
 }
+
 void PluginSettings::addBlacklist(const QString &fileName)
 {
   m_PluginBlacklist.insert(fileName);

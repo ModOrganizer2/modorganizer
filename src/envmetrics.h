@@ -1,3 +1,6 @@
+#ifndef ENV_METRICS_H
+#define ENV_METRICS_H
+
 #include <QString>
 #include <vector>
 
@@ -63,6 +66,10 @@ public:
   //
   const std::vector<Display>& displays() const;
 
+  // full resolution
+  //
+  QRect desktopGeometry() const;
+
 private:
   std::vector<Display> m_displays;
 
@@ -70,3 +77,5 @@ private:
 };
 
 } // namespace
+
+#endif // ENV_METRICS_H

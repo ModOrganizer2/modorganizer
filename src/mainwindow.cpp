@@ -2565,17 +2565,6 @@ void MainWindow::modInstalled(const QString &modName)
   modUpdateCheck(IDs);
 }
 
-void MainWindow::procError(QProcess::ProcessError error)
-{
-  reportError(tr("failed to spawn notepad.exe: %1").arg(error));
-  this->sender()->deleteLater();
-}
-
-void MainWindow::procFinished(int, QProcess::ExitStatus)
-{
-  this->sender()->deleteLater();
-}
-
 void MainWindow::showMessage(const QString &message)
 {
   MessageDialog::showMessage(message, this);
@@ -6449,11 +6438,13 @@ void MainWindow::on_bossButton_clicked()
       return;
     }
 
-    HANDLE loot = startBinary(QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe"),
-                              parameters.join(" "),
-                              qApp->applicationDirPath() + "/loot",
-                              true,
-                              stdOutWrite);
+    spawn::SpawnParameters sp;
+    sp.binary = QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe");
+    sp.arguments = parameters.join(" ");
+    sp.currentDirectory.setPath(qApp->applicationDirPath() + "/loot");
+    sp.stdOut = stdOutWrite;
+
+    HANDLE loot = spawn::startBinary(this, sp);
 
     // we don't use the write end
     ::CloseHandle(stdOutWrite);

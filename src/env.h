@@ -1,7 +1,13 @@
+#ifndef ENV_ENV_H
+#define ENV_ENV_H
+
+class Settings;
+
 namespace env
 {
 
 class Module;
+class Process;
 class SecurityProduct;
 class WindowsInfo;
 class Metrics;
@@ -74,6 +80,37 @@ template <class T>
 using COMPtr = std::unique_ptr<T, COMReleaser>;
 
 
+// used by MallocPtr, calls std::free() as the deleter
+//
+struct MallocFreer
+{
+  void operator()(void* p)
+  {
+    std::free(p);
+  }
+};
+
+template <class T>
+using MallocPtr = std::unique_ptr<T, MallocFreer>;
+
+
+// used by LocalPtr, calls LocalFree() as the deleter
+//
+template <class T>
+struct LocalFreer
+{
+  using pointer = T;
+
+  void operator()(T p)
+  {
+    ::LocalFree(p);
+  }
+};
+
+template <class T>
+using LocalPtr = std::unique_ptr<T, LocalFreer<T>>;
+
+
 // creates a console in the constructor and destroys it in the destructor,
 // also redirects standard streams
 //
@@ -111,6 +148,10 @@ public:
   //
   const std::vector<Module>& loadedModules() const;
 
+  // list of running processes; not cached
+  //
+  std::vector<Process> runningProcesses() const;
+
   // information about the operating system
   //
   const WindowsInfo& windowsInfo() const;
@@ -125,15 +166,69 @@ public:
 
   // logs the environment
   //
-  void dump() const;
+  void dump(const Settings& s) const;
 
 private:
-  std::vector<Module> m_modules;
-  std::unique_ptr<WindowsInfo> m_windows;
-  std::vector<SecurityProduct> m_security;
-  std::unique_ptr<Metrics> m_metrics;
+  mutable std::vector<Module> m_modules;
+  mutable std::unique_ptr<WindowsInfo> m_windows;
+  mutable std::vector<SecurityProduct> m_security;
+  mutable std::unique_ptr<Metrics> m_metrics;
+
+  // dumps all the disks involved in the settings
+  //
+  void dumpDisks(const Settings& s) const;
 };
 
+
+// environment variables
+//
+QString get(const QString& name);
+QString set(const QString& name, const QString& value);
+
+QString path();
+QString addPath(const QString& s);
+QString setPath(const QString& s);
+
+
+class Service
+{
+public:
+  enum class StartType
+  {
+    None = 0,
+    Disabled,
+    Enabled
+  };
+
+  enum class Status
+  {
+    None = 0,
+    Stopped,
+    Running
+  };
+
+
+  explicit Service(QString name);
+  Service(QString name, StartType st, Status s);
+
+  bool isValid() const;
+
+  const QString& name() const;
+  StartType startType() const;
+  Status status() const;
+
+  QString toString() const;
+
+private:
+  QString m_name;
+  StartType m_startType;
+  Status m_status;
+};
+
+
+Service getService(const QString& name);
+QString toString(Service::StartType st);
+QString toString(Service::Status st);
 
 enum class CoreDumpTypes
 {
@@ -142,7 +237,7 @@ enum class CoreDumpTypes
   Full
 };
 
-// creates a minidump file for the given process
+// creates a minidump file for this process
 //
 bool coredump(CoreDumpTypes type);
 
@@ -152,3 +247,5 @@ bool coredump(CoreDumpTypes type);
 bool coredumpOther(CoreDumpTypes type);
 
 } // namespace env
+
+#endif // ENV_ENV_H

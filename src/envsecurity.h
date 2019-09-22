@@ -1,3 +1,6 @@
+#ifndef ENV_SECURITY_H
+#define ENV_SECURITY_H
+
 #include <QUuid>
 #include <QString>
 
@@ -12,6 +15,10 @@ public:
   SecurityProduct(
     QUuid guid, QString name, int provider,
     bool active, bool upToDate);
+
+  // guid
+  //
+  const QUuid& guid() const;
 
   // display name of the product
   //
@@ -46,4 +53,23 @@ private:
 
 std::vector<SecurityProduct> getSecurityProducts();
 
+
+struct FileRights
+{
+  QStringList list;
+  bool hasExecute = false;
+  bool normalRights = false;
+};
+
+struct FileSecurity
+{
+  QString owner;
+  FileRights rights;
+  QString error;
+};
+
+FileSecurity getFileSecurity(const QString& file);
+
 } // namespace env
+
+#endif // ENV_SECURITY_H

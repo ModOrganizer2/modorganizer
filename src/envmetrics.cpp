@@ -4,6 +4,7 @@
 #include <shellscalingapi.h>
 #include <log.h>
 #include <utility.h>
+#include <QDesktopWidget>
 
 namespace env
 {
@@ -223,6 +224,17 @@ Metrics::Metrics()
 const std::vector<Display>& Metrics::displays() const
 {
   return m_displays;
+}
+
+QRect Metrics::desktopGeometry() const
+{
+  QRect r;
+
+  for (auto* s : QGuiApplication::screens()) {
+    r = r.united(s->geometry());
+  }
+
+  return r;
 }
 
 void Metrics::getDisplays()

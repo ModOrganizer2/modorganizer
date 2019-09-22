@@ -8,6 +8,18 @@ class WorkaroundsSettingsTab : public SettingsTab
 {
 public:
   WorkaroundsSettingsTab(Settings& settings, SettingsDialog& dialog);
+
+  // shows the blacklist dialog from the given settings, and changes the
+  // settings when the user accepts it
+  //
+  static bool changeBlacklistNow(QWidget* parent, Settings& settings);
+
+  // shows the blacklist dialog from the given string and returns the new
+  // blacklist if the user accepted it
+  //
+  static std::optional<QString> changeBlacklistLater(
+    QWidget* parent, const QString& current);
+
   void update();
 
 private:
@@ -16,9 +28,6 @@ private:
   void on_bsaDateBtn_clicked();
   void on_execBlacklistBtn_clicked();
   void on_resetGeometryBtn_clicked();
-
-  QString getExecutableBlacklist() { return m_ExecutableBlacklist; }
-  void setExecutableBlacklist(QString blacklist) { m_ExecutableBlacklist = blacklist; }
 };
 
 #endif // SETTINGSDIALOGWORKAROUNDS_H

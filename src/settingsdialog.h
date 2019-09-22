@@ -42,6 +42,7 @@ protected:
 
   Settings& settings();
   SettingsDialog& dialog();
+  QWidget* parentWidget();
 
 private:
   Settings& m_settings;
@@ -56,11 +57,12 @@ private:
  **/
 class SettingsDialog : public MOBase::TutorableDialog
 {
-    Q_OBJECT
+    Q_OBJECT;
+    friend class SettingsTab;
 
 public:
   explicit SettingsDialog(
-    PluginContainer *pluginContainer, Settings& settings, QWidget *parent = 0);
+    PluginContainer* pluginContainer, Settings& settings, QWidget* parent = 0);
 
   ~SettingsDialog();
 
@@ -70,23 +72,21 @@ public:
   */
   QString getColoredButtonStyleSheet() const;
 
-  // temp
-  Ui::SettingsDialog *ui;
-  bool m_keyChanged;
-  PluginContainer *m_PluginContainer;
+  PluginContainer* pluginContainer();
+  QWidget* parentWidgetForDialogs();
+  void setRestartNeeded();
 
   int exec() override;
 
 public slots:
   virtual void accept();
 
-public:
-  bool getApiKeyChanged();
-
 private:
   Settings& m_settings;
   std::vector<std::unique_ptr<SettingsTab>> m_tabs;
-
+  Ui::SettingsDialog* ui;
+  bool m_restartNeeded;
+  PluginContainer* m_pluginContainer;
 };
 
 #endif // SETTINGSDIALOG_H

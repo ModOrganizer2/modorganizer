@@ -1,3 +1,6 @@
+#ifndef ENV_MODULE_H
+#define ENV_MODULE_H
+
 #include <QString>
 #include <QDateTime>
 
@@ -9,7 +12,7 @@ namespace env
 class Module
 {
 public:
-  explicit Module(QString path, std::size_t fileSize);
+  Module(QString path, std::size_t fileSize);
 
   // returns the module's path
   //
@@ -93,6 +96,30 @@ private:
 };
 
 
+// represents one process
+//
+class Process
+{
+public:
+  Process(DWORD pid, QString name);
+
+  DWORD pid() const;
+  const QString& name() const;
+
+  // whether this process can be accessed; fails if the current process doesn't
+  // have the proper permissions
+  //
+  bool canAccess() const;
+
+private:
+  DWORD m_pid;
+  QString m_name;
+};
+
+
+std::vector<Process> getRunningProcesses();
 std::vector<Module> getLoadedModules();
 
 } // namespace env
+
+#endif // ENV_MODULE_H

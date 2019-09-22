@@ -87,7 +87,6 @@ SET(organizer_SRCS
     waitingonclosedialog.cpp
     loadmechanism.cpp
     installationmanager.cpp
-    helper.cpp
     filedialogmemory.cpp
     executableslist.cpp
     editexecutablesdialog.cpp
@@ -136,7 +135,6 @@ SET(organizer_SRCS
 	apiuseraccount.cpp
 	filerenamer.cpp
 	texteditor.cpp
-	expanderwidget.cpp
 	env.cpp
 	envmetrics.cpp
 	envmodule.cpp
@@ -209,7 +207,6 @@ SET(organizer_HDRS
     waitingonclosedialog.h
     loadmechanism.h
     installationmanager.h
-    helper.h
     filedialogmemory.h
     executableslist.h
     editexecutablesdialog.h
@@ -260,7 +257,6 @@ SET(organizer_HDRS
 	apiuseraccount.h
 	filerenamer.h
 	texteditor.h
-	expanderwidget.h
 	env.h
 	envmetrics.h
 	envmodule.h
@@ -466,7 +462,6 @@ set(utilities
 	csvbuilder
 	shared/error_report
 	eventfilter
-	helper
 	shared/leaktrace
 	persistentcookiejar
 	serverinfo
@@ -478,7 +473,6 @@ set(utilities
 )
 
 set(widgets
-	expanderwidget
 	genericicondelegate
 	filerenamer
 	filterwidget

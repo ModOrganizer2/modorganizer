@@ -489,9 +489,6 @@ private slots:
   void doMoveOverwriteContentToMod(const QString &modAbsolutePath);
   void clearOverwrite();
 
-  void procError(QProcess::ProcessError error);
-  void procFinished(int exitCode, QProcess::ExitStatus exitStatus);
-
   // nexus related
   void checkModsForUpdates();
 

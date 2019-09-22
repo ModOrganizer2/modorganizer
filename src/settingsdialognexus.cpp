@@ -226,7 +226,7 @@ void NexusSettingsTab::on_nexusDisconnect_clicked()
 void NexusSettingsTab::on_clearCacheButton_clicked()
 {
   QDir(Settings::instance().paths().cache()).removeRecursively();
-  NexusInterface::instance(dialog().m_PluginContainer)->clearCache();
+  NexusInterface::instance(dialog().pluginContainer())->clearCache();
 }
 
 void NexusSettingsTab::on_associateButton_clicked()
@@ -238,7 +238,7 @@ void NexusSettingsTab::validateKey(const QString& key)
 {
   if (!m_nexusValidator) {
     m_nexusValidator.reset(new NexusKeyValidator(
-      *NexusInterface::instance(dialog().m_PluginContainer)->getAccessManager()));
+      *NexusInterface::instance(dialog().pluginContainer())->getAccessManager()));
 
     m_nexusValidator->stateChanged = [&](auto&& s, auto&& e){
       onValidatorStateChanged(s, e);
@@ -294,7 +294,7 @@ void NexusSettingsTab::onValidatorStateChanged(
 
 void NexusSettingsTab::onValidatorFinished(const APIUserAccount& user)
 {
-  NexusInterface::instance(dialog().m_PluginContainer)->setUserAccount(user);
+  NexusInterface::instance(dialog().pluginContainer())->setUserAccount(user);
 
   if (!user.apiKey().isEmpty()) {
     if (setKey(user.apiKey())) {
@@ -311,7 +311,7 @@ void NexusSettingsTab::addNexusLog(const QString& s)
 
 bool NexusSettingsTab::setKey(const QString& key)
 {
-  dialog().m_keyChanged = true;
+  dialog().setRestartNeeded();
   const bool ret = settings().nexus().setApiKey(key);
   updateNexusState();
   return ret;
@@ -319,10 +319,10 @@ bool NexusSettingsTab::setKey(const QString& key)
 
 bool NexusSettingsTab::clearKey()
 {
-  dialog().m_keyChanged = true;
+  dialog().setRestartNeeded();
   const auto ret = settings().nexus().clearApiKey();
 
-  NexusInterface::instance(dialog().m_PluginContainer)->getAccessManager()->clearApiKey();
+  NexusInterface::instance(dialog().pluginContainer())->getAccessManager()->clearApiKey();
   updateNexusState();
 
   return ret;
@@ -371,7 +371,7 @@ void NexusSettingsTab::updateNexusButtons()
 
 void NexusSettingsTab::updateNexusData()
 {
-  const auto user = NexusInterface::instance(dialog().m_PluginContainer)
+  const auto user = NexusInterface::instance(dialog().pluginContainer())
     ->getAPIUserAccount();
 
   if (user.isValid()) {

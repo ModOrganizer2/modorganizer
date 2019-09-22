@@ -4,6 +4,7 @@
 #include "envsecurity.h"
 #include "envshortcut.h"
 #include "envwindows.h"
+#include "settings.h"
 #include <log.h>
 #include <utility.h>
 
@@ -56,10 +57,7 @@ Console::~Console()
 
 
 Environment::Environment()
-  : m_windows(new WindowsInfo), m_metrics(new Metrics)
 {
-  m_modules = getLoadedModules();
-  m_security = getSecurityProducts();
 }
 
 // anchor
@@ -67,59 +65,380 @@ Environment::~Environment() = default;
 
 const std::vector<Module>& Environment::loadedModules() const
 {
+  if (m_modules.empty()){
+    m_modules = getLoadedModules();
+  }
+
   return m_modules;
+}
+
+std::vector<Process> Environment::runningProcesses() const
+{
+  return getRunningProcesses();
 }
 
 const WindowsInfo& Environment::windowsInfo() const
 {
+  if (!m_windows) {
+    m_windows.reset(new WindowsInfo);
+  }
+
   return *m_windows;
 }
 
 const std::vector<SecurityProduct>& Environment::securityProducts() const
 {
+  if (m_security.empty()) {
+    m_security = getSecurityProducts();
+  }
+
   return m_security;
 }
 
 const Metrics& Environment::metrics() const
 {
+  if (!m_metrics) {
+    m_metrics.reset(new Metrics);
+  }
+
   return *m_metrics;
 }
 
-void Environment::dump() const
+void Environment::dump(const Settings& s) const
 {
-  log::debug("windows: {}", m_windows->toString());
+  log::debug("windows: {}", windowsInfo().toString());
 
-  if (m_windows->compatibilityMode()) {
+  if (windowsInfo().compatibilityMode()) {
     log::warn("MO seems to be running in compatibility mode");
   }
 
   log::debug("security products:");
-  for (const auto& sp : m_security) {
+  for (const auto& sp : securityProducts()) {
     log::debug("  . {}", sp.toString());
   }
 
   log::debug("modules loaded in process:");
-  for (const auto& m : m_modules) {
+  for (const auto& m : loadedModules()) {
     log::debug(" . {}", m.toString());
   }
 
   log::debug("displays:");
-  for (const auto& d : m_metrics->displays()) {
+  for (const auto& d : metrics().displays()) {
     log::debug(" . {}", d.toString());
   }
+
+  const auto r = metrics().desktopGeometry();
+  log::debug(
+    "desktop geometry: ({},{})-({},{})",
+    r.left(), r.top(), r.right(), r.bottom());
+
+  dumpDisks(s);
+}
+
+void Environment::dumpDisks(const Settings& s) const
+{
+  std::set<QString> rootPaths;
+
+  auto dump = [&](auto&& path) {
+    const QFileInfo fi(path);
+    const QStorageInfo si(fi.absoluteFilePath());
+
+    if (rootPaths.contains(si.rootPath())) {
+      // already seen
+      return;
+    }
+
+    // remember
+    rootPaths.insert(si.rootPath());
+
+    log::debug(
+      "  . {} free={} MB{}",
+      si.rootPath(),
+      (si.bytesFree() / 1000 / 1000),
+      (si.isReadOnly() ? " (readonly)" : ""));
+  };
+
+  log::debug("drives:");
+
+  dump(QStorageInfo::root().rootPath());
+  dump(s.paths().base());
+  dump(s.paths().downloads());
+  dump(s.paths().mods());
+  dump(s.paths().cache());
+  dump(s.paths().profiles());
+  dump(s.paths().overwrite());
+  dump(QCoreApplication::applicationDirPath());
 }
 
 
-struct Process
+QString path()
 {
-  std::wstring filename;
-  DWORD pid;
+  return get("PATH");
+}
 
-  Process(std::wstring f, DWORD id)
-    : filename(std::move(f)), pid(id)
-  {
+QString addPath(const QString& s)
+{
+  auto old = path();
+  set("PATH", get("PATH") + ";" + s);
+ return old;
+}
+
+QString setPath(const QString& s)
+{
+  return set("PATH", s);
+}
+
+QString get(const QString& name)
+{
+  std::wstring s(4000, L' ');
+
+  DWORD realSize = ::GetEnvironmentVariableW(
+    name.toStdWString().c_str(), s.data(), static_cast<DWORD>(s.size()));
+
+  if (realSize > s.size()) {
+    s.resize(realSize);
+
+    ::GetEnvironmentVariableW(
+      name.toStdWString().c_str(), s.data(), static_cast<DWORD>(s.size()));
   }
-};
+
+  return QString::fromStdWString(s);
+}
+
+QString set(const QString& n, const QString& v)
+{
+  auto old = get(n);
+  ::SetEnvironmentVariableW(n.toStdWString().c_str(), v.toStdWString().c_str());
+  return old;
+}
+
+
+Service::Service(QString name)
+  : Service(std::move(name), StartType::None, Status::None)
+{
+}
+
+Service::Service(QString name, StartType st, Status s)
+  : m_name(std::move(name)), m_startType(st), m_status(s)
+{
+}
+
+const QString& Service::name() const
+{
+  return m_name;
+}
+
+bool Service::isValid() const
+{
+  return (m_startType != StartType::None) && (m_status != Status::None);
+}
+
+Service::StartType Service::startType() const
+{
+  return m_startType;
+}
+
+Service::Status Service::status() const
+{
+  return m_status;
+}
+
+QString Service::toString() const
+{
+  return QString("service '%1', start=%2, status=%3")
+    .arg(m_name)
+    .arg(env::toString(m_startType))
+    .arg(env::toString(m_status));
+}
+
+
+QString toString(Service::StartType st)
+{
+  using ST = Service::StartType;
+
+  switch (st)
+  {
+    case ST::None:
+      return "none";
+
+    case ST::Disabled:
+      return "disabled";
+
+    case ST::Enabled:
+      return "enabled";
+
+    default:
+      return QString("unknown %1").arg(static_cast<int>(st));
+  }
+}
+
+QString toString(Service::Status st)
+{
+  using S = Service::Status;
+
+  switch (st)
+  {
+    case S::None:
+      return "none";
+
+    case S::Stopped:
+      return "stopped";
+
+    case S::Running:
+      return "running";
+
+    default:
+      return QString("unknown %1").arg(static_cast<int>(st));
+  }
+}
+
+Service::StartType getServiceStartType(SC_HANDLE s, const QString& name)
+{
+  DWORD needed = 0;
+
+  if (!QueryServiceConfig(s, NULL, 0, &needed)) {
+    const auto e = GetLastError();
+
+    if (e != ERROR_INSUFFICIENT_BUFFER) {
+      log::error(
+        "QueryServiceConfig() for size for '{}' failed, {}",
+        name, GetLastError());
+
+      return Service::StartType::None;
+    }
+  }
+
+  const auto size = needed;
+  MallocPtr<QUERY_SERVICE_CONFIG> config(
+    static_cast<QUERY_SERVICE_CONFIG*>(std::malloc(size)));
+
+  if (!QueryServiceConfig(s, config.get(), size, &needed)) {
+    const auto e = GetLastError();
+
+    log::error(
+      "QueryServiceConfig() for '{}' failed", name, formatSystemMessage(e));
+
+    return Service::StartType::None;
+  }
+
+
+  switch (config->dwStartType)
+  {
+    case SERVICE_AUTO_START:   // fall-through
+    case SERVICE_BOOT_START:
+    case SERVICE_DEMAND_START:
+    case SERVICE_SYSTEM_START:
+    {
+      return Service::StartType::Enabled;
+    }
+
+    case SERVICE_DISABLED:
+    {
+      return Service::StartType::Disabled;
+    }
+
+    default:
+    {
+      log::error(
+        "unknown service start type {} for '{}'",
+        config->dwStartType, name);
+
+      return Service::StartType::None;
+    }
+  }
+}
+
+Service::Status getServiceStatus(SC_HANDLE s, const QString& name)
+{
+  DWORD needed = 0;
+
+  if (!QueryServiceStatusEx(s, SC_STATUS_PROCESS_INFO, NULL, 0, &needed)) {
+    const auto e = GetLastError();
+
+    if (e != ERROR_INSUFFICIENT_BUFFER) {
+      log::error(
+        "QueryServiceStatusEx() for size for '{}' failed, {}",
+        name, GetLastError());
+
+      return Service::Status::None;
+    }
+  }
+
+  const auto size = needed;
+  MallocPtr<SERVICE_STATUS_PROCESS> status(
+    static_cast<SERVICE_STATUS_PROCESS*>(std::malloc(size)));
+
+  const auto r = QueryServiceStatusEx(
+    s, SC_STATUS_PROCESS_INFO, reinterpret_cast<BYTE*>(status.get()),
+    size, &needed);
+
+  if (!r) {
+    const auto e = GetLastError();
+
+    log::error(
+      "QueryServiceStatusEx() failed for '{}', {}",
+      name, formatSystemMessage(e));
+
+    return Service::Status::None;
+  }
+
+
+  switch (status->dwCurrentState)
+  {
+    case SERVICE_START_PENDING:    // fall-through
+    case SERVICE_CONTINUE_PENDING:
+    case SERVICE_RUNNING:
+    {
+      return Service::Status::Running;
+    }
+
+    case SERVICE_STOPPED:          // fall-through
+    case SERVICE_STOP_PENDING:
+    case SERVICE_PAUSE_PENDING:
+    case SERVICE_PAUSED:
+    {
+      return Service::Status::Stopped;
+    }
+
+    default:
+    {
+      log::error(
+        "unknown service status {} for '{}'",
+        status->dwCurrentState, name);
+
+      return Service::Status::None;
+    }
+  }
+}
+
+Service getService(const QString& name)
+{
+  // service manager
+  const LocalPtr<SC_HANDLE> scm(OpenSCManager(
+    NULL, NULL, SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG));
+
+  if (!scm) {
+    const auto e = GetLastError();
+    log::error("OpenSCManager() failed, {}", formatSystemMessage(e));
+    return Service(name);
+  }
+
+  // service
+  const LocalPtr<SC_HANDLE> s(OpenService(
+    scm.get(), name.toStdWString().c_str(),
+    SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG));
+
+  if (!s) {
+    const auto e = GetLastError();
+    log::error("OpenService() failed for '{}', {}", name, formatSystemMessage(e));
+    return Service(name);
+  }
+
+  const auto startType = getServiceStartType(s.get(), name);
+  const auto status = getServiceStatus(s.get(), name);
+
+  return {name, startType, status};
+}
 
 
 // returns the filename of the given process or the current one
@@ -177,84 +496,6 @@ std::wstring processFilename(HANDLE process=INVALID_HANDLE_VALUE)
   return {};
 }
 
-std::vector<DWORD> runningProcessesIds()
-{
-  // double the buffer size 10 times
-  const int MaxTries = 10;
-
-  // initial size of 300 processes, unlikely to be more than that
-  std::size_t size = 300;
-
-  for (int tries=0; tries<MaxTries; ++tries) {
-    auto ids = std::make_unique<DWORD[]>(size);
-    std::fill(ids.get(), ids.get() + size, 0);
-
-    DWORD bytesGiven = static_cast<DWORD>(size * sizeof(ids[0]));
-    DWORD bytesWritten = 0;
-
-    if (!EnumProcesses(ids.get(), bytesGiven, &bytesWritten))
-    {
-      const auto e = GetLastError();
-
-      std::wcerr
-        << L"failed to enumerate processes, "
-        << formatSystemMessage(e) << L"\n";
-
-      return {};
-    }
-
-    if (bytesWritten == bytesGiven) {
-      // no way to distinguish between an exact fit and not enough space,
-      // just try again
-      size *= 2;
-      continue;
-    }
-
-    const auto count = bytesWritten / sizeof(ids[0]);
-    return std::vector<DWORD>(ids.get(), ids.get() + count);
-  }
-
-  std::cerr << L"too many processes to enumerate";
-  return {};
-}
-
-std::vector<Process> runningProcesses()
-{
-  const auto pids = runningProcessesIds();
-  std::vector<Process> v;
-
-  for (const auto& pid : pids) {
-    if (pid == 0) {
-      // the idle process has pid 0 and seems to be picked up by EnumProcesses()
-      continue;
-    }
-
-    HandlePtr h(OpenProcess(
-      PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid));
-
-    if (!h) {
-      const auto e = GetLastError();
-
-      if (e != ERROR_ACCESS_DENIED) {
-        // don't log access denied, will happen a lot for system processes, even
-        // when elevated
-        std::wcerr
-          << L"failed to open process " << pid << L", "
-          << formatSystemMessage(e) << L"\n";
-      }
-
-      continue;
-    }
-
-    auto filename = processFilename(h.get());
-    if (!filename.empty()) {
-      v.emplace_back(std::move(filename), pid);
-    }
-  }
-
-  return v;
-}
-
 DWORD findOtherPid()
 {
   const std::wstring defaultName = L"ModOrganizer.exe";
@@ -266,7 +507,7 @@ DWORD findOtherPid()
   std::wclog << L"this process id is " << thisPid << L"\n";
 
   // getting the filename for this process, assumes the other process has the
-  // smae one
+  // same one
   auto filename = processFilename();
   if (filename.empty()) {
     std::wcerr
@@ -279,15 +520,15 @@ DWORD findOtherPid()
   }
 
   // getting all running processes
-  const auto processes = runningProcesses();
+  const auto processes = getRunningProcesses();
   std::wclog << L"there are " << processes.size() << L" processes running\n";
 
   // going through processes, trying to find one with the same name and a
   // different pid than this process has
   for (const auto& p : processes) {
-    if (p.filename == filename) {
-      if (p.pid != thisPid) {
-        return p.pid;
+    if (p.name() == filename) {
+      if (p.pid() != thisPid) {
+        return p.pid();
       }
     }
   }

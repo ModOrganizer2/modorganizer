@@ -238,8 +238,11 @@ void GeneralSettingsTab::on_resetColorsBtn_clicked()
 
 void GeneralSettingsTab::on_resetDialogsButton_clicked()
 {
-  if (QMessageBox::question(&dialog(), QObject::tr("Confirm?"),
-    QObject::tr("This will make all dialogs show up again where you checked the \"Remember selection\"-box. Continue?"),
+  if (QMessageBox::question(
+    parentWidget(), QObject::tr("Confirm?"),
+    QObject::tr(
+      "This will reset all the choices you made to dialogs and make them all "
+      "visible again. Continue?"),
     QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     resetDialogs();
   }

@@ -437,7 +437,10 @@ void PluginList::readLockedOrderFrom(const QString &fileName)
   }
 
   file.open(QIODevice::ReadOnly);
+
+  int lineNumber = 0;
   while (!file.atEnd()) {
+    ++lineNumber;
     QByteArray line = file.readLine();
     if ((line.size() > 0) && (line.at(0) != '#')) {
       QList<QByteArray> fields = line.split('|');
@@ -463,6 +466,7 @@ void PluginList::readLockedOrderFrom(const QString &fileName)
           }
         }
       } else {
+        log::error("locked order file: invalid line #{} '{}'", lineNumber, QString::fromUtf8(line));
         reportError(tr("The file containing locked plugin indices is broken"));
         break;
       }

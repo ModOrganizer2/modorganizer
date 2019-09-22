@@ -3,7 +3,9 @@
 
 #include <log.h>
 
-class ExpanderWidget;
+namespace MOBase {
+  class ExpanderWidget;
+}
 
 template <class T, class=void>
 struct ValueConverter
@@ -241,7 +243,7 @@ private:
 QString widgetNameWithTopLevel(const QWidget* widget);
 QString widgetName(const QMainWindow* w);
 QString widgetName(const QHeaderView* w);
-QString widgetName(const ExpanderWidget* w);
+QString widgetName(const MOBase::ExpanderWidget* w);
 QString widgetName(const QWidget* w);
 
 template <class Widget>
@@ -268,7 +270,7 @@ QString checkedSettingName(const QAbstractButton* b);
 
 void warnIfNotCheckable(const QAbstractButton* b);
 
-bool setWindowsCredential(const QString key, const QString data);
-QString getWindowsCredential(const QString key);
+bool setWindowsCredential(const QString& key, const QString& data);
+QString getWindowsCredential(const QString& key);
 
 #endif // SETTINGSUTILITIES_H
