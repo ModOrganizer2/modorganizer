@@ -41,20 +41,6 @@ class ServerList;
 class Settings;
 
 
-// helper class that calls restoreGeometry() in the constructor and
-// saveGeometry() in the destructor
-//
-class GeometrySaver
-{
-public:
-  GeometrySaver(Settings& s, QDialog* dialog);
-  ~GeometrySaver();
-
-private:
-  Settings& m_settings;
-  QDialog* m_dialog;
-};
-
 
 // setting for the currently managed game
 //
@@ -141,8 +127,11 @@ public:
   void resetIfNeeded();
 
 
-  void saveGeometry(const QWidget* w);
-  bool restoreGeometry(QWidget* w) const;
+  void saveGeometry(const QMainWindow* w);
+  bool restoreGeometry(QMainWindow* w) const;
+
+  void saveGeometry(const QDialog* d);
+  bool restoreGeometry(QDialog* d) const;
 
   void saveState(const QMainWindow* window);
   bool restoreState(QMainWindow* window) const;
@@ -182,6 +171,12 @@ public:
 private:
   QSettings& m_Settings;
   bool m_Reset;
+
+  void saveWindowGeometry(const QWidget* w);
+  bool restoreWindowGeometry(QWidget* w) const;
+
+  void ensureWindowOnScreen(QWidget* w) const;
+  static void centerOnMonitor(QWidget* w, int monitor);
 };
 
 
@@ -762,6 +757,30 @@ private:
   SteamSettings m_Steam;
   InterfaceSettings m_Interface;
   DiagnosticsSettings m_Diagnostics;
+};
+
+
+// helper class that calls restoreGeometry() in the constructor and
+// saveGeometry() in the destructor
+//
+template <class W>
+class GeometrySaver
+{
+public:
+  GeometrySaver(Settings& s, W* w)
+    : m_settings(s), m_widget(w)
+  {
+    m_settings.geometry().restoreGeometry(m_widget);
+  }
+
+  ~GeometrySaver()
+  {
+    m_settings.geometry().saveGeometry(m_widget);
+  }
+
+private:
+  Settings& m_settings;
+  W* m_widget;
 };
 
 #endif // SETTINGS_H
