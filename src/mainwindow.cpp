@@ -263,6 +263,7 @@ MainWindow::MainWindow(Settings &settings
 
   setupToolbar();
   toggleMO2EndorseState();
+  toggleUpdateAction();
 
   TaskProgressManager::instance().tryCreateTaskbar();
 
@@ -5007,6 +5008,7 @@ void MainWindow::on_actionSettings_triggered()
   bool oldDisplayForeign(settings.interface().displayForeign());
   bool proxy = settings.network().useProxy();
   DownloadManager *dlManager = m_OrganizerCore.downloadManager();
+  const bool oldCheckForUpdates = settings.checkForUpdates();
 
 
   SettingsDialog dialog(&m_PluginContainer, settings, this);
@@ -5084,6 +5086,14 @@ void MainWindow::on_actionSettings_triggered()
   m_OrganizerCore.cycleDiagnostics();
 
   toggleMO2EndorseState();
+
+  if (oldCheckForUpdates != settings.checkForUpdates()) {
+    toggleUpdateAction();
+
+    if (settings.checkForUpdates()) {
+      m_OrganizerCore.checkForUpdates();
+    }
+  }
 }
 
 void MainWindow::on_actionNexus_triggered()
@@ -5594,6 +5604,12 @@ void MainWindow::toggleMO2EndorseState()
   ui->actionEndorseMO->menu()->setEnabled(enabled);
   ui->actionEndorseMO->setToolTip(text);
   ui->actionEndorseMO->setStatusTip(text);
+}
+
+void MainWindow::toggleUpdateAction()
+{
+  const auto& s = m_OrganizerCore.settings();
+  ui->actionUpdate->setVisible(s.checkForUpdates());
 }
 
 void MainWindow::nxmEndorsementsAvailable(QVariant userData, QVariant resultData, int)

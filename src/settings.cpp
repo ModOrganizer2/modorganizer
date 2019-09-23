@@ -178,6 +178,16 @@ QString Settings::filename() const
   return m_Settings.fileName();
 }
 
+bool Settings::checkForUpdates() const
+{
+  return get<bool>(m_Settings, "Settings", "check_for_updates", true);
+}
+
+void Settings::setCheckForUpdates(bool b)
+{
+  set(m_Settings, "Settings", "check_for_updates", b);
+}
+
 bool Settings::usePrereleases() const
 {
   return get<bool>(m_Settings, "Settings", "use_prereleases", false);

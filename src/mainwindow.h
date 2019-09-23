@@ -313,6 +313,7 @@ private:
   void sendSelectedPluginsToPriority(int newPriority);
 
   void toggleMO2EndorseState();
+  void toggleUpdateAction();
 
 private:
 

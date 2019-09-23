@@ -692,6 +692,11 @@ public:
   bool archiveParsing() const;
   void setArchiveParsing(bool b);
 
+  // whether the user wants to check for updates
+  //
+  bool checkForUpdates() const;
+  void setCheckForUpdates(bool b);
+
   // whether the user wants to upgrade to pre-releases
   //
   bool usePrereleases() const;

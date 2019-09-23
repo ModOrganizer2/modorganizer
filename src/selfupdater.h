@@ -37,7 +37,7 @@ namespace MOBase { class IPluginGame; }
 
 class QNetworkReply;
 class QProgressDialog;
-
+class Settings;
 
 /**
  * @brief manages updates for Mod Organizer itself
@@ -81,6 +81,11 @@ public:
   void setPluginContainer(PluginContainer *pluginContainer);
 
   /**
+  * @brief request information about the current version
+  **/
+  void testForUpdate(const Settings& settings);
+
+  /**
    * @brief start the update process
    * @note this should not be called if there is no update available
    **/
@@ -90,13 +95,6 @@ public:
    * @return current version of Mod Organizer
    **/
   MOBase::VersionInfo getVersion() const { return m_MOVersion; }
-
-public slots:
-
-  /**
-   * @brief request information about the current version
-   **/
-  void testForUpdate();
 
 signals:
 

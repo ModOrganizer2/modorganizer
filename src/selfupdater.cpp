@@ -122,8 +122,18 @@ void SelfUpdater::setPluginContainer(PluginContainer *pluginContainer)
   m_Interface->setPluginContainer(pluginContainer);
 }
 
-void SelfUpdater::testForUpdate()
+void SelfUpdater::testForUpdate(const Settings& settings)
 {
+  if (settings.network().offlineMode()) {
+    log::debug("not checking for updates, in offline mode");
+    return;
+  }
+
+  if (!settings.checkForUpdates()) {
+    log::debug("not checking for updates, disabled");
+    return;
+  }
+
   // TODO: if prereleases are disabled we could just request the latest release
   // directly
   try {
