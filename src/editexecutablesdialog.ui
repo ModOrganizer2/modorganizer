@@ -428,7 +428,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
              <item>
               <widget class="QCheckBox" name="useApplicationIcon">
                <property name="text">
-                <string>Use Application's Icon for shortcuts</string>
+                <string>Use Application's Icon for desktop shortcuts</string>
                </property>
               </widget>
              </item>
