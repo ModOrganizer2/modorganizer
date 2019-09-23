@@ -160,6 +160,11 @@ public:
   QStringList modInfoTabOrder() const;
   void setModInfoTabOrder(const QString& names);
 
+  // whether dialogs should be centered on their parent
+  //
+  bool centerDialogs() const;
+  void setCenterDialogs(bool b);
+
   // assumes the given widget is a top-level
   //
   void centerOnMainWindowMonitor(QWidget* w);
@@ -177,6 +182,7 @@ private:
 
   void ensureWindowOnScreen(QWidget* w) const;
   static void centerOnMonitor(QWidget* w, int monitor);
+  static void centerOnParent(QWidget* w, QWidget* parent=nullptr);
 };
 
 

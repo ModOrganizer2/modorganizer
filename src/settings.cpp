@@ -623,7 +623,13 @@ void GeometrySettings::saveGeometry(const QDialog* d)
 
 bool GeometrySettings::restoreGeometry(QDialog* d) const
 {
-  return restoreWindowGeometry(d);
+  const auto r = restoreWindowGeometry(d);
+
+  if (centerDialogs()) {
+    centerOnParent(d);
+  }
+
+  return r;
 }
 
 void GeometrySettings::saveWindowGeometry(const QWidget* w)
@@ -829,6 +835,16 @@ void GeometrySettings::setModInfoTabOrder(const QString& names)
   set(m_Settings, "Widgets", "ModInfoTabOrder", names);
 }
 
+bool GeometrySettings::centerDialogs() const
+{
+  return get<bool>(m_Settings, "Settings", "center_dialogs", false);
+}
+
+void GeometrySettings::setCenterDialogs(bool b)
+{
+  set(m_Settings, "Settings", "center_dialogs", b);
+}
+
 void GeometrySettings::centerOnMainWindowMonitor(QWidget* w)
 {
   const auto monitor = getOptional<int>(
@@ -848,6 +864,22 @@ void GeometrySettings::centerOnMonitor(QWidget* w, int monitor)
   }
 
   w->move(center - w->rect().center());
+}
+
+void GeometrySettings::centerOnParent(QWidget* w, QWidget* parent)
+{
+  if (!parent) {
+    parent = w->parentWidget();
+
+    if (!parent) {
+      parent = qApp->activeWindow();
+    }
+  }
+
+  if (parent && parent->isVisible()) {
+    const auto pr = parent->geometry();
+    w->move(pr.center() - w->rect().center());
+  }
 }
 
 void GeometrySettings::saveMainWindowMonitor(const QMainWindow* w)

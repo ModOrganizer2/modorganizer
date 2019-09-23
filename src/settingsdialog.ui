@@ -86,97 +86,23 @@ p, li { white-space: pre-wrap; }
        <item>
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
-          <string>User interface</string>
+          <string>User Interface</string>
          </property>
-         <layout class="QGridLayout" name="gridLayout">
-          <item row="2" column="0" colspan="2">
-           <widget class="QGroupBox" name="ModlistGroupBox">
-            <property name="title">
-             <string>Colors</string>
-            </property>
-            <layout class="QGridLayout" name="gridLayout_5">
-             <item row="6" column="0">
-              <widget class="QCheckBox" name="colorSeparatorsBox">
-               <property name="toolTip">
-                <string>When this is enabled, the color defined for a separator will be shown on the mod list scrollbar at the location of the separator.  This can be useful for quick navigation between separator sections or to a specific separator section.</string>
-               </property>
-               <property name="whatsThis">
-                <string>When this is enabled, the color defined for a separator will be shown on the mod list scrollbar at the location of the separator.  This can be useful for quick navigation between separator sections or to a specific separator section.</string>
-               </property>
-               <property name="text">
-                <string>Show mod list separator colors on the scrollbar</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="0" colspan="2">
-              <widget class="QPushButton" name="containedBtn">
-               <property name="text">
-                <string>Plugin is Contained in selected Mod</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QPushButton" name="overwrittenBtn">
-               <property name="text">
-                <string>Is overwritten (loose files)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QPushButton" name="overwritingBtn">
-               <property name="text">
-                <string>Is overwriting (loose files)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="0" colspan="2">
-              <widget class="QPushButton" name="resetColorsBtn">
-               <property name="text">
-                <string>Reset Colors</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0" colspan="2">
-              <widget class="QPushButton" name="containsBtn">
-               <property name="text">
-                <string>Mod Contains selected Plugin</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0">
-              <widget class="QPushButton" name="overwrittenArchiveBtn">
-               <property name="text">
-                <string>Is overwritten (archive files)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="1">
-              <widget class="QPushButton" name="overwritingArchiveBtn">
-               <property name="text">
-                <string>Is overwriting (archive files)</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item row="6" column="0" colspan="2">
-           <widget class="QPushButton" name="categoriesBtn">
-            <property name="toolTip">
-             <string>Modify the categories available to arrange your mods.</string>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QCheckBox" name="centerDialogs">
+            <property name="statusTip">
+             <string>Dialogs will always be centered on the main window, but will remember their size.</string>
             </property>
             <property name="whatsThis">
-             <string>Modify the categories available to arrange your mods.</string>
+             <string>Dialogs will always be centered on the main window, but will remember their size.</string>
             </property>
             <property name="text">
-             <string>Configure Mod Categories</string>
+             <string>Always center dialogs</string>
             </property>
            </widget>
           </item>
-          <item row="5" column="0" colspan="2">
+          <item>
            <widget class="QPushButton" name="resetDialogsButton">
             <property name="maximumSize">
              <size>
@@ -195,36 +121,119 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </item>
-          <item row="0" column="0">
+          <item>
+           <widget class="QPushButton" name="categoriesBtn">
+            <property name="toolTip">
+             <string>Modify the categories available to arrange your mods.</string>
+            </property>
+            <property name="whatsThis">
+             <string>Modify the categories available to arrange your mods.</string>
+            </property>
+            <property name="text">
+             <string>Configure Mod Categories</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_5">
+         <property name="title">
+          <string>Download List</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_11">
+          <item>
            <widget class="QCheckBox" name="compactBox">
             <property name="toolTip">
              <string>If checked, the download interface will be more compact.</string>
             </property>
             <property name="text">
-             <string>Compact Download Interface</string>
+             <string>Compact List</string>
             </property>
            </widget>
           </item>
-          <item row="4" column="0" colspan="2">
-           <spacer name="verticalSpacer">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>40</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item row="0" column="1">
+          <item>
            <widget class="QCheckBox" name="showMetaBox">
             <property name="toolTip">
              <string>If checked, the download list will display meta information instead of file names.</string>
             </property>
             <property name="text">
-             <string>Download Meta Information</string>
+             <string>Show Meta Information</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="ModlistGroupBox">
+         <property name="title">
+          <string>Colors</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_5">
+          <item row="6" column="0">
+           <widget class="QCheckBox" name="colorSeparatorsBox">
+            <property name="toolTip">
+             <string>When this is enabled, the color defined for a separator will be shown on the mod list scrollbar at the location of the separator.  This can be useful for quick navigation between separator sections or to a specific separator section.</string>
+            </property>
+            <property name="whatsThis">
+             <string>When this is enabled, the color defined for a separator will be shown on the mod list scrollbar at the location of the separator.  This can be useful for quick navigation between separator sections or to a specific separator section.</string>
+            </property>
+            <property name="text">
+             <string>Show mod list separator colors on the scrollbar</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0" colspan="2">
+           <widget class="QPushButton" name="containedBtn">
+            <property name="text">
+             <string>Plugin is Contained in selected Mod</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QPushButton" name="overwrittenBtn">
+            <property name="text">
+             <string>Is overwritten (loose files)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QPushButton" name="overwritingBtn">
+            <property name="text">
+             <string>Is overwriting (loose files)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0" colspan="2">
+           <widget class="QPushButton" name="resetColorsBtn">
+            <property name="text">
+             <string>Reset Colors</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0" colspan="2">
+           <widget class="QPushButton" name="containsBtn">
+            <property name="text">
+             <string>Mod Contains selected Plugin</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QPushButton" name="overwrittenArchiveBtn">
+            <property name="text">
+             <string>Is overwritten (archive files)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QPushButton" name="overwritingArchiveBtn">
+            <property name="text">
+             <string>Is overwriting (archive files)</string>
             </property>
            </widget>
           </item>
@@ -1411,7 +1420,6 @@ programs you are intentionally running.</string>
   <tabstop>styleBox</tabstop>
   <tabstop>logLevelBox</tabstop>
   <tabstop>usePrereleaseBox</tabstop>
-  <tabstop>compactBox</tabstop>
   <tabstop>categoriesBtn</tabstop>
   <tabstop>baseDirEdit</tabstop>
   <tabstop>browseBaseDirBtn</tabstop>

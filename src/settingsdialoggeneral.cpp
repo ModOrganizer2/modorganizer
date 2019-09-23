@@ -51,6 +51,7 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
   setContainsColor(settings().colors().modlistContainsPlugin());
   setContainedColor(settings().colors().pluginListContained());
 
+  ui->centerDialogs->setChecked(settings().geometry().centerDialogs());
   ui->compactBox->setChecked(settings().interface().compactDownloads());
   ui->showMetaBox->setChecked(settings().interface().metaDownloads());
   ui->usePrereleaseBox->setChecked(settings().usePrereleases());
@@ -91,6 +92,7 @@ void GeneralSettingsTab::update()
   settings().colors().setModlistContainsPlugin(getContainsColor());
   settings().colors().setPluginListContained(getContainedColor());
 
+  settings().geometry().setCenterDialogs(ui->centerDialogs->isChecked());
   settings().interface().setCompactDownloads(ui->compactBox->isChecked());
   settings().interface().setMetaDownloads(ui->showMetaBox->isChecked());
   settings().setUsePrereleases(ui->usePrereleaseBox->isChecked());
