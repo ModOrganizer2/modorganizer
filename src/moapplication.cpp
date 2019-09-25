@@ -132,8 +132,8 @@ bool MOApplication::notify(QObject *receiver, QEvent *event)
 
 void MOApplication::updateStyle(const QString &fileName)
 {
-  if (fileName == "Fusion") {
-    setStyle(QStyleFactory::create("fusion"));
+  if (QStyleFactory::keys().contains(fileName)) {
+    setStyle(QStyleFactory::create(fileName));
     setStyleSheet("");
   } else {
     setStyle(new ProxyStyle(QStyleFactory::create(m_DefaultStyle)));

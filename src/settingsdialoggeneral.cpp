@@ -208,13 +208,24 @@ void GeneralSettingsTab::selectLanguage()
 void GeneralSettingsTab::addStyles()
 {
   ui->styleBox->addItem("None", "");
-  ui->styleBox->addItem("Fusion", "Fusion");
+  for (auto&& key : QStyleFactory::keys()) {
+    ui->styleBox->addItem(key, key);
+  }
 
-  QDirIterator langIter(QCoreApplication::applicationDirPath() + "/" + QString::fromStdWString(AppConfig::stylesheetsPath()), QStringList("*.qss"), QDir::Files);
-  while (langIter.hasNext()) {
-    langIter.next();
-    QString style = langIter.fileName();
-    ui->styleBox->addItem(style, style);
+  ui->styleBox->insertSeparator(ui->styleBox->count());
+
+  QDirIterator iter(
+    QCoreApplication::applicationDirPath() + "/" +
+      QString::fromStdWString(AppConfig::stylesheetsPath()),
+        QStringList("*.qss"),
+    QDir::Files);
+
+  while (iter.hasNext()) {
+    iter.next();
+
+    ui->styleBox->addItem(
+      iter.fileInfo().completeBaseName(),
+      iter.fileName());
   }
 }
 
