@@ -158,33 +158,52 @@ void GeneralSettingsTab::update()
 
 void GeneralSettingsTab::addLanguages()
 {
+  // matches the end of filenames for something like "_en.qm" or "_zh_CN.qm"
+  const QString pattern =
+    QString::fromStdWString(AppConfig::translationPrefix()) +
+    "_([a-z]{2,3}(_[A-Z]{2,2})?).qm";
+
+  const QRegExp exp(pattern);
+
+  QDirIterator iter(
+    QCoreApplication::applicationDirPath() + "/translations",
+    QDir::Files);
+
   std::vector<std::pair<QString, QString>> languages;
 
-  QDirIterator langIter(QCoreApplication::applicationDirPath() + "/translations", QDir::Files);
-  QString pattern = QString::fromStdWString(AppConfig::translationPrefix()) +  "_([a-z]{2,3}(_[A-Z]{2,2})?).qm";
-  QRegExp exp(pattern);
-  while (langIter.hasNext()) {
-    langIter.next();
-    QString file = langIter.fileName();
-    if (exp.exactMatch(file)) {
-      QString languageCode = exp.cap(1);
-      QLocale locale(languageCode);
-      QString languageString = QString("%1 (%2)").arg(locale.nativeLanguageName()).arg(locale.nativeCountryName());  //QLocale::languageToString(locale.language());
-      if (locale.language() == QLocale::Chinese) {
-        if (languageCode == "zh_TW") {
-          languageString = "Chinese (traditional)";
-        } else {
-          languageString = "Chinese (simplified)";
-        }
-      }
-      languages.push_back(std::make_pair(QString("%1").arg(languageString), exp.cap(1)));
+  while (iter.hasNext()) {
+    iter.next();
+
+    const QString file = iter.fileName();
+    if (!exp.exactMatch(file)) {
+      continue;
     }
+
+    const QString languageCode = exp.cap(1);
+    const QLocale locale(languageCode);
+
+    QString languageString = QString("%1 (%2)")
+      .arg(locale.nativeLanguageName())
+      .arg(locale.nativeCountryName());
+
+    if (locale.language() == QLocale::Chinese) {
+      if (languageCode == "zh_TW") {
+        languageString = "Chinese (Traditional)";
+      } else {
+        languageString = "Chinese (Simplified)";
+      }
+    }
+
+    languages.push_back({languageString, exp.cap(1)});
   }
+
   if (!ui->languageBox->findText("English")) {
-    languages.push_back(std::make_pair(QString("English"), QString("en_US")));
+    languages.push_back({QString("English"), QString("en_US")});
   }
+
   std::sort(languages.begin(), languages.end());
-  for (const auto &lang : languages) {
+
+  for (const auto& lang : languages) {
     ui->languageBox->addItem(lang.first, lang.second);
   }
 }

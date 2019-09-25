@@ -68,14 +68,10 @@
              <item row="0" column="1">
               <widget class="QComboBox" name="languageBox">
                <property name="toolTip">
-                <string>The display language</string>
+                <string>The language of the user interface.</string>
                </property>
                <property name="whatsThis">
-                <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The display language. This will only displaye languages for which you have a translation installed.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>The language of the user interface.</string>
                </property>
               </widget>
              </item>
@@ -89,10 +85,10 @@ p, li { white-space: pre-wrap; }
              <item row="1" column="1">
               <widget class="QComboBox" name="styleBox">
                <property name="toolTip">
-                <string>graphical style</string>
+                <string>Visual theme of the user interface.</string>
                </property>
                <property name="whatsThis">
-                <string>graphical style of the MO user interface</string>
+                <string>Visual theme of the user interface.</string>
                </property>
               </widget>
              </item>
@@ -121,10 +117,10 @@ p, li { white-space: pre-wrap; }
              </size>
             </property>
             <property name="toolTip">
-             <string>Reset stored information from dialogs.</string>
+             <string>Reset all choices made in dialogs.</string>
             </property>
             <property name="whatsThis">
-             <string>This will make all dialogs show up again where you checked the &quot;Remember selection&quot;-box.</string>
+             <string>Reset all choices made in dialogs.</string>
             </property>
             <property name="text">
              <string>Reset Dialog Choices</string>
@@ -169,7 +165,10 @@ p, li { white-space: pre-wrap; }
           <item>
            <widget class="QCheckBox" name="showMetaBox">
             <property name="toolTip">
-             <string>If checked, the download list will display meta information instead of file names.</string>
+             <string>Show meta information instead of file names in the download list.</string>
+            </property>
+            <property name="whatsThis">
+             <string>Show meta information instead of file names in the download list.</string>
             </property>
             <property name="text">
              <string>Show Meta Information</string>
@@ -179,7 +178,10 @@ p, li { white-space: pre-wrap; }
           <item>
            <widget class="QCheckBox" name="compactBox">
             <property name="toolTip">
-             <string>If checked, the download interface will be more compact.</string>
+             <string>Make the download list more compact.</string>
+            </property>
+            <property name="whatsThis">
+             <string>Make the download list more compact.</string>
             </property>
             <property name="text">
              <string>Compact List</string>
@@ -257,10 +259,10 @@ p, li { white-space: pre-wrap; }
              <item>
               <widget class="QCheckBox" name="colorSeparatorsBox">
                <property name="toolTip">
-                <string>When this is enabled, the color defined for a separator will be shown on the mod list scrollbar at the location of the separator.  This can be useful for quick navigation between separator sections or to a specific separator section.</string>
+                <string>Colors set on separators will also be shown in the mod list scrollbar at the location of the separator. This can be useful for quickly navigating to a specific separator.</string>
                </property>
                <property name="whatsThis">
-                <string>When this is enabled, the color defined for a separator will be shown on the mod list scrollbar at the location of the separator.  This can be useful for quick navigation between separator sections or to a specific separator section.</string>
+                <string>Colors set on separators will also be shown in the mod list scrollbar at the location of the separator. This can be useful for quickly navigating to a specific separator.</string>
                </property>
                <property name="text">
                 <string>Show mod list separator colors on the scrollbar</string>
@@ -285,6 +287,12 @@ p, li { white-space: pre-wrap; }
              </item>
              <item>
               <widget class="QPushButton" name="resetColorsBtn">
+               <property name="toolTip">
+                <string>Reset all colors to their default value.</string>
+               </property>
+               <property name="whatsThis">
+                <string>Reset all colors to their default value.</string>
+               </property>
                <property name="text">
                 <string>Reset Colors</string>
                </property>
@@ -305,10 +313,10 @@ p, li { white-space: pre-wrap; }
           <item>
            <widget class="QCheckBox" name="checkForUpdates">
             <property name="toolTip">
-             <string>Mod Organizer checks for updates on Github on startup.</string>
+             <string>Check for Mod Organizer updates on Github on startup.</string>
             </property>
             <property name="whatsThis">
-             <string>Mod Organizer checks for updates on Github on startup.</string>
+             <string>Check for Mod Organizer updates on Github on startup.</string>
             </property>
             <property name="text">
              <string>Check for updates</string>
@@ -321,7 +329,7 @@ p, li { white-space: pre-wrap; }
              <string>Update to non-stable releases.</string>
             </property>
             <property name="whatsThis">
-             <string>If this is enabled, the integrated update mechanism will notify of all releases, including pre-releases (alphas, betas). Please use this only if you're sufficiently tech-savvy to investigate issues, look for known problems in the issue tracker and create meaningful reports.</string>
+             <string>Update to non-stable releases.</string>
             </property>
             <property name="text">
              <string>Install Pre-releases (Betas)</string>
