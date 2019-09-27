@@ -5,13 +5,24 @@
 
 class Settings;
 
+// a QTableWidget to view and modify color settings
+//
 class ColorTable : public QTableWidget
 {
 public:
   ColorTable(QWidget* parent=nullptr);
 
+  // adds colors to the table from the settings
+  //
   void load(Settings& s);
+
+  // resets the colors to their default values; commitColors() must be called
+  // to save them
+  //
   void resetColors();
+
+  // commits any changes
+  //
   void commitColors();
 
 private:

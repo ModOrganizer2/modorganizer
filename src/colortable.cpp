@@ -10,6 +10,8 @@ void paintBackground(
   const QModelIndex& index);
 
 
+// delegate for the sample text column; paints the background color
+//
 class ColoredBackgroundDelegate : public QStyledItemDelegate
 {
 public:
@@ -26,6 +28,9 @@ public:
 
     QStyleOptionViewItem itemOption(option);
     initStyleOption(&itemOption, index);
+
+    // paint the default stuff like text, but override the state to avoid
+    // destroying the background for selected items, etc.
     itemOption.state = QStyle::State_Enabled;
 
     QStyledItemDelegate::paint(p, itemOption, index);
@@ -36,6 +41,8 @@ private:
 };
 
 
+// delegate for the icons column; paints the background and icons
+//
 class FakeModFlagIconDelegate : public ModFlagIconDelegate
 {
 public:
@@ -79,6 +86,8 @@ private:
 };
 
 
+// item used in the first column of the table
+//
 class ColorItem : public QTableWidgetItem
 {
 public:
@@ -93,16 +102,22 @@ public:
     set(get());
   }
 
+  // color caption
+  //
   const QString& caption() const
   {
     return m_caption;
   }
 
+  // the current color
+  //
   QColor get() const
   {
     return m_temp;
   }
 
+  // sets the current color, commit() must be called to save it
+  //
   bool set(const QColor& c)
   {
     if (m_temp != c) {
@@ -113,14 +128,18 @@ public:
     return false;
   }
 
-  void commit()
-  {
-    m_commit(m_temp);
-  }
-
+  // resets the current color, commit() must be called to save it
+  //
   bool reset()
   {
     return set(m_default);
+  }
+
+  // saves the current color
+  //
+  void commit()
+  {
+    m_commit(m_temp);
   }
 
 private:
@@ -246,9 +265,7 @@ void ColorTable::addColor(
   const auto r = rowCount();
   setRowCount(r + 1);
 
-  auto* item = new ColorItem(text, defaultColor, get, commit);
-
-  setItem(r, 0, item);
+  setItem(r, 0, new ColorItem(text, defaultColor, get, commit));
   setItem(r, 1, new QTableWidgetItem("Text"));
   setItem(r, 2, new QTableWidgetItem);
 
