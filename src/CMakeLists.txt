@@ -142,6 +142,7 @@ SET(organizer_SRCS
 	envshortcut.cpp
 	envwindows.cpp
 	colortable.cpp
+	sanitychecks.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -324,6 +325,7 @@ set(application
 	mainwindow
 	moapplication
 	moshortcut
+	sanitychecks
 	selfupdater
 	singleinstance
 	statusbar
