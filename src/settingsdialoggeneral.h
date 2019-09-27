@@ -18,16 +18,7 @@ private:
   void addStyles();
   void selectStyle();
 
-  void setColorTable();
-
   void resetDialogs();
-
-  void addColor(
-    const QString& text, const QColor& defaultColor,
-    std::function<QColor ()> get,
-    std::function<void (const QColor&)> commit);
-
-  void onColorActivated();
 
   void on_categoriesBtn_clicked();
   void on_resetColorsBtn_clicked();

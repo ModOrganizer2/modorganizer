@@ -32,13 +32,10 @@ IconDelegate::IconDelegate(QObject *parent)
 {
 }
 
-
-void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+void IconDelegate::paintIcons(
+  QPainter *painter, const QStyleOptionViewItem &option,
+  const QModelIndex &index, const QList<QString>& icons)
 {
-  QStyledItemDelegate::paint(painter, option, index);
-
-  QList<QString> icons = getIcons(index);
-
   int x = 4;
   painter->save();
 
@@ -65,5 +62,11 @@ void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
   }
 
   painter->restore();
+}
+
+void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+  QStyledItemDelegate::paint(painter, option, index);
+  paintIcons(painter, option, index, getIcons(index));
 }
 

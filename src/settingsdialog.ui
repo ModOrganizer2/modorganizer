@@ -211,7 +211,7 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_13">
           <item>
-           <widget class="QTableWidget" name="colorTable">
+           <widget class="ColorTable" name="colorTable">
             <property name="editTriggers">
              <set>QAbstractItemView::NoEditTriggers</set>
             </property>
@@ -1527,6 +1527,13 @@ programs you are intentionally running.</string>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ColorTable</class>
+   <extends>QTableWidget</extends>
+   <header>colortable.h</header>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>logLevelBox</tabstop>
   <tabstop>baseDirEdit</tabstop>
