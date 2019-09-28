@@ -384,7 +384,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
                 <string>Move a file to the data directory.</string>
                </property>
                <property name="whatsThis">
-                <string>This moves a esp to the esp directory so it can be enabled in the main window. Please note that the ESP merely becomes &quot;available&quot;, it will not necessarily be loaded! That is configured in the main window of omo.</string>
+                <string>This moves a esp to the esp directory so it can be enabled in the main window. Please note that the ESP merely becomes &quot;available&quot;, it will not necessarily be loaded! That is configured in the main window of MO.</string>
                </property>
                <property name="text">
                 <string/>
@@ -404,10 +404,10 @@ Most mods do not have optional esps, so chances are good you are looking at an e
              <item>
               <widget class="QToolButton" name="deactivateESP">
                <property name="toolTip">
-                <string>Make the selected mod in the lower list unavailable.</string>
+                <string>Make the selected mod in the right list unavailable.</string>
                </property>
                <property name="whatsThis">
-                <string>The selected esp (in the lower list) will be pushed into a subdirectory of the mod and will thus become &quot;invisible&quot; to the game. It can then no longer be activated.</string>
+                <string>The selected esp (in the right list) will be pushed into a subdirectory of the mod and will thus become &quot;invisible&quot; to the game. It can then no longer be activated.</string>
                </property>
                <property name="text">
                 <string/>
