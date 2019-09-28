@@ -985,16 +985,39 @@ void DownloadManager::queryInfoMd5(int index)
     downloadFile.setFileName(m_OrganizerCore->downloadsPath() + "\\" + info->m_FileName);
   }
   if (!downloadFile.exists()) {
-    log::debug("Can't find download file {}", info->m_FileName);
+    log::error("Can't find download file '{}'", info->m_FileName);
     return;
   }
   if (!downloadFile.open(QIODevice::ReadOnly)) {
-    log::debug("Can't open download file {}", info->m_FileName);
+    log::error("Can't open download file '{}'", info->m_FileName);
     return;
   }
-  info->m_Hash = QCryptographicHash::hash(downloadFile.readAll(), QCryptographicHash::Md5);
+
+  QCryptographicHash hash(QCryptographicHash::Md5);
+  const qint64 progressStep = 10 * 1024 * 1024;
+  QProgressDialog progress(tr("Hashing download file '%1'").arg(info->m_FileName),
+                           tr("Cancel"), 
+                           0, 
+                           downloadFile.size() / progressStep);
+  progress.setWindowModality(Qt::WindowModal);
+  progress.setMinimumDuration(1000);
+
+  for (qint64 i = 0; i < downloadFile.size(); i += progressStep) {
+    progress.setValue(progress.value()+1);
+    if (progress.wasCanceled()) {
+      break;
+    }
+    hash.addData(downloadFile.read(progressStep));
+  }
+  if (progress.wasCanceled()) {
+    downloadFile.close();
+    return;
+  }
+
+  progress.close();
   downloadFile.close();
 
+  info->m_Hash = hash.result();
   info->m_ReQueried = true;
   setState(info, STATE_FETCHINGMODINFO_MD5);
 }
