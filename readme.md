@@ -76,6 +76,7 @@ Here is a complete list:
 * https://github.com/Modorganizer2/modorganizer-nxmhandler
 * https://github.com/Modorganizer2/modorganizer-plugin_python
 * https://github.com/Modorganizer2/modorganizer-preview_base
+* https://github.com/ModOrganizer2/modorganizer-preview_dds
 * https://github.com/Modorganizer2/modorganizer-tool_configurator
 * https://github.com/Modorganizer2/modorganizer-tool_inibakery
 * https://github.com/Modorganizer2/modorganizer-uibase
