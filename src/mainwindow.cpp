@@ -2139,6 +2139,7 @@ void MainWindow::readSettings(const Settings& settings)
   settings.geometry().restoreDocks(this);
   settings.geometry().restoreToolbars(this);
   settings.geometry().restoreState(ui->splitter);
+  settings.geometry().restoreState(ui->categoriesSplitter);
   settings.geometry().restoreVisibility(ui->menuBar);
   settings.geometry().restoreVisibility(ui->statusBar);
 
@@ -2218,6 +2219,7 @@ void MainWindow::storeSettings(Settings& s)
   s.geometry().saveVisibility(ui->statusBar);
   s.geometry().saveToolbars(this);
   s.geometry().saveState(ui->splitter);
+  s.geometry().saveState(ui->categoriesSplitter);
   s.geometry().saveMainWindowMonitor(this);
   s.geometry().saveVisibility(ui->categoriesGroup);
 
