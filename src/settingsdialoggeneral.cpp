@@ -16,6 +16,13 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
 
   ui->colorTable->load(s);
 
+  ui->centerDialogs->setChecked(settings().geometry().centerDialogs());
+  ui->compactBox->setChecked(settings().interface().compactDownloads());
+  ui->showMetaBox->setChecked(settings().interface().metaDownloads());
+  ui->checkForUpdates->setChecked(settings().checkForUpdates());
+  ui->usePrereleaseBox->setChecked(settings().usePrereleases());
+  ui->colorSeparatorsBox->setChecked(settings().colors().colorSeparatorScrollbar());
+
   QObject::connect(
     ui->categoriesBtn, &QPushButton::clicked,
     [&]{ on_categoriesBtn_clicked(); });
@@ -49,14 +56,13 @@ void GeneralSettingsTab::update()
     emit settings().styleChanged(newStyle);
   }
 
+  ui->colorTable->commitColors();
+
   settings().geometry().setCenterDialogs(ui->centerDialogs->isChecked());
   settings().interface().setCompactDownloads(ui->compactBox->isChecked());
   settings().interface().setMetaDownloads(ui->showMetaBox->isChecked());
   settings().setCheckForUpdates(ui->checkForUpdates->isChecked());
   settings().setUsePrereleases(ui->usePrereleaseBox->isChecked());
-
-  ui->colorTable->commitColors();
-
   settings().colors().setColorSeparatorScrollbar(ui->colorSeparatorsBox->isChecked());
 }
 
