@@ -1272,7 +1272,7 @@ QString ModList::getColumnToolTip(int column)
     case COL_CATEGORY: return tr("Category of the mod.");
     case COL_GAME:     return tr("The source game which was the origin of this mod.");
     case COL_MODID:    return tr("Id of the mod as used on Nexus.");
-    case COL_FLAGS:    return tr("Emblemes to highlight things that might require attention.");
+    case COL_FLAGS:    return tr("Emblems to highlight things that might require attention.");
     case COL_CONTENT:  return tr("Depicts the content of the mod:<br>"
                                  "<table cellspacing=7>"
                                  "<tr><td><img src=\":/MO/gui/content/plugin\" width=32/></td><td>Game plugins (esp/esm/esl)</td></tr>"

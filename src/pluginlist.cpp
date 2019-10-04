@@ -113,10 +113,11 @@ QString PluginList::getColumnName(int column)
 QString PluginList::getColumnToolTip(int column)
 {
   switch (column) {
-    case COL_NAME:     return tr("Name of your mods");
-    case COL_PRIORITY: return tr("Load priority of your mod. The higher, the more \"important\" it is and thus "
+    case COL_NAME:     return tr("Name of the plugin");
+    case COL_FLAGS:    return tr("Emblems to highlight things that might require attention.");
+    case COL_PRIORITY: return tr("Load priority of plugins. The higher, the more \"important\" it is and thus "
                                  "overwrites data from plugins with lower priority.");
-    case COL_MODINDEX: return tr("The modindex determines the formids of objects originating from this mods.");
+    case COL_MODINDEX: return tr("Determines the formids of objects originating from this mods.");
     default: return tr("unknown");
   }
 }
