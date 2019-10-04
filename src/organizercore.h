@@ -109,6 +109,7 @@ public:
 
   void updateExecutablesList();
 
+  void checkForUpdates();
   void startMOUpdate();
 
   Settings &settings();

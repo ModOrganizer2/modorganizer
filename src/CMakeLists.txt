@@ -141,6 +141,7 @@ SET(organizer_SRCS
 	envsecurity.cpp
 	envshortcut.cpp
 	envwindows.cpp
+	colortable.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -263,6 +264,7 @@ SET(organizer_HDRS
 	envsecurity.h
 	envshortcut.h
 	envwindows.h
+	colortable.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -473,6 +475,7 @@ set(utilities
 )
 
 set(widgets
+	colortable
 	genericicondelegate
 	filerenamer
 	filterwidget

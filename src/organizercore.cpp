@@ -74,25 +74,6 @@ using namespace MOBase;
 //static
 CrashDumpsType OrganizerCore::m_globalCrashDumpsType = CrashDumpsType::None;
 
-static bool isOnline()
-{
-  const auto runningFlags =
-    QNetworkInterface::IsUp | QNetworkInterface::IsRunning;
-
-  for (auto&& i : QNetworkInterface::allInterfaces()) {
-    if (!(i.flags() & QNetworkInterface::IsLoopBack)) {
-      if (i.flags() & runningFlags) {
-        auto addresses = i.addressEntries();
-        if (!addresses.empty()) {
-          return true;
-        }
-      }
-    }
-  }
-
-  return false;
-}
-
 static std::wstring getProcessName(HANDLE process)
 {
   wchar_t buffer[MAX_PATH];
@@ -307,14 +288,15 @@ void OrganizerCore::setUserInterface(IUserInterface *userInterface,
   m_InstallationManager.setParentWidget(widget);
   m_Updater.setUserInterface(widget);
 
-  if (userInterface != nullptr) {
-    // this currently wouldn't work reliably if the ui isn't initialized yet to
-    // display the result
-    if (isOnline() && !m_Settings.network().offlineMode()) {
-      m_Updater.testForUpdate();
-    } else {
-      log::debug("user doesn't seem to be connected to the internet");
-    }
+  checkForUpdates();
+}
+
+void OrganizerCore::checkForUpdates()
+{
+  // this currently wouldn't work reliably if the ui isn't initialized yet to
+  // display the result
+  if (m_UserInterface != nullptr) {
+    m_Updater.testForUpdate(m_Settings);
   }
 }
 

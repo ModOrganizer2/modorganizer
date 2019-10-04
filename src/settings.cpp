@@ -22,7 +22,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "serverinfo.h"
 #include "executableslist.h"
 #include "appconfig.h"
-#include "expanderwidget.h"
+#include "env.h"
+#include "envmetrics.h"
+#include <expanderwidget.h>
 #include <utility.h>
 #include <iplugingame.h>
 
@@ -174,6 +176,16 @@ void Settings::processUpdates(
 QString Settings::filename() const
 {
   return m_Settings.fileName();
+}
+
+bool Settings::checkForUpdates() const
+{
+  return get<bool>(m_Settings, "Settings", "check_for_updates", true);
+}
+
+void Settings::setCheckForUpdates(bool b)
+{
+  set(m_Settings, "Settings", "check_for_updates", b);
 }
 
 bool Settings::usePrereleases() const
@@ -604,19 +616,84 @@ void GeometrySettings::resetIfNeeded()
   removeSection(m_Settings, "Geometry");
 }
 
-void GeometrySettings::saveGeometry(const QWidget* w)
+void GeometrySettings::saveGeometry(const QMainWindow* w)
+{
+  saveWindowGeometry(w);
+}
+
+bool GeometrySettings::restoreGeometry(QMainWindow* w) const
+{
+  return restoreWindowGeometry(w);
+}
+
+void GeometrySettings::saveGeometry(const QDialog* d)
+{
+  saveWindowGeometry(d);
+}
+
+bool GeometrySettings::restoreGeometry(QDialog* d) const
+{
+  const auto r = restoreWindowGeometry(d);
+
+  if (centerDialogs()) {
+    centerOnParent(d);
+  }
+
+  return r;
+}
+
+void GeometrySettings::saveWindowGeometry(const QWidget* w)
 {
   set(m_Settings, "Geometry", geoSettingName(w), w->saveGeometry());
 }
 
-bool GeometrySettings::restoreGeometry(QWidget* w) const
+bool GeometrySettings::restoreWindowGeometry(QWidget* w) const
 {
   if (auto v=getOptional<QByteArray>(m_Settings, "Geometry", geoSettingName(w))) {
     w->restoreGeometry(*v);
+    ensureWindowOnScreen(w);
     return true;
   }
 
   return false;
+}
+
+void GeometrySettings::ensureWindowOnScreen(QWidget* w) const
+{
+  // users report that the main window and/or dialogs are displayed off-screen;
+  // the usual workaround is keyboard navigation to move it
+  //
+  // qt should have code that deals with multiple monitors and off-screen
+  // geometries, but there seems to be bugs or inconsistencies that can't be
+  // reproduced
+  //
+  // the closest would probably be https://bugreports.qt.io/browse/QTBUG-64498,
+  // which is about multiple monitors and high dpi, but it seems fixed as of
+  // 5.12.4, which is shipped with 2.2.1
+  //
+  // without being to reproduce the problem, some simple checks are made in a
+  // timer, which may mitigate the issues
+
+  QTimer::singleShot(100, w, [w] {
+    const auto borders = 20;
+
+    // desktop geometry, made smaller to make sure there isn't just a few pixels
+    const auto originalDg = env::Environment().metrics().desktopGeometry();
+    const auto dg = originalDg.adjusted(borders, borders, -borders, -borders);
+
+    const auto g = w->geometry();
+
+    if (!dg.intersects(g)) {
+      log::warn(
+        "window '{}' is offscreen, moving to main monitor; geo={}, desktop={}",
+        w->objectName(), g, originalDg);
+
+      // widget is off-screen, center it on main monitor
+      centerOnMonitor(w, -1);
+
+      log::warn("window '{}' now at {}", w->objectName(), w->geometry());
+    }
+  });
 }
 
 void GeometrySettings::saveState(const QMainWindow* w)
@@ -768,20 +845,51 @@ void GeometrySettings::setModInfoTabOrder(const QString& names)
   set(m_Settings, "Widgets", "ModInfoTabOrder", names);
 }
 
+bool GeometrySettings::centerDialogs() const
+{
+  return get<bool>(m_Settings, "Settings", "center_dialogs", false);
+}
+
+void GeometrySettings::setCenterDialogs(bool b)
+{
+  set(m_Settings, "Settings", "center_dialogs", b);
+}
+
 void GeometrySettings::centerOnMainWindowMonitor(QWidget* w)
 {
   const auto monitor = getOptional<int>(
-    m_Settings, "Geometry", "MainWindow_monitor");
+    m_Settings, "Geometry", "MainWindow_monitor").value_or(-1);
 
+  centerOnMonitor(w, monitor);
+}
+
+void GeometrySettings::centerOnMonitor(QWidget* w, int monitor)
+{
   QPoint center;
 
-  if (monitor && QGuiApplication::screens().size() > *monitor) {
-    center = QGuiApplication::screens().at(*monitor)->geometry().center();
+  if (monitor >= 0 && monitor < QGuiApplication::screens().size()) {
+    center = QGuiApplication::screens().at(monitor)->geometry().center();
   } else {
     center = QGuiApplication::primaryScreen()->geometry().center();
   }
 
   w->move(center - w->rect().center());
+}
+
+void GeometrySettings::centerOnParent(QWidget* w, QWidget* parent)
+{
+  if (!parent) {
+    parent = w->parentWidget();
+
+    if (!parent) {
+      parent = qApp->activeWindow();
+    }
+  }
+
+  if (parent && parent->isVisible()) {
+    const auto pr = parent->geometry();
+    w->move(pr.center() - w->rect().center());
+  }
 }
 
 void GeometrySettings::saveMainWindowMonitor(const QMainWindow* w)
@@ -1886,16 +1994,4 @@ int DiagnosticsSettings::crashDumpsMax() const
 void DiagnosticsSettings::setCrashDumpsMax(int n)
 {
   set(m_Settings, "Settings", "crash_dumps_max", n);
-}
-
-
-GeometrySaver::GeometrySaver(Settings& s, QDialog* dialog)
-  : m_settings(s), m_dialog(dialog)
-{
-  m_settings.geometry().restoreGeometry(m_dialog);
-}
-
-GeometrySaver::~GeometrySaver()
-{
-  m_settings.geometry().saveGeometry(m_dialog);
 }
