@@ -49,7 +49,7 @@ public:
 
   void openBrowser()
   {
-    shell::OpenLink(QUrl("https://www.nexusmods.com/users/myaccount?tab=api"));
+    shell::Open(QUrl("https://www.nexusmods.com/users/myaccount?tab=api"));
   }
 
   void paste()

@@ -341,11 +341,14 @@ void SelfUpdater::downloadCancel()
 void SelfUpdater::installUpdate()
 {
   const QString parameters = "/DIR=\"" + qApp->applicationDirPath() + "\" ";
+  const auto r = shell::Execute(m_UpdateFile.fileName(), parameters);
 
-  if (shell::Execute(m_UpdateFile.fileName(), parameters)) {
+  if (r.success()) {
     QCoreApplication::quit();
   } else {
-    reportError(tr("Failed to start %1").arg(m_UpdateFile.fileName()));
+    reportError(tr("Failed to start %1: %2")
+      .arg(m_UpdateFile.fileName())
+      .arg(r.toString()));
   }
 
   m_UpdateFile.remove();

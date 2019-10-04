@@ -1808,10 +1808,12 @@ void NexusSettings::registerAsNXMHandler(bool force)
   }
   parameters += " \"" + executable + "\"";
 
-  if (!shell::Execute(nxmPath, parameters)) {
+  const auto r = shell::Execute(nxmPath, parameters);
+
+  if (!r.success()) {
     QMessageBox::critical(
       nullptr, QObject::tr("Failed"),
-      QObject::tr("Failed to start the helper application"));
+      QObject::tr("Failed to start the helper application: %1").arg(r.toString()));
   }
 }
 

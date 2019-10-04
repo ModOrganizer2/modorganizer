@@ -229,7 +229,7 @@ void OverwriteInfoDialog::renameTriggered()
 
 void OverwriteInfoDialog::openFile(const QModelIndex &index)
 {
-  shell::OpenFile(m_FileSystemModel->filePath(index));
+  shell::Open(m_FileSystemModel->filePath(index));
 }
 
 
@@ -270,7 +270,7 @@ void OverwriteInfoDialog::createDirectoryTriggered()
 
 void OverwriteInfoDialog::on_explorerButton_clicked()
 {
-  shell::ExploreFile(m_ModInfo->absolutePath());
+  shell::Explore(m_ModInfo->absolutePath());
 }
 
 void OverwriteInfoDialog::on_filesView_customContextMenuRequested(const QPoint &pos)

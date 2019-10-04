@@ -199,7 +199,7 @@ void TextEditor::explore()
     return;
   }
 
-  MOBase::shell::ExploreFile(m_filename);
+  shell::Explore(m_filename);
 }
 
 void TextEditor::onModified(bool b)

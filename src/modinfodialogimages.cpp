@@ -547,7 +547,7 @@ void ImagesTab::showTooltip(QHelpEvent* e)
 void ImagesTab::onExplore()
 {
   if (auto* f=m_files.selectedFile()) {
-    MOBase::shell::ExploreFile(f->path());
+    shell::Explore(f->path());
   }
 }
 

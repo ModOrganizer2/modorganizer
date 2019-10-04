@@ -547,7 +547,7 @@ void ConflictsTab::exploreItems(QTreeView* tree)
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
   for_each_in_selection(tree, [&](const ConflictItem* item) {
-    shell::ExploreFile(item->fileName());
+    shell::Explore(item->fileName());
     return true;
   });
 }
