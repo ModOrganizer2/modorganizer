@@ -50,6 +50,8 @@ public:
   static const int CATEGORY_SPECIAL_BACKUP = 10006;
   static const int CATEGORY_SPECIAL_MANAGED = 10007;
   static const int CATEGORY_SPECIAL_UNMANAGED = 10008;
+  static const int CATEGORY_SPECIAL_NOGAMEDATA = 10009;
+  static const int CATEGORY_SPECIAL_NONEXUSID = 10010;
 
 
 public:

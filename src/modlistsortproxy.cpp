@@ -308,6 +308,15 @@ bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) cons
       case CategoryFactory::CATEGORY_SPECIAL_UNMANAGED: {
         if (!info->hasFlag(ModInfo::FLAG_FOREIGN)) return false;
       } break;
+      case CategoryFactory::CATEGORY_SPECIAL_NOGAMEDATA: {
+        if (!info->hasFlag(ModInfo::FLAG_INVALID)) return false;
+      } break;
+      case CategoryFactory::CATEGORY_SPECIAL_NONEXUSID: {
+        if (!(info->getNexusID() == -1 && !info->hasFlag(ModInfo::FLAG_FOREIGN) && 
+            !info->hasFlag(ModInfo::FLAG_BACKUP) && 
+            !info->hasFlag(ModInfo::FLAG_SEPARATOR) &&
+            !info->hasFlag(ModInfo::FLAG_OVERWRITE))) return false;
+      } break;
       default: {
         if (!info->categorySet(*iter)) return false;
       } break;
@@ -352,6 +361,15 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_UNMANAGED: {
         if (info->hasFlag(ModInfo::FLAG_FOREIGN)) return true;
+      } break;
+      case CategoryFactory::CATEGORY_SPECIAL_NOGAMEDATA: {
+        if (info->hasFlag(ModInfo::FLAG_INVALID)) return true;
+      } break;
+      case CategoryFactory::CATEGORY_SPECIAL_NONEXUSID: {
+        if ((info->getNexusID() == -1 && !info->hasFlag(ModInfo::FLAG_FOREIGN) &&
+          !info->hasFlag(ModInfo::FLAG_BACKUP) &&
+          !info->hasFlag(ModInfo::FLAG_SEPARATOR) &&
+          !info->hasFlag(ModInfo::FLAG_OVERWRITE))) return true;
       } break;
       default: {
         if (info->categorySet(*iter)) return true;

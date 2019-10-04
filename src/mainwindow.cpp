@@ -2691,6 +2691,8 @@ void MainWindow::refreshFilters()
   addFilterItem(nullptr, tr("<No category>"), CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY, ModListSortProxy::TYPE_SPECIAL);
   addFilterItem(nullptr, tr("<Conflicted>"), CategoryFactory::CATEGORY_SPECIAL_CONFLICT, ModListSortProxy::TYPE_SPECIAL);
   addFilterItem(nullptr, tr("<Not Endorsed>"), CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED, ModListSortProxy::TYPE_SPECIAL);
+  addFilterItem(nullptr, tr("<No Nexus ID>"), CategoryFactory::CATEGORY_SPECIAL_NONEXUSID, ModListSortProxy::TYPE_SPECIAL);
+  addFilterItem(nullptr, tr("<No valid game data>"), CategoryFactory::CATEGORY_SPECIAL_NOGAMEDATA, ModListSortProxy::TYPE_SPECIAL);
 
   addContentFilters();
   std::set<int> categoriesUsed;
