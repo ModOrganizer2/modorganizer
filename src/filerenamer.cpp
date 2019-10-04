@@ -1,4 +1,5 @@
 #include "filerenamer.h"
+#include <utility.h>
 #include <log.h>
 #include <QMessageBox>
 #include <QFileInfo>
@@ -37,10 +38,13 @@ FileRenamer::RenameResults FileRenamer::rename(const QString& oldName, const QSt
         log::debug("removing {}", newName);
 
         // user wants to replace the file, so remove it
-        if (!QFile(newName).remove()) {
-          log::warn("failed to remove '{}'", newName);
+        const auto r = shell::Delete(newName);
+
+        if (!r.success()) {
+          log::error("failed to remove '{}': {}", newName, r.toString());
+
           // removal failed, warn the user and allow canceling
-          if (!removeFailed(newName)) {
+          if (!removeFailed(newName, r)) {
             log::debug("canceling {}", oldName);
             // user wants to cancel
             return RESULT_CANCEL;
@@ -64,12 +68,15 @@ FileRenamer::RenameResults FileRenamer::rename(const QString& oldName, const QSt
   }
 
   // target either didn't exist or was removed correctly
+  const auto r = shell::Rename(oldName, newName);
 
-  if (!QFile::rename(oldName, newName)) {
-    log::warn("failed to rename '{}' to '{}'", oldName, newName);
+  if (!r.success()) {
+    log::error(
+      "failed to rename '{}' to '{}': {}",
+      oldName, newName, r.toString());
 
     // renaming failed, warn the user and allow canceling
-    if (!renameFailed(oldName, newName)) {
+    if (!renameFailed(oldName, newName, r)) {
       // user wants to cancel
       log::debug("canceling");
       return RESULT_CANCEL;
@@ -144,7 +151,7 @@ FileRenamer::RenameDecision FileRenamer::confirmReplace(const QString& newName)
   }
 }
 
-bool FileRenamer::removeFailed(const QString& name)
+bool FileRenamer::removeFailed(const QString& name, const shell::Result& r)
 {
   QMessageBox::StandardButtons buttons = QMessageBox::Ok;
   if (m_flags & MULTIPLE) {
@@ -153,8 +160,9 @@ bool FileRenamer::removeFailed(const QString& name)
   }
 
   const auto answer = QMessageBox::critical(
-    m_parent, QObject::tr("File operation failed"),
-    QObject::tr("Failed to remove \"%1\". Maybe you lack the required file permissions?").arg(name),
+    m_parent,
+    QObject::tr("File operation failed"),
+    QObject::tr("Failed to remove \"%1\": %2").arg(name).arg(r.toString()),
     buttons);
 
   if (answer == QMessageBox::Cancel) {
@@ -168,7 +176,8 @@ bool FileRenamer::removeFailed(const QString& name)
   return true;
 }
 
-bool FileRenamer::renameFailed(const QString& oldName, const QString& newName)
+bool FileRenamer::renameFailed(
+  const QString& oldName, const QString& newName, const shell::Result& r)
 {
   QMessageBox::StandardButtons buttons = QMessageBox::Ok;
   if (m_flags & MULTIPLE) {
@@ -177,9 +186,16 @@ bool FileRenamer::renameFailed(const QString& oldName, const QString& newName)
   }
 
   const auto answer = QMessageBox::critical(
-    m_parent, QObject::tr("File operation failed"),
-    QObject::tr("failed to rename %1 to %2").arg(oldName).arg(QDir::toNativeSeparators(newName)),
-    buttons);
+    m_parent,
+    QObject::tr("File operation failed"),
+    QObject::tr(
+      "Failed to rename file: %1.\r\n\r\n"
+      "Source:\r\n\"%2\"\r\n\r\n"
+      "Destination:\r\n\"%3\"")
+        .arg(r.toString())
+        .arg(QDir::toNativeSeparators(oldName))
+        .arg(QDir::toNativeSeparators(newName)),
+     buttons);
 
   if (answer == QMessageBox::Cancel) {
     // user wants to stop

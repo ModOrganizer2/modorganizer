@@ -112,5 +112,5 @@ void ProblemsDialog::startFix()
 
 void ProblemsDialog::urlClicked(const QUrl &url)
 {
-  shell::OpenLink(url);
+  shell::Open(url);
 }

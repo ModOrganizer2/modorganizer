@@ -1059,11 +1059,11 @@ void DownloadManager::openFile(int index)
 
   QDir path = QDir(m_OutputDirectory);
   if (path.exists(getFileName(index))) {
-    shell::OpenFile(getFilePath(index));
+    shell::Open(getFilePath(index));
     return;
   }
 
-  shell::ExploreFile(m_OutputDirectory);
+  shell::Explore(m_OutputDirectory);
   return;
 }
 
@@ -1077,18 +1077,18 @@ void DownloadManager::openInDownloadsFolder(int index)
   const auto path = getFilePath(index);
 
   if (QFile::exists(path)) {
-    shell::ExploreFile(path);
+    shell::Explore(path);
     return;
   }
   else {
     const auto unfinished = path + ".unfinished";
     if (QFile::exists(unfinished)) {
-      shell::ExploreFile(unfinished);
+      shell::Explore(unfinished);
       return;
     }
   }
 
-  shell::ExploreFile(m_OutputDirectory);
+  shell::Explore(m_OutputDirectory);
 }
 
 

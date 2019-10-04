@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+namespace MOBase::shell { class Result; }
+
 /**
 * Renames individual files and handles dialog boxes to confirm replacements and
 * failures with the user
@@ -126,7 +128,7 @@ private:
   * @param name The name of the file that failed to be removed
   * @return true to continue, false to stop
   **/
-  bool removeFailed(const QString& name);
+  bool removeFailed(const QString& name, const MOBase::shell::Result& r);
 
   /**
   * renaming a file failed, ask the user to continue or cancel
@@ -134,7 +136,9 @@ private:
   * @param newName new filename
   * @return true to continue, false to stop
   **/
-  bool renameFailed(const QString& oldName, const QString& newName);
+  bool renameFailed(
+    const QString& oldName, const QString& newName,
+    const MOBase::shell::Result& r);
 };
 
 #endif // FILERENAMER_H

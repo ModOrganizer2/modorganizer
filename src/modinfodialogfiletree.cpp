@@ -128,7 +128,7 @@ void FileTreeTab::onOpen()
     return;
   }
 
-  shell::OpenFile(m_fs->filePath(selection));
+  shell::Open(m_fs->filePath(selection));
 }
 
 void FileTreeTab::onPreview()
@@ -146,9 +146,9 @@ void FileTreeTab::onExplore()
   auto selection = singleSelection();
 
   if (selection.isValid()) {
-    shell::ExploreFile(m_fs->filePath(selection));
+    shell::Explore(m_fs->filePath(selection));
   } else {
-    shell::ExploreFile(mod().absolutePath());
+    shell::Explore(mod().absolutePath());
   }
 }
 
@@ -204,7 +204,7 @@ void FileTreeTab::onUnhide()
 
 void FileTreeTab::onOpenInExplorer()
 {
-  shell::ExploreFile(mod().absolutePath());
+  shell::Explore(mod().absolutePath());
 }
 
 bool FileTreeTab::deleteFile(const QModelIndex& index)

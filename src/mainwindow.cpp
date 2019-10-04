@@ -3313,12 +3313,12 @@ void MainWindow::openExplorer_clicked()
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
       ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-      shell::ExploreFile(info->absolutePath());
+      shell::Explore(info->absolutePath());
     }
   }
   else {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
-    shell::ExploreFile(modInfo->absolutePath());
+    shell::Explore(modInfo->absolutePath());
   }
 }
 
@@ -3333,14 +3333,14 @@ void MainWindow::openPluginOriginExplorer_clicked()
         continue;
       }
       ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-      shell::ExploreFile(modInfo->absolutePath());
+      shell::Explore(modInfo->absolutePath());
     }
   }
   else {
     QModelIndex idx = selection->currentIndex();
     QString fileName = idx.data().toString();
     ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
-    shell::ExploreFile(modInfo->absolutePath());
+    shell::Explore(modInfo->absolutePath());
   }
 }
 
@@ -3355,7 +3355,7 @@ void MainWindow::openExplorer_activated()
 			std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
 			if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-        shell::ExploreFile(modInfo->absolutePath());
+        shell::Explore(modInfo->absolutePath());
 			}
 
 		}
@@ -3376,7 +3376,7 @@ void MainWindow::openExplorer_activated()
         std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
         if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-          shell::ExploreFile(modInfo->absolutePath());
+          shell::Explore(modInfo->absolutePath());
         }
       }
 		}
@@ -4344,61 +4344,61 @@ void MainWindow::disableVisibleMods()
 void MainWindow::openInstanceFolder()
 {
   QString dataPath = qApp->property("dataPath").toString();
-  shell::ExploreFile(dataPath);
+  shell::Explore(dataPath);
 }
 
 void MainWindow::openLogsFolder()
 {
 	QString logsPath = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath());
-  shell::ExploreFile(logsPath);
+  shell::Explore(logsPath);
 }
 
 void MainWindow::openInstallFolder()
 {
-  shell::ExploreFile(qApp->applicationDirPath());
+  shell::Explore(qApp->applicationDirPath());
 }
 
 void MainWindow::openPluginsFolder()
 {
 	QString pluginsPath = QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath());
-  shell::ExploreFile(pluginsPath);
+  shell::Explore(pluginsPath);
 }
 
 
 void MainWindow::openProfileFolder()
 {
-  shell::ExploreFile(m_OrganizerCore.currentProfile()->absolutePath());
+  shell::Explore(m_OrganizerCore.currentProfile()->absolutePath());
 }
 
 void MainWindow::openIniFolder()
 {
   if (m_OrganizerCore.currentProfile()->localSettingsEnabled())
   {
-    shell::ExploreFile(m_OrganizerCore.currentProfile()->absolutePath());
+    shell::Explore(m_OrganizerCore.currentProfile()->absolutePath());
   }
   else {
-    shell::ExploreFile(m_OrganizerCore.managedGame()->documentsDirectory());
+    shell::Explore(m_OrganizerCore.managedGame()->documentsDirectory());
   }
 }
 
 void MainWindow::openDownloadsFolder()
 {
-  shell::ExploreFile(m_OrganizerCore.settings().paths().downloads());
+  shell::Explore(m_OrganizerCore.settings().paths().downloads());
 }
 
 void MainWindow::openModsFolder()
 {
-  shell::ExploreFile(m_OrganizerCore.settings().paths().mods());
+  shell::Explore(m_OrganizerCore.settings().paths().mods());
 }
 
 void MainWindow::openGameFolder()
 {
-  shell::ExploreFile(m_OrganizerCore.managedGame()->gameDirectory());
+  shell::Explore(m_OrganizerCore.managedGame()->gameDirectory());
 }
 
 void MainWindow::openMyGamesFolder()
 {
-  shell::ExploreFile(m_OrganizerCore.managedGame()->documentsDirectory());
+  shell::Explore(m_OrganizerCore.managedGame()->documentsDirectory());
 }
 
 
@@ -5391,7 +5391,7 @@ void MainWindow::openDataOriginExplorer_clicked()
   const auto fullPath = m_ContextItem->data(0, Qt::UserRole).toString();
 
   log::debug("opening in explorer: {}", fullPath);
-  shell::ExploreFile(fullPath);
+  shell::Explore(fullPath);
 }
 
 void MainWindow::updateAvailable()

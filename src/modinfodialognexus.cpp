@@ -95,7 +95,7 @@ void NexusTab::update()
 
   connect(
     page, &NexusTabWebpage::linkClicked,
-    [&](const QUrl& url){ shell::OpenLink(url); });
+    [&](const QUrl& url){ shell::Open(url); });
 
   ui->endorse->setEnabled(
     (mod().endorsedState() == ModInfo::ENDORSED_FALSE) ||
@@ -363,7 +363,7 @@ void NexusTab::onVisitNexus()
     const QString nexusLink = NexusInterface::instance(&plugin())
       ->getModURL(modID, mod().getGameName());
 
-    shell::OpenLink(QUrl(nexusLink));
+    shell::Open(QUrl(nexusLink));
   }
 }
 
@@ -412,6 +412,6 @@ void NexusTab::onVisitCustomURL()
 {
   const auto url = mod().parseCustomURL();
   if (url.isValid()) {
-    shell::OpenLink(url);
+    shell::Open(url);
   }
 }

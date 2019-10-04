@@ -286,7 +286,7 @@ void NexusSSOLogin::onMessage(const QString& s)
 
     // open browser
     const auto url = NexusSSOPage.arg(m_guid);
-    shell::OpenLink(url);
+    shell::Open(url);
 
     m_timeout.stop();
     setState(WaitingForBrowser);
