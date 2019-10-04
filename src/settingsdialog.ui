@@ -1535,7 +1535,19 @@ programs you are intentionally running.</string>
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>logLevelBox</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>languageBox</tabstop>
+  <tabstop>styleBox</tabstop>
+  <tabstop>centerDialogs</tabstop>
+  <tabstop>resetDialogsButton</tabstop>
+  <tabstop>categoriesBtn</tabstop>
+  <tabstop>showMetaBox</tabstop>
+  <tabstop>compactBox</tabstop>
+  <tabstop>checkForUpdates</tabstop>
+  <tabstop>usePrereleaseBox</tabstop>
+  <tabstop>colorTable</tabstop>
+  <tabstop>colorSeparatorsBox</tabstop>
+  <tabstop>resetColorsBtn</tabstop>
   <tabstop>baseDirEdit</tabstop>
   <tabstop>browseBaseDirBtn</tabstop>
   <tabstop>downloadDirEdit</tabstop>
@@ -1548,7 +1560,18 @@ programs you are intentionally running.</string>
   <tabstop>browseProfilesDirBtn</tabstop>
   <tabstop>overwriteDirEdit</tabstop>
   <tabstop>browseOverwriteDirBtn</tabstop>
+  <tabstop>managedGameDirEdit</tabstop>
+  <tabstop>browseGameDirBtn</tabstop>
+  <tabstop>nexusConnect</tabstop>
+  <tabstop>nexusManualKey</tabstop>
+  <tabstop>nexusDisconnect</tabstop>
+  <tabstop>nexusLog</tabstop>
+  <tabstop>offlineBox</tabstop>
+  <tabstop>endorsementBox</tabstop>
+  <tabstop>proxyBox</tabstop>
+  <tabstop>hideAPICounterBox</tabstop>
   <tabstop>associateButton</tabstop>
+  <tabstop>clearCacheButton</tabstop>
   <tabstop>knownServersList</tabstop>
   <tabstop>preferredServersList</tabstop>
   <tabstop>steamUserEdit</tabstop>
@@ -1558,8 +1581,17 @@ programs you are intentionally running.</string>
   <tabstop>pluginBlacklist</tabstop>
   <tabstop>appIDEdit</tabstop>
   <tabstop>mechanismBox</tabstop>
+  <tabstop>hideUncheckedBox</tabstop>
+  <tabstop>forceEnableBox</tabstop>
+  <tabstop>lockGUIBox</tabstop>
+  <tabstop>displayForeignBox</tabstop>
+  <tabstop>enableArchiveParsingBox</tabstop>
   <tabstop>bsaDateBtn</tabstop>
-  <tabstop>tabWidget</tabstop>
+  <tabstop>execBlacklistBtn</tabstop>
+  <tabstop>resetGeometryBtn</tabstop>
+  <tabstop>logLevelBox</tabstop>
+  <tabstop>dumpsTypeBox</tabstop>
+  <tabstop>dumpsMaxEdit</tabstop>
  </tabstops>
  <resources>
   <include location="resources.qrc"/>
