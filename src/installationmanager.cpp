@@ -307,7 +307,7 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
     QCoreApplication::processEvents();
   } while (!future.isFinished() || m_InstallationProgress->isVisible());
   if (!future.result()) {
-    throw MyException(QString("extracting failed (%1)").arg(m_ArchiveHandler->getLastError()));
+    throw MyException(QString("Extraction failed: %1").arg(m_ArchiveHandler->getLastError()));
   }
 
   return result;
@@ -491,7 +491,7 @@ bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *me
       if (overwriteDialog.backup()) {
         QString backupDirectory = generateBackupName(targetDirectory);
         if (!copyDir(targetDirectory, backupDirectory, false)) {
-          reportError(tr("failed to create backup"));
+          reportError(tr("Failed to create backup"));
           return false;
         }
       }
@@ -616,12 +616,12 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString game
   if (!future.result()) {
     if (m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
       if (!m_ErrorMessage.isEmpty()) {
-        throw MyException(QString("extracting failed (%1)").arg(m_ErrorMessage));
+        throw MyException(tr("Extraction failed: %1").arg(m_ErrorMessage));
       } else {
       return false;
       }
     } else {
-      throw MyException(QString("extracting failed (%1)").arg(m_ArchiveHandler->getLastError()));
+      throw MyException(tr("Extraction failed: %1").arg(m_ArchiveHandler->getLastError()));
     }
   }
 
