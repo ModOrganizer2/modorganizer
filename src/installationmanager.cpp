@@ -307,7 +307,7 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
     QCoreApplication::processEvents();
   } while (!future.isFinished() || m_InstallationProgress->isVisible());
   if (!future.result()) {
-    throw MyException(QString("Extraction failed: %1").arg(m_ArchiveHandler->getLastError()));
+    throw MyException(tr("Extraction failed: %1").arg(m_ArchiveHandler->getLastError()));
   }
 
   return result;
