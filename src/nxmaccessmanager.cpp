@@ -18,6 +18,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "nxmaccessmanager.h"
+#include "ui_validationprogressdialog.h"
 #include "iplugingame.h"
 #include "nexusinterface.h"
 #include "nxmurl.h"
@@ -48,24 +49,14 @@ const QString NexusSSO("wss://sso.nexusmods.com");
 const QString NexusSSOPage("https://www.nexusmods.com/sso?id=%1&application=modorganizer2");
 
 
-ValidationProgressDialog::ValidationProgressDialog(std::chrono::seconds t) :
-  m_timeout(t), m_bar(nullptr), m_buttons(nullptr), m_timer(nullptr),
-  m_first(true)
+ValidationProgressDialog::ValidationProgressDialog(const NexusKeyValidator& v)
+  : m_validator(v), m_updateTimer(nullptr), m_first(true)
 {
-  m_bar = new QProgressBar;
-  m_bar->setTextVisible(false);
+  ui.reset(new Ui::ValidationProgressDialog);
+  ui->setupUi(this);
 
-  auto* label = new QLabel(tr("Validating Nexus Connection"));
-  label->setAlignment(Qt::AlignHCenter);
-
-  auto* vbox = new QVBoxLayout(this);
-  vbox->addWidget(label);
-  vbox->addWidget(m_bar);
-
-  m_buttons = new QDialogButtonBox;
-  m_buttons->addButton(tr("Hide"), QDialogButtonBox::RejectRole);
-  connect(m_buttons, &QDialogButtonBox::clicked, [&](auto* b){ onButton(b); });
-  vbox->addWidget(m_buttons);
+  connect(ui->hide, &QPushButton::clicked, [&]{ onHide(); });
+  connect(ui->cancel, &QPushButton::clicked, [&]{ onCancel(); });
 }
 
 void ValidationProgressDialog::setParentWidget(QWidget* w)
@@ -75,30 +66,32 @@ void ValidationProgressDialog::setParentWidget(QWidget* w)
   hide();
   setParent(w, windowFlags() | Qt::Dialog);
   setModal(false);
-  setVisible(wasVisible);
+
+  if (w && wasVisible) {
+    setVisible(true);
+  }
 }
 
 void ValidationProgressDialog::start()
 {
-  if (!m_timer) {
-    m_timer = new QTimer(this);
-    connect(m_timer, &QTimer::timeout, [&]{ onTimer(); });
-    m_timer->setInterval(100ms);
+  if (!m_updateTimer) {
+    m_updateTimer = new QTimer(this);
+    connect(m_updateTimer, &QTimer::timeout, [&]{ onTimer(); });
+    m_updateTimer->setInterval(100ms);
   }
 
-  m_bar->setRange(0, m_timeout.count());
-  m_bar->setValue(0);
+  ui->progress->setRange(0, m_validator.timeout().count());
+  ui->progress->setValue(0);
 
-  m_elapsed.start();
-  m_timer->start();
+  m_updateTimer->start();
 
   show();
 }
 
 void ValidationProgressDialog::stop()
 {
-  if (m_timer) {
-    m_timer->stop();
+  if (m_updateTimer) {
+    m_updateTimer->stop();
   }
 
   hide();
@@ -118,18 +111,18 @@ void ValidationProgressDialog::closeEvent(QCloseEvent* e)
   e->ignore();
 }
 
-void ValidationProgressDialog::onButton(QAbstractButton* b)
+void ValidationProgressDialog::onHide()
 {
-  if (m_buttons->buttonRole(b) == QDialogButtonBox::RejectRole) {
-    hide();
-  } else {
-    qCritical() << "validation dialog: unknown button pressed";
-  }
+  hide();
+}
+
+void ValidationProgressDialog::onCancel()
+{
 }
 
 void ValidationProgressDialog::onTimer()
 {
-  m_bar->setValue(m_elapsed.elapsed() / 1000);
+  ui->progress->setValue(m_validator.elapsed().elapsed() / 1000);
 }
 
 
@@ -395,6 +388,7 @@ void NexusKeyValidator::start(const QString& key)
 
   m_active = true;
   setState(Connecting);
+  m_elapsed.start();
 
   const QString requestUrl(NexusBaseUrl + "/users/validate");
   QNetworkRequest request(requestUrl);
@@ -435,6 +429,16 @@ void NexusKeyValidator::cancel()
 bool NexusKeyValidator::isActive() const
 {
   return m_active;
+}
+
+QElapsedTimer NexusKeyValidator::elapsed() const
+{
+  return m_elapsed;
+}
+
+std::chrono::seconds NexusKeyValidator::timeout() const
+{
+  return NXMAccessManager::ValidationTimeout;
 }
 
 void NexusKeyValidator::close()
@@ -563,11 +567,12 @@ void NexusKeyValidator::handleError(
 
 NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
   : QNetworkAccessManager(parent)
-  , m_ProgressDialog(new ValidationProgressDialog(ValidationTimeout))
   , m_MOVersion(moVersion)
   , m_validator(*this)
   , m_validationState(NotChecked)
 {
+  m_ProgressDialog.reset(new ValidationProgressDialog(m_validator));
+
   m_validator.stateChanged = [&](auto&& s, auto&& e){ onValidatorState(s, e); };
   m_validator.finished = [&](auto&& user){ onValidatorFinished(user); };
 
@@ -582,7 +587,13 @@ NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
 
 void NXMAccessManager::setTopLevelWidget(QWidget* w)
 {
-  m_ProgressDialog->setParentWidget(w);
+  if (w) {
+    m_ProgressDialog->setParentWidget(w);
+  } else {
+    const auto v = m_ProgressDialog->isVisible();
+    m_ProgressDialog.reset(new ValidationProgressDialog(m_validator));
+    m_validator.cancel();
+  }
 }
 
 QNetworkReply *NXMAccessManager::createRequest(
@@ -641,8 +652,13 @@ void NXMAccessManager::onValidatorState(
   }
 
   m_ProgressDialog->stop();
-  m_validationState = Invalid;
-  emit validateFailed(NexusKeyValidator::stateToString(s, e));
+
+  if (s == NexusKeyValidator::Cancelled) {
+    m_validationState = NotChecked;
+  } else {
+    m_validationState = Invalid;
+    emit validateFailed(NexusKeyValidator::stateToString(s, e));
+  }
 }
 
 void NXMAccessManager::onValidatorFinished(const APIUserAccount& user)

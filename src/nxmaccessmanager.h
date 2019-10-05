@@ -31,38 +31,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <set>
 
 namespace MOBase { class IPluginGame; }
+namespace Ui { class ValidationProgressDialog; }
 class NXMAccessManager;
-
-class ValidationProgressDialog : private QDialog
-{
-  Q_OBJECT;
-
-public:
-  ValidationProgressDialog(std::chrono::seconds timeout);
-
-  void setParentWidget(QWidget* w);
-
-  void start();
-  void stop();
-
-  using QDialog::show;
-
-protected:
-  void showEvent(QShowEvent* e) override;
-  void closeEvent(QCloseEvent* e) override;
-
-private:
-  std::chrono::seconds m_timeout;
-  QProgressBar* m_bar;
-  QDialogButtonBox* m_buttons;
-  QTimer* m_timer;
-  QElapsedTimer m_elapsed;
-  bool m_first;
-
-  void onButton(QAbstractButton* b);
-  void onTimer();
-};
-
 
 class NexusSSOLogin
 {
@@ -138,12 +108,15 @@ public:
   void cancel();
 
   bool isActive() const;
+  QElapsedTimer elapsed() const;
+  std::chrono::seconds timeout() const;
 
 private:
   NXMAccessManager& m_manager;
   QNetworkReply* m_reply;
   QTimer m_timeout;
   bool m_active;
+  QElapsedTimer m_elapsed;
 
   void setState(States s, const QString& error={});
 
@@ -156,6 +129,34 @@ private:
 
   void handleError(
     int code, const QString& nexusMessage, const QString& httpError);
+};
+
+
+class ValidationProgressDialog : public QDialog
+{
+  Q_OBJECT;
+
+public:
+  ValidationProgressDialog(const NexusKeyValidator& v);
+
+  void setParentWidget(QWidget* w);
+
+  void start();
+  void stop();
+
+protected:
+  void showEvent(QShowEvent* e) override;
+  void closeEvent(QCloseEvent* e) override;
+
+private:
+  std::unique_ptr<Ui::ValidationProgressDialog> ui;
+  const NexusKeyValidator& m_validator;
+  QTimer* m_updateTimer;
+  bool m_first;
+
+  void onHide();
+  void onCancel();
+  void onTimer();
 };
 
 
@@ -224,7 +225,7 @@ private:
   };
 
   QWidget* m_TopLevel;
-  mutable ValidationProgressDialog* m_ProgressDialog;
+  mutable std::unique_ptr<ValidationProgressDialog> m_ProgressDialog;
   QString m_MOVersion;
   NexusKeyValidator m_validator;
   States m_validationState;
