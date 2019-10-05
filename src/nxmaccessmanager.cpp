@@ -49,7 +49,7 @@ const QString NexusSSO("wss://sso.nexusmods.com");
 const QString NexusSSOPage("https://www.nexusmods.com/sso?id=%1&application=modorganizer2");
 
 
-ValidationProgressDialog::ValidationProgressDialog(const NexusKeyValidator& v)
+ValidationProgressDialog::ValidationProgressDialog(NexusKeyValidator& v)
   : m_validator(v), m_updateTimer(nullptr), m_first(true)
 {
   ui.reset(new Ui::ValidationProgressDialog);
@@ -118,6 +118,7 @@ void ValidationProgressDialog::onHide()
 
 void ValidationProgressDialog::onCancel()
 {
+  m_validator.cancel();
 }
 
 void ValidationProgressDialog::onTimer()
@@ -571,8 +572,6 @@ NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
   , m_validator(*this)
   , m_validationState(NotChecked)
 {
-  m_ProgressDialog.reset(new ValidationProgressDialog(m_validator));
-
   m_validator.stateChanged = [&](auto&& s, auto&& e){ onValidatorState(s, e); };
   m_validator.finished = [&](auto&& user){ onValidatorFinished(user); };
 
@@ -590,8 +589,7 @@ void NXMAccessManager::setTopLevelWidget(QWidget* w)
   if (w) {
     m_ProgressDialog->setParentWidget(w);
   } else {
-    const auto v = m_ProgressDialog->isVisible();
-    m_ProgressDialog.reset(new ValidationProgressDialog(m_validator));
+    m_ProgressDialog.reset();
     m_validator.cancel();
   }
 }
@@ -640,7 +638,7 @@ void NXMAccessManager::startValidationCheck(const QString& key)
 {
   m_validationState = NotChecked;
   m_validator.start(key);
-  m_ProgressDialog->start();
+  startProgress();
 }
 
 void NXMAccessManager::onValidatorState(
@@ -651,7 +649,7 @@ void NXMAccessManager::onValidatorState(
     return;
   }
 
-  m_ProgressDialog->stop();
+  stopProgress();
 
   if (s == NexusKeyValidator::Cancelled) {
     m_validationState = NotChecked;
@@ -663,7 +661,7 @@ void NXMAccessManager::onValidatorState(
 
 void NXMAccessManager::onValidatorFinished(const APIUserAccount& user)
 {
-  m_ProgressDialog->stop();
+  stopProgress();
 
   m_validationState = Valid;
   emit credentialsReceived(user);
@@ -673,7 +671,7 @@ void NXMAccessManager::onValidatorFinished(const APIUserAccount& user)
 bool NXMAccessManager::validated() const
 {
   if (m_validator.isActive()) {
-    m_ProgressDialog->show();
+    const_cast<NXMAccessManager*>(this)->startProgress();
   }
 
   return (m_validationState == Valid);
@@ -738,4 +736,20 @@ void NXMAccessManager::clearApiKey()
 {
   m_validator.cancel();
   emit credentialsReceived(APIUserAccount());
+}
+
+void NXMAccessManager::startProgress()
+{
+  if (!m_ProgressDialog) {
+    m_ProgressDialog.reset(new ValidationProgressDialog(m_validator));
+  }
+
+  m_ProgressDialog->start();
+}
+
+void NXMAccessManager::stopProgress()
+{
+  if (m_ProgressDialog) {
+    m_ProgressDialog->stop();
+  }
 }

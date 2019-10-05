@@ -137,7 +137,7 @@ class ValidationProgressDialog : public QDialog
   Q_OBJECT;
 
 public:
-  ValidationProgressDialog(const NexusKeyValidator& v);
+  ValidationProgressDialog(NexusKeyValidator& v);
 
   void setParentWidget(QWidget* w);
 
@@ -150,7 +150,7 @@ protected:
 
 private:
   std::unique_ptr<Ui::ValidationProgressDialog> ui;
-  const NexusKeyValidator& m_validator;
+  NexusKeyValidator& m_validator;
   QTimer* m_updateTimer;
   bool m_first;
 
@@ -169,8 +169,7 @@ class NXMAccessManager : public QNetworkAccessManager
 public:
   static const std::chrono::seconds ValidationTimeout;
 
-  explicit NXMAccessManager(QObject *parent, const QString &moVersion);
-
+  NXMAccessManager(QObject *parent, const QString &moVersion);
 
   void setTopLevelWidget(QWidget* w);
 
@@ -233,6 +232,9 @@ private:
   void startValidationCheck(const QString& key);
   void onValidatorState(NexusKeyValidator::States s, const QString& e);
   void onValidatorFinished(const APIUserAccount& user);
+
+  void startProgress();
+  void stopProgress();
 };
 
 #endif // NXMACCESSMANAGER_H
