@@ -112,6 +112,12 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
   QObject::connect(ui->clearCacheButton, &QPushButton::clicked, [&]{ on_clearCacheButton_clicked(); });
   QObject::connect(ui->associateButton, &QPushButton::clicked, [&]{ on_associateButton_clicked(); });
 
+  if (settings().nexus().hasApiKey()) {
+    addNexusLog(QObject::tr("Connected."));
+  } else {
+    addNexusLog(QObject::tr("Not connected."));
+  }
+
   updateNexusState();
 }
 
