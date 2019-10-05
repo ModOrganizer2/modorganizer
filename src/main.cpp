@@ -91,6 +91,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
+
+void sanityChecks(const env::Environment& env);
+
 bool createAndMakeWritable(const std::wstring &subPath) {
   QString const dataPath = qApp->property("dataPath").toString();
   QString fullPath = dataPath + "/" + QString::fromStdWString(subPath);
@@ -494,49 +497,6 @@ void preloadSsl()
 static QString getVersionDisplayString()
 {
   return createVersionInfo().displayString(3);
-}
-
-void checkMissingFiles()
-{
-  // files that are likely to be eaten
-  static const QStringList files({
-    "helper.exe", "nxmhandler.exe",
-    "usvfs_proxy_x64.exe", "usvfs_proxy_x86.exe",
-    "usvfs_x64.dll", "usvfs_x86.dll"
-  });
-
-  const auto dir = QCoreApplication::applicationDirPath();
-
-  for (const auto& name : files) {
-    const QFileInfo file(dir + QDir::separator() + name);
-    if (!file.exists()) {
-      log::warn(
-        "'{}' seems to be missing, an antivirus may have deleted it",
-        file.absoluteFilePath());
-    }
-  }
-}
-
-void checkNahimic(const env::Environment& e)
-{
-  for (auto&& m : e.loadedModules()) {
-    const QFileInfo file(m.path());
-
-    if (file.fileName().compare("NahimicOSD.dll", Qt::CaseInsensitive) == 0) {
-      log::warn(
-        "NahimicOSD.dll is loaded. Nahimic is known to cause issues with "
-        "Mod Organizer, such as freezing or blank windows. Consider "
-        "uninstalling it.");
-
-      break;
-    }
-  }
-}
-
-void sanityChecks(const env::Environment& e)
-{
-  checkMissingFiles();
-  checkNahimic(e);
 }
 
 
