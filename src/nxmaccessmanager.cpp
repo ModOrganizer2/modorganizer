@@ -44,7 +44,6 @@ using namespace MOBase;
 using namespace std::chrono_literals;
 
 const QString NexusBaseUrl("https://api.nexusmods.com/v1");
-const std::chrono::seconds NXMAccessManager::ValidationTimeout = 10s;
 const QString NexusSSO("wss://sso.nexusmods.com");
 const QString NexusSSOPage("https://www.nexusmods.com/sso?id=%1&application=modorganizer2");
 
@@ -69,6 +68,7 @@ void ValidationProgressDialog::setParentWidget(QWidget* w)
 
   if (w && wasVisible) {
     setVisible(true);
+    raise();
   }
 }
 
@@ -80,9 +80,7 @@ void ValidationProgressDialog::start()
     m_updateTimer->setInterval(100ms);
   }
 
-  ui->progress->setRange(0, m_validator.timeout().count());
-  ui->progress->setValue(0);
-
+  updateProgress();
   m_updateTimer->start();
 
   show();
@@ -123,14 +121,35 @@ void ValidationProgressDialog::onCancel()
 
 void ValidationProgressDialog::onTimer()
 {
-  ui->progress->setValue(m_validator.elapsed().elapsed() / 1000);
+  updateProgress();
+}
+
+void ValidationProgressDialog::updateProgress()
+{
+  const auto* current = m_validator.currentAttempt();
+
+  if (current) {
+    ui->progress->setRange(0, current->timeout().count());
+    ui->progress->setValue(current->elapsed().elapsed() / 1000);
+  } else {
+    // indeterminate
+    ui->progress->setRange(0, 0);
+  }
+
+  if (const auto* a=m_validator.lastAttempt()) {
+    ui->label->setText(a->message() + ". " + tr("Trying again..."));
+  } else if (current) {
+    ui->label->setText(tr("Connecting to Nexus..."));
+  } else {
+    ui->label->setText("?");
+  }
 }
 
 
 NexusSSOLogin::NexusSSOLogin()
   : m_keyReceived(false), m_active(false)
 {
-  m_timeout.setInterval(NXMAccessManager::ValidationTimeout);
+  m_timeout.setInterval(10s);
   m_timeout.setSingleShot(true);
 
   QObject::connect(
@@ -167,20 +186,22 @@ QString NexusSSOLogin::stateToString(States s, const QString& e)
       return QObject::tr("Waiting for Nexus...");
 
     case WaitingForBrowser:
-      return QObject::tr(
-        "Opened Nexus in browser.\n"
-        "Switch to your browser and accept the request.");
+      return
+        QObject::tr("Opened Nexus in browser.") + "\n" +
+        QObject::tr("Switch to your browser and accept the request.");
 
     case Finished:
       return QObject::tr("Finished.");
 
     case Timeout:
-      return QObject::tr(
-        "No answer from Nexus.\n"
-        "A firewall might be blocking Mod Organizer.");
+      return
+        QObject::tr("No answer from Nexus.") + "\n" +
+        QObject::tr("A firewall might be blocking Mod Organizer.");
 
     case ClosedByRemote:
-      return QObject::tr("Nexus closed the connection.");
+      return
+        QObject::tr("Nexus closed the connection.") + "\n" +
+        QObject::tr("A firewall might be blocking Mod Organizer.");
 
     case Cancelled:
       return QObject::tr("Cancelled.");
@@ -300,10 +321,11 @@ void NexusSSOLogin::onMessage(const QString& s)
 void NexusSSOLogin::onDisconnected()
 {
   if (m_active) {
-    m_active = false;
-
     if (!m_keyReceived) {
+      close();
       setState(ClosedByRemote);
+    } else {
+      m_active = false;
     }
   }
 }
@@ -332,83 +354,47 @@ void NexusSSOLogin::onTimeout()
 }
 
 
-NexusKeyValidator::NexusKeyValidator(NXMAccessManager& am)
-  : m_manager(am), m_reply(nullptr), m_active(false)
+ValidationAttempt::ValidationAttempt(std::chrono::seconds timeout)
+  : m_reply(nullptr), m_result(None)
 {
-  m_timeout.setInterval(NXMAccessManager::ValidationTimeout);
   m_timeout.setSingleShot(true);
+  m_timeout.setInterval(timeout);
 
   QObject::connect(&m_timeout, &QTimer::timeout, [&]{ onTimeout(); });
 }
 
-NexusKeyValidator::~NexusKeyValidator()
+void ValidationAttempt::start(NXMAccessManager& m, const QString& key)
 {
-  abort();
-}
-
-QString NexusKeyValidator::stateToString(States s, const QString& e)
-{
-  switch (s)
-  {
-    case NexusKeyValidator::Connecting:
-      return QObject::tr("Connecting to Nexus...");
-
-    case NexusKeyValidator::Finished:
-      return QObject::tr("Finished.");
-
-    case NexusKeyValidator::InvalidJson:
-      return QObject::tr("Invalid JSON");
-
-    case NexusKeyValidator::BadResponse:
-      return QObject::tr("Bad response");
-
-    case NexusKeyValidator::Timeout:
-      return QObject::tr("There was a timeout during the request");
-
-    case NexusKeyValidator::Cancelled:
-      return QObject::tr("Cancelled");
-
-    case NexusKeyValidator::Error:  // fall-through
-    default:
-    {
-      if (e.isEmpty()) {
-        return QString("%1").arg(s);
-      } else {
-        return e;
-      }
-    }
-  }
-}
-
-void NexusKeyValidator::start(const QString& key)
-{
-  if (m_reply) {
-    abort();
+  if (!sendRequest(m, key)) {
     return;
   }
 
-  m_active = true;
-  setState(Connecting);
   m_elapsed.start();
+  m_timeout.start();
 
+  log::debug(
+    "validator: attempt started with timeout of {} seconds", timeout().count());
+}
+
+bool ValidationAttempt::sendRequest(
+  NXMAccessManager& m, const QString& key)
+{
   const QString requestUrl(NexusBaseUrl + "/users/validate");
   QNetworkRequest request(requestUrl);
 
   request.setRawHeader("APIKEY", key.toUtf8());
-  request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader, m_manager.userAgent().toUtf8());
+  request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader, m.userAgent().toUtf8());
   request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
   request.setRawHeader("Protocol-Version", "1.0.0");
   request.setRawHeader("Application-Name", "MO2");
-  request.setRawHeader("Application-Version", m_manager.MOVersion().toUtf8());
+  request.setRawHeader("Application-Version", m.MOVersion().toUtf8());
 
-  m_reply = m_manager.get(request);
+  m_reply = m.get(request);
+
   if (!m_reply) {
-    close();
-    setState(Error, QObject::tr("Failed to request %1").arg(requestUrl));
-    return;
+    setFailure(SoftError, QObject::tr("Failed to request %1").arg(requestUrl));
+    return false;
   }
-
-  m_timeout.start(NXMAccessManager::ValidationTimeout);
 
   QObject::connect(
     m_reply, &QNetworkReply::finished,
@@ -417,93 +403,114 @@ void NexusKeyValidator::start(const QString& key)
   QObject::connect(
     m_reply, &QNetworkReply::sslErrors,
     [&](auto&& errors){ onSslErrors(errors); });
+
+  return true;
 }
 
-void NexusKeyValidator::cancel()
+void ValidationAttempt::cancel()
 {
-  if (m_active) {
-    abort();
-    setState(Cancelled);
+  if (!m_reply || m_result != None) {
+    // not running
+    return;
   }
+
+  setFailure(Cancelled, QObject::tr("Cancelled"));
+
+  if (m_reply) {
+    m_reply->abort();
+  }
+
+  cleanup();
 }
 
-bool NexusKeyValidator::isActive() const
+bool ValidationAttempt::done() const
 {
-  return m_active;
+  return (m_result != None);
 }
 
-QElapsedTimer NexusKeyValidator::elapsed() const
+ValidationAttempt::Result ValidationAttempt::result() const
+{
+  return m_result;
+}
+
+const QString& ValidationAttempt::message() const
+{
+  return m_message;
+}
+
+std::chrono::seconds ValidationAttempt::timeout() const
+{
+  return std::chrono::duration_cast<std::chrono::seconds>(
+    m_timeout.intervalAsDuration());
+}
+
+QElapsedTimer ValidationAttempt::elapsed() const
 {
   return m_elapsed;
 }
 
-std::chrono::seconds NexusKeyValidator::timeout() const
+void ValidationAttempt::onFinished()
 {
-  return NXMAccessManager::ValidationTimeout;
-}
-
-void NexusKeyValidator::close()
-{
-  m_active = false;
-  m_timeout.stop();
-
-  if (m_reply) {
-    m_reply->disconnect();
-    m_reply->deleteLater();
-    m_reply = nullptr;
-  }
-}
-
-void NexusKeyValidator::abort()
-{
-  m_active = false;
-  m_timeout.stop();
-
-  if (m_reply) {
-    m_reply->disconnect();
-    m_reply->abort();
-    m_reply->deleteLater();
-    m_reply = nullptr;
-  }
-}
-
-void NexusKeyValidator::setState(States s, const QString& error)
-{
-  if (stateChanged) {
-    stateChanged(s, error);
-  }
-}
-
-void NexusKeyValidator::onFinished()
-{
-  if (!m_reply) {
-    // shouldn't happen
+  if (m_result == Cancelled) {
     return;
   }
 
-  m_timeout.stop();
+  log::debug("validator attempt: request has finished");
 
-  const auto code = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+  if (!m_reply) {
+    // shouldn't happen
+    log::error("validator attempt: reply is null");
+    setFailure(HardError, QObject::tr("Internal error"));
+    return;
+  }
+
+  const auto code = m_reply->attribute(
+    QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+  if (code == 0) {
+    // request wasn't even sent
+    log::error("validator attempt: code is 0");
+    setFailure(SoftError, m_reply->errorString());
+    return;
+  }
+
   const auto doc = QJsonDocument::fromJson(m_reply->readAll());
   const auto headers = m_reply->rawHeaderPairs();
-  const auto error = m_reply->errorString();
-
-  close();
+  const auto httpError = m_reply->errorString();
 
   const QJsonObject data = doc.object();
 
   if (code != 200) {
-    handleError(code, data.value("message").toString(), error);
+    // http request failed
+
+    QString s = m_reply->errorString();
+
+    const auto nexusMessage = data.value("message").toString();
+    if (!nexusMessage.isEmpty()) {
+      if (!s.isEmpty()) {
+        s += ", ";
+      }
+
+      s += nexusMessage;
+    }
+
+    if (s.isEmpty()) {
+      s = QObject::tr("HTTP code %1").arg(code);
+    } else {
+      s += QString(" (%1)").arg(code);
+    }
+
+    setFailure(SoftError, s);
     return;
   }
 
   if (doc.isNull()) {
-    setState(InvalidJson);
+    setFailure(HardError, QObject::tr("Invalid JSON"));
     return;
   }
 
   if (!data.contains("user_id")) {
-    setState(BadResponse);
+    setFailure(HardError, QObject::tr("Bad response"));
     return;
   }
 
@@ -512,6 +519,11 @@ void NexusKeyValidator::onFinished()
   const QString name = data.value("name").toString();
   const bool premium = data.value("is_premium").toBool();
 
+  if (key.isEmpty()) {
+    setFailure(HardError, QObject::tr("API key is empty"));
+    return;
+  }
+
   const auto user = APIUserAccount()
     .apiKey(key)
     .id(QString("%1").arg(id))
@@ -519,51 +531,218 @@ void NexusKeyValidator::onFinished()
     .type(premium ? APIUserAccountTypes::Premium : APIUserAccountTypes::Regular)
     .limits(NexusInterface::parseLimits(headers));
 
-  if (finished) {
-    setState(Finished);
-    finished(user);
+  setSuccess(user);
+}
+
+void ValidationAttempt::onSslErrors(const QList<QSslError>& errors)
+{
+  log::error("validator attempt: ssl errors");
+
+  for (auto& e : errors) {
+    log::error("  . {}", e.errorString());
+  }
+
+  setFailure(HardError, QObject::tr("SSL error"));
+}
+
+void ValidationAttempt::onTimeout()
+{
+  setFailure(SoftError, QObject::tr("Timed out"));
+}
+
+void ValidationAttempt::setFailure(Result r, const QString& error)
+{
+  if (r != Cancelled) {
+    // don't spam the log
+    log::error("validator attempt: {}", error);
+  }
+
+  cleanup();
+
+  m_result = r;
+  m_message = error;
+
+  if (failure) {
+    failure();
   }
 }
 
-void NexusKeyValidator::onSslErrors(const QList<QSslError>& errors)
+void ValidationAttempt::setSuccess(const APIUserAccount& user)
 {
-  if (m_active) {
-    for (const auto& e : errors) {
-      setState(Error, e.errorString());
+  log::debug("validator attempt successful");
+  cleanup();
+
+  m_result = Success;
+  m_message = "";
+
+  if (success) {
+    success(user);
+  }
+}
+
+void ValidationAttempt::cleanup()
+{
+  m_timeout.stop();
+
+  if (m_reply) {
+    m_reply->disconnect();
+    m_reply->deleteLater();
+    m_reply = nullptr;
+  }
+}
+
+
+NexusKeyValidator::NexusKeyValidator(NXMAccessManager& am)
+  : m_manager(am)
+{
+}
+
+NexusKeyValidator::~NexusKeyValidator()
+{
+  cancel();
+}
+
+void NexusKeyValidator::start(const QString& key, Behaviour b)
+{
+  if (isActive()) {
+    log::debug("validator: trying to start while ongoing; ignoring");
+    return;
+  }
+
+  m_key = key;
+
+  switch (b)
+  {
+    case OneShot:
+    {
+      createAttempts({10s});
+      break;
+    }
+
+    case Retry:
+    {
+      createAttempts({5s, 5s, 10s});
+      break;
     }
   }
+
+  nextTry();
 }
 
-void NexusKeyValidator::onTimeout()
+void NexusKeyValidator::createAttempts(
+  const std::vector<std::chrono::seconds>& timeouts)
 {
-  abort();
-  setState(Timeout);
+  m_attempts.clear();
+
+  for (auto&& t : timeouts) {
+    m_attempts.push_back(std::make_unique<ValidationAttempt>(t));
+  }
 }
 
-void NexusKeyValidator::handleError(
-  int code, const QString& nexusMessage, const QString& httpError)
+void NexusKeyValidator::cancel()
 {
-  QString s = httpError;
+  log::debug("validator: cancelled");
 
-  if (!nexusMessage.isEmpty()) {
-    if (!s.isEmpty()) {
-      s += ", ";
+  for (auto&& a : m_attempts) {
+    a->cancel();
+  }
+}
+
+bool NexusKeyValidator::isActive() const
+{
+  for (auto&& a : m_attempts) {
+    if (!a->done()) {
+      return true;
     }
-
-    s += nexusMessage;
   }
 
-  if (code != 0) {
-    if (s.isEmpty()) {
-      s = QString("HTTP code %1").arg(code);
+  return false;
+}
+
+const ValidationAttempt* NexusKeyValidator::lastAttempt() const
+{
+  const ValidationAttempt* last = nullptr;
+
+  for (auto&& a : m_attempts) {
+    if (a->done()) {
+      last = a.get();
     } else {
-      s += QString(" (%1)").arg(code);
+      break;
     }
   }
 
-  setState(Error, s);
+  return last;
 }
 
+const ValidationAttempt* NexusKeyValidator::currentAttempt() const
+{
+  for (auto&& a : m_attempts) {
+    if (!a->done()) {
+      return a.get();
+    }
+  }
+
+  return nullptr;
+}
+
+bool NexusKeyValidator::nextTry()
+{
+  for (auto&& a : m_attempts) {
+    if (!a->done()) {
+      a->success = [&](auto&& user){ onAttemptSuccess(*a, user); };
+      a->failure = [&]{ onAttemptFailure(*a); };
+
+      a->start(m_manager, m_key);
+      return true;
+    }
+  }
+
+  // no more
+  return false;
+}
+
+void NexusKeyValidator::onAttemptSuccess(
+  const ValidationAttempt&, const APIUserAccount& u)
+{
+  setFinished(ValidationAttempt::Success, "", u);
+}
+
+void NexusKeyValidator::onAttemptFailure(const ValidationAttempt& a)
+{
+  switch (a.result())
+  {
+    case ValidationAttempt::SoftError:
+    {
+      if (!nextTry()) {
+        setFinished(a.result(), a.message(), {});
+      }
+
+      break;
+    }
+
+    case ValidationAttempt::HardError:
+    {
+      cancel();
+      setFinished(a.result(), a.message(), {});
+      break;
+    }
+
+    case ValidationAttempt::Cancelled:
+    {
+      setFinished(ValidationAttempt::Cancelled, QObject::tr("Cancelled"), {});
+      break;
+    }
+  }
+}
+
+void NexusKeyValidator::setFinished(
+  ValidationAttempt::Result r, const QString& message,
+  std::optional<APIUserAccount> user)
+{
+  if (finished) {
+    finished(r, message, user);
+  }
+}
 
 
 NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
@@ -572,8 +751,9 @@ NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
   , m_validator(*this)
   , m_validationState(NotChecked)
 {
-  m_validator.stateChanged = [&](auto&& s, auto&& e){ onValidatorState(s, e); };
-  m_validator.finished = [&](auto&& user){ onValidatorFinished(user); };
+  m_validator.finished = [&](auto&& r, auto&& m, auto&& u) {
+    onValidatorFinished(r, m, u);
+  };
 
   setCookieJar(new PersistentCookieJar(QDir::fromNativeSeparators(
     Settings::instance().paths().cache() + "/nexus_cookies.dat")));
@@ -587,7 +767,9 @@ NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
 void NXMAccessManager::setTopLevelWidget(QWidget* w)
 {
   if (w) {
-    m_ProgressDialog->setParentWidget(w);
+    if (m_ProgressDialog) {
+      m_ProgressDialog->setParentWidget(w);
+    }
   } else {
     m_ProgressDialog.reset();
     m_validator.cancel();
@@ -637,35 +819,28 @@ void NXMAccessManager::clearCookies()
 void NXMAccessManager::startValidationCheck(const QString& key)
 {
   m_validationState = NotChecked;
-  m_validator.start(key);
+  m_validator.start(key, NexusKeyValidator::Retry);
   startProgress();
 }
 
-void NXMAccessManager::onValidatorState(
-  NexusKeyValidator::States s, const QString& e)
+void NXMAccessManager::onValidatorFinished(
+  ValidationAttempt::Result r, const QString& message,
+  std::optional<APIUserAccount> user)
 {
-  if (s == NexusKeyValidator::Connecting || s == NexusKeyValidator::Finished) {
-    // no-op, success is handled in onValidatorFinished()
-    return;
-  }
-
   stopProgress();
 
-  if (s == NexusKeyValidator::Cancelled) {
-    m_validationState = NotChecked;
+  if (user) {
+    m_validationState = Valid;
+    emit credentialsReceived(*user);
+    emit validateSuccessful(true);
   } else {
-    m_validationState = Invalid;
-    emit validateFailed(NexusKeyValidator::stateToString(s, e));
+    if (r == ValidationAttempt::Cancelled) {
+      m_validationState = NotChecked;
+    } else {
+      m_validationState = Invalid;
+      emit validateFailed(message);
+    }
   }
-}
-
-void NXMAccessManager::onValidatorFinished(const APIUserAccount& user)
-{
-  stopProgress();
-
-  m_validationState = Valid;
-  emit credentialsReceived(user);
-  emit validateSuccessful(true);
 }
 
 bool NXMAccessManager::validated() const

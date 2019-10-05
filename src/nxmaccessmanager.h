@@ -82,53 +82,93 @@ private:
 };
 
 
-class NexusKeyValidator
+class ValidationAttempt
 {
 public:
-  enum States
+  enum Result
   {
-    Connecting,
-    Finished,
-    InvalidJson,
-    BadResponse,
-    Timeout,
-    Cancelled,
-    Error
+    None,
+    Success,
+    SoftError,
+    HardError,
+    Cancelled
   };
 
-  std::function<void (APIUserAccount)> finished;
-  std::function<void (States, QString)> stateChanged;
+  std::function<void (APIUserAccount)> success;
+  std::function<void ()> failure;
 
-  static QString stateToString(States s, const QString& e);
+  ValidationAttempt(std::chrono::seconds timeout);
+  ValidationAttempt(const ValidationAttempt&) = delete;
+  ValidationAttempt& operator=(const ValidationAttempt&) = delete;
 
-  NexusKeyValidator(NXMAccessManager& am);
-  ~NexusKeyValidator();
-
-  void start(const QString& key);
+  void start(NXMAccessManager& m, const QString& key);
   void cancel();
 
-  bool isActive() const;
-  QElapsedTimer elapsed() const;
+  bool done() const;
+  Result result() const;
+  const QString& message() const;
   std::chrono::seconds timeout() const;
+  QElapsedTimer elapsed() const;
 
 private:
-  NXMAccessManager& m_manager;
   QNetworkReply* m_reply;
+  Result m_result;
+  QString m_message;
   QTimer m_timeout;
-  bool m_active;
   QElapsedTimer m_elapsed;
 
-  void setState(States s, const QString& error={});
-
-  void close();
-  void abort();
+  bool sendRequest(NXMAccessManager& m, const QString& key);
 
   void onFinished();
   void onSslErrors(const QList<QSslError>& errors);
   void onTimeout();
 
-  void handleError(
-    int code, const QString& nexusMessage, const QString& httpError);
+  void setFailure(Result r, const QString& error);
+  void setSuccess(const APIUserAccount& user);
+
+  void cleanup();
+};
+
+
+class NexusKeyValidator
+{
+public:
+  enum Behaviour
+  {
+    OneShot = 0,
+    Retry
+  };
+
+  using FinishedCallback = void (
+    ValidationAttempt::Result, const QString&,
+    std::optional<APIUserAccount>);
+
+  std::function<FinishedCallback> finished;
+
+  NexusKeyValidator(NXMAccessManager& am);
+  ~NexusKeyValidator();
+
+  void start(const QString& key, Behaviour b);
+  void cancel();
+
+  bool isActive() const;
+  const ValidationAttempt* lastAttempt() const;
+  const ValidationAttempt* currentAttempt() const;
+
+private:
+  NXMAccessManager& m_manager;
+  QString m_key;
+  std::vector<std::unique_ptr<ValidationAttempt>> m_attempts;
+
+  void createAttempts(const std::vector<std::chrono::seconds>& timeouts);
+
+  bool nextTry();
+  void onAttemptSuccess(const ValidationAttempt& a, const APIUserAccount& u);
+  void onAttemptFailure(const ValidationAttempt& a);
+
+  void setFinished(
+    ValidationAttempt::Result r, const QString& message,
+    std::optional<APIUserAccount> user);
 };
 
 
@@ -157,6 +197,7 @@ private:
   void onHide();
   void onCancel();
   void onTimer();
+  void updateProgress();
 };
 
 
@@ -167,8 +208,6 @@ class NXMAccessManager : public QNetworkAccessManager
 {
   Q_OBJECT
 public:
-  static const std::chrono::seconds ValidationTimeout;
-
   NXMAccessManager(QObject *parent, const QString &moVersion);
 
   void setTopLevelWidget(QWidget* w);
@@ -230,8 +269,9 @@ private:
   States m_validationState;
 
   void startValidationCheck(const QString& key);
-  void onValidatorState(NexusKeyValidator::States s, const QString& e);
-  void onValidatorFinished(const APIUserAccount& user);
+  void onValidatorFinished(
+    ValidationAttempt::Result r, const QString& message,
+    std::optional<APIUserAccount>);
 
   void startProgress();
   void stopProgress();
