@@ -34,7 +34,7 @@ class StatusBar : public QStatusBar
 public:
   StatusBar(QWidget* parent=nullptr);
 
-  void setup(Ui::MainWindow* ui);
+  void setup(Ui::MainWindow* ui, const Settings& settings);
 
   void setProgress(int percent);
   void setNotifications(bool hasNotifications);
