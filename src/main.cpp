@@ -515,6 +515,10 @@ int runApplication(MOApplication &application, SingleInstance &instance,
   const QString dataPath = application.property("dataPath").toString();
   log::info("data path: {}", dataPath);
 
+  if (InstanceManager::isPortablePath(dataPath)) {
+    log::debug("this is a portable instance");
+  }
+
   if (!bootstrap()) {
     reportError("failed to set up data paths");
     return 1;
@@ -530,6 +534,8 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
     Settings settings(dataPath + "/" + QString::fromStdWString(AppConfig::iniFileName()));
     log::getDefault().setLevel(settings.diagnostics().logLevel());
+
+    log::debug("using ini at '{}'", settings.filename());
 
     // global crashDumpType sits in OrganizerCore to make a bit less ugly to
     // update it when the settings are changed during runtime
@@ -860,6 +866,8 @@ int main(int argc, char *argv[])
   } // we continue for the primary instance OR if MO was called with parameters
 
   do {
+    LogModel::instance().clear();
+
     // make sure the log file isn't locked in case MO was restarted and
     // the previous instance gets deleted
     log::getDefault().setFile({});
