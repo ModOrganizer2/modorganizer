@@ -14,7 +14,7 @@ enum class SecurityZone
   Untrusted = 4,
 };
 
-QString toString(SecurityZone z)
+QString toCodeName(SecurityZone z)
 {
   switch (z)
   {
@@ -24,8 +24,15 @@ QString toString(SecurityZone z)
     case SecurityZone::Trusted: return "Trusted";
     case SecurityZone::Internet: return "Internet";
     case SecurityZone::Untrusted: return "Untrusted";
-    default: return QString("unknown (%1)").arg(static_cast<int>(z));
+    default: return "Unknown";
   }
+}
+
+QString toString(SecurityZone z)
+{
+  return QString("%1 (%2)")
+    .arg(toCodeName(z))
+    .arg(static_cast<int>(z));
 }
 
 bool isZoneBlocked(SecurityZone z)
@@ -46,18 +53,18 @@ bool isFileBlocked(const QFileInfo& fi)
     return false;
   }
 
-  log::debug("file '{}' has an ADS for {}", path, adsPath);
+  log::debug("'{}' has an ADS for {}", path, adsPath);
 
-  QSettings qs(adsPath, QSettings::IniFormat);
+  const QSettings qs(adsPath, QSettings::IniFormat);
 
   if (!qs.contains(key)) {
-    log::debug("but key '{}' is not found", key);
+    log::debug("'{}': key '{}' not found", adsPath, key);
     return false;
   }
 
   const auto v = qs.value(key);
   if (v.isNull()) {
-    log::debug("but key '{}' is null", key);
+    log::debug("'{}': key '{}' is null", adsPath, key);
     return false;
   }
 
@@ -65,25 +72,16 @@ bool isFileBlocked(const QFileInfo& fi)
   const auto z = static_cast<SecurityZone>(v.toInt(&ok));
 
   if (!ok) {
-    log::debug(
-      "but key '{}' is not an int (value is '{}')",
-      key, v);
-
+    log::debug("'{}': key '{}' is not an int (value is '{}')", adsPath, key, v);
     return false;
   }
 
   if (!isZoneBlocked(z)) {
-    log::debug(
-      "but zone id is {}, {}, which is fine",
-      static_cast<int>(z), toString(z));
-
+    log::debug("'{}': zone id is {}, which is fine", adsPath, toString(z));
     return false;
   }
 
-  log::warn(
-    "file '{}' is blocked (zone id is {}, {})",
-    path, static_cast<int>(z), toString(z));
-
+  log::warn("'{}': file is blocked (zone id is {})", path, toString(z));
   return true;
 }
 
@@ -141,7 +139,8 @@ void checkMissingFiles()
   const auto dir = QCoreApplication::applicationDirPath();
 
   for (const auto& name : files) {
-    const QFileInfo file(dir + QDir::separator() + name);
+    const QFileInfo file(dir + "/" + name);
+
     if (!file.exists()) {
       log::warn(
         "'{}' seems to be missing, an antivirus may have deleted it",
@@ -168,6 +167,8 @@ void checkNahimic(const env::Environment& e)
 
 void sanityChecks(const env::Environment& e)
 {
+  log::debug("running sanity checks");
+
   checkBlocked();
   checkMissingFiles();
   checkNahimic(e);
