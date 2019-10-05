@@ -443,16 +443,20 @@ bool OrganizerCore::createDirectory(const QString &path) {
 }
 
 bool OrganizerCore::checkPathSymlinks() {
-  bool hasSymlink = (QFileInfo(m_Settings.paths().profiles()).isSymLink() ||
+  const bool hasSymlink = (
+    QFileInfo(m_Settings.paths().profiles()).isSymLink() ||
     QFileInfo(m_Settings.paths().mods()).isSymLink() ||
     QFileInfo(m_Settings.paths().overwrite()).isSymLink());
+
   if (hasSymlink) {
-    QMessageBox::critical(nullptr, QObject::tr("Error"),
-      QObject::tr("One of the configured MO2 directories (profiles, mods, or overwrite) "
-        "is on a path containing a symbolic (or other) link. This is incompatible "
-        "with MO2's VFS system."));
+    log::warn("{}", QObject::tr(
+      "One of the configured MO2 directories (profiles, mods, or overwrite) "
+      "is on a path containing a symbolic (or other) link. This is likely to "
+      "be incompatible with MO2's virtual filesystem."));
+
     return false;
   }
+
   return true;
 }
 
@@ -498,18 +502,29 @@ void OrganizerCore::setLogLevel(log::Levels level)
   log::getDefault().setLevel(m_Settings.diagnostics().logLevel());
 }
 
-bool OrganizerCore::cycleDiagnostics() {
-  if (int maxDumps = settings().diagnostics().crashDumpsMax())
-    removeOldFiles(QString::fromStdWString(crashDumpsPath()), "*.dmp", maxDumps, QDir::Time|QDir::Reversed);
+bool OrganizerCore::cycleDiagnostics()
+{
+  const auto maxDumps = settings().diagnostics().crashDumpsMax();
+  const auto path = QString::fromStdWString(crashDumpsPath());
+
+  if (maxDumps > 0) {
+    removeOldFiles(path, "*.dmp", maxDumps, QDir::Time|QDir::Reversed);
+  }
+
+  // log if there are any files left
+  const auto files = QDir(path).entryList({"*.dmp"}, QDir::Files);
+  if (!files.isEmpty()) {
+    log::debug("there are crash dumps in '{}'", path);
+  }
+
   return true;
 }
 
-//static
-void OrganizerCore::setGlobalCrashDumpsType(CrashDumpsType type) {
+void OrganizerCore::setGlobalCrashDumpsType(CrashDumpsType type)
+{
   m_globalCrashDumpsType = type;
 }
 
-//static
 std::wstring OrganizerCore::crashDumpsPath() {
   return (
     qApp->property("dataPath").toString() + "/"

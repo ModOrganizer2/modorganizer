@@ -39,6 +39,7 @@ public:
   QString currentInstance() const;
 
   bool allowedToChangeInstance() const;
+  static bool isPortablePath(const QString& dataPath);
 
 private:
 

@@ -263,6 +263,11 @@ QStringList InstanceManager::instances() const
 }
 
 
+bool InstanceManager::isPortablePath(const QString& dataPath)
+{
+  return (dataPath == qApp->applicationDirPath());
+}
+
 bool InstanceManager::portableInstall() const
 {
   return QFile::exists(qApp->applicationDirPath() + "/" +
@@ -303,7 +308,7 @@ void InstanceManager::createDataPath(const QString &dataPath) const
 QString InstanceManager::determineDataPath()
 {
   QString instanceId = currentInstance();
-  if (portableInstallIsLocked()) 
+  if (portableInstallIsLocked())
   {
     instanceId.clear();
   }
