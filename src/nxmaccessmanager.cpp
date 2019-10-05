@@ -702,13 +702,21 @@ bool NexusKeyValidator::nextTry()
 }
 
 void NexusKeyValidator::onAttemptSuccess(
-  const ValidationAttempt&, const APIUserAccount& u)
+  const ValidationAttempt& a, const APIUserAccount& u)
 {
+  if (attemptFinished) {
+    attemptFinished(a);
+  }
+
   setFinished(ValidationAttempt::Success, "", u);
 }
 
 void NexusKeyValidator::onAttemptFailure(const ValidationAttempt& a)
 {
+  if (attemptFinished) {
+    attemptFinished(a);
+  }
+
   switch (a.result())
   {
     case ValidationAttempt::SoftError:
@@ -753,6 +761,10 @@ NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
 {
   m_validator.finished = [&](auto&& r, auto&& m, auto&& u) {
     onValidatorFinished(r, m, u);
+  };
+
+  m_validator.attemptFinished = [&](auto&& a) {
+    onValidatorAttemptFinished(a);
   };
 
   setCookieJar(new PersistentCookieJar(QDir::fromNativeSeparators(
@@ -820,7 +832,12 @@ void NXMAccessManager::startValidationCheck(const QString& key)
 {
   m_validationState = NotChecked;
   m_validator.start(key, NexusKeyValidator::Retry);
-  startProgress();
+
+  if (m_ProgressDialog) {
+    // don't show the progress dialog on startup for the first attempt; the
+    // dialog will be shown in onValidatorAttemptFinished() if it failed
+    startProgress();
+  }
 }
 
 void NXMAccessManager::onValidatorFinished(
@@ -839,6 +856,30 @@ void NXMAccessManager::onValidatorFinished(
     } else {
       m_validationState = Invalid;
       emit validateFailed(message);
+    }
+  }
+}
+
+void NXMAccessManager::onValidatorAttemptFinished(const ValidationAttempt& a)
+{
+  if (!m_ProgressDialog) {
+    switch (a.result())
+    {
+      case ValidationAttempt::SoftError:
+      case ValidationAttempt::HardError:
+      {
+        startProgress();
+        break;
+      }
+
+      case ValidationAttempt::None:
+      case ValidationAttempt::Success:
+      case ValidationAttempt::Cancelled:
+      default:
+      {
+        // don't show the dialog
+        break;
+      }
     }
   }
 }

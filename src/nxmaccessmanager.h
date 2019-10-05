@@ -144,6 +144,7 @@ public:
     std::optional<APIUserAccount>);
 
   std::function<FinishedCallback> finished;
+  std::function<void (const ValidationAttempt&)> attemptFinished;
 
   NexusKeyValidator(NXMAccessManager& am);
   ~NexusKeyValidator();
@@ -269,9 +270,12 @@ private:
   States m_validationState;
 
   void startValidationCheck(const QString& key);
+
   void onValidatorFinished(
     ValidationAttempt::Result r, const QString& message,
     std::optional<APIUserAccount>);
+
+  void onValidatorAttemptFinished(const ValidationAttempt& a);
 
   void startProgress();
   void stopProgress();
