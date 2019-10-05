@@ -9,7 +9,7 @@ StatusBar::StatusBar(QWidget* parent) :
 {
 }
 
-void StatusBar::setup(Ui::MainWindow* mainWindowUI)
+void StatusBar::setup(Ui::MainWindow* mainWindowUI, const Settings& settings)
 {
   ui = mainWindowUI;
   m_notifications = new StatusBarAction(ui->actionNotifications);
@@ -51,6 +51,8 @@ void StatusBar::setup(Ui::MainWindow* mainWindowUI)
   clearMessage();
   setProgress(-1);
   setAPI({}, {});
+
+  checkSettings(settings);
 }
 
 void StatusBar::setProgress(int percent)

@@ -226,7 +226,7 @@ MainWindow::MainWindow(Settings &settings
   QWebEngineProfile::defaultProfile()->setPersistentStoragePath(settings.paths().cache());
 
   ui->setupUi(this);
-  ui->statusBar->setup(ui);
+  ui->statusBar->setup(ui, settings);
 
   {
     auto* ni = NexusInterface::instance(&m_PluginContainer);
