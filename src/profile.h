@@ -313,8 +313,11 @@ public:
 
   void dumpModStatus() const;
 
-  QVariant setting(const QString &section, const QString &name = QString(),
-                   const QVariant &fallback = QVariant()) const;
+  QVariant setting(
+    const QString &section, const QString &name,
+    const QVariant &fallback) const;
+
+  QVariant setting(const QString &name, const QVariant &fallback={}) const;
 
   void storeSetting(const QString &section, const QString &name,
                     const QVariant &value);

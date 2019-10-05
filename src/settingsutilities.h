@@ -39,11 +39,11 @@ void logChange(
   using VC = ValueConverter<T>;
 
   if (oldValue) {
-    log::debug(
+    MOBase::log::debug(
       "setting '{}' changed from '{}' to '{}'",
       displayName, VC::convert(*oldValue), VC::convert(newValue));
   } else {
-    log::debug(
+    MOBase::log::debug(
       "setting '{}' set to '{}'",
       displayName, VC::convert(newValue));
   }

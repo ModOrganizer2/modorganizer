@@ -917,6 +917,11 @@ QVariant Profile::setting(const QString &section, const QString &name,
   return m_Settings->value(section + "/" + name, fallback);
 }
 
+QVariant Profile::setting(const QString &name, const QVariant &fallback) const
+{
+  return m_Settings->value(name, fallback);
+}
+
 void Profile::storeSetting(const QString &section, const QString &name,
                            const QVariant &value)
 {
