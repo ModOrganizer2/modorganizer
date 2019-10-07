@@ -1997,3 +1997,14 @@ void DiagnosticsSettings::setCrashDumpsMax(int n)
 {
   set(m_Settings, "Settings", "crash_dumps_max", n);
 }
+
+std::chrono::seconds DiagnosticsSettings::spawnDelay() const
+{
+  return std::chrono::seconds(
+    get<int>(m_Settings, "Settings", "spawn_delay", 0));
+}
+
+void DiagnosticsSettings::setSpawnDelay(std::chrono::seconds t)
+{
+  set(m_Settings, "Settings", "spawn_delay", t.count());
+}
