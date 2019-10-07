@@ -222,6 +222,7 @@ void EditExecutablesDialog::updateUI(
 {
   // the ui is currently being set, ignore changes
   m_settingUI = true;
+  Guard g([&]{ m_settingUI = false; });
 
   if (e) {
     setEdits(*e);
@@ -230,9 +231,6 @@ void EditExecutablesDialog::updateUI(
   }
 
   setButtons(item, e);
-
-  // any changes from now on are from the user
-  m_settingUI = false;
 }
 
 void EditExecutablesDialog::setButtons(
@@ -274,6 +272,8 @@ void EditExecutablesDialog::clearEdits()
   ui->configureLibraries->setEnabled(false);
   ui->useApplicationIcon->setEnabled(false);
   ui->useApplicationIcon->setChecked(false);
+
+  m_lastGoodTitle = "";
 }
 
 void EditExecutablesDialog::setEdits(const Executable& e)
@@ -286,6 +286,8 @@ void EditExecutablesDialog::setEdits(const Executable& e)
   ui->steamAppID->setEnabled(!e.steamAppID().isEmpty());
   ui->steamAppID->setText(e.steamAppID());
   ui->useApplicationIcon->setChecked(e.usesOwnIcon());
+
+  m_lastGoodTitle = e.title();
 
   {
     int modIndex = -1;
@@ -559,6 +561,13 @@ void EditExecutablesDialog::on_title_textChanged(const QString& s)
     return;
   }
 
+  // don't allow empty names
+  if (s.trimmed().isEmpty()) {
+    return;
+  }
+
+  m_lastGoodTitle = s;
+
   // must save before modifying the item in the list widget because saving
   // relies on the item's text being the same as an item in m_executablesList
   save();
@@ -567,6 +576,13 @@ void EditExecutablesDialog::on_title_textChanged(const QString& s)
   // new name
   if (auto* i=selectedItem()) {
     i->setText(s);
+  }
+}
+
+void EditExecutablesDialog::on_title_editingFinished()
+{
+  if (ui->title->text().trimmed().isEmpty()) {
+    ui->title->setText(m_lastGoodTitle);
   }
 }
 
@@ -619,9 +635,8 @@ void EditExecutablesDialog::on_browseBinary_clicked()
     ui->binary->setText(QDir::toNativeSeparators(binaryName));
   }
 
-  // setting title if currently empty or some variation of "New Executable"
-  if (ui->title->text().isEmpty() || 
-      ui->title->text().startsWith(tr("New Executable"), Qt::CaseInsensitive)) {
+  // setting title if some variation of "New Executable"
+  if (ui->title->text().startsWith(tr("New Executable"), Qt::CaseInsensitive)) {
     const auto prefix = QFileInfo(binaryName).baseName();
     const auto newTitle = m_executablesList.makeNonConflictingTitle(prefix);
 

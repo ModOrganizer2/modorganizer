@@ -169,6 +169,7 @@ private slots:
   void on_down_clicked();
 
   void on_title_textChanged(const QString& s);
+  void on_title_editingFinished();
   void on_overwriteSteamAppID_toggled(bool checked);
   void on_createFilesInMod_toggled(bool checked);
   void on_forceLoadLibraries_toggled(bool checked);
@@ -195,6 +196,10 @@ private:
 
   // forced libraries set in the dialog
   ForcedLibraries m_forcedLibraries;
+
+  // remembers the last executable title that made sense, reverts to this when
+  // the widget loses focus if it's empty
+  QString m_lastGoodTitle;
 
   // true when the change events being triggered are in response to loading
   // the executable's data into the UI, not from a user change
