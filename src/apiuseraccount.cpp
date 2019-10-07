@@ -96,5 +96,5 @@ bool APIUserAccount::shouldThrottle() const
 
 bool APIUserAccount::exhausted() const
 {
-  return (remainingRequests() <= 0);
+  return isValid() && (remainingRequests() <= 0);
 }
