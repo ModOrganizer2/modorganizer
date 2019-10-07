@@ -112,6 +112,12 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
   QObject::connect(ui->clearCacheButton, &QPushButton::clicked, [&]{ on_clearCacheButton_clicked(); });
   QObject::connect(ui->associateButton, &QPushButton::clicked, [&]{ on_associateButton_clicked(); });
 
+  if (settings().nexus().hasApiKey()) {
+    addNexusLog(QObject::tr("Connected."));
+  } else {
+    addNexusLog(QObject::tr("Not connected."));
+  }
+
   updateNexusState();
 }
 
@@ -240,17 +246,13 @@ void NexusSettingsTab::validateKey(const QString& key)
     m_nexusValidator.reset(new NexusKeyValidator(
       *NexusInterface::instance(dialog().pluginContainer())->getAccessManager()));
 
-    m_nexusValidator->stateChanged = [&](auto&& s, auto&& e){
-      onValidatorStateChanged(s, e);
-    };
-
-    m_nexusValidator->finished = [&](auto&& user) {
-      onValidatorFinished(user);
+    m_nexusValidator->finished = [&](auto&& r, auto&& m, auto&& u) {
+      onValidatorFinished(r, m, u);
     };
   }
 
   addNexusLog(QObject::tr("Checking API key..."));
-  m_nexusValidator->start(key);
+  m_nexusValidator->start(key, NexusKeyValidator::OneShot);
 }
 
 void NexusSettingsTab::onSSOKeyChanged(const QString& key)
@@ -277,30 +279,29 @@ void NexusSettingsTab::onSSOStateChanged(NexusSSOLogin::States s, const QString&
   updateNexusState();
 }
 
-void NexusSettingsTab::onValidatorStateChanged(
-  NexusKeyValidator::States s, const QString& e)
+void NexusSettingsTab::onValidatorFinished(
+  ValidationAttempt::Result r, const QString& message,
+  std::optional<APIUserAccount> user)
 {
-  if (s != NexusKeyValidator::Finished) {
-    // finished state is handled in onValidatorFinished()
-    const auto log = NexusKeyValidator::stateToString(s, e);
+  if (user) {
+    NexusInterface::instance(dialog().pluginContainer())->setUserAccount(*user);
+    addNexusLog(QObject::tr("Received user acount information"));
 
-    for (auto&& line : log.split("\n")) {
-      addNexusLog(line);
+    if (setKey(user->apiKey())) {
+      addNexusLog(QObject::tr("Linked with Nexus successfully."));
+    } else {
+      addNexusLog(QObject::tr("Failed to set API key"));
+    }
+  } else {
+    if (message.isEmpty()) {
+      // shouldn't happen
+      addNexusLog("Unknown error");
+    } else {
+      addNexusLog(message);
     }
   }
 
   updateNexusState();
-}
-
-void NexusSettingsTab::onValidatorFinished(const APIUserAccount& user)
-{
-  NexusInterface::instance(dialog().pluginContainer())->setUserAccount(user);
-
-  if (!user.apiKey().isEmpty()) {
-    if (setKey(user.apiKey())) {
-      addNexusLog(QObject::tr("Linked with Nexus successfully."));
-    }
-  }
 }
 
 void NexusSettingsTab::addNexusLog(const QString& s)

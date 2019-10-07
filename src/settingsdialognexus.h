@@ -32,8 +32,9 @@ private:
   void onSSOKeyChanged(const QString& key);
   void onSSOStateChanged(NexusSSOLogin::States s, const QString& e);
 
-  void onValidatorStateChanged(NexusKeyValidator::States s, const QString& e);
-  void onValidatorFinished(const APIUserAccount& user);
+  void onValidatorFinished(
+    ValidationAttempt::Result r, const QString& message,
+    std::optional<APIUserAccount> useR);
 
   void addNexusLog(const QString& s);
 };
