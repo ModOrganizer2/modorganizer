@@ -629,6 +629,9 @@ public:
   int crashDumpsMax() const;
   void setCrashDumpsMax(int n);
 
+  std::chrono::seconds spawnDelay() const;
+  void setSpawnDelay(std::chrono::seconds t);
+
 private:
   QSettings& m_Settings;
 };

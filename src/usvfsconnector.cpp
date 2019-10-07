@@ -162,12 +162,15 @@ QString toString(CrashDumpsType t)
 
 UsvfsConnector::UsvfsConnector()
 {
+  const auto& s = Settings::instance();
+
   USVFSParameters params;
-  LogLevel level = toUsvfsLogLevel(Settings::instance().diagnostics().logLevel());
-  CrashDumpsType dumpType = Settings::instance().diagnostics().crashDumpsType();
+  const LogLevel level = toUsvfsLogLevel(s.diagnostics().logLevel());
+  const CrashDumpsType dumpType = s.diagnostics().crashDumpsType();
+  const auto delay = s.diagnostics().spawnDelay();
 
   std::string dumpPath = MOShared::ToString(OrganizerCore::crashDumpsPath(), true);
-  USVFSInitParameters(&params, SHMID, false, level, dumpType, dumpPath.c_str());
+  USVFSInitParameters(&params, SHMID, false, level, dumpType, dumpPath.c_str(), delay);
   InitLogging(false);
 
   log::debug(
@@ -183,7 +186,7 @@ UsvfsConnector::UsvfsConnector()
   CreateVFS(&params);
 
   ClearExecutableBlacklist();
-  for (auto exec : Settings::instance().executablesBlacklist().split(";")) {
+  for (auto exec : s.executablesBlacklist().split(";")) {
     std::wstring buf = exec.toStdWString();
     BlacklistExecutable(buf.data());
   }
