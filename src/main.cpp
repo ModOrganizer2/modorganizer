@@ -563,10 +563,12 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     if (game == nullptr) {
       InstanceManager &instance = InstanceManager::instance();
       QString instanceName = instance.currentInstance();
+
       if (instanceName.compare("Portable", Qt::CaseInsensitive) != 0) {
         instance.clearCurrentInstance();
-        return INT_MAX;
+        return RestartExitCode;
       }
+
       return 1;
     }
 
@@ -710,6 +712,8 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       splash.finish(&mainWindow);
 
       res = application.exec();
+      mainWindow.onBeforeClose();
+      mainWindow.close();
 
       NexusInterface::instance(&pluginContainer)
         ->getAccessManager()->setTopLevelWidget(nullptr);
@@ -867,6 +871,7 @@ int main(int argc, char *argv[])
 
   do {
     LogModel::instance().clear();
+    ResetExitFlag();
 
     // make sure the log file isn't locked in case MO was restarted and
     // the previous instance gets deleted
@@ -904,10 +909,11 @@ int main(int argc, char *argv[])
       splash = ":/MO/gui/splash";
     }
 
-    int result = runApplication(application, instance, splash);
-    if (result != INT_MAX) {
+    const int result = runApplication(application, instance, splash);
+    if (result != RestartExitCode) {
       return result;
     }
+
     argc = 1;
     moshortcut = MOShortcut("");
   } while (true);

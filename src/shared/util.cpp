@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "util.h"
 #include "windows_error.h"
+#include "mainwindow.h"
 
 namespace MOShared
 {
@@ -244,3 +245,49 @@ MOBase::VersionInfo createVersionInfo()
 }
 
 } // namespace MOShared
+
+
+static bool g_exiting = false;
+
+MainWindow* findMainWindow()
+{
+  for (auto* tl : qApp->topLevelWidgets()) {
+    if (auto* mw=dynamic_cast<MainWindow*>(tl)) {
+      return mw;
+    }
+  }
+
+  return nullptr;
+}
+
+bool ExitModOrganizer(ExitFlags e)
+{
+  if (g_exiting) {
+    return true;
+  }
+
+  if (!e.testFlag(Exit::Force)) {
+    if (auto* mw=findMainWindow()) {
+      if (!mw->canExit()) {
+        return false;
+      }
+    }
+  }
+
+  g_exiting = true;
+
+  const int code = (e.testFlag(Exit::Restart) ? RestartExitCode : 0);
+  qApp->exit(code);
+
+  return true;
+}
+
+bool ModOrganizerExiting()
+{
+  return g_exiting;
+}
+
+void ResetExitFlag()
+{
+  g_exiting = false;
+}

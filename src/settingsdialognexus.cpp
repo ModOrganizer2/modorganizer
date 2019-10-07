@@ -312,7 +312,7 @@ void NexusSettingsTab::addNexusLog(const QString& s)
 
 bool NexusSettingsTab::setKey(const QString& key)
 {
-  dialog().setRestartNeeded();
+  dialog().setExitNeeded(Exit::Restart);
   const bool ret = settings().nexus().setApiKey(key);
   updateNexusState();
   return ret;
@@ -320,7 +320,7 @@ bool NexusSettingsTab::setKey(const QString& key)
 
 bool NexusSettingsTab::clearKey()
 {
-  dialog().setRestartNeeded();
+  dialog().setExitNeeded(Exit::Restart);
   const auto ret = settings().nexus().clearApiKey();
 
   NexusInterface::instance(dialog().pluginContainer())->getAccessManager()->clearApiKey();

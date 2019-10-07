@@ -1217,7 +1217,7 @@ void MainWindow::showEvent(QShowEvent *event)
   QMainWindow::showEvent(event);
 
   if (!m_WasVisible) {
-    readSettings(m_OrganizerCore.settings());
+    readSettings();
     refreshFilters();
 
     // this needs to be connected here instead of in the constructor because the
@@ -1267,26 +1267,44 @@ void MainWindow::showEvent(QShowEvent *event)
   }
 }
 
+void MainWindow::onBeforeClose()
+{
+  storeSettings();
+}
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
-  if (!confirmExit()) {
-    event->ignore();
-    return;
-  }
+  // this happens for two reasons:
+  //  1) the user requested to close the window, such as clicking the X
+  //  2) close() is called in runApplication() after application.exec()
+  //     returns, which happens when qApp->exit() is called
+  //
+  // the window must never actually close for 1), because settings haven't been
+  // saved yet: the state of many widgets is saved to the ini, which relies on
+  // the window still being onscreen (or else everything is considered hidden)
+  //
+  // for 2), the settings have been saved and the window can just close
 
-  storeSettings(m_OrganizerCore.settings());
+  if (ModOrganizerExiting()) {
+    // the user has confirmed if necessary and all settings have been saved,
+    // just close it
+    QMainWindow::closeEvent(event);
+  } else {
+    // never close the window because settings might need to be changed
+    event->ignore();
+
+    // start the process of exiting, which may require confirmation by calling
+    // canExit(), among other things
+    ExitModOrganizer();
+  }
 }
 
-bool MainWindow::confirmExit()
+bool MainWindow::canExit()
 {
-  m_closing = true;
-
   if (m_OrganizerCore.downloadManager()->downloadsInProgressNoPause()) {
     if (QMessageBox::question(this, tr("Downloads in progress"),
                           tr("There are still downloads in progress, do you really want to quit?"),
                           QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Cancel) {
-      m_closing = false;
       return false;
     } else {
       m_OrganizerCore.downloadManager()->pauseAll();
@@ -1298,8 +1316,9 @@ bool MainWindow::confirmExit()
   HANDLE injected_process_still_running = m_OrganizerCore.findAndOpenAUSVFSProcess(hiddenList, GetCurrentProcessId());
   if (injected_process_still_running != INVALID_HANDLE_VALUE)
   {
+    m_exitAfterWait = true;
     m_OrganizerCore.waitForApplication(injected_process_still_running);
-    if (!m_closing) { // if operation cancelled
+    if (!m_exitAfterWait) { // if operation cancelled
       return false;
     }
   }
@@ -2138,20 +2157,22 @@ void MainWindow::activateProxy(bool activate)
   busyDialog.hide();
 }
 
-void MainWindow::readSettings(const Settings& settings)
+void MainWindow::readSettings()
 {
-  settings.geometry().restoreGeometry(this);
-  settings.geometry().restoreState(this);
-  settings.geometry().restoreDocks(this);
-  settings.geometry().restoreToolbars(this);
-  settings.geometry().restoreState(ui->splitter);
-  settings.geometry().restoreState(ui->categoriesSplitter);
-  settings.geometry().restoreVisibility(ui->menuBar);
-  settings.geometry().restoreVisibility(ui->statusBar);
+  const auto& s = m_OrganizerCore.settings();
+
+  s.geometry().restoreGeometry(this);
+  s.geometry().restoreState(this);
+  s.geometry().restoreDocks(this);
+  s.geometry().restoreToolbars(this);
+  s.geometry().restoreState(ui->splitter);
+  s.geometry().restoreState(ui->categoriesSplitter);
+  s.geometry().restoreVisibility(ui->menuBar);
+  s.geometry().restoreVisibility(ui->statusBar);
 
   {
     // special case in case someone puts 0 in the INI
-    auto v = settings.widgets().index(ui->executablesListBox);
+    auto v = s.widgets().index(ui->executablesListBox);
     if (!v || v == 0) {
       v = 1;
     }
@@ -2159,16 +2180,16 @@ void MainWindow::readSettings(const Settings& settings)
     ui->executablesListBox->setCurrentIndex(*v);
   }
 
-  settings.widgets().restoreIndex(ui->groupCombo);
+  s.widgets().restoreIndex(ui->groupCombo);
 
   {
-    settings.geometry().restoreVisibility(ui->categoriesGroup, false);
+    s.geometry().restoreVisibility(ui->categoriesGroup, false);
     const auto v = ui->categoriesGroup->isVisible();
     setCategoryListVisible(v);
     ui->displayCategoriesBtn->setChecked(v);
   }
 
-  if (settings.network().useProxy()) {
+  if (s.network().useProxy()) {
     activateProxy(true);
   }
 }
@@ -2215,8 +2236,10 @@ void MainWindow::processUpdates(Settings& settings) {
   }
 }
 
-void MainWindow::storeSettings(Settings& s)
+void MainWindow::storeSettings()
 {
+  auto& s = m_OrganizerCore.settings();
+
   s.geometry().saveState(this);
   s.geometry().saveGeometry(this);
   s.geometry().saveDocks(this);
@@ -2244,7 +2267,7 @@ ILockedWaitingForProcess* MainWindow::lock()
     ++m_LockCount;
     return m_LockDialog;
   }
-  if (m_closing)
+  if (m_exitAfterWait)
     m_LockDialog = new WaitingOnCloseDialog(this);
   else
     m_LockDialog = new LockedDialog(this, true);
@@ -2265,8 +2288,8 @@ void MainWindow::unlock()
   }
   --m_LockCount;
   if (m_LockCount == 0) {
-    if (m_closing && m_LockDialog->canceled())
-      m_closing = false;
+    if (m_exitAfterWait && m_LockDialog->canceled())
+      m_exitAfterWait = false;
     m_LockDialog->hide();
     m_LockDialog->deleteLater();
     m_LockDialog = nullptr;
@@ -5018,18 +5041,31 @@ void MainWindow::on_actionSettings_triggered()
   bool proxy = settings.network().useProxy();
   DownloadManager *dlManager = m_OrganizerCore.downloadManager();
   const bool oldCheckForUpdates = settings.checkForUpdates();
+  const int oldMaxDumps = settings.diagnostics().crashDumpsMax();
 
 
   SettingsDialog dialog(&m_PluginContainer, settings, this);
   dialog.exec();
 
+  auto e = dialog.exitNeeded();
+
   if (oldManagedGameDirectory != settings.game().directory()) {
-    QMessageBox::about(this, tr("Restarting MO"),
-      tr("Changing the managed game directory requires restarting MO.\n"
-         "Any pending downloads will be paused.\n\n"
-         "Click OK to restart MO now."));
-    dlManager->pauseAll();
-    qApp->exit(INT_MAX);
+    e |= Exit::Restart;
+  }
+
+  if (e.testFlag(Exit::Restart)) {
+    const auto r = MOBase::TaskDialog(this)
+      .title(tr("Restart Mod Organizer"))
+      .main("Restart Mod Organizer")
+      .content(tr("Mod Organizer must restart to finish configuration changes"))
+      .icon(QMessageBox::Question)
+      .button({tr("Restart"), QMessageBox::Yes})
+      .button({tr("Continue"), tr("Some things might be weird."), QMessageBox::No})
+      .exec();
+
+    if (r == QMessageBox::Yes) {
+      ExitModOrganizer(e);
+    }
   }
 
   InstallationManager *instManager = m_OrganizerCore.installationManager();
@@ -5092,7 +5128,10 @@ void MainWindow::on_actionSettings_triggered()
   updateDownloadView();
 
   m_OrganizerCore.setLogLevel(settings.diagnostics().logLevel());
-  m_OrganizerCore.cycleDiagnostics();
+
+  if (settings.diagnostics().crashDumpsMax() != oldMaxDumps) {
+    m_OrganizerCore.cycleDiagnostics();
+  }
 
   toggleMO2EndorseState();
 
@@ -5475,9 +5514,7 @@ void MainWindow::on_actionUpdate_triggered()
 
 void MainWindow::on_actionExit_triggered()
 {
-  if (confirmExit()) {
-    qApp->exit();
-  }
+  ExitModOrganizer();
 }
 
 void MainWindow::actionEndorseMO()
@@ -6121,7 +6158,7 @@ void MainWindow::on_actionChange_Game_triggered()
 
   if (r == QMessageBox::Yes) {
     InstanceManager::instance().clearCurrentInstance();
-    qApp->exit(INT_MAX);
+    ExitModOrganizer(Exit::Restart);
   }
 }
 

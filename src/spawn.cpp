@@ -186,12 +186,12 @@ QMessageBox::StandardButton badSteamReg(
     .details(details)
     .icon(QMessageBox::Critical)
     .button({
-    QObject::tr("Continue without starting Steam"),
-    QObject::tr("The program may fail to launch."),
-    QMessageBox::Yes})
+      QObject::tr("Continue without starting Steam"),
+      QObject::tr("The program may fail to launch."),
+      QMessageBox::Yes})
     .button({
-    QObject::tr("Cancel"),
-    QMessageBox::Cancel})
+      QObject::tr("Cancel"),
+      QMessageBox::Cancel})
     .exec();
 }
 
@@ -517,7 +517,7 @@ bool restartAsAdmin(QWidget* parent)
   }
 
   log::debug("exiting MO");
-  qApp->exit(0);
+  ExitModOrganizer(Exit::Force);
 
   return true;
 }

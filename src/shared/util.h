@@ -48,4 +48,22 @@ MOBase::VersionInfo createVersionInfo();
 
 } // namespace MOShared
 
+
+enum class Exit
+{
+  None    = 0x00,
+  Normal  = 0x01,
+  Restart = 0x02,
+  Force   = 0x04
+};
+
+const int RestartExitCode = INT_MAX;
+
+using ExitFlags = QFlags<Exit>;
+Q_DECLARE_OPERATORS_FOR_FLAGS(ExitFlags);
+
+bool ExitModOrganizer(ExitFlags e=Exit::Normal);
+bool ModOrganizerExiting();
+void ResetExitFlag();
+
 #endif // UTIL_H
