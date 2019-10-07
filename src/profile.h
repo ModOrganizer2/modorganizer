@@ -315,15 +315,12 @@ public:
 
   QVariant setting(
     const QString &section, const QString &name,
-    const QVariant &fallback) const;
+    const QVariant &fallback={}) const;
 
-  QVariant setting(const QString &name, const QVariant &fallback={}) const;
+  void storeSetting(
+    const QString &section, const QString &name, const QVariant &value={});
 
-  void storeSetting(const QString &section, const QString &name,
-                    const QVariant &value);
-  void storeSetting(const QString &name, const QVariant &value);
-  void removeSetting(const QString &section, const QString &name = QString());
-  void removeSetting(const QString &name);
+  void removeSetting(const QString &section, const QString &name);
 
   QVariantMap settingsByGroup(const QString &section) const;
   void storeSettingsByGroup(const QString &section, const QVariantMap &values);
