@@ -787,15 +787,6 @@ void MainWindow::updatePinnedExecutables()
 
 void MainWindow::updateToolbarMenu()
 {
-  // well, this is a bit of a hack to allow the same toolbar menu to be shown
-  // in both the main menu and the context menu
-  //
-  // the toolbar menu is returned by createPopupMenu(), but Qt takes ownership
-  // of it and deletes it by setting the WA_DeleteOnClose attribute on it
-  //
-  // to avoid deleting the menu, the attribute is removed here
-  ui->menuToolbars->setAttribute(Qt::WA_DeleteOnClose, false);
-
   ui->actionMainMenuToggle->setChecked(ui->menuBar->isVisible());
   ui->actionToolBarMainToggle->setChecked(ui->toolBar->isVisible());
   ui->actionStatusBarToggle->setChecked(ui->statusBar->isVisible());
@@ -816,7 +807,23 @@ void MainWindow::updateViewMenu()
 
 QMenu* MainWindow::createPopupMenu()
 {
-  return ui->menuToolbars;
+  auto* m = new QMenu;
+
+  // add all the actions from the toolbars menu
+  for (auto* a : ui->menuToolbars->actions()) {
+    m->addAction(a);
+  }
+
+  m->addSeparator();
+
+  // other actions
+  m->addAction(ui->actionViewLog);
+
+  // make sure the actions are updated
+  updateToolbarMenu();
+  updateViewMenu();
+
+  return m;
 }
 
 void MainWindow::on_actionMainMenuToggle_triggered()
@@ -900,8 +907,7 @@ void MainWindow::on_centralWidget_customContextMenuRequested(const QPoint &pos)
     return;
   }
 
-  auto* m = createPopupMenu();
-  m->exec(ui->centralWidget->mapToGlobal(pos));
+  createPopupMenu()->exec(ui->centralWidget->mapToGlobal(pos));
 }
 
 void MainWindow::scheduleUpdateButton()
