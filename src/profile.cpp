@@ -157,42 +157,42 @@ Profile::~Profile()
 
 void Profile::findProfileSettings()
 {
-  if (setting("LocalSaves") == QVariant()) {
+  if (setting("", "LocalSaves") == QVariant()) {
     if (m_Directory.exists("saves")) {
-      storeSetting("LocalSaves", true);
+      storeSetting("", "LocalSaves", true);
     } else {
       if (m_Directory.exists("_saves")) {
         m_Directory.rename("_saves", "saves");
       }
-      storeSetting("LocalSaves", false);
+      storeSetting("", "LocalSaves", false);
     }
   }
 
-  if (setting("LocalSettings") == QVariant()) {
+  if (setting("", "LocalSettings") == QVariant()) {
     QString backupFile = getIniFileName() + "_";
     if (m_Directory.exists(backupFile)) {
-      storeSetting("LocalSettings", false);
+      storeSetting("", "LocalSettings", false);
       m_Directory.rename(backupFile, getIniFileName());
     } else {
-      storeSetting("LocalSettings", true);
+      storeSetting("", "LocalSettings", true);
     }
   }
 
-  if (setting("AutomaticArchiveInvalidation") == QVariant()) {
+  if (setting("", "AutomaticArchiveInvalidation") == QVariant()) {
     BSAInvalidation *invalidation = m_GamePlugin->feature<BSAInvalidation>();
     DataArchives *dataArchives = m_GamePlugin->feature<DataArchives>();
     bool found = false;
     if ((invalidation != nullptr) && (dataArchives != nullptr)) {
       for (const QString &archive : dataArchives->archives(this)) {
         if (invalidation->isInvalidationBSA(archive)) {
-          storeSetting("AutomaticArchiveInvalidation", true);
+          storeSetting("", "AutomaticArchiveInvalidation", true);
           found = true;
           break;
         }
       }
     }
     if (!found) {
-      storeSetting("AutomaticArchiveInvalidation", false);
+      storeSetting("", "AutomaticArchiveInvalidation", false);
     }
   }
 }
@@ -742,7 +742,7 @@ bool Profile::invalidationActive(bool *supported) const
     *supported = ((invalidation != nullptr) && (dataArchives != nullptr));
   }
 
-  return setting("AutomaticArchiveInvalidation", false).toBool();
+  return setting("", "AutomaticArchiveInvalidation", false).toBool();
 }
 
 
@@ -754,7 +754,7 @@ void Profile::deactivateInvalidation()
     invalidation->deactivate(this);
   }
 
-  storeSetting("AutomaticArchiveInvalidation", false);
+  storeSetting("", "AutomaticArchiveInvalidation", false);
 }
 
 
@@ -766,13 +766,13 @@ void Profile::activateInvalidation()
     invalidation->activate(this);
   }
 
-  storeSetting("AutomaticArchiveInvalidation", true);
+  storeSetting("", "AutomaticArchiveInvalidation", true);
 }
 
 
 bool Profile::localSavesEnabled() const
 {
-  return setting("LocalSaves", false).toBool();
+  return setting("", "LocalSaves", false).toBool();
 }
 
 
@@ -797,14 +797,14 @@ bool Profile::enableLocalSaves(bool enable)
       return false;
     }
   }
-  storeSetting("LocalSaves", enable);
+  storeSetting("", "LocalSaves", enable);
   return true;
 
 }
 
 bool Profile::localSettingsEnabled() const
 {
-  bool enabled = setting("LocalSettings", false).toBool();
+  bool enabled = setting("", "LocalSettings", false).toBool();
   if (enabled) {
     QStringList missingFiles;
     for (QString file : m_GamePlugin->iniFiles()) {
@@ -849,7 +849,7 @@ bool Profile::enableLocalSettings(bool enable)
       return false;
     }
   }
-  storeSetting("LocalSettings", enable);
+  storeSetting("", "LocalSettings", enable);
   return true;
 }
 
@@ -911,36 +911,36 @@ void Profile::rename(const QString &newName)
   m_Directory.setPath(profileDir.absoluteFilePath(newName));
 }
 
+QString keyName(const QString &section, const QString &name)
+{
+  QString key = section;
+
+  if (!name.isEmpty()) {
+    if (!key.isEmpty()) {
+      key += "/";
+    }
+
+    key += name;
+  }
+
+  return key;
+}
+
 QVariant Profile::setting(const QString &section, const QString &name,
                           const QVariant &fallback) const
 {
-  return m_Settings->value(section + "/" + name, fallback);
-}
-
-QVariant Profile::setting(const QString &name, const QVariant &fallback) const
-{
-  return m_Settings->value(name, fallback);
+  return m_Settings->value(keyName(section, name), fallback);
 }
 
 void Profile::storeSetting(const QString &section, const QString &name,
                            const QVariant &value)
 {
-  m_Settings->setValue(section + "/" + name, value);
-}
-
-void Profile::storeSetting(const QString &name, const QVariant &value)
-{
-  storeSetting("", name, value);
+  m_Settings->setValue(keyName(section, name), value);
 }
 
 void Profile::removeSetting(const QString &section, const QString &name)
 {
-	m_Settings->remove(section + "/" + name);
-}
-
-void Profile::removeSetting(const QString &name)
-{
-  removeSetting("", name);
+	m_Settings->remove(keyName(section, name));
 }
 
 QVariantMap Profile::settingsByGroup(const QString &section) const
