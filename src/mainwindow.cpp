@@ -1208,13 +1208,12 @@ void MainWindow::hookUpWindowTutorials()
 
 void MainWindow::showEvent(QShowEvent *event)
 {
-  readSettings(m_OrganizerCore.settings());
-
-  refreshFilters();
-
   QMainWindow::showEvent(event);
 
   if (!m_WasVisible) {
+    readSettings(m_OrganizerCore.settings());
+    refreshFilters();
+
     // this needs to be connected here instead of in the constructor because the
     // actual changing of the stylesheet is done by MOApplication, which
     // connects its signal in runApplication() (in main.cpp), and that happens
