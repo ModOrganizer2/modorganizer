@@ -886,11 +886,15 @@ void NXMAccessManager::onValidatorAttemptFinished(const ValidationAttempt& a)
 
 bool NXMAccessManager::validated() const
 {
+  if (m_validationState == Valid) {
+    return true;
+  }
+
   if (m_validator.isActive()) {
     const_cast<NXMAccessManager*>(this)->startProgress();
   }
 
-  return (m_validationState == Valid);
+  return false;
 }
 
 void NXMAccessManager::refuseValidation()

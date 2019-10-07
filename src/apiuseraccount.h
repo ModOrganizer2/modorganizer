@@ -51,12 +51,12 @@ struct APIStats
 
 
 /**
-* represents a user account on the mod provier website
+* represents a user account on the mod provider website
 */
 class APIUserAccount
 {
 public:
-  // when the number of remanining requests is under this number, further
+  // when the number of remaining requests is under this number, further
   // requests will be throttled by avoiding non-critical ones
   static const int ThrottleThreshold = 200;
 
@@ -110,7 +110,7 @@ public:
   APIUserAccount& name(const QString& name);
 
   /**
-  * sets the acount type
+  * sets the account type
   */
   APIUserAccount& type(APIUserAccountTypes type);
 
