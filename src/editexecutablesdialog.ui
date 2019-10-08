@@ -478,14 +478,25 @@ Right now the only case I know of where this needs to be overwritten is for the 
   </layout>
  </widget>
  <tabstops>
+  <tabstop>add</tabstop>
+  <tabstop>remove</tabstop>
+  <tabstop>up</tabstop>
+  <tabstop>down</tabstop>
+  <tabstop>reset</tabstop>
+  <tabstop>list</tabstop>
+  <tabstop>title</tabstop>
   <tabstop>binary</tabstop>
   <tabstop>browseBinary</tabstop>
   <tabstop>workingDirectory</tabstop>
   <tabstop>browseWorkingDirectory</tabstop>
+  <tabstop>arguments</tabstop>
   <tabstop>overwriteSteamAppID</tabstop>
   <tabstop>steamAppID</tabstop>
   <tabstop>createFilesInMod</tabstop>
   <tabstop>mods</tabstop>
+  <tabstop>forceLoadLibraries</tabstop>
+  <tabstop>configureLibraries</tabstop>
+  <tabstop>useApplicationIcon</tabstop>
  </tabstops>
  <resources>
   <include location="resources.qrc"/>

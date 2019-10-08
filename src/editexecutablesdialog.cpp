@@ -81,7 +81,7 @@ EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, int sel, QWidget
   setDirty(false);
 
   if (sel >= 0 && sel < ui->list->count()) {
-    ui->list->item(sel)->setSelected(true);
+    selectIndex(sel);
   }
 
   auto* m = new QMenu;
@@ -205,6 +205,14 @@ void EditExecutablesDialog::setDirty(bool b)
   }
 }
 
+void EditExecutablesDialog::selectIndex(int i)
+{
+  if (i >= 0 && i < ui->list->count()) {
+    ui->list->selectionModel()->setCurrentIndex(
+      ui->list->model()->index(i, 0), QItemSelectionModel::ClearAndSelect);
+  }
+}
+
 QListWidgetItem* EditExecutablesDialog::selectedItem()
 {
   const auto selection = ui->list->selectedItems();
@@ -243,7 +251,7 @@ void EditExecutablesDialog::fillList()
 
   // select the first one in the list, if any
   if (ui->list->count() > 0) {
-    ui->list->item(0)->setSelected(true);
+    selectIndex(0);
   } else {
     updateUI(nullptr, nullptr);
   }
@@ -459,13 +467,14 @@ void EditExecutablesDialog::move(QListWidgetItem* item, int direction)
     return;
   }
 
-  const auto row = ui->list->row(item);
+  const auto oldRow = ui->list->row(item);
+  const auto newRow = oldRow + (direction > 0 ? 1 : -1);
 
   // removing item
-  ui->list->takeItem(row);
-  ui->list->insertItem(row + (direction > 0 ? 1 : -1), item);
-  item->setSelected(true);
+  ui->list->takeItem(oldRow);
+  ui->list->insertItem(newRow, item);
 
+  selectIndex(newRow);
   setDirty(true);
 }
 
@@ -530,10 +539,10 @@ void EditExecutablesDialog::on_remove_clicked()
   if (currentRow >= ui->list->count()) {
     // that was the last item, select the new list item, if any
     if (ui->list->count() > 0) {
-      ui->list->item(ui->list->count() - 1)->setSelected(true);
+      selectIndex(ui->list->count() - 1);
     }
   } else {
-    ui->list->item(currentRow)->setSelected(true);
+    selectIndex(currentRow);
   }
 
   setDirty(true);
@@ -689,8 +698,8 @@ void EditExecutablesDialog::addNew(Executable e)
 
   auto* item = createListItem(e);
   ui->list->addItem(item);
-  item->setSelected(true);
 
+  selectIndex(ui->list->count() - 1);
   setDirty(true);
 }
 

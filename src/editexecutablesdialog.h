@@ -227,6 +227,7 @@ private:
   bool isTitleConflicting(const QString& s);
   void commitChanges();
   void setDirty(bool b);
+  void selectIndex(int i);
 
   void addFromFile();
   void addEmpty();
