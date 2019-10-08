@@ -33,6 +33,28 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
+class IgnoreChanges
+{
+public:
+  IgnoreChanges(EditExecutablesDialog* d)
+    : m_dialog(d)
+  {
+    m_dialog->m_settingUI = true;
+  }
+
+  ~IgnoreChanges()
+  {
+    m_dialog->m_settingUI = false;
+  }
+
+  IgnoreChanges(const IgnoreChanges&) = delete;
+  IgnoreChanges& operator=(const IgnoreChanges&) = delete;
+
+private:
+  EditExecutablesDialog* m_dialog;
+};
+
+
 EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, QWidget* parent)
   : TutorableDialog("EditExecutables", parent)
   , ui(new Ui::EditExecutablesDialog)
@@ -52,6 +74,12 @@ EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, QWidget* parent)
   ui->mods->addItems(m_organizerCore.modList()->allMods());
   fillList();
   setDirty(false);
+
+  auto* m = new QMenu;
+  m->addAction(tr("Add from file..."), [&]{ addFromFile(); });
+  m->addAction(tr("Add empty"), [&]{ addEmpty(); });
+  m->addAction(tr("Clone selected"), [&]{ clone(); });
+  ui->add->setMenu(m);
 
   // some widgets need to do more than just save() and have their own handler
   connect(ui->binary, &QLineEdit::textChanged, [&]{ save(); });
@@ -221,8 +249,7 @@ void EditExecutablesDialog::updateUI(
   const QListWidgetItem* item, const Executable* e)
 {
   // the ui is currently being set, ignore changes
-  m_settingUI = true;
-  Guard g([&]{ m_settingUI = false; });
+  IgnoreChanges c(this);
 
   if (e) {
     setEdits(*e);
@@ -461,20 +488,7 @@ void EditExecutablesDialog::on_reset_clicked()
 
 void EditExecutablesDialog::on_add_clicked()
 {
-  auto title = m_executablesList.makeNonConflictingTitle(tr("New Executable"));
-  if (!title) {
-    return;
-  }
-
-  const Executable e(*title);
-
-  m_executablesList.setExecutable(e);
-
-  auto* item = createListItem(e);
-  ui->list->addItem(item);
-  item->setSelected(true);
-
-  setDirty(true);
+  addFromFile();
 }
 
 void EditExecutablesDialog::on_remove_clicked()
@@ -550,19 +564,21 @@ bool EditExecutablesDialog::isTitleConflicting(const QString& s)
   return false;
 }
 
-void EditExecutablesDialog::on_title_textChanged(const QString& s)
+void EditExecutablesDialog::on_title_textChanged(const QString& original)
 {
   if (m_settingUI) {
     return;
   }
 
-  // don't allow changing the title to something that already exists
-  if (isTitleConflicting(s)) {
+  auto s = original.trimmed();
+
+  // disallow empty names
+  if (s.isEmpty()) {
     return;
   }
 
-  // don't allow empty names
-  if (s.trimmed().isEmpty()) {
+  // disallow changing the title to something that already exists
+  if (isTitleConflicting(s)) {
     return;
   }
 
@@ -581,9 +597,7 @@ void EditExecutablesDialog::on_title_textChanged(const QString& s)
 
 void EditExecutablesDialog::on_title_editingFinished()
 {
-  if (ui->title->text().trimmed().isEmpty()) {
-    ui->title->setText(m_lastGoodTitle);
-  }
+  ui->title->setText(m_lastGoodTitle);
 }
 
 void EditExecutablesDialog::on_overwriteSteamAppID_toggled(bool checked)
@@ -618,34 +632,78 @@ void EditExecutablesDialog::on_forceLoadLibraries_toggled(bool checked)
 
 void EditExecutablesDialog::on_browseBinary_clicked()
 {
-  const QString binaryName = FileDialogMemory::getOpenFileName(
-    "editExecutableBinary", this, tr("Select a binary"), ui->binary->text(),
-    tr("Executable (%1)").arg("*.exe *.bat *.jar"));
-
-  if (binaryName.isNull()) {
-    // canceled
+  const auto binaryName = browseBinary(ui->binary->text());
+  if (binaryName.fileName().isEmpty()) {
     return;
   }
 
+  setBinary(binaryName);
+  save();
+}
+
+void EditExecutablesDialog::addFromFile()
+{
+  const auto binary = browseBinary(ui->binary->text());
+  if (binary.fileName().isEmpty()) {
+    return;
+  }
+
+  addNew(Executable(binary.fileName()));
+  setBinary(binary);
+}
+
+void EditExecutablesDialog::addEmpty()
+{
+  addNew(Executable(tr("New Executable")));
+}
+
+void EditExecutablesDialog::clone()
+{
+  auto* e = selectedExe();
+  if (!e) {
+    return;
+  }
+
+  addNew(*e);
+}
+
+void EditExecutablesDialog::addNew(Executable e)
+{
+  const auto fixedTitle = m_executablesList.makeNonConflictingTitle(e.title());
+  if (!fixedTitle) {
+    return;
+  }
+
+  e.title(*fixedTitle);
+
+  m_executablesList.setExecutable(e);
+
+  auto* item = createListItem(e);
+  ui->list->addItem(item);
+  item->setSelected(true);
+
+  setDirty(true);
+}
+
+void EditExecutablesDialog::setBinary(const QFileInfo& binary)
+{
   // setting binary
-  if (binaryName.endsWith(".jar", Qt::CaseInsensitive)) {
+  if (binary.suffix().compare("jar", Qt::CaseInsensitive) == 0) {
     // special case for jar files, uses the system java installation
-    setJarBinary(binaryName);
+    setJarBinary(binary);
   } else {
-    ui->binary->setText(QDir::toNativeSeparators(binaryName));
+    ui->binary->setText(QDir::toNativeSeparators(binary.absoluteFilePath()));
   }
 
   // setting title if some variation of "New Executable"
   if (ui->title->text().startsWith(tr("New Executable"), Qt::CaseInsensitive)) {
-    const auto prefix = QFileInfo(binaryName).baseName();
+    const auto prefix = binary.baseName();
     const auto newTitle = m_executablesList.makeNonConflictingTitle(prefix);
 
     if (newTitle) {
       ui->title->setText(*newTitle);
     }
   }
-
-  save();
 }
 
 void EditExecutablesDialog::on_browseWorkingDirectory_clicked()
@@ -655,7 +713,7 @@ void EditExecutablesDialog::on_browseWorkingDirectory_clicked()
     ui->workingDirectory->text());
 
   if (dirName.isNull()) {
-    // canceled
+    // cancelled
     return;
   }
 
@@ -694,9 +752,26 @@ void EditExecutablesDialog::on_buttons_clicked(QAbstractButton* b)
   }
 }
 
-void EditExecutablesDialog::setJarBinary(const QString& binaryName)
+QFileInfo EditExecutablesDialog::browseBinary(const QString& initial)
 {
-  auto java = OrganizerCore::findJavaInstallation(binaryName);
+  const QString Filters =
+    tr("Executables (*.exe *.bat *.jar)") + ";;" +
+    tr("All Files (*.*)");
+
+  const auto f = FileDialogMemory::getOpenFileName(
+    "editExecutableBinary", this, tr("Select an executable"),
+    initial, Filters);
+
+  if (f.isNull()) {
+    return {};
+  }
+
+  return QFileInfo(f);
+}
+
+void EditExecutablesDialog::setJarBinary(const QFileInfo& binary)
+{
+  auto java = OrganizerCore::findJavaInstallation(binary.absoluteFilePath());
 
   if (java.isEmpty()) {
     QMessageBox::information(
@@ -706,13 +781,14 @@ void EditExecutablesDialog::setJarBinary(const QString& binaryName)
          "the binary."));
   }
 
-  // only save once
+  {
+    // only save once
+    IgnoreChanges c(this);
 
-  m_settingUI = true;
-  ui->binary->setText(java);
-  ui->workingDirectory->setText(QDir::toNativeSeparators(QFileInfo(binaryName).absolutePath()));
-  ui->arguments->setText("-jar \"" + QDir::toNativeSeparators(binaryName) + "\"");
-  m_settingUI = false;
+    ui->binary->setText(java);
+    ui->workingDirectory->setText(QDir::toNativeSeparators(binary.absolutePath()));
+    ui->arguments->setText("-jar \"" + QDir::toNativeSeparators(binary.absoluteFilePath()) + "\"");
+  }
 
   save();
 }

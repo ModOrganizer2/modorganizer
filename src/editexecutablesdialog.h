@@ -141,7 +141,8 @@ private:
  **/
 class EditExecutablesDialog : public MOBase::TutorableDialog
 {
-    Q_OBJECT
+    Q_OBJECT;
+    friend class IgnoreChanges;
 
 public:
   using CustomOverwrites = ToggableMap<QString>;
@@ -222,10 +223,18 @@ private:
   void saveOrder();
   bool canMove(const QListWidgetItem* item, int direction);
   void move(QListWidgetItem* item, int direction);
-  void setJarBinary(const QString& binaryName);
   bool isTitleConflicting(const QString& s);
   void commitChanges();
   void setDirty(bool b);
+
+  void addFromFile();
+  void addEmpty();
+  void clone();
+  void addNew(Executable e);
+
+  QFileInfo browseBinary(const QString& initial);
+  void setBinary(const QFileInfo& binary);
+  void setJarBinary(const QFileInfo& binary);
 };
 
 #endif // EDITEXECUTABLESDIALOG_H
