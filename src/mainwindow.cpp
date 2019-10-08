@@ -2345,12 +2345,12 @@ void MainWindow::on_startButton_clicked() {
   ui->startButton->setEnabled(true);
 }
 
-bool MainWindow::modifyExecutablesDialog()
+bool MainWindow::modifyExecutablesDialog(int selection)
 {
   bool result = false;
 
   try {
-    EditExecutablesDialog dialog(m_OrganizerCore, this);
+    EditExecutablesDialog dialog(m_OrganizerCore, selection, this);
 
     result = (dialog.exec() == QDialog::Accepted);
 
@@ -2375,7 +2375,7 @@ void MainWindow::on_executablesListBox_currentIndexChanged(int index)
   m_OldExecutableIndex = index;
 
   if (index == 0) {
-    modifyExecutablesDialog();
+    modifyExecutablesDialog(previousIndex - 1);
     ui->executablesListBox->setCurrentIndex(previousIndex);
   }
 }
@@ -2451,7 +2451,8 @@ void MainWindow::on_actionAdd_Profile_triggered()
 
 void MainWindow::on_actionModify_Executables_triggered()
 {
-  if (modifyExecutablesDialog()) {
+  const auto sel = (m_OldExecutableIndex > 0 ?  m_OldExecutableIndex - 1 : 0);
+  if (modifyExecutablesDialog(sel)) {
     ui->executablesListBox->setCurrentIndex(m_OldExecutableIndex);
   }
 }

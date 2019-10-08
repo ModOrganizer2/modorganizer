@@ -235,7 +235,7 @@ private:
 
   QList<MOBase::IOrganizer::FileInfo> findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const;
 
-  bool modifyExecutablesDialog();
+  bool modifyExecutablesDialog(int selection);
   void displayModInformation(int row, ModInfoTabIDs tab=ModInfoTabIDs::None);
   void testExtractBSA(int modIndex);
 

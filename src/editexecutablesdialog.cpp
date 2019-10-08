@@ -55,7 +55,7 @@ private:
 };
 
 
-EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, QWidget* parent)
+EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, int sel, QWidget* parent)
   : TutorableDialog("EditExecutables", parent)
   , ui(new Ui::EditExecutablesDialog)
   , m_organizerCore(oc)
@@ -74,6 +74,10 @@ EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, QWidget* parent)
   ui->mods->addItems(m_organizerCore.modList()->allMods());
   fillList();
   setDirty(false);
+
+  if (sel >= 0 && sel < ui->list->count()) {
+    ui->list->item(sel)->setSelected(true);
+  }
 
   auto* m = new QMenu;
   m->addAction(tr("Add from file..."), [&]{ addFromFile(); });

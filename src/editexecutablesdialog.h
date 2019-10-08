@@ -148,7 +148,8 @@ public:
   using CustomOverwrites = ToggableMap<QString>;
   using ForcedLibraries = ToggableMap<QList<MOBase::ExecutableForcedLoadSetting>>;
 
-  explicit EditExecutablesDialog(OrganizerCore& oc, QWidget* parent=nullptr);
+  explicit EditExecutablesDialog(
+    OrganizerCore& oc, int selection=-1, QWidget* parent=nullptr);
 
   ~EditExecutablesDialog();
 
