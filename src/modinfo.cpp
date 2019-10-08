@@ -61,17 +61,32 @@ bool ModInfo::ByName(const ModInfo::Ptr &LHS, const ModInfo::Ptr &RHS)
   return QString::compare(LHS->name(), RHS->name(), Qt::CaseInsensitive) < 0;
 }
 
+bool ModInfo::isSeparatorName(const QString& name)
+{
+  static QRegExp separatorExp(".*_separator");
+  return separatorExp.exactMatch(name);
+}
+
+bool ModInfo::isBackupName(const QString& name)
+{
+  static QRegExp backupExp(".*backup[0-9]*");
+  return backupExp.exactMatch(name);
+}
+
+bool ModInfo::isRegularName(const QString& name)
+{
+  return !isSeparatorName(name) && !isBackupName(name);
+}
+
 
 ModInfo::Ptr ModInfo::createFrom(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, const QDir &dir, DirectoryEntry **directoryStructure)
 {
   QMutexLocker locker(&s_Mutex);
-  //  int id = s_NextID++;
-  static QRegExp backupExp(".*backup[0-9]*");
-  static QRegExp separatorExp(".*_separator");
   ModInfo::Ptr result;
-  if (backupExp.exactMatch(dir.dirName())) {
+
+  if (isBackupName(dir.dirName())) {
     result = ModInfo::Ptr(new ModInfoBackup(pluginContainer, game, dir, directoryStructure));
-  } else if(separatorExp.exactMatch(dir.dirName())){
+  } else if (isSeparatorName(dir.dirName())) {
     result = Ptr(new ModInfoSeparator(pluginContainer, game, dir, directoryStructure));
   } else {
     result = ModInfo::Ptr(new ModInfoRegular(pluginContainer, game, dir, directoryStructure));

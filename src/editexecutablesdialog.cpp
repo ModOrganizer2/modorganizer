@@ -71,7 +71,12 @@ EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, int sel, QWidget
   loadCustomOverwrites();
   loadForcedLibraries();
 
-  ui->mods->addItems(m_organizerCore.modList()->allMods());
+  for (auto&& m : m_organizerCore.modList()->allMods()) {
+    if (ModInfo::isRegularName(m)) {
+      ui->mods->addItem(m);
+    }
+  }
+
   fillList();
   setDirty(false);
 
