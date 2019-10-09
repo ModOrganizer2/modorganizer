@@ -378,7 +378,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
                   <string>If this is enabled, new files are created in the specified mod instead of the &quot;Overwrite&quot; mod.</string>
                  </property>
                  <property name="text">
-                  <string>Create Files in Mod instead of Overwrite (*)</string>
+                  <string>Create files in mod instead of overwrite (*)</string>
                  </property>
                 </widget>
                </item>
@@ -399,7 +399,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
                   <string>If this is enabled, the configured libraries will be automatically loaded when this executable is launched.</string>
                  </property>
                  <property name="text">
-                  <string>Force Load Libraries (*)</string>
+                  <string>Force load libraries (*)</string>
                  </property>
                 </widget>
                </item>
@@ -431,14 +431,27 @@ Right now the only case I know of where this needs to be overwritten is for the 
              <item>
               <widget class="QCheckBox" name="useApplicationIcon">
                <property name="text">
-                <string>Use Application's Icon for desktop shortcuts</string>
+                <string>Use application's icon for desktop shortcuts</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="hide">
+               <property name="toolTip">
+                <string>This executable will not appear in the list, on the toolbar or in the menu. It will still be visible in this dialog.</string>
+               </property>
+               <property name="whatsThis">
+                <string>This executable will not appear in the list, on the toolbar or in the menu. It will still be visible in this dialog.</string>
+               </property>
+               <property name="text">
+                <string>Hide in user interface</string>
                </property>
               </widget>
              </item>
              <item>
               <widget class="QLabel" name="label_5">
                <property name="text">
-                <string>(*) Profile Specific</string>
+                <string>(*) Profile specific</string>
                </property>
                <property name="margin">
                 <number>5</number>

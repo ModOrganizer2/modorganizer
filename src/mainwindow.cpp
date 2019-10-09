@@ -757,7 +757,7 @@ void MainWindow::updatePinnedExecutables()
   bool hasLinks = false;
 
   for (const auto& exe : *m_OrganizerCore.executablesList()) {
-    if (exe.isShownOnToolbar()) {
+    if (!exe.hide() && exe.isShownOnToolbar()) {
       hasLinks = true;
 
       QAction *exeAction = new QAction(
@@ -1792,23 +1792,44 @@ bool MainWindow::refreshProfiles(bool selectProfile)
 
 void MainWindow::refreshExecutablesList()
 {
-  QComboBox* executablesList = findChild<QComboBox*>("executablesListBox");
-  executablesList->setEnabled(false);
-  executablesList->clear();
-  executablesList->addItem(tr("<Edit...>"));
+  QAbstractItemModel *model = ui->executablesListBox->model();
 
-  QAbstractItemModel *model = executablesList->model();
+  auto add = [&](const QString& title, const QFileInfo& binary) {
+    QIcon icon;
+    if (!binary.fileName().isEmpty()) {
+      icon = iconForExecutable(binary.filePath());
+    }
 
-  int i = 0;
+    ui->executablesListBox->addItem(icon, title);
+
+    const auto i = ui->executablesListBox->count() - 1;
+
+    model->setData(
+      model->index(i, 0),
+      QSize(0, ui->executablesListBox->iconSize().height() + 4),
+      Qt::SizeHintRole);
+  };
+
+
+  ui->executablesListBox->setEnabled(false);
+  ui->executablesListBox->clear();
+
+  add(tr("<Edit...>"), {});
+
   for (const auto& exe : *m_OrganizerCore.executablesList()) {
-    QIcon icon = iconForExecutable(exe.binaryInfo().filePath());
-    executablesList->addItem(icon, exe.title());
-    model->setData(model->index(i, 0), QSize(0, executablesList->iconSize().height() + 4), Qt::SizeHintRole);
-    ++i;
+    if (!exe.hide()) {
+      add(exe.title(), exe.binaryInfo());
+    }
+  }
+
+  if (ui->executablesListBox->count() == 1) {
+    // all executables are hidden, add an empty one to at least be able to
+    // switch to edit
+    add(tr("(no executables)"), QFileInfo(":badfile"));
   }
 
   ui->executablesListBox->setCurrentIndex(1);
-  executablesList->setEnabled(true);
+  ui->executablesListBox->setEnabled(true);
 }
 
 
@@ -2321,27 +2342,42 @@ void MainWindow::installMod(QString fileName)
   }
 }
 
-void MainWindow::on_startButton_clicked() {
-  ui->startButton->setEnabled(false);
+void MainWindow::on_startButton_clicked()
+{
   try {
-    const Executable &selectedExecutable(getSelectedExecutable());
-    QString customOverwrite = m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.title()).toString();
-    auto forcedLibraries = m_OrganizerCore.currentProfile()->determineForcedLibraries(selectedExecutable.title());
-    if (!m_OrganizerCore.currentProfile()->forcedLibrariesEnabled(selectedExecutable.title())) {
+    const Executable* selectedExecutable = getSelectedExecutable();
+    if (!selectedExecutable) {
+      return;
+    }
+
+    ui->startButton->setEnabled(false);
+
+    auto* profile = m_OrganizerCore.currentProfile();
+
+    const QString customOverwrite = profile->setting(
+      "custom_overwrites", selectedExecutable->title()).toString();
+
+    auto forcedLibraries = profile->determineForcedLibraries(
+      selectedExecutable->title());
+
+    if (!profile->forcedLibrariesEnabled(selectedExecutable->title())) {
       forcedLibraries.clear();
     }
+
     m_OrganizerCore.spawnBinary(
-        selectedExecutable.binaryInfo(), selectedExecutable.arguments(),
-        selectedExecutable.workingDirectory().length() != 0
-            ? selectedExecutable.workingDirectory()
-            : selectedExecutable.binaryInfo().absolutePath(),
-        selectedExecutable.steamAppID(),
-        customOverwrite,
-        forcedLibraries);
+      selectedExecutable->binaryInfo(),
+      selectedExecutable->arguments(),
+      selectedExecutable->workingDirectory().length() != 0 ?
+        selectedExecutable->workingDirectory() :
+        selectedExecutable->binaryInfo().absolutePath(),
+      selectedExecutable->steamAppID(),
+      customOverwrite,
+      forcedLibraries);
   } catch (...) {
     ui->startButton->setEnabled(true);
     throw;
   }
+
   ui->startButton->setEnabled(true);
 }
 
@@ -2376,7 +2412,13 @@ void MainWindow::on_executablesListBox_currentIndexChanged(int index)
 
   if (index == 0) {
     modifyExecutablesDialog(previousIndex - 1);
-    ui->executablesListBox->setCurrentIndex(previousIndex);
+    const auto newCount = ui->executablesListBox->count();
+
+    if (previousIndex >= 0 && previousIndex < newCount) {
+      ui->executablesListBox->setCurrentIndex(previousIndex);
+    } else {
+      ui->executablesListBox->setCurrentIndex(newCount - 1);
+    }
   }
 }
 
@@ -2452,8 +2494,14 @@ void MainWindow::on_actionAdd_Profile_triggered()
 void MainWindow::on_actionModify_Executables_triggered()
 {
   const auto sel = (m_OldExecutableIndex > 0 ?  m_OldExecutableIndex - 1 : 0);
+
   if (modifyExecutablesDialog(sel)) {
-    ui->executablesListBox->setCurrentIndex(m_OldExecutableIndex);
+    const auto newCount = ui->executablesListBox->count();
+    if (m_OldExecutableIndex >= 0 && m_OldExecutableIndex < newCount) {
+      ui->executablesListBox->setCurrentIndex(m_OldExecutableIndex);
+    } else {
+      ui->executablesListBox->setCurrentIndex(newCount - 1);
+    }
   }
 }
 
@@ -4972,33 +5020,43 @@ void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
 
 void MainWindow::linkToolbar()
 {
-  Executable& exe = getSelectedExecutable();
+  Executable* exe = getSelectedExecutable();
+  if (!exe) {
+    return;
+  }
 
-  exe.setShownOnToolbar(!exe.isShownOnToolbar());
+  exe->setShownOnToolbar(!exe->isShownOnToolbar());
   updatePinnedExecutables();
 }
 
 void MainWindow::linkDesktop()
 {
-  env::Shortcut(getSelectedExecutable()).toggle(env::Shortcut::Desktop);
+  if (auto* exe=getSelectedExecutable()) {
+    env::Shortcut(*exe).toggle(env::Shortcut::Desktop);
+  }
 }
 
 void MainWindow::linkMenu()
 {
-  env::Shortcut(getSelectedExecutable()).toggle(env::Shortcut::StartMenu);
+  if (auto* exe=getSelectedExecutable()) {
+    env::Shortcut(*exe).toggle(env::Shortcut::StartMenu);
+  }
 }
 
 void MainWindow::on_linkButton_pressed()
 {
-  const Executable& exe = getSelectedExecutable();
+  const Executable* exe = getSelectedExecutable();
+  if (!exe) {
+    return;
+  }
 
   const QIcon addIcon(":/MO/gui/link");
   const QIcon removeIcon(":/MO/gui/remove");
 
-  env::Shortcut shortcut(exe);
+  env::Shortcut shortcut(*exe);
 
   m_LinkToolbar->setIcon(
-    exe.isShownOnToolbar() ? removeIcon : addIcon);
+    exe->isShownOnToolbar() ? removeIcon : addIcon);
 
   m_LinkDesktop->setIcon(
     shortcut.exists(env::Shortcut::Desktop) ? removeIcon : addIcon);
@@ -6327,16 +6385,19 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
   modFilterActive(m_ModListSortProxy->isFilterActive());
 }
 
-const Executable &MainWindow::getSelectedExecutable() const
+Executable* MainWindow::getSelectedExecutable()
 {
-  const QString name = ui->executablesListBox->itemText(ui->executablesListBox->currentIndex());
-  return m_OrganizerCore.executablesList()->get(name);
-}
+  const QString name = ui->executablesListBox->itemText(
+    ui->executablesListBox->currentIndex());
 
-Executable &MainWindow::getSelectedExecutable()
-{
-  const QString name = ui->executablesListBox->itemText(ui->executablesListBox->currentIndex());
-  return m_OrganizerCore.executablesList()->get(name);
+  try
+  {
+    return &m_OrganizerCore.executablesList()->get(name);
+  }
+  catch(std::runtime_error&)
+  {
+    return nullptr;
+  }
 }
 
 void MainWindow::on_showHiddenBox_toggled(bool checked)

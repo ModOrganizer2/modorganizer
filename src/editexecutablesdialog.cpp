@@ -97,6 +97,7 @@ EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, int sel, QWidget
   connect(ui->steamAppID, &QLineEdit::textChanged, [&]{ save(); });
   connect(ui->mods, &QComboBox::currentTextChanged, [&]{ save(); });
   connect(ui->useApplicationIcon, &QCheckBox::toggled, [&]{ save(); });
+  connect(ui->hide, &QCheckBox::toggled, [&]{ save(); });
   connect(ui->list->model(), &QAbstractItemModel::rowsMoved, [&]{ saveOrder(); });
 }
 
@@ -316,6 +317,8 @@ void EditExecutablesDialog::clearEdits()
   ui->configureLibraries->setEnabled(false);
   ui->useApplicationIcon->setEnabled(false);
   ui->useApplicationIcon->setChecked(false);
+  ui->hide->setEnabled(false);
+  ui->hide->setChecked(false);
 
   m_lastGoodTitle = "";
 }
@@ -330,6 +333,7 @@ void EditExecutablesDialog::setEdits(const Executable& e)
   ui->steamAppID->setEnabled(!e.steamAppID().isEmpty());
   ui->steamAppID->setText(e.steamAppID());
   ui->useApplicationIcon->setChecked(e.usesOwnIcon());
+  ui->hide->setChecked(e.hide());
 
   m_lastGoodTitle = e.title();
 
@@ -375,6 +379,7 @@ void EditExecutablesDialog::setEdits(const Executable& e)
   ui->useApplicationIcon->setEnabled(true);
   ui->createFilesInMod->setEnabled(true);
   ui->forceLoadLibraries->setEnabled(true);
+  ui->hide->setEnabled(true);
 }
 
 void EditExecutablesDialog::save()
@@ -432,6 +437,12 @@ void EditExecutablesDialog::save()
     e->flags(e->flags() | Executable::UseApplicationIcon);
   } else {
     e->flags(e->flags() & (~Executable::UseApplicationIcon));
+  }
+
+  if (ui->hide->isChecked()) {
+    e->flags(e->flags() | Executable::Hide);
+  } else {
+    e->flags(e->flags() & (~Executable::Hide));
   }
 
   setDirty(true);

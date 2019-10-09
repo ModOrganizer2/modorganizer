@@ -397,8 +397,7 @@ private:
   // when painting the count
   QIcon m_originalNotificationIcon;
 
-  Executable const &getSelectedExecutable() const;
-  Executable &getSelectedExecutable();
+  Executable* getSelectedExecutable();
 
 private slots:
 
