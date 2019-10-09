@@ -45,6 +45,7 @@ std::wstring ToLower(const std::wstring &text);
 bool CaseInsensitiveEqual(const std::wstring &lhs, const std::wstring &rhs);
 
 MOBase::VersionInfo createVersionInfo();
+QString getUsvfsVersionString();
 
 } // namespace MOShared
 

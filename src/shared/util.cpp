@@ -20,6 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "util.h"
 #include "windows_error.h"
 #include "mainwindow.h"
+#include <usvfs.h>
+#include <usvfs_version.h>
 
 namespace MOShared
 {
@@ -241,6 +243,50 @@ MOBase::VersionInfo createVersionInfo()
                                version.dwFileVersionMS & 0xFFFF,
                                version.dwFileVersionLS >> 16,
                                version.dwFileVersionLS & 0xFFFF);
+  }
+}
+
+QString getUsvfsDLLVersion()
+{
+  // once 2.2.2 is released, this can be changed to call USVFSVersionString()
+  // directly; until then, using GetProcAddress() allows for mixing up devbuilds
+  // and usvfs dlls
+
+  using USVFSVersionStringType = const char* WINAPI ();
+
+  QString s;
+
+  const auto m = ::LoadLibraryW(L"usvfs_x64.dll");
+
+  if (m) {
+    auto* f = reinterpret_cast<USVFSVersionStringType*>(
+      ::GetProcAddress(m, "USVFSVersionString"));
+
+    if (f) {
+      s = f();
+    }
+
+    ::FreeLibrary(m);
+  }
+
+  if (s.isEmpty()) {
+    s = "?";
+  }
+
+  return s;
+}
+
+QString getUsvfsVersionString()
+{
+  const QString dll = getUsvfsDLLVersion();
+  const QString header = USVFS_VERSION_STRING;
+
+  QString usvfsVersion;
+
+  if (dll == header) {
+    return dll;
+  } else {
+    return "dll is " + dll + ", compiled against " + header;
   }
 }
 

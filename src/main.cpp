@@ -504,8 +504,9 @@ int runApplication(MOApplication &application, SingleInstance &instance,
                    const QString &splashPath)
 {
   log::info(
-    "starting Mod Organizer version {} revision {} in {}",
-    getVersionDisplayString(), GITID, QCoreApplication::applicationDirPath());
+    "starting Mod Organizer version {} revision {} in {}, usvfs: {}",
+    getVersionDisplayString(), GITID, QCoreApplication::applicationDirPath(),
+    MOShared::getUsvfsVersionString());
 
   preloadSsl();
   if (!QSslSocket::supportsSsl()) {
