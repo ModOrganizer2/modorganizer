@@ -33,8 +33,8 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings& setti
   : TutorableDialog("SettingsDialog", parent)
   , ui(new Ui::SettingsDialog)
   , m_settings(settings)
+  , m_exit(Exit::None)
   , m_pluginContainer(pluginContainer)
-  , m_restartNeeded(false)
 {
   ui->setupUi(this);
 
@@ -61,9 +61,14 @@ QWidget* SettingsDialog::parentWidgetForDialogs()
   }
 }
 
-void SettingsDialog::setRestartNeeded()
+void SettingsDialog::setExitNeeded(ExitFlags e)
 {
-  m_restartNeeded = true;
+  m_exit = e;
+}
+
+ExitFlags SettingsDialog::exitNeeded() const
+{
+  return m_exit;
 }
 
 int SettingsDialog::exec()
@@ -84,16 +89,6 @@ int SettingsDialog::exec()
     // update settings for each tab
     for (std::unique_ptr<SettingsTab> const &tab: m_tabs) {
       tab->update();
-    }
-  }
-
-  if (m_restartNeeded) {
-    if (QMessageBox::question(parentWidgetForDialogs(),
-      tr("Restart Mod Organizer?"),
-      tr("In order to finish configuration changes, MO must be restarted.\n"
-        "Restart it now?"),
-      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      qApp->exit(INT_MAX);
     }
   }
 

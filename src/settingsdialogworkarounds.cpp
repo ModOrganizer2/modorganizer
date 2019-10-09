@@ -2,6 +2,7 @@
 #include "ui_settingsdialog.h"
 #include "spawn.h"
 #include "settings.h"
+#include <report.h>
 #include <iplugingame.h>
 
 WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
@@ -118,16 +119,18 @@ void WorkaroundsSettingsTab::on_bsaDateBtn_clicked()
 
 void WorkaroundsSettingsTab::on_resetGeometryBtn_clicked()
 {
-  const auto caption = QObject::tr("Restart Mod Organizer?");
-  const auto text = QObject::tr(
-    "In order to reset the geometry, Mod Organizer must be restarted.\n"
-    "Restart now?");
+  const auto r = MOBase::TaskDialog(parentWidget())
+    .title(QObject::tr("Restart Mod Organizer"))
+    .main(QObject::tr("Restart Mod Organizer"))
+    .content(QObject::tr("Geometries will be reset to their default values."))
+    .icon(QMessageBox::Question)
+    .button({QObject::tr("Restart Mod Organizer"), QMessageBox::Ok})
+    .button({QObject::tr("Cancel"), QMessageBox::Cancel})
+    .exec();
 
-  const auto res = QMessageBox::question(
-    parentWidget(), caption, text, QMessageBox::Yes | QMessageBox::Cancel);
-
-  if (res == QMessageBox::Yes) {
+  if (r == QMessageBox::Ok) {
     settings().geometry().requestReset();
-    qApp->exit(INT_MAX);
+    ExitModOrganizer(Exit::Restart);
+    dialog().close();
   }
 }

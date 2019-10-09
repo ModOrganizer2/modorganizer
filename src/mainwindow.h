@@ -111,7 +111,6 @@ class MainWindow : public QMainWindow, public IUserInterface
   friend class OrganizerProxy;
 
 public:
-
   explicit MainWindow(Settings &settings,
                       OrganizerCore &organizerCore, PluginContainer &pluginContainer,
                       QWidget *parent = 0);
@@ -154,7 +153,8 @@ public:
   void displayModInformation(
     ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tabID) override;
 
-  bool confirmExit();
+  bool canExit();
+  void onBeforeClose();
 
   virtual bool closeWindow();
   virtual void setWindowEnabled(bool enabled);
@@ -383,9 +383,8 @@ private:
   LockedDialogBase *m_LockDialog { nullptr };
   uint64_t m_LockCount { 0 };
 
-  bool m_closing{ false };
-
   bool m_showArchiveData{ true };
+  bool m_exitAfterWait{ false };
 
   MOBase::DelayedFileWriter m_ArchiveListWriter;
 
@@ -672,8 +671,8 @@ private slots: // ui slots
   void on_categoriesOrBtn_toggled(bool checked);
   void on_managedArchiveLabel_linkHovered(const QString &link);
 
-  void storeSettings(Settings& settings);
-  void readSettings(const Settings& settings);
+  void storeSettings();
+  void readSettings();
   void setupModList();
 };
 

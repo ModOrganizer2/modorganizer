@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SETTINGSDIALOG_H
 
 #include "tutorabledialog.h"
+#include "util.h"
 
 class PluginContainer;
 class Settings;
@@ -74,7 +75,9 @@ public:
 
   PluginContainer* pluginContainer();
   QWidget* parentWidgetForDialogs();
-  void setRestartNeeded();
+
+  void setExitNeeded(ExitFlags e);
+  ExitFlags exitNeeded() const;
 
   int exec() override;
 
@@ -82,10 +85,10 @@ public slots:
   virtual void accept();
 
 private:
+  Ui::SettingsDialog* ui;
   Settings& m_settings;
   std::vector<std::unique_ptr<SettingsTab>> m_tabs;
-  Ui::SettingsDialog* ui;
-  bool m_restartNeeded;
+  ExitFlags m_exit;
   PluginContainer* m_pluginContainer;
 };
 
