@@ -195,7 +195,7 @@ public:
 
   void updateVFSParams(
     MOBase::log::Levels logLevel, CrashDumpsType crashDumpsType,
-    QString executableBlacklist);
+    std::chrono::seconds spawnDelay, QString executableBlacklist);
 
   void setLogLevel(MOBase::log::Levels level);
 

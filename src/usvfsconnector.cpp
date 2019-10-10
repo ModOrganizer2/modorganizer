@@ -162,15 +162,24 @@ QString toString(CrashDumpsType t)
 
 UsvfsConnector::UsvfsConnector()
 {
+  using namespace std::chrono;
+
   const auto& s = Settings::instance();
 
-  USVFSParameters params;
-  const LogLevel level = toUsvfsLogLevel(s.diagnostics().logLevel());
+  const LogLevel logLevel = toUsvfsLogLevel(s.diagnostics().logLevel());
   const CrashDumpsType dumpType = s.diagnostics().crashDumpsType();
-  const auto delay = s.diagnostics().spawnDelay();
-
+  const auto delay = duration_cast<milliseconds>(s.diagnostics().spawnDelay());
   std::string dumpPath = MOShared::ToString(OrganizerCore::crashDumpsPath(), true);
-  USVFSInitParameters(&params, SHMID, false, level, dumpType, dumpPath.c_str(), delay);
+
+  usvfsParameters* params = usvfsCreateParameters();
+
+  usvfsSetInstanceName(params, SHMID);
+  usvfsSetDebugMode(params, false);
+  usvfsSetLogLevel(params, logLevel);
+  usvfsSetCrashDumpType(params, dumpType);
+  usvfsSetCrashDumpPath(params, dumpPath.c_str());
+  usvfsSetProcessDelay(params, delay.count());
+
   InitLogging(false);
 
   log::debug(
@@ -178,12 +187,13 @@ UsvfsConnector::UsvfsConnector()
     " . instance: {}\n"
     " . log: {}\n"
     " . dump: {} ({})",
-    params.instanceName,
-    toString(params.logLevel),
-    params.crashDumpsPath,
-    toString(params.crashDumpsType));
+    SHMID,
+    toString(logLevel),
+    dumpPath.c_str(),
+    toString(dumpType));
 
-  CreateVFS(&params);
+  usvfsCreateVFS(params);
+  usvfsFreeParameters(params);
 
   ClearExecutableBlacklist();
   for (auto exec : s.executablesBlacklist().split(";")) {
@@ -253,9 +263,19 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
 
 void UsvfsConnector::updateParams(
   MOBase::log::Levels logLevel, CrashDumpsType crashDumpsType,
-  QString executableBlacklist)
+  std::chrono::seconds spawnDelay, QString executableBlacklist)
 {
-  USVFSUpdateParams(toUsvfsLogLevel(logLevel), crashDumpsType);
+  using namespace std::chrono;
+
+  usvfsParameters* p = usvfsCreateParameters();
+
+  usvfsSetLogLevel(p, toUsvfsLogLevel(logLevel));
+  usvfsSetCrashDumpType(p, crashDumpsType);
+  usvfsSetProcessDelay(p, duration_cast<milliseconds>(spawnDelay).count());
+
+  usvfsUpdateParameters(p);
+  usvfsFreeParameters(p);
+
   ClearExecutableBlacklist();
   for (auto exec : executableBlacklist.split(";")) {
     std::wstring buf = exec.toStdWString();
