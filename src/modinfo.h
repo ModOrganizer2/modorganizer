@@ -229,6 +229,18 @@ public:
    */
   static ModInfo::Ptr createFromPlugin(const QString &modName, const QString &espName, const QStringList &bsaNames, ModInfo::EModType modType, MOShared::DirectoryEntry **directoryStructure, PluginContainer *pluginContainer);
 
+  // whether the given name is used for separators
+  //
+  static bool isSeparatorName(const QString& name);
+
+  // whether the given name is used for backups
+  //
+  static bool isBackupName(const QString& name);
+
+  // whether the given name is used for regular mods
+  //
+  static bool isRegularName(const QString& name);
+
   /**
    * @brief retieve a name for one of the CONTENT_ enums
    * @param contentType the content value

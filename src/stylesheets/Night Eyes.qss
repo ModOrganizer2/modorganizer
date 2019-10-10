@@ -80,6 +80,11 @@ QToolButton:pressed
 	background: #181818;
 }
 
+QToolButton::menu-indicator
+{
+  width: 8px;
+}
+
 
 /* Left Pane & File Trees ----------------------------------------------------- */
 

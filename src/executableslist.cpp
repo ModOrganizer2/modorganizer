@@ -84,6 +84,9 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, const Settings& s)
     if (map["ownicon"].toBool())
       flags |= Executable::UseApplicationIcon;
 
+    if (map["hide"].toBool())
+      flags |= Executable::Hide;
+
     if (map.contains("custom")) {
       // the "custom" setting only exists in older versions
       needsUpgrade = true;
@@ -116,6 +119,7 @@ void ExecutablesList::store(Settings& s)
     map["title"] = item.title();
     map["toolbar"] = item.isShownOnToolbar();
     map["ownicon"] = item.usesOwnIcon();
+    map["hide"] = item.hide();
     map["binary"] = item.binaryInfo().absoluteFilePath();
     map["arguments"] = item.arguments();
     map["workingDirectory"] = item.workingDirectory();
@@ -343,6 +347,10 @@ void ExecutablesList::dump() const
       flags.push_back("icon");
     }
 
+    if (e.flags() & Executable::Hide) {
+      flags.push_back("hide");
+    }
+
     log::debug(
       " . executable '{}'\n"
       "    binary: {}\n"
@@ -456,11 +464,13 @@ bool Executable::usesOwnIcon() const
   return m_flags.testFlag(UseApplicationIcon);
 }
 
+bool Executable::hide() const
+{
+  return m_flags.testFlag(Hide);
+}
+
 void Executable::mergeFrom(const Executable& other)
 {
-  // flags on plugin executables that the user is allowed to change
-  const auto allow = ShowInToolbar;
-
   // this happens after executables are loaded from settings and plugin
   // executables are being added, or when users are modifying executables
 

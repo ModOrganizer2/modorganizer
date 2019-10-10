@@ -209,6 +209,13 @@ QToolButton {
   QToolButton:pressed {
     background-color: #3399FF; }
 
+QToolButton::menu-indicator {
+  image: url(./vs15/combobox-down.png);
+  subcontrol-origin: padding;
+  subcontrol-position: center right;
+  padding-top: 10%;
+  padding-right: 5%; }
+
 /* Group Boxes #QGroupBox */
 QGroupBox {
   border-color: #3F3F46;
