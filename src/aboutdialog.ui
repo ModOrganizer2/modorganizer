@@ -105,6 +105,13 @@
           </widget>
          </item>
          <item>
+          <widget class="QLabel" name="usvfsLabel">
+           <property name="text">
+            <string>usvfs:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <spacer name="verticalSpacer">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
