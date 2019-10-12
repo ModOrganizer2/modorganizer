@@ -6566,6 +6566,7 @@ void MainWindow::on_bossButton_clicked()
     sp.binary = QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe");
     sp.arguments = parameters.join(" ");
     sp.currentDirectory.setPath(qApp->applicationDirPath() + "/loot");
+    sp.hooked = true;
     sp.stdOut = stdOutWrite;
 
     HANDLE loot = spawn::startBinary(this, sp);
