@@ -408,7 +408,7 @@ void EditExecutablesDialog::save()
 
   // get the new title, but ignore it if it's conflicting with an already
   // existing executable
-  QString newTitle = ui->title->text();
+  QString newTitle = ui->title->text().trimmed();
   if (isTitleConflicting(newTitle)) {
     newTitle = e->title();
   }
