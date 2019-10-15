@@ -170,6 +170,7 @@ void PluginList::refresh(const QString &profileName
   ChangeBracket<PluginList> layoutChange(this);
 
   QStringList primaryPlugins = m_GamePlugin->primaryPlugins();
+  bool lightPluginsAreSupported = m_GamePlugin->feature<GamePlugins>()->lightPluginsAreSupported();
 
   m_CurrentProfile = profileName;
 
@@ -223,7 +224,7 @@ void PluginList::refresh(const QString &profileName
           originName = modInfo->name();
         }
 
-        m_ESPs.push_back(ESPInfo(filename, forceEnabled, originName, ToQString(current->getFullPath()), hasIni, loadedArchives));
+        m_ESPs.push_back(ESPInfo(filename, forceEnabled, originName, ToQString(current->getFullPath()), hasIni, loadedArchives, lightPluginsAreSupported));
         m_ESPs.rbegin()->m_Priority = -1;
       } catch (const std::exception &e) {
         reportError(tr("failed to update esp info for file %1 (source id: %2), error: %3").arg(filename).arg(current->getOrigin(archive)).arg(e.what()));
@@ -843,6 +844,7 @@ void PluginList::generatePluginIndexes()
 {
   int numESLs = 0;
   int numSkipped = 0;
+  bool lightPluginsSupported = m_GamePlugin->feature<GamePlugins>()->lightPluginsAreSupported();
   for (int l = 0; l < m_ESPs.size(); ++l) {
     int i = m_ESPsByPriority.at(l);
     if (!m_ESPs[i].m_Enabled) {
@@ -850,7 +852,7 @@ void PluginList::generatePluginIndexes()
       ++numSkipped;
       continue;
     }
-    if (m_ESPs[i].m_IsLight || m_ESPs[i].m_IsLightFlagged) {
+    if (lightPluginsSupported && (m_ESPs[i].m_IsLight || m_ESPs[i].m_IsLightFlagged)) {
       int ESLpos = 254 + ((numESLs + 1) / 4096);
       m_ESPs[i].m_Index = QString("%1:%2").arg(ESLpos, 2, 16, QChar('0')).arg((numESLs) % 4096, 3, 16, QChar('0')).toUpper();
       ++numESLs;
@@ -1355,7 +1357,7 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
 
 PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
                              const QString &originName, const QString &fullPath,
-                             bool hasIni, std::set<QString> archives)
+                             bool hasIni, std::set<QString> archives, bool lightPluginsAreSupported)
   : m_Name(name), m_FullPath(fullPath), m_Enabled(enabled), m_ForceEnabled(enabled),
     m_Priority(0), m_LoadOrder(-1), m_OriginName(originName), m_HasIni(hasIni), m_Archives(archives), m_ModSelected(false)
 {
@@ -1363,8 +1365,8 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
     ESP::File file(ToWString(fullPath));
     m_IsMaster = file.isMaster();
     auto extension = name.right(3).toLower();
-    m_IsLight = (extension == "esl");
-    m_IsLightFlagged = file.isLight();
+    m_IsLight = lightPluginsAreSupported && (extension == "esl");
+    m_IsLightFlagged = lightPluginsAreSupported && file.isLight();
 
     m_Author = QString::fromLatin1(file.author().c_str());
     m_Description = QString::fromLatin1(file.description().c_str());

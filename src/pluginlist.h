@@ -296,7 +296,7 @@ private:
 
   struct ESPInfo {
 
-    ESPInfo(const QString &name, bool enabled, const QString &originName, const QString &fullPath, bool hasIni, std::set<QString> archives);
+    ESPInfo(const QString &name, bool enabled, const QString &originName, const QString &fullPath, bool hasIni, std::set<QString> archives, bool lightSupported);
     QString m_Name;
     QString m_FullPath;
     bool m_Enabled;
