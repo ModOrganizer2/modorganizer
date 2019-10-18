@@ -27,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDir>
 
 class Settings;
+namespace MOBase { class IPluginGame; }
 
 namespace spawn
 {
@@ -46,6 +47,7 @@ struct SpawnParameters
   QFileInfo binary;
   QString arguments;
   QDir currentDirectory;
+  QString steamAppID;
   bool hooked = false;
   HANDLE stdOut = INVALID_HANDLE_VALUE;
   HANDLE stdErr = INVALID_HANDLE_VALUE;
@@ -68,6 +70,38 @@ bool checkBlacklist(
  * @return the process handle
  **/
 HANDLE startBinary(QWidget* parent, const SpawnParameters& sp);
+
+
+class SpawnedProcess
+{
+public:
+  SpawnedProcess(HANDLE handle, SpawnParameters sp);
+
+  SpawnedProcess(const SpawnedProcess&) = delete;
+  SpawnedProcess& operator=(const SpawnedProcess&) = delete;
+  SpawnedProcess(SpawnedProcess&& other);
+  SpawnedProcess& operator=(SpawnedProcess&& other);
+  ~SpawnedProcess();
+
+  HANDLE releaseHandle();
+
+private:
+  HANDLE m_handle;
+  SpawnParameters m_parameters;
+
+  void destroy();
+};
+
+
+class Spawner
+{
+public:
+  SpawnedProcess spawn(
+    QWidget* parent, const MOBase::IPluginGame* game,
+    SpawnParameters sp, Settings& settings);
+
+private:
+};
 
 } // namespace
 

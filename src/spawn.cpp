@@ -27,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "envmodule.h"
 #include "settings.h"
 #include "settingsdialogworkarounds.h"
+#include <iplugingame.h>
 #include <errorcodes.h>
 #include <report.h>
 #include <log.h>
@@ -440,7 +441,7 @@ QMessageBox::StandardButton confirmBlacklisted(
 namespace spawn
 {
 
-DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle, HANDLE& threadHandle)
+DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle)
 {
   BOOL inheritHandles = FALSE;
 
@@ -494,7 +495,7 @@ DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle, HANDLE& threadHand
   }
 
   processHandle = pi.hProcess;
-  threadHandle = pi.hThread;
+  ::CloseHandle(pi.hThread);
 
   return ERROR_SUCCESS;
 }
@@ -618,8 +619,7 @@ bool startSteam(QWidget* parent)
     (password.isEmpty() ? "no" : "yes"));
 
   HANDLE ph = INVALID_HANDLE_VALUE;
-  HANDLE th = INVALID_HANDLE_VALUE;
-  const auto e = spawn(sp, ph, th);
+  const auto e = spawn(sp, ph);
 
   if (e != ERROR_SUCCESS) {
     // make sure username and passwords are not shown
@@ -772,17 +772,59 @@ bool checkBlacklist(
 }
 
 
+void adjustForVirtualized(
+  const IPluginGame* game, SpawnParameters& sp, const Settings& settings)
+{
+  const QString modsPath = settings.paths().mods();
+
+  // Check if this a request with either an executable or a working directory
+  // under our mods folder then will start the process in a virtualized
+  // "environment" with the appropriate paths fixed:
+  // (i.e. mods\FNIS\path\exe => game\data\path\exe)
+  QString cwdPath = sp.currentDirectory.absolutePath();
+  bool virtualizedCwd = cwdPath.startsWith(modsPath, Qt::CaseInsensitive);
+  QString binPath = sp.binary.absoluteFilePath();
+  bool virtualizedBin = binPath.startsWith(modsPath, Qt::CaseInsensitive);
+  if (virtualizedCwd || virtualizedBin) {
+    if (virtualizedCwd) {
+      int cwdOffset = cwdPath.indexOf('/', modsPath.length() + 1);
+      QString adjustedCwd = cwdPath.mid(cwdOffset, -1);
+      cwdPath = game->dataDirectory().absolutePath();
+      if (cwdOffset >= 0)
+        cwdPath += adjustedCwd;
+
+    }
+
+    if (virtualizedBin) {
+      int binOffset = binPath.indexOf('/', modsPath.length() + 1);
+      QString adjustedBin = binPath.mid(binOffset, -1);
+      binPath = game->dataDirectory().absolutePath();
+      if (binOffset >= 0)
+        binPath += adjustedBin;
+    }
+
+    QString cmdline
+      = QString("launch \"%1\" \"%2\" %3")
+      .arg(QDir::toNativeSeparators(cwdPath),
+        QDir::toNativeSeparators(binPath), sp.arguments);
+
+    sp.binary = QFileInfo(QCoreApplication::applicationFilePath());
+    sp.arguments = cmdline;
+    sp.currentDirectory.setPath(QCoreApplication::applicationDirPath());
+  }
+}
+
+
 HANDLE startBinary(QWidget* parent, const SpawnParameters& sp)
 {
-  HANDLE processHandle, threadHandle;
-  const auto e = spawn(sp, processHandle, threadHandle);
+  HANDLE handle = INVALID_HANDLE_VALUE;
+  const auto e = spawn::spawn(sp, handle);
 
   switch (e)
   {
     case ERROR_SUCCESS:
     {
-      ::CloseHandle(threadHandle);
-      return processHandle;
+      return handle;
     }
 
     case ERROR_ELEVATION_REQUIRED:
@@ -797,6 +839,79 @@ HANDLE startBinary(QWidget* parent, const SpawnParameters& sp)
       return INVALID_HANDLE_VALUE;
     }
   }
+}
+
+
+
+SpawnedProcess::SpawnedProcess(HANDLE handle, SpawnParameters sp)
+  : m_handle(handle), m_parameters(std::move(sp))
+{
+}
+
+SpawnedProcess::SpawnedProcess(SpawnedProcess&& other)
+  : m_handle(other.m_handle), m_parameters(std::move(other.m_parameters))
+{
+  other.m_handle = INVALID_HANDLE_VALUE;
+}
+
+SpawnedProcess& SpawnedProcess::operator=(SpawnedProcess&& other)
+{
+  if (this != &other) {
+    destroy();
+
+    m_handle = other.m_handle;
+    other.m_handle = INVALID_HANDLE_VALUE;
+
+    m_parameters = std::move(other.m_parameters);
+  }
+
+  return *this;
+}
+
+SpawnedProcess::~SpawnedProcess()
+{
+  destroy();
+}
+
+HANDLE SpawnedProcess::releaseHandle()
+{
+  const auto h = m_handle;
+  m_handle = INVALID_HANDLE_VALUE;
+  return h;
+}
+
+void SpawnedProcess::destroy()
+{
+  if (m_handle != INVALID_HANDLE_VALUE) {
+    ::CloseHandle(m_handle);
+    m_handle = INVALID_HANDLE_VALUE;
+  }
+}
+
+
+SpawnedProcess Spawner::spawn(
+  QWidget* parent, const IPluginGame* game,
+  SpawnParameters sp, Settings& settings)
+{
+  if (!checkBinary(parent, sp)) {
+    return {INVALID_HANDLE_VALUE, sp};
+  }
+
+  if (!checkSteam(parent, sp, game->gameDirectory(), sp.steamAppID, settings)) {
+    return {INVALID_HANDLE_VALUE, sp};
+  }
+
+  if (!spawn::checkEnvironment(parent, sp)) {
+    return {INVALID_HANDLE_VALUE, sp};
+  }
+
+  if (!spawn::checkBlacklist(parent, sp, settings)) {
+    return {INVALID_HANDLE_VALUE, sp};
+  }
+
+  adjustForVirtualized(game, sp, settings);
+
+  return {startBinary(parent, sp), sp};
 }
 
 } // namespace

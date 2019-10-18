@@ -1,5 +1,5 @@
 #include "organizercore.h"
-
+#include "mainwindow.h"
 #include "delayedfilewriter.h"
 #include "guessedvalue.h"
 #include "imodinterface.h"
@@ -127,7 +127,7 @@ QStringList toStringList(InputIterator current, InputIterator end)
 
 
 OrganizerCore::OrganizerCore(Settings &settings)
-  : m_UserInterface(nullptr)
+  : m_MainWindow(nullptr)
   , m_PluginContainer(nullptr)
   , m_GameName()
   , m_CurrentProfile(nullptr)
@@ -249,44 +249,43 @@ void OrganizerCore::updateExecutablesList()
     m_PluginContainer, m_Settings.interface().displayForeign(), managedGame());
 }
 
-void OrganizerCore::setUserInterface(IUserInterface *userInterface,
-                                     QWidget *widget)
+void OrganizerCore::setUserInterface(MainWindow* mainWindow)
 {
   storeSettings();
 
-  m_UserInterface = userInterface;
+  m_MainWindow = mainWindow;
 
-  if (widget != nullptr) {
-    connect(&m_ModList, SIGNAL(modlistChanged(QModelIndex, int)), widget,
+  if (m_MainWindow != nullptr) {
+    connect(&m_ModList, SIGNAL(modlistChanged(QModelIndex, int)), m_MainWindow,
             SLOT(modlistChanged(QModelIndex, int)));
-    connect(&m_ModList, SIGNAL(modlistChanged(QModelIndexList, int)), widget,
+    connect(&m_ModList, SIGNAL(modlistChanged(QModelIndexList, int)), m_MainWindow,
             SLOT(modlistChanged(QModelIndexList, int)));
-    connect(&m_ModList, SIGNAL(showMessage(QString)), widget,
+    connect(&m_ModList, SIGNAL(showMessage(QString)), m_MainWindow,
             SLOT(showMessage(QString)));
-    connect(&m_ModList, SIGNAL(modRenamed(QString, QString)), widget,
+    connect(&m_ModList, SIGNAL(modRenamed(QString, QString)), m_MainWindow,
             SLOT(modRenamed(QString, QString)));
-    connect(&m_ModList, SIGNAL(modUninstalled(QString)), widget,
+    connect(&m_ModList, SIGNAL(modUninstalled(QString)), m_MainWindow,
             SLOT(modRemoved(QString)));
-    connect(&m_ModList, SIGNAL(removeSelectedMods()), widget,
+    connect(&m_ModList, SIGNAL(removeSelectedMods()), m_MainWindow,
             SLOT(removeMod_clicked()));
-    connect(&m_ModList, SIGNAL(clearOverwrite()), widget,
+    connect(&m_ModList, SIGNAL(clearOverwrite()), m_MainWindow,
       SLOT(clearOverwrite()));
-    connect(&m_ModList, SIGNAL(requestColumnSelect(QPoint)), widget,
+    connect(&m_ModList, SIGNAL(requestColumnSelect(QPoint)), m_MainWindow,
             SLOT(displayColumnSelection(QPoint)));
-    connect(&m_ModList, SIGNAL(fileMoved(QString, QString, QString)), widget,
+    connect(&m_ModList, SIGNAL(fileMoved(QString, QString, QString)), m_MainWindow,
             SLOT(fileMoved(QString, QString, QString)));
-    connect(&m_ModList, SIGNAL(modorder_changed()), widget,
+    connect(&m_ModList, SIGNAL(modorder_changed()), m_MainWindow,
             SLOT(modorder_changed()));
-    connect(&m_PluginList, SIGNAL(writePluginsList()), widget,
+    connect(&m_PluginList, SIGNAL(writePluginsList()), m_MainWindow,
       SLOT(esplist_changed()));
-    connect(&m_PluginList, SIGNAL(esplist_changed()), widget,
+    connect(&m_PluginList, SIGNAL(esplist_changed()), m_MainWindow,
       SLOT(esplist_changed()));
-    connect(&m_DownloadManager, SIGNAL(showMessage(QString)), widget,
+    connect(&m_DownloadManager, SIGNAL(showMessage(QString)), m_MainWindow,
             SLOT(showMessage(QString)));
   }
 
-  m_InstallationManager.setParentWidget(widget);
-  m_Updater.setUserInterface(widget);
+  m_InstallationManager.setParentWidget(m_MainWindow);
+  m_Updater.setUserInterface(m_MainWindow);
 
   checkForUpdates();
 }
@@ -295,7 +294,7 @@ void OrganizerCore::checkForUpdates()
 {
   // this currently wouldn't work reliably if the ui isn't initialized yet to
   // display the result
-  if (m_UserInterface != nullptr) {
+  if (m_MainWindow != nullptr) {
     m_Updater.testForUpdate(m_Settings);
   }
 }
@@ -755,13 +754,13 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
     int modIndex = ModInfo::getIndex(modName);
     if (modIndex != UINT_MAX) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-      if (hasIniTweaks && (m_UserInterface != nullptr)
+      if (hasIniTweaks && (m_MainWindow != nullptr)
           && (QMessageBox::question(qApp->activeWindow(), tr("Configure Mod"),
                                     tr("This mod contains ini tweaks. Do you "
                                        "want to configure them now?"),
                                     QMessageBox::Yes | QMessageBox::No)
               == QMessageBox::Yes)) {
-        m_UserInterface->displayModInformation(
+        m_MainWindow->displayModInformation(
           modInfo, modIndex, ModInfoTabIDs::IniFiles);
       }
       m_ModInstalled(modName);
@@ -822,13 +821,13 @@ void OrganizerCore::installDownload(int index)
         ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
         modInfo->addInstalledFile(modID, fileID);
 
-        if (hasIniTweaks && m_UserInterface != nullptr
+        if (hasIniTweaks && m_MainWindow != nullptr
             && (QMessageBox::question(qApp->activeWindow(), tr("Configure Mod"),
                                       tr("This mod contains ini tweaks. Do you "
                                          "want to configure them now?"),
                                       QMessageBox::Yes | QMessageBox::No)
                 == QMessageBox::Yes)) {
-          m_UserInterface->displayModInformation(
+          m_MainWindow->displayModInformation(
             modInfo, modIndex, ModInfoTabIDs::IniFiles);
         }
 
@@ -1250,11 +1249,11 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary,
     std::unique_ptr<LockedDialog> dlg;
     ILockedWaitingForProcess* uilock = nullptr;
 
-    if (m_UserInterface != nullptr) {
-      uilock = m_UserInterface->lock();
+    if (m_MainWindow != nullptr) {
+      uilock = m_MainWindow->lock();
     }
     else {
-      // i.e. when running command line shortcuts there is no m_UserInterface
+      // i.e. when running command line shortcuts there is no user interface
       dlg.reset(new LockedDialog);
       dlg->show();
       dlg->setEnabled(true);
@@ -1262,8 +1261,8 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary,
     }
 
     ON_BLOCK_EXIT([&]() {
-      if (m_UserInterface != nullptr) {
-        m_UserInterface->unlock();
+      if (m_MainWindow != nullptr) {
+        m_MainWindow->unlock();
       } });
 
     DWORD ignoreExitCode;
@@ -1275,34 +1274,20 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary,
 }
 
 
-HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
-                                         const QString &arguments,
-                                         const QString &profileName,
-                                         const QDir &currentDirectory,
-                                         const QString &steamAppID,
-                                         const QString &customOverwrite,
-                                         const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries)
+HANDLE OrganizerCore::spawnBinaryProcess(
+  const QFileInfo &binary, const QString &arguments, const QString &profileName,
+  const QDir &currentDirectory, const QString &steamAppID,
+  const QString &customOverwrite,
+  const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries)
 {
   spawn::SpawnParameters sp;
   sp.binary = binary;
   sp.arguments = arguments;
   sp.currentDirectory = currentDirectory;
+  sp.steamAppID = steamAppID;
   sp.hooked = true;
 
   prepareStart();
-
-  QWidget *window = qApp->activeWindow();
-  if ((window != nullptr) && (!window->isVisible())) {
-    window = nullptr;
-  }
-
-  if (!spawn::checkBinary(window, sp)) {
-    return INVALID_HANDLE_VALUE;
-  }
-
-  if (!spawn::checkSteam(window, sp, managedGame()->gameDirectory(), steamAppID, m_Settings)) {
-    return INVALID_HANDLE_VALUE;
-  }
 
   while (m_DirectoryUpdate) {
     ::Sleep(100);
@@ -1315,72 +1300,25 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
   }
 
   // TODO: should also pass arguments
-  if (m_AboutToRun(binary.absoluteFilePath())) {
-    try {
-      m_USVFS.updateMapping(fileMapping(profileName, customOverwrite));
-      m_USVFS.updateForcedLibraries(forcedLibraries);
-
-    } catch (const UsvfsConnectorException &e) {
-      log::debug(e.what());
-      return INVALID_HANDLE_VALUE;
-    } catch (const std::exception &e) {
-      QMessageBox::warning(window, tr("Error"), e.what());
-      return INVALID_HANDLE_VALUE;
-    }
-
-    if (!spawn::checkEnvironment(window, sp)) {
-      return INVALID_HANDLE_VALUE;
-    }
-
-    if (!spawn::checkBlacklist(window, sp, m_Settings)) {
-      return INVALID_HANDLE_VALUE;
-    }
-
-    QString modsPath = settings().paths().mods();
-
-    // Check if this a request with either an executable or a working directory under our mods folder
-    // then will start the process in a virtualized "environment" with the appropriate paths fixed:
-    // (i.e. mods\FNIS\path\exe => game\data\path\exe)
-    QString cwdPath = currentDirectory.absolutePath();
-    bool virtualizedCwd = cwdPath.startsWith(modsPath, Qt::CaseInsensitive);
-    QString binPath = binary.absoluteFilePath();
-    bool virtualizedBin = binPath.startsWith(modsPath, Qt::CaseInsensitive);
-    if (virtualizedCwd || virtualizedBin) {
-      if (virtualizedCwd) {
-        int cwdOffset = cwdPath.indexOf('/', modsPath.length() + 1);
-        QString adjustedCwd = cwdPath.mid(cwdOffset, -1);
-        cwdPath = m_GamePlugin->dataDirectory().absolutePath();
-        if (cwdOffset >= 0)
-          cwdPath += adjustedCwd;
-
-      }
-
-      if (virtualizedBin) {
-        int binOffset = binPath.indexOf('/', modsPath.length() + 1);
-        QString adjustedBin = binPath.mid(binOffset, -1);
-        binPath = m_GamePlugin->dataDirectory().absolutePath();
-        if (binOffset >= 0)
-          binPath += adjustedBin;
-      }
-
-      QString cmdline
-          = QString("launch \"%1\" \"%2\" %3")
-                .arg(QDir::toNativeSeparators(cwdPath),
-                     QDir::toNativeSeparators(binPath), arguments);
-
-      sp.binary = QFileInfo(QCoreApplication::applicationFilePath());
-      sp.arguments = cmdline;
-      sp.currentDirectory.setPath(QCoreApplication::applicationDirPath());
-
-      return spawn::startBinary(window, sp);
-    } else {
-      log::debug("Spawning direct process <{}, {}, {}>", binPath, arguments, cwdPath);
-      return spawn::startBinary(window, sp);
-    }
-  } else {
+  if (!m_AboutToRun(binary.absoluteFilePath())) {
     log::debug("start of \"{}\" canceled by plugin", binary.absoluteFilePath());
     return INVALID_HANDLE_VALUE;
   }
+
+  try {
+    m_USVFS.updateMapping(fileMapping(profileName, customOverwrite));
+    m_USVFS.updateForcedLibraries(forcedLibraries);
+
+  } catch (const UsvfsConnectorException &e) {
+    log::debug(e.what());
+    return INVALID_HANDLE_VALUE;
+  } catch (const std::exception &e) {
+    QMessageBox::warning(m_MainWindow, tr("Error"), e.what());
+    return INVALID_HANDLE_VALUE;
+  }
+
+  auto process = spawn::Spawner().spawn(m_MainWindow, m_GamePlugin, sp, m_Settings);
+  return process.releaseHandle();
 }
 
 HANDLE OrganizerCore::runShortcut(const MOShortcut& shortcut)
@@ -1498,13 +1436,13 @@ bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)
     return true;
 
   ILockedWaitingForProcess* uilock = nullptr;
-  if (m_UserInterface != nullptr) {
-    uilock = m_UserInterface->lock();
+  if (m_MainWindow != nullptr) {
+    uilock = m_MainWindow->lock();
   }
 
   ON_BLOCK_EXIT([&] () {
-    if (m_UserInterface != nullptr) {
-      m_UserInterface->unlock();
+    if (m_MainWindow != nullptr) {
+      m_MainWindow->unlock();
     } });
   return waitForProcessCompletion(handle, exitCode, uilock);
 }
@@ -1762,8 +1700,8 @@ void OrganizerCore::refreshBSAList()
       m_ActiveArchives = m_DefaultArchives;
     }
 
-    if (m_UserInterface != nullptr) {
-      m_UserInterface->updateBSAList(m_DefaultArchives, m_ActiveArchives);
+    if (m_MainWindow != nullptr) {
+      m_MainWindow->updateBSAList(m_DefaultArchives, m_ActiveArchives);
     }
 
     m_ArchivesInit = true;
@@ -1879,8 +1817,8 @@ void OrganizerCore::updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::P
   // now we need to refresh the bsa list and save it so there is no confusion
   // about what archives are available and active
   refreshBSAList();
-  if (m_UserInterface != nullptr) {
-    m_UserInterface->archivesWriter().writeImmediately(false);
+  if (m_MainWindow != nullptr) {
+    m_MainWindow->archivesWriter().writeImmediately(false);
   }
 
   std::vector<QString> archives = enabledArchives();
@@ -2064,8 +2002,8 @@ void OrganizerCore::modStatusChanged(unsigned int index)
             = m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()));
         origin.enable(false);
       }
-      if (m_UserInterface != nullptr) {
-        m_UserInterface->archivesWriter().write();
+      if (m_MainWindow != nullptr) {
+        m_MainWindow->archivesWriter().write();
       }
     }
     modInfo->clearCaches();
@@ -2114,8 +2052,8 @@ void OrganizerCore::modStatusChanged(QList<unsigned int> index) {
           origin.enable(false);
         }
       }
-      if (m_UserInterface != nullptr) {
-        m_UserInterface->archivesWriter().write();
+      if (m_MainWindow != nullptr) {
+        m_MainWindow->archivesWriter().write();
       }
     }
 
@@ -2290,8 +2228,8 @@ bool OrganizerCore::saveCurrentLists()
 
   try {
     savePluginList();
-    if (m_UserInterface != nullptr) {
-      m_UserInterface->archivesWriter().write();
+    if (m_MainWindow != nullptr) {
+      m_MainWindow->archivesWriter().write();
     }
   } catch (const std::exception &e) {
     reportError(tr("failed to save load order: %1").arg(e.what()));

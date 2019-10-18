@@ -3,7 +3,7 @@
 
 
 #include "selfupdater.h"
-#include "iuserinterface.h" //should be class IUserInterface;
+#include "ilockedwaitingforprocess.h"
 #include "settings.h"
 #include "modlist.h"
 #include "modinfo.h"
@@ -26,6 +26,8 @@
 class ModListSortProxy;
 class PluginListSortProxy;
 class Profile;
+class MainWindow;
+
 namespace MOBase {
   template <typename T> class GuessedValue;
   class IModInterface;
@@ -101,7 +103,7 @@ public:
 
   ~OrganizerCore();
 
-  void setUserInterface(IUserInterface *userInterface, QWidget *widget);
+  void setUserInterface(MainWindow* mainWindow);
   void connectPlugins(PluginContainer *container);
   void disconnectPlugins();
 
@@ -328,8 +330,7 @@ private:
   static const unsigned int PROBLEM_MO1SCRIPTEXTENDERWORKAROUND = 1;
 
 private:
-
-  IUserInterface *m_UserInterface;
+  MainWindow* m_MainWindow;
   PluginContainer *m_PluginContainer;
   QString m_GameName;
   MOBase::IPluginGame *m_GamePlugin;

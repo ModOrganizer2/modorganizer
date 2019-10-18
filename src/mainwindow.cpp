@@ -411,7 +411,7 @@ MainWindow::MainWindow(Settings &settings
   m_Tutorial.expose("modList", m_OrganizerCore.modList());
   m_Tutorial.expose("espList", m_OrganizerCore.pluginList());
 
-  m_OrganizerCore.setUserInterface(this, this);
+  m_OrganizerCore.setUserInterface(this);
   for (const QString &fileName : m_PluginContainer.pluginFileNames()) {
     installTranslator(QFileInfo(fileName).baseName());
   }
@@ -595,7 +595,7 @@ MainWindow::~MainWindow()
     cleanup();
 
     m_PluginContainer.setUserInterface(nullptr, nullptr);
-    m_OrganizerCore.setUserInterface(nullptr, nullptr);
+    m_OrganizerCore.setUserInterface(nullptr);
     m_IntegratedBrowser.close();
     delete ui;
   } catch (std::exception &e) {
