@@ -280,52 +280,60 @@ void NexusInterface::setUserAccount(const APIUserAccount& user)
 
 void NexusInterface::interpretNexusFileName(const QString &fileName, QString &modName, int &modID, bool query)
 {
-  //Look for something along the lines of modulename-Vn-m + any old rubbish.
-  static std::regex exp(R"exp(^([a-zA-Z0-9_'"\-.() ]*?)([-_ ][VvRr]?[0-9_]+)?-([1-9][0-9]*).*\.(zip|rar|7z))exp");
-  static std::regex simpleexp("^([a-zA-Z0-9_]+)");
+  // guess the mod name from the file name
+  static const QRegularExpression complex("^([a-zA-Z0-9_'\"\\-.() ]*?)([-_ ][VvRr]?[0-9_]+)?-([1-9][0-9]*).*\\.(zip|rar|7z)");
+  static const QRegularExpression simple("^[a-zA-Z0-9_]+");
+  auto complexMatch = complex.match(fileName);
+  auto simpleMatch = simple.match(fileName);
+  if (complexMatch.hasMatch()) {
+    modName = complexMatch.captured(1);
+  }
+  else if (simpleMatch.hasMatch()) {
+    modName = simpleMatch.captured(0);
+  }
+  else {
+    modName.clear();
+  }
 
-  QByteArray fileNameUTF8 = fileName.toUtf8();
-  std::cmatch result;
-  if (std::regex_search(fileNameUTF8.constData(), result, exp)) {
-    modName = QString::fromUtf8(result[1].str().c_str());
-    modName = modName.replace('_', ' ').trimmed();
+  if (query) {
+    SelectionDialog selection(tr("Please pick the mod ID for \"%1\"").arg(fileName));
+    int index = 0;
+    auto splits = fileName.split(QRegExp("[^0-9]"), QString::KeepEmptyParts);
+    for (auto substr : splits) {
+      bool ok = false;
+      int value = substr.toInt(&ok);
+      if (ok) {
+        QString highlight(fileName);
+        highlight.insert(index, " *");
+        highlight.insert(index + substr.length() + 2, "* ");
 
-    std::string candidate = result[3].str();
-    std::string candidate2 = result[2].str();
-    if (candidate2.length() != 0 && (candidate2.find_last_of("VvRr") == std::string::npos)) {
-      // well, that second match might be an id too...
-      size_t offset = strspn(candidate2.c_str(), "-_ ");
-      if (offset < candidate2.length() && query) {
-        SelectionDialog selection(tr("Failed to guess mod id for \"%1\", please pick the correct one").arg(fileName));
-        QString r2Highlight(fileName);
-        r2Highlight.insert(result.position(2) + result.length(2), "* ")
-            .insert(result.position(2) + static_cast<int>(offset), " *");
-        QString r3Highlight(fileName);
-        r3Highlight.insert(result.position(3) + result.length(3), "* ").insert(result.position(3), " *");
+        QStringList choice;
+        choice << substr;
+        choice << (index > 0 ? fileName.left(index - 1) : substr);
+        selection.addChoice(substr, highlight, choice);
+      }
+      index += substr.length() + 1;
+    }
 
-        selection.addChoice(candidate.c_str(), r3Highlight, static_cast<int>(strtol(candidate.c_str(), nullptr, 10)));
-        selection.addChoice(candidate2.c_str() + offset, r2Highlight, static_cast<int>(abs(strtol(candidate2.c_str() + offset, nullptr, 10))));
-        if (selection.exec() == QDialog::Accepted) {
-          modID = selection.getChoiceData().toInt();
-        } else {
-          modID = -1;
-        }
-      } else {
+    if (selection.numChoices() > 0) {
+      if (selection.exec() == QDialog::Accepted) {
+        auto choice = selection.getChoiceData().toStringList();
+        modID = choice.at(0).toInt();
+        modName = choice.at(1);
+        modName = modName.replace('_', ' ').trimmed();
+        log::debug("user selected mod ID {} and mod name \"{}\"", modID, modName);
+      }
+      else {
+        log::debug("user canceled mod ID selection");
         modID = -1;
       }
-    } else {
-      modID = strtol(candidate.c_str(), nullptr, 10);
     }
-    log::debug("mod id guessed: {} -> {}", fileName, modID);
-  } else if (std::regex_search(fileNameUTF8.constData(), result, simpleexp)) {
-    log::debug("simple expression matched, using name only");
-    modName = QString::fromUtf8(result[1].str().c_str());
-    modName = modName.replace('_', ' ').trimmed();
-
-    modID = -1;
-  } else {
-    log::debug("no expression matched!");
-    modName.clear();
+    else {
+      log::debug("no possible mod IDs found in file name");
+      modID = -1;
+    }
+  }
+  else {
     modID = -1;
   }
 }
