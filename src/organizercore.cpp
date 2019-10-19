@@ -1046,40 +1046,6 @@ bool OrganizerCore::getFileExecutionContext(
   }
 }
 
-bool OrganizerCore::executeFileVirtualized(
-  QWidget* parent, const QFileInfo& targetInfo)
-{
-  QFileInfo binaryInfo;
-  QString arguments;
-  FileExecutionTypes type;
-
-  if (!getFileExecutionContext(parent, targetInfo, binaryInfo, arguments, type)) {
-    return false;
-  }
-
-  switch (type)
-  {
-    case FileExecutionTypes::Executable: {
-      spawnBinaryDirect(
-        binaryInfo, arguments, currentProfile()->name(),
-        targetInfo.absolutePath(), "", "");
-
-      return true;
-    }
-
-    case FileExecutionTypes::Other: {
-      ::ShellExecuteW(nullptr, L"open",
-        ToWString(targetInfo.absoluteFilePath()).c_str(),
-        nullptr, nullptr, SW_SHOWNORMAL);
-
-      return true;
-    }
-  }
-
-  // nop
-  return false;
-}
-
 bool OrganizerCore::previewFileWithAlternatives(
   QWidget* parent, QString fileName, int selectedOrigin)
 {
@@ -1208,14 +1174,48 @@ bool OrganizerCore::previewFile(
   return true;
 }
 
-void OrganizerCore::spawnBinary(
+bool OrganizerCore::runFile(
+  QWidget* parent, const QFileInfo& targetInfo)
+{
+  QFileInfo binaryInfo;
+  QString arguments;
+  FileExecutionTypes type;
+
+  if (!getFileExecutionContext(parent, targetInfo, binaryInfo, arguments, type)) {
+    return false;
+  }
+
+  switch (type)
+  {
+    case FileExecutionTypes::Executable: {
+      runExecutable(
+        binaryInfo, arguments, currentProfile()->name(),
+        targetInfo.absolutePath());
+
+      return true;
+    }
+
+    case FileExecutionTypes::Other: {
+      ::ShellExecuteW(nullptr, L"open",
+        ToWString(targetInfo.absoluteFilePath()).c_str(),
+        nullptr, nullptr, SW_SHOWNORMAL);
+
+      return true;
+    }
+  }
+
+  // nop
+  return false;
+}
+
+void OrganizerCore::runExecutable(
   const QFileInfo &binary, const QString &arguments,
   const QDir &currentDirectory, const QString &steamAppID,
   const QString &customOverwrite,
   const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries)
 {
   DWORD processExitCode = 0;
-  HANDLE processHandle = spawnBinaryDirect(
+  HANDLE processHandle = spawnAndWait(
     binary, arguments, m_CurrentProfile->name(), currentDirectory, steamAppID,
     customOverwrite, forcedLibraries, &processExitCode);
 
@@ -1237,7 +1237,7 @@ void OrganizerCore::spawnBinary(
   }
 }
 
-HANDLE OrganizerCore::spawnBinaryDirect(
+HANDLE OrganizerCore::spawnAndWait(
   const QFileInfo &binary, const QString &arguments, const QString &profileName,
   const QDir &currentDirectory, const QString &steamAppID,
   const QString &customOverwrite,
@@ -1334,7 +1334,7 @@ HANDLE OrganizerCore::runShortcut(const MOShortcut& shortcut)
     forcedLibaries.clear();
   }
 
-  return spawnBinaryDirect(
+  return spawnAndWait(
     exe.binaryInfo(), exe.arguments(),
     m_CurrentProfile->name(),
     exe.workingDirectory().length() != 0
@@ -1419,7 +1419,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
   if (ignoreCustomOverwrite)
     customOverwrite.clear();
 
-  return spawnBinaryDirect(binary,
+  return spawnAndWait(binary,
                            arguments,
                            profileName,
                            currentDirectory,

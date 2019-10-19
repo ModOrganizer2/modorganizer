@@ -158,15 +158,16 @@ public:
     QWidget* parent,  const QFileInfo &targetInfo,
     QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type);
 
-  bool executeFileVirtualized(QWidget* parent, const QFileInfo& targetInfo);
   bool previewFileWithAlternatives(QWidget* parent, QString filename, int selectedOrigin=-1);
   bool previewFile(QWidget* parent, const QString& originName, const QString& path);
 
-  void spawnBinary(const QFileInfo &binary, const QString &arguments = "",
-                   const QDir &currentDirectory = QDir(),
-                   const QString &steamAppID = "",
-                   const QString &customOverwrite = "",
-                   const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>());
+  bool runFile(QWidget* parent, const QFileInfo& targetInfo);
+
+  void runExecutable(
+    const QFileInfo &binary, const QString &arguments,
+    const QDir &currentDirectory, const QString &steamAppID={},
+    const QString &customOverwrite={},
+    const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries={});
 
   void loginSuccessfulUpdate(bool necessary);
   void loginFailedUpdate(const QString &message);
@@ -300,7 +301,7 @@ private:
               const MOShared::DirectoryEntry *directoryEntry,
               int createDestination);
 
-  HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments,
+  HANDLE spawnAndWait(const QFileInfo &binary, const QString &arguments,
     const QString &profileName,
     const QDir &currentDirectory,
     const QString &steamAppID,
