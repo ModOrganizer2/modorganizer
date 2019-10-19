@@ -4,6 +4,8 @@
 #include "modinfodialogtab.h"
 #include "filterwidget.h"
 #include <QScrollBar>
+#include "plugincontainer.h"
+#include "organizercore.h"
 
 class ImagesTab;
 
@@ -359,6 +361,7 @@ private:
   void showTooltip(QHelpEvent* e);
   void onExplore();
   void onShowDDS();
+  void onPreviewButton();
   void onFilterChanged();
 
   void select(std::size_t i, Visibility v=Visibility::Full);
