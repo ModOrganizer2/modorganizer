@@ -804,8 +804,8 @@ void EditExecutablesDialog::setJarBinary(const QFileInfo& binary)
 
   if (java.isEmpty()) {
     QMessageBox::information(
-      this, tr("Java (32-bit) required"),
-      tr("MO requires 32-bit java to run this application. If you already "
+      this, tr("Java required"),
+      tr("MO requires Java to run this application. If you already "
          "have it installed, select javaw.exe from that installation as "
          "the binary."));
   }
