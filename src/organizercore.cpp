@@ -1208,15 +1208,17 @@ bool OrganizerCore::previewFile(
   return true;
 }
 
-void OrganizerCore::spawnBinary(const QFileInfo &binary,
-                                const QString &arguments,
-                                const QDir &currentDirectory,
-                                const QString &steamAppID,
-                                const QString &customOverwrite,
-                                const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries)
+void OrganizerCore::spawnBinary(
+  const QFileInfo &binary, const QString &arguments,
+  const QDir &currentDirectory, const QString &steamAppID,
+  const QString &customOverwrite,
+  const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries)
 {
   DWORD processExitCode = 0;
-  HANDLE processHandle = spawnBinaryDirect(binary, arguments, m_CurrentProfile->name(), currentDirectory, steamAppID, customOverwrite, forcedLibraries, &processExitCode);
+  HANDLE processHandle = spawnBinaryDirect(
+    binary, arguments, m_CurrentProfile->name(), currentDirectory, steamAppID,
+    customOverwrite, forcedLibraries, &processExitCode);
+
   if (processHandle != INVALID_HANDLE_VALUE) {
     refreshDirectoryStructure();
     // need to remove our stored load order because it may be outdated if a foreign tool changed the
@@ -1235,50 +1237,12 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary,
   }
 }
 
-HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary,
-                                        const QString &arguments,
-                                        const QString &profileName,
-                                        const QDir &currentDirectory,
-                                        const QString &steamAppID,
-                                        const QString &customOverwrite,
-                                        const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries,
-                                        LPDWORD exitCode)
-{
-  HANDLE processHandle = spawnBinaryProcess(binary, arguments, profileName, currentDirectory, steamAppID, customOverwrite, forcedLibraries);
-  if (Settings::instance().interface().lockGUI() && processHandle != INVALID_HANDLE_VALUE) {
-    std::unique_ptr<LockedDialog> dlg;
-    ILockedWaitingForProcess* uilock = nullptr;
-
-    if (m_MainWindow != nullptr) {
-      uilock = m_MainWindow->lock();
-    }
-    else {
-      // i.e. when running command line shortcuts there is no user interface
-      dlg.reset(new LockedDialog);
-      dlg->show();
-      dlg->setEnabled(true);
-      uilock = dlg.get();
-    }
-
-    ON_BLOCK_EXIT([&]() {
-      if (m_MainWindow != nullptr) {
-        m_MainWindow->unlock();
-      } });
-
-    DWORD ignoreExitCode;
-    waitForProcessCompletion(processHandle, exitCode ? exitCode : &ignoreExitCode, uilock);
-    cycleDiagnostics();
-  }
-
-  return processHandle;
-}
-
-
-HANDLE OrganizerCore::spawnBinaryProcess(
+HANDLE OrganizerCore::spawnBinaryDirect(
   const QFileInfo &binary, const QString &arguments, const QString &profileName,
   const QDir &currentDirectory, const QString &steamAppID,
   const QString &customOverwrite,
-  const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries)
+  const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries,
+  LPDWORD exitCode)
 {
   spawn::SpawnParameters sp;
   sp.binary = binary;
@@ -1317,9 +1281,43 @@ HANDLE OrganizerCore::spawnBinaryProcess(
     return INVALID_HANDLE_VALUE;
   }
 
-  auto process = spawn::Spawner().spawn(m_MainWindow, m_GamePlugin, sp, m_Settings);
-  return process.releaseHandle();
+  HANDLE handle = spawn::Spawner()
+    .spawn(m_MainWindow, m_GamePlugin, sp, m_Settings)
+    .releaseHandle();
+
+  if (handle == INVALID_HANDLE_VALUE) {
+    // failed
+    return INVALID_HANDLE_VALUE;
+  }
+
+  if (Settings::instance().interface().lockGUI()) {
+    std::unique_ptr<LockedDialog> dlg;
+    ILockedWaitingForProcess* uilock = nullptr;
+
+    if (m_MainWindow != nullptr) {
+      uilock = m_MainWindow->lock();
+    }
+    else {
+      // i.e. when running command line shortcuts there is no user interface
+      dlg.reset(new LockedDialog);
+      dlg->show();
+      dlg->setEnabled(true);
+      uilock = dlg.get();
+    }
+
+    ON_BLOCK_EXIT([&]() {
+      if (m_MainWindow != nullptr) {
+        m_MainWindow->unlock();
+      } });
+
+    DWORD ignoreExitCode;
+    waitForProcessCompletion(handle, exitCode ? exitCode : &ignoreExitCode, uilock);
+    cycleDiagnostics();
+  }
+
+  return handle;
 }
+
 
 HANDLE OrganizerCore::runShortcut(const MOShortcut& shortcut)
 {

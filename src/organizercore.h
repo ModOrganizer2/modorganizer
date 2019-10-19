@@ -168,21 +168,6 @@ public:
                    const QString &customOverwrite = "",
                    const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>());
 
-  HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments,
-                           const QString &profileName,
-                           const QDir &currentDirectory,
-                           const QString &steamAppID,
-                           const QString &customOverwrite,
-                           const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>(),
-                           LPDWORD exitCode = nullptr);
-
-  HANDLE spawnBinaryProcess(const QFileInfo &binary, const QString &arguments,
-                            const QString &profileName,
-                            const QDir &currentDirectory,
-                            const QString &steamAppID,
-                            const QString &customOverwrite,
-                            const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>());
-
   void loginSuccessfulUpdate(bool necessary);
   void loginFailedUpdate(const QString &message);
 
@@ -314,6 +299,14 @@ private:
               const MOShared::DirectoryEntry *base,
               const MOShared::DirectoryEntry *directoryEntry,
               int createDestination);
+
+  HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments,
+    const QString &profileName,
+    const QDir &currentDirectory,
+    const QString &steamAppID,
+    const QString &customOverwrite,
+    const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>(),
+    LPDWORD exitCode = nullptr);
 
   bool waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock);
 
