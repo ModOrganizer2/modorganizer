@@ -677,7 +677,7 @@ void EditExecutablesDialog::addFromFile()
     return;
   }
 
-  addNew(Executable(binary.fileName()));
+  addNew(Executable(binary.completeBaseName()));
   setBinary(binary);
 }
 
@@ -726,7 +726,7 @@ void EditExecutablesDialog::setBinary(const QFileInfo& binary)
 
   // setting title if some variation of "New Executable"
   if (ui->title->text().startsWith(tr("New Executable"), Qt::CaseInsensitive)) {
-    const auto prefix = binary.baseName();
+    const auto prefix = binary.completeBaseName();
     const auto newTitle = m_executablesList.makeNonConflictingTitle(prefix);
 
     if (newTitle) {

@@ -5329,7 +5329,7 @@ void MainWindow::addAsExecutable()
     case FileExecutionTypes::Executable: {
         QString name = QInputDialog::getText(this, tr("Enter Name"),
               tr("Please enter a name for the executable"), QLineEdit::Normal,
-              targetInfo.baseName());
+              targetInfo.completeBaseName());
 
         if (!name.isEmpty()) {
           //Note: If this already exists, you'll lose custom settings
