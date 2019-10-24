@@ -103,6 +103,25 @@ public:
 private:
 };
 
+
+enum class FileExecutionTypes
+{
+  Executable = 1,
+  Other
+};
+
+struct FileExecutionContext
+{
+  QFileInfo binary;
+  QString arguments;
+  FileExecutionTypes type;
+};
+
+QString findJavaInstallation(const QString& jarFile);
+
+FileExecutionContext getFileExecutionContext(
+  QWidget* parent, const QFileInfo& target);
+
 } // namespace
 
 

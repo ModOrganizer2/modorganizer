@@ -91,12 +91,6 @@ private:
   typedef boost::signals2::signal<void (const QString&)> SignalModInstalled;
 
 public:
-  enum class FileExecutionTypes
-  {
-    Executable = 1,
-    Other = 2
-  };
-
   static bool isNxmLink(const QString &link) { return link.startsWith("nxm://", Qt::CaseInsensitive); }
 
   OrganizerCore(Settings &settings);
@@ -151,12 +145,6 @@ public:
 
   void doAfterLogin(const std::function<void()> &function) { m_PostLoginTasks.append(function); }
   void loggedInAction(QWidget* parent, std::function<void ()> f);
-
-  static QString findJavaInstallation(const QString& jarFile={});
-
-  static bool getFileExecutionContext(
-    QWidget* parent,  const QFileInfo &targetInfo,
-    QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type);
 
   bool previewFileWithAlternatives(QWidget* parent, QString filename, int selectedOrigin=-1);
   bool previewFile(QWidget* parent, const QString& originName, const QString& path);

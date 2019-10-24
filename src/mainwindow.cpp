@@ -5295,43 +5295,42 @@ void MainWindow::addAsExecutable()
     return;
   }
 
-  using FileExecutionTypes = OrganizerCore::FileExecutionTypes;
+  const QFileInfo target(m_ContextItem->data(0, Qt::UserRole).toString());
+  const auto fec = spawn::getFileExecutionContext(this, target);
 
-  QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
-  QFileInfo binaryInfo;
-  QString arguments;
-  FileExecutionTypes type;
-
-  if (!OrganizerCore::getFileExecutionContext(this, targetInfo, binaryInfo, arguments, type)) {
-    return;
-  }
-
-  switch (type)
+  switch (fec.type)
   {
-    case FileExecutionTypes::Executable: {
-        QString name = QInputDialog::getText(this, tr("Enter Name"),
-              tr("Please enter a name for the executable"), QLineEdit::Normal,
-              targetInfo.completeBaseName());
+    case spawn::FileExecutionTypes::Executable:
+    {
+      const QString name = QInputDialog::getText(
+        this, tr("Enter Name"),
+        tr("Enter a name for the executable"),
+        QLineEdit::Normal,
+        target.completeBaseName());
 
-        if (!name.isEmpty()) {
-          //Note: If this already exists, you'll lose custom settings
-          m_OrganizerCore.executablesList()->setExecutable(Executable()
-            .title(name)
-            .binaryInfo(binaryInfo)
-            .arguments(arguments)
-            .workingDirectory(targetInfo.absolutePath()));
+      if (!name.isEmpty()) {
+        //Note: If this already exists, you'll lose custom settings
+        m_OrganizerCore.executablesList()->setExecutable(Executable()
+          .title(name)
+          .binaryInfo(fec.binary)
+          .arguments(fec.arguments)
+          .workingDirectory(target.absolutePath()));
 
-          refreshExecutablesList();
-        }
-
-        break;
+        refreshExecutablesList();
       }
 
-    case FileExecutionTypes::Other:  // fall-through
-    default: {
-        QMessageBox::information(this, tr("Not an executable"), tr("This is not a recognized executable."));
-        break;
-      }
+      break;
+    }
+
+    case spawn::FileExecutionTypes::Other:  // fall-through
+    default:
+    {
+      QMessageBox::information(
+        this, tr("Not an executable"),
+        tr("This is not a recognized executable."));
+
+      break;
+    }
   }
 }
 
@@ -5458,7 +5457,8 @@ void MainWindow::openDataFile()
     return;
   }
 
-  QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
+  const QString path = m_ContextItem->data(0, Qt::UserRole).toString();
+  const QFileInfo targetInfo(path);
   m_OrganizerCore.runFile(this, targetInfo);
 }
 

@@ -901,17 +901,196 @@ SpawnedProcess Spawner::spawn(
     return {INVALID_HANDLE_VALUE, sp};
   }
 
-  if (!spawn::checkEnvironment(parent, sp)) {
+  if (!checkEnvironment(parent, sp)) {
     return {INVALID_HANDLE_VALUE, sp};
   }
 
-  if (!spawn::checkBlacklist(parent, sp, settings)) {
+  if (!checkBlacklist(parent, sp, settings)) {
     return {INVALID_HANDLE_VALUE, sp};
   }
 
   adjustForVirtualized(game, sp, settings);
 
   return {startBinary(parent, sp), sp};
+}
+
+
+QString getExecutableForJarFile(const QString& jarFile)
+{
+  const std::wstring jarFileW = jarFile.toStdWString();
+
+  WCHAR buffer[MAX_PATH];
+
+  const auto hinst = ::FindExecutableW(jarFileW.c_str(), nullptr, buffer);
+  const auto r = static_cast<int>(reinterpret_cast<std::uintptr_t>(hinst));
+
+  // anything <= 32 signals failure
+  if (r <= 32) {
+    log::warn(
+      "failed to find executable associated with file '{}', {}",
+      jarFile, shell::formatError(r));
+
+    return {};
+  }
+
+  DWORD binaryType = 0;
+
+  if (!::GetBinaryTypeW(buffer, &binaryType)) {
+    const auto e = ::GetLastError();
+
+    log::warn(
+      "failed to determine binary type of '{}', {}",
+      QString::fromWCharArray(buffer), formatSystemMessage(e));
+
+    return {};
+  }
+
+  if (binaryType != SCS_32BIT_BINARY && binaryType != SCS_64BIT_BINARY) {
+    log::warn(
+      "unexpected binary type {} for file '{}'",
+      binaryType, QString::fromWCharArray(buffer));
+
+    return {};
+  }
+
+  return QString::fromWCharArray(buffer);
+}
+
+QString getJavaHome()
+{
+  const QString key = "HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment";
+  const QString value = "CurrentVersion";
+
+  QSettings reg(key, QSettings::NativeFormat);
+
+  if (!reg.contains(value)) {
+    log::warn("key '{}\\{}' doesn't exist", key, value);
+    return {};
+  }
+
+  const QString currentVersion = reg.value("CurrentVersion").toString();
+  const QString javaHome = QString("%1/JavaHome").arg(currentVersion);
+
+  if (!reg.contains(javaHome)) {
+    log::warn(
+      "java version '{}' was found at '{}\\{}', but '{}\\{}' doesn't exist",
+      currentVersion, key, value, key, javaHome);
+
+    return {};
+  }
+
+  const auto path = reg.value(javaHome).toString();
+  return path + "\\bin\\javaw.exe";
+}
+
+QString findJavaInstallation(const QString& jarFile)
+{
+  // try to find java automatically based on the given jar file
+  if (!jarFile.isEmpty()) {
+    const auto s = getExecutableForJarFile(jarFile);
+    if (!s.isEmpty()) {
+      return s;
+    }
+  }
+
+  // second attempt: look to the registry
+  const auto s = getJavaHome();
+  if (!s.isEmpty()) {
+    return s;
+  }
+
+  // not found
+  return {};
+}
+
+bool isBatchFile(const QFileInfo& target)
+{
+  const auto batchExtensions = {"cmd", "bat"};
+
+  const QString extension = target.suffix();
+  for (auto&& e : batchExtensions) {
+    if (extension.compare(e, Qt::CaseInsensitive) == 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool isExeFile(const QFileInfo& target)
+{
+  return (target.suffix().compare("exe", Qt::CaseInsensitive) == 0);
+}
+
+bool isJavaFile(const QFileInfo& target)
+{
+  return (target.suffix().compare("jar", Qt::CaseInsensitive) == 0);
+}
+
+QFileInfo getCmdPath()
+{
+  const auto p = env::get("COMSPEC2");
+  if (!p.isEmpty()) {
+    return p;
+  }
+
+  QString systemDirectory;
+
+  const std::size_t buffer_size = 1000;
+  wchar_t buffer[buffer_size + 1] = {};
+
+  const auto length = ::GetSystemDirectoryW(buffer, buffer_size);
+  if (length != 0) {
+    systemDirectory = QString::fromWCharArray(buffer, length);
+
+    if (!systemDirectory.endsWith("\\")) {
+      systemDirectory += "\\";
+    }
+  } else {
+    systemDirectory = "C:\\Windows\\System32\\";
+  }
+
+  return systemDirectory + "cmd.exe";
+}
+
+FileExecutionContext getFileExecutionContext(
+  QWidget* parent, const QFileInfo& target)
+{
+  if (isExeFile(target)) {
+    return {
+      target,
+      "",
+      FileExecutionTypes::Executable
+    };
+  }
+
+  if (isBatchFile(target)) {
+    return {
+      getCmdPath(),
+      QString("/C \"%1\"").arg(QDir::toNativeSeparators(target.absoluteFilePath())),
+      FileExecutionTypes::Executable
+    };
+  }
+
+  if (isJavaFile(target)) {
+    auto java = findJavaInstallation(target.absoluteFilePath());
+
+    if (java.isEmpty()) {
+      java = QFileDialog::getOpenFileName(
+        parent, QObject::tr("Select binary"),
+        QString(), QObject::tr("Binary") + " (*.exe)");
+    }
+
+    if (!java.isEmpty()) {
+      return {
+        QFileInfo(java),
+        QString("-jar \"%1\"").arg(QDir::toNativeSeparators(target.absoluteFilePath())),
+        FileExecutionTypes::Executable
+      };
+    }
+  }
+
+  return {{}, {}, FileExecutionTypes::Other};
 }
 
 } // namespace
