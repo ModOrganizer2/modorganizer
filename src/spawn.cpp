@@ -1029,7 +1029,7 @@ bool isJavaFile(const QFileInfo& target)
 
 QFileInfo getCmdPath()
 {
-  const auto p = env::get("COMSPEC2");
+  const auto p = env::get("COMSPEC");
   if (!p.isEmpty()) {
     return p;
   }
@@ -1111,7 +1111,7 @@ bool helperExec(
   {
     SHELLEXECUTEINFOW execInfo = {};
 
-    ULONG flags = SEE_MASK_FLAG_NO_UI ;
+    ULONG flags = SEE_MASK_FLAG_NO_UI;
     if (!async)
       flags |= SEE_MASK_NOCLOSEPROCESS;
 

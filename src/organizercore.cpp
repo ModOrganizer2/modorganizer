@@ -1120,8 +1120,19 @@ bool OrganizerCore::runFile(
     case spawn::FileExecutionTypes::Other:  // fall-through
     default:
     {
-      const auto r = shell::Open(targetInfo.absoluteFilePath());
-      return r.success();
+      auto r = shell::Open(targetInfo.absoluteFilePath());
+      if (!r.success()) {
+        return false;
+      }
+
+      // not all files will return a valid handle even if opening them was
+      // successful, such as inproc handlers (like the photo viewer)
+      if (r.processHandle() != INVALID_HANDLE_VALUE) {
+        // steal because it gets closed after the wait
+        return waitForProcessCompletionWithLock(r.stealProcessHandle(), nullptr);
+      }
+
+      return true;
     }
   }
 }
@@ -1333,6 +1344,13 @@ HANDLE OrganizerCore::spawnAndWait(
     return INVALID_HANDLE_VALUE;
   }
 
+  waitForProcessCompletionWithLock(handle, exitCode);
+  return handle;
+}
+
+bool OrganizerCore::waitForProcessCompletionWithLock(
+  HANDLE handle, LPDWORD exitCode)
+{
   if (Settings::instance().interface().lockGUI()) {
     std::unique_ptr<LockedDialog> dlg;
     ILockedWaitingForProcess* uilock = nullptr;

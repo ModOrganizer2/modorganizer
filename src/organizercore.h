@@ -306,7 +306,10 @@ private:
     const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>(),
     LPDWORD exitCode = nullptr);
 
-  bool waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock);
+  bool waitForProcessCompletionWithLock(HANDLE handle, LPDWORD exitCode);
+
+  bool waitForProcessCompletion(
+    HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock);
 
 private slots:
 
