@@ -167,6 +167,8 @@ public:
     const QString &profile, const QString &forcedCustomOverwrite = "",
     bool ignoreCustomOverwrite = false);
 
+  bool waitForApplication(HANDLE processHandle, LPDWORD exitCode = nullptr);
+  bool waitForAllUSVFSProcessesWithLock();
 
   void loginSuccessfulUpdate(bool necessary);
   void loginFailedUpdate(const QString &message);
@@ -221,8 +223,6 @@ public:
   DownloadManager *downloadManager();
   PluginList *pluginList();
   ModList *modList();
-  bool waitForApplication(HANDLE processHandle, LPDWORD exitCode = nullptr);
-  HANDLE findAndOpenAUSVFSProcess(const std::vector<QString>& hiddenList, DWORD preferedParentPid);
   bool onModInstalled(const std::function<void (const QString &)> &func);
   bool onAboutToRun(const std::function<bool (const QString &)> &func);
   bool onFinishedRun(const std::function<void (const QString &, unsigned int)> &func);
@@ -310,6 +310,13 @@ private:
 
   bool waitForProcessCompletion(
     HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock);
+
+  bool waitForAllUSVFSProcesses(ILockedWaitingForProcess* uilock);
+
+  void withLock(std::function<void (ILockedWaitingForProcess*)> f);
+
+  HANDLE findAndOpenAUSVFSProcess(
+    const std::vector<QString>& hiddenList, DWORD preferedParentPid);
 
 private slots:
 

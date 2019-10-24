@@ -27,6 +27,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDir>
 
 class Settings;
+class ILockedWaitingForProcess;
+
 namespace MOBase { class IPluginGame; }
 
 namespace spawn
@@ -84,6 +86,7 @@ public:
   ~SpawnedProcess();
 
   HANDLE releaseHandle();
+  void wait();
 
 private:
   HANDLE m_handle;
@@ -121,6 +124,17 @@ QString findJavaInstallation(const QString& jarFile);
 
 FileExecutionContext getFileExecutionContext(
   QWidget* parent, const QFileInfo& target);
+
+
+enum class WaitResults
+{
+  Completed = 1,
+  Error,
+  Unlocked
+};
+
+WaitResults waitForProcess(
+  HANDLE handle, DWORD* exitCode, ILockedWaitingForProcess* uilock);
 
 } // namespace
 

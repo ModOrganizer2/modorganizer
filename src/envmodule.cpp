@@ -408,7 +408,8 @@ std::vector<Module> getLoadedModules()
 }
 
 
-std::vector<Process> getRunningProcesses()
+template <class F>
+void forEachRunningProcess(F&& f)
 {
   HandlePtr snapshot(CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
 
@@ -416,7 +417,7 @@ std::vector<Process> getRunningProcesses()
   {
     const auto e = GetLastError();
     log::error("CreateToolhelp32Snapshot() failed, {}", formatSystemMessage(e));
-    return {};
+    return;
   }
 
   PROCESSENTRY32 entry = {};
@@ -427,16 +428,14 @@ std::vector<Process> getRunningProcesses()
   if (!Process32First(snapshot.get(), &entry)) {
     const auto e = GetLastError();
     log::error("Process32First() failed, {}", formatSystemMessage(e));
-    return {};
+    return;
   }
-
-  std::vector<Process> v;
 
   for (;;)
   {
-    v.push_back(Process(
-      entry.th32ProcessID,
-      QString::fromStdWString(entry.szExeFile)));
+    if (!f(entry)) {
+      break;
+    }
 
     // next process
     if (!Process32Next(snapshot.get(), &entry))
@@ -450,8 +449,66 @@ std::vector<Process> getRunningProcesses()
       break;
     }
   }
+}
+
+std::vector<Process> getRunningProcesses()
+{
+  std::vector<Process> v;
+
+  forEachRunningProcess([&](auto&& entry) {
+    v.push_back(Process(
+      entry.th32ProcessID,
+      QString::fromStdWString(entry.szExeFile)));
+
+    return true;
+  });
 
   return v;
+}
+
+QString getProcessName(HANDLE process)
+{
+  const QString badName = "unknown";
+
+  if (process == 0 || process == INVALID_HANDLE_VALUE) {
+    return badName;
+  }
+
+  const DWORD bufferSize = MAX_PATH;
+  wchar_t buffer[bufferSize + 1] = {};
+
+  const auto realSize = ::GetProcessImageFileNameW(process, buffer, bufferSize);
+
+  if (realSize == 0) {
+    const auto e = ::GetLastError();
+    log::error("GetProcessImageFileNameW() failed, {}", formatSystemMessage(e));
+    return badName;
+  }
+
+  auto s = QString::fromWCharArray(buffer, realSize);
+
+  const auto lastSlash = s.lastIndexOf("\\");
+  if (lastSlash != -1) {
+    s = s.mid(lastSlash + 1);
+  }
+
+  return s;
+}
+
+DWORD getProcessParentID(DWORD pid)
+{
+  DWORD ppid = 0;
+
+  forEachRunningProcess([&](auto&& entry) {
+    if (entry.th32ProcessID == pid) {
+      ppid = entry.th32ParentProcessID;
+      return false;
+    }
+
+    return true;
+  });
+
+  return ppid;
 }
 
 } // namespace

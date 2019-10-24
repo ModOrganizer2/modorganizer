@@ -34,6 +34,7 @@
 #include "instancemanager.h"
 #include <scriptextender.h>
 #include "previewdialog.h"
+#include "envmodule.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -73,47 +74,6 @@ using namespace MOBase;
 
 //static
 CrashDumpsType OrganizerCore::m_globalCrashDumpsType = CrashDumpsType::None;
-
-static std::wstring getProcessName(HANDLE process)
-{
-  wchar_t buffer[MAX_PATH];
-  const wchar_t *fileName = L"unknown";
-
-  if (process == nullptr) return fileName;
-
-  if (::GetProcessImageFileNameW(process, buffer, MAX_PATH) != 0) {
-    fileName = wcsrchr(buffer, L'\\');
-    if (fileName == nullptr) {
-      fileName = buffer;
-    }
-    else {
-      fileName += 1;
-    }
-  }
-
-  return fileName;
-}
-
-// Get parent PID for the given process, return 0 on failure
-static DWORD getProcessParentID(DWORD pid)
-{
-  HANDLE th = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-  PROCESSENTRY32 pe = { 0 };
-  pe.dwSize = sizeof(PROCESSENTRY32);
-
-  DWORD res = 0;
-  if (Process32First(th, &pe))
-    do {
-      if (pe.th32ProcessID == pid) {
-        res = pe.th32ParentProcessID;
-        break;
-      }
-    } while (Process32Next(th, &pe));
-
-  CloseHandle(th);
-
-  return res;
-}
 
 template <typename InputIterator>
 QStringList toStringList(InputIterator current, InputIterator end)
@@ -1348,35 +1308,46 @@ HANDLE OrganizerCore::spawnAndWait(
   return handle;
 }
 
+void OrganizerCore::withLock(std::function<void (ILockedWaitingForProcess*)> f)
+{
+  std::unique_ptr<LockedDialog> dlg;
+  ILockedWaitingForProcess* uilock = nullptr;
+
+  if (m_MainWindow != nullptr) {
+    uilock = m_MainWindow->lock();
+  }
+  else {
+    // i.e. when running command line shortcuts there is no user interface
+    dlg.reset(new LockedDialog);
+    dlg->show();
+    dlg->setEnabled(true);
+    uilock = dlg.get();
+  }
+
+  ON_BLOCK_EXIT([&]() {
+    if (m_MainWindow != nullptr) {
+      m_MainWindow->unlock();
+    } });
+
+  f(uilock);
+}
+
 bool OrganizerCore::waitForProcessCompletionWithLock(
   HANDLE handle, LPDWORD exitCode)
 {
-  if (Settings::instance().interface().lockGUI()) {
-    std::unique_ptr<LockedDialog> dlg;
-    ILockedWaitingForProcess* uilock = nullptr;
-
-    if (m_MainWindow != nullptr) {
-      uilock = m_MainWindow->lock();
-    }
-    else {
-      // i.e. when running command line shortcuts there is no user interface
-      dlg.reset(new LockedDialog);
-      dlg->show();
-      dlg->setEnabled(true);
-      uilock = dlg.get();
-    }
-
-    ON_BLOCK_EXIT([&]() {
-      if (m_MainWindow != nullptr) {
-        m_MainWindow->unlock();
-      } });
-
-    DWORD ignoreExitCode;
-    waitForProcessCompletion(handle, exitCode ? exitCode : &ignoreExitCode, uilock);
-    cycleDiagnostics();
+  if (!Settings::instance().interface().lockGUI()) {
+    return true;
   }
 
-  return handle;
+  bool r = false;
+
+  withLock([&](auto* uilock) {
+    DWORD ignoreExitCode;
+    r = waitForProcessCompletion(handle, exitCode ? exitCode : &ignoreExitCode, uilock);
+    cycleDiagnostics();
+  });
+
+  return r;
 }
 
 bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)
@@ -1393,30 +1364,64 @@ bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)
     if (m_MainWindow != nullptr) {
       m_MainWindow->unlock();
     } });
+
   return waitForProcessCompletion(handle, exitCode, uilock);
 }
 
-bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock)
+bool OrganizerCore::waitForProcessCompletion(
+  HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock)
 {
+  const auto r = spawn::waitForProcess(handle, exitCode, uilock);
+
+  switch (r)
+  {
+    case spawn::WaitResults::Completed:  // fall-through
+    case spawn::WaitResults::Unlocked:
+      return true;
+
+    case spawn::WaitResults::Error:  // fall-through
+    default:
+      return false;
+  }
+}
+
+bool OrganizerCore::waitForAllUSVFSProcessesWithLock()
+{
+  bool r = false;
+
+  withLock([&](auto* uilock) {
+    r = waitForAllUSVFSProcesses(uilock);
+  });
+
+  return r;
+}
+
+bool OrganizerCore::waitForAllUSVFSProcesses(ILockedWaitingForProcess* uilock)
+{
+  // Certain process names we wish to "hide" for aesthetic reason:
+  std::vector<QString> hiddenList;
+  hiddenList.push_back(QFileInfo(QCoreApplication::applicationFilePath()).fileName());
+
   bool originalHandle = true;
   bool newHandle = true;
   bool uiunlocked = false;
 
+  HANDLE handle = findAndOpenAUSVFSProcess(hiddenList, GetCurrentProcessId());
+  DWORD* exitCode = nullptr;
   DWORD currentPID = 0;
   QString processName;
+
   auto waitForChildUntil = GetTickCount64();
   if (handle != INVALID_HANDLE_VALUE) {
     currentPID = GetProcessId(handle);
-    processName = QString::fromStdWString(getProcessName(handle));
+    processName = env::getProcessName(handle);
   }
 
-  // Certain process names we wish to "hide" for aesthetic reason:
   bool waitingOnHidden = false;
-  std::vector<QString> hiddenList;
-  hiddenList.push_back(QFileInfo(QCoreApplication::applicationFilePath()).fileName());
   for (QString hide : hiddenList)
     if (processName.contains(hide, Qt::CaseInsensitive))
       waitingOnHidden = true;
+
   // The main reason for adding the hidden list is to hide the MO proxy we use to spawn virtualized processes.
   // On the one hand we want to display the real executable without it feeling laggy, on the other we don't want
   // to requery processes all the time if for some reason we are waiting on hidden processes and find no "unhidden"
@@ -1489,7 +1494,7 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, IL
       newHandle = handle != INVALID_HANDLE_VALUE;
       if (newHandle) {
         currentPID = GetProcessId(handle);
-        processName = QString::fromStdWString(getProcessName(handle));
+        processName = env::getProcessName(handle);
         for (QString hide : hiddenList)
           if (processName.contains(hide, Qt::CaseInsensitive))
             waitingOnHidden = true;
@@ -1541,13 +1546,13 @@ HANDLE OrganizerCore::findAndOpenAUSVFSProcess(const std::vector<QString>& hidde
       continue;
     }
 
-    QString pname = QString::fromStdWString(getProcessName(handle));
+    QString pname = env::getProcessName(handle);
     bool phidden = false;
     for (auto hide : hiddenList)
       if (pname.contains(hide, Qt::CaseInsensitive))
         phidden = true;
 
-    bool pprefered = preferedParentPid && getProcessParentID(pids[i]) == preferedParentPid;
+    bool pprefered = preferedParentPid && env::getProcessParentID(pids[i]) == preferedParentPid;
 
     if (best_match == INVALID_HANDLE_VALUE || best_match_hidden || (!phidden && pprefered)) {
       if (best_match != INVALID_HANDLE_VALUE)

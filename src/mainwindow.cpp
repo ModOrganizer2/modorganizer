@@ -1311,16 +1311,10 @@ bool MainWindow::canExit()
     }
   }
 
-  std::vector<QString> hiddenList;
-  hiddenList.push_back(QFileInfo(QCoreApplication::applicationFilePath()).fileName());
-  HANDLE injected_process_still_running = m_OrganizerCore.findAndOpenAUSVFSProcess(hiddenList, GetCurrentProcessId());
-  if (injected_process_still_running != INVALID_HANDLE_VALUE)
-  {
-    m_exitAfterWait = true;
-    m_OrganizerCore.waitForApplication(injected_process_still_running);
-    if (!m_exitAfterWait) { // if operation cancelled
-      return false;
-    }
+  m_exitAfterWait = true;
+  m_OrganizerCore.waitForAllUSVFSProcessesWithLock();
+  if (!m_exitAfterWait) { // if operation cancelled
+    return false;
   }
 
   setCursor(Qt::WaitCursor);

@@ -28,6 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "settingsdialogworkarounds.h"
 #include <iplugingame.h>
+#include <ilockedwaitingforprocess.h>
 #include <errorcodes.h>
 #include <report.h>
 #include <log.h>
@@ -1091,6 +1092,68 @@ FileExecutionContext getFileExecutionContext(
   }
 
   return {{}, {}, FileExecutionTypes::Other};
+}
+
+WaitResults waitForProcess(HANDLE handle, DWORD* exitCode, ILockedWaitingForProcess* uilock)
+{
+  if (handle == INVALID_HANDLE_VALUE) {
+    return WaitResults::Error;
+  }
+
+  const DWORD pid = ::GetProcessId(handle);
+  const QString processName = QString("%1 (%2)")
+    .arg(env::getProcessName(handle))
+    .arg(pid);
+
+  if (uilock)
+    uilock->setProcessName(processName);
+
+  constexpr DWORD INPUT_EVENT = WAIT_OBJECT_0 + 1;
+  DWORD res = WAIT_TIMEOUT;
+
+  log::debug(
+    "waiting for process completion '{}' ({})",
+    processName, pid);
+
+  for (;;) {
+    // Wait for a an event on the handle, a key press, mouse click or timeout
+    const auto res = MsgWaitForMultipleObjects(
+      1, &handle, FALSE, 50, QS_KEY | QS_MOUSEBUTTON);
+
+    if (res == WAIT_FAILED) {
+      // error
+      const auto e = ::GetLastError();
+
+      log::error(
+        "failed waiting for process completion '{}' ({}), {}",
+        processName, pid, formatSystemMessage(e));
+
+      return WaitResults::Error;
+    } else if (res == WAIT_OBJECT_0) {
+      // completed
+      log::debug("process '{}' ({}) completed", processName, pid);
+
+      if (exitCode) {
+        if (!::GetExitCodeProcess(handle, exitCode)) {
+          const auto e = ::GetLastError();
+          log::warn(
+            "failed to get exit code of process '{}' ({}): {}",
+            processName, pid, formatSystemMessage(e));
+        }
+      }
+
+      return WaitResults::Completed;
+    }
+
+    // keep processing events so the app doesn't appear dead
+    QCoreApplication::sendPostedEvents();
+    QCoreApplication::processEvents();
+
+    if (uilock && uilock->unlockForced()) {
+      log::debug("waiting for process '{}' ({}) aborted by UI", processName, pid);
+      return WaitResults::Unlocked;
+    }
+  }
 }
 
 } // namespace

@@ -120,6 +120,9 @@ private:
 std::vector<Process> getRunningProcesses();
 std::vector<Module> getLoadedModules();
 
+QString getProcessName(HANDLE process);
+DWORD getProcessParentID(DWORD pid);
+
 } // namespace env
 
 #endif // ENV_MODULE_H
