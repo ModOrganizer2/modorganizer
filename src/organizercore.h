@@ -163,11 +163,16 @@ public:
 
   bool runFile(QWidget* parent, const QFileInfo& targetInfo);
 
-  void runExecutable(
+  bool runExecutableFile(
     const QFileInfo &binary, const QString &arguments,
     const QDir &currentDirectory, const QString &steamAppID={},
     const QString &customOverwrite={},
-    const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries={});
+    const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries={},
+    bool refresh=true);
+
+  bool runExecutable(const Executable& exe, bool refresh=true);
+
+  bool runShortcut(const MOShortcut& shortcut);
 
   void loginSuccessfulUpdate(bool necessary);
   void loginFailedUpdate(const QString &message);
@@ -222,7 +227,6 @@ public:
   DownloadManager *downloadManager();
   PluginList *pluginList();
   ModList *modList();
-  HANDLE runShortcut(const MOShortcut& shortcut);
   HANDLE startApplication(const QString &executable, const QStringList &args, const QString &cwd, const QString &profile, const QString &forcedCustomOverwrite = "", bool ignoreCustomOverwrite = false);
   bool waitForApplication(HANDLE processHandle, LPDWORD exitCode = nullptr);
   HANDLE findAndOpenAUSVFSProcess(const std::vector<QString>& hiddenList, DWORD preferedParentPid);

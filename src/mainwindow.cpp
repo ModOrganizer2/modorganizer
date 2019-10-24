@@ -1542,26 +1542,8 @@ void MainWindow::startExeAction()
   }
 
   action->setEnabled(false);
-  const Executable& exe = *itor;
-  auto& profile = *m_OrganizerCore.currentProfile();
-
-  QString customOverwrite = profile.setting("custom_overwrites", exe.title()).toString();
-  auto forcedLibraries = profile.determineForcedLibraries(exe.title());
-
-  if (!profile.forcedLibrariesEnabled(exe.title())) {
-    forcedLibraries.clear();
-  }
-
-  m_OrganizerCore.spawnBinary(
-      exe.binaryInfo(), exe.arguments(),
-      exe.workingDirectory().length() != 0
-          ? exe.workingDirectory()
-          : exe.binaryInfo().absolutePath(),
-      exe.steamAppID(),
-      customOverwrite,
-      forcedLibraries);
+  m_OrganizerCore.runExecutable(*itor);
   action->setEnabled(true);
-
 }
 
 void MainWindow::activateSelectedProfile()
@@ -2387,7 +2369,7 @@ void MainWindow::on_startButton_clicked()
       forcedLibraries.clear();
     }
 
-    m_OrganizerCore.spawnBinary(
+    m_OrganizerCore.runExecutableFile(
       selectedExecutable->binaryInfo(),
       selectedExecutable->arguments(),
       selectedExecutable->workingDirectory().length() != 0 ?
@@ -5477,7 +5459,7 @@ void MainWindow::openDataFile()
   }
 
   QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
-  m_OrganizerCore.executeFileVirtualized(this, targetInfo);
+  m_OrganizerCore.runFile(this, targetInfo);
 }
 
 void MainWindow::openDataOriginExplorer_clicked()

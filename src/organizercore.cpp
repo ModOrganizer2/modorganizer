@@ -1188,7 +1188,7 @@ bool OrganizerCore::runFile(
   switch (type)
   {
     case FileExecutionTypes::Executable: {
-      runExecutable(
+      runExecutableFile(
         binaryInfo, arguments, currentProfile()->name(),
         targetInfo.absolutePath());
 
@@ -1208,25 +1208,33 @@ bool OrganizerCore::runFile(
   return false;
 }
 
-void OrganizerCore::runExecutable(
+bool OrganizerCore::runExecutableFile(
   const QFileInfo &binary, const QString &arguments,
   const QDir &currentDirectory, const QString &steamAppID,
   const QString &customOverwrite,
-  const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries)
+  const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries,
+  bool refresh)
 {
   DWORD processExitCode = 0;
   HANDLE processHandle = spawnAndWait(
     binary, arguments, m_CurrentProfile->name(), currentDirectory, steamAppID,
     customOverwrite, forcedLibraries, &processExitCode);
 
-  if (processHandle != INVALID_HANDLE_VALUE) {
+  if (processHandle == INVALID_HANDLE_VALUE) {
+    // failed
+    return false;
+  }
+
+  if (refresh) {
     refreshDirectoryStructure();
+
     // need to remove our stored load order because it may be outdated if a foreign tool changed the
     // file time. After removing that file, refreshESPList will use the file time as the order
     if (managedGame()->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
       log::debug("removing loadorder.txt");
       QFile::remove(m_CurrentProfile->getLoadOrderFileName());
     }
+
     refreshDirectoryStructure();
 
     refreshESPList(true);
@@ -1235,6 +1243,42 @@ void OrganizerCore::runExecutable(
     //These callbacks should not fiddle with directoy structure and ESPs.
     m_FinishedRun(binary.absoluteFilePath(), processExitCode);
   }
+
+  return true;
+}
+
+bool OrganizerCore::runExecutable(const Executable& exe, bool refresh)
+{
+  const QString customOverwrite = m_CurrentProfile->setting(
+    "custom_overwrites", exe.title()).toString();
+
+  QList<MOBase::ExecutableForcedLoadSetting> forcedLibraries;
+
+  if (m_CurrentProfile->forcedLibrariesEnabled(exe.title())) {
+    forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.title());
+  }
+
+  return runExecutableFile(
+    exe.binaryInfo(),
+    exe.arguments(),
+    exe.workingDirectory().length() != 0 ? exe.workingDirectory() : exe.binaryInfo().absolutePath(),
+    exe.steamAppID(),
+    customOverwrite,
+    forcedLibraries,
+    refresh);
+}
+
+bool OrganizerCore::runShortcut(const MOShortcut& shortcut)
+{
+  if (shortcut.hasInstance() && shortcut.instance() != InstanceManager::instance().currentInstance()) {
+    throw std::runtime_error(
+      QString("Refusing to run executable from different instance %1:%2")
+      .arg(shortcut.instance(),shortcut.executable())
+      .toLocal8Bit().constData());
+  }
+
+  const Executable& exe = m_ExecutablesList.get(shortcut.executable());
+  return runExecutable(exe, false);
 }
 
 HANDLE OrganizerCore::spawnAndWait(
@@ -1316,33 +1360,6 @@ HANDLE OrganizerCore::spawnAndWait(
   }
 
   return handle;
-}
-
-
-HANDLE OrganizerCore::runShortcut(const MOShortcut& shortcut)
-{
-  if (shortcut.hasInstance() && shortcut.instance() != InstanceManager::instance().currentInstance())
-    throw std::runtime_error(
-      QString("Refusing to run executable from different instance %1:%2")
-      .arg(shortcut.instance(),shortcut.executable())
-      .toLocal8Bit().constData());
-
-  const Executable& exe = m_ExecutablesList.get(shortcut.executable());
-
-  auto forcedLibaries = m_CurrentProfile->determineForcedLibraries(shortcut.executable());
-  if (!m_CurrentProfile->forcedLibrariesEnabled(shortcut.executable())) {
-    forcedLibaries.clear();
-  }
-
-  return spawnAndWait(
-    exe.binaryInfo(), exe.arguments(),
-    m_CurrentProfile->name(),
-    exe.workingDirectory().length() != 0
-    ? exe.workingDirectory()
-    : exe.binaryInfo().absolutePath(),
-    exe.steamAppID(),
-    "",
-    forcedLibaries);
 }
 
 HANDLE OrganizerCore::startApplication(const QString &executable,
