@@ -1362,45 +1362,44 @@ HANDLE OrganizerCore::spawnAndWait(
   return handle;
 }
 
-HANDLE OrganizerCore::startApplication(const QString &executable,
-                                       const QStringList &args,
-                                       const QString &cwd,
-                                       const QString &profile,
-                                       const QString &forcedCustomOverwrite,
-                                       bool ignoreCustomOverwrite)
+HANDLE OrganizerCore::runExecutableOrExecutableFile(
+  const QString &executable, const QStringList &args, const QString &cwd,
+  const QString &profile, const QString &forcedCustomOverwrite,
+  bool ignoreCustomOverwrite)
 {
-  QFileInfo binary;
-  QString arguments        = args.join(" ");
-  QString currentDirectory = cwd;
   QString profileName = profile;
-  if (profile.length() == 0) {
+  if (profile == "") {
     if (m_CurrentProfile != nullptr) {
       profileName = m_CurrentProfile->name();
     } else {
       throw MyException(tr("No profile set"));
     }
   }
+
+  QFileInfo binary;
+  QString arguments = args.join(" ");
+  QString currentDirectory = cwd;
   QString steamAppID;
   QString customOverwrite;
   QList<ExecutableForcedLoadSetting> forcedLibraries;
+
   if (executable.contains('\\') || executable.contains('/')) {
     // file path
 
     binary = QFileInfo(executable);
     if (binary.isRelative()) {
       // relative path, should be relative to game directory
-      binary = QFileInfo(
-          managedGame()->gameDirectory().absoluteFilePath(executable));
+      binary = managedGame()->gameDirectory().absoluteFilePath(executable);
     }
-    if (cwd.length() == 0) {
+
+    if (currentDirectory == "") {
       currentDirectory = binary.absolutePath();
     }
+
     try {
-      const Executable &exe = m_ExecutablesList.getByBinary(binary);
+      const Executable& exe = m_ExecutablesList.getByBinary(binary);
       steamAppID = exe.steamAppID();
-      customOverwrite
-          = m_CurrentProfile->setting("custom_overwrites", exe.title())
-                .toString();
+      customOverwrite = m_CurrentProfile->setting("custom_overwrites", exe.title()).toString();
       if (m_CurrentProfile->forcedLibrariesEnabled(exe.title())) {
         forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.title());
       }
@@ -1412,9 +1411,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
     try {
       const Executable &exe = m_ExecutablesList.get(executable);
       steamAppID = exe.steamAppID();
-      customOverwrite
-          = m_CurrentProfile->setting("custom_overwrites", exe.title())
-                .toString();
+      customOverwrite = m_CurrentProfile->setting("custom_overwrites", exe.title()).toString();
       if (m_CurrentProfile->forcedLibrariesEnabled(exe.title())) {
         forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.title());
       }
@@ -1422,7 +1419,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
         arguments = exe.arguments();
       }
       binary = exe.binaryInfo();
-      if (cwd.length() == 0) {
+      if (currentDirectory == "") {
         currentDirectory = exe.workingDirectory();
       }
     } catch (const std::runtime_error &) {
@@ -1433,6 +1430,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
 
   if (!forcedCustomOverwrite.isEmpty())
     customOverwrite = forcedCustomOverwrite;
+
   if (ignoreCustomOverwrite)
     customOverwrite.clear();
 

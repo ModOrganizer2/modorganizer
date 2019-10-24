@@ -653,7 +653,8 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 			  arguments.removeFirst(); // remove binary name
 			  // pass the remaining parameters to the binary
 			  try {
-				  organizer.startApplication(exeName, arguments, QString(), QString());
+				  organizer.runExecutableOrExecutableFile(
+            exeName, arguments, QString(), QString());
 				  return 0;
 			  }
 			  catch (const std::exception &e) {

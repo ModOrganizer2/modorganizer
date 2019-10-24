@@ -107,10 +107,14 @@ QString OrganizerProxy::pluginDataPath() const
   return m_Proxied->pluginDataPath();
 }
 
-HANDLE OrganizerProxy::startApplication(const QString &executable, const QStringList &args, const QString &cwd,
-                                        const QString &profile, const QString &forcedCustomOverwrite, bool ignoreCustomOverwrite)
+HANDLE OrganizerProxy::startApplication(
+  const QString &executable, const QStringList &args, const QString &cwd,
+  const QString &profile, const QString &forcedCustomOverwrite,
+  bool ignoreCustomOverwrite)
 {
-  return m_Proxied->startApplication(executable, args, cwd, profile, forcedCustomOverwrite, ignoreCustomOverwrite);
+  return m_Proxied->runExecutableOrExecutableFile(
+    executable, args, cwd, profile,
+    forcedCustomOverwrite, ignoreCustomOverwrite);
 }
 
 bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
