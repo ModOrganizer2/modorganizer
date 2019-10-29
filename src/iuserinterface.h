@@ -33,6 +33,8 @@ public:
 
   virtual ILockedWaitingForProcess* lock() = 0;
   virtual void unlock() = 0;
+
+  virtual QWidget* qtWidget() = 0;
 };
 
 #endif // IUSERINTERFACE_H

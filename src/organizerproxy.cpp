@@ -112,14 +112,14 @@ HANDLE OrganizerProxy::startApplication(
   const QString &profile, const QString &forcedCustomOverwrite,
   bool ignoreCustomOverwrite)
 {
-  return m_Proxied->runExecutableOrExecutableFile(
+  return m_Proxied->processRunner().runExecutableOrExecutableFile(
     executable, args, cwd, profile,
     forcedCustomOverwrite, ignoreCustomOverwrite);
 }
 
 bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
 {
-  return m_Proxied->waitForApplication(handle, exitCode);
+  return m_Proxied->processRunner().waitForApplication(handle, exitCode);
 }
 
 bool OrganizerProxy::onAboutToRun(const std::function<bool (const QString &)> &func)

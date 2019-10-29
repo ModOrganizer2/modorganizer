@@ -1312,7 +1312,7 @@ bool MainWindow::canExit()
   }
 
   m_exitAfterWait = true;
-  m_OrganizerCore.waitForAllUSVFSProcessesWithLock();
+  m_OrganizerCore.processRunner().waitForAllUSVFSProcessesWithLock();
   if (!m_exitAfterWait) { // if operation cancelled
     return false;
   }
@@ -1536,7 +1536,7 @@ void MainWindow::startExeAction()
   }
 
   action->setEnabled(false);
-  m_OrganizerCore.runExecutable(*itor);
+  m_OrganizerCore.processRunner().runExecutable(*itor);
   action->setEnabled(true);
 }
 
@@ -2294,6 +2294,11 @@ void MainWindow::unlock()
   }
 }
 
+QWidget* MainWindow::qtWidget()
+{
+  return this;
+}
+
 void MainWindow::on_btnRefreshData_clicked()
 {
   m_OrganizerCore.refreshDirectoryStructure();
@@ -2363,7 +2368,7 @@ void MainWindow::on_startButton_clicked()
       forcedLibraries.clear();
     }
 
-    m_OrganizerCore.runExecutableFile(
+    m_OrganizerCore.processRunner().runExecutableFile(
       selectedExecutable->binaryInfo(),
       selectedExecutable->arguments(),
       selectedExecutable->workingDirectory().length() != 0 ?
@@ -5453,7 +5458,7 @@ void MainWindow::openDataFile()
 
   const QString path = m_ContextItem->data(0, Qt::UserRole).toString();
   const QFileInfo targetInfo(path);
-  m_OrganizerCore.runFile(this, targetInfo);
+  m_OrganizerCore.processRunner().runFile(this, targetInfo);
 }
 
 void MainWindow::openDataOriginExplorer_clicked()

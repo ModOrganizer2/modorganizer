@@ -143,6 +143,7 @@ SET(organizer_SRCS
 	envwindows.cpp
 	colortable.cpp
 	sanitychecks.cpp
+	processrunner.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -266,6 +267,7 @@ SET(organizer_HDRS
 	envshortcut.h
 	envwindows.h
 	colortable.h
+	processrunner.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -348,6 +350,7 @@ set(core
 	organizercore
 	organizerproxy
 	apiuseraccount
+	processrunner
 )
 
 set(dialogs

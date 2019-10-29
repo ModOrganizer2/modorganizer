@@ -118,8 +118,9 @@ public:
 
   void processUpdates(Settings& settings);
 
-  virtual ILockedWaitingForProcess* lock() override;
-  virtual void unlock() override;
+  ILockedWaitingForProcess* lock() override;
+  void unlock() override;
+  QWidget* qtWidget() override;
 
   bool addProfile();
   void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives);

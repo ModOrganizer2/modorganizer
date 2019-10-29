@@ -73,39 +73,6 @@ bool checkBlacklist(
 HANDLE startBinary(QWidget* parent, const SpawnParameters& sp);
 
 
-class SpawnedProcess
-{
-public:
-  SpawnedProcess(HANDLE handle, SpawnParameters sp);
-
-  SpawnedProcess(const SpawnedProcess&) = delete;
-  SpawnedProcess& operator=(const SpawnedProcess&) = delete;
-  SpawnedProcess(SpawnedProcess&& other);
-  SpawnedProcess& operator=(SpawnedProcess&& other);
-  ~SpawnedProcess();
-
-  HANDLE releaseHandle();
-  void wait();
-
-private:
-  HANDLE m_handle;
-  SpawnParameters m_parameters;
-
-  void destroy();
-};
-
-
-class Spawner
-{
-public:
-  SpawnedProcess spawn(
-    QWidget* parent, const MOBase::IPluginGame* game,
-    SpawnParameters sp, Settings& settings);
-
-private:
-};
-
-
 enum class FileExecutionTypes
 {
   Executable = 1,
@@ -123,21 +90,6 @@ QString findJavaInstallation(const QString& jarFile);
 
 FileExecutionContext getFileExecutionContext(
   QWidget* parent, const QFileInfo& target);
-
-
-enum class WaitResults
-{
-  Completed = 1,
-  Error,
-  Cancelled
-};
-
-WaitResults waitForProcess(
-  HANDLE handle, DWORD* exitCode, std::function<bool ()> progress);
-
-WaitResults waitForProcesses(
-  const std::vector<HANDLE>& handles, std::vector<DWORD>& exitCodes,
-  std::function<bool ()> progress);
 
 } // namespace
 

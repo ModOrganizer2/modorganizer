@@ -3,7 +3,6 @@
 
 
 #include "selfupdater.h"
-#include "ilockedwaitingforprocess.h"
 #include "settings.h"
 #include "modlist.h"
 #include "modinfo.h"
@@ -14,6 +13,7 @@
 #include "executableslist.h"
 #include "usvfsconnector.h"
 #include "moshortcut.h"
+#include "processrunner.h"
 #include <directoryentry.h>
 #include <imoinfo.h>
 #include <iplugindiagnose.h>
@@ -26,7 +26,7 @@
 class ModListSortProxy;
 class PluginListSortProxy;
 class Profile;
-class MainWindow;
+class IUserInterface;
 
 namespace MOBase {
   template <typename T> class GuessedValue;
@@ -97,7 +97,7 @@ public:
 
   ~OrganizerCore();
 
-  void setUserInterface(MainWindow* mainWindow);
+  void setUserInterface(IUserInterface* ui);
   void connectPlugins(PluginContainer *container);
   void disconnectPlugins();
 
@@ -134,7 +134,14 @@ public:
 
   bool saveCurrentLists();
 
-  void prepareStart();
+  ProcessRunner& processRunner();
+
+  bool beforeRun(
+    const QFileInfo& binary, const QString& profileName,
+    const QString& customOverwrite,
+    const QList<MOBase::ExecutableForcedLoadSetting>& forcedLibraries);
+
+  void afterRun(const QFileInfo& binary, DWORD exitCode);
 
   void refreshESPList(bool force = false);
   void refreshBSAList();
@@ -148,27 +155,6 @@ public:
 
   bool previewFileWithAlternatives(QWidget* parent, QString filename, int selectedOrigin=-1);
   bool previewFile(QWidget* parent, const QString& originName, const QString& path);
-
-  bool runFile(QWidget* parent, const QFileInfo& targetInfo);
-
-  bool runExecutableFile(
-    const QFileInfo &binary, const QString &arguments,
-    const QDir &currentDirectory, const QString &steamAppID={},
-    const QString &customOverwrite={},
-    const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries={},
-    bool refresh=true);
-
-  bool runExecutable(const Executable& exe, bool refresh=true);
-
-  bool runShortcut(const MOShortcut& shortcut);
-
-  HANDLE runExecutableOrExecutableFile(
-    const QString &executable, const QStringList &args, const QString &cwd,
-    const QString &profile, const QString &forcedCustomOverwrite = "",
-    bool ignoreCustomOverwrite = false);
-
-  bool waitForApplication(HANDLE processHandle, LPDWORD exitCode = nullptr);
-  bool waitForAllUSVFSProcessesWithLock();
 
   void loginSuccessfulUpdate(bool necessary);
   void loginFailedUpdate(const QString &message);
@@ -273,6 +259,7 @@ signals:
 
 private:
 
+  void saveCurrentProfile();
   void storeSettings();
 
   bool queryApi(QString &apiKey);
@@ -298,26 +285,6 @@ private:
               const MOShared::DirectoryEntry *directoryEntry,
               int createDestination);
 
-  HANDLE spawnAndWait(const QFileInfo &binary, const QString &arguments,
-    const QString &profileName,
-    const QDir &currentDirectory,
-    const QString &steamAppID,
-    const QString &customOverwrite,
-    const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>(),
-    LPDWORD exitCode = nullptr);
-
-  bool waitForProcessCompletionWithLock(HANDLE handle, LPDWORD exitCode);
-
-  bool waitForProcessCompletion(
-    HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock);
-
-  bool waitForAllUSVFSProcesses(ILockedWaitingForProcess* uilock);
-
-  void withLock(std::function<void (ILockedWaitingForProcess*)> f);
-
-  HANDLE findAndOpenAUSVFSProcess(
-    const std::vector<QString>& hiddenList, DWORD preferedParentPid);
-
 private slots:
 
   void directory_refreshed();
@@ -331,13 +298,14 @@ private:
   static const unsigned int PROBLEM_MO1SCRIPTEXTENDERWORKAROUND = 1;
 
 private:
-  MainWindow* m_MainWindow;
+  IUserInterface* m_UserInterface;
   PluginContainer *m_PluginContainer;
   QString m_GameName;
   MOBase::IPluginGame *m_GamePlugin;
 
   Profile *m_CurrentProfile;
 
+  ProcessRunner m_Runner;
   Settings& m_Settings;
 
   SelfUpdater m_Updater;

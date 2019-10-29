@@ -632,7 +632,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 		  if (MOShortcut shortcut{ arguments.at(1) }) {
 			  if (shortcut.hasExecutable()) {
 				  try {
-					  organizer.runShortcut(shortcut);
+					  organizer.processRunner().runShortcut(shortcut);
 					  return 0;
 				  }
 				  catch (const std::exception &e) {
@@ -653,7 +653,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 			  arguments.removeFirst(); // remove binary name
 			  // pass the remaining parameters to the binary
 			  try {
-				  organizer.runExecutableOrExecutableFile(
+				  organizer.processRunner().runExecutableOrExecutableFile(
             exeName, arguments, QString(), QString());
 				  return 0;
 			  }
