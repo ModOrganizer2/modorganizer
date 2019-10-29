@@ -243,6 +243,14 @@ WaitResults waitForProcesses(
   }
 }
 
+WaitResults waitForProcess(
+  HANDLE initialProcess, LPDWORD exitCode, ILockedWaitingForProcess* uilock)
+{
+  std::vector<HANDLE> processes = {initialProcess};
+  return waitForProcesses(processes, exitCode, uilock);
+}
+
+
 
 SpawnedProcess::SpawnedProcess(HANDLE handle, spawn::SpawnParameters sp)
   : m_handle(handle), m_parameters(std::move(sp))
@@ -617,18 +625,20 @@ bool ProcessRunner::waitForProcessCompletionWithLock(
     return true;
   }
 
-  bool r = false;
+  auto r = WaitResults::Error;
 
   withLock([&](auto* uilock) {
-    r = waitForProcessCompletion(handle, exitCode, uilock);
+    r = waitForProcess(handle, exitCode, uilock);
   });
 
-  return r;
+  // completed/unlocked is fine
+  return (r != WaitResults::Error);
 }
 
 bool ProcessRunner::waitForApplication(HANDLE handle, LPDWORD exitCode)
 {
-  // don't check for lockGUI() setting; this _always_ locks the ui
+  // don't check for lockGUI() setting; this _always_ locks the ui and waits
+  // for completion
   //
   // this is typically called only from OrganizerProxy, which allows plugins
   // to wait on applications until they're finished
@@ -637,22 +647,14 @@ bool ProcessRunner::waitForApplication(HANDLE handle, LPDWORD exitCode)
   // and then check the exit code; this has to work regardless of the locking
   // setting
 
-  bool r = false;
+  auto r = WaitResults::Error;
 
   withLock([&](auto* uilock) {
-    r = waitForProcessCompletion(handle, exitCode, uilock);
+    r = waitForProcess(handle, exitCode, uilock);
   });
 
-  return r;
-}
-
-bool ProcessRunner::waitForProcessCompletion(
-  HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock)
-{
-  std::vector<HANDLE> processes = {handle};
-  const auto r = waitForProcesses(processes, exitCode, uilock);
-
-  return (r != WaitResults::Error);
+  // treat unlocked as an error since this should always wait for completion
+  return (r == WaitResults::Completed);
 }
 
 bool ProcessRunner::waitForAllUSVFSProcessesWithLock()

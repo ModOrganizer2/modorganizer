@@ -80,9 +80,6 @@ private:
 
   bool waitForProcessCompletionWithLock(HANDLE handle, LPDWORD exitCode);
 
-  bool waitForProcessCompletion(
-    HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock);
-
   bool waitForAllUSVFSProcesses(ILockedWaitingForProcess* uilock);
 };
 
