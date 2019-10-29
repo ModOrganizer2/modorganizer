@@ -86,19 +86,4 @@ private:
   bool waitForAllUSVFSProcesses(ILockedWaitingForProcess* uilock);
 };
 
-
-enum class WaitResults
-{
-  Completed = 1,
-  Error,
-  Cancelled
-};
-
-WaitResults waitForProcess(
-  HANDLE handle, DWORD* exitCode, std::function<bool ()> progress);
-
-WaitResults waitForProcesses(
-  const std::vector<HANDLE>& handles, std::vector<DWORD>& exitCodes,
-  std::function<bool ()> progress);
-
 #endif // PROCESSRUNNER_H

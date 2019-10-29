@@ -8,45 +8,62 @@
 
 using namespace MOBase;
 
-void adjustForVirtualized(
-  const IPluginGame* game, spawn::SpawnParameters& sp, const Settings& settings)
+enum class WaitResults
 {
-  const QString modsPath = settings.paths().mods();
+  Completed = 1,
+  Error,
+  Cancelled
+};
 
-  // Check if this a request with either an executable or a working directory
-  // under our mods folder then will start the process in a virtualized
-  // "environment" with the appropriate paths fixed:
-  // (i.e. mods\FNIS\path\exe => game\data\path\exe)
-  QString cwdPath = sp.currentDirectory.absolutePath();
-  bool virtualizedCwd = cwdPath.startsWith(modsPath, Qt::CaseInsensitive);
-  QString binPath = sp.binary.absoluteFilePath();
-  bool virtualizedBin = binPath.startsWith(modsPath, Qt::CaseInsensitive);
-  if (virtualizedCwd || virtualizedBin) {
-    if (virtualizedCwd) {
-      int cwdOffset = cwdPath.indexOf('/', modsPath.length() + 1);
-      QString adjustedCwd = cwdPath.mid(cwdOffset, -1);
-      cwdPath = game->dataDirectory().absolutePath();
-      if (cwdOffset >= 0)
-        cwdPath += adjustedCwd;
 
+WaitResults waitForProcess(
+  HANDLE handle, DWORD* exitCode, std::function<bool ()> progress)
+{
+  if (handle == INVALID_HANDLE_VALUE) {
+    return WaitResults::Error;
+  }
+
+  log::debug("waiting for completion on pid {}", ::GetProcessId(handle));
+
+  std::vector<HANDLE> handles;
+  handles.push_back(handle);
+
+  std::vector<DWORD> exitCodes;
+
+  for (;;) {
+    // Wait for a an event on the handle, a key press, mouse click or timeout
+    const auto res = MsgWaitForMultipleObjects(
+      1, &handle, FALSE, 50, QS_KEY | QS_MOUSEBUTTON);
+
+    if (res == WAIT_FAILED) {
+      // error
+      const auto e = ::GetLastError();
+
+      log::error(
+        "failed waiting for process completion, {}", formatSystemMessage(e));
+
+      return WaitResults::Error;
+    } else if (res == WAIT_OBJECT_0) {
+      // completed
+      if (exitCode) {
+        if (!::GetExitCodeProcess(handle, exitCode)) {
+          const auto e = ::GetLastError();
+          log::warn(
+            "failed to get exit code of process, {}",
+            formatSystemMessage(e));
+        }
+      }
+
+      return WaitResults::Completed;
     }
 
-    if (virtualizedBin) {
-      int binOffset = binPath.indexOf('/', modsPath.length() + 1);
-      QString adjustedBin = binPath.mid(binOffset, -1);
-      binPath = game->dataDirectory().absolutePath();
-      if (binOffset >= 0)
-        binPath += adjustedBin;
+    // keep processing events so the app doesn't appear dead
+    QCoreApplication::sendPostedEvents();
+    QCoreApplication::processEvents();
+
+    if (progress && progress()) {
+      return WaitResults::Cancelled;
     }
-
-    QString cmdline
-      = QString("launch \"%1\" \"%2\" %3")
-      .arg(QDir::toNativeSeparators(cwdPath),
-        QDir::toNativeSeparators(binPath), sp.arguments);
-
-    sp.binary = QFileInfo(QCoreApplication::applicationFilePath());
-    sp.arguments = cmdline;
-    sp.currentDirectory.setPath(QCoreApplication::applicationDirPath());
   }
 }
 
@@ -84,9 +101,30 @@ env::Process* getInterestingProcess(std::vector<env::Process>& processes)
     }
   }
 
-
   // everything is hidden, just pick the first one
   return &processes[0];
+}
+
+WaitResults waitForProcesses(
+  std::vector<env::Process>& processes,
+  LPDWORD exitCode, ILockedWaitingForProcess* uilock)
+{
+  const auto* interesting = getInterestingProcess(processes);
+  if (!interesting) {
+    return WaitResults::Error;
+  }
+
+  if (uilock) {
+    uilock->setProcessInformation(interesting->pid(), interesting->name());
+  }
+
+  auto interestingHandle = interesting->openHandleForWait();
+  if (!interestingHandle) {
+    return WaitResults::Error;
+  }
+
+  auto progress = [&]{ return uilock->unlockForced(); };
+  return waitForProcess(interestingHandle.get(), exitCode, progress);
 }
 
 
@@ -358,6 +396,48 @@ HANDLE ProcessRunner::spawnAndWait(
   return handle;
 }
 
+void adjustForVirtualized(
+  const IPluginGame* game, spawn::SpawnParameters& sp, const Settings& settings)
+{
+  const QString modsPath = settings.paths().mods();
+
+  // Check if this a request with either an executable or a working directory
+  // under our mods folder then will start the process in a virtualized
+  // "environment" with the appropriate paths fixed:
+  // (i.e. mods\FNIS\path\exe => game\data\path\exe)
+  QString cwdPath = sp.currentDirectory.absolutePath();
+  bool virtualizedCwd = cwdPath.startsWith(modsPath, Qt::CaseInsensitive);
+  QString binPath = sp.binary.absoluteFilePath();
+  bool virtualizedBin = binPath.startsWith(modsPath, Qt::CaseInsensitive);
+  if (virtualizedCwd || virtualizedBin) {
+    if (virtualizedCwd) {
+      int cwdOffset = cwdPath.indexOf('/', modsPath.length() + 1);
+      QString adjustedCwd = cwdPath.mid(cwdOffset, -1);
+      cwdPath = game->dataDirectory().absolutePath();
+      if (cwdOffset >= 0)
+        cwdPath += adjustedCwd;
+
+    }
+
+    if (virtualizedBin) {
+      int binOffset = binPath.indexOf('/', modsPath.length() + 1);
+      QString adjustedBin = binPath.mid(binOffset, -1);
+      binPath = game->dataDirectory().absolutePath();
+      if (binOffset >= 0)
+        binPath += adjustedBin;
+    }
+
+    QString cmdline
+      = QString("launch \"%1\" \"%2\" %3")
+      .arg(QDir::toNativeSeparators(cwdPath),
+        QDir::toNativeSeparators(binPath), sp.arguments);
+
+    sp.binary = QFileInfo(QCoreApplication::applicationFilePath());
+    sp.arguments = cmdline;
+    sp.currentDirectory.setPath(QCoreApplication::applicationDirPath());
+  }
+}
+
 SpawnedProcess ProcessRunner::spawn(spawn::SpawnParameters sp)
 {
   QWidget* parent = nullptr;
@@ -451,34 +531,8 @@ bool ProcessRunner::waitForProcessCompletion(
   const auto tree = env::getProcessTree(handle);
   std::vector<env::Process> processes = {tree};
 
-  const auto* interesting = getInterestingProcess(processes);
-  if (!interesting) {
-    return true;
-  }
-
-  if (uilock) {
-    uilock->setProcessInformation(interesting->pid(), interesting->name());
-  }
-
-  auto interestingHandle = interesting->openHandleForWait();
-  if (!interestingHandle) {
-    return true;
-  }
-
-  auto progress = [&]{ return uilock->unlockForced(); };
-  const auto r = waitForProcess(
-    interestingHandle.get(), exitCode, progress);
-
-  switch (r)
-  {
-    case WaitResults::Completed:  // fall-through
-    case WaitResults::Cancelled:
-      return true;
-
-    case WaitResults::Error:  // fall-through
-    default:
-      return false;
-  }
+  const auto r = waitForProcesses(processes, exitCode, uilock);
+  return (r != WaitResults::Error);
 }
 
 bool ProcessRunner::waitForAllUSVFSProcessesWithLock()
@@ -511,23 +565,7 @@ bool ProcessRunner::waitForAllUSVFSProcesses(ILockedWaitingForProcess* uilock)
       }
     }
 
-    const auto* interesting = getInterestingProcess(processes);
-    if (!interesting) {
-      break;
-    }
-
-    if (uilock) {
-      uilock->setProcessInformation(interesting->pid(), interesting->name());
-    }
-
-    auto interestingHandle = interesting->openHandleForWait();
-    if (!interestingHandle) {
-      break;
-    }
-
-    auto progress = [&]{ return uilock->unlockForced(); };
-    const auto r = waitForProcess(
-      interestingHandle.get(), nullptr, progress);
+    const auto r = waitForProcesses(processes, nullptr, uilock);
 
     switch (r)
     {
@@ -549,86 +587,4 @@ bool ProcessRunner::waitForAllUSVFSProcesses(ILockedWaitingForProcess* uilock)
 
   log::debug("waiting for process completion successful");
   return true;
-}
-
-
-
-WaitResults waitForProcess(
-  HANDLE handle, DWORD* exitCode, std::function<bool ()> progress)
-{
-  if (handle == INVALID_HANDLE_VALUE) {
-    return WaitResults::Error;
-  }
-
-  log::debug("waiting for completion on pid {}", ::GetProcessId(handle));
-
-  std::vector<HANDLE> handles;
-  handles.push_back(handle);
-
-  std::vector<DWORD> exitCodes;
-
-  const auto r = waitForProcesses(handles, exitCodes, progress);
-
-  if (r == WaitResults::Completed) {
-    if (exitCode && !exitCodes.empty()) {
-      *exitCode = exitCodes[0];
-    }
-  }
-
-  return r;
-}
-
-WaitResults waitForProcesses(
-  const std::vector<HANDLE>& handles, std::vector<DWORD>& exitCodes,
-  std::function<bool ()> progress)
-{
-  if (handles.empty()) {
-    return WaitResults::Completed;
-  }
-
-  const auto WAIT_OBJECT_N = static_cast<DWORD>(WAIT_OBJECT_0 + handles.size());
-
-  for (;;) {
-    // Wait for a an event on the handle, a key press, mouse click or timeout
-    const auto res = MsgWaitForMultipleObjects(
-      static_cast<DWORD>(handles.size()), &handles[0],
-      TRUE, 50, QS_KEY | QS_MOUSEBUTTON);
-
-    if (res == WAIT_FAILED) {
-      // error
-      const auto e = ::GetLastError();
-
-      log::error(
-        "failed waiting for process completion, {}", formatSystemMessage(e));
-
-      return WaitResults::Error;
-    } else if (res >= WAIT_OBJECT_0 && res < WAIT_OBJECT_N) {
-      // completed
-      exitCodes.resize(handles.size());
-      std::fill(exitCodes.begin(), exitCodes.end(), 0);
-
-      for (std::size_t i=0; i<handles.size(); ++i) {
-        DWORD exitCode = 0;
-
-        if (::GetExitCodeProcess(handles[i], &exitCode)) {
-          exitCodes[i] = exitCode;
-        } else {
-          const auto e = ::GetLastError();
-          log::warn(
-            "failed to get exit code of process, {}",
-            formatSystemMessage(e));
-        }
-      }
-
-      return WaitResults::Completed;
-    }
-
-    // keep processing events so the app doesn't appear dead
-    QCoreApplication::sendPostedEvents();
-    QCoreApplication::processEvents();
-
-    if (progress && progress()) {
-      return WaitResults::Cancelled;
-    }
-  }
 }
