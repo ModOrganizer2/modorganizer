@@ -1355,17 +1355,13 @@ bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)
   if (!Settings::instance().interface().lockGUI())
     return true;
 
-  ILockedWaitingForProcess* uilock = nullptr;
-  if (m_MainWindow != nullptr) {
-    uilock = m_MainWindow->lock();
-  }
+  bool r = false;
 
-  ON_BLOCK_EXIT([&] () {
-    if (m_MainWindow != nullptr) {
-      m_MainWindow->unlock();
-    } });
+  withLock([&](auto* uilock) {
+    r = waitForProcessCompletion(handle, exitCode, uilock);
+  });
 
-  return waitForProcessCompletion(handle, exitCode, uilock);
+  return r;
 }
 
 bool OrganizerCore::waitForProcessCompletion(
@@ -1387,6 +1383,9 @@ bool OrganizerCore::waitForProcessCompletion(
 
 bool OrganizerCore::waitForAllUSVFSProcessesWithLock()
 {
+  if (!Settings::instance().interface().lockGUI())
+    return true;
+
   bool r = false;
 
   withLock([&](auto* uilock) {
@@ -1396,178 +1395,81 @@ bool OrganizerCore::waitForAllUSVFSProcessesWithLock()
   return r;
 }
 
-bool OrganizerCore::waitForAllUSVFSProcesses(ILockedWaitingForProcess* uilock)
+HANDLE getInterestingProcess(
+  const std::vector<HANDLE>& handles,
+  const std::vector<QString>& hidden, DWORD preferedParentPid)
 {
-  // Certain process names we wish to "hide" for aesthetic reason:
-  std::vector<QString> hiddenList;
-  hiddenList.push_back(QFileInfo(QCoreApplication::applicationFilePath()).fileName());
-
-  bool originalHandle = true;
-  bool newHandle = true;
-  bool uiunlocked = false;
-
-  HANDLE handle = findAndOpenAUSVFSProcess(hiddenList, GetCurrentProcessId());
-  DWORD* exitCode = nullptr;
-  DWORD currentPID = 0;
-  QString processName;
-
-  auto waitForChildUntil = GetTickCount64();
-  if (handle != INVALID_HANDLE_VALUE) {
-    currentPID = GetProcessId(handle);
-    processName = env::getProcessName(handle);
-  }
-
-  bool waitingOnHidden = false;
-  for (QString hide : hiddenList)
-    if (processName.contains(hide, Qt::CaseInsensitive))
-      waitingOnHidden = true;
-
-  // The main reason for adding the hidden list is to hide the MO proxy we use to spawn virtualized processes.
-  // On the one hand we want to display the real executable without it feeling laggy, on the other we don't want
-  // to requery processes all the time if for some reason we are waiting on hidden processes and find no "unhidden"
-  // process. For this reason we use exponential backoff and also start with a delibrately low value to improve
-  // the responsiveness of the initial update
-  DWORD64 nextHiddenCheck = GetTickCount64();
-  DWORD64 nextHiddenCheckDelay = 50;
-
-  constexpr DWORD INPUT_EVENT = WAIT_OBJECT_0 + 1;
-  DWORD res = WAIT_TIMEOUT;
-  while (handle != INVALID_HANDLE_VALUE && (newHandle || res == WAIT_TIMEOUT || res == INPUT_EVENT))
-  {
-    if (newHandle) {
-      processName += QString(" (%1)").arg(currentPID);
-      if (uilock)
-        uilock->setProcessName(processName);
-
-      log::debug(
-        "Waiting for {} process completion: {}",
-        (originalHandle ? "spawned" : "usvfs"), processName);
-
-      newHandle = false;
-    }
-
-    // Wait for a an event on the handle, a key press, mouse click or timeout
-    res = MsgWaitForMultipleObjects(1, &handle, FALSE, 200, QS_KEY | QS_MOUSEBUTTON);
-    if (res == WAIT_FAILED) {
-      log::warn("Failed waiting for process completion : MsgWaitForMultipleObjects WAIT_FAILED {}", GetLastError());
-      break;
-    }
-
-    // keep processing events so the app doesn't appear dead
-    QCoreApplication::sendPostedEvents();
-    QCoreApplication::processEvents();
-
-    if (uilock && uilock->unlockForced()) {
-      uiunlocked = true;
-      break;
-    }
-
-    if (res == WAIT_OBJECT_0) {
-      // process we were waiting on has completed
-      if (originalHandle && exitCode && !::GetExitCodeProcess(handle, exitCode))
-        log::warn("Failed getting exit code of complete process: {}", GetLastError());
-      CloseHandle(handle);
-      handle = INVALID_HANDLE_VALUE;
-      originalHandle = false;
-      // if the previous process spawned a child process and immediately exits we may miss it if we check immediately
-      waitForChildUntil = GetTickCount64() + 800;
-    }
-
-    // search for another process to wait on if either:
-    // 1. we just completed waiting for a process and need to find/wait for an inject child
-    // 2. we are currently waiting on a hidden process so periodically check if there is a non-hidden process to wait on
-    bool firstIteration = true;
-    while ((handle == INVALID_HANDLE_VALUE && GetTickCount64() <= waitForChildUntil)
-            || (waitingOnHidden && GetTickCount64() >= nextHiddenCheck))
-    {
-      if (firstIteration)
-        firstIteration = false;
-      else {
-        QThread::msleep(200);
-        QCoreApplication::sendPostedEvents();
-        QCoreApplication::processEvents();
-      }
-
-      // search if there is another usvfs process active
-      handle = findAndOpenAUSVFSProcess(hiddenList, currentPID);
-      waitingOnHidden = false;
-      newHandle = handle != INVALID_HANDLE_VALUE;
-      if (newHandle) {
-        currentPID = GetProcessId(handle);
-        processName = env::getProcessName(handle);
-        for (QString hide : hiddenList)
-          if (processName.contains(hide, Qt::CaseInsensitive))
-            waitingOnHidden = true;
-      }
-      if (waitingOnHidden) {
-        nextHiddenCheck = GetTickCount64() + nextHiddenCheckDelay;
-        nextHiddenCheckDelay = std::min(nextHiddenCheckDelay * 2, (DWORD64) 2000);
-      }
-      else {
-        nextHiddenCheck = GetTickCount64();
-        nextHiddenCheckDelay = 200;
-      }
-    }
-  }
-
-  if (res == WAIT_OBJECT_0)
-    log::debug("Waiting for process completion successfull");
-  else if (uiunlocked)
-    log::debug("Waiting for process completion aborted by UI");
-  else
-    log::debug("Waiting for process completion not successfull: {}", res);
-
-  if (handle != INVALID_HANDLE_VALUE)
-    ::CloseHandle(handle);
-
-  return res == WAIT_OBJECT_0;
-}
-
-HANDLE OrganizerCore::findAndOpenAUSVFSProcess(const std::vector<QString>& hiddenList, DWORD preferedParentPid) {
-  // for practical reasons a querySize of 1 is probably enough, we use a larger query as a heuristics
-  // to find a more "aesthetic injected processes (attempting to comply to hiddenList and preferedParentPid)
-  constexpr size_t querySize = 100;
-  DWORD pids[querySize];
-  size_t found = querySize;
-  if (!::GetVFSProcessList(&found, pids)) {
-    log::warn("Failed seeking USVFS processes : GetVFSProcessList failed?!");
-    return INVALID_HANDLE_VALUE;
-  }
-
   HANDLE best_match = INVALID_HANDLE_VALUE;
   bool best_match_hidden = true;
-  for (size_t i = 0; i < found; ++i) {
-    if (pids[i] == GetCurrentProcessId())
-      continue; // obviously don't wait for MO process
 
-    HANDLE handle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, FALSE, pids[i]);
-    if (handle == INVALID_HANDLE_VALUE) {
-      log::warn("Failed opening USVFS process {}: OpenProcess failed {}", pids[i], GetLastError());
-      continue;
-    }
+  for (auto handle : handles) {
+    const QString pname = env::getProcessName(handle);
 
-    QString pname = env::getProcessName(handle);
     bool phidden = false;
-    for (auto hide : hiddenList)
-      if (pname.contains(hide, Qt::CaseInsensitive))
+    for (auto h : hidden)
+      if (pname.contains(h, Qt::CaseInsensitive))
         phidden = true;
 
-    bool pprefered = preferedParentPid && env::getProcessParentID(pids[i]) == preferedParentPid;
+    bool pprefered = preferedParentPid && env::getProcessParentID(handle) == preferedParentPid;
 
     if (best_match == INVALID_HANDLE_VALUE || best_match_hidden || (!phidden && pprefered)) {
-      if (best_match != INVALID_HANDLE_VALUE)
-        CloseHandle(best_match);
       best_match = handle;
       best_match_hidden = phidden;
     }
-    else
-      CloseHandle(handle);
 
     if (!phidden && pprefered)
       return best_match;
   }
 
   return best_match;
+}
+
+bool OrganizerCore::waitForAllUSVFSProcesses(ILockedWaitingForProcess* uilock)
+{
+  // Certain process names we wish to "hide" for aesthetic reason:
+  std::vector<QString> hiddenList;
+  hiddenList.push_back(QFileInfo(QCoreApplication::applicationFilePath()).fileName());
+
+  for (;;) {
+    const auto handles = getRunningUSVFSProcesses();
+    if (handles.empty()) {
+      break;
+    }
+
+    const auto interesting = getInterestingProcess(
+      handles, hiddenList, GetCurrentProcessId());
+
+    if (uilock) {
+      const DWORD pid = ::GetProcessId(interesting);
+      const QString processName = QString("%1 (%2)")
+        .arg(env::getProcessName(interesting))
+        .arg(pid);
+
+      uilock->setProcessName(processName);
+    }
+
+    const auto r = spawn::waitForProcess(interesting, nullptr, uilock);
+
+    switch (r)
+    {
+      case spawn::WaitResults::Completed:
+        // this process is completed, check for others
+        break;
+
+      case spawn::WaitResults::Unlocked:
+        // force unlocked
+        log::debug("waiting for process completion aborted by UI");
+        return true;
+
+      case spawn::WaitResults::Error:  // fall-through
+      default:
+        log::debug("waiting for process completion not successful");
+        return false;
+    }
+  }
+
+  log::debug("Waiting for process completion successful");
+  return true;
 }
 
 bool OrganizerCore::onAboutToRun(

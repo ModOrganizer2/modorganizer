@@ -136,6 +136,10 @@ enum class WaitResults
 WaitResults waitForProcess(
   HANDLE handle, DWORD* exitCode, ILockedWaitingForProcess* uilock);
 
+WaitResults waitForProcesses(
+  const std::vector<HANDLE>& handles, std::vector<DWORD>& exitCodes,
+  ILockedWaitingForProcess* uilock);
+
 } // namespace
 
 

@@ -511,4 +511,10 @@ DWORD getProcessParentID(DWORD pid)
   return ppid;
 }
 
+
+DWORD getProcessParentID(HANDLE handle)
+{
+  return getProcessParentID(GetProcessId(handle));
+}
+
 } // namespace

@@ -103,4 +103,6 @@ private:
 
 CrashDumpsType crashDumpsType(int type);
 
+std::vector<HANDLE> getRunningUSVFSProcesses();
+
 #endif // USVFSCONNECTOR_H

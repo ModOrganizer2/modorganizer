@@ -121,7 +121,9 @@ std::vector<Process> getRunningProcesses();
 std::vector<Module> getLoadedModules();
 
 QString getProcessName(HANDLE process);
+
 DWORD getProcessParentID(DWORD pid);
+DWORD getProcessParentID(HANDLE handle);
 
 } // namespace env
 

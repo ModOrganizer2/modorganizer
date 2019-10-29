@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "usvfsconnector.h"
 #include "settings.h"
 #include "organizercore.h"
+#include "envmodule.h"
 #include "shared/util.h"
 #include <memory>
 #include <sstream>
@@ -255,4 +256,50 @@ void UsvfsConnector::updateForcedLibraries(const QList<MOBase::ExecutableForcedL
       );
     }
   }
+}
+
+
+std::vector<HANDLE> getRunningUSVFSProcesses()
+{
+  std::vector<DWORD> pids;
+
+  {
+    size_t count = 0;
+    DWORD* buffer = nullptr;
+    if (!::GetVFSProcessList2(&count, &buffer)) {
+      log::error("failed to get usvfs process list");
+      return {};
+    }
+
+    if (buffer) {
+      pids.assign(buffer, buffer + count);
+      std::free(buffer);
+    }
+  }
+
+  const auto thisPid = GetCurrentProcessId();
+  std::vector<HANDLE> v;
+
+  for (auto&& pid : pids) {
+    if (pid == thisPid) {
+      continue; // obviously don't wait for MO process
+    }
+
+    HANDLE handle = ::OpenProcess(
+      PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, FALSE, pid);
+
+    if (handle == INVALID_HANDLE_VALUE) {
+      const auto e = GetLastError();
+
+      log::warn(
+        "failed to open usvfs process {}: {}",
+        pid, formatSystemMessage(e));
+
+      continue;
+    }
+
+    v.push_back(handle);
+  }
+
+  return v;
 }

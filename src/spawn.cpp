@@ -1094,7 +1094,8 @@ FileExecutionContext getFileExecutionContext(
   return {{}, {}, FileExecutionTypes::Other};
 }
 
-WaitResults waitForProcess(HANDLE handle, DWORD* exitCode, ILockedWaitingForProcess* uilock)
+WaitResults waitForProcess(
+  HANDLE handle, DWORD* exitCode, ILockedWaitingForProcess* uilock)
 {
   if (handle == INVALID_HANDLE_VALUE) {
     return WaitResults::Error;
@@ -1108,37 +1109,62 @@ WaitResults waitForProcess(HANDLE handle, DWORD* exitCode, ILockedWaitingForProc
   if (uilock)
     uilock->setProcessName(processName);
 
-  constexpr DWORD INPUT_EVENT = WAIT_OBJECT_0 + 1;
-  DWORD res = WAIT_TIMEOUT;
-
   log::debug(
     "waiting for process completion '{}' ({})",
     processName, pid);
 
+  std::vector<HANDLE> handles;
+  handles.push_back(handle);
+
+  std::vector<DWORD> exitCodes;
+
+  const auto r = waitForProcesses(handles, exitCodes, uilock);
+  if (exitCode && !exitCodes.empty()) {
+    *exitCode = exitCodes[0];
+  }
+
+  return r;
+}
+
+WaitResults waitForProcesses(
+  const std::vector<HANDLE>& handles, std::vector<DWORD>& exitCodes,
+  ILockedWaitingForProcess* uilock)
+{
+  if (handles.empty()) {
+    return WaitResults::Completed;
+  }
+
+  const auto WAIT_OBJECT_N = static_cast<DWORD>(WAIT_OBJECT_0 + handles.size());
+
   for (;;) {
     // Wait for a an event on the handle, a key press, mouse click or timeout
     const auto res = MsgWaitForMultipleObjects(
-      1, &handle, FALSE, 50, QS_KEY | QS_MOUSEBUTTON);
+      static_cast<DWORD>(handles.size()), &handles[0],
+      TRUE, 50, QS_KEY | QS_MOUSEBUTTON);
 
     if (res == WAIT_FAILED) {
       // error
       const auto e = ::GetLastError();
 
       log::error(
-        "failed waiting for process completion '{}' ({}), {}",
-        processName, pid, formatSystemMessage(e));
+        "failed waiting for process completion, {}", formatSystemMessage(e));
 
       return WaitResults::Error;
-    } else if (res == WAIT_OBJECT_0) {
+    } else if (res >= WAIT_OBJECT_0 && res < WAIT_OBJECT_N) {
       // completed
-      log::debug("process '{}' ({}) completed", processName, pid);
+      exitCodes.resize(handles.size());
+      std::fill(exitCodes.begin(), exitCodes.end(), 0);
 
-      if (exitCode) {
-        if (!::GetExitCodeProcess(handle, exitCode)) {
+      for (std::size_t i=0; i<handles.size(); ++i) {
+        DWORD exitCode = 0;
+
+        if (::GetExitCodeProcess(handles[i], &exitCode)) {
+          exitCodes[i] = exitCode;
+        } else {
           const auto e = ::GetLastError();
           log::warn(
-            "failed to get exit code of process '{}' ({}): {}",
-            processName, pid, formatSystemMessage(e));
+            "failed to get exit code of process, {}",
+            formatSystemMessage(e));
         }
       }
 
@@ -1150,7 +1176,6 @@ WaitResults waitForProcess(HANDLE handle, DWORD* exitCode, ILockedWaitingForProc
     QCoreApplication::processEvents();
 
     if (uilock && uilock->unlockForced()) {
-      log::debug("waiting for process '{}' ({}) aborted by UI", processName, pid);
       return WaitResults::Unlocked;
     }
   }
