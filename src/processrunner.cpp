@@ -592,8 +592,7 @@ void ProcessRunner::withLock(std::function<void (ILockedWaitingForProcess*)> f)
 
   if (m_ui != nullptr) {
     uilock = m_ui->lock();
-  }
-  else {
+  } else {
     // i.e. when running command line shortcuts there is no user interface
     dlg.reset(new LockedDialog);
     dlg->show();
@@ -614,14 +613,14 @@ bool ProcessRunner::waitForProcessCompletionWithLock(
   HANDLE handle, LPDWORD exitCode)
 {
   if (!Settings::instance().interface().lockGUI()) {
+    log::debug("not waiting for process because user has disabled locking");
     return true;
   }
 
   bool r = false;
 
   withLock([&](auto* uilock) {
-    DWORD ignoreExitCode;
-    r = waitForProcessCompletion(handle, exitCode ? exitCode : &ignoreExitCode, uilock);
+    r = waitForProcessCompletion(handle, exitCode, uilock);
   });
 
   return r;
@@ -629,8 +628,14 @@ bool ProcessRunner::waitForProcessCompletionWithLock(
 
 bool ProcessRunner::waitForApplication(HANDLE handle, LPDWORD exitCode)
 {
-  if (!Settings::instance().interface().lockGUI())
-    return true;
+  // don't check for lockGUI() setting; this _always_ locks the ui
+  //
+  // this is typically called only from OrganizerProxy, which allows plugins
+  // to wait on applications until they're finished
+  //
+  // the check_fnis plugin for example will start FNIS, wait for it to complete,
+  // and then check the exit code; this has to work regardless of the locking
+  // setting
 
   bool r = false;
 
@@ -652,8 +657,10 @@ bool ProcessRunner::waitForProcessCompletion(
 
 bool ProcessRunner::waitForAllUSVFSProcessesWithLock()
 {
-  if (!Settings::instance().interface().lockGUI())
+  if (!Settings::instance().interface().lockGUI()) {
+    log::debug("not waiting for usvfs processes because user has disabled locking");
     return true;
+  }
 
   bool r = false;
 
