@@ -320,9 +320,24 @@ QString Module::getMD5() const
 }
 
 
-Process::Process(DWORD pid, QString name)
-  : m_pid(pid), m_name(std::move(name))
+Process::Process()
+  : Process(0, 0, {})
 {
+}
+
+Process::Process(HANDLE h)
+  : Process(::GetProcessId(h), 0, {})
+{
+}
+
+Process::Process(DWORD pid, DWORD ppid, QString name)
+  : m_pid(pid), m_ppid(ppid), m_name(std::move(name))
+{
+}
+
+bool Process::isValid() const
+{
+  return (m_pid != 0);
 }
 
 DWORD Process::pid() const
@@ -330,9 +345,36 @@ DWORD Process::pid() const
   return m_pid;
 }
 
+DWORD Process::ppid() const
+{
+  if (!m_ppid) {
+    m_ppid = getProcessParentID(m_pid);
+  }
+
+  return *m_ppid;
+}
+
 const QString& Process::name() const
 {
-  return m_name;
+  if (!m_name) {
+    m_name = getProcessName(m_pid);
+  }
+
+  return *m_name;
+}
+
+HandlePtr Process::openHandleForWait() const
+{
+  HandlePtr h(OpenProcess(
+    PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, FALSE, m_pid));
+
+  if (!h) {
+    const auto e = GetLastError();
+    log::error("can't get name of process {}, {}", m_pid, formatSystemMessage(e));
+    return {};
+  }
+
+  return h;
 }
 
 // whether this process can be accessed; fails if the current process doesn't
@@ -351,6 +393,16 @@ bool Process::canAccess() const
   }
 
   return true;
+}
+
+void Process::addChild(Process p)
+{
+  m_children.push_back(p);
+}
+
+std::vector<Process>& Process::children()
+{
+  return m_children;
 }
 
 
@@ -458,12 +510,61 @@ std::vector<Process> getRunningProcesses()
   forEachRunningProcess([&](auto&& entry) {
     v.push_back(Process(
       entry.th32ProcessID,
+      entry.th32ParentProcessID,
       QString::fromStdWString(entry.szExeFile)));
 
     return true;
   });
 
   return v;
+}
+
+void findChildren(Process& parent, const std::vector<Process>& processes)
+{
+  for (auto&& p : processes) {
+    if (p.ppid() == parent.pid()) {
+      Process child = p;
+      findChildren(child, processes);
+
+      parent.addChild(child);
+    }
+  }
+}
+
+Process getProcessTree(HANDLE parent)
+{
+  const auto parentPID = ::GetProcessId(parent);
+  const auto v = getRunningProcesses();
+
+  Process root;
+  for (auto&& p : v) {
+    if (p.pid() == parentPID) {
+      root = p;
+      break;
+    }
+  }
+
+  if (root.pid() == 0) {
+    log::error("process {} is not running", parentPID);
+    return {};
+  }
+
+  findChildren(root, v);
+
+  return root;
+}
+
+QString getProcessName(DWORD pid)
+{
+  HandlePtr h(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid));
+
+  if (!h) {
+    const auto e = GetLastError();
+    log::error("can't get name of process {}, {}", pid, formatSystemMessage(e));
+    return {};
+  }
+
+  return getProcessName(h.get());
 }
 
 QString getProcessName(HANDLE process)

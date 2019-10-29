@@ -18,7 +18,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "lockeddialogbase.h"
-
+#include "envmodule.h"
 #include <QPoint>
 #include <QResizeEvent>
 #include <QWidget>
@@ -61,6 +61,11 @@ bool LockedDialogBase::unlockForced() const {
 
 bool LockedDialogBase::canceled() const {
   return m_Canceled;
+}
+
+void LockedDialogBase::setProcessInformation(DWORD pid, const QString& name)
+{
+  setProcessName(QString("%1 (%2)").arg(name).arg(pid));
 }
 
 void LockedDialogBase::unlock() {

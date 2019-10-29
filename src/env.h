@@ -13,23 +13,6 @@ class WindowsInfo;
 class Metrics;
 
 
-// used by HandlePtr, calls CloseHandle() as the deleter
-//
-struct HandleCloser
-{
-  using pointer = HANDLE;
-
-  void operator()(HANDLE h)
-  {
-    if (h != INVALID_HANDLE_VALUE) {
-      ::CloseHandle(h);
-    }
-  }
-};
-
-using HandlePtr = std::unique_ptr<HANDLE, HandleCloser>;
-
-
 // used by DesktopDCPtr, calls ReleaseDC(0, dc) as the deleter
 //
 struct DesktopDCReleaser

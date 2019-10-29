@@ -27,7 +27,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDir>
 
 class Settings;
-class ILockedWaitingForProcess;
 
 namespace MOBase { class IPluginGame; }
 
@@ -130,15 +129,15 @@ enum class WaitResults
 {
   Completed = 1,
   Error,
-  Unlocked
+  Cancelled
 };
 
 WaitResults waitForProcess(
-  HANDLE handle, DWORD* exitCode, ILockedWaitingForProcess* uilock);
+  HANDLE handle, DWORD* exitCode, std::function<bool ()> progress);
 
 WaitResults waitForProcesses(
   const std::vector<HANDLE>& handles, std::vector<DWORD>& exitCodes,
-  ILockedWaitingForProcess* uilock);
+  std::function<bool ()> progress);
 
 } // namespace
 

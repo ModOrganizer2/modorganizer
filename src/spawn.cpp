@@ -1095,32 +1095,25 @@ FileExecutionContext getFileExecutionContext(
 }
 
 WaitResults waitForProcess(
-  HANDLE handle, DWORD* exitCode, ILockedWaitingForProcess* uilock)
+  HANDLE handle, DWORD* exitCode, std::function<bool ()> progress)
 {
   if (handle == INVALID_HANDLE_VALUE) {
     return WaitResults::Error;
   }
 
-  const DWORD pid = ::GetProcessId(handle);
-  const QString processName = QString("%1 (%2)")
-    .arg(env::getProcessName(handle))
-    .arg(pid);
-
-  if (uilock)
-    uilock->setProcessName(processName);
-
-  log::debug(
-    "waiting for process completion '{}' ({})",
-    processName, pid);
+  log::debug("waiting for completion on pid {}", ::GetProcessId(handle));
 
   std::vector<HANDLE> handles;
   handles.push_back(handle);
 
   std::vector<DWORD> exitCodes;
 
-  const auto r = waitForProcesses(handles, exitCodes, uilock);
-  if (exitCode && !exitCodes.empty()) {
-    *exitCode = exitCodes[0];
+  const auto r = waitForProcesses(handles, exitCodes, progress);
+
+  if (r == WaitResults::Completed) {
+    if (exitCode && !exitCodes.empty()) {
+      *exitCode = exitCodes[0];
+    }
   }
 
   return r;
@@ -1128,7 +1121,7 @@ WaitResults waitForProcess(
 
 WaitResults waitForProcesses(
   const std::vector<HANDLE>& handles, std::vector<DWORD>& exitCodes,
-  ILockedWaitingForProcess* uilock)
+  std::function<bool ()> progress)
 {
   if (handles.empty()) {
     return WaitResults::Completed;
@@ -1175,8 +1168,8 @@ WaitResults waitForProcesses(
     QCoreApplication::sendPostedEvents();
     QCoreApplication::processEvents();
 
-    if (uilock && uilock->unlockForced()) {
-      return WaitResults::Unlocked;
+    if (progress && progress()) {
+      return WaitResults::Cancelled;
     }
   }
 }

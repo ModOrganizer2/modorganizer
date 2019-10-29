@@ -30,7 +30,7 @@ class QWidget;
 /**
  * a small borderless dialog displayed while the Mod Organizer UI is locked
  * The dialog contains only a label and a button to force the UI to be unlocked
- * 
+ *
  * The UI gets locked while running external applications since they may modify the
  * data on which Mod Organizer works. After the UI is unlocked (manually or after the
  * external application closed) MO will refresh all of its data sources
@@ -45,6 +45,8 @@ public:
   bool unlockForced() const override;
 
   virtual bool canceled() const;
+
+  void setProcessInformation(DWORD pid, const QString& name) override;
 
 protected:
 

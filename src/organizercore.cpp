@@ -34,6 +34,7 @@
 #include "instancemanager.h"
 #include <scriptextender.h>
 #include "previewdialog.h"
+#include "env.h"
 #include "envmodule.h"
 
 #include <QApplication>
@@ -83,6 +84,45 @@ QStringList toStringList(InputIterator current, InputIterator end)
     result.append(*current);
   }
   return result;
+}
+
+env::Process* getInterestingProcess(std::vector<env::Process>& processes)
+{
+  if (processes.empty()) {
+    return nullptr;
+  }
+
+  // Certain process names we wish to "hide" for aesthetic reason:
+  const std::vector<QString> hiddenList = {
+    QFileInfo(QCoreApplication::applicationFilePath()).fileName()
+  };
+
+  auto isHidden = [&](auto&& p) {
+    for (auto h : hiddenList) {
+      if (p.name().contains(h, Qt::CaseInsensitive)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+
+  for (auto&& root : processes) {
+    if (!isHidden(root)) {
+      return &root;
+    }
+
+    for (auto&& child : root.children()) {
+      if (!isHidden(child)) {
+        return &child;
+      }
+    }
+  }
+
+
+  // everything is hidden, just pick the first one
+  return &processes[0];
 }
 
 
@@ -1367,12 +1407,31 @@ bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)
 bool OrganizerCore::waitForProcessCompletion(
   HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock)
 {
-  const auto r = spawn::waitForProcess(handle, exitCode, uilock);
+  const auto tree = env::getProcessTree(handle);
+  std::vector<env::Process> processes = {tree};
+
+  const auto* interesting = getInterestingProcess(processes);
+  if (!interesting) {
+    return true;
+  }
+
+  if (uilock) {
+    uilock->setProcessInformation(interesting->pid(), interesting->name());
+  }
+
+  auto interestingHandle = interesting->openHandleForWait();
+  if (!interestingHandle) {
+    return true;
+  }
+
+  auto progress = [&]{ return uilock->unlockForced(); };
+  const auto r = spawn::waitForProcess(
+    interestingHandle.get(), exitCode, progress);
 
   switch (r)
   {
     case spawn::WaitResults::Completed:  // fall-through
-    case spawn::WaitResults::Unlocked:
+    case spawn::WaitResults::Cancelled:
       return true;
 
     case spawn::WaitResults::Error:  // fall-through
@@ -1395,60 +1454,39 @@ bool OrganizerCore::waitForAllUSVFSProcessesWithLock()
   return r;
 }
 
-HANDLE getInterestingProcess(
-  const std::vector<HANDLE>& handles,
-  const std::vector<QString>& hidden, DWORD preferedParentPid)
-{
-  HANDLE best_match = INVALID_HANDLE_VALUE;
-  bool best_match_hidden = true;
-
-  for (auto handle : handles) {
-    const QString pname = env::getProcessName(handle);
-
-    bool phidden = false;
-    for (auto h : hidden)
-      if (pname.contains(h, Qt::CaseInsensitive))
-        phidden = true;
-
-    bool pprefered = preferedParentPid && env::getProcessParentID(handle) == preferedParentPid;
-
-    if (best_match == INVALID_HANDLE_VALUE || best_match_hidden || (!phidden && pprefered)) {
-      best_match = handle;
-      best_match_hidden = phidden;
-    }
-
-    if (!phidden && pprefered)
-      return best_match;
-  }
-
-  return best_match;
-}
-
 bool OrganizerCore::waitForAllUSVFSProcesses(ILockedWaitingForProcess* uilock)
 {
-  // Certain process names we wish to "hide" for aesthetic reason:
-  std::vector<QString> hiddenList;
-  hiddenList.push_back(QFileInfo(QCoreApplication::applicationFilePath()).fileName());
-
   for (;;) {
     const auto handles = getRunningUSVFSProcesses();
     if (handles.empty()) {
       break;
     }
 
-    const auto interesting = getInterestingProcess(
-      handles, hiddenList, GetCurrentProcessId());
-
-    if (uilock) {
-      const DWORD pid = ::GetProcessId(interesting);
-      const QString processName = QString("%1 (%2)")
-        .arg(env::getProcessName(interesting))
-        .arg(pid);
-
-      uilock->setProcessName(processName);
+    std::vector<env::Process> processes;
+    for (auto&& h : handles) {
+      auto p = env::getProcessTree(h);
+      if (p.isValid()) {
+        processes.emplace_back(std::move(p));
+      }
     }
 
-    const auto r = spawn::waitForProcess(interesting, nullptr, uilock);
+    const auto* interesting = getInterestingProcess(processes);
+    if (!interesting) {
+      break;
+    }
+
+    if (uilock) {
+      uilock->setProcessInformation(interesting->pid(), interesting->name());
+    }
+
+    auto interestingHandle = interesting->openHandleForWait();
+    if (!interestingHandle) {
+      break;
+    }
+
+    auto progress = [&]{ return uilock->unlockForced(); };
+    const auto r = spawn::waitForProcess(
+      interestingHandle.get(), nullptr, progress);
 
     switch (r)
     {
@@ -1456,7 +1494,7 @@ bool OrganizerCore::waitForAllUSVFSProcesses(ILockedWaitingForProcess* uilock)
         // this process is completed, check for others
         break;
 
-      case spawn::WaitResults::Unlocked:
+      case spawn::WaitResults::Cancelled:
         // force unlocked
         log::debug("waiting for process completion aborted by UI");
         return true;
@@ -1468,7 +1506,7 @@ bool OrganizerCore::waitForAllUSVFSProcesses(ILockedWaitingForProcess* uilock)
     }
   }
 
-  log::debug("Waiting for process completion successful");
+  log::debug("waiting for process completion successful");
   return true;
 }
 
