@@ -12,38 +12,27 @@ enum class WaitResults
 {
   Completed = 1,
   Error,
-  Cancelled
+  Cancelled,
+  StillRunning
 };
 
 
-WaitResults waitForProcess(
-  HANDLE handle, DWORD* exitCode, std::function<bool ()> progress)
+WaitResults singleWait(HANDLE handle, DWORD* exitCode)
 {
   if (handle == INVALID_HANDLE_VALUE) {
     return WaitResults::Error;
   }
 
-  log::debug("waiting for completion on pid {}", ::GetProcessId(handle));
+  const DWORD WAIT_EVENT = WAIT_OBJECT_0 + 1;
 
-  std::vector<HANDLE> handles;
-  handles.push_back(handle);
+  // Wait for a an event on the handle, a key press, mouse click or timeout
+  const auto res = MsgWaitForMultipleObjects(
+    1, &handle, FALSE, 50, QS_KEY | QS_MOUSEBUTTON);
 
-  std::vector<DWORD> exitCodes;
-
-  for (;;) {
-    // Wait for a an event on the handle, a key press, mouse click or timeout
-    const auto res = MsgWaitForMultipleObjects(
-      1, &handle, FALSE, 50, QS_KEY | QS_MOUSEBUTTON);
-
-    if (res == WAIT_FAILED) {
-      // error
-      const auto e = ::GetLastError();
-
-      log::error(
-        "failed waiting for process completion, {}", formatSystemMessage(e));
-
-      return WaitResults::Error;
-    } else if (res == WAIT_OBJECT_0) {
+  switch (res)
+  {
+    case WAIT_OBJECT_0:
+    {
       // completed
       if (exitCode) {
         if (!::GetExitCodeProcess(handle, exitCode)) {
@@ -57,20 +46,55 @@ WaitResults waitForProcess(
       return WaitResults::Completed;
     }
 
-    // keep processing events so the app doesn't appear dead
-    QCoreApplication::sendPostedEvents();
-    QCoreApplication::processEvents();
+    case WAIT_TIMEOUT:
+    case WAIT_EVENT:
+    {
+      return WaitResults::StillRunning;
+    }
 
-    if (progress && progress()) {
-      return WaitResults::Cancelled;
+    case WAIT_FAILED:  // fall-through
+    default:
+    {
+      // error
+      const auto e = ::GetLastError();
+
+      log::error(
+        "failed waiting for process completion, {}", formatSystemMessage(e));
+
+      return WaitResults::Error;
     }
   }
 }
 
-env::Process* getInterestingProcess(std::vector<env::Process>& processes)
+enum class Interest
+{
+  None = 0,
+  Weak,
+  Strong
+};
+
+QString toString(Interest i)
+{
+  switch (i)
+  {
+    case Interest::Weak:
+      return "weak";
+
+    case Interest::Strong:
+      return "strong";
+
+    case Interest::None:  // fall-through
+    default:
+      return "no";
+  }
+}
+
+
+std::pair<env::Process, Interest> findInterestingProcessInTrees(
+  std::vector<env::Process>& processes)
 {
   if (processes.empty()) {
-    return nullptr;
+    return {{}, Interest::None};
   }
 
   // Certain process names we wish to "hide" for aesthetic reason:
@@ -91,40 +115,132 @@ env::Process* getInterestingProcess(std::vector<env::Process>& processes)
 
   for (auto&& root : processes) {
     if (!isHidden(root)) {
-      return &root;
+      return {root, Interest::Strong};
     }
 
     for (auto&& child : root.children()) {
       if (!isHidden(child)) {
-        return &child;
+        return {child, Interest::Strong};
       }
     }
   }
 
   // everything is hidden, just pick the first one
-  return &processes[0];
+  return {processes[0], Interest::Weak};
+}
+
+std::pair<env::Process, Interest> getInterestingProcess(
+  const std::vector<HANDLE>& initialProcesses)
+{
+  std::vector<env::Process> processes;
+
+  log::debug("getting process tree for {} processes", initialProcesses.size());
+  for (auto&& h : initialProcesses) {
+    auto tree = env::getProcessTree(h);
+    if (tree.isValid()) {
+      processes.push_back(tree);
+    }
+  }
+
+  if (processes.empty()) {
+    log::debug("nothing to wait for");
+    return {{}, Interest::None};
+  }
+
+  const auto interest = findInterestingProcessInTrees(processes);
+  if (!interest.first.isValid()) {
+    log::debug("no interesting process to wait for");
+    return {{}, Interest::None};
+  }
+
+  return interest;
+}
+
+const std::chrono::milliseconds Infinite(-1);
+
+WaitResults timedWait(
+  HANDLE handle, DWORD* exitCode, ILockedWaitingForProcess* uilock,
+  std::chrono::milliseconds wait)
+{
+  using namespace std::chrono;
+
+  high_resolution_clock::time_point start;
+  if (wait != Infinite) {
+    start = high_resolution_clock::now();
+  }
+
+  for (;;) {
+    const auto r = singleWait(handle, exitCode);
+
+    if (r != WaitResults::StillRunning) {
+      return r;
+    }
+
+    // keep processing events so the app doesn't appear dead
+    QCoreApplication::sendPostedEvents();
+    QCoreApplication::processEvents();
+
+    if (uilock && uilock->unlockForced()) {
+      return WaitResults::Cancelled;
+    }
+
+    if (wait != Infinite) {
+      const auto now = high_resolution_clock::now();
+      if (duration_cast<milliseconds>(now - start) >= wait) {
+        return WaitResults::StillRunning;
+      }
+    }
+  }
 }
 
 WaitResults waitForProcesses(
-  std::vector<env::Process>& processes,
+  const std::vector<HANDLE>& initialProcesses,
   LPDWORD exitCode, ILockedWaitingForProcess* uilock)
 {
-  const auto* interesting = getInterestingProcess(processes);
-  if (!interesting) {
-    return WaitResults::Error;
+  using namespace std::chrono;
+
+  if (initialProcesses.empty()) {
+    return WaitResults::Completed;
   }
 
-  if (uilock) {
-    uilock->setProcessInformation(interesting->pid(), interesting->name());
-  }
+  DWORD currentPID = 0;
+  milliseconds wait(50);
 
-  auto interestingHandle = interesting->openHandleForWait();
-  if (!interestingHandle) {
-    return WaitResults::Error;
-  }
+  for (;;) {
+    auto [p, interest] = getInterestingProcess(initialProcesses);
 
-  auto progress = [&]{ return uilock->unlockForced(); };
-  return waitForProcess(interestingHandle.get(), exitCode, progress);
+    if (uilock) {
+      uilock->setProcessInformation(p.pid(), p.name());
+    }
+
+    auto interestingHandle = p.openHandleForWait();
+    if (!interestingHandle) {
+      return WaitResults::Error;
+    }
+
+    if (p.pid() != currentPID) {
+      currentPID = p.pid();
+
+      log::debug(
+        "waiting for completion on {} ({}), {} interest",
+        p.name(), p.pid(), toString(interest));
+    }
+
+    if (interest == Interest::Strong) {
+      wait = Infinite;
+    }
+
+    const auto r = timedWait(interestingHandle.get(), exitCode, uilock, wait);
+    if (r != WaitResults::StillRunning) {
+      return r;
+    }
+
+    wait = std::min(wait * 2, milliseconds(2000));
+
+    log::debug(
+      "looking for a more interesting process (next check in {}ms)",
+      wait.count());
+  }
 }
 
 
@@ -528,10 +644,9 @@ bool ProcessRunner::waitForApplication(HANDLE handle, LPDWORD exitCode)
 bool ProcessRunner::waitForProcessCompletion(
   HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock)
 {
-  const auto tree = env::getProcessTree(handle);
-  std::vector<env::Process> processes = {tree};
-
+  std::vector<HANDLE> processes = {handle};
   const auto r = waitForProcesses(processes, exitCode, uilock);
+
   return (r != WaitResults::Error);
 }
 
@@ -552,17 +667,9 @@ bool ProcessRunner::waitForAllUSVFSProcessesWithLock()
 bool ProcessRunner::waitForAllUSVFSProcesses(ILockedWaitingForProcess* uilock)
 {
   for (;;) {
-    const auto handles = getRunningUSVFSProcesses();
-    if (handles.empty()) {
+    const auto processes = getRunningUSVFSProcesses();
+    if (processes.empty()) {
       break;
-    }
-
-    std::vector<env::Process> processes;
-    for (auto&& h : handles) {
-      auto p = env::getProcessTree(h);
-      if (p.isValid()) {
-        processes.emplace_back(std::move(p));
-      }
     }
 
     const auto r = waitForProcesses(processes, nullptr, uilock);
