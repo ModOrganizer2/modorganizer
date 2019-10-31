@@ -527,7 +527,11 @@ void ConflictsTab::openItems(QTreeView* tree)
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
   for_each_in_selection(tree, [&](const ConflictItem* item) {
-    core().processRunner().runFile(parentWidget(), item->fileName());
+    core().processRunner()
+      .setFromFile(parentWidget(), item->fileName())
+      .setWaitForCompletion(ProcessRunner::NoRefresh)
+      .run();
+
     return true;
   });
 }

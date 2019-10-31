@@ -5422,7 +5422,11 @@ void MainWindow::openDataFile()
 
   const QString path = m_ContextItem->data(0, Qt::UserRole).toString();
   const QFileInfo targetInfo(path);
-  m_OrganizerCore.processRunner().runFile(this, targetInfo);
+
+  m_OrganizerCore.processRunner()
+    .setFromFile(this, targetInfo)
+    .setWaitForCompletion(ProcessRunner::NoRefresh)
+    .run();
 }
 
 void MainWindow::openDataOriginExplorer_clicked()

@@ -44,6 +44,12 @@ public:
     ForceUnlocked
   };
 
+  enum RefreshModes
+  {
+    NoRefresh = 1,
+    Refresh
+  };
+
   using ForcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>;
 
   ProcessRunner(OrganizerCore& core, IUserInterface* ui);
@@ -55,7 +61,8 @@ public:
   ProcessRunner& setCustomOverwrite(const QString& customOverwrite);
   ProcessRunner& setForcedLibraries(const ForcedLibraries& forcedLibraries);
   ProcessRunner& setProfileName(const QString& profileName);
-  ProcessRunner& setWaitForCompletion(LockWidget::Reasons reason, bool refresh);
+  ProcessRunner& setWaitForCompletion(
+    RefreshModes refresh, LockWidget::Reasons reason=LockWidget::LockUI);
 
   ProcessRunner& setFromFile(QWidget* parent, const QFileInfo& targetInfo);
   ProcessRunner& setFromExecutable(const Executable& exe);
@@ -72,8 +79,6 @@ public:
   Results run();
   DWORD exitCode();
 
-
-  bool runFile(QWidget* parent, const QFileInfo& targetInfo);
 
   bool runExecutableFile(
     const QFileInfo &binary, const QString &arguments,
@@ -108,7 +113,7 @@ private:
   ForcedLibraries m_forcedLibraries;
   QString m_profileName;
   LockWidget::Reasons m_lock;
-  bool m_refresh;
+  RefreshModes m_refresh;
   QString m_shellOpen;
   HANDLE m_handle;
   DWORD m_exitCode;

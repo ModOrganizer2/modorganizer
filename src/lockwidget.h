@@ -55,7 +55,7 @@ private:
   QLabel* m_info;
   Results m_result;
   std::unique_ptr<Filter> m_filter;
-  std::vector<QWidget*> m_disabled;
+  std::vector<QPointer<QWidget>> m_disabled;
 
   void createUi(Reasons reason);
 

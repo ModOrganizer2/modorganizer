@@ -59,17 +59,22 @@ LockWidget::Results LockWidget::result() const
 
 void LockWidget::createUi(Reasons reason)
 {
-  if (m_parent) {
-    m_overlay.reset(createTransparentWidget(m_parent));
+  QWidget* overlayTarget = m_parent;
+  if (auto* w = qApp->activeWindow()) {
+    overlayTarget = w;
+  }
+
+  if (overlayTarget) {
+    m_overlay.reset(createTransparentWidget(overlayTarget));
     m_overlay->setWindowFlags(m_overlay->windowFlags() & Qt::FramelessWindowHint);
-    m_overlay->setGeometry(m_parent->rect());
+    m_overlay->setGeometry(overlayTarget->rect());
   } else {
     m_overlay.reset(new QDialog);
   }
 
   auto* center = new QFrame;
 
-  if (m_parent) {
+  if (overlayTarget) {
     center->setFrameStyle(QFrame::StyledPanel);
     center->setLineWidth(1);
     center->setAutoFillBackground(true);
@@ -86,7 +91,7 @@ void LockWidget::createUi(Reasons reason)
 
   auto* ly = new QVBoxLayout(center);
 
-  if (!m_parent) {
+  if (!overlayTarget) {
     ly->setContentsMargins(0, 0, 0, 0);
   }
 
@@ -115,7 +120,7 @@ void LockWidget::createUi(Reasons reason)
     case OutputRequired:
     {
       message->setText(QObject::tr(
-        "The executable must run to completion because a its output is "
+        "The executable must run to completion because its output is "
         "required."));
 
       auto* unlockButton = new QPushButton(QObject::tr("Unlock"));
@@ -149,7 +154,7 @@ void LockWidget::createUi(Reasons reason)
   grid->addWidget(createTransparentWidget(), 1, 2);
   grid->addWidget(center, 1, 1);
 
-  if (!m_parent) {
+  if (!overlayTarget) {
     grid->setContentsMargins(0, 0, 0, 0);
   }
 
@@ -160,10 +165,10 @@ void LockWidget::createUi(Reasons reason)
 
   disableAll();
 
-  if (m_parent) {
+  if (overlayTarget) {
     m_filter.reset(new Filter);
-    m_filter->resized = [=]{ m_overlay->setGeometry(m_parent->rect()); };
-    m_parent->installEventFilter(m_filter.get());
+    m_filter->resized = [=]{ m_overlay->setGeometry(overlayTarget->rect()); };
+    overlayTarget->installEventFilter(m_filter.get());
   }
 
   m_overlay->setFocusPolicy(Qt::TabFocus);
@@ -184,32 +189,48 @@ void LockWidget::onCancel()
   unlock();
 }
 
+template <class T>
+QList<T> findChildrenImmediate(QWidget* parent)
+{
+  return parent->findChildren<T>(QString(), Qt::FindDirectChildrenOnly);
+}
+
 void LockWidget::disableAll()
 {
-  if (!m_parent) {
-    // nothing to disable without a main window
-    return;
-  }
+  const auto topLevels = QApplication::topLevelWidgets();
 
-  if (auto* mw=dynamic_cast<QMainWindow*>(m_parent)) {
-    disable(mw->centralWidget());
-    disable(mw->menuBar());
-    disable(mw->statusBar());
-  }
+  for (auto* w : topLevels) {
+    if (auto* mw=dynamic_cast<QMainWindow*>(w)) {
+      disable(mw->centralWidget());
+      disable(mw->menuBar());
+      disable(mw->statusBar());
 
-  for (auto* tb : m_parent->findChildren<QToolBar*>()) {
-    disable(tb);
-  }
+      for (auto* tb : findChildrenImmediate<QToolBar*>(w)) {
+        disable(tb);
+      }
 
-  for (auto* d : m_parent->findChildren<QDockWidget*>()) {
-    disable(d);
+      for (auto* d : findChildrenImmediate<QDockWidget*>(w)) {
+        disable(d);
+      }
+    }
+
+    if (auto* d=dynamic_cast<QDialog*>(w)) {
+      // no central widget, just disable the children, except for the overlay
+      for (auto* child : findChildrenImmediate<QWidget*>(d)) {
+        if (child != m_overlay.get()) {
+          disable(child);
+        }
+      }
+    }
   }
 }
 
 void LockWidget::enableAll()
 {
-  for (auto* w : m_disabled) {
-    w->setEnabled(true);
+  for (auto w : m_disabled) {
+    if (w) {
+      w->setEnabled(true);
+    }
   }
 
   m_disabled.clear();

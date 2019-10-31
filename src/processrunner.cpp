@@ -368,7 +368,7 @@ void SpawnedProcess::destroy()
 
 
 ProcessRunner::ProcessRunner(OrganizerCore& core, IUserInterface* ui) :
-  m_core(core), m_ui(ui), m_lock(LockWidget::NoReason), m_refresh(false),
+  m_core(core), m_ui(ui), m_lock(LockWidget::NoReason), m_refresh(NoRefresh),
   m_handle(INVALID_HANDLE_VALUE), m_exitCode(-1)
 {
   m_sp.hooked = true;
@@ -417,10 +417,10 @@ ProcessRunner& ProcessRunner::setProfileName(const QString& profileName)
 }
 
 ProcessRunner& ProcessRunner::setWaitForCompletion(
-  LockWidget::Reasons reason, bool refresh)
+  RefreshModes refresh, LockWidget::Reasons reason)
 {
-  m_lock = reason;
   m_refresh = refresh;
+  m_lock = reason;
   return *this;
 }
 
@@ -655,7 +655,7 @@ ProcessRunner::Results ProcessRunner::run()
     const auto r = waitForProcessCompletionWithLock(
       m_handle, &m_exitCode, m_lock);
 
-    if (r == Completed && m_refresh) {
+    if (r == Completed && m_refresh == Refresh) {
       m_core.afterRun(m_sp.binary, m_exitCode);
     }
 
@@ -668,15 +668,6 @@ DWORD ProcessRunner::exitCode()
   return m_exitCode;
 }
 
-
-bool ProcessRunner::runFile(QWidget* parent, const QFileInfo& targetInfo)
-{
-  setFromFile(parent, targetInfo);
-  setWaitForCompletion(LockWidget::LockUI, true);
-
-  const auto r = run();
-  return (r != Error);
-}
 
 bool ProcessRunner::runExecutableFile(
   const QFileInfo &binary, const QString &arguments,
@@ -691,7 +682,7 @@ bool ProcessRunner::runExecutableFile(
   setSteamID(steamAppID);
   setCustomOverwrite(customOverwrite);
   setForcedLibraries(forcedLibraries);
-  setWaitForCompletion(LockWidget::LockUI, refresh);
+  setWaitForCompletion(refresh ? Refresh : NoRefresh);
 
   const auto r = run();
   return (r != Error);
@@ -700,7 +691,7 @@ bool ProcessRunner::runExecutableFile(
 bool ProcessRunner::runExecutable(const Executable& exe, bool refresh)
 {
   setFromExecutable(exe);
-  setWaitForCompletion(LockWidget::LockUI, refresh);
+  setWaitForCompletion(refresh ? Refresh : NoRefresh);
 
   const auto r = run();
   return (r != Error);
@@ -709,7 +700,7 @@ bool ProcessRunner::runExecutable(const Executable& exe, bool refresh)
 bool ProcessRunner::runShortcut(const MOShortcut& shortcut)
 {
   setFromShortcut(shortcut);
-  setWaitForCompletion(LockWidget::LockUI, false);
+  setWaitForCompletion(NoRefresh);
 
   const auto r = run();
   return (r != Error);
@@ -724,7 +715,7 @@ HANDLE ProcessRunner::runExecutableOrExecutableFile(
     executable, args, cwd, profileOverride, forcedCustomOverwrite,
     ignoreCustomOverwrite);
 
-  setWaitForCompletion(LockWidget::LockUI, true);
+  setWaitForCompletion(Refresh);
 
   run();
   return m_handle;
