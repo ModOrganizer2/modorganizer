@@ -176,6 +176,7 @@ void LockWidget::createUi(Reasons reason)
   if (overlayTarget) {
     m_filter.reset(new Filter);
     m_filter->resized = [=]{ m_overlay->setGeometry(overlayTarget->rect()); };
+    m_filter->closed = [=]{ onForceUnlock(); };
     overlayTarget->installEventFilter(m_filter.get());
   }
 

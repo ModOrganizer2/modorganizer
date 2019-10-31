@@ -11,28 +11,9 @@ class IUserInterface;
 class Executable;
 class MOShortcut;
 
-class SpawnedProcess
-{
-public:
-  SpawnedProcess(HANDLE handle, spawn::SpawnParameters sp);
-
-  SpawnedProcess(const SpawnedProcess&) = delete;
-  SpawnedProcess& operator=(const SpawnedProcess&) = delete;
-  SpawnedProcess(SpawnedProcess&& other);
-  SpawnedProcess& operator=(SpawnedProcess&& other);
-  ~SpawnedProcess();
-
-  HANDLE releaseHandle();
-  void wait();
-
-private:
-  HANDLE m_handle;
-  spawn::SpawnParameters m_parameters;
-
-  void destroy();
-};
-
-
+// handles spawning a process and waiting for it, including setting up the lock
+// widget if required
+//
 class ProcessRunner
 {
 public:

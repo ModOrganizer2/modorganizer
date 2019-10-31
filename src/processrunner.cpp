@@ -320,53 +320,6 @@ ProcessRunner::Results waitForProcess(
 }
 
 
-
-SpawnedProcess::SpawnedProcess(HANDLE handle, spawn::SpawnParameters sp)
-  : m_handle(handle), m_parameters(std::move(sp))
-{
-}
-
-SpawnedProcess::SpawnedProcess(SpawnedProcess&& other)
-  : m_handle(other.m_handle), m_parameters(std::move(other.m_parameters))
-{
-  other.m_handle = INVALID_HANDLE_VALUE;
-}
-
-SpawnedProcess& SpawnedProcess::operator=(SpawnedProcess&& other)
-{
-  if (this != &other) {
-    destroy();
-
-    m_handle = other.m_handle;
-    other.m_handle = INVALID_HANDLE_VALUE;
-
-    m_parameters = std::move(other.m_parameters);
-  }
-
-  return *this;
-}
-
-SpawnedProcess::~SpawnedProcess()
-{
-  destroy();
-}
-
-HANDLE SpawnedProcess::releaseHandle()
-{
-  const auto h = m_handle;
-  m_handle = INVALID_HANDLE_VALUE;
-  return h;
-}
-
-void SpawnedProcess::destroy()
-{
-  if (m_handle != INVALID_HANDLE_VALUE) {
-    ::CloseHandle(m_handle);
-    m_handle = INVALID_HANDLE_VALUE;
-  }
-}
-
-
 ProcessRunner::ProcessRunner(OrganizerCore& core, IUserInterface* ui) :
   m_core(core), m_ui(ui), m_lockReason(LockWidget::NoReason),
   m_waitFlags(NoFlags), m_handle(INVALID_HANDLE_VALUE), m_exitCode(-1)

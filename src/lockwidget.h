@@ -35,6 +35,7 @@ private:
   {
   public:
     std::function<void ()> resized;
+    std::function<void ()> closed;
 
   protected:
     bool eventFilter(QObject* o, QEvent* e) override
@@ -42,6 +43,10 @@ private:
       if (e->type() == QEvent::Resize) {
         if (resized) {
           resized();
+        }
+      } else if (e->type() == QEvent::Close) {
+        if (closed) {
+          closed();
         }
       }
 
