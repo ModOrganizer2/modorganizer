@@ -82,9 +82,6 @@ SET(organizer_SRCS
     main.cpp
     loghighlighter.cpp
     loglist.cpp
-    lockeddialogbase.cpp
-    lockeddialog.cpp
-    waitingonclosedialog.cpp
     loadmechanism.cpp
     installationmanager.cpp
     filedialogmemory.cpp
@@ -206,9 +203,6 @@ SET(organizer_HDRS
     mainwindow.h
     loghighlighter.h
     loglist.h
-    lockeddialogbase.h
-    lockeddialog.h
-    waitingonclosedialog.h
     loadmechanism.h
     installationmanager.h
     filedialogmemory.h
@@ -246,7 +240,6 @@ SET(organizer_HDRS
     viewmarkingscrollbar.h
     plugincontainer.h
     organizercore.h
-    ilockedwaitingforprocess.h
     iuserinterface.h
     instancemanager.h
     usvfsconnector.h
@@ -293,8 +286,6 @@ SET(organizer_UIS
     modinfodialog.ui
     messagedialog.ui
     mainwindow.ui
-    lockeddialog.ui
-    waitingonclosedialog.ui
     editexecutablesdialog.ui
     credentialsdialog.ui
     categoriesdialog.ui
@@ -397,12 +388,6 @@ set(executables
 	editexecutablesdialog
 )
 
-set(locking
-	ilockedwaitingforprocess
-	lockeddialog
-	lockeddialogbase
-)
-
 set(modinfo
 	modinfo
 	modinfobackup
@@ -500,7 +485,7 @@ set(widgets
 )
 
 set(src_filters
-	application core browser dialogs downloads env executables locking modinfo
+	application core browser dialogs downloads env executables modinfo
 	modinfo\\dialog modlist plugins previews profiles settings settingsdialog
 	utilities widgets
 )

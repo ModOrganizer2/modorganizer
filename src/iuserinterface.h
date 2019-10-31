@@ -3,7 +3,6 @@
 
 
 #include "modinfodialogfwd.h"
-#include "ilockedwaitingforprocess.h"
 #include "lockwidget.h"
 #include <iplugintool.h>
 #include <ipluginmodpage.h>

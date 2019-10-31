@@ -27,8 +27,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "envmodule.h"
 #include "settings.h"
 #include "settingsdialogworkarounds.h"
-#include <iplugingame.h>
-#include <ilockedwaitingforprocess.h>
 #include <errorcodes.h>
 #include <report.h>
 #include <log.h>
@@ -645,6 +643,7 @@ bool startSteam(QWidget* parent)
 
   HANDLE ph = INVALID_HANDLE_VALUE;
   const auto e = spawn(sp, ph);
+  ::CloseHandle(ph);
 
   if (e != ERROR_SUCCESS) {
     // make sure username and passwords are not shown

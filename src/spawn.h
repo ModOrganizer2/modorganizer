@@ -28,8 +28,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 class Settings;
 
-namespace MOBase { class IPluginGame; }
-
 namespace spawn
 {
 

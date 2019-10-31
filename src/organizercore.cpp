@@ -29,7 +29,6 @@
 #include "appconfig.h"
 #include <report.h>
 #include <questionboxmemory.h>
-#include "lockeddialog.h"
 #include "instancemanager.h"
 #include <scriptextender.h>
 #include "previewdialog.h"
