@@ -108,17 +108,37 @@ QString OrganizerProxy::pluginDataPath() const
 }
 
 HANDLE OrganizerProxy::startApplication(
-  const QString &executable, const QStringList &args, const QString &cwd,
-  const QString &profile, const QString &forcedCustomOverwrite,
-  bool ignoreCustomOverwrite)
+  const QString& exe, const QStringList& args, const QString &cwd,
+  const QString& profile, const QString &overwrite, bool ignoreOverwrite)
 {
-  return m_Proxied->processRunner().runExecutableOrExecutableFile(
-    executable, args, cwd, profile,
-    forcedCustomOverwrite, ignoreCustomOverwrite);
+  log::debug(
+    "a plugin has requested to start an application:\n"
+    " . executable: '{}'\n"
+    " . args: '{}'\n"
+    " . cwd: '{}'\n"
+    " . profile: '{}'\n"
+    " . overwrite: '{}'\n"
+    " . ignore overwrite: {}",
+    exe, args.join(" "), cwd, profile, overwrite, ignoreOverwrite);
+
+  auto runner = m_Proxied->processRunner();
+
+  runner
+    .setFromFileOrExecutable(exe, args, cwd, profile, overwrite, ignoreOverwrite)
+    .setWaitForCompletion(ProcessRunner::Refresh)
+    .run();
+
+  return runner.processHandle();
 }
 
 bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
 {
+  const auto pid = ::GetProcessId(handle);
+
+  log::debug(
+    "a plugin wants to wait for an application to complete, pid {}{}",
+    pid, (pid == 0 ? "unknown (probably already completed)" : ""));
+
   const auto r = m_Proxied->processRunner().waitForApplication(
     handle, exitCode, LockWidget::OutputRequired);
 

@@ -183,6 +183,11 @@ void LockWidget::createUi(Reasons reason)
   m_overlay->setFocus();
   m_overlay->show();
   m_overlay->setEnabled(true);
+
+  if (!overlayTarget) {
+    m_overlay->raise();
+    m_overlay->activateWindow();
+  }
 }
 
 void LockWidget::onForceUnlock()

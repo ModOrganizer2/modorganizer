@@ -442,6 +442,25 @@ QMessageBox::StandardButton confirmBlacklisted(
 namespace spawn
 {
 
+void logSpawning(const SpawnParameters& sp, const QString& realCmd)
+{
+  log::debug(
+    "spawning binary:\n"
+    " . exe: '{}'\n"
+    " . args: '{}'\n"
+    " . cwd: '{}'\n"
+    " . steam id: '{}'\n"
+    " . hooked: {}\n"
+    " . stdout: {}\n"
+    " . stderr: {}\n"
+    " . real cmd: '{}'",
+    sp.binary.absoluteFilePath(), sp.arguments,
+    sp.currentDirectory.absolutePath(), sp.steamAppID, sp.hooked,
+    (sp.stdOut == INVALID_HANDLE_VALUE ? "no" : "yes"),
+    (sp.stdErr == INVALID_HANDLE_VALUE ? "no" : "yes"),
+    realCmd);
+}
+
 DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle)
 {
   BOOL inheritHandles = FALSE;
@@ -462,30 +481,35 @@ DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle)
     si.dwFlags |= STARTF_USESTDHANDLES;
   }
 
-  const auto bin = QDir::toNativeSeparators(sp.binary.absoluteFilePath()).toStdWString();
-  const auto cwd = QDir::toNativeSeparators(sp.currentDirectory.absolutePath()).toStdWString();
+  const auto bin = QDir::toNativeSeparators(sp.binary.absoluteFilePath());
+  const auto cwd = QDir::toNativeSeparators(sp.currentDirectory.absolutePath());
 
-  std::wstring commandLine = L"\"" + bin + L"\"";
-  if (sp.arguments[0] != L'\0') {
-    commandLine +=  L" " + sp.arguments.toStdWString();
+  QString commandLine = "\"" + bin + "\"";
+  if (!sp.arguments.isEmpty()) {
+    commandLine +=  " " + sp.arguments;
   }
 
-  QString moPath = QCoreApplication::applicationDirPath();
+  const QString moPath = QCoreApplication::applicationDirPath();
   const auto oldPath = env::addPath(QDir::toNativeSeparators(moPath));
 
   PROCESS_INFORMATION pi;
   BOOL success = FALSE;
 
+  logSpawning(sp, commandLine);
+
+  const auto wcommandLine = commandLine.toStdWString();
+  const auto wcwd = cwd.toStdWString();
+
   if (sp.hooked) {
     success = ::CreateProcessHooked(
-      nullptr, const_cast<wchar_t*>(commandLine.c_str()), nullptr, nullptr,
+      nullptr, const_cast<wchar_t*>(wcommandLine.c_str()), nullptr, nullptr,
       inheritHandles, CREATE_BREAKAWAY_FROM_JOB, nullptr,
-      cwd.c_str(), &si, &pi);
+      wcwd.c_str(), &si, &pi);
   } else {
     success = ::CreateProcess(
-      nullptr, const_cast<wchar_t*>(commandLine.c_str()), nullptr, nullptr,
+      nullptr, const_cast<wchar_t*>(wcommandLine.c_str()), nullptr, nullptr,
       inheritHandles, CREATE_BREAKAWAY_FROM_JOB, nullptr,
-      cwd.c_str(), &si, &pi);
+      wcwd.c_str(), &si, &pi);
   }
 
   const auto e = GetLastError();

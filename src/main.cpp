@@ -653,15 +653,21 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 		  else {
 			  QString exeName = arguments.at(1);
 			  log::debug("starting {} from command line", exeName);
+
 			  arguments.removeFirst(); // remove application name (ModOrganizer.exe)
 			  arguments.removeFirst(); // remove binary name
-			  // pass the remaining parameters to the binary
-			  try {
-				  organizer.processRunner().runExecutableOrExecutableFile(
-            exeName, arguments, QString(), QString());
+
+        try
+        {
+          // pass the remaining parameters to the binary
+          organizer.processRunner()
+            .setFromFileOrExecutable(exeName, arguments)
+            .setWaitForCompletion(ProcessRunner::NoRefresh)
+            .run();
 				  return 0;
 			  }
-			  catch (const std::exception &e) {
+			  catch (const std::exception &e)
+        {
 				  reportError(
 					  QObject::tr("failed to start application: %1").arg(e.what()));
 				  return 1;

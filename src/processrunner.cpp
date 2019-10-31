@@ -661,21 +661,11 @@ DWORD ProcessRunner::exitCode()
   return m_exitCode;
 }
 
-
-HANDLE ProcessRunner::runExecutableOrExecutableFile(
-  const QString& executable, const QStringList &args, const QString &cwd,
-  const QString& profileOverride, const QString &forcedCustomOverwrite,
-  bool ignoreCustomOverwrite)
+HANDLE ProcessRunner::processHandle()
 {
-  setFromFileOrExecutable(
-    executable, args, cwd, profileOverride, forcedCustomOverwrite,
-    ignoreCustomOverwrite);
-
-  setWaitForCompletion(Refresh);
-
-  run();
   return m_handle;
 }
+
 
 void ProcessRunner::withLock(
   LockWidget::Reasons reason, std::function<void (LockWidget&)> f)

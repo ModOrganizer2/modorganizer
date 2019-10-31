@@ -71,23 +71,14 @@ public:
   ProcessRunner& setFromFileOrExecutable(
     const QString &executable,
     const QStringList &args,
-    const QString &cwd,
-    const QString &profile,
-    const QString &forcedCustomOverwrite = "",
-    bool ignoreCustomOverwrite = false);
+    const QString &cwd={},
+    const QString &profile={},
+    const QString &forcedCustomOverwrite={},
+    bool ignoreCustomOverwrite=false);
 
   Results run();
   DWORD exitCode();
-
-
-  HANDLE runExecutableOrExecutableFile(
-    const QString &executable,
-    const QStringList &args,
-    const QString &cwd,
-    const QString &profile,
-    const QString &forcedCustomOverwrite = "",
-    bool ignoreCustomOverwrite = false);
-
+  HANDLE processHandle();
 
   Results waitForApplication(
     HANDLE processHandle, LPDWORD exitCode, LockWidget::Reasons reason);
