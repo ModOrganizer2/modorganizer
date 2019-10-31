@@ -632,7 +632,11 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 		  if (MOShortcut shortcut{ arguments.at(1) }) {
 			  if (shortcut.hasExecutable()) {
 				  try {
-					  organizer.processRunner().runShortcut(shortcut);
+					  organizer.processRunner()
+              .setFromShortcut(shortcut)
+              .setWaitForCompletion(ProcessRunner::NoRefresh)
+              .run();
+
 					  return 0;
 				  }
 				  catch (const std::exception &e) {

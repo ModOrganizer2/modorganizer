@@ -107,8 +107,16 @@ void LockWidget::createUi(Reasons reason)
   {
     case LockUI:
     {
-      message->setText(QObject::tr(
-        "Mod Organizer is locked while the executable is running."));
+      QString s;
+
+      if (!m_parent) {
+        s = QObject::tr("Mod Organizer is currently running an application.");
+      } else {
+        s = QObject::tr(
+          "Mod Organizer is locked while the application is running.");
+      }
+
+      message->setText(s);
 
       auto* unlockButton = new QPushButton(QObject::tr("Unlock"));
       QObject::connect(unlockButton, &QPushButton::clicked, [&]{ onForceUnlock(); });
@@ -120,7 +128,7 @@ void LockWidget::createUi(Reasons reason)
     case OutputRequired:
     {
       message->setText(QObject::tr(
-        "The executable must run to completion because its output is "
+        "The application must run to completion because its output is "
         "required."));
 
       auto* unlockButton = new QPushButton(QObject::tr("Unlock"));
@@ -133,7 +141,7 @@ void LockWidget::createUi(Reasons reason)
     case PreventExit:
     {
       message->setText(QObject::tr(
-        "Mod Organizer is waiting on processes to finish before exiting."));
+        "Mod Organizer is waiting on application to close before exiting."));
 
       auto* exit = new QPushButton(QObject::tr("Exit Now"));
       QObject::connect(exit, &QPushButton::clicked, [&]{ onForceUnlock(); });

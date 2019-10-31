@@ -662,15 +662,6 @@ DWORD ProcessRunner::exitCode()
 }
 
 
-bool ProcessRunner::runShortcut(const MOShortcut& shortcut)
-{
-  setFromShortcut(shortcut);
-  setWaitForCompletion(NoRefresh);
-
-  const auto r = run();
-  return (r != Error);
-}
-
 HANDLE ProcessRunner::runExecutableOrExecutableFile(
   const QString& executable, const QStringList &args, const QString &cwd,
   const QString& profileOverride, const QString &forcedCustomOverwrite,

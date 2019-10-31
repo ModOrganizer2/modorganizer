@@ -80,8 +80,6 @@ public:
   DWORD exitCode();
 
 
-  bool runShortcut(const MOShortcut& shortcut);
-
   HANDLE runExecutableOrExecutableFile(
     const QString &executable,
     const QStringList &args,
