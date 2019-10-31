@@ -4,11 +4,12 @@
 
 #include "modinfodialogfwd.h"
 #include "ilockedwaitingforprocess.h"
+#include "lockwidget.h"
 #include <iplugintool.h>
 #include <ipluginmodpage.h>
 #include <delayedfilewriter.h>
-
 #include <QMenu>
+
 
 class IUserInterface
 {
@@ -30,9 +31,6 @@ public:
   virtual void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives) = 0;
 
   virtual MOBase::DelayedFileWriterBase &archivesWriter() = 0;
-
-  virtual ILockedWaitingForProcess* lock() = 0;
-  virtual void unlock() = 0;
 
   virtual QWidget* qtWidget() = 0;
 };

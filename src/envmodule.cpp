@@ -545,7 +545,6 @@ Process getProcessTree(HANDLE parent)
   }
 
   if (root.pid() == 0) {
-    log::error("process {} is not running", parentPID);
     return {};
   }
 

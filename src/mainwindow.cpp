@@ -57,7 +57,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "downloadlistwidget.h"
 #include "messagedialog.h"
 #include "installationmanager.h"
-#include "lockeddialog.h"
 #include "waitingonclosedialog.h"
 #include "downloadlistsortproxy.h"
 #include "motddialog.h"
@@ -1311,9 +1310,10 @@ bool MainWindow::canExit()
     }
   }
 
-  m_exitAfterWait = true;
-  m_OrganizerCore.processRunner().waitForAllUSVFSProcessesWithLock();
-  if (!m_exitAfterWait) { // if operation cancelled
+  const auto r = m_OrganizerCore.processRunner()
+    .waitForAllUSVFSProcessesWithLock(LockWidget::PreventExit);
+
+  if (r == ProcessRunner::Cancelled) {
     return false;
   }
 
@@ -2256,42 +2256,6 @@ void MainWindow::storeSettings()
 
   s.widgets().saveIndex(ui->groupCombo);
   s.widgets().saveIndex(ui->executablesListBox);
-}
-
-ILockedWaitingForProcess* MainWindow::lock()
-{
-  if (m_LockDialog != nullptr) {
-    ++m_LockCount;
-    return m_LockDialog;
-  }
-  if (m_exitAfterWait)
-    m_LockDialog = new WaitingOnCloseDialog(this);
-  else
-    m_LockDialog = new LockedDialog(this, true);
-  m_LockDialog->setModal(true);
-  m_LockDialog->show();
-  setEnabled(false);
-  m_LockDialog->setEnabled(true); //What's the point otherwise?
-  ++m_LockCount;
-  return m_LockDialog;
-}
-
-void MainWindow::unlock()
-{
-  //If you come through here with a null lock pointer, it's a bug!
-  if (m_LockDialog == nullptr) {
-    log::debug("Unlocking main window when already unlocked");
-    return;
-  }
-  --m_LockCount;
-  if (m_LockCount == 0) {
-    if (m_exitAfterWait && m_LockDialog->canceled())
-      m_exitAfterWait = false;
-    m_LockDialog->hide();
-    m_LockDialog->deleteLater();
-    m_LockDialog = nullptr;
-    setEnabled(true);
-  }
 }
 
 QWidget* MainWindow::qtWidget()

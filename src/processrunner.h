@@ -2,10 +2,10 @@
 #define PROCESSRUNNER_H
 
 #include "spawn.h"
+#include "lockwidget.h"
 #include <executableinfo.h>
 
 class OrganizerCore;
-class ILockedWaitingForProcess;
 class IUserInterface;
 class Executable;
 class MOShortcut;
@@ -35,9 +35,43 @@ private:
 class ProcessRunner
 {
 public:
-  ProcessRunner(OrganizerCore& core);
+  enum Results
+  {
+    Running = 1,
+    Completed,
+    Error,
+    Cancelled,
+    ForceUnlocked
+  };
 
-  void setUserInterface(IUserInterface* ui);
+  using ForcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>;
+
+  ProcessRunner(OrganizerCore& core, IUserInterface* ui);
+
+  ProcessRunner& setBinary(const QFileInfo &binary);
+  ProcessRunner& setArguments(const QString& arguments);
+  ProcessRunner& setCurrentDirectory(const QDir& directory);
+  ProcessRunner& setSteamID(const QString& steamID);
+  ProcessRunner& setCustomOverwrite(const QString& customOverwrite);
+  ProcessRunner& setForcedLibraries(const ForcedLibraries& forcedLibraries);
+  ProcessRunner& setProfileName(const QString& profileName);
+  ProcessRunner& setWaitForCompletion(LockWidget::Reasons reason, bool refresh);
+
+  ProcessRunner& setFromFile(QWidget* parent, const QFileInfo& targetInfo);
+  ProcessRunner& setFromExecutable(const Executable& exe);
+  ProcessRunner& setFromShortcut(const MOShortcut& shortcut);
+
+  ProcessRunner& setFromFileOrExecutable(
+    const QString &executable,
+    const QStringList &args,
+    const QString &cwd,
+    const QString &profile,
+    const QString &forcedCustomOverwrite = "",
+    bool ignoreCustomOverwrite = false);
+
+  Results run();
+  DWORD exitCode();
+
 
   bool runFile(QWidget* parent, const QFileInfo& targetInfo);
 
@@ -53,17 +87,31 @@ public:
   bool runShortcut(const MOShortcut& shortcut);
 
   HANDLE runExecutableOrExecutableFile(
-    const QString &executable, const QStringList &args, const QString &cwd,
-    const QString &profile, const QString &forcedCustomOverwrite = "",
+    const QString &executable,
+    const QStringList &args,
+    const QString &cwd,
+    const QString &profile,
+    const QString &forcedCustomOverwrite = "",
     bool ignoreCustomOverwrite = false);
 
-  bool waitForApplication(HANDLE processHandle, LPDWORD exitCode = nullptr);
 
-  bool waitForAllUSVFSProcessesWithLock();
+  Results waitForApplication(
+    HANDLE processHandle, LPDWORD exitCode, LockWidget::Reasons reason);
+
+  Results waitForAllUSVFSProcessesWithLock(LockWidget::Reasons reason);
 
 private:
   OrganizerCore& m_core;
   IUserInterface* m_ui;
+  spawn::SpawnParameters m_sp;
+  QString m_customOverwrite;
+  ForcedLibraries m_forcedLibraries;
+  QString m_profileName;
+  LockWidget::Reasons m_lock;
+  bool m_refresh;
+  QString m_shellOpen;
+  HANDLE m_handle;
+  DWORD m_exitCode;
 
   HANDLE spawnAndWait(
     const QFileInfo &binary, const QString &arguments,
@@ -76,11 +124,13 @@ private:
 
   SpawnedProcess spawn(spawn::SpawnParameters sp);
 
-  void withLock(std::function<void (ILockedWaitingForProcess*)> f);
+  void withLock(
+    LockWidget::Reasons reason, std::function<void (LockWidget&)> f);
 
-  bool waitForProcessCompletionWithLock(HANDLE handle, LPDWORD exitCode);
+  Results waitForProcessCompletionWithLock(
+    HANDLE handle, LPDWORD exitCode, LockWidget::Reasons reason);
 
-  bool waitForAllUSVFSProcesses(ILockedWaitingForProcess* uilock);
+  Results waitForAllUSVFSProcesses(LockWidget& lock);
 };
 
 #endif // PROCESSRUNNER_H

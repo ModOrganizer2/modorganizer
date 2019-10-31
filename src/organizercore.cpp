@@ -91,7 +91,6 @@ OrganizerCore::OrganizerCore(Settings &settings)
   , m_PluginContainer(nullptr)
   , m_GameName()
   , m_CurrentProfile(nullptr)
-  , m_Runner(*this)
   , m_Settings(settings)
   , m_Updater(NexusInterface::instance(m_PluginContainer))
   , m_AboutToRun()
@@ -252,7 +251,6 @@ void OrganizerCore::setUserInterface(IUserInterface* ui)
 
   m_InstallationManager.setParentWidget(w);
   m_Updater.setUserInterface(w);
-  m_Runner.setUserInterface(ui);
 
   checkForUpdates();
 }
@@ -357,7 +355,7 @@ void OrganizerCore::externalMessage(const QString &message)
 {
   if (MOShortcut moshortcut{ message } ) {
     if(moshortcut.hasExecutable())
-      m_Runner.runShortcut(moshortcut);
+      processRunner().runShortcut(moshortcut);
   }
   else if (isNxmLink(message)) {
     MessageDialog::showMessage(tr("Download started"), qApp->activeWindow());
@@ -1721,9 +1719,9 @@ void OrganizerCore::saveCurrentProfile()
   storeSettings();
 }
 
-ProcessRunner& OrganizerCore::processRunner()
+ProcessRunner OrganizerCore::processRunner()
 {
-  return m_Runner;
+  return ProcessRunner(*this, m_UserInterface);
 }
 
 bool OrganizerCore::beforeRun(

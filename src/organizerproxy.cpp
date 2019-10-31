@@ -119,7 +119,24 @@ HANDLE OrganizerProxy::startApplication(
 
 bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
 {
-  return m_Proxied->processRunner().waitForApplication(handle, exitCode);
+  const auto r = m_Proxied->processRunner().waitForApplication(
+    handle, exitCode, LockWidget::OutputRequired);
+
+  switch (r)
+  {
+    case ProcessRunner::Completed:
+      return true;
+
+    case ProcessRunner::Cancelled:     // fall-through
+    case ProcessRunner::ForceUnlocked:
+      // this is always an error because the application should have run to
+      // completion
+      return false;
+
+    case ProcessRunner::Error: // fall-through
+    default:
+      return false;
+  }
 }
 
 bool OrganizerProxy::onAboutToRun(const std::function<bool (const QString &)> &func)

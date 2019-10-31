@@ -144,6 +144,7 @@ SET(organizer_SRCS
 	colortable.cpp
 	sanitychecks.cpp
 	processrunner.cpp
+	lockwidget.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -268,6 +269,7 @@ SET(organizer_HDRS
 	envwindows.h
 	colortable.h
 	processrunner.h
+	lockwidget.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -486,6 +488,7 @@ set(widgets
 	filterwidget
 	icondelegate
 	lcdnumber
+	lockwidget
 	loglist
 	loghighlighter
 	modflagicondelegate

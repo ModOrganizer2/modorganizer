@@ -38,7 +38,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 //when I get round to cleaning up main.cpp
 class Executable;
 class CategoryFactory;
-class LockedDialogBase;
 class OrganizerCore;
 
 class PluginListSortProxy;
@@ -118,8 +117,6 @@ public:
 
   void processUpdates(Settings& settings);
 
-  ILockedWaitingForProcess* lock() override;
-  void unlock() override;
   QWidget* qtWidget() override;
 
   bool addProfile();
@@ -381,11 +378,7 @@ private:
 
   bool m_DidUpdateMasterList;
 
-  LockedDialogBase *m_LockDialog { nullptr };
-  uint64_t m_LockCount { 0 };
-
   bool m_showArchiveData{ true };
-  bool m_exitAfterWait{ false };
 
   MOBase::DelayedFileWriter m_ArchiveListWriter;
 

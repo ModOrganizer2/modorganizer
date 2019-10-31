@@ -134,7 +134,7 @@ public:
 
   bool saveCurrentLists();
 
-  ProcessRunner& processRunner();
+  ProcessRunner processRunner();
 
   bool beforeRun(
     const QFileInfo& binary, const QString& profileName,
@@ -305,7 +305,6 @@ private:
 
   Profile *m_CurrentProfile;
 
-  ProcessRunner m_Runner;
   Settings& m_Settings;
 
   SelfUpdater m_Updater;
