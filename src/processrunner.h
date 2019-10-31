@@ -80,13 +80,6 @@ public:
   DWORD exitCode();
 
 
-  bool runExecutableFile(
-    const QFileInfo &binary, const QString &arguments,
-    const QDir &currentDirectory, const QString &steamAppID={},
-    const QString &customOverwrite={},
-    const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries={},
-    bool refresh=true);
-
   bool runExecutable(const Executable& exe, bool refresh=true);
 
   bool runShortcut(const MOShortcut& shortcut);

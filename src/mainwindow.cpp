@@ -2312,41 +2312,18 @@ void MainWindow::installMod(QString fileName)
 
 void MainWindow::on_startButton_clicked()
 {
-  try {
-    const Executable* selectedExecutable = getSelectedExecutable();
-    if (!selectedExecutable) {
-      return;
-    }
-
-    ui->startButton->setEnabled(false);
-
-    auto* profile = m_OrganizerCore.currentProfile();
-
-    const QString customOverwrite = profile->setting(
-      "custom_overwrites", selectedExecutable->title()).toString();
-
-    auto forcedLibraries = profile->determineForcedLibraries(
-      selectedExecutable->title());
-
-    if (!profile->forcedLibrariesEnabled(selectedExecutable->title())) {
-      forcedLibraries.clear();
-    }
-
-    m_OrganizerCore.processRunner().runExecutableFile(
-      selectedExecutable->binaryInfo(),
-      selectedExecutable->arguments(),
-      selectedExecutable->workingDirectory().length() != 0 ?
-        selectedExecutable->workingDirectory() :
-        selectedExecutable->binaryInfo().absolutePath(),
-      selectedExecutable->steamAppID(),
-      customOverwrite,
-      forcedLibraries);
-  } catch (...) {
-    ui->startButton->setEnabled(true);
-    throw;
+  const Executable* selectedExecutable = getSelectedExecutable();
+  if (!selectedExecutable) {
+    return;
   }
 
-  ui->startButton->setEnabled(true);
+  ui->startButton->setEnabled(false);
+  Guard g([&]{ ui->startButton->setEnabled(true); });
+
+  m_OrganizerCore.processRunner()
+    .setFromExecutable(*selectedExecutable)
+    .setWaitForCompletion(ProcessRunner::Refresh)
+    .run();
 }
 
 bool MainWindow::modifyExecutablesDialog(int selection)

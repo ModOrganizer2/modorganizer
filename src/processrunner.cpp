@@ -515,13 +515,6 @@ ProcessRunner& ProcessRunner::setFromFileOrExecutable(
 
   setProfileName(profileOverride);
 
-  //QFileInfo binary;
-  //QString arguments = args.join(" ");
-  //QString currentDirectory = cwd;
-  //QString steamAppID;
-  //QString customOverwrite;
-  //QList<ExecutableForcedLoadSetting> forcedLibraries;
-
   if (executable.contains('\\') || executable.contains('/')) {
     // file path
 
@@ -668,25 +661,6 @@ DWORD ProcessRunner::exitCode()
   return m_exitCode;
 }
 
-
-bool ProcessRunner::runExecutableFile(
-  const QFileInfo &binary, const QString &arguments,
-  const QDir &currentDirectory, const QString &steamAppID,
-  const QString &customOverwrite,
-  const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries,
-  bool refresh)
-{
-  setBinary(binary);
-  setArguments(arguments);
-  setCurrentDirectory(currentDirectory);
-  setSteamID(steamAppID);
-  setCustomOverwrite(customOverwrite);
-  setForcedLibraries(forcedLibraries);
-  setWaitForCompletion(refresh ? Refresh : NoRefresh);
-
-  const auto r = run();
-  return (r != Error);
-}
 
 bool ProcessRunner::runExecutable(const Executable& exe, bool refresh)
 {
