@@ -3,6 +3,7 @@
 
 #include "spawn.h"
 #include "lockwidget.h"
+#include "envmodule.h"
 #include <executableinfo.h>
 
 class OrganizerCore;
@@ -44,15 +45,24 @@ public:
     ForceUnlocked
   };
 
-  enum RefreshModes
+  enum WaitFlag
   {
-    NoRefresh = 1,
-    Refresh
+    NoFlags   = 0x00,
+    Refresh   = 0x01,
+    ForceWait = 0x02
   };
+
+  using WaitFlags = QFlags<WaitFlag>;
 
   using ForcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>;
 
   ProcessRunner(OrganizerCore& core, IUserInterface* ui);
+
+  // move only
+  ProcessRunner(ProcessRunner&&) = default;
+  ProcessRunner& operator=(const ProcessRunner&) = delete;
+  ProcessRunner(const ProcessRunner&) = delete;
+  ProcessRunner& operator=(ProcessRunner&&) = delete;
 
   ProcessRunner& setBinary(const QFileInfo &binary);
   ProcessRunner& setArguments(const QString& arguments);
@@ -62,7 +72,7 @@ public:
   ProcessRunner& setForcedLibraries(const ForcedLibraries& forcedLibraries);
   ProcessRunner& setProfileName(const QString& profileName);
   ProcessRunner& setWaitForCompletion(
-    RefreshModes refresh, LockWidget::Reasons reason=LockWidget::LockUI);
+    WaitFlags flags=NoFlags, LockWidget::Reasons reason=LockWidget::LockUI);
 
   ProcessRunner& setFromFile(QWidget* parent, const QFileInfo& targetInfo);
   ProcessRunner& setFromExecutable(const Executable& exe);
@@ -79,8 +89,9 @@ public:
   Results run();
   Results attachToProcess(HANDLE h);
 
-  DWORD exitCode();
-  HANDLE processHandle();
+  DWORD exitCode() const;
+  HANDLE getProcessHandle() const;
+  env::HandlePtr stealProcessHandle();
 
   Results waitForAllUSVFSProcessesWithLock(LockWidget::Reasons reason);
 
@@ -91,24 +102,16 @@ private:
   QString m_customOverwrite;
   ForcedLibraries m_forcedLibraries;
   QString m_profileName;
-  LockWidget::Reasons m_lock;
-  RefreshModes m_refresh;
+  LockWidget::Reasons m_lockReason;
+  WaitFlags m_waitFlags;
   QString m_shellOpen;
-  HANDLE m_handle;
+  env::HandlePtr m_handle;
   DWORD m_exitCode;
 
   Results postRun();
-
-  void withLock(
-    LockWidget::Reasons reason, std::function<void (LockWidget&)> f);
-
-  Results waitForProcessCompletionWithLock(
-    HANDLE handle, LPDWORD exitCode, LockWidget::Reasons reason);
-
-  Results waitForApplication(
-    HANDLE processHandle, LPDWORD exitCode, LockWidget::Reasons reason);
-
-  Results waitForAllUSVFSProcesses(LockWidget& lock);
+  void withLock(std::function<void (LockWidget&)> f);
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(ProcessRunner::WaitFlags);
 
 #endif // PROCESSRUNNER_H

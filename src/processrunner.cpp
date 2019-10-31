@@ -368,8 +368,8 @@ void SpawnedProcess::destroy()
 
 
 ProcessRunner::ProcessRunner(OrganizerCore& core, IUserInterface* ui) :
-  m_core(core), m_ui(ui), m_lock(LockWidget::NoReason), m_refresh(NoRefresh),
-  m_handle(INVALID_HANDLE_VALUE), m_exitCode(-1)
+  m_core(core), m_ui(ui), m_lockReason(LockWidget::NoReason),
+  m_waitFlags(NoFlags), m_handle(INVALID_HANDLE_VALUE), m_exitCode(-1)
 {
   m_sp.hooked = true;
 }
@@ -417,10 +417,10 @@ ProcessRunner& ProcessRunner::setProfileName(const QString& profileName)
 }
 
 ProcessRunner& ProcessRunner::setWaitForCompletion(
-  RefreshModes refresh, LockWidget::Reasons reason)
+  WaitFlags flags, LockWidget::Reasons reason)
 {
-  m_refresh = refresh;
-  m_lock = reason;
+  m_waitFlags = flags;
+  m_lockReason = reason;
   return *this;
 }
 
@@ -593,13 +593,13 @@ ProcessRunner::Results ProcessRunner::run()
       return Error;
     }
 
-    m_handle = r.stealProcessHandle();
+    m_handle.reset(r.stealProcessHandle());
 
     // not all files will return a valid handle even if opening them was
     // successful, such as inproc handlers (like the photo viewer); in this
     // case it's impossible to determine the status, so just say it's still
     // running
-    if (m_handle == INVALID_HANDLE_VALUE) {
+    if (m_handle.get() == INVALID_HANDLE_VALUE) {
       return Running;
     }
   } else {
@@ -642,8 +642,8 @@ ProcessRunner::Results ProcessRunner::run()
 
     adjustForVirtualized(game, m_sp, settings);
 
-    m_handle = startBinary(parent, m_sp);
-    if (m_handle == INVALID_HANDLE_VALUE) {
+    m_handle.reset(startBinary(parent, m_sp));
+    if (m_handle.get() == INVALID_HANDLE_VALUE) {
       return Error;
     }
   }
@@ -653,14 +653,46 @@ ProcessRunner::Results ProcessRunner::run()
 
 ProcessRunner::Results ProcessRunner::postRun()
 {
-  if (m_lock == LockWidget::NoReason) {
-    return Running;
+  const bool mustWait = (m_waitFlags & ForceWait);
+
+  if (mustWait && m_lockReason == LockWidget::NoReason) {
+    // never lock the ui without an escape hatch for the user
+    log::debug(
+      "the ForceWait flag is set but the lock reason wasn't, "
+      "defaulting to LockUI");
+
+    m_lockReason = LockWidget::LockUI;
   }
 
-  const auto r = waitForProcessCompletionWithLock(
-    m_handle, &m_exitCode, m_lock);
+  if (mustWait) {
+    if (!Settings::instance().interface().lockGUI()) {
+      // at least tell the user what's going on
+      log::debug(
+        "locking is disabled, but the output of the application is required; "
+        "overriding this setting and locking the ui");
+    }
+  } else {
+    // no force wait
 
-  if (r == Completed && m_refresh == Refresh) {
+    if (m_lockReason == LockWidget::NoReason) {
+      // no locking requested
+      return Running;
+    }
+
+    if (!Settings::instance().interface().lockGUI()) {
+      // disabling locking is like clicking on unlock immediately
+      log::debug("not waiting for process because locking is disabled");
+      return ForceUnlocked;
+    }
+  }
+
+  auto r = Error;
+
+  withLock([&](auto& lock) {
+    r = waitForProcess(m_handle.get(), &m_exitCode, lock);
+  });
+
+  if (r == Completed && (m_waitFlags & Refresh)) {
     m_core.afterRun(m_sp.binary, m_exitCode);
   }
 
@@ -669,101 +701,64 @@ ProcessRunner::Results ProcessRunner::postRun()
 
 ProcessRunner::Results ProcessRunner::attachToProcess(HANDLE h)
 {
-  m_handle = h;
+  m_handle.reset(h);
   return postRun();
 }
 
-DWORD ProcessRunner::exitCode()
+DWORD ProcessRunner::exitCode() const
 {
   return m_exitCode;
 }
 
-HANDLE ProcessRunner::processHandle()
+HANDLE ProcessRunner::getProcessHandle() const
 {
-  return m_handle;
+  return m_handle.get();
 }
 
-
-void ProcessRunner::withLock(
-  LockWidget::Reasons reason, std::function<void (LockWidget&)> f)
+env::HandlePtr ProcessRunner::stealProcessHandle()
 {
-  auto lock = std::make_unique<LockWidget>(
-    m_ui ? m_ui->qtWidget() : nullptr, reason);
-
-  f(*lock);
-}
-
-ProcessRunner::Results ProcessRunner::waitForProcessCompletionWithLock(
-  HANDLE handle, LPDWORD exitCode, LockWidget::Reasons reason)
-{
-  if (!Settings::instance().interface().lockGUI()) {
-    log::debug("not waiting for process because user has disabled locking");
-    return ForceUnlocked;
-  }
-
-  return waitForApplication(handle, exitCode, reason);
-}
-
-ProcessRunner::Results ProcessRunner::waitForApplication(
-  HANDLE handle, LPDWORD exitCode, LockWidget::Reasons reason)
-{
-  // don't check for lockGUI() setting; this _always_ locks the ui and waits
-  // for completion
-  //
-  // this is typically called only from:
-  //  1) OrganizerProxy, which allows plugins to wait on applications until
-  //     they're finished
-  //
-  //     the check_fnis plugin for example will start FNIS, wait for it to
-  //     complete, and then check the exit code; this has to work regardless of
-  //     the locking setting;
-  //
-  // 2) waitForProcessCompletionWithLock() above, which has already checked the
-  //    lock setting
-
-  auto r = Error;
-
-  withLock(reason, [&](auto& lock) {
-    r = waitForProcess(handle, exitCode, lock);
-  });
-
-  return r;
+  return std::move(m_handle);
 }
 
 ProcessRunner::Results ProcessRunner::waitForAllUSVFSProcessesWithLock(
   LockWidget::Reasons reason)
 {
+  m_lockReason = reason;
+
   if (!Settings::instance().interface().lockGUI()) {
-    log::debug("not waiting for usvfs processes because user has disabled locking");
+    // disabling locking is like clicking on unlock immediately
     return ForceUnlocked;
   }
 
   auto r = Error;
 
-  withLock(reason, [&](auto& lock) {
-    r = waitForAllUSVFSProcesses(lock);
+  withLock([&](auto& lock) {
+    for (;;) {
+      const auto processes = getRunningUSVFSProcesses();
+      if (processes.empty()) {
+        break;
+      }
+
+      r = waitForProcesses(processes, lock);
+
+      if (r != Completed) {
+        // error, cancelled, or unlocked
+        return;
+      }
+
+      // this process is completed, check for others
+    }
+
+    r = Completed;
   });
 
   return r;
 }
 
-ProcessRunner::Results ProcessRunner::waitForAllUSVFSProcesses(LockWidget& lock)
+void ProcessRunner::withLock(std::function<void (LockWidget&)> f)
 {
-  for (;;) {
-    const auto processes = getRunningUSVFSProcesses();
-    if (processes.empty()) {
-      break;
-    }
+  auto lk = std::make_unique<LockWidget>(
+    m_ui ? m_ui->qtWidget() : nullptr, m_lockReason);
 
-    const auto r = waitForProcesses(processes, lock);
-
-    if (r != Completed) {
-      // error, cancelled, or unlocked
-      return r;
-    }
-
-    // this process is completed, check for others
-  }
-
-  return Completed;
+  f(*lk);
 }

@@ -529,7 +529,7 @@ void ConflictsTab::openItems(QTreeView* tree)
   for_each_in_selection(tree, [&](const ConflictItem* item) {
     core().processRunner()
       .setFromFile(parentWidget(), item->fileName())
-      .setWaitForCompletion(ProcessRunner::NoRefresh)
+      .setWaitForCompletion()
       .run();
 
     return true;

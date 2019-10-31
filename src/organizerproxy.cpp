@@ -128,7 +128,9 @@ HANDLE OrganizerProxy::startApplication(
     .setFromFileOrExecutable(exe, args, cwd, profile, overwrite, ignoreOverwrite)
     .run();
 
-  return runner.processHandle();
+  // the plugin is in charge of closing the handle, unless waitForApplication()
+  // is called on it
+  return runner.stealProcessHandle().release();
 }
 
 bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
@@ -142,7 +144,7 @@ bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
   auto runner = m_Proxied->processRunner();
 
   const auto r = runner
-    .setWaitForCompletion(ProcessRunner::NoRefresh, LockWidget::OutputRequired)
+    .setWaitForCompletion(ProcessRunner::ForceWait, LockWidget::OutputRequired)
     .attachToProcess(handle);
 
   if (exitCode) {

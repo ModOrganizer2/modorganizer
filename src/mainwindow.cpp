@@ -5404,7 +5404,7 @@ void MainWindow::openDataFile()
 
   m_OrganizerCore.processRunner()
     .setFromFile(this, targetInfo)
-    .setWaitForCompletion(ProcessRunner::NoRefresh)
+    .setWaitForCompletion()
     .run();
 }
 

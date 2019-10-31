@@ -357,7 +357,7 @@ void OrganizerCore::externalMessage(const QString &message)
     if(moshortcut.hasExecutable()) {
       processRunner()
         .setFromShortcut(moshortcut)
-        .setWaitForCompletion(ProcessRunner::NoRefresh)
+        .setWaitForCompletion()
         .run();
     }
   }
