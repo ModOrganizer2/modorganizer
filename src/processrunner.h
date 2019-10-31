@@ -80,8 +80,6 @@ public:
   DWORD exitCode();
 
 
-  bool runExecutable(const Executable& exe, bool refresh=true);
-
   bool runShortcut(const MOShortcut& shortcut);
 
   HANDLE runExecutableOrExecutableFile(

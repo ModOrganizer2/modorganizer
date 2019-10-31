@@ -1536,8 +1536,12 @@ void MainWindow::startExeAction()
   }
 
   action->setEnabled(false);
-  m_OrganizerCore.processRunner().runExecutable(*itor);
-  action->setEnabled(true);
+  Guard g([&]{ action->setEnabled(true); });
+
+  m_OrganizerCore.processRunner()
+    .setFromExecutable(*itor)
+    .setWaitForCompletion(ProcessRunner::Refresh)
+    .run();
 }
 
 void MainWindow::activateSelectedProfile()

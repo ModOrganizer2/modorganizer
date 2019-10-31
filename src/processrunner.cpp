@@ -662,15 +662,6 @@ DWORD ProcessRunner::exitCode()
 }
 
 
-bool ProcessRunner::runExecutable(const Executable& exe, bool refresh)
-{
-  setFromExecutable(exe);
-  setWaitForCompletion(refresh ? Refresh : NoRefresh);
-
-  const auto r = run();
-  return (r != Error);
-}
-
 bool ProcessRunner::runShortcut(const MOShortcut& shortcut)
 {
   setFromShortcut(shortcut);
