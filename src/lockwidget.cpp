@@ -229,10 +229,14 @@ void LockWidget::disableAll()
     }
 
     if (auto* d=dynamic_cast<QDialog*>(w)) {
-      // no central widget, just disable the children, except for the overlay
-      for (auto* child : findChildrenImmediate<QWidget*>(d)) {
-        if (child != m_overlay.get()) {
-          disable(child);
+      // don't disable stuff if this dialog is the overlay, which happens when
+      // there's no ui
+      if (d != m_overlay.get()) {
+        // no central widget, just disable the children, except for the overlay
+        for (auto* child : findChildrenImmediate<QWidget*>(d)) {
+          if (child != m_overlay.get()) {
+            disable(child);
+          }
         }
       }
     }

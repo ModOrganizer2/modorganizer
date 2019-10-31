@@ -490,7 +490,7 @@ DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle)
   const QString moPath = QCoreApplication::applicationDirPath();
   const auto oldPath = env::addPath(QDir::toNativeSeparators(moPath));
 
-  PROCESS_INFORMATION pi;
+  PROCESS_INFORMATION pi = {};
   BOOL success = FALSE;
 
   logSpawning(sp, commandLine);
@@ -501,13 +501,11 @@ DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle)
   if (sp.hooked) {
     success = ::CreateProcessHooked(
       nullptr, const_cast<wchar_t*>(wcommandLine.c_str()), nullptr, nullptr,
-      inheritHandles, CREATE_BREAKAWAY_FROM_JOB, nullptr,
-      wcwd.c_str(), &si, &pi);
+      inheritHandles, 0, nullptr, wcwd.c_str(), &si, &pi);
   } else {
     success = ::CreateProcess(
       nullptr, const_cast<wchar_t*>(wcommandLine.c_str()), nullptr, nullptr,
-      inheritHandles, CREATE_BREAKAWAY_FROM_JOB, nullptr,
-      wcwd.c_str(), &si, &pi);
+      inheritHandles, 0, nullptr, wcwd.c_str(), &si, &pi);
   }
 
   const auto e = GetLastError();
@@ -555,16 +553,6 @@ void startBinaryAdmin(QWidget* parent, const SpawnParameters& sp)
 
   log::info("restarting MO as administrator");
   restartAsAdmin(parent);
-}
-
-bool checkBinary(QWidget* parent, const SpawnParameters& sp)
-{
-  if (!sp.binary.exists()) {
-    dialogs::spawnFailed(parent, sp, ERROR_FILE_NOT_FOUND);
-    return false;
-  }
-
-  return true;
 }
 
 struct SteamStatus
@@ -752,31 +740,6 @@ bool checkSteam(
   }
 
   return true;
-}
-
-bool checkEnvironment(QWidget* parent, const SpawnParameters& sp)
-{
-  // check if the Windows Event Logging service is running; for some reason,
-  // this seems to be critical to the successful running of usvfs.
-  const auto serviceName = "EventLog";
-
-  const auto s = env::getService(serviceName);
-
-  if (!s.isValid()) {
-    log::error(
-      "cannot determine the status of the {} service, continuing",
-      serviceName);
-
-    return true;
-  }
-
-  if (s.status() == env::Service::Status::Running) {
-    log::debug("{}", s.toString());
-    return true;
-  }
-
-  log::error("{}", s.toString());
-  return dialogs::eventLogNotRunning(parent, s, sp);
 }
 
 bool checkBlacklist(

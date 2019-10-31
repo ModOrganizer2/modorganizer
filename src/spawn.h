@@ -53,13 +53,9 @@ struct SpawnParameters
 };
 
 
-bool checkBinary(QWidget* parent, const SpawnParameters& sp);
-
 bool checkSteam(
   QWidget* parent, const SpawnParameters& sp,
   const QDir& gameDirectory, const QString &steamAppID, const Settings& settings);
-
-bool checkEnvironment(QWidget* parent, const SpawnParameters& sp);
 
 bool checkBlacklist(
   QWidget* parent, const SpawnParameters& sp, Settings& settings);

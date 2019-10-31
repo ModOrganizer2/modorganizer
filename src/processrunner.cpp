@@ -111,6 +111,9 @@ QString toString(Interest i)
 }
 
 
+// returns a process that's in the hidden list, or the top-level process if
+// they're all hidden; returns an invalid process if the list is empty
+//
 std::pair<env::Process, Interest> findInterestingProcessInTrees(
   std::vector<env::Process>& processes)
 {
@@ -150,6 +153,8 @@ std::pair<env::Process, Interest> findInterestingProcessInTrees(
   return {processes[0], Interest::Weak};
 }
 
+// gets the most interesting process in the list
+//
 std::pair<env::Process, Interest> getInterestingProcess(
   const std::vector<HANDLE>& initialProcesses)
 {
@@ -160,7 +165,7 @@ std::pair<env::Process, Interest> getInterestingProcess(
 
   std::vector<env::Process> processes;
 
-  log::debug("getting process tree for {} processes", initialProcesses.size());
+  // getting process trees for all processes
   for (auto&& h : initialProcesses) {
     auto tree = env::getProcessTree(h);
     if (tree.isValid()) {
@@ -169,12 +174,15 @@ std::pair<env::Process, Interest> getInterestingProcess(
   }
 
   if (processes.empty()) {
+    // if the initial list wasn't empty but this one is, it means all the
+    // processes were already completed
     log::debug("processes are already completed");
     return {{}, Interest::None};
   }
 
   const auto interest = findInterestingProcessInTrees(processes);
   if (!interest.first.isValid()) {
+    // this shouldn't happen
     log::debug("no interesting process to wait for");
     return {{}, Interest::None};
   }
@@ -184,6 +192,8 @@ std::pair<env::Process, Interest> getInterestingProcess(
 
 const std::chrono::milliseconds Infinite(-1);
 
+// waits for completion, times out after `wait` if not Infinite
+//
 std::optional<ProcessRunner::Results> timedWait(
   HANDLE handle, DWORD pid, LockWidget& lock, std::chrono::milliseconds wait)
 {
@@ -195,18 +205,21 @@ std::optional<ProcessRunner::Results> timedWait(
   }
 
   for (;;) {
+    // wait for a very short while, allows for processing events below
     const auto r = singleWait(handle, pid);
 
     if (r) {
+      // the process has either completed or an error was returned
       return *r;
     }
 
-    // still running
+    // the process is still running
 
     // keep processing events so the app doesn't appear dead
     QCoreApplication::sendPostedEvents();
     QCoreApplication::processEvents();
 
+    // check the lock widget
     switch (lock.result())
     {
       case LockWidget::StillLocked:
@@ -239,8 +252,10 @@ std::optional<ProcessRunner::Results> timedWait(
     }
 
     if (wait != Infinite) {
+      // check if enough time has elapsed
       const auto now = high_resolution_clock::now();
       if (duration_cast<milliseconds>(now - start) >= wait) {
+        // if so, return an empty result
         return {};
       }
     }
@@ -258,6 +273,10 @@ ProcessRunner::Results waitForProcesses(
   }
 
   DWORD currentPID = 0;
+
+  // if the interesting process that was found is weak (such as ModOrganizer.exe
+  // when starting a program from within the Data directory), start with a short
+  // wait and check for more interesting children
   milliseconds wait(50);
 
   for (;;) {
@@ -267,14 +286,17 @@ ProcessRunner::Results waitForProcesses(
       return ProcessRunner::Completed;
     }
 
+    // update the lock widget
     lock.setInfo(p.pid(), p.name());
 
+    // open the process
     auto interestingHandle = p.openHandleForWait();
     if (!interestingHandle) {
       return ProcessRunner::Error;
     }
 
     if (p.pid() != currentPID) {
+      // log any change in the process being waited for
       currentPID = p.pid();
 
       log::debug(
@@ -283,19 +305,19 @@ ProcessRunner::Results waitForProcesses(
     }
 
     if (interest == Interest::Strong) {
+      // don't bother with short wait, this is a good process to wait for
       wait = Infinite;
     }
 
     const auto r = timedWait(interestingHandle.get(), p.pid(), lock, wait);
     if (r) {
+      // the process has completed or returned an error
       return *r;
     }
 
+    // exponentially increase the wait time between checks for interesting
+    // processes
     wait = std::min(wait * 2, milliseconds(2000));
-
-    log::debug(
-      "looking for a more interesting process (next check in {}ms)",
-      wait.count());
   }
 }
 
@@ -324,6 +346,7 @@ ProcessRunner::ProcessRunner(OrganizerCore& core, IUserInterface* ui) :
   m_core(core), m_ui(ui), m_lockReason(LockWidget::NoReason),
   m_waitFlags(NoFlags), m_handle(INVALID_HANDLE_VALUE), m_exitCode(-1)
 {
+  // all processes started in ProcessRunner are hooked
   m_sp.hooked = true;
 }
 
@@ -382,6 +405,9 @@ ProcessRunner& ProcessRunner::setFromFile(QWidget* parent, const QFileInfo& targ
   if (!parent && m_ui) {
     parent = m_ui->qtWidget();
   }
+
+  // if the file is a .exe, start it directory; if it's anything else, ask the
+  // shell to start it
 
   const auto fec = spawn::getFileExecutionContext(parent, targetInfo);
 
@@ -466,28 +492,25 @@ ProcessRunner& ProcessRunner::setFromFileOrExecutable(
     throw MyException(QObject::tr("No profile set"));
   }
 
+  setBinary(executable);
+  setArguments(args.join(" "));
+  setCurrentDirectory(cwd);
   setProfileName(profileOverride);
 
   if (executable.contains('\\') || executable.contains('/')) {
     // file path
 
-    auto binary = QFileInfo(executable);
-
-    if (binary.isRelative()) {
+    if (m_sp.binary.isRelative()) {
       // relative path, should be relative to game directory
-      binary = m_core.managedGame()->gameDirectory().absoluteFilePath(executable);
+      setBinary(m_core.managedGame()->gameDirectory().absoluteFilePath(executable));
     }
 
-    setBinary(binary);
-
     if (cwd == "") {
-      setCurrentDirectory(binary.absolutePath());
-    } else {
-      setCurrentDirectory(cwd);
+      setCurrentDirectory(m_sp.binary.absolutePath());
     }
 
     try {
-      const Executable& exe = m_core.executablesList()->getByBinary(binary);
+      const Executable& exe = m_core.executablesList()->getByBinary(m_sp.binary);
 
       setSteamID(exe.steamAppID());
       setCustomOverwrite(profile->setting("custom_overwrites", exe.title()).toString());
@@ -512,20 +535,15 @@ ProcessRunner& ProcessRunner::setFromFileOrExecutable(
 
       if (args.isEmpty()) {
         setArguments(exe.arguments());
-      } else {
-        setArguments(args.join(" "));
       }
 
       setBinary(exe.binaryInfo());
 
       if (cwd == "") {
         setCurrentDirectory(exe.workingDirectory());
-      } else {
-        setCurrentDirectory(cwd);
       }
     } catch (const std::runtime_error &) {
       log::warn("\"{}\" not set up as executable", executable);
-      setBinary(QFileInfo(executable));
     }
   }
 
@@ -540,68 +558,91 @@ ProcessRunner& ProcessRunner::setFromFileOrExecutable(
 
 ProcessRunner::Results ProcessRunner::run()
 {
+  std::optional<Results> r;
+
   if (!m_shellOpen.isEmpty()) {
-    auto r = shell::Open(m_shellOpen);
-    if (!r.success()) {
-      return Error;
-    }
-
-    m_handle.reset(r.stealProcessHandle());
-
-    // not all files will return a valid handle even if opening them was
-    // successful, such as inproc handlers (like the photo viewer); in this
-    // case it's impossible to determine the status, so just say it's still
-    // running
-    if (m_handle.get() == INVALID_HANDLE_VALUE) {
-      return Running;
-    }
+    r = runShell();
   } else {
-    if (m_profileName.isEmpty()) {
-      const auto* profile = m_core.currentProfile();
-      if (!profile) {
-        throw MyException(QObject::tr("No profile set"));
-      }
+    r = runBinary();
+  }
 
-      m_profileName = profile->name();
-    }
-
-    if (!m_core.beforeRun(m_sp.binary, m_profileName, m_customOverwrite, m_forcedLibraries)) {
-      return Error;
-    }
-
-    QWidget* parent = nullptr;
-    if (m_ui) {
-      parent = m_ui->qtWidget();
-    }
-
-    if (!checkBinary(parent, m_sp)) {
-      return Error;
-    }
-
-    const auto* game = m_core.managedGame();
-    auto& settings = m_core.settings();
-
-    if (!checkSteam(parent, m_sp, game->gameDirectory(), m_sp.steamAppID, settings)) {
-      return Error;
-    }
-
-    if (!checkEnvironment(parent, m_sp)) {
-      return Error;
-    }
-
-    if (!checkBlacklist(parent, m_sp, settings)) {
-      return Error;
-    }
-
-    adjustForVirtualized(game, m_sp, settings);
-
-    m_handle.reset(startBinary(parent, m_sp));
-    if (m_handle.get() == INVALID_HANDLE_VALUE) {
-      return Error;
-    }
+  if (r) {
+    // early result: something went wrong and the process cannot be waited for
+    return *r;
   }
 
   return postRun();
+}
+
+std::optional<ProcessRunner::Results> ProcessRunner::runShell()
+{
+  log::debug("executing from shell: '{}'", m_shellOpen);
+
+  auto r = shell::Open(m_shellOpen);
+  if (!r.success()) {
+    return Error;
+  }
+
+  m_handle.reset(r.stealProcessHandle());
+
+  // not all files will return a valid handle even if opening them was
+  // successful, such as inproc handlers (like the photo viewer); in this
+  // case it's impossible to determine the status, so just say it's still
+  // running
+  if (m_handle.get() == INVALID_HANDLE_VALUE) {
+    log::debug("shell didn't report an error, but no handle is available");
+    return Running;
+  }
+
+  return {};
+}
+
+std::optional<ProcessRunner::Results> ProcessRunner::runBinary()
+{
+  if (m_profileName.isEmpty()) {
+    // get the current profile name if it wasn't overridden
+    const auto* profile = m_core.currentProfile();
+    if (!profile) {
+      throw MyException(QObject::tr("No profile set"));
+    }
+
+    m_profileName = profile->name();
+  }
+
+  // saves profile, sets up usvfs, notifies plugins, etc.; can return false if
+  // a plugin doesn't want the program to run (such as when checkFNIS fails to
+  // run FNIS and the user clicks cancel)
+  if (!m_core.beforeRun(m_sp.binary, m_profileName, m_customOverwrite, m_forcedLibraries)) {
+    return Error;
+  }
+
+  // parent widget used for any dialog popped up while checking for things
+  QWidget* parent = (m_ui ? m_ui->qtWidget() : nullptr);
+
+  const auto* game = m_core.managedGame();
+  auto& settings = m_core.settings();
+
+  // start steam if needed
+  if (!checkSteam(parent, m_sp, game->gameDirectory(), m_sp.steamAppID, settings)) {
+    return Error;
+  }
+
+  // warn if the executable is on the blacklist
+  if (!checkBlacklist(parent, m_sp, settings)) {
+    return Error;
+  }
+
+  // if the executable is inside the mods folder another instance of
+  // ModOrganizer.exe is spawned instead to launch it
+  adjustForVirtualized(game, m_sp, settings);
+
+  // run the binary
+  m_handle.reset(startBinary(parent, m_sp));
+  if (m_handle.get() == INVALID_HANDLE_VALUE) {
+    return Error;
+  }
+
+  return {};
 }
 
 ProcessRunner::Results ProcessRunner::postRun()
@@ -618,7 +659,7 @@ ProcessRunner::Results ProcessRunner::postRun()
   }
 
   if (mustWait) {
-    if (!Settings::instance().interface().lockGUI()) {
+    if (!m_core.settings().interface().lockGUI()) {
       // at least tell the user what's going on
       log::debug(
         "locking is disabled, but the output of the application is required; "
@@ -632,7 +673,7 @@ ProcessRunner::Results ProcessRunner::postRun()
       return Running;
     }
 
-    if (!Settings::instance().interface().lockGUI()) {
+    if (!m_core.settings().interface().lockGUI()) {
       // disabling locking is like clicking on unlock immediately
       log::debug("not waiting for process because locking is disabled");
       return ForceUnlocked;
@@ -646,6 +687,18 @@ ProcessRunner::Results ProcessRunner::postRun()
   });
 
   if (r == Completed && (m_waitFlags & Refresh)) {
+    // afterRun() is only called with the Refresh flag; it refreshes the
+    // directory structure and notifies plugins
+    //
+    // refreshing is not always required and can actually cause problems:
+    //
+    //  1) running shortcuts doesn't need refreshing because MO closes right
+    //     after
+    //
+    //  2) the mod info dialog is not set up to deal with refreshes, so that
+    //     it will crash because the old DirectoryEntry's are still being used
+    //     in the list
+    //
     m_core.afterRun(m_sp.binary, m_exitCode);
   }
 
@@ -670,7 +723,9 @@ HANDLE ProcessRunner::getProcessHandle() const
 
 env::HandlePtr ProcessRunner::stealProcessHandle()
 {
-  return std::move(m_handle);
+  auto h = m_handle.release();
+  m_handle.reset(INVALID_HANDLE_VALUE);
+  return env::HandlePtr(h);
 }
 
 ProcessRunner::Results ProcessRunner::waitForAllUSVFSProcessesWithLock(
@@ -678,7 +733,7 @@ ProcessRunner::Results ProcessRunner::waitForAllUSVFSProcessesWithLock(
 {
   m_lockReason = reason;
 
-  if (!Settings::instance().interface().lockGUI()) {
+  if (!m_core.settings().interface().lockGUI()) {
     // disabling locking is like clicking on unlock immediately
     return ForceUnlocked;
   }
