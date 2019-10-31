@@ -593,9 +593,15 @@ ProcessRunner::Results ProcessRunner::run()
       return Error;
     }
 
-    // not all files will return a valid handle even if opening them was
-    // successful, such as inproc handlers (like the photo viewer)
     m_handle = r.stealProcessHandle();
+
+    // not all files will return a valid handle even if opening them was
+    // successful, such as inproc handlers (like the photo viewer); in this
+    // case it's impossible to determine the status, so just say it's still
+    // running
+    if (m_handle == INVALID_HANDLE_VALUE) {
+      return Running;
+    }
   } else {
     if (m_profileName.isEmpty()) {
       const auto* profile = m_core.currentProfile();
@@ -642,18 +648,29 @@ ProcessRunner::Results ProcessRunner::run()
     }
   }
 
-  if (m_handle == INVALID_HANDLE_VALUE || m_lock == LockWidget::NoReason) {
+  return postRun();
+}
+
+ProcessRunner::Results ProcessRunner::postRun()
+{
+  if (m_lock == LockWidget::NoReason) {
     return Running;
-  } else {
-    const auto r = waitForProcessCompletionWithLock(
-      m_handle, &m_exitCode, m_lock);
-
-    if (r == Completed && m_refresh == Refresh) {
-      m_core.afterRun(m_sp.binary, m_exitCode);
-    }
-
-    return r;
   }
+
+  const auto r = waitForProcessCompletionWithLock(
+    m_handle, &m_exitCode, m_lock);
+
+  if (r == Completed && m_refresh == Refresh) {
+    m_core.afterRun(m_sp.binary, m_exitCode);
+  }
+
+  return r;
+}
+
+ProcessRunner::Results ProcessRunner::attachToProcess(HANDLE h)
+{
+  m_handle = h;
+  return postRun();
 }
 
 DWORD ProcessRunner::exitCode()

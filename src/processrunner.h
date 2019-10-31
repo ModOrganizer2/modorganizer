@@ -77,11 +77,10 @@ public:
     bool ignoreCustomOverwrite=false);
 
   Results run();
+  Results attachToProcess(HANDLE h);
+
   DWORD exitCode();
   HANDLE processHandle();
-
-  Results waitForApplication(
-    HANDLE processHandle, LPDWORD exitCode, LockWidget::Reasons reason);
 
   Results waitForAllUSVFSProcessesWithLock(LockWidget::Reasons reason);
 
@@ -98,22 +97,16 @@ private:
   HANDLE m_handle;
   DWORD m_exitCode;
 
-  HANDLE spawnAndWait(
-    const QFileInfo &binary, const QString &arguments,
-    const QString &profileName,
-    const QDir &currentDirectory,
-    const QString &steamAppID,
-    const QString &customOverwrite,
-    const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries={},
-    LPDWORD exitCode = nullptr);
-
-  SpawnedProcess spawn(spawn::SpawnParameters sp);
+  Results postRun();
 
   void withLock(
     LockWidget::Reasons reason, std::function<void (LockWidget&)> f);
 
   Results waitForProcessCompletionWithLock(
     HANDLE handle, LPDWORD exitCode, LockWidget::Reasons reason);
+
+  Results waitForApplication(
+    HANDLE processHandle, LPDWORD exitCode, LockWidget::Reasons reason);
 
   Results waitForAllUSVFSProcesses(LockWidget& lock);
 };

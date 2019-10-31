@@ -123,9 +123,9 @@ HANDLE OrganizerProxy::startApplication(
 
   auto runner = m_Proxied->processRunner();
 
+  // don't wait for completion
   runner
     .setFromFileOrExecutable(exe, args, cwd, profile, overwrite, ignoreOverwrite)
-    .setWaitForCompletion(ProcessRunner::Refresh)
     .run();
 
   return runner.processHandle();
@@ -139,8 +139,15 @@ bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
     "a plugin wants to wait for an application to complete, pid {}{}",
     pid, (pid == 0 ? "unknown (probably already completed)" : ""));
 
-  const auto r = m_Proxied->processRunner().waitForApplication(
-    handle, exitCode, LockWidget::OutputRequired);
+  auto runner = m_Proxied->processRunner();
+
+  const auto r = runner
+    .setWaitForCompletion(ProcessRunner::NoRefresh, LockWidget::OutputRequired)
+    .attachToProcess(handle);
+
+  if (exitCode) {
+    *exitCode = runner.exitCode();
+  }
 
   switch (r)
   {
