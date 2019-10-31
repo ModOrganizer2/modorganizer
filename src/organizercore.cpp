@@ -1796,6 +1796,12 @@ void OrganizerCore::afterRun(const QFileInfo& binary, DWORD exitCode)
   m_FinishedRun(binary.absoluteFilePath(), exitCode);
 }
 
+ProcessRunner::Results OrganizerCore::waitForAllUSVFSProcesses(
+  LockWidget::Reasons reason)
+{
+  return processRunner().waitForAllUSVFSProcessesWithLock(reason);
+}
+
 std::vector<Mapping> OrganizerCore::fileMapping(const QString &profileName,
                                                 const QString &customOverwrite)
 {

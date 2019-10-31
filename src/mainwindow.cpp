@@ -1310,9 +1310,7 @@ bool MainWindow::canExit()
     }
   }
 
-  const auto r = m_OrganizerCore.processRunner()
-    .waitForAllUSVFSProcessesWithLock(LockWidget::PreventExit);
-
+  const auto r = m_OrganizerCore.waitForAllUSVFSProcesses();
   if (r == ProcessRunner::Cancelled) {
     return false;
   }

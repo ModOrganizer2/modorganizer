@@ -143,6 +143,9 @@ public:
 
   void afterRun(const QFileInfo& binary, DWORD exitCode);
 
+  ProcessRunner::Results waitForAllUSVFSProcesses(
+    LockWidget::Reasons reason=LockWidget::PreventExit);
+
   void refreshESPList(bool force = false);
   void refreshBSAList();
 
