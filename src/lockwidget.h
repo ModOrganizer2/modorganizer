@@ -5,22 +5,40 @@
 class LockWidget
 {
 public:
+  // reason to show the widget
+  //
   enum Reasons
   {
     NoReason = 0,
+
+    // lock the ui
     LockUI,
+
+    // because the output is required
     OutputRequired,
+
+    // to prevent exiting until all processes are completed
     PreventExit
   };
 
+  // returned by result()
+  //
   enum Results
   {
     NoResult = 0,
+
+    // the widget is still up
     StillLocked,
+
+    // force unlock was clicked
     ForceUnlocked,
+
+    // cancel was clicked
     Cancelled
   };
 
+  // if `reason` is not NoReason, lock() is called with it
+  //
   LockWidget(QWidget* parent, Reasons reason=NoReason);
   ~LockWidget();
 
