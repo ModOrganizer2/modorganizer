@@ -485,10 +485,12 @@ void OrganizerCore::prepareVFS()
 
 void OrganizerCore::updateVFSParams(
   log::Levels logLevel, CrashDumpsType crashDumpsType,
+  const QString& crashDumpsPath,
   std::chrono::seconds spawnDelay, QString executableBlacklist)
 {
   setGlobalCrashDumpsType(crashDumpsType);
-  m_USVFS.updateParams(logLevel, crashDumpsType, spawnDelay, executableBlacklist);
+  m_USVFS.updateParams(
+    logLevel, crashDumpsType, crashDumpsPath, spawnDelay, executableBlacklist);
 }
 
 void OrganizerCore::setLogLevel(log::Levels level)
@@ -498,6 +500,7 @@ void OrganizerCore::setLogLevel(log::Levels level)
   updateVFSParams(
     m_Settings.diagnostics().logLevel(),
     m_Settings.diagnostics().crashDumpsType(),
+    QString::fromStdWString(crashDumpsPath()),
     m_Settings.diagnostics().spawnDelay(),
     m_Settings.executablesBlacklist());
 
