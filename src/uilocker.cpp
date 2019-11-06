@@ -1,4 +1,4 @@
-#include "lockwidget.h"
+#include "uilocker.h"
 #include "mainwindow.h"
 #include <QGraphicsDropShadowEffect>
 #include <QMenuBar>

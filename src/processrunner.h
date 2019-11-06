@@ -2,7 +2,7 @@
 #define PROCESSRUNNER_H
 
 #include "spawn.h"
-#include "lockwidget.h"
+#include "uilocker.h"
 #include "envmodule.h"
 #include <executableinfo.h>
 

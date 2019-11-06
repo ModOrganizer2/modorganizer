@@ -141,7 +141,7 @@ SET(organizer_SRCS
 	colortable.cpp
 	sanitychecks.cpp
 	processrunner.cpp
-	lockwidget.cpp
+	uilocker.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -262,7 +262,7 @@ SET(organizer_HDRS
 	envwindows.h
 	colortable.h
 	processrunner.h
-	lockwidget.h
+	uilocker.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -344,6 +344,7 @@ set(core
 	organizerproxy
 	apiuseraccount
 	processrunner
+	uilocker
 )
 
 set(dialogs
@@ -473,7 +474,6 @@ set(widgets
 	filterwidget
 	icondelegate
 	lcdnumber
-	lockwidget
 	loglist
 	loghighlighter
 	modflagicondelegate
