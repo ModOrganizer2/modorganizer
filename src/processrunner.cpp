@@ -190,7 +190,7 @@ const std::chrono::milliseconds Infinite(-1);
 // waits for completion, times out after `wait` if not Infinite
 //
 std::optional<ProcessRunner::Results> timedWait(
-  HANDLE handle, DWORD pid, LockWidget::Session& ls,
+  HANDLE handle, DWORD pid, UILocker::Session& ls,
   std::chrono::milliseconds wait)
 {
   using namespace std::chrono;
@@ -214,24 +214,24 @@ std::optional<ProcessRunner::Results> timedWait(
     // check the lock widget
     switch (ls.result())
     {
-      case LockWidget::StillLocked:
+      case UILocker::StillLocked:
       {
         break;
       }
 
-      case LockWidget::ForceUnlocked:
+      case UILocker::ForceUnlocked:
       {
         log::debug("waiting for {} force unlocked by user", pid);
         return ProcessRunner::ForceUnlocked;
       }
 
-      case LockWidget::Cancelled:
+      case UILocker::Cancelled:
       {
         log::debug("waiting for {} cancelled by user", pid);
         return ProcessRunner::Cancelled;
       }
 
-      case LockWidget::NoResult:  // fall-through
+      case UILocker::NoResult:  // fall-through
       default:
       {
         // shouldn't happen
@@ -255,7 +255,7 @@ std::optional<ProcessRunner::Results> timedWait(
 }
 
 ProcessRunner::Results waitForProcessesThreadImpl(
-  const std::vector<HANDLE>& initialProcesses, LockWidget::Session& ls)
+  const std::vector<HANDLE>& initialProcesses, UILocker::Session& ls)
 {
   using namespace std::chrono;
 
@@ -315,14 +315,14 @@ ProcessRunner::Results waitForProcessesThreadImpl(
 
 void waitForProcessesThread(
   ProcessRunner::Results& result,
-  const std::vector<HANDLE>& initialProcesses, LockWidget::Session& ls)
+  const std::vector<HANDLE>& initialProcesses, UILocker::Session& ls)
 {
   result = waitForProcessesThreadImpl(initialProcesses, ls);
   ls.unlock();
 }
 
 ProcessRunner::Results waitForProcesses(
-  const std::vector<HANDLE>& initialProcesses, LockWidget::Session& ls)
+  const std::vector<HANDLE>& initialProcesses, UILocker::Session& ls)
 {
   auto results = ProcessRunner::Running;
 
@@ -343,7 +343,7 @@ ProcessRunner::Results waitForProcesses(
 }
 
 ProcessRunner::Results waitForProcess(
-  HANDLE initialProcess, LPDWORD exitCode, LockWidget::Session& ls)
+  HANDLE initialProcess, LPDWORD exitCode, UILocker::Session& ls)
 {
   std::vector<HANDLE> processes = {initialProcess};
 
@@ -364,7 +364,7 @@ ProcessRunner::Results waitForProcess(
 
 
 ProcessRunner::ProcessRunner(OrganizerCore& core, IUserInterface* ui) :
-  m_core(core), m_ui(ui), m_lockReason(LockWidget::NoReason),
+  m_core(core), m_ui(ui), m_lockReason(UILocker::NoReason),
   m_waitFlags(NoFlags), m_handle(INVALID_HANDLE_VALUE), m_exitCode(-1)
 {
   // all processes started in ProcessRunner are hooked
@@ -414,7 +414,7 @@ ProcessRunner& ProcessRunner::setProfileName(const QString& profileName)
 }
 
 ProcessRunner& ProcessRunner::setWaitForCompletion(
-  WaitFlags flags, LockWidget::Reasons reason)
+  WaitFlags flags, UILocker::Reasons reason)
 {
   m_waitFlags = flags;
   m_lockReason = reason;
@@ -670,13 +670,13 @@ ProcessRunner::Results ProcessRunner::postRun()
 {
   const bool mustWait = (m_waitFlags & ForceWait);
 
-  if (mustWait && m_lockReason == LockWidget::NoReason) {
+  if (mustWait && m_lockReason == UILocker::NoReason) {
     // never lock the ui without an escape hatch for the user
     log::debug(
       "the ForceWait flag is set but the lock reason wasn't, "
       "defaulting to LockUI");
 
-    m_lockReason = LockWidget::LockUI;
+    m_lockReason = UILocker::LockUI;
   }
 
   if (mustWait) {
@@ -689,7 +689,7 @@ ProcessRunner::Results ProcessRunner::postRun()
   } else {
     // no force wait
 
-    if (m_lockReason == LockWidget::NoReason) {
+    if (m_lockReason == UILocker::NoReason) {
       // no locking requested
       return Running;
     }
@@ -750,7 +750,7 @@ env::HandlePtr ProcessRunner::stealProcessHandle()
 }
 
 ProcessRunner::Results ProcessRunner::waitForAllUSVFSProcessesWithLock(
-  LockWidget::Reasons reason)
+  UILocker::Reasons reason)
 {
   m_lockReason = reason;
 
@@ -784,8 +784,8 @@ ProcessRunner::Results ProcessRunner::waitForAllUSVFSProcessesWithLock(
   return r;
 }
 
-void ProcessRunner::withLock(std::function<void (LockWidget::Session&)> f)
+void ProcessRunner::withLock(std::function<void (UILocker::Session&)> f)
 {
-  auto ls = LockWidget::instance().lock(m_lockReason);
+  auto ls = UILocker::instance().lock(m_lockReason);
   f(*ls);
 }

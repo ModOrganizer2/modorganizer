@@ -4,12 +4,12 @@
 #include <QMenuBar>
 #include <QStatusBar>
 
-class LockInterface
+class UILockerInterface
 {
 public:
-  LockInterface(QWidget* mainUI) :
+  UILockerInterface(QWidget* mainUI) :
     m_mainUI(mainUI), m_target(nullptr), m_message(nullptr), m_info(nullptr),
-    m_buttons(nullptr), m_reason(LockWidget::NoReason)
+    m_buttons(nullptr), m_reason(UILocker::NoReason)
   {
     m_timer.reset(new QTimer);
     QObject::connect(m_timer.get(), &QTimer::timeout, [&]{ checkTarget(); });
@@ -18,7 +18,7 @@ public:
     set();
   }
 
-  ~LockInterface()
+  ~UILockerInterface()
   {
   }
 
@@ -71,17 +71,28 @@ public:
     return true;
   }
 
-  void update(LockWidget::Reasons reason)
+  void update(UILocker::Reasons reason)
   {
     m_reason = reason;
     updateMessage(reason);
     updateButtons(reason);
-    setInfo(m_infoText);
+    setInfo(m_labels);
   }
 
-  void setInfo(const QString& s)
+  void setInfo(const QStringList& labels)
   {
-    m_infoText = s;
+    const int MaxLabels = 2;
+
+    m_labels = labels;
+
+    QString s;
+
+    if (labels.size() > MaxLabels) {
+      s = labels.mid(0, MaxLabels).join(", ") + "...";
+    } else {
+      s = labels.join(", ");
+    }
+
     m_info->setText(s);
   }
 
@@ -121,10 +132,10 @@ private:
   std::unique_ptr<QWidget> m_topLevel;
   QLabel* m_message;
   QLabel* m_info;
-  QString m_infoText;
+  QStringList m_labels;
   QWidget* m_buttons;
   std::unique_ptr<Filter> m_filter;
-  LockWidget::Reasons m_reason;
+  UILocker::Reasons m_reason;
 
 
   bool hasMainUI() const
@@ -206,6 +217,7 @@ private:
   void createMessageLabel()
   {
     m_message = new QLabel;
+    m_message->setAlignment(Qt::AlignCenter | Qt::AlignHCenter);
   }
 
   void createInfoLabel()
@@ -221,11 +233,11 @@ private:
   }
 
 
-  void updateMessage(LockWidget::Reasons reason)
+  void updateMessage(UILocker::Reasons reason)
   {
     switch (reason)
     {
-      case LockWidget::LockUI:
+      case UILocker::LockUI:
       {
         QString s;
 
@@ -241,7 +253,7 @@ private:
         break;
       }
 
-      case LockWidget::OutputRequired:
+      case UILocker::OutputRequired:
       {
         m_message->setText(QObject::tr(
           "The application must run to completion because its output is "
@@ -250,7 +262,7 @@ private:
         break;
       }
 
-      case LockWidget::PreventExit:
+      case UILocker::PreventExit:
       {
         m_message->setText(QObject::tr(
           "Mod Organizer is waiting on application to close before exiting."));
@@ -260,20 +272,20 @@ private:
     }
   }
 
-  void updateButtons(LockWidget::Reasons reason)
+  void updateButtons(UILocker::Reasons reason)
   {
     MOBase::deleteChildWidgets(m_buttons);
     auto* ly = m_buttons->layout();
 
     switch (reason)
     {
-      case LockWidget::LockUI: // fall-through
-      case LockWidget::OutputRequired:
+      case UILocker::LockUI: // fall-through
+      case UILocker::OutputRequired:
       {
         auto* unlock = new QPushButton(QObject::tr("Unlock"));
 
         QObject::connect(unlock, &QPushButton::clicked, [&]{
-          LockWidget::instance().onForceUnlock();
+          UILocker::instance().onForceUnlock();
         });
 
         ly->addWidget(unlock);
@@ -281,18 +293,18 @@ private:
         break;
       }
 
-      case LockWidget::PreventExit:
+      case UILocker::PreventExit:
       {
         auto* exit = new QPushButton(QObject::tr("Exit Now"));
         QObject::connect(exit, &QPushButton::clicked, [&]{
-          LockWidget::instance().onForceUnlock();
+          UILocker::instance().onForceUnlock();
         });
 
         ly->addWidget(exit);
 
         auto* cancel = new QPushButton(QObject::tr("Cancel"));
         QObject::connect(cancel, &QPushButton::clicked, [&]{
-          LockWidget::instance().onCancel();
+          UILocker::instance().onCancel();
         });
 
         ly->addWidget(cancel);
@@ -303,19 +315,19 @@ private:
   }
 };
 
-LockWidget::Session::~Session()
+UILocker::Session::~Session()
 {
   unlock();
 }
 
-void LockWidget::Session::unlock()
+void UILocker::Session::unlock()
 {
   QMetaObject::invokeMethod(qApp, [this]{
-    LockWidget::instance().unlock(this);
+    UILocker::instance().unlock(this);
   });
 }
 
-void LockWidget::Session::setInfo(DWORD pid, const QString& name)
+void UILocker::Session::setInfo(DWORD pid, const QString& name)
 {
   {
     std::scoped_lock lock(m_mutex);
@@ -324,39 +336,39 @@ void LockWidget::Session::setInfo(DWORD pid, const QString& name)
   }
 
   QMetaObject::invokeMethod(qApp, [this]{
-    LockWidget::instance().updateLabel();
+    UILocker::instance().updateLabel();
   });
 }
 
-DWORD LockWidget::Session::pid() const
+DWORD UILocker::Session::pid() const
 {
   std::scoped_lock lock(m_mutex);
   return m_pid;
 }
 
-const QString& LockWidget::Session::name() const
+const QString& UILocker::Session::name() const
 {
   std::scoped_lock lock(m_mutex);
   return m_name;
 }
 
-LockWidget::Results LockWidget::Session::result() const
+UILocker::Results UILocker::Session::result() const
 {
-  return LockWidget::instance().result();
+  return UILocker::instance().result();
 }
 
 
-static LockWidget* g_instance = nullptr;
+static UILocker* g_instance = nullptr;
 
 
-LockWidget::LockWidget()
+UILocker::UILocker()
   : m_parent(nullptr), m_result(NoResult)
 {
   Q_ASSERT(!g_instance);
   g_instance = this;
 }
 
-LockWidget::~LockWidget()
+UILocker::~UILocker()
 {
   const auto v = m_sessions;
 
@@ -367,18 +379,18 @@ LockWidget::~LockWidget()
   }
 }
 
-LockWidget& LockWidget::instance()
+UILocker& UILocker::instance()
 {
   Q_ASSERT(g_instance);
   return *g_instance;
 }
 
-void LockWidget::setUserInterface(QWidget* parent)
+void UILocker::setUserInterface(QWidget* parent)
 {
   m_parent = parent;
 }
 
-std::shared_ptr<LockWidget::Session> LockWidget::lock(Reasons reason)
+std::shared_ptr<UILocker::Session> UILocker::lock(Reasons reason)
 {
   m_result = StillLocked;
   createUi(reason);
@@ -391,7 +403,7 @@ std::shared_ptr<LockWidget::Session> LockWidget::lock(Reasons reason)
   return ls;
 }
 
-void LockWidget::unlock(Session* s)
+void UILocker::unlock(Session* s)
 {
   auto itor = m_sessions.begin();
   for (;;) {
@@ -420,7 +432,7 @@ void LockWidget::unlock(Session* s)
   }
 }
 
-void LockWidget::unlockCurrent()
+void UILocker::unlockCurrent()
 {
   if (m_sessions.empty()) {
     return;
@@ -435,29 +447,28 @@ void LockWidget::unlockCurrent()
   unlock(s.get());
 }
 
-void LockWidget::updateLabel()
+void UILocker::updateLabel()
 {
-  QString label;
+  QStringList labels;
 
   for (auto itor=m_sessions.rbegin(); itor!=m_sessions.rend(); ++itor) {
     if (auto ss=itor->lock()) {
-      label += QString("%1 (%2)").arg(ss->name()).arg(ss->pid());
-      break;
+      labels.push_back(QString("%1 (%2)").arg(ss->name()).arg(ss->pid()));
     }
   }
 
-  m_ui->setInfo(label);
+  m_ui->setInfo(labels);
 }
 
-LockWidget::Results LockWidget::result() const
+UILocker::Results UILocker::result() const
 {
   return m_result;
 }
 
-void LockWidget::createUi(Reasons reason)
+void UILocker::createUi(Reasons reason)
 {
   if (!m_ui) {
-    m_ui.reset(new LockInterface(m_parent));
+    m_ui.reset(new UILockerInterface(m_parent));
   }
 
   m_ui->update(reason);
@@ -465,13 +476,13 @@ void LockWidget::createUi(Reasons reason)
   disableAll();
 }
 
-void LockWidget::onForceUnlock()
+void UILocker::onForceUnlock()
 {
   m_result = ForceUnlocked;
   unlockCurrent();
 }
 
-void LockWidget::onCancel()
+void UILocker::onCancel()
 {
   m_result = Cancelled;
   unlockCurrent();
@@ -483,7 +494,7 @@ QList<T> findChildrenImmediate(QWidget* parent)
   return parent->findChildren<T>(QString(), Qt::FindDirectChildrenOnly);
 }
 
-void LockWidget::disableAll()
+void UILocker::disableAll()
 {
   const auto topLevels = QApplication::topLevelWidgets();
 
@@ -517,7 +528,7 @@ void LockWidget::disableAll()
   }
 }
 
-void LockWidget::enableAll()
+void UILocker::enableAll()
 {
   for (auto w : m_disabled) {
     if (w) {
@@ -528,7 +539,7 @@ void LockWidget::enableAll()
   m_disabled.clear();
 }
 
-void LockWidget::disable(QWidget* w)
+void UILocker::disable(QWidget* w)
 {
   if (w->isEnabled()) {
     w->setEnabled(false);

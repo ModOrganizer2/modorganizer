@@ -250,7 +250,7 @@ void OrganizerCore::setUserInterface(IUserInterface* ui)
 
   m_InstallationManager.setParentWidget(w);
   m_Updater.setUserInterface(w);
-  m_LockWidget.setUserInterface(w);
+  m_UILocker.setUserInterface(w);
 
   checkForUpdates();
 }
@@ -1797,7 +1797,7 @@ void OrganizerCore::afterRun(const QFileInfo& binary, DWORD exitCode)
 }
 
 ProcessRunner::Results OrganizerCore::waitForAllUSVFSProcesses(
-  LockWidget::Reasons reason)
+  UILocker::Reasons reason)
 {
   return processRunner().waitForAllUSVFSProcessesWithLock(reason);
 }

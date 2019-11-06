@@ -65,7 +65,7 @@ public:
   ProcessRunner& setForcedLibraries(const ForcedLibraries& forcedLibraries);
   ProcessRunner& setProfileName(const QString& profileName);
   ProcessRunner& setWaitForCompletion(
-    WaitFlags flags=NoFlags, LockWidget::Reasons reason=LockWidget::LockUI);
+    WaitFlags flags=NoFlags, UILocker::Reasons reason=UILocker::LockUI);
 
   // if the target is an executable file, runs that; for anything else, calls
   // ShellExecute() on it
@@ -134,7 +134,7 @@ public:
   // running a process, but it uses the same internal stuff as when running a
   // process
   //
-  Results waitForAllUSVFSProcessesWithLock(LockWidget::Reasons reason);
+  Results waitForAllUSVFSProcessesWithLock(UILocker::Reasons reason);
 
 private:
   OrganizerCore& m_core;
@@ -143,7 +143,7 @@ private:
   QString m_customOverwrite;
   ForcedLibraries m_forcedLibraries;
   QString m_profileName;
-  LockWidget::Reasons m_lockReason;
+  UILocker::Reasons m_lockReason;
   WaitFlags m_waitFlags;
   QString m_shellOpen;
   env::HandlePtr m_handle;
@@ -164,7 +164,7 @@ private:
 
   // creates the lock widget and calls f()
   //
-  void withLock(std::function<void (LockWidget::Session&)> f);
+  void withLock(std::function<void (UILocker::Session&)> f);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(ProcessRunner::WaitFlags);

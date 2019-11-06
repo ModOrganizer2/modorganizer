@@ -3,11 +3,11 @@
 #include <QMainWindow>
 #include <mutex>
 
-class LockInterface;
+class UILockerInterface;
 
-class LockWidget
+class UILocker
 {
-  friend class LockInterface;
+  friend class UILockerInterface;
 
 public:
   // reason to show the widget
@@ -62,12 +62,10 @@ public:
   };
 
 
-  // if `reason` is not NoReason, lock() is called with it
-  //
-  LockWidget();
-  ~LockWidget();
+  UILocker();
+  ~UILocker();
 
-  static LockWidget& instance();
+  static UILocker& instance();
 
   void setUserInterface(QWidget* parent);
 
@@ -77,7 +75,7 @@ public:
 
 private:
   QWidget* m_parent;
-  std::unique_ptr<LockInterface> m_ui;
+  std::unique_ptr<UILockerInterface> m_ui;
   std::vector<std::weak_ptr<Session>> m_sessions;
   std::atomic<Results> m_result;
   std::vector<QPointer<QWidget>> m_disabled;

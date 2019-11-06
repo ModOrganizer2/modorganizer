@@ -145,7 +145,7 @@ public:
   void afterRun(const QFileInfo& binary, DWORD exitCode);
 
   ProcessRunner::Results waitForAllUSVFSProcesses(
-    LockWidget::Reasons reason=LockWidget::PreventExit);
+    UILocker::Reasons reason=UILocker::PreventExit);
 
   void refreshESPList(bool force = false);
   void refreshBSAList();
@@ -344,7 +344,7 @@ private:
   MOBase::DelayedFileWriter m_PluginListsWriter;
   UsvfsConnector m_USVFS;
 
-  LockWidget m_LockWidget;
+  UILocker m_UILocker;
 
   static CrashDumpsType m_globalCrashDumpsType;
 };
