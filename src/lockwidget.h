@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QMainWindow>
+#include <mutex>
 
 class LockInterface;
 
@@ -47,6 +48,7 @@ public:
   public:
     ~Session();
 
+    void unlock();
     void setInfo(DWORD pid, const QString& name);
     Results result() const;
 
@@ -54,6 +56,7 @@ public:
     const QString& name() const;
 
   private:
+    mutable std::mutex m_mutex;
     DWORD m_pid;
     QString m_name;
   };
@@ -76,7 +79,7 @@ private:
   QWidget* m_parent;
   std::unique_ptr<LockInterface> m_ui;
   std::vector<std::weak_ptr<Session>> m_sessions;
-  Results m_result;
+  std::atomic<Results> m_result;
   std::vector<QPointer<QWidget>> m_disabled;
 
   void createUi(Reasons reason);

@@ -305,24 +305,38 @@ private:
 
 LockWidget::Session::~Session()
 {
-  LockWidget::instance().unlock(this);
+  unlock();
+}
+
+void LockWidget::Session::unlock()
+{
+  QMetaObject::invokeMethod(qApp, [this]{
+    LockWidget::instance().unlock(this);
+  });
 }
 
 void LockWidget::Session::setInfo(DWORD pid, const QString& name)
 {
-  m_pid = pid;
-  m_name = name;
+  {
+    std::scoped_lock lock(m_mutex);
+    m_pid = pid;
+    m_name = name;
+  }
 
-  LockWidget::instance().updateLabel();
+  QMetaObject::invokeMethod(qApp, [this]{
+    LockWidget::instance().updateLabel();
+  });
 }
 
 DWORD LockWidget::Session::pid() const
 {
+  std::scoped_lock lock(m_mutex);
   return m_pid;
 }
 
 const QString& LockWidget::Session::name() const
 {
+  std::scoped_lock lock(m_mutex);
   return m_name;
 }
 

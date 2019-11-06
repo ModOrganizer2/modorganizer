@@ -55,11 +55,7 @@ std::optional<ProcessRunner::Results> singleWait(HANDLE handle, DWORD pid)
     return ProcessRunner::Error;
   }
 
-  const DWORD WAIT_EVENT = WAIT_OBJECT_0 + 1;
-
-  // Wait for a an event on the handle, a key press, mouse click or timeout
-  const auto res = MsgWaitForMultipleObjects(
-    1, &handle, FALSE, 50, QS_KEY | QS_MOUSEBUTTON);
+  const auto res = WaitForSingleObject(handle, 50);
 
   switch (res)
   {
@@ -70,7 +66,6 @@ std::optional<ProcessRunner::Results> singleWait(HANDLE handle, DWORD pid)
     }
 
     case WAIT_TIMEOUT:
-    case WAIT_EVENT:
     {
       // still running
       return {};
@@ -216,10 +211,6 @@ std::optional<ProcessRunner::Results> timedWait(
 
     // the process is still running
 
-    // keep processing events so the app doesn't appear dead
-    QCoreApplication::sendPostedEvents();
-    QCoreApplication::processEvents();
-
     // check the lock widget
     switch (ls.result())
     {
@@ -263,7 +254,7 @@ std::optional<ProcessRunner::Results> timedWait(
   }
 }
 
-ProcessRunner::Results waitForProcesses(
+ProcessRunner::Results waitForProcessesThreadImpl(
   const std::vector<HANDLE>& initialProcesses, LockWidget::Session& ls)
 {
   using namespace std::chrono;
@@ -320,6 +311,35 @@ ProcessRunner::Results waitForProcesses(
     // processes
     wait = std::min(wait * 2, milliseconds(2000));
   }
+}
+
+void waitForProcessesThread(
+  ProcessRunner::Results& result,
+  const std::vector<HANDLE>& initialProcesses, LockWidget::Session& ls)
+{
+  result = waitForProcessesThreadImpl(initialProcesses, ls);
+  ls.unlock();
+}
+
+ProcessRunner::Results waitForProcesses(
+  const std::vector<HANDLE>& initialProcesses, LockWidget::Session& ls)
+{
+  auto results = ProcessRunner::Running;
+
+  auto* t = QThread::create(
+    waitForProcessesThread, std::ref(results), initialProcesses, std::ref(ls));
+
+  QEventLoop events;
+  QObject::connect(t, &QThread::finished, [&]{
+    events.quit();
+  });
+
+  t->start();
+  events.exec();
+
+  delete t;
+
+  return results;
 }
 
 ProcessRunner::Results waitForProcess(
