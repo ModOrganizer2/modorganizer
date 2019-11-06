@@ -14,6 +14,7 @@
 #include "usvfsconnector.h"
 #include "moshortcut.h"
 #include "processrunner.h"
+#include "lockwidget.h"
 #include <directoryentry.h>
 #include <imoinfo.h>
 #include <iplugindiagnose.h>
@@ -342,6 +343,8 @@ private:
 
   MOBase::DelayedFileWriter m_PluginListsWriter;
   UsvfsConnector m_USVFS;
+
+  LockWidget m_LockWidget;
 
   static CrashDumpsType m_globalCrashDumpsType;
 };

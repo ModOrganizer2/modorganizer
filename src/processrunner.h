@@ -164,7 +164,7 @@ private:
 
   // creates the lock widget and calls f()
   //
-  void withLock(std::function<void (LockWidget&)> f);
+  void withLock(std::function<void (LockWidget::Session&)> f);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(ProcessRunner::WaitFlags);

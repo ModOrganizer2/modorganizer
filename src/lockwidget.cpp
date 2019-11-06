@@ -4,52 +4,397 @@
 #include <QMenuBar>
 #include <QStatusBar>
 
-QWidget* createTransparentWidget(QWidget* parent=nullptr)
+class LockInterface
 {
-  auto* w = new QWidget(parent);
+public:
+  LockInterface() :
+    m_hasMainUI(false), m_message(nullptr), m_info(nullptr), m_buttons(nullptr)
+  {
+  }
 
-  w->setWindowOpacity(0);
-  w->setAttribute(Qt::WA_NoSystemBackground);
-  w->setAttribute(Qt::WA_TranslucentBackground);
+  ~LockInterface()
+  {
+  }
 
-  return w;
+  void set(QWidget* target)
+  {
+    QFrame* center = nullptr;
+
+    if (target) {
+      center = createOverlay(target);
+    } else {
+      center = createDialog();
+    }
+
+    createMessageLabel();
+    createInfoLabel();
+    createButtonsPanel();
+
+    center->layout()->addWidget(m_message);
+    center->layout()->addWidget(m_info);
+    center->layout()->addWidget(m_buttons);
+
+    m_topLevel->setFocusPolicy(Qt::TabFocus);
+    m_topLevel->setFocus();
+    m_topLevel->show();
+    m_topLevel->setEnabled(true);
+
+    m_topLevel->raise();
+    m_topLevel->activateWindow();
+  }
+
+  void update(LockWidget::Reasons reason)
+  {
+    updateMessage(reason);
+    updateButtons(reason);
+  }
+
+  void setInfo(const QString& s)
+  {
+    m_info->setText(s);
+  }
+
+  QWidget* topLevel()
+  {
+    return m_topLevel.get();
+  }
+
+private:
+  class Filter : public QObject
+  {
+  public:
+    std::function<void ()> resized;
+    std::function<void ()> closed;
+
+  protected:
+    bool eventFilter(QObject* o, QEvent* e) override
+    {
+      if (e->type() == QEvent::Resize) {
+        if (resized) {
+          resized();
+        }
+      } else if (e->type() == QEvent::Close) {
+        if (closed) {
+          closed();
+        }
+      }
+
+      return QObject::eventFilter(o, e);
+    }
+  };
+
+
+  bool m_hasMainUI;
+  std::unique_ptr<QWidget> m_topLevel;
+  QLabel* m_message;
+  QLabel* m_info;
+  QWidget* m_buttons;
+  std::unique_ptr<Filter> m_filter;
+
+  QWidget* createTransparentWidget(QWidget* parent=nullptr)
+  {
+    auto* w = new QWidget(parent);
+
+    w->setWindowOpacity(0);
+    w->setAttribute(Qt::WA_NoSystemBackground);
+    w->setAttribute(Qt::WA_TranslucentBackground);
+
+    return w;
+  }
+
+  QFrame* createOverlay(QWidget* mainUI)
+  {
+    m_hasMainUI = true;
+
+    m_topLevel.reset(createTransparentWidget(mainUI));
+    m_topLevel->setWindowFlags(m_topLevel->windowFlags() & Qt::FramelessWindowHint);
+    m_topLevel->setGeometry(mainUI->rect());
+
+    m_filter.reset(new Filter);
+    m_filter->resized = [=]{ m_topLevel->setGeometry(mainUI->rect()); };
+    m_filter->closed = [=]{ LockWidget::instance().onForceUnlock(); };
+
+    mainUI->installEventFilter(m_filter.get());
+
+    return createFrame();
+  }
+
+  QFrame* createDialog()
+  {
+    m_hasMainUI = false;
+    m_topLevel.reset(new QDialog);
+
+    return createFrame();
+  }
+
+  QFrame* createFrame()
+  {
+    auto* frame = new QFrame;
+    auto* ly = new QVBoxLayout(frame);
+
+    if (m_hasMainUI) {
+      frame->setFrameStyle(QFrame::StyledPanel);
+      frame->setLineWidth(1);
+      frame->setAutoFillBackground(true);
+
+      auto* shadow = new QGraphicsDropShadowEffect;
+      shadow->setBlurRadius(50);
+      shadow->setOffset(0);
+      shadow->setColor(QColor(0, 0, 0, 100));
+      frame->setGraphicsEffect(shadow);
+    } else {
+      ly->setContentsMargins(0, 0, 0, 0);
+    }
+
+    auto* grid = new QGridLayout(m_topLevel.get());
+    grid->addWidget(createTransparentWidget(), 0, 1);
+    grid->addWidget(createTransparentWidget(), 2, 1);
+    grid->addWidget(createTransparentWidget(), 1, 0);
+    grid->addWidget(createTransparentWidget(), 1, 2);
+    grid->addWidget(frame, 1, 1);
+
+    if (!m_hasMainUI) {
+      grid->setContentsMargins(0, 0, 0, 0);
+    }
+
+    grid->setRowStretch(0, 1);
+    grid->setRowStretch(2, 1);
+    grid->setColumnStretch(0, 1);
+    grid->setColumnStretch(2, 1);
+
+    return frame;
+  }
+
+  void createMessageLabel()
+  {
+    m_message = new QLabel;
+  }
+
+  void createInfoLabel()
+  {
+    m_info = new QLabel(" ");
+    m_info->setAlignment(Qt::AlignCenter | Qt::AlignHCenter);
+  }
+
+  void createButtonsPanel()
+  {
+    m_buttons = new QWidget;
+    m_buttons->setLayout(new QHBoxLayout);
+  }
+
+
+  void updateMessage(LockWidget::Reasons reason)
+  {
+    switch (reason)
+    {
+      case LockWidget::LockUI:
+      {
+        QString s;
+
+        if (m_hasMainUI) {
+          s = QObject::tr(
+            "Mod Organizer is locked while the application is running.");
+        } else {
+          s = QObject::tr("Mod Organizer is currently running an application.");
+        }
+
+        m_message->setText(s);
+
+        break;
+      }
+
+      case LockWidget::OutputRequired:
+      {
+        m_message->setText(QObject::tr(
+          "The application must run to completion because its output is "
+          "required."));
+
+        break;
+      }
+
+      case LockWidget::PreventExit:
+      {
+        m_message->setText(QObject::tr(
+          "Mod Organizer is waiting on application to close before exiting."));
+
+        break;
+      }
+    }
+  }
+
+  void updateButtons(LockWidget::Reasons reason)
+  {
+    MOBase::deleteChildWidgets(m_buttons);
+    auto* ly = m_buttons->layout();
+
+    switch (reason)
+    {
+      case LockWidget::LockUI: // fall-through
+      case LockWidget::OutputRequired:
+      {
+        auto* unlock = new QPushButton(QObject::tr("Unlock"));
+
+        QObject::connect(unlock, &QPushButton::clicked, [&]{
+          LockWidget::instance().onForceUnlock();
+        });
+
+        ly->addWidget(unlock);
+
+        break;
+      }
+
+      case LockWidget::PreventExit:
+      {
+        auto* exit = new QPushButton(QObject::tr("Exit Now"));
+        QObject::connect(exit, &QPushButton::clicked, [&]{
+          LockWidget::instance().onForceUnlock();
+        });
+
+        ly->addWidget(exit);
+
+        auto* cancel = new QPushButton(QObject::tr("Cancel"));
+        QObject::connect(cancel, &QPushButton::clicked, [&]{
+          LockWidget::instance().onCancel();
+        });
+
+        ly->addWidget(cancel);
+
+        break;
+      }
+    }
+  }
+};
+
+LockWidget::Session::~Session()
+{
+  LockWidget::instance().unlock(this);
+}
+
+void LockWidget::Session::setInfo(DWORD pid, const QString& name)
+{
+  m_pid = pid;
+  m_name = name;
+
+  LockWidget::instance().updateLabel();
+}
+
+DWORD LockWidget::Session::pid() const
+{
+  return m_pid;
+}
+
+const QString& LockWidget::Session::name() const
+{
+  return m_name;
+}
+
+LockWidget::Results LockWidget::Session::result() const
+{
+  return LockWidget::instance().result();
 }
 
 
-LockWidget::LockWidget(QWidget* parent, Reasons reason) :
-  m_parent(parent), m_overlay(nullptr), m_info(nullptr), m_result(NoResult),
-  m_filter(nullptr)
+static LockWidget* g_instance = nullptr;
+
+
+LockWidget::LockWidget()
+  : m_parent(nullptr), m_result(NoResult)
 {
-  if (reason != NoReason) {
-    lock(reason);
-  }
+  Q_ASSERT(!g_instance);
+  g_instance = this;
 }
 
 LockWidget::~LockWidget()
 {
-  unlock();
+  const auto v = m_sessions;
+
+  for (auto& wp : v) {
+    if (auto s=wp.lock()) {
+      unlock(s.get());
+    }
+  }
 }
 
-void LockWidget::lock(Reasons reason)
+LockWidget& LockWidget::instance()
+{
+  Q_ASSERT(g_instance);
+  return *g_instance;
+}
+
+void LockWidget::setUserInterface(QWidget* parent)
+{
+  m_parent = parent;
+}
+
+std::shared_ptr<LockWidget::Session> LockWidget::lock(Reasons reason)
 {
   m_result = StillLocked;
   createUi(reason);
+
+  auto ls = std::make_shared<Session>();
+  m_sessions.push_back(ls);
+
+  updateLabel();
+
+  return ls;
 }
 
-void LockWidget::unlock()
+void LockWidget::unlock(Session* s)
 {
-  m_overlay.reset();
+  auto itor = m_sessions.begin();
+  for (;;) {
+    if (itor == m_sessions.end()) {
+      break;
+    }
 
-  if (m_filter && m_parent) {
-    m_parent->removeEventFilter(m_filter.get());
+    if (auto ss=itor->lock()) {
+      if (ss.get() == s) {
+        itor = m_sessions.erase(itor);
+        continue;
+      }
+    } else {
+      itor = m_sessions.erase(itor);
+      continue;
+    }
+
+    ++itor;
   }
 
-  enableAll();
+  if (m_sessions.empty()) {
+    m_ui.reset();
+    enableAll();
+  } else {
+    updateLabel();
+  }
 }
 
-void LockWidget::setInfo(DWORD pid, const QString& name)
+void LockWidget::unlockCurrent()
 {
-  m_info->setText(QString("%1 (%2)").arg(name).arg(pid));
+  if (m_sessions.empty()) {
+    return;
+  }
+
+  auto s = m_sessions.back().lock();
+  if (!s) {
+    m_sessions.pop_back();
+    return;
+  }
+
+  unlock(s.get());
+}
+
+void LockWidget::updateLabel()
+{
+  QString label;
+
+  for (auto itor=m_sessions.rbegin(); itor!=m_sessions.rend(); ++itor) {
+    if (auto ss=itor->lock()) {
+      label += QString("%1 (%2)").arg(ss->name()).arg(ss->pid());
+      break;
+    }
+  }
+
+  m_ui->setInfo(label);
 }
 
 LockWidget::Results LockWidget::result() const
@@ -59,148 +404,31 @@ LockWidget::Results LockWidget::result() const
 
 void LockWidget::createUi(Reasons reason)
 {
-  QWidget* overlayTarget = m_parent;
+  QWidget* target = m_parent;
   if (auto* w = qApp->activeWindow()) {
-    overlayTarget = w;
+    target = w;
   }
 
-  if (overlayTarget) {
-    m_overlay.reset(createTransparentWidget(overlayTarget));
-    m_overlay->setWindowFlags(m_overlay->windowFlags() & Qt::FramelessWindowHint);
-    m_overlay->setGeometry(overlayTarget->rect());
-  } else {
-    m_overlay.reset(new QDialog);
+  if (!m_ui) {
+    m_ui.reset(new LockInterface);
   }
 
-  auto* center = new QFrame;
-
-  if (overlayTarget) {
-    center->setFrameStyle(QFrame::StyledPanel);
-    center->setLineWidth(1);
-    center->setAutoFillBackground(true);
-
-    auto* shadow = new QGraphicsDropShadowEffect;
-    shadow->setBlurRadius(50);
-    shadow->setOffset(0);
-    shadow->setColor(QColor(0, 0, 0, 100));
-    center->setGraphicsEffect(shadow);
-  }
-
-  m_info = new QLabel(" ");
-  m_info->setAlignment(Qt::AlignCenter | Qt::AlignHCenter);
-
-  auto* ly = new QVBoxLayout(center);
-
-  if (!overlayTarget) {
-    ly->setContentsMargins(0, 0, 0, 0);
-  }
-
-  auto* message = new QLabel;
-  ly->addWidget(message);
-  ly->addWidget(m_info);
-
-  auto* buttons = new QWidget;
-  auto* buttonsLayout = new QHBoxLayout(buttons);
-  ly->addWidget(buttons);
-
-  switch (reason)
-  {
-    case LockUI:
-    {
-      QString s;
-
-      if (!m_parent) {
-        s = QObject::tr("Mod Organizer is currently running an application.");
-      } else {
-        s = QObject::tr(
-          "Mod Organizer is locked while the application is running.");
-      }
-
-      message->setText(s);
-
-      auto* unlockButton = new QPushButton(QObject::tr("Unlock"));
-      QObject::connect(unlockButton, &QPushButton::clicked, [&]{ onForceUnlock(); });
-      buttonsLayout->addWidget(unlockButton);
-
-      break;
-    }
-
-    case OutputRequired:
-    {
-      message->setText(QObject::tr(
-        "The application must run to completion because its output is "
-        "required."));
-
-      auto* unlockButton = new QPushButton(QObject::tr("Unlock"));
-      QObject::connect(unlockButton, &QPushButton::clicked, [&]{ onForceUnlock(); });
-      buttonsLayout->addWidget(unlockButton);
-
-      break;
-    }
-
-    case PreventExit:
-    {
-      message->setText(QObject::tr(
-        "Mod Organizer is waiting on application to close before exiting."));
-
-      auto* exit = new QPushButton(QObject::tr("Exit Now"));
-      QObject::connect(exit, &QPushButton::clicked, [&]{ onForceUnlock(); });
-      buttonsLayout->addWidget(exit);
-
-      auto* cancel = new QPushButton(QObject::tr("Cancel"));
-      QObject::connect(cancel, &QPushButton::clicked, [&]{ onCancel(); });
-      buttonsLayout->addWidget(cancel);
-
-      break;
-    }
-  }
-
-  auto* grid = new QGridLayout(m_overlay.get());
-  grid->addWidget(createTransparentWidget(), 0, 1);
-  grid->addWidget(createTransparentWidget(), 2, 1);
-  grid->addWidget(createTransparentWidget(), 1, 0);
-  grid->addWidget(createTransparentWidget(), 1, 2);
-  grid->addWidget(center, 1, 1);
-
-  if (!overlayTarget) {
-    grid->setContentsMargins(0, 0, 0, 0);
-  }
-
-  grid->setRowStretch(0, 1);
-  grid->setRowStretch(2, 1);
-  grid->setColumnStretch(0, 1);
-  grid->setColumnStretch(2, 1);
+  m_ui->set(target);
+  m_ui->update(reason);
 
   disableAll();
-
-  if (overlayTarget) {
-    m_filter.reset(new Filter);
-    m_filter->resized = [=]{ m_overlay->setGeometry(overlayTarget->rect()); };
-    m_filter->closed = [=]{ onForceUnlock(); };
-    overlayTarget->installEventFilter(m_filter.get());
-  }
-
-  m_overlay->setFocusPolicy(Qt::TabFocus);
-  m_overlay->setFocus();
-  m_overlay->show();
-  m_overlay->setEnabled(true);
-
-  if (!overlayTarget) {
-    m_overlay->raise();
-    m_overlay->activateWindow();
-  }
 }
 
 void LockWidget::onForceUnlock()
 {
   m_result = ForceUnlocked;
-  unlock();
+  unlockCurrent();
 }
 
 void LockWidget::onCancel()
 {
   m_result = Cancelled;
-  unlock();
+  unlockCurrent();
 }
 
 template <class T>
@@ -231,10 +459,10 @@ void LockWidget::disableAll()
     if (auto* d=dynamic_cast<QDialog*>(w)) {
       // don't disable stuff if this dialog is the overlay, which happens when
       // there's no ui
-      if (d != m_overlay.get()) {
+      if (d != m_ui->topLevel()) {
         // no central widget, just disable the children, except for the overlay
         for (auto* child : findChildrenImmediate<QWidget*>(d)) {
-          if (child != m_overlay.get()) {
+          if (child != m_ui->topLevel()) {
             disable(child);
           }
         }

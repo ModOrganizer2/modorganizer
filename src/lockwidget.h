@@ -2,8 +2,12 @@
 
 #include <QMainWindow>
 
+class LockInterface;
+
 class LockWidget
 {
+  friend class LockInterface;
+
 public:
   // reason to show the widget
   //
@@ -37,50 +41,49 @@ public:
     Cancelled
   };
 
-  // if `reason` is not NoReason, lock() is called with it
-  //
-  LockWidget(QWidget* parent, Reasons reason=NoReason);
-  ~LockWidget();
 
-  void lock(Reasons reason);
-  void unlock();
-
-  void setInfo(DWORD pid, const QString& name);
-  Results result() const;
-
-private:
-  class Filter : public QObject
+  class Session
   {
   public:
-    std::function<void ()> resized;
-    std::function<void ()> closed;
+    ~Session();
 
-  protected:
-    bool eventFilter(QObject* o, QEvent* e) override
-    {
-      if (e->type() == QEvent::Resize) {
-        if (resized) {
-          resized();
-        }
-      } else if (e->type() == QEvent::Close) {
-        if (closed) {
-          closed();
-        }
-      }
+    void setInfo(DWORD pid, const QString& name);
+    Results result() const;
 
-      return QObject::eventFilter(o, e);
-    }
+    DWORD pid() const;
+    const QString& name() const;
+
+  private:
+    DWORD m_pid;
+    QString m_name;
   };
 
 
+  // if `reason` is not NoReason, lock() is called with it
+  //
+  LockWidget();
+  ~LockWidget();
+
+  static LockWidget& instance();
+
+  void setUserInterface(QWidget* parent);
+
+  std::shared_ptr<Session> lock(Reasons reason);
+
+  Results result() const;
+
+private:
   QWidget* m_parent;
-  std::unique_ptr<QWidget> m_overlay;
-  QLabel* m_info;
+  std::unique_ptr<LockInterface> m_ui;
+  std::vector<std::weak_ptr<Session>> m_sessions;
   Results m_result;
-  std::unique_ptr<Filter> m_filter;
   std::vector<QPointer<QWidget>> m_disabled;
 
   void createUi(Reasons reason);
+
+  void unlockCurrent();
+  void unlock(Session* s);
+  void updateLabel();
 
   void onForceUnlock();
   void onCancel();

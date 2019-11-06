@@ -250,6 +250,7 @@ void OrganizerCore::setUserInterface(IUserInterface* ui)
 
   m_InstallationManager.setParentWidget(w);
   m_Updater.setUserInterface(w);
+  m_LockWidget.setUserInterface(w);
 
   checkForUpdates();
 }

@@ -195,7 +195,8 @@ const std::chrono::milliseconds Infinite(-1);
 // waits for completion, times out after `wait` if not Infinite
 //
 std::optional<ProcessRunner::Results> timedWait(
-  HANDLE handle, DWORD pid, LockWidget& lock, std::chrono::milliseconds wait)
+  HANDLE handle, DWORD pid, LockWidget::Session& ls,
+  std::chrono::milliseconds wait)
 {
   using namespace std::chrono;
 
@@ -220,7 +221,7 @@ std::optional<ProcessRunner::Results> timedWait(
     QCoreApplication::processEvents();
 
     // check the lock widget
-    switch (lock.result())
+    switch (ls.result())
     {
       case LockWidget::StillLocked:
       {
@@ -245,7 +246,7 @@ std::optional<ProcessRunner::Results> timedWait(
         // shouldn't happen
         log::debug(
           "unexpected result {} while waiting for {}",
-          static_cast<int>(lock.result()), pid);
+          static_cast<int>(ls.result()), pid);
 
         return ProcessRunner::Error;
       }
@@ -263,7 +264,7 @@ std::optional<ProcessRunner::Results> timedWait(
 }
 
 ProcessRunner::Results waitForProcesses(
-  const std::vector<HANDLE>& initialProcesses, LockWidget& lock)
+  const std::vector<HANDLE>& initialProcesses, LockWidget::Session& ls)
 {
   using namespace std::chrono;
 
@@ -287,7 +288,7 @@ ProcessRunner::Results waitForProcesses(
     }
 
     // update the lock widget
-    lock.setInfo(p.pid(), p.name());
+    ls.setInfo(p.pid(), p.name());
 
     // open the process
     auto interestingHandle = p.openHandleForWait();
@@ -309,7 +310,7 @@ ProcessRunner::Results waitForProcesses(
       wait = Infinite;
     }
 
-    const auto r = timedWait(interestingHandle.get(), p.pid(), lock, wait);
+    const auto r = timedWait(interestingHandle.get(), p.pid(), ls, wait);
     if (r) {
       // the process has completed or returned an error
       return *r;
@@ -322,11 +323,11 @@ ProcessRunner::Results waitForProcesses(
 }
 
 ProcessRunner::Results waitForProcess(
-  HANDLE initialProcess, LPDWORD exitCode, LockWidget& lock)
+  HANDLE initialProcess, LPDWORD exitCode, LockWidget::Session& ls)
 {
   std::vector<HANDLE> processes = {initialProcess};
 
-  const auto r = waitForProcesses(processes, lock);
+  const auto r = waitForProcesses(processes, ls);
 
   // as long as it's not running anymore, try to get the exit code
   if (exitCode && r != ProcessRunner::Running) {
@@ -682,8 +683,8 @@ ProcessRunner::Results ProcessRunner::postRun()
 
   auto r = Error;
 
-  withLock([&](auto& lock) {
-    r = waitForProcess(m_handle.get(), &m_exitCode, lock);
+  withLock([&](auto& ls) {
+    r = waitForProcess(m_handle.get(), &m_exitCode, ls);
   });
 
   if (r == Completed && (m_waitFlags & Refresh)) {
@@ -740,14 +741,14 @@ ProcessRunner::Results ProcessRunner::waitForAllUSVFSProcessesWithLock(
 
   auto r = Error;
 
-  withLock([&](auto& lock) {
+  withLock([&](auto& ls) {
     for (;;) {
       const auto processes = getRunningUSVFSProcesses();
       if (processes.empty()) {
         break;
       }
 
-      r = waitForProcesses(processes, lock);
+      r = waitForProcesses(processes, ls);
 
       if (r != Completed) {
         // error, cancelled, or unlocked
@@ -763,10 +764,8 @@ ProcessRunner::Results ProcessRunner::waitForAllUSVFSProcessesWithLock(
   return r;
 }
 
-void ProcessRunner::withLock(std::function<void (LockWidget&)> f)
+void ProcessRunner::withLock(std::function<void (LockWidget::Session&)> f)
 {
-  auto lk = std::make_unique<LockWidget>(
-    m_ui ? m_ui->qtWidget() : nullptr, m_lockReason);
-
-  f(*lk);
+  auto ls = LockWidget::instance().lock(m_lockReason);
+  f(*ls);
 }
