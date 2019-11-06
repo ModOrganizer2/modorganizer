@@ -118,48 +118,6 @@ CrashDumpsType crashDumpsType(int type)
   }
 }
 
-QString toString(LogLevel lv)
-{
-  switch (lv)
-  {
-    case LogLevel::Debug:
-      return "debug";
-
-    case LogLevel::Info:
-      return "info";
-
-    case LogLevel::Warning:
-      return "warning";
-
-    case LogLevel::Error:
-      return "error";
-
-    default:
-      return QString("%1").arg(static_cast<int>(lv));
-  }
-}
-
-QString toString(CrashDumpsType t)
-{
-  switch (t)
-  {
-    case CrashDumpsType::None:
-      return "none";
-
-    case CrashDumpsType::Mini:
-      return "mini";
-
-    case CrashDumpsType::Data:
-      return "data";
-
-    case CrashDumpsType::Full:
-      return "full";
-
-    default:
-      return QString("%1").arg(static_cast<int>(t));
-  }
-}
-
 UsvfsConnector::UsvfsConnector()
 {
   using namespace std::chrono;
@@ -188,9 +146,9 @@ UsvfsConnector::UsvfsConnector()
     " . log: {}\n"
     " . dump: {} ({})",
     SHMID,
-    toString(logLevel),
+    usvfsLogLevelToString(logLevel),
     dumpPath.c_str(),
-    toString(dumpType));
+    usvfsCrashDumpTypeToString(dumpType));
 
   usvfsCreateVFS(params);
   usvfsFreeParameters(params);
@@ -263,14 +221,17 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
 
 void UsvfsConnector::updateParams(
   MOBase::log::Levels logLevel, CrashDumpsType crashDumpsType,
-  std::chrono::seconds spawnDelay, QString executableBlacklist)
+  const QString& crashDumpsPath, std::chrono::seconds spawnDelay,
+  QString executableBlacklist)
 {
   using namespace std::chrono;
 
   usvfsParameters* p = usvfsCreateParameters();
 
+  usvfsSetDebugMode(p, FALSE);
   usvfsSetLogLevel(p, toUsvfsLogLevel(logLevel));
   usvfsSetCrashDumpType(p, crashDumpsType);
+  usvfsSetCrashDumpPath(p, crashDumpsPath.toStdString().c_str());
   usvfsSetProcessDelay(p, duration_cast<milliseconds>(spawnDelay).count());
 
   usvfsUpdateParameters(p);
