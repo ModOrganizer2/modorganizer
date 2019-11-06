@@ -7,21 +7,47 @@
 class LockInterface
 {
 public:
-  LockInterface() :
-    m_hasMainUI(false), m_message(nullptr), m_info(nullptr), m_buttons(nullptr)
+  LockInterface(QWidget* mainUI) :
+    m_mainUI(mainUI), m_target(nullptr), m_message(nullptr), m_info(nullptr),
+    m_buttons(nullptr), m_reason(LockWidget::NoReason)
   {
+    m_timer.reset(new QTimer);
+    QObject::connect(m_timer.get(), &QTimer::timeout, [&]{ checkTarget(); });
+    m_timer->start(200);
+
+    set();
   }
 
   ~LockInterface()
   {
   }
 
-  void set(QWidget* target)
+  void checkTarget()
   {
+    if (set()) {
+      update(m_reason);
+    }
+  }
+
+  bool set()
+  {
+    QWidget* newTarget = nullptr;
+
+    newTarget = m_mainUI;
+    if (auto* w = QApplication::activeModalWidget()) {
+      newTarget = w;
+    }
+
+    if (newTarget == m_target) {
+      return false;
+    }
+
+    m_target = newTarget;
+
     QFrame* center = nullptr;
 
-    if (target) {
-      center = createOverlay(target);
+    if (m_target) {
+      center = createOverlay(m_target);
     } else {
       center = createDialog();
     }
@@ -41,16 +67,21 @@ public:
 
     m_topLevel->raise();
     m_topLevel->activateWindow();
+
+    return true;
   }
 
   void update(LockWidget::Reasons reason)
   {
+    m_reason = reason;
     updateMessage(reason);
     updateButtons(reason);
+    setInfo(m_infoText);
   }
 
   void setInfo(const QString& s)
   {
+    m_infoText = s;
     m_info->setText(s);
   }
 
@@ -84,12 +115,22 @@ private:
   };
 
 
-  bool m_hasMainUI;
+  std::unique_ptr<QTimer> m_timer;
+  QWidget* m_mainUI;
+  QWidget* m_target;
   std::unique_ptr<QWidget> m_topLevel;
   QLabel* m_message;
   QLabel* m_info;
+  QString m_infoText;
   QWidget* m_buttons;
   std::unique_ptr<Filter> m_filter;
+  LockWidget::Reasons m_reason;
+
+
+  bool hasMainUI() const
+  {
+    return (m_target != nullptr);
+  }
 
   QWidget* createTransparentWidget(QWidget* parent=nullptr)
   {
@@ -104,15 +145,13 @@ private:
 
   QFrame* createOverlay(QWidget* mainUI)
   {
-    m_hasMainUI = true;
-
     m_topLevel.reset(createTransparentWidget(mainUI));
     m_topLevel->setWindowFlags(m_topLevel->windowFlags() & Qt::FramelessWindowHint);
     m_topLevel->setGeometry(mainUI->rect());
 
     m_filter.reset(new Filter);
     m_filter->resized = [=]{ m_topLevel->setGeometry(mainUI->rect()); };
-    m_filter->closed = [=]{ LockWidget::instance().onForceUnlock(); };
+    m_filter->closed = [=]{ checkTarget(); };
 
     mainUI->installEventFilter(m_filter.get());
 
@@ -121,7 +160,6 @@ private:
 
   QFrame* createDialog()
   {
-    m_hasMainUI = false;
     m_topLevel.reset(new QDialog);
 
     return createFrame();
@@ -132,7 +170,7 @@ private:
     auto* frame = new QFrame;
     auto* ly = new QVBoxLayout(frame);
 
-    if (m_hasMainUI) {
+    if (hasMainUI()) {
       frame->setFrameStyle(QFrame::StyledPanel);
       frame->setLineWidth(1);
       frame->setAutoFillBackground(true);
@@ -153,7 +191,7 @@ private:
     grid->addWidget(createTransparentWidget(), 1, 2);
     grid->addWidget(frame, 1, 1);
 
-    if (!m_hasMainUI) {
+    if (!hasMainUI()) {
       grid->setContentsMargins(0, 0, 0, 0);
     }
 
@@ -191,7 +229,7 @@ private:
       {
         QString s;
 
-        if (m_hasMainUI) {
+        if (hasMainUI()) {
           s = QObject::tr(
             "Mod Organizer is locked while the application is running.");
         } else {
@@ -404,16 +442,10 @@ LockWidget::Results LockWidget::result() const
 
 void LockWidget::createUi(Reasons reason)
 {
-  QWidget* target = m_parent;
-  if (auto* w = qApp->activeWindow()) {
-    target = w;
-  }
-
   if (!m_ui) {
-    m_ui.reset(new LockInterface);
+    m_ui.reset(new LockInterface(m_parent));
   }
 
-  m_ui->set(target);
   m_ui->update(reason);
 
   disableAll();
