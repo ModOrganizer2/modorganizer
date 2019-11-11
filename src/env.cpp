@@ -190,19 +190,36 @@ QString setPath(const QString& s)
 
 QString get(const QString& name)
 {
-  std::wstring s(4000, L' ');
+  std::size_t bufferSize = 4000;
+  auto buffer = std::make_unique<wchar_t[]>(bufferSize);
 
   DWORD realSize = ::GetEnvironmentVariableW(
-    name.toStdWString().c_str(), s.data(), static_cast<DWORD>(s.size()));
+    name.toStdWString().c_str(),
+    buffer.get(), static_cast<DWORD>(bufferSize));
 
-  if (realSize > s.size()) {
-    s.resize(realSize);
+  if (realSize > bufferSize) {
+    bufferSize = realSize;
+    buffer = std::make_unique<wchar_t[]>(bufferSize);
 
-    ::GetEnvironmentVariableW(
-      name.toStdWString().c_str(), s.data(), static_cast<DWORD>(s.size()));
+    realSize = ::GetEnvironmentVariableW(
+      name.toStdWString().c_str(),
+      buffer.get(), static_cast<DWORD>(bufferSize));
   }
 
-  return QString::fromStdWString(s);
+  if (realSize == 0) {
+    const auto e = ::GetLastError();
+
+    // don't log if not found
+    if (e != ERROR_ENVVAR_NOT_FOUND) {
+      log::error(
+        "failed to get environment variable '{}', {}",
+        name, formatSystemMessage(e));
+    }
+
+    return {};
+  }
+
+  return QString::fromWCharArray(buffer.get(), realSize);
 }
 
 QString set(const QString& n, const QString& v)

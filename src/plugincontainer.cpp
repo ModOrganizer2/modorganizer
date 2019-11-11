@@ -3,6 +3,7 @@
 #include "organizerproxy.h"
 #include "report.h"
 #include <ipluginproxy.h>
+#include <iuserinterface.h>
 #include <idownloadmanager.h>
 #include <appconfig.h>
 #include <QAction>

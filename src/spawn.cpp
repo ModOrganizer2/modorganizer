@@ -440,7 +440,26 @@ QMessageBox::StandardButton confirmBlacklisted(
 namespace spawn
 {
 
-DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle, HANDLE& threadHandle)
+void logSpawning(const SpawnParameters& sp, const QString& realCmd)
+{
+  log::debug(
+    "spawning binary:\n"
+    " . exe: '{}'\n"
+    " . args: '{}'\n"
+    " . cwd: '{}'\n"
+    " . steam id: '{}'\n"
+    " . hooked: {}\n"
+    " . stdout: {}\n"
+    " . stderr: {}\n"
+    " . real cmd: '{}'",
+    sp.binary.absoluteFilePath(), sp.arguments,
+    sp.currentDirectory.absolutePath(), sp.steamAppID, sp.hooked,
+    (sp.stdOut == INVALID_HANDLE_VALUE ? "no" : "yes"),
+    (sp.stdErr == INVALID_HANDLE_VALUE ? "no" : "yes"),
+    realCmd);
+}
+
+DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle)
 {
   BOOL inheritHandles = FALSE;
 
@@ -460,30 +479,33 @@ DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle, HANDLE& threadHand
     si.dwFlags |= STARTF_USESTDHANDLES;
   }
 
-  const auto bin = QDir::toNativeSeparators(sp.binary.absoluteFilePath()).toStdWString();
-  const auto cwd = QDir::toNativeSeparators(sp.currentDirectory.absolutePath()).toStdWString();
+  const auto bin = QDir::toNativeSeparators(sp.binary.absoluteFilePath());
+  const auto cwd = QDir::toNativeSeparators(sp.currentDirectory.absolutePath());
 
-  std::wstring commandLine = L"\"" + bin + L"\"";
-  if (sp.arguments[0] != L'\0') {
-    commandLine +=  L" " + sp.arguments.toStdWString();
+  QString commandLine = "\"" + bin + "\"";
+  if (!sp.arguments.isEmpty()) {
+    commandLine +=  " " + sp.arguments;
   }
 
-  QString moPath = QCoreApplication::applicationDirPath();
+  const QString moPath = QCoreApplication::applicationDirPath();
   const auto oldPath = env::addPath(QDir::toNativeSeparators(moPath));
 
-  PROCESS_INFORMATION pi;
+  PROCESS_INFORMATION pi = {};
   BOOL success = FALSE;
+
+  logSpawning(sp, commandLine);
+
+  const auto wcommandLine = commandLine.toStdWString();
+  const auto wcwd = cwd.toStdWString();
 
   if (sp.hooked) {
     success = ::CreateProcessHooked(
-      nullptr, const_cast<wchar_t*>(commandLine.c_str()), nullptr, nullptr,
-      inheritHandles, CREATE_BREAKAWAY_FROM_JOB, nullptr,
-      cwd.c_str(), &si, &pi);
+      nullptr, const_cast<wchar_t*>(wcommandLine.c_str()), nullptr, nullptr,
+      inheritHandles, 0, nullptr, wcwd.c_str(), &si, &pi);
   } else {
     success = ::CreateProcess(
-      nullptr, const_cast<wchar_t*>(commandLine.c_str()), nullptr, nullptr,
-      inheritHandles, CREATE_BREAKAWAY_FROM_JOB, nullptr,
-      cwd.c_str(), &si, &pi);
+      nullptr, const_cast<wchar_t*>(wcommandLine.c_str()), nullptr, nullptr,
+      inheritHandles, 0, nullptr, wcwd.c_str(), &si, &pi);
   }
 
   const auto e = GetLastError();
@@ -494,7 +516,7 @@ DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle, HANDLE& threadHand
   }
 
   processHandle = pi.hProcess;
-  threadHandle = pi.hThread;
+  ::CloseHandle(pi.hThread);
 
   return ERROR_SUCCESS;
 }
@@ -531,16 +553,6 @@ void startBinaryAdmin(QWidget* parent, const SpawnParameters& sp)
 
   log::info("restarting MO as administrator");
   restartAsAdmin(parent);
-}
-
-bool checkBinary(QWidget* parent, const SpawnParameters& sp)
-{
-  if (!sp.binary.exists()) {
-    dialogs::spawnFailed(parent, sp, ERROR_FILE_NOT_FOUND);
-    return false;
-  }
-
-  return true;
 }
 
 struct SteamStatus
@@ -618,8 +630,8 @@ bool startSteam(QWidget* parent)
     (password.isEmpty() ? "no" : "yes"));
 
   HANDLE ph = INVALID_HANDLE_VALUE;
-  HANDLE th = INVALID_HANDLE_VALUE;
-  const auto e = spawn(sp, ph, th);
+  const auto e = spawn(sp, ph);
+  ::CloseHandle(ph);
 
   if (e != ERROR_SUCCESS) {
     // make sure username and passwords are not shown
@@ -730,31 +742,6 @@ bool checkSteam(
   return true;
 }
 
-bool checkEnvironment(QWidget* parent, const SpawnParameters& sp)
-{
-  // check if the Windows Event Logging service is running; for some reason,
-  // this seems to be critical to the successful running of usvfs.
-  const auto serviceName = "EventLog";
-
-  const auto s = env::getService(serviceName);
-
-  if (!s.isValid()) {
-    log::error(
-      "cannot determine the status of the {} service, continuing",
-      serviceName);
-
-    return true;
-  }
-
-  if (s.status() == env::Service::Status::Running) {
-    log::debug("{}", s.toString());
-    return true;
-  }
-
-  log::error("{}", s.toString());
-  return dialogs::eventLogNotRunning(parent, s, sp);
-}
-
 bool checkBlacklist(
   QWidget* parent, const SpawnParameters& sp, Settings& settings)
 {
@@ -771,18 +758,16 @@ bool checkBlacklist(
   }
 }
 
-
 HANDLE startBinary(QWidget* parent, const SpawnParameters& sp)
 {
-  HANDLE processHandle, threadHandle;
-  const auto e = spawn(sp, processHandle, threadHandle);
+  HANDLE handle = INVALID_HANDLE_VALUE;
+  const auto e = spawn::spawn(sp, handle);
 
   switch (e)
   {
     case ERROR_SUCCESS:
     {
-      ::CloseHandle(threadHandle);
-      return processHandle;
+      return handle;
     }
 
     case ERROR_ELEVATION_REQUIRED:
@@ -797,6 +782,184 @@ HANDLE startBinary(QWidget* parent, const SpawnParameters& sp)
       return INVALID_HANDLE_VALUE;
     }
   }
+}
+
+QString getExecutableForJarFile(const QString& jarFile)
+{
+  const std::wstring jarFileW = jarFile.toStdWString();
+
+  WCHAR buffer[MAX_PATH];
+
+  const auto hinst = ::FindExecutableW(jarFileW.c_str(), nullptr, buffer);
+  const auto r = static_cast<int>(reinterpret_cast<std::uintptr_t>(hinst));
+
+  // anything <= 32 signals failure
+  if (r <= 32) {
+    log::warn(
+      "failed to find executable associated with file '{}', {}",
+      jarFile, shell::formatError(r));
+
+    return {};
+  }
+
+  DWORD binaryType = 0;
+
+  if (!::GetBinaryTypeW(buffer, &binaryType)) {
+    const auto e = ::GetLastError();
+
+    log::warn(
+      "failed to determine binary type of '{}', {}",
+      QString::fromWCharArray(buffer), formatSystemMessage(e));
+
+    return {};
+  }
+
+  if (binaryType != SCS_32BIT_BINARY && binaryType != SCS_64BIT_BINARY) {
+    log::warn(
+      "unexpected binary type {} for file '{}'",
+      binaryType, QString::fromWCharArray(buffer));
+
+    return {};
+  }
+
+  return QString::fromWCharArray(buffer);
+}
+
+QString getJavaHome()
+{
+  const QString key = "HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment";
+  const QString value = "CurrentVersion";
+
+  QSettings reg(key, QSettings::NativeFormat);
+
+  if (!reg.contains(value)) {
+    log::warn("key '{}\\{}' doesn't exist", key, value);
+    return {};
+  }
+
+  const QString currentVersion = reg.value("CurrentVersion").toString();
+  const QString javaHome = QString("%1/JavaHome").arg(currentVersion);
+
+  if (!reg.contains(javaHome)) {
+    log::warn(
+      "java version '{}' was found at '{}\\{}', but '{}\\{}' doesn't exist",
+      currentVersion, key, value, key, javaHome);
+
+    return {};
+  }
+
+  const auto path = reg.value(javaHome).toString();
+  return path + "\\bin\\javaw.exe";
+}
+
+QString findJavaInstallation(const QString& jarFile)
+{
+  // try to find java automatically based on the given jar file
+  if (!jarFile.isEmpty()) {
+    const auto s = getExecutableForJarFile(jarFile);
+    if (!s.isEmpty()) {
+      return s;
+    }
+  }
+
+  // second attempt: look to the registry
+  const auto s = getJavaHome();
+  if (!s.isEmpty()) {
+    return s;
+  }
+
+  // not found
+  return {};
+}
+
+bool isBatchFile(const QFileInfo& target)
+{
+  const auto batchExtensions = {"cmd", "bat"};
+
+  const QString extension = target.suffix();
+  for (auto&& e : batchExtensions) {
+    if (extension.compare(e, Qt::CaseInsensitive) == 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool isExeFile(const QFileInfo& target)
+{
+  return (target.suffix().compare("exe", Qt::CaseInsensitive) == 0);
+}
+
+bool isJavaFile(const QFileInfo& target)
+{
+  return (target.suffix().compare("jar", Qt::CaseInsensitive) == 0);
+}
+
+QFileInfo getCmdPath()
+{
+  const auto p = env::get("COMSPEC");
+  if (!p.isEmpty()) {
+    return p;
+  }
+
+  QString systemDirectory;
+
+  const std::size_t buffer_size = 1000;
+  wchar_t buffer[buffer_size + 1] = {};
+
+  const auto length = ::GetSystemDirectoryW(buffer, buffer_size);
+  if (length != 0) {
+    systemDirectory = QString::fromWCharArray(buffer, length);
+
+    if (!systemDirectory.endsWith("\\")) {
+      systemDirectory += "\\";
+    }
+  } else {
+    systemDirectory = "C:\\Windows\\System32\\";
+  }
+
+  return systemDirectory + "cmd.exe";
+}
+
+FileExecutionContext getFileExecutionContext(
+  QWidget* parent, const QFileInfo& target)
+{
+  if (isExeFile(target)) {
+    return {
+      target,
+      "",
+      FileExecutionTypes::Executable
+    };
+  }
+
+  if (isBatchFile(target)) {
+    return {
+      getCmdPath(),
+      QString("/C \"%1\"").arg(QDir::toNativeSeparators(target.absoluteFilePath())),
+      FileExecutionTypes::Executable
+    };
+  }
+
+  if (isJavaFile(target)) {
+    auto java = findJavaInstallation(target.absoluteFilePath());
+
+    if (java.isEmpty()) {
+      java = QFileDialog::getOpenFileName(
+        parent, QObject::tr("Select binary"),
+        QString(), QObject::tr("Binary") + " (*.exe)");
+    }
+
+    if (!java.isEmpty()) {
+      return {
+        QFileInfo(java),
+        QString("-jar \"%1\"").arg(QDir::toNativeSeparators(target.absoluteFilePath())),
+        FileExecutionTypes::Executable
+      };
+    }
+  }
+
+  return {{}, {}, FileExecutionTypes::Other};
 }
 
 } // namespace
@@ -817,7 +980,7 @@ bool helperExec(
   {
     SHELLEXECUTEINFOW execInfo = {};
 
-    ULONG flags = SEE_MASK_FLAG_NO_UI ;
+    ULONG flags = SEE_MASK_FLAG_NO_UI;
     if (!async)
       flags |= SEE_MASK_NOCLOSEPROCESS;
 

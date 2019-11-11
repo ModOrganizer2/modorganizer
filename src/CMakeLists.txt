@@ -82,9 +82,6 @@ SET(organizer_SRCS
     main.cpp
     loghighlighter.cpp
     loglist.cpp
-    lockeddialogbase.cpp
-    lockeddialog.cpp
-    waitingonclosedialog.cpp
     loadmechanism.cpp
     installationmanager.cpp
     filedialogmemory.cpp
@@ -143,6 +140,8 @@ SET(organizer_SRCS
 	envwindows.cpp
 	colortable.cpp
 	sanitychecks.cpp
+	processrunner.cpp
+	uilocker.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -204,9 +203,6 @@ SET(organizer_HDRS
     mainwindow.h
     loghighlighter.h
     loglist.h
-    lockeddialogbase.h
-    lockeddialog.h
-    waitingonclosedialog.h
     loadmechanism.h
     installationmanager.h
     filedialogmemory.h
@@ -244,7 +240,6 @@ SET(organizer_HDRS
     viewmarkingscrollbar.h
     plugincontainer.h
     organizercore.h
-    ilockedwaitingforprocess.h
     iuserinterface.h
     instancemanager.h
     usvfsconnector.h
@@ -266,6 +261,8 @@ SET(organizer_HDRS
 	envshortcut.h
 	envwindows.h
 	colortable.h
+	processrunner.h
+	uilocker.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -289,8 +286,6 @@ SET(organizer_UIS
     modinfodialog.ui
     messagedialog.ui
     mainwindow.ui
-    lockeddialog.ui
-    waitingonclosedialog.ui
     editexecutablesdialog.ui
     credentialsdialog.ui
     categoriesdialog.ui
@@ -348,6 +343,8 @@ set(core
 	organizercore
 	organizerproxy
 	apiuseraccount
+	processrunner
+	uilocker
 )
 
 set(dialogs
@@ -390,12 +387,6 @@ set(env
 set(executables
 	executableslist
 	editexecutablesdialog
-)
-
-set(locking
-	ilockedwaitingforprocess
-	lockeddialog
-	lockeddialogbase
 )
 
 set(modinfo
@@ -494,7 +485,7 @@ set(widgets
 )
 
 set(src_filters
-	application core browser dialogs downloads env executables locking modinfo
+	application core browser dialogs downloads env executables modinfo
 	modinfo\\dialog modlist plugins previews profiles settings settingsdialog
 	utilities widgets
 )

@@ -1,5 +1,4 @@
 #include "organizercore.h"
-
 #include "delayedfilewriter.h"
 #include "guessedvalue.h"
 #include "imodinterface.h"
@@ -30,10 +29,11 @@
 #include "appconfig.h"
 #include <report.h>
 #include <questionboxmemory.h>
-#include "lockeddialog.h"
 #include "instancemanager.h"
 #include <scriptextender.h>
 #include "previewdialog.h"
+#include "env.h"
+#include "envmodule.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -73,47 +73,6 @@ using namespace MOBase;
 
 //static
 CrashDumpsType OrganizerCore::m_globalCrashDumpsType = CrashDumpsType::None;
-
-static std::wstring getProcessName(HANDLE process)
-{
-  wchar_t buffer[MAX_PATH];
-  const wchar_t *fileName = L"unknown";
-
-  if (process == nullptr) return fileName;
-
-  if (::GetProcessImageFileNameW(process, buffer, MAX_PATH) != 0) {
-    fileName = wcsrchr(buffer, L'\\');
-    if (fileName == nullptr) {
-      fileName = buffer;
-    }
-    else {
-      fileName += 1;
-    }
-  }
-
-  return fileName;
-}
-
-// Get parent PID for the given process, return 0 on failure
-static DWORD getProcessParentID(DWORD pid)
-{
-  HANDLE th = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-  PROCESSENTRY32 pe = { 0 };
-  pe.dwSize = sizeof(PROCESSENTRY32);
-
-  DWORD res = 0;
-  if (Process32First(th, &pe))
-    do {
-      if (pe.th32ProcessID == pid) {
-        res = pe.th32ParentProcessID;
-        break;
-      }
-    } while (Process32Next(th, &pe));
-
-  CloseHandle(th);
-
-  return res;
-}
 
 template <typename InputIterator>
 QStringList toStringList(InputIterator current, InputIterator end)
@@ -190,7 +149,7 @@ OrganizerCore::~OrganizerCore()
   m_RefresherThread.exit();
   m_RefresherThread.wait();
 
-  prepareStart();
+  saveCurrentProfile();
 
   // profile has to be cleaned up before the modinfo-buffer is cleared
   delete m_CurrentProfile;
@@ -249,44 +208,49 @@ void OrganizerCore::updateExecutablesList()
     m_PluginContainer, m_Settings.interface().displayForeign(), managedGame());
 }
 
-void OrganizerCore::setUserInterface(IUserInterface *userInterface,
-                                     QWidget *widget)
+void OrganizerCore::setUserInterface(IUserInterface* ui)
 {
   storeSettings();
 
-  m_UserInterface = userInterface;
+  m_UserInterface = ui;
 
-  if (widget != nullptr) {
-    connect(&m_ModList, SIGNAL(modlistChanged(QModelIndex, int)), widget,
+  QWidget* w = nullptr;
+  if (m_UserInterface) {
+    w = m_UserInterface->qtWidget();
+  }
+
+  if (w) {
+    connect(&m_ModList, SIGNAL(modlistChanged(QModelIndex, int)), w,
             SLOT(modlistChanged(QModelIndex, int)));
-    connect(&m_ModList, SIGNAL(modlistChanged(QModelIndexList, int)), widget,
+    connect(&m_ModList, SIGNAL(modlistChanged(QModelIndexList, int)), w,
             SLOT(modlistChanged(QModelIndexList, int)));
-    connect(&m_ModList, SIGNAL(showMessage(QString)), widget,
+    connect(&m_ModList, SIGNAL(showMessage(QString)), w,
             SLOT(showMessage(QString)));
-    connect(&m_ModList, SIGNAL(modRenamed(QString, QString)), widget,
+    connect(&m_ModList, SIGNAL(modRenamed(QString, QString)), w,
             SLOT(modRenamed(QString, QString)));
-    connect(&m_ModList, SIGNAL(modUninstalled(QString)), widget,
+    connect(&m_ModList, SIGNAL(modUninstalled(QString)), w,
             SLOT(modRemoved(QString)));
-    connect(&m_ModList, SIGNAL(removeSelectedMods()), widget,
+    connect(&m_ModList, SIGNAL(removeSelectedMods()), w,
             SLOT(removeMod_clicked()));
-    connect(&m_ModList, SIGNAL(clearOverwrite()), widget,
+    connect(&m_ModList, SIGNAL(clearOverwrite()), w,
       SLOT(clearOverwrite()));
-    connect(&m_ModList, SIGNAL(requestColumnSelect(QPoint)), widget,
+    connect(&m_ModList, SIGNAL(requestColumnSelect(QPoint)), w,
             SLOT(displayColumnSelection(QPoint)));
-    connect(&m_ModList, SIGNAL(fileMoved(QString, QString, QString)), widget,
+    connect(&m_ModList, SIGNAL(fileMoved(QString, QString, QString)), w,
             SLOT(fileMoved(QString, QString, QString)));
-    connect(&m_ModList, SIGNAL(modorder_changed()), widget,
+    connect(&m_ModList, SIGNAL(modorder_changed()), w,
             SLOT(modorder_changed()));
-    connect(&m_PluginList, SIGNAL(writePluginsList()), widget,
+    connect(&m_PluginList, SIGNAL(writePluginsList()), w,
       SLOT(esplist_changed()));
-    connect(&m_PluginList, SIGNAL(esplist_changed()), widget,
+    connect(&m_PluginList, SIGNAL(esplist_changed()), w,
       SLOT(esplist_changed()));
-    connect(&m_DownloadManager, SIGNAL(showMessage(QString)), widget,
+    connect(&m_DownloadManager, SIGNAL(showMessage(QString)), w,
             SLOT(showMessage(QString)));
   }
 
-  m_InstallationManager.setParentWidget(widget);
-  m_Updater.setUserInterface(widget);
+  m_InstallationManager.setParentWidget(w);
+  m_Updater.setUserInterface(w);
+  m_UILocker.setUserInterface(w);
 
   checkForUpdates();
 }
@@ -390,8 +354,12 @@ void OrganizerCore::downloadRequestedNXM(const QString &url)
 void OrganizerCore::externalMessage(const QString &message)
 {
   if (MOShortcut moshortcut{ message } ) {
-    if(moshortcut.hasExecutable())
-      runShortcut(moshortcut);
+    if(moshortcut.hasExecutable()) {
+      processRunner()
+        .setFromShortcut(moshortcut)
+        .setWaitForCompletion(ProcessRunner::Refresh)
+        .run();
+    }
   }
   else if (isNxmLink(message)) {
     MessageDialog::showMessage(tr("Download started"), qApp->activeWindow());
@@ -977,110 +945,6 @@ QStringList OrganizerCore::modsSortedByProfilePriority() const
   return res;
 }
 
-QString OrganizerCore::findJavaInstallation(const QString& jarFile)
-{
-  if (!jarFile.isEmpty()) {
-    // try to find java automatically based on the given jar file
-    std::wstring jarFileW = jarFile.toStdWString();
-
-    WCHAR buffer[MAX_PATH];
-    if (::FindExecutableW(jarFileW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
-      DWORD binaryType = 0UL;
-      if (!::GetBinaryTypeW(buffer, &binaryType)) {
-        log::debug(
-          "failed to determine binary type of \"{}\": {}",
-          QString::fromWCharArray(buffer), ::GetLastError());
-      } else if (binaryType == SCS_32BIT_BINARY || binaryType == SCS_64BIT_BINARY) {
-        return QString::fromWCharArray(buffer);
-      }
-    }
-  }
-
-  // second attempt: look to the registry
-  QSettings reg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
-  if (reg.contains("CurrentVersion")) {
-    QString currentVersion = reg.value("CurrentVersion").toString();
-    return reg.value(QString("%1/JavaHome").arg(currentVersion)).toString().append("\\bin\\javaw.exe");
-  }
-
-  // not found
-  return {};
-}
-
-bool OrganizerCore::getFileExecutionContext(
-  QWidget* parent, const QFileInfo &targetInfo,
-  QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type)
-{
-  QString extension = targetInfo.suffix();
-  if ((extension.compare("cmd", Qt::CaseInsensitive) == 0) ||
-    (extension.compare("com", Qt::CaseInsensitive) == 0) ||
-    (extension.compare("bat", Qt::CaseInsensitive) == 0)) {
-    binaryInfo = QFileInfo("C:\\Windows\\System32\\cmd.exe");
-    arguments = QString("/C \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    type = FileExecutionTypes::Executable;
-    return true;
-  } else if (extension.compare("exe", Qt::CaseInsensitive) == 0) {
-    binaryInfo = targetInfo;
-    type = FileExecutionTypes::Executable;
-    return true;
-  } else if (extension.compare("jar", Qt::CaseInsensitive) == 0) {
-    auto java = findJavaInstallation(targetInfo.absoluteFilePath());
-
-    if (java.isEmpty()) {
-      java = QFileDialog::getOpenFileName(
-        parent, QObject::tr("Select binary"),
-        QString(), QObject::tr("Binary") + " (*.exe)");
-    }
-
-    if (java.isEmpty()) {
-      return false;
-    }
-
-    binaryInfo = QFileInfo(java);
-    arguments = QString("-jar \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    type = FileExecutionTypes::Executable;
-
-    return true;
-  } else {
-    type = FileExecutionTypes::Other;
-    return true;
-  }
-}
-
-bool OrganizerCore::executeFileVirtualized(
-  QWidget* parent, const QFileInfo& targetInfo)
-{
-  QFileInfo binaryInfo;
-  QString arguments;
-  FileExecutionTypes type;
-
-  if (!getFileExecutionContext(parent, targetInfo, binaryInfo, arguments, type)) {
-    return false;
-  }
-
-  switch (type)
-  {
-    case FileExecutionTypes::Executable: {
-      spawnBinaryDirect(
-        binaryInfo, arguments, currentProfile()->name(),
-        targetInfo.absolutePath(), "", "");
-
-      return true;
-    }
-
-    case FileExecutionTypes::Other: {
-      ::ShellExecuteW(nullptr, L"open",
-        ToWString(targetInfo.absoluteFilePath()).c_str(),
-        nullptr, nullptr, SW_SHOWNORMAL);
-
-      return true;
-    }
-  }
-
-  // nop
-  return false;
-}
-
 bool OrganizerCore::previewFileWithAlternatives(
   QWidget* parent, QString fileName, int selectedOrigin)
 {
@@ -1207,475 +1071,6 @@ bool OrganizerCore::previewFile(
   preview.exec();
 
   return true;
-}
-
-void OrganizerCore::spawnBinary(const QFileInfo &binary,
-                                const QString &arguments,
-                                const QDir &currentDirectory,
-                                const QString &steamAppID,
-                                const QString &customOverwrite,
-                                const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries)
-{
-  DWORD processExitCode = 0;
-  HANDLE processHandle = spawnBinaryDirect(binary, arguments, m_CurrentProfile->name(), currentDirectory, steamAppID, customOverwrite, forcedLibraries, &processExitCode);
-  if (processHandle != INVALID_HANDLE_VALUE) {
-    refreshDirectoryStructure();
-    // need to remove our stored load order because it may be outdated if a foreign tool changed the
-    // file time. After removing that file, refreshESPList will use the file time as the order
-    if (managedGame()->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
-      log::debug("removing loadorder.txt");
-      QFile::remove(m_CurrentProfile->getLoadOrderFileName());
-    }
-    refreshDirectoryStructure();
-
-    refreshESPList(true);
-    savePluginList();
-
-    //These callbacks should not fiddle with directoy structure and ESPs.
-    m_FinishedRun(binary.absoluteFilePath(), processExitCode);
-  }
-}
-
-HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary,
-                                        const QString &arguments,
-                                        const QString &profileName,
-                                        const QDir &currentDirectory,
-                                        const QString &steamAppID,
-                                        const QString &customOverwrite,
-                                        const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries,
-                                        LPDWORD exitCode)
-{
-  HANDLE processHandle = spawnBinaryProcess(binary, arguments, profileName, currentDirectory, steamAppID, customOverwrite, forcedLibraries);
-  if (Settings::instance().interface().lockGUI() && processHandle != INVALID_HANDLE_VALUE) {
-    std::unique_ptr<LockedDialog> dlg;
-    ILockedWaitingForProcess* uilock = nullptr;
-
-    if (m_UserInterface != nullptr) {
-      uilock = m_UserInterface->lock();
-    }
-    else {
-      // i.e. when running command line shortcuts there is no m_UserInterface
-      dlg.reset(new LockedDialog);
-      dlg->show();
-      dlg->setEnabled(true);
-      uilock = dlg.get();
-    }
-
-    ON_BLOCK_EXIT([&]() {
-      if (m_UserInterface != nullptr) {
-        m_UserInterface->unlock();
-      } });
-
-    DWORD ignoreExitCode;
-    waitForProcessCompletion(processHandle, exitCode ? exitCode : &ignoreExitCode, uilock);
-    cycleDiagnostics();
-  }
-
-  return processHandle;
-}
-
-
-HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
-                                         const QString &arguments,
-                                         const QString &profileName,
-                                         const QDir &currentDirectory,
-                                         const QString &steamAppID,
-                                         const QString &customOverwrite,
-                                         const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries)
-{
-  spawn::SpawnParameters sp;
-  sp.binary = binary;
-  sp.arguments = arguments;
-  sp.currentDirectory = currentDirectory;
-  sp.hooked = true;
-
-  prepareStart();
-
-  QWidget *window = qApp->activeWindow();
-  if ((window != nullptr) && (!window->isVisible())) {
-    window = nullptr;
-  }
-
-  if (!spawn::checkBinary(window, sp)) {
-    return INVALID_HANDLE_VALUE;
-  }
-
-  if (!spawn::checkSteam(window, sp, managedGame()->gameDirectory(), steamAppID, m_Settings)) {
-    return INVALID_HANDLE_VALUE;
-  }
-
-  while (m_DirectoryUpdate) {
-    ::Sleep(100);
-    QCoreApplication::processEvents();
-  }
-
-  // need to make sure all data is saved before we start the application
-  if (m_CurrentProfile != nullptr) {
-    m_CurrentProfile->writeModlistNow(true);
-  }
-
-  // TODO: should also pass arguments
-  if (m_AboutToRun(binary.absoluteFilePath())) {
-    try {
-      m_USVFS.updateMapping(fileMapping(profileName, customOverwrite));
-      m_USVFS.updateForcedLibraries(forcedLibraries);
-
-    } catch (const UsvfsConnectorException &e) {
-      log::debug(e.what());
-      return INVALID_HANDLE_VALUE;
-    } catch (const std::exception &e) {
-      QMessageBox::warning(window, tr("Error"), e.what());
-      return INVALID_HANDLE_VALUE;
-    }
-
-    if (!spawn::checkEnvironment(window, sp)) {
-      return INVALID_HANDLE_VALUE;
-    }
-
-    if (!spawn::checkBlacklist(window, sp, m_Settings)) {
-      return INVALID_HANDLE_VALUE;
-    }
-
-    QString modsPath = settings().paths().mods();
-
-    // Check if this a request with either an executable or a working directory under our mods folder
-    // then will start the process in a virtualized "environment" with the appropriate paths fixed:
-    // (i.e. mods\FNIS\path\exe => game\data\path\exe)
-    QString cwdPath = currentDirectory.absolutePath();
-    bool virtualizedCwd = cwdPath.startsWith(modsPath, Qt::CaseInsensitive);
-    QString binPath = binary.absoluteFilePath();
-    bool virtualizedBin = binPath.startsWith(modsPath, Qt::CaseInsensitive);
-    if (virtualizedCwd || virtualizedBin) {
-      if (virtualizedCwd) {
-        int cwdOffset = cwdPath.indexOf('/', modsPath.length() + 1);
-        QString adjustedCwd = cwdPath.mid(cwdOffset, -1);
-        cwdPath = m_GamePlugin->dataDirectory().absolutePath();
-        if (cwdOffset >= 0)
-          cwdPath += adjustedCwd;
-
-      }
-
-      if (virtualizedBin) {
-        int binOffset = binPath.indexOf('/', modsPath.length() + 1);
-        QString adjustedBin = binPath.mid(binOffset, -1);
-        binPath = m_GamePlugin->dataDirectory().absolutePath();
-        if (binOffset >= 0)
-          binPath += adjustedBin;
-      }
-
-      QString cmdline
-          = QString("launch \"%1\" \"%2\" %3")
-                .arg(QDir::toNativeSeparators(cwdPath),
-                     QDir::toNativeSeparators(binPath), arguments);
-
-      sp.binary = QFileInfo(QCoreApplication::applicationFilePath());
-      sp.arguments = cmdline;
-      sp.currentDirectory.setPath(QCoreApplication::applicationDirPath());
-
-      return spawn::startBinary(window, sp);
-    } else {
-      log::debug("Spawning direct process <{}, {}, {}>", binPath, arguments, cwdPath);
-      return spawn::startBinary(window, sp);
-    }
-  } else {
-    log::debug("start of \"{}\" canceled by plugin", binary.absoluteFilePath());
-    return INVALID_HANDLE_VALUE;
-  }
-}
-
-HANDLE OrganizerCore::runShortcut(const MOShortcut& shortcut)
-{
-  if (shortcut.hasInstance() && shortcut.instance() != InstanceManager::instance().currentInstance())
-    throw std::runtime_error(
-      QString("Refusing to run executable from different instance %1:%2")
-      .arg(shortcut.instance(),shortcut.executable())
-      .toLocal8Bit().constData());
-
-  const Executable& exe = m_ExecutablesList.get(shortcut.executable());
-
-  auto forcedLibaries = m_CurrentProfile->determineForcedLibraries(shortcut.executable());
-  if (!m_CurrentProfile->forcedLibrariesEnabled(shortcut.executable())) {
-    forcedLibaries.clear();
-  }
-
-  return spawnBinaryDirect(
-    exe.binaryInfo(), exe.arguments(),
-    m_CurrentProfile->name(),
-    exe.workingDirectory().length() != 0
-    ? exe.workingDirectory()
-    : exe.binaryInfo().absolutePath(),
-    exe.steamAppID(),
-    "",
-    forcedLibaries);
-}
-
-HANDLE OrganizerCore::startApplication(const QString &executable,
-                                       const QStringList &args,
-                                       const QString &cwd,
-                                       const QString &profile,
-                                       const QString &forcedCustomOverwrite,
-                                       bool ignoreCustomOverwrite)
-{
-  QFileInfo binary;
-  QString arguments        = args.join(" ");
-  QString currentDirectory = cwd;
-  QString profileName = profile;
-  if (profile.length() == 0) {
-    if (m_CurrentProfile != nullptr) {
-      profileName = m_CurrentProfile->name();
-    } else {
-      throw MyException(tr("No profile set"));
-    }
-  }
-  QString steamAppID;
-  QString customOverwrite;
-  QList<ExecutableForcedLoadSetting> forcedLibraries;
-  if (executable.contains('\\') || executable.contains('/')) {
-    // file path
-
-    binary = QFileInfo(executable);
-    if (binary.isRelative()) {
-      // relative path, should be relative to game directory
-      binary = QFileInfo(
-          managedGame()->gameDirectory().absoluteFilePath(executable));
-    }
-    if (cwd.length() == 0) {
-      currentDirectory = binary.absolutePath();
-    }
-    try {
-      const Executable &exe = m_ExecutablesList.getByBinary(binary);
-      steamAppID = exe.steamAppID();
-      customOverwrite
-          = m_CurrentProfile->setting("custom_overwrites", exe.title())
-                .toString();
-      if (m_CurrentProfile->forcedLibrariesEnabled(exe.title())) {
-        forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.title());
-      }
-    } catch (const std::runtime_error &) {
-      // nop
-    }
-  } else {
-    // only a file name, search executables list
-    try {
-      const Executable &exe = m_ExecutablesList.get(executable);
-      steamAppID = exe.steamAppID();
-      customOverwrite
-          = m_CurrentProfile->setting("custom_overwrites", exe.title())
-                .toString();
-      if (m_CurrentProfile->forcedLibrariesEnabled(exe.title())) {
-        forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.title());
-      }
-      if (arguments == "") {
-        arguments = exe.arguments();
-      }
-      binary = exe.binaryInfo();
-      if (cwd.length() == 0) {
-        currentDirectory = exe.workingDirectory();
-      }
-    } catch (const std::runtime_error &) {
-      log::warn("\"{}\" not set up as executable", executable);
-      binary = QFileInfo(executable);
-    }
-  }
-
-  if (!forcedCustomOverwrite.isEmpty())
-    customOverwrite = forcedCustomOverwrite;
-  if (ignoreCustomOverwrite)
-    customOverwrite.clear();
-
-  return spawnBinaryDirect(binary,
-                           arguments,
-                           profileName,
-                           currentDirectory,
-                           steamAppID,
-                           customOverwrite,
-                           forcedLibraries);
-}
-
-bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)
-{
-  if (!Settings::instance().interface().lockGUI())
-    return true;
-
-  ILockedWaitingForProcess* uilock = nullptr;
-  if (m_UserInterface != nullptr) {
-    uilock = m_UserInterface->lock();
-  }
-
-  ON_BLOCK_EXIT([&] () {
-    if (m_UserInterface != nullptr) {
-      m_UserInterface->unlock();
-    } });
-  return waitForProcessCompletion(handle, exitCode, uilock);
-}
-
-bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock)
-{
-  bool originalHandle = true;
-  bool newHandle = true;
-  bool uiunlocked = false;
-
-  DWORD currentPID = 0;
-  QString processName;
-  auto waitForChildUntil = GetTickCount64();
-  if (handle != INVALID_HANDLE_VALUE) {
-    currentPID = GetProcessId(handle);
-    processName = QString::fromStdWString(getProcessName(handle));
-  }
-
-  // Certain process names we wish to "hide" for aesthetic reason:
-  bool waitingOnHidden = false;
-  std::vector<QString> hiddenList;
-  hiddenList.push_back(QFileInfo(QCoreApplication::applicationFilePath()).fileName());
-  for (QString hide : hiddenList)
-    if (processName.contains(hide, Qt::CaseInsensitive))
-      waitingOnHidden = true;
-  // The main reason for adding the hidden list is to hide the MO proxy we use to spawn virtualized processes.
-  // On the one hand we want to display the real executable without it feeling laggy, on the other we don't want
-  // to requery processes all the time if for some reason we are waiting on hidden processes and find no "unhidden"
-  // process. For this reason we use exponential backoff and also start with a delibrately low value to improve
-  // the responsiveness of the initial update
-  DWORD64 nextHiddenCheck = GetTickCount64();
-  DWORD64 nextHiddenCheckDelay = 50;
-
-  constexpr DWORD INPUT_EVENT = WAIT_OBJECT_0 + 1;
-  DWORD res = WAIT_TIMEOUT;
-  while (handle != INVALID_HANDLE_VALUE && (newHandle || res == WAIT_TIMEOUT || res == INPUT_EVENT))
-  {
-    if (newHandle) {
-      processName += QString(" (%1)").arg(currentPID);
-      if (uilock)
-        uilock->setProcessName(processName);
-
-      log::debug(
-        "Waiting for {} process completion: {}",
-        (originalHandle ? "spawned" : "usvfs"), processName);
-
-      newHandle = false;
-    }
-
-    // Wait for a an event on the handle, a key press, mouse click or timeout
-    res = MsgWaitForMultipleObjects(1, &handle, FALSE, 200, QS_KEY | QS_MOUSEBUTTON);
-    if (res == WAIT_FAILED) {
-      log::warn("Failed waiting for process completion : MsgWaitForMultipleObjects WAIT_FAILED {}", GetLastError());
-      break;
-    }
-
-    // keep processing events so the app doesn't appear dead
-    QCoreApplication::sendPostedEvents();
-    QCoreApplication::processEvents();
-
-    if (uilock && uilock->unlockForced()) {
-      uiunlocked = true;
-      break;
-    }
-
-    if (res == WAIT_OBJECT_0) {
-      // process we were waiting on has completed
-      if (originalHandle && exitCode && !::GetExitCodeProcess(handle, exitCode))
-        log::warn("Failed getting exit code of complete process: {}", GetLastError());
-      CloseHandle(handle);
-      handle = INVALID_HANDLE_VALUE;
-      originalHandle = false;
-      // if the previous process spawned a child process and immediately exits we may miss it if we check immediately
-      waitForChildUntil = GetTickCount64() + 800;
-    }
-
-    // search for another process to wait on if either:
-    // 1. we just completed waiting for a process and need to find/wait for an inject child
-    // 2. we are currently waiting on a hidden process so periodically check if there is a non-hidden process to wait on
-    bool firstIteration = true;
-    while ((handle == INVALID_HANDLE_VALUE && GetTickCount64() <= waitForChildUntil)
-            || (waitingOnHidden && GetTickCount64() >= nextHiddenCheck))
-    {
-      if (firstIteration)
-        firstIteration = false;
-      else {
-        QThread::msleep(200);
-        QCoreApplication::sendPostedEvents();
-        QCoreApplication::processEvents();
-      }
-
-      // search if there is another usvfs process active
-      handle = findAndOpenAUSVFSProcess(hiddenList, currentPID);
-      waitingOnHidden = false;
-      newHandle = handle != INVALID_HANDLE_VALUE;
-      if (newHandle) {
-        currentPID = GetProcessId(handle);
-        processName = QString::fromStdWString(getProcessName(handle));
-        for (QString hide : hiddenList)
-          if (processName.contains(hide, Qt::CaseInsensitive))
-            waitingOnHidden = true;
-      }
-      if (waitingOnHidden) {
-        nextHiddenCheck = GetTickCount64() + nextHiddenCheckDelay;
-        nextHiddenCheckDelay = std::min(nextHiddenCheckDelay * 2, (DWORD64) 2000);
-      }
-      else {
-        nextHiddenCheck = GetTickCount64();
-        nextHiddenCheckDelay = 200;
-      }
-    }
-  }
-
-  if (res == WAIT_OBJECT_0)
-    log::debug("Waiting for process completion successfull");
-  else if (uiunlocked)
-    log::debug("Waiting for process completion aborted by UI");
-  else
-    log::debug("Waiting for process completion not successfull: {}", res);
-
-  if (handle != INVALID_HANDLE_VALUE)
-    ::CloseHandle(handle);
-
-  return res == WAIT_OBJECT_0;
-}
-
-HANDLE OrganizerCore::findAndOpenAUSVFSProcess(const std::vector<QString>& hiddenList, DWORD preferedParentPid) {
-  // for practical reasons a querySize of 1 is probably enough, we use a larger query as a heuristics
-  // to find a more "aesthetic injected processes (attempting to comply to hiddenList and preferedParentPid)
-  constexpr size_t querySize = 100;
-  DWORD pids[querySize];
-  size_t found = querySize;
-  if (!::GetVFSProcessList(&found, pids)) {
-    log::warn("Failed seeking USVFS processes : GetVFSProcessList failed?!");
-    return INVALID_HANDLE_VALUE;
-  }
-
-  HANDLE best_match = INVALID_HANDLE_VALUE;
-  bool best_match_hidden = true;
-  for (size_t i = 0; i < found; ++i) {
-    if (pids[i] == GetCurrentProcessId())
-      continue; // obviously don't wait for MO process
-
-    HANDLE handle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, FALSE, pids[i]);
-    if (handle == INVALID_HANDLE_VALUE) {
-      log::warn("Failed opening USVFS process {}: OpenProcess failed {}", pids[i], GetLastError());
-      continue;
-    }
-
-    QString pname = QString::fromStdWString(getProcessName(handle));
-    bool phidden = false;
-    for (auto hide : hiddenList)
-      if (pname.contains(hide, Qt::CaseInsensitive))
-        phidden = true;
-
-    bool pprefered = preferedParentPid && getProcessParentID(pids[i]) == preferedParentPid;
-
-    if (best_match == INVALID_HANDLE_VALUE || best_match_hidden || (!phidden && pprefered)) {
-      if (best_match != INVALID_HANDLE_VALUE)
-        CloseHandle(best_match);
-      best_match = handle;
-      best_match_hidden = phidden;
-    }
-    else
-      CloseHandle(handle);
-
-    if (!phidden && pprefered)
-      return best_match;
-  }
-
-  return best_match;
 }
 
 bool OrganizerCore::onAboutToRun(
@@ -2315,16 +1710,96 @@ void OrganizerCore::savePluginList()
   m_PluginList.saveLoadOrder(*m_DirectoryStructure);
 }
 
-void OrganizerCore::prepareStart()
+void OrganizerCore::saveCurrentProfile()
 {
   if (m_CurrentProfile == nullptr) {
     return;
   }
+
   m_CurrentProfile->writeModlist();
   m_CurrentProfile->createTweakedIniFile();
   saveCurrentLists();
   m_Settings.game().loadMechanism().activate(m_Settings.game().loadMechanismType());
   storeSettings();
+}
+
+ProcessRunner OrganizerCore::processRunner()
+{
+  return ProcessRunner(*this, m_UserInterface);
+}
+
+bool OrganizerCore::beforeRun(
+  const QFileInfo& binary, const QString& profileName,
+  const QString& customOverwrite,
+  const QList<MOBase::ExecutableForcedLoadSetting>& forcedLibraries)
+{
+  saveCurrentProfile();
+
+  while (m_DirectoryUpdate) {
+    ::Sleep(100);
+    QCoreApplication::processEvents();
+  }
+
+  // need to make sure all data is saved before we start the application
+  if (m_CurrentProfile != nullptr) {
+    m_CurrentProfile->writeModlistNow(true);
+  }
+
+  // TODO: should also pass arguments
+  if (!m_AboutToRun(binary.absoluteFilePath())) {
+    log::debug("start of \"{}\" cancelled by plugin", binary.absoluteFilePath());
+    return false;
+  }
+
+  try
+  {
+    m_USVFS.updateMapping(fileMapping(profileName, customOverwrite));
+    m_USVFS.updateForcedLibraries(forcedLibraries);
+  }
+  catch (const UsvfsConnectorException &e)
+  {
+    log::debug(e.what());
+    return false;
+  }
+  catch (const std::exception &e)
+  {
+    QWidget* w = nullptr;
+    if (m_UserInterface) {
+      w = m_UserInterface->qtWidget();
+    }
+    QMessageBox::warning(w, tr("Error"), e.what());
+    return false;
+  }
+
+  return true;
+}
+
+void OrganizerCore::afterRun(const QFileInfo& binary, DWORD exitCode)
+{
+  refreshDirectoryStructure();
+
+  // need to remove our stored load order because it may be outdated if a
+  // foreign tool changed the file time. After removing that file,
+  // refreshESPList will use the file time as the order
+  if (managedGame()->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
+    log::debug("removing loadorder.txt");
+    QFile::remove(m_CurrentProfile->getLoadOrderFileName());
+  }
+
+  refreshDirectoryStructure();
+
+  refreshESPList(true);
+  savePluginList();
+  cycleDiagnostics();
+
+  //These callbacks should not fiddle with directoy structure and ESPs.
+  m_FinishedRun(binary.absoluteFilePath(), exitCode);
+}
+
+ProcessRunner::Results OrganizerCore::waitForAllUSVFSProcesses(
+  UILocker::Reasons reason)
+{
+  return processRunner().waitForAllUSVFSProcessesWithLock(reason);
 }
 
 std::vector<Mapping> OrganizerCore::fileMapping(const QString &profileName,

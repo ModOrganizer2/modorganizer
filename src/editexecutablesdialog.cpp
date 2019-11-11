@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modlist.h"
 #include "forcedloaddialog.h"
 #include "organizercore.h"
+#include "spawn.h"
 
 #include <QMessageBox>
 #include <Shellapi.h>
@@ -800,7 +801,7 @@ QFileInfo EditExecutablesDialog::browseBinary(const QString& initial)
 
 void EditExecutablesDialog::setJarBinary(const QFileInfo& binary)
 {
-  auto java = OrganizerCore::findJavaInstallation(binary.absoluteFilePath());
+  auto java = spawn::findJavaInstallation(binary.absoluteFilePath());
 
   if (java.isEmpty()) {
     QMessageBox::information(

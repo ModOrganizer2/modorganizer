@@ -3,12 +3,11 @@
 
 
 #include "modinfodialogfwd.h"
-#include "ilockedwaitingforprocess.h"
 #include <iplugintool.h>
 #include <ipluginmodpage.h>
 #include <delayedfilewriter.h>
-
 #include <QMenu>
+
 
 class IUserInterface
 {
@@ -31,8 +30,7 @@ public:
 
   virtual MOBase::DelayedFileWriterBase &archivesWriter() = 0;
 
-  virtual ILockedWaitingForProcess* lock() = 0;
-  virtual void unlock() = 0;
+  virtual QWidget* qtWidget() = 0;
 };
 
 #endif // IUSERINTERFACE_H

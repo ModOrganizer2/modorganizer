@@ -46,19 +46,16 @@ struct SpawnParameters
   QFileInfo binary;
   QString arguments;
   QDir currentDirectory;
+  QString steamAppID;
   bool hooked = false;
   HANDLE stdOut = INVALID_HANDLE_VALUE;
   HANDLE stdErr = INVALID_HANDLE_VALUE;
 };
 
 
-bool checkBinary(QWidget* parent, const SpawnParameters& sp);
-
 bool checkSteam(
   QWidget* parent, const SpawnParameters& sp,
   const QDir& gameDirectory, const QString &steamAppID, const Settings& settings);
-
-bool checkEnvironment(QWidget* parent, const SpawnParameters& sp);
 
 bool checkBlacklist(
   QWidget* parent, const SpawnParameters& sp, Settings& settings);
@@ -68,6 +65,25 @@ bool checkBlacklist(
  * @return the process handle
  **/
 HANDLE startBinary(QWidget* parent, const SpawnParameters& sp);
+
+
+enum class FileExecutionTypes
+{
+  Executable = 1,
+  Other
+};
+
+struct FileExecutionContext
+{
+  QFileInfo binary;
+  QString arguments;
+  FileExecutionTypes type;
+};
+
+QString findJavaInstallation(const QString& jarFile);
+
+FileExecutionContext getFileExecutionContext(
+  QWidget* parent, const QFileInfo& target);
 
 } // namespace
 

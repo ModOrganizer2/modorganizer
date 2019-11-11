@@ -57,8 +57,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "downloadlistwidget.h"
 #include "messagedialog.h"
 #include "installationmanager.h"
-#include "lockeddialog.h"
-#include "waitingonclosedialog.h"
 #include "downloadlistsortproxy.h"
 #include "motddialog.h"
 #include "filedialogmemory.h"
@@ -411,7 +409,7 @@ MainWindow::MainWindow(Settings &settings
   m_Tutorial.expose("modList", m_OrganizerCore.modList());
   m_Tutorial.expose("espList", m_OrganizerCore.pluginList());
 
-  m_OrganizerCore.setUserInterface(this, this);
+  m_OrganizerCore.setUserInterface(this);
   for (const QString &fileName : m_PluginContainer.pluginFileNames()) {
     installTranslator(QFileInfo(fileName).baseName());
   }
@@ -595,7 +593,7 @@ MainWindow::~MainWindow()
     cleanup();
 
     m_PluginContainer.setUserInterface(nullptr, nullptr);
-    m_OrganizerCore.setUserInterface(nullptr, nullptr);
+    m_OrganizerCore.setUserInterface(nullptr);
     m_IntegratedBrowser.close();
     delete ui;
   } catch (std::exception &e) {
@@ -1311,16 +1309,9 @@ bool MainWindow::canExit()
     }
   }
 
-  std::vector<QString> hiddenList;
-  hiddenList.push_back(QFileInfo(QCoreApplication::applicationFilePath()).fileName());
-  HANDLE injected_process_still_running = m_OrganizerCore.findAndOpenAUSVFSProcess(hiddenList, GetCurrentProcessId());
-  if (injected_process_still_running != INVALID_HANDLE_VALUE)
-  {
-    m_exitAfterWait = true;
-    m_OrganizerCore.waitForApplication(injected_process_still_running);
-    if (!m_exitAfterWait) { // if operation cancelled
-      return false;
-    }
+  const auto r = m_OrganizerCore.waitForAllUSVFSProcesses();
+  if (r == ProcessRunner::Cancelled) {
+    return false;
   }
 
   setCursor(Qt::WaitCursor);
@@ -1542,26 +1533,12 @@ void MainWindow::startExeAction()
   }
 
   action->setEnabled(false);
-  const Executable& exe = *itor;
-  auto& profile = *m_OrganizerCore.currentProfile();
+  Guard g([&]{ action->setEnabled(true); });
 
-  QString customOverwrite = profile.setting("custom_overwrites", exe.title()).toString();
-  auto forcedLibraries = profile.determineForcedLibraries(exe.title());
-
-  if (!profile.forcedLibrariesEnabled(exe.title())) {
-    forcedLibraries.clear();
-  }
-
-  m_OrganizerCore.spawnBinary(
-      exe.binaryInfo(), exe.arguments(),
-      exe.workingDirectory().length() != 0
-          ? exe.workingDirectory()
-          : exe.binaryInfo().absolutePath(),
-      exe.steamAppID(),
-      customOverwrite,
-      forcedLibraries);
-  action->setEnabled(true);
-
+  m_OrganizerCore.processRunner()
+    .setFromExecutable(*itor)
+    .setWaitForCompletion(ProcessRunner::Refresh)
+    .run();
 }
 
 void MainWindow::activateSelectedProfile()
@@ -2282,40 +2259,9 @@ void MainWindow::storeSettings()
   s.widgets().saveIndex(ui->executablesListBox);
 }
 
-ILockedWaitingForProcess* MainWindow::lock()
+QWidget* MainWindow::qtWidget()
 {
-  if (m_LockDialog != nullptr) {
-    ++m_LockCount;
-    return m_LockDialog;
-  }
-  if (m_exitAfterWait)
-    m_LockDialog = new WaitingOnCloseDialog(this);
-  else
-    m_LockDialog = new LockedDialog(this, true);
-  m_LockDialog->setModal(true);
-  m_LockDialog->show();
-  setEnabled(false);
-  m_LockDialog->setEnabled(true); //What's the point otherwise?
-  ++m_LockCount;
-  return m_LockDialog;
-}
-
-void MainWindow::unlock()
-{
-  //If you come through here with a null lock pointer, it's a bug!
-  if (m_LockDialog == nullptr) {
-    log::debug("Unlocking main window when already unlocked");
-    return;
-  }
-  --m_LockCount;
-  if (m_LockCount == 0) {
-    if (m_exitAfterWait && m_LockDialog->canceled())
-      m_exitAfterWait = false;
-    m_LockDialog->hide();
-    m_LockDialog->deleteLater();
-    m_LockDialog = nullptr;
-    setEnabled(true);
-  }
+  return this;
 }
 
 void MainWindow::on_btnRefreshData_clicked()
@@ -2367,41 +2313,18 @@ void MainWindow::installMod(QString fileName)
 
 void MainWindow::on_startButton_clicked()
 {
-  try {
-    const Executable* selectedExecutable = getSelectedExecutable();
-    if (!selectedExecutable) {
-      return;
-    }
-
-    ui->startButton->setEnabled(false);
-
-    auto* profile = m_OrganizerCore.currentProfile();
-
-    const QString customOverwrite = profile->setting(
-      "custom_overwrites", selectedExecutable->title()).toString();
-
-    auto forcedLibraries = profile->determineForcedLibraries(
-      selectedExecutable->title());
-
-    if (!profile->forcedLibrariesEnabled(selectedExecutable->title())) {
-      forcedLibraries.clear();
-    }
-
-    m_OrganizerCore.spawnBinary(
-      selectedExecutable->binaryInfo(),
-      selectedExecutable->arguments(),
-      selectedExecutable->workingDirectory().length() != 0 ?
-        selectedExecutable->workingDirectory() :
-        selectedExecutable->binaryInfo().absolutePath(),
-      selectedExecutable->steamAppID(),
-      customOverwrite,
-      forcedLibraries);
-  } catch (...) {
-    ui->startButton->setEnabled(true);
-    throw;
+  const Executable* selectedExecutable = getSelectedExecutable();
+  if (!selectedExecutable) {
+    return;
   }
 
-  ui->startButton->setEnabled(true);
+  ui->startButton->setEnabled(false);
+  Guard g([&]{ ui->startButton->setEnabled(true); });
+
+  m_OrganizerCore.processRunner()
+    .setFromExecutable(*selectedExecutable)
+    .setWaitForCompletion(ProcessRunner::Refresh)
+    .run();
 }
 
 bool MainWindow::modifyExecutablesDialog(int selection)
@@ -5313,43 +5236,42 @@ void MainWindow::addAsExecutable()
     return;
   }
 
-  using FileExecutionTypes = OrganizerCore::FileExecutionTypes;
+  const QFileInfo target(m_ContextItem->data(0, Qt::UserRole).toString());
+  const auto fec = spawn::getFileExecutionContext(this, target);
 
-  QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
-  QFileInfo binaryInfo;
-  QString arguments;
-  FileExecutionTypes type;
-
-  if (!OrganizerCore::getFileExecutionContext(this, targetInfo, binaryInfo, arguments, type)) {
-    return;
-  }
-
-  switch (type)
+  switch (fec.type)
   {
-    case FileExecutionTypes::Executable: {
-        QString name = QInputDialog::getText(this, tr("Enter Name"),
-              tr("Please enter a name for the executable"), QLineEdit::Normal,
-              targetInfo.completeBaseName());
+    case spawn::FileExecutionTypes::Executable:
+    {
+      const QString name = QInputDialog::getText(
+        this, tr("Enter Name"),
+        tr("Enter a name for the executable"),
+        QLineEdit::Normal,
+        target.completeBaseName());
 
-        if (!name.isEmpty()) {
-          //Note: If this already exists, you'll lose custom settings
-          m_OrganizerCore.executablesList()->setExecutable(Executable()
-            .title(name)
-            .binaryInfo(binaryInfo)
-            .arguments(arguments)
-            .workingDirectory(targetInfo.absolutePath()));
+      if (!name.isEmpty()) {
+        //Note: If this already exists, you'll lose custom settings
+        m_OrganizerCore.executablesList()->setExecutable(Executable()
+          .title(name)
+          .binaryInfo(fec.binary)
+          .arguments(fec.arguments)
+          .workingDirectory(target.absolutePath()));
 
-          refreshExecutablesList();
-        }
-
-        break;
+        refreshExecutablesList();
       }
 
-    case FileExecutionTypes::Other:  // fall-through
-    default: {
-        QMessageBox::information(this, tr("Not an executable"), tr("This is not a recognized executable."));
-        break;
-      }
+      break;
+    }
+
+    case spawn::FileExecutionTypes::Other:  // fall-through
+    default:
+    {
+      QMessageBox::information(
+        this, tr("Not an executable"),
+        tr("This is not a recognized executable."));
+
+      break;
+    }
   }
 }
 
@@ -5476,8 +5398,13 @@ void MainWindow::openDataFile()
     return;
   }
 
-  QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
-  m_OrganizerCore.executeFileVirtualized(this, targetInfo);
+  const QString path = m_ContextItem->data(0, Qt::UserRole).toString();
+  const QFileInfo targetInfo(path);
+
+  m_OrganizerCore.processRunner()
+    .setFromFile(this, targetInfo)
+    .setWaitForCompletion(ProcessRunner::Refresh)
+    .run();
 }
 
 void MainWindow::openDataOriginExplorer_clicked()

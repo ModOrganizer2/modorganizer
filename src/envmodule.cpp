@@ -320,9 +320,24 @@ QString Module::getMD5() const
 }
 
 
-Process::Process(DWORD pid, QString name)
-  : m_pid(pid), m_name(std::move(name))
+Process::Process()
+  : Process(0, 0, {})
 {
+}
+
+Process::Process(HANDLE h)
+  : Process(::GetProcessId(h), 0, {})
+{
+}
+
+Process::Process(DWORD pid, DWORD ppid, QString name)
+  : m_pid(pid), m_ppid(ppid), m_name(std::move(name))
+{
+}
+
+bool Process::isValid() const
+{
+  return (m_pid != 0);
 }
 
 DWORD Process::pid() const
@@ -330,9 +345,36 @@ DWORD Process::pid() const
   return m_pid;
 }
 
+DWORD Process::ppid() const
+{
+  if (!m_ppid) {
+    m_ppid = getProcessParentID(m_pid);
+  }
+
+  return *m_ppid;
+}
+
 const QString& Process::name() const
 {
-  return m_name;
+  if (!m_name) {
+    m_name = getProcessName(m_pid);
+  }
+
+  return *m_name;
+}
+
+HandlePtr Process::openHandleForWait() const
+{
+  HandlePtr h(OpenProcess(
+    PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, FALSE, m_pid));
+
+  if (!h) {
+    const auto e = GetLastError();
+    log::error("can't get name of process {}, {}", m_pid, formatSystemMessage(e));
+    return {};
+  }
+
+  return h;
 }
 
 // whether this process can be accessed; fails if the current process doesn't
@@ -351,6 +393,16 @@ bool Process::canAccess() const
   }
 
   return true;
+}
+
+void Process::addChild(Process p)
+{
+  m_children.push_back(p);
+}
+
+std::vector<Process>& Process::children()
+{
+  return m_children;
 }
 
 
@@ -408,7 +460,8 @@ std::vector<Module> getLoadedModules()
 }
 
 
-std::vector<Process> getRunningProcesses()
+template <class F>
+void forEachRunningProcess(F&& f)
 {
   HandlePtr snapshot(CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
 
@@ -416,7 +469,7 @@ std::vector<Process> getRunningProcesses()
   {
     const auto e = GetLastError();
     log::error("CreateToolhelp32Snapshot() failed, {}", formatSystemMessage(e));
-    return {};
+    return;
   }
 
   PROCESSENTRY32 entry = {};
@@ -427,16 +480,14 @@ std::vector<Process> getRunningProcesses()
   if (!Process32First(snapshot.get(), &entry)) {
     const auto e = GetLastError();
     log::error("Process32First() failed, {}", formatSystemMessage(e));
-    return {};
+    return;
   }
-
-  std::vector<Process> v;
 
   for (;;)
   {
-    v.push_back(Process(
-      entry.th32ProcessID,
-      QString::fromStdWString(entry.szExeFile)));
+    if (!f(entry)) {
+      break;
+    }
 
     // next process
     if (!Process32Next(snapshot.get(), &entry))
@@ -450,8 +501,120 @@ std::vector<Process> getRunningProcesses()
       break;
     }
   }
+}
+
+std::vector<Process> getRunningProcesses()
+{
+  std::vector<Process> v;
+
+  forEachRunningProcess([&](auto&& entry) {
+    v.push_back(Process(
+      entry.th32ProcessID,
+      entry.th32ParentProcessID,
+      QString::fromStdWString(entry.szExeFile)));
+
+    return true;
+  });
 
   return v;
+}
+
+void findChildren(Process& parent, const std::vector<Process>& processes)
+{
+  for (auto&& p : processes) {
+    if (p.ppid() == parent.pid()) {
+      Process child = p;
+      findChildren(child, processes);
+
+      parent.addChild(child);
+    }
+  }
+}
+
+Process getProcessTree(HANDLE parent)
+{
+  const auto parentPID = ::GetProcessId(parent);
+  const auto v = getRunningProcesses();
+
+  Process root;
+  for (auto&& p : v) {
+    if (p.pid() == parentPID) {
+      root = p;
+      break;
+    }
+  }
+
+  if (root.pid() == 0) {
+    return {};
+  }
+
+  findChildren(root, v);
+
+  return root;
+}
+
+QString getProcessName(DWORD pid)
+{
+  HandlePtr h(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid));
+
+  if (!h) {
+    const auto e = GetLastError();
+    log::error("can't get name of process {}, {}", pid, formatSystemMessage(e));
+    return {};
+  }
+
+  return getProcessName(h.get());
+}
+
+QString getProcessName(HANDLE process)
+{
+  const QString badName = "unknown";
+
+  if (process == 0 || process == INVALID_HANDLE_VALUE) {
+    return badName;
+  }
+
+  const DWORD bufferSize = MAX_PATH;
+  wchar_t buffer[bufferSize + 1] = {};
+
+  const auto realSize = ::GetProcessImageFileNameW(process, buffer, bufferSize);
+
+  if (realSize == 0) {
+    const auto e = ::GetLastError();
+    log::error("GetProcessImageFileNameW() failed, {}", formatSystemMessage(e));
+    return badName;
+  }
+
+  auto s = QString::fromWCharArray(buffer, realSize);
+
+  const auto lastSlash = s.lastIndexOf("\\");
+  if (lastSlash != -1) {
+    s = s.mid(lastSlash + 1);
+  }
+
+  return s;
+}
+
+DWORD getProcessParentID(DWORD pid)
+{
+  DWORD ppid = 0;
+
+  forEachRunningProcess([&](auto&& entry) {
+    if (entry.th32ProcessID == pid) {
+      ppid = entry.th32ParentProcessID;
+      return false;
+    }
+
+    return true;
+  });
+
+  return ppid;
+}
+
+
+DWORD getProcessParentID(HANDLE handle)
+{
+  return getProcessParentID(GetProcessId(handle));
 }
 
 } // namespace

@@ -632,7 +632,11 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 		  if (MOShortcut shortcut{ arguments.at(1) }) {
 			  if (shortcut.hasExecutable()) {
 				  try {
-					  organizer.runShortcut(shortcut);
+					  organizer.processRunner()
+              .setFromShortcut(shortcut)
+              .setWaitForCompletion()
+              .run();
+
 					  return 0;
 				  }
 				  catch (const std::exception &e) {
@@ -649,14 +653,21 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 		  else {
 			  QString exeName = arguments.at(1);
 			  log::debug("starting {} from command line", exeName);
+
 			  arguments.removeFirst(); // remove application name (ModOrganizer.exe)
 			  arguments.removeFirst(); // remove binary name
-			  // pass the remaining parameters to the binary
-			  try {
-				  organizer.startApplication(exeName, arguments, QString(), QString());
+
+        try
+        {
+          // pass the remaining parameters to the binary
+          organizer.processRunner()
+            .setFromFileOrExecutable(exeName, arguments)
+            .setWaitForCompletion()
+            .run();
 				  return 0;
 			  }
-			  catch (const std::exception &e) {
+			  catch (const std::exception &e)
+        {
 				  reportError(
 					  QObject::tr("failed to start application: %1").arg(e.what()));
 				  return 1;
