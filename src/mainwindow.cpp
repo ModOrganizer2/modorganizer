@@ -39,7 +39,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "spawn.h"
 #include "versioninfo.h"
 #include "instancemanager.h"
-#include "loot.h"
 #include "report.h"
 #include "modlist.h"
 #include "modlistsortproxy.h"
@@ -190,6 +189,8 @@ using namespace MOShared;
 const QSize SmallToolbarSize(24, 24);
 const QSize MediumToolbarSize(32, 32);
 const QSize LargeToolbarSize(42, 36);
+
+bool runLoot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList);
 
 
 MainWindow::MainWindow(Settings &settings
