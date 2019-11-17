@@ -5,6 +5,74 @@
 
 using namespace MOBase;
 
+
+class LootDialog : public QDialog
+{
+public:
+  LootDialog(QWidget* parent) :
+    QDialog(parent), m_label(nullptr), m_progress(nullptr), m_buttons(nullptr),
+    m_cancelled(false)
+  {
+    createUI();
+  }
+
+  void setText(const QString& s)
+  {
+    m_label->setText(s);
+  }
+
+  void setIndeterminate()
+  {
+    m_progress->setMaximum(0);
+  }
+
+  bool cancelled() const
+  {
+    return m_cancelled;
+  }
+
+private:
+  QLabel* m_label;
+  QProgressBar* m_progress;
+  QDialogButtonBox* m_buttons;
+  bool m_cancelled;
+
+  void createUI()
+  {
+    auto* root = new QWidget(this);
+    auto* ly = new QVBoxLayout(root);
+
+    setLayout(new QVBoxLayout);
+    layout()->setContentsMargins(0, 0, 0, 0);
+    layout()->addWidget(root);
+
+    m_label = new QLabel;
+    ly->addWidget(m_label);
+
+    m_progress = new QProgressBar;
+    ly->addWidget(m_progress);
+
+    ly->addStretch(1);
+
+    m_buttons = new QDialogButtonBox(QDialogButtonBox::Cancel);
+    connect(m_buttons, &QDialogButtonBox::clicked, [&](auto* b){ onButton(b); });
+    ly->addWidget(m_buttons);
+  }
+
+  void closeEvent(QCloseEvent* e) override
+  {
+    m_cancelled = true;
+  }
+
+  void onButton(QAbstractButton* b)
+  {
+    if (m_buttons->buttonRole(b) == QDialogButtonBox::RejectRole) {
+      m_cancelled = true;
+    }
+  }
+};
+
+
 void createStdoutPipe(HANDLE *stdOutRead, HANDLE *stdOutWrite)
 {
   SECURITY_ATTRIBUTES secAttributes;
@@ -47,8 +115,7 @@ std::string readFromPipe(HANDLE stdOutRead)
 
 void processLOOTOut(
   OrganizerCore& core,
-  const std::string &lootOut, std::string &errorMessages,
-  QProgressDialog &dialog)
+  const std::string &lootOut, std::string &errorMessages, LootDialog& dialog)
 {
   std::vector<std::string> lines;
   boost::split(lines, lootOut, boost::is_any_of("\r\n"));
@@ -61,7 +128,7 @@ void processLOOTOut(
       size_t progidx    = line.find("[progress]");
       size_t erroridx   = line.find("[error]");
       if (progidx != std::string::npos) {
-        dialog.setLabelText(line.substr(progidx + 11).c_str());
+        dialog.setText(line.substr(progidx + 11).c_str());
       } else if (erroridx != std::string::npos) {
         log::warn("{}", line);
         errorMessages.append(boost::algorithm::trim_copy(line.substr(erroridx + 8)) + "\n");
@@ -97,10 +164,10 @@ bool runLoot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
   bool success = false;
 
   try {
-    QProgressDialog dialog(parent);
+    LootDialog dialog(parent);
 
-    dialog.setLabelText(QObject::tr("Please wait while LOOT is running"));
-    dialog.setMaximum(0);
+    dialog.setText(QObject::tr("Please wait while LOOT is running"));
+    dialog.setIndeterminate();
     dialog.show();
 
     QString outPath = QDir::temp().absoluteFilePath("lootreport.json");
@@ -178,7 +245,7 @@ bool runLoot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
           }
         }
 
-        if (dialog.wasCanceled()) {
+        if (dialog.cancelled()) {
           if (isJobHandle) {
             ::TerminateJobObject(loot, 1);
           } else {
