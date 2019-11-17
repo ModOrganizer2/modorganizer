@@ -26,6 +26,19 @@ public:
     m_progress->setMaximum(0);
   }
 
+  void addOutput(const QString& s)
+  {
+    const auto lines = s.split(QRegExp("[\\r\\n]"), QString::SkipEmptyParts);
+
+    for (auto&& line : lines) {
+      if (line.isEmpty()) {
+        continue;
+      }
+
+      addLineOutput(line);
+    }
+  }
+
   bool cancelled() const
   {
     return m_cancelled;
@@ -35,6 +48,8 @@ private:
   QLabel* m_label;
   QProgressBar* m_progress;
   QDialogButtonBox* m_buttons;
+  QPlainTextEdit* m_output;
+  QString m_lastLine;
   bool m_cancelled;
 
   void createUI()
@@ -52,7 +67,8 @@ private:
     m_progress = new QProgressBar;
     ly->addWidget(m_progress);
 
-    ly->addStretch(1);
+    m_output = new QPlainTextEdit;
+    ly->addWidget(m_output);
 
     m_buttons = new QDialogButtonBox(QDialogButtonBox::Cancel);
     connect(m_buttons, &QDialogButtonBox::clicked, [&](auto* b){ onButton(b); });
@@ -69,6 +85,16 @@ private:
     if (m_buttons->buttonRole(b) == QDialogButtonBox::RejectRole) {
       m_cancelled = true;
     }
+  }
+
+  void addLineOutput(const QString& line)
+  {
+    if (line == m_lastLine) {
+      return;
+    }
+
+    m_output->appendPlainText(line);
+    m_lastLine = line;
   }
 };
 
@@ -117,6 +143,8 @@ void processLOOTOut(
   OrganizerCore& core,
   const std::string &lootOut, std::string &errorMessages, LootDialog& dialog)
 {
+  dialog.addOutput(QString::fromStdString(lootOut));
+
   std::vector<std::string> lines;
   boost::split(lines, lootOut, boost::is_any_of("\r\n"));
 
