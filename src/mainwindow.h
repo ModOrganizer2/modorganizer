@@ -136,10 +136,6 @@ public:
 
   void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);
 
-  void createStdoutPipe(HANDLE *stdOutRead, HANDLE *stdOutWrite);
-  std::string readFromPipe(HANDLE stdOutRead);
-  void processLOOTOut(const std::string &lootOut, std::string &errorMessages, QProgressDialog &dialog);
-
   void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
 
   QString getOriginDisplayName(int originID);

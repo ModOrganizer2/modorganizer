@@ -142,6 +142,7 @@ SET(organizer_SRCS
 	sanitychecks.cpp
 	processrunner.cpp
 	uilocker.cpp
+	loot.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -263,6 +264,7 @@ SET(organizer_HDRS
 	colortable.h
 	processrunner.h
 	uilocker.h
+	loot.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -465,6 +467,7 @@ set(utilities
 	shared/util
 	usvfsconnector
 	shared/windows_error
+	loot
 )
 
 set(widgets
