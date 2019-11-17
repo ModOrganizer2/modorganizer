@@ -3,6 +3,7 @@
 
 #include <windows.h>
 #include <QWidget>
+#include "envmodule.h"
 
 class OrganizerCore;
 
@@ -11,10 +12,10 @@ class Loot : public QObject
   Q_OBJECT;
 
 public:
-  Loot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList);
+  Loot();
   ~Loot();
 
-  void start();
+  bool start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList);
   void cancel();
   bool result() const;
 
@@ -31,11 +32,10 @@ private:
   std::atomic<bool> m_cancel;
   std::atomic<bool> m_result;
   QString m_outPath;
-  HANDLE m_lootProcess;
-  HANDLE m_stdOutRead;
+  env::HandlePtr m_lootProcess;
+  env::HandlePtr m_stdout;
 
-  void createStdoutPipe(HANDLE *stdOutRead, HANDLE *stdOutWrite);
-  std::string readFromPipe(HANDLE stdOutRead);
+  std::string readFromPipe();
 
   void processLOOTOut(const std::string &lootOut);
   void lootThread();

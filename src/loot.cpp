@@ -76,12 +76,12 @@ public:
 
   void cancel()
   {
+    addOutput(QObject::tr("Stopping LOOT..."));
     m_loot.cancel();
   }
 
   int exec() override
   {
-    m_loot.start();
     QDialog::exec();
 
     if (m_errorMessages.length() > 0) {
@@ -174,9 +174,17 @@ private:
 };
 
 
-Loot::Loot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList) :
-  m_thread(nullptr), m_cancel(false), m_result(false),
-  m_lootProcess(INVALID_HANDLE_VALUE), m_stdOutRead(INVALID_HANDLE_VALUE)
+Loot::Loot()
+  : m_thread(nullptr), m_cancel(false), m_result(false)
+{
+}
+
+Loot::~Loot()
+{
+  m_thread->wait();
+}
+
+bool Loot::start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
 {
   m_outPath = QDir::temp().absoluteFilePath("lootreport.json");
 
@@ -191,8 +199,28 @@ Loot::Loot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList) :
     parameters << "--skipUpdateMasterlist";
   }
 
-  HANDLE stdOutWrite = INVALID_HANDLE_VALUE;
-  createStdoutPipe(&m_stdOutRead, &stdOutWrite);
+  SECURITY_ATTRIBUTES secAttributes;
+  secAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
+  secAttributes.bInheritHandle = TRUE;
+  secAttributes.lpSecurityDescriptor = nullptr;
+
+  env::HandlePtr readPipe, writePipe;
+
+  {
+    HANDLE read = INVALID_HANDLE_VALUE;
+    HANDLE write = INVALID_HANDLE_VALUE;
+
+    if (!::CreatePipe(&read, &write, &secAttributes, 0)) {
+      log::error("failed to create stdout reroute");
+    }
+
+    readPipe.reset(read);
+    writePipe.reset(write);
+
+    if (!::SetHandleInformation(read, HANDLE_FLAG_INHERIT, 0)) {
+      log::error("failed to correctly set up the stdout reroute");
+    }
+  }
 
   core.prepareVFS();
 
@@ -201,12 +229,17 @@ Loot::Loot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList) :
   sp.arguments = parameters.join(" ");
   sp.currentDirectory.setPath(qApp->applicationDirPath() + "/loot");
   sp.hooked = true;
-  sp.stdOut = stdOutWrite;
+  sp.stdOut = writePipe.get();
 
-  m_lootProcess = spawn::startBinary(parent, sp);
+  m_stdout = std::move(readPipe);
 
-  // we don't use the write end
-  ::CloseHandle(stdOutWrite);
+  HANDLE lootHandle = spawn::startBinary(parent, sp);
+  if (lootHandle == INVALID_HANDLE_VALUE) {
+    emit error(QObject::tr("failed to start loot"));
+    return false;
+  }
+
+  m_lootProcess.reset(lootHandle);
 
   core.pluginList()->clearAdditionalInformation();
 
@@ -214,16 +247,10 @@ Loot::Loot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList) :
     lootThread();
     emit finished();
   }));
-}
 
-Loot::~Loot()
-{
-  m_thread->wait();
-}
-
-void Loot::start()
-{
   m_thread->start();
+
+  return true;
 }
 
 void Loot::cancel()
@@ -236,24 +263,7 @@ bool Loot::result() const
   return m_result;
 }
 
-void Loot::createStdoutPipe(HANDLE *stdOutRead, HANDLE *stdOutWrite)
-{
-  SECURITY_ATTRIBUTES secAttributes;
-  secAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
-  secAttributes.bInheritHandle = TRUE;
-  secAttributes.lpSecurityDescriptor = nullptr;
-
-  if (!::CreatePipe(stdOutRead, stdOutWrite, &secAttributes, 0)) {
-    log::error("failed to create stdout reroute");
-  }
-
-  if (!::SetHandleInformation(*stdOutRead, HANDLE_FLAG_INHERIT, 0)) {
-    log::error("failed to correctly set up the stdout reroute");
-    *stdOutWrite = *stdOutRead = INVALID_HANDLE_VALUE;
-  }
-}
-
-std::string Loot::readFromPipe(HANDLE stdOutRead)
+std::string Loot::readFromPipe()
 {
   static const int chunkSize = 128;
   std::string result;
@@ -263,7 +273,7 @@ std::string Loot::readFromPipe(HANDLE stdOutRead)
 
   DWORD read = 1;
   while (read > 0) {
-    if (!::ReadFile(stdOutRead, buffer, chunkSize, &read, nullptr)) {
+    if (!::ReadFile(m_stdout.get(), buffer, chunkSize, &read, nullptr)) {
       break;
     }
     if (read > 0) {
@@ -323,90 +333,54 @@ void Loot::lootThread()
   try {
     m_result = false;
 
-    DWORD retLen;
-    JOBOBJECT_BASIC_PROCESS_ID_LIST info;
-    HANDLE processHandle = m_lootProcess;
+    HANDLE waitHandle = m_lootProcess.get();
+    DWORD res = ::MsgWaitForMultipleObjects(1, &waitHandle, false, 100, QS_KEY | QS_MOUSE);
 
-    if (m_lootProcess != INVALID_HANDLE_VALUE) {
-      bool isJobHandle = true;
-      ULONG lastProcessID;
-      DWORD res = ::MsgWaitForMultipleObjects(1, &m_lootProcess, false, 100, QS_KEY | QS_MOUSE);
-      while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0)) {
-        if (isJobHandle) {
-          if (::QueryInformationJobObject(m_lootProcess, JobObjectBasicProcessIdList, &info, sizeof(info), &retLen) > 0) {
-            if (info.NumberOfProcessIdsInList == 0) {
-              log::debug("no more processes in job");
-              break;
-            } else {
-              if (lastProcessID != info.ProcessIdList[0]) {
-                lastProcessID = info.ProcessIdList[0];
-                if (processHandle != m_lootProcess) {
-                  ::CloseHandle(processHandle);
-                }
-                processHandle = ::OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, lastProcessID);
-              }
-            }
-          } else {
-            // the info-object I passed only provides space for 1 process id. but since this code only cares about whether there
-            // is more than one that's good enough. ERROR_MORE_DATA simply signals there are at least two processes running.
-            // any other error probably means the handle is a regular process handle, probably caused by running MO in a job without
-            // the right to break out.
-            if (::GetLastError() != ERROR_MORE_DATA) {
-              isJobHandle = false;
-            }
-          }
-        }
-
-        if (m_cancel) {
-          if (isJobHandle) {
-            ::TerminateJobObject(m_lootProcess, 1);
-          } else {
-            ::TerminateProcess(m_lootProcess, 1);
-          }
-        }
-
-        // keep processing events so the app doesn't appear dead
-        QCoreApplication::processEvents();
-        std::string lootOut = readFromPipe(m_stdOutRead);
-        processLOOTOut(lootOut);
-
-        res = ::MsgWaitForMultipleObjects(1, &m_lootProcess, false, 100, QS_KEY | QS_MOUSE);
+    while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0)) {
+      if (m_cancel) {
+        ::TerminateProcess(m_lootProcess.get(), 1);
       }
 
-      std::string remainder = readFromPipe(m_stdOutRead).c_str();
-      if (remainder.length() > 0) {
-        processLOOTOut(remainder);
-      }
+      std::string lootOut = readFromPipe();
+      processLOOTOut(lootOut);
 
-      DWORD exitCode = 0UL;
-      ::GetExitCodeProcess(processHandle, &exitCode);
-      ::CloseHandle(processHandle);
-      if (exitCode != 0UL) {
+      res = ::MsgWaitForMultipleObjects(1, &waitHandle, false, 100, QS_KEY | QS_MOUSE);
+    }
+
+    std::string remainder = readFromPipe();
+    if (remainder.length() > 0) {
+      processLOOTOut(remainder);
+    }
+
+    DWORD exitCode = 0UL;
+    ::GetExitCodeProcess(m_lootProcess.get(), &exitCode);
+
+    if (exitCode != 0UL) {
+      if (!m_cancel) {
         emit error(QObject::tr("loot failed. Exit code was: %1").arg(exitCode));
-        m_result = false;
-        return;
-      } else {
-        m_result = true;
-        QFile outFile(m_outPath);
-        outFile.open(QIODevice::ReadOnly);
-        QJsonDocument doc = QJsonDocument::fromJson(outFile.readAll());
-        QJsonArray array = doc.array();
-        for (auto iter = array.begin();  iter != array.end(); ++iter) {
-          QJsonObject pluginObj = (*iter).toObject();
-          QJsonArray pluginMessages = pluginObj["messages"].toArray();
-          for (auto msgIter = pluginMessages.begin(); msgIter != pluginMessages.end(); ++msgIter) {
-            QJsonObject msg = (*msgIter).toObject();
-            emit information(
-              pluginObj["name"].toString(),
-              QString("%1: %2").arg(msg["type"].toString(), msg["message"].toString()));
-          }
-          if (pluginObj["dirty"].toString() == "yes") {
-            emit information(pluginObj["name"].toString(), "dirty");
-          }
-        }
       }
-    } else {
-      emit error(QObject::tr("failed to start loot"));
+
+      return;
+    }
+
+    m_result = true;
+    QFile outFile(m_outPath);
+    outFile.open(QIODevice::ReadOnly);
+    QJsonDocument doc = QJsonDocument::fromJson(outFile.readAll());
+    QJsonArray array = doc.array();
+
+    for (auto iter = array.begin();  iter != array.end(); ++iter) {
+      QJsonObject pluginObj = (*iter).toObject();
+      QJsonArray pluginMessages = pluginObj["messages"].toArray();
+      for (auto msgIter = pluginMessages.begin(); msgIter != pluginMessages.end(); ++msgIter) {
+        QJsonObject msg = (*msgIter).toObject();
+        emit information(
+          pluginObj["name"].toString(),
+          QString("%1: %2").arg(msg["type"].toString(), msg["message"].toString()));
+      }
+      if (pluginObj["dirty"].toString() == "yes") {
+        emit information(pluginObj["name"].toString(), "dirty");
+      }
     }
   } catch (const std::exception &e) {
     emit error(QObject::tr("failed to run loot: %1").arg(e.what()));
@@ -424,8 +398,10 @@ bool runLoot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
   //Need to figure out how I want to do that.
 
   try {
-    Loot loot(parent, core, didUpdateMasterList);
+    Loot loot;
     LootDialog dialog(parent, core, loot);
+
+    loot.start(parent, core, didUpdateMasterList);
 
     dialog.setText(QObject::tr("Please wait while LOOT is running"));
     dialog.setIndeterminate();
