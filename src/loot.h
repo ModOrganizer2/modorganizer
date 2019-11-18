@@ -37,8 +37,10 @@ private:
 
   std::string readFromPipe();
 
-  void processLOOTOut(const std::string &lootOut);
   void lootThread();
+  bool waitForCompletion();
+  void processOutputFile();
+  void processStdout(const std::string &lootOut);
 };
 
 

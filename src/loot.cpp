@@ -76,7 +76,7 @@ public:
 
   void cancel()
   {
-    addOutput(QObject::tr("Stopping LOOT..."));
+    addOutput(tr("Stopping LOOT..."));
     m_loot.cancel();
   }
 
@@ -86,7 +86,7 @@ public:
 
     if (m_errorMessages.length() > 0) {
       QMessageBox *warn = new QMessageBox(
-        QMessageBox::Warning, QObject::tr("Errors occurred"),
+        QMessageBox::Warning, tr("Errors occurred"),
         m_errorMessages, QMessageBox::Ok, parentWidget());
 
       warn->exec();
@@ -235,7 +235,7 @@ bool Loot::start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
 
   HANDLE lootHandle = spawn::startBinary(parent, sp);
   if (lootHandle == INVALID_HANDLE_VALUE) {
-    emit error(QObject::tr("failed to start loot"));
+    emit error(tr("failed to start loot"));
     return false;
   }
 
@@ -263,6 +263,66 @@ bool Loot::result() const
   return m_result;
 }
 
+void Loot::lootThread()
+{
+  try {
+    m_result = false;
+
+    if (!waitForCompletion()) {
+      return;
+    }
+
+    m_result = true;
+    processOutputFile();
+  } catch (const std::exception &e) {
+    emit error(tr("failed to run loot: %1").arg(e.what()));
+  }
+}
+
+bool Loot::waitForCompletion()
+{
+  HANDLE waitHandle = m_lootProcess.get();
+  DWORD res = ::MsgWaitForMultipleObjects(1, &waitHandle, false, 100, QS_KEY | QS_MOUSE);
+
+  while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0)) {
+    if (m_cancel) {
+      ::TerminateProcess(m_lootProcess.get(), 1);
+    }
+
+    std::string lootOut = readFromPipe();
+    processStdout(lootOut);
+
+    res = ::MsgWaitForMultipleObjects(1, &waitHandle, false, 100, QS_KEY | QS_MOUSE);
+  }
+
+  const std::string remainder = readFromPipe();
+  if (!remainder.empty()) {
+    processStdout(remainder);
+  }
+
+  if (m_cancel) {
+    return false;
+  }
+
+
+  // checking exit code
+
+  DWORD exitCode = 0;
+
+  if (!::GetExitCodeProcess(m_lootProcess.get(), &exitCode)) {
+    const auto e = GetLastError();
+    log::error("failed to get exit code for loot, {}", formatSystemMessage(e));
+    return false;
+  }
+
+  if (exitCode != 0UL) {
+    emit error(tr("Loot failed. Exit code was: %1").arg(exitCode));
+    return false;
+  }
+
+  return true;
+}
+
 std::string Loot::readFromPipe()
 {
   static const int chunkSize = 128;
@@ -286,7 +346,7 @@ std::string Loot::readFromPipe()
   return result;
 }
 
-void Loot::processLOOTOut(const std::string &lootOut)
+void Loot::processStdout(const std::string &lootOut)
 {
   emit output(QString::fromStdString(lootOut));
 
@@ -313,13 +373,13 @@ void Loot::processLOOTOut(const std::string &lootOut)
           std::string dependency(match[2].first, match[2].second);
           emit information(
             QString::fromStdString(modName),
-            QObject::tr("depends on missing \"%1\"").arg(dependency.c_str()));
+            tr("depends on missing \"%1\"").arg(dependency.c_str()));
         } else if (std::regex_match(line, match, exIncompatible)) {
           std::string modName(match[1].first, match[1].second);
           std::string dependency(match[2].first, match[2].second);
           emit information(
             QString::fromStdString(modName),
-            QObject::tr("incompatible with \"%1\"").arg(dependency.c_str()));
+            tr("incompatible with \"%1\"").arg(dependency.c_str()));
         } else {
           log::debug("[loot] {}", line);
         }
@@ -328,62 +388,26 @@ void Loot::processLOOTOut(const std::string &lootOut)
   }
 }
 
-void Loot::lootThread()
+void Loot::processOutputFile()
 {
-  try {
-    m_result = false;
+  QFile outFile(m_outPath);
+  outFile.open(QIODevice::ReadOnly);
 
-    HANDLE waitHandle = m_lootProcess.get();
-    DWORD res = ::MsgWaitForMultipleObjects(1, &waitHandle, false, 100, QS_KEY | QS_MOUSE);
+  QJsonDocument doc = QJsonDocument::fromJson(outFile.readAll());
+  QJsonArray array = doc.array();
 
-    while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0)) {
-      if (m_cancel) {
-        ::TerminateProcess(m_lootProcess.get(), 1);
-      }
-
-      std::string lootOut = readFromPipe();
-      processLOOTOut(lootOut);
-
-      res = ::MsgWaitForMultipleObjects(1, &waitHandle, false, 100, QS_KEY | QS_MOUSE);
+  for (auto iter = array.begin();  iter != array.end(); ++iter) {
+    QJsonObject pluginObj = (*iter).toObject();
+    QJsonArray pluginMessages = pluginObj["messages"].toArray();
+    for (auto msgIter = pluginMessages.begin(); msgIter != pluginMessages.end(); ++msgIter) {
+      QJsonObject msg = (*msgIter).toObject();
+      emit information(
+        pluginObj["name"].toString(),
+        QString("%1: %2").arg(msg["type"].toString(), msg["message"].toString()));
     }
-
-    std::string remainder = readFromPipe();
-    if (remainder.length() > 0) {
-      processLOOTOut(remainder);
+    if (pluginObj["dirty"].toString() == "yes") {
+      emit information(pluginObj["name"].toString(), "dirty");
     }
-
-    DWORD exitCode = 0UL;
-    ::GetExitCodeProcess(m_lootProcess.get(), &exitCode);
-
-    if (exitCode != 0UL) {
-      if (!m_cancel) {
-        emit error(QObject::tr("loot failed. Exit code was: %1").arg(exitCode));
-      }
-
-      return;
-    }
-
-    m_result = true;
-    QFile outFile(m_outPath);
-    outFile.open(QIODevice::ReadOnly);
-    QJsonDocument doc = QJsonDocument::fromJson(outFile.readAll());
-    QJsonArray array = doc.array();
-
-    for (auto iter = array.begin();  iter != array.end(); ++iter) {
-      QJsonObject pluginObj = (*iter).toObject();
-      QJsonArray pluginMessages = pluginObj["messages"].toArray();
-      for (auto msgIter = pluginMessages.begin(); msgIter != pluginMessages.end(); ++msgIter) {
-        QJsonObject msg = (*msgIter).toObject();
-        emit information(
-          pluginObj["name"].toString(),
-          QString("%1: %2").arg(msg["type"].toString(), msg["message"].toString()));
-      }
-      if (pluginObj["dirty"].toString() == "yes") {
-        emit information(pluginObj["name"].toString(), "dirty");
-      }
-    }
-  } catch (const std::exception &e) {
-    emit error(QObject::tr("failed to run loot: %1").arg(e.what()));
   }
 }
 
