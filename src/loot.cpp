@@ -388,27 +388,205 @@ void Loot::processStdout(const std::string &lootOut)
   }
 }
 
+QString jsonType(const QJsonValue& v)
+{
+  if (v.isUndefined()) {
+    return "undefined";
+  } else if (v.isNull()) {
+    return "null";
+  } else if (v.isArray()) {
+    return "an array";
+  } else if (v.isBool()) {
+    return "a bool";
+  } else if (v.isDouble()) {
+    return "a double";
+  } else if (v.isObject()) {
+    return "an object";
+  } else if (v.isString()) {
+    return "a string";
+  } else {
+    return "an unknown type";
+  }
+}
+
+QString jsonType(const QJsonDocument& doc)
+{
+  if (doc.isEmpty()) {
+    return "empty";
+  } else if (doc.isNull()) {
+    return "null";
+  } else if (doc.isArray()) {
+    return "an array";
+  } else if (doc.isObject()) {
+    return "an object";
+  } else {
+    return "an unknown type";
+  }
+}
+
 void Loot::processOutputFile()
 {
   QFile outFile(m_outPath);
-  outFile.open(QIODevice::ReadOnly);
+  if (!outFile.open(QIODevice::ReadOnly)) {
+    logJsonError(
+      "failed to open file, {} (error {})",
+      outFile.errorString(), outFile.error());
 
-  QJsonDocument doc = QJsonDocument::fromJson(outFile.readAll());
-  QJsonArray array = doc.array();
-
-  for (auto iter = array.begin();  iter != array.end(); ++iter) {
-    QJsonObject pluginObj = (*iter).toObject();
-    QJsonArray pluginMessages = pluginObj["messages"].toArray();
-    for (auto msgIter = pluginMessages.begin(); msgIter != pluginMessages.end(); ++msgIter) {
-      QJsonObject msg = (*msgIter).toObject();
-      emit information(
-        pluginObj["name"].toString(),
-        QString("%1: %2").arg(msg["type"].toString(), msg["message"].toString()));
-    }
-    if (pluginObj["dirty"].toString() == "yes") {
-      emit information(pluginObj["name"].toString(), "dirty");
-    }
+    return;
   }
+
+  QJsonParseError e;
+  const QJsonDocument doc = QJsonDocument::fromJson(outFile.readAll(), &e);
+  if (doc.isNull()) {
+    logJsonError("invalid json, {} (error {})", e.errorString(), e.error);
+    return;
+  }
+
+  if (!doc.isArray()) {
+    logJsonError("root is {}, not an array", jsonType(doc));
+    return;
+  }
+
+  const QJsonArray array = doc.array();
+
+  for (auto pluginValue : array) {
+    processOutputPlugin(pluginValue);
+  }
+}
+
+bool Loot::processOutputPlugin(const QJsonValue& pluginValue)
+{
+  if (!pluginValue.isObject()) {
+    logJsonError(
+      "value in root array is {}, not an object", jsonType(pluginValue));
+    return false;
+  }
+
+  const auto plugin = pluginValue.toObject();
+
+
+  if (!plugin.contains("name")) {
+    logJsonError("plugin value doesn't have a 'name' property");
+    return false;
+  }
+
+  const auto pluginNameValue = plugin["name"];
+  if (!pluginNameValue.isString()) {
+    logJsonError(
+      "plugin property 'name' is {}, not a string", jsonType(pluginNameValue));
+    return false;
+  }
+
+  const auto pluginName = pluginNameValue.toString();
+
+  processPluginMessages(pluginName, plugin);
+  processPluginDirty(pluginName, plugin);
+
+  return true;
+}
+
+bool Loot::processPluginMessages(
+  const QString& pluginName, const QJsonObject& plugin)
+{
+  if (!plugin.contains("messages")) {
+    return true;
+  }
+
+  const auto messagesValue = plugin["messages"];
+
+  if (!messagesValue.isArray()) {
+    logJsonError(
+      "'messages' value for plugin '{}' is {}, not an array",
+      pluginName, jsonType(messagesValue));
+
+    return false;
+  }
+
+  const auto messages = messagesValue.toArray();
+
+
+  for (auto messageValue : messages) {
+    if (!messageValue.isObject()) {
+      logJsonError(
+        "plugin '{}' has a message that's {}, not an object",
+        pluginName, jsonType(messageValue));
+
+      continue;
+    }
+
+    processPluginMessage(pluginName, messageValue.toObject());
+  }
+
+  return true;
+}
+
+bool Loot::processPluginMessage(
+  const QString& pluginName, const QJsonObject& message)
+{
+  const auto messageType = message["type"].toString();
+  const auto messageString = message["message"].toString();
+
+  if (messageType.isEmpty()) {
+    logJsonError(
+      "plugin '{}' has a message with no 'type' property", pluginName);
+    return false;
+  }
+
+  if (messageString.isEmpty()) {
+    logJsonError(
+      "plugin '{}' has a message with no 'message' property", pluginName);
+    return false;
+  }
+
+  const auto info = QString("%1: %2")
+    .arg(messageType)
+    .arg(messageString);
+
+  emit information(pluginName, info);
+  return true;
+}
+
+
+bool Loot::processPluginDirty(
+  const QString& pluginName, const QJsonObject& plugin)
+{
+  if (!plugin.contains("dirty")) {
+    return true;
+  }
+
+  const auto dirtyValue = plugin["dirty"];
+
+  if (!dirtyValue.isArray()) {
+    logJsonError(
+      "'dirty' value for plugin '{}' is {}, not an array",
+      pluginName, jsonType(dirtyValue));
+
+    return false;
+  }
+
+  const auto dirty = dirtyValue.toArray();
+
+
+  for (auto stringValue : dirty) {
+    if (!stringValue.isString()) {
+      logJsonError(
+        "'dirty' value for plugin '{}' is {}, not a string",
+        pluginName, jsonType(stringValue));
+
+      continue;
+    }
+
+    const auto string = stringValue.toString();
+
+    if (string.isEmpty()) {
+      logJsonError("'dirty' string for plugin '{}' is empty", pluginName);
+      continue;
+    }
+
+    emit information(pluginName, string);
+  }
+
+  return true;
 }
 
 

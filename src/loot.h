@@ -1,9 +1,10 @@
 #ifndef MODORGANIZER_LOOT_H
 #define MODORGANIZER_LOOT_H
 
+#include "envmodule.h"
+#include <log.h>
 #include <windows.h>
 #include <QWidget>
-#include "envmodule.h"
 
 class OrganizerCore;
 
@@ -39,8 +40,27 @@ private:
 
   void lootThread();
   bool waitForCompletion();
-  void processOutputFile();
   void processStdout(const std::string &lootOut);
+
+  void processOutputFile();
+  bool processOutputPlugin(const QJsonValue& pluginValue);
+
+  bool processPluginMessages(
+    const QString& pluginName, const QJsonObject& plugin);
+
+  bool processPluginMessage(
+    const QString& pluginName, const QJsonObject& message);
+
+  bool processPluginDirty(
+    const QString& pluginName, const QJsonObject& plugin);
+
+  template <class Format, class... Args>
+  void logJsonError(Format&& f, Args&&... args)
+  {
+    MOBase::log::error(
+      std::string("loot output file '{}': ") + f,
+      m_outPath, std::forward<Args>(args)...);
+  };
 };
 
 

@@ -963,7 +963,11 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     QString toolTip;
     if (addInfoIter != m_AdditionalInfo.end()) {
       if (!addInfoIter->second.m_Messages.isEmpty()) {
-        toolTip += addInfoIter->second.m_Messages.join("<br>") + "<br><hr>";
+        toolTip += "<ul style=\"margin-left:15px; -qt-list-indent: 0;\">";
+        for (auto&& message : addInfoIter->second.m_Messages) {
+          toolTip += "<li>" + message + "</li>";
+        }
+        toolTip += "</ul><hr>";
       }
     }
     if (m_ESPs[index].m_ForceEnabled) {
