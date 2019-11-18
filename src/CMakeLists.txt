@@ -569,11 +569,13 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/bsatk/src
                     ${project_path}/esptk/src
                     ${project_path}/archive/src
+					${project_path}/lootcli/include
                     ${dependency_project_path}/usvfs/include
                     ${project_path}/game_gamebryo/src/gamebryo
                     ${project_path}/game_gamebryo/src/creation
                     ${project_path}/game_features/src
                     ${project_path}/githubpp/src
+					${SPDLOG_ROOT}/include
                     ${LZ4_ROOT}/lib)
 
 INCLUDE_DIRECTORIES(shared ${ZLIB_INCLUDE_DIRS})

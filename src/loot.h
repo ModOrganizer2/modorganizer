@@ -3,8 +3,12 @@
 
 #include "envmodule.h"
 #include <log.h>
+#include <lootcli/lootcli.h>
 #include <windows.h>
 #include <QWidget>
+
+Q_DECLARE_METATYPE(lootcli::Progress);
+Q_DECLARE_METATYPE(MOBase::log::Levels);
 
 class OrganizerCore;
 
@@ -22,10 +26,9 @@ public:
 
 signals:
   void output(const QString& s);
-  void progress(const QString& s);
+  void progress(const lootcli::Progress p);
+  void log(MOBase::log::Levels level, const QString& s);
   void information(const QString& mod, const QString& info);
-  void errorMessage(const QString& s);
-  void error(const QString& s);
   void finished();
 
 private:
@@ -35,12 +38,15 @@ private:
   QString m_outPath;
   env::HandlePtr m_lootProcess;
   env::HandlePtr m_stdout;
+  std::string m_outputBuffer;
 
   std::string readFromPipe();
 
   void lootThread();
   bool waitForCompletion();
+
   void processStdout(const std::string &lootOut);
+  void processMessage(const lootcli::Message& m);
 
   void processOutputFile();
   bool processOutputPlugin(const QJsonValue& pluginValue);

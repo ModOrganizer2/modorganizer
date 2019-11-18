@@ -22,19 +22,15 @@ public:
 
     QObject::connect(
       &m_loot, &Loot::progress,
-      this, [&](auto&& s){ setText(s); }, Qt::QueuedConnection);
+      this, [&](auto&& p){ setProgress(p); }, Qt::QueuedConnection);
+
+    QObject::connect(
+      &m_loot, &Loot::log, this,
+      [&](auto&& lv, auto&& s){ log(lv, s); }, Qt::QueuedConnection);
 
     QObject::connect(
       &m_loot, &Loot::information, this,
       [&](auto&& mod, auto&& i){ setInfo(mod, i); }, Qt::QueuedConnection);
-
-    QObject::connect(
-      &m_loot, &Loot::errorMessage, this,
-      [&](auto&& s){ onErrorMessage(s); }, Qt::QueuedConnection);
-
-    QObject::connect(
-      &m_loot, &Loot::error, this,
-      [&](auto&& s){ onError(s); }, Qt::QueuedConnection);
 
     QObject::connect(
       &m_loot, &Loot::finished, this,
@@ -44,6 +40,29 @@ public:
   void setText(const QString& s)
   {
     m_label->setText(s);
+  }
+
+  void setProgress(lootcli::Progress p)
+  {
+    setText(progressToString(p));
+  }
+
+  QString progressToString(lootcli::Progress p)
+  {
+    using P = lootcli::Progress;
+
+    switch (p)
+    {
+      case P::CheckingMasterlistExistence: return tr("Checking masterlist existence");
+      case P::UpdatingMasterlist: return tr("Updating masterlist");
+      case P::LoadingLists: return tr("Loading lists");
+      case P::ReadingPlugins: return tr("Reading plugins");
+      case P::SortingPlugins: return tr("Sorting plugins");
+      case P::WritingLoadorder: return tr("Writing loadorder.txt");
+      case P::ParsingLootMessages: return tr("Parsing loot messages");
+      case P::Done: return tr("Done");
+      default: return QString("unknown progress %1").arg(static_cast<int>(p));
+    }
   }
 
   void setIndeterminate()
@@ -153,10 +172,6 @@ private:
 
   void addLineOutput(const QString& line)
   {
-    if (line == m_lastLine) {
-      return;
-    }
-
     m_output->appendPlainText(line);
     m_lastLine = line;
   }
@@ -164,12 +179,19 @@ private:
   void onFinished()
   {
     m_finished = true;
-    close();
   }
 
-  void onErrorMessage(const QString& s)
+  void log(log::Levels lv, const QString& s)
   {
-    m_errorMessages += s;
+    if (lv == log::Levels::Error) {
+      MOBase::log::error("{}", s);
+      
+      if (!m_errorMessages.isEmpty()) {
+        m_errorMessages += "\n";
+      }
+
+      m_errorMessages += s;
+    }
   }
 };
 
@@ -235,7 +257,7 @@ bool Loot::start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
 
   HANDLE lootHandle = spawn::startBinary(parent, sp);
   if (lootHandle == INVALID_HANDLE_VALUE) {
-    emit error(tr("failed to start loot"));
+    emit log(log::Levels::Error, tr("failed to start loot"));
     return false;
   }
 
@@ -275,7 +297,7 @@ void Loot::lootThread()
     m_result = true;
     processOutputFile();
   } catch (const std::exception &e) {
-    emit error(tr("failed to run loot: %1").arg(e.what()));
+    emit log(log::Levels::Error, tr("failed to run loot: %1").arg(e.what()));
   }
 }
 
@@ -316,7 +338,7 @@ bool Loot::waitForCompletion()
   }
 
   if (exitCode != 0UL) {
-    emit error(tr("Loot failed. Exit code was: %1").arg(exitCode));
+    emit log(log::Levels::Error, tr("Loot failed. Exit code was: %1").arg(exitCode));
     return false;
   }
 
@@ -350,40 +372,69 @@ void Loot::processStdout(const std::string &lootOut)
 {
   emit output(QString::fromStdString(lootOut));
 
-  std::vector<std::string> lines;
-  boost::split(lines, lootOut, boost::is_any_of("\r\n"));
+  m_outputBuffer += lootOut;
+  std::size_t start = 0;
 
-  std::regex exRequires("\"([^\"]*)\" requires \"([^\"]*)\", but it is missing\\.");
-  std::regex exIncompatible("\"([^\"]*)\" is incompatible with \"([^\"]*)\", but both are present\\.");
+  for (;;) {
+    const auto newline = m_outputBuffer.find("\n", start);
+    if (newline == std::string::npos) {
+      break;
+    }
 
-  for (const std::string &line : lines) {
-    if (line.length() > 0) {
-      size_t progidx    = line.find("[progress]");
-      size_t erroridx   = line.find("[error]");
-      if (progidx != std::string::npos) {
-        emit progress(line.substr(progidx + 11).c_str());
-      } else if (erroridx != std::string::npos) {
-        log::warn("{}", line);
-        emit errorMessage(QString::fromStdString(
-          boost::algorithm::trim_copy(line.substr(erroridx + 8)) + "\n"));
-      } else {
+    const std::string_view line(m_outputBuffer.c_str() + start, newline - start);
+    const auto m = lootcli::parseMessage(line);
+
+    if (m.type == lootcli::MessageType::None) {
+      log::error("unrecognised loot output: '{}'", line);
+      continue;
+    }
+
+    processMessage(m);
+
+    start = newline + 1;
+  }
+
+  m_outputBuffer.erase(0, start);
+}
+
+void Loot::processMessage(const lootcli::Message& m)
+{
+  static const std::regex exRequires("\"([^\"]*)\" requires \"([^\"]*)\", but it is missing\\.");
+  static const std::regex exIncompatible("\"([^\"]*)\" is incompatible with \"([^\"]*)\", but both are present\\.");
+
+  switch (m.type)
+  {
+    case lootcli::MessageType::Log:
+    {
+      if (m.logLevel == spdlog::level::err) {
         std::smatch match;
-        if (std::regex_match(line, match, exRequires)) {
+
+        if (std::regex_match(m.log, match, exRequires)) {
           std::string modName(match[1].first, match[1].second);
           std::string dependency(match[2].first, match[2].second);
           emit information(
             QString::fromStdString(modName),
             tr("depends on missing \"%1\"").arg(dependency.c_str()));
-        } else if (std::regex_match(line, match, exIncompatible)) {
+        } else if (std::regex_match(m.log, match, exIncompatible)) {
           std::string modName(match[1].first, match[1].second);
           std::string dependency(match[2].first, match[2].second);
           emit information(
             QString::fromStdString(modName),
             tr("incompatible with \"%1\"").arg(dependency.c_str()));
         } else {
-          log::debug("[loot] {}", line);
+          emit log(log::levelFromSpdlog(m.logLevel), QString::fromStdString(m.log));
         }
+      } else {
+        emit log(log::levelFromSpdlog(m.logLevel), QString::fromStdString(m.log));
       }
+
+      break;
+    }
+
+    case lootcli::MessageType::Progress:
+    {
+      emit progress(m.progress);
+      break;
     }
   }
 }
