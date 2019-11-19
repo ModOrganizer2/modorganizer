@@ -653,6 +653,10 @@ INSTALL(
         ${qt5bin}/windeployqt.exe --verbose 0 uibase.dll ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
     )
+    EXECUTE_PROCESS(COMMAND
+        ${qt5bin}/windeployqt.exe --verbose 0 plugins/bsa_packer.dll ${windeploy_parameters}
+        WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
+    )
     file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/platforms)
     file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/styles)
     file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/dlls/imageformats)
