@@ -2,24 +2,32 @@
 
 # Mod Organizer
 
-Mod Organizer (MO) is a tool for managing mod collections of arbitrary size. It is specifically designed for people who like to experiment with mods and thus need an easy and reliable way to install and uninstall them.
-Mod Organizer 2 is a mod manager created by Tannin to support 64-bit games like Skyrim Special Edition and Fallout 4 in addition to all the 32-bit games MO1 already supported.
+Mod Organizer (MO) is a tool for managing mod collections of arbitrary size. It is specifically designed for people who like to experiment with mods - and need an easy and reliable way to install and uninstall them.
+
+Mod Organizer 2 is a mod manager created by Tannin to support 64-bit games like Skyrim Special Edition and Fallout 4, in addition to all the 32-bit games MO1 already supported.
 
 Tannin discontinued the project when he was hired by the Nexus team to develop their new Vortex mod manager.
+
 MO2 was not completed and was left with many issues. LePresidente managed to fix it to a usable state by himself after SkyrimSE came out, adding support for it, and releasing v2.0.8.
+
 The project took up speed again after a few more coders showed up in late 2017, and a lot of progress has been made.
 
 ## Help Wanted!
+
 Mod Organizer 2 is an open project in the hands of the community, there are problems that need to be solved and things that could be added. MO2 really needs developers and if you have the programming skills and some free time you can really improve the experience of the modding community.
 
 To have more information, please join the open MO2 Development discord server :* [ModOrganizerDevs](https://discord.gg/vD2ZbfX)
+
 If you want to help translate MO2 to your language you should join the discord server too and head to the #translation channel.
+
 To setup a development environment on your machine, there is the [umbrella project](https://github.com/Modorganizer2/modorganizer-umbrella) that handles that.
+
 If you want to submit your code changes, please use a good formating style like the default one in Visual Studio.
 
 Through the work of a few people of the community MO2 has come quite far, now it needs some more of those people to go further.
 
 ## Reporting Issues:
+
 Issues should be reported to the GitHub page or on the open discord server: [ModOrganizerDevs](https://discord.gg/vD2ZbfX). Here is also where dev builds are tested, bugs are reported and investigated, suggestions are discussed and a lot more.
 
 Credits to Tannin, LePresidente, Silarn, erasmux, AL12, LostDragonist, AnyOldName3 and many others for the development.
@@ -40,6 +48,7 @@ Please refer to [Modorganizer2/modorganizer-umbrella](https://github.com/Modorga
 ## Other Repositories
 
 MO2 consists of multiple repositories on github. The Umbrella project will download them automatically as required. They should however also be buildable individually.
+
 Here is a complete list:
 
 * https://github.com/LePresidente/cpython-1
