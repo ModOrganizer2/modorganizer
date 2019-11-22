@@ -36,7 +36,8 @@ class LootDialog : public QDialog
 public:
   LootDialog(QWidget* parent, OrganizerCore& core, Loot& loot) :
     QDialog(parent), m_core(core), m_loot(loot),
-    m_label(nullptr), m_progress(nullptr), m_buttons(nullptr), m_finished(false)
+    m_label(nullptr), m_progress(nullptr), m_buttons(nullptr),
+    m_finished(false), m_cancelling(false)
   {
     createUI();
     m_progress->setMaximum(0);
@@ -124,8 +125,12 @@ public:
 
   void cancel()
   {
-    addOutput(tr("Stopping LOOT..."));
-    m_loot.cancel();
+    if (!m_finished && !m_cancelling) {
+      addLineOutput(tr("Stopping LOOT..."));
+      m_loot.cancel();
+      m_buttons->setEnabled(false);
+      m_cancelling = true;
+    }
   }
 
   int exec() override
@@ -146,6 +151,7 @@ private:
   QDialogButtonBox* m_buttons;
   QPlainTextEdit* m_output;
   bool m_finished;
+  bool m_cancelling;
 
   void createUI()
   {
@@ -186,7 +192,11 @@ private:
   void onButton(QAbstractButton* b)
   {
     if (m_buttons->buttonRole(b) == QDialogButtonBox::RejectRole) {
-      cancel();
+      if (m_finished) {
+        close();
+      } else {
+        cancel();
+      }
     }
   }
 
@@ -198,6 +208,12 @@ private:
   void onFinished()
   {
     m_finished = true;
+
+    if (m_cancelling) {
+      close();
+    } else {
+      m_buttons->setStandardButtons(QDialogButtonBox::Close);
+    }
   }
 
   void log(log::Levels lv, const QString& s)
