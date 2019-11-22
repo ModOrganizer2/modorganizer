@@ -50,16 +50,12 @@ private:
   void processMessage(const lootcli::Message& m);
 
   void processOutputFile();
-  bool processOutputPlugin(const QJsonValue& pluginValue);
+  bool processMessages(const QJsonArray& messages);
+  bool processMessage(const QJsonObject& message);
+  bool processPlugins(const QJsonArray& plugins);
+  bool processPlugin(const QJsonObject& plugin);
 
-  bool processPluginMessages(
-    const QString& pluginName, const QJsonObject& plugin);
-
-  bool processPluginMessage(
-    const QString& pluginName, const QJsonObject& message);
-
-  bool processPluginDirty(
-    const QString& pluginName, const QJsonObject& plugin);
+  bool processPluginDirty(const QString& name, const QJsonObject& plugin);
 
   template <class Format, class... Args>
   void logJsonError(Format&& f, Args&&... args)
