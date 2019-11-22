@@ -9,7 +9,8 @@ using namespace MOBase;
 DiagnosticsSettingsTab::DiagnosticsSettingsTab(Settings& s, SettingsDialog& d)
   : SettingsTab(s, d)
 {
-  setLevelsBox();
+  setLogLevel();
+  setLootLogLevel();
   setCrashDumpTypesBox();
 
   ui->dumpsMaxEdit->setValue(settings().diagnostics().crashDumpsMax());
@@ -26,7 +27,7 @@ DiagnosticsSettingsTab::DiagnosticsSettingsTab(Settings& s, SettingsDialog& d)
   );
 }
 
-void DiagnosticsSettingsTab::setLevelsBox()
+void DiagnosticsSettingsTab::setLogLevel()
 {
   ui->logLevelBox->clear();
 
@@ -35,9 +36,35 @@ void DiagnosticsSettingsTab::setLevelsBox()
   ui->logLevelBox->addItem(QObject::tr("Warning"), log::Warning);
   ui->logLevelBox->addItem(QObject::tr("Error"), log::Error);
 
+  const auto sel = settings().diagnostics().logLevel();
+
   for (int i=0; i<ui->logLevelBox->count(); ++i) {
-    if (ui->logLevelBox->itemData(i) == settings().diagnostics().logLevel()) {
+    if (ui->logLevelBox->itemData(i) == sel) {
       ui->logLevelBox->setCurrentIndex(i);
+      break;
+    }
+  }
+}
+
+void DiagnosticsSettingsTab::setLootLogLevel()
+{
+  using L = lootcli::LogLevels;
+
+  auto v = [](L level) { return QVariant(static_cast<int>(level)); };
+
+  ui->lootLogLevel->clear();
+
+  ui->lootLogLevel->addItem(QObject::tr("Trace"), v(L::Trace));
+  ui->lootLogLevel->addItem(QObject::tr("Debug"), v(L::Debug));
+  ui->lootLogLevel->addItem(QObject::tr("Info (recommended)"), v(L::Info));
+  ui->lootLogLevel->addItem(QObject::tr("Warning"), v(L::Warning));
+  ui->lootLogLevel->addItem(QObject::tr("Error"), v(L::Error));
+
+  const auto sel = settings().diagnostics().lootLogLevel();
+
+  for (int i=0; i<ui->lootLogLevel->count(); ++i) {
+    if (ui->lootLogLevel->itemData(i) == v(sel)) {
+      ui->lootLogLevel->setCurrentIndex(i);
       break;
     }
   }
@@ -76,4 +103,7 @@ void DiagnosticsSettingsTab::update()
     static_cast<CrashDumpsType>(ui->dumpsTypeBox->currentData().toInt()));
 
   settings().diagnostics().setCrashDumpsMax(ui->dumpsMaxEdit->value());
+
+  settings().diagnostics().setLootLogLevel(
+    static_cast<lootcli::LogLevels>(ui->lootLogLevel->currentData().toInt()));
 }

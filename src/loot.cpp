@@ -6,6 +6,30 @@
 
 using namespace MOBase;
 
+log::Levels levelFromLoot(lootcli::LogLevels level)
+{
+  using LC = lootcli::LogLevels;
+
+  switch (level)
+  {
+    case LC::Trace:  // fall-through
+    case LC::Debug:
+      return log::Debug;
+
+    case LC::Info:
+      return log::Info;
+
+    case LC::Warning:
+      return log::Warning;
+
+    case LC::Error:
+      return log::Error;
+
+    default:
+      return log::Info;
+  }
+}
+
 
 class LootDialog : public QDialog
 {
@@ -15,6 +39,7 @@ public:
     m_label(nullptr), m_progress(nullptr), m_buttons(nullptr), m_finished(false)
   {
     createUI();
+    m_progress->setMaximum(0);
 
     QObject::connect(
       &m_loot, &Loot::output, this,
@@ -45,6 +70,11 @@ public:
   void setProgress(lootcli::Progress p)
   {
     setText(progressToString(p));
+
+    if (p == lootcli::Progress::Done) {
+      m_progress->setRange(0, 1);
+      m_progress->setValue(1);
+    }
   }
 
   QString progressToString(lootcli::Progress p)
@@ -65,13 +95,12 @@ public:
     }
   }
 
-  void setIndeterminate()
-  {
-    m_progress->setMaximum(0);
-  }
-
   void addOutput(const QString& s)
   {
+    if (m_core.settings().diagnostics().lootLogLevel() > lootcli::LogLevels::Debug) {
+      return;
+    }
+
     const auto lines = s.split(QRegExp("[\\r\\n]"), QString::SkipEmptyParts);
 
     for (auto&& line : lines) {
@@ -101,17 +130,7 @@ public:
 
   int exec() override
   {
-    QDialog::exec();
-
-    if (m_errorMessages.length() > 0) {
-      QMessageBox *warn = new QMessageBox(
-        QMessageBox::Warning, tr("Errors occurred"),
-        m_errorMessages, QMessageBox::Ok, parentWidget());
-
-      warn->exec();
-    }
-
-    return 0;
+    return QDialog::exec();
   }
 
   void onError(const QString& s)
@@ -126,8 +145,6 @@ private:
   QProgressBar* m_progress;
   QDialogButtonBox* m_buttons;
   QPlainTextEdit* m_output;
-  QString m_lastLine;
-  QString m_errorMessages;
   bool m_finished;
 
   void createUI()
@@ -146,11 +163,14 @@ private:
     ly->addWidget(m_progress);
 
     m_output = new QPlainTextEdit;
+    m_output->setWordWrapMode(QTextOption::NoWrap);
     ly->addWidget(m_output);
 
     m_buttons = new QDialogButtonBox(QDialogButtonBox::Cancel);
     connect(m_buttons, &QDialogButtonBox::clicked, [&](auto* b){ onButton(b); });
     ly->addWidget(m_buttons);
+
+    resize(700, 400);
   }
 
   void closeEvent(QCloseEvent* e) override
@@ -173,7 +193,6 @@ private:
   void addLineOutput(const QString& line)
   {
     m_output->appendPlainText(line);
-    m_lastLine = line;
   }
 
   void onFinished()
@@ -183,14 +202,12 @@ private:
 
   void log(log::Levels lv, const QString& s)
   {
-    if (lv == log::Levels::Error) {
-      MOBase::log::error("{}", s);
-      
-      if (!m_errorMessages.isEmpty()) {
-        m_errorMessages += "\n";
-      }
+    if (lv >= log::Levels::Warning) {
+      log::log(lv, "{}", s);
+    }
 
-      m_errorMessages += s;
+    if (m_core.settings().diagnostics().lootLogLevel() > lootcli::LogLevels::Debug) {
+      addLineOutput(QString("[%1] %2").arg(log::levelToString(lv)).arg(s));
     }
   }
 };
@@ -210,11 +227,14 @@ bool Loot::start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
 {
   m_outPath = QDir::temp().absoluteFilePath("lootreport.json");
 
+  const auto logLevel = core.settings().diagnostics().lootLogLevel();
+
   QStringList parameters;
   parameters
     << "--game" << core.managedGame()->gameShortName()
     << "--gamePath" << QString("\"%1\"").arg(core.managedGame()->gameDirectory().absolutePath())
     << "--pluginListPath" << QString("\"%1/loadorder.txt\"").arg(core.profilePath())
+    << "--logLevel" << QString::fromStdString(lootcli::logLevelToString(logLevel))
     << "--out" << QString("\"%1\"").arg(m_outPath);
 
   if (didUpdateMasterList) {
@@ -406,7 +426,7 @@ void Loot::processMessage(const lootcli::Message& m)
   {
     case lootcli::MessageType::Log:
     {
-      if (m.logLevel == spdlog::level::err) {
+      if (m.logLevel == lootcli::LogLevels::Error) {
         std::smatch match;
 
         if (std::regex_match(m.log, match, exRequires)) {
@@ -422,10 +442,10 @@ void Loot::processMessage(const lootcli::Message& m)
             QString::fromStdString(modName),
             tr("incompatible with \"%1\"").arg(dependency.c_str()));
         } else {
-          emit log(log::levelFromSpdlog(m.logLevel), QString::fromStdString(m.log));
+          emit log(levelFromLoot(m.logLevel), QString::fromStdString(m.log));
         }
       } else {
-        emit log(log::levelFromSpdlog(m.logLevel), QString::fromStdString(m.log));
+        emit log(levelFromLoot(m.logLevel), QString::fromStdString(m.log));
       }
 
       break;
@@ -657,7 +677,6 @@ bool runLoot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
     loot.start(parent, core, didUpdateMasterList);
 
     dialog.setText(QObject::tr("Please wait while LOOT is running"));
-    dialog.setIndeterminate();
     dialog.exec();
 
     return dialog.result();

@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SETTINGS_H
 
 #include "loadmechanism.h"
+#include <lootcli/lootcli.h>
 #include <questionboxmemory.h>
 #include <log.h>
 #include <usvfsparameters.h>
@@ -618,6 +619,10 @@ public:
   //
   MOBase::log::Levels logLevel() const;
   void setLogLevel(MOBase::log::Levels level);
+
+  // log level for loot
+  lootcli::LogLevels lootLogLevel() const;
+  void setLootLogLevel(lootcli::LogLevels level);
 
   // crash dump type for both MO and usvfs
   //
