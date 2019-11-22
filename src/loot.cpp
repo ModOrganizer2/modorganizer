@@ -37,6 +37,7 @@ public:
   LootDialog(QWidget* parent, OrganizerCore& core, Loot& loot) :
     QDialog(parent), m_core(core), m_loot(loot),
     m_label(nullptr), m_progress(nullptr), m_buttons(nullptr),
+    m_report(nullptr), m_output(nullptr),
     m_finished(false), m_cancelling(false)
   {
     createUI();
@@ -138,9 +139,10 @@ public:
     return QDialog::exec();
   }
 
-  void onError(const QString& s)
+  void openReport()
   {
-    reportError(s);
+    const auto path = m_loot.outPath();
+    shell::Open(path);
   }
 
 private:
@@ -149,6 +151,7 @@ private:
   QLabel* m_label;
   QProgressBar* m_progress;
   QDialogButtonBox* m_buttons;
+  QPushButton* m_report;
   QPlainTextEdit* m_output;
   bool m_finished;
   bool m_cancelling;
@@ -168,6 +171,27 @@ private:
     m_progress = new QProgressBar;
     ly->addWidget(m_progress);
 
+    auto* more = createMoreUI();
+    ly->addWidget(more);
+
+    resize(700, 400);
+  }
+
+  QWidget* createMoreUI()
+  {
+    auto* more = new QWidget;
+    auto* ly = new QVBoxLayout(more);
+    ly->setContentsMargins(0, 0, 0, 0);
+
+    auto* buttons = new QHBoxLayout;
+    buttons->setContentsMargins(0, 0, 0, 0);
+    m_report = new QPushButton(tr("Open JSON report"));
+    m_report->setEnabled(false);
+    connect(m_report, &QPushButton::clicked, [&]{ openReport(); });
+    buttons->addWidget(m_report);
+    buttons->addStretch(1);
+    ly->addLayout(buttons);
+
     m_output = new QPlainTextEdit;
     m_output->setWordWrapMode(QTextOption::NoWrap);
     ly->addWidget(m_output);
@@ -176,7 +200,7 @@ private:
     connect(m_buttons, &QDialogButtonBox::clicked, [&](auto* b){ onButton(b); });
     ly->addWidget(m_buttons);
 
-    resize(700, 400);
+    return more;
   }
 
   void closeEvent(QCloseEvent* e) override
@@ -212,6 +236,7 @@ private:
     if (m_cancelling) {
       close();
     } else {
+      m_report->setEnabled(true);
       m_buttons->setStandardButtons(QDialogButtonBox::Close);
     }
   }
@@ -319,6 +344,11 @@ void Loot::cancel()
 bool Loot::result() const
 {
   return m_result;
+}
+
+const QString& Loot::outPath() const
+{
+  return m_outPath;
 }
 
 void Loot::lootThread()

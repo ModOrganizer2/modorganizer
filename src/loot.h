@@ -23,6 +23,7 @@ public:
   bool start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList);
   void cancel();
   bool result() const;
+  const QString& outPath() const;
 
 signals:
   void output(const QString& s);
