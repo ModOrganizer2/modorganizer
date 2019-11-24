@@ -58,10 +58,6 @@ public:
       [&](auto&& lv, auto&& s){ log(lv, s); }, Qt::QueuedConnection);
 
     QObject::connect(
-      &m_loot, &Loot::information, this,
-      [&](auto&& mod, auto&& i){ setInfo(mod, i); }, Qt::QueuedConnection);
-
-    QObject::connect(
       &m_loot, &Loot::finished, this,
       [&]{ onFinished(); }, Qt::QueuedConnection);
   }
@@ -114,11 +110,6 @@ public:
 
       addLineOutput(line);
     }
-  }
-
-  void setInfo(const QString& mod, const QString& info)
-  {
-    m_core.pluginList()->addInformation(mod.toStdString().c_str(), info);
   }
 
   bool result() const
@@ -237,6 +228,7 @@ private:
     if (m_cancelling) {
       close();
     } else {
+      handleReport();
       m_report->setEnabled(true);
       m_buttons->setStandardButtons(QDialogButtonBox::Close);
     }
@@ -252,83 +244,55 @@ private:
       addLineOutput(QString("[%1] %2").arg(log::levelToString(lv)).arg(s));
     }
   }
-};
 
-
-struct Loot::Message
-{
-  QString type;
-  QString text;
-};
-
-struct Loot::File
-{
-  QString name;
-  QString displayName;
-};
-
-struct Loot::Dirty
-{
-  qint64 crc=0;
-  qint64 itm=0;
-  qint64 deletedReferences=0;
-  qint64 deletedNavmesh=0;
-  QString cleaningUtility;
-  QString info;
-
-  QString toString(bool isClean) const
+  void handleReport()
   {
-    if (isClean) {
-      return QObject::tr("Verified clean by %1")
-        .arg(cleaningUtility.isEmpty() ? "?" : cleaningUtility);
+    const auto& report = m_loot.report();
+
+    if (!report.messages.empty()) {
+      addLineOutput("");
     }
 
-    QString s = cleaningString();
-
-    if (!info.isEmpty()) {
-      s += " " + info;
+    for (auto&& m : report.messages) {
+      log(levelFromLoot(
+        lootcli::logLevelFromString(m.type.toStdString())),
+        m.text);
     }
 
-    return s;
-  }
-
-  QString cleaningString() const
-  {
-    return QObject::tr("%1 found %2 ITM record(s), %3 deleted reference(s) and %4 deleted navmesh(es).")
-      .arg(cleaningUtility.isEmpty() ? "?" : cleaningUtility)
-      .arg(itm)
-      .arg(deletedReferences)
-      .arg(deletedNavmesh);
+    for (auto&& p : report.plugins) {
+      for (auto&& d : p.dirty) {
+        m_core.pluginList()->addInformation(p.name, d.toString(false));
+      }
+    }
   }
 };
 
-struct Loot::Plugin
+
+QString Loot::Dirty::toString(bool isClean) const
 {
-  QString name;
-  std::vector<File> incompatibilities;
-  std::vector<Message> messages;
-  std::vector<Dirty> dirty, clean;
-  std::vector<QString> missingMasters;
-  bool loadsArchive = false;
-  bool isMaster = false;
-  bool isLightMaster = false;
-};
+  if (isClean) {
+    return QObject::tr("Verified clean by %1")
+      .arg(cleaningUtility.isEmpty() ? "?" : cleaningUtility);
+  }
 
-struct Loot::Stats
+  QString s = cleaningString();
+
+  if (!info.isEmpty()) {
+    s += " " + info;
+  }
+
+  return s;
+}
+
+QString Loot::Dirty::cleaningString() const
 {
-  qint64 time = 0;
-  QString version;
-};
+  return QObject::tr("%1 found %2 ITM record(s), %3 deleted reference(s) and %4 deleted navmesh(es).")
+    .arg(cleaningUtility.isEmpty() ? "?" : cleaningUtility)
+    .arg(itm)
+    .arg(deletedReferences)
+    .arg(deletedNavmesh);
+}
 
-struct Loot::Report
-{
-  std::vector<Message> messages;
-  std::vector<Plugin> plugins;
-  Stats stats;
-};
-
-
-class ReportFailed {};
 
 Loot::Loot()
   : m_thread(nullptr), m_cancel(false), m_result(false)
@@ -435,6 +399,11 @@ bool Loot::result() const
 const QString& Loot::outPath() const
 {
   return m_outPath;
+}
+
+const Loot::Report& Loot::report() const
+{
+  return m_report;
 }
 
 void Loot::lootThread()
@@ -558,7 +527,7 @@ void Loot::processStdout(const std::string &lootOut)
 
 void Loot::processMessage(const lootcli::Message& m)
 {
-  static const std::regex exRequires("\"([^\"]*)\" requires \"([^\"]*)\", but it is missing\\.");
+  /*static const std::regex exRequires("\"([^\"]*)\" requires \"([^\"]*)\", but it is missing\\.");
   static const std::regex exIncompatible("\"([^\"]*)\" is incompatible with \"([^\"]*)\", but both are present\\.");
 
   switch (m.type)
@@ -595,7 +564,7 @@ void Loot::processMessage(const lootcli::Message& m)
       emit progress(m.progress);
       break;
     }
-  }
+  }*/
 }
 
 void Loot::processOutputFile()
@@ -623,19 +592,7 @@ void Loot::processOutputFile()
     return;
   }
 
-  const auto report = createReport(doc);
-
-  for (auto&& m : report.messages) {
-    emit log(levelFromLoot(
-      lootcli::logLevelFromString(m.type.toStdString())),
-      m.text);
-  }
-
-  for (auto&& p : report.plugins) {
-    for (auto&& d : p.dirty) {
-      emit information(p.name, d.toString(false));
-    }
-  }
+  m_report = createReport(doc);
 }
 
 Loot::Report Loot::createReport(const QJsonDocument& doc) const

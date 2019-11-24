@@ -423,6 +423,17 @@ void PluginList::addInformation(const QString &name, const QString &message)
   }
 }
 
+void PluginList::addLootReport(const QString& name, Loot::Plugin plugin)
+{
+  auto iter = m_ESPsByName.find(name.toLower());
+
+  if (iter != m_ESPsByName.end()) {
+    m_AdditionalInfo[name.toLower()].m_Loot = std::move(plugin);
+  } else {
+    log::warn("failed to associate loot report for \"{}\"", name);
+  }
+}
+
 bool PluginList::isEnabled(int index)
 {
   return m_ESPs.at(index).m_Enabled;
@@ -908,137 +919,195 @@ void PluginList::testMasters()
 QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
 {
   int index = modelIndex.row();
-  if ((role == Qt::DisplayRole)
-      || (role == Qt::EditRole)) {
-    switch (modelIndex.column()) {
-      case COL_NAME: {
-        return m_ESPs[index].m_Name;
-      } break;
-      case COL_PRIORITY: {
-        return m_ESPs[index].m_Priority;
-      } break;
-      case COL_MODINDEX: {
-        return m_ESPs[index].m_Index;
-      } break;
-      default: {
-          return QVariant();
-      } break;
-    }
+
+  if ((role == Qt::DisplayRole) || (role == Qt::EditRole)) {
+    return displayData(modelIndex);
   } else if ((role == Qt::CheckStateRole) && (modelIndex.column() == 0)) {
-    if (m_ESPs[index].m_ForceEnabled) {
-      return QVariant();
-    } else {
-      return m_ESPs[index].m_Enabled ? Qt::Checked : Qt::Unchecked;
-    }
+    return checkstateData(modelIndex);
   } else if (role == Qt::ForegroundRole) {
-    if ((modelIndex.column() == COL_NAME) &&
-      m_ESPs[index].m_ForceEnabled) {
-      return QBrush(Qt::gray);
-    }
-  } else if (role == Qt::BackgroundRole
-    || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
-    if (m_ESPs[index].m_ModSelected) {
-      return Settings::instance().colors().pluginListContained();
-    } else {
-      return QVariant();
-    }
+    return foregroundData(modelIndex);
+  } else if (role == Qt::BackgroundRole || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
+    return backgroundData(modelIndex);
   } else if (role == Qt::FontRole) {
-    QFont result;
-    if (m_ESPs[index].m_IsMaster) {
-      result.setItalic(true);
-      result.setWeight(QFont::Bold);
-    } else if (m_ESPs[index].m_IsLight || m_ESPs[index].m_IsLightFlagged) {
-      result.setItalic(true);
-    }
-    return result;
+    return fontData(modelIndex);
   } else if (role == Qt::TextAlignmentRole) {
-    if (modelIndex.column() == 0) {
-      return QVariant(Qt::AlignLeft | Qt::AlignVCenter);
-    } else {
-      return QVariant(Qt::AlignHCenter | Qt::AlignVCenter);
-    }
+    return alignmentData(modelIndex);
   } else if (role == Qt::ToolTipRole) {
-    QString name = m_ESPs[index].m_Name.toLower();
-    auto addInfoIter = m_AdditionalInfo.find(name);
-    QString toolTip;
-    if (addInfoIter != m_AdditionalInfo.end()) {
-      if (!addInfoIter->second.m_Messages.isEmpty()) {
-        toolTip += "<ul style=\"margin-left:15px; -qt-list-indent: 0;\">";
-        for (auto&& message : addInfoIter->second.m_Messages) {
-          toolTip += "<li>" + message + "</li>";
-        }
-        toolTip += "</ul><hr>";
-      }
-    }
-    if (m_ESPs[index].m_ForceEnabled) {
-      QString text = tr("<b>Origin</b>: %1").arg(m_ESPs[index].m_OriginName);
-      text += tr("<br><b><i>This plugin can't be disabled (enforced by the game).</i></b>");
-      toolTip += text;
-    } else {
-      QString text = tr("<b>Origin</b>: %1").arg(m_ESPs[index].m_OriginName);
-      if (m_ESPs[index].m_Author.size() > 0) {
-        text += "<br><b>" + tr("Author") + "</b>: " + TruncateString(m_ESPs[index].m_Author);
-      }
-      if (m_ESPs[index].m_Description.size() > 0) {
-        text += "<br><b>" + tr("Description") + "</b>: " + TruncateString(m_ESPs[index].m_Description);
-      }
-      if (m_ESPs[index].m_MasterUnset.size() > 0) {
-        text += "<br><b>" + tr("Missing Masters") + "</b>: <b>" + TruncateString(SetJoin(m_ESPs[index].m_MasterUnset, ", ")) + "</b>";
-      }
-      std::set<QString> enabledMasters;
-      std::set_difference(m_ESPs[index].m_Masters.begin(), m_ESPs[index].m_Masters.end(),
-                          m_ESPs[index].m_MasterUnset.begin(), m_ESPs[index].m_MasterUnset.end(),
-                          std::inserter(enabledMasters, enabledMasters.end()));
-      if (!enabledMasters.empty()) {
-        text += "<br><b>" + tr("Enabled Masters") + "</b>: " + TruncateString(SetJoin(enabledMasters, ", "));
-      }
-      if (!m_ESPs[index].m_Archives.empty()) {
-        text += "<br><b>" + tr("Loads Archives") + "</b>: " + TruncateString(SetJoin(m_ESPs[index].m_Archives, ", "));
-        text += "<br>" + tr("There are Archives connected to this plugin. "
-          "Their assets will be added to your game, overwriting in case of conflicts following the plugin order. "
-          "Loose files will always overwrite assets from Archives. (This flag only checks for Archives from the same mod as the plugin)");
-      }
-      if (m_ESPs[index].m_HasIni) {
-        text += "<br><b>" + tr("Loads INI settings") + "</b>: ";
-        text += "<br>" + tr("There is an ini file connected to this plugin. "
-                            "Its settings will be added to your game settings, overwriting in case of conflicts.");
-      }
-      if (m_ESPs[index].m_IsLightFlagged && !m_ESPs[index].m_IsLight) {
-          text += "<br><br>" + tr("This ESP is flagged as an ESL. "
-                                  "It will adhere to the ESP load order but the records will be loaded in ESL space.");
-      }
-      toolTip += text;
-    }
-    return toolTip;
+    return tooltipData(modelIndex);
   } else if (role == Qt::UserRole + 1) {
-    QVariantList result;
-    QString nameLower = m_ESPs[index].m_Name.toLower();
-    if (m_ESPs[index].m_MasterUnset.size() > 0) {
-      result.append(":/MO/gui/warning");
-    }
-    if (m_LockedOrder.find(nameLower) != m_LockedOrder.end()) {
-      result.append(":/MO/gui/locked");
-    }
-    auto bossInfoIter = m_AdditionalInfo.find(nameLower);
-    if (bossInfoIter != m_AdditionalInfo.end()) {
-      if (!bossInfoIter->second.m_Messages.isEmpty()) {
-        result.append(":/MO/gui/information");
-      }
-    }
-    if (m_ESPs[index].m_HasIni) {
-      result.append(":/MO/gui/attachment");
-    }
-    if (!m_ESPs[index].m_Archives.empty()) {
-      result.append(":/MO/gui/archive_conflict_neutral");
-    }
-    if (m_ESPs[index].m_IsLightFlagged && !m_ESPs[index].m_IsLight) {
-        result.append(":/MO/gui/awaiting");
-    }
-    return result;
+    return iconData(modelIndex);
   }
   return QVariant();
 }
 
+QVariant PluginList::displayData(const QModelIndex &modelIndex) const
+{
+  int index = modelIndex.row();
+
+  switch (modelIndex.column()) {
+    case COL_NAME: {
+      return m_ESPs[index].m_Name;
+    } break;
+    case COL_PRIORITY: {
+      return m_ESPs[index].m_Priority;
+    } break;
+    case COL_MODINDEX: {
+      return m_ESPs[index].m_Index;
+    } break;
+    default: {
+        return QVariant();
+    } break;
+  }
+}
+
+QVariant PluginList::checkstateData(const QModelIndex &modelIndex) const
+{
+  int index = modelIndex.row();
+
+  if (m_ESPs[index].m_ForceEnabled) {
+    return QVariant();
+  } else {
+    return m_ESPs[index].m_Enabled ? Qt::Checked : Qt::Unchecked;
+  }
+}
+
+QVariant PluginList::foregroundData(const QModelIndex &modelIndex) const
+{
+  int index = modelIndex.row();
+
+  if ((modelIndex.column() == COL_NAME) &&
+    m_ESPs[index].m_ForceEnabled) {
+    return QBrush(Qt::gray);
+  }
+
+  return {};
+}
+
+QVariant PluginList::backgroundData(const QModelIndex &modelIndex) const
+{
+  int index = modelIndex.row();
+
+  if (m_ESPs[index].m_ModSelected) {
+    return Settings::instance().colors().pluginListContained();
+  } else {
+    return QVariant();
+  }
+}
+
+QVariant PluginList::fontData(const QModelIndex &modelIndex) const
+{
+  int index = modelIndex.row();
+
+  QFont result;
+
+  if (m_ESPs[index].m_IsMaster) {
+    result.setItalic(true);
+    result.setWeight(QFont::Bold);
+  } else if (m_ESPs[index].m_IsLight || m_ESPs[index].m_IsLightFlagged) {
+    result.setItalic(true);
+  }
+
+  return result;
+}
+
+QVariant PluginList::alignmentData(const QModelIndex &modelIndex) const
+{
+  int index = modelIndex.row();
+
+  if (modelIndex.column() == 0) {
+    return QVariant(Qt::AlignLeft | Qt::AlignVCenter);
+  } else {
+    return QVariant(Qt::AlignHCenter | Qt::AlignVCenter);
+  }
+}
+
+QVariant PluginList::tooltipData(const QModelIndex &modelIndex) const
+{
+  int index = modelIndex.row();
+
+  QString name = m_ESPs[index].m_Name.toLower();
+  auto addInfoIter = m_AdditionalInfo.find(name);
+  QString toolTip;
+  if (addInfoIter != m_AdditionalInfo.end()) {
+    if (!addInfoIter->second.m_Messages.isEmpty()) {
+      toolTip += "<ul style=\"margin-left:15px; -qt-list-indent: 0;\">";
+      for (auto&& message : addInfoIter->second.m_Messages) {
+        toolTip += "<li>" + message + "</li>";
+      }
+      toolTip += "</ul><hr>";
+    }
+  }
+  if (m_ESPs[index].m_ForceEnabled) {
+    QString text = tr("<b>Origin</b>: %1").arg(m_ESPs[index].m_OriginName);
+    text += tr("<br><b><i>This plugin can't be disabled (enforced by the game).</i></b>");
+    toolTip += text;
+  } else {
+    QString text = tr("<b>Origin</b>: %1").arg(m_ESPs[index].m_OriginName);
+    if (m_ESPs[index].m_Author.size() > 0) {
+      text += "<br><b>" + tr("Author") + "</b>: " + TruncateString(m_ESPs[index].m_Author);
+    }
+    if (m_ESPs[index].m_Description.size() > 0) {
+      text += "<br><b>" + tr("Description") + "</b>: " + TruncateString(m_ESPs[index].m_Description);
+    }
+    if (m_ESPs[index].m_MasterUnset.size() > 0) {
+      text += "<br><b>" + tr("Missing Masters") + "</b>: <b>" + TruncateString(SetJoin(m_ESPs[index].m_MasterUnset, ", ")) + "</b>";
+    }
+    std::set<QString> enabledMasters;
+    std::set_difference(m_ESPs[index].m_Masters.begin(), m_ESPs[index].m_Masters.end(),
+      m_ESPs[index].m_MasterUnset.begin(), m_ESPs[index].m_MasterUnset.end(),
+      std::inserter(enabledMasters, enabledMasters.end()));
+    if (!enabledMasters.empty()) {
+      text += "<br><b>" + tr("Enabled Masters") + "</b>: " + TruncateString(SetJoin(enabledMasters, ", "));
+    }
+    if (!m_ESPs[index].m_Archives.empty()) {
+      text += "<br><b>" + tr("Loads Archives") + "</b>: " + TruncateString(SetJoin(m_ESPs[index].m_Archives, ", "));
+      text += "<br>" + tr("There are Archives connected to this plugin. "
+        "Their assets will be added to your game, overwriting in case of conflicts following the plugin order. "
+        "Loose files will always overwrite assets from Archives. (This flag only checks for Archives from the same mod as the plugin)");
+    }
+    if (m_ESPs[index].m_HasIni) {
+      text += "<br><b>" + tr("Loads INI settings") + "</b>: ";
+      text += "<br>" + tr("There is an ini file connected to this plugin. "
+        "Its settings will be added to your game settings, overwriting in case of conflicts.");
+    }
+    if (m_ESPs[index].m_IsLightFlagged && !m_ESPs[index].m_IsLight) {
+      text += "<br><br>" + tr("This ESP is flagged as an ESL. "
+        "It will adhere to the ESP load order but the records will be loaded in ESL space.");
+    }
+    toolTip += text;
+  }
+  return toolTip;
+}
+
+QVariant PluginList::iconData(const QModelIndex &modelIndex) const
+{
+  int index = modelIndex.row();
+
+  QVariantList result;
+  QString nameLower = m_ESPs[index].m_Name.toLower();
+  if (m_ESPs[index].m_MasterUnset.size() > 0) {
+    result.append(":/MO/gui/warning");
+  }
+  if (m_LockedOrder.find(nameLower) != m_LockedOrder.end()) {
+    result.append(":/MO/gui/locked");
+  }
+  auto bossInfoIter = m_AdditionalInfo.find(nameLower);
+  if (bossInfoIter != m_AdditionalInfo.end()) {
+    if (!bossInfoIter->second.m_Messages.isEmpty()) {
+      result.append(":/MO/gui/information");
+    }
+  }
+  if (m_ESPs[index].m_HasIni) {
+    result.append(":/MO/gui/attachment");
+  }
+  if (!m_ESPs[index].m_Archives.empty()) {
+    result.append(":/MO/gui/archive_conflict_neutral");
+  }
+  if (m_ESPs[index].m_IsLightFlagged && !m_ESPs[index].m_IsLight) {
+    result.append(":/MO/gui/awaiting");
+  }
+  return result;
+}
 
 bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int role)
 {

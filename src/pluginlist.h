@@ -23,6 +23,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <directoryentry.h>
 #include <ipluginlist.h>
 #include "profile.h"
+#include "loot.h"
+
 namespace MOBase { class IPluginGame; }
 
 #include <QString>
@@ -153,6 +155,11 @@ public:
    * @param message the message to add to the plugin
    */
   void addInformation(const QString &name, const QString &message);
+
+  /**
+   * adds information from a loot report
+   */
+  void addLootReport(const QString& name, Loot::Plugin plugin);
 
   /**
    * @brief test if a plugin is enabled
@@ -324,6 +331,7 @@ private:
 
   struct AdditionalInfo {
     QStringList m_Messages;
+    Loot::Plugin m_Loot;
   };
 
   friend bool ByName(const ESPInfo& LHS, const ESPInfo& RHS);
@@ -372,6 +380,15 @@ private:
 
   const MOBase::IPluginGame *m_GamePlugin;
 
+
+  QVariant displayData(const QModelIndex &modelIndex) const;
+  QVariant checkstateData(const QModelIndex &modelIndex) const;
+  QVariant foregroundData(const QModelIndex &modelIndex) const;
+  QVariant backgroundData(const QModelIndex &modelIndex) const;
+  QVariant fontData(const QModelIndex &modelIndex) const;
+  QVariant alignmentData(const QModelIndex &modelIndex) const;
+  QVariant tooltipData(const QModelIndex &modelIndex) const;
+  QVariant iconData(const QModelIndex &modelIndex) const;
 };
 
 #pragma warning(pop)

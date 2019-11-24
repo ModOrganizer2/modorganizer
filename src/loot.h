@@ -17,6 +17,57 @@ class Loot : public QObject
   Q_OBJECT;
 
 public:
+  struct Message
+  {
+    QString type;
+    QString text;
+  };
+
+  struct File
+  {
+    QString name;
+    QString displayName;
+  };
+
+  struct Dirty
+  {
+    qint64 crc=0;
+    qint64 itm=0;
+    qint64 deletedReferences=0;
+    qint64 deletedNavmesh=0;
+    QString cleaningUtility;
+    QString info;
+
+    QString toString(bool isClean) const;
+    QString cleaningString() const;
+  };
+
+  struct Plugin
+  {
+    QString name;
+    std::vector<File> incompatibilities;
+    std::vector<Message> messages;
+    std::vector<Dirty> dirty, clean;
+    std::vector<QString> missingMasters;
+    bool loadsArchive = false;
+    bool isMaster = false;
+    bool isLightMaster = false;
+  };
+
+  struct Stats
+  {
+    qint64 time = 0;
+    QString version;
+  };
+
+  struct Report
+  {
+    std::vector<Message> messages;
+    std::vector<Plugin> plugins;
+    Stats stats;
+  };
+
+
   Loot();
   ~Loot();
 
@@ -24,23 +75,15 @@ public:
   void cancel();
   bool result() const;
   const QString& outPath() const;
+  const Report& report() const;
 
 signals:
   void output(const QString& s);
   void progress(const lootcli::Progress p);
   void log(MOBase::log::Levels level, const QString& s);
-  void information(const QString& mod, const QString& info);
   void finished();
 
 private:
-  struct Report;
-  struct Stats;
-  struct Message;
-  struct Plugin;
-  struct Dirty;
-  struct File;
-  class BadReport {};
-
   std::unique_ptr<QThread> m_thread;
   std::atomic<bool> m_cancel;
   std::atomic<bool> m_result;
@@ -48,6 +91,7 @@ private:
   env::HandlePtr m_lootProcess;
   env::HandlePtr m_stdout;
   std::string m_outputBuffer;
+  Report m_report;
 
   std::string readFromPipe();
 
