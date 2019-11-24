@@ -1,10 +1,12 @@
 #include "loot.h"
 #include "spawn.h"
 #include "organizercore.h"
+#include "json.h"
 #include <log.h>
 #include <report.h>
 
 using namespace MOBase;
+using namespace json;
 
 log::Levels levelFromLoot(lootcli::LogLevels level)
 {
@@ -193,7 +195,6 @@ private:
     ly->addLayout(buttons);
 
     m_output = new QPlainTextEdit;
-    m_output->setWordWrapMode(QTextOption::NoWrap);
     ly->addWidget(m_output);
 
     m_buttons = new QDialogButtonBox(QDialogButtonBox::Cancel);
@@ -253,6 +254,81 @@ private:
   }
 };
 
+
+struct Loot::Message
+{
+  QString type;
+  QString text;
+};
+
+struct Loot::File
+{
+  QString name;
+  QString displayName;
+};
+
+struct Loot::Dirty
+{
+  qint64 crc=0;
+  qint64 itm=0;
+  qint64 deletedReferences=0;
+  qint64 deletedNavmesh=0;
+  QString cleaningUtility;
+  QString info;
+
+  QString toString(bool isClean) const
+  {
+    if (isClean) {
+      return QObject::tr("Verified clean by %1")
+        .arg(cleaningUtility.isEmpty() ? "?" : cleaningUtility);
+    }
+
+    QString s = cleaningString();
+
+    if (!info.isEmpty()) {
+      s += " " + info;
+    }
+
+    return s;
+  }
+
+  QString cleaningString() const
+  {
+    return QObject::tr("%1 found %2 ITM record(s), %3 deleted reference(s) and %4 deleted navmesh(es).")
+      .arg(cleaningUtility.isEmpty() ? "?" : cleaningUtility)
+      .arg(itm)
+      .arg(deletedReferences)
+      .arg(deletedNavmesh);
+  }
+};
+
+struct Loot::Plugin
+{
+  QString name;
+  std::vector<File> incompatibilities;
+  std::vector<Message> messages;
+  std::vector<Dirty> dirty, clean;
+  std::vector<QString> missingMasters;
+  bool loadsArchive = false;
+  bool isMaster = false;
+  bool isLightMaster = false;
+};
+
+struct Loot::Stats
+{
+  qint64 time = 0;
+  QString version;
+};
+
+struct Loot::Report
+{
+  std::vector<Message> messages;
+  std::vector<Plugin> plugins;
+  Stats stats;
+};
+
+
+class ReportFailed {};
 
 Loot::Loot()
   : m_thread(nullptr), m_cancel(false), m_result(false)
@@ -522,49 +598,16 @@ void Loot::processMessage(const lootcli::Message& m)
   }
 }
 
-QString jsonType(const QJsonValue& v)
-{
-  if (v.isUndefined()) {
-    return "undefined";
-  } else if (v.isNull()) {
-    return "null";
-  } else if (v.isArray()) {
-    return "an array";
-  } else if (v.isBool()) {
-    return "a bool";
-  } else if (v.isDouble()) {
-    return "a double";
-  } else if (v.isObject()) {
-    return "an object";
-  } else if (v.isString()) {
-    return "a string";
-  } else {
-    return "an unknown type";
-  }
-}
-
-QString jsonType(const QJsonDocument& doc)
-{
-  if (doc.isEmpty()) {
-    return "empty";
-  } else if (doc.isNull()) {
-    return "null";
-  } else if (doc.isArray()) {
-    return "an array";
-  } else if (doc.isObject()) {
-    return "an object";
-  } else {
-    return "an unknown type";
-  }
-}
-
 void Loot::processOutputFile()
 {
+  log::info("parsing json output file at '{}'", m_outPath);
+
   QFile outFile(m_outPath);
   if (!outFile.open(QIODevice::ReadOnly)) {
-    logJsonError(
-      "failed to open file, {} (error {})",
-      outFile.errorString(), outFile.error());
+    emit log(
+      MOBase::log::Error,
+      QString("failed to open file, %1 (error %2)")
+        .arg(outFile.errorString()).arg(outFile.error()));
 
     return;
   }
@@ -572,149 +615,178 @@ void Loot::processOutputFile()
   QJsonParseError e;
   const QJsonDocument doc = QJsonDocument::fromJson(outFile.readAll(), &e);
   if (doc.isNull()) {
-    logJsonError("invalid json, {} (error {})", e.errorString(), e.error);
+    emit log(
+      MOBase::log::Error,
+      QString("invalid json, %1 (error %2)")
+        .arg(e.errorString()).arg(e.error));
+
     return;
   }
 
-  if (!doc.isObject()) {
-    logJsonError("root is {}, not an object", jsonType(doc));
-    return;
+  const auto report = createReport(doc);
+
+  for (auto&& m : report.messages) {
+    emit log(levelFromLoot(
+      lootcli::logLevelFromString(m.type.toStdString())),
+      m.text);
   }
 
+  for (auto&& p : report.plugins) {
+    for (auto&& d : p.dirty) {
+      emit information(p.name, d.toString(false));
+    }
+  }
+}
+
+Loot::Report Loot::createReport(const QJsonDocument& doc) const
+{
+  requireObject(doc, "root");
+
+  Report r;
   const QJsonObject object = doc.object();
 
-  if (object.contains("messages")) {
-    const auto messagesValue = object["messages"];
+  r.messages = reportMessages(getOpt<QJsonArray>(object, "messages"));
+  r.plugins = reportPlugins(getOpt<QJsonArray>(object, "plugins"));
 
-    if (messagesValue.isArray()) {
-      processMessages(messagesValue.toArray());
-    } else {
-      logJsonError(
-        "'messages' property is {}, not an array", jsonType(messagesValue));
-    }
-
-  }
-
-  if (object.contains("plugins")) {
-    const auto pluginsValue = object["plugins"];
-
-    if (pluginsValue.isArray()) {
-      processPlugins(pluginsValue.toArray());
-    } else {
-      logJsonError(
-        "'plugins' property is {}, not an array", jsonType(pluginsValue));
-    }
-  }
+  return r;
 }
 
-bool Loot::processMessages(const QJsonArray& messages)
+std::vector<Loot::Plugin> Loot::reportPlugins(const QJsonArray& plugins) const
 {
-  for (auto messageValue : messages) {
-    if (messageValue.isObject()) {
-      processMessage(messageValue.toObject());
-    } else {
-      logJsonError("a message is {}, not an object", jsonType(messageValue));
-    }
-  }
+  std::vector<Loot::Plugin> v;
 
-  return true;
-}
-
-bool Loot::processMessage(const QJsonObject& message)
-{
-  const auto messageType = message["type"].toString();
-  const auto messageString = message["message"].toString();
-
-  if (messageType.isEmpty()) {
-    logJsonError("there's a message with no 'type' property");
-    return false;
-  }
-
-  if (messageString.isEmpty()) {
-    logJsonError("there's a message with no 'message' property");
-    return false;
-  }
-
-  emit log(levelFromLoot(
-    lootcli::logLevelFromString(messageType.toStdString())),
-    messageString);
-
-  return true;
-}
-
-bool Loot::processPlugins(const QJsonArray& plugins)
-{
   for (auto pluginValue : plugins) {
-    if (pluginValue.isObject()) {
-      processPlugin(pluginValue.toObject());
-    } else {
-      logJsonError("a plugin is {}, not an object", jsonType(pluginValue));
-    }
-  }
-
-  return true;
-}
-
-bool Loot::processPlugin(const QJsonObject& plugin)
-{
-  if (!plugin.contains("name")) {
-    logJsonError("plugin missing 'name' property");
-    return false;
-  }
-
-  const auto nameValue = plugin["name"];
-  if (!nameValue.isString()) {
-    logJsonError("plugin property 'name' is {}, not a string", jsonType(nameValue));
-    return false;
-  }
-
-  const auto name = nameValue.toString();
-
-  processPluginDirty(name, plugin);
-
-  return true;
-}
-
-
-bool Loot::processPluginDirty(const QString& name, const QJsonObject& plugin)
-{
-  if (!plugin.contains("dirty")) {
-    return true;
-  }
-
-  const auto dirtyValue = plugin["dirty"];
-
-  if (!dirtyValue.isArray()) {
-    logJsonError(
-      "'dirty' value for plugin '{}' is {}, not an array",
-      name, jsonType(dirtyValue));
-
-    return false;
-  }
-
-  const auto dirty = dirtyValue.toArray();
-
-
-  for (auto stringValue : dirty) {
-    if (!stringValue.isString()) {
-      logJsonError(
-        "'dirty' value for plugin '{}' is {}, not a string",
-        name, jsonType(stringValue));
-
+    const auto o = convertWarn<QJsonObject>(pluginValue, "plugin");
+    if (o.isEmpty()) {
       continue;
     }
 
-    const auto string = stringValue.toString();
+    auto p = reportPlugin(o);
+    if (!p.name.isEmpty()) {
+      v.emplace_back(std::move(p));
+    }
+  }
 
-    if (string.isEmpty()) {
-      logJsonError("'dirty' string for plugin '{}' is empty", name);
+  return v;
+}
+
+Loot::Plugin Loot::reportPlugin(const QJsonObject& plugin) const
+{
+  Plugin p;
+
+  p.name = getWarn<QString>(plugin, "name");
+  if (p.name.isEmpty()) {
+    return {};
+  }
+
+  if (plugin.contains("incompatibilities")) {
+    p.incompatibilities = reportFiles(getOpt<QJsonArray>(plugin, "incompatibilities"));
+  }
+
+  if (plugin.contains("messages")) {
+    p.messages = reportMessages(getOpt<QJsonArray>(plugin, "messages"));
+  }
+
+  if (plugin.contains("dirty")) {
+    p.dirty = reportDirty(getOpt<QJsonArray>(plugin, "dirty"));
+  }
+
+  if (plugin.contains("clean")) {
+    p.clean = reportDirty(getOpt<QJsonArray>(plugin, "clean"));
+  }
+
+  if (plugin.contains("missingMasters")) {
+    p.missingMasters = reportStringArray(getOpt<QJsonArray>(plugin, "missingMasters"));
+  }
+
+  p.loadsArchive = getOpt(plugin, "loadsArchive", false);
+  p.isMaster = getOpt(plugin, "isMaster", false);
+  p.isLightMaster = getOpt(plugin, "isLightMaster", false);
+
+  return p;
+}
+
+std::vector<Loot::Message> Loot::reportMessages(const QJsonArray& array) const
+{
+  std::vector<Loot::Message> v;
+
+  for (auto messageValue : array) {
+    const auto o = convertWarn<QJsonObject>(messageValue, "message");
+    if (o.isEmpty()) {
       continue;
     }
 
-    emit information(name, string);
+    Message m;
+    m.type = getWarn<QString>(o, "type");
+    m.text = getWarn<QString>(o, "text");
+
+    if (!m.text.isEmpty()) {
+      v.emplace_back(std::move(m));
+    }
   }
 
-  return true;
+  return v;
+}
+
+std::vector<Loot::File> Loot::reportFiles(const QJsonArray& array) const
+{
+  std::vector<Loot::File> v;
+
+  for (auto&& fileValue : array) {
+    const auto o = convertWarn<QJsonObject>(fileValue, "file");
+    if (o.isEmpty()) {
+      continue;
+    }
+
+    File f;
+
+    f.name = getWarn<QString>(o, "name");
+    f.displayName = getOpt<QString>(o, "displayName");
+
+    if (!f.name.isEmpty()) {
+      v.emplace_back(std::move(f));
+    }
+  }
+
+  return v;
+}
+
+std::vector<Loot::Dirty> Loot::reportDirty(const QJsonArray& array) const
+{
+  std::vector<Loot::Dirty> v;
+
+  for (auto&& dirtyValue : array) {
+    const auto o = convertWarn<QJsonObject>(dirtyValue, "dirty");
+
+    Dirty d;
+
+    d.crc = getWarn<qint64>(o, "crc");
+    d.itm = getOpt<qint64>(o, "itm");
+    d.deletedReferences = getOpt<qint64>(o, "deletedReferences");
+    d.deletedNavmesh = getOpt<qint64>(o, "deletedNavmesh");
+    d.cleaningUtility = getOpt<QString>(o, "cleaningUtility");
+    d.info = getOpt<QString>(o, "info");
+
+    v.emplace_back(std::move(d));
+  }
+
+  return v;
+}
+
+std::vector<QString> Loot::reportStringArray(const QJsonArray& array) const
+{
+  std::vector<QString> v;
+
+  for (auto&& sv : array) {
+    auto s = convertWarn<QString>(sv, "string");
+    if (s.isEmpty()) {
+      continue;
+    }
+
+    v.emplace_back(std::move(s));
+  }
+
+  return v;
 }
 
 

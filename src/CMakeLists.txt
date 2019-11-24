@@ -265,6 +265,7 @@ SET(organizer_HDRS
 	processrunner.h
 	uilocker.h
 	loot.h
+	json.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -468,6 +469,7 @@ set(utilities
 	usvfsconnector
 	shared/windows_error
 	loot
+	json
 )
 
 set(widgets

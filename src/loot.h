@@ -33,6 +33,14 @@ signals:
   void finished();
 
 private:
+  struct Report;
+  struct Stats;
+  struct Message;
+  struct Plugin;
+  struct Dirty;
+  struct File;
+  class BadReport {};
+
   std::unique_ptr<QThread> m_thread;
   std::atomic<bool> m_cancel;
   std::atomic<bool> m_result;
@@ -50,20 +58,16 @@ private:
   void processMessage(const lootcli::Message& m);
 
   void processOutputFile();
-  bool processMessages(const QJsonArray& messages);
-  bool processMessage(const QJsonObject& message);
-  bool processPlugins(const QJsonArray& plugins);
-  bool processPlugin(const QJsonObject& plugin);
 
-  bool processPluginDirty(const QString& name, const QJsonObject& plugin);
+  Report createReport(const QJsonDocument& doc) const;
+  Message reportMessage(const QJsonObject& message) const;
+  std::vector<Plugin> reportPlugins(const QJsonArray& plugins) const;
+  Loot::Plugin reportPlugin(const QJsonObject& plugin) const;
 
-  template <class Format, class... Args>
-  void logJsonError(Format&& f, Args&&... args)
-  {
-    MOBase::log::error(
-      std::string("loot output file '{}': ") + f,
-      m_outPath, std::forward<Args>(args)...);
-  };
+  std::vector<Message> reportMessages(const QJsonArray& array) const;
+  std::vector<Loot::File> reportFiles(const QJsonArray& array) const;
+  std::vector<Loot::Dirty> reportDirty(const QJsonArray& array) const;
+  std::vector<QString> reportStringArray(const QJsonArray& array) const;
 };
 
 
