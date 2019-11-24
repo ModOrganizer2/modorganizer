@@ -1606,6 +1606,8 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
       emit showMessage(tr("No matching file found on Nexus! Maybe this file is no longer available or it was renamed?"));
     } else {
       SelectionDialog selection(tr("No file on Nexus matches the selected file by name. Please manually choose the correct one."));
+      std::sort(files.begin(), files.end(), [](const QVariant& lhs, const QVariant& rhs) 
+        {return lhs.toMap()["uploaded_timestamp"].toInt() > rhs.toMap()["uploaded_timestamp"].toInt();});
       for (QVariant file : files) {
         QVariantMap fileInfo = file.toMap();
         if (fileInfo["category_id"].toInt() != 6)
