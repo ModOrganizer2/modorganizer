@@ -1034,36 +1034,30 @@ QVariant PluginList::tooltipData(const QModelIndex &modelIndex) const
 
   QString toolTip;
 
-  // additional info
-  auto itor = m_AdditionalInfo.find(esp.name.toLower());
-
-  if (itor != m_AdditionalInfo.end()) {
-    if (!itor->second.messages.isEmpty()) {
-      toolTip += "<ul style=\"margin-left:15px; -qt-list-indent: 0;\">";
-
-      for (auto&& message : itor->second.messages) {
-        toolTip += "<li>" + message + "</li>";
-      }
-
-      toolTip += "</ul><hr>";
-    }
-  }
-
-  toolTip += tr("<b>Origin</b>: %1").arg(esp.originName);
+  toolTip += "<b>" + tr("Origin") + "</b>: " + esp.originName;
 
   if (esp.forceEnabled) {
-    toolTip += tr("<br><b><i>This plugin can't be disabled (enforced by the game).</i></b>");
+    toolTip +=
+      "<br><b><i>" +
+      tr("This plugin can't be disabled (enforced by the game).") +
+      "</i></b>";
   } else {
     if (!esp.author.isEmpty()) {
-      toolTip += "<br><b>" + tr("Author") + "</b>: " + TruncateString(esp.author);
+      toolTip +=
+        "<br><b>" + tr("Author") + "</b>: " +
+        TruncateString(esp.author);
     }
 
     if (esp.description.size() > 0) {
-      toolTip += "<br><b>" + tr("Description") + "</b>: " + TruncateString(esp.description);
+      toolTip +=
+        "<br><b>" + tr("Description") + "</b>: " +
+        TruncateString(esp.description);
     }
 
     if (esp.masterUnset.size() > 0) {
-      toolTip += "<br><b>" + tr("Missing Masters") + "</b>: <b>" + TruncateString(SetJoin(esp.masterUnset, ", ")) + "</b>";
+      toolTip +=
+        "<br><b>" + tr("Missing Masters") + "</b>: " +
+        "<b>" + TruncateString(SetJoin(esp.masterUnset, ", ")) + "</b>";
     }
 
     std::set<QString> enabledMasters;
@@ -1072,29 +1066,116 @@ QVariant PluginList::tooltipData(const QModelIndex &modelIndex) const
       std::inserter(enabledMasters, enabledMasters.end()));
 
     if (!enabledMasters.empty()) {
-      toolTip += "<br><b>" + tr("Enabled Masters") + "</b>: " + TruncateString(SetJoin(enabledMasters, ", "));
+      toolTip +=
+        "<br><b>" + tr("Enabled Masters") + "</b>: " +
+        TruncateString(SetJoin(enabledMasters, ", "));
     }
 
     if (!esp.archives.empty()) {
-      toolTip += "<br><b>" + tr("Loads Archives") + "</b>: " + TruncateString(SetJoin(esp.archives, ", "));
-      toolTip += "<br>" + tr("There are Archives connected to this plugin. "
-        "Their assets will be added to your game, overwriting in case of conflicts following the plugin order. "
-        "Loose files will always overwrite assets from Archives. (This flag only checks for Archives from the same mod as the plugin)");
+      toolTip +=
+        "<br><b>" + tr("Loads Archives") + "</b>: " +
+        TruncateString(SetJoin(esp.archives, ", ")) +
+        "<br>" + tr(
+          "There are Archives connected to this plugin. Their assets will be "
+          "added to your game, overwriting in case of conflicts following the "
+          "plugin order. Loose files will always overwrite assets from "
+          "Archives. (This flag only checks for Archives from the same mod as "
+          "the plugin)");
     }
 
     if (esp.hasIni) {
-      toolTip += "<br><b>" + tr("Loads INI settings") + "</b>: ";
-      toolTip += "<br>" + tr("There is an ini file connected to this plugin. "
-        "Its settings will be added to your game settings, overwriting in case of conflicts.");
+      toolTip +=
+        "<br><b>" + tr("Loads INI settings") + "</b>: "
+        "<br>" + tr(
+          "There is an ini file connected to this plugin. Its settings will "
+          "be added to your game settings, overwriting in case of conflicts.");
     }
 
     if (esp.isLightFlagged && !esp.isLight) {
-      toolTip += "<br><br>" + tr("This ESP is flagged as an ESL. "
-        "It will adhere to the ESP load order but the records will be loaded in ESL space.");
+      toolTip +=
+        "<br><br>" + tr(
+          "This ESP is flagged as an ESL. It will adhere to the ESP load "
+          "order but the records will be loaded in ESL space.");
     }
   }
 
+
+  // additional info
+  auto itor = m_AdditionalInfo.find(esp.name.toLower());
+
+  if (itor != m_AdditionalInfo.end()) {
+    if (!itor->second.messages.isEmpty()) {
+      toolTip += "<hr><ul style=\"margin-left:15px; -qt-list-indent: 0;\">";
+
+      for (auto&& message : itor->second.messages) {
+        toolTip += "<li>" + message + "</li>";
+      }
+
+      toolTip += "</ul>";
+    }
+
+    // loot
+    toolTip += makeLootTooltip(itor->second.loot);
+  }
+
   return toolTip;
+}
+
+QString PluginList::makeLootTooltip(const Loot::Plugin& loot) const
+{
+  QString s;
+
+  for (auto&& f : loot.incompatibilities) {
+    s +=
+      "<li>" + tr("Incompatible with %1")
+        .arg(f.displayName.isEmpty() ? f.name : f.displayName) +
+      "</li>";
+  }
+
+  for (auto&& m : loot.missingMasters) {
+    s += "<li>" + tr("Depends on missing %1").arg(m) + "</li>";
+  }
+
+  for (auto&& m : loot.messages) {
+    s += "<li>";
+
+    switch (m.type)
+    {
+      case log::Warning:
+        s += tr("Warning") + ": ";
+        break;
+
+      case log::Error:
+        s += tr("Error") + ": ";
+        break;
+
+      case log::Info:  // fall-through
+      case log::Debug:
+      default:
+        // nothing
+        break;
+    }
+
+    s += m.text + "</li>";
+  }
+
+  for (auto&& d : loot.dirty) {
+    s += "<li>" + d.toString(false) + "</li>";
+  }
+
+  for (auto&& c : loot.clean) {
+    s += "<li>" + c.toString(true) + "</li>";
+  }
+
+  if (!s.isEmpty()) {
+    s =
+      "<hr>"
+      "<ul style=\"margin-top:0px; padding-top:0px; margin-left:15px; -qt-list-indent: 0;\">" +
+      s +
+      "</ul>";
+  }
+
+  return s;
 }
 
 QVariant PluginList::iconData(const QModelIndex &modelIndex) const
@@ -1102,29 +1183,80 @@ QVariant PluginList::iconData(const QModelIndex &modelIndex) const
   int index = modelIndex.row();
 
   QVariantList result;
-  QString nameLower = m_ESPs[index].name.toLower();
-  if (m_ESPs[index].masterUnset.size() > 0) {
+
+  const auto& esp = m_ESPs[index];
+  const QString nameLower = esp.name.toLower();
+
+  auto infoItor = m_AdditionalInfo.find(nameLower);
+
+  const AdditionalInfo* info = nullptr;
+  if (infoItor != m_AdditionalInfo.end()) {
+    info = &infoItor->second;
+  }
+
+  if (isProblematic(esp, info)) {
     result.append(":/MO/gui/warning");
   }
+
   if (m_LockedOrder.find(nameLower) != m_LockedOrder.end()) {
     result.append(":/MO/gui/locked");
   }
-  auto bossInfoIter = m_AdditionalInfo.find(nameLower);
-  if (bossInfoIter != m_AdditionalInfo.end()) {
-    if (!bossInfoIter->second.messages.isEmpty()) {
-      result.append(":/MO/gui/information");
-    }
+
+  if (hasInfo(esp, info)) {
+    result.append(":/MO/gui/information");
   }
-  if (m_ESPs[index].hasIni) {
+
+  if (esp.hasIni) {
     result.append(":/MO/gui/attachment");
   }
-  if (!m_ESPs[index].archives.empty()) {
+
+  if (!esp.archives.empty()) {
     result.append(":/MO/gui/archive_conflict_neutral");
   }
-  if (m_ESPs[index].isLightFlagged && !m_ESPs[index].isLight) {
+
+  if (esp.isLightFlagged && !m_ESPs[index].isLight) {
     result.append(":/MO/gui/awaiting");
   }
+
   return result;
+}
+
+bool PluginList::isProblematic(const ESPInfo& esp, const AdditionalInfo* info) const
+{
+  if (esp.masterUnset.size() > 0) {
+    return true;
+  }
+
+  if (info) {
+    if (!info->loot.incompatibilities.empty()) {
+      return true;
+    }
+
+    if (!info->loot.missingMasters.empty()) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool PluginList::hasInfo(const ESPInfo& esp, const AdditionalInfo* info) const
+{
+  if (info) {
+    if (!info->messages.empty()) {
+      return true;
+    }
+
+    if (!info->loot.messages.empty()) {
+      return true;
+    }
+
+    if (!info->loot.dirty.empty()) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int role)

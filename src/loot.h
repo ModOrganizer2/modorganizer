@@ -19,7 +19,7 @@ class Loot : public QObject
 public:
   struct Message
   {
-    QString type;
+    MOBase::log::Levels type;
     QString text;
   };
 

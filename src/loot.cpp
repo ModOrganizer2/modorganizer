@@ -254,15 +254,11 @@ private:
     }
 
     for (auto&& m : report.messages) {
-      log(levelFromLoot(
-        lootcli::logLevelFromString(m.type.toStdString())),
-        m.text);
+      log(m.type, m.text);
     }
 
     for (auto&& p : report.plugins) {
-      for (auto&& d : p.dirty) {
-        m_core.pluginList()->addInformation(p.name, d.toString(false));
-      }
+      m_core.pluginList()->addLootReport(p.name, p);
     }
   }
 };
@@ -527,35 +523,11 @@ void Loot::processStdout(const std::string &lootOut)
 
 void Loot::processMessage(const lootcli::Message& m)
 {
-  /*static const std::regex exRequires("\"([^\"]*)\" requires \"([^\"]*)\", but it is missing\\.");
-  static const std::regex exIncompatible("\"([^\"]*)\" is incompatible with \"([^\"]*)\", but both are present\\.");
-
   switch (m.type)
   {
     case lootcli::MessageType::Log:
     {
-      if (m.logLevel == lootcli::LogLevels::Error) {
-        std::smatch match;
-
-        if (std::regex_match(m.log, match, exRequires)) {
-          std::string modName(match[1].first, match[1].second);
-          std::string dependency(match[2].first, match[2].second);
-          emit information(
-            QString::fromStdString(modName),
-            tr("depends on missing \"%1\"").arg(dependency.c_str()));
-        } else if (std::regex_match(m.log, match, exIncompatible)) {
-          std::string modName(match[1].first, match[1].second);
-          std::string dependency(match[2].first, match[2].second);
-          emit information(
-            QString::fromStdString(modName),
-            tr("incompatible with \"%1\"").arg(dependency.c_str()));
-        } else {
-          emit log(levelFromLoot(m.logLevel), QString::fromStdString(m.log));
-        }
-      } else {
-        emit log(levelFromLoot(m.logLevel), QString::fromStdString(m.log));
-      }
-
+      emit log(levelFromLoot(m.logLevel), QString::fromStdString(m.log));
       break;
     }
 
@@ -564,7 +536,7 @@ void Loot::processMessage(const lootcli::Message& m)
       emit progress(m.progress);
       break;
     }
-  }*/
+  }
 }
 
 void Loot::processOutputFile()
@@ -674,7 +646,20 @@ std::vector<Loot::Message> Loot::reportMessages(const QJsonArray& array) const
     }
 
     Message m;
-    m.type = getWarn<QString>(o, "type");
+
+    const auto type = getWarn<QString>(o, "type");
+
+    if (type == "info") {
+      m.type = log::Info;
+    } else if (type == "warn") {
+      m.type = log::Warning;
+    } else if (type == "error") {
+      m.type = log::Error;
+    } else {
+      log::error("unknown message type '{}'", type);
+      m.type = log::Info;
+    }
+
     m.text = getWarn<QString>(o, "text");
 
     if (!m.text.isEmpty()) {

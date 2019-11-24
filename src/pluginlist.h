@@ -394,6 +394,10 @@ private:
   QVariant alignmentData(const QModelIndex &modelIndex) const;
   QVariant tooltipData(const QModelIndex &modelIndex) const;
   QVariant iconData(const QModelIndex &modelIndex) const;
+
+  QString makeLootTooltip(const Loot::Plugin& loot) const;
+  bool isProblematic(const ESPInfo& esp, const AdditionalInfo* info) const;
+  bool hasInfo(const ESPInfo& esp, const AdditionalInfo* info) const;
 };
 
 #pragma warning(pop)
