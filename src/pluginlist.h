@@ -202,8 +202,8 @@ public:
 
   int timeElapsedSinceLastChecked() const;
 
-  QString getName(int index) const { return m_ESPs.at(index).m_Name; }
-  int getPriority(int index) const { return m_ESPs.at(index).m_Priority; }
+  QString getName(int index) const { return m_ESPs.at(index).name; }
+  int getPriority(int index) const { return m_ESPs.at(index).priority; }
   QString getIndexPriority(int index) const;
   bool isESPLocked(int index) const;
   void lockESPIndex(int index, bool lock);
@@ -301,37 +301,42 @@ signals:
 
 private:
 
-  struct ESPInfo {
+  struct ESPInfo
+  {
+    ESPInfo(
+      const QString &name, bool enabled, const QString &originName,
+      const QString &fullPath, bool hasIni, std::set<QString> archives,
+      bool lightSupported);
 
-    ESPInfo(const QString &name, bool enabled, const QString &originName, const QString &fullPath, bool hasIni, std::set<QString> archives, bool lightSupported);
-    QString m_Name;
-    QString m_FullPath;
-    bool m_Enabled;
-    bool m_ForceEnabled;
-    int m_Priority;
-    QString m_Index;
-    int m_LoadOrder;
-    FILETIME m_Time;
-    QString m_OriginName;
-    bool m_IsMaster;
-    bool m_IsLight;
-    bool m_IsLightFlagged;
-    bool m_ModSelected;
-    QString m_Author;
-    QString m_Description;
-    bool m_HasIni;
-    std::set<QString> m_Archives;
-    std::set<QString> m_Masters;
-    mutable std::set<QString> m_MasterUnset;
+    QString name;
+    QString fullPath;
+    bool enabled;
+    bool forceEnabled;
+    int priority;
+    QString index;
+    int loadOrder;
+    FILETIME time;
+    QString originName;
+    bool isMaster;
+    bool isLight;
+    bool isLightFlagged;
+    bool modSelected;
+    QString author;
+    QString description;
+    bool hasIni;
+    std::set<QString> archives;
+    std::set<QString> masters;
+    mutable std::set<QString> masterUnset;
+
     bool operator < (const ESPInfo& str) const
     {
-      return (m_LoadOrder < str.m_LoadOrder);
+      return (loadOrder < str.loadOrder);
     }
   };
 
   struct AdditionalInfo {
-    QStringList m_Messages;
-    Loot::Plugin m_Loot;
+    QStringList messages;
+    Loot::Plugin loot;
   };
 
   friend bool ByName(const ESPInfo& LHS, const ESPInfo& RHS);
