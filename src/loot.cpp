@@ -199,6 +199,7 @@ Loot::~Loot()
   }
 
   if (!m_outPath.isEmpty() && QFile::exists(m_outPath)) {
+    log::debug("deleting temporary loot report '{}'", m_outPath);
     const auto r = shell::Delete(m_outPath);
 
     if (!r) {
@@ -211,6 +212,8 @@ Loot::~Loot()
 
 bool Loot::start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
 {
+  log::debug("starting loot");
+
   m_outPath = QDir::temp().absoluteFilePath("lootreport.json");
 
   const auto logLevel = core.settings().diagnostics().lootLogLevel();
@@ -271,8 +274,19 @@ bool Loot::start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
 
   core.pluginList()->clearAdditionalInformation();
 
+  log::debug("starting loot thread");
+
   m_thread.reset(QThread::create([&]{
-    lootThread();
+    try
+    {
+      lootThread();
+    }
+    catch(...)
+    {
+      log::error("unhandled exception in loot thread");
+    }
+
+    log::debug("finishing loot thread");
     emit finished();
   }));
 
@@ -283,7 +297,10 @@ bool Loot::start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
 
 void Loot::cancel()
 {
-  m_cancel = true;
+  if (!m_cancel) {
+    log::debug("loot received cancel request");
+    m_cancel = true;
+  }
 }
 
 bool Loot::result() const
@@ -303,6 +320,8 @@ const Loot::Report& Loot::report() const
 
 void Loot::lootThread()
 {
+  ::SetThreadDescription(GetCurrentThread(), L"loot");
+
   try {
     m_result = false;
 
@@ -321,10 +340,13 @@ bool Loot::waitForCompletion()
 {
   bool terminating = false;
 
+  log::debug("loot thread waiting for completion on lootcli");
+
   for (;;) {
     DWORD res = WaitForSingleObject(m_lootProcess.get(), 100);
 
     if (res == WAIT_OBJECT_0) {
+      log::debug("lootcli has completed");
       // done
       break;
     }
@@ -336,9 +358,13 @@ bool Loot::waitForCompletion()
     }
 
     if (m_cancel) {
-      // terminate and wait to finish
+      log::debug("terminating lootcli process");
       ::TerminateProcess(m_lootProcess.get(), 1);
+
+      log::debug("waiting for loocli process to terminate");
       WaitForSingleObject(m_lootProcess.get(), INFINITE);
+
+      log::debug("lootcli terminated");
       return false;
     }
 
@@ -396,6 +422,12 @@ void Loot::processStdout(const std::string &lootOut)
   emit output(QString::fromStdString(lootOut));
 
   m_outputBuffer += lootOut;
+  if (m_outputBuffer.empty()) {
+    return;
+  }
+
+  log::debug("loot: processing stdout ({} bytes)", m_outputBuffer.size());
+
   std::size_t start = 0;
 
   for (;;) {
@@ -440,7 +472,7 @@ void Loot::processMessage(const lootcli::Message& m)
 
 void Loot::processOutputFile()
 {
-  log::info("parsing json output file at '{}'", m_outPath);
+  log::debug("parsing json output file at '{}'", m_outPath);
 
   QFile outFile(m_outPath);
   if (!outFile.open(QIODevice::ReadOnly)) {
@@ -645,20 +677,13 @@ std::vector<QString> Loot::reportStringArray(const QJsonArray& array) const
 
 bool runLoot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
 {
-  //m_OrganizerCore.currentProfile()->writeModlistNow();
   core.savePluginList();
-
-  //Create a backup of the load orders w/ LOOT in name
-  //to make sure that any sorting is easily undo-able.
-  //Need to figure out how I want to do that.
 
   try {
     Loot loot;
     LootDialog dialog(parent, core, loot);
 
     loot.start(parent, core, didUpdateMasterList);
-
-    dialog.setText(QObject::tr("Please wait while LOOT is running"));
     dialog.exec();
 
     return dialog.result();

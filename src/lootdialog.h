@@ -48,15 +48,13 @@ public:
   void setText(const QString& s);
   void setProgress(lootcli::Progress p);
 
-  QString progressToString(lootcli::Progress p);
-
   void addOutput(const QString& s);
-
   bool result() const;
-
   void cancel();
-
   void openReport();
+
+  void accept() override;
+  void reject() override;
 
 private:
   std::unique_ptr<Ui::LootDialog> ui;
@@ -68,11 +66,10 @@ private:
 
   void createUI();
   void closeEvent(QCloseEvent* e) override;
-  void onButton(QAbstractButton* b);
   void addLineOutput(const QString& line);
   void onFinished();
   void log(MOBase::log::Levels lv, const QString& s);
-  void handleReport();
+  void showReport();
 };
 
 #endif // MODORGANIZER_LOOTDIALOG_H

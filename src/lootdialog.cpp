@@ -8,6 +8,29 @@
 
 using namespace MOBase;
 
+QString progressToString(lootcli::Progress p)
+{
+  using P = lootcli::Progress;
+
+  static const std::map<P, QString> map = {
+    {P::CheckingMasterlistExistence, QObject::tr("Checking masterlist existence")},
+    {P::UpdatingMasterlist,          QObject::tr("Updating masterlist")},
+    {P::LoadingLists,                QObject::tr("Loading lists")},
+    {P::ReadingPlugins,              QObject::tr("Reading plugins")},
+    {P::SortingPlugins,              QObject::tr("Sorting plugins")},
+    {P::WritingLoadorder,            QObject::tr("Writing loadorder.txt")},
+    {P::ParsingLootMessages,         QObject::tr("Parsing loot messages")},
+    {P::Done,                        QObject::tr("Done")}
+  };
+
+  auto itor = map.find(p);
+  if (itor == map.end()) {
+    return QString("unknown progress %1").arg(static_cast<int>(p));
+  } else {
+    return itor->second;
+  }
+}
+
 
 MarkdownDocument::MarkdownDocument(QObject* parent)
   : QObject(parent)
@@ -74,29 +97,15 @@ void LootDialog::setText(const QString& s)
 
 void LootDialog::setProgress(lootcli::Progress p)
 {
-  setText(progressToString(p));
+  // don't overwrite the "stopping loot" message even if lootcli generates a new
+  // progress message
+  if (!m_cancelling) {
+    setText(progressToString(p));
+  }
 
   if (p == lootcli::Progress::Done) {
     ui->progressBar->setRange(0, 1);
     ui->progressBar->setValue(1);
-  }
-}
-
-QString LootDialog::progressToString(lootcli::Progress p)
-{
-  using P = lootcli::Progress;
-
-  switch (p)
-  {
-    case P::CheckingMasterlistExistence: return tr("Checking masterlist existence");
-    case P::UpdatingMasterlist: return tr("Updating masterlist");
-    case P::LoadingLists: return tr("Loading lists");
-    case P::ReadingPlugins: return tr("Reading plugins");
-    case P::SortingPlugins: return tr("Sorting plugins");
-    case P::WritingLoadorder: return tr("Writing loadorder.txt");
-    case P::ParsingLootMessages: return tr("Parsing loot messages");
-    case P::Done: return tr("Done");
-    default: return QString("unknown progress %1").arg(static_cast<int>(p));
   }
 }
 
@@ -125,8 +134,12 @@ bool LootDialog::result() const
 void LootDialog::cancel()
 {
   if (!m_finished && !m_cancelling) {
-    addLineOutput(tr("Stopping LOOT..."));
+    log::debug("loot dialog: cancelling");
     m_loot.cancel();
+
+    setText(tr("Stopping LOOT..."));
+    addLineOutput("stopping loot");
+
     ui->buttons->setEnabled(false);
     m_cancelling = true;
   }
@@ -136,6 +149,22 @@ void LootDialog::openReport()
 {
   const auto path = m_loot.outPath();
   shell::Open(path);
+}
+
+void LootDialog::accept()
+{
+  // no-op
+}
+
+void LootDialog::reject()
+{
+  if (m_finished) {
+    log::debug("loot dialog reject: loot finished, closing");
+    QDialog::reject();
+  } else {
+    log::debug("loot dialog reject: not finished, cancelling");
+    cancel();
+  }
 }
 
 void LootDialog::createUI()
@@ -169,7 +198,7 @@ void LootDialog::createUI()
 
   new ExpanderWidget(ui->details, ui->detailsPanel);
 
-  connect(ui->buttons, &QDialogButtonBox::clicked, [&](auto* b){ onButton(b); });
+  ui->buttons->setStandardButtons(QDialogButtonBox::Cancel);
 
   resize(650, 450);
 }
@@ -177,21 +206,12 @@ void LootDialog::createUI()
 void LootDialog::closeEvent(QCloseEvent* e)
 {
   if (m_finished) {
+    log::debug("loot dialog close event: finished, closing");
     QDialog::closeEvent(e);
   } else {
+    log::debug("loot dialog close event: not finished, cancelling");
     cancel();
     e->ignore();
-  }
-}
-
-void LootDialog::onButton(QAbstractButton* b)
-{
-  if (ui->buttons->buttonRole(b) == QDialogButtonBox::RejectRole) {
-    if (m_finished) {
-      close();
-    } else {
-      cancel();
-    }
   }
 }
 
@@ -202,12 +222,16 @@ void LootDialog::addLineOutput(const QString& line)
 
 void LootDialog::onFinished()
 {
+  log::debug("loot dialog: loot is finished");
+
   m_finished = true;
 
   if (m_cancelling) {
+    log::debug("loot dialog: was cancelling, closing");
     close();
   } else {
-    handleReport();
+    log::debug("loot dialog: showing report");
+    showReport();
     ui->openJsonReport->setEnabled(true);
     ui->buttons->setStandardButtons(QDialogButtonBox::Close);
   }
@@ -224,7 +248,7 @@ void LootDialog::log(log::Levels lv, const QString& s)
   }
 }
 
-void LootDialog::handleReport()
+void LootDialog::showReport()
 {
   const auto& lootReport = m_loot.report();
 
