@@ -143,6 +143,7 @@ SET(organizer_SRCS
 	processrunner.cpp
 	uilocker.cpp
 	loot.cpp
+	lootdialog.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -265,6 +266,7 @@ SET(organizer_HDRS
 	processrunner.h
 	uilocker.h
 	loot.h
+	lootdialog.h
 	json.h
 
     shared/windows_error.h
@@ -392,6 +394,11 @@ set(executables
 	editexecutablesdialog
 )
 
+set(loot
+	loot
+	lootdialog
+)
+
 set(modinfo
 	modinfo
 	modinfobackup
@@ -468,7 +475,6 @@ set(utilities
 	shared/util
 	usvfsconnector
 	shared/windows_error
-	loot
 	json
 )
 
@@ -490,7 +496,7 @@ set(widgets
 )
 
 set(src_filters
-	application core browser dialogs downloads env executables modinfo
+	application core browser dialogs downloads env executables loot modinfo
 	modinfo\\dialog modlist plugins previews profiles settings settingsdialog
 	utilities widgets
 )
