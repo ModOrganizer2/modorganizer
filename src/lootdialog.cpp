@@ -171,7 +171,7 @@ void LootDialog::createUI()
 
   connect(ui->buttons, &QDialogButtonBox::clicked, [&](auto* b){ onButton(b); });
 
-  resize(480, 275);
+  resize(650, 450);
 }
 
 void LootDialog::closeEvent(QCloseEvent* e)
@@ -227,14 +227,6 @@ void LootDialog::log(log::Levels lv, const QString& s)
 void LootDialog::handleReport()
 {
   const auto& lootReport = m_loot.report();
-
-  if (!lootReport.messages.empty()) {
-    addLineOutput("");
-  }
-
-  for (auto&& m : lootReport.messages) {
-    log(m.type, m.text);
-  }
 
   for (auto&& p : lootReport.plugins) {
     m_core.pluginList()->addLootReport(p.name, p);
