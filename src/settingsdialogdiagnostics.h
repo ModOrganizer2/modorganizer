@@ -12,7 +12,8 @@ public:
   void update();
 
 private:
-  void setLevelsBox();
+  void setLogLevel();
+  void setLootLogLevel();
   void setCrashDumpTypesBox();
 };
 

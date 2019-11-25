@@ -142,6 +142,8 @@ SET(organizer_SRCS
 	sanitychecks.cpp
 	processrunner.cpp
 	uilocker.cpp
+	loot.cpp
+	lootdialog.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -263,6 +265,9 @@ SET(organizer_HDRS
 	colortable.h
 	processrunner.h
 	uilocker.h
+	loot.h
+	lootdialog.h
+	json.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -389,6 +394,11 @@ set(executables
 	editexecutablesdialog
 )
 
+set(loot
+	loot
+	lootdialog
+)
+
 set(modinfo
 	modinfo
 	modinfobackup
@@ -465,6 +475,7 @@ set(utilities
 	shared/util
 	usvfsconnector
 	shared/windows_error
+	json
 )
 
 set(widgets
@@ -485,7 +496,7 @@ set(widgets
 )
 
 set(src_filters
-	application core browser dialogs downloads env executables modinfo
+	application core browser dialogs downloads env executables loot modinfo
 	modinfo\\dialog modlist plugins previews profiles settings settingsdialog
 	utilities widgets
 )
@@ -566,11 +577,13 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/bsatk/src
                     ${project_path}/esptk/src
                     ${project_path}/archive/src
+					${project_path}/lootcli/include
                     ${dependency_project_path}/usvfs/include
                     ${project_path}/game_gamebryo/src/gamebryo
                     ${project_path}/game_gamebryo/src/creation
                     ${project_path}/game_features/src
                     ${project_path}/githubpp/src
+					${SPDLOG_ROOT}/include
                     ${LZ4_ROOT}/lib)
 
 INCLUDE_DIRECTORIES(shared ${ZLIB_INCLUDE_DIRS})
@@ -668,3 +681,5 @@ INSTALL(
 
 # qdds.dll needs installing manually as Qt no longer ships with it by default.
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../qdds.dll DESTINATION bin/dlls/imageformats)
+
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/markdown.html DESTINATION bin/resources)

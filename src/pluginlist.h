@@ -23,6 +23,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <directoryentry.h>
 #include <ipluginlist.h>
 #include "profile.h"
+#include "loot.h"
+
 namespace MOBase { class IPluginGame; }
 
 #include <QString>
@@ -155,6 +157,11 @@ public:
   void addInformation(const QString &name, const QString &message);
 
   /**
+   * adds information from a loot report
+   */
+  void addLootReport(const QString& name, Loot::Plugin plugin);
+
+  /**
    * @brief test if a plugin is enabled
    *
    * @param index index of the plugin to look up
@@ -195,8 +202,8 @@ public:
 
   int timeElapsedSinceLastChecked() const;
 
-  QString getName(int index) const { return m_ESPs.at(index).m_Name; }
-  int getPriority(int index) const { return m_ESPs.at(index).m_Priority; }
+  QString getName(int index) const { return m_ESPs.at(index).name; }
+  int getPriority(int index) const { return m_ESPs.at(index).priority; }
   QString getIndexPriority(int index) const;
   bool isESPLocked(int index) const;
   void lockESPIndex(int index, bool lock);
@@ -294,36 +301,42 @@ signals:
 
 private:
 
-  struct ESPInfo {
+  struct ESPInfo
+  {
+    ESPInfo(
+      const QString &name, bool enabled, const QString &originName,
+      const QString &fullPath, bool hasIni, std::set<QString> archives,
+      bool lightSupported);
 
-    ESPInfo(const QString &name, bool enabled, const QString &originName, const QString &fullPath, bool hasIni, std::set<QString> archives, bool lightSupported);
-    QString m_Name;
-    QString m_FullPath;
-    bool m_Enabled;
-    bool m_ForceEnabled;
-    int m_Priority;
-    QString m_Index;
-    int m_LoadOrder;
-    FILETIME m_Time;
-    QString m_OriginName;
-    bool m_IsMaster;
-    bool m_IsLight;
-    bool m_IsLightFlagged;
-    bool m_ModSelected;
-    QString m_Author;
-    QString m_Description;
-    bool m_HasIni;
-    std::set<QString> m_Archives;
-    std::set<QString> m_Masters;
-    mutable std::set<QString> m_MasterUnset;
+    QString name;
+    QString fullPath;
+    bool enabled;
+    bool forceEnabled;
+    int priority;
+    QString index;
+    int loadOrder;
+    FILETIME time;
+    QString originName;
+    bool isMaster;
+    bool isLight;
+    bool isLightFlagged;
+    bool modSelected;
+    QString author;
+    QString description;
+    bool hasIni;
+    std::set<QString> archives;
+    std::set<QString> masters;
+    mutable std::set<QString> masterUnset;
+
     bool operator < (const ESPInfo& str) const
     {
-      return (m_LoadOrder < str.m_LoadOrder);
+      return (loadOrder < str.loadOrder);
     }
   };
 
   struct AdditionalInfo {
-    QStringList m_Messages;
+    QStringList messages;
+    Loot::Plugin loot;
   };
 
   friend bool ByName(const ESPInfo& LHS, const ESPInfo& RHS);
@@ -372,6 +385,19 @@ private:
 
   const MOBase::IPluginGame *m_GamePlugin;
 
+
+  QVariant displayData(const QModelIndex &modelIndex) const;
+  QVariant checkstateData(const QModelIndex &modelIndex) const;
+  QVariant foregroundData(const QModelIndex &modelIndex) const;
+  QVariant backgroundData(const QModelIndex &modelIndex) const;
+  QVariant fontData(const QModelIndex &modelIndex) const;
+  QVariant alignmentData(const QModelIndex &modelIndex) const;
+  QVariant tooltipData(const QModelIndex &modelIndex) const;
+  QVariant iconData(const QModelIndex &modelIndex) const;
+
+  QString makeLootTooltip(const Loot::Plugin& loot) const;
+  bool isProblematic(const ESPInfo& esp, const AdditionalInfo* info) const;
+  bool hasInfo(const ESPInfo& esp, const AdditionalInfo* info) const;
 };
 
 #pragma warning(pop)

@@ -1977,6 +1977,17 @@ void DiagnosticsSettings::setLogLevel(log::Levels level)
   set(m_Settings, "Settings", "log_level", level);
 }
 
+lootcli::LogLevels DiagnosticsSettings::lootLogLevel() const
+{
+  return get<lootcli::LogLevels>(
+    m_Settings, "Settings", "loot_log_level", lootcli::LogLevels::Info);
+}
+
+void DiagnosticsSettings::setLootLogLevel(lootcli::LogLevels level)
+{
+  set(m_Settings, "Settings", "loot_log_level", level);
+}
+
 CrashDumpsType DiagnosticsSettings::crashDumpsType() const
 {
   return get<CrashDumpsType>(m_Settings,
