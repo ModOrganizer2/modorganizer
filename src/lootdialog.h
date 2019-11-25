@@ -3,6 +3,7 @@
 
 #include <lootcli/lootcli.h>
 #include <log.h>
+#include <expanderwidget.h>
 
 namespace Ui { class LootDialog; }
 
@@ -53,11 +54,13 @@ public:
   void cancel();
   void openReport();
 
+  int exec() override;
   void accept() override;
   void reject() override;
 
 private:
   std::unique_ptr<Ui::LootDialog> ui;
+  MOBase::ExpanderWidget m_expander;
   OrganizerCore& m_core;
   Loot& m_loot;
   bool m_finished;

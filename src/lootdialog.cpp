@@ -3,7 +3,6 @@
 #include "loot.h"
 #include "organizercore.h"
 #include <utility.h>
-#include <expanderwidget.h>
 #include <QWebChannel>
 
 using namespace MOBase;
@@ -151,6 +150,20 @@ void LootDialog::openReport()
   shell::Open(path);
 }
 
+int LootDialog::exec()
+{
+  auto& s = m_core.settings();
+
+  GeometrySaver gs(s, this);
+  s.geometry().restoreState(&m_expander);
+
+  const auto r = QDialog::exec();
+
+  s.geometry().saveState(&m_expander);
+
+  return r;
+}
+
 void LootDialog::accept()
 {
   // no-op
@@ -193,10 +206,9 @@ void LootDialog::createUI()
     log::error("can't open '{}', {}", path, f.errorString());
   }
 
+  m_expander.set(ui->details, ui->detailsPanel);
   ui->openJsonReport->setEnabled(false);
   connect(ui->openJsonReport, &QPushButton::clicked, [&]{ openReport(); });
-
-  new ExpanderWidget(ui->details, ui->detailsPanel);
 
   ui->buttons->setStandardButtons(QDialogButtonBox::Cancel);
 
