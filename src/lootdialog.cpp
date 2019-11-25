@@ -262,12 +262,16 @@ void LootDialog::log(log::Levels lv, const QString& s)
 
 void LootDialog::showReport()
 {
-  const auto& lootReport = m_loot.report();
+  if (m_loot.result()) {
+    const auto& lootReport = m_loot.report();
 
-  m_core.pluginList()->clearAdditionalInformation();
-  for (auto&& p : lootReport.plugins) {
-    m_core.pluginList()->addLootReport(p.name, p);
+    m_core.pluginList()->clearAdditionalInformation();
+    for (auto&& p : lootReport.plugins) {
+      m_core.pluginList()->addLootReport(p.name, p);
+    }
+
+    m_report.setText(lootReport.toMarkdown());
+  } else {
+    m_report.setText("**" + tr("Loot failed to run") + "**");
   }
-
-  m_report.setText(lootReport.toMarkdown());
 }

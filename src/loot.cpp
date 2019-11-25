@@ -252,7 +252,7 @@ QString Loot::Report::toMarkdown() const
   }
 
   if (s.isEmpty()) {
-    s += "**" + QObject::tr("No messages.") + "**";
+    s += "**" + QObject::tr("No messages.") + "**\n";
   }
 
   s += stats.toMarkdown();
@@ -833,7 +833,10 @@ bool runLoot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
     Loot loot;
     LootDialog dialog(parent, core, loot);
 
-    loot.start(parent, core, didUpdateMasterList);
+    if (!loot.start(parent, core, didUpdateMasterList)) {
+      return false;
+    }
+
     dialog.exec();
 
     return dialog.result();

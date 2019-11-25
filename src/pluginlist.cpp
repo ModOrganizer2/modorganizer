@@ -1214,8 +1214,12 @@ QVariant PluginList::iconData(const QModelIndex &modelIndex) const
     result.append(":/MO/gui/archive_conflict_neutral");
   }
 
-  if (esp.isLightFlagged && !m_ESPs[index].isLight) {
+  if (esp.isLightFlagged && !esp.isLight) {
     result.append(":/MO/gui/awaiting");
+  }
+
+  if (info && !info->loot.dirty.empty()) {
+    result.append(":/MO/gui/edit_clear");
   }
 
   return result;
@@ -1248,10 +1252,6 @@ bool PluginList::hasInfo(const ESPInfo& esp, const AdditionalInfo* info) const
     }
 
     if (!info->loot.messages.empty()) {
-      return true;
-    }
-
-    if (!info->loot.dirty.empty()) {
       return true;
     }
   }
