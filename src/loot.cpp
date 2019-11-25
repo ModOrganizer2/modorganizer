@@ -10,6 +10,194 @@ using namespace MOBase;
 using namespace json;
 
 static QString LootReportPath = QDir::temp().absoluteFilePath("lootreport.json");
+static const DWORD PipeTimeout = 500;
+
+
+class AsyncPipe
+{
+public:
+  AsyncPipe()
+    : m_ioPending(false)
+  {
+    std::fill(std::begin(m_buffer), std::end(m_buffer), 0);
+    std::memset(&m_ov, 0, sizeof(m_ov));
+  }
+
+  env::HandlePtr create()
+  {
+    // creating pipe
+    env::HandlePtr out(createPipe());
+    if (out.get() == INVALID_HANDLE_VALUE) {
+      return {};
+    }
+
+    HANDLE readEventHandle = ::CreateEvent(nullptr, TRUE, FALSE, nullptr);
+
+    if (readEventHandle == NULL) {
+      const auto e = GetLastError();
+      log::error("CreateEvent failed for loot, {}", formatSystemMessage(e));
+      return {};
+    }
+
+    m_ov.hEvent = readEventHandle;
+    m_readEvent.reset(readEventHandle);
+
+    return out;
+  }
+
+  std::string read()
+  {
+    if (m_ioPending) {
+      return checkPending();
+    } else {
+      return tryRead();
+    }
+  }
+
+private:
+  static const std::size_t bufferSize = 50'000;
+
+  env::HandlePtr m_stdout;
+  env::HandlePtr m_readEvent;
+  char m_buffer[bufferSize];
+  OVERLAPPED m_ov;
+  bool m_ioPending;
+
+  HANDLE createPipe()
+  {
+    static const wchar_t* PipeName = L"\\\\.\\pipe\\lootcli_pipe";
+
+    SECURITY_ATTRIBUTES sa = {};
+    sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+    sa.bInheritHandle = TRUE;
+
+    env::HandlePtr pipe;
+
+    // creating pipe
+    {
+      HANDLE pipeHandle = ::CreateNamedPipe(
+        PipeName, PIPE_ACCESS_DUPLEX|FILE_FLAG_OVERLAPPED,
+        PIPE_TYPE_BYTE|PIPE_READMODE_BYTE|PIPE_WAIT,
+        1, 50'000, 50'000, PipeTimeout, &sa);
+
+      if (pipeHandle == INVALID_HANDLE_VALUE) {
+        const auto e = GetLastError();
+        log::error("CreateNamedPipe failed, {}", formatSystemMessage(e));
+        return INVALID_HANDLE_VALUE;
+      }
+
+      pipe.reset(pipeHandle);
+    }
+
+    {
+      // duplicating the handle to read from it
+      HANDLE outputRead = INVALID_HANDLE_VALUE;
+
+      const auto r = DuplicateHandle(
+        GetCurrentProcess(), pipe.get(), GetCurrentProcess(), &outputRead,
+        0, TRUE, DUPLICATE_SAME_ACCESS);
+
+      if (!r) {
+        const auto e = GetLastError();
+        log::error("DuplicateHandle for pipe failed, {}", formatSystemMessage(e));
+        return INVALID_HANDLE_VALUE;
+      }
+
+      m_stdout.reset(outputRead);
+    }
+
+
+    // creating handle to pipe which is passed to CreateProcess()
+    HANDLE outputWrite = ::CreateFileW(
+      PipeName, FILE_WRITE_DATA|SYNCHRONIZE, 0,
+      &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+
+    if (outputWrite == INVALID_HANDLE_VALUE) {
+      const auto e = GetLastError();
+      log::error("CreateFileW for pipe failed, {}", formatSystemMessage(e));
+      return INVALID_HANDLE_VALUE;
+    }
+
+    return outputWrite;
+  }
+
+  std::string tryRead()
+  {
+    DWORD bytesRead = 0;
+
+    if (!::ReadFile(m_stdout.get(), m_buffer, bufferSize, &bytesRead, &m_ov)) {
+      const auto e = GetLastError();
+
+      switch (e)
+      {
+        case ERROR_IO_PENDING:
+        {
+          m_ioPending = true;
+          break;
+        }
+
+        case ERROR_BROKEN_PIPE:
+        {
+          // broken pipe probably means lootcli is finished
+          break;
+        }
+
+        default:
+        {
+          log::error("{}", formatSystemMessage(e));
+          break;
+        }
+      }
+
+      return {};
+    }
+
+    return {m_buffer, m_buffer + bytesRead};
+  }
+
+  std::string checkPending()
+  {
+    DWORD bytesRead = 0;
+
+    if (!::GetOverlappedResultEx(m_stdout.get(), &m_ov, &bytesRead, PipeTimeout, FALSE)) {
+      const auto e = GetLastError();
+
+      switch (e)
+      {
+        case ERROR_IO_INCOMPLETE:
+        {
+          break;
+        }
+
+        case WAIT_TIMEOUT:
+        {
+          break;
+        }
+
+        case ERROR_BROKEN_PIPE:
+        {
+          // broken pipe probably means lootcli is finished
+          break;
+        }
+
+        default:
+        {
+          log::error("GetOverlappedResult failed, {}", formatSystemMessage(e));
+          break;
+        }
+      }
+
+      return {};
+    }
+
+    ::ResetEvent(m_readEvent.get());
+    m_ioPending = false;
+
+    return {m_buffer, m_buffer + bytesRead};
+  }
+};
+
+
 
 log::Levels levelFromLoot(lootcli::LogLevels level)
 {
@@ -216,9 +404,10 @@ bool Loot::start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
 {
   log::debug("starting loot");
 
-  // creating pipe
-  env::HandlePtr out(createPipe());
-  if (out.get() == INVALID_HANDLE_VALUE) {
+  m_pipe.reset(new AsyncPipe);
+
+  env::HandlePtr stdoutHandle = m_pipe->create();
+  if (!stdoutHandle) {
     return false;
   }
 
@@ -226,7 +415,7 @@ bool Loot::start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
   core.prepareVFS();
 
   // spawning
-  if (!spawnLootcli(parent, core, didUpdateMasterList, out.get())) {
+  if (!spawnLootcli(parent, core, didUpdateMasterList, std::move(stdoutHandle))) {
     return false;
   }
 
@@ -240,7 +429,7 @@ bool Loot::start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
 
 bool Loot::spawnLootcli(
   QWidget* parent, OrganizerCore& core, bool didUpdateMasterList,
-  HANDLE stdoutHandle)
+  env::HandlePtr stdoutHandle)
 {
   const auto logLevel = core.settings().diagnostics().lootLogLevel();
 
@@ -261,9 +450,10 @@ bool Loot::spawnLootcli(
   sp.arguments = parameters.join(" ");
   sp.currentDirectory.setPath(qApp->applicationDirPath() + "/loot");
   sp.hooked = true;
-  sp.stdOut = stdoutHandle;
+  sp.stdOut = stdoutHandle.get();
 
   HANDLE lootHandle = spawn::startBinary(parent, sp);
+
   if (lootHandle == INVALID_HANDLE_VALUE) {
     emit log(log::Levels::Error, tr("failed to start loot"));
     return false;
@@ -272,63 +462,6 @@ bool Loot::spawnLootcli(
   m_lootProcess.reset(lootHandle);
 
   return true;
-}
-
-HANDLE Loot::createPipe()
-{
-  static const wchar_t* PipeName = L"\\\\.\\pipe\\lootcli_pipe";
-
-  SECURITY_ATTRIBUTES sa = {};
-  sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-  sa.bInheritHandle = TRUE;
-
-  env::HandlePtr pipe;
-
-  // creating pipe
-  {
-    HANDLE pipeHandle = ::CreateNamedPipe(
-      PipeName, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE|PIPE_READMODE_BYTE|PIPE_WAIT,
-      1, 50'000, 50'000, 0, &sa);
-
-    if (pipeHandle == INVALID_HANDLE_VALUE) {
-      const auto e = GetLastError();
-      log::error("CreateNamedPipe failed, {}", formatSystemMessage(e));
-      return INVALID_HANDLE_VALUE;
-    }
-
-    pipe.reset(pipeHandle);
-  }
-
-  {
-    // duplicating the handle to read from it
-    HANDLE outputRead = INVALID_HANDLE_VALUE;
-
-    const auto r = DuplicateHandle(
-      GetCurrentProcess(), pipe.get(), GetCurrentProcess(), &outputRead,
-      0, TRUE, DUPLICATE_SAME_ACCESS);
-
-    if (!r) {
-      const auto e = GetLastError();
-      log::error("DuplicateHandle for pipe failed, {}", formatSystemMessage(e));
-      return INVALID_HANDLE_VALUE;
-    }
-
-    m_stdout.reset(outputRead);
-  }
-
-
-  // creating handle to pipe which is passed to CreateProcess()
-  HANDLE outputWrite = ::CreateFileW(
-    PipeName, FILE_WRITE_DATA|SYNCHRONIZE, 0,
-    &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-
-  if (outputWrite == INVALID_HANDLE_VALUE) {
-    const auto e = GetLastError();
-    log::error("CreateFileW for pipe failed, {}", formatSystemMessage(e));
-    return INVALID_HANDLE_VALUE;
-  }
-
-  return outputWrite;
 }
 
 void Loot::cancel()
@@ -362,12 +495,10 @@ void Loot::lootThread()
   {
     m_result = false;
 
-    if (!waitForCompletion()) {
-      return;
+    if (waitForCompletion()) {
+      m_result = true;
+      processOutputFile();
     }
-
-    m_result = true;
-    processOutputFile();
   }
   catch(...)
   {
@@ -377,6 +508,7 @@ void Loot::lootThread()
   log::debug("finishing loot thread");
   emit finished();
 }
+
 
 bool Loot::waitForCompletion()
 {
@@ -410,14 +542,14 @@ bool Loot::waitForCompletion()
       return false;
     }
 
-    processStdout(readFromPipe());
+    processStdout(m_pipe->read());
   }
 
   if (m_cancel) {
     return false;
   }
 
-  processStdout(readFromPipe());
+  processStdout(m_pipe->read());
 
   // checking exit code
   DWORD exitCode = 0;
@@ -436,27 +568,6 @@ bool Loot::waitForCompletion()
   return true;
 }
 
-std::string Loot::readFromPipe()
-{
-  static const std::size_t bufferSize = 50'000;
-
-  char buffer[bufferSize] = {};
-
-  DWORD bytesRead = 0;
-  if (::ReadFile(m_stdout.get(), buffer, bufferSize, &bytesRead, nullptr)) {
-    return {buffer, buffer + bytesRead};
-  } else {
-    const auto e = GetLastError();
-
-    // broken pipe probably means lootcli is finished
-    if (e != ERROR_BROKEN_PIPE) {
-      log::error("{}", formatSystemMessage(e));
-    }
-
-    return {};
-  }
-}
-
 void Loot::processStdout(const std::string &lootOut)
 {
   emit output(QString::fromStdString(lootOut));
@@ -465,8 +576,6 @@ void Loot::processStdout(const std::string &lootOut)
   if (m_outputBuffer.empty()) {
     return;
   }
-
-  log::debug("loot: processing stdout ({} bytes)", m_outputBuffer.size());
 
   std::size_t start = 0;
 

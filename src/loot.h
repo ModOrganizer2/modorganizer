@@ -11,6 +11,7 @@ Q_DECLARE_METATYPE(lootcli::Progress);
 Q_DECLARE_METATYPE(MOBase::log::Levels);
 
 class OrganizerCore;
+class AsyncPipe;
 
 class Loot : public QObject
 {
@@ -98,16 +99,13 @@ private:
   std::atomic<bool> m_cancel;
   std::atomic<bool> m_result;
   env::HandlePtr m_lootProcess;
-  env::HandlePtr m_stdout;
+  std::unique_ptr<AsyncPipe> m_pipe;
   std::string m_outputBuffer;
   Report m_report;
 
-  HANDLE createPipe();
   bool spawnLootcli(
     QWidget* parent, OrganizerCore& core, bool didUpdateMasterList,
-    HANDLE stdoutHandle);
-
-  std::string readFromPipe();
+    env::HandlePtr stdoutHandle);
 
   void lootThread();
   bool waitForCompletion();
