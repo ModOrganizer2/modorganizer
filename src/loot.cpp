@@ -439,7 +439,8 @@ bool Loot::spawnLootcli(
     << "--gamePath" << QString("\"%1\"").arg(core.managedGame()->gameDirectory().absolutePath())
     << "--pluginListPath" << QString("\"%1/loadorder.txt\"").arg(core.profilePath())
     << "--logLevel" << QString::fromStdString(lootcli::logLevelToString(logLevel))
-    << "--out" << QString("\"%1\"").arg(LootReportPath);
+    << "--out" << QString("\"%1\"").arg(LootReportPath)
+    << "--language" << core.settings().interface().language();
 
   if (didUpdateMasterList) {
     parameters << "--skipUpdateMasterlist";
