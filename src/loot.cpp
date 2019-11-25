@@ -159,7 +159,15 @@ private:
   {
     DWORD bytesRead = 0;
 
-    if (!::GetOverlappedResultEx(m_stdout.get(), &m_ov, &bytesRead, PipeTimeout, FALSE)) {
+    const auto r = WaitForSingleObject(m_readEvent.get(), PipeTimeout);
+
+    if (r == WAIT_FAILED) {
+      const auto e = GetLastError();
+      log::error("WaitForSingleObject in AsyncPipe failed, {}", formatSystemMessage(e));
+      return {};
+    }
+
+    if (!::GetOverlappedResult(m_stdout.get(), &m_ov, &bytesRead, FALSE)) {
       const auto e = GetLastError();
 
       switch (e)
@@ -490,8 +498,6 @@ const Loot::Report& Loot::report() const
 
 void Loot::lootThread()
 {
-  ::SetThreadDescription(GetCurrentThread(), L"loot");
-
   try
   {
     m_result = false;
