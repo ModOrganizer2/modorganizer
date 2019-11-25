@@ -252,6 +252,7 @@ void LootDialog::showReport()
 {
   const auto& lootReport = m_loot.report();
 
+  m_core.pluginList()->clearAdditionalInformation();
   for (auto&& p : lootReport.plugins) {
     m_core.pluginList()->addLootReport(p.name, p);
   }

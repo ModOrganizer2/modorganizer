@@ -97,11 +97,15 @@ private:
   std::unique_ptr<QThread> m_thread;
   std::atomic<bool> m_cancel;
   std::atomic<bool> m_result;
-  QString m_outPath;
   env::HandlePtr m_lootProcess;
   env::HandlePtr m_stdout;
   std::string m_outputBuffer;
   Report m_report;
+
+  HANDLE createPipe();
+  bool spawnLootcli(
+    QWidget* parent, OrganizerCore& core, bool didUpdateMasterList,
+    HANDLE stdoutHandle);
 
   std::string readFromPipe();
 

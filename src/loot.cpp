@@ -9,6 +9,8 @@
 using namespace MOBase;
 using namespace json;
 
+static QString LootReportPath = QDir::temp().absoluteFilePath("lootreport.json");
+
 log::Levels levelFromLoot(lootcli::LogLevels level)
 {
   using LC = lootcli::LogLevels;
@@ -198,14 +200,14 @@ Loot::~Loot()
     m_thread->wait();
   }
 
-  if (!m_outPath.isEmpty() && QFile::exists(m_outPath)) {
-    log::debug("deleting temporary loot report '{}'", m_outPath);
-    const auto r = shell::Delete(m_outPath);
+  if (QFile::exists(LootReportPath)) {
+    log::debug("deleting temporary loot report '{}'", LootReportPath);
+    const auto r = shell::Delete(LootReportPath);
 
     if (!r) {
       log::error(
         "failed to remove temporary loot json report '{}': {}",
-        m_outPath, r.toString());
+        LootReportPath, r.toString());
     }
   }
 }
@@ -214,8 +216,32 @@ bool Loot::start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
 {
   log::debug("starting loot");
 
-  m_outPath = QDir::temp().absoluteFilePath("lootreport.json");
+  // creating pipe
+  env::HandlePtr out(createPipe());
+  if (out.get() == INVALID_HANDLE_VALUE) {
+    return false;
+  }
 
+  // vfs
+  core.prepareVFS();
+
+  // spawning
+  if (!spawnLootcli(parent, core, didUpdateMasterList, out.get())) {
+    return false;
+  }
+
+  // starting thread
+  log::debug("starting loot thread");
+  m_thread.reset(QThread::create([&]{ lootThread(); }));
+  m_thread->start();
+
+  return true;
+}
+
+bool Loot::spawnLootcli(
+  QWidget* parent, OrganizerCore& core, bool didUpdateMasterList,
+  HANDLE stdoutHandle)
+{
   const auto logLevel = core.settings().diagnostics().lootLogLevel();
 
   QStringList parameters;
@@ -224,45 +250,18 @@ bool Loot::start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
     << "--gamePath" << QString("\"%1\"").arg(core.managedGame()->gameDirectory().absolutePath())
     << "--pluginListPath" << QString("\"%1/loadorder.txt\"").arg(core.profilePath())
     << "--logLevel" << QString::fromStdString(lootcli::logLevelToString(logLevel))
-    << "--out" << QString("\"%1\"").arg(m_outPath);
+    << "--out" << QString("\"%1\"").arg(LootReportPath);
 
   if (didUpdateMasterList) {
     parameters << "--skipUpdateMasterlist";
   }
-
-  SECURITY_ATTRIBUTES secAttributes;
-  secAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
-  secAttributes.bInheritHandle = TRUE;
-  secAttributes.lpSecurityDescriptor = nullptr;
-
-  env::HandlePtr readPipe, writePipe;
-
-  {
-    HANDLE read = INVALID_HANDLE_VALUE;
-    HANDLE write = INVALID_HANDLE_VALUE;
-
-    if (!::CreatePipe(&read, &write, &secAttributes, 0)) {
-      log::error("failed to create stdout reroute");
-    }
-
-    readPipe.reset(read);
-    writePipe.reset(write);
-
-    if (!::SetHandleInformation(read, HANDLE_FLAG_INHERIT, 0)) {
-      log::error("failed to correctly set up the stdout reroute");
-    }
-  }
-
-  core.prepareVFS();
 
   spawn::SpawnParameters sp;
   sp.binary = QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe");
   sp.arguments = parameters.join(" ");
   sp.currentDirectory.setPath(qApp->applicationDirPath() + "/loot");
   sp.hooked = true;
-  sp.stdOut = writePipe.get();
-
-  m_stdout = std::move(readPipe);
+  sp.stdOut = stdoutHandle;
 
   HANDLE lootHandle = spawn::startBinary(parent, sp);
   if (lootHandle == INVALID_HANDLE_VALUE) {
@@ -272,27 +271,64 @@ bool Loot::start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
 
   m_lootProcess.reset(lootHandle);
 
-  core.pluginList()->clearAdditionalInformation();
-
-  log::debug("starting loot thread");
-
-  m_thread.reset(QThread::create([&]{
-    try
-    {
-      lootThread();
-    }
-    catch(...)
-    {
-      log::error("unhandled exception in loot thread");
-    }
-
-    log::debug("finishing loot thread");
-    emit finished();
-  }));
-
-  m_thread->start();
-
   return true;
+}
+
+HANDLE Loot::createPipe()
+{
+  static const wchar_t* PipeName = L"\\\\.\\pipe\\lootcli_pipe";
+
+  SECURITY_ATTRIBUTES sa = {};
+  sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+  sa.bInheritHandle = TRUE;
+
+  env::HandlePtr pipe;
+
+  // creating pipe
+  {
+    HANDLE pipeHandle = ::CreateNamedPipe(
+      PipeName, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE|PIPE_READMODE_BYTE|PIPE_WAIT,
+      1, 50'000, 50'000, 0, &sa);
+
+    if (pipeHandle == INVALID_HANDLE_VALUE) {
+      const auto e = GetLastError();
+      log::error("CreateNamedPipe failed, {}", formatSystemMessage(e));
+      return INVALID_HANDLE_VALUE;
+    }
+
+    pipe.reset(pipeHandle);
+  }
+
+  {
+    // duplicating the handle to read from it
+    HANDLE outputRead = INVALID_HANDLE_VALUE;
+
+    const auto r = DuplicateHandle(
+      GetCurrentProcess(), pipe.get(), GetCurrentProcess(), &outputRead,
+      0, TRUE, DUPLICATE_SAME_ACCESS);
+
+    if (!r) {
+      const auto e = GetLastError();
+      log::error("DuplicateHandle for pipe failed, {}", formatSystemMessage(e));
+      return INVALID_HANDLE_VALUE;
+    }
+
+    m_stdout.reset(outputRead);
+  }
+
+
+  // creating handle to pipe which is passed to CreateProcess()
+  HANDLE outputWrite = ::CreateFileW(
+    PipeName, FILE_WRITE_DATA|SYNCHRONIZE, 0,
+    &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+
+  if (outputWrite == INVALID_HANDLE_VALUE) {
+    const auto e = GetLastError();
+    log::error("CreateFileW for pipe failed, {}", formatSystemMessage(e));
+    return INVALID_HANDLE_VALUE;
+  }
+
+  return outputWrite;
 }
 
 void Loot::cancel()
@@ -310,7 +346,7 @@ bool Loot::result() const
 
 const QString& Loot::outPath() const
 {
-  return m_outPath;
+  return LootReportPath;
 }
 
 const Loot::Report& Loot::report() const
@@ -322,7 +358,8 @@ void Loot::lootThread()
 {
   ::SetThreadDescription(GetCurrentThread(), L"loot");
 
-  try {
+  try
+  {
     m_result = false;
 
     if (!waitForCompletion()) {
@@ -331,9 +368,14 @@ void Loot::lootThread()
 
     m_result = true;
     processOutputFile();
-  } catch (const std::exception &e) {
-    emit log(log::Levels::Error, tr("failed to run loot: %1").arg(e.what()));
   }
+  catch(...)
+  {
+    log::error("unhandled exception in loot thread");
+  }
+
+  log::debug("finishing loot thread");
+  emit finished();
 }
 
 bool Loot::waitForCompletion()
@@ -396,25 +438,23 @@ bool Loot::waitForCompletion()
 
 std::string Loot::readFromPipe()
 {
-  static const int chunkSize = 128;
-  std::string result;
+  static const std::size_t bufferSize = 50'000;
 
-  char buffer[chunkSize + 1];
-  buffer[chunkSize] = '\0';
+  char buffer[bufferSize] = {};
 
-  DWORD read = 1;
-  while (read > 0) {
-    if (!::ReadFile(m_stdout.get(), buffer, chunkSize, &read, nullptr)) {
-      break;
+  DWORD bytesRead = 0;
+  if (::ReadFile(m_stdout.get(), buffer, bufferSize, &bytesRead, nullptr)) {
+    return {buffer, buffer + bytesRead};
+  } else {
+    const auto e = GetLastError();
+
+    // broken pipe probably means lootcli is finished
+    if (e != ERROR_BROKEN_PIPE) {
+      log::error("{}", formatSystemMessage(e));
     }
-    if (read > 0) {
-      result.append(buffer, read);
-      if (read < chunkSize) {
-        break;
-      }
-    }
+
+    return {};
   }
-  return result;
 }
 
 void Loot::processStdout(const std::string &lootOut)
@@ -472,9 +512,9 @@ void Loot::processMessage(const lootcli::Message& m)
 
 void Loot::processOutputFile()
 {
-  log::debug("parsing json output file at '{}'", m_outPath);
+  log::debug("parsing json output file at '{}'", LootReportPath);
 
-  QFile outFile(m_outPath);
+  QFile outFile(LootReportPath);
   if (!outFile.open(QIODevice::ReadOnly)) {
     emit log(
       MOBase::log::Error,
