@@ -67,7 +67,9 @@ Loot::Loot()
 
 Loot::~Loot()
 {
-  m_thread->wait();
+  if (m_thread) {
+    m_thread->wait();
+  }
 
   if (!m_outPath.isEmpty() && QFile::exists(m_outPath)) {
     const auto r = shell::Delete(m_outPath);

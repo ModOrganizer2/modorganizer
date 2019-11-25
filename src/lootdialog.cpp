@@ -4,8 +4,43 @@
 #include "organizercore.h"
 #include <utility.h>
 #include <expanderwidget.h>
+#include <QWebChannel>
 
 using namespace MOBase;
+
+
+MarkdownDocument::MarkdownDocument(QObject* parent)
+  : QObject(parent)
+{
+}
+
+void MarkdownDocument::setText(const QString& text)
+{
+  if (m_text == text)
+    return;
+
+  m_text = text;
+  emit textChanged(m_text);
+}
+
+
+MarkdownPage::MarkdownPage(QObject* parent)
+  : QWebEnginePage(parent)
+{
+}
+
+bool MarkdownPage::acceptNavigationRequest(const QUrl &url, NavigationType, bool)
+{
+  static const QStringList allowed = {"qrc", "data"};
+
+  if (!allowed.contains(url.scheme())) {
+    QDesktopServices::openUrl(url);
+    return false;
+  }
+
+  return true;
+}
+
 
 LootDialog::LootDialog(QWidget* parent, OrganizerCore& core, Loot& loot) :
   QDialog(parent), ui(new Ui::LootDialog), m_core(core), m_loot(loot),
@@ -108,6 +143,27 @@ void LootDialog::createUI()
   ui->setupUi(this);
   ui->progressBar->setMaximum(0);
 
+  auto* page = new MarkdownPage(this);
+  ui->report->setPage(page);
+
+  auto* channel = new QWebChannel(this);
+  channel->registerObject("content", &m_report);
+  page->setWebChannel(channel);
+
+  const QString path = QApplication::applicationDirPath() + "/resources/markdown.html";
+  QFile f(path);
+
+  if (f.open(QFile::ReadOnly)) {
+    const QString html = f.readAll();
+    if (!html.isEmpty()) {
+      ui->report->setHtml(html);
+    } else {
+      log::error("failed to read '{}', {}", path, f.errorString());
+    }
+  } else {
+    log::error("can't open '{}', {}", path, f.errorString());
+  }
+
   ui->openJsonReport->setEnabled(false);
   connect(ui->openJsonReport, &QPushButton::clicked, [&]{ openReport(); });
 
@@ -176,27 +232,25 @@ void LootDialog::handleReport()
     addLineOutput("");
   }
 
-  QString html;
+  QString md;
 
   if (!report.messages.empty()) {
-    html += "<ul>";
-
     for (auto&& m : report.messages) {
       log(m.type, m.text);
 
-      html += "<li>";
+      md += " - ";
 
       switch (m.type)
       {
         case log::Error:
         {
-          html += "<b>" + QObject::tr("Error") + "</b>: ";
+          md += "**" + QObject::tr("Error") + "**: ";
           break;
         }
 
         case log::Warning:
         {
-          html += "<b>" + QObject::tr("Warning") + "</b>: ";
+          md += "**" + QObject::tr("Warning") + "**: ";
           break;
         }
 
@@ -206,15 +260,13 @@ void LootDialog::handleReport()
         }
       }
 
-      html += m.text + "</li>";
+      md += m.text + "\n";
     }
-
-    html + "</ul>";
   } else {
-    html += QObject::tr("No messages.");
+    md += QObject::tr("**No messages.**");
   }
 
-  ui->report->setHtml(html);
+  m_report.setText(md);
 
   for (auto&& p : report.plugins) {
     m_core.pluginList()->addLootReport(p.name, p);

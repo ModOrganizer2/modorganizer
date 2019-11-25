@@ -9,6 +9,36 @@ namespace Ui { class LootDialog; }
 class OrganizerCore;
 class Loot;
 
+
+class MarkdownDocument : public QObject
+{
+  Q_OBJECT;
+  Q_PROPERTY(QString text MEMBER m_text NOTIFY textChanged FINAL);
+
+public:
+  explicit MarkdownDocument(QObject* parent=nullptr);
+  void setText(const QString& text);
+
+signals:
+  void textChanged(const QString &text);
+
+private:
+  QString m_text;
+};
+
+
+class MarkdownPage : public QWebEnginePage
+{
+  Q_OBJECT;
+
+public:
+  explicit MarkdownPage(QObject* parent=nullptr);
+
+protected:
+  bool acceptNavigationRequest(const QUrl &url, NavigationType, bool) override;
+};
+
+
 class LootDialog : public QDialog
 {
 public:
@@ -34,6 +64,7 @@ private:
   Loot& m_loot;
   bool m_finished;
   bool m_cancelling;
+  MarkdownDocument m_report;
 
   void createUI();
   void closeEvent(QCloseEvent* e) override;
