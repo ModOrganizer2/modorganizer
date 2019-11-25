@@ -32,14 +32,13 @@ log::Levels levelFromLoot(lootcli::LogLevels level)
   }
 }
 
-
 class LootDialog : public QDialog
 {
 public:
   LootDialog(QWidget* parent, OrganizerCore& core, Loot& loot) :
     QDialog(parent), m_core(core), m_loot(loot),
-    m_label(nullptr), m_progress(nullptr), m_buttons(nullptr),
-    m_report(nullptr), m_output(nullptr),
+    m_label(nullptr), m_progress(nullptr),
+    m_report(nullptr), m_output(nullptr), m_buttons(nullptr),
     m_finished(false), m_cancelling(false)
   {
     createUI();
@@ -143,9 +142,10 @@ private:
   Loot& m_loot;
   QLabel* m_label;
   QProgressBar* m_progress;
-  QDialogButtonBox* m_buttons;
+  QTextEdit* m_messages;
   QPushButton* m_report;
   QPlainTextEdit* m_output;
+  QDialogButtonBox* m_buttons;
   bool m_finished;
   bool m_cancelling;
 
@@ -163,6 +163,9 @@ private:
 
     m_progress = new QProgressBar;
     ly->addWidget(m_progress);
+
+    m_messages = new QTextEdit;
+    ly->addWidget(m_messages);
 
     auto* more = createMoreUI();
     ly->addWidget(more);
@@ -253,9 +256,45 @@ private:
       addLineOutput("");
     }
 
-    for (auto&& m : report.messages) {
-      log(m.type, m.text);
+    QString html;
+
+    if (!report.messages.empty()) {
+      html += "<ul>";
+
+      for (auto&& m : report.messages) {
+        log(m.type, m.text);
+
+        html += "<li>";
+
+        switch (m.type)
+        {
+          case log::Error:
+          {
+            html += "<b>" + QObject::tr("Error") + "</b>: ";
+            break;
+          }
+
+          case log::Warning:
+          {
+            html += "<b>" + QObject::tr("Warning") + "</b>: ";
+            break;
+          }
+
+          default:
+          {
+            break;
+          }
+        }
+
+        html += m.text + "</li>";
+      }
+
+      html + "</ul>";
+    } else {
+      html += QObject::tr("No messages.");
     }
+
+    m_messages->setHtml(html);
 
     for (auto&& p : report.plugins) {
       m_core.pluginList()->addLootReport(p.name, p);
@@ -299,7 +338,7 @@ Loot::~Loot()
 {
   m_thread->wait();
 
-  if (!m_outPath.isEmpty()) {
+  if (!m_outPath.isEmpty() && QFile::exists(m_outPath)) {
     const auto r = shell::Delete(m_outPath);
 
     if (!r) {
