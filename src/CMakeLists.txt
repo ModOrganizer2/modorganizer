@@ -677,3 +677,5 @@ INSTALL(
 
 # qdds.dll needs installing manually as Qt no longer ships with it by default.
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../qdds.dll DESTINATION bin/dlls/imageformats)
+
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/markdown.html DESTINATION bin/resources)

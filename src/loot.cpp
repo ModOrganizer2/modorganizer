@@ -34,6 +34,99 @@ log::Levels levelFromLoot(lootcli::LogLevels level)
 }
 
 
+QString Loot::Report::toMarkdown() const
+{
+  QString s;
+
+  if (!messages.empty()) {
+    s += "### " + QObject::tr("General messages") + "\n";
+
+    for (auto&& m : messages) {
+      s += " - " + m.toMarkdown() + "\n";
+    }
+  }
+
+  if (!plugins.empty()) {
+    if (!s.isEmpty()) {
+      s += "\n";
+    }
+
+    s += "### " + QObject::tr("Plugins") + "\n";
+
+    for (auto&& p : plugins) {
+      const auto ps = p.toMarkdown();
+      if (!ps.isEmpty()) {
+        s += ps + "\n";
+      }
+    }
+  }
+
+  if (s.isEmpty()) {
+    s += "**" + QObject::tr("No messages.") + "**";
+  }
+
+  s += stats.toMarkdown();
+
+  return s;
+}
+
+QString Loot::Stats::toMarkdown() const
+{
+  return QString("`stats: %1s, lootcli %2, loot %3`")
+    .arg(QString::number(time / 1000.0, 'f', 2))
+    .arg(lootcliVersion)
+    .arg(lootVersion);
+}
+
+QString Loot::Plugin::toMarkdown() const
+{
+  QString s;
+
+  if (!incompatibilities.empty()) {
+    s += " - **" + QObject::tr("Incompatibilities") + ": ";
+
+    QString fs;
+    for (auto&& f : incompatibilities) {
+      if (!fs.isEmpty()) {
+        fs += ", ";
+      }
+
+      fs += f.displayName.isEmpty() ? f.name : f.displayName;
+    }
+
+    s += fs + "**\n";
+  }
+
+  if (!missingMasters.empty()) {
+    s += " - **" + QObject::tr("Missing masters") + ": ";
+
+    QString ms;
+    for (auto&& m : missingMasters) {
+      if (!ms.isEmpty()) {
+        ms += ", ";
+      }
+
+      ms += m;
+    }
+
+    s += ms + "**\n";
+  }
+
+  for (auto&& m : messages) {
+    s += " - " + m.toMarkdown() + "\n";
+  }
+
+  for (auto&& d : dirty) {
+    s += " - " + d.toMarkdown(false) + "\n";
+  }
+
+  if (!s.isEmpty()) {
+    s = "#### " + name + "\n" + s;
+  }
+
+  return s;
+}
+
 QString Loot::Dirty::toString(bool isClean) const
 {
   if (isClean) {
@@ -50,6 +143,11 @@ QString Loot::Dirty::toString(bool isClean) const
   return s;
 }
 
+QString Loot::Dirty::toMarkdown(bool isClean) const
+{
+  return toString(isClean);
+}
+
 QString Loot::Dirty::cleaningString() const
 {
   return QObject::tr("%1 found %2 ITM record(s), %3 deleted reference(s) and %4 deleted navmesh(es).")
@@ -57,6 +155,35 @@ QString Loot::Dirty::cleaningString() const
     .arg(itm)
     .arg(deletedReferences)
     .arg(deletedNavmesh);
+}
+
+QString Loot::Message::toMarkdown() const
+{
+  QString s;
+
+  switch (type)
+  {
+    case log::Error:
+    {
+      s += "**" + QObject::tr("Error") + "**: ";
+      break;
+    }
+
+    case log::Warning:
+    {
+      s += "**" + QObject::tr("Warning") + "**: ";
+      break;
+    }
+
+    default:
+    {
+      break;
+    }
+  }
+
+  s += text;
+
+  return s;
 }
 
 
@@ -348,6 +475,7 @@ Loot::Report Loot::createReport(const QJsonDocument& doc) const
 
   r.messages = reportMessages(getOpt<QJsonArray>(object, "messages"));
   r.plugins = reportPlugins(getOpt<QJsonArray>(object, "plugins"));
+  r.stats = reportStats(getWarn<QJsonObject>(object, "stats"));
 
   return r;
 }
@@ -405,6 +533,17 @@ Loot::Plugin Loot::reportPlugin(const QJsonObject& plugin) const
   p.isLightMaster = getOpt(plugin, "isLightMaster", false);
 
   return p;
+}
+
+Loot::Stats Loot::reportStats(const QJsonObject& stats) const
+{
+  Stats s;
+
+  s.time = getWarn<qint64>(stats, "time");
+  s.lootcliVersion = getWarn<QString>(stats, "lootcliVersion");
+  s.lootVersion = getWarn<QString>(stats, "lootVersion");
+
+  return s;
 }
 
 std::vector<Loot::Message> Loot::reportMessages(const QJsonArray& array) const

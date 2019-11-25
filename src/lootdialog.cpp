@@ -226,49 +226,19 @@ void LootDialog::log(log::Levels lv, const QString& s)
 
 void LootDialog::handleReport()
 {
-  const auto& report = m_loot.report();
+  const auto& lootReport = m_loot.report();
 
-  if (!report.messages.empty()) {
+  if (!lootReport.messages.empty()) {
     addLineOutput("");
   }
 
-  QString md;
-
-  if (!report.messages.empty()) {
-    for (auto&& m : report.messages) {
-      log(m.type, m.text);
-
-      md += " - ";
-
-      switch (m.type)
-      {
-        case log::Error:
-        {
-          md += "**" + QObject::tr("Error") + "**: ";
-          break;
-        }
-
-        case log::Warning:
-        {
-          md += "**" + QObject::tr("Warning") + "**: ";
-          break;
-        }
-
-        default:
-        {
-          break;
-        }
-      }
-
-      md += m.text + "\n";
-    }
-  } else {
-    md += QObject::tr("**No messages.**");
+  for (auto&& m : lootReport.messages) {
+    log(m.type, m.text);
   }
 
-  m_report.setText(md);
-
-  for (auto&& p : report.plugins) {
+  for (auto&& p : lootReport.plugins) {
     m_core.pluginList()->addLootReport(p.name, p);
   }
+
+  m_report.setText(lootReport.toMarkdown());
 }

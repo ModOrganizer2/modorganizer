@@ -21,6 +21,8 @@ public:
   {
     MOBase::log::Levels type;
     QString text;
+
+    QString toMarkdown() const;
   };
 
   struct File
@@ -39,6 +41,7 @@ public:
     QString info;
 
     QString toString(bool isClean) const;
+    QString toMarkdown(bool isClean) const;
     QString cleaningString() const;
   };
 
@@ -52,12 +55,17 @@ public:
     bool loadsArchive = false;
     bool isMaster = false;
     bool isLightMaster = false;
+
+    QString toMarkdown() const;
   };
 
   struct Stats
   {
     qint64 time = 0;
-    QString version;
+    QString lootcliVersion;
+    QString lootVersion;
+
+    QString toMarkdown() const;
   };
 
   struct Report
@@ -65,6 +73,8 @@ public:
     std::vector<Message> messages;
     std::vector<Plugin> plugins;
     Stats stats;
+
+    QString toMarkdown() const;
   };
 
 
@@ -107,6 +117,7 @@ private:
   Message reportMessage(const QJsonObject& message) const;
   std::vector<Plugin> reportPlugins(const QJsonArray& plugins) const;
   Loot::Plugin reportPlugin(const QJsonObject& plugin) const;
+  Loot::Stats reportStats(const QJsonObject& stats) const;
 
   std::vector<Message> reportMessages(const QJsonArray& array) const;
   std::vector<Loot::File> reportFiles(const QJsonArray& array) const;
