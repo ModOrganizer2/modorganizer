@@ -12,6 +12,8 @@ public:
   FileTreeTab(ModInfoDialogTabContext cx);
 
   void clear() override;
+  void saveState(Settings& s);
+  void restoreState(const Settings& s);
   void update() override;
   bool deleteRequested() override;
 
