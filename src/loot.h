@@ -79,10 +79,10 @@ public:
   };
 
 
-  Loot();
+  Loot(OrganizerCore& core);
   ~Loot();
 
-  bool start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList);
+  bool start(QWidget* parent, bool didUpdateMasterList);
   void cancel();
   bool result() const;
   const QString& outPath() const;
@@ -95,6 +95,7 @@ signals:
   void finished();
 
 private:
+  OrganizerCore& m_core;
   std::unique_ptr<QThread> m_thread;
   std::atomic<bool> m_cancel;
   std::atomic<bool> m_result;
@@ -104,8 +105,7 @@ private:
   Report m_report;
 
   bool spawnLootcli(
-    QWidget* parent, OrganizerCore& core, bool didUpdateMasterList,
-    env::HandlePtr stdoutHandle);
+    QWidget* parent, bool didUpdateMasterList, env::HandlePtr stdoutHandle);
 
   void lootThread();
   bool waitForCompletion();

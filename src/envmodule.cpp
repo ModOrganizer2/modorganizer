@@ -365,16 +365,13 @@ const QString& Process::name() const
 
 HandlePtr Process::openHandleForWait() const
 {
-  HandlePtr h(OpenProcess(
-    PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, FALSE, m_pid));
+  const auto rights =
+    PROCESS_QUERY_LIMITED_INFORMATION |    // exit code, image name, etc.
+    SYNCHRONIZE |                          // wait functions
+    PROCESS_SET_QUOTA | PROCESS_TERMINATE; // add to job
 
-  if (!h) {
-    const auto e = GetLastError();
-    log::error("can't get name of process {}, {}", m_pid, formatSystemMessage(e));
-    return {};
-  }
-
-  return h;
+  // don't log errors, failure can happen if the process doesn't exist
+  return HandlePtr(OpenProcess(rights, FALSE, m_pid));
 }
 
 // whether this process can be accessed; fails if the current process doesn't
@@ -401,6 +398,11 @@ void Process::addChild(Process p)
 }
 
 std::vector<Process>& Process::children()
+{
+  return m_children;
+}
+
+const std::vector<Process>& Process::children() const
 {
   return m_children;
 }
@@ -531,9 +533,10 @@ void findChildren(Process& parent, const std::vector<Process>& processes)
   }
 }
 
-Process getProcessTree(HANDLE parent)
+
+Process getProcessTreeFromProcess(HANDLE h)
 {
-  const auto parentPID = ::GetProcessId(parent);
+  const auto parentPID = ::GetProcessId(h);
   const auto v = getRunningProcesses();
 
   Process root;
@@ -551,6 +554,161 @@ Process getProcessTree(HANDLE parent)
   findChildren(root, v);
 
   return root;
+}
+
+
+std::vector<DWORD> processesInJob(HANDLE h)
+{
+  for (int tries=0; tries<5; ++tries) {
+    DWORD maxIds = 100;
+
+    const DWORD idsSize = sizeof(ULONG_PTR) * maxIds;
+    const DWORD bufferSize = sizeof(JOBOBJECT_BASIC_PROCESS_ID_LIST) + idsSize;
+
+    MallocPtr<void> buffer(std::malloc(bufferSize));
+    auto* ids = static_cast<JOBOBJECT_BASIC_PROCESS_ID_LIST*>(buffer.get());
+
+    const auto r = QueryInformationJobObject(
+      h, JobObjectBasicProcessIdList, ids, bufferSize, nullptr);
+
+    if (!r) {
+      const auto e = GetLastError();
+      log::error("failed to get process ids in job, {}", formatSystemMessage(e));
+      return {};
+    }
+
+    if (ids->NumberOfProcessIdsInList >= ids->NumberOfAssignedProcesses) {
+      std::vector<DWORD> v;
+      for (DWORD i=0; i<ids->NumberOfProcessIdsInList; ++i) {
+        v.push_back(ids->ProcessIdList[i]);
+      }
+
+      return v;
+    }
+
+    // try again with a larger buffer
+    maxIds *= 2;
+  }
+
+  log::error("failed to get processes in job, can't get a buffer large enough");
+  return {};
+}
+
+
+void findChildProcesses(Process& parent, std::vector<Process>& processes)
+{
+  // find all processes that are direct children of `parent`
+  auto itor = processes.begin();
+
+  while (itor != processes.end()) {
+    if (itor->ppid() == parent.pid()) {
+      parent.addChild(*itor);
+      itor = processes.erase(itor);
+    } else {
+      ++itor;
+    }
+  }
+
+  // find all processes that are direct children of `parent`'s children
+  for (auto&& c : parent.children()) {
+    findChildProcesses(c, processes);
+  }
+}
+
+Process getProcessTreeFromJob(HANDLE h)
+{
+  const auto ids = processesInJob(h);
+  if (ids.empty()) {
+    return {};
+  }
+
+  std::vector<Process> ps;
+
+  forEachRunningProcess([&](auto&& entry) {
+    for (auto&& id : ids) {
+      if (entry.th32ProcessID == id) {
+        ps.push_back(Process(
+          entry.th32ProcessID,
+          entry.th32ParentProcessID,
+          QString::fromStdWString(entry.szExeFile)));
+
+        break;
+      }
+    }
+
+    return true;
+  });
+
+  Process root;
+
+  {
+    // getting processes whose parent is not in the list
+    for (auto&& possibleRoot : ps) {
+      const auto ppid = possibleRoot.ppid();
+      bool found = false;
+
+      for (auto&& p : ps) {
+        if (p.pid() == ppid) {
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        // this is a root process
+        root.addChild(possibleRoot);
+      }
+    }
+
+    // removing root processes from the list
+    auto newEnd = std::remove_if(ps.begin(), ps.end(), [&](auto&& p) {
+      for (auto&& rp : root.children()) {
+        if (rp.pid() == p.pid()) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+
+    ps.erase(newEnd, ps.end());
+  }
+
+  // at this point, `processes` should only contain processes that are direct
+  // or indirect children of the ones in `root`
+
+  if (ps.empty()) {
+    // and that's all there is
+    return root;
+  }
+
+  {
+    // recursively find children
+    for (auto&& r : root.children()) {
+      findChildProcesses(r, ps);
+    }
+  }
+
+  return root;
+}
+
+bool isJobHandle(HANDLE h)
+{
+  JOBOBJECT_BASIC_ACCOUNTING_INFORMATION info = {};
+
+  const auto r = ::QueryInformationJobObject(
+    h, JobObjectBasicAccountingInformation, &info, sizeof(info), nullptr);
+
+  return r;
+}
+
+Process getProcessTree(HANDLE h)
+{
+  if (isJobHandle(h)) {
+    return getProcessTreeFromJob(h);
+  } else {
+    return getProcessTreeFromProcess(h);
+  }
 }
 
 QString getProcessName(DWORD pid)

@@ -106,20 +106,45 @@ QString toString(Interest i)
 }
 
 
+struct InterestingProcess
+{
+  env::Process p;
+  Interest interest = Interest::None;
+  env::HandlePtr handle;
+};
+
+
+InterestingProcess findRandomProcess(const env::Process& root)
+{
+  for (auto&& c : root.children()) {
+    env::HandlePtr h = c.openHandleForWait();
+    if (h) {
+      return {c, Interest::Weak, std::move(h)};
+    }
+
+    auto r = findRandomProcess(c);
+    if (r.handle) {
+      return r;
+    }
+  }
+
+  return {};
+}
+
 // returns a process that's in the hidden list, or the top-level process if
 // they're all hidden; returns an invalid process if the list is empty
 //
-std::pair<env::Process, Interest> findInterestingProcessInTrees(
-  std::vector<env::Process>& processes)
+InterestingProcess findInterestingProcessInTrees(const env::Process& root)
 {
-  if (processes.empty()) {
-    return {{}, Interest::None};
-  }
-
   // Certain process names we wish to "hide" for aesthetic reason:
-  const std::vector<QString> hiddenList = {
-    QFileInfo(QCoreApplication::applicationFilePath()).fileName()
+  static const std::vector<QString> hiddenList = {
+    QFileInfo(QCoreApplication::applicationFilePath()).fileName(),
+    "conhost.exe"
   };
+
+  if (root.children().empty()) {
+    return {};
+  }
 
   auto isHidden = [&](auto&& p) {
     for (auto h : hiddenList) {
@@ -132,54 +157,61 @@ std::pair<env::Process, Interest> findInterestingProcessInTrees(
   };
 
 
-  for (auto&& root : processes) {
-    if (!isHidden(root)) {
-      return {root, Interest::Strong};
+  for (auto&& p : root.children()) {
+    if (!isHidden(p)) {
+      env::HandlePtr h = p.openHandleForWait();
+      if (h) {
+        return {p, Interest::Strong, std::move(h)};
+      }
     }
 
-    for (auto&& child : root.children()) {
-      if (!isHidden(child)) {
-        return {child, Interest::Strong};
-      }
+    auto r = findInterestingProcessInTrees(p);
+    if (r.interest == Interest::Strong) {
+      return r;
     }
   }
 
-  // everything is hidden, just pick the first one
-  return {processes[0], Interest::Weak};
+  // everything is hidden, just pick the first one that can be used
+  return findRandomProcess(root);
+}
+
+void dump(const env::Process& p, int indent)
+{
+  log::debug(
+    "{}{}, pid={}, ppid={}",
+    std::string(indent * 4, ' '), p.name(), p.pid(), p.ppid());
+
+  for (auto&& c : p.children()) {
+    dump(c, indent + 1);
+  }
+}
+
+void dump(const env::Process& root)
+{
+  log::debug("process tree:");
+
+  for (auto&& p : root.children()) {
+    dump(p, 1);
+  }
 }
 
 // gets the most interesting process in the list
 //
-std::pair<env::Process, Interest> getInterestingProcess(
-  const std::vector<HANDLE>& initialProcesses)
+InterestingProcess getInterestingProcess(HANDLE job)
 {
-  if (initialProcesses.empty()) {
+  env::Process root = env::getProcessTree(job);
+  if (root.children().empty()) {
     log::debug("nothing to wait for");
-    return {{}, Interest::None};
+    return {};
   }
 
-  std::vector<env::Process> processes;
+  dump(root);
 
-  // getting process trees for all processes
-  for (auto&& h : initialProcesses) {
-    auto tree = env::getProcessTree(h);
-    if (tree.isValid()) {
-      processes.push_back(tree);
-    }
-  }
-
-  if (processes.empty()) {
-    // if the initial list wasn't empty but this one is, it means all the
-    // processes were already completed
-    log::debug("processes are already completed");
-    return {{}, Interest::None};
-  }
-
-  const auto interest = findInterestingProcessInTrees(processes);
-  if (!interest.first.isValid()) {
-    // this shouldn't happen
+  auto interest = findInterestingProcessInTrees(root);
+  if (!interest.handle) {
+    // this can happen if none of the processes can be opened
     log::debug("no interesting process to wait for");
-    return {{}, Interest::None};
+    return {};
   }
 
   return interest;
@@ -255,56 +287,52 @@ std::optional<ProcessRunner::Results> timedWait(
 }
 
 ProcessRunner::Results waitForProcessesThreadImpl(
-  const std::vector<HANDLE>& initialProcesses, UILocker::Session& ls)
+  HANDLE job, UILocker::Session& ls)
 {
   using namespace std::chrono;
-
-  if (initialProcesses.empty()) {
-    // shouldn't happen
-    return ProcessRunner::Completed;
-  }
 
   DWORD currentPID = 0;
 
   // if the interesting process that was found is weak (such as ModOrganizer.exe
   // when starting a program from within the Data directory), start with a short
   // wait and check for more interesting children
-  milliseconds wait(50);
+  const milliseconds defaultWait(50);
+  auto wait = defaultWait;
 
   for (;;) {
-    auto [p, interest] = getInterestingProcess(initialProcesses);
-    if (!p.isValid()) {
+    auto ip = getInterestingProcess(job);
+    if (!ip.handle) {
       // nothing to wait on
       return ProcessRunner::Completed;
     }
 
     // update the lock widget
-    ls.setInfo(p.pid(), p.name());
+    ls.setInfo(ip.p.pid(), ip.p.name());
 
-    // open the process
-    auto interestingHandle = p.openHandleForWait();
-    if (!interestingHandle) {
-      return ProcessRunner::Error;
-    }
-
-    if (p.pid() != currentPID) {
+    if (ip.p.pid() != currentPID) {
       // log any change in the process being waited for
-      currentPID = p.pid();
+      currentPID = ip.p.pid();
 
       log::debug(
         "waiting for completion on {} ({}), {} interest",
-        p.name(), p.pid(), toString(interest));
+        ip.p.name(), ip.p.pid(), toString(ip.interest));
     }
 
-    if (interest == Interest::Strong) {
+    if (ip.interest == Interest::Strong) {
       // don't bother with short wait, this is a good process to wait for
       wait = Infinite;
     }
 
-    const auto r = timedWait(interestingHandle.get(), p.pid(), ls, wait);
+    const auto r = timedWait(ip.handle.get(), ip.p.pid(), ls, wait);
     if (r) {
-      // the process has completed or returned an error
-      return *r;
+      if (*r == ProcessRunner::Results::Completed) {
+        // process completed, check another one, reset the wait time to find
+        // interesting processes
+        wait = defaultWait;
+      } else if (*r != ProcessRunner::Results::Running) {
+        // something's wrong, or the user unlocked the ui
+        return *r;
+      }
     }
 
     // exponentially increase the wait time between checks for interesting
@@ -314,20 +342,44 @@ ProcessRunner::Results waitForProcessesThreadImpl(
 }
 
 void waitForProcessesThread(
-  ProcessRunner::Results& result,
-  const std::vector<HANDLE>& initialProcesses, UILocker::Session& ls)
+  ProcessRunner::Results& result, HANDLE job, UILocker::Session& ls)
 {
-  result = waitForProcessesThreadImpl(initialProcesses, ls);
+  result = waitForProcessesThreadImpl(job, ls);
   ls.unlock();
 }
 
 ProcessRunner::Results waitForProcesses(
   const std::vector<HANDLE>& initialProcesses, UILocker::Session& ls)
 {
+  // using a job so any child process started by any of those processes can also
+  // be captured and monitored
+  env::HandlePtr job(CreateJobObjectW(nullptr, nullptr));
+  if (!job) {
+    const auto e = GetLastError();
+
+    log::error(
+      "failed to create job to wait for processes, {}",
+      formatSystemMessage(e));
+
+    return ProcessRunner::Error;
+  }
+
+  for (auto&& h : initialProcesses) {
+    if (!::AssignProcessToJobObject(job.get(), h)) {
+      const auto e = GetLastError();
+
+      log::error(
+        "can't assign process to job to wait for processes, {}",
+        formatSystemMessage(e));
+
+      // keep going
+    }
+  }
+
   auto results = ProcessRunner::Running;
 
   auto* t = QThread::create(
-    waitForProcessesThread, std::ref(results), initialProcesses, std::ref(ls));
+    waitForProcessesThread, std::ref(results), job.get(), std::ref(ls));
 
   QEventLoop events;
   QObject::connect(t, &QThread::finished, [&]{
