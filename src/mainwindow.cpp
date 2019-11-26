@@ -277,6 +277,7 @@ MainWindow::MainWindow(Settings &settings
   ui->espList->installEventFilter(m_OrganizerCore.pluginList());
 
   ui->bsaList->setLocalMoveOnly(true);
+  ui->bsaList->setHeaderHidden(true);
 
   initDownloadView();
 
