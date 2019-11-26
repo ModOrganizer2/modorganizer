@@ -259,7 +259,22 @@ QString InstanceManager::instancePath() const
 
 QStringList InstanceManager::instances() const
 {
-  return QDir(instancePath()).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+  const std::set<QString> ignore = {
+    "cache", "qtwebengine",
+  };
+
+  const auto dirs = QDir(instancePath())
+    .entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+
+  QStringList list;
+
+  for (auto&& d : dirs) {
+    if (!ignore.contains(QFileInfo(d).fileName().toLower())) {
+      list.push_back(d);
+    }
+  }
+
+  return list;
 }
 
 
