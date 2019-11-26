@@ -157,8 +157,18 @@ void Environment::dump(const Settings& s) const
   }
 
   log::debug("security products:");
-  for (const auto& sp : securityProducts()) {
-    log::debug("  . {}", sp.toString());
+
+  {
+    // ignore products with identical names, some AVs register themselves with
+    // the same names and provider, but different guids
+    std::set<QString> productNames;
+    for (const auto& sp : securityProducts()) {
+      productNames.insert(sp.toString());
+    }
+
+    for (auto&& name : productNames) {
+      log::debug("  . {}", name);
+    }
   }
 
   log::debug("modules loaded in process:");

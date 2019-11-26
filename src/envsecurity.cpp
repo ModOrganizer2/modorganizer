@@ -207,13 +207,6 @@ QString SecurityProduct::toString() const
     s += ", definitions outdated";
   }
 
-  // all products have a guid, but the windows firewall is not actually a real
-  // one from wmi, it's queried independently in getWindowsFirewall() and has a
-  // null guid, so just don't log it
-  if (!m_guid.isNull()) {
-    s += ", " + m_guid.toString(QUuid::QUuid::WithoutBraces);
-  }
-
   return s;
 }
 
