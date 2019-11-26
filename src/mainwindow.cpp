@@ -5428,6 +5428,27 @@ void MainWindow::openDataOriginExplorer_clicked()
   shell::Explore(fullPath);
 }
 
+void MainWindow::openDataModInfo_clicked()
+{
+  if (m_ContextItem == nullptr) {
+    return;
+  }
+
+  const auto originID = m_ContextItem->data(1, Qt::UserRole + 1).toInt();
+  const auto& origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
+  const auto& name = QString::fromStdWString(origin.getName());
+
+  unsigned int index = ModInfo::getIndex(name);
+  if (index == UINT_MAX) {
+    return;
+  }
+
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
+  if (modInfo) {
+    displayModInformation(modInfo, index, ModInfoTabIDs::None);
+  }
+}
+
 void MainWindow::updateAvailable()
 {
   ui->actionUpdate->setEnabled(true);
@@ -5472,6 +5493,8 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
     if (!isArchive && !isDirectory) {
       menu.addAction("Open Origin in Explorer", this, SLOT(openDataOriginExplorer_clicked()));
     }
+
+    menu.addAction("Open Mod Info", this, SLOT(openDataModInfo_clicked()));
 
     // offer to hide/unhide file, but not for files from archives
     if (!isArchive) {
