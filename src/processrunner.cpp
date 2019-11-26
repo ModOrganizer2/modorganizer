@@ -520,9 +520,9 @@ ProcessRunner& ProcessRunner::setFromExecutable(const Executable& exe)
     forcedLibraries = profile->determineForcedLibraries(exe.title());
   }
 
-  QDir currentDirectory = exe.workingDirectory();
+  QString currentDirectory = exe.workingDirectory();
   if (currentDirectory.isEmpty()) {
-    currentDirectory.setPath(exe.binaryInfo().absolutePath());
+    currentDirectory = exe.binaryInfo().absolutePath();
   }
 
   setBinary(exe.binaryInfo());
