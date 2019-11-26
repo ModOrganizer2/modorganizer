@@ -554,6 +554,20 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       return 1;
     }
 
+    {
+      // log if there are any dmp files
+      const auto hasCrashDumps =
+        !QDir(QString::fromStdWString(organizer.crashDumpsPath()))
+          .entryList({"*.dmp"}, QDir::Files)
+          .empty();
+
+      if (hasCrashDumps) {
+        log::debug(
+          "there are crash dumps in '{}'",
+          QString::fromStdWString(organizer.crashDumpsPath()));
+      }
+    }
+
     log::debug("initializing plugins");
     PluginContainer pluginContainer(&organizer);
     pluginContainer.loadPlugins();

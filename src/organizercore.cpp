@@ -484,12 +484,6 @@ bool OrganizerCore::cycleDiagnostics()
     removeOldFiles(path, "*.dmp", maxDumps, QDir::Time|QDir::Reversed);
   }
 
-  // log if there are any files left
-  const auto files = QDir(path).entryList({"*.dmp"}, QDir::Files);
-  if (!files.isEmpty()) {
-    log::debug("there are crash dumps in '{}'", path);
-  }
-
   return true;
 }
 
