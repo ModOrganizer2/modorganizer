@@ -295,10 +295,19 @@ QDateTime Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
 
 QString Module::getMD5() const
 {
-  if (m_path.contains("\\windows\\", Qt::CaseInsensitive)) {
-    // don't calculate md5 for system files, it's not really relevant and
-    // it takes a while
-    return {};
+  static const std::set<QString> ignore = {
+    "\\windows\\",
+    "\\program files\\",
+    "\\program files (x86)\\",
+    "\\programdata\\"
+  };
+
+  // don't calculate md5 for system files, it's not really relevant and
+  // it takes a while
+  for (auto&& i : ignore) {
+    if (m_path.contains(i, Qt::CaseInsensitive)) {
+      return {};
+    }
   }
 
   // opening the file
