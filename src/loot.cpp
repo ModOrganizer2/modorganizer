@@ -385,8 +385,8 @@ QString Loot::Message::toMarkdown() const
 }
 
 
-Loot::Loot()
-  : m_thread(nullptr), m_cancel(false), m_result(false)
+Loot::Loot(OrganizerCore& core)
+  : m_core(core), m_thread(nullptr), m_cancel(false), m_result(false)
 {
 }
 
@@ -408,7 +408,7 @@ Loot::~Loot()
   }
 }
 
-bool Loot::start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
+bool Loot::start(QWidget* parent, bool didUpdateMasterList)
 {
   log::debug("starting loot");
 
@@ -420,10 +420,10 @@ bool Loot::start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
   }
 
   // vfs
-  core.prepareVFS();
+  m_core.prepareVFS();
 
   // spawning
-  if (!spawnLootcli(parent, core, didUpdateMasterList, std::move(stdoutHandle))) {
+  if (!spawnLootcli(parent, didUpdateMasterList, std::move(stdoutHandle))) {
     return false;
   }
 
@@ -436,19 +436,29 @@ bool Loot::start(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
 }
 
 bool Loot::spawnLootcli(
-  QWidget* parent, OrganizerCore& core, bool didUpdateMasterList,
-  env::HandlePtr stdoutHandle)
+  QWidget* parent, bool didUpdateMasterList, env::HandlePtr stdoutHandle)
 {
-  const auto logLevel = core.settings().diagnostics().lootLogLevel();
+  const auto logLevel = m_core.settings().diagnostics().lootLogLevel();
 
   QStringList parameters;
   parameters
-    << "--game" << core.managedGame()->gameShortName()
-    << "--gamePath" << QString("\"%1\"").arg(core.managedGame()->gameDirectory().absolutePath())
-    << "--pluginListPath" << QString("\"%1/loadorder.txt\"").arg(core.profilePath())
-    << "--logLevel" << QString::fromStdString(lootcli::logLevelToString(logLevel))
-    << "--out" << QString("\"%1\"").arg(LootReportPath)
-    << "--language" << core.settings().interface().language();
+    << "--game"
+    << m_core.managedGame()->gameShortName()
+
+    << "--gamePath"
+    << QString("\"%1\"").arg(m_core.managedGame()->gameDirectory().absolutePath())
+
+    << "--pluginListPath"
+    << QString("\"%1/loadorder.txt\"").arg(m_core.profilePath())
+
+    << "--logLevel"
+    << QString::fromStdString(lootcli::logLevelToString(logLevel))
+
+    << "--out"
+    << QString("\"%1\"").arg(LootReportPath)
+
+    << "--language"
+    << m_core.settings().interface().language();
 
   if (didUpdateMasterList) {
     parameters << "--skipUpdateMasterlist";
@@ -696,6 +706,12 @@ Loot::Plugin Loot::reportPlugin(const QJsonObject& plugin) const
     return {};
   }
 
+  // ignore disabled plugins; lootcli doesn't know if a plugin is enabled or not
+  // and will report information on any plugin that's in the filesystem
+  if (!m_core.pluginList()->isEnabled(p.name)) {
+    return {};
+  }
+
   if (plugin.contains("incompatibilities")) {
     p.incompatibilities = reportFiles(getOpt<QJsonArray>(plugin, "incompatibilities"));
   }
@@ -836,10 +852,10 @@ bool runLoot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
   core.savePluginList();
 
   try {
-    Loot loot;
+    Loot loot(core);
     LootDialog dialog(parent, core, loot);
 
-    if (!loot.start(parent, core, didUpdateMasterList)) {
+    if (!loot.start(parent, didUpdateMasterList)) {
       return false;
     }
 
