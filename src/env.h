@@ -122,7 +122,7 @@ private:
 class ModuleNotification
 {
 public:
-  ModuleNotification(std::function<void (Module)> f);
+  ModuleNotification(QObject* o, std::function<void (Module)> f);
   ~ModuleNotification();
 
   ModuleNotification(const ModuleNotification&) = delete;
@@ -132,10 +132,12 @@ public:
   ModuleNotification& operator=(ModuleNotification&&) = default;
 
   void setCookie(void* c);
-  void fire(const Module& m);
+  void fire(QString path, std::size_t fileSize);
 
 private:
   void* m_cookie;
+  QObject* m_object;
+  std::set<QString> m_loaded;
   std::function<void (Module)> m_f;
 };
 
@@ -172,8 +174,11 @@ public:
   //
   QString timezone() const;
 
+  // will call `f` on the same thread `o` is running on every time a module
+  // is loaded in the process
+  //
   std::unique_ptr<ModuleNotification> onModuleLoaded(
-    std::function<void (Module)> f);
+    QObject* o, std::function<void (Module)> f);
 
   // logs the environment
   //

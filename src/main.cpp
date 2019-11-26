@@ -93,6 +93,7 @@ using namespace MOShared;
 
 
 void sanityChecks(const env::Environment& env);
+int checkIncompatibleModule(const env::Module& m);
 
 bool createAndMakeWritable(const std::wstring &subPath) {
   QString const dataPath = qApp->property("dataPath").toString();
@@ -547,8 +548,9 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     settings.dump();
     sanityChecks(env);
 
-    const auto moduleNotification = env.onModuleLoaded([](auto&& m) {
+    const auto moduleNotification = env.onModuleLoaded(qApp, [](auto&& m) {
       log::debug("loaded module {}", m.toString());
+      checkIncompatibleModule(m);
     });
 
     log::debug("initializing core");

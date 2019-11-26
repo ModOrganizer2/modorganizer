@@ -56,8 +56,8 @@ Console::~Console()
 }
 
 
-ModuleNotification::ModuleNotification(std::function<void (Module)> f)
-  : m_cookie(nullptr), m_f(std::move(f))
+ModuleNotification::ModuleNotification(QObject* o, std::function<void (Module)> f)
+  : m_cookie(nullptr), m_object(o), m_f(std::move(f))
 {
 }
 
@@ -97,10 +97,26 @@ void ModuleNotification::setCookie(void* c)
   m_cookie = c;
 }
 
-void ModuleNotification::fire(const Module& m)
+void ModuleNotification::fire(QString path, std::size_t fileSize)
 {
+  if (m_loaded.contains(path)) {
+    // don't notify if it's been loaded before
+  }
+
+  m_loaded.insert(path);
+
+  // constructing a Module will query the version info of the file, which seems
+  // to generate an access violation for at least plugin_python.dll on Windows 7
+  //
+  // it's not clear what the problem is, but making sure this is deferred until
+  // _after_ the dll is loaded seems to fix it
+  //
+  // so this queues the callback in the main thread
+
   if (m_f) {
-    m_f(m);
+    QMetaObject::invokeMethod(m_object, [path, fileSize, f=m_f] {
+      f(Module(path, fileSize));
+    }, Qt::QueuedConnection);
   }
 }
 
@@ -196,7 +212,7 @@ QString Environment::timezone() const
 }
 
 std::unique_ptr<ModuleNotification> Environment::onModuleLoaded(
-  std::function<void (Module)> f)
+  QObject* o, std::function<void (Module)> f)
 {
   typedef struct _UNICODE_STRING {
     USHORT Length;
@@ -263,19 +279,19 @@ std::unique_ptr<ModuleNotification> Environment::onModuleLoaded(
   }
 
 
-  auto context = std::make_unique<ModuleNotification>(f);
+  auto context = std::make_unique<ModuleNotification>(o, f);
   void* cookie = nullptr;
 
   auto OnDllLoaded = [](ULONG reason, const PLDR_DLL_NOTIFICATION_DATA data, void* context) {
     if (reason == LDR_DLL_NOTIFICATION_REASON_LOADED) {
-      const Module m(
-        QString::fromWCharArray(
-          data->Loaded.FullDllName->Buffer,
-          data->Loaded.FullDllName->Length / sizeof(wchar_t)),
-        data->Loaded.SizeOfImage);
-
-      if (context) {
-        static_cast<ModuleNotification*>(context)->fire(m);
+      if (data && data->Loaded.FullDllName) {
+        if (context) {
+          static_cast<ModuleNotification*>(context)->fire(
+            QString::fromWCharArray(
+              data->Loaded.FullDllName->Buffer,
+              data->Loaded.FullDllName->Length / sizeof(wchar_t)),
+            data->Loaded.SizeOfImage);
+        }
       }
     }
   };
