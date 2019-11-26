@@ -109,6 +109,13 @@
            </widget>
           </item>
           <item>
+           <widget class="QCheckBox" name="changeGameConfirmation">
+            <property name="text">
+             <string>Show confirmation when changing instance</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="resetDialogsButton">
             <property name="maximumSize">
              <size>

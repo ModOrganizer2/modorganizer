@@ -6139,14 +6139,18 @@ void MainWindow::on_actionNotifications_triggered()
 
 void MainWindow::on_actionChange_Game_triggered()
 {
-  const auto r = QMessageBox::question(
-    this, tr("Are you sure?"), tr("This will restart MO, continue?"),
-    QMessageBox::Yes | QMessageBox::Cancel);
+  if (m_OrganizerCore.settings().interface().showChangeGameConfirmation()) {
+    const auto r = QMessageBox::question(
+      this, tr("Are you sure?"), tr("This will restart MO, continue?"),
+      QMessageBox::Yes | QMessageBox::Cancel);
 
-  if (r == QMessageBox::Yes) {
-    InstanceManager::instance().clearCurrentInstance();
-    ExitModOrganizer(Exit::Restart);
+    if (r != QMessageBox::Yes) {
+      return;
+    }
   }
+
+  InstanceManager::instance().clearCurrentInstance();
+  ExitModOrganizer(Exit::Restart);
 }
 
 void MainWindow::setCategoryListVisible(bool visible)
