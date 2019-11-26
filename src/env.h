@@ -147,6 +147,10 @@ public:
   //
   const Metrics& metrics() const;
 
+  // timezone
+  //
+  QString timezone() const;
+
   // logs the environment
   //
   void dump(const Settings& s) const;

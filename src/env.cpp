@@ -104,9 +104,53 @@ const Metrics& Environment::metrics() const
   return *m_metrics;
 }
 
+QString Environment::timezone() const
+{
+  TIME_ZONE_INFORMATION tz = {};
+
+  const auto r = GetTimeZoneInformation(&tz);
+  if (r == TIME_ZONE_ID_INVALID) {
+    const auto e = GetLastError();
+    log::error("failed to get timezone, {}", formatSystemMessage(e));
+    return "unknown";
+  }
+
+  auto offsetString = [](int o) {
+    return
+      QString("%1%2:%3")
+      .arg(o < 0 ? "" : "+")
+      .arg(QString::number(o / 60), 2, QChar::fromLatin1('0'))
+      .arg(QString::number(o % 60), 2, QChar::fromLatin1('0'));
+  };
+
+  const auto stdName = QString::fromWCharArray(tz.StandardName);
+  const auto stdOffset = -(tz.Bias + tz.StandardBias);
+  const auto std = QString("%1, %2")
+    .arg(stdName)
+    .arg(offsetString(stdOffset));
+
+  const auto dstName = QString::fromWCharArray(tz.DaylightName);
+  const auto dstOffset = -(tz.Bias + tz.DaylightBias);
+  const auto dst = QString("%1, %2")
+    .arg(dstName)
+    .arg(offsetString(dstOffset));
+
+  QString s;
+
+  if (r == TIME_ZONE_ID_DAYLIGHT) {
+    s = dst + " (dst is active, std is " + std + ")";
+  } else {
+    s = std + " (std is active, dst is " + dst + ")";
+  }
+
+  return s;
+}
+
 void Environment::dump(const Settings& s) const
 {
   log::debug("windows: {}", windowsInfo().toString());
+
+  log::debug("time zone: {}", timezone());
 
   if (windowsInfo().compatibilityMode()) {
     log::warn("MO seems to be running in compatibility mode");
