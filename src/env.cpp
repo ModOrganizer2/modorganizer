@@ -56,6 +56,55 @@ Console::~Console()
 }
 
 
+ModuleNotification::ModuleNotification(std::function<void (Module)> f)
+  : m_cookie(nullptr), m_f(std::move(f))
+{
+}
+
+ModuleNotification::~ModuleNotification()
+{
+  if (!m_cookie) {
+    return;
+  }
+
+  typedef NTSTATUS NTAPI LdrUnregisterDllNotificationType(
+    PVOID Cookie
+  );
+
+  LibraryPtr ntdll(LoadLibraryW(L"ntdll.dll"));
+
+  if (!ntdll) {
+    log::error("failed to load ntdll.dll while unregistering for module notifications");
+    return;
+  }
+
+  auto* LdrUnregisterDllNotification = reinterpret_cast<LdrUnregisterDllNotificationType*>(
+    GetProcAddress(ntdll.get(), "LdrUnregisterDllNotification"));
+
+  if (!LdrUnregisterDllNotification) {
+    log::error("LdrUnregisterDllNotification not found in ntdll.dll");
+    return;
+  }
+
+  const auto r = LdrUnregisterDllNotification(m_cookie);
+  if (r != 0) {
+    log::error("failed to unregister for module notifications, error {}", r);
+  }
+}
+
+void ModuleNotification::setCookie(void* c)
+{
+  m_cookie = c;
+}
+
+void ModuleNotification::fire(const Module& m)
+{
+  if (m_f) {
+    m_f(m);
+  }
+}
+
+
 Environment::Environment()
 {
 }
@@ -144,6 +193,104 @@ QString Environment::timezone() const
   }
 
   return s;
+}
+
+std::unique_ptr<ModuleNotification> Environment::onModuleLoaded(
+  std::function<void (Module)> f)
+{
+  typedef struct _UNICODE_STRING {
+    USHORT Length;
+    USHORT MaximumLength;
+    PWSTR  Buffer;
+  } UNICODE_STRING, *PUNICODE_STRING;
+
+  typedef const PUNICODE_STRING PCUNICODE_STRING;
+
+  typedef struct _LDR_DLL_LOADED_NOTIFICATION_DATA {
+    ULONG Flags;                    //Reserved.
+    PCUNICODE_STRING FullDllName;   //The full path name of the DLL module.
+    PCUNICODE_STRING BaseDllName;   //The base file name of the DLL module.
+    PVOID DllBase;                  //A pointer to the base address for the DLL in memory.
+    ULONG SizeOfImage;              //The size of the DLL image, in bytes.
+  } LDR_DLL_LOADED_NOTIFICATION_DATA, *PLDR_DLL_LOADED_NOTIFICATION_DATA;
+
+  typedef struct _LDR_DLL_UNLOADED_NOTIFICATION_DATA {
+    ULONG Flags;                    //Reserved.
+    PCUNICODE_STRING FullDllName;   //The full path name of the DLL module.
+    PCUNICODE_STRING BaseDllName;   //The base file name of the DLL module.
+    PVOID DllBase;                  //A pointer to the base address for the DLL in memory.
+    ULONG SizeOfImage;              //The size of the DLL image, in bytes.
+  } LDR_DLL_UNLOADED_NOTIFICATION_DATA, *PLDR_DLL_UNLOADED_NOTIFICATION_DATA;
+
+  typedef union _LDR_DLL_NOTIFICATION_DATA {
+    LDR_DLL_LOADED_NOTIFICATION_DATA Loaded;
+    LDR_DLL_UNLOADED_NOTIFICATION_DATA Unloaded;
+  } LDR_DLL_NOTIFICATION_DATA, *PLDR_DLL_NOTIFICATION_DATA;
+
+  typedef VOID CALLBACK LDR_DLL_NOTIFICATION_FUNCTION(
+    ULONG                            NotificationReason,
+    const PLDR_DLL_NOTIFICATION_DATA NotificationData,
+    PVOID                            Context
+  );
+
+  typedef LDR_DLL_NOTIFICATION_FUNCTION* PLDR_DLL_NOTIFICATION_FUNCTION;
+
+  typedef NTSTATUS NTAPI LdrRegisterDllNotificationType(
+    ULONG                          Flags,
+    PLDR_DLL_NOTIFICATION_FUNCTION NotificationFunction,
+    PVOID                          Context,
+    PVOID                          *Cookie
+  );
+
+  const ULONG LDR_DLL_NOTIFICATION_REASON_LOADED = 1;
+  const ULONG LDR_DLL_NOTIFICATION_REASON_UNLOADED = 2;
+
+
+  // loading ntdll.dll, the function will be found with GetProcAddress()
+  LibraryPtr ntdll(LoadLibraryW(L"ntdll.dll"));
+
+  if (!ntdll) {
+    log::error("failed to load ntdll.dll while registering for module notifications");
+    return {};
+  }
+
+  auto* LdrRegisterDllNotification = reinterpret_cast<LdrRegisterDllNotificationType*>(
+    GetProcAddress(ntdll.get(), "LdrRegisterDllNotification"));
+
+  if (!LdrRegisterDllNotification) {
+    log::error("LdrRegisterDllNotification not found in ntdll.dll");
+    return {};
+  }
+
+
+  auto context = std::make_unique<ModuleNotification>(f);
+  void* cookie = nullptr;
+
+  auto OnDllLoaded = [](ULONG reason, const PLDR_DLL_NOTIFICATION_DATA data, void* context) {
+    if (reason == LDR_DLL_NOTIFICATION_REASON_LOADED) {
+      const Module m(
+        QString::fromWCharArray(
+          data->Loaded.FullDllName->Buffer,
+          data->Loaded.FullDllName->Length / sizeof(wchar_t)),
+        data->Loaded.SizeOfImage);
+
+      if (context) {
+        static_cast<ModuleNotification*>(context)->fire(m);
+      }
+    }
+  };
+
+  const auto r = LdrRegisterDllNotification(
+    0, OnDllLoaded, context.get(), &cookie);
+
+  if (r != 0) {
+    log::error("failed to register for module notifications, error {}", r);
+    return {};
+  }
+
+  context->setCookie(cookie);
+
+  return context;
 }
 
 void Environment::dump(const Settings& s) const

@@ -119,6 +119,27 @@ private:
 };
 
 
+class ModuleNotification
+{
+public:
+  ModuleNotification(std::function<void (Module)> f);
+  ~ModuleNotification();
+
+  ModuleNotification(const ModuleNotification&) = delete;
+  ModuleNotification& operator=(const ModuleNotification&) = delete;
+
+  ModuleNotification(ModuleNotification&&) = default;
+  ModuleNotification& operator=(ModuleNotification&&) = default;
+
+  void setCookie(void* c);
+  void fire(const Module& m);
+
+private:
+  void* m_cookie;
+  std::function<void (Module)> m_f;
+};
+
+
 // represents the process's environment
 //
 class Environment
@@ -150,6 +171,9 @@ public:
   // timezone
   //
   QString timezone() const;
+
+  std::unique_ptr<ModuleNotification> onModuleLoaded(
+    std::function<void (Module)> f);
 
   // logs the environment
   //

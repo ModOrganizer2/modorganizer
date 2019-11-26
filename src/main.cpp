@@ -547,6 +547,10 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     settings.dump();
     sanityChecks(env);
 
+    const auto moduleNotification = env.onModuleLoaded([](auto&& m) {
+      log::debug("loaded module {}", m.toString());
+    });
+
     log::debug("initializing core");
     OrganizerCore organizer(settings);
     if (!organizer.bootstrap()) {
