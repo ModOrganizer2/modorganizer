@@ -280,13 +280,17 @@ std::vector<HANDLE> getRunningUSVFSProcesses()
   const auto thisPid = GetCurrentProcessId();
   std::vector<HANDLE> v;
 
+  const auto rights =
+    PROCESS_QUERY_LIMITED_INFORMATION |    // exit code, image name, etc.
+    SYNCHRONIZE |                          // wait functions
+    PROCESS_SET_QUOTA | PROCESS_TERMINATE; // add to job
+
   for (auto&& pid : pids) {
     if (pid == thisPid) {
       continue; // obviously don't wait for MO process
     }
 
-    HANDLE handle = ::OpenProcess(
-      PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, FALSE, pid);
+    HANDLE handle = ::OpenProcess(rights, FALSE, pid);
 
     if (handle == INVALID_HANDLE_VALUE) {
       const auto e = GetLastError();

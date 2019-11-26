@@ -136,6 +136,7 @@ public:
 
   void addChild(Process p);
   std::vector<Process>& children();
+  const std::vector<Process>& children() const;
 
 private:
   DWORD m_pid;
@@ -148,7 +149,9 @@ private:
 std::vector<Process> getRunningProcesses();
 std::vector<Module> getLoadedModules();
 
-Process getProcessTree(HANDLE parent);
+// works for both jobs and processes
+//
+Process getProcessTree(HANDLE h);
 
 QString getProcessName(DWORD pid);
 QString getProcessName(HANDLE process);
