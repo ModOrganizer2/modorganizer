@@ -377,6 +377,8 @@ UILocker::~UILocker()
       unlock(s.get());
     }
   }
+
+  g_instance = nullptr;
 }
 
 UILocker& UILocker::instance()
@@ -449,6 +451,12 @@ void UILocker::unlockCurrent()
 
 void UILocker::updateLabel()
 {
+  if (!m_ui) {
+    // this can happen if the lock overlay was destroyed while a cross-thread
+    // call for updateLabel() was in flight
+    return;
+  }
+
   QStringList labels;
 
   for (auto itor=m_sessions.rbegin(); itor!=m_sessions.rend(); ++itor) {
