@@ -1,6 +1,9 @@
 #include "env.h"
 #include "envmodule.h"
+#include "settings.h"
+#include <iplugingame.h>
 #include <log.h>
+#include <utility.h>
 
 using namespace MOBase;
 
@@ -247,6 +250,83 @@ int checkIncompatibilities(const env::Environment& e)
 
   for (auto&& m : e.loadedModules()) {
     n += checkIncompatibleModule(m);
+  }
+
+  return n;
+}
+
+std::vector<std::pair<QString, QString>> getSystemDirectories()
+{
+  // folder ids and display names for logging
+  const std::vector<std::pair<GUID, QString>> systemFolderIDs = {
+    {FOLDERID_ProgramFiles, "Program Files"},
+    {FOLDERID_ProgramFilesX86, "Program Files"}
+  };
+
+  std::vector<std::pair<QString, QString>> systemDirs;
+
+  for (auto&& p : systemFolderIDs) {
+    try
+    {
+      const auto dir = MOBase::getKnownFolder(p.first);
+
+      auto path = QDir::toNativeSeparators(dir.absolutePath()).toLower();
+      if (!path.endsWith("\\")) {
+        path += "\\";
+      }
+
+      systemDirs.push_back({path, p.second});
+    }
+    catch(std::exception&)
+    {
+      // ignore
+    }
+  }
+
+  return systemDirs;
+}
+
+int checkProtected(const QDir& d, const QString& what)
+{
+  static const auto systemDirs = getSystemDirectories();
+
+  const auto path = QDir::toNativeSeparators(d.absolutePath()).toLower();
+
+  log::debug("  . {}: {}", what, path);
+
+  for (auto&& sd : systemDirs) {
+    if (path.startsWith(sd.first)) {
+      log::warn(
+        "{} is in {}; this may cause issues because it's a protected "
+        "system folder",
+        what, sd.second);
+
+      log::debug("path '{}' starts with '{}'", path, sd.first);
+
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+int checkPathsForSanity(IPluginGame& game, const Settings& s)
+{
+  log::debug("checking paths");
+
+  int n = 0;
+
+  n += checkProtected(game.gameDirectory(), "the game");
+  n += checkProtected(QApplication::applicationDirPath(), "Mod Organizer");
+
+  if (checkProtected(s.paths().base(), "the instance base directory")) {
+    ++n;
+  } else {
+    n += checkProtected(s.paths().downloads(), "the downloads directory");
+    n += checkProtected(s.paths().mods(), "the mods directory");
+    n += checkProtected(s.paths().cache(), "the cache directory");
+    n += checkProtected(s.paths().profiles(), "the profiles directory");
+    n += checkProtected(s.paths().overwrite(), "the overwrite directory");
   }
 
   return n;
