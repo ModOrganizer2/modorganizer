@@ -120,7 +120,7 @@ void ExecutablesList::store(Settings& s)
     map["toolbar"] = item.isShownOnToolbar();
     map["ownicon"] = item.usesOwnIcon();
     map["hide"] = item.hide();
-    map["binary"] = item.binaryInfo().absoluteFilePath();
+    map["binary"] = item.binaryInfo().filePath();
     map["arguments"] = item.arguments();
     map["workingDirectory"] = item.workingDirectory();
     map["steamAppID"] = item.steamAppID();
@@ -358,7 +358,7 @@ void ExecutablesList::dump() const
       "    steam ID: {}\n"
       "    directory: {}\n"
       "    flags: {} ({})",
-      e.title(), e.binaryInfo().absoluteFilePath(), e.arguments(),
+      e.title(), e.binaryInfo().filePath(), e.arguments(),
       e.steamAppID(), e.workingDirectory(), flags.join("|"), e.flags());
   }
 }
@@ -374,7 +374,7 @@ Executable::Executable(const MOBase::ExecutableInfo& info, Flags flags) :
   m_binaryInfo(info.binary()),
   m_arguments(info.arguments().join(" ")),
   m_steamAppID(info.steamAppID()),
-  m_workingDirectory(info.workingDirectory().absolutePath()),
+  m_workingDirectory(info.workingDirectory().path()),
   m_flags(flags)
 {
 }
