@@ -190,6 +190,11 @@ const QSize SmallToolbarSize(24, 24);
 const QSize MediumToolbarSize(32, 32);
 const QSize LargeToolbarSize(42, 36);
 
+QString UnmanagedModName()
+{
+  return QObject::tr("<Unmanaged>");
+}
+
 bool runLoot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList);
 
 
@@ -1661,9 +1666,13 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
       QString fileName = ToQString(current->getName());
       QStringList columns(fileName);
       FilesOrigin origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
-      QString source("data");
-      unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
-      if (modIndex != UINT_MAX) {
+
+      QString source;
+      const unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
+
+      if (modIndex == UINT_MAX) {
+        source = UnmanagedModName();
+      } else {
         ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
         source = modInfo->name();
       }
@@ -2046,12 +2055,17 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
     int originID = iter->second->data(1, Qt::UserRole).toInt();
 
     FilesOrigin origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
-    QString modName("data");
-    unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
-    if (modIndex != UINT_MAX) {
+
+    QString modName;
+    const unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
+
+    if (modIndex == UINT_MAX) {
+      modName = UnmanagedModName();
+    } else {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
       modName = modInfo->name();
     }
+
     QList<QTreeWidgetItem*> items = ui->bsaList->findItems(modName, Qt::MatchFixedString);
     QTreeWidgetItem * subItem = nullptr;
     if (items.length() > 0) {
@@ -5435,11 +5449,17 @@ void MainWindow::openDataModInfo_clicked()
   }
 
   const auto originID = m_ContextItem->data(1, Qt::UserRole + 1).toInt();
+  if (originID == 0) {
+    // unmanaged
+    return;
+  }
+
   const auto& origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
   const auto& name = QString::fromStdWString(origin.getName());
 
   unsigned int index = ModInfo::getIndex(name);
   if (index == UINT_MAX) {
+    log::error("can't open mod info, mod '{}' not found", name);
     return;
   }
 
