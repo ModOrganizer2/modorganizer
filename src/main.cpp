@@ -94,6 +94,7 @@ using namespace MOShared;
 
 void sanityChecks(const env::Environment& env);
 int checkIncompatibleModule(const env::Module& m);
+int checkPathsForSanity(MOBase::IPluginGame& game, const Settings& s);
 
 bool createAndMakeWritable(const std::wstring &subPath) {
   QString const dataPath = qApp->property("dataPath").toString();
@@ -592,6 +593,8 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
       return 1;
     }
+
+    checkPathsForSanity(*game, settings);
 
     if (splashPath.startsWith(':')) {
       // currently using MO splash, see if the plugin contains one
