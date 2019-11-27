@@ -75,20 +75,30 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="0">
+             <item row="2" column="0">
               <widget class="QLabel" name="label_10">
                <property name="text">
                 <string>Style</string>
                </property>
               </widget>
              </item>
-             <item row="1" column="1">
+             <item row="2" column="1">
               <widget class="QComboBox" name="styleBox">
                <property name="toolTip">
                 <string>Visual theme of the user interface.</string>
                </property>
                <property name="whatsThis">
                 <string>Visual theme of the user interface.</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="LinkLabel" name="label_33">
+               <property name="text">
+                <string>&lt;a href=&quot;https://www.transifex.com/tannin/mod-organizer/&quot;&gt;Help translate Mod Organizer&lt;/a&gt;</string>
+               </property>
+               <property name="openExternalLinks">
+                <bool>true</bool>
                </property>
               </widget>
              </item>
