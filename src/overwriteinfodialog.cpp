@@ -106,13 +106,24 @@ OverwriteInfoDialog::~OverwriteInfoDialog()
 
 void OverwriteInfoDialog::showEvent(QShowEvent* e)
 {
-  Settings::instance().geometry().restoreGeometry(this);
+  const auto& s = Settings::instance();
+
+  s.geometry().restoreGeometry(this);
+
+  if (!s.geometry().restoreState(ui->filesView->header())) {
+    ui->filesView->sortByColumn(0, Qt::AscendingOrder);
+  }
+
   QDialog::showEvent(e);
 }
 
 void OverwriteInfoDialog::done(int r)
 {
-  Settings::instance().geometry().saveGeometry(this);
+  auto& s = Settings::instance();
+
+  s.geometry().saveGeometry(this);
+  s.geometry().saveState(ui->filesView->header());
+
   QDialog::done(r);
 }
 

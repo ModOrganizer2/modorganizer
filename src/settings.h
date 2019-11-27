@@ -605,6 +605,11 @@ public:
   bool isTutorialCompleted(const QString& windowName) const;
   void setTutorialCompleted(const QString& windowName, bool b=true);
 
+  // whether to show the confirmation when switching instances
+  //
+  bool showChangeGameConfirmation() const;
+  void setShowChangeGameConfirmation(bool b) const;
+
 private:
   QSettings& m_Settings;
 };

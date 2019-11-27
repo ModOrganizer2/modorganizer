@@ -119,6 +119,29 @@ private:
 };
 
 
+class ModuleNotification
+{
+public:
+  ModuleNotification(QObject* o, std::function<void (Module)> f);
+  ~ModuleNotification();
+
+  ModuleNotification(const ModuleNotification&) = delete;
+  ModuleNotification& operator=(const ModuleNotification&) = delete;
+
+  ModuleNotification(ModuleNotification&&) = default;
+  ModuleNotification& operator=(ModuleNotification&&) = default;
+
+  void setCookie(void* c);
+  void fire(QString path, std::size_t fileSize);
+
+private:
+  void* m_cookie;
+  QObject* m_object;
+  std::set<QString> m_loaded;
+  std::function<void (Module)> m_f;
+};
+
+
 // represents the process's environment
 //
 class Environment
@@ -146,6 +169,16 @@ public:
   // information about displays
   //
   const Metrics& metrics() const;
+
+  // timezone
+  //
+  QString timezone() const;
+
+  // will call `f` on the same thread `o` is running on every time a module
+  // is loaded in the process
+  //
+  std::unique_ptr<ModuleNotification> onModuleLoaded(
+    QObject* o, std::function<void (Module)> f);
 
   // logs the environment
   //

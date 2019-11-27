@@ -177,9 +177,14 @@ int checkMissingFiles()
 {
   // files that are likely to be eaten
   static const QStringList files({
-    "helper.exe", "nxmhandler.exe",
-    "usvfs_proxy_x64.exe", "usvfs_proxy_x86.exe",
-    "usvfs_x64.dll", "usvfs_x86.dll"
+    "helper.exe",
+    "nxmhandler.exe",
+    "usvfs_proxy_x64.exe",
+    "usvfs_proxy_x86.exe",
+    "usvfs_x64.dll",
+    "usvfs_x86.dll",
+    "loot/loot.dll",
+    "loot/lootcli.exe"
     });
 
   log::debug("  . missing files");
@@ -202,29 +207,36 @@ int checkMissingFiles()
   return n;
 }
 
-bool checkNahimic(const env::Environment& e)
+int checkIncompatibleModule(const env::Module& m)
 {
-  // Nahimic seems to interfere mostly with dialogs, like the mod info dialog:
-  // it renders dialogs fully white and makes it impossible to interact with
-  // them
+  // these dlls seems to interfere mostly with dialogs, like the mod info
+  // dialog: it renders dialogs fully white and makes it impossible to interact
+  // with them
   //
-  // NahimicOSD.dll is usually loaded on startup, but there has been some
-  // reports where it got loaded later, so this check is not entirely accurate
+  // the dlls is usually loaded on startup, but there has been some  reports
+  // where it got loaded later, so this is also called every time a new module
+  // is loaded into this process
 
-  for (auto&& m : e.loadedModules()) {
-    const QFileInfo file(m.path());
+  static const std::map<QString, QString> names = {
+    {"NahimicOSD.dll", "Nahimic"},
+    {"RTSSHooks64.dll", "RivaTuner Statistics Server"}
+  };
 
-    if (file.fileName().compare("NahimicOSD.dll", Qt::CaseInsensitive) == 0) {
+  const QFileInfo file(m.path());
+  int n = 0;
+
+  for (auto&& p : names) {
+    if (file.fileName().compare(p.first, Qt::CaseInsensitive) == 0) {
       log::warn(
-        "NahimicOSD.dll is loaded. Nahimic is known to cause issues with "
+        "{} is loaded. This program is known to cause issues with "
         "Mod Organizer, such as freezing or blank windows. Consider "
-        "uninstalling it.");
+        "uninstalling it. ({})", p.second, file.absoluteFilePath());
 
-      return true;
+      ++n;
     }
   }
 
-  return false;
+  return n;
 }
 
 int checkIncompatibilities(const env::Environment& e)
@@ -233,8 +245,8 @@ int checkIncompatibilities(const env::Environment& e)
 
   int n = 0;
 
-  if (checkNahimic(e)) {
-    ++n;
+  for (auto&& m : e.loadedModules()) {
+    n += checkIncompatibleModule(m);
   }
 
   return n;

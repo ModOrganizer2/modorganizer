@@ -1961,6 +1961,16 @@ void InterfaceSettings::setTutorialCompleted(const QString& windowName, bool b)
   set(m_Settings, "CompletedWindowTutorials", windowName, b);
 }
 
+bool InterfaceSettings::showChangeGameConfirmation() const
+{
+  return get<bool>(m_Settings, "Settings", "show_change_game_confirmation", true);
+}
+
+void InterfaceSettings::setShowChangeGameConfirmation(bool b) const
+{
+  set(m_Settings, "Settings", "show_change_game_confirmation", b);
+}
+
 
 DiagnosticsSettings::DiagnosticsSettings(QSettings& settings)
   : m_Settings(settings)

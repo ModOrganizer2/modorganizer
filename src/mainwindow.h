@@ -448,6 +448,7 @@ private slots:
   void hideFile();
   void unhideFile();
   void openDataOriginExplorer_clicked();
+  void openDataModInfo_clicked();
 
   // pluginlist context menu
   void enableSelectedPlugins_clicked();

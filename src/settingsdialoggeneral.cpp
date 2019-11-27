@@ -17,6 +17,7 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
   ui->colorTable->load(s);
 
   ui->centerDialogs->setChecked(settings().geometry().centerDialogs());
+  ui->changeGameConfirmation->setChecked(settings().interface().showChangeGameConfirmation());
   ui->compactBox->setChecked(settings().interface().compactDownloads());
   ui->showMetaBox->setChecked(settings().interface().metaDownloads());
   ui->checkForUpdates->setChecked(settings().checkForUpdates());
@@ -59,6 +60,7 @@ void GeneralSettingsTab::update()
   ui->colorTable->commitColors();
 
   settings().geometry().setCenterDialogs(ui->centerDialogs->isChecked());
+  settings().interface().setShowChangeGameConfirmation(ui->changeGameConfirmation->isChecked());
   settings().interface().setCompactDownloads(ui->compactBox->isChecked());
   settings().interface().setMetaDownloads(ui->showMetaBox->isChecked());
   settings().setCheckForUpdates(ui->checkForUpdates->isChecked());

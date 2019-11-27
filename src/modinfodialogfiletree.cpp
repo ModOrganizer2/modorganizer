@@ -55,6 +55,18 @@ void FileTreeTab::clear()
   setHasData(true);
 }
 
+void FileTreeTab::saveState(Settings& s)
+{
+  s.geometry().saveState(ui->filetree->header());
+}
+
+void FileTreeTab::restoreState(const Settings& s)
+{
+  if (!s.geometry().restoreState(ui->filetree->header())) {
+    ui->filetree->sortByColumn(0, Qt::AscendingOrder);
+  }
+}
+
 void FileTreeTab::update()
 {
   const auto rootPath = mod().absolutePath();

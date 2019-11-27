@@ -56,6 +56,71 @@ Console::~Console()
 }
 
 
+ModuleNotification::ModuleNotification(QObject* o, std::function<void (Module)> f)
+  : m_cookie(nullptr), m_object(o), m_f(std::move(f))
+{
+}
+
+ModuleNotification::~ModuleNotification()
+{
+  if (!m_cookie) {
+    return;
+  }
+
+  typedef NTSTATUS NTAPI LdrUnregisterDllNotificationType(
+    PVOID Cookie
+  );
+
+  LibraryPtr ntdll(LoadLibraryW(L"ntdll.dll"));
+
+  if (!ntdll) {
+    log::error("failed to load ntdll.dll while unregistering for module notifications");
+    return;
+  }
+
+  auto* LdrUnregisterDllNotification = reinterpret_cast<LdrUnregisterDllNotificationType*>(
+    GetProcAddress(ntdll.get(), "LdrUnregisterDllNotification"));
+
+  if (!LdrUnregisterDllNotification) {
+    log::error("LdrUnregisterDllNotification not found in ntdll.dll");
+    return;
+  }
+
+  const auto r = LdrUnregisterDllNotification(m_cookie);
+  if (r != 0) {
+    log::error("failed to unregister for module notifications, error {}", r);
+  }
+}
+
+void ModuleNotification::setCookie(void* c)
+{
+  m_cookie = c;
+}
+
+void ModuleNotification::fire(QString path, std::size_t fileSize)
+{
+  if (m_loaded.contains(path)) {
+    // don't notify if it's been loaded before
+  }
+
+  m_loaded.insert(path);
+
+  // constructing a Module will query the version info of the file, which seems
+  // to generate an access violation for at least plugin_python.dll on Windows 7
+  //
+  // it's not clear what the problem is, but making sure this is deferred until
+  // _after_ the dll is loaded seems to fix it
+  //
+  // so this queues the callback in the main thread
+
+  if (m_f) {
+    QMetaObject::invokeMethod(m_object, [path, fileSize, f=m_f] {
+      f(Module(path, fileSize));
+    }, Qt::QueuedConnection);
+  }
+}
+
+
 Environment::Environment()
 {
 }
@@ -104,17 +169,169 @@ const Metrics& Environment::metrics() const
   return *m_metrics;
 }
 
+QString Environment::timezone() const
+{
+  TIME_ZONE_INFORMATION tz = {};
+
+  const auto r = GetTimeZoneInformation(&tz);
+  if (r == TIME_ZONE_ID_INVALID) {
+    const auto e = GetLastError();
+    log::error("failed to get timezone, {}", formatSystemMessage(e));
+    return "unknown";
+  }
+
+  auto offsetString = [](int o) {
+    return
+      QString("%1%2:%3")
+      .arg(o < 0 ? "" : "+")
+      .arg(QString::number(o / 60), 2, QChar::fromLatin1('0'))
+      .arg(QString::number(o % 60), 2, QChar::fromLatin1('0'));
+  };
+
+  const auto stdName = QString::fromWCharArray(tz.StandardName);
+  const auto stdOffset = -(tz.Bias + tz.StandardBias);
+  const auto std = QString("%1, %2")
+    .arg(stdName)
+    .arg(offsetString(stdOffset));
+
+  const auto dstName = QString::fromWCharArray(tz.DaylightName);
+  const auto dstOffset = -(tz.Bias + tz.DaylightBias);
+  const auto dst = QString("%1, %2")
+    .arg(dstName)
+    .arg(offsetString(dstOffset));
+
+  QString s;
+
+  if (r == TIME_ZONE_ID_DAYLIGHT) {
+    s = dst + " (dst is active, std is " + std + ")";
+  } else {
+    s = std + " (std is active, dst is " + dst + ")";
+  }
+
+  return s;
+}
+
+std::unique_ptr<ModuleNotification> Environment::onModuleLoaded(
+  QObject* o, std::function<void (Module)> f)
+{
+  typedef struct _UNICODE_STRING {
+    USHORT Length;
+    USHORT MaximumLength;
+    PWSTR  Buffer;
+  } UNICODE_STRING, *PUNICODE_STRING;
+
+  typedef const PUNICODE_STRING PCUNICODE_STRING;
+
+  typedef struct _LDR_DLL_LOADED_NOTIFICATION_DATA {
+    ULONG Flags;                    //Reserved.
+    PCUNICODE_STRING FullDllName;   //The full path name of the DLL module.
+    PCUNICODE_STRING BaseDllName;   //The base file name of the DLL module.
+    PVOID DllBase;                  //A pointer to the base address for the DLL in memory.
+    ULONG SizeOfImage;              //The size of the DLL image, in bytes.
+  } LDR_DLL_LOADED_NOTIFICATION_DATA, *PLDR_DLL_LOADED_NOTIFICATION_DATA;
+
+  typedef struct _LDR_DLL_UNLOADED_NOTIFICATION_DATA {
+    ULONG Flags;                    //Reserved.
+    PCUNICODE_STRING FullDllName;   //The full path name of the DLL module.
+    PCUNICODE_STRING BaseDllName;   //The base file name of the DLL module.
+    PVOID DllBase;                  //A pointer to the base address for the DLL in memory.
+    ULONG SizeOfImage;              //The size of the DLL image, in bytes.
+  } LDR_DLL_UNLOADED_NOTIFICATION_DATA, *PLDR_DLL_UNLOADED_NOTIFICATION_DATA;
+
+  typedef union _LDR_DLL_NOTIFICATION_DATA {
+    LDR_DLL_LOADED_NOTIFICATION_DATA Loaded;
+    LDR_DLL_UNLOADED_NOTIFICATION_DATA Unloaded;
+  } LDR_DLL_NOTIFICATION_DATA, *PLDR_DLL_NOTIFICATION_DATA;
+
+  typedef VOID CALLBACK LDR_DLL_NOTIFICATION_FUNCTION(
+    ULONG                            NotificationReason,
+    const PLDR_DLL_NOTIFICATION_DATA NotificationData,
+    PVOID                            Context
+  );
+
+  typedef LDR_DLL_NOTIFICATION_FUNCTION* PLDR_DLL_NOTIFICATION_FUNCTION;
+
+  typedef NTSTATUS NTAPI LdrRegisterDllNotificationType(
+    ULONG                          Flags,
+    PLDR_DLL_NOTIFICATION_FUNCTION NotificationFunction,
+    PVOID                          Context,
+    PVOID                          *Cookie
+  );
+
+  const ULONG LDR_DLL_NOTIFICATION_REASON_LOADED = 1;
+  const ULONG LDR_DLL_NOTIFICATION_REASON_UNLOADED = 2;
+
+
+  // loading ntdll.dll, the function will be found with GetProcAddress()
+  LibraryPtr ntdll(LoadLibraryW(L"ntdll.dll"));
+
+  if (!ntdll) {
+    log::error("failed to load ntdll.dll while registering for module notifications");
+    return {};
+  }
+
+  auto* LdrRegisterDllNotification = reinterpret_cast<LdrRegisterDllNotificationType*>(
+    GetProcAddress(ntdll.get(), "LdrRegisterDllNotification"));
+
+  if (!LdrRegisterDllNotification) {
+    log::error("LdrRegisterDllNotification not found in ntdll.dll");
+    return {};
+  }
+
+
+  auto context = std::make_unique<ModuleNotification>(o, f);
+  void* cookie = nullptr;
+
+  auto OnDllLoaded = [](ULONG reason, const PLDR_DLL_NOTIFICATION_DATA data, void* context) {
+    if (reason == LDR_DLL_NOTIFICATION_REASON_LOADED) {
+      if (data && data->Loaded.FullDllName) {
+        if (context) {
+          static_cast<ModuleNotification*>(context)->fire(
+            QString::fromWCharArray(
+              data->Loaded.FullDllName->Buffer,
+              data->Loaded.FullDllName->Length / sizeof(wchar_t)),
+            data->Loaded.SizeOfImage);
+        }
+      }
+    }
+  };
+
+  const auto r = LdrRegisterDllNotification(
+    0, OnDllLoaded, context.get(), &cookie);
+
+  if (r != 0) {
+    log::error("failed to register for module notifications, error {}", r);
+    return {};
+  }
+
+  context->setCookie(cookie);
+
+  return context;
+}
+
 void Environment::dump(const Settings& s) const
 {
   log::debug("windows: {}", windowsInfo().toString());
+
+  log::debug("time zone: {}", timezone());
 
   if (windowsInfo().compatibilityMode()) {
     log::warn("MO seems to be running in compatibility mode");
   }
 
   log::debug("security products:");
-  for (const auto& sp : securityProducts()) {
-    log::debug("  . {}", sp.toString());
+
+  {
+    // ignore products with identical names, some AVs register themselves with
+    // the same names and provider, but different guids
+    std::set<QString> productNames;
+    for (const auto& sp : securityProducts()) {
+      productNames.insert(sp.toString());
+    }
+
+    for (auto&& name : productNames) {
+      log::debug("  . {}", name);
+    }
   }
 
   log::debug("modules loaded in process:");

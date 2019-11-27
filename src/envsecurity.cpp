@@ -207,13 +207,6 @@ QString SecurityProduct::toString() const
     s += ", definitions outdated";
   }
 
-  // all products have a guid, but the windows firewall is not actually a real
-  // one from wmi, it's queried independently in getWindowsFirewall() and has a
-  // null guid, so just don't log it
-  if (!m_guid.isNull()) {
-    s += ", " + m_guid.toString(QUuid::QUuid::WithoutBraces);
-  }
-
   return s;
 }
 
@@ -390,7 +383,18 @@ std::optional<SecurityProduct> getWindowsFirewall()
     hr = policy->get_FirewallEnabled(NET_FW_PROFILE2_PUBLIC, &enabledVariant);
     if (FAILED(hr))
     {
-      log::error("get_FirewallEnabled failed, {}", formatSystemMessage(hr));
+      // EPT_S_NOT_REGISTERED is "There are no more endpoints available from the
+      // endpoint mapper", which seems to happen sometimes on Windows 7 when the
+      // firewall has been disabled, so treat it as such and don't log it
+      //
+      // however the user reported the error was actually 0x800706d9, not just
+      // 0x6d9 (1753, what EPT_S_NOT_REGISTERED is defined to), so this is
+      // testing for both because it's not clear which it is and nobody can
+      // reproduce it
+      if (hr != EPT_S_NOT_REGISTERED && hr != 0x800706d9) {
+        log::error("get_FirewallEnabled failed, {}", formatSystemMessage(hr));
+      }
+
       return {};
     }
   }

@@ -996,8 +996,8 @@ void DownloadManager::queryInfoMd5(int index)
   QCryptographicHash hash(QCryptographicHash::Md5);
   const qint64 progressStep = 10 * 1024 * 1024;
   QProgressDialog progress(tr("Hashing download file '%1'").arg(info->m_FileName),
-                           tr("Cancel"), 
-                           0, 
+                           tr("Cancel"),
+                           0,
                            downloadFile.size() / progressStep);
   progress.setWindowModality(Qt::WindowModal);
   progress.setMinimumDuration(1000);
@@ -1606,7 +1606,7 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
       emit showMessage(tr("No matching file found on Nexus! Maybe this file is no longer available or it was renamed?"));
     } else {
       SelectionDialog selection(tr("No file on Nexus matches the selected file by name. Please manually choose the correct one."));
-      std::sort(files.begin(), files.end(), [](const QVariant& lhs, const QVariant& rhs) 
+      std::sort(files.begin(), files.end(), [](const QVariant& lhs, const QVariant& rhs)
         {return lhs.toMap()["uploaded_timestamp"].toInt() > rhs.toMap()["uploaded_timestamp"].toInt();});
       for (QVariant file : files) {
         QVariantMap fileInfo = file.toMap();
@@ -1692,7 +1692,6 @@ static int evaluateFileInfoMap(
   }
 
   if (!found) {
-    log::error("server '{}' not found while sorting by preference", name);
     return 0;
   }
 

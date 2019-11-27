@@ -190,6 +190,11 @@ const QSize SmallToolbarSize(24, 24);
 const QSize MediumToolbarSize(32, 32);
 const QSize LargeToolbarSize(42, 36);
 
+QString UnmanagedModName()
+{
+  return QObject::tr("<Unmanaged>");
+}
+
 bool runLoot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList);
 
 
@@ -277,6 +282,7 @@ MainWindow::MainWindow(Settings &settings
   ui->espList->installEventFilter(m_OrganizerCore.pluginList());
 
   ui->bsaList->setLocalMoveOnly(true);
+  ui->bsaList->setHeaderHidden(true);
 
   initDownloadView();
 
@@ -1660,9 +1666,13 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
       QString fileName = ToQString(current->getName());
       QStringList columns(fileName);
       FilesOrigin origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
-      QString source("data");
-      unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
-      if (modIndex != UINT_MAX) {
+
+      QString source;
+      const unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
+
+      if (modIndex == UINT_MAX) {
+        source = UnmanagedModName();
+      } else {
         ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
         source = modInfo->name();
       }
@@ -2045,12 +2055,17 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
     int originID = iter->second->data(1, Qt::UserRole).toInt();
 
     FilesOrigin origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
-    QString modName("data");
-    unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
-    if (modIndex != UINT_MAX) {
+
+    QString modName;
+    const unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
+
+    if (modIndex == UINT_MAX) {
+      modName = UnmanagedModName();
+    } else {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
       modName = modInfo->name();
     }
+
     QList<QTreeWidgetItem*> items = ui->bsaList->findItems(modName, Qt::MatchFixedString);
     QTreeWidgetItem * subItem = nullptr;
     if (items.length() > 0) {
@@ -5427,6 +5442,33 @@ void MainWindow::openDataOriginExplorer_clicked()
   shell::Explore(fullPath);
 }
 
+void MainWindow::openDataModInfo_clicked()
+{
+  if (m_ContextItem == nullptr) {
+    return;
+  }
+
+  const auto originID = m_ContextItem->data(1, Qt::UserRole + 1).toInt();
+  if (originID == 0) {
+    // unmanaged
+    return;
+  }
+
+  const auto& origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
+  const auto& name = QString::fromStdWString(origin.getName());
+
+  unsigned int index = ModInfo::getIndex(name);
+  if (index == UINT_MAX) {
+    log::error("can't open mod info, mod '{}' not found", name);
+    return;
+  }
+
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
+  if (modInfo) {
+    displayModInformation(modInfo, index, ModInfoTabIDs::None);
+  }
+}
+
 void MainWindow::updateAvailable()
 {
   ui->actionUpdate->setEnabled(true);
@@ -5471,6 +5513,8 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
     if (!isArchive && !isDirectory) {
       menu.addAction("Open Origin in Explorer", this, SLOT(openDataOriginExplorer_clicked()));
     }
+
+    menu.addAction("Open Mod Info", this, SLOT(openDataModInfo_clicked()));
 
     // offer to hide/unhide file, but not for files from archives
     if (!isArchive) {
@@ -6139,14 +6183,18 @@ void MainWindow::on_actionNotifications_triggered()
 
 void MainWindow::on_actionChange_Game_triggered()
 {
-  const auto r = QMessageBox::question(
-    this, tr("Are you sure?"), tr("This will restart MO, continue?"),
-    QMessageBox::Yes | QMessageBox::Cancel);
+  if (m_OrganizerCore.settings().interface().showChangeGameConfirmation()) {
+    const auto r = QMessageBox::question(
+      this, tr("Are you sure?"), tr("This will restart MO, continue?"),
+      QMessageBox::Yes | QMessageBox::Cancel);
 
-  if (r == QMessageBox::Yes) {
-    InstanceManager::instance().clearCurrentInstance();
-    ExitModOrganizer(Exit::Restart);
+    if (r != QMessageBox::Yes) {
+      return;
+    }
   }
+
+  InstanceManager::instance().clearCurrentInstance();
+  ExitModOrganizer(Exit::Restart);
 }
 
 void MainWindow::setCategoryListVisible(bool visible)

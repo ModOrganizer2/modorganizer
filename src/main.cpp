@@ -93,6 +93,7 @@ using namespace MOShared;
 
 
 void sanityChecks(const env::Environment& env);
+int checkIncompatibleModule(const env::Module& m);
 
 bool createAndMakeWritable(const std::wstring &subPath) {
   QString const dataPath = qApp->property("dataPath").toString();
@@ -547,11 +548,30 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     settings.dump();
     sanityChecks(env);
 
+    const auto moduleNotification = env.onModuleLoaded(qApp, [](auto&& m) {
+      log::debug("loaded module {}", m.toString());
+      checkIncompatibleModule(m);
+    });
+
     log::debug("initializing core");
     OrganizerCore organizer(settings);
     if (!organizer.bootstrap()) {
       reportError("failed to set up data paths");
       return 1;
+    }
+
+    {
+      // log if there are any dmp files
+      const auto hasCrashDumps =
+        !QDir(QString::fromStdWString(organizer.crashDumpsPath()))
+          .entryList({"*.dmp"}, QDir::Files)
+          .empty();
+
+      if (hasCrashDumps) {
+        log::debug(
+          "there are crash dumps in '{}'",
+          QString::fromStdWString(organizer.crashDumpsPath()));
+      }
     }
 
     log::debug("initializing plugins");
