@@ -6552,6 +6552,11 @@ void MainWindow::on_categoriesOrBtn_toggled(bool checked)
   }
 }
 
+void MainWindow::on_categoriesNotBtn_toggled(bool checked)
+{
+  m_ModListSortProxy->setFilterNot(checked);
+}
+
 void MainWindow::on_managedArchiveLabel_linkHovered(const QString&)
 {
   QToolTip::showText(QCursor::pos(),

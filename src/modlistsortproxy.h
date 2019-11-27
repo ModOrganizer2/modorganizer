@@ -85,6 +85,7 @@ public:
   bool isFilterActive() const { return m_FilterActive; }
 
   void setFilterMode(FilterMode mode);
+  void setFilterNot(bool b);
 
   /**
    * @brief tests if the specified index has child nodes
@@ -129,9 +130,7 @@ private slots:
   void postDataChanged();
 
 private:
-
   Profile *m_Profile;
-
   std::vector<int> m_CategoryFilter;
   std::vector<int> m_ContentFilter;
   std::bitset<ModList::COL_LASTCOLUMN + 1> m_EnabledColumns;
@@ -139,6 +138,7 @@ private:
 
   bool m_FilterActive;
   FilterMode m_FilterMode;
+  bool m_FilterNot;
 
   std::vector<int> m_PreChangeFilters;
 
