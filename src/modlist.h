@@ -341,6 +341,7 @@ private:
   std::set<int> m_RequestIDs;
 
   mutable bool m_Modified;
+  bool m_InNotifyChange;
 
   QFontMetrics m_FontMetrics;
 
