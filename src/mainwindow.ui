@@ -47,7 +47,7 @@
         </size>
        </property>
        <property name="title">
-        <string>Categories</string>
+        <string>Filters</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_10" stretch="6,0,0">
         <property name="spacing">
