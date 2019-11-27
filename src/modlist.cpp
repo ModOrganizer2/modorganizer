@@ -61,6 +61,7 @@ ModList::ModList(PluginContainer *pluginContainer, QObject *parent)
   , m_Profile(nullptr)
   , m_NexusInterface(nullptr)
   , m_Modified(false)
+  , m_InNotifyChange(false)
   , m_FontMetrics(QFont())
   , m_DropOnItems(false)
   , m_PluginContainer(pluginContainer)
@@ -1195,6 +1196,32 @@ bool ModList::removeRows(int row, int count, const QModelIndex &parent)
 
 void ModList::notifyChange(int rowStart, int rowEnd)
 {
+  // this function can emit dataChanged(), which can eventually recurse back
+  // here; for example:
+  //
+  // - a filter is active in the mod list, such as "no categories"
+  // - mods are selected and a category is set on them
+  // - these mods get updated here and disappear from the list because they're
+  //   not in "no categories" anymore
+  // - dataChanged() is emitted
+  // - it's picked up in MainWindow::modlistSelectionsChanged() because the
+  //   selected mods are gone
+  // - it calls setOverwriteMarkers(), which calls notifyChange() again and
+  //   ends up here
+  // - dataChanged() is emitted again
+  //
+  // at this point, MO crashes because dataChanged() is not reentrant: it's in
+  // the middle of modifying internal data and crashes when trying to change an
+  // internal vector
+  //
+  // long story short, this prevents reentrancy
+  if (m_InNotifyChange) {
+    return;
+  }
+
+  m_InNotifyChange = true;
+  Guard g([&]{ m_InNotifyChange = false; });
+
   if (rowStart < 0) {
     m_Overwrite.clear();
     m_Overwritten.clear();
