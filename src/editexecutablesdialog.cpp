@@ -327,7 +327,7 @@ void EditExecutablesDialog::clearEdits()
 void EditExecutablesDialog::setEdits(const Executable& e)
 {
   ui->title->setText(e.title());
-  ui->binary->setText(QDir::toNativeSeparators(e.binaryInfo().absoluteFilePath()));
+  ui->binary->setText(QDir::toNativeSeparators(e.binaryInfo().filePath()));
   ui->workingDirectory->setText(QDir::toNativeSeparators(e.workingDirectory()));
   ui->arguments->setText(e.arguments());
   ui->overwriteSteamAppID->setChecked(!e.steamAppID().isEmpty());
