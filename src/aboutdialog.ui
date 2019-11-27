@@ -158,9 +158,9 @@
           </spacer>
          </item>
          <item>
-          <widget class="QLabel" name="sourceText">
+          <widget class="LinkLabel" name="sourceText">
            <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Source code can be found at &lt;a href=&quot;https://github.com/ModOrganizer2/modorganizer&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;GitHub&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Source code can be found at &lt;a href=&quot;https://github.com/ModOrganizer2/modorganizer&quot;&gt;GitHub&lt;/a&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
@@ -536,6 +536,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>LinkLabel</class>
+   <extends>QLabel</extends>
+   <header location="global">linklabel.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="resources.qrc"/>
  </resources>

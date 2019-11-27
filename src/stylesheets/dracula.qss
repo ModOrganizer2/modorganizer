@@ -30,6 +30,10 @@ QCheckBox, QGroupBox {
     selection-color: #bbbbbb;
 }
 
+LinkLabel {
+  qproperty-linkColor: #3399FF;
+}
+
 /*
  * GroupBox and CheckBox
  */

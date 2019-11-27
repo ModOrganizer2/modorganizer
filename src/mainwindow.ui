@@ -941,12 +941,12 @@ p, li { white-space: pre-wrap; }
              <item>
               <layout class="QHBoxLayout" name="horizontalLayout_9" stretch="0">
                <item>
-                <widget class="QLabel" name="managedArchiveLabel">
+                <widget class="LinkLabel" name="managedArchiveLabel">
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BSAs / BA2s are bundles of game assets (textures, scripts, etc.). By default, the engine loads these bundles in a separate step from loose files. &lt;p&gt;Their load order is specified by the priority of the corresponding plugin (right pane, plugins tab).&lt;/p&gt;&lt;p&gt;If there is a matching plugin, the game will load them no matter what.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Currently detected archives. (&lt;a href=&quot;#&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;What is an archive?&lt;/span&gt;&lt;/a&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Currently detected archives. (&lt;a href=&quot;#&quot;&gt;What is an archive?&lt;/a&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="wordWrap">
                   <bool>true</bool>
@@ -1772,6 +1772,11 @@ p, li { white-space: pre-wrap; }
    <class>StatusBar</class>
    <extends>QStatusBar</extends>
    <header>statusbar.h</header>
+  </customwidget>
+  <customwidget>
+   <class>LinkLabel</class>
+   <extends>QLabel</extends>
+   <header location="global">linklabel.h</header>
   </customwidget>
  </customwidgets>
  <resources>

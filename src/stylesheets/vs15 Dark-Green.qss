@@ -94,6 +94,9 @@ QTreeView::branch:selected {
 QLabel {
   background-color: transparent; }
 
+LinkLabel {
+  qproperty-linkColor: #3399FF; }
+
 /* Left Pane & File Trees #QTreeView, #QListView*/
 QTreeView::branch:closed:has-children {
   image: url(./vs15/branch-closed.png); }

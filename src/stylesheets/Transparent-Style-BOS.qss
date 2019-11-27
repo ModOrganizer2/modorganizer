@@ -743,3 +743,7 @@ QStatusBar::item {border: None;}
      border-bottom:1px solid #9A9A00;
     */
 }
+
+LinkLabel {
+  qproperty-linkColor: #3399FF;
+}
