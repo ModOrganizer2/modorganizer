@@ -278,52 +278,15 @@ bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags)
 bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) const
 {
   for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
-    switch (*iter) {
-      case CategoryFactory::CATEGORY_SPECIAL_CHECKED: {
-        if (!enabled && !info->alwaysEnabled() && !info->hasFlag(ModInfo::FLAG_SEPARATOR)) return false;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_UNCHECKED: {
-        if (enabled || info->alwaysEnabled()) return false;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE: {
-        if (!info->updateAvailable() && !info->downgradeAvailable()) return false;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY: {
-        if (info->getCategories().size() > 0) return false;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_CONFLICT: {
-        if (!hasConflictFlag(info->getFlags())) return false;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED: {
-        ModInfo::EEndorsedState state = info->endorsedState();
-        if (state != ModInfo::ENDORSED_FALSE) return false;
-      } break;
-	  case CategoryFactory::CATEGORY_SPECIAL_BACKUP: {
-        if (!info->hasFlag(ModInfo::FLAG_BACKUP)) return false;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_MANAGED: {
-        if (info->hasFlag(ModInfo::FLAG_FOREIGN)) return false;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_UNMANAGED: {
-        if (!info->hasFlag(ModInfo::FLAG_FOREIGN)) return false;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_NOGAMEDATA: {
-        if (!info->hasFlag(ModInfo::FLAG_INVALID)) return false;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_NONEXUSID: {
-        if (!(info->getNexusID() == -1 && !info->hasFlag(ModInfo::FLAG_FOREIGN) &&
-            !info->hasFlag(ModInfo::FLAG_BACKUP) &&
-            !info->hasFlag(ModInfo::FLAG_SEPARATOR) &&
-            !info->hasFlag(ModInfo::FLAG_OVERWRITE))) return false;
-      } break;
-      default: {
-        if (!info->categorySet(*iter)) return false;
-      } break;
+    if (!categoryMatchesMod(info, enabled, *iter)) {
+      return false;
     }
   }
 
   foreach (int content, m_ContentFilter) {
-    if (!info->hasContent(static_cast<ModInfo::EContent>(content))) return false;
+    if (!contentMatchesMod(info, enabled, content)) {
+      return false;
+    }
   }
 
   return true;
@@ -332,55 +295,78 @@ bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) cons
 bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
 {
   for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
-    switch (*iter) {
-      case CategoryFactory::CATEGORY_SPECIAL_CHECKED: {
-        if (enabled || info->alwaysEnabled()) return true;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_UNCHECKED: {
-        if (!enabled && !info->alwaysEnabled()) return true;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE: {
-        if (info->updateAvailable() || info->downgradeAvailable()) return true;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY: {
-        if (info->getCategories().size() == 0) return true;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_CONFLICT: {
-        if (hasConflictFlag(info->getFlags())) return true;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED: {
-        ModInfo::EEndorsedState state = info->endorsedState();
-        if ((state == ModInfo::ENDORSED_FALSE) || (state == ModInfo::ENDORSED_NEVER)) return true;
-      } break;
-	  case CategoryFactory::CATEGORY_SPECIAL_BACKUP: {
-        if (info->hasFlag(ModInfo::FLAG_BACKUP)) return true;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_MANAGED: {
-        if (!info->hasFlag(ModInfo::FLAG_FOREIGN)) return true;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_UNMANAGED: {
-        if (info->hasFlag(ModInfo::FLAG_FOREIGN)) return true;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_NOGAMEDATA: {
-        if (info->hasFlag(ModInfo::FLAG_INVALID)) return true;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_NONEXUSID: {
-        if ((info->getNexusID() == -1 && !info->hasFlag(ModInfo::FLAG_FOREIGN) &&
-          !info->hasFlag(ModInfo::FLAG_BACKUP) &&
-          !info->hasFlag(ModInfo::FLAG_SEPARATOR) &&
-          !info->hasFlag(ModInfo::FLAG_OVERWRITE))) return true;
-      } break;
-      default: {
-        if (info->categorySet(*iter)) return true;
-      } break;
+    if (categoryMatchesMod(info, enabled, *iter)) {
+      return true;
     }
   }
 
   foreach (int content, m_ContentFilter) {
-    if (info->hasContent(static_cast<ModInfo::EContent>(content))) return true;
+    if (contentMatchesMod(info, enabled, content)) {
+      return true;
+    }
   }
 
   return m_CategoryFilter.empty() && m_ContentFilter.empty();
+}
+
+bool ModListSortProxy::categoryMatchesMod(
+  ModInfo::Ptr info, bool enabled, int category) const
+{
+  switch (category)
+  {
+    case CategoryFactory::CATEGORY_SPECIAL_CHECKED:
+      return (enabled || info->alwaysEnabled());
+
+    case CategoryFactory::CATEGORY_SPECIAL_UNCHECKED:
+      return (!enabled && !info->alwaysEnabled());
+
+    case CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE:
+      return (info->updateAvailable() || info->downgradeAvailable());
+
+    case CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY:
+      return (info->getCategories().size() == 0);
+
+    case CategoryFactory::CATEGORY_SPECIAL_CONFLICT:
+      return (hasConflictFlag(info->getFlags()));
+
+    case CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED:
+    {
+      ModInfo::EEndorsedState state = info->endorsedState();
+      return ((state == ModInfo::ENDORSED_FALSE) || (state == ModInfo::ENDORSED_NEVER));
+    }
+
+    case CategoryFactory::CATEGORY_SPECIAL_BACKUP:
+      return (info->hasFlag(ModInfo::FLAG_BACKUP));
+
+    case CategoryFactory::CATEGORY_SPECIAL_MANAGED:
+      return (!info->hasFlag(ModInfo::FLAG_FOREIGN));
+
+    case CategoryFactory::CATEGORY_SPECIAL_UNMANAGED:
+      return (info->hasFlag(ModInfo::FLAG_FOREIGN));
+
+    case CategoryFactory::CATEGORY_SPECIAL_NOGAMEDATA:
+      return (info->hasFlag(ModInfo::FLAG_INVALID));
+
+    case CategoryFactory::CATEGORY_SPECIAL_NONEXUSID:
+    {
+      return (
+        info->getNexusID() == -1 &&
+        !info->hasFlag(ModInfo::FLAG_FOREIGN) &&
+        !info->hasFlag(ModInfo::FLAG_BACKUP) &&
+        !info->hasFlag(ModInfo::FLAG_SEPARATOR) &&
+        !info->hasFlag(ModInfo::FLAG_OVERWRITE));
+    }
+
+    default:
+    {
+      return (info->categorySet(category));
+    }
+  }
+}
+
+bool ModListSortProxy::contentMatchesMod(ModInfo::Ptr info, bool enabled, int content) const
+{
+  return info->hasContent(static_cast<ModInfo::EContent>(content));
 }
 
 bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const

@@ -142,6 +142,8 @@ private:
 
   std::vector<int> m_PreChangeFilters;
 
+  bool categoryMatchesMod(ModInfo::Ptr info, bool enabled, int category) const;
+  bool contentMatchesMod(ModInfo::Ptr info, bool enabled, int content) const;
 };
 
 #endif // MODLISTSORTPROXY_H
