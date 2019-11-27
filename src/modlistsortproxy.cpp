@@ -278,11 +278,11 @@ bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags)
 
 bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) const
 {
-  for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
-    if (info->hasFlag(ModInfo::FLAG_SEPARATOR) && !m_FilterSeparators) {
-      return false;
-    }
+  if (info->hasFlag(ModInfo::FLAG_SEPARATOR) && !m_FilterSeparators) {
+    return false;
+  }
 
+  for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
     if (!categoryMatchesMod(info, enabled, *iter)) {
       return false;
     }
@@ -299,14 +299,19 @@ bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) cons
 
 bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
 {
-  for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
-    if (info->hasFlag(ModInfo::FLAG_SEPARATOR) && !m_FilterSeparators) {
-      return false;
-    }
+  if (info->hasFlag(ModInfo::FLAG_SEPARATOR) && !m_FilterSeparators) {
+    return false;
+  }
 
+  for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
     if (categoryMatchesMod(info, enabled, *iter)) {
       return true;
     }
+  }
+
+  if (!m_CategoryFilter.empty()) {
+    // nothing matched
+    return false;
   }
 
   foreach (int content, m_ContentFilter) {
@@ -315,66 +320,116 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
     }
   }
 
-  return m_CategoryFilter.empty() && m_ContentFilter.empty();
+  if (!m_ContentFilter.empty()) {
+    // nothing matched
+    return false;
+  }
+
+  return true;
 }
 
 bool ModListSortProxy::categoryMatchesMod(
   ModInfo::Ptr info, bool enabled, int category) const
 {
+  bool b = false;
+
   switch (category)
   {
     case CategoryFactory::CATEGORY_SPECIAL_CHECKED:
-      return (enabled || info->alwaysEnabled());
+    {
+      b = (enabled || info->alwaysEnabled());
+      break;
+    }
 
     case CategoryFactory::CATEGORY_SPECIAL_UNCHECKED:
-      return (!enabled && !info->alwaysEnabled());
+    {
+      b = (!enabled && !info->alwaysEnabled());
+      break;
+    }
 
     case CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE:
-      return (info->updateAvailable() || info->downgradeAvailable());
+    {
+      b = (info->updateAvailable() || info->downgradeAvailable());
+      break;
+    }
 
     case CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY:
-      return (info->getCategories().size() == 0);
+    {
+      b = (info->getCategories().size() == 0);
+      break;
+    }
 
     case CategoryFactory::CATEGORY_SPECIAL_CONFLICT:
-      return (hasConflictFlag(info->getFlags()));
+    {
+      b = (hasConflictFlag(info->getFlags()));
+      break;
+    }
 
     case CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED:
     {
       ModInfo::EEndorsedState state = info->endorsedState();
-      return (state != ModInfo::ENDORSED_TRUE);
+      b = (state != ModInfo::ENDORSED_TRUE);
+      break;
     }
 
     case CategoryFactory::CATEGORY_SPECIAL_BACKUP:
-      return (info->hasFlag(ModInfo::FLAG_BACKUP));
+    {
+      b = (info->hasFlag(ModInfo::FLAG_BACKUP));
+      break;
+    }
 
     case CategoryFactory::CATEGORY_SPECIAL_MANAGED:
-      return (!info->hasFlag(ModInfo::FLAG_FOREIGN));
+    {
+      b = (!info->hasFlag(ModInfo::FLAG_FOREIGN));
+      break;
+    }
 
     case CategoryFactory::CATEGORY_SPECIAL_UNMANAGED:
-      return (info->hasFlag(ModInfo::FLAG_FOREIGN));
+    {
+      b = (info->hasFlag(ModInfo::FLAG_FOREIGN));
+      break;
+    }
 
     case CategoryFactory::CATEGORY_SPECIAL_NOGAMEDATA:
-      return (info->hasFlag(ModInfo::FLAG_INVALID));
+    {
+      b = (info->hasFlag(ModInfo::FLAG_INVALID));
+      break;
+    }
 
     case CategoryFactory::CATEGORY_SPECIAL_NONEXUSID:
     {
-      return (
+      b = (
         info->getNexusID() == -1 &&
         !info->hasFlag(ModInfo::FLAG_FOREIGN) &&
         !info->hasFlag(ModInfo::FLAG_BACKUP) &&
         !info->hasFlag(ModInfo::FLAG_OVERWRITE));
+
+      break;
     }
 
     default:
     {
-      return (info->categorySet(category));
+      b = (info->categorySet(category));
+      break;
     }
   }
+
+  if (m_FilterNot) {
+    b = !b;
+  }
+
+  return b;
 }
 
 bool ModListSortProxy::contentMatchesMod(ModInfo::Ptr info, bool enabled, int content) const
 {
-  return info->hasContent(static_cast<ModInfo::EContent>(content));
+  bool b = info->hasContent(static_cast<ModInfo::EContent>(content));
+
+  if (m_FilterNot) {
+    b = !b;
+  }
+
+  return b;
 }
 
 bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
