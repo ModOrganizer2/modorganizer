@@ -21,7 +21,6 @@ FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
   m_fs->setReadOnly(false);
   ui->filetree->setModel(m_fs);
   ui->filetree->setColumnWidth(0, 300);
-  ui->filetree->sortByColumn(0, Qt::AscendingOrder);
 
   m_actions.newFolder = new QAction(tr("&New Folder"), ui->filetree);
   m_actions.open = new QAction(tr("&Open/Execute"), ui->filetree);
@@ -63,7 +62,9 @@ void FileTreeTab::saveState(Settings& s)
 
 void FileTreeTab::restoreState(const Settings& s)
 {
-  s.geometry().restoreState(ui->filetree->header());
+  if (!s.geometry().restoreState(ui->filetree->header())) {
+    ui->filetree->sortByColumn(0, Qt::AscendingOrder);
+  }
 }
 
 void FileTreeTab::update()

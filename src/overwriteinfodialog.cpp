@@ -85,7 +85,6 @@ OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget *parent)
   ui->filesView->setModel(m_FileSystemModel);
   ui->filesView->setRootIndex(m_FileSystemModel->index(modInfo->absolutePath()));
   ui->filesView->setColumnWidth(0, 250);
-  ui->filesView->sortByColumn(0, Qt::AscendingOrder);
 
   m_DeleteAction = new QAction(tr("&Delete"), ui->filesView);
   m_RenameAction = new QAction(tr("&Rename"), ui->filesView);
@@ -110,7 +109,10 @@ void OverwriteInfoDialog::showEvent(QShowEvent* e)
   const auto& s = Settings::instance();
 
   s.geometry().restoreGeometry(this);
-  s.geometry().restoreState(ui->filesView->header());
+
+  if (!s.geometry().restoreState(ui->filesView->header())) {
+    ui->filesView->sortByColumn(0, Qt::AscendingOrder);
+  }
 
   QDialog::showEvent(e);
 }
