@@ -132,7 +132,7 @@
            <item>
             <widget class="QRadioButton" name="categoriesAndBtn">
              <property name="toolTip">
-              <string>If checked, only mods that match all selected categories are displayed.</string>
+              <string>Display mods that match all selected categories.</string>
              </property>
              <property name="text">
               <string>And</string>
@@ -145,7 +145,7 @@
            <item>
             <widget class="QRadioButton" name="categoriesOrBtn">
              <property name="toolTip">
-              <string>If checked, all mods that match at least one of the selected categories are displayed.</string>
+              <string>Display mods that match at least one of the selected categories</string>
              </property>
              <property name="text">
               <string>Or</string>
@@ -154,6 +154,9 @@
            </item>
            <item>
             <widget class="QCheckBox" name="categoriesNotBtn">
+             <property name="toolTip">
+              <string>Invert each selected category</string>
+             </property>
              <property name="text">
               <string>Not</string>
              </property>
@@ -161,6 +164,9 @@
            </item>
            <item>
             <widget class="QCheckBox" name="categoriesSeparators">
+             <property name="toolTip">
+              <string>Include separators</string>
+             </property>
              <property name="text">
               <string>Separators</string>
              </property>
