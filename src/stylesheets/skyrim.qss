@@ -113,6 +113,9 @@ QListView::item {
 QLabel {
   background-color: transparent; }
 
+LinkLabel {
+  qproperty-linkColor: #3399FF; }
+
 /* Font size */
 QLabel,
 QTextEdit,

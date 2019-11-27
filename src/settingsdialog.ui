@@ -1410,7 +1410,7 @@ programs you are intentionally running.</string>
         </spacer>
        </item>
        <item row="2" column="0">
-        <widget class="QLabel" name="diagnosticsExplainedLabel">
+        <widget class="LinkLabel" name="diagnosticsExplainedLabel">
          <property name="toolTip">
           <string>Hint: right click link and copy link location</string>
          </property>
@@ -1534,6 +1534,11 @@ programs you are intentionally running.</string>
    <class>ColorTable</class>
    <extends>QTableWidget</extends>
    <header>colortable.h</header>
+  </customwidget>
+  <customwidget>
+   <class>LinkLabel</class>
+   <extends>QLabel</extends>
+   <header location="global">linklabel.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

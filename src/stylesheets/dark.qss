@@ -381,3 +381,7 @@ DownloadListWidget[downloadView=standard]::item {
 DownloadListWidget[downloadView=compact]::item {
 	padding: 4px;
 }
+
+LinkLabel {
+  qproperty-linkColor: #3399FF;
+}

@@ -66,6 +66,10 @@ QSplitter {
 	width: 8px;
 }
 
+LinkLabel {
+  qproperty-linkColor: #3399FF;
+}
+
 /* Toolbar */
 
 QToolBar {
