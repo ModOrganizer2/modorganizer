@@ -159,6 +159,13 @@
              </property>
             </widget>
            </item>
+           <item>
+            <widget class="QCheckBox" name="categoriesSeparators">
+             <property name="text">
+              <string>Separators</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>

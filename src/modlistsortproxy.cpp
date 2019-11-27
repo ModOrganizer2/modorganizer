@@ -39,6 +39,7 @@ ModListSortProxy::ModListSortProxy(Profile* profile, QObject *parent)
   , m_FilterActive(false)
   , m_FilterMode(FILTER_AND)
   , m_FilterNot(false)
+  , m_FilterSeparators(false)
 {
   setDynamicSortFilter(true); // this seems to work without dynamicsortfilter
                               // but I don't know why. This should be necessary
@@ -278,6 +279,10 @@ bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags)
 bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) const
 {
   for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
+    if (info->hasFlag(ModInfo::FLAG_SEPARATOR) && !m_FilterSeparators) {
+      return false;
+    }
+
     if (!categoryMatchesMod(info, enabled, *iter)) {
       return false;
     }
@@ -295,6 +300,10 @@ bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) cons
 bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
 {
   for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
+    if (info->hasFlag(ModInfo::FLAG_SEPARATOR) && !m_FilterSeparators) {
+      return false;
+    }
+
     if (categoryMatchesMod(info, enabled, *iter)) {
       return true;
     }
@@ -332,7 +341,7 @@ bool ModListSortProxy::categoryMatchesMod(
     case CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED:
     {
       ModInfo::EEndorsedState state = info->endorsedState();
-      return ((state == ModInfo::ENDORSED_FALSE) || (state == ModInfo::ENDORSED_NEVER));
+      return (state != ModInfo::ENDORSED_TRUE);
     }
 
     case CategoryFactory::CATEGORY_SPECIAL_BACKUP:
@@ -353,7 +362,6 @@ bool ModListSortProxy::categoryMatchesMod(
         info->getNexusID() == -1 &&
         !info->hasFlag(ModInfo::FLAG_FOREIGN) &&
         !info->hasFlag(ModInfo::FLAG_BACKUP) &&
-        !info->hasFlag(ModInfo::FLAG_SEPARATOR) &&
         !info->hasFlag(ModInfo::FLAG_OVERWRITE));
     }
 
@@ -476,6 +484,14 @@ void ModListSortProxy::setFilterNot(bool b)
 {
   if (b != m_FilterNot) {
     m_FilterNot = b;
+    this->invalidate();
+  }
+}
+
+void ModListSortProxy::setFilterSeparators(bool b)
+{
+  if (b != m_FilterSeparators) {
+    m_FilterSeparators = b;
     this->invalidate();
   }
 }

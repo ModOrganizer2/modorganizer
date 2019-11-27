@@ -86,6 +86,7 @@ public:
 
   void setFilterMode(FilterMode mode);
   void setFilterNot(bool b);
+  void setFilterSeparators(bool b);
 
   /**
    * @brief tests if the specified index has child nodes
@@ -139,6 +140,7 @@ private:
   bool m_FilterActive;
   FilterMode m_FilterMode;
   bool m_FilterNot;
+  bool m_FilterSeparators;
 
   std::vector<int> m_PreChangeFilters;
 

@@ -660,6 +660,7 @@ private slots: // ui slots
   void on_categoriesAndBtn_toggled(bool checked);
   void on_categoriesOrBtn_toggled(bool checked);
   void on_categoriesNotBtn_toggled(bool checked);
+  void on_categoriesSeparators_toggled(bool checked);
   void on_managedArchiveLabel_linkHovered(const QString &link);
 
   void storeSettings();
