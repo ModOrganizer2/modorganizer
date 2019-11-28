@@ -39,6 +39,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 class Executable;
 class CategoryFactory;
 class OrganizerCore;
+class FilterList;
 
 class PluginListSortProxy;
 namespace BSA { class Archive; }
@@ -235,8 +236,6 @@ private:
 
   void writeDataToFile(QFile &file, const QString &directory, const MOShared::DirectoryEntry &directoryEntry);
 
-  void refreshFilters();
-
   /**
    * Sets category selections from menu; for multiple mods, this will only apply
    * the changes made in the menu (which is the delta between the current menu selection and the reference mod)
@@ -265,10 +264,6 @@ private:
   bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
 
   size_t checkForProblems();
-
-  QTreeWidgetItem *addFilterItem(QTreeWidgetItem *root, const QString &name, int categoryID, ModListSortProxy::FilterType type);
-  void addContentFilters();
-  void addCategoryFilters(QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID);
 
   void setCategoryListVisible(bool visible);
 
@@ -326,6 +321,8 @@ private:
   QAction* m_linksSeparator;
 
   MOBase::TutorialControl m_Tutorial;
+
+  std::unique_ptr<FilterList> m_Filters;
 
   int m_OldProfileIndex;
 
@@ -515,7 +512,6 @@ private slots:
 
   void onRequestsChanged(const APIStats& stats, const APIUserAccount& user);
 
-  void editCategories();
   void deselectFilters();
 
   void displayModInformation(const QString &modName, ModInfoTabIDs tabID);
@@ -630,7 +626,6 @@ private slots: // ui slots
   void on_clearFiltersButton_clicked();
   void on_btnRefreshData_clicked();
   void on_btnRefreshDownloads_clicked();
-  void on_categoriesList_customContextMenuRequested(const QPoint &pos);
   void on_conflictsCheckBox_toggled(bool checked);
   void on_showArchiveDataCheckBox_toggled(bool checked);
   void on_dataTree_customContextMenuRequested(const QPoint &pos);
@@ -647,7 +642,6 @@ private slots: // ui slots
   void on_espList_customContextMenuRequested(const QPoint &pos);
   void on_displayCategoriesBtn_toggled(bool checked);
   void on_groupCombo_currentIndexChanged(int index);
-  void on_categoriesList_itemSelectionChanged();
   void on_linkButton_pressed();
   void on_showHiddenBox_toggled(bool checked);
   void on_bsaList_itemChanged(QTreeWidgetItem *item, int column);
