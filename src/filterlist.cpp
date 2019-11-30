@@ -50,6 +50,11 @@ public:
     return m_checkbox->isChecked();
   }
 
+  void setInverted(bool b)
+  {
+    m_checkbox->setChecked(b);
+  }
+
 private:
   const int IDRole = Qt::UserRole;
   const int TypeRole = Qt::UserRole + 1;
@@ -223,7 +228,7 @@ void FilterList::onSelection()
   const QModelIndexList indices = ui->filters->selectionModel()->selectedRows();
   std::vector<Criteria> criteria;
 
-  for (auto* item: ui->filters->selectedItems()) {
+  for (auto* item : ui->filters->selectedItems()) {
     const auto* ci = dynamic_cast<CriteriaItem*>(item);
     if (!ci) {
       continue;
@@ -242,8 +247,11 @@ void FilterList::onSelection()
 void FilterList::onContextMenu(const QPoint &pos)
 {
   QMenu menu;
+  menu.addAction(tr("Deselect filters"), [&]{ clearSelection(); });
+  menu.addAction(tr("Set inverted"), [&]{ toggleInverted(true); });
+  menu.addAction(tr("Unset inverted"), [&]{ toggleInverted(false); });
+  menu.addSeparator();
   menu.addAction(tr("Edit Categories..."), [&]{ editCategories(); });
-  menu.addAction(tr("Deselect filter"), [&]{ clearSelection(); });
 
   menu.exec(ui->filters->viewport()->mapToGlobal(pos));
 }
@@ -254,6 +262,27 @@ void FilterList::editCategories()
 
   if (dialog.exec() == QDialog::Accepted) {
     dialog.commitChanges();
+  }
+}
+
+void FilterList::toggleInverted(bool b)
+{
+  bool changed = false;
+
+  for (auto* item : ui->filters->selectedItems()) {
+    auto* ci = dynamic_cast<CriteriaItem*>(item);
+    if (!ci) {
+      continue;
+    }
+
+    if (ci->inverse() != b) {
+      ci->setInverted(b);
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    onSelection();
   }
 }
 
