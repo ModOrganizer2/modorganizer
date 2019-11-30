@@ -61,7 +61,7 @@ void ModListSortProxy::setCriteria(const std::vector<Criteria>& criteria)
   const bool changed = (criteria != m_Criteria);
   const bool isForUpdates = (
     !criteria.empty() &&
-    criteria[0].id == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE);
+    criteria[0].id == CategoryFactory::UpdateAvailable);
 
   if (changed || isForUpdates) {
     m_Criteria = criteria;
@@ -343,68 +343,56 @@ bool ModListSortProxy::categoryMatchesMod(
 
   switch (category)
   {
-    case CategoryFactory::CATEGORY_SPECIAL_CHECKED:
+    case CategoryFactory::Checked:
     {
       b = (enabled || info->alwaysEnabled());
       break;
     }
 
-    case CategoryFactory::CATEGORY_SPECIAL_UNCHECKED:
-    {
-      b = (!enabled && !info->alwaysEnabled());
-      break;
-    }
-
-    case CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE:
+    case CategoryFactory::UpdateAvailable:
     {
       b = (info->updateAvailable() || info->downgradeAvailable());
       break;
     }
 
-    case CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY:
+    case CategoryFactory::HasNoCategory:
     {
       b = (info->getCategories().size() == 0);
       break;
     }
 
-    case CategoryFactory::CATEGORY_SPECIAL_CONFLICT:
+    case CategoryFactory::Conflict:
     {
       b = (hasConflictFlag(info->getFlags()));
       break;
     }
 
-    case CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED:
+    case CategoryFactory::NotEndorsed:
     {
       ModInfo::EEndorsedState state = info->endorsedState();
       b = (state != ModInfo::ENDORSED_TRUE);
       break;
     }
 
-    case CategoryFactory::CATEGORY_SPECIAL_BACKUP:
+    case CategoryFactory::Backup:
     {
       b = (info->hasFlag(ModInfo::FLAG_BACKUP));
       break;
     }
 
-    case CategoryFactory::CATEGORY_SPECIAL_MANAGED:
+    case CategoryFactory::Managed:
     {
       b = (!info->hasFlag(ModInfo::FLAG_FOREIGN));
       break;
     }
 
-    case CategoryFactory::CATEGORY_SPECIAL_UNMANAGED:
-    {
-      b = (info->hasFlag(ModInfo::FLAG_FOREIGN));
-      break;
-    }
-
-    case CategoryFactory::CATEGORY_SPECIAL_NOGAMEDATA:
+    case CategoryFactory::NoGameData:
     {
       b = (info->hasFlag(ModInfo::FLAG_INVALID));
       break;
     }
 
-    case CategoryFactory::CATEGORY_SPECIAL_NONEXUSID:
+    case CategoryFactory::NoNexusID:
     {
       b = (
         info->getNexusID() == -1 &&

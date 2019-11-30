@@ -94,6 +94,8 @@ FilterList::FilterList(Ui::MainWindow* ui, CategoryFactory& factory)
 
   ui->filters->header()->setSectionResizeMode(0, QHeaderView::Stretch);
   ui->filters->header()->resizeSection(1, 50);
+  ui->categoriesSplitter->setCollapsible(0, false);
+  ui->categoriesSplitter->setCollapsible(1, false);
 }
 
 QTreeWidgetItem* FilterList::addCriteriaItem(
@@ -142,8 +144,10 @@ void FilterList::addCategoryCriteria(QTreeWidgetItem *root, const std::set<int> 
 
 void FilterList::addSpecialCriteria(int type)
 {
+  const auto sc = static_cast<CategoryFactory::SpecialCategories>(type);
+
   addCriteriaItem(
-    nullptr, m_factory.getSpecialCategoryName(type),
+    nullptr, m_factory.getSpecialCategoryName(sc),
     type, ModListSortProxy::TYPE_SPECIAL);
 }
 
@@ -157,17 +161,15 @@ void FilterList::refresh()
   ui->filters->clear();
 
   using F = CategoryFactory;
-  addSpecialCriteria(F::CATEGORY_SPECIAL_CHECKED);
-  addSpecialCriteria(F::CATEGORY_SPECIAL_UNCHECKED);
-  addSpecialCriteria(F::CATEGORY_SPECIAL_UPDATEAVAILABLE);
-  addSpecialCriteria(F::CATEGORY_SPECIAL_BACKUP);
-  addSpecialCriteria(F::CATEGORY_SPECIAL_MANAGED);
-  addSpecialCriteria(F::CATEGORY_SPECIAL_UNMANAGED);
-  addSpecialCriteria(F::CATEGORY_SPECIAL_NOCATEGORY);
-  addSpecialCriteria(F::CATEGORY_SPECIAL_CONFLICT);
-  addSpecialCriteria(F::CATEGORY_SPECIAL_NOTENDORSED);
-  addSpecialCriteria(F::CATEGORY_SPECIAL_NONEXUSID);
-  addSpecialCriteria(F::CATEGORY_SPECIAL_NOGAMEDATA);
+  addSpecialCriteria(F::Checked);
+  addSpecialCriteria(F::UpdateAvailable);
+  addSpecialCriteria(F::Backup);
+  addSpecialCriteria(F::Managed);
+  addSpecialCriteria(F::HasNoCategory);
+  addSpecialCriteria(F::Conflict);
+  addSpecialCriteria(F::NotEndorsed);
+  addSpecialCriteria(F::NoNexusID);
+  addSpecialCriteria(F::NoGameData);
 
   addContentCriteria();
 
@@ -211,7 +213,7 @@ void FilterList::setSelection(std::vector<int> categories)
       continue;
     }
 
-    if (item->id() == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) {
+    if (item->id() == CategoryFactory::UpdateAvailable) {
       ui->filters->setCurrentItem(ui->filters->topLevelItem(i));
       break;
     }

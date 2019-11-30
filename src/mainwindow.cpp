@@ -4126,11 +4126,11 @@ void MainWindow::checkModsForUpdates()
   if (updatesAvailable || checkingModsForUpdate) {
     m_ModListSortProxy->setCriteria({{
         ModListSortProxy::TYPE_SPECIAL,
-        CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE,
+        CategoryFactory::UpdateAvailable,
         false}
     });
 
-    m_Filters->setSelection({CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE});
+    m_Filters->setSelection({CategoryFactory::UpdateAvailable});
   }
 }
 
