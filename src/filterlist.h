@@ -32,8 +32,9 @@ private:
   void onSelection();
   void onCriteriaChanged();
 
-  void editCategories();
+  void clear();
   void toggleInverted(bool b);
+  void editCategories();
 
   QTreeWidgetItem* addCriteriaItem(
     QTreeWidgetItem *root, const QString &name, int categoryID,

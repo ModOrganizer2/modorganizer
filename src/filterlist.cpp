@@ -78,7 +78,7 @@ FilterList::FilterList(Ui::MainWindow* ui, CategoryFactory& factory)
 
   connect(
     ui->filtersClear, &QPushButton::clicked,
-    [&]{ clearSelection(); });
+    [&]{ clear(); });
 
   connect(
     ui->filtersAnd, &QCheckBox::toggled,
@@ -241,19 +241,22 @@ void FilterList::onSelection()
     });
   }
 
-  ui->filtersClear->setEnabled(!criteria.empty());
-
   emit criteriaChanged(criteria);
 }
 
 void FilterList::onContextMenu(const QPoint &pos)
 {
   QMenu menu;
-  menu.addAction(tr("Deselect filters"), [&]{ clearSelection(); });
-  menu.addAction(tr("Set inverted"), [&]{ toggleInverted(true); });
-  menu.addAction(tr("Unset inverted"), [&]{ toggleInverted(false); });
+
+  QAction* set = menu.addAction(tr("Set inverted"), [&]{ toggleInverted(true); });
+  QAction* unset = menu.addAction(tr("Unset inverted"), [&]{ toggleInverted(false); });
   menu.addSeparator();
   menu.addAction(tr("Edit Categories..."), [&]{ editCategories(); });
+
+  if (ui->filters->selectedItems().empty()) {
+    set->setEnabled(false);
+    unset->setEnabled(false);
+  }
 
   menu.exec(ui->filters->viewport()->mapToGlobal(pos));
 }
@@ -265,6 +268,21 @@ void FilterList::editCategories()
   if (dialog.exec() == QDialog::Accepted) {
     dialog.commitChanges();
   }
+}
+
+void FilterList::clear()
+{
+  const auto count = ui->filters->topLevelItemCount();
+  for (int i=0; i<count; ++i) {
+    auto* ci = dynamic_cast<CriteriaItem*>(ui->filters->topLevelItem(i));
+    if (!ci) {
+      continue;
+    }
+
+    ci->setInverted(false);
+  }
+
+  clearSelection();
 }
 
 void FilterList::toggleInverted(bool b)
