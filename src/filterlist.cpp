@@ -11,28 +11,23 @@ using Criteria = ModListSortProxy::Criteria;
 class FilterList::CriteriaItem : public QTreeWidgetItem
 {
 public:
+  enum States : int
+  {
+    FirstState = 0,
+
+    Inactive = FirstState,
+    Active,
+    Inverted,
+
+    LastState = Inverted
+  };
+
   CriteriaItem(FilterList* list, QString name, CriteriaType type, int id)
-    : QTreeWidgetItem({name}), m_list(list), m_widget(nullptr), m_checkbox(nullptr)
+    : QTreeWidgetItem({"", name}), m_list(list), m_state(Inactive)
   {
     setData(0, Qt::ToolTipRole, name);
     setData(0, TypeRole, type);
     setData(0, IDRole, id);
-
-    m_widget = new QWidget;
-    m_widget->setStyleSheet("background-color: rgba(0,0,0,0)");
-
-    auto* ly = new QVBoxLayout(m_widget);
-    ly->setAlignment(Qt::AlignCenter);
-    ly->setContentsMargins(0, 0, 0, 0);
-
-    m_checkbox = new QCheckBox;
-    QObject::connect(m_checkbox, &QCheckBox::toggled, [&]{ m_list->onSelection(); });
-    ly->addWidget(m_checkbox);
-  }
-
-  QWidget* widget()
-  {
-    return m_widget;
   }
 
   CriteriaType type() const
@@ -45,14 +40,37 @@ public:
     return data(0, IDRole).toInt();
   }
 
-  bool inverse() const
+  States state() const
   {
-    return m_checkbox->isChecked();
+    return m_state;
   }
 
-  void setInverted(bool b)
+  void setState(States s)
   {
-    m_checkbox->setChecked(b);
+    if (m_state != s) {
+      m_state = s;
+      updateState();
+    }
+  }
+
+  void nextState()
+  {
+    m_state = static_cast<States>(m_state + 1);
+    if (m_state > LastState) {
+      m_state = FirstState;
+    }
+
+    updateState();
+  }
+
+  void previousState()
+  {
+    m_state = static_cast<States>(m_state - 1);
+    if (m_state < FirstState) {
+      m_state = LastState;
+    }
+
+    updateState();
   }
 
 private:
@@ -60,40 +78,91 @@ private:
   const int TypeRole = Qt::UserRole + 1;
 
   FilterList* m_list;
-  QWidget* m_widget;
-  QCheckBox* m_checkbox;
+  States m_state;
+
+  void updateState()
+  {
+    QString s;
+
+    switch (m_state)
+    {
+      case Inactive:
+      {
+        break;
+      }
+
+      case Active:
+      {
+        // U+2713 CHECK MARK
+        s = QString::fromUtf8("\xe2\x9c\x93");
+        break;
+      }
+
+      case Inverted:
+      {
+        s = tr("Not");
+        break;
+      }
+    }
+
+    setText(0, s);
+  }
+};
+
+
+class ClickFilter : public QObject
+{
+public:
+  ClickFilter(std::function<bool (QMouseEvent*)> f)
+    : m_f(std::move(f))
+  {
+  }
+
+  bool eventFilter(QObject* o, QEvent* e) override
+  {
+    if (e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseButtonDblClick) {
+      if (m_f) {
+        return m_f(static_cast<QMouseEvent*>(e));
+      }
+    }
+
+    return QObject::eventFilter(o, e);;
+  }
+
+private:
+  std::function<bool (QMouseEvent*)> m_f;
 };
 
 
 FilterList::FilterList(Ui::MainWindow* ui, CategoryFactory& factory)
   : ui(ui), m_factory(factory)
 {
-  connect(
-    ui->filters, &QTreeWidget::customContextMenuRequested,
-    [&](auto&& pos){ onContextMenu(pos); });
-
-  connect(
-    ui->filters, &QTreeWidget::itemSelectionChanged,
-    [&]{ onSelection(); });
+  ui->filters->viewport()->installEventFilter(
+    new ClickFilter([&](auto* e){ return onClick(e); }));
 
   connect(
     ui->filtersClear, &QPushButton::clicked,
-    [&]{ clear(); });
+    [&]{ clearSelection(); });
+
+  connect(
+    ui->filtersEdit, &QPushButton::clicked,
+    [&]{ editCategories(); });
 
   connect(
     ui->filtersAnd, &QCheckBox::toggled,
-    [&]{ onCriteriaChanged(); });
+    [&]{ onOptionsChanged(); });
 
   connect(
     ui->filtersOr, &QCheckBox::toggled,
-    [&]{ onCriteriaChanged(); });
+    [&]{ onOptionsChanged(); });
 
   connect(
     ui->filtersSeparators, &QCheckBox::toggled,
-    [&]{ onCriteriaChanged(); });
+    [&]{ onOptionsChanged(); });
 
-  ui->filters->header()->setSectionResizeMode(0, QHeaderView::Stretch);
-  ui->filters->header()->resizeSection(1, 50);
+  ui->filters->header()->setMinimumSectionSize(0);
+  ui->filters->header()->setSectionResizeMode(0, QHeaderView::Fixed);
+  ui->filters->header()->resizeSection(0, 30);
   ui->categoriesSplitter->setCollapsible(0, false);
   ui->categoriesSplitter->setCollapsible(1, false);
 }
@@ -110,7 +179,7 @@ QTreeWidgetItem* FilterList::addCriteriaItem(
     ui->filters->addTopLevelItem(item);
   }
 
-  ui->filters->setItemWidget(item, 1, item->widget());
+  item->setTextAlignment(0, Qt::AlignCenter);
 
   return item;
 }
@@ -224,43 +293,60 @@ void FilterList::setSelection(const std::vector<Criteria>& criteria)
 
 void FilterList::clearSelection()
 {
-  ui->filters->clearSelection();
-}
-
-void FilterList::onSelection()
-{
-  const QModelIndexList indices = ui->filters->selectionModel()->selectedRows();
-  std::vector<Criteria> criteria;
-
-  for (auto* item : ui->filters->selectedItems()) {
-    const auto* ci = dynamic_cast<CriteriaItem*>(item);
+  for (int i=0; i<ui->filters->topLevelItemCount(); ++i) {
+    auto* ci = dynamic_cast<CriteriaItem*>(ui->filters->topLevelItem(i));
     if (!ci) {
       continue;
     }
 
-    criteria.push_back({
-      ci->type(), ci->id(), ci->inverse()
-    });
+    ci->setState(CriteriaItem::Inactive);
+  }
+
+  checkCriteria();
+}
+
+bool FilterList::onClick(QMouseEvent* e)
+{
+  auto* item = ui->filters->itemAt(e->pos());
+  if (!item) {
+    return false;
+  }
+
+  auto* ci = dynamic_cast<CriteriaItem*>(item);
+  if (!ci) {
+    return false;
+  }
+
+  if (e->button() == Qt::LeftButton) {
+    ci->nextState();
+  } else if (e->button() == Qt::RightButton) {
+    ci->previousState();
+  } else {
+    return false;
+  }
+
+  checkCriteria();
+  return true;
+}
+
+void FilterList::checkCriteria()
+{
+  std::vector<Criteria> criteria;
+
+  for (int i=0; i<ui->filters->topLevelItemCount(); ++i) {
+    const auto* ci = dynamic_cast<CriteriaItem*>(ui->filters->topLevelItem(i));
+    if (!ci) {
+      continue;
+    }
+
+    if (ci->state() != CriteriaItem::Inactive) {
+      criteria.push_back({
+        ci->type(), ci->id(), (ci->state() == CriteriaItem::Inverted)
+      });
+    }
   }
 
   emit criteriaChanged(criteria);
-}
-
-void FilterList::onContextMenu(const QPoint &pos)
-{
-  QMenu menu;
-
-  QAction* set = menu.addAction(tr("Set inverted"), [&]{ toggleInverted(true); });
-  QAction* unset = menu.addAction(tr("Unset inverted"), [&]{ toggleInverted(false); });
-  menu.addSeparator();
-  menu.addAction(tr("Edit Categories..."), [&]{ editCategories(); });
-
-  if (ui->filters->selectedItems().empty()) {
-    set->setEnabled(false);
-    unset->setEnabled(false);
-  }
-
-  menu.exec(ui->filters->viewport()->mapToGlobal(pos));
 }
 
 void FilterList::editCategories()
@@ -272,43 +358,7 @@ void FilterList::editCategories()
   }
 }
 
-void FilterList::clear()
-{
-  const auto count = ui->filters->topLevelItemCount();
-  for (int i=0; i<count; ++i) {
-    auto* ci = dynamic_cast<CriteriaItem*>(ui->filters->topLevelItem(i));
-    if (!ci) {
-      continue;
-    }
-
-    ci->setInverted(false);
-  }
-
-  clearSelection();
-}
-
-void FilterList::toggleInverted(bool b)
-{
-  bool changed = false;
-
-  for (auto* item : ui->filters->selectedItems()) {
-    auto* ci = dynamic_cast<CriteriaItem*>(item);
-    if (!ci) {
-      continue;
-    }
-
-    if (ci->inverse() != b) {
-      ci->setInverted(b);
-      changed = true;
-    }
-  }
-
-  if (changed) {
-    onSelection();
-  }
-}
-
-void FilterList::onCriteriaChanged()
+void FilterList::onOptionsChanged()
 {
   const auto mode = ui->filtersAnd->isChecked() ?
     ModListSortProxy::FILTER_AND : ModListSortProxy::FILTER_OR;

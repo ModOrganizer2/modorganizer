@@ -76,59 +76,69 @@
             <height>0</height>
            </size>
           </property>
-          <property name="contextMenuPolicy">
-           <enum>Qt::CustomContextMenu</enum>
-          </property>
           <property name="selectionMode">
-           <enum>QAbstractItemView::ExtendedSelection</enum>
+           <enum>QAbstractItemView::NoSelection</enum>
           </property>
           <property name="indentation">
            <number>0</number>
+          </property>
+          <property name="rootIsDecorated">
+           <bool>false</bool>
           </property>
           <property name="uniformRowHeights">
            <bool>true</bool>
           </property>
           <property name="headerHidden">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <attribute name="headerVisible">
-           <bool>true</bool>
-          </attribute>
-          <attribute name="headerCascadingSectionResizes">
-           <bool>true</bool>
-          </attribute>
-          <attribute name="headerStretchLastSection">
            <bool>false</bool>
           </attribute>
+          <attribute name="headerCascadingSectionResizes">
+           <bool>false</bool>
+          </attribute>
+          <column>
+           <property name="text">
+            <string/>
+           </property>
+          </column>
           <column>
            <property name="text">
             <string notr="true">Category</string>
            </property>
           </column>
-          <column>
-           <property name="text">
-            <string>Invert</string>
-           </property>
-          </column>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="filtersClear">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>25</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Clear</string>
-          </property>
+         <widget class="QWidget" name="widget_2" native="true">
+          <layout class="QHBoxLayout" name="horizontalLayout_8">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>2</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QPushButton" name="filtersClear">
+             <property name="text">
+              <string>Clear</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="filtersEdit">
+             <property name="text">
+              <string>Edit...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </item>
         <item>

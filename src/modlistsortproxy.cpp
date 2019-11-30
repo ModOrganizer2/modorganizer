@@ -269,12 +269,12 @@ bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags)
 
 bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) const
 {
-  if (info->hasFlag(ModInfo::FLAG_SEPARATOR) && !m_FilterSeparators) {
+  if (!optionsMatchMod(info, enabled)) {
     return false;
   }
 
   for (auto&& c : m_Criteria) {
-    if (!criteriaMatchesMod(info, enabled, c)) {
+    if (!criteriaMatchMod(info, enabled, c)) {
       return false;
     }
   }
@@ -284,12 +284,12 @@ bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) cons
 
 bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
 {
-  if (info->hasFlag(ModInfo::FLAG_SEPARATOR) && !m_FilterSeparators) {
+  if (!optionsMatchMod(info, enabled)) {
     return false;
   }
 
   for (auto&& c : m_Criteria) {
-    if (criteriaMatchesMod(info, enabled, c)) {
+    if (criteriaMatchMod(info, enabled, c)) {
       return true;
     }
   }
@@ -302,7 +302,23 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
   return true;
 }
 
-bool ModListSortProxy::criteriaMatchesMod(
+bool ModListSortProxy::optionsMatchMod(ModInfo::Ptr info, bool) const
+{
+  // don't check options if there are no filters selected
+  if (!m_FilterActive) {
+    return true;
+  }
+
+  if (!m_FilterSeparators) {
+    if (info->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool ModListSortProxy::criteriaMatchMod(
   ModInfo::Ptr info, bool enabled, const Criteria& c) const
 {
   bool b = false;

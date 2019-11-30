@@ -28,13 +28,11 @@ private:
   Ui::MainWindow* ui;
   CategoryFactory& m_factory;
 
-  void onContextMenu(const QPoint &pos);
-  void onSelection();
-  void onCriteriaChanged();
+  bool onClick(QMouseEvent* e);
+  void onOptionsChanged();
 
-  void clear();
-  void toggleInverted(bool b);
   void editCategories();
+  void checkCriteria();
 
   QTreeWidgetItem* addCriteriaItem(
     QTreeWidgetItem *root, const QString &name, int categoryID,

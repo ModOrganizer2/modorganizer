@@ -157,7 +157,8 @@ private:
 
   std::vector<Criteria> m_PreChangeCriteria;
 
-  bool criteriaMatchesMod(ModInfo::Ptr info, bool enabled, const Criteria& c) const;
+  bool optionsMatchMod(ModInfo::Ptr info, bool enabled) const;
+  bool criteriaMatchMod(ModInfo::Ptr info, bool enabled, const Criteria& c) const;
   bool categoryMatchesMod(ModInfo::Ptr info, bool enabled, int category) const;
   bool contentMatchesMod(ModInfo::Ptr info, bool enabled, int content) const;
 };
