@@ -320,6 +320,40 @@ QString CategoryFactory::getCategoryName(unsigned int index) const
   return m_Categories[index].m_Name;
 }
 
+QString CategoryFactory::getSpecialCategoryName(int type) const
+{
+  switch (type)
+  {
+    case CATEGORY_SPECIAL_CHECKED:         return QObject::tr("<Checked>");
+    case CATEGORY_SPECIAL_UNCHECKED:       return QObject::tr("<Unchecked>");
+    case CATEGORY_SPECIAL_UPDATEAVAILABLE: return QObject::tr("<Update>");
+    case CATEGORY_SPECIAL_NOCATEGORY:      return QObject::tr("<Mod Backup>");
+    case CATEGORY_SPECIAL_CONFLICT:        return QObject::tr("<Managed by MO>");
+    case CATEGORY_SPECIAL_NOTENDORSED:     return QObject::tr("<Managed outside MO>");
+    case CATEGORY_SPECIAL_BACKUP:          return QObject::tr("<No category>");
+    case CATEGORY_SPECIAL_MANAGED:         return QObject::tr("<Conflicted>");
+    case CATEGORY_SPECIAL_UNMANAGED:       return QObject::tr("<Not Endorsed>");
+    case CATEGORY_SPECIAL_NOGAMEDATA:      return QObject::tr("<No Nexus ID>");
+    case CATEGORY_SPECIAL_NONEXUSID:       return QObject::tr("<No valid game data>");
+    default: return {};
+  }
+}
+
+QString CategoryFactory::getCategoryNameByID(int id) const
+{
+  auto itor = m_IDMap.find(id);
+
+  if (itor == m_IDMap.end()) {
+    return getSpecialCategoryName(id);
+  } else {
+    const auto index = itor->second;
+    if (index >= m_Categories.size()) {
+      return {};
+    }
+
+    return m_Categories[index].m_Name;
+  }
+}
 
 int CategoryFactory::getCategoryID(unsigned int index) const
 {

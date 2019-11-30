@@ -19,7 +19,8 @@ public:
   void refresh();
 
 signals:
-  void changed(std::vector<int> categories, std::vector<int> content);
+  void filtersChanged(std::vector<int> categories, std::vector<int> content);
+  void criteriaChanged(ModListSortProxy::FilterMode mode, bool inverse, bool separators);
 
 private:
   Ui::MainWindow* ui;
@@ -27,6 +28,7 @@ private:
 
   void onContextMenu(const QPoint &pos);
   void onSelection();
+  void onCriteriaChanged();
 
   void editCategories();
 
@@ -37,6 +39,8 @@ private:
   void addContentFilters();
   void addCategoryFilters(
     QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID);
+  void addSpecialFilterItem(int type);
+
 };
 
 #endif // MODORGANIZER_CATEGORIESLIST_INCLUDED

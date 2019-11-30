@@ -144,6 +144,8 @@ public:
    * @return QString name of the category
    **/
   QString getCategoryName(unsigned int index) const;
+  QString getSpecialCategoryName(int type) const;
+  QString getCategoryNameByID(int id) const;
 
   /**
    * @brief look up the id of a category by its index

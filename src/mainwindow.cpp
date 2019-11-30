@@ -262,10 +262,14 @@ MainWindow::MainWindow(Settings &settings
 
   m_CategoryFactory.loadCategories();
   m_Filters.reset(new FilterList(ui, m_CategoryFactory));
-  connect(m_Filters.get(), &FilterList::changed, [&](auto&& cats, auto&& content) {
-    m_ModListSortProxy->setCategoryFilter(cats);
-    m_ModListSortProxy->setContentFilter(content);
-  });
+
+  connect(
+    m_Filters.get(), &FilterList::filtersChanged,
+    [&](auto&& cats, auto&& content) { onFilters(cats, content); });
+
+  connect(
+    m_Filters.get(), &FilterList::criteriaChanged,
+    [&](auto mode, bool inv, bool sep) { onFiltersCriteria(mode, inv, sep); });
 
   ui->logList->setCore(m_OrganizerCore);
 
@@ -1229,7 +1233,7 @@ void MainWindow::showEvent(QShowEvent *event)
 
   if (!m_WasVisible) {
     readSettings();
-    m_Filters->refresh();
+    refreshFilters();
 
     // this needs to be connected here instead of in the constructor because the
     // actual changing of the stylesheet is done by MOApplication, which
@@ -4025,7 +4029,7 @@ void MainWindow::addRemoveCategories_MenuHandler() {
     m_OrganizerCore.modList()->notifyChange(m_ContextRow);
   }
 
-  m_Filters->refresh();
+  refreshFilters();
 }
 
 void MainWindow::replaceCategories_MenuHandler() {
@@ -4069,7 +4073,7 @@ void MainWindow::replaceCategories_MenuHandler() {
     m_OrganizerCore.modList()->notifyChange(m_ContextRow);
   }
 
-  m_Filters->refresh();
+  refreshFilters();
 }
 
 void MainWindow::saveArchiveList()
@@ -4936,7 +4940,7 @@ void MainWindow::on_actionSettings_triggered()
   instManager->setDownloadDirectory(settings.paths().downloads());
 
   fixCategories();
-  m_Filters->refresh();
+  refreshFilters();
 
   if (settings.paths().profiles() != oldProfilesDirectory) {
     refreshProfiles();
@@ -6083,6 +6087,69 @@ void MainWindow::deselectFilters()
   m_Filters->clearSelection();
 }
 
+void MainWindow::refreshFilters()
+{
+  QItemSelection currentSelection = ui->modList->selectionModel()->selection();
+
+  QVariant currentIndexName = ui->modList->currentIndex().data();
+  ui->modList->setCurrentIndex(QModelIndex());
+
+  m_Filters->refresh();
+
+  ui->modList->selectionModel()->select(currentSelection, QItemSelectionModel::Select);
+
+  QModelIndexList matchList;
+  if (currentIndexName.isValid()) {
+    matchList = ui->modList->model()->match(
+      ui->modList->model()->index(0, 0),
+      Qt::DisplayRole,
+      currentIndexName);
+  }
+
+  if (matchList.size() > 0) {
+    ui->modList->setCurrentIndex(matchList.at(0));
+  }
+}
+
+void MainWindow::onFilters(
+  const std::vector<int>& categories, const std::vector<int>& content)
+{
+  m_ModListSortProxy->setCategoryFilter(categories);
+  m_ModListSortProxy->setContentFilter(content);
+
+  QString label = "?";
+
+  if ((categories.size() + content.size()) > 1) {
+    label = tr("<Multiple>");
+  } else if (!categories.empty()) {
+    const int c = categories[0];
+    label = m_CategoryFactory.getCategoryNameByID(c);
+    if (label.isEmpty()) {
+      log::error("category '{}' not found", c);
+    }
+  } else if (!content.empty()) {
+    const int c = content[0];
+    try {
+      label = ModInfo::getContentTypeName(c);
+    }
+    catch(std::exception&) {
+      log::error("content filter '{}' not found", c);
+    }
+  } else {
+    label = "";
+  }
+
+  ui->currentCategoryLabel->setText(label);
+  ui->modList->reset();
+}
+
+void MainWindow::onFiltersCriteria(
+  ModListSortProxy::FilterMode mode, bool inverse, bool separators)
+{
+  m_ModListSortProxy->setFilterMode(mode);
+  m_ModListSortProxy->setFilterNot(inverse);
+  m_ModListSortProxy->setFilterSeparators(separators);
+}
 
 void MainWindow::updateESPLock(bool locked)
 {
@@ -6383,30 +6450,6 @@ void MainWindow::on_restoreModsButton_clicked()
     }
     m_OrganizerCore.refreshModList(false);
   }
-}
-
-void MainWindow::on_categoriesAndBtn_toggled(bool checked)
-{
-  if (checked) {
-    m_ModListSortProxy->setFilterMode(ModListSortProxy::FILTER_AND);
-  }
-}
-
-void MainWindow::on_categoriesOrBtn_toggled(bool checked)
-{
-  if (checked) {
-    m_ModListSortProxy->setFilterMode(ModListSortProxy::FILTER_OR);
-  }
-}
-
-void MainWindow::on_categoriesNotBtn_toggled(bool checked)
-{
-  m_ModListSortProxy->setFilterNot(checked);
-}
-
-void MainWindow::on_categoriesSeparators_toggled(bool checked)
-{
-  m_ModListSortProxy->setFilterSeparators(checked);
 }
 
 void MainWindow::on_managedArchiveLabel_linkHovered(const QString&)

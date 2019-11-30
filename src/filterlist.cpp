@@ -9,13 +9,33 @@ using namespace MOBase;
 FilterList::FilterList(Ui::MainWindow* ui, CategoryFactory& factory)
   : ui(ui), m_factory(factory)
 {
-  QObject::connect(
-    ui->categoriesList, &QTreeWidget::customContextMenuRequested,
+  connect(
+    ui->filters, &QTreeWidget::customContextMenuRequested,
     [&](auto&& pos){ onContextMenu(pos); });
 
-  QObject::connect(
-    ui->categoriesList, &QTreeWidget::itemSelectionChanged,
+  connect(
+    ui->filters, &QTreeWidget::itemSelectionChanged,
     [&]{ onSelection(); });
+
+  connect(
+    ui->filtersClear, &QPushButton::clicked,
+    [&]{ clearSelection(); });
+
+  connect(
+    ui->filtersAnd, &QCheckBox::toggled,
+    [&]{ onCriteriaChanged(); });
+
+  connect(
+    ui->filtersOr, &QCheckBox::toggled,
+    [&]{ onCriteriaChanged(); });
+
+  connect(
+    ui->filtersNot, &QCheckBox::toggled,
+    [&]{ onCriteriaChanged(); });
+
+  connect(
+    ui->filtersSeparators, &QCheckBox::toggled,
+    [&]{ onCriteriaChanged(); });
 }
 
 QTreeWidgetItem* FilterList::addFilterItem(
@@ -29,7 +49,7 @@ QTreeWidgetItem* FilterList::addFilterItem(
   if (root != nullptr) {
     root->addChild(item);
   } else {
-    ui->categoriesList->addTopLevelItem(item);
+    ui->filters->addTopLevelItem(item);
   }
   return item;
 }
@@ -37,7 +57,9 @@ QTreeWidgetItem* FilterList::addFilterItem(
 void FilterList::addContentFilters()
 {
   for (unsigned i = 0; i < ModInfo::NUM_CONTENT_TYPES; ++i) {
-    addFilterItem(nullptr, tr("<Contains %1>").arg(ModInfo::getContentTypeName(i)), i, ModListSortProxy::TYPE_CONTENT);
+    addFilterItem(
+      nullptr, tr("<Contains %1>").arg(ModInfo::getContentTypeName(i)),
+      i, ModListSortProxy::TYPE_CONTENT);
   }
 }
 
@@ -59,32 +81,37 @@ void FilterList::addCategoryFilters(QTreeWidgetItem *root, const std::set<int> &
   }
 }
 
+void FilterList::addSpecialFilterItem(int type)
+{
+  addFilterItem(
+    nullptr, m_factory.getSpecialCategoryName(type),
+    type, ModListSortProxy::TYPE_SPECIAL);
+}
+
 void FilterList::refresh()
 {
-  QItemSelection currentSelection = ui->modList->selectionModel()->selection();
-
-  QVariant currentIndexName = ui->modList->currentIndex().data();
-  ui->modList->setCurrentIndex(QModelIndex());
-
   QStringList selectedItems;
-  for (QTreeWidgetItem *item : ui->categoriesList->selectedItems()) {
+  for (QTreeWidgetItem *item : ui->filters->selectedItems()) {
     selectedItems.append(item->text(0));
   }
 
-  ui->categoriesList->clear();
-  addFilterItem(nullptr, tr("<Checked>"), CategoryFactory::CATEGORY_SPECIAL_CHECKED, ModListSortProxy::TYPE_SPECIAL);
-  addFilterItem(nullptr, tr("<Unchecked>"), CategoryFactory::CATEGORY_SPECIAL_UNCHECKED, ModListSortProxy::TYPE_SPECIAL);
-  addFilterItem(nullptr, tr("<Update>"), CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE, ModListSortProxy::TYPE_SPECIAL);
-  addFilterItem(nullptr, tr("<Mod Backup>"), CategoryFactory::CATEGORY_SPECIAL_BACKUP, ModListSortProxy::TYPE_SPECIAL);
-  addFilterItem(nullptr, tr("<Managed by MO>"), CategoryFactory::CATEGORY_SPECIAL_MANAGED, ModListSortProxy::TYPE_SPECIAL);
-  addFilterItem(nullptr, tr("<Managed outside MO>"), CategoryFactory::CATEGORY_SPECIAL_UNMANAGED, ModListSortProxy::TYPE_SPECIAL);
-  addFilterItem(nullptr, tr("<No category>"), CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY, ModListSortProxy::TYPE_SPECIAL);
-  addFilterItem(nullptr, tr("<Conflicted>"), CategoryFactory::CATEGORY_SPECIAL_CONFLICT, ModListSortProxy::TYPE_SPECIAL);
-  addFilterItem(nullptr, tr("<Not Endorsed>"), CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED, ModListSortProxy::TYPE_SPECIAL);
-  addFilterItem(nullptr, tr("<No Nexus ID>"), CategoryFactory::CATEGORY_SPECIAL_NONEXUSID, ModListSortProxy::TYPE_SPECIAL);
-  addFilterItem(nullptr, tr("<No valid game data>"), CategoryFactory::CATEGORY_SPECIAL_NOGAMEDATA, ModListSortProxy::TYPE_SPECIAL);
+  ui->filters->clear();
+
+  using F = CategoryFactory;
+  addSpecialFilterItem(F::CATEGORY_SPECIAL_CHECKED);
+  addSpecialFilterItem(F::CATEGORY_SPECIAL_UNCHECKED);
+  addSpecialFilterItem(F::CATEGORY_SPECIAL_UPDATEAVAILABLE);
+  addSpecialFilterItem(F::CATEGORY_SPECIAL_BACKUP);
+  addSpecialFilterItem(F::CATEGORY_SPECIAL_MANAGED);
+  addSpecialFilterItem(F::CATEGORY_SPECIAL_UNMANAGED);
+  addSpecialFilterItem(F::CATEGORY_SPECIAL_NOCATEGORY);
+  addSpecialFilterItem(F::CATEGORY_SPECIAL_CONFLICT);
+  addSpecialFilterItem(F::CATEGORY_SPECIAL_NOTENDORSED);
+  addSpecialFilterItem(F::CATEGORY_SPECIAL_NONEXUSID);
+  addSpecialFilterItem(F::CATEGORY_SPECIAL_NOGAMEDATA);
 
   addContentFilters();
+
   std::set<int> categoriesUsed;
   for (unsigned int modIdx = 0; modIdx < ModInfo::getNumMods(); ++modIdx) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modIdx);
@@ -106,27 +133,20 @@ void FilterList::refresh()
   addCategoryFilters(nullptr, categoriesUsed, 0);
 
   for (const QString &item : selectedItems) {
-    QList<QTreeWidgetItem*> matches = ui->categoriesList->findItems(item, Qt::MatchFixedString | Qt::MatchRecursive);
+    QList<QTreeWidgetItem*> matches = ui->filters->findItems(
+      item, Qt::MatchFixedString | Qt::MatchRecursive);
+
     if (matches.size() > 0) {
       matches.at(0)->setSelected(true);
     }
-  }
-  ui->modList->selectionModel()->select(currentSelection, QItemSelectionModel::Select);
-  QModelIndexList matchList;
-  if (currentIndexName.isValid()) {
-    matchList = ui->modList->model()->match(ui->modList->model()->index(0, 0), Qt::DisplayRole, currentIndexName);
-  }
-
-  if (matchList.size() > 0) {
-    ui->modList->setCurrentIndex(matchList.at(0));
   }
 }
 
 void FilterList::setSelection(std::vector<int> categories)
 {
-  for (int i = 0; i < ui->categoriesList->topLevelItemCount(); ++i) {
-    if (ui->categoriesList->topLevelItem(i)->data(0, Qt::UserRole) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) {
-      ui->categoriesList->setCurrentItem(ui->categoriesList->topLevelItem(i));
+  for (int i = 0; i < ui->filters->topLevelItemCount(); ++i) {
+    if (ui->filters->topLevelItem(i)->data(0, Qt::UserRole) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) {
+      ui->filters->setCurrentItem(ui->filters->topLevelItem(i));
       break;
     }
   }
@@ -134,40 +154,32 @@ void FilterList::setSelection(std::vector<int> categories)
 
 void FilterList::clearSelection()
 {
-  ui->categoriesList->clearSelection();
+  ui->filters->clearSelection();
 }
 
 void FilterList::onSelection()
 {
-  QModelIndexList indices = ui->categoriesList->selectionModel()->selectedRows();
+  QModelIndexList indices = ui->filters->selectionModel()->selectedRows();
   std::vector<int> categories;
   std::vector<int> content;
+
   for (const QModelIndex &index : indices) {
-    int filterType = index.data(Qt::UserRole + 1).toInt();
-    if ((filterType == ModListSortProxy::TYPE_CATEGORY)
-      || (filterType == ModListSortProxy::TYPE_SPECIAL)) {
-      int categoryId = index.data(Qt::UserRole).toInt();
+    const int filterType = index.data(Qt::UserRole + 1).toInt();
+
+    if ((filterType == ModListSortProxy::TYPE_CATEGORY) || (filterType == ModListSortProxy::TYPE_SPECIAL)) {
+      const int categoryId = index.data(Qt::UserRole).toInt();
       if (categoryId != CategoryFactory::CATEGORY_NONE) {
         categories.push_back(categoryId);
       }
     } else if (filterType == ModListSortProxy::TYPE_CONTENT) {
-      int contentId = index.data(Qt::UserRole).toInt();
+      const int contentId = index.data(Qt::UserRole).toInt();
       content.push_back(contentId);
     }
   }
 
-  emit changed(categories, content);
+  ui->filtersClear->setEnabled(categories.size() > 0 || content.size() >0);
 
-  ui->clickBlankButton->setEnabled(categories.size() > 0 || content.size() >0);
-
-  if (indices.count() == 0) {
-    ui->currentCategoryLabel->setText(QString("(%1)").arg(tr("<All>")));
-  } else if (indices.count() > 1) {
-    ui->currentCategoryLabel->setText(QString("(%1)").arg(tr("<Multiple>")));
-  } else {
-    ui->currentCategoryLabel->setText(QString("(%1)").arg(indices.first().data().toString()));
-  }
-  ui->modList->reset();
+  emit filtersChanged(categories, content);
 }
 
 void FilterList::onContextMenu(const QPoint &pos)
@@ -176,7 +188,7 @@ void FilterList::onContextMenu(const QPoint &pos)
   menu.addAction(tr("Edit Categories..."), [&]{ editCategories(); });
   menu.addAction(tr("Deselect filter"), [&]{ clearSelection(); });
 
-  menu.exec(ui->categoriesList->viewport()->mapToGlobal(pos));
+  menu.exec(ui->filters->viewport()->mapToGlobal(pos));
 }
 
 void FilterList::editCategories()
@@ -186,4 +198,15 @@ void FilterList::editCategories()
   if (dialog.exec() == QDialog::Accepted) {
     dialog.commitChanges();
   }
+}
+
+void FilterList::onCriteriaChanged()
+{
+  const auto mode = ui->filtersAnd->isChecked() ?
+    ModListSortProxy::FILTER_AND : ModListSortProxy::FILTER_OR;
+
+  const bool inverse = ui->filtersNot->isChecked();
+  const bool separators = ui->filtersSeparators->isChecked();
+
+  emit criteriaChanged(mode, inverse, separators);
 }
