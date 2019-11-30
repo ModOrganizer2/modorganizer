@@ -305,18 +305,35 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
 bool ModListSortProxy::criteriaMatchesMod(
   ModInfo::Ptr info, bool enabled, const Criteria& c) const
 {
+  bool b = false;
+
   switch (c.type)
   {
     case TYPE_SPECIAL:  // fall-through
     case TYPE_CATEGORY:
-      return categoryMatchesMod(info, enabled, c.id);
+    {
+      b = categoryMatchesMod(info, enabled, c.id);
+      break;
+    }
 
     case TYPE_CONTENT:
-      return contentMatchesMod(info, enabled, c.id);
+    {
+      b = contentMatchesMod(info, enabled, c.id);
+      break;
+    }
 
     default:
-      return false;
+    {
+      log::error("bad criteria type {}", c.type);
+      break;
+    }
   }
+
+  if (c.inverse) {
+    b = !b;
+  }
+
+  return b;
 }
 
 bool ModListSortProxy::categoryMatchesMod(

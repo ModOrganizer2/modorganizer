@@ -5,9 +5,60 @@
 #include <utility.h>
 
 using namespace MOBase;
+using CriteriaType = ModListSortProxy::CriteriaType;
+using Criteria = ModListSortProxy::Criteria;
 
-const int CategoryIDRole = Qt::UserRole;
-const int CategoryTypeRole = Qt::UserRole + 1;
+class FilterList::CriteriaItem : public QTreeWidgetItem
+{
+public:
+  CriteriaItem(FilterList* list, QString name, CriteriaType type, int id)
+    : QTreeWidgetItem({name}), m_list(list), m_widget(nullptr), m_checkbox(nullptr)
+  {
+    setData(0, Qt::ToolTipRole, name);
+    setData(0, TypeRole, type);
+    setData(0, IDRole, id);
+
+    m_widget = new QWidget;
+    m_widget->setStyleSheet("background-color: rgba(0,0,0,0)");
+
+    auto* ly = new QVBoxLayout(m_widget);
+    ly->setAlignment(Qt::AlignCenter);
+    ly->setContentsMargins(0, 0, 0, 0);
+
+    m_checkbox = new QCheckBox;
+    QObject::connect(m_checkbox, &QCheckBox::toggled, [&]{ m_list->onSelection(); });
+    ly->addWidget(m_checkbox);
+  }
+
+  QWidget* widget()
+  {
+    return m_widget;
+  }
+
+  CriteriaType type() const
+  {
+    return static_cast<CriteriaType>(data(0, TypeRole).toInt());
+  }
+
+  int id() const
+  {
+    return data(0, IDRole).toInt();
+  }
+
+  bool inverse() const
+  {
+    return m_checkbox->isChecked();
+  }
+
+private:
+  const int IDRole = Qt::UserRole;
+  const int TypeRole = Qt::UserRole + 1;
+
+  FilterList* m_list;
+  QWidget* m_widget;
+  QCheckBox* m_checkbox;
+};
+
 
 FilterList::FilterList(Ui::MainWindow* ui, CategoryFactory& factory)
   : ui(ui), m_factory(factory)
@@ -42,13 +93,9 @@ FilterList::FilterList(Ui::MainWindow* ui, CategoryFactory& factory)
 
 QTreeWidgetItem* FilterList::addCriteriaItem(
   QTreeWidgetItem *root, const QString &name, int categoryID,
-  ModListSortProxy::CriteriaType type)
+  CriteriaType type)
 {
-  QTreeWidgetItem *item = new QTreeWidgetItem(QStringList(name));
-
-  item->setData(0, Qt::ToolTipRole, name);
-  item->setData(0, CategoryIDRole, categoryID);
-  item->setData(0, CategoryTypeRole, type);
+  auto* item = new CriteriaItem(this, name, type, categoryID);
 
   if (root != nullptr) {
     root->addChild(item);
@@ -56,18 +103,7 @@ QTreeWidgetItem* FilterList::addCriteriaItem(
     ui->filters->addTopLevelItem(item);
   }
 
-  auto* w = new QWidget;
-  w->setStyleSheet("background-color: rgba(0,0,0,0)");
-
-  auto* ly = new QVBoxLayout(w);
-  ly->setAlignment(Qt::AlignCenter);
-  ly->setContentsMargins(0, 0, 0, 0);
-
-  auto* cb = new QCheckBox;
-  connect(cb, &QCheckBox::toggled, [&]{ onSelection(); });
-  ly->addWidget(cb);
-
-  ui->filters->setItemWidget(item, 1, w);
+  ui->filters->setItemWidget(item, 1, item->widget());
 
   return item;
 }
@@ -163,7 +199,14 @@ void FilterList::refresh()
 void FilterList::setSelection(std::vector<int> categories)
 {
   for (int i = 0; i < ui->filters->topLevelItemCount(); ++i) {
-    if (ui->filters->topLevelItem(i)->data(0, CategoryIDRole) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) {
+    const auto* item = dynamic_cast<CriteriaItem*>(
+      ui->filters->topLevelItem(i));
+
+    if (!item) {
+      continue;
+    }
+
+    if (item->id() == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) {
       ui->filters->setCurrentItem(ui->filters->topLevelItem(i));
       break;
     }
@@ -178,18 +221,17 @@ void FilterList::clearSelection()
 void FilterList::onSelection()
 {
   const QModelIndexList indices = ui->filters->selectionModel()->selectedRows();
-  std::vector<ModListSortProxy::Criteria> criteria;
+  std::vector<Criteria> criteria;
 
   for (auto* item: ui->filters->selectedItems()) {
-    const auto  type = static_cast<ModListSortProxy::CriteriaType>(
-      item->data(0, CategoryTypeRole).toInt());
+    const auto* ci = dynamic_cast<CriteriaItem*>(item);
+    if (!ci) {
+      continue;
+    }
 
-    const int id = item->data(0, CategoryIDRole).toInt();
-
-    auto* cb = static_cast<const QCheckBox*>(ui->filters->itemWidget(item, 1));
-    const bool inverse = cb->isChecked();
-
-    criteria.push_back({type, id, inverse});
+    criteria.push_back({
+      ci->type(), ci->id(), ci->inverse()
+    });
   }
 
   ui->filtersClear->setEnabled(!criteria.empty());

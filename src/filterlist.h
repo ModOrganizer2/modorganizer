@@ -23,6 +23,8 @@ signals:
   void optionsChanged(ModListSortProxy::FilterMode mode, bool separators);
 
 private:
+  class CriteriaItem;
+
   Ui::MainWindow* ui;
   CategoryFactory& m_factory;
 

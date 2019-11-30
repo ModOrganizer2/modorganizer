@@ -327,14 +327,14 @@ QString CategoryFactory::getSpecialCategoryName(int type) const
     case CATEGORY_SPECIAL_CHECKED:         return QObject::tr("<Checked>");
     case CATEGORY_SPECIAL_UNCHECKED:       return QObject::tr("<Unchecked>");
     case CATEGORY_SPECIAL_UPDATEAVAILABLE: return QObject::tr("<Update>");
-    case CATEGORY_SPECIAL_NOCATEGORY:      return QObject::tr("<Mod Backup>");
-    case CATEGORY_SPECIAL_CONFLICT:        return QObject::tr("<Managed by MO>");
-    case CATEGORY_SPECIAL_NOTENDORSED:     return QObject::tr("<Managed outside MO>");
-    case CATEGORY_SPECIAL_BACKUP:          return QObject::tr("<No category>");
-    case CATEGORY_SPECIAL_MANAGED:         return QObject::tr("<Conflicted>");
-    case CATEGORY_SPECIAL_UNMANAGED:       return QObject::tr("<Not Endorsed>");
-    case CATEGORY_SPECIAL_NOGAMEDATA:      return QObject::tr("<No Nexus ID>");
-    case CATEGORY_SPECIAL_NONEXUSID:       return QObject::tr("<No valid game data>");
+    case CATEGORY_SPECIAL_NOCATEGORY:      return QObject::tr("<No category>");
+    case CATEGORY_SPECIAL_CONFLICT:        return QObject::tr("<Conflicted>");
+    case CATEGORY_SPECIAL_NOTENDORSED:     return QObject::tr("<Not Endorsed>");
+    case CATEGORY_SPECIAL_BACKUP:          return QObject::tr("<Mod Backup>");
+    case CATEGORY_SPECIAL_MANAGED:         return QObject::tr("<Managed by MO>");
+    case CATEGORY_SPECIAL_UNMANAGED:       return QObject::tr("<Managed outside MO>");
+    case CATEGORY_SPECIAL_NOGAMEDATA:      return QObject::tr("<No valid game data>");
+    case CATEGORY_SPECIAL_NONEXUSID:       return QObject::tr("<No Nexus ID>");
     default: return {};
   }
 }
