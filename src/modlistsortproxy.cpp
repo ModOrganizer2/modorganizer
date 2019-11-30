@@ -38,7 +38,6 @@ ModListSortProxy::ModListSortProxy(Profile* profile, QObject *parent)
   , m_Profile(profile)
   , m_FilterActive(false)
   , m_FilterMode(FILTER_AND)
-  , m_FilterNot(false)
   , m_FilterSeparators(false)
 {
   setDynamicSortFilter(true); // this seems to work without dynamicsortfilter
@@ -52,26 +51,20 @@ void ModListSortProxy::setProfile(Profile *profile)
 
 void ModListSortProxy::updateFilterActive()
 {
-  m_FilterActive = ((m_CategoryFilter.size() > 0)
-                    || (m_ContentFilter.size() > 0)
-                    || !m_CurrentFilter.isEmpty());
+  m_FilterActive = (!m_Criteria.empty() || !m_Filter.isEmpty());
   emit filterActive(m_FilterActive);
 }
 
-void ModListSortProxy::setCategoryFilter(const std::vector<int> &categories)
+void ModListSortProxy::setCriteria(const std::vector<Criteria>& criteria)
 {
-  //avoid refreshing the filter unless we are checking all mods for update.
-  if (categories != m_CategoryFilter || (!categories.empty() && categories.at(0) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE)) {
-    m_CategoryFilter = categories;
-    updateFilterActive();
-    invalidate();
-  }
-}
+  // avoid refreshing the filter unless we are checking all mods for update.
+  const bool changed = (criteria != m_Criteria);
+  const bool isForUpdates = (
+    !criteria.empty() &&
+    criteria[0].id == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE);
 
-void ModListSortProxy::setContentFilter(const std::vector<int> &content)
-{
-  if (content != m_ContentFilter) {
-    m_ContentFilter = content;
+  if (changed || isForUpdates) {
+    m_Criteria = criteria;
     updateFilterActive();
     invalidate();
   }
@@ -248,12 +241,10 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
   return lt;
 }
 
-void ModListSortProxy::updateFilter(const QString &filter)
+void ModListSortProxy::updateFilter(const QString& filter)
 {
-  m_CurrentFilter = filter;
+  m_Filter = filter;
   updateFilterActive();
-  // using invalidateFilter here should be enough but that crashes the application? WTF?
-  // invalidateFilter();
   invalidate();
 }
 
@@ -282,14 +273,8 @@ bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) cons
     return false;
   }
 
-  for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
-    if (!categoryMatchesMod(info, enabled, *iter)) {
-      return false;
-    }
-  }
-
-  foreach (int content, m_ContentFilter) {
-    if (!contentMatchesMod(info, enabled, content)) {
+  for (auto&& c : m_Criteria) {
+    if (!criteriaMatchesMod(info, enabled, c)) {
       return false;
     }
   }
@@ -303,29 +288,35 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
     return false;
   }
 
-  for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
-    if (categoryMatchesMod(info, enabled, *iter)) {
+  for (auto&& c : m_Criteria) {
+    if (criteriaMatchesMod(info, enabled, c)) {
       return true;
     }
   }
 
-  if (!m_CategoryFilter.empty()) {
-    // nothing matched
-    return false;
-  }
-
-  foreach (int content, m_ContentFilter) {
-    if (contentMatchesMod(info, enabled, content)) {
-      return true;
-    }
-  }
-
-  if (!m_ContentFilter.empty()) {
+  if (!m_Criteria.empty()) {
     // nothing matched
     return false;
   }
 
   return true;
+}
+
+bool ModListSortProxy::criteriaMatchesMod(
+  ModInfo::Ptr info, bool enabled, const Criteria& c) const
+{
+  switch (c.type)
+  {
+    case TYPE_SPECIAL:  // fall-through
+    case TYPE_CATEGORY:
+      return categoryMatchesMod(info, enabled, c.id);
+
+    case TYPE_CONTENT:
+      return contentMatchesMod(info, enabled, c.id);
+
+    default:
+      return false;
+  }
 }
 
 bool ModListSortProxy::categoryMatchesMod(
@@ -414,29 +405,19 @@ bool ModListSortProxy::categoryMatchesMod(
     }
   }
 
-  if (m_FilterNot) {
-    b = !b;
-  }
-
   return b;
 }
 
 bool ModListSortProxy::contentMatchesMod(ModInfo::Ptr info, bool enabled, int content) const
 {
-  bool b = info->hasContent(static_cast<ModInfo::EContent>(content));
-
-  if (m_FilterNot) {
-    b = !b;
-  }
-
-  return b;
+  return info->hasContent(static_cast<ModInfo::EContent>(content));
 }
 
 bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
 {
-  if (!m_CurrentFilter.isEmpty()) {
+  if (!m_Filter.isEmpty()) {
     bool display = false;
-    QString filterCopy = QString(m_CurrentFilter);
+    QString filterCopy = QString(m_Filter);
     filterCopy.replace("||", ";").replace("OR", ";").replace("|", ";");
     QStringList ORList = filterCopy.split(";", QString::SkipEmptyParts);
 
@@ -527,26 +508,11 @@ void ModListSortProxy::setColumnVisible(int column, bool visible)
   m_EnabledColumns[column] = visible;
 }
 
-void ModListSortProxy::setFilterMode(ModListSortProxy::FilterMode mode)
+void ModListSortProxy::setOptions(ModListSortProxy::FilterMode mode, bool separators)
 {
-  if (m_FilterMode != mode) {
+  if (m_FilterMode != mode || separators != m_FilterSeparators) {
     m_FilterMode = mode;
-    this->invalidate();
-  }
-}
-
-void ModListSortProxy::setFilterNot(bool b)
-{
-  if (b != m_FilterNot) {
-    m_FilterNot = b;
-    this->invalidate();
-  }
-}
-
-void ModListSortProxy::setFilterSeparators(bool b)
-{
-  if (b != m_FilterSeparators) {
-    m_FilterSeparators = b;
+    m_FilterSeparators = separators;
     this->invalidate();
   }
 }
@@ -623,8 +589,8 @@ void ModListSortProxy::aboutToChangeData()
   // (at least with some Qt versions)
   // this may be related to the fact that the item being edited may disappear from the view as a
   // result of the edit
-  m_PreChangeFilters = categoryFilter();
-  setCategoryFilter(std::vector<int>());
+  m_PreChangeCriteria = m_Criteria;
+  setCriteria({});
 }
 
 void ModListSortProxy::postDataChanged()
@@ -633,8 +599,8 @@ void ModListSortProxy::postDataChanged()
   // or at least the view continues to think it's being edited. As a result no new editor can be
   // opened
   QTimer::singleShot(10, [this] () {
-    setCategoryFilter(m_PreChangeFilters);
-    m_PreChangeFilters.clear();
+    setCriteria(m_PreChangeCriteria);
+    m_PreChangeCriteria.clear();
   });
 }
 

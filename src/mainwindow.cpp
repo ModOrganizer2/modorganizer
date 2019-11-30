@@ -264,12 +264,12 @@ MainWindow::MainWindow(Settings &settings
   m_Filters.reset(new FilterList(ui, m_CategoryFactory));
 
   connect(
-    m_Filters.get(), &FilterList::filtersChanged,
-    [&](auto&& cats, auto&& content) { onFilters(cats, content); });
+    m_Filters.get(), &FilterList::criteriaChanged,
+    [&](auto&& v) { onFiltersCriteria(v); });
 
   connect(
-    m_Filters.get(), &FilterList::criteriaChanged,
-    [&](auto mode, bool inv, bool sep) { onFiltersCriteria(mode, inv, sep); });
+    m_Filters.get(), &FilterList::optionsChanged,
+    [&](auto mode, bool sep) { onFiltersOptions(mode, sep); });
 
   ui->logList->setCore(m_OrganizerCore);
 
@@ -4124,7 +4124,12 @@ void MainWindow::checkModsForUpdates()
   }
 
   if (updatesAvailable || checkingModsForUpdate) {
-    m_ModListSortProxy->setCategoryFilter(boost::assign::list_of(CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE));
+    m_ModListSortProxy->setCriteria({{
+        ModListSortProxy::TYPE_SPECIAL,
+        CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE,
+        false}
+    });
+
     m_Filters->setSelection({CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE});
   }
 }
@@ -6111,44 +6116,31 @@ void MainWindow::refreshFilters()
   }
 }
 
-void MainWindow::onFilters(
-  const std::vector<int>& categories, const std::vector<int>& content)
+void MainWindow::onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>& criteria)
 {
-  m_ModListSortProxy->setCategoryFilter(categories);
-  m_ModListSortProxy->setContentFilter(content);
+  m_ModListSortProxy->setCriteria(criteria);
 
   QString label = "?";
 
-  if ((categories.size() + content.size()) > 1) {
-    label = tr("<Multiple>");
-  } else if (!categories.empty()) {
-    const int c = categories[0];
-    label = m_CategoryFactory.getCategoryNameByID(c);
+  if (criteria.empty()) {
+    label = "";
+  } else if (criteria.size() == 1) {
+    const auto& c = criteria[0];
+    label = m_CategoryFactory.getCategoryNameByID(c.id);
     if (label.isEmpty()) {
-      log::error("category '{}' not found", c);
-    }
-  } else if (!content.empty()) {
-    const int c = content[0];
-    try {
-      label = ModInfo::getContentTypeName(c);
-    }
-    catch(std::exception&) {
-      log::error("content filter '{}' not found", c);
+      log::error("category '{}' not found", c.id);
     }
   } else {
-    label = "";
+    label = tr("<Multiple>");
   }
 
   ui->currentCategoryLabel->setText(label);
   ui->modList->reset();
 }
 
-void MainWindow::onFiltersCriteria(
-  ModListSortProxy::FilterMode mode, bool inverse, bool separators)
+void MainWindow::onFiltersOptions(ModListSortProxy::FilterMode mode, bool separators)
 {
-  m_ModListSortProxy->setFilterMode(mode);
-  m_ModListSortProxy->setFilterNot(inverse);
-  m_ModListSortProxy->setFilterSeparators(separators);
+  m_ModListSortProxy->setOptions(mode, separators);
 }
 
 void MainWindow::updateESPLock(bool locked)

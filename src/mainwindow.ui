@@ -85,12 +85,26 @@
           <property name="uniformRowHeights">
            <bool>true</bool>
           </property>
+          <property name="headerHidden">
+           <bool>false</bool>
+          </property>
           <attribute name="headerVisible">
+           <bool>true</bool>
+          </attribute>
+          <attribute name="headerCascadingSectionResizes">
+           <bool>true</bool>
+          </attribute>
+          <attribute name="headerStretchLastSection">
            <bool>false</bool>
           </attribute>
           <column>
            <property name="text">
-            <string notr="true">1</string>
+            <string notr="true">Category</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Invert</string>
            </property>
           </column>
          </widget>
@@ -149,16 +163,6 @@
              </property>
              <property name="text">
               <string>Or</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QCheckBox" name="filtersNot">
-             <property name="toolTip">
-              <string>Invert each selected category</string>
-             </property>
-             <property name="text">
-              <string>Not</string>
              </property>
             </widget>
            </item>
@@ -351,9 +355,6 @@ p, li { white-space: pre-wrap; }
            <property name="contextMenuPolicy">
             <enum>Qt::CustomContextMenu</enum>
            </property>
-           <property name="toolTip">
-            <string>List of available mods.</string>
-           </property>
            <property name="whatsThis">
             <string>This is a list of installed mods. Use the checkboxes to activate/deactivate mods and drag &amp; drop mods to change their &quot;installation&quot; orders.</string>
            </property>
@@ -448,14 +449,7 @@ p, li { white-space: pre-wrap; }
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="currentCategoryLabel">
-             <property name="font">
-              <font>
-               <pointsize>8</pointsize>
-               <italic>true</italic>
-              </font>
-             </property>
-            </widget>
+            <widget class="QLabel" name="currentCategoryLabel"/>
            </item>
            <item>
             <spacer name="horizontalSpacer_5">

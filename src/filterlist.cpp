@@ -6,6 +6,9 @@
 
 using namespace MOBase;
 
+const int CategoryIDRole = Qt::UserRole;
+const int CategoryTypeRole = Qt::UserRole + 1;
+
 FilterList::FilterList(Ui::MainWindow* ui, CategoryFactory& factory)
   : ui(ui), m_factory(factory)
 {
@@ -30,60 +33,75 @@ FilterList::FilterList(Ui::MainWindow* ui, CategoryFactory& factory)
     [&]{ onCriteriaChanged(); });
 
   connect(
-    ui->filtersNot, &QCheckBox::toggled,
-    [&]{ onCriteriaChanged(); });
-
-  connect(
     ui->filtersSeparators, &QCheckBox::toggled,
     [&]{ onCriteriaChanged(); });
+
+  ui->filters->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+  ui->filters->header()->resizeSection(1, 50);
 }
 
-QTreeWidgetItem* FilterList::addFilterItem(
+QTreeWidgetItem* FilterList::addCriteriaItem(
   QTreeWidgetItem *root, const QString &name, int categoryID,
-  ModListSortProxy::FilterType type)
+  ModListSortProxy::CriteriaType type)
 {
   QTreeWidgetItem *item = new QTreeWidgetItem(QStringList(name));
+
   item->setData(0, Qt::ToolTipRole, name);
-  item->setData(0, Qt::UserRole, categoryID);
-  item->setData(0, Qt::UserRole + 1, type);
+  item->setData(0, CategoryIDRole, categoryID);
+  item->setData(0, CategoryTypeRole, type);
+
   if (root != nullptr) {
     root->addChild(item);
   } else {
     ui->filters->addTopLevelItem(item);
   }
+
+  auto* w = new QWidget;
+  w->setStyleSheet("background-color: rgba(0,0,0,0)");
+
+  auto* ly = new QVBoxLayout(w);
+  ly->setAlignment(Qt::AlignCenter);
+  ly->setContentsMargins(0, 0, 0, 0);
+
+  auto* cb = new QCheckBox;
+  connect(cb, &QCheckBox::toggled, [&]{ onSelection(); });
+  ly->addWidget(cb);
+
+  ui->filters->setItemWidget(item, 1, w);
+
   return item;
 }
 
-void FilterList::addContentFilters()
+void FilterList::addContentCriteria()
 {
   for (unsigned i = 0; i < ModInfo::NUM_CONTENT_TYPES; ++i) {
-    addFilterItem(
+    addCriteriaItem(
       nullptr, tr("<Contains %1>").arg(ModInfo::getContentTypeName(i)),
       i, ModListSortProxy::TYPE_CONTENT);
   }
 }
 
-void FilterList::addCategoryFilters(QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID)
+void FilterList::addCategoryCriteria(QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID)
 {
-  for (unsigned int i = 1;
-    i < static_cast<unsigned int>(m_factory.numCategories()); ++i) {
-    if ((m_factory.getParentID(i) == targetID)) {
+  const auto count = static_cast<unsigned int>(m_factory.numCategories());
+  for (unsigned int i = 1; i < count; ++i) {
+    if (m_factory.getParentID(i) == targetID) {
       int categoryID = m_factory.getCategoryID(i);
       if (categoriesUsed.find(categoryID) != categoriesUsed.end()) {
         QTreeWidgetItem *item =
-          addFilterItem(root, m_factory.getCategoryName(i),
+          addCriteriaItem(root, m_factory.getCategoryName(i),
             categoryID, ModListSortProxy::TYPE_CATEGORY);
         if (m_factory.hasChildren(i)) {
-          addCategoryFilters(item, categoriesUsed, categoryID);
+          addCategoryCriteria(item, categoriesUsed, categoryID);
         }
       }
     }
   }
 }
 
-void FilterList::addSpecialFilterItem(int type)
+void FilterList::addSpecialCriteria(int type)
 {
-  addFilterItem(
+  addCriteriaItem(
     nullptr, m_factory.getSpecialCategoryName(type),
     type, ModListSortProxy::TYPE_SPECIAL);
 }
@@ -98,19 +116,19 @@ void FilterList::refresh()
   ui->filters->clear();
 
   using F = CategoryFactory;
-  addSpecialFilterItem(F::CATEGORY_SPECIAL_CHECKED);
-  addSpecialFilterItem(F::CATEGORY_SPECIAL_UNCHECKED);
-  addSpecialFilterItem(F::CATEGORY_SPECIAL_UPDATEAVAILABLE);
-  addSpecialFilterItem(F::CATEGORY_SPECIAL_BACKUP);
-  addSpecialFilterItem(F::CATEGORY_SPECIAL_MANAGED);
-  addSpecialFilterItem(F::CATEGORY_SPECIAL_UNMANAGED);
-  addSpecialFilterItem(F::CATEGORY_SPECIAL_NOCATEGORY);
-  addSpecialFilterItem(F::CATEGORY_SPECIAL_CONFLICT);
-  addSpecialFilterItem(F::CATEGORY_SPECIAL_NOTENDORSED);
-  addSpecialFilterItem(F::CATEGORY_SPECIAL_NONEXUSID);
-  addSpecialFilterItem(F::CATEGORY_SPECIAL_NOGAMEDATA);
+  addSpecialCriteria(F::CATEGORY_SPECIAL_CHECKED);
+  addSpecialCriteria(F::CATEGORY_SPECIAL_UNCHECKED);
+  addSpecialCriteria(F::CATEGORY_SPECIAL_UPDATEAVAILABLE);
+  addSpecialCriteria(F::CATEGORY_SPECIAL_BACKUP);
+  addSpecialCriteria(F::CATEGORY_SPECIAL_MANAGED);
+  addSpecialCriteria(F::CATEGORY_SPECIAL_UNMANAGED);
+  addSpecialCriteria(F::CATEGORY_SPECIAL_NOCATEGORY);
+  addSpecialCriteria(F::CATEGORY_SPECIAL_CONFLICT);
+  addSpecialCriteria(F::CATEGORY_SPECIAL_NOTENDORSED);
+  addSpecialCriteria(F::CATEGORY_SPECIAL_NONEXUSID);
+  addSpecialCriteria(F::CATEGORY_SPECIAL_NOGAMEDATA);
 
-  addContentFilters();
+  addContentCriteria();
 
   std::set<int> categoriesUsed;
   for (unsigned int modIdx = 0; modIdx < ModInfo::getNumMods(); ++modIdx) {
@@ -130,7 +148,7 @@ void FilterList::refresh()
     }
   }
 
-  addCategoryFilters(nullptr, categoriesUsed, 0);
+  addCategoryCriteria(nullptr, categoriesUsed, 0);
 
   for (const QString &item : selectedItems) {
     QList<QTreeWidgetItem*> matches = ui->filters->findItems(
@@ -145,7 +163,7 @@ void FilterList::refresh()
 void FilterList::setSelection(std::vector<int> categories)
 {
   for (int i = 0; i < ui->filters->topLevelItemCount(); ++i) {
-    if (ui->filters->topLevelItem(i)->data(0, Qt::UserRole) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) {
+    if (ui->filters->topLevelItem(i)->data(0, CategoryIDRole) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) {
       ui->filters->setCurrentItem(ui->filters->topLevelItem(i));
       break;
     }
@@ -159,27 +177,24 @@ void FilterList::clearSelection()
 
 void FilterList::onSelection()
 {
-  QModelIndexList indices = ui->filters->selectionModel()->selectedRows();
-  std::vector<int> categories;
-  std::vector<int> content;
+  const QModelIndexList indices = ui->filters->selectionModel()->selectedRows();
+  std::vector<ModListSortProxy::Criteria> criteria;
 
-  for (const QModelIndex &index : indices) {
-    const int filterType = index.data(Qt::UserRole + 1).toInt();
+  for (auto* item: ui->filters->selectedItems()) {
+    const auto  type = static_cast<ModListSortProxy::CriteriaType>(
+      item->data(0, CategoryTypeRole).toInt());
 
-    if ((filterType == ModListSortProxy::TYPE_CATEGORY) || (filterType == ModListSortProxy::TYPE_SPECIAL)) {
-      const int categoryId = index.data(Qt::UserRole).toInt();
-      if (categoryId != CategoryFactory::CATEGORY_NONE) {
-        categories.push_back(categoryId);
-      }
-    } else if (filterType == ModListSortProxy::TYPE_CONTENT) {
-      const int contentId = index.data(Qt::UserRole).toInt();
-      content.push_back(contentId);
-    }
+    const int id = item->data(0, CategoryIDRole).toInt();
+
+    auto* cb = static_cast<const QCheckBox*>(ui->filters->itemWidget(item, 1));
+    const bool inverse = cb->isChecked();
+
+    criteria.push_back({type, id, inverse});
   }
 
-  ui->filtersClear->setEnabled(categories.size() > 0 || content.size() >0);
+  ui->filtersClear->setEnabled(!criteria.empty());
 
-  emit filtersChanged(categories, content);
+  emit criteriaChanged(criteria);
 }
 
 void FilterList::onContextMenu(const QPoint &pos)
@@ -205,8 +220,7 @@ void FilterList::onCriteriaChanged()
   const auto mode = ui->filtersAnd->isChecked() ?
     ModListSortProxy::FILTER_AND : ModListSortProxy::FILTER_OR;
 
-  const bool inverse = ui->filtersNot->isChecked();
   const bool separators = ui->filtersSeparators->isChecked();
 
-  emit criteriaChanged(mode, inverse, separators);
+  emit optionsChanged(mode, separators);
 }

@@ -19,8 +19,8 @@ public:
   void refresh();
 
 signals:
-  void filtersChanged(std::vector<int> categories, std::vector<int> content);
-  void criteriaChanged(ModListSortProxy::FilterMode mode, bool inverse, bool separators);
+  void criteriaChanged(std::vector<ModListSortProxy::Criteria> criteria);
+  void optionsChanged(ModListSortProxy::FilterMode mode, bool separators);
 
 private:
   Ui::MainWindow* ui;
@@ -32,14 +32,14 @@ private:
 
   void editCategories();
 
-  QTreeWidgetItem* addFilterItem(
+  QTreeWidgetItem* addCriteriaItem(
     QTreeWidgetItem *root, const QString &name, int categoryID,
-    ModListSortProxy::FilterType type);
+    ModListSortProxy::CriteriaType type);
 
-  void addContentFilters();
-  void addCategoryFilters(
+  void addContentCriteria();
+  void addCategoryCriteria(
     QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID);
-  void addSpecialFilterItem(int type);
+  void addSpecialCriteria(int type);
 
 };
 
