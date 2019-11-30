@@ -6126,9 +6126,15 @@ void MainWindow::onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>
     label = "";
   } else if (criteria.size() == 1) {
     const auto& c = criteria[0];
-    label = m_CategoryFactory.getCategoryNameByID(c.id);
+
+    if (c.type == ModListSortProxy::TYPE_CONTENT) {
+      label = ModInfo::getContentTypeName(c.id);
+    } else {
+      label = m_CategoryFactory.getCategoryNameByID(c.id);
+    }
+
     if (label.isEmpty()) {
-      log::error("category '{}' not found", c.id);
+      log::error("category {}:{} not found", c.type, c.id);
     }
   } else {
     label = tr("<Multiple>");
