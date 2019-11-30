@@ -11,7 +11,7 @@ using Criteria = ModListSortProxy::Criteria;
 class FilterList::CriteriaItem : public QTreeWidgetItem
 {
 public:
-  enum States : int
+  enum States
   {
     FirstState = 0,
 
@@ -234,11 +234,11 @@ void FilterList::refresh()
   addSpecialCriteria(F::UpdateAvailable);
   addSpecialCriteria(F::Backup);
   addSpecialCriteria(F::Managed);
-  addSpecialCriteria(F::HasNoCategory);
+  addSpecialCriteria(F::HasCategory);
   addSpecialCriteria(F::Conflict);
-  addSpecialCriteria(F::NotEndorsed);
-  addSpecialCriteria(F::NoNexusID);
-  addSpecialCriteria(F::NoGameData);
+  addSpecialCriteria(F::Endorsed);
+  addSpecialCriteria(F::HasNexusID);
+  addSpecialCriteria(F::HasGameData);
 
   addContentCriteria();
 

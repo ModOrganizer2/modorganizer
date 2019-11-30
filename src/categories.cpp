@@ -324,15 +324,15 @@ QString CategoryFactory::getSpecialCategoryName(SpecialCategories type) const
 {
   switch (type)
   {
-    case Checked:         return QObject::tr("<Checked>");
-    case UpdateAvailable: return QObject::tr("<Update>");
-    case HasNoCategory:      return QObject::tr("<No category>");
+    case Checked:         return QObject::tr("<Active>");
+    case UpdateAvailable: return QObject::tr("<Update available>");
+    case HasCategory:     return QObject::tr("<Has category>");
     case Conflict:        return QObject::tr("<Conflicted>");
-    case NotEndorsed:     return QObject::tr("<Not Endorsed>");
-    case Backup:          return QObject::tr("<Mod Backup>");
-    case Managed:         return QObject::tr("<Managed by MO>");
-    case NoGameData:      return QObject::tr("<No valid game data>");
-    case NoNexusID:       return QObject::tr("<No Nexus ID>");
+    case Endorsed:        return QObject::tr("<Endorsed>");
+    case Backup:          return QObject::tr("<Has backup>");
+    case Managed:         return QObject::tr("<Managed>");
+    case HasGameData:     return QObject::tr("<Has valid game data>");
+    case HasNexusID:      return QObject::tr("<Has Nexus ID>");
     default: return {};
   }
 }

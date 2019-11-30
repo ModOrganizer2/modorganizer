@@ -371,9 +371,9 @@ bool ModListSortProxy::categoryMatchesMod(
       break;
     }
 
-    case CategoryFactory::HasNoCategory:
+    case CategoryFactory::HasCategory:
     {
-      b = (info->getCategories().size() == 0);
+      b = !info->getCategories().empty();
       break;
     }
 
@@ -383,10 +383,9 @@ bool ModListSortProxy::categoryMatchesMod(
       break;
     }
 
-    case CategoryFactory::NotEndorsed:
+    case CategoryFactory::Endorsed:
     {
-      ModInfo::EEndorsedState state = info->endorsedState();
-      b = (state != ModInfo::ENDORSED_TRUE);
+      b = (info->endorsedState() == ModInfo::ENDORSED_TRUE);
       break;
     }
 
@@ -402,20 +401,24 @@ bool ModListSortProxy::categoryMatchesMod(
       break;
     }
 
-    case CategoryFactory::NoGameData:
+    case CategoryFactory::HasGameData:
     {
-      b = (info->hasFlag(ModInfo::FLAG_INVALID));
+      b = !info->hasFlag(ModInfo::FLAG_INVALID);
       break;
     }
 
-    case CategoryFactory::NoNexusID:
+    case CategoryFactory::HasNexusID:
     {
-      b = (
-        info->getNexusID() == -1 &&
-        !info->hasFlag(ModInfo::FLAG_FOREIGN) &&
-        !info->hasFlag(ModInfo::FLAG_BACKUP) &&
-        !info->hasFlag(ModInfo::FLAG_OVERWRITE));
+      // never show these
+      if (
+        info->hasFlag(ModInfo::FLAG_FOREIGN) ||
+        info->hasFlag(ModInfo::FLAG_BACKUP) ||
+        info->hasFlag(ModInfo::FLAG_OVERWRITE))
+      {
+        return false;
+      }
 
+      b = (info->getNexusID() > 0);
       break;
     }
 

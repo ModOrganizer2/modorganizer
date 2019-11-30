@@ -41,13 +41,13 @@ public:
   {
     Checked = 10000,
     UpdateAvailable,
-    HasNoCategory,
+    HasCategory,
     Conflict,
-    NotEndorsed,
+    Endorsed,
     Backup,
     Managed,
-    NoGameData,
-    NoNexusID
+    HasGameData,
+    HasNexusID
   };
 
 public:
