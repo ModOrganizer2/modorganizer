@@ -4130,7 +4130,11 @@ void MainWindow::checkModsForUpdates()
         false}
     });
 
-    m_Filters->setSelection({CategoryFactory::UpdateAvailable});
+    m_Filters->setSelection({{
+      ModListSortProxy::TYPE_SPECIAL,
+      CategoryFactory::UpdateAvailable,
+      false
+    }});
   }
 }
 

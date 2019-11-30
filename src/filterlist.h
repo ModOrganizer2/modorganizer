@@ -14,7 +14,7 @@ class FilterList : public QObject
 public:
   FilterList(Ui::MainWindow* ui, CategoryFactory& factory);
 
-  void setSelection(std::vector<int> categories);
+  void setSelection(const std::vector<ModListSortProxy::Criteria>& criteria);
   void clearSelection();
   void refresh();
 

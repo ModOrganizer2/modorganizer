@@ -203,7 +203,7 @@ void FilterList::refresh()
   }
 }
 
-void FilterList::setSelection(std::vector<int> categories)
+void FilterList::setSelection(const std::vector<Criteria>& criteria)
 {
   for (int i = 0; i < ui->filters->topLevelItemCount(); ++i) {
     const auto* item = dynamic_cast<CriteriaItem*>(
@@ -213,9 +213,11 @@ void FilterList::setSelection(std::vector<int> categories)
       continue;
     }
 
-    if (item->id() == CategoryFactory::UpdateAvailable) {
-      ui->filters->setCurrentItem(ui->filters->topLevelItem(i));
-      break;
+    for (auto&& c : criteria) {
+      if (item->type() == c.type && item->id() == c.id) {
+        ui->filters->setCurrentItem(ui->filters->topLevelItem(i));
+        break;
+      }
     }
   }
 }
