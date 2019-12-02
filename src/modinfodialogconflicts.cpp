@@ -608,6 +608,19 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
     menu.addAction(actions.preview);
   }
 
+  // goto
+  if (actions.gotoMenu) {
+    menu.addMenu(actions.gotoMenu);
+
+    for (auto* a : actions.gotoActions) {
+      connect(a, &QAction::triggered, [&, name=a->text()]{
+        emitModOpen(name);
+        });
+
+      actions.gotoMenu->addAction(a);
+    }
+  }
+
   // explore
   if (actions.explore) {
     connect(actions.explore, &QAction::triggered, [&]{
@@ -616,6 +629,8 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
 
     menu.addAction(actions.explore);
   }
+
+  menu.addSeparator();
 
   // hide
   if (actions.hide) {
@@ -633,19 +648,6 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
     });
 
     menu.addAction(actions.unhide);
-  }
-
-  // goto
-  if (actions.gotoMenu) {
-    menu.addMenu(actions.gotoMenu);
-
-    for (auto* a : actions.gotoActions) {
-      connect(a, &QAction::triggered, [&, name=a->text()]{
-        emitModOpen(name);
-       });
-
-      actions.gotoMenu->addAction(a);
-    }
   }
 
   if (!menu.isEmpty()) {
@@ -732,14 +734,6 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
 
   Actions actions;
 
-  actions.hide = new QAction(tr("&Hide"), parentWidget());
-  actions.hide->setEnabled(enableHide);
-
-  // note that it is possible for hidden files to appear if they override other
-  // hidden files from another mod
-  actions.unhide = new QAction(tr("&Unhide"), parentWidget());
-  actions.unhide->setEnabled(enableUnhide);
-
   if (enableRun) {
     actions.open = new QAction(tr("&Execute"), parentWidget());
   } else if (enableOpen) {
@@ -750,11 +744,19 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
   actions.preview = new QAction(tr("&Preview"), parentWidget());
   actions.preview->setEnabled(enablePreview);
 
+  actions.gotoMenu = new QMenu(tr("&Go to..."), parentWidget());
+  actions.gotoMenu->setEnabled(enableGoto);
+
   actions.explore = new QAction(tr("Open in &Explorer"), parentWidget());
   actions.explore->setEnabled(enableExplore);
 
-  actions.gotoMenu = new QMenu(tr("&Go to..."), parentWidget());
-  actions.gotoMenu->setEnabled(enableGoto);
+  actions.hide = new QAction(tr("&Hide"), parentWidget());
+  actions.hide->setEnabled(enableHide);
+
+  // note that it is possible for hidden files to appear if they override other
+  // hidden files from another mod
+  actions.unhide = new QAction(tr("&Unhide"), parentWidget());
+  actions.unhide->setEnabled(enableUnhide);
 
   if (enableGoto && n == 1) {
     const auto* item = model->getItem(static_cast<std::size_t>(

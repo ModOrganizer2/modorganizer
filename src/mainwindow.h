@@ -440,6 +440,7 @@ private slots:
   // data-tree context menu
   void writeDataToFile();
   void openDataFile();
+  void runDataFileHooked();
   void addAsExecutable();
   void previewDataFile();
   void hideFile();

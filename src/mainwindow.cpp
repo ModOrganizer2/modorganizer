@@ -5304,6 +5304,21 @@ void MainWindow::openDataFile()
     .run();
 }
 
+void MainWindow::runDataFileHooked()
+{
+  if (m_ContextItem == nullptr) {
+    return;
+  }
+
+  const QString path = m_ContextItem->data(0, Qt::UserRole).toString();
+  const QFileInfo targetInfo(path);
+
+  m_OrganizerCore.processRunner()
+    .setFromFile(this, targetInfo, true)
+    .setWaitForCompletion(ProcessRunner::Refresh)
+    .run();
+}
+
 void MainWindow::openDataOriginExplorer_clicked()
 {
   if (m_ContextItem == nullptr) {
@@ -5380,22 +5395,30 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
   QMenu menu;
   if ((m_ContextItem != nullptr) && (m_ContextItem->childCount() == 0)
       && (m_ContextItem->data(0, Qt::UserRole + 3).toBool() != true)) {
-    menu.addAction(tr("Open/Execute"), this, SLOT(openDataFile()));
-    menu.addAction(tr("Add as Executable"), this, SLOT(addAsExecutable()));
-
     QString fileName = m_ContextItem->text(0);
+    const auto isArchive = m_ContextItem->data(0, Qt::UserRole + 1).toBool();
+    const auto isDirectory = m_ContextItem->data(0, Qt::UserRole + 3).toBool();
+
+    if (canRunFile(isArchive, fileName)) {
+      menu.addAction(tr("&Execute"), this, SLOT(openDataFile()));
+    } else if (canOpenFile(isArchive, fileName)) {
+      menu.addAction(tr("&Open"), this, SLOT(openDataFile()));
+      menu.addAction(tr("Open with &VFS"), this, SLOT(runDataFileHooked()));
+    }
+
+    menu.addAction(tr("&Add as Executable"), this, SLOT(addAsExecutable()));
+
     if (m_PluginContainer.previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
       menu.addAction(tr("Preview"), this, SLOT(previewDataFile()));
     }
-
-    const auto isArchive = m_ContextItem->data(0, Qt::UserRole + 1).toBool();
-    const auto isDirectory = m_ContextItem->data(0, Qt::UserRole + 3).toBool();
 
     if (!isArchive && !isDirectory) {
       menu.addAction("Open Origin in Explorer", this, SLOT(openDataOriginExplorer_clicked()));
     }
 
     menu.addAction("Open Mod Info", this, SLOT(openDataModInfo_clicked()));
+
+    menu.addSeparator();
 
     // offer to hide/unhide file, but not for files from archives
     if (!isArchive) {
@@ -5405,8 +5428,6 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
         menu.addAction(tr("Hide"), this, SLOT(hideFile()));
       }
     }
-
-    menu.addSeparator();
   }
   menu.addAction(tr("Write To File..."), this, SLOT(writeDataToFile()));
   menu.addAction(tr("Refresh"), this, SLOT(on_btnRefreshData_clicked()));
