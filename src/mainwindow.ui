@@ -39,6 +39,9 @@
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
+      <property name="childrenCollapsible">
+       <bool>false</bool>
+      </property>
       <widget class="QGroupBox" name="categoriesGroup">
        <property name="maximumSize">
         <size>
@@ -47,7 +50,7 @@
         </size>
        </property>
        <property name="title">
-        <string>Categories</string>
+        <string>Filters</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_10" stretch="6,0,0">
         <property name="spacing">
@@ -66,7 +69,7 @@
          <number>1</number>
         </property>
         <item>
-         <widget class="QTreeWidget" name="categoriesList">
+         <widget class="QTreeWidget" name="filters">
           <property name="minimumSize">
            <size>
             <width>120</width>
@@ -74,50 +77,71 @@
            </size>
           </property>
           <property name="contextMenuPolicy">
-           <enum>Qt::CustomContextMenu</enum>
+           <enum>Qt::NoContextMenu</enum>
           </property>
           <property name="selectionMode">
-           <enum>QAbstractItemView::ExtendedSelection</enum>
+           <enum>QAbstractItemView::NoSelection</enum>
           </property>
           <property name="indentation">
            <number>0</number>
           </property>
+          <property name="rootIsDecorated">
+           <bool>false</bool>
+          </property>
           <property name="uniformRowHeights">
+           <bool>true</bool>
+          </property>
+          <property name="headerHidden">
            <bool>true</bool>
           </property>
           <attribute name="headerVisible">
            <bool>false</bool>
           </attribute>
+          <attribute name="headerCascadingSectionResizes">
+           <bool>false</bool>
+          </attribute>
           <column>
            <property name="text">
-            <string notr="true">1</string>
+            <string/>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string notr="true">Category</string>
            </property>
           </column>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="clickBlankButton">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>25</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Clear</string>
-          </property>
-          <property name="flat">
-           <bool>true</bool>
-          </property>
+         <widget class="QWidget" name="widget_2" native="true">
+          <layout class="QHBoxLayout" name="horizontalLayout_8">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>2</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QPushButton" name="filtersClear">
+             <property name="text">
+              <string>Clear</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="filtersEdit">
+             <property name="text">
+              <string>Edit...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </item>
         <item>
@@ -129,10 +153,22 @@
            </sizepolicy>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_11">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>2</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
            <item>
-            <widget class="QRadioButton" name="categoriesAndBtn">
+            <widget class="QRadioButton" name="filtersAnd">
              <property name="toolTip">
-              <string>If checked, only mods that match all selected categories are displayed.</string>
+              <string>Display mods that match all selected categories.</string>
              </property>
              <property name="text">
               <string>And</string>
@@ -143,12 +179,21 @@
             </widget>
            </item>
            <item>
-            <widget class="QRadioButton" name="categoriesOrBtn">
+            <widget class="QRadioButton" name="filtersOr">
              <property name="toolTip">
-              <string>If checked, all mods that match at least one of the selected categories are displayed.</string>
+              <string>Display mods that match at least one of the selected categories</string>
              </property>
              <property name="text">
               <string>Or</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="filtersSeparators">
+             <property name="toolTip">
+              <string>Filter: only show the separators that match the current filters
+Show: always show separators
+Hide: never show separators</string>
              </property>
             </widget>
            </item>
@@ -331,9 +376,6 @@ p, li { white-space: pre-wrap; }
            <property name="contextMenuPolicy">
             <enum>Qt::CustomContextMenu</enum>
            </property>
-           <property name="toolTip">
-            <string>List of available mods.</string>
-           </property>
            <property name="whatsThis">
             <string>This is a list of installed mods. Use the checkboxes to activate/deactivate mods and drag &amp; drop mods to change their &quot;installation&quot; orders.</string>
            </property>
@@ -428,14 +470,7 @@ p, li { white-space: pre-wrap; }
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="currentCategoryLabel">
-             <property name="font">
-              <font>
-               <pointsize>8</pointsize>
-               <italic>true</italic>
-              </font>
-             </property>
-            </widget>
+            <widget class="QLabel" name="currentCategoryLabel"/>
            </item>
            <item>
             <spacer name="horizontalSpacer_5">

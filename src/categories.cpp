@@ -320,6 +320,38 @@ QString CategoryFactory::getCategoryName(unsigned int index) const
   return m_Categories[index].m_Name;
 }
 
+QString CategoryFactory::getSpecialCategoryName(SpecialCategories type) const
+{
+  switch (type)
+  {
+    case Checked:         return QObject::tr("<Active>");
+    case UpdateAvailable: return QObject::tr("<Update available>");
+    case HasCategory:     return QObject::tr("<Has category>");
+    case Conflict:        return QObject::tr("<Conflicted>");
+    case Endorsed:        return QObject::tr("<Endorsed>");
+    case Backup:          return QObject::tr("<Has backup>");
+    case Managed:         return QObject::tr("<Managed>");
+    case HasGameData:     return QObject::tr("<Has valid game data>");
+    case HasNexusID:      return QObject::tr("<Has Nexus ID>");
+    default: return {};
+  }
+}
+
+QString CategoryFactory::getCategoryNameByID(int id) const
+{
+  auto itor = m_IDMap.find(id);
+
+  if (itor == m_IDMap.end()) {
+    return getSpecialCategoryName(static_cast<SpecialCategories>(id));
+  } else {
+    const auto index = itor->second;
+    if (index >= m_Categories.size()) {
+      return {};
+    }
+
+    return m_Categories[index].m_Name;
+  }
+}
 
 int CategoryFactory::getCategoryID(unsigned int index) const
 {

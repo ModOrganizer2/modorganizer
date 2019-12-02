@@ -144,6 +144,7 @@ SET(organizer_SRCS
 	uilocker.cpp
 	loot.cpp
 	lootdialog.cpp
+	filterlist.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -268,6 +269,7 @@ SET(organizer_HDRS
 	loot.h
 	lootdialog.h
 	json.h
+	filterlist.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -320,6 +322,7 @@ SET(organizer_RCS
 source_group(src REGULAR_EXPRESSION ".*\\.(h|cpp|ui)")
 
 set(application
+	filterlist
 	iuserinterface
 	main
 	mainwindow
