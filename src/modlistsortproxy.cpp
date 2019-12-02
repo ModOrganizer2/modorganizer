@@ -404,6 +404,12 @@ bool ModListSortProxy::categoryMatchesMod(
       break;
     }
 
+    case CategoryFactory::Tracked:
+    {
+      b = (info->trackedState() == ModInfo::TRACKED_TRUE);
+      break;
+    }
+
     default:
     {
       b = (info->categorySet(category));

@@ -47,7 +47,8 @@ public:
     Backup,
     Managed,
     HasGameData,
-    HasNexusID
+    HasNexusID,
+    Tracked
   };
 
 public:

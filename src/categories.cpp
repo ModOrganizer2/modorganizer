@@ -333,6 +333,7 @@ QString CategoryFactory::getSpecialCategoryName(SpecialCategories type) const
     case Managed:         return QObject::tr("<Managed>");
     case HasGameData:     return QObject::tr("<Has valid game data>");
     case HasNexusID:      return QObject::tr("<Has Nexus ID>");
+    case Tracked:         return QObject::tr("<Tracked on Nexus>");
     default: return {};
   }
 }
