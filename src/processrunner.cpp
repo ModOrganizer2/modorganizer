@@ -498,6 +498,10 @@ ProcessRunner& ProcessRunner::setFromFile(QWidget* parent, const QFileInfo& targ
     default:
     {
       m_shellOpen = targetInfo.absoluteFilePath();
+
+      // picked up by postRun()
+      m_sp.hooked = false;
+
       break;
     }
   }
@@ -721,6 +725,11 @@ std::optional<ProcessRunner::Results> ProcessRunner::runBinary()
 ProcessRunner::Results ProcessRunner::postRun()
 {
   const bool mustWait = (m_waitFlags & ForceWait);
+
+  if (!m_sp.hooked && !mustWait) {
+    // the process wasn't hooked and there's no force wait, don't lock
+    return Running;
+  }
 
   if (mustWait && m_lockReason == UILocker::NoReason) {
     // never lock the ui without an escape hatch for the user

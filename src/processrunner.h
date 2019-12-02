@@ -42,8 +42,9 @@ public:
     // the ui will be refreshed once the process has completed
     Refresh   = 0x01,
 
-    // the process will be waited for even if locking is disabled
-    ForceWait = 0x02
+    // the process will be waited for even if locking is disabled or the
+    // process is not hooked
+    ForceWait = 0x02,
   };
 
   using WaitFlags = QFlags<WaitFlag>;

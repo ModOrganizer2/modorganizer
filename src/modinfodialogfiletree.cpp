@@ -140,7 +140,10 @@ void FileTreeTab::onOpen()
     return;
   }
 
-  shell::Open(m_fs->filePath(selection));
+  core().processRunner()
+    .setFromFile(parentWidget(), m_fs->filePath(selection))
+    .setWaitForCompletion()
+    .run();
 }
 
 void FileTreeTab::onPreview()

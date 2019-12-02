@@ -181,10 +181,11 @@ UsvfsConnector::~UsvfsConnector()
 
 void UsvfsConnector::updateMapping(const MappingType &mapping)
 {
-  QProgressDialog progress;
+  QProgressDialog progress(qApp->activeWindow());
   progress.setLabelText(tr("Preparing vfs"));
   progress.setMaximum(static_cast<int>(mapping.size()));
   progress.show();
+
   int value = 0;
   int files = 0;
   int dirs = 0;
