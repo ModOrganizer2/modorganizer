@@ -31,16 +31,23 @@ class ModListSortProxy : public QSortFilterProxyModel
   Q_OBJECT
 
 public:
-
-  enum FilterMode {
-    FILTER_AND,
-    FILTER_OR
+  enum FilterMode
+  {
+    FilterAnd,
+    FilterOr
   };
 
   enum CriteriaType {
-    TYPE_SPECIAL,
-    TYPE_CATEGORY,
-    TYPE_CONTENT
+    TypeSpecial,
+    TypeCategory,
+    TypeContent
+  };
+
+  enum SeparatorsMode
+  {
+    SeparatorFilter,
+    SeparatorShow,
+    SeparatorHide
   };
 
   struct Criteria
@@ -101,7 +108,7 @@ public:
   bool isFilterActive() const { return m_FilterActive; }
 
   void setCriteria(const std::vector<Criteria>& criteria);
-  void setOptions(FilterMode mode, bool separators);
+  void setOptions(FilterMode mode, SeparatorsMode separators);
 
   /**
    * @brief tests if the specified index has child nodes
@@ -153,7 +160,7 @@ private:
 
   bool m_FilterActive;
   FilterMode m_FilterMode;
-  bool m_FilterSeparators;
+  SeparatorsMode m_FilterSeparators;
 
   std::vector<Criteria> m_PreChangeCriteria;
 

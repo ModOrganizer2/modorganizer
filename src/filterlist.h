@@ -6,6 +6,7 @@
 
 namespace Ui { class MainWindow; };
 class CategoryFactory;
+class Settings;
 
 class FilterList : public QObject
 {
@@ -14,13 +15,17 @@ class FilterList : public QObject
 public:
   FilterList(Ui::MainWindow* ui, CategoryFactory& factory);
 
+  void restoreState(const Settings& s);
+  void saveState(Settings& s) const;
+
   void setSelection(const std::vector<ModListSortProxy::Criteria>& criteria);
   void clearSelection();
   void refresh();
 
 signals:
   void criteriaChanged(std::vector<ModListSortProxy::Criteria> criteria);
-  void optionsChanged(ModListSortProxy::FilterMode mode, bool separators);
+  void optionsChanged(
+    ModListSortProxy::FilterMode mode, ModListSortProxy::SeparatorsMode sep);
 
 private:
   class CriteriaItem;

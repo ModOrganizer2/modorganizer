@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "categories.h"
 #include "categoriesdialog.h"
+#include "settings.h"
 #include <utility.h>
 
 using namespace MOBase;
@@ -157,7 +158,7 @@ FilterList::FilterList(Ui::MainWindow* ui, CategoryFactory& factory)
     [&]{ onOptionsChanged(); });
 
   connect(
-    ui->filtersSeparators, &QCheckBox::toggled,
+    ui->filtersSeparators, qOverload<int>(&QComboBox::currentIndexChanged),
     [&]{ onOptionsChanged(); });
 
   ui->filters->header()->setMinimumSectionSize(0);
@@ -165,6 +166,20 @@ FilterList::FilterList(Ui::MainWindow* ui, CategoryFactory& factory)
   ui->filters->header()->resizeSection(0, 30);
   ui->categoriesSplitter->setCollapsible(0, false);
   ui->categoriesSplitter->setCollapsible(1, false);
+
+  ui->filtersSeparators->addItem(tr("Filter separators"), ModListSortProxy::SeparatorFilter);
+  ui->filtersSeparators->addItem(tr("Show separators"), ModListSortProxy::SeparatorShow);
+  ui->filtersSeparators->addItem(tr("Hide separators"), ModListSortProxy::SeparatorHide);
+}
+
+void FilterList::restoreState(const Settings& s)
+{
+  s.widgets().restoreIndex(ui->filtersSeparators);
+}
+
+void FilterList::saveState(Settings& s) const
+{
+  s.widgets().saveIndex(ui->filtersSeparators);
 }
 
 QTreeWidgetItem* FilterList::addCriteriaItem(
@@ -189,7 +204,7 @@ void FilterList::addContentCriteria()
   for (unsigned i = 0; i < ModInfo::NUM_CONTENT_TYPES; ++i) {
     addCriteriaItem(
       nullptr, tr("<Contains %1>").arg(ModInfo::getContentTypeName(i)),
-      i, ModListSortProxy::TYPE_CONTENT);
+      i, ModListSortProxy::TypeContent);
   }
 }
 
@@ -202,7 +217,7 @@ void FilterList::addCategoryCriteria(QTreeWidgetItem *root, const std::set<int> 
       if (categoriesUsed.find(categoryID) != categoriesUsed.end()) {
         QTreeWidgetItem *item =
           addCriteriaItem(root, m_factory.getCategoryName(i),
-            categoryID, ModListSortProxy::TYPE_CATEGORY);
+            categoryID, ModListSortProxy::TypeCategory);
         if (m_factory.hasChildren(i)) {
           addCategoryCriteria(item, categoriesUsed, categoryID);
         }
@@ -217,7 +232,7 @@ void FilterList::addSpecialCriteria(int type)
 
   addCriteriaItem(
     nullptr, m_factory.getSpecialCategoryName(sc),
-    type, ModListSortProxy::TYPE_SPECIAL);
+    type, ModListSortProxy::TypeSpecial);
 }
 
 void FilterList::refresh()
@@ -361,9 +376,10 @@ void FilterList::editCategories()
 void FilterList::onOptionsChanged()
 {
   const auto mode = ui->filtersAnd->isChecked() ?
-    ModListSortProxy::FILTER_AND : ModListSortProxy::FILTER_OR;
+    ModListSortProxy::FilterAnd: ModListSortProxy::FilterOr;
 
-  const bool separators = ui->filtersSeparators->isChecked();
+  const auto separators = static_cast<ModListSortProxy::SeparatorsMode>(
+    ui->filtersSeparators->currentData().toInt());
 
   emit optionsChanged(mode, separators);
 }

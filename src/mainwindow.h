@@ -515,7 +515,8 @@ private slots:
   void deselectFilters();
   void refreshFilters();
   void onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>& filters);
-  void onFiltersOptions(ModListSortProxy::FilterMode mode, bool separators);
+  void onFiltersOptions(
+    ModListSortProxy::FilterMode mode, ModListSortProxy::SeparatorsMode sep);
 
   void displayModInformation(const QString &modName, ModInfoTabIDs tabID);
 

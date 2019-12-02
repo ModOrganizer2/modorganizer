@@ -269,7 +269,7 @@ MainWindow::MainWindow(Settings &settings
 
   connect(
     m_Filters.get(), &FilterList::optionsChanged,
-    [&](auto mode, bool sep) { onFiltersOptions(mode, sep); });
+    [&](auto&& mode, auto&& sep) { onFiltersOptions(mode, sep); });
 
   ui->logList->setCore(m_OrganizerCore);
 
@@ -2205,6 +2205,7 @@ void MainWindow::readSettings()
   }
 
   s.widgets().restoreIndex(ui->groupCombo);
+  m_Filters->restoreState(s);
 
   {
     s.geometry().restoreVisibility(ui->categoriesGroup, false);
@@ -2283,6 +2284,8 @@ void MainWindow::storeSettings()
 
   s.widgets().saveIndex(ui->groupCombo);
   s.widgets().saveIndex(ui->executablesListBox);
+
+  m_Filters->saveState(s);
 }
 
 QWidget* MainWindow::qtWidget()
@@ -4125,13 +4128,13 @@ void MainWindow::checkModsForUpdates()
 
   if (updatesAvailable || checkingModsForUpdate) {
     m_ModListSortProxy->setCriteria({{
-        ModListSortProxy::TYPE_SPECIAL,
+        ModListSortProxy::TypeSpecial,
         CategoryFactory::UpdateAvailable,
         false}
     });
 
     m_Filters->setSelection({{
-      ModListSortProxy::TYPE_SPECIAL,
+      ModListSortProxy::TypeSpecial,
       CategoryFactory::UpdateAvailable,
       false
     }});
@@ -6131,7 +6134,7 @@ void MainWindow::onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>
   } else if (criteria.size() == 1) {
     const auto& c = criteria[0];
 
-    if (c.type == ModListSortProxy::TYPE_CONTENT) {
+    if (c.type == ModListSortProxy::TypeContent) {
       label = ModInfo::getContentTypeName(c.id);
     } else {
       label = m_CategoryFactory.getCategoryNameByID(c.id);
@@ -6148,9 +6151,10 @@ void MainWindow::onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>
   ui->modList->reset();
 }
 
-void MainWindow::onFiltersOptions(ModListSortProxy::FilterMode mode, bool separators)
+void MainWindow::onFiltersOptions(
+  ModListSortProxy::FilterMode mode, ModListSortProxy::SeparatorsMode sep)
 {
-  m_ModListSortProxy->setOptions(mode, separators);
+  m_ModListSortProxy->setOptions(mode, sep);
 }
 
 void MainWindow::updateESPLock(bool locked)

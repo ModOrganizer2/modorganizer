@@ -37,8 +37,8 @@ ModListSortProxy::ModListSortProxy(Profile* profile, QObject *parent)
   : QSortFilterProxyModel(parent)
   , m_Profile(profile)
   , m_FilterActive(false)
-  , m_FilterMode(FILTER_AND)
-  , m_FilterSeparators(false)
+  , m_FilterMode(FilterAnd)
+  , m_FilterSeparators(SeparatorFilter)
 {
   setDynamicSortFilter(true); // this seems to work without dynamicsortfilter
                               // but I don't know why. This should be necessary
@@ -269,10 +269,6 @@ bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags)
 
 bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) const
 {
-  if (!optionsMatchMod(info, enabled)) {
-    return false;
-  }
-
   for (auto&& c : m_Criteria) {
     if (!criteriaMatchMod(info, enabled, c)) {
       return false;
@@ -284,10 +280,6 @@ bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) cons
 
 bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
 {
-  if (!optionsMatchMod(info, enabled)) {
-    return false;
-  }
-
   for (auto&& c : m_Criteria) {
     if (criteriaMatchMod(info, enabled, c)) {
       return true;
@@ -304,16 +296,6 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
 
 bool ModListSortProxy::optionsMatchMod(ModInfo::Ptr info, bool) const
 {
-  // don't check options if there are no filters selected
-  if (!m_FilterActive) {
-    return true;
-  }
-
-  if (!m_FilterSeparators) {
-    if (info->hasFlag(ModInfo::FLAG_SEPARATOR)) {
-      return false;
-    }
-  }
 
   return true;
 }
@@ -325,14 +307,14 @@ bool ModListSortProxy::criteriaMatchMod(
 
   switch (c.type)
   {
-    case TYPE_SPECIAL:  // fall-through
-    case TYPE_CATEGORY:
+    case TypeSpecial:  // fall-through
+    case TypeCategory:
     {
       b = categoryMatchesMod(info, enabled, c.id);
       break;
     }
 
-    case TYPE_CONTENT:
+    case TypeContent:
     {
       b = contentMatchesMod(info, enabled, c.id);
       break;
@@ -439,6 +421,37 @@ bool ModListSortProxy::contentMatchesMod(ModInfo::Ptr info, bool enabled, int co
 
 bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
 {
+  // don't check if there are no filters selected
+  if (!m_FilterActive) {
+    return true;
+  }
+
+
+  // special case for separators
+  if (info->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+    switch (m_FilterSeparators)
+    {
+      case SeparatorFilter:
+      {
+        // filter normally
+        break;
+      }
+
+      case SeparatorShow:
+      {
+        // force visible
+        return true;
+      }
+
+      case SeparatorHide:
+      {
+        // force hide
+        return false;
+      }
+    }
+  }
+
+
   if (!m_Filter.isEmpty()) {
     bool display = false;
     QString filterCopy = QString(m_Filter);
@@ -519,7 +532,8 @@ bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
     }
   }//if (!m_CurrentFilter.isEmpty())
 
-  if (m_FilterMode == FILTER_AND) {
+
+  if (m_FilterMode == FilterAnd) {
     return filterMatchesModAnd(info, enabled);
   }
   else {
@@ -532,7 +546,8 @@ void ModListSortProxy::setColumnVisible(int column, bool visible)
   m_EnabledColumns[column] = visible;
 }
 
-void ModListSortProxy::setOptions(ModListSortProxy::FilterMode mode, bool separators)
+void ModListSortProxy::setOptions(
+  ModListSortProxy::FilterMode mode, SeparatorsMode separators)
 {
   if (m_FilterMode != mode || separators != m_FilterSeparators) {
     m_FilterMode = mode;

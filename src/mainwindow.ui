@@ -153,6 +153,18 @@
            </sizepolicy>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_11">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>2</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
            <item>
             <widget class="QRadioButton" name="filtersAnd">
              <property name="toolTip">
@@ -177,12 +189,11 @@
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="filtersSeparators">
+            <widget class="QComboBox" name="filtersSeparators">
              <property name="toolTip">
-              <string>Include separators</string>
-             </property>
-             <property name="text">
-              <string>Separators</string>
+              <string>Filter: only show the separators that match the current filters
+Show: always show separators
+Hide: never show separators</string>
              </property>
             </widget>
            </item>
