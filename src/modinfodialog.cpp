@@ -61,10 +61,27 @@ bool canPreviewFile(
   return pluginContainer.previewGenerator().previewSupported(ext);
 }
 
-bool canOpenFile(bool isArchive, const QString&)
+bool isExecutableFilename(const QString& filename)
 {
-  // can open anything as long as it's not in an archive
-  return !isArchive;
+  static const std::set<QString> exeExtensions = {
+    "exe", "cmd", "bat"
+  };
+
+  const auto ext = QFileInfo(filename).suffix().toLower();
+
+  return exeExtensions.contains(ext);
+}
+
+bool canRunFile(bool isArchive, const QString& filename)
+{
+  // can run executables that are not archives
+  return !isArchive && isExecutableFilename(filename);
+}
+
+bool canOpenFile(bool isArchive, const QString& filename)
+{
+  // can open non-executables that are not archives
+  return !isArchive && !isExecutableFilename(filename);
 }
 
 bool canExploreFile(bool isArchive, const QString&)

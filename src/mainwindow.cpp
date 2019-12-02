@@ -350,6 +350,7 @@ MainWindow::MainWindow(Settings &settings
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(espFilterChanged(QString)));
 
   connect(ui->dataTree, SIGNAL(itemExpanded(QTreeWidgetItem*)), this, SLOT(expandDataTreeItem(QTreeWidgetItem*)));
+  connect(ui->dataTree, SIGNAL(itemActivated(QTreeWidgetItem*, int)), this, SLOT(activateDataTreeItem(QTreeWidgetItem*, int)));
 
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(refreshed()), this, SLOT(directory_refreshed()));
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(progress(int)), this, SLOT(refresher_progress(int)));
@@ -1767,6 +1768,10 @@ void MainWindow::expandDataTreeItem(QTreeWidgetItem *item)
   }
 }
 
+void MainWindow::activateDataTreeItem(QTreeWidgetItem *item, int column)
+{
+  openDataFile(item);
+}
 
 bool MainWindow::refreshProfiles(bool selectProfile)
 {
@@ -5295,11 +5300,38 @@ void MainWindow::openDataFile()
     return;
   }
 
-  const QString path = m_ContextItem->data(0, Qt::UserRole).toString();
+  openDataFile(m_ContextItem);
+}
+
+void MainWindow::openDataFile(QTreeWidgetItem* item)
+{
+  const auto isArchive = item->data(0, Qt::UserRole + 1).toBool();
+  const auto isDirectory = item->data(0, Qt::UserRole + 3).toBool();
+
+  if (isArchive || isDirectory) {
+    return;
+  }
+
+  const QString path = item->data(0, Qt::UserRole).toString();
   const QFileInfo targetInfo(path);
 
   m_OrganizerCore.processRunner()
     .setFromFile(this, targetInfo)
+    .setWaitForCompletion(ProcessRunner::Refresh)
+    .run();
+}
+
+void MainWindow::runDataFileHooked()
+{
+  if (m_ContextItem == nullptr) {
+    return;
+  }
+
+  const QString path = m_ContextItem->data(0, Qt::UserRole).toString();
+  const QFileInfo targetInfo(path);
+
+  m_OrganizerCore.processRunner()
+    .setFromFile(this, targetInfo, true)
     .setWaitForCompletion(ProcessRunner::Refresh)
     .run();
 }
@@ -5374,28 +5406,43 @@ void MainWindow::motdReceived(const QString &motd)
 
 void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
 {
-  QTreeWidget *dataTree = findChild<QTreeWidget*>("dataTree");
-  m_ContextItem = dataTree->itemAt(pos.x(), pos.y());
+  m_ContextItem = ui->dataTree->itemAt(pos.x(), pos.y());
 
   QMenu menu;
   if ((m_ContextItem != nullptr) && (m_ContextItem->childCount() == 0)
       && (m_ContextItem->data(0, Qt::UserRole + 3).toBool() != true)) {
-    menu.addAction(tr("Open/Execute"), this, SLOT(openDataFile()));
-    menu.addAction(tr("Add as Executable"), this, SLOT(addAsExecutable()));
-
     QString fileName = m_ContextItem->text(0);
+    const auto isArchive = m_ContextItem->data(0, Qt::UserRole + 1).toBool();
+    const auto isDirectory = m_ContextItem->data(0, Qt::UserRole + 3).toBool();
+
+    QAction* open = nullptr;
+
+    if (canRunFile(isArchive, fileName)) {
+      open = menu.addAction(tr("&Execute"), this, SLOT(openDataFile()));
+    } else if (canOpenFile(isArchive, fileName)) {
+      open = menu.addAction(tr("&Open"), this, SLOT(openDataFile()));
+      menu.addAction(tr("Open with &VFS"), this, SLOT(runDataFileHooked()));
+    }
+
+    if (open) {
+      auto bold = open->font();
+      bold.setBold(true);
+      open->setFont(bold);
+    }
+
+    menu.addAction(tr("&Add as Executable"), this, SLOT(addAsExecutable()));
+
     if (m_PluginContainer.previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
       menu.addAction(tr("Preview"), this, SLOT(previewDataFile()));
     }
-
-    const auto isArchive = m_ContextItem->data(0, Qt::UserRole + 1).toBool();
-    const auto isDirectory = m_ContextItem->data(0, Qt::UserRole + 3).toBool();
 
     if (!isArchive && !isDirectory) {
       menu.addAction("Open Origin in Explorer", this, SLOT(openDataOriginExplorer_clicked()));
     }
 
     menu.addAction("Open Mod Info", this, SLOT(openDataModInfo_clicked()));
+
+    menu.addSeparator();
 
     // offer to hide/unhide file, but not for files from archives
     if (!isArchive) {
@@ -5405,13 +5452,11 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
         menu.addAction(tr("Hide"), this, SLOT(hideFile()));
       }
     }
-
-    menu.addSeparator();
   }
   menu.addAction(tr("Write To File..."), this, SLOT(writeDataToFile()));
   menu.addAction(tr("Refresh"), this, SLOT(on_btnRefreshData_clicked()));
 
-  menu.exec(dataTree->viewport()->mapToGlobal(pos));
+  menu.exec(ui->dataTree->viewport()->mapToGlobal(pos));
 }
 
 void MainWindow::on_conflictsCheckBox_toggled(bool)

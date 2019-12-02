@@ -81,6 +81,11 @@ public:
     return canUnhideFile(isArchive(), fileName());
   }
 
+  bool canRun() const
+  {
+    return canRunFile(isArchive(), fileName());
+  }
+
   bool canOpen() const
   {
     return canOpenFile(isArchive(), fileName());
@@ -536,6 +541,20 @@ void ConflictsTab::openItems(QTreeView* tree)
   });
 }
 
+void ConflictsTab::runItemsHooked(QTreeView* tree)
+{
+  // the menu item is only shown for a single selection, but handle all of them
+  // in case this changes
+  for_each_in_selection(tree, [&](const ConflictItem* item) {
+    core().processRunner()
+      .setFromFile(parentWidget(), item->fileName(), true)
+      .setWaitForCompletion()
+      .run();
+
+    return true;
+  });
+}
+
 void ConflictsTab::previewItems(QTreeView* tree)
 {
   // the menu item is only shown for a single selection, but handle all of them
@@ -568,7 +587,20 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
       openItems(tree);
     });
 
+    auto bold = actions.open->font();
+    bold.setBold(true);
+    actions.open->setFont(bold);
+
     menu.addAction(actions.open);
+  }
+
+  // run hooked
+  if (actions.runHooked) {
+    connect(actions.runHooked, &QAction::triggered, [&]{
+      runItemsHooked(tree);
+    });
+
+    menu.addAction(actions.runHooked);
   }
 
   // preview
@@ -580,6 +612,19 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
     menu.addAction(actions.preview);
   }
 
+  // goto
+  if (actions.gotoMenu) {
+    menu.addMenu(actions.gotoMenu);
+
+    for (auto* a : actions.gotoActions) {
+      connect(a, &QAction::triggered, [&, name=a->text()]{
+        emitModOpen(name);
+        });
+
+      actions.gotoMenu->addAction(a);
+    }
+  }
+
   // explore
   if (actions.explore) {
     connect(actions.explore, &QAction::triggered, [&]{
@@ -588,6 +633,8 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
 
     menu.addAction(actions.explore);
   }
+
+  menu.addSeparator();
 
   // hide
   if (actions.hide) {
@@ -607,19 +654,6 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
     menu.addAction(actions.unhide);
   }
 
-  // goto
-  if (actions.gotoMenu) {
-    menu.addMenu(actions.gotoMenu);
-
-    for (auto* a : actions.gotoActions) {
-      connect(a, &QAction::triggered, [&, name=a->text()]{
-        emitModOpen(name);
-       });
-
-      actions.gotoMenu->addAction(a);
-    }
-  }
-
   if (!menu.isEmpty()) {
     menu.exec(tree->viewport()->mapToGlobal(pos));
   }
@@ -633,6 +667,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
 
   bool enableHide = true;
   bool enableUnhide = true;
+  bool enableRun = true;
   bool enableOpen = true;
   bool enablePreview = true;
   bool enableExplore = true;
@@ -657,6 +692,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
 
     enableHide = item->canHide();
     enableUnhide = item->canUnhide();
+    enableRun = item->canRun();
     enableOpen = item->canOpen();
     enablePreview = item->canPreview(plugin());
     enableExplore = item->canExplore();
@@ -665,6 +701,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
   else {
     // this is a multiple selection, don't show open/preview so users don't open
     // a thousand files
+    enableRun = false;
     enableOpen = false;
     enablePreview = false;
 
@@ -701,6 +738,22 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
 
   Actions actions;
 
+  if (enableRun) {
+    actions.open = new QAction(tr("&Execute"), parentWidget());
+  } else if (enableOpen) {
+    actions.open = new QAction(tr("&Open"), parentWidget());
+    actions.runHooked = new QAction(tr("Open with &VFS"), parentWidget());
+  }
+
+  actions.preview = new QAction(tr("&Preview"), parentWidget());
+  actions.preview->setEnabled(enablePreview);
+
+  actions.gotoMenu = new QMenu(tr("&Go to..."), parentWidget());
+  actions.gotoMenu->setEnabled(enableGoto);
+
+  actions.explore = new QAction(tr("Open in &Explorer"), parentWidget());
+  actions.explore->setEnabled(enableExplore);
+
   actions.hide = new QAction(tr("&Hide"), parentWidget());
   actions.hide->setEnabled(enableHide);
 
@@ -708,18 +761,6 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
   // hidden files from another mod
   actions.unhide = new QAction(tr("&Unhide"), parentWidget());
   actions.unhide->setEnabled(enableUnhide);
-
-  actions.open = new QAction(tr("&Open/Execute"), parentWidget());
-  actions.open->setEnabled(enableOpen);
-
-  actions.preview = new QAction(tr("&Preview"), parentWidget());
-  actions.preview->setEnabled(enablePreview);
-
-  actions.explore = new QAction(tr("Open in &Explorer"), parentWidget());
-  actions.explore->setEnabled(enableExplore);
-
-  actions.gotoMenu = new QMenu(tr("&Go to..."), parentWidget());
-  actions.gotoMenu->setEnabled(enableGoto);
 
   if (enableGoto && n == 1) {
     const auto* item = model->getItem(static_cast<std::size_t>(
@@ -787,11 +828,15 @@ GeneralConflictsTab::GeneralConflictsTab(
 
   QObject::connect(
     ui->overwriteTree, &QTreeView::doubleClicked,
-    [&](auto&& item){ onOverwriteActivated(item); });
+    [&](auto&&){ m_tab->openItems(ui->overwriteTree); });
 
   QObject::connect(
     ui->overwrittenTree, &QTreeView::doubleClicked,
-    [&](auto&& item){ onOverwrittenActivated(item); });
+    [&](auto&& item){ m_tab->openItems(ui->overwrittenTree); });
+
+  QObject::connect(
+    ui->noConflictTree, &QTreeView::doubleClicked,
+    [&](auto&& item){ m_tab->openItems(ui->noConflictTree); });
 
   QObject::connect(
     ui->overwriteTree, &QTreeView::customContextMenuRequested,
@@ -1001,6 +1046,10 @@ AdvancedConflictsTab::AdvancedConflictsTab(
   QObject::connect(
     ui->conflictsAdvancedShowNearest, &QRadioButton::clicked,
     [&]{ update(); });
+
+  QObject::connect(
+    ui->conflictsAdvancedList, &QTreeView::activated,
+    [&]{ m_tab->openItems(ui->conflictsAdvancedList); });
 
   QObject::connect(
     ui->conflictsAdvancedList, &QTreeView::customContextMenuRequested,

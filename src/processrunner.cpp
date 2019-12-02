@@ -3,6 +3,8 @@
 #include "instancemanager.h"
 #include "iuserinterface.h"
 #include "envmodule.h"
+#include "env.h"
+#include <iplugingame.h>
 #include <log.h>
 
 using namespace MOBase;
@@ -473,13 +475,14 @@ ProcessRunner& ProcessRunner::setWaitForCompletion(
   return *this;
 }
 
-ProcessRunner& ProcessRunner::setFromFile(QWidget* parent, const QFileInfo& targetInfo)
+ProcessRunner& ProcessRunner::setFromFile(
+  QWidget* parent, const QFileInfo& targetInfo, bool forceHook)
 {
   if (!parent && m_ui) {
     parent = m_ui->qtWidget();
   }
 
-  // if the file is a .exe, start it directory; if it's anything else, ask the
+  // if the file is a .exe, start it directly; if it's anything else, ask the
   // shell to start it
 
   const auto fec = spawn::getFileExecutionContext(parent, targetInfo);
@@ -497,7 +500,24 @@ ProcessRunner& ProcessRunner::setFromFile(QWidget* parent, const QFileInfo& targ
     case spawn::FileExecutionTypes::Other:  // fall-through
     default:
     {
+      if (forceHook) {
+        auto assoc = env::getAssociation(targetInfo);
+        if (!assoc.executable.filePath().isEmpty()) {
+          setBinary(assoc.executable);
+          setArguments(assoc.formattedCommandLine);
+          setCurrentDirectory(assoc.executable.absoluteDir());
+
+          return *this;
+        }
+
+        // if it fails, just use the regular shell open
+      }
+
       m_shellOpen = targetInfo.absoluteFilePath();
+
+      // picked up by postRun()
+      m_sp.hooked = false;
+
       break;
     }
   }
@@ -721,6 +741,11 @@ std::optional<ProcessRunner::Results> ProcessRunner::runBinary()
 ProcessRunner::Results ProcessRunner::postRun()
 {
   const bool mustWait = (m_waitFlags & ForceWait);
+
+  if (!m_sp.hooked && !mustWait) {
+    // the process wasn't hooked and there's no force wait, don't lock
+    return Running;
+  }
 
   if (mustWait && m_lockReason == UILocker::NoReason) {
     // never lock the ui without an escape hatch for the user
