@@ -81,6 +81,11 @@ public:
     return canUnhideFile(isArchive(), fileName());
   }
 
+  bool canRun() const
+  {
+    return canRunFile(isArchive(), fileName());
+  }
+
   bool canOpen() const
   {
     return canOpenFile(isArchive(), fileName());
@@ -536,6 +541,20 @@ void ConflictsTab::openItems(QTreeView* tree)
   });
 }
 
+void ConflictsTab::runItemsHooked(QTreeView* tree)
+{
+  // the menu item is only shown for a single selection, but handle all of them
+  // in case this changes
+  for_each_in_selection(tree, [&](const ConflictItem* item) {
+    core().processRunner()
+      .setFromFile(parentWidget(), item->fileName(), true)
+      .setWaitForCompletion()
+      .run();
+
+    return true;
+  });
+}
+
 void ConflictsTab::previewItems(QTreeView* tree)
 {
   // the menu item is only shown for a single selection, but handle all of them
@@ -569,6 +588,15 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
     });
 
     menu.addAction(actions.open);
+  }
+
+  // run hooked
+  if (actions.runHooked) {
+    connect(actions.runHooked, &QAction::triggered, [&]{
+      runItemsHooked(tree);
+    });
+
+    menu.addAction(actions.runHooked);
   }
 
   // preview
@@ -633,6 +661,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
 
   bool enableHide = true;
   bool enableUnhide = true;
+  bool enableRun = true;
   bool enableOpen = true;
   bool enablePreview = true;
   bool enableExplore = true;
@@ -657,6 +686,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
 
     enableHide = item->canHide();
     enableUnhide = item->canUnhide();
+    enableRun = item->canRun();
     enableOpen = item->canOpen();
     enablePreview = item->canPreview(plugin());
     enableExplore = item->canExplore();
@@ -665,6 +695,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
   else {
     // this is a multiple selection, don't show open/preview so users don't open
     // a thousand files
+    enableRun = false;
     enableOpen = false;
     enablePreview = false;
 
@@ -709,8 +740,12 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
   actions.unhide = new QAction(tr("&Unhide"), parentWidget());
   actions.unhide->setEnabled(enableUnhide);
 
-  actions.open = new QAction(tr("&Open/Execute"), parentWidget());
-  actions.open->setEnabled(enableOpen);
+  if (enableRun) {
+    actions.open = new QAction(tr("&Execute"), parentWidget());
+  } else if (enableOpen) {
+    actions.open = new QAction(tr("&Open"), parentWidget());
+    actions.runHooked = new QAction(tr("Open with &VFS"), parentWidget());
+  }
 
   actions.preview = new QAction(tr("&Preview"), parentWidget());
   actions.preview->setEnabled(enablePreview);

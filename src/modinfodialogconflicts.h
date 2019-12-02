@@ -112,6 +112,7 @@ public:
   bool canHandleUnmanaged() const override;
 
   void openItems(QTreeView* tree);
+  void runItemsHooked(QTreeView* tree);
   void previewItems(QTreeView* tree);
   void exploreItems(QTreeView* tree);
 
@@ -125,6 +126,7 @@ private:
     QAction* hide = nullptr;
     QAction* unhide = nullptr;
     QAction* open = nullptr;
+    QAction* runHooked = nullptr;
     QAction* preview = nullptr;
     QAction* explore = nullptr;
     QMenu* gotoMenu = nullptr;

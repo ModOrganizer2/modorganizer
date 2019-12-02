@@ -675,6 +675,163 @@ Service getService(const QString& name)
 }
 
 
+std::optional<QString> getAssocString(const QFileInfo& file, ASSOCSTR astr)
+{
+  const auto ext = L"." + file.suffix().toStdWString();
+
+  // getting buffer size
+  DWORD bufferSize = 0;
+  auto r = AssocQueryStringW(
+    ASSOCF_INIT_IGNOREUNKNOWN, astr, ext.c_str(), L"open", nullptr, &bufferSize);
+
+  // returns S_FALSE when giving back the buffer size, so that's actually the
+  // expected return value
+
+  if (r != S_FALSE || bufferSize == 0) {
+    if (r == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION)) {
+      log::error("file '{}' has no associated executable", file.absoluteFilePath());
+    } else {
+      log::error(
+        "can't get buffer size for AssocQueryStringW(), {}",
+        formatSystemMessage(r));
+    }
+    return {};
+  }
+
+  // getting string
+  auto buffer = std::make_unique<wchar_t[]>(bufferSize + 1);
+  std::fill(buffer.get(), buffer.get() + bufferSize + 1, 0);
+
+  r = AssocQueryStringW(
+    ASSOCF_INIT_IGNOREUNKNOWN, astr, ext.c_str(), L"open", buffer.get(), &bufferSize);
+
+  if (FAILED(r)) {
+    log::error(
+      "failed to get exe associated with '{}', {}",
+      file.suffix(), formatSystemMessage(r));
+
+    return {};
+  }
+
+  // buffer size includes the null terminator
+  return QString::fromWCharArray(buffer.get(), bufferSize - 1);
+}
+
+QString formatCommandLine(const QFileInfo& targetInfo, const QString& cmd)
+{
+  // yeah, FormatMessage() expects at least as many arguments as there are
+  // placeholders and while the command for associations should typically only
+  // have %1, the user can actually enter anything in the registry
+  //
+  // since the maximum number of arguments is 99, this creates an array of 99
+  // wchar_* where the first one (%1) points to the filename and the remaining
+  // 98 to ""
+  //
+  // FormatMessage() actually takes a va_list* for the arguments, but by passing
+  // FORMAT_MESSAGE_ARGUMENT_ARRAY, an array of DWORD_PTR can be given instead
+
+  // 99 arguments
+  std::array<DWORD_PTR, 99> args;
+
+  // first one is the filename
+  const auto wpath = targetInfo.absoluteFilePath().toStdWString();
+  args[0] = reinterpret_cast<DWORD_PTR>(wpath.c_str());
+
+  // remaining are ""
+  std::fill(args.begin() + 1, args.end(), reinterpret_cast<DWORD_PTR>(L""));
+
+  // must be freed with LocalFree()
+  wchar_t* buffer = nullptr;
+
+  const auto wcmd = cmd.toStdWString();
+
+  const auto n = ::FormatMessageW(
+    FORMAT_MESSAGE_ALLOCATE_BUFFER |
+    FORMAT_MESSAGE_ARGUMENT_ARRAY |
+    FORMAT_MESSAGE_FROM_STRING,
+    wcmd.c_str(), 0, 0,
+    reinterpret_cast<LPWSTR>(&buffer),
+    0, reinterpret_cast<va_list*>(&args[0]));
+
+  if (n == 0 || !buffer){
+    const auto e = GetLastError();
+
+    log::error(
+      "failed to format command line '{}' with path '{}', {}",
+      cmd, targetInfo.absoluteFilePath(), formatSystemMessage(e));
+
+    return {};
+  }
+
+  auto s = QString::fromWCharArray(buffer, n);
+  ::LocalFree(buffer);
+
+  return s.trimmed();
+}
+
+std::pair<QString, QString> splitExeAndArguments(const QString& cmd)
+{
+  int exeBegin = 0;
+  int exeEnd = -1;
+
+  if (cmd[0] == '"'){
+    // surrounded by double-quotes, so find the next one
+    exeBegin = 1;
+    exeEnd = cmd.indexOf('"', exeBegin);
+
+    if (exeEnd == -1) {
+      log::error("missing terminating double-quote in command line '{}'", cmd);
+      return {};
+    }
+  } else {
+    // no double-quotes, find the first whitespace
+    exeEnd = cmd.indexOf(QRegExp("\\s"));
+    if (exeEnd == -1) {
+      exeEnd = cmd.size();
+    }
+  }
+
+  QString exe = cmd.mid(exeBegin, exeEnd - exeBegin).trimmed();
+  QString args = cmd.mid(exeEnd + 1).trimmed();
+
+  return {std::move(exe), std::move(args)};
+}
+
+Association getAssociation(const QFileInfo& targetInfo)
+{
+  log::debug(
+    "getting association for '{}', extension is '.{}'",
+    targetInfo.absoluteFilePath(), targetInfo.suffix());
+
+  const auto cmd = getAssocString(targetInfo, ASSOCSTR_COMMAND);
+  if (!cmd) {
+    return {};
+  }
+
+  log::debug("raw cmd is '{}'", *cmd);
+
+  QString formattedCmd = formatCommandLine(targetInfo, *cmd);
+  if (formattedCmd.isEmpty()) {
+    log::error(
+      "command line associated with '{}' is empty",
+      targetInfo.absoluteFilePath());
+
+    return {};
+  }
+
+  log::debug("formatted cmd is '{}'", formattedCmd);
+
+  const auto p = splitExeAndArguments(formattedCmd);
+  if (p.first.isEmpty()) {
+    return {};
+  }
+
+  log::debug("split into exe='{}' and cmd='{}'", p.first, p.second);
+
+  return {p.first, *cmd, p.second};
+}
+
+
 // returns the filename of the given process or the current one
 //
 std::wstring processFilename(HANDLE process=INVALID_HANDLE_VALUE)

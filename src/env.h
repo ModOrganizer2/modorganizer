@@ -246,6 +246,26 @@ Service getService(const QString& name);
 QString toString(Service::StartType st);
 QString toString(Service::Status st);
 
+
+struct Association
+{
+  // path to the executable associated with the file
+  QFileInfo executable;
+
+  // full command line associated with the file, no replacements
+  QString commandLine;
+
+  // command line _without_ the executable and with placeholders such as %1
+  // replaced by the given file
+  QString formattedCommandLine;
+};
+
+// returns the associated executable and command line, executable is empty on
+// error
+//
+Association getAssociation(const QFileInfo& file);
+
+
 enum class CoreDumpTypes
 {
   Mini = 1,
