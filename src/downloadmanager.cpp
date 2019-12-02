@@ -200,8 +200,9 @@ QString DownloadManager::DownloadInfo::currentURL()
 }
 
 
-DownloadManager::DownloadManager(NexusInterface *nexusInterface, QObject *parent)
-  : IDownloadManager(parent), m_NexusInterface(nexusInterface), m_DirWatcher(), m_ShowHidden(false)
+DownloadManager::DownloadManager(NexusInterface *nexusInterface, QObject *parent) :
+  IDownloadManager(parent), m_NexusInterface(nexusInterface), m_DirWatcher(), m_ShowHidden(false),
+  m_ParentWidget(nullptr)
 {
   m_OrganizerCore = dynamic_cast<OrganizerCore*>(parent);
   connect(&m_DirWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(directoryChanged(QString)));
@@ -219,6 +220,10 @@ DownloadManager::~DownloadManager()
   m_ActiveDownloads.clear();
 }
 
+void DownloadManager::setParentWidget(QWidget* w)
+{
+  m_ParentWidget = w;
+}
 
 bool DownloadManager::downloadsInProgress()
 {
@@ -501,7 +506,7 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
     if (QFile::exists(m_OutputDirectory + "/" + newDownload->m_FileName)) {
       setState(newDownload, STATE_PAUSING);
       QCoreApplication::processEvents();
-      if (QMessageBox::question(nullptr, tr("Download again?"), tr("A file with the same name \"%1\" has already been downloaded. "
+      if (QMessageBox::question(m_ParentWidget, tr("Download again?"), tr("A file with the same name \"%1\" has already been downloaded. "
           "Do you want to download it again? The new file will receive a different name.").arg(newDownload->m_FileName),
           QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
         if (reply->isFinished())
@@ -513,7 +518,7 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
         newDownload->setName(getDownloadFileName(newDownload->m_FileName, true), true);
         endDisableDirWatcher();
         if (newDownload->m_State == STATE_PAUSED)
-          resumeDownload(indexByName(newDownload->m_FileName));
+          resumeDownload(indexByInfo(newDownload));
         else
           setState(newDownload, STATE_DOWNLOADING);
       }
@@ -527,7 +532,7 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
       newDownload->m_State != STATE_READY &&
       newDownload->m_State != STATE_FETCHINGMODINFO &&
       reply->isFinished()) {
-      downloadFinished(indexByName(newDownload->m_FileName));
+      downloadFinished(indexByInfo(newDownload));
       return;
     }
   } else
@@ -556,7 +561,7 @@ void DownloadManager::addNXMDownload(const QString &url)
   log::debug("add nxm download: {}", url);
   if (foundGame == nullptr) {
     log::debug("download requested for wrong game (game: {}, url: {})", m_ManagedGame->gameShortName(), nxmInfo.game());
-    QMessageBox::information(nullptr, tr("Wrong Game"), tr("The download link is for a mod for \"%1\" but this instance of MO "
+    QMessageBox::information(m_ParentWidget, tr("Wrong Game"), tr("The download link is for a mod for \"%1\" but this instance of MO "
     "has been set up for \"%2\".").arg(nxmInfo.game()).arg(m_ManagedGame->gameShortName()), QMessageBox::Ok);
     return;
   }
@@ -571,7 +576,7 @@ void DownloadManager::addNXMDownload(const QString &url)
         "download requested is already queued (mod: {}, file: {})",
         nxmInfo.modId(), nxmInfo.fileId());
 
-      QMessageBox::information(nullptr, tr("Already Queued"), infoStr, QMessageBox::Ok);
+      QMessageBox::information(m_ParentWidget, tr("Already Queued"), infoStr, QMessageBox::Ok);
       return;
     }
   }
@@ -615,7 +620,7 @@ void DownloadManager::addNXMDownload(const QString &url)
         }
 
         log::debug("{}", debugStr);
-        QMessageBox::information(nullptr, tr("Already Started"), infoStr, QMessageBox::Ok);
+        QMessageBox::information(m_ParentWidget, tr("Already Started"), infoStr, QMessageBox::Ok);
         return;
       }
     }
@@ -1732,6 +1737,16 @@ int DownloadManager::indexByName(const QString &fileName) const
 {
   for (int i = 0; i < m_ActiveDownloads.size(); ++i) {
     if (m_ActiveDownloads[i]->m_FileName == fileName) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+int DownloadManager::indexByInfo(const DownloadInfo* info) const
+{
+  for (int i = 0; i < m_ActiveDownloads.size(); ++i) {
+    if (m_ActiveDownloads[i] == info) {
       return i;
     }
   }
