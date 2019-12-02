@@ -251,6 +251,7 @@ void OrganizerCore::setUserInterface(IUserInterface* ui)
   m_InstallationManager.setParentWidget(w);
   m_Updater.setUserInterface(w);
   m_UILocker.setUserInterface(w);
+  m_DownloadManager.setParentWidget(w);
 
   checkForUpdates();
 }

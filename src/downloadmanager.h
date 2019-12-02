@@ -137,6 +137,8 @@ public:
 
   ~DownloadManager();
 
+  void setParentWidget(QWidget* w);
+
   /**
    * @brief determine if a download is currently in progress
    *
@@ -368,6 +370,7 @@ public:
    * @return index of that download or -1 if it wasn't found
    */
   int indexByName(const QString &fileName) const;
+  int indexByInfo(const DownloadInfo* info) const;
 
   void pauseAll();
 
@@ -529,6 +532,7 @@ private:
   NexusInterface *m_NexusInterface;
 
   OrganizerCore *m_OrganizerCore;
+  QWidget* m_ParentWidget;
 
   QVector<std::tuple<QString, int, int>> m_PendingDownloads;
 
