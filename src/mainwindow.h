@@ -440,6 +440,7 @@ private slots:
   // data-tree context menu
   void writeDataToFile();
   void openDataFile();
+  void openDataFile(QTreeWidgetItem* item);
   void runDataFileHooked();
   void addAsExecutable();
   void previewDataFile();
@@ -589,6 +590,7 @@ private slots:
 
   void refreshSavesIfOpen();
   void expandDataTreeItem(QTreeWidgetItem *item);
+  void activateDataTreeItem(QTreeWidgetItem *item, int column);
   void about();
   void delayedRemove();
 

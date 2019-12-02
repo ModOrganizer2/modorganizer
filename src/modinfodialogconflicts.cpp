@@ -587,6 +587,10 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
       openItems(tree);
     });
 
+    auto bold = actions.open->font();
+    bold.setBold(true);
+    actions.open->setFont(bold);
+
     menu.addAction(actions.open);
   }
 
@@ -824,11 +828,15 @@ GeneralConflictsTab::GeneralConflictsTab(
 
   QObject::connect(
     ui->overwriteTree, &QTreeView::doubleClicked,
-    [&](auto&& item){ onOverwriteActivated(item); });
+    [&](auto&&){ m_tab->openItems(ui->overwriteTree); });
 
   QObject::connect(
     ui->overwrittenTree, &QTreeView::doubleClicked,
-    [&](auto&& item){ onOverwrittenActivated(item); });
+    [&](auto&& item){ m_tab->openItems(ui->overwrittenTree); });
+
+  QObject::connect(
+    ui->noConflictTree, &QTreeView::doubleClicked,
+    [&](auto&& item){ m_tab->openItems(ui->noConflictTree); });
 
   QObject::connect(
     ui->overwriteTree, &QTreeView::customContextMenuRequested,
@@ -1038,6 +1046,10 @@ AdvancedConflictsTab::AdvancedConflictsTab(
   QObject::connect(
     ui->conflictsAdvancedShowNearest, &QRadioButton::clicked,
     [&]{ update(); });
+
+  QObject::connect(
+    ui->conflictsAdvancedList, &QTreeView::activated,
+    [&]{ m_tab->openItems(ui->conflictsAdvancedList); });
 
   QObject::connect(
     ui->conflictsAdvancedList, &QTreeView::customContextMenuRequested,

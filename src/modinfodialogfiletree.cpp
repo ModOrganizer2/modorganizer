@@ -32,6 +32,10 @@ FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
   m_actions.hide = new QAction(tr("&Hide"), ui->filetree);
   m_actions.unhide = new QAction(tr("&Unhide"), ui->filetree);
 
+  auto bold = m_actions.open->font();
+  bold.setBold(true);
+  m_actions.open->setFont(bold);
+
   connect(m_actions.newFolder, &QAction::triggered, [&]{ onCreateDirectory(); });
   connect(m_actions.open, &QAction::triggered, [&]{ onOpen(); });
   connect(m_actions.runHooked, &QAction::triggered, [&]{ onRunHooked(); });
@@ -47,6 +51,12 @@ FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
   connect(
     ui->filetree, &QTreeView::customContextMenuRequested,
     [&](const QPoint& pos){ onContextMenu(pos); });
+
+  // disable renaming on double click, open the file instead
+  ui->filetree->setEditTriggers(
+    ui->filetree->editTriggers() & (~QAbstractItemView::DoubleClicked));
+
+  connect(ui->filetree, &QTreeView::activated, [&](auto&&){ onOpen(); });
 }
 
 void FileTreeTab::clear()
