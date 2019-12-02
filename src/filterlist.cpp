@@ -252,6 +252,7 @@ void FilterList::refresh()
   addSpecialCriteria(F::HasCategory);
   addSpecialCriteria(F::Conflict);
   addSpecialCriteria(F::Endorsed);
+  addSpecialCriteria(F::Tracked);
   addSpecialCriteria(F::HasNexusID);
   addSpecialCriteria(F::HasGameData);
 
