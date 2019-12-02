@@ -60,10 +60,6 @@ private:
 
   void onOverwriteActivated(const QModelIndex& index);
   void onOverwrittenActivated(const QModelIndex& index);
-
-  void onOverwriteTreeContext(const QPoint &pos);
-  void onOverwrittenTreeContext(const QPoint &pos);
-  void onNoConflictTreeContext(const QPoint &pos);
 };
 
 

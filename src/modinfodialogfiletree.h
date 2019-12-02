@@ -20,14 +20,15 @@ public:
 private:
   struct Actions
   {
-    QAction *newFolder = nullptr;
-    QAction *open = nullptr;
-    QAction *preview = nullptr;
-    QAction *explore = nullptr;
-    QAction *rename = nullptr;
-    QAction *del = nullptr;
-    QAction *hide = nullptr;
-    QAction *unhide = nullptr;
+    QAction* newFolder = nullptr;
+    QAction* open = nullptr;
+    QAction* runHooked = nullptr;
+    QAction* preview = nullptr;
+    QAction* explore = nullptr;
+    QAction* rename = nullptr;
+    QAction* del = nullptr;
+    QAction* hide = nullptr;
+    QAction* unhide = nullptr;
   };
 
   QFileSystemModel* m_fs;
@@ -35,6 +36,7 @@ private:
 
   void onCreateDirectory();
   void onOpen();
+  void onRunHooked();
   void onPreview();
   void onExplore();
   void onRename();

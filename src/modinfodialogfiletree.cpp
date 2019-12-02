@@ -24,6 +24,7 @@ FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
 
   m_actions.newFolder = new QAction(tr("&New Folder"), ui->filetree);
   m_actions.open = new QAction(tr("&Open/Execute"), ui->filetree);
+  m_actions.runHooked = new QAction(tr("Open with &VFS"), ui->filetree);
   m_actions.preview = new QAction(tr("&Preview"), ui->filetree);
   m_actions.explore = new QAction(tr("Open in &Explorer"), ui->filetree);
   m_actions.rename = new QAction(tr("&Rename"), ui->filetree);
@@ -33,6 +34,7 @@ FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
 
   connect(m_actions.newFolder, &QAction::triggered, [&]{ onCreateDirectory(); });
   connect(m_actions.open, &QAction::triggered, [&]{ onOpen(); });
+  connect(m_actions.runHooked, &QAction::triggered, [&]{ onRunHooked(); });
   connect(m_actions.preview, &QAction::triggered, [&]{ onPreview(); });
   connect(m_actions.explore, &QAction::triggered, [&]{ onExplore(); });
   connect(m_actions.rename, &QAction::triggered, [&]{ onRename(); });
@@ -142,6 +144,19 @@ void FileTreeTab::onOpen()
 
   core().processRunner()
     .setFromFile(parentWidget(), m_fs->filePath(selection))
+    .setWaitForCompletion()
+    .run();
+}
+
+void FileTreeTab::onRunHooked()
+{
+  auto selection = singleSelection();
+  if (!selection.isValid()) {
+    return;
+  }
+
+  core().processRunner()
+    .setFromFile(parentWidget(), m_fs->filePath(selection), true)
     .setWaitForCompletion()
     .run();
 }
@@ -342,75 +357,53 @@ void FileTreeTab::onContextMenu(const QPoint &pos)
 
   QMenu menu(ui->filetree);
 
-  bool enableNewFolder = true;
-  bool enableOpen = true;
-  bool enablePreview = true;
-  bool enableExplore = true;
-  bool enableRename = true;
-  bool enableDelete = true;
-  bool enableHide = true;
-  bool enableUnhide = true;
+  bool enableNewFolder = false;
+  bool enableRun = false;
+  bool enableOpen = false;
+  bool enablePreview = false;
+  bool enableExplore = false;
+  bool enableRename = false;
+  bool enableDelete = false;
+  bool enableHide = false;
+  bool enableUnhide = false;
 
   if (selection.size() == 0) {
     // no selection, only new folder and explore
-    enableOpen = false;
-    enablePreview = false;
-    enableRename = false;
-    enableDelete = false;
-    enableHide = false;
-    enableUnhide = false;
+    enableNewFolder = true;
+    enableExplore = true;
   } else if (selection.size() == 1) {
     // single selection
+    enableNewFolder = true;
+    enableRename = true;
+    enableDelete = true;
 
     // only enable open action if a file is selected
     bool hasFiles = false;
 
-    for (auto index : selection) {
-      if (m_fs->fileInfo(index).isFile()) {
-        hasFiles = true;
-        break;
+    const QString fileName = m_fs->fileName(selection[0]);
+
+    if (m_fs->fileInfo(selection[0]).isFile()) {
+      if (canRunFile(false, fileName)) {
+        enableRun = true;
+      } else if (canOpenFile(false, fileName)) {
+        enableOpen = true;
       }
     }
 
-    if (!hasFiles) {
-      enableOpen = false;
-      enablePreview = false;
-    }
-
-    const QString fileName = m_fs->fileName(selection[0]);
-
-    if (!canPreviewFile(plugin(), false, fileName)) {
-      enablePreview = false;
-    }
-
-    if (!canExploreFile(false, fileName)) {
-      enableExplore = false;
-    }
-
-    if (!canHideFile(false, fileName)) {
-      enableHide = false;
-    }
-
-    if (!canUnhideFile(false, fileName)) {
-      enableUnhide = false;
-    }
+    enablePreview = canPreviewFile(plugin(), false, fileName);
+    enableExplore = canExploreFile(false, fileName);
+    enableHide = canHideFile(false, fileName);
+    enableUnhide = canUnhideFile(false, fileName);
   } else {
-    // this is a multiple selection, don't show open action so users don't open
-    // a thousand files
-    enableOpen = false;
-    enablePreview = false;
-
-    // can't explore multiple files
-    enableExplore = false;
-
-    // can't rename multiple files
-    enableRename = false;
+    // this is a multiple selection, don't show open or explore actions so users
+    // don't open a thousand files
+    enableNewFolder = true;
+    enablePreview = true;
+    enableDelete = true;
 
     if (selection.size() < max_scan_for_context_menu) {
       // if the number of selected items is low, checking them to accurately
       // show the menu items is worth it
-      enableHide = false;
-      enableUnhide = false;
 
       for (const auto& index : selection) {
         const QString fileName = m_fs->fileName(index);
@@ -431,11 +424,14 @@ void FileTreeTab::onContextMenu(const QPoint &pos)
     }
   }
 
-  menu.addAction(m_actions.newFolder);
-  m_actions.newFolder->setEnabled(enableNewFolder);
-
-  menu.addAction(m_actions.open);
-  m_actions.open->setEnabled(enableOpen);
+  if (enableRun) {
+    m_actions.open->setText(tr("&Execute"));
+    menu.addAction(m_actions.open);
+  } else if (enableOpen) {
+    m_actions.open->setText(tr("&Open"));
+    menu.addAction(m_actions.open);
+    menu.addAction(m_actions.runHooked);
+  }
 
   menu.addAction(m_actions.preview);
   m_actions.preview->setEnabled(enablePreview);
@@ -443,11 +439,18 @@ void FileTreeTab::onContextMenu(const QPoint &pos)
   menu.addAction(m_actions.explore);
   m_actions.explore->setEnabled(enableExplore);
 
+  menu.addSeparator();
+
+  menu.addAction(m_actions.newFolder);
+  m_actions.newFolder->setEnabled(enableNewFolder);
+
   menu.addAction(m_actions.rename);
   m_actions.rename->setEnabled(enableRename);
 
   menu.addAction(m_actions.del);
   m_actions.del->setEnabled(enableDelete);
+
+  menu.addSeparator();
 
   menu.addAction(m_actions.hide);
   m_actions.hide->setEnabled(enableHide);
