@@ -32,10 +32,6 @@ FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
   m_actions.hide = new QAction(tr("&Hide"), ui->filetree);
   m_actions.unhide = new QAction(tr("&Unhide"), ui->filetree);
 
-  auto bold = m_actions.open->font();
-  bold.setBold(true);
-  m_actions.open->setFont(bold);
-
   connect(m_actions.newFolder, &QAction::triggered, [&]{ onCreateDirectory(); });
   connect(m_actions.open, &QAction::triggered, [&]{ onOpen(); });
   connect(m_actions.runHooked, &QAction::triggered, [&]{ onRunHooked(); });
@@ -152,10 +148,17 @@ void FileTreeTab::onOpen()
     return;
   }
 
-  core().processRunner()
-    .setFromFile(parentWidget(), m_fs->filePath(selection))
-    .setWaitForCompletion()
-    .run();
+  const auto path = m_fs->filePath(selection);
+  const auto tryPreview = core().settings().interface().doubleClicksOpenPreviews();
+
+  if (tryPreview && canPreviewFile(plugin(), false, path)) {
+    core().previewFile(parentWidget(), mod().name(), path);
+  } else {
+    core().processRunner()
+      .setFromFile(parentWidget(), path)
+      .setWaitForCompletion()
+      .run();
+  }
 }
 
 void FileTreeTab::onRunHooked()
@@ -408,7 +411,6 @@ void FileTreeTab::onContextMenu(const QPoint &pos)
     // this is a multiple selection, don't show open or explore actions so users
     // don't open a thousand files
     enableNewFolder = true;
-    enablePreview = true;
     enableDelete = true;
 
     if (selection.size() < max_scan_for_context_menu) {
@@ -445,6 +447,28 @@ void FileTreeTab::onContextMenu(const QPoint &pos)
 
   menu.addAction(m_actions.preview);
   m_actions.preview->setEnabled(enablePreview);
+
+  auto bold = m_actions.preview->font();
+  bold.setBold(true);
+  auto notBold = m_actions.preview->font();
+  notBold.setBold(false);
+
+  // preview is bold if the file is previewable and [the preview on double-click
+  // option is enabled or the file can't be opened]; open is bold if the file
+  // can be opened and cannot be previewed
+  if (enablePreview && core().settings().interface().doubleClicksOpenPreviews()) {
+    m_actions.open->setFont(notBold);
+    m_actions.preview->setFont(bold);
+  } else if (enableOpen) {
+    m_actions.open->setFont(bold);
+    m_actions.preview->setFont(notBold);
+  } else if (enablePreview) {
+    m_actions.open->setFont(notBold);
+    m_actions.preview->setFont(bold);
+  } else {
+    m_actions.open->setFont(notBold);
+    m_actions.preview->setFont(notBold);
+  }
 
   menu.addAction(m_actions.explore);
   m_actions.explore->setEnabled(enableExplore);

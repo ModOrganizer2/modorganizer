@@ -21,6 +21,7 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
 
   ui->centerDialogs->setChecked(settings().geometry().centerDialogs());
   ui->changeGameConfirmation->setChecked(settings().interface().showChangeGameConfirmation());
+  ui->doubleClickPreviews->setChecked(settings().interface().doubleClicksOpenPreviews());
   ui->compactBox->setChecked(settings().interface().compactDownloads());
   ui->showMetaBox->setChecked(settings().interface().metaDownloads());
   ui->checkForUpdates->setChecked(settings().checkForUpdates());
@@ -63,6 +64,7 @@ void GeneralSettingsTab::update()
 
   settings().geometry().setCenterDialogs(ui->centerDialogs->isChecked());
   settings().interface().setShowChangeGameConfirmation(ui->changeGameConfirmation->isChecked());
+  settings().interface().setDoubleClicksOpenPreviews(ui->doubleClickPreviews->isChecked());
   settings().interface().setCompactDownloads(ui->compactBox->isChecked());
   settings().interface().setMetaDownloads(ui->showMetaBox->isChecked());
   settings().setCheckForUpdates(ui->checkForUpdates->isChecked());

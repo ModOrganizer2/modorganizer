@@ -101,6 +101,9 @@
              </item>
              <item row="1" column="1" colspan="2">
               <widget class="LinkLabel" name="label_33">
+               <property name="toolTip">
+                <string>https://www.transifex.com/tannin/mod-organizer/</string>
+               </property>
                <property name="text">
                 <string>&lt;a href=&quot;https://www.transifex.com/tannin/mod-organizer/&quot;&gt;Help translate Mod Organizer&lt;/a&gt;</string>
                </property>
@@ -129,6 +132,13 @@
            <widget class="QCheckBox" name="changeGameConfirmation">
             <property name="text">
              <string>Show confirmation when changing instance</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="doubleClickPreviews">
+            <property name="text">
+             <string>Open previews on double-click</string>
             </property>
            </widget>
           </item>

@@ -1966,9 +1966,19 @@ bool InterfaceSettings::showChangeGameConfirmation() const
   return get<bool>(m_Settings, "Settings", "show_change_game_confirmation", true);
 }
 
-void InterfaceSettings::setShowChangeGameConfirmation(bool b) const
+void InterfaceSettings::setShowChangeGameConfirmation(bool b)
 {
   set(m_Settings, "Settings", "show_change_game_confirmation", b);
+}
+
+bool InterfaceSettings::doubleClicksOpenPreviews() const
+{
+  return get<bool>(m_Settings, "Settings", "double_click_previews", false);
+}
+
+void InterfaceSettings::setDoubleClicksOpenPreviews(bool b)
+{
+  set(m_Settings, "Settings", "double_click_previews", b);
 }
 
 
