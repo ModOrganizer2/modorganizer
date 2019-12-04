@@ -111,51 +111,88 @@ private:
 };
 
 
-class ClickFilter : public QObject
+class CriteriaItemFilter : public QObject
 {
 public:
-  ClickFilter(std::function<bool (QMouseEvent*)> f)
-    : m_f(std::move(f))
+  using Callback = std::function<bool (QTreeWidgetItem*, int)>;
+
+  CriteriaItemFilter(QTreeWidget* tree, Callback f)
+    : QObject(tree), m_tree(tree), m_f(std::move(f))
   {
   }
 
   bool eventFilter(QObject* o, QEvent* e) override
   {
-    if (e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseButtonDblClick) {
-      if (m_f) {
-        return m_f(static_cast<QMouseEvent*>(e));
+    // careful: this filter is installed on both the tree and the viewport
+    //
+    // no check is currently necessary because mouse events originate from the
+    // viewport only and keyboard events from the tree only
+
+    if (m_f) {
+      if (e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseButtonDblClick) {
+        if (handleMouse(static_cast<QMouseEvent*>(e))) {
+          return true;
+        }
+      } else if (e->type() == QEvent::KeyPress) {
+        if (handleKeyboard(static_cast<QKeyEvent*>(e))) {
+          return true;
+        }
       }
     }
 
-    return QObject::eventFilter(o, e);;
+    return QObject::eventFilter(o, e);
   }
 
 private:
-  std::function<bool (QMouseEvent*)> m_f;
+  QTreeWidget* m_tree;
+  Callback m_f;
+
+  bool handleMouse(QMouseEvent* e)
+  {
+    auto* item = m_tree->itemAt(e->pos());
+    if (!item) {
+      return false;
+    }
+
+    m_tree->setCurrentItem(item);
+
+    const auto dir = (e->button() == Qt::LeftButton ? 1 : - 1);
+
+    return m_f(item, dir);
+  }
+
+  bool handleKeyboard(QKeyEvent* e)
+  {
+    if (e->key() == Qt::Key_Space) {
+      auto* item = m_tree->currentItem();
+      if (!item) {
+        return false;
+      }
+
+      const auto shiftPressed = (e->modifiers() & Qt::ShiftModifier);
+      const auto dir = (shiftPressed ? -1 : 1);
+
+      return m_f(item, dir);
+    }
+
+    return false;
+  }
 };
 
 
 FilterList::FilterList(Ui::MainWindow* ui, CategoryFactory& factory)
   : ui(ui), m_factory(factory)
 {
-  ui->filters->viewport()->installEventFilter(
-    new ClickFilter([&](auto* e){ return onClick(e); }));
+  auto* eventFilter = new CriteriaItemFilter(
+    ui->filters, [&](auto* item, int dir){ return cycleItem(item, dir); });
 
-  connect(
-    ui->filtersClear, &QPushButton::clicked,
-    [&]{ clearSelection(); });
+  ui->filters->installEventFilter(eventFilter);
+  ui->filters->viewport()->installEventFilter(eventFilter);
 
-  connect(
-    ui->filtersEdit, &QPushButton::clicked,
-    [&]{ editCategories(); });
-
-  connect(
-    ui->filtersAnd, &QCheckBox::toggled,
-    [&]{ onOptionsChanged(); });
-
-  connect(
-    ui->filtersOr, &QCheckBox::toggled,
-    [&]{ onOptionsChanged(); });
+  connect(ui->filtersClear, &QPushButton::clicked, [&]{ clearSelection(); });
+  connect(ui->filtersEdit, &QPushButton::clicked, [&]{ editCategories(); });
+  connect(ui->filtersAnd, &QCheckBox::toggled, [&]{ onOptionsChanged(); });
+  connect(ui->filtersOr, &QCheckBox::toggled, [&]{ onOptionsChanged(); });
 
   connect(
     ui->filtersSeparators, qOverload<int>(&QComboBox::currentIndexChanged),
@@ -321,21 +358,16 @@ void FilterList::clearSelection()
   checkCriteria();
 }
 
-bool FilterList::onClick(QMouseEvent* e)
+bool FilterList::cycleItem(QTreeWidgetItem* item, int direction)
 {
-  auto* item = ui->filters->itemAt(e->pos());
-  if (!item) {
-    return false;
-  }
-
   auto* ci = dynamic_cast<CriteriaItem*>(item);
   if (!ci) {
     return false;
   }
 
-  if (e->button() == Qt::LeftButton) {
+  if (direction > 0) {
     ci->nextState();
-  } else if (e->button() == Qt::RightButton) {
+  } else if (direction < 0) {
     ci->previousState();
   } else {
     return false;

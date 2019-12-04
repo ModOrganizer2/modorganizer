@@ -34,10 +34,12 @@ private:
   CategoryFactory& m_factory;
 
   bool onClick(QMouseEvent* e);
+  void onItemActivated(QTreeWidgetItem* item);
   void onOptionsChanged();
 
   void editCategories();
   void checkCriteria();
+  bool cycleItem(QTreeWidgetItem* item, int direction);
 
   QTreeWidgetItem* addCriteriaItem(
     QTreeWidgetItem *root, const QString &name, int categoryID,
@@ -47,7 +49,6 @@ private:
   void addCategoryCriteria(
     QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID);
   void addSpecialCriteria(int type);
-
 };
 
 #endif // MODORGANIZER_CATEGORIESLIST_INCLUDED
