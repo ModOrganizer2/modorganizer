@@ -198,6 +198,55 @@ QString UnmanagedModName()
 
 bool runLoot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList);
 
+void setDefaultActivationActionForFile(QAction* open, QAction* preview)
+{
+  if (!open && !preview) {
+    return;
+  }
+
+  QFont bold, notBold;
+
+  if (open) {
+    bold = open->font();
+    notBold = open->font();
+  } else {
+    bold = preview->font();
+    notBold = preview->font();
+  }
+
+  notBold.setBold(false);
+  bold.setBold(true);
+
+
+  const auto& s = Settings::instance();
+  const auto openEnabled = (open && open->isEnabled());
+  const auto previewEnabled = (preview && preview->isEnabled());
+
+  bool doPreview = false;
+
+  // preview is bold if the file is previewable and [the preview on double-click
+  // option is enabled or the file can't be opened]; open is bold if the file
+  // can be opened and cannot be previewed
+  if (previewEnabled && s.interface().doubleClicksOpenPreviews()) {
+    doPreview = true;
+  } else if (openEnabled) {
+    doPreview = false;
+  } else if (previewEnabled) {
+    doPreview = true;
+  } else {
+    // shouldn't happen, checked above
+    return;
+  }
+
+  if (open) {
+    open->setFont(doPreview ? notBold : bold);
+  }
+
+  if (preview) {
+    preview->setFont(doPreview ? bold : notBold);
+  }
+}
+
 
 MainWindow::MainWindow(Settings &settings
                        , OrganizerCore &organizerCore
@@ -1770,7 +1819,23 @@ void MainWindow::expandDataTreeItem(QTreeWidgetItem *item)
 
 void MainWindow::activateDataTreeItem(QTreeWidgetItem *item, int column)
 {
-  openDataFile(item);
+  const auto isArchive = item->data(0, Qt::UserRole + 1).toBool();
+  const auto isDirectory = item->data(0, Qt::UserRole + 3).toBool();
+
+  if (isArchive || isDirectory) {
+    return;
+  }
+
+  const QString path = item->data(0, Qt::UserRole).toString();
+  const QFileInfo targetInfo(path);
+
+  const auto tryPreview = m_OrganizerCore.settings().interface().doubleClicksOpenPreviews();
+
+  if (tryPreview && m_PluginContainer.previewGenerator().previewSupported(targetInfo.suffix())) {
+    previewDataFile(item);
+  } else {
+    openDataFile(item);
+  }
 }
 
 bool MainWindow::refreshProfiles(bool selectProfile)
@@ -5287,7 +5352,16 @@ void MainWindow::disableSelectedMods_clicked()
 
 void MainWindow::previewDataFile()
 {
-  QString fileName = QDir::fromNativeSeparators(m_ContextItem->data(0, Qt::UserRole).toString());
+  if (m_ContextItem == nullptr) {
+    return;
+  }
+
+  previewDataFile(m_ContextItem);
+}
+
+void MainWindow::previewDataFile(QTreeWidgetItem* item)
+{
+  QString fileName = QDir::fromNativeSeparators(item->data(0, Qt::UserRole).toString());
   m_OrganizerCore.previewFileWithAlternatives(this, fileName);
 }
 
@@ -5413,6 +5487,7 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
     const auto isDirectory = m_ContextItem->data(0, Qt::UserRole + 3).toBool();
 
     QAction* open = nullptr;
+    QAction* preview = nullptr;
 
     if (canRunFile(isArchive, fileName)) {
       open = menu.addAction(tr("&Execute"), this, SLOT(openDataFile()));
@@ -5421,16 +5496,10 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
       menu.addAction(tr("Open with &VFS"), this, SLOT(runDataFileHooked()));
     }
 
-    if (open) {
-      auto bold = open->font();
-      bold.setBold(true);
-      open->setFont(bold);
-    }
-
     menu.addAction(tr("&Add as Executable"), this, SLOT(addAsExecutable()));
 
     if (m_PluginContainer.previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
-      menu.addAction(tr("Preview"), this, SLOT(previewDataFile()));
+      preview = menu.addAction(tr("Preview"), this, SLOT(previewDataFile()));
     }
 
     if (!isArchive && !isDirectory) {
@@ -5449,7 +5518,10 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
         menu.addAction(tr("Hide"), this, SLOT(hideFile()));
       }
     }
+
+    setDefaultActivationActionForFile(open, preview);
   }
+
   menu.addAction(tr("Write To File..."), this, SLOT(writeDataToFile()));
   menu.addAction(tr("Refresh"), this, SLOT(on_btnRefreshData_clicked()));
 

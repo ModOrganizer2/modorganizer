@@ -14,6 +14,9 @@ namespace shell = MOBase::shell;
 // checking whether menu items apply to them, just show all of them
 const int max_scan_for_context_menu = 50;
 
+// in mainwindow.cpp
+void setDefaultActivationActionForFile(QAction* open, QAction* preview);
+
 FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
   : ModInfoDialogTab(std::move(cx)), m_fs(nullptr)
 {
@@ -31,10 +34,6 @@ FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
   m_actions.del = new QAction(tr("&Delete"), ui->filetree);
   m_actions.hide = new QAction(tr("&Hide"), ui->filetree);
   m_actions.unhide = new QAction(tr("&Unhide"), ui->filetree);
-
-  auto bold = m_actions.open->font();
-  bold.setBold(true);
-  m_actions.open->setFont(bold);
 
   connect(m_actions.newFolder, &QAction::triggered, [&]{ onCreateDirectory(); });
   connect(m_actions.open, &QAction::triggered, [&]{ onOpen(); });
@@ -56,7 +55,7 @@ FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
   ui->filetree->setEditTriggers(
     ui->filetree->editTriggers() & (~QAbstractItemView::DoubleClicked));
 
-  connect(ui->filetree, &QTreeView::activated, [&](auto&&){ onOpen(); });
+  connect(ui->filetree, &QTreeView::activated, [&](auto&&){ onActivated(); });
 }
 
 void FileTreeTab::clear()
@@ -145,6 +144,23 @@ void FileTreeTab::onCreateDirectory()
   ui->filetree->edit(newIndex);
 }
 
+void FileTreeTab::onActivated()
+{
+  auto selection = singleSelection();
+  if (!selection.isValid()) {
+    return;
+  }
+
+  const auto path = m_fs->filePath(selection);
+  const auto tryPreview = core().settings().interface().doubleClicksOpenPreviews();
+
+  if (tryPreview && canPreviewFile(plugin(), false, path)) {
+    onPreview();
+  } else {
+    onOpen();
+  }
+}
+
 void FileTreeTab::onOpen()
 {
   auto selection = singleSelection();
@@ -152,8 +168,9 @@ void FileTreeTab::onOpen()
     return;
   }
 
+  const auto path = m_fs->filePath(selection);
   core().processRunner()
-    .setFromFile(parentWidget(), m_fs->filePath(selection))
+    .setFromFile(parentWidget(), path)
     .setWaitForCompletion()
     .run();
 }
@@ -408,7 +425,6 @@ void FileTreeTab::onContextMenu(const QPoint &pos)
     // this is a multiple selection, don't show open or explore actions so users
     // don't open a thousand files
     enableNewFolder = true;
-    enablePreview = true;
     enableDelete = true;
 
     if (selection.size() < max_scan_for_context_menu) {
@@ -445,6 +461,8 @@ void FileTreeTab::onContextMenu(const QPoint &pos)
 
   menu.addAction(m_actions.preview);
   m_actions.preview->setEnabled(enablePreview);
+
+  setDefaultActivationActionForFile(m_actions.open, m_actions.preview);
 
   menu.addAction(m_actions.explore);
   m_actions.explore->setEnabled(enableExplore);

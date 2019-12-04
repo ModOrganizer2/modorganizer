@@ -608,7 +608,12 @@ public:
   // whether to show the confirmation when switching instances
   //
   bool showChangeGameConfirmation() const;
-  void setShowChangeGameConfirmation(bool b) const;
+  void setShowChangeGameConfirmation(bool b);
+
+  // whether double-clicks on files should try to open previews first
+  //
+  bool doubleClicksOpenPreviews() const;
+  void setDoubleClicksOpenPreviews(bool b);
 
 private:
   QSettings& m_Settings;
