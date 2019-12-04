@@ -35,6 +35,7 @@ private:
   Actions m_actions;
 
   void onCreateDirectory();
+  void onActivated();
   void onOpen();
   void onRunHooked();
   void onPreview();

@@ -107,11 +107,14 @@ public:
   void restoreState(const Settings& s) override;
   bool canHandleUnmanaged() const override;
 
+  void activateItems(QTreeView* tree);
   void openItems(QTreeView* tree);
   void runItemsHooked(QTreeView* tree);
   void previewItems(QTreeView* tree);
   void exploreItems(QTreeView* tree);
 
+  void openItem(const ConflictItem* item);
+  void previewItem(const ConflictItem* item);
   void changeItemsVisibility(QTreeView* tree, bool visible);
 
   void showContextMenu(const QPoint &pos, QTreeView* tree);

@@ -137,6 +137,9 @@
           </item>
           <item>
            <widget class="QCheckBox" name="doubleClickPreviews">
+            <property name="toolTip">
+             <string>Whether double-clicking on a file opens the preview window or launches the program associated with it. This applies to the Data tab as well as the Conflicts and Filetree tabs in the mod info window.</string>
+            </property>
             <property name="text">
              <string>Open previews on double-click</string>
             </property>

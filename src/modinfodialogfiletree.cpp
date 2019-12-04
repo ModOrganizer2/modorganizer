@@ -14,6 +14,9 @@ namespace shell = MOBase::shell;
 // checking whether menu items apply to them, just show all of them
 const int max_scan_for_context_menu = 50;
 
+// in mainwindow.cpp
+void setDefaultActivationActionForFile(QAction* open, QAction* preview);
+
 FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
   : ModInfoDialogTab(std::move(cx)), m_fs(nullptr)
 {
@@ -52,7 +55,7 @@ FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
   ui->filetree->setEditTriggers(
     ui->filetree->editTriggers() & (~QAbstractItemView::DoubleClicked));
 
-  connect(ui->filetree, &QTreeView::activated, [&](auto&&){ onOpen(); });
+  connect(ui->filetree, &QTreeView::activated, [&](auto&&){ onActivated(); });
 }
 
 void FileTreeTab::clear()
@@ -141,7 +144,7 @@ void FileTreeTab::onCreateDirectory()
   ui->filetree->edit(newIndex);
 }
 
-void FileTreeTab::onOpen()
+void FileTreeTab::onActivated()
 {
   auto selection = singleSelection();
   if (!selection.isValid()) {
@@ -152,13 +155,24 @@ void FileTreeTab::onOpen()
   const auto tryPreview = core().settings().interface().doubleClicksOpenPreviews();
 
   if (tryPreview && canPreviewFile(plugin(), false, path)) {
-    core().previewFile(parentWidget(), mod().name(), path);
+    onPreview();
   } else {
-    core().processRunner()
-      .setFromFile(parentWidget(), path)
-      .setWaitForCompletion()
-      .run();
+    onOpen();
   }
+}
+
+void FileTreeTab::onOpen()
+{
+  auto selection = singleSelection();
+  if (!selection.isValid()) {
+    return;
+  }
+
+  const auto path = m_fs->filePath(selection);
+  core().processRunner()
+    .setFromFile(parentWidget(), path)
+    .setWaitForCompletion()
+    .run();
 }
 
 void FileTreeTab::onRunHooked()
@@ -448,27 +462,7 @@ void FileTreeTab::onContextMenu(const QPoint &pos)
   menu.addAction(m_actions.preview);
   m_actions.preview->setEnabled(enablePreview);
 
-  auto bold = m_actions.preview->font();
-  bold.setBold(true);
-  auto notBold = m_actions.preview->font();
-  notBold.setBold(false);
-
-  // preview is bold if the file is previewable and [the preview on double-click
-  // option is enabled or the file can't be opened]; open is bold if the file
-  // can be opened and cannot be previewed
-  if (enablePreview && core().settings().interface().doubleClicksOpenPreviews()) {
-    m_actions.open->setFont(notBold);
-    m_actions.preview->setFont(bold);
-  } else if (enableOpen) {
-    m_actions.open->setFont(bold);
-    m_actions.preview->setFont(notBold);
-  } else if (enablePreview) {
-    m_actions.open->setFont(notBold);
-    m_actions.preview->setFont(bold);
-  } else {
-    m_actions.open->setFont(notBold);
-    m_actions.preview->setFont(notBold);
-  }
+  setDefaultActivationActionForFile(m_actions.open, m_actions.preview);
 
   menu.addAction(m_actions.explore);
   m_actions.explore->setEnabled(enableExplore);

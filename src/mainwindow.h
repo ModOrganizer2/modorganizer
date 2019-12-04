@@ -444,6 +444,7 @@ private slots:
   void runDataFileHooked();
   void addAsExecutable();
   void previewDataFile();
+  void previewDataFile(QTreeWidgetItem* item);
   void hideFile();
   void unhideFile();
   void openDataOriginExplorer_clicked();

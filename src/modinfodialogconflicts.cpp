@@ -12,6 +12,9 @@ using namespace MOBase;
 // checking whether menu items apply to them, just show all of them
 const std::size_t max_small_selection = 50;
 
+// in mainwindow.cpp
+void setDefaultActivationActionForFile(QAction* open, QAction* preview);
+
 
 class ConflictItem
 {
@@ -527,18 +530,41 @@ void ConflictsTab::changeItemsVisibility(QTreeView* tree, bool visible)
   }
 }
 
+void ConflictsTab::activateItems(QTreeView* tree)
+{
+  const auto tryPreview = core().settings().interface().doubleClicksOpenPreviews();
+
+  // the menu item is only shown for a single selection, but handle all of them
+  // in case this changes
+  for_each_in_selection(tree, [&](const ConflictItem* item) {
+    const auto path = item->fileName();
+
+    if (tryPreview && canPreviewFile(plugin(), item->isArchive(), path)) {
+      previewItem(item);
+    } else {
+      openItem(item);
+    }
+
+    return true;
+  });
+}
+
 void ConflictsTab::openItems(QTreeView* tree)
 {
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
   for_each_in_selection(tree, [&](const ConflictItem* item) {
-    core().processRunner()
-      .setFromFile(parentWidget(), item->fileName())
-      .setWaitForCompletion()
-      .run();
-
+    openItem(item);
     return true;
   });
+}
+
+void ConflictsTab::openItem(const ConflictItem* item)
+{
+  core().processRunner()
+    .setFromFile(parentWidget(), item->fileName())
+    .setWaitForCompletion()
+    .run();
 }
 
 void ConflictsTab::runItemsHooked(QTreeView* tree)
@@ -560,9 +586,14 @@ void ConflictsTab::previewItems(QTreeView* tree)
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
   for_each_in_selection(tree, [&](const ConflictItem* item) {
-    core().previewFileWithAlternatives(parentWidget(), item->fileName());
+    previewItem(item);
     return true;
   });
+}
+
+void ConflictsTab::previewItem(const ConflictItem* item)
+{
+  core().previewFileWithAlternatives(parentWidget(), item->fileName());
 }
 
 void ConflictsTab::exploreItems(QTreeView* tree)
@@ -586,10 +617,6 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
     connect(actions.open, &QAction::triggered, [&]{
       openItems(tree);
     });
-
-    auto bold = actions.open->font();
-    bold.setBold(true);
-    actions.open->setFont(bold);
 
     menu.addAction(actions.open);
   }
@@ -653,6 +680,8 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
 
     menu.addAction(actions.unhide);
   }
+
+  setDefaultActivationActionForFile(actions.open, actions.preview);
 
   if (!menu.isEmpty()) {
     menu.exec(tree->viewport()->mapToGlobal(pos));
@@ -828,15 +857,15 @@ GeneralConflictsTab::GeneralConflictsTab(
 
   QObject::connect(
     ui->overwriteTree, &QTreeView::doubleClicked,
-    [&](auto&&){ m_tab->openItems(ui->overwriteTree); });
+    [&](auto&&){ m_tab->activateItems(ui->overwriteTree); });
 
   QObject::connect(
     ui->overwrittenTree, &QTreeView::doubleClicked,
-    [&](auto&& item){ m_tab->openItems(ui->overwrittenTree); });
+    [&](auto&& item){ m_tab->activateItems(ui->overwrittenTree); });
 
   QObject::connect(
     ui->noConflictTree, &QTreeView::doubleClicked,
-    [&](auto&& item){ m_tab->openItems(ui->noConflictTree); });
+    [&](auto&& item){ m_tab->activateItems(ui->noConflictTree); });
 
   QObject::connect(
     ui->overwriteTree, &QTreeView::customContextMenuRequested,
@@ -1049,7 +1078,7 @@ AdvancedConflictsTab::AdvancedConflictsTab(
 
   QObject::connect(
     ui->conflictsAdvancedList, &QTreeView::activated,
-    [&]{ m_tab->openItems(ui->conflictsAdvancedList); });
+    [&]{ m_tab->activateItems(ui->conflictsAdvancedList); });
 
   QObject::connect(
     ui->conflictsAdvancedList, &QTreeView::customContextMenuRequested,
