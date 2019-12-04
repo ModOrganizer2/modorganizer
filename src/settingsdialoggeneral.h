@@ -20,9 +20,10 @@ private:
 
   void resetDialogs();
 
-  void on_categoriesBtn_clicked();
-  void on_resetColorsBtn_clicked();
-  void on_resetDialogsButton_clicked();
+  void onExploreStyles();
+  void onEditCategories();
+  void onResetColors();
+  void onResetDialogs();
 };
 
 #endif // SETTINGSDIALOGGENERAL_H

@@ -3,7 +3,10 @@
 #include "appconfig.h"
 #include "categoriesdialog.h"
 #include "colortable.h"
+#include <utility.h>
 #include <questionboxmemory.h>
+
+using namespace MOBase;
 
 GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
   : SettingsTab(s, d)
@@ -24,17 +27,16 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
   ui->usePrereleaseBox->setChecked(settings().usePrereleases());
   ui->colorSeparatorsBox->setChecked(settings().colors().colorSeparatorScrollbar());
 
-  QObject::connect(
-    ui->categoriesBtn, &QPushButton::clicked,
-    [&]{ on_categoriesBtn_clicked(); });
+  QObject::connect(ui->exploreStyles, &QPushButton::clicked, [&]{ onExploreStyles(); });
 
   QObject::connect(
-    ui->resetColorsBtn, &QPushButton::clicked,
-    [&]{ on_resetColorsBtn_clicked(); });
+    ui->categoriesBtn, &QPushButton::clicked, [&]{ onEditCategories(); });
 
   QObject::connect(
-    ui->resetDialogsButton, &QPushButton::clicked,
-    [&]{ on_resetDialogsButton_clicked(); });
+    ui->resetColorsBtn, &QPushButton::clicked, [&]{ onResetColors(); });
+
+  QObject::connect(
+    ui->resetDialogsButton, &QPushButton::clicked, [&]{ onResetDialogs(); });
 }
 
 void GeneralSettingsTab::update()
@@ -175,12 +177,27 @@ void GeneralSettingsTab::resetDialogs()
   settings().widgets().resetQuestionButtons();
 }
 
-void GeneralSettingsTab::on_resetColorsBtn_clicked()
+void GeneralSettingsTab::onExploreStyles()
+{
+  QString ssPath = QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::stylesheetsPath());
+  shell::Explore(ssPath);
+}
+
+void GeneralSettingsTab::onEditCategories()
+{
+  CategoriesDialog dialog(&dialog());
+
+  if (dialog.exec() == QDialog::Accepted) {
+    dialog.commitChanges();
+  }
+}
+
+void GeneralSettingsTab::onResetColors()
 {
   ui->colorTable->resetColors();
 }
 
-void GeneralSettingsTab::on_resetDialogsButton_clicked()
+void GeneralSettingsTab::onResetDialogs()
 {
   const auto r = QMessageBox::question(
     parentWidget(),
@@ -192,14 +209,5 @@ void GeneralSettingsTab::on_resetDialogsButton_clicked()
 
   if (r == QMessageBox::Yes) {
     resetDialogs();
-  }
-}
-
-void GeneralSettingsTab::on_categoriesBtn_clicked()
-{
-  CategoriesDialog dialog(&dialog());
-
-  if (dialog.exec() == QDialog::Accepted) {
-    dialog.commitChanges();
   }
 }

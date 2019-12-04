@@ -545,6 +545,7 @@ private slots:
   void openLogsFolder();
   void openInstallFolder();
 	void openPluginsFolder();
+  void openStylesheetsFolder();
   void openDownloadsFolder();
   void openModsFolder();
   void openProfileFolder();
