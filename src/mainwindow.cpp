@@ -4591,23 +4591,27 @@ QMenu *MainWindow::openFolderMenu()
 {
 	QMenu *FolderMenu = new QMenu(this);
 
+  // game folders that are not necessarily MO-specific
 	FolderMenu->addAction(tr("Open Game folder"), this, SLOT(openGameFolder()));
 	FolderMenu->addAction(tr("Open MyGames folder"), this, SLOT(openMyGamesFolder()));
   FolderMenu->addAction(tr("Open INIs folder"), this, SLOT(openIniFolder()));
 
 	FolderMenu->addSeparator();
 
+  // MO-specific folders that are related to modding the game
 	FolderMenu->addAction(tr("Open Instance folder"), this, SLOT(openInstanceFolder()));
   FolderMenu->addAction(tr("Open Mods folder"), this, SLOT(openModsFolder()));
 	FolderMenu->addAction(tr("Open Profile folder"), this, SLOT(openProfileFolder()));
 	FolderMenu->addAction(tr("Open Downloads folder"), this, SLOT(openDownloadsFolder()));
-	FolderMenu->addAction(tr("Open Logs folder"), this, SLOT(openLogsFolder()));
 
 	FolderMenu->addSeparator();
 
+  // MO-specific folders that are not directly related to modding and are either
+  // in the installation folder or the instance
 	FolderMenu->addAction(tr("Open MO2 Install folder"), this, SLOT(openInstallFolder()));
 	FolderMenu->addAction(tr("Open MO2 Plugins folder"), this, SLOT(openPluginsFolder()));
   FolderMenu->addAction(tr("Open MO2 Stylesheets folder"), this, SLOT(openStylesheetsFolder()));
+  FolderMenu->addAction(tr("Open MO2 Logs folder"), this, SLOT(openLogsFolder()));
 
 	return FolderMenu;
 }
