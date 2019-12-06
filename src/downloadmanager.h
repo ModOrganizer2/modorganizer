@@ -313,6 +313,14 @@ public:
   int getModID(int index) const;
 
   /**
+   * @brief retrieve the displayable game name of the download specified by the index
+   *
+   * @param index index of the file to look up
+   * @return the displayable game name
+   **/
+  QString getDisplayGameName(int index) const;
+
+  /**
    * @brief retrieve the game name of the downlaod specified by the index
    *
    * @param index index of the file to look up

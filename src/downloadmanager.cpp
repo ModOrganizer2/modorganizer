@@ -1239,6 +1239,19 @@ int DownloadManager::getModID(int index) const
   return m_ActiveDownloads.at(index)->m_FileInfo->modID;
 }
 
+QString DownloadManager::getDisplayGameName(int index) const
+{
+  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
+    throw MyException(tr("mod id: invalid download index %1").arg(index));
+  }
+  QString gameName = m_ActiveDownloads.at(index)->m_FileInfo->gameName;
+  IPluginGame* gamePlugin = m_OrganizerCore->getGame(gameName);
+  if (gamePlugin) {
+    gameName = gamePlugin->gameName();
+  }
+  return gameName;
+}
+
 QString DownloadManager::getGameName(int index) const
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
