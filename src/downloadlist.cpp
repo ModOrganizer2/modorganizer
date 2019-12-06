@@ -77,6 +77,7 @@ QVariant DownloadList::headerData(int section, Qt::Orientation orientation, int 
       case COL_SIZE: return tr("Size");
       case COL_STATUS: return tr("Status");
       case COL_FILETIME: return tr("Filetime");
+      case COL_SOURCEGAME: return tr("Source Game");
       default: return QVariant();
     }
   } else {
@@ -118,8 +119,14 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
           if (m_Manager->isInfoIncomplete(index.row())) {
             return {};
           } else {
-            const MOBase::ModRepositoryFileInfo *info = m_Manager->getFileInfo(index.row());
             return QString("%1").arg(m_Manager->getModID(index.row()));
+          }
+        }
+        case COL_SOURCEGAME: {
+          if (m_Manager->isInfoIncomplete(index.row())) {
+            return {};
+          } else {
+            return QString("%1").arg(m_Manager->getDisplayGameName(index.row()));
           }
         }
         case COL_SIZE: return MOBase::localizedByteSize(m_Manager->getFileSize(index.row()));

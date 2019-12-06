@@ -96,6 +96,8 @@ bool DownloadListSortProxy::lessThan(const QModelIndex &left,
       return m_Manager->getFileSize(left.row()) < m_Manager->getFileSize(right.row());
     } else if (left.column() == DownloadList::COL_FILETIME) {
       return m_Manager->getFileTime(left.row()) < m_Manager->getFileTime(right.row());
+    } else if (left.column() == DownloadList::COL_SOURCEGAME) {
+      return m_Manager->getDisplayGameName(left.row()) < m_Manager->getDisplayGameName(right.row());
     } else {
       return leftIndex < rightIndex;
     }

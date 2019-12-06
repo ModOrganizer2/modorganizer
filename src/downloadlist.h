@@ -43,6 +43,7 @@ public:
     COL_MODNAME,
     COL_VERSION,
     COL_ID,
+    COL_SOURCEGAME,
 
     // number of columns
     COL_COUNT

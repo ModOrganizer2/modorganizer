@@ -135,6 +135,7 @@ void DownloadListWidget::setManager(DownloadManager *manager)
   header()->hideSection(DownloadList::COL_MODNAME);
   header()->hideSection(DownloadList::COL_VERSION);
   header()->hideSection(DownloadList::COL_ID);
+  header()->hideSection(DownloadList::COL_SOURCEGAME);
 }
 
 void DownloadListWidget::setSourceModel(DownloadList *sourceModel)
