@@ -45,7 +45,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="226"/>
+        <location filename="aboutdialog.ui" line="231"/>
         <source>MO2 Developers &amp;&amp; Contributors</source>
         <translation type="unfinished"></translation>
     </message>
@@ -75,57 +75,57 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="332"/>
+        <location filename="aboutdialog.ui" line="337"/>
         <source>yohru (Japanese)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="337"/>
+        <location filename="aboutdialog.ui" line="342"/>
         <source>Mordan (Greek)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="350"/>
+        <location filename="aboutdialog.ui" line="355"/>
         <source>Yoosk (Polish)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="355"/>
+        <location filename="aboutdialog.ui" line="360"/>
         <source>Brgodfx (Portuguese)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="360"/>
+        <location filename="aboutdialog.ui" line="365"/>
         <source>zDas (Portuguese)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="380"/>
+        <location filename="aboutdialog.ui" line="385"/>
         <source>Jax (Swedish)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="385"/>
+        <location filename="aboutdialog.ui" line="390"/>
         <source>Nubbie (Swedish)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="390"/>
+        <location filename="aboutdialog.ui" line="395"/>
         <source>...and all other contributors!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="404"/>
+        <location filename="aboutdialog.ui" line="409"/>
         <source>Other Supporters &amp;&amp; Contributors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="414"/>
+        <location filename="aboutdialog.ui" line="419"/>
         <source>Tannin (Original Creator)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="531"/>
+        <location filename="aboutdialog.ui" line="536"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>

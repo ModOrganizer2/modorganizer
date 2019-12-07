@@ -329,6 +329,11 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">Xahtax (German)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string>yohru (Japanese)</string>
                </property>
               </item>
