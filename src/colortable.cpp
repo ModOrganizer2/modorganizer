@@ -1,5 +1,6 @@
 #include "colortable.h"
 #include "modflagicondelegate.h"
+#include "modconflicticondelegate.h"
 #include "settings.h"
 
 class ColorItem;
@@ -52,21 +53,17 @@ public:
   }
 
   void paint(
-    QPainter *painter, const QStyleOptionViewItem &option,
-    const QModelIndex &index) const override
+    QPainter* painter, const QStyleOptionViewItem& option,
+    const QModelIndex& index) const override
   {
     paintBackground(m_table, painter, option, index);
     ModFlagIconDelegate::paintIcons(painter, option, index, getIcons(index));
   }
 
 protected:
-  QList<QString> getIcons(const QModelIndex &index) const override
+  QList<QString> getIcons(const QModelIndex& index) const override
   {
     const auto flags = {
-      ModInfo::FLAG_CONFLICT_MIXED,
-      ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE,
-      ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN,
-      ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED,
       ModInfo::FLAG_BACKUP,
       ModInfo::FLAG_NOTENDORSED,
       ModInfo::FLAG_NOTES,
@@ -76,7 +73,48 @@ protected:
     return getIconsForFlags(flags, false);
   }
 
-  size_t getNumIcons(const QModelIndex &index) const override
+  size_t getNumIcons(const QModelIndex& index) const override
+  {
+    return getIcons(index).size();
+  }
+
+private:
+  QTableWidget* m_table;
+};
+
+
+// delegate for the icons column; paints the background and icons
+//
+class FakeModConflictIconDelegate : public ModConflictIconDelegate
+{
+public:
+  explicit FakeModConflictIconDelegate(QTableWidget* table)
+    : m_table(table)
+  {
+  }
+
+  void paint(
+    QPainter* painter, const QStyleOptionViewItem& option,
+    const QModelIndex& index) const override
+  {
+    paintBackground(m_table, painter, option, index);
+    ModFlagIconDelegate::paintIcons(painter, option, index, getIcons(index));
+  }
+
+protected:
+  QList<QString> getIcons(const QModelIndex& index) const override
+  {
+    const auto flags = {
+      ModInfo::FLAG_CONFLICT_MIXED,
+      ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE,
+      ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN,
+      ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED
+    };
+
+    return getIconsForFlags(flags, false);
+  }
+
+  size_t getNumIcons(const QModelIndex& index) const override
   {
     return getIcons(index).size();
   }
@@ -183,11 +221,12 @@ void paintBackground(
 ColorTable::ColorTable(QWidget* parent)
   : QTableWidget(parent), m_settings(nullptr)
 {
-  setColumnCount(3);
-  setHorizontalHeaderLabels({"", "", ""});
+  setColumnCount(4);
+  setHorizontalHeaderLabels({"", "", "", ""});
 
   setItemDelegateForColumn(1, new ColoredBackgroundDelegate(this));
-  setItemDelegateForColumn(2, new FakeModFlagIconDelegate(this));
+  setItemDelegateForColumn(2, new FakeModConflictIconDelegate(this));
+  setItemDelegateForColumn(3, new FakeModFlagIconDelegate(this));
 
   connect(
     this, &QTableWidget::cellActivated,

@@ -57,6 +57,7 @@ public:
 
   enum EColumn {
     COL_NAME,
+    COL_CONFLICTFLAGS,
     COL_FLAGS,
     COL_CONTENT,
     COL_CATEGORY,
@@ -288,6 +289,8 @@ private:
   QVariant getOverwriteData(int column, int role) const;
 
   QString getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const;
+
+  QString getConflictFlagText(ModInfo::EConflictFlag flag, ModInfo::Ptr modInfo) const;
 
   static QString getColumnToolTip(int column);
 

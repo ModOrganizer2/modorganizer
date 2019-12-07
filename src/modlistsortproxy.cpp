@@ -115,6 +115,17 @@ unsigned long ModListSortProxy::flagsId(const std::vector<ModInfo::EFlag> &flags
   return result;
 }
 
+unsigned long ModListSortProxy::conflictFlagsId(const std::vector<ModInfo::EConflictFlag>& flags) const
+{
+  unsigned long result = 0;
+  for (ModInfo::EConflictFlag flag : flags) {
+    if ((flag != ModInfo::FLAG_OVERWRITE_CONFLICT)) {
+      result += 1 << (int)flag;
+    }
+  }
+  return result;
+}
+
 bool ModListSortProxy::lessThan(const QModelIndex &left,
                                 const QModelIndex &right) const
 {
@@ -153,6 +164,16 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
         lt = leftFlags.size() < rightFlags.size();
       } else {
         lt = flagsId(leftFlags) < flagsId(rightFlags);
+      }
+    } break;
+    case ModList::COL_CONFLICTFLAGS: {
+      std::vector<ModInfo::EConflictFlag> leftFlags = leftMod->getConflictFlags();
+      std::vector<ModInfo::EConflictFlag> rightFlags = rightMod->getConflictFlags();
+      if (leftFlags.size() != rightFlags.size()) {
+        lt = leftFlags.size() < rightFlags.size();
+      }
+      else {
+        lt = conflictFlagsId(leftFlags) < conflictFlagsId(rightFlags);
       }
     } break;
     case ModList::COL_CONTENT: {

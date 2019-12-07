@@ -24,10 +24,6 @@ protected:
   virtual size_t getNumIcons(const QModelIndex &index) const;
 
 private:
-  static ModInfo::EFlag m_ConflictFlags[4];
-  static ModInfo::EFlag m_ArchiveLooseConflictFlags[2];
-  static ModInfo::EFlag m_ArchiveConflictFlags[3];
-
   int m_LogicalIndex;
   int m_CompactSize;
   bool m_Compact;

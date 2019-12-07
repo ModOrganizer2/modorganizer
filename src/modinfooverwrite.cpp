@@ -37,6 +37,15 @@ std::vector<ModInfo::EFlag> ModInfoOverwrite::getFlags() const
   return result;
 }
 
+std::vector<ModInfo::EConflictFlag> ModInfoOverwrite::getConflictFlags() const
+{
+  std::vector<ModInfo::EConflictFlag> result;
+  result.push_back(FLAG_OVERWRITE_CONFLICT);
+  for (auto flag : ModInfoWithConflictInfo::getConflictFlags())
+    result.push_back(flag);
+  return result;
+}
+
 int ModInfoOverwrite::getHighlight() const
 {
   int highlight = (isValid() ? HIGHLIGHT_IMPORTANT : HIGHLIGHT_INVALID) | HIGHLIGHT_CENTER;

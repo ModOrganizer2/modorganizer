@@ -51,6 +51,7 @@ public:
   virtual QDateTime getExpires() const { return QDateTime(); }
   virtual std::vector<QString> getIniTweaks() const { return std::vector<QString>(); }
   virtual std::vector<ModInfo::EFlag> getFlags() const;
+  virtual std::vector<ModInfo::EConflictFlag> getConflictFlags() const;
   virtual int getHighlight() const;
   virtual QString getDescription() const;
   virtual int getNexusFileStatus() const { return 0; }

@@ -114,6 +114,7 @@ SET(organizer_SRCS
     previewdialog.cpp
     aboutdialog.cpp
     modflagicondelegate.cpp
+    modconflicticondelegate.cpp
     genericicondelegate.cpp
     organizerproxy.cpp
     viewmarkingscrollbar.cpp
@@ -238,6 +239,7 @@ SET(organizer_HDRS
     previewdialog.h
     aboutdialog.h
     modflagicondelegate.h
+    modconflicticondelegate.h
     genericicondelegate.h
     organizerproxy.h
     viewmarkingscrollbar.h
@@ -491,6 +493,7 @@ set(widgets
 	loglist
 	loghighlighter
 	modflagicondelegate
+	modconflicticondelegate
 	modidlineedit
 	noeditdelegate
 	qtgroupingproxy

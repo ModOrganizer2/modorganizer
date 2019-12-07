@@ -61,6 +61,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "filedialogmemory.h"
 #include "tutorialmanager.h"
 #include "modflagicondelegate.h"
+#include "modconflicticondelegate.h"
 #include "genericicondelegate.h"
 #include "selectiondialog.h"
 #include "csvbuilder.h"
@@ -552,7 +553,16 @@ void MainWindow::setupModList()
     flagDelegate, SLOT(columnResized(int,int,int)));
 
 
+  ModConflictIconDelegate* conflictFlagDelegate = new ModConflictIconDelegate(
+    ui->modList, ModList::COL_CONFLICTFLAGS, 120);
+
+  connect(
+    ui->modList->header(), SIGNAL(sectionResized(int, int, int)),
+    conflictFlagDelegate, SLOT(columnResized(int, int, int)));
+
+
   ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, flagDelegate);
+  ui->modList->setItemDelegateForColumn(ModList::COL_CONFLICTFLAGS, conflictFlagDelegate);
   ui->modList->setItemDelegateForColumn(ModList::COL_CONTENT, contentDelegate);
   ui->modList->header()->installEventFilter(m_OrganizerCore.modList());
 
@@ -2317,6 +2327,15 @@ void MainWindow::processUpdates(Settings& settings) {
         ui->downloadView->header()->hideSection(i);
       }
     }
+
+    if (lastVersion < QVersionNumber(2, 2, 2)) {
+      bool lastHidden = true;
+      for (int i = ModList::COL_CONFLICTFLAGS; i < ui->modList->model()->columnCount(); ++i) {
+        bool hidden = ui->modList->header()->isSectionHidden(i);
+        ui->modList->header()->setSectionHidden(i, lastHidden);
+        lastHidden = hidden;
+      }
+    }
   }
 
   if (currentVersion < lastVersion) {
@@ -3877,7 +3896,8 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
         case ModList::COL_MODID: tab = ModInfoTabIDs::Nexus; break;
         case ModList::COL_GAME: tab = ModInfoTabIDs::Nexus; break;
         case ModList::COL_CATEGORY: tab = ModInfoTabIDs::Categories; break;
-        case ModList::COL_FLAGS: tab = ModInfoTabIDs::Conflicts; break;
+        case ModList::COL_CONFLICTFLAGS: tab = ModInfoTabIDs::Conflicts; break;
+        case ModList::COL_FLAGS: tab = ModInfoTabIDs::Flags; break;
       }
 
       displayModInformation(sourceIdx.row(), tab);

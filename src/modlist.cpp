@@ -159,19 +159,27 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
         output << QString("<i>%1</i>").arg(modInfo->notes());
       return output.join("");
     }
-    case ModInfo::FLAG_CONFLICT_OVERWRITE: return tr("Overwrites loose files");
-    case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return tr("Overwritten loose files");
-    case ModInfo::FLAG_CONFLICT_MIXED: return tr("Loose files Overwrites & Overwritten");
-    case ModInfo::FLAG_CONFLICT_REDUNDANT: return tr("Redundant");
-    case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE: return tr("Overwrites an archive with loose files");
-    case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN: return tr("Archive is overwritten by loose files");
-    case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE: return tr("Overwrites another archive file");
-    case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN: return tr("Overwritten by another archive file");
-    case ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED: return tr("Archive files overwrites & overwritten");
     case ModInfo::FLAG_ALTERNATE_GAME: return tr("<br>This mod is for a different game, "
       "make sure it's compatible or it could cause crashes.");
     case ModInfo::FLAG_TRACKED: return tr("Mod is being tracked on the website");
     default: return "";
+  }
+}
+
+
+QString ModList::getConflictFlagText(ModInfo::EConflictFlag flag, ModInfo::Ptr modInfo) const
+{
+  switch (flag) {
+  case ModInfo::FLAG_CONFLICT_OVERWRITE: return tr("Overwrites loose files");
+  case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return tr("Overwritten loose files");
+  case ModInfo::FLAG_CONFLICT_MIXED: return tr("Loose files Overwrites & Overwritten");
+  case ModInfo::FLAG_CONFLICT_REDUNDANT: return tr("Redundant");
+  case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE: return tr("Overwrites an archive with loose files");
+  case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN: return tr("Archive is overwritten by loose files");
+  case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE: return tr("Overwrites another archive file");
+  case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN: return tr("Overwritten by another archive file");
+  case ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED: return tr("Archive files overwrites & overwritten");
+  default: return "";
   }
 }
 
@@ -218,7 +226,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
   if ((role == Qt::DisplayRole) ||
       (role == Qt::EditRole)) {
     if ((column == COL_FLAGS)
-        || (column == COL_CONTENT)) {
+        || (column == COL_CONTENT)
+        || (column == COL_CONFLICTFLAGS)) {
       return QVariant();
     } else if (column == COL_NAME) {
       auto flags = modInfo->getFlags();
@@ -441,6 +450,15 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       for (ModInfo::EFlag flag : modInfo->getFlags()) {
         if (result.length() != 0) result += "<br>";
         result += getFlagText(flag, modInfo);
+      }
+
+      return result;
+    } else if (column == COL_CONFLICTFLAGS) {
+      QString result;
+
+      for (ModInfo::EConflictFlag flag : modInfo->getConflictFlags()) {
+        if (result.length() != 0) result += "<br>";
+        result += getConflictFlagText(flag, modInfo);
       }
 
       return result;
@@ -1274,6 +1292,7 @@ void ModList::dropModeUpdate(bool dropOnItems)
 QString ModList::getColumnName(int column)
 {
   switch (column) {
+    case COL_CONFLICTFLAGS: return tr("Conflicts");
     case COL_FLAGS:    return tr("Flags");
     case COL_CONTENT:  return tr("Content");
     case COL_NAME:     return tr("Mod Name");
@@ -1299,6 +1318,7 @@ QString ModList::getColumnToolTip(int column)
     case COL_CATEGORY: return tr("Category of the mod.");
     case COL_GAME:     return tr("The source game which was the origin of this mod.");
     case COL_MODID:    return tr("Id of the mod as used on Nexus.");
+    case COL_CONFLICTFLAGS: return tr("Indicators of file conflicts between mods.");
     case COL_FLAGS:    return tr("Emblems to highlight things that might require attention.");
     case COL_CONTENT:  return tr("Depicts the content of the mod:<br>"
                                  "<table cellspacing=7>"
