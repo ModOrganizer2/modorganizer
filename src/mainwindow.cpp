@@ -3897,7 +3897,6 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
         case ModList::COL_GAME: tab = ModInfoTabIDs::Nexus; break;
         case ModList::COL_CATEGORY: tab = ModInfoTabIDs::Categories; break;
         case ModList::COL_CONFLICTFLAGS: tab = ModInfoTabIDs::Conflicts; break;
-        case ModList::COL_FLAGS: tab = ModInfoTabIDs::Flags; break;
       }
 
       displayModInformation(sourceIdx.row(), tab);

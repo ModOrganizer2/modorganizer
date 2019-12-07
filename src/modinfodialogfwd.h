@@ -14,7 +14,6 @@ enum class ModInfoTabIDs
   Images,
   Esps,
   Conflicts,
-  Flags,
   Categories,
   Nexus,
   Notes,
