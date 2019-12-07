@@ -217,7 +217,7 @@
               </item>
               <item>
                <property name="text">
-                <string>isanae</string>
+                <string notr="true">isanae</string>
                </property>
               </item>
              </widget>
