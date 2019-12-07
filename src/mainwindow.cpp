@@ -6719,11 +6719,6 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
   QMainWindow::keyReleaseEvent(event);
 }
 
-void MainWindow::on_clickBlankButton_clicked()
-{
-  deselectFilters();
-}
-
 void MainWindow::on_clearFiltersButton_clicked()
 {
   ui->modFilterEdit->clear();
