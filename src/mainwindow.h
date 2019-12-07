@@ -199,9 +199,6 @@ protected:
 private slots:
   void on_actionChange_Game_triggered();
 
-private slots:
-  void on_clickBlankButton_clicked();
-
 private:
 
   void cleanup();
