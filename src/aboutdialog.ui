@@ -215,6 +215,11 @@
                 <string notr="true">LostDragonist</string>
                </property>
               </item>
+              <item>
+               <property name="text">
+                <string>isanae</string>
+               </property>
+              </item>
              </widget>
             </item>
            </layout>
@@ -239,11 +244,6 @@
               <item>
                <property name="text">
                 <string notr="true">erasmux</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">isanae</string>
                </property>
               </item>
               <item>
