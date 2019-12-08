@@ -108,12 +108,11 @@ public:
   bool canHandleUnmanaged() const override;
 
   void activateItems(QTreeView* tree);
-  void openItems(QTreeView* tree);
-  void runItemsHooked(QTreeView* tree);
+  void openItems(QTreeView* tree, bool hooked);
   void previewItems(QTreeView* tree);
   void exploreItems(QTreeView* tree);
 
-  void openItem(const ConflictItem* item);
+  void openItem(const ConflictItem* item, bool hooked);
   void previewItem(const ConflictItem* item);
   void changeItemsVisibility(QTreeView* tree, bool visible);
 

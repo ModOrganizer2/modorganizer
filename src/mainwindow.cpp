@@ -5425,7 +5425,8 @@ void MainWindow::runDataFileHooked()
   const QFileInfo targetInfo(path);
 
   m_OrganizerCore.processRunner()
-    .setFromFile(this, targetInfo, true)
+    .setFromFile(this, targetInfo)
+    .setHooked(true)
     .setWaitForCompletion(ProcessRunner::Refresh)
     .run();
 }

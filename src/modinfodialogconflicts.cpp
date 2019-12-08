@@ -542,43 +542,30 @@ void ConflictsTab::activateItems(QTreeView* tree)
     if (tryPreview && canPreviewFile(plugin(), item->isArchive(), path)) {
       previewItem(item);
     } else {
-      openItem(item);
+      openItem(item, false);
     }
 
     return true;
   });
 }
 
-void ConflictsTab::openItems(QTreeView* tree)
+void ConflictsTab::openItems(QTreeView* tree, bool hooked)
 {
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
   for_each_in_selection(tree, [&](const ConflictItem* item) {
-    openItem(item);
+    openItem(item, hooked);
     return true;
   });
 }
 
-void ConflictsTab::openItem(const ConflictItem* item)
+void ConflictsTab::openItem(const ConflictItem* item, bool hooked)
 {
   core().processRunner()
     .setFromFile(parentWidget(), item->fileName())
+    .setHooked(hooked)
     .setWaitForCompletion()
     .run();
-}
-
-void ConflictsTab::runItemsHooked(QTreeView* tree)
-{
-  // the menu item is only shown for a single selection, but handle all of them
-  // in case this changes
-  for_each_in_selection(tree, [&](const ConflictItem* item) {
-    core().processRunner()
-      .setFromFile(parentWidget(), item->fileName(), true)
-      .setWaitForCompletion()
-      .run();
-
-    return true;
-  });
 }
 
 void ConflictsTab::previewItems(QTreeView* tree)
@@ -615,19 +602,8 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
   // open
   if (actions.open) {
     connect(actions.open, &QAction::triggered, [&]{
-      openItems(tree);
+      openItems(tree, false);
     });
-
-    menu.addAction(actions.open);
-  }
-
-  // run hooked
-  if (actions.runHooked) {
-    connect(actions.runHooked, &QAction::triggered, [&]{
-      runItemsHooked(tree);
-    });
-
-    menu.addAction(actions.runHooked);
   }
 
   // preview
@@ -635,8 +611,33 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
     connect(actions.preview, &QAction::triggered, [&]{
       previewItems(tree);
     });
+  }
 
-    menu.addAction(actions.preview);
+  if ((actions.open && actions.open->isEnabled()) && (actions.preview && actions.preview->isEnabled())) {
+    if (Settings::instance().interface().doubleClicksOpenPreviews()) {
+      menu.addAction(actions.preview);
+      menu.addAction(actions.open);
+    } else {
+      menu.addAction(actions.open);
+      menu.addAction(actions.preview);
+    }
+  } else {
+    if (actions.open) {
+      menu.addAction(actions.open);
+    }
+
+    if (actions.preview) {
+      menu.addAction(actions.preview);
+    }
+  }
+
+  // run hooked
+  if (actions.runHooked) {
+    connect(actions.runHooked, &QAction::triggered, [&]{
+      openItems(tree, true);
+    });
+
+    menu.addAction(actions.runHooked);
   }
 
   // goto
@@ -681,9 +682,15 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
     menu.addAction(actions.unhide);
   }
 
-  setDefaultActivationActionForFile(actions.open, actions.preview);
-
   if (!menu.isEmpty()) {
+    if (actions.open || actions.preview || actions.runHooked) {
+      // bold the first option
+      auto* top = menu.actions()[0];
+      auto f = top->font();
+      f.setBold(true);
+      top->setFont(f);
+    }
+
     menu.exec(tree->viewport()->mapToGlobal(pos));
   }
 }
@@ -769,6 +776,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
 
   if (enableRun) {
     actions.open = new QAction(tr("&Execute"), parentWidget());
+    actions.runHooked = new QAction(tr("Execute with &VFS"), parentWidget());
   } else if (enableOpen) {
     actions.open = new QAction(tr("&Open"), parentWidget());
     actions.runHooked = new QAction(tr("Open with &VFS"), parentWidget());

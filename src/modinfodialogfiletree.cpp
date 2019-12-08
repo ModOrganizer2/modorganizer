@@ -183,7 +183,8 @@ void FileTreeTab::onRunHooked()
   }
 
   core().processRunner()
-    .setFromFile(parentWidget(), m_fs->filePath(selection), true)
+    .setFromFile(parentWidget(), m_fs->filePath(selection))
+    .setHooked(true)
     .setWaitForCompletion()
     .run();
 }
