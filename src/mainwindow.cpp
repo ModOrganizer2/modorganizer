@@ -554,7 +554,7 @@ void MainWindow::setupModList()
 
 
   ModConflictIconDelegate* conflictFlagDelegate = new ModConflictIconDelegate(
-    ui->modList, ModList::COL_CONFLICTFLAGS, 120);
+    ui->modList, ModList::COL_CONFLICTFLAGS, 80);
 
   connect(
     ui->modList->header(), SIGNAL(sectionResized(int, int, int)),

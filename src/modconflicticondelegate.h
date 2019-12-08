@@ -8,7 +8,7 @@ class ModConflictIconDelegate : public IconDelegate
   Q_OBJECT;
 
 public:
-  explicit ModConflictIconDelegate(QObject *parent = 0, int logicalIndex = -1, int compactSize = 120);
+  explicit ModConflictIconDelegate(QObject *parent = 0, int logicalIndex = -1, int compactSize = 80);
   virtual QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
 
   static QList<QString> getIconsForFlags(
