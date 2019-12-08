@@ -1973,7 +1973,7 @@ void InterfaceSettings::setShowChangeGameConfirmation(bool b)
 
 bool InterfaceSettings::doubleClicksOpenPreviews() const
 {
-  return get<bool>(m_Settings, "Settings", "double_click_previews", false);
+  return get<bool>(m_Settings, "Settings", "double_click_previews", true);
 }
 
 void InterfaceSettings::setDoubleClicksOpenPreviews(bool b)
