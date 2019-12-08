@@ -2310,9 +2310,9 @@ void MainWindow::processUpdates(Settings& settings) {
   if (!settings.firstStart()) {
     if (lastVersion < QVersionNumber(2, 1, 3)) {
       bool lastHidden = true;
-      for (int i = ModList::COL_GAME; i < ui->modList->model()->columnCount(); ++i) {
-        bool hidden = ui->modList->header()->isSectionHidden(i);
-        ui->modList->header()->setSectionHidden(i, lastHidden);
+      for (int i = ui->modList->header()->visualIndex(ModList::COL_GAME); i < ui->modList->header()->count(); ++i) {
+        bool hidden = ui->modList->header()->isSectionHidden(ui->modList->header()->logicalIndex(i));
+        ui->modList->header()->setSectionHidden(ui->modList->header()->logicalIndex(i), lastHidden);
         lastHidden = hidden;
       }
     }
@@ -2330,9 +2330,9 @@ void MainWindow::processUpdates(Settings& settings) {
 
     if (lastVersion < QVersionNumber(2, 2, 2)) {
       bool lastHidden = true;
-      for (int i = ModList::COL_CONFLICTFLAGS; i < ui->modList->model()->columnCount(); ++i) {
-        bool hidden = ui->modList->header()->isSectionHidden(i);
-        ui->modList->header()->setSectionHidden(i, lastHidden);
+      for (int i = ui->modList->header()->visualIndex(ModList::COL_CONFLICTFLAGS); i < ui->modList->header()->count(); ++i) {
+        bool hidden = ui->modList->header()->isSectionHidden(ui->modList->header()->logicalIndex(i));
+        ui->modList->header()->setSectionHidden(ui->modList->header()->logicalIndex(i), lastHidden);
         lastHidden = hidden;
       }
     }
