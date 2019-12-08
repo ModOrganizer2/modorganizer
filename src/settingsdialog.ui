@@ -102,10 +102,10 @@
              <item row="1" column="1" colspan="2">
               <widget class="LinkLabel" name="label_33">
                <property name="toolTip">
-                <string>https://www.transifex.com/tannin/mod-organizer/</string>
+                <string>https://www.transifex.com/mod-organizer-2-team/mod-organizer-2/</string>
                </property>
                <property name="text">
-                <string>&lt;a href=&quot;https://www.transifex.com/tannin/mod-organizer/&quot;&gt;Help translate Mod Organizer&lt;/a&gt;</string>
+                <string>&lt;a href=&quot;https://www.transifex.com/mod-organizer-2-team/mod-organizer-2/&quot;&gt;Help translate Mod Organizer&lt;/a&gt;</string>
                </property>
                <property name="openExternalLinks">
                 <bool>true</bool>
