@@ -78,6 +78,7 @@ Here is a complete list:
 * https://github.com/ModOrganizer2/modorganizer-plugin_python
 * https://github.com/ModOrganizer2/modorganizer-preview_base
 * https://github.com/ModOrganizer2/modorganizer-preview_dds
+* https://github.com/ModOrganizer2/modorganizer-form43_checker
 * https://github.com/ModOrganizer2/modorganizer-tool_configurator
 * https://github.com/ModOrganizer2/modorganizer-tool_inibakery
 * https://github.com/ModOrganizer2/modorganizer-uibase
