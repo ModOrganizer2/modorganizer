@@ -207,6 +207,7 @@ MainWindow::MainWindow(Settings &settings
   : QMainWindow(parent)
   , ui(new Ui::MainWindow)
   , m_WasVisible(false)
+  , m_FirstPaint(true)
   , m_linksSeparator(nullptr)
   , m_Tutorial(this, "MainWindow")
   , m_OldProfileIndex(-1)
@@ -687,15 +688,12 @@ void MainWindow::allowListResize()
   for (int i = 0; i < ui->modList->header()->count(); ++i) {
     ui->modList->header()->setSectionResizeMode(i, QHeaderView::Interactive);
   }
-  //ui->modList->header()->setSectionResizeMode(ui->modList->header()->count() - 1, QHeaderView::Stretch);
   ui->modList->header()->setStretchLastSection(true);
-
 
   // allow resize on plugin list
   for (int i = 0; i < ui->espList->header()->count(); ++i) {
     ui->espList->header()->setSectionResizeMode(i, QHeaderView::Interactive);
   }
-  //ui->espList->header()->setSectionResizeMode(ui->espList->header()->count() - 1, QHeaderView::Stretch);
   ui->espList->header()->setStretchLastSection(true);
 }
 
@@ -1286,12 +1284,20 @@ void MainWindow::showEvent(QShowEvent *event)
 
     m_OrganizerCore.settings().widgets().restoreIndex(ui->groupCombo);
 
-    allowListResize();
-
     m_OrganizerCore.settings().nexus().registerAsNXMHandler(false);
     m_WasVisible = true;
 	  updateProblemsButton();
   }
+}
+
+void MainWindow::paintEvent(QPaintEvent* event)
+{
+  if (m_FirstPaint) {
+    allowListResize();
+    m_FirstPaint = false;
+  }
+
+  QMainWindow::paintEvent(event);
 }
 
 void MainWindow::onBeforeClose()

@@ -189,6 +189,7 @@ signals:
 protected:
 
   virtual void showEvent(QShowEvent *event);
+  virtual void paintEvent(QPaintEvent* event);
   virtual void closeEvent(QCloseEvent *event);
   virtual bool eventFilter(QObject *obj, QEvent *event);
   virtual void resizeEvent(QResizeEvent *event);
@@ -312,6 +313,7 @@ private:
   Ui::MainWindow *ui;
 
   bool m_WasVisible;
+  bool m_FirstPaint;
 
   // last separator on the toolbar, used to add spacer for right-alignment and
   // as an insert point for executables
