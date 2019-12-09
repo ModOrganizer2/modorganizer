@@ -12,10 +12,6 @@ using namespace MOBase;
 // checking whether menu items apply to them, just show all of them
 const std::size_t max_small_selection = 50;
 
-// in mainwindow.cpp
-void setDefaultActivationActionForFile(QAction* open, QAction* preview);
-
-
 class ConflictItem
 {
 public:

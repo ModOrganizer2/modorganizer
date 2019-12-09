@@ -14,9 +14,6 @@ namespace shell = MOBase::shell;
 // checking whether menu items apply to them, just show all of them
 const int max_scan_for_context_menu = 50;
 
-// in mainwindow.cpp
-void setDefaultActivationActionForFile(QAction* open, QAction* preview);
-
 FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
   : ModInfoDialogTab(std::move(cx)), m_fs(nullptr)
 {

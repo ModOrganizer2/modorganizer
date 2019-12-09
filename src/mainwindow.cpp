@@ -199,56 +199,6 @@ QString UnmanagedModName()
 
 bool runLoot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList);
 
-void setDefaultActivationActionForFile(QAction* open, QAction* preview)
-{
-  if (!open && !preview) {
-    return;
-  }
-
-  QFont bold, notBold;
-
-  if (open) {
-    bold = open->font();
-    notBold = open->font();
-  } else {
-    bold = preview->font();
-    notBold = preview->font();
-  }
-
-  notBold.setBold(false);
-  bold.setBold(true);
-
-
-  const auto& s = Settings::instance();
-  const auto openEnabled = (open && open->isEnabled());
-  const auto previewEnabled = (preview && preview->isEnabled());
-
-  bool doPreview = false;
-
-  // preview is bold if the file is previewable and [the preview on double-click
-  // option is enabled or the file can't be opened]; open is bold if the file
-  // can be opened and cannot be previewed
-  if (previewEnabled && s.interface().doubleClicksOpenPreviews()) {
-    doPreview = true;
-  } else if (openEnabled) {
-    doPreview = false;
-  } else if (previewEnabled) {
-    doPreview = true;
-  } else {
-    // shouldn't happen, checked above
-    return;
-  }
-
-  if (open) {
-    open->setFont(doPreview ? notBold : bold);
-  }
-
-  if (preview) {
-    preview->setFont(doPreview ? bold : notBold);
-  }
-}
-
-
 MainWindow::MainWindow(Settings &settings
                        , OrganizerCore &organizerCore
                        , PluginContainer &pluginContainer
