@@ -439,6 +439,7 @@ private slots:
   void openDataFile();
   void openDataFile(QTreeWidgetItem* item);
   void runDataFileHooked();
+  void runDataFileHooked(QTreeWidgetItem* item);
   void addAsExecutable();
   void previewDataFile();
   void previewDataFile(QTreeWidgetItem* item);

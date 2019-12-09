@@ -1827,27 +1827,6 @@ void MainWindow::expandDataTreeItem(QTreeWidgetItem *item)
   }
 }
 
-void MainWindow::activateDataTreeItem(QTreeWidgetItem *item, int column)
-{
-  const auto isArchive = item->data(0, Qt::UserRole + 1).toBool();
-  const auto isDirectory = item->data(0, Qt::UserRole + 3).toBool();
-
-  if (isArchive || isDirectory) {
-    return;
-  }
-
-  const QString path = item->data(0, Qt::UserRole).toString();
-  const QFileInfo targetInfo(path);
-
-  const auto tryPreview = m_OrganizerCore.settings().interface().doubleClicksOpenPreviews();
-
-  if (tryPreview && m_PluginContainer.previewGenerator().previewSupported(targetInfo.suffix())) {
-    previewDataFile(item);
-  } else {
-    openDataFile(item);
-  }
-}
-
 bool MainWindow::refreshProfiles(bool selectProfile)
 {
   QComboBox* profileBox = findChild<QComboBox*>("profileBox");
@@ -5373,19 +5352,25 @@ void MainWindow::disableSelectedMods_clicked()
 }
 
 
-void MainWindow::previewDataFile()
+void MainWindow::activateDataTreeItem(QTreeWidgetItem *item, int column)
 {
-  if (m_ContextItem == nullptr) {
+  const auto isArchive = item->data(0, Qt::UserRole + 1).toBool();
+  const auto isDirectory = item->data(0, Qt::UserRole + 3).toBool();
+
+  if (isArchive || isDirectory) {
     return;
   }
 
-  previewDataFile(m_ContextItem);
-}
+  const QString path = item->data(0, Qt::UserRole).toString();
+  const QFileInfo targetInfo(path);
 
-void MainWindow::previewDataFile(QTreeWidgetItem* item)
-{
-  QString fileName = QDir::fromNativeSeparators(item->data(0, Qt::UserRole).toString());
-  m_OrganizerCore.previewFileWithAlternatives(this, fileName);
+  const auto tryPreview = m_OrganizerCore.settings().interface().doubleClicksOpenPreviews();
+
+  if (tryPreview && m_PluginContainer.previewGenerator().previewSupported(targetInfo.suffix())) {
+    previewDataFile(item);
+  } else {
+    openDataFile(item);
+  }
 }
 
 void MainWindow::openDataFile()
@@ -5411,6 +5396,7 @@ void MainWindow::openDataFile(QTreeWidgetItem* item)
 
   m_OrganizerCore.processRunner()
     .setFromFile(this, targetInfo)
+    .setHooked(false)
     .setWaitForCompletion(ProcessRunner::Refresh)
     .run();
 }
@@ -5421,7 +5407,19 @@ void MainWindow::runDataFileHooked()
     return;
   }
 
-  const QString path = m_ContextItem->data(0, Qt::UserRole).toString();
+  runDataFileHooked(m_ContextItem);
+}
+
+void MainWindow::runDataFileHooked(QTreeWidgetItem* item)
+{
+  const auto isArchive = item->data(0, Qt::UserRole + 1).toBool();
+  const auto isDirectory = item->data(0, Qt::UserRole + 3).toBool();
+
+  if (isArchive || isDirectory) {
+    return;
+  }
+
+  const QString path = item->data(0, Qt::UserRole).toString();
   const QFileInfo targetInfo(path);
 
   m_OrganizerCore.processRunner()
@@ -5429,6 +5427,21 @@ void MainWindow::runDataFileHooked()
     .setHooked(true)
     .setWaitForCompletion(ProcessRunner::Refresh)
     .run();
+}
+
+void MainWindow::previewDataFile()
+{
+  if (m_ContextItem == nullptr) {
+    return;
+  }
+
+  previewDataFile(m_ContextItem);
+}
+
+void MainWindow::previewDataFile(QTreeWidgetItem* item)
+{
+  QString fileName = QDir::fromNativeSeparators(item->data(0, Qt::UserRole).toString());
+  m_OrganizerCore.previewFileWithAlternatives(this, fileName);
 }
 
 void MainWindow::openDataOriginExplorer_clicked()
@@ -5511,20 +5524,56 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
     const auto isDirectory = m_ContextItem->data(0, Qt::UserRole + 3).toBool();
 
     QAction* open = nullptr;
+    QAction* runHooked = nullptr;
     QAction* preview = nullptr;
 
     if (canRunFile(isArchive, fileName)) {
-      open = menu.addAction(tr("&Execute"), this, SLOT(openDataFile()));
+      open = new QAction(tr("&Execute"), ui->dataTree);
+      runHooked = new QAction(tr("Execute with &VFS"), ui->dataTree);
     } else if (canOpenFile(isArchive, fileName)) {
-      open = menu.addAction(tr("&Open"), this, SLOT(openDataFile()));
-      menu.addAction(tr("Open with &VFS"), this, SLOT(runDataFileHooked()));
+      open = new QAction(tr("&Open"), ui->dataTree);
+      runHooked = new QAction(tr("Open with &VFS"), ui->dataTree);
+    }
+
+    if (m_PluginContainer.previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
+      preview = new QAction(tr("Preview"), ui->dataTree);
+    }
+
+    if (open) {
+      connect(open, &QAction::triggered, [&]{ openDataFile(); });
+    }
+
+    if (runHooked) {
+      connect(runHooked, &QAction::triggered, [&]{ runDataFileHooked(); });
+    }
+
+    if (preview) {
+      connect(preview, &QAction::triggered, [&]{ previewDataFile(); });
+    }
+
+    if (open && preview) {
+      if (m_OrganizerCore.settings().interface().doubleClicksOpenPreviews()) {
+        menu.addAction(preview);
+        menu.addAction(open);
+      } else {
+        menu.addAction(open);
+        menu.addAction(preview);
+      }
+    } else {
+      if (open) {
+        menu.addAction(open);
+      }
+
+      if (preview) {
+        menu.addAction(preview);
+      }
+    }
+
+    if (runHooked) {
+      menu.addAction(runHooked);
     }
 
     menu.addAction(tr("&Add as Executable"), this, SLOT(addAsExecutable()));
-
-    if (m_PluginContainer.previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
-      preview = menu.addAction(tr("Preview"), this, SLOT(previewDataFile()));
-    }
 
     if (!isArchive && !isDirectory) {
       menu.addAction("Open Origin in Explorer", this, SLOT(openDataOriginExplorer_clicked()));
@@ -5543,7 +5592,13 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
       }
     }
 
-    setDefaultActivationActionForFile(open, preview);
+    if (open || preview || runHooked) {
+      // bold the first option
+      auto* top = menu.actions()[0];
+      auto f = top->font();
+      f.setBold(true);
+      top->setFont(f);
+    }
   }
 
   menu.addAction(tr("Write To File..."), this, SLOT(writeDataToFile()));
