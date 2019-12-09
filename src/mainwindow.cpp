@@ -178,6 +178,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdexcept>
 #include <sstream>
 #include <utility>
+#include <iterator>
 
 #ifdef TEST_MODELS
 #include "modeltest.h"
@@ -511,6 +512,7 @@ MainWindow::MainWindow(Settings &settings
   resetActionIcons();
   updatePluginCount();
   updateModCount();
+  processUpdates();
 }
 
 void MainWindow::setupModList()
@@ -2299,7 +2301,8 @@ void MainWindow::readSettings()
   }
 }
 
-void MainWindow::processUpdates(Settings& settings) {
+void MainWindow::processUpdates() {
+  auto& settings = m_OrganizerCore.settings();
   const auto earliest = QVersionNumber::fromString("2.1.2").normalized();
 
   const auto lastVersion = settings.version().value_or(earliest);
@@ -2308,15 +2311,6 @@ void MainWindow::processUpdates(Settings& settings) {
   settings.processUpdates(currentVersion, lastVersion);
 
   if (!settings.firstStart()) {
-    if (lastVersion < QVersionNumber(2, 1, 3)) {
-      bool lastHidden = true;
-      for (int i = ui->modList->header()->visualIndex(ModList::COL_GAME); i < ui->modList->header()->count(); ++i) {
-        bool hidden = ui->modList->header()->isSectionHidden(ui->modList->header()->logicalIndex(i));
-        ui->modList->header()->setSectionHidden(ui->modList->header()->logicalIndex(i), lastHidden);
-        lastHidden = hidden;
-      }
-    }
-
     if (lastVersion < QVersionNumber(2, 1, 6)) {
       ui->modList->header()->setSectionHidden(ModList::COL_NOTES, true);
     }
@@ -2329,11 +2323,28 @@ void MainWindow::processUpdates(Settings& settings) {
     }
 
     if (lastVersion < QVersionNumber(2, 2, 2)) {
-      bool lastHidden = true;
-      for (int i = ui->modList->header()->visualIndex(ModList::COL_CONFLICTFLAGS); i < ui->modList->header()->count(); ++i) {
-        bool hidden = ui->modList->header()->isSectionHidden(ui->modList->header()->logicalIndex(i));
-        ui->modList->header()->setSectionHidden(ui->modList->header()->logicalIndex(i), lastHidden);
-        lastHidden = hidden;
+      int pos1 = ui->modList->columnViewportPosition(ModList::COL_FLAGS);
+      int pos2 = 0;
+      if (pos1) {
+        ui->modList->showColumn(ModList::COL_CONFLICTFLAGS);
+        pos2 = ui->modList->columnViewportPosition(ModList::COL_CONFLICTFLAGS);
+        ui->modList->header()->moveSection(
+          ui->modList->header()->visualIndexAt(pos2),
+          ui->modList->header()->visualIndexAt(pos1)
+        );
+      }
+    }
+  } else {
+    { // Move conflict flags
+      int pos1 = ui->modList->columnViewportPosition(ModList::COL_FLAGS);
+      int pos2 = 0;
+      if (pos1) {
+        ui->modList->showColumn(ModList::COL_CONFLICTFLAGS);
+        pos2 = ui->modList->columnViewportPosition(ModList::COL_CONFLICTFLAGS);
+        ui->modList->header()->moveSection(
+          ui->modList->header()->visualIndexAt(pos2),
+          ui->modList->header()->visualIndexAt(pos1)
+        );
       }
     }
   }

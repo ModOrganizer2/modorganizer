@@ -57,7 +57,6 @@ public:
 
   enum EColumn {
     COL_NAME,
-    COL_CONFLICTFLAGS,
     COL_FLAGS,
     COL_CONTENT,
     COL_CATEGORY,
@@ -67,8 +66,8 @@ public:
     COL_INSTALLTIME,
     COL_PRIORITY,
     COL_NOTES,
-
-    COL_LASTCOLUMN = COL_NOTES
+    COL_CONFLICTFLAGS,
+    COL_LASTCOLUMN = COL_CONFLICTFLAGS,
   };
 
   typedef boost::signals2::signal<void (const QString &, ModStates)> SignalModStateChanged;

@@ -116,7 +116,7 @@ public:
                       QWidget *parent = 0);
   ~MainWindow();
 
-  void processUpdates(Settings& settings);
+  void processUpdates();
 
   QWidget* qtWidget() override;
 
