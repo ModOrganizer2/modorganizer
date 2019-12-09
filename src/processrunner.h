@@ -67,6 +67,7 @@ public:
   ProcessRunner& setProfileName(const QString& profileName);
   ProcessRunner& setWaitForCompletion(
     WaitFlags flags=NoFlags, UILocker::Reasons reason=UILocker::LockUI);
+  ProcessRunner& setHooked(bool b);
 
   // - if the target is an executable file, runs it hooked
   // - if the target is a file:
@@ -74,8 +75,7 @@ public:
   //     - if forceHook is true, gets the executable associated with the file
   //       and runs that hooked by passing the file as an argument
   //
-  ProcessRunner& setFromFile(
-    QWidget* parent, const QFileInfo& targetInfo, bool forceHook = false);
+  ProcessRunner& setFromFile(QWidget* parent, const QFileInfo& targetInfo);
 
   ProcessRunner& setFromExecutable(const Executable& exe);
   ProcessRunner& setFromShortcut(const MOShortcut& shortcut);
@@ -150,10 +150,12 @@ private:
   QString m_profileName;
   UILocker::Reasons m_lockReason;
   WaitFlags m_waitFlags;
-  QString m_shellOpen;
+  QFileInfo m_shellOpen;
   env::HandlePtr m_handle;
   DWORD m_exitCode;
 
+
+  bool shouldRunShell() const;
 
   // runs the command in m_shellOpen; returns empty if it can be waited for
   //

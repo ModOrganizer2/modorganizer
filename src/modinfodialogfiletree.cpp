@@ -14,9 +14,6 @@ namespace shell = MOBase::shell;
 // checking whether menu items apply to them, just show all of them
 const int max_scan_for_context_menu = 50;
 
-// in mainwindow.cpp
-void setDefaultActivationActionForFile(QAction* open, QAction* preview);
-
 FileTreeTab::FileTreeTab(ModInfoDialogTabContext cx)
   : ModInfoDialogTab(std::move(cx)), m_fs(nullptr)
 {
@@ -171,6 +168,7 @@ void FileTreeTab::onOpen()
   const auto path = m_fs->filePath(selection);
   core().processRunner()
     .setFromFile(parentWidget(), path)
+    .setHooked(false)
     .setWaitForCompletion()
     .run();
 }
@@ -182,8 +180,10 @@ void FileTreeTab::onRunHooked()
     return;
   }
 
+  const auto path = m_fs->filePath(selection);
   core().processRunner()
-    .setFromFile(parentWidget(), m_fs->filePath(selection), true)
+    .setFromFile(parentWidget(), path)
+    .setHooked(true)
     .setWaitForCompletion()
     .run();
 }
@@ -450,19 +450,52 @@ void FileTreeTab::onContextMenu(const QPoint &pos)
     }
   }
 
-  if (enableRun) {
-    m_actions.open->setText(tr("&Execute"));
-    menu.addAction(m_actions.open);
-  } else if (enableOpen) {
-    m_actions.open->setText(tr("&Open"));
-    menu.addAction(m_actions.open);
-    menu.addAction(m_actions.runHooked);
+  bool enableRunHooked = false;
+
+  if (enableRun || enableOpen) {
+    if (auto* p=core().currentProfile()) {
+      if (mod().canBeEnabled()) {
+        const auto index = ModInfo::getIndex(mod().name());
+        if (index == UINT_MAX) {
+          log::error("mod '{}' not found (filetree)", mod().name());
+        } else {
+          enableRunHooked = p->modEnabled(index);
+        }
+      }
+    }
   }
 
-  menu.addAction(m_actions.preview);
+  if (enableRun) {
+    m_actions.open->setText(tr("&Execute"));
+    m_actions.runHooked->setText(tr("Execute with &VFS"));
+  } else if (enableOpen) {
+    m_actions.open->setText(tr("&Open"));
+    m_actions.runHooked->setText(tr("Open with &VFS"));
+  }
+
   m_actions.preview->setEnabled(enablePreview);
 
-  setDefaultActivationActionForFile(m_actions.open, m_actions.preview);
+  if ((enableRun || enableOpen) && enablePreview) {
+    if (Settings::instance().interface().doubleClicksOpenPreviews()) {
+      menu.addAction(m_actions.preview);
+      menu.addAction(m_actions.open);
+    } else {
+      menu.addAction(m_actions.open);
+      menu.addAction(m_actions.preview);
+    }
+  } else {
+    if (enableOpen || enableRun) {
+      menu.addAction(m_actions.open);
+    }
+
+    if (enablePreview) {
+      menu.addAction(m_actions.preview);
+    }
+  }
+
+  if (enableRunHooked) {
+    menu.addAction(m_actions.runHooked);
+  }
 
   menu.addAction(m_actions.explore);
   m_actions.explore->setEnabled(enableExplore);
@@ -485,6 +518,17 @@ void FileTreeTab::onContextMenu(const QPoint &pos)
 
   menu.addAction(m_actions.unhide);
   m_actions.unhide->setEnabled(enableUnhide);
+
+  if (enableOpen || enableRun || enablePreview) {
+    // bold the first option, unbold all the others
+    for (int i=0; i<menu.actions().size(); ++i) {
+      if (auto* a=menu.actions()[i]) {
+        auto f = a->font();
+        f.setBold(i == 0);
+        a->setFont(f);
+      }
+    }
+  }
 
   menu.exec(ui->filetree->viewport()->mapToGlobal(pos));
 }

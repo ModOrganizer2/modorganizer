@@ -421,8 +421,8 @@ ProcessRunner::ProcessRunner(OrganizerCore& core, IUserInterface* ui) :
   m_core(core), m_ui(ui), m_lockReason(UILocker::NoReason),
   m_waitFlags(NoFlags), m_handle(INVALID_HANDLE_VALUE), m_exitCode(-1)
 {
-  // all processes started in ProcessRunner are hooked
-  m_sp.hooked = true;
+  // all processes started in ProcessRunner are hooked by default
+  setHooked(true);
 }
 
 ProcessRunner& ProcessRunner::setBinary(const QFileInfo &binary)
@@ -475,8 +475,14 @@ ProcessRunner& ProcessRunner::setWaitForCompletion(
   return *this;
 }
 
+ProcessRunner& ProcessRunner::setHooked(bool b)
+{
+  m_sp.hooked = b;
+  return *this;
+}
+
 ProcessRunner& ProcessRunner::setFromFile(
-  QWidget* parent, const QFileInfo& targetInfo, bool forceHook)
+  QWidget* parent, const QFileInfo& targetInfo)
 {
   if (!parent && m_ui) {
     parent = m_ui->qtWidget();
@@ -500,24 +506,8 @@ ProcessRunner& ProcessRunner::setFromFile(
     case spawn::FileExecutionTypes::Other:  // fall-through
     default:
     {
-      if (forceHook) {
-        auto assoc = env::getAssociation(targetInfo);
-        if (!assoc.executable.filePath().isEmpty()) {
-          setBinary(assoc.executable);
-          setArguments(assoc.formattedCommandLine);
-          setCurrentDirectory(assoc.executable.absoluteDir());
-
-          return *this;
-        }
-
-        // if it fails, just use the regular shell open
-      }
-
-      m_shellOpen = targetInfo.absoluteFilePath();
-
-      // picked up by postRun()
-      m_sp.hooked = false;
-
+      m_shellOpen = targetInfo;
+      setHooked(false);
       break;
     }
   }
@@ -649,11 +639,41 @@ ProcessRunner& ProcessRunner::setFromFileOrExecutable(
   return *this;
 }
 
+bool ProcessRunner::shouldRunShell() const
+{
+  return !m_shellOpen.filePath().isEmpty();
+}
+
 ProcessRunner::Results ProcessRunner::run()
 {
+  // check if setHooked() was called after setFromFile(); this needs to
+  // modify the settings to run the associated executable instead of using
+  // shell::Open()
+
+  if (shouldRunShell() && m_sp.hooked) {
+    // this is a non-executable file, but it should be hooked; the associated
+    // executable needs to be retrieved and run instead
+    auto assoc = env::getAssociation(m_shellOpen);
+    if (!assoc.executable.filePath().isEmpty()) {
+      setBinary(assoc.executable);
+      setArguments(assoc.formattedCommandLine);
+      setCurrentDirectory(assoc.executable.absoluteDir());
+      m_shellOpen = {};
+    } else {
+      // if it fails, just use the regular shell open
+      log::error("failed to get the associated executable, running unhooked");
+      m_sp.hooked = false;
+    }
+  } else if (!shouldRunShell() && !m_sp.hooked) {
+    // this is an executable that should not be hooked; just run it through
+    // the shell
+    m_shellOpen = m_sp.binary;
+  }
+
+
   std::optional<Results> r;
 
-  if (!m_shellOpen.isEmpty()) {
+  if (shouldRunShell()) {
     r = runShell();
   } else {
     r = runBinary();
@@ -669,9 +689,11 @@ ProcessRunner::Results ProcessRunner::run()
 
 std::optional<ProcessRunner::Results> ProcessRunner::runShell()
 {
-  log::debug("executing from shell: '{}'", m_shellOpen);
+  const auto file = m_shellOpen.absoluteFilePath();
 
-  auto r = shell::Open(m_shellOpen);
+  log::debug("executing from shell: '{}'", file);
+
+  auto r = shell::Open(file);
   if (!r.success()) {
     return Error;
   }
