@@ -1283,7 +1283,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
     </message>
     <message>
         <location filename="modinfodialogfiletree.cpp" line="30"/>
-        <location filename="modinfodialogfiletree.cpp" line="461"/>
+        <location filename="modinfodialogfiletree.cpp" line="476"/>
         <source>Open with &amp;VFS</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1349,17 +1349,17 @@ Right now the only case I know of where this needs to be overwritten is for the 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogfiletree.cpp" line="457"/>
+        <location filename="modinfodialogfiletree.cpp" line="472"/>
         <source>&amp;Execute</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogfiletree.cpp" line="458"/>
+        <location filename="modinfodialogfiletree.cpp" line="473"/>
         <source>Execute with &amp;VFS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogfiletree.cpp" line="460"/>
+        <location filename="modinfodialogfiletree.cpp" line="475"/>
         <source>&amp;Open</source>
         <translation type="unfinished"></translation>
     </message>

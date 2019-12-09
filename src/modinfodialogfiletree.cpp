@@ -453,6 +453,21 @@ void FileTreeTab::onContextMenu(const QPoint &pos)
     }
   }
 
+  bool enableRunHooked = false;
+
+  if (enableRun || enableOpen) {
+    if (auto* p=core().currentProfile()) {
+      if (mod().canBeEnabled()) {
+        const auto index = ModInfo::getIndex(mod().name());
+        if (index == UINT_MAX) {
+          log::error("mod '{}' not found (filetree)", mod().name());
+        } else {
+          enableRunHooked = p->modEnabled(index);
+        }
+      }
+    }
+  }
+
   if (enableRun) {
     m_actions.open->setText(tr("&Execute"));
     m_actions.runHooked->setText(tr("Execute with &VFS"));
@@ -481,7 +496,7 @@ void FileTreeTab::onContextMenu(const QPoint &pos)
     }
   }
 
-  if (enableOpen || enableRun) {
+  if (enableRunHooked) {
     menu.addAction(m_actions.runHooked);
   }
 
