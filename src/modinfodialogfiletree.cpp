@@ -171,6 +171,7 @@ void FileTreeTab::onOpen()
   const auto path = m_fs->filePath(selection);
   core().processRunner()
     .setFromFile(parentWidget(), path)
+    .setHooked(false)
     .setWaitForCompletion()
     .run();
 }
@@ -182,8 +183,9 @@ void FileTreeTab::onRunHooked()
     return;
   }
 
+  const auto path = m_fs->filePath(selection);
   core().processRunner()
-    .setFromFile(parentWidget(), m_fs->filePath(selection))
+    .setFromFile(parentWidget(), path)
     .setHooked(true)
     .setWaitForCompletion()
     .run();
@@ -453,17 +455,35 @@ void FileTreeTab::onContextMenu(const QPoint &pos)
 
   if (enableRun) {
     m_actions.open->setText(tr("&Execute"));
-    menu.addAction(m_actions.open);
+    m_actions.runHooked->setText(tr("Execute with &VFS"));
   } else if (enableOpen) {
     m_actions.open->setText(tr("&Open"));
-    menu.addAction(m_actions.open);
-    menu.addAction(m_actions.runHooked);
+    m_actions.runHooked->setText(tr("Open with &VFS"));
   }
 
-  menu.addAction(m_actions.preview);
   m_actions.preview->setEnabled(enablePreview);
 
-  setDefaultActivationActionForFile(m_actions.open, m_actions.preview);
+  if ((enableRun || enableOpen) && enablePreview) {
+    if (Settings::instance().interface().doubleClicksOpenPreviews()) {
+      menu.addAction(m_actions.preview);
+      menu.addAction(m_actions.open);
+    } else {
+      menu.addAction(m_actions.open);
+      menu.addAction(m_actions.preview);
+    }
+  } else {
+    if (enableOpen || enableRun) {
+      menu.addAction(m_actions.open);
+    }
+
+    if (enablePreview) {
+      menu.addAction(m_actions.preview);
+    }
+  }
+
+  if (enableOpen || enableRun) {
+    menu.addAction(m_actions.runHooked);
+  }
 
   menu.addAction(m_actions.explore);
   m_actions.explore->setEnabled(enableExplore);
@@ -486,6 +506,17 @@ void FileTreeTab::onContextMenu(const QPoint &pos)
 
   menu.addAction(m_actions.unhide);
   m_actions.unhide->setEnabled(enableUnhide);
+
+  if (enableOpen || enableRun || enablePreview) {
+    // bold the first option, unbold all the others
+    for (int i=0; i<menu.actions().size(); ++i) {
+      if (auto* a=menu.actions()[i]) {
+        auto f = a->font();
+        f.setBold(i == 0);
+        a->setFont(f);
+      }
+    }
+  }
 
   menu.exec(ui->filetree->viewport()->mapToGlobal(pos));
 }
