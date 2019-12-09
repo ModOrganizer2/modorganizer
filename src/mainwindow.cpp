@@ -2201,7 +2201,10 @@ void MainWindow::readSettings()
 {
   const auto& s = m_OrganizerCore.settings();
 
-  s.geometry().restoreGeometry(this);
+  if (!s.geometry().restoreGeometry(this)) {
+    resize(1300, 800);
+  }
+
   s.geometry().restoreState(this);
   s.geometry().restoreDocks(this);
   s.geometry().restoreToolbars(this);
