@@ -528,6 +528,8 @@ void MainWindow::setupModList()
       ui->modList->header()->resizeSection(column, sectionSize);
     }
   } else {
+    fixConflictsColumn();
+
     // hide these columns by default
     ui->modList->header()->setSectionHidden(ModList::COL_CONTENT, true);
     ui->modList->header()->setSectionHidden(ModList::COL_MODID, true);
@@ -547,6 +549,25 @@ void MainWindow::setupModList()
   ui->modList->header()->setSectionHidden(ModList::COL_NAME, false);
 
   ui->modList->installEventFilter(m_OrganizerCore.modList());
+}
+
+void MainWindow::fixConflictsColumn()
+{
+  // the conflicts column should sit to the left of the flags column, but its
+  // enum is at the end to preserve compatibility
+  //
+  // this is called when updating from 2.2.1, or when there is no state saved
+  // for the mod list, so it's free to do whatever it wants with the column
+
+  const auto flags = ui->modList->header()->visualIndex(ModList::COL_FLAGS);
+  const auto conflicts = ui->modList->header()->visualIndex(ModList::COL_CONFLICTFLAGS);
+
+  // this can be called twice when migrating from 2.2.1: once in
+  // processUpdates() and again in setupModList() because the geometry names in
+  // the ini have changed; to a simple check to see if the column has been moved
+  if (conflicts > flags) {
+    ui->modList->header()->moveSection(conflicts, flags);
+  }
 }
 
 void MainWindow::resetActionIcons()
@@ -2258,29 +2279,7 @@ void MainWindow::processUpdates() {
     }
 
     if (lastVersion < QVersionNumber(2, 2, 2)) {
-      int pos1 = ui->modList->columnViewportPosition(ModList::COL_FLAGS);
-      int pos2 = 0;
-      if (pos1) {
-        ui->modList->showColumn(ModList::COL_CONFLICTFLAGS);
-        pos2 = ui->modList->columnViewportPosition(ModList::COL_CONFLICTFLAGS);
-        ui->modList->header()->moveSection(
-          ui->modList->header()->visualIndexAt(pos2),
-          ui->modList->header()->visualIndexAt(pos1)
-        );
-      }
-    }
-  } else {
-    { // Move conflict flags
-      int pos1 = ui->modList->columnViewportPosition(ModList::COL_FLAGS);
-      int pos2 = 0;
-      if (pos1) {
-        ui->modList->showColumn(ModList::COL_CONFLICTFLAGS);
-        pos2 = ui->modList->columnViewportPosition(ModList::COL_CONFLICTFLAGS);
-        ui->modList->header()->moveSection(
-          ui->modList->header()->visualIndexAt(pos2),
-          ui->modList->header()->visualIndexAt(pos1)
-        );
-      }
+      fixConflictsColumn();
     }
   }
 
