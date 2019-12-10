@@ -2,6 +2,7 @@
 #define MODINFODIALOGFWD_H
 
 #include "filerenamer.h"
+#include <QStyledItemDelegate>
 
 class ModInfo;
 using ModInfoPtr = QSharedPointer<ModInfo>;

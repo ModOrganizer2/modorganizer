@@ -77,6 +77,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "eventfilter.h"
 #include "statusbar.h"
 #include "filterlist.h"
+#include "datatab.h"
 #include <utility.h>
 #include <dataarchives.h>
 #include <bsainvalidation.h>
@@ -299,7 +300,19 @@ MainWindow::MainWindow(Settings &settings
   const bool pluginListAdjusted =
     settings.geometry().restoreState(ui->espList->header());
 
-  settings.geometry().restoreState(ui->dataTree->header());
+  m_DataTab.reset(new DataTab(m_OrganizerCore, m_PluginContainer, this, ui));
+  m_DataTab->restoreState(settings);
+
+  connect(m_DataTab.get(), &DataTab::executablesChanged, [&]{ refreshExecutablesList(); });
+
+  connect(
+    m_DataTab.get(), &DataTab::originModified,
+    [&](int id){ originModified(id); });
+
+  connect(
+    m_DataTab.get(), &DataTab::displayModInformation,
+    [&](auto&& m, auto&& i, auto&& tab){ displayModInformation(m, i, tab); });
+
   settings.geometry().restoreState(ui->downloadView->header());
 
   ui->splitter->setStretchFactor(0, 3);
@@ -348,9 +361,6 @@ MainWindow::MainWindow(Settings &settings
 
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), m_PluginListSortProxy, SLOT(updateFilter(QString)));
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(espFilterChanged(QString)));
-
-  connect(ui->dataTree, SIGNAL(itemExpanded(QTreeWidgetItem*)), this, SLOT(expandDataTreeItem(QTreeWidgetItem*)));
-  connect(ui->dataTree, SIGNAL(itemActivated(QTreeWidgetItem*, int)), this, SLOT(activateDataTreeItem(QTreeWidgetItem*, int)));
 
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(refreshed()), this, SLOT(directory_refreshed()));
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(progress(int)), this, SLOT(refresher_progress(int)));
@@ -1657,161 +1667,6 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
   }
 }
 
-void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const DirectoryEntry &directoryEntry, bool conflictsOnly, QIcon *fileIcon, QIcon *folderIcon)
-{
-  bool isDirectory = true;
-  //QIcon folderIcon = (new QFileIconProvider())->icon(QFileIconProvider::Folder);
-  //QIcon fileIcon = (new QFileIconProvider())->icon(QFileIconProvider::File);
-
-  std::wostringstream temp;
-  temp << directorySoFar << "\\" << directoryEntry.getName();
-  {
-    std::vector<DirectoryEntry*>::const_iterator current, end;
-    directoryEntry.getSubDirectories(current, end);
-    for (; current != end; ++current) {
-      QString pathName = ToQString((*current)->getName());
-      QStringList columns(pathName);
-      columns.append("");
-      if (!(*current)->isEmpty()) {
-        QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
-        directoryChild->setData(0, Qt::DecorationRole, *folderIcon);
-        directoryChild->setData(0, Qt::UserRole + 3, isDirectory);
-
-        if (conflictsOnly || !m_showArchiveData) {
-          updateTo(directoryChild, temp.str(), **current, conflictsOnly, fileIcon, folderIcon);
-          if (directoryChild->childCount() != 0) {
-            subTree->addChild(directoryChild);
-          }
-          else {
-            delete directoryChild;
-          }
-        }
-        else {
-          QTreeWidgetItem *onDemandLoad = new QTreeWidgetItem(QStringList());
-          onDemandLoad->setData(0, Qt::UserRole + 0, "__loaded_on_demand__");
-          onDemandLoad->setData(0, Qt::UserRole + 1, ToQString(temp.str()));
-          onDemandLoad->setData(0, Qt::UserRole + 2, conflictsOnly);
-          directoryChild->addChild(onDemandLoad);
-          subTree->addChild(directoryChild);
-        }
-      }
-      else {
-        QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
-        directoryChild->setData(0, Qt::DecorationRole, *folderIcon);
-        directoryChild->setData(0, Qt::UserRole + 3, isDirectory);
-        subTree->addChild(directoryChild);
-      }
-    }
-  }
-
-
-  isDirectory = false;
-  {
-    for (const FileEntry::Ptr current : directoryEntry.getFiles()) {
-      if (conflictsOnly && (current->getAlternatives().size() == 0)) {
-        continue;
-      }
-
-      bool isArchive = false;
-      int originID = current->getOrigin(isArchive);
-      if (!m_showArchiveData && isArchive) {
-        continue;
-      }
-
-      QString fileName = ToQString(current->getName());
-      QStringList columns(fileName);
-      FilesOrigin origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
-
-      QString source;
-      const unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
-
-      if (modIndex == UINT_MAX) {
-        source = UnmanagedModName();
-      } else {
-        ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-        source = modInfo->name();
-      }
-
-      std::pair<std::wstring, int> archive = current->getArchive();
-      if (archive.first.length() != 0) {
-        source.append(" (").append(ToQString(archive.first)).append(")");
-      }
-      columns.append(source);
-      QTreeWidgetItem *fileChild = new QTreeWidgetItem(columns);
-      if (isArchive) {
-        QFont font = fileChild->font(0);
-        font.setItalic(true);
-        fileChild->setFont(0, font);
-        fileChild->setFont(1, font);
-      } else if (fileName.endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
-        QFont font = fileChild->font(0);
-        font.setStrikeOut(true);
-        fileChild->setFont(0, font);
-        fileChild->setFont(1, font);
-      }
-      fileChild->setData(0, Qt::UserRole, ToQString(current->getFullPath()));
-      fileChild->setData(0, Qt::DecorationRole, *fileIcon);
-      fileChild->setData(0, Qt::UserRole + 3, isDirectory);
-      fileChild->setData(0, Qt::UserRole + 1, isArchive);
-      fileChild->setData(1, Qt::UserRole, source);
-      fileChild->setData(1, Qt::UserRole + 1, originID);
-
-      std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = current->getAlternatives();
-
-      if (!alternatives.empty()) {
-        std::wostringstream altString;
-        altString << ToWString(tr("Also in: <br>"));
-        for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator altIter = alternatives.begin();
-             altIter != alternatives.end(); ++altIter) {
-          if (altIter != alternatives.begin()) {
-            altString << " , ";
-          }
-          altString << "<span style=\"white-space: nowrap;\"><i>" << m_OrganizerCore.directoryStructure()->getOriginByID(altIter->first).getName() << "</font></span>";
-        }
-        fileChild->setToolTip(1, QString("%1").arg(ToQString(altString.str())));
-        fileChild->setForeground(1, QBrush(Qt::red));
-      } else {
-        fileChild->setToolTip(1, tr("No conflict"));
-      }
-      subTree->addChild(fileChild);
-    }
-  }
-
-
-  //subTree->sortChildren(0, Qt::AscendingOrder);
-}
-
-void MainWindow::delayedRemove()
-{
-  for (QTreeWidgetItem *item : m_RemoveWidget) {
-    item->removeChild(item->child(0));
-  }
-  m_RemoveWidget.clear();
-}
-
-void MainWindow::expandDataTreeItem(QTreeWidgetItem *item)
-{
-  if ((item->childCount() == 1) && (item->child(0)->data(0, Qt::UserRole).toString() == "__loaded_on_demand__")) {
-    // read the data we need from the sub-item, then dispose of it
-    QTreeWidgetItem *onDemandDataItem = item->child(0);
-    const QString path = onDemandDataItem->data(0, Qt::UserRole + 1).toString();
-    std::wstring wspath = path.toStdWString();
-    bool conflictsOnly = onDemandDataItem->data(0, Qt::UserRole + 2).toBool();
-
-    std::wstring virtualPath = (wspath + L"\\").substr(6) + ToWString(item->text(0));
-    DirectoryEntry *dir = m_OrganizerCore.directoryStructure()->findSubDirectoryRecursive(virtualPath);
-    if (dir != nullptr) {
-      QIcon folderIcon = (new QFileIconProvider())->icon(QFileIconProvider::Folder);
-      QIcon fileIcon = (new QFileIconProvider())->icon(QFileIconProvider::File);
-      updateTo(item, wspath, *dir, conflictsOnly, &fileIcon, &folderIcon);
-    } else {
-      log::warn("failed to update view of {}", path);
-    }
-    m_RemoveWidget.push_back(item);
-    QTimer::singleShot(5, this, SLOT(delayedRemove()));
-  }
-}
-
 bool MainWindow::refreshProfiles(bool selectProfile)
 {
   QComboBox* profileBox = findChild<QComboBox*>("profileBox");
@@ -1892,58 +1747,6 @@ void MainWindow::refreshExecutablesList()
   ui->executablesListBox->setCurrentIndex(1);
   ui->executablesListBox->setEnabled(true);
 }
-
-
-void MainWindow::refreshDataTree()
-{
-  QCheckBox *conflictsBox = findChild<QCheckBox*>("conflictsCheckBox");
-  QTreeWidget *tree = findChild<QTreeWidget*>("dataTree");
-  QIcon folderIcon = (new QFileIconProvider())->icon(QFileIconProvider::Folder);
-  QIcon fileIcon = (new QFileIconProvider())->icon(QFileIconProvider::File);
-  tree->clear();
-  QStringList columns("data");
-  columns.append("");
-  QTreeWidgetItem *subTree = new QTreeWidgetItem(columns);
-  subTree->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::Folder));
-  updateTo(subTree, L"", *m_OrganizerCore.directoryStructure(), conflictsBox->isChecked(), &fileIcon, &folderIcon);
-  tree->insertTopLevelItem(0, subTree);
-  subTree->setExpanded(true);
-}
-
-void MainWindow::refreshDataTreeKeepExpandedNodes()
-{
-	QCheckBox *conflictsBox = findChild<QCheckBox*>("conflictsCheckBox");
-	QTreeWidget *tree = findChild<QTreeWidget*>("dataTree");
-  QIcon folderIcon = (new QFileIconProvider())->icon(QFileIconProvider::Folder);
-  QIcon fileIcon = (new QFileIconProvider())->icon(QFileIconProvider::File);
-	QStringList expandedNodes;
-	QTreeWidgetItemIterator it1(tree, QTreeWidgetItemIterator::NotHidden | QTreeWidgetItemIterator::HasChildren);
-	while (*it1) {
-		QTreeWidgetItem *current = (*it1);
-		if (current->isExpanded() && !(current->text(0)=="data")) {
-			expandedNodes.append(current->text(0)+"/"+current->parent()->text(0));
-		}
-		++it1;
-	}
-
-	tree->clear();
-	QStringList columns("data");
-	columns.append("");
-	QTreeWidgetItem *subTree = new QTreeWidgetItem(columns);
-  subTree->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::Folder));
-	updateTo(subTree, L"", *m_OrganizerCore.directoryStructure(), conflictsBox->isChecked(), &fileIcon, &folderIcon);
-	tree->insertTopLevelItem(0, subTree);
-	subTree->setExpanded(true);
-	QTreeWidgetItemIterator it2(tree, QTreeWidgetItemIterator::HasChildren);
-	while (*it2) {
-		QTreeWidgetItem *current = (*it2);
-		if (!(current->text(0)=="data") && expandedNodes.contains(current->text(0)+"/"+current->parent()->text(0))) {
-			current->setExpanded(true);
-		}
-		++it2;
-	}
-}
-
 
 void MainWindow::refreshSavesIfOpen()
 {
@@ -2317,7 +2120,6 @@ void MainWindow::storeSettings()
   s.geometry().saveVisibility(ui->categoriesGroup);
 
   s.geometry().saveState(ui->espList->header());
-  s.geometry().saveState(ui->dataTree->header());
   s.geometry().saveState(ui->downloadView->header());
   s.geometry().saveState(ui->modList->header());
 
@@ -2325,16 +2127,12 @@ void MainWindow::storeSettings()
   s.widgets().saveIndex(ui->executablesListBox);
 
   m_Filters->saveState(s);
+  m_DataTab->saveState(s);
 }
 
 QWidget* MainWindow::qtWidget()
 {
   return this;
-}
-
-void MainWindow::on_btnRefreshData_clicked()
-{
-  m_OrganizerCore.refreshDirectoryStructure();
 }
 
 void MainWindow::on_btnRefreshDownloads_clicked()
@@ -2349,7 +2147,7 @@ void MainWindow::on_tabWidget_currentChanged(int index)
   } else if (index == 1) {
     m_OrganizerCore.refreshBSAList();
   } else if (index == 2) {
-    refreshDataTreeKeepExpandedNodes();
+    m_DataTab->activated();
   } else if (index == 3) {
     refreshSaveList();
   }
@@ -2558,12 +2356,10 @@ void MainWindow::directory_refreshed()
   // now
   updateProblemsButton();
 
-
   //Some better check for the current tab is needed.
   if (ui->tabWidget->currentIndex() == 2) {
-      refreshDataTreeKeepExpandedNodes();
+    m_DataTab->refreshDataTreeKeepExpandedNodes();
   }
-
 }
 
 void MainWindow::esplist_changed()
@@ -5254,149 +5050,12 @@ void MainWindow::languageChange(const QString &newLanguage)
   ui->openFolderMenu->setMenu(openFolderMenu());
 }
 
-void MainWindow::writeDataToFile(QFile &file, const QString &directory, const DirectoryEntry &directoryEntry)
-{
-  for (FileEntry::Ptr current : directoryEntry.getFiles()) {
-    bool isArchive = false;
-    int origin = current->getOrigin(isArchive);
-    if (isArchive) {
-      // TODO: don't list files from archives. maybe make this an option?
-      continue;
-    }
-    QString fullName = directory + "\\" + ToQString(current->getName());
-    file.write(fullName.toUtf8());
-
-    file.write("\t(");
-    file.write(ToQString(m_OrganizerCore.directoryStructure()->getOriginByID(origin).getName()).toUtf8());
-    file.write(")\r\n");
-  }
-
-  // recurse into subdirectories
-  std::vector<DirectoryEntry*>::const_iterator current, end;
-  directoryEntry.getSubDirectories(current, end);
-  for (; current != end; ++current) {
-    writeDataToFile(file, directory + "\\" + ToQString((*current)->getName()), **current);
-  }
-}
-
-void MainWindow::writeDataToFile()
-{
-  QString fileName = QFileDialog::getSaveFileName(this);
-  if (!fileName.isEmpty()) {
-    QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly)) {
-      reportError(tr("failed to write to file %1").arg(fileName));
-    }
-
-    writeDataToFile(file, "data", *m_OrganizerCore.directoryStructure());
-    file.close();
-
-    MessageDialog::showMessage(tr("%1 written").arg(QDir::toNativeSeparators(fileName)), this);
-  }
-}
-
-void MainWindow::addAsExecutable()
-{
-  if (m_ContextItem == nullptr) {
-    return;
-  }
-
-  const QFileInfo target(m_ContextItem->data(0, Qt::UserRole).toString());
-  const auto fec = spawn::getFileExecutionContext(this, target);
-
-  switch (fec.type)
-  {
-    case spawn::FileExecutionTypes::Executable:
-    {
-      const QString name = QInputDialog::getText(
-        this, tr("Enter Name"),
-        tr("Enter a name for the executable"),
-        QLineEdit::Normal,
-        target.completeBaseName());
-
-      if (!name.isEmpty()) {
-        //Note: If this already exists, you'll lose custom settings
-        m_OrganizerCore.executablesList()->setExecutable(Executable()
-          .title(name)
-          .binaryInfo(fec.binary)
-          .arguments(fec.arguments)
-          .workingDirectory(target.absolutePath()));
-
-        refreshExecutablesList();
-      }
-
-      break;
-    }
-
-    case spawn::FileExecutionTypes::Other:  // fall-through
-    default:
-    {
-      QMessageBox::information(
-        this, tr("Not an executable"),
-        tr("This is not a recognized executable."));
-
-      break;
-    }
-  }
-}
-
-
 void MainWindow::originModified(int originID)
 {
   FilesOrigin &origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
   origin.enable(false);
   m_OrganizerCore.directoryStructure()->addFromOrigin(origin.getName(), origin.getPath(), origin.getPriority());
   DirectoryRefresher::cleanStructure(m_OrganizerCore.directoryStructure());
-}
-
-
-void MainWindow::hideFile()
-{
-  QString oldName = m_ContextItem->data(0, Qt::UserRole).toString();
-  QString newName = oldName + ModInfo::s_HiddenExt;
-
-  if (QFileInfo(newName).exists()) {
-    if (QMessageBox::question(this, tr("Replace file?"), tr("There already is a hidden version of this file. Replace it?"),
-                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      if (!QFile(newName).remove()) {
-        QMessageBox::critical(this, tr("File operation failed"), tr("Failed to remove \"%1\". Maybe you lack the required file permissions?").arg(newName));
-        return;
-      }
-    } else {
-      return;
-    }
-  }
-
-  if (QFile::rename(oldName, newName)) {
-    originModified(m_ContextItem->data(1, Qt::UserRole + 1).toInt());
-	refreshDataTreeKeepExpandedNodes();
-  } else {
-    reportError(tr("failed to rename \"%1\" to \"%2\"").arg(oldName).arg(QDir::toNativeSeparators(newName)));
-  }
-}
-
-
-void MainWindow::unhideFile()
-{
-  QString oldName = m_ContextItem->data(0, Qt::UserRole).toString();
-  QString newName = oldName.left(oldName.length() - ModInfo::s_HiddenExt.length());
-  if (QFileInfo(newName).exists()) {
-    if (QMessageBox::question(this, tr("Replace file?"), tr("There already is a visible version of this file. Replace it?"),
-                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      if (!QFile(newName).remove()) {
-        QMessageBox::critical(this, tr("File operation failed"), tr("Failed to remove \"%1\". Maybe you lack the required file permissions?").arg(newName));
-        return;
-      }
-    } else {
-      return;
-    }
-  }
-  if (QFile::rename(oldName, newName)) {
-    originModified(m_ContextItem->data(1, Qt::UserRole + 1).toInt());
-	refreshDataTreeKeepExpandedNodes();
-  } else {
-    reportError(tr("failed to rename \"%1\" to \"%2\"").arg(QDir::toNativeSeparators(oldName)).arg(QDir::toNativeSeparators(newName)));
-  }
 }
 
 
@@ -5450,149 +5109,6 @@ void MainWindow::disableSelectedMods_clicked()
   }
 }
 
-
-void MainWindow::activateDataTreeItem(QTreeWidgetItem *item, int column)
-{
-  const auto isArchive = item->data(0, Qt::UserRole + 1).toBool();
-  const auto isDirectory = item->data(0, Qt::UserRole + 3).toBool();
-
-  if (isArchive || isDirectory) {
-    return;
-  }
-
-  const QString path = item->data(0, Qt::UserRole).toString();
-  if (path.isEmpty()) {
-    return;
-  }
-
-  const QFileInfo targetInfo(path);
-
-  const auto tryPreview = m_OrganizerCore.settings().interface().doubleClicksOpenPreviews();
-
-  if (tryPreview && m_PluginContainer.previewGenerator().previewSupported(targetInfo.suffix())) {
-    previewDataFile(item);
-  } else {
-    openDataFile(item);
-  }
-}
-
-void MainWindow::openDataFile()
-{
-  if (m_ContextItem == nullptr) {
-    return;
-  }
-
-  openDataFile(m_ContextItem);
-}
-
-void MainWindow::openDataFile(QTreeWidgetItem* item)
-{
-  const auto isArchive = item->data(0, Qt::UserRole + 1).toBool();
-  const auto isDirectory = item->data(0, Qt::UserRole + 3).toBool();
-
-  if (isArchive || isDirectory) {
-    return;
-  }
-
-  const QString path = item->data(0, Qt::UserRole).toString();
-  const QFileInfo targetInfo(path);
-
-  m_OrganizerCore.processRunner()
-    .setFromFile(this, targetInfo)
-    .setHooked(false)
-    .setWaitForCompletion(ProcessRunner::Refresh)
-    .run();
-}
-
-void MainWindow::runDataFileHooked()
-{
-  if (m_ContextItem == nullptr) {
-    return;
-  }
-
-  runDataFileHooked(m_ContextItem);
-}
-
-void MainWindow::runDataFileHooked(QTreeWidgetItem* item)
-{
-  const auto isArchive = item->data(0, Qt::UserRole + 1).toBool();
-  const auto isDirectory = item->data(0, Qt::UserRole + 3).toBool();
-
-  if (isArchive || isDirectory) {
-    return;
-  }
-
-  const QString path = item->data(0, Qt::UserRole).toString();
-  const QFileInfo targetInfo(path);
-
-  m_OrganizerCore.processRunner()
-    .setFromFile(this, targetInfo)
-    .setHooked(true)
-    .setWaitForCompletion(ProcessRunner::Refresh)
-    .run();
-}
-
-void MainWindow::previewDataFile()
-{
-  if (m_ContextItem == nullptr) {
-    return;
-  }
-
-  previewDataFile(m_ContextItem);
-}
-
-void MainWindow::previewDataFile(QTreeWidgetItem* item)
-{
-  QString fileName = QDir::fromNativeSeparators(item->data(0, Qt::UserRole).toString());
-  m_OrganizerCore.previewFileWithAlternatives(this, fileName);
-}
-
-void MainWindow::openDataOriginExplorer_clicked()
-{
-  if (m_ContextItem == nullptr) {
-    return;
-  }
-
-  const auto isArchive = m_ContextItem->data(0, Qt::UserRole + 1).toBool();
-  const auto isDirectory = m_ContextItem->data(0, Qt::UserRole + 3).toBool();
-
-  if (isArchive || isDirectory) {
-    return;
-  }
-
-  const auto fullPath = m_ContextItem->data(0, Qt::UserRole).toString();
-
-  log::debug("opening in explorer: {}", fullPath);
-  shell::Explore(fullPath);
-}
-
-void MainWindow::openDataModInfo_clicked()
-{
-  if (m_ContextItem == nullptr) {
-    return;
-  }
-
-  const auto originID = m_ContextItem->data(1, Qt::UserRole + 1).toInt();
-  if (originID == 0) {
-    // unmanaged
-    return;
-  }
-
-  const auto& origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
-  const auto& name = QString::fromStdWString(origin.getName());
-
-  unsigned int index = ModInfo::getIndex(name);
-  if (index == UINT_MAX) {
-    log::error("can't open mod info, mod '{}' not found", name);
-    return;
-  }
-
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-  if (modInfo) {
-    displayModInformation(modInfo, index, ModInfoTabIDs::None);
-  }
-}
-
 void MainWindow::updateAvailable()
 {
   ui->actionUpdate->setEnabled(true);
@@ -5613,106 +5129,6 @@ void MainWindow::motdReceived(const QString &motd)
       m_OrganizerCore.settings().setMotdHash(hash);
     }
   }
-}
-
-void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
-{
-  m_ContextItem = ui->dataTree->itemAt(pos.x(), pos.y());
-
-  QMenu menu;
-  if ((m_ContextItem != nullptr) && (m_ContextItem->childCount() == 0)
-      && (m_ContextItem->data(0, Qt::UserRole + 3).toBool() != true)) {
-    QString fileName = m_ContextItem->text(0);
-    const auto isArchive = m_ContextItem->data(0, Qt::UserRole + 1).toBool();
-    const auto isDirectory = m_ContextItem->data(0, Qt::UserRole + 3).toBool();
-
-    QAction* open = nullptr;
-    QAction* runHooked = nullptr;
-    QAction* preview = nullptr;
-
-    if (canRunFile(isArchive, fileName)) {
-      open = new QAction(tr("&Execute"), ui->dataTree);
-      runHooked = new QAction(tr("Execute with &VFS"), ui->dataTree);
-    } else if (canOpenFile(isArchive, fileName)) {
-      open = new QAction(tr("&Open"), ui->dataTree);
-      runHooked = new QAction(tr("Open with &VFS"), ui->dataTree);
-    }
-
-    if (m_PluginContainer.previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
-      preview = new QAction(tr("Preview"), ui->dataTree);
-    }
-
-    if (open) {
-      connect(open, &QAction::triggered, [&]{ openDataFile(); });
-    }
-
-    if (runHooked) {
-      connect(runHooked, &QAction::triggered, [&]{ runDataFileHooked(); });
-    }
-
-    if (preview) {
-      connect(preview, &QAction::triggered, [&]{ previewDataFile(); });
-    }
-
-    if (open && preview) {
-      if (m_OrganizerCore.settings().interface().doubleClicksOpenPreviews()) {
-        menu.addAction(preview);
-        menu.addAction(open);
-      } else {
-        menu.addAction(open);
-        menu.addAction(preview);
-      }
-    } else {
-      if (open) {
-        menu.addAction(open);
-      }
-
-      if (preview) {
-        menu.addAction(preview);
-      }
-    }
-
-    if (runHooked) {
-      menu.addAction(runHooked);
-    }
-
-    menu.addAction(tr("&Add as Executable"), this, SLOT(addAsExecutable()));
-
-    if (!isArchive && !isDirectory) {
-      menu.addAction("Open Origin in Explorer", this, SLOT(openDataOriginExplorer_clicked()));
-    }
-
-    menu.addAction("Open Mod Info", this, SLOT(openDataModInfo_clicked()));
-
-    menu.addSeparator();
-
-    // offer to hide/unhide file, but not for files from archives
-    if (!isArchive) {
-      if (m_ContextItem->text(0).endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
-        menu.addAction(tr("Un-Hide"), this, SLOT(unhideFile()));
-      } else {
-        menu.addAction(tr("Hide"), this, SLOT(hideFile()));
-      }
-    }
-
-    if (open || preview || runHooked) {
-      // bold the first option
-      auto* top = menu.actions()[0];
-      auto f = top->font();
-      f.setBold(true);
-      top->setFont(f);
-    }
-  }
-
-  menu.addAction(tr("Write To File..."), this, SLOT(writeDataToFile()));
-  menu.addAction(tr("Refresh"), this, SLOT(on_btnRefreshData_clicked()));
-
-  menu.exec(ui->dataTree->viewport()->mapToGlobal(pos));
-}
-
-void MainWindow::on_conflictsCheckBox_toggled(bool)
-{
-  refreshDataTreeKeepExpandedNodes();
 }
 
 void MainWindow::on_actionUpdate_triggered()
@@ -6970,17 +6386,3 @@ void MainWindow::sendSelectedModsToSeparator_clicked()
     }
   }
 }
-
-void MainWindow::on_showArchiveDataCheckBox_toggled(const bool checked)
-{
-  if (m_OrganizerCore.getArchiveParsing() && checked)
-  {
-    m_showArchiveData = checked;
-  }
-  else
-  {
-    m_showArchiveData = false;
-  }
-  refreshDataTree();
-}
-
