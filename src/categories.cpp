@@ -322,20 +322,22 @@ QString CategoryFactory::getCategoryName(unsigned int index) const
 
 QString CategoryFactory::getSpecialCategoryName(SpecialCategories type) const
 {
+  QString label;
   switch (type)
   {
-    case Checked:         return QObject::tr("<Active>");
-    case UpdateAvailable: return QObject::tr("<Update available>");
-    case HasCategory:     return QObject::tr("<Has category>");
-    case Conflict:        return QObject::tr("<Conflicted>");
-    case Endorsed:        return QObject::tr("<Endorsed>");
-    case Backup:          return QObject::tr("<Has backup>");
-    case Managed:         return QObject::tr("<Managed>");
-    case HasGameData:     return QObject::tr("<Has valid game data>");
-    case HasNexusID:      return QObject::tr("<Has Nexus ID>");
-    case Tracked:         return QObject::tr("<Tracked on Nexus>");
+    case Checked:         label = QObject::tr("Active"); break;
+    case UpdateAvailable: label = QObject::tr("Update available"); break;
+    case HasCategory:     label = QObject::tr("Has category"); break;
+    case Conflict:        label = QObject::tr("Conflicted"); break;
+    case Endorsed:        label = QObject::tr("Endorsed"); break;
+    case Backup:          label = QObject::tr("Has backup"); break;
+    case Managed:         label = QObject::tr("Managed"); break;
+    case HasGameData:     label = QObject::tr("Has valid game data"); break;
+    case HasNexusID:      label = QObject::tr("Has Nexus ID"); break;
+    case Tracked:         label = QObject::tr("Tracked on Nexus"); break;
     default: return {};
   }
+  return QString("<%1>").arg(label);
 }
 
 QString CategoryFactory::getCategoryNameByID(int id) const

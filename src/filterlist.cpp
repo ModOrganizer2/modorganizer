@@ -239,8 +239,9 @@ QTreeWidgetItem* FilterList::addCriteriaItem(
 void FilterList::addContentCriteria()
 {
   for (unsigned i = 0; i < ModInfo::NUM_CONTENT_TYPES; ++i) {
+    QString filterName = tr("Contains %1").arg(ModInfo::getContentTypeName(i));
     addCriteriaItem(
-      nullptr, tr("<Contains %1>").arg(ModInfo::getContentTypeName(i)),
+      nullptr, QString("<%1>").arg(filterName),
       i, ModListSortProxy::TypeContent);
   }
 }
