@@ -8,6 +8,7 @@ namespace Ui { class MainWindow; }
 class OrganizerCore;
 class Settings;
 class PluginContainer;
+class FileTreeModel;
 
 namespace MOShared { class DirectoryEntry; }
 
@@ -36,7 +37,7 @@ private:
   struct DataTabUi
   {
     QPushButton* refresh;
-    QTreeWidget* tree;
+    QTreeView* tree;
     QCheckBox* conflicts;
     QCheckBox* archives;
   };
@@ -45,6 +46,7 @@ private:
   PluginContainer& m_pluginContainer;
   bool m_archives;
   QWidget* m_parent;
+  FileTreeModel* m_model;
   DataTabUi ui;
   std::vector<QTreeWidgetItem*> m_removeLater;
 

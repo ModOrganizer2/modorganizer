@@ -145,6 +145,7 @@ SET(organizer_SRCS
 	lootdialog.cpp
 	filterlist.cpp
 	datatab.cpp
+	filetree.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -270,6 +271,7 @@ SET(organizer_HDRS
 	json.h
 	filterlist.h
 	datatab.h
+	filetree.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -401,6 +403,7 @@ set(loot
 
 set(mainwindow
 	datatab
+	filetree
 	filterlist
 	mainwindow
 	statusbar

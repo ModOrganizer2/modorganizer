@@ -4,6 +4,7 @@
 #include "organizercore.h"
 #include "directoryentry.h"
 #include "messagedialog.h"
+#include "filetree.h"
 #include <log.h>
 #include <report.h>
 
@@ -18,21 +19,24 @@ DataTab::DataTab(
   OrganizerCore& core, PluginContainer& pc,
   QWidget* parent, Ui::MainWindow* mwui) :
     m_core(core), m_pluginContainer(pc), m_archives(false), m_parent(parent),
+    m_model(new FileTreeModel(core)),
     ui{
       mwui->btnRefreshData, mwui->dataTree,
       mwui->conflictsCheckBox, mwui->showArchiveDataCheckBox}
 {
+  ui.tree->setModel(m_model);
+
   connect(
     ui.refresh, &QPushButton::clicked,
     [&]{ onRefresh(); });
 
-  connect(
-    ui.tree, &QTreeWidget::itemExpanded,
-    [&](auto* item){ onItemExpanded(item); });
-
-  connect(
-    ui.tree, &QTreeWidget::itemActivated,
-    [&](auto* item, int col){ onItemActivated(item, col); });
+  //connect(
+  //  ui.tree, &QTreeWidget::itemExpanded,
+  //  [&](auto* item){ onItemExpanded(item); });
+  //
+  //connect(
+  //  ui.tree, &QTreeWidget::itemActivated,
+  //  [&](auto* item, int col){ onItemActivated(item, col); });
 
   connect(
     ui.tree, &QTreeWidget::customContextMenuRequested,
@@ -64,12 +68,13 @@ void DataTab::activated()
 
 QTreeWidgetItem* DataTab::singleSelection()
 {
-  const auto sel = ui.tree->selectedItems();
-  if (sel.count() != 1) {
-    return nullptr;
-  }
-
-  return sel[0];
+  //const auto sel = ui.tree->selectedItems();
+  //if (sel.count() != 1) {
+  //  return nullptr;
+  //}
+  //
+  //return sel[0];
+  return nullptr;
 }
 
 void DataTab::openSelection()
@@ -144,21 +149,16 @@ void DataTab::onRefresh()
 
 void DataTab::refreshDataTree()
 {
-  QIcon folderIcon = (new QFileIconProvider())->icon(QFileIconProvider::Folder);
-  QIcon fileIcon = (new QFileIconProvider())->icon(QFileIconProvider::File);
-  ui.tree->clear();
-  QStringList columns("data");
-  columns.append("");
-  QTreeWidgetItem *subTree = new QTreeWidgetItem(columns);
-  subTree->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::Folder));
-  updateTo(subTree, L"", *m_core.directoryStructure(), ui.conflicts->isChecked(), &fileIcon, &folderIcon);
-  ui.tree->insertTopLevelItem(0, subTree);
-  subTree->setExpanded(true);
+  m_model->refresh();
+  ui.tree->expand(m_model->index(0, 0));
 }
 
 void DataTab::refreshDataTreeKeepExpandedNodes()
 {
-  QIcon folderIcon = (new QFileIconProvider())->icon(QFileIconProvider::Folder);
+  //m_model->refreshKeepExpandedNodes();
+  m_model->refresh();  // temp
+
+  /*QIcon folderIcon = (new QFileIconProvider())->icon(QFileIconProvider::Folder);
   QIcon fileIcon = (new QFileIconProvider())->icon(QFileIconProvider::File);
   QStringList expandedNodes;
   QTreeWidgetItemIterator it1(ui.tree, QTreeWidgetItemIterator::NotHidden | QTreeWidgetItemIterator::HasChildren);
@@ -185,7 +185,7 @@ void DataTab::refreshDataTreeKeepExpandedNodes()
       current->setExpanded(true);
     }
     ++it2;
-  }
+  }*/
 }
 
 void DataTab::updateTo(
@@ -193,127 +193,6 @@ void DataTab::updateTo(
   const DirectoryEntry &directoryEntry, bool conflictsOnly,
   QIcon *fileIcon, QIcon *folderIcon)
 {
-  bool isDirectory = true;
-  //QIcon folderIcon = (new QFileIconProvider())->icon(QFileIconProvider::Folder);
-  //QIcon fileIcon = (new QFileIconProvider())->icon(QFileIconProvider::File);
-
-  std::wostringstream temp;
-  temp << directorySoFar << "\\" << directoryEntry.getName();
-  {
-    std::vector<DirectoryEntry*>::const_iterator current, end;
-    directoryEntry.getSubDirectories(current, end);
-    for (; current != end; ++current) {
-      QString pathName = QString::fromStdWString((*current)->getName());
-      QStringList columns(pathName);
-      columns.append("");
-      if (!(*current)->isEmpty()) {
-        QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
-        directoryChild->setData(0, Qt::DecorationRole, *folderIcon);
-        directoryChild->setData(0, Qt::UserRole + 3, isDirectory);
-
-        if (conflictsOnly || !m_archives) {
-          updateTo(directoryChild, temp.str(), **current, conflictsOnly, fileIcon, folderIcon);
-          if (directoryChild->childCount() != 0) {
-            subTree->addChild(directoryChild);
-          }
-          else {
-            delete directoryChild;
-          }
-        }
-        else {
-          QTreeWidgetItem *onDemandLoad = new QTreeWidgetItem(QStringList());
-          onDemandLoad->setData(0, Qt::UserRole + 0, "__loaded_on_demand__");
-          onDemandLoad->setData(0, Qt::UserRole + 1, QString::fromStdWString(temp.str()));
-          onDemandLoad->setData(0, Qt::UserRole + 2, conflictsOnly);
-          directoryChild->addChild(onDemandLoad);
-          subTree->addChild(directoryChild);
-        }
-      }
-      else {
-        QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
-        directoryChild->setData(0, Qt::DecorationRole, *folderIcon);
-        directoryChild->setData(0, Qt::UserRole + 3, isDirectory);
-        subTree->addChild(directoryChild);
-      }
-    }
-  }
-
-
-  isDirectory = false;
-  {
-    for (const FileEntry::Ptr current : directoryEntry.getFiles()) {
-      if (conflictsOnly && (current->getAlternatives().size() == 0)) {
-        continue;
-      }
-
-      bool isArchive = false;
-      int originID = current->getOrigin(isArchive);
-      if (!m_archives && isArchive) {
-        continue;
-      }
-
-      QString fileName = QString::fromStdWString(current->getName());
-      QStringList columns(fileName);
-      FilesOrigin origin = m_core.directoryStructure()->getOriginByID(originID);
-
-      QString source;
-      const unsigned int modIndex = ModInfo::getIndex(
-        QString::fromStdWString(origin.getName()));
-
-      if (modIndex == UINT_MAX) {
-        source = UnmanagedModName();
-      } else {
-        ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-        source = modInfo->name();
-      }
-
-      std::pair<std::wstring, int> archive = current->getArchive();
-      if (archive.first.length() != 0) {
-        source.append(" (").append(QString::fromStdWString(archive.first)).append(")");
-      }
-      columns.append(source);
-      QTreeWidgetItem *fileChild = new QTreeWidgetItem(columns);
-      if (isArchive) {
-        QFont font = fileChild->font(0);
-        font.setItalic(true);
-        fileChild->setFont(0, font);
-        fileChild->setFont(1, font);
-      } else if (fileName.endsWith(ModInfo::s_HiddenExt)) {
-        QFont font = fileChild->font(0);
-        font.setStrikeOut(true);
-        fileChild->setFont(0, font);
-        fileChild->setFont(1, font);
-      }
-      fileChild->setData(0, Qt::UserRole, QString::fromStdWString(current->getFullPath()));
-      fileChild->setData(0, Qt::DecorationRole, *fileIcon);
-      fileChild->setData(0, Qt::UserRole + 3, isDirectory);
-      fileChild->setData(0, Qt::UserRole + 1, isArchive);
-      fileChild->setData(1, Qt::UserRole, source);
-      fileChild->setData(1, Qt::UserRole + 1, originID);
-
-      std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = current->getAlternatives();
-
-      if (!alternatives.empty()) {
-        std::wostringstream altString;
-        altString << tr("Also in: <br>").toStdWString();
-        for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator altIter = alternatives.begin();
-          altIter != alternatives.end(); ++altIter) {
-          if (altIter != alternatives.begin()) {
-            altString << " , ";
-          }
-          altString << "<span style=\"white-space: nowrap;\"><i>" << m_core.directoryStructure()->getOriginByID(altIter->first).getName() << "</font></span>";
-        }
-        fileChild->setToolTip(1, QString("%1").arg(QString::fromStdWString(altString.str())));
-        fileChild->setForeground(1, QBrush(Qt::red));
-      } else {
-        fileChild->setToolTip(1, tr("No conflict"));
-      }
-      subTree->addChild(fileChild);
-    }
-  }
-
-
-  //subTree->sortChildren(0, Qt::AscendingOrder);
 }
 
 void DataTab::onItemExpanded(QTreeWidgetItem* item)
@@ -369,7 +248,7 @@ void DataTab::onItemActivated(QTreeWidgetItem *item, int column)
 
 void DataTab::onContextMenu(const QPoint &pos)
 {
-  auto* item = ui.tree->itemAt(pos.x(), pos.y());
+  QTreeWidgetItem* item = nullptr;//ui.tree->itemAt(pos.x(), pos.y());
 
   QMenu menu;
   if ((item != nullptr) && (item->childCount() == 0)

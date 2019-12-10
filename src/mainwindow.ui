@@ -1075,7 +1075,7 @@ p, li { white-space: pre-wrap; }
              <item>
               <layout class="QHBoxLayout" name="horizontalLayout_2">
                <item>
-                <widget class="QTreeWidget" name="dataTree">
+                <widget class="QTreeView" name="dataTree">
                  <property name="contextMenuPolicy">
                   <enum>Qt::CustomContextMenu</enum>
                  </property>
@@ -1088,19 +1088,9 @@ p, li { white-space: pre-wrap; }
                  <property name="uniformRowHeights">
                   <bool>true</bool>
                  </property>
-                 <attribute name="headerDefaultSectionSize">
+                 <attribute name="headerMinimumSectionSize">
                   <number>400</number>
                  </attribute>
-                 <column>
-                  <property name="text">
-                   <string>File</string>
-                  </property>
-                 </column>
-                 <column>
-                  <property name="text">
-                   <string>Mod</string>
-                  </property>
-                 </column>
                 </widget>
                </item>
               </layout>
