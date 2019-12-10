@@ -322,17 +322,13 @@ SET(organizer_RCS
 source_group(src REGULAR_EXPRESSION ".*\\.(h|cpp|ui)")
 
 set(application
-	datatab
-	filterlist
 	iuserinterface
 	main
-	mainwindow
 	moapplication
 	moshortcut
 	sanitychecks
 	selfupdater
 	singleinstance
-	statusbar
 )
 
 set(browser
@@ -401,6 +397,13 @@ set(executables
 set(loot
 	loot
 	lootdialog
+)
+
+set(mainwindow
+	datatab
+	filterlist
+	mainwindow
+	statusbar
 )
 
 set(modinfo
@@ -499,9 +502,9 @@ set(widgets
 )
 
 set(src_filters
-	application core browser dialogs downloads env executables loot modinfo
-	modinfo\\dialog modlist plugins previews profiles settings settingsdialog
-	utilities widgets
+	application core browser dialogs downloads env executables loot mainwindow
+	modinfo modinfo\\dialog modlist plugins previews profiles settings
+	settingsdialog utilities widgets
 )
 
 foreach(filter in list ${src_filters})
