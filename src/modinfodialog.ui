@@ -268,7 +268,7 @@
                <number>0</number>
               </property>
               <item>
-               <widget class="QPushButton" name="previewPluginButton">
+               <widget class="QToolButton" name="previewPluginButton">
                 <property name="text">
                  <string>Open with Preview Plugin</string>
                 </property>
