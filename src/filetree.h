@@ -32,14 +32,27 @@ public:
   const std::vector<std::unique_ptr<FileTreeItem>>& children() const;
 
   FileTreeItem* parent();
+
+  const QString& virtualParentPath() const;
+  QString virtualPath() const;
   const QString& filename() const;
   const QString& mod() const;
-  bool isFromArchive() const;
-  bool isHidden() const;
-  bool isConflicted() const;;
+
+  QString dataRelativeParentPath() const;
+  QString dataRelativeFilePath() const;
+
   QFileIconProvider::IconType icon() const;
 
+  bool isDirectory() const;
+  bool isFromArchive() const;
+  bool isConflicted() const;
+  bool isHidden() const;
+  bool hasChildren() const;
+
   void setLoaded(bool b);
+  bool isLoaded() const;
+
+  QString debugName() const;
 
 private:
   FileTreeItem* m_parent;
@@ -76,8 +89,10 @@ public:
   QModelIndex parent(const QModelIndex& index) const override;
   int rowCount(const QModelIndex& parent={}) const override;
   int columnCount(const QModelIndex& parent={}) const override;
+  bool hasChildren(const QModelIndex& parent={}) const override;
   QVariant data(const QModelIndex& index, int role=Qt::DisplayRole) const override;
   QVariant headerData(int i, Qt::Orientation ori, int role=Qt::DisplayRole) const override;
+  Qt::ItemFlags flags(const QModelIndex& index) const override;
 
 private:
   using DirectoryIterator = std::vector<MOShared::DirectoryEntry*>::const_iterator;
@@ -104,6 +119,7 @@ private:
   std::wstring makeModName(const MOShared::FileEntry& file, int originID) const;
 
   FileTreeItem* itemFromIndex(const QModelIndex& index) const;
+  void ensureLoaded(FileTreeItem* item) const;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FileTreeModel::Flags);

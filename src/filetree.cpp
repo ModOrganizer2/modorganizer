@@ -1,7 +1,9 @@
 #include "filetree.h"
 #include "organizercore.h"
+#include <log.h>
 
 using namespace MOShared;
+using namespace MOBase;
 
 // in mainwindow.cpp
 QString UnmanagedModName();
@@ -41,6 +43,46 @@ FileTreeItem* FileTreeItem::parent()
   return m_parent;
 }
 
+const QString& FileTreeItem::virtualParentPath() const
+{
+  return m_virtualParentPath;
+}
+
+QString FileTreeItem::virtualPath() const
+{
+  if (m_virtualParentPath.isEmpty()) {
+    return m_file;
+  } else {
+    return m_virtualParentPath + "\\" + m_file;
+  }
+}
+
+QString FileTreeItem::dataRelativeParentPath() const
+{
+  if (m_virtualParentPath == "data") {
+    return "";
+  }
+
+  static const QString prefix = "data\\";
+
+  auto path = m_virtualParentPath;
+  if (path.startsWith(prefix)) {
+    path = path.mid(prefix.size());
+  }
+
+  return path;
+}
+
+QString FileTreeItem::dataRelativeFilePath() const
+{
+  auto path = dataRelativeParentPath();
+  if (!path.isEmpty()) {
+    path += "\\";
+  }
+
+  return path += m_file;
+}
+
 const QString& FileTreeItem::filename() const
 {
   return m_file;
@@ -49,21 +91,6 @@ const QString& FileTreeItem::filename() const
 const QString& FileTreeItem::mod() const
 {
   return m_mod;
-}
-
-bool FileTreeItem::isFromArchive() const
-{
-  return (m_flags & FromArchive);
-}
-
-bool FileTreeItem::isHidden() const
-{
-  return m_file.endsWith(ModInfo::s_HiddenExt);
-}
-
-bool FileTreeItem::isConflicted() const
-{
-  return (m_flags & Conflicted);
 }
 
 QFileIconProvider::IconType FileTreeItem::icon() const
@@ -75,11 +102,56 @@ QFileIconProvider::IconType FileTreeItem::icon() const
   }
 }
 
+bool FileTreeItem::isDirectory() const
+{
+  return (m_flags & Directory);
+}
+
+bool FileTreeItem::isFromArchive() const
+{
+  return (m_flags & FromArchive);
+}
+
+bool FileTreeItem::isConflicted() const
+{
+  return (m_flags & Conflicted);
+}
+
+bool FileTreeItem::isHidden() const
+{
+  return m_file.endsWith(ModInfo::s_HiddenExt);
+}
+
+bool FileTreeItem::hasChildren() const
+{
+  if (!isDirectory()) {
+    return false;
+  }
+
+  if (isLoaded() && m_children.empty()) {
+    return false;
+  }
+
+  return true;
+}
+
 void FileTreeItem::setLoaded(bool b)
 {
   m_loaded = b;
 }
 
+bool FileTreeItem::isLoaded() const
+{
+  return m_loaded;
+}
+
+QString FileTreeItem::debugName() const
+{
+  return QString("%1(ld=%2,cs=%3)")
+    .arg(virtualPath())
+    .arg(m_loaded)
+    .arg(m_children.size());
+}
 
 
 FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent)
@@ -107,37 +179,60 @@ bool FileTreeModel::showArchives() const
 
 void FileTreeModel::refresh()
 {
+  beginResetModel();
   m_root = {nullptr, L"", L"", FileTreeItem::Directory, L"Data", L""};
-
   fill(m_root, *m_core.directoryStructure(), L"");
-  m_root.setLoaded(true);
+  endResetModel();
+}
+
+void FileTreeModel::ensureLoaded(FileTreeItem* item) const
+{
+  if (!item) {
+    log::error("ensureLoaded(): item is null");
+    return;
+  }
+
+  if (item->isLoaded()) {
+    return;
+  }
+
+  log::debug("{}: loading on demand", item->debugName());
+
+  const auto path = item->dataRelativeFilePath();
+  auto* dir = m_core.directoryStructure()->findSubDirectoryRecursive(
+    path.toStdWString());
+
+  if (!dir) {
+    log::error("{}: directory '{}' not found", item->debugName(), path);
+    return;
+  }
+
+  const_cast<FileTreeModel*>(this)
+    ->fill(*item, *dir, item->dataRelativeParentPath().toStdWString());
 }
 
 void FileTreeModel::fill(
   FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
   const std::wstring& parentPath)
 {
-  const std::wstring path = parentPath + L"\\" + parentEntry.getName();
-  bool isDirectory = true;
+  const std::wstring path =
+    parentPath +
+    (parentPath.empty() ? L"" : L"\\") +
+    parentEntry.getName();
 
+  std::vector<DirectoryEntry*>::const_iterator begin, end;
+  parentEntry.getSubDirectories(begin, end);
+  fillDirectories(parentItem, path, begin, end);
 
-  {
-    std::vector<DirectoryEntry*>::const_iterator begin, end;
-    parentEntry.getSubDirectories(begin, end);
-    fillDirectories(parentItem, path, begin, end);
-  }
+  fillFiles(parentItem, path, parentEntry.getFiles());
 
-  {
-    fillFiles(parentItem, path, parentEntry.getFiles());
-  }
+  parentItem.setLoaded(true);
 }
 
 void FileTreeModel::fillDirectories(
   FileTreeItem& parentItem, const std::wstring& path,
   DirectoryIterator begin, DirectoryIterator end)
 {
-  const bool isDirectory = true;
-
   for (auto itor=begin; itor!=end; ++itor) {
     const auto& dir = **itor;
 
@@ -146,8 +241,6 @@ void FileTreeModel::fillDirectories(
 
     if (dir.isEmpty()) {
       child->setLoaded(true);
-    } else if (showConflicts() || !showArchives()) {
-      fill(*child, dir, path);
     }
 
     parentItem.add(std::move(child));
@@ -158,8 +251,6 @@ void FileTreeModel::fillFiles(
   FileTreeItem& parentItem, const std::wstring& path,
   const std::vector<FileEntry::Ptr>& files)
 {
-  const bool isDirectory = false;
-
   for (auto&& file : files) {
     if (showConflicts() && (file->getAlternatives().size() == 0)) {
       continue;
@@ -217,7 +308,8 @@ FileTreeItem* FileTreeModel::itemFromIndex(const QModelIndex& index) const
   return static_cast<FileTreeItem*>(data);
 }
 
-QModelIndex FileTreeModel::index(int row, int col, const QModelIndex& parentIndex) const
+QModelIndex FileTreeModel::index(
+  int row, int col, const QModelIndex& parentIndex) const
 {
   FileTreeItem* parent = nullptr;
 
@@ -228,14 +320,25 @@ QModelIndex FileTreeModel::index(int row, int col, const QModelIndex& parentInde
   }
 
   if (!parent) {
+    log::error("FileTreeModel::index(): parent is null");
     return {};
   }
 
+  ensureLoaded(parent);
+
   if (static_cast<std::size_t>(row) >= parent->children().size()) {
+    log::error(
+      "FileTreeModel::index(): row {} is out of range for {}",
+      row, parent->debugName());
+
     return {};
   }
 
   if (col >= columnCount({})) {
+    log::error(
+      "FileTreeModel::index(): col {} is out of range for {}",
+      col, parent->debugName());
+
     return {};
   }
 
@@ -259,6 +362,8 @@ QModelIndex FileTreeModel::parent(const QModelIndex& index) const
     return {};
   }
 
+  ensureLoaded(parent);
+
   int row = 0;
   for (auto&& child : parent->children()) {
     if (child.get() == item) {
@@ -268,25 +373,51 @@ QModelIndex FileTreeModel::parent(const QModelIndex& index) const
     ++row;
   }
 
+  log::error(
+    "FileTreeModel::parent(): item {} has no child {}",
+    parent->debugName(), item->debugName());
+
   return {};
 }
 
 int FileTreeModel::rowCount(const QModelIndex& parent) const
 {
+  FileTreeItem* item = nullptr;
+
   if (!parent.isValid()) {
-    return static_cast<int>(m_root.children().size());
+    item = &m_root;
   } else {
-    if (auto* item=itemFromIndex(parent)) {
-      return static_cast<int>(item->children().size());
-    }
+    item = itemFromIndex(parent);
   }
 
-  return 0;
+  if (!item) {
+    return 0;
+  }
+
+  ensureLoaded(item);
+  return static_cast<int>(item->children().size());
 }
 
 int FileTreeModel::columnCount(const QModelIndex&) const
 {
   return 2;
+}
+
+bool FileTreeModel::hasChildren(const QModelIndex& parent) const
+{
+  const FileTreeItem* item = nullptr;
+
+  if (!parent.isValid()) {
+    item = &m_root;
+  } else {
+    item = itemFromIndex(parent);
+  }
+
+  if (!item) {
+    return false;
+  }
+
+  return item->hasChildren();
 }
 
 QVariant FileTreeModel::data(const QModelIndex& index, int role) const
@@ -393,4 +524,17 @@ QVariant FileTreeModel::headerData(int i, Qt::Orientation ori, int role) const
   }
 
   return {};
+}
+
+Qt::ItemFlags FileTreeModel::flags(const QModelIndex& index) const
+{
+  auto f = QAbstractItemModel::flags(index);
+
+  if (auto* item=itemFromIndex(index)) {
+    if (!item->hasChildren()) {
+      f |= Qt::ItemNeverHasChildren;
+    }
+  }
+
+  return f;
 }
