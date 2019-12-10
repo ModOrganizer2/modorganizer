@@ -38,6 +38,7 @@ public:
   const QString& filename() const;
   const QString& mod() const;
 
+  const QString& realPath() const;
   QString dataRelativeParentPath() const;
   QString dataRelativeFilePath() const;
 
@@ -95,11 +96,15 @@ public:
   Qt::ItemFlags flags(const QModelIndex& index) const override;
 
 private:
+  class IconFetcher;
+
   using DirectoryIterator = std::vector<MOShared::DirectoryEntry*>::const_iterator;
   OrganizerCore& m_core;
   mutable FileTreeItem m_root;
   Flags m_flags;
-  QIcon m_fileIcon, m_directoryIcon;
+  std::unique_ptr<IconFetcher> m_iconFetcher;
+  mutable std::vector<QModelIndex> m_iconPending;
+  mutable QTimer m_iconPendingTimer;
 
   bool showConflicts() const;
   bool showArchives() const;
@@ -120,6 +125,7 @@ private:
 
   FileTreeItem* itemFromIndex(const QModelIndex& index) const;
   void ensureLoaded(FileTreeItem* item) const;
+  void updatePendingIcons();
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FileTreeModel::Flags);
