@@ -307,7 +307,16 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
     QCoreApplication::processEvents();
   } while (!future.isFinished() || m_InstallationProgress->isVisible());
   if (!future.result()) {
-    throw MyException(tr("Extraction failed: %1").arg(m_ArchiveHandler->getLastError()));
+    if (m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
+      if (!m_ErrorMessage.isEmpty()) {
+        throw MyException(tr("Extraction failed: %1").arg(m_ErrorMessage));
+      } else {
+        return QStringList();
+      }
+    }
+    else {
+      throw MyException(tr("Extraction failed: %1").arg(m_ArchiveHandler->getLastError()));
+    }
   }
 
   return result;
@@ -839,7 +848,7 @@ bool InstallationManager::install(const QString &fileName,
         }
       }
 
-      { // custom case
+      if (installResult != IPluginInstaller::RESULT_CANCELED) { // custom case
         IPluginInstallerCustom *installerCustom
             = dynamic_cast<IPluginInstallerCustom *>(installer);
         if ((installerCustom != nullptr)

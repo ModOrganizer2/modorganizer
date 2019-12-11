@@ -1527,90 +1527,91 @@ Right now the only case I know of where this needs to be overwritten is for the 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="310"/>
-        <location filename="installationmanager.cpp" line="619"/>
-        <location filename="installationmanager.cpp" line="624"/>
+        <location filename="installationmanager.cpp" line="312"/>
+        <location filename="installationmanager.cpp" line="318"/>
+        <location filename="installationmanager.cpp" line="628"/>
+        <location filename="installationmanager.cpp" line="633"/>
         <source>Extraction failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="494"/>
+        <location filename="installationmanager.cpp" line="503"/>
         <source>Failed to create backup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="503"/>
+        <location filename="installationmanager.cpp" line="512"/>
         <source>Mod Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="503"/>
+        <location filename="installationmanager.cpp" line="512"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="556"/>
+        <location filename="installationmanager.cpp" line="565"/>
         <source>Invalid name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="557"/>
+        <location filename="installationmanager.cpp" line="566"/>
         <source>The name you entered is invalid, please enter a different one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="725"/>
+        <location filename="installationmanager.cpp" line="734"/>
         <source>File format &quot;%1&quot; not supported</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="888"/>
+        <location filename="installationmanager.cpp" line="897"/>
         <source>None of the available installer plugins were able to handle that archive.
 This is likely due to a corrupted or incompatible download or unrecognized archive format.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="900"/>
+        <location filename="installationmanager.cpp" line="909"/>
         <source>no error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="903"/>
+        <location filename="installationmanager.cpp" line="912"/>
         <source>7z.dll not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="906"/>
+        <location filename="installationmanager.cpp" line="915"/>
         <source>7z.dll isn&apos;t valid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="909"/>
+        <location filename="installationmanager.cpp" line="918"/>
         <source>archive not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="912"/>
+        <location filename="installationmanager.cpp" line="921"/>
         <source>failed to open archive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="915"/>
+        <location filename="installationmanager.cpp" line="924"/>
         <source>unsupported archive type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="918"/>
+        <location filename="installationmanager.cpp" line="927"/>
         <source>internal library error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="921"/>
+        <location filename="installationmanager.cpp" line="930"/>
         <source>archive invalid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="925"/>
+        <location filename="installationmanager.cpp" line="934"/>
         <source>unknown archive error</source>
         <translation type="unfinished"></translation>
     </message>
