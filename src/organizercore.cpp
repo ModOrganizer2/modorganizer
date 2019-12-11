@@ -710,7 +710,7 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
   }
   m_CurrentProfile->writeModlistNow();
   m_InstallationManager.setModsDirectory(m_Settings.paths().mods());
-  if (m_InstallationManager.install(fileName, modName, hasIniTweaks)) {
+  if (m_InstallationManager.install(fileName, modName, hasIniTweaks) == IPluginInstaller::RESULT_SUCCESS) {
     MessageDialog::showMessage(tr("Installation successful"),
                                qApp->activeWindow());
     refreshModList();
@@ -778,7 +778,7 @@ void OrganizerCore::installDownload(int index)
 
     bool hasIniTweaks = false;
     m_InstallationManager.setModsDirectory(m_Settings.paths().mods());
-    if (m_InstallationManager.install(fileName, modName, hasIniTweaks)) {
+    if (m_InstallationManager.install(fileName, modName, hasIniTweaks) == IPluginInstaller::RESULT_SUCCESS) {
       MessageDialog::showMessage(tr("Installation successful"),
                                  qApp->activeWindow());
       refreshModList();

@@ -881,7 +881,7 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
           hasIniTweaks = (iniTweakNode != filesTree->nodesEnd()) &&
             ((*iniTweakNode)->numLeafs() != 0);
         }
-        return installResult;
+        return IPluginInstaller::RESULT_SUCCESS;
       } break;
       case IPluginInstaller::RESULT_NOTATTEMPTED: {
         continue;
