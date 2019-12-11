@@ -328,13 +328,8 @@ IPluginInstaller::EInstallResult InstallationManager::installArchive(GuessedValu
   // a problem if this is called by the bundle installer and the bundled installer adds additional names that then end up being used,
   // because the caller will then not have the right name.
   bool iniTweaks;
-  if (install(archiveName, modName, iniTweaks, modId)) {
-    return IPluginInstaller::RESULT_SUCCESS;
-  } else {
-    return IPluginInstaller::RESULT_FAILED;
-  }
+  return install(archiveName, modName, iniTweaks, modId);
 }
-
 
 DirectoryTree *InstallationManager::createFilesTree()
 {
@@ -573,18 +568,18 @@ bool InstallationManager::ensureValidModName(GuessedValue<QString> &name) const
   return true;
 }
 
-bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString gameName, int modID,
+IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QString> &modName, QString gameName, int modID,
                                     const QString &version, const QString &newestVersion,
                                     int categoryID, int fileCategoryID, const QString &repository)
 {
   if (!ensureValidModName(modName)) {
-    return false;
+    return IPluginInstaller::RESULT_FAILED;
   }
 
   bool merge = false;
   // determine target directory
   if (!testOverwrite(modName, &merge)) {
-    return false;
+    return IPluginInstaller::RESULT_FAILED;
   }
 
   QString targetDirectory = QDir(m_ModsDirectory + "/" + modName).canonicalPath();
@@ -627,7 +622,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString game
       if (!m_ErrorMessage.isEmpty()) {
         throw MyException(tr("Extraction failed: %1").arg(m_ErrorMessage));
       } else {
-      return false;
+      return IPluginInstaller::RESULT_CANCELED;
       }
     } else {
       throw MyException(tr("Extraction failed: %1").arg(m_ArchiveHandler->getLastError()));
@@ -671,7 +666,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString game
     settingsFile.endGroup();
   }
 
-  return true;
+  return IPluginInstaller::RESULT_SUCCESS;
 }
 
 
@@ -721,7 +716,7 @@ void InstallationManager::postInstallCleanup()
   }
 }
 
-bool InstallationManager::install(const QString &fileName,
+IPluginInstaller::EInstallResult InstallationManager::install(const QString &fileName,
                                   GuessedValue<QString> &modName,
                                   bool &hasIniTweaks,
                                   int modID)
@@ -732,7 +727,7 @@ bool InstallationManager::install(const QString &fileName,
   QFileInfo fileInfo(fileName);
   if (m_SupportedExtensions.find(fileInfo.suffix()) == m_SupportedExtensions.end()) {
     reportError(tr("File format \"%1\" not supported").arg(fileInfo.suffix()));
-    return false;
+    return IPluginInstaller::RESULT_FAILED;
   }
 
   modName.setFilter(&fixDirectoryName);
@@ -840,10 +835,7 @@ bool InstallationManager::install(const QString &fileName,
             mapToArchive(filesTree.data());
             // the simple installer only prepares the installation, the rest
             // works the same for all installers
-            if (!doInstall(modName, gameName, modID, version, newestVersion, categoryID,
-                            fileCategoryID, repository)) {
-              installResult = IPluginInstaller::RESULT_FAILED;
-            }
+            installResult = doInstall(modName, gameName, modID, version, newestVersion, categoryID, fileCategoryID, repository);
           }
         }
       }
@@ -876,28 +868,34 @@ bool InstallationManager::install(const QString &fileName,
     // act upon the installation result. at this point the files have already been
     // extracted to the correct location
     switch (installResult) {
-      case IPluginInstaller::RESULT_CANCELED:
       case IPluginInstaller::RESULT_FAILED: {
-        return false;
+        QMessageBox::information(qApp->activeWindow(), tr("Installation failed"),
+          tr("Something went wrong while installing this mod."),
+          QMessageBox::Ok);
+        return installResult;
       } break;
       case IPluginInstaller::RESULT_SUCCESS:
       case IPluginInstaller::RESULT_SUCCESSCANCEL: {
         if (filesTree != nullptr) {
           DirectoryTree::node_iterator iniTweakNode = filesTree->nodeFind(DirectoryTreeInformation("INI Tweaks"));
           hasIniTweaks = (iniTweakNode != filesTree->nodesEnd()) &&
-                         ((*iniTweakNode)->numLeafs() != 0);
-          return true;
-        } else {
-          return false;
+            ((*iniTweakNode)->numLeafs() != 0);
         }
+        return installResult;
       } break;
+      case IPluginInstaller::RESULT_NOTATTEMPTED: {
+        continue;
+      }
+      default:
+        return installResult;
     }
   }
+  if (installResult == IPluginInstaller::RESULT_NOTATTEMPTED) {
+    reportError(tr("None of the available installer plugins were able to handle that archive.\n"
+      "This is likely due to a corrupted or incompatible download or unrecognized archive format."));
+  }
 
-  reportError(tr("None of the available installer plugins were able to handle that archive.\n"
-    "This is likely due to a corrupted or incompatible download or unrecognized archive format."));
-
-  return false;
+  return installResult;
 }
 
 

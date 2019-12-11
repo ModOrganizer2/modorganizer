@@ -82,7 +82,7 @@ public:
    * @return true if the archive was installed, false if installation failed or was refused
    * @exception std::exception an exception may be thrown if the archive can't be opened (maybe the format is invalid or the file is damaged)
    **/
-  bool install(const QString &fileName, MOBase::GuessedValue<QString> &modName, bool &hasIniTweaks, int modID = 0);
+  MOBase::IPluginInstaller::EInstallResult install(const QString &fileName, MOBase::GuessedValue<QString> &modName, bool &hasIniTweaks, int modID = 0);
 
   /**
    * @return true if the installation was canceled
@@ -175,7 +175,7 @@ private:
   bool isSimpleArchiveTopLayer(const MOBase::DirectoryTree::Node *node, bool bainStyle);
   MOBase::DirectoryTree::Node *getSimpleArchiveBase(MOBase::DirectoryTree *dataTree);
 
-  bool doInstall(MOBase::GuessedValue<QString> &modName, QString gameName,
+  MOBase::IPluginInstaller::EInstallResult doInstall(MOBase::GuessedValue<QString> &modName, QString gameName,
                  int modID, const QString &version, const QString &newestVersion, int categoryID, int fileCategoryID, const QString &repository);
 
   //QString generateBackupName(const QString &directoryName) const;

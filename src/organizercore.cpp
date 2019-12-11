@@ -735,9 +735,12 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
       reportError(tr("mod not found: %1").arg(qUtf8Printable(modName)));
     }
   } else if (m_InstallationManager.wasCancelled()) {
-    QMessageBox::information(qApp->activeWindow(), tr("Installation cancelled"),
-                             tr("The mod was not installed completely."),
+    QMessageBox::information(qApp->activeWindow(), tr("Extraction cancelled"),
+                             tr("The installation was cancelled while extracting files. "
+                               "If this was prior to a FOMOD setup, this warning may be ignored. "
+                               "However, if this was during installation, the mod will likely be missing files."),
                              QMessageBox::Ok);
+    refreshModList();
   }
   return nullptr;
 }
@@ -803,9 +806,12 @@ void OrganizerCore::installDownload(int index)
 
       emit modInstalled(modName);
     } else if (m_InstallationManager.wasCancelled()) {
-      QMessageBox::information(
-          qApp->activeWindow(), tr("Installation cancelled"),
-          tr("The mod was not installed completely."), QMessageBox::Ok);
+      QMessageBox::information(qApp->activeWindow(), tr("Extraction cancelled"),
+        tr("The installation was cancelled while extracting files. "
+          "If this was prior to a FOMOD setup, this warning may be ignored. "
+          "However, if this was during installation, the mod will likely be missing files."),
+        QMessageBox::Ok);
+      refreshModList();
     }
   } catch (const std::exception &e) {
     reportError(e.what());
