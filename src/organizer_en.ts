@@ -6766,7 +6766,7 @@ You can restart Mod Organizer as administrator and try launching the program aga
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="sanitychecks.cpp" line="238"/>
+        <location filename="sanitychecks.cpp" line="239"/>
         <source>%1 is loaded. This program is known to cause issues with Mod Organizer, such as freezing or blank windows. Consider uninstalling it.</source>
         <oldsource>%1 is loaded. This program is known to cause issues with Mod Organizer, such as freezing or blank windows. Consider uninstalling it. (%2)</oldsource>
         <translation type="unfinished"></translation>

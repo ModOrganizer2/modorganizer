@@ -227,7 +227,8 @@ int checkIncompatibleModule(const env::Module& m)
   static const std::map<QString, QString> names = {
     {"NahimicOSD.dll", "Nahimic"},
     {"RTSSHooks64.dll", "RivaTuner Statistics Server"},
-    {"SSAudioOSD.dll", "SteelSeries Audio"}
+    {"SSAudioOSD.dll", "SteelSeries Audio"},
+    {"SS3DevProps.dll", "Sonic Suite 3"}
   };
 
   const QFileInfo file(m.path());
