@@ -217,8 +217,10 @@ public:
 
   void clear();
   bool isPopulated() const { return m_Populated; }
+  bool isTopLevel() const { return m_TopLevel; }
 
   bool isEmpty() const { return m_Files.empty() && m_SubDirectories.empty(); }
+  bool hasFiles() const { return !m_Files.empty(); }
 
   const DirectoryEntry *getParent() const { return m_Parent; }
 
@@ -245,6 +247,18 @@ public:
   void getSubDirectories(std::vector<DirectoryEntry*>::const_iterator &begin
                          , std::vector<DirectoryEntry*>::const_iterator &end) const {
     begin = m_SubDirectories.begin(); end = m_SubDirectories.end();
+  }
+
+  template <class F>
+  void forEachFile(F&& f) const
+  {
+    for (auto&& p : m_Files) {
+      if (auto file=m_FileRegister->getFile(p.second)) {
+        if (!f(*file)) {
+          break;
+        }
+      }
+    }
   }
 
   DirectoryEntry *findSubDirectory(const std::wstring &name) const;

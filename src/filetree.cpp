@@ -16,17 +16,16 @@ FileTreeItem::FileTreeItem()
 
 FileTreeItem::FileTreeItem(
   FileTreeItem* parent, int originID,
-  std::wstring virtualParentPath, std::wstring realPath, Flags flags,
+  std::wstring dataRelativeParentPath, std::wstring realPath, Flags flags,
   std::wstring file, std::wstring mod) :
     m_parent(parent), m_originID(originID),
-    m_virtualParentPath(QString::fromStdWString(virtualParentPath)),
+    m_virtualParentPath(QString::fromStdWString(dataRelativeParentPath)),
     m_realPath(QString::fromStdWString(realPath)),
     m_flags(flags),
     m_file(QString::fromStdWString(file)),
     m_mod(QString::fromStdWString(mod)),
     m_loaded(false)
 {
-  Q_ASSERT(!m_mod.isEmpty());
 }
 
 void FileTreeItem::add(std::unique_ptr<FileTreeItem> child)
@@ -56,27 +55,20 @@ const QString& FileTreeItem::virtualParentPath() const
 
 QString FileTreeItem::virtualPath() const
 {
-  if (m_virtualParentPath.isEmpty()) {
-    return m_file;
-  } else {
-    return m_virtualParentPath + "\\" + m_file;
+  QString s = "Data\\";
+
+  if (!m_virtualParentPath.isEmpty()) {
+    s += m_virtualParentPath + "\\";
   }
+
+  s += m_file;
+
+  return s;
 }
 
 QString FileTreeItem::dataRelativeParentPath() const
 {
-  if (m_virtualParentPath == "data") {
-    return "";
-  }
-
-  static const QString prefix = "data\\";
-
-  auto path = m_virtualParentPath;
-  if (path.startsWith(prefix)) {
-    path = path.mid(prefix.size());
-  }
-
-  return path;
+  return m_virtualParentPath;
 }
 
 QString FileTreeItem::dataRelativeFilePath() const
@@ -396,13 +388,13 @@ bool FileTreeModel::showConflicts() const
 
 bool FileTreeModel::showArchives() const
 {
-  return (m_flags & Archives);
+  return (m_flags & Archives) && m_core.getArchiveParsing();
 }
 
 void FileTreeModel::refresh()
 {
   beginResetModel();
-  m_root = {nullptr, 0, L"", L"", FileTreeItem::Directory, L"Data", L""};
+  m_root = {nullptr, 0, L"", L"", FileTreeItem::Directory, L"Data", L"<root>"};
   fill(m_root, *m_core.directoryStructure(), L"");
   endResetModel();
 }
@@ -437,26 +429,86 @@ void FileTreeModel::fill(
   FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
   const std::wstring& parentPath)
 {
-  const std::wstring path =
-    parentPath +
-    (parentPath.empty() ? L"" : L"\\") +
-    parentEntry.getName();
+  std::wstring path = parentPath;
+
+  if (!parentEntry.isTopLevel()) {
+    if (!path.empty()) {
+      path += L"\\";
+    }
+
+    path += parentEntry.getName();
+  }
+
+  const auto flags = FillFlag::PruneDirectories;
 
   std::vector<DirectoryEntry*>::const_iterator begin, end;
   parentEntry.getSubDirectories(begin, end);
-  fillDirectories(parentItem, path, begin, end);
+  fillDirectories(parentItem, path, begin, end, flags);
 
-  fillFiles(parentItem, path, parentEntry.getFiles());
+  fillFiles(parentItem, path, parentEntry.getFiles(), flags);
 
   parentItem.setLoaded(true);
 }
 
+bool FileTreeModel::shouldShowFile(const FileEntry& file) const
+{
+  if (showConflicts() && (file.getAlternatives().size() == 0)) {
+    return false;
+  }
+
+  bool isArchive = false;
+  int originID = file.getOrigin(isArchive);
+  if (!showArchives() && isArchive) {
+    return false;
+  }
+
+  return true;
+}
+
+bool FileTreeModel::hasFilesAnywhere(const DirectoryEntry& dir) const
+{
+  bool foundFile = false;
+
+  dir.forEachFile([&](auto&& f) {
+    if (shouldShowFile(f)) {
+      foundFile = true;
+
+      // stop
+      return false;
+    }
+
+    // continue
+    return true;
+  });
+
+  if (foundFile) {
+    return true;
+  }
+
+  std::vector<DirectoryEntry*>::const_iterator begin, end;
+  dir.getSubDirectories(begin, end);
+
+  for (auto itor=begin; itor!=end; ++itor) {
+    if (hasFilesAnywhere(**itor)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 void FileTreeModel::fillDirectories(
   FileTreeItem& parentItem, const std::wstring& path,
-  DirectoryIterator begin, DirectoryIterator end)
+  DirectoryIterator begin, DirectoryIterator end, FillFlags flags)
 {
   for (auto itor=begin; itor!=end; ++itor) {
     const auto& dir = **itor;
+
+    if (flags & FillFlag::PruneDirectories) {
+      if (!hasFilesAnywhere(dir)) {
+        continue;
+      }
+    }
 
     auto child = std::make_unique<FileTreeItem>(
       &parentItem, 0, path, L"", FileTreeItem::Directory, dir.getName(), L"");
@@ -471,18 +523,15 @@ void FileTreeModel::fillDirectories(
 
 void FileTreeModel::fillFiles(
   FileTreeItem& parentItem, const std::wstring& path,
-  const std::vector<FileEntry::Ptr>& files)
+  const std::vector<FileEntry::Ptr>& files, FillFlags)
 {
   for (auto&& file : files) {
-    if (showConflicts() && (file->getAlternatives().size() == 0)) {
+    if (!shouldShowFile(*file)) {
       continue;
     }
 
     bool isArchive = false;
     int originID = file->getOrigin(isArchive);
-    if (!showArchives() && isArchive) {
-      continue;
-    }
 
     FileTreeItem::Flags flags = FileTreeItem::NoFlags;
 
@@ -549,9 +598,12 @@ QModelIndex FileTreeModel::index(
   ensureLoaded(parent);
 
   if (static_cast<std::size_t>(row) >= parent->children().size()) {
-    log::error(
-      "FileTreeModel::index(): row {} is out of range for {}",
-      row, parent->debugName());
+    // don't warn if the tree hasn't been refreshed yet
+    if (!m_root.children().empty()) {
+      log::error(
+        "FileTreeModel::index(): row {} is out of range for {}",
+        row, parent->debugName());
+    }
 
     return {};
   }

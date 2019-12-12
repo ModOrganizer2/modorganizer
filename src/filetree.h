@@ -20,7 +20,7 @@ public:
   FileTreeItem();
   FileTreeItem(
     FileTreeItem* parent, int originID,
-    std::wstring virtualParentPath, std::wstring realPath, Flags flags,
+    std::wstring dataRelativeParentPath, std::wstring realPath, Flags flags,
     std::wstring file, std::wstring mod);
 
   FileTreeItem(const FileTreeItem&) = delete;
@@ -98,6 +98,14 @@ public:
   Qt::ItemFlags flags(const QModelIndex& index) const override;
 
 private:
+  enum class FillFlag
+  {
+    None             = 0x00,
+    PruneDirectories = 0x01
+  };
+
+  Q_DECLARE_FLAGS(FillFlags, FillFlag);
+
   class IconFetcher;
 
   using DirectoryIterator = std::vector<MOShared::DirectoryEntry*>::const_iterator;
@@ -117,11 +125,11 @@ private:
 
   void fillDirectories(
     FileTreeItem& parentItem, const std::wstring& path,
-    DirectoryIterator begin, DirectoryIterator end);
+    DirectoryIterator begin, DirectoryIterator end, FillFlags flags);
 
   void fillFiles(
     FileTreeItem& parentItem, const std::wstring& path,
-    const std::vector<MOShared::FileEntry::Ptr>& files);
+    const std::vector<MOShared::FileEntry::Ptr>& files, FillFlags flags);
 
   std::wstring makeModName(const MOShared::FileEntry& file, int originID) const;
 
@@ -129,6 +137,8 @@ private:
   void ensureLoaded(FileTreeItem* item) const;
   void updatePendingIcons();
 
+  bool shouldShowFile(const MOShared::FileEntry& file) const;
+  bool hasFilesAnywhere(const MOShared::DirectoryEntry& dir) const;
   QString makeTooltip(const FileTreeItem& item) const;
   QVariant makeIcon(const FileTreeItem& item, const QModelIndex& index) const;
 };

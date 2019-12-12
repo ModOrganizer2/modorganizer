@@ -44,7 +44,6 @@ private:
 
   OrganizerCore& m_core;
   PluginContainer& m_pluginContainer;
-  bool m_archives;
   QWidget* m_parent;
   FileTreeModel* m_model;
   DataTabUi ui;
@@ -56,6 +55,7 @@ private:
   void onContextMenu(const QPoint &pos);
   void onConflicts();
   void onArchives();
+  void updateOptions();
 
   void updateTo(
     QTreeWidgetItem *subTree, const std::wstring &directorySoFar,

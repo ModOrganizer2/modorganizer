@@ -18,7 +18,7 @@ QString UnmanagedModName();
 DataTab::DataTab(
   OrganizerCore& core, PluginContainer& pc,
   QWidget* parent, Ui::MainWindow* mwui) :
-    m_core(core), m_pluginContainer(pc), m_archives(false), m_parent(parent),
+    m_core(core), m_pluginContainer(pc), m_parent(parent),
     m_model(new FileTreeModel(core)),
     ui{
       mwui->btnRefreshData, mwui->dataTree,
@@ -150,7 +150,6 @@ void DataTab::onRefresh()
 void DataTab::refreshDataTree()
 {
   m_model->refresh();
-  ui.tree->expand(m_model->index(0, 0));
 }
 
 void DataTab::refreshDataTreeKeepExpandedNodes()
@@ -343,12 +342,27 @@ void DataTab::onContextMenu(const QPoint &pos)
 
 void DataTab::onConflicts()
 {
-  refreshDataTreeKeepExpandedNodes();
+  updateOptions();
 }
 
 void DataTab::onArchives()
 {
-  m_archives = (m_core.getArchiveParsing() && ui.archives->isChecked());
+  updateOptions();
+}
+
+void DataTab::updateOptions()
+{
+  FileTreeModel::Flags flags = FileTreeModel::NoFlags;
+
+  if (ui.conflicts->isChecked()) {
+    flags |= FileTreeModel::Conflicts;
+  }
+
+  if (ui.archives->isChecked()) {
+    flags |= FileTreeModel::Archives;
+  }
+
+  m_model->setFlags(flags);
   refreshDataTree();
 }
 
