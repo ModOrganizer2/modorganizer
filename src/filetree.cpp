@@ -15,10 +15,10 @@ FileTreeItem::FileTreeItem()
 }
 
 FileTreeItem::FileTreeItem(
-  FileTreeItem* parent,
+  FileTreeItem* parent, int originID,
   std::wstring virtualParentPath, std::wstring realPath, Flags flags,
   std::wstring file, std::wstring mod) :
-    m_parent(parent),
+    m_parent(parent), m_originID(originID),
     m_virtualParentPath(QString::fromStdWString(virtualParentPath)),
     m_realPath(QString::fromStdWString(realPath)),
     m_flags(flags),
@@ -26,6 +26,7 @@ FileTreeItem::FileTreeItem(
     m_mod(QString::fromStdWString(mod)),
     m_loaded(false)
 {
+  Q_ASSERT(!m_mod.isEmpty());
 }
 
 void FileTreeItem::add(std::unique_ptr<FileTreeItem> child)
@@ -41,6 +42,11 @@ const std::vector<std::unique_ptr<FileTreeItem>>& FileTreeItem::children() const
 FileTreeItem* FileTreeItem::parent()
 {
   return m_parent;
+}
+
+int FileTreeItem::originID() const
+{
+  return m_originID;
 }
 
 const QString& FileTreeItem::virtualParentPath() const
@@ -96,6 +102,19 @@ const QString& FileTreeItem::filename() const
 const QString& FileTreeItem::mod() const
 {
   return m_mod;
+}
+
+QFont FileTreeItem::font() const
+{
+  QFont f;
+
+  if (isFromArchive()) {
+    f.setItalic(true);
+  } else if (isHidden()) {
+    f.setStrikeOut(true);
+  }
+
+  return f;
 }
 
 QFileIconProvider::IconType FileTreeItem::icon() const
@@ -298,6 +317,7 @@ private:
     {
       std::scoped_lock lock(cache.queueMutex);
       queue = std::move(cache.queue);
+      cache.queue.clear();
     }
 
     if (queue.empty()) {
@@ -382,7 +402,7 @@ bool FileTreeModel::showArchives() const
 void FileTreeModel::refresh()
 {
   beginResetModel();
-  m_root = {nullptr, L"", L"", FileTreeItem::Directory, L"Data", L""};
+  m_root = {nullptr, 0, L"", L"", FileTreeItem::Directory, L"Data", L""};
   fill(m_root, *m_core.directoryStructure(), L"");
   endResetModel();
 }
@@ -439,7 +459,7 @@ void FileTreeModel::fillDirectories(
     const auto& dir = **itor;
 
     auto child = std::make_unique<FileTreeItem>(
-      &parentItem, path, L"", FileTreeItem::Directory, dir.getName(), L"");
+      &parentItem, 0, path, L"", FileTreeItem::Directory, dir.getName(), L"");
 
     if (dir.isEmpty()) {
       child->setLoaded(true);
@@ -475,29 +495,29 @@ void FileTreeModel::fillFiles(
     }
 
     parentItem.add(std::make_unique<FileTreeItem>(
-      &parentItem, path, file->getFullPath(), flags, file->getName(),
+      &parentItem, originID, path, file->getFullPath(), flags, file->getName(),
       makeModName(*file, originID)));
   }
 }
 
 std::wstring FileTreeModel::makeModName(const FileEntry& file, int originID) const
 {
-  const auto origin = m_core.directoryStructure()->getOriginByID(originID);
-  return origin.getName();
+  static const std::wstring Unmanaged = UnmanagedModName().toStdWString();
 
-  //const auto index = ModInfo::getIndex(QString::fromStdWString(origin.getName()));
-  //if (index == UINT_MAX) {
-  //  return UnmanagedModName();
-  //}
-  //
-  //std::wstring name = ModInfo::getByIndex(index)->name();
-  //
-  //std::pair<std::wstring, int> archive = file.getArchive();
-  //if (archive.first.length() != 0) {
-  //  name += L" (" + archive.first + L")";
-  //}
-  //
-  //return name;
+  const auto origin = m_core.directoryStructure()->getOriginByID(originID);
+
+  if (origin.getID() == 0) {
+    return Unmanaged;
+  }
+
+  std::wstring name = origin.getName();
+
+  const auto& archive = file.getArchive();
+  if (!archive.first.empty()) {
+    name += L" (" + archive.first + L")";
+  }
+
+  return name;
 }
 
 FileTreeItem* FileTreeModel::itemFromIndex(const QModelIndex& index) const
@@ -642,15 +662,7 @@ QVariant FileTreeModel::data(const QModelIndex& index, int role) const
     case Qt::FontRole:
     {
       if (auto* item=itemFromIndex(index)) {
-        QFont f;
-
-        if (item->isFromArchive()) {
-          f.setItalic(true);
-        } else if (item->isHidden()) {
-          f.setStrikeOut(true);
-        }
-
-        return f;
+        return item->font();
       }
 
       break;
@@ -658,27 +670,11 @@ QVariant FileTreeModel::data(const QModelIndex& index, int role) const
 
     case Qt::ToolTipRole:
     {
-      /*
-        const auto alternatives = file->getAlternatives();
+      if (auto* item=itemFromIndex(index)) {
+        return makeTooltip(*item);
+      }
 
-        if (!alternatives.empty()) {
-          std::wostringstream altString;
-          altString << tr("Also in: <br>").toStdWString();
-          for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator altIter = alternatives.begin();
-            altIter != alternatives.end(); ++altIter) {
-            if (altIter != alternatives.begin()) {
-              altString << " , ";
-            }
-            altString << "<span style=\"white-space: nowrap;\"><i>" << m_core.directoryStructure()->getOriginByID(altIter->first).getName() << "</font></span>";
-          }
-          fileChild->setToolTip(1, QString("%1").arg(QString::fromStdWString(altString.str())));
-          fileChild->setForeground(1, QBrush(Qt::red));
-        } else {
-          fileChild->setToolTip(1, tr("No conflict"));
-        }
-      */
-
-      break;
+      return {};
     }
 
     case Qt::ForegroundRole:
@@ -698,17 +694,7 @@ QVariant FileTreeModel::data(const QModelIndex& index, int role) const
     {
       if (index.column() == 0) {
         if (auto* item=itemFromIndex(index)) {
-          if (item->isDirectory()) {
-            return m_iconFetcher->genericDirectoryIcon();
-          } else {
-            auto v = m_iconFetcher->icon(item->realPath());
-            if (v.isNull()) {
-              m_iconPending.push_back(index);
-              m_iconPendingTimer.start(std::chrono::milliseconds(1));
-              return m_iconFetcher->genericFileIcon();
-            }
-            return v;
-          }
+          return makeIcon(*item, index);
         }
       }
 
@@ -719,10 +705,90 @@ QVariant FileTreeModel::data(const QModelIndex& index, int role) const
   return {};
 }
 
+QString FileTreeModel::makeTooltip(const FileTreeItem& item) const
+{
+  if (item.isDirectory()) {
+    return {};
+  }
+
+  auto nowrap = [&](auto&& s) {
+    return "<p style=\"white-space: pre; margin: 0; padding: 0;\">" + s + "</p>";
+  };
+
+  auto line = [&](auto&& caption, auto&& value) {
+    if (value.isEmpty()) {
+      return nowrap("<b>" + caption + ":</b>\n");
+    } else {
+      return nowrap("<b>" + caption + ":</b> " + value.toHtmlEscaped()) + "\n";
+    }
+  };
+
+  static const QString ListStart =
+    "<ul style=\""
+      "margin-left: 20px; "
+      "margin-top: 0; "
+      "margin-bottom: 0; "
+      "padding: 0; "
+      "-qt-list-indent: 0;"
+    "\">";
+
+  static const QString ListEnd = "</ul>";
+
+
+  QString s =
+    line(tr("Virtual path"), item.virtualPath()) +
+    line(tr("Real path"),    item.realPath()) +
+    line(tr("From"),         item.mod());
+
+
+  const auto file = m_core.directoryStructure()->searchFile(
+    item.dataRelativeFilePath().toStdWString(), nullptr);
+
+  if (file) {
+    const auto alternatives = file->getAlternatives();
+    QStringList list;
+
+    for (auto&& alt : file->getAlternatives()) {
+      const auto& origin = m_core.directoryStructure()->getOriginByID(alt.first);
+      list.push_back(QString::fromStdWString(origin.getName()));
+    }
+
+    if (list.size() == 1) {
+      s += line(tr("Also in"), list[0]);
+    } else if (list.size() >= 2) {
+      s += line(tr("Also in"), QString()) + ListStart;
+
+      for (auto&& alt : list) {
+        s += "<li>" + alt +"</li>";
+      }
+
+      s += ListEnd;
+    }
+  }
+
+  return s;
+}
+
+QVariant FileTreeModel::makeIcon(
+  const FileTreeItem& item, const QModelIndex& index) const
+{
+  if (item.isDirectory()) {
+    return m_iconFetcher->genericDirectoryIcon();
+  }
+
+  auto v = m_iconFetcher->icon(item.realPath());
+  if (!v.isNull()) {
+    return v;
+  }
+
+  m_iconPending.push_back(index);
+  m_iconPendingTimer.start(std::chrono::milliseconds(1));
+
+  return m_iconFetcher->genericFileIcon();
+}
+
 void FileTreeModel::updatePendingIcons()
 {
-  log::debug("updating {} pending icons", m_iconPending.size());
-
   for (auto&& index : m_iconPending) {
     emit dataChanged(index, index, {Qt::DecorationRole});
   }

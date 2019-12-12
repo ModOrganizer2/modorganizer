@@ -19,7 +19,7 @@ public:
 
   FileTreeItem();
   FileTreeItem(
-    FileTreeItem* parent,
+    FileTreeItem* parent, int originID,
     std::wstring virtualParentPath, std::wstring realPath, Flags flags,
     std::wstring file, std::wstring mod);
 
@@ -32,11 +32,12 @@ public:
   const std::vector<std::unique_ptr<FileTreeItem>>& children() const;
 
   FileTreeItem* parent();
-
+  int originID() const;
   const QString& virtualParentPath() const;
   QString virtualPath() const;
   const QString& filename() const;
   const QString& mod() const;
+  QFont font() const;
 
   const QString& realPath() const;
   QString dataRelativeParentPath() const;
@@ -57,6 +58,7 @@ public:
 
 private:
   FileTreeItem* m_parent;
+  int m_originID;
   QString m_virtualParentPath;
   QString m_realPath;
   Flags m_flags;
@@ -102,7 +104,7 @@ private:
   OrganizerCore& m_core;
   mutable FileTreeItem m_root;
   Flags m_flags;
-  std::unique_ptr<IconFetcher> m_iconFetcher;
+  mutable std::unique_ptr<IconFetcher> m_iconFetcher;
   mutable std::vector<QModelIndex> m_iconPending;
   mutable QTimer m_iconPendingTimer;
 
@@ -126,6 +128,9 @@ private:
   FileTreeItem* itemFromIndex(const QModelIndex& index) const;
   void ensureLoaded(FileTreeItem* item) const;
   void updatePendingIcons();
+
+  QString makeTooltip(const FileTreeItem& item) const;
+  QVariant makeIcon(const FileTreeItem& item, const QModelIndex& index) const;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FileTreeModel::Flags);
