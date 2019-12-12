@@ -275,10 +275,7 @@ void FilterList::addSpecialCriteria(int type)
 
 void FilterList::refresh()
 {
-  QStringList selectedItems;
-  for (QTreeWidgetItem *item : ui->filters->selectedItems()) {
-    selectedItems.append(item->text(0));
-  }
+  const auto oldSelection = selectedCriteria();
 
   ui->filters->clear();
 
@@ -315,32 +312,29 @@ void FilterList::refresh()
   }
 
   addCategoryCriteria(nullptr, categoriesUsed, 0);
-
-  for (const QString &item : selectedItems) {
-    QList<QTreeWidgetItem*> matches = ui->filters->findItems(
-      item, Qt::MatchFixedString | Qt::MatchRecursive);
-
-    if (matches.size() > 0) {
-      matches.at(0)->setSelected(true);
-    }
-  }
+  setSelection(oldSelection);
 }
 
 void FilterList::setSelection(const std::vector<Criteria>& criteria)
 {
   for (int i = 0; i < ui->filters->topLevelItemCount(); ++i) {
-    const auto* item = dynamic_cast<CriteriaItem*>(
-      ui->filters->topLevelItem(i));
-
+    auto* item = dynamic_cast<CriteriaItem*>(ui->filters->topLevelItem(i));
     if (!item) {
       continue;
     }
 
+    bool found = false;
+
     for (auto&& c : criteria) {
       if (item->type() == c.type && item->id() == c.id) {
-        ui->filters->setCurrentItem(ui->filters->topLevelItem(i));
+        item->setState(c.inverse ? CriteriaItem::Inverted : CriteriaItem::Active);
+        found = true;
         break;
       }
+    }
+
+    if (!found) {
+      item->setState(CriteriaItem::Inactive);
     }
   }
 }
@@ -378,7 +372,7 @@ bool FilterList::cycleItem(QTreeWidgetItem* item, int direction)
   return true;
 }
 
-void FilterList::checkCriteria()
+std::vector<ModListSortProxy::Criteria> FilterList::selectedCriteria() const
 {
   std::vector<Criteria> criteria;
 
@@ -395,7 +389,12 @@ void FilterList::checkCriteria()
     }
   }
 
-  emit criteriaChanged(criteria);
+  return criteria;
+}
+
+void FilterList::checkCriteria()
+{
+  emit criteriaChanged(selectedCriteria());
 }
 
 void FilterList::editCategories()
@@ -404,6 +403,7 @@ void FilterList::editCategories()
 
   if (dialog.exec() == QDialog::Accepted) {
     dialog.commitChanges();
+    refresh();
   }
 }
 

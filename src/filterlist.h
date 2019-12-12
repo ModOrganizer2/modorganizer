@@ -39,6 +39,7 @@ private:
 
   void editCategories();
   void checkCriteria();
+  std::vector<ModListSortProxy::Criteria> selectedCriteria() const;
   bool cycleItem(QTreeWidgetItem* item, int direction);
 
   QTreeWidgetItem* addCriteriaItem(
