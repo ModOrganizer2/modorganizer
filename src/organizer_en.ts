@@ -6754,6 +6754,23 @@ You can restart Mod Organizer as administrator and try launching the program aga
         <source>Exit Now</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="sanitychecks.cpp" line="113"/>
+        <source>&apos;%1&apos;: file is blocked (%2)</source>
+        <oldsource>&apos;%1&apos;: file is blocked (&apos;%2&apos;)</oldsource>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="sanitychecks.cpp" line="206"/>
+        <source>&apos;%1&apos; seems to be missing, an antivirus may have deleted it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="sanitychecks.cpp" line="239"/>
+        <source>%1 is loaded. This program is known to cause issues with Mod Organizer, such as freezing or blank windows. Consider uninstalling it.</source>
+        <oldsource>%1 is loaded. This program is known to cause issues with Mod Organizer, such as freezing or blank windows. Consider uninstalling it. (%2)</oldsource>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>QueryOverwriteDialog</name>

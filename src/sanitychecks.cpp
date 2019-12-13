@@ -110,7 +110,11 @@ bool isFileBlocked(const QFileInfo& fi)
   }
 
   // file is blocked
-  log::warn("'{}': file is blocked, zone id is {}", path, toString(z));
+  log::warn("{}", QObject::tr(
+    "'%1': file is blocked (%2)")
+    .arg(path)
+    .arg(toString(z)));
+
   return true;
 }
 
@@ -199,9 +203,9 @@ int checkMissingFiles()
     const QFileInfo file(dir + "/" + name);
 
     if (!file.exists()) {
-      log::warn(
-        "'{}' seems to be missing, an antivirus may have deleted it",
-        file.absoluteFilePath());
+      log::warn("{}", QObject::tr(
+        "'%1' seems to be missing, an antivirus may have deleted it")
+        .arg(file.absoluteFilePath()));
 
       ++n;
     }
@@ -223,7 +227,8 @@ int checkIncompatibleModule(const env::Module& m)
   static const std::map<QString, QString> names = {
     {"NahimicOSD.dll", "Nahimic"},
     {"RTSSHooks64.dll", "RivaTuner Statistics Server"},
-    {"SSAudioOSD.dll", "SteelSeries Audio"}
+    {"SSAudioOSD.dll", "SteelSeries Audio"},
+    {"SS3DevProps.dll", "Sonic Suite 3"}
   };
 
   const QFileInfo file(m.path());
@@ -231,10 +236,13 @@ int checkIncompatibleModule(const env::Module& m)
 
   for (auto&& p : names) {
     if (file.fileName().compare(p.first, Qt::CaseInsensitive) == 0) {
-      log::warn(
-        "{} is loaded. This program is known to cause issues with "
+      log::warn("{}", QObject::tr(
+        "%1 is loaded. This program is known to cause issues with "
         "Mod Organizer, such as freezing or blank windows. Consider "
-        "uninstalling it. ({})", p.second, file.absoluteFilePath());
+        "uninstalling it.")
+        .arg(p.second));
+
+      log::warn("{}", file.absoluteFilePath());
 
       ++n;
     }

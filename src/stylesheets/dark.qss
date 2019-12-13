@@ -349,7 +349,7 @@ QToolButton:hover
   padding-bottom: 2px;
 }
 
-QTreeView
+QTreeView, QListView
  {
   color: #E9E6E4;
   background-color: #3F4041;
