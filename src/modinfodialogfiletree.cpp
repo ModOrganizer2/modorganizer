@@ -148,6 +148,11 @@ void FileTreeTab::onActivated()
     return;
   }
 
+  // Don't open explorer on directories as we just want them to be expanded instead.
+  if (m_fs->isDir(selection)) {
+    return;
+  }
+
   const auto path = m_fs->filePath(selection);
   const auto tryPreview = core().settings().interface().doubleClicksOpenPreviews();
 
