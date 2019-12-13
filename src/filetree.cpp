@@ -170,209 +170,9 @@ QString FileTreeItem::debugName() const
 }
 
 
-class FileTreeModel::IconFetcher
-{
-public:
-  IconFetcher()
-    : m_iconSize(GetSystemMetrics(SM_CXSMICON)), m_stop(false)
-  {
-    m_quickCache.file = getPixmapIcon(QFileIconProvider::File);
-    m_quickCache.directory = getPixmapIcon(QFileIconProvider::Folder);
-
-    m_thread = std::thread([&]{ threadFun(); });
-  }
-
-  ~IconFetcher()
-  {
-    stop();
-    m_thread.join();
-  }
-
-  void stop()
-  {
-    m_stop = true;
-    m_waiter.wakeUp();
-  }
-
-  QVariant icon(const QString& path) const
-  {
-    if (hasOwnIcon(path)) {
-      return fileIcon(path);
-    } else {
-      const auto dot = path.lastIndexOf(".");
-
-      if (dot == -1) {
-        // no extension
-        return m_quickCache.file;
-      }
-
-      return extensionIcon(path.midRef(dot));
-    }
-  }
-
-  QPixmap genericFileIcon() const
-  {
-    return m_quickCache.file;
-  }
-
-  QPixmap genericDirectoryIcon() const
-  {
-    return m_quickCache.directory;
-  }
-
-private:
-  struct QuickCache
-  {
-    QPixmap file;
-    QPixmap directory;
-  };
-
-  struct Cache
-  {
-    std::map<QString, QPixmap, std::less<>> map;
-    std::mutex mapMutex;
-
-    std::set<QString> queue;
-    std::mutex queueMutex;
-  };
-
-  struct Waiter
-  {
-    mutable std::mutex m_wakeUpMutex;
-    std::condition_variable m_wakeUp;
-    bool m_queueAvailable = false;
-
-    void wait()
-    {
-      std::unique_lock lock(m_wakeUpMutex);
-      m_wakeUp.wait(lock, [&]{ return m_queueAvailable; });
-      m_queueAvailable = false;
-    }
-
-    void wakeUp()
-    {
-      {
-        std::scoped_lock lock(m_wakeUpMutex);
-        m_queueAvailable = true;
-      }
-
-      m_wakeUp.notify_one();
-    }
-  };
-
-  const int m_iconSize;
-  QFileIconProvider m_provider;
-  std::thread m_thread;
-  std::atomic<bool> m_stop;
-
-  mutable QuickCache m_quickCache;
-  mutable Cache m_extensionCache;
-  mutable Cache m_fileCache;
-  mutable Waiter m_waiter;
-
-
-  bool hasOwnIcon(const QString& path) const
-  {
-    static const QString exe = ".exe";
-    static const QString lnk = ".lnk";
-    static const QString ico = ".ico";
-
-    return
-      path.endsWith(exe, Qt::CaseInsensitive) ||
-      path.endsWith(lnk, Qt::CaseInsensitive) ||
-      path.endsWith(ico, Qt::CaseInsensitive);
-  }
-
-  template <class T>
-  QPixmap getPixmapIcon(T&& t) const
-  {
-    return m_provider.icon(t).pixmap({m_iconSize, m_iconSize});
-  }
-
-  void threadFun()
-  {
-    while (!m_stop) {
-      m_waiter.wait();
-      if (m_stop) {
-        break;
-      }
-
-      checkCache(m_extensionCache);
-      checkCache(m_fileCache);
-    }
-  }
-
-  void checkCache(Cache& cache)
-  {
-    std::set<QString> queue;
-
-    {
-      std::scoped_lock lock(cache.queueMutex);
-      queue = std::move(cache.queue);
-      cache.queue.clear();
-    }
-
-    if (queue.empty()) {
-      return;
-    }
-
-    std::map<QString, QPixmap> map;
-    for (auto&& ext : queue) {
-      map.emplace(std::move(ext), getPixmapIcon(ext));
-    }
-
-    {
-      std::scoped_lock lock(cache.mapMutex);
-      for (auto&& p : map) {
-        cache.map.insert(std::move(p));
-      }
-    }
-  }
-
-  void queue(Cache& cache, QString path) const
-  {
-    {
-      std::scoped_lock lock(cache.queueMutex);
-      cache.queue.insert(std::move(path));
-    }
-
-    m_waiter.wakeUp();
-  }
-
-  QVariant fileIcon(const QString& path) const
-  {
-    {
-      std::scoped_lock lock(m_fileCache.mapMutex);
-      auto itor = m_fileCache.map.find(path);
-      if (itor != m_fileCache.map.end()) {
-        return itor->second;
-      }
-    }
-
-    queue(m_fileCache, path);
-    return {};
-  }
-
-  QVariant extensionIcon(const QStringRef& ext) const
-  {
-    {
-      std::scoped_lock lock(m_extensionCache.mapMutex);
-      auto itor = m_extensionCache.map.find(ext);
-      if (itor != m_extensionCache.map.end()) {
-        return itor->second;
-      }
-    }
-
-    queue(m_extensionCache, ext.toString());
-    return {};
-  }
-};
-
-
 FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent)
   : QAbstractItemModel(parent), m_core(core), m_flags(NoFlags)
 {
-  m_iconFetcher.reset(new IconFetcher);
   connect(&m_iconPendingTimer, &QTimer::timeout, [&]{ updatePendingIcons(); });
 }
 
@@ -825,10 +625,10 @@ QVariant FileTreeModel::makeIcon(
   const FileTreeItem& item, const QModelIndex& index) const
 {
   if (item.isDirectory()) {
-    return m_iconFetcher->genericDirectoryIcon();
+    return m_iconFetcher.genericDirectoryIcon();
   }
 
-  auto v = m_iconFetcher->icon(item.realPath());
+  auto v = m_iconFetcher.icon(item.realPath());
   if (!v.isNull()) {
     return v;
   }
@@ -836,7 +636,7 @@ QVariant FileTreeModel::makeIcon(
   m_iconPending.push_back(index);
   m_iconPendingTimer.start(std::chrono::milliseconds(1));
 
-  return m_iconFetcher->genericFileIcon();
+  return m_iconFetcher.genericFileIcon();
 }
 
 void FileTreeModel::updatePendingIcons()

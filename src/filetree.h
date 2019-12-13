@@ -1,6 +1,6 @@
 #include "directoryentry.h"
+#include "iconfetcher.h"
 #include <QAbstractItemModel>
-#include <QFileIconProvider>
 
 class OrganizerCore;
 
@@ -106,13 +106,11 @@ private:
 
   Q_DECLARE_FLAGS(FillFlags, FillFlag);
 
-  class IconFetcher;
-
   using DirectoryIterator = std::vector<MOShared::DirectoryEntry*>::const_iterator;
   OrganizerCore& m_core;
   mutable FileTreeItem m_root;
   Flags m_flags;
-  mutable std::unique_ptr<IconFetcher> m_iconFetcher;
+  mutable IconFetcher m_iconFetcher;
   mutable std::vector<QModelIndex> m_iconPending;
   mutable QTimer m_iconPendingTimer;
 

@@ -146,6 +146,7 @@ SET(organizer_SRCS
 	filterlist.cpp
 	datatab.cpp
 	filetree.cpp
+	iconfetcher.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -272,6 +273,7 @@ SET(organizer_HDRS
 	filterlist.h
 	datatab.h
 	filetree.h
+	iconfetcher.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -403,6 +405,7 @@ set(loot
 
 set(mainwindow
 	datatab
+	iconfetcher
 	filetree
 	filterlist
 	mainwindow
