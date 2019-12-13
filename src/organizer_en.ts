@@ -1283,7 +1283,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
     </message>
     <message>
         <location filename="modinfodialogfiletree.cpp" line="27"/>
-        <location filename="modinfodialogfiletree.cpp" line="473"/>
+        <location filename="modinfodialogfiletree.cpp" line="478"/>
         <source>Open with &amp;VFS</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1329,37 +1329,37 @@ Right now the only case I know of where this needs to be overwritten is for the 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogfiletree.cpp" line="238"/>
+        <location filename="modinfodialogfiletree.cpp" line="243"/>
         <source>Are you sure you want to delete &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogfiletree.cpp" line="240"/>
+        <location filename="modinfodialogfiletree.cpp" line="245"/>
         <source>Are you sure you want to delete the selected files?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogfiletree.cpp" line="243"/>
+        <location filename="modinfodialogfiletree.cpp" line="248"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogfiletree.cpp" line="278"/>
+        <location filename="modinfodialogfiletree.cpp" line="283"/>
         <source>Failed to delete %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogfiletree.cpp" line="469"/>
+        <location filename="modinfodialogfiletree.cpp" line="474"/>
         <source>&amp;Execute</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogfiletree.cpp" line="470"/>
+        <location filename="modinfodialogfiletree.cpp" line="475"/>
         <source>Execute with &amp;VFS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogfiletree.cpp" line="472"/>
+        <location filename="modinfodialogfiletree.cpp" line="477"/>
         <source>&amp;Open</source>
         <translation type="unfinished"></translation>
     </message>
