@@ -886,6 +886,9 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
       case IPluginInstaller::RESULT_NOTATTEMPTED: {
         continue;
       }
+      case IPluginInstaller::RESULT_MANUALREQUESTED: {
+        continue;
+      }
       default:
         return installResult;
     }
