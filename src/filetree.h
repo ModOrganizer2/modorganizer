@@ -1,8 +1,12 @@
+#ifndef MODORGANIZER_FILETREE_INCLUDED
+#define MODORGANIZER_FILETREE_INCLUDED
+
 #include "directoryentry.h"
 #include "iconfetcher.h"
 #include <QAbstractItemModel>
 
 class OrganizerCore;
+class PluginContainer;
 
 class FileTreeItem
 {
@@ -96,6 +100,7 @@ public:
   QVariant data(const QModelIndex& index, int role=Qt::DisplayRole) const override;
   QVariant headerData(int i, Qt::Orientation ori, int role=Qt::DisplayRole) const override;
   Qt::ItemFlags flags(const QModelIndex& index) const override;
+  FileTreeItem* itemFromIndex(const QModelIndex& index) const;
 
 private:
   enum class FillFlag
@@ -131,7 +136,6 @@ private:
 
   std::wstring makeModName(const MOShared::FileEntry& file, int originID) const;
 
-  FileTreeItem* itemFromIndex(const QModelIndex& index) const;
   void ensureLoaded(FileTreeItem* item) const;
   void updatePendingIcons();
 
@@ -143,3 +147,43 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FileTreeModel::Flags);
 Q_DECLARE_OPERATORS_FOR_FLAGS(FileTreeItem::Flags);
+
+
+class FileTree
+{
+public:
+  FileTree(OrganizerCore& core, PluginContainer& pc, QTreeView* tree);
+
+  void setFlags(FileTreeModel::Flags flags);
+  void refresh();
+
+  void open();
+  void openHooked();
+  void preview();
+
+  void addAsExecutable();
+  void exploreOrigin();
+  void openModInfo();
+
+  void toggleVisibility();
+  void hide();
+  void unhide();
+
+  void dumpToFile();
+
+private:
+  OrganizerCore& m_core;
+  PluginContainer& m_plugins;
+  QTreeView* m_tree;
+  FileTreeModel* m_model;
+
+  FileTreeItem* singleSelection();
+  void onContextMenu(const QPoint &pos);
+
+  void addDirectoryMenus(QMenu& menu, FileTreeItem& item);
+  void addFileMenus(QMenu& menu, const MOShared::FileEntry& file, int originID);
+  void addOpenMenus(QMenu& menu, const MOShared::FileEntry& file);
+  void addCommonMenus(QMenu& menu);
+};
+
+#endif // MODORGANIZER_FILETREE_INCLUDED

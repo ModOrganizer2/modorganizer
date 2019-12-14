@@ -1,5 +1,6 @@
 #include "filetree.h"
 #include "organizercore.h"
+#include "modinfodialogfwd.h"
 #include <log.h>
 
 using namespace MOShared;
@@ -7,6 +8,33 @@ using namespace MOBase;
 
 // in mainwindow.cpp
 QString UnmanagedModName();
+
+
+bool canPreviewFile(const PluginContainer& pc, const FileEntry& file)
+{
+  return canPreviewFile(
+    pc, file.isFromArchive(), QString::fromStdWString(file.getName()));
+}
+
+bool canRunFile(const FileEntry& file)
+{
+  return canRunFile(file.isFromArchive(), QString::fromStdWString(file.getName()));
+}
+
+bool canOpenFile(const FileEntry& file)
+{
+  return canOpenFile(file.isFromArchive(), QString::fromStdWString(file.getName()));
+}
+
+bool isHidden(const FileEntry& file)
+{
+  return (QString::fromStdWString(file.getName()).endsWith(ModInfo::s_HiddenExt));
+}
+
+bool canExploreFile(const FileEntry& file);
+bool canHideFile(const FileEntry& file);
+bool canUnhideFile(const FileEntry& file);
+
 
 
 FileTreeItem::FileTreeItem()
@@ -673,4 +701,276 @@ Qt::ItemFlags FileTreeModel::flags(const QModelIndex& index) const
   }
 
   return f;
+}
+
+
+FileTree::FileTree(OrganizerCore& core, PluginContainer& pc, QTreeView* tree)
+  : m_core(core), m_plugins(pc), m_tree(tree), m_model(new FileTreeModel(core))
+{
+  m_tree->setModel(m_model);
+
+  QObject::connect(
+    m_tree, &QTreeWidget::customContextMenuRequested,
+    [&](auto pos){ onContextMenu(pos); });
+}
+
+void FileTree::setFlags(FileTreeModel::Flags flags)
+{
+  m_model->setFlags(flags);
+}
+
+void FileTree::refresh()
+{
+  m_model->refresh();
+}
+
+FileTreeItem* FileTree::singleSelection()
+{
+  const auto sel = m_tree->selectionModel()->selectedRows();
+  if (sel.size() == 1) {
+    return m_model->itemFromIndex(sel[0]);
+  }
+
+  return nullptr;
+}
+
+void FileTree::open()
+{
+  if (auto* item=singleSelection()) {
+    if (item->isFromArchive() || item->isDirectory()) {
+      return;
+    }
+
+    const QString path = item->realPath();
+    const QFileInfo targetInfo(path);
+
+    m_core.processRunner()
+      .setFromFile(m_tree->window(), targetInfo)
+      .setHooked(false)
+      .setWaitForCompletion(ProcessRunner::Refresh)
+      .run();
+  }
+}
+
+void FileTree::openHooked()
+{
+  if (auto* item=singleSelection()) {
+    if (item->isFromArchive() || item->isDirectory()) {
+      return;
+    }
+
+    const QString path = item->realPath();
+    const QFileInfo targetInfo(path);
+
+    m_core.processRunner()
+      .setFromFile(m_tree->window(), targetInfo)
+      .setHooked(true)
+      .setWaitForCompletion(ProcessRunner::Refresh)
+      .run();
+  }
+}
+
+void FileTree::preview()
+{
+  if (auto* item=singleSelection()) {
+    const QString path = item->dataRelativeFilePath();
+    m_core.previewFileWithAlternatives(m_tree->window(), path);
+  }
+}
+
+void FileTree::addAsExecutable()
+{
+  auto* item = singleSelection();
+  if (!item) {
+    return;
+  }
+
+  const QString path = item->realPath();
+  const QFileInfo target(path);
+  const auto fec = spawn::getFileExecutionContext(m_tree->window(), target);
+
+  switch (fec.type)
+  {
+    case spawn::FileExecutionTypes::Executable:
+    {
+      const QString name = QInputDialog::getText(
+        m_tree->window(), QObject::tr("Enter Name"),
+        QObject::tr("Enter a name for the executable"),
+        QLineEdit::Normal,
+        target.completeBaseName());
+
+      if (!name.isEmpty()) {
+        //Note: If this already exists, you'll lose custom settings
+        m_core.executablesList()->setExecutable(Executable()
+          .title(name)
+          .binaryInfo(fec.binary)
+          .arguments(fec.arguments)
+          .workingDirectory(target.absolutePath()));
+
+        // todo
+        //emit executablesChanged();
+      }
+
+      break;
+    }
+
+    case spawn::FileExecutionTypes::Other:  // fall-through
+    default:
+    {
+      QMessageBox::information(
+        m_tree->window(), QObject::tr("Not an executable"),
+        QObject::tr("This is not a recognized executable."));
+
+      break;
+    }
+  }
+}
+
+void FileTree::exploreOrigin()
+{
+}
+
+void FileTree::openModInfo()
+{
+}
+
+void FileTree::toggleVisibility()
+{
+}
+
+void FileTree::hide()
+{
+}
+
+void FileTree::unhide()
+{
+}
+
+void FileTree::dumpToFile()
+{
+}
+
+void FileTree::onContextMenu(const QPoint &pos)
+{
+  QMenu menu;
+
+  if (auto* item=singleSelection()) {
+    if (item->isDirectory()) {
+      addDirectoryMenus(menu, *item);
+    } else {
+      const auto file = m_core.directoryStructure()->searchFile(
+        item->dataRelativeFilePath().toStdWString(), nullptr);
+
+      if (file) {
+        addFileMenus(menu, *file, item->originID());
+      }
+    }
+  }
+
+  addCommonMenus(menu);
+
+  menu.exec(m_tree->viewport()->mapToGlobal(pos));
+}
+
+void FileTree::addDirectoryMenus(QMenu&, FileTreeItem&)
+{
+  // noop
+}
+
+void FileTree::addFileMenus(QMenu& menu, const FileEntry& file, int originID)
+{
+  using namespace spawn;
+
+  addOpenMenus(menu, file);
+
+  menu.addSeparator();
+
+  const QFileInfo target(QString::fromStdWString(file.getFullPath()));
+  if (getFileExecutionType(target) == FileExecutionTypes::Executable) {
+    menu.addAction(QObject::tr("&Add as Executable"), [&]{ addAsExecutable(); });
+  }
+
+  if (!file.isFromArchive()) {
+    menu.addAction(QObject::tr("Open Origin in Explorer"), [&]{ exploreOrigin(); });
+  }
+
+  if (originID != 0) {
+    menu.addAction(QObject::tr("Open Mod Info"), [&]{ openModInfo(); });
+  }
+
+  // offer to hide/unhide file, but not for files from archives
+  if (!file.isFromArchive()) {
+    if (isHidden(file)) {
+      menu.addAction(QObject::tr("Un-Hide"), [&]{ hide(); });
+    } else {
+      menu.addAction(QObject::tr("Hide"), [&]{ unhide(); });
+    }
+  }
+}
+
+void FileTree::addOpenMenus(QMenu& menu, const MOShared::FileEntry& file)
+{
+  QAction* openMenu = nullptr;
+  QAction* openHookedMenu = nullptr;
+
+  if (canRunFile(file)) {
+    openMenu = new QAction(QObject::tr("&Execute"), m_tree);
+    openHookedMenu = new QAction(QObject::tr("Execute with &VFS"), m_tree);
+  } else if (canOpenFile(file)) {
+    openMenu = new QAction(QObject::tr("&Open"), m_tree);
+    openHookedMenu = new QAction(QObject::tr("Open with &VFS"), m_tree);
+  }
+
+  QAction* previewMenu = nullptr;
+  if (canPreviewFile(m_plugins, file)) {
+    previewMenu = new QAction(QObject::tr("Preview"), m_tree);
+  }
+
+  if (openMenu && previewMenu) {
+    if (m_core.settings().interface().doubleClicksOpenPreviews()) {
+      menu.addAction(previewMenu);
+      menu.addAction(openMenu);
+    } else {
+      menu.addAction(openMenu);
+      menu.addAction(previewMenu);
+    }
+  } else {
+    if (openMenu) {
+      menu.addAction(openMenu);
+    }
+
+    if (previewMenu) {
+      menu.addAction(previewMenu);
+    }
+  }
+
+  if (openHookedMenu) {
+    menu.addAction(openHookedMenu);
+  }
+
+
+  if (openMenu) {
+    QObject::connect(openMenu, &QAction::triggered, [&]{ open(); });
+  }
+
+  if (openHookedMenu) {
+    QObject::connect(openHookedMenu, &QAction::triggered, [&]{ openHooked(); });
+  }
+
+  if (previewMenu) {
+    QObject::connect(previewMenu, &QAction::triggered, [&]{ preview(); });
+  }
+
+
+  // bold the first option
+  auto* top = menu.actions()[0];
+  auto f = top->font();
+  f.setBold(true);
+  top->setFont(f);
+}
+
+void FileTree::addCommonMenus(QMenu& menu)
+{
+  menu.addAction(QObject::tr("Write To File..."), [&]{ dumpToFile(); });
+  menu.addAction(QObject::tr("Refresh"), [&]{ refresh(); });
 }

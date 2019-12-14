@@ -924,6 +924,15 @@ QFileInfo getCmdPath()
   return systemDirectory + "cmd.exe";
 }
 
+FileExecutionTypes getFileExecutionType(const QFileInfo& target)
+{
+  if (isExeFile(target) || isBatchFile(target) || isJavaFile(target)) {
+    return FileExecutionTypes::Executable;
+  }
+
+  return FileExecutionTypes::Other;
+}
+
 FileExecutionContext getFileExecutionContext(
   QWidget* parent, const QFileInfo& target)
 {

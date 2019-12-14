@@ -433,7 +433,7 @@ std::wstring FileEntry::getRelativePath() const
   return result + L"\\" + m_Name;
 }
 
-bool FileEntry::isFromArchive(std::wstring archiveName)
+bool FileEntry::isFromArchive(std::wstring archiveName) const
 {
   if (archiveName.length() == 0) return m_Archive.first.length() != 0;
   if (m_Archive.first.compare(archiveName) == 0) return true;

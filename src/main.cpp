@@ -635,8 +635,6 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       }
     }
 
-    Q_ASSERT(!edition.isEmpty());
-
     game->setGameVariant(edition);
 
     log::info(

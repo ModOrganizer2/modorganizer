@@ -19,28 +19,19 @@ DataTab::DataTab(
   OrganizerCore& core, PluginContainer& pc,
   QWidget* parent, Ui::MainWindow* mwui) :
     m_core(core), m_pluginContainer(pc), m_parent(parent),
-    m_model(new FileTreeModel(core)),
     ui{
       mwui->btnRefreshData, mwui->dataTree,
       mwui->conflictsCheckBox, mwui->showArchiveDataCheckBox}
 {
-  ui.tree->setModel(m_model);
+  m_filetree.reset(new FileTree(core, m_pluginContainer, ui.tree));
 
   connect(
     ui.refresh, &QPushButton::clicked,
     [&]{ onRefresh(); });
 
   //connect(
-  //  ui.tree, &QTreeWidget::itemExpanded,
-  //  [&](auto* item){ onItemExpanded(item); });
-  //
-  //connect(
   //  ui.tree, &QTreeWidget::itemActivated,
   //  [&](auto* item, int col){ onItemActivated(item, col); });
-
-  connect(
-    ui.tree, &QTreeWidget::customContextMenuRequested,
-    [&](auto pos){ onContextMenu(pos); });
 
   connect(
     ui.conflicts, &QCheckBox::toggled,
@@ -79,28 +70,10 @@ QTreeWidgetItem* DataTab::singleSelection()
 
 void DataTab::openSelection()
 {
-  if (auto* item=singleSelection()) {
-    open(item);
-  }
 }
 
 void DataTab::open(QTreeWidgetItem* item)
 {
-  const auto isArchive = item->data(0, Qt::UserRole + 1).toBool();
-  const auto isDirectory = item->data(0, Qt::UserRole + 3).toBool();
-
-  if (isArchive || isDirectory) {
-    return;
-  }
-
-  const QString path = item->data(0, Qt::UserRole).toString();
-  const QFileInfo targetInfo(path);
-
-  m_core.processRunner()
-    .setFromFile(m_parent, targetInfo)
-    .setHooked(false)
-    .setWaitForCompletion(ProcessRunner::Refresh)
-    .run();
 }
 
 void DataTab::runSelectionHooked()
@@ -112,21 +85,6 @@ void DataTab::runSelectionHooked()
 
 void DataTab::runHooked(QTreeWidgetItem* item)
 {
-  const auto isArchive = item->data(0, Qt::UserRole + 1).toBool();
-  const auto isDirectory = item->data(0, Qt::UserRole + 3).toBool();
-
-  if (isArchive || isDirectory) {
-    return;
-  }
-
-  const QString path = item->data(0, Qt::UserRole).toString();
-  const QFileInfo targetInfo(path);
-
-  m_core.processRunner()
-    .setFromFile(m_parent, targetInfo)
-    .setHooked(true)
-    .setWaitForCompletion(ProcessRunner::Refresh)
-    .run();
 }
 
 void DataTab::previewSelection()
@@ -138,8 +96,6 @@ void DataTab::previewSelection()
 
 void DataTab::preview(QTreeWidgetItem* item)
 {
-  QString fileName = QDir::fromNativeSeparators(item->data(0, Qt::UserRole).toString());
-  m_core.previewFileWithAlternatives(m_parent, fileName);
 }
 
 void DataTab::onRefresh()
@@ -149,13 +105,13 @@ void DataTab::onRefresh()
 
 void DataTab::refreshDataTree()
 {
-  m_model->refresh();
+  m_filetree->refresh();
 }
 
 void DataTab::refreshDataTreeKeepExpandedNodes()
 {
   //m_model->refreshKeepExpandedNodes();
-  m_model->refresh();  // temp
+  m_filetree->refresh();  // temp
 
   /*QIcon folderIcon = (new QFileIconProvider())->icon(QFileIconProvider::Folder);
   QIcon fileIcon = (new QFileIconProvider())->icon(QFileIconProvider::File);
@@ -245,101 +201,6 @@ void DataTab::onItemActivated(QTreeWidgetItem *item, int column)
   }
 }
 
-void DataTab::onContextMenu(const QPoint &pos)
-{
-  QTreeWidgetItem* item = nullptr;//ui.tree->itemAt(pos.x(), pos.y());
-
-  QMenu menu;
-  if ((item != nullptr) && (item->childCount() == 0)
-    && (item->data(0, Qt::UserRole + 3).toBool() != true)) {
-    QString fileName = item->text(0);
-    const auto isArchive = item->data(0, Qt::UserRole + 1).toBool();
-    const auto isDirectory = item->data(0, Qt::UserRole + 3).toBool();
-
-    QAction* open = nullptr;
-    QAction* runHooked = nullptr;
-    QAction* preview = nullptr;
-
-    if (canRunFile(isArchive, fileName)) {
-      open = new QAction(tr("&Execute"), ui.tree);
-      runHooked = new QAction(tr("Execute with &VFS"), ui.tree);
-    } else if (canOpenFile(isArchive, fileName)) {
-      open = new QAction(tr("&Open"), ui.tree);
-      runHooked = new QAction(tr("Open with &VFS"), ui.tree);
-    }
-
-    if (m_pluginContainer.previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
-      preview = new QAction(tr("Preview"), ui.tree);
-    }
-
-    if (open) {
-      connect(open, &QAction::triggered, [&]{ openSelection(); });
-    }
-
-    if (runHooked) {
-      connect(runHooked, &QAction::triggered, [&]{ runSelectionHooked(); });
-    }
-
-    if (preview) {
-      connect(preview, &QAction::triggered, [&]{ previewSelection(); });
-    }
-
-    if (open && preview) {
-      if (m_core.settings().interface().doubleClicksOpenPreviews()) {
-        menu.addAction(preview);
-        menu.addAction(open);
-      } else {
-        menu.addAction(open);
-        menu.addAction(preview);
-      }
-    } else {
-      if (open) {
-        menu.addAction(open);
-      }
-
-      if (preview) {
-        menu.addAction(preview);
-      }
-    }
-
-    if (runHooked) {
-      menu.addAction(runHooked);
-    }
-
-    menu.addAction(tr("&Add as Executable"), [&]{ addAsExecutable(); });
-
-    if (!isArchive && !isDirectory) {
-      menu.addAction("Open Origin in Explorer", [&]{ openOriginInExplorer(); });
-    }
-
-    menu.addAction("Open Mod Info", [&]{ openModInfo(); });
-
-    menu.addSeparator();
-
-    // offer to hide/unhide file, but not for files from archives
-    if (!isArchive) {
-      if (item->text(0).endsWith(ModInfo::s_HiddenExt)) {
-        menu.addAction(tr("Un-Hide"), [&]{ unhideFile(); });
-      } else {
-        menu.addAction(tr("Hide"), [&]{ hideFile(); });
-      }
-    }
-
-    if (open || preview || runHooked) {
-      // bold the first option
-      auto* top = menu.actions()[0];
-      auto f = top->font();
-      f.setBold(true);
-      top->setFont(f);
-    }
-  }
-
-  menu.addAction(tr("Write To File..."), [&]{ writeDataToFile(); });
-  menu.addAction(tr("Refresh"), [&]{ onRefresh(); });
-
-  menu.exec(ui.tree->viewport()->mapToGlobal(pos));
-}
-
 void DataTab::onConflicts()
 {
   updateOptions();
@@ -362,54 +223,12 @@ void DataTab::updateOptions()
     flags |= FileTreeModel::Archives;
   }
 
-  m_model->setFlags(flags);
+  m_filetree->setFlags(flags);
   refreshDataTree();
 }
 
 void DataTab::addAsExecutable()
 {
-  auto* item = singleSelection();
-  if (!item) {
-    return;
-  }
-
-  const QFileInfo target(item->data(0, Qt::UserRole).toString());
-  const auto fec = spawn::getFileExecutionContext(m_parent, target);
-
-  switch (fec.type)
-  {
-    case spawn::FileExecutionTypes::Executable:
-    {
-      const QString name = QInputDialog::getText(
-        m_parent, tr("Enter Name"),
-        tr("Enter a name for the executable"),
-        QLineEdit::Normal,
-        target.completeBaseName());
-
-      if (!name.isEmpty()) {
-        //Note: If this already exists, you'll lose custom settings
-        m_core.executablesList()->setExecutable(Executable()
-          .title(name)
-          .binaryInfo(fec.binary)
-          .arguments(fec.arguments)
-          .workingDirectory(target.absolutePath()));
-
-        emit executablesChanged();
-      }
-
-      break;
-    }
-
-    case spawn::FileExecutionTypes::Other:  // fall-through
-    default:
-    {
-      QMessageBox::information(
-        m_parent, tr("Not an executable"),
-        tr("This is not a recognized executable."));
-
-      break;
-    }
-  }
 }
 
 void DataTab::openOriginInExplorer()

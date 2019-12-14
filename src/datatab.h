@@ -8,7 +8,7 @@ namespace Ui { class MainWindow; }
 class OrganizerCore;
 class Settings;
 class PluginContainer;
-class FileTreeModel;
+class FileTree;
 
 namespace MOShared { class DirectoryEntry; }
 
@@ -45,14 +45,13 @@ private:
   OrganizerCore& m_core;
   PluginContainer& m_pluginContainer;
   QWidget* m_parent;
-  FileTreeModel* m_model;
   DataTabUi ui;
+  std::unique_ptr<FileTree> m_filetree;
   std::vector<QTreeWidgetItem*> m_removeLater;
 
   void onRefresh();
   void onItemExpanded(QTreeWidgetItem* item);
   void onItemActivated(QTreeWidgetItem* item, int col);
-  void onContextMenu(const QPoint &pos);
   void onConflicts();
   void onArchives();
   void updateOptions();

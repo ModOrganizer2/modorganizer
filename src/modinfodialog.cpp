@@ -51,7 +51,8 @@ int naturalCompare(const QString& a, const QString& b)
 }
 
 bool canPreviewFile(
-  PluginContainer& pluginContainer, bool isArchive, const QString& filename)
+  const PluginContainer& pluginContainer,
+  bool isArchive, const QString& filename)
 {
   if (isArchive) {
     return false;

@@ -78,7 +78,7 @@ public:
   int getOrigin() const { return m_Origin; }
   int getOrigin(bool &archive) const { archive = (m_Archive.first.length() != 0); return m_Origin; }
   const std::pair<std::wstring, int> &getArchive() const { return m_Archive; }
-  bool isFromArchive(std::wstring archiveName = L"");
+  bool isFromArchive(std::wstring archiveName = L"") const;
   std::wstring getFullPath() const;
   std::wstring getRelativePath() const;
   DirectoryEntry *getParent() { return m_Parent; }
