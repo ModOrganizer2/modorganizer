@@ -49,6 +49,8 @@ protected:
 private:
   Ui::MainWindow* ui;
   QProgressBar* m_progress;
+  QWidget* m_progressSpacer1;
+  QWidget* m_progressSpacer2;
   StatusBarAction* m_notifications;
   StatusBarAction* m_update;
   QLabel* m_api;

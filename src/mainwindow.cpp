@@ -466,6 +466,8 @@ MainWindow::MainWindow(Settings &settings
     m_showArchiveData = false;
   }
 
+  QApplication::instance()->installEventFilter(this);
+
   refreshExecutablesList();
   updatePinnedExecutables();
   resetActionIcons();
@@ -1471,7 +1473,11 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event)
   if ((object == ui->savegameList) &&
       ((event->type() == QEvent::Leave) || (event->type() == QEvent::WindowDeactivate))) {
     hideSaveGameInfo();
+  } else if (event->type() == QEvent::StatusTip && object != this) {
+    QMainWindow::event(event);
+    return true;
   }
+
   return false;
 }
 

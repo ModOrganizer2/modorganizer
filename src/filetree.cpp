@@ -36,6 +36,87 @@ bool canHideFile(const FileEntry& file);
 bool canUnhideFile(const FileEntry& file);
 
 
+class MenuItem
+{
+public:
+  MenuItem(QString s={})
+    : m_action(new QAction(std::move(s)))
+  {
+  }
+
+  MenuItem& caption(const QString& s)
+  {
+    m_action->setText(s);
+    return *this;
+  }
+
+  template <class F>
+  MenuItem& callback(F&& f)
+  {
+    QObject::connect(m_action, &QAction::triggered, std::forward<F>(f));
+    return *this;
+  }
+
+  MenuItem& hint(const QString& s)
+  {
+    m_tooltip = s;
+    return *this;
+  }
+
+  MenuItem& disabledHint(const QString& s)
+  {
+    m_disabledHint = s;
+    return *this;
+  }
+
+  MenuItem& enabled(bool b)
+  {
+    m_action->setEnabled(b);
+    return *this;
+  }
+
+  void addTo(QMenu& menu)
+  {
+    QString s;
+
+    setTips();
+
+    m_action->setParent(&menu);
+    menu.addAction(m_action);
+  }
+
+private:
+  QAction* m_action;
+  QString m_tooltip;
+  QString m_disabledHint;
+
+  void setTips()
+  {
+    if (m_action->isEnabled() || m_disabledHint.isEmpty()) {
+      m_action->setStatusTip(m_tooltip);
+      return;
+    }
+
+    QString s = m_tooltip.trimmed();
+
+    if (!s.isEmpty()) {
+      if (!s.endsWith(".")) {
+        s += ".";
+      }
+
+      s += "\n";
+    }
+
+    s += QObject::tr("Disabled because") + ": " + m_disabledHint.trimmed();
+
+    if (!s.endsWith(".")) {
+      s += ".";
+    }
+
+    m_action->setStatusTip(s);
+  }
+};
+
 
 FileTreeItem::FileTreeItem()
   : m_flags(NoFlags), m_loaded(false)
@@ -884,89 +965,120 @@ void FileTree::addFileMenus(QMenu& menu, const FileEntry& file, int originID)
   addOpenMenus(menu, file);
 
   menu.addSeparator();
+  menu.setToolTipsVisible(true);
 
   const QFileInfo target(QString::fromStdWString(file.getFullPath()));
-  if (getFileExecutionType(target) == FileExecutionTypes::Executable) {
-    menu.addAction(QObject::tr("&Add as Executable"), [&]{ addAsExecutable(); });
-  }
 
-  if (!file.isFromArchive()) {
-    menu.addAction(QObject::tr("Open Origin in Explorer"), [&]{ exploreOrigin(); });
-  }
+  MenuItem(QObject::tr("&Add as Executable"))
+    .callback([&]{ addAsExecutable(); })
+    .hint(QObject::tr("Add this file to the executables list"))
+    .disabledHint(QObject::tr("This file is not executable"))
+    .enabled(getFileExecutionType(target) == FileExecutionTypes::Executable)
+    .addTo(menu);
 
-  if (originID != 0) {
-    menu.addAction(QObject::tr("Open Mod Info"), [&]{ openModInfo(); });
-  }
+  MenuItem(QObject::tr("E&xplore"))
+    .callback([&]{ exploreOrigin(); })
+    .hint(QObject::tr("Opens the file in Explorer"))
+    .disabledHint(QObject::tr("This file is in an archive"))
+    .enabled(!file.isFromArchive())
+    .addTo(menu);
 
-  // offer to hide/unhide file, but not for files from archives
-  if (!file.isFromArchive()) {
-    if (isHidden(file)) {
-      menu.addAction(QObject::tr("Un-Hide"), [&]{ hide(); });
-    } else {
-      menu.addAction(QObject::tr("Hide"), [&]{ unhide(); });
-    }
+  MenuItem(QObject::tr("Open &Mod Info"))
+    .callback([&]{ openModInfo(); })
+    .hint(QObject::tr("Opens the Mod Info Window"))
+    .disabledHint(QObject::tr("This file is not in a managed mod"))
+    .enabled(originID != 0)
+    .addTo(menu);
+
+  if (isHidden(file)) {
+    MenuItem(QObject::tr("&Un-Hide"))
+      .callback([&]{ hide(); })
+      .hint(QObject::tr("Un-hides the file"))
+      .disabledHint(QObject::tr("This file is in an archive"))
+      .enabled(!file.isFromArchive())
+      .addTo(menu);
+  } else {
+    MenuItem(QObject::tr("&Hide"))
+      .callback([&]{ unhide(); })
+      .hint(QObject::tr("Hides the file"))
+      .disabledHint(QObject::tr("This file is in an archive"))
+      .enabled(!file.isFromArchive())
+      .addTo(menu);
   }
 }
 
 void FileTree::addOpenMenus(QMenu& menu, const MOShared::FileEntry& file)
 {
-  QAction* openMenu = nullptr;
-  QAction* openHookedMenu = nullptr;
+  using namespace spawn;
 
-  if (canRunFile(file)) {
-    openMenu = new QAction(QObject::tr("&Execute"), m_tree);
-    openHookedMenu = new QAction(QObject::tr("Execute with &VFS"), m_tree);
-  } else if (canOpenFile(file)) {
-    openMenu = new QAction(QObject::tr("&Open"), m_tree);
-    openHookedMenu = new QAction(QObject::tr("Open with &VFS"), m_tree);
-  }
+  MenuItem openMenu, openHookedMenu;
 
-  QAction* previewMenu = nullptr;
-  if (canPreviewFile(m_plugins, file)) {
-    previewMenu = new QAction(QObject::tr("Preview"), m_tree);
-  }
+  const QFileInfo target(QString::fromStdWString(file.getFullPath()));
 
-  if (openMenu && previewMenu) {
-    if (m_core.settings().interface().doubleClicksOpenPreviews()) {
-      menu.addAction(previewMenu);
-      menu.addAction(openMenu);
-    } else {
-      menu.addAction(openMenu);
-      menu.addAction(previewMenu);
-    }
+  if (getFileExecutionType(target) == FileExecutionTypes::Executable) {
+    openMenu
+      .caption(QObject::tr("&Execute"))
+      .callback([&]{ open(); })
+      .hint(QObject::tr("Launches this program"))
+      .disabledHint(QObject::tr("This file is in an archive"))
+      .enabled(!file.isFromArchive());
+
+    openHookedMenu
+      .caption(QObject::tr("Execute with &VFS"))
+      .callback([&]{ openHooked(); })
+      .hint(QObject::tr("Launches this program hooked to the VFS"))
+      .disabledHint(QObject::tr("This file is in an archive"))
+      .enabled(!file.isFromArchive());
   } else {
-    if (openMenu) {
-      menu.addAction(openMenu);
+    openMenu
+      .caption(QObject::tr("&Open"))
+      .callback([&]{ open(); })
+      .hint(QObject::tr("Opens this file with its default handler"))
+      .disabledHint(QObject::tr("This file is in an archive"))
+      .enabled(!file.isFromArchive());
+
+    openHookedMenu
+      .caption(QObject::tr("Open with &VFS"))
+      .callback([&]{ openHooked(); })
+      .hint(QObject::tr("Opens this file with its default handler hooked to the VFS"))
+      .disabledHint(QObject::tr("This file is in an archive"))
+      .enabled(!file.isFromArchive());
+  }
+
+  MenuItem previewMenu(QObject::tr("&Preview"));
+  previewMenu
+    .callback([&]{ preview(); })
+    .hint(QObject::tr("Previews this file within Mod Organizer"))
+    .disabledHint(QObject::tr(
+      "This file is in an archive or has no preview handler "
+      "associated with it"))
+    .enabled(canPreviewFile(m_plugins, file));
+
+  if (m_core.settings().interface().doubleClicksOpenPreviews()) {
+    previewMenu.addTo(menu);
+    openMenu.addTo(menu);
+    openHookedMenu.addTo(menu);
+  } else {
+    openMenu.addTo(menu);
+    previewMenu.addTo(menu);
+    openHookedMenu.addTo(menu);
+  }
+
+  // bold the first enabled option, only first three are considered
+  for (int i=0; i<3; ++i) {
+    if (i >= menu.actions().size()) {
+      break;
     }
 
-    if (previewMenu) {
-      menu.addAction(previewMenu);
+    auto* a = menu.actions()[i];
+
+    if (menu.actions()[i]->isEnabled()) {
+      auto f = a->font();
+      f.setBold(true);
+      a->setFont(f);
+      break;
     }
   }
-
-  if (openHookedMenu) {
-    menu.addAction(openHookedMenu);
-  }
-
-
-  if (openMenu) {
-    QObject::connect(openMenu, &QAction::triggered, [&]{ open(); });
-  }
-
-  if (openHookedMenu) {
-    QObject::connect(openHookedMenu, &QAction::triggered, [&]{ openHooked(); });
-  }
-
-  if (previewMenu) {
-    QObject::connect(previewMenu, &QAction::triggered, [&]{ preview(); });
-  }
-
-
-  // bold the first option
-  auto* top = menu.actions()[0];
-  auto f = top->font();
-  f.setBold(true);
-  top->setFont(f);
 }
 
 void FileTree::addCommonMenus(QMenu& menu)
