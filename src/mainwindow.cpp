@@ -5305,6 +5305,10 @@ void MainWindow::activateDataTreeItem(QTreeWidgetItem *item, int column)
   }
 
   const QString path = item->data(0, Qt::UserRole).toString();
+  if (path.isEmpty()) {
+    return;
+  }
+
   const QFileInfo targetInfo(path);
 
   const auto tryPreview = m_OrganizerCore.settings().interface().doubleClicksOpenPreviews();
