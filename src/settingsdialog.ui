@@ -722,7 +722,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="groupBox_4">
+        <widget class="QGroupBox" name="nexusBox">
          <property name="title">
           <string>Nexus Connection</string>
          </property>
