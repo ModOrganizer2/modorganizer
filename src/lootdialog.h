@@ -42,6 +42,7 @@ protected:
 
 class LootDialog : public QDialog
 {
+  Q_OBJECT;
 public:
   LootDialog(QWidget* parent, OrganizerCore& core, Loot& loot);
   ~LootDialog();

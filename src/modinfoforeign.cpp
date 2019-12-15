@@ -8,11 +8,6 @@
 using namespace MOBase;
 using namespace MOShared;
 
-QString ModInfoForeign::name() const
-{
-  return m_Name;
-}
-
 QDateTime ModInfoForeign::creationTime() const
 {
   return m_CreationTime;
@@ -59,11 +54,14 @@ ModInfoForeign::ModInfoForeign(const QString &modName,
   switch (modType) {
   case ModInfo::EModType::MOD_DLC:
     m_Name = tr("DLC: ") + modName;
+    m_InternalName = QString("DLC: ") + modName;
     break;
   case ModInfo::EModType::MOD_CC:
     m_Name = tr("Creation Club: ") + modName;
+    m_InternalName = QString("Creation Club: ") + modName;
     break;
   default:
     m_Name = tr("Unmanaged: ") + modName;
+    m_InternalName = QString("Unmanaged: ") + modName;
   }
 }

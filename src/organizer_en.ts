@@ -4035,22 +4035,22 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ModInfoForeign</name>
     <message>
-        <location filename="modinfoforeign.cpp" line="47"/>
+        <location filename="modinfoforeign.cpp" line="42"/>
         <source>This pseudo mod represents content managed outside MO. It isn&apos;t modified by MO.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfoforeign.cpp" line="61"/>
+        <location filename="modinfoforeign.cpp" line="56"/>
         <source>DLC: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfoforeign.cpp" line="64"/>
+        <location filename="modinfoforeign.cpp" line="60"/>
         <source>Creation Club: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfoforeign.cpp" line="67"/>
+        <location filename="modinfoforeign.cpp" line="64"/>
         <source>Unmanaged: </source>
         <translation type="unfinished"></translation>
     </message>
@@ -6769,6 +6769,51 @@ You can restart Mod Organizer as administrator and try launching the program aga
         <location filename="sanitychecks.cpp" line="239"/>
         <source>%1 is loaded. This program is known to cause issues with Mod Organizer, such as freezing or blank windows. Consider uninstalling it.</source>
         <oldsource>%1 is loaded. This program is known to cause issues with Mod Organizer, such as freezing or blank windows. Consider uninstalling it. (%2)</oldsource>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="shared/directoryentry.cpp" line="87"/>
+        <source>invalid origin name: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="shared/directoryentry.cpp" line="110"/>
+        <source>failed to change name lookup from {} to {}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="shared/directoryentry.cpp" line="524"/>
+        <source>failed to determine file time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="shared/directoryentry.cpp" line="546"/>
+        <source>invalid bsa file: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="shared/directoryentry.cpp" line="722"/>
+        <source>file &quot;{}&quot; not in directory &quot;{}&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="shared/directoryentry.cpp" line="727"/>
+        <source>file &quot;{}&quot; not in directory &quot;{}&quot;, directory empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="shared/directoryentry.cpp" line="851"/>
+        <source>unexpected end of path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="shared/directoryentry.cpp" line="995"/>
+        <source>invalid file index for remove: {}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="shared/directoryentry.cpp" line="1009"/>
+        <source>invalid file index for remove (for origin): {}</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
