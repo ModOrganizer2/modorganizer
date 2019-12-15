@@ -66,18 +66,18 @@ ModList::ModList(PluginContainer *pluginContainer, QObject *parent)
   , m_DropOnItems(false)
   , m_PluginContainer(pluginContainer)
 {
-  m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(":/MO/gui/content/plugin", tr("Game Plugins (ESP/ESM/ESL)"));
-  m_ContentIcons[ModInfo::CONTENT_INTERFACE] = std::make_tuple(":/MO/gui/content/interface", tr("Interface"));
-  m_ContentIcons[ModInfo::CONTENT_MESH]      = std::make_tuple(":/MO/gui/content/mesh", tr("Meshes"));
-  m_ContentIcons[ModInfo::CONTENT_BSA]       = std::make_tuple(":/MO/gui/content/bsa", tr("Bethesda Archive"));
-  m_ContentIcons[ModInfo::CONTENT_SCRIPT]    = std::make_tuple(":/MO/gui/content/script", tr("Scripts (Papyrus)"));
-  m_ContentIcons[ModInfo::CONTENT_SKSE]      = std::make_tuple(":/MO/gui/content/skse", tr("Script Extender Plugin"));
-  m_ContentIcons[ModInfo::CONTENT_SKYPROC]   = std::make_tuple(":/MO/gui/content/skyproc", tr("SkyProc Patcher"));
-  m_ContentIcons[ModInfo::CONTENT_SOUND]     = std::make_tuple(":/MO/gui/content/sound", tr("Sound or Music"));
-  m_ContentIcons[ModInfo::CONTENT_TEXTURE]   = std::make_tuple(":/MO/gui/content/texture", tr("Textures"));
-  m_ContentIcons[ModInfo::CONTENT_MCM]       = std::make_tuple(":/MO/gui/content/menu", tr("MCM Configuration"));
-  m_ContentIcons[ModInfo::CONTENT_INI]       = std::make_tuple(":/MO/gui/content/inifile", tr("INI files"));
-  m_ContentIcons[ModInfo::CONTENT_MODGROUP]  = std::make_tuple(":/MO/gui/content/modgroup", tr("ModGroup files"));
+  m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(":/MO/gui/content/plugin", QT_TR_NOOP("Game Plugins (ESP/ESM/ESL)"));
+  m_ContentIcons[ModInfo::CONTENT_INTERFACE] = std::make_tuple(":/MO/gui/content/interface", QT_TR_NOOP("Interface"));
+  m_ContentIcons[ModInfo::CONTENT_MESH]      = std::make_tuple(":/MO/gui/content/mesh", QT_TR_NOOP("Meshes"));
+  m_ContentIcons[ModInfo::CONTENT_BSA]       = std::make_tuple(":/MO/gui/content/bsa", QT_TR_NOOP("Bethesda Archive"));
+  m_ContentIcons[ModInfo::CONTENT_SCRIPT]    = std::make_tuple(":/MO/gui/content/script", QT_TR_NOOP("Scripts (Papyrus)"));
+  m_ContentIcons[ModInfo::CONTENT_SKSE]      = std::make_tuple(":/MO/gui/content/skse", QT_TR_NOOP("Script Extender Plugin"));
+  m_ContentIcons[ModInfo::CONTENT_SKYPROC]   = std::make_tuple(":/MO/gui/content/skyproc", QT_TR_NOOP("SkyProc Patcher"));
+  m_ContentIcons[ModInfo::CONTENT_SOUND]     = std::make_tuple(":/MO/gui/content/sound", QT_TR_NOOP("Sound or Music"));
+  m_ContentIcons[ModInfo::CONTENT_TEXTURE]   = std::make_tuple(":/MO/gui/content/texture", QT_TR_NOOP("Textures"));
+  m_ContentIcons[ModInfo::CONTENT_MCM]       = std::make_tuple(":/MO/gui/content/menu", QT_TR_NOOP("MCM Configuration"));
+  m_ContentIcons[ModInfo::CONTENT_INI]       = std::make_tuple(":/MO/gui/content/inifile", QT_TR_NOOP("INI files"));
+  m_ContentIcons[ModInfo::CONTENT_MODGROUP]  = std::make_tuple(":/MO/gui/content/modgroup", QT_TR_NOOP("ModGroup files"));
 
   m_LastCheck.start();
 }
@@ -207,7 +207,7 @@ QString ModList::contentsToToolTip(const std::vector<ModInfo::EContent> &content
     if (contentsSet.find(iter->first) != contentsSet.end()) {
       result.append(QString("<tr><td><img src=\"%1\" width=32/></td>"
                             "<td valign=\"middle\">%2</td></tr>")
-                    .arg(std::get<0>(iter->second)).arg(std::get<1>(iter->second)));
+                    .arg(std::get<0>(iter->second)).arg(tr(std::get<1>(iter->second).toStdString().c_str())));
     }
   }
   result.append("</table>");
