@@ -1317,18 +1317,25 @@ void MainWindow::closeEvent(QCloseEvent* event)
   //
   // for 2), the settings have been saved and the window can just close
 
-  if (ModOrganizerExiting()) {
+  if (ModOrganizerCanCloseNow()) {
     // the user has confirmed if necessary and all settings have been saved,
     // just close it
     QMainWindow::closeEvent(event);
-  } else {
-    // never close the window because settings might need to be changed
-    event->ignore();
-
-    // start the process of exiting, which may require confirmation by calling
-    // canExit(), among other things
-    ExitModOrganizer();
+    return;
   }
+
+  if (ModOrganizerExiting()) {
+    // ignore repeated attempts
+    event->ignore();
+    return;
+  }
+
+  // never close the window because settings might need to be changed
+  event->ignore();
+
+  // start the process of exiting, which may require confirmation by calling
+  // canExit(), among other things
+  ExitModOrganizer();
 }
 
 bool MainWindow::canExit()
