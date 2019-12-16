@@ -461,6 +461,11 @@ std::shared_ptr<UILocker::Session> UILocker::lock(Reasons reason)
   return ls;
 }
 
+bool UILocker::locked() const
+{
+  return !m_sessions.empty();
+}
+
 void UILocker::unlock(Session* s)
 {
   auto itor = m_sessions.begin();

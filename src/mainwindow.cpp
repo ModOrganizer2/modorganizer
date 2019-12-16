@@ -1306,6 +1306,21 @@ void MainWindow::onBeforeClose()
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
+  if (isVisible()) {
+    // this is messy
+    //
+    // the main problem this is solving is when closing MO, then getting the
+    // lock overlay because processes are still running, then pressing the X
+    // again
+    //
+    // in this case, closeEvent() is _not_ called for the second event and the
+    // window is immediately hidden
+    //
+    // this always saves the settings here; in the event where a lock overlay
+    // is then shown, it might save settings multiple times, but it's harmless
+    onBeforeClose();
+  }
+
   // this happens for two reasons:
   //  1) the user requested to close the window, such as clicking the X
   //  2) close() is called in runApplication() after application.exec()
@@ -1321,6 +1336,13 @@ void MainWindow::closeEvent(QCloseEvent* event)
     // the user has confirmed if necessary and all settings have been saved,
     // just close it
     QMainWindow::closeEvent(event);
+    return;
+  }
+
+  if (UILocker::instance().locked()) {
+    // don't bother asking the user to confirm if the ui is already locked
+    event->ignore();
+    ExitModOrganizer(Exit::Force);
     return;
   }
 

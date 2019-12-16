@@ -498,14 +498,16 @@ DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle)
   const auto wcommandLine = commandLine.toStdWString();
   const auto wcwd = cwd.toStdWString();
 
+  const DWORD flags = CREATE_BREAKAWAY_FROM_JOB;
+
   if (sp.hooked) {
     success = ::CreateProcessHooked(
       nullptr, const_cast<wchar_t*>(wcommandLine.c_str()), nullptr, nullptr,
-      inheritHandles, 0, nullptr, wcwd.c_str(), &si, &pi);
+      inheritHandles, flags, nullptr, wcwd.c_str(), &si, &pi);
   } else {
     success = ::CreateProcess(
       nullptr, const_cast<wchar_t*>(wcommandLine.c_str()), nullptr, nullptr,
-      inheritHandles, 0, nullptr, wcwd.c_str(), &si, &pi);
+      inheritHandles, flags, nullptr, wcwd.c_str(), &si, &pi);
   }
 
   const auto e = GetLastError();

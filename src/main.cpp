@@ -745,7 +745,6 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       splash.finish(&mainWindow);
 
       res = application.exec();
-      mainWindow.onBeforeClose();
       mainWindow.close();
 
       NexusInterface::instance(&pluginContainer)

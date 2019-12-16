@@ -344,6 +344,9 @@ ProcessRunner::Results waitForProcessesThreadImpl(
     // processes
     wait = std::min(wait * 2, milliseconds(2000));
   }
+
+  log::debug("waiting for processes interrupted");
+  return ProcessRunner::ForceUnlocked;
 }
 
 void waitForProcessesThread(
@@ -374,9 +377,12 @@ ProcessRunner::Results waitForProcesses(
     if (!::AssignProcessToJobObject(job.get(), h)) {
       const auto e = GetLastError();
 
-      log::error(
-        "can't assign process to job to wait for processes, {}",
-        formatSystemMessage(e));
+      // this happens when closing MO while multiple processes are running,
+      // so the logging is disabled until it gets fixed
+
+      //log::error(
+      //  "can't assign process to job to wait for processes, {}",
+      //  formatSystemMessage(e));
 
       // keep going
     }
@@ -871,11 +877,12 @@ ProcessRunner::Results ProcessRunner::waitForAllUSVFSProcessesWithLock(
 
   auto r = Error;
 
-  withLock([&](auto& ls) {
   for (;;) {
+    withLock([&](auto& ls) {
       const auto processes = getRunningUSVFSProcesses();
       if (processes.empty()) {
-        break;
+        r = Completed;
+        return;
       }
 
       r = waitForProcesses(processes, ls);
@@ -886,10 +893,13 @@ ProcessRunner::Results ProcessRunner::waitForAllUSVFSProcessesWithLock(
       }
 
       // this process is completed, check for others
-    }
-
-    r = Completed;
+      r = Running;
     });
+
+    if (r != Running) {
+      break;
+    }
+  }
 
   return r;
 }
