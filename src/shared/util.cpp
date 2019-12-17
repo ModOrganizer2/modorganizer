@@ -294,6 +294,7 @@ QString getUsvfsVersionString()
 
 
 static bool g_exiting = false;
+static bool g_canClose = false;
 
 MainWindow* findMainWindow()
 {
@@ -312,6 +313,9 @@ bool ExitModOrganizer(ExitFlags e)
     return true;
   }
 
+  g_exiting = true;
+  MOBase::Guard g([&]{ g_exiting = false; });
+
   if (!e.testFlag(Exit::Force)) {
     if (auto* mw=findMainWindow()) {
       if (!mw->canExit()) {
@@ -320,12 +324,17 @@ bool ExitModOrganizer(ExitFlags e)
     }
   }
 
-  g_exiting = true;
+  g_canClose = true;
 
   const int code = (e.testFlag(Exit::Restart) ? RestartExitCode : 0);
   qApp->exit(code);
 
   return true;
+}
+
+bool ModOrganizerCanCloseNow()
+{
+  return g_canClose;
 }
 
 bool ModOrganizerExiting()

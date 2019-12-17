@@ -225,7 +225,7 @@ const std::chrono::milliseconds Infinite(-1);
 //
 std::optional<ProcessRunner::Results> timedWait(
   HANDLE handle, DWORD pid, UILocker::Session& ls,
-  std::chrono::milliseconds wait)
+  std::chrono::milliseconds wait, std::atomic<bool>& interrupt)
 {
   using namespace std::chrono;
 
@@ -234,7 +234,7 @@ std::optional<ProcessRunner::Results> timedWait(
     start = high_resolution_clock::now();
   }
 
-  for (;;) {
+  while (!interrupt) {
     // wait for a very short while, allows for processing events below
     const auto r = singleWait(handle, pid);
 
@@ -286,10 +286,13 @@ std::optional<ProcessRunner::Results> timedWait(
       }
     }
   }
+
+  log::debug("waiting for {} interrupted", pid);
+  return ProcessRunner::ForceUnlocked;
 }
 
 ProcessRunner::Results waitForProcessesThreadImpl(
-  HANDLE job, UILocker::Session& ls)
+  HANDLE job, UILocker::Session& ls, std::atomic<bool>& interrupt)
 {
   using namespace std::chrono;
 
@@ -301,7 +304,7 @@ ProcessRunner::Results waitForProcessesThreadImpl(
   const milliseconds defaultWait(50);
   auto wait = defaultWait;
 
-  for (;;) {
+  while (!interrupt) {
     auto ip = getInterestingProcess(job);
     if (!ip.handle) {
       // nothing to wait on
@@ -325,7 +328,7 @@ ProcessRunner::Results waitForProcessesThreadImpl(
       wait = Infinite;
     }
 
-    const auto r = timedWait(ip.handle.get(), ip.p.pid(), ls, wait);
+    const auto r = timedWait(ip.handle.get(), ip.p.pid(), ls, wait, interrupt);
     if (r) {
       if (*r == ProcessRunner::Results::Completed) {
         // process completed, check another one, reset the wait time to find
@@ -341,12 +344,16 @@ ProcessRunner::Results waitForProcessesThreadImpl(
     // processes
     wait = std::min(wait * 2, milliseconds(2000));
   }
+
+  log::debug("waiting for processes interrupted");
+  return ProcessRunner::ForceUnlocked;
 }
 
 void waitForProcessesThread(
-  ProcessRunner::Results& result, HANDLE job, UILocker::Session& ls)
+  ProcessRunner::Results& result, HANDLE job, UILocker::Session& ls,
+  std::atomic<bool>& interrupt)
 {
-  result = waitForProcessesThreadImpl(job, ls);
+  result = waitForProcessesThreadImpl(job, ls, interrupt);
   ls.unlock();
 }
 
@@ -370,18 +377,23 @@ ProcessRunner::Results waitForProcesses(
     if (!::AssignProcessToJobObject(job.get(), h)) {
       const auto e = GetLastError();
 
-      log::error(
-        "can't assign process to job to wait for processes, {}",
-        formatSystemMessage(e));
+      // this happens when closing MO while multiple processes are running,
+      // so the logging is disabled until it gets fixed
+
+      //log::error(
+      //  "can't assign process to job to wait for processes, {}",
+      //  formatSystemMessage(e));
 
       // keep going
     }
   }
 
   auto results = ProcessRunner::Running;
+  std::atomic<bool> interrupt(false);
 
   auto* t = QThread::create(
-    waitForProcessesThread, std::ref(results), job.get(), std::ref(ls));
+    waitForProcessesThread,
+    std::ref(results), job.get(), std::ref(ls), std::ref(interrupt));
 
   QEventLoop events;
   QObject::connect(t, &QThread::finished, [&]{
@@ -390,6 +402,11 @@ ProcessRunner::Results waitForProcesses(
 
   t->start();
   events.exec();
+
+  if (t->isRunning()) {
+    interrupt = true;
+    t->wait();
+  }
 
   delete t;
 
@@ -860,11 +877,12 @@ ProcessRunner::Results ProcessRunner::waitForAllUSVFSProcessesWithLock(
 
   auto r = Error;
 
-  withLock([&](auto& ls) {
-    for (;;) {
+  for (;;) {
+    withLock([&](auto& ls) {
       const auto processes = getRunningUSVFSProcesses();
       if (processes.empty()) {
-        break;
+        r = Completed;
+        return;
       }
 
       r = waitForProcesses(processes, ls);
@@ -875,10 +893,13 @@ ProcessRunner::Results ProcessRunner::waitForAllUSVFSProcessesWithLock(
       }
 
       // this process is completed, check for others
-    }
+      r = Running;
+    });
 
-    r = Completed;
-  });
+    if (r != Running) {
+      break;
+    }
+  }
 
   return r;
 }

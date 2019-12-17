@@ -20,6 +20,9 @@ public:
 
   ~UILockerInterface()
   {
+    if (m_topLevel) {
+      delete m_topLevel.data();
+    }
   }
 
   void checkTarget()
@@ -31,14 +34,8 @@ public:
 
   bool set()
   {
-    QWidget* newTarget = nullptr;
-
-    newTarget = m_mainUI;
-    if (auto* w = QApplication::activeModalWidget()) {
-      newTarget = w;
-    }
-
-    if (newTarget == m_target) {
+    QWidget* newTarget = findTarget();
+    if (m_topLevel && newTarget == m_target) {
       return false;
     }
 
@@ -98,8 +95,8 @@ public:
 
   QWidget* topLevel()
   {
-    return m_topLevel.get();
-  }
+    return m_topLevel.data();
+   }
 
 private:
   class Filter : public QObject
@@ -129,7 +126,7 @@ private:
   std::unique_ptr<QTimer> m_timer;
   QWidget* m_mainUI;
   QWidget* m_target;
-  std::unique_ptr<QWidget> m_topLevel;
+  QPointer<QWidget> m_topLevel;
   QLabel* m_message;
   QLabel* m_info;
   QStringList m_labels;
@@ -141,6 +138,55 @@ private:
   bool hasMainUI() const
   {
     return (m_target != nullptr);
+  }
+
+  QWidget* findTarget()
+  {
+    auto isValidTarget = [](QWidget* w) {
+      // skip message boxes
+      if (dynamic_cast<QMessageBox*>(w)) {
+        return false;
+      }
+
+      // skip invisible widgets
+      if (!w->isVisible()) {
+        return false;
+      }
+
+      // skip windows that are too small
+      if (w->height() < 150) {
+        return false;
+      }
+
+      return true;
+    };
+
+
+    // find a modal dialog
+    QWidget* w = QApplication::activeModalWidget();
+
+    while (w && w != m_mainUI) {
+      if (isValidTarget(w)) {
+        return w;
+      }
+
+      w = w->parentWidget();
+    }
+
+    // find a non-modal dialog that's a child of the main window
+    if (m_mainUI) {
+      const auto topLevels = QApplication::topLevelWidgets();
+
+      for (auto* w : topLevels) {
+        if (w && w->parentWidget() == m_mainUI) {
+          if (isValidTarget(w)) {
+            return w;
+          }
+        }
+      }
+    }
+
+    return m_mainUI;
   }
 
   QWidget* createTransparentWidget(QWidget* parent=nullptr)
@@ -156,7 +202,12 @@ private:
 
   QFrame* createOverlay(QWidget* mainUI)
   {
-    m_topLevel.reset(createTransparentWidget(mainUI));
+    if (m_topLevel) {
+      delete m_topLevel.data();
+      m_topLevel.clear();
+    }
+
+    m_topLevel = createTransparentWidget(mainUI);
     m_topLevel->setWindowFlags(m_topLevel->windowFlags() & Qt::FramelessWindowHint);
     m_topLevel->setGeometry(mainUI->rect());
 
@@ -171,7 +222,12 @@ private:
 
   QFrame* createDialog()
   {
-    m_topLevel.reset(new QDialog);
+    if (m_topLevel) {
+      delete m_topLevel.data();
+      m_topLevel.clear();
+    }
+
+    m_topLevel = new QDialog;
 
     return createFrame();
   }
@@ -195,7 +251,7 @@ private:
       ly->setContentsMargins(0, 0, 0, 0);
     }
 
-    auto* grid = new QGridLayout(m_topLevel.get());
+    auto* grid = new QGridLayout(m_topLevel.data());
     grid->addWidget(createTransparentWidget(), 0, 1);
     grid->addWidget(createTransparentWidget(), 2, 1);
     grid->addWidget(createTransparentWidget(), 1, 0);
@@ -403,6 +459,11 @@ std::shared_ptr<UILocker::Session> UILocker::lock(Reasons reason)
   updateLabel();
 
   return ls;
+}
+
+bool UILocker::locked() const
+{
+  return !m_sessions.empty();
 }
 
 void UILocker::unlock(Session* s)

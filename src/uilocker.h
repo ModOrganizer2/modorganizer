@@ -70,6 +70,7 @@ public:
   void setUserInterface(QWidget* parent);
 
   std::shared_ptr<Session> lock(Reasons reason);
+  bool locked() const;
 
   Results result() const;
 

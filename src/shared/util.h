@@ -65,6 +65,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(ExitFlags);
 
 bool ExitModOrganizer(ExitFlags e=Exit::Normal);
 bool ModOrganizerExiting();
+bool ModOrganizerCanCloseNow();
 void ResetExitFlag();
 
 #endif // UTIL_H
