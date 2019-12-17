@@ -1681,12 +1681,34 @@ This is likely due to a corrupted or incompatible download or unrecognized archi
 <context>
     <name>Loot</name>
     <message>
-        <location filename="loot.cpp" line="477"/>
+        <location filename="loot.cpp" line="239"/>
+        <source>Loot failed to run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="loot.cpp" line="242"/>
+        <source>No errors were reported. The log below might have more information.
+</source>
+        <oldsource>No errors were reported. The log below might have more information.</oldsource>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="loot.cpp" line="296"/>
+        <source>Errors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="loot.cpp" line="308"/>
+        <source>Warnings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="loot.cpp" line="517"/>
         <source>failed to start loot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="loot.cpp" line="581"/>
+        <location filename="loot.cpp" line="632"/>
         <source>Loot failed. Exit code was: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1724,8 +1746,8 @@ This is likely due to a corrupted or incompatible download or unrecognized archi
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="lootdialog.cpp" line="275"/>
-        <source>Loot failed to run</source>
+        <location filename="lootdialog.cpp" line="215"/>
+        <source>Running LOOT...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -5500,7 +5522,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../../uibase/src/report.cpp" line="38"/>
         <location filename="../../uibase/src/report.cpp" line="41"/>
-        <location filename="loot.cpp" line="366"/>
+        <location filename="loot.cpp" line="413"/>
         <location filename="main.cpp" line="104"/>
         <location filename="organizercore.cpp" line="404"/>
         <location filename="settingsdialogdiagnostics.cpp" line="37"/>
@@ -5945,49 +5967,49 @@ If the folder was still in use, restart MO and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="loot.cpp" line="240"/>
+        <location filename="loot.cpp" line="260"/>
         <source>General messages</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="loot.cpp" line="252"/>
+        <location filename="loot.cpp" line="272"/>
         <source>Plugins</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="loot.cpp" line="263"/>
+        <location filename="loot.cpp" line="283"/>
         <source>No messages.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="loot.cpp" line="284"/>
+        <location filename="loot.cpp" line="331"/>
         <source>Incompatibilities</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="loot.cpp" line="299"/>
+        <location filename="loot.cpp" line="346"/>
         <source>Missing masters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="loot.cpp" line="331"/>
+        <location filename="loot.cpp" line="378"/>
         <source>Verified clean by %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="loot.cpp" line="351"/>
+        <location filename="loot.cpp" line="398"/>
         <source>%1 found %2 ITM record(s), %3 deleted reference(s) and %4 deleted navmesh(es).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="loot.cpp" line="372"/>
+        <location filename="loot.cpp" line="419"/>
         <location filename="settingsdialogdiagnostics.cpp" line="36"/>
         <location filename="settingsdialogdiagnostics.cpp" line="60"/>
         <source>Warning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="loot.cpp" line="869"/>
+        <location filename="loot.cpp" line="949"/>
         <source>failed to run loot: %1</source>
         <translation type="unfinished"></translation>
     </message>

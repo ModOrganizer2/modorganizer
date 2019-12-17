@@ -71,11 +71,17 @@ public:
 
   struct Report
   {
+    bool okay = false;
+    std::vector<QString> errors, warnings;
     std::vector<Message> messages;
     std::vector<Plugin> plugins;
     Stats stats;
 
     QString toMarkdown() const;
+
+  private:
+    QString successMarkdown() const;
+    QString errorsMarkdown() const;
   };
 
 
@@ -85,13 +91,16 @@ public:
   bool start(QWidget* parent, bool didUpdateMasterList);
   void cancel();
   bool result() const;
+
   const QString& outPath() const;
   const Report& report() const;
+  const std::vector<QString>& errors() const;
+  const std::vector<QString>& warnings() const;
 
 signals:
   void output(const QString& s);
   void progress(const lootcli::Progress p);
-  void log(MOBase::log::Levels level, const QString& s);
+  void log(MOBase::log::Levels level, const QString& s) const;
   void finished();
 
 private:
@@ -102,6 +111,7 @@ private:
   env::HandlePtr m_lootProcess;
   std::unique_ptr<AsyncPipe> m_pipe;
   std::string m_outputBuffer;
+  std::vector<QString> m_errors, m_warnings;
   Report m_report;
 
   bool spawnLootcli(
@@ -113,9 +123,10 @@ private:
   void processStdout(const std::string &lootOut);
   void processMessage(const lootcli::Message& m);
 
-  void processOutputFile();
+  Report createReport() const;
+  void processOutputFile(Report& r) const;
+  void deleteReportFile();
 
-  Report createReport(const QJsonDocument& doc) const;
   Message reportMessage(const QJsonObject& message) const;
   std::vector<Plugin> reportPlugins(const QJsonArray& plugins) const;
   Loot::Plugin reportPlugin(const QJsonObject& plugin) const;
