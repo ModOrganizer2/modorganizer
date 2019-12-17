@@ -476,6 +476,11 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">reedts</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">Schilduin</string>
                </property>
               </item>
