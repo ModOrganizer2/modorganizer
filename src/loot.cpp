@@ -231,8 +231,28 @@ log::Levels levelFromLoot(lootcli::LogLevels level)
   }
 }
 
-
 QString Loot::Report::toMarkdown() const
+{
+  QString s;
+
+  if (!okay) {
+    s += "## " + tr("Loot failed to run") + "\n";
+
+    if (errors.empty() && warnings.empty()) {
+      s += tr("No errors were reported. The log below might have more information.\n");
+    }
+  }
+
+  s += errorsMarkdown();
+
+  if (okay) {
+    s += "\n" + successMarkdown();
+  }
+
+  return s;
+}
+
+QString Loot::Report::successMarkdown() const
 {
   QString s;
 
@@ -264,6 +284,33 @@ QString Loot::Report::toMarkdown() const
   }
 
   s += stats.toMarkdown();
+
+  return s;
+}
+
+QString Loot::Report::errorsMarkdown() const
+{
+  QString s;
+
+  if (!errors.empty()) {
+    s += "### " + tr("Errors") + ":\n";
+
+    for (auto&& e : errors) {
+      s += " - " + e + "\n";
+    }
+  }
+
+  if (!warnings.empty()) {
+    if (!s.isEmpty()) {
+      s += "\n";
+    }
+
+    s += "### " + tr("Warnings") + ":\n";
+
+    for (auto&& w : warnings) {
+      s += " - " + w + "\n";
+    }
+  }
 
   return s;
 }
@@ -396,20 +443,13 @@ Loot::~Loot()
     m_thread->wait();
   }
 
-  if (QFile::exists(LootReportPath)) {
-    log::debug("deleting temporary loot report '{}'", LootReportPath);
-    const auto r = shell::Delete(LootReportPath);
-
-    if (!r) {
-      log::error(
-        "failed to remove temporary loot json report '{}': {}",
-        LootReportPath, r.toString());
-    }
-  }
+  deleteReportFile();
 }
 
 bool Loot::start(QWidget* parent, bool didUpdateMasterList)
 {
+  deleteReportFile();
+
   log::debug("starting loot");
 
   m_pipe.reset(new AsyncPipe);
@@ -506,6 +546,16 @@ const Loot::Report& Loot::report() const
   return m_report;
 }
 
+const std::vector<QString>& Loot::errors() const
+{
+  return m_errors;
+}
+
+const std::vector<QString>& Loot::warnings() const
+{
+  return m_warnings;
+}
+
 void Loot::lootThread()
 {
   try
@@ -514,8 +564,9 @@ void Loot::lootThread()
 
     if (waitForCompletion()) {
       m_result = true;
-      processOutputFile();
     }
+
+    m_report = createReport();
   }
   catch(...)
   {
@@ -624,7 +675,15 @@ void Loot::processMessage(const lootcli::Message& m)
   {
     case lootcli::MessageType::Log:
     {
-      emit log(levelFromLoot(m.logLevel), QString::fromStdString(m.log));
+      const auto level = levelFromLoot(m.logLevel);
+
+      if (level == log::Error) {
+        m_errors.push_back(QString::fromStdString(m.log));
+      } else if (level == log::Warning) {
+        m_warnings.push_back(QString::fromStdString(m.log));
+      }
+
+      emit log(level, QString::fromStdString(m.log));
       break;
     }
 
@@ -636,7 +695,36 @@ void Loot::processMessage(const lootcli::Message& m)
   }
 }
 
-void Loot::processOutputFile()
+Loot::Report Loot::createReport() const
+{
+  Report r;
+
+  r.okay = m_result;
+  r.errors = m_errors;
+  r.warnings = m_warnings;
+
+  if (m_result) {
+    processOutputFile(r);
+  }
+
+  return r;
+}
+
+void Loot::deleteReportFile()
+{
+  if (QFile::exists(LootReportPath)) {
+    log::debug("deleting temporary loot report '{}'", LootReportPath);
+    const auto r = shell::Delete(LootReportPath);
+
+    if (!r) {
+      log::error(
+        "failed to remove temporary loot json report '{}': {}",
+        LootReportPath, r.toString());
+    }
+  }
+}
+
+void Loot::processOutputFile(Report& r) const
 {
   log::debug("parsing json output file at '{}'", LootReportPath);
 
@@ -661,21 +749,13 @@ void Loot::processOutputFile()
     return;
   }
 
-  m_report = createReport(doc);
-}
-
-Loot::Report Loot::createReport(const QJsonDocument& doc) const
-{
   requireObject(doc, "root");
 
-  Report r;
   const QJsonObject object = doc.object();
 
   r.messages = reportMessages(getOpt<QJsonArray>(object, "messages"));
   r.plugins = reportPlugins(getOpt<QJsonArray>(object, "plugins"));
   r.stats = reportStats(getWarn<QJsonObject>(object, "stats"));
-
-  return r;
 }
 
 std::vector<Loot::Plugin> Loot::reportPlugins(const QJsonArray& plugins) const

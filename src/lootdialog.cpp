@@ -212,6 +212,8 @@ void LootDialog::createUI()
 
   ui->buttons->setStandardButtons(QDialogButtonBox::Cancel);
 
+  m_report.setText(tr("Running LOOT..."));
+
   resize(650, 450);
 }
 
@@ -243,9 +245,15 @@ void LootDialog::onFinished()
     close();
   } else {
     log::debug("loot dialog: showing report");
+
     showReport();
+
     ui->openJsonReport->setEnabled(true);
     ui->buttons->setStandardButtons(QDialogButtonBox::Close);
+
+    // if loot failed, the Done progress won't be received; this makes sure
+    // the progress bar is stopped
+    setProgress(lootcli::Progress::Done);
   }
 }
 
@@ -262,16 +270,14 @@ void LootDialog::log(log::Levels lv, const QString& s)
 
 void LootDialog::showReport()
 {
-  if (m_loot.result()) {
-    const auto& lootReport = m_loot.report();
+  const auto& lootReport = m_loot.report();
 
+  if (m_loot.result()) {
     m_core.pluginList()->clearAdditionalInformation();
     for (auto&& p : lootReport.plugins) {
       m_core.pluginList()->addLootReport(p.name, p);
     }
-
-    m_report.setText(lootReport.toMarkdown());
-  } else {
-    m_report.setText("**" + tr("Loot failed to run") + "**");
   }
+
+  m_report.setText(lootReport.toMarkdown());
 }
