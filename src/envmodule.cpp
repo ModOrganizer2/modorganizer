@@ -545,22 +545,19 @@ void findChildren(Process& parent, const std::vector<Process>& processes)
 
 Process getProcessTreeFromProcess(HANDLE h)
 {
+  Process root;
+
   const auto parentPID = ::GetProcessId(h);
   const auto v = getRunningProcesses();
 
-  Process root;
   for (auto&& p : v) {
     if (p.pid() == parentPID) {
-      root = p;
+      Process child = p;
+      findChildren(child, v);
+      root.addChild(child);
       break;
     }
   }
-
-  if (root.pid() == 0) {
-    return {};
-  }
-
-  findChildren(root, v);
 
   return root;
 }
