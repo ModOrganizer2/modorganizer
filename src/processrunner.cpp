@@ -360,6 +360,11 @@ void waitForProcessesThread(
 ProcessRunner::Results waitForProcesses(
   const std::vector<HANDLE>& initialProcesses, UILocker::Session& ls)
 {
+  if (initialProcesses.empty()) {
+    // nothing to wait for
+    return ProcessRunner::Completed;
+  }
+
   // using a job so any child process started by any of those processes can also
   // be captured and monitored
   env::HandlePtr job(CreateJobObjectW(nullptr, nullptr));
@@ -373,8 +378,12 @@ ProcessRunner::Results waitForProcesses(
     return ProcessRunner::Error;
   }
 
+  bool oneWorked = false;
+
   for (auto&& h : initialProcesses) {
-    if (!::AssignProcessToJobObject(job.get(), h)) {
+    if (::AssignProcessToJobObject(job.get(), h)) {
+      oneWorked = true;
+    } else {
       const auto e = GetLastError();
 
       // this happens when closing MO while multiple processes are running,
@@ -388,12 +397,21 @@ ProcessRunner::Results waitForProcesses(
     }
   }
 
+  HANDLE monitor = INVALID_HANDLE_VALUE;
+
+  if (oneWorked) {
+    monitor = job.get();
+  } else {
+    // none of the handles could be added to the job, just monitor the first one
+    monitor = initialProcesses[0];
+  }
+
   auto results = ProcessRunner::Running;
   std::atomic<bool> interrupt(false);
 
   auto* t = QThread::create(
     waitForProcessesThread,
-    std::ref(results), job.get(), std::ref(ls), std::ref(interrupt));
+    std::ref(results), monitor, std::ref(ls), std::ref(interrupt));
 
   QEventLoop events;
   QObject::connect(t, &QThread::finished, [&]{
