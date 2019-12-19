@@ -1,4 +1,5 @@
 #include "iconfetcher.h"
+#include "util.h"
 
 void IconFetcher::Waiter::wait()
 {
@@ -79,6 +80,8 @@ bool IconFetcher::hasOwnIcon(const QString& path) const
 
 void IconFetcher::threadFun()
 {
+  MOShared::SetThisThreadName("IconFetcher");
+
   while (!m_stop) {
     m_waiter.wait();
     if (m_stop) {

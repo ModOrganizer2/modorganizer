@@ -47,6 +47,8 @@ bool CaseInsensitiveEqual(const std::wstring &lhs, const std::wstring &rhs);
 MOBase::VersionInfo createVersionInfo();
 QString getUsvfsVersionString();
 
+void SetThisThreadName(const QString& s);
+
 } // namespace MOShared
 
 

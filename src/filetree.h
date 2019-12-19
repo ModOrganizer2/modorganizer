@@ -35,6 +35,8 @@ public:
   FileTreeItem& operator=(FileTreeItem&&) = default;
 
   void add(std::unique_ptr<FileTreeItem> child);
+  void insert(std::unique_ptr<FileTreeItem> child, std::size_t at);
+  void remove(std::size_t i);
   const std::vector<std::unique_ptr<FileTreeItem>>& children() const;
 
   FileTreeItem* parent();
@@ -59,6 +61,11 @@ public:
 
   void setLoaded(bool b);
   bool isLoaded() const;
+  void unload();
+
+  void setExpanded(bool b);
+  bool isStrictlyExpanded() const;
+  bool areChildrenVisible() const;
 
   QString debugName() const;
 
@@ -71,6 +78,7 @@ private:
   QString m_file;
   QString m_mod;
   bool m_loaded;
+  bool m_expanded;
   std::vector<std::unique_ptr<FileTreeItem>> m_children;
 };
 
@@ -136,15 +144,31 @@ private:
     FileTreeItem& parentItem, const std::wstring& path,
     const std::vector<MOShared::FileEntry::Ptr>& files, FillFlags flags);
 
+
+  void update(
+    FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
+    const std::wstring& parentPath);
+
+  void updateDirectories(
+    FileTreeItem& parentItem, const std::wstring& path,
+    const MOShared::DirectoryEntry& parentEntry, FillFlags flags);
+
+  void updateFiles(
+    FileTreeItem& parentItem, const std::wstring& path,
+    const MOShared::DirectoryEntry& parentEntry, FillFlags flags);
+
   std::wstring makeModName(const MOShared::FileEntry& file, int originID) const;
 
   void ensureLoaded(FileTreeItem* item) const;
   void updatePendingIcons();
+  void removePendingIcons(const QModelIndex& parent, int first, int last);
 
   bool shouldShowFile(const MOShared::FileEntry& file) const;
   bool hasFilesAnywhere(const MOShared::DirectoryEntry& dir) const;
   QString makeTooltip(const FileTreeItem& item) const;
   QVariant makeIcon(const FileTreeItem& item, const QModelIndex& index) const;
+
+  QModelIndex indexFromItem(FileTreeItem* item, int row, int col) const;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FileTreeModel::Flags);
@@ -187,7 +211,9 @@ private:
   FileTreeModel* m_model;
 
   FileTreeItem* singleSelection();
+  void onExpandedChanged(const QModelIndex& index, bool expanded);
   void onContextMenu(const QPoint &pos);
+
 
   void addDirectoryMenus(QMenu& menu, FileTreeItem& item);
   void addFileMenus(QMenu& menu, const MOShared::FileEntry& file, int originID);

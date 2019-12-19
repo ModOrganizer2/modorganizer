@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "util.h"
 #include "windows_error.h"
 #include "mainwindow.h"
+#include "env.h"
 #include <usvfs.h>
 #include <usvfs_version.h>
 
@@ -287,6 +288,32 @@ QString getUsvfsVersionString()
     return dll;
   } else {
     return "dll is " + dll + ", compiled against " + header;
+  }
+}
+
+void SetThisThreadName(const QString& s)
+{
+  using SetThreadDescriptionType = HRESULT (
+    HANDLE hThread,
+    PCWSTR lpThreadDescription
+  );
+
+  static SetThreadDescriptionType* SetThreadDescription = [] {
+    SetThreadDescriptionType* p = nullptr;
+
+    env::LibraryPtr kernel32(LoadLibraryW(L"kernel32.dll"));
+    if (!kernel32) {
+      return p;
+    }
+
+    p = reinterpret_cast<SetThreadDescriptionType*>(
+      GetProcAddress(kernel32.get(), "SetThreadDescription"));
+
+    return p;
+  }();
+
+  if (SetThreadDescription) {
+    SetThreadDescription(GetCurrentThread(), s.toStdWString().c_str());
   }
 }
 

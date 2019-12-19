@@ -133,13 +133,37 @@ FileTreeItem::FileTreeItem(
     m_flags(flags),
     m_file(QString::fromStdWString(file)),
     m_mod(QString::fromStdWString(mod)),
-    m_loaded(false)
+    m_loaded(false),
+    m_expanded(false)
 {
 }
 
 void FileTreeItem::add(std::unique_ptr<FileTreeItem> child)
 {
   m_children.push_back(std::move(child));
+}
+
+void FileTreeItem::insert(std::unique_ptr<FileTreeItem> child, std::size_t at)
+{
+  if (at > m_children.size()) {
+    log::error(
+      "{}: can't insert child {} at {}, out of range",
+      debugName(), child->debugName(), at);
+
+    return;
+  }
+
+  m_children.insert(m_children.begin() + at, std::move(child));
+}
+
+void FileTreeItem::remove(std::size_t i)
+{
+  if (i >= m_children.size()) {
+    log::error("{}: can't remove child at {}", debugName(), i);
+    return;
+  }
+
+  m_children.erase(m_children.begin() + i);
 }
 
 const std::vector<std::unique_ptr<FileTreeItem>>& FileTreeItem::children() const
@@ -270,6 +294,39 @@ bool FileTreeItem::isLoaded() const
   return m_loaded;
 }
 
+void FileTreeItem::unload()
+{
+  if (!m_loaded) {
+    return;
+  }
+
+  m_loaded = false;
+  m_children.clear();
+}
+
+void FileTreeItem::setExpanded(bool b)
+{
+  m_expanded = b;
+}
+
+bool FileTreeItem::isStrictlyExpanded() const
+{
+  return m_expanded;
+}
+
+bool FileTreeItem::areChildrenVisible() const
+{
+  if (m_expanded) {
+    if (m_parent) {
+      return m_parent->areChildrenVisible();
+    } else {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 QString FileTreeItem::debugName() const
 {
   return QString("%1(ld=%2,cs=%3)")
@@ -283,6 +340,16 @@ FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent)
   : QAbstractItemModel(parent), m_core(core), m_flags(NoFlags)
 {
   connect(&m_iconPendingTimer, &QTimer::timeout, [&]{ updatePendingIcons(); });
+
+  connect(
+    this, &QAbstractItemModel::modelAboutToBeReset,
+    [&]{ m_iconPending.clear(); });
+
+  connect(
+    this, &QAbstractItemModel::rowsAboutToBeRemoved,
+    [&](auto&& parent, int first, int last){
+      removePendingIcons(parent, first, last);
+  });
 }
 
 void FileTreeModel::setFlags(Flags f)
@@ -302,10 +369,15 @@ bool FileTreeModel::showArchives() const
 
 void FileTreeModel::refresh()
 {
-  beginResetModel();
-  m_root = {nullptr, 0, L"", L"", FileTreeItem::Directory, L"Data", L"<root>"};
-  fill(m_root, *m_core.directoryStructure(), L"");
-  endResetModel();
+  if (m_root.hasChildren()) {
+    update(m_root, *m_core.directoryStructure(), L"");
+  } else {
+    beginResetModel();
+    m_root = {nullptr, 0, L"", L"", FileTreeItem::Directory, L"", L"<root>"};
+    m_root.setExpanded(true);
+    fill(m_root, *m_core.directoryStructure(), L"");
+    endResetModel();
+  }
 }
 
 void FileTreeModel::ensureLoaded(FileTreeItem* item) const
@@ -357,6 +429,28 @@ void FileTreeModel::fill(
   fillFiles(parentItem, path, parentEntry.getFiles(), flags);
 
   parentItem.setLoaded(true);
+}
+
+void FileTreeModel::update(
+  FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
+  const std::wstring& parentPath)
+{
+  log::debug("updating {}", parentItem.debugName());
+
+  std::wstring path = parentPath;
+
+  if (!parentEntry.isTopLevel()) {
+    if (!path.empty()) {
+      path += L"\\";
+    }
+
+    path += parentEntry.getName();
+  }
+
+  const auto flags = FillFlag::PruneDirectories;
+
+  updateDirectories(parentItem, path, parentEntry, flags);
+  updateFiles(parentItem, path, parentEntry, flags);
 }
 
 bool FileTreeModel::shouldShowFile(const FileEntry& file) const
@@ -458,6 +552,288 @@ void FileTreeModel::fillFiles(
   }
 }
 
+void FileTreeModel::updateDirectories(
+  FileTreeItem& parentItem, const std::wstring& path,
+  const MOShared::DirectoryEntry& parentEntry, FillFlags flags)
+{
+  log::debug(
+    "updating directories in {} from {}",
+    parentItem.debugName(), (path.empty() ? L"\\" : path));
+
+  int row = 0;
+  std::vector<FileTreeItem*> remove;
+  std::set<std::wstring> seen;
+
+  for (auto&& item : parentItem.children()) {
+    if (!item->isDirectory()) {
+      break;
+    }
+
+    const auto name = item->filename().toStdWString();
+
+    if (auto d=parentEntry.findSubDirectory(name)) {
+      // directory still exists
+      seen.insert(name);
+
+      if (item->areChildrenVisible()) {
+        log::debug("{} still exists and is expanded", item->debugName());
+
+        // node is expanded
+        update(*item, *d, path);
+
+        if (flags & FillFlag::PruneDirectories) {
+          if (item->children().empty()) {
+            log::debug("{} is now empty, will prune", item->debugName());
+            remove.push_back(item.get());
+          }
+        }
+      } else {
+        if ((flags & FillFlag::PruneDirectories) && !hasFilesAnywhere(*d)) {
+          log::debug("{} still exists but is empty; pruning", item->debugName());
+          remove.push_back(item.get());
+        } else if (item->isLoaded()) {
+          log::debug(
+            "{} still exists, is loaded, but is not expanded; unloading",
+            item->debugName());
+
+          // node is not expanded, unload
+
+          bool mustEnd = false;
+
+          if (!item->children().empty()) {
+            const auto itemIndex = indexFromItem(item.get(), row, 0);
+            const int first = 0;
+            const int last = static_cast<int>(item->children().size());
+
+            beginRemoveRows(itemIndex, first, last);
+            mustEnd = true;
+          }
+
+          item->unload();
+
+          if (mustEnd) {
+            endRemoveRows();
+          }
+
+          if (d->isEmpty()) {
+            item->setLoaded(true);
+          }
+        }
+      }
+    } else {
+      // directory is gone
+      log::debug("{} is gone, removing", item->debugName());
+      remove.push_back(item.get());
+    }
+
+    ++row;
+  }
+
+  if (!remove.empty()) {
+    log::debug("{}: removing disappearing items", parentItem.debugName());
+
+    for (auto* toRemove : remove) {
+      const auto& cs = parentItem.children();
+
+      for (std::size_t i=0; i<cs.size(); ++i) {
+        if (cs[i].get() == toRemove) {
+          const auto itemIndex = indexFromItem(
+            toRemove, static_cast<int>(i), 0);
+
+          const auto parentIndex = parent(itemIndex);
+          const int first = static_cast<int>(i);
+          const int last = static_cast<int>(i);
+
+          beginRemoveRows(parentIndex, first, last);
+          parentItem.remove(i);
+          endRemoveRows();
+
+          break;
+        }
+      }
+    }
+  }
+
+
+  std::vector<DirectoryEntry*>::const_iterator begin, end;
+  parentEntry.getSubDirectories(begin, end);
+
+  std::size_t insertPos = 0;
+  for (auto itor=begin; itor!=end; ++itor) {
+    const auto& dir = **itor;
+
+    if (!seen.contains(dir.getName())) {
+      log::debug(
+        "{}: new directory {}",
+        parentItem.debugName(), QString::fromStdWString(dir.getName()));
+
+      if (flags & FillFlag::PruneDirectories) {
+        if (!hasFilesAnywhere(dir)) {
+          log::debug("has no files and pruning is set, skipping");
+          continue;
+        }
+      }
+
+      auto child = std::make_unique<FileTreeItem>(
+        &parentItem, 0, path, L"", FileTreeItem::Directory, dir.getName(), L"");
+
+      if (dir.isEmpty()) {
+        child->setLoaded(true);
+      }
+
+      QModelIndex parentIndex;
+
+      if (parentItem.parent()) {
+        const auto& cs = parentItem.parent()->children();
+
+        for (std::size_t i=0; i<cs.size(); ++i) {
+          if (cs[i].get() == &parentItem) {
+            parentIndex = indexFromItem(&parentItem, static_cast<int>(i), 0);
+            break;
+          }
+        }
+      }
+
+      const auto first = static_cast<int>(insertPos);
+      const auto last = static_cast<int>(insertPos);
+
+      log::debug(
+        "{}: inserting {} at {}",
+        parentItem.debugName(), child->debugName(), insertPos);
+
+      beginInsertRows(parentIndex, first, last);
+      parentItem.insert(std::move(child), insertPos);
+      endInsertRows();
+    }
+
+    ++insertPos;
+  }
+}
+
+void FileTreeModel::updateFiles(
+  FileTreeItem& parentItem, const std::wstring& path,
+  const MOShared::DirectoryEntry& parentEntry, FillFlags)
+{
+  log::debug(
+    "updating files in {} from {}",
+    parentItem.debugName(), (path.empty() ? L"\\" : path));
+
+  std::set<std::wstring> seen;
+  std::vector<FileTreeItem*> remove;
+
+  for (auto&& item : parentItem.children()) {
+    if (item->isDirectory()) {
+      continue;
+    }
+
+    const auto name = item->filename().toStdWString();
+
+    if (auto f=parentEntry.findFile(name)) {
+      if (shouldShowFile(*f)) {
+        // file still exists
+        log::debug("{} still exists", item->debugName());
+        seen.insert(name);
+        continue;
+      }
+    }
+
+    log::debug("{} is gone", item->debugName());
+
+    remove.push_back(item.get());
+  }
+
+
+  if (!remove.empty()) {
+    log::debug("{}: removing disappearing items", parentItem.debugName());
+
+    for (auto* toRemove : remove) {
+      const auto& cs = parentItem.children();
+
+      for (std::size_t i=0; i<cs.size(); ++i) {
+        if (cs[i].get() == toRemove) {
+          const auto itemIndex = indexFromItem(
+            toRemove, static_cast<int>(i), 0);
+
+          const auto parentIndex = parent(itemIndex);
+          const int first = static_cast<int>(i);
+          const int last = static_cast<int>(i);
+
+          beginRemoveRows(parentIndex, first, last);
+          parentItem.remove(i);
+          endRemoveRows();
+
+          break;
+        }
+      }
+    }
+  }
+
+  std::size_t firstFile = 0;
+  for (std::size_t i=0; i<parentItem.children().size(); ++i) {
+    if (!parentItem.children()[i]->isDirectory()) {
+      break;
+    }
+
+    ++firstFile;
+  }
+
+  log::debug("{}: first file index is {}", parentItem.debugName(), firstFile);
+  std::size_t insertPos = firstFile;
+
+  for (auto&& file : parentEntry.getFiles()) {
+    if (shouldShowFile(*file)) {
+      if (!seen.contains(file->getName())) {
+        log::debug(
+          "{}: new file {}",
+          parentItem.debugName(), QString::fromStdWString(file->getName()));
+
+        bool isArchive = false;
+        int originID = file->getOrigin(isArchive);
+
+        FileTreeItem::Flags flags = FileTreeItem::NoFlags;
+
+        if (isArchive) {
+          flags |= FileTreeItem::FromArchive;
+        }
+
+        if (!file->getAlternatives().empty()) {
+          flags |= FileTreeItem::Conflicted;
+        }
+
+        auto child = std::make_unique<FileTreeItem>(
+          &parentItem, originID, path, file->getFullPath(), flags, file->getName(),
+          makeModName(*file, originID));
+
+        log::debug(
+          "{}: inserting {} at {}",
+          parentItem.debugName(), child->debugName(), insertPos);
+
+        QModelIndex parentIndex;
+
+        if (parentItem.parent()) {
+          const auto& cs = parentItem.parent()->children();
+
+          for (std::size_t i=0; i<cs.size(); ++i) {
+            if (cs[i].get() == &parentItem) {
+              parentIndex = indexFromItem(&parentItem, static_cast<int>(i), 0);
+              break;
+            }
+          }
+        }
+
+        const auto first = static_cast<int>(insertPos);
+        const auto last = static_cast<int>(insertPos);
+
+        beginInsertRows(parentIndex, first, last);
+        parentItem.insert(std::move(child), insertPos);
+        endInsertRows();
+      }
+
+      ++insertPos;
+    }
+  }
+}
+
 std::wstring FileTreeModel::makeModName(const FileEntry& file, int originID) const
 {
   static const std::wstring Unmanaged = UnmanagedModName().toStdWString();
@@ -485,7 +861,18 @@ FileTreeItem* FileTreeModel::itemFromIndex(const QModelIndex& index) const
     return nullptr;
   }
 
-  return static_cast<FileTreeItem*>(data);
+  auto* item = static_cast<FileTreeItem*>(data);
+  if (!item->debugName().isEmpty()) {
+    return item;
+  }
+
+  return nullptr;
+}
+
+QModelIndex FileTreeModel::indexFromItem(
+  FileTreeItem* item, int row, int col) const
+{
+  return createIndex(row, col, item);
 }
 
 QModelIndex FileTreeModel::index(
@@ -526,7 +913,7 @@ QModelIndex FileTreeModel::index(
   }
 
   auto* item = parent->children()[static_cast<std::size_t>(row)].get();
-  return createIndex(row, col, item);
+  return indexFromItem(item, row, col);
 }
 
 QModelIndex FileTreeModel::parent(const QModelIndex& index) const
@@ -750,12 +1137,39 @@ QVariant FileTreeModel::makeIcon(
 
 void FileTreeModel::updatePendingIcons()
 {
-  for (auto&& index : m_iconPending) {
+  std::vector<QModelIndex> v(std::move(m_iconPending));
+  m_iconPending.clear();
+
+  for (auto&& index : v) {
     emit dataChanged(index, index, {Qt::DecorationRole});
   }
 
-  m_iconPending.clear();
-  m_iconPendingTimer.stop();
+  if (m_iconPending.empty()) {
+    m_iconPendingTimer.stop();
+  }
+}
+
+void FileTreeModel::removePendingIcons(
+  const QModelIndex& parent, int first, int last)
+{
+  auto itor = m_iconPending.begin();
+
+  while (itor != m_iconPending.end()) {
+    if (itor->parent() == parent) {
+      if (itor->row() >= first && itor->row() <= last) {
+        if (auto* item=itemFromIndex(*itor)) {
+          log::debug("removing pending icon {}", item->debugName());
+        } else {
+          log::debug("removing pending icon (can't get item)");
+        }
+
+        itor = m_iconPending.erase(itor);
+        continue;
+      }
+    }
+
+    ++itor;
+  }
 }
 
 QVariant FileTreeModel::headerData(int i, Qt::Orientation ori, int role) const
@@ -793,6 +1207,14 @@ FileTree::FileTree(OrganizerCore& core, PluginContainer& pc, QTreeView* tree)
   QObject::connect(
     m_tree, &QTreeWidget::customContextMenuRequested,
     [&](auto pos){ onContextMenu(pos); });
+
+  QObject::connect(
+    m_tree, &QTreeWidget::expanded,
+    [&](auto&& index){ onExpandedChanged(index, true); });
+
+  QObject::connect(
+    m_tree, &QTreeWidget::collapsed,
+    [&](auto&& index){ onExpandedChanged(index, false); });
 }
 
 void FileTree::setFlags(FileTreeModel::Flags flags)
@@ -1083,6 +1505,13 @@ void FileTree::dumpToFile(
     dumpToFile(out, newParentPath, dir);
     return true;
   });
+}
+
+void FileTree::onExpandedChanged(const QModelIndex& index, bool expanded)
+{
+  if (auto* item=m_model->itemFromIndex(index)) {
+    item->setExpanded(expanded);
+  }
 }
 
 void FileTree::onContextMenu(const QPoint &pos)

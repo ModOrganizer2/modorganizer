@@ -885,6 +885,11 @@ const FileEntry::Ptr DirectoryEntry::findFile(const std::wstring &name) const
   }
 }
 
+bool DirectoryEntry::hasFile(const std::wstring& name) const
+{
+  return m_Files.contains(ToLower(name));
+}
+
 DirectoryEntry *DirectoryEntry::getSubDirectory(const std::wstring &name, bool create, int originID)
 {
   for (DirectoryEntry *entry : m_SubDirectories) {
