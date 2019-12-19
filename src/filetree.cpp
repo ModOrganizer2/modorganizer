@@ -1004,8 +1004,85 @@ void FileTree::unhide()
   toggleVisibility(true);
 }
 
-void FileTree::dumpToFile()
+class DumpFailed {};
+
+void FileTree::dumpToFile() const
 {
+  log::debug("dumping filetree to file");
+
+  QString file = QFileDialog::getSaveFileName(m_tree->window());
+  if (file.isEmpty()) {
+    log::debug("user cancelled");
+    return;
+  }
+
+  QFile out(file);
+
+  if (!out.open(QIODevice::WriteOnly)) {
+    QMessageBox::critical(
+      m_tree->window(),
+      QObject::tr("Error"),
+      QObject::tr("Failed to open file '%1': %2")
+      .arg(file)
+      .arg(out.errorString()));
+
+    return;
+  }
+
+  try
+  {
+    dumpToFile(out, "Data", *m_core.directoryStructure());
+  }
+  catch(DumpFailed&)
+  {
+    // try to remove it silently
+    if (out.exists()) {
+      if (!out.remove()) {
+        log::error("failed to remove '{}', ignoring", file);
+      }
+    }
+  }
+}
+
+void FileTree::dumpToFile(
+  QFile& out, const QString& parentPath, const DirectoryEntry& entry) const
+{
+  entry.forEachFile([&](auto&& file) {
+    bool isArchive = false;
+    const int originID = file.getOrigin(isArchive);
+
+    if (isArchive) {
+      // TODO: don't list files from archives. maybe make this an option?
+      return true;
+    }
+
+    const auto& origin = m_core.directoryStructure()->getOriginByID(originID);
+    const auto originName = QString::fromStdWString(origin.getName());
+
+    const QString path =
+      parentPath + "\\" + QString::fromStdWString(file.getName());
+
+    if (out.write(path.toUtf8() + "\t(" + originName.toUtf8() + ")\r\n") == -1) {
+      QMessageBox::critical(
+        m_tree->window(),
+        QObject::tr("Error"),
+        QObject::tr("Failed to write to file %1: %2")
+          .arg(out.fileName())
+          .arg(out.errorString()));
+
+      throw DumpFailed();
+    }
+
+    return true;
+  });
+
+  entry.forEachDirectory([&](auto&& dir) {
+    const auto newParentPath =
+      parentPath + "\\" + QString::fromStdWString(dir.getName());
+
+    dumpToFile(out, newParentPath, dir);
+    return true;
+  });
 }
 
 void FileTree::onContextMenu(const QPoint &pos)

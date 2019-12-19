@@ -173,7 +173,7 @@ public:
   void hide();
   void unhide();
 
-  void dumpToFile();
+  void dumpToFile() const;
 
 signals:
   void executablesChanged();
@@ -195,6 +195,10 @@ private:
   void addCommonMenus(QMenu& menu);
 
   void toggleVisibility(bool b);
+
+  void dumpToFile(
+    QFile& out, const QString& parentPath,
+    const MOShared::DirectoryEntry& entry) const;
 };
 
 #endif // MODORGANIZER_FILETREE_INCLUDED

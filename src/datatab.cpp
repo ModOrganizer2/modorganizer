@@ -257,70 +257,13 @@ void DataTab::hideFile()
 
 void DataTab::unhideFile()
 {
-  auto* item = singleSelection();
-  if (!item) {
-    return;
-  }
-
-  QString oldName = item->data(0, Qt::UserRole).toString();
-  QString newName = oldName.left(oldName.length() - ModInfo::s_HiddenExt.length());
-  if (QFileInfo(newName).exists()) {
-    if (QMessageBox::question(m_parent, tr("Replace file?"), tr("There already is a visible version of this file. Replace it?"),
-      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      if (!QFile(newName).remove()) {
-        QMessageBox::critical(m_parent, tr("File operation failed"), tr("Failed to remove \"%1\". Maybe you lack the required file permissions?").arg(newName));
-        return;
-      }
-    } else {
-      return;
-    }
-  }
-  if (QFile::rename(oldName, newName)) {
-    emit originModified(item->data(1, Qt::UserRole + 1).toInt());
-    refreshDataTreeKeepExpandedNodes();
-  } else {
-    reportError(tr("failed to rename \"%1\" to \"%2\"").arg(QDir::toNativeSeparators(oldName)).arg(QDir::toNativeSeparators(newName)));
-  }
 }
 
 void DataTab::writeDataToFile(
   QFile &file, const QString &directory, const DirectoryEntry &directoryEntry)
 {
-  for (FileEntry::Ptr current : directoryEntry.getFiles()) {
-    bool isArchive = false;
-    int origin = current->getOrigin(isArchive);
-    if (isArchive) {
-      // TODO: don't list files from archives. maybe make this an option?
-      continue;
-    }
-    QString fullName = directory + "\\" + ToQString(current->getName());
-    file.write(fullName.toUtf8());
-
-    file.write("\t(");
-    file.write(ToQString(m_core.directoryStructure()->getOriginByID(origin).getName()).toUtf8());
-    file.write(")\r\n");
-  }
-
-  // recurse into subdirectories
-  std::vector<DirectoryEntry*>::const_iterator current, end;
-  directoryEntry.getSubDirectories(current, end);
-  for (; current != end; ++current) {
-    writeDataToFile(file, directory + "\\" + ToQString((*current)->getName()), **current);
-  }
 }
 
 void DataTab::writeDataToFile()
 {
-  QString fileName = QFileDialog::getSaveFileName(m_parent);
-  if (!fileName.isEmpty()) {
-    QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly)) {
-      reportError(tr("failed to write to file %1").arg(fileName));
-    }
-
-    writeDataToFile(file, "data", *m_core.directoryStructure());
-    file.close();
-
-    MessageDialog::showMessage(tr("%1 written").arg(QDir::toNativeSeparators(fileName)), m_parent);
-  }
 }

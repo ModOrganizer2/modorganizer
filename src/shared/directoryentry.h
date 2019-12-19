@@ -250,6 +250,16 @@ public:
   }
 
   template <class F>
+  void forEachDirectory(F&& f) const
+  {
+    for (auto&& d : m_SubDirectories) {
+      if (!f(*d)) {
+        break;
+      }
+    }
+  }
+
+  template <class F>
   void forEachFile(F&& f) const
   {
     for (auto&& p : m_Files) {
