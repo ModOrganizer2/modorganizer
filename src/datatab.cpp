@@ -29,10 +29,6 @@ DataTab::DataTab(
     ui.refresh, &QPushButton::clicked,
     [&]{ onRefresh(); });
 
-  //connect(
-  //  ui.tree, &QTreeWidget::itemActivated,
-  //  [&](auto* item, int col){ onItemActivated(item, col); });
-
   connect(
     ui.conflicts, &QCheckBox::toggled,
     [&]{ onConflicts(); });
@@ -67,47 +63,6 @@ void DataTab::restoreState(const Settings& s)
 void DataTab::activated()
 {
   refreshDataTreeKeepExpandedNodes();
-}
-
-QTreeWidgetItem* DataTab::singleSelection()
-{
-  //const auto sel = ui.tree->selectedItems();
-  //if (sel.count() != 1) {
-  //  return nullptr;
-  //}
-  //
-  //return sel[0];
-  return nullptr;
-}
-
-void DataTab::openSelection()
-{
-}
-
-void DataTab::open(QTreeWidgetItem* item)
-{
-}
-
-void DataTab::runSelectionHooked()
-{
-  if (auto* item=singleSelection()) {
-    runHooked(item);
-  }
-}
-
-void DataTab::runHooked(QTreeWidgetItem* item)
-{
-}
-
-void DataTab::previewSelection()
-{
-  if (auto* item=singleSelection()) {
-    preview(item);
-  }
-}
-
-void DataTab::preview(QTreeWidgetItem* item)
-{
 }
 
 void DataTab::onRefresh()
@@ -155,16 +110,9 @@ void DataTab::refreshDataTreeKeepExpandedNodes()
   }*/
 }
 
-void DataTab::updateTo(
-  QTreeWidgetItem *subTree, const std::wstring &directorySoFar,
-  const DirectoryEntry &directoryEntry, bool conflictsOnly,
-  QIcon *fileIcon, QIcon *folderIcon)
-{
-}
-
 void DataTab::onItemExpanded(QTreeWidgetItem* item)
 {
-  if ((item->childCount() == 1) && (item->child(0)->data(0, Qt::UserRole).toString() == "__loaded_on_demand__")) {
+  /*if ((item->childCount() == 1) && (item->child(0)->data(0, Qt::UserRole).toString() == "__loaded_on_demand__")) {
     // read the data we need from the sub-item, then dispose of it
     QTreeWidgetItem *onDemandDataItem = item->child(0);
     const QString path = onDemandDataItem->data(0, Qt::UserRole + 1).toString();
@@ -189,28 +137,7 @@ void DataTab::onItemExpanded(QTreeWidgetItem* item)
       }
       m_removeLater.clear();
     });
-  }
-}
-
-void DataTab::onItemActivated(QTreeWidgetItem *item, int column)
-{
-  const auto isArchive = item->data(0, Qt::UserRole + 1).toBool();
-  const auto isDirectory = item->data(0, Qt::UserRole + 3).toBool();
-
-  if (isArchive || isDirectory) {
-    return;
-  }
-
-  const QString path = item->data(0, Qt::UserRole).toString();
-  const QFileInfo targetInfo(path);
-
-  const auto tryPreview = m_core.settings().interface().doubleClicksOpenPreviews();
-
-  if (tryPreview && m_pluginContainer.previewGenerator().previewSupported(targetInfo.suffix())) {
-    emit preview(item);
-  } else {
-    emit open(item);
-  }
+  }*/
 }
 
 void DataTab::onConflicts()
@@ -237,33 +164,4 @@ void DataTab::updateOptions()
 
   m_filetree->setFlags(flags);
   refreshDataTree();
-}
-
-void DataTab::addAsExecutable()
-{
-}
-
-void DataTab::openOriginInExplorer()
-{
-}
-
-void DataTab::openModInfo()
-{
-}
-
-void DataTab::hideFile()
-{
-}
-
-void DataTab::unhideFile()
-{
-}
-
-void DataTab::writeDataToFile(
-  QFile &file, const QString &directory, const DirectoryEntry &directoryEntry)
-{
-}
-
-void DataTab::writeDataToFile()
-{
 }

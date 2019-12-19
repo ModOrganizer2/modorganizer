@@ -51,34 +51,7 @@ private:
 
   void onRefresh();
   void onItemExpanded(QTreeWidgetItem* item);
-  void onItemActivated(QTreeWidgetItem* item, int col);
   void onConflicts();
   void onArchives();
   void updateOptions();
-
-  void updateTo(
-    QTreeWidgetItem *subTree, const std::wstring &directorySoFar,
-    const MOShared::DirectoryEntry &directoryEntry, bool conflictsOnly,
-    QIcon *fileIcon, QIcon *folderIcon);
-
-  QTreeWidgetItem* singleSelection();
-
-  void openSelection();
-  void open(QTreeWidgetItem* item);
-
-  void runSelectionHooked();
-  void runHooked(QTreeWidgetItem* item);
-
-  void previewSelection();
-  void preview(QTreeWidgetItem* item);
-
-  void addAsExecutable();
-  void openOriginInExplorer();
-  void openModInfo();
-  void hideFile();
-  void unhideFile();
-  void writeDataToFile();
-  void writeDataToFile(
-    QFile &file, const QString &directory,
-    const MOShared::DirectoryEntry &directoryEntry);
 };
