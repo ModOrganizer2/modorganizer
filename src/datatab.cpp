@@ -40,6 +40,18 @@ DataTab::DataTab(
   connect(
     ui.archives, &QCheckBox::toggled,
     [&]{ onArchives(); });
+
+  connect(
+    m_filetree.get(), &FileTree::executablesChanged,
+    this, &DataTab::executablesChanged);
+
+  connect(
+    m_filetree.get(), &FileTree::originModified,
+    this, &DataTab::originModified);
+
+  connect(
+    m_filetree.get(), &FileTree::displayModInformation,
+    this, &DataTab::displayModInformation);
 }
 
 void DataTab::saveState(Settings& s) const
@@ -233,80 +245,14 @@ void DataTab::addAsExecutable()
 
 void DataTab::openOriginInExplorer()
 {
-  auto* item = singleSelection();
-  if (!item) {
-    return;
-  }
-
-  const auto isArchive = item->data(0, Qt::UserRole + 1).toBool();
-  const auto isDirectory = item->data(0, Qt::UserRole + 3).toBool();
-
-  if (isArchive || isDirectory) {
-    return;
-  }
-
-  const auto fullPath = item->data(0, Qt::UserRole).toString();
-
-  log::debug("opening in explorer: {}", fullPath);
-  shell::Explore(fullPath);
 }
 
 void DataTab::openModInfo()
 {
-  auto* item = singleSelection();
-  if (!item) {
-    return;
-  }
-
-  const auto originID = item->data(1, Qt::UserRole + 1).toInt();
-  if (originID == 0) {
-    // unmanaged
-    return;
-  }
-
-  const auto& origin = m_core.directoryStructure()->getOriginByID(originID);
-  const auto& name = QString::fromStdWString(origin.getName());
-
-  unsigned int index = ModInfo::getIndex(name);
-  if (index == UINT_MAX) {
-    log::error("can't open mod info, mod '{}' not found", name);
-    return;
-  }
-
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-  if (modInfo) {
-    emit displayModInformation(modInfo, index, ModInfoTabIDs::None);
-  }
 }
 
 void DataTab::hideFile()
 {
-  auto* item = singleSelection();
-  if (!item) {
-    return;
-  }
-
-  QString oldName = item->data(0, Qt::UserRole).toString();
-  QString newName = oldName + ModInfo::s_HiddenExt;
-
-  if (QFileInfo(newName).exists()) {
-    if (QMessageBox::question(m_parent, tr("Replace file?"), tr("There already is a hidden version of this file. Replace it?"),
-      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      if (!QFile(newName).remove()) {
-        QMessageBox::critical(m_parent, tr("File operation failed"), tr("Failed to remove \"%1\". Maybe you lack the required file permissions?").arg(newName));
-        return;
-      }
-    } else {
-      return;
-    }
-  }
-
-  if (QFile::rename(oldName, newName)) {
-    emit originModified(item->data(1, Qt::UserRole + 1).toInt());
-    refreshDataTreeKeepExpandedNodes();
-  } else {
-    reportError(tr("failed to rename \"%1\" to \"%2\"").arg(oldName).arg(QDir::toNativeSeparators(newName)));
-  }
 }
 
 void DataTab::unhideFile()

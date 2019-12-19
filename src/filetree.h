@@ -3,6 +3,8 @@
 
 #include "directoryentry.h"
 #include "iconfetcher.h"
+#include "modinfodialogfwd.h"
+#include "modinfo.h"
 #include <QAbstractItemModel>
 
 class OrganizerCore;
@@ -149,8 +151,10 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(FileTreeModel::Flags);
 Q_DECLARE_OPERATORS_FOR_FLAGS(FileTreeItem::Flags);
 
 
-class FileTree
+class FileTree : public QObject
 {
+  Q_OBJECT;
+
 public:
   FileTree(OrganizerCore& core, PluginContainer& pc, QTreeView* tree);
 
@@ -171,6 +175,11 @@ public:
 
   void dumpToFile();
 
+signals:
+  void executablesChanged();
+  void originModified(int originID);
+  void displayModInformation(ModInfo::Ptr m, unsigned int i, ModInfoTabIDs tab);
+
 private:
   OrganizerCore& m_core;
   PluginContainer& m_plugins;
@@ -184,6 +193,8 @@ private:
   void addFileMenus(QMenu& menu, const MOShared::FileEntry& file, int originID);
   void addOpenMenus(QMenu& menu, const MOShared::FileEntry& file);
   void addCommonMenus(QMenu& menu);
+
+  void toggleVisibility(bool b);
 };
 
 #endif // MODORGANIZER_FILETREE_INCLUDED

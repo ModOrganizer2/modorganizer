@@ -888,8 +888,7 @@ void FileTree::addAsExecutable()
           .arguments(fec.arguments)
           .workingDirectory(target.absolutePath()));
 
-        // todo
-        //emit executablesChanged();
+        emit executablesChanged();
       }
 
       break;
@@ -909,22 +908,100 @@ void FileTree::addAsExecutable()
 
 void FileTree::exploreOrigin()
 {
+  if (auto* item=singleSelection()) {
+    if (item->isFromArchive() || item->isDirectory()) {
+      return;
+    }
+
+    const auto path = item->realPath();
+
+    log::debug("opening in explorer: {}", path);
+    shell::Explore(path);
+  }
 }
 
 void FileTree::openModInfo()
 {
+  if (auto* item=singleSelection()) {
+    const auto originID = item->originID();
+
+    if (originID == 0) {
+      // unmanaged
+      return;
+    }
+
+    const auto& origin = m_core.directoryStructure()->getOriginByID(originID);
+    const auto& name = QString::fromStdWString(origin.getName());
+
+    unsigned int index = ModInfo::getIndex(name);
+    if (index == UINT_MAX) {
+      log::error("can't open mod info, mod '{}' not found", name);
+      return;
+    }
+
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
+    if (modInfo) {
+      emit displayModInformation(modInfo, index, ModInfoTabIDs::None);
+    }
+  }
 }
 
 void FileTree::toggleVisibility()
 {
 }
 
+void FileTree::toggleVisibility(bool visible)
+{
+  auto* item = singleSelection();
+  if (!item) {
+    return;
+  }
+
+  const QString currentName = item->realPath();
+  QString newName;
+
+  if (visible) {
+    if (!currentName.endsWith(ModInfo::s_HiddenExt)) {
+      log::error(
+        "cannot unhide '{}', doesn't end with '{}'",
+        currentName, ModInfo::s_HiddenExt);
+
+      return;
+    }
+
+    newName = currentName.left(currentName.size() - ModInfo::s_HiddenExt.size());
+  } else {
+    if (currentName.endsWith(ModInfo::s_HiddenExt)) {
+      log::error(
+        "cannot hide '{}', already ends with '{}'",
+        currentName, ModInfo::s_HiddenExt);
+
+      return;
+    }
+
+    newName = currentName + ModInfo::s_HiddenExt;
+  }
+
+  log::debug("attempting to rename '{}' to '{}'", currentName, newName);
+
+  FileRenamer renamer(
+    m_tree->window(),
+    (visible ? FileRenamer::UNHIDE : FileRenamer::HIDE));
+
+  if (renamer.rename(currentName, newName) == FileRenamer::RESULT_OK) {
+    emit originModified(item->originID());
+    refresh();
+  }
+}
+
 void FileTree::hide()
 {
+  toggleVisibility(false);
 }
 
 void FileTree::unhide()
 {
+  toggleVisibility(true);
 }
 
 void FileTree::dumpToFile()
@@ -992,14 +1069,14 @@ void FileTree::addFileMenus(QMenu& menu, const FileEntry& file, int originID)
 
   if (isHidden(file)) {
     MenuItem(QObject::tr("&Un-Hide"))
-      .callback([&]{ hide(); })
+      .callback([&]{ unhide(); })
       .hint(QObject::tr("Un-hides the file"))
       .disabledHint(QObject::tr("This file is in an archive"))
       .enabled(!file.isFromArchive())
       .addTo(menu);
   } else {
     MenuItem(QObject::tr("&Hide"))
-      .callback([&]{ unhide(); })
+      .callback([&]{ hide(); })
       .hint(QObject::tr("Hides the file"))
       .disabledHint(QObject::tr("This file is in an archive"))
       .enabled(!file.isFromArchive())
@@ -1083,6 +1160,15 @@ void FileTree::addOpenMenus(QMenu& menu, const MOShared::FileEntry& file)
 
 void FileTree::addCommonMenus(QMenu& menu)
 {
-  menu.addAction(QObject::tr("Write To File..."), [&]{ dumpToFile(); });
-  menu.addAction(QObject::tr("Refresh"), [&]{ refresh(); });
+  menu.addSeparator();
+
+  MenuItem(QObject::tr("&Save Tree to Text File..."))
+    .callback([&]{ dumpToFile(); })
+    .hint(QObject::tr("Writes the list of files to a text file"))
+    .addTo(menu);
+
+  MenuItem(QObject::tr("&Refresh"))
+    .callback([&]{ refresh(); })
+    .hint(QObject::tr("Refreshes the list"))
+    .addTo(menu);
 }
