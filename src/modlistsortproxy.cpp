@@ -269,9 +269,9 @@ void ModListSortProxy::updateFilter(const QString& filter)
   invalidate();
 }
 
-bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags) const
+bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EConflictFlag> &flags) const
 {
-  for (ModInfo::EFlag flag : flags) {
+  for (ModInfo::EConflictFlag flag : flags) {
     if ((flag == ModInfo::FLAG_CONFLICT_MIXED) ||
       (flag == ModInfo::FLAG_CONFLICT_OVERWRITE) ||
       (flag == ModInfo::FLAG_CONFLICT_OVERWRITTEN) ||
@@ -382,7 +382,7 @@ bool ModListSortProxy::categoryMatchesMod(
 
     case CategoryFactory::Conflict:
     {
-      b = (hasConflictFlag(info->getFlags()));
+      b = (hasConflictFlag(info->getConflictFlags()));
       break;
     }
 
