@@ -69,20 +69,29 @@ public:
   FileEntry(Index index, const std::wstring &name, DirectoryEntry *parent);
   ~FileEntry();
 
-  Index getIndex() const { return m_Index; }
+  Index getIndex() const
+  {
+    return m_Index;
+  }
 
-  time_t lastAccessed() const { return m_LastAccessed; }
+  time_t lastAccessed() const
+  {
+    return m_LastAccessed;
+  }
 
-  void addOrigin(int origin, FILETIME fileTime, const std::wstring &archive, int order);
+  void addOrigin(
+    int origin, FILETIME fileTime, const std::wstring &archive, int order);
 
-  // remove the specified origin from the list of origins that contain this file. if no origin is left,
-  // the file is effectively deleted and true is returned. otherwise, false is returned
+  // remove the specified origin from the list of origins that contain this
+  // file. if no origin is left, the file is effectively deleted and true is
+  // returned. otherwise, false is returned
   bool removeOrigin(int origin);
 
   void sortOrigins();
 
-  // gets the list of alternative origins (origins with lower priority than the primary one).
-  // if sortOrigins has been called, it is sorted by priority (ascending)
+  // gets the list of alternative origins (origins with lower priority than
+  // the primary one). if sortOrigins has been called, it is sorted by priority
+  // (ascending)
   const AlternativesVector &getAlternatives() const
   {
     return m_Alternatives;
@@ -320,7 +329,10 @@ public:
 
   void propagateOrigin(int origin);
 
-  const std::wstring &getName() const;
+  const std::wstring &getName() const
+  {
+    return m_Name;
+  }
 
   boost::shared_ptr<FileRegister> getFileRegister()
   {
@@ -400,7 +412,8 @@ public:
   // if directory is not nullptr, the referenced variable will be set to the
   // path containing the file
   //
-  const FileEntry::Ptr searchFile(const std::wstring &path, const DirectoryEntry **directory) const;
+  const FileEntry::Ptr searchFile(
+    const std::wstring &path, const DirectoryEntry **directory) const;
 
   void insertFile(const std::wstring &filePath, FilesOrigin &origin, FILETIME fileTime);
 
