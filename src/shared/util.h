@@ -52,6 +52,20 @@ void SetThisThreadName(const QString& s);
 } // namespace MOShared
 
 
+class TimeThis
+{
+public:
+  TimeThis(QString what={});
+  ~TimeThis();
+
+private:
+  using Clock = std::chrono::high_resolution_clock;
+
+  QString m_what;
+  Clock::time_point m_start;
+};
+
+
 enum class Exit
 {
   None    = 0x00,

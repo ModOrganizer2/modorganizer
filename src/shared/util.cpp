@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "windows_error.h"
 #include "mainwindow.h"
 #include "env.h"
+#include <log.h>
 #include <usvfs.h>
 #include <usvfs_version.h>
 
@@ -318,6 +319,26 @@ void SetThisThreadName(const QString& s)
 }
 
 } // namespace MOShared
+
+
+TimeThis::TimeThis(QString what)
+  : m_what(std::move(what)), m_start(Clock::now())
+{
+}
+
+TimeThis::~TimeThis()
+{
+  using namespace std::chrono;
+
+  const auto end = Clock::now();
+  const auto d = duration_cast<milliseconds>(end - m_start).count();
+
+  if (m_what.isEmpty()) {
+    MOBase::log::debug("{} ms", d);
+  } else {
+    MOBase::log::debug("{} {} ms", m_what, d);
+  }
+}
 
 
 static bool g_exiting = false;

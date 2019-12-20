@@ -594,4 +594,8 @@ void FileTree::addCommonMenus(QMenu& menu)
     .callback([&]{ refresh(); })
     .hint(QObject::tr("Refreshes the list"))
     .addTo(menu);
+
+  MenuItem(QObject::tr("E&xpand All"))
+    .callback([&]{ m_tree->expandAll(); })
+    .addTo(menu);
 }

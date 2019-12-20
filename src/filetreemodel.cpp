@@ -9,6 +9,13 @@ using namespace MOShared;
 QString UnmanagedModName();
 
 
+template <class F>
+void trace(F&&)
+{
+  //f();
+}
+
+
 FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent)
   : QAbstractItemModel(parent), m_core(core), m_flags(NoFlags)
 {
@@ -43,8 +50,10 @@ bool FileTreeModel::showArchives() const
 void FileTreeModel::refresh()
 {
   if (m_root.hasChildren()) {
+    TimeThis tt("FileTreeModel::update()");
     update(m_root, *m_core.directoryStructure(), L"");
   } else {
+    TimeThis tt("FileTreeModel::fill()");
     beginResetModel();
     m_root = {nullptr, 0, L"", L"", FileTreeItem::Directory, L"", L"<root>"};
     m_root.setExpanded(true);
@@ -64,7 +73,7 @@ void FileTreeModel::ensureLoaded(FileTreeItem* item) const
     return;
   }
 
-  log::debug("{}: loading on demand", item->debugName());
+  trace([&]{ log::debug("{}: loading on demand", item->debugName()); });
 
   const auto path = item->dataRelativeFilePath();
   auto* dir = m_core.directoryStructure()->findSubDirectoryRecursive(
@@ -83,6 +92,8 @@ void FileTreeModel::fill(
   FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
   const std::wstring& parentPath)
 {
+  trace([&]{ log::debug("filling {}", parentItem.debugName()); });
+
   std::wstring path = parentPath;
 
   if (!parentEntry.isTopLevel()) {
@@ -108,7 +119,7 @@ void FileTreeModel::update(
   FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
   const std::wstring& parentPath)
 {
-  log::debug("updating {}", parentItem.debugName());
+  trace([&]{ log::debug("updating {}", parentItem.debugName()); });
 
   std::wstring path = parentPath;
 
@@ -229,9 +240,10 @@ void FileTreeModel::updateDirectories(
   FileTreeItem& parentItem, const std::wstring& path,
   const MOShared::DirectoryEntry& parentEntry, FillFlags flags)
 {
-  log::debug(
+  trace([&]{ log::debug(
     "updating directories in {} from {}",
     parentItem.debugName(), (path.empty() ? L"\\" : path));
+  });
 
   int row = 0;
   std::vector<FileTreeItem*> remove;
@@ -249,25 +261,35 @@ void FileTreeModel::updateDirectories(
       seen.insert(name);
 
       if (item->areChildrenVisible()) {
-        log::debug("{} still exists and is expanded", item->debugName());
+        trace([&]{ log::debug(
+          "{} still exists and is expanded", item->debugName());
+        });
 
         // node is expanded
         update(*item, *d, path);
 
         if (flags & FillFlag::PruneDirectories) {
           if (item->children().empty()) {
-            log::debug("{} is now empty, will prune", item->debugName());
+            trace([&]{ log::debug(
+              "{} is now empty, will prune", item->debugName());
+            });
+
             remove.push_back(item.get());
           }
         }
       } else {
         if ((flags & FillFlag::PruneDirectories) && !hasFilesAnywhere(*d)) {
-          log::debug("{} still exists but is empty; pruning", item->debugName());
+          trace([&]{ log::debug(
+            "{} still exists but is empty; pruning",
+            item->debugName());
+          });
+
           remove.push_back(item.get());
         } else if (item->isLoaded()) {
-          log::debug(
+          trace([&]{ log::debug(
             "{} still exists, is loaded, but is not expanded; unloading",
             item->debugName());
+          });
 
           // node is not expanded, unload
 
@@ -295,7 +317,7 @@ void FileTreeModel::updateDirectories(
       }
     } else {
       // directory is gone
-      log::debug("{} is gone, removing", item->debugName());
+      trace([&]{ log::debug("{} is gone, removing", item->debugName()); });
       remove.push_back(item.get());
     }
 
@@ -303,7 +325,10 @@ void FileTreeModel::updateDirectories(
   }
 
   if (!remove.empty()) {
-    log::debug("{}: removing disappearing items", parentItem.debugName());
+    trace([&]{ log::debug(
+      "{}: removing disappearing items",
+      parentItem.debugName());
+    });
 
     for (auto* toRemove : remove) {
       const auto& cs = parentItem.children();
@@ -336,13 +361,14 @@ void FileTreeModel::updateDirectories(
     const auto& dir = **itor;
 
     if (!seen.contains(dir.getName())) {
-      log::debug(
+      trace([&]{ log::debug(
         "{}: new directory {}",
         parentItem.debugName(), QString::fromStdWString(dir.getName()));
+      });
 
       if (flags & FillFlag::PruneDirectories) {
         if (!hasFilesAnywhere(dir)) {
-          log::debug("has no files and pruning is set, skipping");
+          trace([&]{ log::debug("has no files and pruning is set, skipping"); });
           continue;
         }
       }
@@ -370,9 +396,10 @@ void FileTreeModel::updateDirectories(
       const auto first = static_cast<int>(insertPos);
       const auto last = static_cast<int>(insertPos);
 
-      log::debug(
+      trace([&]{ log::debug(
         "{}: inserting {} at {}",
         parentItem.debugName(), child->debugName(), insertPos);
+      });
 
       beginInsertRows(parentIndex, first, last);
       parentItem.insert(std::move(child), insertPos);
@@ -387,9 +414,10 @@ void FileTreeModel::updateFiles(
   FileTreeItem& parentItem, const std::wstring& path,
   const MOShared::DirectoryEntry& parentEntry, FillFlags)
 {
-  log::debug(
+  trace([&]{ log::debug(
     "updating files in {} from {}",
     parentItem.debugName(), (path.empty() ? L"\\" : path));
+  });
 
   std::set<std::wstring> seen;
   std::vector<FileTreeItem*> remove;
@@ -404,20 +432,22 @@ void FileTreeModel::updateFiles(
     if (auto f=parentEntry.findFile(name)) {
       if (shouldShowFile(*f)) {
         // file still exists
-        log::debug("{} still exists", item->debugName());
+        trace([&]{ log::debug("{} still exists", item->debugName()); });
         seen.insert(name);
         continue;
       }
     }
 
-    log::debug("{} is gone", item->debugName());
+    trace([&]{ log::debug("{} is gone", item->debugName()); });
 
     remove.push_back(item.get());
   }
 
 
   if (!remove.empty()) {
-    log::debug("{}: removing disappearing items", parentItem.debugName());
+    trace([&]{ log::debug(
+      "{}: removing disappearing items", parentItem.debugName());
+    });
 
     for (auto* toRemove : remove) {
       const auto& cs = parentItem.children();
@@ -450,15 +480,19 @@ void FileTreeModel::updateFiles(
     ++firstFile;
   }
 
-  log::debug("{}: first file index is {}", parentItem.debugName(), firstFile);
+  trace([&]{ log::debug(
+    "{}: first file index is {}", parentItem.debugName(), firstFile);
+  });
+
   std::size_t insertPos = firstFile;
 
   for (auto&& file : parentEntry.getFiles()) {
     if (shouldShowFile(*file)) {
       if (!seen.contains(file->getName())) {
-        log::debug(
+        trace([&]{ log::debug(
           "{}: new file {}",
           parentItem.debugName(), QString::fromStdWString(file->getName()));
+        });
 
         bool isArchive = false;
         int originID = file->getOrigin(isArchive);
@@ -477,9 +511,10 @@ void FileTreeModel::updateFiles(
           &parentItem, originID, path, file->getFullPath(), flags, file->getName(),
           makeModName(*file, originID));
 
-        log::debug(
+        trace([&]{ log::debug(
           "{}: inserting {} at {}",
           parentItem.debugName(), child->debugName(), insertPos);
+        });
 
         QModelIndex parentIndex;
 
