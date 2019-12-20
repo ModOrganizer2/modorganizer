@@ -17,9 +17,13 @@ void trace(F&&)
 }
 
 
-FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent)
-  : QAbstractItemModel(parent), m_core(core), m_flags(NoFlags)
+FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent) :
+  QAbstractItemModel(parent), m_core(core),
+  m_root(nullptr, 0, L"", L"", FileTreeItem::Directory, L"", L"<root>"),
+  m_flags(NoFlags)
 {
+  m_root.setExpanded(true);
+
   connect(&m_iconPendingTimer, &QTimer::timeout, [&]{ updatePendingIcons(); });
 
   connect(
@@ -33,21 +37,6 @@ FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent)
     });
 }
 
-void FileTreeModel::setFlags(Flags f)
-{
-  m_flags = f;
-}
-
-bool FileTreeModel::showConflicts() const
-{
-  return (m_flags & Conflicts);
-}
-
-bool FileTreeModel::showArchives() const
-{
-  return (m_flags & Archives) && m_core.getArchiveParsing();
-}
-
 void FileTreeModel::refresh()
 {
   if (m_root.hasChildren()) {
@@ -56,11 +45,22 @@ void FileTreeModel::refresh()
   } else {
     TimeThis tt("FileTreeModel::fill()");
     beginResetModel();
-    m_root = {nullptr, 0, L"", L"", FileTreeItem::Directory, L"", L"<root>"};
-    m_root.setExpanded(true);
+    m_root.clear();
     fill(m_root, *m_core.directoryStructure(), L"");
     endResetModel();
   }
+}
+
+void FileTreeModel::clear()
+{
+  beginResetModel();
+  m_root.clear();
+  endResetModel();
+}
+
+bool FileTreeModel::showArchives() const
+{
+  return (m_flags & Archives) && m_core.getArchiveParsing();
 }
 
 void FileTreeModel::ensureLoaded(FileTreeItem* item) const
@@ -426,7 +426,7 @@ void FileTreeModel::updateFiles(
       continue;
     }
 
-    if (auto f=parentEntry.findFile(item->filenameWsLowerCase(), true)) {
+    if (auto f=parentEntry.findFile(item->key())) {
       if (shouldShowFile(*f)) {
         // file still exists
         trace([&]{ log::debug("{} still exists", item->debugName()); });

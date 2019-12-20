@@ -20,6 +20,7 @@ public:
 
   FileTreeModel* model();
   void refresh();
+  void clear();
 
   void open();
   void openHooked();

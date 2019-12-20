@@ -35,6 +35,20 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include "util.h"
 
+namespace MOShared { struct DirectoryEntryFileKey; }
+
+namespace std
+{
+  template <>
+  struct hash<MOShared::DirectoryEntryFileKey>
+  {
+    using argument_type = MOShared::DirectoryEntryFileKey;
+    using result_type = std::size_t;
+
+    inline result_type operator()(const argument_type& key) const;
+  };
+}
+
 
 namespace MOShared {
 
@@ -203,9 +217,32 @@ private:
 };
 
 
+struct DirectoryEntryFileKey
+{
+  DirectoryEntryFileKey(std::wstring v)
+    : value(std::move(v)), hash(getHash(value))
+  {
+  }
+
+  bool operator==(const DirectoryEntryFileKey& o) const
+  {
+    return (value == o.value);
+  }
+
+  static std::size_t getHash(const std::wstring& value)
+  {
+    return std::hash<std::wstring>()(value);
+  }
+
+  const std::wstring value;
+  const std::size_t hash;
+};
+
+
 class DirectoryEntry
 {
 public:
+  using FileKey = DirectoryEntryFileKey;
 
   DirectoryEntry(const std::wstring &name, DirectoryEntry *parent, int originID);
 
@@ -294,6 +331,7 @@ public:
     * @return fileentry object for the file or nullptr if no file matches
     */
   const FileEntry::Ptr findFile(const std::wstring &name, bool alreadyLowerCase=false) const;
+  const FileEntry::Ptr findFile(const FileKey& key) const;
   bool hasFile(const std::wstring& name) const;
 
   bool containsArchive(std::wstring archiveName);
@@ -315,21 +353,7 @@ public:
    */
   void removeDir(const std::wstring &path);
 
-  bool remove(const std::wstring &fileName, int *origin) {
-    auto iter = m_Files.find(ToLower(fileName));
-    if (iter != m_Files.end()) {
-      if (origin != nullptr) {
-        FileEntry::Ptr entry = m_FileRegister->getFile(iter->second);
-        if (entry.get() != nullptr) {
-          bool ignore;
-          *origin = entry->getOrigin(ignore);
-        }
-      }
-      return m_FileRegister->removeFile(iter->second);
-    } else {
-      return false;
-    }
-  }
+  bool remove(const std::wstring &fileName, int *origin);
 
   bool hasContentsFromOrigin(int originID) const;
 
@@ -342,20 +366,9 @@ private:
   DirectoryEntry(const DirectoryEntry &reference);
   DirectoryEntry &operator=(const DirectoryEntry &reference);
 
-  void insert(const std::wstring &fileName, FilesOrigin &origin, FILETIME fileTime, const std::wstring &archive, int order) {
-    std::wstring fileNameLower = ToLower(fileName);
-    auto iter = m_Files.find(fileNameLower);
-    FileEntry::Ptr file;
-    if (iter != m_Files.end()) {
-      file = m_FileRegister->getFile(iter->second);
-    } else {
-      file = m_FileRegister->createFile(fileName, this);
-      // TODO this has been observed to cause a crash, no clue why
-      m_Files[fileNameLower] = file->getIndex();
-    }
-    file->addOrigin(origin.getID(), fileTime, archive, order);
-    origin.addFile(file->getIndex());
-  }
+  void insert(
+    const std::wstring &fileName, FilesOrigin &origin, FILETIME fileTime,
+    const std::wstring &archive, int order);
 
   void addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOffset);
   void addFiles(FilesOrigin &origin, BSA::Folder::Ptr archiveFolder, FILETIME &fileTime, const std::wstring &archiveName, int order);
@@ -367,13 +380,16 @@ private:
   void removeDirRecursive();
 
 private:
+  using FilesMap = std::map<std::wstring, FileEntry::Index>;
+  using FilesLookup = std::unordered_map<FileKey, FileEntry::Index>;
   using SubDirectoriesMap = std::unordered_map<std::wstring, DirectoryEntry*>;
 
   boost::shared_ptr<FileRegister> m_FileRegister;
   boost::shared_ptr<OriginConnection> m_OriginConnection;
 
   std::wstring m_Name;
-  std::map<std::wstring, FileEntry::Index> m_Files;
+  FilesMap m_Files;
+  FilesLookup m_FilesLookup;
   std::vector<DirectoryEntry*> m_SubDirectories;
   SubDirectoriesMap m_SubDirectoriesMap;
 
@@ -386,7 +402,17 @@ private:
 
 };
 
-
 } // namespace MOShared
+
+
+namespace std
+{
+  hash<MOShared::DirectoryEntryFileKey>::result_type
+  hash<MOShared::DirectoryEntryFileKey>::operator()(
+    const argument_type& key) const
+  {
+    return key.hash;
+  }
+}
 
 #endif // DIRECTORYENTRY_H

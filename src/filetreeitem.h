@@ -1,6 +1,7 @@
 #ifndef MODORGANIZER_FILETREEITEM_INCLUDED
 #define MODORGANIZER_FILETREEITEM_INCLUDED
 
+#include "directoryentry.h"
 #include <QFileIconProvider>
 
 class FileTreeItem
@@ -16,7 +17,6 @@ public:
 
   Q_DECLARE_FLAGS(Flags, Flag);
 
-  FileTreeItem();
   FileTreeItem(
     FileTreeItem* parent, int originID,
     std::wstring dataRelativeParentPath, std::wstring realPath, Flags flags,
@@ -34,6 +34,12 @@ public:
 
   void insert(std::unique_ptr<FileTreeItem> child, std::size_t at);
   void remove(std::size_t i);
+
+  void clear()
+  {
+    m_children.clear();
+    m_loaded = false;
+  }
 
   const std::vector<std::unique_ptr<FileTreeItem>>& children() const
   {
@@ -57,6 +63,7 @@ public:
   }
 
   QString virtualPath() const;
+
   const QString& filename() const
   {
     return m_file;
@@ -70,6 +77,11 @@ public:
   const std::wstring& filenameWsLowerCase() const
   {
     return m_wsLcFile;
+  }
+
+  const MOShared::DirectoryEntry::FileKey& key() const
+  {
+    return m_key;
   }
 
   const QString& mod() const
@@ -152,13 +164,16 @@ public:
 
 private:
   FileTreeItem* m_parent;
-  int m_originID;
-  QString m_virtualParentPath;
-  QString m_realPath;
-  Flags m_flags;
-  std::wstring m_wsFile, m_wsLcFile;
-  QString m_file;
-  QString m_mod;
+
+  const int m_originID;
+  const QString m_virtualParentPath;
+  const QString m_realPath;
+  const Flags m_flags;
+  const std::wstring m_wsFile, m_wsLcFile;
+  const MOShared::DirectoryEntry::FileKey m_key;
+  const QString m_file;
+  const QString m_mod;
+
   bool m_loaded;
   bool m_expanded;
   std::vector<std::unique_ptr<FileTreeItem>> m_children;

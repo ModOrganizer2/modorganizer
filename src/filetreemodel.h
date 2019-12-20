@@ -23,8 +23,13 @@ public:
 
   FileTreeModel(OrganizerCore& core, QObject* parent=nullptr);
 
-  void setFlags(Flags f);
+  void setFlags(Flags f)
+  {
+    m_flags = f;
+  }
+
   void refresh();
+  void clear();
 
   QModelIndex index(int row, int col, const QModelIndex& parent={}) const override;
   QModelIndex parent(const QModelIndex& index) const override;
@@ -53,7 +58,11 @@ private:
   mutable std::vector<QModelIndex> m_iconPending;
   mutable QTimer m_iconPendingTimer;
 
-  bool showConflicts() const;
+  bool showConflicts() const
+  {
+    return (m_flags & Conflicts);
+  }
+
   bool showArchives() const;
 
   void fill(

@@ -144,6 +144,11 @@ void FileTree::refresh()
   m_model->refresh();
 }
 
+void FileTree::clear()
+{
+  m_model->clear();
+}
+
 FileTreeItem* FileTree::singleSelection()
 {
   const auto sel = m_tree->selectionModel()->selectedRows();

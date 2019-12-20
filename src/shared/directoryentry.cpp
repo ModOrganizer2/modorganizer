@@ -482,6 +482,8 @@ const std::wstring &DirectoryEntry::getName() const
 void DirectoryEntry::clear()
 {
   m_Files.clear();
+  m_FilesLookup.clear();
+
   for (DirectoryEntry *entry : m_SubDirectories) {
     delete entry;
   }
@@ -663,6 +665,8 @@ void DirectoryEntry::removeDirRecursive()
     m_FileRegister->removeFile(m_Files.begin()->second);
   }
 
+  m_FilesLookup.clear();
+
   for (DirectoryEntry *entry : m_SubDirectories) {
     entry->removeDirRecursive();
     delete entry;
@@ -709,6 +713,56 @@ void DirectoryEntry::removeDir(const std::wstring &path)
   }
 }
 
+bool DirectoryEntry::remove(const std::wstring &fileName, int *origin)
+{
+  const auto lcFileName = ToLowerCopy(fileName);
+
+  auto iter = m_Files.find(lcFileName);
+  bool b = false;
+
+  if (iter != m_Files.end()) {
+    if (origin != nullptr) {
+      FileEntry::Ptr entry = m_FileRegister->getFile(iter->second);
+      if (entry.get() != nullptr) {
+        bool ignore;
+        *origin = entry->getOrigin(ignore);
+      }
+    }
+
+    b = m_FileRegister->removeFile(iter->second);
+  }
+
+  if (m_Files.size() != m_FilesLookup.size()) {
+    DebugBreak();
+  }
+
+  return b;
+}
+
+void DirectoryEntry::insert(
+  const std::wstring &fileName, FilesOrigin &origin, FILETIME fileTime,
+  const std::wstring &archive, int order)
+{
+  std::wstring fileNameLower = ToLowerCopy(fileName);
+  auto iter = m_Files.find(fileNameLower);
+  FileEntry::Ptr file;
+
+  if (iter != m_Files.end()) {
+    file = m_FileRegister->getFile(iter->second);
+  } else {
+    file = m_FileRegister->createFile(fileName, this);
+    m_Files.emplace(fileNameLower, file->getIndex());
+    m_FilesLookup.emplace(fileNameLower, file->getIndex());
+  }
+
+  if (m_Files.size() != m_FilesLookup.size()) {
+    DebugBreak();
+  }
+
+  file->addOrigin(origin.getID(), fileTime, archive, order);
+  origin.addFile(file->getIndex());
+}
+
 bool DirectoryEntry::hasContentsFromOrigin(int originID) const
 {
   return m_Origins.find(originID) != m_Origins.end();
@@ -726,13 +780,34 @@ void DirectoryEntry::insertFile(const std::wstring &filePath, FilesOrigin &origi
   }
 }
 
-
 void DirectoryEntry::removeFile(FileEntry::Index index)
 {
+  if (!m_FilesLookup.empty()) {
+    auto iter = std::find_if(
+      m_FilesLookup.begin(), m_FilesLookup.end(),
+      [&index](auto&& pair) { return (pair.second == index); }
+    );
+
+    if (iter != m_FilesLookup.end()) {
+      m_FilesLookup.erase(iter);
+    } else {
+      log::error(
+        "file \"{}\" not in directory for lookup \"{}\"",
+        m_FileRegister->getFile(index)->getName(), this->getName());
+    }
+  } else {
+    log::error(
+      "file \"{}\" not in directory \"{}\" for lookup, directory empty",
+      m_FileRegister->getFile(index)->getName(), this->getName());
+  }
+
   if (!m_Files.empty()) {
-    auto iter = std::find_if(m_Files.begin(), m_Files.end(),
-                             [&index](const std::pair<std::wstring, FileEntry::Index> &iter) -> bool {
-                               return iter.second == index; } );
+    auto iter = std::find_if(
+      m_Files.begin(), m_Files.end(),
+      [&index](const std::pair<std::wstring, FileEntry::Index> &iter) -> bool {
+        return iter.second == index; }
+    );
+
     if (iter != m_Files.end()) {
       m_Files.erase(iter);
     } else {
@@ -745,14 +820,25 @@ void DirectoryEntry::removeFile(FileEntry::Index index)
       QObject::tr("file \"{}\" not in directory \"{}\", directory empty").toStdString(),
       m_FileRegister->getFile(index)->getName(), this->getName());
   }
-}
 
+  if (m_Files.size() != m_FilesLookup.size()) {
+    DebugBreak();
+  }
+}
 
 void DirectoryEntry::removeFiles(const std::set<FileEntry::Index> &indices)
 {
   for (auto iter = m_Files.begin(); iter != m_Files.end();) {
     if (indices.find(iter->second) != indices.end()) {
-      m_Files.erase(iter++);
+      iter = m_Files.erase(iter);
+    } else {
+      ++iter;
+    }
+  }
+
+  for (auto iter = m_FilesLookup.begin(); iter != m_FilesLookup.end();) {
+    if (indices.find(iter->second) != indices.end()) {
+      iter = m_FilesLookup.erase(iter);
     } else {
       ++iter;
     }
@@ -851,7 +937,7 @@ const FileEntry::Ptr DirectoryEntry::searchFile(const std::wstring &path, const 
 
   if (len == std::string::npos) {
     // no more path components
-    auto iter = m_Files.find(ToLower(path));
+    auto iter = m_Files.find(ToLowerCopy(path));
     if (iter != m_Files.end()) {
       return m_FileRegister->getFile(iter->second);
     } else if (directory != nullptr) {
@@ -884,7 +970,7 @@ DirectoryEntry *DirectoryEntry::findSubDirectory(
   if (alreadyLowerCase) {
     itor = m_SubDirectoriesMap.find(name);
   } else {
-    itor = m_SubDirectoriesMap.find(ToLower(name));
+    itor = m_SubDirectoriesMap.find(ToLowerCopy(name));
   }
 
   if (itor == m_SubDirectoriesMap.end()) {
@@ -904,15 +990,26 @@ DirectoryEntry *DirectoryEntry::findSubDirectoryRecursive(const std::wstring &pa
 const FileEntry::Ptr DirectoryEntry::findFile(
   const std::wstring &name, bool alreadyLowerCase) const
 {
-  std::map<std::wstring, FileEntry::Index>::const_iterator iter;
+  FilesLookup::const_iterator iter;
 
   if (alreadyLowerCase) {
-    iter = m_Files.find(name);
+    iter = m_FilesLookup.find(FileKey(name));
   } else {
-    iter = m_Files.find(ToLower(name));
+    iter = m_FilesLookup.find(FileKey(ToLowerCopy(name)));
   }
 
-  if (iter != m_Files.end()) {
+  if (iter != m_FilesLookup.end()) {
+    return m_FileRegister->getFile(iter->second);
+  } else {
+    return FileEntry::Ptr();
+  }
+}
+
+const FileEntry::Ptr DirectoryEntry::findFile(const FileKey& key) const
+{
+  auto iter = m_FilesLookup.find(key);
+
+  if (iter != m_FilesLookup.end()) {
     return m_FileRegister->getFile(iter->second);
   } else {
     return FileEntry::Ptr();
@@ -921,7 +1018,7 @@ const FileEntry::Ptr DirectoryEntry::findFile(
 
 bool DirectoryEntry::hasFile(const std::wstring& name) const
 {
-  return m_Files.contains(ToLower(name));
+  return m_Files.contains(ToLowerCopy(name));
 }
 
 DirectoryEntry *DirectoryEntry::getSubDirectory(const std::wstring &name, bool create, int originID)
@@ -936,7 +1033,7 @@ DirectoryEntry *DirectoryEntry::getSubDirectory(const std::wstring &name, bool c
       name, this, originID, m_FileRegister, m_OriginConnection);
 
     m_SubDirectories.push_back(entry);
-    m_SubDirectoriesMap.emplace(ToLower(name), entry);
+    m_SubDirectoriesMap.emplace(ToLowerCopy(name), entry);
 
     return entry;
   } else {

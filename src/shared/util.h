@@ -36,11 +36,11 @@ bool FileExists(const std::wstring &searchPath, const std::wstring &filename);
 std::string ToString(const std::wstring &source, bool utf8);
 std::wstring ToWString(const std::string &source, bool utf8);
 
-std::string &ToLower(std::string &text);
-std::string ToLower(const std::string &text);
+std::string& ToLowerInPlace(std::string& text);
+std::string ToLowerCopy(const std::string& text);
 
-std::wstring &ToLower(std::wstring &text);
-std::wstring ToLower(const std::wstring &text);
+std::wstring& ToLowerInPlace(std::wstring& text);
+std::wstring ToLowerCopy(const std::wstring& text);
 
 bool CaseInsensitiveEqual(const std::wstring &lhs, const std::wstring &rhs);
 

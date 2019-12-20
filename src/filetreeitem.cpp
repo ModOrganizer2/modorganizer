@@ -6,24 +6,22 @@
 using namespace MOBase;
 using namespace MOShared;
 
-FileTreeItem::FileTreeItem()
-  : m_flags(NoFlags), m_loaded(false)
-{
-}
-
 FileTreeItem::FileTreeItem(
   FileTreeItem* parent, int originID,
   std::wstring dataRelativeParentPath, std::wstring realPath, Flags flags,
   std::wstring file, std::wstring mod) :
-  m_parent(parent), m_originID(originID),
-  m_virtualParentPath(QString::fromStdWString(dataRelativeParentPath)),
-  m_realPath(QString::fromStdWString(realPath)),
-  m_flags(flags),
-  m_wsFile(file), m_wsLcFile(ToLower(file)),
-  m_file(QString::fromStdWString(file)),
-  m_mod(QString::fromStdWString(mod)),
-  m_loaded(false),
-  m_expanded(false)
+    m_parent(parent),
+    m_originID(originID),
+    m_virtualParentPath(QString::fromStdWString(dataRelativeParentPath)),
+    m_realPath(QString::fromStdWString(realPath)),
+    m_flags(flags),
+    m_wsFile(file),
+    m_wsLcFile(ToLowerCopy(file)),
+    m_key(m_wsLcFile),
+    m_file(QString::fromStdWString(file)),
+    m_mod(QString::fromStdWString(mod)),
+    m_loaded(false),
+    m_expanded(false)
 {
 }
 
