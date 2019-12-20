@@ -271,7 +271,22 @@ public:
     }
   }
 
-  DirectoryEntry *findSubDirectory(const std::wstring &name) const;
+  template <class F>
+  void forEachFileIndex(F&& f) const
+  {
+    for (auto&& p : m_Files) {
+      if (!f(p.second)) {
+        break;
+      }
+    }
+  }
+
+  FileEntry::Ptr getFileByIndex(FileEntry::Index index) const
+  {
+    return m_FileRegister->getFile(index);
+  }
+
+  DirectoryEntry *findSubDirectory(const std::wstring &name, bool alreadyLowerCase=false) const;
   DirectoryEntry *findSubDirectoryRecursive(const std::wstring &path);
 
   /** retrieve a file in this directory by name.
@@ -352,6 +367,7 @@ private:
   void removeDirRecursive();
 
 private:
+  using SubDirectoriesMap = std::unordered_map<std::wstring, DirectoryEntry*>;
 
   boost::shared_ptr<FileRegister> m_FileRegister;
   boost::shared_ptr<OriginConnection> m_OriginConnection;
@@ -359,6 +375,7 @@ private:
   std::wstring m_Name;
   std::map<std::wstring, FileEntry::Index> m_Files;
   std::vector<DirectoryEntry*> m_SubDirectories;
+  SubDirectoriesMap m_SubDirectoriesMap;
 
   DirectoryEntry *m_Parent;
   std::set<int> m_Origins;

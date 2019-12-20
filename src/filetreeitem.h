@@ -27,39 +27,125 @@ public:
   FileTreeItem(FileTreeItem&&) = default;
   FileTreeItem& operator=(FileTreeItem&&) = default;
 
-  void add(std::unique_ptr<FileTreeItem> child);
+  void add(std::unique_ptr<FileTreeItem> child)
+  {
+    m_children.push_back(std::move(child));
+  }
+
   void insert(std::unique_ptr<FileTreeItem> child, std::size_t at);
   void remove(std::size_t i);
-  const std::vector<std::unique_ptr<FileTreeItem>>& children() const;
 
-  FileTreeItem* parent();
-  int originID() const;
-  const QString& virtualParentPath() const;
+  const std::vector<std::unique_ptr<FileTreeItem>>& children() const
+  {
+    return m_children;
+  }
+
+
+  FileTreeItem* parent()
+  {
+    return m_parent;
+  }
+
+  int originID() const
+  {
+    return m_originID;
+  }
+
+  const QString& virtualParentPath() const
+  {
+    return m_virtualParentPath;
+  }
+
   QString virtualPath() const;
-  const QString& filename() const;
-  const std::wstring& filenameWs() const;
-  const std::wstring& filenameWsLowerCase() const;
-  const QString& mod() const;
+  const QString& filename() const
+  {
+    return m_file;
+  }
+
+  const std::wstring& filenameWs() const
+  {
+    return m_wsFile;
+  }
+
+  const std::wstring& filenameWsLowerCase() const
+  {
+    return m_wsLcFile;
+  }
+
+  const QString& mod() const
+  {
+    return m_mod;
+  }
+
   QFont font() const;
 
-  const QString& realPath() const;
-  QString dataRelativeParentPath() const;
+  const QString& realPath() const
+  {
+    return m_realPath;
+  }
+
+  const QString& dataRelativeParentPath() const
+  {
+    return m_virtualParentPath;
+  }
+
   QString dataRelativeFilePath() const;
 
   QFileIconProvider::IconType icon() const;
 
-  bool isDirectory() const;
-  bool isFromArchive() const;
-  bool isConflicted() const;
-  bool isHidden() const;
-  bool hasChildren() const;
+  bool isDirectory() const
+  {
+    return (m_flags & Directory);
+  }
 
-  void setLoaded(bool b);
-  bool isLoaded() const;
+  bool isFromArchive() const
+  {
+    return (m_flags & FromArchive);
+  }
+
+  bool isConflicted() const
+  {
+    return (m_flags & Conflicted);
+  }
+
+  bool isHidden() const;
+
+  bool hasChildren() const
+  {
+    if (!isDirectory()) {
+      return false;
+    }
+
+    if (isLoaded() && m_children.empty()) {
+      return false;
+    }
+
+    return true;
+  }
+
+
+  void setLoaded(bool b)
+  {
+    m_loaded = b;
+  }
+
+  bool isLoaded() const
+  {
+    return m_loaded;
+  }
+
   void unload();
 
-  void setExpanded(bool b);
-  bool isStrictlyExpanded() const;
+  void setExpanded(bool b)
+  {
+    m_expanded = b;
+  }
+
+  bool isStrictlyExpanded() const
+  {
+    return m_expanded;
+  }
+
   bool areChildrenVisible() const;
 
   QString debugName() const;

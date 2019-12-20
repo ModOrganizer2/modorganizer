@@ -255,7 +255,7 @@ void FileTreeModel::updateDirectories(
       break;
     }
 
-    if (auto d=parentEntry.findSubDirectory(item->filenameWsLowerCase())) {
+    if (auto d=parentEntry.findSubDirectory(item->filenameWsLowerCase(), true)) {
       // directory still exists
       seen.insert(item->filenameWs());
 
@@ -418,7 +418,7 @@ void FileTreeModel::updateFiles(
     parentItem.debugName(), (path.empty() ? L"\\" : path));
   });
 
-  std::unordered_set<std::wstring_view> seen;
+  std::unordered_set<FileEntry::Index> seen;
   std::vector<FileTreeItem*> remove;
 
   for (auto&& item : parentItem.children()) {
@@ -430,7 +430,7 @@ void FileTreeModel::updateFiles(
       if (shouldShowFile(*f)) {
         // file still exists
         trace([&]{ log::debug("{} still exists", item->debugName()); });
-        seen.insert(item->filenameWs());
+        seen.emplace(f->getIndex());
         continue;
       }
     }
@@ -483,9 +483,14 @@ void FileTreeModel::updateFiles(
 
   std::size_t insertPos = firstFile;
 
-  for (auto&& file : parentEntry.getFiles()) {
-    if (shouldShowFile(*file)) {
-      if (!seen.contains(file->getName())) {
+  parentEntry.forEachFileIndex([&](auto&& fileIndex) {
+    if (!seen.contains(fileIndex)) {
+      const auto& file = parentEntry.getFileByIndex(fileIndex);
+      if (!file) {
+        return true;
+      }
+
+      if (shouldShowFile(*file)) {
         trace([&]{ log::debug(
           "{}: new file {}",
           parentItem.debugName(), QString::fromStdWString(file->getName()));
@@ -532,11 +537,15 @@ void FileTreeModel::updateFiles(
         beginInsertRows(parentIndex, first, last);
         parentItem.insert(std::move(child), insertPos);
         endInsertRows();
+      } else {
+        ++insertPos;
       }
-
+    } else {
       ++insertPos;
     }
-  }
+
+    return true;
+  });
 }
 
 std::wstring FileTreeModel::makeModName(const FileEntry& file, int originID) const

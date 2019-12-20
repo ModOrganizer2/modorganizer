@@ -485,7 +485,9 @@ void DirectoryEntry::clear()
   for (DirectoryEntry *entry : m_SubDirectories) {
     delete entry;
   }
+
   m_SubDirectories.clear();
+  m_SubDirectoriesMap.clear();
 }
 
 
@@ -665,7 +667,9 @@ void DirectoryEntry::removeDirRecursive()
     entry->removeDirRecursive();
     delete entry;
   }
+
   m_SubDirectories.clear();
+  m_SubDirectoriesMap.clear();
 }
 
 void DirectoryEntry::removeDir(const std::wstring &path)
@@ -676,6 +680,20 @@ void DirectoryEntry::removeDir(const std::wstring &path)
       DirectoryEntry *entry = *iter;
       if (CaseInsensitiveEqual(entry->getName(), path)) {
         entry->removeDirRecursive();
+
+        bool found = false;
+        for (auto iter2=m_SubDirectoriesMap.begin(); iter2!=m_SubDirectoriesMap.end(); ++iter2) {
+          if (iter2->second == entry) {
+            m_SubDirectoriesMap.erase(iter2);
+            found = true;
+            break;
+          }
+        }
+
+        if (!found) {
+          log::error("entry {} not in sub directories map", entry->getName());
+        }
+
         m_SubDirectories.erase(iter);
         delete entry;
         break;
@@ -858,14 +876,22 @@ const FileEntry::Ptr DirectoryEntry::searchFile(const std::wstring &path, const 
 }
 
 
-DirectoryEntry *DirectoryEntry::findSubDirectory(const std::wstring &name) const
+DirectoryEntry *DirectoryEntry::findSubDirectory(
+  const std::wstring &name, bool alreadyLowerCase) const
 {
-  for (DirectoryEntry *entry : m_SubDirectories) {
-    if (CaseInsensitiveEqual(entry->getName(), name)) {
-      return entry;
-    }
+  SubDirectoriesMap::const_iterator itor;
+
+  if (alreadyLowerCase) {
+    itor = m_SubDirectoriesMap.find(name);
+  } else {
+    itor = m_SubDirectoriesMap.find(ToLower(name));
   }
-  return nullptr;
+
+  if (itor == m_SubDirectoriesMap.end()) {
+    return nullptr;
+  }
+
+  return itor->second;
 }
 
 
@@ -878,7 +904,13 @@ DirectoryEntry *DirectoryEntry::findSubDirectoryRecursive(const std::wstring &pa
 const FileEntry::Ptr DirectoryEntry::findFile(
   const std::wstring &name, bool alreadyLowerCase) const
 {
-  auto iter = m_Files.find(alreadyLowerCase ? name : ToLower(name));
+  std::map<std::wstring, FileEntry::Index>::const_iterator iter;
+
+  if (alreadyLowerCase) {
+    iter = m_Files.find(name);
+  } else {
+    iter = m_Files.find(ToLower(name));
+  }
 
   if (iter != m_Files.end()) {
     return m_FileRegister->getFile(iter->second);
@@ -900,9 +932,13 @@ DirectoryEntry *DirectoryEntry::getSubDirectory(const std::wstring &name, bool c
     }
   }
   if (create) {
-    std::vector<DirectoryEntry*>::iterator iter = m_SubDirectories.insert(m_SubDirectories.end(),
-          new DirectoryEntry(name, this, originID, m_FileRegister, m_OriginConnection));
-    return *iter;
+    auto* entry = new DirectoryEntry(
+      name, this, originID, m_FileRegister, m_OriginConnection);
+
+    m_SubDirectories.push_back(entry);
+    m_SubDirectoriesMap.emplace(ToLower(name), entry);
+
+    return entry;
   } else {
     return nullptr;
   }

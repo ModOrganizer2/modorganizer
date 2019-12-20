@@ -27,11 +27,6 @@ FileTreeItem::FileTreeItem(
 {
 }
 
-void FileTreeItem::add(std::unique_ptr<FileTreeItem> child)
-{
-  m_children.push_back(std::move(child));
-}
-
 void FileTreeItem::insert(std::unique_ptr<FileTreeItem> child, std::size_t at)
 {
   if (at > m_children.size()) {
@@ -55,26 +50,6 @@ void FileTreeItem::remove(std::size_t i)
   m_children.erase(m_children.begin() + i);
 }
 
-const std::vector<std::unique_ptr<FileTreeItem>>& FileTreeItem::children() const
-{
-  return m_children;
-}
-
-FileTreeItem* FileTreeItem::parent()
-{
-  return m_parent;
-}
-
-int FileTreeItem::originID() const
-{
-  return m_originID;
-}
-
-const QString& FileTreeItem::virtualParentPath() const
-{
-  return m_virtualParentPath;
-}
-
 QString FileTreeItem::virtualPath() const
 {
   QString s = "Data\\";
@@ -88,11 +63,6 @@ QString FileTreeItem::virtualPath() const
   return s;
 }
 
-QString FileTreeItem::dataRelativeParentPath() const
-{
-  return m_virtualParentPath;
-}
-
 QString FileTreeItem::dataRelativeFilePath() const
 {
   auto path = dataRelativeParentPath();
@@ -101,31 +71,6 @@ QString FileTreeItem::dataRelativeFilePath() const
   }
 
   return path += m_file;
-}
-
-const QString& FileTreeItem::realPath() const
-{
-  return m_realPath;
-}
-
-const QString& FileTreeItem::filename() const
-{
-  return m_file;
-}
-
-const std::wstring& FileTreeItem::filenameWs() const
-{
-  return m_wsFile;
-}
-
-const std::wstring& FileTreeItem::filenameWsLowerCase() const
-{
-  return m_wsLcFile;
-}
-
-const QString& FileTreeItem::mod() const
-{
-  return m_mod;
 }
 
 QFont FileTreeItem::font() const
@@ -150,47 +95,9 @@ QFileIconProvider::IconType FileTreeItem::icon() const
   }
 }
 
-bool FileTreeItem::isDirectory() const
-{
-  return (m_flags & Directory);
-}
-
-bool FileTreeItem::isFromArchive() const
-{
-  return (m_flags & FromArchive);
-}
-
-bool FileTreeItem::isConflicted() const
-{
-  return (m_flags & Conflicted);
-}
-
 bool FileTreeItem::isHidden() const
 {
   return m_file.endsWith(ModInfo::s_HiddenExt);
-}
-
-bool FileTreeItem::hasChildren() const
-{
-  if (!isDirectory()) {
-    return false;
-  }
-
-  if (isLoaded() && m_children.empty()) {
-    return false;
-  }
-
-  return true;
-}
-
-void FileTreeItem::setLoaded(bool b)
-{
-  m_loaded = b;
-}
-
-bool FileTreeItem::isLoaded() const
-{
-  return m_loaded;
 }
 
 void FileTreeItem::unload()
@@ -201,16 +108,6 @@ void FileTreeItem::unload()
 
   m_loaded = false;
   m_children.clear();
-}
-
-void FileTreeItem::setExpanded(bool b)
-{
-  m_expanded = b;
-}
-
-bool FileTreeItem::isStrictlyExpanded() const
-{
-  return m_expanded;
 }
 
 bool FileTreeItem::areChildrenVisible() const
