@@ -37,6 +37,8 @@ public:
   const QString& virtualParentPath() const;
   QString virtualPath() const;
   const QString& filename() const;
+  const std::wstring& filenameWs() const;
+  const std::wstring& filenameWsLowerCase() const;
   const QString& mod() const;
   QFont font() const;
 
@@ -68,6 +70,7 @@ private:
   QString m_virtualParentPath;
   QString m_realPath;
   Flags m_flags;
+  std::wstring m_wsFile, m_wsLcFile;
   QString m_file;
   QString m_mod;
   bool m_loaded;

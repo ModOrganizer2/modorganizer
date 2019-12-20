@@ -875,9 +875,11 @@ DirectoryEntry *DirectoryEntry::findSubDirectoryRecursive(const std::wstring &pa
 }
 
 
-const FileEntry::Ptr DirectoryEntry::findFile(const std::wstring &name) const
+const FileEntry::Ptr DirectoryEntry::findFile(
+  const std::wstring &name, bool alreadyLowerCase) const
 {
-  auto iter = m_Files.find(ToLower(name));
+  auto iter = m_Files.find(alreadyLowerCase ? name : ToLower(name));
+
   if (iter != m_Files.end()) {
     return m_FileRegister->getFile(iter->second);
   } else {

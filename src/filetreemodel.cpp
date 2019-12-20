@@ -1,6 +1,7 @@
 #include "filetreemodel.h"
 #include "organizercore.h"
 #include <log.h>
+#include <unordered_set>
 
 using namespace MOBase;
 using namespace MOShared;
@@ -247,18 +248,16 @@ void FileTreeModel::updateDirectories(
 
   int row = 0;
   std::vector<FileTreeItem*> remove;
-  std::set<std::wstring> seen;
+  std::unordered_set<std::wstring_view> seen;
 
   for (auto&& item : parentItem.children()) {
     if (!item->isDirectory()) {
       break;
     }
 
-    const auto name = item->filename().toStdWString();
-
-    if (auto d=parentEntry.findSubDirectory(name)) {
+    if (auto d=parentEntry.findSubDirectory(item->filenameWsLowerCase())) {
       // directory still exists
-      seen.insert(name);
+      seen.insert(item->filenameWs());
 
       if (item->areChildrenVisible()) {
         trace([&]{ log::debug(
@@ -419,7 +418,7 @@ void FileTreeModel::updateFiles(
     parentItem.debugName(), (path.empty() ? L"\\" : path));
   });
 
-  std::set<std::wstring> seen;
+  std::unordered_set<std::wstring_view> seen;
   std::vector<FileTreeItem*> remove;
 
   for (auto&& item : parentItem.children()) {
@@ -427,13 +426,11 @@ void FileTreeModel::updateFiles(
       continue;
     }
 
-    const auto name = item->filename().toStdWString();
-
-    if (auto f=parentEntry.findFile(name)) {
+    if (auto f=parentEntry.findFile(item->filenameWsLowerCase(), true)) {
       if (shouldShowFile(*f)) {
         // file still exists
         trace([&]{ log::debug("{} still exists", item->debugName()); });
-        seen.insert(name);
+        seen.insert(item->filenameWs());
         continue;
       }
     }
@@ -569,12 +566,7 @@ FileTreeItem* FileTreeModel::itemFromIndex(const QModelIndex& index) const
     return nullptr;
   }
 
-  auto* item = static_cast<FileTreeItem*>(data);
-  if (!item->debugName().isEmpty()) {
-    return item;
-  }
-
-  return nullptr;
+  return static_cast<FileTreeItem*>(data);
 }
 
 QModelIndex FileTreeModel::indexFromItem(

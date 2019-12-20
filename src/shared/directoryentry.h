@@ -278,7 +278,7 @@ public:
     * @param name name of the file
     * @return fileentry object for the file or nullptr if no file matches
     */
-  const FileEntry::Ptr findFile(const std::wstring &name) const;
+  const FileEntry::Ptr findFile(const std::wstring &name, bool alreadyLowerCase=false) const;
   bool hasFile(const std::wstring& name) const;
 
   bool containsArchive(std::wstring archiveName);

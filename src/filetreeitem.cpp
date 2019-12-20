@@ -1,8 +1,10 @@
 #include "filetreeitem.h"
 #include "modinfo.h"
+#include "util.h"
 #include <log.h>
 
 using namespace MOBase;
+using namespace MOShared;
 
 FileTreeItem::FileTreeItem()
   : m_flags(NoFlags), m_loaded(false)
@@ -17,6 +19,7 @@ FileTreeItem::FileTreeItem(
   m_virtualParentPath(QString::fromStdWString(dataRelativeParentPath)),
   m_realPath(QString::fromStdWString(realPath)),
   m_flags(flags),
+  m_wsFile(file), m_wsLcFile(ToLower(file)),
   m_file(QString::fromStdWString(file)),
   m_mod(QString::fromStdWString(mod)),
   m_loaded(false),
@@ -108,6 +111,16 @@ const QString& FileTreeItem::realPath() const
 const QString& FileTreeItem::filename() const
 {
   return m_file;
+}
+
+const std::wstring& FileTreeItem::filenameWs() const
+{
+  return m_wsFile;
+}
+
+const std::wstring& FileTreeItem::filenameWsLowerCase() const
+{
+  return m_wsLcFile;
 }
 
 const QString& FileTreeItem::mod() const
