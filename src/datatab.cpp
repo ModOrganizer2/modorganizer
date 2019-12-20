@@ -5,6 +5,7 @@
 #include "directoryentry.h"
 #include "messagedialog.h"
 #include "filetree.h"
+#include "filetreemodel.h"
 #include <log.h>
 #include <report.h>
 
@@ -162,6 +163,6 @@ void DataTab::updateOptions()
     flags |= FileTreeModel::Archives;
   }
 
-  m_filetree->setFlags(flags);
+  m_filetree->model()->setFlags(flags);
   refreshDataTree();
 }
