@@ -358,14 +358,16 @@ bool FileEntry::removeOrigin(int origin)
   return false;
 }
 
-FileEntry::FileEntry()
-  : m_Index(UINT_MAX), m_Name(), m_Origin(-1), m_Parent(nullptr), m_LastAccessed(time(nullptr))
+FileEntry::FileEntry() :
+  m_Index(UINT_MAX), m_Name(), m_Origin(-1), m_Parent(nullptr),
+  m_LastAccessed(time(nullptr))
 {
   LEAK_TRACE;
 }
 
-FileEntry::FileEntry(Index index, const std::wstring &name, DirectoryEntry *parent)
-  : m_Index(index), m_Name(name), m_Origin(-1), m_Archive(L"", -1), m_Parent(parent), m_LastAccessed(time(nullptr))
+FileEntry::FileEntry(Index index, const std::wstring &name, DirectoryEntry *parent) :
+  m_Index(index), m_Name(name), m_Origin(-1), m_Archive(L"", -1),
+  m_Parent(parent), m_LastAccessed(time(nullptr))
 {
   LEAK_TRACE;
 }
