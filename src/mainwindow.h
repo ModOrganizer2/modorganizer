@@ -283,7 +283,9 @@ private:
 
   QAction* m_ContextAction;
 
-  CategoryFactory& m_CategoryFactory;
+  QAction* m_browseModPage;
+
+  CategoryFactory* m_CategoryFactory;
 
   QTimer m_CheckBSATimer;
   QTimer m_SaveMetaTimer;

@@ -31,8 +31,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
  *to look up categories, optimized to where the request comes from. Therefore be very
  *careful which of the two you have available
  **/
-class CategoryFactory
-{
+class CategoryFactory : QObject {
+  Q_OBJECT;
 
   friend class CategoriesDialog;
 
@@ -53,24 +53,26 @@ public:
   };
 
 public:
-  struct Category
-  {
-    Category(int sortValue, int id, const QString& name,
-             const std::vector<int>& nexusIDs, int parentID)
-        : m_SortValue(sortValue), m_ID(id), m_Name(name), m_HasChildren(false),
-          m_NexusIDs(nexusIDs), m_ParentID(parentID)
-    {}
+  struct Category {
+    Category(int sortValue, int id, const QString& name, int parentID)
+      : m_SortValue(sortValue), m_ID(id), m_Name(name), m_HasChildren(false), m_ParentID(parentID) {}
     int m_SortValue;
     int m_ID;
     int m_ParentID;
     bool m_HasChildren;
     QString m_Name;
-    std::vector<int> m_NexusIDs;
 
     friend bool operator<(const Category& LHS, const Category& RHS)
     {
       return LHS.m_SortValue < RHS.m_SortValue;
     }
+  };
+
+  struct NexusCategory {
+    NexusCategory(const QString &name, const int nexusID)
+      : m_Name(name), m_ID(nexusID) {}
+    QString m_Name;
+    int m_ID;
   };
 
 public:
@@ -89,7 +91,7 @@ public:
    **/
   void saveCategories();
 
-  int addCategory(const QString& name, const std::vector<int>& nexusIDs, int parentID);
+  int addCategory(const QString& name, const std::vector<NexusCategory>& nexusCats, int parentID);
 
   /**
    * @brief retrieve the number of available categories
@@ -183,20 +185,33 @@ public:
    *
    * @return the reference to the singleton
    **/
-  static CategoryFactory& instance();
+  static CategoryFactory* instance();
 
   /**
    * @return path to the file that contains the categories list
    */
   static QString categoriesFilePath();
 
+  /**
+   * @return path to the file that contains the nexus category mappings
+   */
+  static QString nexusMappingFilePath();
+
+public slots:
+
+  void mapNexusCategories(QString, QVariant, QVariant data);
+
+signals:
+
+  void requestNexusCategories();
+
 private:
   CategoryFactory();
 
   void loadDefaultCategories();
 
-  void addCategory(int id, const QString& name, const std::vector<int>& nexusID,
-                   int parentID);
+  void addCategory(int id, const QString& name, const std::vector<NexusCategory>& nexusCats, int parentID);
+  void addCategory(int id, const QString& name, int parentID);
 
   void setParents();
 
@@ -207,7 +222,7 @@ private:
 
   std::vector<Category> m_Categories;
   std::map<int, unsigned int> m_IDMap;
-  std::map<int, unsigned int> m_NexusMap;
+  std::map<NexusCategory, unsigned int> m_NexusMap;
 
 private:
   // called by isDescendantOf()
