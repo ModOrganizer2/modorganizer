@@ -85,6 +85,11 @@ void NexusBridge::requestToggleTracking(QString gameName, int modID, bool track,
   m_RequestIDs.insert(m_Interface->requestToggleTracking(gameName, modID, track, this, userData, m_SubModule));
 }
 
+void NexusBridge::requestGameInfo(QString gameName, QVariant userData)
+{
+  m_RequestIDs.insert(m_Interface->requestGameInfo(gameName, this, userData, m_SubModule));
+}
+
 void NexusBridge::nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
 {
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
@@ -174,6 +179,15 @@ void NexusBridge::nxmTrackingToggled(QString gameName, int modID, QVariant userD
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
     emit trackingToggled(gameName, modID, userData, tracked);
+  }
+}
+
+void NexusBridge::nxmGameInfoAvailable(QString gameName, QVariant userData, QVariant resultData, int requestID)
+{
+  std::set<int>::iterator iter = m_RequestIDs.find(requestID);
+  if (iter != m_RequestIDs.end()) {
+    m_RequestIDs.erase(iter);
+    emit gameInfoAvailable(gameName, userData, resultData);
   }
 }
 
@@ -645,6 +659,26 @@ int NexusInterface::requestToggleTracking(QString gameName, int modID, bool trac
   return requestInfo.m_ID;
 }
 
+int NexusInterface::requestGameInfo(QString gameName, QObject* receiver, QVariant userData, const QString& subModule, MOBase::IPluginGame const* game)
+{
+  if (m_User.shouldThrottle()) {
+    throttledWarning(m_User);
+    return -1;
+  }
+
+  NXMRequestInfo requestInfo(NXMRequestInfo::TYPE_GAMEINFO, userData, subModule, game);
+  m_RequestQueue.enqueue(requestInfo);
+
+  connect(this, SIGNAL(nxmGameInfoAvailable(QString, QVariant, QVariant, int)),
+    receiver, SLOT(nxmGameInfoAvailable(QString, QVariant, QVariant, int)), Qt::UniqueConnection);
+
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+
+  nextRequest();
+  return requestInfo.m_ID;
+}
+
 int NexusInterface::requestInfoFromMd5(QString gameName, QByteArray &hash, QObject *receiver, QVariant userData,
                                        const QString &subModule, MOBase::IPluginGame const *game)
 {
@@ -1070,6 +1104,30 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   : m_ModID(modID)
   , m_ModVersion("0")
   , m_FileID(fileID)
+  , m_Reply(nullptr)
+  , m_Type(type)
+  , m_UpdatePeriod(UpdatePeriod::NONE)
+  , m_UserData(userData)
+  , m_Timeout(nullptr)
+  , m_Reroute(false)
+  , m_ID(s_NextID.fetchAndAddAcquire(1))
+  , m_URL(get_management_url())
+  , m_SubModule(subModule)
+  , m_NexusGameID(game->nexusGameID())
+  , m_GameName(game->gameNexusName())
+  , m_Endorse(false)
+  , m_Track(false)
+  , m_Hash(QByteArray())
+{}
+
+NexusInterface::NXMRequestInfo::NXMRequestInfo(Type type
+  , QVariant userData
+  , const QString & subModule
+  , MOBase::IPluginGame const *game
+)
+  : m_ModID(0)
+  , m_ModVersion("0")
+  , m_FileID(0)
   , m_Reply(nullptr)
   , m_Type(type)
   , m_UpdatePeriod(UpdatePeriod::NONE)
