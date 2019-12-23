@@ -181,7 +181,7 @@ private:
 };
 
 
-FilterList::FilterList(Ui::MainWindow* ui, OrganizerCore* organizer, CategoryFactory& factory)
+FilterList::FilterList(Ui::MainWindow* ui, OrganizerCore* organizer, CategoryFactory* factory)
   : ui(ui), m_Organizer(organizer), m_factory(factory)
 {
   auto* eventFilter = new CriteriaItemFilter(
@@ -243,15 +243,15 @@ void FilterList::addContentCriteria()
 
 void FilterList::addCategoryCriteria(QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID)
 {
-  const auto count = static_cast<unsigned int>(m_factory.numCategories());
+  const auto count = static_cast<unsigned int>(m_factory->numCategories());
   for (unsigned int i = 1; i < count; ++i) {
-    if (m_factory.getParentID(i) == targetID) {
-      int categoryID = m_factory.getCategoryID(i);
+    if (m_factory->getParentID(i) == targetID) {
+      int categoryID = m_factory->getCategoryID(i);
       if (categoriesUsed.find(categoryID) != categoriesUsed.end()) {
         QTreeWidgetItem *item =
-          addCriteriaItem(root, m_factory.getCategoryName(i),
+          addCriteriaItem(root, m_factory->getCategoryName(i),
             categoryID, ModListSortProxy::TypeCategory);
-        if (m_factory.hasChildren(i)) {
+        if (m_factory->hasChildren(i)) {
           addCategoryCriteria(item, categoriesUsed, categoryID);
         }
       }
@@ -264,7 +264,7 @@ void FilterList::addSpecialCriteria(int type)
   const auto sc = static_cast<CategoryFactory::SpecialCategories>(type);
 
   addCriteriaItem(
-    nullptr, m_factory.getSpecialCategoryName(sc),
+    nullptr, m_factory->getSpecialCategoryName(sc),
     type, ModListSortProxy::TypeSpecial);
 }
 
@@ -302,7 +302,7 @@ void FilterList::refresh()
           log::warn("cycle in categories: {}", SetJoin(cycleTest, ", "));
           break;
         }
-        currentID = m_factory.getParentID(m_factory.getCategoryIndex(currentID));
+        currentID = m_factory->getParentID(m_factory->getCategoryIndex(currentID));
       }
     }
   }

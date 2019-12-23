@@ -315,6 +315,9 @@ MainWindow::MainWindow(Settings &settings
     ui->statusBar->setAPI(ni->getAPIStats(), ni->getAPIUserAccount());
   }
 
+  languageChange(settings.interface().language());
+
+  m_CategoryFactory->loadCategories();
   m_Filters.reset(new FilterList(ui, &m_OrganizerCore, m_CategoryFactory));
 
   connect(
@@ -442,6 +445,8 @@ MainWindow::MainWindow(Settings &settings
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(requestNXMDownload(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(QString,int,int,QVariant,QVariant,int)));
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusApi()));
+
+  connect(m_CategoryFactory, SIGNAL(requestNexusCategories()), &m_OrganizerCore, SLOT(requestNexusCategories()));
 
   connect(
     NexusInterface::instance(&pluginContainer)->getAccessManager(),
@@ -2137,7 +2142,7 @@ void MainWindow::fixCategories()
     std::set<int> categories = modInfo->getCategories();
     for (std::set<int>::iterator iter = categories.begin();
          iter != categories.end(); ++iter) {
-      if (!m_CategoryFactory.categoryExists(*iter)) {
+      if (!m_CategoryFactory->categoryExists(*iter)) {
         modInfo->setCategory(*iter, false);
       }
     }
@@ -4019,17 +4024,17 @@ bool MainWindow::populateMenuCategories(QMenu *menu, int targetID)
 
   bool childEnabled = false;
 
-  for (unsigned int i = 1; i < m_CategoryFactory.numCategories(); ++i) {
-    if (m_CategoryFactory.getParentID(i) == targetID) {
+  for (unsigned int i = 1; i < m_CategoryFactory->numCategories(); ++i) {
+    if (m_CategoryFactory->getParentID(i) == targetID) {
       QMenu *targetMenu = menu;
-      if (m_CategoryFactory.hasChildren(i)) {
-        targetMenu = menu->addMenu(m_CategoryFactory.getCategoryName(i).replace('&', "&&"));
+      if (m_CategoryFactory->hasChildren(i)) {
+        targetMenu = menu->addMenu(m_CategoryFactory->getCategoryName(i).replace('&', "&&"));
       }
 
-      int id = m_CategoryFactory.getCategoryID(i);
+      int id = m_CategoryFactory->getCategoryID(i);
       QScopedPointer<QCheckBox> checkBox(new QCheckBox(targetMenu));
       bool enabled = categories.find(id) != categories.end();
-      checkBox->setText(m_CategoryFactory.getCategoryName(i).replace('&', "&&"));
+      checkBox->setText(m_CategoryFactory->getCategoryName(i).replace('&', "&&"));
       if (enabled) {
         childEnabled = true;
       }
@@ -4040,8 +4045,8 @@ bool MainWindow::populateMenuCategories(QMenu *menu, int targetID)
       checkableAction->setData(id);
       targetMenu->addAction(checkableAction.take());
 
-      if (m_CategoryFactory.hasChildren(i)) {
-        if (populateMenuCategories(targetMenu, m_CategoryFactory.getCategoryID(i)) || enabled) {
+      if (m_CategoryFactory->hasChildren(i)) {
+        if (populateMenuCategories(targetMenu, m_CategoryFactory->getCategoryID(i)) || enabled) {
           targetMenu->setIcon(QIcon(":/MO/gui/resources/check.png"));
         }
       }
@@ -4320,11 +4325,11 @@ void MainWindow::addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu,
                                               ModInfo::Ptr info) {
   const std::set<int> &categories = info->getCategories();
   for (int categoryID : categories) {
-    int catIdx = m_CategoryFactory.getCategoryIndex(categoryID);
+    int catIdx = m_CategoryFactory->getCategoryIndex(categoryID);
     QWidgetAction *action = new QWidgetAction(primaryCategoryMenu);
     try {
       QRadioButton *categoryBox = new QRadioButton(
-          m_CategoryFactory.getCategoryName(catIdx).replace('&', "&&"),
+          m_CategoryFactory->getCategoryName(catIdx).replace('&', "&&"),
           primaryCategoryMenu);
       connect(categoryBox, &QRadioButton::toggled, [info, categoryID](bool enable) {
         if (enable) {
@@ -4579,7 +4584,7 @@ void MainWindow::exportModListCSV()
           if (mod_Note->isChecked())
             builder.setRowField("#Note", QString("%1").arg(info->comments().remove(',')));
 					if (primary_Category->isChecked())
-						builder.setRowField("#Primary_Category", (m_CategoryFactory.categoryExists(info->primaryCategory())) ? m_CategoryFactory.getCategoryNameByID(info->primaryCategory()) : "");
+						builder.setRowField("#Primary_Category", (m_CategoryFactory->categoryExists(info->primaryCategory())) ? m_CategoryFactory->getCategoryNameByID(info->primaryCategory()) : "");
 					if (nexus_ID->isChecked())
 						builder.setRowField("#Nexus_ID", info->nexusId());
 					if (mod_Nexus_URL->isChecked())
@@ -6028,7 +6033,7 @@ void MainWindow::onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>
       const auto *content = m_OrganizerCore.modDataContents().findById(c.id);
       label = content ? content->name() : QString();
     } else {
-      label = m_CategoryFactory.getCategoryNameByID(c.id);
+      label = m_CategoryFactory->getCategoryNameByID(c.id);
     }
 
     if (label.isEmpty()) {

@@ -128,8 +128,8 @@ void CategoriesDialog::cellChanged(int row, int)
 
 void CategoriesDialog::commitChanges()
 {
-  CategoryFactory &categories = CategoryFactory::instance();
-  categories.reset();
+  CategoryFactory *categories = CategoryFactory::instance();
+  categories->reset();
 
   for (int i = 0; i < ui->categoriesTable->rowCount(); ++i) {
     int index = ui->categoriesTable->verticalHeader()->logicalIndex(i);
@@ -141,15 +141,15 @@ void CategoriesDialog::commitChanges()
       nexusIDs.push_back(iter->toInt());
     }
 
-    categories.addCategory(
+    categories->addCategory(
           ui->categoriesTable->item(index, 0)->text().toInt(),
           ui->categoriesTable->item(index, 1)->text(),
           nexusIDs,
           ui->categoriesTable->item(index, 3)->text().toInt());
   }
-  categories.setParents();
+  categories->setParents();
 
-  categories.saveCategories();
+  categories->saveCategories();
 }
 
 
