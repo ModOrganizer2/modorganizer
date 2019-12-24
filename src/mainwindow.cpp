@@ -419,7 +419,7 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
   connect(&NexusInterface::instance(), SIGNAL(needLogin()), &m_OrganizerCore,
           SLOT(nexusApi()));
 
-  connect(m_CategoryFactory, SIGNAL(requestNexusCategories()), &m_OrganizerCore, SLOT(requestNexusCategories()));
+  connect(CategoryFactory::instance(), SIGNAL(requestNexusCategories()), &m_OrganizerCore, SLOT(requestNexusCategories()));
 
   connect(
     NexusInterface::instance(&pluginContainer)->getAccessManager(),

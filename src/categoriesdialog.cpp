@@ -136,18 +136,19 @@ void CategoriesDialog::commitChanges()
   categories->reset();
 
   for (int i = 0; i < ui->categoriesTable->rowCount(); ++i) {
-    int index             = ui->categoriesTable->verticalHeader()->logicalIndex(i);
-    QString nexusIDString = ui->categoriesTable->item(index, 2)->text();
-    QStringList nexusIDStringList = nexusIDString.split(',', Qt::SkipEmptyParts);
-    std::vector<int> nexusIDs;
-    for (QStringList::iterator iter = nexusIDStringList.begin();
-         iter != nexusIDStringList.end(); ++iter) {
-      nexusIDs.push_back(iter->toInt());
+    int index = ui->categoriesTable->verticalHeader()->logicalIndex(i);
+    QVariantList nexusData = ui->categoriesTable->item(index, 2)->data(Qt::UserRole).toList();
+    std::vector<CategoryFactory::NexusCategory> nexusCats;
+    for (QVariantList::iterator iter = nexusData.begin();
+         iter != nexusData.end(); ++iter) {
+      QVariantList nexusInfo = iter->toList();
+      nexusCats.push_back(CategoryFactory::NexusCategory(nexusInfo[0].toString(), nexusInfo[1].toInt()));
     }
 
     categories->addCategory(
           ui->categoriesTable->item(index, 0)->text().toInt(),
-          ui->categoriesTable->item(index, 1)->text(), nexusIDs,
+          ui->categoriesTable->item(index, 1)->text(),
+          nexusCats,
           ui->categoriesTable->item(index, 3)->text().toInt());
   }
   categories->setParents();
@@ -169,8 +170,8 @@ void CategoriesDialog::refreshIDs()
 
 void CategoriesDialog::fillTable()
 {
-  CategoryFactory& categories = CategoryFactory::instance();
-  QTableWidget* table         = ui->categoriesTable;
+  CategoryFactory* categories = CategoryFactory::instance();
+  QTableWidget* table = ui->categoriesTable;
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
   table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
@@ -198,9 +199,8 @@ void CategoriesDialog::fillTable()
       3, new ValidatingDelegate(this, new ExistingIDValidator(m_IDs)));
 
   int row = 0;
-  for (std::vector<CategoryFactory::Category>::const_iterator iter =
-           categories.m_Categories.begin();
-       iter != categories.m_Categories.end(); ++iter, ++row) {
+  for (std::vector<CategoryFactory::Category>::const_iterator iter = categories->m_Categories.begin();
+       iter != categories->m_Categories.end(); ++iter, ++row) {
     const CategoryFactory::Category& category = *iter;
     if (category.m_ID == 0) {
       --row;
@@ -213,14 +213,23 @@ void CategoriesDialog::fillTable()
     idItem->setData(Qt::DisplayRole, category.m_ID);
 
     QScopedPointer<QTableWidgetItem> nameItem(new QTableWidgetItem(category.m_Name));
-    QScopedPointer<QTableWidgetItem> nexusIDItem(
-        new QTableWidgetItem(MOBase::VectorJoin(category.m_NexusIDs, ",")));
+    QStringList nexusLabel;
+    QVariantList nexusData;
+    for (auto iter = category.m_NexusCats.begin(); iter < category.m_NexusCats.end(); ++iter) {
+      nexusLabel.append(iter->m_Name);
+      QVariantList data;
+      data.append(QVariant(iter->m_Name));
+      data.append(QVariant(iter->m_ID));
+      nexusData.append(data);
+    }
+    QScopedPointer<QTableWidgetItem> nexusCatItem(new QTableWidgetItem(nexusLabel.join(", ")));
+    nexusCatItem->setData(Qt::UserRole, nexusData);
     QScopedPointer<QTableWidgetItem> parentIDItem(new QTableWidgetItem());
     parentIDItem->setData(Qt::DisplayRole, category.m_ParentID);
 
     table->setItem(row, 0, idItem.take());
     table->setItem(row, 1, nameItem.take());
-    table->setItem(row, 2, nexusIDItem.take());
+    table->setItem(row, 2, nexusCatItem.take());
     table->setItem(row, 3, parentIDItem.take());
   }
 

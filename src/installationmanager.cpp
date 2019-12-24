@@ -659,12 +659,12 @@ InstallationResult InstallationManager::install(const QString& fileName,
     modName.update(doc.toPlainText(), GUESS_FALLBACK);
     modName.update(metaFile.value("modName", "").toString(), GUESS_META);
 
-    version                    = metaFile.value("version", "").toString();
-    newestVersion              = metaFile.value("newestVersion", "").toString();
-    unsigned int categoryIndex = CategoryFactory::instance().resolveNexusID(
+    version = metaFile.value("version", "").toString();
+    newestVersion = metaFile.value("newestVersion", "").toString();
+    unsigned int categoryIndex = CategoryFactory::instance()->resolveNexusID(
         metaFile.value("category", 0).toInt());
-    categoryID     = CategoryFactory::instance().getCategoryID(categoryIndex);
-    repository     = metaFile.value("repository", "").toString();
+    categoryID = CategoryFactory::instance()->getCategoryID(categoryIndex);
+    repository = metaFile.value("repository", "").toString();
     fileCategoryID = metaFile.value("fileCategory", 1).toInt();
   }
 

@@ -210,8 +210,7 @@ void ModInfoRegular::readMeta()
       // ignore invalid id
       continue;
     }
-    if (ok && (categoryID != 0) &&
-        (CategoryFactory::instance().categoryExists(categoryID))) {
+    if (ok && (categoryID != 0) && (CategoryFactory::instance()->categoryExists(categoryID))) {
       m_Categories.insert(categoryID);
       if (iter == categories.begin()) {
         m_PrimaryCategory = categoryID;
@@ -575,7 +574,7 @@ void ModInfoRegular::setInstallationFile(const QString& fileName)
 
 void ModInfoRegular::addNexusCategory(int categoryID)
 {
-  m_Categories.insert(CategoryFactory::instance().resolveNexusID(categoryID));
+  m_Categories.insert(CategoryFactory::instance()->resolveNexusID(categoryID));
 }
 
 void ModInfoRegular::setIsEndorsed(bool endorsed)
@@ -731,15 +730,15 @@ QString ModInfoRegular::getDescription() const
     const std::set<int>& categories = getCategories();
     std::wostringstream categoryString;
     categoryString << ToWString(tr("Categories: <br>"));
-    CategoryFactory& categoryFactory = CategoryFactory::instance();
+    CategoryFactory* categoryFactory = CategoryFactory::instance();
     for (std::set<int>::const_iterator catIter = categories.begin();
          catIter != categories.end(); ++catIter) {
       if (catIter != categories.begin()) {
         categoryString << " , ";
       }
       categoryString << "<span style=\"white-space: nowrap;\"><i>"
-                     << ToWString(categoryFactory.getCategoryName(
-                            categoryFactory.getCategoryIndex(*catIter)))
+                     << ToWString(categoryFactory->getCategoryName(
+                         categoryFactory->getCategoryIndex(*catIter)))
                      << "</font></span>";
     }
 

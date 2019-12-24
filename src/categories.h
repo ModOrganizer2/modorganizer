@@ -31,7 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
  *to look up categories, optimized to where the request comes from. Therefore be very
  *careful which of the two you have available
  **/
-class CategoryFactory : QObject {
+class CategoryFactory : public QObject {
   Q_OBJECT;
 
   friend class CategoriesDialog;
@@ -53,26 +53,40 @@ public:
   };
 
 public:
+  struct NexusCategory {
+    NexusCategory(const QString& name, const int nexusID)
+      : m_Name(name), m_ID(nexusID) {}
+    QString m_Name;
+    int m_ID;
+
+    friend bool operator==(const NexusCategory& LHS, const NexusCategory& RHS) {
+      return LHS.m_ID == RHS.m_ID;
+    }
+
+    friend bool operator==(const NexusCategory& LHS, const int RHS) {
+      return LHS.m_ID == RHS;
+    }
+
+    friend bool operator<(const NexusCategory& LHS, const NexusCategory& RHS) {
+      return LHS.m_ID < RHS.m_ID;
+    }
+  };
+
   struct Category {
-    Category(int sortValue, int id, const QString& name, int parentID)
-      : m_SortValue(sortValue), m_ID(id), m_Name(name), m_HasChildren(false), m_ParentID(parentID) {}
+    Category(int sortValue, int id, const QString& name, int parentID, std::vector<NexusCategory> nexusCats)
+      : m_SortValue(sortValue), m_ID(id), m_Name(name), m_HasChildren(false), m_ParentID(parentID)
+      , m_NexusCats(nexusCats) {}
     int m_SortValue;
     int m_ID;
     int m_ParentID;
     bool m_HasChildren;
     QString m_Name;
+    std::vector<NexusCategory> m_NexusCats;
 
     friend bool operator<(const Category& LHS, const Category& RHS)
     {
       return LHS.m_SortValue < RHS.m_SortValue;
     }
-  };
-
-  struct NexusCategory {
-    NexusCategory(const QString &name, const int nexusID)
-      : m_Name(name), m_ID(nexusID) {}
-    QString m_Name;
-    int m_ID;
   };
 
 public:
@@ -206,7 +220,7 @@ signals:
   void requestNexusCategories();
 
 private:
-  CategoryFactory();
+  explicit CategoryFactory();
 
   void loadDefaultCategories();
 
@@ -215,11 +229,7 @@ private:
 
   void setParents();
 
-  static void cleanup();
-
 private:
-  static CategoryFactory* s_Instance;
-
   std::vector<Category> m_Categories;
   std::map<int, unsigned int> m_IDMap;
   std::map<NexusCategory, unsigned int> m_NexusMap;
