@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define CATEGORIESDIALOG_H
 
 #include "tutorabledialog.h"
+#include "categories.h"
 #include <set>
 
 namespace Ui {
@@ -68,6 +69,7 @@ private:
 
   int m_HighestID;
   std::set<int> m_IDs;
+  std::vector<CategoryFactory::NexusCategory> m_NexusCategories;
 
 };
 

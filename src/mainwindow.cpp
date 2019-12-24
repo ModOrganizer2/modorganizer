@@ -446,7 +446,7 @@ MainWindow::MainWindow(Settings &settings
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(QString,int,int,QVariant,QVariant,int)));
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusApi()));
 
-  connect(m_CategoryFactory, SIGNAL(requestNexusCategories()), &m_OrganizerCore, SLOT(requestNexusCategories()));
+  connect(CategoryFactory::instance(), SIGNAL(requestNexusCategories()), &m_OrganizerCore, SLOT(requestNexusCategories()));
 
   connect(
     NexusInterface::instance(&pluginContainer)->getAccessManager(),
