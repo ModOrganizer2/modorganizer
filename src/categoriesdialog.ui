@@ -14,16 +14,6 @@
    <string>Categories</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="1" column="2" colspan="4">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
-   </item>
    <item row="0" column="3">
     <widget class="QTableWidget" name="categoriesTable">
      <property name="contextMenuPolicy">
@@ -123,6 +113,16 @@ p, li { white-space: pre-wrap; }
      </column>
     </widget>
    </item>
+   <item row="4" column="3">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
    <item row="0" column="5">
     <widget class="QGroupBox" name="groupBox">
      <property name="layoutDirection">
@@ -133,7 +133,7 @@ p, li { white-space: pre-wrap; }
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QListWidget" name="listWidget">
+       <widget class="QListWidget" name="nexusCategoryList">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
           <horstretch>0</horstretch>
@@ -149,6 +149,13 @@ p, li { white-space: pre-wrap; }
        </widget>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item row="4" column="5">
+    <widget class="QPushButton" name="nexusRefresh">
+     <property name="text">
+      <string>Refresh Nexus Categories</string>
+     </property>
     </widget>
    </item>
   </layout>

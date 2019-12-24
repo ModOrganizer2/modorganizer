@@ -2,6 +2,7 @@
 #include "categories.h"
 #include "categoriesdialog.h"
 #include "organizercore.h"
+#include "plugincontainer.h"
 #include "settings.h"
 #include "ui_mainwindow.h"
 #include <utility.h>
@@ -188,8 +189,8 @@ private:
 };
 
 
-FilterList::FilterList(Ui::MainWindow* ui, OrganizerCore* organizer, CategoryFactory* factory)
-  : ui(ui), m_Organizer(organizer), m_factory(factory)
+FilterList::FilterList(Ui::MainWindow* ui, OrganizerCore* organizer, PluginContainer* pluginContainer, CategoryFactory* factory)
+  : ui(ui), m_Organizer(organizer), m_pluginContainer(pluginContainer, m_factory(factory)
 {
   auto* eventFilter = new CriteriaItemFilter(ui->filters, [&](auto* item, int dir) {
     return cycleItem(item, dir);
@@ -425,7 +426,7 @@ void FilterList::checkCriteria()
 
 void FilterList::editCategories()
 {
-  CategoriesDialog dialog(qApp->activeWindow());
+  CategoriesDialog dialog(m_pluginContainer, qApp->activeWindow());
 
   if (dialog.exec() == QDialog::Accepted) {
     dialog.commitChanges();
