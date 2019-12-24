@@ -8,8 +8,8 @@
 
 using namespace MOBase;
 
-GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
-  : SettingsTab(s, d)
+GeneralSettingsTab::GeneralSettingsTab(Settings& s, PluginContainer *pluginContainer, SettingsDialog& d)
+  : SettingsTab(s, d), m_PluginContainer(pluginContainer)
 {
   addLanguages();
   selectLanguage();
@@ -187,7 +187,7 @@ void GeneralSettingsTab::onExploreStyles()
 
 void GeneralSettingsTab::onEditCategories()
 {
-  CategoriesDialog dialog(&dialog());
+  CategoriesDialog dialog(m_PluginContainer, &dialog());
 
   if (dialog.exec() == QDialog::Accepted) {
     dialog.commitChanges();

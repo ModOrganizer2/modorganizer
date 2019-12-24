@@ -827,7 +827,10 @@ void NexusInterface::nextRequest()
       } break;
       case NXMRequestInfo::TYPE_FILEINFO_MD5: {
         url = QStringLiteral("%1/games/%2/mods/md5_search/%3").arg(info.m_URL).arg(info.m_GameName).arg(QString(info.m_Hash.toHex()));
-      }
+      } break;
+      case NXMRequestInfo::TYPE_GAMEINFO: {
+        url = QStringLiteral("%1/games/%2").arg(info.m_URL).arg(info.m_GameName);
+      } break;
     }
   } else {
     url = info.m_URL;
@@ -961,6 +964,9 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
           } break;
           case NXMRequestInfo::TYPE_FILEINFO_MD5: {
             emit nxmFileInfoFromMd5Available(iter->m_GameName, iter->m_UserData, result, iter->m_ID);
+          } break;
+          case NXMRequestInfo::TYPE_GAMEINFO: {
+            emit nxmGameInfoAvailable(iter->m_GameName, iter->m_UserData, result, iter->m_ID);
           } break;
         }
 

@@ -6,6 +6,7 @@
 
 namespace Ui { class MainWindow; };
 class CategoryFactory;
+class PluginContainer;
 class Settings;
 class OrganizerCore;
 
@@ -14,7 +15,7 @@ class FilterList : public QObject
   Q_OBJECT;
 
 public:
-  FilterList(Ui::MainWindow* ui, OrganizerCore *organizer, CategoryFactory *factory);
+  FilterList(Ui::MainWindow* ui, OrganizerCore *organizer, PluginContainer *pluginContainer, CategoryFactory *factory);
 
   void restoreState(const Settings& s);
   void saveState(Settings& s) const;
@@ -34,6 +35,7 @@ private:
   Ui::MainWindow* ui;
   OrganizerCore* m_Organizer;
   CategoryFactory* m_factory;
+  PluginContainer* m_pluginContainer;
 
   bool onClick(QMouseEvent* e);
   void onItemActivated(QTreeWidgetItem* item);

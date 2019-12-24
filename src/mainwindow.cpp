@@ -318,7 +318,7 @@ MainWindow::MainWindow(Settings &settings
   languageChange(settings.interface().language());
 
   m_CategoryFactory->loadCategories();
-  m_Filters.reset(new FilterList(ui, &m_OrganizerCore, m_CategoryFactory));
+  m_Filters.reset(new FilterList(ui, &m_OrganizerCore, &m_PluginContainer, m_CategoryFactory));
 
   connect(
     m_Filters.get(), &FilterList::criteriaChanged,
