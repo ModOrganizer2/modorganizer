@@ -795,6 +795,48 @@ std::optional<ProcessRunner::Results> ProcessRunner::runBinary()
   return {};
 }
 
+bool ProcessRunner::shouldRefresh(Results r) const
+{
+  // afterRun() is only called with the Refresh flag; it refreshes the
+  // directory structure and notifies plugins
+  //
+  // refreshing is not always required and can actually cause problems:
+  //
+  //  1) running shortcuts doesn't need refreshing because MO closes right
+  //     after
+  //
+  //  2) the mod info dialog is not set up to deal with refreshes, so that
+  //     it will crash because the old DirectoryEntry's are still being used
+  //     in the list
+  if (!m_waitFlags.testFlag(Refresh)) {
+    log::debug("not refreshing because the flag isn't set");
+    return false;
+  }
+
+  switch (r)
+  {
+    case Completed:
+    {
+      log::debug("refreshing because the process completed");
+      return true;
+    }
+
+    case ForceUnlocked:
+    {
+      log::debug("refreshing because the ui was force unlocked");
+      return true;
+    }
+
+    case Error:          // fall-through
+    case Cancelled:
+    case Running:
+    default:
+    {
+      return false;
+    }
+  }
+}
+
 ProcessRunner::Results ProcessRunner::postRun()
 {
   const bool mustWait = (m_waitFlags & ForceWait);
@@ -841,19 +883,7 @@ ProcessRunner::Results ProcessRunner::postRun()
     r = waitForProcess(m_handle.get(), &m_exitCode, ls);
   });
 
-  if (r == Completed && (m_waitFlags & Refresh)) {
-    // afterRun() is only called with the Refresh flag; it refreshes the
-    // directory structure and notifies plugins
-    //
-    // refreshing is not always required and can actually cause problems:
-    //
-    //  1) running shortcuts doesn't need refreshing because MO closes right
-    //     after
-    //
-    //  2) the mod info dialog is not set up to deal with refreshes, so that
-    //     it will crash because the old DirectoryEntry's are still being used
-    //     in the list
-    //
+  if (shouldRefresh(r)) {
     m_core.afterRun(m_sp.binary, m_exitCode);
   }
 

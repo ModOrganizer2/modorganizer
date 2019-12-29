@@ -101,6 +101,7 @@ void ModuleNotification::fire(QString path, std::size_t fileSize)
 {
   if (m_loaded.contains(path)) {
     // don't notify if it's been loaded before
+    return;
   }
 
   m_loaded.insert(path);

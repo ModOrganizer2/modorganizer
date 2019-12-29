@@ -333,8 +333,8 @@ void NexusSSOLogin::onDisconnected()
 void NexusSSOLogin::onError(QAbstractSocket::SocketError e)
 {
   if (m_active) {
-    setState(Error, m_socket.errorString());
     close();
+    setState(Error, m_socket.errorString());
   }
 }
 

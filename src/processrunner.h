@@ -156,6 +156,7 @@ private:
 
 
   bool shouldRunShell() const;
+  bool shouldRefresh(Results r) const;
 
   // runs the command in m_shellOpen; returns empty if it can be waited for
   //
