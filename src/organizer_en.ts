@@ -6317,9 +6317,9 @@ If the folder was still in use, restart MO and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="processrunner.cpp" line="539"/>
-        <location filename="processrunner.cpp" line="592"/>
-        <location filename="processrunner.cpp" line="738"/>
+        <location filename="processrunner.cpp" line="557"/>
+        <location filename="processrunner.cpp" line="610"/>
+        <location filename="processrunner.cpp" line="756"/>
         <source>No profile set</source>
         <translation type="unfinished"></translation>
     </message>
