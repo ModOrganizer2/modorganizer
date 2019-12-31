@@ -446,7 +446,7 @@ MainWindow::MainWindow(Settings &settings
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(QString,int,int,QVariant,QVariant,int)));
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusApi()));
 
-  connect(CategoryFactory::instance(), SIGNAL(requestNexusCategories()), &m_OrganizerCore, SLOT(requestNexusCategories()));
+  connect(CategoryFactory::instance(), SIGNAL(requestNexusCategories()), this, SLOT(requestNexusCategories()));
 
   connect(
     NexusInterface::instance(&pluginContainer)->getAccessManager(),
@@ -5276,6 +5276,14 @@ void MainWindow::sendSelectedPluginsToPriority_clicked()
   m_OrganizerCore.pluginList()->sendToPriority(ui->espList->selectionModel(), newPriority);
 }
 
+void MainWindow::requestNexusCategories()
+{
+  CategoriesDialog dialog(&m_PluginContainer, this);
+
+  if (dialog.exec() == QDialog::Accepted) {
+    dialog.commitChanges();
+  }
+}
 
 void MainWindow::enableSelectedMods_clicked()
 {

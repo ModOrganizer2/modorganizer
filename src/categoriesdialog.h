@@ -64,6 +64,7 @@ private slots:
   void addCategory_clicked();
   void removeCategory_clicked();
   void nexusRefresh_clicked();
+  void nexusImport_clicked();
   void cellChanged(int row, int column);
 
 private:

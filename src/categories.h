@@ -59,6 +59,7 @@ public:
       : m_Name(name), m_ID(nexusID) {}
     QString m_Name;
     int m_ID;
+    int m_CategoryID = -1;
 
     friend bool operator==(const NexusCategory& LHS, const NexusCategory& RHS) {
       return LHS.m_ID == RHS.m_ID;
@@ -234,7 +235,7 @@ private:
 private:
   std::vector<Category> m_Categories;
   std::map<int, unsigned int> m_IDMap;
-  std::map<NexusCategory, unsigned int> m_NexusMap;
+  std::map<int, NexusCategory> m_NexusMap;
 
 private:
 

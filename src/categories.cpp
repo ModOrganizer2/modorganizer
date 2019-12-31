@@ -114,18 +114,25 @@ void CategoryFactory::loadCategories()
         QByteArray nexLine = nexusMapFile.readLine();
         ++nexLineNum;
         QList<QByteArray> nexCells = nexLine.split('|');
-        std::vector<NexusCategory> nexusCats;
-        QString nexName = nexCells[1];
-        bool ok = false;
-        int nexID = nexCells[2].toInt(&ok);
-        if (!ok) {
-          log::error(tr("invalid nexus ID {}").toStdString(), nexCells[2].constData());
+        if (nexCells.count() == 3) {
+          std::vector<NexusCategory> nexusCats;
+          QString nexName = nexCells[1];
+          bool ok = false;
+          int nexID = nexCells[2].toInt(&ok);
+          if (!ok) {
+            log::error(tr("invalid nexus ID {}").toStdString(), nexCells[2].constData());
+          }
+          int catID = nexCells[0].toInt(&ok);
+          if (!ok) {
+            log::error(tr("invalid category id {}").toStdString(), nexCells[0].constData());
+          }
+          m_NexusMap.insert_or_assign(nexID, NexusCategory(nexName, nexID));
+          m_NexusMap.at(nexID).m_CategoryID = catID;
+        } else {
+          log::error(
+            tr("invalid nexus category line {}: {} ({} cells)").toStdString(),
+            lineNum, nexLine.constData(), nexCells.count());
         }
-        int catID = nexCells[0].toInt(&ok);
-        if (!ok) {
-          log::error(tr("invalid category id {}").toStdString(), nexCells[0].constData());
-        }
-        m_NexusMap[NexusCategory(nexName, nexID)] = catID;
       }
     }
     nexusMapFile.close();
@@ -205,14 +212,14 @@ void CategoryFactory::saveCategories()
   }
 
   nexusMapFile.resize(0);
-  QByteArray line;
   for (auto iter = m_NexusMap.begin(); iter != m_NexusMap.end(); ++iter) {
-    line.append(iter->first.m_Name).append("|");
-    line.append(iter->first.m_ID).append("|");
-    line.append(iter->second).append("\n");
-    categoryFile.write(line);
+    QByteArray line;
+    line.append(QByteArray::number(iter->second.m_CategoryID)).append("|");
+    line.append(iter->second.m_Name.toUtf8()).append("|");
+    line.append(QByteArray::number(iter->second.m_ID)).append("\n");
+    nexusMapFile.write(line);
   }
-  categoryFile.close();
+  nexusMapFile.close();
 }
 
 
@@ -249,7 +256,8 @@ void CategoryFactory::addCategory(int id, const QString &name, int parentID)
 void CategoryFactory::addCategory(int id, const QString& name, const std::vector<NexusCategory>& nexusCats, int parentID)
 {
   for (auto nexusCat : nexusCats) {
-    m_NexusMap[nexusCat] = id;
+    m_NexusMap.insert_or_assign(nexusCat.m_ID, nexusCat);
+    m_NexusMap.at(nexusCat.m_ID).m_CategoryID = id;
   }
   int index = static_cast<int>(m_Categories.size());
   m_Categories.push_back(Category(index, id, name, parentID, nexusCats));
@@ -261,11 +269,11 @@ void CategoryFactory::loadDefaultCategories()
 {
   // the order here is relevant as it defines the order in which the
   // mods appear in the combo box
-  if (QMessageBox::question(nullptr, tr("Load Nexus Categories?"),
-    tr("This is either a new or old instance which lacks modern Nexus category mappings. Would you like to import and map categories from Nexus now?"),
-    QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    emit requestNexusCategories();
-  }
+  //if (QMessageBox::question(nullptr, tr("Load Nexus Categories?"),
+  //  tr("This is either a new or old instance which lacks modern Nexus category mappings. Would you like to import and map categories from Nexus now?"),
+  //  QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+  //  emit requestNexusCategories();
+  //}
 }
 
 
@@ -403,12 +411,10 @@ int CategoryFactory::getCategoryID(const QString &name) const
 
 unsigned int CategoryFactory::resolveNexusID(int nexusID) const
 {
-  auto result = std::find_if(m_NexusMap.begin(), m_NexusMap.end(), [nexusID](const std::pair<NexusCategory, unsigned int> el) {
-    return el.first.m_ID == nexusID;
-    });
+  auto result = m_NexusMap.find(nexusID);
   if (result != m_NexusMap.end()) {
-    log::debug(tr("nexus category id {} maps to internal {}").toStdString(), nexusID, result->second);
-    return result->second;
+    log::debug(tr("nexus category id {} maps to internal {}").toStdString(), nexusID, result->second.m_ID);
+    return m_IDMap.at(result->second.m_CategoryID);
   } else {
     log::debug(tr("nexus category id {} not mapped").toStdString(), nexusID);
     return 0U;
