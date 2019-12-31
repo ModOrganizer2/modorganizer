@@ -14,11 +14,13 @@
   <file name="Qt5Positioning.dll"/>
   <file name="Qt5PrintSupport.dll"/>
   <file name="Qt5Qml.dll"/>
+  <file name="Qt5QmlModels.dll"/>
+  <file name="Qt5QmlWorkerScript.dll"/>
   <file name="Qt5Quick.dll"/>
   <file name="Qt5QuickWidgets.dll"/>
-  <file name="Qt5WebChannel.dll"/>
   <file name="Qt5SerialPort.dll"/>
   <file name="Qt5Svg.dll"/>
+  <file name="Qt5WebChannel.dll"/>
   <file name="Qt5WebEngineCore.dll"/>
   <file name="Qt5WebEngineWidgets.dll"/>
   <file name="Qt5WebSockets.dll"/>
