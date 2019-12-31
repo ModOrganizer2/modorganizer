@@ -14,6 +14,36 @@
    <string>Categories</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
+   <item row="4" column="3">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="5">
+    <widget class="QPushButton" name="nexusRefresh">
+     <property name="text">
+      <string>Refresh from Nexus</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="4">
+    <widget class="QPushButton" name="nexusImportButton">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>&lt;-- Import Nexus Cats</string>
+     </property>
+    </widget>
+   </item>
    <item row="0" column="3">
     <widget class="QTableWidget" name="categoriesTable">
      <property name="contextMenuPolicy">
@@ -113,17 +143,7 @@ p, li { white-space: pre-wrap; }
      </column>
     </widget>
    </item>
-   <item row="4" column="3">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="5">
+   <item row="0" column="4" colspan="2">
     <widget class="QGroupBox" name="groupBox">
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
@@ -149,13 +169,6 @@ p, li { white-space: pre-wrap; }
        </widget>
       </item>
      </layout>
-    </widget>
-   </item>
-   <item row="4" column="5">
-    <widget class="QPushButton" name="nexusRefresh">
-     <property name="text">
-      <string>Refresh Nexus Categories</string>
-     </property>
     </widget>
    </item>
   </layout>

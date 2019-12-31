@@ -419,7 +419,7 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
   connect(&NexusInterface::instance(), SIGNAL(needLogin()), &m_OrganizerCore,
           SLOT(nexusApi()));
 
-  connect(CategoryFactory::instance(), SIGNAL(requestNexusCategories()), &m_OrganizerCore, SLOT(requestNexusCategories()));
+  connect(CategoryFactory::instance(), SIGNAL(requestNexusCategories()), this, SLOT(requestNexusCategories()));
 
   connect(
     NexusInterface::instance(&pluginContainer)->getAccessManager(),
@@ -3911,6 +3911,65 @@ void MainWindow::originModified(int originID)
       origin.getName(), origin.getPath(), origin.getPriority(), dummy);
 
   DirectoryRefresher::cleanStructure(m_OrganizerCore.directoryStructure());
+}
+
+
+void MainWindow::enableSelectedPlugins_clicked()
+{
+  m_OrganizerCore.pluginList()->enableSelected(ui->espList->selectionModel());
+}
+
+
+void MainWindow::disableSelectedPlugins_clicked()
+{
+  m_OrganizerCore.pluginList()->disableSelected(ui->espList->selectionModel());
+}
+
+void MainWindow::sendSelectedPluginsToTop_clicked()
+{
+  m_OrganizerCore.pluginList()->sendToPriority(ui->espList->selectionModel(), 0);
+}
+
+void MainWindow::sendSelectedPluginsToBottom_clicked()
+{
+  m_OrganizerCore.pluginList()->sendToPriority(ui->espList->selectionModel(), INT_MAX);
+}
+
+void MainWindow::sendSelectedPluginsToPriority_clicked()
+{
+  bool ok;
+  int newPriority = QInputDialog::getInt(this,
+    tr("Set Priority"), tr("Set the priority of the selected plugins"),
+    0, 0, INT_MAX, 1, &ok);
+  if (!ok) return;
+
+  m_OrganizerCore.pluginList()->sendToPriority(ui->espList->selectionModel(), newPriority);
+}
+
+void MainWindow::requestNexusCategories()
+{
+  CategoriesDialog dialog(&m_PluginContainer, this);
+
+  if (dialog.exec() == QDialog::Accepted) {
+    dialog.commitChanges();
+  }
+}
+
+void MainWindow::enableSelectedMods_clicked()
+{
+  m_OrganizerCore.modList()->enableSelected(ui->modList->selectionModel());
+  if (m_ModListSortProxy != nullptr) {
+    m_ModListSortProxy->invalidate();
+  }
+}
+
+
+void MainWindow::disableSelectedMods_clicked()
+{
+  m_OrganizerCore.modList()->disableSelected(ui->modList->selectionModel());
+  if (m_ModListSortProxy != nullptr) {
+    m_ModListSortProxy->invalidate();
+  }
 }
 
 void MainWindow::updateAvailable()
