@@ -232,6 +232,7 @@ MainWindow::MainWindow(Settings &settings
   QWebEngineProfile::defaultProfile()->setPersistentStoragePath(settings.paths().cache());
 
   ui->setupUi(this);
+  languageChange(settings.interface().language());
   ui->statusBar->setup(ui, settings);
 
   {
@@ -258,8 +259,6 @@ MainWindow::MainWindow(Settings &settings
     updateWindowTitle(ni->getAPIUserAccount());
     ui->statusBar->setAPI(ni->getAPIStats(), ni->getAPIUserAccount());
   }
-
-  languageChange(settings.interface().language());
 
   m_CategoryFactory.loadCategories();
   m_Filters.reset(new FilterList(ui, m_CategoryFactory));

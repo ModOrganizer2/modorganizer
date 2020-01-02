@@ -69,7 +69,9 @@ void StatusBar::setProgress(int percent)
 
 void StatusBar::setNotifications(bool hasNotifications)
 {
-  m_notifications->set(hasNotifications);
+  if (m_notifications) {
+    m_notifications->set(hasNotifications);
+  }
 }
 
 void StatusBar::setAPI(const APIStats& stats, const APIUserAccount& user)
