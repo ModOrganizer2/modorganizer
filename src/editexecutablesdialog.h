@@ -141,15 +141,21 @@ private:
  **/
 class EditExecutablesDialog : public MOBase::TutorableDialog
 {
-    Q_OBJECT
+    Q_OBJECT;
+    friend class IgnoreChanges;
 
 public:
   using CustomOverwrites = ToggableMap<QString>;
   using ForcedLibraries = ToggableMap<QList<MOBase::ExecutableForcedLoadSetting>>;
 
-  explicit EditExecutablesDialog(OrganizerCore& oc, QWidget* parent=nullptr);
+  explicit EditExecutablesDialog(
+    OrganizerCore& oc, int selection=-1, QWidget* parent=nullptr);
 
   ~EditExecutablesDialog();
+
+  // also saves and restores geometry
+  //
+  int exec() override;
 
   ExecutablesList getExecutablesList() const;
   const CustomOverwrites& getCustomOverwrites() const;
@@ -165,6 +171,7 @@ private slots:
   void on_down_clicked();
 
   void on_title_textChanged(const QString& s);
+  void on_title_editingFinished();
   void on_overwriteSteamAppID_toggled(bool checked);
   void on_createFilesInMod_toggled(bool checked);
   void on_forceLoadLibraries_toggled(bool checked);
@@ -192,6 +199,10 @@ private:
   // forced libraries set in the dialog
   ForcedLibraries m_forcedLibraries;
 
+  // remembers the last executable title that made sense, reverts to this when
+  // the widget loses focus if it's empty
+  QString m_lastGoodTitle;
+
   // true when the change events being triggered are in response to loading
   // the executable's data into the UI, not from a user change
   bool m_settingUI;
@@ -213,10 +224,19 @@ private:
   void saveOrder();
   bool canMove(const QListWidgetItem* item, int direction);
   void move(QListWidgetItem* item, int direction);
-  void setJarBinary(const QString& binaryName);
   bool isTitleConflicting(const QString& s);
   void commitChanges();
   void setDirty(bool b);
+  void selectIndex(int i);
+
+  void addFromFile();
+  void addEmpty();
+  void clone();
+  void addNew(Executable e);
+
+  QFileInfo browseBinary(const QString& initial);
+  void setBinary(const QFileInfo& binary);
+  void setJarBinary(const QFileInfo& binary);
 };
 
 #endif // EDITEXECUTABLESDIALOG_H

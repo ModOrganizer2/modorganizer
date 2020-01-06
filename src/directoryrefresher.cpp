@@ -127,7 +127,7 @@ void DirectoryRefresher::addModFilesToStructure(DirectoryEntry *directoryStructu
     FilesOrigin &origin = directoryStructure->createOrigin(ToWString(modName), directoryW, priority);
     for (const QString &filename : stealFiles) {
       if (filename.isEmpty()) {
-        qWarning("Trying to find file with no name");
+        log::warn("Trying to find file with no name");
         continue;
       }
       QFileInfo fileInfo(filename);
@@ -143,7 +143,7 @@ void DirectoryRefresher::addModFilesToStructure(DirectoryEntry *directoryStructu
         QString warnStr = fileInfo.absolutePath();
         if (warnStr.isEmpty())
           warnStr = filename;
-        qWarning("file not found: %s", qUtf8Printable(warnStr));
+        log::warn("file not found: {}", warnStr);
       }
     }
   } else {

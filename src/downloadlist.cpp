@@ -19,12 +19,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "downloadlist.h"
 #include "downloadmanager.h"
+#include <utility.h>
+#include <log.h>
 #include <QEvent>
 #include <QColor>
 #include <QIcon>
-
 #include <QSortFilterProxyModel>
 
+using namespace MOBase;
 
 DownloadList::DownloadList(DownloadManager *manager, QObject *parent)
   : QAbstractTableModel(parent), m_Manager(manager)
@@ -75,6 +77,7 @@ QVariant DownloadList::headerData(int section, Qt::Orientation orientation, int 
       case COL_SIZE: return tr("Size");
       case COL_STATUS: return tr("Status");
       case COL_FILETIME: return tr("Filetime");
+      case COL_SOURCEGAME: return tr("Source Game");
       default: return QVariant();
     }
   } else {
@@ -116,11 +119,17 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
           if (m_Manager->isInfoIncomplete(index.row())) {
             return {};
           } else {
-            const MOBase::ModRepositoryFileInfo *info = m_Manager->getFileInfo(index.row());
             return QString("%1").arg(m_Manager->getModID(index.row()));
           }
         }
-        case COL_SIZE: return sizeFormat(m_Manager->getFileSize(index.row()));
+        case COL_SOURCEGAME: {
+          if (m_Manager->isInfoIncomplete(index.row())) {
+            return {};
+          } else {
+            return QString("%1").arg(m_Manager->getDisplayGameName(index.row()));
+          }
+        }
+        case COL_SIZE: return MOBase::localizedByteSize(m_Manager->getFileSize(index.row()));
         case COL_FILETIME: return m_Manager->getFileTime(index.row());
         case COL_STATUS:
           switch (m_Manager->getState(index.row())) {
@@ -192,23 +201,5 @@ void DownloadList::update(int row)
   else if (row < this->rowCount())
     emit dataChanged(this->index(row, 0, QModelIndex()), this->index(row, this->columnCount(QModelIndex())-1, QModelIndex()));
   else
-    qCritical("invalid row %d in download list, update failed", row);
-}
-
-QString DownloadList::sizeFormat(quint64 size) const
-{
-  qreal calc = size;
-  QStringList list;
-  list << "MB" << "GB" << "TB";
-
-  QStringListIterator i(list);
-  QString unit("KB");
-
-  calc /= 1024.0;
-  while (calc >= 1024.0 && i.hasNext()) {
-    unit = i.next();
-    calc /= 1024.0;
-  }
-
-  return QString().setNum(calc, 'f', 2) + " " + unit;
+    log::error("invalid row {} in download list, update failed", row);
 }

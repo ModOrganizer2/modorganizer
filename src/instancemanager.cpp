@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "instancemanager.h"
 #include "selectiondialog.h"
 #include <utility.h>
+#include <log.h>
 #include <appconfig.h>
 #include <QCoreApplication>
 #include <QDir>
@@ -29,11 +30,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 #include <cstdint>
 
+using namespace MOBase;
 
 static const char COMPANY_NAME[]     = "Tannin";
 static const char APPLICATION_NAME[] = "Mod Organizer";
 static const char INSTANCE_KEY[]     = "CurrentInstance";
-
 
 
 InstanceManager::InstanceManager()
@@ -86,10 +87,13 @@ bool InstanceManager::deleteLocalInstance(const QString &instanceId) const
 
   if (!MOBase::shellDelete(QStringList(instancePath),true))
   {
-    qWarning("Failed to shell-delete \"%s\" (errorcode %lu), trying regular delete", qUtf8Printable(instancePath), ::GetLastError());
+    log::warn(
+      "Failed to shell-delete \"{}\" (errorcode {}), trying regular delete",
+      instancePath, ::GetLastError());
+
     if (!MOBase::removeDir(instancePath))
     {
-      qWarning("regular delete failed too");
+      log::warn("regular delete failed too");
       result = false;
     }
   }
@@ -153,7 +157,7 @@ QString InstanceManager::queryInstanceName(const QStringList &instanceList) cons
     dialogText = dialog.textValue();
     instanceId = sanitizeInstanceName(dialogText);
     if (instanceId != dialogText) {
-      if (QMessageBox::question( nullptr, 
+      if (QMessageBox::question( nullptr,
                                 QObject::tr("Invalid instance name"),
                                 QObject::tr("The instance name \"%1\" is invalid.  Use the name \"%2\" instead?").arg(dialogText,instanceId),
                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
@@ -182,6 +186,10 @@ QString InstanceManager::queryInstanceName(const QStringList &instanceList) cons
 
 QString InstanceManager::chooseInstance(const QStringList &instanceList) const
 {
+  if (portableInstallIsLocked()) {
+    return QString();
+  }
+
   enum class Special : uint8_t {
     NewInstance,
     Portable,
@@ -220,7 +228,7 @@ QString InstanceManager::chooseInstance(const QStringList &instanceList) const
   selection.setWindowFlags(selection.windowFlags() | Qt::WindowStaysOnTopHint);
 
   if (selection.exec() == QDialog::Rejected) {
-    qDebug("rejected");
+    log::debug("rejected");
     throw MOBase::MyException(QObject::tr("Canceled"));
   }
 
@@ -251,14 +259,47 @@ QString InstanceManager::instancePath() const
 
 QStringList InstanceManager::instances() const
 {
-  return QDir(instancePath()).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+  const std::set<QString> ignore = {
+    "cache", "qtwebengine",
+  };
+
+  const auto dirs = QDir(instancePath())
+    .entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+
+  QStringList list;
+
+  for (auto&& d : dirs) {
+    if (!ignore.contains(QFileInfo(d).fileName().toLower())) {
+      list.push_back(d);
+    }
+  }
+
+  return list;
 }
 
+
+bool InstanceManager::isPortablePath(const QString& dataPath)
+{
+  return (dataPath == qApp->applicationDirPath());
+}
 
 bool InstanceManager::portableInstall() const
 {
   return QFile::exists(qApp->applicationDirPath() + "/" +
                        QString::fromStdWString(AppConfig::iniFileName()));
+}
+
+
+bool InstanceManager::portableInstallIsLocked() const
+{
+  return QFile::exists(qApp->applicationDirPath() + "/" +
+                       QString::fromStdWString(AppConfig::portableLockFileName()));
+}
+
+
+bool InstanceManager::allowedToChangeInstance() const
+{
+  return !portableInstallIsLocked();
 }
 
 
@@ -282,6 +323,10 @@ void InstanceManager::createDataPath(const QString &dataPath) const
 QString InstanceManager::determineDataPath()
 {
   QString instanceId = currentInstance();
+  if (portableInstallIsLocked())
+  {
+    instanceId.clear();
+  }
   if (instanceId.isEmpty() && !m_Reset && (m_overrideInstance || portableInstall()))
   {
     // startup, apparently using portable mode before
@@ -323,7 +368,7 @@ QString InstanceManager::sanitizeInstanceName(const QString &name) const
   // Don't end in spaces and periods
   new_name = new_name.remove(QRegExp("\\.*$"));
   new_name = new_name.remove(QRegExp(" *$"));
-  
+
   // Recurse until stuff stops changing
   if (new_name != name) {
     return sanitizeInstanceName(new_name);

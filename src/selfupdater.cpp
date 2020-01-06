@@ -122,15 +122,25 @@ void SelfUpdater::setPluginContainer(PluginContainer *pluginContainer)
   m_Interface->setPluginContainer(pluginContainer);
 }
 
-void SelfUpdater::testForUpdate()
+void SelfUpdater::testForUpdate(const Settings& settings)
 {
+  if (settings.network().offlineMode()) {
+    log::debug("not checking for updates, in offline mode");
+    return;
+  }
+
+  if (!settings.checkForUpdates()) {
+    log::debug("not checking for updates, disabled");
+    return;
+  }
+
   // TODO: if prereleases are disabled we could just request the latest release
   // directly
   try {
     m_GitHub.releases(GitHub::Repository("Modorganizer2", "modorganizer"),
                       [this](const QJsonArray &releases) {
       if (releases.isEmpty()) {
-        qDebug("Unable to connect to github.com to check version");
+        // error message already logged
         return;
       }
 
@@ -150,23 +160,23 @@ void SelfUpdater::testForUpdate()
         VersionInfo newestVer(newest["tag_name"].toString());
         if (newestVer > this->m_MOVersion) {
           m_UpdateCandidate = newest;
-          qDebug("update available: %s -> %s",
-                 qUtf8Printable(this->m_MOVersion.displayString(3)),
-                 qUtf8Printable(newestVer.displayString(3)));
+          log::debug("update available: {} -> {}",
+                 this->m_MOVersion.displayString(3),
+                 newestVer.displayString(3));
           emit updateAvailable();
         } else if (newestVer < this->m_MOVersion) {
           // this could happen if the user switches from using prereleases to
           // stable builds. Should we downgrade?
-          qDebug("This version is newer than the latest released one: %s -> %s",
-                 qUtf8Printable(this->m_MOVersion.displayString(3)),
-                 qUtf8Printable(newestVer.displayString(3)));
+          log::debug("This version is newer than the latest released one: {} -> {}",
+                 this->m_MOVersion.displayString(3),
+                 newestVer.displayString(3));
         }
       }
     });
   }
   //Catch all is bad by design, should be improved
   catch (...) {
-		qDebug("Unable to connect to github.com to check version");
+		log::debug("Unable to connect to github.com to check version");
   }
 }
 
@@ -230,7 +240,7 @@ void SelfUpdater::closeProgress()
 void SelfUpdater::openOutputFile(const QString &fileName)
 {
   QString outputPath = QDir::fromNativeSeparators(qApp->property("dataPath").toString()) + "/" + fileName;
-  qDebug("downloading to %s", qUtf8Printable(outputPath));
+  log::debug("downloading to {}", outputPath);
   m_UpdateFile.setFileName(outputPath);
   m_UpdateFile.open(QIODevice::WriteOnly);
 }
@@ -312,7 +322,7 @@ void SelfUpdater::downloadFinished()
     return;
   }
 
-  qDebug("download: %s", m_UpdateFile.fileName().toUtf8().constData());
+  log::debug("download: {}", m_UpdateFile.fileName());
 
   try {
     installUpdate();
@@ -331,11 +341,14 @@ void SelfUpdater::downloadCancel()
 void SelfUpdater::installUpdate()
 {
   const QString parameters = "/DIR=\"" + qApp->applicationDirPath() + "\" ";
+  const auto r = shell::Execute(m_UpdateFile.fileName(), parameters);
 
-  if (shell::Execute(m_UpdateFile.fileName(), parameters)) {
+  if (r.success()) {
     QCoreApplication::quit();
   } else {
-    reportError(tr("Failed to start %1").arg(m_UpdateFile.fileName()));
+    reportError(tr("Failed to start %1: %2")
+      .arg(m_UpdateFile.fileName())
+      .arg(r.toString()));
   }
 
   m_UpdateFile.remove();

@@ -1,6 +1,9 @@
 #include "texteditor.h"
 #include "utility.h"
+#include <log.h>
 #include <QSplitter>
+
+using namespace MOBase;
 
 TextEditor::TextEditor(QWidget* parent) :
   QPlainTextEdit(parent),
@@ -196,7 +199,7 @@ void TextEditor::explore()
     return;
   }
 
-  MOBase::shell::ExploreFile(m_filename);
+  shell::Explore(m_filename);
 }
 
 void TextEditor::onModified(bool b)
@@ -249,7 +252,7 @@ QWidget* TextEditor::wrapEditWidget()
     auto index = splitter->indexOf(this);
 
     if (index == -1) {
-      qCritical(
+      log::error(
         "TextEditor: cannot wrap edit widget to display a toolbar, "
         "parent is a splitter, but widget isn't in it");
 
@@ -260,7 +263,7 @@ QWidget* TextEditor::wrapEditWidget()
 
   } else {
     // unknown parent
-    qCritical(
+    log::error(
       "TextEditor: cannot wrap edit widget to display a toolbar, "
       "no parent or parent has no layout");
 

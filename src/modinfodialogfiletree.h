@@ -2,34 +2,42 @@
 #define MODINFODIALOGFILETREE_H
 
 #include "modinfodialogtab.h"
+#include <QFileSystemModel>
 
 class FileTreeTab : public ModInfoDialogTab
 {
+  Q_OBJECT;
+
 public:
   FileTreeTab(ModInfoDialogTabContext cx);
 
   void clear() override;
+  void saveState(Settings& s);
+  void restoreState(const Settings& s);
   void update() override;
   bool deleteRequested() override;
 
 private:
   struct Actions
   {
-    QAction *newFolder = nullptr;
-    QAction *open = nullptr;
-    QAction *preview = nullptr;
-    QAction *explore = nullptr;
-    QAction *rename = nullptr;
-    QAction *del = nullptr;
-    QAction *hide = nullptr;
-    QAction *unhide = nullptr;
+    QAction* newFolder = nullptr;
+    QAction* open = nullptr;
+    QAction* runHooked = nullptr;
+    QAction* preview = nullptr;
+    QAction* explore = nullptr;
+    QAction* rename = nullptr;
+    QAction* del = nullptr;
+    QAction* hide = nullptr;
+    QAction* unhide = nullptr;
   };
 
   QFileSystemModel* m_fs;
   Actions m_actions;
 
   void onCreateDirectory();
+  void onActivated();
   void onOpen();
+  void onRunHooked();
   void onPreview();
   void onExplore();
   void onRename();

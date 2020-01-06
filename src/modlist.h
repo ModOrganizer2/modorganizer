@@ -57,6 +57,7 @@ public:
 
   enum EColumn {
     COL_NAME,
+    COL_CONFLICTFLAGS,
     COL_FLAGS,
     COL_CONTENT,
     COL_CATEGORY,
@@ -66,8 +67,7 @@ public:
     COL_INSTALLTIME,
     COL_PRIORITY,
     COL_NOTES,
-
-    COL_LASTCOLUMN = COL_NOTES
+    COL_LASTCOLUMN = COL_NOTES,
   };
 
   typedef boost::signals2::signal<void (const QString &, ModStates)> SignalModStateChanged;
@@ -289,6 +289,8 @@ private:
 
   QString getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const;
 
+  QString getConflictFlagText(ModInfo::EConflictFlag flag, ModInfo::Ptr modInfo) const;
+
   static QString getColumnToolTip(int column);
 
   QVariantList contentsToIcons(const std::vector<ModInfo::EContent> &content) const;
@@ -341,6 +343,7 @@ private:
   std::set<int> m_RequestIDs;
 
   mutable bool m_Modified;
+  bool m_InNotifyChange;
 
   QFontMetrics m_FontMetrics;
 

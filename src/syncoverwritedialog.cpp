@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_syncoverwritedialog.h"
 #include <utility.h>
 #include <report.h>
+#include <log.h>
 
 #include <QDir>
 #include <QDirIterator>
@@ -86,7 +87,7 @@ void SyncOverwriteDialog::readTree(const QString &path, DirectoryEntry *director
       if (subDir != nullptr) {
         readTree(fileInfo.absoluteFilePath(), subDir, newItem);
       } else {
-        qCritical("no directory structure for %s?", qUtf8Printable(file));
+        log::error("no directory structure for {}?", file);
         delete newItem;
         newItem = nullptr;
       }

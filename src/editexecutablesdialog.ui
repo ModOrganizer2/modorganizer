@@ -106,6 +106,9 @@
                <iconset resource="resources.qrc">
                 <normaloff>:/MO/gui/add</normaloff>:/MO/gui/add</iconset>
               </property>
+              <property name="popupMode">
+               <enum>QToolButton::InstantPopup</enum>
+              </property>
              </widget>
             </item>
             <item>
@@ -140,7 +143,7 @@
                <string>Move the executable up in the list</string>
               </property>
               <property name="text">
-               <string>Move the executable up in the list</string>
+               <string>Up</string>
               </property>
               <property name="icon">
                <iconset resource="resources.qrc">
@@ -160,7 +163,7 @@
                <string>Move the executable down in the list</string>
               </property>
               <property name="text">
-               <string>Move the executable down in the list</string>
+               <string>Down</string>
               </property>
               <property name="icon">
                <iconset resource="resources.qrc">
@@ -375,7 +378,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
                   <string>If this is enabled, new files are created in the specified mod instead of the &quot;Overwrite&quot; mod.</string>
                  </property>
                  <property name="text">
-                  <string>Create Files in Mod instead of Overwrite (*)</string>
+                  <string>Create files in mod instead of overwrite (*)</string>
                  </property>
                 </widget>
                </item>
@@ -396,7 +399,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
                   <string>If this is enabled, the configured libraries will be automatically loaded when this executable is launched.</string>
                  </property>
                  <property name="text">
-                  <string>Force Load Libraries (*)</string>
+                  <string>Force load libraries (*)</string>
                  </property>
                 </widget>
                </item>
@@ -428,14 +431,27 @@ Right now the only case I know of where this needs to be overwritten is for the 
              <item>
               <widget class="QCheckBox" name="useApplicationIcon">
                <property name="text">
-                <string>Use Application's Icon for shortcuts</string>
+                <string>Use application's icon for desktop shortcuts</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="hide">
+               <property name="toolTip">
+                <string>This executable will not appear in the list, on the toolbar or in the menu. It will still be visible in this dialog.</string>
+               </property>
+               <property name="whatsThis">
+                <string>This executable will not appear in the list, on the toolbar or in the menu. It will still be visible in this dialog.</string>
+               </property>
+               <property name="text">
+                <string>Hide in user interface</string>
                </property>
               </widget>
              </item>
              <item>
               <widget class="QLabel" name="label_5">
                <property name="text">
-                <string>(*) Profile Specific</string>
+                <string>(*) Profile specific</string>
                </property>
                <property name="margin">
                 <number>5</number>
@@ -475,14 +491,25 @@ Right now the only case I know of where this needs to be overwritten is for the 
   </layout>
  </widget>
  <tabstops>
+  <tabstop>add</tabstop>
+  <tabstop>remove</tabstop>
+  <tabstop>up</tabstop>
+  <tabstop>down</tabstop>
+  <tabstop>reset</tabstop>
+  <tabstop>list</tabstop>
+  <tabstop>title</tabstop>
   <tabstop>binary</tabstop>
   <tabstop>browseBinary</tabstop>
   <tabstop>workingDirectory</tabstop>
   <tabstop>browseWorkingDirectory</tabstop>
+  <tabstop>arguments</tabstop>
   <tabstop>overwriteSteamAppID</tabstop>
   <tabstop>steamAppID</tabstop>
   <tabstop>createFilesInMod</tabstop>
   <tabstop>mods</tabstop>
+  <tabstop>forceLoadLibraries</tabstop>
+  <tabstop>configureLibraries</tabstop>
+  <tabstop>useApplicationIcon</tabstop>
  </tabstops>
  <resources>
   <include location="resources.qrc"/>

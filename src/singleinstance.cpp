@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "singleinstance.h"
 #include "utility.h"
 #include <report.h>
+#include <log.h>
 #include <QLocalSocket>
 
 static const char s_Key[] = "mo-43d1a3ad-eeb0-4818-97c9-eda5216c29b5";
@@ -93,15 +94,31 @@ void SingleInstance::sendMessage(const QString &message)
   }
 
   socket.disconnectFromServer();
+  socket.waitForDisconnected();
 }
 
 
 void SingleInstance::receiveMessage()
 {
   QLocalSocket *socket = m_Server.nextPendingConnection();
-  if (!socket->waitForReadyRead(s_Timeout)) {
-    reportError(tr("failed to receive data from secondary instance: %1").arg(socket->errorString()));
+  if (!socket) {
     return;
+  }
+
+  if (!socket->waitForReadyRead(s_Timeout)) {
+    // check if there are bytes available; if so, it probably means the data was
+    // already received by the time waitForReadyRead() was called and the
+    // connection has been closed
+    const auto av = socket->bytesAvailable();
+
+    if (av <= 0) {
+      MOBase::log::error(
+        "failed to receive data from secondary instance: {}",
+        socket->errorString());
+
+      reportError(tr("failed to receive data from secondary instance: %1").arg(socket->errorString()));
+      return;
+    }
   }
 
   QString message = QString::fromUtf8(socket->readAll().constData());

@@ -61,17 +61,10 @@ public:
   //
   void selectTab(ModInfoTabIDs id);
 
-  // updates all tabs, selects the initial tab and opens the dialog
+  // updates all tabs, selects the initial tab, opens the dialog and
+  // saves/restores geometry
   //
   int exec() override;
-
-  // saves the dialog state and calls saveState() on all tabs
-  //
-  void saveState(Settings& s) const;
-
-  // restores the dialog state and calls restoreState() on all tabs
-  //
-  void restoreState(const Settings& s);
 
 signals:
   // emitted when a tab changes the origin
@@ -146,6 +139,15 @@ private:
   void createTabs();
 
 
+  // saves the dialog state and calls saveState() on all tabs
+  //
+  void saveState() const;
+
+  // restores the dialog state and calls restoreState() on all tabs
+  //
+  void restoreState();
+
+
   // sets the currently selected mod; resets first activation, but doesn't
   // update anything
   //
@@ -213,11 +215,7 @@ private:
   // setTabsVisibility() to make sure any changes to order are saved before
   // re-adding tabs
   //
-  void saveTabOrder(Settings& s) const;
-
-  // returns a list of tab names in the order they should appear on the widget
-  //
-  std::vector<QString> getOrderedTabNames() const;
+  void saveTabOrder() const;
 
   // asks all the tabs if they accept closing the dialog, returns false if one
   // objected

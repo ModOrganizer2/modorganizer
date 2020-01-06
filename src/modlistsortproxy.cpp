@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "profile.h"
 #include "messagedialog.h"
 #include "qtgroupingproxy.h"
+#include <log.h>
 #include <QMenu>
 #include <QCheckBox>
 #include <QWidgetAction>
@@ -30,14 +31,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 #include <QTreeView>
 
+using namespace MOBase;
 
 ModListSortProxy::ModListSortProxy(Profile* profile, QObject *parent)
   : QSortFilterProxyModel(parent)
   , m_Profile(profile)
-  , m_CategoryFilter()
-  , m_CurrentFilter()
   , m_FilterActive(false)
-  , m_FilterMode(FILTER_AND)
+  , m_FilterMode(FilterAnd)
+  , m_FilterSeparators(SeparatorFilter)
 {
   setDynamicSortFilter(true); // this seems to work without dynamicsortfilter
                               // but I don't know why. This should be necessary
@@ -50,26 +51,20 @@ void ModListSortProxy::setProfile(Profile *profile)
 
 void ModListSortProxy::updateFilterActive()
 {
-  m_FilterActive = ((m_CategoryFilter.size() > 0)
-                    || (m_ContentFilter.size() > 0)
-                    || !m_CurrentFilter.isEmpty());
+  m_FilterActive = (!m_Criteria.empty() || !m_Filter.isEmpty());
   emit filterActive(m_FilterActive);
 }
 
-void ModListSortProxy::setCategoryFilter(const std::vector<int> &categories)
+void ModListSortProxy::setCriteria(const std::vector<Criteria>& criteria)
 {
-  //avoid refreshing the filter unless we are checking all mods for update.
-  if (categories != m_CategoryFilter || (!categories.empty() && categories.at(0) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE)) {
-    m_CategoryFilter = categories;
-    updateFilterActive();
-    invalidate();
-  }
-}
+  // avoid refreshing the filter unless we are checking all mods for update.
+  const bool changed = (criteria != m_Criteria);
+  const bool isForUpdates = (
+    !criteria.empty() &&
+    criteria[0].id == CategoryFactory::UpdateAvailable);
 
-void ModListSortProxy::setContentFilter(const std::vector<int> &content)
-{
-  if (content != m_ContentFilter) {
-    m_ContentFilter = content;
+  if (changed || isForUpdates) {
+    m_Criteria = criteria;
     updateFilterActive();
     invalidate();
   }
@@ -120,6 +115,17 @@ unsigned long ModListSortProxy::flagsId(const std::vector<ModInfo::EFlag> &flags
   return result;
 }
 
+unsigned long ModListSortProxy::conflictFlagsId(const std::vector<ModInfo::EConflictFlag>& flags) const
+{
+  unsigned long result = 0;
+  for (ModInfo::EConflictFlag flag : flags) {
+    if ((flag != ModInfo::FLAG_OVERWRITE_CONFLICT)) {
+      result += 1 << (int)flag;
+    }
+  }
+  return result;
+}
+
 bool ModListSortProxy::lessThan(const QModelIndex &left,
                                 const QModelIndex &right) const
 {
@@ -160,6 +166,16 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
         lt = flagsId(leftFlags) < flagsId(rightFlags);
       }
     } break;
+    case ModList::COL_CONFLICTFLAGS: {
+      std::vector<ModInfo::EConflictFlag> leftFlags = leftMod->getConflictFlags();
+      std::vector<ModInfo::EConflictFlag> rightFlags = rightMod->getConflictFlags();
+      if (leftFlags.size() != rightFlags.size()) {
+        lt = leftFlags.size() < rightFlags.size();
+      }
+      else {
+        lt = conflictFlagsId(leftFlags) < conflictFlagsId(rightFlags);
+      }
+    } break;
     case ModList::COL_CONTENT: {
       std::vector<ModInfo::EContent> lContent = leftMod->getContents();
       std::vector<ModInfo::EContent> rContent = rightMod->getContents();
@@ -194,7 +210,7 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
             QString rightCatName = categories.getCategoryName(categories.getCategoryIndex(rightMod->getPrimaryCategory()));
             lt = leftCatName < rightCatName;
           } catch (const std::exception &e) {
-            qCritical("failed to compare categories: %s", e.what());
+            log::error("failed to compare categories: {}", e.what());
           }
         }
       }
@@ -240,24 +256,22 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
       // nop, already compared by priority
     } break;
     default: {
-      qWarning() << "Sorting is not defined for column " << left.column();
+      log::warn("Sorting is not defined for column {}", left.column());
     } break;
   }
   return lt;
 }
 
-void ModListSortProxy::updateFilter(const QString &filter)
+void ModListSortProxy::updateFilter(const QString& filter)
 {
-  m_CurrentFilter = filter;
+  m_Filter = filter;
   updateFilterActive();
-  // using invalidateFilter here should be enough but that crashes the application? WTF?
-  // invalidateFilter();
   invalidate();
 }
 
-bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags) const
+bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EConflictFlag> &flags) const
 {
-  for (ModInfo::EFlag flag : flags) {
+  for (ModInfo::EConflictFlag flag : flags) {
     if ((flag == ModInfo::FLAG_CONFLICT_MIXED) ||
       (flag == ModInfo::FLAG_CONFLICT_OVERWRITE) ||
       (flag == ModInfo::FLAG_CONFLICT_OVERWRITTEN) ||
@@ -276,44 +290,10 @@ bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags)
 
 bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) const
 {
-  for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
-    switch (*iter) {
-      case CategoryFactory::CATEGORY_SPECIAL_CHECKED: {
-        if (!enabled && !info->alwaysEnabled() && !info->hasFlag(ModInfo::FLAG_SEPARATOR)) return false;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_UNCHECKED: {
-        if (enabled || info->alwaysEnabled()) return false;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE: {
-        if (!info->updateAvailable() && !info->downgradeAvailable()) return false;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY: {
-        if (info->getCategories().size() > 0) return false;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_CONFLICT: {
-        if (!hasConflictFlag(info->getFlags())) return false;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED: {
-        ModInfo::EEndorsedState state = info->endorsedState();
-        if (state != ModInfo::ENDORSED_FALSE) return false;
-      } break;
-	  case CategoryFactory::CATEGORY_SPECIAL_BACKUP: {
-        if (!info->hasFlag(ModInfo::FLAG_BACKUP)) return false;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_MANAGED: {
-        if (info->hasFlag(ModInfo::FLAG_FOREIGN)) return false;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_UNMANAGED: {
-        if (!info->hasFlag(ModInfo::FLAG_FOREIGN)) return false;
-      } break;
-      default: {
-        if (!info->categorySet(*iter)) return false;
-      } break;
+  for (auto&& c : m_Criteria) {
+    if (!criteriaMatchMod(info, enabled, c)) {
+      return false;
     }
-  }
-
-  foreach (int content, m_ContentFilter) {
-    if (!info->hasContent(static_cast<ModInfo::EContent>(content))) return false;
   }
 
   return true;
@@ -321,54 +301,187 @@ bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) cons
 
 bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
 {
-  for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
-    switch (*iter) {
-      case CategoryFactory::CATEGORY_SPECIAL_CHECKED: {
-        if (enabled || info->alwaysEnabled()) return true;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_UNCHECKED: {
-        if (!enabled && !info->alwaysEnabled()) return true;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE: {
-        if (info->updateAvailable() || info->downgradeAvailable()) return true;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY: {
-        if (info->getCategories().size() == 0) return true;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_CONFLICT: {
-        if (hasConflictFlag(info->getFlags())) return true;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED: {
-        ModInfo::EEndorsedState state = info->endorsedState();
-        if ((state == ModInfo::ENDORSED_FALSE) || (state == ModInfo::ENDORSED_NEVER)) return true;
-      } break;
-	  case CategoryFactory::CATEGORY_SPECIAL_BACKUP: {
-        if (info->hasFlag(ModInfo::FLAG_BACKUP)) return true;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_MANAGED: {
-        if (!info->hasFlag(ModInfo::FLAG_FOREIGN)) return true;
-      } break;
-      case CategoryFactory::CATEGORY_SPECIAL_UNMANAGED: {
-        if (info->hasFlag(ModInfo::FLAG_FOREIGN)) return true;
-      } break;
-      default: {
-        if (info->categorySet(*iter)) return true;
-      } break;
+  for (auto&& c : m_Criteria) {
+    if (criteriaMatchMod(info, enabled, c)) {
+      return true;
     }
   }
 
-  foreach (int content, m_ContentFilter) {
-    if (info->hasContent(static_cast<ModInfo::EContent>(content))) return true;
+  if (!m_Criteria.empty()) {
+    // nothing matched
+    return false;
   }
 
-  return false;
+  return true;
+}
+
+bool ModListSortProxy::optionsMatchMod(ModInfo::Ptr info, bool) const
+{
+
+  return true;
+}
+
+bool ModListSortProxy::criteriaMatchMod(
+  ModInfo::Ptr info, bool enabled, const Criteria& c) const
+{
+  bool b = false;
+
+  switch (c.type)
+  {
+    case TypeSpecial:  // fall-through
+    case TypeCategory:
+    {
+      b = categoryMatchesMod(info, enabled, c.id);
+      break;
+    }
+
+    case TypeContent:
+    {
+      b = contentMatchesMod(info, enabled, c.id);
+      break;
+    }
+
+    default:
+    {
+      log::error("bad criteria type {}", c.type);
+      break;
+    }
+  }
+
+  if (c.inverse) {
+    b = !b;
+  }
+
+  return b;
+}
+
+bool ModListSortProxy::categoryMatchesMod(
+  ModInfo::Ptr info, bool enabled, int category) const
+{
+  bool b = false;
+
+  switch (category)
+  {
+    case CategoryFactory::Checked:
+    {
+      b = (enabled || info->alwaysEnabled());
+      break;
+    }
+
+    case CategoryFactory::UpdateAvailable:
+    {
+      b = (info->updateAvailable() || info->downgradeAvailable());
+      break;
+    }
+
+    case CategoryFactory::HasCategory:
+    {
+      b = !info->getCategories().empty();
+      break;
+    }
+
+    case CategoryFactory::Conflict:
+    {
+      b = (hasConflictFlag(info->getConflictFlags()));
+      break;
+    }
+
+    case CategoryFactory::Endorsed:
+    {
+      b = (info->endorsedState() == ModInfo::ENDORSED_TRUE);
+      break;
+    }
+
+    case CategoryFactory::Backup:
+    {
+      b = (info->hasFlag(ModInfo::FLAG_BACKUP));
+      break;
+    }
+
+    case CategoryFactory::Managed:
+    {
+      b = (!info->hasFlag(ModInfo::FLAG_FOREIGN));
+      break;
+    }
+
+    case CategoryFactory::HasGameData:
+    {
+      b = !info->hasFlag(ModInfo::FLAG_INVALID);
+      break;
+    }
+
+    case CategoryFactory::HasNexusID:
+    {
+      // never show these
+      if (
+        info->hasFlag(ModInfo::FLAG_FOREIGN) ||
+        info->hasFlag(ModInfo::FLAG_BACKUP) ||
+        info->hasFlag(ModInfo::FLAG_OVERWRITE))
+      {
+        return false;
+      }
+
+      b = (info->getNexusID() > 0);
+      break;
+    }
+
+    case CategoryFactory::Tracked:
+    {
+      b = (info->trackedState() == ModInfo::TRACKED_TRUE);
+      break;
+    }
+
+    default:
+    {
+      b = (info->categorySet(category));
+      break;
+    }
+  }
+
+  return b;
+}
+
+bool ModListSortProxy::contentMatchesMod(ModInfo::Ptr info, bool enabled, int content) const
+{
+  return info->hasContent(static_cast<ModInfo::EContent>(content));
 }
 
 bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
 {
-  if (!m_CurrentFilter.isEmpty()) {
+  // don't check if there are no filters selected
+  if (!m_FilterActive) {
+    return true;
+  }
+
+
+  // special case for separators
+  if (info->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+    switch (m_FilterSeparators)
+    {
+      case SeparatorFilter:
+      {
+        // filter normally
+        break;
+      }
+
+      case SeparatorShow:
+      {
+        // force visible
+        return true;
+      }
+
+      case SeparatorHide:
+      {
+        // force hide
+        return false;
+      }
+    }
+  }
+
+
+  if (!m_Filter.isEmpty()) {
     bool display = false;
-    QString filterCopy = QString(m_CurrentFilter);
+    QString filterCopy = QString(m_Filter);
     filterCopy.replace("||", ";").replace("OR", ";").replace("|", ";");
     QStringList ORList = filterCopy.split(";", QString::SkipEmptyParts);
 
@@ -446,7 +559,8 @@ bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
     }
   }//if (!m_CurrentFilter.isEmpty())
 
-  if (m_FilterMode == FILTER_AND) {
+
+  if (m_FilterMode == FilterAnd) {
     return filterMatchesModAnd(info, enabled);
   }
   else {
@@ -459,10 +573,12 @@ void ModListSortProxy::setColumnVisible(int column, bool visible)
   m_EnabledColumns[column] = visible;
 }
 
-void ModListSortProxy::setFilterMode(ModListSortProxy::FilterMode mode)
+void ModListSortProxy::setOptions(
+  ModListSortProxy::FilterMode mode, SeparatorsMode separators)
 {
-  if (m_FilterMode != mode) {
+  if (m_FilterMode != mode || separators != m_FilterSeparators) {
     m_FilterMode = mode;
+    m_FilterSeparators = separators;
     this->invalidate();
   }
 }
@@ -474,13 +590,13 @@ bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) cons
   }
 
   if (row >= static_cast<int>(m_Profile->numMods())) {
-    qWarning("invalid row index: %d", row);
+    log::warn("invalid row index: {}", row);
     return false;
   }
 
   QModelIndex idx = sourceModel()->index(row, 0, parent);
   if (!idx.isValid()) {
-    qDebug("invalid mod index");
+    log::debug("invalid mod index");
     return false;
   }
   if (sourceModel()->hasChildren(idx)) {
@@ -539,8 +655,8 @@ void ModListSortProxy::aboutToChangeData()
   // (at least with some Qt versions)
   // this may be related to the fact that the item being edited may disappear from the view as a
   // result of the edit
-  m_PreChangeFilters = categoryFilter();
-  setCategoryFilter(std::vector<int>());
+  m_PreChangeCriteria = m_Criteria;
+  setCriteria({});
 }
 
 void ModListSortProxy::postDataChanged()
@@ -549,8 +665,8 @@ void ModListSortProxy::postDataChanged()
   // or at least the view continues to think it's being edited. As a result no new editor can be
   // opened
   QTimer::singleShot(10, [this] () {
-    setCategoryFilter(m_PreChangeFilters);
-    m_PreChangeFilters.clear();
+    setCriteria(m_PreChangeCriteria);
+    m_PreChangeCriteria.clear();
   });
 }
 

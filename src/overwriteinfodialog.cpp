@@ -32,7 +32,6 @@ using namespace MOBase;
 
 
 class MyFileSystemModel : public QFileSystemModel {
-
 public:
   MyFileSystemModel(QObject *parent)
     : QFileSystemModel(parent), m_RegularColumnCount(0) {}
@@ -105,6 +104,29 @@ OverwriteInfoDialog::~OverwriteInfoDialog()
   delete ui;
 }
 
+void OverwriteInfoDialog::showEvent(QShowEvent* e)
+{
+  const auto& s = Settings::instance();
+
+  s.geometry().restoreGeometry(this);
+
+  if (!s.geometry().restoreState(ui->filesView->header())) {
+    ui->filesView->sortByColumn(0, Qt::AscendingOrder);
+  }
+
+  QDialog::showEvent(e);
+}
+
+void OverwriteInfoDialog::done(int r)
+{
+  auto& s = Settings::instance();
+
+  s.geometry().saveGeometry(this);
+  s.geometry().saveState(ui->filesView->header());
+
+  QDialog::done(r);
+}
+
 void OverwriteInfoDialog::setModInfo(ModInfo::Ptr modInfo)
 {
   m_ModInfo = modInfo;
@@ -121,18 +143,18 @@ bool OverwriteInfoDialog::recursiveDelete(const QModelIndex &index)
     QModelIndex childIndex = m_FileSystemModel->index(childRow, 0, index);
     if (m_FileSystemModel->isDir(childIndex)) {
       if (!recursiveDelete(childIndex)) {
-        qCritical("failed to delete %s", m_FileSystemModel->fileName(childIndex).toUtf8().constData());
+        log::error("failed to delete {}", m_FileSystemModel->fileName(childIndex));
         return false;
       }
     } else {
       if (!m_FileSystemModel->remove(childIndex)) {
-        qCritical("failed to delete %s", m_FileSystemModel->fileName(childIndex).toUtf8().constData());
+        log::error("failed to delete {}", m_FileSystemModel->fileName(childIndex));
         return false;
       }
     }
   }
   if (!m_FileSystemModel->remove(index)) {
-    qCritical("failed to delete %s", m_FileSystemModel->fileName(index).toUtf8().constData());
+    log::error("failed to delete {}", m_FileSystemModel->fileName(index));
     return false;
   }
   return true;
@@ -218,7 +240,7 @@ void OverwriteInfoDialog::renameTriggered()
 
 void OverwriteInfoDialog::openFile(const QModelIndex &index)
 {
-  shell::OpenFile(m_FileSystemModel->filePath(index));
+  shell::Open(m_FileSystemModel->filePath(index));
 }
 
 
@@ -259,7 +281,7 @@ void OverwriteInfoDialog::createDirectoryTriggered()
 
 void OverwriteInfoDialog::on_explorerButton_clicked()
 {
-  shell::ExploreFile(m_ModInfo->absolutePath());
+  shell::Explore(m_ModInfo->absolutePath());
 }
 
 void OverwriteInfoDialog::on_filesView_customContextMenuRequested(const QPoint &pos)

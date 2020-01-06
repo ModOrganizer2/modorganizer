@@ -35,8 +35,8 @@ public:
   virtual void track(bool) {}
   virtual void parseNexusInfo() {}
   virtual bool isEmpty() const { return false; }
-  virtual QString name() const;
-  virtual QString internalName() const { return name(); }
+  virtual QString name() const { return m_Name; }
+  virtual QString internalName() const { return m_InternalName; }
   virtual QString comments() const { return ""; }
   virtual QString notes() const { return ""; }
   virtual QDateTime creationTime() const;
@@ -72,6 +72,7 @@ protected:
 private:
 
   QString m_Name;
+  QString m_InternalName;
   QString m_ReferenceFile;
   QStringList m_Archives;
   QDateTime m_CreationTime;

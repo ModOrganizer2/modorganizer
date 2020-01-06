@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "downloadlist.h"
 #include "downloadlistwidget.h"
+#include <log.h>
 #include <QPainter>
 #include <QMouseEvent>
 #include <QMenu>
@@ -28,6 +29,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QHeaderView>
 #include <QCheckBox>
 #include <QWidgetAction>
+
+using namespace MOBase;
 
 void DownloadProgressDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
@@ -132,6 +135,7 @@ void DownloadListWidget::setManager(DownloadManager *manager)
   header()->hideSection(DownloadList::COL_MODNAME);
   header()->hideSection(DownloadList::COL_VERSION);
   header()->hideSection(DownloadList::COL_ID);
+  header()->hideSection(DownloadList::COL_SOURCEGAME);
 }
 
 void DownloadListWidget::setSourceModel(DownloadList *sourceModel)
@@ -201,40 +205,49 @@ void DownloadListWidget::onCustomContextMenu(const QPoint &point)
   QModelIndex index = indexAt(point);
   bool hidden = false;
 
-  if (index.row() >= 0) {
-    m_ContextRow = qobject_cast<QSortFilterProxyModel*>(model())->mapToSource(index).row();
-    DownloadManager::DownloadState state = m_Manager->getState(m_ContextRow);
-    hidden = m_Manager->isHidden(m_ContextRow);
+  try
+  {
+    if (index.row() >= 0) {
+      m_ContextRow = qobject_cast<QSortFilterProxyModel*>(model())->mapToSource(index).row();
+      DownloadManager::DownloadState state = m_Manager->getState(m_ContextRow);
 
-    if (state >= DownloadManager::STATE_READY) {
-      menu.addAction(tr("Install"), this, SLOT(issueInstall()));
-      if (m_Manager->isInfoIncomplete(m_ContextRow))
-        menu.addAction(tr("Query Info"), this, SLOT(issueQueryInfoMd5()));
-      else
-        menu.addAction(tr("Visit on Nexus"), this, SLOT(issueVisitOnNexus()));
-      menu.addAction(tr("Open File"), this, SLOT(issueOpenFile()));
-      menu.addAction(tr("Show in Folder"), this, SLOT(issueOpenInDownloadsFolder()));
+      hidden = m_Manager->isHidden(m_ContextRow);
+
+      if (state >= DownloadManager::STATE_READY) {
+        menu.addAction(tr("Install"), this, SLOT(issueInstall()));
+        if (m_Manager->isInfoIncomplete(m_ContextRow))
+          menu.addAction(tr("Query Info"), this, SLOT(issueQueryInfoMd5()));
+        else
+          menu.addAction(tr("Visit on Nexus"), this, SLOT(issueVisitOnNexus()));
+        menu.addAction(tr("Open File"), this, SLOT(issueOpenFile()));
+        menu.addAction(tr("Show in Folder"), this, SLOT(issueOpenInDownloadsFolder()));
+
+        menu.addSeparator();
+
+        menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
+        if (hidden)
+          menu.addAction(tr("Un-Hide"), this, SLOT(issueRestoreToView()));
+        else
+          menu.addAction(tr("Hide"), this, SLOT(issueRemoveFromView()));
+      } else if (state == DownloadManager::STATE_DOWNLOADING) {
+        menu.addAction(tr("Cancel"), this, SLOT(issueCancel()));
+        menu.addAction(tr("Pause"), this, SLOT(issuePause()));
+        menu.addAction(tr("Show in Folder"), this, SLOT(issueOpenInDownloadsFolder()));
+      } else if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)
+                || (state == DownloadManager::STATE_PAUSING)) {
+        menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
+        menu.addAction(tr("Resume"), this, SLOT(issueResume()));
+        menu.addAction(tr("Show in Folder"), this, SLOT(issueOpenInDownloadsFolder()));
+      }
 
       menu.addSeparator();
-
-      menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
-      if (hidden)
-        menu.addAction(tr("Un-Hide"), this, SLOT(issueRestoreToView()));
-      else
-        menu.addAction(tr("Hide"), this, SLOT(issueRemoveFromView()));
-    } else if (state == DownloadManager::STATE_DOWNLOADING) {
-      menu.addAction(tr("Cancel"), this, SLOT(issueCancel()));
-      menu.addAction(tr("Pause"), this, SLOT(issuePause()));
-      menu.addAction(tr("Show in Folder"), this, SLOT(issueOpenInDownloadsFolder()));
-    } else if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)
-              || (state == DownloadManager::STATE_PAUSING)) {
-      menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
-      menu.addAction(tr("Resume"), this, SLOT(issueResume()));
-      menu.addAction(tr("Show in Folder"), this, SLOT(issueOpenInDownloadsFolder()));
     }
-
-    menu.addSeparator();
+  } catch(std::exception&)
+  {
+    // this happens when the download index is not found, ignore it and don't
+    // display download-specific actions
   }
+
   menu.addAction(tr("Delete Installed Downloads..."), this, SLOT(issueDeleteCompleted()));
   menu.addAction(tr("Delete Uninstalled Downloads..."), this, SLOT(issueDeleteUninstalled()));
   menu.addAction(tr("Delete All Downloads..."), this, SLOT(issueDeleteAll()));
@@ -277,7 +290,7 @@ void DownloadListWidget::issueDelete()
 
 void DownloadListWidget::issueRemoveFromView()
 {
-  qDebug() << "removing from view: " << m_ContextRow;
+  log::debug("removing from view: {}", m_ContextRow);
   emit removeDownload(m_ContextRow, false);
 }
 

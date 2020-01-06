@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DOWNLOADMANAGER_H
 #define DOWNLOADMANAGER_H
 
+#include "serverinfo.h"
 #include <idownloadmanager.h>
 #include <modrepositoryfileinfo.h>
 #include <set>
@@ -136,6 +137,8 @@ public:
 
   ~DownloadManager();
 
+  void setParentWidget(QWidget* w);
+
   /**
    * @brief determine if a download is currently in progress
    *
@@ -172,11 +175,6 @@ public:
    * @return current download directory
    **/
   QString getOutputDirectory() const { return m_OutputDirectory; }
-
-  /**
-   * @brief setPreferredServers set the list of preferred servers
-   */
-  void setPreferredServers(const std::map<QString, int> &preferredServers);
 
   /**
    * @brief set the list of supported extensions
@@ -315,6 +313,14 @@ public:
   int getModID(int index) const;
 
   /**
+   * @brief retrieve the displayable game name of the download specified by the index
+   *
+   * @param index index of the file to look up
+   * @return the displayable game name
+   **/
+  QString getDisplayGameName(int index) const;
+
+  /**
    * @brief retrieve the game name of the downlaod specified by the index
    *
    * @param index index of the file to look up
@@ -360,15 +366,6 @@ public:
    */
   void refreshList();
 
-  /**
-   * @brief Sort function for download servers
-   * @param LHS
-   * @param RHS
-   * @return
-   */
-  static bool ServerByPreference(const std::map<QString, int> &preferredServers, const QVariant &LHS, const QVariant &RHS);
-
-
   virtual int startDownloadURLs(const QStringList &urls);
 
   virtual int startDownloadNexusFile(int modID, int fileID);
@@ -381,6 +378,7 @@ public:
    * @return index of that download or -1 if it wasn't found
    */
   int indexByName(const QString &fileName) const;
+  int indexByInfo(const DownloadInfo* info) const;
 
   void pauseAll();
 
@@ -542,13 +540,13 @@ private:
   NexusInterface *m_NexusInterface;
 
   OrganizerCore *m_OrganizerCore;
+  QWidget* m_ParentWidget;
 
   QVector<std::tuple<QString, int, int>> m_PendingDownloads;
 
   QVector<DownloadInfo*> m_ActiveDownloads;
 
   QString m_OutputDirectory;
-  std::map<QString, int> m_PreferredServers;
   QStringList m_SupportedExtensions;
   std::set<int> m_RequestIDs;
   QVector<int> m_AlphabeticalTranslation;

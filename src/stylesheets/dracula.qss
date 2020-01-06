@@ -4,7 +4,7 @@
 
 QWidget, QStackedWidget,
 QScrollArea, QAbstractScrollArea {
-    background-color: transparent;
+    background-color: #3c3f41;
     color: #bbbbbb;
 	}
 
@@ -28,6 +28,10 @@ QLabel, QTabBar::tab, QMenuBar::item,
 QCheckBox, QGroupBox {
     background-color: transparent;
     selection-color: #bbbbbb;
+}
+
+LinkLabel {
+  qproperty-linkColor: #3399FF;
 }
 
 /*

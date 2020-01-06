@@ -24,9 +24,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "messagedialog.h"
 #include "report.h"
 #include "persistentcookiejar.h"
+#include "settings.h"
 
 #include <utility.h>
-#include "settings.h"
+#include <log.h>
 
 #include <QWebEngineSettings>
 #include <QNetworkCookieJar>
@@ -35,9 +36,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QInputDialog>
 #include <QWebEngineHistory>
 #include <QDir>
-#include <QDesktopWidget>
 #include <QKeyEvent>
 
+using namespace MOBase;
 
 
 BrowserDialog::BrowserDialog(QWidget *parent)
@@ -48,7 +49,7 @@ BrowserDialog::BrowserDialog(QWidget *parent)
   ui->setupUi(this);
 
   m_AccessManager->setCookieJar(new PersistentCookieJar(
-      QDir::fromNativeSeparators(Settings::instance().getCacheDirectory() + "/cookies.dat")));
+    QDir::fromNativeSeparators(Settings::instance().paths().cache() + "/cookies.dat")));
 
   Qt::WindowFlags flags = windowFlags() | Qt::WindowMaximizeButtonHint | Qt::WindowMinimizeButtonHint;
   Qt::WindowFlags helpFlag = Qt::WindowContextHelpButtonHint;
@@ -71,7 +72,7 @@ BrowserDialog::~BrowserDialog()
 
 void BrowserDialog::closeEvent(QCloseEvent *event)
 {
-//  m_AccessManager->showCookies();
+  Settings::instance().geometry().saveGeometry(this);
   QDialog::closeEvent(event);
 }
 
@@ -125,6 +126,7 @@ void BrowserDialog::urlChanged(const QUrl &url)
 void BrowserDialog::openUrl(const QUrl &url)
 {
   if (isHidden()) {
+    Settings::instance().geometry().restoreGeometry(this);
     show();
   }
   openInNewTab(url);
@@ -138,9 +140,8 @@ void BrowserDialog::maximizeWidth()
 
   int contentWidth = getCurrentView()->page()->contentsSize().width();
 
-  QDesktopWidget screen;
-  int currentScreen = screen.screenNumber(this);
-  int screenWidth = screen.screenGeometry(currentScreen).size().width();
+  QScreen* screen = this->window()->windowHandle()->screen();
+  int screenWidth = screen->geometry().size().width();
 
   int targetWidth = std::min<int>(std::max<int>(viewportWidth, contentWidth) + frameWidth, screenWidth);
   this->resize(targetWidth, height());
@@ -192,12 +193,12 @@ void BrowserDialog::unsupportedContent(QNetworkReply *reply)
   try {
     QWebEnginePage *page = qobject_cast<QWebEnginePage*>(sender());
     if (page == nullptr) {
-      qCritical("sender not a page");
+      log::error("sender not a page");
       return;
     }
     BrowserView *view = qobject_cast<BrowserView*>(page->view());
     if (view == nullptr) {
-      qCritical("no view?");
+      log::error("no view?");
       return;
     }
 
@@ -206,14 +207,14 @@ void BrowserDialog::unsupportedContent(QNetworkReply *reply)
     if (isVisible()) {
       MessageDialog::showMessage(tr("failed to start download"), this);
     }
-    qCritical("exception downloading unsupported content: %s", e.what());
+    log::error("exception downloading unsupported content: {}", e.what());
   }
 }
 
 
 void BrowserDialog::downloadRequested(const QNetworkRequest &request)
 {
-  qCritical("download request %s ignored", request.url().toString().toUtf8().constData());
+  log::error("download request {} ignored", request.url().toString());
 }
 
 

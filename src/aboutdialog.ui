@@ -105,6 +105,13 @@
           </widget>
          </item>
          <item>
+          <widget class="QLabel" name="usvfsLabel">
+           <property name="text">
+            <string>usvfs:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <spacer name="verticalSpacer">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
@@ -151,9 +158,9 @@
           </spacer>
          </item>
          <item>
-          <widget class="QLabel" name="sourceText">
+          <widget class="LinkLabel" name="sourceText">
            <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Source code can be found at &lt;a href=&quot;https://github.com/ModOrganizer2/modorganizer&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;GitHub&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Source code can be found at &lt;a href=&quot;https://github.com/ModOrganizer2/modorganizer&quot;&gt;GitHub&lt;/a&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
@@ -208,6 +215,11 @@
                 <string notr="true">LostDragonist</string>
                </property>
               </item>
+              <item>
+               <property name="text">
+                <string notr="true">isanae</string>
+               </property>
+              </item>
              </widget>
             </item>
            </layout>
@@ -232,11 +244,6 @@
               <item>
                <property name="text">
                 <string notr="true">erasmux</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">isanae</string>
                </property>
               </item>
               <item>
@@ -318,6 +325,11 @@
               <item>
                <property name="text">
                 <string notr="true">pndrev (German)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Xahtax (German)</string>
                </property>
               </item>
               <item>
@@ -464,6 +476,11 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">reedts</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">Schilduin</string>
                </property>
               </item>
@@ -529,6 +546,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>LinkLabel</class>
+   <extends>QLabel</extends>
+   <header location="global">linklabel.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="resources.qrc"/>
  </resources>

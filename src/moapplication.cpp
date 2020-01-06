@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "moapplication.h"
 #include <report.h>
 #include <utility.h>
+#include <log.h>
 #include <appconfig.h>
 #include <QFile>
 #include <QStringList>
@@ -36,7 +37,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 
 
-using MOBase::reportError;
+using namespace MOBase;
 
 
 class ProxyStyle : public QProxyStyle {
@@ -50,7 +51,7 @@ public:
     if(element == QStyle::PE_IndicatorItemViewItemDrop) {
       painter->setRenderHint(QPainter::Antialiasing, true);
 
-      QColor col(option->palette.foreground().color());
+      QColor col(option->palette.windowText().color());
       QPen pen(col);
       pen.setWidth(2);
       col.setAlpha(50);
@@ -114,13 +115,15 @@ bool MOApplication::notify(QObject *receiver, QEvent *event)
   try {
     return QApplication::notify(receiver, event);
   } catch (const std::exception &e) {
-    qCritical("uncaught exception in handler (object %s, eventtype %d): %s",
-              receiver->objectName().toUtf8().constData(), event->type(), e.what());
+    log::error(
+      "uncaught exception in handler (object {}, eventtype {}): {}",
+      receiver->objectName(), event->type(), e.what());
     reportError(tr("an error occurred: %1").arg(e.what()));
     return false;
   } catch (...) {
-    qCritical("uncaught non-std exception in handler (object %s, eventtype %d)",
-              receiver->objectName().toUtf8().constData(), event->type());
+    log::error(
+      "uncaught non-std exception in handler (object {}, eventtype {})",
+      receiver->objectName(), event->type());
     reportError(tr("an error occurred"));
     return false;
   }
@@ -129,15 +132,15 @@ bool MOApplication::notify(QObject *receiver, QEvent *event)
 
 void MOApplication::updateStyle(const QString &fileName)
 {
-  if (fileName == "Fusion") {
-    setStyle(QStyleFactory::create("fusion"));
+  if (QStyleFactory::keys().contains(fileName)) {
+    setStyle(QStyleFactory::create(fileName));
     setStyleSheet("");
   } else {
     setStyle(new ProxyStyle(QStyleFactory::create(m_DefaultStyle)));
     if (QFile::exists(fileName)) {
       setStyleSheet(QString("file:///%1").arg(fileName));
     } else {
-      qWarning("invalid stylesheet: %s", qUtf8Printable(fileName));
+      log::warn("invalid stylesheet: {}", fileName);
     }
   }
 }

@@ -60,14 +60,7 @@ public:
 
   static QString s_HiddenExt;
 
-  enum EFlag {
-    FLAG_INVALID,
-    FLAG_BACKUP,
-    FLAG_SEPARATOR,
-    FLAG_OVERWRITE,
-    FLAG_FOREIGN,
-    FLAG_NOTENDORSED,
-    FLAG_NOTES,
+  enum EConflictFlag {
     FLAG_CONFLICT_OVERWRITE,
     FLAG_CONFLICT_OVERWRITTEN,
     FLAG_CONFLICT_MIXED,
@@ -77,6 +70,17 @@ public:
     FLAG_ARCHIVE_CONFLICT_OVERWRITE,
     FLAG_ARCHIVE_CONFLICT_OVERWRITTEN,
     FLAG_ARCHIVE_CONFLICT_MIXED,
+    FLAG_OVERWRITE_CONFLICT,
+  };
+
+  enum EFlag {
+    FLAG_INVALID,
+    FLAG_BACKUP,
+    FLAG_SEPARATOR,
+    FLAG_OVERWRITE,
+    FLAG_FOREIGN,
+    FLAG_NOTENDORSED,
+    FLAG_NOTES,
     FLAG_PLUGIN_SELECTED,
     FLAG_ALTERNATE_GAME,
     FLAG_TRACKED,
@@ -228,6 +232,18 @@ public:
    * @return a new mod
    */
   static ModInfo::Ptr createFromPlugin(const QString &modName, const QString &espName, const QStringList &bsaNames, ModInfo::EModType modType, MOShared::DirectoryEntry **directoryStructure, PluginContainer *pluginContainer);
+
+  // whether the given name is used for separators
+  //
+  static bool isSeparatorName(const QString& name);
+
+  // whether the given name is used for backups
+  //
+  static bool isBackupName(const QString& name);
+
+  // whether the given name is used for regular mods
+  //
+  static bool isRegularName(const QString& name);
 
   /**
    * @brief retieve a name for one of the CONTENT_ enums
@@ -506,6 +522,11 @@ public:
    * @return a list of flags for this mod
    */
   virtual std::vector<EFlag> getFlags() const = 0;
+
+  /**
+   * @return a list of conflict flags for this mod
+   */
+  virtual std::vector<EConflictFlag> getConflictFlags() const = 0;
 
   /**
    * @return a list of content types contained in a mod

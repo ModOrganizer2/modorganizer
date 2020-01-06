@@ -27,25 +27,19 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 class IconDelegate : public QStyledItemDelegate
 {
-  Q_OBJECT
+  Q_OBJECT;
+
 public:
-
   explicit IconDelegate(QObject *parent = 0);
-
   virtual void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
 
-signals:
-  
-public slots:
+  static void paintIcons(
+    QPainter *painter, const QStyleOptionViewItem &option,
+    const QModelIndex &index, const QList<QString>& icons);
 
-private:
-
+protected:
   virtual QList<QString> getIcons(const QModelIndex &index) const = 0;
   virtual size_t getNumIcons(const QModelIndex &index) const = 0;
-
-
-private:
-
 };
 
 #endif // ICONDELEGATE_H

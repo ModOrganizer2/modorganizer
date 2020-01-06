@@ -49,6 +49,10 @@ QAbstractScrollArea::corner
 	margin: 0px -2px -2px 0px;
 }
 
+LinkLabel
+{
+  qproperty-linkColor: #3399FF;
+}
 
 /* Toolbar -------------------------------------------------------------------- */
 
@@ -78,6 +82,11 @@ QToolButton:hover
 QToolButton:pressed
 {
 	background: #181818;
+}
+
+QToolButton::menu-indicator
+{
+  width: 8px;
 }
 
 

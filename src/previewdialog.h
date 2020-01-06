@@ -15,6 +15,10 @@ public:
   explicit PreviewDialog(const QString &fileName, QWidget *parent = 0);
   ~PreviewDialog();
 
+  // also saves and restores geometry
+  //
+  int exec() override;
+
   void addVariant(const QString &modName, QWidget *widget);
   int numVariants() const;
 

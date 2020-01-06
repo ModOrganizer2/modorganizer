@@ -23,15 +23,17 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <map>
 #include <QString>
-#include <QSettings>
 #include <QFileDialog>
 
+class Settings;
 
 class FileDialogMemory
 {
 public:
-  static void save(QSettings &settings);
-  static void restore(QSettings &settings);
+  FileDialogMemory() = delete;
+
+  static void save(Settings& settings);
+  static void restore(const Settings& settings);
 
   static QString getOpenFileName(
     const QString &dirID, QWidget *parent = 0, const QString &caption = QString(),
@@ -42,12 +44,6 @@ public:
     const QString &dirID, QWidget *parent = 0, const QString &caption = QString(),
     const QString &dir = QString(),
     QFileDialog::Options options = QFileDialog::ShowDirsOnly);
-
-private:
-  std::map<QString, QString> m_Cache;
-
-  FileDialogMemory();
-  static FileDialogMemory &instance();
 };
 
 #endif // FILEDIALOGMEMORY_H

@@ -61,22 +61,23 @@ ModList::ModList(PluginContainer *pluginContainer, QObject *parent)
   , m_Profile(nullptr)
   , m_NexusInterface(nullptr)
   , m_Modified(false)
+  , m_InNotifyChange(false)
   , m_FontMetrics(QFont())
   , m_DropOnItems(false)
   , m_PluginContainer(pluginContainer)
 {
-  m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(":/MO/gui/content/plugin", tr("Game Plugins (ESP/ESM/ESL)"));
-  m_ContentIcons[ModInfo::CONTENT_INTERFACE] = std::make_tuple(":/MO/gui/content/interface", tr("Interface"));
-  m_ContentIcons[ModInfo::CONTENT_MESH]      = std::make_tuple(":/MO/gui/content/mesh", tr("Meshes"));
-  m_ContentIcons[ModInfo::CONTENT_BSA]       = std::make_tuple(":/MO/gui/content/bsa", tr("Bethesda Archive"));
-  m_ContentIcons[ModInfo::CONTENT_SCRIPT]    = std::make_tuple(":/MO/gui/content/script", tr("Scripts (Papyrus)"));
-  m_ContentIcons[ModInfo::CONTENT_SKSE]      = std::make_tuple(":/MO/gui/content/skse", tr("Script Extender Plugin"));
-  m_ContentIcons[ModInfo::CONTENT_SKYPROC]   = std::make_tuple(":/MO/gui/content/skyproc", tr("SkyProc Patcher"));
-  m_ContentIcons[ModInfo::CONTENT_SOUND]     = std::make_tuple(":/MO/gui/content/sound", tr("Sound or Music"));
-  m_ContentIcons[ModInfo::CONTENT_TEXTURE]   = std::make_tuple(":/MO/gui/content/texture", tr("Textures"));
-  m_ContentIcons[ModInfo::CONTENT_MCM]       = std::make_tuple(":/MO/gui/content/menu", tr("MCM Configuration"));
-  m_ContentIcons[ModInfo::CONTENT_INI]       = std::make_tuple(":/MO/gui/content/inifile", tr("INI files"));
-  m_ContentIcons[ModInfo::CONTENT_MODGROUP]  = std::make_tuple(":/MO/gui/content/modgroup", tr("ModGroup files"));
+  m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(":/MO/gui/content/plugin", QT_TR_NOOP("Game Plugins (ESP/ESM/ESL)"));
+  m_ContentIcons[ModInfo::CONTENT_INTERFACE] = std::make_tuple(":/MO/gui/content/interface", QT_TR_NOOP("Interface"));
+  m_ContentIcons[ModInfo::CONTENT_MESH]      = std::make_tuple(":/MO/gui/content/mesh", QT_TR_NOOP("Meshes"));
+  m_ContentIcons[ModInfo::CONTENT_BSA]       = std::make_tuple(":/MO/gui/content/bsa", QT_TR_NOOP("Bethesda Archive"));
+  m_ContentIcons[ModInfo::CONTENT_SCRIPT]    = std::make_tuple(":/MO/gui/content/script", QT_TR_NOOP("Scripts (Papyrus)"));
+  m_ContentIcons[ModInfo::CONTENT_SKSE]      = std::make_tuple(":/MO/gui/content/skse", QT_TR_NOOP("Script Extender Plugin"));
+  m_ContentIcons[ModInfo::CONTENT_SKYPROC]   = std::make_tuple(":/MO/gui/content/skyproc", QT_TR_NOOP("SkyProc Patcher"));
+  m_ContentIcons[ModInfo::CONTENT_SOUND]     = std::make_tuple(":/MO/gui/content/sound", QT_TR_NOOP("Sound or Music"));
+  m_ContentIcons[ModInfo::CONTENT_TEXTURE]   = std::make_tuple(":/MO/gui/content/texture", QT_TR_NOOP("Textures"));
+  m_ContentIcons[ModInfo::CONTENT_MCM]       = std::make_tuple(":/MO/gui/content/menu", QT_TR_NOOP("MCM Configuration"));
+  m_ContentIcons[ModInfo::CONTENT_INI]       = std::make_tuple(":/MO/gui/content/inifile", QT_TR_NOOP("INI files"));
+  m_ContentIcons[ModInfo::CONTENT_MODGROUP]  = std::make_tuple(":/MO/gui/content/modgroup", QT_TR_NOOP("ModGroup files"));
 
   m_LastCheck.start();
 }
@@ -158,19 +159,27 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
         output << QString("<i>%1</i>").arg(modInfo->notes());
       return output.join("");
     }
-    case ModInfo::FLAG_CONFLICT_OVERWRITE: return tr("Overwrites loose files");
-    case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return tr("Overwritten loose files");
-    case ModInfo::FLAG_CONFLICT_MIXED: return tr("Loose files Overwrites & Overwritten");
-    case ModInfo::FLAG_CONFLICT_REDUNDANT: return tr("Redundant");
-    case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE: return tr("Overwrites an archive with loose files");
-    case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN: return tr("Archive is overwritten by loose files");
-    case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE: return tr("Overwrites another archive file");
-    case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN: return tr("Overwritten by another archive file");
-    case ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED: return tr("Archive files overwrites & overwritten");
     case ModInfo::FLAG_ALTERNATE_GAME: return tr("<br>This mod is for a different game, "
       "make sure it's compatible or it could cause crashes.");
     case ModInfo::FLAG_TRACKED: return tr("Mod is being tracked on the website");
     default: return "";
+  }
+}
+
+
+QString ModList::getConflictFlagText(ModInfo::EConflictFlag flag, ModInfo::Ptr modInfo) const
+{
+  switch (flag) {
+  case ModInfo::FLAG_CONFLICT_OVERWRITE: return tr("Overwrites loose files");
+  case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return tr("Overwritten loose files");
+  case ModInfo::FLAG_CONFLICT_MIXED: return tr("Loose files Overwrites & Overwritten");
+  case ModInfo::FLAG_CONFLICT_REDUNDANT: return tr("Redundant");
+  case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE: return tr("Overwrites an archive with loose files");
+  case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN: return tr("Archive is overwritten by loose files");
+  case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE: return tr("Overwrites another archive file");
+  case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN: return tr("Overwritten by another archive file");
+  case ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED: return tr("Archive files overwrites & overwritten");
+  default: return "";
   }
 }
 
@@ -198,7 +207,7 @@ QString ModList::contentsToToolTip(const std::vector<ModInfo::EContent> &content
     if (contentsSet.find(iter->first) != contentsSet.end()) {
       result.append(QString("<tr><td><img src=\"%1\" width=32/></td>"
                             "<td valign=\"middle\">%2</td></tr>")
-                    .arg(std::get<0>(iter->second)).arg(std::get<1>(iter->second)));
+                    .arg(std::get<0>(iter->second)).arg(tr(std::get<1>(iter->second).toStdString().c_str())));
     }
   }
   result.append("</table>");
@@ -217,7 +226,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
   if ((role == Qt::DisplayRole) ||
       (role == Qt::EditRole)) {
     if ((column == COL_FLAGS)
-        || (column == COL_CONTENT)) {
+        || (column == COL_CONTENT)
+        || (column == COL_CONFLICTFLAGS)) {
       return QVariant();
     } else if (column == COL_NAME) {
       auto flags = modInfo->getFlags();
@@ -271,11 +281,11 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
               int categoryIdx = categoryFactory.getCategoryIndex(category);
               return categoryFactory.getCategoryName(categoryIdx);
             } catch (const std::exception &e) {
-              qCritical("failed to retrieve category name: %s", e.what());
+              log::error("failed to retrieve category name: {}", e.what());
               return QString();
             }
           } else {
-            qWarning("category %d doesn't exist (may have been removed)", category);
+            log::warn("category {} doesn't exist (may have been removed)", category);
             modInfo->setCategory(category, false);
             return QString();
           }
@@ -390,7 +400,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     return QVariant();
   } else if (role == Qt::ForegroundRole) {
     if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR) && modInfo->getColor().isValid()) {
-      return Settings::getIdealTextColor(modInfo->getColor());
+      return ColorSettings::idealTextColor(modInfo->getColor());
     } else if (column == COL_NAME) {
       int highlight = modInfo->getHighlight();
       if (highlight & ModInfo::HIGHLIGHT_IMPORTANT)
@@ -416,19 +426,19 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     bool archiveOverwritten = m_ArchiveOverwritten.find(modIndex) != m_ArchiveOverwritten.end();
     bool archiveLooseOverwritten = m_ArchiveLooseOverwritten.find(modIndex) != m_ArchiveLooseOverwritten.end();
     if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
-      return Settings::instance().modlistContainsPluginColor();
+      return Settings::instance().colors().modlistContainsPlugin();
     } else if (overwritten || archiveLooseOverwritten) {
-      return Settings::instance().modlistOverwritingLooseColor();
+      return Settings::instance().colors().modlistOverwritingLoose();
     } else if (overwrite || archiveLooseOverwrite) {
-      return Settings::instance().modlistOverwrittenLooseColor();
+      return Settings::instance().colors().modlistOverwrittenLoose();
     } else if (archiveOverwritten) {
-      return Settings::instance().modlistOverwritingArchiveColor();
+      return Settings::instance().colors().modlistOverwritingArchive();
     } else if (archiveOverwrite) {
-      return Settings::instance().modlistOverwrittenArchiveColor();
+      return Settings::instance().colors().modlistOverwrittenArchive();
     } else if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)
                && modInfo->getColor().isValid()
                && ((role != ViewMarkingScrollBar::DEFAULT_ROLE)
-                    || Settings::instance().colorSeparatorScrollbar())) {
+                    || Settings::instance().colors().colorSeparatorScrollbar())) {
       return modInfo->getColor();
     } else {
       return QVariant();
@@ -443,13 +453,22 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
 
       return result;
+    } else if (column == COL_CONFLICTFLAGS) {
+      QString result;
+
+      for (ModInfo::EConflictFlag flag : modInfo->getConflictFlags()) {
+        if (result.length() != 0) result += "<br>";
+        result += getConflictFlagText(flag, modInfo);
+      }
+
+      return result;
     } else if (column == COL_CONTENT) {
       return contentsToToolTip(modInfo->getContents());
     } else if (column == COL_NAME) {
       try {
         return modInfo->getDescription();
       } catch (const std::exception &e) {
-        qCritical("invalid mod description: %s", e.what());
+        log::error("invalid mod description: {}", e.what());
         return QString();
       }
     } else if (column == COL_VERSION) {
@@ -488,7 +507,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         try {
           categoryString << "<span style=\"white-space: nowrap;\"><i>" << ToWString(categoryFactory.getCategoryName(categoryFactory.getCategoryIndex(*catIter))) << "</font></span>";
         } catch (const std::exception &e) {
-          qCritical("failed to generate tooltip: %s", e.what());
+          log::error("failed to generate tooltip: {}", e.what());
           return QString();
         }
       }
@@ -618,8 +637,9 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
         result = true;
       } break;
       default: {
-        qWarning("edit on column \"%s\" not supported",
-                 getColumnName(index.column()).toUtf8().constData());
+        log::warn(
+          "edit on column \"{}\" not supported",
+          getColumnName(index.column()).toUtf8().constData());
         result = false;
       } break;
     }
@@ -635,9 +655,9 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
     try {
       m_ModStateChanged(info->name(), newState);
     } catch (const std::exception &e) {
-      qCritical("failed to invoke state changed notification: %s", e.what());
+      log::error("failed to invoke state changed notification: {}", e.what());
     } catch (...) {
-      qCritical("failed to invoke state changed notification: unknown exception");
+      log::error("failed to invoke state changed notification: unknown exception");
     }
   }
 
@@ -833,7 +853,7 @@ void ModList::modInfoChanged(ModInfo::Ptr info)
     emit dataChanged(index(row, 0), index(row, columnCount()));
     emit postDataChanged();
   } else {
-    qCritical("modInfoChanged not called after modInfoAboutToChange");
+    log::error("modInfoChanged not called after modInfoAboutToChange");
   }
   m_ChangeInfo.name = QString();
 }
@@ -998,8 +1018,8 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
   QDir modDir = QDir(modInfo->absolutePath());
 
-  QDir allModsDir(Settings::instance().getModDirectory());
-  QDir overwriteDir(Settings::instance().getOverwriteDirectory());
+  QDir allModsDir(Settings::instance().paths().mods());
+  QDir overwriteDir(Settings::instance().paths().overwrite());
 
   QStringList sourceList;
   QStringList targetList;
@@ -1012,9 +1032,8 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
   QString overwriteName = ModInfo::getByIndex(overwriteIndex)->name();
 
   for (auto url : mimeData->urls()) {
-    //qDebug("URL drop requested: %s -> %s", qUtf8Printable(url.url()), qUtf8Printable(modDir.canonicalPath()));
     if (!url.isLocalFile()) {
-      qDebug("URL drop ignored: \"%s\" is not a local file", qUtf8Printable(url.url()));
+      log::debug("URL drop ignored: \"{}\" is not a local file", url.url());
       continue;
     }
 
@@ -1034,7 +1053,7 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
       originName = overwriteName;
       relativePath = overwriteDir.relativeFilePath(sourceFile);
     } else {
-      qDebug("URL drop ignored: \"%s\" is not a known file to MO", qUtf8Printable(sourceFile));
+      log::debug("URL drop ignored: \"{}\" is not a known file to MO", sourceFile);
       continue;
     }
 
@@ -1046,7 +1065,7 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
 
   if (sourceList.count()) {
     if (!shellMove(sourceList, targetList)) {
-      qDebug("Failed to move file (error %d)", ::GetLastError());
+      log::debug("Failed to move file (error {})", ::GetLastError());
       return false;
     }
   }
@@ -1195,6 +1214,32 @@ bool ModList::removeRows(int row, int count, const QModelIndex &parent)
 
 void ModList::notifyChange(int rowStart, int rowEnd)
 {
+  // this function can emit dataChanged(), which can eventually recurse back
+  // here; for example:
+  //
+  // - a filter is active in the mod list, such as "no categories"
+  // - mods are selected and a category is set on them
+  // - these mods get updated here and disappear from the list because they're
+  //   not in "no categories" anymore
+  // - dataChanged() is emitted
+  // - it's picked up in MainWindow::modlistSelectionsChanged() because the
+  //   selected mods are gone
+  // - it calls setOverwriteMarkers(), which calls notifyChange() again and
+  //   ends up here
+  // - dataChanged() is emitted again
+  //
+  // at this point, MO crashes because dataChanged() is not reentrant: it's in
+  // the middle of modifying internal data and crashes when trying to change an
+  // internal vector
+  //
+  // long story short, this prevents reentrancy
+  if (m_InNotifyChange) {
+    return;
+  }
+
+  m_InNotifyChange = true;
+  Guard g([&]{ m_InNotifyChange = false; });
+
   if (rowStart < 0) {
     m_Overwrite.clear();
     m_Overwritten.clear();
@@ -1247,6 +1292,7 @@ void ModList::dropModeUpdate(bool dropOnItems)
 QString ModList::getColumnName(int column)
 {
   switch (column) {
+    case COL_CONFLICTFLAGS: return tr("Conflicts");
     case COL_FLAGS:    return tr("Flags");
     case COL_CONTENT:  return tr("Content");
     case COL_NAME:     return tr("Mod Name");
@@ -1272,7 +1318,8 @@ QString ModList::getColumnToolTip(int column)
     case COL_CATEGORY: return tr("Category of the mod.");
     case COL_GAME:     return tr("The source game which was the origin of this mod.");
     case COL_MODID:    return tr("Id of the mod as used on Nexus.");
-    case COL_FLAGS:    return tr("Emblemes to highlight things that might require attention.");
+    case COL_CONFLICTFLAGS: return tr("Indicators of file conflicts between mods.");
+    case COL_FLAGS:    return tr("Emblems to highlight things that might require attention.");
     case COL_CONTENT:  return tr("Depicts the content of the mod:<br>"
                                  "<table cellspacing=7>"
                                  "<tr><td><img src=\":/MO/gui/content/plugin\" width=32/></td><td>Game plugins (esp/esm/esl)</td></tr>"
@@ -1324,7 +1371,7 @@ bool ModList::moveSelection(QAbstractItemView *itemView, int direction)
   QModelIndexList rows = selectionModel->selectedRows();
   if (direction > 0) {
     for (int i = 0; i < rows.size() / 2; ++i) {
-      rows.swap(i, rows.size() - i - 1);
+      rows.swapItemsAt(i, rows.size() - i - 1);
     }
   }
   for (QModelIndex idx : rows) {

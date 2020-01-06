@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMetaType>
 
 namespace MOBase { class IPluginGame; class ExecutableInfo; }
+class Settings;
 
 /*!
  * @brief Information about an executable
@@ -38,8 +39,9 @@ class Executable
 public:
   enum Flag
   {
-    ShowInToolbar = 0x02,
-    UseApplicationIcon = 0x04
+    ShowInToolbar      = 0x02,
+    UseApplicationIcon = 0x04,
+    Hide               = 0x08
   };
 
   Q_DECLARE_FLAGS(Flags, Flag);
@@ -68,6 +70,7 @@ public:
   bool isShownOnToolbar() const;
   void setShownOnToolbar(bool state);
   bool usesOwnIcon() const;
+  bool hide() const;
 
   void mergeFrom(const Executable& other);
 
@@ -103,7 +106,7 @@ public:
   /**
    * @brief initializes the list from the settings and the given plugin
    **/
-  void load(const MOBase::IPluginGame* game, QSettings& settings);
+  void load(const MOBase::IPluginGame* game, const Settings& settings);
 
   /**
    * @brief re-adds all the executables from the plugin and renames existing
@@ -114,7 +117,7 @@ public:
   /**
    * @brief writes the current list to the settings
    */
-  void store(QSettings& settings);
+  void store(Settings& settings);
 
   /**
    * @brief get an executable by name
@@ -214,6 +217,10 @@ private:
    * called when MO is still using the old custom executables from 2.2.0
    **/
   void upgradeFromCustom(const MOBase::IPluginGame* game);
+
+  // logs all executables
+  //
+  void dump() const;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Executable::Flags)

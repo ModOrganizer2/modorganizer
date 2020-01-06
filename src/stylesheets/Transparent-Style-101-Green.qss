@@ -485,6 +485,11 @@ QStatusBar::item {border: None;}
      font-family: Source Sans Pro;
      font-size: 14px;
 }
+
+LinkLabel {
+  qproperty-linkColor: #3399FF;
+}
+
  QAbstractItemView {
      color: #cccccc;
      font-family: Source Sans Pro;

@@ -23,7 +23,7 @@ bool ModInfoOverwrite::isEmpty() const
 
 QString ModInfoOverwrite::absolutePath() const
 {
-  return Settings::instance().getOverwriteDirectory();
+  return Settings::instance().paths().overwrite();
 }
 
 std::vector<ModInfo::EFlag> ModInfoOverwrite::getFlags() const
@@ -33,6 +33,15 @@ std::vector<ModInfo::EFlag> ModInfoOverwrite::getFlags() const
   if (m_PluginSelected)
     result.push_back(FLAG_PLUGIN_SELECTED);
   for (auto flag : ModInfoWithConflictInfo::getFlags())
+    result.push_back(flag);
+  return result;
+}
+
+std::vector<ModInfo::EConflictFlag> ModInfoOverwrite::getConflictFlags() const
+{
+  std::vector<ModInfo::EConflictFlag> result;
+  result.push_back(FLAG_OVERWRITE_CONFLICT);
+  for (auto flag : ModInfoWithConflictInfo::getConflictFlags())
     result.push_back(flag);
   return result;
 }

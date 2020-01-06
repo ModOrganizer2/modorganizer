@@ -61,10 +61,27 @@ bool canPreviewFile(
   return pluginContainer.previewGenerator().previewSupported(ext);
 }
 
-bool canOpenFile(bool isArchive, const QString&)
+bool isExecutableFilename(const QString& filename)
 {
-  // can open anything as long as it's not in an archive
-  return !isArchive;
+  static const std::set<QString> exeExtensions = {
+    "exe", "cmd", "bat"
+  };
+
+  const auto ext = QFileInfo(filename).suffix().toLower();
+
+  return exeExtensions.contains(ext);
+}
+
+bool canRunFile(bool isArchive, const QString& filename)
+{
+  // can run executables that are not archives
+  return !isArchive && isExecutableFilename(filename);
+}
+
+bool canOpenFile(bool isArchive, const QString& filename)
+{
+  // can open non-executables that are not archives
+  return !isArchive && !isExecutableFilename(filename);
 }
 
 bool canExploreFile(bool isArchive, const QString&)
@@ -176,7 +193,7 @@ void ModInfoDialog::createTabs()
   // check for tabs in the ui not having a corresponding tab in the list
   int count = ui->tabWidget->count();
   if (count < 0 || count > static_cast<int>(m_tabs.size())) {
-    qCritical() << "mod info dialog has more tabs than expected";
+    log::error("mod info dialog has more tabs than expected");
     count = static_cast<int>(m_tabs.size());
   }
 
@@ -210,6 +227,9 @@ void ModInfoDialog::createTabs()
 
 int ModInfoDialog::exec()
 {
+  GeometrySaver gs(Settings::instance(), this);
+  restoreState();
+
   // whether to select the first tab; if the main window requested a specific
   // tab, it is selected when encountered in update()
   const auto selectFirst = (m_initialTab == ModInfoTabIDs::None);
@@ -220,7 +240,10 @@ int ModInfoDialog::exec()
     ui->tabWidget->setCurrentIndex(0);
   }
 
-  return TutorableDialog::exec();
+  const int r = TutorableDialog::exec();
+  saveState();
+
+  return r;
 }
 
 void ModInfoDialog::setMod(ModInfo::Ptr mod)
@@ -239,13 +262,13 @@ void ModInfoDialog::setMod(const QString& name)
 {
   unsigned int index = ModInfo::getIndex(name);
   if (index == UINT_MAX) {
-    qCritical() << "failed to resolve mod name " << name;
+    log::error("failed to resolve mod name {}", name);
     return;
   }
 
   auto mod = ModInfo::getByIndex(index);
   if (!mod) {
-    qCritical() << "mod by index " << index << " is null";
+    log::error("mod by index {} is null", index);
     return;
   }
 
@@ -307,7 +330,7 @@ void ModInfoDialog::update(bool firstTime)
       // changed
       tabInfo->tab->activated();
     } else {
-      qCritical() << "tab index " << oldTab << " not found";
+      log::error("tab index {} not found", oldTab);
     }
   }
 }
@@ -356,7 +379,7 @@ void ModInfoDialog::setTabsVisibility(bool firstTime)
   if (!firstTime) {
     // but don't do it the first time visibility is set because the tabs are
     // in the default order, which will clobber the current settings
-    saveTabOrder(Settings::instance());
+    saveTabOrder();
   }
 
   // remember selection, if any
@@ -375,11 +398,14 @@ void ModInfoDialog::reAddTabs(
   Q_ASSERT(visibility.size() == m_tabs.size());
 
   // ordered tab names from settings
-  const auto orderedNames = getOrderedTabNames();
+  const auto orderedNames = m_core->settings().geometry().modInfoTabOrder();
 
-  // whether the tabs can be sorted; if the object name of a tab widget is not
-  // found in orderedNames, the list cannot be sorted safely
-  bool canSort = true;
+  // whether the tabs can be sorted
+  //
+  // if the object name of a tab widget is not found in orderedNames, the list
+  // cannot be sorted safely; if the list is empty, it's probably a first run
+  // and there's nothing to sort
+  bool canSort = !orderedNames.empty();
 
   // gathering visible tabs
   std::vector<TabInfo*> visibleTabs;
@@ -400,7 +426,7 @@ void ModInfoDialog::reAddTabs(
       if (itor == orderedNames.end()) {
         // this shouldn't happen, it means there's a tab in the UI that's no
         // in the list
-        qCritical() << "can't sort tabs, '" << objectName << "' not found";
+        log::error("can't sort tabs, '{}' not found", objectName);
         canSort = false;
       }
     }
@@ -556,9 +582,7 @@ void ModInfoDialog::switchToTab(ModInfoTabIDs id)
   }
 
   // this could happen if the tab is not visible right now
-  qDebug()
-    << "can't switch to tab ID " << static_cast<int>(id)
-    << ", not available";
+  log::debug("can't switch to tab ID {}, not available", static_cast<int>(id));
 }
 
 MOShared::FilesOrigin* ModInfoDialog::getOrigin()
@@ -577,37 +601,28 @@ MOShared::FilesOrigin* ModInfoDialog::getOrigin()
   return origin;
 }
 
-void ModInfoDialog::saveState(Settings& s) const
+void ModInfoDialog::saveState() const
 {
-  saveTabOrder(s);
-
-  // remove 2.2.0 settings
-  s.directInterface().remove("mod_info_tabs");
-  s.directInterface().remove("mod_info_conflict_expanders");
-  s.directInterface().remove("mod_info_conflicts");
-  s.directInterface().remove("mod_info_advanced_conflicts");
-  s.directInterface().remove("mod_info_conflicts_overwrite");
-  s.directInterface().remove("mod_info_conflicts_noconflict");
-  s.directInterface().remove("mod_info_conflicts_overwritten");
+  saveTabOrder();
 
   // save state for each tab
   for (const auto& tabInfo : m_tabs) {
-    tabInfo.tab->saveState(s);
+    tabInfo.tab->saveState(m_core->settings());
   }
 }
 
-void ModInfoDialog::restoreState(const Settings& s)
+void ModInfoDialog::restoreState()
 {
   // tab order is not restored here, it will be picked up if tabs have to be
   // removed and re-added
 
   // restore state for each tab
   for (const auto& tabInfo : m_tabs) {
-    tabInfo.tab->restoreState(s);
+    tabInfo.tab->restoreState(m_core->settings());
   }
 }
 
-void ModInfoDialog::saveTabOrder(Settings& s) const
+void ModInfoDialog::saveTabOrder() const
 {
   if (static_cast<int>(m_tabs.size()) != ui->tabWidget->count()) {
     // only save tab state when all tabs are visible
@@ -631,40 +646,7 @@ void ModInfoDialog::saveTabOrder(Settings& s) const
     names += ui->tabWidget->widget(i)->objectName();
   }
 
-  s.directInterface().setValue("mod_info_tab_order", names);
-}
-
-std::vector<QString> ModInfoDialog::getOrderedTabNames() const
-{
-  const auto& settings = Settings::instance().directInterface();
-
-  std::vector<QString> v;
-
-  if (settings.contains("mod_info_tabs")) {
-    // old byte array from 2.2.0
-    QDataStream stream(settings.value("mod_info_tabs").toByteArray());
-
-    int count = 0;
-    stream >> count;
-
-    for (int i=0; i<count; ++i) {
-      QString s;
-      stream >> s;
-      v.emplace_back(std::move(s));
-    }
-  } else {
-    // string list
-    QString string = settings.value("mod_info_tab_order").toString();
-    QTextStream stream(&string);
-
-    while (!stream.atEnd()) {
-      QString s;
-      stream >> s;
-      v.emplace_back(std::move(s));
-    }
-  }
-
-  return v;
+  m_core->settings().geometry().setModInfoTabOrder(names);
 }
 
 void ModInfoDialog::onOriginModified(int originID)
@@ -753,7 +735,7 @@ void ModInfoDialog::onTabMoved()
     }
 
     if (!found) {
-      qCritical() << "unknown tab at index " << i;
+      log::error("unknown tab at index {}", i);
     }
   }
 }

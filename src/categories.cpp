@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <utility.h>
 #include <report.h>
+#include <log.h>
 
 #include <QObject>
 #include <QFile>
@@ -61,8 +62,9 @@ void CategoryFactory::loadCategories()
       ++lineNum;
       QList<QByteArray> cells = line.split('|');
       if (cells.count() != 4) {
-        qCritical("invalid category line %d: %s (%d cells)",
-                  lineNum, line.constData(), cells.count());
+        log::error(
+          "invalid category line {}: {} ({} cells)",
+          lineNum, line.constData(), cells.count());
       } else {
         std::vector<int> nexusIDs;
         if (cells[2].length() > 0) {
@@ -72,7 +74,7 @@ void CategoryFactory::loadCategories()
             bool ok = false;
             int temp = iter->toInt(&ok);
             if (!ok) {
-              qCritical("invalid category id %s", iter->constData());
+              log::error("invalid category id {}", iter->constData());
             }
             nexusIDs.push_back(temp);
           }
@@ -82,8 +84,7 @@ void CategoryFactory::loadCategories()
         int id = cells[0].toInt(&cell0Ok);
         int parentID = cells[3].trimmed().toInt(&cell3Ok);
         if (!cell0Ok || !cell3Ok) {
-          qCritical("invalid category line %d: %s",
-                    lineNum, line.constData());
+          log::error("invalid category line {}: {}", lineNum, line.constData());
         }
         addCategory(id, QString::fromUtf8(cells[1].constData()), nexusIDs, parentID);
       }
@@ -294,7 +295,7 @@ bool CategoryFactory::isDecendantOf(int id, int parentID) const
       return isDecendantOf(m_Categories[index].m_ParentID, parentID);
     }
   } else {
-    qWarning("%d is no valid category id", id);
+    log::warn("{} is no valid category id", id);
     return false;
   }
 }
@@ -319,6 +320,41 @@ QString CategoryFactory::getCategoryName(unsigned int index) const
   return m_Categories[index].m_Name;
 }
 
+QString CategoryFactory::getSpecialCategoryName(SpecialCategories type) const
+{
+  QString label;
+  switch (type)
+  {
+    case Checked:         label = QObject::tr("Active"); break;
+    case UpdateAvailable: label = QObject::tr("Update available"); break;
+    case HasCategory:     label = QObject::tr("Has category"); break;
+    case Conflict:        label = QObject::tr("Conflicted"); break;
+    case Endorsed:        label = QObject::tr("Endorsed"); break;
+    case Backup:          label = QObject::tr("Has backup"); break;
+    case Managed:         label = QObject::tr("Managed"); break;
+    case HasGameData:     label = QObject::tr("Has valid game data"); break;
+    case HasNexusID:      label = QObject::tr("Has Nexus ID"); break;
+    case Tracked:         label = QObject::tr("Tracked on Nexus"); break;
+    default: return {};
+  }
+  return QString("<%1>").arg(label);
+}
+
+QString CategoryFactory::getCategoryNameByID(int id) const
+{
+  auto itor = m_IDMap.find(id);
+
+  if (itor == m_IDMap.end()) {
+    return getSpecialCategoryName(static_cast<SpecialCategories>(id));
+  } else {
+    const auto index = itor->second;
+    if (index >= m_Categories.size()) {
+      return {};
+    }
+
+    return m_Categories[index].m_Name;
+  }
+}
 
 int CategoryFactory::getCategoryID(unsigned int index) const
 {
@@ -359,10 +395,10 @@ unsigned int CategoryFactory::resolveNexusID(int nexusID) const
 {
   std::map<int, unsigned int>::const_iterator iter = m_NexusMap.find(nexusID);
   if (iter != m_NexusMap.end()) {
-    qDebug("nexus category id %d maps to internal %d", nexusID, iter->second);
+    log::debug("nexus category id {} maps to internal {}", nexusID, iter->second);
     return iter->second;
   } else {
-    qDebug("nexus category id %d not mapped", nexusID);
+    log::debug("nexus category id {} not mapped", nexusID);
     return 0U;
   }
 }

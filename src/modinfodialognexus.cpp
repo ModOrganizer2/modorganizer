@@ -6,8 +6,9 @@
 #include "bbcode.h"
 #include <versioninfo.h>
 #include <utility.h>
+#include <log.h>
 
-namespace shell = MOBase::shell;
+using namespace MOBase;
 
 bool isValidModID(int id)
 {
@@ -18,7 +19,7 @@ NexusTab::NexusTab(ModInfoDialogTabContext cx) :
   ModInfoDialogTab(std::move(cx)), m_requestStarted(false), m_loading(false)
 {
   ui->modID->setValidator(new QIntValidator(ui->modID));
-  ui->endorse->setVisible(core().settings().endorsementIntegration());
+  ui->endorse->setVisible(core().settings().nexus().endorsementIntegration());
 
   connect(ui->modID, &QLineEdit::editingFinished, [&]{ onModIDChanged(); });
   connect(
@@ -94,7 +95,7 @@ void NexusTab::update()
 
   connect(
     page, &NexusTabWebpage::linkClicked,
-    [&](const QUrl& url){ shell::OpenLink(url); });
+    [&](const QUrl& url){ shell::Open(url); });
 
   ui->endorse->setEnabled(
     (mod().endorsedState() == ModInfo::ENDORSED_FALSE) ||
@@ -350,7 +351,7 @@ void NexusTab::onRefreshBrowser()
     mod().setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
     updateWebpage();
   } else {
-    qInfo("Mod has no valid Nexus ID, info can't be updated.");
+    log::info("Mod has no valid Nexus ID, info can't be updated.");
   }
 }
 
@@ -362,7 +363,7 @@ void NexusTab::onVisitNexus()
     const QString nexusLink = NexusInterface::instance(&plugin())
       ->getModURL(modID, mod().getGameName());
 
-    shell::OpenLink(QUrl(nexusLink));
+    shell::Open(QUrl(nexusLink));
   }
 }
 
@@ -411,6 +412,6 @@ void NexusTab::onVisitCustomURL()
 {
   const auto url = mod().parseCustomURL();
   if (url.isValid()) {
-    shell::OpenLink(url);
+    shell::Open(url);
   }
 }

@@ -14,9 +14,9 @@ void ModInfoWithConflictInfo::clearCaches()
   m_LastConflictCheck = QTime();
 }
 
-std::vector<ModInfo::EFlag> ModInfoWithConflictInfo::getFlags() const
+std::vector<ModInfo::EConflictFlag> ModInfoWithConflictInfo::getConflictFlags() const
 {
-  std::vector<ModInfo::EFlag> result;
+  std::vector<ModInfo::EConflictFlag> result;
   switch (isConflicted()) {
     case CONFLICT_MIXED: {
       result.push_back(ModInfo::FLAG_CONFLICT_MIXED);

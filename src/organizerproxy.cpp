@@ -107,15 +107,65 @@ QString OrganizerProxy::pluginDataPath() const
   return m_Proxied->pluginDataPath();
 }
 
-HANDLE OrganizerProxy::startApplication(const QString &executable, const QStringList &args, const QString &cwd,
-                                        const QString &profile, const QString &forcedCustomOverwrite, bool ignoreCustomOverwrite)
+HANDLE OrganizerProxy::startApplication(
+  const QString& exe, const QStringList& args, const QString &cwd,
+  const QString& profile, const QString &overwrite, bool ignoreOverwrite)
 {
-  return m_Proxied->startApplication(executable, args, cwd, profile, forcedCustomOverwrite, ignoreCustomOverwrite);
+  log::debug(
+    "a plugin has requested to start an application:\n"
+    " . executable: '{}'\n"
+    " . args: '{}'\n"
+    " . cwd: '{}'\n"
+    " . profile: '{}'\n"
+    " . overwrite: '{}'\n"
+    " . ignore overwrite: {}",
+    exe, args.join(" "), cwd, profile, overwrite, ignoreOverwrite);
+
+  auto runner = m_Proxied->processRunner();
+
+  // don't wait for completion
+  runner
+    .setFromFileOrExecutable(exe, args, cwd, profile, overwrite, ignoreOverwrite)
+    .run();
+
+  // the plugin is in charge of closing the handle, unless waitForApplication()
+  // is called on it
+  return runner.stealProcessHandle().release();
 }
 
 bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
 {
-  return m_Proxied->waitForApplication(handle, exitCode);
+  const auto pid = ::GetProcessId(handle);
+
+  log::debug(
+    "a plugin wants to wait for an application to complete, pid {}{}",
+    pid, (pid == 0 ? "unknown (probably already completed)" : ""));
+
+  auto runner = m_Proxied->processRunner();
+
+  const auto r = runner
+    .setWaitForCompletion(ProcessRunner::ForceWait, UILocker::OutputRequired)
+    .attachToProcess(handle);
+
+  if (exitCode) {
+    *exitCode = runner.exitCode();
+  }
+
+  switch (r)
+  {
+    case ProcessRunner::Completed:
+      return true;
+
+    case ProcessRunner::Cancelled:     // fall-through
+    case ProcessRunner::ForceUnlocked:
+      // this is always an error because the application should have run to
+      // completion
+      return false;
+
+    case ProcessRunner::Error: // fall-through
+    default:
+      return false;
+  }
 }
 
 bool OrganizerProxy::onAboutToRun(const std::function<bool (const QString &)> &func)

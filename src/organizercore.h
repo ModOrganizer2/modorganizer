@@ -3,7 +3,6 @@
 
 
 #include "selfupdater.h"
-#include "iuserinterface.h" //should be class IUserInterface;
 #include "settings.h"
 #include "modlist.h"
 #include "modinfo.h"
@@ -14,6 +13,8 @@
 #include "executableslist.h"
 #include "usvfsconnector.h"
 #include "moshortcut.h"
+#include "processrunner.h"
+#include "uilocker.h"
 #include <directoryentry.h>
 #include <imoinfo.h>
 #include <iplugindiagnose.h>
@@ -21,10 +22,13 @@
 #include <delayedfilewriter.h>
 #include <boost/signals2.hpp>
 #include "executableinfo.h"
+#include <log.h>
 
 class ModListSortProxy;
 class PluginListSortProxy;
 class Profile;
+class IUserInterface;
+
 namespace MOBase {
   template <typename T> class GuessedValue;
   class IModInterface;
@@ -88,26 +92,21 @@ private:
   typedef boost::signals2::signal<void (const QString&)> SignalModInstalled;
 
 public:
-  enum class FileExecutionTypes
-  {
-    Executable = 1,
-    Other = 2
-  };
-
   static bool isNxmLink(const QString &link) { return link.startsWith("nxm://", Qt::CaseInsensitive); }
 
-  OrganizerCore(const QSettings &initSettings);
+  OrganizerCore(Settings &settings);
 
   ~OrganizerCore();
 
-  void setUserInterface(IUserInterface *userInterface, QWidget *widget);
+  void setUserInterface(IUserInterface* ui);
   void connectPlugins(PluginContainer *container);
   void disconnectPlugins();
 
   void setManagedGame(MOBase::IPluginGame *game);
 
-  void updateExecutablesList(QSettings &settings);
+  void updateExecutablesList();
 
+  void checkForUpdates();
   void startMOUpdate();
 
   Settings &settings();
@@ -136,7 +135,17 @@ public:
 
   bool saveCurrentLists();
 
-  void prepareStart();
+  ProcessRunner processRunner();
+
+  bool beforeRun(
+    const QFileInfo& binary, const QString& profileName,
+    const QString& customOverwrite,
+    const QList<MOBase::ExecutableForcedLoadSetting>& forcedLibraries);
+
+  void afterRun(const QFileInfo& binary, DWORD exitCode);
+
+  ProcessRunner::Results waitForAllUSVFSProcesses(
+    UILocker::Reasons reason=UILocker::PreventExit);
 
   void refreshESPList(bool force = false);
   void refreshBSAList();
@@ -148,36 +157,8 @@ public:
   void doAfterLogin(const std::function<void()> &function) { m_PostLoginTasks.append(function); }
   void loggedInAction(QWidget* parent, std::function<void ()> f);
 
-  static QString findJavaInstallation(const QString& jarFile={});
-
-  static bool getFileExecutionContext(
-    QWidget* parent,  const QFileInfo &targetInfo,
-    QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type);
-
-  bool executeFileVirtualized(QWidget* parent, const QFileInfo& targetInfo);
   bool previewFileWithAlternatives(QWidget* parent, QString filename, int selectedOrigin=-1);
   bool previewFile(QWidget* parent, const QString& originName, const QString& path);
-
-  void spawnBinary(const QFileInfo &binary, const QString &arguments = "",
-                   const QDir &currentDirectory = QDir(),
-                   const QString &steamAppID = "",
-                   const QString &customOverwrite = "",
-                   const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>());
-
-  HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments,
-                           const QString &profileName,
-                           const QDir &currentDirectory,
-                           const QString &steamAppID,
-                           const QString &customOverwrite,
-                           const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>(),
-                           LPDWORD exitCode = nullptr);
-
-  HANDLE spawnBinaryProcess(const QFileInfo &binary, const QString &arguments,
-                            const QString &profileName,
-                            const QDir &currentDirectory,
-                            const QString &steamAppID,
-                            const QString &customOverwrite,
-                            const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>());
 
   void loginSuccessfulUpdate(bool necessary);
   void loginFailedUpdate(const QString &message);
@@ -191,12 +172,17 @@ public:
 
   void prepareVFS();
 
-  void updateVFSParams(int logLevel, int crashDumpsType, QString executableBlacklist);
+  void updateVFSParams(
+    MOBase::log::Levels logLevel, CrashDumpsType crashDumpsType,
+    const QString& crashDumpsPath, std::chrono::seconds spawnDelay,
+    QString executableBlacklist);
+
+  void setLogLevel(MOBase::log::Levels level);
 
   bool cycleDiagnostics();
 
   static CrashDumpsType getGlobalCrashDumpsType() { return m_globalCrashDumpsType; }
-  static void setGlobalCrashDumpsType(int crashDumpsType);
+  static void setGlobalCrashDumpsType(CrashDumpsType crashDumpsType);
   static std::wstring crashDumpsPath();
 
 public:
@@ -227,10 +213,6 @@ public:
   DownloadManager *downloadManager();
   PluginList *pluginList();
   ModList *modList();
-  HANDLE runShortcut(const MOShortcut& shortcut);
-  HANDLE startApplication(const QString &executable, const QStringList &args, const QString &cwd, const QString &profile, const QString &forcedCustomOverwrite = "", bool ignoreCustomOverwrite = false);
-  bool waitForApplication(HANDLE processHandle, LPDWORD exitCode = nullptr);
-  HANDLE findAndOpenAUSVFSProcess(const std::vector<QString>& hiddenList, DWORD preferedParentPid);
   bool onModInstalled(const std::function<void (const QString &)> &func);
   bool onAboutToRun(const std::function<bool (const QString &)> &func);
   bool onFinishedRun(const std::function<void (const QString &, unsigned int)> &func);
@@ -281,11 +263,8 @@ signals:
 
 private:
 
+  void saveCurrentProfile();
   void storeSettings();
-
-  QSettings::Status storeSettings(const QString &fileName);
-
-  QString commitSettings(const QString &iniFile);
 
   bool queryApi(QString &apiKey);
 
@@ -310,8 +289,6 @@ private:
               const MOShared::DirectoryEntry *directoryEntry,
               int createDestination);
 
-  bool waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock);
-
 private slots:
 
   void directory_refreshed();
@@ -325,15 +302,14 @@ private:
   static const unsigned int PROBLEM_MO1SCRIPTEXTENDERWORKAROUND = 1;
 
 private:
-
-  IUserInterface *m_UserInterface;
+  IUserInterface* m_UserInterface;
   PluginContainer *m_PluginContainer;
   QString m_GameName;
   MOBase::IPluginGame *m_GamePlugin;
 
   Profile *m_CurrentProfile;
 
-  Settings m_Settings;
+  Settings& m_Settings;
 
   SelfUpdater m_Updater;
 
@@ -367,6 +343,8 @@ private:
 
   MOBase::DelayedFileWriter m_PluginListsWriter;
   UsvfsConnector m_USVFS;
+
+  UILocker m_UILocker;
 
   static CrashDumpsType m_globalCrashDumpsType;
 };

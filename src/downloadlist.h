@@ -43,6 +43,7 @@ public:
     COL_MODNAME,
     COL_VERSION,
     COL_ID,
+    COL_SOURCEGAME,
 
     // number of columns
     COL_COUNT
@@ -99,8 +100,6 @@ private:
 
   DownloadManager *m_Manager;
   bool m_MetaDisplay;
-
-  QString sizeFormat(quint64 size) const;
 };
 
 #endif // DOWNLOADLIST_H

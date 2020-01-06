@@ -47,5 +47,5 @@ void MotDDialog::on_okButton_clicked()
 
 void MotDDialog::linkClicked(const QUrl &url)
 {
-  shell::OpenLink(url);
+  shell::Open(url);
 }

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>586</width>
-    <height>486</height>
+    <height>491</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,151 +23,148 @@
       <attribute name="title">
        <string>General</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_3">
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_3">
-         <item>
-          <widget class="QLabel" name="label_5">
-           <property name="text">
-            <string>Language</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QComboBox" name="languageBox">
-           <property name="toolTip">
-            <string>The display language</string>
-           </property>
-           <property name="whatsThis">
-            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The display language. This will only displaye languages for which you have a translation installed.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_4">
-         <item>
-          <widget class="QLabel" name="label_10">
-           <property name="text">
-            <string>Style</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QComboBox" name="styleBox">
-           <property name="toolTip">
-            <string>graphical style</string>
-           </property>
-           <property name="whatsThis">
-            <string>graphical style of the MO user interface</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="usePrereleaseBox">
-         <property name="toolTip">
-          <string>Update to non-stable releases.</string>
+      <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0,1">
+       <item row="5" column="0" colspan="2">
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
          </property>
-         <property name="whatsThis">
-          <string>If this is enabled, the integrated update mechanism will notify of all releases, including pre-releases (alphas, betas).
-
-Please use this only if you're sufficiently tech-savvy to investigate issues, look for known problems in the issue tracker and create meaningful reports.
-
-If you use pre-releases, never contact me directly by e-mail or via private messages!</string>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
          </property>
-         <property name="text">
-          <string>Install Pre-releases (Betas)</string>
-         </property>
-        </widget>
+        </spacer>
        </item>
-       <item>
+       <item row="0" column="0" rowspan="2">
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
-          <string>User interface</string>
+          <string>User Interface</string>
          </property>
-         <layout class="QGridLayout" name="gridLayout">
-          <item row="2" column="0" colspan="2">
-           <widget class="QGroupBox" name="ModlistGroupBox">
-            <property name="title">
-             <string>Colors</string>
-            </property>
-            <layout class="QGridLayout" name="gridLayout_5">
-             <item row="6" column="0">
-              <widget class="QCheckBox" name="colorSeparatorsBox">
-               <property name="toolTip">
-                <string>When this is enabled, the color defined for a separator will be shown on the mod list scrollbar at the location of the separator.  This can be useful for quick navigation between separator sections or to a specific separator section.</string>
-               </property>
-               <property name="whatsThis">
-                <string>When this is enabled, the color defined for a separator will be shown on the mod list scrollbar at the location of the separator.  This can be useful for quick navigation between separator sections or to a specific separator section.</string>
-               </property>
+         <layout class="QVBoxLayout" name="verticalLayout_14">
+          <item>
+           <widget class="QWidget" name="widget_6" native="true">
+            <layout class="QGridLayout" name="gridLayout_5" columnstretch="0,1,0">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_5">
                <property name="text">
-                <string>Show mod list separator colors on the scrollbar</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="0" colspan="2">
-              <widget class="QPushButton" name="containedBtn">
-               <property name="text">
-                <string>Plugin is Contained in selected Mod</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QPushButton" name="overwrittenBtn">
-               <property name="text">
-                <string>Is overwritten (loose files)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QPushButton" name="overwritingBtn">
-               <property name="text">
-                <string>Is overwriting (loose files)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="0" colspan="2">
-              <widget class="QPushButton" name="resetColorsBtn">
-               <property name="text">
-                <string>Reset Colors</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0" colspan="2">
-              <widget class="QPushButton" name="containsBtn">
-               <property name="text">
-                <string>Mod Contains selected Plugin</string>
+                <string>Language</string>
                </property>
               </widget>
              </item>
              <item row="2" column="0">
-              <widget class="QPushButton" name="overwrittenArchiveBtn">
+              <widget class="QLabel" name="label_10">
                <property name="text">
-                <string>Is overwritten (archive files)</string>
+                <string>Style</string>
                </property>
               </widget>
              </item>
              <item row="2" column="1">
-              <widget class="QPushButton" name="overwritingArchiveBtn">
+              <widget class="QComboBox" name="styleBox">
+               <property name="toolTip">
+                <string>Visual theme of the user interface.</string>
+               </property>
+               <property name="whatsThis">
+                <string>Visual theme of the user interface.</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QPushButton" name="exploreStyles">
                <property name="text">
-                <string>Is overwriting (archive files)</string>
+                <string>Explore...</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1" colspan="2">
+              <widget class="QComboBox" name="languageBox">
+               <property name="toolTip">
+                <string>The language of the user interface.</string>
+               </property>
+               <property name="whatsThis">
+                <string>The language of the user interface.</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1" colspan="2">
+              <widget class="LinkLabel" name="label_33">
+               <property name="toolTip">
+                <string>https://www.transifex.com/mod-organizer-2-team/mod-organizer-2/</string>
+               </property>
+               <property name="text">
+                <string>&lt;a href=&quot;https://www.transifex.com/mod-organizer-2-team/mod-organizer-2/&quot;&gt;Help translate Mod Organizer&lt;/a&gt;</string>
+               </property>
+               <property name="openExternalLinks">
+                <bool>true</bool>
                </property>
               </widget>
              </item>
             </layout>
            </widget>
           </item>
-          <item row="6" column="0" colspan="2">
+          <item>
+           <widget class="QCheckBox" name="centerDialogs">
+            <property name="toolTip">
+             <string>Dialogs will always be centered on the main window, but will remember their size.</string>
+            </property>
+            <property name="whatsThis">
+             <string>Dialogs will always be centered on the main window, but will remember their size.</string>
+            </property>
+            <property name="text">
+             <string>Always center dialogs</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="changeGameConfirmation">
+            <property name="text">
+             <string>Show confirmation when changing instance</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="doubleClickPreviews">
+            <property name="toolTip">
+             <string>Whether double-clicking on a file opens the preview window or launches the program associated with it. This applies to the Data tab as well as the Conflicts and Filetree tabs in the mod info window.</string>
+            </property>
+            <property name="text">
+             <string>Open previews on double-click</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="resetDialogsButton">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Reset all choices made in dialogs.</string>
+            </property>
+            <property name="whatsThis">
+             <string>Reset all choices made in dialogs.</string>
+            </property>
+            <property name="text">
+             <string>Reset Dialog Choices</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="categoriesBtn">
             <property name="toolTip">
              <string>Modify the categories available to arrange your mods.</string>
@@ -180,57 +177,214 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
             </property>
            </widget>
           </item>
-          <item row="5" column="0" colspan="2">
-           <widget class="QPushButton" name="resetDialogsButton">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="toolTip">
-             <string>Reset stored information from dialogs.</string>
-            </property>
-            <property name="whatsThis">
-             <string>This will make all dialogs show up again where you checked the &quot;Remember selection&quot;-box.</string>
-            </property>
-            <property name="text">
-             <string>Reset Dialogs</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QCheckBox" name="compactBox">
-            <property name="toolTip">
-             <string>If checked, the download interface will be more compact.</string>
-            </property>
-            <property name="text">
-             <string>Compact Download Interface</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="0" colspan="2">
-           <spacer name="verticalSpacer">
+          <item>
+           <spacer name="verticalSpacer_11">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>20</width>
-              <height>40</height>
+              <width>0</width>
+              <height>0</height>
              </size>
             </property>
            </spacer>
           </item>
-          <item row="0" column="1">
+         </layout>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QGroupBox" name="groupBox_5">
+         <property name="title">
+          <string>Download List</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
            <widget class="QCheckBox" name="showMetaBox">
             <property name="toolTip">
-             <string>If checked, the download list will display meta information instead of file names.</string>
+             <string>Show meta information instead of file names in the download list.</string>
+            </property>
+            <property name="whatsThis">
+             <string>Show meta information instead of file names in the download list.</string>
             </property>
             <property name="text">
-             <string>Download Meta Information</string>
+             <string>Show Meta Information</string>
             </property>
            </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="compactBox">
+            <property name="toolTip">
+             <string>Make the download list more compact.</string>
+            </property>
+            <property name="whatsThis">
+             <string>Make the download list more compact.</string>
+            </property>
+            <property name="text">
+             <string>Compact List</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_5">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="3" column="0" colspan="2">
+        <widget class="QGroupBox" name="ModlistGroupBox">
+         <property name="title">
+          <string>Colors</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_13">
+          <item>
+           <widget class="ColorTable" name="colorTable">
+            <property name="editTriggers">
+             <set>QAbstractItemView::NoEditTriggers</set>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::SingleSelection</enum>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+            <property name="verticalScrollMode">
+             <enum>QAbstractItemView::ScrollPerPixel</enum>
+            </property>
+            <property name="cornerButtonEnabled">
+             <bool>false</bool>
+            </property>
+            <attribute name="horizontalHeaderVisible">
+             <bool>false</bool>
+            </attribute>
+            <attribute name="horizontalHeaderHighlightSections">
+             <bool>false</bool>
+            </attribute>
+            <attribute name="horizontalHeaderStretchLastSection">
+             <bool>true</bool>
+            </attribute>
+            <attribute name="verticalHeaderVisible">
+             <bool>false</bool>
+            </attribute>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="widget_5" native="true">
+            <layout class="QHBoxLayout" name="horizontalLayout_3">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QCheckBox" name="colorSeparatorsBox">
+               <property name="toolTip">
+                <string>Colors set on separators will also be shown in the mod list scrollbar at the location of the separator. This can be useful for quickly navigating to a specific separator.</string>
+               </property>
+               <property name="whatsThis">
+                <string>Colors set on separators will also be shown in the mod list scrollbar at the location of the separator. This can be useful for quickly navigating to a specific separator.</string>
+               </property>
+               <property name="text">
+                <string>Show mod list separator colors on the scrollbar</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="resetColorsBtn">
+               <property name="toolTip">
+                <string>Reset all colors to their default value.</string>
+               </property>
+               <property name="whatsThis">
+                <string>Reset all colors to their default value.</string>
+               </property>
+               <property name="text">
+                <string>Reset Colors</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QGroupBox" name="groupBox_6">
+         <property name="title">
+          <string>Updates</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QCheckBox" name="checkForUpdates">
+            <property name="toolTip">
+             <string>Check for Mod Organizer updates on Github on startup.</string>
+            </property>
+            <property name="whatsThis">
+             <string>Check for Mod Organizer updates on Github on startup.</string>
+            </property>
+            <property name="text">
+             <string>Check for updates</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="usePrereleaseBox">
+            <property name="toolTip">
+             <string>Update to non-stable releases.</string>
+            </property>
+            <property name="whatsThis">
+             <string>Update to non-stable releases.</string>
+            </property>
+            <property name="text">
+             <string>Install Pre-releases (Betas)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_9">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
           </item>
          </layout>
         </widget>
@@ -451,108 +605,233 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
       <attribute name="title">
        <string>Nexus</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_4">
+      <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,1,0,0,0,1">
+       <item>
+        <widget class="QWidget" name="widget" native="true">
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QGroupBox" name="groupBox_2">
+            <property name="title">
+             <string>Nexus Account</string>
+            </property>
+            <layout class="QFormLayout" name="formLayout">
+             <property name="horizontalSpacing">
+              <number>10</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_2">
+               <property name="text">
+                <string>User ID:</string>
+               </property>
+               <property name="textInteractionFlags">
+                <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="nexusUserID">
+               <property name="text">
+                <string>id</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_3">
+               <property name="text">
+                <string>Name:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="nexusName">
+               <property name="text">
+                <string>name</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="label_11">
+               <property name="text">
+                <string>Account:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QLabel" name="nexusAccount">
+               <property name="text">
+                <string>account</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="groupBox_3">
+            <property name="title">
+             <string>Statistics</string>
+            </property>
+            <layout class="QFormLayout" name="formLayout_3">
+             <property name="horizontalSpacing">
+              <number>10</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_30">
+               <property name="text">
+                <string>Daily requests:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="nexusDailyRequests">
+               <property name="text">
+                <string>daily requests</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_31">
+               <property name="text">
+                <string>Hourly requests:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="nexusHourlyRequests">
+               <property name="text">
+                <string>hourly requests</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
        <item>
         <widget class="QGroupBox" name="nexusBox">
-         <property name="toolTip">
-          <string>Allows Mod Organizer to connect to the Nexus for downloading mods, checking for updates, and other such things.</string>
-         </property>
-         <property name="whatsThis">
-          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Allows Mod Organizer to connect to the Nexus for downloading mods, checking for updates, and other such things.  Clicking &amp;quot;Connect to Nexus&amp;quot; will open a Nexus webpage to authorise Mod Organizer.  You will need to be logged into your Nexus account.  The authorisation is stored in the Windows Credential Manager.  Your Nexus username and password are not required or stored by Mod Organizer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
          <property name="title">
-          <string>Nexus</string>
+          <string>Nexus Connection</string>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
+         <layout class="QHBoxLayout" name="horizontalLayout_14">
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_10">
-            <item>
-             <widget class="QPushButton" name="nexusConnect">
-              <property name="text">
-               <string>Connect to Nexus</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <widget class="QWidget" name="widget_2" native="true">
+            <layout class="QVBoxLayout" name="verticalLayout_11">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="nexusConnect">
+               <property name="text">
+                <string>Connect to Nexus</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="nexusManualKey">
+               <property name="toolTip">
+                <string>Manually enter the API key and try to login</string>
+               </property>
+               <property name="text">
+                <string>Enter API Key Manually</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="nexusDisconnect">
+               <property name="toolTip">
+                <string>Clear the stored Nexus API key and force reauthorization.</string>
+               </property>
+               <property name="text">
+                <string>Disconnect from Nexus</string>
+               </property>
+               <property name="icon">
+                <iconset resource="resources.qrc">
+                 <normaloff>:/MO/gui/edit_clear</normaloff>:/MO/gui/edit_clear</iconset>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="verticalSpacer_3">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_11">
-            <item>
-             <spacer name="horizontalSpacer_7">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="QPushButton" name="nexusManualKey">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="toolTip">
-               <string>Manually enter the API key and try to login</string>
-              </property>
-              <property name="text">
-               <string>Enter API Key Manually</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="nexusDisconnect">
-              <property name="toolTip">
-               <string>Clear the stored Nexus API key and force reauthorization.</string>
-              </property>
-              <property name="text">
-               <string>Disconnect from Nexus</string>
-              </property>
-              <property name="icon">
-               <iconset resource="resources.qrc">
-                <normaloff>:/MO/gui/edit_clear</normaloff>:/MO/gui/edit_clear</iconset>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="clearCacheButton">
-              <property name="toolTip">
-               <string>Remove cache and cookies.</string>
-              </property>
-              <property name="text">
-               <string>Clear Cache</string>
-              </property>
-              <property name="icon">
-               <iconset resource="resources.qrc">
-                <normaloff>:/MO/gui/edit_clear</normaloff>:/MO/gui/edit_clear</iconset>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_5">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
+           <widget class="QWidget" name="widget_3" native="true">
+            <layout class="QVBoxLayout" name="verticalLayout_12">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QListWidget" name="nexusLog">
+               <property name="sizeAdjustPolicy">
+                <enum>QAbstractScrollArea::AdjustToContents</enum>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
           </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QWidget" name="widget_4" native="true">
+         <layout class="QHBoxLayout" name="horizontalLayout_10">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
          </layout>
         </widget>
        </item>
@@ -597,10 +876,10 @@ p, li { white-space: pre-wrap; }
          <item row="1" column="1">
           <widget class="QCheckBox" name="hideAPICounterBox">
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;By default, a counter is displayed under the mod list.  This informs the user of their remaining API requests.  The Nexus API becomes unusable once these API requests run out.  Checking this option will hide that counter.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;By default, a counter is displayed in the bottom right corner.  This informs the user of their remaining API requests.  The Nexus API becomes unusable once these API requests run out.  Checking this option will hide that counter.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="whatsThis">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;By default, a counter is displayed under the mod list.  This informs the user of their remaining API requests.  The Nexus API becomes unusable once these API requests run out.  Checking this option will hide that counter.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;By default, a counter is displayed in the bottom right corner.  This informs the user of their remaining API requests.  The Nexus API becomes unusable once these API requests run out.  Checking this option will hide that counter.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Hide API Request Counter</string>
@@ -615,6 +894,20 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="associateButton">
            <property name="text">
             <string>Associate with &quot;Download with manager&quot; links</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="clearCacheButton">
+           <property name="toolTip">
+            <string>Remove cache and cookies.</string>
+           </property>
+           <property name="text">
+            <string>Clear Cache</string>
+           </property>
+           <property name="icon">
+            <iconset resource="resources.qrc">
+             <normaloff>:/MO/gui/edit_clear</normaloff>:/MO/gui/edit_clear</iconset>
            </property>
           </widget>
          </item>
@@ -682,19 +975,6 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </item>
-       <item>
-        <spacer name="verticalSpacer_3">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="steamTab">
@@ -702,53 +982,10 @@ p, li { white-space: pre-wrap; }
        <string>Steam</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_3">
-       <item row="0" column="0">
+       <item row="1" column="0">
         <widget class="QLabel" name="label_19">
          <property name="text">
           <string>Username</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QLineEdit" name="steamUserEdit"/>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_20">
-         <property name="text">
-          <string>Password</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QLineEdit" name="steamPassEdit">
-         <property name="echoMode">
-          <enum>QLineEdit::Password</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <spacer name="verticalSpacer_5">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Minimum</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="3" column="0" colspan="2">
-        <widget class="QLabel" name="label_21">
-         <property name="text">
-          <string>If you save your steam user ID and password here, they will be used when logging into steam. Note, however, your password will be stored unencrypted, so make sure your computer is secure.</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -767,6 +1004,33 @@ p, li { white-space: pre-wrap; }
           </size>
          </property>
         </spacer>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="steamUserEdit"/>
+       </item>
+       <item row="0" column="0" colspan="2">
+        <widget class="QLabel" name="label_21">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If you save your steam user ID and password here, they will be used when logging into steam.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_20">
+         <property name="text">
+          <string>Password</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="steamPassEdit">
+         <property name="echoMode">
+          <enum>QLineEdit::Password</enum>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -1127,9 +1391,6 @@ programs you are intentionally running.</string>
          <property name="text">
           <string>Reset Window Geometries</string>
          </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
         </widget>
        </item>
        <item>
@@ -1162,109 +1423,7 @@ programs you are intentionally running.</string>
        <string>Diagnostics</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_4">
-       <item row="2" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout_13">
-         <item>
-          <widget class="QLabel" name="label_28">
-           <property name="text">
-            <string>Max Dumps To Keep</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer_6">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>60</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="dumpsMaxEdit">
-           <property name="toolTip">
-            <string>Maximum number of crash dumps to keep on disk. Use 0 for unlimited.</string>
-           </property>
-           <property name="whatsThis">
-            <string>
-                                    Maximum number of crash dumps to keep on disk. Use 0 for unlimited.
-                                    Set &quot;Crash Dumps&quot; above to None to disable crash dump collection.
-                                </string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
        <item row="3" column="0">
-        <widget class="QLabel" name="diagnosticsExplainedLabel">
-         <property name="toolTip">
-          <string>Hint: right click link and copy link location</string>
-         </property>
-         <property name="text">
-          <string>
-                            Logs and crash dumps are stored under your current instance in the &lt;a href=&quot;LOGS_FULL_PATH&quot;&gt;LOGS_DIR&lt;/a&gt;
-                            and &lt;a href=&quot;DUMPS_FULL_PATH&quot;&gt;DUMPS_DIR&lt;/a&gt; folders.
-                            Sending logs and/or crash dumps to the developers can help investigate issues.
-                            It is recommended to compress large log and dmp files before sending.
-                        </string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout_12">
-         <item>
-          <widget class="QLabel" name="label_27">
-           <property name="text">
-            <string>Crash Dumps</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QComboBox" name="dumpsTypeBox">
-           <property name="toolTip">
-            <string>Decides which type of crash dumps are collected when injected processes crash.</string>
-           </property>
-           <property name="whatsThis">
-            <string>
-                                    Decides which type of crash dumps are collected when injected processes crash.
-                                    &quot;None&quot; Disables the generation of crash dumps by MO.
-                                    &quot;Mini&quot; Default level which generates small dumps (only stack traces).
-                                    &quot;Data&quot; Much larger dumps with additional information which may be need (also data segments).
-                                    &quot;Full&quot; Even larger dumps with a full memory dump of the process.
-                                </string>
-           </property>
-           <item>
-            <property name="text">
-             <string>None</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Mini (recommended)</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Data</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Full</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="4" column="0">
         <spacer name="verticalSpacer_10">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -1280,16 +1439,43 @@ programs you are intentionally running.</string>
          </property>
         </spacer>
        </item>
+       <item row="2" column="0">
+        <widget class="LinkLabel" name="diagnosticsExplainedLabel">
+         <property name="toolTip">
+          <string>Hint: right click link and copy link location</string>
+         </property>
+         <property name="text">
+          <string>
+                            Logs and crash dumps are stored under your current instance in the &lt;a href=&quot;LOGS_FULL_PATH&quot;&gt;LOGS_DIR&lt;/a&gt;
+                            and &lt;a href=&quot;DUMPS_FULL_PATH&quot;&gt;DUMPS_DIR&lt;/a&gt; folders.
+                            Sending logs and/or crash dumps to the developers can help investigate issues.
+                            It is recommended to compress large log and dmp files before sending.
+                        </string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+         <property name="openExternalLinks">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
        <item row="0" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout_6">
-         <item>
+        <layout class="QFormLayout" name="formLayout_5">
+         <property name="fieldGrowthPolicy">
+          <enum>QFormLayout::ExpandingFieldsGrow</enum>
+         </property>
+         <property name="horizontalSpacing">
+          <number>12</number>
+         </property>
+         <item row="0" column="0">
           <widget class="QLabel" name="label_12">
            <property name="text">
             <string>Log Level</string>
            </property>
           </widget>
          </item>
-         <item>
+         <item row="0" column="1">
           <widget class="QComboBox" name="logLevelBox">
            <property name="toolTip">
             <string>Decides the amount of data printed to &quot;ModOrganizer.log&quot;</string>
@@ -1300,27 +1486,60 @@ programs you are intentionally running.</string>
                                     &quot;Debug&quot; produces very useful information for finding problems. There is usually no noteworthy performance impact but the file may become rather large. If this is a problem you may prefer the &quot;Info&quot; level for regular use. On the &quot;Error&quot; level the log file usually remains empty.
                                 </string>
            </property>
-           <item>
-            <property name="text">
-             <string>Debug</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Info (recommended)</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Warning</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Error</string>
-            </property>
-           </item>
           </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_27">
+           <property name="text">
+            <string>Crash Dumps</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="dumpsTypeBox">
+           <property name="toolTip">
+            <string>Decides which type of crash dumps are collected when injected processes crash.</string>
+           </property>
+           <property name="whatsThis">
+            <string>
+                                    Decides which type of crash dumps are collected when injected processes crash.
+                                    &quot;None&quot; Disables the generation of crash dumps by MO.
+                                    &quot;Mini&quot; Default level which generates small dumps (only stack traces).
+                                    &quot;Data&quot; Much larger dumps with additional information which may be need (also data segments).
+                                    &quot;Full&quot; Even larger dumps with a full memory dump of the process.
+                                </string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_28">
+           <property name="text">
+            <string>Max Dumps To Keep</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QSpinBox" name="dumpsMaxEdit">
+           <property name="toolTip">
+            <string>Maximum number of crash dumps to keep on disk. Use 0 for unlimited.</string>
+           </property>
+           <property name="whatsThis">
+            <string>
+                                    Maximum number of crash dumps to keep on disk. Use 0 for unlimited.
+                                    Set &quot;Crash Dumps&quot; above to None to disable crash dump collection.
+                                </string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_32">
+           <property name="text">
+            <string>LOOT Log Level</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QComboBox" name="lootLogLevel"/>
          </item>
         </layout>
        </item>
@@ -1340,13 +1559,32 @@ programs you are intentionally running.</string>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ColorTable</class>
+   <extends>QTableWidget</extends>
+   <header>colortable.h</header>
+  </customwidget>
+  <customwidget>
+   <class>LinkLabel</class>
+   <extends>QLabel</extends>
+   <header location="global">linklabel.h</header>
+  </customwidget>
+ </customwidgets>
  <tabstops>
+  <tabstop>tabWidget</tabstop>
   <tabstop>languageBox</tabstop>
   <tabstop>styleBox</tabstop>
-  <tabstop>logLevelBox</tabstop>
-  <tabstop>usePrereleaseBox</tabstop>
-  <tabstop>compactBox</tabstop>
+  <tabstop>centerDialogs</tabstop>
+  <tabstop>resetDialogsButton</tabstop>
   <tabstop>categoriesBtn</tabstop>
+  <tabstop>showMetaBox</tabstop>
+  <tabstop>compactBox</tabstop>
+  <tabstop>checkForUpdates</tabstop>
+  <tabstop>usePrereleaseBox</tabstop>
+  <tabstop>colorTable</tabstop>
+  <tabstop>colorSeparatorsBox</tabstop>
+  <tabstop>resetColorsBtn</tabstop>
   <tabstop>baseDirEdit</tabstop>
   <tabstop>browseBaseDirBtn</tabstop>
   <tabstop>downloadDirEdit</tabstop>
@@ -1359,8 +1597,18 @@ programs you are intentionally running.</string>
   <tabstop>browseProfilesDirBtn</tabstop>
   <tabstop>overwriteDirEdit</tabstop>
   <tabstop>browseOverwriteDirBtn</tabstop>
-  <tabstop>clearCacheButton</tabstop>
+  <tabstop>managedGameDirEdit</tabstop>
+  <tabstop>browseGameDirBtn</tabstop>
+  <tabstop>nexusConnect</tabstop>
+  <tabstop>nexusManualKey</tabstop>
+  <tabstop>nexusDisconnect</tabstop>
+  <tabstop>nexusLog</tabstop>
+  <tabstop>offlineBox</tabstop>
+  <tabstop>endorsementBox</tabstop>
+  <tabstop>proxyBox</tabstop>
+  <tabstop>hideAPICounterBox</tabstop>
   <tabstop>associateButton</tabstop>
+  <tabstop>clearCacheButton</tabstop>
   <tabstop>knownServersList</tabstop>
   <tabstop>preferredServersList</tabstop>
   <tabstop>steamUserEdit</tabstop>
@@ -1370,8 +1618,14 @@ programs you are intentionally running.</string>
   <tabstop>pluginBlacklist</tabstop>
   <tabstop>appIDEdit</tabstop>
   <tabstop>mechanismBox</tabstop>
+  <tabstop>hideUncheckedBox</tabstop>
+  <tabstop>forceEnableBox</tabstop>
+  <tabstop>lockGUIBox</tabstop>
+  <tabstop>displayForeignBox</tabstop>
+  <tabstop>enableArchiveParsingBox</tabstop>
   <tabstop>bsaDateBtn</tabstop>
-  <tabstop>tabWidget</tabstop>
+  <tabstop>execBlacklistBtn</tabstop>
+  <tabstop>resetGeometryBtn</tabstop>
  </tabstops>
  <resources>
   <include location="resources.qrc"/>

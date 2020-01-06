@@ -37,7 +37,15 @@ SET(organizer_SRCS
     spawn.cpp
     singleinstance.cpp
     settingsdialog.cpp
+	settingsdialogdiagnostics.cpp
+	settingsdialoggeneral.cpp
+	settingsdialognexus.cpp
+	settingsdialogpaths.cpp
+	settingsdialogplugins.cpp
+	settingsdialogsteam.cpp
+	settingsdialogworkarounds.cpp
     settings.cpp
+	settingsutilities.cpp
     selfupdater.cpp
     selectiondialog.cpp
     queryoverwritedialog.cpp
@@ -73,13 +81,9 @@ SET(organizer_SRCS
     mainwindow.cpp
     main.cpp
     loghighlighter.cpp
-    logbuffer.cpp
-    lockeddialogbase.cpp
-    lockeddialog.cpp
-    waitingonclosedialog.cpp
+    loglist.cpp
     loadmechanism.cpp
     installationmanager.cpp
-    helper.cpp
     filedialogmemory.cpp
     executableslist.cpp
     editexecutablesdialog.cpp
@@ -110,6 +114,7 @@ SET(organizer_SRCS
     previewdialog.cpp
     aboutdialog.cpp
     modflagicondelegate.cpp
+    modconflicticondelegate.cpp
     genericicondelegate.cpp
     organizerproxy.cpp
     viewmarkingscrollbar.cpp
@@ -128,7 +133,19 @@ SET(organizer_SRCS
 	apiuseraccount.cpp
 	filerenamer.cpp
 	texteditor.cpp
-	expanderwidget.cpp
+	env.cpp
+	envmetrics.cpp
+	envmodule.cpp
+	envsecurity.cpp
+	envshortcut.cpp
+	envwindows.cpp
+	colortable.cpp
+	sanitychecks.cpp
+	processrunner.cpp
+	uilocker.cpp
+	loot.cpp
+	lootdialog.cpp
+	filterlist.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -145,7 +162,15 @@ SET(organizer_HDRS
     spawn.h
     singleinstance.h
     settingsdialog.h
+	settingsdialogdiagnostics.h
+	settingsdialoggeneral.h
+	settingsdialognexus.h
+	settingsdialogpaths.h
+	settingsdialogplugins.h
+	settingsdialogsteam.h
+	settingsdialogworkarounds.h
     settings.h
+	settingsutilities.h
     selfupdater.h
     selectiondialog.h
     queryoverwritedialog.h
@@ -181,13 +206,9 @@ SET(organizer_HDRS
     messagedialog.h
     mainwindow.h
     loghighlighter.h
-    logbuffer.h
-    lockeddialogbase.h
-    lockeddialog.h
-    waitingonclosedialog.h
+    loglist.h
     loadmechanism.h
     installationmanager.h
-    helper.h
     filedialogmemory.h
     executableslist.h
     editexecutablesdialog.h
@@ -218,12 +239,12 @@ SET(organizer_HDRS
     previewdialog.h
     aboutdialog.h
     modflagicondelegate.h
+    modconflicticondelegate.h
     genericicondelegate.h
     organizerproxy.h
     viewmarkingscrollbar.h
     plugincontainer.h
     organizercore.h
-    ilockedwaitingforprocess.h
     iuserinterface.h
     instancemanager.h
     usvfsconnector.h
@@ -238,7 +259,19 @@ SET(organizer_HDRS
 	apiuseraccount.h
 	filerenamer.h
 	texteditor.h
-	expanderwidget.h
+	env.h
+	envmetrics.h
+	envmodule.h
+	envsecurity.h
+	envshortcut.h
+	envwindows.h
+	colortable.h
+	processrunner.h
+	uilocker.h
+	loot.h
+	lootdialog.h
+	json.h
+	filterlist.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -262,8 +295,6 @@ SET(organizer_UIS
     modinfodialog.ui
     messagedialog.ui
     mainwindow.ui
-    lockeddialog.ui
-    waitingonclosedialog.ui
     editexecutablesdialog.ui
     credentialsdialog.ui
     categoriesdialog.ui
@@ -293,11 +324,13 @@ SET(organizer_RCS
 source_group(src REGULAR_EXPRESSION ".*\\.(h|cpp|ui)")
 
 set(application
+	filterlist
 	iuserinterface
 	main
 	mainwindow
 	moapplication
 	moshortcut
+	sanitychecks
 	selfupdater
 	singleinstance
 	statusbar
@@ -320,6 +353,8 @@ set(core
 	organizercore
 	organizerproxy
 	apiuseraccount
+	processrunner
+	uilocker
 )
 
 set(dialogs
@@ -350,15 +385,23 @@ set(downloads
 	downloadmanager
 )
 
+set(env
+	env
+	envmetrics
+	envmodule
+	envsecurity
+	envshortcut
+	envwindows
+)
+
 set(executables
 	executableslist
 	editexecutablesdialog
 )
 
-set(locking
-	ilockedwaitingforprocess
-	lockeddialog
-	lockeddialogbase
+set(loot
+	loot
+	lootdialog
 )
 
 set(modinfo
@@ -409,7 +452,18 @@ set(profiles
 
 set(settings
 	settings
+	settingsutilities
+)
+
+set(settingsdialog
 	settingsdialog
+	settingsdialogdiagnostics
+	settingsdialoggeneral
+	settingsdialognexus
+	settingsdialogpaths
+	settingsdialogplugins
+	settingsdialogsteam
+	settingsdialogworkarounds
 )
 
 set(utilities
@@ -418,7 +472,6 @@ set(utilities
 	csvbuilder
 	shared/error_report
 	eventfilter
-	helper
 	shared/leaktrace
 	persistentcookiejar
 	serverinfo
@@ -427,18 +480,20 @@ set(utilities
 	shared/util
 	usvfsconnector
 	shared/windows_error
+	json
 )
 
 set(widgets
-	expanderwidget
+	colortable
 	genericicondelegate
 	filerenamer
 	filterwidget
 	icondelegate
 	lcdnumber
-	logbuffer
+	loglist
 	loghighlighter
 	modflagicondelegate
+	modconflicticondelegate
 	modidlineedit
 	noeditdelegate
 	qtgroupingproxy
@@ -447,8 +502,9 @@ set(widgets
 )
 
 set(src_filters
-	application core browser dialogs downloads executables locking modinfo modinfo\\dialog
-	modlist plugins previews profiles settings utilities widgets
+	application core browser dialogs downloads env executables loot modinfo
+	modinfo\\dialog modlist plugins previews profiles settings settingsdialog
+	utilities widgets
 )
 
 foreach(filter in list ${src_filters})
@@ -520,15 +576,20 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 FIND_PACKAGE(zlib REQUIRED)
 # TODO FindZlib doesn't find the static zlib library
 
+# fmt
+find_package(fmt REQUIRED)
+
 INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/bsatk/src
                     ${project_path}/esptk/src
                     ${project_path}/archive/src
+					${project_path}/lootcli/include
                     ${dependency_project_path}/usvfs/include
                     ${project_path}/game_gamebryo/src/gamebryo
                     ${project_path}/game_gamebryo/src/creation
                     ${project_path}/game_features/src
                     ${project_path}/githubpp/src
+					${SPDLOG_ROOT}/include
                     ${LZ4_ROOT}/lib)
 
 INCLUDE_DIRECTORIES(shared ${ZLIB_INCLUDE_DIRS})
@@ -551,10 +612,11 @@ ELSE()
 ENDIF()
 
 ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIS} ${organizer_RCS} ${organizer_QRCS} ${organizer_translations_qm})
+
 TARGET_LINK_LIBRARIES(ModOrganizer
                       Qt5::Widgets Qt5::WinExtras Qt5::WebEngineWidgets Qt5::Quick
                       Qt5::Qml Qt5::QuickWidgets Qt5::Network Qt5::WebSockets
-                      ${Boost_LIBRARIES}
+                      ${Boost_LIBRARIES} fmt::fmt
                       zlibstatic
                       uibase esptk bsatk githubpp
                       ${usvfs_name}
@@ -610,6 +672,10 @@ INSTALL(
         ${qt5bin}/windeployqt.exe --verbose 0 uibase.dll ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
     )
+    EXECUTE_PROCESS(COMMAND
+        ${qt5bin}/windeployqt.exe --verbose 0 plugins/bsa_packer.dll ${windeploy_parameters}
+        WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
+    )
     file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/platforms)
     file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/styles)
     file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/dlls/imageformats)
@@ -621,3 +687,5 @@ INSTALL(
 
 # qdds.dll needs installing manually as Qt no longer ships with it by default.
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../qdds.dll DESTINATION bin/dlls/imageformats)
+
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/markdown.html DESTINATION bin/resources)

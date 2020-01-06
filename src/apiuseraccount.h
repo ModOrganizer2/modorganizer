@@ -18,6 +18,8 @@ enum class APIUserAccountTypes
   Premium
 };
 
+QString localizedUserAccountType(APIUserAccountTypes t);
+
 
 /**
 * current limits imposed on the user account
@@ -49,16 +51,27 @@ struct APIStats
 
 
 /**
-* represents a user account on the mod provier website
+* represents a user account on the mod provider website
 */
 class APIUserAccount
 {
 public:
-  // when the number of remanining requests is under this number, further
+  // when the number of remaining requests is under this number, further
   // requests will be throttled by avoiding non-critical ones
   static const int ThrottleThreshold = 200;
 
   APIUserAccount();
+
+
+  /**
+   * whether the user is logged in
+   */
+  bool isValid() const;
+
+  /**
+  * api key
+  */
+  const QString& apiKey() const;
 
   /**
   * user id
@@ -82,6 +95,11 @@ public:
 
 
   /**
+   * sets the api key
+   */
+  APIUserAccount& apiKey(const QString& key);
+
+  /**
   * sets the user id
   */
   APIUserAccount& id(const QString& id);
@@ -92,7 +110,7 @@ public:
   APIUserAccount& name(const QString& name);
 
   /**
-  * sets the acount type
+  * sets the account type
   */
   APIUserAccount& type(APIUserAccountTypes type);
 
@@ -120,10 +138,9 @@ public:
   bool exhausted() const;
 
 private:
-  QString m_id, m_name;
+  QString m_key, m_id, m_name;
   APIUserAccountTypes m_type;
   APILimits m_limits;
-  APIStats m_stats;
 };
 
 #endif // APIUSERACCOUNT_H

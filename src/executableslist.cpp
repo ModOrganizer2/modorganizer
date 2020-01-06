@@ -21,6 +21,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "iplugingame.h"
 #include "utility.h"
+#include "settings.h"
+#include <log.h>
 
 #include <QFileInfo>
 #include <QDir>
@@ -63,9 +65,9 @@ bool ExecutablesList::empty() const
   return m_Executables.empty();
 }
 
-void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
+void ExecutablesList::load(const MOBase::IPluginGame* game, const Settings& s)
 {
-  qDebug("setting up configured executables");
+  log::debug("loading executables");
 
   m_Executables.clear();
 
@@ -73,58 +75,60 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
   // executables from 2.2.0, see upgradeFromCustom()
   bool needsUpgrade = false;
 
-  int numCustomExecutables = settings.beginReadArray("customExecutables");
-  for (int i = 0; i < numCustomExecutables; ++i) {
-    settings.setArrayIndex(i);
-
+  for (auto& map : s.executables()) {
     Executable::Flags flags;
-    if (settings.value("toolbar", false).toBool())
+
+    if (map["toolbar"].toBool())
       flags |= Executable::ShowInToolbar;
-    if (settings.value("ownicon", false).toBool())
+
+    if (map["ownicon"].toBool())
       flags |= Executable::UseApplicationIcon;
 
-    if (settings.contains("custom")) {
+    if (map["hide"].toBool())
+      flags |= Executable::Hide;
+
+    if (map.contains("custom")) {
       // the "custom" setting only exists in older versions
       needsUpgrade = true;
     }
 
     setExecutable(Executable()
-      .title(settings.value("title").toString())
-      .binaryInfo(settings.value("binary").toString())
-      .arguments(settings.value("arguments").toString())
-      .steamAppID(settings.value("steamAppID", "").toString())
-      .workingDirectory(settings.value("workingDirectory", "").toString())
+      .title(map["title"].toString())
+      .binaryInfo(map["binary"].toString())
+      .arguments(map["arguments"].toString())
+      .steamAppID(map["steamAppID"].toString())
+      .workingDirectory(map["workingDirectory"].toString())
       .flags(flags));
   }
-
-  settings.endArray();
 
   addFromPlugin(game, IgnoreExisting);
 
   if (needsUpgrade)
     upgradeFromCustom(game);
+
+  dump();
 }
 
-void ExecutablesList::store(QSettings& settings)
+void ExecutablesList::store(Settings& s)
 {
-  settings.remove("customExecutables");
-  settings.beginWriteArray("customExecutables");
-
-  int count = 0;
+  std::vector<std::map<QString, QVariant>> v;
 
   for (const auto& item : *this) {
-    settings.setArrayIndex(count++);
+    std::map<QString, QVariant> map;
 
-    settings.setValue("title", item.title());
-    settings.setValue("toolbar", item.isShownOnToolbar());
-    settings.setValue("ownicon", item.usesOwnIcon());
-    settings.setValue("binary", item.binaryInfo().absoluteFilePath());
-    settings.setValue("arguments", item.arguments());
-    settings.setValue("workingDirectory", item.workingDirectory());
-    settings.setValue("steamAppID", item.steamAppID());
+    map["title"] = item.title();
+    map["toolbar"] = item.isShownOnToolbar();
+    map["ownicon"] = item.usesOwnIcon();
+    map["hide"] = item.hide();
+    map["binary"] = item.binaryInfo().filePath();
+    map["arguments"] = item.arguments();
+    map["workingDirectory"] = item.workingDirectory();
+    map["steamAppID"] = item.steamAppID();
+
+    v.push_back(std::move(map));
   }
 
-  settings.endArray();
+  s.setExecutables(v);
 }
 
 std::vector<Executable> ExecutablesList::getPluginExecutables(
@@ -163,7 +167,7 @@ std::vector<Executable> ExecutablesList::getPluginExecutables(
 
 void ExecutablesList::resetFromPlugin(MOBase::IPluginGame const *game)
 {
-  qDebug("resetting plugin executables");
+  log::debug("resetting plugin executables");
 
   Q_ASSERT(game != nullptr);
 
@@ -240,16 +244,16 @@ void ExecutablesList::setExecutable(const Executable &exe, SetFlags flags)
     if (flags == MoveExisting) {
       const auto newTitle = makeNonConflictingTitle(exe.title());
       if (!newTitle) {
-        qCritical().nospace()
-          << "executable '" << exe.title() << "' was in the way but could "
-          << "not be renamed";
+        log::error(
+          "executable '{}' was in the way but could not be renamed",
+          exe.title());
 
         return;
       }
 
-      qWarning().nospace()
-        << "executable '" << itor->title() << "' was in the way and was "
-        << "renamed to '" << *newTitle << "'";
+      log::warn(
+        "executable '{}' was in the way and was renamed to '{}'",
+        itor->title(), *newTitle);
 
       itor->title(*newTitle);
       itor = end();
@@ -286,15 +290,13 @@ std::optional<QString> ExecutablesList::makeNonConflictingTitle(
     title = prefix + QString(" (%1)").arg(i);
   }
 
-  qCritical().nospace()
-    << "ran out of executable titles for prefix '" << prefix << "'";
-
+  log::error("ran out of executable titles for prefix '{}'", prefix);
   return {};
 }
 
 void ExecutablesList::upgradeFromCustom(MOBase::IPluginGame const *game)
 {
-  qDebug() << "upgrading executables list";
+  log::debug("upgrading executables list");
 
   Q_ASSERT(game != nullptr);
 
@@ -332,6 +334,35 @@ void ExecutablesList::upgradeFromCustom(MOBase::IPluginGame const *game)
   }
 }
 
+void ExecutablesList::dump() const
+{
+  for (const auto& e : m_Executables) {
+    QStringList flags;
+
+    if (e.flags() & Executable::ShowInToolbar) {
+      flags.push_back("toolbar");
+    }
+
+    if (e.flags() & Executable::UseApplicationIcon) {
+      flags.push_back("icon");
+    }
+
+    if (e.flags() & Executable::Hide) {
+      flags.push_back("hide");
+    }
+
+    log::debug(
+      " . executable '{}'\n"
+      "    binary: {}\n"
+      "    arguments: {}\n"
+      "    steam ID: {}\n"
+      "    directory: {}\n"
+      "    flags: {} ({})",
+      e.title(), e.binaryInfo().filePath(), e.arguments(),
+      e.steamAppID(), e.workingDirectory(), flags.join("|"), e.flags());
+  }
+}
+
 
 Executable::Executable(QString title)
   : m_title(title)
@@ -343,7 +374,7 @@ Executable::Executable(const MOBase::ExecutableInfo& info, Flags flags) :
   m_binaryInfo(info.binary()),
   m_arguments(info.arguments().join(" ")),
   m_steamAppID(info.steamAppID()),
-  m_workingDirectory(info.workingDirectory().absolutePath()),
+  m_workingDirectory(info.workingDirectory().path()),
   m_flags(flags)
 {
 }
@@ -433,11 +464,13 @@ bool Executable::usesOwnIcon() const
   return m_flags.testFlag(UseApplicationIcon);
 }
 
+bool Executable::hide() const
+{
+  return m_flags.testFlag(Hide);
+}
+
 void Executable::mergeFrom(const Executable& other)
 {
-  // flags on plugin executables that the user is allowed to change
-  const auto allow = ShowInToolbar;
-
   // this happens after executables are loaded from settings and plugin
   // executables are being added, or when users are modifying executables
 

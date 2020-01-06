@@ -37,23 +37,21 @@ class CategoryFactory {
   friend class CategoriesDialog;
 
 public:
-
-  static const int CATEGORY_NONE = 0;
-
-  static const int CATEGORY_SPECIAL_FIRST = 10000;
-  static const int CATEGORY_SPECIAL_CHECKED = CATEGORY_SPECIAL_FIRST;
-  static const int CATEGORY_SPECIAL_UNCHECKED = 10001;
-  static const int CATEGORY_SPECIAL_UPDATEAVAILABLE = 10002;
-  static const int CATEGORY_SPECIAL_NOCATEGORY = 10003;
-  static const int CATEGORY_SPECIAL_CONFLICT = 10004;
-  static const int CATEGORY_SPECIAL_NOTENDORSED = 10005;
-  static const int CATEGORY_SPECIAL_BACKUP = 10006;
-  static const int CATEGORY_SPECIAL_MANAGED = 10007;
-  static const int CATEGORY_SPECIAL_UNMANAGED = 10008;
-
+  enum SpecialCategories
+  {
+    Checked = 10000,
+    UpdateAvailable,
+    HasCategory,
+    Conflict,
+    Endorsed,
+    Backup,
+    Managed,
+    HasGameData,
+    HasNexusID,
+    Tracked
+  };
 
 public:
-
   struct Category {
     Category(int sortValue, int id, const QString &name, const std::vector<int> &nexusIDs, int parentID)
       : m_SortValue(sortValue), m_ID(id), m_Name(name), m_HasChildren(false),
@@ -142,6 +140,8 @@ public:
    * @return QString name of the category
    **/
   QString getCategoryName(unsigned int index) const;
+  QString getSpecialCategoryName(SpecialCategories type) const;
+  QString getCategoryNameByID(int id) const;
 
   /**
    * @brief look up the id of a category by its index

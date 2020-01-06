@@ -3,21 +3,15 @@
 
 
 #include "modinfodialogfwd.h"
-#include "ilockedwaitingforprocess.h"
 #include <iplugintool.h>
 #include <ipluginmodpage.h>
 #include <delayedfilewriter.h>
-
 #include <QMenu>
 
-class QSettings;
 
 class IUserInterface
 {
 public:
-
-  virtual void storeSettings(QSettings &settings) = 0;
-
   virtual void registerPluginTool(MOBase::IPluginTool *tool, QString name = QString(), QMenu *menu = nullptr) = 0;
   virtual void registerPluginTools(std::vector<MOBase::IPluginTool *> toolPlugins) = 0;
   virtual void registerModPage(MOBase::IPluginModPage *modPage) = 0;
@@ -36,8 +30,7 @@ public:
 
   virtual MOBase::DelayedFileWriterBase &archivesWriter() = 0;
 
-  virtual ILockedWaitingForProcess* lock() = 0;
-  virtual void unlock() = 0;
+  virtual QWidget* qtWidget() = 0;
 };
 
 #endif // IUSERINTERFACE_H

@@ -1,13 +1,17 @@
 #include "filerenamer.h"
+#include <utility.h>
+#include <log.h>
 #include <QMessageBox>
 #include <QFileInfo>
+
+using namespace MOBase;
 
 FileRenamer::FileRenamer(QWidget* parent, QFlags<RenameFlags> flags)
   : m_parent(parent), m_flags(flags)
 {
   // sanity check for flags
   if ((m_flags & (HIDE|UNHIDE)) == 0) {
-    qCritical("renameFile() missing hide flag");
+    log::error("renameFile() missing hide flag");
     // doesn't really matter, it's just for text
     m_flags = HIDE;
   }
@@ -15,10 +19,10 @@ FileRenamer::FileRenamer(QWidget* parent, QFlags<RenameFlags> flags)
 
 FileRenamer::RenameResults FileRenamer::rename(const QString& oldName, const QString& newName)
 {
-  qDebug().nospace() << "renaming " << oldName << " to " << newName;
+  log::debug("renaming {} to {}", oldName, newName);
 
   if (QFileInfo(newName).exists()) {
-    qDebug().nospace() << newName << " already exists";
+    log::debug("{} already exists", newName);
 
     // target file already exists, confirm replacement
     auto answer = confirmReplace(newName);
@@ -26,24 +30,28 @@ FileRenamer::RenameResults FileRenamer::rename(const QString& oldName, const QSt
     switch (answer) {
       case DECISION_SKIP: {
         // user wants to skip this file
-        qDebug().nospace() << "skipping " << oldName;
+        log::debug("skipping {}", oldName);
         return RESULT_SKIP;
       }
 
       case DECISION_REPLACE: {
-        qDebug().nospace() << "removing " << newName;
+        log::debug("removing {}", newName);
+
         // user wants to replace the file, so remove it
-        if (!QFile(newName).remove()) {
-          qWarning().nospace() << "failed to remove " << newName;
+        const auto r = shell::Delete(newName);
+
+        if (!r.success()) {
+          log::error("failed to remove '{}': {}", newName, r.toString());
+
           // removal failed, warn the user and allow canceling
-          if (!removeFailed(newName)) {
-            qDebug().nospace() << "canceling " << oldName;
+          if (!removeFailed(newName, r)) {
+            log::debug("canceling {}", oldName);
             // user wants to cancel
             return RESULT_CANCEL;
           }
 
           // ignore this file and continue on
-          qDebug().nospace() << "skipping " << oldName;
+          log::debug("skipping {}", oldName);
           return RESULT_SKIP;
         }
 
@@ -53,31 +61,34 @@ FileRenamer::RenameResults FileRenamer::rename(const QString& oldName, const QSt
       case DECISION_CANCEL:  // fall-through
       default: {
         // user wants to stop
-        qDebug().nospace() << "canceling";
+        log::debug("canceling");
         return RESULT_CANCEL;
       }
     }
   }
 
   // target either didn't exist or was removed correctly
+  const auto r = shell::Rename(oldName, newName);
 
-  if (!QFile::rename(oldName, newName)) {
-    qWarning().nospace() << "failed to rename " << oldName << " to " << newName;
+  if (!r.success()) {
+    log::error(
+      "failed to rename '{}' to '{}': {}",
+      oldName, newName, r.toString());
 
     // renaming failed, warn the user and allow canceling
-    if (!renameFailed(oldName, newName)) {
+    if (!renameFailed(oldName, newName, r)) {
       // user wants to cancel
-      qDebug().nospace() << "canceling";
+      log::debug("canceling");
       return RESULT_CANCEL;
     }
 
     // ignore this file and continue on
-    qDebug().nospace() << "skipping " << oldName;
+    log::debug("skipping {}", oldName);
     return RESULT_SKIP;
   }
 
   // everything worked
-  qDebug().nospace() << "successfully renamed " << oldName << " to " << newName;
+  log::debug("successfully renamed {} to {}", oldName, newName);
   return RESULT_OK;
 }
 
@@ -85,12 +96,12 @@ FileRenamer::RenameDecision FileRenamer::confirmReplace(const QString& newName)
 {
   if (m_flags & REPLACE_ALL) {
     // user wants to silently replace all
-    qDebug().nospace() << "user has selected replace all";
+    log::debug("user has selected replace all");
     return DECISION_REPLACE;
   }
   else if (m_flags & REPLACE_NONE) {
     // user wants to silently skip all
-    qDebug().nospace() << "user has selected replace none";
+    log::debug("user has selected replace none");
     return DECISION_SKIP;
   }
 
@@ -114,33 +125,33 @@ FileRenamer::RenameDecision FileRenamer::confirmReplace(const QString& newName)
 
   switch (answer) {
     case QMessageBox::Yes:
-      qDebug().nospace() << "user wants to replace";
+      log::debug("user wants to replace");
       return DECISION_REPLACE;
 
     case QMessageBox::No:
-      qDebug().nospace() << "user wants to skip";
+      log::debug("user wants to skip");
       return DECISION_SKIP;
 
     case QMessageBox::YesToAll:
-      qDebug().nospace() << "user wants to replace all";
+      log::debug("user wants to replace all");
       // remember the answer
       m_flags |= REPLACE_ALL;
       return DECISION_REPLACE;
 
     case QMessageBox::NoToAll:
-      qDebug().nospace() << "user wants to replace none";
+      log::debug("user wants to replace none");
       // remember the answer
       m_flags |= REPLACE_NONE;
       return DECISION_SKIP;
 
     case QMessageBox::Cancel:  // fall-through
     default:
-      qDebug().nospace() << "user wants to cancel";
+      log::debug("user wants to cancel");
       return DECISION_CANCEL;
   }
 }
 
-bool FileRenamer::removeFailed(const QString& name)
+bool FileRenamer::removeFailed(const QString& name, const shell::Result& r)
 {
   QMessageBox::StandardButtons buttons = QMessageBox::Ok;
   if (m_flags & MULTIPLE) {
@@ -149,22 +160,24 @@ bool FileRenamer::removeFailed(const QString& name)
   }
 
   const auto answer = QMessageBox::critical(
-    m_parent, QObject::tr("File operation failed"),
-    QObject::tr("Failed to remove \"%1\". Maybe you lack the required file permissions?").arg(name),
+    m_parent,
+    QObject::tr("File operation failed"),
+    QObject::tr("Failed to remove \"%1\": %2").arg(name).arg(r.toString()),
     buttons);
 
   if (answer == QMessageBox::Cancel) {
     // user wants to stop
-    qDebug().nospace() << "user wants to cancel";
+    log::debug("user wants to cancel");
     return false;
   }
 
   // skip this one and continue
-  qDebug().nospace() << "user wants to skip";
+  log::debug("user wants to skip");
   return true;
 }
 
-bool FileRenamer::renameFailed(const QString& oldName, const QString& newName)
+bool FileRenamer::renameFailed(
+  const QString& oldName, const QString& newName, const shell::Result& r)
 {
   QMessageBox::StandardButtons buttons = QMessageBox::Ok;
   if (m_flags & MULTIPLE) {
@@ -173,17 +186,24 @@ bool FileRenamer::renameFailed(const QString& oldName, const QString& newName)
   }
 
   const auto answer = QMessageBox::critical(
-    m_parent, QObject::tr("File operation failed"),
-    QObject::tr("failed to rename %1 to %2").arg(oldName).arg(QDir::toNativeSeparators(newName)),
-    buttons);
+    m_parent,
+    QObject::tr("File operation failed"),
+    QObject::tr(
+      "Failed to rename file: %1.\r\n\r\n"
+      "Source:\r\n\"%2\"\r\n\r\n"
+      "Destination:\r\n\"%3\"")
+        .arg(r.toString())
+        .arg(QDir::toNativeSeparators(oldName))
+        .arg(QDir::toNativeSeparators(newName)),
+     buttons);
 
   if (answer == QMessageBox::Cancel) {
     // user wants to stop
-    qDebug().nospace() << "user wants to cancel";
+    log::debug("user wants to cancel");
     return false;
   }
 
   // skip this one and continue
-  qDebug().nospace() << "user wants to skip";
+  log::debug("user wants to skip");
   return true;
 }

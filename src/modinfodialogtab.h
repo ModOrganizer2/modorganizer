@@ -253,32 +253,6 @@ protected:
   //
   void setFocus();
 
-
-  // saves the sate of the given widget in geometry/modinfodialog_[objectname]
-  //
-  // this needs to be a template because saveState() and restoreState() are
-  // not in QWidget, but they're in various widgets
-  //
-  template <class Widget>
-  void saveWidgetState(QSettings& s, Widget* w)
-  {
-    s.setValue(settingName(w), w->saveState());
-  }
-
-  // restores the sate of the given widget from
-  // geometry/modinfodialog_[objectname]
-  //
-  // this needs to be a template because saveState() and restoreState() are
-  // not in QWidget, but they're in various widgets
-  //
-  template <class Widget>
-  void restoreWidgetState(const QSettings& s, Widget* w)
-  {
-    if (s.contains(settingName(w))) {
-      w->restoreState(s.value(settingName(w)).toByteArray());
-    }
-  }
-
 private:
   // core
   OrganizerCore& m_core;
@@ -303,14 +277,6 @@ private:
 
   // true if the tab has never been selected for the current mod
   bool m_firstActivation;
-
-
-  // used by saveWidgetState() and restoreWidgetState()
-  //
-  QString settingName(QWidget* w)
-  {
-    return "geometry/modinfodialog_" + w->objectName();
-  }
 };
 
 

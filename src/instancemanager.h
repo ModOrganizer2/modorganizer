@@ -38,6 +38,9 @@ public:
 
   QString currentInstance() const;
 
+  bool allowedToChangeInstance() const;
+  static bool isPortablePath(const QString& dataPath);
+
 private:
 
   InstanceManager();
@@ -58,6 +61,7 @@ private:
 
   void createDataPath(const QString &dataPath) const;
   bool portableInstall() const;
+  bool portableInstallIsLocked() const;
 
 private:
 

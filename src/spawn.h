@@ -26,28 +26,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileInfo>
 #include <QDir>
 
+class Settings;
 
-/**
- * @brief a dirty little trick so we can issue a clean restart from startBinary
- * @note unused
- */
-/*class ExitProxy : public QObject {
-  Q_OBJECT
-public:
-  static ExitProxy *instance();
-  void emitExit();
-signals:
-  void exit();
-private:
-  ExitProxy() {}
-private:
-  static ExitProxy *s_Instance;
-};*/
+namespace spawn
+{
 
-
-/**
- * @brief spawn a binary with Mod Organizer injected
- *
+/*
  * @param binary the binary to spawn
  * @param arguments arguments to pass to the binary
  * @param profileName name of the active profile
@@ -56,13 +40,80 @@ private:
  * @param hooked if set, the binary is started with mo injected
  * @param stdout if not equal to INVALID_HANDLE_VALUE, this is used as stdout for the process
  * @param stderr if not equal to INVALID_HANDLE_VALUE, this is used as stderr for the process
+*/
+struct SpawnParameters
+{
+  QFileInfo binary;
+  QString arguments;
+  QDir currentDirectory;
+  QString steamAppID;
+  bool hooked = false;
+  HANDLE stdOut = INVALID_HANDLE_VALUE;
+  HANDLE stdErr = INVALID_HANDLE_VALUE;
+};
+
+
+bool checkSteam(
+  QWidget* parent, const SpawnParameters& sp,
+  const QDir& gameDirectory, const QString &steamAppID, const Settings& settings);
+
+bool checkBlacklist(
+  QWidget* parent, const SpawnParameters& sp, Settings& settings);
+
+/**
+ * @brief spawn a binary with Mod Organizer injected
  * @return the process handle
- * @todo is the profile name even used any more?
- * @todo is the hooked parameter used?
  **/
-HANDLE startBinary(const QFileInfo &binary, const QString &arguments,
-                   const QDir &currentDirectory, bool hooked,
-                   HANDLE stdOut = INVALID_HANDLE_VALUE, HANDLE stdErr = INVALID_HANDLE_VALUE);
+HANDLE startBinary(QWidget* parent, const SpawnParameters& sp);
+
+
+enum class FileExecutionTypes
+{
+  Executable = 1,
+  Other
+};
+
+struct FileExecutionContext
+{
+  QFileInfo binary;
+  QString arguments;
+  FileExecutionTypes type;
+};
+
+QString findJavaInstallation(const QString& jarFile);
+
+FileExecutionContext getFileExecutionContext(
+  QWidget* parent, const QFileInfo& target);
+
+} // namespace
+
+
+// convenience functions to work with the external helper program, which is used
+// to make changes on the system that require administrative rights, so that
+// ModOrganizer itself can run without special privileges
+//
+namespace helper
+{
+
+/**
+* @brief sets the last modified time for all .bsa-files in the target directory well into the past
+* @param moPath absolute path to the modOrganizer base directory
+* @param dataPath the path taht contains the .bsa-files, usually the data directory of the game
+**/
+bool backdateBSAs(
+  QWidget* parent, const std::wstring &moPath, const std::wstring &dataPath);
+
+/**
+* @brief waits for the current process to exit and restarts it as an administrator
+* @param moPath absolute path to the modOrganizer base directory
+* @param moFile file name of modOrganizer
+* @param workingDir current working directory
+**/
+bool adminLaunch(
+  QWidget* parent, const std::wstring &moPath,
+  const std::wstring &moFile, const std::wstring &workingDir);
+
+} // namespace
 
 #endif // SPAWN_H
 

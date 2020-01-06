@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "bbcode.h"
 #include <utility.h>
 #include <util.h>
+#include <log.h>
 
 #include <QApplication>
 #include <QNetworkCookieJar>
@@ -40,12 +41,11 @@ using namespace MOShared;
 
 void throttledWarning(const APIUserAccount& user)
 {
-  qCritical() <<
-    QString(
-      "You have fewer than %1 requests remaining (%2). Only downloads and "
-      "login validation are being allowed.")
-    .arg(APIUserAccount::ThrottleThreshold)
-    .arg(user.remainingRequests());
+  log::error(
+    "You have fewer than {} requests remaining ({}). Only downloads and "
+    "login validation are being allowed.",
+    APIUserAccount::ThrottleThreshold,
+    user.remainingRequests());
 }
 
 
@@ -208,12 +208,27 @@ APILimits NexusInterface::defaultAPILimits()
 
 APILimits NexusInterface::parseLimits(const QNetworkReply* reply)
 {
+  return parseLimits(reply->rawHeaderPairs());
+}
+
+APILimits NexusInterface::parseLimits(
+  const QList<QNetworkReply::RawHeaderPair>& headers)
+{
   APILimits limits;
 
-  limits.maxDailyRequests = reply->rawHeader("x-rl-daily-limit").toInt();
-  limits.remainingDailyRequests = reply->rawHeader("x-rl-daily-remaining").toInt();
-  limits.maxHourlyRequests = reply->rawHeader("x-rl-hourly-limit").toInt();
-  limits.remainingHourlyRequests = reply->rawHeader("x-rl-hourly-remaining").toInt();
+  for (const auto& pair : headers) {
+    const auto name = QString(pair.first).toLower();
+
+    if (name == "x-rl-daily-limit") {
+      limits.maxDailyRequests = pair.second.toInt();
+    } else if (name == "x-rl-daily-remaining") {
+      limits.remainingDailyRequests = pair.second.toInt();
+    } else if (name == "x-rl-hourly-limit") {
+      limits.maxHourlyRequests = pair.second.toInt();
+    } else if (name == "x-rl-hourly-remaining") {
+      limits.remainingHourlyRequests = pair.second.toInt();
+    }
+  }
 
   return limits;
 }
@@ -265,52 +280,60 @@ void NexusInterface::setUserAccount(const APIUserAccount& user)
 
 void NexusInterface::interpretNexusFileName(const QString &fileName, QString &modName, int &modID, bool query)
 {
-  //Look for something along the lines of modulename-Vn-m + any old rubbish.
-  static std::regex exp(R"exp(^([a-zA-Z0-9_'"\-.() ]*?)([-_ ][VvRr]?[0-9_]+)?-([1-9][0-9]*).*\.(zip|rar|7z))exp");
-  static std::regex simpleexp("^([a-zA-Z0-9_]+)");
+  // guess the mod name from the file name
+  static const QRegularExpression complex("^([a-zA-Z0-9_'\"\\-.() ]*?)([-_ ][VvRr]?[0-9_]+)?-([1-9][0-9]*).*\\.(zip|rar|7z)");
+  static const QRegularExpression simple("^[a-zA-Z0-9_]+");
+  auto complexMatch = complex.match(fileName);
+  auto simpleMatch = simple.match(fileName);
+  if (complexMatch.hasMatch()) {
+    modName = complexMatch.captured(1);
+  }
+  else if (simpleMatch.hasMatch()) {
+    modName = simpleMatch.captured(0);
+  }
+  else {
+    modName.clear();
+  }
 
-  QByteArray fileNameUTF8 = fileName.toUtf8();
-  std::cmatch result;
-  if (std::regex_search(fileNameUTF8.constData(), result, exp)) {
-    modName = QString::fromUtf8(result[1].str().c_str());
-    modName = modName.replace('_', ' ').trimmed();
+  if (query) {
+    SelectionDialog selection(tr("Please pick the mod ID for \"%1\"").arg(fileName));
+    int index = 0;
+    auto splits = fileName.split(QRegExp("[^0-9]"), QString::KeepEmptyParts);
+    for (auto substr : splits) {
+      bool ok = false;
+      int value = substr.toInt(&ok);
+      if (ok) {
+        QString highlight(fileName);
+        highlight.insert(index, " *");
+        highlight.insert(index + substr.length() + 2, "* ");
 
-    std::string candidate = result[3].str();
-    std::string candidate2 = result[2].str();
-    if (candidate2.length() != 0 && (candidate2.find_last_of("VvRr") == std::string::npos)) {
-      // well, that second match might be an id too...
-      size_t offset = strspn(candidate2.c_str(), "-_ ");
-      if (offset < candidate2.length() && query) {
-        SelectionDialog selection(tr("Failed to guess mod id for \"%1\", please pick the correct one").arg(fileName));
-        QString r2Highlight(fileName);
-        r2Highlight.insert(result.position(2) + result.length(2), "* ")
-            .insert(result.position(2) + static_cast<int>(offset), " *");
-        QString r3Highlight(fileName);
-        r3Highlight.insert(result.position(3) + result.length(3), "* ").insert(result.position(3), " *");
+        QStringList choice;
+        choice << substr;
+        choice << (index > 0 ? fileName.left(index - 1) : substr);
+        selection.addChoice(substr, highlight, choice);
+      }
+      index += substr.length() + 1;
+    }
 
-        selection.addChoice(candidate.c_str(), r3Highlight, static_cast<int>(strtol(candidate.c_str(), nullptr, 10)));
-        selection.addChoice(candidate2.c_str() + offset, r2Highlight, static_cast<int>(abs(strtol(candidate2.c_str() + offset, nullptr, 10))));
-        if (selection.exec() == QDialog::Accepted) {
-          modID = selection.getChoiceData().toInt();
-        } else {
-          modID = -1;
-        }
-      } else {
+    if (selection.numChoices() > 0) {
+      if (selection.exec() == QDialog::Accepted) {
+        auto choice = selection.getChoiceData().toStringList();
+        modID = choice.at(0).toInt();
+        modName = choice.at(1);
+        modName = modName.replace('_', ' ').trimmed();
+        log::debug("user selected mod ID {} and mod name \"{}\"", modID, modName);
+      }
+      else {
+        log::debug("user canceled mod ID selection");
         modID = -1;
       }
-    } else {
-      modID = strtol(candidate.c_str(), nullptr, 10);
     }
-    qDebug("mod id guessed: %s -> %d", qUtf8Printable(fileName), modID);
-  } else if (std::regex_search(fileNameUTF8.constData(), result, simpleexp)) {
-    qDebug("simple expression matched, using name only");
-    modName = QString::fromUtf8(result[1].str().c_str());
-    modName = modName.replace('_', ' ').trimmed();
-
-    modID = -1;
-  } else {
-    qDebug("no expression matched!");
-    modName.clear();
+    else {
+      log::debug("no possible mod IDs found in file name");
+      modID = -1;
+    }
+  }
+  else {
     modID = -1;
   }
 }
@@ -328,7 +351,7 @@ QString NexusInterface::getGameURL(QString gameName) const
   if (game != nullptr) {
     return "https://www.nexusmods.com/" + game->gameNexusName().toLower();
   } else {
-    qCritical("getGameURL can't find plugin for %s", qUtf8Printable(gameName));
+    log::error("getGameURL can't find plugin for {}", gameName);
     return "";
   }
 }
@@ -339,7 +362,7 @@ QString NexusInterface::getOldModsURL(QString gameName) const
   if (game != nullptr) {
     return "https://" + game->gameNexusName().toLower() + ".nexusmods.com/mods";
   } else {
-    qCritical("getOldModsURL can't find plugin for %s", qUtf8Printable(gameName));
+    log::error("getOldModsURL can't find plugin for {}", gameName);
     return "";
   }
 }
@@ -448,7 +471,7 @@ int NexusInterface::requestUpdates(const int &modID, QObject *receiver, QVariant
 
   IPluginGame *game = getGame(gameName);
   if (game == nullptr) {
-    qCritical("requestUpdates can't find plugin for %s", qUtf8Printable(gameName));
+    log::error("requestUpdates can't find plugin for {}", gameName);
     return -1;
   }
 
@@ -505,7 +528,7 @@ int NexusInterface::requestFileInfo(QString gameName, int modID, int fileID, QOb
 {
   IPluginGame *gamePlugin = getGame(gameName);
   if (gamePlugin == nullptr) {
-    qCritical("requestFileInfo can't find plugin for %s", qUtf8Printable(gameName));
+    log::error("requestFileInfo can't find plugin for {}", gameName);
     return -1;
   }
 
@@ -671,7 +694,7 @@ void NexusInterface::nextRequest()
     } else if (getAccessManager()->validateWaiting()) {
       return;
     } else {
-      qCritical() << tr("You must authorize MO2 in Settings -> Nexus to use the Nexus API.");
+      log::error("{}", tr("You must authorize MO2 in Settings -> Nexus to use the Nexus API."));
     }
   }
 
@@ -680,9 +703,13 @@ void NexusInterface::nextRequest()
     QTime time = QTime::currentTime();
     QTime targetTime;
     targetTime.setHMS((time.hour() + 1) % 23, 5, 0);
-    QString warning = tr("You've exceeded the Nexus API rate limit and requests are now being throttled. "
-      "Your next batch of requests will be available in approximately %1 minutes and %2 seconds.");
-    qWarning() << warning.arg(time.secsTo(targetTime) / 60).arg(time.secsTo(targetTime) % 60);
+    QString warning = tr(
+      "You've exceeded the Nexus API rate limit and requests are now being throttled. "
+      "Your next batch of requests will be available in approximately %1 minutes and %2 seconds.")
+      .arg(time.secsTo(targetTime) / 60)
+      .arg(time.secsTo(targetTime) % 60);
+
+    log::warn("{}", warning);
     return;
   }
 
@@ -732,8 +759,8 @@ void NexusInterface::nextRequest()
           url = QString("%1/games/%2/mods/%3/files/%4/download_link?key=%5&expires=%6")
           .arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID).arg(info.m_FileID).arg(fileInfo->nexusKey).arg(fileInfo->nexusExpires);
         } else {
-          qWarning() << tr("Aborting download: Either you clicked on a premium-only link and your account is not premium, "
-            "or the download link was generated by a different account than the one stored in Mod Organizer.");
+          log::warn("{}", tr("Aborting download: Either you clicked on a premium-only link and your account is not premium, "
+            "or the download link was generated by a different account than the one stored in Mod Organizer."));
           return;
         }
       } break;
@@ -765,7 +792,7 @@ void NexusInterface::nextRequest()
   QNetworkRequest request(url);
   request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
   request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
-  request.setRawHeader("APIKEY", m_AccessManager->apiKey().toUtf8());
+  request.setRawHeader("APIKEY", m_User.apiKey().toUtf8());
   request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader, m_AccessManager->userAgent(info.m_SubModule));
   request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
   request.setRawHeader("Protocol-Version", "1.0.0");
@@ -813,16 +840,16 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
       m_User.limits(parseLimits(reply));
 
       if (!m_User.exhausted()) {
-        qWarning("You appear to be making requests to the Nexus API too quickly and are being throttled. Please inform the MO2 team.");
+        log::warn("You appear to be making requests to the Nexus API too quickly and are being throttled. Please inform the MO2 team.");
       }
       else {
-        qWarning("All API requests have been consumed and are now being denied.");
+        log::warn("All API requests have been consumed and are now being denied.");
       }
 
       emit requestsChanged(getAPIStats(), m_User);
-      qWarning("Error: %s", reply->errorString().toUtf8().constData());
+      log::warn("Error: {}", reply->errorString());
     } else {
-      qWarning("request failed: %s", reply->errorString().toUtf8().constData());
+      log::warn("request failed: {}", reply->errorString());
     }
     emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, reply->error(), reply->errorString());
   } else {
@@ -841,7 +868,7 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
       if (nexusError.length() == 0) {
         nexusError = tr("empty response");
       }
-      qDebug("nexus error: %s", qUtf8Printable(nexusError));
+      log::debug("nexus error: {}", nexusError);
       emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, reply->error(), nexusError);
     } else {
       QJsonDocument responseDoc = QJsonDocument::fromJson(data);
@@ -925,14 +952,13 @@ void NexusInterface::requestError(QNetworkReply::NetworkError)
 {
   QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
   if (reply == nullptr) {
-    qWarning("invalid sender type");
+    log::warn("invalid sender type");
     return;
   }
 
-  qCritical("request (%s) error: %s (%d)",
-            qUtf8Printable(reply->url().toString()),
-            qUtf8Printable(reply->errorString()),
-            reply->error());
+  log::error(
+    "request ({}) error: {} ({})",
+    reply->url().toString(), reply->errorString(), reply->error());
 }
 
 
@@ -940,7 +966,7 @@ void NexusInterface::requestTimeout()
 {
   QTimer *timer =  qobject_cast<QTimer*>(sender());
   if (timer == nullptr) {
-    qWarning("invalid sender type");
+    log::warn("invalid sender type");
     return;
   }
   for (std::list<NXMRequestInfo>::iterator iter = m_ActiveRequest.begin(); iter != m_ActiveRequest.end(); ++iter) {

@@ -2,7 +2,9 @@
 #include "ui_modinfodialog.h"
 #include "settings.h"
 #include "utility.h"
+#include <log.h>
 
+using namespace MOBase;
 using namespace ImagesTabHelpers;
 
 QSize resizeWithAspectRatio(const QSize& original, const QSize& available)
@@ -51,6 +53,8 @@ ImagesTab::ImagesTab(ModInfoDialogTabContext cx) :
   ui->tabImagesSplitter->setStretchFactor(0, 0);
   ui->tabImagesSplitter->setStretchFactor(1, 1);
 
+  ui->previewPluginButton->setEnabled(false);
+
   ui->imagesThumbnails->setTab(this);
 
   ui->imagesScrollerVBar->setTab(this);
@@ -63,6 +67,7 @@ ImagesTab::ImagesTab(ModInfoDialogTabContext cx) :
 
   connect(ui->imagesExplore, &QAbstractButton::clicked, [&]{ onExplore(); });
   connect(ui->imagesShowDDS, &QCheckBox::toggled, [&]{ onShowDDS(); });
+  connect(ui->previewPluginButton, &QAbstractButton::clicked, [&] { onPreviewButton(); });
 
   ui->imagesShowDDS->setEnabled(m_ddsAvailable);
 
@@ -128,18 +133,14 @@ void ImagesTab::update()
 
 void ImagesTab::saveState(Settings& s)
 {
-  s.directInterface().setValue(
-    "mod_info_dialog_images_show_dds", m_ddsEnabled);
-
-  saveWidgetState(s.directInterface(), ui->tabImagesSplitter);
+  s.widgets().saveChecked(ui->imagesShowDDS);
+  s.geometry().saveState(ui->tabImagesSplitter);
 }
 
 void ImagesTab::restoreState(const Settings& s)
 {
-  ui->imagesShowDDS->setChecked(s.directInterface()
-    .value("mod_info_dialog_images_show_dds", false).toBool());
-
-  restoreWidgetState(s.directInterface(), ui->tabImagesSplitter);
+  s.widgets().restoreChecked(ui->imagesShowDDS);
+  s.geometry().restoreState(ui->tabImagesSplitter);
 }
 
 void ImagesTab::checkFiltering()
@@ -253,13 +254,34 @@ void ImagesTab::select(std::size_t i, Visibility v)
 
     ui->imagesPath->setText(QDir::toNativeSeparators(f->path()));
     ui->imagesExplore->setEnabled(true);
+    if (plugin().previewGenerator().previewSupported(QString::fromStdWString(std::filesystem::path(f->path().toStdWString()).extension().wstring()).remove(0,1)))
+      ui->previewPluginButton->setEnabled(true);
+    else
+      ui->previewPluginButton->setEnabled(false);
     ui->imagesSize->setText(dimensionString(f->original().size()));
 
-    m_image->setImage(f->original());
+    if (f->original().isNull()) {
+      m_image->clear();
+
+      QImage image(300, 100, QImage::Format_RGBA64);
+      QPainter paint;
+      paint.begin(&image);
+      paint.fillRect(0, 0, 300, 100, QBrush(QColor(0, 0, 0, 255)));
+      paint.setPen(m_theme.textColor);
+      paint.setFont(m_theme.font);
+      paint.drawImage(QPoint(150-16, 50-20-16), QImage(":/MO/gui/warning"));
+      const auto flags = Qt::AlignHCenter | Qt::AlignVCenter | Qt::TextWordWrap;
+      paint.drawText(0, 46, 300, 54, flags, "This image format is not supported by Qt, but the preview plugin may be able to display it. Use the button above.");
+      paint.end();
+
+      m_image->setImage(image);
+    } else
+      m_image->setImage(f->original());
     ensureVisible(i, v);
   } else {
     ui->imagesPath->clear();
     ui->imagesExplore->setEnabled(false);
+    ui->previewPluginButton->setEnabled(false);
     ui->imagesSize->clear();
     m_image->clear();
   }
@@ -549,7 +571,7 @@ void ImagesTab::showTooltip(QHelpEvent* e)
 void ImagesTab::onExplore()
 {
   if (auto* f=m_files.selectedFile()) {
-    MOBase::shell::ExploreFile(f->path());
+    shell::Explore(f->path());
   }
 }
 
@@ -560,6 +582,11 @@ void ImagesTab::onShowDDS()
     m_ddsEnabled = b;
     update();
   }
+}
+
+void ImagesTab::onPreviewButton()
+{
+  core().previewFileWithAlternatives(parentWidget(), m_files.selectedFile()->path());
 }
 
 void ImagesTab::onFilterChanged()
@@ -896,10 +923,9 @@ void File::ensureOriginalLoaded()
   QImageReader reader(m_path);
 
   if (!reader.read(&m_original)) {
-    qCritical().noquote().nospace()
-      << "failed to load '" << m_path << "'\n"
-      << reader.errorString() << " "
-      << "(error " << static_cast<int>(reader.error()) << ")";
+    log::error(
+      "failed to load '{}'\n{} (error {})",
+      m_path, reader.errorString(), static_cast<int>(reader.error()));
 
     m_failed = true;
   }
@@ -961,13 +987,17 @@ void File::load(const Geometry& geo)
   ensureOriginalLoaded();
 
   if (m_failed) {
-    return;
+    QImage warning(":/MO/gui/warning");
+    const auto scaledSize = geo.scaledImageSize(warning.size());
+
+    m_thumbnail = warning.scaled(
+      scaledSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+  } else {
+    const auto scaledSize = geo.scaledImageSize(m_original.size());
+
+    m_thumbnail = m_original.scaled(
+      scaledSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
   }
-
-  const auto scaledSize = geo.scaledImageSize(m_original.size());
-
-  m_thumbnail = m_original.scaled(
-    scaledSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 }
 
 

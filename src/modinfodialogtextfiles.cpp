@@ -176,12 +176,12 @@ void GenericFilesTab::update()
 
 void GenericFilesTab::saveState(Settings& s)
 {
-  saveWidgetState(s.directInterface(), m_splitter);
+  s.geometry().saveState(m_splitter);
 }
 
 void GenericFilesTab::restoreState(const Settings& s)
 {
-  restoreWidgetState(s.directInterface(), m_splitter);
+  s.geometry().restoreState(m_splitter);
 }
 
 void GenericFilesTab::onSelection(

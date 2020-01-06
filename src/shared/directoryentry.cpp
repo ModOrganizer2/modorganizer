@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "windows_error.h"
 #include "leaktrace.h"
 #include "error_report.h"
+#include <log.h>
 #include <bsatk.h>
 #include <boost/bind.hpp>
 #include <boost/scoped_array.hpp>
@@ -31,9 +32,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <algorithm>
 #include <map>
 #include <atomic>
+#include <QObject>
 
 
 namespace MOShared {
+
+namespace log = MOBase::log;
 
 static const int MAXPATH_UNICODE = 32767;
 
@@ -80,7 +84,7 @@ public:
       return m_Origins[iter->second];
     } else {
       std::ostringstream stream;
-      stream << "invalid origin name: " << ToString(name, false);
+      stream << QObject::tr("invalid origin name: ").toStdString() << ToString(name, true);
       throw std::runtime_error(stream.str());
     }
   }
@@ -103,7 +107,7 @@ public:
       m_OriginsNameMap.erase(iter);
       m_OriginsNameMap[newName] = idx;
     } else {
-      log("failed to change name lookup from %ls to %ls", oldName.c_str(), newName.c_str());
+      log::error(QObject::tr("failed to change name lookup from {} to {}").toStdString(), oldName, newName);
     }
   }
 
@@ -517,7 +521,7 @@ void DirectoryEntry::addFromBSA(const std::wstring &originName, std::wstring &di
 
   WIN32_FILE_ATTRIBUTE_DATA fileData;
   if (::GetFileAttributesExW(fileName.c_str(), GetFileExInfoStandard, &fileData) == 0) {
-    throw windows_error("failed to determine file time");
+    throw windows_error(QObject::tr("failed to determine file time").toStdString());
   }
   FILETIME now;
   ::GetSystemTimeAsFileTime(&now);
@@ -539,7 +543,7 @@ void DirectoryEntry::addFromBSA(const std::wstring &originName, std::wstring &di
     BSA::EErrorCode res = archive.read(ToString(fileName, false).c_str(), false);
     if ((res != BSA::ERROR_NONE) && (res != BSA::ERROR_INVALIDHASHES)) {
       std::ostringstream stream;
-      stream << "invalid bsa file: " << ToString(fileName, false) << " errorcode " << res << " - " << ::GetLastError();
+      stream << QObject::tr("invalid bsa file: ").toStdString() << ToString(fileName, false) << " errorcode " << res << " - " << ::GetLastError();
       throw std::runtime_error(stream.str());
     }
 
@@ -714,14 +718,14 @@ void DirectoryEntry::removeFile(FileEntry::Index index)
     if (iter != m_Files.end()) {
       m_Files.erase(iter);
     } else {
-      log("file \"%ls\" not in directory \"%ls\"",
-          m_FileRegister->getFile(index)->getName().c_str(),
-          this->getName().c_str());
+      log::error(
+        QObject::tr("file \"{}\" not in directory \"{}\"").toStdString(),
+        m_FileRegister->getFile(index)->getName(), this->getName());
     }
   } else {
-    log("file \"%ls\" not in directory \"%ls\", directory empty",
-        m_FileRegister->getFile(index)->getName().c_str(),
-        this->getName().c_str());
+    log::error(
+      QObject::tr("file \"{}\" not in directory \"{}\", directory empty").toStdString(),
+      m_FileRegister->getFile(index)->getName(), this->getName());
   }
 }
 
@@ -844,7 +848,7 @@ const FileEntry::Ptr DirectoryEntry::searchFile(const std::wstring &path, const 
     DirectoryEntry *temp = findSubDirectory(pathComponent);
     if (temp != nullptr) {
       if (len >= path.size()) {
-        log("unexpected end of path");
+        log::error(QObject::tr("unexpected end of path").toStdString());
         return FileEntry::Ptr();
       }
       return temp->searchFile(path.substr(len + 1), directory);
@@ -988,7 +992,7 @@ bool FileRegister::removeFile(FileEntry::Index index)
     m_Files.erase(index);
     return true;
   } else {
-    log("invalid file index for remove: %lu", index);
+    log::error(QObject::tr("invalid file index for remove: {}").toStdString(), index);
     return false;
   }
 }
@@ -1002,7 +1006,7 @@ void FileRegister::removeOrigin(FileEntry::Index index, int originID)
       m_Files.erase(iter);
     }
   } else {
-    log("invalid file index for remove (for origin): %lu", index);
+    log::error(QObject::tr("invalid file index for remove (for origin): {}").toStdString(), index);
   }
 }
 

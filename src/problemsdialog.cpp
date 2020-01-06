@@ -29,6 +29,12 @@ ProblemsDialog::~ProblemsDialog()
   delete ui;
 }
 
+int ProblemsDialog::exec()
+{
+  GeometrySaver gs(Settings::instance(), this);
+  return QDialog::exec();
+}
+
 void ProblemsDialog::runDiagnosis()
 {
   m_hasProblems = false;
@@ -96,7 +102,7 @@ void ProblemsDialog::startFix()
 {
   QObject *fixButton = QObject::sender();
   if (fixButton == NULL) {
-    qWarning("no button");
+    log::warn("no button");
     return;
   }
   IPluginDiagnose *plugin = reinterpret_cast<IPluginDiagnose*>(fixButton ->property("fix").value<void*>());
@@ -106,5 +112,5 @@ void ProblemsDialog::startFix()
 
 void ProblemsDialog::urlClicked(const QUrl &url)
 {
-  shell::OpenLink(url);
+  shell::Open(url);
 }

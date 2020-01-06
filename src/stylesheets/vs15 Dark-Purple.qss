@@ -95,6 +95,9 @@ QTreeView::branch:selected {
 QLabel {
   background-color: transparent; }
 
+LinkLabel {
+  qproperty-linkColor: #3399FF; }
+
 /* Left Pane & File Trees #QTreeView, #QListView*/
 QTreeView::branch:closed:has-children {
   image: url(./vs15/branch-closed.png); }
@@ -209,6 +212,13 @@ QToolButton {
     background-color: #3E3E40; }
   QToolButton:pressed {
     background-color: #7E2AD2; }
+
+QToolButton::menu-indicator {
+  image: url(./vs15/combobox-down.png);
+  subcontrol-origin: padding;
+  subcontrol-position: center right;
+  padding-top: 10%;
+  padding-right: 5%; }
 
 /* Group Boxes #QGroupBox */
 QGroupBox {

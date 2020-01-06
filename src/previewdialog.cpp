@@ -1,5 +1,6 @@
 #include "previewdialog.h"
 #include "ui_previewdialog.h"
+#include "settings.h"
 #include <QFileInfo>
 
 PreviewDialog::PreviewDialog(const QString &fileName, QWidget *parent) :
@@ -15,6 +16,12 @@ PreviewDialog::PreviewDialog(const QString &fileName, QWidget *parent) :
 PreviewDialog::~PreviewDialog()
 {
   delete ui;
+}
+
+int PreviewDialog::exec()
+{
+  GeometrySaver gs(Settings::instance(), this);
+  return QDialog::exec();
 }
 
 void PreviewDialog::addVariant(const QString &modName, QWidget *widget)

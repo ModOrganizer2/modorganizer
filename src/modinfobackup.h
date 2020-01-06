@@ -6,6 +6,8 @@
 class ModInfoBackup : public ModInfoRegular
 {
 
+  Q_OBJECT
+
   friend class ModInfo;
 
 public:

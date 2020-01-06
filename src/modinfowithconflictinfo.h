@@ -12,7 +12,8 @@ public:
 
   ModInfoWithConflictInfo(PluginContainer *pluginContainer, MOShared::DirectoryEntry **directoryStructure);
 
-  std::vector<ModInfo::EFlag> getFlags() const;
+  std::vector<ModInfo::EConflictFlag> getConflictFlags() const;
+  virtual std::vector<ModInfo::EFlag> getFlags() const { return std::vector<ModInfo::EFlag>(); };
 
   /**
    * @brief clear all caches held for this mod

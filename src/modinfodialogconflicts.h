@@ -33,7 +33,7 @@ signals:
 private:
   struct Expanders
   {
-    ExpanderWidget overwrite, overwritten, nonconflict;
+    MOBase::ExpanderWidget overwrite, overwritten, nonconflict;
   };
 
   ConflictsTab* m_tab;
@@ -60,10 +60,6 @@ private:
 
   void onOverwriteActivated(const QModelIndex& index);
   void onOverwrittenActivated(const QModelIndex& index);
-
-  void onOverwriteTreeContext(const QPoint &pos);
-  void onOverwrittenTreeContext(const QPoint &pos);
-  void onNoConflictTreeContext(const QPoint &pos);
 };
 
 
@@ -111,10 +107,13 @@ public:
   void restoreState(const Settings& s) override;
   bool canHandleUnmanaged() const override;
 
-  void openItems(QTreeView* tree);
+  void activateItems(QTreeView* tree);
+  void openItems(QTreeView* tree, bool hooked);
   void previewItems(QTreeView* tree);
   void exploreItems(QTreeView* tree);
 
+  void openItem(const ConflictItem* item, bool hooked);
+  void previewItem(const ConflictItem* item);
   void changeItemsVisibility(QTreeView* tree, bool visible);
 
   void showContextMenu(const QPoint &pos, QTreeView* tree);
@@ -125,6 +124,7 @@ private:
     QAction* hide = nullptr;
     QAction* unhide = nullptr;
     QAction* open = nullptr;
+    QAction* runHooked = nullptr;
     QAction* preview = nullptr;
     QAction* explore = nullptr;
     QMenu* gotoMenu = nullptr;

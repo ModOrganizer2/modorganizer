@@ -37,11 +37,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <appconfig.h>
 #include <scriptextender.h>
 #include <unmanagedmods.h>
+#include <log.h>
 
 #include <QApplication>
 #include <QDirIterator>
 #include <QMutexLocker>
-#include <QSettings>
 
 using namespace MOBase;
 using namespace MOShared;
@@ -61,17 +61,32 @@ bool ModInfo::ByName(const ModInfo::Ptr &LHS, const ModInfo::Ptr &RHS)
   return QString::compare(LHS->name(), RHS->name(), Qt::CaseInsensitive) < 0;
 }
 
+bool ModInfo::isSeparatorName(const QString& name)
+{
+  static QRegExp separatorExp(".*_separator");
+  return separatorExp.exactMatch(name);
+}
+
+bool ModInfo::isBackupName(const QString& name)
+{
+  static QRegExp backupExp(".*backup[0-9]*");
+  return backupExp.exactMatch(name);
+}
+
+bool ModInfo::isRegularName(const QString& name)
+{
+  return !isSeparatorName(name) && !isBackupName(name);
+}
+
 
 ModInfo::Ptr ModInfo::createFrom(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, const QDir &dir, DirectoryEntry **directoryStructure)
 {
   QMutexLocker locker(&s_Mutex);
-  //  int id = s_NextID++;
-  static QRegExp backupExp(".*backup[0-9]*");
-  static QRegExp separatorExp(".*_separator");
   ModInfo::Ptr result;
-  if (backupExp.exactMatch(dir.dirName())) {
+
+  if (isBackupName(dir.dirName())) {
     result = ModInfo::Ptr(new ModInfoBackup(pluginContainer, game, dir, directoryStructure));
-  } else if(separatorExp.exactMatch(dir.dirName())){
+  } else if (isSeparatorName(dir.dirName())) {
     result = Ptr(new ModInfoSeparator(pluginContainer, game, dir, directoryStructure));
   } else {
     result = ModInfo::Ptr(new ModInfoRegular(pluginContainer, game, dir, directoryStructure));
@@ -319,13 +334,12 @@ bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
     }
 
     if (organizedGames.empty()) {
-      qWarning() << tr("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.");
+      log::warn("{}", tr("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests."));
       updatesAvailable = false;
     } else {
-      qInfo() << tr(
+      log::info("{}", tr(
         "You have mods that haven't been checked within the last month using the new API. These mods must be checked before we can use the bulk update API. "
-        "This will consume significantly more API requests than usual. You will need to rerun the update check once complete in order to parse the remaining mods."
-      );
+        "This will consume significantly more API requests than usual. You will need to rerun the update check once complete in order to parse the remaining mods."));
     }
 
     for (auto game : organizedGames)
@@ -412,7 +426,7 @@ void ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *recei
   });
 
   if (mods.size()) {
-    qInfo("Checking updates for %d mods...", mods.size());
+    log::info("Checking updates for {} mods...", mods.size());
 
     for (auto mod : mods) {
       organizedGames.insert(std::make_pair<QString, int>(mod->getGameName().toLower(), mod->getNexusID()));
@@ -422,7 +436,7 @@ void ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *recei
       NexusInterface::instance(pluginContainer)->requestUpdates(game.second, receiver, QVariant(), game.first, QString());
     }
   } else {
-    qInfo("None of the selected mods can be updated.");
+    log::info("None of the selected mods can be updated.");
   }
 }
 
@@ -530,10 +544,7 @@ QUrl ModInfo::parseCustomURL() const
   const auto url = QUrl::fromUserInput(getCustomURL());
 
   if (!url.isValid()) {
-    qCritical()
-      << "mod '" << name() << "' has an invalid custom url "
-      << "'" << getCustomURL() << "'";
-
+    log::error("mod '{}' has an invalid custom url '{}'", name(), getCustomURL());
     return {};
   }
 

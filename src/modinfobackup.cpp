@@ -1,5 +1,6 @@
 #include "modinfobackup.h"
 
+
 std::vector<ModInfo::EFlag> ModInfoBackup::getFlags() const
 {
   std::vector<ModInfo::EFlag> result = ModInfoRegular::getFlags();

@@ -18,25 +18,24 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "icondelegate.h"
+#include <log.h>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPainter>
 #include <QDebug>
 #include <QPixmapCache>
 
+using namespace MOBase;
 
 IconDelegate::IconDelegate(QObject *parent)
   : QStyledItemDelegate(parent)
 {
 }
 
-
-void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+void IconDelegate::paintIcons(
+  QPainter *painter, const QStyleOptionViewItem &option,
+  const QModelIndex &index, const QList<QString>& icons)
 {
-  QStyledItemDelegate::paint(painter, option, index);
-
-  QList<QString> icons = getIcons(index);
-
   int x = 4;
   painter->save();
 
@@ -54,7 +53,7 @@ void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
     if (!QPixmapCache::find(fullIconId, &icon)) {
       icon = QIcon(iconId).pixmap(iconWidth, iconWidth);
       if (icon.isNull()) {
-        qWarning("failed to load icon %s", qUtf8Printable(iconId));
+        log::warn("failed to load icon {}", iconId);
       }
       QPixmapCache::insert(fullIconId, icon);
     }
@@ -63,5 +62,11 @@ void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
   }
 
   painter->restore();
+}
+
+void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+  QStyledItemDelegate::paint(painter, option, index);
+  paintIcons(painter, option, index, getIcons(index));
 }
 

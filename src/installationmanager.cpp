@@ -263,7 +263,7 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
           targetFile = wcsrchr(origFile/*data[i]->getFileName()*/, '/');
         }
         if (targetFile == nullptr) {
-          qCritical() << "Failed to find backslash in " << data[i]->getFileName();
+          log::error("Failed to find backslash in {}", data[i]->getFileName());
           continue;
         } else {
           // skip the slash
@@ -307,7 +307,16 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
     QCoreApplication::processEvents();
   } while (!future.isFinished() || m_InstallationProgress->isVisible());
   if (!future.result()) {
-    throw MyException(QString("extracting failed (%1)").arg(m_ArchiveHandler->getLastError()));
+    if (m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
+      if (!m_ErrorMessage.isEmpty()) {
+        throw MyException(tr("Extraction failed: %1").arg(m_ErrorMessage));
+      } else {
+        return QStringList();
+      }
+    }
+    else {
+      throw MyException(tr("Extraction failed: %1").arg(m_ArchiveHandler->getLastError()));
+    }
   }
 
   return result;
@@ -319,13 +328,8 @@ IPluginInstaller::EInstallResult InstallationManager::installArchive(GuessedValu
   // a problem if this is called by the bundle installer and the bundled installer adds additional names that then end up being used,
   // because the caller will then not have the right name.
   bool iniTweaks;
-  if (install(archiveName, modName, iniTweaks, modId)) {
-    return IPluginInstaller::RESULT_SUCCESS;
-  } else {
-    return IPluginInstaller::RESULT_FAILED;
-  }
+  return install(archiveName, modName, iniTweaks, modId);
 }
-
 
 DirectoryTree *InstallationManager::createFilesTree()
 {
@@ -398,7 +402,7 @@ bool InstallationManager::isSimpleArchiveTopLayer(const DirectoryTree::Node *nod
   for (DirectoryTree::const_node_iterator iter = node->nodesBegin(); iter != node->nodesEnd(); ++iter) {
     if ((bainStyle && InstallationTester::isTopLevelDirectoryBain((*iter)->getData().name)) ||
         (!bainStyle && InstallationTester::isTopLevelDirectory((*iter)->getData().name))) {
-      qDebug("%s on the top level", (*iter)->getData().name.toUtf8().constData());
+      log::debug("{} on the top level", (*iter)->getData().name.toQString());
       return true;
     }
   }
@@ -424,7 +428,7 @@ DirectoryTree::Node *InstallationManager::getSimpleArchiveBase(DirectoryTree *da
                (currentNode->numNodes() == 1)) {
       currentNode = *currentNode->nodesBegin();
     } else {
-      qDebug("not a simple archive");
+      log::debug("not a simple archive");
       return nullptr;
     }
   }
@@ -476,17 +480,22 @@ QString InstallationManager::generateBackupName(const QString &directoryName) co
 bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *merge) const
 {
   QString targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory + "\\" + modName);
+
   while (QDir(targetDirectory).exists()) {
     Settings &settings(Settings::instance());
-    bool backup = settings.directInterface().value("backup_install", false).toBool();
-    QueryOverwriteDialog overwriteDialog(m_ParentWidget,
-                                         backup ? QueryOverwriteDialog::BACKUP_YES : QueryOverwriteDialog::BACKUP_NO);
+
+    const bool backup = settings.keepBackupOnInstall();
+    QueryOverwriteDialog overwriteDialog(
+      m_ParentWidget,
+      backup ? QueryOverwriteDialog::BACKUP_YES : QueryOverwriteDialog::BACKUP_NO);
+
     if (overwriteDialog.exec()) {
-      settings.directInterface().setValue("backup_install", overwriteDialog.backup());
+      settings.setKeepBackupOnInstall(overwriteDialog.backup());
+
       if (overwriteDialog.backup()) {
         QString backupDirectory = generateBackupName(targetDirectory);
         if (!copyDir(targetDirectory, backupDirectory, false)) {
-          reportError(tr("failed to create backup"));
+          reportError(tr("Failed to create backup"));
           return false;
         }
       }
@@ -527,7 +536,7 @@ bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *me
           settingsFile.write(originalSettings);
           settingsFile.close();
         } else {
-          qCritical("failed to restore original settings: %s", qUtf8Printable(metaFilename));
+          log::error("failed to restore original settings: {}", metaFilename);
         }
         return true;
       } else if (overwriteDialog.action() == QueryOverwriteDialog::ACT_MERGE) {
@@ -559,24 +568,24 @@ bool InstallationManager::ensureValidModName(GuessedValue<QString> &name) const
   return true;
 }
 
-bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString gameName, int modID,
+IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QString> &modName, QString gameName, int modID,
                                     const QString &version, const QString &newestVersion,
                                     int categoryID, int fileCategoryID, const QString &repository)
 {
   if (!ensureValidModName(modName)) {
-    return false;
+    return IPluginInstaller::RESULT_FAILED;
   }
 
   bool merge = false;
   // determine target directory
   if (!testOverwrite(modName, &merge)) {
-    return false;
+    return IPluginInstaller::RESULT_FAILED;
   }
 
   QString targetDirectory = QDir(m_ModsDirectory + "/" + modName).canonicalPath();
   QString targetDirectoryNative = QDir::toNativeSeparators(targetDirectory);
 
-  qDebug("installing to \"%s\"", qUtf8Printable(targetDirectoryNative));
+  log::debug("installing to \"{}\"", targetDirectoryNative);
 
   m_InstallationProgress = new QProgressDialog(m_ParentWidget);
   ON_BLOCK_EXIT([this] () {
@@ -611,12 +620,12 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString game
   if (!future.result()) {
     if (m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
       if (!m_ErrorMessage.isEmpty()) {
-        throw MyException(QString("extracting failed (%1)").arg(m_ErrorMessage));
+        throw MyException(tr("Extraction failed: %1").arg(m_ErrorMessage));
       } else {
-      return false;
+      return IPluginInstaller::RESULT_CANCELED;
       }
     } else {
-      throw MyException(QString("extracting failed (%1)").arg(m_ArchiveHandler->getLastError()));
+      throw MyException(tr("Extraction failed: %1").arg(m_ArchiveHandler->getLastError()));
     }
   }
 
@@ -657,7 +666,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString game
     settingsFile.endGroup();
   }
 
-  return true;
+  return IPluginInstaller::RESULT_SUCCESS;
 }
 
 
@@ -693,7 +702,7 @@ void InstallationManager::postInstallCleanup()
         QFile::setPermissions(fileInfo.absoluteFilePath(), QFile::ReadOther | QFile::WriteOther);
       }
       if (!QFile::remove(fileInfo.absoluteFilePath())) {
-        qWarning() << "Unable to delete " << fileInfo.absoluteFilePath();
+        log::warn("Unable to delete {}", fileInfo.absoluteFilePath());
       }
     }
     directoriesToRemove.insert(fileInfo.absolutePath());
@@ -707,7 +716,7 @@ void InstallationManager::postInstallCleanup()
   }
 }
 
-bool InstallationManager::install(const QString &fileName,
+IPluginInstaller::EInstallResult InstallationManager::install(const QString &fileName,
                                   GuessedValue<QString> &modName,
                                   bool &hasIniTweaks,
                                   int modID)
@@ -718,7 +727,7 @@ bool InstallationManager::install(const QString &fileName,
   QFileInfo fileInfo(fileName);
   if (m_SupportedExtensions.find(fileInfo.suffix()) == m_SupportedExtensions.end()) {
     reportError(tr("File format \"%1\" not supported").arg(fileInfo.suffix()));
-    return false;
+    return IPluginInstaller::RESULT_FAILED;
   }
 
   modName.setFilter(&fixDirectoryName);
@@ -764,7 +773,7 @@ bool InstallationManager::install(const QString &fileName,
     if ((modID == 0) && (guessedModID != -1)) {
       modID = guessedModID;
     } else if (modID != guessedModID) {
-      qDebug("passed mod id: %d, guessed id: %d", modID, guessedModID);
+      log::debug("passed mod id: {}, guessed id: {}", modID, guessedModID);
     }
 
     modName.update(guessedModName, GUESS_GOOD);
@@ -774,7 +783,7 @@ bool InstallationManager::install(const QString &fileName,
   if (fileInfo.dir() == QDir(m_DownloadsDirectory)) {
     m_CurrentFile = fileInfo.fileName();
   }
-  qDebug("using mod name \"%s\" (id %d) -> %s", qUtf8Printable(modName), modID, qUtf8Printable(m_CurrentFile));
+  log::debug("using mod name \"{}\" (id {}) -> {}", QString(modName), modID, m_CurrentFile);
 
   //If there's an archive already open, close it. This happens with the bundle
   //installer when it uncompresses a split archive, then finds it has a real archive
@@ -785,9 +794,9 @@ bool InstallationManager::install(const QString &fileName,
   bool archiveOpen = m_ArchiveHandler->open(fileName,
                                             new MethodCallback<InstallationManager, void, QString *>(this, &InstallationManager::queryPassword));
   if (!archiveOpen) {
-    qDebug("integrated archiver can't open %s: %s (%d)",
-           qUtf8Printable(fileName),
-           qUtf8Printable(getErrorString(m_ArchiveHandler->getLastError())),
+    log::debug("integrated archiver can't open {}: {} ({})",
+           fileName,
+           getErrorString(m_ArchiveHandler->getLastError()),
            m_ArchiveHandler->getLastError());
   }
   ON_BLOCK_EXIT(std::bind(&InstallationManager::postInstallCleanup, this));
@@ -826,15 +835,12 @@ bool InstallationManager::install(const QString &fileName,
             mapToArchive(filesTree.data());
             // the simple installer only prepares the installation, the rest
             // works the same for all installers
-            if (!doInstall(modName, gameName, modID, version, newestVersion, categoryID,
-                            fileCategoryID, repository)) {
-              installResult = IPluginInstaller::RESULT_FAILED;
-            }
+            installResult = doInstall(modName, gameName, modID, version, newestVersion, categoryID, fileCategoryID, repository);
           }
         }
       }
 
-      { // custom case
+      if (installResult != IPluginInstaller::RESULT_CANCELED) { // custom case
         IPluginInstallerCustom *installerCustom
             = dynamic_cast<IPluginInstallerCustom *>(installer);
         if ((installerCustom != nullptr)
@@ -856,35 +862,41 @@ bool InstallationManager::install(const QString &fileName,
         }
       }
     } catch (const IncompatibilityException &e) {
-      qCritical("plugin \"%s\" incompatible: %s",
-                qUtf8Printable(installer->name()), e.what());
+      log::error("plugin \"{}\" incompatible: {}", installer->name(), e.what());
     }
 
     // act upon the installation result. at this point the files have already been
     // extracted to the correct location
     switch (installResult) {
-      case IPluginInstaller::RESULT_CANCELED:
       case IPluginInstaller::RESULT_FAILED: {
-        return false;
+        QMessageBox::information(qApp->activeWindow(), tr("Installation failed"),
+          tr("Something went wrong while installing this mod."),
+          QMessageBox::Ok);
+        return installResult;
       } break;
       case IPluginInstaller::RESULT_SUCCESS:
       case IPluginInstaller::RESULT_SUCCESSCANCEL: {
         if (filesTree != nullptr) {
           DirectoryTree::node_iterator iniTweakNode = filesTree->nodeFind(DirectoryTreeInformation("INI Tweaks"));
           hasIniTweaks = (iniTweakNode != filesTree->nodesEnd()) &&
-                         ((*iniTweakNode)->numLeafs() != 0);
-          return true;
-        } else {
-          return false;
+            ((*iniTweakNode)->numLeafs() != 0);
         }
+        return IPluginInstaller::RESULT_SUCCESS;
       } break;
+      case IPluginInstaller::RESULT_NOTATTEMPTED:
+      case IPluginInstaller::RESULT_MANUALREQUESTED: {
+        continue;
+      }
+      default:
+        return installResult;
     }
   }
+  if (installResult == IPluginInstaller::RESULT_NOTATTEMPTED) {
+    reportError(tr("None of the available installer plugins were able to handle that archive.\n"
+      "This is likely due to a corrupted or incompatible download or unrecognized archive format."));
+  }
 
-  reportError(tr("None of the available installer plugins were able to handle that archive.\n"
-    "This is likely due to a corrupted or incompatible download or unrecognized archive format."));
-
-  return false;
+  return installResult;
 }
 
 

@@ -31,16 +31,43 @@ class ModListSortProxy : public QSortFilterProxyModel
   Q_OBJECT
 
 public:
-
-  enum FilterMode {
-    FILTER_AND,
-    FILTER_OR
+  enum FilterMode
+  {
+    FilterAnd,
+    FilterOr
   };
 
-  enum FilterType {
-    TYPE_SPECIAL,
-    TYPE_CATEGORY,
-    TYPE_CONTENT
+  enum CriteriaType {
+    TypeSpecial,
+    TypeCategory,
+    TypeContent
+  };
+
+  enum SeparatorsMode
+  {
+    SeparatorFilter,
+    SeparatorShow,
+    SeparatorHide
+  };
+
+  struct Criteria
+  {
+    CriteriaType type;
+    int id;
+    bool inverse;
+
+    bool operator==(const Criteria& other) const
+    {
+      return
+        (type == other.type) &&
+        (id == other.id) &&
+        (inverse == other.inverse);
+    }
+
+    bool operator!=(const Criteria& other) const
+    {
+      return !(*this == other);
+    }
   };
 
 public:
@@ -49,10 +76,6 @@ public:
 
   void setProfile(Profile *profile);
 
-  void setCategoryFilter(const std::vector<int> &categories);
-  std::vector<int> categoryFilter() const { return m_CategoryFilter; }
-
-  void setContentFilter(const std::vector<int> &content);
 
   virtual Qt::ItemFlags flags(const QModelIndex &modelIndex) const;
   virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action,
@@ -84,7 +107,8 @@ public:
    */
   bool isFilterActive() const { return m_FilterActive; }
 
-  void setFilterMode(FilterMode mode);
+  void setCriteria(const std::vector<Criteria>& criteria);
+  void setOptions(FilterMode mode, SeparatorsMode separators);
 
   /**
    * @brief tests if the specified index has child nodes
@@ -118,7 +142,8 @@ protected:
 private:
 
   unsigned long flagsId(const std::vector<ModInfo::EFlag> &flags) const;
-  bool hasConflictFlag(const std::vector<ModInfo::EFlag> &flags) const;
+  unsigned long conflictFlagsId(const std::vector<ModInfo::EConflictFlag>& flags) const;
+  bool hasConflictFlag(const std::vector<ModInfo::EConflictFlag> &flags) const;
   void updateFilterActive();
   bool filterMatchesModAnd(ModInfo::Ptr info, bool enabled) const;
   bool filterMatchesModOr(ModInfo::Ptr info, bool enabled) const;
@@ -129,19 +154,21 @@ private slots:
   void postDataChanged();
 
 private:
-
-  Profile *m_Profile;
-
-  std::vector<int> m_CategoryFilter;
-  std::vector<int> m_ContentFilter;
+  Profile* m_Profile;
+  std::vector<Criteria> m_Criteria;
+  QString m_Filter;
   std::bitset<ModList::COL_LASTCOLUMN + 1> m_EnabledColumns;
-  QString m_CurrentFilter;
 
   bool m_FilterActive;
   FilterMode m_FilterMode;
+  SeparatorsMode m_FilterSeparators;
 
-  std::vector<int> m_PreChangeFilters;
+  std::vector<Criteria> m_PreChangeCriteria;
 
+  bool optionsMatchMod(ModInfo::Ptr info, bool enabled) const;
+  bool criteriaMatchMod(ModInfo::Ptr info, bool enabled, const Criteria& c) const;
+  bool categoryMatchesMod(ModInfo::Ptr info, bool enabled, int category) const;
+  bool contentMatchesMod(ModInfo::Ptr info, bool enabled, int content) const;
 };
 
 #endif // MODLISTSORTPROXY_H
