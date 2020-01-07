@@ -61,7 +61,7 @@ void ProblemsDialog::runDiagnosis()
       if (diagnose->hasGuidedFix(key)) {
         newItem->setText(1, tr("Fix"));
         QPushButton *fixButton = new QPushButton(tr("Fix"));
-        fixButton->setProperty("fix", qVariantFromValue(reinterpret_cast<void*>(diagnose)));
+        fixButton->setProperty("fix", QVariant::fromValue(reinterpret_cast<void*>(diagnose)));
         fixButton->setProperty("key", key);
         connect(fixButton, SIGNAL(clicked()), this, SLOT(startFix()));
         ui->problemsWidget->setItemWidget(newItem, 1, fixButton);

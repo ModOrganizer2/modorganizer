@@ -1434,7 +1434,7 @@ void MainWindow::displaySaveGameInfo(QListWidgetItem *newItem)
   m_CurrentSaveView->move(pos);
 
   m_CurrentSaveView->show();
-  m_CurrentSaveView->setProperty("displayItem", qVariantFromValue(static_cast<void *>(newItem)));
+  m_CurrentSaveView->setProperty("displayItem", QVariant::fromValue(static_cast<void *>(newItem)));
 }
 
 
@@ -1507,7 +1507,7 @@ void MainWindow::registerPluginTool(IPluginTool *tool, QString name, QMenu *menu
   QAction *action = new QAction(tool->icon(), name, menu);
   action->setToolTip(tool->tooltip());
   tool->setParentWidget(this);
-  action->setData(qVariantFromValue((QObject*)tool));
+  action->setData(QVariant::fromValue((QObject*)tool));
   connect(action, SIGNAL(triggered()), this, SLOT(toolPluginInvoke()), Qt::QueuedConnection);
 
   menu->addAction(action);
@@ -1567,7 +1567,7 @@ void MainWindow::registerModPage(IPluginModPage *modPage)
 
   QAction *action = new QAction(modPage->icon(), modPage->displayName(), this);
   modPage->setParentWidget(this);
-  action->setData(qVariantFromValue(reinterpret_cast<QObject*>(modPage)));
+  action->setData(QVariant::fromValue(reinterpret_cast<QObject*>(modPage)));
 
   connect(action, SIGNAL(triggered()), this, SLOT(modPagePluginInvoke()), Qt::QueuedConnection);
 

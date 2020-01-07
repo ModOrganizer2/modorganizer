@@ -639,7 +639,7 @@ void DownloadManager::addNXMDownload(const QString &url)
   info->nexusDownloadUser = nxmInfo.userId();
 
   QObject *test = info;
-  m_RequestIDs.insert(m_NexusInterface->requestFileInfo(foundGame->gameShortName(), nxmInfo.modId(), nxmInfo.fileId(), this, qVariantFromValue(test), ""));
+  m_RequestIDs.insert(m_NexusInterface->requestFileInfo(foundGame->gameShortName(), nxmInfo.modId(), nxmInfo.fileId(), this, QVariant::fromValue(test), ""));
 }
 
 
@@ -1690,7 +1690,7 @@ void DownloadManager::nxmFileInfoAvailable(QString gameName, int modID, int file
   info->fileID = fileID;
 
   QObject *test = info;
-  m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(info->gameName, info->modID, info->fileID, this, qVariantFromValue(test), QString()));
+  m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(info->gameName, info->modID, info->fileID, this, QVariant::fromValue(test), QString()));
 }
 
 static int evaluateFileInfoMap(
