@@ -199,7 +199,7 @@ FilterList::FilterList(Ui::MainWindow* ui, CategoryFactory& factory)
     [&]{ onOptionsChanged(); });
 
   ui->filters->header()->setMinimumSectionSize(0);
-  ui->filters->header()->setSectionResizeMode(0, QHeaderView::Fixed);
+  ui->filters->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
   ui->filters->header()->resizeSection(0, 30);
   ui->categoriesSplitter->setCollapsible(0, false);
   ui->categoriesSplitter->setCollapsible(1, false);

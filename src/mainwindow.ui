@@ -101,19 +101,25 @@
            <bool>true</bool>
           </property>
           <attribute name="headerVisible">
-           <bool>false</bool>
+           <bool>true</bool>
           </attribute>
           <attribute name="headerCascadingSectionResizes">
            <bool>false</bool>
           </attribute>
           <column>
            <property name="text">
-            <string/>
+            <string>State</string>
+           </property>
+           <property name="toolTip">
+            <string>State of the filter, can either be Disabled, Enabled or Inverted.</string>
            </property>
           </column>
           <column>
            <property name="text">
-            <string notr="true">Category</string>
+            <string notr="true">Filter</string>
+           </property>
+           <property name="toolTip">
+            <string>Filter to apply to the modlist.</string>
            </property>
           </column>
          </widget>
