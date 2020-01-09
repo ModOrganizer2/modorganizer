@@ -225,11 +225,9 @@ QTreeWidgetItem* FilterList::addCriteriaItem(
 {
   auto* item = new CriteriaItem(this, name, type, categoryID);
 
-  if (root != nullptr) {
-    root->addChild(item);
-  } else {
-    ui->filters->addTopLevelItem(item);
-  }
+  // For now list all categories flatly without nestling them as there is
+  // no way to espand nodes in the filter view since clicking changes state.
+  ui->filters->addTopLevelItem(item);
 
   item->setTextAlignment(0, Qt::AlignCenter);
 
