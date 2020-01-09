@@ -199,7 +199,7 @@ FilterList::FilterList(Ui::MainWindow* ui, CategoryFactory& factory)
     [&]{ onOptionsChanged(); });
 
   ui->filters->header()->setMinimumSectionSize(0);
-  ui->filters->header()->setSectionResizeMode(0, QHeaderView::Fixed);
+  ui->filters->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
   ui->filters->header()->resizeSection(0, 30);
   ui->categoriesSplitter->setCollapsible(0, false);
   ui->categoriesSplitter->setCollapsible(1, false);
@@ -225,11 +225,9 @@ QTreeWidgetItem* FilterList::addCriteriaItem(
 {
   auto* item = new CriteriaItem(this, name, type, categoryID);
 
-  if (root != nullptr) {
-    root->addChild(item);
-  } else {
-    ui->filters->addTopLevelItem(item);
-  }
+  // For now list all categories flatly without nestling them as there is
+  // no way to espand nodes in the filter view since clicking changes state.
+  ui->filters->addTopLevelItem(item);
 
   item->setTextAlignment(0, Qt::AlignCenter);
 
