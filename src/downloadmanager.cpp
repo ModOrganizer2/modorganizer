@@ -1823,8 +1823,14 @@ void DownloadManager::nxmFileInfoFromMd5Available(QString gameName, QVariant use
       auto fileDetails = results["file_details"].toMap();
 
       if (fileDetails["file_name"].toString().compare(info->m_FileName, Qt::CaseInsensitive) == 0) {
-        chosenIdx = i;
-        break;
+        if (chosenIdx < 0) {
+          chosenIdx = i; //intentional to not break in order to check other results
+        }
+        else {
+          log::debug("Multiple files with same name found during MD5 search.");
+          chosenIdx = -1;
+          break;
+        }
       }
     }
   }
@@ -1839,7 +1845,7 @@ void DownloadManager::nxmFileInfoFromMd5Available(QString gameName, QVariant use
         if (chosenIdx < 0) {
           chosenIdx = i; //intentional to not break in order to check other results
         } else {
-          log::debug("Multiple active files found during MD5 search.  Defaulting to time stamps...");
+          log::debug("Multiple active files found during MD5 search.");
           chosenIdx = -1;
           break;
         }
@@ -1847,23 +1853,13 @@ void DownloadManager::nxmFileInfoFromMd5Available(QString gameName, QVariant use
     }
   }
 
-  //Look for the most recent one
+  //Unable to determine the correct mod / file.  Revert to the old method
   if (chosenIdx < 0) {
-    int mostRecentTime = INT_MIN;
-    for (int i = 0; i < resultlist.count(); i++) {
-      auto results = resultlist[i].toMap();
-      auto fileDetails = results["file_details"].toMap();
-
-      int fileTime = fileDetails["uploaded_timestamp"].toInt();
-      if (fileTime > mostRecentTime) {
-        chosenIdx = i;
-        mostRecentTime = fileTime;
-      }
-    }
+    //don't use the normal state set function as we don't want to create a meta file
+    info->m_State = DownloadManager::STATE_READY; 
+    queryInfo(m_ActiveDownloads.indexOf(info));
+    return;
   }
-
-  //If nothing is preferred, just use the first one
-  if (chosenIdx < 0) chosenIdx = 0;
 
   auto results = resultlist[chosenIdx].toMap();
   auto fileDetails = results["file_details"].toMap();
