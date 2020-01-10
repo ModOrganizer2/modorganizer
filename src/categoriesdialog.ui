@@ -45,7 +45,7 @@
     </widget>
    </item>
    <item row="0" column="3">
-    <widget class="QTableWidget" name="categoriesTable">
+    <widget class="CategoriesTable" name="categoriesTable">
      <property name="contextMenuPolicy">
       <enum>Qt::CustomContextMenu</enum>
      </property>
@@ -145,6 +145,9 @@ p, li { white-space: pre-wrap; }
    </item>
    <item row="0" column="4" colspan="2">
     <widget class="QGroupBox" name="groupBox">
+     <property name="toolTip">
+      <string>Drag &amp; drop nexus categories from this pane onto the target category on the left.</string>
+     </property>
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
@@ -173,6 +176,13 @@ p, li { white-space: pre-wrap; }
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CategoriesTable</class>
+   <extends>QTableWidget</extends>
+   <header>categoriestable.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>
