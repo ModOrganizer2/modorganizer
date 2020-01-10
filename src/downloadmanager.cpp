@@ -951,13 +951,20 @@ void DownloadManager::queryInfo(int index)
     SelectionDialog selection(tr("Please select the source game code for %1").arg(getFileName(index)));
 
     std::vector<std::pair<QString, QString>> choices = m_NexusInterface->getGameChoices(m_ManagedGame);
-    for (auto choice : choices) {
-      selection.addChoice(choice.first, choice.second, choice.first);
+    if (choices.size() == 1)
+    {
+      info->m_FileInfo->gameName = choices[0].first;
     }
-    if (selection.exec() == QDialog::Accepted) {
-      info->m_FileInfo->gameName = selection.getChoiceData().toString();
-    } else {
-      info->m_FileInfo->gameName = m_ManagedGame->gameShortName();
+    else {
+      for (auto choice : choices) {
+        selection.addChoice(choice.first, choice.second, choice.first);
+      }
+      if (selection.exec() == QDialog::Accepted) {
+        info->m_FileInfo->gameName = selection.getChoiceData().toString();
+      }
+      else {
+        info->m_FileInfo->gameName = m_ManagedGame->gameShortName();
+      }
     }
   }
   info->m_ReQueried = true;
