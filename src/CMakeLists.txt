@@ -44,6 +44,7 @@ mo2_add_filter(NAME src/browser GROUPS
 
 mo2_add_filter(NAME src/core GROUPS
 	categories
+    categoriestable
 	archivefiletree
 	installationmanager
 	nexusinterface

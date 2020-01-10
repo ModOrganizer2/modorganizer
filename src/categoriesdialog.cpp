@@ -226,7 +226,7 @@ void CategoriesDialog::fillTable()
       itemData.insert(itemData.length(), newData);
       QStringList names;
       for (auto cat : itemData) {
-        names.append(categories->getCategoryName(categories->resolveNexusID(cat.toList()[1].toInt())));
+        names.append(cat.toList()[0].toString());
       }
       item->setData(Qt::UserRole, itemData);
       item->setData(Qt::DisplayRole, names.join(", "));
