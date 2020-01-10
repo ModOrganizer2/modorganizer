@@ -162,12 +162,9 @@ LogList::LogList(QWidget* parent)
 {
   setModel(&LogModel::instance());
 
-  const QFontMetrics fm(font());
-  const int timestampWidth = fm.horizontalAdvance("00:00:00.000");
-
   header()->setMinimumSectionSize(0);
   header()->resizeSection(0, 20);
-  header()->resizeSection(1, timestampWidth + 8);
+  header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
 
   setAutoScroll(true);
   scrollToBottom();
