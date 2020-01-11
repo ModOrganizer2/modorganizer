@@ -432,6 +432,13 @@ bool DownloadManager::addDownload(QNetworkReply *reply, const QStringList &URLs,
     }
   }
 
+  // baseName could be a URL at this point so strip out the URL query
+  int queryIndex = baseName.indexOf("?");
+  if (queryIndex >= 0)
+  {
+    baseName.truncate(queryIndex);
+  }
+
   startDisableDirWatcher();
   newDownload->setName(getDownloadFileName(baseName), false);
   endDisableDirWatcher();
