@@ -93,6 +93,7 @@ void Settings::processUpdates(
   const QVersionNumber& currentVersion, const QVersionNumber& lastVersion)
 {
   if (firstStart()) {
+    set(m_Settings, "General", "version", currentVersion.toString());
     return;
   }
 
