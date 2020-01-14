@@ -19,7 +19,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "directoryentry.h"
 #include "windows_error.h"
-#include "leaktrace.h"
 #include "error_report.h"
 #include <log.h>
 #include <bsatk.h>
@@ -32,7 +31,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <algorithm>
 #include <map>
 #include <atomic>
-#include <QObject>
 
 namespace MOShared
 {
@@ -80,12 +78,6 @@ public:
   OriginConnection()
     : m_NextID(0)
   {
-    LEAK_TRACE;
-  }
-
-  ~OriginConnection()
-  {
-    LEAK_UNTRACE;
   }
 
   FilesOrigin& createOrigin(
@@ -166,19 +158,12 @@ FileEntry::FileEntry() :
   m_Index(UINT_MAX), m_Name(), m_Origin(-1), m_Parent(nullptr),
   m_LastAccessed(time(nullptr))
 {
-  LEAK_TRACE;
 }
 
 FileEntry::FileEntry(Index index, const std::wstring &name, DirectoryEntry *parent) :
   m_Index(index), m_Name(name), m_Origin(-1), m_Archive(L"", -1),
   m_Parent(parent), m_LastAccessed(time(nullptr))
 {
-  LEAK_TRACE;
-}
-
-FileEntry::~FileEntry()
-{
-  LEAK_UNTRACE;
 }
 
 void FileEntry::addOrigin(
@@ -399,7 +384,6 @@ bool FileEntry::recurseParents(std::wstring &path, const DirectoryEntry *parent)
 FilesOrigin::FilesOrigin()
   : m_ID(0), m_Disabled(false), m_Name(), m_Path(), m_Priority(0)
 {
-  LEAK_TRACE;
 }
 
 FilesOrigin::FilesOrigin(const FilesOrigin &reference)
@@ -411,7 +395,6 @@ FilesOrigin::FilesOrigin(const FilesOrigin &reference)
   , m_FileRegister(reference.m_FileRegister)
   , m_OriginConnection(reference.m_OriginConnection)
 {
-  LEAK_TRACE;
 }
 
 FilesOrigin::FilesOrigin(
@@ -422,12 +405,6 @@ FilesOrigin::FilesOrigin(
     m_Priority(priority), m_FileRegister(fileRegister),
     m_OriginConnection(originConnection)
 {
-  LEAK_TRACE;
-}
-
-FilesOrigin::~FilesOrigin()
-{
-  LEAK_UNTRACE;
 }
 
 void FilesOrigin::setPriority(int priority)
@@ -504,13 +481,6 @@ bool FilesOrigin::containsArchive(std::wstring archiveName)
 FileRegister::FileRegister(boost::shared_ptr<OriginConnection> originConnection)
   : m_OriginConnection(originConnection)
 {
-  LEAK_TRACE;
-}
-
-FileRegister::~FileRegister()
-{
-  LEAK_UNTRACE;
-  m_Files.clear();
 }
 
 bool FileRegister::indexValid(FileEntry::Index index) const
@@ -650,7 +620,6 @@ DirectoryEntry::DirectoryEntry(
 {
   m_FileRegister.reset(new FileRegister(m_OriginConnection));
   m_Origins.insert(originID);
-  LEAK_TRACE;
 }
 
 DirectoryEntry::DirectoryEntry(
@@ -660,13 +629,11 @@ DirectoryEntry::DirectoryEntry(
     m_FileRegister(fileRegister), m_OriginConnection(originConnection),
     m_Name(name), m_Parent(parent), m_Populated(false), m_TopLevel(false)
 {
-  LEAK_TRACE;
   m_Origins.insert(originID);
 }
 
 DirectoryEntry::~DirectoryEntry()
 {
-  LEAK_UNTRACE;
   clear();
 }
 
@@ -680,7 +647,7 @@ void DirectoryEntry::clear()
   }
 
   m_SubDirectories.clear();
-  m_SubDirectoriesMap.clear();
+  m_SubDirectoriesLookup.clear();
 }
 
 void DirectoryEntry::addFromOrigin(
@@ -735,7 +702,7 @@ void DirectoryEntry::addFromBSA(
       stream
 		<< QObject::tr("invalid bsa file: ").toStdString()
 		<< ToString(fileName, false)
-		<< " errorcode " << res << " - " << ::GetLastError();
+		<< " error code " << res << " - " << ::GetLastError();
 
       throw std::runtime_error(stream.str());
     }
@@ -806,15 +773,15 @@ std::vector<FileEntry::Ptr> DirectoryEntry::getFiles() const
 DirectoryEntry *DirectoryEntry::findSubDirectory(
   const std::wstring &name, bool alreadyLowerCase) const
 {
-  SubDirectoriesMap::const_iterator itor;
+  SubDirectoriesLookup::const_iterator itor;
 
   if (alreadyLowerCase) {
-    itor = m_SubDirectoriesMap.find(name);
+    itor = m_SubDirectoriesLookup.find(name);
   } else {
-    itor = m_SubDirectoriesMap.find(ToLowerCopy(name));
+    itor = m_SubDirectoriesLookup.find(ToLowerCopy(name));
   }
 
-  if (itor == m_SubDirectoriesMap.end()) {
+  if (itor == m_SubDirectoriesLookup.end()) {
     return nullptr;
   }
 
@@ -936,48 +903,7 @@ void DirectoryEntry::insertFile(
 
 void DirectoryEntry::removeFile(FileEntry::Index index)
 {
-  if (!m_FilesLookup.empty()) {
-    auto iter = std::find_if(
-      m_FilesLookup.begin(), m_FilesLookup.end(),
-      [&index](auto&& pair) { return (pair.second == index); }
-    );
-
-    if (iter != m_FilesLookup.end()) {
-      m_FilesLookup.erase(iter);
-    } else {
-      log::error(
-        QObject::tr("file \"{}\" not in directory for lookup \"{}\"").toStdString(),
-        m_FileRegister->getFile(index)->getName(), this->getName());
-    }
-  } else {
-    log::error(
-      QObject::tr("file \"{}\" not in directory \"{}\" for lookup, directory empty").toStdString(),
-      m_FileRegister->getFile(index)->getName(), this->getName());
-  }
-
-  if (!m_Files.empty()) {
-    auto iter = std::find_if(
-      m_Files.begin(), m_Files.end(),
-      [&index](const std::pair<std::wstring, FileEntry::Index> &iter) -> bool {
-        return iter.second == index; }
-    );
-
-    if (iter != m_Files.end()) {
-      m_Files.erase(iter);
-    } else {
-      log::error(
-        QObject::tr("file \"{}\" not in directory \"{}\"").toStdString(),
-        m_FileRegister->getFile(index)->getName(), this->getName());
-    }
-  } else {
-    log::error(
-      QObject::tr("file \"{}\" not in directory \"{}\", directory empty").toStdString(),
-      m_FileRegister->getFile(index)->getName(), this->getName());
-  }
-
-  if (m_Files.size() != m_FilesLookup.size()) {
-    DebugBreak();
-  }
+  removeFileFromList(index);
 }
 
 bool DirectoryEntry::removeFile(const std::wstring &filePath, int *origin)
@@ -1009,21 +935,7 @@ void DirectoryEntry::removeDir(const std::wstring &path)
 
       if (CaseInsensitiveEqual(entry->getName(), path)) {
         entry->removeDirRecursive();
-
-        bool found = false;
-        for (auto iter2=m_SubDirectoriesMap.begin(); iter2!=m_SubDirectoriesMap.end(); ++iter2) {
-          if (iter2->second == entry) {
-            m_SubDirectoriesMap.erase(iter2);
-            found = true;
-            break;
-          }
-        }
-
-        if (!found) {
-          log::error("entry {} not in sub directories map", entry->getName());
-        }
-
-        m_SubDirectories.erase(iter);
+        removeDirectoryFromList(iter);
         delete entry;
         break;
       }
@@ -1058,10 +970,6 @@ bool DirectoryEntry::remove(const std::wstring &fileName, int *origin)
     b = m_FileRegister->removeFile(iter->second);
   }
 
-  if (m_Files.size() != m_FilesLookup.size()) {
-    DebugBreak();
-  }
-
   return b;
 }
 
@@ -1085,41 +993,21 @@ FilesOrigin &DirectoryEntry::createOrigin(
 
 void DirectoryEntry::removeFiles(const std::set<FileEntry::Index> &indices)
 {
-  for (auto iter = m_Files.begin(); iter != m_Files.end();) {
-    if (indices.find(iter->second) != indices.end()) {
-      iter = m_Files.erase(iter);
-    } else {
-      ++iter;
-    }
-  }
-
-  for (auto iter = m_FilesLookup.begin(); iter != m_FilesLookup.end();) {
-    if (indices.find(iter->second) != indices.end()) {
-      iter = m_FilesLookup.erase(iter);
-    } else {
-      ++iter;
-    }
-  }
+  removeFilesFromList(indices);
 }
 
 void DirectoryEntry::insert(
   const std::wstring &fileName, FilesOrigin &origin, FILETIME fileTime,
   const std::wstring &archive, int order)
 {
-  std::wstring fileNameLower = ToLowerCopy(fileName);
-  auto iter = m_Files.find(fileNameLower);
+  auto iter = m_Files.find(ToLowerCopy(fileName));
   FileEntry::Ptr file;
 
   if (iter != m_Files.end()) {
     file = m_FileRegister->getFile(iter->second);
   } else {
     file = m_FileRegister->createFile(fileName, this);
-    m_Files.emplace(fileNameLower, file->getIndex());
-    m_FilesLookup.emplace(fileNameLower, file->getIndex());
-  }
-
-  if (m_Files.size() != m_FilesLookup.size()) {
-    DebugBreak();
+    addFileToList(*file);
   }
 
   file->addOrigin(origin.getID(), fileTime, archive, order);
@@ -1198,8 +1086,7 @@ DirectoryEntry *DirectoryEntry::getSubDirectory(
     auto* entry = new DirectoryEntry(
       name, this, originID, m_FileRegister, m_OriginConnection);
 
-    m_SubDirectories.push_back(entry);
-    m_SubDirectoriesMap.emplace(ToLowerCopy(name), entry);
+    addDirectoryToList(entry);
 
     return entry;
   } else {
@@ -1244,7 +1131,87 @@ void DirectoryEntry::removeDirRecursive()
   }
 
   m_SubDirectories.clear();
-  m_SubDirectoriesMap.clear();
+  m_SubDirectoriesLookup.clear();
+}
+
+void DirectoryEntry::addDirectoryToList(DirectoryEntry* e)
+{
+  m_SubDirectories.push_back(e);
+  m_SubDirectoriesLookup.emplace(ToLowerCopy(e->getName()), e);
+}
+
+void DirectoryEntry::removeDirectoryFromList(SubDirectories::iterator itor)
+{
+  const auto* entry = *itor;
+
+  {
+    auto itor2 = std::find_if(
+      m_SubDirectoriesLookup.begin(), m_SubDirectoriesLookup.end(),
+      [&](auto&& d) { return (d.second == entry); });
+
+    if (itor2 == m_SubDirectoriesLookup.end()) {
+      log::error("entry {} not in sub directories map", entry->getName());
+    } else {
+      m_SubDirectoriesLookup.erase(itor2);
+    }
+  }
+
+  m_SubDirectories.erase(itor);
+}
+
+void DirectoryEntry::removeFileFromList(FileEntry::Index index)
+{
+  auto removeFrom = [&](auto& list) {
+    auto iter = std::find_if(
+      list.begin(), list.end(),
+      [&index](auto&& pair) { return (pair.second == index); }
+    );
+
+    if (iter == list.end()) {
+      auto f = m_FileRegister->getFile(index);
+
+      if (f) {
+        log::error(
+          "can't remove file '{}', not in directory entry '{}'",
+          f->getName(), getName());
+      } else {
+        log::error(
+          "can't remove file with index {}, not in directory entry '{}' and "
+          "not in register",
+          index, getName());
+      }
+    } else {
+      list.erase(iter);
+    }
+  };
+
+  removeFrom(m_FilesLookup);
+  removeFrom(m_Files);
+}
+
+void DirectoryEntry::removeFilesFromList(const std::set<FileEntry::Index>& indices)
+{
+  for (auto iter = m_Files.begin(); iter != m_Files.end();) {
+    if (indices.find(iter->second) != indices.end()) {
+      iter = m_Files.erase(iter);
+    } else {
+      ++iter;
+    }
+  }
+
+  for (auto iter = m_FilesLookup.begin(); iter != m_FilesLookup.end();) {
+    if (indices.find(iter->second) != indices.end()) {
+      iter = m_FilesLookup.erase(iter);
+    } else {
+      ++iter;
+    }
+  }
+}
+
+void DirectoryEntry::addFileToList(const FileEntry& f)
+{
+  m_Files.emplace(ToLowerCopy(f.getName()), f.getIndex());
+  m_FilesLookup.emplace(ToLowerCopy(f.getName()), f.getIndex());
 }
 
 } // namespace MOShared

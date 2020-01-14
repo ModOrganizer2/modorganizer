@@ -48,6 +48,19 @@ void FileTreeItem::remove(std::size_t i)
   m_children.erase(m_children.begin() + i);
 }
 
+void FileTreeItem::remove(std::size_t from, std::size_t n)
+{
+  if ((from + n) > m_children.size()) {
+    log::error("{}: can't remove children from {} n={}", debugName(), from, n);
+    return;
+  }
+
+  auto begin = m_children.begin() + from;
+  auto end = begin + n;
+
+  m_children.erase(begin, end);
+}
+
 QString FileTreeItem::virtualPath() const
 {
   QString s = "Data\\";

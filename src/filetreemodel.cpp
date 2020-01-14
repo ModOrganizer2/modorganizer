@@ -20,7 +20,7 @@ void trace(F&&)
 FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent) :
   QAbstractItemModel(parent), m_core(core),
   m_root(nullptr, 0, L"", L"", FileTreeItem::Directory, L"", L"<root>"),
-  m_flags(NoFlags)
+  m_flags(NoFlags), m_isRefreshing(false)
 {
   m_root.setExpanded(true);
 
@@ -39,6 +39,9 @@ FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent) :
 
 void FileTreeModel::refresh()
 {
+  m_isRefreshing = true;
+  Guard g([&]{ m_isRefreshing = false; });
+
   if (m_root.hasChildren()) {
     TimeThis tt("FileTreeModel::update()");
     update(m_root, *m_core.directoryStructure(), L"");
@@ -65,6 +68,10 @@ bool FileTreeModel::showArchives() const
 
 void FileTreeModel::ensureLoaded(FileTreeItem* item) const
 {
+  if (m_isRefreshing) {
+    return;
+  }
+
   if (!item) {
     log::error("ensureLoaded(): item is null");
     return;
@@ -247,7 +254,7 @@ void FileTreeModel::updateDirectories(
   });
 
   int row = 0;
-  std::vector<FileTreeItem*> remove;
+  std::list<FileTreeItem*> remove;
   std::unordered_set<std::wstring_view> seen;
 
   for (auto&& item : parentItem.children()) {
@@ -329,25 +336,58 @@ void FileTreeModel::updateDirectories(
       parentItem.debugName());
     });
 
-    for (auto* toRemove : remove) {
-      const auto& cs = parentItem.children();
 
-      for (std::size_t i=0; i<cs.size(); ++i) {
+    QModelIndex parentIndex;
+    int first = -1;
+    int last = -1;
+
+    const auto& cs = parentItem.children();
+    for (std::size_t i=0; i<cs.size(); ++i) {
+      if (remove.empty()) {
+        break;
+      }
+
+      for (auto itor=remove.begin(); itor!=remove.end(); ++itor) {
+        auto* toRemove = *itor;
+
         if (cs[i].get() == toRemove) {
-          const auto itemIndex = indexFromItem(
-            toRemove, static_cast<int>(i), 0);
+          if (!parentIndex.isValid()) {
+            parentIndex = parent(indexFromItem(
+              toRemove, static_cast<int>(i), 0));
+          }
 
-          const auto parentIndex = parent(itemIndex);
-          const int first = static_cast<int>(i);
-          const int last = static_cast<int>(i);
+          if (first == -1) {
+            first = i;
+            last = i;
+          } else if (i == (last + 1)) {
+            last = i;
+          } else {
+            beginRemoveRows(parentIndex, first, last);
 
-          beginRemoveRows(parentIndex, first, last);
-          parentItem.remove(i);
-          endRemoveRows();
+            parentItem.remove(
+              static_cast<std::size_t>(first),
+              static_cast<std::size_t>(last - first + 1));
 
+            endRemoveRows();
+
+            first = i;
+            last = i;
+          }
+
+          remove.erase(itor);
           break;
         }
       }
+    }
+
+    if (first != -1) {
+      beginRemoveRows(parentIndex, first, last);
+
+      parentItem.remove(
+        static_cast<std::size_t>(first),
+        static_cast<std::size_t>(last - first + 1));
+
+      endRemoveRows();
     }
   }
 

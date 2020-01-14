@@ -67,7 +67,6 @@ public:
 
   FileEntry();
   FileEntry(Index index, const std::wstring &name, DirectoryEntry *parent);
-  ~FileEntry();
 
   Index getIndex() const
   {
@@ -160,7 +159,6 @@ class FilesOrigin
 public:
   FilesOrigin();
   FilesOrigin(const FilesOrigin &reference);
-  ~FilesOrigin();
 
   // sets priority for this origin, but it will overwrite the existing mapping
   // for this priority, the previous origin will no longer be referenced
@@ -226,7 +224,6 @@ class FileRegister
 {
 public:
   FileRegister(boost::shared_ptr<OriginConnection> originConnection);
-  ~FileRegister();
 
   bool indexValid(FileEntry::Index index) const;
 
@@ -351,7 +348,8 @@ public:
     std::vector<DirectoryEntry*>::const_iterator &begin,
     std::vector<DirectoryEntry*>::const_iterator &end) const
   {
-    begin = m_SubDirectories.begin(); end = m_SubDirectories.end();
+    begin = m_SubDirectories.begin();
+    end = m_SubDirectories.end();
   }
 
   template <class F>
@@ -442,7 +440,8 @@ public:
 private:
   using FilesMap = std::map<std::wstring, FileEntry::Index>;
   using FilesLookup = std::unordered_map<FileKey, FileEntry::Index>;
-  using SubDirectoriesMap = std::unordered_map<std::wstring, DirectoryEntry*>;
+  using SubDirectories = std::vector<DirectoryEntry*>;
+  using SubDirectoriesLookup = std::unordered_map<std::wstring, DirectoryEntry*>;
 
   boost::shared_ptr<FileRegister> m_FileRegister;
   boost::shared_ptr<OriginConnection> m_OriginConnection;
@@ -450,8 +449,8 @@ private:
   std::wstring m_Name;
   FilesMap m_Files;
   FilesLookup m_FilesLookup;
-  std::vector<DirectoryEntry*> m_SubDirectories;
-  SubDirectoriesMap m_SubDirectoriesMap;
+  SubDirectories m_SubDirectories;
+  SubDirectoriesLookup m_SubDirectoriesLookup;
 
   DirectoryEntry *m_Parent;
   std::set<int> m_Origins;
@@ -479,6 +478,13 @@ private:
     const std::wstring &path, bool create, int originID = -1);
 
   void removeDirRecursive();
+
+  void addDirectoryToList(DirectoryEntry* e);
+  void removeDirectoryFromList(SubDirectories::iterator itor);
+
+  void addFileToList(const FileEntry& f);
+  void removeFileFromList(FileEntry::Index index);
+  void removeFilesFromList(const std::set<FileEntry::Index>& indices);
 };
 
 } // namespace MOShared

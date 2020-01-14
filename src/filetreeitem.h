@@ -34,6 +34,7 @@ public:
 
   void insert(std::unique_ptr<FileTreeItem> child, std::size_t at);
   void remove(std::size_t i);
+  void remove(std::size_t from, std::size_t n);
 
   void clear()
   {

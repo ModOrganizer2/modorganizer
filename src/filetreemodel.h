@@ -57,6 +57,7 @@ private:
   mutable IconFetcher m_iconFetcher;
   mutable std::vector<QModelIndex> m_iconPending;
   mutable QTimer m_iconPendingTimer;
+  bool m_isRefreshing;
 
   bool showConflicts() const
   {
