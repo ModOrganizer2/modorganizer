@@ -386,7 +386,7 @@ bool ModListSortProxy::categoryMatchesMod(
       break;
     }
 	
-	case CategoryFactory::HasHiddenFiles:
+    case CategoryFactory::HasHiddenFiles:
     {
       b = (info->hasFlag(ModInfo::FLAG_HIDDEN_FILES));
       break;

@@ -53,7 +53,7 @@
     <file alias="archive_loose_conflict_mixed">resources/conflict-mixed-blue.png</file>
     <file alias="archive_loose_conflict_overwrite">resources/conflict-overwrite-blue.png</file>
     <file alias="archive_loose_conflict_overwritten">resources/red-archive-conflict-loser.png</file>
-	<file alias="emblem_hidden_files">resources/conflict-hidden.png</file>
+    <file alias="emblem_hidden_files">resources/conflict-hidden.png</file>
     <file alias="emblem_notes">resources/accessories-text-editor.png</file>
     <file alias="version_date">resources/x-office-calendar.png</file>
     <file alias="warning_16">resources/dialog-warning_16.png</file>

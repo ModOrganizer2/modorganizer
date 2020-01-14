@@ -162,7 +162,7 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
     case ModInfo::FLAG_ALTERNATE_GAME: return tr("<br>This mod is for a different game, "
       "make sure it's compatible or it could cause crashes.");
     case ModInfo::FLAG_TRACKED: return tr("Mod is being tracked on the website");
-	case ModInfo::FLAG_HIDDEN_FILES: return tr("Contains hidden files");
+    case ModInfo::FLAG_HIDDEN_FILES: return tr("Contains hidden files");
     default: return "";
   }
 }
