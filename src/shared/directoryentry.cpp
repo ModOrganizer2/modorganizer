@@ -909,7 +909,7 @@ const FileEntry::Ptr DirectoryEntry::searchFile(
 
     if (temp != nullptr) {
       if (len >= path.size()) {
-        log::error(QObject::tr("unexpected end of path"));
+        log::error(QObject::tr("unexpected end of path").toStdString());
         return FileEntry::Ptr();
       }
 
