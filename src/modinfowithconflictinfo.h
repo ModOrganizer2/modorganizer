@@ -13,7 +13,7 @@ public:
   ModInfoWithConflictInfo(PluginContainer *pluginContainer, MOShared::DirectoryEntry **directoryStructure);
 
   std::vector<ModInfo::EConflictFlag> getConflictFlags() const;
-  virtual std::vector<ModInfo::EFlag> getFlags() const { return std::vector<ModInfo::EFlag>(); };
+  virtual std::vector<ModInfo::EFlag> getFlags() const;
 
   /**
    * @brief clear all caches held for this mod
@@ -67,6 +67,8 @@ private:
    */
   bool isRedundant() const;
 
+  bool hasHiddenFiles() const;
+
 private:
 
   MOShared::DirectoryEntry **m_DirectoryStructure;
@@ -75,6 +77,7 @@ private:
   mutable EConflictType m_ArchiveConflictState;
   mutable EConflictType m_ArchiveConflictLooseState;
   mutable bool m_HasLooseOverwrite;
+  mutable bool m_HasHiddenFiles;
   mutable QTime m_LastConflictCheck;
 
   mutable std::set<unsigned int> m_OverwriteList;   // indices of mods overritten by this mod
