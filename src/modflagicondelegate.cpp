@@ -56,7 +56,7 @@ QString ModFlagIconDelegate::getFlagIcon(ModInfo::EFlag flag)
     case ModInfo::FLAG_INVALID: return QStringLiteral(":/MO/gui/problem");
     case ModInfo::FLAG_NOTENDORSED: return QStringLiteral(":/MO/gui/emblem_notendorsed");
     case ModInfo::FLAG_NOTES: return QStringLiteral(":/MO/gui/emblem_notes");
-	case ModInfo::FLAG_HIDDEN_FILES: return QStringLiteral(":/MO/gui/emblem_hidden_files");
+    case ModInfo::FLAG_HIDDEN_FILES: return QStringLiteral(":/MO/gui/emblem_hidden_files");
     case ModInfo::FLAG_ALTERNATE_GAME: return QStringLiteral(":/MO/gui/alternate_game");
     case ModInfo::FLAG_FOREIGN: return QString();
     case ModInfo::FLAG_SEPARATOR: return QString();
