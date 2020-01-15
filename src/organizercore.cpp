@@ -940,7 +940,7 @@ QStringList OrganizerCore::modsSortedByProfilePriority() const
     auto modInfo = ModInfo::getByIndex(modIndex);
     if (!modInfo->hasFlag(ModInfo::FLAG_OVERWRITE) &&
         !modInfo->hasFlag(ModInfo::FLAG_BACKUP)) {
-      res.push_back(ModInfo::getByIndex(modIndex)->name());
+      res.push_back(ModInfo::getByIndex(modIndex)->internalName());
     }
   }
   return res;
