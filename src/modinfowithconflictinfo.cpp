@@ -2,16 +2,27 @@
 
 #include "directoryentry.h"
 #include "utility.h"
+#include <filesystem>
 
 using namespace MOBase;
 using namespace MOShared;
+namespace fs = std::filesystem;
 
 ModInfoWithConflictInfo::ModInfoWithConflictInfo(PluginContainer *pluginContainer, DirectoryEntry **directoryStructure)
-  : ModInfo(pluginContainer), m_DirectoryStructure(directoryStructure), m_HasLooseOverwrite(false) {}
+  : ModInfo(pluginContainer), m_DirectoryStructure(directoryStructure), m_HasLooseOverwrite(false), m_HasHiddenFiles(false) {}
 
 void ModInfoWithConflictInfo::clearCaches()
 {
   m_LastConflictCheck = QTime();
+}
+
+std::vector<ModInfo::EFlag> ModInfoWithConflictInfo::getFlags() const
+{ 
+  std::vector<ModInfo::EFlag> result = std::vector<ModInfo::EFlag>();
+  if (hasHiddenFiles()) {
+    result.push_back(ModInfo::FLAG_HIDDEN_FILES);
+  }
+  return result;
 }
 
 std::vector<ModInfo::EConflictFlag> ModInfoWithConflictInfo::getConflictFlags() const
@@ -71,6 +82,7 @@ void ModInfoWithConflictInfo::doConflictCheck() const
   m_ArchiveLooseOverwrittenList.clear();
 
   bool providesAnything = false;
+  bool hasHiddenFiles = false;
 
   int dataID = 0;
   if ((*m_DirectoryStructure)->originExists(L"data")) {
@@ -88,6 +100,15 @@ void ModInfoWithConflictInfo::doConflictCheck() const
     std::vector<FileEntry::Ptr> files = origin.getFiles();
     // for all files in this origin
     for (FileEntry::Ptr file : files) {
+
+      //Skip hiidden file check if already found one
+      if (!hasHiddenFiles) {
+        const fs::path nameAsPath(file->getName());
+        if (nameAsPath.extension().wstring().compare(L".mohidden") == 0) {
+          hasHiddenFiles = true;
+        }
+      }
+
       auto alternatives = file->getAlternatives();
       if ((alternatives.size() == 0) || (alternatives.back().first == dataID)) {
         // no alternatives -> no conflict
@@ -178,6 +199,8 @@ void ModInfoWithConflictInfo::doConflictCheck() const
         m_ArchiveConflictLooseState = CONFLICT_OVERWRITTEN;
       else if (!m_ArchiveLooseOverwriteList.empty())
         m_ArchiveConflictLooseState = CONFLICT_OVERWRITE;
+
+      m_HasHiddenFiles = hasHiddenFiles;
     }
   }
 }
@@ -230,4 +253,15 @@ bool ModInfoWithConflictInfo::isRedundant() const
   } else {
     return false;
   }
+}
+
+
+bool ModInfoWithConflictInfo::hasHiddenFiles() const
+{
+  QTime now = QTime::currentTime();
+  if (m_LastConflictCheck.isNull() || (m_LastConflictCheck.secsTo(now) > 10)) {
+    doConflictCheck();
+  }
+
+  return m_HasHiddenFiles;
 }

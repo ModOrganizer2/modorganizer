@@ -329,6 +329,7 @@ QString CategoryFactory::getSpecialCategoryName(SpecialCategories type) const
     case UpdateAvailable: label = QObject::tr("Update available"); break;
     case HasCategory:     label = QObject::tr("Has category"); break;
     case Conflict:        label = QObject::tr("Conflicted"); break;
+    case HasHiddenFiles:  label = QObject::tr("Has hidden files"); break;
     case Endorsed:        label = QObject::tr("Endorsed"); break;
     case Backup:          label = QObject::tr("Has backup"); break;
     case Managed:         label = QObject::tr("Managed"); break;

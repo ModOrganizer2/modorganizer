@@ -284,6 +284,7 @@ void FilterList::refresh()
   addSpecialCriteria(F::Managed);
   addSpecialCriteria(F::HasCategory);
   addSpecialCriteria(F::Conflict);
+  addSpecialCriteria(F::HasHiddenFiles);
   addSpecialCriteria(F::Endorsed);
   addSpecialCriteria(F::Tracked);
   addSpecialCriteria(F::HasNexusID);

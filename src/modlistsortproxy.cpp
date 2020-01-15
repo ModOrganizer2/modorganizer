@@ -385,6 +385,12 @@ bool ModListSortProxy::categoryMatchesMod(
       b = (hasConflictFlag(info->getConflictFlags()));
       break;
     }
+	
+    case CategoryFactory::HasHiddenFiles:
+    {
+      b = (info->hasFlag(ModInfo::FLAG_HIDDEN_FILES));
+      break;
+    }
 
     case CategoryFactory::Endorsed:
     {
