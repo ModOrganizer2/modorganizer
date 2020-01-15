@@ -529,7 +529,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
               <item>
                <layout class="QVBoxLayout" name="overwriteRoot">
                 <item>
-                 <layout class="QHBoxLayout" name="overwriteHeader" stretch="1,0">
+                 <layout class="QHBoxLayout" name="overwriteHeader" stretch="1,0,0">
                   <item>
                    <widget class="QToolButton" name="overwriteExpander">
                     <property name="sizePolicy">
@@ -546,6 +546,9 @@ text-align: left;</string>
                      <string>The following conflicted files are provided by this mod</string>
                     </property>
                    </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="overwriteLineEdit"/>
                   </item>
                   <item>
                    <widget class="QLCDNumber" name="overwriteCount">
@@ -586,7 +589,7 @@ text-align: left;</string>
               <item>
                <layout class="QVBoxLayout" name="overwrittenRoot">
                 <item>
-                 <layout class="QHBoxLayout" name="overwrittenHeader" stretch="1,0">
+                 <layout class="QHBoxLayout" name="overwrittenHeader" stretch="1,0,0">
                   <item>
                    <widget class="QToolButton" name="overwrittenExpander">
                     <property name="sizePolicy">
@@ -603,6 +606,9 @@ text-align: left;</string>
                      <string>The following conflicted files are provided by other mods</string>
                     </property>
                    </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="overwrittenLineEdit"/>
                   </item>
                   <item>
                    <widget class="QLCDNumber" name="overwrittenCount">
@@ -640,7 +646,7 @@ text-align: left;</string>
               <item>
                <layout class="QVBoxLayout" name="noConflictRoot">
                 <item>
-                 <layout class="QHBoxLayout" name="noConflictHeader" stretch="1,0">
+                 <layout class="QHBoxLayout" name="noConflictHeader" stretch="1,0,0">
                   <item>
                    <widget class="QToolButton" name="noConflictExpander">
                     <property name="sizePolicy">
@@ -657,6 +663,9 @@ text-align: left;</string>
                      <string>The following files have no conflicts</string>
                     </property>
                    </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="noConflictLineEdit"/>
                   </item>
                   <item>
                    <widget class="QLCDNumber" name="noConflictCount">

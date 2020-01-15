@@ -859,6 +859,15 @@ GeneralConflictsTab::GeneralConflictsTab(
   m_expanders.overwritten.set(ui->overwrittenExpander, ui->overwrittenTree, true);
   m_expanders.nonconflict.set(ui->noConflictExpander, ui->noConflictTree);
 
+  m_filterOverwrite.setEdit(ui->overwriteLineEdit);
+  m_filterOverwrite.setList(ui->overwriteTree);
+
+  m_filterOverwritten.setEdit(ui->overwrittenLineEdit);
+  m_filterOverwritten.setList(ui->overwrittenTree);
+
+  m_filterNoConflicts.setEdit(ui->noConflictLineEdit);
+  m_filterNoConflicts.setList(ui->noConflictTree);
+
   QObject::connect(
     ui->overwriteTree, &QTreeView::doubleClicked,
     [&](auto&&){ m_tab->activateItems(ui->overwriteTree); });

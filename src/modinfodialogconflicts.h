@@ -45,6 +45,10 @@ private:
   ConflictListModel* m_overwrittenModel;
   ConflictListModel* m_noConflictModel;
 
+  FilterWidget m_filterOverwrite;
+  FilterWidget m_filterOverwritten;
+  FilterWidget m_filterNoConflicts;
+
   ConflictItem createOverwriteItem(
     MOShared::FileEntry::Index index, bool archive,
     QString fileName, QString relativeName,
