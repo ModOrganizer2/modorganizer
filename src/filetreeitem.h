@@ -33,6 +33,13 @@ public:
   }
 
   void insert(std::unique_ptr<FileTreeItem> child, std::size_t at);
+
+  template <class Itor>
+  void insert(Itor begin, Itor end, std::size_t at)
+  {
+    m_children.insert(m_children.begin() + at, begin, end);
+  }
+
   void remove(std::size_t i);
   void remove(std::size_t from, std::size_t n);
 

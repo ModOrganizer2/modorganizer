@@ -4,6 +4,7 @@
 #include "filetreeitem.h"
 #include "iconfetcher.h"
 #include "directoryentry.h"
+#include <unordered_set>
 
 class OrganizerCore;
 
@@ -36,9 +37,11 @@ public:
   int rowCount(const QModelIndex& parent={}) const override;
   int columnCount(const QModelIndex& parent={}) const override;
   bool hasChildren(const QModelIndex& parent={}) const override;
+  bool canFetchMore(const QModelIndex& parent) const override;
   QVariant data(const QModelIndex& index, int role=Qt::DisplayRole) const override;
   QVariant headerData(int i, Qt::Orientation ori, int role=Qt::DisplayRole) const override;
   Qt::ItemFlags flags(const QModelIndex& index) const override;
+
   FileTreeItem* itemFromIndex(const QModelIndex& index) const;
 
 private:
@@ -66,6 +69,31 @@ private:
 
   bool showArchives() const;
 
+
+  void update(
+    FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
+    const std::wstring& parentPath);
+
+  void updateDirectories(
+    FileTreeItem& parentItem, const std::wstring& path,
+    const MOShared::DirectoryEntry& parentEntry, FillFlags flags);
+
+  void removeDisappearingDirectories(
+    FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
+    std::unordered_set<std::wstring_view>& seen);
+
+  void addNewDirectories(
+    FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
+    const std::wstring& parentPath,
+    const std::unordered_set<std::wstring_view>& seen);
+
+  void removeRange(FileTreeItem& parentItem, int first, int last);
+
+  void addRange(
+    FileTreeItem& parentItem, int at,
+    std::vector<std::unique_ptr<FileTreeItem>>& items);
+
+
   void fill(
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
     const std::wstring& parentPath);
@@ -78,14 +106,6 @@ private:
     FileTreeItem& parentItem, const std::wstring& path,
     const std::vector<MOShared::FileEntry::Ptr>& files, FillFlags flags);
 
-
-  void update(
-    FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
-    const std::wstring& parentPath);
-
-  void updateDirectories(
-    FileTreeItem& parentItem, const std::wstring& path,
-    const MOShared::DirectoryEntry& parentEntry, FillFlags flags);
 
   void updateFiles(
     FileTreeItem& parentItem, const std::wstring& path,
@@ -102,7 +122,7 @@ private:
   QString makeTooltip(const FileTreeItem& item) const;
   QVariant makeIcon(const FileTreeItem& item, const QModelIndex& index) const;
 
-  QModelIndex indexFromItem(FileTreeItem* item, int row, int col) const;
+  QModelIndex indexFromItem(FileTreeItem& item) const;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FileTreeModel::Flags);

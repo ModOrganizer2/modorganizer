@@ -352,6 +352,11 @@ public:
     end = m_SubDirectories.end();
   }
 
+  const std::vector<DirectoryEntry*>& getSubDirectories() const
+  {
+    return m_SubDirectories;
+  }
+
   template <class F>
   void forEachDirectory(F&& f) const
   {
