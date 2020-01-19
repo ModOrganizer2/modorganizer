@@ -5802,11 +5802,6 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="executableslist.cpp" line="156"/>
-        <source>Explore Virtual Folder</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="filerenamer.cpp" line="111"/>
         <source>The hidden file &quot;%1&quot; already exists. Replace it?</source>
         <translation type="unfinished"></translation>

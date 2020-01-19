@@ -153,7 +153,7 @@ std::vector<Executable> ExecutablesList::getPluginExecutables(
       .arg(QDir::toNativeSeparators(game->dataDirectory().absolutePath()));
 
     const auto exe = Executable()
-      .title(QObject::tr("Explore Virtual Folder"))
+      .title("Explore Virtual Folder")
       .binaryInfo(eppBin)
       .arguments(args)
       .workingDirectory(eppBin.absolutePath())
