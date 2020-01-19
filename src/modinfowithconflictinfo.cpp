@@ -98,14 +98,38 @@ void ModInfoWithConflictInfo::doConflictCheck() const
   if ((*m_DirectoryStructure)->originExists(name)) {
     FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
     std::vector<FileEntry::Ptr> files = origin.getFiles();
+    std::set<const DirectoryEntry*> checkedDirs;
+
     // for all files in this origin
     for (FileEntry::Ptr file : files) {
 
-      //Skip hiidden file check if already found one
+      // skip hiidden file check if already found one
       if (!hasHiddenFiles) {
         const fs::path nameAsPath(file->getName());
+
         if (nameAsPath.extension().wstring().compare(L".mohidden") == 0) {
           hasHiddenFiles = true;
+        }
+        else {
+          const DirectoryEntry* parent = file->getParent();
+
+          // iterate on all parent direEntries to check for .mohiddden
+          while (parent != nullptr) {
+            auto insertResult = checkedDirs.insert(parent);
+
+            if (insertResult.second == false) {
+              // if already present break as we can assume to have checked the parents as well
+              break;
+            }
+            else {
+              const fs::path dirPath(parent->getName());
+              if (dirPath.extension().wstring().compare(L".mohidden") == 0) {
+                hasHiddenFiles = true;
+                break;
+              }
+              parent = parent->getParent();
+            }
+          }
         }
       }
 
