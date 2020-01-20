@@ -12,7 +12,7 @@ QString UnmanagedModName();
 template <class F>
 void trace(F&& f)
 {
-  f();
+  //f();
 }
 
 
@@ -108,14 +108,40 @@ bool FileTreeModel::hasChildren(const QModelIndex& parent) const
 {
   if (auto* item=itemFromIndex(parent)) {
     return item->hasChildren();
-  } else {
-    return m_root.hasChildren();
   }
+
+  return false;
 }
 
 bool FileTreeModel::canFetchMore(const QModelIndex& parent) const
 {
+  if (auto* item=itemFromIndex(parent)) {
+    return !item->isLoaded();
+  }
+
   return false;
+}
+
+void FileTreeModel::fetchMore(const QModelIndex& parent)
+{
+  FileTreeItem* item = itemFromIndex(parent);
+  if (!item) {
+    return;
+  }
+
+  const auto path = item->dataRelativeFilePath();
+
+  auto* parentEntry = m_core.directoryStructure()
+    ->findSubDirectoryRecursive(path.toStdWString());
+
+  if (!parentEntry) {
+    log::error("FileTreeModel::fetchMore(): directory '{}' not found", path);
+    return;
+  }
+
+  const auto parentPath = item->dataRelativeParentPath();
+
+  update(*item, *parentEntry, parentPath.toStdWString());
 }
 
 QVariant FileTreeModel::data(const QModelIndex& index, int role) const
@@ -154,7 +180,15 @@ QVariant FileTreeModel::headerData(int i, Qt::Orientation ori, int role) const
 
 Qt::ItemFlags FileTreeModel::flags(const QModelIndex& index) const
 {
-  return QAbstractItemModel::flags(index);
+  auto f = QAbstractItemModel::flags(index);
+
+  if (auto* item=itemFromIndex(index)) {
+    if (!item->hasChildren()) {
+      f |= Qt::ItemNeverHasChildren;
+    }
+  }
+
+  return f;
 }
 
 FileTreeItem* FileTreeModel::itemFromIndex(const QModelIndex& index) const
@@ -191,7 +225,7 @@ QModelIndex FileTreeModel::indexFromItem(FileTreeItem& item) const
 
   for (std::size_t i=0; i<cs.size(); ++i) {
     if (cs[i].get() == &item) {
-      return createIndex(static_cast<int>(i), 0, &item);
+      return createIndex(static_cast<int>(i), 0, parent);
     }
   }
 
@@ -207,7 +241,19 @@ void FileTreeModel::update(
   const std::wstring& parentPath)
 {
   trace([&]{ log::debug("updating {}", parentItem.debugName()); });
-  updateDirectories(parentItem, parentPath, parentEntry, FillFlag::None);
+
+  auto path = parentPath;
+  if (!parentEntry.isTopLevel()) {
+    if (!path.empty()) {
+      path += L"\\";
+    }
+
+    path += parentEntry.getName();
+  }
+
+  updateDirectories(parentItem, path, parentEntry, FillFlag::None);
+
+  parentItem.setLoaded(true);
 }
 
 
@@ -215,6 +261,9 @@ void FileTreeModel::updateDirectories(
   FileTreeItem& parentItem, const std::wstring& parentPath,
   const MOShared::DirectoryEntry& parentEntry, FillFlags flags)
 {
+  // removeDisappearingDirectories() will add directories that are in the
+  // tree and still on the filesystem to this set; addNewDirectories() will
+  // use this to figure out if a directory is new or not
   std::unordered_set<std::wstring_view> seen;
 
   removeDisappearingDirectories(parentItem, parentEntry, seen);
@@ -228,15 +277,18 @@ void FileTreeModel::removeDisappearingDirectories(
   auto& children = parentItem.children();
   auto itor = children.begin();
 
+  // keeps track of the contiguous directories that need to be removed to
+  // avoid calling beginRemoveRows(), etc. for each item
   int removeStart = -1;
   int row = 0;
 
+  // for each item in this tree item
   while (itor != children.end()) {
     const auto& item = *itor;
 
     if (!item->isDirectory()) {
-      // directories are always first, no point continuing once a file has been
-      // seen
+      // directories are always first, no point continuing once a file has
+      // been seen
       break;
     }
 
@@ -248,10 +300,14 @@ void FileTreeModel::removeDisappearingDirectories(
       // directory is still there
       seen.insert(item->filenameWs());
 
+      // if there were directories before this row that need to be removed,
+      // do it now
       if (removeStart != -1) {
         removeRange(parentItem, removeStart, row - 1);
 
         removeStart = -1;
+
+        // adjust current row to account for those that were just removed
         row -= (row - removeStart);
         itor = children.begin() + row;
       }
@@ -260,6 +316,7 @@ void FileTreeModel::removeDisappearingDirectories(
       trace([&]{ log::debug("{} is gone", item->filename()); });
 
       if (removeStart == -1) {
+        // start a new contiguous sequence
         removeStart = row;
       }
     }
@@ -268,6 +325,7 @@ void FileTreeModel::removeDisappearingDirectories(
     ++itor;
   }
 
+  // remove the last directory range, if any
   if (removeStart != -1) {
     removeRange(parentItem, removeStart, row -1 );
   }
@@ -278,14 +336,19 @@ void FileTreeModel::addNewDirectories(
   const std::wstring& parentPath,
   const std::unordered_set<std::wstring_view>& seen)
 {
+  // keeps track of the contiguous directories that need to be added to
+  // avoid calling beginAddRows(), etc. for each item
   std::vector<std::unique_ptr<FileTreeItem>> toAdd;
   int addStart = -1;
   int row = 0;
 
+  // for each directory on the filesystem
   for (auto&& d : parentEntry.getSubDirectories()) {
     if (seen.contains(d->getName())) {
       // already seen in the parent item
 
+      // if there were directories before this row that need to be added,
+      // do it now
       if (addStart != -1) {
         addRange(parentItem, addStart, toAdd);
         toAdd.clear();
@@ -300,12 +363,15 @@ void FileTreeModel::addNewDirectories(
         d->getName(), L"");
 
       if (d->isEmpty()) {
+        // if this directory is empty, mark the item as loaded so the expand
+        // arrow doesn't show
         item->setLoaded(true);
       }
 
       toAdd.push_back(std::move(item));
 
       if (addStart == -1) {
+        // start a new contiguous sequence
         addStart = row;
       }
     }
@@ -313,6 +379,7 @@ void FileTreeModel::addNewDirectories(
     ++row;
   }
 
+  // add the last directory range, if any
   if (addStart != -1) {
     addRange(parentItem, addStart, toAdd);
   }

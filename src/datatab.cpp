@@ -63,11 +63,15 @@ void DataTab::restoreState(const Settings& s)
 
 void DataTab::activated()
 {
-  refreshDataTreeKeepExpandedNodes();
+  //refreshDataTreeKeepExpandedNodes();
 }
 
 void DataTab::onRefresh()
 {
+  if (QGuiApplication::keyboardModifiers() & Qt::ShiftModifier) {
+    m_filetree->clear();
+  }
+
   m_core.refreshDirectoryStructure();
 }
 
