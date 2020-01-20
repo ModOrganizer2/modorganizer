@@ -1743,7 +1743,7 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
         font.setItalic(true);
         fileChild->setFont(0, font);
         fileChild->setFont(1, font);
-      } else if (fileName.endsWith(ModInfo::s_HiddenExt)) {
+      } else if (fileName.endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
         QFont font = fileChild->font(0);
         font.setStrikeOut(true);
         fileChild->setFont(0, font);
@@ -5560,7 +5560,7 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
 
     // offer to hide/unhide file, but not for files from archives
     if (!isArchive) {
-      if (m_ContextItem->text(0).endsWith(ModInfo::s_HiddenExt)) {
+      if (m_ContextItem->text(0).endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
         menu.addAction(tr("Un-Hide"), this, SLOT(unhideFile()));
       } else {
         menu.addAction(tr("Hide"), this, SLOT(hideFile()));

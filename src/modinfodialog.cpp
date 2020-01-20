@@ -97,7 +97,7 @@ bool canHideFile(bool isArchive, const QString& filename)
     return false;
   }
 
-  if (filename.endsWith(ModInfo::s_HiddenExt)) {
+  if (filename.endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
     // already hidden
     return false;
   }
@@ -112,7 +112,7 @@ bool canUnhideFile(bool isArchive, const QString& filename)
     return false;
   }
 
-  if (!filename.endsWith(ModInfo::s_HiddenExt)) {
+  if (!filename.endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
     // already visible
     return false;
   }
