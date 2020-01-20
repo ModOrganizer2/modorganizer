@@ -30,7 +30,9 @@ bool canHideFile(bool isArchive, const QString& filename);
 bool canUnhideFile(bool isArchive, const QString& filename);
 
 FileRenamer::RenameResults hideFile(FileRenamer& renamer, const QString &oldName);
-FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString &oldName);
+FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString& oldName);
+FileRenamer::RenameResults restoreHiddenFilesRecursive(FileRenamer& renamer, const QString &targetDir);
+
 
 int naturalCompare(const QString& a, const QString& b);
 

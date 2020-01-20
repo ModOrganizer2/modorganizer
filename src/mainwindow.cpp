@@ -3201,6 +3201,99 @@ void MainWindow::markConverted_clicked()
 }
 
 
+void MainWindow::restoreHiddenFiles_clicked()
+{
+  const int max_items = 20;
+  QItemSelectionModel* selection = ui->modList->selectionModel();
+
+  QFlags<FileRenamer::RenameFlags> flags = FileRenamer::UNHIDE;
+  flags |= FileRenamer::MULTIPLE;
+
+  FileRenamer renamer(this, flags);
+
+  FileRenamer::RenameResults result = FileRenamer::RESULT_OK;
+
+  // multi selection
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    QString mods;
+    QStringList modNames;
+    int i = 0;
+
+    for (QModelIndex idx : selection->selectedRows()) {
+
+      QString name = idx.data().toString();
+      int row_idx = idx.data(Qt::UserRole + 1).toInt();
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(row_idx);
+      const auto flags = modInfo->getFlags();
+
+      if (!modInfo->isRegular() ||
+          std::find(flags.begin(), flags.end(), ModInfo::FLAG_HIDDEN_FILES) == flags.end()) {
+        continue;
+      }
+
+      // adds an item for the mod name until `i` reaches `max_items`, which
+      // adds one "..." item; subsequent mods are not shown on the list but
+      // are still added to `modNames` below so they can be removed correctly
+      if (i < max_items) {
+        mods += "<li>" + name + "</li>";
+      }
+      else if (i == max_items) {
+        mods += "<li>...</li>";
+      }
+
+      modNames.append(ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->name());
+      ++i;
+    }
+    if (QMessageBox::question(this, tr("Confirm"),
+        tr("Restore all hidden files in the following mods?<br><ul>%1</ul>").arg(mods),
+        QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+
+      for (QModelIndex idx : selection->selectedRows()) {
+
+        int row_idx = idx.data(Qt::UserRole + 1).toInt();
+        ModInfo::Ptr modInfo = ModInfo::getByIndex(row_idx);
+
+        const auto flags = modInfo->getFlags();
+        if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_HIDDEN_FILES) != flags.end()) {
+          const QString modDir = modInfo->absolutePath();
+
+          auto partialResult = restoreHiddenFilesRecursive(renamer, modDir);
+
+          if (partialResult == FileRenamer::RESULT_CANCEL) {
+            result = FileRenamer::RESULT_CANCEL;
+            break;
+          }
+          originModified((m_OrganizerCore.directoryStructure()->getOriginByName(
+            ToWString(modInfo->internalName()))).getID());
+        }
+      }
+    }
+  }
+  else {
+    //single selection
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
+    const QString modDir = modInfo->absolutePath();
+
+    if (QMessageBox::question(this, tr("Are you sure?"),
+        tr("About to restore all hidden files in:\n") + modInfo->name(),
+        QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Ok) {
+
+      result = restoreHiddenFilesRecursive(renamer, modDir);
+
+      originModified((m_OrganizerCore.directoryStructure()->getOriginByName(
+        ToWString(modInfo->internalName()))).getID());
+    }
+  }
+
+  if (result == FileRenamer::RESULT_CANCEL){
+    log::debug("Restoring hidden files operation cancelled");
+  }
+  else {
+    log::debug("Finished restoring hidden files");
+  }
+}
+
+
 void MainWindow::visitOnNexus_clicked()
 {
   QItemSelectionModel *selection = ui->modList->selectionModel();
@@ -4725,6 +4818,10 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu.addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
         menu.addAction(tr("Create Backup"), this, SLOT(backupMod_clicked()));
 
+        if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_HIDDEN_FILES) != flags.end()) {
+          menu.addAction(tr("Restore hidden files"), this, SLOT(restoreHiddenFiles_clicked()));
+        }
+
         menu.addSeparator();
 
         if (info->getNexusID() > 0 && Settings::instance().nexus().endorsementIntegration()) {
@@ -4773,6 +4870,8 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_ALTERNATE_GAME) != flags.end()) {
           menu.addAction(tr("Mark as converted/working"), this, SLOT(markConverted_clicked()));
         }
+
+        menu.addSeparator();
 
         if (info->getNexusID() > 0)  {
           menu.addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
