@@ -435,65 +435,58 @@ void FileTreeModel::removeDisappearingFiles(
   auto& children = parentItem.children();
   auto itor = children.begin();
 
+  firstFileRow = -1;
+
   // keeps track of the contiguous directories that need to be removed to
   // avoid calling beginRemoveRows(), etc. for each item
   int removeStart = -1;
-  firstFileRow = 0;
-
-  // directories are always first, so find the first file item
-  while (itor != children.end()) {
-    const auto& item = *itor;
-
-    if (!item->isDirectory()) {
-      break;
-    }
-
-    ++firstFileRow;
-    ++itor;
-  }
-
-  if (itor == children.end()) {
-    // no file items
-    return;
-  }
-
-  int row = firstFileRow;
+  int row = 0;
 
   // for each item in this tree item
   while (itor != children.end()) {
     const auto& item = *itor;
 
-    auto f = parentEntry.findFile(item->key());
-
-    if (f) {
-      trace([&]{ log::debug("file {} still there", item->filename()); });
-
-      // file is still there
-      seen.emplace(f->getIndex());
-
-      // if there were files before this row that need to be removed,
-      // do it now
-      if (removeStart != -1) {
-        removeRange(parentItem, removeStart, row - 1);
-
-        // adjust current row to account for those that were just removed
-        row -= (row - removeStart);
-        itor = children.begin() + row;
-
-        removeStart = -1;
+    if (!item->isDirectory()) {
+      if (firstFileRow == -1) {
+        firstFileRow = row;
       }
-    } else {
-      // file is gone from the parent entry
-      trace([&]{ log::debug("file {} is gone", item->filename()); });
 
-      if (removeStart == -1) {
-        // start a new contiguous sequence
-        removeStart = row;
+      auto f = parentEntry.findFile(item->key());
+
+      if (f) {
+        trace([&]{ log::debug("file {} still there", item->filename()); });
+
+        // file is still there
+        seen.emplace(f->getIndex());
+
+        // if there were files before this row that need to be removed,
+        // do it now
+        if (removeStart != -1) {
+          removeRange(parentItem, removeStart, row - 1);
+
+          // adjust current row to account for those that were just removed
+          row -= (row - removeStart);
+          itor = children.begin() + row;
+
+          removeStart = -1;
+        }
+      } else {
+        // file is gone from the parent entry
+        trace([&]{ log::debug("file {} is gone", item->filename()); });
+
+        if (removeStart == -1) {
+          // start a new contiguous sequence
+          removeStart = row;
+        }
       }
     }
 
     ++row;
     ++itor;
+  }
+
+  if (firstFileRow == -1) {
+    firstFileRow = static_cast<int>(children.size());
   }
 
   // remove the last file range, if any
