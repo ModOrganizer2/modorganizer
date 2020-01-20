@@ -6,11 +6,12 @@
 using namespace MOBase;
 using namespace MOShared;
 
+
 FileTreeItem::FileTreeItem(
   FileTreeItem* parent, int originID,
   std::wstring dataRelativeParentPath, std::wstring realPath, Flags flags,
   std::wstring file, std::wstring mod) :
-    m_parent(parent),
+    m_parent(parent), m_indexGuess(NoIndexGuess),
     m_originID(originID),
     m_virtualParentPath(QString::fromStdWString(dataRelativeParentPath)),
     m_realPath(QString::fromStdWString(realPath)),
@@ -35,6 +36,7 @@ void FileTreeItem::insert(std::unique_ptr<FileTreeItem> child, std::size_t at)
     return;
   }
 
+  child->m_indexGuess = at;
   m_children.insert(m_children.begin() + at, std::move(child));
 }
 

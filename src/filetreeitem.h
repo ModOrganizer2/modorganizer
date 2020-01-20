@@ -29,6 +29,7 @@ public:
 
   void add(std::unique_ptr<FileTreeItem> child)
   {
+    child->m_indexGuess = m_children.size();
     m_children.push_back(std::move(child));
   }
 
@@ -37,6 +38,11 @@ public:
   template <class Itor>
   void insert(Itor begin, Itor end, std::size_t at)
   {
+    std::size_t nextRowGuess = m_children.size();
+    for (auto itor=begin; itor!=end; ++itor) {
+      (*itor)->m_indexGuess = nextRowGuess++;
+    }
+
     m_children.insert(m_children.begin() + at, begin, end);
   }
 
@@ -54,6 +60,23 @@ public:
     return m_children;
   }
 
+  int childIndex(const FileTreeItem& item) const
+  {
+    if (item.m_indexGuess < m_children.size()) {
+      if (m_children[item.m_indexGuess].get() == &item) {
+        return static_cast<int>(item.m_indexGuess);
+      }
+    }
+
+    for (std::size_t i=0; i<m_children.size(); ++i) {
+      if (m_children[i].get() == &item) {
+        item.m_indexGuess = i;
+        return static_cast<int>(i);
+      }
+    }
+
+    return -1;
+  }
 
   FileTreeItem* parent()
   {
@@ -171,7 +194,11 @@ public:
   QString debugName() const;
 
 private:
+  static constexpr std::size_t NoIndexGuess =
+    std::numeric_limits<std::size_t>::max();
+
   FileTreeItem* m_parent;
+  mutable std::size_t m_indexGuess;
 
   const int m_originID;
   const QString m_virtualParentPath;

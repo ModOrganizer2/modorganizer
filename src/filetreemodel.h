@@ -81,7 +81,7 @@ private:
 
   void removeDisappearingDirectories(
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
-    std::unordered_set<std::wstring_view>& seen);
+    const std::wstring& parentPath, std::unordered_set<std::wstring_view>& seen);
 
   void addNewDirectories(
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
@@ -95,22 +95,18 @@ private:
     std::vector<std::unique_ptr<FileTreeItem>>& items);
 
 
-  void fill(
-    FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
-    const std::wstring& parentPath);
-
-  void fillDirectories(
-    FileTreeItem& parentItem, const std::wstring& path,
-    DirectoryIterator begin, DirectoryIterator end, FillFlags flags);
-
-  void fillFiles(
-    FileTreeItem& parentItem, const std::wstring& path,
-    const std::vector<MOShared::FileEntry::Ptr>& files, FillFlags flags);
-
-
   void updateFiles(
     FileTreeItem& parentItem, const std::wstring& path,
-    const MOShared::DirectoryEntry& parentEntry, FillFlags flags);
+    const MOShared::DirectoryEntry& parentEntry);
+
+  void removeDisappearingFiles(
+    FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
+    int& firstFileRow, std::unordered_set<MOShared::FileEntry::Index>& seen);
+
+  void addNewFiles(
+    FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
+    const std::wstring& parentPath, int firstFileRow,
+    const std::unordered_set<MOShared::FileEntry::Index>& seen);
 
   std::wstring makeModName(const MOShared::FileEntry& file, int originID) const;
 
