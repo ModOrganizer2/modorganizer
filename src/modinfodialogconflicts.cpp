@@ -380,8 +380,6 @@ void for_each_in_selection(QTreeView* tree, F&& f)
     return;
   }
 
-  auto modelSel = proxy->mapSelectionToSource(sel->selection());
-
   for (const auto& rowIndex : sel->selectedRows()) {
     auto modelRow = proxy->mapToSource(rowIndex).row();
     if (auto* item = model->getItem(static_cast<std::size_t>(modelRow))) {
