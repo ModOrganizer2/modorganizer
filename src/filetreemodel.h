@@ -52,6 +52,8 @@ private:
     PruneDirectories = 0x01
   };
 
+  class Range;
+
   Q_DECLARE_FLAGS(FillFlags, FillFlag);
 
   using DirectoryIterator = std::vector<MOShared::DirectoryEntry*>::const_iterator;
@@ -75,6 +77,7 @@ private:
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
     const std::wstring& parentPath);
 
+
   void updateDirectories(
     FileTreeItem& parentItem, const std::wstring& path,
     const MOShared::DirectoryEntry& parentEntry, FillFlags flags);
@@ -87,12 +90,6 @@ private:
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
     const std::wstring& parentPath,
     const std::unordered_set<std::wstring_view>& seen);
-
-  void removeRange(FileTreeItem& parentItem, int first, int last);
-
-  void addRange(
-    FileTreeItem& parentItem, int at,
-    std::vector<std::unique_ptr<FileTreeItem>>& items);
 
 
   void updateFiles(
@@ -107,6 +104,7 @@ private:
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
     const std::wstring& parentPath, int firstFileRow,
     const std::unordered_set<MOShared::FileEntry::Index>& seen);
+
 
   std::wstring makeModName(const MOShared::FileEntry& file, int originID) const;
 

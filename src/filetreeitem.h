@@ -7,6 +7,8 @@
 class FileTreeItem
 {
 public:
+  using Children = std::vector<std::unique_ptr<FileTreeItem>>;
+
   enum Flag
   {
     NoFlags     = 0x00,
@@ -55,7 +57,7 @@ public:
     m_loaded = false;
   }
 
-  const std::vector<std::unique_ptr<FileTreeItem>>& children() const
+  const Children& children() const
   {
     return m_children;
   }
@@ -211,7 +213,7 @@ private:
 
   bool m_loaded;
   bool m_expanded;
-  std::vector<std::unique_ptr<FileTreeItem>> m_children;
+  Children m_children;
 };
 
 #endif // MODORGANIZER_FILETREEITEM_INCLUDED

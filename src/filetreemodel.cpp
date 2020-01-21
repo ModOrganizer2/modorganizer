@@ -16,6 +16,112 @@ void trace(F&& f)
 }
 
 
+// tracks a contiguous range in the model to avoid calling begin*Rows(), etc.
+// for every single item that's added/removed
+//
+class FileTreeModel::Range
+{
+public:
+  // note that file ranges can start from an index higher than 0 if there are
+  // directories
+  //
+  Range(FileTreeModel* model, FileTreeItem& parentItem, int start=0)
+    : m_model(model), m_parentItem(parentItem), m_first(-1), m_current(start)
+  {
+  }
+
+  // includes the current index in the range
+  //
+  void includeCurrent()
+  {
+    // just remember the start of the range, m_current will be used in add()
+    // or remove() to figure out the actual range
+    if (m_first == -1) {
+      m_first = m_current;
+    }
+  }
+
+  // moves to the next row
+  //
+  void next()
+  {
+    ++m_current;
+  }
+
+  // returns the current row
+  //
+  int current() const
+  {
+    return m_current;
+  }
+
+  // adds the given items to this range
+  //
+  void add(FileTreeItem::Children toAdd)
+  {
+    if (m_first == -1) {
+      // nothing to add
+      Q_ASSERT(toAdd.empty());
+      return;
+    }
+
+    const auto last = m_current - 1;
+    const auto parentIndex = m_model->indexFromItem(m_parentItem);
+
+    // make sure the number of items is the same as the size of this range
+    Q_ASSERT(static_cast<int>(toAdd.size()) == (last - m_first));
+
+    m_model->beginInsertRows(parentIndex, m_first, last);
+
+    m_parentItem.insert(
+      std::make_move_iterator(toAdd.begin()),
+      std::make_move_iterator(toAdd.end()),
+      static_cast<std::size_t>(m_first));
+
+    m_model->endInsertRows();
+
+    // reset
+    m_first = -1;
+  }
+
+  // removes the item in this range, returns an iterator to first item passed
+  // this range once removed, which can be end()
+  //
+  FileTreeItem::Children::const_iterator remove()
+  {
+    if (m_first == -1) {
+      // nothing to remove
+      return m_parentItem.children().begin() + m_current + 1;
+    }
+
+    const auto last = m_current - 1;
+    const auto parentIndex = m_model->indexFromItem(m_parentItem);
+
+    m_model->beginRemoveRows(parentIndex, m_first, last);
+
+    m_parentItem.remove(
+      static_cast<std::size_t>(m_first),
+      static_cast<std::size_t>(last - m_first + 1));
+
+    m_model->endRemoveRows();
+
+    // adjust current row to account for those that were just removed
+    m_current -= (m_current - m_first);
+
+    // reset
+    m_first = -1;
+
+    return m_parentItem.children().begin() + m_current + 1;
+  }
+
+private:
+  FileTreeModel* m_model;
+  FileTreeItem& m_parentItem;
+  int m_first;
+  int m_current;
+};
+
+
 FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent) :
   QAbstractItemModel(parent), m_core(core),
   m_root(nullptr, 0, L"", L"", FileTreeItem::Directory, L"", L"<root>"),
@@ -251,7 +357,6 @@ void FileTreeModel::update(
   parentItem.setLoaded(true);
 }
 
-
 void FileTreeModel::updateDirectories(
   FileTreeItem& parentItem, const std::wstring& parentPath,
   const MOShared::DirectoryEntry& parentEntry, FillFlags flags)
@@ -274,8 +379,7 @@ void FileTreeModel::removeDisappearingDirectories(
 
   // keeps track of the contiguous directories that need to be removed to
   // avoid calling beginRemoveRows(), etc. for each item
-  int removeStart = -1;
-  int row = 0;
+  Range range(this, parentItem);
 
   // for each item in this tree item
   while (itor != children.end()) {
@@ -297,15 +401,7 @@ void FileTreeModel::removeDisappearingDirectories(
 
       // if there were directories before this row that need to be removed,
       // do it now
-      if (removeStart != -1) {
-        removeRange(parentItem, removeStart, row - 1);
-
-        // adjust current row to account for those that were just removed
-        row -= (row - removeStart);
-        itor = children.begin() + row;
-
-        removeStart = -1;
-      }
+      itor = range.remove();
 
       if (item->areChildrenVisible()) {
         update(*item, *d, parentPath);
@@ -314,20 +410,15 @@ void FileTreeModel::removeDisappearingDirectories(
       // directory is gone from the parent entry
       trace([&]{ log::debug("dir {} is gone", item->filename()); });
 
-      if (removeStart == -1) {
-        // start a new contiguous sequence
-        removeStart = row;
-      }
+      range.includeCurrent();
+      ++itor;
     }
 
-    ++row;
-    ++itor;
+    range.next();
   }
 
   // remove the last directory range, if any
-  if (removeStart != -1) {
-    removeRange(parentItem, removeStart, row -1 );
-  }
+  range.remove();
 }
 
 void FileTreeModel::addNewDirectories(
@@ -337,9 +428,8 @@ void FileTreeModel::addNewDirectories(
 {
   // keeps track of the contiguous directories that need to be added to
   // avoid calling beginAddRows(), etc. for each item
+  Range range(this, parentItem);
   std::vector<std::unique_ptr<FileTreeItem>> toAdd;
-  int addStart = -1;
-  int row = 0;
 
   // for each directory on the filesystem
   for (auto&& d : parentEntry.getSubDirectories()) {
@@ -348,11 +438,8 @@ void FileTreeModel::addNewDirectories(
 
       // if there were directories before this row that need to be added,
       // do it now
-      if (addStart != -1) {
-        addRange(parentItem, addStart, toAdd);
-        toAdd.clear();
-        addStart = -1;
-      }
+      range.add(std::move(toAdd));
+      toAdd.clear();
     } else {
       // this is a new directory
       trace([&]{ log::debug("new dir {}", QString::fromStdWString(d->getName())); });
@@ -368,50 +455,15 @@ void FileTreeModel::addNewDirectories(
       }
 
       toAdd.push_back(std::move(item));
-
-      if (addStart == -1) {
-        // start a new contiguous sequence
-        addStart = row;
-      }
+      range.includeCurrent();
     }
 
-    ++row;
+    range.next();
   }
 
   // add the last directory range, if any
-  if (addStart != -1) {
-    addRange(parentItem, addStart, toAdd);
-  }
+  range.add(std::move(toAdd));
 }
-
-void FileTreeModel::removeRange(FileTreeItem& parentItem, int first, int last)
-{
-  const auto parentIndex = indexFromItem(parentItem);
-
-  beginRemoveRows(parentIndex, first, last);
-
-  parentItem.remove(
-    static_cast<std::size_t>(first),
-    static_cast<std::size_t>(last - first + 1));
-
-  endRemoveRows();
-}
-
-void FileTreeModel::addRange(
-  FileTreeItem& parentItem, int at,
-  std::vector<std::unique_ptr<FileTreeItem>>& items)
-{
-  const auto parentIndex = indexFromItem(parentItem);
-  beginInsertRows(parentIndex, at, at + static_cast<int>(items.size()) - 1);
-
-  parentItem.insert(
-    std::make_move_iterator(items.begin()),
-    std::make_move_iterator(items.end()),
-    static_cast<std::size_t>(at));
-
-  endInsertRows();
-}
-
 
 void FileTreeModel::updateFiles(
   FileTreeItem& parentItem, const std::wstring& parentPath,
@@ -439,8 +491,7 @@ void FileTreeModel::removeDisappearingFiles(
 
   // keeps track of the contiguous directories that need to be removed to
   // avoid calling beginRemoveRows(), etc. for each item
-  int removeStart = -1;
-  int row = 0;
+  Range range(this, parentItem);
 
   // for each item in this tree item
   while (itor != children.end()) {
@@ -448,7 +499,7 @@ void FileTreeModel::removeDisappearingFiles(
 
     if (!item->isDirectory()) {
       if (firstFileRow == -1) {
-        firstFileRow = row;
+        firstFileRow = range.current();
       }
 
       auto f = parentEntry.findFile(item->key());
@@ -461,37 +512,26 @@ void FileTreeModel::removeDisappearingFiles(
 
         // if there were files before this row that need to be removed,
         // do it now
-        if (removeStart != -1) {
-          removeRange(parentItem, removeStart, row - 1);
-
-          // adjust current row to account for those that were just removed
-          row -= (row - removeStart);
-          itor = children.begin() + row;
-
-          removeStart = -1;
-        }
+        itor = range.remove();
       } else {
         // file is gone from the parent entry
         trace([&]{ log::debug("file {} is gone", item->filename()); });
 
-        if (removeStart == -1) {
-          // start a new contiguous sequence
-          removeStart = row;
-        }
+        range.includeCurrent();
+        ++itor;
       }
+    } else {
+      ++itor;
     }
 
-    ++row;
-    ++itor;
-  }
-
-  if (firstFileRow == -1) {
-    firstFileRow = static_cast<int>(children.size());
+    range.next();
   }
 
   // remove the last file range, if any
-  if (removeStart != -1) {
-    removeRange(parentItem, removeStart, row -1 );
+  range.remove();
+
+  if (firstFileRow == -1) {
+    firstFileRow = static_cast<int>(children.size());
   }
 }
 
@@ -503,8 +543,7 @@ void FileTreeModel::addNewFiles(
   // keeps track of the contiguous files that need to be added to
   // avoid calling beginAddRows(), etc. for each item
   std::vector<std::unique_ptr<FileTreeItem>> toAdd;
-  int addStart = -1;
-  int row = firstFileRow;
+  Range range(this, parentItem, firstFileRow);
 
   // for each directory on the filesystem
   parentEntry.forEachFileIndex([&](auto&& fileIndex) {
@@ -513,11 +552,8 @@ void FileTreeModel::addNewFiles(
 
       // if there were directories before this row that need to be added,
       // do it now
-      if (addStart != -1) {
-        addRange(parentItem, addStart, toAdd);
-        toAdd.clear();
-        addStart = -1;
-      }
+      range.add(std::move(toAdd));
+      toAdd.clear();
     } else {
       const auto file = parentEntry.getFileByIndex(fileIndex);
 
@@ -552,22 +588,16 @@ void FileTreeModel::addNewFiles(
       item->setLoaded(true);
 
       toAdd.push_back(std::move(item));
-
-      if (addStart == -1) {
-        // start a new contiguous sequence
-        addStart = row;
-      }
+      range.includeCurrent();
     }
 
-    ++row;
+    range.next();
 
     return true;
   });
 
   // add the last file range, if any
-  if (addStart != -1) {
-    addRange(parentItem, addStart, toAdd);
-  }
+  range.add(std::move(toAdd));
 }
 
 std::wstring FileTreeModel::makeModName(
