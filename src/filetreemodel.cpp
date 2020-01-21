@@ -263,6 +263,48 @@ QVariant FileTreeModel::data(const QModelIndex& index, int role) const
 
       break;
     }
+
+    case Qt::FontRole:
+    {
+      if (auto* item=itemFromIndex(index)) {
+        return item->font();
+      }
+
+      break;
+    }
+
+    case Qt::ToolTipRole:
+    {
+      if (auto* item=itemFromIndex(index)) {
+        return makeTooltip(*item);
+      }
+
+      return {};
+    }
+
+    case Qt::ForegroundRole:
+    {
+      if (index.column() == 1) {
+        if (auto* item=itemFromIndex(index)) {
+          if (item->isConflicted()) {
+            return QBrush(Qt::red);
+          }
+        }
+      }
+
+      break;
+    }
+
+    case Qt::DecorationRole:
+    {
+      if (index.column() == 0) {
+        if (auto* item=itemFromIndex(index)) {
+          return makeIcon(*item, index);
+        }
+      }
+
+      break;
+    }
   }
 
   return {};
@@ -633,4 +675,78 @@ std::wstring FileTreeModel::makeModName(
   }
 
   return name;
+}
+
+QString FileTreeModel::makeTooltip(const FileTreeItem& item) const
+{
+  auto nowrap = [&](auto&& s) {
+    return "<p style=\"white-space: pre; margin: 0; padding: 0;\">" + s + "</p>";
+  };
+
+  auto line = [&](auto&& caption, auto&& value) {
+    if (value.isEmpty()) {
+      return nowrap("<b>" + caption + ":</b>\n");
+    } else {
+      return nowrap("<b>" + caption + ":</b> " + value.toHtmlEscaped()) + "\n";
+    }
+  };
+
+
+  if (item.isDirectory()) {
+    return
+      line(tr("Directory"), item.filename()) +
+      line(tr("Virtual path"), item.virtualPath());
+  }
+
+
+  static const QString ListStart =
+    "<ul style=\""
+    "margin-left: 20px; "
+    "margin-top: 0; "
+    "margin-bottom: 0; "
+    "padding: 0; "
+    "-qt-list-indent: 0;"
+    "\">";
+
+  static const QString ListEnd = "</ul>";
+
+
+  QString s =
+    line(tr("Virtual path"), item.virtualPath()) +
+    line(tr("Real path"),    item.realPath()) +
+    line(tr("From"),         item.mod());
+
+
+  const auto file = m_core.directoryStructure()->searchFile(
+    item.dataRelativeFilePath().toStdWString(), nullptr);
+
+  if (file) {
+    const auto alternatives = file->getAlternatives();
+    QStringList list;
+
+    for (auto&& alt : file->getAlternatives()) {
+      const auto& origin = m_core.directoryStructure()->getOriginByID(alt.first);
+      list.push_back(QString::fromStdWString(origin.getName()));
+    }
+
+    if (list.size() == 1) {
+      s += line(tr("Also in"), list[0]);
+    } else if (list.size() >= 2) {
+      s += line(tr("Also in"), QString()) + ListStart;
+
+      for (auto&& alt : list) {
+        s += "<li>" + alt +"</li>";
+      }
+
+      s += ListEnd;
+    }
+  }
+
+  return s;
+}
+
+QVariant FileTreeModel::makeIcon(
+  const FileTreeItem& item, const QModelIndex& index) const
+{
+  return {};
 }
