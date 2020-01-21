@@ -105,6 +105,8 @@ public:
 
     m_model->endRemoveRows();
 
+    m_model->removePendingIcons(parentIndex, m_first, last);
+
     // adjust current row to account for those that were just removed
     m_current -= (m_current - m_first);
 
@@ -129,17 +131,7 @@ FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent) :
 {
   m_root.setExpanded(true);
 
-  //connect(&m_iconPendingTimer, &QTimer::timeout, [&]{ updatePendingIcons(); });
-  //
-  //connect(
-  //  this, &QAbstractItemModel::modelAboutToBeReset,
-  //  [&]{ m_iconPending.clear(); });
-  //
-  //connect(
-  //  this, &QAbstractItemModel::rowsAboutToBeRemoved,
-  //  [&](auto&& parent, int first, int last){
-  //    removePendingIcons(parent, first, last);
-  //  });
+  connect(&m_iconPendingTimer, &QTimer::timeout, [&]{ updatePendingIcons(); });
 }
 
 void FileTreeModel::refresh()
@@ -748,5 +740,48 @@ QString FileTreeModel::makeTooltip(const FileTreeItem& item) const
 QVariant FileTreeModel::makeIcon(
   const FileTreeItem& item, const QModelIndex& index) const
 {
-  return {};
+  if (item.isDirectory()) {
+    return m_iconFetcher.genericDirectoryIcon();
+  }
+
+  auto v = m_iconFetcher.icon(item.realPath());
+  if (!v.isNull()) {
+    return v;
+  }
+
+  m_iconPending.push_back(index);
+  m_iconPendingTimer.start(std::chrono::milliseconds(1));
+
+  return m_iconFetcher.genericFileIcon();
+}
+
+void FileTreeModel::updatePendingIcons()
+{
+  std::vector<QModelIndex> v(std::move(m_iconPending));
+  m_iconPending.clear();
+
+  for (auto&& index : v) {
+    emit dataChanged(index, index, {Qt::DecorationRole});
+  }
+
+  if (m_iconPending.empty()) {
+    m_iconPendingTimer.stop();
+  }
+}
+
+void FileTreeModel::removePendingIcons(
+  const QModelIndex& parent, int first, int last)
+{
+  auto itor = m_iconPending.begin();
+
+  while (itor != m_iconPending.end()) {
+    if (itor->parent() == parent) {
+      if (itor->row() >= first && itor->row() <= last) {
+        itor = m_iconPending.erase(itor);
+        continue;
+      }
+    }
+
+    ++itor;
+  }
 }
