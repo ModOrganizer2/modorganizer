@@ -444,17 +444,7 @@ void FileTreeModel::addNewDirectories(
       // this is a new directory
       trace([&]{ log::debug("new dir {}", QString::fromStdWString(d->getName())); });
 
-      auto item = std::make_unique<FileTreeItem>(
-        &parentItem, 0, parentPath, L"", FileTreeItem::Directory,
-        d->getName(), L"");
-
-      if (d->isEmpty()) {
-        // if this directory is empty, mark the item as loaded so the expand
-        // arrow doesn't show
-        item->setLoaded(true);
-      }
-
-      toAdd.push_back(std::move(item));
+      toAdd.push_back(createDirectoryItem(parentItem, parentPath, *d));
       range.includeCurrent();
     }
 
@@ -568,26 +558,7 @@ void FileTreeModel::addNewFiles(
       // this is a new file
       trace([&]{ log::debug("new file {}", QString::fromStdWString(file->getName())); });
 
-      bool isArchive = false;
-      int originID = file->getOrigin(isArchive);
-
-      FileTreeItem::Flags flags = FileTreeItem::NoFlags;
-
-      if (isArchive) {
-        flags |= FileTreeItem::FromArchive;
-      }
-
-      if (!file->getAlternatives().empty()) {
-        flags |= FileTreeItem::Conflicted;
-      }
-
-      auto item = std::make_unique<FileTreeItem>(
-        &parentItem, originID, parentPath, file->getFullPath(), flags,
-        file->getName(), makeModName(*file, originID));
-
-      item->setLoaded(true);
-
-      toAdd.push_back(std::move(item));
+      toAdd.push_back(createFileItem(parentItem, parentPath, *file));
       range.includeCurrent();
     }
 
@@ -598,6 +569,49 @@ void FileTreeModel::addNewFiles(
 
   // add the last file range, if any
   range.add(std::move(toAdd));
+}
+
+std::unique_ptr<FileTreeItem> FileTreeModel::createDirectoryItem(
+  FileTreeItem& parentItem, const std::wstring& parentPath,
+  const DirectoryEntry& d)
+{
+  auto item = std::make_unique<FileTreeItem>(
+    &parentItem, 0, parentPath, L"", FileTreeItem::Directory,
+    d.getName(), L"");
+
+  if (d.isEmpty()) {
+    // if this directory is empty, mark the item as loaded so the expand
+    // arrow doesn't show
+    item->setLoaded(true);
+  }
+
+  return item;
+}
+
+std::unique_ptr<FileTreeItem> FileTreeModel::createFileItem(
+  FileTreeItem& parentItem, const std::wstring& parentPath,
+  const FileEntry& file)
+{
+  bool isArchive = false;
+  int originID = file.getOrigin(isArchive);
+
+  FileTreeItem::Flags flags = FileTreeItem::NoFlags;
+
+  if (isArchive) {
+    flags |= FileTreeItem::FromArchive;
+  }
+
+  if (!file.getAlternatives().empty()) {
+    flags |= FileTreeItem::Conflicted;
+  }
+
+  auto item = std::make_unique<FileTreeItem>(
+    &parentItem, originID, parentPath, file.getFullPath(), flags,
+    file.getName(), makeModName(file, originID));
+
+  item->setLoaded(true);
+
+  return item;
 }
 
 std::wstring FileTreeModel::makeModName(

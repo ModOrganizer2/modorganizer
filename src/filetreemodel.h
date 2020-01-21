@@ -106,6 +106,15 @@ private:
     const std::unordered_set<MOShared::FileEntry::Index>& seen);
 
 
+  std::unique_ptr<FileTreeItem> createDirectoryItem(
+    FileTreeItem& parentItem, const std::wstring& parentPath,
+    const MOShared::DirectoryEntry& d);
+
+  std::unique_ptr<FileTreeItem> createFileItem(
+    FileTreeItem& parentItem, const std::wstring& parentPath,
+    const MOShared::FileEntry& file);
+
+
   std::wstring makeModName(const MOShared::FileEntry& file, int originID) const;
 
   void ensureLoaded(FileTreeItem* item) const;
