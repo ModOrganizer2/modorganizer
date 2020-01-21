@@ -38,6 +38,7 @@
 #include <Shlwapi.h>
 #include <tchar.h>
 #include <wincred.h>
+#include <windowsx.h>
 
 // boost
 #include <boost/algorithm/string.hpp>
