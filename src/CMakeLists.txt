@@ -135,6 +135,7 @@ SET(organizer_SRCS
 	envmetrics.cpp
 	envmodule.cpp
 	envsecurity.cpp
+	envshell.cpp
 	envshortcut.cpp
 	envwindows.cpp
 	colortable.cpp
@@ -264,6 +265,7 @@ SET(organizer_HDRS
 	envmetrics.h
 	envmodule.h
 	envsecurity.h
+	envshell.h
 	envshortcut.h
 	envwindows.h
 	colortable.h
@@ -393,6 +395,7 @@ set(env
 	envmetrics
 	envmodule
 	envsecurity
+	envshell
 	envshortcut
 	envwindows
 )

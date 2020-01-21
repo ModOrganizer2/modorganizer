@@ -2,6 +2,7 @@
 #include "filetreemodel.h"
 #include "filetreeitem.h"
 #include "organizercore.h"
+#include "envshell.h"
 #include <log.h>
 
 using namespace MOShared;
@@ -438,6 +439,23 @@ void FileTree::onExpandedChanged(const QModelIndex& index, bool expanded)
 
 void FileTree::onContextMenu(const QPoint &pos)
 {
+  const auto m = QApplication::keyboardModifiers();
+
+  if (m & Qt::ShiftModifier) {
+    if (auto* item=singleSelection()) {
+      if (!item->isDirectory()) {
+        const auto file = m_core.directoryStructure()->searchFile(
+          item->dataRelativeFilePath().toStdWString(), nullptr);
+
+        if (file) {
+          const QFileInfo fi(QString::fromStdWString(file->getFullPath()));
+          env::showShellMenu(m_tree, fi, m_tree->viewport()->mapToGlobal(pos));
+          return;
+        }
+      }
+    }
+  }
+
   QMenu menu;
 
   if (auto* item=singleSelection()) {
