@@ -362,7 +362,7 @@ std::size_t smallSelectionSize(const QTreeView* tree)
 }
 
 template <class F>
-void for_each_in_selection(QTreeView* tree, F&& f)
+void forEachInSelection(QTreeView* tree, F&& f)
 {
   const auto* sel = tree->selectionModel();
 
@@ -481,7 +481,7 @@ void ConflictsTab::changeItemsVisibility(QTreeView* tree, bool visible)
     return;
   }
 
-  for_each_in_selection(tree, [&](const ConflictItem* item) {
+  forEachInSelection(tree, [&](const ConflictItem* item) {
     if (stop) {
       return false;
     }
@@ -546,7 +546,7 @@ void ConflictsTab::activateItems(QTreeView* tree)
 
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
-  for_each_in_selection(tree, [&](const ConflictItem* item) {
+  forEachInSelection(tree, [&](const ConflictItem* item) {
     const auto path = item->fileName();
 
     if (tryPreview && canPreviewFile(plugin(), item->isArchive(), path)) {
@@ -563,7 +563,7 @@ void ConflictsTab::openItems(QTreeView* tree, bool hooked)
 {
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
-  for_each_in_selection(tree, [&](const ConflictItem* item) {
+  forEachInSelection(tree, [&](const ConflictItem* item) {
     openItem(item, hooked);
     return true;
   });
@@ -582,7 +582,7 @@ void ConflictsTab::previewItems(QTreeView* tree)
 {
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
-  for_each_in_selection(tree, [&](const ConflictItem* item) {
+  forEachInSelection(tree, [&](const ConflictItem* item) {
     previewItem(item);
     return true;
   });
@@ -597,7 +597,7 @@ void ConflictsTab::exploreItems(QTreeView* tree)
 {
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
-  for_each_in_selection(tree, [&](const ConflictItem* item) {
+  forEachInSelection(tree, [&](const ConflictItem* item) {
     shell::Explore(item->fileName());
     return true;
   });
@@ -774,7 +774,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
       enableHide = false;
       enableUnhide = false;
 
-      for_each_in_selection(tree, [&](const ConflictItem* item) {
+      forEachInSelection(tree, [&](const ConflictItem* item) {
         if (item->canHide()) {
           enableHide = true;
         }
