@@ -365,20 +365,28 @@ template <class F>
 void for_each_in_selection(QTreeView* tree, F&& f)
 {
   const auto* sel = tree->selectionModel();
-  const auto* model = dynamic_cast<ConflictListModel*>(tree->model());
+
+  const auto* proxy = dynamic_cast<QAbstractProxyModel*>(tree->model());
+
+  if (!proxy) {
+    log::error("tree doesn't have a SortProxyModel");
+    return;
+  }
+
+  const auto* model = dynamic_cast<ConflictListModel*>(proxy->sourceModel());
 
   if (!model) {
     log::error("tree doesn't have a ConflictListModel");
     return;
   }
 
-  for (const auto& range : sel->selection()) {
-    // ranges are inclusive
-    for (int row=range.top(); row<=range.bottom(); ++row) {
-      if (auto* item=model->getItem(static_cast<std::size_t>(row))) {
-        if (!f(item)) {
-          return;
-        }
+  auto modelSel = proxy->mapSelectionToSource(sel->selection());
+
+  for (const auto& rowIndex : sel->selectedRows()) {
+    auto modelRow = proxy->mapToSource(rowIndex).row();
+    if (auto* item = model->getItem(static_cast<std::size_t>(modelRow))) {
+      if (!f(item)) {
+        return;
       }
     }
   }
@@ -461,9 +469,17 @@ void ConflictsTab::changeItemsVisibility(QTreeView* tree, bool visible)
 
   FileRenamer renamer(parentWidget(), flags);
 
-  auto* model = dynamic_cast<ConflictListModel*>(tree->model());
+  const auto* proxy = dynamic_cast<QAbstractProxyModel*>(tree->model());
+
+  if (!proxy) {
+    log::error("tree doesn't have a SortProxyModel");
+    return;
+  }
+
+  const auto* model = dynamic_cast<ConflictListModel*>(proxy->sourceModel());
+
   if (!model) {
-    log::error("list doesn't have a ConflictListModel");
+    log::error("tree doesn't have a ConflictListModel");
     return;
   }
 
@@ -707,16 +723,27 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
 
   const auto n = smallSelectionSize(tree);
 
-  const auto* model = dynamic_cast<ConflictListModel*>(tree->model());
+  const auto* proxy = dynamic_cast<QAbstractProxyModel*>(tree->model());
+
+  if (!proxy) {
+    log::error("tree doesn't have a SortProxyModel");
+    return {};
+  }
+
+  const auto* model = dynamic_cast<ConflictListModel*>(proxy->sourceModel());
+
   if (!model) {
     log::error("tree doesn't have a ConflictListModel");
     return {};
   }
 
+  auto modelSel = proxy->mapSelectionToSource(tree->selectionModel()->selection());
+
+
   if (n == 1) {
     // this is a single selection
     const auto* item = model->getItem(static_cast<std::size_t>(
-      tree->selectionModel()->selectedRows()[0].row()));
+      modelSel.indexes()[0].row()));
 
     if (!item) {
       return {};
@@ -797,7 +824,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
 
   if (enableGoto && n == 1) {
     const auto* item = model->getItem(static_cast<std::size_t>(
-      tree->selectionModel()->selectedRows()[0].row()));
+      modelSel.indexes()[0].row()));
 
     actions.gotoActions = createGotoActions(item);
   }
@@ -1027,12 +1054,23 @@ ConflictItem GeneralConflictsTab::createOverwrittenItem(
 
 void GeneralConflictsTab::onOverwriteActivated(const QModelIndex& index)
 {
-  auto* model = dynamic_cast<ConflictListModel*>(ui->overwriteTree->model());
-  if (!model) {
+  const auto* proxy = dynamic_cast<QAbstractProxyModel*>(ui->overwriteTree->model());
+
+  if (!proxy) {
+    log::error("tree doesn't have a SortProxyModel");
     return;
   }
 
-  auto* item = model->getItem(static_cast<std::size_t>(index.row()));
+  const auto* model = dynamic_cast<ConflictListModel*>(proxy->sourceModel());
+
+  if (!model) {
+    log::error("tree doesn't have a ConflictListModel");
+    return;
+  }
+
+  auto modelIndex = proxy->mapToSource(index);
+
+  auto* item = model->getItem(static_cast<std::size_t>(modelIndex.row()));
   if (!item) {
     return;
   }
@@ -1045,12 +1083,25 @@ void GeneralConflictsTab::onOverwriteActivated(const QModelIndex& index)
 
 void GeneralConflictsTab::onOverwrittenActivated(const QModelIndex& index)
 {
-  auto* model = dynamic_cast<ConflictListModel*>(ui->overwrittenTree->model());
-  if (!model) {
+  const auto* proxy = dynamic_cast<QAbstractProxyModel*>(ui->overwrittenTree->model());
+
+  if (!proxy) {
+    log::error("tree doesn't have a SortProxyModel");
     return;
   }
 
-  auto* item = model->getItem(static_cast<std::size_t>(index.row()));
+  const auto* model = dynamic_cast<ConflictListModel*>(proxy->sourceModel());
+
+  if (!model) {
+    log::error("tree doesn't have a ConflictListModel");
+    return;
+  }
+
+  proxy->mapSelectionToSource(ui->overwrittenTree->selectionModel()->selection());
+
+  auto modelIndex = proxy->mapToSource(index);
+
+  auto* item = model->getItem(static_cast<std::size_t>(modelIndex.row()));
   if (!item) {
     return;
   }
@@ -1067,6 +1118,10 @@ AdvancedConflictsTab::AdvancedConflictsTab(
     m_tab(tab), ui(pui), m_core(oc),
     m_model(new AdvancedConflictListModel(ui->conflictsAdvancedList))
 {
+
+  m_filter.setEdit(ui->conflictsAdvancedFilter);
+  m_filter.setList(ui->conflictsAdvancedList);
+
   // left-elide the overwrites column so that the nearest are visible
   ui->conflictsAdvancedList->setItemDelegateForColumn(
     0, new ElideLeftDelegate(ui->conflictsAdvancedList));
@@ -1096,9 +1151,6 @@ AdvancedConflictsTab::AdvancedConflictsTab(
   QObject::connect(
     ui->conflictsAdvancedList, &QTreeView::customContextMenuRequested,
     [&](const QPoint& p){ m_tab->showContextMenu(p, ui->conflictsAdvancedList); });
-
-  m_filter.setEdit(ui->conflictsAdvancedFilter);
-  QObject::connect(&m_filter, &FilterWidget::changed, [&]{ update(); });
 }
 
 void AdvancedConflictsTab::clear()
@@ -1255,17 +1307,6 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
 
   auto beforeQS = QString::fromStdWString(before);
   auto afterQS = QString::fromStdWString(after);
-
-  const bool matched = m_filter.matches([&](auto&& what) {
-    return
-      beforeQS.contains(what, Qt::CaseInsensitive) ||
-      relativeName.contains(what, Qt::CaseInsensitive) ||
-      afterQS.contains(what, Qt::CaseInsensitive);
-    });
-
-  if (!matched) {
-    return {};
-  }
 
   return ConflictItem(
     std::move(beforeQS), std::move(relativeName), std::move(afterQS),
