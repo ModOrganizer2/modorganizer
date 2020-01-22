@@ -6,6 +6,8 @@
 
 class FileTreeItem
 {
+  class Sorter;
+
 public:
   using Children = std::vector<std::unique_ptr<FileTreeItem>>;
 
@@ -87,6 +89,8 @@ public:
 
     return -1;
   }
+
+  void sort(int column, Qt::SortOrder order);
 
   FileTreeItem* parent()
   {

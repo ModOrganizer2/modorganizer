@@ -59,6 +59,10 @@ void DataTab::saveState(Settings& s) const
 void DataTab::restoreState(const Settings& s)
 {
   s.geometry().restoreState(ui.tree->header());
+  
+  // prior to 2.3, the list was not sortable, and this remembered in the
+  // widget state, for whatever reason
+  ui.tree->setSortingEnabled(true);
 }
 
 void DataTab::activated()

@@ -1091,6 +1091,9 @@ p, li { white-space: pre-wrap; }
                  <property name="uniformRowHeights">
                   <bool>true</bool>
                  </property>
+                 <property name="sortingEnabled">
+                  <bool>true</bool>
+                 </property>
                  <attribute name="headerMinimumSectionSize">
                   <number>400</number>
                  </attribute>

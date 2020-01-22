@@ -326,6 +326,39 @@ Qt::ItemFlags FileTreeModel::flags(const QModelIndex& index) const
   return f;
 }
 
+void FileTreeModel::sort(int column, Qt::SortOrder order)
+{
+  emit layoutAboutToBeChanged();
+
+  m_sort.column = column;
+  m_sort.order = order;
+
+  const auto oldList = persistentIndexList();
+  std::vector<std::pair<FileTreeItem*, int>> oldItems;
+
+  const auto itemCount = oldList.size();
+  oldItems.reserve(static_cast<std::size_t>(itemCount));
+
+  for (int i=0; i<itemCount; ++i) {
+    const QModelIndex& index = oldList[i];
+    oldItems.push_back({itemFromIndex(index), index.column()});
+  }
+
+  m_root.sort(column, order);
+
+  QModelIndexList newList;
+  newList.reserve(itemCount);
+
+  for (int i=0; i<itemCount; ++i) {
+    const auto& pair = oldItems[static_cast<std::size_t>(i)];
+    newList.append(indexFromItem(*pair.first, pair.second));
+  }
+
+  changePersistentIndexList(oldList, newList);
+
+  emit layoutChanged({}, QAbstractItemModel::VerticalSortHint);
+}
+
 FileTreeItem* FileTreeModel::itemFromIndex(const QModelIndex& index) const
 {
   if (!index.isValid()) {
@@ -349,7 +382,7 @@ FileTreeItem* FileTreeModel::itemFromIndex(const QModelIndex& index) const
   return parentItem->children()[index.row()].get();
 }
 
-QModelIndex FileTreeModel::indexFromItem(FileTreeItem& item) const
+QModelIndex FileTreeModel::indexFromItem(FileTreeItem& item, int col) const
 {
   auto* parent = item.parent();
   if (!parent) {
@@ -365,7 +398,7 @@ QModelIndex FileTreeModel::indexFromItem(FileTreeItem& item) const
     return {};
   }
 
-  return createIndex(index, 0, parent);
+  return createIndex(index, col, parent);
 }
 
 void FileTreeModel::update(
@@ -383,13 +416,24 @@ void FileTreeModel::update(
     path += parentEntry.getName();
   }
 
-  updateDirectories(parentItem, path, parentEntry, FillFlag::None);
-  updateFiles(parentItem, path, parentEntry);
-
   parentItem.setLoaded(true);
+
+  bool added = false;
+
+  if (updateDirectories(parentItem, path, parentEntry, FillFlag::None)) {
+    added = true;
+  }
+
+  if (updateFiles(parentItem, path, parentEntry)) {
+    added = true;
+  }
+
+  if (added) {
+    parentItem.sort(m_sort.column, m_sort.order);
+  }
 }
 
-void FileTreeModel::updateDirectories(
+bool FileTreeModel::updateDirectories(
   FileTreeItem& parentItem, const std::wstring& parentPath,
   const MOShared::DirectoryEntry& parentEntry, FillFlags flags)
 {
@@ -399,7 +443,7 @@ void FileTreeModel::updateDirectories(
   std::unordered_set<std::wstring_view> seen;
 
   removeDisappearingDirectories(parentItem, parentEntry, parentPath, seen);
-  addNewDirectories(parentItem, parentEntry, parentPath, seen);
+  return addNewDirectories(parentItem, parentEntry, parentPath, seen);
 }
 
 void FileTreeModel::removeDisappearingDirectories(
@@ -453,7 +497,7 @@ void FileTreeModel::removeDisappearingDirectories(
   range.remove();
 }
 
-void FileTreeModel::addNewDirectories(
+bool FileTreeModel::addNewDirectories(
   FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
   const std::wstring& parentPath,
   const std::unordered_set<std::wstring_view>& seen)
@@ -462,6 +506,7 @@ void FileTreeModel::addNewDirectories(
   // avoid calling beginAddRows(), etc. for each item
   Range range(this, parentItem);
   std::vector<std::unique_ptr<FileTreeItem>> toAdd;
+  bool added = false;
 
   // for each directory on the filesystem
   for (auto&& d : parentEntry.getSubDirectories()) {
@@ -477,6 +522,8 @@ void FileTreeModel::addNewDirectories(
       trace([&]{ log::debug("new dir {}", QString::fromStdWString(d->getName())); });
 
       toAdd.push_back(createDirectoryItem(parentItem, parentPath, *d));
+      added = true;
+
       range.includeCurrent();
     }
 
@@ -485,9 +532,11 @@ void FileTreeModel::addNewDirectories(
 
   // add the last directory range, if any
   range.add(std::move(toAdd));
+
+  return added;
 }
 
-void FileTreeModel::updateFiles(
+bool FileTreeModel::updateFiles(
   FileTreeItem& parentItem, const std::wstring& parentPath,
   const MOShared::DirectoryEntry& parentEntry)
 {
@@ -499,7 +548,7 @@ void FileTreeModel::updateFiles(
   int firstFileRow = 0;
 
   removeDisappearingFiles(parentItem, parentEntry, firstFileRow, seen);
-  addNewFiles(parentItem, parentEntry, parentPath, firstFileRow, seen);
+  return addNewFiles(parentItem, parentEntry, parentPath, firstFileRow, seen);
 }
 
 void FileTreeModel::removeDisappearingFiles(
@@ -557,7 +606,7 @@ void FileTreeModel::removeDisappearingFiles(
   }
 }
 
-void FileTreeModel::addNewFiles(
+bool FileTreeModel::addNewFiles(
   FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
   const std::wstring& parentPath, const int firstFileRow,
   const std::unordered_set<FileEntry::Index>& seen)
@@ -566,6 +615,7 @@ void FileTreeModel::addNewFiles(
   // avoid calling beginAddRows(), etc. for each item
   std::vector<std::unique_ptr<FileTreeItem>> toAdd;
   Range range(this, parentItem, firstFileRow);
+  bool added = false;
 
   // for each directory on the filesystem
   parentEntry.forEachFileIndex([&](auto&& fileIndex) {
@@ -591,6 +641,8 @@ void FileTreeModel::addNewFiles(
       trace([&]{ log::debug("new file {}", QString::fromStdWString(file->getName())); });
 
       toAdd.push_back(createFileItem(parentItem, parentPath, *file));
+      added = true;
+
       range.includeCurrent();
     }
 
@@ -601,6 +653,8 @@ void FileTreeModel::addNewFiles(
 
   // add the last file range, if any
   range.add(std::move(toAdd));
+
+  return added;
 }
 
 std::unique_ptr<FileTreeItem> FileTreeModel::createDirectoryItem(
@@ -650,7 +704,7 @@ QVariant FileTreeModel::displayData(const FileTreeItem* item, int column) const
 {
   switch (column)
   {
-    case Filename:
+    case FileName:
     {
       return item->filename();
     }
@@ -681,7 +735,7 @@ QVariant FileTreeModel::displayData(const FileTreeItem* item, int column) const
 
     default:
     {
-      break;
+      return {};
     }
   }
 }

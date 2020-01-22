@@ -22,7 +22,7 @@ public:
 
   enum Columns
   {
-    Filename = 0,
+    FileName = 0,
     ModName,
     FileType,
     FileSize,
@@ -53,6 +53,7 @@ public:
   QVariant data(const QModelIndex& index, int role=Qt::DisplayRole) const override;
   QVariant headerData(int i, Qt::Orientation ori, int role=Qt::DisplayRole) const override;
   Qt::ItemFlags flags(const QModelIndex& index) const override;
+  void sort(int column, Qt::SortOrder order=Qt::AscendingOrder) override;
 
   FileTreeItem* itemFromIndex(const QModelIndex& index) const;
 
@@ -61,6 +62,12 @@ private:
   {
     None             = 0x00,
     PruneDirectories = 0x01
+  };
+
+  struct Sort
+  {
+    int column = 0;
+    Qt::SortOrder order = Qt::AscendingOrder;
   };
 
   class Range;
@@ -75,6 +82,7 @@ private:
   mutable std::vector<QModelIndex> m_iconPending;
   mutable QTimer m_iconPendingTimer;
   bool m_isRefreshing;
+  Sort m_sort;
 
   bool showConflicts() const
   {
@@ -89,7 +97,7 @@ private:
     const std::wstring& parentPath);
 
 
-  void updateDirectories(
+  bool updateDirectories(
     FileTreeItem& parentItem, const std::wstring& path,
     const MOShared::DirectoryEntry& parentEntry, FillFlags flags);
 
@@ -97,13 +105,13 @@ private:
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
     const std::wstring& parentPath, std::unordered_set<std::wstring_view>& seen);
 
-  void addNewDirectories(
+  bool addNewDirectories(
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
     const std::wstring& parentPath,
     const std::unordered_set<std::wstring_view>& seen);
 
 
-  void updateFiles(
+  bool updateFiles(
     FileTreeItem& parentItem, const std::wstring& path,
     const MOShared::DirectoryEntry& parentEntry);
 
@@ -111,7 +119,7 @@ private:
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
     int& firstFileRow, std::unordered_set<MOShared::FileEntry::Index>& seen);
 
-  void addNewFiles(
+  bool addNewFiles(
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
     const std::wstring& parentPath, int firstFileRow,
     const std::unordered_set<MOShared::FileEntry::Index>& seen);
@@ -138,7 +146,7 @@ private:
   QString makeTooltip(const FileTreeItem& item) const;
   QVariant makeIcon(const FileTreeItem& item, const QModelIndex& index) const;
 
-  QModelIndex indexFromItem(FileTreeItem& item) const;
+  QModelIndex indexFromItem(FileTreeItem& item, int col=0) const;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FileTreeModel::Flags);

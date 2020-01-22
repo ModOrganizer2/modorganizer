@@ -1,6 +1,8 @@
 #include "filetreeitem.h"
+#include "filetreemodel.h"
 #include "modinfo.h"
 #include "util.h"
+#include "modinfodialogfwd.h"
 #include <log.h>
 
 using namespace MOBase;
@@ -61,6 +63,71 @@ void FileTreeItem::remove(std::size_t from, std::size_t n)
   auto end = begin + n;
 
   m_children.erase(begin, end);
+}
+
+
+template <class T>
+int threeWayCompare(T&& a, T&& b)
+{
+  if (a < b) {
+    return -1;
+  }
+
+  if (a > b) {
+    return 1;
+  }
+
+  return 0;
+}
+
+class FileTreeItem::Sorter
+{
+public:
+  static int compare(int column, const FileTreeItem* a, const FileTreeItem* b)
+  {
+    switch (column)
+    {
+      case FileTreeModel::FileName:
+        return naturalCompare(a->m_file, b->m_file);
+
+      case FileTreeModel::ModName:
+        return naturalCompare(a->m_mod, b->m_mod);
+
+      case FileTreeModel::FileType:
+        return naturalCompare(a->meta().type, b->meta().type);
+
+      case FileTreeModel::FileSize:
+        return threeWayCompare(a->meta().size, b->meta().size);
+
+      case FileTreeModel::LastModified:
+        return threeWayCompare(a->meta().lastModified, b->meta().lastModified);
+
+      default:
+        return 0;
+    }
+  }
+};
+
+
+void FileTreeItem::sort(int column, Qt::SortOrder order)
+{
+  std::sort(m_children.begin(), m_children.end(), [&](auto&& a, auto&& b) {
+    int r = 0;
+
+    if (a->isDirectory() && !b->isDirectory()) {
+      r = -1;
+    } else if (!a->isDirectory() && b->isDirectory()) {
+      r = 1;
+    } else {
+      r = FileTreeItem::Sorter::compare(column, a.get(), b.get());
+    }
+
+    if (order == Qt::AscendingOrder) {
+      return (r < 0);
+    } else {
+      return (r > 0);
+    }
+  });
 }
 
 QString FileTreeItem::virtualPath() const
