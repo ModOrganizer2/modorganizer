@@ -23,6 +23,24 @@ public:
 };
 
 
+class DummyMenu
+{
+public:
+  DummyMenu(QString s)
+    : m_what(s)
+  {
+  }
+
+  const QString& what() const
+  {
+    return m_what;
+  }
+
+private:
+  QString m_what;
+};
+
+
 struct IdlsFreer
 {
   const std::vector<LPCITEMIDLIST>& v;
@@ -220,9 +238,10 @@ void ShellMenu::exec(QWidget* parent, const QPoint& pos)
     return;
   }
 
+  auto* mw = getMainWindow(parent);
+
   try
   {
-    auto* mw = getMainWindow(parent);
     auto idls = createIdls(m_files);
 
     if (idls.empty()) {
@@ -243,6 +262,18 @@ void ShellMenu::exec(QWidget* parent, const QPoint& pos)
 
     invoke(mw, pos, cmd - QCM_FIRST, cm.get());
   }
+  catch(DummyMenu& dm)
+  {
+    try
+    {
+      showDummyMenu(mw, pos, dm.what());
+    }
+    catch(MenuFailed& e)
+    {
+      log::error("{}", dm.what());
+      log::error("additionally, creating the dummy menu failed: {}", e.what());
+    }
+  }
   catch(MenuFailed& e)
   {
     if (m_files.size() == 1) {
@@ -254,6 +285,27 @@ void ShellMenu::exec(QWidget* parent, const QPoint& pos)
         "can't create shell menu for {} files: {}",
         m_files.size(), e.what());
     }
+  }
+}
+
+void ShellMenu::showDummyMenu(
+  QMainWindow* mw, const QPoint& pos, const QString& what)
+{
+  HMENU menu = CreatePopupMenu();
+  if (!menu) {
+    const auto e = GetLastError();
+    throw MenuFailed(e, "CreatePopupMenu failed");
+  }
+
+  if (!AppendMenuW(menu, MF_STRING | MF_DISABLED, 0, what.toStdWString().c_str())) {
+    const auto e = GetLastError();
+    throw MenuFailed(e, "AppendMenuW failed");
+  }
+
+  const auto hwnd = (HWND)mw->winId();
+  if (!TrackPopupMenuEx(menu, 0, pos.x(), pos.y(), hwnd, nullptr)) {
+    const auto e = GetLastError();
+    throw MenuFailed(e, "TrackPopupMenuEx failed");
   }
 }
 
@@ -314,9 +366,19 @@ std::vector<LPCITEMIDLIST> ShellMenu::createIdls(
   const std::vector<QFileInfo>& files)
 {
   std::vector<LPCITEMIDLIST> idls;
+  std::optional<QDir> parent;
 
   for (auto&& f : files) {
     const auto path = QDir::toNativeSeparators(f.absoluteFilePath()).toStdWString();
+
+    if (!parent) {
+      parent = f.absoluteDir();
+    } else {
+      if (*parent != f.absoluteDir()) {
+        throw DummyMenu(QObject::tr(
+          "Selected files must be in the same directory"));
+      }
+    }
 
     auto item = createShellItem(path);
     auto pidlist = getPersistIDList(item.get());

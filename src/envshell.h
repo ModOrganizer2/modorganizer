@@ -27,6 +27,7 @@ private:
   HMenuPtr createMenu(IContextMenu* cm);
   int runMenu(QMainWindow* mw, IContextMenu* cm, HMENU menu, const QPoint& p);
   void invoke(QMainWindow* mw, const QPoint& p, int cmd, IContextMenu* cm);
+  void showDummyMenu(QMainWindow* mw, const QPoint& pos, const QString& what);
 };
 
 } // namespace
