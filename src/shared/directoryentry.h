@@ -63,7 +63,16 @@ class FileEntry
 public:
   typedef unsigned int Index;
   typedef boost::shared_ptr<FileEntry> Ptr;
-  typedef std::vector<std::pair<int, std::pair<std::wstring, int>>> AlternativesVector;
+
+  // a vector of {originId, {archiveName, order}}
+  //
+  // if a file is in an archive, archiveName is the name of the bsa and order
+  // is the order of the associated plugin in the plugins list
+  //
+  // is a file is not in an archive, archiveName is empty and order is usually
+  // -1
+  typedef std::vector<std::pair<int, std::pair<std::wstring, int>>>
+    AlternativesVector;
 
   FileEntry();
   FileEntry(Index index, const std::wstring &name, DirectoryEntry *parent);
@@ -339,6 +348,7 @@ public:
   bool originExists(const std::wstring &name) const;
   FilesOrigin &getOriginByID(int ID) const;
   FilesOrigin &getOriginByName(const std::wstring &name) const;
+  const FilesOrigin* findOriginByID(int ID) const;
 
   int anyOrigin() const;
 

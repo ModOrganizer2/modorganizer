@@ -104,6 +104,17 @@ public:
     return m_Origins[ID];
   }
 
+  const FilesOrigin* findByID(Index ID) const
+  {
+    auto itor = m_Origins.find(ID);
+
+    if (itor == m_Origins.end()) {
+      return nullptr;
+    } else {
+      return &itor->second;
+    }
+  }
+
   FilesOrigin &getByName(const std::wstring &name)
   {
     std::map<std::wstring, int>::iterator iter = m_OriginsNameMap.find(name);
@@ -734,6 +745,11 @@ FilesOrigin &DirectoryEntry::getOriginByID(int ID) const
 FilesOrigin &DirectoryEntry::getOriginByName(const std::wstring &name) const
 {
   return m_OriginConnection->getByName(name);
+}
+
+const FilesOrigin* DirectoryEntry::findOriginByID(int ID) const
+{
+  return m_OriginConnection->findByID(ID);
 }
 
 int DirectoryEntry::anyOrigin() const

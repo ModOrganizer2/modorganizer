@@ -12,10 +12,16 @@ class ShellMenu
 {
 public:
   void addFile(QFileInfo fi);
+
   void exec(QWidget* parent, const QPoint& pos);
+  HMENU getMenu();
 
 private:
   std::vector<QFileInfo> m_files;
+  COMPtr<IContextMenu> m_cm;
+  HMenuPtr m_menu;
+
+  void createMenu();
 
   QMainWindow* getMainWindow(QWidget* w);
   COMPtr<IShellItem> createShellItem(const std::wstring& path);
@@ -25,9 +31,10 @@ private:
   COMPtr<IShellItemArray> createItemArray(std::vector<LPCITEMIDLIST>& idls);
   COMPtr<IContextMenu> createContextMenu(IShellItemArray* array);
   HMenuPtr createMenu(IContextMenu* cm);
+  HMenuPtr createDummyMenu(const QString& what);
+
   int runMenu(QMainWindow* mw, IContextMenu* cm, HMENU menu, const QPoint& p);
   void invoke(QMainWindow* mw, const QPoint& p, int cmd, IContextMenu* cm);
-  void showDummyMenu(QMainWindow* mw, const QPoint& pos, const QString& what);
 };
 
 } // namespace

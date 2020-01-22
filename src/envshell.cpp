@@ -65,15 +65,7 @@ public:
   WndProcFilter(QMainWindow* mw, IContextMenu* cm)
     : m_mw(mw), m_cm(cm), m_cm2(nullptr), m_cm3(nullptr)
   {
-    IContextMenu2* cm2 = nullptr;
-    if (SUCCEEDED(cm->QueryInterface(IID_IContextMenu2, (void**)&cm2))) {
-      m_cm2.reset(cm2);
-    }
-
-    IContextMenu3* cm3 = nullptr;
-    if (SUCCEEDED(cm->QueryInterface(IID_IContextMenu3, (void**)&cm3))) {
-      m_cm3.reset(cm3);
-    }
+    createInterfaces();
   }
 
   ~WndProcFilter()
@@ -86,6 +78,9 @@ public:
   bool nativeEventFilter(const QByteArray& type, void* m, long* lresultOut) override
   {
     MSG* msg = (MSG*)m;
+    if (!msg) {
+      return false;
+    }
 
     if (msg->message == WM_MENUSELECT) {
       HANDLE_WM_MENUSELECT(msg->hwnd, msg->wParam, msg->lParam, onMenuSelect);
@@ -128,6 +123,23 @@ private:
   IContextMenu* m_cm;
   COMPtr<IContextMenu2> m_cm2;
   COMPtr<IContextMenu3> m_cm3;
+
+  void createInterfaces()
+  {
+    if (!m_cm) {
+      return;
+    }
+
+    IContextMenu2* cm2 = nullptr;
+    if (SUCCEEDED(m_cm->QueryInterface(IID_IContextMenu2, (void**)&cm2))) {
+      m_cm2.reset(cm2);
+    }
+
+    IContextMenu3* cm3 = nullptr;
+    if (SUCCEEDED(m_cm->QueryInterface(IID_IContextMenu3, (void**)&cm3))) {
+      m_cm3.reset(cm3);
+    }
+  }
 
   // adapted from
   // https://devblogs.microsoft.com/oldnewthing/20040928-00/?p=37723
@@ -233,12 +245,50 @@ void ShellMenu::addFile(QFileInfo fi)
 
 void ShellMenu::exec(QWidget* parent, const QPoint& pos)
 {
+  auto* mw = getMainWindow(parent);
+  HMENU menu = getMenu();
+  if (!menu) {
+    return;
+  }
+
+  try
+  {
+    const int cmd = runMenu(mw, m_cm.get(), m_menu.get(), pos);
+    if (cmd <= 0) {
+      return;
+    }
+
+    invoke(mw, pos, cmd - QCM_FIRST, m_cm.get());
+  }
+  catch(MenuFailed& e)
+  {
+    if (m_files.size() == 1) {
+      log::error(
+        "can't exec shell menu for '{}': {}",
+        QDir::toNativeSeparators(m_files[0].absoluteFilePath()), e.what());
+    } else {
+      log::error(
+        "can't exec shell menu for {} files: {}",
+        m_files.size(), e.what());
+    }
+  }
+}
+
+HMENU ShellMenu::getMenu()
+{
+  if (!m_menu) {
+    createMenu();
+  }
+
+  return m_menu.get();
+}
+
+void ShellMenu::createMenu()
+{
   if (m_files.empty()) {
     log::warn("showShellMenu(): no files given");
     return;
   }
-
-  auto* mw = getMainWindow(parent);
 
   try
   {
@@ -252,27 +302,12 @@ void ShellMenu::exec(QWidget* parent, const QPoint& pos)
     IdlsFreer freer(idls);
 
     auto array = createItemArray(idls);
-    auto cm = createContextMenu(array.get());
-    auto hmenu = createMenu(cm.get());
-
-    const int cmd = runMenu(mw, cm.get(), hmenu.get(), pos);
-    if (cmd <= 0) {
-      return;
-    }
-
-    invoke(mw, pos, cmd - QCM_FIRST, cm.get());
+    m_cm = createContextMenu(array.get());
+    m_menu = createMenu(m_cm.get());
   }
   catch(DummyMenu& dm)
   {
-    try
-    {
-      showDummyMenu(mw, pos, dm.what());
-    }
-    catch(MenuFailed& e)
-    {
-      log::error("{}", dm.what());
-      log::error("additionally, creating the dummy menu failed: {}", e.what());
-    }
+    m_menu = createDummyMenu(dm.what());
   }
   catch(MenuFailed& e)
   {
@@ -285,27 +320,34 @@ void ShellMenu::exec(QWidget* parent, const QPoint& pos)
         "can't create shell menu for {} files: {}",
         m_files.size(), e.what());
     }
+
+    m_menu = createDummyMenu(QObject::tr("No menu available"));
   }
 }
 
-void ShellMenu::showDummyMenu(
-  QMainWindow* mw, const QPoint& pos, const QString& what)
+HMenuPtr ShellMenu::createDummyMenu(const QString& what)
 {
-  HMENU menu = CreatePopupMenu();
-  if (!menu) {
-    const auto e = GetLastError();
-    throw MenuFailed(e, "CreatePopupMenu failed");
-  }
+  try
+  {
+    HMENU menu = CreatePopupMenu();
+    if (!menu) {
+      const auto e = GetLastError();
+      throw MenuFailed(e, "CreatePopupMenu failed");
+    }
 
-  if (!AppendMenuW(menu, MF_STRING | MF_DISABLED, 0, what.toStdWString().c_str())) {
-    const auto e = GetLastError();
-    throw MenuFailed(e, "AppendMenuW failed");
-  }
+    if (!AppendMenuW(menu, MF_STRING | MF_DISABLED, 0, what.toStdWString().c_str())) {
+      const auto e = GetLastError();
+      throw MenuFailed(e, "AppendMenuW failed");
+    }
 
-  const auto hwnd = (HWND)mw->winId();
-  if (!TrackPopupMenuEx(menu, 0, pos.x(), pos.y(), hwnd, nullptr)) {
-    const auto e = GetLastError();
-    throw MenuFailed(e, "TrackPopupMenuEx failed");
+    return HMenuPtr(menu);
+  }
+  catch(MenuFailed& e)
+  {
+    log::error("{}", what);
+    log::error("additionally, creating the dummy menu failed: {}", e.what());
+
+    return {};
   }
 }
 

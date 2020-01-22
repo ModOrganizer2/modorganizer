@@ -468,7 +468,8 @@ void FileTree::onContextMenu(const QPoint &pos)
 
 void FileTree::showShellMenu(QPoint pos)
 {
-  env::ShellMenu menu;
+  // menus by origin
+  std::map<int, env::ShellMenu> menus;
 
   for (auto&& index : m_tree->selectionModel()->selectedRows()) {
     auto* item = m_model->itemFromIndex(index);
@@ -476,10 +477,71 @@ void FileTree::showShellMenu(QPoint pos)
       continue;
     }
 
-    menu.addFile(item->realPath());
+    menus[item->originID()].addFile(item->realPath());
+
+    if (item->isConflicted()) {
+      const auto file = m_core.directoryStructure()->searchFile(
+        item->dataRelativeFilePath().toStdWString(), nullptr);
+
+      if (!file) {
+        log::error(
+          "file '{}' not found, data path={}, real path={}",
+          item->filename(), item->dataRelativeFilePath(), item->realPath());
+
+        continue;
+      }
+
+      const auto alts = file->getAlternatives();
+      if (alts.empty()) {
+        log::warn(
+          "file '{}' has no alternative origins but is marked as conflicted",
+          item->dataRelativeFilePath());
+      }
+
+      for (auto&& alt : alts) {
+        auto* dir = file->getParent();
+        if (!dir) {
+          log::error(
+            "file {} from origin {} has no parent",
+            item->dataRelativeFilePath(), alt.first);
+
+          continue;
+        }
+
+        const auto* origin = dir->findOriginByID(alt.first);
+        if (!origin) {
+          log::error(
+            "origin {} for file {} cannot be found",
+            alt.first, item->dataRelativeFilePath());
+
+          continue;
+        }
+
+        const auto originFile = origin->findFile(file->getIndex());
+        if (!originFile) {
+          log::error(
+            "file {} not found in origin {} ({})",
+            item->dataRelativeFilePath(), origin->getName(), file->getIndex());
+
+          continue;
+        }
+
+        menus[alt.first].addFile(
+          QString::fromStdWString(originFile->getFullPath()));
+      }
+    }
   }
 
-  menu.exec(m_tree, m_tree->viewport()->mapToGlobal(pos));
+  if (menus.empty()) {
+    log::warn("no menus to show");
+    return;
+  }
+  else if (menus.size() == 1) {
+    auto& menu = menus.begin()->second;
+    menu.exec(m_tree, m_tree->viewport()->mapToGlobal(pos));
+  } else {
+
+  }
 }
 
 void FileTree::addDirectoryMenus(QMenu&, FileTreeItem&)
