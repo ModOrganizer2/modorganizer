@@ -20,6 +20,7 @@ public:
   ShellMenu& operator=(ShellMenu&&) = default;
 
   void addFile(QFileInfo fi);
+  int fileCount() const;
 
   void exec(const QPoint& pos);
   HMENU getMenu();
@@ -57,7 +58,9 @@ class ShellMenuCollection
 public:
   ShellMenuCollection(QMainWindow* mw);
 
+  void addDetails(QString s);
   void add(QString name, ShellMenu m);
+
   void exec(const QPoint& pos);
 
 private:
@@ -68,6 +71,7 @@ private:
   };
 
   QMainWindow* m_mw;
+  std::vector<QString> m_details;
   std::vector<MenuInfo> m_menus;
   MenuInfo* m_active;
 

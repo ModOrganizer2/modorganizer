@@ -185,6 +185,11 @@ void ShellMenu::addFile(QFileInfo fi)
   m_files.emplace_back(std::move(fi));
 }
 
+int ShellMenu::fileCount() const
+{
+  return static_cast<int>(m_files.size());
+}
+
 void ShellMenu::exec(const QPoint& pos)
 {
   HMENU menu = getMenu();
@@ -529,6 +534,11 @@ ShellMenuCollection::ShellMenuCollection(QMainWindow* mw)
 {
 }
 
+void ShellMenuCollection::addDetails(QString s)
+{
+  m_details.emplace_back(std::move(s));
+}
+
 void ShellMenuCollection::add(QString name, ShellMenu m)
 {
   m_menus.push_back({name, std::move(m)});
@@ -545,6 +555,28 @@ void ShellMenuCollection::exec(const QPoint& pos)
       formatSystemMessage(e));
 
     return;
+  }
+
+  if (!m_details.empty()) {
+    for (auto&& d : m_details) {
+      const auto s = d.toStdWString();
+      const auto r = AppendMenuW(menu, MF_STRING|MF_DISABLED, 0, s.c_str());
+
+      if (!r) {
+        const auto e = GetLastError();
+        log::error(
+          "AppendMenuW failed for details '{}', {}",
+          d, formatSystemMessage(e));
+      }
+    }
+
+    const auto r = AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
+    if (!r) {
+      const auto e = GetLastError();
+      log::error(
+        "AppendMenuW failed for separator, {}",
+        formatSystemMessage(e));
+    }
   }
 
   for (auto&& m : m_menus) {

@@ -487,6 +487,7 @@ void FileTree::showShellMenu(QPoint pos)
 
   // menus by origin
   std::map<int, env::ShellMenu> menus;
+  int totalFiles = 0;
 
   for (auto&& index : m_tree->selectionModel()->selectedRows()) {
     auto* item = m_model->itemFromIndex(index);
@@ -500,6 +501,7 @@ void FileTree::showShellMenu(QPoint pos)
     }
 
     itor->second.addFile(item->realPath());
+    ++totalFiles;
 
     if (item->isConflicted()) {
       const auto file = m_core.directoryStructure()->searchFile(
@@ -549,6 +551,7 @@ void FileTree::showShellMenu(QPoint pos)
     menu.exec(m_tree->viewport()->mapToGlobal(pos));
   } else {
     env::ShellMenuCollection mc(mw);
+    bool hasDiscrepancies = false;
 
     for (auto&& m : menus) {
       const auto* origin = m_core.directoryStructure()->findOriginByID(m.first);
@@ -557,7 +560,18 @@ void FileTree::showShellMenu(QPoint pos)
         continue;
       }
 
-      mc.add(QString::fromStdWString(origin->getName()), std::move(m.second));
+      QString caption = QString::fromStdWString(origin->getName());
+      if (m.second.fileCount() < totalFiles) {
+        const auto d = m.second.fileCount();
+        caption += " " + tr("(only has %1 file(s))").arg(d);
+        hasDiscrepancies = true;
+      }
+
+      mc.add(caption, std::move(m.second));
+    }
+
+    if (hasDiscrepancies) {
+      mc.addDetails(tr("%1 file(s) selected").arg(totalFiles));
     }
 
     mc.exec(m_tree->viewport()->mapToGlobal(pos));
