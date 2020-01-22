@@ -11,6 +11,14 @@ namespace env
 class ShellMenu
 {
 public:
+  ShellMenu() = default;
+
+  // noncopyable
+  ShellMenu(const ShellMenu&) = delete;
+  ShellMenu& operator=(const ShellMenu&) = delete;
+  ShellMenu(ShellMenu&&) = default;
+  ShellMenu& operator=(ShellMenu&&) = default;
+
   void addFile(QFileInfo fi);
 
   void exec(QWidget* parent, const QPoint& pos);
@@ -23,7 +31,6 @@ private:
 
   void createMenu();
 
-  QMainWindow* getMainWindow(QWidget* w);
   COMPtr<IShellItem> createShellItem(const std::wstring& path);
   COMPtr<IPersistIDList> getPersistIDList(IShellItem* item);
   CoTaskMemPtr<LPITEMIDLIST> getIDList(IPersistIDList* pidlist);
@@ -35,6 +42,23 @@ private:
 
   int runMenu(QMainWindow* mw, IContextMenu* cm, HMENU menu, const QPoint& p);
   void invoke(QMainWindow* mw, const QPoint& p, int cmd, IContextMenu* cm);
+};
+
+
+class ShellMenuCollection
+{
+public:
+  void add(QString name, ShellMenu m);
+  void exec(QWidget* parent, const QPoint& pos);
+
+private:
+  struct MenuInfo
+  {
+    QString name;
+    ShellMenu menu;
+  };
+
+  std::vector<MenuInfo> m_menus;
 };
 
 } // namespace

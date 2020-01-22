@@ -540,7 +540,19 @@ void FileTree::showShellMenu(QPoint pos)
     auto& menu = menus.begin()->second;
     menu.exec(m_tree, m_tree->viewport()->mapToGlobal(pos));
   } else {
+    env::ShellMenuCollection mc;
 
+    for (auto&& m : menus) {
+      const auto* origin = m_core.directoryStructure()->findOriginByID(m.first);
+      if (!origin) {
+        log::error("origin {} not found for merged menus", m.first);
+        continue;
+      }
+
+      mc.add(QString::fromStdWString(origin->getName()), std::move(m.second));
+    }
+
+    mc.exec(m_tree, m_tree->viewport()->mapToGlobal(pos));
   }
 }
 

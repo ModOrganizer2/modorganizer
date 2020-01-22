@@ -237,6 +237,30 @@ private:
 };
 
 
+QMainWindow* getMainWindow(QWidget* w)
+{
+  QWidget* p = w;
+
+  while (p) {
+    if (auto* mw=dynamic_cast<QMainWindow*>(p)) {
+      return mw;
+    }
+
+    p = p->parentWidget();
+  }
+
+  return nullptr;
+}
+
+HWND getHWND(QMainWindow* mw)
+{
+  if (mw) {
+    return (HWND)mw->winId();
+  } else {
+    return 0;
+  }
+}
+
 
 void ShellMenu::addFile(QFileInfo fi)
 {
@@ -349,21 +373,6 @@ HMenuPtr ShellMenu::createDummyMenu(const QString& what)
 
     return {};
   }
-}
-
-QMainWindow* ShellMenu::getMainWindow(QWidget* w)
-{
-  QWidget* p = w;
-
-  while (p) {
-    if (auto* mw=dynamic_cast<QMainWindow*>(p)) {
-      return mw;
-    }
-
-    p = p->parentWidget();
-  }
-
-  return nullptr;
 }
 
 COMPtr<IShellItem> ShellMenu::createShellItem(const std::wstring& path)
@@ -481,7 +490,7 @@ HMenuPtr ShellMenu::createMenu(IContextMenu* cm)
 int ShellMenu::runMenu(
   QMainWindow* mw, IContextMenu* cm, HMENU menu, const QPoint& p)
 {
-  const auto hwnd = (HWND)mw->winId();
+  const auto hwnd = getHWND(mw);
 
   auto filter = std::make_unique<WndProcFilter>(mw, cm);
   QCoreApplication::instance()->installNativeEventFilter(filter.get());
@@ -492,7 +501,7 @@ int ShellMenu::runMenu(
 void ShellMenu::invoke(
   QMainWindow* mw, const QPoint& p, int cmd, IContextMenu* cm)
 {
-  const auto hwnd = (HWND)mw->winId();
+  const auto hwnd = getHWND(mw);
 
   CMINVOKECOMMANDINFOEX info = {};
 
@@ -521,6 +530,52 @@ void ShellMenu::invoke(
   if (FAILED(r)) {
     throw MenuFailed(r, fmt::format("InvokeCommand failed, verb={}", cmd));
   }
+}
+
+
+void ShellMenuCollection::add(QString name, ShellMenu m)
+{
+  m_menus.push_back({name, std::move(m)});
+}
+
+void ShellMenuCollection::exec(QWidget* parent, const QPoint& pos)
+{
+  HMENU menu = ::CreatePopupMenu();
+  if (!menu) {
+    const auto e = GetLastError();
+
+    log::error(
+      "CreatePopupMenu for merged menus failed, {}",
+      formatSystemMessage(e));
+
+    return;
+  }
+
+  for (auto&& m : m_menus) {
+    auto hmenu = m.menu.getMenu();
+    if (!hmenu) {
+      continue;
+    }
+
+    const auto r = AppendMenuW(
+      menu, MF_POPUP | MF_STRING,
+      reinterpret_cast<UINT_PTR>(hmenu), m.name.toStdWString().c_str());
+
+    if (!r) {
+      const auto e = GetLastError();
+
+      log::error(
+        "AppendMenuW failed for merged menu {}, {}",
+        m.name, formatSystemMessage(e));
+
+      continue;
+    }
+  }
+
+  auto* mw = getMainWindow(parent);
+  auto hwnd = getHWND(mw);
+
+  TrackPopupMenuEx(menu, TPM_RETURNCMD, pos.x(), pos.y(), hwnd, nullptr);
 }
 
 } // namespace
