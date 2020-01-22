@@ -354,12 +354,20 @@ bool FileEntry::isFromArchive(std::wstring archiveName) const
   return false;
 }
 
-std::wstring FileEntry::getFullPath() const
+std::wstring FileEntry::getFullPath(int originID) const
 {
-  bool ignore = false;
+  if (originID == -1) {
+    bool ignore = false;
+    originID = getOrigin(ignore);
+  }
 
   // base directory for origin
-  std::wstring result = m_Parent->getOriginByID(getOrigin(ignore)).getPath();
+  const auto* o = m_Parent->findOriginByID(originID);
+  if (!o) {
+    return {};
+  }
+
+  std::wstring result = o->getPath();
 
   // all intermediate directories
   recurseParents(result, m_Parent);

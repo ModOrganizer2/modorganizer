@@ -127,7 +127,12 @@ public:
   }
 
   bool isFromArchive(std::wstring archiveName = L"") const;
-  std::wstring getFullPath() const;
+
+  // if originID is -1, uses the main origin; if this file doesn't exist in the
+  // given origin, returns an empty string
+  //
+  std::wstring getFullPath(int originID=-1) const;
+
   std::wstring getRelativePath() const;
 
   DirectoryEntry *getParent()

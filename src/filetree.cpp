@@ -466,8 +466,25 @@ void FileTree::onContextMenu(const QPoint &pos)
   menu.exec(m_tree->viewport()->mapToGlobal(pos));
 }
 
+QMainWindow* getMainWindow(QWidget* w)
+{
+  QWidget* p = w;
+
+  while (p) {
+    if (auto* mw=dynamic_cast<QMainWindow*>(p)) {
+      return mw;
+    }
+
+    p = p->parentWidget();
+  }
+
+  return nullptr;
+}
+
 void FileTree::showShellMenu(QPoint pos)
 {
+  auto* mw = getMainWindow(m_tree);
+
   // menus by origin
   std::map<int, env::ShellMenu> menus;
 
@@ -477,7 +494,12 @@ void FileTree::showShellMenu(QPoint pos)
       continue;
     }
 
-    menus[item->originID()].addFile(item->realPath());
+    auto itor = menus.find(item->originID());
+    if (itor == menus.end()) {
+      itor = menus.emplace(item->originID(), mw).first;
+    }
+
+    itor->second.addFile(item->realPath());
 
     if (item->isConflicted()) {
       const auto file = m_core.directoryStructure()->searchFile(
@@ -499,35 +521,21 @@ void FileTree::showShellMenu(QPoint pos)
       }
 
       for (auto&& alt : alts) {
-        auto* dir = file->getParent();
-        if (!dir) {
+        auto itor = menus.find(alt.first);
+        if (itor == menus.end()) {
+          itor = menus.emplace(alt.first, mw).first;
+        }
+
+        const auto fullPath = file->getFullPath(alt.first);
+        if (fullPath.empty()) {
           log::error(
-            "file {} from origin {} has no parent",
+            "file {} not found in origin {}",
             item->dataRelativeFilePath(), alt.first);
 
           continue;
         }
 
-        const auto* origin = dir->findOriginByID(alt.first);
-        if (!origin) {
-          log::error(
-            "origin {} for file {} cannot be found",
-            alt.first, item->dataRelativeFilePath());
-
-          continue;
-        }
-
-        const auto originFile = origin->findFile(file->getIndex());
-        if (!originFile) {
-          log::error(
-            "file {} not found in origin {} ({})",
-            item->dataRelativeFilePath(), origin->getName(), file->getIndex());
-
-          continue;
-        }
-
-        menus[alt.first].addFile(
-          QString::fromStdWString(originFile->getFullPath()));
+        itor->second.addFile(QString::fromStdWString(fullPath));
       }
     }
   }
@@ -538,9 +546,9 @@ void FileTree::showShellMenu(QPoint pos)
   }
   else if (menus.size() == 1) {
     auto& menu = menus.begin()->second;
-    menu.exec(m_tree, m_tree->viewport()->mapToGlobal(pos));
+    menu.exec(m_tree->viewport()->mapToGlobal(pos));
   } else {
-    env::ShellMenuCollection mc;
+    env::ShellMenuCollection mc(mw);
 
     for (auto&& m : menus) {
       const auto* origin = m_core.directoryStructure()->findOriginByID(m.first);
@@ -552,7 +560,7 @@ void FileTree::showShellMenu(QPoint pos)
       mc.add(QString::fromStdWString(origin->getName()), std::move(m.second));
     }
 
-    mc.exec(m_tree, m_tree->viewport()->mapToGlobal(pos));
+    mc.exec(m_tree->viewport()->mapToGlobal(pos));
   }
 }
 

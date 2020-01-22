@@ -11,7 +11,7 @@ namespace env
 class ShellMenu
 {
 public:
-  ShellMenu() = default;
+  ShellMenu(QMainWindow* mw);
 
   // noncopyable
   ShellMenu(const ShellMenu&) = delete;
@@ -21,35 +21,44 @@ public:
 
   void addFile(QFileInfo fi);
 
-  void exec(QWidget* parent, const QPoint& pos);
+  void exec(const QPoint& pos);
   HMENU getMenu();
+  bool wndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp, LRESULT* out);
+  void invoke(const QPoint& p, int cmd);
 
 private:
+  QMainWindow* m_mw;
   std::vector<QFileInfo> m_files;
   COMPtr<IContextMenu> m_cm;
+  COMPtr<IContextMenu2> m_cm2;
+  COMPtr<IContextMenu3> m_cm3;
   HMenuPtr m_menu;
 
-  void createMenu();
+  void create();
+
+  std::vector<LPCITEMIDLIST> createIdls(const std::vector<QFileInfo>& files);
+  COMPtr<IShellItemArray> createItemArray(std::vector<LPCITEMIDLIST>& idls);
+
+  void createContextMenu(IShellItemArray* array);
+  void createPopupMenu(IContextMenu* cm);
 
   COMPtr<IShellItem> createShellItem(const std::wstring& path);
   COMPtr<IPersistIDList> getPersistIDList(IShellItem* item);
   CoTaskMemPtr<LPITEMIDLIST> getIDList(IPersistIDList* pidlist);
-  std::vector<LPCITEMIDLIST> createIdls(const std::vector<QFileInfo>& files);
-  COMPtr<IShellItemArray> createItemArray(std::vector<LPCITEMIDLIST>& idls);
-  COMPtr<IContextMenu> createContextMenu(IShellItemArray* array);
-  HMenuPtr createMenu(IContextMenu* cm);
   HMenuPtr createDummyMenu(const QString& what);
 
-  int runMenu(QMainWindow* mw, IContextMenu* cm, HMENU menu, const QPoint& p);
-  void invoke(QMainWindow* mw, const QPoint& p, int cmd, IContextMenu* cm);
+  void onMenuSelect(
+    HWND hwnd, HMENU hmenu, int item, HMENU hmenuPopup, UINT flags);
 };
 
 
 class ShellMenuCollection
 {
 public:
+  ShellMenuCollection(QMainWindow* mw);
+
   void add(QString name, ShellMenu m);
-  void exec(QWidget* parent, const QPoint& pos);
+  void exec(const QPoint& pos);
 
 private:
   struct MenuInfo
@@ -58,7 +67,14 @@ private:
     ShellMenu menu;
   };
 
+  QMainWindow* m_mw;
   std::vector<MenuInfo> m_menus;
+  MenuInfo* m_active;
+
+  bool wndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp, LRESULT* out);
+
+  void onMenuSelect(
+    HWND hwnd, HMENU hmenu, int item, HMENU hmenuPopup, UINT flags);
 };
 
 } // namespace
