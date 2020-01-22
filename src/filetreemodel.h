@@ -20,6 +20,15 @@ public:
     Archives  = 0x02
   };
 
+  enum Columns
+  {
+    Filename = 0,
+    ModName,
+    FileSize,
+
+    ColumnCount
+  };
+
   Q_DECLARE_FLAGS(Flags, Flag);
 
   FileTreeModel(OrganizerCore& core, QObject* parent=nullptr);

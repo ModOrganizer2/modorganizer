@@ -99,6 +99,16 @@ QFont FileTreeItem::font() const
   return f;
 }
 
+const FileTreeItem::Meta& FileTreeItem::meta() const
+{
+  if (!m_meta) {
+    QFile f(m_realPath);
+    m_meta = {static_cast<uint64_t>(f.size())};
+  }
+
+  return *m_meta;
+}
+
 QFileIconProvider::IconType FileTreeItem::icon() const
 {
   if (m_flags & Directory) {

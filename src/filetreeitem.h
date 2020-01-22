@@ -17,6 +17,12 @@ public:
     Conflicted  = 0x04
   };
 
+  struct Meta
+  {
+    uint64_t size;
+  };
+
+
   Q_DECLARE_FLAGS(Flags, Flag);
 
   FileTreeItem(
@@ -124,6 +130,8 @@ public:
 
   QFont font() const;
 
+  const Meta& meta() const;
+
   const QString& realPath() const
   {
     return m_realPath;
@@ -210,6 +218,7 @@ private:
   const MOShared::DirectoryEntry::FileKey m_key;
   const QString m_file;
   const QString m_mod;
+  mutable std::optional<Meta> m_meta;
 
   bool m_loaded;
   bool m_expanded;

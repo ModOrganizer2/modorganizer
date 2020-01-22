@@ -196,7 +196,7 @@ int FileTreeModel::rowCount(const QModelIndex& parent) const
 
 int FileTreeModel::columnCount(const QModelIndex&) const
 {
-  return 2;
+  return ColumnCount;
 }
 
 bool FileTreeModel::hasChildren(const QModelIndex& parent) const
@@ -246,10 +246,31 @@ QVariant FileTreeModel::data(const QModelIndex& index, int role) const
     case Qt::DisplayRole:
     {
       if (auto* item=itemFromIndex(index)) {
-        if (index.column() == 0) {
-          return item->filename();
-        } else if (index.column() == 1) {
-          return item->mod();
+        switch (index.column())
+        {
+          case Filename:
+          {
+            return item->filename();
+          }
+
+          case ModName:
+          {
+            return item->mod();
+          }
+
+          case FileSize:
+          {
+            if (item->isDirectory()) {
+              return {};
+            } else {
+              return localizedByteSize(item->meta().size);
+            }
+          }
+
+          default:
+          {
+            break;
+          }
         }
       }
 
@@ -304,11 +325,13 @@ QVariant FileTreeModel::data(const QModelIndex& index, int role) const
 
 QVariant FileTreeModel::headerData(int i, Qt::Orientation ori, int role) const
 {
+  static const std::array<QString, ColumnCount> names = {
+    tr("File"), tr("Mod"), tr("Size")
+  };
+
   if (role == Qt::DisplayRole) {
-    if (i == 0) {
-      return tr("File");
-    } else if (i == 1) {
-      return tr("Mod");
+    if (i > 0 && i < static_cast<int>(names.size())) {
+      return names[static_cast<std::size_t>(i)];
     }
   }
 
