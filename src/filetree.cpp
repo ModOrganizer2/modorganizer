@@ -468,7 +468,7 @@ void FileTree::onContextMenu(const QPoint &pos)
 
 void FileTree::showShellMenu(QPoint pos)
 {
-  std::vector<QFileInfo> files;
+  env::ShellMenu menu;
 
   for (auto&& index : m_tree->selectionModel()->selectedRows()) {
     auto* item = m_model->itemFromIndex(index);
@@ -476,10 +476,10 @@ void FileTree::showShellMenu(QPoint pos)
       continue;
     }
 
-    files.push_back(item->realPath());
+    menu.addFile(item->realPath());
   }
 
-  env::showShellMenu(m_tree, files, m_tree->viewport()->mapToGlobal(pos));
+  menu.exec(m_tree, m_tree->viewport()->mapToGlobal(pos));
 }
 
 void FileTree::addDirectoryMenus(QMenu&, FileTreeItem&)

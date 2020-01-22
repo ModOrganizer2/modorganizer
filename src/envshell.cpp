@@ -1,5 +1,4 @@
 #include "envshell.h"
-#include "env.h"
 #include <log.h>
 #include <utility.h>
 #include <windowsx.h>
@@ -209,7 +208,56 @@ private:
 
 
 
-QMainWindow* getMainWindow(QWidget* w)
+void ShellMenu::addFile(QFileInfo fi)
+{
+  m_files.emplace_back(std::move(fi));
+}
+
+void ShellMenu::exec(QWidget* parent, const QPoint& pos)
+{
+  if (m_files.empty()) {
+    log::warn("showShellMenu(): no files given");
+    return;
+  }
+
+  try
+  {
+    auto* mw = getMainWindow(parent);
+    auto idls = createIdls(m_files);
+
+    if (idls.empty()) {
+      log::error("no idls, can't create context menu");
+      return;
+    }
+
+    IdlsFreer freer(idls);
+
+    auto array = createItemArray(idls);
+    auto cm = createContextMenu(array.get());
+    auto hmenu = createMenu(cm.get());
+
+    const int cmd = runMenu(mw, cm.get(), hmenu.get(), pos);
+    if (cmd <= 0) {
+      return;
+    }
+
+    invoke(mw, pos, cmd - QCM_FIRST, cm.get());
+  }
+  catch(MenuFailed& e)
+  {
+    if (m_files.size() == 1) {
+      log::error(
+        "can't create shell menu for '{}': {}",
+        QDir::toNativeSeparators(m_files[0].absoluteFilePath()), e.what());
+    } else {
+      log::error(
+        "can't create shell menu for {} files: {}",
+        m_files.size(), e.what());
+    }
+  }
+}
+
+QMainWindow* ShellMenu::getMainWindow(QWidget* w)
 {
   QWidget* p = w;
 
@@ -224,7 +272,7 @@ QMainWindow* getMainWindow(QWidget* w)
   return nullptr;
 }
 
-COMPtr<IShellItem> createShellItem(const std::wstring& path)
+COMPtr<IShellItem> ShellMenu::createShellItem(const std::wstring& path)
 {
   IShellItem* item = nullptr;
 
@@ -238,7 +286,7 @@ COMPtr<IShellItem> createShellItem(const std::wstring& path)
   return COMPtr<IShellItem>(item);
 }
 
-COMPtr<IPersistIDList> getPersistIDList(IShellItem* item)
+COMPtr<IPersistIDList> ShellMenu::getPersistIDList(IShellItem* item)
 {
   IPersistIDList* idl = nullptr;
   auto r = item->QueryInterface(IID_IPersistIDList, (void**)&idl);
@@ -250,7 +298,7 @@ COMPtr<IPersistIDList> getPersistIDList(IShellItem* item)
   return COMPtr<IPersistIDList>(idl);
 }
 
-CoTaskMemPtr<LPITEMIDLIST> getIDList(IPersistIDList* pidlist)
+CoTaskMemPtr<LPITEMIDLIST> ShellMenu::getIDList(IPersistIDList* pidlist)
 {
   LPITEMIDLIST absIdl = nullptr;
   auto r = pidlist->GetIDList(&absIdl);
@@ -262,7 +310,7 @@ CoTaskMemPtr<LPITEMIDLIST> getIDList(IPersistIDList* pidlist)
   return CoTaskMemPtr<LPITEMIDLIST>(absIdl);
 }
 
-std::vector<LPCITEMIDLIST> createIdls(
+std::vector<LPCITEMIDLIST> ShellMenu::createIdls(
   const std::vector<QFileInfo>& files)
 {
   std::vector<LPCITEMIDLIST> idls;
@@ -280,7 +328,7 @@ std::vector<LPCITEMIDLIST> createIdls(
   return idls;
 }
 
-COMPtr<IShellItemArray> createItemArray(
+COMPtr<IShellItemArray> ShellMenu::createItemArray(
   std::vector<LPCITEMIDLIST>& idls)
 {
   IShellItemArray* array = nullptr;
@@ -294,7 +342,7 @@ COMPtr<IShellItemArray> createItemArray(
   return COMPtr<IShellItemArray>(array);
 }
 
-COMPtr<IContextMenu> createContextMenu(IShellItemArray* array)
+COMPtr<IContextMenu> ShellMenu::createContextMenu(IShellItemArray* array)
 {
   IContextMenu* cm = nullptr;
 
@@ -308,7 +356,7 @@ COMPtr<IContextMenu> createContextMenu(IShellItemArray* array)
   return COMPtr<IContextMenu>(cm);
 }
 
-HMenuPtr createMenu(IContextMenu* cm)
+HMenuPtr ShellMenu::createMenu(IContextMenu* cm)
 {
   HMENU hmenu = CreatePopupMenu();
   if (!hmenu) {
@@ -326,7 +374,8 @@ HMenuPtr createMenu(IContextMenu* cm)
   return HMenuPtr(hmenu);
 }
 
-int runMenu(QMainWindow* mw, IContextMenu* cm, HMENU menu, const QPoint& p)
+int ShellMenu::runMenu(
+  QMainWindow* mw, IContextMenu* cm, HMENU menu, const QPoint& p)
 {
   const auto hwnd = (HWND)mw->winId();
 
@@ -336,7 +385,8 @@ int runMenu(QMainWindow* mw, IContextMenu* cm, HMENU menu, const QPoint& p)
   return TrackPopupMenuEx(menu, TPM_RETURNCMD, p.x(), p.y(), hwnd, nullptr);
 }
 
-void invoke(QMainWindow* mw, const QPoint& p, int cmd, IContextMenu* cm)
+void ShellMenu::invoke(
+  QMainWindow* mw, const QPoint& p, int cmd, IContextMenu* cm)
 {
   const auto hwnd = (HWND)mw->winId();
 
@@ -367,57 +417,6 @@ void invoke(QMainWindow* mw, const QPoint& p, int cmd, IContextMenu* cm)
   if (FAILED(r)) {
     throw MenuFailed(r, fmt::format("InvokeCommand failed, verb={}", cmd));
   }
-}
-
-
-void showShellMenu(
-  QWidget* parent, const std::vector<QFileInfo>& files, const QPoint& pos)
-{
-  if (files.empty()) {
-    log::warn("showShellMenu(): no files given");
-    return;
-  }
-
-  try
-  {
-    auto* mw = getMainWindow(parent);
-    auto idls = createIdls(files);
-
-    if (idls.empty()) {
-      log::error("no idls, can't create context menu");
-      return;
-    }
-
-    IdlsFreer freer(idls);
-
-    auto array = createItemArray(idls);
-    auto cm = createContextMenu(array.get());
-    auto hmenu = createMenu(cm.get());
-
-    const int cmd = runMenu(mw, cm.get(), hmenu.get(), pos);
-    if (cmd <= 0) {
-      return;
-    }
-
-    invoke(mw, pos, cmd - QCM_FIRST, cm.get());
-  }
-  catch(MenuFailed& e)
-  {
-    if (files.size() == 1) {
-      log::error(
-        "can't create shell menu for '{}': {}",
-        QDir::toNativeSeparators(files[0].absoluteFilePath()), e.what());
-    } else {
-      log::error(
-        "can't create shell menu for {} files: {}",
-        files.size(), e.what());
-    }
-  }
-}
-
-void showShellMenu(QWidget* parent, const QFileInfo& file, const QPoint& pos)
-{
-  showShellMenu(parent, std::vector{file}, pos);
 }
 
 } // namespace
