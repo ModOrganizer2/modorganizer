@@ -90,6 +90,7 @@ void ModInfoWithConflictInfo::doConflictCheck() const
   }
 
   std::wstring name = ToWString(this->name());
+  const std::wstring hideExt = ToWString(ModInfo::s_HiddenExt);
 
   m_CurrentConflictState = CONFLICT_NONE;
   m_ArchiveConflictState = CONFLICT_NONE;
@@ -107,7 +108,7 @@ void ModInfoWithConflictInfo::doConflictCheck() const
       if (!hasHiddenFiles) {
         const fs::path nameAsPath(file->getName());
 
-        if (nameAsPath.extension().wstring().compare(L".mohidden") == 0) {
+        if (nameAsPath.extension().wstring().compare(hideExt) == 0) {
           hasHiddenFiles = true;
         }
         else {
@@ -123,7 +124,7 @@ void ModInfoWithConflictInfo::doConflictCheck() const
             }
             else {
               const fs::path dirPath(parent->getName());
-              if (dirPath.extension().wstring().compare(L".mohidden") == 0) {
+              if (dirPath.extension().wstring().compare(hideExt) == 0) {
                 hasHiddenFiles = true;
                 break;
               }

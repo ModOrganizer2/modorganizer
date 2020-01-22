@@ -97,7 +97,7 @@ bool canHideFile(bool isArchive, const QString& filename)
     return false;
   }
 
-  if (filename.endsWith(ModInfo::s_HiddenExt)) {
+  if (filename.endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
     // already hidden
     return false;
   }
@@ -112,7 +112,7 @@ bool canUnhideFile(bool isArchive, const QString& filename)
     return false;
   }
 
-  if (!filename.endsWith(ModInfo::s_HiddenExt)) {
+  if (!filename.endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive)) {
     // already visible
     return false;
   }
@@ -130,6 +130,46 @@ FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString &oldNa
 {
   QString newName = oldName.left(oldName.length() - ModInfo::s_HiddenExt.length());
   return renamer.rename(oldName, newName);
+}
+
+
+FileRenamer::RenameResults restoreHiddenFilesRecursive(FileRenamer& renamer, const QString& targetDir)
+{
+  FileRenamer::RenameResults results = FileRenamer::RESULT_OK;
+  QDir currentDir = targetDir;
+  for (QString hiddenFile : currentDir.entryList(
+    (QStringList() << "*" + ModInfo::s_HiddenExt),
+    QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot)) {
+
+    QString oldName = currentDir.absoluteFilePath(hiddenFile);
+    QString newName = oldName.left(oldName.length() - ModInfo::s_HiddenExt.length());
+
+    auto partialResult = renamer.rename(oldName, newName);
+
+    if (partialResult == FileRenamer::RESULT_CANCEL) {
+      return FileRenamer::RESULT_CANCEL;
+    }
+
+    if (partialResult == FileRenamer::RESULT_SKIP) {
+      results = FileRenamer::RESULT_SKIP;
+    }
+  }
+
+  for (QString dirName : currentDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot)) {
+
+    const QString dirPath = currentDir.absoluteFilePath(dirName);
+    // recurse on childrend directories
+    auto partialResult = restoreHiddenFilesRecursive(renamer, dirPath);
+
+    if (partialResult == FileRenamer::RESULT_CANCEL) {
+      return FileRenamer::RESULT_CANCEL;
+    }
+
+    if (partialResult == FileRenamer::RESULT_SKIP) {
+      results = FileRenamer::RESULT_SKIP;
+    }
+  }
+  return results;
 }
 
 

@@ -421,6 +421,7 @@ private slots:
   void untrack_clicked();
   void ignoreMissingData_clicked();
   void markConverted_clicked();
+  void restoreHiddenFiles_clicked();
   void visitOnNexus_clicked();
   void visitWebPage_clicked();
   void openExplorer_clicked();
