@@ -246,32 +246,7 @@ QVariant FileTreeModel::data(const QModelIndex& index, int role) const
     case Qt::DisplayRole:
     {
       if (auto* item=itemFromIndex(index)) {
-        switch (index.column())
-        {
-          case Filename:
-          {
-            return item->filename();
-          }
-
-          case ModName:
-          {
-            return item->mod();
-          }
-
-          case FileSize:
-          {
-            if (item->isDirectory()) {
-              return {};
-            } else {
-              return localizedByteSize(item->meta().size);
-            }
-          }
-
-          default:
-          {
-            break;
-          }
-        }
+        return displayData(item, index.column());
       }
 
       break;
@@ -326,11 +301,11 @@ QVariant FileTreeModel::data(const QModelIndex& index, int role) const
 QVariant FileTreeModel::headerData(int i, Qt::Orientation ori, int role) const
 {
   static const std::array<QString, ColumnCount> names = {
-    tr("File"), tr("Mod"), tr("Size")
+    tr("Name"), tr("Mod"), tr("Type"), tr("Size"), tr("Date modified")
   };
 
   if (role == Qt::DisplayRole) {
-    if (i > 0 && i < static_cast<int>(names.size())) {
+    if (i >= 0 && i < static_cast<int>(names.size())) {
       return names[static_cast<std::size_t>(i)];
     }
   }
@@ -669,6 +644,46 @@ std::unique_ptr<FileTreeItem> FileTreeModel::createFileItem(
   item->setLoaded(true);
 
   return item;
+}
+
+QVariant FileTreeModel::displayData(const FileTreeItem* item, int column) const
+{
+  switch (column)
+  {
+    case Filename:
+    {
+      return item->filename();
+    }
+
+    case ModName:
+    {
+      return item->mod();
+    }
+
+    case FileType:
+    {
+      return item->meta().type;
+    }
+
+    case FileSize:
+    {
+      if (item->isDirectory()) {
+        return {};
+      } else {
+        return localizedByteSize(item->meta().size);
+      }
+    }
+
+    case LastModified:
+    {
+      return item->meta().lastModified.toString(Qt::SystemLocaleDate);
+    }
+
+    default:
+    {
+      break;
+    }
+  }
 }
 
 std::wstring FileTreeModel::makeModName(

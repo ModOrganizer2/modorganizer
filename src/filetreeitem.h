@@ -20,6 +20,8 @@ public:
   struct Meta
   {
     uint64_t size;
+    QDateTime lastModified;
+    QString type;
   };
 
 

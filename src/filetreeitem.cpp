@@ -102,8 +102,28 @@ QFont FileTreeItem::font() const
 const FileTreeItem::Meta& FileTreeItem::meta() const
 {
   if (!m_meta) {
-    QFile f(m_realPath);
-    m_meta = {static_cast<uint64_t>(f.size())};
+    QFileInfo fi(m_realPath);
+
+    SHFILEINFOW sfi = {};
+    const auto r = SHGetFileInfoW(
+      m_realPath.toStdWString().c_str(), 0, &sfi, sizeof(sfi),
+      SHGFI_TYPENAME);
+
+    if (!r) {
+      const auto e = GetLastError();
+
+      log::error(
+        "SHGetFileInfoW failed for '{}', {}",
+        m_realPath, e);
+
+      sfi = {};
+    }
+
+    m_meta = {
+      static_cast<uint64_t>(fi.size()),
+      fi.lastModified(),
+      QString::fromWCharArray(sfi.szTypeName)
+    };
   }
 
   return *m_meta;
