@@ -442,18 +442,8 @@ void FileTree::onContextMenu(const QPoint &pos)
   const auto m = QApplication::keyboardModifiers();
 
   if (m & Qt::ShiftModifier) {
-    if (auto* item=singleSelection()) {
-      if (!item->isDirectory()) {
-        const auto file = m_core.directoryStructure()->searchFile(
-          item->dataRelativeFilePath().toStdWString(), nullptr);
-
-        if (file) {
-          const QFileInfo fi(QString::fromStdWString(file->getFullPath()));
-          env::showShellMenu(m_tree, fi, m_tree->viewport()->mapToGlobal(pos));
-          return;
-        }
-      }
-    }
+    showShellMenu(pos);
+    return;
   }
 
   QMenu menu;
@@ -474,6 +464,22 @@ void FileTree::onContextMenu(const QPoint &pos)
   addCommonMenus(menu);
 
   menu.exec(m_tree->viewport()->mapToGlobal(pos));
+}
+
+void FileTree::showShellMenu(QPoint pos)
+{
+  std::vector<QFileInfo> files;
+
+  for (auto&& index : m_tree->selectionModel()->selectedRows()) {
+    auto* item = m_model->itemFromIndex(index);
+    if (!item) {
+      continue;
+    }
+
+    files.push_back(item->realPath());
+  }
+
+  env::showShellMenu(m_tree, files, m_tree->viewport()->mapToGlobal(pos));
 }
 
 void FileTree::addDirectoryMenus(QMenu&, FileTreeItem&)

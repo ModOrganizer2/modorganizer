@@ -48,9 +48,10 @@ private:
   FileTreeModel* m_model;
 
   FileTreeItem* singleSelection();
+
   void onExpandedChanged(const QModelIndex& index, bool expanded);
   void onContextMenu(const QPoint &pos);
-  void showShellMenu(const MOShared::FileEntry& file, QPoint pos);
+  void showShellMenu(QPoint pos);
 
   void addDirectoryMenus(QMenu& menu, FileTreeItem& item);
   void addFileMenus(QMenu& menu, const MOShared::FileEntry& file, int originID);

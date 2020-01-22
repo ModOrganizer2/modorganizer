@@ -24,6 +24,24 @@ public:
 };
 
 
+struct IdlsFreer
+{
+  const std::vector<LPCITEMIDLIST>& v;
+
+  IdlsFreer(const std::vector<LPCITEMIDLIST>& v)
+    : v(v)
+  {
+  }
+
+  ~IdlsFreer()
+  {
+    for (auto&& idl : v) {
+      ::CoTaskMemFree(const_cast<LPITEMIDLIST>(idl));
+    }
+  }
+};
+
+
 class WndProcFilter : public QAbstractNativeEventFilter
 {
 public:
@@ -191,48 +209,103 @@ private:
 
 
 
-CoTaskMemPtr<LPITEMIDLIST> getIDL(const wchar_t* path)
+QMainWindow* getMainWindow(QWidget* w)
 {
-  LPITEMIDLIST pidl;
-  SFGAOF sfgao;
+  QWidget* p = w;
 
-  const auto r = SHParseDisplayName(path, nullptr, &pidl, 0, &sfgao);
+  while (p) {
+    if (auto* mw=dynamic_cast<QMainWindow*>(p)) {
+      return mw;
+    }
 
-  if (FAILED(r)) {
-    throw MenuFailed(r, "SHParseDisplayName failed");
+    p = p->parentWidget();
   }
 
-  return CoTaskMemPtr<LPITEMIDLIST>(pidl);
+  return nullptr;
 }
 
-std::pair<COMPtr<IShellFolder>, LPCITEMIDLIST> getShellFolder(LPITEMIDLIST idl)
+COMPtr<IShellItem> createShellItem(const std::wstring& path)
 {
-  IShellFolder* psf = nullptr;
-  LPCITEMIDLIST pidlChild = nullptr;
+  IShellItem* item = nullptr;
 
-  const auto r = SHBindToParent(
-    idl, IID_IShellFolder, reinterpret_cast<void**>(&psf), &pidlChild);
+  auto r = SHCreateItemFromParsingName(
+    path.c_str(), nullptr, IID_IShellItem, (void**)&item);
 
   if (FAILED(r)) {
-    throw MenuFailed(r, "SHBindToParent failed");
+    throw MenuFailed(r, "SHCreateItemFromParsingName failed");
   }
 
-  return {COMPtr<IShellFolder>(psf), pidlChild};
+  return COMPtr<IShellItem>(item);
 }
 
-COMPtr<IContextMenu> getContextMenu(IShellFolder* psf, LPCITEMIDLIST idl)
+COMPtr<IPersistIDList> getPersistIDList(IShellItem* item)
 {
-  IContextMenu* pcm = nullptr;
-
-  const auto r = psf->GetUIObjectOf(
-    0, 1, &idl, IID_IContextMenu, nullptr,
-    reinterpret_cast<void**>(&pcm));
+  IPersistIDList* idl = nullptr;
+  auto r = item->QueryInterface(IID_IPersistIDList, (void**)&idl);
 
   if (FAILED(r)) {
-    throw MenuFailed(r, "GetUIObjectOf failed");
+    throw MenuFailed(r, "QueryInterface IID_IPersistIDList failed");
   }
 
-  return COMPtr<IContextMenu>(pcm);
+  return COMPtr<IPersistIDList>(idl);
+}
+
+CoTaskMemPtr<LPITEMIDLIST> getIDList(IPersistIDList* pidlist)
+{
+  LPITEMIDLIST absIdl = nullptr;
+  auto r = pidlist->GetIDList(&absIdl);
+
+  if (FAILED(r)) {
+    throw MenuFailed(r, "GetIDList failed");
+  }
+
+  return CoTaskMemPtr<LPITEMIDLIST>(absIdl);
+}
+
+std::vector<LPCITEMIDLIST> createIdls(
+  const std::vector<QFileInfo>& files)
+{
+  std::vector<LPCITEMIDLIST> idls;
+
+  for (auto&& f : files) {
+    const auto path = QDir::toNativeSeparators(f.absoluteFilePath()).toStdWString();
+
+    auto item = createShellItem(path);
+    auto pidlist = getPersistIDList(item.get());
+    auto absIdl = getIDList(pidlist.get());
+
+    idls.push_back(absIdl.release());
+  }
+
+  return idls;
+}
+
+COMPtr<IShellItemArray> createItemArray(
+  std::vector<LPCITEMIDLIST>& idls)
+{
+  IShellItemArray* array = nullptr;
+  auto r = SHCreateShellItemArrayFromIDLists(
+    static_cast<UINT>(idls.size()), &idls[0], &array);
+
+  if (FAILED(r)) {
+    throw MenuFailed(r, "SHCreateShellItemArrayFromIDLists failed");
+  }
+
+  return COMPtr<IShellItemArray>(array);
+}
+
+COMPtr<IContextMenu> createContextMenu(IShellItemArray* array)
+{
+  IContextMenu* cm = nullptr;
+
+  auto r = array->BindToHandler(
+    nullptr, BHID_SFUIObject, IID_IContextMenu, (void**)&cm);
+
+  if (FAILED(r)) {
+    throw MenuFailed(r, "BindToHandler failed");
+  }
+
+  return COMPtr<IContextMenu>(cm);
 }
 
 HMenuPtr createMenu(IContextMenu* cm)
@@ -296,31 +369,29 @@ void invoke(QMainWindow* mw, const QPoint& p, int cmd, IContextMenu* cm)
   }
 }
 
-QMainWindow* getMainWindow(QWidget* w)
+
+void showShellMenu(
+  QWidget* parent, const std::vector<QFileInfo>& files, const QPoint& pos)
 {
-  QWidget* p = w;
-
-  while (p) {
-    if (auto* mw=dynamic_cast<QMainWindow*>(p)) {
-      return mw;
-    }
-
-    p = p->parentWidget();
+  if (files.empty()) {
+    log::warn("showShellMenu(): no files given");
+    return;
   }
-
-  return nullptr;
-}
-
-void showShellMenu(QWidget* parent, const QFileInfo& file, const QPoint& pos)
-{
-  const auto path = QDir::toNativeSeparators(file.absoluteFilePath());
 
   try
   {
     auto* mw = getMainWindow(parent);
-    auto idl = getIDL(path.toStdWString().c_str());
-    auto [sf, childIdl] = getShellFolder(idl.get());
-    auto cm = getContextMenu(sf.get(), childIdl);
+    auto idls = createIdls(files);
+
+    if (idls.empty()) {
+      log::error("no idls, can't create context menu");
+      return;
+    }
+
+    IdlsFreer freer(idls);
+
+    auto array = createItemArray(idls);
+    auto cm = createContextMenu(array.get());
     auto hmenu = createMenu(cm.get());
 
     const int cmd = runMenu(mw, cm.get(), hmenu.get(), pos);
@@ -332,8 +403,21 @@ void showShellMenu(QWidget* parent, const QFileInfo& file, const QPoint& pos)
   }
   catch(MenuFailed& e)
   {
-    log::error("can't create shell menu for '{}': {}", path, e.what());
+    if (files.size() == 1) {
+      log::error(
+        "can't create shell menu for '{}': {}",
+        QDir::toNativeSeparators(files[0].absoluteFilePath()), e.what());
+    } else {
+      log::error(
+        "can't create shell menu for {} files: {}",
+        files.size(), e.what());
+    }
   }
+}
+
+void showShellMenu(QWidget* parent, const QFileInfo& file, const QPoint& pos)
+{
+  showShellMenu(parent, std::vector{file}, pos);
 }
 
 } // namespace

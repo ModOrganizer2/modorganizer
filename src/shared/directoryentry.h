@@ -416,7 +416,7 @@ public:
   // path containing the file
   //
   const FileEntry::Ptr searchFile(
-    const std::wstring &path, const DirectoryEntry **directory) const;
+    const std::wstring &path, const DirectoryEntry **directory=nullptr) const;
 
   void insertFile(const std::wstring &filePath, FilesOrigin &origin, FILETIME fileTime);
 

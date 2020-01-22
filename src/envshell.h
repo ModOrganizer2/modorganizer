@@ -7,7 +7,11 @@
 namespace env
 {
 
-void showShellMenu(QWidget* parent, const QFileInfo& file, const QPoint& pos);
+void showShellMenu(
+  QWidget* parent, const QFileInfo& file, const QPoint& pos);
+
+void showShellMenu(
+  QWidget* parent, const std::vector<QFileInfo>& files, const QPoint& pos);
 
 }
 
