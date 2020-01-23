@@ -1058,7 +1058,7 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
       continue;
     }
 
-    QFileInfo targetInfo(modDir.absoluteFilePath(sourceInfo.fileName()));
+    QFileInfo targetInfo(modDir.absoluteFilePath(relativePath));
     sourceList << sourceFile;
     targetList << targetInfo.absoluteFilePath();
     relativePathList << QPair<QString,QString>(relativePath, originName);
