@@ -4614,7 +4614,7 @@ void MainWindow::exportModListCSV()
           if (mod_Note->isChecked())
             builder.setRowField("#Note", QString("%1").arg(info->comments().remove(',')));
 					if (primary_Category->isChecked())
-						builder.setRowField("#Primary_Category", (m_CategoryFactory.categoryExists(info->getPrimaryCategory())) ? m_CategoryFactory.getCategoryName(info->getPrimaryCategory()) : "");
+						builder.setRowField("#Primary_Category", (m_CategoryFactory.categoryExists(info->getPrimaryCategory())) ? m_CategoryFactory.getCategoryNameByID(info->getPrimaryCategory()) : "");
 					if (nexus_ID->isChecked())
 						builder.setRowField("#Nexus_ID", info->getNexusID());
 					if (mod_Nexus_URL->isChecked())
