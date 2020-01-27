@@ -4737,7 +4737,8 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
       QMenu menu(this);
       initModListContextMenu(&menu);
       menu.exec(modList->viewport()->mapToGlobal(pos));
-    } else {
+    }
+    else {
       QMenu menu(this);
 
       QMenu *allMods = new QMenu(&menu);
@@ -4748,6 +4749,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
       ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
       std::vector<ModInfo::EFlag> flags = info->getFlags();
+      // Context menu for overwrites
       if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
         if (QDir(info->absolutePath()).count() > 2) {
           menu.addAction(tr("Sync to Mods..."), &m_OrganizerCore, SLOT(syncOverwrite()));
@@ -4756,10 +4758,31 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           menu.addAction(tr("Clear Overwrite..."), this, SLOT(clearOverwrite()));
         }
         menu.addAction(tr("Open in Explorer"), this, SLOT(openExplorer_clicked()));
-      } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) {
-        menu.addAction(tr("Restore Backup"), this, SLOT(restoreBackup_clicked()));
-        menu.addAction(tr("Remove Backup..."), this, SLOT(removeMod_clicked()));
-      } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end()){
+      }
+      // Context menu for mod backups
+      else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) {
+          menu.addAction(tr("Restore Backup"), this, SLOT(restoreBackup_clicked()));
+          menu.addAction(tr("Remove Backup..."), this, SLOT(removeMod_clicked()));
+          if (info->getNexusID() > 0) {
+            menu.addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
+          }
+
+          const auto url = info->parseCustomURL();
+          if (url.isValid()) {
+            menu.addAction(
+              tr("Visit on %1").arg(url.host()),
+              this, SLOT(visitWebPage_clicked()));
+          }
+
+          if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_INVALID) != flags.end()) {
+            menu.addAction(tr("Ignore missing data"), this, SLOT(ignoreMissingData_clicked()));
+          }
+          if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_ALTERNATE_GAME) != flags.end()) {
+            menu.addAction(tr("Mark as converted/working"), this, SLOT(markConverted_clicked()));
+          }
+          menu.addAction(tr("Open in Explorer"), this, SLOT(openExplorer_clicked()));
+      }
+      else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end()){
         menu.addSeparator();
         QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"), &menu);
         populateMenuCategories(addRemoveCategoriesMenu, 0);
@@ -4774,12 +4797,16 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu.addSeparator();
         addModSendToContextMenu(&menu);
         menu.addAction(tr("Select Color..."), this, SLOT(setColor_clicked()));
+
         if(info->getColor().isValid())
           menu.addAction(tr("Reset Color"), this, SLOT(resetColor_clicked()));
+
         menu.addSeparator();
-      } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
+      }
+      else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
         addModSendToContextMenu(&menu);
-      } else {
+      }
+      else {
         QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"), &menu);
         populateMenuCategories(addRemoveCategoriesMenu, 0);
         connect(addRemoveCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(addRemoveCategories_MenuHandler()));
