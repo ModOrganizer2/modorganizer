@@ -73,7 +73,11 @@ EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, int sel, QWidget
   loadForcedLibraries();
 
   for (auto&& m : m_organizerCore.modList()->allMods()) {
-    if (ModInfo::isRegularName(m)) {
+    auto mod = ModInfo::getByName(m);
+    if (!mod->hasAnyOfTheseFlags({ ModInfo::FLAG_FOREIGN, 
+                                   ModInfo::FLAG_BACKUP, 
+                                   ModInfo::FLAG_OVERWRITE, 
+                                   ModInfo::FLAG_SEPARATOR })) {
       ui->mods->addItem(m);
     }
   }

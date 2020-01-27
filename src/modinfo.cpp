@@ -491,6 +491,22 @@ bool ModInfo::hasFlag(ModInfo::EFlag flag) const
   return std::find(flags.begin(), flags.end(), flag) != flags.end();
 }
 
+bool ModInfo::hasAnyOfTheseFlags(std::vector<ModInfo::EFlag> flags) const
+{
+  std::vector<EFlag> modFlags = getFlags();
+  for (auto modFlag : modFlags)
+  {
+    for (auto flag : flags)
+    {
+      if (modFlag == flag)
+      {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 bool ModInfo::hasContent(ModInfo::EContent content) const
 {
   std::vector<EContent> contents = getContents();

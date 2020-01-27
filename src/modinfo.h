@@ -542,6 +542,13 @@ public:
   bool hasFlag(EFlag flag) const;
 
   /**
+   * @brief test if any of the provided flags are set for this mod
+   * @param flags the flags to test
+   * @return true if any of the flags are set, false otherwise
+   */
+  bool hasAnyOfTheseFlags(std::vector<ModInfo::EFlag> flags) const;
+
+  /**
    * @brief test if the mods contains the specified content
    * @param content the content to test
    * @return true if the content is there, false otherwise
