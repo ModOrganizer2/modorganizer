@@ -4763,6 +4763,14 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
       else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) {
           menu.addAction(tr("Restore Backup"), this, SLOT(restoreBackup_clicked()));
           menu.addAction(tr("Remove Backup..."), this, SLOT(removeMod_clicked()));
+          menu.addSeparator();
+          if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_INVALID) != flags.end()) {
+            menu.addAction(tr("Ignore missing data"), this, SLOT(ignoreMissingData_clicked()));
+          }
+          if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_ALTERNATE_GAME) != flags.end()) {
+            menu.addAction(tr("Mark as converted/working"), this, SLOT(markConverted_clicked()));
+          }
+          menu.addSeparator();
           if (info->getNexusID() > 0) {
             menu.addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
           }
@@ -4774,12 +4782,6 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
               this, SLOT(visitWebPage_clicked()));
           }
 
-          if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_INVALID) != flags.end()) {
-            menu.addAction(tr("Ignore missing data"), this, SLOT(ignoreMissingData_clicked()));
-          }
-          if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_ALTERNATE_GAME) != flags.end()) {
-            menu.addAction(tr("Mark as converted/working"), this, SLOT(markConverted_clicked()));
-          }
           menu.addAction(tr("Open in Explorer"), this, SLOT(openExplorer_clicked()));
       }
       else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end()){
