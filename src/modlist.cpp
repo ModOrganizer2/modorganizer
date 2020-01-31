@@ -1316,7 +1316,7 @@ QString ModList::getColumnToolTip(int column)
     case COL_VERSION:  return tr("Version of the mod (if available)");
     case COL_PRIORITY: return tr("Installation priority of your mod. The higher, the more \"important\" it is and thus "
                                  "overwrites files from mods with lower priority.");
-    case COL_CATEGORY: return tr("Category of the mod.");
+    case COL_CATEGORY: return tr("Primary category of the mod.");
     case COL_GAME:     return tr("The source game which was the origin of this mod.");
     case COL_MODID:    return tr("Id of the mod as used on Nexus.");
     case COL_CONFLICTFLAGS: return tr("Indicators of file conflicts between mods.");
