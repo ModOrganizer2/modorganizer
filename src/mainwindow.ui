@@ -1056,53 +1056,37 @@ p, li { white-space: pre-wrap; }
               <number>6</number>
              </property>
              <item>
-              <widget class="QPushButton" name="btnRefreshData">
-               <property name="toolTip">
-                <string>refresh data-directory overview</string>
-               </property>
-               <property name="whatsThis">
-                <string>Refresh the overview. This may take a moment.</string>
-               </property>
-               <property name="text">
-                <string>Refresh</string>
-               </property>
-               <property name="icon">
-                <iconset resource="resources.qrc">
-                 <normaloff>:/MO/gui/resources/view-refresh.png</normaloff>:/MO/gui/resources/view-refresh.png</iconset>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <layout class="QHBoxLayout" name="horizontalLayout_12">
                <item>
-                <widget class="QTreeView" name="dataTree">
-                 <property name="contextMenuPolicy">
-                  <enum>Qt::CustomContextMenu</enum>
+                <widget class="QPushButton" name="btnRefreshData">
+                 <property name="toolTip">
+                  <string>refresh data-directory overview</string>
                  </property>
                  <property name="whatsThis">
-                  <string>This is an overview of your data directory as visible to the game (and tools). </string>
+                  <string>Refresh the overview. This may take a moment.</string>
                  </property>
-                 <property name="alternatingRowColors">
-                  <bool>true</bool>
+                 <property name="text">
+                  <string>Refresh</string>
                  </property>
-                 <property name="selectionMode">
-                  <enum>QAbstractItemView::ExtendedSelection</enum>
+                 <property name="icon">
+                  <iconset resource="resources.qrc">
+                   <normaloff>:/MO/gui/resources/view-refresh.png</normaloff>:/MO/gui/resources/view-refresh.png</iconset>
                  </property>
-                 <property name="uniformRowHeights">
-                  <bool>true</bool>
-                 </property>
-                 <property name="sortingEnabled">
-                  <bool>true</bool>
-                 </property>
-                 <attribute name="headerMinimumSectionSize">
-                  <number>400</number>
-                 </attribute>
                 </widget>
                </item>
-              </layout>
-             </item>
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_12">
+               <item>
+                <spacer name="horizontalSpacer_4">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
                <item>
                 <widget class="QCheckBox" name="conflictsCheckBox">
                  <property name="toolTip">
@@ -1130,6 +1114,35 @@ p, li { white-space: pre-wrap; }
                  <property name="text">
                   <string>Show files from Archives</string>
                  </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_2">
+               <item>
+                <widget class="QTreeView" name="dataTree">
+                 <property name="contextMenuPolicy">
+                  <enum>Qt::CustomContextMenu</enum>
+                 </property>
+                 <property name="whatsThis">
+                  <string>This is an overview of your data directory as visible to the game (and tools). </string>
+                 </property>
+                 <property name="alternatingRowColors">
+                  <bool>true</bool>
+                 </property>
+                 <property name="selectionMode">
+                  <enum>QAbstractItemView::ExtendedSelection</enum>
+                 </property>
+                 <property name="uniformRowHeights">
+                  <bool>true</bool>
+                 </property>
+                 <property name="sortingEnabled">
+                  <bool>true</bool>
+                 </property>
+                 <attribute name="headerMinimumSectionSize">
+                  <number>400</number>
+                 </attribute>
                 </widget>
                </item>
               </layout>
