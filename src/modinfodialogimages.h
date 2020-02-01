@@ -7,6 +7,8 @@
 #include "plugincontainer.h"
 #include "organizercore.h"
 
+using namespace MOBase;
+
 class ImagesTab;
 
 namespace ImagesTabHelpers

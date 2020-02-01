@@ -8,6 +8,8 @@
 #include <QTreeWidget>
 #include <optional>
 
+using namespace MOBase;
+
 class ConflictsTab;
 class OrganizerCore;
 class ConflictItem;

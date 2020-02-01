@@ -6,6 +6,8 @@
 #include <QSplitter>
 #include <QListView>
 
+using namespace MOBase;
+
 class FileListItem;
 class FileListModel;
 class TextEditor;
