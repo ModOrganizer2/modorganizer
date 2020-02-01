@@ -167,13 +167,15 @@ private:
 
 FileEntry::FileEntry() :
   m_Index(UINT_MAX), m_Name(), m_Origin(-1), m_Parent(nullptr),
+  m_FileSize(NoFileSize), m_CompressedFileSize(NoFileSize),
   m_LastAccessed(time(nullptr))
 {
 }
 
 FileEntry::FileEntry(Index index, const std::wstring &name, DirectoryEntry *parent) :
-  m_Index(index), m_Name(name), m_Origin(-1), m_Archive(L"", -1),
-  m_Parent(parent), m_LastAccessed(time(nullptr))
+  m_Index(index), m_Name(name), m_Origin(-1), m_Archive(L"", -1), m_Parent(parent),
+  m_FileSize(NoFileSize), m_CompressedFileSize(NoFileSize),
+  m_LastAccessed(time(nullptr))
 {
 }
 
@@ -1020,7 +1022,7 @@ void DirectoryEntry::removeFiles(const std::set<FileEntry::Index> &indices)
   removeFilesFromList(indices);
 }
 
-void DirectoryEntry::insert(
+FileEntry::Ptr DirectoryEntry::insert(
   const std::wstring &fileName, FilesOrigin &origin, FILETIME fileTime,
   const std::wstring &archive, int order)
 {
@@ -1036,6 +1038,8 @@ void DirectoryEntry::insert(
 
   file->addOrigin(origin.getID(), fileTime, archive, order);
   origin.addFile(file->getIndex());
+
+  return file;
 }
 
 void DirectoryEntry::addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOffset)
@@ -1085,7 +1089,16 @@ void DirectoryEntry::addFiles(
   // add files
   for (unsigned int fileIdx = 0; fileIdx < archiveFolder->getNumFiles(); ++fileIdx) {
     BSA::File::Ptr file = archiveFolder->getFile(fileIdx);
-    insert(ToWString(file->getName(), true), origin, fileTime, archiveName, order);
+
+    auto f = insert(ToWString(file->getName(), true), origin, fileTime, archiveName, order);
+
+    if (f) {
+      if (file->getUncompressedFileSize() > 0) {
+        f->setFileSize(file->getFileSize(), file->getUncompressedFileSize());
+      } else {
+        f->setFileSize(file->getFileSize(), FileEntry::NoFileSize);
+      }
+    }
   }
 
   // recurse into subdirectories

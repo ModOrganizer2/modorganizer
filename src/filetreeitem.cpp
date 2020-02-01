@@ -4,9 +4,38 @@
 #include "util.h"
 #include "modinfodialogfwd.h"
 #include <log.h>
+#include <utility.h>
 
 using namespace MOBase;
 using namespace MOShared;
+namespace fs = std::filesystem;
+
+const QString& directoryFileType()
+{
+  static QString name;
+
+  if (name.isEmpty()) {
+    const DWORD flags = SHGFI_TYPENAME;
+    SHFILEINFOW sfi = {};
+
+    // "." for the current directory, which should always exist
+    const auto r = SHGetFileInfoW(L".", 0, &sfi, sizeof(sfi), flags);
+
+    if (!r) {
+      const auto e = GetLastError();
+
+      log::error(
+        "SHGetFileInfoW failed for folder file type, {}",
+        formatSystemMessage(e));
+
+      name = "File folder";
+    } else {
+      name = QString::fromWCharArray(sfi.szTypeName);
+    }
+  }
+
+  return name;
+}
 
 
 FileTreeItem::FileTreeItem(
@@ -16,6 +45,7 @@ FileTreeItem::FileTreeItem(
     m_parent(parent), m_indexGuess(NoIndexGuess),
     m_originID(originID),
     m_virtualParentPath(QString::fromStdWString(dataRelativeParentPath)),
+    m_wsRealPath(realPath),
     m_realPath(QString::fromStdWString(realPath)),
     m_flags(flags),
     m_wsFile(file),
@@ -94,13 +124,19 @@ public:
         return naturalCompare(a->m_mod, b->m_mod);
 
       case FileTreeModel::FileType:
-        return naturalCompare(a->meta().type, b->meta().type);
+        return naturalCompare(
+          a->fileType().value_or(QString()),
+          b->fileType().value_or(QString()));
 
       case FileTreeModel::FileSize:
-        return threeWayCompare(a->meta().size, b->meta().size);
+        return threeWayCompare(
+          a->fileSize().value_or(0),
+          b->fileSize().value_or(0));
 
       case FileTreeModel::LastModified:
-        return threeWayCompare(a->meta().lastModified, b->meta().lastModified);
+        return threeWayCompare(
+          a->lastModified().value_or(QDateTime()),
+          b->lastModified().value_or(QDateTime()));
 
       default:
         return 0;
@@ -166,34 +202,88 @@ QFont FileTreeItem::font() const
   return f;
 }
 
-const FileTreeItem::Meta& FileTreeItem::meta() const
+std::optional<uint64_t> FileTreeItem::fileSize() const
 {
-  if (!m_meta) {
-    QFileInfo fi(m_realPath);
+  if (m_fileSize.empty()) {
+    std::error_code ec;
+    const auto size = fs::file_size(fs::path(m_wsRealPath), ec);
 
-    SHFILEINFOW sfi = {};
-    const auto r = SHGetFileInfoW(
-      m_realPath.toStdWString().c_str(), 0, &sfi, sizeof(sfi),
-      SHGFI_TYPENAME);
-
-    if (!r) {
-      const auto e = GetLastError();
-
-      log::error(
-        "SHGetFileInfoW failed for '{}', {}",
-        m_realPath, e);
-
-      sfi = {};
+    if (ec) {
+      log::error("can't get file size for '{}', {}", m_realPath, ec.message());
+      m_fileSize.fail();
+    } else {
+      m_fileSize.set(size);
     }
-
-    m_meta = {
-      static_cast<uint64_t>(fi.size()),
-      fi.lastModified(),
-      QString::fromWCharArray(sfi.szTypeName)
-    };
   }
 
-  return *m_meta;
+  return m_fileSize.value;
+}
+
+std::optional<QDateTime> FileTreeItem::lastModified() const
+{
+  if (m_lastModified.empty()) {
+    if (m_realPath.isEmpty()) {
+      // this is a virtual directory
+      m_lastModified.set({});
+    } else if (isFromArchive()) {
+      // can't get last modified date for files in archives
+      m_lastModified.set({});
+    } else {
+      // looks like a regular file on the filesystem
+      const QFileInfo fi(m_realPath);
+      const auto d = fi.lastModified();
+
+      if (!d.isValid()) {
+        log::error("can't get last modified date for '{}'", m_realPath);
+        m_lastModified.fail();
+      } else {
+        m_lastModified.set(d);
+      }
+    }
+  }
+
+  return m_lastModified.value;
+}
+
+std::optional<QString> FileTreeItem::fileType() const
+{
+  if (m_fileType.empty()) {
+    getFileType();
+  }
+
+  return m_fileType.value;
+}
+
+void FileTreeItem::getFileType() const
+{
+  if (isDirectory()) {
+    m_fileType.set(directoryFileType());
+    return;
+  }
+
+  DWORD flags = SHGFI_TYPENAME;
+
+  if (isFromArchive()) {
+    // files from archives are not on the filesystem; this flag forces
+    // SHGetFileInfoW() to only work with the filename
+    flags |= SHGFI_USEFILEATTRIBUTES;
+  }
+
+  SHFILEINFOW sfi = {};
+  const auto r = SHGetFileInfoW(
+    m_wsRealPath.c_str(), 0, &sfi, sizeof(sfi), flags);
+
+  if (!r) {
+    const auto e = GetLastError();
+
+    log::error(
+      "SHGetFileInfoW failed for '{}', {}",
+      m_realPath, formatSystemMessage(e));
+
+    m_fileType.fail();
+  } else {
+    m_fileType.set(QString::fromWCharArray(sfi.szTypeName));
+  }
 }
 
 QFileIconProvider::IconType FileTreeItem::icon() const

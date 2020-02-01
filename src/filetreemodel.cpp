@@ -127,7 +127,7 @@ private:
 FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent) :
   QAbstractItemModel(parent), m_core(core),
   m_root(nullptr, 0, L"", L"", FileTreeItem::Directory, L"", L"<root>"),
-  m_flags(NoFlags), m_isRefreshing(false)
+  m_flags(NoFlags)
 {
   m_root.setExpanded(true);
 
@@ -136,9 +136,6 @@ FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent) :
 
 void FileTreeModel::refresh()
 {
-  m_isRefreshing = true;
-  Guard g([&]{ m_isRefreshing = false; });
-
   TimeThis tt("FileTreeModel::refresh()");
   update(m_root, *m_core.directoryStructure(), L"");
 }
@@ -695,6 +692,14 @@ std::unique_ptr<FileTreeItem> FileTreeModel::createFileItem(
     &parentItem, originID, parentPath, file.getFullPath(), flags,
     file.getName(), makeModName(file, originID));
 
+  if (file.getFileSize() != FileEntry::NoFileSize) {
+    item->setFileSize(file.getFileSize());
+  }
+
+  if (file.getCompressedFileSize() != FileEntry::NoFileSize) {
+    item->setCompressedFileSize(file.getCompressedFileSize());
+  }
+
   item->setLoaded(true);
 
   return item;
@@ -716,7 +721,7 @@ QVariant FileTreeModel::displayData(const FileTreeItem* item, int column) const
 
     case FileType:
     {
-      return item->meta().type;
+      return item->fileType().value_or(QString());
     }
 
     case FileSize:
@@ -724,13 +729,29 @@ QVariant FileTreeModel::displayData(const FileTreeItem* item, int column) const
       if (item->isDirectory()) {
         return {};
       } else {
-        return localizedByteSize(item->meta().size);
+        QString fs;
+
+        if (auto n=item->fileSize()) {
+          fs = localizedByteSize(*n);
+        }
+
+        if (auto n=item->compressedFileSize()) {
+          return QString("%1 (%2)").arg(fs).arg(localizedByteSize(*n));
+        } else {
+          return fs;
+        }
       }
     }
 
     case LastModified:
     {
-      return item->meta().lastModified.toString(Qt::SystemLocaleDate);
+      if (auto d=item->lastModified()) {
+        if (d->isValid()) {
+          return d->toString(Qt::SystemLocaleDate);
+        }
+      }
+
+      return {};
     }
 
     default:

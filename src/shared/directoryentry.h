@@ -61,6 +61,9 @@ class FileRegister;
 class FileEntry
 {
 public:
+  static constexpr uint64_t NoFileSize =
+    std::numeric_limits<uint64_t>::max();
+
   typedef unsigned int Index;
   typedef boost::shared_ptr<FileEntry> Ptr;
 
@@ -150,6 +153,22 @@ public:
     return m_FileTime;
   }
 
+  void setFileSize(uint64_t size, uint64_t compressedSize)
+  {
+    m_FileSize = size;
+    m_CompressedFileSize = compressedSize;
+  }
+
+  uint64_t getFileSize() const
+  {
+    return m_FileSize;
+  }
+
+  uint64_t getCompressedFileSize() const
+  {
+    return m_CompressedFileSize;
+  }
+
 private:
   Index m_Index;
   std::wstring m_Name;
@@ -158,6 +177,7 @@ private:
   AlternativesVector m_Alternatives;
   DirectoryEntry *m_Parent;
   mutable FILETIME m_FileTime;
+  uint64_t m_FileSize, m_CompressedFileSize;
 
   time_t m_LastAccessed;
 
@@ -480,7 +500,7 @@ private:
 
   DirectoryEntry(const DirectoryEntry &reference);
 
-  void insert(
+  FileEntry::Ptr insert(
     const std::wstring &fileName, FilesOrigin &origin, FILETIME fileTime,
     const std::wstring &archive, int order);
 

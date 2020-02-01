@@ -19,13 +19,6 @@ public:
     Conflicted  = 0x04
   };
 
-  struct Meta
-  {
-    uint64_t size;
-    QDateTime lastModified;
-    QString type;
-  };
-
 
   Q_DECLARE_FLAGS(Flags, Flag);
 
@@ -136,7 +129,24 @@ public:
 
   QFont font() const;
 
-  const Meta& meta() const;
+  std::optional<uint64_t> fileSize() const;
+  std::optional<QDateTime> lastModified() const;
+  std::optional<QString> fileType() const;
+
+  std::optional<uint64_t> compressedFileSize() const
+  {
+    return m_compressedFileSize;
+  }
+
+  void setFileSize(uint64_t size)
+  {
+    m_fileSize.set(size);
+  }
+
+  void setCompressedFileSize(uint64_t compressedSize)
+  {
+    m_compressedFileSize = compressedSize;
+  }
 
   const QString& realPath() const
   {
@@ -210,6 +220,30 @@ public:
   QString debugName() const;
 
 private:
+  template <class T>
+  struct Cached
+  {
+    std::optional<T> value;
+    bool failed = false;
+
+    bool empty() const
+    {
+      return !failed && !value;
+    }
+
+    void set(T t)
+    {
+      value = std::move(t);
+      failed = false;
+    }
+
+    void fail()
+    {
+      value = {};
+      failed = true;
+    }
+  };
+
   static constexpr std::size_t NoIndexGuess =
     std::numeric_limits<std::size_t>::max();
 
@@ -218,17 +252,24 @@ private:
 
   const int m_originID;
   const QString m_virtualParentPath;
+  const std::wstring m_wsRealPath;
   const QString m_realPath;
   const Flags m_flags;
   const std::wstring m_wsFile, m_wsLcFile;
   const MOShared::DirectoryEntry::FileKey m_key;
   const QString m_file;
   const QString m_mod;
-  mutable std::optional<Meta> m_meta;
+
+  mutable Cached<uint64_t> m_fileSize;
+  mutable Cached<QDateTime> m_lastModified;
+  mutable Cached<QString> m_fileType;
+  mutable std::optional<uint64_t> m_compressedFileSize;
 
   bool m_loaded;
   bool m_expanded;
   Children m_children;
+
+  void getFileType() const;
 };
 
 #endif // MODORGANIZER_FILETREEITEM_INCLUDED

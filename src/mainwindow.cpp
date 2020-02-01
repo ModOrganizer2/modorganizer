@@ -2364,7 +2364,7 @@ void MainWindow::directory_refreshed()
 
   //Some better check for the current tab is needed.
   if (ui->tabWidget->currentIndex() == 2) {
-    m_DataTab->refreshDataTreeKeepExpandedNodes();
+    m_DataTab->updateTree();
   }
 }
 

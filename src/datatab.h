@@ -25,8 +25,7 @@ public:
   void restoreState(const Settings& s);
   void activated();
 
-  void refreshDataTreeKeepExpandedNodes();
-  void refreshDataTree();
+  void updateTree();
 
 signals:
   void executablesChanged();
