@@ -9,7 +9,8 @@ class FileTreeItem
   class Sorter;
 
 public:
-  using Children = std::vector<std::unique_ptr<FileTreeItem>>;
+  using Ptr = std::unique_ptr<FileTreeItem>;
+  using Children = std::vector<Ptr>;
 
   enum Flag
   {
@@ -22,7 +23,7 @@ public:
 
   Q_DECLARE_FLAGS(Flags, Flag);
 
-  FileTreeItem(
+  static Ptr create(
     FileTreeItem* parent, int originID,
     std::wstring dataRelativeParentPath, std::wstring realPath, Flags flags,
     std::wstring file, std::wstring mod);
@@ -32,13 +33,13 @@ public:
   FileTreeItem(FileTreeItem&&) = default;
   FileTreeItem& operator=(FileTreeItem&&) = default;
 
-  void add(std::unique_ptr<FileTreeItem> child)
+  void add(Ptr child)
   {
     child->m_indexGuess = m_children.size();
     m_children.push_back(std::move(child));
   }
 
-  void insert(std::unique_ptr<FileTreeItem> child, std::size_t at);
+  void insert(Ptr child, std::size_t at);
 
   template <class Itor>
   void insert(Itor begin, Itor end, std::size_t at)
@@ -268,6 +269,12 @@ private:
   bool m_loaded;
   bool m_expanded;
   Children m_children;
+
+
+  FileTreeItem(
+    FileTreeItem* parent, int originID,
+    std::wstring dataRelativeParentPath, std::wstring realPath, Flags flags,
+    std::wstring file, std::wstring mod);
 
   void getFileType() const;
 };

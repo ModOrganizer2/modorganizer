@@ -25,6 +25,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <usvfs.h>
 #include <usvfs_version.h>
 
+using namespace MOBase;
+
 namespace MOShared
 {
 
@@ -199,7 +201,7 @@ std::wstring GetFileVersionString(const std::wstring &fileName)
   }
 }
 
-MOBase::VersionInfo createVersionInfo()
+VersionInfo createVersionInfo()
 {
   VS_FIXEDFILEINFO version = GetFileVersion(QApplication::applicationFilePath().toStdWString());
 
@@ -222,25 +224,25 @@ MOBase::VersionInfo createVersionInfo()
     if (noLetters)
     {
       // Default to pre-alpha when release type is unspecified
-      return MOBase::VersionInfo(version.dwFileVersionMS >> 16,
-                                 version.dwFileVersionMS & 0xFFFF,
-                                 version.dwFileVersionLS >> 16,
-                                 version.dwFileVersionLS & 0xFFFF,
-                                 MOBase::VersionInfo::RELEASE_PREALPHA);
+      return VersionInfo(version.dwFileVersionMS >> 16,
+                         version.dwFileVersionMS & 0xFFFF,
+                         version.dwFileVersionLS >> 16,
+                         version.dwFileVersionLS & 0xFFFF,
+                         VersionInfo::RELEASE_PREALPHA);
     }
     else
     {
       // Trust the string to make sense
-      return MOBase::VersionInfo(versionString);
+      return VersionInfo(versionString);
     }
   }
   else
   {
     // Non-pre-release builds just need their version numbers reading
-    return MOBase::VersionInfo(version.dwFileVersionMS >> 16,
-                               version.dwFileVersionMS & 0xFFFF,
-                               version.dwFileVersionLS >> 16,
-                               version.dwFileVersionLS & 0xFFFF);
+    return VersionInfo(version.dwFileVersionMS >> 16,
+                       version.dwFileVersionMS & 0xFFFF,
+                       version.dwFileVersionLS >> 16,
+                       version.dwFileVersionLS & 0xFFFF);
   }
 }
 
@@ -314,6 +316,62 @@ void SetThisThreadName(const QString& s)
   }
 }
 
+
+char shortcutChar(const QAction* a)
+{
+  const auto text = a->text();
+  char shortcut = 0;
+
+  for (int i=0; i<text.size(); ++i) {
+    const auto c = text[i];
+    if (c == '&') {
+      if (i >= (text.size() - 1)) {
+        log::error("ampersand at the end");
+        return 0;
+      }
+
+      return text[i + 1].toLatin1();
+    }
+  }
+
+  log::error("action {} has no shortcut", text);
+  return 0;
+}
+
+void checkDuplicateShortcuts(const QMenu& m)
+{
+  const auto actions = m.actions();
+
+  for (int i=0; i<actions.size(); ++i) {
+    const auto* action1 = actions[i];
+    if (action1->isSeparator()) {
+      continue;
+    }
+
+    const char shortcut1 = shortcutChar(action1);
+    if (shortcut1 == 0) {
+      continue;
+    }
+
+    for (int j=i+1; j<actions.size(); ++j) {
+      const auto* action2 = actions[j];
+      if (action2->isSeparator()) {
+        continue;
+      }
+
+      const char shortcut2 = shortcutChar(action2);
+
+      if (shortcut1 == shortcut2) {
+        log::error(
+          "duplicate shortcut {} for {} and {}",
+          shortcut1, action1->text(), action2->text());
+
+        break;
+      }
+    }
+  }
+}
+
 } // namespace MOShared
 
 
@@ -330,9 +388,9 @@ TimeThis::~TimeThis()
   const auto d = duration_cast<milliseconds>(end - m_start).count();
 
   if (m_what.isEmpty()) {
-    MOBase::log::debug("{} ms", d);
+    log::debug("{} ms", d);
   } else {
-    MOBase::log::debug("{} {} ms", m_what, d);
+    log::debug("{} {} ms", m_what, d);
   }
 }
 
@@ -358,7 +416,7 @@ bool ExitModOrganizer(ExitFlags e)
   }
 
   g_exiting = true;
-  MOBase::Guard g([&]{ g_exiting = false; });
+  Guard g([&]{ g_exiting = false; });
 
   if (!e.testFlag(Exit::Force)) {
     if (auto* mw=findMainWindow()) {

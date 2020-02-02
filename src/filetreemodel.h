@@ -69,7 +69,7 @@ private:
 
   using DirectoryIterator = std::vector<MOShared::DirectoryEntry*>::const_iterator;
   OrganizerCore& m_core;
-  mutable FileTreeItem m_root;
+  mutable FileTreeItem::Ptr m_root;
   Flags m_flags;
   mutable IconFetcher m_iconFetcher;
   mutable std::vector<QModelIndex> m_iconPending;
@@ -117,11 +117,11 @@ private:
     const std::unordered_set<MOShared::FileEntry::Index>& seen);
 
 
-  std::unique_ptr<FileTreeItem> createDirectoryItem(
+  FileTreeItem::Ptr createDirectoryItem(
     FileTreeItem& parentItem, const std::wstring& parentPath,
     const MOShared::DirectoryEntry& d);
 
-  std::unique_ptr<FileTreeItem> createFileItem(
+  FileTreeItem::Ptr createFileItem(
     FileTreeItem& parentItem, const std::wstring& parentPath,
     const MOShared::FileEntry& file);
 
@@ -134,7 +134,7 @@ private:
   void removePendingIcons(const QModelIndex& parent, int first, int last);
 
   bool shouldShowFile(const MOShared::FileEntry& file) const;
-  bool hasFilesAnywhere(const MOShared::DirectoryEntry& dir) const;
+  bool shouldShowFolder(const MOShared::DirectoryEntry& dir, const FileTreeItem* item) const;
   QString makeTooltip(const FileTreeItem& item) const;
   QVariant makeIcon(const FileTreeItem& item, const QModelIndex& index) const;
 

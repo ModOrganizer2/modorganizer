@@ -65,7 +65,7 @@ public:
     const auto parentIndex = m_model->indexFromItem(m_parentItem);
 
     // make sure the number of items is the same as the size of this range
-    Q_ASSERT(static_cast<int>(toAdd.size()) == (last - m_first));
+    Q_ASSERT(static_cast<int>(toAdd.size()) == (last - m_first + 1));
 
     trace(log::debug("Range::add() {} to {}", m_first, last));
 
@@ -124,12 +124,24 @@ private:
 };
 
 
+FileTreeItem* getItem(const QModelIndex& index)
+{
+  return static_cast<FileTreeItem*>(index.internalPointer());
+}
+
+void* makeInternalPointer(FileTreeItem* item)
+{
+  return item;
+}
+
+
 FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent) :
   QAbstractItemModel(parent), m_core(core),
-  m_root(nullptr, 0, L"", L"", FileTreeItem::Directory, L"", L"<root>"),
+  m_root(FileTreeItem::create(
+    nullptr, 0, L"", L"", FileTreeItem::Directory, L"", L"<root>")),
   m_flags(NoFlags)
 {
-  m_root.setExpanded(true);
+  m_root->setExpanded(true);
 
   connect(&m_iconPendingTimer, &QTimer::timeout, [&]{ updatePendingIcons(); });
 }
@@ -137,19 +149,19 @@ FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent) :
 void FileTreeModel::refresh()
 {
   TimeThis tt("FileTreeModel::refresh()");
-  update(m_root, *m_core.directoryStructure(), L"");
+  update(*m_root, *m_core.directoryStructure(), L"");
 }
 
 void FileTreeModel::clear()
 {
   beginResetModel();
-  m_root.clear();
+  m_root->clear();
   endResetModel();
 }
 
 bool FileTreeModel::showArchives() const
 {
-  return (m_flags & Archives) && m_core.getArchiveParsing();
+  return (m_flags.testFlag(Archives) && m_core.getArchiveParsing());
 }
 
 QModelIndex FileTreeModel::index(
@@ -160,7 +172,7 @@ QModelIndex FileTreeModel::index(
       return {};
     }
 
-    return createIndex(row, col, parentItem);
+    return createIndex(row, col, makeInternalPointer(parentItem));
   }
 
   log::error("FileTreeModel::index(): parentIndex has no internal pointer");
@@ -173,7 +185,7 @@ QModelIndex FileTreeModel::parent(const QModelIndex& index) const
     return {};
   }
 
-  auto* parentItem = static_cast<FileTreeItem*>(index.internalPointer());
+  auto* parentItem = getItem(index);
   if (!parentItem) {
     log::error("FileTreeModel::parent(): no internal pointer");
     return {};
@@ -341,7 +353,7 @@ void FileTreeModel::sort(int column, Qt::SortOrder order)
     oldItems.push_back({itemFromIndex(index), index.column()});
   }
 
-  m_root.sort(column, order);
+  m_root->sort(column, order);
 
   QModelIndexList newList;
   newList.reserve(itemCount);
@@ -359,10 +371,10 @@ void FileTreeModel::sort(int column, Qt::SortOrder order)
 FileTreeItem* FileTreeModel::itemFromIndex(const QModelIndex& index) const
 {
   if (!index.isValid()) {
-    return &m_root;
+    return m_root.get();
   }
 
-  auto* parentItem = static_cast<FileTreeItem*>(index.internalPointer());
+  auto* parentItem = getItem(index);
   if (!parentItem) {
     log::error("FileTreeModel::itemFromIndex(): no internal pointer");
     return nullptr;
@@ -395,7 +407,7 @@ QModelIndex FileTreeModel::indexFromItem(FileTreeItem& item, int col) const
     return {};
   }
 
-  return createIndex(index, col, parent);
+  return createIndex(index, col, makeInternalPointer(parent));
 }
 
 void FileTreeModel::update(
@@ -477,35 +489,22 @@ void FileTreeModel::removeDisappearingDirectories(
       if (item->areChildrenVisible()) {
         // the item is currently expanded, update it
         update(*item, *d, parentPath);
-      } else if (item->isLoaded()) {
-        // the item is loaded (previously expanded but now collapsed), mark it
-        // as unloaded
-        item->setLoaded(false);
       }
 
-      if ((m_flags & PruneDirectories)) {
-        // this directory must be checked to see if it's empty so it can be
-        // pruned
-        bool prune = false;
-
-        if (item->isLoaded() && item->children().empty()) {
-          // item is loaded and has no children; prune it
-          prune = true;
-        } else {
-          // item is not loaded, so children have to be checked manually
-          if (!hasFilesAnywhere(*d)) {
-            // item wouldn't have any children, prune it
-            prune = true;
-          }
+      if (shouldShowFolder(*d, item.get())) {
+        // folder should be left in the list
+        if (!item->areChildrenVisible() && item->isLoaded()) {
+          // the item is loaded (previously expanded but now collapsed), mark
+          // it as unloaded so it updates when next expanded
+          item->setLoaded(false);
         }
+      } else {
+        // item wouldn't have any children, prune it
+        trace(log::debug("dir {} is empty and pruned", item->filename()));
 
-        if (prune) {
-          trace(log::debug("dir {} is empty and pruned", item->filename()));
-
-          range.includeCurrent();
-          currentRemoved = true;
-          ++itor;
-        }
+        range.includeCurrent();
+        currentRemoved = true;
+        ++itor;
       }
 
       if (!currentRemoved) {
@@ -536,7 +535,7 @@ bool FileTreeModel::addNewDirectories(
   // keeps track of the contiguous directories that need to be added to
   // avoid calling beginAddRows(), etc. for each item
   Range range(this, parentItem);
-  std::vector<std::unique_ptr<FileTreeItem>> toAdd;
+  std::vector<FileTreeItem::Ptr> toAdd;
   bool added = false;
 
   // for each directory on the filesystem
@@ -553,7 +552,7 @@ bool FileTreeModel::addNewDirectories(
       range.add(std::move(toAdd));
       toAdd.clear();
     } else {
-      if ((m_flags & PruneDirectories) && !hasFilesAnywhere(*d)) {
+      if (!shouldShowFolder(*d, nullptr)) {
         // this is a new directory, but it doesn't contain anything interesting
         trace(log::debug("new dir {}, empty and pruned", QString::fromStdWString(d->getName())));
 
@@ -656,7 +655,7 @@ bool FileTreeModel::addNewFiles(
 {
   // keeps track of the contiguous files that need to be added to
   // avoid calling beginAddRows(), etc. for each item
-  std::vector<std::unique_ptr<FileTreeItem>> toAdd;
+  std::vector<FileTreeItem::Ptr> toAdd;
   Range range(this, parentItem, firstFileRow);
   bool added = false;
 
@@ -705,11 +704,11 @@ bool FileTreeModel::addNewFiles(
   return added;
 }
 
-std::unique_ptr<FileTreeItem> FileTreeModel::createDirectoryItem(
+FileTreeItem::Ptr FileTreeModel::createDirectoryItem(
   FileTreeItem& parentItem, const std::wstring& parentPath,
   const DirectoryEntry& d)
 {
-  auto item = std::make_unique<FileTreeItem>(
+  auto item = FileTreeItem::create(
     &parentItem, 0, parentPath, L"", FileTreeItem::Directory,
     d.getName(), L"");
 
@@ -722,7 +721,7 @@ std::unique_ptr<FileTreeItem> FileTreeModel::createDirectoryItem(
   return item;
 }
 
-std::unique_ptr<FileTreeItem> FileTreeModel::createFileItem(
+FileTreeItem::Ptr FileTreeModel::createFileItem(
   FileTreeItem& parentItem, const std::wstring& parentPath,
   const FileEntry& file)
 {
@@ -739,7 +738,7 @@ std::unique_ptr<FileTreeItem> FileTreeModel::createFileItem(
     flags |= FileTreeItem::Conflicted;
   }
 
-  auto item = std::make_unique<FileTreeItem>(
+  auto item = FileTreeItem::create(
     &parentItem, originID, parentPath, file.getFullPath(), flags,
     file.getName(), makeModName(file, originID));
 
@@ -759,22 +758,54 @@ std::unique_ptr<FileTreeItem> FileTreeModel::createFileItem(
 bool FileTreeModel::shouldShowFile(const FileEntry& file) const
 {
   if (showConflictsOnly() && (file.getAlternatives().size() == 0)) {
+    // only conflicts should be shown, but this file is not conflicted
     return false;
   }
 
-  if (!showArchives()) {
-    bool isArchive = false;
-    file.getOrigin(isArchive);
-    return !isArchive;
+  if (!showArchives() && file.isFromArchive()) {
+    // files from archives shouldn't be shown, but this file is from an archive
+    return false;
   }
 
   return true;
 }
 
-bool FileTreeModel::hasFilesAnywhere(const DirectoryEntry& dir) const
+bool FileTreeModel::shouldShowFolder(
+  const DirectoryEntry& dir, const FileTreeItem* item) const
 {
+  bool shouldPrune = m_flags.testFlag(PruneDirectories);
+
+  if (m_core.settings().archiveParsing()) {
+    if (!m_flags.testFlag(Archives)) {
+      // archive parsing is enabled but the tree shouldn't show archives; this
+      // is a bit of a special case for folders because they have to be hidden
+      // regardless of the PruneDirectories flag if they only exist in archives
+      //
+      // note that this test is inaccurate: if a loose folder exists but is
+      // empty, and the same folder exists in an archive but is _not_ empty,
+      // then it's considered to exist _only_ in an archive and will be pruned
+      //
+      // if directories are ever made first-class so they can retain their
+      // origins, this test can be made more accurate
+      shouldPrune = true;
+    }
+  }
+
+  if (!shouldPrune) {
+    // always show folders regardless of their content
+    return true;
+  }
+
+  if (item) {
+    if (item->isLoaded() && item->children().empty()) {
+      // item is loaded and has no children; prune it
+      return false;
+    }
+  }
+
   bool foundFile = false;
 
+  // check all files in this directory, return early if a file should be shown
   dir.forEachFile([&](auto&& f) {
     if (shouldShowFile(f)) {
       foundFile = true;
@@ -791,11 +822,9 @@ bool FileTreeModel::hasFilesAnywhere(const DirectoryEntry& dir) const
     return true;
   }
 
-  std::vector<DirectoryEntry*>::const_iterator begin, end;
-  dir.getSubDirectories(begin, end);
-
-  for (auto itor=begin; itor!=end; ++itor) {
-    if (hasFilesAnywhere(**itor)) {
+  // recurse into subdirectories
+  for (auto subdir : dir.getSubDirectories()) {
+    if (shouldShowFolder(*subdir, nullptr)) {
       return true;
     }
   }

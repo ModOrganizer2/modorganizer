@@ -442,8 +442,11 @@ void FileTree::onContextMenu(const QPoint &pos)
   const auto m = QApplication::keyboardModifiers();
 
   if (m & Qt::ShiftModifier) {
-    showShellMenu(pos);
-    return;
+    // if no shell menu was available, continue on and show the regular
+    // context menu
+    if (showShellMenu(pos)) {
+      return;
+    }
   }
 
   QMenu menu;
@@ -481,17 +484,28 @@ QMainWindow* getMainWindow(QWidget* w)
   return nullptr;
 }
 
-void FileTree::showShellMenu(QPoint pos)
+bool FileTree::showShellMenu(QPoint pos)
 {
   auto* mw = getMainWindow(m_tree);
 
   // menus by origin
   std::map<int, env::ShellMenu> menus;
   int totalFiles = 0;
+  bool hasDirectory = false;
 
   for (auto&& index : m_tree->selectionModel()->selectedRows()) {
     auto* item = m_model->itemFromIndex(index);
     if (!item) {
+      continue;
+    }
+
+    if (item->isDirectory()) {
+      hasDirectory = true;
+
+      log::warn(
+        "directories do not have shell menus; '{}' selected",
+        item->filename());
+
       continue;
     }
 
@@ -543,8 +557,13 @@ void FileTree::showShellMenu(QPoint pos)
   }
 
   if (menus.empty()) {
-    log::warn("no menus to show");
-    return;
+    // don't warn if a directory was selected, a warning has already been
+    // logged above
+    if (!hasDirectory) {
+      log::warn("no menus to show");
+    }
+
+    return false;
   }
   else if (menus.size() == 1) {
     auto& menu = menus.begin()->second;
@@ -576,6 +595,8 @@ void FileTree::showShellMenu(QPoint pos)
 
     mc.exec(m_tree->viewport()->mapToGlobal(pos));
   }
+
+  return true;
 }
 
 void FileTree::addDirectoryMenus(QMenu&, FileTreeItem&)
@@ -720,7 +741,11 @@ void FileTree::addCommonMenus(QMenu& menu)
     .hint(QObject::tr("Refreshes the list"))
     .addTo(menu);
 
-  MenuItem(QObject::tr("E&xpand All"))
+  MenuItem(QObject::tr("Ex&pand All"))
     .callback([&]{ m_tree->expandAll(); })
+    .addTo(menu);
+
+  MenuItem(QObject::tr("&Collapse All"))
+    .callback([&]{ m_tree->collapseAll(); })
     .addTo(menu);
 }

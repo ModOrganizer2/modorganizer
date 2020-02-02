@@ -58,7 +58,17 @@ FileTreeItem::FileTreeItem(
 {
 }
 
-void FileTreeItem::insert(std::unique_ptr<FileTreeItem> child, std::size_t at)
+FileTreeItem::Ptr FileTreeItem::create(
+  FileTreeItem* parent, int originID,
+  std::wstring dataRelativeParentPath, std::wstring realPath, Flags flags,
+  std::wstring file, std::wstring mod)
+{
+  return std::unique_ptr<FileTreeItem>(new FileTreeItem(
+    parent, originID, std::move(dataRelativeParentPath), std::move(realPath),
+    flags, std::move(file), std::move(mod)));
+}
+
+void FileTreeItem::insert(FileTreeItem::Ptr child, std::size_t at)
 {
   if (at > m_children.size()) {
     log::error(

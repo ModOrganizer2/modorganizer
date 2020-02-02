@@ -48,6 +48,7 @@ MOBase::VersionInfo createVersionInfo();
 QString getUsvfsVersionString();
 
 void SetThisThreadName(const QString& s);
+void checkDuplicateShortcuts(const QMenu& m);
 
 } // namespace MOShared
 
