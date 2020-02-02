@@ -15,9 +15,10 @@ class FileTreeModel : public QAbstractItemModel
 public:
   enum Flag
   {
-    NoFlags   = 0x00,
-    Conflicts = 0x01,
-    Archives  = 0x02
+    NoFlags          = 0x00,
+    ConflictsOnly    = 0x01,
+    Archives         = 0x02,
+    PruneDirectories = 0x04
   };
 
   enum Columns
@@ -58,12 +59,6 @@ public:
   FileTreeItem* itemFromIndex(const QModelIndex& index) const;
 
 private:
-  enum class FillFlag
-  {
-    None             = 0x00,
-    PruneDirectories = 0x01
-  };
-
   struct Sort
   {
     int column = 0;
@@ -71,8 +66,6 @@ private:
   };
 
   class Range;
-
-  Q_DECLARE_FLAGS(FillFlags, FillFlag);
 
   using DirectoryIterator = std::vector<MOShared::DirectoryEntry*>::const_iterator;
   OrganizerCore& m_core;
@@ -83,9 +76,9 @@ private:
   mutable QTimer m_iconPendingTimer;
   Sort m_sort;
 
-  bool showConflicts() const
+  bool showConflictsOnly() const
   {
-    return (m_flags & Conflicts);
+    return (m_flags & ConflictsOnly);
   }
 
   bool showArchives() const;
@@ -98,7 +91,7 @@ private:
 
   bool updateDirectories(
     FileTreeItem& parentItem, const std::wstring& path,
-    const MOShared::DirectoryEntry& parentEntry, FillFlags flags);
+    const MOShared::DirectoryEntry& parentEntry);
 
   void removeDisappearingDirectories(
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,

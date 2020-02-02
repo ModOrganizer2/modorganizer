@@ -96,14 +96,16 @@ void DataTab::onArchives()
 
 void DataTab::updateOptions()
 {
-  FileTreeModel::Flags flags = FileTreeModel::NoFlags;
+  using M = FileTreeModel;
+
+  M::Flags flags = M::NoFlags;
 
   if (ui.conflicts->isChecked()) {
-    flags |= FileTreeModel::Conflicts;
+    flags |= M::ConflictsOnly | M::PruneDirectories;
   }
 
   if (ui.archives->isChecked()) {
-    flags |= FileTreeModel::Archives;
+    flags |= M::Archives;
   }
 
   m_filetree->model()->setFlags(flags);

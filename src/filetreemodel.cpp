@@ -9,11 +9,7 @@ using namespace MOShared;
 QString UnmanagedModName();
 
 
-template <class F>
-void trace(F&& f)
-{
-  //f();
-}
+#define trace(f)
 
 
 // tracks a contiguous range in the model to avoid calling begin*Rows(), etc.
@@ -71,6 +67,8 @@ public:
     // make sure the number of items is the same as the size of this range
     Q_ASSERT(static_cast<int>(toAdd.size()) == (last - m_first));
 
+    trace(log::debug("Range::add() {} to {}", m_first, last));
+
     m_model->beginInsertRows(parentIndex, m_first, last);
 
     m_parentItem.insert(
@@ -96,6 +94,8 @@ public:
 
     const auto last = m_current - 1;
     const auto parentIndex = m_model->indexFromItem(m_parentItem);
+
+    trace(log::debug("Range::remove() {} to {}", m_first, last));
 
     m_model->beginRemoveRows(parentIndex, m_first, last);
 
@@ -402,7 +402,7 @@ void FileTreeModel::update(
   FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
   const std::wstring& parentPath)
 {
-  trace([&]{ log::debug("updating {}", parentItem.debugName()); });
+  trace(log::debug("updating {}", parentItem.debugName()));
 
   auto path = parentPath;
   if (!parentEntry.isTopLevel()) {
@@ -417,7 +417,7 @@ void FileTreeModel::update(
 
   bool added = false;
 
-  if (updateDirectories(parentItem, path, parentEntry, FillFlag::None)) {
+  if (updateDirectories(parentItem, path, parentEntry)) {
     added = true;
   }
 
@@ -432,7 +432,7 @@ void FileTreeModel::update(
 
 bool FileTreeModel::updateDirectories(
   FileTreeItem& parentItem, const std::wstring& parentPath,
-  const MOShared::DirectoryEntry& parentEntry, FillFlags flags)
+  const MOShared::DirectoryEntry& parentEntry)
 {
   // removeDisappearingDirectories() will add directories that are in the
   // tree and still on the filesystem to this set; addNewDirectories() will
@@ -467,21 +467,55 @@ void FileTreeModel::removeDisappearingDirectories(
     auto d = parentEntry.findSubDirectory(item->filenameWsLowerCase(), true);
 
     if (d) {
-      trace([&]{ log::debug("dir {} still there", item->filename()); });
+      trace(log::debug("dir {} still there", item->filename()));
 
       // directory is still there
-      seen.emplace(item->filenameWs());
+      seen.emplace(d->getName());
 
-      // if there were directories before this row that need to be removed,
-      // do it now
-      itor = range.remove();
+      bool currentRemoved = false;
 
       if (item->areChildrenVisible()) {
+        // the item is currently expanded, update it
         update(*item, *d, parentPath);
+      } else if (item->isLoaded()) {
+        // the item is loaded (previously expanded but now collapsed), mark it
+        // as unloaded
+        item->setLoaded(false);
+      }
+
+      if ((m_flags & PruneDirectories)) {
+        // this directory must be checked to see if it's empty so it can be
+        // pruned
+        bool prune = false;
+
+        if (item->isLoaded() && item->children().empty()) {
+          // item is loaded and has no children; prune it
+          prune = true;
+        } else {
+          // item is not loaded, so children have to be checked manually
+          if (!hasFilesAnywhere(*d)) {
+            // item wouldn't have any children, prune it
+            prune = true;
+          }
+        }
+
+        if (prune) {
+          trace(log::debug("dir {} is empty and pruned", item->filename()));
+
+          range.includeCurrent();
+          currentRemoved = true;
+          ++itor;
+        }
+      }
+
+      if (!currentRemoved) {
+        // if there were directories before this row that need to be removed,
+        // do it now
+        itor = range.remove();
       }
     } else {
       // directory is gone from the parent entry
-      trace([&]{ log::debug("dir {} is gone", item->filename()); });
+      trace(log::debug("dir {} is gone", item->filename()));
 
       range.includeCurrent();
       ++itor;
@@ -512,11 +546,23 @@ bool FileTreeModel::addNewDirectories(
 
       // if there were directories before this row that need to be added,
       // do it now
+      //
+      // todo: if the directory was actually removed in
+      // removeDisappearingDirectories(), the range doesn't need to be added
+      // now and could be extended further
       range.add(std::move(toAdd));
       toAdd.clear();
     } else {
+      if ((m_flags & PruneDirectories) && !hasFilesAnywhere(*d)) {
+        // this is a new directory, but it doesn't contain anything interesting
+        trace(log::debug("new dir {}, empty and pruned", QString::fromStdWString(d->getName())));
+
+        // act as if this directory doesn't exist at all
+        continue;
+      }
+
       // this is a new directory
-      trace([&]{ log::debug("new dir {}", QString::fromStdWString(d->getName())); });
+      trace(log::debug("new dir {}", QString::fromStdWString(d->getName())));
 
       toAdd.push_back(createDirectoryItem(parentItem, parentPath, *d));
       added = true;
@@ -572,8 +618,8 @@ void FileTreeModel::removeDisappearingFiles(
 
       auto f = parentEntry.findFile(item->key());
 
-      if (f) {
-        trace([&]{ log::debug("file {} still there", item->filename()); });
+      if (f && shouldShowFile(*f)) {
+        trace(log::debug("file {} still there", item->filename()));
 
         // file is still there
         seen.emplace(f->getIndex());
@@ -583,7 +629,7 @@ void FileTreeModel::removeDisappearingFiles(
         itor = range.remove();
       } else {
         // file is gone from the parent entry
-        trace([&]{ log::debug("file {} is gone", item->filename()); });
+        trace(log::debug("file {} is gone", item->filename()));
 
         range.includeCurrent();
         ++itor;
@@ -634,13 +680,18 @@ bool FileTreeModel::addNewFiles(
         return true;
       }
 
-      // this is a new file
-      trace([&]{ log::debug("new file {}", QString::fromStdWString(file->getName())); });
+      if (shouldShowFile(*file)) {
+        // this is a new file
+        trace(log::debug("new file {}", QString::fromStdWString(file->getName())));
 
-      toAdd.push_back(createFileItem(parentItem, parentPath, *file));
-      added = true;
+        toAdd.push_back(createFileItem(parentItem, parentPath, *file));
+        added = true;
 
-      range.includeCurrent();
+        range.includeCurrent();
+      } else {
+        // this is a new file, but it shouldn't be shown
+        trace(log::debug("new file {}, not shown", QString::fromStdWString(file->getName())));
+      }
     }
 
     range.next();
@@ -703,6 +754,53 @@ std::unique_ptr<FileTreeItem> FileTreeModel::createFileItem(
   item->setLoaded(true);
 
   return item;
+}
+
+bool FileTreeModel::shouldShowFile(const FileEntry& file) const
+{
+  if (showConflictsOnly() && (file.getAlternatives().size() == 0)) {
+    return false;
+  }
+
+  if (!showArchives()) {
+    bool isArchive = false;
+    file.getOrigin(isArchive);
+    return !isArchive;
+  }
+
+  return true;
+}
+
+bool FileTreeModel::hasFilesAnywhere(const DirectoryEntry& dir) const
+{
+  bool foundFile = false;
+
+  dir.forEachFile([&](auto&& f) {
+    if (shouldShowFile(f)) {
+      foundFile = true;
+
+      // stop
+      return false;
+    }
+
+    // continue
+    return true;
+  });
+
+  if (foundFile) {
+    return true;
+  }
+
+  std::vector<DirectoryEntry*>::const_iterator begin, end;
+  dir.getSubDirectories(begin, end);
+
+  for (auto itor=begin; itor!=end; ++itor) {
+    if (hasFilesAnywhere(**itor)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 QVariant FileTreeModel::displayData(const FileTreeItem* item, int column) const
