@@ -27,7 +27,7 @@ bool canOpenFile(const FileEntry& file)
 
 bool isHidden(const FileEntry& file)
 {
-  return (QString::fromStdWString(file.getName()).endsWith(ModInfo::s_HiddenExt));
+  return (QString::fromStdWString(file.getName()).endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive));
 }
 
 bool canExploreFile(const FileEntry& file);

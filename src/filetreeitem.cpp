@@ -325,7 +325,7 @@ QFileIconProvider::IconType FileTreeItem::icon() const
 
 bool FileTreeItem::isHidden() const
 {
-  return m_file.endsWith(ModInfo::s_HiddenExt);
+  return m_file.endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive);
 }
 
 void FileTreeItem::unload()
