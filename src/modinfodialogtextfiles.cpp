@@ -154,15 +154,9 @@ bool GenericFilesTab::canClose()
 
 bool GenericFilesTab::feedFile(const QString& rootPath, const QString& fullPath)
 {
-  static constexpr const char* extensions[] = {
-    ".txt"
-  };
-
-  for (const auto* e : extensions) {
-    if (wantsFile(rootPath, fullPath)) {
-      m_model->add(rootPath, fullPath);
-      return true;
-    }
+  if (wantsFile(rootPath, fullPath)) {
+    m_model->add(rootPath, fullPath);
+    return true;
   }
 
   return false;
@@ -217,7 +211,12 @@ TextFilesTab::TextFilesTab(ModInfoDialogTabContext cx)
 
 bool TextFilesTab::wantsFile(const QString& rootPath, const QString& fullPath) const
 {
-  static const QString extensions[] = {".txt"};
+  static const QString extensions[] = {
+    ".txt",
+    ".json",
+    ".cfg",
+    ".log"
+  };
 
   for (const auto& e : extensions) {
     if (fullPath.endsWith(e, Qt::CaseInsensitive)) {
