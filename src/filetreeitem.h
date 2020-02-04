@@ -15,23 +15,29 @@ public:
   enum Flag
   {
     NoFlags     = 0x00,
-    Directory   = 0x01,
-    FromArchive = 0x02,
-    Conflicted  = 0x04
+    FromArchive = 0x01,
+    Conflicted  = 0x02
   };
 
 
   Q_DECLARE_FLAGS(Flags, Flag);
 
-  static Ptr create(
-    FileTreeItem* parent, int originID,
-    std::wstring dataRelativeParentPath, std::wstring realPath, Flags flags,
-    std::wstring file, std::wstring mod);
+  static Ptr createFile(
+    FileTreeItem* parent,
+    std::wstring dataRelativeParentPath, std::wstring file);
+
+  static Ptr createDirectory(
+    FileTreeItem* parent,
+    std::wstring dataRelativeParentPath, std::wstring file);
 
   FileTreeItem(const FileTreeItem&) = delete;
   FileTreeItem& operator=(const FileTreeItem&) = delete;
   FileTreeItem(FileTreeItem&&) = default;
   FileTreeItem& operator=(FileTreeItem&&) = default;
+
+  void setOrigin(
+    int originID, const std::wstring& realPath,
+    Flags flags, const std::wstring& mod);
 
   void add(Ptr child)
   {
@@ -136,17 +142,17 @@ public:
 
   std::optional<uint64_t> compressedFileSize() const
   {
-    return m_compressedFileSize;
+    return m_compressedFileSize.value;
   }
 
   void setFileSize(uint64_t size)
   {
-    m_fileSize.set(size);
+    m_fileSize.override(size);
   }
 
   void setCompressedFileSize(uint64_t compressedSize)
   {
-    m_compressedFileSize = compressedSize;
+    m_compressedFileSize.override(compressedSize);
   }
 
   const QString& realPath() const
@@ -165,7 +171,7 @@ public:
 
   bool isDirectory() const
   {
-    return (m_flags & Directory);
+    return m_isDirectory;
   }
 
   bool isFromArchive() const
@@ -226,6 +232,7 @@ private:
   {
     std::optional<T> value;
     bool failed = false;
+    bool overridden = false;
 
     bool empty() const
     {
@@ -236,12 +243,29 @@ private:
     {
       value = std::move(t);
       failed = false;
+      overridden = false;
+    }
+
+    void override(T t)
+    {
+      value = std::move(t);
+      failed = false;
+      overridden = true;
     }
 
     void fail()
     {
       value = {};
       failed = true;
+      overridden = false;
+    }
+
+    void reset()
+    {
+      if (!overridden) {
+        value = {};
+        failed = false;
+      }
     }
   };
 
@@ -251,20 +275,22 @@ private:
   FileTreeItem* m_parent;
   mutable std::size_t m_indexGuess;
 
-  const int m_originID;
   const QString m_virtualParentPath;
-  const std::wstring m_wsRealPath;
-  const QString m_realPath;
-  const Flags m_flags;
   const std::wstring m_wsFile, m_wsLcFile;
   const MOShared::DirectoryEntry::FileKey m_key;
   const QString m_file;
-  const QString m_mod;
+  const bool m_isDirectory;
+
+  int m_originID;
+  QString m_realPath;
+  std::wstring m_wsRealPath;
+  Flags m_flags;
+  QString m_mod;
 
   mutable Cached<uint64_t> m_fileSize;
   mutable Cached<QDateTime> m_lastModified;
   mutable Cached<QString> m_fileType;
-  mutable std::optional<uint64_t> m_compressedFileSize;
+  mutable Cached<uint64_t> m_compressedFileSize;
 
   bool m_loaded;
   bool m_expanded;
@@ -272,9 +298,8 @@ private:
 
 
   FileTreeItem(
-    FileTreeItem* parent, int originID,
-    std::wstring dataRelativeParentPath, std::wstring realPath, Flags flags,
-    std::wstring file, std::wstring mod);
+    FileTreeItem* parent,
+    std::wstring dataRelativeParentPath, bool isDirectory, std::wstring file);
 
   void getFileType() const;
 };

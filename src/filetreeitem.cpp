@@ -39,33 +39,51 @@ const QString& directoryFileType()
 
 
 FileTreeItem::FileTreeItem(
-  FileTreeItem* parent, int originID,
-  std::wstring dataRelativeParentPath, std::wstring realPath, Flags flags,
-  std::wstring file, std::wstring mod) :
+  FileTreeItem* parent,
+  std::wstring dataRelativeParentPath, bool isDirectory, std::wstring file) :
     m_parent(parent), m_indexGuess(NoIndexGuess),
-    m_originID(originID),
     m_virtualParentPath(QString::fromStdWString(dataRelativeParentPath)),
-    m_wsRealPath(realPath),
-    m_realPath(QString::fromStdWString(realPath)),
-    m_flags(flags),
     m_wsFile(file),
     m_wsLcFile(ToLowerCopy(file)),
     m_key(m_wsLcFile),
     m_file(QString::fromStdWString(file)),
-    m_mod(QString::fromStdWString(mod)),
+    m_isDirectory(isDirectory),
+    m_originID(-1),
+    m_flags(NoFlags),
     m_loaded(false),
     m_expanded(false)
 {
 }
 
-FileTreeItem::Ptr FileTreeItem::create(
-  FileTreeItem* parent, int originID,
-  std::wstring dataRelativeParentPath, std::wstring realPath, Flags flags,
-  std::wstring file, std::wstring mod)
+FileTreeItem::Ptr FileTreeItem::createFile(
+  FileTreeItem* parent, std::wstring dataRelativeParentPath, std::wstring file)
 {
   return std::unique_ptr<FileTreeItem>(new FileTreeItem(
-    parent, originID, std::move(dataRelativeParentPath), std::move(realPath),
-    flags, std::move(file), std::move(mod)));
+    parent, std::move(dataRelativeParentPath), false, std::move(file)));
+}
+
+FileTreeItem::Ptr FileTreeItem::createDirectory(
+  FileTreeItem* parent,
+  std::wstring dataRelativeParentPath, std::wstring file)
+{
+  return std::unique_ptr<FileTreeItem>(new FileTreeItem(
+    parent, std::move(dataRelativeParentPath), true, std::move(file)));
+}
+
+void FileTreeItem::setOrigin(
+  int originID, const std::wstring& realPath, Flags flags,
+  const std::wstring& mod)
+{
+  m_originID = originID;
+  m_wsRealPath = realPath;
+  m_realPath = QString::fromStdWString(realPath);
+  m_flags = flags;
+  m_mod = QString::fromStdWString(mod);
+
+  m_fileSize.reset();
+  m_lastModified.reset();
+  m_fileType.reset();
+  m_compressedFileSize.reset();
 }
 
 void FileTreeItem::insert(FileTreeItem::Ptr child, std::size_t at)
@@ -298,7 +316,7 @@ void FileTreeItem::getFileType() const
 
 QFileIconProvider::IconType FileTreeItem::icon() const
 {
-  if (m_flags & Directory) {
+  if (m_isDirectory) {
     return QFileIconProvider::Folder;
   } else {
     return QFileIconProvider::File;

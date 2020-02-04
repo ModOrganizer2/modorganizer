@@ -137,8 +137,7 @@ void* makeInternalPointer(FileTreeItem* item)
 
 FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent) :
   QAbstractItemModel(parent), m_core(core),
-  m_root(FileTreeItem::create(
-    nullptr, 0, L"", L"", FileTreeItem::Directory, L"", L"<root>")),
+  m_root(FileTreeItem::createDirectory(nullptr, L"", L"")),
   m_flags(NoFlags)
 {
   m_root->setExpanded(true);
@@ -623,6 +622,11 @@ void FileTreeModel::removeDisappearingFiles(
         // file is still there
         seen.emplace(f->getIndex());
 
+        if (f->getOrigin() != item->originID()) {
+          // origin has changed
+          updateFileItem(*item, *f);
+        }
+
         // if there were files before this row that need to be removed,
         // do it now
         itor = range.remove();
@@ -708,9 +712,8 @@ FileTreeItem::Ptr FileTreeModel::createDirectoryItem(
   FileTreeItem& parentItem, const std::wstring& parentPath,
   const DirectoryEntry& d)
 {
-  auto item = FileTreeItem::create(
-    &parentItem, 0, parentPath, L"", FileTreeItem::Directory,
-    d.getName(), L"");
+  auto item = FileTreeItem::createDirectory(
+    &parentItem, parentPath, d.getName());
 
   if (d.isEmpty()) {
     // if this directory is empty, mark the item as loaded so the expand
@@ -725,6 +728,19 @@ FileTreeItem::Ptr FileTreeModel::createFileItem(
   FileTreeItem& parentItem, const std::wstring& parentPath,
   const FileEntry& file)
 {
+  auto item = FileTreeItem::createFile(
+    &parentItem, parentPath, file.getName());
+
+  updateFileItem(*item, file);
+
+  item->setLoaded(true);
+
+  return item;
+}
+
+void FileTreeModel::updateFileItem(
+  FileTreeItem& item, const MOShared::FileEntry& file)
+{
   bool isArchive = false;
   int originID = file.getOrigin(isArchive);
 
@@ -738,21 +754,16 @@ FileTreeItem::Ptr FileTreeModel::createFileItem(
     flags |= FileTreeItem::Conflicted;
   }
 
-  auto item = FileTreeItem::create(
-    &parentItem, originID, parentPath, file.getFullPath(), flags,
-    file.getName(), makeModName(file, originID));
+  item.setOrigin(
+    originID, file.getFullPath(), flags, makeModName(file, originID));
 
   if (file.getFileSize() != FileEntry::NoFileSize) {
-    item->setFileSize(file.getFileSize());
+    item.setFileSize(file.getFileSize());
   }
 
   if (file.getCompressedFileSize() != FileEntry::NoFileSize) {
-    item->setCompressedFileSize(file.getCompressedFileSize());
+    item.setCompressedFileSize(file.getCompressedFileSize());
   }
-
-  item->setLoaded(true);
-
-  return item;
 }
 
 bool FileTreeModel::shouldShowFile(const FileEntry& file) const

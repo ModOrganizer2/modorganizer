@@ -125,6 +125,8 @@ private:
     FileTreeItem& parentItem, const std::wstring& parentPath,
     const MOShared::FileEntry& file);
 
+  void updateFileItem(FileTreeItem& item, const MOShared::FileEntry& file);
+
 
   QVariant displayData(const FileTreeItem* item, int column) const;
   std::wstring makeModName(const MOShared::FileEntry& file, int originID) const;
