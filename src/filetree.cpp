@@ -491,7 +491,7 @@ bool FileTree::showShellMenu(QPoint pos)
   // menus by origin
   std::map<int, env::ShellMenu> menus;
   int totalFiles = 0;
-  bool hasDirectory = false;
+  bool warnOnEmpty = true;
 
   for (auto&& index : m_tree->selectionModel()->selectedRows()) {
     auto* item = m_model->itemFromIndex(index);
@@ -500,10 +500,20 @@ bool FileTree::showShellMenu(QPoint pos)
     }
 
     if (item->isDirectory()) {
-      hasDirectory = true;
+      warnOnEmpty = false;
 
       log::warn(
         "directories do not have shell menus; '{}' selected",
+        item->filename());
+
+      continue;
+    }
+
+    if (item->isFromArchive()) {
+      warnOnEmpty = false;
+
+      log::warn(
+        "files from archives do not have shell menus; '{}' selected",
         item->filename());
 
       continue;
@@ -557,9 +567,9 @@ bool FileTree::showShellMenu(QPoint pos)
   }
 
   if (menus.empty()) {
-    // don't warn if a directory was selected, a warning has already been
-    // logged above
-    if (!hasDirectory) {
+    // don't warn if something that doesn't have a shell menu was selected, a
+    // warning has already been logged above
+    if (warnOnEmpty) {
       log::warn("no menus to show");
     }
 
