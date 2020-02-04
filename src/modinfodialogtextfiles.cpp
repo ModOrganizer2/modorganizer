@@ -236,7 +236,7 @@ IniFilesTab::IniFilesTab(ModInfoDialogTabContext cx)
 
 bool IniFilesTab::wantsFile(const QString& rootPath, const QString& fullPath) const
 {
-  static const QString extensions[] = {".ini", ".cfg"};
+  static const QString extensions[] = {".ini"};
   static const QString meta("meta.ini");
 
   for (const auto& e : extensions) {
