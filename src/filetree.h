@@ -21,6 +21,7 @@ public:
   FileTreeModel* model();
   void refresh();
   void clear();
+  void ensureFullyLoaded();
 
   void open();
   void openHooked();
@@ -59,6 +60,8 @@ private:
   void addCommonMenus(QMenu& menu);
 
   void toggleVisibility(bool b);
+
+  QModelIndex proxiedIndex(const QModelIndex& index);
 
   void dumpToFile(
     QFile& out, const QString& parentPath,

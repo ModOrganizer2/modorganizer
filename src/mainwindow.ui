@@ -1058,7 +1058,7 @@ p, li { white-space: pre-wrap; }
              <item>
               <layout class="QHBoxLayout" name="horizontalLayout_12">
                <item>
-                <widget class="QPushButton" name="btnRefreshData">
+                <widget class="QPushButton" name="dataTabRefresh">
                  <property name="toolTip">
                   <string>refresh data-directory overview</string>
                  </property>
@@ -1088,7 +1088,7 @@ p, li { white-space: pre-wrap; }
                 </spacer>
                </item>
                <item>
-                <widget class="QCheckBox" name="conflictsCheckBox">
+                <widget class="QCheckBox" name="dataTabShowOnlyConflicts">
                  <property name="toolTip">
                   <string>Filters the above list so that only conflicts are displayed.</string>
                  </property>
@@ -1101,7 +1101,7 @@ p, li { white-space: pre-wrap; }
                 </widget>
                </item>
                <item>
-                <widget class="QCheckBox" name="showArchiveDataCheckBox">
+                <widget class="QCheckBox" name="dataTabShowFromArchives">
                  <property name="toolTip">
                   <string>Filters the above list so that files from archives are not shown</string>
                  </property>
@@ -1144,6 +1144,13 @@ p, li { white-space: pre-wrap; }
                   <number>400</number>
                  </attribute>
                 </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="dataTreeFilterBox">
+               <item>
+                <widget class="QLineEdit" name="dataTabFilter"/>
                </item>
               </layout>
              </item>

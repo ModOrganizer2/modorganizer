@@ -87,31 +87,32 @@ public:
   //
   FileTreeItem::Children::const_iterator remove()
   {
-    if (m_first == -1) {
-      // nothing to remove
-      return m_parentItem.children().begin() + m_current + 1;
+    if (m_first >= 0) {
+      const auto last = m_current - 1;
+      const auto parentIndex = m_model->indexFromItem(m_parentItem);
+
+      trace(log::debug("Range::remove() {} to {}", m_first, last));
+
+      m_model->beginRemoveRows(parentIndex, m_first, last);
+
+      m_parentItem.remove(
+        static_cast<std::size_t>(m_first),
+        static_cast<std::size_t>(last - m_first + 1));
+
+      m_model->endRemoveRows();
+
+      m_model->removePendingIcons(parentIndex, m_first, last);
+
+      // adjust current row to account for those that were just removed
+      m_current -= (m_current - m_first);
+
+      // reset
+      m_first = -1;
     }
 
-    const auto last = m_current - 1;
-    const auto parentIndex = m_model->indexFromItem(m_parentItem);
-
-    trace(log::debug("Range::remove() {} to {}", m_first, last));
-
-    m_model->beginRemoveRows(parentIndex, m_first, last);
-
-    m_parentItem.remove(
-      static_cast<std::size_t>(m_first),
-      static_cast<std::size_t>(last - m_first + 1));
-
-    m_model->endRemoveRows();
-
-    m_model->removePendingIcons(parentIndex, m_first, last);
-
-    // adjust current row to account for those that were just removed
-    m_current -= (m_current - m_first);
-
-    // reset
-    m_first = -1;
+    if (m_current >= m_parentItem.children().size()) {
+      return m_parentItem.children().end();
+    }
 
     return m_parentItem.children().begin() + m_current + 1;
   }
@@ -138,7 +139,7 @@ void* makeInternalPointer(FileTreeItem* item)
 FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent) :
   QAbstractItemModel(parent), m_core(core),
   m_root(FileTreeItem::createDirectory(nullptr, L"", L"")),
-  m_flags(NoFlags)
+  m_flags(NoFlags), m_fullyLoaded(false)
 {
   m_root->setExpanded(true);
 
@@ -148,14 +149,38 @@ FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent) :
 void FileTreeModel::refresh()
 {
   TimeThis tt("FileTreeModel::refresh()");
+
+  m_fullyLoaded = false;
   update(*m_root, *m_core.directoryStructure(), L"");
 }
 
 void FileTreeModel::clear()
 {
+  m_fullyLoaded = false;
+
   beginResetModel();
   m_root->clear();
   endResetModel();
+}
+
+void FileTreeModel::recursiveFetchMore(const QModelIndex& m)
+{
+  if (canFetchMore(m)) {
+    fetchMore(m);
+  }
+
+  for (int i=0; i<rowCount(m); ++i) {
+    recursiveFetchMore(index(i, 0, m));
+  }
+}
+
+void FileTreeModel::ensureFullyLoaded()
+{
+  if (!m_fullyLoaded) {
+    TimeThis tt("FileTreeModel:: fully loading for search");
+    recursiveFetchMore(QModelIndex());
+    m_fullyLoaded = true;
+  }
 }
 
 bool FileTreeModel::showArchives() const
@@ -493,9 +518,12 @@ void FileTreeModel::removeDisappearingDirectories(
       if (shouldShowFolder(*d, item.get())) {
         // folder should be left in the list
         if (!item->areChildrenVisible() && item->isLoaded()) {
-          // the item is loaded (previously expanded but now collapsed), mark
-          // it as unloaded so it updates when next expanded
-          item->setLoaded(false);
+          if (!d->isEmpty()) {
+            // the item is loaded (previously expanded but now collapsed) and
+            // has children, mark  it as unloaded so it updates when next
+            // expanded
+            item->setLoaded(false);
+          }
         }
       } else {
         // item wouldn't have any children, prune it
@@ -694,6 +722,7 @@ bool FileTreeModel::addNewFiles(
       } else {
         // this is a new file, but it shouldn't be shown
         trace(log::debug("new file {}, not shown", QString::fromStdWString(file->getName())));
+        return true;
       }
     }
 

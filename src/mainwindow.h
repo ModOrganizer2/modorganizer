@@ -349,8 +349,6 @@ private:
 
   bool m_DidUpdateMasterList;
 
-  bool m_showArchiveData{ true };
-
   MOBase::DelayedFileWriter m_ArchiveListWriter;
 
   QAction* m_LinkToolbar;

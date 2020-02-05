@@ -1,5 +1,6 @@
 #include "modinfodialogfwd.h"
 #include "modinfo.h"
+#include <filterwidget.h>
 #include <QPushButton>
 #include <QTreeWidget>
 #include <QCheckBox>
@@ -47,6 +48,7 @@ private:
   DataTabUi ui;
   std::unique_ptr<FileTree> m_filetree;
   std::vector<QTreeWidgetItem*> m_removeLater;
+  MOBase::FilterWidget m_filter;
 
   void onRefresh();
   void onItemExpanded(QTreeWidgetItem* item);

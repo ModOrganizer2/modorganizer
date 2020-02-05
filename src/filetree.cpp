@@ -150,11 +150,16 @@ void FileTree::clear()
   m_model->clear();
 }
 
+void FileTree::ensureFullyLoaded()
+{
+  m_model->ensureFullyLoaded();
+}
+
 FileTreeItem* FileTree::singleSelection()
 {
   const auto sel = m_tree->selectionModel()->selectedRows();
   if (sel.size() == 1) {
-    return m_model->itemFromIndex(sel[0]);
+    return m_model->itemFromIndex(proxiedIndex(sel[0]));
   }
 
   return nullptr;
@@ -357,7 +362,7 @@ void FileTree::dumpToFile() const
 
   QString file = QFileDialog::getSaveFileName(m_tree->window());
   if (file.isEmpty()) {
-    log::debug("user cancelled");
+    log::debug("user canceled");
     return;
   }
 
@@ -432,7 +437,7 @@ void FileTree::dumpToFile(
 
 void FileTree::onExpandedChanged(const QModelIndex& index, bool expanded)
 {
-  if (auto* item=m_model->itemFromIndex(index)) {
+  if (auto* item=m_model->itemFromIndex(proxiedIndex(index))) {
     item->setExpanded(expanded);
   }
 }
@@ -494,7 +499,7 @@ bool FileTree::showShellMenu(QPoint pos)
   bool warnOnEmpty = true;
 
   for (auto&& index : m_tree->selectionModel()->selectedRows()) {
-    auto* item = m_model->itemFromIndex(index);
+    auto* item = m_model->itemFromIndex(proxiedIndex(index));
     if (!item) {
       continue;
     }
@@ -758,4 +763,15 @@ void FileTree::addCommonMenus(QMenu& menu)
   MenuItem(QObject::tr("&Collapse All"))
     .callback([&]{ m_tree->collapseAll(); })
     .addTo(menu);
+}
+
+QModelIndex FileTree::proxiedIndex(const QModelIndex& index)
+{
+  auto* model = m_tree->model();
+
+  if (auto* proxy=dynamic_cast<QSortFilterProxyModel*>(model)) {
+    return proxy->mapToSource(index);
+  } else {
+    return index;
+  }
 }

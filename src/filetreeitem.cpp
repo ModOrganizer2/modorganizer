@@ -10,6 +10,8 @@ using namespace MOBase;
 using namespace MOShared;
 namespace fs = std::filesystem;
 
+constexpr bool AlwaysSortDirectoriesFirst = true;
+
 const QString& directoryFileType()
 {
   static QString name;
@@ -179,9 +181,17 @@ void FileTreeItem::sort(int column, Qt::SortOrder order)
     int r = 0;
 
     if (a->isDirectory() && !b->isDirectory()) {
-      r = -1;
+      if constexpr (AlwaysSortDirectoriesFirst) {
+        return true;
+      } else {
+        r = -1;
+      }
     } else if (!a->isDirectory() && b->isDirectory()) {
-      r = 1;
+      if constexpr (AlwaysSortDirectoriesFirst) {
+        return false;
+      } else {
+        r = 1;
+      }
     } else {
       r = FileTreeItem::Sorter::compare(column, a.get(), b.get());
     }
@@ -192,6 +202,10 @@ void FileTreeItem::sort(int column, Qt::SortOrder order)
       return (r > 0);
     }
   });
+
+  for (auto& child : m_children) {
+    child->sort(column, order);
+  }
 }
 
 QString FileTreeItem::virtualPath() const
@@ -232,7 +246,7 @@ QFont FileTreeItem::font() const
 
 std::optional<uint64_t> FileTreeItem::fileSize() const
 {
-  if (m_fileSize.empty()) {
+  if (m_fileSize.empty() && !m_isDirectory) {
     std::error_code ec;
     const auto size = fs::file_size(fs::path(m_wsRealPath), ec);
 

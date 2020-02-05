@@ -47,6 +47,18 @@ int naturalCompare(const QString& a, const QString& b)
     return c;
   }();
 
+
+  // todo: remove this once the fix is released
+  // see https://bugreports.qt.io/projects/QTBUG/issues/QTBUG-81673
+  // and https://codereview.qt-project.org/c/qt/qtbase/+/287966/5/src/corelib/text/qcollator_win.cpp
+  if (!a.size()) {
+    return b.size() ? -1 : 0;
+  }
+  if (!b.size()) {
+    return +1;
+  }
+
+
   return c.compare(a, b);
 }
 

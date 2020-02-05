@@ -21,10 +21,21 @@ DataTab::DataTab(
   QWidget* parent, Ui::MainWindow* mwui) :
     m_core(core), m_pluginContainer(pc), m_parent(parent),
     ui{
-      mwui->btnRefreshData, mwui->dataTree,
-      mwui->conflictsCheckBox, mwui->showArchiveDataCheckBox}
+      mwui->dataTabRefresh, mwui->dataTree,
+      mwui->dataTabShowOnlyConflicts, mwui->dataTabShowFromArchives}
 {
   m_filetree.reset(new FileTree(core, m_pluginContainer, ui.tree));
+  m_filter.setUseSourceSort(true);
+  m_filter.setEdit(mwui->dataTabFilter);
+  m_filter.setList(mwui->dataTree);
+
+  if (auto* m=m_filter.proxyModel()) {
+    m->setDynamicSortFilter(false);
+  }
+
+  connect(
+    &m_filter, &FilterWidget::aboutToChange,
+    [&]{ m_filetree->ensureFullyLoaded(); });
 
   connect(
     ui.refresh, &QPushButton::clicked,
@@ -54,6 +65,8 @@ DataTab::DataTab(
 void DataTab::saveState(Settings& s) const
 {
   s.geometry().saveState(ui.tree->header());
+  s.widgets().saveChecked(ui.conflicts);
+  s.widgets().saveChecked(ui.archives);
 }
 
 void DataTab::restoreState(const Settings& s)
@@ -63,6 +76,9 @@ void DataTab::restoreState(const Settings& s)
   // prior to 2.3, the list was not sortable, and this remembered in the
   // widget state, for whatever reason
   ui.tree->setSortingEnabled(true);
+
+  s.widgets().restoreChecked(ui.conflicts);
+  s.widgets().restoreChecked(ui.archives);
 }
 
 void DataTab::activated()
@@ -82,6 +98,14 @@ void DataTab::onRefresh()
 void DataTab::updateTree()
 {
   m_filetree->refresh();
+
+  if (!m_filter.empty()) {
+    m_filetree->ensureFullyLoaded();
+
+    if (auto* m=m_filter.proxyModel()) {
+      m->invalidate();
+    }
+  }
 }
 
 void DataTab::onConflicts()

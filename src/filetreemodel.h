@@ -43,6 +43,7 @@ public:
 
   void refresh();
   void clear();
+  void ensureFullyLoaded();
 
   QModelIndex index(int row, int col, const QModelIndex& parent={}) const override;
   QModelIndex parent(const QModelIndex& index) const override;
@@ -75,6 +76,7 @@ private:
   mutable std::vector<QModelIndex> m_iconPending;
   mutable QTimer m_iconPendingTimer;
   Sort m_sort;
+  bool m_fullyLoaded;
 
   bool showConflictsOnly() const
   {
@@ -141,6 +143,7 @@ private:
   QVariant makeIcon(const FileTreeItem& item, const QModelIndex& index) const;
 
   QModelIndex indexFromItem(FileTreeItem& item, int col=0) const;
+  void recursiveFetchMore(const QModelIndex& m);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(FileTreeModel::Flags);

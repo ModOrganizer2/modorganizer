@@ -455,15 +455,13 @@ MainWindow::MainWindow(Settings &settings
 
   if (m_OrganizerCore.getArchiveParsing())
   {
-    ui->showArchiveDataCheckBox->setCheckState(Qt::Checked);
-    ui->showArchiveDataCheckBox->setEnabled(true);
-    m_showArchiveData = true;
+    ui->dataTabShowFromArchives->setCheckState(Qt::Checked);
+    ui->dataTabShowFromArchives->setEnabled(true);
   }
   else
   {
-    ui->showArchiveDataCheckBox->setCheckState(Qt::Unchecked);
-    ui->showArchiveDataCheckBox->setEnabled(false);
-    m_showArchiveData = false;
+    ui->dataTabShowFromArchives->setCheckState(Qt::Unchecked);
+    ui->dataTabShowFromArchives->setEnabled(false);
   }
 
   QApplication::instance()->installEventFilter(this);
@@ -1193,7 +1191,7 @@ void MainWindow::downloadFilterChanged(const QString &filter)
 void MainWindow::expandModList(const QModelIndex &index)
 {
   QAbstractItemModel *model = ui->modList->model();
-#pragma message("why is this so complicated? mapping the index doesn't work, probably a bug in QtGroupingProxy?")
+
   for (int i = 0; i < model->rowCount(); ++i) {
     QModelIndex targetIdx = model->index(i, 0);
     if (model->data(targetIdx).toString() == index.data().toString()) {
@@ -4949,15 +4947,13 @@ void MainWindow::on_actionSettings_triggered()
     m_OrganizerCore.setArchiveParsing(state);
     if (!state)
     {
-      ui->showArchiveDataCheckBox->setCheckState(Qt::Unchecked);
-      ui->showArchiveDataCheckBox->setEnabled(false);
-      m_showArchiveData = false;
+      ui->dataTabShowFromArchives->setCheckState(Qt::Unchecked);
+      ui->dataTabShowFromArchives->setEnabled(false);
     }
     else
     {
-      ui->showArchiveDataCheckBox->setCheckState(Qt::Checked);
-      ui->showArchiveDataCheckBox->setEnabled(true);
-      m_showArchiveData = true;
+      ui->dataTabShowFromArchives->setCheckState(Qt::Checked);
+      ui->dataTabShowFromArchives->setEnabled(true);
     }
     m_OrganizerCore.refreshModList();
     m_OrganizerCore.refreshDirectoryStructure();
