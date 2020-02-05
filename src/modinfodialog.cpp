@@ -272,12 +272,13 @@ int ModInfoDialog::exec()
 
   // whether to select the first tab; if the main window requested a specific
   // tab, it is selected when encountered in update()
-  const auto selectFirst = (m_initialTab == ModInfoTabIDs::None);
+  const auto noCustomTabRequested = (m_initialTab == ModInfoTabIDs::None);
+  const auto requestedTab = m_initialTab;
 
   update(true);
 
-  if (selectFirst && ui->tabWidget->count() > 0) {
-    ui->tabWidget->setCurrentIndex(0);
+  if (noCustomTabRequested) {
+    m_core->settings().widgets().restoreIndex(ui->tabWidget);
   }
 
   const int r = TutorableDialog::exec();
@@ -687,6 +688,8 @@ void ModInfoDialog::saveTabOrder() const
   }
 
   m_core->settings().geometry().setModInfoTabOrder(names);
+  // save last opened index
+  m_core->settings().widgets().saveIndex(ui->tabWidget);
 }
 
 void ModInfoDialog::onOriginModified(int originID)
