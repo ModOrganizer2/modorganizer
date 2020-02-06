@@ -48,9 +48,6 @@ protected:
   QVariant headerData(
     int section, Qt::Orientation ori, int role=Qt::DisplayRole) const override;
 
-signals:
-  void entryAdded(MOBase::log::Entry e);
-
 private:
   std::deque<MOBase::log::Entry> m_entries;
 
@@ -75,7 +72,10 @@ public:
 
 private:
   OrganizerCore* m_core;
+  QTimer m_timer;
+
   void onContextMenu(const QPoint& pos);
+  void onNewEntry();
 };
 
 #endif // LOGBUFFER_H

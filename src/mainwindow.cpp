@@ -87,6 +87,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "localsavegames.h"
 #include "listdialog.h"
 #include "envshortcut.h"
+#include "browserdialog.h"
 
 #include <QAbstractItemDelegate>
 #include <QAbstractProxyModel>
@@ -406,8 +407,6 @@ MainWindow::MainWindow(Settings &settings
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this, &MainWindow::modInstalled);
   connect(&m_OrganizerCore, &OrganizerCore::close, this, &QMainWindow::close);
 
-  connect(&m_IntegratedBrowser, SIGNAL(requestDownload(QUrl,QNetworkReply*)), &m_OrganizerCore, SLOT(requestDownload(QUrl,QNetworkReply*)));
-
   m_CheckBSATimer.setSingleShot(true);
   connect(&m_CheckBSATimer, SIGNAL(timeout()), this, SLOT(checkBSAList()));
 
@@ -632,7 +631,12 @@ MainWindow::~MainWindow()
 
     m_PluginContainer.setUserInterface(nullptr, nullptr);
     m_OrganizerCore.setUserInterface(nullptr);
-    m_IntegratedBrowser.close();
+
+    if (m_IntegratedBrowser) {
+      m_IntegratedBrowser->close();
+      m_IntegratedBrowser.reset();
+    }
+
     delete ui;
   } catch (std::exception &e) {
     QMessageBox::critical(nullptr, tr("Crash on exit"),
@@ -1393,7 +1397,12 @@ bool MainWindow::canExit()
 void MainWindow::cleanup()
 {
   QWebEngineProfile::defaultProfile()->clearAllVisitedLinks();
-  m_IntegratedBrowser.close();
+
+  if (m_IntegratedBrowser) {
+    m_IntegratedBrowser->close();
+    m_IntegratedBrowser = {};
+  }
+
   m_SaveMetaTimer.stop();
   m_MetaSave.waitForFinished();
 }
@@ -1501,8 +1510,17 @@ void MainWindow::modPagePluginInvoke()
   IPluginModPage *plugin = qobject_cast<IPluginModPage*>(triggeredAction->data().value<QObject*>());
   if (plugin != nullptr) {
     if (plugin->useIntegratedBrowser()) {
-      m_IntegratedBrowser.setWindowTitle(plugin->displayName());
-      m_IntegratedBrowser.openUrl(plugin->pageURL());
+
+      if (!m_IntegratedBrowser) {
+        m_IntegratedBrowser.reset(new BrowserDialog);
+
+        connect(
+          m_IntegratedBrowser.get(), SIGNAL(requestDownload(QUrl,QNetworkReply*)),
+          &m_OrganizerCore, SLOT(requestDownload(QUrl,QNetworkReply*)));
+      }
+
+      m_IntegratedBrowser->setWindowTitle(plugin->displayName());
+      m_IntegratedBrowser->openUrl(plugin->pageURL());
     } else {
       QDesktopServices::openUrl(QUrl(plugin->pageURL()));
     }

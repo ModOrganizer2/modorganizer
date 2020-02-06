@@ -21,7 +21,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define MAINWINDOW_H
 
 #include "bsafolder.h"
-#include "browserdialog.h"
 #include "delayedfilewriter.h"
 #include "errorcodes.h"
 #include "imoinfo.h"
@@ -39,6 +38,7 @@ class CategoryFactory;
 class OrganizerCore;
 class FilterList;
 class DataTab;
+class BrowserDialog;
 
 class PluginListSortProxy;
 namespace BSA { class Archive; }
@@ -341,7 +341,7 @@ private:
   QString m_CurrentLanguage;
   std::vector<QTranslator*> m_Translators;
 
-  BrowserDialog m_IntegratedBrowser;
+  std::unique_ptr<BrowserDialog> m_IntegratedBrowser;
 
   QFileSystemWatcher m_SavesWatcher;
 
