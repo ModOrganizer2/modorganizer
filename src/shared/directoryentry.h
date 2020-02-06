@@ -522,7 +522,7 @@ private:
   void addDirectoryToList(DirectoryEntry* e);
   void removeDirectoryFromList(SubDirectories::iterator itor);
 
-  void addFileToList(const FileEntry& f);
+  void addFileToList(std::wstring fileNameLower, FileEntry::Index index);
   void removeFileFromList(FileEntry::Index index);
   void removeFilesFromList(const std::set<FileEntry::Index>& indices);
 };

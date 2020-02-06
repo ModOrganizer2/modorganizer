@@ -512,9 +512,11 @@ bool FileRegister::indexValid(FileEntry::Index index) const
 FileEntry::Ptr FileRegister::createFile(const std::wstring &name, DirectoryEntry *parent)
 {
   FileEntry::Index index = generateIndex();
-  m_Files[index] = FileEntry::Ptr(new FileEntry(index, name, parent));
 
-  return m_Files[index];
+  auto r = m_Files.insert_or_assign(
+    index, FileEntry::Ptr(new FileEntry(index, name, parent)));
+
+  return r.first->second;
 }
 
 FileEntry::Ptr FileRegister::getFile(FileEntry::Index index) const
@@ -1026,14 +1028,18 @@ FileEntry::Ptr DirectoryEntry::insert(
   const std::wstring &fileName, FilesOrigin &origin, FILETIME fileTime,
   const std::wstring &archive, int order)
 {
-  auto iter = m_Files.find(ToLowerCopy(fileName));
+  std::wstring fileNameLower = ToLowerCopy(fileName);
+
+  auto iter = m_Files.find(fileNameLower);
   FileEntry::Ptr file;
 
   if (iter != m_Files.end()) {
     file = m_FileRegister->getFile(iter->second);
   } else {
     file = m_FileRegister->createFile(fileName, this);
-    addFileToList(*file);
+    addFileToList(std::move(fileNameLower), file->getIndex());
+
+    // fileNameLower has moved from this point
   }
 
   file->addOrigin(origin.getID(), fileTime, archive, order);
@@ -1067,8 +1073,10 @@ void DirectoryEntry::addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOf
         if ((wcscmp(findData.cFileName, L".") != 0) &&
             (wcscmp(findData.cFileName, L"..") != 0)) {
           int offset = _snwprintf(buffer + bufferOffset, MAXPATH_UNICODE, L"\\%ls", findData.cFileName);
+
           // recurse into subdirectories
-          getSubDirectory(findData.cFileName, true, origin.getID())->addFiles(origin, buffer, bufferOffset + offset);
+          DirectoryEntry* sd = getSubDirectory(findData.cFileName, true, origin.getID());
+          sd->addFiles(origin, buffer, bufferOffset + offset);
         }
       } else {
         insert(findData.cFileName, origin, findData.ftLastWriteTime, L"", -1);
@@ -1245,10 +1253,12 @@ void DirectoryEntry::removeFilesFromList(const std::set<FileEntry::Index>& indic
   }
 }
 
-void DirectoryEntry::addFileToList(const FileEntry& f)
+void DirectoryEntry::addFileToList(
+  std::wstring fileNameLower, FileEntry::Index index)
 {
-  m_Files.emplace(ToLowerCopy(f.getName()), f.getIndex());
-  m_FilesLookup.emplace(ToLowerCopy(f.getName()), f.getIndex());
+  m_FilesLookup.emplace(fileNameLower, index);
+  m_Files.emplace(std::move(fileNameLower), index);
+  // fileNameLower has been moved from this point
 }
 
 } // namespace MOShared
