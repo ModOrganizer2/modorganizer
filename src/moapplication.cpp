@@ -80,7 +80,11 @@ public:
 MOApplication::MOApplication(int &argc, char **argv)
   : QApplication(argc, argv)
 {
-  connect(&m_StyleWatcher, SIGNAL(fileChanged(QString)), SLOT(updateStyle(QString)));
+  connect(&m_StyleWatcher, &QFileSystemWatcher::fileChanged, [&](auto&& file){
+    log::debug("style file '{}' changed, reloading", file);
+    updateStyle(file);
+  });
+
   m_DefaultStyle = style()->objectName();
   setStyle(new ProxyStyle(style()));
 }

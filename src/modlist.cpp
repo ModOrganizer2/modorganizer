@@ -676,11 +676,6 @@ QVariant ModList::headerData(int section, Qt::Orientation orientation,
       return getColumnToolTip(section);
     } else if (role == Qt::TextAlignmentRole) {
       return QVariant(Qt::AlignCenter);
-    } else if (role == Qt::SizeHintRole) {
-      QSize temp = m_FontMetrics.size(Qt::TextSingleLine, getColumnName(section));
-      temp.rwidth() += 20;
-      temp.rheight() += 12;
-      return temp;
     }
   }
   return QAbstractItemModel::headerData(section, orientation, role);

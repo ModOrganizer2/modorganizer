@@ -103,6 +103,7 @@ DownloadListWidget::DownloadListWidget(QWidget *parent)
 {
   setHeader(new DownloadListHeader(Qt::Horizontal, this));
 
+  header()->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
   header()->setSectionsMovable(true);
   header()->setContextMenuPolicy(Qt::CustomContextMenu);
   header()->setCascadingSectionResizes(true);
