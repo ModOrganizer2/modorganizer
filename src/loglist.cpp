@@ -173,8 +173,8 @@ LogList::LogList(QWidget* parent)
     this, &QWidget::customContextMenuRequested,
     [&](auto&& pos){ onContextMenu(pos); });
 
-  connect(model(), &LogModel::rowsInserted, [&]{ onNewEntry(); });
-  connect(model(), &LogModel::dataChanged, [&]{ onNewEntry(); });
+  connect(model(), &LogModel::rowsInserted, this, [&]{ onNewEntry(); });
+  connect(model(), &LogModel::dataChanged, this, [&]{ onNewEntry(); });
 
   m_timer.setSingleShot(true);
   connect(&m_timer, &QTimer::timeout, [&]{ scrollToBottom(); });

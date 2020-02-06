@@ -31,7 +31,6 @@ public:
   void exploreOrigin();
   void openModInfo();
 
-  void toggleVisibility();
   void hide();
   void unhide();
 

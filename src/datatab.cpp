@@ -25,9 +25,9 @@ DataTab::DataTab(
       mwui->dataTabShowOnlyConflicts, mwui->dataTabShowFromArchives}
 {
   m_filetree.reset(new FileTree(core, m_pluginContainer, ui.tree));
-  m_filter.setUseSourceSort(true);
   m_filter.setEdit(mwui->dataTabFilter);
   m_filter.setList(mwui->dataTree);
+  m_filter.setUseSourceSort(true);
 
   if (auto* m=m_filter.proxyModel()) {
     m->setDynamicSortFilter(false);

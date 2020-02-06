@@ -1092,9 +1092,6 @@ p, li { white-space: pre-wrap; }
                  <property name="sortingEnabled">
                   <bool>true</bool>
                  </property>
-                 <attribute name="headerMinimumSectionSize">
-                  <number>400</number>
-                 </attribute>
                 </widget>
                </item>
               </layout>

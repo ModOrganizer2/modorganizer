@@ -296,10 +296,6 @@ void FileTree::openModInfo()
   }
 }
 
-void FileTree::toggleVisibility()
-{
-}
-
 void FileTree::toggleVisibility(bool visible)
 {
   auto* item = singleSelection();
