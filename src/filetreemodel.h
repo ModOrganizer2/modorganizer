@@ -34,6 +34,13 @@ public:
 
   Q_DECLARE_FLAGS(Flags, Flag);
 
+  struct SortInfo
+  {
+    int column = 0;
+    Qt::SortOrder order = Qt::AscendingOrder;
+  };
+
+
   FileTreeModel(OrganizerCore& core, QObject* parent=nullptr);
 
   void setFlags(Flags f)
@@ -47,6 +54,8 @@ public:
 
   bool enabled() const;
   void setEnabled(bool b);
+
+  const SortInfo& sortInfo() const;
 
   QModelIndex index(int row, int col, const QModelIndex& parent={}) const override;
   QModelIndex parent(const QModelIndex& index) const override;
@@ -63,12 +72,6 @@ public:
   FileTreeItem* itemFromIndex(const QModelIndex& index) const;
 
 private:
-  struct Sort
-  {
-    int column = 0;
-    Qt::SortOrder order = Qt::AscendingOrder;
-  };
-
   class Range;
 
   using DirectoryIterator = std::vector<MOShared::DirectoryEntry*>::const_iterator;
@@ -80,7 +83,7 @@ private:
   mutable IconFetcher m_iconFetcher;
   mutable std::vector<QModelIndex> m_iconPending;
   mutable QTimer m_iconPendingTimer;
-  Sort m_sort;
+  SortInfo m_sort;
   bool m_fullyLoaded;
 
   bool showConflictsOnly() const

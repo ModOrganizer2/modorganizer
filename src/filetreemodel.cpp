@@ -138,7 +138,7 @@ void* makeInternalPointer(FileTreeItem* item)
 
 FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent) :
   QAbstractItemModel(parent), m_core(core), m_enabled(true),
-  m_root(FileTreeItem::createDirectory(nullptr, L"", L"")),
+  m_root(FileTreeItem::createDirectory(this, nullptr, L"", L"")),
   m_flags(NoFlags), m_fullyLoaded(false)
 {
   m_root->setExpanded(true);
@@ -191,6 +191,11 @@ bool FileTreeModel::enabled() const
 void FileTreeModel::setEnabled(bool b)
 {
   m_enabled = b;
+}
+
+const FileTreeModel::SortInfo& FileTreeModel::sortInfo() const
+{
+  return m_sort;
 }
 
 bool FileTreeModel::showArchives() const
@@ -756,7 +761,7 @@ FileTreeItem::Ptr FileTreeModel::createDirectoryItem(
   const DirectoryEntry& d)
 {
   auto item = FileTreeItem::createDirectory(
-    &parentItem, parentPath, d.getName());
+    this, &parentItem, parentPath, d.getName());
 
   if (d.isEmpty()) {
     // if this directory is empty, mark the item as loaded so the expand
@@ -772,7 +777,7 @@ FileTreeItem::Ptr FileTreeModel::createFileItem(
   const FileEntry& file)
 {
   auto item = FileTreeItem::createFile(
-    &parentItem, parentPath, file.getName());
+    this, &parentItem, parentPath, file.getName());
 
   updateFileItem(*item, file);
 

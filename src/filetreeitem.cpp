@@ -41,9 +41,9 @@ const QString& directoryFileType()
 
 
 FileTreeItem::FileTreeItem(
-  FileTreeItem* parent,
+  FileTreeModel* model, FileTreeItem* parent,
   std::wstring dataRelativeParentPath, bool isDirectory, std::wstring file) :
-    m_parent(parent), m_indexGuess(NoIndexGuess),
+    m_model(model), m_parent(parent), m_indexGuess(NoIndexGuess),
     m_virtualParentPath(QString::fromStdWString(dataRelativeParentPath)),
     m_wsFile(file),
     m_wsLcFile(ToLowerCopy(file)),
@@ -53,23 +53,25 @@ FileTreeItem::FileTreeItem(
     m_originID(-1),
     m_flags(NoFlags),
     m_loaded(false),
-    m_expanded(false)
+    m_expanded(false),
+    m_sortingStale(true)
 {
 }
 
 FileTreeItem::Ptr FileTreeItem::createFile(
-  FileTreeItem* parent, std::wstring dataRelativeParentPath, std::wstring file)
-{
-  return std::unique_ptr<FileTreeItem>(new FileTreeItem(
-    parent, std::move(dataRelativeParentPath), false, std::move(file)));
-}
-
-FileTreeItem::Ptr FileTreeItem::createDirectory(
-  FileTreeItem* parent,
+  FileTreeModel* model, FileTreeItem* parent,
   std::wstring dataRelativeParentPath, std::wstring file)
 {
   return std::unique_ptr<FileTreeItem>(new FileTreeItem(
-    parent, std::move(dataRelativeParentPath), true, std::move(file)));
+    model, parent, std::move(dataRelativeParentPath), false, std::move(file)));
+}
+
+FileTreeItem::Ptr FileTreeItem::createDirectory(
+  FileTreeModel* model, FileTreeItem* parent,
+  std::wstring dataRelativeParentPath, std::wstring file)
+{
+  return std::unique_ptr<FileTreeItem>(new FileTreeItem(
+    model, parent, std::move(dataRelativeParentPath), true, std::move(file)));
 }
 
 void FileTreeItem::setOrigin(
@@ -174,9 +176,23 @@ public:
   }
 };
 
+void FileTreeItem::sort()
+{
+  sort(m_model->sortInfo().column, m_model->sortInfo().order);
+}
 
 void FileTreeItem::sort(int column, Qt::SortOrder order)
 {
+  if (!m_expanded) {
+    m_sortingStale = true;
+    return;
+  }
+
+  if (m_sortingStale) {
+    //log::debug("sorting is stale for {}, sorting now", debugName());
+    m_sortingStale = false;
+  }
+
   std::sort(m_children.begin(), m_children.end(), [&](auto&& a, auto&& b) {
     int r = 0;
 

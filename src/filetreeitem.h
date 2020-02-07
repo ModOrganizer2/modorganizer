@@ -4,6 +4,8 @@
 #include "directoryentry.h"
 #include <QFileIconProvider>
 
+class FileTreeModel;
+
 class FileTreeItem
 {
   class Sorter;
@@ -23,11 +25,11 @@ public:
   Q_DECLARE_FLAGS(Flags, Flag);
 
   static Ptr createFile(
-    FileTreeItem* parent,
+    FileTreeModel* model, FileTreeItem* parent,
     std::wstring dataRelativeParentPath, std::wstring file);
 
   static Ptr createDirectory(
-    FileTreeItem* parent,
+    FileTreeModel* model, FileTreeItem* parent,
     std::wstring dataRelativeParentPath, std::wstring file);
 
   FileTreeItem(const FileTreeItem&) = delete;
@@ -215,6 +217,10 @@ public:
   void setExpanded(bool b)
   {
     m_expanded = b;
+
+    if (m_sortingStale) {
+      sort();
+    }
   }
 
   bool isStrictlyExpanded() const
@@ -272,6 +278,7 @@ private:
   static constexpr std::size_t NoIndexGuess =
     std::numeric_limits<std::size_t>::max();
 
+  FileTreeModel* m_model;
   FileTreeItem* m_parent;
   mutable std::size_t m_indexGuess;
 
@@ -294,14 +301,16 @@ private:
 
   bool m_loaded;
   bool m_expanded;
+  bool m_sortingStale;
   Children m_children;
 
 
   FileTreeItem(
-    FileTreeItem* parent,
+    FileTreeModel* model, FileTreeItem* parent,
     std::wstring dataRelativeParentPath, bool isDirectory, std::wstring file);
 
   void getFileType() const;
+  void sort();
 };
 
 #endif // MODORGANIZER_FILETREEITEM_INCLUDED
