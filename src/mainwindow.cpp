@@ -2169,12 +2169,7 @@ void MainWindow::on_tabWidget_currentChanged(int index)
   } else if (index == 1) {
     m_OrganizerCore.refreshBSAList();
   } else if (index == 2) {
-    static bool first = true;
-
-    if (first) {
-      m_DataTab->activated();
-      first = false;
-    }
+    m_DataTab->activated();
   } else if (index == 3) {
     refreshSaveList();
   }

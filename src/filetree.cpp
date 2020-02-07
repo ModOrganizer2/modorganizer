@@ -120,7 +120,9 @@ private:
 FileTree::FileTree(OrganizerCore& core, PluginContainer& pc, QTreeView* tree)
   : m_core(core), m_plugins(pc), m_tree(tree), m_model(new FileTreeModel(core))
 {
+  m_tree->sortByColumn(0, Qt::AscendingOrder);
   m_tree->setModel(m_model);
+  m_tree->header()->resizeSection(0, 200);
 
   connect(
     m_tree, &QTreeView::customContextMenuRequested,

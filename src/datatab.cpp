@@ -22,7 +22,8 @@ DataTab::DataTab(
     m_core(core), m_pluginContainer(pc), m_parent(parent),
     ui{
       mwui->dataTabRefresh, mwui->dataTree,
-      mwui->dataTabShowOnlyConflicts, mwui->dataTabShowFromArchives}
+      mwui->dataTabShowOnlyConflicts, mwui->dataTabShowFromArchives},
+    m_firstActivation(true)
 {
   m_filetree.reset(new FileTree(core, m_pluginContainer, ui.tree));
   m_filter.setEdit(mwui->dataTabFilter);
@@ -84,7 +85,10 @@ void DataTab::restoreState(const Settings& s)
 
 void DataTab::activated()
 {
-  updateTree();
+  if (m_firstActivation) {
+    m_firstActivation = false;
+    updateTree();
+  }
 }
 
 void DataTab::onRefresh()

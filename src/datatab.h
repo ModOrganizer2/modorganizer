@@ -49,6 +49,7 @@ private:
   std::unique_ptr<FileTree> m_filetree;
   std::vector<QTreeWidgetItem*> m_removeLater;
   MOBase::FilterWidget m_filter;
+  bool m_firstActivation;
 
   void onRefresh();
   void onItemExpanded(QTreeWidgetItem* item);
