@@ -90,6 +90,7 @@ void DataTab::activated()
 void DataTab::onRefresh()
 {
   if (QGuiApplication::keyboardModifiers() & Qt::ShiftModifier) {
+    m_filetree->model()->setEnabled(false);
     m_filetree->clear();
   }
 
@@ -98,6 +99,7 @@ void DataTab::onRefresh()
 
 void DataTab::updateTree()
 {
+  m_filetree->model()->setEnabled(true);
   m_filetree->refresh();
 
   if (!m_filter.empty()) {

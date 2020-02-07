@@ -45,6 +45,9 @@ public:
   void clear();
   void ensureFullyLoaded();
 
+  bool enabled() const;
+  void setEnabled(bool b);
+
   QModelIndex index(int row, int col, const QModelIndex& parent={}) const override;
   QModelIndex parent(const QModelIndex& index) const override;
   int rowCount(const QModelIndex& parent={}) const override;
@@ -69,7 +72,9 @@ private:
   class Range;
 
   using DirectoryIterator = std::vector<MOShared::DirectoryEntry*>::const_iterator;
+
   OrganizerCore& m_core;
+  bool m_enabled;
   mutable FileTreeItem::Ptr m_root;
   Flags m_flags;
   mutable IconFetcher m_iconFetcher;

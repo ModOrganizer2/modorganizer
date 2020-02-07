@@ -157,7 +157,28 @@ void FileTree::clear()
 
 void FileTree::ensureFullyLoaded()
 {
+  QAbstractProxyModel* proxy = nullptr;
+
+  if (m_tree->model() != m_model) {
+    // looks like there's a proxy on the tree, disable it
+    proxy = dynamic_cast<QAbstractProxyModel*>(m_tree->model());
+
+    m_tree->setModel(m_model);
+
+    if (proxy) {
+      if (proxy->sourceModel() != m_model)
+        DebugBreak();
+
+      proxy->setSourceModel(nullptr);
+    }
+  }
+
   m_model->ensureFullyLoaded();
+
+  if (proxy) {
+    proxy->setSourceModel(m_model);
+    m_tree->setModel(proxy);
+  }
 }
 
 FileTreeItem* FileTree::singleSelection()

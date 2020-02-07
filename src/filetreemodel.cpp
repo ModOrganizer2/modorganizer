@@ -137,7 +137,7 @@ void* makeInternalPointer(FileTreeItem* item)
 
 
 FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent) :
-  QAbstractItemModel(parent), m_core(core),
+  QAbstractItemModel(parent), m_core(core), m_enabled(true),
   m_root(FileTreeItem::createDirectory(nullptr, L"", L"")),
   m_flags(NoFlags), m_fullyLoaded(false)
 {
@@ -181,6 +181,16 @@ void FileTreeModel::ensureFullyLoaded()
     recursiveFetchMore(QModelIndex());
     m_fullyLoaded = true;
   }
+}
+
+bool FileTreeModel::enabled() const
+{
+  return m_enabled;
+}
+
+void FileTreeModel::setEnabled(bool b)
+{
+  m_enabled = b;
 }
 
 bool FileTreeModel::showArchives() const
@@ -243,6 +253,10 @@ bool FileTreeModel::hasChildren(const QModelIndex& parent) const
 
 bool FileTreeModel::canFetchMore(const QModelIndex& parent) const
 {
+  if (!m_enabled) {
+    return false;
+  }
+
   if (auto* item=itemFromIndex(parent)) {
     return !item->isLoaded();
   }
