@@ -3191,6 +3191,57 @@ void MainWindow::visitWebPage_clicked()
   }
 }
 
+void MainWindow::visitNexusOrWebPage_clicked() {
+  QItemSelectionModel* selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    int count = selection->selectedRows().count();
+    if (count > 10) {
+      if (QMessageBox::question(this, tr("Opening Web Pages"),
+        tr("You are trying to open %1 Web Pages.  Are you sure you want to do this?").arg(count),
+        QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+        return;
+      }
+    }
+    int row_idx;
+    ModInfo::Ptr info;
+    QString gameName;
+
+    for (QModelIndex idx : selection->selectedRows()) {
+      row_idx = idx.data(Qt::UserRole + 1).toInt();
+      info = ModInfo::getByIndex(row_idx);
+      int modID = info->getNexusID();
+      gameName = info->getGameName();
+      const auto url = info->parseCustomURL();
+      if (modID > 0) {
+        linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
+      }
+      else if (url.isValid()) {
+        linkClicked(url.toString());
+      }
+      else {
+        log::error("mod '{}' has no valid link", info->name());
+      }
+    }
+  }
+  else {
+    int modID = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole).toInt();
+    QString gameName = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole + 4).toString();
+    if (modID > 0) {
+      linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
+    }
+    else {
+      ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+      const auto url = info->parseCustomURL();
+      if (url.isValid()) {
+        linkClicked(url.toString());
+      }
+      else {
+        MessageDialog::showMessage(tr("No valid Web Page for this mod"), this);
+      }
+    }
+  }
+}
+
 void MainWindow::openExplorer_clicked()
 {
   QItemSelectionModel *selection = ui->modList->selectionModel();
@@ -3749,7 +3800,17 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
       reportError(e.what());
     }
   }
-  else {
+  else if (modifiers.testFlag(Qt::ShiftModifier)) {
+    try {
+      m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
+      visitNexusOrWebPage_clicked();
+      ui->modList->closePersistentEditor(index);
+    }
+    catch (const std::exception & e) {
+      reportError(e.what());
+    }
+  }
+  else{
     try {
       m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
       sourceIdx.column();

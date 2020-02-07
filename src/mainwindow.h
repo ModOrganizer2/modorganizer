@@ -401,6 +401,7 @@ private slots:
   void restoreHiddenFiles_clicked();
   void visitOnNexus_clicked();
   void visitWebPage_clicked();
+  void visitNexusOrWebPage_clicked();
   void openExplorer_clicked();
   void openPluginOriginExplorer_clicked();
   void openOriginInformation_clicked();
