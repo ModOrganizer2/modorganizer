@@ -178,7 +178,7 @@ public:
 
 void FileTreeItem::sort()
 {
-  sort(m_model->sortInfo().column, m_model->sortInfo().order);
+  m_model->sortItem(*this);
 }
 
 void FileTreeItem::sort(int column, Qt::SortOrder order)

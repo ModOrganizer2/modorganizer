@@ -216,9 +216,13 @@ public:
 
   void setExpanded(bool b)
   {
+    if (m_expanded == b) {
+      return;
+    }
+
     m_expanded = b;
 
-    if (m_sortingStale) {
+    if (m_expanded && m_sortingStale) {
       sort();
     }
   }

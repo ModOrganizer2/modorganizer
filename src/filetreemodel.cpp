@@ -208,6 +208,7 @@ QModelIndex FileTreeModel::index(
 {
   if (auto* parentItem=itemFromIndex(parentIndex)) {
     if (row < 0 || row >= parentItem->children().size()) {
+      log::error("row {} out of range for {}", row, parentItem->debugName());
       return {};
     }
 
@@ -378,12 +379,9 @@ Qt::ItemFlags FileTreeModel::flags(const QModelIndex& index) const
   return f;
 }
 
-void FileTreeModel::sort(int column, Qt::SortOrder order)
+void FileTreeModel::sortItem(FileTreeItem& item)
 {
   emit layoutAboutToBeChanged();
-
-  m_sort.column = column;
-  m_sort.order = order;
 
   const auto oldList = persistentIndexList();
   std::vector<std::pair<FileTreeItem*, int>> oldItems;
@@ -396,7 +394,7 @@ void FileTreeModel::sort(int column, Qt::SortOrder order)
     oldItems.push_back({itemFromIndex(index), index.column()});
   }
 
-  m_root->sort(column, order);
+  item.sort(m_sort.column, m_sort.order);
 
   QModelIndexList newList;
   newList.reserve(itemCount);
@@ -409,6 +407,14 @@ void FileTreeModel::sort(int column, Qt::SortOrder order)
   changePersistentIndexList(oldList, newList);
 
   emit layoutChanged({}, QAbstractItemModel::VerticalSortHint);
+}
+
+void FileTreeModel::sort(int column, Qt::SortOrder order)
+{
+  m_sort.column = column;
+  m_sort.order = order;
+
+  sortItem(*m_root);
 }
 
 FileTreeItem* FileTreeModel::itemFromIndex(const QModelIndex& index) const
