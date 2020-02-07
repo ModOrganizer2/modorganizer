@@ -37,7 +37,7 @@ DataTab::DataTab(
 
   connect(
     &m_filter, &FilterWidget::aboutToChange,
-    [&]{ m_filetree->ensureFullyLoaded(); });
+    [&]{ ensureFullyLoaded(); });
 
   connect(
     ui.refresh, &QPushButton::clicked,
@@ -107,11 +107,20 @@ void DataTab::updateTree()
   m_filetree->refresh();
 
   if (!m_filter.empty()) {
-    m_filetree->ensureFullyLoaded();
+    ensureFullyLoaded();
 
     if (auto* m=m_filter.proxyModel()) {
       m->invalidate();
     }
+  }
+}
+
+void DataTab::ensureFullyLoaded()
+{
+  if (!m_filetree->fullyLoaded()) {
+    m_filter.proxyModel()->setRecursiveFilteringEnabled(false);
+    m_filetree->ensureFullyLoaded();
+    m_filter.proxyModel()->setRecursiveFilteringEnabled(true);
   }
 }
 

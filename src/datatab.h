@@ -56,4 +56,5 @@ private:
   void onConflicts();
   void onArchives();
   void updateOptions();
+  void ensureFullyLoaded();
 };

@@ -21,6 +21,8 @@ public:
   FileTreeModel* model();
   void refresh();
   void clear();
+
+  bool fullyLoaded() const;
   void ensureFullyLoaded();
 
   void open(FileTreeItem* item=nullptr);

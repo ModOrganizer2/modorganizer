@@ -50,6 +50,12 @@ public:
 
   void refresh();
   void clear();
+
+  bool fullyLoaded() const
+  {
+    return m_fullyLoaded;
+  }
+
   void ensureFullyLoaded();
 
   bool enabled() const;
