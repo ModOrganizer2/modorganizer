@@ -22,6 +22,7 @@
 #include <string.h>
 #include <string>
 #include <tuple>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <wchar.h>
@@ -37,6 +38,7 @@
 #include <Shlwapi.h>
 #include <tchar.h>
 #include <wincred.h>
+#include <windowsx.h>
 
 // boost
 #include <boost/algorithm/string.hpp>

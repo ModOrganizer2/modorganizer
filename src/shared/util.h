@@ -36,18 +36,35 @@ bool FileExists(const std::wstring &searchPath, const std::wstring &filename);
 std::string ToString(const std::wstring &source, bool utf8);
 std::wstring ToWString(const std::string &source, bool utf8);
 
-std::string &ToLower(std::string &text);
-std::string ToLower(const std::string &text);
+std::string& ToLowerInPlace(std::string& text);
+std::string ToLowerCopy(const std::string& text);
 
-std::wstring &ToLower(std::wstring &text);
-std::wstring ToLower(const std::wstring &text);
+std::wstring& ToLowerInPlace(std::wstring& text);
+std::wstring ToLowerCopy(const std::wstring& text);
 
 bool CaseInsensitiveEqual(const std::wstring &lhs, const std::wstring &rhs);
 
 MOBase::VersionInfo createVersionInfo();
 QString getUsvfsVersionString();
 
+void SetThisThreadName(const QString& s);
+void checkDuplicateShortcuts(const QMenu& m);
+
 } // namespace MOShared
+
+
+class TimeThis
+{
+public:
+  TimeThis(QString what={});
+  ~TimeThis();
+
+private:
+  using Clock = std::chrono::high_resolution_clock;
+
+  QString m_what;
+  Clock::time_point m_start;
+};
 
 
 enum class Exit

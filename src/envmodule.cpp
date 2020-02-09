@@ -8,6 +8,12 @@ namespace env
 
 using namespace MOBase;
 
+// the rationale for logging md5 was to make sure the various files were the
+// same as in the released version; this turned out to be of dubious interest,
+// while adding to the startup time
+constexpr bool UseMD5 = false;
+
+
 Module::Module(QString path, std::size_t fileSize)
   : m_path(std::move(path)), m_fileSize(fileSize)
 {
@@ -16,7 +22,10 @@ Module::Module(QString path, std::size_t fileSize)
   m_version = getVersion(fi.ffi);
   m_timestamp = getTimestamp(fi.ffi);
   m_versionString = fi.fileDescription;
-  m_md5 = getMD5();
+
+  if (UseMD5) {
+    m_md5 = getMD5();
+  }
 }
 
 const QString& Module::path() const

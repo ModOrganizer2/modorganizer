@@ -5,6 +5,7 @@
 
 StatusBar::StatusBar(QWidget* parent) :
   QStatusBar(parent), ui(nullptr), m_progress(new QProgressBar),
+  m_progressSpacer1(new QWidget), m_progressSpacer2(new QWidget),
   m_notifications(nullptr), m_update(nullptr), m_api(new QLabel)
 {
 }
@@ -15,17 +16,17 @@ void StatusBar::setup(Ui::MainWindow* mainWindowUI, const Settings& settings)
   m_notifications = new StatusBarAction(ui->actionNotifications);
   m_update = new StatusBarAction(ui->actionUpdate);
 
-  QWidget* spacer1 = new QWidget;
-  spacer1->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  spacer1->setHidden(true);
-  spacer1->setVisible(true);
-  addPermanentWidget(spacer1, 0);
+  m_progressSpacer1->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_progressSpacer1->setHidden(true);
+  m_progressSpacer1->setVisible(true);
+  addPermanentWidget(m_progressSpacer1, 0);
   addPermanentWidget(m_progress);
-  QWidget* spacer2 = new QWidget;
-  spacer2->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  spacer2->setHidden(true);
-  spacer2->setVisible(true);
-  addPermanentWidget(spacer2,0);
+
+  m_progressSpacer2->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_progressSpacer2->setHidden(true);
+  m_progressSpacer2->setVisible(true);
+  addPermanentWidget(m_progressSpacer2,0);
+
   addPermanentWidget(m_notifications);
   addPermanentWidget(m_update);
   addPermanentWidget(m_api);
@@ -57,14 +58,19 @@ void StatusBar::setup(Ui::MainWindow* mainWindowUI, const Settings& settings)
 
 void StatusBar::setProgress(int percent)
 {
+  bool visible =true;
+
   if (percent < 0 || percent >= 100) {
     clearMessage();
-    m_progress->setVisible(false);
+    visible = false;
   } else {
     showMessage(QObject::tr("Loading..."));
-    m_progress->setVisible(true);
     m_progress->setValue(percent);
   }
+
+  m_progress->setVisible(visible);
+  m_progressSpacer1->setVisible(visible);
+  m_progressSpacer2->setVisible(visible);
 }
 
 void StatusBar::setNotifications(bool hasNotifications)

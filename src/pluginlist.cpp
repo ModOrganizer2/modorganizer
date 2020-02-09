@@ -1315,11 +1315,6 @@ QVariant PluginList::headerData(int section, Qt::Orientation orientation,
       return getColumnName(section);
     } else if (role == Qt::ToolTipRole) {
       return getColumnToolTip(section);
-    } else if (role == Qt::SizeHintRole) {
-      QSize temp = m_FontMetrics.size(Qt::TextSingleLine, getColumnName(section));
-      temp.rwidth() += 25;
-      temp.rheight() += 12;
-      return temp;
     }
   }
   return QAbstractItemModel::headerData(section, orientation, role);

@@ -20,8 +20,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "util.h"
 #include "windows_error.h"
 #include "mainwindow.h"
+#include "env.h"
+#include <log.h>
 #include <usvfs.h>
 #include <usvfs_version.h>
+
+using namespace MOBase;
 
 namespace MOShared
 {
@@ -100,32 +104,28 @@ static auto locToLower = [] (char in) -> char {
   return std::tolower(in, loc);
 };
 
-std::string &ToLower(std::string &text)
+std::string& ToLowerInPlace(std::string& text)
 {
-  //std::transform(text.begin(), text.end(), text.begin(), locToLower);
   CharLowerBuffA(const_cast<CHAR *>(text.c_str()), static_cast<DWORD>(text.size()));
   return text;
 }
 
-std::string ToLower(const std::string &text)
+std::string ToLowerCopy(const std::string& text)
 {
   std::string result(text);
-  //std::transform(result.begin(), result.end(), result.begin(), locToLower);
   CharLowerBuffA(const_cast<CHAR *>(result.c_str()), static_cast<DWORD>(result.size()));
   return result;
 }
 
-std::wstring &ToLower(std::wstring &text)
+std::wstring& ToLowerInPlace(std::wstring& text)
 {
-  //std::transform(text.begin(), text.end(), text.begin(), locToLowerW);
   CharLowerBuffW(const_cast<WCHAR *>(text.c_str()), static_cast<DWORD>(text.size()));
   return text;
 }
 
-std::wstring ToLower(const std::wstring &text)
+std::wstring ToLowerCopy(const std::wstring& text)
 {
   std::wstring result(text);
-  //std::transform(result.begin(), result.end(), result.begin(), locToLowerW);
   CharLowerBuffW(const_cast<WCHAR *>(result.c_str()), static_cast<DWORD>(result.size()));
   return result;
 }
@@ -201,7 +201,7 @@ std::wstring GetFileVersionString(const std::wstring &fileName)
   }
 }
 
-MOBase::VersionInfo createVersionInfo()
+VersionInfo createVersionInfo()
 {
   VS_FIXEDFILEINFO version = GetFileVersion(QApplication::applicationFilePath().toStdWString());
 
@@ -224,25 +224,25 @@ MOBase::VersionInfo createVersionInfo()
     if (noLetters)
     {
       // Default to pre-alpha when release type is unspecified
-      return MOBase::VersionInfo(version.dwFileVersionMS >> 16,
-                                 version.dwFileVersionMS & 0xFFFF,
-                                 version.dwFileVersionLS >> 16,
-                                 version.dwFileVersionLS & 0xFFFF,
-                                 MOBase::VersionInfo::RELEASE_PREALPHA);
+      return VersionInfo(version.dwFileVersionMS >> 16,
+                         version.dwFileVersionMS & 0xFFFF,
+                         version.dwFileVersionLS >> 16,
+                         version.dwFileVersionLS & 0xFFFF,
+                         VersionInfo::RELEASE_PREALPHA);
     }
     else
     {
       // Trust the string to make sense
-      return MOBase::VersionInfo(versionString);
+      return VersionInfo(versionString);
     }
   }
   else
   {
     // Non-pre-release builds just need their version numbers reading
-    return MOBase::VersionInfo(version.dwFileVersionMS >> 16,
-                               version.dwFileVersionMS & 0xFFFF,
-                               version.dwFileVersionLS >> 16,
-                               version.dwFileVersionLS & 0xFFFF);
+    return VersionInfo(version.dwFileVersionMS >> 16,
+                       version.dwFileVersionMS & 0xFFFF,
+                       version.dwFileVersionLS >> 16,
+                       version.dwFileVersionLS & 0xFFFF);
   }
 }
 
@@ -290,7 +290,109 @@ QString getUsvfsVersionString()
   }
 }
 
+void SetThisThreadName(const QString& s)
+{
+  using SetThreadDescriptionType = HRESULT (
+    HANDLE hThread,
+    PCWSTR lpThreadDescription
+  );
+
+  static SetThreadDescriptionType* SetThreadDescription = [] {
+    SetThreadDescriptionType* p = nullptr;
+
+    env::LibraryPtr kernel32(LoadLibraryW(L"kernel32.dll"));
+    if (!kernel32) {
+      return p;
+    }
+
+    p = reinterpret_cast<SetThreadDescriptionType*>(
+      GetProcAddress(kernel32.get(), "SetThreadDescription"));
+
+    return p;
+  }();
+
+  if (SetThreadDescription) {
+    SetThreadDescription(GetCurrentThread(), s.toStdWString().c_str());
+  }
+}
+
+
+char shortcutChar(const QAction* a)
+{
+  const auto text = a->text();
+  char shortcut = 0;
+
+  for (int i=0; i<text.size(); ++i) {
+    const auto c = text[i];
+    if (c == '&') {
+      if (i >= (text.size() - 1)) {
+        log::error("ampersand at the end");
+        return 0;
+      }
+
+      return text[i + 1].toLatin1();
+    }
+  }
+
+  log::error("action {} has no shortcut", text);
+  return 0;
+}
+
+void checkDuplicateShortcuts(const QMenu& m)
+{
+  const auto actions = m.actions();
+
+  for (int i=0; i<actions.size(); ++i) {
+    const auto* action1 = actions[i];
+    if (action1->isSeparator()) {
+      continue;
+    }
+
+    const char shortcut1 = shortcutChar(action1);
+    if (shortcut1 == 0) {
+      continue;
+    }
+
+    for (int j=i+1; j<actions.size(); ++j) {
+      const auto* action2 = actions[j];
+      if (action2->isSeparator()) {
+        continue;
+      }
+
+      const char shortcut2 = shortcutChar(action2);
+
+      if (shortcut1 == shortcut2) {
+        log::error(
+          "duplicate shortcut {} for {} and {}",
+          shortcut1, action1->text(), action2->text());
+
+        break;
+      }
+    }
+  }
+}
+
 } // namespace MOShared
+
+
+TimeThis::TimeThis(QString what)
+  : m_what(std::move(what)), m_start(Clock::now())
+{
+}
+
+TimeThis::~TimeThis()
+{
+  using namespace std::chrono;
+
+  const auto end = Clock::now();
+  const auto d = duration_cast<milliseconds>(end - m_start).count();
+
+  if (m_what.isEmpty()) {
+    log::debug("{} ms", d);
+  } else {
+    log::debug("{} {} ms", m_what, d);
+  }
+}
 
 
 static bool g_exiting = false;
@@ -314,7 +416,7 @@ bool ExitModOrganizer(ExitFlags e)
   }
 
   g_exiting = true;
-  MOBase::Guard g([&]{ g_exiting = false; });
+  Guard g([&]{ g_exiting = false; });
 
   if (!e.testFlag(Exit::Force)) {
     if (auto* mw=findMainWindow()) {

@@ -27,7 +27,6 @@ const std::size_t MaxLines = 1000;
 
 LogModel::LogModel()
 {
-  connect(this, &LogModel::entryAdded, [&](auto&& e){ onEntryAdded(e); });
 }
 
 void LogModel::create()
@@ -42,7 +41,8 @@ LogModel& LogModel::instance()
 
 void LogModel::add(MOBase::log::Entry e)
 {
-  emit entryAdded(std::move(e));
+  QMetaObject::invokeMethod(
+    this, [this, e]{ onEntryAdded(std::move(e)); }, Qt::QueuedConnection);
 }
 
 void LogModel::clear()
@@ -173,13 +173,16 @@ LogList::LogList(QWidget* parent)
     this, &QWidget::customContextMenuRequested,
     [&](auto&& pos){ onContextMenu(pos); });
 
-  connect(
-    model(), SIGNAL(rowsInserted(const QModelIndex &, int, int)),
-    this, SLOT(scrollToBottom()));
+  connect(model(), &LogModel::rowsInserted, this, [&]{ onNewEntry(); });
+  connect(model(), &LogModel::dataChanged, this, [&]{ onNewEntry(); });
 
-  connect(
-    model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)),
-    this, SLOT(scrollToBottom()));
+  m_timer.setSingleShot(true);
+  connect(&m_timer, &QTimer::timeout, [&]{ scrollToBottom(); });
+}
+
+void LogList::onNewEntry()
+{
+  m_timer.start(std::chrono::milliseconds(10));
 }
 
 void LogList::setCore(OrganizerCore& core)

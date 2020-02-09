@@ -218,8 +218,16 @@ public:
   bool onFinishedRun(const std::function<void (const QString &, unsigned int)> &func);
   void refreshModList(bool saveChanges = true);
   QStringList modsSortedByProfilePriority() const;
-  bool getArchiveParsing() const;
-  void setArchiveParsing(bool archiveParsing);
+
+  bool getArchiveParsing() const
+  {
+    return m_ArchiveParsing;
+  }
+
+  void setArchiveParsing(bool archiveParsing)
+  {
+    m_ArchiveParsing = archiveParsing;
+  }
 
 public: // IPluginDiagnose interface
 

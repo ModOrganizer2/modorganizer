@@ -30,6 +30,23 @@ struct DesktopDCReleaser
 using DesktopDCPtr = std::unique_ptr<HDC, DesktopDCReleaser>;
 
 
+// used by HMenuPtr, calls DestroyMenu() as the deleter
+//
+struct HMenuFreer
+{
+  using pointer = HMENU;
+
+  void operator()(HMENU h)
+  {
+    if (h != 0) {
+      ::DestroyMenu(h);
+    }
+  }
+};
+
+using HMenuPtr = std::unique_ptr<HMENU, HMenuFreer>;
+
+
 // used by LibraryPtr, calls FreeLibrary as the deleter
 //
 struct LibraryFreer
@@ -92,6 +109,23 @@ struct LocalFreer
 
 template <class T>
 using LocalPtr = std::unique_ptr<T, LocalFreer<T>>;
+
+
+// used by the CoTaskMemPtr, calls CoTaskMemFree() as the deleter
+//
+template <class T>
+struct CoTaskMemFreer
+{
+  using pointer = T;
+
+  void operator()(T p)
+  {
+    ::CoTaskMemFree(p);
+  }
+};
+
+template <class T>
+using CoTaskMemPtr = std::unique_ptr<T, CoTaskMemFreer<T>>;
 
 
 // creates a console in the constructor and destroys it in the destructor,

@@ -500,16 +500,6 @@ std::wstring OrganizerCore::crashDumpsPath() {
     ).toStdWString();
 }
 
-bool OrganizerCore::getArchiveParsing() const
-{
-  return m_ArchiveParsing;
-}
-
-void OrganizerCore::setArchiveParsing(const bool archiveParsing)
-{
-  m_ArchiveParsing = archiveParsing;
-}
-
 void OrganizerCore::setCurrentProfile(const QString &profileName)
 {
   if ((m_CurrentProfile != nullptr)

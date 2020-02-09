@@ -135,6 +135,7 @@ SET(organizer_SRCS
 	envmetrics.cpp
 	envmodule.cpp
 	envsecurity.cpp
+	envshell.cpp
 	envshortcut.cpp
 	envwindows.cpp
 	colortable.cpp
@@ -144,6 +145,11 @@ SET(organizer_SRCS
 	loot.cpp
 	lootdialog.cpp
 	filterlist.cpp
+	datatab.cpp
+	filetree.cpp
+	filetreemodel.cpp
+	filetreeitem.cpp
+	iconfetcher.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -259,6 +265,7 @@ SET(organizer_HDRS
 	envmetrics.h
 	envmodule.h
 	envsecurity.h
+	envshell.h
 	envshortcut.h
 	envwindows.h
 	colortable.h
@@ -268,6 +275,11 @@ SET(organizer_HDRS
 	lootdialog.h
 	json.h
 	filterlist.h
+	datatab.h
+	filetree.h
+	filetreeitem.h
+	filetreemodel.h
+	iconfetcher.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -320,16 +332,13 @@ SET(organizer_RCS
 source_group(src REGULAR_EXPRESSION ".*\\.(h|cpp|ui)")
 
 set(application
-	filterlist
 	iuserinterface
 	main
-	mainwindow
 	moapplication
 	moshortcut
 	sanitychecks
 	selfupdater
 	singleinstance
-	statusbar
 )
 
 set(browser
@@ -386,6 +395,7 @@ set(env
 	envmetrics
 	envmodule
 	envsecurity
+	envshell
 	envshortcut
 	envwindows
 )
@@ -398,6 +408,17 @@ set(executables
 set(loot
 	loot
 	lootdialog
+)
+
+set(mainwindow
+	datatab
+	iconfetcher
+	filetree
+	filetreeitem
+	filetreemodel
+	filterlist
+	mainwindow
+	statusbar
 )
 
 set(modinfo
@@ -496,9 +517,9 @@ set(widgets
 )
 
 set(src_filters
-	application core browser dialogs downloads env executables loot modinfo
-	modinfo\\dialog modlist plugins previews profiles settings settingsdialog
-	utilities widgets
+	application core browser dialogs downloads env executables loot mainwindow
+	modinfo modinfo\\dialog modlist plugins previews profiles settings
+	settingsdialog utilities widgets
 )
 
 foreach(filter in list ${src_filters})

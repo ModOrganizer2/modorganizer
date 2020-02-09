@@ -692,19 +692,6 @@ QTabBar QToolButton::left-arrow:hover {
   image: url(./vs15/scrollbar-left-hover.png); }
 
 /* Special styles */
-/* fix margins on tabs pane */
-QLineEdit#espFilterEdit {
-  margin: 0 0 6px 0; }
-
-QTreeView#downloadView {
-  margin: 4px 4px 0 4px; }
-
-QCheckBox#showHiddenBox {
-  margin: 0 0 4px 4px; }
-
-QLineEdit#downloadFilterEdit {
-  margin: 0 4px 4px 0; }
-
 QWidget#tabImages QPushButton {
   background-color: transparent;
   margin: 0 .3em;

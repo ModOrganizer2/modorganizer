@@ -21,7 +21,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define MAINWINDOW_H
 
 #include "bsafolder.h"
-#include "browserdialog.h"
 #include "delayedfilewriter.h"
 #include "errorcodes.h"
 #include "imoinfo.h"
@@ -34,12 +33,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "iplugingame.h" //namespace MOBase { class IPluginGame; }
 #include <log.h>
 
-//Note the commented headers here can be replaced with forward references,
-//when I get round to cleaning up main.cpp
 class Executable;
 class CategoryFactory;
 class OrganizerCore;
 class FilterList;
+class DataTab;
+class BrowserDialog;
 
 class PluginListSortProxy;
 namespace BSA { class Archive; }
@@ -122,8 +121,6 @@ public:
 
   bool addProfile();
   void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives);
-  void refreshDataTree();
-  void refreshDataTreeKeepExpandedNodes();
   void refreshSaveList();
 
   void setModListSorting(int index);
@@ -136,10 +133,6 @@ public:
   void registerModPage(MOBase::IPluginModPage *modPage);
 
   void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);
-
-  void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
-
-  QString getOriginDisplayName(int originID);
 
   void installTranslator(const QString &name);
 
@@ -219,20 +212,12 @@ private:
   QMenu* createPopupMenu() override;
   void activateSelectedProfile();
 
-  void startSteam();
-
-  void updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const MOShared::DirectoryEntry &directoryEntry, bool conflictsOnly, QIcon *fileIcon, QIcon *folderIcon);
   bool refreshProfiles(bool selectProfile = true);
   void refreshExecutablesList();
   void installMod(QString fileName = "");
 
-  QList<MOBase::IOrganizer::FileInfo> findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const;
-
   bool modifyExecutablesDialog(int selection);
   void displayModInformation(int row, ModInfoTabIDs tab=ModInfoTabIDs::None);
-  void testExtractBSA(int modIndex);
-
-  void writeDataToFile(QFile &file, const QString &directory, const MOShared::DirectoryEntry &directoryEntry);
 
   /**
    * Sets category selections from menu; for multiple mods, this will only apply
@@ -267,8 +252,6 @@ private:
 
   void displaySaveGameInfo(QListWidgetItem *newItem);
 
-  HANDLE nextChildProcess();
-
   bool errorReported(QString &logFile);
 
   void updateESPLock(bool locked);
@@ -285,8 +268,6 @@ private:
 
   QMenu *openFolderMenu();
 
-  std::set<QString> enabledArchives();
-
   void scheduleUpdateButton();
 
   QDir currentSavesDir() const;
@@ -297,7 +278,6 @@ private:
   void dropLocalFile(const QUrl &url, const QString &outputDir, bool move);
 
   void sendSelectedModsToPriority(int newPriority);
-  void sendSelectedPluginsToPriority(int newPriority);
 
   void toggleMO2EndorseState();
   void toggleUpdateAction();
@@ -322,6 +302,7 @@ private:
   MOBase::TutorialControl m_Tutorial;
 
   std::unique_ptr<FilterList> m_Filters;
+  std::unique_ptr<DataTab> m_DataTab;
 
   int m_OldProfileIndex;
 
@@ -360,17 +341,13 @@ private:
   QString m_CurrentLanguage;
   std::vector<QTranslator*> m_Translators;
 
-  BrowserDialog m_IntegratedBrowser;
+  std::unique_ptr<BrowserDialog> m_IntegratedBrowser;
 
   QFileSystemWatcher m_SavesWatcher;
-
-  std::vector<QTreeWidgetItem*> m_RemoveWidget;
 
   QByteArray m_ArchiveListHash;
 
   bool m_DidUpdateMasterList;
-
-  bool m_showArchiveData{ true };
 
   MOBase::DelayedFileWriter m_ArchiveListWriter;
 
@@ -439,18 +416,6 @@ private slots:
   void deleteSavegame_clicked();
   void fixMods_clicked(SaveGameInfo::MissingAssets const &missingAssets);
   // data-tree context menu
-  void writeDataToFile();
-  void openDataFile();
-  void openDataFile(QTreeWidgetItem* item);
-  void runDataFileHooked();
-  void runDataFileHooked(QTreeWidgetItem* item);
-  void addAsExecutable();
-  void previewDataFile();
-  void previewDataFile(QTreeWidgetItem* item);
-  void hideFile();
-  void unhideFile();
-  void openDataOriginExplorer_clicked();
-  void openDataModInfo_clicked();
 
   // pluginlist context menu
   void enableSelectedPlugins_clicked();
@@ -593,10 +558,7 @@ private slots:
   void unignoreUpdate();
 
   void refreshSavesIfOpen();
-  void expandDataTreeItem(QTreeWidgetItem *item);
-  void activateDataTreeItem(QTreeWidgetItem *item, int column);
   void about();
-  void delayedRemove();
 
   void modListSortIndicatorChanged(int column, Qt::SortOrder order);
   void modListSectionResized(int logicalIndex, int oldSize, int newSize);
@@ -635,11 +597,7 @@ private slots: // ui slots
   void on_centralWidget_customContextMenuRequested(const QPoint &pos);
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_clearFiltersButton_clicked();
-  void on_btnRefreshData_clicked();
   void on_btnRefreshDownloads_clicked();
-  void on_conflictsCheckBox_toggled(bool checked);
-  void on_showArchiveDataCheckBox_toggled(bool checked);
-  void on_dataTree_customContextMenuRequested(const QPoint &pos);
   void on_executablesListBox_currentIndexChanged(int index);
   void on_modList_customContextMenuRequested(const QPoint &pos);
   void on_modList_doubleClicked(const QModelIndex &index);

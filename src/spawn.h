@@ -85,6 +85,8 @@ QString findJavaInstallation(const QString& jarFile);
 FileExecutionContext getFileExecutionContext(
   QWidget* parent, const QFileInfo& target);
 
+FileExecutionTypes getFileExecutionType(const QFileInfo& target);
+
 } // namespace
 
 
