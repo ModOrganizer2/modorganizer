@@ -604,6 +604,12 @@ bool FileTree::showShellMenu(QPoint pos)
       itor = menus.emplace(item->originID(), mw).first;
     }
 
+    if (!QFile::exists(item->realPath())) {
+      log::error("{}",
+        tr("File '%1' does not exist, you may need to refresh.")
+        .arg(item->realPath()));
+    }
+
     itor->second.addFile(item->realPath());
     ++totalFiles;
 
@@ -639,6 +645,12 @@ bool FileTree::showShellMenu(QPoint pos)
             item->dataRelativeFilePath(), alt.first);
 
           continue;
+        }
+
+        if (!QFile::exists(QString::fromStdWString(fullPath))) {
+          log::error("{}",
+            tr("File '%1' does not exist, you may need to refresh.")
+            .arg(QString::fromStdWString(fullPath)));
         }
 
         itor->second.addFile(QString::fromStdWString(fullPath));
