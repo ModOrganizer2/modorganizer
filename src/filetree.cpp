@@ -522,6 +522,21 @@ void FileTree::onContextMenu(const QPoint &pos)
   const auto m = QApplication::keyboardModifiers();
 
   if (m & Qt::ShiftModifier) {
+    // shift+right-click won't select individual items because it interferes
+    // with regular shift selection; this makes it behave like explorer:
+    //   - if the right-clicked item is currently part of the selection, show
+    //     the menu for the selection
+    //   - if not, select this item only and show the menu for it
+    const auto index = m_tree->indexAt(pos);
+
+    if (!m_tree->selectionModel()->isSelected(index)) {
+      m_tree->selectionModel()->select(
+        index,
+        QItemSelectionModel::ClearAndSelect |
+        QItemSelectionModel::Rows |
+        QItemSelectionModel::Current);
+    }
+
     // if no shell menu was available, continue on and show the regular
     // context menu
     if (showShellMenu(pos)) {
