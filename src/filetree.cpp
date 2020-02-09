@@ -4,6 +4,7 @@
 #include "organizercore.h"
 #include "envshell.h"
 #include <log.h>
+#include <widgetutility.h>
 
 using namespace MOShared;
 using namespace MOBase;
@@ -123,6 +124,8 @@ FileTree::FileTree(OrganizerCore& core, PluginContainer& pc, QTreeView* tree)
   m_tree->sortByColumn(0, Qt::AscendingOrder);
   m_tree->setModel(m_model);
   m_tree->header()->resizeSection(0, 200);
+
+  MOBase::setCustomizableColumns(m_tree);
 
   connect(
     m_tree, &QTreeView::customContextMenuRequested,
