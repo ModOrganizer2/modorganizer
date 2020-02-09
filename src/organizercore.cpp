@@ -234,8 +234,6 @@ void OrganizerCore::setUserInterface(IUserInterface* ui)
             SLOT(removeMod_clicked()));
     connect(&m_ModList, SIGNAL(clearOverwrite()), w,
       SLOT(clearOverwrite()));
-    connect(&m_ModList, SIGNAL(requestColumnSelect(QPoint)), w,
-            SLOT(displayColumnSelection(QPoint)));
     connect(&m_ModList, SIGNAL(fileMoved(QString, QString, QString)), w,
             SLOT(fileMoved(QString, QString, QString)));
     connect(&m_ModList, SIGNAL(modorder_changed()), w,

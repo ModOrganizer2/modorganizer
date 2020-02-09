@@ -202,12 +202,6 @@ signals:
   void resizeHeaders();
 
   /**
-   * @brief requestColumnSelect is emitted whenever the user requested a menu to select visible columns
-   * @param pos the position to display the menu at
-   */
-  void requestColumnSelect(QPoint pos);
-
-  /**
    * @brief emitted to remove a file origin
    * @param name name of the orign to remove
    */

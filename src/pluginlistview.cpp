@@ -1,4 +1,5 @@
 #include "pluginlistview.h"
+#include <widgetutility.h>
 #include <QUrl>
 #include <QMimeData>
 #include <QProxyStyle>
@@ -40,6 +41,7 @@ PluginListView::PluginListView(QWidget *parent)
   , m_Scrollbar(new ViewMarkingScrollBar(this->model(), this))
 {
   setVerticalScrollBar(m_Scrollbar);
+  MOBase::setCustomizableColumns(this);
 }
 
 void PluginListView::dragEnterEvent(QDragEnterEvent *event)

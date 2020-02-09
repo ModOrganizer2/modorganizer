@@ -1434,15 +1434,7 @@ bool ModList::toggleSelection(QAbstractItemView *itemView)
 
 bool ModList::eventFilter(QObject *obj, QEvent *event)
 {
-  if (event->type() == QEvent::ContextMenu) {
-    QContextMenuEvent *contextEvent = static_cast<QContextMenuEvent*>(event);
-    QWidget *object = qobject_cast<QWidget*>(obj);
-    if ((object != nullptr) && (contextEvent->reason() == QContextMenuEvent::Mouse)) {
-      emit requestColumnSelect(object->mapToGlobal(contextEvent->pos()));
-
-      return true;
-    }
-  } else if ((event->type() == QEvent::KeyPress) && (m_Profile != nullptr)) {
+  if ((event->type() == QEvent::KeyPress) && (m_Profile != nullptr)) {
     QAbstractItemView *itemView = qobject_cast<QAbstractItemView*>(obj);
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
 

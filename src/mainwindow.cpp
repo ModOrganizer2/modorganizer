@@ -5818,38 +5818,6 @@ void MainWindow::extractBSATriggered()
   }
 }
 
-
-void MainWindow::displayColumnSelection(const QPoint &pos)
-{
-  QMenu menu;
-
-  // display a list of all headers as checkboxes
-  QAbstractItemModel *model = ui->modList->header()->model();
-  for (int i = 1; i < model->columnCount(); ++i) {
-    QString columnName = model->headerData(i, Qt::Horizontal).toString();
-    QCheckBox *checkBox = new QCheckBox(&menu);
-    checkBox->setText(columnName);
-    checkBox->setChecked(!ui->modList->header()->isSectionHidden(i));
-    QWidgetAction *checkableAction = new QWidgetAction(&menu);
-    checkableAction->setDefaultWidget(checkBox);
-    menu.addAction(checkableAction);
-  }
-  menu.exec(pos);
-
-  // view/hide columns depending on check-state
-  int i = 1;
-  for (const QAction *action : menu.actions()) {
-    const QWidgetAction *widgetAction = qobject_cast<const QWidgetAction*>(action);
-    if (widgetAction != nullptr) {
-      const QCheckBox *checkBox = qobject_cast<const QCheckBox*>(widgetAction->defaultWidget());
-      if (checkBox != nullptr) {
-        ui->modList->header()->setSectionHidden(i, !checkBox->isChecked());
-      }
-    }
-    ++i;
-  }
-}
-
 void MainWindow::on_bsaList_customContextMenuRequested(const QPoint &pos)
 {
   m_ContextItem = ui->bsaList->itemAt(pos);
