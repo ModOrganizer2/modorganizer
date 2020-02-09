@@ -71,6 +71,10 @@ QAbstractItemView {
     background-color: #009933;
     color: #F1F1F1; }
 
+QAbstractItemView[filtered=true] {
+	border: 2px solid #f00 !important;
+}
+
 QAbstractItemView,
 QListView,
 QTreeView {

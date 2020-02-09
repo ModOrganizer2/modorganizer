@@ -373,6 +373,10 @@ QTreeView::branch:open:has-children:has-siblings {
     image: url(:/stylesheet/branch-open.png);
 }
 
+QAbstractItemView[filtered=true] {
+	border: 2px solid #f00 !important;
+}
+
 /*
  * Tool bar
  */

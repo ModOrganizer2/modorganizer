@@ -79,6 +79,10 @@ QListView,
 QTreeView {
   show-decoration-selected: 1; }
 
+QAbstractItemView[filtered=true] {
+	background-color: #f00 !important;
+}
+
 QAbstractItemView::item:hover,
 QListView::item:hover,
 QTreeView::branch:hover,

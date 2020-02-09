@@ -145,6 +145,10 @@ QWebView {
 	border-radius: 6px;
 }
 
+QAbstractItemView[filtered=true] {
+	border: 2px solid #f00 !important;
+}
+
 /* Group Boxes */
 
 QGroupBox {

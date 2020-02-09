@@ -356,6 +356,10 @@ QTreeView, QListView
   alternate-background-color: #2F3031;
 }
 
+QAbstractItemView[filtered=true] {
+	border: 2px solid #f00 !important;
+}
+
 QTreeView::branch:has-children:!has-siblings:closed,
 QTreeView::branch:closed:has-children:has-siblings
 {

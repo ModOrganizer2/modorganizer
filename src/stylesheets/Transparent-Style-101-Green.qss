@@ -6,13 +6,13 @@
 }
  QWidget {
      color: #fff;
-     background-color: rgb(0, 204, 0, 5);
-     alternate-background-color: rgb(0, 204, 0, 10);
+     background-color: rgba(0, 204, 0, 5);
+     alternate-background-color: rgba(0, 204, 0, 10);
 }
  QAbstractItemView {
      color: #fff;
-     background-color: rgb(0, 204, 0, 5);
-     alternate-background-color: rgb(0, 204, 0, 10);
+     background-color: rgba(0, 204, 0, 5);
+     alternate-background-color: rgba(0, 204, 0, 10);
      border: 1px solid #001a00;
      border-style:outset;
      border-radius: 3px;
@@ -29,7 +29,7 @@
      border-image: url(./Transparent-Style/Green/vault-tec-small.png) 0 0 0 0 stretch stretch;
 }
  #nameLabel {
-     background-color: rgb(0, 0, 0, 20);
+     background-color: rgba(0, 0, 0, 20);
      border-top:1px solid black;
      border-bottom:1px solid black;
 }
@@ -269,7 +269,7 @@
      padding-right: 5%;
 }
  QPushButton:open {
-     background-color: rgb(0, 204, 0, 100);
+     background-color: rgba(0, 204, 0, 100);
 }
  QPushButton:!enabled {
      border: 1px grey;
@@ -331,29 +331,34 @@
      border-radius: 5px;
      border-top:1px solid #b9d7fc;
      border-bottom:1px solid #b9d7fc;
-     background-color: rgb(0, 204, 0, 100);
+     background-color: rgba(0, 204, 0, 100);
 }
  QTreeView::branch:has-siblings:!adjoins-item {
-     background:url(Vault-101/Vault-101-item-line-v.png) center center no-repeat;
+     background:url(Transparent-Style/Green/Vault-101-item-line-v.png) center center no-repeat;
 }
  QTreeView::branch:has-siblings {
-     background:url(Vault-101/Vault-101-itemB-line.png) center center no-repeat;
+     background:url(Transparent-Style/Green/Vault-101-itemB-line.png) center center no-repeat;
 }
  QTreeView::branch:!has-children:!has-siblings:adjoins-item {
-     background:url(Vault-101/Vault-101-itemB-end.png) center center no-repeat;
+     background:url(Transparent-Style/Green/Vault-101-itemB-end.png) center center no-repeat;
 }
  QTreeView::branch:closed:has-children:has-siblings {
-     background:url(Vault-101/Vault-101-itemB-close.png) center center no-repeat;
+     background:url(Transparent-Style/Green/Vault-101-itemB-close.png) center center no-repeat;
 }
  QTreeView::branch:closed:has-children:!has-siblings {
-     background:url(Vault-101/Vault-101-itemB-close-last.png) center center no-repeat;
+     background:url(Transparent-Style/Green/Vault-101-itemB-close-last.png) center center no-repeat;
 }
  QTreeView::branch:open:has-children:has-siblings {
-     background:url(Vault-101/Vault-101-itemB-open.png) center center no-repeat;
+     background:url(Transparent-Style/Green/Vault-101-itemB-open.png) center center no-repeat;
 }
  QTreeView::branch:open:has-children:!has-siblings {
-     background:url(Vault-101/Vault-101-itemB-open-last.png) center center no-repeat;
+     background:url(Transparent-Style/Green/Vault-101-itemB-open-last.png) center center no-repeat;
 }
+
+QAbstractItemView[filtered=true] {
+	border: 2px solid #f00 !important;
+}
+
 /* **************************************************************** */
 /* Checkboxes and Radio buttons common #QCheckBox, #QRadioButton */
 /* common */
@@ -477,7 +482,7 @@ QStatusBar::item {border: None;}
      border-radius:5px;
      margin: 0px;
      padding-left:2px;
-     selection-background-color: rgb(0, 204, 0, 10);
+     selection-background-color: rgba(0, 204, 0, 10);
 }
 /* Font size */
  QLabel, QMenu, QPushButton, QTabBar, QTextEdit, QLineEdit, QWebView, QComboBox, QComboBox:editable, QAbstractSpinBox, QGroupBox, QCheckBox, QRadioButton {
