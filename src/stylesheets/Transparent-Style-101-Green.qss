@@ -500,3 +500,7 @@ LinkLabel {
      font-family: Source Sans Pro;
      font-size: 14px;
 }
+
+QLineEdit[valid-filter=false] {
+	background-color: #661111 !important;
+}

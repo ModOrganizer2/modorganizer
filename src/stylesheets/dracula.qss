@@ -439,3 +439,7 @@ QProgressBar::chunk
 {
   background-color: #427683;
 }
+
+QLineEdit[valid-filter=false] {
+	background-color: #661111 !important;
+}

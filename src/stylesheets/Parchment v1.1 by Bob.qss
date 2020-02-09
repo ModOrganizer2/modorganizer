@@ -601,3 +601,7 @@ QTableView {
 	gridline-color: #DBD399;
 	border: 0px;
 }
+
+QLineEdit[valid-filter=false] {
+	background-color: #661111 !important;
+}

@@ -663,3 +663,7 @@ QDialog#CredentialsDialog {
 
 #pluginsList {
   min-width: 260px; }
+
+QLineEdit[valid-filter=false] {
+	background-color: #661111 !important;
+}
