@@ -1992,6 +1992,24 @@ void InterfaceSettings::setDoubleClicksOpenPreviews(bool b)
   set(m_Settings, "Settings", "double_click_previews", b);
 }
 
+FilterWidget::Options InterfaceSettings::filterOptions() const
+{
+  FilterWidget::Options o;
+
+  o.useRegex = get<bool>(m_Settings, "Settings", "filter_regex", false);
+  o.regexCaseSensitive = get<bool>(m_Settings, "Settings", "regex_case_sensitive", false);
+  o.regexExtended = get<bool>(m_Settings, "Settings", "regex_extended", false);
+
+  return o;
+}
+
+void InterfaceSettings::setFilterOptions(const FilterWidget::Options& o)
+{
+  set(m_Settings, "Settings", "filter_regex", o.useRegex);
+  set(m_Settings, "Settings", "regex_case_sensitive", o.regexCaseSensitive);
+  set(m_Settings, "Settings", "regex_extended", o.regexExtended);
+}
+
 
 DiagnosticsSettings::DiagnosticsSettings(QSettings& settings)
   : m_Settings(settings)

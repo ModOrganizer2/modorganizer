@@ -2075,6 +2075,8 @@ void MainWindow::readSettings()
   s.geometry().restoreVisibility(ui->menuBar);
   s.geometry().restoreVisibility(ui->statusBar);
 
+  FilterWidget::setOptions(s.interface().filterOptions());
+
   {
     // special case in case someone puts 0 in the INI
     auto v = s.widgets().index(ui->executablesListBox);
@@ -2159,6 +2161,8 @@ void MainWindow::storeSettings()
 
   m_Filters->saveState(s);
   m_DataTab->saveState(s);
+
+  s.interface().setFilterOptions(FilterWidget::options());
 }
 
 QWidget* MainWindow::qtWidget()

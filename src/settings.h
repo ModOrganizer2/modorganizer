@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SETTINGS_H
 
 #include "loadmechanism.h"
+#include <filterwidget.h>
 #include <lootcli/lootcli.h>
 #include <questionboxmemory.h>
 #include <log.h>
@@ -614,6 +615,11 @@ public:
   //
   bool doubleClicksOpenPreviews() const;
   void setDoubleClicksOpenPreviews(bool b);
+
+  // filter widget options
+  //
+  MOBase::FilterWidget::Options filterOptions() const;
+  void setFilterOptions(const MOBase::FilterWidget::Options& o);
 
 private:
   QSettings& m_Settings;
