@@ -76,7 +76,7 @@ public:
   void sort(int column, Qt::SortOrder order=Qt::AscendingOrder) override;
 
   FileTreeItem* itemFromIndex(const QModelIndex& index) const;
-  void sortItem(FileTreeItem& item);
+  void sortItem(FileTreeItem& item, bool force);
 
 private:
   class Range;

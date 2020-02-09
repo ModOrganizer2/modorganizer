@@ -92,7 +92,7 @@ public:
     return -1;
   }
 
-  void sort(int column, Qt::SortOrder order);
+  void sort(int column, Qt::SortOrder order, bool force);
 
   FileTreeItem* parent()
   {

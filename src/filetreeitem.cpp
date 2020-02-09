@@ -178,12 +178,14 @@ public:
 
 void FileTreeItem::sort()
 {
-  m_model->sortItem(*this);
+  if (!m_children.empty()) {
+    m_model->sortItem(*this, true);
+  }
 }
 
-void FileTreeItem::sort(int column, Qt::SortOrder order)
+void FileTreeItem::sort(int column, Qt::SortOrder order, bool force)
 {
-  if (!m_expanded) {
+  if (!force && !m_expanded) {
     m_sortingStale = true;
     return;
   }
@@ -220,7 +222,7 @@ void FileTreeItem::sort(int column, Qt::SortOrder order)
   });
 
   for (auto& child : m_children) {
-    child->sort(column, order);
+    child->sort(column, order, force);
   }
 }
 

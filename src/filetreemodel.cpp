@@ -379,7 +379,7 @@ Qt::ItemFlags FileTreeModel::flags(const QModelIndex& index) const
   return f;
 }
 
-void FileTreeModel::sortItem(FileTreeItem& item)
+void FileTreeModel::sortItem(FileTreeItem& item, bool force)
 {
   emit layoutAboutToBeChanged();
 
@@ -394,7 +394,7 @@ void FileTreeModel::sortItem(FileTreeItem& item)
     oldItems.push_back({itemFromIndex(index), index.column()});
   }
 
-  item.sort(m_sort.column, m_sort.order);
+  item.sort(m_sort.column, m_sort.order, force);
 
   QModelIndexList newList;
   newList.reserve(itemCount);
@@ -414,7 +414,7 @@ void FileTreeModel::sort(int column, Qt::SortOrder order)
   m_sort.column = column;
   m_sort.order = order;
 
-  sortItem(*m_root);
+  sortItem(*m_root, false);
 }
 
 FileTreeItem* FileTreeModel::itemFromIndex(const QModelIndex& index) const
@@ -487,7 +487,7 @@ void FileTreeModel::update(
   }
 
   if (added) {
-    parentItem.sort(m_sort.column, m_sort.order);
+    parentItem.sort(m_sort.column, m_sort.order, true);
   }
 }
 
