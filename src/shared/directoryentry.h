@@ -80,7 +80,7 @@ public:
     AlternativesVector;
 
   FileEntry();
-  FileEntry(Index index, std::wstring_view name, DirectoryEntry *parent);
+  FileEntry(Index index, std::wstring name, DirectoryEntry *parent);
 
   Index getIndex() const
   {
@@ -263,7 +263,7 @@ public:
 
   bool indexValid(FileEntry::Index index) const;
 
-  FileEntry::Ptr createFile(std::wstring_view name, DirectoryEntry *parent);
+  FileEntry::Ptr createFile(std::wstring name, DirectoryEntry *parent);
   FileEntry::Ptr getFile(FileEntry::Index index) const;
 
   size_t size() const
@@ -459,8 +459,6 @@ public:
   const FileEntry::Ptr searchFile(
     const std::wstring &path, const DirectoryEntry **directory=nullptr) const;
 
-  void insertFile(const std::wstring &filePath, FilesOrigin &origin, FILETIME fileTime);
-
   void removeFile(FileEntry::Index index);
 
   // remove the specified file from the tree. This can be a path leading to a
@@ -508,6 +506,10 @@ private:
 
   FileEntry::Ptr insert(
     std::wstring_view fileName, FilesOrigin &origin, FILETIME fileTime,
+    std::wstring_view archive, int order);
+
+  FileEntry::Ptr insert(
+    env::File& file, FilesOrigin &origin,
     std::wstring_view archive, int order);
 
   void addFiles(

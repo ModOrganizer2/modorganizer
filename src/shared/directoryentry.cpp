@@ -174,8 +174,8 @@ FileEntry::FileEntry() :
 {
 }
 
-FileEntry::FileEntry(Index index, std::wstring_view name, DirectoryEntry *parent) :
-  m_Index(index), m_Name(name.begin(), name.end()), m_Origin(-1), m_Archive(L"", -1), m_Parent(parent),
+FileEntry::FileEntry(Index index, std::wstring name, DirectoryEntry *parent) :
+  m_Index(index), m_Name(std::move(name)), m_Origin(-1), m_Archive(L"", -1), m_Parent(parent),
   m_FileSize(NoFileSize), m_CompressedFileSize(NoFileSize),
   m_LastAccessed(time(nullptr))
 {
@@ -511,7 +511,7 @@ bool FileRegister::indexValid(FileEntry::Index index) const
   return (m_Files.find(index) != m_Files.end());
 }
 
-FileEntry::Ptr FileRegister::createFile(std::wstring_view name, DirectoryEntry *parent)
+FileEntry::Ptr FileRegister::createFile(std::wstring name, DirectoryEntry *parent)
 {
   FileEntry::Index index = generateIndex();
 
@@ -707,7 +707,7 @@ void DirectoryEntry::addDir(FilesOrigin& origin, env::Directory& d)
   }
 
   for (auto& f : d.files) {
-    insert(f.name, origin, f.ft, L"", -1);
+    insert(f, origin, L"", -1);
   }
 
   std::sort(
@@ -944,20 +944,6 @@ const FileEntry::Ptr DirectoryEntry::searchFile(
   return FileEntry::Ptr();
 }
 
-void DirectoryEntry::insertFile(
-  const std::wstring &filePath, FilesOrigin &origin, FILETIME fileTime)
-{
-  size_t pos = filePath.find_first_of(L"\\/");
-
-  if (pos == std::string::npos) {
-    this->insert(filePath, origin, fileTime, std::wstring(), -1);
-  } else {
-    std::wstring dirName = filePath.substr(0, pos);
-    std::wstring rest = filePath.substr(pos + 1);
-    getSubDirectoryRecursive(dirName, true, origin.getID())->insertFile(rest, origin, fileTime);
-  }
-}
-
 void DirectoryEntry::removeFile(FileEntry::Index index)
 {
   removeFileFromList(index);
@@ -1065,9 +1051,8 @@ FileEntry::Ptr DirectoryEntry::insert(
   if (iter != m_Files.end()) {
     file = m_FileRegister->getFile(iter->second);
   } else {
-    file = m_FileRegister->createFile(fileName, this);
+    file = m_FileRegister->createFile(std::wstring(fileName.begin(), fileName.end()), this);
     addFileToList(std::move(fileNameLower), file->getIndex());
-
     // fileNameLower has moved from this point
   }
 
@@ -1075,6 +1060,26 @@ FileEntry::Ptr DirectoryEntry::insert(
   origin.addFile(file->getIndex());
 
   return file;
+}
+
+FileEntry::Ptr DirectoryEntry::insert(
+  env::File& file, FilesOrigin &origin, std::wstring_view archive, int order)
+{
+  auto iter = m_Files.find(file.lcname);
+  FileEntry::Ptr fe;
+
+  if (iter != m_Files.end()) {
+    fe = m_FileRegister->getFile(iter->second);
+  } else {
+    fe = m_FileRegister->createFile(std::move(file.name), this);
+    addFileToList(std::move(file.lcname), fe->getIndex());
+    // both file.name and file.lcname have been moved from this point
+  }
+
+  fe->addOrigin(origin.getID(), file.lastModified, archive, order);
+  origin.addFile(fe->getIndex());
+
+  return fe;
 }
 
 void DirectoryEntry::addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOffset)

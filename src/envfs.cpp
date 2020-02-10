@@ -1,4 +1,5 @@
 #include "envfs.h"
+#include "util.h"
 #include <utility.h>
 #include <log.h>
 
@@ -368,7 +369,12 @@ Directory getFilesAndDirs(const std::wstring& path)
 
       [](void* pcx, std::wstring_view path, FILETIME ft) {
       Context* cx = (Context*)pcx;
-      cx->current.top()->files.push_back({std::wstring(path.begin(), path.end()), ft});
+
+      cx->current.top()->files.push_back({
+        std::wstring(path.begin(), path.end()),
+        MOShared::ToLowerCopy(path),
+        ft
+      });
     }
   );
 

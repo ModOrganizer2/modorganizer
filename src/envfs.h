@@ -9,7 +9,8 @@ namespace env
 struct File
 {
   std::wstring name;
-  FILETIME ft;
+  std::wstring lcname;
+  FILETIME lastModified;
 };
 
 struct Directory
