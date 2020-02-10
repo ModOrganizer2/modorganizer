@@ -130,6 +130,13 @@ std::wstring ToLowerCopy(const std::wstring& text)
   return result;
 }
 
+std::wstring ToLowerCopy(std::wstring_view text)
+{
+  std::wstring result(text.begin(), text.end());
+  ToLowerInPlace(result);
+  return result;
+}
+
 bool CaseInsenstiveComparePred(wchar_t lhs, wchar_t rhs)
 {
   return std::tolower(lhs, loc) == std::tolower(rhs, loc);

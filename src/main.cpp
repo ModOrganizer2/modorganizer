@@ -885,6 +885,8 @@ int main(int argc, char *argv[])
   MOApplication application(argc, argv);
   QStringList arguments = application.arguments();
 
+  SetThisThreadName("main");
+
   setupPath();
 
   bool forcePrimary = false;

@@ -20,6 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "directoryentry.h"
 #include "windows_error.h"
 #include "error_report.h"
+#include "envfs.h"
+#include <utility.h>
 #include <log.h>
 #include <bsatk.h>
 #include <boost/bind.hpp>
@@ -172,15 +174,15 @@ FileEntry::FileEntry() :
 {
 }
 
-FileEntry::FileEntry(Index index, const std::wstring &name, DirectoryEntry *parent) :
-  m_Index(index), m_Name(name), m_Origin(-1), m_Archive(L"", -1), m_Parent(parent),
+FileEntry::FileEntry(Index index, std::wstring_view name, DirectoryEntry *parent) :
+  m_Index(index), m_Name(name.begin(), name.end()), m_Origin(-1), m_Archive(L"", -1), m_Parent(parent),
   m_FileSize(NoFileSize), m_CompressedFileSize(NoFileSize),
   m_LastAccessed(time(nullptr))
 {
 }
 
 void FileEntry::addOrigin(
-  int origin, FILETIME fileTime, const std::wstring &archive, int order)
+  int origin, FILETIME fileTime, std::wstring_view archive, int order)
 {
   m_LastAccessed = time(nullptr);
   if (m_Parent != nullptr) {
@@ -192,7 +194,7 @@ void FileEntry::addOrigin(
     // alternatives
     m_Origin = origin;
     m_FileTime = fileTime;
-    m_Archive = std::pair<std::wstring, int>(archive, order);
+    m_Archive = std::pair<std::wstring, int>(std::wstring(archive.begin(), archive.end()), order);
   }
   else if (
     (m_Parent != nullptr) && (
@@ -213,7 +215,7 @@ void FileEntry::addOrigin(
 
     m_Origin = origin;
     m_FileTime = fileTime;
-    m_Archive = std::pair<std::wstring, int>(archive, order);
+    m_Archive = std::pair<std::wstring, int>(std::wstring(archive.begin(), archive.end()), order);
   }
   else {
     // This mod is just an alternative
@@ -232,14 +234,14 @@ void FileEntry::addOrigin(
 
       if ((m_Parent != nullptr) &&
         (m_Parent->getOriginByID(iter->first).getPriority() < m_Parent->getOriginByID(origin).getPriority())) {
-        m_Alternatives.insert(iter, {origin, {archive, order}});
+        m_Alternatives.insert(iter, {origin, {std::wstring(archive.begin(), archive.end()), order}});
         found = true;
         break;
       }
     }
 
     if (!found) {
-      m_Alternatives.push_back({origin, {archive, order}});
+      m_Alternatives.push_back({origin, {std::wstring(archive.begin(), archive.end()), order}});
     }
   }
 }
@@ -509,12 +511,12 @@ bool FileRegister::indexValid(FileEntry::Index index) const
   return (m_Files.find(index) != m_Files.end());
 }
 
-FileEntry::Ptr FileRegister::createFile(const std::wstring &name, DirectoryEntry *parent)
+FileEntry::Ptr FileRegister::createFile(std::wstring_view name, DirectoryEntry *parent)
 {
   FileEntry::Index index = generateIndex();
 
   auto r = m_Files.insert_or_assign(
-    index, FileEntry::Ptr(new FileEntry(index, name, parent)));
+    index, FileEntry::Ptr(new FileEntry(index, std::move(name), parent)));
 
   return r.first->second;
 }
@@ -637,20 +639,20 @@ void FileRegister::unregisterFile(FileEntry::Ptr file)
 
 
 DirectoryEntry::DirectoryEntry(
-  const std::wstring &name, DirectoryEntry *parent, int originID) :
+  std::wstring name, DirectoryEntry *parent, int originID) :
     m_OriginConnection(new OriginConnection),
-    m_Name(name), m_Parent(parent), m_Populated(false), m_TopLevel(true)
+    m_Name(std::move(name)), m_Parent(parent), m_Populated(false), m_TopLevel(true)
 {
   m_FileRegister.reset(new FileRegister(m_OriginConnection));
   m_Origins.insert(originID);
 }
 
 DirectoryEntry::DirectoryEntry(
-  const std::wstring &name, DirectoryEntry *parent, int originID,
+  std::wstring name, DirectoryEntry *parent, int originID,
   boost::shared_ptr<FileRegister> fileRegister,
   boost::shared_ptr<OriginConnection> originConnection) :
     m_FileRegister(fileRegister), m_OriginConnection(originConnection),
-    m_Name(name), m_Parent(parent), m_Populated(false), m_TopLevel(false)
+    m_Name(std::move(name)), m_Parent(parent), m_Populated(false), m_TopLevel(false)
 {
   m_Origins.insert(originID);
 }
@@ -1025,8 +1027,8 @@ void DirectoryEntry::removeFiles(const std::set<FileEntry::Index> &indices)
 }
 
 FileEntry::Ptr DirectoryEntry::insert(
-  const std::wstring &fileName, FilesOrigin &origin, FILETIME fileTime,
-  const std::wstring &archive, int order)
+  std::wstring_view fileName, FilesOrigin &origin, FILETIME fileTime,
+  std::wstring_view archive, int order)
 {
   std::wstring fileNameLower = ToLowerCopy(fileName);
 
@@ -1050,6 +1052,35 @@ FileEntry::Ptr DirectoryEntry::insert(
 
 void DirectoryEntry::addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOffset)
 {
+  struct Context
+  {
+    FilesOrigin& origin;
+    std::stack<DirectoryEntry*> current;
+  };
+
+  Context cx = {origin};
+  cx.current.push(this);
+
+  env::forEachEntry(buffer, &cx,
+    [](void* pcx, std::wstring_view path) {
+      Context* cx = (Context*)pcx;
+      cx->current.push(cx->current.top()->getSubDirectory(path, true, cx->origin.getID()));
+    },
+
+    [](void* pcx, std::wstring_view path) {
+      Context* cx = (Context*)pcx;
+      auto* current= cx->current.top();
+      std::sort(current->m_SubDirectories.begin(), current->m_SubDirectories.end(), &DirCompareByName);
+      cx->current.pop();
+    },
+
+    [](void* pcx, std::wstring_view path, FILETIME ft) {
+      Context* cx = (Context*)pcx;
+      cx->current.top()->insert(path, cx->origin, ft, L"", -1);
+    }
+  );
+
+  /*
   WIN32_FIND_DATAW findData;
 
   _snwprintf_s(buffer + bufferOffset, MAXPATH_UNICODE - bufferOffset, _TRUNCATE, L"\\*");
@@ -1087,7 +1118,7 @@ void DirectoryEntry::addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOf
   }
 
   std::sort(m_SubDirectories.begin(), m_SubDirectories.end(), &DirCompareByName);
-  ::FindClose(searchHandle);
+  ::FindClose(searchHandle);*/
 }
 
 void DirectoryEntry::addFiles(
@@ -1119,17 +1150,18 @@ void DirectoryEntry::addFiles(
 }
 
 DirectoryEntry *DirectoryEntry::getSubDirectory(
-  const std::wstring &name, bool create, int originID)
+  std::wstring_view name, bool create, int originID)
 {
-  for (DirectoryEntry *entry : m_SubDirectories) {
-    if (CaseInsensitiveEqual(entry->getName(), name)) {
-      return entry;
-    }
+  auto itor = m_SubDirectoriesLookup.find(ToLowerCopy(name));
+
+  if (itor != m_SubDirectoriesLookup.end()) {
+    return itor->second;
   }
 
   if (create) {
     auto* entry = new DirectoryEntry(
-      name, this, originID, m_FileRegister, m_OriginConnection);
+      std::wstring(name.begin(), name.end()), this, originID,
+      m_FileRegister, m_OriginConnection);
 
     addDirectoryToList(entry);
 

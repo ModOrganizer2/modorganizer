@@ -132,6 +132,7 @@ SET(organizer_SRCS
 	filerenamer.cpp
 	texteditor.cpp
 	env.cpp
+	envfs.cpp
 	envmetrics.cpp
 	envmodule.cpp
 	envsecurity.cpp
@@ -262,6 +263,7 @@ SET(organizer_HDRS
 	filerenamer.h
 	texteditor.h
 	env.h
+	envfs.h
 	envmetrics.h
 	envmodule.h
 	envsecurity.h
@@ -392,6 +394,7 @@ set(downloads
 
 set(env
 	env
+	envfs
 	envmetrics
 	envmodule
 	envsecurity

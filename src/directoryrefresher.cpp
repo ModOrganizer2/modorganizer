@@ -159,7 +159,7 @@ void DirectoryRefresher::addModToStructure(DirectoryEntry *directoryStructure
                                            , const QStringList &archives)
 {
   addModFilesToStructure(directoryStructure, modName, priority, directory, stealFiles);
-  
+
   if (Settings::instance().archiveParsing()) {
     addModBSAToStructure(directoryStructure, modName, priority, directory, archives);
   }
@@ -167,6 +167,9 @@ void DirectoryRefresher::addModToStructure(DirectoryEntry *directoryStructure
 
 void DirectoryRefresher::refresh()
 {
+  SetThisThreadName("DirectoryRefresher");
+  TimeThis tt("DirectoryRefresher::refresh()");
+
   QMutexLocker locker(&m_RefreshLock);
 
   delete m_DirectoryStructure;

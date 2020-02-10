@@ -78,7 +78,7 @@ public:
     AlternativesVector;
 
   FileEntry();
-  FileEntry(Index index, const std::wstring &name, DirectoryEntry *parent);
+  FileEntry(Index index, std::wstring_view name, DirectoryEntry *parent);
 
   Index getIndex() const
   {
@@ -91,7 +91,7 @@ public:
   }
 
   void addOrigin(
-    int origin, FILETIME fileTime, const std::wstring &archive, int order);
+    int origin, FILETIME fileTime, std::wstring_view archive, int order);
 
   // remove the specified origin from the list of origins that contain this
   // file. if no origin is left, the file is effectively deleted and true is
@@ -261,7 +261,7 @@ public:
 
   bool indexValid(FileEntry::Index index) const;
 
-  FileEntry::Ptr createFile(const std::wstring &name, DirectoryEntry *parent);
+  FileEntry::Ptr createFile(std::wstring_view name, DirectoryEntry *parent);
   FileEntry::Ptr getFile(FileEntry::Index index) const;
 
   size_t size() const
@@ -312,10 +312,10 @@ public:
   using FileKey = DirectoryEntryFileKey;
 
   DirectoryEntry(
-    const std::wstring &name, DirectoryEntry *parent, int originID);
+    std::wstring name, DirectoryEntry *parent, int originID);
 
   DirectoryEntry(
-    const std::wstring &name, DirectoryEntry *parent, int originID,
+    std::wstring name, DirectoryEntry *parent, int originID,
     boost::shared_ptr<FileRegister> fileRegister,
     boost::shared_ptr<OriginConnection> originConnection);
 
@@ -501,8 +501,8 @@ private:
   DirectoryEntry(const DirectoryEntry &reference);
 
   FileEntry::Ptr insert(
-    const std::wstring &fileName, FilesOrigin &origin, FILETIME fileTime,
-    const std::wstring &archive, int order);
+    std::wstring_view fileName, FilesOrigin &origin, FILETIME fileTime,
+    std::wstring_view archive, int order);
 
   void addFiles(
     FilesOrigin &origin, wchar_t *buffer, int bufferOffset);
@@ -511,10 +511,10 @@ private:
     FilesOrigin &origin, BSA::Folder::Ptr archiveFolder, FILETIME &fileTime,
     const std::wstring &archiveName, int order);
 
-  DirectoryEntry *getSubDirectory(
-    const std::wstring &name, bool create, int originID = -1);
+  DirectoryEntry* getSubDirectory(
+    std::wstring_view name, bool create, int originID = -1);
 
-  DirectoryEntry *getSubDirectoryRecursive(
+  DirectoryEntry* getSubDirectoryRecursive(
     const std::wstring &path, bool create, int originID = -1);
 
   void removeDirRecursive();
