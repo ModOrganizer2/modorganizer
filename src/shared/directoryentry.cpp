@@ -1152,7 +1152,8 @@ void DirectoryEntry::addFiles(
 DirectoryEntry *DirectoryEntry::getSubDirectory(
   std::wstring_view name, bool create, int originID)
 {
-  auto itor = m_SubDirectoriesLookup.find(ToLowerCopy(name));
+  std::wstring nameLc = ToLowerCopy(name);
+  auto itor = m_SubDirectoriesLookup.find(nameLc);
 
   if (itor != m_SubDirectoriesLookup.end()) {
     return itor->second;
@@ -1163,7 +1164,8 @@ DirectoryEntry *DirectoryEntry::getSubDirectory(
       std::wstring(name.begin(), name.end()), this, originID,
       m_FileRegister, m_OriginConnection);
 
-    addDirectoryToList(entry);
+    addDirectoryToList(entry, std::move(nameLc));
+    // nameLc is moved from this point
 
     return entry;
   } else {
@@ -1211,10 +1213,10 @@ void DirectoryEntry::removeDirRecursive()
   m_SubDirectoriesLookup.clear();
 }
 
-void DirectoryEntry::addDirectoryToList(DirectoryEntry* e)
+void DirectoryEntry::addDirectoryToList(DirectoryEntry* e, std::wstring nameLc)
 {
   m_SubDirectories.push_back(e);
-  m_SubDirectoriesLookup.emplace(ToLowerCopy(e->getName()), e);
+  m_SubDirectoriesLookup.emplace(std::move(nameLc), e);
 }
 
 void DirectoryEntry::removeDirectoryFromList(SubDirectories::iterator itor)

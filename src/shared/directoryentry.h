@@ -519,7 +519,7 @@ private:
 
   void removeDirRecursive();
 
-  void addDirectoryToList(DirectoryEntry* e);
+  void addDirectoryToList(DirectoryEntry* e, std::wstring nameLc);
   void removeDirectoryFromList(SubDirectories::iterator itor);
 
   void addFileToList(std::wstring fileNameLower, FileEntry::Index index);
