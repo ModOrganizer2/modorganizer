@@ -4,16 +4,6 @@
 
 using namespace MOBase;
 
-struct NtCloser
-{
-  using pointer = HANDLE;
-  void operator()(HANDLE h)
-  {
-  }
-};
-
-using NtHandle = std::unique_ptr<HANDLE, NtCloser>;
-
 typedef struct _UNICODE_STRING {
   USHORT Length;
   USHORT MaximumLength;
@@ -76,8 +66,12 @@ typedef NTSTATUS(WINAPI *NtOpenFile_type)(PHANDLE, ACCESS_MASK,
   POBJECT_ATTRIBUTES, PIO_STATUS_BLOCK,
   ULONG, ULONG);
 
+typedef NTSTATUS(WINAPI *NtClose_type)(HANDLE);
+
+
 NtOpenFile_type NtOpenFile = nullptr;
 NtQueryDirectoryFile_type NtQueryDirectoryFile = nullptr;
+extern NtClose_type NtClose = nullptr;
 
 
 #define FILE_DIRECTORY_FILE                     0x00000001
@@ -160,17 +154,46 @@ constexpr std::size_t AllocSize = 1024 * 1024;
 std::vector<std::unique_ptr<unsigned char[]>> g_buffers;
 
 
+struct HandleCloserThread
+{
+  std::vector<HANDLE> handles;
+  std::thread thread;
+  std::atomic<bool> busy;
+
+  HandleCloserThread()
+    : busy(false)
+  {
+  }
+
+  ~HandleCloserThread()
+  {
+    if (thread.joinable()) {
+      thread.join();
+    }
+  }
+
+  void closeHandles()
+  {
+    for (auto& h : handles) {
+      NtClose(h);
+    }
+
+    handles.clear();
+    busy = false;
+  }
+};
+
+std::array<HandleCloserThread, 10> g_handleCloserThreads;
+
 
 void forEachEntryImpl(
-  void* cx, POBJECT_ATTRIBUTES poa, std::size_t depth,
+  void* cx, HandleCloserThread& hc, POBJECT_ATTRIBUTES poa, std::size_t depth,
   DirStartF* dirStartF, DirEndF* dirEndF, FileF* fileF)
 {
   IO_STATUS_BLOCK iosb;
   UNICODE_STRING ObjectName;
   OBJECT_ATTRIBUTES oa = { sizeof(oa), 0, &ObjectName };
   NTSTATUS status;
-
-  //log::debug("{}{}", std::wstring(depth * 2, L' '), toString(poa));
 
   status = NtOpenFile(
     &oa.RootDirectory, FILE_GENERIC_READ, poa, &iosb, FILE_SHARE_VALID_FLAGS,
@@ -184,10 +207,7 @@ void forEachEntryImpl(
     return;
   }
 
-  NtHandle rootDirectoryHandle(oa.RootDirectory);
-
-  //std::unique_ptr<unsigned char> buffer(new unsigned char[AllocSize]);
-
+  hc.handles.push_back(oa.RootDirectory);
   unsigned char* buffer;
 
   if (depth >= g_buffers.size()) {
@@ -248,7 +268,7 @@ void forEachEntryImpl(
 
         if (DirInfo->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
           dirStartF(cx, toStringView(&oa));
-          forEachEntryImpl(cx, &oa, depth+1, dirStartF, dirEndF, fileF);
+          forEachEntryImpl(cx, hc, &oa, depth+1, dirStartF, dirEndF, fileF);
           dirEndF(cx, toStringView(&oa));
         } else {
           //log::debug("{}{}", std::wstring((depth + 1) * 2, L' '), toString(&oa));
@@ -266,8 +286,6 @@ void forEachEntryImpl(
       }
     }
 
-    //log::debug("{}{} processed {} files", std::wstring(depth * 2, L' '), toString(poa), count);
-
     if (AllocSize - iosb.Information > (ULONG)FIELD_OFFSET(FILE_DIRECTORY_INFORMATION, FileName[256])) {
       // NO_MORE_FILES
       break;
@@ -275,14 +293,41 @@ void forEachEntryImpl(
   }
 }
 
+std::size_t findHandleCloserThread()
+{
+  for (;;) {
+    for (std::size_t i=0; i<g_handleCloserThreads.size(); ++i) {
+      auto& t = g_handleCloserThreads[i];
+
+      if (!t.busy) {
+        if (t.thread.joinable()) {
+          t.thread.join();
+        }
+
+        t.busy = true;
+
+        return i;
+      }
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+}
+
 void forEachEntry(
   const std::wstring& path, void* cx,
   DirStartF* dirStartF, DirEndF* dirEndF, FileF* fileF)
 {
+  const std::size_t hci = findHandleCloserThread();
+
+  auto& hc = g_handleCloserThreads[hci];
+  hc.handles.reserve(50'000);
+
   if (!NtOpenFile) {
     HMODULE m = ::LoadLibraryW(L"ntdll.dll");
     NtOpenFile = (NtOpenFile_type)::GetProcAddress(m, "NtOpenFile");
     NtQueryDirectoryFile = (NtQueryDirectoryFile_type)::GetProcAddress(m, "NtQueryDirectoryFile");
+    NtClose = (NtClose_type)::GetProcAddress(m, "NtClose");
     ::FreeLibrary(m);
   }
 
@@ -297,7 +342,9 @@ void forEachEntry(
   oa.Length = sizeof(oa);
   oa.ObjectName = &ObjectName;
 
-  forEachEntryImpl(cx, &oa, 0, dirStartF, dirEndF, fileF);
+  forEachEntryImpl(cx, hc, &oa, 0, dirStartF, dirEndF, fileF);
+
+  hc.thread = std::thread([hci]{ g_handleCloserThreads[hci].closeHandles(); });
 }
 
 } // namespace
