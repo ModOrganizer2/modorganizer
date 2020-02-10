@@ -209,6 +209,16 @@ void Settings::setUseSplash(bool b)
   set(m_Settings, "Settings", "use_splash", b);
 }
 
+std::size_t Settings::refreshThreadCount() const
+{
+  return get<std::size_t>(m_Settings, "Settings", "refresh_thread_count", 10);
+}
+
+void Settings::setRefreshThreadCount(std::size_t n) const
+{
+  return set(m_Settings, "Settings", "refresh_thread_count", n);
+}
+
 std::optional<QVersionNumber> Settings::version() const
 {
   if (auto v=getOptional<QString>(m_Settings, "General", "version")) {

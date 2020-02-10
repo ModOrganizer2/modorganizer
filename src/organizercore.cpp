@@ -88,24 +88,19 @@ QStringList toStringList(InputIterator current, InputIterator end)
 OrganizerCore::OrganizerCore(Settings &settings)
   : m_UserInterface(nullptr)
   , m_PluginContainer(nullptr)
-  , m_GameName()
   , m_CurrentProfile(nullptr)
   , m_Settings(settings)
   , m_Updater(NexusInterface::instance(m_PluginContainer))
-  , m_AboutToRun()
-  , m_FinishedRun()
-  , m_ModInstalled()
   , m_ModList(m_PluginContainer, this)
   , m_PluginList(this)
-  , m_DirectoryRefresher()
+  , m_DirectoryRefresher(settings.refreshThreadCount())
   , m_DirectoryStructure(new DirectoryEntry(L"data", nullptr, 0))
   , m_DownloadManager(NexusInterface::instance(m_PluginContainer), this)
-  , m_InstallationManager()
-  , m_RefresherThread()
   , m_DirectoryUpdate(false)
   , m_ArchivesInit(false)
   , m_PluginListsWriter(std::bind(&OrganizerCore::savePluginList, this))
 {
+  env::setHandleCloserThreadCount(settings.refreshThreadCount());
   m_DownloadManager.setOutputDirectory(m_Settings.paths().downloads(), false);
 
   NexusInterface::instance(m_PluginContainer)->setCacheDirectory(
@@ -1245,13 +1240,17 @@ void OrganizerCore::updateModInDirectoryStructure(unsigned int index,
 
 void OrganizerCore::updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::Ptr> modInfo)
 {
+  std::vector<DirectoryRefresher::EntryInfo> entries;
+
   for (auto idx : modInfo.keys()) {
-    // add files of the bsa to the directory structure
-    m_DirectoryRefresher.addModFilesToStructure(
-      m_DirectoryStructure, modInfo[idx]->name(),
-      m_CurrentProfile->getModPriority(idx), modInfo[idx]->absolutePath(),
-      modInfo[idx]->stealFiles());
+    entries.push_back({
+      modInfo[idx]->name(), modInfo[idx]->absolutePath(),
+      modInfo[idx]->stealFiles(), {}, m_CurrentProfile->getModPriority(idx)});
   }
+
+  m_DirectoryRefresher.addMultipleModsFilesToStructure(
+    m_DirectoryStructure, entries);
+
   DirectoryRefresher::cleanStructure(m_DirectoryStructure);
   // need to refresh plugin list now so we can activate esps
   refreshESPList(true);

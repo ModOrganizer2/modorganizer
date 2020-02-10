@@ -731,6 +731,11 @@ public:
   bool useSplash() const;
   void setUseSplash(bool b);
 
+  // number of threads to use when refreshing
+  //
+  std::size_t refreshThreadCount() const;
+  void setRefreshThreadCount(std::size_t n) const;
+
   GameSettings& game();
   const GameSettings& game() const;
 

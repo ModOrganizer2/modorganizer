@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "report.h"
 #include "modinfo.h"
 #include "settings.h"
+#include "envfs.h"
 
 #include <QApplication>
 #include <QDir>
@@ -36,8 +37,8 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-DirectoryRefresher::DirectoryRefresher()
-  : m_DirectoryStructure(nullptr)
+DirectoryRefresher::DirectoryRefresher(std::size_t threadCount)
+  : m_DirectoryStructure(nullptr), m_threadCount(threadCount)
 {
 }
 
@@ -116,59 +117,160 @@ void DirectoryRefresher::addModBSAToStructure(DirectoryEntry *directoryStructure
   }
 }
 
-void DirectoryRefresher::addModFilesToStructure(DirectoryEntry *directoryStructure, const QString &modName,
-                                                int priority, const QString &directory, const QStringList &stealFiles)
+void DirectoryRefresher::stealModFilesIntoStructure(
+  DirectoryEntry *directoryStructure, const QString &modName,
+  int priority, const QString &directory, const QStringList &stealFiles)
 {
   std::wstring directoryW = ToWString(QDir::toNativeSeparators(directory));
 
-  if (stealFiles.length() > 0) {
-    // instead of adding all the files of the target directory, we just change the root of the specified
-    // files to this mod
-    FilesOrigin &origin = directoryStructure->createOrigin(ToWString(modName), directoryW, priority);
-    for (const QString &filename : stealFiles) {
-      if (filename.isEmpty()) {
-        log::warn("Trying to find file with no name");
-        continue;
-      }
-      QFileInfo fileInfo(filename);
-      FileEntry::Ptr file = directoryStructure->findFile(ToWString(fileInfo.fileName()));
-      if (file.get() != nullptr) {
-        if (file->getOrigin() == 0) {
-          // replace data as the origin on this bsa
-          file->removeOrigin(0);
-        }
-        origin.addFile(file->getIndex());
-        file->addOrigin(origin.getID(), file->getFileTime(), L"", -1);
-      } else {
-        QString warnStr = fileInfo.absolutePath();
-        if (warnStr.isEmpty())
-          warnStr = filename;
-        log::warn("file not found: {}", warnStr);
-      }
+  // instead of adding all the files of the target directory, we just change the root of the specified
+  // files to this mod
+  FilesOrigin &origin = directoryStructure->createOrigin(ToWString(modName), directoryW, priority);
+  for (const QString &filename : stealFiles) {
+    if (filename.isEmpty()) {
+      log::warn("Trying to find file with no name");
+      continue;
     }
+    QFileInfo fileInfo(filename);
+    FileEntry::Ptr file = directoryStructure->findFile(ToWString(fileInfo.fileName()));
+    if (file.get() != nullptr) {
+      if (file->getOrigin() == 0) {
+        // replace data as the origin on this bsa
+        file->removeOrigin(0);
+      }
+      origin.addFile(file->getIndex());
+      file->addOrigin(origin.getID(), file->getFileTime(), L"", -1);
+    } else {
+      QString warnStr = fileInfo.absolutePath();
+      if (warnStr.isEmpty())
+        warnStr = filename;
+      log::warn("file not found: {}", warnStr);
+    }
+  }
+}
+
+void DirectoryRefresher::addModFilesToStructure(
+  DirectoryEntry *directoryStructure, const QString &modName,
+  int priority, const QString &directory, const QStringList &stealFiles)
+{
+  TimeThis tt("addModFilesToStructure()");
+
+  std::wstring directoryW = ToWString(QDir::toNativeSeparators(directory));
+
+  if (stealFiles.length() > 0) {
+    stealModFilesIntoStructure(
+      directoryStructure, modName, priority, directory, stealFiles);
   } else {
     directoryStructure->addFromOrigin(ToWString(modName), directoryW, priority);
   }
 }
 
 void DirectoryRefresher::addModToStructure(DirectoryEntry *directoryStructure
-                                           , const QString &modName
-                                           , int priority
-                                           , const QString &directory
-                                           , const QStringList &stealFiles
-                                           , const QStringList &archives)
+  , const QString &modName
+  , int priority
+  , const QString &directory
+  , const QStringList &stealFiles
+  , const QStringList &archives)
 {
-  addModFilesToStructure(directoryStructure, modName, priority, directory, stealFiles);
+  TimeThis tt("addModToStructure()");
+
+  if (stealFiles.length() > 0) {
+    stealModFilesIntoStructure(
+      directoryStructure, modName, priority, directory, stealFiles);
+  } else {
+    std::wstring directoryW = ToWString(QDir::toNativeSeparators(directory));
+    directoryStructure->addFromOrigin(ToWString(modName), directoryW, priority);
+  }
 
   if (Settings::instance().archiveParsing()) {
     addModBSAToStructure(directoryStructure, modName, priority, directory, archives);
   }
 }
 
+struct ModThread
+{
+  std::wstring path;
+  env::Directory* dir = nullptr;
+  std::condition_variable cv;
+  std::mutex mutex;
+  bool ready = false;
+
+  void wakeup()
+  {
+    ready = true;
+    cv.notify_one();
+  }
+
+  void run()
+  {
+    std::unique_lock lock(mutex);
+    cv.wait(lock, [&]{ return ready; });
+
+    *dir = env::getFilesAndDirs(path);
+
+    ready = false;
+  }
+};
+
+void DirectoryRefresher::addMultipleModsFilesToStructure(
+  MOShared::DirectoryEntry *directoryStructure,
+  const std::vector<EntryInfo>& entries, bool emitProgress)
+{
+  TimeThis tt(QString("add %1 mods").arg(entries.size()));
+
+  env::ThreadPool<ModThread> threads(m_threadCount);
+  std::vector<env::Directory> dirs(entries.size());
+
+  for (std::size_t i=0; i<entries.size(); ++i) {
+    const auto& e = entries[i];
+    const int prio = static_cast<int>(i + 1);
+
+    try {
+      if (e.stealFiles.length() > 0) {
+        stealModFilesIntoStructure(
+          directoryStructure, e.modName, prio, e.absolutePath, e.stealFiles);
+      } else {
+        auto& mt = threads.request();
+
+        mt.path = QDir::toNativeSeparators(e.absolutePath).toStdWString();
+        mt.dir = &dirs[i];
+
+        mt.wakeup();
+      }
+    } catch (const std::exception& ex) {
+      emit error(tr("failed to read mod (%1): %2").arg(e.modName, ex.what()));
+    }
+
+    if (emitProgress) {
+      emit progress((static_cast<int>(i) * 100) / static_cast<int>(entries.size()) + 1);
+    }
+  }
+
+  threads.join();
+
+  for (std::size_t i=0; i<entries.size(); ++i) {
+    const int prio = static_cast<int>(i + 1);
+
+    directoryStructure->addFromList(
+      entries[i].modName.toStdWString(),
+      entries[i].absolutePath.toStdWString(),
+      dirs[i],
+      prio);
+
+    if (Settings::instance().archiveParsing()) {
+      addModBSAToStructure(
+        directoryStructure,
+        entries[i].modName,
+        prio,
+        entries[i].absolutePath,
+        entries[i].archives);
+    }
+  }
+}
+
 void DirectoryRefresher::refresh()
 {
   SetThisThreadName("DirectoryRefresher");
-  TimeThis tt("DirectoryRefresher::refresh()");
 
   QMutexLocker locker(&m_RefreshLock);
 
@@ -178,20 +280,16 @@ void DirectoryRefresher::refresh()
 
   IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
 
-  std::wstring dataDirectory = QDir::toNativeSeparators(game->dataDirectory().absolutePath()).toStdWString();
+  std::wstring dataDirectory =
+    QDir::toNativeSeparators(game->dataDirectory().absolutePath()).toStdWString();
+
   m_DirectoryStructure->addFromOrigin(L"data", dataDirectory, 0);
 
-  std::sort(m_Mods.begin(), m_Mods.end(), [](auto lhs, auto rhs){return lhs.priority < rhs.priority;});
-  auto iter = m_Mods.begin();
+  std::sort(m_Mods.begin(), m_Mods.end(), [](auto lhs, auto rhs) {
+    return lhs.priority < rhs.priority;
+  });
 
-  for (int i = 1; iter != m_Mods.end(); ++iter, ++i) {
-    try {
-      addModToStructure(m_DirectoryStructure, iter->modName, i, iter->absolutePath, iter->stealFiles, iter->archives);
-    } catch (const std::exception &e) {
-      emit error(tr("failed to read mod (%1): %2").arg(iter->modName, e.what()));
-    }
-    emit progress((i * 100) / static_cast<int>(m_Mods.size()) + 1);
-  }
+  addMultipleModsFilesToStructure(m_DirectoryStructure, m_Mods, true);
 
   m_DirectoryStructure->getFileRegister()->sortOrigins();
 

@@ -150,44 +150,62 @@ QString toString(POBJECT_ATTRIBUTES poa)
 }
 
 
-constexpr std::size_t AllocSize = 1024 * 1024;
-std::vector<std::unique_ptr<unsigned char[]>> g_buffers;
-
-
-struct HandleCloserThread
+class HandleCloserThread
 {
-  std::vector<HANDLE> handles;
-  std::thread thread;
-  std::atomic<bool> busy;
-
+public:
   HandleCloserThread()
-    : busy(false)
+    : m_ready(false)
   {
+    m_handles.reserve(50'000);
   }
 
-  ~HandleCloserThread()
+  void add(HANDLE h)
   {
-    if (thread.joinable()) {
-      thread.join();
-    }
+    m_handles.push_back(h);
   }
+
+  void wakeup()
+  {
+    m_ready = true;
+    m_cv.notify_one();
+  }
+
+  void run()
+  {
+    std::unique_lock lock(m_mutex);
+    m_cv.wait(lock, [&]{ return m_ready; });
+
+    closeHandles();
+  }
+
+private:
+  std::vector<HANDLE> m_handles;
+  std::condition_variable m_cv;
+  std::mutex m_mutex;
+  bool m_ready;
 
   void closeHandles()
   {
-    for (auto& h : handles) {
+    for (auto& h : m_handles) {
       NtClose(h);
     }
 
-    handles.clear();
-    busy = false;
+    m_handles.clear();
+    m_ready = false;
   }
 };
 
-std::array<HandleCloserThread, 10> g_handleCloserThreads;
+constexpr std::size_t AllocSize = 1024 * 1024;
+static ThreadPool<HandleCloserThread> g_handleClosers;
 
+void setHandleCloserThreadCount(std::size_t n)
+{
+  g_handleClosers.setMax(n);
+}
 
 void forEachEntryImpl(
-  void* cx, HandleCloserThread& hc, POBJECT_ATTRIBUTES poa, std::size_t depth,
+  void* cx, HandleCloserThread& hc, std::vector<std::unique_ptr<unsigned char[]>>& buffers,
+  POBJECT_ATTRIBUTES poa, std::size_t depth,
   DirStartF* dirStartF, DirEndF* dirEndF, FileF* fileF)
 {
   IO_STATUS_BLOCK iosb;
@@ -207,14 +225,14 @@ void forEachEntryImpl(
     return;
   }
 
-  hc.handles.push_back(oa.RootDirectory);
+  hc.add(oa.RootDirectory);
   unsigned char* buffer;
 
-  if (depth >= g_buffers.size()) {
-    g_buffers.emplace_back(std::make_unique<unsigned char[]>(AllocSize));
-    buffer = g_buffers.back().get();
+  if (depth >= buffers.size()) {
+    buffers.emplace_back(std::make_unique<unsigned char[]>(AllocSize));
+    buffer = buffers.back().get();
   } else {
-    buffer = g_buffers[depth].get();
+    buffer = buffers[depth].get();
   }
 
   union
@@ -268,7 +286,7 @@ void forEachEntryImpl(
 
         if (DirInfo->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
           dirStartF(cx, toStringView(&oa));
-          forEachEntryImpl(cx, hc, &oa, depth+1, dirStartF, dirEndF, fileF);
+          forEachEntryImpl(cx, hc, buffers, &oa, depth+1, dirStartF, dirEndF, fileF);
           dirEndF(cx, toStringView(&oa));
         } else {
           //log::debug("{}{}", std::wstring((depth + 1) * 2, L' '), toString(&oa));
@@ -293,35 +311,13 @@ void forEachEntryImpl(
   }
 }
 
-std::size_t findHandleCloserThread()
-{
-  for (;;) {
-    for (std::size_t i=0; i<g_handleCloserThreads.size(); ++i) {
-      auto& t = g_handleCloserThreads[i];
-
-      if (!t.busy) {
-        if (t.thread.joinable()) {
-          t.thread.join();
-        }
-
-        t.busy = true;
-
-        return i;
-      }
-    }
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
-}
-
 void forEachEntry(
   const std::wstring& path, void* cx,
   DirStartF* dirStartF, DirEndF* dirEndF, FileF* fileF)
 {
-  const std::size_t hci = findHandleCloserThread();
+  auto& hc = g_handleClosers.request();
 
-  auto& hc = g_handleCloserThreads[hci];
-  hc.handles.reserve(50'000);
+  std::vector<std::unique_ptr<unsigned char[]>> buffers;
 
   if (!NtOpenFile) {
     HMODULE m = ::LoadLibraryW(L"ntdll.dll");
@@ -342,9 +338,41 @@ void forEachEntry(
   oa.Length = sizeof(oa);
   oa.ObjectName = &ObjectName;
 
-  forEachEntryImpl(cx, hc, &oa, 0, dirStartF, dirEndF, fileF);
+  forEachEntryImpl(cx, hc, buffers, &oa, 0, dirStartF, dirEndF, fileF);
+  hc.wakeup();
+}
 
-  hc.thread = std::thread([hci]{ g_handleCloserThreads[hci].closeHandles(); });
+Directory getFilesAndDirs(const std::wstring& path)
+{
+  struct Context
+  {
+    std::stack<Directory*> current;
+  };
+
+  Directory root;
+
+  Context cx;
+  cx.current.push(&root);
+
+  env::forEachEntry(path, &cx,
+    [](void* pcx, std::wstring_view path) {
+      Context* cx = (Context*)pcx;
+      cx->current.top()->dirs.push_back({std::wstring(path.begin(), path.end())});
+      cx->current.push(&cx->current.top()->dirs.back());
+    },
+
+    [](void* pcx, std::wstring_view path) {
+      Context* cx = (Context*)pcx;
+      cx->current.pop();
+    },
+
+      [](void* pcx, std::wstring_view path, FILETIME ft) {
+      Context* cx = (Context*)pcx;
+      cx->current.top()->files.push_back({std::wstring(path.begin(), path.end()), ft});
+    }
+  );
+
+  return root;
 }
 
 } // namespace

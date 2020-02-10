@@ -39,12 +39,23 @@ class DirectoryRefresher : public QObject
   Q_OBJECT
 
 public:
+  struct EntryInfo {
+    EntryInfo(const QString &modName, const QString &absolutePath,
+      const QStringList &stealFiles, const QStringList &archives, int priority)
+      : modName(modName), absolutePath(absolutePath), stealFiles(stealFiles)
+      , archives(archives), priority(priority) {}
+    QString modName;
+    QString absolutePath;
+    QStringList stealFiles;
+    QStringList archives;
+    int priority;
+  };
 
   /**
    * @brief constructor
    *
    **/
-  DirectoryRefresher();
+  DirectoryRefresher(std::size_t threadCount);
 
   ~DirectoryRefresher();
 
@@ -53,7 +64,7 @@ public:
    *
    * returns a pointer to the updated directory structure. DirectoryRefresher
    * deletes its own pointer and the caller takes custody of the pointer
-   * 
+   *
    * @return updated directory structure
    **/
   MOShared::DirectoryEntry *getDirectoryStructure();
@@ -107,7 +118,13 @@ public:
    * @param directory
    * @param stealFiles
    */
-  void addModFilesToStructure(MOShared::DirectoryEntry *directoryStructure, const QString &modName, int priority, const QString &directory, const QStringList &stealFiles);
+  void addModFilesToStructure(
+    MOShared::DirectoryEntry *directoryStructure, const QString &modName,
+    int priority, const QString &directory, const QStringList &stealFiles);
+
+  void addMultipleModsFilesToStructure(
+    MOShared::DirectoryEntry *directoryStructure,
+    const std::vector<EntryInfo>& entries, bool emitProgress=false);
 
 public slots:
 
@@ -123,26 +140,15 @@ signals:
   void refreshed();
 
 private:
-
-  struct EntryInfo {
-    EntryInfo(const QString &modName, const QString &absolutePath,
-              const QStringList &stealFiles, const QStringList &archives, int priority)
-      : modName(modName), absolutePath(absolutePath), stealFiles(stealFiles)
-      , archives(archives), priority(priority) {}
-    QString modName;
-    QString absolutePath;
-    QStringList stealFiles;
-    QStringList archives;
-    int priority;
-  };
-
-private:
-
   std::vector<EntryInfo> m_Mods;
   std::set<QString> m_EnabledArchives;
   MOShared::DirectoryEntry *m_DirectoryStructure;
   QMutex m_RefreshLock;
+  std::size_t m_threadCount;
 
+  void stealModFilesIntoStructure(
+    MOShared::DirectoryEntry *directoryStructure, const QString &modName,
+    int priority, const QString &directory, const QStringList &stealFiles);
 };
 
 #endif // DIRECTORYREFRESHER_H

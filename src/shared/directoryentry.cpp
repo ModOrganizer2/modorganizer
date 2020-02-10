@@ -691,6 +691,33 @@ void DirectoryEntry::addFromOrigin(
   m_Populated = true;
 }
 
+void DirectoryEntry::addFromList(
+  const std::wstring &originName, const std::wstring &directory,
+  env::Directory& root, int priority)
+{
+  FilesOrigin &origin = createOrigin(originName, directory, priority);
+  addDir(origin, root);
+}
+
+void DirectoryEntry::addDir(FilesOrigin& origin, env::Directory& d)
+{
+  for (auto& sd : d.dirs) {
+    auto* sdirEntry = getSubDirectory(sd.name, true, origin.getID());
+    sdirEntry->addDir(origin, sd);
+  }
+
+  for (auto& f : d.files) {
+    insert(f.name, origin, f.ft, L"", -1);
+  }
+
+  std::sort(
+    m_SubDirectories.begin(),
+    m_SubDirectories.end(),
+    &DirCompareByName);
+
+  m_Populated = true;
+}
+
 void DirectoryEntry::addFromBSA(
   const std::wstring &originName, std::wstring &directory,
   const std::wstring &fileName, int priority, int order)

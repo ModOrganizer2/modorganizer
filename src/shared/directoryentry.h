@@ -33,7 +33,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #endif
+
 #include "util.h"
+#include "envfs.h"
 
 namespace MOShared { struct DirectoryEntryFileKey; }
 
@@ -358,6 +360,10 @@ public:
     const std::wstring &originName, std::wstring &directory,
     const std::wstring &fileName, int priority, int order);
 
+  void addFromList(
+    const std::wstring &originName, const std::wstring &directory,
+    env::Directory& root, int priority);
+
   void propagateOrigin(int origin);
 
   const std::wstring &getName() const
@@ -510,6 +516,8 @@ private:
   void addFiles(
     FilesOrigin &origin, BSA::Folder::Ptr archiveFolder, FILETIME &fileTime,
     const std::wstring &archiveName, int order);
+
+  void addDir(FilesOrigin& origin, env::Directory& d);
 
   DirectoryEntry* getSubDirectory(
     std::wstring_view name, bool create, int originID = -1);
