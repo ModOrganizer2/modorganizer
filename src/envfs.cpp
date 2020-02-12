@@ -1,4 +1,5 @@
 #include "envfs.h"
+#include "env.h"
 #include "util.h"
 #include <utility.h>
 #include <log.h>
@@ -160,6 +161,11 @@ public:
     m_handles.reserve(50'000);
   }
 
+  void shrink()
+  {
+    m_handles.shrink_to_fit();
+  }
+
   void add(HANDLE h)
   {
     m_handles.push_back(h);
@@ -202,6 +208,15 @@ static ThreadPool<HandleCloserThread> g_handleClosers;
 void setHandleCloserThreadCount(std::size_t n)
 {
   g_handleClosers.setMax(n);
+}
+
+void shrinkFs()
+{
+  g_handleClosers.join();
+
+  g_handleClosers.forEach([](auto&& t) {
+    t.shrink();
+  });
 }
 
 void forEachEntryImpl(
@@ -290,7 +305,6 @@ void forEachEntryImpl(
           forEachEntryImpl(cx, hc, buffers, &oa, depth+1, dirStartF, dirEndF, fileF);
           dirEndF(cx, toStringView(&oa));
         } else {
-          //log::debug("{}{}", std::wstring((depth + 1) * 2, L' '), toString(&oa));
           FILETIME ft;
           ft.dwLowDateTime = DirInfo->LastWriteTime.LowPart;
           ft.dwHighDateTime = DirInfo->LastWriteTime.HighPart;
@@ -321,11 +335,10 @@ void forEachEntry(
   std::vector<std::unique_ptr<unsigned char[]>> buffers;
 
   if (!NtOpenFile) {
-    HMODULE m = ::LoadLibraryW(L"ntdll.dll");
-    NtOpenFile = (NtOpenFile_type)::GetProcAddress(m, "NtOpenFile");
-    NtQueryDirectoryFile = (NtQueryDirectoryFile_type)::GetProcAddress(m, "NtQueryDirectoryFile");
-    NtClose = (NtClose_type)::GetProcAddress(m, "NtClose");
-    ::FreeLibrary(m);
+    LibraryPtr m(::LoadLibraryW(L"ntdll.dll"));
+    NtOpenFile = (NtOpenFile_type)::GetProcAddress(m.get(), "NtOpenFile");
+    NtQueryDirectoryFile = (NtQueryDirectoryFile_type)::GetProcAddress(m.get(), "NtQueryDirectoryFile");
+    NtClose = (NtClose_type)::GetProcAddress(m.get(), "NtClose");
   }
 
   const std::wstring ntpath = std::wstring(L"\\??\\") + path;
@@ -358,7 +371,12 @@ Directory getFilesAndDirs(const std::wstring& path)
   env::forEachEntry(path, &cx,
     [](void* pcx, std::wstring_view path) {
       Context* cx = (Context*)pcx;
-      cx->current.top()->dirs.push_back({std::wstring(path.begin(), path.end())});
+
+      cx->current.top()->dirs.push_back({
+        std::wstring(path.begin(), path.end()),
+        MOShared::ToLowerCopy(path)
+      });
+
       cx->current.push(&cx->current.top()->dirs.back());
     },
 

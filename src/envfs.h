@@ -16,6 +16,8 @@ struct File
 struct Directory
 {
   std::wstring name;
+  std::wstring lcname;
+
   std::list<Directory> dirs;
   std::list<File> files;
 };
@@ -77,6 +79,14 @@ public:
     }
   }
 
+  template <class F>
+  void forEach(F&& f)
+  {
+    for (auto& ti : m_threads) {
+      f(ti.o);
+    }
+  }
+
 private:
   struct ThreadInfo
   {
@@ -94,6 +104,7 @@ using DirEndF = void (void*, std::wstring_view);
 using FileF = void (void*, std::wstring_view, FILETIME);
 
 void setHandleCloserThreadCount(std::size_t n);
+void shrinkFs();
 
 void forEachEntry(
   const std::wstring& path, void* cx,

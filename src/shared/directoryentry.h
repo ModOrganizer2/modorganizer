@@ -60,6 +60,44 @@ class OriginConnection;
 class FileRegister;
 
 
+struct DirectoryStats
+{
+  std::string mod;
+
+  std::chrono::nanoseconds dirTimes;
+  std::chrono::nanoseconds fileTimes;
+  std::chrono::nanoseconds sortTimes;
+
+  std::chrono::nanoseconds subdirLookupTimes;
+  std::chrono::nanoseconds addDirectoryTimes;
+
+  std::chrono::nanoseconds filesLookupTimes;
+  std::chrono::nanoseconds addFileTimes;
+  std::chrono::nanoseconds addOriginToFileTimes;
+  std::chrono::nanoseconds addFileToOriginTimes;
+  std::chrono::nanoseconds addFileToRegisterTimes;
+
+  int64_t originExists;
+  int64_t originCreate;
+  int64_t originsNeededEnabled;
+
+  int64_t subdirExists;
+  int64_t subdirCreate;
+
+  int64_t fileExists;
+  int64_t fileCreate;
+  int64_t filesInsertedInRegister;
+  int64_t filesAssignedInRegister;
+
+  DirectoryStats();
+
+  DirectoryStats& operator+=(const DirectoryStats& o);
+
+  static std::string csvHeader();
+  std::string toCsv() const;
+};
+
+
 class FileEntry
 {
 public:
@@ -81,6 +119,7 @@ public:
 
   FileEntry();
   FileEntry(Index index, std::wstring name, DirectoryEntry *parent);
+  ~FileEntry();
 
   Index getIndex() const
   {
@@ -195,6 +234,7 @@ class FilesOrigin
 public:
   FilesOrigin();
   FilesOrigin(const FilesOrigin &reference);
+  ~FilesOrigin();
 
   // sets priority for this origin, but it will overwrite the existing mapping
   // for this priority, the previous origin will no longer be referenced
@@ -224,7 +264,9 @@ public:
   std::vector<FileEntry::Ptr> getFiles() const;
   FileEntry::Ptr findFile(FileEntry::Index index) const;
 
+  void enable(bool enabled, DirectoryStats& stats, time_t notAfter = LONG_MAX);
   void enable(bool enabled, time_t notAfter = LONG_MAX);
+
   bool isDisabled() const
   {
     return m_Disabled;
@@ -260,10 +302,13 @@ class FileRegister
 {
 public:
   FileRegister(boost::shared_ptr<OriginConnection> originConnection);
+  ~FileRegister();
 
   bool indexValid(FileEntry::Index index) const;
 
-  FileEntry::Ptr createFile(std::wstring name, DirectoryEntry *parent);
+  FileEntry::Ptr createFile(
+    std::wstring name, DirectoryEntry *parent, DirectoryStats& stats);
+
   FileEntry::Ptr getFile(FileEntry::Index index) const;
 
   size_t size() const
@@ -362,7 +407,7 @@ public:
 
   void addFromList(
     const std::wstring &originName, const std::wstring &directory,
-    env::Directory& root, int priority);
+    env::Directory& root, int priority, DirectoryStats& stats);
 
   void propagateOrigin(int origin);
 
@@ -477,7 +522,7 @@ public:
 
   FilesOrigin &createOrigin(
     const std::wstring &originName,
-    const std::wstring &directory, int priority);
+    const std::wstring &directory, int priority, DirectoryStats& stats);
 
   void removeFiles(const std::set<FileEntry::Index> &indices);
 
@@ -510,7 +555,7 @@ private:
 
   FileEntry::Ptr insert(
     env::File& file, FilesOrigin &origin,
-    std::wstring_view archive, int order);
+    std::wstring_view archive, int order, DirectoryStats& stats);
 
   void addFiles(
     FilesOrigin &origin, wchar_t *buffer, int bufferOffset);
@@ -519,10 +564,14 @@ private:
     FilesOrigin &origin, BSA::Folder::Ptr archiveFolder, FILETIME &fileTime,
     const std::wstring &archiveName, int order);
 
-  void addDir(FilesOrigin& origin, env::Directory& d);
+  void addDir(FilesOrigin& origin, env::Directory& d, DirectoryStats& stats);
 
   DirectoryEntry* getSubDirectory(
     std::wstring_view name, bool create, int originID = -1);
+
+  DirectoryEntry* getSubDirectory(
+    env::Directory& dir, bool create, DirectoryStats& stats,
+    int originID = -1);
 
   DirectoryEntry* getSubDirectoryRecursive(
     const std::wstring &path, bool create, int originID = -1);
