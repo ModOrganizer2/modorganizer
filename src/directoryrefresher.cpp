@@ -48,7 +48,7 @@ DirectoryRefresher::~DirectoryRefresher()
   delete m_DirectoryStructure;
 }
 
-DirectoryEntry *DirectoryRefresher::getDirectoryStructure()
+DirectoryEntry *DirectoryRefresher::stealDirectoryStructure()
 {
   QMutexLocker locker(&m_RefreshLock);
   DirectoryEntry *result = m_DirectoryStructure;
@@ -279,58 +279,50 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
 
   g_threads.setMax(m_threadCount);
 
-  {
-    TimeThis tt("walk dirs");
+  for (std::size_t i=0; i<entries.size(); ++i) {
+    const auto& e = entries[i];
+    const int prio = static_cast<int>(i + 1);
 
-    for (std::size_t i=0; i<entries.size(); ++i) {
-      const auto& e = entries[i];
-      const int prio = static_cast<int>(i + 1);
+    stats[i].mod = entries[i].modName.toStdString();
 
-      stats[i].mod = entries[i].modName.toStdString();
+    try
+    {
+      if (e.stealFiles.length() > 0) {
+        stealModFilesIntoStructure(
+          directoryStructure, e.modName, prio, e.absolutePath, e.stealFiles);
+      } else {
+        auto& mt = g_threads.request();
 
-      try
-      {
-        if (e.stealFiles.length() > 0) {
-          stealModFilesIntoStructure(
-            directoryStructure, e.modName, prio, e.absolutePath, e.stealFiles);
-        } else {
-          auto& mt = g_threads.request();
+        mt.ds = directoryStructure;
+        mt.modName = entries[i].modName.toStdWString();
+        mt.path = QDir::toNativeSeparators(e.absolutePath).toStdWString();
+        mt.prio = prio;
+        mt.stats = &stats[i];
 
-          mt.ds = directoryStructure;
-          mt.modName = entries[i].modName.toStdWString();
-          mt.path = QDir::toNativeSeparators(e.absolutePath).toStdWString();
-          mt.prio = prio;
-          mt.stats = &stats[i];
-
-          mt.wakeup();
-        }
-      } catch (const std::exception& ex) {
-        emit error(tr("failed to read mod (%1): %2").arg(e.modName, ex.what()));
+        mt.wakeup();
       }
-
-      if (emitProgress) {
-        emit progress((static_cast<int>(i) * 100) / static_cast<int>(entries.size()) + 1);
-      }
+    } catch (const std::exception& ex) {
+      emit error(tr("failed to read mod (%1): %2").arg(e.modName, ex.what()));
     }
 
-    g_threads.waitForAll();
+    if (emitProgress) {
+      emit progress((static_cast<int>(i) * 100) / static_cast<int>(entries.size()) + 1);
+    }
   }
+
+  g_threads.waitForAll();
 
   dumpStats(stats);
 }
 
-namespace MOShared{ void logcounts(std::string w); }
-
 void DirectoryRefresher::refresh()
 {
   SetThisThreadName("DirectoryRefresher");
+  TimeThis tt("refresh");
 
   for (int i=0; i<1; ++i) {
     QMutexLocker locker(&m_RefreshLock);
-
-    //logcounts("before delete");
     delete m_DirectoryStructure;
-    //logcounts("after delete");
 
     m_DirectoryStructure = new DirectoryEntry(L"data", nullptr, 0);
 
@@ -355,9 +347,6 @@ void DirectoryRefresher::refresh()
     cleanStructure(m_DirectoryStructure);
   }
 
-    emit progress(100);
-
+  emit progress(100);
   emit refreshed();
-
-  //logcounts("after refresh");
 }

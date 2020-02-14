@@ -144,6 +144,10 @@ OrganizerCore::~OrganizerCore()
   m_RefresherThread.exit();
   m_RefresherThread.wait();
 
+  if (m_StructureDeleter.joinable()) {
+    m_StructureDeleter.join();
+  }
+
   saveCurrentProfile();
 
   // profile has to be cleaned up before the modinfo-buffer is cleared
@@ -1379,46 +1383,74 @@ std::vector<QString> OrganizerCore::enabledArchives()
 
 void OrganizerCore::refreshDirectoryStructure()
 {
-  if (!m_DirectoryUpdate) {
-    m_CurrentProfile->writeModlistNow(true);
-
-    m_DirectoryUpdate = true;
-    std::vector<std::tuple<QString, QString, int>> activeModList
-        = m_CurrentProfile->getActiveMods();
-    auto archives = enabledArchives();
-    m_DirectoryRefresher.setMods(
-        activeModList, std::set<QString>(archives.begin(), archives.end()));
-
-    QTimer::singleShot(0, &m_DirectoryRefresher, SLOT(refresh()));
+  if (m_DirectoryUpdate) {
+    log::debug("can't refresh, already in progress");
+    return;
   }
+
+  log::debug("refreshing structure");
+  m_DirectoryUpdate = true;
+
+  m_CurrentProfile->writeModlistNow(true);
+  const auto activeModList = m_CurrentProfile->getActiveMods();
+  const auto archives = enabledArchives();
+
+  m_DirectoryRefresher.setMods(
+      activeModList, std::set<QString>(archives.begin(), archives.end()));
+
+  // runs refresh() in a thread
+  QTimer::singleShot(0, &m_DirectoryRefresher, SLOT(refresh()));
 }
 
 void OrganizerCore::directory_refreshed()
 {
-  DirectoryEntry *newStructure = m_DirectoryRefresher.getDirectoryStructure();
+  log::debug("structure refreshed");
+
+  DirectoryEntry *newStructure = m_DirectoryRefresher.stealDirectoryStructure();
   Q_ASSERT(newStructure != m_DirectoryStructure);
-  if (newStructure != nullptr) {
-    std::swap(m_DirectoryStructure, newStructure);
-    delete newStructure;
-  } else {
+
+  if (newStructure == nullptr) {
     // TODO: don't know why this happens, this slot seems to get called twice
     // with only one emit
     return;
   }
+
+  std::swap(m_DirectoryStructure, newStructure);
+
+  if (m_StructureDeleter.joinable()) {
+    m_StructureDeleter.join();
+  }
+
+  m_StructureDeleter = std::thread([=]{
+    log::debug("structure deleter thread start");
+    delete newStructure;
+    log::debug("structure deleter thread done");
+  });
+
   m_DirectoryUpdate = false;
 
+  log::debug("clearing caches");
   for (int i = 0; i < m_ModList.rowCount(); ++i) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
     modInfo->clearCaches();
   }
-  for (auto task : m_PostRefreshTasks) {
-    task();
+
+  if (!m_PostRefreshTasks.empty()) {
+    log::debug("running {} post refresh tasks", m_PostRefreshTasks.size());
+
+    for (auto task : m_PostRefreshTasks) {
+      task();
+    }
+
+    m_PostRefreshTasks.clear();
   }
-  m_PostRefreshTasks.clear();
 
   if (m_CurrentProfile != nullptr) {
+    log::debug("refreshing lists");
     refreshLists();
   }
+
+  log::debug("refresh done");
 }
 
 void OrganizerCore::profileRefresh()

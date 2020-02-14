@@ -40,13 +40,6 @@ namespace MOShared
 using namespace MOBase;
 static const int MAXPATH_UNICODE = 32767;
 
-
-static std::atomic<int> FileEntryCount(0);
-static std::atomic<int> FilesOriginCount(0);
-static std::atomic<int> FileRegisterCount(0);
-static std::atomic<int> DirectoryEntryCount(0);
-static std::atomic<int> OriginConnectionCount(0);
-
 template <class F>
 std::chrono::nanoseconds elapsed(F&& f)
 {
@@ -54,13 +47,6 @@ std::chrono::nanoseconds elapsed(F&& f)
   f();
   const auto end = std::chrono::high_resolution_clock::now();
   return (end - start);
-}
-
-void logcounts(std::string w)
-{
-  log::debug(
-    "{}: FileEntry={} FilesOrigin={} FileRegister={} DirectoryEntry={} OriginConnection={}",
-    w, FileEntryCount, FilesOriginCount, FileRegisterCount, DirectoryEntryCount, OriginConnectionCount);
 }
 
 
@@ -203,12 +189,6 @@ public:
   OriginConnection()
     : m_NextID(0)
   {
-    ++OriginConnectionCount;
-  }
-
-  ~OriginConnection()
-  {
-    --OriginConnectionCount;
   }
 
   std::pair<FilesOrigin&, bool> getOrCreate(
@@ -350,7 +330,6 @@ FileEntry::FileEntry() :
   m_FileSize(NoFileSize), m_CompressedFileSize(NoFileSize),
   m_LastAccessed(time(nullptr))
 {
-  ++FileEntryCount;
 }
 
 FileEntry::FileEntry(Index index, std::wstring name, DirectoryEntry *parent) :
@@ -358,16 +337,6 @@ FileEntry::FileEntry(Index index, std::wstring name, DirectoryEntry *parent) :
   m_FileSize(NoFileSize), m_CompressedFileSize(NoFileSize),
   m_LastAccessed(time(nullptr))
 {
-  ++FileEntryCount;
-}
-
-FileEntry::~FileEntry()
-{
-  while (!m_Alternatives.empty()) {
-    m_Alternatives.pop_back();
-  }
-
-  --FileEntryCount;
 }
 
 void FileEntry::addOrigin(
@@ -606,7 +575,6 @@ bool FileEntry::recurseParents(std::wstring &path, const DirectoryEntry *parent)
 FilesOrigin::FilesOrigin()
   : m_ID(0), m_Disabled(false), m_Name(), m_Path(), m_Priority(0)
 {
-  ++FilesOriginCount;
 }
 
 FilesOrigin::FilesOrigin(const FilesOrigin &reference)
@@ -618,7 +586,6 @@ FilesOrigin::FilesOrigin(const FilesOrigin &reference)
   , m_FileRegister(reference.m_FileRegister)
   , m_OriginConnection(reference.m_OriginConnection)
 {
-  ++FilesOriginCount;
 }
 
 FilesOrigin::FilesOrigin(
@@ -629,12 +596,6 @@ FilesOrigin::FilesOrigin(
     m_Priority(priority), m_FileRegister(fileRegister),
     m_OriginConnection(originConnection)
 {
-  ++FilesOriginCount;
-}
-
-FilesOrigin::~FilesOrigin()
-{
-  --FilesOriginCount;
 }
 
 void FilesOrigin::setPriority(int priority)
@@ -733,12 +694,6 @@ bool FilesOrigin::containsArchive(std::wstring archiveName)
 FileRegister::FileRegister(boost::shared_ptr<OriginConnection> originConnection)
   : m_OriginConnection(originConnection)
 {
-  ++FileRegisterCount;
-}
-
-FileRegister::~FileRegister()
-{
-  --FileRegisterCount;
 }
 
 bool FileRegister::indexValid(FileEntry::Index index) const
@@ -907,7 +862,6 @@ DirectoryEntry::DirectoryEntry(
     m_OriginConnection(new OriginConnection),
     m_Name(std::move(name)), m_Parent(parent), m_Populated(false), m_TopLevel(true)
 {
-  ++DirectoryEntryCount;
   m_FileRegister.reset(new FileRegister(m_OriginConnection));
   m_Origins.insert(originID);
 }
@@ -919,13 +873,11 @@ DirectoryEntry::DirectoryEntry(
     m_FileRegister(fileRegister), m_OriginConnection(originConnection),
     m_Name(std::move(name)), m_Parent(parent), m_Populated(false), m_TopLevel(false)
 {
-  ++DirectoryEntryCount;
   m_Origins.insert(originID);
 }
 
 DirectoryEntry::~DirectoryEntry()
 {
-  --DirectoryEntryCount;
   clear();
 }
 

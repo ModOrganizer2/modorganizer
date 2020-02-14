@@ -67,7 +67,7 @@ public:
    *
    * @return updated directory structure
    **/
-  MOShared::DirectoryEntry *getDirectoryStructure();
+  MOShared::DirectoryEntry* stealDirectoryStructure();
 
   /**
    * @brief sets up the mods to be included in the directory structure

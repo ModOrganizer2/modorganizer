@@ -121,7 +121,6 @@ public:
 
   FileEntry();
   FileEntry(Index index, std::wstring name, DirectoryEntry *parent);
-  ~FileEntry();
 
   Index getIndex() const
   {
@@ -237,7 +236,6 @@ class FilesOrigin
 public:
   FilesOrigin();
   FilesOrigin(const FilesOrigin &reference);
-  ~FilesOrigin();
 
   // sets priority for this origin, but it will overwrite the existing mapping
   // for this priority, the previous origin will no longer be referenced
@@ -307,7 +305,6 @@ class FileRegister
 {
 public:
   FileRegister(boost::shared_ptr<OriginConnection> originConnection);
-  ~FileRegister();
 
   bool indexValid(FileEntry::Index index) const;
 

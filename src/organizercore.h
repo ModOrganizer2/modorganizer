@@ -346,6 +346,8 @@ private:
 
   QThread m_RefresherThread;
 
+  std::thread m_StructureDeleter;
+
   bool m_DirectoryUpdate;
   bool m_ArchivesInit;
   bool m_ArchiveParsing{ m_Settings.archiveParsing() };
