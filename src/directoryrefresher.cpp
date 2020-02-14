@@ -160,12 +160,14 @@ void DirectoryRefresher::addModFilesToStructure(
   TimeThis tt("addModFilesToStructure()");
 
   std::wstring directoryW = ToWString(QDir::toNativeSeparators(directory));
+  DirectoryStats dummy;
 
   if (stealFiles.length() > 0) {
     stealModFilesIntoStructure(
       directoryStructure, modName, priority, directory, stealFiles);
   } else {
-    directoryStructure->addFromOrigin(ToWString(modName), directoryW, priority);
+    directoryStructure->addFromOrigin(
+      ToWString(modName), directoryW, priority, dummy);
   }
 }
 
@@ -178,16 +180,20 @@ void DirectoryRefresher::addModToStructure(DirectoryEntry *directoryStructure
 {
   TimeThis tt("addModToStructure()");
 
+  DirectoryStats dummy;
+
   if (stealFiles.length() > 0) {
     stealModFilesIntoStructure(
       directoryStructure, modName, priority, directory, stealFiles);
   } else {
     std::wstring directoryW = ToWString(QDir::toNativeSeparators(directory));
-    directoryStructure->addFromOrigin(ToWString(modName), directoryW, priority);
+    directoryStructure->addFromOrigin(
+      ToWString(modName), directoryW, priority, dummy);
   }
 
   if (Settings::instance().archiveParsing()) {
-    addModBSAToStructure(directoryStructure, modName, priority, directory, archives);
+    addModBSAToStructure(
+      directoryStructure, modName, priority, directory, archives);
   }
 }
 
@@ -198,6 +204,7 @@ struct ModThread
   std::wstring path;
   int prio = -1;
   env::Directory* dir = nullptr;
+  DirectoryStats* stats =  nullptr;
 
   std::condition_variable cv;
   std::mutex mutex;
@@ -214,7 +221,8 @@ struct ModThread
     std::unique_lock lock(mutex);
     cv.wait(lock, [&]{ return ready; });
 
-    ds->addFromOrigin(modName, path, prio);
+    SetThisThreadName(QString::fromStdWString(modName + L" refresher"));
+    ds->addFromOrigin(modName, path, prio, *stats);
 
     /*if (Settings::instance().archiveParsing()) {
       addModBSAToStructure(
@@ -229,11 +237,39 @@ struct ModThread
   }
 };
 
+void dumpStats(std::vector<DirectoryStats>& stats)
+{
+  static int run = 0;
+  static const std::string file("c:\\tmp\\data.csv");
+
+  if (run == 0) {
+    std::ofstream out(file, std::ios::out|std::ios::trunc);
+    out << fmt::format("what,run,{}", DirectoryStats::csvHeader()) << "\n";
+  }
+
+  std::sort(stats.begin(), stats.end(), [](auto&& a, auto&& b){
+    return (naturalCompare(QString::fromStdString(a.mod), QString::fromStdString(b.mod)) < 0);
+  });
+
+  std::ofstream out(file, std::ios::app);
+
+  DirectoryStats total;
+  for (const auto& s : stats) {
+    out << fmt::format("{},{},{}", s.mod, run, s.toCsv()) << "\n";
+    total += s;
+  }
+
+  out << fmt::format("total,{},{}", run, total.toCsv()) << "\n";
+
+  ++run;
+}
+
 void DirectoryRefresher::addMultipleModsFilesToStructure(
   MOShared::DirectoryEntry *directoryStructure,
   const std::vector<EntryInfo>& entries, bool emitProgress)
 {
   std::vector<env::Directory> dirs(entries.size());
+  std::vector<DirectoryStats> stats(entries.size());
 
   {
     TimeThis tt("walk dirs");
@@ -257,6 +293,9 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
           mt.path = QDir::toNativeSeparators(e.absolutePath).toStdWString();
           mt.prio = prio;
           mt.dir = &dirs[i];
+          mt.stats = &stats[i];
+
+          stats[i].mod = entries[i].modName.toStdString();
 
           mt.wakeup();
         }
@@ -272,23 +311,7 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
     threads.join();
   }
 
-  //std::sort(stats.begin(), stats.end(), [](auto&& a, auto&& b){
-  //  return (naturalCompare(QString::fromStdString(a.mod), QString::fromStdString(b.mod)) < 0);
-  //});
-
-  //static int run = 1;
-  //
-  //std::ofstream out("c:\\tmp\\data.csv", std::ios::app);
-
-  //out << fmt::format("what,run,{}", DirectoryStats::csvHeader());
-  //
-  //for (std::size_t i=0; i<entries.size(); ++i) {
-  //  out << fmt::format("{},{},{}", stats[i].mod, run, stats[i].toCsv()) << "\n";
-  //}
-  //
-  //out << fmt::format("total,{},{}", run, total.toCsv()) << "\n";
-  //
-  //++run;
+  dumpStats(stats);
 }
 
 namespace MOShared{ void logcounts(std::string w); }
@@ -297,34 +320,39 @@ void DirectoryRefresher::refresh()
 {
   SetThisThreadName("DirectoryRefresher");
 
-  QMutexLocker locker(&m_RefreshLock);
+  for (int i=0; i<1; ++i) {
+    QMutexLocker locker(&m_RefreshLock);
 
-  //logcounts("before delete");
-  delete m_DirectoryStructure;
-  //logcounts("after delete");
+    //logcounts("before delete");
+    delete m_DirectoryStructure;
+    //logcounts("after delete");
 
-  m_DirectoryStructure = new DirectoryEntry(L"data", nullptr, 0);
+    m_DirectoryStructure = new DirectoryEntry(L"data", nullptr, 0);
 
-  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+    IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
 
-  std::wstring dataDirectory =
-    QDir::toNativeSeparators(game->dataDirectory().absolutePath()).toStdWString();
+    std::wstring dataDirectory =
+      QDir::toNativeSeparators(game->dataDirectory().absolutePath()).toStdWString();
 
-  m_DirectoryStructure->addFromOrigin(L"data", dataDirectory, 0);
+    {
+      DirectoryStats dummy;
+      m_DirectoryStructure->addFromOrigin(L"data", dataDirectory, 0, dummy);
+    }
 
-  std::sort(m_Mods.begin(), m_Mods.end(), [](auto lhs, auto rhs) {
-    return lhs.priority < rhs.priority;
-  });
+    std::sort(m_Mods.begin(), m_Mods.end(), [](auto lhs, auto rhs) {
+      return lhs.priority < rhs.priority;
+    });
 
-  addMultipleModsFilesToStructure(m_DirectoryStructure, m_Mods, true);
+    addMultipleModsFilesToStructure(m_DirectoryStructure, m_Mods, true);
 
-  m_DirectoryStructure->getFileRegister()->sortOrigins();
+    m_DirectoryStructure->getFileRegister()->sortOrigins();
 
-  emit progress(100);
+    emit progress(100);
 
-  cleanStructure(m_DirectoryStructure);
+    cleanStructure(m_DirectoryStructure);
 
-  emit refreshed();
+    emit refreshed();
 
-  //logcounts("after refresh");
+    //logcounts("after refresh");
+  }
 }

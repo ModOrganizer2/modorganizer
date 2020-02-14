@@ -5148,7 +5148,11 @@ void MainWindow::originModified(int originID)
 {
   FilesOrigin &origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
   origin.enable(false);
-  m_OrganizerCore.directoryStructure()->addFromOrigin(origin.getName(), origin.getPath(), origin.getPriority());
+
+  DirectoryStats dummy;
+  m_OrganizerCore.directoryStructure()->addFromOrigin(
+    origin.getName(), origin.getPath(), origin.getPriority(), dummy);
+
   DirectoryRefresher::cleanStructure(m_OrganizerCore.directoryStructure());
 }
 

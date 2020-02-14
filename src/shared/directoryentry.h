@@ -221,6 +221,7 @@ private:
   DirectoryEntry *m_Parent;
   mutable FILETIME m_FileTime;
   uint64_t m_FileSize, m_CompressedFileSize;
+  mutable std::mutex m_OriginsMutex;
 
   time_t m_LastAccessed;
 
@@ -328,12 +329,14 @@ public:
   void sortOrigins();
 
 private:
+  using FileMap = std::map<FileEntry::Index, FileEntry::Ptr>;
+
   mutable std::mutex m_Mutex;
-  std::map<FileEntry::Index, FileEntry::Ptr> m_Files;
+  FileMap m_Files;
   boost::shared_ptr<OriginConnection> m_OriginConnection;
 
-  FileEntry::Index generateIndex();
   void unregisterFile(FileEntry::Ptr file);
+  FileEntry::Index generateIndex();
 };
 
 
@@ -354,7 +357,7 @@ struct DirectoryEntryFileKey
     return std::hash<std::wstring>()(value);
   }
 
-  const std::wstring value;
+  std::wstring value;
   const std::size_t hash;
 };
 
@@ -405,7 +408,7 @@ public:
   // That origin may exist or not
   void addFromOrigin(
     const std::wstring &originName,
-    const std::wstring &directory, int priority);
+    const std::wstring &directory, int priority, DirectoryStats& stats);
 
   void addFromBSA(
     const std::wstring &originName, std::wstring &directory,
@@ -559,14 +562,14 @@ private:
 
   FileEntry::Ptr insert(
     std::wstring_view fileName, FilesOrigin &origin, FILETIME fileTime,
-    std::wstring_view archive, int order);
+    std::wstring_view archive, int order, DirectoryStats& stats);
 
   FileEntry::Ptr insert(
     env::File& file, FilesOrigin &origin,
     std::wstring_view archive, int order, DirectoryStats& stats);
 
   void addFiles(
-    FilesOrigin &origin, wchar_t *buffer, int bufferOffset);
+    FilesOrigin &origin, const std::wstring& path, DirectoryStats& stats);
 
   void addFiles(
     FilesOrigin &origin, BSA::Folder::Ptr archiveFolder, FILETIME &fileTime,
@@ -575,7 +578,8 @@ private:
   void addDir(FilesOrigin& origin, env::Directory& d, DirectoryStats& stats);
 
   DirectoryEntry* getSubDirectory(
-    std::wstring_view name, bool create, int originID = -1);
+    std::wstring_view name, bool create, DirectoryStats& stats,
+    int originID = -1);
 
   DirectoryEntry* getSubDirectory(
     env::Directory& dir, bool create, DirectoryStats& stats,

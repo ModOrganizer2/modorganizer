@@ -160,19 +160,23 @@ std::string DirectoryStats::toCsv() const
 {
   QStringList oss;
 
+  auto s = [](auto ns) {
+    return ns.count() / 1000.0 / 1000.0 / 1000.0;
+  };
+
   oss
-    << QString::number(dirTimes.count())
-    << QString::number(fileTimes.count())
-    << QString::number(sortTimes.count())
+    << QString::number(s(dirTimes))
+    << QString::number(s(fileTimes))
+    << QString::number(s(sortTimes))
 
-    << QString::number(subdirLookupTimes.count())
-    << QString::number(addDirectoryTimes.count())
+    << QString::number(s(subdirLookupTimes))
+    << QString::number(s(addDirectoryTimes))
 
-    << QString::number(filesLookupTimes.count())
-    << QString::number(addFileTimes.count())
-    << QString::number(addOriginToFileTimes.count())
-    << QString::number(addFileToOriginTimes.count())
-    << QString::number(addFileToRegisterTimes.count())
+    << QString::number(s(filesLookupTimes))
+    << QString::number(s(addFileTimes))
+    << QString::number(s(addOriginToFileTimes))
+    << QString::number(s(addFileToOriginTimes))
+    << QString::number(s(addFileToRegisterTimes))
 
     << QString::number(originExists)
     << QString::number(originCreate)
@@ -323,6 +327,8 @@ FileEntry::~FileEntry()
 void FileEntry::addOrigin(
   int origin, FILETIME fileTime, std::wstring_view archive, int order)
 {
+  std::scoped_lock lock(m_OriginsMutex);
+
   m_LastAccessed = time(nullptr);
   if (m_Parent != nullptr) {
     m_Parent->propagateOrigin(origin);
@@ -387,6 +393,8 @@ void FileEntry::addOrigin(
 
 bool FileEntry::removeOrigin(int origin)
 {
+  std::scoped_lock lock(m_OriginsMutex);
+
   if (m_Origin == origin) {
     if (!m_Alternatives.empty()) {
       // find alternative with the highest priority
@@ -440,6 +448,8 @@ bool FileEntry::removeOrigin(int origin)
 
 void FileEntry::sortOrigins()
 {
+  std::scoped_lock lock(m_OriginsMutex);
+
   m_Alternatives.push_back({m_Origin, m_Archive});
 
   std::sort(m_Alternatives.begin(), m_Alternatives.end(), [&](auto&& LHS, auto&& RHS) {
@@ -480,6 +490,8 @@ void FileEntry::sortOrigins()
 
 bool FileEntry::isFromArchive(std::wstring archiveName) const
 {
+  std::scoped_lock lock(m_OriginsMutex);
+
   if (archiveName.length() == 0) {
     return m_Archive.first.length() != 0;
   }
@@ -499,6 +511,8 @@ bool FileEntry::isFromArchive(std::wstring archiveName) const
 
 std::wstring FileEntry::getFullPath(int originID) const
 {
+  std::scoped_lock lock(m_OriginsMutex);
+
   if (originID == -1) {
     bool ignore = false;
     originID = getOrigin(ignore);
@@ -690,25 +704,32 @@ bool FileRegister::indexValid(FileEntry::Index index) const
 FileEntry::Ptr FileRegister::createFile(
   std::wstring name, DirectoryEntry *parent, DirectoryStats& stats)
 {
-  FileEntry::Index index = generateIndex();
+  const auto index = generateIndex();
   FileEntry::Ptr p;
 
   stats.addFileToRegisterTimes += elapsed([&]{
-    std::scoped_lock lock(m_Mutex);
+    bool inserted = false;
+    p = FileEntry::Ptr(new FileEntry(index, std::move(name), parent));
 
-    auto r = m_Files.insert_or_assign(
-      index, FileEntry::Ptr(new FileEntry(index, std::move(name), parent)));
+    {
+      std::scoped_lock lock(m_Mutex);
+      inserted = m_Files.insert_or_assign(index, p).second;
+    }
 
-    if (r.second) {
+    if (inserted) {
       ++stats.filesInsertedInRegister;
     } else {
       ++stats.filesAssignedInRegister;
     }
-
-    p = r.first->second;
   });
 
   return p;
+}
+
+FileEntry::Index FileRegister::generateIndex()
+{
+  static std::atomic<FileEntry::Index> sIndex(0);
+  return sIndex++;
 }
 
 FileEntry::Ptr FileRegister::getFile(FileEntry::Index index) const
@@ -815,12 +836,6 @@ void FileRegister::sortOrigins()
   }
 }
 
-FileEntry::Index FileRegister::generateIndex()
-{
-  static std::atomic<FileEntry::Index> sIndex(0);
-  return sIndex++;
-}
-
 void FileRegister::unregisterFile(FileEntry::Ptr file)
 {
   bool ignore;
@@ -881,17 +896,13 @@ void DirectoryEntry::clear()
 }
 
 void DirectoryEntry::addFromOrigin(
-  const std::wstring &originName, const std::wstring &directory, int priority)
+  const std::wstring &originName, const std::wstring &directory, int priority,
+  DirectoryStats& stats)
 {
-  DirectoryStats dummy;
-  FilesOrigin &origin = createOrigin(originName, directory, priority, dummy);
+  FilesOrigin &origin = createOrigin(originName, directory, priority, stats);
 
-  if (directory.length() != 0) {
-    boost::scoped_array<wchar_t> buffer(new wchar_t[MAXPATH_UNICODE + 1]);
-    memset(buffer.get(), L'\0', MAXPATH_UNICODE + 1);
-    int offset = _snwprintf(buffer.get(), MAXPATH_UNICODE, L"%ls", directory.c_str());
-    buffer.get()[offset] = L'\0';
-    addFiles(origin, buffer.get(), offset);
+  if (!directory.empty()) {
+    addFiles(origin, directory, stats);
   }
 
   m_Populated = true;
@@ -1260,58 +1271,80 @@ void DirectoryEntry::removeFiles(const std::set<FileEntry::Index> &indices)
 
 FileEntry::Ptr DirectoryEntry::insert(
   std::wstring_view fileName, FilesOrigin &origin, FILETIME fileTime,
-  std::wstring_view archive, int order)
+  std::wstring_view archive, int order, DirectoryStats& stats)
 {
-  std::scoped_lock lock(m_FilesMutex);
-
   std::wstring fileNameLower = ToLowerCopy(fileName);
+  FileEntry::Ptr fe;
 
-  auto iter = m_Files.find(fileNameLower);
-  FileEntry::Ptr file;
+  FileKey key(std::move(fileNameLower));
 
-  if (iter != m_Files.end()) {
-    file = m_FileRegister->getFile(iter->second);
-  } else {
-    DirectoryStats dummy;
+  {
+    std::unique_lock lock(m_FilesMutex);
 
-    file = m_FileRegister->createFile(
-      std::wstring(fileName.begin(), fileName.end()), this, dummy);
+    FilesLookup::iterator itor;
 
-    addFileToList(std::move(fileNameLower), file->getIndex());
-    // fileNameLower has moved from this point
+    stats.filesLookupTimes += elapsed([&]{
+      itor = m_FilesLookup.find(key);
+    });
+
+    if (itor != m_FilesLookup.end()) {
+      lock.unlock();
+      ++stats.fileExists;
+      fe = m_FileRegister->getFile(itor->second);
+    } else {
+      ++stats.fileCreate;
+      fe = m_FileRegister->createFile(
+        std::wstring(fileName.begin(), fileName.end()), this, stats);
+
+      stats.addFileTimes += elapsed([&] {
+        addFileToList(std::move(key.value), fe->getIndex());
+      });
+
+      // fileNameLower has moved from this point
+    }
   }
 
-  file->addOrigin(origin.getID(), fileTime, archive, order);
-  origin.addFile(file->getIndex());
+  stats.addOriginToFileTimes += elapsed([&]{
+    fe->addOrigin(origin.getID(), fileTime, archive, order);
+  });
 
-  return file;
+  stats.addFileToOriginTimes += elapsed([&]{
+    origin.addFile(fe->getIndex());
+  });
+
+  return fe;
 }
 
 FileEntry::Ptr DirectoryEntry::insert(
   env::File& file, FilesOrigin &origin, std::wstring_view archive, int order,
   DirectoryStats& stats)
 {
-  std::scoped_lock lock(m_FilesMutex);
-
-  FilesMap::iterator itor;
-
-  stats.filesLookupTimes += elapsed([&]{
-    itor = m_Files.find(file.lcname);
-  });
-
   FileEntry::Ptr fe;
 
-  if (itor != m_Files.end()) {
-    ++stats.fileExists;
-    fe = m_FileRegister->getFile(itor->second);
-  } else {
-    fe = m_FileRegister->createFile(std::move(file.name), this, stats);
+  {
+    std::unique_lock lock(m_FilesMutex);
 
-    stats.addFileTimes += elapsed([&]{
-      addFileToList(std::move(file.lcname), fe->getIndex());
+    FilesMap::iterator itor;
+
+    stats.filesLookupTimes += elapsed([&]{
+      itor = m_Files.find(file.lcname);
     });
 
-    // both file.name and file.lcname have been moved from this point
+    if (itor != m_Files.end()) {
+      lock.unlock();
+      ++stats.fileExists;
+      fe = m_FileRegister->getFile(itor->second);
+    } else {
+      ++stats.fileCreate;
+      fe = m_FileRegister->createFile(std::move(file.name), this, stats);
+      // file.name has been moved from this point
+
+      stats.addFileTimes += elapsed([&]{
+        addFileToList(std::move(file.lcname), fe->getIndex());
+      });
+
+      // file.lcname has been moved from this point
+    }
   }
 
   stats.addOriginToFileTimes += elapsed([&]{
@@ -1325,91 +1358,75 @@ FileEntry::Ptr DirectoryEntry::insert(
   return fe;
 }
 
-void DirectoryEntry::addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOffset)
+void DirectoryEntry::addFiles(
+  FilesOrigin &origin, const std::wstring& path, DirectoryStats& stats)
 {
   struct Context
   {
     FilesOrigin& origin;
+    DirectoryStats& stats;
     std::stack<DirectoryEntry*> current;
   };
 
-  Context cx = {origin};
+  Context cx = {origin, stats};
   cx.current.push(this);
 
-  env::forEachEntry(buffer, &cx,
-    [](void* pcx, std::wstring_view path) {
+  env::forEachEntry(path, &cx,
+    [](void* pcx, std::wstring_view path)
+    {
       Context* cx = (Context*)pcx;
-      cx->current.push(cx->current.top()->getSubDirectory(path, true, cx->origin.getID()));
+      cx->stats.dirTimes += elapsed([&] {
+        auto* sd = cx->current.top()->getSubDirectory(
+          path, true, cx->stats, cx->origin.getID());
+
+        cx->current.push(sd);
+      });
     },
 
-    [](void* pcx, std::wstring_view path) {
+    [](void* pcx, std::wstring_view path)
+    {
       Context* cx = (Context*)pcx;
-      auto* current= cx->current.top();
 
-      {
-        std::scoped_lock lock(current->m_SubDirMutex);
-        std::sort(current->m_SubDirectories.begin(), current->m_SubDirectories.end(), &DirCompareByName);
-      }
+      cx->stats.dirTimes += elapsed([&] {
+        auto* current= cx->current.top();
 
-      cx->current.pop();
+        {
+          std::scoped_lock lock(current->m_SubDirMutex);
+
+          std::sort(
+            current->m_SubDirectories.begin(),
+            current->m_SubDirectories.end(),
+            &DirCompareByName);
+        }
+
+        cx->current.pop();
+      });
     },
 
-    [](void* pcx, std::wstring_view path, FILETIME ft) {
+    [](void* pcx, std::wstring_view path, FILETIME ft)
+    {
       Context* cx = (Context*)pcx;
-      cx->current.top()->insert(path, cx->origin, ft, L"", -1);
+
+      cx->stats.fileTimes += elapsed([&]{
+        cx->current.top()->insert(path, cx->origin, ft, L"", -1, cx->stats);
+      });
     }
   );
-
-  /*
-  WIN32_FIND_DATAW findData;
-
-  _snwprintf_s(buffer + bufferOffset, MAXPATH_UNICODE - bufferOffset, _TRUNCATE, L"\\*");
-
-  HANDLE searchHandle = nullptr;
-
-  if (SupportOptimizedFind()) {
-    searchHandle = ::FindFirstFileExW(
-      buffer, FindExInfoBasic, &findData, FindExSearchNameMatch, nullptr,
-      FIND_FIRST_EX_LARGE_FETCH);
-  } else {
-    searchHandle = ::FindFirstFileExW(
-      buffer, FindExInfoStandard, &findData, FindExSearchNameMatch, nullptr, 0);
-  }
-
-  if (searchHandle != INVALID_HANDLE_VALUE) {
-    BOOL result = true;
-
-    while (result) {
-      if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-        if ((wcscmp(findData.cFileName, L".") != 0) &&
-            (wcscmp(findData.cFileName, L"..") != 0)) {
-          int offset = _snwprintf(buffer + bufferOffset, MAXPATH_UNICODE, L"\\%ls", findData.cFileName);
-
-          // recurse into subdirectories
-          DirectoryEntry* sd = getSubDirectory(findData.cFileName, true, origin.getID());
-          sd->addFiles(origin, buffer, bufferOffset + offset);
-        }
-      } else {
-        insert(findData.cFileName, origin, findData.ftLastWriteTime, L"", -1);
-      }
-
-      result = ::FindNextFileW(searchHandle, &findData);
-    }
-  }
-
-  std::sort(m_SubDirectories.begin(), m_SubDirectories.end(), &DirCompareByName);
-  ::FindClose(searchHandle);*/
 }
 
 void DirectoryEntry::addFiles(
   FilesOrigin &origin, BSA::Folder::Ptr archiveFolder, FILETIME &fileTime,
   const std::wstring &archiveName, int order)
 {
+  DirectoryStats dummy;
+
   // add files
   for (unsigned int fileIdx = 0; fileIdx < archiveFolder->getNumFiles(); ++fileIdx) {
     BSA::File::Ptr file = archiveFolder->getFile(fileIdx);
 
-    auto f = insert(ToWString(file->getName(), true), origin, fileTime, archiveName, order);
+    auto f = insert(
+      ToWString(file->getName(), true), origin, fileTime,
+      archiveName, order, dummy);
 
     if (f) {
       if (file->getUncompressedFileSize() > 0) {
@@ -1423,31 +1440,41 @@ void DirectoryEntry::addFiles(
   // recurse into subdirectories
   for (unsigned int folderIdx = 0; folderIdx < archiveFolder->getNumSubFolders(); ++folderIdx) {
     BSA::Folder::Ptr folder = archiveFolder->getSubFolder(folderIdx);
-    DirectoryEntry *folderEntry = getSubDirectoryRecursive(ToWString(folder->getName(), true), true, origin.getID());
+    DirectoryEntry *folderEntry = getSubDirectoryRecursive(
+      ToWString(folder->getName(), true), true, origin.getID());
 
     folderEntry->addFiles(origin, folder, fileTime, archiveName, order);
   }
 }
 
 DirectoryEntry *DirectoryEntry::getSubDirectory(
-  std::wstring_view name, bool create, int originID)
+  std::wstring_view name, bool create, DirectoryStats& stats, int originID)
 {
+  std::wstring nameLc = ToLowerCopy(name);
+
   std::scoped_lock lock(m_SubDirMutex);
 
-  std::wstring nameLc = ToLowerCopy(name);
-  auto itor = m_SubDirectoriesLookup.find(nameLc);
+  SubDirectoriesLookup::iterator itor;
+  stats.subdirLookupTimes += elapsed([&] {
+    itor = m_SubDirectoriesLookup.find(nameLc);
+  });
 
   if (itor != m_SubDirectoriesLookup.end()) {
+    ++stats.subdirExists;
     return itor->second;
   }
 
   if (create) {
+    ++stats.subdirCreate;
+
     auto* entry = new DirectoryEntry(
       std::wstring(name.begin(), name.end()), this, originID,
       m_FileRegister, m_OriginConnection);
 
-    addDirectoryToList(entry, std::move(nameLc));
-    // nameLc is moved from this point
+    stats.addDirectoryTimes += elapsed([&] {
+      addDirectoryToList(entry, std::move(nameLc));
+      // nameLc is moved from this point
+    });
 
     return entry;
   } else {
@@ -1498,16 +1525,19 @@ DirectoryEntry *DirectoryEntry::getSubDirectoryRecursive(
   }
 
   const size_t pos = path.find_first_of(L"\\/");
+  DirectoryStats dummy;
 
   if (pos == std::wstring::npos) {
-    return getSubDirectory(path, create);
+    return getSubDirectory(path, create, dummy);
   } else {
-    DirectoryEntry *nextChild = getSubDirectory(path.substr(0, pos), create, originID);
+    DirectoryEntry *nextChild = getSubDirectory(
+      path.substr(0, pos), create, dummy, originID);
 
     if (nextChild == nullptr) {
       return nullptr;
     } else {
-      return nextChild->getSubDirectoryRecursive(path.substr(pos + 1), create, originID);
+      return nextChild->getSubDirectoryRecursive(
+        path.substr(pos + 1), create, originID);
     }
   }
 }
