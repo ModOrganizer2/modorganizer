@@ -5487,50 +5487,52 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
     bool foundUpdate = false;
     bool oldFile = false;
     QString installedFile = mod->getInstallationFile();
-    QVariantMap foundFile;
-    for (auto file : files) {
-      QVariantMap fileData = file.toMap();
-      if (fileData["file_name"].toString().compare(installedFile, Qt::CaseInsensitive) == 0) {
-        foundFile = fileData;
-        mod->setNexusFileStatus(foundFile["category_id"].toInt());
-        if (mod->getNexusFileStatus() == 4 || mod->getNexusFileStatus() == 6)
-          oldFile = true;
+    if (!installedFile.isEmpty()) { 
+      QVariantMap foundFile;
+      for (auto file : files) {
+        QVariantMap fileData = file.toMap();
+        if (fileData["file_name"].toString().compare(installedFile, Qt::CaseInsensitive) == 0) {
+          foundFile = fileData;
+          mod->setNexusFileStatus(foundFile["category_id"].toInt());
+          if (mod->getNexusFileStatus() == 4 || mod->getNexusFileStatus() == 6)
+            oldFile = true;
+        }
       }
-    }
-    for (auto update : fileUpdates) {
-      QVariantMap updateData = update.toMap();
-      // Locate the current install file as an update
-      if (installedFile == updateData["old_file_name"].toString()) {
-        int currentUpdate = updateData["new_file_id"].toInt();
-        bool finalUpdate = false;
-        // Crawl the updates to make sure we have the latest file version
-        while (!finalUpdate) {
-          finalUpdate = true;
-          for (auto updateScan : fileUpdates) {
-            QVariantMap updateScanData = updateScan.toMap();
-            if (currentUpdate == updateScanData["old_file_id"].toInt()) {
-              currentUpdate = updateScanData["new_file_id"].toInt();
-              finalUpdate = false;
-              // Apply the version data from the latest file
-              for (auto file : files) {
-                QVariantMap fileData = file.toMap();
-                if (fileData["file_id"].toInt() == currentUpdate) {
-                  if (fileData["category_id"].toInt() != 6) {
-                    mod->setNewestVersion(fileData["version"].toString());
-                    foundUpdate = true;
+      for (auto update : fileUpdates) {
+        QVariantMap updateData = update.toMap();
+        // Locate the current install file as an update
+        if (installedFile == updateData["old_file_name"].toString()) {
+          int currentUpdate = updateData["new_file_id"].toInt();
+          bool finalUpdate = false;
+          // Crawl the updates to make sure we have the latest file version
+          while (!finalUpdate) {
+            finalUpdate = true;
+            for (auto updateScan : fileUpdates) {
+              QVariantMap updateScanData = updateScan.toMap();
+              if (currentUpdate == updateScanData["old_file_id"].toInt()) {
+                currentUpdate = updateScanData["new_file_id"].toInt();
+                finalUpdate = false;
+                // Apply the version data from the latest file
+                for (auto file : files) {
+                  QVariantMap fileData = file.toMap();
+                  if (fileData["file_id"].toInt() == currentUpdate) {
+                    if (fileData["category_id"].toInt() != 6) {
+                      mod->setNewestVersion(fileData["version"].toString());
+                      foundUpdate = true;
+                    }
                   }
                 }
+                break;
               }
-              break;
             }
           }
-        }
-        break;
-      } else if (installedFile == updateData["new_file_name"].toString()) {
-        // This is a safety mechanism if this is the latest update file so we don't use the mod version
-        if (!foundUpdate && !oldFile) {
-          foundUpdate = true;
-          mod->setNewestVersion(foundFile["version"].toString());
+          break;
+        } else if (installedFile == updateData["new_file_name"].toString()) {
+          // This is a safety mechanism if this is the latest update file so we don't use the mod version
+          if (!foundUpdate && !oldFile) {
+            foundUpdate = true;
+            mod->setNewestVersion(foundFile["version"].toString());
+          }
         }
       }
     }
@@ -5566,9 +5568,13 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
     QDateTime now = QDateTime::currentDateTimeUtc();
     QDateTime updateTarget = mod->getExpires();
     if (now >= updateTarget) {
-      mod->setNewestVersion(result["version"].toString());
-      mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
-      foundUpdate = true;
+      // if file is still listed as optional or miscellaneous don't update the version as often optional files are left
+      // with an older version than the main mod version.
+      if (mod->getNexusFileStatus() != 3 && mod->getNexusFileStatus() != 5) {
+        mod->setNewestVersion(result["version"].toString());
+        mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
+        foundUpdate = true;
+      }
     }
     mod->setNexusDescription(result["description"].toString());
     if ((mod->endorsedState() != ModInfo::ENDORSED_NEVER) && (result.contains("endorsement"))) {
