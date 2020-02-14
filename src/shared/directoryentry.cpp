@@ -38,16 +38,25 @@ namespace MOShared
 {
 
 using namespace MOBase;
-static const int MAXPATH_UNICODE = 32767;
+const int MAXPATH_UNICODE = 32767;
 
 template <class F>
-std::chrono::nanoseconds elapsed(F&& f)
+void elapsedImpl(std::chrono::nanoseconds& out, F&& f)
 {
-  const auto start = std::chrono::high_resolution_clock::now();
-  f();
-  const auto end = std::chrono::high_resolution_clock::now();
-  return (end - start);
+  if constexpr (DirectoryStats::EnableInstrumentation) {
+    const auto start = std::chrono::high_resolution_clock::now();
+    f();
+    const auto end = std::chrono::high_resolution_clock::now();
+    out += (end - start);
+  } else {
+    f();
+  }
 }
+
+// elapsed() is not optimized out when EnableInstrumentation is false even
+// though it's equivalent that this macro
+//#define elapsed(OUT, F) (F)();
+#define elapsed(OUT, F) elapsedImpl(OUT, F);
 
 
 static std::wstring tail(const std::wstring &source, const size_t count)
@@ -327,15 +336,13 @@ private:
 
 FileEntry::FileEntry() :
   m_Index(UINT_MAX), m_Name(), m_Origin(-1), m_Parent(nullptr),
-  m_FileSize(NoFileSize), m_CompressedFileSize(NoFileSize),
-  m_LastAccessed(time(nullptr))
+  m_FileSize(NoFileSize), m_CompressedFileSize(NoFileSize)
 {
 }
 
 FileEntry::FileEntry(Index index, std::wstring name, DirectoryEntry *parent) :
   m_Index(index), m_Name(std::move(name)), m_Origin(-1), m_Archive(L"", -1), m_Parent(parent),
-  m_FileSize(NoFileSize), m_CompressedFileSize(NoFileSize),
-  m_LastAccessed(time(nullptr))
+  m_FileSize(NoFileSize), m_CompressedFileSize(NoFileSize)
 {
 }
 
@@ -344,7 +351,6 @@ void FileEntry::addOrigin(
 {
   std::scoped_lock lock(m_OriginsMutex);
 
-  m_LastAccessed = time(nullptr);
   if (m_Parent != nullptr) {
     m_Parent->propagateOrigin(origin);
   }
@@ -639,13 +645,13 @@ FileEntry::Ptr FilesOrigin::findFile(FileEntry::Index index) const
   return m_FileRegister.lock()->getFile(index);
 }
 
-void FilesOrigin::enable(bool enabled, time_t notAfter)
+void FilesOrigin::enable(bool enabled)
 {
   DirectoryStats dummy;
-  enable(enabled, dummy, notAfter);
+  enable(enabled, dummy);
 }
 
-void FilesOrigin::enable(bool enabled, DirectoryStats& stats, time_t notAfter)
+void FilesOrigin::enable(bool enabled, DirectoryStats& stats)
 {
   if (!enabled) {
     ++stats.originsNeededEnabled;
@@ -658,7 +664,7 @@ void FilesOrigin::enable(bool enabled, DirectoryStats& stats, time_t notAfter)
       m_Files.clear();
     }
 
-    m_FileRegister.lock()->removeOriginMulti(copy, m_ID, notAfter);
+    m_FileRegister.lock()->removeOriginMulti(copy, m_ID);
   }
 
   m_Disabled = !enabled;
@@ -692,57 +698,53 @@ bool FilesOrigin::containsArchive(std::wstring archiveName)
 
 
 FileRegister::FileRegister(boost::shared_ptr<OriginConnection> originConnection)
-  : m_OriginConnection(originConnection)
+  : m_OriginConnection(originConnection), m_NextIndex(0)
 {
 }
 
 bool FileRegister::indexValid(FileEntry::Index index) const
 {
   std::scoped_lock lock(m_Mutex);
-  return (m_Files.find(index) != m_Files.end());
+
+  if (index < m_Files.size()) {
+    return (m_Files[index].get() != nullptr);
+  }
+
+  return false;
 }
 
 FileEntry::Ptr FileRegister::createFile(
   std::wstring name, DirectoryEntry *parent, DirectoryStats& stats)
 {
   const auto index = generateIndex();
-  FileEntry::Ptr p;
+  auto p = FileEntry::Ptr(new FileEntry(index, std::move(name), parent));
 
-  stats.addFileToRegisterTimes += elapsed([&]{
-    bool inserted = false;
-    p = FileEntry::Ptr(new FileEntry(index, std::move(name), parent));
+  {
+    std::scoped_lock lock(m_Mutex);
 
-    {
-      std::scoped_lock lock(m_Mutex);
-      inserted = m_Files.insert_or_assign(index, p).second;
+    if (index >= m_Files.size()) {
+      m_Files.resize(index + 1);
     }
 
-    if (inserted) {
-      ++stats.filesInsertedInRegister;
-    } else {
-      ++stats.filesAssignedInRegister;
-    }
-  });
+    m_Files[index] = p;
+  }
 
   return p;
 }
 
 FileEntry::Index FileRegister::generateIndex()
 {
-  static std::atomic<FileEntry::Index> sIndex(0);
-  return sIndex++;
+  return m_NextIndex++;
 }
 
 FileEntry::Ptr FileRegister::getFile(FileEntry::Index index) const
 {
   std::scoped_lock lock(m_Mutex);
 
-  auto iter = m_Files.find(index);
-
-  if (iter != m_Files.end()) {
-    return iter->second;
+  if (index < m_Files.size()) {
+    return m_Files[index];
   } else {
-    return FileEntry::Ptr();
+    return {};
   }
 }
 
@@ -750,37 +752,42 @@ bool FileRegister::removeFile(FileEntry::Index index)
 {
   std::scoped_lock lock(m_Mutex);
 
-  auto iter = m_Files.find(index);
+  if (index < m_Files.size()) {
+    FileEntry::Ptr p;
+    m_Files[index].swap(p);
 
-  if (iter != m_Files.end()) {
-    unregisterFile(iter->second);
-    m_Files.erase(index);
-    return true;
-  } else {
-    log::error(QObject::tr("invalid file index for remove: {}").toStdString(), index);
-    return false;
+    if (p) {
+      unregisterFile(p);
+      return true;
+    }
   }
+
+  log::error(QObject::tr("invalid file index for remove: {}").toStdString(), index);
+  return false;
 }
 
 void FileRegister::removeOrigin(FileEntry::Index index, int originID)
 {
   std::unique_lock lock(m_Mutex);
 
-  auto iter = m_Files.find(index);
+  if (index < m_Files.size()) {
+    FileEntry::Ptr& p = m_Files[index];
 
-  if (iter != m_Files.end()) {
-    if (iter->second->removeOrigin(originID)) {
-      m_Files.erase(iter);
-      lock.unlock();
-      unregisterFile(iter->second);
+    if (p) {
+      if (p->removeOrigin(originID)) {
+        m_Files[index] = {};
+        lock.unlock();
+        unregisterFile(p);
+        return;
+      }
     }
-  } else {
-    log::error(QObject::tr("invalid file index for remove (for origin): {}").toStdString(), index);
   }
+
+  log::error(QObject::tr("invalid file index for remove (for origin): {}").toStdString(), index);
 }
 
 void FileRegister::removeOriginMulti(
-  std::set<FileEntry::Index> indices, int originID, time_t notAfter)
+  std::set<FileEntry::Index> indices, int originID)
 {
   std::vector<FileEntry::Ptr> removedFiles;
 
@@ -788,17 +795,20 @@ void FileRegister::removeOriginMulti(
     std::scoped_lock lock(m_Mutex);
 
     for (auto iter = indices.begin(); iter != indices.end(); ) {
-      auto pos = m_Files.find(*iter);
+      const auto index = *iter;
 
-      if (pos != m_Files.end()
-          && (pos->second->lastAccessed() < notAfter)
-          && pos->second->removeOrigin(originID)) {
-        removedFiles.push_back(pos->second);
-        m_Files.erase(pos);
-        ++iter;
-      } else {
-        indices.erase(iter++);
+      if (index < m_Files.size()) {
+        const auto& p = m_Files[index];
+
+        if (p && p->removeOrigin(originID)) {
+          removedFiles.push_back(p);
+          m_Files[index] = {};
+          ++iter;
+          continue;
+        }
       }
+
+      iter = indices.erase(iter);
     }
   }
 
@@ -832,8 +842,8 @@ void FileRegister::sortOrigins()
 {
   std::scoped_lock lock(m_Mutex);
 
-  for (auto iter = m_Files.begin(); iter != m_Files.end(); ++iter) {
-    iter->second->sortOrigins();
+  for (auto&& p : m_Files) {
+    p->sortOrigins();
   }
 }
 
@@ -927,20 +937,20 @@ void DirectoryEntry::addFromList(
 void DirectoryEntry::addDir(
   FilesOrigin& origin, env::Directory& d, DirectoryStats& stats)
 {
-  stats.dirTimes += elapsed([&]{
+  elapsed(stats.dirTimes, [&]{
     for (auto& sd : d.dirs) {
       auto* sdirEntry = getSubDirectory(sd, true, stats, origin.getID());
       sdirEntry->addDir(origin, sd, stats);
     }
   });
 
-  stats.fileTimes += elapsed([&]{
+  elapsed(stats.fileTimes, [&]{
     for (auto& f : d.files) {
       insert(f, origin, L"", -1, stats);
     }
   });
 
-  stats.sortTimes += elapsed([&]{
+  elapsed(stats.sortTimes, [&]{
     std::sort(
       m_SubDirectories.begin(),
       m_SubDirectories.end(),
@@ -1293,7 +1303,7 @@ FileEntry::Ptr DirectoryEntry::insert(
 
     FilesLookup::iterator itor;
 
-    stats.filesLookupTimes += elapsed([&]{
+    elapsed(stats.filesLookupTimes, [&]{
       itor = m_FilesLookup.find(key);
     });
 
@@ -1306,7 +1316,7 @@ FileEntry::Ptr DirectoryEntry::insert(
       fe = m_FileRegister->createFile(
         std::wstring(fileName.begin(), fileName.end()), this, stats);
 
-      stats.addFileTimes += elapsed([&] {
+      elapsed(stats.addFileTimes, [&] {
         addFileToList(std::move(key.value), fe->getIndex());
       });
 
@@ -1314,11 +1324,11 @@ FileEntry::Ptr DirectoryEntry::insert(
     }
   }
 
-  stats.addOriginToFileTimes += elapsed([&]{
+  elapsed(stats.addOriginToFileTimes, [&]{
     fe->addOrigin(origin.getID(), fileTime, archive, order);
   });
 
-  stats.addFileToOriginTimes += elapsed([&]{
+  elapsed(stats.addFileToOriginTimes, [&]{
     origin.addFile(fe->getIndex());
   });
 
@@ -1336,7 +1346,7 @@ FileEntry::Ptr DirectoryEntry::insert(
 
     FilesMap::iterator itor;
 
-    stats.filesLookupTimes += elapsed([&]{
+    elapsed(stats.filesLookupTimes, [&]{
       itor = m_Files.find(file.lcname);
     });
 
@@ -1349,7 +1359,7 @@ FileEntry::Ptr DirectoryEntry::insert(
       fe = m_FileRegister->createFile(std::move(file.name), this, stats);
       // file.name has been moved from this point
 
-      stats.addFileTimes += elapsed([&]{
+      elapsed(stats.addFileTimes, [&]{
         addFileToList(std::move(file.lcname), fe->getIndex());
       });
 
@@ -1357,11 +1367,11 @@ FileEntry::Ptr DirectoryEntry::insert(
     }
   }
 
-  stats.addOriginToFileTimes += elapsed([&]{
+  elapsed(stats.addOriginToFileTimes, [&]{
     fe->addOrigin(origin.getID(), file.lastModified, archive, order);
   });
 
-  stats.addFileToOriginTimes += elapsed([&]{
+  elapsed(stats.addFileToOriginTimes, [&]{
     origin.addFile(fe->getIndex());
   });
 
@@ -1386,7 +1396,7 @@ void DirectoryEntry::addFiles(
     [](void* pcx, std::wstring_view path)
     {
       Context* cx = (Context*)pcx;
-      cx->stats.dirTimes += elapsed([&] {
+      elapsed(cx->stats.dirTimes, [&] {
         auto* sd = cx->current.top()->getSubDirectory(
           path, true, cx->stats, cx->origin.getID());
 
@@ -1398,7 +1408,7 @@ void DirectoryEntry::addFiles(
     {
       Context* cx = (Context*)pcx;
 
-      cx->stats.dirTimes += elapsed([&] {
+      elapsed(cx->stats.dirTimes, [&] {
         auto* current= cx->current.top();
 
         {
@@ -1418,7 +1428,7 @@ void DirectoryEntry::addFiles(
     {
       Context* cx = (Context*)pcx;
 
-      cx->stats.fileTimes += elapsed([&]{
+      elapsed(cx->stats.fileTimes, [&]{
         cx->current.top()->insert(path, cx->origin, ft, L"", -1, cx->stats);
       });
     }
@@ -1466,7 +1476,7 @@ DirectoryEntry *DirectoryEntry::getSubDirectory(
   std::scoped_lock lock(m_SubDirMutex);
 
   SubDirectoriesLookup::iterator itor;
-  stats.subdirLookupTimes += elapsed([&] {
+  elapsed(stats.subdirLookupTimes, [&] {
     itor = m_SubDirectoriesLookup.find(nameLc);
   });
 
@@ -1482,7 +1492,7 @@ DirectoryEntry *DirectoryEntry::getSubDirectory(
       std::wstring(name.begin(), name.end()), this, originID,
       m_FileRegister, m_OriginConnection);
 
-    stats.addDirectoryTimes += elapsed([&] {
+    elapsed(stats.addDirectoryTimes, [&] {
       addDirectoryToList(entry, std::move(nameLc));
       // nameLc is moved from this point
     });
@@ -1498,7 +1508,7 @@ DirectoryEntry *DirectoryEntry::getSubDirectory(
 {
   SubDirectoriesLookup::iterator itor;
 
-  stats.subdirLookupTimes += elapsed([&] {
+  elapsed(stats.subdirLookupTimes, [&] {
     itor = m_SubDirectoriesLookup.find(dir.lcname);
   });
 
@@ -1515,7 +1525,7 @@ DirectoryEntry *DirectoryEntry::getSubDirectory(
       m_FileRegister, m_OriginConnection);
     // dir.name is moved from this point
 
-    stats.addDirectoryTimes += elapsed([&]{
+    elapsed(stats.addDirectoryTimes, [&]{
       addDirectoryToList(entry, std::move(dir.lcname));
     });
 

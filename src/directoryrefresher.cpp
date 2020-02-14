@@ -39,7 +39,7 @@ using namespace MOShared;
 
 
 DirectoryRefresher::DirectoryRefresher(std::size_t threadCount)
-  : m_DirectoryStructure(nullptr), m_threadCount(threadCount)
+  : m_DirectoryStructure(nullptr), m_threadCount(threadCount), m_lastFileCount(0)
 {
 }
 
@@ -283,7 +283,9 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
     const auto& e = entries[i];
     const int prio = static_cast<int>(i + 1);
 
-    stats[i].mod = entries[i].modName.toStdString();
+    if constexpr (DirectoryStats::EnableInstrumentation) {
+      stats[i].mod = entries[i].modName.toStdString();
+    }
 
     try
     {
@@ -312,7 +314,9 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
 
   g_threads.waitForAll();
 
-  dumpStats(stats);
+  if constexpr (DirectoryStats::EnableInstrumentation) {
+    dumpStats(stats);
+  }
 }
 
 void DirectoryRefresher::refresh()
@@ -325,6 +329,7 @@ void DirectoryRefresher::refresh()
     delete m_DirectoryStructure;
 
     m_DirectoryStructure = new DirectoryEntry(L"data", nullptr, 0);
+    m_DirectoryStructure->getFileRegister()->reserve(m_lastFileCount);
 
     IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
 
@@ -346,6 +351,8 @@ void DirectoryRefresher::refresh()
 
     cleanStructure(m_DirectoryStructure);
   }
+
+  m_lastFileCount = m_DirectoryStructure->getFileRegister()->highestCount();
 
   emit progress(100);
   emit refreshed();

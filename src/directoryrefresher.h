@@ -145,6 +145,7 @@ private:
   MOShared::DirectoryEntry *m_DirectoryStructure;
   QMutex m_RefreshLock;
   std::size_t m_threadCount;
+  std::size_t m_lastFileCount;
 
   void stealModFilesIntoStructure(
     MOShared::DirectoryEntry *directoryStructure, const QString &modName,

@@ -64,6 +64,8 @@ class FileRegister;
 
 struct DirectoryStats
 {
+  static constexpr bool EnableInstrumentation = true;
+
   std::string mod;
 
   std::chrono::nanoseconds dirTimes;
@@ -125,11 +127,6 @@ public:
   Index getIndex() const
   {
     return m_Index;
-  }
-
-  time_t lastAccessed() const
-  {
-    return m_LastAccessed;
   }
 
   void addOrigin(
@@ -222,8 +219,6 @@ private:
   uint64_t m_FileSize, m_CompressedFileSize;
   mutable std::mutex m_OriginsMutex;
 
-  time_t m_LastAccessed;
-
   bool recurseParents(std::wstring &path, const DirectoryEntry *parent) const;
 };
 
@@ -265,8 +260,8 @@ public:
   std::vector<FileEntry::Ptr> getFiles() const;
   FileEntry::Ptr findFile(FileEntry::Index index) const;
 
-  void enable(bool enabled, DirectoryStats& stats, time_t notAfter = LONG_MAX);
-  void enable(bool enabled, time_t notAfter = LONG_MAX);
+  void enable(bool enabled, DirectoryStats& stats);
+  void enable(bool enabled);
 
   bool isDisabled() const
   {
@@ -313,24 +308,30 @@ public:
 
   FileEntry::Ptr getFile(FileEntry::Index index) const;
 
-  size_t size() const
+  size_t highestCount() const
   {
     std::scoped_lock lock(m_Mutex);
     return m_Files.size();
   }
 
+  void reserve(std::size_t n)
+  {
+    m_Files.reserve(n);
+  }
+
   bool removeFile(FileEntry::Index index);
   void removeOrigin(FileEntry::Index index, int originID);
-  void removeOriginMulti(std::set<FileEntry::Index> indices, int originID, time_t notAfter);
+  void removeOriginMulti(std::set<FileEntry::Index> indices, int originID);
 
   void sortOrigins();
 
 private:
-  using FileMap = std::map<FileEntry::Index, FileEntry::Ptr>;
+  using FileMap = std::vector<FileEntry::Ptr>;
 
   mutable std::mutex m_Mutex;
   FileMap m_Files;
   boost::shared_ptr<OriginConnection> m_OriginConnection;
+  std::atomic<FileEntry::Index> m_NextIndex;
 
   void unregisterFile(FileEntry::Ptr file);
   FileEntry::Index generateIndex();
