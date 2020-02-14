@@ -212,15 +212,6 @@ void setHandleCloserThreadCount(std::size_t n)
   g_handleClosers.setMax(n);
 }
 
-void shrinkFs()
-{
-  g_handleClosers.join();
-
-  g_handleClosers.forEach([](auto&& t) {
-    t.shrink();
-  });
-}
-
 void forEachEntryImpl(
   void* cx, HandleCloserThread& hc, std::vector<std::unique_ptr<unsigned char[]>>& buffers,
   POBJECT_ATTRIBUTES poa, std::size_t depth,
@@ -328,13 +319,12 @@ void forEachEntryImpl(
   }
 }
 
-void forEachEntry(
+
+void DirectoryWalker::forEachEntry(
   const std::wstring& path, void* cx,
   DirStartF* dirStartF, DirEndF* dirEndF, FileF* fileF)
 {
   auto& hc = g_handleClosers.request();
-
-  std::vector<std::unique_ptr<unsigned char[]>> buffers;
 
   if (!NtOpenFile) {
     LibraryPtr m(::LoadLibraryW(L"ntdll.dll"));
@@ -354,8 +344,16 @@ void forEachEntry(
   oa.Length = sizeof(oa);
   oa.ObjectName = &ObjectName;
 
-  forEachEntryImpl(cx, hc, buffers, &oa, 0, dirStartF, dirEndF, fileF);
+  forEachEntryImpl(cx, hc, m_buffers, &oa, 0, dirStartF, dirEndF, fileF);
   hc.wakeup();
+}
+
+
+void forEachEntry(
+  const std::wstring& path, void* cx,
+  DirStartF* dirStartF, DirEndF* dirEndF, FileF* fileF)
+{
+  DirectoryWalker().forEachEntry(path, cx, dirStartF, dirEndF, fileF);
 }
 
 Directory getFilesAndDirs(const std::wstring& path)

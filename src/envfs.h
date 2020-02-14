@@ -33,13 +33,13 @@ class ThreadPool
 {
 public:
   ThreadPool(std::size_t max=1)
-    : m_threads(max)
   {
+    setMax(max);
   }
 
   ~ThreadPool()
   {
-    join();
+    stopAndJoin();
   }
 
   void setMax(std::size_t n)
@@ -47,12 +47,37 @@ public:
     m_threads.resize(n);
   }
 
-  void join()
+  void stopAndJoin()
   {
+    for (auto& ti : m_threads) {
+      ti.stop = true;
+      ti.wakeup();
+    }
+
     for (auto& ti : m_threads) {
       if (ti.thread.joinable()) {
         ti.thread.join();
       }
+    }
+  }
+
+  void waitForAll()
+  {
+    for (;;) {
+      bool done = true;
+
+      for (auto& ti : m_threads) {
+        if (ti.busy) {
+          done = false;
+          break;
+        }
+      }
+
+      if (done) {
+        break;
+      }
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
 
@@ -67,15 +92,7 @@ public:
         bool expected = false;
 
         if (ti.busy.compare_exchange_strong(expected, true)) {
-          if (ti.thread.joinable()) {
-            ti.thread.join();
-          }
-
-          ti.thread = std::thread([&]{
-            ti.o.run();
-            ti.busy = false;
-          });
-
+          ti.wakeup();
           return ti.o;
         }
       }
@@ -98,6 +115,47 @@ private:
     std::thread thread;
     std::atomic<bool> busy;
     T o;
+
+    std::condition_variable cv;
+    std::mutex mutex;
+    bool ready;
+
+    std::atomic<bool> stop;
+
+    ThreadInfo()
+      : busy(true), ready(false), stop(false)
+    {
+      thread = std::thread([&]{ run(); });
+    }
+
+    void wakeup()
+    {
+      {
+        std::scoped_lock lock(mutex);
+        ready = true;
+      }
+
+      cv.notify_one();
+    }
+
+    void run()
+    {
+      busy = false;
+
+      while (!stop) {
+        std::unique_lock lock(mutex);
+        cv.wait(lock, [&]{ return ready; });
+
+        if (stop) {
+          break;
+        }
+
+        o.run();
+
+        ready = false;
+        busy = false;
+      }
+    }
   };
 
   std::list<ThreadInfo> m_threads;
@@ -109,7 +167,19 @@ using DirEndF = void (void*, std::wstring_view);
 using FileF = void (void*, std::wstring_view, FILETIME);
 
 void setHandleCloserThreadCount(std::size_t n);
-void shrinkFs();
+
+
+class DirectoryWalker
+{
+public:
+  void forEachEntry(
+    const std::wstring& path, void* cx,
+    DirStartF* dirStartF, DirEndF* dirEndF, FileF* fileF);
+
+private:
+  std::vector<std::unique_ptr<unsigned char[]>> m_buffers;
+};
+
 
 void forEachEntry(
   const std::wstring& path, void* cx,

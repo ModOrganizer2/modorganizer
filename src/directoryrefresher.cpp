@@ -203,8 +203,8 @@ struct ModThread
   std::wstring modName;
   std::wstring path;
   int prio = -1;
-  env::Directory* dir = nullptr;
   DirectoryStats* stats =  nullptr;
+  env::DirectoryWalker walker;
 
   std::condition_variable cv;
   std::mutex mutex;
@@ -212,7 +212,11 @@ struct ModThread
 
   void wakeup()
   {
-    ready = true;
+    {
+      std::scoped_lock lock(mutex);
+      ready = true;
+    }
+
     cv.notify_one();
   }
 
@@ -222,7 +226,7 @@ struct ModThread
     cv.wait(lock, [&]{ return ready; });
 
     SetThisThreadName(QString::fromStdWString(modName + L" refresher"));
-    ds->addFromOrigin(modName, path, prio, *stats);
+    ds->addFromOrigin(walker, modName, path, prio, *stats);
 
     /*if (Settings::instance().archiveParsing()) {
       addModBSAToStructure(
@@ -236,6 +240,9 @@ struct ModThread
     ready = false;
   }
 };
+
+env::ThreadPool<ModThread> g_threads;
+
 
 void dumpStats(std::vector<DirectoryStats>& stats)
 {
@@ -268,17 +275,18 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
   MOShared::DirectoryEntry *directoryStructure,
   const std::vector<EntryInfo>& entries, bool emitProgress)
 {
-  std::vector<env::Directory> dirs(entries.size());
   std::vector<DirectoryStats> stats(entries.size());
+
+  g_threads.setMax(m_threadCount);
 
   {
     TimeThis tt("walk dirs");
 
-    env::ThreadPool<ModThread> threads(m_threadCount);
-
     for (std::size_t i=0; i<entries.size(); ++i) {
       const auto& e = entries[i];
       const int prio = static_cast<int>(i + 1);
+
+      stats[i].mod = entries[i].modName.toStdString();
 
       try
       {
@@ -286,16 +294,13 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
           stealModFilesIntoStructure(
             directoryStructure, e.modName, prio, e.absolutePath, e.stealFiles);
         } else {
-          auto& mt = threads.request();
+          auto& mt = g_threads.request();
 
           mt.ds = directoryStructure;
           mt.modName = entries[i].modName.toStdWString();
           mt.path = QDir::toNativeSeparators(e.absolutePath).toStdWString();
           mt.prio = prio;
-          mt.dir = &dirs[i];
           mt.stats = &stats[i];
-
-          stats[i].mod = entries[i].modName.toStdString();
 
           mt.wakeup();
         }
@@ -308,7 +313,7 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
       }
     }
 
-    threads.join();
+    g_threads.waitForAll();
   }
 
   dumpStats(stats);
@@ -347,12 +352,12 @@ void DirectoryRefresher::refresh()
 
     m_DirectoryStructure->getFileRegister()->sortOrigins();
 
+    cleanStructure(m_DirectoryStructure);
+  }
+
     emit progress(100);
 
-    cleanStructure(m_DirectoryStructure);
+  emit refreshed();
 
-    emit refreshed();
-
-    //logcounts("after refresh");
-  }
+  //logcounts("after refresh");
 }

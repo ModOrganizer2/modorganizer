@@ -211,35 +211,57 @@ public:
     --OriginConnectionCount;
   }
 
+  std::pair<FilesOrigin&, bool> getOrCreate(
+    const std::wstring &originName, const std::wstring &directory, int priority,
+    const boost::shared_ptr<FileRegister>& fileRegister,
+    const boost::shared_ptr<OriginConnection>& originConnection,
+    DirectoryStats& stats)
+  {
+    std::unique_lock lock(m_Mutex);
+
+    auto itor = m_OriginsNameMap.find(originName);
+
+    if (itor == m_OriginsNameMap.end()) {
+      FilesOrigin& origin = createOriginNoLock(
+        originName, directory, priority, fileRegister, originConnection);
+
+      return {origin, true};
+    } else {
+      FilesOrigin& origin = m_Origins[itor->second];
+      lock.unlock();
+
+      origin.enable(true, stats);
+      return {origin, false};
+    }
+  }
+
   FilesOrigin& createOrigin(
     const std::wstring &originName, const std::wstring &directory, int priority,
     boost::shared_ptr<FileRegister> fileRegister,
     boost::shared_ptr<OriginConnection> originConnection)
   {
-    int newID = createID();
+    std::scoped_lock lock(m_Mutex);
 
-    auto itor = m_Origins.insert({newID, FilesOrigin(
-      newID, originName, directory, priority,
-      fileRegister, originConnection)}).first;
-
-    m_OriginsNameMap.insert({originName, newID});
-    m_OriginsPriorityMap.insert({priority, newID});
-
-    return itor->second;
+    return createOriginNoLock(
+      originName, directory, priority, fileRegister, originConnection);
   }
 
   bool exists(const std::wstring &name)
   {
+    std::scoped_lock lock(m_Mutex);
     return m_OriginsNameMap.find(name) != m_OriginsNameMap.end();
   }
 
   FilesOrigin &getByID(Index ID)
   {
+    std::scoped_lock lock(m_Mutex);
     return m_Origins[ID];
   }
 
   const FilesOrigin* findByID(Index ID) const
   {
+    std::scoped_lock lock(m_Mutex);
+
     auto itor = m_Origins.find(ID);
 
     if (itor == m_Origins.end()) {
@@ -251,6 +273,8 @@ public:
 
   FilesOrigin &getByName(const std::wstring &name)
   {
+    std::scoped_lock lock(m_Mutex);
+
     std::map<std::wstring, int>::iterator iter = m_OriginsNameMap.find(name);
 
     if (iter != m_OriginsNameMap.end()) {
@@ -264,6 +288,8 @@ public:
 
   void changePriorityLookup(int oldPriority, int newPriority)
   {
+    std::scoped_lock lock(m_Mutex);
+
     auto iter = m_OriginsPriorityMap.find(oldPriority);
 
     if (iter != m_OriginsPriorityMap.end()) {
@@ -275,6 +301,8 @@ public:
 
   void changeNameLookup(const std::wstring &oldName, const std::wstring &newName)
   {
+    std::scoped_lock lock(m_Mutex);
+
     auto iter = m_OriginsNameMap.find(oldName);
 
     if (iter != m_OriginsNameMap.end()) {
@@ -291,10 +319,28 @@ private:
   std::map<Index, FilesOrigin> m_Origins;
   std::map<std::wstring, Index> m_OriginsNameMap;
   std::map<int, Index> m_OriginsPriorityMap;
+  mutable std::mutex m_Mutex;
 
   Index createID()
   {
     return m_NextID++;
+  }
+
+  FilesOrigin& createOriginNoLock(
+    const std::wstring &originName, const std::wstring &directory, int priority,
+    boost::shared_ptr<FileRegister> fileRegister,
+    boost::shared_ptr<OriginConnection> originConnection)
+  {
+    int newID = createID();
+
+    auto itor = m_Origins.insert({newID, FilesOrigin(
+      newID, originName, directory, priority,
+      fileRegister, originConnection)}).first;
+
+    m_OriginsNameMap.insert({originName, newID});
+    m_OriginsPriorityMap.insert({priority, newID});
+
+    return itor->second;
   }
 };
 
@@ -899,10 +945,18 @@ void DirectoryEntry::addFromOrigin(
   const std::wstring &originName, const std::wstring &directory, int priority,
   DirectoryStats& stats)
 {
+  env::DirectoryWalker walker;
+  addFromOrigin(walker, originName, directory, priority, stats);
+}
+
+void DirectoryEntry::addFromOrigin(
+  env::DirectoryWalker& walker, const std::wstring &originName,
+  const std::wstring &directory, int priority, DirectoryStats& stats)
+{
   FilesOrigin &origin = createOrigin(originName, directory, priority, stats);
 
   if (!directory.empty()) {
-    addFiles(origin, directory, stats);
+    addFiles(walker, origin, directory, stats);
   }
 
   m_Populated = true;
@@ -993,7 +1047,10 @@ void DirectoryEntry::addFromBSA(
 
 void DirectoryEntry::propagateOrigin(int origin)
 {
-  m_Origins.insert(origin);
+  {
+    std::scoped_lock lock(m_OriginsMutex);
+    m_Origins.insert(origin);
+  }
 
   if (m_Parent != nullptr) {
     m_Parent->propagateOrigin(origin);
@@ -1252,16 +1309,17 @@ FilesOrigin &DirectoryEntry::createOrigin(
   const std::wstring &originName, const std::wstring &directory, int priority,
   DirectoryStats& stats)
 {
-  if (m_OriginConnection->exists(originName)) {
-    ++stats.originExists;
-    FilesOrigin &origin = m_OriginConnection->getByName(originName);
-    origin.enable(true, stats);
-    return origin;
-  } else {
+  auto r = m_OriginConnection->getOrCreate(
+    originName, directory, priority,
+    m_FileRegister, m_OriginConnection, stats);
+
+  if (r.second) {
     ++stats.originCreate;
-    return m_OriginConnection->createOrigin(
-      originName, directory, priority, m_FileRegister, m_OriginConnection);
+  } else {
+    ++stats.originExists;
   }
+
+  return r.first;
 }
 
 void DirectoryEntry::removeFiles(const std::set<FileEntry::Index> &indices)
@@ -1359,7 +1417,8 @@ FileEntry::Ptr DirectoryEntry::insert(
 }
 
 void DirectoryEntry::addFiles(
-  FilesOrigin &origin, const std::wstring& path, DirectoryStats& stats)
+  env::DirectoryWalker& walker, FilesOrigin &origin,
+  const std::wstring& path, DirectoryStats& stats)
 {
   struct Context
   {
@@ -1371,7 +1430,7 @@ void DirectoryEntry::addFiles(
   Context cx = {origin, stats};
   cx.current.push(this);
 
-  env::forEachEntry(path, &cx,
+  walker.forEachEntry(path, &cx,
     [](void* pcx, std::wstring_view path)
     {
       Context* cx = (Context*)pcx;

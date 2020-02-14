@@ -410,6 +410,10 @@ public:
     const std::wstring &originName,
     const std::wstring &directory, int priority, DirectoryStats& stats);
 
+  void addFromOrigin(
+    env::DirectoryWalker& walker, const std::wstring &originName,
+    const std::wstring &directory, int priority, DirectoryStats& stats);
+
   void addFromBSA(
     const std::wstring &originName, std::wstring &directory,
     const std::wstring &fileName, int priority, int order);
@@ -556,6 +560,7 @@ private:
   bool m_TopLevel;
   std::mutex m_SubDirMutex;
   std::mutex m_FilesMutex;
+  std::mutex m_OriginsMutex;
 
 
   DirectoryEntry(const DirectoryEntry &reference);
@@ -569,7 +574,8 @@ private:
     std::wstring_view archive, int order, DirectoryStats& stats);
 
   void addFiles(
-    FilesOrigin &origin, const std::wstring& path, DirectoryStats& stats);
+    env::DirectoryWalker& walker, FilesOrigin &origin,
+    const std::wstring& path, DirectoryStats& stats);
 
   void addFiles(
     FilesOrigin &origin, BSA::Folder::Ptr archiveFolder, FILETIME &fileTime,
