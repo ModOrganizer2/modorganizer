@@ -372,11 +372,7 @@ Directory getFilesAndDirs(const std::wstring& path)
     [](void* pcx, std::wstring_view path) {
       Context* cx = (Context*)pcx;
 
-      cx->current.top()->dirs.push_back({
-        std::wstring(path.begin(), path.end()),
-        MOShared::ToLowerCopy(path)
-      });
-
+      cx->current.top()->dirs.push_back(Directory(path));
       cx->current.push(&cx->current.top()->dirs.back());
     },
 
@@ -385,18 +381,70 @@ Directory getFilesAndDirs(const std::wstring& path)
       cx->current.pop();
     },
 
-      [](void* pcx, std::wstring_view path, FILETIME ft) {
+    [](void* pcx, std::wstring_view path, FILETIME ft) {
       Context* cx = (Context*)pcx;
 
-      cx->current.top()->files.push_back({
-        std::wstring(path.begin(), path.end()),
-        MOShared::ToLowerCopy(path),
-        ft
-      });
+      cx->current.top()->files.push_back(File(path, ft));
     }
   );
 
   return root;
+}
+
+File::File(std::wstring_view n, FILETIME ft) :
+  name(n.begin(), n.end()),
+  lcname(MOShared::ToLowerCopy(name)),
+  lastModified(ft)
+{
+}
+
+Directory::Directory()
+{
+}
+
+Directory::Directory(std::wstring_view n)
+  : name(n.begin(), n.end()), lcname(MOShared::ToLowerCopy(name))
+{
+}
+
+
+void getFilesAndDirsWithFindImpl(const std::wstring& path, Directory& d)
+{
+  const std::wstring searchString = path + L"\\*";
+
+  WIN32_FIND_DATAW findData;
+
+  HANDLE searchHandle = ::FindFirstFileExW(
+    searchString.c_str(), FindExInfoBasic, &findData, FindExSearchNameMatch,
+    nullptr, FIND_FIRST_EX_LARGE_FETCH);
+
+  if (searchHandle != INVALID_HANDLE_VALUE) {
+    BOOL result = true;
+
+    while (result) {
+      if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+        if ((wcscmp(findData.cFileName, L".") != 0) &&
+          (wcscmp(findData.cFileName, L"..") != 0)) {
+          const std::wstring newPath = path + L"\\" + findData.cFileName;
+          d.dirs.push_back(Directory(findData.cFileName));
+          getFilesAndDirsWithFindImpl(newPath, d.dirs.back());
+        }
+      } else {
+        d.files.push_back(File(findData.cFileName, findData.ftLastWriteTime));
+      }
+
+      result = ::FindNextFileW(searchHandle, &findData);
+    }
+  }
+
+  ::FindClose(searchHandle);
+}
+
+Directory getFilesAndDirsWithFind(const std::wstring& path)
+{
+  Directory d;
+  getFilesAndDirsWithFindImpl(path, d);
+  return d;
 }
 
 } // namespace

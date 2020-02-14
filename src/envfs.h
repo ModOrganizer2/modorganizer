@@ -11,6 +11,8 @@ struct File
   std::wstring name;
   std::wstring lcname;
   FILETIME lastModified;
+
+  File(std::wstring_view name, FILETIME ft);
 };
 
 struct Directory
@@ -18,8 +20,11 @@ struct Directory
   std::wstring name;
   std::wstring lcname;
 
-  std::list<Directory> dirs;
-  std::list<File> files;
+  std::vector<Directory> dirs;
+  std::vector<File> files;
+
+  Directory();
+  Directory(std::wstring_view name);
 };
 
 
@@ -111,6 +116,7 @@ void forEachEntry(
   DirStartF* dirStartF, DirEndF* dirEndF, FileF* fileF);
 
 Directory getFilesAndDirs(const std::wstring& path);
+Directory getFilesAndDirsWithFind(const std::wstring& path);
 
 } // namespace
 

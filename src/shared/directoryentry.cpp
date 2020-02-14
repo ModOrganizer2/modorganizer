@@ -214,11 +214,14 @@ public:
   {
     int newID = createID();
 
-    m_Origins[newID] = FilesOrigin(newID, originName, directory, priority, fileRegister, originConnection);
-    m_OriginsNameMap[originName] = newID;
-    m_OriginsPriorityMap[priority] = newID;
+    auto itor = m_Origins.insert({newID, FilesOrigin(
+      newID, originName, directory, priority,
+      fileRegister, originConnection)}).first;
 
-    return m_Origins[newID];
+    m_OriginsNameMap.insert({originName, newID});
+    m_OriginsPriorityMap.insert({priority, newID});
+
+    return itor->second;
   }
 
   bool exists(const std::wstring &name)
@@ -597,9 +600,13 @@ std::vector<FileEntry::Ptr> FilesOrigin::getFiles() const
 {
   std::vector<FileEntry::Ptr> result;
 
-  for (FileEntry::Index fileIdx : m_Files) {
-    if (FileEntry::Ptr p = m_FileRegister.lock()->getFile(fileIdx)) {
-      result.push_back(p);
+  {
+    std::scoped_lock lock(m_Mutex);
+
+    for (FileEntry::Index fileIdx : m_Files) {
+      if (FileEntry::Ptr p = m_FileRegister.lock()->getFile(fileIdx)) {
+        result.push_back(p);
+      }
     }
   }
 
@@ -621,9 +628,16 @@ void FilesOrigin::enable(bool enabled, DirectoryStats& stats, time_t notAfter)
 {
   if (!enabled) {
     ++stats.originsNeededEnabled;
-    std::set<FileEntry::Index> copy = m_Files;
+
+    std::set<FileEntry::Index> copy;
+
+    {
+      std::scoped_lock lock(m_Mutex);
+      copy = m_Files;
+      m_Files.clear();
+    }
+
     m_FileRegister.lock()->removeOriginMulti(copy, m_ID, notAfter);
-    m_Files.clear();
   }
 
   m_Disabled = !enabled;
@@ -631,6 +645,8 @@ void FilesOrigin::enable(bool enabled, DirectoryStats& stats, time_t notAfter)
 
 void FilesOrigin::removeFile(FileEntry::Index index)
 {
+  std::scoped_lock lock(m_Mutex);
+
   auto iter = m_Files.find(index);
 
   if (iter != m_Files.end()) {
@@ -640,6 +656,8 @@ void FilesOrigin::removeFile(FileEntry::Index index)
 
 bool FilesOrigin::containsArchive(std::wstring archiveName)
 {
+  std::scoped_lock lock(m_Mutex);
+
   for (FileEntry::Index fileIdx : m_Files) {
     if (FileEntry::Ptr p = m_FileRegister.lock()->getFile(fileIdx)) {
       if (p->isFromArchive(archiveName)) {
@@ -665,6 +683,7 @@ FileRegister::~FileRegister()
 
 bool FileRegister::indexValid(FileEntry::Index index) const
 {
+  std::scoped_lock lock(m_Mutex);
   return (m_Files.find(index) != m_Files.end());
 }
 
@@ -675,6 +694,8 @@ FileEntry::Ptr FileRegister::createFile(
   FileEntry::Ptr p;
 
   stats.addFileToRegisterTimes += elapsed([&]{
+    std::scoped_lock lock(m_Mutex);
+
     auto r = m_Files.insert_or_assign(
       index, FileEntry::Ptr(new FileEntry(index, std::move(name), parent)));
 
@@ -692,6 +713,8 @@ FileEntry::Ptr FileRegister::createFile(
 
 FileEntry::Ptr FileRegister::getFile(FileEntry::Index index) const
 {
+  std::scoped_lock lock(m_Mutex);
+
   auto iter = m_Files.find(index);
 
   if (iter != m_Files.end()) {
@@ -703,6 +726,8 @@ FileEntry::Ptr FileRegister::getFile(FileEntry::Index index) const
 
 bool FileRegister::removeFile(FileEntry::Index index)
 {
+  std::scoped_lock lock(m_Mutex);
+
   auto iter = m_Files.find(index);
 
   if (iter != m_Files.end()) {
@@ -717,12 +742,15 @@ bool FileRegister::removeFile(FileEntry::Index index)
 
 void FileRegister::removeOrigin(FileEntry::Index index, int originID)
 {
+  std::unique_lock lock(m_Mutex);
+
   auto iter = m_Files.find(index);
 
   if (iter != m_Files.end()) {
     if (iter->second->removeOrigin(originID)) {
-      unregisterFile(iter->second);
       m_Files.erase(iter);
+      lock.unlock();
+      unregisterFile(iter->second);
     }
   } else {
     log::error(QObject::tr("invalid file index for remove (for origin): {}").toStdString(), index);
@@ -734,17 +762,21 @@ void FileRegister::removeOriginMulti(
 {
   std::vector<FileEntry::Ptr> removedFiles;
 
-  for (auto iter = indices.begin(); iter != indices.end(); ) {
-    auto pos = m_Files.find(*iter);
+  {
+    std::scoped_lock lock(m_Mutex);
 
-    if (pos != m_Files.end()
-        && (pos->second->lastAccessed() < notAfter)
-        && pos->second->removeOrigin(originID)) {
-      removedFiles.push_back(pos->second);
-      m_Files.erase(pos);
-      ++iter;
-    } else {
-      indices.erase(iter++);
+    for (auto iter = indices.begin(); iter != indices.end(); ) {
+      auto pos = m_Files.find(*iter);
+
+      if (pos != m_Files.end()
+          && (pos->second->lastAccessed() < notAfter)
+          && pos->second->removeOrigin(originID)) {
+        removedFiles.push_back(pos->second);
+        m_Files.erase(pos);
+        ++iter;
+      } else {
+        indices.erase(iter++);
+      }
     }
   }
 
@@ -776,6 +808,8 @@ void FileRegister::removeOriginMulti(
 
 void FileRegister::sortOrigins()
 {
+  std::scoped_lock lock(m_Mutex);
+
   for (auto iter = m_Files.begin(); iter != m_Files.end(); ++iter) {
     iter->second->sortOrigins();
   }
@@ -1228,6 +1262,8 @@ FileEntry::Ptr DirectoryEntry::insert(
   std::wstring_view fileName, FilesOrigin &origin, FILETIME fileTime,
   std::wstring_view archive, int order)
 {
+  std::scoped_lock lock(m_FilesMutex);
+
   std::wstring fileNameLower = ToLowerCopy(fileName);
 
   auto iter = m_Files.find(fileNameLower);
@@ -1255,6 +1291,8 @@ FileEntry::Ptr DirectoryEntry::insert(
   env::File& file, FilesOrigin &origin, std::wstring_view archive, int order,
   DirectoryStats& stats)
 {
+  std::scoped_lock lock(m_FilesMutex);
+
   FilesMap::iterator itor;
 
   stats.filesLookupTimes += elapsed([&]{
@@ -1307,7 +1345,12 @@ void DirectoryEntry::addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOf
     [](void* pcx, std::wstring_view path) {
       Context* cx = (Context*)pcx;
       auto* current= cx->current.top();
-      std::sort(current->m_SubDirectories.begin(), current->m_SubDirectories.end(), &DirCompareByName);
+
+      {
+        std::scoped_lock lock(current->m_SubDirMutex);
+        std::sort(current->m_SubDirectories.begin(), current->m_SubDirectories.end(), &DirCompareByName);
+      }
+
       cx->current.pop();
     },
 
@@ -1389,6 +1432,8 @@ void DirectoryEntry::addFiles(
 DirectoryEntry *DirectoryEntry::getSubDirectory(
   std::wstring_view name, bool create, int originID)
 {
+  std::scoped_lock lock(m_SubDirMutex);
+
   std::wstring nameLc = ToLowerCopy(name);
   auto itor = m_SubDirectoriesLookup.find(nameLc);
 

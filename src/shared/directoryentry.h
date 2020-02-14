@@ -26,6 +26,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <map>
 #include <cassert>
+#include <mutex>
+
 #define WIN32_MEAN_AND_LEAN
 #include <Windows.h>
 #include <bsatk.h>
@@ -274,6 +276,7 @@ public:
 
   void addFile(FileEntry::Index index)
   {
+    std::scoped_lock lock(m_Mutex);
     m_Files.insert(index);
   }
 
@@ -290,6 +293,7 @@ private:
   int m_Priority;
   boost::weak_ptr<FileRegister> m_FileRegister;
   boost::weak_ptr<OriginConnection> m_OriginConnection;
+  mutable std::mutex m_Mutex;
 
   FilesOrigin(
     int ID, const std::wstring &name, const std::wstring &path, int priority,
@@ -313,6 +317,7 @@ public:
 
   size_t size() const
   {
+    std::scoped_lock lock(m_Mutex);
     return m_Files.size();
   }
 
@@ -323,6 +328,7 @@ public:
   void sortOrigins();
 
 private:
+  mutable std::mutex m_Mutex;
   std::map<FileEntry::Index, FileEntry::Ptr> m_Files;
   boost::shared_ptr<OriginConnection> m_OriginConnection;
 
@@ -545,6 +551,8 @@ private:
   std::set<int> m_Origins;
   bool m_Populated;
   bool m_TopLevel;
+  std::mutex m_SubDirMutex;
+  std::mutex m_FilesMutex;
 
 
   DirectoryEntry(const DirectoryEntry &reference);
