@@ -653,7 +653,10 @@ IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QSt
   settingsFile.setValue("nexusFileStatus", fileCategoryID);
   settingsFile.setValue("installationFile", m_CurrentFile);
   settingsFile.setValue("repository", repository);
-  settingsFile.setValue("url", m_URL);
+
+  if (!m_URL.isEmpty() || !settingsFile.contains("url")) {
+    settingsFile.setValue("url", m_URL);
+  }
 
   //cleanup of m_URL or this will persist across installs.
   m_URL = "";
