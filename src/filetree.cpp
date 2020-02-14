@@ -438,30 +438,7 @@ void FileTree::dumpToFile() const
     return;
   }
 
-  QFile out(file);
-
-  if (!out.open(QIODevice::WriteOnly)) {
-    QMessageBox::critical(
-      m_tree->window(), tr("Error"), tr("Failed to open file '%1': %2")
-      .arg(file)
-      .arg(out.errorString()));
-
-    return;
-  }
-
-  try
-  {
-    dumpToFile(out, "Data", *m_core.directoryStructure());
-  }
-  catch(DumpFailed&)
-  {
-    // try to remove it silently
-    if (out.exists()) {
-      if (!out.remove()) {
-        log::error("failed to remove '{}', ignoring", file);
-      }
-    }
-  }
+  m_core.directoryStructure()->dump(file.toStdWString());
 }
 
 void FileTree::dumpToFile(

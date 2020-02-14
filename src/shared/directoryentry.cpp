@@ -1380,61 +1380,80 @@ FileEntry::Ptr DirectoryEntry::insert(
   return fe;
 }
 
+struct DirectoryEntry::Context
+{
+  FilesOrigin& origin;
+  DirectoryStats& stats;
+  std::stack<DirectoryEntry*> current;
+};
+
 void DirectoryEntry::addFiles(
   env::DirectoryWalker& walker, FilesOrigin &origin,
   const std::wstring& path, DirectoryStats& stats)
 {
-  struct Context
-  {
-    FilesOrigin& origin;
-    DirectoryStats& stats;
-    std::stack<DirectoryEntry*> current;
-  };
-
   Context cx = {origin, stats};
   cx.current.push(this);
 
   walker.forEachEntry(path, &cx,
     [](void* pcx, std::wstring_view path)
     {
-      Context* cx = (Context*)pcx;
-      elapsed(cx->stats.dirTimes, [&] {
-        auto* sd = cx->current.top()->getSubDirectory(
-          path, true, cx->stats, cx->origin.getID());
-
-        cx->current.push(sd);
-      });
+      onDirectoryStart((Context*)pcx, path);
     },
 
     [](void* pcx, std::wstring_view path)
     {
-      Context* cx = (Context*)pcx;
-
-      elapsed(cx->stats.dirTimes, [&] {
-        auto* current= cx->current.top();
-
-        {
-          std::scoped_lock lock(current->m_SubDirMutex);
-
-          std::sort(
-            current->m_SubDirectories.begin(),
-            current->m_SubDirectories.end(),
-            &DirCompareByName);
-        }
-
-        cx->current.pop();
-      });
+      onDirectoryEnd((Context*)pcx, path);
     },
 
     [](void* pcx, std::wstring_view path, FILETIME ft)
     {
-      Context* cx = (Context*)pcx;
-
-      elapsed(cx->stats.fileTimes, [&]{
-        cx->current.top()->insert(path, cx->origin, ft, L"", -1, cx->stats);
-      });
+      onFile((Context*)pcx, path, ft);
     }
   );
+
+  {
+    std::scoped_lock lock(m_SubDirMutex);
+
+    std::sort(
+      m_SubDirectories.begin(),
+      m_SubDirectories.end(),
+      &DirCompareByName);
+  }
+}
+
+void DirectoryEntry::onDirectoryStart(Context* cx, std::wstring_view path)
+{
+  elapsed(cx->stats.dirTimes, [&] {
+    auto* sd = cx->current.top()->getSubDirectory(
+      path, true, cx->stats, cx->origin.getID());
+
+    cx->current.push(sd);
+  });
+}
+
+void DirectoryEntry::onDirectoryEnd(Context* cx, std::wstring_view path)
+{
+  elapsed(cx->stats.dirTimes, [&] {
+    auto* current = cx->current.top();
+
+    {
+      std::scoped_lock lock(current->m_SubDirMutex);
+
+      std::sort(
+        current->m_SubDirectories.begin(),
+        current->m_SubDirectories.end(),
+        &DirCompareByName);
+    }
+
+    cx->current.pop();
+  });
+}
+
+void DirectoryEntry::onFile(Context* cx, std::wstring_view path, FILETIME ft)
+{
+  elapsed(cx->stats.fileTimes, [&]{
+    cx->current.top()->insert(path, cx->origin, ft, L"", -1, cx->stats);
+  });
 }
 
 void DirectoryEntry::addFiles(
@@ -1509,6 +1528,8 @@ DirectoryEntry *DirectoryEntry::getSubDirectory(
   env::Directory& dir, bool create, DirectoryStats& stats, int originID)
 {
   SubDirectoriesLookup::iterator itor;
+
+  std::scoped_lock lock(m_SubDirMutex);
 
   elapsed(stats.subdirLookupTimes, [&] {
     itor = m_SubDirectoriesLookup.find(dir.lcname);
@@ -1662,6 +1683,50 @@ void DirectoryEntry::addFileToList(
   m_FilesLookup.emplace(fileNameLower, index);
   m_Files.emplace(std::move(fileNameLower), index);
   // fileNameLower has been moved from this point
+}
+
+void DirectoryEntry::dump(const std::wstring& file) const
+{
+  std::FILE* f = nullptr;
+  auto e = _wfopen_s(&f, file.c_str(), L"wb");
+
+  dump(f, L"Data");
+
+  std::fclose(f);
+}
+
+void DirectoryEntry::dump(std::FILE* f, const std::wstring& parentPath) const
+{
+  {
+    std::scoped_lock lock(m_FilesMutex);
+
+    for (auto&& index : m_Files) {
+      const auto file = m_FileRegister->getFile(index.second);
+      if (!file) {
+        continue;
+      }
+
+      if (file->isFromArchive()) {
+        // TODO: don't list files from archives. maybe make this an option?
+        continue;
+      }
+
+      const auto o = m_OriginConnection->getByID(file->getOrigin());
+      const auto path = parentPath + L"\\" + file->getName();
+      const auto line = path + L"\t(" + o.getName() + L")\r\n";
+
+      const auto lineu8 = MOShared::ToString(line, true);
+      std::fwrite(lineu8.data(), lineu8.size(), 1, f);
+    }
+  }
+
+  {
+    std::scoped_lock lock(m_SubDirMutex);
+    for (auto&& d : m_SubDirectories) {
+      const auto path = parentPath + L"\\" + d->m_Name;
+      d->dump(f, path);
+    }
+  }
 }
 
 } // namespace MOShared

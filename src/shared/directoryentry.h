@@ -537,6 +537,8 @@ public:
 
   void removeFiles(const std::set<FileEntry::Index> &indices);
 
+  void dump(const std::wstring& file) const;
+
 private:
   using FilesMap = std::map<std::wstring, FileEntry::Index>;
   using FilesLookup = std::unordered_map<FileKey, FileEntry::Index>;
@@ -556,9 +558,9 @@ private:
   std::set<int> m_Origins;
   bool m_Populated;
   bool m_TopLevel;
-  std::mutex m_SubDirMutex;
-  std::mutex m_FilesMutex;
-  std::mutex m_OriginsMutex;
+  mutable std::mutex m_SubDirMutex;
+  mutable std::mutex m_FilesMutex;
+  mutable std::mutex m_OriginsMutex;
 
 
   DirectoryEntry(const DirectoryEntry &reference);
@@ -600,6 +602,13 @@ private:
   void addFileToList(std::wstring fileNameLower, FileEntry::Index index);
   void removeFileFromList(FileEntry::Index index);
   void removeFilesFromList(const std::set<FileEntry::Index>& indices);
+
+  struct Context;
+  static void onDirectoryStart(Context* cx, std::wstring_view path);
+  static void onDirectoryEnd(Context* cx, std::wstring_view path);
+  static void onFile(Context* cx, std::wstring_view path, FILETIME ft);
+
+  void dump(std::FILE* f, const std::wstring& parentPath) const;
 };
 
 } // namespace MOShared
