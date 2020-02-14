@@ -64,7 +64,7 @@ class FileRegister;
 
 struct DirectoryStats
 {
-  static constexpr bool EnableInstrumentation = true;
+  static constexpr bool EnableInstrumentation = false;
 
   std::string mod;
 

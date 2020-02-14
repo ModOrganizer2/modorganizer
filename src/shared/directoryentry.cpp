@@ -55,8 +55,8 @@ void elapsedImpl(std::chrono::nanoseconds& out, F&& f)
 
 // elapsed() is not optimized out when EnableInstrumentation is false even
 // though it's equivalent that this macro
-//#define elapsed(OUT, F) (F)();
-#define elapsed(OUT, F) elapsedImpl(OUT, F);
+#define elapsed(OUT, F) (F)();
+//#define elapsed(OUT, F) elapsedImpl(OUT, F);
 
 
 static std::wstring tail(const std::wstring &source, const size_t count)
@@ -843,7 +843,9 @@ void FileRegister::sortOrigins()
   std::scoped_lock lock(m_Mutex);
 
   for (auto&& p : m_Files) {
-    p->sortOrigins();
+    if (p) {
+      p->sortOrigins();
+    }
   }
 }
 
