@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define UTIL_H
 
 #include <string>
+#include <filesystem>
 #include <versioninfo.h>
 
 class Executable;
@@ -50,6 +51,15 @@ QString getUsvfsVersionString();
 
 void SetThisThreadName(const QString& s);
 void checkDuplicateShortcuts(const QMenu& m);
+
+inline FILETIME ToFILETIME(std::filesystem::file_time_type t)
+{
+  FILETIME ft;
+  static_assert(sizeof(t) == sizeof(ft));
+
+  std::memcpy(&ft, &t, sizeof(FILETIME));
+  return ft;
+}
 
 } // namespace MOShared
 

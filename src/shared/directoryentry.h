@@ -50,10 +50,10 @@ class DirectoryEntry
 {
 public:
   DirectoryEntry(
-    std::wstring name, DirectoryEntry *parent, OriginID originID);
+    std::wstring name, DirectoryEntry* parent, OriginID originID);
 
   DirectoryEntry(
-    std::wstring name, DirectoryEntry *parent, OriginID originID,
+    std::wstring name, DirectoryEntry* parent, OriginID originID,
     boost::shared_ptr<FileRegister> fileRegister,
     boost::shared_ptr<OriginConnection> originConnection);
 
@@ -85,7 +85,7 @@ public:
     return !m_Files.empty();
   }
 
-  const DirectoryEntry *getParent() const
+  const DirectoryEntry* getParent() const
   {
     return m_Parent;
   }
@@ -93,24 +93,32 @@ public:
   // add files to this directory (and subdirectories) from the specified origin.
   // That origin may exist or not
   void addFromOrigin(
-    const std::wstring &originName,
-    const std::wstring &directory, int priority, DirectoryStats& stats);
+    const std::wstring& originName,
+    const std::wstring& directory, int priority, DirectoryStats& stats);
 
   void addFromOrigin(
-    env::DirectoryWalker& walker, const std::wstring &originName,
-    const std::wstring &directory, int priority, DirectoryStats& stats);
+    env::DirectoryWalker& walker, const std::wstring& originName,
+    const std::wstring& directory, int priority, DirectoryStats& stats);
+
+  void addFromAllBSAs(
+    const std::wstring& originName, const std::wstring& directory,
+    int priority, const std::vector<std::wstring>& archives,
+    const std::set<std::wstring>& enabledArchives,
+    const std::vector<std::wstring>& loadOrder,
+    DirectoryStats& stats);
 
   void addFromBSA(
-    const std::wstring &originName, std::wstring &directory,
-    const std::wstring &fileName, int priority, int order);
+    const std::wstring& originName, const std::wstring& directory,
+    const std::wstring& archivePath, int priority, int order,
+    DirectoryStats& stats);
 
   void addFromList(
-    const std::wstring &originName, const std::wstring &directory,
+    const std::wstring& originName, const std::wstring& directory,
     env::Directory& root, int priority, DirectoryStats& stats);
 
   void propagateOrigin(OriginID origin);
 
-  const std::wstring &getName() const
+  const std::wstring& getName() const
   {
     return m_Name;
   }
@@ -120,9 +128,9 @@ public:
     return m_FileRegister;
   }
 
-  bool originExists(const std::wstring &name) const;
-  FilesOrigin &getOriginByID(OriginID ID) const;
-  FilesOrigin &getOriginByName(const std::wstring &name) const;
+  bool originExists(const std::wstring& name) const;
+  FilesOrigin& getOriginByID(OriginID ID) const;
+  FilesOrigin& getOriginByName(const std::wstring& name) const;
   const FilesOrigin* findOriginByID(OriginID ID) const;
 
   OriginID anyOrigin() const;
@@ -130,8 +138,8 @@ public:
   std::vector<FileEntryPtr> getFiles() const;
 
   void getSubDirectories(
-    std::vector<DirectoryEntry*>::const_iterator &begin,
-    std::vector<DirectoryEntry*>::const_iterator &end) const
+    std::vector<DirectoryEntry*>::const_iterator& begin,
+    std::vector<DirectoryEntry*>::const_iterator& end) const
   {
     begin = m_SubDirectories.begin();
     end = m_SubDirectories.end();
@@ -179,16 +187,16 @@ public:
     return m_FileRegister->getFile(index);
   }
 
-  DirectoryEntry *findSubDirectory(
-    const std::wstring &name, bool alreadyLowerCase=false) const;
+  DirectoryEntry* findSubDirectory(
+    const std::wstring& name, bool alreadyLowerCase=false) const;
 
-  DirectoryEntry *findSubDirectoryRecursive(const std::wstring &path);
+  DirectoryEntry* findSubDirectoryRecursive(const std::wstring& path);
 
   /** retrieve a file in this directory by name.
     * @param name name of the file
     * @return fileentry object for the file or nullptr if no file matches
     */
-  const FileEntryPtr findFile(const std::wstring &name, bool alreadyLowerCase=false) const;
+  const FileEntryPtr findFile(const std::wstring& name, bool alreadyLowerCase=false) const;
   const FileEntryPtr findFile(const DirectoryEntryFileKey& key) const;
 
   bool hasFile(const std::wstring& name) const;
@@ -201,29 +209,29 @@ public:
   // path containing the file
   //
   const FileEntryPtr searchFile(
-    const std::wstring &path, const DirectoryEntry **directory=nullptr) const;
+    const std::wstring& path, const DirectoryEntry** directory=nullptr) const;
 
   void removeFile(FileIndex index);
 
   // remove the specified file from the tree. This can be a path leading to a
   // file in a subdirectory
-  bool removeFile(const std::wstring &filePath, OriginID *origin = nullptr);
+  bool removeFile(const std::wstring& filePath, OriginID* origin = nullptr);
 
   /**
    * @brief remove the specified directory
    * @param path directory to remove
    */
-  void removeDir(const std::wstring &path);
+  void removeDir(const std::wstring& path);
 
-  bool remove(const std::wstring &fileName, OriginID *origin);
+  bool remove(const std::wstring& fileName, OriginID* origin);
 
   bool hasContentsFromOrigin(OriginID originID) const;
 
-  FilesOrigin &createOrigin(
-    const std::wstring &originName,
-    const std::wstring &directory, int priority, DirectoryStats& stats);
+  FilesOrigin& createOrigin(
+    const std::wstring& originName,
+    const std::wstring& directory, int priority, DirectoryStats& stats);
 
-  void removeFiles(const std::set<FileIndex> &indices);
+  void removeFiles(const std::set<FileIndex>& indices);
 
   void dump(const std::wstring& file) const;
 
@@ -242,7 +250,7 @@ private:
   SubDirectories m_SubDirectories;
   SubDirectoriesLookup m_SubDirectoriesLookup;
 
-  DirectoryEntry *m_Parent;
+  DirectoryEntry* m_Parent;
   std::set<OriginID> m_Origins;
   bool m_Populated;
   bool m_TopLevel;
@@ -252,20 +260,20 @@ private:
 
 
   FileEntryPtr insert(
-    std::wstring_view fileName, FilesOrigin &origin, FILETIME fileTime,
+    std::wstring_view fileName, FilesOrigin& origin, FILETIME fileTime,
     std::wstring_view archive, int order, DirectoryStats& stats);
 
   FileEntryPtr insert(
-    env::File& file, FilesOrigin &origin,
+    env::File& file, FilesOrigin& origin,
     std::wstring_view archive, int order, DirectoryStats& stats);
 
   void addFiles(
-    env::DirectoryWalker& walker, FilesOrigin &origin,
+    env::DirectoryWalker& walker, FilesOrigin& origin,
     const std::wstring& path, DirectoryStats& stats);
 
   void addFiles(
-    FilesOrigin &origin, BSA::Folder::Ptr archiveFolder, FILETIME &fileTime,
-    const std::wstring &archiveName, int order);
+    FilesOrigin& origin, BSA::Folder::Ptr archiveFolder, FILETIME fileTime,
+    const std::wstring& archiveName, int order, DirectoryStats& stats);
 
   void addDir(FilesOrigin& origin, env::Directory& d, DirectoryStats& stats);
 
@@ -278,7 +286,8 @@ private:
     OriginID originID = InvalidOriginID);
 
   DirectoryEntry* getSubDirectoryRecursive(
-    const std::wstring &path, bool create, OriginID originID = InvalidOriginID);
+    const std::wstring& path, bool create, DirectoryStats& stats,
+    OriginID originID = InvalidOriginID);
 
   void removeDirRecursive();
 

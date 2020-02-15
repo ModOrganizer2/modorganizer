@@ -67,14 +67,14 @@ static bool SupportOptimizedFind()
   return (::VerifyVersionInfo(&versionInfo, VER_MAJORVERSION | VER_MINORVERSION, mask) == TRUE);
 }
 
-static bool DirCompareByName(const DirectoryEntry *lhs, const DirectoryEntry *rhs)
+static bool DirCompareByName(const DirectoryEntry* lhs, const DirectoryEntry* rhs)
 {
   return _wcsicmp(lhs->getName().c_str(), rhs->getName().c_str()) < 0;
 }
 
 
 DirectoryEntry::DirectoryEntry(
-  std::wstring name, DirectoryEntry *parent, int originID) :
+  std::wstring name, DirectoryEntry* parent, int originID) :
     m_OriginConnection(new OriginConnection),
     m_Name(std::move(name)), m_Parent(parent), m_Populated(false), m_TopLevel(true)
 {
@@ -83,7 +83,7 @@ DirectoryEntry::DirectoryEntry(
 }
 
 DirectoryEntry::DirectoryEntry(
-  std::wstring name, DirectoryEntry *parent, int originID,
+  std::wstring name, DirectoryEntry* parent, int originID,
   boost::shared_ptr<FileRegister> fileRegister,
   boost::shared_ptr<OriginConnection> originConnection) :
     m_FileRegister(fileRegister), m_OriginConnection(originConnection),
@@ -166,51 +166,69 @@ void DirectoryEntry::addDir(
   m_Populated = true;
 }
 
-void DirectoryEntry::addFromBSA(
-  const std::wstring &originName, std::wstring &directory,
-  const std::wstring &fileName, int priority, int order)
+void DirectoryEntry::addFromAllBSAs(
+  const std::wstring& originName, const std::wstring& directory,
+  int priority, const std::vector<std::wstring>& archives,
+  const std::set<std::wstring>& enabledArchives,
+  const std::vector<std::wstring>& loadOrder,
+  DirectoryStats& stats)
 {
-  DirectoryStats dummy;
-  FilesOrigin &origin = createOrigin(originName, directory, priority, dummy);
+  for (const auto& archive : archives) {
+    const std::filesystem::path archivePath(archive);
+    const auto filename = archivePath.filename().native();
 
-  WIN32_FILE_ATTRIBUTE_DATA fileData;
-  if (::GetFileAttributesExW(fileName.c_str(), GetFileExInfoStandard, &fileData) == 0) {
-    throw windows_error(QObject::tr("failed to determine file time").toStdString());
-  }
-
-  FILETIME now;
-  ::GetSystemTimeAsFileTime(&now);
-
-  const double clfSecondsPer100ns = 100. * 1.E-9;
-
-  ((ULARGE_INTEGER *)&now)->QuadPart -= ((double)5) / clfSecondsPer100ns;
-
-  size_t namePos = fileName.find_last_of(L"\\/");
-  if (namePos == std::wstring::npos) {
-    namePos = 0;
-  }
-  else {
-    ++namePos;
-  }
-
-  if (!containsArchive(fileName.substr(namePos)) || ::CompareFileTime(&fileData.ftLastWriteTime, &now) > 0) {
-    BSA::Archive archive;
-    BSA::EErrorCode res = archive.read(ToString(fileName, false).c_str(), false);
-
-    if ((res != BSA::ERROR_NONE) && (res != BSA::ERROR_INVALIDHASHES)) {
-      std::ostringstream stream;
-
-      stream
-		<< QObject::tr("invalid bsa file: ").toStdString()
-		<< ToString(fileName, false)
-		<< " error code " << res << " - " << ::GetLastError();
-
-      throw std::runtime_error(stream.str());
+    if (!enabledArchives.contains(filename)) {
+      continue;
     }
 
-    addFiles(origin, archive.getRoot(), fileData.ftLastWriteTime, fileName.substr(namePos), order);
-    m_Populated = true;
+    const auto filenameLc = ToLowerCopy(filename);
+
+    int order = -1;
+
+    for (auto plugin : loadOrder)
+    {
+      const auto pluginNameLc =
+        ToLowerCopy(std::filesystem::path(plugin).stem().native());
+
+      if (filenameLc.starts_with(pluginNameLc + L" - ") ||
+          filenameLc.starts_with(pluginNameLc + L".")) {
+        auto itor = std::find(loadOrder.begin(), loadOrder.end(), plugin);
+        if (itor != loadOrder.end()) {
+          order = std::distance(loadOrder.begin(), itor);
+        }
+      }
+    }
+
+    addFromBSA(
+      originName, directory, archivePath.native(),
+      priority, order, stats);
   }
+}
+
+void DirectoryEntry::addFromBSA(
+  const std::wstring& originName, const std::wstring& directory,
+  const std::wstring& archivePath, int priority, int order, DirectoryStats& stats)
+{
+  FilesOrigin& origin = createOrigin(originName, directory, priority, stats);
+  const auto archiveName = std::filesystem::path(archivePath).filename().native();
+
+  if (containsArchive(archiveName)) {
+    return;
+  }
+
+  BSA::Archive archive;
+  BSA::EErrorCode res = archive.read(ToString(archivePath, false).c_str(), false);
+
+  if ((res != BSA::ERROR_NONE) && (res != BSA::ERROR_INVALIDHASHES)) {
+    log::error("invalid bsa '{}', error {}", archivePath, res);
+    return;
+  }
+
+  const auto ft = ToFILETIME(std::filesystem::last_write_time(archivePath));
+
+  addFiles(origin, archive.getRoot(), ft, archiveName, order, stats);
+
+  m_Populated = true;
 }
 
 void DirectoryEntry::propagateOrigin(int origin)
@@ -258,7 +276,7 @@ int DirectoryEntry::anyOrigin() const
 
   // if we got here, no file directly within this directory is a valid indicator for a mod, thus
   // we continue looking in subdirectories
-  for (DirectoryEntry *entry : m_SubDirectories) {
+  for (DirectoryEntry* entry : m_SubDirectories) {
     int res = entry->anyOrigin();
     if (res != InvalidOriginID){
       return res;
@@ -279,7 +297,7 @@ std::vector<FileEntryPtr> DirectoryEntry::getFiles() const
   return result;
 }
 
-DirectoryEntry *DirectoryEntry::findSubDirectory(
+DirectoryEntry* DirectoryEntry::findSubDirectory(
   const std::wstring &name, bool alreadyLowerCase) const
 {
   SubDirectoriesLookup::const_iterator itor;
@@ -297,9 +315,10 @@ DirectoryEntry *DirectoryEntry::findSubDirectory(
   return itor->second;
 }
 
-DirectoryEntry *DirectoryEntry::findSubDirectoryRecursive(const std::wstring &path)
+DirectoryEntry* DirectoryEntry::findSubDirectoryRecursive(const std::wstring &path)
 {
-  return getSubDirectoryRecursive(path, false, InvalidOriginID);
+  DirectoryStats dummy;
+  return getSubDirectoryRecursive(path, false, dummy, InvalidOriginID);
 }
 
 const FileEntryPtr DirectoryEntry::findFile(
@@ -349,7 +368,7 @@ bool DirectoryEntry::containsArchive(std::wstring archiveName)
 }
 
 const FileEntryPtr DirectoryEntry::searchFile(
-  const std::wstring &path, const DirectoryEntry **directory) const
+  const std::wstring &path, const DirectoryEntry** directory) const
 {
   if (directory != nullptr) {
     *directory = nullptr;
@@ -373,7 +392,7 @@ const FileEntryPtr DirectoryEntry::searchFile(
     if (iter != m_Files.end()) {
       return m_FileRegister->getFile(iter->second);
     } else if (directory != nullptr) {
-      DirectoryEntry *temp = findSubDirectory(path);
+      DirectoryEntry* temp = findSubDirectory(path);
       if (temp != nullptr) {
         *directory = temp;
       }
@@ -381,7 +400,7 @@ const FileEntryPtr DirectoryEntry::searchFile(
   } else {
     // file is in a subdirectory, recurse into the matching subdirectory
     std::wstring pathComponent = path.substr(0, len);
-    DirectoryEntry *temp = findSubDirectory(pathComponent);
+    DirectoryEntry* temp = findSubDirectory(pathComponent);
 
     if (temp != nullptr) {
       if (len >= path.size()) {
@@ -401,7 +420,7 @@ void DirectoryEntry::removeFile(FileIndex index)
   removeFileFromList(index);
 }
 
-bool DirectoryEntry::removeFile(const std::wstring &filePath, int *origin)
+bool DirectoryEntry::removeFile(const std::wstring &filePath, int* origin)
 {
   size_t pos = filePath.find_first_of(L"\\/");
 
@@ -411,7 +430,9 @@ bool DirectoryEntry::removeFile(const std::wstring &filePath, int *origin)
 
   std::wstring dirName = filePath.substr(0, pos);
   std::wstring rest = filePath.substr(pos + 1);
-  DirectoryEntry *entry = getSubDirectoryRecursive(dirName, false);
+
+  DirectoryStats dummy;
+  DirectoryEntry* entry = getSubDirectoryRecursive(dirName, false, dummy);
 
   if (entry != nullptr) {
     return entry->removeFile(rest, origin);
@@ -426,7 +447,7 @@ void DirectoryEntry::removeDir(const std::wstring &path)
 
   if (pos == std::string::npos) {
     for (auto iter = m_SubDirectories.begin(); iter != m_SubDirectories.end(); ++iter) {
-      DirectoryEntry *entry = *iter;
+      DirectoryEntry* entry = *iter;
 
       if (CaseInsensitiveEqual(entry->getName(), path)) {
         entry->removeDirRecursive();
@@ -438,7 +459,9 @@ void DirectoryEntry::removeDir(const std::wstring &path)
   } else {
     std::wstring dirName = path.substr(0, pos);
     std::wstring rest = path.substr(pos + 1);
-    DirectoryEntry *entry = getSubDirectoryRecursive(dirName, false);
+
+    DirectoryStats dummy;
+    DirectoryEntry* entry = getSubDirectoryRecursive(dirName, false, dummy);
 
     if (entry != nullptr) {
       entry->removeDir(rest);
@@ -446,7 +469,7 @@ void DirectoryEntry::removeDir(const std::wstring &path)
   }
 }
 
-bool DirectoryEntry::remove(const std::wstring &fileName, int *origin)
+bool DirectoryEntry::remove(const std::wstring &fileName, int* origin)
 {
   const auto lcFileName = ToLowerCopy(fileName);
 
@@ -661,18 +684,17 @@ void DirectoryEntry::onFile(Context* cx, std::wstring_view path, FILETIME ft)
 }
 
 void DirectoryEntry::addFiles(
-  FilesOrigin &origin, BSA::Folder::Ptr archiveFolder, FILETIME &fileTime,
-  const std::wstring &archiveName, int order)
+  FilesOrigin& origin, const BSA::Folder::Ptr archiveFolder, FILETIME fileTime,
+  const std::wstring& archiveName, int order, DirectoryStats& stats)
 {
-  DirectoryStats dummy;
-
   // add files
-  for (unsigned int fileIdx = 0; fileIdx < archiveFolder->getNumFiles(); ++fileIdx) {
-    BSA::File::Ptr file = archiveFolder->getFile(fileIdx);
+  const auto fileCount = archiveFolder->getNumFiles();
+  for (unsigned int i=0; i<fileCount; ++i) {
+    const BSA::File::Ptr file = archiveFolder->getFile(i);
 
     auto f = insert(
       ToWString(file->getName(), true), origin, fileTime,
-      archiveName, order, dummy);
+      archiveName, order, stats);
 
     if (f) {
       if (file->getUncompressedFileSize() > 0) {
@@ -684,16 +706,18 @@ void DirectoryEntry::addFiles(
   }
 
   // recurse into subdirectories
-  for (unsigned int folderIdx = 0; folderIdx < archiveFolder->getNumSubFolders(); ++folderIdx) {
-    BSA::Folder::Ptr folder = archiveFolder->getSubFolder(folderIdx);
-    DirectoryEntry *folderEntry = getSubDirectoryRecursive(
-      ToWString(folder->getName(), true), true, origin.getID());
+  const auto dirCount = archiveFolder->getNumSubFolders();
+  for (unsigned int i=0; i<dirCount; ++i) {
+    const BSA::Folder::Ptr folder = archiveFolder->getSubFolder(i);
 
-    folderEntry->addFiles(origin, folder, fileTime, archiveName, order);
+    DirectoryEntry* folderEntry = getSubDirectoryRecursive(
+      ToWString(folder->getName(), true), true, stats, origin.getID());
+
+    folderEntry->addFiles(origin, folder, fileTime, archiveName, order, stats);
   }
 }
 
-DirectoryEntry *DirectoryEntry::getSubDirectory(
+DirectoryEntry* DirectoryEntry::getSubDirectory(
   std::wstring_view name, bool create, DirectoryStats& stats, int originID)
 {
   std::wstring nameLc = ToLowerCopy(name);
@@ -728,7 +752,7 @@ DirectoryEntry *DirectoryEntry::getSubDirectory(
   }
 }
 
-DirectoryEntry *DirectoryEntry::getSubDirectory(
+DirectoryEntry* DirectoryEntry::getSubDirectory(
   env::Directory& dir, bool create, DirectoryStats& stats, int originID)
 {
   SubDirectoriesLookup::iterator itor;
@@ -764,8 +788,8 @@ DirectoryEntry *DirectoryEntry::getSubDirectory(
   }
 }
 
-DirectoryEntry *DirectoryEntry::getSubDirectoryRecursive(
-  const std::wstring &path, bool create, int originID)
+DirectoryEntry* DirectoryEntry::getSubDirectoryRecursive(
+  const std::wstring& path, bool create, DirectoryStats& stats, int originID)
 {
   if (path.length() == 0) {
     // path ended with a backslash?
@@ -773,19 +797,18 @@ DirectoryEntry *DirectoryEntry::getSubDirectoryRecursive(
   }
 
   const size_t pos = path.find_first_of(L"\\/");
-  DirectoryStats dummy;
 
   if (pos == std::wstring::npos) {
-    return getSubDirectory(path, create, dummy);
+    return getSubDirectory(path, create, stats);
   } else {
-    DirectoryEntry *nextChild = getSubDirectory(
-      path.substr(0, pos), create, dummy, originID);
+    DirectoryEntry* nextChild = getSubDirectory(
+      path.substr(0, pos), create, stats, originID);
 
     if (nextChild == nullptr) {
       return nullptr;
     } else {
       return nextChild->getSubDirectoryRecursive(
-        path.substr(pos + 1), create, originID);
+        path.substr(pos + 1), create, stats, originID);
     }
   }
 }
@@ -798,7 +821,7 @@ void DirectoryEntry::removeDirRecursive()
 
   m_FilesLookup.clear();
 
-  for (DirectoryEntry *entry : m_SubDirectories) {
+  for (DirectoryEntry* entry : m_SubDirectories) {
     entry->removeDirRecursive();
     delete entry;
   }

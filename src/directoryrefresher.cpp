@@ -210,38 +210,41 @@ void DirectoryRefresher::cleanStructure(DirectoryEntry *structure)
   }
 }
 
-void DirectoryRefresher::addModBSAToStructure(DirectoryEntry *directoryStructure, const QString &modName,
-                                              int priority, const QString &directory, const QStringList &archives)
+void DirectoryRefresher::addModBSAToStructure(
+  DirectoryEntry* root, const QString& modName,
+  int priority, const QString& directory, const QStringList& archives)
 {
-  std::wstring directoryW = ToWString(QDir::toNativeSeparators(directory));
-  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+  const IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
 
   GamePlugins *gamePlugins = game->feature<GamePlugins>();
   QStringList loadOrder = QStringList();
   gamePlugins->getLoadOrder(loadOrder);
 
-  for (const QString &archive : archives) {
-    QFileInfo fileInfo(archive);
-    if (m_EnabledArchives.find(fileInfo.fileName()) != m_EnabledArchives.end()) {
-
-      int order = -1;
-
-      for (auto plugin : loadOrder)
-      {
-        QString name = plugin.left(plugin.size() - 4);
-        if (fileInfo.fileName().startsWith(name + " - ", Qt::CaseInsensitive) || fileInfo.fileName().startsWith(name + ".", Qt::CaseInsensitive)) {
-          order = loadOrder.indexOf(plugin);
-        }
-      }
-
-      try {
-        IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
-        directoryStructure->addFromBSA(ToWString(modName), directoryW, ToWString(QDir::toNativeSeparators(fileInfo.absoluteFilePath())), priority, order);
-      } catch (const std::exception &e) {
-        throw MyException(tr("failed to parse bsa %1: %2").arg(archive, e.what()));
-      }
-    }
+  std::vector<std::wstring> lo;
+  for (auto&& s : loadOrder) {
+    lo.push_back(s.toStdWString());
   }
+
+  std::vector<std::wstring> archivesW;
+  for (auto&& a : archives) {
+    archivesW.push_back(a.toStdWString());
+  }
+
+  std::set<std::wstring> enabledArchives;
+  for (auto&& a : m_EnabledArchives) {
+    enabledArchives.insert(a.toStdWString());
+  }
+
+  DirectoryStats dummy;
+
+  root->addFromAllBSAs(
+    modName.toStdWString(),
+    QDir::toNativeSeparators(directory).toStdWString(),
+    priority,
+    archivesW,
+    enabledArchives,
+    lo,
+    dummy);
 }
 
 void DirectoryRefresher::stealModFilesIntoStructure(
@@ -329,6 +332,8 @@ struct ModThread
   std::wstring modName;
   std::wstring path;
   int prio = -1;
+  std::vector<std::wstring> archives;
+  std::set<std::wstring> enabledArchives;
   DirectoryStats* stats =  nullptr;
   env::DirectoryWalker walker;
 
@@ -354,14 +359,21 @@ struct ModThread
     SetThisThreadName(QString::fromStdWString(modName + L" refresher"));
     ds->addFromOrigin(walker, modName, path, prio, *stats);
 
-    /*if (Settings::instance().archiveParsing()) {
-      addModBSAToStructure(
-        directoryStructure,
-        entries[i].modName,
-        prio,
-        entries[i].absolutePath,
-        entries[i].archives);
-    }*/
+    if (Settings::instance().archiveParsing()) {
+      const IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+
+      GamePlugins *gamePlugins = game->feature<GamePlugins>();
+      QStringList loadOrder = QStringList();
+      gamePlugins->getLoadOrder(loadOrder);
+
+      std::vector<std::wstring> lo;
+      for (auto&& s : loadOrder) {
+        lo.push_back(s.toStdWString());
+      }
+
+      ds->addFromAllBSAs(
+        modName, path, prio, archives, enabledArchives, lo, *stats);
+    }
 
     ready = false;
   }
@@ -377,6 +389,7 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
 {
   std::vector<DirectoryStats> stats(entries.size());
 
+  log::debug("refresher: using {} threads", m_threadCount);
   g_threads.setMax(m_threadCount);
 
   for (std::size_t i=0; i<entries.size(); ++i) {
@@ -396,9 +409,20 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
         auto& mt = g_threads.request();
 
         mt.ds = directoryStructure;
-        mt.modName = entries[i].modName.toStdWString();
+        mt.modName = e.modName.toStdWString();
         mt.path = QDir::toNativeSeparators(e.absolutePath).toStdWString();
         mt.prio = prio;
+
+        mt.archives.clear();
+        for (auto&& a : e.archives) {
+          mt.archives.push_back(a.toStdWString());
+        }
+
+        mt.enabledArchives.clear();
+        for (auto&& a : m_EnabledArchives) {
+          mt.enabledArchives.insert(a.toStdWString());
+        }
+
         mt.stats = &stats[i];
 
         mt.wakeup();
@@ -424,33 +448,35 @@ void DirectoryRefresher::refresh()
   SetThisThreadName("DirectoryRefresher");
   TimeThis tt("refresh");
 
-  QMutexLocker locker(&m_RefreshLock);
-
-  m_Root.reset(new DirectoryEntry(L"data", nullptr, 0));
-  m_Root->getFileRegister()->reserve(m_lastFileCount);
-
-  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
-
-  std::wstring dataDirectory =
-    QDir::toNativeSeparators(game->dataDirectory().absolutePath()).toStdWString();
-
   {
-    DirectoryStats dummy;
-    m_Root->addFromOrigin(L"data", dataDirectory, 0, dummy);
+    QMutexLocker locker(&m_RefreshLock);
+
+    m_Root.reset(new DirectoryEntry(L"data", nullptr, 0));
+    m_Root->getFileRegister()->reserve(m_lastFileCount);
+
+    IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+
+    std::wstring dataDirectory =
+      QDir::toNativeSeparators(game->dataDirectory().absolutePath()).toStdWString();
+
+    {
+      DirectoryStats dummy;
+      m_Root->addFromOrigin(L"data", dataDirectory, 0, dummy);
+    }
+
+    std::sort(m_Mods.begin(), m_Mods.end(), [](auto lhs, auto rhs) {
+      return lhs.priority < rhs.priority;
+    });
+
+    addMultipleModsFilesToStructure(m_Root.get(), m_Mods, true);
+
+    m_Root->getFileRegister()->sortOrigins();
+
+    cleanStructure(m_Root.get());
+
+    m_lastFileCount = m_Root->getFileRegister()->highestCount();
+    log::debug("refresher saw {} files", m_lastFileCount);
   }
-
-  std::sort(m_Mods.begin(), m_Mods.end(), [](auto lhs, auto rhs) {
-    return lhs.priority < rhs.priority;
-  });
-
-  addMultipleModsFilesToStructure(m_Root.get(), m_Mods, true);
-
-  m_Root->getFileRegister()->sortOrigins();
-
-  cleanStructure(m_Root.get());
-
-  m_lastFileCount = m_Root->getFileRegister()->highestCount();
-  log::debug("refresher saw {} files", m_lastFileCount);
 
   emit progress(100);
   emit refreshed();
