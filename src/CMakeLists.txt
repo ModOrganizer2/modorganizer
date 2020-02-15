@@ -537,6 +537,8 @@ endforeach()
 file(GLOB_RECURSE rule_files ../vsbuild/CMakeFiles/*.rule)
 file(GLOB qm_files ../vsbuild/src/*.qm)
 
+set(organizer_misc ../modorganizer.natvis)
+
 source_group(cmake FILES CMakeLists.txt)
 source_group(autogen FILES ${rule_files} ${qm_files})
 source_group(resources FILES ${organizer_RCS} ${organizer_QRCS})
@@ -629,7 +631,10 @@ ELSE()
   SET(usvfs_name usvfs_x86)
 ENDIF()
 
-ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIS} ${organizer_RCS} ${organizer_QRCS} ${organizer_translations_qm})
+ADD_EXECUTABLE(
+	ModOrganizer WIN32
+	${organizer_HDRS} ${organizer_SRCS} ${organizer_UIS} ${organizer_RCS}
+	${organizer_QRCS} ${organizer_translations_qm} ${organizer_misc})
 
 TARGET_LINK_LIBRARIES(ModOrganizer
                       Qt5::Widgets Qt5::WinExtras Qt5::WebEngineWidgets Qt5::Quick
