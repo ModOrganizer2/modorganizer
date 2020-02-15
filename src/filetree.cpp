@@ -3,6 +3,9 @@
 #include "filetreeitem.h"
 #include "organizercore.h"
 #include "envshell.h"
+#include "shared/fileentry.h"
+#include "shared/directoryentry.h"
+#include "shared/filesorigin.h"
 #include <log.h>
 #include <widgetutility.h>
 

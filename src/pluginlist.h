@@ -20,7 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef PLUGINLIST_H
 #define PLUGINLIST_H
 
-#include <directoryentry.h>
 #include <ipluginlist.h>
 #include "profile.h"
 #include "loot.h"

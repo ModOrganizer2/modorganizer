@@ -4,7 +4,7 @@
 #include "modinfodialogtab.h"
 #include "expanderwidget.h"
 #include "filterwidget.h"
-#include "directoryentry.h"
+#include "shared/fileregisterfwd.h"
 #include <QTreeWidget>
 #include <optional>
 
@@ -52,16 +52,16 @@ private:
   FilterWidget m_filterNoConflicts;
 
   ConflictItem createOverwriteItem(
-    MOShared::FileEntry::Index index, bool archive,
+    MOShared::FileIndex index, bool archive,
     QString fileName, QString relativeName,
-    const MOShared::FileEntry::AlternativesVector& alternatives);
+    const MOShared::AlternativesVector& alternatives);
 
   ConflictItem createNoConflictItem(
-    MOShared::FileEntry::Index index, bool archive,
+    MOShared::FileIndex index, bool archive,
     QString fileName, QString relativeName);
 
   ConflictItem createOverwrittenItem(
-    MOShared::FileEntry::Index index, int fileOrigin, bool archive,
+    MOShared::FileIndex index, int fileOrigin, bool archive,
     QString fileName, QString relativeName);
 
   void onOverwriteActivated(const QModelIndex& index);
@@ -94,9 +94,9 @@ private:
   ConflictListModel* m_model;
 
   std::optional<ConflictItem> createItem(
-    MOShared::FileEntry::Index index, int fileOrigin, bool archive,
+    MOShared::FileIndex index, int fileOrigin, bool archive,
     QString fileName, QString relativeName,
-    const MOShared::FileEntry::AlternativesVector& alternatives);
+    const MOShared::AlternativesVector& alternatives);
 };
 
 

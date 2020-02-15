@@ -15,7 +15,6 @@
 #include "moshortcut.h"
 #include "processrunner.h"
 #include "uilocker.h"
-#include <directoryentry.h>
 #include <imoinfo.h>
 #include <iplugindiagnose.h>
 #include <versioninfo.h>

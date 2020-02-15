@@ -18,6 +18,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "directoryrefresher.h"
+#include "shared/fileentry.h"
+#include "shared/filesorigin.h"
+#include "shared/directoryentry.h"
 
 #include "iplugingame.h"
 #include "utility.h"
@@ -26,12 +29,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "envfs.h"
 #include "modinfodialogfwd.h"
+#include "util.h"
+
+#include <gameplugins.h>
 
 #include <QApplication>
 #include <QDir>
 #include <QString>
 #include <QTextCodec>
-#include <gameplugins.h>
+
+#include <fstream>
 
 
 using namespace MOBase;
@@ -136,7 +143,7 @@ void DirectoryRefresher::stealModFilesIntoStructure(
       continue;
     }
     QFileInfo fileInfo(filename);
-    FileEntry::Ptr file = directoryStructure->findFile(ToWString(fileInfo.fileName()));
+    FileEntryPtr file = directoryStructure->findFile(ToWString(fileInfo.fileName()));
     if (file.get() != nullptr) {
       if (file->getOrigin() == 0) {
         // replace data as the origin on this bsa

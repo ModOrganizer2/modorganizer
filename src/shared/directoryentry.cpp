@@ -18,21 +18,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "directoryentry.h"
-#include "windows_error.h"
-#include "error_report.h"
+#include "originconnection.h"
+#include "filesorigin.h"
+#include "fileentry.h"
 #include "envfs.h"
-#include <utility.h>
+#include "util.h"
+#include "windows_error.h"
 #include <log.h>
-#include <bsatk.h>
-#include <boost/bind.hpp>
-#include <boost/scoped_array.hpp>
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <sstream>
-#include <ctime>
-#include <algorithm>
-#include <map>
-#include <atomic>
+#include <utility.h>
 
 namespace MOShared
 {
@@ -57,16 +50,6 @@ void elapsedImpl(std::chrono::nanoseconds& out, F&& f)
 // though it's equivalent that this macro
 #define elapsed(OUT, F) (F)();
 //#define elapsed(OUT, F) elapsedImpl(OUT, F);
-
-
-static std::wstring tail(const std::wstring &source, const size_t count)
-{
-  if (count >= source.length()) {
-    return source;
-  }
-
-  return source.substr(source.length() - count);
-}
 
 static bool SupportOptimizedFind()
 {
@@ -186,686 +169,6 @@ std::string DirectoryStats::toCsv() const
     << QString::number(filesAssignedInRegister);
 
   return oss.join(",").toStdString();
-}
-
-
-class OriginConnection
-{
-public:
-  typedef int Index;
-  static const int INVALID_INDEX = INT_MIN;
-
-  OriginConnection()
-    : m_NextID(0)
-  {
-  }
-
-  std::pair<FilesOrigin&, bool> getOrCreate(
-    const std::wstring &originName, const std::wstring &directory, int priority,
-    const boost::shared_ptr<FileRegister>& fileRegister,
-    const boost::shared_ptr<OriginConnection>& originConnection,
-    DirectoryStats& stats)
-  {
-    std::unique_lock lock(m_Mutex);
-
-    auto itor = m_OriginsNameMap.find(originName);
-
-    if (itor == m_OriginsNameMap.end()) {
-      FilesOrigin& origin = createOriginNoLock(
-        originName, directory, priority, fileRegister, originConnection);
-
-      return {origin, true};
-    } else {
-      FilesOrigin& origin = m_Origins[itor->second];
-      lock.unlock();
-
-      origin.enable(true, stats);
-      return {origin, false};
-    }
-  }
-
-  FilesOrigin& createOrigin(
-    const std::wstring &originName, const std::wstring &directory, int priority,
-    boost::shared_ptr<FileRegister> fileRegister,
-    boost::shared_ptr<OriginConnection> originConnection)
-  {
-    std::scoped_lock lock(m_Mutex);
-
-    return createOriginNoLock(
-      originName, directory, priority, fileRegister, originConnection);
-  }
-
-  bool exists(const std::wstring &name)
-  {
-    std::scoped_lock lock(m_Mutex);
-    return m_OriginsNameMap.find(name) != m_OriginsNameMap.end();
-  }
-
-  FilesOrigin &getByID(Index ID)
-  {
-    std::scoped_lock lock(m_Mutex);
-    return m_Origins[ID];
-  }
-
-  const FilesOrigin* findByID(Index ID) const
-  {
-    std::scoped_lock lock(m_Mutex);
-
-    auto itor = m_Origins.find(ID);
-
-    if (itor == m_Origins.end()) {
-      return nullptr;
-    } else {
-      return &itor->second;
-    }
-  }
-
-  FilesOrigin &getByName(const std::wstring &name)
-  {
-    std::scoped_lock lock(m_Mutex);
-
-    std::map<std::wstring, int>::iterator iter = m_OriginsNameMap.find(name);
-
-    if (iter != m_OriginsNameMap.end()) {
-      return m_Origins[iter->second];
-    } else {
-      std::ostringstream stream;
-      stream << QObject::tr("invalid origin name: ").toStdString() << ToString(name, true);
-      throw std::runtime_error(stream.str());
-    }
-  }
-
-  void changePriorityLookup(int oldPriority, int newPriority)
-  {
-    std::scoped_lock lock(m_Mutex);
-
-    auto iter = m_OriginsPriorityMap.find(oldPriority);
-
-    if (iter != m_OriginsPriorityMap.end()) {
-      Index idx = iter->second;
-      m_OriginsPriorityMap.erase(iter);
-      m_OriginsPriorityMap[newPriority] = idx;
-    }
-  }
-
-  void changeNameLookup(const std::wstring &oldName, const std::wstring &newName)
-  {
-    std::scoped_lock lock(m_Mutex);
-
-    auto iter = m_OriginsNameMap.find(oldName);
-
-    if (iter != m_OriginsNameMap.end()) {
-      Index idx = iter->second;
-      m_OriginsNameMap.erase(iter);
-      m_OriginsNameMap[newName] = idx;
-    } else {
-      log::error(QObject::tr("failed to change name lookup from {} to {}").toStdString(), oldName, newName);
-    }
-  }
-
-private:
-  Index m_NextID;
-  std::map<Index, FilesOrigin> m_Origins;
-  std::map<std::wstring, Index> m_OriginsNameMap;
-  std::map<int, Index> m_OriginsPriorityMap;
-  mutable std::mutex m_Mutex;
-
-  Index createID()
-  {
-    return m_NextID++;
-  }
-
-  FilesOrigin& createOriginNoLock(
-    const std::wstring &originName, const std::wstring &directory, int priority,
-    boost::shared_ptr<FileRegister> fileRegister,
-    boost::shared_ptr<OriginConnection> originConnection)
-  {
-    int newID = createID();
-
-    auto itor = m_Origins.insert({newID, FilesOrigin(
-      newID, originName, directory, priority,
-      fileRegister, originConnection)}).first;
-
-    m_OriginsNameMap.insert({originName, newID});
-    m_OriginsPriorityMap.insert({priority, newID});
-
-    return itor->second;
-  }
-};
-
-
-FileEntry::FileEntry() :
-  m_Index(UINT_MAX), m_Name(), m_Origin(-1), m_Parent(nullptr),
-  m_FileSize(NoFileSize), m_CompressedFileSize(NoFileSize)
-{
-}
-
-FileEntry::FileEntry(Index index, std::wstring name, DirectoryEntry *parent) :
-  m_Index(index), m_Name(std::move(name)), m_Origin(-1), m_Archive(L"", -1), m_Parent(parent),
-  m_FileSize(NoFileSize), m_CompressedFileSize(NoFileSize)
-{
-}
-
-void FileEntry::addOrigin(
-  int origin, FILETIME fileTime, std::wstring_view archive, int order)
-{
-  std::scoped_lock lock(m_OriginsMutex);
-
-  if (m_Parent != nullptr) {
-    m_Parent->propagateOrigin(origin);
-  }
-
-  if (m_Origin == -1) {
-    // If this file has no previous origin, this mod is now the origin with no
-    // alternatives
-    m_Origin = origin;
-    m_FileTime = fileTime;
-    m_Archive = std::pair<std::wstring, int>(std::wstring(archive.begin(), archive.end()), order);
-  }
-  else if (
-    (m_Parent != nullptr) && (
-      (m_Parent->getOriginByID(origin).getPriority() > m_Parent->getOriginByID(m_Origin).getPriority()) ||
-      (archive.size() == 0 && m_Archive.first.size() > 0 ))
-    ) {
-    // If this mod has a higher priority than the origin mod OR
-    // this mod has a loose file and the origin mod has an archived file,
-    // this mod is now the origin and the previous origin is the first alternative
-
-    auto itor = std::find_if(
-      m_Alternatives.begin(), m_Alternatives.end(),
-      [&](auto&& i) { return i.first == m_Origin; });
-
-    if (itor == m_Alternatives.end()) {
-      m_Alternatives.push_back({m_Origin, m_Archive});
-    }
-
-    m_Origin = origin;
-    m_FileTime = fileTime;
-    m_Archive = std::pair<std::wstring, int>(std::wstring(archive.begin(), archive.end()), order);
-  }
-  else {
-    // This mod is just an alternative
-    bool found = false;
-
-    if (m_Origin == origin) {
-      // already an origin
-      return;
-    }
-
-    for (auto iter = m_Alternatives.begin(); iter != m_Alternatives.end(); ++iter) {
-      if (iter->first == origin) {
-        // already an origin
-        return;
-      }
-
-      if ((m_Parent != nullptr) &&
-        (m_Parent->getOriginByID(iter->first).getPriority() < m_Parent->getOriginByID(origin).getPriority())) {
-        m_Alternatives.insert(iter, {origin, {std::wstring(archive.begin(), archive.end()), order}});
-        found = true;
-        break;
-      }
-    }
-
-    if (!found) {
-      m_Alternatives.push_back({origin, {std::wstring(archive.begin(), archive.end()), order}});
-    }
-  }
-}
-
-bool FileEntry::removeOrigin(int origin)
-{
-  std::scoped_lock lock(m_OriginsMutex);
-
-  if (m_Origin == origin) {
-    if (!m_Alternatives.empty()) {
-      // find alternative with the highest priority
-      auto currentIter = m_Alternatives.begin();
-      for (auto iter = m_Alternatives.begin(); iter != m_Alternatives.end(); ++iter) {
-        if (iter->first != origin) {
-          //Both files are not from archives.
-          if (!iter->second.first.size() && !currentIter->second.first.size()) {
-            if ((m_Parent->getOriginByID(iter->first).getPriority() > m_Parent->getOriginByID(currentIter->first).getPriority())) {
-              currentIter = iter;
-            }
-          }
-          else {
-            //Both files are from archives
-            if (iter->second.first.size() && currentIter->second.first.size()) {
-              if (iter->second.second > currentIter->second.second) {
-                currentIter = iter;
-              }
-            }
-            else {
-              //Only one of the two is an archive, so we change currentIter only if he is the archive one.
-              if (currentIter->second.first.size()) {
-                currentIter = iter;
-              }
-            }
-          }
-        }
-      }
-
-      int currentID = currentIter->first;
-      m_Archive = currentIter->second;
-      m_Alternatives.erase(currentIter);
-
-      m_Origin = currentID;
-    } else {
-      m_Origin = -1;
-      m_Archive = std::pair<std::wstring, int>(L"", -1);
-      return true;
-    }
-  } else {
-    auto newEnd = std::remove_if(
-      m_Alternatives.begin(), m_Alternatives.end(),
-      [&](auto &i) { return i.first == origin; });
-
-    if (newEnd != m_Alternatives.end()) {
-      m_Alternatives.erase(newEnd, m_Alternatives.end());
-    }
-  }
-  return false;
-}
-
-void FileEntry::sortOrigins()
-{
-  std::scoped_lock lock(m_OriginsMutex);
-
-  m_Alternatives.push_back({m_Origin, m_Archive});
-
-  std::sort(m_Alternatives.begin(), m_Alternatives.end(), [&](auto&& LHS, auto&& RHS) {
-    if (!LHS.second.first.size() && !RHS.second.first.size()) {
-      int l = m_Parent->getOriginByID(LHS.first).getPriority();
-      if (l < 0) {
-        l = INT_MAX;
-      }
-
-      int r = m_Parent->getOriginByID(RHS.first).getPriority();
-      if (r < 0) {
-        r = INT_MAX;
-      }
-
-      return l < r;
-    }
-
-    if (LHS.second.first.size() && RHS.second.first.size()) {
-      int l = LHS.second.second; if (l < 0) l = INT_MAX;
-      int r = RHS.second.second; if (r < 0) r = INT_MAX;
-
-      return l < r;
-    }
-
-    if (RHS.second.first.size()) {
-        return false;
-    }
-
-    return true;
-  });
-
-  if (!m_Alternatives.empty()) {
-    m_Origin = m_Alternatives.back().first;
-    m_Archive = m_Alternatives.back().second;
-    m_Alternatives.pop_back();
-  }
-}
-
-bool FileEntry::isFromArchive(std::wstring archiveName) const
-{
-  std::scoped_lock lock(m_OriginsMutex);
-
-  if (archiveName.length() == 0) {
-    return m_Archive.first.length() != 0;
-  }
-
-  if (m_Archive.first.compare(archiveName) == 0) {
-    return true;
-  }
-
-  for (auto alternative : m_Alternatives) {
-    if (alternative.second.first.compare(archiveName) == 0) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-std::wstring FileEntry::getFullPath(int originID) const
-{
-  std::scoped_lock lock(m_OriginsMutex);
-
-  if (originID == -1) {
-    bool ignore = false;
-    originID = getOrigin(ignore);
-  }
-
-  // base directory for origin
-  const auto* o = m_Parent->findOriginByID(originID);
-  if (!o) {
-    return {};
-  }
-
-  std::wstring result = o->getPath();
-
-  // all intermediate directories
-  recurseParents(result, m_Parent);
-
-  return result + L"\\" + m_Name;
-}
-
-std::wstring FileEntry::getRelativePath() const
-{
-  std::wstring result;
-
-  // all intermediate directories
-  recurseParents(result, m_Parent);
-
-  return result + L"\\" + m_Name;
-}
-
-bool FileEntry::recurseParents(std::wstring &path, const DirectoryEntry *parent) const
-{
-  if (parent == nullptr) {
-    return false;
-  } else {
-    // don't append the topmost parent because it is the virtual data-root
-    if (recurseParents(path, parent->getParent())) {
-      path.append(L"\\").append(parent->getName());
-    }
-
-    return true;
-  }
-}
-
-
-FilesOrigin::FilesOrigin()
-  : m_ID(0), m_Disabled(false), m_Name(), m_Path(), m_Priority(0)
-{
-}
-
-FilesOrigin::FilesOrigin(const FilesOrigin &reference)
-  : m_ID(reference.m_ID)
-  , m_Disabled(reference.m_Disabled)
-  , m_Name(reference.m_Name)
-  , m_Path(reference.m_Path)
-  , m_Priority(reference.m_Priority)
-  , m_FileRegister(reference.m_FileRegister)
-  , m_OriginConnection(reference.m_OriginConnection)
-{
-}
-
-FilesOrigin::FilesOrigin(
-  int ID, const std::wstring &name, const std::wstring &path, int priority,
-  boost::shared_ptr<MOShared::FileRegister> fileRegister,
-  boost::shared_ptr<MOShared::OriginConnection> originConnection) :
-    m_ID(ID), m_Disabled(false), m_Name(name), m_Path(path),
-    m_Priority(priority), m_FileRegister(fileRegister),
-    m_OriginConnection(originConnection)
-{
-}
-
-void FilesOrigin::setPriority(int priority)
-{
-  m_OriginConnection.lock()->changePriorityLookup(m_Priority, priority);
-
-  m_Priority = priority;
-}
-
-void FilesOrigin::setName(const std::wstring &name)
-{
-  m_OriginConnection.lock()->changeNameLookup(m_Name, name);
-
-  // change path too
-  if (tail(m_Path, m_Name.length()) == m_Name) {
-    m_Path = m_Path.substr(0, m_Path.length() - m_Name.length()).append(name);
-  }
-
-  m_Name = name;
-}
-
-std::vector<FileEntry::Ptr> FilesOrigin::getFiles() const
-{
-  std::vector<FileEntry::Ptr> result;
-
-  {
-    std::scoped_lock lock(m_Mutex);
-
-    for (FileEntry::Index fileIdx : m_Files) {
-      if (FileEntry::Ptr p = m_FileRegister.lock()->getFile(fileIdx)) {
-        result.push_back(p);
-      }
-    }
-  }
-
-  return result;
-}
-
-FileEntry::Ptr FilesOrigin::findFile(FileEntry::Index index) const
-{
-  return m_FileRegister.lock()->getFile(index);
-}
-
-void FilesOrigin::enable(bool enabled)
-{
-  DirectoryStats dummy;
-  enable(enabled, dummy);
-}
-
-void FilesOrigin::enable(bool enabled, DirectoryStats& stats)
-{
-  if (!enabled) {
-    ++stats.originsNeededEnabled;
-
-    std::set<FileEntry::Index> copy;
-
-    {
-      std::scoped_lock lock(m_Mutex);
-      copy = m_Files;
-      m_Files.clear();
-    }
-
-    m_FileRegister.lock()->removeOriginMulti(copy, m_ID);
-  }
-
-  m_Disabled = !enabled;
-}
-
-void FilesOrigin::removeFile(FileEntry::Index index)
-{
-  std::scoped_lock lock(m_Mutex);
-
-  auto iter = m_Files.find(index);
-
-  if (iter != m_Files.end()) {
-    m_Files.erase(iter);
-  }
-}
-
-bool FilesOrigin::containsArchive(std::wstring archiveName)
-{
-  std::scoped_lock lock(m_Mutex);
-
-  for (FileEntry::Index fileIdx : m_Files) {
-    if (FileEntry::Ptr p = m_FileRegister.lock()->getFile(fileIdx)) {
-      if (p->isFromArchive(archiveName)) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
-
-FileRegister::FileRegister(boost::shared_ptr<OriginConnection> originConnection)
-  : m_OriginConnection(originConnection), m_NextIndex(0)
-{
-}
-
-bool FileRegister::indexValid(FileEntry::Index index) const
-{
-  std::scoped_lock lock(m_Mutex);
-
-  if (index < m_Files.size()) {
-    return (m_Files[index].get() != nullptr);
-  }
-
-  return false;
-}
-
-FileEntry::Ptr FileRegister::createFile(
-  std::wstring name, DirectoryEntry *parent, DirectoryStats& stats)
-{
-  const auto index = generateIndex();
-  auto p = FileEntry::Ptr(new FileEntry(index, std::move(name), parent));
-
-  {
-    std::scoped_lock lock(m_Mutex);
-
-    if (index >= m_Files.size()) {
-      m_Files.resize(index + 1);
-    }
-
-    m_Files[index] = p;
-  }
-
-  return p;
-}
-
-FileEntry::Index FileRegister::generateIndex()
-{
-  return m_NextIndex++;
-}
-
-FileEntry::Ptr FileRegister::getFile(FileEntry::Index index) const
-{
-  std::scoped_lock lock(m_Mutex);
-
-  if (index < m_Files.size()) {
-    return m_Files[index];
-  } else {
-    return {};
-  }
-}
-
-bool FileRegister::removeFile(FileEntry::Index index)
-{
-  std::scoped_lock lock(m_Mutex);
-
-  if (index < m_Files.size()) {
-    FileEntry::Ptr p;
-    m_Files[index].swap(p);
-
-    if (p) {
-      unregisterFile(p);
-      return true;
-    }
-  }
-
-  log::error(QObject::tr("invalid file index for remove: {}").toStdString(), index);
-  return false;
-}
-
-void FileRegister::removeOrigin(FileEntry::Index index, int originID)
-{
-  std::unique_lock lock(m_Mutex);
-
-  if (index < m_Files.size()) {
-    FileEntry::Ptr& p = m_Files[index];
-
-    if (p) {
-      if (p->removeOrigin(originID)) {
-        m_Files[index] = {};
-        lock.unlock();
-        unregisterFile(p);
-        return;
-      }
-    }
-  }
-
-  log::error(QObject::tr("invalid file index for remove (for origin): {}").toStdString(), index);
-}
-
-void FileRegister::removeOriginMulti(
-  std::set<FileEntry::Index> indices, int originID)
-{
-  std::vector<FileEntry::Ptr> removedFiles;
-
-  {
-    std::scoped_lock lock(m_Mutex);
-
-    for (auto iter = indices.begin(); iter != indices.end(); ) {
-      const auto index = *iter;
-
-      if (index < m_Files.size()) {
-        const auto& p = m_Files[index];
-
-        if (p && p->removeOrigin(originID)) {
-          removedFiles.push_back(p);
-          m_Files[index] = {};
-          ++iter;
-          continue;
-        }
-      }
-
-      iter = indices.erase(iter);
-    }
-  }
-
-  // optimization: this is only called when disabling an origin and in this case
-  // we don't have to remove the file from the origin
-
-  // need to remove files from their parent directories. multiple ways to go
-  // about this:
-  //   a) for each file, search its parents file-list (preferably by name) and
-  //      remove what is found
-  //   b) gather the parent directories, go through the file list for each once
-  //      and remove all files that have been removed
-  //
-  // the latter should be faster when there are many files in few directories.
-  // since this is called only when disabling an origin that is probably
-  // frequently the case
-
-  std::set<DirectoryEntry*> parents;
-  for (const FileEntry::Ptr &file : removedFiles) {
-    if (file->getParent() != nullptr) {
-      parents.insert(file->getParent());
-    }
-  }
-
-  for (DirectoryEntry *parent : parents) {
-    parent->removeFiles(indices);
-  }
-}
-
-void FileRegister::sortOrigins()
-{
-  std::scoped_lock lock(m_Mutex);
-
-  for (auto&& p : m_Files) {
-    if (p) {
-      p->sortOrigins();
-    }
-  }
-}
-
-void FileRegister::unregisterFile(FileEntry::Ptr file)
-{
-  bool ignore;
-
-  // unregister from origin
-  int originID = file->getOrigin(ignore);
-  m_OriginConnection->getByID(originID).removeFile(file->getIndex());
-  const auto& alternatives = file->getAlternatives();
-
-  for (auto iter = alternatives.begin(); iter != alternatives.end(); ++iter) {
-    m_OriginConnection->getByID(iter->first).removeFile(file->getIndex());
-  }
-
-  // unregister from directory
-  if (file->getParent() != nullptr) {
-    file->getParent()->removeFile(file->getIndex());
-  }
 }
 
 
@@ -1046,7 +349,7 @@ int DirectoryEntry::anyOrigin() const
   bool ignore;
 
   for (auto iter = m_Files.begin(); iter != m_Files.end(); ++iter) {
-    FileEntry::Ptr entry = m_FileRegister->getFile(iter->second);
+    FileEntryPtr entry = m_FileRegister->getFile(iter->second);
     if ((entry.get() != nullptr) && !entry->isFromArchive()) {
       return entry->getOrigin(ignore);
     }
@@ -1064,9 +367,9 @@ int DirectoryEntry::anyOrigin() const
   return *(m_Origins.begin());
 }
 
-std::vector<FileEntry::Ptr> DirectoryEntry::getFiles() const
+std::vector<FileEntryPtr> DirectoryEntry::getFiles() const
 {
-  std::vector<FileEntry::Ptr> result;
+  std::vector<FileEntryPtr> result;
 
   for (auto iter = m_Files.begin(); iter != m_Files.end(); ++iter) {
     result.push_back(m_FileRegister->getFile(iter->second));
@@ -1098,7 +401,7 @@ DirectoryEntry *DirectoryEntry::findSubDirectoryRecursive(const std::wstring &pa
   return getSubDirectoryRecursive(path, false, -1);
 }
 
-const FileEntry::Ptr DirectoryEntry::findFile(
+const FileEntryPtr DirectoryEntry::findFile(
   const std::wstring &name, bool alreadyLowerCase) const
 {
   FilesLookup::const_iterator iter;
@@ -1112,18 +415,18 @@ const FileEntry::Ptr DirectoryEntry::findFile(
   if (iter != m_FilesLookup.end()) {
     return m_FileRegister->getFile(iter->second);
   } else {
-    return FileEntry::Ptr();
+    return FileEntryPtr();
   }
 }
 
-const FileEntry::Ptr DirectoryEntry::findFile(const FileKey& key) const
+const FileEntryPtr DirectoryEntry::findFile(const FileKey& key) const
 {
   auto iter = m_FilesLookup.find(key);
 
   if (iter != m_FilesLookup.end()) {
     return m_FileRegister->getFile(iter->second);
   } else {
-    return FileEntry::Ptr();
+    return FileEntryPtr();
   }
 }
 
@@ -1135,7 +438,7 @@ bool DirectoryEntry::hasFile(const std::wstring& name) const
 bool DirectoryEntry::containsArchive(std::wstring archiveName)
 {
   for (auto iter = m_Files.begin(); iter != m_Files.end(); ++iter) {
-    FileEntry::Ptr entry = m_FileRegister->getFile(iter->second);
+    FileEntryPtr entry = m_FileRegister->getFile(iter->second);
     if (entry->isFromArchive(archiveName)) {
       return true;
     }
@@ -1144,7 +447,7 @@ bool DirectoryEntry::containsArchive(std::wstring archiveName)
   return false;
 }
 
-const FileEntry::Ptr DirectoryEntry::searchFile(
+const FileEntryPtr DirectoryEntry::searchFile(
   const std::wstring &path, const DirectoryEntry **directory) const
 {
   if (directory != nullptr) {
@@ -1157,7 +460,7 @@ const FileEntry::Ptr DirectoryEntry::searchFile(
       *directory = this;
     }
 
-    return FileEntry::Ptr();
+    return FileEntryPtr();
   }
 
   const size_t len =  path.find_first_of(L"\\/");
@@ -1182,14 +485,14 @@ const FileEntry::Ptr DirectoryEntry::searchFile(
     if (temp != nullptr) {
       if (len >= path.size()) {
         log::error(QObject::tr("unexpected end of path").toStdString());
-        return FileEntry::Ptr();
+        return FileEntryPtr();
       }
 
       return temp->searchFile(path.substr(len + 1), directory);
     }
   }
 
-  return FileEntry::Ptr();
+  return FileEntryPtr();
 }
 
 void DirectoryEntry::removeFile(FileEntry::Index index)
@@ -1251,7 +554,7 @@ bool DirectoryEntry::remove(const std::wstring &fileName, int *origin)
 
   if (iter != m_Files.end()) {
     if (origin != nullptr) {
-      FileEntry::Ptr entry = m_FileRegister->getFile(iter->second);
+      FileEntryPtr entry = m_FileRegister->getFile(iter->second);
       if (entry.get() != nullptr) {
         bool ignore;
         *origin = entry->getOrigin(ignore);
@@ -1291,12 +594,12 @@ void DirectoryEntry::removeFiles(const std::set<FileEntry::Index> &indices)
   removeFilesFromList(indices);
 }
 
-FileEntry::Ptr DirectoryEntry::insert(
+FileEntryPtr DirectoryEntry::insert(
   std::wstring_view fileName, FilesOrigin &origin, FILETIME fileTime,
   std::wstring_view archive, int order, DirectoryStats& stats)
 {
   std::wstring fileNameLower = ToLowerCopy(fileName);
-  FileEntry::Ptr fe;
+  FileEntryPtr fe;
 
   FileKey key(std::move(fileNameLower));
 
@@ -1337,11 +640,11 @@ FileEntry::Ptr DirectoryEntry::insert(
   return fe;
 }
 
-FileEntry::Ptr DirectoryEntry::insert(
+FileEntryPtr DirectoryEntry::insert(
   env::File& file, FilesOrigin &origin, std::wstring_view archive, int order,
   DirectoryStats& stats)
 {
-  FileEntry::Ptr fe;
+  FileEntryPtr fe;
 
   {
     std::unique_lock lock(m_FilesMutex);
@@ -1730,7 +1033,7 @@ void DirectoryEntry::dump(std::FILE* f, const std::wstring& parentPath) const
         continue;
       }
 
-      const auto o = m_OriginConnection->getByID(file->getOrigin());
+      const auto& o = m_OriginConnection->getByID(file->getOrigin());
       const auto path = parentPath + L"\\" + file->getName();
       const auto line = path + L"\t(" + o.getName() + L")\r\n";
 

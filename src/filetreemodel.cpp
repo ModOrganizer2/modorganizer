@@ -1,5 +1,9 @@
 #include "filetreemodel.h"
 #include "organizercore.h"
+#include "filesorigin.h"
+#include "util.h"
+#include "shared/directoryentry.h"
+#include "shared/fileentry.h"
 #include <log.h>
 
 using namespace MOBase;
@@ -637,7 +641,7 @@ bool FileTreeModel::updateFiles(
   // removeDisappearingFiles() will add files that are in the tree and still on
   // the filesystem to this set; addNewFiless() will use this to figure out if
   // a file is new or not
-  std::unordered_set<FileEntry::Index> seen;
+  std::unordered_set<FileIndex> seen;
 
   int firstFileRow = 0;
 
@@ -647,7 +651,7 @@ bool FileTreeModel::updateFiles(
 
 void FileTreeModel::removeDisappearingFiles(
   FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
-  int& firstFileRow, std::unordered_set<FileEntry::Index>& seen)
+  int& firstFileRow, std::unordered_set<FileIndex>& seen)
 {
   auto& children = parentItem.children();
   auto itor = children.begin();
@@ -708,7 +712,7 @@ void FileTreeModel::removeDisappearingFiles(
 bool FileTreeModel::addNewFiles(
   FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
   const std::wstring& parentPath, const int firstFileRow,
-  const std::unordered_set<FileEntry::Index>& seen)
+  const std::unordered_set<FileIndex>& seen)
 {
   // keeps track of the contiguous files that need to be added to
   // avoid calling beginAddRows(), etc. for each item
@@ -958,7 +962,7 @@ std::wstring FileTreeModel::makeModName(
 {
   static const std::wstring Unmanaged = UnmanagedModName().toStdWString();
 
-  const auto origin = m_core.directoryStructure()->getOriginByID(originID);
+  const auto& origin = m_core.directoryStructure()->getOriginByID(originID);
 
   if (origin.getID() == 0) {
     return Unmanaged;

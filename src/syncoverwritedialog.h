@@ -20,11 +20,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SYNCOVERWRITEDIALOG_H
 #define SYNCOVERWRITEDIALOG_H
 
-
 #include "tutorabledialog.h"
+#include "shared/fileregisterfwd.h"
 #include <QTreeWidgetItem>
-#include <directoryentry.h>
-
 
 namespace Ui {
 class SyncOverwriteDialog;
@@ -33,9 +31,12 @@ class SyncOverwriteDialog;
 class SyncOverwriteDialog : public MOBase::TutorableDialog
 {
   Q_OBJECT
-  
+
 public:
-  explicit SyncOverwriteDialog(const QString &path, MOShared::DirectoryEntry *directoryStructure, QWidget *parent = 0);
+  explicit SyncOverwriteDialog(
+    const QString &path, MOShared::DirectoryEntry *directoryStructure,
+    QWidget *parent = 0);
+
   ~SyncOverwriteDialog();
 
   void apply(const QString &modDirectory);

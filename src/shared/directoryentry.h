@@ -17,29 +17,18 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef DIRECTORYENTRY_H
-#define DIRECTORYENTRY_H
+#ifndef MO_REGISTER_DIRECTORYENTRY_INCLUDED
+#define MO_REGISTER_DIRECTORYENTRY_INCLUDED
 
-
-#include <string>
-#include <set>
-#include <vector>
-#include <map>
-#include <cassert>
-#include <mutex>
-
-#define WIN32_MEAN_AND_LEAN
-#include <Windows.h>
+#include "fileregister.h"
 #include <bsatk.h>
-#ifndef Q_MOC_RUN
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
-#endif
 
-#include "util.h"
-#include "envfs.h"
-
-namespace MOShared { struct DirectoryEntryFileKey; }
+namespace env
+{
+  class DirectoryWalker;
+  struct Directory;
+  struct File;
+}
 
 namespace std
 {
@@ -57,309 +46,6 @@ namespace std
 namespace MOShared
 {
 
-class DirectoryEntry;
-class OriginConnection;
-class FileRegister;
-
-
-struct DirectoryStats
-{
-  static constexpr bool EnableInstrumentation = false;
-
-  std::string mod;
-
-  std::chrono::nanoseconds dirTimes;
-  std::chrono::nanoseconds fileTimes;
-  std::chrono::nanoseconds sortTimes;
-
-  std::chrono::nanoseconds subdirLookupTimes;
-  std::chrono::nanoseconds addDirectoryTimes;
-
-  std::chrono::nanoseconds filesLookupTimes;
-  std::chrono::nanoseconds addFileTimes;
-  std::chrono::nanoseconds addOriginToFileTimes;
-  std::chrono::nanoseconds addFileToOriginTimes;
-  std::chrono::nanoseconds addFileToRegisterTimes;
-
-  int64_t originExists;
-  int64_t originCreate;
-  int64_t originsNeededEnabled;
-
-  int64_t subdirExists;
-  int64_t subdirCreate;
-
-  int64_t fileExists;
-  int64_t fileCreate;
-  int64_t filesInsertedInRegister;
-  int64_t filesAssignedInRegister;
-
-  DirectoryStats();
-
-  DirectoryStats& operator+=(const DirectoryStats& o);
-
-  static std::string csvHeader();
-  std::string toCsv() const;
-};
-
-
-class FileEntry
-{
-public:
-  static constexpr uint64_t NoFileSize =
-    std::numeric_limits<uint64_t>::max();
-
-  typedef unsigned int Index;
-  typedef boost::shared_ptr<FileEntry> Ptr;
-
-  // a vector of {originId, {archiveName, order}}
-  //
-  // if a file is in an archive, archiveName is the name of the bsa and order
-  // is the order of the associated plugin in the plugins list
-  //
-  // is a file is not in an archive, archiveName is empty and order is usually
-  // -1
-  typedef std::vector<std::pair<int, std::pair<std::wstring, int>>>
-    AlternativesVector;
-
-  FileEntry();
-  FileEntry(Index index, std::wstring name, DirectoryEntry *parent);
-
-  Index getIndex() const
-  {
-    return m_Index;
-  }
-
-  void addOrigin(
-    int origin, FILETIME fileTime, std::wstring_view archive, int order);
-
-  // remove the specified origin from the list of origins that contain this
-  // file. if no origin is left, the file is effectively deleted and true is
-  // returned. otherwise, false is returned
-  bool removeOrigin(int origin);
-
-  void sortOrigins();
-
-  // gets the list of alternative origins (origins with lower priority than
-  // the primary one). if sortOrigins has been called, it is sorted by priority
-  // (ascending)
-  const AlternativesVector &getAlternatives() const
-  {
-    return m_Alternatives;
-  }
-
-  const std::wstring &getName() const
-  {
-    return m_Name;
-  }
-
-  int getOrigin() const
-  {
-    return m_Origin;
-  }
-
-  int getOrigin(bool &archive) const
-  {
-    archive = (m_Archive.first.length() != 0);
-    return m_Origin;
-  }
-
-  const std::pair<std::wstring, int> &getArchive() const
-  {
-    return m_Archive;
-  }
-
-  bool isFromArchive(std::wstring archiveName = L"") const;
-
-  // if originID is -1, uses the main origin; if this file doesn't exist in the
-  // given origin, returns an empty string
-  //
-  std::wstring getFullPath(int originID=-1) const;
-
-  std::wstring getRelativePath() const;
-
-  DirectoryEntry *getParent()
-  {
-    return m_Parent;
-  }
-
-  void setFileTime(FILETIME fileTime) const
-  {
-    m_FileTime = fileTime;
-  }
-
-  FILETIME getFileTime() const
-  {
-    return m_FileTime;
-  }
-
-  void setFileSize(uint64_t size, uint64_t compressedSize)
-  {
-    m_FileSize = size;
-    m_CompressedFileSize = compressedSize;
-  }
-
-  uint64_t getFileSize() const
-  {
-    return m_FileSize;
-  }
-
-  uint64_t getCompressedFileSize() const
-  {
-    return m_CompressedFileSize;
-  }
-
-private:
-  Index m_Index;
-  std::wstring m_Name;
-  int m_Origin;
-  std::pair<std::wstring, int> m_Archive;
-  AlternativesVector m_Alternatives;
-  DirectoryEntry *m_Parent;
-  mutable FILETIME m_FileTime;
-  uint64_t m_FileSize, m_CompressedFileSize;
-  mutable std::mutex m_OriginsMutex;
-
-  bool recurseParents(std::wstring &path, const DirectoryEntry *parent) const;
-};
-
-
-// represents a mod or the data directory, providing files to the tree
-class FilesOrigin
-{
-  friend class OriginConnection;
-
-public:
-  FilesOrigin();
-  FilesOrigin(const FilesOrigin &reference);
-
-  // sets priority for this origin, but it will overwrite the existing mapping
-  // for this priority, the previous origin will no longer be referenced
-  void setPriority(int priority);
-
-  int getPriority() const
-  {
-    return m_Priority;
-  }
-
-  void setName(const std::wstring &name);
-  const std::wstring &getName() const
-  {
-    return m_Name;
-  }
-
-  int getID() const
-  {
-    return m_ID;
-  }
-
-  const std::wstring &getPath() const
-  {
-    return m_Path;
-  }
-
-  std::vector<FileEntry::Ptr> getFiles() const;
-  FileEntry::Ptr findFile(FileEntry::Index index) const;
-
-  void enable(bool enabled, DirectoryStats& stats);
-  void enable(bool enabled);
-
-  bool isDisabled() const
-  {
-    return m_Disabled;
-  }
-
-  void addFile(FileEntry::Index index)
-  {
-    std::scoped_lock lock(m_Mutex);
-    m_Files.insert(index);
-  }
-
-  void removeFile(FileEntry::Index index);
-
-  bool containsArchive(std::wstring archiveName);
-
-private:
-  int m_ID;
-  bool m_Disabled;
-  std::set<FileEntry::Index> m_Files;
-  std::wstring m_Name;
-  std::wstring m_Path;
-  int m_Priority;
-  boost::weak_ptr<FileRegister> m_FileRegister;
-  boost::weak_ptr<OriginConnection> m_OriginConnection;
-  mutable std::mutex m_Mutex;
-
-  FilesOrigin(
-    int ID, const std::wstring &name, const std::wstring &path, int priority,
-    boost::shared_ptr<FileRegister> fileRegister,
-    boost::shared_ptr<OriginConnection> originConnection);
-};
-
-
-class FileRegister
-{
-public:
-  FileRegister(boost::shared_ptr<OriginConnection> originConnection);
-
-  bool indexValid(FileEntry::Index index) const;
-
-  FileEntry::Ptr createFile(
-    std::wstring name, DirectoryEntry *parent, DirectoryStats& stats);
-
-  FileEntry::Ptr getFile(FileEntry::Index index) const;
-
-  size_t highestCount() const
-  {
-    std::scoped_lock lock(m_Mutex);
-    return m_Files.size();
-  }
-
-  void reserve(std::size_t n)
-  {
-    m_Files.reserve(n);
-  }
-
-  bool removeFile(FileEntry::Index index);
-  void removeOrigin(FileEntry::Index index, int originID);
-  void removeOriginMulti(std::set<FileEntry::Index> indices, int originID);
-
-  void sortOrigins();
-
-private:
-  using FileMap = std::vector<FileEntry::Ptr>;
-
-  mutable std::mutex m_Mutex;
-  FileMap m_Files;
-  boost::shared_ptr<OriginConnection> m_OriginConnection;
-  std::atomic<FileEntry::Index> m_NextIndex;
-
-  void unregisterFile(FileEntry::Ptr file);
-  FileEntry::Index generateIndex();
-};
-
-
-struct DirectoryEntryFileKey
-{
-  DirectoryEntryFileKey(std::wstring v)
-    : value(std::move(v)), hash(getHash(value))
-  {
-  }
-
-  bool operator==(const DirectoryEntryFileKey& o) const
-  {
-    return (value == o.value);
-  }
-
-  static std::size_t getHash(const std::wstring& value)
-  {
-    return std::hash<std::wstring>()(value);
-  }
-
-  std::wstring value;
-  const std::size_t hash;
-};
-
-
 class DirectoryEntry
 {
 public:
@@ -372,6 +58,10 @@ public:
     std::wstring name, DirectoryEntry *parent, int originID,
     boost::shared_ptr<FileRegister> fileRegister,
     boost::shared_ptr<OriginConnection> originConnection);
+
+  // noncopyable
+  DirectoryEntry(const DirectoryEntry&) = delete;
+  DirectoryEntry& operator=(const DirectoryEntry&) = delete;
 
   ~DirectoryEntry();
 
@@ -439,7 +129,7 @@ public:
 
   int anyOrigin() const;
 
-  std::vector<FileEntry::Ptr> getFiles() const;
+  std::vector<FileEntryPtr> getFiles() const;
 
   void getSubDirectories(
     std::vector<DirectoryEntry*>::const_iterator &begin,
@@ -486,7 +176,7 @@ public:
     }
   }
 
-  FileEntry::Ptr getFileByIndex(FileEntry::Index index) const
+  FileEntryPtr getFileByIndex(FileIndex index) const
   {
     return m_FileRegister->getFile(index);
   }
@@ -500,8 +190,8 @@ public:
     * @param name name of the file
     * @return fileentry object for the file or nullptr if no file matches
     */
-  const FileEntry::Ptr findFile(const std::wstring &name, bool alreadyLowerCase=false) const;
-  const FileEntry::Ptr findFile(const FileKey& key) const;
+  const FileEntryPtr findFile(const std::wstring &name, bool alreadyLowerCase=false) const;
+  const FileEntryPtr findFile(const FileKey& key) const;
 
   bool hasFile(const std::wstring& name) const;
   bool containsArchive(std::wstring archiveName);
@@ -512,10 +202,10 @@ public:
   // if directory is not nullptr, the referenced variable will be set to the
   // path containing the file
   //
-  const FileEntry::Ptr searchFile(
+  const FileEntryPtr searchFile(
     const std::wstring &path, const DirectoryEntry **directory=nullptr) const;
 
-  void removeFile(FileEntry::Index index);
+  void removeFile(FileIndex index);
 
   // remove the specified file from the tree. This can be a path leading to a
   // file in a subdirectory
@@ -535,13 +225,13 @@ public:
     const std::wstring &originName,
     const std::wstring &directory, int priority, DirectoryStats& stats);
 
-  void removeFiles(const std::set<FileEntry::Index> &indices);
+  void removeFiles(const std::set<FileIndex> &indices);
 
   void dump(const std::wstring& file) const;
 
 private:
-  using FilesMap = std::map<std::wstring, FileEntry::Index>;
-  using FilesLookup = std::unordered_map<FileKey, FileEntry::Index>;
+  using FilesMap = std::map<std::wstring, FileIndex>;
+  using FilesLookup = std::unordered_map<FileKey, FileIndex>;
   using SubDirectories = std::vector<DirectoryEntry*>;
   using SubDirectoriesLookup = std::unordered_map<std::wstring, DirectoryEntry*>;
 
@@ -563,13 +253,11 @@ private:
   mutable std::mutex m_OriginsMutex;
 
 
-  DirectoryEntry(const DirectoryEntry &reference);
-
-  FileEntry::Ptr insert(
+  FileEntryPtr insert(
     std::wstring_view fileName, FilesOrigin &origin, FILETIME fileTime,
     std::wstring_view archive, int order, DirectoryStats& stats);
 
-  FileEntry::Ptr insert(
+  FileEntryPtr insert(
     env::File& file, FilesOrigin &origin,
     std::wstring_view archive, int order, DirectoryStats& stats);
 
@@ -599,9 +287,9 @@ private:
   void addDirectoryToList(DirectoryEntry* e, std::wstring nameLc);
   void removeDirectoryFromList(SubDirectories::iterator itor);
 
-  void addFileToList(std::wstring fileNameLower, FileEntry::Index index);
-  void removeFileFromList(FileEntry::Index index);
-  void removeFilesFromList(const std::set<FileEntry::Index>& indices);
+  void addFileToList(std::wstring fileNameLower, FileIndex index);
+  void removeFileFromList(FileIndex index);
+  void removeFilesFromList(const std::set<FileIndex>& indices);
 
   struct Context;
   static void onDirectoryStart(Context* cx, std::wstring_view path);
@@ -624,4 +312,4 @@ namespace std
   }
 }
 
-#endif // DIRECTORYENTRY_H
+#endif // MO_REGISTER_DIRECTORYENTRY_INCLUDED

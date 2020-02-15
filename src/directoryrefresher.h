@@ -20,7 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DIRECTORYREFRESHER_H
 #define DIRECTORYREFRESHER_H
 
-#include <directoryentry.h>
 #include <QObject>
 #include <QMutex>
 #include <QStringList>
@@ -58,6 +57,10 @@ public:
   DirectoryRefresher(std::size_t threadCount);
 
   ~DirectoryRefresher();
+
+  // noncopyable
+  DirectoryRefresher(const DirectoryRefresher&) = delete;
+  DirectoryRefresher& operator=(const DirectoryRefresher&) = delete;
 
   /**
    * @brief retrieve the updated directory structure

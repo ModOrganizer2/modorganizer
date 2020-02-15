@@ -27,7 +27,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "profile.h"
 
 #include <imodlist.h>
-#include <directoryentry.h>
 
 #include <QFile>
 #include <QListWidget>

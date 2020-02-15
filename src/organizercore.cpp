@@ -22,7 +22,6 @@
 #include <ipluginmodpage.h>
 #include <dataarchives.h>
 #include <localsavegames.h>
-#include <directoryentry.h>
 #include <scopeguard.h>
 #include <utility.h>
 #include <usvfs.h>
@@ -34,6 +33,10 @@
 #include "previewdialog.h"
 #include "env.h"
 #include "envmodule.h"
+#include "envfs.h"
+#include "shared/directoryentry.h"
+#include "shared/filesorigin.h"
+#include "shared/fileentry.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -810,7 +813,7 @@ QString OrganizerCore::resolvePath(const QString &fileName) const
   if (m_DirectoryStructure == nullptr) {
     return QString();
   }
-  const FileEntry::Ptr file
+  const FileEntryPtr file
       = m_DirectoryStructure->searchFile(ToWString(fileName), nullptr);
   if (file.get() != nullptr) {
     return ToQString(file->getFullPath());

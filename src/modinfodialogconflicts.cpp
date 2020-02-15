@@ -4,6 +4,9 @@
 #include "utility.h"
 #include "settings.h"
 #include "organizercore.h"
+#include "shared/directoryentry.h"
+#include "shared/filesorigin.h"
+#include "shared/fileentry.h"
 
 using namespace MOShared;
 using namespace MOBase;
@@ -17,7 +20,7 @@ class ConflictItem
 public:
   ConflictItem(
     QString before, QString relativeName, QString after,
-    FileEntry::Index index,  QString fileName,
+    FileIndex index,  QString fileName,
     bool hasAltOrigins, QString altOrigin,  bool archive) :
       m_before(std::move(before)),
       m_relativeName(std::move(relativeName)),
@@ -65,7 +68,7 @@ public:
     return m_isArchive;
   }
 
-  FileEntry::Index fileIndex() const
+  FileIndex fileIndex() const
   {
     return m_index;
   }
@@ -104,7 +107,7 @@ private:
   QString m_before;
   QString m_relativeName;
   QString m_after;
-  FileEntry::Index m_index;
+  FileIndex m_index;
   QString m_fileName;
   bool m_hasAltOrigins;
   QString m_altOrigin;
@@ -1006,8 +1009,8 @@ bool GeneralConflictsTab::update()
 }
 
 ConflictItem GeneralConflictsTab::createOverwriteItem(
-  FileEntry::Index index, bool archive, QString fileName, QString relativeName,
-  const FileEntry::AlternativesVector& alternatives)
+  FileIndex index, bool archive, QString fileName, QString relativeName,
+  const MOShared::AlternativesVector& alternatives)
 {
   const auto& ds = *m_core.directoryStructure();
   std::wstring altString;
@@ -1028,7 +1031,7 @@ ConflictItem GeneralConflictsTab::createOverwriteItem(
 }
 
 ConflictItem GeneralConflictsTab::createNoConflictItem(
-  FileEntry::Index index, bool archive, QString fileName, QString relativeName)
+  FileIndex index, bool archive, QString fileName, QString relativeName)
 {
   return ConflictItem(
     QString(), std::move(relativeName), QString(), index,
@@ -1036,7 +1039,7 @@ ConflictItem GeneralConflictsTab::createNoConflictItem(
 }
 
 ConflictItem GeneralConflictsTab::createOverwrittenItem(
-  FileEntry::Index index, int fileOrigin, bool archive,
+  FileIndex index, int fileOrigin, bool archive,
   QString fileName, QString relativeName)
 {
   const auto& ds = *m_core.directoryStructure();
@@ -1205,9 +1208,9 @@ void AdvancedConflictsTab::update()
 }
 
 std::optional<ConflictItem> AdvancedConflictsTab::createItem(
-  FileEntry::Index index, int fileOrigin, bool archive,
+  FileIndex index, int fileOrigin, bool archive,
   QString fileName, QString relativeName,
-  const MOShared::FileEntry::AlternativesVector& alternatives)
+  const MOShared::AlternativesVector& alternatives)
 {
   const auto& ds = *m_core.directoryStructure();
 

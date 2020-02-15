@@ -155,6 +155,10 @@ SET(organizer_SRCS
     shared/windows_error.cpp
     shared/error_report.cpp
     shared/directoryentry.cpp
+	shared/fileentry.cpp
+	shared/filesorigin.cpp
+	shared/fileregister.cpp
+	shared/originconnection.cpp
     shared/util.cpp
     shared/appconfig.cpp
     shared/leaktrace.cpp
@@ -286,6 +290,10 @@ SET(organizer_HDRS
     shared/windows_error.h
     shared/error_report.h
     shared/directoryentry.h
+	shared/fileentry.h
+	shared/filesorigin.h
+	shared/fileregister.h
+	shared/originconnection.h
     shared/util.h
     shared/appconfig.h
     shared/appconfig.inc
@@ -350,8 +358,6 @@ set(browser
 
 set(core
 	categories
-	shared/directoryentry
-	directoryrefresher
 	installationmanager
 	instancemanager
 	loadmechanism
@@ -470,6 +476,15 @@ set(profiles
 	profilesdialog
 )
 
+set(register
+	shared/directoryentry
+	shared/fileentry
+	shared/filesorigin
+	shared/fileregister
+	shared/originconnection
+	directoryrefresher
+)
+
 set(settings
 	settings
 	settingsutilities
@@ -521,7 +536,7 @@ set(widgets
 
 set(src_filters
 	application core browser dialogs downloads env executables loot mainwindow
-	modinfo modinfo\\dialog modlist plugins previews profiles settings
+	modinfo modinfo\\dialog modlist plugins previews profiles register settings
 	settingsdialog utilities widgets
 )
 

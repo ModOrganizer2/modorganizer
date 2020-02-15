@@ -20,8 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include "directoryentry.h"
-#include "directoryrefresher.h"
 #include "executableinfo.h"
 #include "executableslist.h"
 #include "guessedvalue.h"
@@ -88,6 +86,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "listdialog.h"
 #include "envshortcut.h"
 #include "browserdialog.h"
+
+#include "shared/directoryentry.h"
+#include "shared/fileentry.h"
+#include "shared/filesorigin.h"
 
 #include <QAbstractItemDelegate>
 #include <QAbstractProxyModel>
@@ -1870,7 +1872,7 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
   std::vector<std::pair<UINT32, QTreeWidgetItem*>> items;
 
   BSAInvalidation * invalidation = m_OrganizerCore.managedGame()->feature<BSAInvalidation>();
-  std::vector<FileEntry::Ptr> files = m_OrganizerCore.directoryStructure()->getFiles();
+  std::vector<FileEntryPtr> files = m_OrganizerCore.directoryStructure()->getFiles();
 
   QStringList plugins = m_OrganizerCore.findFiles("", [](const QString &fileName) -> bool {
     return fileName.endsWith(".esp", Qt::CaseInsensitive)
@@ -1889,7 +1891,7 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
     return false;
   };
 
-  for (FileEntry::Ptr current : files) {
+  for (FileEntryPtr current : files) {
     QFileInfo fileInfo(ToQString(current->getName().c_str()));
 
     if (fileInfo.suffix().toLower() == "bsa" || fileInfo.suffix().toLower() == "ba2") {
@@ -1942,7 +1944,7 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
   for (auto iter = items.begin(); iter != items.end(); ++iter) {
     int originID = iter->second->data(1, Qt::UserRole).toInt();
 
-    FilesOrigin origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
+    const FilesOrigin& origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
 
     QString modName;
     const unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
@@ -2504,7 +2506,7 @@ void MainWindow::modRenamed(const QString &oldName, const QString &newName)
 
 void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName, const QString &newOriginName)
 {
-  const FileEntry::Ptr filePtr = m_OrganizerCore.directoryStructure()->findFile(ToWString(filePath));
+  const FileEntryPtr filePtr = m_OrganizerCore.directoryStructure()->findFile(ToWString(filePath));
   if (filePtr.get() != nullptr) {
     try {
       if (m_OrganizerCore.directoryStructure()->originExists(ToWString(newOriginName))) {

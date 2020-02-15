@@ -2,7 +2,6 @@
 #include "ui_mainwindow.h"
 #include "settings.h"
 #include "organizercore.h"
-#include "directoryentry.h"
 #include "messagedialog.h"
 #include "filetree.h"
 #include "filetreemodel.h"
