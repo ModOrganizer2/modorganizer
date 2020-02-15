@@ -224,7 +224,17 @@ void DirectoryEntry::addFromBSA(
     return;
   }
 
-  const auto ft = ToFILETIME(std::filesystem::last_write_time(archivePath));
+  std::error_code ec;
+  const auto lwt = std::filesystem::last_write_time(archivePath, ec);
+  FILETIME ft = {};
+
+  if (ec) {
+    log::warn(
+      "failed to get last modified date for '{}', {}",
+      archivePath, ec.message());
+  } else {
+    ft = ToFILETIME(lwt);
+  }
 
   addFiles(origin, archive.getRoot(), ft, archiveName, order, stats);
 
