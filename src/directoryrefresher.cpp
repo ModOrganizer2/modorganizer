@@ -45,22 +45,141 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-DirectoryRefresher::DirectoryRefresher(std::size_t threadCount)
-  : m_DirectoryStructure(nullptr), m_threadCount(threadCount), m_lastFileCount(0)
+DirectoryStats::DirectoryStats()
 {
+  std::memset(this, 0, sizeof(DirectoryStats));
 }
 
-DirectoryRefresher::~DirectoryRefresher()
+DirectoryStats& DirectoryStats::operator+=(const DirectoryStats& o)
 {
-  delete m_DirectoryStructure;
+  dirTimes += o.dirTimes;
+  fileTimes += o.fileTimes;
+  sortTimes += o.sortTimes;
+
+  subdirLookupTimes += o.subdirLookupTimes;
+  addDirectoryTimes += o.addDirectoryTimes;
+
+  filesLookupTimes += o.filesLookupTimes;
+  addFileTimes += o.addFileTimes;
+  addOriginToFileTimes += o.addOriginToFileTimes;
+  addFileToOriginTimes += o.addFileToOriginTimes;
+  addFileToRegisterTimes += o.addFileToRegisterTimes;
+
+  originExists += o.originExists;
+  originCreate += o.originCreate;
+  originsNeededEnabled += o.originsNeededEnabled;
+
+  subdirExists += o.subdirExists;
+  subdirCreate += o.subdirCreate;
+
+  fileExists += o.fileExists;
+  fileCreate += o.fileCreate;
+  filesInsertedInRegister += o.filesInsertedInRegister;
+  filesAssignedInRegister += o.filesAssignedInRegister;
+
+  return *this;
+}
+
+std::string DirectoryStats::csvHeader()
+{
+  QStringList sl = {
+    "dirTimes",
+    "fileTimes",
+    "sortTimes",
+    "subdirLookupTimes",
+    "addDirectoryTimes",
+    "filesLookupTimes",
+    "addFileTimes",
+    "addOriginToFileTimes",
+    "addFileToOriginTimes",
+    "addFileToRegisterTimes",
+    "originExists",
+    "originCreate",
+    "originsNeededEnabled",
+    "subdirExists",
+    "subdirCreate",
+    "fileExists",
+    "fileCreate",
+    "filesInsertedInRegister",
+    "filesAssignedInRegister"};
+
+  return sl.join(",").toStdString();
+}
+
+std::string DirectoryStats::toCsv() const
+{
+  QStringList oss;
+
+  auto s = [](auto ns) {
+    return ns.count() / 1000.0 / 1000.0 / 1000.0;
+  };
+
+  oss
+    << QString::number(s(dirTimes))
+    << QString::number(s(fileTimes))
+    << QString::number(s(sortTimes))
+
+    << QString::number(s(subdirLookupTimes))
+    << QString::number(s(addDirectoryTimes))
+
+    << QString::number(s(filesLookupTimes))
+    << QString::number(s(addFileTimes))
+    << QString::number(s(addOriginToFileTimes))
+    << QString::number(s(addFileToOriginTimes))
+    << QString::number(s(addFileToRegisterTimes))
+
+    << QString::number(originExists)
+    << QString::number(originCreate)
+    << QString::number(originsNeededEnabled)
+
+    << QString::number(subdirExists)
+    << QString::number(subdirCreate)
+
+    << QString::number(fileExists)
+    << QString::number(fileCreate)
+    << QString::number(filesInsertedInRegister)
+    << QString::number(filesAssignedInRegister);
+
+  return oss.join(",").toStdString();
+}
+
+void dumpStats(std::vector<DirectoryStats>& stats)
+{
+  static int run = 0;
+  static const std::string file("c:\\tmp\\data.csv");
+
+  if (run == 0) {
+    std::ofstream out(file, std::ios::out|std::ios::trunc);
+    out << fmt::format("what,run,{}", DirectoryStats::csvHeader()) << "\n";
+  }
+
+  std::sort(stats.begin(), stats.end(), [](auto&& a, auto&& b){
+    return (naturalCompare(QString::fromStdString(a.mod), QString::fromStdString(b.mod)) < 0);
+    });
+
+  std::ofstream out(file, std::ios::app);
+
+  DirectoryStats total;
+  for (const auto& s : stats) {
+    out << fmt::format("{},{},{}", s.mod, run, s.toCsv()) << "\n";
+    total += s;
+  }
+
+  out << fmt::format("total,{},{}", run, total.toCsv()) << "\n";
+
+  ++run;
+}
+
+
+DirectoryRefresher::DirectoryRefresher(std::size_t threadCount)
+  : m_threadCount(threadCount), m_lastFileCount(0)
+{
 }
 
 DirectoryEntry *DirectoryRefresher::stealDirectoryStructure()
 {
   QMutexLocker locker(&m_RefreshLock);
-  DirectoryEntry *result = m_DirectoryStructure;
-  m_DirectoryStructure = nullptr;
-  return result;
+  return m_Root.release();
 }
 
 void DirectoryRefresher::setMods(const std::vector<std::tuple<QString, QString, int> > &mods
@@ -251,32 +370,6 @@ struct ModThread
 env::ThreadPool<ModThread> g_threads;
 
 
-void dumpStats(std::vector<DirectoryStats>& stats)
-{
-  static int run = 0;
-  static const std::string file("c:\\tmp\\data.csv");
-
-  if (run == 0) {
-    std::ofstream out(file, std::ios::out|std::ios::trunc);
-    out << fmt::format("what,run,{}", DirectoryStats::csvHeader()) << "\n";
-  }
-
-  std::sort(stats.begin(), stats.end(), [](auto&& a, auto&& b){
-    return (naturalCompare(QString::fromStdString(a.mod), QString::fromStdString(b.mod)) < 0);
-  });
-
-  std::ofstream out(file, std::ios::app);
-
-  DirectoryStats total;
-  for (const auto& s : stats) {
-    out << fmt::format("{},{},{}", s.mod, run, s.toCsv()) << "\n";
-    total += s;
-  }
-
-  out << fmt::format("total,{},{}", run, total.toCsv()) << "\n";
-
-  ++run;
-}
 
 void DirectoryRefresher::addMultipleModsFilesToStructure(
   MOShared::DirectoryEntry *directoryStructure,
@@ -332,10 +425,9 @@ void DirectoryRefresher::refresh()
   TimeThis tt("refresh");
 
   QMutexLocker locker(&m_RefreshLock);
-  delete m_DirectoryStructure;
 
-  m_DirectoryStructure = new DirectoryEntry(L"data", nullptr, 0);
-  m_DirectoryStructure->getFileRegister()->reserve(m_lastFileCount);
+  m_Root.reset(new DirectoryEntry(L"data", nullptr, 0));
+  m_Root->getFileRegister()->reserve(m_lastFileCount);
 
   IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
 
@@ -344,20 +436,20 @@ void DirectoryRefresher::refresh()
 
   {
     DirectoryStats dummy;
-    m_DirectoryStructure->addFromOrigin(L"data", dataDirectory, 0, dummy);
+    m_Root->addFromOrigin(L"data", dataDirectory, 0, dummy);
   }
 
   std::sort(m_Mods.begin(), m_Mods.end(), [](auto lhs, auto rhs) {
     return lhs.priority < rhs.priority;
   });
 
-  addMultipleModsFilesToStructure(m_DirectoryStructure, m_Mods, true);
+  addMultipleModsFilesToStructure(m_Root.get(), m_Mods, true);
 
-  m_DirectoryStructure->getFileRegister()->sortOrigins();
+  m_Root->getFileRegister()->sortOrigins();
 
-  cleanStructure(m_DirectoryStructure);
+  cleanStructure(m_Root.get());
 
-  m_lastFileCount = m_DirectoryStructure->getFileRegister()->highestCount();
+  m_lastFileCount = m_Root->getFileRegister()->highestCount();
   log::debug("refresher saw {} files", m_lastFileCount);
 
   emit progress(100);

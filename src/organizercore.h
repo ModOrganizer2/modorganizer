@@ -1,13 +1,11 @@
 #ifndef ORGANIZERCORE_H
 #define ORGANIZERCORE_H
 
-
 #include "selfupdater.h"
 #include "settings.h"
 #include "modlist.h"
 #include "modinfo.h"
 #include "pluginlist.h"
-#include "directoryrefresher.h"
 #include "installationmanager.h"
 #include "downloadmanager.h"
 #include "executableslist.h"
@@ -23,17 +21,6 @@
 #include "executableinfo.h"
 #include <log.h>
 
-class ModListSortProxy;
-class PluginListSortProxy;
-class Profile;
-class IUserInterface;
-
-namespace MOBase {
-  template <typename T> class GuessedValue;
-  class IModInterface;
-}
-namespace MOShared { class DirectoryEntry; }
-
 #include <QDir>
 #include <QFileInfo>
 #include <QList>
@@ -44,19 +31,23 @@ namespace MOShared { class DirectoryEntry; }
 #include <QThread>
 #include <QVariant>
 
-class QNetworkReply;
-class QUrl;
-class QWidget;
-
-#include <Windows.h> //for HANDLE, LPDWORD
-
-#include <functional>
-#include <vector>
-
+class ModListSortProxy;
+class PluginListSortProxy;
+class Profile;
+class IUserInterface;
 class PluginContainer;
+class DirectoryRefresher;
 
-namespace MOBase {
+namespace MOBase
+{
+  template <typename T> class GuessedValue;
+  class IModInterface;
   class IPluginGame;
+}
+
+namespace MOShared
+{
+  class DirectoryEntry;
 }
 
 
@@ -113,7 +104,7 @@ public:
   SelfUpdater *updater() { return &m_Updater; }
   InstallationManager *installationManager();
   MOShared::DirectoryEntry *directoryStructure() { return m_DirectoryStructure; }
-  DirectoryRefresher *directoryRefresher() { return &m_DirectoryRefresher; }
+  DirectoryRefresher *directoryRefresher() { return m_DirectoryRefresher.get(); }
   ExecutablesList *executablesList() { return &m_ExecutablesList; }
   void setExecutablesList(const ExecutablesList &executablesList) {
     m_ExecutablesList = executablesList;
@@ -337,7 +328,7 @@ private:
   QStringList m_DefaultArchives;
   QStringList m_ActiveArchives;
 
-  DirectoryRefresher m_DirectoryRefresher;
+  std::unique_ptr<DirectoryRefresher> m_DirectoryRefresher;
   MOShared::DirectoryEntry *m_DirectoryStructure;
 
   DownloadManager m_DownloadManager;

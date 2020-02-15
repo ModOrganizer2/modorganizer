@@ -34,6 +34,7 @@
 #include "env.h"
 #include "envmodule.h"
 #include "envfs.h"
+#include "directoryrefresher.h"
 #include "shared/directoryentry.h"
 #include "shared/filesorigin.h"
 #include "shared/fileentry.h"
@@ -96,7 +97,7 @@ OrganizerCore::OrganizerCore(Settings &settings)
   , m_Updater(NexusInterface::instance(m_PluginContainer))
   , m_ModList(m_PluginContainer, this)
   , m_PluginList(this)
-  , m_DirectoryRefresher(settings.refreshThreadCount())
+  , m_DirectoryRefresher(new DirectoryRefresher(settings.refreshThreadCount()))
   , m_DirectoryStructure(new DirectoryEntry(L"data", nullptr, 0))
   , m_DownloadManager(NexusInterface::instance(m_PluginContainer), this)
   , m_DirectoryUpdate(false)
@@ -114,7 +115,7 @@ OrganizerCore::OrganizerCore(Settings &settings)
 
   connect(&m_DownloadManager, SIGNAL(downloadSpeed(QString, int)), this,
           SLOT(downloadSpeed(QString, int)));
-  connect(&m_DirectoryRefresher, SIGNAL(refreshed()), this,
+  connect(m_DirectoryRefresher.get(), SIGNAL(refreshed()), this,
           SLOT(directory_refreshed()));
 
   connect(&m_ModList, SIGNAL(removeOrigin(QString)), this,
@@ -139,7 +140,7 @@ OrganizerCore::OrganizerCore(Settings &settings)
 
   // make directory refresher run in a separate thread
   m_RefresherThread.start();
-  m_DirectoryRefresher.moveToThread(&m_RefresherThread);
+  m_DirectoryRefresher->moveToThread(&m_RefresherThread);
 }
 
 OrganizerCore::~OrganizerCore()
@@ -1255,7 +1256,7 @@ void OrganizerCore::updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::P
       modInfo[idx]->stealFiles(), {}, m_CurrentProfile->getModPriority(idx)});
   }
 
-  m_DirectoryRefresher.addMultipleModsFilesToStructure(
+  m_DirectoryRefresher->addMultipleModsFilesToStructure(
     m_DirectoryStructure, entries);
 
   DirectoryRefresher::cleanStructure(m_DirectoryStructure);
@@ -1274,13 +1275,13 @@ void OrganizerCore::updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::P
   }
 
   std::vector<QString> archives = enabledArchives();
-  m_DirectoryRefresher.setMods(
+  m_DirectoryRefresher->setMods(
     m_CurrentProfile->getActiveMods(),
     std::set<QString>(archives.begin(), archives.end()));
 
   // finally also add files from bsas to the directory structure
   for (auto idx : modInfo.keys()) {
-    m_DirectoryRefresher.addModBSAToStructure(
+    m_DirectoryRefresher->addModBSAToStructure(
       m_DirectoryStructure, modInfo[idx]->name(),
       m_CurrentProfile->getModPriority(idx), modInfo[idx]->absolutePath(),
       modInfo[idx]->archives());
@@ -1398,18 +1399,18 @@ void OrganizerCore::refreshDirectoryStructure()
   const auto activeModList = m_CurrentProfile->getActiveMods();
   const auto archives = enabledArchives();
 
-  m_DirectoryRefresher.setMods(
+  m_DirectoryRefresher->setMods(
       activeModList, std::set<QString>(archives.begin(), archives.end()));
 
   // runs refresh() in a thread
-  QTimer::singleShot(0, &m_DirectoryRefresher, SLOT(refresh()));
+  QTimer::singleShot(0, m_DirectoryRefresher.get(), SLOT(refresh()));
 }
 
 void OrganizerCore::directory_refreshed()
 {
   log::debug("structure refreshed");
 
-  DirectoryEntry *newStructure = m_DirectoryRefresher.stealDirectoryStructure();
+  DirectoryEntry *newStructure = m_DirectoryRefresher->stealDirectoryStructure();
   Q_ASSERT(newStructure != m_DirectoryStructure);
 
   if (newStructure == nullptr) {

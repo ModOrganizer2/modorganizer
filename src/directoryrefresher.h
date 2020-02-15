@@ -50,13 +50,7 @@ public:
     int priority;
   };
 
-  /**
-   * @brief constructor
-   *
-   **/
   DirectoryRefresher(std::size_t threadCount);
-
-  ~DirectoryRefresher();
 
   // noncopyable
   DirectoryRefresher(const DirectoryRefresher&) = delete;
@@ -145,7 +139,7 @@ signals:
 private:
   std::vector<EntryInfo> m_Mods;
   std::set<QString> m_EnabledArchives;
-  MOShared::DirectoryEntry *m_DirectoryStructure;
+  std::unique_ptr<MOShared::DirectoryEntry> m_Root;
   QMutex m_RefreshLock;
   std::size_t m_threadCount;
   std::size_t m_lastFileCount;
