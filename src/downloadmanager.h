@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QNetworkReply>
 #include <QTime>
 #include <QTimer>
+#include <QElapsedTimer>
 #include <QVector>
 #include <QMap>
 #include <QStringList>
@@ -77,7 +78,7 @@ private:
     QString m_FileName;
     QFile m_Output;
     QNetworkReply *m_Reply;
-    QTime m_StartTime;
+    QElapsedTimer m_StartTime;
     qint64 m_PreResumeSize;
     std::pair<int, QString> m_Progress;
     std::tuple<int, int, int, int, int> m_SpeedDiff;
