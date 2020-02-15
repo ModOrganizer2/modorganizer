@@ -507,7 +507,6 @@ void PluginList::writeLockedOrder(const QString &fileName) const
     file->write(QString("%1|%2\r\n").arg(iter->first).arg(iter->second).toUtf8());
   }
   file.commit();
-  log::debug("{} saved", QDir::toNativeSeparators(fileName));
 }
 
 
@@ -531,9 +530,7 @@ void PluginList::saveTo(const QString &lockedOrderFileName
         deleterFile->write("\r\n");
       }
     }
-    if (deleterFile.commitIfDifferent(m_LastSaveHash[deleterFileName])) {
-      log::debug("{} saved", QDir::toNativeSeparators(deleterFileName));
-    }
+    deleterFile.commitIfDifferent(m_LastSaveHash[deleterFileName]);
   } else if (QFile::exists(deleterFileName)) {
     shellDelete(QStringList() << deleterFileName);
   }

@@ -1685,14 +1685,33 @@ void DirectoryEntry::addFileToList(
   // fileNameLower has been moved from this point
 }
 
+struct DumpFailed : public std::runtime_error
+{
+  using runtime_error::runtime_error;
+};
+
 void DirectoryEntry::dump(const std::wstring& file) const
 {
-  std::FILE* f = nullptr;
-  auto e = _wfopen_s(&f, file.c_str(), L"wb");
+  try
+  {
+    std::FILE* f = nullptr;
+    auto e = _wfopen_s(&f, file.c_str(), L"wb");
 
-  dump(f, L"Data");
+    if (e != 0 || !f) {
+      throw DumpFailed(fmt::format(
+        "failed to open, {} ({})", std::strerror(e), e));
+    }
 
-  std::fclose(f);
+    Guard g([&]{ std::fclose(f); });
+
+    dump(f, L"Data");
+  }
+  catch(DumpFailed& e)
+  {
+    log::error(
+      "failed to write list to '{}': {}",
+      QString::fromStdWString(file).toStdString(), e.what());
+  }
 }
 
 void DirectoryEntry::dump(std::FILE* f, const std::wstring& parentPath) const
@@ -1716,7 +1735,12 @@ void DirectoryEntry::dump(std::FILE* f, const std::wstring& parentPath) const
       const auto line = path + L"\t(" + o.getName() + L")\r\n";
 
       const auto lineu8 = MOShared::ToString(line, true);
-      std::fwrite(lineu8.data(), lineu8.size(), 1, f);
+
+      if (std::fwrite(lineu8.data(), lineu8.size(), 1, f) != 1) {
+        const auto e = errno;
+        throw DumpFailed(fmt::format(
+          "failed to write, {} ({})", std::strerror(e), e));
+      }
     }
   }
 

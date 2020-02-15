@@ -324,35 +324,34 @@ void DirectoryRefresher::refresh()
   SetThisThreadName("DirectoryRefresher");
   TimeThis tt("refresh");
 
-  for (int i=0; i<1; ++i) {
-    QMutexLocker locker(&m_RefreshLock);
-    delete m_DirectoryStructure;
+  QMutexLocker locker(&m_RefreshLock);
+  delete m_DirectoryStructure;
 
-    m_DirectoryStructure = new DirectoryEntry(L"data", nullptr, 0);
-    m_DirectoryStructure->getFileRegister()->reserve(m_lastFileCount);
+  m_DirectoryStructure = new DirectoryEntry(L"data", nullptr, 0);
+  m_DirectoryStructure->getFileRegister()->reserve(m_lastFileCount);
 
-    IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
 
-    std::wstring dataDirectory =
-      QDir::toNativeSeparators(game->dataDirectory().absolutePath()).toStdWString();
+  std::wstring dataDirectory =
+    QDir::toNativeSeparators(game->dataDirectory().absolutePath()).toStdWString();
 
-    {
-      DirectoryStats dummy;
-      m_DirectoryStructure->addFromOrigin(L"data", dataDirectory, 0, dummy);
-    }
-
-    std::sort(m_Mods.begin(), m_Mods.end(), [](auto lhs, auto rhs) {
-      return lhs.priority < rhs.priority;
-    });
-
-    addMultipleModsFilesToStructure(m_DirectoryStructure, m_Mods, true);
-
-    m_DirectoryStructure->getFileRegister()->sortOrigins();
-
-    cleanStructure(m_DirectoryStructure);
+  {
+    DirectoryStats dummy;
+    m_DirectoryStructure->addFromOrigin(L"data", dataDirectory, 0, dummy);
   }
 
+  std::sort(m_Mods.begin(), m_Mods.end(), [](auto lhs, auto rhs) {
+    return lhs.priority < rhs.priority;
+  });
+
+  addMultipleModsFilesToStructure(m_DirectoryStructure, m_Mods, true);
+
+  m_DirectoryStructure->getFileRegister()->sortOrigins();
+
+  cleanStructure(m_DirectoryStructure);
+
   m_lastFileCount = m_DirectoryStructure->getFileRegister()->highestCount();
+  log::debug("refresher saw {} files", m_lastFileCount);
 
   emit progress(100);
   emit refreshed();

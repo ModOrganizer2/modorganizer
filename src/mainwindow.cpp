@@ -4116,9 +4116,7 @@ void MainWindow::saveArchiveList()
         }
       }
     }
-    if (archiveFile.commitIfDifferent(m_ArchiveListHash)) {
-      log::debug("{} saved", QDir::toNativeSeparators(m_OrganizerCore.currentProfile()->getArchivesFileName()));
-    }
+    archiveFile.commitIfDifferent(m_ArchiveListHash);
   } else {
     log::warn("archive list not initialised");
   }

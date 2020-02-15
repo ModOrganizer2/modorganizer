@@ -441,45 +441,6 @@ void FileTree::dumpToFile() const
   m_core.directoryStructure()->dump(file.toStdWString());
 }
 
-void FileTree::dumpToFile(
-  QFile& out, const QString& parentPath, const DirectoryEntry& entry) const
-{
-  entry.forEachFile([&](auto&& file) {
-    bool isArchive = false;
-    const int originID = file.getOrigin(isArchive);
-
-    if (isArchive) {
-      // TODO: don't list files from archives. maybe make this an option?
-      return true;
-    }
-
-    const auto& origin = m_core.directoryStructure()->getOriginByID(originID);
-    const auto originName = QString::fromStdWString(origin.getName());
-
-    const QString path =
-      parentPath + "\\" + QString::fromStdWString(file.getName());
-
-    if (out.write(path.toUtf8() + "\t(" + originName.toUtf8() + ")\r\n") == -1) {
-      QMessageBox::critical(
-        m_tree->window(), tr("Error"), tr("Failed to write to file %1: %2")
-          .arg(out.fileName())
-          .arg(out.errorString()));
-
-      throw DumpFailed();
-    }
-
-    return true;
-  });
-
-  entry.forEachDirectory([&](auto&& dir) {
-    const auto newParentPath =
-      parentPath + "\\" + QString::fromStdWString(dir.getName());
-
-    dumpToFile(out, newParentPath, dir);
-    return true;
-  });
-}
-
 void FileTree::onExpandedChanged(const QModelIndex& index, bool expanded)
 {
   if (auto* item=m_model->itemFromIndex(proxiedIndex(index))) {
