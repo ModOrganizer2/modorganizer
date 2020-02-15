@@ -49,21 +49,19 @@ namespace MOShared
 class DirectoryEntry
 {
 public:
-  using FileKey = DirectoryEntryFileKey;
+  DirectoryEntry(
+    std::wstring name, DirectoryEntry *parent, OriginID originID);
 
   DirectoryEntry(
-    std::wstring name, DirectoryEntry *parent, int originID);
-
-  DirectoryEntry(
-    std::wstring name, DirectoryEntry *parent, int originID,
+    std::wstring name, DirectoryEntry *parent, OriginID originID,
     boost::shared_ptr<FileRegister> fileRegister,
     boost::shared_ptr<OriginConnection> originConnection);
+
+  ~DirectoryEntry();
 
   // noncopyable
   DirectoryEntry(const DirectoryEntry&) = delete;
   DirectoryEntry& operator=(const DirectoryEntry&) = delete;
-
-  ~DirectoryEntry();
 
   void clear();
 
@@ -110,7 +108,7 @@ public:
     const std::wstring &originName, const std::wstring &directory,
     env::Directory& root, int priority, DirectoryStats& stats);
 
-  void propagateOrigin(int origin);
+  void propagateOrigin(OriginID origin);
 
   const std::wstring &getName() const
   {
@@ -123,11 +121,11 @@ public:
   }
 
   bool originExists(const std::wstring &name) const;
-  FilesOrigin &getOriginByID(int ID) const;
+  FilesOrigin &getOriginByID(OriginID ID) const;
   FilesOrigin &getOriginByName(const std::wstring &name) const;
-  const FilesOrigin* findOriginByID(int ID) const;
+  const FilesOrigin* findOriginByID(OriginID ID) const;
 
-  int anyOrigin() const;
+  OriginID anyOrigin() const;
 
   std::vector<FileEntryPtr> getFiles() const;
 
@@ -191,7 +189,7 @@ public:
     * @return fileentry object for the file or nullptr if no file matches
     */
   const FileEntryPtr findFile(const std::wstring &name, bool alreadyLowerCase=false) const;
-  const FileEntryPtr findFile(const FileKey& key) const;
+  const FileEntryPtr findFile(const DirectoryEntryFileKey& key) const;
 
   bool hasFile(const std::wstring& name) const;
   bool containsArchive(std::wstring archiveName);
@@ -209,7 +207,7 @@ public:
 
   // remove the specified file from the tree. This can be a path leading to a
   // file in a subdirectory
-  bool removeFile(const std::wstring &filePath, int *origin = nullptr);
+  bool removeFile(const std::wstring &filePath, OriginID *origin = nullptr);
 
   /**
    * @brief remove the specified directory
@@ -217,9 +215,9 @@ public:
    */
   void removeDir(const std::wstring &path);
 
-  bool remove(const std::wstring &fileName, int *origin);
+  bool remove(const std::wstring &fileName, OriginID *origin);
 
-  bool hasContentsFromOrigin(int originID) const;
+  bool hasContentsFromOrigin(OriginID originID) const;
 
   FilesOrigin &createOrigin(
     const std::wstring &originName,
@@ -231,7 +229,7 @@ public:
 
 private:
   using FilesMap = std::map<std::wstring, FileIndex>;
-  using FilesLookup = std::unordered_map<FileKey, FileIndex>;
+  using FilesLookup = std::unordered_map<DirectoryEntryFileKey, FileIndex>;
   using SubDirectories = std::vector<DirectoryEntry*>;
   using SubDirectoriesLookup = std::unordered_map<std::wstring, DirectoryEntry*>;
 
@@ -245,7 +243,7 @@ private:
   SubDirectoriesLookup m_SubDirectoriesLookup;
 
   DirectoryEntry *m_Parent;
-  std::set<int> m_Origins;
+  std::set<OriginID> m_Origins;
   bool m_Populated;
   bool m_TopLevel;
   mutable std::mutex m_SubDirMutex;
@@ -273,14 +271,14 @@ private:
 
   DirectoryEntry* getSubDirectory(
     std::wstring_view name, bool create, DirectoryStats& stats,
-    int originID = -1);
+    OriginID originID = InvalidOriginID);
 
   DirectoryEntry* getSubDirectory(
     env::Directory& dir, bool create, DirectoryStats& stats,
-    int originID = -1);
+    OriginID originID = InvalidOriginID);
 
   DirectoryEntry* getSubDirectoryRecursive(
-    const std::wstring &path, bool create, int originID = -1);
+    const std::wstring &path, bool create, OriginID originID = InvalidOriginID);
 
   void removeDirRecursive();
 

@@ -54,13 +54,13 @@ bool OriginConnection::exists(const std::wstring &name)
   return m_OriginsNameMap.find(name) != m_OriginsNameMap.end();
 }
 
-FilesOrigin& OriginConnection::getByID(Index ID)
+FilesOrigin& OriginConnection::getByID(OriginID ID)
 {
   std::scoped_lock lock(m_Mutex);
   return m_Origins[ID];
 }
 
-const FilesOrigin* OriginConnection::findByID(Index ID) const
+const FilesOrigin* OriginConnection::findByID(OriginID ID) const
 {
   std::scoped_lock lock(m_Mutex);
 
@@ -77,7 +77,7 @@ FilesOrigin& OriginConnection::getByName(const std::wstring &name)
 {
   std::scoped_lock lock(m_Mutex);
 
-  std::map<std::wstring, int>::iterator iter = m_OriginsNameMap.find(name);
+  auto iter = m_OriginsNameMap.find(name);
 
   if (iter != m_OriginsNameMap.end()) {
     return m_Origins[iter->second];
@@ -95,7 +95,7 @@ void OriginConnection::changePriorityLookup(int oldPriority, int newPriority)
   auto iter = m_OriginsPriorityMap.find(oldPriority);
 
   if (iter != m_OriginsPriorityMap.end()) {
-    Index idx = iter->second;
+    OriginID idx = iter->second;
     m_OriginsPriorityMap.erase(iter);
     m_OriginsPriorityMap[newPriority] = idx;
   }
@@ -108,7 +108,7 @@ void OriginConnection::changeNameLookup(const std::wstring &oldName, const std::
   auto iter = m_OriginsNameMap.find(oldName);
 
   if (iter != m_OriginsNameMap.end()) {
-    Index idx = iter->second;
+    OriginID idx = iter->second;
     m_OriginsNameMap.erase(iter);
     m_OriginsNameMap[newName] = idx;
   } else {
@@ -116,7 +116,7 @@ void OriginConnection::changeNameLookup(const std::wstring &oldName, const std::
   }
 }
 
-OriginConnection::Index OriginConnection::createID()
+OriginID OriginConnection::createID()
 {
   return m_NextID++;
 }
@@ -126,7 +126,7 @@ FilesOrigin& OriginConnection::createOriginNoLock(
   boost::shared_ptr<FileRegister> fileRegister,
   boost::shared_ptr<OriginConnection> originConnection)
 {
-  int newID = createID();
+  OriginID newID = createID();
 
   auto itor = m_Origins.emplace(
     std::piecewise_construct,

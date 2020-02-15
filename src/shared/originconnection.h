@@ -9,9 +9,6 @@ namespace MOShared
 class OriginConnection
 {
 public:
-  typedef int Index;
-  static const int INVALID_INDEX = INT_MIN;
-
   OriginConnection();
 
   // noncopyable
@@ -31,8 +28,8 @@ public:
 
   bool exists(const std::wstring &name);
 
-  FilesOrigin &getByID(Index ID);
-  const FilesOrigin* findByID(Index ID) const;
+  FilesOrigin &getByID(OriginID ID);
+  const FilesOrigin* findByID(OriginID ID) const;
   FilesOrigin &getByName(const std::wstring &name);
 
   void changePriorityLookup(int oldPriority, int newPriority);
@@ -40,13 +37,13 @@ public:
   void changeNameLookup(const std::wstring &oldName, const std::wstring &newName);
 
 private:
-  Index m_NextID;
-  std::map<Index, FilesOrigin> m_Origins;
-  std::map<std::wstring, Index> m_OriginsNameMap;
-  std::map<int, Index> m_OriginsPriorityMap;
+  std::atomic<OriginID> m_NextID;
+  std::map<OriginID, FilesOrigin> m_Origins;
+  std::map<std::wstring, OriginID> m_OriginsNameMap;
+  std::map<int, OriginID> m_OriginsPriorityMap;
   mutable std::mutex m_Mutex;
 
-  Index createID();
+  OriginID createID();
 
   FilesOrigin& createOriginNoLock(
     const std::wstring &originName, const std::wstring &directory, int priority,

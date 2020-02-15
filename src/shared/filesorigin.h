@@ -11,18 +11,16 @@ class FilesOrigin
 {
 public:
   FilesOrigin();
-//  FilesOrigin(const FilesOrigin &reference);
 
   FilesOrigin(
-    int ID, const std::wstring &name, const std::wstring &path, int priority,
+    OriginID ID, const std::wstring &name, const std::wstring &path,
+    int priority,
     boost::shared_ptr<FileRegister> fileRegister,
     boost::shared_ptr<OriginConnection> originConnection);
 
   // noncopyable
   FilesOrigin(const FilesOrigin&) = delete;
   FilesOrigin& operator=(const FilesOrigin&) = delete;
-  FilesOrigin(FilesOrigin&&) = default;
-  FilesOrigin& operator=(FilesOrigin&&) = default;
 
   // sets priority for this origin, but it will overwrite the existing mapping
   // for this priority, the previous origin will no longer be referenced
@@ -39,7 +37,7 @@ public:
     return m_Name;
   }
 
-  int getID() const
+  OriginID getID() const
   {
     return m_ID;
   }
@@ -71,7 +69,7 @@ public:
   bool containsArchive(std::wstring archiveName);
 
 private:
-  int m_ID;
+  OriginID m_ID;
   bool m_Disabled;
   std::set<FileIndex> m_Files;
   std::wstring m_Name;

@@ -79,7 +79,7 @@ bool FileRegister::removeFile(FileIndex index)
   return false;
 }
 
-void FileRegister::removeOrigin(FileIndex index, int originID)
+void FileRegister::removeOrigin(FileIndex index, OriginID originID)
 {
   std::unique_lock lock(m_Mutex);
 
@@ -100,7 +100,7 @@ void FileRegister::removeOrigin(FileIndex index, int originID)
 }
 
 void FileRegister::removeOriginMulti(
-  std::set<FileIndex> indices, int originID)
+  std::set<FileIndex> indices, OriginID originID)
 {
   std::vector<FileEntryPtr> removedFiles;
 
@@ -167,7 +167,7 @@ void FileRegister::unregisterFile(FileEntryPtr file)
   bool ignore;
 
   // unregister from origin
-  int originID = file->getOrigin(ignore);
+  OriginID originID = file->getOrigin(ignore);
   m_OriginConnection->getByID(originID).removeFile(file->getIndex());
   const auto& alternatives = file->getAlternatives();
 

@@ -847,8 +847,8 @@ QStringList OrganizerCore::findFiles(
   if (!path.isEmpty())
     dir = dir->findSubDirectoryRecursive(ToWString(path));
   if (dir != nullptr) {
-    std::vector<FileEntry::Ptr> files = dir->getFiles();
-    foreach (FileEntry::Ptr file, files) {
+    std::vector<FileEntryPtr> files = dir->getFiles();
+    foreach (FileEntryPtr file, files) {
       if (filter(ToQString(file->getFullPath()))) {
         result.append(ToQString(file->getFullPath()));
       }
@@ -860,7 +860,7 @@ QStringList OrganizerCore::findFiles(
 QStringList OrganizerCore::getFileOrigins(const QString &fileName) const
 {
   QStringList result;
-  const FileEntry::Ptr file = m_DirectoryStructure->searchFile(ToWString(fileName), nullptr);
+  const FileEntryPtr file = m_DirectoryStructure->searchFile(ToWString(fileName), nullptr);
 
   if (file.get() != nullptr) {
     result.append(ToQString(
@@ -883,8 +883,8 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerCore::findFileInfos(
   if (!path.isEmpty())
     dir = dir->findSubDirectoryRecursive(ToWString(path));
   if (dir != nullptr) {
-    std::vector<FileEntry::Ptr> files = dir->getFiles();
-    foreach (FileEntry::Ptr file, files) {
+    std::vector<FileEntryPtr> files = dir->getFiles();
+    foreach (FileEntryPtr file, files) {
       IOrganizer::FileInfo info;
       info.filePath    = ToQString(file->getFullPath());
       bool fromArchive = false;
@@ -966,7 +966,7 @@ bool OrganizerCore::previewFileWithAlternatives(
 
 
 
-  const FileEntry::Ptr file = directoryStructure()->searchFile(ToWString(fileName), nullptr);
+  const FileEntryPtr file = directoryStructure()->searchFile(ToWString(fileName), nullptr);
 
   if (file.get() == nullptr) {
     reportError(tr("file not found: %1").arg(qUtf8Printable(fileName)));
@@ -1180,7 +1180,7 @@ void OrganizerCore::updateModsActiveState(const QList<unsigned int> &modIndices,
     QDir dir(modInfo->absolutePath());
     for (const QString &esm :
       dir.entryList(QStringList() << "*.esm", QDir::Files)) {
-      const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esm));
+      const FileEntryPtr file = m_DirectoryStructure->findFile(ToWString(esm));
       if (file.get() == nullptr) {
         log::warn("failed to activate {}", esm);
         continue;
@@ -1196,7 +1196,7 @@ void OrganizerCore::updateModsActiveState(const QList<unsigned int> &modIndices,
 
     for (const QString &esl :
       dir.entryList(QStringList() << "*.esl", QDir::Files)) {
-      const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esl));
+      const FileEntryPtr file = m_DirectoryStructure->findFile(ToWString(esl));
       if (file.get() == nullptr) {
         log::warn("failed to activate {}", esl);
         continue;
@@ -1212,7 +1212,7 @@ void OrganizerCore::updateModsActiveState(const QList<unsigned int> &modIndices,
     }
     QStringList esps = dir.entryList(QStringList() << "*.esp", QDir::Files);
     for (const QString &esp : esps) {
-      const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esp));
+      const FileEntryPtr file = m_DirectoryStructure->findFile(ToWString(esp));
       if (file.get() == nullptr) {
         log::warn("failed to activate {}", esp);
         continue;
@@ -1899,7 +1899,7 @@ std::vector<Mapping> OrganizerCore::fileMapping(
 {
   std::vector<Mapping> result;
 
-  for (FileEntry::Ptr current : directoryEntry->getFiles()) {
+  for (FileEntryPtr current : directoryEntry->getFiles()) {
     bool isArchive = false;
     int origin = current->getOrigin(isArchive);
     if (isArchive || (origin == 0)) {

@@ -12,28 +12,25 @@ public:
   static constexpr uint64_t NoFileSize =
     std::numeric_limits<uint64_t>::max();
 
-  typedef unsigned int Index;
-  typedef boost::shared_ptr<FileEntry> Ptr;
-
   FileEntry();
-  FileEntry(Index index, std::wstring name, DirectoryEntry *parent);
+  FileEntry(FileIndex index, std::wstring name, DirectoryEntry *parent);
 
   // noncopyable
   FileEntry(const FileEntry&) = delete;
   FileEntry& operator=(const FileEntry&) = delete;
 
-  Index getIndex() const
+  FileIndex getIndex() const
   {
     return m_Index;
   }
 
   void addOrigin(
-    int origin, FILETIME fileTime, std::wstring_view archive, int order);
+    OriginID origin, FILETIME fileTime, std::wstring_view archive, int order);
 
   // remove the specified origin from the list of origins that contain this
   // file. if no origin is left, the file is effectively deleted and true is
   // returned. otherwise, false is returned
-  bool removeOrigin(int origin);
+  bool removeOrigin(OriginID origin);
 
   void sortOrigins();
 
@@ -50,12 +47,12 @@ public:
     return m_Name;
   }
 
-  int getOrigin() const
+  OriginID getOrigin() const
   {
     return m_Origin;
   }
 
-  int getOrigin(bool &archive) const
+  OriginID getOrigin(bool &archive) const
   {
     archive = (m_Archive.first.length() != 0);
     return m_Origin;
@@ -71,7 +68,7 @@ public:
   // if originID is -1, uses the main origin; if this file doesn't exist in the
   // given origin, returns an empty string
   //
-  std::wstring getFullPath(int originID=-1) const;
+  std::wstring getFullPath(OriginID originID=InvalidOriginID) const;
 
   std::wstring getRelativePath() const;
 
@@ -107,9 +104,9 @@ public:
   }
 
 private:
-  Index m_Index;
+  FileIndex m_Index;
   std::wstring m_Name;
-  int m_Origin;
+  OriginID m_Origin;
   std::pair<std::wstring, int> m_Archive;
   AlternativesVector m_Alternatives;
   DirectoryEntry *m_Parent;

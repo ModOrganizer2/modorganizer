@@ -359,7 +359,7 @@ int DirectoryEntry::anyOrigin() const
   // we continue looking in subdirectories
   for (DirectoryEntry *entry : m_SubDirectories) {
     int res = entry->anyOrigin();
-    if (res != -1){
+    if (res != InvalidOriginID){
       return res;
     }
   }
@@ -398,7 +398,7 @@ DirectoryEntry *DirectoryEntry::findSubDirectory(
 
 DirectoryEntry *DirectoryEntry::findSubDirectoryRecursive(const std::wstring &path)
 {
-  return getSubDirectoryRecursive(path, false, -1);
+  return getSubDirectoryRecursive(path, false, InvalidOriginID);
 }
 
 const FileEntryPtr DirectoryEntry::findFile(
@@ -407,9 +407,9 @@ const FileEntryPtr DirectoryEntry::findFile(
   FilesLookup::const_iterator iter;
 
   if (alreadyLowerCase) {
-    iter = m_FilesLookup.find(FileKey(name));
+    iter = m_FilesLookup.find(DirectoryEntryFileKey(name));
   } else {
-    iter = m_FilesLookup.find(FileKey(ToLowerCopy(name)));
+    iter = m_FilesLookup.find(DirectoryEntryFileKey(ToLowerCopy(name)));
   }
 
   if (iter != m_FilesLookup.end()) {
@@ -419,7 +419,7 @@ const FileEntryPtr DirectoryEntry::findFile(
   }
 }
 
-const FileEntryPtr DirectoryEntry::findFile(const FileKey& key) const
+const FileEntryPtr DirectoryEntry::findFile(const DirectoryEntryFileKey& key) const
 {
   auto iter = m_FilesLookup.find(key);
 
@@ -495,7 +495,7 @@ const FileEntryPtr DirectoryEntry::searchFile(
   return FileEntryPtr();
 }
 
-void DirectoryEntry::removeFile(FileEntry::Index index)
+void DirectoryEntry::removeFile(FileIndex index)
 {
   removeFileFromList(index);
 }
@@ -589,7 +589,7 @@ FilesOrigin &DirectoryEntry::createOrigin(
   return r.first;
 }
 
-void DirectoryEntry::removeFiles(const std::set<FileEntry::Index> &indices)
+void DirectoryEntry::removeFiles(const std::set<FileIndex> &indices)
 {
   removeFilesFromList(indices);
 }
@@ -601,7 +601,7 @@ FileEntryPtr DirectoryEntry::insert(
   std::wstring fileNameLower = ToLowerCopy(fileName);
   FileEntryPtr fe;
 
-  FileKey key(std::move(fileNameLower));
+  DirectoryEntryFileKey key(std::move(fileNameLower));
 
   {
     std::unique_lock lock(m_FilesMutex);
@@ -931,7 +931,7 @@ void DirectoryEntry::removeDirectoryFromList(SubDirectories::iterator itor)
   m_SubDirectories.erase(itor);
 }
 
-void DirectoryEntry::removeFileFromList(FileEntry::Index index)
+void DirectoryEntry::removeFileFromList(FileIndex index)
 {
   auto removeFrom = [&](auto& list) {
     auto iter = std::find_if(
@@ -961,7 +961,7 @@ void DirectoryEntry::removeFileFromList(FileEntry::Index index)
   removeFrom(m_Files);
 }
 
-void DirectoryEntry::removeFilesFromList(const std::set<FileEntry::Index>& indices)
+void DirectoryEntry::removeFilesFromList(const std::set<FileIndex>& indices)
 {
   for (auto iter = m_Files.begin(); iter != m_Files.end();) {
     if (indices.find(iter->second) != indices.end()) {
@@ -980,8 +980,7 @@ void DirectoryEntry::removeFilesFromList(const std::set<FileEntry::Index>& indic
   }
 }
 
-void DirectoryEntry::addFileToList(
-  std::wstring fileNameLower, FileEntry::Index index)
+void DirectoryEntry::addFileToList(std::wstring fileNameLower, FileIndex index)
 {
   m_FilesLookup.emplace(fileNameLower, index);
   m_Files.emplace(std::move(fileNameLower), index);

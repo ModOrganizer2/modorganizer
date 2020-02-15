@@ -21,19 +21,8 @@ FilesOrigin::FilesOrigin()
 {
 }
 
-/*FilesOrigin::FilesOrigin(const FilesOrigin &reference)
-  : m_ID(reference.m_ID)
-  , m_Disabled(reference.m_Disabled)
-  , m_Name(reference.m_Name)
-  , m_Path(reference.m_Path)
-  , m_Priority(reference.m_Priority)
-  , m_FileRegister(reference.m_FileRegister)
-  , m_OriginConnection(reference.m_OriginConnection)
-{
-}*/
-
 FilesOrigin::FilesOrigin(
-  int ID, const std::wstring &name, const std::wstring &path, int priority,
+  OriginID ID, const std::wstring &name, const std::wstring &path, int priority,
   boost::shared_ptr<MOShared::FileRegister> fileRegister,
   boost::shared_ptr<MOShared::OriginConnection> originConnection) :
   m_ID(ID), m_Disabled(false), m_Name(name), m_Path(path),

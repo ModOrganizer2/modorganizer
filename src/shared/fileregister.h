@@ -36,8 +36,8 @@ public:
   }
 
   bool removeFile(FileIndex index);
-  void removeOrigin(FileIndex index, int originID);
-  void removeOriginMulti(std::set<FileIndex> indices, int originID);
+  void removeOrigin(FileIndex index, OriginID originID);
+  void removeOriginMulti(std::set<FileIndex> indices, OriginID originID);
 
   void sortOrigins();
 

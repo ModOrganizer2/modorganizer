@@ -6,19 +6,19 @@ namespace MOShared
 {
 
 FileEntry::FileEntry() :
-  m_Index(UINT_MAX), m_Name(), m_Origin(-1), m_Parent(nullptr),
+  m_Index(InvalidFileIndex), m_Name(), m_Origin(-1), m_Parent(nullptr),
   m_FileSize(NoFileSize), m_CompressedFileSize(NoFileSize)
 {
 }
 
-FileEntry::FileEntry(Index index, std::wstring name, DirectoryEntry *parent) :
+FileEntry::FileEntry(FileIndex index, std::wstring name, DirectoryEntry *parent) :
   m_Index(index), m_Name(std::move(name)), m_Origin(-1), m_Archive(L"", -1), m_Parent(parent),
   m_FileSize(NoFileSize), m_CompressedFileSize(NoFileSize)
 {
 }
 
 void FileEntry::addOrigin(
-  int origin, FILETIME fileTime, std::wstring_view archive, int order)
+  OriginID origin, FILETIME fileTime, std::wstring_view archive, int order)
 {
   std::scoped_lock lock(m_OriginsMutex);
 
@@ -83,7 +83,7 @@ void FileEntry::addOrigin(
   }
 }
 
-bool FileEntry::removeOrigin(int origin)
+bool FileEntry::removeOrigin(OriginID origin)
 {
   std::scoped_lock lock(m_OriginsMutex);
 
@@ -116,7 +116,7 @@ bool FileEntry::removeOrigin(int origin)
         }
       }
 
-      int currentID = currentIter->first;
+      OriginID currentID = currentIter->first;
       m_Archive = currentIter->second;
       m_Alternatives.erase(currentIter);
 
@@ -201,11 +201,11 @@ bool FileEntry::isFromArchive(std::wstring archiveName) const
   return false;
 }
 
-std::wstring FileEntry::getFullPath(int originID) const
+std::wstring FileEntry::getFullPath(OriginID originID) const
 {
   std::scoped_lock lock(m_OriginsMutex);
 
-  if (originID == -1) {
+  if (originID == InvalidOriginID) {
     bool ignore = false;
     originID = getOrigin(ignore);
   }

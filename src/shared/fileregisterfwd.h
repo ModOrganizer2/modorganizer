@@ -35,6 +35,11 @@ struct DirectoryStats;
 
 using FileEntryPtr = boost::shared_ptr<FileEntry>;
 using FileIndex = unsigned int;
+using OriginID = int;
+
+constexpr FileIndex InvalidFileIndex = UINT_MAX;
+constexpr OriginID InvalidOriginID = -1;
+
 
 // a vector of {originId, {archiveName, order}}
 //
@@ -43,7 +48,7 @@ using FileIndex = unsigned int;
 //
 // is a file is not in an archive, archiveName is empty and order is usually
 // -1
-using AlternativesVector = std::vector<std::pair<int, std::pair<std::wstring, int>>>;
+using AlternativesVector = std::vector<std::pair<OriginID, std::pair<std::wstring, int>>>;
 
 struct DirectoryStats
 {
