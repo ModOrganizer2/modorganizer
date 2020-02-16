@@ -105,6 +105,7 @@ public:
   void setManagedGame(MOBase::IPluginGame *game);
 
   void updateExecutablesList();
+  void updateModInfoFromDisc();
 
   void checkForUpdates();
   void startMOUpdate();

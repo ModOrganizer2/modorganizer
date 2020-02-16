@@ -643,6 +643,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       game->gameDirectory().absolutePath());
 
     organizer.updateExecutablesList();
+    organizer.updateModInfoFromDisc();
 
     QString selectedProfileName = determineProfile(arguments, settings);
     organizer.setCurrentProfile(selectedProfileName);

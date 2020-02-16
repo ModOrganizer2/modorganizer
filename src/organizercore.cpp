@@ -200,9 +200,9 @@ void OrganizerCore::updateExecutablesList()
   }
 
   m_ExecutablesList.load(managedGame(), m_Settings);
+}
 
-  // TODO this has nothing to do with executables list move to an appropriate
-  // function!
+void OrganizerCore::updateModInfoFromDisc() {
   ModInfo::updateFromDisc(
     m_Settings.paths().mods(), &m_DirectoryStructure,
     m_PluginContainer, m_Settings.interface().displayForeign(), managedGame());
