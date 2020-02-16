@@ -1,6 +1,8 @@
 #ifndef MO_REGISTER_FILEREGISTERFWD_INCLUDED
 #define MO_REGISTER_FILEREGISTERFWD_INCLUDED
 
+class DirectoryRefreshProgress;
+
 namespace MOShared
 {
 

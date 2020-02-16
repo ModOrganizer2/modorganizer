@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "tutorialcontrol.h"
 #include "plugincontainer.h" //class PluginContainer;
 #include "iplugingame.h" //namespace MOBase { class IPluginGame; }
+#include "shared/fileregisterfwd.h"
 #include <log.h>
 
 class Executable;
@@ -155,7 +156,8 @@ public:
 public slots:
   void modorder_changed();
   void esplist_changed();
-  void refresher_progress(int percent);
+  void refresherProgress(const DirectoryRefreshProgress* p);
+
   void directory_refreshed();
 
   void toolPluginInvoke();

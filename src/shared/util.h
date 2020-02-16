@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <log.h>
 #include <string>
 #include <filesystem>
 #include <versioninfo.h>
@@ -62,20 +63,6 @@ inline FILETIME ToFILETIME(std::filesystem::file_time_type t)
 }
 
 } // namespace MOShared
-
-
-class TimeThis
-{
-public:
-  TimeThis(QString what={});
-  ~TimeThis();
-
-private:
-  using Clock = std::chrono::high_resolution_clock;
-
-  QString m_what;
-  Clock::time_point m_start;
-};
 
 
 enum class Exit

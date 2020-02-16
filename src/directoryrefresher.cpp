@@ -326,8 +326,10 @@ void DirectoryRefresher::addModToStructure(DirectoryEntry *directoryStructure
   }
 }
 
+
 struct ModThread
 {
+  DirectoryRefreshProgress* progress = nullptr;
   DirectoryEntry* ds = nullptr;
   std::wstring modName;
   std::wstring path;
@@ -375,6 +377,11 @@ struct ModThread
         modName, path, prio, archives, enabledArchives, lo, *stats);
     }
 
+    if (progress) {
+      progress->addDone();
+    }
+
+    SetThisThreadName(QString::fromStdWString(L"idle refresher"));
     ready = false;
   }
 };
@@ -382,12 +389,21 @@ struct ModThread
 env::ThreadPool<ModThread> g_threads;
 
 
+void DirectoryRefresher::updateProgress(const DirectoryRefreshProgress* p)
+{
+  // careful: called from multiple threads
+  emit progress(p);
+}
 
 void DirectoryRefresher::addMultipleModsFilesToStructure(
   MOShared::DirectoryEntry *directoryStructure,
-  const std::vector<EntryInfo>& entries, bool emitProgress)
+  const std::vector<EntryInfo>& entries, DirectoryRefreshProgress* progress)
 {
   std::vector<DirectoryStats> stats(entries.size());
+
+  if (progress) {
+    progress->start(entries.size());
+  }
 
   log::debug("refresher: using {} threads", m_threadCount);
   g_threads.setMax(m_threadCount);
@@ -405,9 +421,14 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
       if (e.stealFiles.length() > 0) {
         stealModFilesIntoStructure(
           directoryStructure, e.modName, prio, e.absolutePath, e.stealFiles);
+
+        if (progress) {
+          progress->addDone();
+        }
       } else {
         auto& mt = g_threads.request();
 
+        mt.progress = progress;
         mt.ds = directoryStructure;
         mt.modName = e.modName.toStdWString();
         mt.path = QDir::toNativeSeparators(e.absolutePath).toStdWString();
@@ -430,10 +451,6 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
     } catch (const std::exception& ex) {
       emit error(tr("failed to read mod (%1): %2").arg(e.modName, ex.what()));
     }
-
-    if (emitProgress) {
-      emit progress((static_cast<int>(i) * 100) / static_cast<int>(entries.size()) + 1);
-    }
   }
 
   g_threads.waitForAll();
@@ -447,6 +464,7 @@ void DirectoryRefresher::refresh()
 {
   SetThisThreadName("DirectoryRefresher");
   TimeThis tt("refresh");
+  auto* p = new DirectoryRefreshProgress(this);
 
   {
     QMutexLocker locker(&m_RefreshLock);
@@ -468,7 +486,7 @@ void DirectoryRefresher::refresh()
       return lhs.priority < rhs.priority;
     });
 
-    addMultipleModsFilesToStructure(m_Root.get(), m_Mods, true);
+    addMultipleModsFilesToStructure(m_Root.get(), m_Mods, p);
 
     m_Root->getFileRegister()->sortOrigins();
 
@@ -478,6 +496,8 @@ void DirectoryRefresher::refresh()
     log::debug("refresher saw {} files", m_lastFileCount);
   }
 
-  emit progress(100);
+  p->finish();
+
+  emit progress(p);
   emit refreshed();
 }

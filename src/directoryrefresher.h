@@ -20,14 +20,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DIRECTORYREFRESHER_H
 #define DIRECTORYREFRESHER_H
 
+#include "fileregisterfwd.h"
+#include "profile.h"
 #include <QObject>
 #include <QMutex>
 #include <QStringList>
 #include <vector>
 #include <set>
 #include <tuple>
-#include "profile.h"
-
 
 /**
  * @brief used to asynchronously generate the virtual view of the combined data directory
@@ -38,11 +38,15 @@ class DirectoryRefresher : public QObject
   Q_OBJECT
 
 public:
-  struct EntryInfo {
+  struct EntryInfo
+  {
     EntryInfo(const QString &modName, const QString &absolutePath,
       const QStringList &stealFiles, const QStringList &archives, int priority)
       : modName(modName), absolutePath(absolutePath), stealFiles(stealFiles)
-      , archives(archives), priority(priority) {}
+      , archives(archives), priority(priority)
+    {
+    }
+
     QString modName;
     QString absolutePath;
     QStringList stealFiles;
@@ -121,7 +125,10 @@ public:
 
   void addMultipleModsFilesToStructure(
     MOShared::DirectoryEntry *directoryStructure,
-    const std::vector<EntryInfo>& entries, bool emitProgress=false);
+    const std::vector<EntryInfo>& entries,
+    DirectoryRefreshProgress* progress=nullptr);
+
+  void updateProgress(const DirectoryRefreshProgress* p);
 
 public slots:
 
@@ -132,7 +139,7 @@ public slots:
 
 signals:
 
-  void progress(int progress);
+  void progress(const DirectoryRefreshProgress* p);
   void error(const QString &error);
   void refreshed();
 
@@ -147,6 +154,61 @@ private:
   void stealModFilesIntoStructure(
     MOShared::DirectoryEntry *directoryStructure, const QString &modName,
     int priority, const QString &directory, const QStringList &stealFiles);
+};
+
+
+class DirectoryRefreshProgress : QObject
+{
+  Q_OBJECT;
+
+public:
+  DirectoryRefreshProgress(DirectoryRefresher* r) :
+    QObject(r), m_refresher(r), m_modCount(0), m_modDone(0), m_finished(false)
+  {
+  }
+
+  void start(std::size_t modCount)
+  {
+    m_modCount = modCount;
+    m_modDone = 0;
+    m_finished = false;
+  }
+
+
+  bool finished() const
+  {
+    return m_finished;
+  }
+
+  int percentDone() const
+  {
+    int percent = 100;
+
+    if (m_modCount > 0) {
+      const double d = static_cast<double>(m_modDone) / m_modCount;
+      percent = static_cast<int>(d * 100);
+    }
+
+    return percent;
+  }
+
+
+  void finish()
+  {
+    m_finished = true;
+  }
+
+  void addDone()
+  {
+    ++m_modDone;
+    m_refresher->updateProgress(this);
+  }
+
+private:
+  DirectoryRefresher* m_refresher;
+  std::size_t m_modCount;
+  std::atomic<std::size_t> m_modDone;
+  bool m_finished;
 };
 
 #endif // DIRECTORYREFRESHER_H

@@ -367,7 +367,10 @@ MainWindow::MainWindow(Settings &settings
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(espFilterChanged(QString)));
 
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(refreshed()), this, SLOT(directory_refreshed()));
-  connect(m_OrganizerCore.directoryRefresher(), SIGNAL(progress(int)), this, SLOT(refresher_progress(int)));
+  connect(
+    m_OrganizerCore.directoryRefresher(),
+    &DirectoryRefresher::progress,
+    this, &MainWindow::refresherProgress);
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(error(QString)), this, SLOT(showError(QString)));
 
   connect(&m_SavesWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(refreshSavesIfOpen()));
@@ -2382,10 +2385,15 @@ void MainWindow::setESPListSorting(int index)
   }
 }
 
-void MainWindow::refresher_progress(int percent)
+void MainWindow::refresherProgress(const DirectoryRefreshProgress* p)
 {
-  setEnabled(percent == 100);
-  ui->statusBar->setProgress(percent);
+  if (p->finished()) {
+    setEnabled(true);
+    ui->statusBar->setProgress(100);
+  } else {
+    setEnabled(false);
+    ui->statusBar->setProgress(p->percentDone());
+  }
 }
 
 void MainWindow::directory_refreshed()
