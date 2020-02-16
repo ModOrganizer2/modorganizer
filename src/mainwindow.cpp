@@ -5291,6 +5291,10 @@ void MainWindow::initDownloadView()
 
 void MainWindow::updateDownloadView()
 {
+  // this means downlaodTab initialization hasnt happened yet
+  if (ui->downloadView->model() == nullptr) {
+    return;
+  }
   // set the view attribute and default row sizes
   if (m_OrganizerCore.settings().interface().compactDownloads()) {
     ui->downloadView->setProperty("downloadView", "compact");
