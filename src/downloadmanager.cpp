@@ -281,14 +281,16 @@ void DownloadManager::pauseAll()
 }
 
 
-void DownloadManager::setOutputDirectory(const QString &outputDirectory)
+void DownloadManager::setOutputDirectory(const QString &outputDirectory, const bool refresh)
 {
   QStringList directories = m_DirWatcher.directories();
   if (directories.length() != 0) {
     m_DirWatcher.removePaths(directories);
   }
   m_OutputDirectory = QDir::fromNativeSeparators(outputDirectory);
-  refreshList();
+  if (refresh) {
+    refreshList();
+  }
   m_DirWatcher.addPath(m_OutputDirectory);
 }
 
