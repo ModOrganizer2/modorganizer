@@ -1659,6 +1659,15 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
       m_OrganizerCore.saveCurrentLists();
     }
 
+    // Avoid doing any refresh if currentProfile is already set but previous index was -1
+    // as it means that this is happening during initialization so everything has already been set.
+    if (previousIndex == -1 
+        && m_OrganizerCore.currentProfile() != nullptr 
+        && m_OrganizerCore.currentProfile()->exists() 
+        && ui->profileBox->currentText() == m_OrganizerCore.currentProfile()->name()){
+      return;
+    }
+
     // ensure the new index is valid
     if (index < 0 || index >= ui->profileBox->count()) {
       log::debug("invalid profile index, using last profile");
