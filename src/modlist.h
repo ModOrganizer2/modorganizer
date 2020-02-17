@@ -363,7 +363,7 @@ private:
 
   std::map<ModInfo::EContent, std::tuple<QString, QString> > m_ContentIcons;
 
-  QTime m_LastCheck;
+  QElapsedTimer m_LastCheck;
 
   PluginContainer *m_PluginContainer;
 

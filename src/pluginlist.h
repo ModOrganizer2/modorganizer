@@ -31,6 +31,7 @@ namespace MOBase { class IPluginGame; }
 #include <QListWidget>
 #include <QTimer>
 #include <QTime>
+#include <QElapsedTimer>
 #include <QTemporaryFile>
 
 #pragma warning(push)
@@ -381,7 +382,7 @@ private:
 
   QTemporaryFile m_TempFile;
 
-  QTime m_LastCheck;
+  QElapsedTimer m_LastCheck;
 
   const MOBase::IPluginGame *m_GamePlugin;
 

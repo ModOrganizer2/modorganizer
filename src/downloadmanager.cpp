@@ -2027,7 +2027,7 @@ void DownloadManager::downloadFinished(int index)
         foreach (const QVariant &server, info->m_FileInfo->userData["downloadMap"].toList()) {
           QVariantMap serverMap = server.toMap();
           if (serverMap["URI"].toString() == url) {
-            int deltaTime = info->m_StartTime.secsTo(QTime::currentTime());
+            int deltaTime = info->m_StartTime.elapsed() / 1000;
             if (deltaTime > 5) {
               emit downloadSpeed(serverMap["short_name"].toString(), (info->m_TotalSize - info->m_PreResumeSize) / deltaTime);
             } // no division by zero please! Also, if the download is shorter than a few seconds, the result is way to inprecise
