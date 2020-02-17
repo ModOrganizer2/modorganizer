@@ -734,14 +734,13 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       QObject::connect(&instance, SIGNAL(messageSent(QString)), &organizer,
                        SLOT(externalMessage(QString)));
 
-      // this must be before readSettings(), see DockFixer in mainwindow.cpp
-      splash.finish(&mainWindow);
-
       log::debug("displaying main window");
       mainWindow.show();
       mainWindow.activateWindow();
 
-      splash.finish(&mainWindow);
+      // don't pass mainwindow as it just waits half a second for it
+      // instead of proceding
+      splash.finish(nullptr);
 
       res = application.exec();
       mainWindow.close();
