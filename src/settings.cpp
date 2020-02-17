@@ -199,6 +199,16 @@ void Settings::setUsePrereleases(bool b)
   set(m_Settings, "Settings", "use_prereleases", b);
 }
 
+bool Settings::useSplash() const
+{
+  return get<bool>(m_Settings, "Settings", "use_splash", true);
+}
+
+void Settings::setUseSplash(bool b)
+{
+  set(m_Settings, "Settings", "use_splash", b);
+}
+
 std::optional<QVersionNumber> Settings::version() const
 {
   if (auto v=getOptional<QString>(m_Settings, "General", "version")) {
