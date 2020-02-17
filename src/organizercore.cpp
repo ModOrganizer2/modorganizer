@@ -1426,14 +1426,6 @@ void OrganizerCore::directory_refreshed()
 
 void OrganizerCore::profileRefresh()
 {
-  // have to refresh mods twice (again in refreshModList), otherwise the refresh
-  // isn't complete. Not sure why
-  ModInfo::updateFromDisc(
-    m_Settings.paths().mods(), &m_DirectoryStructure,
-    m_PluginContainer, m_Settings.interface().displayForeign(), managedGame());
-
-  m_CurrentProfile->refreshModStatus();
-
   refreshModList();
 }
 
