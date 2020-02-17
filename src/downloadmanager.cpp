@@ -298,9 +298,8 @@ void DownloadManager::setOutputDirectory(const QString &outputDirectory, const b
 void DownloadManager::setSupportedExtensions(const QStringList &extensions)
 {
   m_SupportedExtensions = extensions;
-  // this happens only during initialization so don't refresh yet as the refresh will
-  // later during initDownloadView
-  //refreshList();
+  // this happens only during initialization so don't refresh yet as that will
+  // happen later during initDownloadView
 }
 
 void DownloadManager::setShowHidden(bool showHidden)
