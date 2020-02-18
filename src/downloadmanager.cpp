@@ -320,6 +320,8 @@ void DownloadManager::setPluginContainer(PluginContainer *pluginContainer)
 
 void DownloadManager::refreshList()
 {
+  TimeThis tt("DownloadManager::refreshList()");
+
   try {
     //avoid triggering other refreshes
     startDisableDirWatcher();
@@ -1873,7 +1875,7 @@ void DownloadManager::nxmFileInfoFromMd5Available(QString gameName, QVariant use
   //Unable to determine the correct mod / file.  Revert to the old method
   if (chosenIdx < 0) {
     //don't use the normal state set function as we don't want to create a meta file
-    info->m_State = DownloadManager::STATE_READY; 
+    info->m_State = DownloadManager::STATE_READY;
     queryInfo(m_ActiveDownloads.indexOf(info));
     return;
   }

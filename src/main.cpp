@@ -506,6 +506,8 @@ static QString getVersionDisplayString()
 int runApplication(MOApplication &application, SingleInstance &instance,
                    const QString &splashPath)
 {
+  TimeThis tt("runApplication() to exec()");
+
   log::info(
     "starting Mod Organizer version {} revision {} in {}, usvfs: {}",
     getVersionDisplayString(), GITID, QCoreApplication::applicationDirPath(),
@@ -703,7 +705,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 	  }
 
     QPixmap pixmap;
-    
+
     QSplashScreen splash(nullptr);
 
     if (useSplash) {
@@ -748,12 +750,14 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       log::debug("displaying main window");
       mainWindow.show();
       mainWindow.activateWindow();
-      
+
       if (useSplash) {
         // don't pass mainwindow as it just waits half a second for it
         // instead of proceding
         splash.finish(nullptr);
       }
+
+      tt.stop();
 
       res = application.exec();
       mainWindow.close();
@@ -855,6 +859,8 @@ void initLogging()
 
 int main(int argc, char *argv[])
 {
+  TimeThis tt("main to runApplication()");
+
   // handle --crashdump first
   for (int i=1; i<argc; ++i) {
     if (std::strcmp(argv[i], "--crashdump") == 0) {
@@ -953,6 +959,8 @@ int main(int argc, char *argv[])
     if (!QFile::exists(dataPath + "/splash.png")) {
       splash = ":/MO/gui/splash";
     }
+
+    tt.stop();
 
     const int result = runApplication(application, instance, splash);
     if (result != RestartExitCode) {

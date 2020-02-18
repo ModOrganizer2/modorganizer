@@ -463,7 +463,7 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
 void DirectoryRefresher::refresh()
 {
   SetThisThreadName("DirectoryRefresher");
-  TimeThis tt("refresh");
+  TimeThis tt("DirectoryRefresher::refresh()");
   auto* p = new DirectoryRefreshProgress(this);
 
   {

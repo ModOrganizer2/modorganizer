@@ -249,6 +249,8 @@ const PreviewGenerator &PluginContainer::previewGenerator() const
 
 void PluginContainer::loadPlugins()
 {
+  TimeThis tt("PluginContainer::loadPlugins()");
+
   unloadPlugins();
 
   for (QObject *plugin : QPluginLoader::staticInstances()) {

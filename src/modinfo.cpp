@@ -251,6 +251,8 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
                              bool displayForeign,
                              MOBase::IPluginGame const *game)
 {
+  TimeThis tt("updateFromDisc()");
+
   QMutexLocker lock(&s_Mutex);
   s_Collection.clear();
   s_NextID = 0;

@@ -293,6 +293,7 @@ SET(organizer_HDRS
 	shared/fileentry.h
 	shared/filesorigin.h
 	shared/fileregister.h
+	shared/fileregisterfwd.h
 	shared/originconnection.h
     shared/util.h
     shared/appconfig.h
@@ -481,6 +482,7 @@ set(register
 	shared/fileentry
 	shared/filesorigin
 	shared/fileregister
+	shared/fileregisterfwd
 	shared/originconnection
 	directoryrefresher
 )

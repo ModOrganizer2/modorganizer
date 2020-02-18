@@ -1408,7 +1408,8 @@ void OrganizerCore::refreshDirectoryStructure()
 
 void OrganizerCore::directory_refreshed()
 {
-  log::debug("structure refreshed");
+  log::debug("directory refreshed, finishing up");
+  TimeThis tt("directory_refreshed()");
 
   DirectoryEntry *newStructure = m_DirectoryRefresher->stealDirectoryStructure();
   Q_ASSERT(newStructure != m_DirectoryStructure);
