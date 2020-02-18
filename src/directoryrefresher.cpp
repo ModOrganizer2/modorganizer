@@ -286,7 +286,7 @@ void DirectoryRefresher::addModFilesToStructure(
   DirectoryEntry *directoryStructure, const QString &modName,
   int priority, const QString &directory, const QStringList &stealFiles)
 {
-  TimeThis tt("addModFilesToStructure()");
+  TimeThis tt("DirectoryRefresher::addModFilesToStructure()");
 
   std::wstring directoryW = ToWString(QDir::toNativeSeparators(directory));
   DirectoryStats dummy;
@@ -307,7 +307,7 @@ void DirectoryRefresher::addModToStructure(DirectoryEntry *directoryStructure
   , const QStringList &stealFiles
   , const QStringList &archives)
 {
-  TimeThis tt("addModToStructure()");
+  TimeThis tt("DirectoryRefresher::addModToStructure()");
 
   DirectoryStats dummy;
 

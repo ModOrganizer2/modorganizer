@@ -1127,6 +1127,8 @@ void OrganizerCore::refreshESPList(bool force)
 
 void OrganizerCore::refreshBSAList()
 {
+  TimeThis tt("OrganizerCore::refreshBSAList()");
+
   DataArchives *archives = m_GamePlugin->feature<DataArchives>();
 
   if (archives != nullptr) {
@@ -1409,7 +1411,7 @@ void OrganizerCore::refreshDirectoryStructure()
 void OrganizerCore::directory_refreshed()
 {
   log::debug("directory refreshed, finishing up");
-  TimeThis tt("directory_refreshed()");
+  TimeThis tt("OrganizerCore::directory_refreshed()");
 
   DirectoryEntry *newStructure = m_DirectoryRefresher->stealDirectoryStructure();
   Q_ASSERT(newStructure != m_DirectoryStructure);
