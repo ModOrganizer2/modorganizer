@@ -130,6 +130,13 @@ std::wstring ToLowerCopy(const std::wstring& text)
   return result;
 }
 
+std::wstring ToLowerCopy(std::wstring_view text)
+{
+  std::wstring result(text.begin(), text.end());
+  ToLowerInPlace(result);
+  return result;
+}
+
 bool CaseInsenstiveComparePred(wchar_t lhs, wchar_t rhs)
 {
   return std::tolower(lhs, loc) == std::tolower(rhs, loc);
@@ -373,26 +380,6 @@ void checkDuplicateShortcuts(const QMenu& m)
 }
 
 } // namespace MOShared
-
-
-TimeThis::TimeThis(QString what)
-  : m_what(std::move(what)), m_start(Clock::now())
-{
-}
-
-TimeThis::~TimeThis()
-{
-  using namespace std::chrono;
-
-  const auto end = Clock::now();
-  const auto d = duration_cast<milliseconds>(end - m_start).count();
-
-  if (m_what.isEmpty()) {
-    log::debug("{} ms", d);
-  } else {
-    log::debug("{} {} ms", m_what, d);
-  }
-}
 
 
 static bool g_exiting = false;

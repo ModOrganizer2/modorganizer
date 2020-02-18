@@ -1,7 +1,7 @@
 #ifndef MODORGANIZER_FILETREEITEM_INCLUDED
 #define MODORGANIZER_FILETREEITEM_INCLUDED
 
-#include "directoryentry.h"
+#include "shared/fileregisterfwd.h"
 #include <QFileIconProvider>
 
 class FileTreeModel;
@@ -126,7 +126,7 @@ public:
     return m_wsLcFile;
   }
 
-  const MOShared::DirectoryEntry::FileKey& key() const
+  const MOShared::DirectoryEntryFileKey& key() const
   {
     return m_key;
   }
@@ -288,7 +288,7 @@ private:
 
   const QString m_virtualParentPath;
   const std::wstring m_wsFile, m_wsLcFile;
-  const MOShared::DirectoryEntry::FileKey m_key;
+  const MOShared::DirectoryEntryFileKey m_key;
   const QString m_file;
   const bool m_isDirectory;
 

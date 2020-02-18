@@ -373,6 +373,10 @@ QTreeView::branch:open:has-children:has-siblings {
     image: url(:/stylesheet/branch-open.png);
 }
 
+QAbstractItemView[filtered=true] {
+	border: 2px solid #f00 !important;
+}
+
 /*
  * Tool bar
  */
@@ -434,4 +438,8 @@ QProgressBar
 QProgressBar::chunk
 {
   background-color: #427683;
+}
+
+QLineEdit[valid-filter=false] {
+	background-color: #661111 !important;
 }

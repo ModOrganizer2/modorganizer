@@ -48,6 +48,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "organizercore.h"
 #include "env.h"
 #include "envmodule.h"
+#include "util.h"
 
 #include <eh.h>
 #include <windows_error.h>
@@ -884,6 +885,8 @@ int main(int argc, char *argv[])
 
   MOApplication application(argc, argv);
   QStringList arguments = application.arguments();
+
+  SetThisThreadName("main");
 
   setupPath();
 

@@ -79,6 +79,10 @@ QListView,
 QTreeView {
   show-decoration-selected: 1; }
 
+QAbstractItemView[filtered=true] {
+	background-color: #f00 !important;
+}
+
 QAbstractItemView::item:hover,
 QListView::item:hover,
 QTreeView::branch:hover,
@@ -659,3 +663,7 @@ QDialog#CredentialsDialog {
 
 #pluginsList {
   min-width: 260px; }
+
+QLineEdit[valid-filter=false] {
+	background-color: #661111 !important;
+}

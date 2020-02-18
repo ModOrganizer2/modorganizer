@@ -18,8 +18,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "syncoverwritedialog.h"
-
+#include "shared/directoryentry.h"
+#include "shared/fileentry.h"
+#include "shared/filesorigin.h"
 #include "ui_syncoverwritedialog.h"
+
 #include <utility.h>
 #include <report.h>
 #include <log.h>
@@ -92,7 +95,7 @@ void SyncOverwriteDialog::readTree(const QString &path, DirectoryEntry *director
         newItem = nullptr;
       }
     } else {
-      const FileEntry::Ptr entry = directoryStructure->findFile(ToWString(file));
+      const FileEntryPtr entry = directoryStructure->findFile(ToWString(file));
       QComboBox* combo = new QComboBox(ui->syncTree);
       combo->addItem(tr("<don't sync>"), -1);
       if (entry.get() != nullptr) {

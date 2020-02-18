@@ -1,8 +1,8 @@
 #include "modinfodialogtab.h"
 #include "ui_modinfodialog.h"
 #include "texteditor.h"
-#include "directoryentry.h"
 #include "modinfo.h"
+#include "shared/filesorigin.h"
 
 ModInfoDialogTab::ModInfoDialogTab(ModInfoDialogTabContext cx) :
   ui(cx.ui), m_core(cx.core), m_plugin(cx.plugin), m_parent(cx.parent),

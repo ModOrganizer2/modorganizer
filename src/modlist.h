@@ -27,7 +27,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "profile.h"
 
 #include <imodlist.h>
-#include <directoryentry.h>
 
 #include <QFile>
 #include <QListWidget>
@@ -200,12 +199,6 @@ signals:
    * @brief signals change to the count of headers
    */
   void resizeHeaders();
-
-  /**
-   * @brief requestColumnSelect is emitted whenever the user requested a menu to select visible columns
-   * @param pos the position to display the menu at
-   */
-  void requestColumnSelect(QPoint pos);
 
   /**
    * @brief emitted to remove a file origin

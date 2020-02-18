@@ -356,6 +356,10 @@ QTreeView, QListView
   alternate-background-color: #2F3031;
 }
 
+QAbstractItemView[filtered=true] {
+	border: 2px solid #f00 !important;
+}
+
 QTreeView::branch:has-children:!has-siblings:closed,
 QTreeView::branch:closed:has-children:has-siblings
 {
@@ -384,4 +388,8 @@ DownloadListWidget[downloadView=compact]::item {
 
 LinkLabel {
   qproperty-linkColor: #3399FF;
+}
+
+QLineEdit[valid-filter=false] {
+	background-color: #661111 !important;
 }

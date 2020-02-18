@@ -1,7 +1,8 @@
 #include "modinfowithconflictinfo.h"
-
-#include "directoryentry.h"
 #include "utility.h"
+#include "shared/directoryentry.h"
+#include "shared/filesorigin.h"
+#include "shared/fileentry.h"
 #include <filesystem>
 
 using namespace MOBase;
@@ -98,11 +99,11 @@ void ModInfoWithConflictInfo::doConflictCheck() const
 
   if ((*m_DirectoryStructure)->originExists(name)) {
     FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
-    std::vector<FileEntry::Ptr> files = origin.getFiles();
+    std::vector<FileEntryPtr> files = origin.getFiles();
     std::set<const DirectoryEntry*> checkedDirs;
 
     // for all files in this origin
-    for (FileEntry::Ptr file : files) {
+    for (FileEntryPtr file : files) {
 
       // skip hiidden file check if already found one
       if (!hasHiddenFiles) {
@@ -267,7 +268,7 @@ bool ModInfoWithConflictInfo::isRedundant() const
   std::wstring name = ToWString(this->name());
   if ((*m_DirectoryStructure)->originExists(name)) {
     FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
-    std::vector<FileEntry::Ptr> files = origin.getFiles();
+    std::vector<FileEntryPtr> files = origin.getFiles();
     bool ignore = false;
     for (auto iter = files.begin(); iter != files.end(); ++iter) {
       if ((*iter)->getOrigin(ignore) == origin.getID()) {

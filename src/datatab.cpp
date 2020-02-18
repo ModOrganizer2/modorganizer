@@ -2,7 +2,6 @@
 #include "ui_mainwindow.h"
 #include "settings.h"
 #include "organizercore.h"
-#include "directoryentry.h"
 #include "messagedialog.h"
 #include "filetree.h"
 #include "filetreemodel.h"
@@ -26,10 +25,10 @@ DataTab::DataTab(
     m_firstActivation(true)
 {
   m_filetree.reset(new FileTree(core, m_pluginContainer, ui.tree));
-  m_filter.setEdit(mwui->dataTabFilter);
-  m_filter.setList(mwui->dataTree);
   m_filter.setUseSourceSort(true);
   m_filter.setFilterColumn(FileTreeModel::FileName);
+  m_filter.setEdit(mwui->dataTabFilter);
+  m_filter.setList(mwui->dataTree);
 
   if (auto* m=m_filter.proxyModel()) {
     m->setDynamicSortFilter(false);

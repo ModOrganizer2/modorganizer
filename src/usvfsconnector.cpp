@@ -70,6 +70,8 @@ LogWorker::~LogWorker()
 
 void LogWorker::process()
 {
+  MOShared::SetThisThreadName("LogWorker");
+
   int noLogCycles = 0;
   while (!m_QuitRequested) {
     if (GetLogMessages(&m_Buffer[0], m_Buffer.size(), false)) {

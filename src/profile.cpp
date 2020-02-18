@@ -250,9 +250,7 @@ void Profile::doWriteModlist()
       }
     }
 
-    if (file.commitIfDifferent(m_LastModlistHash)) {
-      log::debug("{} saved", QDir::toNativeSeparators(fileName));
-    }
+    file.commitIfDifferent(m_LastModlistHash);
   } catch (const std::exception &e) {
     reportError(tr("failed to write mod list: %1").arg(e.what()));
     return;
@@ -292,8 +290,6 @@ void Profile::createTweakedIniFile()
     reportError(tr("failed to create tweaked ini: %1")
       .arg(QString::fromStdWString(formatSystemMessage(e))));
   }
-
-  log::debug("{} saved", QDir::toNativeSeparators(tweakedIni));
 }
 
 // static

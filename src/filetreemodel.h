@@ -3,7 +3,7 @@
 
 #include "filetreeitem.h"
 #include "iconfetcher.h"
-#include "directoryentry.h"
+#include "shared/fileregisterfwd.h"
 #include <unordered_set>
 
 class OrganizerCore;
@@ -126,12 +126,12 @@ private:
 
   void removeDisappearingFiles(
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
-    int& firstFileRow, std::unordered_set<MOShared::FileEntry::Index>& seen);
+    int& firstFileRow, std::unordered_set<MOShared::FileIndex>& seen);
 
   bool addNewFiles(
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
     const std::wstring& parentPath, int firstFileRow,
-    const std::unordered_set<MOShared::FileEntry::Index>& seen);
+    const std::unordered_set<MOShared::FileIndex>& seen);
 
 
   FileTreeItem::Ptr createDirectoryItem(

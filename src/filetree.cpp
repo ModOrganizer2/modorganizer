@@ -3,7 +3,11 @@
 #include "filetreeitem.h"
 #include "organizercore.h"
 #include "envshell.h"
+#include "shared/fileentry.h"
+#include "shared/directoryentry.h"
+#include "shared/filesorigin.h"
 #include <log.h>
+#include <widgetutility.h>
 
 using namespace MOShared;
 using namespace MOBase;
@@ -123,6 +127,8 @@ FileTree::FileTree(OrganizerCore& core, PluginContainer& pc, QTreeView* tree)
   m_tree->sortByColumn(0, Qt::AscendingOrder);
   m_tree->setModel(m_model);
   m_tree->header()->resizeSection(0, 200);
+
+  MOBase::setCustomizableColumns(m_tree);
 
   connect(
     m_tree, &QTreeView::customContextMenuRequested,
@@ -435,69 +441,7 @@ void FileTree::dumpToFile() const
     return;
   }
 
-  QFile out(file);
-
-  if (!out.open(QIODevice::WriteOnly)) {
-    QMessageBox::critical(
-      m_tree->window(), tr("Error"), tr("Failed to open file '%1': %2")
-      .arg(file)
-      .arg(out.errorString()));
-
-    return;
-  }
-
-  try
-  {
-    dumpToFile(out, "Data", *m_core.directoryStructure());
-  }
-  catch(DumpFailed&)
-  {
-    // try to remove it silently
-    if (out.exists()) {
-      if (!out.remove()) {
-        log::error("failed to remove '{}', ignoring", file);
-      }
-    }
-  }
-}
-
-void FileTree::dumpToFile(
-  QFile& out, const QString& parentPath, const DirectoryEntry& entry) const
-{
-  entry.forEachFile([&](auto&& file) {
-    bool isArchive = false;
-    const int originID = file.getOrigin(isArchive);
-
-    if (isArchive) {
-      // TODO: don't list files from archives. maybe make this an option?
-      return true;
-    }
-
-    const auto& origin = m_core.directoryStructure()->getOriginByID(originID);
-    const auto originName = QString::fromStdWString(origin.getName());
-
-    const QString path =
-      parentPath + "\\" + QString::fromStdWString(file.getName());
-
-    if (out.write(path.toUtf8() + "\t(" + originName.toUtf8() + ")\r\n") == -1) {
-      QMessageBox::critical(
-        m_tree->window(), tr("Error"), tr("Failed to write to file %1: %2")
-          .arg(out.fileName())
-          .arg(out.errorString()));
-
-      throw DumpFailed();
-    }
-
-    return true;
-  });
-
-  entry.forEachDirectory([&](auto&& dir) {
-    const auto newParentPath =
-      parentPath + "\\" + QString::fromStdWString(dir.getName());
-
-    dumpToFile(out, newParentPath, dir);
-    return true;
-  });
+  m_core.directoryStructure()->dump(file.toStdWString());
 }
 
 void FileTree::onExpandedChanged(const QModelIndex& index, bool expanded)
@@ -522,6 +466,21 @@ void FileTree::onContextMenu(const QPoint &pos)
   const auto m = QApplication::keyboardModifiers();
 
   if (m & Qt::ShiftModifier) {
+    // shift+right-click won't select individual items because it interferes
+    // with regular shift selection; this makes it behave like explorer:
+    //   - if the right-clicked item is currently part of the selection, show
+    //     the menu for the selection
+    //   - if not, select this item only and show the menu for it
+    const auto index = m_tree->indexAt(pos);
+
+    if (!m_tree->selectionModel()->isSelected(index)) {
+      m_tree->selectionModel()->select(
+        index,
+        QItemSelectionModel::ClearAndSelect |
+        QItemSelectionModel::Rows |
+        QItemSelectionModel::Current);
+    }
+
     // if no shell menu was available, continue on and show the regular
     // context menu
     if (showShellMenu(pos)) {
@@ -604,6 +563,12 @@ bool FileTree::showShellMenu(QPoint pos)
       itor = menus.emplace(item->originID(), mw).first;
     }
 
+    if (!QFile::exists(item->realPath())) {
+      log::error("{}",
+        tr("File '%1' does not exist, you may need to refresh.")
+        .arg(item->realPath()));
+    }
+
     itor->second.addFile(item->realPath());
     ++totalFiles;
 
@@ -639,6 +604,12 @@ bool FileTree::showShellMenu(QPoint pos)
             item->dataRelativeFilePath(), alt.first);
 
           continue;
+        }
+
+        if (!QFile::exists(QString::fromStdWString(fullPath))) {
+          log::error("{}",
+            tr("File '%1' does not exist, you may need to refresh.")
+            .arg(QString::fromStdWString(fullPath)));
         }
 
         itor->second.addFile(QString::fromStdWString(fullPath));

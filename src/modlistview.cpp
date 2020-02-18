@@ -1,4 +1,5 @@
 #include "modlistview.h"
+#include <widgetutility.h>
 #include <QUrl>
 #include <QMimeData>
 #include <QProxyStyle>
@@ -39,6 +40,7 @@ ModListView::ModListView(QWidget *parent)
   , m_Scrollbar(new ViewMarkingScrollBar(this->model(), this))
 {
   setVerticalScrollBar(m_Scrollbar);
+  MOBase::setCustomizableColumns(this);
 }
 
 void ModListView::dragEnterEvent(QDragEnterEvent *event)

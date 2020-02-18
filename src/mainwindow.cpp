@@ -20,8 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include "directoryentry.h"
-#include "directoryrefresher.h"
 #include "executableinfo.h"
 #include "executableslist.h"
 #include "guessedvalue.h"
@@ -88,6 +86,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "listdialog.h"
 #include "envshortcut.h"
 #include "browserdialog.h"
+
+#include "directoryrefresher.h"
+#include "shared/directoryentry.h"
+#include "shared/fileentry.h"
+#include "shared/filesorigin.h"
 
 #include <QAbstractItemDelegate>
 #include <QAbstractProxyModel>
@@ -364,7 +367,10 @@ MainWindow::MainWindow(Settings &settings
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(espFilterChanged(QString)));
 
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(refreshed()), this, SLOT(directory_refreshed()));
-  connect(m_OrganizerCore.directoryRefresher(), SIGNAL(progress(int)), this, SLOT(refresher_progress(int)));
+  connect(
+    m_OrganizerCore.directoryRefresher(),
+    &DirectoryRefresher::progress,
+    this, &MainWindow::refresherProgress);
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(error(QString)), this, SLOT(showError(QString)));
 
   connect(&m_SavesWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(refreshSavesIfOpen()));
@@ -1870,7 +1876,7 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
   std::vector<std::pair<UINT32, QTreeWidgetItem*>> items;
 
   BSAInvalidation * invalidation = m_OrganizerCore.managedGame()->feature<BSAInvalidation>();
-  std::vector<FileEntry::Ptr> files = m_OrganizerCore.directoryStructure()->getFiles();
+  std::vector<FileEntryPtr> files = m_OrganizerCore.directoryStructure()->getFiles();
 
   QStringList plugins = m_OrganizerCore.findFiles("", [](const QString &fileName) -> bool {
     return fileName.endsWith(".esp", Qt::CaseInsensitive)
@@ -1889,7 +1895,7 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
     return false;
   };
 
-  for (FileEntry::Ptr current : files) {
+  for (FileEntryPtr current : files) {
     QFileInfo fileInfo(ToQString(current->getName().c_str()));
 
     if (fileInfo.suffix().toLower() == "bsa" || fileInfo.suffix().toLower() == "ba2") {
@@ -1942,7 +1948,7 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
   for (auto iter = items.begin(); iter != items.end(); ++iter) {
     int originID = iter->second->data(1, Qt::UserRole).toInt();
 
-    FilesOrigin origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
+    const FilesOrigin& origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
 
     QString modName;
     const unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
@@ -2075,6 +2081,8 @@ void MainWindow::readSettings()
   s.geometry().restoreVisibility(ui->menuBar);
   s.geometry().restoreVisibility(ui->statusBar);
 
+  FilterWidget::setOptions(s.interface().filterOptions());
+
   {
     // special case in case someone puts 0 in the INI
     auto v = s.widgets().index(ui->executablesListBox);
@@ -2159,6 +2167,8 @@ void MainWindow::storeSettings()
 
   m_Filters->saveState(s);
   m_DataTab->saveState(s);
+
+  s.interface().setFilterOptions(FilterWidget::options());
 }
 
 QWidget* MainWindow::qtWidget()
@@ -2375,10 +2385,15 @@ void MainWindow::setESPListSorting(int index)
   }
 }
 
-void MainWindow::refresher_progress(int percent)
+void MainWindow::refresherProgress(const DirectoryRefreshProgress* p)
 {
-  setEnabled(percent == 100);
-  ui->statusBar->setProgress(percent);
+  if (p->finished()) {
+    setEnabled(true);
+    ui->statusBar->setProgress(100);
+  } else {
+    setEnabled(false);
+    ui->statusBar->setProgress(p->percentDone());
+  }
 }
 
 void MainWindow::directory_refreshed()
@@ -2500,7 +2515,7 @@ void MainWindow::modRenamed(const QString &oldName, const QString &newName)
 
 void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName, const QString &newOriginName)
 {
-  const FileEntry::Ptr filePtr = m_OrganizerCore.directoryStructure()->findFile(ToWString(filePath));
+  const FileEntryPtr filePtr = m_OrganizerCore.directoryStructure()->findFile(ToWString(filePath));
   if (filePtr.get() != nullptr) {
     try {
       if (m_OrganizerCore.directoryStructure()->originExists(ToWString(newOriginName))) {
@@ -4112,9 +4127,7 @@ void MainWindow::saveArchiveList()
         }
       }
     }
-    if (archiveFile.commitIfDifferent(m_ArchiveListHash)) {
-      log::debug("{} saved", QDir::toNativeSeparators(m_OrganizerCore.currentProfile()->getArchivesFileName()));
-    }
+    archiveFile.commitIfDifferent(m_ArchiveListHash);
   } else {
     log::warn("archive list not initialised");
   }
@@ -5144,7 +5157,11 @@ void MainWindow::originModified(int originID)
 {
   FilesOrigin &origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
   origin.enable(false);
-  m_OrganizerCore.directoryStructure()->addFromOrigin(origin.getName(), origin.getPath(), origin.getPriority());
+
+  DirectoryStats dummy;
+  m_OrganizerCore.directoryStructure()->addFromOrigin(
+    origin.getName(), origin.getPath(), origin.getPriority(), dummy);
+
   DirectoryRefresher::cleanStructure(m_OrganizerCore.directoryStructure());
 }
 
@@ -5811,38 +5828,6 @@ void MainWindow::extractBSATriggered()
       }
       archive.close();
     }
-  }
-}
-
-
-void MainWindow::displayColumnSelection(const QPoint &pos)
-{
-  QMenu menu;
-
-  // display a list of all headers as checkboxes
-  QAbstractItemModel *model = ui->modList->header()->model();
-  for (int i = 1; i < model->columnCount(); ++i) {
-    QString columnName = model->headerData(i, Qt::Horizontal).toString();
-    QCheckBox *checkBox = new QCheckBox(&menu);
-    checkBox->setText(columnName);
-    checkBox->setChecked(!ui->modList->header()->isSectionHidden(i));
-    QWidgetAction *checkableAction = new QWidgetAction(&menu);
-    checkableAction->setDefaultWidget(checkBox);
-    menu.addAction(checkableAction);
-  }
-  menu.exec(pos);
-
-  // view/hide columns depending on check-state
-  int i = 1;
-  for (const QAction *action : menu.actions()) {
-    const QWidgetAction *widgetAction = qobject_cast<const QWidgetAction*>(action);
-    if (widgetAction != nullptr) {
-      const QCheckBox *checkBox = qobject_cast<const QCheckBox*>(widgetAction->defaultWidget());
-      if (checkBox != nullptr) {
-        ui->modList->header()->setSectionHidden(i, !checkBox->isChecked());
-      }
-    }
-    ++i;
   }
 }
 

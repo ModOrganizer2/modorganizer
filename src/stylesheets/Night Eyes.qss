@@ -692,3 +692,11 @@ QProgressBar
 	text-align: center;
 	margin: 0px;
 }
+
+QAbstractItemView[filtered=true] {
+	border: 2px solid #f00 !important;
+}
+
+QLineEdit[valid-filter=false] {
+	background-color: #661111 !important;
+}

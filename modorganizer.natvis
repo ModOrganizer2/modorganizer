@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+<Type Name="FileTreeItem"><DisplayString>{{
+file={m_wsFile}
+ dir={m_isDirectory}
+ origin={m_originID}
+ flags={m_flags.i}
+ loaded={m_loaded}
+ expanded={m_expanded}
+}}</DisplayString></Type>
+
+</AutoVisualizer>

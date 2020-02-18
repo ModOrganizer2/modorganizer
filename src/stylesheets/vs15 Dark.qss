@@ -71,6 +71,10 @@ QAbstractItemView {
     background-color: #3399FF;
     color: #F1F1F1; }
 
+QAbstractItemView[filtered=true] {
+	border: 2px solid #f00 !important;
+}
+
 QAbstractItemView,
 QListView,
 QTreeView {
@@ -755,3 +759,7 @@ QDialog#QueryOverwriteDialog {
 
 QDialog#ModInfoDialog {
   min-width: 850px; }
+
+QLineEdit[valid-filter=false] {
+	background-color: #661111 !important;
+}

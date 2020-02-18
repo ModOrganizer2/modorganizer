@@ -20,7 +20,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <log.h>
 #include <string>
+#include <filesystem>
 #include <versioninfo.h>
 
 class Executable;
@@ -41,6 +43,7 @@ std::string ToLowerCopy(const std::string& text);
 
 std::wstring& ToLowerInPlace(std::wstring& text);
 std::wstring ToLowerCopy(const std::wstring& text);
+std::wstring ToLowerCopy(std::wstring_view text);
 
 bool CaseInsensitiveEqual(const std::wstring &lhs, const std::wstring &rhs);
 
@@ -50,21 +53,16 @@ QString getUsvfsVersionString();
 void SetThisThreadName(const QString& s);
 void checkDuplicateShortcuts(const QMenu& m);
 
-} // namespace MOShared
-
-
-class TimeThis
+inline FILETIME ToFILETIME(std::filesystem::file_time_type t)
 {
-public:
-  TimeThis(QString what={});
-  ~TimeThis();
+  FILETIME ft;
+  static_assert(sizeof(t) == sizeof(ft));
 
-private:
-  using Clock = std::chrono::high_resolution_clock;
+  std::memcpy(&ft, &t, sizeof(FILETIME));
+  return ft;
+}
 
-  QString m_what;
-  Clock::time_point m_start;
-};
+} // namespace MOShared
 
 
 enum class Exit

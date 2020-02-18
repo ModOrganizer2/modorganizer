@@ -65,10 +65,6 @@ private:
   void toggleVisibility(bool b, FileTreeItem* item=nullptr);
 
   QModelIndex proxiedIndex(const QModelIndex& index);
-
-  void dumpToFile(
-    QFile& out, const QString& parentPath,
-    const MOShared::DirectoryEntry& entry) const;
 };
 
 #endif // MODORGANIZER_FILETREE_INCLUDED

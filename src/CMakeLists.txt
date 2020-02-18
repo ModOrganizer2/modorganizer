@@ -132,6 +132,7 @@ SET(organizer_SRCS
 	filerenamer.cpp
 	texteditor.cpp
 	env.cpp
+	envfs.cpp
 	envmetrics.cpp
 	envmodule.cpp
 	envsecurity.cpp
@@ -154,6 +155,10 @@ SET(organizer_SRCS
     shared/windows_error.cpp
     shared/error_report.cpp
     shared/directoryentry.cpp
+	shared/fileentry.cpp
+	shared/filesorigin.cpp
+	shared/fileregister.cpp
+	shared/originconnection.cpp
     shared/util.cpp
     shared/appconfig.cpp
     shared/leaktrace.cpp
@@ -262,6 +267,7 @@ SET(organizer_HDRS
 	filerenamer.h
 	texteditor.h
 	env.h
+	envfs.h
 	envmetrics.h
 	envmodule.h
 	envsecurity.h
@@ -284,6 +290,10 @@ SET(organizer_HDRS
     shared/windows_error.h
     shared/error_report.h
     shared/directoryentry.h
+	shared/fileentry.h
+	shared/filesorigin.h
+	shared/fileregister.h
+	shared/originconnection.h
     shared/util.h
     shared/appconfig.h
     shared/appconfig.inc
@@ -348,8 +358,6 @@ set(browser
 
 set(core
 	categories
-	shared/directoryentry
-	directoryrefresher
 	installationmanager
 	instancemanager
 	loadmechanism
@@ -392,6 +400,7 @@ set(downloads
 
 set(env
 	env
+	envfs
 	envmetrics
 	envmodule
 	envsecurity
@@ -467,6 +476,15 @@ set(profiles
 	profilesdialog
 )
 
+set(register
+	shared/directoryentry
+	shared/fileentry
+	shared/filesorigin
+	shared/fileregister
+	shared/originconnection
+	directoryrefresher
+)
+
 set(settings
 	settings
 	settingsutilities
@@ -518,7 +536,7 @@ set(widgets
 
 set(src_filters
 	application core browser dialogs downloads env executables loot mainwindow
-	modinfo modinfo\\dialog modlist plugins previews profiles settings
+	modinfo modinfo\\dialog modlist plugins previews profiles register settings
 	settingsdialog utilities widgets
 )
 
@@ -533,6 +551,8 @@ endforeach()
 
 file(GLOB_RECURSE rule_files ../vsbuild/CMakeFiles/*.rule)
 file(GLOB qm_files ../vsbuild/src/*.qm)
+
+set(organizer_misc ../modorganizer.natvis)
 
 source_group(cmake FILES CMakeLists.txt)
 source_group(autogen FILES ${rule_files} ${qm_files})
@@ -626,7 +646,10 @@ ELSE()
   SET(usvfs_name usvfs_x86)
 ENDIF()
 
-ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIS} ${organizer_RCS} ${organizer_QRCS} ${organizer_translations_qm})
+ADD_EXECUTABLE(
+	ModOrganizer WIN32
+	${organizer_HDRS} ${organizer_SRCS} ${organizer_UIS} ${organizer_RCS}
+	${organizer_QRCS} ${organizer_translations_qm} ${organizer_misc})
 
 TARGET_LINK_LIBRARIES(ModOrganizer
                       Qt5::Widgets Qt5::WinExtras Qt5::WebEngineWidgets Qt5::Quick

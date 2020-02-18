@@ -20,8 +20,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef LOGBUFFER_H
 #define LOGBUFFER_H
 
-#include <QTreeView>
 #include <log.h>
+#include <QTreeView>
+#include <deque>
 
 class OrganizerCore;
 

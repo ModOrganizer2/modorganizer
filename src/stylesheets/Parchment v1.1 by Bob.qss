@@ -145,6 +145,10 @@ QWebView {
 	border-radius: 6px;
 }
 
+QAbstractItemView[filtered=true] {
+	border: 2px solid #f00 !important;
+}
+
 /* Group Boxes */
 
 QGroupBox {
@@ -596,4 +600,8 @@ QSlider::handle:horizontal:hover {
 QTableView {
 	gridline-color: #DBD399;
 	border: 0px;
+}
+
+QLineEdit[valid-filter=false] {
+	background-color: #661111 !important;
 }

@@ -209,6 +209,16 @@ void Settings::setUseSplash(bool b)
   set(m_Settings, "Settings", "use_splash", b);
 }
 
+std::size_t Settings::refreshThreadCount() const
+{
+  return get<std::size_t>(m_Settings, "Settings", "refresh_thread_count", 10);
+}
+
+void Settings::setRefreshThreadCount(std::size_t n) const
+{
+  return set(m_Settings, "Settings", "refresh_thread_count", n);
+}
+
 std::optional<QVersionNumber> Settings::version() const
 {
   if (auto v=getOptional<QString>(m_Settings, "General", "version")) {
@@ -1990,6 +2000,24 @@ bool InterfaceSettings::doubleClicksOpenPreviews() const
 void InterfaceSettings::setDoubleClicksOpenPreviews(bool b)
 {
   set(m_Settings, "Settings", "double_click_previews", b);
+}
+
+FilterWidget::Options InterfaceSettings::filterOptions() const
+{
+  FilterWidget::Options o;
+
+  o.useRegex = get<bool>(m_Settings, "Settings", "filter_regex", false);
+  o.regexCaseSensitive = get<bool>(m_Settings, "Settings", "regex_case_sensitive", false);
+  o.regexExtended = get<bool>(m_Settings, "Settings", "regex_extended", false);
+
+  return o;
+}
+
+void InterfaceSettings::setFilterOptions(const FilterWidget::Options& o)
+{
+  set(m_Settings, "Settings", "filter_regex", o.useRegex);
+  set(m_Settings, "Settings", "regex_case_sensitive", o.regexCaseSensitive);
+  set(m_Settings, "Settings", "regex_extended", o.regexExtended);
 }
 
 

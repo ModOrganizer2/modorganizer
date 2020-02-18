@@ -186,11 +186,11 @@ void ImagesTab::switchToFiltered()
 
   const bool hasTextFilter = !m_filter.empty();
 
-  for (auto& f : m_files.allFiles()) {
+  for (File& f : m_files.allFiles()) {
     if (hasTextFilter) {
       // check filter widget
-      const auto m = m_filter.matches([&](auto&& what) {
-        return f.path().contains(what, Qt::CaseInsensitive);
+      const auto m = m_filter.matches([&](const QRegularExpression& regex) {
+        return regex.match(f.filename()).hasMatch();
       });
 
       if (!m) {
@@ -201,7 +201,7 @@ void ImagesTab::switchToFiltered()
 
     if (!m_ddsEnabled) {
       // skip .dds files
-      if (f.path().endsWith(".dds", Qt::CaseInsensitive)) {
+      if (f.filename().endsWith(".dds", Qt::CaseInsensitive)) {
         continue;
       }
     }
