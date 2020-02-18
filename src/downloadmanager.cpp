@@ -281,14 +281,16 @@ void DownloadManager::pauseAll()
 }
 
 
-void DownloadManager::setOutputDirectory(const QString &outputDirectory)
+void DownloadManager::setOutputDirectory(const QString &outputDirectory, const bool refresh)
 {
   QStringList directories = m_DirWatcher.directories();
   if (directories.length() != 0) {
     m_DirWatcher.removePaths(directories);
   }
   m_OutputDirectory = QDir::fromNativeSeparators(outputDirectory);
-  refreshList();
+  if (refresh) {
+    refreshList();
+  }
   m_DirWatcher.addPath(m_OutputDirectory);
 }
 
@@ -296,7 +298,8 @@ void DownloadManager::setOutputDirectory(const QString &outputDirectory)
 void DownloadManager::setSupportedExtensions(const QStringList &extensions)
 {
   m_SupportedExtensions = extensions;
-  refreshList();
+  // this happens only during initialization so don't refresh yet as that will
+  // happen later during initDownloadView
 }
 
 void DownloadManager::setShowHidden(bool showHidden)

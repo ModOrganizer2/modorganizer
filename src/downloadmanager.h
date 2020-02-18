@@ -159,7 +159,7 @@ public:
    *
    * @param outputDirectory the new output directory
    **/
-  void setOutputDirectory(const QString &outputDirectory);
+  void setOutputDirectory(const QString &outputDirectory, const bool refresh = true);
 
   /**
   * @brief disables feedback from the downlods fileSystemWhatcher untill disableDownloadsWatcherEnd() is called

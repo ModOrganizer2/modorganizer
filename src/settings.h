@@ -720,6 +720,10 @@ public:
   bool usePrereleases() const;
   void setUsePrereleases(bool b);
 
+  // whether to use spascreen or not
+  //
+  bool useSplash() const;
+  void setUseSplash(bool b);
 
   GameSettings& game();
   const GameSettings& game() const;

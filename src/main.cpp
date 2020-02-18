@@ -596,13 +596,17 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
     checkPathsForSanity(*game, settings);
 
-    if (splashPath.startsWith(':')) {
-      // currently using MO splash, see if the plugin contains one
-      QString pluginSplash
+    bool useSplash = settings.useSplash();
+
+    if (useSplash) {
+      if (splashPath.startsWith(':')) {
+        // currently using MO splash, see if the plugin contains one
+        QString pluginSplash
           = QString(":/%1/splash").arg(game->gameShortName());
-      QImage image(pluginSplash);
-      if (!image.isNull()) {
-        image.save(dataPath + "/splash.png");
+        QImage image(pluginSplash);
+        if (!image.isNull()) {
+          image.save(dataPath + "/splash.png");
+        }
       }
     }
 
@@ -643,6 +647,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       game->gameDirectory().absolutePath());
 
     organizer.updateExecutablesList();
+    organizer.updateModInfoFromDisc();
 
     QString selectedProfileName = determineProfile(arguments, settings);
     organizer.setCurrentProfile(selectedProfileName);
@@ -696,12 +701,18 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 		  }
 	  }
 
-    QPixmap pixmap(splashPath);
-    QSplashScreen splash(pixmap);
+    QPixmap pixmap;
+    
+    QSplashScreen splash(nullptr);
 
-    settings.geometry().centerOnMainWindowMonitor(&splash);
-    splash.show();
-    splash.activateWindow();
+    if (useSplash) {
+      pixmap = QPixmap(splashPath);
+      splash.setPixmap(pixmap);
+
+      settings.geometry().centerOnMainWindowMonitor(&splash);
+      splash.show();
+      splash.activateWindow();
+    }
 
     QString apiKey;
     if (settings.nexus().apiKey(apiKey)) {
@@ -733,14 +744,15 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       QObject::connect(&instance, SIGNAL(messageSent(QString)), &organizer,
                        SLOT(externalMessage(QString)));
 
-      // this must be before readSettings(), see DockFixer in mainwindow.cpp
-      splash.finish(&mainWindow);
-
       log::debug("displaying main window");
       mainWindow.show();
       mainWindow.activateWindow();
-
-      splash.finish(&mainWindow);
+      
+      if (useSplash) {
+        // don't pass mainwindow as it just waits half a second for it
+        // instead of proceding
+        splash.finish(nullptr);
+      }
 
       res = application.exec();
       mainWindow.close();
