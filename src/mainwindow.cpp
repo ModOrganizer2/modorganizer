@@ -962,6 +962,8 @@ void MainWindow::scheduleUpdateButton()
 
 void MainWindow::updateProblemsButton()
 {
+  TimeThis tt("MainWindow::updateProblemsButton()");
+
   // if the current stylesheet doesn't provide an icon, this is used instead
   const char* DefaultIconName = ":/MO/gui/warning";
 
@@ -1667,9 +1669,9 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 
     // Avoid doing any refresh if currentProfile is already set but previous index was -1
     // as it means that this is happening during initialization so everything has already been set.
-    if (previousIndex == -1 
-        && m_OrganizerCore.currentProfile() != nullptr 
-        && m_OrganizerCore.currentProfile()->exists() 
+    if (previousIndex == -1
+        && m_OrganizerCore.currentProfile() != nullptr
+        && m_OrganizerCore.currentProfile()->exists()
         && ui->profileBox->currentText() == m_OrganizerCore.currentProfile()->name()){
       return;
     }
@@ -5517,7 +5519,7 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
     bool foundUpdate = false;
     bool oldFile = false;
     QString installedFile = mod->getInstallationFile();
-    if (!installedFile.isEmpty()) { 
+    if (!installedFile.isEmpty()) {
       QVariantMap foundFile;
       for (auto file : files) {
         QVariantMap fileData = file.toMap();

@@ -174,6 +174,8 @@ void PluginList::refresh(const QString &profileName
                          , const QString &lockedOrderFile
                          , bool force)
 {
+  TimeThis tt("PluginList::refresh()");
+
   if (force) {
     m_ESPs.clear();
     m_ESPsByName.clear();
