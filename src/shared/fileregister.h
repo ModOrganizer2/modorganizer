@@ -30,11 +30,6 @@ public:
     return m_Files.size();
   }
 
-  void reserve(std::size_t n)
-  {
-    m_Files.reserve(n);
-  }
-
   bool removeFile(FileIndex index);
   void removeOrigin(FileIndex index, OriginID originID);
   void removeOriginMulti(std::set<FileIndex> indices, OriginID originID);
@@ -42,7 +37,7 @@ public:
   void sortOrigins();
 
 private:
-  using FileMap = std::vector<FileEntryPtr>;
+  using FileMap = std::deque<FileEntryPtr>;
 
   mutable std::mutex m_Mutex;
   FileMap m_Files;

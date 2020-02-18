@@ -470,7 +470,6 @@ void DirectoryRefresher::refresh()
     QMutexLocker locker(&m_RefreshLock);
 
     m_Root.reset(new DirectoryEntry(L"data", nullptr, 0));
-    m_Root->getFileRegister()->reserve(m_lastFileCount);
 
     IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
 
