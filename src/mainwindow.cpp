@@ -265,7 +265,6 @@ MainWindow::MainWindow(Settings &settings
     ui->statusBar->setAPI(ni->getAPIStats(), ni->getAPIUserAccount());
   }
 
-  m_CategoryFactory.loadCategories();
   m_Filters.reset(new FilterList(ui, m_CategoryFactory));
 
   connect(
