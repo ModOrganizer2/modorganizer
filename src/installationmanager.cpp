@@ -191,6 +191,8 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
   m_InstallationProgress->setWindowTitle(tr("Extracting files"));
   m_InstallationProgress->setWindowModality(Qt::WindowModal);
   m_InstallationProgress->setFixedSize(600, 100);
+  m_InstallationProgress->setAutoClose(false);
+  m_InstallationProgress->setAutoReset(false);
   m_InstallationProgress->show();
 
   QFuture<bool> future = QtConcurrent::run([&]() -> bool {
@@ -290,6 +292,8 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
   m_InstallationProgress->setWindowTitle(tr("Extracting files"));
   m_InstallationProgress->setWindowModality(Qt::WindowModal);
   m_InstallationProgress->setFixedSize(600, 100);
+  m_InstallationProgress->setAutoClose(false);
+  m_InstallationProgress->setAutoReset(false);
   m_InstallationProgress->show();
 
   // unpack only the files we need for the installer
@@ -601,6 +605,8 @@ IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QSt
         m_InstallationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
   m_InstallationProgress->setWindowModality(Qt::WindowModal);
   m_InstallationProgress->setFixedSize(600, 100);
+  m_InstallationProgress->setAutoClose(false);
+  m_InstallationProgress->setAutoReset(false);
   m_InstallationProgress->show();
   QFuture<bool> future = QtConcurrent::run([&]() -> bool {
     return m_ArchiveHandler->extract(
