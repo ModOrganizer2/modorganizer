@@ -246,7 +246,14 @@ QString convertToHTML(const QString &inputParam)
     if ((pos < (input.size() - 1)) && (input.at(pos + 1) == '/')) {
        // skip invalid end tag
       int tagEnd = input.indexOf(']',  pos) + 1;
-      pos = tagEnd;
+      if (tagEnd == 0) {
+        //no closing tag found
+        //move the pos up one so that the opening bracket is ignored next iteration
+        pos++;
+      }
+      else {
+        pos = tagEnd;
+      }
     } else {
       // convert the tag and content if necessary
       int length = -1;
