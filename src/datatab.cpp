@@ -29,6 +29,7 @@ DataTab::DataTab(
   m_filter.setFilterColumn(FileTreeModel::FileName);
   m_filter.setEdit(mwui->dataTabFilter);
   m_filter.setList(mwui->dataTree);
+  m_filter.setUpdateDelay(true);
 
   if (auto* m=m_filter.proxyModel()) {
     m->setDynamicSortFilter(false);
