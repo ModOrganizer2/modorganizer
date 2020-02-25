@@ -17,14 +17,10 @@ void StatusBar::setup(Ui::MainWindow* mainWindowUI, const Settings& settings)
   m_update = new StatusBarAction(ui->actionUpdate);
 
   m_progressSpacer1->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_progressSpacer1->setHidden(true);
-  m_progressSpacer1->setVisible(true);
   addPermanentWidget(m_progressSpacer1, 0);
   addPermanentWidget(m_progress);
 
   m_progressSpacer2->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_progressSpacer2->setHidden(true);
-  m_progressSpacer2->setVisible(true);
   addPermanentWidget(m_progressSpacer2,0);
 
   addPermanentWidget(m_notifications);
