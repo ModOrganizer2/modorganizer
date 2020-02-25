@@ -163,7 +163,7 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
         output << QString("<i>%1</i>").arg(modInfo->notes());
       return output.join("");
     }
-    case ModInfo::FLAG_ALTERNATE_GAME: return tr("<br>This mod is for a different game, "
+    case ModInfo::FLAG_ALTERNATE_GAME: return tr("This mod is for a different<br> game, "
       "make sure it's compatible or it could cause crashes.");
     case ModInfo::FLAG_TRACKED: return tr("Mod is being tracked on the website");
     case ModInfo::FLAG_HIDDEN_FILES: return tr("Contains hidden files");
