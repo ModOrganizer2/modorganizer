@@ -2009,6 +2009,7 @@ FilterWidget::Options InterfaceSettings::filterOptions() const
   o.useRegex = get<bool>(m_Settings, "Settings", "filter_regex", false);
   o.regexCaseSensitive = get<bool>(m_Settings, "Settings", "regex_case_sensitive", false);
   o.regexExtended = get<bool>(m_Settings, "Settings", "regex_extended", false);
+  o.scrollToSelection = get<bool>(m_Settings, "Settings", "filter_scroll_to_selection", false);
 
   return o;
 }
@@ -2018,6 +2019,7 @@ void InterfaceSettings::setFilterOptions(const FilterWidget::Options& o)
   set(m_Settings, "Settings", "filter_regex", o.useRegex);
   set(m_Settings, "Settings", "regex_case_sensitive", o.regexCaseSensitive);
   set(m_Settings, "Settings", "regex_extended", o.regexExtended);
+  set(m_Settings, "Settings", "filter_scroll_to_selection", o.scrollToSelection);
 }
 
 
