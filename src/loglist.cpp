@@ -117,7 +117,7 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
   const auto& e = m_entries[row];
 
   if (role == Qt::DisplayRole) {
-    if (index.column() == 1) {
+    if (index.column() == 0) {
       const auto ms = duration_cast<milliseconds>(e.time.time_since_epoch());
       const auto s = duration_cast<seconds>(ms);
 
@@ -132,7 +132,7 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
   }
 
   if (role == Qt::DecorationRole) {
-    if (index.column() == 0) {
+    if (index.column() == 1) {
       switch (e.level) {
         case log::Warning:
           return QIcon(":/MO/gui/warning");
@@ -140,8 +140,10 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
         case log::Error:
           return QIcon(":/MO/gui/problem");
 
-        case log::Debug:  // fall-through
+        case log::Debug:
+          return QIcon(":/MO/gui/debug");
         case log::Info:
+          return QIcon(":/MO/gui/information");
         default:
           return {};
       }
@@ -163,8 +165,8 @@ LogList::LogList(QWidget* parent)
   setModel(&LogModel::instance());
 
   header()->setMinimumSectionSize(0);
-  header()->resizeSection(0, 20);
-  header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+  header()->resizeSection(1, 20);
+  header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
 
   setAutoScroll(true);
   scrollToBottom();

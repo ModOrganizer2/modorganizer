@@ -33,6 +33,7 @@
     <file alias="emblem_backup">resources/symbol-backup.png</file>
     <file alias="icon_tools">resources/applications-accessories.png</file>
     <file alias="problem">resources/emblem-unreadable.png</file>
+    <file alias="debug">resources/log-debug.png</file>
     <file>resources/internet-web-browser.png</file>
     <file alias="update">resources/system-software-update.png</file>
     <file alias="help">resources/help-browser_32.png</file>
