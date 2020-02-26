@@ -29,6 +29,8 @@ public:
     setData(0, Qt::ToolTipRole, name);
     setData(0, TypeRole, type);
     setData(0, IDRole, id);
+    setData(0, Qt::DecorationRole, QIcon(":/MO/gui/unchecked-checkbox"));
+    setData(0, Qt::TextAlignmentRole, Qt::AlignCenter);
   }
 
   CriteriaType type() const
@@ -84,11 +86,13 @@ private:
   void updateState()
   {
     QString s;
+    QIcon i;
 
     switch (m_state)
     {
       case Inactive:
       {
+        i = QIcon(":/MO/gui/unchecked-checkbox");
         break;
       }
 
@@ -96,17 +100,19 @@ private:
       {
         // U+2713 CHECK MARK
         s = QString::fromUtf8("\xe2\x9c\x93");
+        i = QIcon(":/MO/gui/checked-checkbox");
         break;
       }
 
       case Inverted:
       {
         s = tr("Not");
+        i = QIcon(":/MO/gui/indeterminate-checkbox");
         break;
       }
     }
-
-    setText(0, s);
+    //setText(0, s);
+    setData(0, Qt::DecorationRole, i);
   }
 };
 
@@ -199,8 +205,7 @@ FilterList::FilterList(Ui::MainWindow* ui, CategoryFactory& factory)
     [&]{ onOptionsChanged(); });
 
   ui->filters->header()->setMinimumSectionSize(0);
-  ui->filters->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-  ui->filters->header()->resizeSection(0, 30);
+  ui->filters->header()->resizeSection(0, 23);
   ui->categoriesSplitter->setCollapsible(0, false);
   ui->categoriesSplitter->setCollapsible(1, false);
 
