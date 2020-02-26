@@ -1410,7 +1410,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>1009</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -1480,6 +1480,12 @@ p, li { white-space: pre-wrap; }
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QDockWidget" name="logDock">
+   <property name="minimumSize">
+    <size>
+     <width>0</width>
+     <height>0</height>
+    </size>
+   </property>
    <property name="features">
     <set>QDockWidget::AllDockWidgetFeatures</set>
    </property>
@@ -1505,6 +1511,18 @@ p, li { white-space: pre-wrap; }
      </property>
      <item>
       <widget class="LogList" name="logList">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>30</width>
+         <height>20</height>
+        </size>
+       </property>
        <property name="contextMenuPolicy">
         <enum>Qt::CustomContextMenu</enum>
        </property>
