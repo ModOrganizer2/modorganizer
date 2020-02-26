@@ -30,7 +30,6 @@ public:
     setData(0, TypeRole, type);
     setData(0, IDRole, id);
     setData(0, Qt::DecorationRole, QIcon(":/MO/gui/unchecked-checkbox"));
-    setData(0, Qt::TextAlignmentRole, Qt::AlignCenter);
   }
 
   CriteriaType type() const
@@ -85,7 +84,6 @@ private:
 
   void updateState()
   {
-    QString s;
     QIcon i;
 
     switch (m_state)
@@ -98,20 +96,16 @@ private:
 
       case Active:
       {
-        // U+2713 CHECK MARK
-        s = QString::fromUtf8("\xe2\x9c\x93");
         i = QIcon(":/MO/gui/checked-checkbox");
         break;
       }
 
       case Inverted:
       {
-        s = tr("Not");
         i = QIcon(":/MO/gui/indeterminate-checkbox");
         break;
       }
     }
-    //setText(0, s);
     setData(0, Qt::DecorationRole, i);
   }
 };
@@ -233,8 +227,6 @@ QTreeWidgetItem* FilterList::addCriteriaItem(
   // For now list all categories flatly without nestling them as there is
   // no way to espand nodes in the filter view since clicking changes state.
   ui->filters->addTopLevelItem(item);
-
-  item->setTextAlignment(0, Qt::AlignCenter);
 
   return item;
 }
