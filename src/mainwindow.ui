@@ -60,13 +60,13 @@
          <number>3</number>
         </property>
         <property name="topMargin">
-         <number>7</number>
+         <number>15</number>
         </property>
         <property name="rightMargin">
          <number>3</number>
         </property>
         <property name="bottomMargin">
-         <number>1</number>
+         <number>0</number>
         </property>
         <item>
          <widget class="QTreeWidget" name="filters">
@@ -102,7 +102,7 @@
           </attribute>
           <column>
            <property name="text">
-            <string>State</string>
+            <string/>
            </property>
            <property name="toolTip">
             <string>State of the filter, can either be Disabled, Enabled or Inverted.</string>
@@ -158,18 +158,18 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
-          <layout class="QHBoxLayout" name="horizontalLayout_11">
+          <layout class="QHBoxLayout" name="horizontalLayout_11" stretch="1,1,2">
            <property name="leftMargin">
-            <number>0</number>
+            <number>1</number>
            </property>
            <property name="topMargin">
             <number>2</number>
            </property>
            <property name="rightMargin">
-            <number>0</number>
+            <number>1</number>
            </property>
            <property name="bottomMargin">
-            <number>0</number>
+            <number>2</number>
            </property>
            <item>
             <widget class="QRadioButton" name="filtersAnd">
@@ -196,6 +196,12 @@
            </item>
            <item>
             <widget class="QComboBox" name="filtersSeparators">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="toolTip">
               <string>Filter: only show the separators that match the current filters
 Show: always show separators
@@ -582,9 +588,15 @@ p, li { white-space: pre-wrap; }
        </widget>
        <widget class="QWidget" name="layoutWidget_2">
         <layout class="QVBoxLayout" name="verticalLayout_2">
+         <property name="spacing">
+          <number>2</number>
+         </property>
          <item>
           <widget class="QFrame" name="startGroup">
            <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="1,0">
+            <property name="bottomMargin">
+             <number>4</number>
+            </property>
             <item>
              <widget class="QComboBox" name="executablesListBox">
               <property name="sizePolicy">
@@ -1482,8 +1494,8 @@ p, li { white-space: pre-wrap; }
   <widget class="QDockWidget" name="logDock">
    <property name="minimumSize">
     <size>
-     <width>0</width>
-     <height>0</height>
+     <width>80</width>
+     <height>42</height>
     </size>
    </property>
    <property name="features">
