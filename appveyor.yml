@@ -1,32 +1,69 @@
-version: 1.0.{build}
+version: dev-appveyor{build}
 skip_branch_with_pr: true
 image: Visual Studio 2019
+init:
+- ps: >-
+    # define build version depending on nightly or normal build
+
+    if($env:APPVEYOR_SCHEDULED_BUILD -eq 'True'){
+        $timestamp= Get-Date -Format "ddmmyyyy-HHmm"
+        Update-AppveyorBuild -Version "$($env:MO_VERSION)$($env:VER_STUB_NIGHTLY)$timestamp"
+    } else {
+        Update-AppveyorBuild -Version "$($env:MO_VERSION)$($env:VER_STUB_NORMAL)$($env:APPVEYOR_BUILD_NUMBER)"
+    }
+
+    Write-Host Build version set to: $env:APPVEYOR_BUILD_VERSION
 environment:
   WEBHOOK_URL:
-    secure: gOKbXaZM9ImtMD5XrYITvdyZUW/az082G9OIN1EC1VYoNNsKROB4s6VsQiL6qbLNLc4XQhc8Y9DhdU9Hfh49vhypcjUEQmMsENxnp+1hYMJctTqIYDunVSd767eez5wz6rKHqk+XOHmg5gyVNCV9u4DVcCZJSVe4UTKn1lc47H0=
-build:
-  parallel: true
+    secure: gOKbXaZM9ImtMD5XrYITvdyZUW/az082G9OIN1EC1VaKiI9iefpxhBavJ6Al6CzIZvQ+3pxnLqjmNgA7cDc22wcj2kB4hSG5qhbTI8wGa8jLQ5L65nuRZ3vrIqghBz9G3GLglgZkg6eqH9r3Kqc6UzcpCGzxxPOqm550nRcIiUU=
+  MO_VERSION: 2.3.0
+  VER_STUB_NORMAL: dev-appveyor
+  VER_STUB_NIGHTLY: dev-nightly-
 build_script:
 - cmd: >-
-    git clone --depth=1 --branch=%APPVEYOR_REPO_BRANCH% https://github.com/ModOrganizer2/modorganizer-umbrella.git c:\projects\modorganizer-umbrella 2> $null
+    REM Maintenance comments:
 
-    mkdir c:\projects\modorganizer-build -type directory
+    REM APPVEYOR_BUILD_FOLDER= "c:\projects\modorganizer-slug"
+
+    REM -Need to update py3 version used to invoke unimake.py once in a while.
+
+    REM -Need update MO_VERSION env variable after each release.
+
+    REM -Always clones umbrella master
+
+    REM -Will checkout all the branches matching the one that triggered the build on the main repo.
+
+    REM End comments.
+
+
+    git clone --depth=1 https://github.com/ModOrganizer2/modorganizer-umbrella.git c:\projects\modorganizer-umbrella 2> $null
+
+
+    mkdir %APPVEYOR_BUILD_FOLDER%\modorganizer-build -type directory
+
 
     cd c:\projects\modorganizer-umbrella
 
-    C:\Python37-x64\python.exe unimake.py -d c:\projects\modorganizer-build -s Appveyor_Build=True %APPVEYOR_PROJECT_NAME%
+
+    C:\Python38-x64\python.exe unimake.py -d %APPVEYOR_BUILD_FOLDER%\modorganizer-build -s Appveyor_Build=True -s Feature_Branch=%APPVEYOR_REPO_BRANCH% -s override_build_version=%APPVEYOR_BUILD_VERSION%
+test: off
 artifacts:
-- path: build\src\ModOrganizer.exe
-  name: modorganizer_exe
-- path: build\src\ModOrganizer.pdb
-  name: modorganizer_pdb
+- path: '\modorganizer-build\install\bin'
+  name: Mod.Organizer-$(APPVEYOR_BUILD_VERSION)
+- path: '\modorganizer-build\install\pdb'
+  name: PDBs-Mod.Organizer-$(APPVEYOR_BUILD_VERSION)
+deploy: off
 on_success:
-  - ps: Set-Location -Path $env:APPVEYOR_BUILD_FOLDER
-  - ps: Invoke-RestMethod https://raw.githubusercontent.com/DiscordHooks/appveyor-discord-webhook/master/send.ps1 -o send.ps1
-  - ps: ./send.ps1 success $env:WEBHOOK_URL
+- ps: >-
+    Set-Location -Path $env:APPVEYOR_BUILD_FOLDER
+
+    Invoke-RestMethod https://raw.githubusercontent.com/DiscordHooks/appveyor-discord-webhook/master/send.ps1 -o send.ps1
+
+    ./send.ps1 success $env:WEBHOOK_URL
 on_failure:
-  - ps: Set-Location -Path $env:APPVEYOR_BUILD_FOLDER
-  - ps: Push-AppveyorArtifact ${env:APPVEYOR_BUILD_FOLDER}\stdout.log
-  - ps: Push-AppveyorArtifact ${env:APPVEYOR_BUILD_FOLDER}\stderr.log
-  - ps: Invoke-RestMethod https://raw.githubusercontent.com/DiscordHooks/appveyor-discord-webhook/master/send.ps1 -o send.ps1
-  - ps: ./send.ps1 failure $env:WEBHOOK_URL
+- ps: >-
+    Set-Location -Path $env:APPVEYOR_BUILD_FOLDER
+
+    Invoke-RestMethod https://raw.githubusercontent.com/DiscordHooks/appveyor-discord-webhook/master/send.ps1 -o send.ps1
+
+    ./send.ps1 failure $env:WEBHOOK_URL
