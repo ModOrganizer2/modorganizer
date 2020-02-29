@@ -1224,6 +1224,9 @@ p, li { white-space: pre-wrap; }
                <property name="selectionBehavior">
                 <enum>QAbstractItemView::SelectRows</enum>
                </property>
+               <property name="uniformItemSizes">
+                <bool>true</bool>
+               </property>
               </widget>
              </item>
             </layout>
@@ -1315,6 +1318,9 @@ p, li { white-space: pre-wrap; }
                  </property>
                  <property name="indentation">
                   <number>0</number>
+                 </property>
+                 <property name="uniformRowHeights">
+                  <bool>true</bool>
                  </property>
                  <property name="itemsExpandable">
                   <bool>false</bool>
@@ -1537,6 +1543,9 @@ p, li { white-space: pre-wrap; }
        </property>
        <property name="contextMenuPolicy">
         <enum>Qt::CustomContextMenu</enum>
+       </property>
+       <property name="alternatingRowColors">
+        <bool>true</bool>
        </property>
        <property name="rootIsDecorated">
         <bool>false</bool>

@@ -67,6 +67,9 @@
              <property name="whatsThis">
               <string>A list of text-files in the mod directory like readmes. </string>
              </property>
+             <property name="alternatingRowColors">
+              <bool>true</bool>
+             </property>
              <property name="uniformItemSizes">
               <bool>true</bool>
              </property>
@@ -129,6 +132,9 @@
              </property>
              <property name="whatsThis">
               <string>This is a list of .ini files in the mod. These are usually used to configure the behaviour of mods if there are configurable parameters.</string>
+             </property>
+             <property name="alternatingRowColors">
+              <bool>true</bool>
              </property>
              <property name="uniformItemSizes">
               <bool>true</bool>
@@ -349,6 +355,9 @@ They usually contain optional functionality, see the readme.
 
 Most mods do not have optional esps, so chances are good you are looking at an empty list.</string>
              </property>
+             <property name="alternatingRowColors">
+              <bool>true</bool>
+             </property>
              <property name="uniformItemSizes">
               <bool>true</bool>
              </property>
@@ -476,6 +485,9 @@ Most mods do not have optional esps, so chances are good you are looking at an e
                 <property name="whatsThis">
                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These are the mod files that are in the (virtual) data directory of your game and will thus be selectable in the esp list in the main window.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
+                <property name="alternatingRowColors">
+                 <bool>true</bool>
+                </property>
                 <property name="uniformItemSizes">
                  <bool>true</bool>
                 </property>
@@ -572,6 +584,9 @@ text-align: left;</string>
                 <property name="contextMenuPolicy">
                  <enum>Qt::CustomContextMenu</enum>
                 </property>
+                <property name="alternatingRowColors">
+                 <bool>true</bool>
+                </property>
                 <property name="selectionMode">
                  <enum>QAbstractItemView::ExtendedSelection</enum>
                 </property>
@@ -629,6 +644,9 @@ text-align: left;</string>
                 <property name="contextMenuPolicy">
                  <enum>Qt::CustomContextMenu</enum>
                 </property>
+                <property name="alternatingRowColors">
+                 <bool>true</bool>
+                </property>
                 <property name="selectionMode">
                  <enum>QAbstractItemView::ExtendedSelection</enum>
                 </property>
@@ -685,6 +703,9 @@ text-align: left;</string>
                <widget class="QTreeView" name="noConflictTree">
                 <property name="contextMenuPolicy">
                  <enum>Qt::CustomContextMenu</enum>
+                </property>
+                <property name="alternatingRowColors">
+                 <bool>true</bool>
                 </property>
                 <property name="selectionMode">
                  <enum>QAbstractItemView::ExtendedSelection</enum>
@@ -757,6 +778,9 @@ text-align: left;</string>
                   <widget class="QTreeView" name="conflictsAdvancedList">
                    <property name="contextMenuPolicy">
                     <enum>Qt::CustomContextMenu</enum>
+                   </property>
+                   <property name="alternatingRowColors">
+                    <bool>true</bool>
                    </property>
                    <property name="selectionMode">
                     <enum>QAbstractItemView::ExtendedSelection</enum>
@@ -867,6 +891,12 @@ text-align: left;</string>
       <layout class="QVBoxLayout" name="verticalLayout_7">
        <item>
         <widget class="QTreeWidget" name="categories">
+         <property name="alternatingRowColors">
+          <bool>true</bool>
+         </property>
+         <property name="uniformRowHeights">
+          <bool>true</bool>
+         </property>
          <attribute name="headerVisible">
           <bool>false</bool>
          </attribute>
@@ -1260,6 +1290,9 @@ p, li { white-space: pre-wrap; }
          </property>
          <property name="defaultDropAction">
           <enum>Qt::MoveAction</enum>
+         </property>
+         <property name="alternatingRowColors">
+          <bool>true</bool>
          </property>
          <property name="selectionMode">
           <enum>QAbstractItemView::ExtendedSelection</enum>
