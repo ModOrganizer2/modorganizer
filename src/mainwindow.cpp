@@ -234,8 +234,12 @@ MainWindow::MainWindow(Settings &settings
   // disables incredibly slow menu fade in effect that looks and feels like crap.
   // this was only happening to users with the windows
   // "Fade or slide menus into view" effect enabled.
+  // maybe in the future the effects will be better at this moment they aren't.
   QApplication::setEffectEnabled(Qt::UI_FadeMenu, false);
   QApplication::setEffectEnabled(Qt::UI_AnimateMenu, false);
+  QApplication::setEffectEnabled(Qt::UI_AnimateCombo, false);
+  QApplication::setEffectEnabled(Qt::UI_AnimateTooltip, false);
+  QApplication::setEffectEnabled(Qt::UI_FadeTooltip, false);
 
   QWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
   QWebEngineProfile::defaultProfile()->setHttpCacheMaximumSize(52428800);
