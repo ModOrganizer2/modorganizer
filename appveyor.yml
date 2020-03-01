@@ -6,7 +6,7 @@ init:
     # define build version depending on nightly or normal build
 
     if($env:APPVEYOR_SCHEDULED_BUILD -eq 'True'){
-        $timestamp= Get-Date -Format "ddmmyyyy-HHmm"
+        $timestamp= Get-Date -Format "ddMMyyyy-HHmm"
         Update-AppveyorBuild -Version "$($env:MO_VERSION)$($env:VER_STUB_NIGHTLY)$timestamp"
     } else {
         Update-AppveyorBuild -Version "$($env:MO_VERSION)$($env:VER_STUB_NORMAL)$($env:APPVEYOR_BUILD_NUMBER)"
