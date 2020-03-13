@@ -281,12 +281,26 @@ void NexusInterface::setUserAccount(const APIUserAccount& user)
 void NexusInterface::interpretNexusFileName(const QString &fileName, QString &modName, int &modID, bool query)
 {
   // guess the mod name from the file name
-  static const QRegularExpression complex("^([a-zA-Z0-9_'\"\\-.() ]*?)([-_ ][VvRr]?[0-9_]+)?-([1-9][0-9]*).*\\.(zip|rar|7z)");
-  static const QRegularExpression simple("^[a-zA-Z0-9_]+");
+  static const QRegularExpression complex(R"(^([a-zA-Z0-9_'"\-.() ]*?)([-_ ][VvRr]+[0-9]+(?:(?:[\.][0-9]+){0,2}|(?:[_][0-9]+){0,2}|(?:[-.][0-9]+){0,2})?[ab]?)??-([1-9][0-9]+)?-.*?\.(zip|rar|7z))");
+  //complex regex explanation:
+  //group 1: modname.
+  //group 2: optional version, 
+  //  assumed to start with v (empty most of the time).
+  //group 3: NexusId,
+  //  assumed wrapped in "-", will miss single digit IDs for better accuracy.
+  //If no id is present the whole regex does not match.
+  static const QRegularExpression simple(R"(^[^a-zA-Z]*([a-zA-Z_ ]+))");
   auto complexMatch = complex.match(fileName);
   auto simpleMatch = simple.match(fileName);
+
+  // assume not found
+  modID = -1;
+
   if (complexMatch.hasMatch()) {
     modName = complexMatch.captured(1);
+    if (!query && !complexMatch.captured(3).isNull()) {
+      modID = complexMatch.captured(3).toInt();
+    }
   }
   else if (simpleMatch.hasMatch()) {
     modName = simpleMatch.captured(0);
@@ -325,16 +339,11 @@ void NexusInterface::interpretNexusFileName(const QString &fileName, QString &mo
       }
       else {
         log::debug("user canceled mod ID selection");
-        modID = -1;
       }
     }
     else {
       log::debug("no possible mod IDs found in file name");
-      modID = -1;
     }
-  }
-  else {
-    modID = -1;
   }
 }
 
