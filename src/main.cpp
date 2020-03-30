@@ -527,6 +527,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
   if (!bootstrap()) {
     reportError("failed to set up data paths");
+    InstanceManager::instance().clearCurrentInstance();
     return 1;
   }
 
@@ -561,6 +562,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     OrganizerCore organizer(settings);
     if (!organizer.bootstrap()) {
       reportError("failed to set up data paths");
+      InstanceManager::instance().clearCurrentInstance();
       return 1;
     }
 
@@ -951,6 +953,7 @@ int main(int argc, char *argv[])
 
     if (!createAndMakeWritable(AppConfig::logPath())) {
       reportError("Failed to create log folder");
+      InstanceManager::instance().clearCurrentInstance();
       return 1;
     }
 
