@@ -221,7 +221,7 @@ void DownloadListWidget::onCustomContextMenu(const QPoint &point)
         else
           menu.addAction(tr("Visit on Nexus"), this, SLOT(issueVisitOnNexus()));
         menu.addAction(tr("Open File"), this, SLOT(issueOpenFile()));
-        menu.addAction(tr("Show in Folder"), this, SLOT(issueOpenInDownloadsFolder()));
+        menu.addAction(tr("Reveal in Explorer"), this, SLOT(issueOpenInDownloadsFolder()));
 
         menu.addSeparator();
 
@@ -233,12 +233,12 @@ void DownloadListWidget::onCustomContextMenu(const QPoint &point)
       } else if (state == DownloadManager::STATE_DOWNLOADING) {
         menu.addAction(tr("Cancel"), this, SLOT(issueCancel()));
         menu.addAction(tr("Pause"), this, SLOT(issuePause()));
-        menu.addAction(tr("Show in Folder"), this, SLOT(issueOpenInDownloadsFolder()));
+        menu.addAction(tr("Reveal in Explorer"), this, SLOT(issueOpenInDownloadsFolder()));
       } else if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)
                 || (state == DownloadManager::STATE_PAUSING)) {
         menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
         menu.addAction(tr("Resume"), this, SLOT(issueResume()));
-        menu.addAction(tr("Show in Folder"), this, SLOT(issueOpenInDownloadsFolder()));
+        menu.addAction(tr("Reveal in Explorer"), this, SLOT(issueOpenInDownloadsFolder()));
       }
 
       menu.addSeparator();

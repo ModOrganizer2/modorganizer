@@ -683,7 +683,7 @@ void FileTree::addFileMenus(QMenu& menu, const FileEntry& file, int originID)
     .enabled(getFileExecutionType(target) == FileExecutionTypes::Executable)
     .addTo(menu);
 
-  MenuItem(tr("E&xplore"))
+  MenuItem(tr("Reveal in E&xplorer"))
     .callback([&]{ exploreOrigin(); })
     .hint(tr("Opens the file in Explorer"))
     .disabledHint(tr("This file is in an archive"))
