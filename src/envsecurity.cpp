@@ -244,7 +244,7 @@ QString SecurityProduct::providerToString() const
   }
 
   if (ps.empty()) {
-    return "doesn't provider anything";
+    return "doesn't provide anything";
   }
 
   return ps.join("|");
