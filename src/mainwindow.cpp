@@ -1809,10 +1809,16 @@ QDir MainWindow::currentSavesDir() const
   if (m_OrganizerCore.currentProfile()->localSavesEnabled()) {
     savesDir.setPath(m_OrganizerCore.currentProfile()->savePath());
   } else {
+    auto iniFiles = m_OrganizerCore.managedGame()->iniFiles();
+
+    if (iniFiles.isEmpty()) {
+      return m_OrganizerCore.managedGame()->savesDirectory();
+    }
+
     QString iniPath = m_OrganizerCore.currentProfile()->localSettingsEnabled()
                     ? m_OrganizerCore.currentProfile()->absolutePath()
                     : m_OrganizerCore.managedGame()->documentsDirectory().absolutePath();
-    iniPath += "/" + m_OrganizerCore.managedGame()->iniFiles()[0];
+    iniPath += "/" + iniFiles[0];
 
     wchar_t path[MAX_PATH];
     ::GetPrivateProfileStringW(
@@ -4140,7 +4146,7 @@ void MainWindow::saveArchiveList()
     }
     archiveFile.commitIfDifferent(m_ArchiveListHash);
   } else {
-    log::warn("archive list not initialised");
+    log::debug("archive list not initialised");
   }
 }
 
