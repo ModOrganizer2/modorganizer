@@ -93,6 +93,13 @@ private:
   SortInfo m_sort;
   bool m_fullyLoaded;
 
+  // see top of filetreemodel.cpp
+  std::vector<FileTreeItem*> m_removeItems;
+  QTimer m_removeTimer;
+  std::vector<FileTreeItem*> m_sortItems;
+  QTimer m_sortTimer;
+
+
   bool showConflictsOnly() const
   {
     return (m_flags & ConflictsOnly);
@@ -101,18 +108,28 @@ private:
   bool showArchives() const;
 
 
+  // for `forFetching`, see top of filetreemodel.cpp
   void update(
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
-    const std::wstring& parentPath);
+    const std::wstring& parentPath, bool forFetching);
+
+  void queueRemoveItem(FileTreeItem* item);
+  void removeItems();
+
+  void queueSortItem(FileTreeItem* item);
+  void sortItems();
 
 
+  // for `forFetching`, see top of filetreemodel.cpp
   bool updateDirectories(
     FileTreeItem& parentItem, const std::wstring& path,
-    const MOShared::DirectoryEntry& parentEntry);
+    const MOShared::DirectoryEntry& parentEntry, bool forFetching);
 
+  // for `forFetching`, see top of filetreemodel.cpp
   void removeDisappearingDirectories(
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
-    const std::wstring& parentPath, std::unordered_set<std::wstring_view>& seen);
+    const std::wstring& parentPath, std::unordered_set<std::wstring_view>& seen,
+    bool forFetching);
 
   bool addNewDirectories(
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,

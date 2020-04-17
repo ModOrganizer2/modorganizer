@@ -145,7 +145,6 @@ FileTree::FileTree(OrganizerCore& core, PluginContainer& pc, QTreeView* tree)
   connect(
     m_tree, &QTreeView::activated,
     [&](auto&& index){ onItemActivated(index); });
-
 }
 
 FileTreeModel* FileTree::model()

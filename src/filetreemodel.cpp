@@ -5,6 +5,7 @@
 #include "shared/directoryentry.h"
 #include "shared/fileentry.h"
 #include <log.h>
+#include <moassert.h>
 
 using namespace MOBase;
 using namespace MOShared;
@@ -12,8 +13,44 @@ using namespace MOShared;
 // in mainwindow.cpp
 QString UnmanagedModName();
 
-
 #define trace(f)
+
+
+// about queueRemoveItem(), queueSortItems() and the `forFetching` parameter
+//
+// update() can be called when refreshing the tree or expanding a node;
+// there are certain operations that cannot be done during node expansion,
+// namely removing or moving items
+//
+// 1) removing items
+//    beginRemoveRows()/endRemoveRows() clears the internal list of visible
+//    items in a QTreeView, which is repopulated during the next layout
+//
+//    doing this _during_ layout (which happens during node expansion) crashes
+//    in Qt because it assumes the list of visible items doesn't change; that
+//    is, fetchMore() cannot _remove_ items from the tree, it can only _add_
+//    items
+//
+// 2) moving items
+//    when a QSortFilterProxyModel is used between a tree and the FileTreeModel,
+//    it maintains a mapping of indices between the source and proxy models;
+//    calling layoutAboutToBeChanged()/layoutChanged() clears that mapping
+//
+//    the only time this is called in FileTreeModel is when sorting items,
+//    which can happen during layout because since it calls fetchMore()
+//
+//    doing this _during_ layout (which happens during node expansion) crashes
+//    in Qt because the QSortFilterProxyModel assumes the mapping doesn't
+//    change; that is, fetchMore() cannot _move_ items in the tree, it can
+//    only _add_ items
+//
+//
+// therefore, these two operations are queued in a 1ms timer which is processed
+// immediately after update()
+//
+// note that not all instances of removing items are currently getting queued
+// (such as when removeDisappearingFiles()) because they cannot happen while
+// fetching
 
 
 // tracks a contiguous range in the model to avoid calling begin*Rows(), etc.
@@ -55,13 +92,21 @@ public:
     return m_current;
   }
 
+  // manually set this range
+  //
+  void set(int first, int last)
+  {
+    m_first = first;
+    m_current = last;
+  }
+
   // adds the given items to this range
   //
   void add(FileTreeItem::Children toAdd)
   {
     if (m_first == -1) {
       // nothing to add
-      Q_ASSERT(toAdd.empty());
+      MO_ASSERT(toAdd.empty());
       return;
     }
 
@@ -69,7 +114,7 @@ public:
     const auto parentIndex = m_model->indexFromItem(m_parentItem);
 
     // make sure the number of items is the same as the size of this range
-    Q_ASSERT(static_cast<int>(toAdd.size()) == (last - m_first + 1));
+    MO_ASSERT(static_cast<int>(toAdd.size()) == (last - m_first + 1));
 
     trace(log::debug("Range::add() {} to {}", m_first, last));
 
@@ -121,6 +166,14 @@ public:
     return m_parentItem.children().begin() + m_current + 1;
   }
 
+  static void removeChildren(FileTreeModel* model, FileTreeItem& parentItem)
+  {
+    Range r(model, parentItem);
+    r.set(0, static_cast<int>(parentItem.children().size()));
+    r.remove();
+    parentItem.clear();
+  }
+
 private:
   FileTreeModel* m_model;
   FileTreeItem& m_parentItem;
@@ -147,6 +200,9 @@ FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent) :
 {
   m_root->setExpanded(true);
 
+  connect(&m_removeTimer, &QTimer::timeout, [&]{ removeItems(); });
+  connect(&m_sortTimer, &QTimer::timeout, [&]{ sortItems(); });
+
   connect(&m_iconPendingTimer, &QTimer::timeout, [&]{ updatePendingIcons(); });
 }
 
@@ -155,7 +211,7 @@ void FileTreeModel::refresh()
   TimeThis tt("FileTreeModel::refresh()");
 
   m_fullyLoaded = false;
-  update(*m_root, *m_core.directoryStructure(), L"");
+  update(*m_root, *m_core.directoryStructure(), L"", false);
 }
 
 void FileTreeModel::clear()
@@ -254,8 +310,14 @@ int FileTreeModel::columnCount(const QModelIndex&) const
 
 bool FileTreeModel::hasChildren(const QModelIndex& parent) const
 {
+  if (!m_enabled) {
+    return false;
+  }
+
   if (auto* item=itemFromIndex(parent)) {
-    return item->hasChildren();
+    if (parent.column() <= 0) {
+      return item->hasChildren();
+    }
   }
 
   return false;
@@ -292,8 +354,7 @@ void FileTreeModel::fetchMore(const QModelIndex& parent)
   }
 
   const auto parentPath = item->dataRelativeParentPath();
-
-  update(*item, *parentEntry, parentPath.toStdWString());
+  update(*item, *parentEntry, parentPath.toStdWString(), true);
 }
 
 QVariant FileTreeModel::data(const QModelIndex& index, int role) const
@@ -385,7 +446,8 @@ Qt::ItemFlags FileTreeModel::flags(const QModelIndex& index) const
 
 void FileTreeModel::sortItem(FileTreeItem& item, bool force)
 {
-  emit layoutAboutToBeChanged();
+  emit layoutAboutToBeChanged({}, QAbstractItemModel::VerticalSortHint);
+
 
   const auto oldList = persistentIndexList();
   std::vector<std::pair<FileTreeItem*, int>> oldItems;
@@ -435,7 +497,7 @@ FileTreeItem* FileTreeModel::itemFromIndex(const QModelIndex& index) const
 
   if (index.row() < 0 || index.row() >= parentItem->children().size()) {
     log::error(
-      "FileeTreeModel::itemFromIndex(): row {} is out of range for {}",
+      "FileTreeModel::itemFromIndex(): row {} is out of range for {}",
       index.row(), parentItem->debugName());
 
     return nullptr;
@@ -465,7 +527,7 @@ QModelIndex FileTreeModel::indexFromItem(FileTreeItem& item, int col) const
 
 void FileTreeModel::update(
   FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
-  const std::wstring& parentPath)
+  const std::wstring& parentPath, bool forFetching)
 {
   trace(log::debug("updating {}", parentItem.debugName()));
 
@@ -482,7 +544,7 @@ void FileTreeModel::update(
 
   bool added = false;
 
-  if (updateDirectories(parentItem, path, parentEntry)) {
+  if (updateDirectories(parentItem, path, parentEntry, forFetching)) {
     added = true;
   }
 
@@ -491,26 +553,31 @@ void FileTreeModel::update(
   }
 
   if (added) {
-    parentItem.sort(m_sort.column, m_sort.order, true);
+    // see comment at the top of this file
+    if (forFetching)
+      queueSortItem(&parentItem);
+    else
+      sortItem(parentItem, true);
   }
 }
 
 bool FileTreeModel::updateDirectories(
   FileTreeItem& parentItem, const std::wstring& parentPath,
-  const MOShared::DirectoryEntry& parentEntry)
+  const MOShared::DirectoryEntry& parentEntry, bool forFetching)
 {
   // removeDisappearingDirectories() will add directories that are in the
   // tree and still on the filesystem to this set; addNewDirectories() will
   // use this to figure out if a directory is new or not
   std::unordered_set<std::wstring_view> seen;
 
-  removeDisappearingDirectories(parentItem, parentEntry, parentPath, seen);
+  removeDisappearingDirectories(parentItem, parentEntry, parentPath, seen, forFetching);
   return addNewDirectories(parentItem, parentEntry, parentPath, seen);
 }
 
 void FileTreeModel::removeDisappearingDirectories(
   FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
-  const std::wstring& parentPath, std::unordered_set<std::wstring_view>& seen)
+  const std::wstring& parentPath, std::unordered_set<std::wstring_view>& seen,
+  bool forFetching)
 {
   auto& children = parentItem.children();
   auto itor = children.begin();
@@ -541,7 +608,7 @@ void FileTreeModel::removeDisappearingDirectories(
 
       if (item->areChildrenVisible()) {
         // the item is currently expanded, update it
-        update(*item, *d, parentPath);
+        update(*item, *d, parentPath, forFetching);
       }
 
       if (shouldShowFolder(*d, item.get())) {
@@ -549,9 +616,20 @@ void FileTreeModel::removeDisappearingDirectories(
         if (!item->areChildrenVisible() && item->isLoaded()) {
           if (!d->isEmpty()) {
             // the item is loaded (previously expanded but now collapsed) and
-            // has children, mark  it as unloaded so it updates when next
+            // has children, mark it as unloaded so it updates when next
             // expanded
             item->setLoaded(false);
+
+            if (!item->children().empty()) {
+              // if the item had children, remove them from the tree
+
+              // see comment at the top of this file
+              if (forFetching) {
+                queueRemoveItem(item.get());
+              } else {
+                Range::removeChildren(this, *item);
+              }
+            }
           }
         }
       } else {
@@ -764,6 +842,48 @@ bool FileTreeModel::addNewFiles(
   range.add(std::move(toAdd));
 
   return added;
+}
+
+void FileTreeModel::queueRemoveItem(FileTreeItem* item)
+{
+  trace(log::debug("queuing {} for removal", item->debugName()));
+
+  m_removeItems.push_back(item);
+  m_removeTimer.start(1);
+}
+
+void FileTreeModel::removeItems()
+{
+  // see comment at the top of this file
+  log::debug("remove item timer: removing {} items", m_removeItems.size());
+
+  auto copy = std::move(m_removeItems);
+  m_removeItems.clear();
+  m_removeTimer.stop();
+
+  for (auto&& f : copy) {
+    Range::removeChildren(this, *f);
+  }
+}
+
+void FileTreeModel::queueSortItem(FileTreeItem* item)
+{
+  m_sortItems.push_back(item);
+  m_sortTimer.start(1);
+}
+
+void FileTreeModel::sortItems()
+{
+  // see comment at the top of this file
+  log::debug("sort item timer: sorting {} items", m_sortItems.size());
+
+  auto copy = std::move(m_sortItems);
+  m_sortItems.clear();
+  m_sortTimer.stop();
+
+  for (auto&& f : copy) {
+    sortItem(*f, true);
+  }
 }
 
 FileTreeItem::Ptr FileTreeModel::createDirectoryItem(
