@@ -124,6 +124,12 @@ Module::FileInfo Module::getFileInfo() const
       return {};
     }
 
+    if (e == ERROR_RESOURCE_DATA_NOT_FOUND) {
+      // not an error, no version information built into that module;
+      // happens often in wine
+      return {};
+    }
+
     log::error(
       "GetFileVersionInfoSizeW() failed on '{}', {}",
       m_path, formatSystemMessage(e));

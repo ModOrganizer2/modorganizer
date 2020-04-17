@@ -108,7 +108,8 @@ private:
       &rawService);
 
     if (FAILED(res) || !rawService) {
-      log::error(
+      // don't log as error, seems to happen often for some people
+      log::debug(
         "locator->ConnectServer() failed for namespace '{}', {}",
         ns, formatSystemMessage(res));
 
@@ -392,7 +393,8 @@ std::optional<SecurityProduct> getWindowsFirewall()
       // testing for both because it's not clear which it is and nobody can
       // reproduce it
       if (hr != EPT_S_NOT_REGISTERED && hr != 0x800706d9) {
-        log::error("get_FirewallEnabled failed, {}", formatSystemMessage(hr));
+        // don't log as error
+        log::debug("get_FirewallEnabled failed, {}", formatSystemMessage(hr));
       }
 
       return {};
