@@ -366,8 +366,7 @@ void FileTreeItem::unload()
     return;
   }
 
-  m_loaded = false;
-  m_children.clear();
+  clear();
 }
 
 bool FileTreeItem::areChildrenVisible() const
