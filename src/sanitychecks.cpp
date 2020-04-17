@@ -320,8 +320,10 @@ std::vector<std::pair<QString, QString>> getSystemDirectories()
   std::vector<std::pair<QString, QString>> systemDirs;
 
   for (auto&& p : systemFolderIDs) {
-    if (const auto dir=MOBase::getOptionalKnownFolder(p.first)) {
-      auto path = QDir::toNativeSeparators(dir->absolutePath()).toLower();
+    const auto dir = MOBase::getOptionalKnownFolder(p.first);
+
+    if (!dir.isEmpty()) {
+      auto path = QDir::toNativeSeparators(dir).toLower();
       if (!path.endsWith("\\")) {
         path += "\\";
       }
