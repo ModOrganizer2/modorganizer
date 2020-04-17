@@ -523,6 +523,7 @@ MainWindow::MainWindow(Settings &settings
   updatePluginCount();
   updateModCount();
   processUpdates();
+  ui->statusBar->updateNormalMessage(m_OrganizerCore);
 }
 
 void MainWindow::setupModList()
@@ -1699,6 +1700,7 @@ void MainWindow::activateSelectedProfile()
   m_OrganizerCore.refreshModList();
   updateModCount();
   updatePluginCount();
+  ui->statusBar->updateNormalMessage(m_OrganizerCore);
 }
 
 void MainWindow::on_profileBox_currentIndexChanged(int index)

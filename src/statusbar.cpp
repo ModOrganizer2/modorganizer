@@ -1,12 +1,15 @@
 #include "statusbar.h"
 #include "nexusinterface.h"
 #include "settings.h"
+#include "organizercore.h"
+#include "instancemanager.h"
 #include "ui_mainwindow.h"
 
 StatusBar::StatusBar(QWidget* parent) :
-  QStatusBar(parent), ui(nullptr), m_progress(new QProgressBar),
-  m_progressSpacer1(new QWidget), m_progressSpacer2(new QWidget),
-  m_notifications(nullptr), m_update(nullptr), m_api(new QLabel)
+  QStatusBar(parent), ui(nullptr), m_normal(new QLabel),
+  m_progress(new QProgressBar), m_progressSpacer1(new QWidget),
+  m_progressSpacer2(new QWidget), m_notifications(nullptr), m_update(nullptr),
+  m_api(new QLabel)
 {
 }
 
@@ -15,6 +18,8 @@ void StatusBar::setup(Ui::MainWindow* mainWindowUI, const Settings& settings)
   ui = mainWindowUI;
   m_notifications = new StatusBarAction(ui->actionNotifications);
   m_update = new StatusBarAction(ui->actionUpdate);
+
+  addWidget(m_normal);
 
   m_progressSpacer1->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   addPermanentWidget(m_progressSpacer1, 0);
@@ -136,6 +141,31 @@ void StatusBar::setUpdateAvailable(bool b)
 void StatusBar::checkSettings(const Settings& settings)
 {
   m_api->setVisible(!settings.interface().hideAPICounter());
+}
+
+void StatusBar::updateNormalMessage(OrganizerCore& core)
+{
+  QString game;
+
+  if (core.managedGame()) {
+    game = core.managedGame()->gameName();
+  } else {
+    game = tr("Unknown game");
+  }
+
+  QString instance = InstanceManager::instance().currentInstance();
+  if (instance.isEmpty()) {
+    instance = tr("Portable");
+  }
+
+  QString profile = core.profileName();
+
+  const auto s = QString("%1 - %2 - %3")
+    .arg(game)
+    .arg(instance)
+    .arg(profile);
+
+  m_normal->setText(s);
 }
 
 void StatusBar::showEvent(QShowEvent*)
