@@ -621,7 +621,7 @@ void NexusKeyValidator::start(const QString& key, Behaviour b)
 
     case Retry:
     {
-      createAttempts({5s, 5s, 10s});
+      createAttempts({10s, 15s, 20s});
       break;
     }
   }
