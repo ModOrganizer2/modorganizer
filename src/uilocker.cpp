@@ -321,7 +321,7 @@ private:
       case UILocker::PreventExit:
       {
         m_message->setText(QObject::tr(
-          "Mod Organizer is waiting on application to close before exiting."));
+          "Mod Organizer is waiting on an application to close before exiting."));
 
         break;
       }

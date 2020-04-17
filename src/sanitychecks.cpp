@@ -214,7 +214,7 @@ int checkMissingFiles()
   return n;
 }
 
-int checkIncompatibleModule(const env::Module& m)
+int checkBadOSDs(const env::Module& m)
 {
   // these dlls seems to interfere mostly with dialogs, like the mod info
   // dialog: it renders dialogs fully white and makes it impossible to interact
@@ -224,11 +224,16 @@ int checkIncompatibleModule(const env::Module& m)
   // where it got loaded later, so this is also called every time a new module
   // is loaded into this process
 
+  const char* nahimic =
+    "Nahimic (also known as SonicSuite, SonicRadar, SteelSeries, etc.)";
+
   static const std::map<QString, QString> names = {
-    {"NahimicOSD.dll", "Nahimic"},
-    {"RTSSHooks64.dll", "RivaTuner Statistics Server"},
-    {"SSAudioOSD.dll", "SteelSeries Audio"},
-    {"SS3DevProps.dll", "Sonic Suite 3"}
+    {"NahimicOSD.dll",    nahimic},
+    {"nahimicmsiosd.dll", nahimic},
+    {"RTSSHooks64.dll",   "RivaTuner Statistics Server"},
+    {"SSAudioOSD.dll",    "SteelSeries Audio"},
+    {"SS3DevProps.dll",   "Sonic Suite 3"},
+    {"specialk64.dll",    "SpecialK"}
   };
 
   const QFileInfo file(m.path());
@@ -251,6 +256,44 @@ int checkIncompatibleModule(const env::Module& m)
   return n;
 }
 
+int checkUsvfsIncompatibilites(const env::Module& m)
+{
+  // these dlls seems to interfere with usvfs
+
+  static const std::map<QString, QString> names = {
+    {"mactype64.dll", "Mactype"}
+  };
+
+  const QFileInfo file(m.path());
+  int n = 0;
+
+  for (auto&& p : names) {
+    if (file.fileName().compare(p.first, Qt::CaseInsensitive) == 0) {
+      log::warn("{}", QObject::tr(
+        "%1 is loaded. This program is known to cause issues with "
+        "Mod Organizer and its virtual filesystem, such script extenders "
+        "refusing to run. Consider uninstalling it.")
+        .arg(p.second));
+
+      log::warn("{}", file.absoluteFilePath());
+
+      ++n;
+    }
+  }
+
+  return n;
+}
+
+int checkIncompatibleModule(const env::Module& m)
+{
+  int n = 0;
+
+  n += checkBadOSDs(m);
+  n += checkUsvfsIncompatibilites(m);
+
+  return n;
+}
+
 int checkIncompatibilities(const env::Environment& e)
 {
   log::debug("  . incompatibilities");
@@ -268,27 +311,22 @@ std::vector<std::pair<QString, QString>> getSystemDirectories()
 {
   // folder ids and display names for logging
   const std::vector<std::pair<GUID, QString>> systemFolderIDs = {
-    {FOLDERID_ProgramFiles, "Program Files"},
-    {FOLDERID_ProgramFilesX86, "Program Files"}
+    {FOLDERID_ProgramFiles, "in program files"},
+    {FOLDERID_ProgramFilesX86, "in program files"},
+    {FOLDERID_Desktop, "on the desktop"},
+    {FOLDERID_OneDrive, "in OneDrive"}
   };
 
   std::vector<std::pair<QString, QString>> systemDirs;
 
   for (auto&& p : systemFolderIDs) {
-    try
-    {
-      const auto dir = MOBase::getKnownFolder(p.first);
-
-      auto path = QDir::toNativeSeparators(dir.absolutePath()).toLower();
+    if (const auto dir=MOBase::getOptionalKnownFolder(p.first)) {
+      auto path = QDir::toNativeSeparators(dir->absolutePath()).toLower();
       if (!path.endsWith("\\")) {
         path += "\\";
       }
 
       systemDirs.push_back({path, p.second});
-    }
-    catch(std::exception&)
-    {
-      // ignore
     }
   }
 
@@ -306,7 +344,7 @@ int checkProtected(const QDir& d, const QString& what)
   for (auto&& sd : systemDirs) {
     if (path.startsWith(sd.first)) {
       log::warn(
-        "{} is in {}; this may cause issues because it's a protected "
+        "{} is {}; this may cause issues because it's a special "
         "system folder",
         what, sd.second);
 

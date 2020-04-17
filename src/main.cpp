@@ -266,8 +266,6 @@ QString determineProfile(QStringList &arguments, const Settings &settings)
   if (!selectedProfileName) {
     log::debug("no configured profile");
     selectedProfileName = "Default";
-  } else {
-    log::debug("configured profile: {}", *selectedProfileName);
   }
 
   return *selectedProfileName;
@@ -300,7 +298,10 @@ MOBase::IPluginGame *determineCurrentGame(
   if (gameConfigured) {
     MOBase::IPluginGame *game = plugins.managedGame(*gameName);
     if (game == nullptr) {
-      reportError(QObject::tr("Plugin to handle %1 no longer installed").arg(*gameName));
+      reportError(
+        QObject::tr("Plugin to handle %1 no longer installed. An antivirus might have deleted files.")
+        .arg(*gameName));
+
       return nullptr;
     }
 
@@ -958,6 +959,8 @@ int main(int argc, char *argv[])
     }
 
     log::getDefault().setFile(MOBase::log::File::single(logFile.toStdWString()));
+
+    log::debug("command line: '{}'", QString::fromWCharArray(GetCommandLineW()));
 
     QString splash = dataPath + "/splash.png";
     if (!QFile::exists(dataPath + "/splash.png")) {

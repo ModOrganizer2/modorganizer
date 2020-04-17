@@ -508,6 +508,8 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
     return;
   }
 
+  log::debug("selecting profile '{}'", profileName);
+
   QDir profileBaseDir(settings().paths().profiles());
   QString profileDir = profileBaseDir.absoluteFilePath(profileName);
 
@@ -537,6 +539,8 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
   connect(m_CurrentProfile, SIGNAL(modStatusChanged(uint)), this, SLOT(modStatusChanged(uint)));
   connect(m_CurrentProfile, SIGNAL(modStatusChanged(QList<uint>)), this, SLOT(modStatusChanged(QList<uint>)));
   refreshDirectoryStructure();
+
+  m_CurrentProfile->debugDump();
 }
 
 MOBase::IModRepositoryBridge *OrganizerCore::createNexusBridge() const

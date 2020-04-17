@@ -7,6 +7,8 @@
 struct APIStats;
 class APIUserAccount;
 class Settings;
+class OrganizerCore;
+
 namespace Ui { class MainWindow; }
 
 
@@ -41,6 +43,7 @@ public:
   void setAPI(const APIStats& stats, const APIUserAccount& user);
   void setUpdateAvailable(bool b);
   void checkSettings(const Settings& settings);
+  void updateNormalMessage(OrganizerCore& core);
 
 protected:
   void showEvent(QShowEvent* e);
@@ -48,6 +51,7 @@ protected:
 
 private:
   Ui::MainWindow* ui;
+  QLabel* m_normal;
   QProgressBar* m_progress;
   QWidget* m_progressSpacer1;
   QWidget* m_progressSpacer2;

@@ -160,7 +160,7 @@ void SelfUpdater::testForUpdate(const Settings& settings)
         VersionInfo newestVer(newest["tag_name"].toString());
         if (newestVer > this->m_MOVersion) {
           m_UpdateCandidate = newest;
-          log::debug("update available: {} -> {}",
+          log::info("update available: {} -> {}",
                  this->m_MOVersion.displayString(3),
                  newestVer.displayString(3));
           emit updateAvailable();

@@ -65,6 +65,8 @@ public:
   virtual bool alwaysEnabled() const { return true; }
   virtual void addInstalledFile(int, int) {}
 
+  ModInfo::EModType modType() const { return m_ModType; }
+
 protected:
   ModInfoForeign(const QString &modName, const QString &referenceFile,
                  const QStringList &archives, ModInfo::EModType modType,
@@ -77,7 +79,7 @@ private:
   QStringList m_Archives;
   QDateTime m_CreationTime;
   int m_Priority;
-
+  ModInfo::EModType m_ModType;
 };
 
 #endif // MODINFOFOREIGN_H
