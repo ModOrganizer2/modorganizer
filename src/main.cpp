@@ -960,6 +960,8 @@ int main(int argc, char *argv[])
 
     log::getDefault().setFile(MOBase::log::File::single(logFile.toStdWString()));
 
+    log::debug("command line: '{}'", QString::fromWCharArray(GetCommandLineW()));
+
     QString splash = dataPath + "/splash.png";
     if (!QFile::exists(dataPath + "/splash.png")) {
       splash = ":/MO/gui/splash";
