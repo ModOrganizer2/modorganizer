@@ -266,8 +266,6 @@ QString determineProfile(QStringList &arguments, const Settings &settings)
   if (!selectedProfileName) {
     log::debug("no configured profile");
     selectedProfileName = "Default";
-  } else {
-    log::debug("configured profile: {}", *selectedProfileName);
   }
 
   return *selectedProfileName;

@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <dataarchives.h>
 #include "util.h"
 #include "registry.h"
+#include "modinfoforeign.h"
 #include <questionboxmemory.h>
 
 #include <QApplication>
@@ -1064,4 +1065,99 @@ void Profile::storeForcedLibraries(const QString &executable, const QList<Execut
 void Profile::removeForcedLibraries(const QString &executable)
 {
   m_Settings->remove("forced_libraries/" + executable);
+}
+
+void Profile::debugDump() const
+{
+  struct Pair
+  {
+    std::size_t enabled=0;
+    std::size_t total=0;
+  };
+
+  Pair total;
+  Pair real;
+  Pair backup;
+  Pair separators;
+  Pair dlc;
+  Pair cc;
+  Pair unmanaged;
+
+  auto add = [](Pair& p, const ModStatus& status) {
+    ++p.total;
+
+    if (status.m_Enabled) {
+      ++p.enabled;
+    }
+  };
+
+
+  for (const auto& status : m_ModStatus) {
+    if (status.m_Overwrite) {
+      continue;
+    }
+
+    auto index = m_ModIndexByPriority.find(status.m_Priority);
+    if (index == m_ModIndexByPriority.end()) {
+      log::error("mod with priority {} not in priority map", status.m_Priority);
+      continue;
+    }
+
+    auto m = ModInfo::getByIndex(index->second);
+    if (!m) {
+      log::error("mod index {} with priority {} not found", index->second, status.m_Priority);
+      continue;
+    }
+
+    add(total, status);
+
+    if (m->hasFlag(ModInfo::FLAG_BACKUP)) {
+      add(backup, status);
+    }
+
+    if (m->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+      add(separators, status);
+    }
+
+    if (m->hasFlag(ModInfo::FLAG_FOREIGN)) {
+      if (auto* f = dynamic_cast<ModInfoForeign*>(m.get())) {
+        switch (f->modType())
+        {
+          case ModInfo::MOD_DLC:
+            add(dlc, status);
+            break;
+
+          case ModInfo::MOD_CC:
+            add(cc, status);
+            break;
+
+          default:
+            add(unmanaged, status);
+            break;
+        }
+      }
+    }
+
+    if (!m->hasAnyOfTheseFlags({
+      ModInfo::FLAG_BACKUP, ModInfo::FLAG_FOREIGN,
+      ModInfo::FLAG_SEPARATOR, ModInfo::FLAG_OVERWRITE }))
+    {
+      add(real, status);
+    }
+  }
+
+  log::debug(
+    "profile '{}' in '{}': "
+    "mods={}/{} backup={}/{} separators={}/{} real={}/{} dlc={}/{} "
+    "cc={}/{} unmanaged={}/{} localsaves={}, localsettings={}",
+    name(), absolutePath(),
+    total.enabled, total.total,
+    backup.enabled, backup.total,
+    separators.enabled, separators.total,
+    real.enabled, real.total,
+    dlc.enabled, dlc.total,
+    cc.enabled, cc.total,
+    unmanaged.enabled, unmanaged.total,
+    localSavesEnabled() ? "yes" : "no",
+    localSettingsEnabled() ? "yes" : "no");
 }

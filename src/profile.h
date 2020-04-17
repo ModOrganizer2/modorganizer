@@ -336,6 +336,8 @@ public:
   void storeForcedLibraries(const QString &executable, const QList<MOBase::ExecutableForcedLoadSetting> &values);
   void removeForcedLibraries(const QString &executable);
 
+  void debugDump() const;
+
 signals:
 
   /**

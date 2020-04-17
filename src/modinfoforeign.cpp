@@ -49,7 +49,8 @@ ModInfoForeign::ModInfoForeign(const QString &modName,
                                DirectoryEntry **directoryStructure,
                                PluginContainer *pluginContainer)
     : ModInfoWithConflictInfo(pluginContainer, directoryStructure),
-      m_ReferenceFile(referenceFile), m_Archives(archives) {
+      m_ReferenceFile(referenceFile), m_Archives(archives), m_ModType(modType)
+{
   m_CreationTime = QFileInfo(referenceFile).birthTime();
   switch (modType) {
   case ModInfo::EModType::MOD_DLC:
