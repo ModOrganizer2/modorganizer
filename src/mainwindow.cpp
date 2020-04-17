@@ -204,6 +204,42 @@ QString UnmanagedModName()
 
 bool runLoot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList);
 
+
+void setFilterShortcuts(QWidget* widget, QLineEdit* edit)
+{
+  auto activate = [=] {
+    edit->setFocus();
+    edit->selectAll();
+  };
+
+  auto reset = [=] {
+    edit->clear();
+    widget->setFocus();
+  };
+
+  auto hookActivate = [activate](auto* w) {
+    auto* s = new QShortcut(QKeySequence::Find, w);
+    s->setAutoRepeat(false);
+    s->setContext(Qt::WidgetWithChildrenShortcut);
+    QObject::connect(s, &QShortcut::activated, activate);
+  };
+
+  auto hookReset = [reset](auto* w) {
+    auto* s = new QShortcut(QKeySequence(Qt::Key_Escape), w);
+    s->setAutoRepeat(false);
+    s->setContext(Qt::WidgetWithChildrenShortcut);
+    QObject::connect(s, &QShortcut::activated, reset);
+  };
+
+
+  hookActivate(widget);
+  hookReset(widget);
+
+  hookActivate(edit);
+  hookReset(edit);
+}
+
+
 MainWindow::MainWindow(Settings &settings
                        , OrganizerCore &organizerCore
                        , PluginContainer &pluginContainer
@@ -432,8 +468,9 @@ MainWindow::MainWindow(Settings &settings
 
   new QShortcut(QKeySequence::Refresh, this, SLOT(refreshProfile_activated()));
 
-  new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), this, SLOT(search_activated()));
-  new QShortcut(QKeySequence(Qt::Key_Escape), this, SLOT(searchClear_activated()));
+  setFilterShortcuts(ui->modList, ui->modFilterEdit);
+  setFilterShortcuts(ui->espList, ui->espFilterEdit);
+  setFilterShortcuts(ui->downloadView, ui->downloadFilterEdit);
 
   m_UpdateProblemsTimer.setSingleShot(true);
   connect(&m_UpdateProblemsTimer, SIGNAL(timeout()), this, SLOT(updateProblemsButton()));
@@ -3351,42 +3388,6 @@ void MainWindow::openExplorer_activated()
 void MainWindow::refreshProfile_activated()
 {
 	m_OrganizerCore.profileRefresh();
-}
-
-void MainWindow::search_activated()
-{
-  if (ui->modList->hasFocus() || ui->modFilterEdit->hasFocus()) {
-    ui->modFilterEdit->setFocus();
-    ui->modFilterEdit->setSelection(0, INT_MAX);
-  }
-
-  else if (ui->espList->hasFocus() || ui->espFilterEdit->hasFocus()) {
-    ui->espFilterEdit->setFocus();
-    ui->espFilterEdit->setSelection(0, INT_MAX);
-  }
-
-  else if (ui->downloadView->hasFocus() || ui->downloadFilterEdit->hasFocus()) {
-    ui->downloadFilterEdit->setFocus();
-    ui->downloadFilterEdit->setSelection(0, INT_MAX);
-  }
-}
-
-void MainWindow::searchClear_activated()
-{
-  if (ui->modList->hasFocus() || ui->modFilterEdit->hasFocus()) {
-    ui->modFilterEdit->clear();
-    ui->modList->setFocus();
-  }
-
-  else if (ui->espList->hasFocus() || ui->espFilterEdit->hasFocus()) {
-    ui->espFilterEdit->clear();
-    ui->espList->setFocus();
-  }
-
-  else if (ui->downloadView->hasFocus() || ui->downloadFilterEdit->hasFocus()) {
-    ui->downloadFilterEdit->clear();
-    ui->downloadView->setFocus();
-  }
 }
 
 void MainWindow::updateModCount()

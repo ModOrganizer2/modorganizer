@@ -565,9 +565,6 @@ private slots:
   void modlistSelectionsChanged(const QItemSelection &current);
   void esplistSelectionsChanged(const QItemSelection &current);
 
-  void search_activated();
-  void searchClear_activated();
-
   void resetActionIcons();
   void updateModCount();
   void updatePluginCount();
