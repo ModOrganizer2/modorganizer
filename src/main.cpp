@@ -298,7 +298,10 @@ MOBase::IPluginGame *determineCurrentGame(
   if (gameConfigured) {
     MOBase::IPluginGame *game = plugins.managedGame(*gameName);
     if (game == nullptr) {
-      reportError(QObject::tr("Plugin to handle %1 no longer installed").arg(*gameName));
+      reportError(
+        QObject::tr("Plugin to handle %1 no longer installed. An antivirus might have deleted files.")
+        .arg(*gameName));
+
       return nullptr;
     }
 
