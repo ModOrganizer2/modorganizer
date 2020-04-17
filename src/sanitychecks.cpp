@@ -268,27 +268,22 @@ std::vector<std::pair<QString, QString>> getSystemDirectories()
 {
   // folder ids and display names for logging
   const std::vector<std::pair<GUID, QString>> systemFolderIDs = {
-    {FOLDERID_ProgramFiles, "Program Files"},
-    {FOLDERID_ProgramFilesX86, "Program Files"}
+    {FOLDERID_ProgramFiles, "in program files"},
+    {FOLDERID_ProgramFilesX86, "in program files"},
+    {FOLDERID_Desktop, "on the desktop"},
+    {FOLDERID_OneDrive, "in OneDrive"}
   };
 
   std::vector<std::pair<QString, QString>> systemDirs;
 
   for (auto&& p : systemFolderIDs) {
-    try
-    {
-      const auto dir = MOBase::getKnownFolder(p.first);
-
-      auto path = QDir::toNativeSeparators(dir.absolutePath()).toLower();
+    if (const auto dir=MOBase::getOptionalKnownFolder(p.first)) {
+      auto path = QDir::toNativeSeparators(dir->absolutePath()).toLower();
       if (!path.endsWith("\\")) {
         path += "\\";
       }
 
       systemDirs.push_back({path, p.second});
-    }
-    catch(std::exception&)
-    {
-      // ignore
     }
   }
 
@@ -306,7 +301,7 @@ int checkProtected(const QDir& d, const QString& what)
   for (auto&& sd : systemDirs) {
     if (path.startsWith(sd.first)) {
       log::warn(
-        "{} is in {}; this may cause issues because it's a protected "
+        "{} is {}; this may cause issues because it's a special "
         "system folder",
         what, sd.second);
 
