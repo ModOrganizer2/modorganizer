@@ -881,7 +881,11 @@ QString Profile::getDeleterFileName() const
 
 QString Profile::getIniFileName() const
 {
-  return m_Directory.absoluteFilePath(m_GamePlugin->iniFiles()[0]);
+  auto iniFiles = m_GamePlugin->iniFiles();
+  if (iniFiles.isEmpty())
+    return "";
+  else
+    return m_Directory.absoluteFilePath(iniFiles[0]);
 }
 
 QString Profile::getProfileTweaks() const
