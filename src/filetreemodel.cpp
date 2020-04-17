@@ -855,7 +855,7 @@ void FileTreeModel::queueRemoveItem(FileTreeItem* item)
 void FileTreeModel::removeItems()
 {
   // see comment at the top of this file
-  log::debug("remove item timer: removing {} items", m_removeItems.size());
+  trace(log::debug("remove item timer: removing {} items", m_removeItems.size()));
 
   auto copy = std::move(m_removeItems);
   m_removeItems.clear();
@@ -875,7 +875,7 @@ void FileTreeModel::queueSortItem(FileTreeItem* item)
 void FileTreeModel::sortItems()
 {
   // see comment at the top of this file
-  log::debug("sort item timer: sorting {} items", m_sortItems.size());
+  trace(log::debug("sort item timer: sorting {} items", m_sortItems.size()));
 
   auto copy = std::move(m_sortItems);
   m_sortItems.clear();
