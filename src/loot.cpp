@@ -55,7 +55,7 @@ public:
   }
 
 private:
-  static const std::size_t bufferSize = 50'000;
+  static const std::size_t bufferSize = 50000;
 
   env::HandlePtr m_stdout;
   env::HandlePtr m_readEvent;

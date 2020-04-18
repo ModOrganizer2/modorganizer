@@ -28,6 +28,49 @@ namespace Ui {
 class OverwriteInfoDialog;
 }
 
+class OverwriteFileSystemModel : public QFileSystemModel
+{
+  Q_OBJECT;
+
+public:
+  OverwriteFileSystemModel(QObject *parent)
+    : QFileSystemModel(parent), m_RegularColumnCount(0) {}
+
+  virtual int columnCount(const QModelIndex &parent) const {
+    m_RegularColumnCount = QFileSystemModel::columnCount(parent);
+    return m_RegularColumnCount;
+  }
+
+  virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const {
+    if ((orientation == Qt::Horizontal) &&
+      (section >= m_RegularColumnCount)) {
+      if (role == Qt::DisplayRole) {
+        return tr("Overwrites");
+      } else {
+        return QVariant();
+      }
+    } else {
+      return QFileSystemModel::headerData(section, orientation, role);
+    }
+  }
+
+  virtual QVariant data(const QModelIndex &index, int role) const {
+    if (index.column() == m_RegularColumnCount + 0) {
+      if (role == Qt::DisplayRole) {
+        return tr("not implemented");
+      } else {
+        return QVariant();
+      }
+    } else {
+      return QFileSystemModel::data(index, role);
+    }
+  }
+
+private:
+  mutable int m_RegularColumnCount;
+};
+
+
 class OverwriteInfoDialog : public QDialog
 {
   Q_OBJECT
