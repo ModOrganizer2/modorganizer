@@ -158,7 +158,7 @@ public:
   HandleCloserThread()
     : m_ready(false)
   {
-    m_handles.reserve(50'000);
+    m_handles.reserve(50000);
   }
 
   void shrink()

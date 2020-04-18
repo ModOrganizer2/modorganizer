@@ -27,49 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QShortcut>
 #include <Shlwapi.h>
 
-
 using namespace MOBase;
-
-
-class MyFileSystemModel : public QFileSystemModel {
-public:
-  MyFileSystemModel(QObject *parent)
-    : QFileSystemModel(parent), m_RegularColumnCount(0) {}
-
-  virtual int columnCount(const QModelIndex &parent) const {
-    m_RegularColumnCount = QFileSystemModel::columnCount(parent);
-    return m_RegularColumnCount;
-  }
-
-  virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const {
-    if ((orientation == Qt::Horizontal) &&
-        (section >= m_RegularColumnCount)) {
-      if (role == Qt::DisplayRole) {
-        return tr("Overwrites");
-      } else {
-        return QVariant();
-      }
-    } else {
-      return QFileSystemModel::headerData(section, orientation, role);
-    }
-  }
-
-  virtual QVariant data(const QModelIndex &index, int role) const {
-    if (index.column() == m_RegularColumnCount + 0) {
-      if (role == Qt::DisplayRole) {
-        return tr("not implemented");
-      } else {
-        return QVariant();
-      }
-    } else {
-      return QFileSystemModel::data(index, role);
-    }
-  }
-
-private:
-  mutable int m_RegularColumnCount;
-};
-
 
 OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget *parent)
   : QDialog(parent), ui(new Ui::OverwriteInfoDialog), m_FileSystemModel(nullptr),
@@ -79,7 +37,7 @@ OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget *parent)
 
   this->setWindowModality(Qt::NonModal);
 
-  m_FileSystemModel = new MyFileSystemModel(this);
+  m_FileSystemModel = new OverwriteFileSystemModel(this);
   m_FileSystemModel->setReadOnly(false);
   setModInfo(modInfo);
   ui->filesView->setModel(m_FileSystemModel);
