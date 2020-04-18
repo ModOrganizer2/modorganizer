@@ -65,7 +65,7 @@ bool MarkdownPage::acceptNavigationRequest(const QUrl &url, NavigationType, bool
 
 
 LootDialog::LootDialog(QWidget* parent, OrganizerCore& core, Loot& loot) :
-  QDialog(parent), ui(new Ui::LootDialog), m_core(core), m_loot(loot),
+  QDialog(parent, Qt::WindowMaximizeButtonHint), ui(new Ui::LootDialog), m_core(core), m_loot(loot),
   m_finished(false), m_cancelling(false)
 {
   createUI();
@@ -215,6 +215,7 @@ void LootDialog::createUI()
   m_report.setText(tr("Running LOOT..."));
 
   resize(650, 450);
+  setSizeGripEnabled(true);
 }
 
 void LootDialog::closeEvent(QCloseEvent* e)
