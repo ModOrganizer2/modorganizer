@@ -31,7 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <iplugingame.h>
 #include <espfile.h>
 #include <report.h>
-#include <windows_error.h>
+#include "shared/windows_error.h"
 #include <safewritefile.h>
 #include <gameplugins.h>
 

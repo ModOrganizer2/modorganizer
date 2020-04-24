@@ -1,5 +1,5 @@
 #include "iconfetcher.h"
-#include "util.h"
+#include "shared/util.h"
 
 void IconFetcher::Waiter::wait()
 {

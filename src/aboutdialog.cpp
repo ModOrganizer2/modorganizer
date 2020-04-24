@@ -20,7 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "aboutdialog.h"
 #include "ui_aboutdialog.h"
-#include "util.h"
+#include "shared/util.h"
 #include <utility.h>
 
 #include <QApplication>

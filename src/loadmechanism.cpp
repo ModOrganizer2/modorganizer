@@ -19,10 +19,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "loadmechanism.h"
 #include "utility.h"
-#include "util.h"
+#include "shared/util.h"
 #include <iplugingame.h>
 #include <scriptextender.h>
-#include <appconfig.h>
+#include "shared/appconfig.h"
 #include <log.h>
 #include <QFile>
 #include <QFileInfo>

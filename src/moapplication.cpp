@@ -21,7 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <report.h>
 #include <utility.h>
 #include <log.h>
-#include <appconfig.h>
+#include "shared/appconfig.h"
 #include <QFile>
 #include <QStringList>
 #if QT_VERSION < QT_VERSION_CHECK(5,0,0)

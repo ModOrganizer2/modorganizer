@@ -20,7 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "profilesdialog.h"
 #include "ui_profilesdialog.h"
 
-#include "appconfig.h"
+#include "shared/appconfig.h"
 #include "bsainvalidation.h"
 #include "iplugingame.h"
 #include "profile.h"

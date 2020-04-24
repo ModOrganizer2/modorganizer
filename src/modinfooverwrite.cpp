@@ -1,6 +1,6 @@
 #include "modinfooverwrite.h"
 
-#include "appconfig.h"
+#include "shared/appconfig.h"
 #include "settings.h"
 
 #include <QApplication>

@@ -1,6 +1,6 @@
 #include "settingsdialogpaths.h"
 #include "ui_settingsdialog.h"
-#include "appconfig.h"
+#include "shared/appconfig.h"
 #include <iplugingame.h>
 
 PathsSettingsTab::PathsSettingsTab(Settings& s, SettingsDialog& d)

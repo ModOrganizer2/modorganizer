@@ -32,8 +32,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <log.h>
 #include <usvfs.h>
 #include <Shellapi.h>
-#include <appconfig.h>
-#include <windows_error.h>
+#include "shared/appconfig.h"
+#include "shared/windows_error.h"
 #include <QApplication>
 #include <QMessageBox>
 #include <QtDebug>

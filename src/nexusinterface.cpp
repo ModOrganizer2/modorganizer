@@ -24,7 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "selectiondialog.h"
 #include "bbcode.h"
 #include <utility.h>
-#include <util.h>
+#include "shared/util.h"
 #include <log.h>
 
 #include <QApplication>

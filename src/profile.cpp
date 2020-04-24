@@ -22,14 +22,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfo.h"
 #include "settings.h"
 #include <utility.h>
-#include <error_report.h>
-#include "appconfig.h"
+#include "shared/error_report.h"
+#include "shared/appconfig.h"
 #include <iplugingame.h>
 #include <report.h>
 #include <safewritefile.h>
 #include <bsainvalidation.h>
 #include <dataarchives.h>
-#include "util.h"
+#include "shared/util.h"
 #include "registry.h"
 #include "modinfoforeign.h"
 #include <questionboxmemory.h>

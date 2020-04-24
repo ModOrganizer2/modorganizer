@@ -25,7 +25,7 @@
 #include <scopeguard.h>
 #include <utility.h>
 #include <usvfs.h>
-#include "appconfig.h"
+#include "shared/appconfig.h"
 #include <report.h>
 #include <questionboxmemory.h>
 #include "instancemanager.h"

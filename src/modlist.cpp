@@ -31,7 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "shared/fileentry.h"
 #include "shared/filesorigin.h"
 
-#include <appconfig.h>
+#include "shared/appconfig.h"
 #include <utility.h>
 #include <report.h>
 

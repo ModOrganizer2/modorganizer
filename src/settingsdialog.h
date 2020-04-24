@@ -21,7 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SETTINGSDIALOG_H
 
 #include "tutorabledialog.h"
-#include "util.h"
+#include "shared/util.h"
 
 class PluginContainer;
 class Settings;
