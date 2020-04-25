@@ -197,18 +197,10 @@ add_filter(NAME src/widgets GROUPS
 )
 
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-	${modorganizer_super_path}/game_features/src
-	${modorganizer_super_path}/lootcli/include
-	${modorganizer_super_path}/githubpp/src
-	${modorganizer_super_path}/bsatk/src
-	${modorganizer_super_path}/archive/src
-	${modorganizer_super_path}/esptk/src
-	${modorganizer_build_path}/usvfs/include
-)
+requires_project(game_features githubpp bsatk esptk archive usvfs)
 
-target_link_libraries(${CMAKE_PROJECT_NAME}
-	uibase usvfs_x64 bsatk esptk githubpp
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+	${modorganizer_super_path}/lootcli/include
 )
 
 
