@@ -53,7 +53,7 @@ public:
 
   /**
    * @brief get a list of mods that the user chose to activate
-   * 
+   *
    * @note This can of ocurse only be called after the dialog has been displayed
    *
    * @return set< QString > the mods to activate

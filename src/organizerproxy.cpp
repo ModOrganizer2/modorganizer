@@ -1,6 +1,6 @@
 #include "organizerproxy.h"
 
-#include "appconfig.h"
+#include "shared/appconfig.h"
 #include "organizercore.h"
 #include "plugincontainer.h"
 

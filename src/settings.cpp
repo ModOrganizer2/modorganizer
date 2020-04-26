@@ -21,7 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settingsutilities.h"
 #include "serverinfo.h"
 #include "executableslist.h"
-#include "appconfig.h"
+#include "shared/appconfig.h"
 #include "env.h"
 #include "envmetrics.h"
 #include <expanderwidget.h>

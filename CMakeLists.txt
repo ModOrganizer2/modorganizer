@@ -1,39 +1,14 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.16)
 
-ADD_COMPILE_OPTIONS(
-	$<$<CXX_COMPILER_ID:MSVC>:/MP>
-	$<$<CXX_COMPILER_ID:MSVC>:/D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING>
-	$<$<CXX_COMPILER_ID:MSVC>:$<$<CONFIG:RELEASE>:/O2>>
-	$<$<CXX_COMPILER_ID:MSVC>:$<$<CONFIG:RELWITHDEBINFO>:/O2>>)
+project(organizer)
+set(project_type exe)
+set(executable_name ModOrganizer)
+set(enable_warnings OFF)
 
-PROJECT(organizer)
+include(../cmake_common/project.cmake)
 
-# sets ModOrganizer as StartUp Project in Visual Studio
-set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY VS_STARTUP_PROJECT "ModOrganizer")
+set(additional_translations ${uibase_path}/src)
 
-set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
-set(CMAKE_INSTALL_MESSAGE NEVER)
+add_subdirectory(src)
 
-SET(DEPENDENCIES_DIR CACHE PATH "")
-
-# hint to find qt in dependencies path
-LIST(APPEND CMAKE_PREFIX_PATH ${QT_ROOT}/lib/cmake)
-LIST(APPEND CMAKE_PREFIX_PATH ${LZ4_ROOT}/dll)
-LIST(APPEND CMAKE_PREFIX_PATH ${FMT_ROOT}/build)
-
-ADD_SUBDIRECTORY(src)
-
-set(vcxproj_user_file "${CMAKE_CURRENT_BINARY_DIR}/INSTALL.vcxproj.user")
-if(NOT EXISTS ${vcxproj_user_file})
-	FILE(WRITE ${vcxproj_user_file}
-		"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
-			"<Project ToolsVersion=\"Current\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\n"
-			  "<PropertyGroup>\n"
-				"<LocalDebuggerWorkingDirectory>${CMAKE_INSTALL_PREFIX}/bin</LocalDebuggerWorkingDirectory>\n"
-				"<DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>"
-				"<LocalDebuggerCommand>${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe</LocalDebuggerCommand>\n"
-			  "</PropertyGroup>\n"
-			"</Project>\n")
-endif()
-
-INSTALL(FILES dump_running_process.bat DESTINATION bin)
+install(FILES dump_running_process.bat DESTINATION bin)

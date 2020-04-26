@@ -1,6 +1,6 @@
 #include "settingsdialogdiagnostics.h"
 #include "ui_settingsdialog.h"
-#include "appconfig.h"
+#include "shared/appconfig.h"
 #include "organizercore.h"
 #include <log.h>
 

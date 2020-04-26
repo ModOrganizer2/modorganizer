@@ -21,11 +21,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define NEXUSINTERFACE_H
 
 #include "apiuseraccount.h"
+#include "plugincontainer.h"
 
 #include <utility.h>
 #include <versioninfo.h>
 #include <imodrepositorybridge.h>
-#include <plugincontainer.h>
 
 #include <QNetworkReply>
 #include <QNetworkDiskCache>

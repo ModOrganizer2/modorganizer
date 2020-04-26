@@ -1,7 +1,7 @@
 #include "filetreemodel.h"
 #include "organizercore.h"
-#include "filesorigin.h"
-#include "util.h"
+#include "shared/filesorigin.h"
+#include "shared/util.h"
 #include "shared/directoryentry.h"
 #include "shared/fileentry.h"
 #include <log.h>

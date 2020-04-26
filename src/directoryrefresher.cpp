@@ -29,7 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "envfs.h"
 #include "modinfodialogfwd.h"
-#include "util.h"
+#include "shared/util.h"
 
 #include <gameplugins.h>
 

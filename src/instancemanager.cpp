@@ -22,7 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "selectiondialog.h"
 #include <utility.h>
 #include <log.h>
-#include <appconfig.h>
+#include "shared/appconfig.h"
 #include <QCoreApplication>
 #include <QDir>
 #include <QStandardPaths>

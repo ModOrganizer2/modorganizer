@@ -3,9 +3,9 @@
 #include "organizerproxy.h"
 #include "report.h"
 #include <ipluginproxy.h>
-#include <iuserinterface.h>
+#include "iuserinterface.h"
 #include <idownloadmanager.h>
-#include <appconfig.h>
+#include "shared/appconfig.h"
 #include <QAction>
 #include <QToolButton>
 #include <QCoreApplication>

@@ -21,7 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "originconnection.h"
 #include "filesorigin.h"
 #include "fileentry.h"
-#include "envfs.h"
+#include "../envfs.h"
 #include "util.h"
 #include "windows_error.h"
 #include <log.h>

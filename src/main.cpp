@@ -27,7 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <windows.h>
 #include <DbgHelp.h>
 
-#include <appconfig.h>
+#include "shared/appconfig.h"
 #include <utility.h>
 #include <scopeguard.h>
 #include "mainwindow.h"
@@ -48,10 +48,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "organizercore.h"
 #include "env.h"
 #include "envmodule.h"
-#include "util.h"
+#include "shared/util.h"
 
 #include <eh.h>
-#include <windows_error.h>
+#include "shared/windows_error.h"
 #include <usvfs.h>
 #include <log.h>
 

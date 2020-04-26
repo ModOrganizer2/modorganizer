@@ -1,6 +1,6 @@
 #include "settingsdialoggeneral.h"
 #include "ui_settingsdialog.h"
-#include "appconfig.h"
+#include "shared/appconfig.h"
 #include "categoriesdialog.h"
 #include "colortable.h"
 #include <utility.h>

@@ -34,7 +34,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "organizercore.h"
 #include <versioninfo.h>
 #include <report.h>
-#include <util.h>
+#include "shared/util.h"
 
 #include <QApplication>
 #include <QCoreApplication>

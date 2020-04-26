@@ -71,7 +71,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settingsdialog.h"
 #include <safewritefile.h>
 #include "nxmaccessmanager.h"
-#include "appconfig.h"
+#include "shared/appconfig.h"
 #include "eventfilter.h"
 #include "statusbar.h"
 #include "filterlist.h"
