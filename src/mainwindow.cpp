@@ -4644,6 +4644,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
     m_ContextIdx = mapToModel(m_OrganizerCore.modList(), modList->indexAt(pos));
     m_ContextRow = m_ContextIdx.row();
+    int contextColumn = m_ContextIdx.column();
 
     if (m_ContextRow == -1) {
       // no selection
@@ -4766,12 +4767,14 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
         menu.addSeparator();
 
-        menu.addAction(tr("Select Color..."), this, SLOT(setColor_clicked()));
+        if (contextColumn == ModList::COL_NOTES) {
+          menu.addAction(tr("Select Color..."), this, SLOT(setColor_clicked()));
 
-        if (info->getColor().isValid())
-          menu.addAction(tr("Reset Color"), this, SLOT(resetColor_clicked()));
+          if (info->getColor().isValid())
+            menu.addAction(tr("Reset Color"), this, SLOT(resetColor_clicked()));
 
-        menu.addSeparator();
+          menu.addSeparator();
+        }
 
         if (info->getNexusID() > 0 && Settings::instance().nexus().endorsementIntegration()) {
           switch (info->endorsedState()) {
