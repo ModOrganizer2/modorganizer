@@ -3649,11 +3649,7 @@ void MainWindow::setColor_clicked()
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
       ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-      auto flags = info->getFlags();
-      if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())
-      {
-        info->setColor(currentColor);
-      }
+       info->setColor(currentColor);
     }
   }
   else {
@@ -3669,11 +3665,7 @@ void MainWindow::resetColor_clicked()
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
       ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-      auto flags = info->getFlags();
-      if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())
-      {
-        info->setColor(color);
-      }
+       info->setColor(color);
     }
   }
   else {
@@ -4771,6 +4763,13 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_HIDDEN_FILES) != flags.end()) {
           menu.addAction(tr("Restore hidden files"), this, SLOT(restoreHiddenFiles_clicked()));
         }
+
+        menu.addSeparator();
+
+        menu.addAction(tr("Select Color..."), this, SLOT(setColor_clicked()));
+
+        if (info->getColor().isValid())
+          menu.addAction(tr("Reset Color"), this, SLOT(resetColor_clicked()));
 
         menu.addSeparator();
 

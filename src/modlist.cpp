@@ -404,7 +404,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     }
     return QVariant();
   } else if (role == Qt::ForegroundRole) {
-    if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR) && modInfo->getColor().isValid()) {
+    if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR) || (column == COL_NOTES) && modInfo->getColor().isValid()) {
       return ColorSettings::idealTextColor(modInfo->getColor());
     } else if (column == COL_NAME) {
       int highlight = modInfo->getHighlight();
@@ -430,7 +430,9 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     bool overwritten = m_Overwritten.find(modIndex) != m_Overwritten.end();
     bool archiveOverwritten = m_ArchiveOverwritten.find(modIndex) != m_ArchiveOverwritten.end();
     bool archiveLooseOverwritten = m_ArchiveLooseOverwritten.find(modIndex) != m_ArchiveLooseOverwritten.end();
-    if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
+    if (column == COL_NOTES && modInfo->getColor().isValid()) {
+      return modInfo->getColor();
+    } else if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
       return Settings::instance().colors().modlistContainsPlugin();
     } else if (overwritten || archiveLooseOverwritten) {
       return Settings::instance().colors().modlistOverwritingLoose();
