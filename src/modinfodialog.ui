@@ -1204,17 +1204,35 @@ p, li { white-space: pre-wrap; }
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_10">
        <item>
-        <widget class="QLineEdit" name="comments">
-         <property name="toolTip">
-          <string>Enter comments about the mod here.  These are displayed in the notes column of the mod list.</string>
-         </property>
-         <property name="whatsThis">
-          <string>Enter comments about the mod here.  These are displayed in the notes column of the mod list.</string>
-         </property>
-         <property name="placeholderText">
-          <string>Enter comments about the mod here.  These are displayed in the notes column of the mod list.</string>
-         </property>
-        </widget>
+        <layout class="QHBoxLayout" name="horizontalLayout_11">
+         <item>
+          <widget class="QLineEdit" name="comments">
+           <property name="toolTip">
+            <string>Enter comments about the mod here.  These are displayed in the notes column of the mod list.</string>
+           </property>
+           <property name="whatsThis">
+            <string>Enter comments about the mod here.  These are displayed in the notes column of the mod list.</string>
+           </property>
+           <property name="placeholderText">
+            <string>Enter comments about the mod here.  These are displayed in the notes column of the mod list.</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="setColorButton">
+           <property name="text">
+            <string>Set Color</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="resetColorButton">
+           <property name="text">
+            <string>Reset Color</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="HTMLEditor" name="notes">

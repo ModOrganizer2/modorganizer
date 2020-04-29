@@ -154,12 +154,29 @@ NotesTab::NotesTab(ModInfoDialogTabContext cx)
 {
   connect(ui->comments, &QLineEdit::editingFinished, [&]{ onComments(); });
   connect(ui->notes, &HTMLEditor::editingFinished, [&]{ onNotes(); });
+  connect(ui->setColorButton, &QPushButton::clicked, [&] { onSetColor(); });
+  connect(ui->resetColorButton, &QPushButton::clicked, [&] { onResetColor(); });
+}
+
+void NotesTab::updateCommentsColor(bool clear)
+{
+  QPalette commentPalette = QPalette();
+  
+  if (!clear) {
+    auto modColor = mod().getColor();
+    if (modColor.isValid()) {
+      commentPalette.setColor(QPalette::Base, modColor);
+      commentPalette.setColor(QPalette::Text, ColorSettings::idealTextColor(modColor));
+    }
+  }
+  ui->comments->setPalette(commentPalette);
 }
 
 void NotesTab::clear()
 {
   ui->comments->clear();
   ui->notes->clear();
+  updateCommentsColor(true);
   setHasData(false);
 }
 
@@ -170,6 +187,7 @@ void NotesTab::update()
 
   ui->comments->setText(comments);
   ui->notes->setText(notes);
+  updateCommentsColor();
   checkHasData();
 }
 
@@ -196,6 +214,38 @@ void NotesTab::onNotes()
   checkHasData();
 }
 
+void NotesTab::onSetColor()
+{
+  QColorDialog dialog(m_parent);
+  dialog.setOption(QColorDialog::ShowAlphaChannel);
+
+  QColor currentColor = mod().getColor();
+  
+  if (currentColor.isValid()) {
+    dialog.setCurrentColor(currentColor);
+  }
+
+  if (!dialog.exec())
+    return;
+
+  currentColor = dialog.currentColor();
+  if (!currentColor.isValid())
+    return;
+
+  mod().setColor(currentColor);
+  updateCommentsColor();
+  checkHasData();
+}
+
+void NotesTab::onResetColor()
+{
+  QColor color = QColor();
+
+  mod().setColor(color);
+  updateCommentsColor();
+  checkHasData();
+}
+
 bool NotesTab::usesOriginFiles() const
 {
   return false;
@@ -205,5 +255,6 @@ void NotesTab::checkHasData()
 {
   setHasData(
     !ui->comments->text().isEmpty() ||
-    !ui->notes->toPlainText().isEmpty());
+    !ui->notes->toPlainText().isEmpty() ||
+    mod().getColor().isValid());
 }
