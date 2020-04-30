@@ -253,15 +253,15 @@ protected:
   //
   void setFocus();
 
+  // parent widget, used to display modal dialogs
+  QWidget* m_parent;
+
 private:
   // core
   OrganizerCore& m_core;
 
   // plugin
   PluginContainer& m_plugin;
-
-  // parent widget, used to display modal dialogs
-  QWidget* m_parent;
 
   // current mod, never null
   ModInfoPtr m_mod;
@@ -299,8 +299,11 @@ public:
   bool usesOriginFiles() const override;
 
 private:
+  void updateCommentsColor(bool clear = false);
   void onComments();
   void onNotes();
+  void onSetColor();
+  void onResetColor();
   void checkHasData();
 };
 

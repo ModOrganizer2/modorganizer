@@ -3649,11 +3649,7 @@ void MainWindow::setColor_clicked()
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
       ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-      auto flags = info->getFlags();
-      if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())
-      {
-        info->setColor(currentColor);
-      }
+       info->setColor(currentColor);
     }
   }
   else {
@@ -3669,11 +3665,7 @@ void MainWindow::resetColor_clicked()
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
       ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-      auto flags = info->getFlags();
-      if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())
-      {
-        info->setColor(color);
-      }
+       info->setColor(color);
     }
   }
   else {
@@ -4652,6 +4644,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
     m_ContextIdx = mapToModel(m_OrganizerCore.modList(), modList->indexAt(pos));
     m_ContextRow = m_ContextIdx.row();
+    int contextColumn = m_ContextIdx.column();
 
     if (m_ContextRow == -1) {
       // no selection
@@ -4773,6 +4766,15 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         }
 
         menu.addSeparator();
+
+        if (contextColumn == ModList::COL_NOTES) {
+          menu.addAction(tr("Select Color..."), this, SLOT(setColor_clicked()));
+
+          if (info->getColor().isValid())
+            menu.addAction(tr("Reset Color"), this, SLOT(resetColor_clicked()));
+
+          menu.addSeparator();
+        }
 
         if (info->getNexusID() > 0 && Settings::instance().nexus().endorsementIntegration()) {
           switch (info->endorsedState()) {
