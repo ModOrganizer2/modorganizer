@@ -5,7 +5,13 @@ set(project_type exe)
 set(executable_name ModOrganizer)
 set(enable_warnings OFF)
 
-include(../cmake_common/project.cmake)
+# appveyor does not build modorganizer in its standard location, so use
+# DEPENDENCIES_DIR to find cmake_common
+if(DEFINED DEPENDENCIES_DIR)
+	include(${DEPENDENCIES_DIR}/modorganizer_super/cmake_common/project.cmake)
+else()
+	include(../cmake_common/project.cmake)
+endif()
 
 set(additional_translations ${uibase_path}/src)
 
