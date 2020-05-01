@@ -324,7 +324,7 @@ void NexusTab::onSourceGameChanged()
 
   for (auto game : plugin().plugins<MOBase::IPluginGame>()) {
     if (game->gameName() == ui->sourceGame->currentText()) {
-      mod().setGameName(game->gameShortName());
+      mod().setGamePlugin(game);
       mod().setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
       refreshData(mod().getNexusID());
       return;

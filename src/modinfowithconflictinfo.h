@@ -12,27 +12,27 @@ public:
 
   ModInfoWithConflictInfo(PluginContainer *pluginContainer, MOShared::DirectoryEntry **directoryStructure);
 
-  std::vector<ModInfo::EConflictFlag> getConflictFlags() const;
-  virtual std::vector<ModInfo::EFlag> getFlags() const;
+  std::vector<ModInfo::EConflictFlag> getConflictFlags() const override;
+  virtual std::vector<ModInfo::EFlag> getFlags() const override;
 
   /**
    * @brief clear all caches held for this mod
    */
-  virtual void clearCaches();
+  virtual void clearCaches() override;
 
-  virtual std::set<unsigned int> getModOverwrite() { return m_OverwriteList; }
+  virtual std::set<unsigned int> getModOverwrite() const override { return m_OverwriteList; }
 
-  virtual std::set<unsigned int> getModOverwritten() { return m_OverwrittenList; }
+  virtual std::set<unsigned int> getModOverwritten() const override { return m_OverwrittenList; }
 
-  virtual std::set<unsigned int> getModArchiveOverwrite() { return m_ArchiveOverwriteList; }
+  virtual std::set<unsigned int> getModArchiveOverwrite() const override { return m_ArchiveOverwriteList; }
 
-  virtual std::set<unsigned int> getModArchiveOverwritten() { return m_ArchiveOverwrittenList; }
+  virtual std::set<unsigned int> getModArchiveOverwritten() const override { return m_ArchiveOverwrittenList; }
 
-  virtual std::set<unsigned int> getModArchiveLooseOverwrite() { return m_ArchiveLooseOverwriteList; }
+  virtual std::set<unsigned int> getModArchiveLooseOverwrite() const override { return m_ArchiveLooseOverwriteList; }
 
-  virtual std::set<unsigned int> getModArchiveLooseOverwritten() { return m_ArchiveLooseOverwrittenList; }
+  virtual std::set<unsigned int> getModArchiveLooseOverwritten() const override { return m_ArchiveLooseOverwrittenList; }
 
-  virtual void doConflictCheck() const;
+  virtual void doConflictCheck() const override;
 
 private:
 

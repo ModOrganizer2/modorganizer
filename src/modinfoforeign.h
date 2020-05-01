@@ -1,9 +1,11 @@
 #ifndef MODINFOFOREIGN_H
 #define MODINFOFOREIGN_H
 
+#include <limits>
+
 #include "modinfowithconflictinfo.h"
 
-class ModInfoForeign : public ModInfoWithConflictInfo
+class ModInfoForeign: public ModInfoWithConflictInfo
 {
 
   Q_OBJECT
@@ -12,65 +14,66 @@ class ModInfoForeign : public ModInfoWithConflictInfo
 
 public:
 
-  virtual bool updateAvailable() const { return false; }
-  virtual bool updateIgnored() const { return false; }
-  virtual bool downgradeAvailable() const { return false; }
-  virtual bool updateNXMInfo() { return false; }
-  virtual void setCategory(int, bool) {}
-  virtual bool setName(const QString&) { return false; }
-  virtual void setComments(const QString&) {}
-  virtual void setNotes(const QString&) {}
-  virtual void setGameName(const QString&) {}
-  virtual void setNexusID(int) {}
-  virtual void setNewestVersion(const MOBase::VersionInfo&) {}
-  virtual void ignoreUpdate(bool) {}
-  virtual void setNexusDescription(const QString&) {}
-  virtual void setInstallationFile(const QString&) {}
-  virtual void addNexusCategory(int) {}
-  virtual void setIsEndorsed(bool) {}
-  virtual void setNeverEndorse() {}
-  virtual void setIsTracked(bool) {}
-  virtual bool remove() { return false; }
-  virtual void endorse(bool) {}
-  virtual void track(bool) {}
-  virtual void parseNexusInfo() {}
-  virtual bool isEmpty() const { return false; }
-  virtual QString name() const { return m_Name; }
-  virtual QString internalName() const { return m_InternalName; }
-  virtual QString comments() const { return ""; }
-  virtual QString notes() const { return ""; }
-  virtual QDateTime creationTime() const;
-  virtual QString absolutePath() const;
-  virtual MOBase::VersionInfo getNewestVersion() const { return QString(); }
-  virtual QString getInstallationFile() const { return ""; }
-  virtual QString getGameName() const { return ""; }
-  virtual int getNexusID() const { return -1; }
-  virtual QDateTime getExpires() const { return QDateTime(); }
-  virtual std::vector<QString> getIniTweaks() const { return std::vector<QString>(); }
-  virtual std::vector<ModInfo::EFlag> getFlags() const;
-  virtual int getHighlight() const;
-  virtual QString getDescription() const;
-  virtual int getNexusFileStatus() const { return 0; }
-  virtual void setNexusFileStatus(int) {}
-  virtual QDateTime getLastNexusUpdate() const { return QDateTime(); }
-  virtual void setLastNexusUpdate(QDateTime) {}
-  virtual QDateTime getLastNexusQuery() const { return QDateTime(); }
-  virtual void setLastNexusQuery(QDateTime) {}
-  virtual QDateTime getNexusLastModified() const { return QDateTime(); }
-  virtual void setNexusLastModified(QDateTime) {}
-  virtual QString getNexusDescription() const { return QString(); }
-  virtual int getFixedPriority() const { return INT_MIN; }
-  virtual QStringList archives(bool checkOnDisk = false)  { return m_Archives; }
-  virtual QStringList stealFiles() const { return m_Archives + QStringList(m_ReferenceFile); }
-  virtual bool alwaysEnabled() const { return true; }
-  virtual void addInstalledFile(int, int) {}
+  virtual bool updateAvailable() const override { return false; }
+  virtual bool updateIgnored() const override { return false; }
+  virtual bool downgradeAvailable() const override { return false; }
+  virtual bool updateNXMInfo() override { return false; }
+  virtual void setCategory(int, bool) override {}
+  virtual bool setName(const QString&) override { return false; }
+  virtual void setComments(const QString&) override {}
+  virtual void setNotes(const QString&) override {}
+  virtual void setGamePlugin(const MOBase::IPluginGame*) override {}
+  virtual void setNexusID(int) override {}
+  virtual void setNewestVersion(const MOBase::VersionInfo&) override {}
+  virtual void ignoreUpdate(bool) override {}
+  virtual void setNexusDescription(const QString&) override {}
+  virtual void setInstallationFile(const QString&) override {}
+  virtual void addNexusCategory(int) override {}
+  virtual void setIsEndorsed(bool) override {}
+  virtual void setNeverEndorse() override {}
+  virtual void setIsTracked(bool) override {}
+  virtual bool remove() override { return false; }
+  virtual void endorse(bool) override {}
+  virtual void track(bool) override {}
+  virtual bool isEmpty() const override { return false; }
+  virtual QString name() const override { return m_Name; }
+  virtual QString internalName() const override { return m_InternalName; }
+  virtual QString comments() const override { return ""; }
+  virtual QString notes() const override { return ""; }
+  virtual QDateTime creationTime() const override;
+  virtual QString absolutePath() const override;
+  virtual MOBase::VersionInfo getNewestVersion() const override { return QString(); }
+  virtual QString getInstallationFile() const override { return ""; }
+  virtual QString getGameName() const override { return ""; }
+  virtual int getNexusID() const override { return -1; }
+  virtual QDateTime getExpires() const override { return QDateTime(); }
+  virtual std::vector<QString> getIniTweaks() const override { return std::vector<QString>(); }
+  virtual std::vector<ModInfo::EFlag> getFlags() const override;
+  virtual int getHighlight() const override;
+  virtual QString getDescription() const override;
+  virtual int getNexusFileStatus() const override { return 0; }
+  virtual void setNexusFileStatus(int) override {}
+  virtual QDateTime getLastNexusUpdate() const override { return QDateTime(); }
+  virtual void setLastNexusUpdate(QDateTime) override {}
+  virtual QDateTime getLastNexusQuery() const override { return QDateTime(); }
+  virtual void setLastNexusQuery(QDateTime) override {}
+  virtual QDateTime getNexusLastModified() const override { return QDateTime(); }
+  virtual void setNexusLastModified(QDateTime) override {}
+  virtual QString getNexusDescription() const override { return QString(); }
+  virtual int getFixedPriority() const override { return std::numeric_limits<int>::min(); }
+  virtual QStringList archives(bool = false) override { return m_Archives; }
+  virtual QStringList stealFiles() const override { return m_Archives + QStringList(m_ReferenceFile); }
+  virtual bool alwaysEnabled() const override { return true; }
+  virtual void addInstalledFile(int, int) override {}
 
   ModInfo::EModType modType() const { return m_ModType; }
 
 protected:
   ModInfoForeign(const QString &modName, const QString &referenceFile,
                  const QStringList &archives, ModInfo::EModType modType,
-                 MOShared::DirectoryEntry **directoryStructure, PluginContainer *pluginContainer);
+                 MOShared::DirectoryEntry **directoryStructure, PluginContainer *pluginContainer);  
+  
+  virtual bool doTestValid() const { return true;  }
 private:
 
   QString m_Name;

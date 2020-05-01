@@ -1,4 +1,5 @@
 #include "modinforegular.h"
+#include "installationtester.h"
 
 #include "categories.h"
 #include "messagedialog.h"
@@ -29,6 +30,7 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGa
   , m_Name(path.dirName())
   , m_Path(path.absolutePath())
   , m_Repository()
+  , m_GamePlugin(game)
   , m_GameName(game->gameShortName())
   , m_IsAlternate(false)
   , m_Converted(false)
@@ -269,6 +271,34 @@ void ModInfoRegular::saveMeta()
   }
 }
 
+bool ModInfoRegular::doTestValid() const {
+
+  bool valid = false;
+  QDirIterator dirIter(absolutePath());
+  while (dirIter.hasNext()) {
+    dirIter.next();
+    if (dirIter.fileInfo().isDir()) {
+      if (InstallationTester::isTopLevelDirectory(dirIter.fileName())) {
+        valid = true;
+        break;
+      }
+    }
+    else {
+      if (InstallationTester::isTopLevelSuffix(dirIter.fileName())) {
+        valid = true;
+        break;
+      }
+    }
+  }
+  
+  // NOTE: in Qt 4.7 it seems that QDirIterator leaves a file handle open if it is not iterated to the
+  // end
+  while (dirIter.hasNext()) {
+    dirIter.next();
+  }
+
+  return valid;
+}
 
 bool ModInfoRegular::updateAvailable() const
 {
@@ -467,10 +497,12 @@ void ModInfoRegular::setNotes(const QString &notes)
   m_MetaInfoChanged = true;
 }
 
-void ModInfoRegular::setGameName(const QString &gameName)
+void ModInfoRegular::setGamePlugin(const MOBase::IPluginGame* gamePlugin)
 {
-  m_GameName = gameName;
+  m_GamePlugin = gamePlugin;
+  m_GameName = gamePlugin->gameShortName();
   m_MetaInfoChanged = true;
+  testValid();
 }
 
 void ModInfoRegular::setNexusID(int modID)
