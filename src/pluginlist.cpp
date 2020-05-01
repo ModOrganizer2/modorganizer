@@ -185,7 +185,8 @@ void PluginList::refresh(const QString &profileName
   ChangeBracket<PluginList> layoutChange(this);
 
   QStringList primaryPlugins = m_GamePlugin->primaryPlugins();
-  bool lightPluginsAreSupported = m_GamePlugin->feature<GamePlugins>()->lightPluginsAreSupported();
+  GamePlugins *gamePlugins = m_GamePlugin->feature<GamePlugins>();
+  const bool lightPluginsAreSupported = gamePlugins ? gamePlugins->lightPluginsAreSupported() : false;
 
   m_CurrentProfile = profileName;
 
@@ -265,8 +266,9 @@ void PluginList::refresh(const QString &profileName
   // indices need to work. priority will be off however
   updateIndices();
 
-  GamePlugins *gamePlugins = m_GamePlugin->feature<GamePlugins>();
-  gamePlugins->readPluginLists(this);
+  if (gamePlugins) {
+    gamePlugins->readPluginLists(this);
+  }
 
   testMasters();
 
@@ -521,7 +523,9 @@ void PluginList::saveTo(const QString &lockedOrderFileName
                         , bool hideUnchecked) const
 {
   GamePlugins *gamePlugins = m_GamePlugin->feature<GamePlugins>();
-  gamePlugins->writePluginLists(this);
+  if (gamePlugins) {
+    gamePlugins->writePluginLists(this);
+  }
 
   writeLockedOrder(lockedOrderFileName);
 
@@ -870,7 +874,10 @@ void PluginList::generatePluginIndexes()
 {
   int numESLs = 0;
   int numSkipped = 0;
-  bool lightPluginsSupported = m_GamePlugin->feature<GamePlugins>()->lightPluginsAreSupported();
+
+  GamePlugins* gamePlugins = m_GamePlugin->feature<GamePlugins>();
+  const bool lightPluginsSupported = gamePlugins ? gamePlugins->lightPluginsAreSupported() : false;
+
   for (int l = 0; l < m_ESPs.size(); ++l) {
     int i = m_ESPsByPriority.at(l);
     if (!m_ESPs[i].enabled) {
