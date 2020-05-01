@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <tuple>
+
 #include "installationmanager.h"
 
 #include "utility.h"
@@ -55,6 +57,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <boost/assign.hpp>
 #include <boost/scoped_ptr.hpp>
+
+#include "archivefiletree.h"
 
 
 using namespace MOBase;
@@ -121,172 +125,18 @@ void InstallationManager::queryPassword(QString *password)
                                     tr("Password"), QLineEdit::Password);
 }
 
-void InstallationManager::mapToArchive(const DirectoryTree::Node *node, QString path, FileData * const *data)
+
+bool InstallationManager::extractFiles(QDir extractPath)
 {
-  if (path.length() > 0) {
-    // when using a long windows path (starting with \\?\) we apparently can have redundant
-    // . components in the path. This wasn't a problem with "regular" path names.
-    if (path == ".") {
-      path.clear();
-    } else {
-      path.append("\\");
-    }
-  }
-
-  for (DirectoryTree::const_leaf_iterator iter = node->leafsBegin(); iter != node->leafsEnd(); ++iter) {
-    data[iter->getIndex()]->addOutputFileName(path + iter->getName().toQString());
-  }
-
-  for (DirectoryTree::const_node_iterator iter = node->nodesBegin(); iter != node->nodesEnd(); ++iter) {
-    QString temp = path + (*iter)->getData().name.toQString();
-    if ((*iter)->getData().index != -1) {
-      data[(*iter)->getData().index]->addOutputFileName(temp);
-    }
-    mapToArchive(*iter, temp, data);
-  }
-}
-
-
-void InstallationManager::mapToArchive(const DirectoryTree::Node *baseNode)
-{
-  FileData* const *data;
-  size_t size;
-  m_ArchiveHandler->getFileList(data, size);
-
-  mapToArchive(baseNode, "", data);
-}
-
-
-bool InstallationManager::unpackSingleFile(const QString &fileName)
-{
-  FileData* const *data;
-  size_t size;
-  m_ArchiveHandler->getFileList(data, size);
-
-  QString baseName = QFileInfo(fileName).fileName();
-
-  bool available = false;
-  for (size_t i = 0; i < size; ++i) {
-    if (data[i]->getFileName().compare(fileName, Qt::CaseInsensitive) == 0) {
-      available = true;
-      data[i]->addOutputFileName(baseName);
-      m_TempFilesToDelete.insert(baseName);
-    }
-  }
-
-  if (!available) {
-    return false;
-  }
-
   m_InstallationProgress = new QProgressDialog(m_ParentWidget);
-  ON_BLOCK_EXIT([this] () {
+  ON_BLOCK_EXIT([this]() {
     m_InstallationProgress->hide();
     m_InstallationProgress->deleteLater();
     m_InstallationProgress = nullptr;
     m_Progress = 0;
-  });
+    });
   m_InstallationProgress->setWindowFlags(
-        m_InstallationProgress->windowFlags() & ~Qt::WindowContextHelpButtonHint);
-
-  m_InstallationProgress->setWindowTitle(tr("Extracting files"));
-  m_InstallationProgress->setWindowModality(Qt::WindowModal);
-  m_InstallationProgress->setFixedSize(600, 100);
-  m_InstallationProgress->show();
-
-  QFuture<bool> future = QtConcurrent::run([&]() -> bool {
-    return m_ArchiveHandler->extract(
-      QDir::tempPath(),
-      new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
-      nullptr,
-      new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError)
-    );
-  });
-  do {
-    if (m_Progress != m_InstallationProgress->value())
-      m_InstallationProgress->setValue(m_Progress);
-    QCoreApplication::processEvents();
-  } while (!future.isFinished() || m_InstallationProgress->isVisible());
-  bool res = future.result();
-
-  return res;
-}
-
-
-QString InstallationManager::extractFile(const QString &fileName)
-{
-  if (unpackSingleFile(fileName)) {
-    return QDir::tempPath() + "/" + QFileInfo(fileName).fileName();
-  } else {
-    return QString();
-  }
-}
-
-
-static QString canonicalize(const QString &name)
-{
-  QString result(name);
-  if ((result.startsWith('/')) ||
-      (result.startsWith('\\'))) {
-    result.remove(0, 1);
-  }
-  result.replace('/', '\\');
-
-  return result;
-}
-
-
-QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool flatten)
-{
-  QStringList files;
-
-  for (const QString &file : filesOrig) {
-    files.append(canonicalize(file));
-  }
-
-  QStringList result;
-
-  FileData* const *data;
-  size_t size;
-  m_ArchiveHandler->getFileList(data, size);
-
-  for (size_t i = 0; i < size; ++i) {
-    //FIXME Use qstring all the way through
-    if (files.contains(data[i]->getFileName(), Qt::CaseInsensitive)) {
-      std::wstring temp = data[i]->getFileName().toStdWString();
-      wchar_t const * const origFile = temp.c_str();
-      const wchar_t *targetFile = origFile;
-      //Note: I don't think 'flatten' is ever set to true. so this code
-      //might never be executed
-      if (flatten) {
-        targetFile = wcsrchr(origFile/*data[i]->getFileName()*/, '\\');
-        if (targetFile == nullptr) {
-          targetFile = wcsrchr(origFile/*data[i]->getFileName()*/, '/');
-        }
-        if (targetFile == nullptr) {
-          log::error("Failed to find backslash in {}", data[i]->getFileName());
-          continue;
-        } else {
-          // skip the slash
-          ++targetFile;
-        }
-      }
-      data[i]->addOutputFileName(ToQString(targetFile));
-
-      result.append(QDir::tempPath().append("/").append(ToQString(targetFile)));
-
-      m_TempFilesToDelete.insert(ToQString(targetFile));
-    }
-  }
-
-  m_InstallationProgress = new QProgressDialog(m_ParentWidget);
-  ON_BLOCK_EXIT([this] () {
-    m_InstallationProgress->hide();
-    m_InstallationProgress->deleteLater();
-    m_InstallationProgress = nullptr;
-    m_Progress = 0;
-  });
-  m_InstallationProgress->setWindowFlags(
-        m_InstallationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+    m_InstallationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
   m_InstallationProgress->setWindowTitle(tr("Extracting files"));
   m_InstallationProgress->setWindowModality(Qt::WindowModal);
   m_InstallationProgress->setFixedSize(600, 100);
@@ -298,9 +148,9 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
       QDir::tempPath(),
       new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
       nullptr,
-      new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError)
+      new MethodCallback<InstallationManager, void, QString const&>(this, &InstallationManager::report7ZipError)
     );
-  });
+    });
   do {
     if (m_Progress != m_InstallationProgress->value())
       m_InstallationProgress->setValue(m_Progress);
@@ -310,8 +160,9 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
     if (m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
       if (!m_ErrorMessage.isEmpty()) {
         throw MyException(tr("Extraction failed: %1").arg(m_ErrorMessage));
-      } else {
-        return QStringList();
+      }
+      else {
+        return false;
       }
     }
     else {
@@ -319,10 +170,45 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
     }
   }
 
+  return true;
+}
+
+
+QString InstallationManager::extractFile(std::shared_ptr<const FileTreeEntry> entry)
+{
+  QStringList result = this->extractFiles({ entry });
+  return result.isEmpty() ? QString() : result[0];
+}
+
+
+QStringList InstallationManager::extractFiles(std::vector<std::shared_ptr<const FileTreeEntry>> const& entries)
+{
+  // Remove the directory since mapToArchive would add them:
+  std::vector<std::shared_ptr<const FileTreeEntry>> files;
+  std::copy_if(entries.begin(), entries.end(), std::back_inserter(files),
+    [](auto const& entry) { return entry->isFile(); });
+
+  // Update the archive:
+  ArchiveFileTree::mapToArchive(m_ArchiveHandler, files);
+
+  // Retrieve the file path:
+  QStringList result;
+
+  for (auto &entry : files) {
+    auto path = entry->path();
+    result.append(QDir::tempPath().append("/").append(path));
+    m_TempFilesToDelete.insert(path);
+  }
+
+  if (!extractFiles(QDir::tempPath())) {
+    return QStringList();
+  }
+
   return result;
 }
 
-IPluginInstaller::EInstallResult InstallationManager::installArchive(GuessedValue<QString> &modName, const QString &archiveName, const int &modId)
+
+IPluginInstaller::EInstallResult InstallationManager::installArchive(GuessedValue<QString> &modName, const QString &archiveName, int modId)
 {
   // in earlier versions the modName was copied here and the copy passed to install. I don't know why I did this and it causes
   // a problem if this is called by the bundle installer and the bundled installer adds additional names that then end up being used,
@@ -330,110 +216,6 @@ IPluginInstaller::EInstallResult InstallationManager::installArchive(GuessedValu
   bool iniTweaks;
   return install(archiveName, modName, iniTweaks, modId);
 }
-
-DirectoryTree *InstallationManager::createFilesTree()
-{
-  FileData* const *data;
-  size_t size;
-  m_ArchiveHandler->getFileList(data, size);
-
-  QScopedPointer<DirectoryTree> result(new DirectoryTree);
-
-  for (size_t i = 0; i < size; ++i) {
-    // the files are in a flat list where each file has a a full path relative to the archive root
-    // to create a tree, we have to iterate over each path component of each. This could be sped up by
-    // grouping the filenames first, but so far there doesn't seem to be an actual performance problem
-    DirectoryTree::Node *currentNode = result.data();
-
-    QString fileName = data[i]->getFileName();
-    QStringList components = fileName.split("\\");
-
-    // iterate over all path-components of this filename (including the filename itself)
-    for (QStringList::iterator componentIter = components.begin(); componentIter != components.end(); ++componentIter) {
-      if (componentIter->size() == 0) {
-        // empty string indicates fileName is actually only a directory name and we have
-        // completely processed it already.
-        break;
-      }
-
-      bool exists = false;
-      // test if this path is already in the tree
-      for (DirectoryTree::node_iterator nodeIter = currentNode->nodesBegin(); nodeIter != currentNode->nodesEnd(); ++nodeIter) {
-        if ((*nodeIter)->getData().name == *componentIter) {
-          currentNode = *nodeIter;
-          exists = true;
-          break;
-        }
-      }
-
-      if (!exists) {
-        if (componentIter + 1 == components.end()) {
-          // last path component. directory or file?
-          if (data[i]->isDirectory()) {
-            // this is a bit problematic. archives will often only list directories if they are empty,
-            // otherwise the dir only appears in the path of a file. In the UI however we allow the user
-            // to uncheck all files in a directory while keeping the dir checked. Those directories are
-            // currently not installed.
-            DirectoryTree::Node *newNode = new DirectoryTree::Node;
-            newNode->setData(
-                DirectoryTreeInformation(*componentIter, static_cast<int>(i)));
-            currentNode->addNode(newNode, false);
-            currentNode = newNode;
-          } else {
-            currentNode->addLeaf(FileTreeInformation(*componentIter, i));
-          }
-        } else {
-          DirectoryTree::Node *newNode = new DirectoryTree::Node;
-          newNode->setData(DirectoryTreeInformation(*componentIter, -1));
-          currentNode->addNode(newNode, false);
-          currentNode = newNode;
-        }
-      }
-    }
-  }
-
-  return result.take();
-}
-
-
-bool InstallationManager::isSimpleArchiveTopLayer(const DirectoryTree::Node *node, bool bainStyle)
-{
-  // see if there is at least one directory that makes sense on the top level
-  for (DirectoryTree::const_node_iterator iter = node->nodesBegin(); iter != node->nodesEnd(); ++iter) {
-    if ((bainStyle && InstallationTester::isTopLevelDirectoryBain((*iter)->getData().name)) ||
-        (!bainStyle && InstallationTester::isTopLevelDirectory((*iter)->getData().name))) {
-      log::debug("{} on the top level", (*iter)->getData().name.toQString());
-      return true;
-    }
-  }
-
-  // see if there is a file that makes sense on the top level
-  for (DirectoryTree::const_leaf_iterator iter = node->leafsBegin(); iter != node->leafsEnd(); ++iter) {
-    if (InstallationTester::isTopLevelSuffix(iter->getName())) {
-      return true;
-    }
-  }
-  return false;
-}
-
-
-DirectoryTree::Node *InstallationManager::getSimpleArchiveBase(DirectoryTree *dataTree)
-{
-  DirectoryTree::Node *currentNode = dataTree;
-
-  while (true) {
-    if (isSimpleArchiveTopLayer(currentNode, false)) {
-      return currentNode;
-    } else if ((currentNode->numLeafs() == 0) &&
-               (currentNode->numNodes() == 1)) {
-      currentNode = *currentNode->nodesBegin();
-    } else {
-      log::debug("not a simple archive");
-      return nullptr;
-    }
-  }
-}
-
 
 void InstallationManager::updateProgress(float percentage)
 {
@@ -804,7 +586,8 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
   }
   ON_BLOCK_EXIT(std::bind(&InstallationManager::postInstallCleanup, this));
 
-  QScopedPointer<DirectoryTree> filesTree(archiveOpen ? createFilesTree() : nullptr);
+  std::shared_ptr<IFileTree> filesTree = 
+    archiveOpen ? ArchiveFileTree::makeTree(m_ArchiveHandler) : nullptr;
   IPluginInstaller::EInstallResult installResult = IPluginInstaller::RESULT_NOTATTEMPTED;
 
   std::sort(m_Installers.begin(), m_Installers.end(), [] (IPluginInstaller *LHS, IPluginInstaller *RHS) {
@@ -831,11 +614,20 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
         IPluginInstallerSimple *installerSimple
             = dynamic_cast<IPluginInstallerSimple *>(installer);
         if ((installerSimple != nullptr) && (filesTree != nullptr)
-            && (installer->isArchiveSupported(*filesTree))) {
+            && (installer->isArchiveSupported(filesTree))) {
           installResult
-              = installerSimple->install(modName, *filesTree, version, modID);
+              = installerSimple->install(modName, filesTree, version, modID);
           if (installResult == IPluginInstaller::RESULT_SUCCESS) {
-            mapToArchive(filesTree.data());
+
+            // Note: Have to maintain a pointer to IFileTree because install() takes a
+            // reference. This could be an issue if ever a plugin creates a new tree that
+            // is not a ArchiveFileTree.
+            ArchiveFileTree* p = dynamic_cast<ArchiveFileTree*>(filesTree.get());
+            if (p == nullptr) {
+              throw IncompatibilityException(tr("Invalid file tree returned by plugin."));
+            }
+            p->mapToArchive(m_ArchiveHandler);
+
             // the simple installer only prepares the installation, the rest
             // works the same for all installers
             installResult = doInstall(modName, gameName, modID, version, newestVersion, categoryID, fileCategoryID, repository);
@@ -848,7 +640,7 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
             = dynamic_cast<IPluginInstallerCustom *>(installer);
         if ((installerCustom != nullptr)
             && (((filesTree != nullptr)
-                 && installer->isArchiveSupported(*filesTree))
+                 && installer->isArchiveSupported(filesTree))
                 || ((filesTree == nullptr)
                     && installerCustom->isArchiveSupported(fileName)))) {
           std::set<QString> installerExt
@@ -880,9 +672,9 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
       case IPluginInstaller::RESULT_SUCCESS:
       case IPluginInstaller::RESULT_SUCCESSCANCEL: {
         if (filesTree != nullptr) {
-          DirectoryTree::node_iterator iniTweakNode = filesTree->nodeFind(DirectoryTreeInformation("INI Tweaks"));
-          hasIniTweaks = (iniTweakNode != filesTree->nodesEnd()) &&
-            ((*iniTweakNode)->numLeafs() != 0);
+          auto iniTweakEntry = filesTree->find("INI Tweaks", FileTreeEntry::DIRECTORY);
+          hasIniTweaks = iniTweakEntry != nullptr 
+            && !iniTweakEntry->astree()->empty();
         }
         return IPluginInstaller::RESULT_SUCCESS;
       } break;
