@@ -404,7 +404,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     }
     return QVariant();
   } else if (role == Qt::ForegroundRole) {
-    if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR) || (column == COL_NOTES) && modInfo->getColor().isValid()) {
+    if ((modInfo->hasFlag(ModInfo::FLAG_SEPARATOR) || (column == COL_NOTES)) && modInfo->getColor().isValid()) {
       return ColorSettings::idealTextColor(modInfo->getColor());
     } else if (column == COL_NAME) {
       int highlight = modInfo->getHighlight();
