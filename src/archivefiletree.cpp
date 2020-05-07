@@ -158,7 +158,7 @@ protected:
 
     // We know that the files are sorted:
     QString currentName = "";
-    int currentIndex;
+    int currentIndex = -1;
     std::vector<File> currentFiles;
     for (auto& p : m_Files) {
 
@@ -167,7 +167,6 @@ protected:
       // one for a/b while we would want the one for a, but we correct that later):
       if (currentName == "") {
         currentName = std::get<0>(p)[0];
-        currentIndex = std::get<2>(p);
       }
 
       // If the name is different, we need to create a directory from what we have 
@@ -178,7 +177,7 @@ protected:
         currentFiles.clear(); // Back to a valid state.
 
         // Retrieve the next index:
-        currentIndex = std::get<2>(p);
+        currentIndex = -1;
       }
 
       // We can always override the current name:
