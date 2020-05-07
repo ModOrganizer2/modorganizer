@@ -46,7 +46,7 @@ public:
   virtual QString absolutePath() const override;
   virtual MOBase::VersionInfo getNewestVersion() const override { return QString(); }
   virtual QString getInstallationFile() const override { return ""; }
-  virtual int getFixedPriority() const override { return std::numeric_limits<int>::min(); }
+  virtual int getFixedPriority() const override { return std::numeric_limits<int>::max(); }
   virtual QString getGameName() const override { return ""; }
   virtual int getNexusID() const override { return -1; }
   virtual QDateTime getExpires() const override { return QDateTime(); }
@@ -66,9 +66,6 @@ public:
   virtual QString getNexusDescription() const override { return QString(); }
   virtual QStringList archives(bool checkOnDisk = false) override;
   virtual void addInstalledFile(int, int) override {}
-
-protected:
-  virtual bool doTestValid() const { return true; }
 
 private:
   ModInfoOverwrite(PluginContainer *pluginContainer, MOShared::DirectoryEntry **directoryStructure );

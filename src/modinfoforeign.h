@@ -73,7 +73,6 @@ protected:
                  const QStringList &archives, ModInfo::EModType modType,
                  MOShared::DirectoryEntry **directoryStructure, PluginContainer *pluginContainer);  
   
-  virtual bool doTestValid() const { return true;  }
 private:
 
   QString m_Name;

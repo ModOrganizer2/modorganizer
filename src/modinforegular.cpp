@@ -1,5 +1,4 @@
 #include "modinforegular.h"
-#include "installationtester.h"
 
 #include "categories.h"
 #include "messagedialog.h"
@@ -271,34 +270,6 @@ void ModInfoRegular::saveMeta()
   }
 }
 
-bool ModInfoRegular::doTestValid() const {
-
-  bool valid = false;
-  QDirIterator dirIter(absolutePath());
-  while (dirIter.hasNext()) {
-    dirIter.next();
-    if (dirIter.fileInfo().isDir()) {
-      if (InstallationTester::isTopLevelDirectory(dirIter.fileName())) {
-        valid = true;
-        break;
-      }
-    }
-    else {
-      if (InstallationTester::isTopLevelSuffix(dirIter.fileName())) {
-        valid = true;
-        break;
-      }
-    }
-  }
-  
-  // NOTE: in Qt 4.7 it seems that QDirIterator leaves a file handle open if it is not iterated to the
-  // end
-  while (dirIter.hasNext()) {
-    dirIter.next();
-  }
-
-  return valid;
-}
 
 bool ModInfoRegular::updateAvailable() const
 {

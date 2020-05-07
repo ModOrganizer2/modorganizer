@@ -420,13 +420,6 @@ protected:
 
   ModInfoRegular(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, const QDir &path, MOShared::DirectoryEntry **directoryStructure);
 
-  /**
-   * @brief check if the content of this mod is valid.
-   *
-   * @return true if the content is valid, false otherwize.
-   **/
-    virtual bool doTestValid() const;
-
 private:
 
   QString m_Name;

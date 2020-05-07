@@ -34,6 +34,15 @@ public:
 
   virtual void doConflictCheck() const override;
 
+protected:
+
+  /**
+   * @brief check if the content of this mod is valid.
+   *
+   * @return true if the content is valid, false otherwize.
+   **/
+  virtual bool doTestValid() const;
+
 private:
 
   enum EConflictType {
