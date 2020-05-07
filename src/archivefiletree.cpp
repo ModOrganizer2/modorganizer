@@ -73,6 +73,16 @@ public: // Public for make_shared (but not accessible by other since not exposed
   ArchiveFileTreeImpl(std::shared_ptr<IFileTree> parent, QString name, int index, std::vector<File>&& files)
     : FileTreeEntry(parent, name), ArchiveFileEntry(parent, name, index), IFileTree(), m_Files(std::move(files)) { }
 
+public: // Override to avoid VS warnings:
+
+  virtual std::shared_ptr<IFileTree> astree() override {
+    return IFileTree::astree();
+  }
+
+  virtual std::shared_ptr<const IFileTree> astree() const override {
+    return IFileTree::astree();
+  }
+
 public: // Overrides:
 
   /**
