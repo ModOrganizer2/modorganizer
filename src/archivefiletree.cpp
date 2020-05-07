@@ -191,9 +191,11 @@ protected:
             std::make_shared<ArchiveFileEntry>(parent, currentName, std::get<2>(p), QDateTime()));
           currentName = "";
         }
-        // Otherwize, it is the actual "file" corresponding to the directory, so we can retrieve
-        // the index here:
-        currentIndex = std::get<2>(p);
+        else {
+          // Otherwize, it is the actual "file" corresponding to the directory, so we can retrieve
+          // the index here:
+          currentIndex = std::get<2>(p);
+        }
       }
       else {
         currentFiles.push_back({
