@@ -388,7 +388,7 @@ public:
 
   virtual void setColor(QColor color) override;
 
-  virtual QColor getColor();
+  virtual QColor getColor() const override;
 
   virtual void addInstalledFile(int modId, int fileId) override;
 

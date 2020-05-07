@@ -559,7 +559,7 @@ void ModInfoRegular::setColor(QColor color)
   m_MetaInfoChanged = true;
 }
 
-QColor ModInfoRegular::getColor()
+QColor ModInfoRegular::getColor() const
 {
   return m_Color;
 }
