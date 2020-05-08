@@ -162,9 +162,7 @@ protected:
     std::vector<File> currentFiles;
     for (auto& p : m_Files) {
 
-      // At the start or if we have reset, just retrieve the current name and index - The
-      // index might not be valid in this case (e.g., if the path is a/b, the index is the 
-      // one for a/b while we would want the one for a, but we correct that later):
+      // At the start or if we have reset, just retrieve the current name:
       if (currentName == "") {
         currentName = std::get<0>(p)[0];
       }
@@ -172,11 +170,14 @@ protected:
       // If the name is different, we need to create a directory from what we have 
       // accumulated:
       if (currentName != std::get<0>(p)[0]) {
-        // No index here since this is not an empty tree:
+
+        // We may or may not have an index here, it depends on the type of archive (some archives list
+        // intermediate non-empty folders, some don't):
         entries.push_back(std::make_shared<ArchiveFileTreeImpl>(parent, currentName, currentIndex, std::move(currentFiles)));
+        
         currentFiles.clear(); // Back to a valid state.
 
-        // Retrieve the next index:
+        // Reset the index:
         currentIndex = -1;
       }
 
@@ -185,6 +186,7 @@ protected:
 
       // If the current path contains only one components:
       if (std::get<0>(p).size() == 1) {
+
         // If it is not a directory, then it is a file in directly under this tree:
         if (!std::get<1>(p)) {
           entries.push_back(
@@ -192,7 +194,7 @@ protected:
           currentName = "";
         }
         else {
-          // Otherwize, it is the actual "file" corresponding to the directory, so we can retrieve
+          // Otherwize, it is the actual "file" corresponding to the directory we are listing, so we can retrieve
           // the index here:
           currentIndex = std::get<2>(p);
         }
