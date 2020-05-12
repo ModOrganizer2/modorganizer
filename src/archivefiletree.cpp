@@ -40,7 +40,7 @@ public:
    * @param index The index of the file in the archive.
    * @param time The modification time of this file.
    */
-  ArchiveFileEntry(std::shared_ptr<IFileTree> parent, QString name, int index, QDateTime time) :
+  ArchiveFileEntry(std::shared_ptr<const IFileTree> parent, QString name, int index, QDateTime time) :
     FileTreeEntry(parent, name, time), m_Index(index) {
   }
 
@@ -51,7 +51,7 @@ public:
    * @param name The name of this directory.
    * @param index The index of the directory in the archive, or -1.
    */
-  ArchiveFileEntry(std::shared_ptr<IFileTree> parent, QString name, int index) :
+  ArchiveFileEntry(std::shared_ptr<const IFileTree> parent, QString name, int index) :
     FileTreeEntry(parent, name), m_Index(index) {
   }
 
@@ -70,7 +70,7 @@ public:
 
 public: // Public for make_shared (but not accessible by other since not exposed in .h):
 
-  ArchiveFileTreeImpl(std::shared_ptr<IFileTree> parent, QString name, int index, std::vector<File>&& files)
+  ArchiveFileTreeImpl(std::shared_ptr<const IFileTree> parent, QString name, int index, std::vector<File>&& files)
     : FileTreeEntry(parent, name), ArchiveFileEntry(parent, name, index), IFileTree(), m_Files(std::move(files)) { }
 
 public: // Override to avoid VS warnings:
@@ -145,11 +145,11 @@ protected:
    * @override
    */
   virtual std::shared_ptr<IFileTree> makeDirectory(
-    std::shared_ptr<IFileTree> parent, QString name) const override {
+    std::shared_ptr<const IFileTree> parent, QString name) const override {
     return std::make_shared<ArchiveFileTreeImpl>(parent, name, -1, std::vector<File>{});
   }
 
-  virtual void doPopulate(std::shared_ptr<IFileTree> parent, std::vector<std::shared_ptr<FileTreeEntry>>& entries) const override {
+  virtual void doPopulate(std::shared_ptr<const IFileTree> parent, std::vector<std::shared_ptr<FileTreeEntry>>& entries) const override {
 
     // Sort by name:
     std::sort(std::begin(m_Files), std::end(m_Files),
