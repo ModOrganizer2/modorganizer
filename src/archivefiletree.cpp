@@ -55,6 +55,10 @@ public:
     FileTreeEntry(parent, name), m_Index(index) {
   }
 
+  virtual std::shared_ptr<FileTreeEntry> clone() const override {
+    return std::make_shared<ArchiveFileEntry>(nullptr, name(), m_Index);
+  }
+
   // No private since we are in an implementation file:
   const int m_Index;
 };
@@ -70,7 +74,7 @@ public:
 
 public: // Public for make_shared (but not accessible by other since not exposed in .h):
 
-  ArchiveFileTreeImpl(std::shared_ptr<const IFileTree> parent, QString name, int index, std::vector<File>&& files)
+  ArchiveFileTreeImpl(std::shared_ptr<const IFileTree> parent, QString name, int index, std::vector<File> files)
     : FileTreeEntry(parent, name), ArchiveFileEntry(parent, name, index), IFileTree(), m_Files(std::move(files)) { }
 
 public: // Override to avoid VS warnings:
@@ -81,6 +85,12 @@ public: // Override to avoid VS warnings:
 
   virtual std::shared_ptr<const IFileTree> astree() const override {
     return IFileTree::astree();
+  }
+
+protected:
+
+  virtual std::shared_ptr<FileTreeEntry> clone() const override {
+    return IFileTree::clone();
   }
 
 public: // Overrides:
@@ -209,6 +219,10 @@ protected:
     if (currentName != "") {
       entries.push_back(std::make_shared<ArchiveFileTreeImpl>(parent, currentName, currentIndex, std::move(currentFiles)));
     }
+  }
+
+  virtual std::shared_ptr<IFileTree> doClone() const override {
+    return std::make_shared<ArchiveFileTreeImpl>(nullptr, name(), m_Index, m_Files);
   }
 
 private:
