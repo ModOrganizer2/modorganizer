@@ -36,6 +36,7 @@ add_filter(NAME src/core GROUPS
 	organizerproxy
 	apiuseraccount
 	processrunner
+	qdirfiletree
 	uilocker
 )
 
