@@ -105,11 +105,11 @@ public:
   void setNotes(const QString &notes) override;
 
   /**
-  * @brief set/change the game plgin for this mod
-  *
-  * @param gamePlugin the game plugin
-  */
-  virtual void setGamePlugin(const MOBase::IPluginGame* gamePlugin) override;
+   * @brief set/change the source game of this mod
+   *
+   * @param gameName the source game shortName
+   */
+  virtual void setGameName(const QString& gameName) override;
 
   /**
    * @brief set/change the nexus mod id of this mod
@@ -432,9 +432,11 @@ private:
   QString m_CustomURL;
   bool m_HasCustomURL;
 
-  // Storing both the game name and game plugin since we can have a game
-  // name that is not one of the primary names of the game plugin:
-  const MOBase::IPluginGame* m_GamePlugin;
+  // Current game plugin running in MO2:
+  MOBase::IPluginGame const* m_GamePlugin;
+
+  // Game name for the mod, can be different from the actual game running in MO2
+  // e.g., for Skyrim / Skyrim SE.
   QString m_GameName;
 
   mutable QStringList m_Archives;

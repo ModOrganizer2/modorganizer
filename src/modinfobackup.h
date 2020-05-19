@@ -16,7 +16,7 @@ public:
   virtual bool updateIgnored() const override { return false; }
   virtual bool downgradeAvailable() const override { return false; }
   virtual bool updateNXMInfo() override { return false; }
-  virtual void setGamePlugin(const MOBase::IPluginGame*) override {}
+  virtual void setGameName(const QString& gameName) override {}
   virtual void setNexusID(int) override {}
   virtual void endorse(bool) override {}
   virtual int getFixedPriority() const override { return -1; }

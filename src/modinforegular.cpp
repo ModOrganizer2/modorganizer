@@ -468,12 +468,10 @@ void ModInfoRegular::setNotes(const QString &notes)
   m_MetaInfoChanged = true;
 }
 
-void ModInfoRegular::setGamePlugin(const MOBase::IPluginGame* gamePlugin)
+void ModInfoRegular::setGameName(const QString& gameName)
 {
-  m_GamePlugin = gamePlugin;
-  m_GameName = gamePlugin->gameShortName();
+  m_GameName = gameName;
   m_MetaInfoChanged = true;
-  testValid();
 }
 
 void ModInfoRegular::setNexusID(int modID)

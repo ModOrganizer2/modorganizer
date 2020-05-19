@@ -21,7 +21,7 @@ public:
   virtual bool setName(const QString& name);
 
   virtual int getNexusID() const override { return -1; }
-  virtual void setGamePlugin(const MOBase::IPluginGame* /*gamePlugin*/) override {}
+  virtual void setGameName(const QString& gameName) override {}
   virtual void setNexusID(int /*modID*/) override {}
   virtual void endorse(bool /*doEndorse*/) override {}
   virtual void ignoreUpdate(bool /*ignore*/) override {}

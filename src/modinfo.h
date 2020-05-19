@@ -319,11 +319,11 @@ public:
   virtual void setNotes(const QString &notes) = 0;
 
   /**
-  * @brief set/change the game plgin for this mod
-  *
-  * @param gamePlugin the game plugin
-  */
-  virtual void setGamePlugin(const MOBase::IPluginGame* gamePlugin) = 0;
+   * @brief set/change the source game of this mod
+   *
+   * @param gameName the source game shortName
+   */
+  virtual void setGameName(const QString& gameName) = 0;
 
   /**
    * @brief set the name of this mod

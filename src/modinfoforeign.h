@@ -22,7 +22,7 @@ public:
   virtual bool setName(const QString&) override { return false; }
   virtual void setComments(const QString&) override {}
   virtual void setNotes(const QString&) override {}
-  virtual void setGamePlugin(const MOBase::IPluginGame*) override {}
+  virtual void setGameName(const QString& gameName) override {}
   virtual void setNexusID(int) override {}
   virtual void setNewestVersion(const MOBase::VersionInfo&) override {}
   virtual void ignoreUpdate(bool) override {}
