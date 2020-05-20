@@ -184,6 +184,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <sstream>
 #include <utility>
 
+#include "gameplugins.h"
+
 #ifdef TEST_MODELS
 #include "modeltest.h"
 #endif // TEST_MODELS
@@ -363,6 +365,15 @@ MainWindow::MainWindow(Settings &settings
     m_DataTab.get(), &DataTab::displayModInformation,
     [&](auto&& m, auto&& i, auto&& tab){ displayModInformation(m, i, tab); });
 
+  // Hide stuff we do not need:
+  IPluginGame const* game = m_OrganizerCore.managedGame();
+  if (!game->feature<GamePlugins>()) {
+    ui->tabWidget->removeTab(ui->tabWidget->indexOf(ui->espTab));
+  }
+  if (!game->feature<DataArchives>()) {
+    ui->tabWidget->removeTab(ui->tabWidget->indexOf(ui->bsaTab));
+  }
+
   settings.geometry().restoreState(ui->downloadView->header());
 
   ui->splitter->setStretchFactor(0, 3);
@@ -526,6 +537,7 @@ MainWindow::MainWindow(Settings &settings
   updatePluginCount();
   updateModCount();
   processUpdates();
+
   ui->statusBar->updateNormalMessage(m_OrganizerCore);
 }
 
