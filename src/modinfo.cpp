@@ -25,11 +25,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfooverwrite.h"
 #include "modinfoseparator.h"
 
-#include "installationtester.h"
 #include "categories.h"
 #include "modinfodialog.h"
 #include "overwriteinfodialog.h"
-#include "filenamestring.h"
 #include "versioninfo.h"
 
 #include <iplugingame.h>
@@ -475,7 +473,7 @@ bool ModInfo::removeCategory(const QString &categoryName)
   return true;
 }
 
-QStringList ModInfo::categories()
+QStringList ModInfo::categories() const
 {
   QStringList result;
 
@@ -529,28 +527,7 @@ bool ModInfo::categorySet(int categoryID) const
 
 void ModInfo::testValid()
 {
-  m_Valid = false;
-  QDirIterator dirIter(absolutePath());
-  while (dirIter.hasNext()) {
-    dirIter.next();
-    if (dirIter.fileInfo().isDir()) {
-      if (InstallationTester::isTopLevelDirectory(dirIter.fileName())) {
-        m_Valid = true;
-        break;
-      }
-    } else {
-      if (InstallationTester::isTopLevelSuffix(dirIter.fileName())) {
-        m_Valid = true;
-        break;
-      }
-    }
-  }
-
-  // NOTE: in Qt 4.7 it seems that QDirIterator leaves a file handle open if it is not iterated to the
-  // end
-  while (dirIter.hasNext()) {
-    dirIter.next();
-  }
+  m_Valid = doTestValid();
 }
 
 QUrl ModInfo::parseCustomURL() const

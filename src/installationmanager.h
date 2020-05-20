@@ -20,7 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef INSTALLATIONMANAGER_H
 #define INSTALLATIONMANAGER_H
 
-
+#include <ifiletree.h>
 #include <iinstallationmanager.h>
 #include <iplugininstaller.h>
 #include <guessedvalue.h>
@@ -107,42 +107,61 @@ public:
    * @brief register an installer-plugin
    * @param the installer to register
    */
-  void registerInstaller(MOBase::IPluginInstaller *installer);
-
+  void registerInstaller(MOBase::IPluginInstaller *installer); 
+  
   /**
    * @return list of file extensions we can install
    */
   QStringList getSupportedExtensions() const;
 
   /**
-   * @brief extract the specified file from the currently open archive to a temporary location
-   * @param (relative) name of the file within the archive
-   * @return the absolute name of the temporary file
-   * @note the call will fail with an exception if no archive is open (plugins deriving
-   *       from IPluginInstallerSimple can rely on that, custom installers shouldn't)
-   * @note the temporary file is automatically cleaned up after the installation
-   * @note This call can be very slow if the archive is large and "solid"
+   * @brief Extract the specified file from the currently opened archive to a temporary location.
+   *
+   * This method cannot be used to extract directory.
+   *
+   * @param entry Entry corresponding to the file to extract.
+   *
+   * @return the absolute path to the temporary file.
+   *
+   * @note The call will fail with an exception if no archive is open (plugins deriving
+   *       from IPluginInstallerSimple can rely on that, custom installers should not).
+   * @note The temporary file is automatically cleaned up after the installation.
+   * @note This call can be very slow if the archive is large and "solid".
    */
-  virtual QString extractFile(const QString &fileName);
+  virtual QString extractFile(std::shared_ptr<const MOBase::FileTreeEntry> entry) override;
 
   /**
-   * @brief extract the specified files from the currently open archive to a temporary location
-   * @param (relative) names of files within the archive
-   * @return the absolute names of the temporary files
-   * @note the call will fail with an exception if no archive is open (plugins deriving
-   *       from IPluginInstallerSimple can rely on that, custom installers shouldn't)
-   * @note the temporary file is automatically cleaned up after the installation
-   * @note This call can be very slow if the archive is large and "solid"
+   * @brief Extract the specified files from the currently opened archive to a temporary location.
+   *
+   * This method cannot be used to extract directory.
+   *
+   * @param entres Entries corresponding to the files to extract.
+   *
+   * @return the list of absolute paths to the temporary files.
+   *
+   * @note The call will fail with an exception if no archive is open (plugins deriving
+   *       from IPluginInstallerSimple can rely on that, custom installers should not).
+   * @note The temporary file is automatically cleaned up after the installation.
+   * @note This call can be very slow if the archive is large and "solid".
+   *
+   * The flatten argument is not present here while it is present in the deprecated QStringList
+   * version for multiple reasons: 1) it was never used, 2) it is kind of fishy because there
+   * is no way to know if a file is going to be overriden, 3) it is quite easy to flatten a 
+   * IFileTree and thus to given a list of entries flattened (this was not possible with the
+   * QStringList version since these were based on the name of the file inside the archive).
    */
-  virtual QStringList extractFiles(const QStringList &files, bool flatten);
+  virtual QStringList extractFiles(std::vector<std::shared_ptr<const MOBase::FileTreeEntry>> const& entries) override;
 
   /**
-   * @brief installs an archive
-   * @param modName suggested name of the mod
-   * @param archiveFile path to the archive to install
-   * @return the installation result
+   * @brief Installs the given archive.
+   *
+   * @param modName Suggested name of the mod.
+   * @param archiveFile Path to the archive to install.
+   * @param modId ID of the mod, if available.
+   *
+   * @return the installation result.
    */
-  virtual MOBase::IPluginInstaller::EInstallResult installArchive(MOBase::GuessedValue<QString> &modName, const QString &archiveName, const int &modId = 0);
+  virtual MOBase::IPluginInstaller::EInstallResult installArchive(MOBase::GuessedValue<QString> &modName, const QString &archiveName, int modId = 0) override;
 
   /**
    * @brief test if the specified mod name is free. If not, query the user how to proceed
@@ -161,19 +180,8 @@ private:
   void updateProgressFile(const QString &fileName);
   void report7ZipError(const QString &errorMessage);
 
-  MOBase::DirectoryTree *createFilesTree();
-
-  // remap all files in the archive to the directory structure represented by baseNode
-  // files not present in baseNode are disabled
-  void mapToArchive(const MOBase::DirectoryTree::Node *baseNode);
-
-  // recursive worker function for mapToArchive
-  void mapToArchive(const MOBase::DirectoryTree::Node *node, QString path, FileData * const *data);
+  // Recursive worker function for mapToArchive (takes raw reference for "speed").
   bool unpackSingleFile(const QString &fileName);
-
-
-  bool isSimpleArchiveTopLayer(const MOBase::DirectoryTree::Node *node, bool bainStyle);
-  MOBase::DirectoryTree::Node *getSimpleArchiveBase(MOBase::DirectoryTree *dataTree);
 
   MOBase::IPluginInstaller::EInstallResult doInstall(MOBase::GuessedValue<QString> &modName, QString gameName,
                  int modID, const QString &version, const QString &newestVersion, int categoryID, int fileCategoryID, const QString &repository);
@@ -204,6 +212,19 @@ private:
         return QString::compare(LHS, RHS, Qt::CaseInsensitive) < 0;
       }
   };
+
+  /**
+   * @brief Extract the files from the archived that are not disabled (that have
+   *     output filenames associated with them) to the given path.
+   *
+   * @param extractPath Path (on the disk) were the extracted files should be put.
+   *
+   * This method is mainly a convenience method for the extractFiles() methods.
+   *
+   * @return true if the extraction was successful, false if the extraciton was
+   *     cancelled. If an error occured, an exception is thrown.
+   */
+  bool extractFiles(QDir extractPath);
 
 private:
 

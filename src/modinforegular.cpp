@@ -29,6 +29,7 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGa
   , m_Name(path.dirName())
   , m_Path(path.absolutePath())
   , m_Repository()
+  , m_GamePlugin(game)
   , m_GameName(game->gameShortName())
   , m_IsAlternate(false)
   , m_Converted(false)
@@ -467,7 +468,7 @@ void ModInfoRegular::setNotes(const QString &notes)
   m_MetaInfoChanged = true;
 }
 
-void ModInfoRegular::setGameName(const QString &gameName)
+void ModInfoRegular::setGameName(const QString& gameName)
 {
   m_GameName = gameName;
   m_MetaInfoChanged = true;
@@ -556,7 +557,7 @@ void ModInfoRegular::setColor(QColor color)
   m_MetaInfoChanged = true;
 }
 
-QColor ModInfoRegular::getColor()
+QColor ModInfoRegular::getColor() const
 {
   return m_Color;
 }

@@ -1,6 +1,8 @@
 #ifndef MODINFOREGULAR_H
 #define MODINFOREGULAR_H
 
+#include <limits>
+
 #include "modinfowithconflictinfo.h"
 #include "nexusinterface.h"
 
@@ -22,9 +24,9 @@ public:
 
   ~ModInfoRegular();
 
-  virtual bool isRegular() const { return true; }
+  virtual bool isRegular() const override { return true; }
 
-  virtual bool isEmpty() const;
+  virtual bool isEmpty() const override;
 
   bool isAlternate() { return m_IsAlternate; }
   bool isConverted() { return m_Converted; }
@@ -39,12 +41,12 @@ public:
    *
    * @return true if there is a newer version
    **/
-  bool updateAvailable() const;
+  bool updateAvailable() const override;
 
   /**
    * @return true if the current update is being ignored
    */
-  virtual bool updateIgnored() const { return m_IgnoredVersion.isValid() && m_IgnoredVersion == m_NewestVersion; }
+  virtual bool updateIgnored() const override { return m_IgnoredVersion.isValid() && m_IgnoredVersion == m_NewestVersion; }
 
   /**
    * @brief test if there is a newer version of the mod
@@ -55,7 +57,7 @@ public:
    *
    * @return true if there is a newer version
    **/
-  bool downgradeAvailable() const;
+  bool downgradeAvailable() const override;
 
   /**
    * @brief request an update of nexus description for this mod.
@@ -65,7 +67,7 @@ public:
    *
    * @return returns true if information for this mod will be updated, false if there is no nexus mod id to use
    **/
-  bool updateNXMInfo();
+  bool updateNXMInfo() override;
 
   /**
    * @brief assign or unassign the specified category
@@ -76,7 +78,7 @@ public:
    * @param active determines wheter the category is assigned or unassigned
    * @note this function does not test whether categoryID actually identifies a valid category
    **/
-  void setCategory(int categoryID, bool active);
+  void setCategory(int categoryID, bool active) override;
 
   /**
    * @brief set the name of this mod
@@ -88,33 +90,33 @@ public:
    * @return true on success, false if the new name can't be used (i.e. because the new
    *         directory name wouldn't be valid)
    **/
-  bool setName(const QString &name);
+  bool setName(const QString &name) override;
 
   /**
   * @brief changes the comments (manually set information displayed in the mod list) for this mod
   * @param comments new comments
   */
-  void setComments(const QString &comments);
+  void setComments(const QString &comments) override;
 
   /**
    * @brief change the notes (manually set information) for this mod
    * @param notes new notes
    */
-  void setNotes(const QString &notes);
+  void setNotes(const QString &notes) override;
 
   /**
    * @brief set/change the source game of this mod
    *
    * @param gameName the source game shortName
    */
-  void setGameName(const QString &gameName);
+  virtual void setGameName(const QString& gameName) override;
 
   /**
    * @brief set/change the nexus mod id of this mod
    *
    * @param modID the nexus mod id
    **/
-  void setNexusID(int modID);
+  void setNexusID(int modID) override;
 
   /**
    * @brief set the version of this mod
@@ -124,7 +126,7 @@ public:
    *
    * @param version the new version to use
    **/
-  void setVersion(const MOBase::VersionInfo &version);
+  void setVersion(const MOBase::VersionInfo &version) override;
 
   /**
    * @brief set the newest version of this mod on the nexus
@@ -136,73 +138,73 @@ public:
    * @todo this function should be made obsolete. All queries for mod information should go through
    *       this class so no public function for this change is required
    **/
-  void setNewestVersion(const MOBase::VersionInfo &version);
+  void setNewestVersion(const MOBase::VersionInfo &version) override;
 
   /**
    * @brief changes/updates the nexus description text
    * @param description the current description text
    */
-  virtual void setNexusDescription(const QString &description);
+  virtual void setNexusDescription(const QString &description) override;
 
-  virtual void setInstallationFile(const QString &fileName);
+  virtual void setInstallationFile(const QString &fileName) override;
 
   /**
    * @brief sets the category id from a nexus category id. Conversion to MO id happens internally
    * @param categoryID the nexus category id
    * @note if a mapping is not possible, the category is set to the default value
    */
-  virtual void addNexusCategory(int categoryID);
+  virtual void addNexusCategory(int categoryID) override;
 
   /**
    * @brief sets the new primary category of the mod
    * @param categoryID the category to set
    */
-  virtual void setPrimaryCategory(int categoryID) { m_PrimaryCategory = categoryID; m_MetaInfoChanged = true; }
+  virtual void setPrimaryCategory(int categoryID) override { m_PrimaryCategory = categoryID; m_MetaInfoChanged = true; }
 
   /**
    * @brief sets the download repository
    * @param repository
    */
-  virtual void setRepository(const QString &repository) { m_Repository = repository; }
+  virtual void setRepository(const QString &repository) override { m_Repository = repository; }
 
   /**
    * update the endorsement state for the mod. This only changes the
    * buffered state, it does not sync with Nexus
    * @param endorsed the new endorsement state
    */
-  virtual void setIsEndorsed(bool endorsed);
+  virtual void setIsEndorsed(bool endorsed) override;
 
   /**
    * set the mod to "i don't intend to endorse". The mod will not show as unendorsed but can still be endorsed
    */
-  virtual void setNeverEndorse();
+  virtual void setNeverEndorse() override;
 
   /**
    * update the tracked state for the mod.  This only changes the
    * buffered state.  It does not sync with Nexus
    * @param tracked the new tracked state
    */
-  virtual void setIsTracked(bool tracked);
+  virtual void setIsTracked(bool tracked) override;
 
   /**
    * @brief delete the mod from the disc. This does not update the global ModInfo structure or indices
    * @return true if the mod was successfully removed
    **/
-  bool remove();
+  bool remove() override;
 
   /**
    * @brief endorse or un-endorse the mod
    * @param doEndorse if true, the mod is endorsed, if false, it's un-endorsed.
    * @note if doEndorse doesn't differ from the current value, nothing happens.
    */
-  virtual void endorse(bool doEndorse);
+  virtual void endorse(bool doEndorse) override;
 
   /**
   * @brief track or untrack the mod.  This will sync with nexus!
   * @param doTrack if true, the mod is tracked, if false, it's untracked.
   * @note if doTrack doesn't differ from the current value, nothing happens.
   */
-  virtual void track(bool doTrack);
+  virtual void track(bool doTrack) override;
 
   /**
   * @brief updates the mod to flag it as converted in order to ignore the alternate game warning
@@ -219,183 +221,183 @@ public:
    *
    * @return the mod name
    **/
-  QString name() const { return m_Name; }
+  QString name() const override { return m_Name; }
 
   /**
    * @brief getter for the mod path
    *
    * @return the (absolute) path to the mod
    **/
-  QString absolutePath() const;
+  QString absolutePath() const override;
 
   /**
    * @brief getter for the newest version number of this mod
    *
    * @return newest version of the mod
    **/
-  MOBase::VersionInfo getNewestVersion() const { return m_NewestVersion; }
+  MOBase::VersionInfo getNewestVersion() const override { return m_NewestVersion; }
 
   /**
    * @brief ignore the newest version for updates
    */
-  void ignoreUpdate(bool ignore);
+  void ignoreUpdate(bool ignore) override;
 
   /**
    * @brief getter for the installation file
    *
    * @return file used to install this mod from
    */
-  virtual QString getInstallationFile() const { return m_InstallationFile; }
+  virtual QString getInstallationFile() const override { return m_InstallationFile; }
 
   /**
    * @brief getter for the source game repository
    *
    * @return the source game repository. should default to the active game.
    **/
-  QString getGameName() const { return m_GameName; }
+  QString getGameName() const override { return m_GameName; }
 
   /**
    * @brief getter for the nexus mod id
    *
    * @return the nexus mod id. may be 0 if the mod id isn't known or doesn't exist
    **/
-  int getNexusID() const { return m_NexusID; }
+  int getNexusID() const override { return m_NexusID; }
 
   /**
    * @return the fixed priority of mods of this type or INT_MIN if the priority of mods
    *         needs to be user-modifiable
    */
-  virtual int getFixedPriority() const { return INT_MIN; }
+  virtual int getFixedPriority() const override { return std::numeric_limits<int>::min(); }
 
   /**
    * @return true if the mod can be updated
    */
-  virtual bool canBeUpdated() const;
+  virtual bool canBeUpdated() const override;
 
   /**
    * @return the update expiration date based on the last updated date from Nexus
    */
-  virtual QDateTime getExpires() const;
+  virtual QDateTime getExpires() const override;
 
   /**
    * @return true if the mod can be enabled/disabled
    */
-  virtual bool canBeEnabled() const { return true; }
+  virtual bool canBeEnabled() const override { return true; }
 
   /**
    * @return a list of flags for this mod
    */
-  virtual std::vector<EFlag> getFlags() const;
+  virtual std::vector<EFlag> getFlags() const override;
 
-  virtual std::vector<EContent> getContents() const;
+  virtual std::vector<EContent> getContents() const override;
 
   /**
    * @return an indicator if and how this mod should be highlighted by the UI
    */
-  virtual int getHighlight() const;
+  virtual int getHighlight() const override;
 
   /**
    * @return list of names of ini tweaks
    **/
-  std::vector<QString> getIniTweaks() const;
+  std::vector<QString> getIniTweaks() const override;
 
   /**
    * @return a description about the mod, to be displayed in the ui
    */
-  virtual QString getDescription() const;
+  virtual QString getDescription() const override;
 
 
   /**
    * @return the nexus file status (aka category ID)
    */
-  virtual int getNexusFileStatus() const;
+  virtual int getNexusFileStatus() const override;
 
 
   /**
    * @brief sets the file status (category ID) from Nexus
    * @param status the status id of the installed file
    */
-  virtual void setNexusFileStatus(int status);
+  virtual void setNexusFileStatus(int status) override;
 
   /**
   * @return comments for this mod
   */
-  virtual QString comments() const;
+  virtual QString comments() const override;
 
   /**
    * @return manually set notes for this mod
    */
-  virtual QString notes() const;
+  virtual QString notes() const override;
 
   /**
    * @return time this mod was created (file time of the directory)
    */
-  virtual QDateTime creationTime() const;
+  virtual QDateTime creationTime() const override;
 
   /**
    * @return nexus description of the mod (html)
    */
-  QString getNexusDescription() const;
+  QString getNexusDescription() const override;
 
   /**
    * @return repository from which the file was downloaded
    */
-  virtual QString repository() const;
+  virtual QString repository() const override;
 
   /**
    * @return true if the file has been endorsed on nexus
    */
-  virtual EEndorsedState endorsedState() const;
+  virtual EEndorsedState endorsedState() const override;
 
   /**
    * @return true if the file is being tracked on nexus
    */
-  virtual ETrackedState trackedState() const;
+  virtual ETrackedState trackedState() const override;
 
   /**
    * @brief get the last time nexus was checked for file updates on this mod
    */
-  virtual QDateTime getLastNexusUpdate() const;
+  virtual QDateTime getLastNexusUpdate() const override;
 
   /**
    * @brief set the last time nexus was checked for file updates on this mod
    */
-  virtual void setLastNexusUpdate(QDateTime time);
+  virtual void setLastNexusUpdate(QDateTime time) override;
 
   /**
    * @return last time nexus was queried for infos on this mod
    */
-  virtual QDateTime getLastNexusQuery() const;
+  virtual QDateTime getLastNexusQuery() const override;
 
   /**
    * @brief set the last time nexus was queried for info on this mod
    */
-  virtual void setLastNexusQuery(QDateTime time);
+  virtual void setLastNexusQuery(QDateTime time) override;
 
   /**
    * @return last time the mod was updated on Nexus
    */
-  virtual QDateTime getNexusLastModified() const;
+  virtual QDateTime getNexusLastModified() const override;
 
   /**
    * @brief set the last time the mod was updated on Nexus
    */
-  virtual void setNexusLastModified(QDateTime time);
+  virtual void setNexusLastModified(QDateTime time) override;
 
-  virtual QStringList archives(bool checkOnDisk = false);
+  virtual QStringList archives(bool checkOnDisk = false) override;
 
-  virtual void setColor(QColor color);
+  virtual void setColor(QColor color) override;
 
-  virtual QColor getColor();
+  virtual QColor getColor() const override;
 
-  virtual void addInstalledFile(int modId, int fileId);
+  virtual void addInstalledFile(int modId, int fileId) override;
 
   /**
    * @brief stores meta information back to disk
    */
-  virtual void saveMeta();
+  virtual void saveMeta() override;
 
-  void readMeta();
+  void readMeta() override;
 
   virtual void setHasCustomURL(bool b) override;
   virtual bool hasCustomURL() const override;
@@ -429,6 +431,12 @@ private:
   QString m_Repository;
   QString m_CustomURL;
   bool m_HasCustomURL;
+
+  // Current game plugin running in MO2:
+  MOBase::IPluginGame const* m_GamePlugin;
+
+  // Game name for the mod, can be different from the actual game running in MO2
+  // e.g., for Skyrim / Skyrim SE.
   QString m_GameName;
 
   mutable QStringList m_Archives;

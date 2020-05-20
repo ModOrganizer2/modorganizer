@@ -319,11 +319,23 @@ public:
   virtual void setNotes(const QString &notes) = 0;
 
   /**
-  * @brief set/change the source game of this mod
-  *
-  * @param gameName the source game shortName
-  */
-  virtual void setGameName(const QString &gameName) = 0;
+   * @brief set/change the source game of this mod
+   *
+   * @param gameName the source game shortName
+   */
+  virtual void setGameName(const QString& gameName) = 0;
+
+  /**
+   * @brief set the name of this mod
+   *
+   * set the name of this mod. This will also update the name of the
+   * directory that contains this mod
+   *
+   * @param name new name of the mod
+   * @return true on success, false if the new name can't be used (i.e. because the new
+   *         directory name wouldn't be valid)
+   **/
+  virtual bool setName(const QString& name) = 0;
 
   /**
    * @brief set/change the nexus mod id of this mod
@@ -336,7 +348,7 @@ public:
    * @brief set/change the version of this mod
    * @param version new version of the mod
    */
-  virtual void setVersion(const MOBase::VersionInfo &version);
+  virtual void setVersion(const MOBase::VersionInfo &version) override;
 
   /**
   * @brief Controls if mod should be highlighted based on plugin selection
@@ -382,7 +394,7 @@ public:
 
   virtual void addCategory(const QString &categoryName) override;
   virtual bool removeCategory(const QString &categoryName) override;
-  virtual QStringList categories() override;
+  virtual QStringList categories() const override;
 
   /**
    * update the endorsement state for the mod. This only changes the
@@ -645,12 +657,12 @@ public:
   /*
    *@return the color choosen by the user for the mod/separator
    */
-  virtual QColor getColor() { return QColor(); }
+  virtual QColor getColor() const { return QColor(); }
 
   /*
    *@return true if the color has been set successfully.
    */
-  virtual void setColor(QColor color) { }
+  virtual void setColor(QColor) { }
 
   /**
    * @brief adds the information that a file has been installed into this mod
@@ -709,12 +721,12 @@ public:
   /**
    * @brief updates the mod to flag it as converted in order to ignore the alternate game warning
    */
-  virtual void markConverted(bool converted) {}
+  virtual void markConverted(bool) {}
 
   /**
   * @brief updates the mod to flag it as valid in order to ignore the invalid game data flag
   */
-  virtual void markValidated(bool validated) {}
+  virtual void markValidated(bool) {}
 
   /**
    * @brief reads meta information from disk
@@ -729,32 +741,32 @@ public:
   /**
    * @return retrieve list of mods (as mod index) that are overwritten by this one. Updates may be delayed
    */
-  virtual std::set<unsigned int> getModOverwrite() { return std::set<unsigned int>(); }
+  virtual std::set<unsigned int> getModOverwrite() const { return std::set<unsigned int>(); }
 
   /**
    * @return list of mods (as mod index) that overwrite this one. Updates may be delayed
    */
-  virtual std::set<unsigned int> getModOverwritten() { return std::set<unsigned int>(); }
+  virtual std::set<unsigned int> getModOverwritten() const { return std::set<unsigned int>(); }
 
   /**
    * @return retrieve list of mods (as mod index) with archives that are overwritten by this one. Updates may be delayed
   */
-  virtual std::set<unsigned int> getModArchiveOverwrite() { return std::set<unsigned int>(); }
+  virtual std::set<unsigned int> getModArchiveOverwrite() const { return std::set<unsigned int>(); }
 
   /**
   * @return list of mods (as mod index) with archives that overwrite this one. Updates may be delayed
   */
-  virtual std::set<unsigned int> getModArchiveOverwritten() { return std::set<unsigned int>(); }
+  virtual std::set<unsigned int> getModArchiveOverwritten() const { return std::set<unsigned int>(); }
 
   /**
   * @return retrieve list of mods (as mod index) with archives that are overwritten by thos mod's loose files. Updates may be delayed
   */
-  virtual std::set<unsigned int> getModArchiveLooseOverwrite() { return std::set<unsigned int>(); }
+  virtual std::set<unsigned int> getModArchiveLooseOverwrite() const { return std::set<unsigned int>(); }
 
   /**
   * @return list of mods (as mod index) with loose files that overwrite this one's archive files. Updates may be delayed
   */
-  virtual std::set<unsigned int> getModArchiveLooseOverwritten() { return std::set<unsigned int>(); }
+  virtual std::set<unsigned int> getModArchiveLooseOverwritten() const { return std::set<unsigned int>(); }
 
   /**
    * @brief update conflict information
@@ -803,6 +815,13 @@ protected:
 
   static void updateIndices();
   static bool ByName(const ModInfo::Ptr &LHS, const ModInfo::Ptr &RHS);
+
+  /**
+   * @brief check if the content of this mod is valid.
+   *
+   * @return true if the content is valid, false otherwize.
+   **/
+  virtual bool doTestValid() const = 0;
 
 private:
 
