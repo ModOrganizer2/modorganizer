@@ -228,7 +228,7 @@ void forEachEntryImpl(
 
   status = NtOpenFile(
     &oa.RootDirectory, FILE_GENERIC_READ, poa, &iosb, FILE_SHARE_VALID_FLAGS,
-    FILE_SYNCHRONOUS_IO_NONALERT|FILE_OPEN_REPARSE_POINT|FILE_OPEN_FOR_BACKUP_INTENT);
+    FILE_SYNCHRONOUS_IO_NONALERT|FILE_OPEN_FOR_BACKUP_INTENT);
 
   if (status < 0) {
     log::error(
