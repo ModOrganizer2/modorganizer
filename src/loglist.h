@@ -20,6 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef LOGBUFFER_H
 #define LOGBUFFER_H
 
+
+#include "shared/appconfig.h"
 #include <log.h>
 #include <QTreeView>
 #include <deque>
@@ -68,6 +70,7 @@ public:
 
   void copyToClipboard();
   void clear();
+  void openLogsFolder();
 
   QMenu* createMenu(QWidget* parent=nullptr);
 

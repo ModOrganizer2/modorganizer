@@ -214,6 +214,12 @@ void LogList::clear()
   static_cast<LogModel*>(model())->clear();
 }
 
+void LogList::openLogsFolder()
+{
+  QString logsPath = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath());
+  shell::Explore(logsPath);
+}
+
 QMenu* LogList::createMenu(QWidget* parent)
 {
   auto* menu = new QMenu(parent);
@@ -221,6 +227,7 @@ QMenu* LogList::createMenu(QWidget* parent)
   menu->addAction(tr("&Copy all"), [&]{ copyToClipboard(); });
   menu->addSeparator();
   menu->addAction(tr("C&lear all"), [&]{ clear(); });
+  menu->addAction(tr("&Open logs folder"), [&]{ openLogsFolder(); });
 
   auto* levels = new QMenu(tr("&Level"));
   menu->addMenu(levels);
