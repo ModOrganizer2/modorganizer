@@ -232,7 +232,8 @@ public:
    * @param bsaNames names of archives
    * @return a new mod
    */
-  static ModInfo::Ptr createFromPlugin(const QString &modName, const QString &espName, const QStringList &bsaNames, ModInfo::EModType modType, MOShared::DirectoryEntry **directoryStructure, PluginContainer *pluginContainer);
+  static ModInfo::Ptr createFromPlugin(const QString &modName, const QString &espName, const QStringList &bsaNames, ModInfo::EModType modType, 
+    const MOBase::IPluginGame* game, MOShared::DirectoryEntry **directoryStructure, PluginContainer *pluginContainer);
 
   // whether the given name is used for separators
   //
@@ -826,6 +827,7 @@ protected:
 private:
 
   static void createFromOverwrite(PluginContainer *pluginContainer,
+                                  const MOBase::IPluginGame* game,
                                   MOShared::DirectoryEntry **directoryStructure);
 
 protected:

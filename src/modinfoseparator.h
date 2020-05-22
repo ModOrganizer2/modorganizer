@@ -53,10 +53,10 @@ protected:
 
 private:
 
-  ModInfoSeparator
-    (
-      PluginContainer* pluginContainer, const MOBase::IPluginGame* game, const QDir& path,
-      MOShared::DirectoryEntry** directoryStructure);
+  ModInfoSeparator(
+    PluginContainer* pluginContainer, 
+    const MOBase::IPluginGame* game, const QDir& path,
+    MOShared::DirectoryEntry** directoryStructure);
 };
 
 #endif

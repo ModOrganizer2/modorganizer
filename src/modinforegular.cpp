@@ -25,11 +25,10 @@ namespace {
 }
 
 ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGame *game, const QDir &path, DirectoryEntry **directoryStructure)
-  : ModInfoWithConflictInfo(pluginContainer, directoryStructure)
+  : ModInfoWithConflictInfo(pluginContainer, game, directoryStructure)
   , m_Name(path.dirName())
   , m_Path(path.absolutePath())
   , m_Repository()
-  , m_GamePlugin(game)
   , m_GameName(game->gameShortName())
   , m_IsAlternate(false)
   , m_Converted(false)

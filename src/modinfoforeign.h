@@ -71,6 +71,7 @@ public:
 protected:
   ModInfoForeign(const QString &modName, const QString &referenceFile,
                  const QStringList &archives, ModInfo::EModType modType,
+                 const MOBase::IPluginGame *gamePlugin,
                  MOShared::DirectoryEntry **directoryStructure, PluginContainer *pluginContainer);  
   
 private:

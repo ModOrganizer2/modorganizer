@@ -97,11 +97,12 @@ ModInfo::Ptr ModInfo::createFromPlugin(const QString &modName,
                                        const QString &espName,
                                        const QStringList &bsaNames,
                                        ModInfo::EModType modType,
+                                       const MOBase::IPluginGame* game,
                                        DirectoryEntry **directoryStructure,
                                        PluginContainer *pluginContainer) {
   QMutexLocker locker(&s_Mutex);
   ModInfo::Ptr result = ModInfo::Ptr(
-      new ModInfoForeign(modName, espName, bsaNames, modType, directoryStructure, pluginContainer));
+      new ModInfoForeign(modName, espName, bsaNames, modType, game, directoryStructure, pluginContainer));
   s_Collection.push_back(result);
   return result;
 }
@@ -128,11 +129,12 @@ QString ModInfo::getContentTypeName(int contentType)
 }
 
 void ModInfo::createFromOverwrite(PluginContainer *pluginContainer,
+                                  const MOBase::IPluginGame* game,
                                   MOShared::DirectoryEntry **directoryStructure)
 {
   QMutexLocker locker(&s_Mutex);
 
-  s_Collection.push_back(ModInfo::Ptr(new ModInfoOverwrite(pluginContainer, directoryStructure)));
+  s_Collection.push_back(ModInfo::Ptr(new ModInfoOverwrite(pluginContainer, game, directoryStructure)));
 }
 
 unsigned int ModInfo::getNumMods()
@@ -274,12 +276,13 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
                        unmanaged->referenceFile(modName).absoluteFilePath(),
                        unmanaged->secondaryFiles(modName),
                        modType,
+                       game,
                        directoryStructure,
                        pluginContainer);
     }
   }
 
-  createFromOverwrite(pluginContainer, directoryStructure);
+  createFromOverwrite(pluginContainer, game, directoryStructure);
 
   std::sort(s_Collection.begin(), s_Collection.end(), ModInfo::ByName);
 

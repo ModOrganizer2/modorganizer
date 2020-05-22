@@ -6,12 +6,15 @@
 #include "shared/fileentry.h"
 #include <filesystem>
 
+#include "qdirfiletree.h"
+
 using namespace MOBase;
 using namespace MOShared;
 namespace fs = std::filesystem;
 
-ModInfoWithConflictInfo::ModInfoWithConflictInfo(PluginContainer *pluginContainer, DirectoryEntry **directoryStructure)
-  : ModInfo(pluginContainer), m_DirectoryStructure(directoryStructure), m_HasLooseOverwrite(false), m_HasHiddenFiles(false) {}
+ModInfoWithConflictInfo::ModInfoWithConflictInfo(
+  PluginContainer *pluginContainer, const MOBase::IPluginGame* gamePlugin, DirectoryEntry **directoryStructure)
+  : ModInfo(pluginContainer), m_GamePlugin(gamePlugin), m_DirectoryStructure(directoryStructure), m_HasLooseOverwrite(false), m_HasHiddenFiles(false) {}
 
 void ModInfoWithConflictInfo::clearCaches()
 {

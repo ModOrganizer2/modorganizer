@@ -68,7 +68,7 @@ public:
   virtual void addInstalledFile(int, int) override {}
 
 private:
-  ModInfoOverwrite(PluginContainer *pluginContainer, MOShared::DirectoryEntry **directoryStructure );
+  ModInfoOverwrite(PluginContainer *pluginContainer, const MOBase::IPluginGame* game, MOShared::DirectoryEntry **directoryStructure);
 
 };
 
