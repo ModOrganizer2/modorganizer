@@ -1,11 +1,11 @@
 #include "modinfowithconflictinfo.h"
-#include "installationtester.h"
 #include "utility.h"
 #include "shared/directoryentry.h"
 #include "shared/filesorigin.h"
 #include "shared/fileentry.h"
 #include <filesystem>
 
+#include "moddatachecker.h"
 #include "qdirfiletree.h"
 
 using namespace MOBase;
@@ -298,30 +298,12 @@ bool ModInfoWithConflictInfo::hasHiddenFiles() const
 
 
 bool ModInfoWithConflictInfo::doTestValid() const {
+  auto mdc = m_GamePlugin->feature<ModDataChecker>();
 
-  bool valid = false;
-  QDirIterator dirIter(absolutePath());
-  while (dirIter.hasNext()) {
-    dirIter.next();
-    if (dirIter.fileInfo().isDir()) {
-      if (InstallationTester::isTopLevelDirectory(dirIter.fileName())) {
-        valid = true;
-        break;
-      }
-    }
-    else {
-      if (InstallationTester::isTopLevelSuffix(dirIter.fileName())) {
-        valid = true;
-        break;
-      }
-    }
+  if (mdc) {
+    auto qdirfiletree = QDirFileTree::makeTree(absolutePath());
+    return mdc->dataLooksValid(qdirfiletree);
   }
 
-  // NOTE: in Qt 4.7 it seems that QDirIterator leaves a file handle open if it is not iterated to the
-  // end
-  while (dirIter.hasNext()) {
-    dirIter.next();
-  }
-
-  return valid;
+  return true;
 }
