@@ -34,7 +34,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "selectiondialog.h"
 #include "modinfo.h"
 #include <scopeguard.h>
-#include <installationtester.h>
 #include <utility.h>
 #include <scopeguard.h>
 
