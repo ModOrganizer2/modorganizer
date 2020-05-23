@@ -67,7 +67,8 @@ static bool SupportOptimizedFind()
   return (::VerifyVersionInfo(&versionInfo, VER_MAJORVERSION | VER_MINORVERSION, mask) == TRUE);
 }
 
-static bool DirCompareByName(const DirectoryEntry* lhs, const DirectoryEntry* rhs)
+bool DirCompareByName::operator()(
+    const DirectoryEntry* lhs, const DirectoryEntry* rhs) const
 {
   return _wcsicmp(lhs->getName().c_str(), rhs->getName().c_str()) < 0;
 }
@@ -154,13 +155,6 @@ void DirectoryEntry::addDir(
     for (auto& f : d.files) {
       insert(f, origin, L"", -1, stats);
     }
-  });
-
-  elapsed(stats.sortTimes, [&]{
-    std::sort(
-      m_SubDirectories.begin(),
-      m_SubDirectories.end(),
-      &DirCompareByName);
   });
 
   m_Populated = true;
@@ -647,15 +641,6 @@ void DirectoryEntry::addFiles(
       onFile((Context*)pcx, path, ft);
     }
   );
-
-  {
-    std::scoped_lock lock(m_SubDirMutex);
-
-    std::sort(
-      m_SubDirectories.begin(),
-      m_SubDirectories.end(),
-      &DirCompareByName);
-  }
 }
 
 void DirectoryEntry::onDirectoryStart(Context* cx, std::wstring_view path)
@@ -671,17 +656,6 @@ void DirectoryEntry::onDirectoryStart(Context* cx, std::wstring_view path)
 void DirectoryEntry::onDirectoryEnd(Context* cx, std::wstring_view path)
 {
   elapsed(cx->stats.dirTimes, [&] {
-    auto* current = cx->current.top();
-
-    {
-      std::scoped_lock lock(current->m_SubDirMutex);
-
-      std::sort(
-        current->m_SubDirectories.begin(),
-        current->m_SubDirectories.end(),
-        &DirCompareByName);
-    }
-
     cx->current.pop();
   });
 }
@@ -842,7 +816,7 @@ void DirectoryEntry::removeDirRecursive()
 
 void DirectoryEntry::addDirectoryToList(DirectoryEntry* e, std::wstring nameLc)
 {
-  m_SubDirectories.push_back(e);
+  m_SubDirectories.insert(e);
   m_SubDirectoriesLookup.emplace(std::move(nameLc), e);
 }
 

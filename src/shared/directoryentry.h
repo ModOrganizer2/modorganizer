@@ -46,10 +46,18 @@ namespace std
 namespace MOShared
 {
 
+struct DirCompareByName
+{
+    bool operator()(const DirectoryEntry* a, const DirectoryEntry* b) const;
+};
+
+
 class DirectoryEntry
 {
 public:
-  DirectoryEntry(
+    using SubDirectories = std::set<DirectoryEntry*, DirCompareByName>;
+
+    DirectoryEntry(
     std::wstring name, DirectoryEntry* parent, OriginID originID);
 
   DirectoryEntry(
@@ -137,15 +145,7 @@ public:
 
   std::vector<FileEntryPtr> getFiles() const;
 
-  void getSubDirectories(
-    std::vector<DirectoryEntry*>::const_iterator& begin,
-    std::vector<DirectoryEntry*>::const_iterator& end) const
-  {
-    begin = m_SubDirectories.begin();
-    end = m_SubDirectories.end();
-  }
-
-  const std::vector<DirectoryEntry*>& getSubDirectories() const
+  const SubDirectories& getSubDirectories() const
   {
     return m_SubDirectories;
   }
@@ -238,7 +238,6 @@ public:
 private:
   using FilesMap = std::map<std::wstring, FileIndex>;
   using FilesLookup = std::unordered_map<DirectoryEntryFileKey, FileIndex>;
-  using SubDirectories = std::vector<DirectoryEntry*>;
   using SubDirectoriesLookup = std::unordered_map<std::wstring, DirectoryEntry*>;
 
   boost::shared_ptr<FileRegister> m_FileRegister;

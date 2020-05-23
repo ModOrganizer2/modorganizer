@@ -834,10 +834,8 @@ QStringList OrganizerCore::listDirectories(const QString &directoryName) const
   if (!directoryName.isEmpty())
     dir = dir->findSubDirectoryRecursive(ToWString(directoryName));
   if (dir != nullptr) {
-    std::vector<DirectoryEntry *>::iterator current, end;
-    dir->getSubDirectories(current, end);
-    for (; current != end; ++current) {
-      result.append(ToQString((*current)->getName()));
+    for (const auto& d : dir->getSubDirectories()) {
+      result.append(ToQString(d->getName()));
     }
   }
   return result;
@@ -1926,14 +1924,12 @@ std::vector<Mapping> OrganizerCore::fileMapping(
   }
 
   // recurse into subdirectories
-  std::vector<DirectoryEntry *>::const_iterator current, end;
-  directoryEntry->getSubDirectories(current, end);
-  for (; current != end; ++current) {
-    int origin = (*current)->anyOrigin();
+  for (const auto& d : directoryEntry->getSubDirectories()) {
+    int origin = d->anyOrigin();
 
     QString originPath
         = QString::fromStdWString(base->getOriginByID(origin).getPath());
-    QString dirName = QString::fromStdWString((*current)->getName());
+    QString dirName = QString::fromStdWString(d->getName());
     QString source  = originPath + relPath + dirName;
     QString target  = dataPath + relPath + dirName;
 
@@ -1942,7 +1938,7 @@ std::vector<Mapping> OrganizerCore::fileMapping(
 
     result.push_back({source, target, true, writeDestination});
     std::vector<Mapping> subRes = fileMapping(
-        dataPath, relPath + dirName + "\\", base, *current, createDestination);
+        dataPath, relPath + dirName + "\\", base, d, createDestination);
     result.insert(result.end(), subRes.begin(), subRes.end());
   }
   return result;
