@@ -43,17 +43,18 @@ public:
    */
   static std::shared_ptr<const QDirFileTree> makeTree(QDir directory);
 
+  QDirFileTree(std::shared_ptr<const IFileTree> parent, QDir directory);
+
 protected:
 
-  QDirFileTree(std::shared_ptr<const IFileTree> parent, QDir directory);
 
   virtual bool beforeReplace(IFileTree const* dstTree, FileTreeEntry const* destination, FileTreeEntry const* source) override;
   virtual bool beforeInsert(IFileTree const* entry, FileTreeEntry const* name) override;
   virtual bool beforeRemove(IFileTree const* entry, FileTreeEntry const* name) override;
 
-  virtual std::shared_ptr<FileTreeEntry> makeFile(std::shared_ptr<const IFileTree> parent, QString name, QDateTime time) const override;
+  virtual std::shared_ptr<FileTreeEntry> makeFile(std::shared_ptr<const IFileTree> parent, QString name) const override;
   virtual std::shared_ptr<IFileTree> makeDirectory(std::shared_ptr<const IFileTree> parent, QString name) const override;
-  virtual void doPopulate(std::shared_ptr<const IFileTree> parent, std::vector<std::shared_ptr<FileTreeEntry>>& entries) const override;
+  virtual bool doPopulate(std::shared_ptr<const IFileTree> parent, std::vector<std::shared_ptr<FileTreeEntry>>& entries) const override;
   virtual std::shared_ptr<IFileTree> doClone() const override;
 
   QDir qDir;

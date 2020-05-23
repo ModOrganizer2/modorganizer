@@ -33,23 +33,11 @@ class ArchiveFileEntry : public virtual FileTreeEntry {
 public:
 
   /**
-   * @brief Create a new entry corresponding to a file.
+   * @brief Create a new entry.
    *
-   * @param parent The tree containing this file.
-   * @param name The name of this file.
-   * @param index The index of the file in the archive.
-   * @param time The modification time of this file.
-   */
-  ArchiveFileEntry(std::shared_ptr<const IFileTree> parent, QString name, int index, QDateTime time) :
-    FileTreeEntry(parent, name, time), m_Index(index) {
-  }
-
-  /**
-   * @brief Create a new entry corresponding to a directory.
-   *
-   * @param parent The tree containing this directory.
-   * @param name The name of this directory.
-   * @param index The index of the directory in the archive, or -1.
+   * @param parent The tree containing this entry.
+   * @param name The name of this entry.
+   * @param index The index of the entry in the archive.
    */
   ArchiveFileEntry(std::shared_ptr<const IFileTree> parent, QString name, int index) :
     FileTreeEntry(parent, name), m_Index(index) {
@@ -98,7 +86,7 @@ public: // Overrides:
   /**
    * @override
    */
-  std::shared_ptr<FileTreeEntry> addFile(QString path, QDateTime time = QDateTime()) override {
+  std::shared_ptr<FileTreeEntry> addFile(QString path) override {
     // Cannot add file to an archive.
     throw UnsupportedOperationException(QObject::tr("Cannot create file within an archive."));
   }
@@ -159,7 +147,7 @@ protected:
     return std::make_shared<ArchiveFileTreeImpl>(parent, name, -1, std::vector<File>{});
   }
 
-  virtual void doPopulate(std::shared_ptr<const IFileTree> parent, std::vector<std::shared_ptr<FileTreeEntry>>& entries) const override {
+  virtual bool doPopulate(std::shared_ptr<const IFileTree> parent, std::vector<std::shared_ptr<FileTreeEntry>>& entries) const override {
 
     // Sort by name:
     std::sort(std::begin(m_Files), std::end(m_Files),
@@ -200,7 +188,7 @@ protected:
         // If it is not a directory, then it is a file in directly under this tree:
         if (!std::get<1>(p)) {
           entries.push_back(
-            std::make_shared<ArchiveFileEntry>(parent, currentName, std::get<2>(p), QDateTime()));
+            std::make_shared<ArchiveFileEntry>(parent, currentName, std::get<2>(p)));
           currentName = "";
         }
         else {
@@ -219,6 +207,9 @@ protected:
     if (currentName != "") {
       entries.push_back(std::make_shared<ArchiveFileTreeImpl>(parent, currentName, currentIndex, std::move(currentFiles)));
     }
+    
+    // Let the parent class sort the entries:
+    return false;
   }
 
   virtual std::shared_ptr<IFileTree> doClone() const override {
