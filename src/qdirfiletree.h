@@ -26,7 +26,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 /**
- * Class that expose a directory on the drive, using QDir, as a `MOBase::IFileTree`.
+ * @brief Class that expose a directory on the drive, using QDir, as a `MOBase::IFileTree`.
+ *
+ * The tree is lazily populated: each subtree is only populated (from the disk) when needed,
+ * as specified by IFileTree.
  *
  * This class does not expose mutable operations, so any mutable operations will
  * fail.
