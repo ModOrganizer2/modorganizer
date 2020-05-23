@@ -20,7 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modlist.h"
 
 #include "messagedialog.h"
-#include "installationtester.h"
 #include "qtgroupingproxy.h"
 #include "viewmarkingscrollbar.h"
 #include "modlistsortproxy.h"

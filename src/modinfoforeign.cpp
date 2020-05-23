@@ -46,9 +46,10 @@ ModInfoForeign::ModInfoForeign(const QString &modName,
                                const QString &referenceFile,
                                const QStringList &archives,
                                ModInfo::EModType modType,
+                               const MOBase::IPluginGame* gamePlugin,
                                DirectoryEntry **directoryStructure,
                                PluginContainer *pluginContainer)
-    : ModInfoWithConflictInfo(pluginContainer, directoryStructure),
+    : ModInfoWithConflictInfo(pluginContainer, gamePlugin, directoryStructure),
       m_ReferenceFile(referenceFile), m_Archives(archives), m_ModType(modType)
 {
   m_CreationTime = QFileInfo(referenceFile).birthTime();

@@ -10,8 +10,6 @@ class ModInfoWithConflictInfo : public ModInfo
 
 public:
 
-  ModInfoWithConflictInfo(PluginContainer *pluginContainer, MOShared::DirectoryEntry **directoryStructure);
-
   std::vector<ModInfo::EConflictFlag> getConflictFlags() const override;
   virtual std::vector<ModInfo::EFlag> getFlags() const override;
 
@@ -42,6 +40,11 @@ protected:
    * @return true if the content is valid, false otherwize.
    **/
   virtual bool doTestValid() const;
+
+  ModInfoWithConflictInfo(
+    PluginContainer* pluginContainer,
+    const MOBase::IPluginGame* gamePlugin,
+    MOShared::DirectoryEntry** directoryStructure);
 
 private:
 
@@ -79,6 +82,9 @@ private:
   bool hasHiddenFiles() const;
 
 private:
+
+  // Current game plugin running in MO2:
+  MOBase::IPluginGame const* m_GamePlugin;
 
   MOShared::DirectoryEntry **m_DirectoryStructure;
 

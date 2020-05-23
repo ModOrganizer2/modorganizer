@@ -432,9 +432,6 @@ private:
   QString m_CustomURL;
   bool m_HasCustomURL;
 
-  // Current game plugin running in MO2:
-  MOBase::IPluginGame const* m_GamePlugin;
-
   // Game name for the mod, can be different from the actual game running in MO2
   // e.g., for Skyrim / Skyrim SE.
   QString m_GameName;
