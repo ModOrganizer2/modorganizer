@@ -4,21 +4,6 @@
 
 using namespace MOBase;
 
-class QFileTreeEntry : public virtual FileTreeEntry {
-public:
-  using FileTreeEntry::FileTreeEntry;
-
-  QFileTreeEntry(std::shared_ptr<const IFileTree> parent, QFileInfo fileInfo) :
-    FileTreeEntry(parent, fileInfo.fileName()), m_FileInfo(fileInfo) { }
-
-  QDateTime time() const override {
-    return m_FileInfo.lastModified();
-  }
-
-protected:
-  QFileInfo m_FileInfo;
-};
-
 class QDirFileTreeImpl : public QDirFileTree {
 public:
 
@@ -47,7 +32,7 @@ protected:
         entries.push_back(std::make_shared<QDirFileTreeImpl>(parent, QDir(info.absoluteFilePath())));
       }
       else {
-        entries.push_back(std::make_shared<QFileTreeEntry>(parent, info));
+        entries.push_back(createFileEntry(parent, info.fileName()));
       }
     }
 
