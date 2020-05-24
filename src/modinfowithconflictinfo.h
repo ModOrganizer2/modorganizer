@@ -1,6 +1,8 @@
 #ifndef MODINFOWITHCONFLICTINFO_H
 #define MODINFOWITHCONFLICTINFO_H
 
+#include <ifiletree.h>
+
 #include "modinfo.h"
 
 #include <QTime>
@@ -12,6 +14,11 @@ public:
 
   std::vector<ModInfo::EConflictFlag> getConflictFlags() const override;
   virtual std::vector<ModInfo::EFlag> getFlags() const override;
+
+  /**
+   * @return true if this mod is considered "valid", that is: it contains data used by the game
+   **/
+  virtual bool isValid() const override;
 
   /**
    * @brief clear all caches held for this mod
@@ -32,6 +39,13 @@ public:
 
   virtual void doConflictCheck() const override;
 
+public slots:
+
+  /**
+   * @brief Notify this mod that the content of the disk may have changed.
+   */
+  virtual void diskContentModified();
+
 protected:
 
   /**
@@ -40,6 +54,17 @@ protected:
    * @return true if the content is valid, false otherwize.
    **/
   virtual bool doTestValid() const;
+
+  /**
+   * @brief Retrieve a file tree corresponding to the underlying disk content
+   *     of this mod.
+   *
+   * The file tree should not be cached since it is already cached and updated when
+   * required.
+   *
+   * @return a file tree representing the content of this mod.
+   */
+  std::shared_ptr<const MOBase::IFileTree> contentFileTree() const;
 
   ModInfoWithConflictInfo(
     PluginContainer* pluginContainer,
@@ -81,10 +106,19 @@ private:
 
   bool hasHiddenFiles() const;
 
-private:
+protected:
 
   // Current game plugin running in MO2:
-  MOBase::IPluginGame const* m_GamePlugin;
+  MOBase::IPluginGame const * const m_GamePlugin;
+
+private:
+
+  // Mutex:
+  mutable std::mutex m_Mutex;
+
+  // File tree representing the content of the disk. A null pointer indicates
+  // that the content needs to be loaded from the disk:
+  mutable std::shared_ptr<const MOBase::IFileTree> m_FileTree = nullptr;
 
   MOShared::DirectoryEntry **m_DirectoryStructure;
 

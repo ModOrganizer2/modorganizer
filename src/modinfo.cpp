@@ -306,7 +306,7 @@ void ModInfo::updateIndices()
 
 
 ModInfo::ModInfo(PluginContainer *pluginContainer)
-  : m_Valid(false), m_PrimaryCategory(-1)
+  : m_PrimaryCategory(-1)
 {
 }
 
@@ -526,11 +526,6 @@ bool ModInfo::categorySet(int categoryID) const
   }
 
   return false;
-}
-
-void ModInfo::testValid()
-{
-  m_Valid = doTestValid();
 }
 
 QUrl ModInfo::parseCustomURL() const

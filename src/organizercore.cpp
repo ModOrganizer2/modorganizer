@@ -1629,7 +1629,7 @@ void OrganizerCore::syncOverwrite()
                                  qApp->activeWindow());
   if (syncDialog.exec() == QDialog::Accepted) {
     syncDialog.apply(QDir::fromNativeSeparators(m_Settings.paths().mods()));
-    modInfo->testValid();
+    modInfo->diskContentModified();
     refreshDirectoryStructure();
   }
 }

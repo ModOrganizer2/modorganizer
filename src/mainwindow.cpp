@@ -3062,7 +3062,7 @@ void MainWindow::ignoreMissingData_clicked()
       int row_idx = idx.data(Qt::UserRole + 1).toInt();
       ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
       //QDir(info->absolutePath()).mkdir("textures");
-      info->testValid();
+      info->diskContentModified();
       info->markValidated(true);
       connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
 
@@ -3071,7 +3071,7 @@ void MainWindow::ignoreMissingData_clicked()
   } else {
     ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
     //QDir(info->absolutePath()).mkdir("textures");
-    info->testValid();
+    info->diskContentModified();
     info->markValidated(true);
     connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
 

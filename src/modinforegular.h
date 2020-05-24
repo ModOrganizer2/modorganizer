@@ -462,9 +462,6 @@ private:
 
   NexusBridge m_NexusBridge;
 
-  mutable std::vector<ModInfo::EContent> m_CachedContent;
-  mutable QTime m_LastContentCheck;
-
   bool needsDescriptionUpdate() const;
 };
 

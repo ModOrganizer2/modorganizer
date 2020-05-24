@@ -38,7 +38,6 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGa
   , m_TrackedState(TRACKED_UNKNOWN)
   , m_NexusBridge(pluginContainer)
 {
-  testValid();
   m_CreationTime = QFileInfo(path.absolutePath()).birthTime();
   // read out the meta-file for information
   readMeta();
@@ -656,58 +655,59 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 
 std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
 {
-  QTime now = QTime::currentTime();
-  if (m_LastContentCheck.isNull() || (m_LastContentCheck.secsTo(now) > 60)) {
-    m_CachedContent.clear();
-    QDir dir(absolutePath());
-    if (dir.entryList(QStringList() << "*.esp" << "*.esm" << "*.esl").size() > 0) {
-      m_CachedContent.push_back(CONTENT_PLUGIN);
-    }
-    if (dir.entryList(QStringList() << "*.bsa" << "*.ba2").size() > 0) {
-      m_CachedContent.push_back(CONTENT_BSA);
-    }
-    //use >1 for ini files since there is meta.ini in all mods already.
-    if (dir.entryList(QStringList() << "*.ini").size() > 1) {
-      m_CachedContent.push_back(CONTENT_INI);
-    }
+  auto tree = contentFileTree();
+  std::vector<ModInfo::EContent> contents;
 
-    if (dir.entryList(QStringList() << "*.modgroups").size() > 0) {
-      m_CachedContent.push_back(CONTENT_MODGROUP);
+  for (auto e : *tree) {
+    if (e->isFile()) {
+      auto suffix = e->suffix();
+      if (suffix == "esp" || suffix == "esm" || suffix == "esl") {
+        contents.push_back(CONTENT_PLUGIN);
+      }
+      else if (suffix == "bsa" || suffix == "ba2") {
+        contents.push_back(CONTENT_BSA);
+      }
+      //use >1 for ini files since there is meta.ini in all mods already.
+      else if (suffix == "ini" && e->compare("meta.ini") != 0) {
+        contents.push_back(CONTENT_INI);
+      }
+      else if (suffix == "modgroups") {
+        contents.push_back(CONTENT_MODGROUP);
+      }
     }
+    else {
+      if (e->compare("textures") == 0 || e->compare("icons") == 0 || e->compare("bookart") == 0)
+        contents.push_back(CONTENT_TEXTURE);
+      if (e->compare("meshes") == 0)
+        contents.push_back(CONTENT_MESH);
+      if (e->compare("interface") == 0 || e->compare("menus") == 0)
+        contents.push_back(CONTENT_INTERFACE);
+      if (e->compare("music") == 0 || e->compare("sound") == 0)
+        contents.push_back(CONTENT_SOUND);
+      if (e->compare("scripts") == 0)
+        contents.push_back(CONTENT_SCRIPT);
+      if (e->compare("SkyProc Patchers") == 0)
+        contents.push_back(CONTENT_SKYPROC);
+      if (e->compare("MCM") == 0)
+        contents.push_back(CONTENT_MCM);
+    }
+  }
 
-    ScriptExtender *extender = qApp->property("managed_game")
-                                   .value<IPluginGame *>()
-                                   ->feature<ScriptExtender>();
-
-    if (extender != nullptr) {
-      QString sePluginPath = extender->PluginPath();
-      if (dir.exists(sePluginPath)) {
-        m_CachedContent.push_back(CONTENT_SKSEFILES);
-        QDir sePluginDir(absolutePath() + "/" + sePluginPath);
-        if (sePluginDir.entryList(QStringList() << "*.dll").size() > 0) {
-          m_CachedContent.push_back(CONTENT_SKSE);
+  ScriptExtender* extender = m_GamePlugin->feature<ScriptExtender>();
+  if (extender != nullptr) {
+    auto e = tree->findDirectory(extender->PluginPath());
+    if (e) {
+      contents.push_back(CONTENT_SKSEFILES);
+      for (auto f : *e) {
+        if (e->suffix().compare("dll") == 0) {
+          contents.push_back(CONTENT_SKSE);
+          break;
         }
       }
     }
-    if (dir.exists("textures") || dir.exists("icons") || dir.exists("bookart"))
-      m_CachedContent.push_back(CONTENT_TEXTURE);
-    if (dir.exists("meshes"))
-      m_CachedContent.push_back(CONTENT_MESH);
-    if (dir.exists("interface") || dir.exists("menus"))
-      m_CachedContent.push_back(CONTENT_INTERFACE);
-    if (dir.exists("music") || dir.exists("sound"))
-      m_CachedContent.push_back(CONTENT_SOUND);
-    if (dir.exists("scripts"))
-      m_CachedContent.push_back(CONTENT_SCRIPT);
-    if (dir.exists("SkyProc Patchers"))
-      m_CachedContent.push_back(CONTENT_SKYPROC);
-    if (dir.exists("MCM"))
-      m_CachedContent.push_back(CONTENT_MCM);
-
-    m_LastContentCheck = QTime::currentTime();
   }
 
-  return m_CachedContent;
+  return contents;
 
 }
 

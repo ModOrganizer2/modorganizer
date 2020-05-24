@@ -296,14 +296,30 @@ bool ModInfoWithConflictInfo::hasHiddenFiles() const
   return m_HasHiddenFiles;
 }
 
+void ModInfoWithConflictInfo::diskContentModified() {
+  std::unique_lock lock(m_Mutex);
+  m_FileTree = nullptr;
+}
+
+std::shared_ptr<const IFileTree> ModInfoWithConflictInfo::contentFileTree() const {
+  std::unique_lock lock(m_Mutex);
+  if (!m_FileTree) {
+    m_FileTree = QDirFileTree::makeTree(absolutePath());
+  }
+  return m_FileTree;
+}
 
 bool ModInfoWithConflictInfo::doTestValid() const {
   auto mdc = m_GamePlugin->feature<ModDataChecker>();
 
   if (mdc) {
-    auto qdirfiletree = QDirFileTree::makeTree(absolutePath());
+    auto qdirfiletree = contentFileTree();
     return mdc->dataLooksValid(qdirfiletree);
   }
 
   return true;
+}
+
+bool ModInfoWithConflictInfo::isValid() const {
+  return doTestValid();
 }

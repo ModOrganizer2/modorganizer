@@ -849,7 +849,7 @@ void ModList::modInfoChanged(ModInfo::Ptr info)
     }
 
     int row = ModInfo::getIndex(info->name());
-    info->testValid();
+    info->diskContentModified();
     emit aboutToChangeData();
     emit dataChanged(index(row, 0), index(row, columnCount()));
     emit postDataChanged();
@@ -1076,7 +1076,7 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
   }
 
   if (!modInfo->isValid()) {
-    modInfo->testValid();
+    modInfo->diskContentModified();
   }
 
   return true;
