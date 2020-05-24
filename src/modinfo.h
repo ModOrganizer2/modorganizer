@@ -22,7 +22,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "imodinterface.h"
 #include "versioninfo.h"
-#include "envfs.h"
 
 class PluginContainer;
 class QDir;
@@ -840,36 +839,6 @@ protected:
   bool m_PluginSelected = false;
 
 private:
-
-  struct ModThread
-  {
-    ModInfo::Ptr ptr;
-
-    std::condition_variable cv;
-    std::mutex mutex;
-    bool ready = false;
-
-    void wakeup()
-    {
-      {
-        std::scoped_lock lock(mutex);
-        ready = true;
-      }
-
-      cv.notify_one();
-    }
-
-    void run()
-    {
-      std::unique_lock lock(mutex);
-      cv.wait(lock, [&] { return ready; });
-
-      ptr->isValid();
-      ready = false;
-    }
-  };
-
-  static env::ThreadPool<ModThread> s_Threads;
 
   static QMutex s_Mutex;
   static std::map<std::pair<QString, int>, std::vector<unsigned int> > s_ModsByModID;
