@@ -21,10 +21,14 @@ namespace MOShared {
  *
  */
 template <class It, class Callable>
-void parallelMap(It begin, It end, Callable callable, std::size_t nThreads) {
+void parallelMap(It begin, It end, Callable callable, std::size_t nThreads) 
+{
+  std::mutex m;
   std::vector<std::thread> threads(nThreads);
 
-  std::mutex m;
+  // Create the thread:
+  //  - The mutex is only used to fetch/increment the iterator.
+  //  - The callable is copied in each thread to avoid conflicts.
   for (auto &thread: threads) {
     thread = std::thread([&m, &begin, end, callable]() {
       while (true) {
@@ -42,7 +46,6 @@ void parallelMap(It begin, It end, Callable callable, std::size_t nThreads) {
       }
     });
   }
-
 
   // Join everything:
   for (auto& t : threads) {
