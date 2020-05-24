@@ -667,7 +667,6 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
       else if (suffix == "bsa" || suffix == "ba2") {
         contents.push_back(CONTENT_BSA);
       }
-      //use >1 for ini files since there is meta.ini in all mods already.
       else if (suffix == "ini" && e->compare("meta.ini") != 0) {
         contents.push_back(CONTENT_INI);
       }
