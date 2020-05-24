@@ -143,6 +143,7 @@ public:
                              MOShared::DirectoryEntry **directoryStructure,
                              PluginContainer *pluginContainer,
                              bool displayForeign,
+                             std::size_t refreshThreadCount,
                              MOBase::IPluginGame const *game);
 
   static void clear() { s_Collection.clear(); s_ModsByName.clear(); s_ModsByModID.clear(); }

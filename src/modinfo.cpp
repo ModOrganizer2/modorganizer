@@ -46,7 +46,7 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-env::ThreadPool<ModInfo::ModThread> ModInfo::s_Threads(10);
+env::ThreadPool<ModInfo::ModThread> ModInfo::s_Threads;
 std::vector<ModInfo::Ptr> ModInfo::s_Collection;
 std::map<QString, unsigned int> ModInfo::s_ModsByName;
 std::map<std::pair<QString, int>, std::vector<unsigned int>> ModInfo::s_ModsByModID;
@@ -251,6 +251,7 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
                              DirectoryEntry **directoryStructure,
                              PluginContainer *pluginContainer,
                              bool displayForeign,
+                             std::size_t refreshThreadCount,
                              MOBase::IPluginGame const *game)
 {
   TimeThis tt("ModInfo::updateFromDisc()");
@@ -287,14 +288,17 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
   createFromOverwrite(pluginContainer, game, directoryStructure);
 
   std::sort(s_Collection.begin(), s_Collection.end(), ModInfo::ByName);
-
-  updateIndices();
-
+  
+  // This force loading a part of the FileTree:
+  s_Threads.setMax(refreshThreadCount);
   for (auto& p : s_Collection) {
-    auto &t = s_Threads.request();
+    auto& t = s_Threads.request();
     t.ptr = p;
     t.wakeup();
   }
+
+  updateIndices();
+
 }
 
 
