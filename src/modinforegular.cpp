@@ -660,7 +660,7 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
 
   for (auto e : *tree) {
     if (e->isFile()) {
-      auto suffix = e->suffix();
+      auto suffix = e->suffix().toLower();
       if (suffix == "esp" || suffix == "esm" || suffix == "esl") {
         contents.push_back(CONTENT_PLUGIN);
       }
