@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfodialog.h"
 #include "overwriteinfodialog.h"
 #include "versioninfo.h"
+#include "envfs.h"
 
 #include <iplugingame.h>
 #include <versioninfo.h>
@@ -45,6 +46,7 @@ using namespace MOBase;
 using namespace MOShared;
 
 
+env::ThreadPool<ModInfo::ModThread> ModInfo::s_Threads(10);
 std::vector<ModInfo::Ptr> ModInfo::s_Collection;
 std::map<QString, unsigned int> ModInfo::s_ModsByName;
 std::map<std::pair<QString, int>, std::vector<unsigned int>> ModInfo::s_ModsByModID;
@@ -287,6 +289,12 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
   std::sort(s_Collection.begin(), s_Collection.end(), ModInfo::ByName);
 
   updateIndices();
+
+  for (auto& p : s_Collection) {
+    auto &t = s_Threads.request();
+    t.ptr = p;
+    t.wakeup();
+  }
 }
 
 
