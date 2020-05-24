@@ -653,7 +653,7 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 }
 
 
-std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
+std::vector<ModInfo::EContent> ModInfoRegular::doGetContents() const
 {
   auto tree = contentFileTree();
   std::vector<ModInfo::EContent> contents;
@@ -707,7 +707,6 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
   }
 
   return contents;
-
 }
 
 

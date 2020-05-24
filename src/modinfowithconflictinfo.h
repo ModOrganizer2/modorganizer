@@ -3,6 +3,7 @@
 
 #include <ifiletree.h>
 
+#include "thread_utils.h"
 #include "modinfo.h"
 
 #include <QTime>
@@ -19,6 +20,11 @@ public:
    * @return true if this mod is considered "valid", that is: it contains data used by the game
    **/
   virtual bool isValid() const override;
+
+  /**
+   * @return a list of content types contained in a mod
+   */
+  virtual std::vector<EContent> getContents() const override;
 
   /**
    * @brief clear all caches held for this mod
@@ -49,11 +55,18 @@ public slots:
 protected:
 
   /**
-   * @brief check if the content of this mod is valid.
+   * @brief Check if the content of this mod is valid.
    *
-   * @return true if the content is valid, false otherwize.
+   * @return true if the content is valid, false otherwise.
    **/
   virtual bool doTestValid() const;
+
+  /**
+   * @brief Compute the contents for this mod.
+   *
+   * @return the contents for this mod.
+   **/
+  virtual std::vector<EContent> doGetContents() const { return {}; }
 
   /**
    * @brief Retrieve a file tree corresponding to the underlying disk content
@@ -122,12 +135,16 @@ protected:
 
 private:
 
-  // Mutex:
-  mutable std::mutex m_Mutex;
+  /**
+   * @return a file tree for this mod.
+   */
+  std::shared_ptr<const MOBase::IFileTree> updateFileTree() const;
 
-  // File tree representing the content of the disk. A null pointer indicates
-  // that the content needs to be loaded from the disk:
-  mutable std::shared_ptr<const MOBase::IFileTree> m_FileTree = nullptr;
+  MOShared::MemoizedLocked<
+    std::shared_ptr<const MOBase::IFileTree>, 
+    decltype(&ModInfoWithConflictInfo::updateFileTree)> m_FileTree;
+  MOShared::MemoizedLocked<bool, decltype(&ModInfoWithConflictInfo::doTestValid)> m_Valid;
+  MOShared::MemoizedLocked<std::vector<EContent>, decltype(&ModInfoWithConflictInfo::doGetContents)> m_Contents;
 
   MOShared::DirectoryEntry **m_DirectoryStructure;
 

@@ -289,8 +289,6 @@ public:
    */
   virtual std::vector<EFlag> getFlags() const override;
 
-  virtual std::vector<EContent> getContents() const override;
-
   /**
    * @return an indicator if and how this mod should be highlighted by the UI
    */
@@ -417,6 +415,8 @@ private slots:
   void nxmRequestFailed(QString, int modID, int fileID, QVariant userData, QNetworkReply::NetworkError error, const QString &errorMessage);
 
 protected:
+
+  virtual std::vector<EContent> doGetContents() const override;
 
   ModInfoRegular(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, const QDir &path, MOShared::DirectoryEntry **directoryStructure);
 
