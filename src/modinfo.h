@@ -815,7 +815,19 @@ signals:
 
 protected:
 
+  /**
+   *
+   */
   ModInfo(PluginContainer *pluginContainer);
+
+  /**
+   * @brief Prefetch content for this mod.
+   *
+   * This method can be used to prefetch content from the mod, e.g., for isValid()
+   * or getContents(). This method will only be called when first creating the mod
+   * using multiple threads for all the mods.
+   */
+  virtual void prefetch() = 0;
 
   static void updateIndices();
   static bool ByName(const ModInfo::Ptr &LHS, const ModInfo::Ptr &RHS);

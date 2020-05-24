@@ -309,6 +309,11 @@ std::shared_ptr<const IFileTree> ModInfoWithConflictInfo::contentFileTree() cons
   return m_FileTree;
 }
 
+void ModInfoWithConflictInfo::prefetch() {
+  // Populating the tree to 1-depth:
+  contentFileTree()->size();
+}
+
 bool ModInfoWithConflictInfo::doTestValid() const {
   auto mdc = m_GamePlugin->feature<ModDataChecker>();
 

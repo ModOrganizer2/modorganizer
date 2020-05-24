@@ -108,6 +108,15 @@ private:
 
 protected:
 
+  /**
+   * @brief Prefetch content for this mod.
+   *
+   * This method can be used to prefetch content from the mod, e.g., for isValid()
+   * or getContents(). This method will only be called when first creating the mod
+   * using multiple threads for all the mods.
+   */
+  virtual void prefetch() override;
+
   // Current game plugin running in MO2:
   MOBase::IPluginGame const * const m_GamePlugin;
 

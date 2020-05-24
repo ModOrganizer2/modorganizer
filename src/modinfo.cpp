@@ -288,7 +288,7 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
 
   std::sort(s_Collection.begin(), s_Collection.end(), ModInfo::ByName);
   
-  parallelMap(std::begin(s_Collection), std::end(s_Collection), &ModInfo::isValid, refreshThreadCount);
+  parallelMap(std::begin(s_Collection), std::end(s_Collection), &ModInfo::prefetch, refreshThreadCount);
 
   updateIndices();
 
