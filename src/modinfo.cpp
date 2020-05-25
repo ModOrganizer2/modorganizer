@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfodialog.h"
 #include "overwriteinfodialog.h"
 #include "versioninfo.h"
+#include "thread_utils.h"
 
 #include <iplugingame.h>
 #include <versioninfo.h>
@@ -249,6 +250,7 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
                              DirectoryEntry **directoryStructure,
                              PluginContainer *pluginContainer,
                              bool displayForeign,
+                             std::size_t refreshThreadCount,
                              MOBase::IPluginGame const *game)
 {
   TimeThis tt("ModInfo::updateFromDisc()");
@@ -285,8 +287,11 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
   createFromOverwrite(pluginContainer, game, directoryStructure);
 
   std::sort(s_Collection.begin(), s_Collection.end(), ModInfo::ByName);
+  
+  parallelMap(std::begin(s_Collection), std::end(s_Collection), &ModInfo::prefetch, refreshThreadCount);
 
   updateIndices();
+
 }
 
 
@@ -306,7 +311,7 @@ void ModInfo::updateIndices()
 
 
 ModInfo::ModInfo(PluginContainer *pluginContainer)
-  : m_Valid(false), m_PrimaryCategory(-1)
+  : m_PrimaryCategory(-1)
 {
 }
 
@@ -526,11 +531,6 @@ bool ModInfo::categorySet(int categoryID) const
   }
 
   return false;
-}
-
-void ModInfo::testValid()
-{
-  m_Valid = doTestValid();
 }
 
 QUrl ModInfo::parseCustomURL() const

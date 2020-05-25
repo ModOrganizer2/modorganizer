@@ -276,8 +276,6 @@ protected:
 
 private:
 
-  bool testValid(const QString &modDir);
-
   QVariant getOverwriteData(int column, int role) const;
 
   QString getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const;

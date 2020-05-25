@@ -186,6 +186,7 @@ add_filter(NAME src/utilities GROUPS
 	shared/util
 	usvfsconnector
 	shared/windows_error
+	thread_utils
 	json
 )
 

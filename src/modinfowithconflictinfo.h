@@ -1,6 +1,9 @@
 #ifndef MODINFOWITHCONFLICTINFO_H
 #define MODINFOWITHCONFLICTINFO_H
 
+#include <ifiletree.h>
+
+#include "thread_utils.h"
 #include "modinfo.h"
 
 #include <QTime>
@@ -12,6 +15,16 @@ public:
 
   std::vector<ModInfo::EConflictFlag> getConflictFlags() const override;
   virtual std::vector<ModInfo::EFlag> getFlags() const override;
+
+  /**
+   * @return true if this mod is considered "valid", that is: it contains data used by the game
+   **/
+  virtual bool isValid() const override;
+
+  /**
+   * @return a list of content types contained in a mod
+   */
+  virtual std::vector<EContent> getContents() const override;
 
   /**
    * @brief clear all caches held for this mod
@@ -32,14 +45,39 @@ public:
 
   virtual void doConflictCheck() const override;
 
+public slots:
+
+  /**
+   * @brief Notify this mod that the content of the disk may have changed.
+   */
+  virtual void diskContentModified();
+
 protected:
 
   /**
-   * @brief check if the content of this mod is valid.
+   * @brief Check if the content of this mod is valid.
    *
-   * @return true if the content is valid, false otherwize.
+   * @return true if the content is valid, false otherwise.
    **/
-  virtual bool doTestValid() const;
+  virtual bool doIsValid() const;
+
+  /**
+   * @brief Compute the contents for this mod.
+   *
+   * @return the contents for this mod.
+   **/
+  virtual std::vector<EContent> doGetContents() const { return {}; }
+
+  /**
+   * @brief Retrieve a file tree corresponding to the underlying disk content
+   *     of this mod.
+   *
+   * The file tree should not be cached since it is already cached and updated when
+   * required.
+   *
+   * @return a file tree representing the content of this mod.
+   */
+  std::shared_ptr<const MOBase::IFileTree> contentFileTree() const;
 
   ModInfoWithConflictInfo(
     PluginContainer* pluginContainer,
@@ -81,10 +119,25 @@ private:
 
   bool hasHiddenFiles() const;
 
-private:
+protected:
+
+  /**
+   * @brief Prefetch content for this mod.
+   *
+   * This method can be used to prefetch content from the mod, e.g., for isValid()
+   * or getContents(). This method will only be called when first creating the mod
+   * using multiple threads for all the mods.
+   */
+  virtual void prefetch() override;
 
   // Current game plugin running in MO2:
-  MOBase::IPluginGame const* m_GamePlugin;
+  MOBase::IPluginGame const * const m_GamePlugin;
+
+private:
+
+  MOShared::MemoizedLocked<std::shared_ptr<const MOBase::IFileTree>> m_FileTree;
+  MOShared::MemoizedLocked<bool> m_Valid;
+  MOShared::MemoizedLocked<std::vector<EContent>> m_Contents;
 
   MOShared::DirectoryEntry **m_DirectoryStructure;
 

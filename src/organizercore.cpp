@@ -208,7 +208,8 @@ void OrganizerCore::updateExecutablesList()
 void OrganizerCore::updateModInfoFromDisc() {
   ModInfo::updateFromDisc(
     m_Settings.paths().mods(), &m_DirectoryStructure,
-    m_PluginContainer, m_Settings.interface().displayForeign(), managedGame());
+    m_PluginContainer, m_Settings.interface().displayForeign(), 
+    m_Settings.refreshThreadCount(), managedGame());
 }
 
 void OrganizerCore::setUserInterface(IUserInterface* ui)
@@ -1097,7 +1098,8 @@ void OrganizerCore::refreshModList(bool saveChanges)
 
   ModInfo::updateFromDisc(
     m_Settings.paths().mods(), &m_DirectoryStructure,
-    m_PluginContainer, m_Settings.interface().displayForeign(), managedGame());
+    m_PluginContainer, m_Settings.interface().displayForeign(), 
+    m_Settings.refreshThreadCount(), managedGame());
 
   m_CurrentProfile->refreshModStatus();
 
@@ -1629,7 +1631,7 @@ void OrganizerCore::syncOverwrite()
                                  qApp->activeWindow());
   if (syncDialog.exec() == QDialog::Accepted) {
     syncDialog.apply(QDir::fromNativeSeparators(m_Settings.paths().mods()));
-    modInfo->testValid();
+    modInfo->diskContentModified();
     refreshDirectoryStructure();
   }
 }

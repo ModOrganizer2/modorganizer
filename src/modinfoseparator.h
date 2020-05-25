@@ -49,7 +49,7 @@ public:
   virtual void addInstalledFile(int /*modId*/, int /*fileId*/) override { }
 
 protected:
-  virtual bool doTestValid() const override { return true; }
+  virtual bool doIsValid() const override { return true; }
 
 private:
 

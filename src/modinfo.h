@@ -142,6 +142,7 @@ public:
                              MOShared::DirectoryEntry **directoryStructure,
                              PluginContainer *pluginContainer,
                              bool displayForeign,
+                             std::size_t refreshThreadCount,
                              MOBase::IPluginGame const *game);
 
   static void clear() { s_Collection.clear(); s_ModsByName.clear(); s_ModsByModID.clear(); }
@@ -702,7 +703,7 @@ public:
   /**
    * @return true if this mod is considered "valid", that is: it contains data used by the game
    **/
-  virtual bool isValid() const { return m_Valid; }
+  virtual bool isValid() const = 0;
 
   /**
    * @return true if the file has been endorsed on nexus
@@ -713,11 +714,6 @@ public:
    * @return true if the file is being tracked on nexus
    */
   virtual ETrackedState trackedState() const { return TRACKED_FALSE; }
-
-  /**
-   * @brief updates the valid-flag for this mod
-   */
-  void testValid();
 
   /**
    * @brief updates the mod to flag it as converted in order to ignore the alternate game warning
@@ -801,6 +797,13 @@ public:
    **/
   QUrl parseCustomURL() const;
 
+public slots:
+
+  /**
+   * @brief Notify this mod that the content of the disk may have changed.
+   */
+  virtual void diskContentModified() = 0;
+
 signals:
 
   /**
@@ -812,17 +815,22 @@ signals:
 
 protected:
 
+  /**
+   *
+   */
   ModInfo(PluginContainer *pluginContainer);
+
+  /**
+   * @brief Prefetch content for this mod.
+   *
+   * This method can be used to prefetch content from the mod, e.g., for isValid()
+   * or getContents(). This method will only be called when first creating the mod
+   * using multiple threads for all the mods.
+   */
+  virtual void prefetch() = 0;
 
   static void updateIndices();
   static bool ByName(const ModInfo::Ptr &LHS, const ModInfo::Ptr &RHS);
-
-  /**
-   * @brief check if the content of this mod is valid.
-   *
-   * @return true if the content is valid, false otherwize.
-   **/
-  virtual bool doTestValid() const = 0;
 
 private:
 
@@ -847,8 +855,6 @@ private:
   static QMutex s_Mutex;
   static std::map<std::pair<QString, int>, std::vector<unsigned int> > s_ModsByModID;
   static int s_NextID;
-
-  bool m_Valid;
 
 };
 

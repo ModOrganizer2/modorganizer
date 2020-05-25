@@ -289,8 +289,6 @@ public:
    */
   virtual std::vector<EFlag> getFlags() const override;
 
-  virtual std::vector<EContent> getContents() const override;
-
   /**
    * @return an indicator if and how this mod should be highlighted by the UI
    */
@@ -418,6 +416,8 @@ private slots:
 
 protected:
 
+  virtual std::vector<EContent> doGetContents() const override;
+
   ModInfoRegular(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, const QDir &path, MOShared::DirectoryEntry **directoryStructure);
 
 private:
@@ -461,9 +461,6 @@ private:
   ETrackedState m_TrackedState;
 
   NexusBridge m_NexusBridge;
-
-  mutable std::vector<ModInfo::EContent> m_CachedContent;
-  mutable QTime m_LastContentCheck;
 
   bool needsDescriptionUpdate() const;
 };
