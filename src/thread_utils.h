@@ -1,6 +1,7 @@
 #ifndef MO2_THREAD_UTILS_H
 #define MO2_THREAD_UTILS_H
 
+#include <functional>
 #include <mutex>
 #include <thread>
 
@@ -19,11 +20,12 @@ namespace MOShared {
  * @tparam T Type of value ot memoized.
  * @tparam Fn Type of the callback.
  */
-template <class T, class Fn>
+template <class T, class Fn = std::function<T()>>
 struct MemoizedLocked {
 
-  MemoizedLocked(Fn callback, T value = {}) :
-    m_Fn{ callback }, m_Value{ std::move(value) } { }
+  template <class Callable>
+  MemoizedLocked(Callable &&callable, T value = {}) :
+    m_Fn{ std::forward<Callable>(callable) }, m_Value{ std::move(value) } { }
   
   template <class... Args>
   T& value(Args&&... args) const {
@@ -31,14 +33,14 @@ struct MemoizedLocked {
       std::scoped_lock lock(m_Mutex);
       if (m_NeedUpdating) {
         m_Value = std::invoke(m_Fn, std::forward<Args>(args)... );
-        m_NeedUpdating.store(false);
+        m_NeedUpdating = false;
       }
     }
     return m_Value;
   }
 
-  void invalidate() const {
-    m_NeedUpdating.store(true);
+  void invalidate() {
+    m_NeedUpdating = true;
   }
 
 private:
