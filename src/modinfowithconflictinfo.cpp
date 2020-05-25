@@ -307,7 +307,8 @@ void ModInfoWithConflictInfo::diskContentModified() {
 }
 
 void ModInfoWithConflictInfo::prefetch() {
-  // Populating the tree to 1-depth:
+  // Populating the tree to 1-depth (IFileTree is lazy, so size() forces the
+  // tree to populate the first level):
   contentFileTree()->size();
 }
 
