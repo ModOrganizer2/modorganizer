@@ -698,7 +698,7 @@ std::vector<ModInfo::EContent> ModInfoRegular::doGetContents() const
     if (e) {
       contents.push_back(CONTENT_SKSEFILES);
       for (auto f : *e) {
-        if (f->suffix().compare("dll") == 0) {
+        if (f->suffix().compare("dll", FileNameComparator::CaseSensitivity) == 0) {
           contents.push_back(CONTENT_SKSE);
           break;
         }
