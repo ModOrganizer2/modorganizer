@@ -15,7 +15,9 @@ namespace fs = std::filesystem;
 ModInfoWithConflictInfo::ModInfoWithConflictInfo(
   PluginContainer *pluginContainer, const MOBase::IPluginGame* gamePlugin, DirectoryEntry **directoryStructure)
   : ModInfo(pluginContainer), m_GamePlugin(gamePlugin), 
-  m_FileTree(&ModInfoWithConflictInfo::updateFileTree), m_Valid(&ModInfoWithConflictInfo::doTestValid), m_Contents(&ModInfoWithConflictInfo::doGetContents),
+  m_FileTree([this]() { return QDirFileTree::makeTree(absolutePath()); }),
+  m_Valid([this]() { return doIsValid(); }),
+  m_Contents([this]() { return doGetContents(); }),
   m_DirectoryStructure(directoryStructure), m_HasLooseOverwrite(false), m_HasHiddenFiles(false) {}
 
 void ModInfoWithConflictInfo::clearCaches()
@@ -304,20 +306,12 @@ void ModInfoWithConflictInfo::diskContentModified() {
   m_Contents.invalidate();
 }
 
-std::shared_ptr<const IFileTree> ModInfoWithConflictInfo::updateFileTree() const {
-  return QDirFileTree::makeTree(absolutePath());
-}
-
-std::shared_ptr<const IFileTree> ModInfoWithConflictInfo::contentFileTree() const {
-  return m_FileTree.value(this);
-}
-
 void ModInfoWithConflictInfo::prefetch() {
   // Populating the tree to 1-depth:
   contentFileTree()->size();
 }
 
-bool ModInfoWithConflictInfo::doTestValid() const {
+bool ModInfoWithConflictInfo::doIsValid() const {
   auto mdc = m_GamePlugin->feature<ModDataChecker>();
 
   if (mdc) {
@@ -328,10 +322,14 @@ bool ModInfoWithConflictInfo::doTestValid() const {
   return true;
 }
 
+std::shared_ptr<const IFileTree> ModInfoWithConflictInfo::contentFileTree() const {
+  return m_FileTree.value();
+}
+
 bool ModInfoWithConflictInfo::isValid() const {
-  return m_Valid.value(this);
+  return m_Valid.value();
 }
 
 std::vector<ModInfo::EContent> ModInfoWithConflictInfo::getContents() const {
-  return m_Contents.value(this);
+  return m_Contents.value();
 }

@@ -59,7 +59,7 @@ protected:
    *
    * @return true if the content is valid, false otherwise.
    **/
-  virtual bool doTestValid() const;
+  virtual bool doIsValid() const;
 
   /**
    * @brief Compute the contents for this mod.
@@ -135,16 +135,9 @@ protected:
 
 private:
 
-  /**
-   * @return a file tree for this mod.
-   */
-  std::shared_ptr<const MOBase::IFileTree> updateFileTree() const;
-
-  MOShared::MemoizedLocked<
-    std::shared_ptr<const MOBase::IFileTree>, 
-    decltype(&ModInfoWithConflictInfo::updateFileTree)> m_FileTree;
-  MOShared::MemoizedLocked<bool, decltype(&ModInfoWithConflictInfo::doTestValid)> m_Valid;
-  MOShared::MemoizedLocked<std::vector<EContent>, decltype(&ModInfoWithConflictInfo::doGetContents)> m_Contents;
+  MOShared::MemoizedLocked<std::shared_ptr<const MOBase::IFileTree>> m_FileTree;
+  MOShared::MemoizedLocked<bool> m_Valid;
+  MOShared::MemoizedLocked<std::vector<EContent>> m_Contents;
 
   MOShared::DirectoryEntry **m_DirectoryStructure;
 
