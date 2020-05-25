@@ -135,6 +135,16 @@ OrganizerCore::OrganizerCore(Settings &settings)
   connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame const *)),
           &m_PluginList, SLOT(managedGameChanged(MOBase::IPluginGame const *)));
 
+  connect(this, &OrganizerCore::managedGameChanged, [this](IPluginGame const* gamePlugin) {
+    ModDataContent* contentFeature = gamePlugin->feature<ModDataContent>();
+    if (contentFeature) {
+      m_Contents = contentFeature->getAllContents();
+    }
+    else {
+      m_Contents = {};
+    }
+  });
+
   connect(&m_PluginList, &PluginList::writePluginsList, &m_PluginListsWriter,
           &DelayedFileWriterBase::write);
 

@@ -3,6 +3,7 @@
 #include "categories.h"
 #include "categoriesdialog.h"
 #include "settings.h"
+#include "organizercore.h"
 #include <utility.h>
 
 using namespace MOBase;
@@ -180,8 +181,8 @@ private:
 };
 
 
-FilterList::FilterList(Ui::MainWindow* ui, CategoryFactory& factory)
-  : ui(ui), m_factory(factory)
+FilterList::FilterList(Ui::MainWindow* ui, OrganizerCore* organizer, CategoryFactory& factory)
+  : ui(ui), m_Organizer(organizer), m_factory(factory)
 {
   auto* eventFilter = new CriteriaItemFilter(
     ui->filters, [&](auto* item, int dir){ return cycleItem(item, dir); });
@@ -233,11 +234,10 @@ QTreeWidgetItem* FilterList::addCriteriaItem(
 
 void FilterList::addContentCriteria()
 {
-  for (unsigned i = 0; i < ModInfo::NUM_CONTENT_TYPES; ++i) {
-    QString filterName = tr("Contains %1").arg(ModInfo::getContentTypeName(i));
+  for (auto &content: m_Organizer->modDataContents()) {
     addCriteriaItem(
-      nullptr, QString("<%1>").arg(filterName),
-      i, ModListSortProxy::TypeContent);
+      nullptr, QString("<%1>").arg(tr("Contains %1").arg(content.name())),
+      content.id(), ModListSortProxy::TypeContent);
   }
 }
 

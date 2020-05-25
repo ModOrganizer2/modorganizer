@@ -24,7 +24,16 @@ public:
   /**
    * @return a list of content types contained in a mod
    */
-  virtual std::vector<EContent> getContents() const override;
+  virtual const std::vector<int>& getContents() const override;
+
+  /**
+   * @brief Test if the mod contains the specified content.
+   *
+   * @param content ID of the content to test.
+   *
+   * @return true if the content is there, false otherwise.
+   */
+  virtual bool hasContent(int content) const override;
 
   /**
    * @brief clear all caches held for this mod
@@ -66,7 +75,7 @@ protected:
    *
    * @return the contents for this mod.
    **/
-  virtual std::vector<EContent> doGetContents() const { return {}; }
+  virtual std::vector<int> doGetContents() const { return {}; }
 
   /**
    * @brief Retrieve a file tree corresponding to the underlying disk content
@@ -137,7 +146,7 @@ private:
 
   MOShared::MemoizedLocked<std::shared_ptr<const MOBase::IFileTree>> m_FileTree;
   MOShared::MemoizedLocked<bool> m_Valid;
-  MOShared::MemoizedLocked<std::vector<EContent>> m_Contents;
+  MOShared::MemoizedLocked<std::vector<int>> m_Contents;
 
   MOShared::DirectoryEntry **m_DirectoryStructure;
 

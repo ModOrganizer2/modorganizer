@@ -3,7 +3,7 @@
 #include "categories.h"
 #include "messagedialog.h"
 #include "report.h"
-#include "scriptextender.h"
+#include "moddatacontent.h"
 #include "settings.h"
 
 #include <QApplication>
@@ -653,60 +653,15 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 }
 
 
-std::vector<ModInfo::EContent> ModInfoRegular::doGetContents() const
+std::vector<int> ModInfoRegular::doGetContents() const
 {
-  auto tree = contentFileTree();
-  std::vector<ModInfo::EContent> contents;
+  ModDataContent* contentFeature = m_GamePlugin->feature<ModDataContent>();
 
-  for (auto e : *tree) {
-    if (e->isFile()) {
-      auto suffix = e->suffix().toLower();
-      if (suffix == "esp" || suffix == "esm" || suffix == "esl") {
-        contents.push_back(CONTENT_PLUGIN);
-      }
-      else if (suffix == "bsa" || suffix == "ba2") {
-        contents.push_back(CONTENT_BSA);
-      }
-      else if (suffix == "ini" && e->compare("meta.ini") != 0) {
-        contents.push_back(CONTENT_INI);
-      }
-      else if (suffix == "modgroups") {
-        contents.push_back(CONTENT_MODGROUP);
-      }
-    }
-    else {
-      if (e->compare("textures") == 0 || e->compare("icons") == 0 || e->compare("bookart") == 0)
-        contents.push_back(CONTENT_TEXTURE);
-      if (e->compare("meshes") == 0)
-        contents.push_back(CONTENT_MESH);
-      if (e->compare("interface") == 0 || e->compare("menus") == 0)
-        contents.push_back(CONTENT_INTERFACE);
-      if (e->compare("music") == 0 || e->compare("sound") == 0)
-        contents.push_back(CONTENT_SOUND);
-      if (e->compare("scripts") == 0)
-        contents.push_back(CONTENT_SCRIPT);
-      if (e->compare("SkyProc Patchers") == 0)
-        contents.push_back(CONTENT_SKYPROC);
-      if (e->compare("MCM") == 0)
-        contents.push_back(CONTENT_MCM);
-    }
+  if (contentFeature) {
+    return contentFeature->getContentsFor(contentFileTree());
   }
 
-  ScriptExtender* extender = m_GamePlugin->feature<ScriptExtender>();
-  if (extender != nullptr) {
-    auto e = tree->findDirectory(extender->PluginPath());
-    if (e) {
-      contents.push_back(CONTENT_SKSEFILES);
-      for (auto f : *e) {
-        if (f->hasSuffix("dll")) {
-          contents.push_back(CONTENT_SKSE);
-          break;
-        }
-      }
-    }
-  }
-
-  return contents;
+  return {};
 }
 
 

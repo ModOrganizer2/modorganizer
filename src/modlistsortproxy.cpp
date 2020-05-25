@@ -177,22 +177,7 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
       }
     } break;
     case ModList::COL_CONTENT: {
-      std::vector<ModInfo::EContent> lContent = leftMod->getContents();
-      std::vector<ModInfo::EContent> rContent = rightMod->getContents();
-      if (lContent.size() != rContent.size()) {
-        lt = lContent.size() < rContent.size();
-      }
-
-      int lValue = 0;
-      int rValue = 0;
-      for (ModInfo::EContent content : lContent) {
-        lValue += 2 << (unsigned int)content;
-      }
-      for (ModInfo::EContent content : rContent) {
-        rValue += 2 << (unsigned int)content;
-      }
-
-      lt = lValue < rValue;
+      lt = leftMod->getContents() < rightMod->getContents();
     } break;
     case ModList::COL_NAME: {
       int comp = QString::compare(leftMod->name(), rightMod->name(), Qt::CaseInsensitive);
@@ -449,7 +434,7 @@ bool ModListSortProxy::categoryMatchesMod(
 
 bool ModListSortProxy::contentMatchesMod(ModInfo::Ptr info, bool enabled, int content) const
 {
-  return info->hasContent(static_cast<ModInfo::EContent>(content));
+  return info->hasContent(content);
 }
 
 bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const

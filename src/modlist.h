@@ -20,7 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MODLIST_H
 #define MODLIST_H
 
-
+#include "moddatacontent.h"
 #include "categories.h"
 #include "nexusinterface.h"
 #include "modinfo.h"
@@ -42,6 +42,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 class QSortFilterProxyModel;
 class PluginContainer;
+class OrganizerCore;
 
 /**
  * Model presenting an overview of the installed mod
@@ -78,7 +79,7 @@ public:
    * @brief constructor
    * @todo ensure this view works without a profile set, otherwise there are intransparent dependencies on the initialisation order
    **/
-  ModList(PluginContainer *pluginContainer, QObject *parent = nullptr);
+  ModList(PluginContainer *pluginContainer, OrganizerCore *parent = nullptr);
 
   ~ModList();
 
@@ -284,9 +285,9 @@ private:
 
   static QString getColumnToolTip(int column);
 
-  QVariantList contentsToIcons(const std::vector<ModInfo::EContent> &content) const;
+  QVariantList contentsToIcons(const std::vector<int> &contentIds) const;
 
-  QString contentsToToolTip(const std::vector<ModInfo::EContent> &contents) const;
+  QString contentsToToolTip(const std::vector<int> &contentsIds) const;
 
   ModList::EColumn getEnabledColumn(int index) const;
 
@@ -328,6 +329,7 @@ private:
 
 private:
 
+  OrganizerCore *m_Organizer;
   Profile *m_Profile;
 
   NexusInterface *m_NexusInterface;
@@ -351,8 +353,6 @@ private:
 
   SignalModStateChanged m_ModStateChanged;
   SignalModMoved m_ModMoved;
-
-  std::map<ModInfo::EContent, std::tuple<QString, QString> > m_ContentIcons;
 
   QElapsedTimer m_LastCheck;
 

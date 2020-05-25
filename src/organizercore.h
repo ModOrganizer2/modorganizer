@@ -19,6 +19,7 @@
 #include <delayedfilewriter.h>
 #include <boost/signals2.hpp>
 #include "executableinfo.h"
+#include "moddatacontent.h"
 #include <log.h>
 
 #include <QDir>
@@ -121,6 +122,12 @@ public:
   PluginListSortProxy *createPluginListProxyModel();
 
   MOBase::IPluginGame const *managedGame() const;
+
+  /**
+   * @return the list of contents for the currently managed game, or an empty vector
+   *     if the game plugin does not implement the ModDataContent feature.
+   */
+  const std::vector<ModDataContent::Content>& modDataContents() const { return m_Contents; }
 
   bool isArchivesInit() const { return m_ArchivesInit; }
 
@@ -305,6 +312,7 @@ private:
   PluginContainer *m_PluginContainer;
   QString m_GameName;
   MOBase::IPluginGame *m_GamePlugin;
+  std::vector<ModDataContent::Content> m_Contents;
 
   Profile *m_CurrentProfile;
 

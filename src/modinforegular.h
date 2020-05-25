@@ -416,7 +416,7 @@ private slots:
 
 protected:
 
-  virtual std::vector<EContent> doGetContents() const override;
+  virtual std::vector<int> doGetContents() const override;
 
   ModInfoRegular(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, const QDir &path, MOShared::DirectoryEntry **directoryStructure);
 

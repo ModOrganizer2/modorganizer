@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modlistsortproxy.h"
 #include "pluginlist.h"
 #include "settings.h"
+#include "organizercore.h"
 #include "modinforegular.h"
 #include "shared/directoryentry.h"
 #include "shared/fileentry.h"
@@ -59,8 +60,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 
 
-ModList::ModList(PluginContainer *pluginContainer, QObject *parent)
-  : QAbstractItemModel(parent)
+ModList::ModList(PluginContainer *pluginContainer, OrganizerCore *organizer)
+  : QAbstractItemModel(organizer)
+  , m_Organizer(organizer)
   , m_Profile(nullptr)
   , m_NexusInterface(nullptr)
   , m_Modified(false)
@@ -69,19 +71,6 @@ ModList::ModList(PluginContainer *pluginContainer, QObject *parent)
   , m_DropOnItems(false)
   , m_PluginContainer(pluginContainer)
 {
-  m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(":/MO/gui/content/plugin", QT_TR_NOOP("Game Plugins (ESP/ESM/ESL)"));
-  m_ContentIcons[ModInfo::CONTENT_INTERFACE] = std::make_tuple(":/MO/gui/content/interface", QT_TR_NOOP("Interface"));
-  m_ContentIcons[ModInfo::CONTENT_MESH]      = std::make_tuple(":/MO/gui/content/mesh", QT_TR_NOOP("Meshes"));
-  m_ContentIcons[ModInfo::CONTENT_BSA]       = std::make_tuple(":/MO/gui/content/bsa", QT_TR_NOOP("Bethesda Archive"));
-  m_ContentIcons[ModInfo::CONTENT_SCRIPT]    = std::make_tuple(":/MO/gui/content/script", QT_TR_NOOP("Scripts (Papyrus)"));
-  m_ContentIcons[ModInfo::CONTENT_SKSE]      = std::make_tuple(":/MO/gui/content/skse", QT_TR_NOOP("Script Extender Plugin"));
-  m_ContentIcons[ModInfo::CONTENT_SKYPROC]   = std::make_tuple(":/MO/gui/content/skyproc", QT_TR_NOOP("SkyProc Patcher"));
-  m_ContentIcons[ModInfo::CONTENT_SOUND]     = std::make_tuple(":/MO/gui/content/sound", QT_TR_NOOP("Sound or Music"));
-  m_ContentIcons[ModInfo::CONTENT_TEXTURE]   = std::make_tuple(":/MO/gui/content/texture", QT_TR_NOOP("Textures"));
-  m_ContentIcons[ModInfo::CONTENT_MCM]       = std::make_tuple(":/MO/gui/content/menu", QT_TR_NOOP("MCM Configuration"));
-  m_ContentIcons[ModInfo::CONTENT_INI]       = std::make_tuple(":/MO/gui/content/inifile", QT_TR_NOOP("INI files"));
-  m_ContentIcons[ModInfo::CONTENT_MODGROUP]  = std::make_tuple(":/MO/gui/content/modgroup", QT_TR_NOOP("ModGroup files"));
-
   m_LastCheck.start();
 }
 
@@ -188,13 +177,13 @@ QString ModList::getConflictFlagText(ModInfo::EConflictFlag flag, ModInfo::Ptr m
 }
 
 
-QVariantList ModList::contentsToIcons(const std::vector<ModInfo::EContent> &contents) const
+QVariantList ModList::contentsToIcons(const std::vector<int> &contents) const
 {
   QVariantList result;
-  std::set<ModInfo::EContent> contentsSet(contents.begin(), contents.end());
-  for (auto iter = m_ContentIcons.begin(); iter != m_ContentIcons.end(); ++iter) {
-    if (contentsSet.find(iter->first) != contentsSet.end()) {
-      result.append(std::get<0>(iter->second));
+  std::set<int> contentsSet(contents.begin(), contents.end());
+  for (auto &content: m_Organizer->modDataContents()) {
+    if (contentsSet.find(content.id()) != contentsSet.end()) {
+      result.append(content.icon());
     } else {
       result.append(QString());
     }
@@ -202,16 +191,16 @@ QVariantList ModList::contentsToIcons(const std::vector<ModInfo::EContent> &cont
   return result;
 }
 
-QString ModList::contentsToToolTip(const std::vector<ModInfo::EContent> &contents) const
+QString ModList::contentsToToolTip(const std::vector<int> &contents) const
 {
   QString result("<table cellspacing=7>");
 
-  std::set<ModInfo::EContent> contentsSet(contents.begin(), contents.end());
-  for (auto iter = m_ContentIcons.begin(); iter != m_ContentIcons.end(); ++iter) {
-    if (contentsSet.find(iter->first) != contentsSet.end()) {
+  std::set<int> contentsSet(contents.begin(), contents.end());
+  for (auto& content : m_Organizer->modDataContents()) {
+    if (contentsSet.find(content.id()) != contentsSet.end()) {
       result.append(QString("<tr><td><img src=\"%1\" width=32/></td>"
                             "<td valign=\"middle\">%2</td></tr>")
-                    .arg(std::get<0>(iter->second)).arg(tr(std::get<1>(iter->second).toStdString().c_str())));
+                    .arg(content.icon()).arg(content.name()));
     }
   }
   result.append("</table>");
