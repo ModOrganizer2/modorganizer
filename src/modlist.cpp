@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "modlist.h"
 
+#include "widgetutility.h"
 #include "messagedialog.h"
 #include "qtgroupingproxy.h"
 #include "viewmarkingscrollbar.h"
@@ -670,6 +671,13 @@ QVariant ModList::headerData(int section, Qt::Orientation orientation,
       return getColumnToolTip(section);
     } else if (role == Qt::TextAlignmentRole) {
       return QVariant(Qt::AlignCenter);
+    } else if (role == MOBase::EnabledColumnRole) {
+      if (section == COL_CONTENT) {
+        return !m_Organizer->modDataContents().empty();
+      }
+      else {
+        return true;
+      }
     }
   }
   return QAbstractItemModel::headerData(section, orientation, role);
@@ -1298,7 +1306,7 @@ QString ModList::getColumnName(int column)
 }
 
 
-QString ModList::getColumnToolTip(int column)
+QString ModList::getColumnToolTip(int column) const
 {
   switch (column) {
     case COL_NAME:     return tr("Name of your mods");
@@ -1310,24 +1318,18 @@ QString ModList::getColumnToolTip(int column)
     case COL_MODID:    return tr("Id of the mod as used on Nexus.");
     case COL_CONFLICTFLAGS: return tr("Indicators of file conflicts between mods.");
     case COL_FLAGS:    return tr("Emblems to highlight things that might require attention.");
-    case COL_CONTENT:  return tr("Depicts the content of the mod:<br>"
-                                 "<table cellspacing=7>"
-                                 "<tr><td><img src=\":/MO/gui/content/plugin\" width=32/></td><td>Game plugins (esp/esm/esl)</td></tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/interface\" width=32/></td><td>Interface</td></tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/mesh\" width=32/></td><td>Meshes</td></tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/bsa\" width=32/></td><td>BSA</td></tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/texture\" width=32/></td><td>Textures</td></tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/sound\" width=32/></td><td>Sounds</td></tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/music\" width=32/></td><td>Music</td></tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/string\" width=32/></td><td>Strings</td></tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/script\" width=32/></td><td>Scripts (Papyrus)</td></tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/skse\" width=32/></td><td>Script Extender plugins</td></tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/skyproc\" width=32/></td><td>SkyProc Patcher</td></tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/menu\" width=32/></td><td>Mod Configuration Menu</td></tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/inifile\" width=32/></td><td>INI files</td></tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/modgroup\" width=32/></td><td>ModGroup files</td></tr>"
-
-                                 "</table>");
+    case COL_CONTENT: {
+      auto& contents = m_Organizer->modDataContents();
+      if (contents.empty()) {
+        return QString();
+      }
+      QString result = tr("Depicts the content of the mod:") + "<br>" + "<table cellspacing=7>";
+      for (auto& content : contents) {
+        result += QString("<tr><td><img src=\"%1\" width=32/></td><td>%2</td></tr>")
+          .arg(content.icon()).arg(content.name());
+      }
+      return result + "</table>";
+    };
     case COL_INSTALLTIME: return tr("Time this mod was installed");
     case COL_NOTES:       return tr("User notes about the mod");
     default: return tr("unknown");

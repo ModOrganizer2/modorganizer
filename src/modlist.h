@@ -283,7 +283,7 @@ private:
 
   QString getConflictFlagText(ModInfo::EConflictFlag flag, ModInfo::Ptr modInfo) const;
 
-  static QString getColumnToolTip(int column);
+  QString getColumnToolTip(int column) const;
 
   QVariantList contentsToIcons(const std::vector<int> &contentIds) const;
 
