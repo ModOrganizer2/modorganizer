@@ -5918,7 +5918,8 @@ void MainWindow::refreshFilters()
 {
   QItemSelection currentSelection = ui->modList->selectionModel()->selection();
 
-  QVariant currentIndexName = ui->modList->currentIndex().data();
+  int idxRow = ui->modList->currentIndex().row();
+  QVariant currentIndexName = ui->modList->model()->index(idxRow, 0).data();
   ui->modList->setCurrentIndex(QModelIndex());
 
   m_Filters->refresh();
