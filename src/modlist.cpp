@@ -178,13 +178,12 @@ QString ModList::getConflictFlagText(ModInfo::EConflictFlag flag, ModInfo::Ptr m
 }
 
 
-QVariantList ModList::contentsToIcons(const std::vector<int> &contents) const
+QVariantList ModList::contentsToIcons(const std::set<int> &contents) const
 {
   QVariantList result;
-  std::set<int> contentsSet(contents.begin(), contents.end());
   for (auto &content: m_Organizer->modDataContents()) {
     if (!content.isOnlyForFilter()) {
-      if (contentsSet.find(content.id()) != contentsSet.end()) {
+      if (contents.find(content.id()) != contents.end()) {
         result.append(content.icon());
       }
       else {
@@ -195,13 +194,11 @@ QVariantList ModList::contentsToIcons(const std::vector<int> &contents) const
   return result;
 }
 
-QString ModList::contentsToToolTip(const std::vector<int> &contents) const
+QString ModList::contentsToToolTip(const std::set<int> &contents) const
 {
   QString result("<table cellspacing=7>");
-
-  std::set<int> contentsSet(contents.begin(), contents.end());
   for (auto& content : m_Organizer->modDataContents()) {
-    if (!content.isOnlyForFilter() && contentsSet.find(content.id()) != contentsSet.end()) {
+    if (!content.isOnlyForFilter() && contents.find(content.id()) != contents.end()) {
       result.append(QString("<tr><td><img src=\"%1\" width=32/></td>"
                             "<td valign=\"middle\">%2</td></tr>")
                     .arg(content.icon()).arg(content.name()));

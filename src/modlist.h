@@ -79,7 +79,7 @@ public:
    * @brief constructor
    * @todo ensure this view works without a profile set, otherwise there are intransparent dependencies on the initialisation order
    **/
-  ModList(PluginContainer *pluginContainer, OrganizerCore *parent = nullptr);
+  ModList(PluginContainer *pluginContainer, OrganizerCore *parent);
 
   ~ModList();
 
@@ -285,9 +285,9 @@ private:
 
   QString getColumnToolTip(int column) const;
 
-  QVariantList contentsToIcons(const std::vector<int> &contentIds) const;
+  QVariantList contentsToIcons(const std::set<int> &contentIds) const;
 
-  QString contentsToToolTip(const std::vector<int> &contentsIds) const;
+  QString contentsToToolTip(const std::set<int> &contentsIds) const;
 
   ModList::EColumn getEnabledColumn(int index) const;
 

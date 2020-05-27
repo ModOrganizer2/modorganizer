@@ -653,12 +653,13 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 }
 
 
-std::vector<int> ModInfoRegular::doGetContents() const
+std::set<int> ModInfoRegular::doGetContents() const
 {
   ModDataContent* contentFeature = m_GamePlugin->feature<ModDataContent>();
 
   if (contentFeature) {
-    return contentFeature->getContentsFor(contentFileTree());
+    auto result = contentFeature->getContentsFor(contentFileTree());
+    return std::set<int>(std::begin(result), std::end(result));
   }
 
   return {};

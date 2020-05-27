@@ -521,7 +521,7 @@ public:
   /**
    * @return a list of content types contained in a mod
    */
-  virtual const std::vector<int>& getContents() const = 0;
+  virtual const std::set<int>& getContents() const = 0;
 
   /**
    * @brief test if the specified flag is set for this mod

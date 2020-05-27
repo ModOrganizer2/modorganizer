@@ -331,7 +331,7 @@ bool ModInfoWithConflictInfo::isValid() const {
   return m_Valid.value();
 }
 
-const std::vector<int>& ModInfoWithConflictInfo::getContents() const {
+const std::set<int>& ModInfoWithConflictInfo::getContents() const {
   return m_Contents.value();
 }
 
