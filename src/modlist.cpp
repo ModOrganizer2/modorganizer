@@ -183,10 +183,13 @@ QVariantList ModList::contentsToIcons(const std::vector<int> &contents) const
   QVariantList result;
   std::set<int> contentsSet(contents.begin(), contents.end());
   for (auto &content: m_Organizer->modDataContents()) {
-    if (contentsSet.find(content.id()) != contentsSet.end()) {
-      result.append(content.icon());
-    } else {
-      result.append(QString());
+    if (!content.isOnlyForFilter()) {
+      if (contentsSet.find(content.id()) != contentsSet.end()) {
+        result.append(content.icon());
+      }
+      else {
+        result.append(QString());
+      }
     }
   }
   return result;
@@ -198,7 +201,7 @@ QString ModList::contentsToToolTip(const std::vector<int> &contents) const
 
   std::set<int> contentsSet(contents.begin(), contents.end());
   for (auto& content : m_Organizer->modDataContents()) {
-    if (contentsSet.find(content.id()) != contentsSet.end()) {
+    if (!content.isOnlyForFilter() && contentsSet.find(content.id()) != contentsSet.end()) {
       result.append(QString("<tr><td><img src=\"%1\" width=32/></td>"
                             "<td valign=\"middle\">%2</td></tr>")
                     .arg(content.icon()).arg(content.name()));
@@ -1325,8 +1328,10 @@ QString ModList::getColumnToolTip(int column) const
       }
       QString result = tr("Depicts the content of the mod:") + "<br>" + "<table cellspacing=7>";
       for (auto& content : contents) {
-        result += QString("<tr><td><img src=\"%1\" width=32/></td><td>%2</td></tr>")
-          .arg(content.icon()).arg(content.name());
+        if (!content.isOnlyForFilter()) {
+          result += QString("<tr><td><img src=\"%1\" width=32/></td><td>%2</td></tr>")
+            .arg(content.icon()).arg(content.name());
+        }
       }
       return result + "</table>";
     };
