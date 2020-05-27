@@ -22,6 +22,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "profile.h"
 #include "messagedialog.h"
 #include "qtgroupingproxy.h"
+#include "organizercore.h"
+
 #include <log.h>
 #include <QMenu>
 #include <QCheckBox>
@@ -33,8 +35,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-ModListSortProxy::ModListSortProxy(Profile* profile, QObject *parent)
-  : QSortFilterProxyModel(parent)
+ModListSortProxy::ModListSortProxy(Profile* profile, OrganizerCore * organizer)
+  : QSortFilterProxyModel(organizer)
+  , m_Organizer(organizer)
   , m_Profile(profile)
   , m_FilterActive(false)
   , m_FilterMode(FilterAnd)
@@ -177,13 +180,19 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
       }
     } break;
     case ModList::COL_CONTENT: {
+      auto& lContents = leftMod->getContents();
+      auto& rContents = rightMod->getContents();
       unsigned int lValue = 0;
       unsigned int rValue = 0;
-      for (int content : leftMod->getContents()) {
-        lValue += 2U << static_cast<unsigned int>(content);
-      }
-      for (int content : rightMod->getContents()) {
-        rValue += 2U << static_cast<unsigned int>(content);
+      for (auto& content : m_Organizer->modDataContents()) {
+        if (!content.isOnlyForFilter()) {
+          if (std::find(std::begin(lContents), std::end(lContents), content.id()) != std::end(lContents)) {
+            lValue += 2U << static_cast<unsigned int>(content.id());
+          }
+          if (std::find(std::begin(rContents), std::end(rContents), content.id()) != std::end(rContents)) {
+            rValue += 2U << static_cast<unsigned int>(content.id());
+          }
+        }
       }
       lt = lValue < rValue;
     } break;
