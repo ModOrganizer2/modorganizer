@@ -177,7 +177,15 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
       }
     } break;
     case ModList::COL_CONTENT: {
-      lt = leftMod->getContents() < rightMod->getContents();
+      unsigned int lValue = 0;
+      unsigned int rValue = 0;
+      for (int content : leftMod->getContents()) {
+        lValue += 2U << static_cast<unsigned int>(content);
+      }
+      for (int content : rightMod->getContents()) {
+        rValue += 2U << static_cast<unsigned int>(content);
+      }
+      lt = lValue < rValue;
     } break;
     case ModList::COL_NAME: {
       int comp = QString::compare(leftMod->name(), rightMod->name(), Qt::CaseInsensitive);
