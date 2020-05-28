@@ -125,8 +125,8 @@ public:
     }
 
     /**
-     * Apply fnIn to each content whose ID is in the given set, and fnOut to each content not in the
-     * given set, excluding filter-only content (from both cases) unless includeFilter is true..
+     * @brief Apply fnIn to each content whose ID is in the given set, and fnOut to each content not in the
+     *   given set, excluding filter-only content (from both cases) unless includeFilter is true.
      *
      * @param ids The set of content IDs.
      * @param fnIn Function to apply to content whose IDs are in ids.

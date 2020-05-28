@@ -180,8 +180,8 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
       }
     } break;
     case ModList::COL_CONTENT: {
-      auto& lContents = leftMod->getContents();
-      auto& rContents = rightMod->getContents();
+      const auto& lContents = leftMod->getContents();
+      const auto& rContents = rightMod->getContents();
       unsigned int lValue = 0;
       unsigned int rValue = 0;
       m_Organizer->modDataContents().forEachContentIn(lContents, [&lValue](auto const& content) {
