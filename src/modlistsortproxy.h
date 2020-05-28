@@ -73,7 +73,7 @@ public:
 
 public:
 
-  explicit ModListSortProxy(Profile *profile, OrganizerCore * organizer);
+  explicit ModListSortProxy(Profile *profile, OrganizerCore *organizer);
 
   void setProfile(Profile *profile);
 
