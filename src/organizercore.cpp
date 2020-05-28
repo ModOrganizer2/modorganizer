@@ -138,10 +138,10 @@ OrganizerCore::OrganizerCore(Settings &settings)
   connect(this, &OrganizerCore::managedGameChanged, [this](IPluginGame const* gamePlugin) {
     ModDataContent* contentFeature = gamePlugin->feature<ModDataContent>();
     if (contentFeature) {
-      m_Contents = contentFeature->getAllContents();
+      m_Contents = ModDataContentHolder(contentFeature->getAllContents());
     }
     else {
-      m_Contents = {};
+      m_Contents = ModDataContentHolder();
     }
   });
 

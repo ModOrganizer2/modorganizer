@@ -184,16 +184,12 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
       auto& rContents = rightMod->getContents();
       unsigned int lValue = 0;
       unsigned int rValue = 0;
-      for (auto& content : m_Organizer->modDataContents()) {
-        if (!content.isOnlyForFilter()) {
-          if (std::find(std::begin(lContents), std::end(lContents), content.id()) != std::end(lContents)) {
-            lValue += 2U << static_cast<unsigned int>(content.id());
-          }
-          if (std::find(std::begin(rContents), std::end(rContents), content.id()) != std::end(rContents)) {
-            rValue += 2U << static_cast<unsigned int>(content.id());
-          }
-        }
-      }
+      m_Organizer->modDataContents().forEachContentIn(lContents, [&lValue](auto const& content) {
+        lValue += 2U << static_cast<unsigned int>(content.id());
+      });
+      m_Organizer->modDataContents().forEachContentIn(rContents, [&rValue](auto const& content) {
+        rValue += 2U << static_cast<unsigned int>(content.id());
+      });
       lt = lValue < rValue;
     } break;
     case ModList::COL_NAME: {

@@ -181,29 +181,21 @@ QString ModList::getConflictFlagText(ModInfo::EConflictFlag flag, ModInfo::Ptr m
 QVariantList ModList::contentsToIcons(const std::set<int> &contents) const
 {
   QVariantList result;
-  for (auto &content: m_Organizer->modDataContents()) {
-    if (!content.isOnlyForFilter()) {
-      if (contents.find(content.id()) != contents.end()) {
-        result.append(content.icon());
-      }
-      else {
-        result.append(QString());
-      }
-    }
-  }
+  m_Organizer->modDataContents().forEachContentInOrOut(
+    contents,
+    [&result](auto const& content) { result.append(content.icon()); },
+    [&result](auto const&) { result.append(QString()); });
   return result;
 }
 
 QString ModList::contentsToToolTip(const std::set<int> &contents) const
 {
   QString result("<table cellspacing=7>");
-  for (auto& content : m_Organizer->modDataContents()) {
-    if (!content.isOnlyForFilter() && contents.find(content.id()) != contents.end()) {
-      result.append(QString("<tr><td><img src=\"%1\" width=32/></td>"
-                            "<td valign=\"middle\">%2</td></tr>")
-                    .arg(content.icon()).arg(content.name()));
-    }
-  }
+  m_Organizer->modDataContents().forEachContentIn(contents, [&result](auto const& content) {
+    result.append(QString("<tr><td><img src=\"%1\" width=32/></td>"
+      "<td valign=\"middle\">%2</td></tr>")
+      .arg(content.icon()).arg(content.name()));
+    });
   result.append("</table>");
   return result;
 }
@@ -1320,16 +1312,14 @@ QString ModList::getColumnToolTip(int column) const
     case COL_FLAGS:    return tr("Emblems to highlight things that might require attention.");
     case COL_CONTENT: {
       auto& contents = m_Organizer->modDataContents();
-      if (contents.empty()) {
+      if (m_Organizer->modDataContents().empty()) {
         return QString();
       }
       QString result = tr("Depicts the content of the mod:") + "<br>" + "<table cellspacing=7>";
-      for (auto& content : contents) {
-        if (!content.isOnlyForFilter()) {
-          result += QString("<tr><td><img src=\"%1\" width=32/></td><td>%2</td></tr>")
-            .arg(content.icon()).arg(content.name());
-        }
-      }
+      m_Organizer->modDataContents().forEachContent([&result](auto const& content) {
+        result += QString("<tr><td><img src=\"%1\" width=32/></td><td>%2</td></tr>")
+          .arg(content.icon()).arg(content.name());
+      });
       return result + "</table>";
     };
     case COL_INSTALLTIME: return tr("Time this mod was installed");

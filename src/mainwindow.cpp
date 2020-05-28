@@ -5950,9 +5950,8 @@ void MainWindow::onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>
     const auto& c = criteria[0];
 
     if (c.type == ModListSortProxy::TypeContent) {
-      auto& contents = m_OrganizerCore.modDataContents();
-      auto it = std::find_if(std::begin(contents), std::end(contents), [&c](auto const& content) { return content.id() == c.id; });
-      label = it != std::end(contents) ? it->name() : QString();
+      const auto *content = m_OrganizerCore.modDataContents().findById(c.id);
+      label = content ? content->name() : QString();
     } else {
       label = m_CategoryFactory.getCategoryNameByID(c.id);
     }

@@ -234,11 +234,11 @@ QTreeWidgetItem* FilterList::addCriteriaItem(
 
 void FilterList::addContentCriteria()
 {
-  for (auto &content: m_Organizer->modDataContents()) {
+  m_Organizer->modDataContents().forEachContent([this](auto const& content) {
     addCriteriaItem(
       nullptr, QString("<%1>").arg(tr("Contains %1").arg(content.name())),
       content.id(), ModListSortProxy::TypeContent);
-  }
+  }, true);
 }
 
 void FilterList::addCategoryCriteria(QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID)
