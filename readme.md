@@ -43,13 +43,13 @@ MO2 consists of multiple repositories on github. The Umbrella project will downl
 Here is a complete list:
 
 * https://github.com/LePresidente/cpython-1
+* https://github.com/ModOrganizer2/cmake_common
 * https://github.com/ModOrganizer2/githubpp
 * https://github.com/ModOrganizer2/modorganizer
 * https://github.com/ModOrganizer2/modorganizer-archive
 * https://github.com/ModOrganizer2/modorganizer-bsatk
 * https://github.com/ModOrganizer2/modorganizer-bsa_extractor
 * https://github.com/ModOrganizer2/modorganizer-check_fnis
-* https://github.com/ModOrganizer2/modorganizer-cmake_common
 * https://github.com/ModOrganizer2/modorganizer-diagnose_basic
 * https://github.com/ModOrganizer2/modorganizer-esptk
 * https://github.com/ModOrganizer2/modorganizer-fnistool
