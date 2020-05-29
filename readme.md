@@ -49,6 +49,7 @@ Here is a complete list:
 * https://github.com/ModOrganizer2/modorganizer-bsatk
 * https://github.com/ModOrganizer2/modorganizer-bsa_extractor
 * https://github.com/ModOrganizer2/modorganizer-check_fnis
+* https://github.com/ModOrganizer2/modorganizer-cmake_common
 * https://github.com/ModOrganizer2/modorganizer-diagnose_basic
 * https://github.com/ModOrganizer2/modorganizer-esptk
 * https://github.com/ModOrganizer2/modorganizer-fnistool
