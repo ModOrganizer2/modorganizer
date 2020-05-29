@@ -108,27 +108,6 @@ ModInfo::Ptr ModInfo::createFromPlugin(const QString &modName,
   return result;
 }
 
-QString ModInfo::getContentTypeName(int contentType)
-{
-  switch (contentType) {
-    case CONTENT_PLUGIN:    return tr("Plugins");
-    case CONTENT_TEXTURE:   return tr("Textures");
-    case CONTENT_MESH:      return tr("Meshes");
-    case CONTENT_BSA:       return tr("Bethesda Archive");
-    case CONTENT_INTERFACE: return tr("UI Changes");
-    case CONTENT_SOUND:     return tr("Sound Effects");
-    case CONTENT_SCRIPT:    return tr("Scripts");
-    case CONTENT_SKSE:      return tr("Script Extender");
-    case CONTENT_SKSEFILES: return tr("Script Extender Files");
-    case CONTENT_SKYPROC:   return tr("SkyProc Tools");
-    case CONTENT_MCM:       return tr("MCM Data");
-    case CONTENT_INI:       return tr("INI files");
-    case CONTENT_MODGROUP:  return tr("ModGroup files");
-
-    default: throw MyException(tr("invalid content type: %1").arg(contentType));
-  }
-}
-
 void ModInfo::createFromOverwrite(PluginContainer *pluginContainer,
                                   const MOBase::IPluginGame* game,
                                   MOShared::DirectoryEntry **directoryStructure)
@@ -513,12 +492,6 @@ bool ModInfo::hasAnyOfTheseFlags(std::vector<ModInfo::EFlag> flags) const
     }
   }
   return false;
-}
-
-bool ModInfo::hasContent(ModInfo::EContent content) const
-{
-  std::vector<EContent> contents = getContents();
-  return std::find(contents.begin(), contents.end(), content) != contents.end();
 }
 
 bool ModInfo::categorySet(int categoryID) const

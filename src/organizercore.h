@@ -19,6 +19,7 @@
 #include <delayedfilewriter.h>
 #include <boost/signals2.hpp>
 #include "executableinfo.h"
+#include "moddatacontent.h"
 #include <log.h>
 
 #include <QDir>
@@ -82,6 +83,110 @@ private:
   typedef boost::signals2::signal<void (const QString&)> SignalModInstalled;
 
 public:
+
+  /**
+   * Small holder for the game content returned by the ModDataContent feature (the
+   * list of all possible contents, not the per-mod content).
+   */
+  struct ModDataContentHolder {
+
+    using Content = ModDataContent::Content;
+
+    /**
+     * @return true if the hold list of contents is empty, false otherwise.
+     */
+    bool empty() const { return m_Contents.empty(); }
+
+    /**
+     * @param id ID of the content to retrieve.
+     *
+     * @return the content with the given ID, or a null pointer if it is not found.
+     */
+    const Content* findById(int id) const {
+      auto it = std::find_if(std::begin(m_Contents), std::end(m_Contents), [&id](auto const& content) { return content.id() == id; });
+      return it == std::end(m_Contents) ? nullptr : &(*it);
+    }
+
+    /**
+     * Apply the given function to each content whose ID is in the given set.
+     *
+     * @param ids The set of content IDs.
+     * @param fn The function to apply.
+     * @param includeFilter true to also apply the function to filter-only contents, false otherwise.
+     */
+    template <class Fn>
+    void forEachContentIn(std::set<int> const& ids, Fn const& fn, bool includeFilter = false) const {
+      for (const auto& content : m_Contents) {
+        if ((includeFilter || !content.isOnlyForFilter())
+          && ids.find(content.id()) != ids.end()) {
+          fn(content);
+        }
+      }
+    }
+
+    /**
+     * @brief Apply fnIn to each content whose ID is in the given set, and fnOut to each content not in the
+     *   given set, excluding filter-only content (from both cases) unless includeFilter is true.
+     *
+     * @param ids The set of content IDs.
+     * @param fnIn Function to apply to content whose IDs are in ids.
+     * @param fnOut Function to apply to content whose IDs are not in ids.
+     * @param includeFilter true to also apply the function to filter-only contents, false otherwise.
+     */
+    template <class FnIn, class FnOut>
+    void forEachContentInOrOut(std::set<int> const& ids, FnIn const& fnIn, FnOut const& fnOut, bool includeFilter = false) const {
+      for (const auto& content : m_Contents) {
+        if ((includeFilter || !content.isOnlyForFilter())) {
+          if (ids.find(content.id()) != ids.end()) {
+            fnIn(content);
+          }
+          else {
+            fnOut(content);
+          }
+        }
+      }
+    }
+
+    /**
+     * Apply the given function to each content.
+     *
+     * @param fn The function to apply.
+     * @param includeFilter true to also apply the function to filter-only contents, false otherwise.
+     */
+    template <class Fn>
+    void forEachContent(Fn const& fn, bool includeFilter = false) const {
+      for (const auto& content : m_Contents) {
+        if (includeFilter || !content.isOnlyForFilter()) {
+          fn(content);
+        }
+      }
+    }
+
+
+    ModDataContentHolder& operator=(ModDataContentHolder const&) = delete;
+    ModDataContentHolder& operator=(ModDataContentHolder&&) = default;
+
+  private:
+
+    std::vector<Content> m_Contents;
+
+    /**
+     * @brief Construct a ModDataContentHolder without any contents (e.g., if the feature is
+     *     missing).
+     */
+    ModDataContentHolder() { }
+
+    /**
+     * @brief Construct a ModDataContentHold holding the given list of contents.
+     */
+    ModDataContentHolder(std::vector<ModDataContent::Content> contents) :
+      m_Contents(std::move(contents)) { }
+
+    friend class OrganizerCore;
+  };
+
+public:
+
   static bool isNxmLink(const QString &link) { return link.startsWith("nxm://", Qt::CaseInsensitive); }
 
   OrganizerCore(Settings &settings);
@@ -121,6 +226,12 @@ public:
   PluginListSortProxy *createPluginListProxyModel();
 
   MOBase::IPluginGame const *managedGame() const;
+
+  /**
+   * @return the list of contents for the currently managed game, or an empty vector
+   *     if the game plugin does not implement the ModDataContent feature.
+   */
+  const ModDataContentHolder& modDataContents() const { return m_Contents; }
 
   bool isArchivesInit() const { return m_ArchivesInit; }
 
@@ -305,6 +416,7 @@ private:
   PluginContainer *m_PluginContainer;
   QString m_GameName;
   MOBase::IPluginGame *m_GamePlugin;
+  ModDataContentHolder m_Contents;
 
   Profile *m_CurrentProfile;
 

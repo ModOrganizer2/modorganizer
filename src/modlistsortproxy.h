@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modlist.h"
 
 class Profile;
+class OrganizerCore;
 
 class ModListSortProxy : public QSortFilterProxyModel
 {
@@ -72,7 +73,7 @@ public:
 
 public:
 
-  explicit ModListSortProxy(Profile *profile, QObject *parent = 0);
+  explicit ModListSortProxy(Profile *profile, OrganizerCore *organizer);
 
   void setProfile(Profile *profile);
 
@@ -154,6 +155,8 @@ private slots:
   void postDataChanged();
 
 private:
+  OrganizerCore* m_Organizer;
+
   Profile* m_Profile;
   std::vector<Criteria> m_Criteria;
   QString m_Filter;

@@ -22,6 +22,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "profile.h"
 #include "messagedialog.h"
 #include "qtgroupingproxy.h"
+#include "organizercore.h"
+
 #include <log.h>
 #include <QMenu>
 #include <QCheckBox>
@@ -33,8 +35,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-ModListSortProxy::ModListSortProxy(Profile* profile, QObject *parent)
-  : QSortFilterProxyModel(parent)
+ModListSortProxy::ModListSortProxy(Profile* profile, OrganizerCore * organizer)
+  : QSortFilterProxyModel(organizer)
+  , m_Organizer(organizer)
   , m_Profile(profile)
   , m_FilterActive(false)
   , m_FilterMode(FilterAnd)
@@ -177,21 +180,16 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
       }
     } break;
     case ModList::COL_CONTENT: {
-      std::vector<ModInfo::EContent> lContent = leftMod->getContents();
-      std::vector<ModInfo::EContent> rContent = rightMod->getContents();
-      if (lContent.size() != rContent.size()) {
-        lt = lContent.size() < rContent.size();
-      }
-
-      int lValue = 0;
-      int rValue = 0;
-      for (ModInfo::EContent content : lContent) {
-        lValue += 2 << (unsigned int)content;
-      }
-      for (ModInfo::EContent content : rContent) {
-        rValue += 2 << (unsigned int)content;
-      }
-
+      const auto& lContents = leftMod->getContents();
+      const auto& rContents = rightMod->getContents();
+      unsigned int lValue = 0;
+      unsigned int rValue = 0;
+      m_Organizer->modDataContents().forEachContentIn(lContents, [&lValue](auto const& content) {
+        lValue += 2U << static_cast<unsigned int>(content.id());
+      });
+      m_Organizer->modDataContents().forEachContentIn(rContents, [&rValue](auto const& content) {
+        rValue += 2U << static_cast<unsigned int>(content.id());
+      });
       lt = lValue < rValue;
     } break;
     case ModList::COL_NAME: {
@@ -449,7 +447,7 @@ bool ModListSortProxy::categoryMatchesMod(
 
 bool ModListSortProxy::contentMatchesMod(ModInfo::Ptr info, bool enabled, int content) const
 {
-  return info->hasContent(static_cast<ModInfo::EContent>(content));
+  return info->hasContent(content);
 }
 
 bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const

@@ -87,24 +87,6 @@ public:
     FLAG_TRACKED,
   };
 
-  enum EContent {
-    CONTENT_PLUGIN,
-    CONTENT_TEXTURE,
-    CONTENT_MESH,
-    CONTENT_BSA,
-    CONTENT_INTERFACE,
-    CONTENT_SOUND,
-    CONTENT_SCRIPT,
-    CONTENT_SKSE,
-    CONTENT_SKSEFILES,
-    CONTENT_SKYPROC,
-    CONTENT_MCM,
-    CONTENT_INI,
-    CONTENT_MODGROUP
-  };
-
-  static const int NUM_CONTENT_TYPES = CONTENT_MODGROUP + 1;
-
   enum EHighlight {
     HIGHLIGHT_NONE = 0,
     HIGHLIGHT_INVALID = 1,
@@ -247,13 +229,6 @@ public:
   // whether the given name is used for regular mods
   //
   static bool isRegularName(const QString& name);
-
-  /**
-   * @brief retieve a name for one of the CONTENT_ enums
-   * @param contentType the content value
-   * @return a display string
-   */
-  static QString getContentTypeName(int contentType);
 
   virtual bool isRegular() const { return false; }
 
@@ -546,7 +521,7 @@ public:
   /**
    * @return a list of content types contained in a mod
    */
-  virtual std::vector<EContent> getContents() const { return std::vector<EContent>(); }
+  virtual const std::set<int>& getContents() const = 0;
 
   /**
    * @brief test if the specified flag is set for this mod
@@ -563,11 +538,13 @@ public:
   bool hasAnyOfTheseFlags(std::vector<ModInfo::EFlag> flags) const;
 
   /**
-   * @brief test if the mods contains the specified content
-   * @param content the content to test
-   * @return true if the content is there, false otherwise
+   * @brief Test if the mod contains the specified content.
+   *
+   * @param content ID of the content to test.
+   *
+   * @return true if the content is there, false otherwise.
    */
-  bool hasContent(ModInfo::EContent content) const;
+  virtual bool hasContent(int content) const = 0;
 
   /**
    * @return an indicator if and how this mod should be highlighted by the UI
