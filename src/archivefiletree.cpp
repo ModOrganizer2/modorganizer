@@ -84,14 +84,6 @@ protected:
 public: // Overrides:
 
   /**
-   * @override
-   */
-  std::shared_ptr<FileTreeEntry> addFile(QString path) override {
-    // Cannot add file to an archive.
-    throw UnsupportedOperationException(QObject::tr("Cannot create file within an archive."));
-  }
-
-  /**
    *
    */
   static void mapToArchive(IFileTree const& tree, QString path, FileData* const* data)
@@ -118,7 +110,9 @@ public: // Overrides:
       }
       else {
         const ArchiveFileEntry& archiveFileEntry = dynamic_cast<const ArchiveFileEntry&>(*entry);
-        data[archiveFileEntry.m_Index]->addOutputFileName(path + archiveFileEntry.name());
+        if (archiveFileEntry.m_Index != -1) {
+          data[archiveFileEntry.m_Index]->addOutputFileName(path + archiveFileEntry.name());
+        }
       }
     }
   }
@@ -135,16 +129,18 @@ public: // Overrides:
 
 protected:
 
-  /*
-   * Overriding this to create custom FileTreeEntry with index set to -1. No need to
-   * override makeFile() since we addFile is overriden. Note that this will not be
-   * used to create existing tree since we do this manually in doPopulate.
+  /**
+   * Overriding makeDirectory and makeFile to create file tree or file entry with index -1.
    *
-   * @override
    */
   virtual std::shared_ptr<IFileTree> makeDirectory(
     std::shared_ptr<const IFileTree> parent, QString name) const override {
     return std::make_shared<ArchiveFileTreeImpl>(parent, name, -1, std::vector<File>{});
+  }
+
+  virtual std::shared_ptr<FileTreeEntry> makeFile(
+    std::shared_ptr<const IFileTree> parent, QString name) const override {
+    return std::make_shared<ArchiveFileEntry>(parent, name, -1);
   }
 
   virtual bool doPopulate(std::shared_ptr<const IFileTree> parent, std::vector<std::shared_ptr<FileTreeEntry>>& entries) const override {
