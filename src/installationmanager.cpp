@@ -527,12 +527,12 @@ IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QSt
 }
 
 
-bool InstallationManager::wasCancelled()
+bool InstallationManager::wasCancelled() const
 {
   return m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED;
 }
 
-bool InstallationManager::isRunning()
+bool InstallationManager::isRunning() const
 {
   return m_IsRunning;
 }
@@ -828,9 +828,5 @@ void InstallationManager::registerInstaller(IPluginInstaller *installer)
 
 QStringList InstallationManager::getSupportedExtensions() const
 {
-  QStringList result;
-  foreach (const QString &extension, m_SupportedExtensions) {
-    result.append(extension);
-  }
-  return result;
+  return QStringList(std::begin(m_SupportedExtensions), std::end(m_SupportedExtensions));
 }

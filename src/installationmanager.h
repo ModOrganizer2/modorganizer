@@ -88,12 +88,12 @@ public:
   /**
    * @return true if the installation was canceled
    **/
-  bool wasCancelled();
+  bool wasCancelled() const;
 
   /**
    * @return true if an installation is currently in progress
    **/
-  bool isRunning();
+  bool isRunning() const;
 
   /**
    * @brief retrieve a string describing the specified error code
@@ -111,9 +111,9 @@ public:
   void registerInstaller(MOBase::IPluginInstaller *installer); 
   
   /**
-   * @return list of file extensions we can install
+   * @return the extensions of archives supported by this installation manager.
    */
-  QStringList getSupportedExtensions() const;
+  QStringList getSupportedExtensions() const override;
 
   /**
    * @brief Extract the specified file from the currently opened archive to a temporary location.
