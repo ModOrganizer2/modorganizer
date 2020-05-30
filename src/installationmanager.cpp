@@ -108,6 +108,7 @@ InstallationManager::~InstallationManager()
 
 void InstallationManager::setParentWidget(QWidget *widget)
 {
+  m_ParentWidget = widget;
   for (IPluginInstaller *installer : m_Installers) {
     installer->setParentWidget(widget);
   }
