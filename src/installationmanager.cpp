@@ -130,6 +130,7 @@ bool InstallationManager::extractFiles(QDir extractPath)
 {
   m_InstallationProgress = new QProgressDialog(m_ParentWidget);
   ON_BLOCK_EXIT([this]() {
+    m_InstallationProgress->cancel();
     m_InstallationProgress->hide();
     m_InstallationProgress->deleteLater();
     m_InstallationProgress = nullptr;
@@ -140,6 +141,7 @@ bool InstallationManager::extractFiles(QDir extractPath)
   m_InstallationProgress->setWindowTitle(tr("Extracting files"));
   m_InstallationProgress->setWindowModality(Qt::WindowModal);
   m_InstallationProgress->setFixedSize(600, 100);
+  m_InstallationProgress->setAutoReset(false);
   m_InstallationProgress->show();
 
   // unpack only the files we need for the installer
@@ -155,7 +157,7 @@ bool InstallationManager::extractFiles(QDir extractPath)
     if (m_Progress != m_InstallationProgress->value())
       m_InstallationProgress->setValue(m_Progress);
     QCoreApplication::processEvents();
-  } while (!future.isFinished() || m_InstallationProgress->isVisible());
+  } while (!future.isFinished());
   if (!future.result()) {
     if (m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
       if (!m_ErrorMessage.isEmpty()) {
@@ -433,6 +435,13 @@ IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QSt
     m_Progress = 0;
     m_ProgressFile = QString();
   });
+
+  // Turn off auto-reset otherwize the progress dialog is reset before the end. This
+  // is kind of annoying because updateProgress consider percentage of progression
+  // through the archive (pack), while we are waiting for extracting archive entries, so
+  // the percentage of in updateProgress is not really related to the percentage of files
+  // extracted...
+  m_InstallationProgress->setAutoReset(false);
 
   m_InstallationProgress->setWindowFlags(
         m_InstallationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
