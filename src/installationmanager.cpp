@@ -207,6 +207,60 @@ QStringList InstallationManager::extractFiles(std::vector<std::shared_ptr<const 
 }
 
 
+QString InstallationManager::createFile(std::shared_ptr<const MOBase::FileTreeEntry> entry) 
+{
+  // Use QTemporaryFile to create the temporary file with the given template:
+  QTemporaryFile tempFile(QDir::cleanPath(QDir::tempPath() + QDir::separator() + "mo2-install"));
+
+  // Turn-off autoRemove otherwise the file is deleted when destructor is called:
+  tempFile.setAutoRemove(false);
+
+  // Open/Close the file so that installer can use it properly:
+  if (!tempFile.open()) {
+    return QString();
+  }
+  tempFile.close();
+
+  // fileName() returns the full path since we provide a full path in the constructor:
+  const QString absPath = tempFile.fileName();
+
+  m_CreatedFiles[entry] = absPath;
+  m_TempFilesToDelete.insert(QDir::temp().relativeFilePath(absPath));
+
+  // Returns the path with native separators:
+  return QDir::toNativeSeparators(absPath);
+}
+
+void InstallationManager::cleanCreatedFiles(std::shared_ptr<const MOBase::IFileTree> fileTree) 
+{
+  // We simply have to check if all the entries have fileTree as a parent:
+  for (auto it = std::begin(m_CreatedFiles); it != std::end(m_CreatedFiles); ) {
+    
+    // Find the parent - Could this be in FileTreeEntry?
+    bool found = false;
+    {
+      auto parent = it->first->parent();
+      while (parent && !found) {
+        if (parent == fileTree) {
+          found = true;
+        }
+        else {
+          parent = parent->parent();
+        }
+      }
+    }
+
+    // If the parent was not found, we remove the entry, otherwize we move to the next one:
+    if (!found) {
+      it = m_CreatedFiles.erase(it);
+    }
+    else {
+      ++it;
+    }
+  }
+}
+
+
 IPluginInstaller::EInstallResult InstallationManager::installArchive(GuessedValue<QString> &modName, const QString &archiveName, int modId)
 {
   // in earlier versions the modName was copied here and the copy passed to install. I don't know why I did this and it causes
@@ -368,6 +422,7 @@ IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QSt
 
   log::debug("installing to \"{}\"", targetDirectoryNative);
 
+  // Extract the archive:
   m_InstallationProgress = new QProgressDialog(m_ParentWidget);
   ON_BLOCK_EXIT([this] () {
     m_InstallationProgress->cancel();
@@ -408,6 +463,24 @@ IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QSt
     } else {
       throw MyException(tr("Extraction failed: %1").arg(m_ArchiveHandler->getLastError()));
     }
+  }
+
+  // Copy the created files:
+  for (auto& p : m_CreatedFiles) {
+    QString destPath = QDir::cleanPath(targetDirectory + QDir::separator() + p.first->path());
+    log::debug("Moving {} to {}.", p.second, destPath);
+
+    // We need to remove the path if it exists:
+    if (QFile::exists(destPath)) {
+      QFile::remove(destPath);
+    }
+    
+    QDir dir = QFileInfo(destPath).absoluteDir();
+    if (!dir.exists()) {
+      dir.mkpath(".");
+    }
+    
+    QFile::copy(p.second, destPath);
   }
 
   QSettings settingsFile(targetDirectory + "/meta.ini", QSettings::IniFormat);
@@ -467,6 +540,10 @@ bool InstallationManager::isRunning()
 
 void InstallationManager::postInstallCleanup()
 {
+  // Clear the list of created files:
+  m_CreatedFiles.clear();
+
+  // Close the archive:
   m_ArchiveHandler->close();
 
   // directories we may want to remove. sorted from longest to shortest to ensure we remove subdirectories first.
@@ -618,14 +695,22 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
               = installerSimple->install(modName, filesTree, version, modID);
           if (installResult == IPluginInstaller::RESULT_SUCCESS) {
 
-            // Note: Have to maintain a pointer to IFileTree because install() takes a
-            // reference. This could be an issue if ever a plugin creates a new tree that
-            // is not a ArchiveFileTree.
+            // Downcast to an actual ArchiveFileTree and map to the archive. Test if
+            // the tree is still an ArchiveFileTree, otherwize it means the installer
+            // did some bad stuff.
             ArchiveFileTree* p = dynamic_cast<ArchiveFileTree*>(filesTree.get());
             if (p == nullptr) {
               throw IncompatibilityException(tr("Invalid file tree returned by plugin."));
             }
+            
+            // Detach the file tree (this ensure the parent is null and call to path()
+            // stops at this root):
+            p->detach();
+
             p->mapToArchive(m_ArchiveHandler);
+
+            // Clean the created files:
+            cleanCreatedFiles(filesTree);
 
             // the simple installer only prepares the installation, the rest
             // works the same for all installers
