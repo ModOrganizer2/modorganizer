@@ -262,7 +262,8 @@ private:
   QString m_CurrentFile;
   QString m_ErrorMessage;
 
-  // List of creates files:
+  // Map from entries in the tree that is used by the installer and absolute
+  // paths to temporary files:
   std::map<std::shared_ptr<const MOBase::FileTreeEntry>, QString> m_CreatedFiles;
 
   QProgressDialog *m_InstallationProgress { nullptr };
