@@ -85,20 +85,26 @@ InstallationManager::InstallationManager()
     : m_ParentWidget(nullptr),
       m_SupportedExtensions({"zip", "rar", "7z", "fomod", "001"}),
       m_IsRunning(false) {
-  QLibrary archiveLib(QCoreApplication::applicationDirPath() +
-                      "\\dlls\\archive.dll");
-  if (!archiveLib.load()) {
-    throw MyException(QObject::tr("archive.dll not loaded: \"%1\"")
-                          .arg(archiveLib.errorString()));
-  }
-
-  CreateArchiveType CreateArchiveFunc
-      = resolveFunction<CreateArchiveType>(archiveLib, "CreateArchive");
-
-  m_ArchiveHandler = CreateArchiveFunc();
+  m_ArchiveHandler = CreateArchive();
   if (!m_ArchiveHandler->isValid()) {
     throw MyException(getErrorString(m_ArchiveHandler->getLastError()));
   }
+  m_ArchiveHandler->setLogCallback([](auto level, auto const& message) {
+    switch (level) {
+    case NArchive::LogLevel::Debug:
+      log::debug("{}", message);
+      break;
+    case NArchive::LogLevel::Info:
+      log::info("{}", message);
+      break;
+    case NArchive::LogLevel::Warning:
+      log::warn("{}", message);
+      break;
+    case NArchive::LogLevel::Error:
+      log::error("{}", message);
+      break;
+    }
+  });
 }
 
 InstallationManager::~InstallationManager()
@@ -147,10 +153,10 @@ bool InstallationManager::extractFiles(QDir extractPath)
   // unpack only the files we need for the installer
   QFuture<bool> future = QtConcurrent::run([&]() -> bool {
     return m_ArchiveHandler->extract(
-      QDir::tempPath(),
-      new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
+      QDir::tempPath().toStdWString(),
+      [this](float f) { updateProgress(f); },
       nullptr,
-      new MethodCallback<InstallationManager, void, QString const&>(this, &InstallationManager::report7ZipError)
+      [this](std::wstring const& error) { report7ZipError(QString::fromStdWString(error)); } 
     );
     });
   do {
@@ -159,7 +165,7 @@ bool InstallationManager::extractFiles(QDir extractPath)
     QCoreApplication::processEvents();
   } while (!future.isFinished());
   if (!future.result()) {
-    if (m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
+    if (m_ArchiveHandler->getLastError() == Archive::Error::ERROR_EXTRACT_CANCELLED) {
       if (!m_ErrorMessage.isEmpty()) {
         throw MyException(tr("Extraction failed: %1").arg(m_ErrorMessage));
       }
@@ -168,7 +174,7 @@ bool InstallationManager::extractFiles(QDir extractPath)
       }
     }
     else {
-      throw MyException(tr("Extraction failed: %1").arg(m_ArchiveHandler->getLastError()));
+      throw MyException(tr("Extraction failed: %1").arg(static_cast<int>(m_ArchiveHandler->getLastError())));
     }
   }
 
@@ -448,12 +454,15 @@ IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QSt
   m_InstallationProgress->setWindowModality(Qt::WindowModal);
   m_InstallationProgress->setFixedSize(600, 100);
   m_InstallationProgress->show();
+
+  auto start = std::chrono::system_clock::now();
+
   QFuture<bool> future = QtConcurrent::run([&]() -> bool {
     return m_ArchiveHandler->extract(
-      targetDirectory,
-      new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
-      new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::updateProgressFile),
-      new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError)
+      targetDirectory.toStdWString(),
+      [this](float progress) { updateProgress(progress); },
+      [this](std::wstring const& filename) { updateProgressFile(QString::fromStdWString(filename)); },
+      [this](std::wstring const& error) { report7ZipError(QString::fromStdWString(error)); }
     );
   });
   do {
@@ -463,15 +472,17 @@ IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QSt
       m_InstallationProgress->setLabelText(m_ProgressFile);
     QCoreApplication::processEvents();
   } while (!future.isFinished());
+  log::debug("Extraction took {:.3f}s.", std::chrono::duration<double>(std::chrono::system_clock::now() - start).count());
+
   if (!future.result()) {
-    if (m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
+    if (m_ArchiveHandler->getLastError() == Archive::Error::ERROR_EXTRACT_CANCELLED) {
       if (!m_ErrorMessage.isEmpty()) {
         throw MyException(tr("Extraction failed: %1").arg(m_ErrorMessage));
       } else {
       return IPluginInstaller::RESULT_CANCELED;
       }
     } else {
-      throw MyException(tr("Extraction failed: %1").arg(m_ArchiveHandler->getLastError()));
+      throw MyException(tr("Extraction failed: %1").arg(static_cast<int>(m_ArchiveHandler->getLastError())));
     }
   }
 
@@ -539,7 +550,7 @@ IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QSt
 
 bool InstallationManager::wasCancelled() const
 {
-  return m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED;
+  return m_ArchiveHandler->getLastError() == Archive::Error::ERROR_EXTRACT_CANCELLED;
 }
 
 bool InstallationManager::isRunning() const
@@ -662,8 +673,12 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
   m_ArchiveHandler->close();
 
   // open the archive and construct the directory tree the installers work on
-  bool archiveOpen = m_ArchiveHandler->open(fileName,
-                                            new MethodCallback<InstallationManager, void, QString *>(this, &InstallationManager::queryPassword));
+  bool archiveOpen = m_ArchiveHandler->open(
+    fileName.toStdWString(), [this]() {
+      QString password;
+      queryPassword(&password);
+      return password.toStdWString();
+    });
   if (!archiveOpen) {
     log::debug("integrated archiver can't open {}: {} ({})",
            fileName,
@@ -793,28 +808,28 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
 QString InstallationManager::getErrorString(Archive::Error errorCode)
 {
   switch (errorCode) {
-    case Archive::ERROR_NONE: {
+    case Archive::Error::ERROR_NONE: {
       return tr("no error");
     } break;
-    case Archive::ERROR_LIBRARY_NOT_FOUND: {
+    case Archive::Error::ERROR_LIBRARY_NOT_FOUND: {
       return tr("7z.dll not found");
     } break;
-    case Archive::ERROR_LIBRARY_INVALID: {
+    case Archive::Error::ERROR_LIBRARY_INVALID: {
       return tr("7z.dll isn't valid");
     } break;
-    case Archive::ERROR_ARCHIVE_NOT_FOUND: {
+    case Archive::Error::ERROR_ARCHIVE_NOT_FOUND: {
       return tr("archive not found");
     } break;
-    case Archive::ERROR_FAILED_TO_OPEN_ARCHIVE: {
+    case Archive::Error::ERROR_FAILED_TO_OPEN_ARCHIVE: {
       return tr("failed to open archive");
     } break;
-    case Archive::ERROR_INVALID_ARCHIVE_FORMAT: {
+    case Archive::Error::ERROR_INVALID_ARCHIVE_FORMAT: {
       return tr("unsupported archive type");
     } break;
-    case Archive::ERROR_LIBRARY_ERROR: {
+    case Archive::Error::ERROR_LIBRARY_ERROR: {
       return tr("internal library error");
     } break;
-    case Archive::ERROR_ARCHIVE_INVALID: {
+    case Archive::Error::ERROR_ARCHIVE_INVALID: {
       return tr("archive invalid");
     } break;
     default: {
