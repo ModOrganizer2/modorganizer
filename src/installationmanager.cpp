@@ -125,12 +125,6 @@ void InstallationManager::setURL(QString const &url)
   m_URL = url;
 }
 
-void InstallationManager::queryPassword(QString *password)
-{
-  *password = QInputDialog::getText(nullptr, tr("Password required"),
-                                    tr("Password"), QLineEdit::Password);
-}
-
 bool InstallationManager::extractFiles(QString extractPath, QString title, bool showFilenames)
 {
   QProgressDialog *installationProgress = new QProgressDialog(m_ParentWidget);
@@ -630,8 +624,8 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
   // open the archive and construct the directory tree the installers work on
   bool archiveOpen = m_ArchiveHandler->open(
     fileName.toStdWString(), [this]() {
-      QString password;
-      queryPassword(&password);
+      QString password = QInputDialog::getText(m_ParentWidget, tr("Password required"),
+        tr("Password"), QLineEdit::Password);
       return password.toStdWString();
     });
   if (!archiveOpen) {

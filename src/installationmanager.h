@@ -189,14 +189,6 @@ public:
 
 private:
 
-  void queryPassword(QString *password);
-  void updateProgress(float percentage);
-  void updateProgressFile(const QString &fileName);
-  void report7ZipError(const QString &errorMessage);
-
-  // Recursive worker function for mapToArchive (takes raw reference for "speed").
-  bool unpackSingleFile(const QString &fileName);
-
   MOBase::IPluginInstaller::EInstallResult doInstall(MOBase::GuessedValue<QString> &modName, QString gameName,
                  int modID, const QString &version, const QString &newestVersion, int categoryID, int fileCategoryID, const QString &repository);
 
