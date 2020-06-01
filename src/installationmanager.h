@@ -204,10 +204,16 @@ private:
 
   void postInstallCleanup();
 
+private slots:
+
+  /**
+   * @brief Query user for password and update the m_Password field.
+   */
+  void queryPassword();
+
 signals:
 
-  void progressUpdate(float percentage);
-  void progressUpdate(QString const fileName);
+  void passwordRequested();
 
 private:
 
@@ -252,6 +258,9 @@ private:
 
   Archive *m_ArchiveHandler;
   QString m_CurrentFile;
+
+  // Current password:
+  QString m_Password;
 
   // Map from entries in the tree that is used by the installer and absolute
   // paths to temporary files:

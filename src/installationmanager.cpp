@@ -105,6 +105,12 @@ InstallationManager::InstallationManager()
       break;
     }
   });
+
+  // Connect the query password slot - This is the only way I found to be able to query user
+  // from a separate thread. We use a BlockingQueuedConnection so that calling passwordRequested()
+  // will block until the end of the slot.
+  connect(this, &InstallationManager::passwordRequested, 
+    this, &InstallationManager::queryPassword, Qt::BlockingQueuedConnection);
 }
 
 InstallationManager::~InstallationManager()
@@ -123,6 +129,11 @@ void InstallationManager::setParentWidget(QWidget *widget)
 void InstallationManager::setURL(QString const &url)
 {
   m_URL = url;
+}
+
+void InstallationManager::queryPassword() {
+  m_Password = QInputDialog::getText(m_ParentWidget, tr("Password required"),
+    tr("Password"), QLineEdit::Password);
 }
 
 bool InstallationManager::extractFiles(QString extractPath, QString title, bool showFilenames)
@@ -625,11 +636,22 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
   m_ArchiveHandler->close();
 
   // open the archive and construct the directory tree the installers work on
+
   bool archiveOpen = m_ArchiveHandler->open(
-    fileName.toStdWString(), [this]() {
-      QString password = QInputDialog::getText(m_ParentWidget, tr("Password required"),
-        tr("Password"), QLineEdit::Password);
-      return password.toStdWString();
+    fileName.toStdWString(), [this]() -> std::wstring {
+      m_Password = QString();
+
+      // Note: If we are not in the Qt event thread, we cannot use queryPassword() directly,
+      // so we emit passwordRequested() that is connected to queryPassword(). The connection is
+      // made using Qt::BlockingQueuedConnection, so the emit "call" is actually blocking. We
+      // cannot use emit if we are in the even thread, otherwize we have a deadlock.
+      if (QThread::currentThread() != QApplication::instance()->thread()) {
+        emit passwordRequested();
+      }
+      else {
+        queryPassword();
+      }
+      return m_Password.toStdWString();
     });
   if (!archiveOpen) {
     log::debug("integrated archiver can't open {}: {} ({})",
@@ -755,8 +777,6 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
   return installResult;
 }
 
-
-
 QString InstallationManager::getErrorString(Archive::Error errorCode)
 {
   switch (errorCode) {
@@ -790,7 +810,6 @@ QString InstallationManager::getErrorString(Archive::Error errorCode)
     } break;
   }
 }
-
 
 void InstallationManager::registerInstaller(IPluginInstaller *installer)
 {
