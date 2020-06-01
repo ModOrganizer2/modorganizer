@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <archive.h>
 #include <QProgressDialog>
 #include <set>
+#include <map>
 #include <errorcodes.h>
 
 
@@ -87,12 +88,12 @@ public:
   /**
    * @return true if the installation was canceled
    **/
-  bool wasCancelled();
+  bool wasCancelled() const;
 
   /**
    * @return true if an installation is currently in progress
    **/
-  bool isRunning();
+  bool isRunning() const;
 
   /**
    * @brief retrieve a string describing the specified error code
@@ -110,9 +111,9 @@ public:
   void registerInstaller(MOBase::IPluginInstaller *installer); 
   
   /**
-   * @return list of file extensions we can install
+   * @return the extensions of archives supported by this installation manager.
    */
-  QStringList getSupportedExtensions() const;
+  QStringList getSupportedExtensions() const override;
 
   /**
    * @brief Extract the specified file from the currently opened archive to a temporary location.
@@ -153,6 +154,19 @@ public:
   virtual QStringList extractFiles(std::vector<std::shared_ptr<const MOBase::FileTreeEntry>> const& entries) override;
 
   /**
+   * @brief Create a new file on the disk corresponding to the given entry.
+   *
+   * This method can be used by installer that needs to create files that are not in the original
+   * archive. At the end of the installation, if there are entries in the final tree that were used
+   * to create files, the corresponding files will be moved to the mod folder.
+   *
+   * @param entry The entry for which a temporary file should be created.
+   *
+   * @return the path to the created file.
+   */
+  virtual QString createFile(std::shared_ptr<const MOBase::FileTreeEntry> entry) override;
+  
+  /**
    * @brief Installs the given archive.
    *
    * @param modName Suggested name of the mod.
@@ -186,7 +200,13 @@ private:
   MOBase::IPluginInstaller::EInstallResult doInstall(MOBase::GuessedValue<QString> &modName, QString gameName,
                  int modID, const QString &version, const QString &newestVersion, int categoryID, int fileCategoryID, const QString &repository);
 
-  //QString generateBackupName(const QString &directoryName) const;
+  /**
+   * @brief Clean the list of created files by removing all entries that are not
+   *     in the given tree.
+   *
+   * @param tree The parent tree. Usually the tree returned by the installer.
+   */
+  void cleanCreatedFiles(std::shared_ptr<const MOBase::IFileTree> fileTree);
 
   bool ensureValidModName(MOBase::GuessedValue<QString> &name) const;
 
@@ -241,6 +261,10 @@ private:
   Archive *m_ArchiveHandler;
   QString m_CurrentFile;
   QString m_ErrorMessage;
+
+  // Map from entries in the tree that is used by the installer and absolute
+  // paths to temporary files:
+  std::map<std::shared_ptr<const MOBase::FileTreeEntry>, QString> m_CreatedFiles;
 
   QProgressDialog *m_InstallationProgress { nullptr };
   int m_Progress;
