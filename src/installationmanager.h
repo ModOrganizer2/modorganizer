@@ -244,7 +244,7 @@ private:
    * @return true if the extraction was successful, false if the extraciton was
    *     cancelled. If an error occured, an exception is thrown.
    */
-  bool extractFiles(QDir extractPath);
+  bool extractFiles(QString extractPath, QString title, bool showFilenames);
 
 private:
 
@@ -260,16 +260,10 @@ private:
 
   Archive *m_ArchiveHandler;
   QString m_CurrentFile;
-  QString m_ErrorMessage;
 
   // Map from entries in the tree that is used by the installer and absolute
   // paths to temporary files:
   std::map<std::shared_ptr<const MOBase::FileTreeEntry>, QString> m_CreatedFiles;
-
-  QProgressDialog *m_InstallationProgress { nullptr };
-  int m_Progress;
-  QString m_ProgressFile;
-
   std::set<QString> m_TempFilesToDelete;
 
   QString m_URL;

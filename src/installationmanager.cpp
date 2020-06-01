@@ -131,43 +131,77 @@ void InstallationManager::queryPassword(QString *password)
                                     tr("Password"), QLineEdit::Password);
 }
 
-
-bool InstallationManager::extractFiles(QDir extractPath)
+bool InstallationManager::extractFiles(QString extractPath, QString title, bool showFilenames)
 {
-  m_InstallationProgress = new QProgressDialog(m_ParentWidget);
-  ON_BLOCK_EXIT([this]() {
-    m_InstallationProgress->cancel();
-    m_InstallationProgress->hide();
-    m_InstallationProgress->deleteLater();
-    m_InstallationProgress = nullptr;
-    m_Progress = 0;
-    });
-  m_InstallationProgress->setWindowFlags(
-    m_InstallationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
-  m_InstallationProgress->setWindowTitle(tr("Extracting files"));
-  m_InstallationProgress->setWindowModality(Qt::WindowModal);
-  m_InstallationProgress->setFixedSize(600, 100);
-  m_InstallationProgress->setAutoReset(false);
-  m_InstallationProgress->show();
+  QProgressDialog *installationProgress = new QProgressDialog(m_ParentWidget);
+  ON_BLOCK_EXIT([=]() {
+    installationProgress->cancel();
+    installationProgress->hide();
+    installationProgress->deleteLater();
+  });
+  installationProgress->setWindowFlags(
+    installationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+  if (!title.isEmpty()) {
+    installationProgress->setWindowTitle(title);
+  }
+  installationProgress->setWindowModality(Qt::WindowModal);
+  installationProgress->setFixedSize(600, 100);
+
+  // Turn off auto-reset otherwize the progress dialog is reset before the end. This
+  // is kind of annoying because updateProgress consider percentage of progression
+  // through the archive (pack), while we are waiting for extracting archive entries, so
+  // the percentage of in updateProgress is not really related to the percentage of files
+  // extracted...
+  installationProgress->setAutoReset(false);
+
+  installationProgress->show();
+
+  auto start = std::chrono::system_clock::now();
+
+  // Variable updated by the callbacks:
+  int progress = 0;
+  QString progressFile;
+  QString errorMessage;
+
+  // The callbacks:
+  ProgressCallback progressCallback = [&progress, installationProgress, this](float p) {
+    progress = static_cast<int>(p * 100.0);
+
+    if (installationProgress->wasCanceled()) {
+      m_ArchiveHandler->cancel();
+      installationProgress->reset();
+    }
+  };
+  FileChangeCallback fileChangeCallback = [&progressFile](std::wstring const& file) {
+    progressFile = QString::fromStdWString(file);
+  };
+  ErrorCallback errorCallback = [&errorMessage, this](std::wstring const& message) {
+    errorMessage = QString::fromStdWString(message);
+  };
 
   // unpack only the files we need for the installer
   QFuture<bool> future = QtConcurrent::run([&]() -> bool {
     return m_ArchiveHandler->extract(
-      QDir::tempPath().toStdWString(),
-      [this](float f) { updateProgress(f); },
-      nullptr,
-      [this](std::wstring const& error) { report7ZipError(QString::fromStdWString(error)); } 
+      extractPath.toStdWString(),
+      progressCallback,
+      showFilenames ? fileChangeCallback : nullptr,
+      errorCallback
     );
-    });
+  });
   do {
-    if (m_Progress != m_InstallationProgress->value())
-      m_InstallationProgress->setValue(m_Progress);
+    if (progress != installationProgress->value()) {
+      installationProgress->setValue(progress);
+    }
+    if (showFilenames && progressFile != installationProgress->labelText()) {
+      installationProgress->setLabelText(progressFile);
+    }
     QCoreApplication::processEvents();
   } while (!future.isFinished());
+  log::debug("Extraction took {:.3f}s.", std::chrono::duration<double>(std::chrono::system_clock::now() - start).count());
   if (!future.result()) {
     if (m_ArchiveHandler->getLastError() == Archive::Error::ERROR_EXTRACT_CANCELLED) {
-      if (!m_ErrorMessage.isEmpty()) {
-        throw MyException(tr("Extraction failed: %1").arg(m_ErrorMessage));
+      if (!errorMessage.isEmpty()) {
+        throw MyException(tr("Extraction failed: %1").arg(errorMessage));
       }
       else {
         return false;
@@ -181,13 +215,11 @@ bool InstallationManager::extractFiles(QDir extractPath)
   return true;
 }
 
-
 QString InstallationManager::extractFile(std::shared_ptr<const FileTreeEntry> entry)
 {
   QStringList result = this->extractFiles({ entry });
   return result.isEmpty() ? QString() : result[0];
 }
-
 
 QStringList InstallationManager::extractFiles(std::vector<std::shared_ptr<const FileTreeEntry>> const& entries)
 {
@@ -208,7 +240,7 @@ QStringList InstallationManager::extractFiles(std::vector<std::shared_ptr<const 
     m_TempFilesToDelete.insert(path);
   }
 
-  if (!extractFiles(QDir::tempPath())) {
+  if (!extractFiles(QDir::tempPath(), tr("Extracting files"), false)) {
     return QStringList();
   }
 
@@ -277,31 +309,6 @@ IPluginInstaller::EInstallResult InstallationManager::installArchive(GuessedValu
   // because the caller will then not have the right name.
   bool iniTweaks;
   return install(archiveName, modName, iniTweaks, modId);
-}
-
-void InstallationManager::updateProgress(float percentage)
-{
-  if (m_InstallationProgress != nullptr) {
-    m_Progress = static_cast<int>(percentage * 100.0);
-
-    if (m_InstallationProgress->wasCanceled()) {
-      m_ArchiveHandler->cancel();
-      m_InstallationProgress->reset();
-    }
-  }
-}
-
-
-void InstallationManager::updateProgressFile(QString const &fileName)
-{
-  m_ProgressFile = fileName;
-}
-
-
-void InstallationManager::report7ZipError(QString const &errorMessage)
-{
-  m_ErrorMessage = errorMessage;
-  m_ArchiveHandler->cancel();
 }
 
 
@@ -430,60 +437,8 @@ IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QSt
   QString targetDirectoryNative = QDir::toNativeSeparators(targetDirectory);
 
   log::debug("installing to \"{}\"", targetDirectoryNative);
-
-  // Extract the archive:
-  m_InstallationProgress = new QProgressDialog(m_ParentWidget);
-  ON_BLOCK_EXIT([this] () {
-    m_InstallationProgress->cancel();
-    m_InstallationProgress->hide();
-    m_InstallationProgress->deleteLater();
-    m_InstallationProgress = nullptr;
-    m_Progress = 0;
-    m_ProgressFile = QString();
-  });
-
-  // Turn off auto-reset otherwize the progress dialog is reset before the end. This
-  // is kind of annoying because updateProgress consider percentage of progression
-  // through the archive (pack), while we are waiting for extracting archive entries, so
-  // the percentage of in updateProgress is not really related to the percentage of files
-  // extracted...
-  m_InstallationProgress->setAutoReset(false);
-
-  m_InstallationProgress->setWindowFlags(
-        m_InstallationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
-  m_InstallationProgress->setWindowModality(Qt::WindowModal);
-  m_InstallationProgress->setFixedSize(600, 100);
-  m_InstallationProgress->show();
-
-  auto start = std::chrono::system_clock::now();
-
-  QFuture<bool> future = QtConcurrent::run([&]() -> bool {
-    return m_ArchiveHandler->extract(
-      targetDirectory.toStdWString(),
-      [this](float progress) { updateProgress(progress); },
-      [this](std::wstring const& filename) { updateProgressFile(QString::fromStdWString(filename)); },
-      [this](std::wstring const& error) { report7ZipError(QString::fromStdWString(error)); }
-    );
-  });
-  do {
-    if (m_Progress != m_InstallationProgress->value())
-      m_InstallationProgress->setValue(m_Progress);
-    if (m_ProgressFile != m_InstallationProgress->labelText())
-      m_InstallationProgress->setLabelText(m_ProgressFile);
-    QCoreApplication::processEvents();
-  } while (!future.isFinished());
-  log::debug("Extraction took {:.3f}s.", std::chrono::duration<double>(std::chrono::system_clock::now() - start).count());
-
-  if (!future.result()) {
-    if (m_ArchiveHandler->getLastError() == Archive::Error::ERROR_EXTRACT_CANCELLED) {
-      if (!m_ErrorMessage.isEmpty()) {
-        throw MyException(tr("Extraction failed: %1").arg(m_ErrorMessage));
-      } else {
-      return IPluginInstaller::RESULT_CANCELED;
-      }
-    } else {
-      throw MyException(tr("Extraction failed: %1").arg(static_cast<int>(m_ArchiveHandler->getLastError())));
-    }
+  if (!extractFiles(targetDirectory, "", true)) {
+    return IPluginInstaller::RESULT_CANCELED;
   }
 
   // Copy the created files:
