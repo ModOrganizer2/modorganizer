@@ -90,17 +90,18 @@ InstallationManager::InstallationManager()
     throw MyException(getErrorString(m_ArchiveHandler->getLastError()));
   }
   m_ArchiveHandler->setLogCallback([](auto level, auto const& message) {
+    using LogLevel = ArchiveCallbacks::LogLevel;
     switch (level) {
-    case NArchive::LogLevel::Debug:
+    case LogLevel::Debug:
       log::debug("{}", message);
       break;
-    case NArchive::LogLevel::Info:
+    case LogLevel::Info:
       log::info("{}", message);
       break;
-    case NArchive::LogLevel::Warning:
+    case LogLevel::Warning:
       log::warn("{}", message);
       break;
-    case NArchive::LogLevel::Error:
+    case LogLevel::Error:
       log::error("{}", message);
       break;
     }
@@ -169,11 +170,11 @@ bool InstallationManager::extractFiles(QString extractPath, QString title, bool 
   QString errorMessage;
 
   // The callbacks:
-  ProgressCallback progressCallback = [&progress](float p) { progress = static_cast<int>(p * 100.0); };
-  FileChangeCallback fileChangeCallback = [&progressFile](std::wstring const& file) {
+  ArchiveCallbacks::ProgressCallback progressCallback = [&progress](float p) { progress = static_cast<int>(p * 100.0); };
+  ArchiveCallbacks::FileChangeCallback fileChangeCallback = [&progressFile](std::wstring const& file) {
     progressFile = QString::fromStdWString(file);
   };
-  ErrorCallback errorCallback = [&errorMessage, this](std::wstring const& message) {
+  ArchiveCallbacks::ErrorCallback errorCallback = [&errorMessage, this](std::wstring const& message) {
     m_ArchiveHandler->cancel();
     errorMessage = QString::fromStdWString(message);
   };
