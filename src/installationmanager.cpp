@@ -158,18 +158,12 @@ bool InstallationManager::extractFiles(QString extractPath, QString title, bool 
   QString errorMessage;
 
   // The callbacks:
-  ProgressCallback progressCallback = [&progress, installationProgress, this](float p) {
-    progress = static_cast<int>(p * 100.0);
-
-    if (installationProgress->wasCanceled()) {
-      m_ArchiveHandler->cancel();
-      installationProgress->reset();
-    }
-  };
+  ProgressCallback progressCallback = [&progress](float p) { progress = static_cast<int>(p * 100.0); };
   FileChangeCallback fileChangeCallback = [&progressFile](std::wstring const& file) {
     progressFile = QString::fromStdWString(file);
   };
   ErrorCallback errorCallback = [&errorMessage, this](std::wstring const& message) {
+    m_ArchiveHandler->cancel();
     errorMessage = QString::fromStdWString(message);
   };
 
@@ -182,7 +176,13 @@ bool InstallationManager::extractFiles(QString extractPath, QString title, bool 
       errorCallback
     );
   });
+
+  // Wait for the extraction to complete (or be cancelled):
   do {
+    if (installationProgress->wasCanceled()) {
+      m_ArchiveHandler->cancel();
+      installationProgress->reset();
+    }
     if (progress != installationProgress->value()) {
       installationProgress->setValue(progress);
     }
@@ -191,7 +191,8 @@ bool InstallationManager::extractFiles(QString extractPath, QString title, bool 
     }
     QCoreApplication::processEvents();
   } while (!future.isFinished());
-  log::debug("Extraction took {:.3f}s.", std::chrono::duration<double>(std::chrono::system_clock::now() - start).count());
+
+  // Check the result:
   if (!future.result()) {
     if (m_ArchiveHandler->getLastError() == Archive::Error::ERROR_EXTRACT_CANCELLED) {
       if (!errorMessage.isEmpty()) {
@@ -205,6 +206,8 @@ bool InstallationManager::extractFiles(QString extractPath, QString title, bool 
       throw MyException(tr("Extraction failed: %1").arg(static_cast<int>(m_ArchiveHandler->getLastError())));
     }
   }
+
+  log::debug("Extraction took {:.3f}s.", std::chrono::duration<double>(std::chrono::system_clock::now() - start).count());
 
   return true;
 }
