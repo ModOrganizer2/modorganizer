@@ -64,10 +64,6 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-typedef Archive* (*CreateArchiveType)();
-
-
-
 template <typename T>
 static T resolveFunction(QLibrary &lib, const char *name)
 {
@@ -116,7 +112,6 @@ InstallationManager::InstallationManager()
 
 InstallationManager::~InstallationManager()
 {
-  delete m_ArchiveHandler;
 }
 
 void InstallationManager::setParentWidget(QWidget *widget)
@@ -238,7 +233,7 @@ QStringList InstallationManager::extractFiles(std::vector<std::shared_ptr<const 
     [](auto const& entry) { return entry->isFile(); });
 
   // Update the archive:
-  ArchiveFileTree::mapToArchive(m_ArchiveHandler, files);
+  ArchiveFileTree::mapToArchive(*m_ArchiveHandler, files);
 
   // Retrieve the file path:
   QStringList result;
@@ -663,7 +658,7 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
   ON_BLOCK_EXIT(std::bind(&InstallationManager::postInstallCleanup, this));
 
   std::shared_ptr<IFileTree> filesTree = 
-    archiveOpen ? ArchiveFileTree::makeTree(m_ArchiveHandler) : nullptr;
+    archiveOpen ? ArchiveFileTree::makeTree(*m_ArchiveHandler) : nullptr;
   IPluginInstaller::EInstallResult installResult = IPluginInstaller::RESULT_NOTATTEMPTED;
 
   std::sort(m_Installers.begin(), m_Installers.end(), [] (IPluginInstaller *LHS, IPluginInstaller *RHS) {
@@ -707,7 +702,7 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
             // stops at this root):
             p->detach();
 
-            p->mapToArchive(m_ArchiveHandler);
+            p->mapToArchive(*m_ArchiveHandler);
 
             // Clean the created files:
             cleanCreatedFiles(filesTree);

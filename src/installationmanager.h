@@ -256,10 +256,9 @@ private:
   std::vector<MOBase::IPluginInstaller*> m_Installers;
   std::set<QString, CaseInsensitive> m_SupportedExtensions;
 
-  Archive *m_ArchiveHandler;
+  // Archive management:
+  std::unique_ptr<Archive> m_ArchiveHandler;
   QString m_CurrentFile;
-
-  // Current password:
   QString m_Password;
 
   // Map from entries in the tree that is used by the installer and absolute

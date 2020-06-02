@@ -120,8 +120,8 @@ public: // Overrides:
   /**
    *
    */
-  void mapToArchive(Archive* archive) const override {
-    mapToArchive(*this, "", archive->getFileList());
+  void mapToArchive(Archive &archive) const override {
+    mapToArchive(*this, "", archive.getFileList());
   }
 
 protected:
@@ -214,9 +214,9 @@ private:
   mutable std::vector<File> m_Files;
 };
 
-std::shared_ptr<ArchiveFileTree> ArchiveFileTree::makeTree(Archive* archive) 
+std::shared_ptr<ArchiveFileTree> ArchiveFileTree::makeTree(Archive const& archive) 
 {
-  auto const& data = archive->getFileList();
+  auto const& data = archive.getFileList();
 
   std::vector<ArchiveFileTreeImpl::File> files;
   files.reserve(data.size());
@@ -255,6 +255,6 @@ void mapToArchive(std::vector<FileData*> const& data, It begin, It end) {
   }
 }
 
-void ArchiveFileTree::mapToArchive(Archive* archive, std::vector<std::shared_ptr<const FileTreeEntry>> const& entries) {
-  ::mapToArchive(archive->getFileList(), entries.cbegin(), entries.cend());
+void ArchiveFileTree::mapToArchive(Archive &archive, std::vector<std::shared_ptr<const FileTreeEntry>> const& entries) {
+  ::mapToArchive(archive.getFileList(), entries.cbegin(), entries.cend());
 }

@@ -37,7 +37,7 @@ public:
    *
    * @return a file tree representing the given archive.
    */
-  static std::shared_ptr<ArchiveFileTree> makeTree(Archive* archive);
+  static std::shared_ptr<ArchiveFileTree> makeTree(Archive const& archive);
 
   /**
    * @brief Update the given archive to reflect change in this tree.
@@ -48,7 +48,7 @@ public:
    * @param archive The archive to update. Must be the one used to
    *     create the tree.
    */
-  virtual void mapToArchive(Archive *archive) const = 0;
+  virtual void mapToArchive(Archive &archive) const = 0;
 
   /**
    * @brief Update the given archive to prepare for the extraction
@@ -61,7 +61,7 @@ public:
    * @param entries List of entries to mark for extraction. All the entries must
    *     come from a tree created with the given archive.
    */
-  static void mapToArchive(Archive* archive, std::vector<std::shared_ptr<const FileTreeEntry>> const& entries);
+  static void mapToArchive(Archive &archive, std::vector<std::shared_ptr<const FileTreeEntry>> const& entries);
 
 protected:
 

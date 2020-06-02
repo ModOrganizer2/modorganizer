@@ -71,45 +71,18 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
-
-typedef Archive* (*CreateArchiveType)();
-
-
-template <typename T> static T resolveFunction(QLibrary &lib, const char *name)
-{
-  T temp = reinterpret_cast<T>(lib.resolve(name));
-  if (temp == nullptr) {
-    throw std::runtime_error(QObject::tr("invalid 7-zip32.dll: %1").arg(lib.errorString()).toLatin1().constData());
-  }
-  return temp;
-}
-
-
 SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
   : m_Parent(nullptr)
   , m_Interface(nexusInterface)
   , m_Reply(nullptr)
   , m_Attempts(3)
 {
-  QLibrary archiveLib(QCoreApplication::applicationDirPath() + "\\dlls\\archive.dll");
-  if (!archiveLib.load()) {
-    throw MyException(tr("archive.dll not loaded: \"%1\"").arg(archiveLib.errorString()));
-  }
-
-  CreateArchiveType CreateArchiveFunc = resolveFunction<CreateArchiveType>(archiveLib, "CreateArchive");
-
-  m_ArchiveHandler = CreateArchiveFunc();
-  if (!m_ArchiveHandler->isValid()) {
-    throw MyException(InstallationManager::getErrorString(m_ArchiveHandler->getLastError()));
-  }
-
   m_MOVersion = createVersionInfo();
 }
 
 
 SelfUpdater::~SelfUpdater()
 {
-  delete m_ArchiveHandler;
 }
 
 void SelfUpdater::setUserInterface(QWidget *widget)
