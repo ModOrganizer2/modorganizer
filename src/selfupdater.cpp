@@ -19,10 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "selfupdater.h"
 
-#include "archive.h"
-#include "callback.h"
 #include "utility.h"
-#include "installationmanager.h"
 #include "iplugingame.h"
 #include "messagedialog.h"
 #include "downloadmanager.h"
