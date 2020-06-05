@@ -155,30 +155,36 @@ bool InstallationManager::extractFiles(QString extractPath, QString title, bool 
   // extracted...
   installationProgress->setAutoReset(false);
 
+  // Connect signals emitted by the extraction callback to the progress dialog slots:
+  connect(this, &InstallationManager::progressUpdate, installationProgress, &QProgressDialog::setValue);
+  connect(this, &InstallationManager::progressFileChange, installationProgress, &QProgressDialog::setLabelText);
+
+  // Cancelling progress only cancel the extraction, we do not force exiting the event-loop:
+  connect(installationProgress, &QProgressDialog::canceled, [this]() { m_ArchiveHandler->cancel(); });
+
   installationProgress->show();
 
-  auto start = std::chrono::system_clock::now();
-
   // Variable updated by the callbacks:
-  int progress = 0;
-  QString progressFile;
   QString errorMessage;
 
   // The callbacks:
-  auto progressCallback = [&progress](auto progressType, uint64_t current, uint64_t total) { 
+  auto progressCallback = [this](auto progressType, uint64_t current, uint64_t total) { 
     if (progressType == Archive::ProgressType::EXTRACTION) {
-      progress = static_cast<int>(100 * current / total);
+      int progress = static_cast<int>(100 * current / total);
+      emit progressUpdate(progress);
     }
   };
-  Archive::FileChangeCallback fileChangeCallback = [&progressFile](auto changeType, std::wstring const& file) {
+  Archive::FileChangeCallback fileChangeCallback = [this](auto changeType, std::wstring const& file) {
     if (changeType == Archive::FileChangeType::EXTRACTION_START) {
-      progressFile = QString::fromStdWString(file);
+      emit progressFileChange(QString::fromStdWString(file));
     }
   };
   auto errorCallback = [&errorMessage, this](std::wstring const& message) {
     m_ArchiveHandler->cancel();
     errorMessage = QString::fromStdWString(message);
   };
+
+  auto start = std::chrono::system_clock::now();
 
   // unpack only the files we need for the installer
   QFuture<bool> future = QtConcurrent::run([&]() -> bool {
@@ -190,20 +196,15 @@ bool InstallationManager::extractFiles(QString extractPath, QString title, bool 
     );
   });
 
-  // Wait for the extraction to complete (or be cancelled):
-  do {
-    if (installationProgress->wasCanceled()) {
-      m_ArchiveHandler->cancel();
-      installationProgress->reset();
-    }
-    if (progress != installationProgress->value()) {
-      installationProgress->setValue(progress);
-    }
-    if (showFilenames && progressFile != installationProgress->labelText()) {
-      installationProgress->setLabelText(progressFile);
-    }
-    QCoreApplication::processEvents();
-  } while (!future.isFinished());
+  // Future watcher to exit the loop:
+  QFutureWatcher<bool> futureWatcher;
+  futureWatcher.setFuture(future);
+
+  QEventLoop loop(this);
+  connect(&futureWatcher, &QFutureWatcher<bool>::finished, &loop, &QEventLoop::quit);
+
+  // Wait for future to complete:
+  loop.exec();
 
   // Check the result:
   if (!future.result()) {

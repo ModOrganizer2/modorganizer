@@ -213,7 +213,20 @@ private slots:
 
 signals:
 
+  /**
+   * @brief Emitted when a password is requested from the archive wrapper.
+   */
   void passwordRequested();
+
+  /**
+   * @brief Progress update from the extraction.
+   */
+  void progressUpdate(int percentage);
+
+  /**
+   * @brief File change update from the extraction.
+   */
+  void progressFileChange(QString const& value);
 
 private:
 
