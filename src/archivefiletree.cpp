@@ -104,14 +104,14 @@ public: // Overrides:
         const ArchiveFileTreeImpl& archiveEntry = dynamic_cast<const ArchiveFileTreeImpl&>(*entry);
         QString tmp = path + archiveEntry.name();
         if (archiveEntry.m_Index != -1) {
-          data[archiveEntry.m_Index]->addOutputFileName(tmp.toStdWString());
+          data[archiveEntry.m_Index]->addOutputFilePath(tmp.toStdWString());
         }
         mapToArchive(*archiveEntry.astree(), tmp, data);
       }
       else {
         const ArchiveFileEntry& archiveFileEntry = dynamic_cast<const ArchiveFileEntry&>(*entry);
         if (archiveFileEntry.m_Index != -1) {
-          data[archiveFileEntry.m_Index]->addOutputFileName((path + archiveFileEntry.name()).toStdWString());
+          data[archiveFileEntry.m_Index]->addOutputFilePath((path + archiveFileEntry.name()).toStdWString());
         }
       }
     }
@@ -223,7 +223,7 @@ std::shared_ptr<ArchiveFileTree> ArchiveFileTree::makeTree(Archive const& archiv
 
   for (size_t i = 0; i < data.size(); ++i) {
     files.push_back(std::make_tuple(
-      QString::fromStdWString(data[i]->getFileName()).replace("\\", "/").split("/", Qt::SkipEmptyParts), 
+      QString::fromStdWString(data[i]->getArchiveFilePath()).replace("\\", "/").split("/", Qt::SkipEmptyParts), 
       data[i]->isDirectory(), 
       (int) i));
   }
@@ -245,7 +245,7 @@ void mapToArchive(std::vector<FileData*> const& data, It begin, It end) {
     auto* aentry = dynamic_cast<const ArchiveFileEntry*>(entry.get());
 
     if (aentry->m_Index != -1) {
-      data[aentry->m_Index]->addOutputFileName(aentry->path().toStdWString());
+      data[aentry->m_Index]->addOutputFilePath(aentry->path().toStdWString());
     }
 
     if (entry->isDir()) {
