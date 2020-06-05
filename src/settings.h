@@ -287,8 +287,10 @@ private:
 
 // settings about plugins
 //
-class PluginSettings
+class PluginSettings: public QObject
 {
+  Q_OBJECT
+
 public:
   PluginSettings(QSettings& settings);
 
@@ -356,6 +358,13 @@ public:
   // commits all the settings to the ini
   //
   void save();
+
+Q_SIGNALS:
+
+  /**
+   * Emitted when a plugin setting changes.
+   */
+  void pluginSettingChanged(QString const& pluginName, const QString& key, const QVariant& oldValue, const QVariant& newValue);
 
 private:
   QSettings& m_Settings;
