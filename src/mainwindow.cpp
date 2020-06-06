@@ -266,6 +266,7 @@ MainWindow::MainWindow(Settings &settings
   , m_LinkToolbar(nullptr)
   , m_LinkDesktop(nullptr)
   , m_LinkStartMenu(nullptr)
+  , m_NumberOfProblems(0)
 {
   // disables incredibly slow menu fade in effect that looks and feels like crap.
   // this was only happening to users with the windows
@@ -473,7 +474,8 @@ MainWindow::MainWindow(Settings &settings
   setFilterShortcuts(ui->downloadView, ui->downloadFilterEdit);
 
   m_UpdateProblemsTimer.setSingleShot(true);
-  connect(&m_UpdateProblemsTimer, SIGNAL(timeout()), this, SLOT(updateProblemsButton()));
+  connect(&m_UpdateProblemsTimer, SIGNAL(timeout()), this, SLOT(checkForProblemsAsync()));
+  connect(this, SIGNAL(checkForProblemsDone()), this, SLOT(updateProblemsButton()), Qt::ConnectionType::QueuedConnection);
 
   m_SaveMetaTimer.setSingleShot(false);
   connect(&m_SaveMetaTimer, SIGNAL(timeout()), this, SLOT(saveModMetas()));
@@ -1000,7 +1002,7 @@ void MainWindow::on_centralWidget_customContextMenuRequested(const QPoint &pos)
   createPopupMenu()->exec(ui->centralWidget->mapToGlobal(pos));
 }
 
-void MainWindow::scheduleUpdateButton()
+void MainWindow::scheduleCheckForProblems()
 {
   if (!m_UpdateProblemsTimer.isActive()) {
     m_UpdateProblemsTimer.start(1000);
@@ -1014,7 +1016,7 @@ void MainWindow::updateProblemsButton()
   // if the current stylesheet doesn't provide an icon, this is used instead
   const char* DefaultIconName = ":/MO/gui/warning";
 
-  const std::size_t numProblems = checkForProblems();
+  const std::size_t numProblems = m_NumberOfProblems;
 
   // original icon without a count painted on it
   const QIcon original = m_originalNotificationIcon.isNull() ?
@@ -1097,8 +1099,13 @@ bool MainWindow::errorReported(QString &logFile)
   return false;
 }
 
+void MainWindow::checkForProblemsAsync() {
+  QtConcurrent::run([this]() {
+    checkForProblems();
+    });
+}
 
-size_t MainWindow::checkForProblems()
+void MainWindow::checkForProblems()
 {
   size_t numProblems = 0;
   for (QObject *pluginObj : m_PluginContainer.plugins<QObject>()) {
@@ -1109,7 +1116,8 @@ size_t MainWindow::checkForProblems()
         numProblems += diagnose->activeProblems().size();
     }
   }
-  return numProblems;
+  m_NumberOfProblems = numProblems;
+  emit checkForProblemsDone();
 }
 
 void MainWindow::about()
@@ -1353,7 +1361,7 @@ void MainWindow::showEvent(QShowEvent *event)
 
     m_OrganizerCore.settings().nexus().registerAsNXMHandler(false);
     m_WasVisible = true;
-	  updateProblemsButton();
+    updateProblemsButton();
   }
 }
 
