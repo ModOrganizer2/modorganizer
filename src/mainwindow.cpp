@@ -401,7 +401,7 @@ MainWindow::MainWindow(Settings &settings
     ui->bossButton->setToolTip(tr("There is no supported sort mechanism for this game. You will probably have to use a third-party tool."));
   }
 
-  connect(&m_PluginContainer, SIGNAL(diagnosisUpdate()), this, SLOT(updateProblemsButton()));
+  connect(&m_PluginContainer, SIGNAL(diagnosisUpdate()), this, SLOT(scheduleCheckForProblems()));
 
   connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(saveSelectionChanged(QListWidgetItem*)));
 
@@ -474,8 +474,8 @@ MainWindow::MainWindow(Settings &settings
   setFilterShortcuts(ui->downloadView, ui->downloadFilterEdit);
 
   m_UpdateProblemsTimer.setSingleShot(true);
-  connect(&m_UpdateProblemsTimer, SIGNAL(timeout()), this, SLOT(checkForProblemsAsync()));
-  connect(this, SIGNAL(checkForProblemsDone()), this, SLOT(updateProblemsButton()), Qt::ConnectionType::QueuedConnection);
+  connect(&m_UpdateProblemsTimer, &QTimer::timeout, this, &MainWindow::checkForProblemsAsync);
+  connect(this, &MainWindow::checkForProblemsDone, this, &MainWindow::updateProblemsButton, Qt::ConnectionType::QueuedConnection);
 
   m_SaveMetaTimer.setSingleShot(false);
   connect(&m_SaveMetaTimer, SIGNAL(timeout()), this, SLOT(saveModMetas()));
@@ -1011,8 +1011,6 @@ void MainWindow::scheduleCheckForProblems()
 
 void MainWindow::updateProblemsButton()
 {
-  TimeThis tt("MainWindow::updateProblemsButton()");
-
   // if the current stylesheet doesn't provide an icon, this is used instead
   const char* DefaultIconName = ":/MO/gui/warning";
 
@@ -1107,6 +1105,7 @@ void MainWindow::checkForProblemsAsync() {
 
 void MainWindow::checkForProblems()
 {
+  TimeThis tt("MainWindow::checkForProblems()");
   size_t numProblems = 0;
   for (QObject *pluginObj : m_PluginContainer.plugins<QObject>()) {
     IPlugin *plugin = qobject_cast<IPlugin*>(pluginObj);
@@ -2464,7 +2463,7 @@ void MainWindow::directory_refreshed()
 {
   // some problem-reports may rely on the virtual directory tree so they need to be updated
   // now
-  updateProblemsButton();
+  scheduleCheckForProblems();
 
   //Some better check for the current tab is needed.
   if (ui->tabWidget->currentIndex() == 2) {
@@ -3790,7 +3789,7 @@ void MainWindow::clearOverwrite()
       for (auto f : overwriteDir.entryList(QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot))
         delList.push_back(overwriteDir.absoluteFilePath(f));
       if (shellDelete(delList, true)) {
-        updateProblemsButton();
+        checkForProblems();
         m_OrganizerCore.refreshModList();
       } else {
         const auto e = GetLastError();
@@ -5170,7 +5169,6 @@ void MainWindow::languageChange(const QString &newLanguage)
   createHelpMenu();
 
   updateDownloadView();
-  updateProblemsButton();
 
   QMenu *listOptionsMenu = new QMenu(ui->listOptionsBtn);
   initModListContextMenu(listOptionsMenu);
@@ -5877,12 +5875,12 @@ void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
 
 void MainWindow::on_actionNotifications_triggered()
 {
-  updateProblemsButton();
+  checkForProblems();
 
   ProblemsDialog problems(m_PluginContainer.plugins<QObject>(), this);
   problems.exec();
 
-  updateProblemsButton();
+  checkForProblems();
 }
 
 void MainWindow::on_actionChange_Game_triggered()
