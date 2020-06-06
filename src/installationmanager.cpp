@@ -186,25 +186,28 @@ bool InstallationManager::extractFiles(QString extractPath, QString title, bool 
 
   auto start = std::chrono::system_clock::now();
 
+  // Future watcher to exit the loop:
+  QFutureWatcher<bool> futureWatcher;
+
+  QEventLoop loop(this);
+  connect(
+    &futureWatcher, &QFutureWatcher<bool>::finished, 
+    &loop, &QEventLoop::quit, 
+    Qt::QueuedConnection);
+
   // unpack only the files we need for the installer
-  QFuture<bool> future = QtConcurrent::run([&]() -> bool {
+  futureWatcher.setFuture(QtConcurrent::run([&]() -> bool {
     return m_ArchiveHandler->extract(
       extractPath.toStdWString(),
       progressCallback,
       showFilenames ? fileChangeCallback : nullptr,
       errorCallback
     );
-  });
-
-  // Future watcher to exit the loop:
-  QFutureWatcher<bool> futureWatcher;
-  futureWatcher.setFuture(future);
-
-  QEventLoop loop(this);
-  connect(&futureWatcher, &QFutureWatcher<bool>::finished, &loop, &QEventLoop::quit);
+  }));
 
   // Wait for future to complete:
   loop.exec();
+  auto future = futureWatcher.future();
 
   // Check the result:
   if (!future.result()) {
