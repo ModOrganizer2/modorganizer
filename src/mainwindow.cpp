@@ -1106,8 +1106,6 @@ QFuture<void> MainWindow::checkForProblemsAsync() {
 
 void MainWindow::checkForProblemsImpl()
 {
-  TimeThis tt("MainWindow::checkForProblemsImpl()");
-
   m_ProblemsCheckRequired = true;
 
   std::scoped_lock lk(m_CheckForProblemsMutex);
@@ -1115,6 +1113,7 @@ void MainWindow::checkForProblemsImpl()
   // another thread might already have checked while this one was waiting on the lock
   if (m_ProblemsCheckRequired) {
     m_ProblemsCheckRequired = false;
+    TimeThis tt("MainWindow::checkForProblemsImpl()");
     size_t numProblems = 0;
     for (QObject *pluginObj : m_PluginContainer.plugins<QObject>()) {
       IPlugin *plugin = qobject_cast<IPlugin*>(pluginObj);
