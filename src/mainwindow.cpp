@@ -1098,15 +1098,15 @@ bool MainWindow::errorReported(QString &logFile)
   return false;
 }
 
-void MainWindow::checkForProblemsAsync() {
-  QtConcurrent::run([this]() {
-    checkForProblems();
+QFuture<void> MainWindow::checkForProblemsAsync() {
+  return QtConcurrent::run([this]() {
+    checkForProblemsImpl();
     });
 }
 
-void MainWindow::checkForProblems()
+void MainWindow::checkForProblemsImpl()
 {
-  TimeThis tt("MainWindow::checkForProblems()");
+  TimeThis tt("MainWindow::checkForProblemsImpl()");
   {
     QMutexLocker lk(&m_CheckForProblemsMutex);
     if (m_CheckingForProblems) {
@@ -5886,7 +5886,9 @@ void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
 
 void MainWindow::on_actionNotifications_triggered()
 {
-  checkForProblems();
+  auto future = checkForProblemsAsync();
+
+  future.waitForFinished();
 
   ProblemsDialog problems(m_PluginContainer.plugins<QObject>(), this);
   problems.exec();
