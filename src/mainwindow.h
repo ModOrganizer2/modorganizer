@@ -247,7 +247,7 @@ private:
 
   bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
    
-  // Performs checks, sets the problemCount and singnals checkForProblemsDone().
+  // Performs checks, sets the m_NumberOfProblems and signals checkForProblemsDone().
   void checkForProblems();
 
   void setCategoryListVisible(bool visible);
