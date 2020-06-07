@@ -1310,9 +1310,14 @@ void PluginSettings::setSetting(const QString &pluginName, const QString &key, c
       .arg(pluginName));
   }
 
+  QVariant oldValue = m_PluginSettings[pluginName][key];
+
   // store the new setting both in memory and in the ini
   m_PluginSettings[pluginName][key] = value;
   set(m_Settings, "Plugins", pluginName + "/" + key, value);
+
+  // emit signal:
+  emit pluginSettingChanged(pluginName, key, oldValue, value);
 }
 
 QVariantMap PluginSettings::settings(const QString &pluginName) const
@@ -1322,7 +1327,32 @@ QVariantMap PluginSettings::settings(const QString &pluginName) const
 
 void PluginSettings::setSettings(const QString &pluginName, const QVariantMap& map)
 {
+  auto iterPlugin = m_PluginSettings.find(pluginName);
+
+  if (iterPlugin == m_PluginSettings.end()) {
+    throw MyException(
+      QObject::tr("attempt to store setting for unknown plugin \"%1\"")
+      .arg(pluginName));
+  }
+
+  QVariantMap oldSettings = m_PluginSettings[pluginName];
   m_PluginSettings[pluginName] = map;
+
+  // Emit signals for settings that have been changed or added:
+  for (auto& k : map.keys()) {
+    // .value() return a default-constructed QVariant if k is not in oldSettings:
+    QVariant oldValue = oldSettings.value(k);
+    if (oldValue != map[k]) {
+      emit pluginSettingChanged(pluginName, k, oldSettings.value(k), map[k]);
+    }
+  }
+
+  // Emit signals for settings that have been removed:
+  for (auto& k : oldSettings.keys()) {
+    if (!map.contains(k)) {
+      emit pluginSettingChanged(pluginName, k, oldSettings[k], QVariant());
+    }
+  }
 }
 
 QVariantMap PluginSettings::descriptions(const QString &pluginName) const

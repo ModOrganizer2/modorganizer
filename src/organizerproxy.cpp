@@ -3,7 +3,9 @@
 #include "shared/appconfig.h"
 #include "organizercore.h"
 #include "plugincontainer.h"
+#include "settings.h"
 
+#include <QObject>
 #include <QApplication>
 
 using namespace MOBase;
@@ -11,10 +13,17 @@ using namespace MOShared;
 
 
 OrganizerProxy::OrganizerProxy(OrganizerCore *organizer, PluginContainer *pluginContainer, const QString &pluginName)
-  : m_Proxied(organizer)
+  : IOrganizer(organizer)
+  , m_Proxied(organizer)
   , m_PluginContainer(pluginContainer)
   , m_PluginName(pluginName)
 {
+
+  PluginSettings& pluginSettings = m_Proxied->settings().plugins();
+
+  connect(&pluginSettings, &PluginSettings::pluginSettingChanged, [this](auto const& ...args) {
+    emit pluginSettingChanged(args...);
+  });
 }
 
 IModRepositoryBridge *OrganizerProxy::createNexusBridge() const
