@@ -1471,6 +1471,8 @@ void OrganizerCore::directory_refreshed()
     refreshLists();
   }
 
+  emit directoryStructureReady();
+
   log::debug("refresh done");
 }
 
@@ -1768,9 +1770,12 @@ bool OrganizerCore::beforeRun(
 {
   saveCurrentProfile();
 
-  while (m_DirectoryUpdate) {
-    ::Sleep(100);
-    QCoreApplication::processEvents();
+  // need to wait until directory structure is ready
+  if (m_DirectoryUpdate) {
+    QEventLoop loop;
+    connect(this, &OrganizerCore::directoryStructureReady, &loop, &QEventLoop::quit,
+      Qt::ConnectionType::QueuedConnection);
+    loop.exec();
   }
 
   // need to make sure all data is saved before we start the application
@@ -1838,10 +1843,12 @@ ProcessRunner::Results OrganizerCore::waitForAllUSVFSProcesses(
 std::vector<Mapping> OrganizerCore::fileMapping(const QString &profileName,
                                                 const QString &customOverwrite)
 {
-  // need to wait until directory structure
-  while (m_DirectoryUpdate) {
-    ::Sleep(100);
-    QCoreApplication::processEvents();
+  // need to wait until directory structure is ready
+  if (m_DirectoryUpdate) {
+    QEventLoop loop;
+    connect(this, &OrganizerCore::directoryStructureReady, &loop, &QEventLoop::quit,
+      Qt::ConnectionType::QueuedConnection);
+    loop.exec();
   }
 
   IPluginGame *game  = qApp->property("managed_game").value<IPluginGame *>();

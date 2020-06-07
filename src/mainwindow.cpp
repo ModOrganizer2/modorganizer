@@ -2129,11 +2129,20 @@ void MainWindow::activateProxy(bool activate)
   busyDialog.setWindowFlags(busyDialog.windowFlags() & ~Qt::WindowContextHelpButtonHint);
   busyDialog.setWindowModality(Qt::WindowModal);
   busyDialog.show();
-  QFuture<void> future = QtConcurrent::run(MainWindow::setupNetworkProxy, activate);
-  while (!future.isFinished()) {
-    QCoreApplication::processEvents();
-    ::Sleep(100);
-  }
+  
+  QFutureWatcher<void> futureWatcher;
+  QEventLoop loop;
+  connect(&futureWatcher, &QFutureWatcher<void>::finished,
+          &loop, &QEventLoop::quit,
+          Qt::QueuedConnection);
+
+  futureWatcher.setFuture(
+    QtConcurrent::run(MainWindow::setupNetworkProxy, activate)
+  );
+  
+  // wait for setupNetworkProxy while keeping ui responsive
+  loop.exec();
+
   busyDialog.hide();
 }
 

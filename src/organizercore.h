@@ -371,6 +371,10 @@ signals:
 
   void close();
 
+  // Notify that the directory structure is ready to be used on the main thread
+  // Use queued connections
+  void directoryStructureReady();
+
 private:
 
   void saveCurrentProfile();
