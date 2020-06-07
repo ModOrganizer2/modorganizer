@@ -178,6 +178,8 @@ signals:
 
   void modListDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
 
+  void checkForProblemsDone();
+
 protected:
 
   virtual void showEvent(QShowEvent *event);
@@ -244,8 +246,9 @@ private:
   void fixCategories();
 
   bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
-
-  size_t checkForProblems();
+   
+  // Performs checks, sets the m_NumberOfProblems and signals checkForProblemsDone().
+  void checkForProblemsImpl();
 
   void setCategoryListVisible(bool visible);
 
@@ -266,8 +269,6 @@ private:
   void addPluginSendToContextMenu(QMenu *menu);
 
   QMenu *openFolderMenu();
-
-  void scheduleUpdateButton();
 
   QDir currentSavesDir() const;
 
@@ -357,6 +358,10 @@ private:
   // icon set by the stylesheet, used to remember its original appearance
   // when painting the count
   QIcon m_originalNotificationIcon;
+
+  std::atomic<std::size_t> m_NumberOfProblems;
+  std::atomic<bool> m_ProblemsCheckRequired;
+  std::mutex m_CheckForProblemsMutex;
 
   Executable* getSelectedExecutable();
 
@@ -523,7 +528,14 @@ private slots:
 
   void checkBSAList();
 
+  // Only visually update the problems icon.
   void updateProblemsButton();
+
+  // Queue a problem check to allow collapsing of multiple requests in short amount of time.
+  void scheduleCheckForProblems();
+
+  // Perform the actual problem check in another thread.
+  QFuture<void> checkForProblemsAsync();
 
   void saveModMetas();
 
