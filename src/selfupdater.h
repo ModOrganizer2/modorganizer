@@ -140,8 +140,6 @@ private:
   bool m_Canceled;
   int m_Attempts;
 
-  Archive *m_ArchiveHandler;
-
   GitHub m_GitHub;
   QJsonObject m_UpdateCandidate;
 

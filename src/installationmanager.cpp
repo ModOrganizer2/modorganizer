@@ -64,10 +64,6 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-typedef Archive* (*CreateArchiveType)();
-
-
-
 template <typename T>
 static T resolveFunction(QLibrary &lib, const char *name)
 {
@@ -85,25 +81,37 @@ InstallationManager::InstallationManager()
     : m_ParentWidget(nullptr),
       m_SupportedExtensions({"zip", "rar", "7z", "fomod", "001"}),
       m_IsRunning(false) {
-  QLibrary archiveLib(QCoreApplication::applicationDirPath() +
-                      "\\dlls\\archive.dll");
-  if (!archiveLib.load()) {
-    throw MyException(QObject::tr("archive.dll not loaded: \"%1\"")
-                          .arg(archiveLib.errorString()));
-  }
-
-  CreateArchiveType CreateArchiveFunc
-      = resolveFunction<CreateArchiveType>(archiveLib, "CreateArchive");
-
-  m_ArchiveHandler = CreateArchiveFunc();
+  m_ArchiveHandler = CreateArchive();
   if (!m_ArchiveHandler->isValid()) {
     throw MyException(getErrorString(m_ArchiveHandler->getLastError()));
   }
+  m_ArchiveHandler->setLogCallback([](auto level, auto const& message) {
+    using LogLevel = Archive::LogLevel;
+    switch (level) {
+    case LogLevel::Debug:
+      log::debug("{}", message);
+      break;
+    case LogLevel::Info:
+      log::info("{}", message);
+      break;
+    case LogLevel::Warning:
+      log::warn("{}", message);
+      break;
+    case LogLevel::Error:
+      log::error("{}", message);
+      break;
+    }
+  });
+
+  // Connect the query password slot - This is the only way I found to be able to query user
+  // from a separate thread. We use a BlockingQueuedConnection so that calling passwordRequested()
+  // will block until the end of the slot.
+  connect(this, &InstallationManager::passwordRequested, 
+    this, &InstallationManager::queryPassword, Qt::BlockingQueuedConnection);
 }
 
 InstallationManager::~InstallationManager()
 {
-  delete m_ArchiveHandler;
 }
 
 void InstallationManager::setParentWidget(QWidget *widget)
@@ -119,69 +127,113 @@ void InstallationManager::setURL(QString const &url)
   m_URL = url;
 }
 
-void InstallationManager::queryPassword(QString *password)
-{
-  *password = QInputDialog::getText(nullptr, tr("Password required"),
-                                    tr("Password"), QLineEdit::Password);
+void InstallationManager::queryPassword() {
+  m_Password = QInputDialog::getText(m_ParentWidget, tr("Password required"),
+    tr("Password"), QLineEdit::Password);
 }
 
-
-bool InstallationManager::extractFiles(QDir extractPath)
+bool InstallationManager::extractFiles(QString extractPath, QString title, bool showFilenames)
 {
-  m_InstallationProgress = new QProgressDialog(m_ParentWidget);
-  ON_BLOCK_EXIT([this]() {
-    m_InstallationProgress->cancel();
-    m_InstallationProgress->hide();
-    m_InstallationProgress->deleteLater();
-    m_InstallationProgress = nullptr;
-    m_Progress = 0;
-    });
-  m_InstallationProgress->setWindowFlags(
-    m_InstallationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
-  m_InstallationProgress->setWindowTitle(tr("Extracting files"));
-  m_InstallationProgress->setWindowModality(Qt::WindowModal);
-  m_InstallationProgress->setFixedSize(600, 100);
-  m_InstallationProgress->setAutoReset(false);
-  m_InstallationProgress->show();
+  QProgressDialog *installationProgress = new QProgressDialog(m_ParentWidget);
+  ON_BLOCK_EXIT([=]() {
+    installationProgress->cancel();
+    installationProgress->hide();
+    installationProgress->deleteLater();
+  });
+  installationProgress->setWindowFlags(
+    installationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+  if (!title.isEmpty()) {
+    installationProgress->setWindowTitle(title);
+  }
+  installationProgress->setWindowModality(Qt::WindowModal);
+  installationProgress->setFixedSize(600, 100);
+
+  // Turn off auto-reset otherwize the progress dialog is reset before the end. This
+  // is kind of annoying because updateProgress consider percentage of progression
+  // through the archive (pack), while we are waiting for extracting archive entries, so
+  // the percentage of in updateProgress is not really related to the percentage of files
+  // extracted...
+  installationProgress->setAutoReset(false);
+
+  // Connect signals emitted by the extraction callback to the progress dialog slots:
+  connect(this, &InstallationManager::progressUpdate, installationProgress, &QProgressDialog::setValue);
+  connect(this, &InstallationManager::progressFileChange, installationProgress, &QProgressDialog::setLabelText);
+
+  // Cancelling progress only cancel the extraction, we do not force exiting the event-loop:
+  connect(installationProgress, &QProgressDialog::canceled, [this]() { m_ArchiveHandler->cancel(); });
+
+  installationProgress->show();
+
+  // Variable updated by the callbacks:
+  QString errorMessage;
+
+  // The callbacks:
+  auto progressCallback = [this](auto progressType, uint64_t current, uint64_t total) { 
+    if (progressType == Archive::ProgressType::EXTRACTION) {
+      int progress = static_cast<int>(100 * current / total);
+      emit progressUpdate(progress);
+    }
+  };
+  Archive::FileChangeCallback fileChangeCallback = [this](auto changeType, std::wstring const& file) {
+    if (changeType == Archive::FileChangeType::EXTRACTION_START) {
+      emit progressFileChange(QString::fromStdWString(file));
+    }
+  };
+  auto errorCallback = [&errorMessage, this](std::wstring const& message) {
+    m_ArchiveHandler->cancel();
+    errorMessage = QString::fromStdWString(message);
+  };
+
+  auto start = std::chrono::system_clock::now();
+
+  // Future watcher to exit the loop:
+  QFutureWatcher<bool> futureWatcher;
+
+  QEventLoop loop(this);
+  connect(
+    &futureWatcher, &QFutureWatcher<bool>::finished, 
+    &loop, &QEventLoop::quit, 
+    Qt::QueuedConnection);
 
   // unpack only the files we need for the installer
-  QFuture<bool> future = QtConcurrent::run([&]() -> bool {
+  futureWatcher.setFuture(QtConcurrent::run([&]() -> bool {
     return m_ArchiveHandler->extract(
-      QDir::tempPath(),
-      new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
-      nullptr,
-      new MethodCallback<InstallationManager, void, QString const&>(this, &InstallationManager::report7ZipError)
+      extractPath.toStdWString(),
+      progressCallback,
+      showFilenames ? fileChangeCallback : nullptr,
+      errorCallback
     );
-    });
-  do {
-    if (m_Progress != m_InstallationProgress->value())
-      m_InstallationProgress->setValue(m_Progress);
-    QCoreApplication::processEvents();
-  } while (!future.isFinished());
+  }));
+
+  // Wait for future to complete:
+  loop.exec();
+  auto future = futureWatcher.future();
+
+  // Check the result:
   if (!future.result()) {
-    if (m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
-      if (!m_ErrorMessage.isEmpty()) {
-        throw MyException(tr("Extraction failed: %1").arg(m_ErrorMessage));
+    if (m_ArchiveHandler->getLastError() == Archive::Error::ERROR_EXTRACT_CANCELLED) {
+      if (!errorMessage.isEmpty()) {
+        throw MyException(tr("Extraction failed: %1").arg(errorMessage));
       }
       else {
         return false;
       }
     }
     else {
-      throw MyException(tr("Extraction failed: %1").arg(m_ArchiveHandler->getLastError()));
+      throw MyException(tr("Extraction failed: %1").arg(static_cast<int>(m_ArchiveHandler->getLastError())));
     }
   }
 
+  log::debug("Extraction took {:.3f}s.", std::chrono::duration<double>(std::chrono::system_clock::now() - start).count());
+
   return true;
 }
-
 
 QString InstallationManager::extractFile(std::shared_ptr<const FileTreeEntry> entry)
 {
   QStringList result = this->extractFiles({ entry });
   return result.isEmpty() ? QString() : result[0];
 }
-
 
 QStringList InstallationManager::extractFiles(std::vector<std::shared_ptr<const FileTreeEntry>> const& entries)
 {
@@ -191,7 +243,7 @@ QStringList InstallationManager::extractFiles(std::vector<std::shared_ptr<const 
     [](auto const& entry) { return entry->isFile(); });
 
   // Update the archive:
-  ArchiveFileTree::mapToArchive(m_ArchiveHandler, files);
+  ArchiveFileTree::mapToArchive(*m_ArchiveHandler, files);
 
   // Retrieve the file path:
   QStringList result;
@@ -202,7 +254,7 @@ QStringList InstallationManager::extractFiles(std::vector<std::shared_ptr<const 
     m_TempFilesToDelete.insert(path);
   }
 
-  if (!extractFiles(QDir::tempPath())) {
+  if (!extractFiles(QDir::tempPath(), tr("Extracting files"), false)) {
     return QStringList();
   }
 
@@ -271,31 +323,6 @@ IPluginInstaller::EInstallResult InstallationManager::installArchive(GuessedValu
   // because the caller will then not have the right name.
   bool iniTweaks;
   return install(archiveName, modName, iniTweaks, modId);
-}
-
-void InstallationManager::updateProgress(float percentage)
-{
-  if (m_InstallationProgress != nullptr) {
-    m_Progress = static_cast<int>(percentage * 100.0);
-
-    if (m_InstallationProgress->wasCanceled()) {
-      m_ArchiveHandler->cancel();
-      m_InstallationProgress->reset();
-    }
-  }
-}
-
-
-void InstallationManager::updateProgressFile(QString const &fileName)
-{
-  m_ProgressFile = fileName;
-}
-
-
-void InstallationManager::report7ZipError(QString const &errorMessage)
-{
-  m_ErrorMessage = errorMessage;
-  m_ArchiveHandler->cancel();
 }
 
 
@@ -424,55 +451,8 @@ IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QSt
   QString targetDirectoryNative = QDir::toNativeSeparators(targetDirectory);
 
   log::debug("installing to \"{}\"", targetDirectoryNative);
-
-  // Extract the archive:
-  m_InstallationProgress = new QProgressDialog(m_ParentWidget);
-  ON_BLOCK_EXIT([this] () {
-    m_InstallationProgress->cancel();
-    m_InstallationProgress->hide();
-    m_InstallationProgress->deleteLater();
-    m_InstallationProgress = nullptr;
-    m_Progress = 0;
-    m_ProgressFile = QString();
-  });
-
-  // Turn off auto-reset otherwize the progress dialog is reset before the end. This
-  // is kind of annoying because updateProgress consider percentage of progression
-  // through the archive (pack), while we are waiting for extracting archive entries, so
-  // the percentage of in updateProgress is not really related to the percentage of files
-  // extracted...
-  m_InstallationProgress->setAutoReset(false);
-
-  m_InstallationProgress->setWindowFlags(
-        m_InstallationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
-  m_InstallationProgress->setWindowModality(Qt::WindowModal);
-  m_InstallationProgress->setFixedSize(600, 100);
-  m_InstallationProgress->show();
-  QFuture<bool> future = QtConcurrent::run([&]() -> bool {
-    return m_ArchiveHandler->extract(
-      targetDirectory,
-      new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
-      new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::updateProgressFile),
-      new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError)
-    );
-  });
-  do {
-    if (m_Progress != m_InstallationProgress->value())
-      m_InstallationProgress->setValue(m_Progress);
-    if (m_ProgressFile != m_InstallationProgress->labelText())
-      m_InstallationProgress->setLabelText(m_ProgressFile);
-    QCoreApplication::processEvents();
-  } while (!future.isFinished());
-  if (!future.result()) {
-    if (m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
-      if (!m_ErrorMessage.isEmpty()) {
-        throw MyException(tr("Extraction failed: %1").arg(m_ErrorMessage));
-      } else {
-      return IPluginInstaller::RESULT_CANCELED;
-      }
-    } else {
-      throw MyException(tr("Extraction failed: %1").arg(m_ArchiveHandler->getLastError()));
-    }
+  if (!extractFiles(targetDirectory, "", true)) {
+    return IPluginInstaller::RESULT_CANCELED;
   }
 
   // Copy the created files:
@@ -539,7 +519,7 @@ IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QSt
 
 bool InstallationManager::wasCancelled() const
 {
-  return m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED;
+  return m_ArchiveHandler->getLastError() == Archive::Error::ERROR_EXTRACT_CANCELLED;
 }
 
 bool InstallationManager::isRunning() const
@@ -662,8 +642,23 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
   m_ArchiveHandler->close();
 
   // open the archive and construct the directory tree the installers work on
-  bool archiveOpen = m_ArchiveHandler->open(fileName,
-                                            new MethodCallback<InstallationManager, void, QString *>(this, &InstallationManager::queryPassword));
+
+  bool archiveOpen = m_ArchiveHandler->open(
+    fileName.toStdWString(), [this]() -> std::wstring {
+      m_Password = QString();
+
+      // Note: If we are not in the Qt event thread, we cannot use queryPassword() directly,
+      // so we emit passwordRequested() that is connected to queryPassword(). The connection is
+      // made using Qt::BlockingQueuedConnection, so the emit "call" is actually blocking. We
+      // cannot use emit if we are in the even thread, otherwize we have a deadlock.
+      if (QThread::currentThread() != QApplication::instance()->thread()) {
+        emit passwordRequested();
+      }
+      else {
+        queryPassword();
+      }
+      return m_Password.toStdWString();
+    });
   if (!archiveOpen) {
     log::debug("integrated archiver can't open {}: {} ({})",
            fileName,
@@ -673,7 +668,7 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
   ON_BLOCK_EXIT(std::bind(&InstallationManager::postInstallCleanup, this));
 
   std::shared_ptr<IFileTree> filesTree = 
-    archiveOpen ? ArchiveFileTree::makeTree(m_ArchiveHandler) : nullptr;
+    archiveOpen ? ArchiveFileTree::makeTree(*m_ArchiveHandler) : nullptr;
   IPluginInstaller::EInstallResult installResult = IPluginInstaller::RESULT_NOTATTEMPTED;
 
   std::sort(m_Installers.begin(), m_Installers.end(), [] (IPluginInstaller *LHS, IPluginInstaller *RHS) {
@@ -717,7 +712,7 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
             // stops at this root):
             p->detach();
 
-            p->mapToArchive(m_ArchiveHandler);
+            p->mapToArchive(*m_ArchiveHandler);
 
             // Clean the created files:
             cleanCreatedFiles(filesTree);
@@ -788,33 +783,31 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
   return installResult;
 }
 
-
-
 QString InstallationManager::getErrorString(Archive::Error errorCode)
 {
   switch (errorCode) {
-    case Archive::ERROR_NONE: {
+    case Archive::Error::ERROR_NONE: {
       return tr("no error");
     } break;
-    case Archive::ERROR_LIBRARY_NOT_FOUND: {
+    case Archive::Error::ERROR_LIBRARY_NOT_FOUND: {
       return tr("7z.dll not found");
     } break;
-    case Archive::ERROR_LIBRARY_INVALID: {
+    case Archive::Error::ERROR_LIBRARY_INVALID: {
       return tr("7z.dll isn't valid");
     } break;
-    case Archive::ERROR_ARCHIVE_NOT_FOUND: {
+    case Archive::Error::ERROR_ARCHIVE_NOT_FOUND: {
       return tr("archive not found");
     } break;
-    case Archive::ERROR_FAILED_TO_OPEN_ARCHIVE: {
+    case Archive::Error::ERROR_FAILED_TO_OPEN_ARCHIVE: {
       return tr("failed to open archive");
     } break;
-    case Archive::ERROR_INVALID_ARCHIVE_FORMAT: {
+    case Archive::Error::ERROR_INVALID_ARCHIVE_FORMAT: {
       return tr("unsupported archive type");
     } break;
-    case Archive::ERROR_LIBRARY_ERROR: {
+    case Archive::Error::ERROR_LIBRARY_ERROR: {
       return tr("internal library error");
     } break;
-    case Archive::ERROR_ARCHIVE_INVALID: {
+    case Archive::Error::ERROR_ARCHIVE_INVALID: {
       return tr("archive invalid");
     } break;
     default: {
@@ -823,7 +816,6 @@ QString InstallationManager::getErrorString(Archive::Error errorCode)
     } break;
   }
 }
-
 
 void InstallationManager::registerInstaller(IPluginInstaller *installer)
 {
