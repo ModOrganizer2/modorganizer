@@ -267,6 +267,7 @@ MainWindow::MainWindow(Settings &settings
   , m_LinkDesktop(nullptr)
   , m_LinkStartMenu(nullptr)
   , m_NumberOfProblems(0)
+  , m_CheckingForProblems(false)
 {
   // disables incredibly slow menu fade in effect that looks and feels like crap.
   // this was only happening to users with the windows
@@ -1005,7 +1006,7 @@ void MainWindow::on_centralWidget_customContextMenuRequested(const QPoint &pos)
 void MainWindow::scheduleCheckForProblems()
 {
   if (!m_UpdateProblemsTimer.isActive()) {
-    m_UpdateProblemsTimer.start(1000);
+    m_UpdateProblemsTimer.start(500);
   }
 }
 
@@ -1106,6 +1107,15 @@ void MainWindow::checkForProblemsAsync() {
 void MainWindow::checkForProblems()
 {
   TimeThis tt("MainWindow::checkForProblems()");
+  {
+    QMutexLocker lk(&m_CheckForProblemsMutex);
+    if (m_CheckingForProblems) {
+      return;
+    }
+    else {
+      m_CheckingForProblems = true;
+    }
+  }
   size_t numProblems = 0;
   for (QObject *pluginObj : m_PluginContainer.plugins<QObject>()) {
     IPlugin *plugin = qobject_cast<IPlugin*>(pluginObj);
@@ -1116,6 +1126,7 @@ void MainWindow::checkForProblems()
     }
   }
   m_NumberOfProblems = numProblems;
+  m_CheckingForProblems = false;
   emit checkForProblemsDone();
 }
 
@@ -3789,7 +3800,7 @@ void MainWindow::clearOverwrite()
       for (auto f : overwriteDir.entryList(QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot))
         delList.push_back(overwriteDir.absoluteFilePath(f));
       if (shellDelete(delList, true)) {
-        checkForProblemsAsync();
+        scheduleCheckForProblems();
         m_OrganizerCore.refreshModList();
       } else {
         const auto e = GetLastError();
@@ -5880,7 +5891,7 @@ void MainWindow::on_actionNotifications_triggered()
   ProblemsDialog problems(m_PluginContainer.plugins<QObject>(), this);
   problems.exec();
 
-  checkForProblemsAsync();
+  scheduleCheckForProblems();
 }
 
 void MainWindow::on_actionChange_Game_triggered()
