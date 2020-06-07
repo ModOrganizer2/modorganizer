@@ -3789,7 +3789,7 @@ void MainWindow::clearOverwrite()
       for (auto f : overwriteDir.entryList(QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot))
         delList.push_back(overwriteDir.absoluteFilePath(f));
       if (shellDelete(delList, true)) {
-        checkForProblems();
+        checkForProblemsAsync();
         m_OrganizerCore.refreshModList();
       } else {
         const auto e = GetLastError();
@@ -5880,7 +5880,7 @@ void MainWindow::on_actionNotifications_triggered()
   ProblemsDialog problems(m_PluginContainer.plugins<QObject>(), this);
   problems.exec();
 
-  checkForProblems();
+  checkForProblemsAsync();
 }
 
 void MainWindow::on_actionChange_Game_triggered()
