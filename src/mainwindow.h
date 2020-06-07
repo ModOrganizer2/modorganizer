@@ -359,7 +359,7 @@ private:
   // when painting the count
   QIcon m_originalNotificationIcon;
 
-  size_t m_NumberOfProblems;
+  std::atomic<std::size_t> m_NumberOfProblems;
 
   Executable* getSelectedExecutable();
 
