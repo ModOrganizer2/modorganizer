@@ -267,7 +267,7 @@ MainWindow::MainWindow(Settings &settings
   , m_LinkDesktop(nullptr)
   , m_LinkStartMenu(nullptr)
   , m_NumberOfProblems(0)
-  , m_CheckingForProblems(false)
+  , m_ProblemsCheckRequired(false)
 {
   // disables incredibly slow menu fade in effect that looks and feels like crap.
   // this was only happening to users with the windows
@@ -1107,27 +1107,26 @@ QFuture<void> MainWindow::checkForProblemsAsync() {
 void MainWindow::checkForProblemsImpl()
 {
   TimeThis tt("MainWindow::checkForProblemsImpl()");
-  {
-    QMutexLocker lk(&m_CheckForProblemsMutex);
-    if (m_CheckingForProblems) {
-      return;
+
+  m_ProblemsCheckRequired = true;
+
+  std::scoped_lock lk(m_CheckForProblemsMutex);
+
+  // another thread might already have checked while this one was waiting on the lock
+  if (m_ProblemsCheckRequired) {
+    m_ProblemsCheckRequired = false;
+    size_t numProblems = 0;
+    for (QObject *pluginObj : m_PluginContainer.plugins<QObject>()) {
+      IPlugin *plugin = qobject_cast<IPlugin*>(pluginObj);
+      if (plugin == nullptr || plugin->isActive()) {
+        IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(pluginObj);
+        if (diagnose != nullptr)
+          numProblems += diagnose->activeProblems().size();
+      }
     }
-    else {
-      m_CheckingForProblems = true;
-    }
+    m_NumberOfProblems = numProblems;
+    emit checkForProblemsDone();
   }
-  size_t numProblems = 0;
-  for (QObject *pluginObj : m_PluginContainer.plugins<QObject>()) {
-    IPlugin *plugin = qobject_cast<IPlugin*>(pluginObj);
-    if (plugin == nullptr || plugin->isActive()) {
-      IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(pluginObj);
-      if (diagnose != nullptr)
-        numProblems += diagnose->activeProblems().size();
-    }
-  }
-  m_NumberOfProblems = numProblems;
-  m_CheckingForProblems = false;
-  emit checkForProblemsDone();
 }
 
 void MainWindow::about()

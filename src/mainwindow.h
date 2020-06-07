@@ -360,8 +360,8 @@ private:
   QIcon m_originalNotificationIcon;
 
   std::atomic<std::size_t> m_NumberOfProblems;
-  std::atomic<bool> m_CheckingForProblems;
-  QMutex m_CheckForProblemsMutex;
+  std::atomic<bool> m_ProblemsCheckRequired;
+  std::mutex m_CheckForProblemsMutex;
 
   Executable* getSelectedExecutable();
 
