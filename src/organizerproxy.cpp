@@ -4,6 +4,7 @@
 #include "organizercore.h"
 #include "plugincontainer.h"
 #include "settings.h"
+#include "glob_matching.h"
 
 #include <QObject>
 #include <QApplication>
@@ -215,6 +216,22 @@ QStringList OrganizerProxy::listDirectories(const QString &directoryName) const
 QStringList OrganizerProxy::findFiles(const QString &path, const std::function<bool(const QString&)> &filter) const
 {
   return m_Proxied->findFiles(path, filter);
+}
+
+QStringList OrganizerProxy::findFiles(const QString& path, const QStringList& globFilters) const
+{
+  QList<GlobPattern<QChar>> patterns;
+  for (auto& gfilter : globFilters) {
+    patterns.append(GlobPattern(gfilter));
+  }
+  return findFiles(path, [&patterns](const QString& filename) {
+    for (auto& p : patterns) {
+      if (p.match(filename)) {
+        return true;
+      }
+    }
+    return false;
+  });
 }
 
 QStringList OrganizerProxy::getFileOrigins(const QString &fileName) const
