@@ -325,7 +325,6 @@ MainWindow::MainWindow(Settings &settings
 
   ui->logList->setCore(m_OrganizerCore);
 
-  updateProblemsButton();
 
   setupToolbar();
   toggleMO2EndorseState();
@@ -520,6 +519,7 @@ MainWindow::MainWindow(Settings &settings
 
   QApplication::instance()->installEventFilter(this);
 
+  scheduleCheckForProblems();
   refreshExecutablesList();
   updatePinnedExecutables();
   resetActionIcons();
