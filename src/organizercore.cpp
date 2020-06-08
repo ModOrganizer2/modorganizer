@@ -863,7 +863,7 @@ QStringList OrganizerCore::findFiles(
   if (dir != nullptr) {
     std::vector<FileEntryPtr> files = dir->getFiles();
     for (FileEntryPtr &file: files) {
-      QString fullPath = QString::fromStdWString(file->getFullPath());
+      QString fullPath = ToQString(file->getFullPath());
       if (filter(fullPath)) {
         result.append(fullPath);
       }
