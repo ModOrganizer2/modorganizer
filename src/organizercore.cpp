@@ -862,9 +862,10 @@ QStringList OrganizerCore::findFiles(
     dir = dir->findSubDirectoryRecursive(ToWString(path));
   if (dir != nullptr) {
     std::vector<FileEntryPtr> files = dir->getFiles();
-    foreach (FileEntryPtr file, files) {
-      if (filter(ToQString(file->getFullPath()))) {
-        result.append(ToQString(file->getFullPath()));
+    for (FileEntryPtr &file: files) {
+      QString fullPath = ToQString(file->getFullPath());
+      if (filter(fullPath)) {
+        result.append(fullPath);
       }
     }
   }
