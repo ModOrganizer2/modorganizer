@@ -47,6 +47,15 @@ namespace MOShared {
    *
    * From https://gitlab.com/G_ka/playground/-/commits/master/include/wildcards.hpp
    *
+   * Currently, this supports the following globbing character:
+   *  - '*' matches zero or more characters.
+   *  - '?' matches exactly one character.
+   *  - '[abc]' matches one of 'a', 'b' or 'c'.
+   *
+   * Standard globbing feature not supported:
+   *  - You cannot escape globbing characters with \.
+   *  - You cannot use `[a-z]` to match any character from 'a' to 'z'.
+   *
    * Custom class because the following alternatives have some issues:
    *  - QRegExp is a tad slow, and we need to convert everything to QString.
    *  - QDir::match is VERY slow. I think it converts the glob pattern to a QRegularExpression and
