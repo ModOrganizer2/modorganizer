@@ -300,7 +300,7 @@ bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
   bool updatesAvailable = true;
 
   QDateTime earliest = QDateTime::currentDateTimeUtc();
-  QDateTime latest;
+  QDateTime latest = QDateTime::fromMSecsSinceEpoch(0);
   std::set<QString> games;
   for (auto mod : s_Collection) {
     if (mod->canBeUpdated()) {

@@ -5644,9 +5644,10 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
       // with an older version than the main mod version.
       if (mod->getNexusFileStatus() != 3 && mod->getNexusFileStatus() != 5) {
         mod->setNewestVersion(result["version"].toString());
-        mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
         foundUpdate = true;
       }
+      // update the LastNexusUpdate time in any case since we did perform the check.
+      mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
     }
     mod->setNexusDescription(result["description"].toString());
     if ((mod->endorsedState() != ModInfo::ENDORSED_NEVER) && (result.contains("endorsement"))) {
@@ -5776,6 +5777,20 @@ void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, in
 {
   if (error == QNetworkReply::ContentAccessDenied || error == QNetworkReply::ContentNotFoundError) {
     log::debug("{}", tr("Mod ID %1 no longer seems to be available on Nexus.").arg(modID));
+    
+    // update last checked timestamp on orphaned mods as well to avoid repeating requests
+    QString gameNameReal;
+    for (IPluginGame* game : m_PluginContainer.plugins<IPluginGame>()) {
+      if (game->gameNexusName() == gameName) {
+        gameNameReal = game->gameShortName();
+        break;
+      }
+    }
+    auto orphanedMods = ModInfo::getByModID(gameNameReal, modID);
+    for (auto mod : orphanedMods) {
+      mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
+      mod->setLastNexusQuery(QDateTime::currentDateTimeUtc());
+    }
   } else {
     MessageDialog::showMessage(tr("Request to Nexus failed: %1").arg(errorString), this);
   }
