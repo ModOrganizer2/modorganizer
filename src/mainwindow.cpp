@@ -5644,9 +5644,10 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
       // with an older version than the main mod version.
       if (mod->getNexusFileStatus() != 3 && mod->getNexusFileStatus() != 5) {
         mod->setNewestVersion(result["version"].toString());
-        mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
         foundUpdate = true;
       }
+      // update the LastNexusUpdate time in any case since we did perform the check.
+      mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
     }
     mod->setNexusDescription(result["description"].toString());
     if ((mod->endorsedState() != ModInfo::ENDORSED_NEVER) && (result.contains("endorsement"))) {
