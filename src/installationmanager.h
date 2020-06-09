@@ -121,6 +121,7 @@ public:
    * This method cannot be used to extract directory.
    *
    * @param entry Entry corresponding to the file to extract.
+   * @param silent If true, the dialog showing extraction progress will not be shown.
    *
    * @return the absolute path to the temporary file.
    *
@@ -129,7 +130,7 @@ public:
    * @note The temporary file is automatically cleaned up after the installation.
    * @note This call can be very slow if the archive is large and "solid".
    */
-  virtual QString extractFile(std::shared_ptr<const MOBase::FileTreeEntry> entry) override;
+  virtual QString extractFile(std::shared_ptr<const MOBase::FileTreeEntry> entry, bool silent = false) override;
 
   /**
    * @brief Extract the specified files from the currently opened archive to a temporary location.
@@ -137,6 +138,7 @@ public:
    * This method cannot be used to extract directory.
    *
    * @param entres Entries corresponding to the files to extract.
+   * @param silent If true, the dialog showing extraction progress will not be shown.
    *
    * @return the list of absolute paths to the temporary files.
    *
@@ -151,7 +153,7 @@ public:
    * IFileTree and thus to given a list of entries flattened (this was not possible with the
    * QStringList version since these were based on the name of the file inside the archive).
    */
-  virtual QStringList extractFiles(std::vector<std::shared_ptr<const MOBase::FileTreeEntry>> const& entries) override;
+  virtual QStringList extractFiles(std::vector<std::shared_ptr<const MOBase::FileTreeEntry>> const& entries, bool silent = false) override;
 
   /**
    * @brief Create a new file on the disk corresponding to the given entry.
@@ -255,7 +257,7 @@ private:
    * @return true if the extraction was successful, false if the extraciton was
    *     cancelled. If an error occured, an exception is thrown.
    */
-  bool extractFiles(QString extractPath, QString title, bool showFilenames);
+  bool extractFiles(QString extractPath, QString title, bool showFilenames, bool silent);
 
 private:
 
