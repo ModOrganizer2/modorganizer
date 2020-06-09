@@ -132,82 +132,99 @@ void InstallationManager::queryPassword() {
     tr("Password"), QLineEdit::Password);
 }
 
-bool InstallationManager::extractFiles(QString extractPath, QString title, bool showFilenames)
+bool InstallationManager::extractFiles(QString extractPath, QString title, bool showFilenames, bool silent)
 {
-  QProgressDialog *installationProgress = new QProgressDialog(m_ParentWidget);
-  ON_BLOCK_EXIT([=]() {
-    installationProgress->cancel();
-    installationProgress->hide();
-    installationProgress->deleteLater();
-  });
-  installationProgress->setWindowFlags(
-    installationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
-  if (!title.isEmpty()) {
-    installationProgress->setWindowTitle(title);
-  }
-  installationProgress->setWindowModality(Qt::WindowModal);
-  installationProgress->setFixedSize(600, 100);
+  TimeThis tt("InstallationManager::extractFiles");
 
-  // Turn off auto-reset otherwize the progress dialog is reset before the end. This
-  // is kind of annoying because updateProgress consider percentage of progression
-  // through the archive (pack), while we are waiting for extracting archive entries, so
-  // the percentage of in updateProgress is not really related to the percentage of files
-  // extracted...
-  installationProgress->setAutoReset(false);
-
-  // Connect signals emitted by the extraction callback to the progress dialog slots:
-  connect(this, &InstallationManager::progressUpdate, installationProgress, &QProgressDialog::setValue);
-  connect(this, &InstallationManager::progressFileChange, installationProgress, &QProgressDialog::setLabelText);
-
-  // Cancelling progress only cancel the extraction, we do not force exiting the event-loop:
-  connect(installationProgress, &QProgressDialog::canceled, [this]() { m_ArchiveHandler->cancel(); });
-
-  installationProgress->show();
-
-  // Variable updated by the callbacks:
+  // Callback for errors:
   QString errorMessage;
-
-  // The callbacks:
-  auto progressCallback = [this](auto progressType, uint64_t current, uint64_t total) { 
-    if (progressType == Archive::ProgressType::EXTRACTION) {
-      int progress = static_cast<int>(100 * current / total);
-      emit progressUpdate(progress);
-    }
-  };
-  Archive::FileChangeCallback fileChangeCallback = [this](auto changeType, std::wstring const& file) {
-    if (changeType == Archive::FileChangeType::EXTRACTION_START) {
-      emit progressFileChange(QString::fromStdWString(file));
-    }
-  };
   auto errorCallback = [&errorMessage, this](std::wstring const& message) {
     m_ArchiveHandler->cancel();
     errorMessage = QString::fromStdWString(message);
   };
 
-  auto start = std::chrono::system_clock::now();
+  // The future that will hold the result:
+  QFuture<bool> future;
 
-  // Future watcher to exit the loop:
-  QFutureWatcher<bool> futureWatcher;
+  if (silent) {
+    future = QtConcurrent::run([&]() -> bool {
+      return m_ArchiveHandler->extract(
+        extractPath.toStdWString(),
+        nullptr,
+        nullptr,
+        errorCallback
+      );
+    });
+    future.waitForFinished();
+  }
+  else {
+    QProgressDialog* installationProgress = new QProgressDialog(m_ParentWidget);
+    ON_BLOCK_EXIT([=]() {
+      installationProgress->cancel();
+      installationProgress->hide();
+      installationProgress->deleteLater();
+      });
+    installationProgress->setWindowFlags(
+      installationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+    if (!title.isEmpty()) {
+      installationProgress->setWindowTitle(title);
+    }
+    installationProgress->setWindowModality(Qt::WindowModal);
+    installationProgress->setFixedSize(600, 100);
 
-  QEventLoop loop(this);
-  connect(
-    &futureWatcher, &QFutureWatcher<bool>::finished, 
-    &loop, &QEventLoop::quit, 
-    Qt::QueuedConnection);
+    // Turn off auto-reset otherwize the progress dialog is reset before the end. This
+    // is kind of annoying because updateProgress consider percentage of progression
+    // through the archive (pack), while we are waiting for extracting archive entries, so
+    // the percentage of in updateProgress is not really related to the percentage of files
+    // extracted...
+    installationProgress->setAutoReset(false);
 
-  // unpack only the files we need for the installer
-  futureWatcher.setFuture(QtConcurrent::run([&]() -> bool {
-    return m_ArchiveHandler->extract(
-      extractPath.toStdWString(),
-      progressCallback,
-      showFilenames ? fileChangeCallback : nullptr,
-      errorCallback
-    );
-  }));
+    // Connect signals emitted by the extraction callback to the progress dialog slots:
+    connect(this, &InstallationManager::progressUpdate, installationProgress, &QProgressDialog::setValue);
+    connect(this, &InstallationManager::progressFileChange, installationProgress, &QProgressDialog::setLabelText);
 
-  // Wait for future to complete:
-  loop.exec();
-  auto future = futureWatcher.future();
+    // Cancelling progress only cancel the extraction, we do not force exiting the event-loop:
+    connect(installationProgress, &QProgressDialog::canceled, [this]() { m_ArchiveHandler->cancel(); });
+
+    installationProgress->show();
+
+    // The callbacks:
+    auto progressCallback = [this](auto progressType, uint64_t current, uint64_t total) {
+      if (progressType == Archive::ProgressType::EXTRACTION) {
+        int progress = static_cast<int>(100 * current / total);
+        emit progressUpdate(progress);
+      }
+    };
+    Archive::FileChangeCallback fileChangeCallback = [this](auto changeType, std::wstring const& file) {
+      if (changeType == Archive::FileChangeType::EXTRACTION_START) {
+        emit progressFileChange(QString::fromStdWString(file));
+      }
+    };
+
+    // Future watcher to exit the loop:
+    QFutureWatcher<bool> futureWatcher;
+
+    QEventLoop loop(this);
+    connect(
+      &futureWatcher, &QFutureWatcher<bool>::finished,
+      &loop, &QEventLoop::quit,
+      Qt::QueuedConnection);
+
+    // unpack only the files we need for the installer
+    futureWatcher.setFuture(QtConcurrent::run([&]() -> bool {
+      return m_ArchiveHandler->extract(
+        extractPath.toStdWString(),
+        progressCallback,
+        showFilenames ? fileChangeCallback : nullptr,
+        errorCallback
+      );
+    }));
+
+    // Wait for future to complete:
+    loop.exec();
+    
+    future = futureWatcher.future();
+  }
 
   // Check the result:
   if (!future.result()) {
@@ -224,18 +241,16 @@ bool InstallationManager::extractFiles(QString extractPath, QString title, bool 
     }
   }
 
-  log::debug("Extraction took {:.3f}s.", std::chrono::duration<double>(std::chrono::system_clock::now() - start).count());
-
   return true;
 }
 
-QString InstallationManager::extractFile(std::shared_ptr<const FileTreeEntry> entry)
+QString InstallationManager::extractFile(std::shared_ptr<const FileTreeEntry> entry, bool silent)
 {
-  QStringList result = this->extractFiles({ entry });
+  QStringList result = this->extractFiles({ entry }, silent);
   return result.isEmpty() ? QString() : result[0];
 }
 
-QStringList InstallationManager::extractFiles(std::vector<std::shared_ptr<const FileTreeEntry>> const& entries)
+QStringList InstallationManager::extractFiles(std::vector<std::shared_ptr<const FileTreeEntry>> const& entries, bool silent)
 {
   // Remove the directory since mapToArchive would add them:
   std::vector<std::shared_ptr<const FileTreeEntry>> files;
@@ -254,7 +269,7 @@ QStringList InstallationManager::extractFiles(std::vector<std::shared_ptr<const 
     m_TempFilesToDelete.insert(path);
   }
 
-  if (!extractFiles(QDir::tempPath(), tr("Extracting files"), false)) {
+  if (!extractFiles(QDir::tempPath(), tr("Extracting files"), false, silent)) {
     return QStringList();
   }
 
@@ -451,7 +466,7 @@ IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QSt
   QString targetDirectoryNative = QDir::toNativeSeparators(targetDirectory);
 
   log::debug("installing to \"{}\"", targetDirectoryNative);
-  if (!extractFiles(targetDirectory, "", true)) {
+  if (!extractFiles(targetDirectory, "", true, false)) {
     return IPluginInstaller::RESULT_CANCELED;
   }
 
