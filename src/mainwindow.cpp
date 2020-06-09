@@ -5777,6 +5777,20 @@ void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, in
 {
   if (error == QNetworkReply::ContentAccessDenied || error == QNetworkReply::ContentNotFoundError) {
     log::debug("{}", tr("Mod ID %1 no longer seems to be available on Nexus.").arg(modID));
+    
+    // update last checked timestamp on orphaned mods as well to avoid repeating requests
+    QString gameNameReal;
+    for (IPluginGame* game : m_PluginContainer.plugins<IPluginGame>()) {
+      if (game->gameNexusName() == gameName) {
+        gameNameReal = game->gameShortName();
+        break;
+      }
+    }
+    auto orphanedMods = ModInfo::getByModID(gameNameReal, modID);
+    for (auto mod : orphanedMods) {
+      mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
+      mod->setLastNexusQuery(QDateTime::currentDateTimeUtc());
+    }
   } else {
     MessageDialog::showMessage(tr("Request to Nexus failed: %1").arg(errorString), this);
   }
