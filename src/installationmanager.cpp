@@ -182,6 +182,7 @@ bool InstallationManager::extractFiles(QString extractPath, QString title, bool 
     // Note: Using a loop with a progressUpdate() that only wake-up the loop. The event-loop
     // will be used in a loop and not via exec() because connecting to QProgressDialog::setValue
     // and using .exec() creates huge recursion that leads to stack-overflow.
+    // See https://bugreports.qt.io/browse/QTBUG-10561
     QEventLoop loop;
     connect(this, &InstallationManager::progressUpdate, &loop, &QEventLoop::wakeUp, Qt::QueuedConnection);
 
@@ -222,15 +223,15 @@ bool InstallationManager::extractFiles(QString extractPath, QString title, bool 
     installationProgress->setModal(true);
     installationProgress->show();
 
-    do {
+    while (!futureWatcher.isFinished()) {
+      loop.processEvents(QEventLoop::AllEvents | QEventLoop::WaitForMoreEvents);
       if (currentProgress != installationProgress->value()) {
         installationProgress->setValue(currentProgress);
       }
       if (currentFileName != installationProgress->labelText()) {
         installationProgress->setLabelText(currentFileName);
       }
-      loop.processEvents(QEventLoop::AllEvents | QEventLoop::WaitForMoreEvents);
-    } while (!futureWatcher.isFinished());
+    }
 
     installationProgress->hide();
 
