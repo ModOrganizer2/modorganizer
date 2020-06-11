@@ -560,6 +560,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     });
 
     log::debug("initializing core");
+    std::unique_ptr<PluginContainer> pluginContainer;
     OrganizerCore organizer(settings);
     if (!organizer.bootstrap()) {
       reportError("failed to set up data paths");
@@ -582,11 +583,11 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     }
 
     log::debug("initializing plugins");
-    PluginContainer pluginContainer(&organizer);
-    pluginContainer.loadPlugins();
+    pluginContainer = std::make_unique<PluginContainer>(&organizer);
+    pluginContainer->loadPlugins();
 
     MOBase::IPluginGame *game = determineCurrentGame(
-        application.applicationDirPath(), settings, pluginContainer);
+        application.applicationDirPath(), settings, *pluginContainer);
 
     if (game == nullptr) {
       InstanceManager &instance = InstanceManager::instance();
@@ -723,7 +724,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
     QString apiKey;
     if (settings.nexus().apiKey(apiKey)) {
-      NexusInterface::instance(&pluginContainer)->getAccessManager()->apiCheck(apiKey);
+      NexusInterface::instance(pluginContainer.get())->getAccessManager()->apiCheck(apiKey);
     }
 
     log::debug("initializing tutorials");
@@ -741,9 +742,9 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
     { // scope to control lifetime of mainwindow
       // set up main window and its data structures
-      MainWindow mainWindow(settings, organizer, pluginContainer);
+      MainWindow mainWindow(settings, organizer, *pluginContainer);
 
-      NexusInterface::instance(&pluginContainer)
+      NexusInterface::instance(pluginContainer.get())
         ->getAccessManager()->setTopLevelWidget(&mainWindow);
 
       QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), &application,
@@ -766,13 +767,12 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       res = application.exec();
       mainWindow.close();
 
-      NexusInterface::instance(&pluginContainer)
+      NexusInterface::instance(pluginContainer.get())
         ->getAccessManager()->setTopLevelWidget(nullptr);
     }
 
     settings.geometry().resetIfNeeded();
     return res;
-
   } catch (const std::exception &e) {
     reportError(e.what());
   }
