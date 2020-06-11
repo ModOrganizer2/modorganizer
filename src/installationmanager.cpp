@@ -179,7 +179,9 @@ bool InstallationManager::extractFiles(QString extractPath, QString title, bool 
     // extracted...
     installationProgress->setAutoReset(false);
 
-    // Connect signals emitted by the extraction callback to the progress dialog slots:
+    // Note: Using a loop with a progressUpdate() that only wake-up the loop. The event-loop
+    // will be used in a loop and not via exec() because connecting to QProgressDialog::setValue
+    // and using .exec() creates huge recursion that leads to stack-overflow.
     QEventLoop loop;
     connect(this, &InstallationManager::progressUpdate, &loop, &QEventLoop::wakeUp, Qt::QueuedConnection);
 
