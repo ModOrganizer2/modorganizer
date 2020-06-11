@@ -1865,7 +1865,7 @@ void MainWindow::refreshExecutablesList()
 
 void MainWindow::refreshSavesIfOpen()
 {
-  if (ui->tabWidget->currentIndex() == 3) {
+  if (ui->tabWidget->currentWidget() == ui->savesTab) {
     refreshSaveList();
   }
 }
@@ -2276,13 +2276,14 @@ void MainWindow::on_btnRefreshDownloads_clicked()
 
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
-  if (index == 0) {
+  QWidget* currentWidget = ui->tabWidget->widget(index);
+  if (currentWidget == ui->espTab) {
     m_OrganizerCore.refreshESPList();
-  } else if (index == 1) {
+  } else if (currentWidget == ui->bsaTab) {
     m_OrganizerCore.refreshBSAList();
-  } else if (index == 2) {
+  } else if (currentWidget == ui->dataTab) {
     m_DataTab->activated();
-  } else if (index == 3) {
+  } else if (currentWidget == ui->savesTab) {
     refreshSaveList();
   }
 }
@@ -2495,8 +2496,7 @@ void MainWindow::directory_refreshed()
   // now
   scheduleCheckForProblems();
 
-  //Some better check for the current tab is needed.
-  if (ui->tabWidget->currentIndex() == 2) {
+  if (ui->tabWidget->currentWidget() == ui->dataTab) {
     m_DataTab->updateTree();
   }
 }
