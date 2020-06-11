@@ -163,7 +163,7 @@ bool InstallationManager::extractFiles(QString extractPath, QString title, bool 
       installationProgress->cancel();
       installationProgress->hide();
       installationProgress->deleteLater();
-      });
+    });
     installationProgress->setWindowFlags(
       installationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
     if (!title.isEmpty()) {
@@ -222,6 +222,11 @@ bool InstallationManager::extractFiles(QString extractPath, QString title, bool 
 
     // Wait for future to complete:
     loop.exec();
+
+    // There might still be signal in the queue at this point but the progress dialog is
+    // going to be destroyed so we must disconnect the signals:
+    disconnect(this, &InstallationManager::progressUpdate, installationProgress, &QProgressDialog::setValue);
+    disconnect(this, &InstallationManager::progressFileChange, installationProgress, &QProgressDialog::setLabelText);
     
     future = futureWatcher.future();
   }
