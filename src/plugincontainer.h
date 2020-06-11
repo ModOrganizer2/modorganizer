@@ -49,6 +49,7 @@ private:
 public:
 
   PluginContainer(OrganizerCore *organizer);
+  virtual ~PluginContainer();
 
   void setUserInterface(IUserInterface *userInterface, QWidget *widget);
 

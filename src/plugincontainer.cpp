@@ -28,6 +28,10 @@ PluginContainer::PluginContainer(OrganizerCore *organizer)
 {
 }
 
+PluginContainer::~PluginContainer() {
+  m_Organizer = nullptr;
+  unloadPlugins();
+}
 
 void PluginContainer::setUserInterface(IUserInterface *userInterface, QWidget *widget)
 {
@@ -213,7 +217,9 @@ void PluginContainer::unloadPlugins()
   }
 
   // disconnect all slots before unloading plugins so plugins don't have to take care of that
-  m_Organizer->disconnectPlugins();
+  if (m_Organizer != nullptr) {
+    m_Organizer->disconnectPlugins();
+  }
 
   bf::for_each(m_Plugins, clearPlugins());
 
