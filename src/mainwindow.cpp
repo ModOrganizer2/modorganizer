@@ -1865,7 +1865,7 @@ void MainWindow::refreshExecutablesList()
 
 void MainWindow::refreshSavesIfOpen()
 {
-  if (ui->tabWidget->currentIndex() == ui->tabWidget->indexOf(ui->savesTab)) {
+  if (ui->tabWidget->currentWidget() == ui->savesTab) {
     refreshSaveList();
   }
 }
@@ -2276,13 +2276,14 @@ void MainWindow::on_btnRefreshDownloads_clicked()
 
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
-  if (index == ui->tabWidget->indexOf(ui->espTab)) {
+  QWidget* currentWidget = ui->tabWidget->widget(index);
+  if (currentWidget == ui->espTab) {
     m_OrganizerCore.refreshESPList();
-  } else if (index == ui->tabWidget->indexOf(ui->bsaTab)) {
+  } else if (currentWidget == ui->bsaTab) {
     m_OrganizerCore.refreshBSAList();
-  } else if (index == ui->tabWidget->indexOf(ui->dataTab)) {
+  } else if (currentWidget == ui->dataTab) {
     m_DataTab->activated();
-  } else if (index == ui->tabWidget->indexOf(ui->savesTab)) {
+  } else if (currentWidget == ui->savesTab) {
     refreshSaveList();
   }
 }
@@ -2495,7 +2496,7 @@ void MainWindow::directory_refreshed()
   // now
   scheduleCheckForProblems();
 
-  if (ui->tabWidget->currentIndex() == ui->tabWidget->indexOf(ui->dataTab)) {
+  if (ui->tabWidget->currentWidget() == ui->dataTab) {
     m_DataTab->updateTree();
   }
 }
