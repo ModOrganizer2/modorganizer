@@ -223,12 +223,7 @@ signals:
   /**
    * @brief Progress update from the extraction.
    */
-  void progressUpdate(int percentage);
-
-  /**
-   * @brief File change update from the extraction.
-   */
-  void progressFileChange(QString const& value);
+  void progressUpdate();
 
 private:
 
