@@ -317,7 +317,7 @@ bool ModInfoWithConflictInfo::doIsValid() const {
 
   if (mdc) {
     auto qdirfiletree = contentFileTree();
-    return mdc->dataLooksValid(qdirfiletree);
+    return mdc->dataLooksValid(qdirfiletree) == ModDataChecker::CheckReturn::VALID;
   }
 
   return true;
