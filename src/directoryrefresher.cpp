@@ -216,11 +216,11 @@ void DirectoryRefresher::addModBSAToStructure(
 {
   const IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
 
-  QStringList loadOrder = QStringList();
+  QStringList loadOrder;
 
   GamePlugins* gamePlugins = game->feature<GamePlugins>();
   if (gamePlugins) {
-    gamePlugins->getLoadOrder(loadOrder);
+    loadOrder = gamePlugins->getLoadOrder();
   }
 
   std::vector<std::wstring> lo;
@@ -367,10 +367,10 @@ struct ModThread
     if (Settings::instance().archiveParsing()) {
       const IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
 
-      QStringList loadOrder = QStringList();
+      QStringList loadOrder;
       GamePlugins* gamePlugins = game->feature<GamePlugins>();
       if (gamePlugins) {
-        gamePlugins->getLoadOrder(loadOrder);
+        loadOrder = gamePlugins->getLoadOrder();
       }
 
       std::vector<std::wstring> lo;
