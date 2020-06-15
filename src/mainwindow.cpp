@@ -539,6 +539,8 @@ MainWindow::MainWindow(Settings &settings
   processUpdates();
 
   ui->statusBar->updateNormalMessage(m_OrganizerCore);
+
+  m_OrganizerCore.userInterfaceInitialized(this);
 }
 
 void MainWindow::setupModList()
