@@ -539,8 +539,6 @@ MainWindow::MainWindow(Settings &settings
   processUpdates();
 
   ui->statusBar->updateNormalMessage(m_OrganizerCore);
-
-  m_OrganizerCore.userInterfaceInitialized(this);
 }
 
 void MainWindow::setupModList()
@@ -1384,6 +1382,9 @@ void MainWindow::showEvent(QShowEvent *event)
     m_OrganizerCore.settings().nexus().registerAsNXMHandler(false);
     m_WasVisible = true;
     updateProblemsButton();
+
+    // Notify plugin that the UI is initialized:
+    m_OrganizerCore.userInterfaceInitialized(this);
   }
 }
 
