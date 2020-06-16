@@ -7,6 +7,7 @@
 #include <ipluginmodpage.h>
 #include <delayedfilewriter.h>
 #include <QMenu>
+#include <QMainWindow>
 
 
 class IUserInterface
@@ -30,7 +31,7 @@ public:
 
   virtual MOBase::DelayedFileWriterBase &archivesWriter() = 0;
 
-  virtual QWidget* qtWidget() = 0;
+  virtual QMainWindow* mainWindow() = 0;
 };
 
 #endif // IUSERINTERFACE_H

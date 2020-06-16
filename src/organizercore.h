@@ -365,7 +365,7 @@ public slots:
   void requestDownload(const QUrl &url, QNetworkReply *reply);
   void downloadRequestedNXM(const QString &url);
 
-  void userInterfaceInitialized(QMainWindow *);
+  void userInterfaceInitialized();
 
   bool nexusApi(bool retry = false);
 

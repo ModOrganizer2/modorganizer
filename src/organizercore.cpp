@@ -233,7 +233,7 @@ void OrganizerCore::setUserInterface(IUserInterface* ui)
 
   QWidget* w = nullptr;
   if (m_UserInterface) {
-    w = m_UserInterface->qtWidget();
+    w = m_UserInterface->mainWindow();
   }
 
   if (w) {
@@ -371,9 +371,9 @@ void OrganizerCore::downloadRequestedNXM(const QString &url)
   }
 }
 
-void OrganizerCore::userInterfaceInitialized(QMainWindow* mainWindow) 
+void OrganizerCore::userInterfaceInitialized() 
 {
-  m_UserInterfaceInitialized(mainWindow);
+  m_UserInterfaceInitialized(m_UserInterface->mainWindow());
 }
 
 void OrganizerCore::externalMessage(const QString &message)
@@ -1834,7 +1834,7 @@ bool OrganizerCore::beforeRun(
   {
     QWidget* w = nullptr;
     if (m_UserInterface) {
-      w = m_UserInterface->qtWidget();
+      w = m_UserInterface->mainWindow();
     }
     QMessageBox::warning(w, tr("Error"), e.what());
     return false;

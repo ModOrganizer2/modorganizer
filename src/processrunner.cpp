@@ -520,7 +520,7 @@ ProcessRunner& ProcessRunner::setFromFile(
   QWidget* parent, const QFileInfo& targetInfo)
 {
   if (!parent && m_ui) {
-    parent = m_ui->qtWidget();
+    parent = m_ui->mainWindow();
   }
 
   // if the file is a .exe, start it directly; if it's anything else, ask the
@@ -767,7 +767,7 @@ std::optional<ProcessRunner::Results> ProcessRunner::runBinary()
   }
 
   // parent widget used for any dialog popped up while checking for things
-  QWidget* parent = (m_ui ? m_ui->qtWidget() : nullptr);
+  QWidget* parent = (m_ui ? m_ui->mainWindow() : nullptr);
 
   const auto* game = m_core.managedGame();
   auto& settings = m_core.settings();
