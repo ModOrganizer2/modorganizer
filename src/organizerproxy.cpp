@@ -14,8 +14,7 @@ using namespace MOShared;
 
 
 OrganizerProxy::OrganizerProxy(OrganizerCore *organizer, PluginContainer *pluginContainer, const QString &pluginName)
-  : IOrganizer()
-  , m_Proxied(organizer)
+  : m_Proxied(organizer)
   , m_PluginContainer(pluginContainer)
   , m_PluginName(pluginName)
 {
