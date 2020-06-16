@@ -28,10 +28,11 @@ If necessary, describe the problem you have been experiencing with more details 
 
 
 ## Link to Mod Organizer logs:
-To access the log files you can press the Open folder icon over the modlist and select "Open MO2 Logs folder". You should close MO2 before sending or examining the logs as they are finished writing only after the program is closed.
+Right click on the log window at the bottom of MO2, set log level to debug, restart Mo2 and reproduce the problem. To access the logs right click on the log
+To access the log files you can press the Open folder icon over the modlist and select "Open MO2 Logs folder".
 
 ### USVFS:
-Create a [GIST](https://gist.github.com) which is a paste of your USVFS logs, and link them here.
+Create a [GIST](https://gist.github.com) which is a paste of your latest USVFS log, and link them here.
 Do _NOT_ paste your full USVFS logs here, as it will make this issue very long and hard to read!
 If you are reporting a bug, _always_ include the USVFS logs!
 
