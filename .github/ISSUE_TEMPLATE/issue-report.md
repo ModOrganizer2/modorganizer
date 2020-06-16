@@ -28,7 +28,7 @@ If necessary, describe the problem you have been experiencing with more details 
 
 
 ## Link to Mod Organizer logs:
-Right click on the log window at the bottom of MO2, set log level to debug, restart Mo2 and reproduce the problem. To access the logs right click on the log
+Right click on the log window at the bottom of MO2, set log level to debug, restart Mo2 and reproduce the problem.
 To access the log files you can press the Open folder icon over the modlist and select "Open MO2 Logs folder".
 
 ### USVFS:
