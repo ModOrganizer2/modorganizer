@@ -118,7 +118,7 @@ public:
 
   void processUpdates();
 
-  QWidget* qtWidget() override;
+  QMainWindow* mainWindow() override;
 
   bool addProfile();
   void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives);
@@ -174,6 +174,11 @@ signals:
    * @brief emitted when the selected style changes
    */
   void styleChanged(const QString &styleFile);
+
+  /**
+   * @brief emitted when the user interface has been completely initialized
+   */
+  void userInterfaceInitialized();
 
 
   void modListDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);

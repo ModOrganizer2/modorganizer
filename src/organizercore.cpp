@@ -151,6 +151,10 @@ OrganizerCore::OrganizerCore(Settings &settings)
   // make directory refresher run in a separate thread
   m_RefresherThread.start();
   m_DirectoryRefresher->moveToThread(&m_RefresherThread);
+
+  connect(&settings.plugins(), &PluginSettings::pluginSettingChanged, [this](auto const& ...args) {
+    m_PluginSettingChanged(args...);
+  });
 }
 
 OrganizerCore::~OrganizerCore()
@@ -165,8 +169,7 @@ OrganizerCore::~OrganizerCore()
   saveCurrentProfile();
 
   // profile has to be cleaned up before the modinfo-buffer is cleared
-  delete m_CurrentProfile;
-  m_CurrentProfile = nullptr;
+  m_CurrentProfile.reset();
 
   ModInfo::clear();
   m_ModList.setProfile(nullptr);
@@ -230,7 +233,7 @@ void OrganizerCore::setUserInterface(IUserInterface* ui)
 
   QWidget* w = nullptr;
   if (m_UserInterface) {
-    w = m_UserInterface->qtWidget();
+    w = m_UserInterface->mainWindow();
   }
 
   if (w) {
@@ -297,6 +300,10 @@ void OrganizerCore::disconnectPlugins()
   m_AboutToRun.disconnect_all_slots();
   m_FinishedRun.disconnect_all_slots();
   m_ModInstalled.disconnect_all_slots();
+  m_UserInterfaceInitialized.disconnect_all_slots();
+  m_ProfileChanged.disconnect_all_slots();
+  m_PluginSettingChanged.disconnect_all_slots();
+
   m_ModList.disconnectSlots();
   m_PluginList.disconnectSlots();
   m_Updater.setPluginContainer(nullptr);
@@ -362,6 +369,11 @@ void OrganizerCore::downloadRequestedNXM(const QString &url)
   } else {
     m_DownloadManager.addNXMDownload(url);
   }
+}
+
+void OrganizerCore::userInterfaceInitialized() 
+{
+  m_UserInterfaceInitialized(m_UserInterface->mainWindow());
 }
 
 void OrganizerCore::externalMessage(const QString &message)
@@ -533,11 +545,12 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
         profileBaseDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot).at(0));
   }
 
-  Profile *newProfile = new Profile(QDir(profileDir), managedGame());
+  // Keep the old profile to emit signal-changed:
+  auto oldProfile = std::move(m_CurrentProfile);
 
-  delete m_CurrentProfile;
-  m_CurrentProfile = newProfile;
-  m_ModList.setProfile(newProfile);
+  m_CurrentProfile = std::make_unique<Profile>(QDir(profileDir), managedGame());
+
+  m_ModList.setProfile(m_CurrentProfile.get());
 
   if (m_CurrentProfile->invalidationActive(nullptr)) {
     m_CurrentProfile->activateInvalidation();
@@ -547,11 +560,13 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
 
   m_Settings.game().setSelectedProfileName(m_CurrentProfile->name());
 
-  connect(m_CurrentProfile, SIGNAL(modStatusChanged(uint)), this, SLOT(modStatusChanged(uint)));
-  connect(m_CurrentProfile, SIGNAL(modStatusChanged(QList<uint>)), this, SLOT(modStatusChanged(QList<uint>)));
+  connect(m_CurrentProfile.get(), SIGNAL(modStatusChanged(uint)), this, SLOT(modStatusChanged(uint)));
+  connect(m_CurrentProfile.get(), SIGNAL(modStatusChanged(QList<uint>)), this, SLOT(modStatusChanged(QList<uint>)));
   refreshDirectoryStructure();
 
   m_CurrentProfile->debugDump();
+
+  m_ProfileChanged(oldProfile.get(), m_CurrentProfile.get());
 }
 
 MOBase::IModRepositoryBridge *OrganizerCore::createNexusBridge() const
@@ -1100,6 +1115,21 @@ bool OrganizerCore::onModInstalled(
   return conn.connected();
 }
 
+bool OrganizerCore::onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func)
+{
+  return m_UserInterfaceInitialized.connect(func).connected();
+}
+
+bool OrganizerCore::onProfileChanged(std::function<void(IProfile*, IProfile*)> const& func)
+{
+  return m_ProfileChanged.connect(func).connected();
+}
+
+bool OrganizerCore::onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func)
+{
+  return m_PluginSettingChanged.connect(func).connected();
+}
+
 void OrganizerCore::refreshModList(bool saveChanges)
 {
   // don't lose changes!
@@ -1153,7 +1183,7 @@ void OrganizerCore::refreshBSAList()
     // found (which might
     // happen if ini files are missing) use hard-coded defaults (preferrably the
     // same the game would use)
-    m_DefaultArchives = archives->archives(m_CurrentProfile);
+    m_DefaultArchives = archives->archives(m_CurrentProfile.get());
     if (m_DefaultArchives.length() == 0) {
       m_DefaultArchives = archives->vanillaArchives();
     }
@@ -1370,7 +1400,7 @@ void OrganizerCore::requestDownload(const QUrl &url, QNetworkReply *reply)
 
 ModListSortProxy *OrganizerCore::createModListProxyModel()
 {
-  ModListSortProxy *result = new ModListSortProxy(m_CurrentProfile, this);
+  ModListSortProxy *result = new ModListSortProxy(m_CurrentProfile.get(), this);
   result->setSourceModel(&m_ModList);
   return result;
 }
@@ -1804,7 +1834,7 @@ bool OrganizerCore::beforeRun(
   {
     QWidget* w = nullptr;
     if (m_UserInterface) {
-      w = m_UserInterface->qtWidget();
+      w = m_UserInterface->mainWindow();
     }
     QMessageBox::warning(w, tr("Error"), e.what());
     return false;

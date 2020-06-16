@@ -78,9 +78,12 @@ private:
 
 private:
 
-  typedef boost::signals2::signal<bool (const QString&), SignalCombinerAnd> SignalAboutToRunApplication;
-  typedef boost::signals2::signal<void (const QString&, unsigned int)> SignalFinishedRunApplication;
-  typedef boost::signals2::signal<void (const QString&)> SignalModInstalled;
+  using SignalAboutToRunApplication = boost::signals2::signal<bool (const QString&), SignalCombinerAnd>;
+  using SignalFinishedRunApplication = boost::signals2::signal<void (const QString&, unsigned int)>;
+  using SignalModInstalled = boost::signals2::signal<void (const QString&)>;
+  using SignalUserInterfaceInitialized = boost::signals2::signal<void (QMainWindow*)>;
+  using SignalProfileChanged = boost::signals2::signal<void (MOBase::IProfile *, MOBase::IProfile *)>;
+  using SignalPluginSettingChanged = boost::signals2::signal<void (QString const&, const QString& key, const QVariant&, const QVariant&)>;
 
 public:
 
@@ -215,7 +218,7 @@ public:
     m_ExecutablesList = executablesList;
   }
 
-  Profile *currentProfile() const { return m_CurrentProfile; }
+  Profile *currentProfile() const { return m_CurrentProfile.get(); }
   void setCurrentProfile(const QString &profileName);
 
   std::vector<QString> enabledArchives();
@@ -315,11 +318,16 @@ public:
   DownloadManager *downloadManager();
   PluginList *pluginList();
   ModList *modList();
-  bool onModInstalled(const std::function<void (const QString &)> &func);
-  bool onAboutToRun(const std::function<bool (const QString &)> &func);
-  bool onFinishedRun(const std::function<void (const QString &, unsigned int)> &func);
   void refreshModList(bool saveChanges = true);
   QStringList modsSortedByProfilePriority() const;
+
+
+  bool onModInstalled(const std::function<void(const QString&)>& func);
+  bool onAboutToRun(const std::function<bool(const QString&)>& func);
+  bool onFinishedRun(const std::function<void(const QString&, unsigned int)>& func);
+  bool onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func);
+  bool onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func);
+  bool onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func);
 
   bool getArchiveParsing() const
   {
@@ -356,6 +364,8 @@ public slots:
   void modStatusChanged(QList<unsigned int> index);
   void requestDownload(const QUrl &url, QNetworkReply *reply);
   void downloadRequestedNXM(const QString &url);
+
+  void userInterfaceInitialized();
 
   bool nexusApi(bool retry = false);
 
@@ -422,7 +432,7 @@ private:
   MOBase::IPluginGame *m_GamePlugin;
   ModDataContentHolder m_Contents;
 
-  Profile *m_CurrentProfile;
+  std::unique_ptr<Profile> m_CurrentProfile;
 
   Settings& m_Settings;
 
@@ -431,6 +441,9 @@ private:
   SignalAboutToRunApplication m_AboutToRun;
   SignalFinishedRunApplication m_FinishedRun;
   SignalModInstalled m_ModInstalled;
+  SignalUserInterfaceInitialized m_UserInterfaceInitialized;
+  SignalProfileChanged m_ProfileChanged;
+  SignalPluginSettingChanged m_PluginSettingChanged;
 
   ModList m_ModList;
   PluginList m_PluginList;

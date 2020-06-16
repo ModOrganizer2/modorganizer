@@ -52,6 +52,9 @@ public:
   virtual bool onAboutToRun(const std::function<bool(const QString&)> &func);
   virtual bool onFinishedRun(const std::function<void (const QString&, unsigned int)> &func);
   virtual bool onModInstalled(const std::function<void (const QString&)> &func);
+  virtual bool onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func);
+  virtual bool onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func);
+  virtual bool onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func);
 
   virtual MOBase::IPluginGame const *managedGame() const;
 

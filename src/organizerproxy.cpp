@@ -14,17 +14,10 @@ using namespace MOShared;
 
 
 OrganizerProxy::OrganizerProxy(OrganizerCore *organizer, PluginContainer *pluginContainer, const QString &pluginName)
-  : IOrganizer(organizer)
-  , m_Proxied(organizer)
+  : m_Proxied(organizer)
   , m_PluginContainer(pluginContainer)
   , m_PluginName(pluginName)
 {
-
-  PluginSettings& pluginSettings = m_Proxied->settings().plugins();
-
-  connect(&pluginSettings, &PluginSettings::pluginSettingChanged, [this](auto const& ...args) {
-    emit pluginSettingChanged(args...);
-  });
 }
 
 IModRepositoryBridge *OrganizerProxy::createNexusBridge() const
@@ -191,6 +184,21 @@ bool OrganizerProxy::onFinishedRun(const std::function<void (const QString &, un
 bool OrganizerProxy::onModInstalled(const std::function<void (const QString &)> &func)
 {
   return m_Proxied->onModInstalled(func);
+}
+
+bool OrganizerProxy::onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func)
+{
+  return m_Proxied->onUserInterfaceInitialized(func);
+}
+
+bool OrganizerProxy::onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func)
+{
+  return m_Proxied->onProfileChanged(func);
+}
+
+bool OrganizerProxy::onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func)
+{
+  return m_Proxied->onPluginSettingChanged(func);
 }
 
 void OrganizerProxy::refreshModList(bool saveChanges)

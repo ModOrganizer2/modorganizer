@@ -502,6 +502,7 @@ MainWindow::MainWindow(Settings &settings
   m_Tutorial.expose("espList", m_OrganizerCore.pluginList());
 
   m_OrganizerCore.setUserInterface(this);
+  connect(this, &MainWindow::userInterfaceInitialized, &m_OrganizerCore, &OrganizerCore::userInterfaceInitialized);
   for (const QString &fileName : m_PluginContainer.pluginFileNames()) {
     installTranslator(QFileInfo(fileName).baseName());
   }
@@ -1382,6 +1383,9 @@ void MainWindow::showEvent(QShowEvent *event)
     m_OrganizerCore.settings().nexus().registerAsNXMHandler(false);
     m_WasVisible = true;
     updateProblemsButton();
+
+    // Notify plugin that the UI is initialized:
+    emit userInterfaceInitialized();
   }
 }
 
@@ -2264,7 +2268,7 @@ void MainWindow::storeSettings()
   s.interface().setFilterOptions(FilterWidget::options());
 }
 
-QWidget* MainWindow::qtWidget()
+QMainWindow* MainWindow::mainWindow()
 {
   return this;
 }
