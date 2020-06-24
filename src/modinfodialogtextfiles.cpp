@@ -215,7 +215,8 @@ bool TextFilesTab::wantsFile(const QString& rootPath, const QString& fullPath) c
     ".txt",
     ".json",
     ".cfg",
-    ".log"
+    ".log",
+    ".toml"
   };
 
   for (const auto& e : extensions) {
