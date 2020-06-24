@@ -717,7 +717,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::updateWindowTitle(const APIUserAccount& user)
 {
-  QString title = QString("%1 Mod Organizer v%2").arg(
+  //"\xe2\x80\x93" is an "em dash", a longer "-"
+  QString title = QString("%1 \xe2\x80\x93 Mod Organizer v%2").arg(
         m_OrganizerCore.managedGame()->gameName(),
         m_OrganizerCore.getVersion().displayString(3));
 
