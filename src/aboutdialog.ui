@@ -258,7 +258,7 @@
               </item>
               <item>
                <property name="text">
-                <string>Holt59</string>
+                <string notr="true">Holt59</string>
                </property>
               </item>
              </widget>
@@ -436,7 +436,7 @@
               </item>
               <item>
                <property name="text">
-                <string>Drew Warwick</string>
+                <string notr="true">Drew Warwick</string>
                </property>
               </item>
               <item>
@@ -486,7 +486,7 @@
               </item>
               <item>
                <property name="text">
-                <string>PurpleFez</string>
+                <string notr="true">PurpleFez</string>
                </property>
               </item>
               <item>
