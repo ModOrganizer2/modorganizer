@@ -226,7 +226,7 @@ void FileTreeModel::clear()
 void FileTreeModel::recursiveFetchMore(const QModelIndex& m)
 {
   if (canFetchMore(m)) {
-    fetchMore(m);
+    doFetchMore(m, false);
   }
 
   for (int i=0; i<rowCount(m); ++i) {
@@ -338,6 +338,11 @@ bool FileTreeModel::canFetchMore(const QModelIndex& parent) const
 
 void FileTreeModel::fetchMore(const QModelIndex& parent)
 {
+  doFetchMore(parent, true);
+}
+
+void FileTreeModel::doFetchMore(const QModelIndex& parent, bool forFetch)
+{
   FileTreeItem* item = itemFromIndex(parent);
   if (!item) {
     return;
@@ -354,7 +359,7 @@ void FileTreeModel::fetchMore(const QModelIndex& parent)
   }
 
   const auto parentPath = item->dataRelativeParentPath();
-  update(*item, *parentEntry, parentPath.toStdWString(), true);
+  update(*item, *parentEntry, parentPath.toStdWString(), forFetch);
 }
 
 QVariant FileTreeModel::data(const QModelIndex& index, int role) const

@@ -1462,54 +1462,54 @@ Right now the only case I know of where this needs to be overwritten is for the 
 <context>
     <name>FileTreeModel</name>
     <message>
-        <location filename="filetreemodel.cpp" line="422"/>
+        <location filename="filetreemodel.cpp" line="427"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="filetreemodel.cpp" line="422"/>
+        <location filename="filetreemodel.cpp" line="427"/>
         <source>Mod</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="filetreemodel.cpp" line="422"/>
+        <location filename="filetreemodel.cpp" line="427"/>
         <source>Type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="filetreemodel.cpp" line="422"/>
+        <location filename="filetreemodel.cpp" line="427"/>
         <source>Size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="filetreemodel.cpp" line="422"/>
+        <location filename="filetreemodel.cpp" line="427"/>
         <source>Date modified</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="filetreemodel.cpp" line="1118"/>
+        <location filename="filetreemodel.cpp" line="1123"/>
         <source>Directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="filetreemodel.cpp" line="1119"/>
-        <location filename="filetreemodel.cpp" line="1136"/>
+        <location filename="filetreemodel.cpp" line="1124"/>
+        <location filename="filetreemodel.cpp" line="1141"/>
         <source>Virtual path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="filetreemodel.cpp" line="1137"/>
+        <location filename="filetreemodel.cpp" line="1142"/>
         <source>Real path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="filetreemodel.cpp" line="1138"/>
+        <location filename="filetreemodel.cpp" line="1143"/>
         <source>From</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="filetreemodel.cpp" line="1154"/>
-        <location filename="filetreemodel.cpp" line="1156"/>
+        <location filename="filetreemodel.cpp" line="1159"/>
+        <location filename="filetreemodel.cpp" line="1161"/>
         <source>Also in</source>
         <translation type="unfinished"></translation>
     </message>
