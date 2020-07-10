@@ -463,7 +463,7 @@ QSettings::Status Settings::sync() const
 void Settings::dump() const
 {
   static const QStringList ignore({
-    "username", "password", "nexus_api_key"
+    "username", "password", "nexus_api_key", "nexus_username", "nexus_password"
     });
 
   log::debug("settings:");
