@@ -611,17 +611,19 @@ void NexusKeyValidator::start(const QString& key, Behaviour b)
 
   m_key = key;
 
+  const auto timeouts = Settings::instance().nexus().validationTimeouts();
+
   switch (b)
   {
     case OneShot:
     {
-      createAttempts({10s});
+      createAttempts({timeouts[0]});
       break;
     }
 
     case Retry:
     {
-      createAttempts({10s, 15s, 20s});
+      createAttempts(timeouts);
       break;
     }
   }

@@ -217,7 +217,7 @@
               </item>
               <item>
                <property name="text">
-                <string notr="true">isanae</string>
+                <string notr="true">isa</string>
                </property>
               </item>
              </widget>
@@ -254,6 +254,11 @@
               <item>
                <property name="text">
                 <string notr="true">przester</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Holt59</string>
                </property>
               </item>
              </widget>
@@ -431,6 +436,11 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">Drew Warwick</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">deathneko11</string>
                </property>
               </item>
@@ -472,6 +482,11 @@
               <item>
                <property name="text">
                 <string notr="true">outdatedtv</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">PurpleFez</string>
                </property>
               </item>
               <item>

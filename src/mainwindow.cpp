@@ -2146,7 +2146,7 @@ void MainWindow::activateProxy(bool activate)
   busyDialog.setWindowFlags(busyDialog.windowFlags() & ~Qt::WindowContextHelpButtonHint);
   busyDialog.setWindowModality(Qt::WindowModal);
   busyDialog.show();
-  
+
   QFutureWatcher<void> futureWatcher;
   QEventLoop loop;
   connect(&futureWatcher, &QFutureWatcher<void>::finished,
@@ -2156,7 +2156,7 @@ void MainWindow::activateProxy(bool activate)
   futureWatcher.setFuture(
     QtConcurrent::run(MainWindow::setupNetworkProxy, activate)
   );
-  
+
   // wait for setupNetworkProxy while keeping ui responsive
   loop.exec();
 
@@ -2225,6 +2225,11 @@ void MainWindow::processUpdates() {
       for (int i=DownloadList::COL_MODNAME; i<DownloadList::COL_COUNT; ++i) {
         ui->downloadView->header()->hideSection(i);
       }
+    }
+
+    if (lastVersion < QVersionNumber(2, 3)) {
+      for (int i=1; i<ui->dataTree->header()->count(); ++i)
+        ui->dataTree->setColumnWidth(i, 150);
     }
   }
 
@@ -5794,7 +5799,7 @@ void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, in
 {
   if (error == QNetworkReply::ContentAccessDenied || error == QNetworkReply::ContentNotFoundError) {
     log::debug("{}", tr("Mod ID %1 no longer seems to be available on Nexus.").arg(modID));
-    
+
     // update last checked timestamp on orphaned mods as well to avoid repeating requests
     QString gameNameReal;
     for (IPluginGame* game : m_PluginContainer.plugins<IPluginGame>()) {

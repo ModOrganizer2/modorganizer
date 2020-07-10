@@ -629,7 +629,7 @@ bool Loot::waitForCompletion()
   }
 
   if (exitCode != 0UL) {
-    emit log(log::Levels::Error, tr("Loot failed. Exit code was: %1").arg(exitCode));
+    emit log(log::Levels::Error, tr("Loot failed. Exit code was: 0x%1").arg(exitCode, 0, 16));
     return false;
   }
 

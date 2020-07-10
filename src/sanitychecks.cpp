@@ -225,15 +225,22 @@ int checkBadOSDs(const env::Module& m)
   // is loaded into this process
 
   const char* nahimic =
-    "Nahimic (also known as SonicSuite, SonicRadar, SteelSeries, etc.)";
+    "Nahimic (also known as SonicSuite, SonicRadar, SteelSeries, A-Volute, etc.)";
 
   static const std::map<QString, QString> names = {
-    {"NahimicOSD.dll",    nahimic},
-    {"nahimicmsiosd.dll", nahimic},
-    {"RTSSHooks64.dll",   "RivaTuner Statistics Server"},
-    {"SSAudioOSD.dll",    "SteelSeries Audio"},
-    {"SS3DevProps.dll",   "Sonic Suite 3"},
-    {"specialk64.dll",    "SpecialK"}
+    {"NahimicOSD.dll",         nahimic},
+    {"nahimicmsiosd.dll",      nahimic},
+    {"cassinimlkosd.dll",      nahimic},
+    {"SS3DevProps.dll",        nahimic},
+    {"ss2devprops.dll",        nahimic},
+    {"ss2osd.dll",             nahimic},
+    {"RTSSHooks64.dll",        "RivaTuner Statistics Server"},
+    {"SSAudioOSD.dll",         "SteelSeries Audio"},
+    {"specialk64.dll",         "SpecialK"},
+    {"corsairosdhook.x64.dll", "Corsair Utility Engine"},
+    {"gtii-osd64-vk.dll",      "ASUS GPU Tweak 2"},
+    {"easyhook64.dll",         "Razer Cortex"},
+    {"k_fps64.dll",            "Razer Cortex"}
   };
 
   const QFileInfo file(m.path());
@@ -242,7 +249,7 @@ int checkBadOSDs(const env::Module& m)
   for (auto&& p : names) {
     if (file.fileName().compare(p.first, Qt::CaseInsensitive) == 0) {
       log::warn("{}", QObject::tr(
-        "%1 is loaded. This program is known to cause issues with "
+        "%1 is loaded.\nThis program is known to cause issues with "
         "Mod Organizer, such as freezing or blank windows. Consider "
         "uninstalling it.")
         .arg(p.second));
@@ -311,10 +318,12 @@ std::vector<std::pair<QString, QString>> getSystemDirectories()
 {
   // folder ids and display names for logging
   const std::vector<std::pair<GUID, QString>> systemFolderIDs = {
-    {FOLDERID_ProgramFiles, "in program files"},
-    {FOLDERID_ProgramFilesX86, "in program files"},
+    {FOLDERID_ProgramFiles, "in Program Files"},
+    {FOLDERID_ProgramFilesX86, "in Program Files"},
     {FOLDERID_Desktop, "on the desktop"},
-    {FOLDERID_OneDrive, "in OneDrive"}
+    {FOLDERID_OneDrive, "in OneDrive"},
+    {FOLDERID_Documents, "in Documents"},
+    {FOLDERID_Downloads, "in Downloads"}
   };
 
   std::vector<std::pair<QString, QString>> systemDirs;

@@ -1083,7 +1083,7 @@ bool coredump(CoreDumpTypes type)
 
 bool coredumpOther(CoreDumpTypes type)
 {
-  std::wclog << L"creating minidump for an running process\n";
+  std::wclog << L"creating minidump for a running process\n";
 
   const auto pid = findOtherPid();
   if (pid == 0) {

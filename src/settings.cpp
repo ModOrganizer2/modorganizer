@@ -463,7 +463,7 @@ QSettings::Status Settings::sync() const
 void Settings::dump() const
 {
   static const QStringList ignore({
-    "username", "password", "nexus_api_key"
+    "username", "password", "nexus_api_key", "nexus_username", "nexus_password"
     });
 
   log::debug("settings:");
@@ -1866,6 +1866,40 @@ void NexusSettings::registerAsNXMHandler(bool force)
       nullptr, QObject::tr("Failed"),
       QObject::tr("Failed to start the helper application: %1").arg(r.toString()));
   }
+}
+
+std::vector<std::chrono::seconds> NexusSettings::validationTimeouts() const
+{
+    using namespace std::chrono_literals;
+
+    const auto s = get<QString>(
+        m_Settings, "Settings", "validation_timeouts", "");
+
+    const auto numbers = s.split(" ");
+    std::vector<std::chrono::seconds> v;
+
+    for (auto ns : numbers)
+    {
+        ns = ns.trimmed();
+        if (ns.isEmpty())
+            continue;
+
+        bool ok = false;
+        const auto n = ns.toInt(&ok);
+
+        if (!ok || n < 0 || n > 100)
+        {
+            log::error("bad validation_timeouts number '{}'", ns);
+            continue;
+        }
+
+        v.push_back(std::chrono::seconds(n));
+    }
+
+    if (v.empty())
+        v = {10s, 15s, 20s};
+
+    return v;
 }
 
 
