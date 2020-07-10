@@ -178,17 +178,17 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>AdvancedConflictListModel</name>
     <message>
-        <location filename="modinfodialogconflicts.cpp" line="337"/>
+        <location filename="modinfodialogconflictsmodels.cpp" line="280"/>
         <source>Overwrites</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogconflicts.cpp" line="338"/>
+        <location filename="modinfodialogconflictsmodels.cpp" line="281"/>
         <source>File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogconflicts.cpp" line="339"/>
+        <location filename="modinfodialogconflictsmodels.cpp" line="282"/>
         <source>Overwritten By</source>
         <translation type="unfinished"></translation>
     </message>
@@ -294,47 +294,47 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ConflictsTab</name>
     <message>
-        <location filename="modinfodialogconflicts.cpp" line="799"/>
+        <location filename="modinfodialogconflicts.cpp" line="472"/>
         <source>&amp;Execute</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogconflicts.cpp" line="800"/>
+        <location filename="modinfodialogconflicts.cpp" line="473"/>
         <source>Execute with &amp;VFS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogconflicts.cpp" line="802"/>
+        <location filename="modinfodialogconflicts.cpp" line="475"/>
         <source>&amp;Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogconflicts.cpp" line="803"/>
+        <location filename="modinfodialogconflicts.cpp" line="476"/>
         <source>Open with &amp;VFS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogconflicts.cpp" line="806"/>
+        <location filename="modinfodialogconflicts.cpp" line="479"/>
         <source>&amp;Preview</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogconflicts.cpp" line="809"/>
+        <location filename="modinfodialogconflicts.cpp" line="482"/>
         <source>&amp;Go to...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogconflicts.cpp" line="812"/>
+        <location filename="modinfodialogconflicts.cpp" line="485"/>
         <source>Open in &amp;Explorer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogconflicts.cpp" line="815"/>
+        <location filename="modinfodialogconflicts.cpp" line="488"/>
         <source>&amp;Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogconflicts.cpp" line="820"/>
+        <location filename="modinfodialogconflicts.cpp" line="493"/>
         <source>&amp;Unhide</source>
         <translation type="unfinished"></translation>
     </message>
@@ -375,12 +375,7 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>DirectoryRefresher</name>
     <message>
-        <location filename="directoryrefresher.cpp" line="113"/>
-        <source>failed to parse bsa %1: %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="directoryrefresher.cpp" line="188"/>
+        <location filename="directoryrefresher.cpp" line="457"/>
         <source>failed to read mod (%1): %2</source>
         <translation type="unfinished"></translation>
     </message>
@@ -508,153 +503,153 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>DownloadListWidget</name>
     <message>
-        <location filename="downloadlistwidget.cpp" line="217"/>
+        <location filename="downloadlistwidget.cpp" line="218"/>
         <source>Install</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="219"/>
+        <location filename="downloadlistwidget.cpp" line="220"/>
         <source>Query Info</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="221"/>
+        <location filename="downloadlistwidget.cpp" line="222"/>
         <source>Visit on Nexus</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="222"/>
+        <location filename="downloadlistwidget.cpp" line="223"/>
         <source>Open File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="223"/>
-        <location filename="downloadlistwidget.cpp" line="235"/>
-        <location filename="downloadlistwidget.cpp" line="240"/>
-        <source>Show in Folder</source>
+        <location filename="downloadlistwidget.cpp" line="224"/>
+        <location filename="downloadlistwidget.cpp" line="236"/>
+        <location filename="downloadlistwidget.cpp" line="241"/>
+        <source>Reveal in Explorer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="227"/>
-        <location filename="downloadlistwidget.cpp" line="238"/>
+        <location filename="downloadlistwidget.cpp" line="228"/>
+        <location filename="downloadlistwidget.cpp" line="239"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="229"/>
+        <location filename="downloadlistwidget.cpp" line="230"/>
         <source>Un-Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="231"/>
+        <location filename="downloadlistwidget.cpp" line="232"/>
         <source>Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="233"/>
+        <location filename="downloadlistwidget.cpp" line="234"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="234"/>
+        <location filename="downloadlistwidget.cpp" line="235"/>
         <source>Pause</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="239"/>
+        <location filename="downloadlistwidget.cpp" line="240"/>
         <source>Resume</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="251"/>
+        <location filename="downloadlistwidget.cpp" line="252"/>
         <source>Delete Installed Downloads...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="252"/>
+        <location filename="downloadlistwidget.cpp" line="253"/>
         <source>Delete Uninstalled Downloads...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="253"/>
+        <location filename="downloadlistwidget.cpp" line="254"/>
         <source>Delete All Downloads...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="257"/>
+        <location filename="downloadlistwidget.cpp" line="258"/>
         <source>Hide Installed...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="258"/>
+        <location filename="downloadlistwidget.cpp" line="259"/>
         <source>Hide Uninstalled...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="259"/>
+        <location filename="downloadlistwidget.cpp" line="260"/>
         <source>Hide All...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="261"/>
+        <location filename="downloadlistwidget.cpp" line="262"/>
         <source>Un-Hide All...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="284"/>
-        <location filename="downloadlistwidget.cpp" line="339"/>
-        <location filename="downloadlistwidget.cpp" line="348"/>
-        <location filename="downloadlistwidget.cpp" line="357"/>
+        <location filename="downloadlistwidget.cpp" line="285"/>
+        <location filename="downloadlistwidget.cpp" line="340"/>
+        <location filename="downloadlistwidget.cpp" line="349"/>
+        <location filename="downloadlistwidget.cpp" line="358"/>
         <source>Delete Files?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="285"/>
+        <location filename="downloadlistwidget.cpp" line="286"/>
         <source>This will permanently delete the selected download.
 
 Are you absolutely sure you want to proceed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="340"/>
+        <location filename="downloadlistwidget.cpp" line="341"/>
         <source>This will remove all finished downloads from this list and from disk.
 
 Are you absolutely sure you want to proceed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="349"/>
+        <location filename="downloadlistwidget.cpp" line="350"/>
         <source>This will remove all installed downloads from this list and from disk.
 
 Are you absolutely sure you want to proceed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="358"/>
+        <location filename="downloadlistwidget.cpp" line="359"/>
         <source>This will remove all uninstalled downloads from this list and from disk.
 
 Are you absolutely sure you want to proceed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="366"/>
-        <location filename="downloadlistwidget.cpp" line="375"/>
-        <location filename="downloadlistwidget.cpp" line="384"/>
+        <location filename="downloadlistwidget.cpp" line="367"/>
+        <location filename="downloadlistwidget.cpp" line="376"/>
+        <location filename="downloadlistwidget.cpp" line="385"/>
         <source>Hide Files?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="367"/>
+        <location filename="downloadlistwidget.cpp" line="368"/>
         <source>This will remove all finished downloads from this list (but NOT from disk).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="376"/>
+        <location filename="downloadlistwidget.cpp" line="377"/>
         <source>This will remove all installed downloads from this list (but NOT from disk).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="385"/>
+        <location filename="downloadlistwidget.cpp" line="386"/>
         <source>This will remove all uninstalled downloads from this list (but NOT from disk).</source>
         <translation type="unfinished"></translation>
     </message>
@@ -667,37 +662,37 @@ Are you absolutely sure you want to proceed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="386"/>
+        <location filename="downloadmanager.cpp" line="391"/>
         <source>Memory allocation error (in refreshing directory).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="493"/>
+        <location filename="downloadmanager.cpp" line="498"/>
         <source>failed to download %1: could not open output file: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="516"/>
+        <location filename="downloadmanager.cpp" line="521"/>
         <source>Download again?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="516"/>
+        <location filename="downloadmanager.cpp" line="521"/>
         <source>A file with the same name &quot;%1&quot; has already been downloaded. Do you want to download it again? The new file will receive a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="571"/>
+        <location filename="downloadmanager.cpp" line="576"/>
         <source>Wrong Game</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="571"/>
+        <location filename="downloadmanager.cpp" line="576"/>
         <source>The download link is for a mod for &quot;%1&quot; but this instance of MO has been set up for &quot;%2&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="579"/>
+        <location filename="downloadmanager.cpp" line="584"/>
         <source>There is already a download queued for this file.
 
 Mod %1
@@ -705,12 +700,12 @@ File %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="586"/>
+        <location filename="downloadmanager.cpp" line="591"/>
         <source>Already Queued</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="595"/>
+        <location filename="downloadmanager.cpp" line="600"/>
         <source>There is already a download started for this file.
 
 Mod %1:	%2
@@ -718,277 +713,277 @@ File %3:	%4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="630"/>
+        <location filename="downloadmanager.cpp" line="635"/>
         <source>Already Started</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="659"/>
-        <location filename="downloadmanager.cpp" line="792"/>
+        <location filename="downloadmanager.cpp" line="664"/>
+        <location filename="downloadmanager.cpp" line="797"/>
         <source>remove: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="678"/>
+        <location filename="downloadmanager.cpp" line="683"/>
         <source>failed to delete %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="685"/>
+        <location filename="downloadmanager.cpp" line="690"/>
         <source>failed to delete meta file for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="745"/>
+        <location filename="downloadmanager.cpp" line="750"/>
         <source>restore: invalid download index: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="814"/>
+        <location filename="downloadmanager.cpp" line="819"/>
         <source>cancel: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="827"/>
+        <location filename="downloadmanager.cpp" line="832"/>
         <source>pause: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="849"/>
+        <location filename="downloadmanager.cpp" line="854"/>
         <source>resume: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="860"/>
+        <location filename="downloadmanager.cpp" line="865"/>
         <source>resume (int): invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="884"/>
+        <location filename="downloadmanager.cpp" line="889"/>
         <source>No known download urls. Sorry, this download can&apos;t be resumed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="925"/>
-        <location filename="downloadmanager.cpp" line="984"/>
+        <location filename="downloadmanager.cpp" line="930"/>
+        <location filename="downloadmanager.cpp" line="989"/>
         <source>query: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="947"/>
+        <location filename="downloadmanager.cpp" line="952"/>
         <source>Please enter the nexus mod id</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="947"/>
+        <location filename="downloadmanager.cpp" line="952"/>
         <source>Mod ID:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="958"/>
+        <location filename="downloadmanager.cpp" line="963"/>
         <source>Please select the source game code for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1017"/>
+        <location filename="downloadmanager.cpp" line="1022"/>
         <source>Hashing download file &apos;%1&apos;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1018"/>
+        <location filename="downloadmanager.cpp" line="1023"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1047"/>
+        <location filename="downloadmanager.cpp" line="1052"/>
         <source>VisitNexus: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1068"/>
+        <location filename="downloadmanager.cpp" line="1073"/>
         <source>Nexus ID for this Mod is unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1075"/>
+        <location filename="downloadmanager.cpp" line="1080"/>
         <source>OpenFile: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1092"/>
+        <location filename="downloadmanager.cpp" line="1097"/>
         <source>OpenFileInDownloadsFolder: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1127"/>
+        <location filename="downloadmanager.cpp" line="1132"/>
         <source>get pending: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1136"/>
+        <location filename="downloadmanager.cpp" line="1141"/>
         <source>get path: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1145"/>
+        <location filename="downloadmanager.cpp" line="1150"/>
         <source>Main</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1146"/>
+        <location filename="downloadmanager.cpp" line="1151"/>
         <source>Update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1147"/>
+        <location filename="downloadmanager.cpp" line="1152"/>
         <source>Optional</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1148"/>
+        <location filename="downloadmanager.cpp" line="1153"/>
         <source>Old</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1149"/>
+        <location filename="downloadmanager.cpp" line="1154"/>
         <source>Miscellaneous</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1150"/>
+        <location filename="downloadmanager.cpp" line="1155"/>
         <source>Deleted</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1151"/>
+        <location filename="downloadmanager.cpp" line="1156"/>
         <source>Unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1158"/>
+        <location filename="downloadmanager.cpp" line="1163"/>
         <source>display name: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1178"/>
+        <location filename="downloadmanager.cpp" line="1183"/>
         <source>file name: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1187"/>
+        <location filename="downloadmanager.cpp" line="1192"/>
         <source>file time: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1206"/>
+        <location filename="downloadmanager.cpp" line="1211"/>
         <source>file size: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1216"/>
+        <location filename="downloadmanager.cpp" line="1221"/>
         <source>progress: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1226"/>
+        <location filename="downloadmanager.cpp" line="1231"/>
         <source>state: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1236"/>
+        <location filename="downloadmanager.cpp" line="1241"/>
         <source>infocomplete: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1251"/>
-        <location filename="downloadmanager.cpp" line="1259"/>
-        <location filename="downloadmanager.cpp" line="1272"/>
+        <location filename="downloadmanager.cpp" line="1256"/>
+        <location filename="downloadmanager.cpp" line="1264"/>
+        <location filename="downloadmanager.cpp" line="1277"/>
         <source>mod id: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1280"/>
+        <location filename="downloadmanager.cpp" line="1285"/>
         <source>ishidden: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1289"/>
+        <location filename="downloadmanager.cpp" line="1294"/>
         <source>file info: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1299"/>
+        <location filename="downloadmanager.cpp" line="1304"/>
         <source>mark installed: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1344"/>
+        <location filename="downloadmanager.cpp" line="1349"/>
         <source>mark uninstalled: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1510"/>
+        <location filename="downloadmanager.cpp" line="1515"/>
         <source>Memory allocation error (in processing progress event).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1520"/>
+        <location filename="downloadmanager.cpp" line="1525"/>
         <source>Memory allocation error (in processing downloaded data).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1636"/>
+        <location filename="downloadmanager.cpp" line="1641"/>
         <source>Information updated</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1638"/>
-        <location filename="downloadmanager.cpp" line="1655"/>
+        <location filename="downloadmanager.cpp" line="1643"/>
+        <location filename="downloadmanager.cpp" line="1660"/>
         <source>No matching file found on Nexus! Maybe this file is no longer available or it was renamed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1640"/>
+        <location filename="downloadmanager.cpp" line="1645"/>
         <source>No file on Nexus matches the selected file by name. Please manually choose the correct one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1796"/>
+        <location filename="downloadmanager.cpp" line="1801"/>
         <source>No download server available. Please try again later.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1962"/>
+        <location filename="downloadmanager.cpp" line="1967"/>
         <source>Failed to request file info from nexus: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1989"/>
+        <location filename="downloadmanager.cpp" line="1994"/>
         <source>Warning: Content type is: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1994"/>
+        <location filename="downloadmanager.cpp" line="1999"/>
         <source>Download header content length: %1 downloaded file size: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1996"/>
+        <location filename="downloadmanager.cpp" line="2001"/>
         <source>Download failed: %1 (%2)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2018"/>
+        <location filename="downloadmanager.cpp" line="2023"/>
         <source>We were unable to download the file due to errors after four retries. There may be an issue with the Nexus servers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2101"/>
+        <location filename="downloadmanager.cpp" line="2106"/>
         <source>failed to re-open %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2146"/>
+        <location filename="downloadmanager.cpp" line="2151"/>
         <source>Unable to write download to drive (return %1).
 Check the drive&apos;s available storage.
 
@@ -1208,64 +1203,314 @@ Right now the only case I know of where this needs to be overwritten is for the 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="93"/>
+        <location filename="editexecutablesdialog.cpp" line="92"/>
         <source>Add from file...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="94"/>
+        <location filename="editexecutablesdialog.cpp" line="93"/>
         <source>Add empty</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="95"/>
+        <location filename="editexecutablesdialog.cpp" line="94"/>
         <source>Clone selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="504"/>
+        <location filename="editexecutablesdialog.cpp" line="503"/>
         <source>Reset plugin executables</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="506"/>
+        <location filename="editexecutablesdialog.cpp" line="505"/>
         <source>This will restore all the executables provided by the game plugin. If there are existing executables with the same names, they will be automatically renamed and left unchanged.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="691"/>
-        <location filename="editexecutablesdialog.cpp" line="733"/>
+        <location filename="editexecutablesdialog.cpp" line="690"/>
+        <location filename="editexecutablesdialog.cpp" line="732"/>
         <source>New Executable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="746"/>
+        <location filename="editexecutablesdialog.cpp" line="745"/>
         <source>Select a directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="792"/>
+        <location filename="editexecutablesdialog.cpp" line="791"/>
         <source>Executables (*.exe *.bat *.jar)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="793"/>
+        <location filename="editexecutablesdialog.cpp" line="792"/>
         <source>All Files (*.*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="796"/>
+        <location filename="editexecutablesdialog.cpp" line="795"/>
         <source>Select an executable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="812"/>
+        <location filename="editexecutablesdialog.cpp" line="811"/>
         <source>Java required</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="813"/>
+        <location filename="editexecutablesdialog.cpp" line="812"/>
         <source>MO requires Java to run this application. If you already have it installed, select javaw.exe from that installation as the binary.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FileTree</name>
+    <message>
+        <location filename="filetree.cpp" line="292"/>
+        <source>Enter Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="293"/>
+        <source>Enter a name for the executable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="314"/>
+        <source>Not an executable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="315"/>
+        <source>This is not a recognized executable.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="567"/>
+        <location filename="filetree.cpp" line="610"/>
+        <source>File &apos;%1&apos; does not exist, you may need to refresh.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="645"/>
+        <source>(only has %1 file(s))</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="653"/>
+        <source>%1 file(s) selected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="678"/>
+        <source>&amp;Add as Executable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="680"/>
+        <source>Add this file to the executables list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="681"/>
+        <source>This file is not executable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="685"/>
+        <source>Reveal in E&amp;xplorer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="687"/>
+        <source>Opens the file in Explorer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="688"/>
+        <location filename="filetree.cpp" line="703"/>
+        <location filename="filetree.cpp" line="710"/>
+        <location filename="filetree.cpp" line="729"/>
+        <location filename="filetree.cpp" line="736"/>
+        <location filename="filetree.cpp" line="743"/>
+        <location filename="filetree.cpp" line="750"/>
+        <source>This file is in an archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="692"/>
+        <source>Open &amp;Mod Info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="694"/>
+        <source>Opens the Mod Info Window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="695"/>
+        <source>This file is not in a managed mod</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="700"/>
+        <source>&amp;Un-Hide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="702"/>
+        <source>Un-hides the file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="707"/>
+        <source>&amp;Hide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="709"/>
+        <source>Hides the file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="726"/>
+        <source>&amp;Execute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="728"/>
+        <source>Launches this program</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="733"/>
+        <source>Execute with &amp;VFS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="735"/>
+        <source>Launches this program hooked to the VFS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="740"/>
+        <source>&amp;Open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="742"/>
+        <source>Opens this file with its default handler</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="747"/>
+        <source>Open with &amp;VFS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="749"/>
+        <source>Opens this file with its default handler hooked to the VFS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="754"/>
+        <source>&amp;Preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="757"/>
+        <source>Previews this file within Mod Organizer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="758"/>
+        <source>This file is in an archive or has no preview handler associated with it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="794"/>
+        <source>&amp;Save Tree to Text File...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="796"/>
+        <source>Writes the list of files to a text file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="799"/>
+        <source>&amp;Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="801"/>
+        <source>Refreshes the list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="804"/>
+        <source>Ex&amp;pand All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="808"/>
+        <source>&amp;Collapse All</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FileTreeModel</name>
+    <message>
+        <location filename="filetreemodel.cpp" line="422"/>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetreemodel.cpp" line="422"/>
+        <source>Mod</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetreemodel.cpp" line="422"/>
+        <source>Type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetreemodel.cpp" line="422"/>
+        <source>Size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetreemodel.cpp" line="422"/>
+        <source>Date modified</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetreemodel.cpp" line="1118"/>
+        <source>Directory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetreemodel.cpp" line="1119"/>
+        <location filename="filetreemodel.cpp" line="1136"/>
+        <source>Virtual path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetreemodel.cpp" line="1137"/>
+        <source>Real path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetreemodel.cpp" line="1138"/>
+        <source>From</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetreemodel.cpp" line="1154"/>
+        <location filename="filetreemodel.cpp" line="1156"/>
+        <source>Also in</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1367,11 +1612,6 @@ Right now the only case I know of where this needs to be overwritten is for the 
 <context>
     <name>FilterList</name>
     <message>
-        <location filename="filterlist.cpp" line="104"/>
-        <source>Not</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="filterlist.cpp" line="207"/>
         <source>Filter separators</source>
         <translation type="unfinished"></translation>
@@ -1387,7 +1627,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="filterlist.cpp" line="240"/>
+        <location filename="filterlist.cpp" line="239"/>
         <source>Contains %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1511,117 +1751,119 @@ Right now the only case I know of where this needs to be overwritten is for the 
 <context>
     <name>InstallationManager</name>
     <message>
-        <location filename="installationmanager.cpp" line="120"/>
+        <location filename="installationmanager.cpp" line="131"/>
         <source>Password required</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="121"/>
+        <location filename="installationmanager.cpp" line="132"/>
         <source>Password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="191"/>
-        <location filename="installationmanager.cpp" line="290"/>
+        <location filename="installationmanager.cpp" line="284"/>
         <source>Extracting files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="312"/>
-        <location filename="installationmanager.cpp" line="318"/>
-        <location filename="installationmanager.cpp" line="623"/>
-        <location filename="installationmanager.cpp" line="628"/>
+        <location filename="installationmanager.cpp" line="245"/>
+        <location filename="installationmanager.cpp" line="252"/>
         <source>Extraction failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="498"/>
+        <location filename="installationmanager.cpp" line="390"/>
         <source>Failed to create backup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="507"/>
+        <location filename="installationmanager.cpp" line="399"/>
         <source>Mod Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="507"/>
+        <location filename="installationmanager.cpp" line="399"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="560"/>
+        <location filename="installationmanager.cpp" line="452"/>
         <source>Invalid name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="561"/>
+        <location filename="installationmanager.cpp" line="453"/>
         <source>The name you entered is invalid, please enter a different one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="729"/>
+        <location filename="installationmanager.cpp" line="607"/>
         <source>File format &quot;%1&quot; not supported</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="872"/>
+        <location filename="installationmanager.cpp" line="735"/>
+        <source>Invalid file tree returned by plugin.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="installationmanager.cpp" line="783"/>
         <source>Installation failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="873"/>
+        <location filename="installationmanager.cpp" line="784"/>
         <source>Something went wrong while installing this mod.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="895"/>
+        <location filename="installationmanager.cpp" line="806"/>
         <source>None of the available installer plugins were able to handle that archive.
 This is likely due to a corrupted or incompatible download or unrecognized archive format.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="908"/>
+        <location filename="installationmanager.cpp" line="817"/>
         <source>no error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="911"/>
+        <location filename="installationmanager.cpp" line="820"/>
         <source>7z.dll not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="914"/>
+        <location filename="installationmanager.cpp" line="823"/>
         <source>7z.dll isn&apos;t valid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="917"/>
+        <location filename="installationmanager.cpp" line="826"/>
         <source>archive not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="920"/>
+        <location filename="installationmanager.cpp" line="829"/>
         <source>failed to open archive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="923"/>
+        <location filename="installationmanager.cpp" line="832"/>
         <source>unsupported archive type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="926"/>
+        <location filename="installationmanager.cpp" line="835"/>
         <source>internal library error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="929"/>
+        <location filename="installationmanager.cpp" line="838"/>
         <source>archive invalid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="933"/>
+        <location filename="installationmanager.cpp" line="842"/>
         <source>unknown archive error</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1642,37 +1884,42 @@ This is likely due to a corrupted or incompatible download or unrecognized archi
 <context>
     <name>LogList</name>
     <message>
-        <location filename="loglist.cpp" line="216"/>
+        <location filename="loglist.cpp" line="227"/>
         <source>&amp;Copy all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="loglist.cpp" line="218"/>
+        <location filename="loglist.cpp" line="229"/>
         <source>C&amp;lear all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="loglist.cpp" line="220"/>
+        <location filename="loglist.cpp" line="230"/>
+        <source>&amp;Open logs folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="loglist.cpp" line="232"/>
         <source>&amp;Level</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="loglist.cpp" line="240"/>
+        <location filename="loglist.cpp" line="252"/>
         <source>&amp;Debug</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="loglist.cpp" line="241"/>
+        <location filename="loglist.cpp" line="253"/>
         <source>&amp;Info</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="loglist.cpp" line="242"/>
+        <location filename="loglist.cpp" line="254"/>
         <source>&amp;Warnings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="loglist.cpp" line="243"/>
+        <location filename="loglist.cpp" line="255"/>
         <source>&amp;Errors</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1752,13 +1999,63 @@ This is likely due to a corrupted or incompatible download or unrecognized archi
 <context>
     <name>MOApplication</name>
     <message>
-        <location filename="moapplication.cpp" line="121"/>
+        <location filename="moapplication.cpp" line="125"/>
         <source>an error occurred: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="moapplication.cpp" line="127"/>
+        <location filename="moapplication.cpp" line="131"/>
         <source>an error occurred</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MOBase::FilterWidget</name>
+    <message>
+        <location filename="../../uibase/src/filterwidget.cpp" line="476"/>
+        <source>Filter options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/filterwidget.cpp" line="484"/>
+        <source>Use regular expressions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/filterwidget.cpp" line="485"/>
+        <source>Use regular expressions in filters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/filterwidget.cpp" line="495"/>
+        <source>Case sensitive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/filterwidget.cpp" line="497"/>
+        <source>Make regular expressions case sensitive (/i)</source>
+        <extracomment>leave &quot;(/i)&quot; verbatim</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/filterwidget.cpp" line="508"/>
+        <source>Extended</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/filterwidget.cpp" line="510"/>
+        <source>Ignores unescaped whitespace in regular expressions (/x)</source>
+        <extracomment>leave &quot;(/x)&quot; verbatim</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/filterwidget.cpp" line="520"/>
+        <source>Keep selection in view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/filterwidget.cpp" line="521"/>
+        <source>Scroll to keep the current selection in view after filtering</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1814,47 +2111,42 @@ This is likely due to a corrupted or incompatible download or unrecognized archi
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="111"/>
-        <source>State</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="114"/>
+        <location filename="mainwindow.ui" line="108"/>
         <source>State of the filter, can either be Disabled, Enabled or Inverted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="122"/>
+        <location filename="mainwindow.ui" line="116"/>
         <source>Filter to apply to the modlist.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="145"/>
+        <location filename="mainwindow.ui" line="139"/>
         <source>Clear</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="152"/>
+        <location filename="mainwindow.ui" line="146"/>
         <source>Edit...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="183"/>
+        <location filename="mainwindow.ui" line="177"/>
         <source>Display mods that match all selected categories.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="186"/>
+        <location filename="mainwindow.ui" line="180"/>
         <source>And</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="196"/>
+        <location filename="mainwindow.ui" line="190"/>
         <source>Display mods that match at least one of the selected categories</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="199"/>
+        <location filename="mainwindow.ui" line="193"/>
         <source>Or</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1902,20 +2194,18 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="mainwindow.ui" line="324"/>
-        <location filename="mainwindow.ui" line="825"/>
         <source>Restore Backup...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="338"/>
-        <location filename="mainwindow.ui" line="845"/>
-        <location filename="mainwindow.cpp" line="4848"/>
+        <location filename="mainwindow.cpp" line="4800"/>
         <source>Create Backup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="352"/>
-        <location filename="mainwindow.ui" line="859"/>
+        <location filename="mainwindow.ui" line="874"/>
         <source>Active:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1932,8 +2222,8 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="mainwindow.ui" line="480"/>
         <location filename="mainwindow.ui" line="581"/>
-        <location filename="mainwindow.ui" line="960"/>
-        <location filename="mainwindow.ui" line="1299"/>
+        <location filename="mainwindow.ui" line="990"/>
+        <location filename="mainwindow.ui" line="1372"/>
         <source>Filter</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1958,12 +2248,12 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="616"/>
+        <location filename="mainwindow.ui" line="622"/>
         <source>Pick a program to run.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="619"/>
+        <location filename="mainwindow.ui" line="625"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -1973,12 +2263,12 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="667"/>
+        <location filename="mainwindow.ui" line="673"/>
         <source>Run program</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="670"/>
+        <location filename="mainwindow.ui" line="676"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -1987,17 +2277,17 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="680"/>
+        <location filename="mainwindow.ui" line="686"/>
         <source>Run</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="721"/>
+        <location filename="mainwindow.ui" line="727"/>
         <source>Create a shortcut in your start menu or on the desktop to the specified program</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="724"/>
+        <location filename="mainwindow.ui" line="730"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -2006,61 +2296,49 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="731"/>
+        <location filename="mainwindow.ui" line="737"/>
         <source>Shortcut</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="781"/>
+        <location filename="mainwindow.ui" line="787"/>
         <source>Plugins</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="801"/>
+        <location filename="mainwindow.ui" line="804"/>
+        <location filename="mainwindow.ui" line="807"/>
+        <source>Sort the plugins using LOOT.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="810"/>
         <source>Sort</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="872"/>
-        <source>This provides statistics about the plugin list.  The total number of active plugins is normally displayed.  Other statistics may be accessed with the tooltip of this counter.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="899"/>
-        <source>List of available esp/esm files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="902"/>
-        <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This list contains the esps, esms, and esls contained in the active mods. These require their own load order. Use drag&amp;amp;drop to modify this load order. Please note that MO will only save the load order for mods that are active/checked.&lt;br /&gt;There is a great tool named &amp;quot;BOSS&amp;quot; to automatically sort these files.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="973"/>
+        <location filename="mainwindow.ui" line="1003"/>
+        <location filename="mainwindow.ui" line="1169"/>
         <source>Archives</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="993"/>
+        <location filename="mainwindow.ui" line="1020"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BSAs / BA2s are bundles of game assets (textures, scripts, etc.). By default, the engine loads these bundles in a separate step from loose files. &lt;p&gt;Their load order is specified by the priority of the corresponding plugin (right pane, plugins tab).&lt;/p&gt;&lt;p&gt;If there is a matching plugin, the game will load them no matter what.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="996"/>
+        <location filename="mainwindow.ui" line="1023"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Currently detected archives. (&lt;a href=&quot;#&quot;&gt;What is an archive?&lt;/a&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1011"/>
+        <location filename="mainwindow.ui" line="1038"/>
         <source>List of available BS Archives. Archives not checked here are not managed by MO and ignore installation order.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1014"/>
+        <location filename="mainwindow.ui" line="1041"/>
         <source>BSA files are archives (comparable to .zip files) that contain data assets (meshes, textures, ...) to be used by the game. As such they &quot;compete&quot; with loose files in your data directory over which is loaded.
                     By default, BSAs that share their base name with an enabled ESP (i.e. plugin.esp and plugin.bsa) are automatically loaded and will have precedence over all loose files, the installation order you set up to the left is then ignored!
 
@@ -2068,72 +2346,29 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1043"/>
+        <location filename="mainwindow.ui" line="1070"/>
         <source>Data</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1061"/>
-        <source>refresh data-directory overview</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="1064"/>
-        <source>Refresh the overview. This may take a moment.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="1067"/>
-        <location filename="mainwindow.ui" line="1213"/>
-        <location filename="mainwindow.cpp" line="4692"/>
-        <location filename="mainwindow.cpp" line="5708"/>
+        <location filename="mainwindow.ui" line="1093"/>
+        <location filename="mainwindow.ui" line="1259"/>
+        <location filename="mainwindow.cpp" line="4643"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1083"/>
+        <location filename="mainwindow.ui" line="1124"/>
         <source>This is an overview of your data directory as visible to the game (and tools). </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1096"/>
-        <source>File</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="1101"/>
-        <source>Mod</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="1113"/>
-        <location filename="mainwindow.ui" line="1116"/>
-        <source>Filters the above list so that only conflicts are displayed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="1119"/>
-        <source>Show only conflicts</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="1126"/>
-        <location filename="mainwindow.ui" line="1132"/>
-        <source>Filters the above list so that files from archives are not shown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="1135"/>
-        <source>Show files from Archives</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="1145"/>
+        <location filename="mainwindow.ui" line="1189"/>
         <source>Saves</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1169"/>
+        <location filename="mainwindow.ui" line="1210"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -2144,1142 +2379,1210 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1192"/>
+        <location filename="mainwindow.ui" line="1236"/>
         <source>Downloads</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1210"/>
-        <source>Refresh downloads view</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="1241"/>
+        <location filename="mainwindow.ui" line="1302"/>
         <source>This is a list of mods you downloaded from Nexus. Double click one to install it. You can also drag an archive into here.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1279"/>
-        <source>Show Hidden</source>
+        <location filename="mainwindow.ui" line="834"/>
+        <location filename="mainwindow.ui" line="837"/>
+        <source>Restore a backup.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1321"/>
+        <location filename="mainwindow.ui" line="857"/>
+        <location filename="mainwindow.ui" line="860"/>
+        <source>Create a backup.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="887"/>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This provides statistics about the plugin list. The total number of active plugins is normally displayed.  Other statistics may be accessed with the tooltip of this counter.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="914"/>
+        <location filename="mainwindow.ui" line="917"/>
+        <source>List of available esp/esm files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="981"/>
+        <location filename="mainwindow.ui" line="984"/>
+        <source>Filter the list of plugins.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="1087"/>
+        <location filename="mainwindow.ui" line="1090"/>
+        <source>Refresh the data structure.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="1147"/>
+        <location filename="mainwindow.ui" line="1150"/>
+        <source>Filter the list so that only conflicts are displayed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="1153"/>
+        <source>Conflicts only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="1160"/>
+        <location filename="mainwindow.ui" line="1166"/>
+        <source>Filter the list so that files from archives are shown.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="1176"/>
+        <location filename="mainwindow.ui" line="1179"/>
+        <source>Filter the Data tree.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="1253"/>
+        <location filename="mainwindow.ui" line="1256"/>
+        <source>Refresh the downloads.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="1340"/>
+        <location filename="mainwindow.ui" line="1343"/>
+        <source>Show downloads marked as hidden.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="1346"/>
+        <source>Hidden files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="1366"/>
+        <location filename="mainwindow.ui" line="1369"/>
+        <source>Filter the list of downloads.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="1394"/>
         <source>Main ToolBar</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1363"/>
+        <location filename="mainwindow.ui" line="1436"/>
         <source>&amp;File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1373"/>
-        <location filename="mainwindow.ui" line="1542"/>
+        <location filename="mainwindow.ui" line="1446"/>
+        <location filename="mainwindow.ui" line="1636"/>
         <source>&amp;Tools</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1384"/>
-        <location filename="mainwindow.ui" line="1638"/>
-        <location filename="mainwindow.ui" line="1641"/>
+        <location filename="mainwindow.ui" line="1457"/>
+        <location filename="mainwindow.ui" line="1732"/>
+        <location filename="mainwindow.ui" line="1735"/>
         <source>&amp;Help</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1393"/>
+        <location filename="mainwindow.ui" line="1466"/>
         <source>&amp;View</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1397"/>
+        <location filename="mainwindow.ui" line="1470"/>
         <source>&amp;Toolbars</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1418"/>
+        <location filename="mainwindow.ui" line="1491"/>
         <source>&amp;Run</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1432"/>
-        <location filename="mainwindow.ui" line="1780"/>
+        <location filename="mainwindow.ui" line="1511"/>
+        <location filename="mainwindow.ui" line="1874"/>
         <source>Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1476"/>
+        <location filename="mainwindow.ui" line="1570"/>
         <source>Install &amp;Mod...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1479"/>
+        <location filename="mainwindow.ui" line="1573"/>
         <source>Install &amp;Mod</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1482"/>
-        <location filename="mainwindow.ui" line="1485"/>
+        <location filename="mainwindow.ui" line="1576"/>
+        <location filename="mainwindow.ui" line="1579"/>
         <source>Install a new mod from an archive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1488"/>
+        <location filename="mainwindow.ui" line="1582"/>
         <source>Ctrl+M</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1497"/>
+        <location filename="mainwindow.ui" line="1591"/>
         <source>&amp;Profiles...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1500"/>
+        <location filename="mainwindow.ui" line="1594"/>
         <source>&amp;Profiles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1503"/>
-        <location filename="mainwindow.ui" line="1506"/>
+        <location filename="mainwindow.ui" line="1597"/>
+        <location filename="mainwindow.ui" line="1600"/>
         <source>Configure profiles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1509"/>
+        <location filename="mainwindow.ui" line="1603"/>
         <source>Ctrl+P</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1518"/>
+        <location filename="mainwindow.ui" line="1612"/>
         <source>&amp;Executables...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1521"/>
+        <location filename="mainwindow.ui" line="1615"/>
         <source>&amp;Executables</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1524"/>
-        <location filename="mainwindow.ui" line="1527"/>
+        <location filename="mainwindow.ui" line="1618"/>
+        <location filename="mainwindow.ui" line="1621"/>
         <source>Configure the executables that can be started through Mod Organizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1530"/>
+        <location filename="mainwindow.ui" line="1624"/>
         <source>Ctrl+E</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1539"/>
+        <location filename="mainwindow.ui" line="1633"/>
         <source>&amp;Tool Plugins</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1545"/>
+        <location filename="mainwindow.ui" line="1639"/>
         <source>Tools</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1548"/>
+        <location filename="mainwindow.ui" line="1642"/>
         <source>Ctrl+I</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1557"/>
+        <location filename="mainwindow.ui" line="1651"/>
         <source>&amp;Settings...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1560"/>
+        <location filename="mainwindow.ui" line="1654"/>
         <source>&amp;Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1563"/>
-        <location filename="mainwindow.ui" line="1566"/>
+        <location filename="mainwindow.ui" line="1657"/>
+        <location filename="mainwindow.ui" line="1660"/>
         <source>Configure settings and workarounds</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1569"/>
+        <location filename="mainwindow.ui" line="1663"/>
         <source>Ctrl+S</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1578"/>
-        <location filename="mainwindow.ui" line="1581"/>
+        <location filename="mainwindow.ui" line="1672"/>
+        <location filename="mainwindow.ui" line="1675"/>
         <source>Visit &amp;Nexus</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1584"/>
-        <location filename="mainwindow.ui" line="1587"/>
+        <location filename="mainwindow.ui" line="1678"/>
+        <location filename="mainwindow.ui" line="1681"/>
         <source>Visit the Nexus website in your browser for more mods</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1590"/>
+        <location filename="mainwindow.ui" line="1684"/>
         <source>Ctrl+N</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1602"/>
-        <location filename="mainwindow.ui" line="1605"/>
+        <location filename="mainwindow.ui" line="1696"/>
+        <location filename="mainwindow.ui" line="1699"/>
         <source>&amp;Update Mod Organizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1608"/>
-        <location filename="mainwindow.ui" line="1611"/>
+        <location filename="mainwindow.ui" line="1702"/>
+        <location filename="mainwindow.ui" line="1705"/>
         <source>Mod Organizer is up-to-date</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1620"/>
+        <location filename="mainwindow.ui" line="1714"/>
         <source>&amp;Notifications...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1623"/>
-        <location filename="mainwindow.ui" line="1626"/>
+        <location filename="mainwindow.ui" line="1717"/>
+        <location filename="mainwindow.ui" line="1720"/>
         <source>Open the notifications dialog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1629"/>
+        <location filename="mainwindow.ui" line="1723"/>
         <source>This button will be highlighted on the toolbar if MO discovered potential problems in your setup and provide tips on how to fix them.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1644"/>
-        <location filename="mainwindow.ui" line="1647"/>
+        <location filename="mainwindow.ui" line="1738"/>
+        <location filename="mainwindow.ui" line="1741"/>
         <source>Show help options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1650"/>
+        <location filename="mainwindow.ui" line="1744"/>
         <source>Ctrl+H</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1659"/>
-        <location filename="mainwindow.ui" line="1662"/>
+        <location filename="mainwindow.ui" line="1753"/>
+        <location filename="mainwindow.ui" line="1756"/>
         <source>&amp;Endorse ModOrganizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1665"/>
-        <location filename="mainwindow.ui" line="1668"/>
-        <location filename="mainwindow.cpp" line="5734"/>
+        <location filename="mainwindow.ui" line="1759"/>
+        <location filename="mainwindow.ui" line="1762"/>
+        <location filename="mainwindow.cpp" line="5316"/>
         <source>Endorse Mod Organizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1677"/>
+        <location filename="mainwindow.ui" line="1771"/>
         <source>&amp;Change Game...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1680"/>
+        <location filename="mainwindow.ui" line="1774"/>
         <source>&amp;Change Game</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1683"/>
-        <location filename="mainwindow.ui" line="1686"/>
+        <location filename="mainwindow.ui" line="1777"/>
+        <location filename="mainwindow.ui" line="1780"/>
         <source>Open the Instance selection dialog to manage a different Game</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1691"/>
-        <location filename="mainwindow.ui" line="1694"/>
+        <location filename="mainwindow.ui" line="1785"/>
+        <location filename="mainwindow.ui" line="1788"/>
         <source>E&amp;xit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1697"/>
-        <location filename="mainwindow.ui" line="1700"/>
+        <location filename="mainwindow.ui" line="1791"/>
+        <location filename="mainwindow.ui" line="1794"/>
         <source>Exits Mod Organizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1708"/>
+        <location filename="mainwindow.ui" line="1802"/>
         <source>M&amp;ain Toolbar</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1716"/>
+        <location filename="mainwindow.ui" line="1810"/>
         <source>&amp;Small Icons</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1724"/>
+        <location filename="mainwindow.ui" line="1818"/>
         <source>Lar&amp;ge Icons</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1732"/>
+        <location filename="mainwindow.ui" line="1826"/>
         <source>&amp;Icons Only</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1740"/>
+        <location filename="mainwindow.ui" line="1834"/>
         <source>&amp;Text Only</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1748"/>
+        <location filename="mainwindow.ui" line="1842"/>
         <source>I&amp;cons and Text</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1756"/>
+        <location filename="mainwindow.ui" line="1850"/>
         <source>M&amp;edium Icons</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1764"/>
+        <location filename="mainwindow.ui" line="1858"/>
         <source>&amp;Menu</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1772"/>
+        <location filename="mainwindow.ui" line="1866"/>
         <source>Status &amp;bar</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="311"/>
+        <location filename="mainwindow.cpp" line="385"/>
         <source>Toolbar and Menu</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="312"/>
+        <location filename="mainwindow.cpp" line="386"/>
         <source>Desktop</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="313"/>
+        <location filename="mainwindow.cpp" line="387"/>
         <source>Start Menu</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="338"/>
+        <location filename="mainwindow.cpp" line="412"/>
         <source>There is no supported sort mechanism for this game. You will probably have to use a third-party tool.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="628"/>
+        <location filename="mainwindow.cpp" line="711"/>
         <source>Crash on exit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="629"/>
+        <location filename="mainwindow.cpp" line="712"/>
         <source>MO crashed while exiting.  Some settings may not be saved.
 
 Error: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="958"/>
+        <location filename="mainwindow.cpp" line="1042"/>
         <source>There are notifications to read</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="977"/>
+        <location filename="mainwindow.cpp" line="1061"/>
         <source>There are no notifications</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1064"/>
-        <location filename="mainwindow.cpp" line="4862"/>
-        <location filename="mainwindow.cpp" line="4866"/>
+        <location filename="mainwindow.cpp" line="1163"/>
+        <location filename="mainwindow.cpp" line="4823"/>
+        <location filename="mainwindow.cpp" line="4827"/>
         <source>Endorse</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1068"/>
+        <location filename="mainwindow.cpp" line="1167"/>
         <source>Won&apos;t Endorse</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1085"/>
+        <location filename="mainwindow.cpp" line="1184"/>
         <source>Help on UI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1089"/>
+        <location filename="mainwindow.cpp" line="1188"/>
         <source>Documentation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1093"/>
+        <location filename="mainwindow.cpp" line="1192"/>
         <source>Chat on Discord</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1097"/>
+        <location filename="mainwindow.cpp" line="1196"/>
         <source>Report Issue</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1101"/>
+        <location filename="mainwindow.cpp" line="1200"/>
         <source>Tutorials</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1140"/>
+        <location filename="mainwindow.cpp" line="1239"/>
         <source>About</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1141"/>
+        <location filename="mainwindow.cpp" line="1240"/>
         <source>About Qt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1200"/>
+        <location filename="mainwindow.cpp" line="1299"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1201"/>
+        <location filename="mainwindow.cpp" line="1300"/>
         <source>Please enter a name for the new profile</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1209"/>
+        <location filename="mainwindow.cpp" line="1308"/>
         <source>failed to create profile: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1264"/>
+        <location filename="mainwindow.cpp" line="1363"/>
         <source>Show tutorial?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1265"/>
+        <location filename="mainwindow.cpp" line="1364"/>
         <source>You are starting Mod Organizer for the first time. Do you want to show a tutorial of its basic features? If you choose no you can always start the tutorial from the &quot;Help&quot;-menu.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1365"/>
+        <location filename="mainwindow.cpp" line="1467"/>
         <source>Downloads in progress</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1366"/>
+        <location filename="mainwindow.cpp" line="1468"/>
         <source>There are still downloads in progress, do you really want to quit?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1477"/>
+        <location filename="mainwindow.cpp" line="1588"/>
         <source>Plugin &quot;%1&quot; failed: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1479"/>
+        <location filename="mainwindow.cpp" line="1590"/>
         <source>Plugin &quot;%1&quot; failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1559"/>
+        <location filename="mainwindow.cpp" line="1679"/>
         <source>Browse Mod Page</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1763"/>
-        <source>Also in: &lt;br&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="1774"/>
-        <source>No conflict</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="1878"/>
+        <location filename="mainwindow.cpp" line="1853"/>
         <source>&lt;Edit...&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1889"/>
+        <location filename="mainwindow.cpp" line="1864"/>
         <source>(no executables)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2163"/>
+        <location filename="mainwindow.cpp" line="2092"/>
         <source>This bsa is enabled in the ini file so it may be required!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2216"/>
+        <location filename="mainwindow.cpp" line="2145"/>
         <source>Activating Network Proxy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2292"/>
+        <location filename="mainwindow.cpp" line="2232"/>
         <source>Notice: Your current MO version (%1) is lower than the previously used one (%2). The GUI may not downgrade gracefully, so you may experience oddities. However, there should be no serious issues.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2368"/>
+        <location filename="mainwindow.cpp" line="2306"/>
         <source>Choose Mod</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2369"/>
+        <location filename="mainwindow.cpp" line="2307"/>
         <source>Mod Archive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2463"/>
+        <location filename="mainwindow.cpp" line="2401"/>
         <source>Start Tutorial?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2464"/>
+        <location filename="mainwindow.cpp" line="2402"/>
         <source>You&apos;re about to start a tutorial. For technical reasons it&apos;s not possible to end the tutorial early. Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2670"/>
+        <location filename="mainwindow.cpp" line="2610"/>
         <source>failed to change origin name: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2694"/>
+        <location filename="mainwindow.cpp" line="2634"/>
         <source>failed to move &quot;%1&quot; from mod &quot;%2&quot; to &quot;%3&quot;: %4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2707"/>
+        <location filename="mainwindow.cpp" line="2647"/>
         <source>failed to rename mod: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2720"/>
+        <location filename="mainwindow.cpp" line="2660"/>
         <source>Overwrite?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2721"/>
+        <location filename="mainwindow.cpp" line="2661"/>
         <source>This will replace the existing mod &quot;%1&quot;. Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2724"/>
+        <location filename="mainwindow.cpp" line="2664"/>
         <source>failed to remove mod &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2728"/>
-        <location filename="mainwindow.cpp" line="5374"/>
-        <location filename="mainwindow.cpp" line="5398"/>
+        <location filename="mainwindow.cpp" line="2668"/>
         <source>failed to rename &quot;%1&quot; to &quot;%2&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2816"/>
-        <location filename="mainwindow.cpp" line="3247"/>
-        <location filename="mainwindow.cpp" line="4395"/>
-        <location filename="mainwindow.cpp" line="4403"/>
-        <location filename="mainwindow.cpp" line="4964"/>
+        <location filename="mainwindow.cpp" line="2756"/>
+        <location filename="mainwindow.cpp" line="3183"/>
+        <location filename="mainwindow.cpp" line="4346"/>
+        <location filename="mainwindow.cpp" line="4354"/>
+        <location filename="mainwindow.cpp" line="4925"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2817"/>
+        <location filename="mainwindow.cpp" line="2757"/>
         <source>Remove the following mods?&lt;br&gt;&lt;ul&gt;%1&lt;/ul&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2832"/>
+        <location filename="mainwindow.cpp" line="2772"/>
         <source>failed to remove mod: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2864"/>
-        <location filename="mainwindow.cpp" line="2867"/>
-        <location filename="mainwindow.cpp" line="2877"/>
+        <location filename="mainwindow.cpp" line="2804"/>
+        <location filename="mainwindow.cpp" line="2807"/>
+        <location filename="mainwindow.cpp" line="2817"/>
         <source>Failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2864"/>
+        <location filename="mainwindow.cpp" line="2804"/>
         <source>Installation file no longer exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2868"/>
+        <location filename="mainwindow.cpp" line="2808"/>
         <source>Mods installed with old versions of MO can&apos;t be reinstalled in this way.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2878"/>
+        <location filename="mainwindow.cpp" line="2818"/>
         <source>Failed to create backup.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2906"/>
+        <location filename="mainwindow.cpp" line="2846"/>
         <source>Endorsing multiple mods will take a while. Please wait...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2942"/>
+        <location filename="mainwindow.cpp" line="2882"/>
         <source>Unendorsing multiple mods will take a while. Please wait...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3019"/>
+        <location filename="mainwindow.cpp" line="2959"/>
         <source>Failed to display overwrite dialog: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3248"/>
+        <location filename="mainwindow.cpp" line="3184"/>
         <source>Restore all hidden files in the following mods?&lt;br&gt;&lt;ul&gt;%1&lt;/ul&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3277"/>
-        <location filename="mainwindow.cpp" line="3876"/>
-        <location filename="mainwindow.cpp" line="6365"/>
+        <location filename="mainwindow.cpp" line="3213"/>
+        <location filename="mainwindow.cpp" line="3819"/>
+        <location filename="mainwindow.cpp" line="5942"/>
         <source>Are you sure?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3278"/>
+        <location filename="mainwindow.cpp" line="3214"/>
         <source>About to restore all hidden files in:
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3303"/>
+        <location filename="mainwindow.cpp" line="3239"/>
         <source>Opening Nexus Links</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3304"/>
+        <location filename="mainwindow.cpp" line="3240"/>
         <source>You are trying to open %1 links to Nexus Mods.  Are you sure you want to do this?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3331"/>
+        <location filename="mainwindow.cpp" line="3267"/>
         <source>Nexus ID for this mod is unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3342"/>
+        <location filename="mainwindow.cpp" line="3278"/>
+        <location filename="mainwindow.cpp" line="3312"/>
         <source>Opening Web Pages</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3343"/>
+        <location filename="mainwindow.cpp" line="3279"/>
+        <location filename="mainwindow.cpp" line="3313"/>
         <source>You are trying to open %1 Web Pages.  Are you sure you want to do this?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3549"/>
+        <location filename="mainwindow.cpp" line="3352"/>
+        <source>No valid Web Page for this mod</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3500"/>
         <source>&lt;table cellspacing=&quot;5&quot;&gt;&lt;tr&gt;&lt;th&gt;Type&lt;/th&gt;&lt;th&gt;All&lt;/th&gt;&lt;th&gt;Visible&lt;/th&gt;&lt;tr&gt;&lt;td&gt;Enabled mods:&amp;emsp;&lt;/td&gt;&lt;td align=right&gt;%1 / %2&lt;/td&gt;&lt;td align=right&gt;%3 / %4&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;Unmanaged/DLCs:&amp;emsp;&lt;/td&gt;&lt;td align=right&gt;%5&lt;/td&gt;&lt;td align=right&gt;%6&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;Mod backups:&amp;emsp;&lt;/td&gt;&lt;td align=right&gt;%7&lt;/td&gt;&lt;td align=right&gt;%8&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;Separators:&amp;emsp;&lt;/td&gt;&lt;td align=right&gt;%9&lt;/td&gt;&lt;td align=right&gt;%10&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3604"/>
+        <location filename="mainwindow.cpp" line="3555"/>
         <source>&lt;table cellspacing=&quot;6&quot;&gt;&lt;tr&gt;&lt;th&gt;Type&lt;/th&gt;&lt;th&gt;Active      &lt;/th&gt;&lt;th&gt;Total&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;All plugins:&lt;/td&gt;&lt;td align=right&gt;%1    &lt;/td&gt;&lt;td align=right&gt;%2&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;ESMs:&lt;/td&gt;&lt;td align=right&gt;%3    &lt;/td&gt;&lt;td align=right&gt;%4&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;ESPs:&lt;/td&gt;&lt;td align=right&gt;%7    &lt;/td&gt;&lt;td align=right&gt;%8&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;ESMs+ESPs:&lt;/td&gt;&lt;td align=right&gt;%9    &lt;/td&gt;&lt;td align=right&gt;%10&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;ESLs:&lt;/td&gt;&lt;td align=right&gt;%5    &lt;/td&gt;&lt;td align=right&gt;%6&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3636"/>
-        <location filename="mainwindow.cpp" line="3780"/>
-        <location filename="mainwindow.cpp" line="4756"/>
+        <location filename="mainwindow.cpp" line="3587"/>
+        <location filename="mainwindow.cpp" line="3723"/>
+        <location filename="mainwindow.cpp" line="4708"/>
         <source>Create Mod...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3637"/>
+        <location filename="mainwindow.cpp" line="3588"/>
         <source>This will create an empty mod.
 Please enter a name:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3646"/>
-        <location filename="mainwindow.cpp" line="3790"/>
+        <location filename="mainwindow.cpp" line="3597"/>
+        <location filename="mainwindow.cpp" line="3733"/>
         <source>A mod with this name already exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3674"/>
+        <location filename="mainwindow.cpp" line="3625"/>
         <source>Create Separator...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3675"/>
+        <location filename="mainwindow.cpp" line="3626"/>
         <source>This will create a new separator.
 Please enter a name:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3682"/>
+        <location filename="mainwindow.cpp" line="3633"/>
         <source>A separator with this name already exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3781"/>
+        <location filename="mainwindow.cpp" line="3724"/>
         <source>This will move all files from overwrite into a new, regular mod.
 Please enter a name:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3854"/>
+        <location filename="mainwindow.cpp" line="3797"/>
         <source>Move successful.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3877"/>
+        <location filename="mainwindow.cpp" line="3820"/>
         <source>About to recursively delete:
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4277"/>
+        <location filename="mainwindow.cpp" line="4228"/>
         <source>Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4278"/>
+        <location filename="mainwindow.cpp" line="4229"/>
         <source>The versioning scheme decides which version is considered newer than another.
 This function will guess the versioning scheme under the assumption that the installed version is outdated.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4298"/>
+        <location filename="mainwindow.cpp" line="4249"/>
         <source>Sorry</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4299"/>
+        <location filename="mainwindow.cpp" line="4250"/>
         <source>I don&apos;t know a versioning scheme where %1 is newer than %2.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4395"/>
+        <location filename="mainwindow.cpp" line="4346"/>
         <source>Really enable all visible mods?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4403"/>
+        <location filename="mainwindow.cpp" line="4354"/>
         <source>Really disable all visible mods?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4485"/>
+        <location filename="mainwindow.cpp" line="4436"/>
         <source>Export to csv</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4488"/>
+        <location filename="mainwindow.cpp" line="4439"/>
         <source>CSV (Comma Separated Values) is a format that can be imported in programs like Excel to create a spreadsheet.
 You can also use online editors and converters instead.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4491"/>
+        <location filename="mainwindow.cpp" line="4442"/>
         <source>Select what mods you want export:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4492"/>
+        <location filename="mainwindow.cpp" line="4443"/>
         <source>All installed mods</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4493"/>
+        <location filename="mainwindow.cpp" line="4444"/>
         <source>Only active (checked) mods from your current profile</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4494"/>
+        <location filename="mainwindow.cpp" line="4445"/>
         <source>All currently visible mods in the mod list</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4515"/>
+        <location filename="mainwindow.cpp" line="4466"/>
         <source>Choose what Columns to export:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4518"/>
+        <location filename="mainwindow.cpp" line="4469"/>
         <source>Mod_Priority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4520"/>
+        <location filename="mainwindow.cpp" line="4471"/>
         <source>Mod_Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4522"/>
+        <location filename="mainwindow.cpp" line="4473"/>
         <source>Notes_column</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4523"/>
+        <location filename="mainwindow.cpp" line="4474"/>
         <source>Mod_Status</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4525"/>
+        <location filename="mainwindow.cpp" line="4476"/>
         <source>Primary_Category</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4526"/>
+        <location filename="mainwindow.cpp" line="4477"/>
         <source>Nexus_ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4527"/>
+        <location filename="mainwindow.cpp" line="4478"/>
         <source>Mod_Nexus_URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4528"/>
+        <location filename="mainwindow.cpp" line="4479"/>
         <source>Mod_Version</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4529"/>
+        <location filename="mainwindow.cpp" line="4480"/>
         <source>Install_Date</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4530"/>
+        <location filename="mainwindow.cpp" line="4481"/>
         <source>Download_File_Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4638"/>
+        <location filename="mainwindow.cpp" line="4589"/>
         <source>export failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4657"/>
+        <location filename="mainwindow.cpp" line="4608"/>
         <source>Open Game folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4658"/>
+        <location filename="mainwindow.cpp" line="4609"/>
         <source>Open MyGames folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4659"/>
+        <location filename="mainwindow.cpp" line="4610"/>
         <source>Open INIs folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4664"/>
+        <location filename="mainwindow.cpp" line="4615"/>
         <source>Open Instance folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4665"/>
+        <location filename="mainwindow.cpp" line="4616"/>
         <source>Open Mods folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4666"/>
+        <location filename="mainwindow.cpp" line="4617"/>
         <source>Open Profile folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4667"/>
+        <location filename="mainwindow.cpp" line="4618"/>
         <source>Open Downloads folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4673"/>
+        <location filename="mainwindow.cpp" line="4624"/>
         <source>Open MO2 Install folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4674"/>
+        <location filename="mainwindow.cpp" line="4625"/>
         <source>Open MO2 Plugins folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4675"/>
+        <location filename="mainwindow.cpp" line="4626"/>
         <source>Open MO2 Stylesheets folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4676"/>
+        <location filename="mainwindow.cpp" line="4627"/>
         <source>Open MO2 Logs folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4683"/>
+        <location filename="mainwindow.cpp" line="4634"/>
         <source>Install Mod...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4684"/>
+        <location filename="mainwindow.cpp" line="4635"/>
         <source>Create empty mod</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4685"/>
+        <location filename="mainwindow.cpp" line="4636"/>
         <source>Create Separator</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4689"/>
+        <location filename="mainwindow.cpp" line="4640"/>
         <source>Enable all visible</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4690"/>
+        <location filename="mainwindow.cpp" line="4641"/>
         <source>Disable all visible</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4691"/>
+        <location filename="mainwindow.cpp" line="4642"/>
         <source>Check for updates</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4693"/>
+        <location filename="mainwindow.cpp" line="4644"/>
         <source>Export to csv...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4702"/>
-        <location filename="mainwindow.cpp" line="4718"/>
+        <location filename="mainwindow.cpp" line="4653"/>
+        <location filename="mainwindow.cpp" line="4669"/>
         <source>Send to</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4703"/>
-        <location filename="mainwindow.cpp" line="4719"/>
+        <location filename="mainwindow.cpp" line="4654"/>
+        <location filename="mainwindow.cpp" line="4670"/>
         <source>Top</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4704"/>
-        <location filename="mainwindow.cpp" line="4720"/>
+        <location filename="mainwindow.cpp" line="4655"/>
+        <location filename="mainwindow.cpp" line="4671"/>
         <source>Bottom</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4705"/>
-        <location filename="mainwindow.cpp" line="4721"/>
+        <location filename="mainwindow.cpp" line="4656"/>
+        <location filename="mainwindow.cpp" line="4672"/>
         <source>Priority...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4706"/>
+        <location filename="mainwindow.cpp" line="4657"/>
         <source>Separator...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4746"/>
+        <location filename="mainwindow.cpp" line="4698"/>
         <source>All Mods</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4755"/>
+        <location filename="mainwindow.cpp" line="4707"/>
         <source>Sync to Mods...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4757"/>
+        <location filename="mainwindow.cpp" line="4709"/>
         <source>Move content to Mod...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4758"/>
+        <location filename="mainwindow.cpp" line="4710"/>
         <source>Clear Overwrite...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4760"/>
-        <location filename="mainwindow.cpp" line="4785"/>
-        <location filename="mainwindow.cpp" line="4916"/>
+        <location filename="mainwindow.cpp" line="4712"/>
+        <location filename="mainwindow.cpp" line="4737"/>
+        <location filename="mainwindow.cpp" line="4877"/>
         <source>Open in Explorer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4764"/>
+        <location filename="mainwindow.cpp" line="4716"/>
         <source>Restore Backup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4765"/>
+        <location filename="mainwindow.cpp" line="4717"/>
         <source>Remove Backup...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4768"/>
-        <location filename="mainwindow.cpp" line="4896"/>
+        <location filename="mainwindow.cpp" line="4720"/>
+        <location filename="mainwindow.cpp" line="4857"/>
         <source>Ignore missing data</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4771"/>
-        <location filename="mainwindow.cpp" line="4900"/>
+        <location filename="mainwindow.cpp" line="4723"/>
+        <location filename="mainwindow.cpp" line="4861"/>
         <source>Mark as converted/working</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4775"/>
-        <location filename="mainwindow.cpp" line="4906"/>
+        <location filename="mainwindow.cpp" line="4727"/>
+        <location filename="mainwindow.cpp" line="4867"/>
         <source>Visit on Nexus</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4781"/>
-        <location filename="mainwindow.cpp" line="4912"/>
+        <location filename="mainwindow.cpp" line="4733"/>
+        <location filename="mainwindow.cpp" line="4873"/>
         <source>Visit on %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4789"/>
-        <location filename="mainwindow.cpp" line="4812"/>
+        <location filename="mainwindow.cpp" line="4741"/>
+        <location filename="mainwindow.cpp" line="4764"/>
         <source>Change Categories</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4793"/>
-        <location filename="mainwindow.cpp" line="4817"/>
+        <location filename="mainwindow.cpp" line="4745"/>
+        <location filename="mainwindow.cpp" line="4769"/>
         <source>Primary Category</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4797"/>
+        <location filename="mainwindow.cpp" line="4749"/>
         <source>Rename Separator...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4798"/>
+        <location filename="mainwindow.cpp" line="4750"/>
         <source>Remove Separator...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4801"/>
+        <location filename="mainwindow.cpp" line="4753"/>
+        <location filename="mainwindow.cpp" line="4809"/>
         <source>Select Color...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4804"/>
+        <location filename="mainwindow.cpp" line="4756"/>
+        <location filename="mainwindow.cpp" line="4812"/>
         <source>Reset Color</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4824"/>
+        <location filename="mainwindow.cpp" line="4776"/>
         <source>Change versioning scheme</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4828"/>
+        <location filename="mainwindow.cpp" line="4780"/>
         <source>Force-check updates</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4830"/>
+        <location filename="mainwindow.cpp" line="4782"/>
         <source>Un-ignore update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4833"/>
+        <location filename="mainwindow.cpp" line="4785"/>
         <source>Ignore update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4838"/>
-        <location filename="mainwindow.cpp" line="6523"/>
+        <location filename="mainwindow.cpp" line="4790"/>
+        <location filename="mainwindow.cpp" line="6102"/>
         <source>Enable selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4839"/>
-        <location filename="mainwindow.cpp" line="6524"/>
+        <location filename="mainwindow.cpp" line="4791"/>
+        <location filename="mainwindow.cpp" line="6103"/>
         <source>Disable selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4845"/>
+        <location filename="mainwindow.cpp" line="4797"/>
         <source>Rename Mod...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4846"/>
+        <location filename="mainwindow.cpp" line="4798"/>
         <source>Reinstall Mod</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4847"/>
+        <location filename="mainwindow.cpp" line="4799"/>
         <source>Remove Mod...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4851"/>
+        <location filename="mainwindow.cpp" line="4803"/>
         <source>Restore hidden files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4859"/>
+        <location filename="mainwindow.cpp" line="4820"/>
         <source>Un-Endorse</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4863"/>
+        <location filename="mainwindow.cpp" line="4824"/>
         <source>Won&apos;t endorse</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4869"/>
+        <location filename="mainwindow.cpp" line="4830"/>
         <source>Endorsement state unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4879"/>
+        <location filename="mainwindow.cpp" line="4840"/>
         <source>Start tracking</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4882"/>
+        <location filename="mainwindow.cpp" line="4843"/>
         <source>Stop tracking</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4885"/>
+        <location filename="mainwindow.cpp" line="4846"/>
         <source>Tracked state unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4920"/>
+        <location filename="mainwindow.cpp" line="4881"/>
         <source>Information...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4927"/>
-        <location filename="mainwindow.cpp" line="6576"/>
+        <location filename="mainwindow.cpp" line="4888"/>
+        <location filename="mainwindow.cpp" line="6155"/>
         <source>Exception: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4929"/>
-        <location filename="mainwindow.cpp" line="6578"/>
+        <location filename="mainwindow.cpp" line="4890"/>
+        <location filename="mainwindow.cpp" line="6157"/>
         <source>Unknown exception</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4961"/>
+        <location filename="mainwindow.cpp" line="4922"/>
         <source>%1 more</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="4965"/>
+        <location filename="mainwindow.cpp" line="4926"/>
         <source>Are you sure you want to remove the following %n save(s)?&lt;br&gt;&lt;ul&gt;%1&lt;/ul&gt;&lt;br&gt;Removed saves will be sent to the Recycle Bin.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -3287,12 +3590,12 @@ You can also use online editors and converters instead.</source>
         </translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5010"/>
+        <location filename="mainwindow.cpp" line="4971"/>
         <source>Enable Mods...</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="5025"/>
+        <location filename="mainwindow.cpp" line="4986"/>
         <source>Delete %n save(s)</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -3300,335 +3603,232 @@ You can also use online editors and converters instead.</source>
         </translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5105"/>
+        <location filename="mainwindow.cpp" line="5066"/>
         <source>Restart Mod Organizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5107"/>
+        <location filename="mainwindow.cpp" line="5068"/>
         <source>Mod Organizer must restart to finish configuration changes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5109"/>
+        <location filename="mainwindow.cpp" line="5070"/>
         <source>Restart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5110"/>
+        <location filename="mainwindow.cpp" line="5071"/>
         <source>Continue</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5110"/>
+        <location filename="mainwindow.cpp" line="5071"/>
         <source>Some things might be weird.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5131"/>
+        <location filename="mainwindow.cpp" line="5092"/>
         <source>Can&apos;t change download directory while downloads are in progress!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5288"/>
-        <source>failed to write to file %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5294"/>
-        <source>%1 written</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5312"/>
-        <source>Enter Name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5313"/>
-        <source>Enter a name for the executable</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5335"/>
-        <source>Not an executable</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5336"/>
-        <source>This is not a recognized executable.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5359"/>
-        <location filename="mainwindow.cpp" line="5384"/>
-        <source>Replace file?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5359"/>
-        <source>There already is a hidden version of this file. Replace it?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5362"/>
-        <location filename="mainwindow.cpp" line="5387"/>
-        <source>File operation failed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5362"/>
-        <location filename="mainwindow.cpp" line="5387"/>
-        <source>Failed to remove &quot;%1&quot;. Maybe you lack the required file permissions?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5384"/>
-        <source>There already is a visible version of this file. Replace it?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5428"/>
-        <location filename="mainwindow.cpp" line="6915"/>
+        <location filename="mainwindow.cpp" line="5253"/>
+        <location filename="mainwindow.cpp" line="6494"/>
         <source>Set Priority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5428"/>
+        <location filename="mainwindow.cpp" line="5253"/>
         <source>Set the priority of the selected plugins</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5599"/>
+        <location filename="mainwindow.cpp" line="5281"/>
         <source>Update available</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5634"/>
-        <source>&amp;Execute</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5635"/>
-        <source>Execute with &amp;VFS</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5637"/>
-        <source>&amp;Open</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5638"/>
-        <source>Open with &amp;VFS</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5642"/>
-        <source>Preview</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5679"/>
-        <source>&amp;Add as Executable</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5692"/>
-        <source>Un-Hide</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5694"/>
-        <source>Hide</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5707"/>
-        <source>Write To File...</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="5735"/>
+        <location filename="mainwindow.cpp" line="5317"/>
         <source>Do you want to endorse Mod Organizer on %1 now?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5749"/>
+        <location filename="mainwindow.cpp" line="5331"/>
         <source>Abstain from Endorsing Mod Organizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5750"/>
+        <location filename="mainwindow.cpp" line="5332"/>
         <source>Are you sure you want to abstain from endorsing Mod Organizer 2?
 You will have to visit the mod page on the %1 Nexus site to change your mind.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5841"/>
+        <location filename="mainwindow.cpp" line="5427"/>
         <source>Thank you for endorsing MO2! :)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5847"/>
+        <location filename="mainwindow.cpp" line="5433"/>
         <source>Please reconsider endorsing MO2 on Nexus!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6111"/>
+        <location filename="mainwindow.cpp" line="5704"/>
         <source>Thank you!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6111"/>
+        <location filename="mainwindow.cpp" line="5704"/>
         <source>Thank you for your endorsement!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6203"/>
+        <location filename="mainwindow.cpp" line="5796"/>
         <source>Mod ID %1 no longer seems to be available on Nexus.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6205"/>
+        <location filename="mainwindow.cpp" line="5812"/>
         <source>Request to Nexus failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6221"/>
-        <location filename="mainwindow.cpp" line="6283"/>
+        <location filename="mainwindow.cpp" line="5828"/>
+        <location filename="mainwindow.cpp" line="5890"/>
         <source>failed to read %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6233"/>
+        <location filename="mainwindow.cpp" line="5840"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6233"/>
+        <location filename="mainwindow.cpp" line="5840"/>
         <source>failed to extract %1 (errorcode %2)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6265"/>
+        <location filename="mainwindow.cpp" line="5872"/>
         <source>Extract BSA</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6294"/>
+        <location filename="mainwindow.cpp" line="5901"/>
         <source>This archive contains invalid hashes. Some files may be broken.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6340"/>
+        <location filename="mainwindow.cpp" line="5915"/>
         <source>Extract...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6365"/>
+        <location filename="mainwindow.cpp" line="5942"/>
         <source>This will restart MO, continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6443"/>
+        <location filename="mainwindow.cpp" line="6022"/>
         <source>&lt;Multiple&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6507"/>
+        <location filename="mainwindow.cpp" line="6086"/>
         <source>Remove &apos;%1&apos; from the toolbar</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6528"/>
+        <location filename="mainwindow.cpp" line="6107"/>
         <source>Enable all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6529"/>
+        <location filename="mainwindow.cpp" line="6108"/>
         <source>Disable all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6550"/>
+        <location filename="mainwindow.cpp" line="6129"/>
         <source>Unlock load order</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6553"/>
+        <location filename="mainwindow.cpp" line="6132"/>
         <source>Lock load order</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6563"/>
+        <location filename="mainwindow.cpp" line="6142"/>
         <source>Open Origin in Explorer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6568"/>
+        <location filename="mainwindow.cpp" line="6147"/>
         <source>Open Origin Info...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6676"/>
+        <location filename="mainwindow.cpp" line="6255"/>
         <source>Backup of load order created</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6686"/>
+        <location filename="mainwindow.cpp" line="6265"/>
         <source>Choose backup to restore</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6699"/>
+        <location filename="mainwindow.cpp" line="6278"/>
         <source>No Backups</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6699"/>
+        <location filename="mainwindow.cpp" line="6278"/>
         <source>There are no backups to restore</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6724"/>
-        <location filename="mainwindow.cpp" line="6749"/>
+        <location filename="mainwindow.cpp" line="6303"/>
+        <location filename="mainwindow.cpp" line="6328"/>
         <source>Restore failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6725"/>
-        <location filename="mainwindow.cpp" line="6750"/>
+        <location filename="mainwindow.cpp" line="6304"/>
+        <location filename="mainwindow.cpp" line="6329"/>
         <source>Failed to restore the backup. Errorcode: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6737"/>
+        <location filename="mainwindow.cpp" line="6316"/>
         <source>Backup of mod list created</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6820"/>
+        <location filename="mainwindow.cpp" line="6399"/>
         <source>A file with the same name has already been downloaded. What would you like to do?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6822"/>
+        <location filename="mainwindow.cpp" line="6401"/>
         <source>Overwrite</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6823"/>
+        <location filename="mainwindow.cpp" line="6402"/>
         <source>Rename new file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6824"/>
+        <location filename="mainwindow.cpp" line="6403"/>
         <source>Ignore file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6915"/>
+        <location filename="mainwindow.cpp" line="6494"/>
         <source>Set the priority of the selected mods</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3645,92 +3845,22 @@ You will have to visit the mod page on the %1 Nexus site to change your mind.</s
 <context>
     <name>ModInfo</name>
     <message>
-        <location filename="modinfo.cpp" line="114"/>
-        <source>Plugins</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfo.cpp" line="115"/>
-        <source>Textures</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfo.cpp" line="116"/>
-        <source>Meshes</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfo.cpp" line="117"/>
-        <source>Bethesda Archive</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfo.cpp" line="118"/>
-        <source>UI Changes</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfo.cpp" line="119"/>
-        <source>Sound Effects</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfo.cpp" line="120"/>
-        <source>Scripts</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfo.cpp" line="121"/>
-        <source>Script Extender</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfo.cpp" line="122"/>
-        <source>Script Extender Files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfo.cpp" line="123"/>
-        <source>SkyProc Tools</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfo.cpp" line="124"/>
-        <source>MCM Data</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfo.cpp" line="125"/>
-        <source>INI files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfo.cpp" line="126"/>
-        <source>ModGroup files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfo.cpp" line="128"/>
-        <source>invalid content type: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfo.cpp" line="152"/>
+        <location filename="modinfo.cpp" line="132"/>
         <source>invalid mod index: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="197"/>
+        <location filename="modinfo.cpp" line="177"/>
         <source>remove: invalid mod index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="337"/>
+        <location filename="modinfo.cpp" line="324"/>
         <source>All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="340"/>
+        <location filename="modinfo.cpp" line="327"/>
         <source>You have mods that haven&apos;t been checked within the last month using the new API. These mods must be checked before we can use the bulk update API. This will consume significantly more API requests than usual. You will need to rerun the update check once complete in order to parse the remaining mods.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3767,63 +3897,63 @@ You will have to visit the mod page on the %1 Nexus site to change your mind.</s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="105"/>
+        <location filename="modinfodialog.ui" line="108"/>
         <source>INI Files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="121"/>
+        <location filename="modinfodialog.ui" line="124"/>
         <source>Ini Files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="128"/>
+        <location filename="modinfodialog.ui" line="131"/>
         <source>This is a list of .ini files in the mod.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="131"/>
+        <location filename="modinfodialog.ui" line="134"/>
         <source>This is a list of .ini files in the mod. These are usually used to configure the behaviour of mods if there are configurable parameters.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="163"/>
+        <location filename="modinfodialog.ui" line="169"/>
         <source>Images</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="229"/>
+        <location filename="modinfodialog.ui" line="235"/>
         <source>Show .dds files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="273"/>
+        <location filename="modinfodialog.ui" line="279"/>
         <source>Open with Preview Plugin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="280"/>
+        <location filename="modinfodialog.ui" line="286"/>
         <source>Open in Explorer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="294"/>
+        <location filename="modinfodialog.ui" line="300"/>
         <source>0x0</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="312"/>
-        <location filename="modinfodialog.ui" line="337"/>
+        <location filename="modinfodialog.ui" line="318"/>
+        <location filename="modinfodialog.ui" line="343"/>
         <source>Optional ESPs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="344"/>
+        <location filename="modinfodialog.ui" line="350"/>
         <source>List of esps, esms, and esls that can not be loaded by the game.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="347"/>
+        <location filename="modinfodialog.ui" line="353"/>
         <source>List of esps, esms, and esls contained in this plugin that currently can not be loaded by the game. They will not even appear in the esp-list in the main MO-window.
 They usually contain optional functionality, see the readme.
 
@@ -3831,132 +3961,132 @@ Most mods do not have optional esps, so chances are good you are looking at an e
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="391"/>
+        <location filename="modinfodialog.ui" line="400"/>
         <source>Move a file to the data directory.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="394"/>
+        <location filename="modinfodialog.ui" line="403"/>
         <source>This moves a esp to the esp directory so it can be enabled in the main window. Please note that the ESP merely becomes &quot;available&quot;, it will not necessarily be loaded! That is configured in the main window of MO.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="414"/>
+        <location filename="modinfodialog.ui" line="423"/>
         <source>Make the selected mod in the right list unavailable.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="417"/>
+        <location filename="modinfodialog.ui" line="426"/>
         <source>The selected esp (in the right list) will be pushed into a subdirectory of the mod and will thus become &quot;invisible&quot; to the game. It can then no longer be activated.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="467"/>
+        <location filename="modinfodialog.ui" line="476"/>
         <source>Available ESPs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="474"/>
+        <location filename="modinfodialog.ui" line="483"/>
         <source>ESPs in the data directory and thus visible to the game.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="477"/>
+        <location filename="modinfodialog.ui" line="486"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;These are the mod files that are in the (virtual) data directory of your game and will thus be selectable in the esp list in the main window.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="495"/>
+        <location filename="modinfodialog.ui" line="507"/>
         <source>Conflicts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="505"/>
+        <location filename="modinfodialog.ui" line="517"/>
         <source>General</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="546"/>
+        <location filename="modinfodialog.ui" line="558"/>
         <source>The following conflicted files are provided by this mod</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="606"/>
+        <location filename="modinfodialog.ui" line="621"/>
         <source>The following conflicted files are provided by other mods</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="663"/>
+        <location filename="modinfodialog.ui" line="681"/>
         <source>The following files have no conflicts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="723"/>
+        <location filename="modinfodialog.ui" line="744"/>
         <source>Advanced</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="793"/>
+        <location filename="modinfodialog.ui" line="817"/>
         <source>Whether files that have no conflicts should be visible in the list</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="796"/>
+        <location filename="modinfodialog.ui" line="820"/>
         <source>Show files that have no conflicts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="806"/>
+        <location filename="modinfodialog.ui" line="830"/>
         <source>Shows all mods overwriting or being overwritten by this mod</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="809"/>
+        <location filename="modinfodialog.ui" line="833"/>
         <source>Show all conflicting mods</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="819"/>
+        <location filename="modinfodialog.ui" line="843"/>
         <source>Shows only the nearest conflicting mods, in order of priority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="822"/>
+        <location filename="modinfodialog.ui" line="846"/>
         <source>Show nearest conflicting mod</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="844"/>
+        <location filename="modinfodialog.ui" line="868"/>
         <source>Filter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="865"/>
+        <location filename="modinfodialog.ui" line="889"/>
         <source>Categories</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="885"/>
+        <location filename="modinfodialog.ui" line="915"/>
         <source>Primary Category</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="902"/>
+        <location filename="modinfodialog.ui" line="932"/>
         <source>Nexus Info</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="925"/>
+        <location filename="modinfodialog.ui" line="955"/>
         <source>Mod ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="932"/>
+        <location filename="modinfodialog.ui" line="962"/>
         <source>Mod ID for this mod on Nexus.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="935"/>
+        <location filename="modinfodialog.ui" line="965"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -3965,22 +4095,22 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="946"/>
+        <location filename="modinfodialog.ui" line="976"/>
         <source>Source Game</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="953"/>
+        <location filename="modinfodialog.ui" line="983"/>
         <source>Source game for this mod.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="956"/>
+        <location filename="modinfodialog.ui" line="986"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Source game for this mod. This determines where the mod was downloaded from and decides where to fetch info, version updates, and send endorsements. Changing this will likely require you to enter a new Mod ID.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="963"/>
+        <location filename="modinfodialog.ui" line="993"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -3989,83 +4119,93 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="970"/>
+        <location filename="modinfodialog.ui" line="1000"/>
         <source>Version</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="1020"/>
-        <location filename="modinfodialog.ui" line="1026"/>
+        <location filename="modinfodialog.ui" line="1050"/>
+        <location filename="modinfodialog.ui" line="1056"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="1023"/>
+        <location filename="modinfodialog.ui" line="1053"/>
         <source>Refresh all information from Nexus.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="1037"/>
-        <location filename="modinfodialog.ui" line="1162"/>
+        <location filename="modinfodialog.ui" line="1067"/>
+        <location filename="modinfodialog.ui" line="1192"/>
         <source>Open in Browser</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="1048"/>
+        <location filename="modinfodialog.ui" line="1078"/>
         <source>Endorse</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="1059"/>
+        <location filename="modinfodialog.ui" line="1089"/>
         <source>Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="1126"/>
+        <location filename="modinfodialog.ui" line="1156"/>
         <source>about:blank</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="1152"/>
+        <location filename="modinfodialog.ui" line="1182"/>
         <source>Use Custom URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="1173"/>
+        <location filename="modinfodialog.ui" line="1203"/>
         <source>Notes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="1179"/>
-        <location filename="modinfodialog.ui" line="1182"/>
-        <location filename="modinfodialog.ui" line="1185"/>
+        <location filename="modinfodialog.ui" line="1211"/>
+        <location filename="modinfodialog.ui" line="1214"/>
+        <location filename="modinfodialog.ui" line="1217"/>
         <source>Enter comments about the mod here.  These are displayed in the notes column of the mod list.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="1192"/>
-        <location filename="modinfodialog.ui" line="1195"/>
-        <location filename="modinfodialog.ui" line="1201"/>
+        <location filename="modinfodialog.ui" line="1224"/>
+        <source>Set Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modinfodialog.ui" line="1231"/>
+        <source>Reset Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modinfodialog.ui" line="1240"/>
+        <location filename="modinfodialog.ui" line="1243"/>
+        <location filename="modinfodialog.ui" line="1249"/>
         <source>Enter notes about the mod here.  These can be viewed in the mod list by hovering over the notes column or the flags column.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="1209"/>
+        <location filename="modinfodialog.ui" line="1257"/>
         <source>Filetree</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="1223"/>
+        <location filename="modinfodialog.ui" line="1271"/>
         <source>Open Mod in Explorer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="1248"/>
+        <location filename="modinfodialog.ui" line="1296"/>
         <source>A directory view of this mod</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="1251"/>
+        <location filename="modinfodialog.ui" line="1299"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -4075,17 +4215,17 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="1284"/>
+        <location filename="modinfodialog.ui" line="1335"/>
         <source>Previous</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="1294"/>
+        <location filename="modinfodialog.ui" line="1345"/>
         <source>Next</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="1317"/>
+        <location filename="modinfodialog.ui" line="1368"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4098,17 +4238,17 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfoforeign.cpp" line="56"/>
+        <location filename="modinfoforeign.cpp" line="58"/>
         <source>DLC: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfoforeign.cpp" line="60"/>
+        <location filename="modinfoforeign.cpp" line="62"/>
         <source>Creation Club: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfoforeign.cpp" line="64"/>
+        <location filename="modinfoforeign.cpp" line="66"/>
         <source>Unmanaged: </source>
         <translation type="unfinished"></translation>
     </message>
@@ -4116,7 +4256,7 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ModInfoOverwrite</name>
     <message>
-        <location filename="modinfooverwrite.cpp" line="60"/>
+        <location filename="modinfooverwrite.cpp" line="59"/>
         <source>This pseudo mod contains files from the virtual data tree that got modified (i.e. by the construction kit)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4124,12 +4264,12 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ModInfoRegular</name>
     <message>
-        <location filename="modinforegular.cpp" line="729"/>
+        <location filename="modinforegular.cpp" line="683"/>
         <source>%1 contains no esp/esm/esl and no asset (textures, meshes, interface, ...) directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinforegular.cpp" line="733"/>
+        <location filename="modinforegular.cpp" line="687"/>
         <source>Categories: &lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4145,333 +4285,273 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ModList</name>
     <message>
-        <location filename="modlist.cpp" line="69"/>
-        <source>Game Plugins (ESP/ESM/ESL)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="70"/>
-        <source>Interface</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="71"/>
-        <source>Meshes</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="72"/>
-        <source>Bethesda Archive</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="73"/>
-        <source>Scripts (Papyrus)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="74"/>
-        <source>Script Extender Plugin</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="75"/>
-        <source>SkyProc Patcher</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="76"/>
-        <source>Sound or Music</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="77"/>
-        <source>Textures</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="78"/>
-        <source>MCM Configuration</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="79"/>
-        <source>INI files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="80"/>
-        <source>ModGroup files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="141"/>
+        <location filename="modlist.cpp" line="134"/>
         <source>This entry contains files that have been created inside the virtual data tree (i.e. by the construction kit)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="150"/>
+        <location filename="modlist.cpp" line="143"/>
         <source>Backup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="151"/>
+        <location filename="modlist.cpp" line="144"/>
         <source>Separator</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="152"/>
+        <location filename="modlist.cpp" line="145"/>
         <source>No valid game data</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="153"/>
+        <location filename="modlist.cpp" line="146"/>
         <source>Not endorsed yet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="162"/>
-        <source>&lt;br&gt;This mod is for a different game, make sure it&apos;s compatible or it could cause crashes.</source>
+        <location filename="modlist.cpp" line="155"/>
+        <source>This mod is for a different&lt;br&gt; game, make sure it&apos;s compatible or it could cause crashes.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="164"/>
+        <location filename="modlist.cpp" line="157"/>
         <source>Mod is being tracked on the website</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="165"/>
+        <location filename="modlist.cpp" line="158"/>
         <source>Contains hidden files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="174"/>
+        <location filename="modlist.cpp" line="167"/>
         <source>Overwrites loose files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="175"/>
+        <location filename="modlist.cpp" line="168"/>
         <source>Overwritten loose files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="176"/>
+        <location filename="modlist.cpp" line="169"/>
         <source>Loose files Overwrites &amp; Overwritten</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="177"/>
+        <location filename="modlist.cpp" line="170"/>
         <source>Redundant</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="178"/>
+        <location filename="modlist.cpp" line="171"/>
         <source>Overwrites an archive with loose files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="179"/>
+        <location filename="modlist.cpp" line="172"/>
         <source>Archive is overwritten by loose files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="180"/>
+        <location filename="modlist.cpp" line="173"/>
         <source>Overwrites another archive file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="181"/>
+        <location filename="modlist.cpp" line="174"/>
         <source>Overwritten by another archive file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="182"/>
+        <location filename="modlist.cpp" line="175"/>
         <source>Archive files overwrites &amp; overwritten</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="275"/>
+        <location filename="modlist.cpp" line="260"/>
         <source>Non-MO</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="307"/>
+        <location filename="modlist.cpp" line="292"/>
         <source>invalid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="476"/>
+        <location filename="modlist.cpp" line="463"/>
         <source>installed version: &quot;%1&quot;, newest version: &quot;%2&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="478"/>
+        <location filename="modlist.cpp" line="465"/>
         <source>The newest version on Nexus seems to be older than the one you have installed. This could either mean the version you have has been withdrawn (i.e. due to a bug) or the author uses a non-standard versioning scheme and that newest version is actually newer. Either way you may want to &quot;upgrade&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="483"/>
+        <location filename="modlist.cpp" line="470"/>
         <source>This file has been marked as &quot;Old&quot;. There is most likely an updated version of this file available.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="485"/>
+        <location filename="modlist.cpp" line="472"/>
         <source>This file has been marked as &quot;Deleted&quot;! You may want to check for an update or remove the nexus ID from this mod!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="492"/>
+        <location filename="modlist.cpp" line="479"/>
         <source>%1 minute(s) and %2 second(s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="493"/>
+        <location filename="modlist.cpp" line="480"/>
         <source>This mod will be available to check in %2.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="501"/>
+        <location filename="modlist.cpp" line="488"/>
         <source>Categories: &lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="532"/>
+        <location filename="modlist.cpp" line="519"/>
         <source>Invalid name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="537"/>
+        <location filename="modlist.cpp" line="524"/>
         <source>Name is already in use by another mod</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1123"/>
+        <location filename="modlist.cpp" line="1112"/>
         <source>drag&amp;drop failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1202"/>
+        <location filename="modlist.cpp" line="1191"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1203"/>
+        <location filename="modlist.cpp" line="1192"/>
         <source>Are you sure you want to remove &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1296"/>
+        <location filename="modlist.cpp" line="1285"/>
         <source>Conflicts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1297"/>
+        <location filename="modlist.cpp" line="1286"/>
         <source>Flags</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1298"/>
+        <location filename="modlist.cpp" line="1287"/>
         <source>Content</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1299"/>
+        <location filename="modlist.cpp" line="1288"/>
         <source>Mod Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1300"/>
+        <location filename="modlist.cpp" line="1289"/>
         <source>Version</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1301"/>
+        <location filename="modlist.cpp" line="1290"/>
         <source>Priority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1302"/>
+        <location filename="modlist.cpp" line="1291"/>
         <source>Category</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1303"/>
+        <location filename="modlist.cpp" line="1292"/>
         <source>Source Game</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1304"/>
+        <location filename="modlist.cpp" line="1293"/>
         <source>Nexus ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1305"/>
+        <location filename="modlist.cpp" line="1294"/>
         <source>Installation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1306"/>
+        <location filename="modlist.cpp" line="1295"/>
         <source>Notes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1307"/>
-        <location filename="modlist.cpp" line="1344"/>
+        <location filename="modlist.cpp" line="1296"/>
+        <location filename="modlist.cpp" line="1327"/>
         <source>unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1315"/>
+        <location filename="modlist.cpp" line="1304"/>
         <source>Name of your mods</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1316"/>
+        <location filename="modlist.cpp" line="1305"/>
         <source>Version of the mod (if available)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1317"/>
+        <location filename="modlist.cpp" line="1306"/>
         <source>Installation priority of your mod. The higher, the more &quot;important&quot; it is and thus overwrites files from mods with lower priority.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1319"/>
+        <location filename="modlist.cpp" line="1308"/>
         <source>Primary category of the mod.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1320"/>
+        <location filename="modlist.cpp" line="1309"/>
         <source>The source game which was the origin of this mod.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1321"/>
+        <location filename="modlist.cpp" line="1310"/>
         <source>Id of the mod as used on Nexus.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1322"/>
+        <location filename="modlist.cpp" line="1311"/>
         <source>Indicators of file conflicts between mods.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1323"/>
+        <location filename="modlist.cpp" line="1312"/>
         <source>Emblems to highlight things that might require attention.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1324"/>
-        <source>Depicts the content of the mod:&lt;br&gt;&lt;table cellspacing=7&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/plugin&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Game plugins (esp/esm/esl)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/interface&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Interface&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/mesh&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Meshes&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/bsa&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;BSA&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/texture&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Textures&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/sound&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Sounds&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/music&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Music&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/string&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Strings&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/script&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Scripts (Papyrus)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/skse&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Script Extender plugins&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/skyproc&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;SkyProc Patcher&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/menu&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Mod Configuration Menu&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/inifile&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;INI files&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/modgroup&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;ModGroup files&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</source>
+        <location filename="modlist.cpp" line="1318"/>
+        <source>Depicts the content of the mod:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1342"/>
+        <location filename="modlist.cpp" line="1325"/>
         <source>Time this mod was installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1343"/>
+        <location filename="modlist.cpp" line="1326"/>
         <source>User notes about the mod</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4479,7 +4559,7 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ModListSortProxy</name>
     <message>
-        <location filename="modlistsortproxy.cpp" line="628"/>
+        <location filename="modlistsortproxy.cpp" line="626"/>
         <source>Drag&amp;Drop is only supported when sorting by priority</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4498,19 +4578,6 @@ p, li { white-space: pre-wrap; }
     </message>
 </context>
 <context>
-    <name>MyFileSystemModel</name>
-    <message>
-        <location filename="overwriteinfodialog.cpp" line="48"/>
-        <source>Overwrites</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="overwriteinfodialog.cpp" line="60"/>
-        <source>not implemented</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>NXMUrl</name>
     <message>
         <location filename="../../uibase/src/nxmurl.cpp" line="34"/>
@@ -4521,32 +4588,32 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>NexusInterface</name>
     <message>
-        <location filename="nexusinterface.cpp" line="299"/>
+        <location filename="nexusinterface.cpp" line="313"/>
         <source>Please pick the mod ID for &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nexusinterface.cpp" line="697"/>
+        <location filename="nexusinterface.cpp" line="706"/>
         <source>You must authorize MO2 in Settings -&gt; Nexus to use the Nexus API.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nexusinterface.cpp" line="706"/>
+        <location filename="nexusinterface.cpp" line="715"/>
         <source>You&apos;ve exceeded the Nexus API rate limit and requests are now being throttled. Your next batch of requests will be available in approximately %1 minutes and %2 seconds.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nexusinterface.cpp" line="762"/>
+        <location filename="nexusinterface.cpp" line="771"/>
         <source>Aborting download: Either you clicked on a premium-only link and your account is not premium, or the download link was generated by a different account than the one stored in Mod Organizer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nexusinterface.cpp" line="869"/>
+        <location filename="nexusinterface.cpp" line="878"/>
         <source>empty response</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nexusinterface.cpp" line="927"/>
+        <location filename="nexusinterface.cpp" line="936"/>
         <source>invalid response</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4629,7 +4696,7 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>NoConflictListModel</name>
     <message>
-        <location filename="modinfodialogconflicts.cpp" line="325"/>
+        <location filename="modinfodialogconflictsmodels.cpp" line="272"/>
         <source>File</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4637,211 +4704,211 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>OrganizerCore</name>
     <message>
-        <location filename="organizercore.cpp" line="181"/>
+        <location filename="organizercore.cpp" line="197"/>
         <source>File is write protected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="183"/>
+        <location filename="organizercore.cpp" line="199"/>
         <source>Invalid file format (probably a bug)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="185"/>
+        <location filename="organizercore.cpp" line="201"/>
         <source>Unknown error %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="189"/>
+        <location filename="organizercore.cpp" line="205"/>
         <source>Failed to write settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="190"/>
+        <location filename="organizercore.cpp" line="206"/>
         <source>An error occurred trying to write back MO settings to %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="366"/>
-        <location filename="organizercore.cpp" line="377"/>
+        <location filename="organizercore.cpp" line="390"/>
+        <location filename="organizercore.cpp" line="401"/>
         <source>Download started</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="380"/>
+        <location filename="organizercore.cpp" line="404"/>
         <source>Download failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="701"/>
-        <location filename="organizercore.cpp" line="752"/>
+        <location filename="organizercore.cpp" line="722"/>
+        <location filename="organizercore.cpp" line="773"/>
         <source>Installation cancelled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="702"/>
-        <location filename="organizercore.cpp" line="753"/>
-        <source>Another installation is currently in progress.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="organizercore.cpp" line="714"/>
-        <location filename="organizercore.cpp" line="782"/>
-        <source>Installation successful</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="organizercore.cpp" line="722"/>
-        <location filename="organizercore.cpp" line="792"/>
-        <source>Configure Mod</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="organizercore.cpp" line="723"/>
-        <location filename="organizercore.cpp" line="793"/>
-        <source>This mod contains ini tweaks. Do you want to configure them now?</source>
+        <location filename="organizercore.cpp" line="774"/>
+        <source>Another installation is currently in progress.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="organizercore.cpp" line="735"/>
         <location filename="organizercore.cpp" line="803"/>
+        <source>Installation successful</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="organizercore.cpp" line="743"/>
+        <location filename="organizercore.cpp" line="813"/>
+        <source>Configure Mod</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="organizercore.cpp" line="744"/>
+        <location filename="organizercore.cpp" line="814"/>
+        <source>This mod contains ini tweaks. Do you want to configure them now?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="organizercore.cpp" line="756"/>
+        <location filename="organizercore.cpp" line="824"/>
         <source>mod not found: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="738"/>
-        <location filename="organizercore.cpp" line="809"/>
+        <location filename="organizercore.cpp" line="759"/>
+        <location filename="organizercore.cpp" line="830"/>
         <source>Extraction cancelled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="739"/>
-        <location filename="organizercore.cpp" line="810"/>
+        <location filename="organizercore.cpp" line="760"/>
+        <location filename="organizercore.cpp" line="831"/>
         <source>The installation was cancelled while extracting files. If this was prior to a FOMOD setup, this warning may be ignored. However, if this was during installation, the mod will likely be missing files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="982"/>
+        <location filename="organizercore.cpp" line="1002"/>
         <source>file not found: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="996"/>
+        <location filename="organizercore.cpp" line="1016"/>
         <source>failed to generate preview for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1048"/>
+        <location filename="organizercore.cpp" line="1068"/>
         <source>Sorry</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1049"/>
+        <location filename="organizercore.cpp" line="1069"/>
         <source>Sorry, can&apos;t preview anything. This function currently does not support extracting from bsas.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1059"/>
+        <location filename="organizercore.cpp" line="1079"/>
         <source>File &apos;%1&apos; not found.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1067"/>
+        <location filename="organizercore.cpp" line="1087"/>
         <source>Failed to generate preview for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1133"/>
+        <location filename="organizercore.cpp" line="1169"/>
         <source>Failed to refresh list of esps: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1242"/>
+        <location filename="organizercore.cpp" line="1280"/>
         <source>Multiple esps/esls activated, please check that they don&apos;t conflict.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1306"/>
+        <location filename="organizercore.cpp" line="1348"/>
         <source>You need to be logged in with Nexus</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1345"/>
+        <location filename="organizercore.cpp" line="1387"/>
         <source>Download?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1346"/>
+        <location filename="organizercore.cpp" line="1388"/>
         <source>A download has been started but no installed page plugin recognizes it.
 If you download anyway no information (i.e. version) will be associated with the download.
 Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1483"/>
-        <location filename="organizercore.cpp" line="1532"/>
+        <location filename="organizercore.cpp" line="1548"/>
+        <location filename="organizercore.cpp" line="1597"/>
         <source>failed to update mod list: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1539"/>
-        <location filename="organizercore.cpp" line="1556"/>
+        <location filename="organizercore.cpp" line="1604"/>
+        <location filename="organizercore.cpp" line="1621"/>
         <source>login successful</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1566"/>
+        <location filename="organizercore.cpp" line="1631"/>
         <source>Login failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1567"/>
+        <location filename="organizercore.cpp" line="1632"/>
         <source>Login failed, try again?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1576"/>
+        <location filename="organizercore.cpp" line="1641"/>
         <source>login failed: %1. Download will not be associated with an account</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1584"/>
+        <location filename="organizercore.cpp" line="1649"/>
         <source>login failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1594"/>
+        <location filename="organizercore.cpp" line="1659"/>
         <source>login failed: %1. You need to log-in with Nexus to update MO.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1647"/>
+        <location filename="organizercore.cpp" line="1712"/>
         <source>MO1 &quot;Script Extender&quot; load mechanism has left hook.dll in your game folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1650"/>
-        <location filename="organizercore.cpp" line="1666"/>
+        <location filename="organizercore.cpp" line="1715"/>
+        <location filename="organizercore.cpp" line="1731"/>
         <source>Description missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1659"/>
+        <location filename="organizercore.cpp" line="1724"/>
         <source>&lt;a href=&quot;%1&quot;&gt;hook.dll&lt;/a&gt; has been found in your game folder (right click to copy the full path). This is most likely a leftover of setting the ModOrganizer 1 load mechanism to &quot;Script Extender&quot;, in which case you must remove this file either by changing the load mechanism in ModOrganizer 1 or manually removing the file, otherwise the game is likely to crash and burn.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1693"/>
+        <location filename="organizercore.cpp" line="1758"/>
         <source>failed to save load order: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1771"/>
+        <location filename="organizercore.cpp" line="1839"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1845"/>
+        <location filename="organizercore.cpp" line="1915"/>
         <source>The designated write target &quot;%1&quot; is not enabled.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4849,13 +4916,26 @@ Continue?</source>
 <context>
     <name>OverwriteConflictListModel</name>
     <message>
-        <location filename="modinfodialogconflicts.cpp" line="299"/>
+        <location filename="modinfodialogconflictsmodels.cpp" line="254"/>
         <source>File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogconflicts.cpp" line="300"/>
+        <location filename="modinfodialogconflictsmodels.cpp" line="255"/>
         <source>Overwritten Mods</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>OverwriteFileSystemModel</name>
+    <message>
+        <location filename="overwriteinfodialog.h" line="48"/>
+        <source>Overwrites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="overwriteinfodialog.h" line="60"/>
+        <source>not implemented</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4877,63 +4957,63 @@ Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="89"/>
+        <location filename="overwriteinfodialog.cpp" line="47"/>
         <source>&amp;Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="90"/>
+        <location filename="overwriteinfodialog.cpp" line="48"/>
         <source>&amp;Rename</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="91"/>
+        <location filename="overwriteinfodialog.cpp" line="49"/>
         <source>&amp;Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="92"/>
+        <location filename="overwriteinfodialog.cpp" line="50"/>
         <source>&amp;New Folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="136"/>
+        <location filename="overwriteinfodialog.cpp" line="94"/>
         <source>mod not found: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="171"/>
+        <location filename="overwriteinfodialog.cpp" line="129"/>
         <source>Failed to delete &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="187"/>
-        <location filename="overwriteinfodialog.cpp" line="193"/>
-        <location filename="overwriteinfodialog.cpp" line="212"/>
-        <location filename="overwriteinfodialog.cpp" line="217"/>
+        <location filename="overwriteinfodialog.cpp" line="145"/>
+        <location filename="overwriteinfodialog.cpp" line="151"/>
+        <location filename="overwriteinfodialog.cpp" line="170"/>
+        <location filename="overwriteinfodialog.cpp" line="175"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="187"/>
-        <location filename="overwriteinfodialog.cpp" line="212"/>
+        <location filename="overwriteinfodialog.cpp" line="145"/>
+        <location filename="overwriteinfodialog.cpp" line="170"/>
         <source>Are you sure you want to delete &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="193"/>
-        <location filename="overwriteinfodialog.cpp" line="217"/>
+        <location filename="overwriteinfodialog.cpp" line="151"/>
+        <location filename="overwriteinfodialog.cpp" line="175"/>
         <source>Are you sure you want to delete the selected files?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="262"/>
-        <location filename="overwriteinfodialog.cpp" line="268"/>
+        <location filename="overwriteinfodialog.cpp" line="220"/>
+        <location filename="overwriteinfodialog.cpp" line="226"/>
         <source>New Folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="274"/>
+        <location filename="overwriteinfodialog.cpp" line="232"/>
         <source>Failed to create &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4941,12 +5021,12 @@ Continue?</source>
 <context>
     <name>OverwrittenConflictListModel</name>
     <message>
-        <location filename="modinfodialogconflicts.cpp" line="312"/>
+        <location filename="modinfodialogconflictsmodels.cpp" line="263"/>
         <source>File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialogconflicts.cpp" line="313"/>
+        <location filename="modinfodialogconflictsmodels.cpp" line="264"/>
         <source>Providing Mod</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4954,18 +5034,18 @@ Continue?</source>
 <context>
     <name>PluginContainer</name>
     <message>
-        <location filename="plugincontainer.cpp" line="333"/>
+        <location filename="plugincontainer.cpp" line="341"/>
         <source>Some plugins could not be loaded</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="plugincontainer.cpp" line="336"/>
-        <location filename="plugincontainer.cpp" line="354"/>
+        <location filename="plugincontainer.cpp" line="344"/>
+        <location filename="plugincontainer.cpp" line="362"/>
         <source>Description missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="plugincontainer.cpp" line="345"/>
+        <location filename="plugincontainer.cpp" line="353"/>
         <source>The following plugins could not be loaded. The reason may be missing dependencies (i.e. python) or an outdated version:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4973,159 +5053,159 @@ Continue?</source>
 <context>
     <name>PluginList</name>
     <message>
-        <location filename="pluginlist.cpp" line="111"/>
+        <location filename="pluginlist.cpp" line="115"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="112"/>
+        <location filename="pluginlist.cpp" line="116"/>
         <source>Priority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="113"/>
+        <location filename="pluginlist.cpp" line="117"/>
         <source>Mod Index</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="114"/>
+        <location filename="pluginlist.cpp" line="118"/>
         <source>Flags</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="115"/>
-        <location filename="pluginlist.cpp" line="128"/>
+        <location filename="pluginlist.cpp" line="119"/>
+        <location filename="pluginlist.cpp" line="132"/>
         <source>unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="123"/>
+        <location filename="pluginlist.cpp" line="127"/>
         <source>Name of the plugin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="124"/>
+        <location filename="pluginlist.cpp" line="128"/>
         <source>Emblems to highlight things that might require attention.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="125"/>
+        <location filename="pluginlist.cpp" line="129"/>
         <source>Load priority of plugins. The higher, the more &quot;important&quot; it is and thus overwrites data from plugins with lower priority.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="127"/>
+        <location filename="pluginlist.cpp" line="131"/>
         <source>Determines the formids of objects originating from this mods.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="239"/>
+        <location filename="pluginlist.cpp" line="246"/>
         <source>failed to update esp info for file %1 (source id: %2), error: %3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="312"/>
+        <location filename="pluginlist.cpp" line="320"/>
         <source>Plugin not found: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="360"/>
-        <location filename="pluginlist.cpp" line="372"/>
+        <location filename="pluginlist.cpp" line="368"/>
+        <location filename="pluginlist.cpp" line="380"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="360"/>
+        <location filename="pluginlist.cpp" line="368"/>
         <source>Really enable all plugins?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="372"/>
+        <location filename="pluginlist.cpp" line="380"/>
         <source>Really disable all plugins?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="492"/>
+        <location filename="pluginlist.cpp" line="500"/>
         <source>The file containing locked plugin indices is broken</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1037"/>
+        <location filename="pluginlist.cpp" line="1047"/>
         <source>Origin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1042"/>
+        <location filename="pluginlist.cpp" line="1052"/>
         <source>This plugin can&apos;t be disabled (enforced by the game).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1047"/>
+        <location filename="pluginlist.cpp" line="1057"/>
         <source>Author</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1053"/>
+        <location filename="pluginlist.cpp" line="1063"/>
         <source>Description</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1059"/>
+        <location filename="pluginlist.cpp" line="1069"/>
         <source>Missing Masters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1070"/>
+        <location filename="pluginlist.cpp" line="1080"/>
         <source>Enabled Masters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1076"/>
+        <location filename="pluginlist.cpp" line="1086"/>
         <source>Loads Archives</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1078"/>
+        <location filename="pluginlist.cpp" line="1088"/>
         <source>There are Archives connected to this plugin. Their assets will be added to your game, overwriting in case of conflicts following the plugin order. Loose files will always overwrite assets from Archives. (This flag only checks for Archives from the same mod as the plugin)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1088"/>
+        <location filename="pluginlist.cpp" line="1098"/>
         <source>Loads INI settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1089"/>
+        <location filename="pluginlist.cpp" line="1099"/>
         <source>There is an ini file connected to this plugin. Its settings will be added to your game settings, overwriting in case of conflicts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1096"/>
+        <location filename="pluginlist.cpp" line="1106"/>
         <source>This ESP is flagged as an ESL. It will adhere to the ESP load order but the records will be loaded in ESL space.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1130"/>
+        <location filename="pluginlist.cpp" line="1140"/>
         <source>Incompatible with %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1136"/>
+        <location filename="pluginlist.cpp" line="1146"/>
         <source>Depends on missing %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1145"/>
+        <location filename="pluginlist.cpp" line="1155"/>
         <source>Warning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1149"/>
+        <location filename="pluginlist.cpp" line="1159"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1401"/>
+        <location filename="pluginlist.cpp" line="1406"/>
         <source>failed to restore load order for %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5192,71 +5272,71 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>Profile</name>
     <message>
-        <location filename="profile.cpp" line="80"/>
+        <location filename="profile.cpp" line="81"/>
         <source>invalid profile name: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="84"/>
+        <location filename="profile.cpp" line="85"/>
         <source>failed to create %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="257"/>
+        <location filename="profile.cpp" line="256"/>
         <source>failed to write mod list: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="270"/>
+        <location filename="profile.cpp" line="269"/>
         <source>failed to update tweaked ini file, wrong settings may be used: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="292"/>
+        <location filename="profile.cpp" line="291"/>
         <source>failed to create tweaked ini: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="319"/>
+        <location filename="profile.cpp" line="316"/>
         <source>failed to open %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="379"/>
+        <location filename="profile.cpp" line="376"/>
         <source>&quot;%1&quot; is missing or inaccessible</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="424"/>
-        <location filename="profile.cpp" line="465"/>
-        <location filename="profile.cpp" line="557"/>
-        <location filename="profile.cpp" line="607"/>
-        <location filename="profile.cpp" line="617"/>
+        <location filename="profile.cpp" line="421"/>
+        <location filename="profile.cpp" line="462"/>
+        <location filename="profile.cpp" line="554"/>
+        <location filename="profile.cpp" line="604"/>
+        <location filename="profile.cpp" line="614"/>
         <source>invalid mod index: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="549"/>
+        <location filename="profile.cpp" line="546"/>
         <source>invalid priority %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="788"/>
+        <location filename="profile.cpp" line="785"/>
         <source>Delete profile-specific save games?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="789"/>
+        <location filename="profile.cpp" line="786"/>
         <source>Do you want to delete the profile-specific save games? (If you select &quot;No&quot;, the save games will show up again if you re-enable profile-specific save games)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="819"/>
+        <location filename="profile.cpp" line="816"/>
         <source>Missing profile-specific game INI files!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="820"/>
+        <location filename="profile.cpp" line="817"/>
         <source>Some of your profile-specific game INI files were missing.  They will now be copied from the vanilla game folder.  You might want to double-check your settings.
 
 Missing files:
@@ -5264,12 +5344,12 @@ Missing files:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="836"/>
+        <location filename="profile.cpp" line="833"/>
         <source>Delete profile-specific game INI files?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="837"/>
+        <location filename="profile.cpp" line="834"/>
         <source>Do you want to delete the profile-specific game INI files? (If you select &quot;No&quot;, the INI files will be used again if you re-enable profile-specific game INI files.)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5523,7 +5603,7 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../../uibase/src/filterwidget.cpp" line="53"/>
+        <location filename="../../uibase/src/filterwidget.cpp" line="107"/>
         <source>Filter</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5566,11 +5646,11 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/report.cpp" line="38"/>
-        <location filename="../../uibase/src/report.cpp" line="41"/>
+        <location filename="../../uibase/src/report.cpp" line="39"/>
+        <location filename="../../uibase/src/report.cpp" line="42"/>
         <location filename="loot.cpp" line="413"/>
-        <location filename="main.cpp" line="104"/>
-        <location filename="organizercore.cpp" line="404"/>
+        <location filename="main.cpp" line="105"/>
+        <location filename="organizercore.cpp" line="428"/>
         <location filename="settingsdialogdiagnostics.cpp" line="37"/>
         <location filename="settingsdialogdiagnostics.cpp" line="61"/>
         <location filename="settingsdialogpaths.cpp" line="71"/>
@@ -5578,23 +5658,23 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/report.cpp" line="289"/>
+        <location filename="../../uibase/src/report.cpp" line="290"/>
         <source>You can reset these choices by clicking &quot;Reset Dialog Choices&quot; in the General tab of the Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/report.cpp" line="298"/>
+        <location filename="../../uibase/src/report.cpp" line="299"/>
         <source>Always ask</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/report.cpp" line="299"/>
-        <location filename="../../uibase/src/report.cpp" line="306"/>
+        <location filename="../../uibase/src/report.cpp" line="300"/>
+        <location filename="../../uibase/src/report.cpp" line="307"/>
         <source>Remember my choice</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/report.cpp" line="300"/>
+        <location filename="../../uibase/src/report.cpp" line="301"/>
         <source>Remember my choice for %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5636,37 +5716,52 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/utility.cpp" line="807"/>
+        <location filename="../../uibase/src/utility.cpp" line="923"/>
+        <source>%1 B</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/utility.cpp" line="925"/>
         <source>%1 MB</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/utility.cpp" line="807"/>
+        <location filename="../../uibase/src/utility.cpp" line="926"/>
         <source>%1 GB</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/utility.cpp" line="807"/>
+        <location filename="../../uibase/src/utility.cpp" line="927"/>
         <source>%1 TB</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/utility.cpp" line="810"/>
+        <location filename="../../uibase/src/utility.cpp" line="937"/>
+        <source>%1 GB/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/utility.cpp" line="938"/>
+        <source>%1 TB/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/utility.cpp" line="924"/>
         <source>%1 KB</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/utility.cpp" line="828"/>
+        <location filename="../../uibase/src/utility.cpp" line="934"/>
         <source>%1 B/s</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/utility.cpp" line="832"/>
+        <location filename="../../uibase/src/utility.cpp" line="935"/>
         <source>%1 KB/s</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/utility.cpp" line="836"/>
+        <location filename="../../uibase/src/utility.cpp" line="936"/>
         <source>%1 MB/s</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5867,14 +5962,8 @@ Destination:<byte value="xd"/>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="73"/>
-        <location filename="selfupdater.cpp" line="82"/>
+        <location filename="installationmanager.cpp" line="72"/>
         <source>invalid 7-zip32.dll: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="installationmanager.cpp" line="88"/>
-        <source>archive.dll not loaded: &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5998,7 +6087,7 @@ If the folder was still in use, restart MO and try again.</source>
     </message>
     <message>
         <location filename="instancemanager.cpp" line="311"/>
-        <location filename="profile.cpp" line="68"/>
+        <location filename="profile.cpp" line="69"/>
         <source>failed to create %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6100,111 +6189,112 @@ If the folder was still in use, restart MO and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="105"/>
-        <location filename="organizercore.cpp" line="405"/>
+        <location filename="main.cpp" line="106"/>
+        <location filename="organizercore.cpp" line="429"/>
         <source>Failed to create &quot;%1&quot;. Your user account probably lacks permission.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="main.cpp" line="302"/>
-        <source>Plugin to handle %1 no longer installed</source>
+        <source>Plugin to handle %1 no longer installed. An antivirus might have deleted files.</source>
+        <oldsource>Plugin to handle %1 no longer installed</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="315"/>
-        <location filename="main.cpp" line="357"/>
-        <location filename="main.cpp" line="373"/>
+        <location filename="main.cpp" line="317"/>
+        <location filename="main.cpp" line="359"/>
+        <location filename="main.cpp" line="375"/>
         <source>The configured path to the game directory (%1) appears to be a symbolic (or other) link. This setup is incompatible with MO2&apos;s VFS and will not run correctly.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="330"/>
+        <location filename="main.cpp" line="332"/>
         <source>Could not use configuration settings for game &quot;%1&quot;, path &quot;%2&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="335"/>
-        <location filename="main.cpp" line="365"/>
-        <location filename="main.cpp" line="390"/>
+        <location filename="main.cpp" line="337"/>
+        <location filename="main.cpp" line="367"/>
+        <location filename="main.cpp" line="392"/>
         <source>Please select the installation of %1 to manage</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="336"/>
-        <location filename="main.cpp" line="366"/>
-        <location filename="main.cpp" line="391"/>
+        <location filename="main.cpp" line="338"/>
+        <location filename="main.cpp" line="368"/>
+        <location filename="main.cpp" line="393"/>
         <source>Please select the game to manage</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="402"/>
+        <location filename="main.cpp" line="404"/>
         <source>Canceled finding %1 in &quot;%2&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="403"/>
+        <location filename="main.cpp" line="405"/>
         <source>Canceled finding game in &quot;%1&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="410"/>
+        <location filename="main.cpp" line="412"/>
         <source>%1 not identified in &quot;%2&quot;. The directory is required to contain the game binary.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="419"/>
+        <location filename="main.cpp" line="421"/>
         <source>No game identified in &quot;%1&quot;. The directory is required to contain the game binary.&lt;br&gt;&lt;br&gt;&lt;b&gt;These are the games supported by Mod Organizer:&lt;/b&gt;&lt;ul&gt;%2&lt;/ul&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="620"/>
+        <location filename="main.cpp" line="631"/>
         <source>Please select the game edition you have (MO can&apos;t start the game correctly if this is set incorrectly!)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="667"/>
+        <location filename="main.cpp" line="678"/>
         <source>failed to start shortcut: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="695"/>
+        <location filename="main.cpp" line="706"/>
         <source>failed to start application: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="898"/>
+        <location filename="main.cpp" line="921"/>
         <location filename="settingsdialogworkarounds.cpp" line="17"/>
         <source>Mod Organizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="899"/>
+        <location filename="main.cpp" line="922"/>
         <source>An instance of Mod Organizer is already running</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="921"/>
+        <location filename="main.cpp" line="944"/>
         <source>Failed to set up instance</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="197"/>
+        <location filename="mainwindow.cpp" line="204"/>
         <source>&lt;Unmanaged&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1277"/>
+        <location filename="mainwindow.cpp" line="1376"/>
         <source>Please use &quot;Help&quot; from the toolbar to get usage instructions to all elements</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1823"/>
-        <location filename="mainwindow.cpp" line="5243"/>
+        <location filename="mainwindow.cpp" line="1798"/>
+        <location filename="mainwindow.cpp" line="5202"/>
         <source>&lt;Manage...&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1835"/>
+        <location filename="mainwindow.cpp" line="1810"/>
         <source>failed to parse profile %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6332,33 +6422,33 @@ If the folder was still in use, restart MO and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="421"/>
+        <location filename="organizercore.cpp" line="445"/>
         <source>One of the configured MO2 directories (profiles, mods, or overwrite) is on a path containing a symbolic (or other) link. This is likely to be incompatible with MO2&apos;s virtual filesystem.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="plugincontainer.cpp" line="179"/>
+        <location filename="plugincontainer.cpp" line="183"/>
         <source>failed to initialize plugin %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="plugincontainer.cpp" line="265"/>
+        <location filename="plugincontainer.cpp" line="273"/>
         <source>Plugin error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="plugincontainer.cpp" line="266"/>
+        <location filename="plugincontainer.cpp" line="274"/>
         <source>It appears the plugin &quot;%1&quot; failed to load last startup and caused MO to crash. Do you want to disable it?
 (Please note: If this is the first time you see this message for this plugin you may want to give it another try. The plugin may be able to recover from the problem)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="571"/>
+        <location filename="pluginlist.cpp" line="578"/>
         <source>failed to access %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="585"/>
+        <location filename="pluginlist.cpp" line="592"/>
         <source>failed to set file time %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6385,23 +6475,29 @@ If the folder was still in use, restart MO and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="sanitychecks.cpp" line="239"/>
+        <location filename="sanitychecks.cpp" line="244"/>
         <source>%1 is loaded. This program is known to cause issues with Mod Organizer, such as freezing or blank windows. Consider uninstalling it.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="1289"/>
-        <location filename="settings.cpp" line="1332"/>
+        <location filename="sanitychecks.cpp" line="272"/>
+        <source>%1 is loaded. This program is known to cause issues with Mod Organizer and its virtual filesystem, such script extenders refusing to run. Consider uninstalling it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settings.cpp" line="1309"/>
+        <location filename="settings.cpp" line="1334"/>
+        <location filename="settings.cpp" line="1382"/>
         <source>attempt to store setting for unknown plugin &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="1816"/>
+        <location filename="settings.cpp" line="1866"/>
         <source>Failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="1817"/>
+        <location filename="settings.cpp" line="1867"/>
         <source>Failed to start the helper application: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6594,47 +6690,27 @@ Example:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="shared/directoryentry.cpp" line="87"/>
+        <location filename="shared/originconnection.cpp" line="86"/>
         <source>invalid origin name: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="shared/directoryentry.cpp" line="110"/>
+        <location filename="shared/originconnection.cpp" line="115"/>
         <source>failed to change name lookup from {} to {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="shared/directoryentry.cpp" line="524"/>
-        <source>failed to determine file time</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="shared/directoryentry.cpp" line="546"/>
-        <source>invalid bsa file: </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="shared/directoryentry.cpp" line="722"/>
-        <source>file &quot;{}&quot; not in directory &quot;{}&quot;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="shared/directoryentry.cpp" line="727"/>
-        <source>file &quot;{}&quot; not in directory &quot;{}&quot;, directory empty</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="shared/directoryentry.cpp" line="851"/>
+        <location filename="shared/directoryentry.cpp" line="411"/>
         <source>unexpected end of path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="shared/directoryentry.cpp" line="995"/>
+        <location filename="shared/fileregister.cpp" line="78"/>
         <source>invalid file index for remove: {}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="shared/directoryentry.cpp" line="1009"/>
+        <location filename="shared/fileregister.cpp" line="99"/>
         <source>invalid file index for remove (for origin): {}</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6818,22 +6894,22 @@ You can restart Mod Organizer as administrator and try launching the program aga
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="951"/>
+        <location filename="spawn.cpp" line="960"/>
         <source>Select binary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="952"/>
+        <location filename="spawn.cpp" line="961"/>
         <source>Binary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="statusbar.cpp" line="43"/>
+        <location filename="statusbar.cpp" line="45"/>
         <source>This tracks the number of queued Nexus API requests, as well as the remaining daily and hourly requests. The Nexus API limits you to a pool of requests per day and requests per hour. It is dynamically updated every time a request is completed. If you run out of requests, you will be unable to queue downloads, check updates, parse mod info, or even log in. Both pools must be consumed before this happens.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="statusbar.cpp" line="64"/>
+        <location filename="statusbar.cpp" line="68"/>
         <source>Loading...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6869,7 +6945,8 @@ You can restart Mod Organizer as administrator and try launching the program aga
     </message>
     <message>
         <location filename="uilocker.cpp" line="323"/>
-        <source>Mod Organizer is waiting on application to close before exiting.</source>
+        <source>Mod Organizer is waiting on an application to close before exiting.</source>
+        <oldsource>Mod Organizer is waiting on application to close before exiting.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6882,6 +6959,21 @@ You can restart Mod Organizer as administrator and try launching the program aga
         <source>Exit Now</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="envshell.cpp" line="342"/>
+        <source>No menu available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="envshell.cpp" line="385"/>
+        <source>Selected files must be in the same directory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="filetree.cpp" line="113"/>
+        <source>Disabled because</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>QueryOverwriteDialog</name>
@@ -6891,32 +6983,39 @@ You can restart Mod Organizer as administrator and try launching the program aga
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="queryoverwritedialog.ui" line="45"/>
-        <source>This mod seems to be installed already. Do you want to add files from this archive (overwriting existing ones) or do you want to completely replace the existing files (old files are deleted)? Alternatively you can install this mod under a different name.</source>
+        <location filename="queryoverwritedialog.ui" line="69"/>
+        <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;This mod seems to be installed already, what would you like to do?&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Merge:&lt;/span&gt; Add files from this archive overwriting existing ones.&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Replace:&lt;/span&gt; Completely replace the existing mod (old files are deleted).&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Rename:&lt;/span&gt; Install this as a separate mod with a new name&lt;span style=&quot; font-style:italic;&quot;&gt; (recommended)&lt;/span&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="queryoverwritedialog.ui" line="63"/>
+        <location filename="queryoverwritedialog.ui" line="100"/>
         <source>Keep Backup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="queryoverwritedialog.ui" line="70"/>
+        <location filename="queryoverwritedialog.ui" line="107"/>
         <source>Merge</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="queryoverwritedialog.ui" line="77"/>
+        <location filename="queryoverwritedialog.ui" line="114"/>
         <source>Replace</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="queryoverwritedialog.ui" line="84"/>
+        <location filename="queryoverwritedialog.ui" line="121"/>
         <source>Rename</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="queryoverwritedialog.ui" line="91"/>
+        <location filename="queryoverwritedialog.ui" line="131"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6993,63 +7092,58 @@ You can restart Mod Organizer as administrator and try launching the program aga
 <context>
     <name>SelfUpdater</name>
     <message>
-        <location filename="selfupdater.cpp" line="96"/>
-        <source>archive.dll not loaded: &quot;%1&quot;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="selfupdater.cpp" line="189"/>
+        <location filename="selfupdater.cpp" line="159"/>
         <source>New update available (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="190"/>
+        <location filename="selfupdater.cpp" line="160"/>
         <source>Do you want to install update? All your mods and setup will be left untouched.
 Select Show Details option to see the full change-log.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="194"/>
+        <location filename="selfupdater.cpp" line="164"/>
         <source>Install</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="211"/>
+        <location filename="selfupdater.cpp" line="181"/>
         <source>Download failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="212"/>
+        <location filename="selfupdater.cpp" line="182"/>
         <source>Failed to find correct download, please try again later.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="227"/>
+        <location filename="selfupdater.cpp" line="197"/>
         <source>Update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="228"/>
+        <location filename="selfupdater.cpp" line="198"/>
         <source>Download in progress</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="319"/>
+        <location filename="selfupdater.cpp" line="289"/>
         <source>Download failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="330"/>
+        <location filename="selfupdater.cpp" line="300"/>
         <source>Failed to install update: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="349"/>
+        <location filename="selfupdater.cpp" line="319"/>
         <source>Failed to start %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="359"/>
+        <location filename="selfupdater.cpp" line="329"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7824,6 +7918,19 @@ programs you are intentionally running.</source>
     </message>
 </context>
 <context>
+    <name>StatusBar</name>
+    <message>
+        <location filename="statusbar.cpp" line="153"/>
+        <source>Unknown game</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="statusbar.cpp" line="158"/>
+        <source>Portable</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SyncOverwriteDialog</name>
     <message>
         <location filename="syncoverwritedialog.ui" line="14"/>
@@ -7841,17 +7948,17 @@ programs you are intentionally running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="syncoverwritedialog.cpp" line="97"/>
+        <location filename="syncoverwritedialog.cpp" line="100"/>
         <source>&lt;don&apos;t sync&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="syncoverwritedialog.cpp" line="149"/>
+        <location filename="syncoverwritedialog.cpp" line="152"/>
         <source>failed to remove %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="syncoverwritedialog.cpp" line="151"/>
+        <location filename="syncoverwritedialog.cpp" line="154"/>
         <source>failed to move %1 to %2</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8003,7 +8110,7 @@ On Windows XP:
 <context>
     <name>UsvfsConnector</name>
     <message>
-        <location filename="usvfsconnector.cpp" line="185"/>
+        <location filename="usvfsconnector.cpp" line="187"/>
         <source>Preparing vfs</source>
         <translation type="unfinished"></translation>
     </message>
