@@ -298,6 +298,8 @@ std::optional<SecurityProduct> handleProduct(IWbemClassObject* o)
       state = prop.lVal;
     } else if (prop.vt == VT_UI4) {
       state = prop.ulVal;
+    } else if (prop.vt == VT_UI1) {
+      state = prop.bVal;
     } else if (prop.vt == VT_NULL) {
       log::warn("productState is null");
     } else {
