@@ -521,6 +521,8 @@ public:
   //
   void registerAsNXMHandler(bool force);
 
+  std::vector<std::chrono::seconds> validationTimeouts() const;
+
 private:
   Settings& m_Parent;
   QSettings& m_Settings;

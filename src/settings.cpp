@@ -1868,6 +1868,40 @@ void NexusSettings::registerAsNXMHandler(bool force)
   }
 }
 
+std::vector<std::chrono::seconds> NexusSettings::validationTimeouts() const
+{
+    using namespace std::chrono_literals;
+
+    const auto s = get<QString>(
+        m_Settings, "Settings", "validation_timeouts", "");
+
+    const auto numbers = s.split(" ");
+    std::vector<std::chrono::seconds> v;
+
+    for (auto ns : numbers)
+    {
+        ns = ns.trimmed();
+        if (ns.isEmpty())
+            continue;
+
+        bool ok = false;
+        const auto n = ns.toInt(&ok);
+
+        if (!ok || n < 0 || n > 100)
+        {
+            log::error("bad validation_timeouts number '{}'", ns);
+            continue;
+        }
+
+        v.push_back(std::chrono::seconds(n));
+    }
+
+    if (v.empty())
+        v = {10s, 15s, 20s};
+
+    return v;
+}
+
 
 SteamSettings::SteamSettings(Settings& parent, QSettings& settings)
   : m_Parent(parent), m_Settings(settings)
