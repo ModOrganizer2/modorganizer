@@ -87,6 +87,30 @@ protected:
 };
 
 
+class ExeCommand : public Command
+{
+public:
+  bool allow_unregistered() const override;
+
+protected:
+  po::options_description doOptions() const;
+  Meta meta() const override;
+  std::optional<int> doRun() override;
+};
+
+
+class RunCommand : public Command
+{
+public:
+  bool allow_unregistered() const override;
+
+protected:
+  po::options_description doOptions() const;
+  Meta meta() const override;
+  std::optional<int> doRun() override;
+};
+
+
 class CommandLine
 {
 public:

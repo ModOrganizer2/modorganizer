@@ -5,9 +5,47 @@
 namespace cl
 {
 
+std::string pad_right(std::string s, std::size_t n, char c=' ')
+{
+  if (s.size() < n)
+    s.append(n - s.size() , c);
+
+  return s;
+}
+
+std::string table(
+  const std::vector<std::pair<std::string, std::string>>& v,
+  std::size_t indent, std::size_t spacing)
+{
+  std::size_t longest = 0;
+
+  for (auto&& p : v)
+    longest = std::max(longest, p.first.size());
+
+  std::string s;
+
+  for (auto&& p : v)
+  {
+    if (!s.empty())
+      s += "\n";
+
+    s +=
+      std::string(indent, ' ') +
+      pad_right(p.first, longest) + " " +
+      std::string(spacing, ' ') +
+      p.second;
+  }
+
+  return s;
+
+}
+
+
 CommandLine::CommandLine()
 {
   createOptions();
+  m_commands.push_back(std::make_unique<ExeCommand>());
+  m_commands.push_back(std::make_unique<RunCommand>());
   m_commands.push_back(std::make_unique<CrashDumpCommand>());
   m_commands.push_back(std::make_unique<LaunchCommand>());
 }
@@ -156,11 +194,14 @@ std::string CommandLine::usage(const Command* c) const
       << "\n"
       << "Commands:\n";
 
+    std::vector<std::pair<std::string, std::string>> v;
     for (auto&& c : m_commands) {
-      oss << "  " << c->name() << "    " << c->description() << "\n";
+      v.push_back({c->name(), c->description()});
     }
 
-    oss << "\n";
+    oss
+      << table(v, 2, 4) << "\n"
+      << "\n";
   }
 
   oss
@@ -353,7 +394,7 @@ po::options_description LaunchCommand::doOptions() const
 
 Command::Meta LaunchCommand::meta() const
 {
-  return {"launch", ""};
+  return {"launch", "(internal, do not use)"};
 }
 
 std::optional<int> LaunchCommand::doRun()
@@ -419,6 +460,48 @@ LPCWSTR LaunchCommand::UntouchedCommandLineArguments(
     }
   }
   return cmd;
+}
+
+
+bool ExeCommand::allow_unregistered() const
+{
+  return true;
+}
+
+po::options_description ExeCommand::doOptions() const
+{
+  return {};
+}
+
+Command::Meta ExeCommand::meta() const
+{
+  return {"exe", "launches a configured executable"};
+}
+
+std::optional<int> ExeCommand::doRun()
+{
+  return {};
+}
+
+
+bool RunCommand::allow_unregistered() const
+{
+  return true;
+}
+
+po::options_description RunCommand::doOptions() const
+{
+  return {};
+}
+
+Command::Meta RunCommand::meta() const
+{
+  return {"run", "launches an arbitrary program"};
+}
+
+std::optional<int> RunCommand::doRun()
+{
+  return {};
 }
 
 } // namespace
