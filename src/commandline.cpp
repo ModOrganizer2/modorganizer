@@ -15,8 +15,6 @@ std::optional<int> CommandLine::run(const std::wstring& line)
 {
   try
   {
-    po::variables_map vm;
-
     auto args = po::split_winmain(line);
     if (!args.empty()) {
       // remove program name
@@ -29,10 +27,10 @@ std::optional<int> CommandLine::run(const std::wstring& line)
       .allow_unregistered()
       .run();
 
-    po::store(parsed, vm);
+    po::store(parsed, m_vm);
 
-    if (vm.count("command")) {
-      const auto commandName = vm["command"].as<std::string>();
+    if (m_vm.count("command")) {
+      const auto commandName = m_vm["command"].as<std::string>();
 
       for (auto&& c : m_commands) {
         if (c->name() == commandName) {
@@ -55,20 +53,20 @@ std::optional<int> CommandLine::run(const std::wstring& line)
 
           parsed = parser.run();
 
-          po::store(parsed, vm);
+          po::store(parsed, m_vm);
 
-          if (vm.count("help")) {
+          if (m_vm.count("help")) {
             env::Console console;
             std::cout << usage(c.get()) << "\n";
             return 0;
           }
 
-          return c->run(line, vm, opts);
+          return c->run(line, m_vm, opts);
         }
       }
     }
 
-    if (vm.count("help")) {
+    if (m_vm.count("help")) {
       env::Console console;
       std::cout << usage() << "\n";
       return 0;
@@ -91,7 +89,8 @@ std::optional<int> CommandLine::run(const std::wstring& line)
 void CommandLine::createOptions()
 {
   m_visibleOptions.add_options()
-    ("help", "shows this message");
+    ("help",     "shows this message")
+    ("multiple", "allows multiple instances of MO to run; see below");
 
   po::options_description options;
   options.add_options()
@@ -137,7 +136,32 @@ std::string CommandLine::usage(const Command* c) const
     << "Global options:\n"
     << m_visibleOptions << "\n";
 
+  if (!c) {
+    oss << "\n" << more() << "\n";
+  }
+
   return oss.str();
+}
+
+bool CommandLine::multiple() const
+{
+  return (m_vm.count("multiple") > 0);
+}
+
+std::string CommandLine::more() const
+{
+  return
+    "--multiple can be used to allow multiple instances of MO to run\n"
+    "simultaneously. This is unsupported and can create all sorts of weird\n"
+    "problems. To minimize the problems:\n"
+    "\n"
+    "  1) Never have multiple MO instances opened that manage the same game\n"
+    "     instance.\n"
+    "  2) If an executable is launched from an instance, only this instance\n"
+    "     may launch executables until all instances are closed.\n"
+    "\n"
+    "It is recommended to close _all_ instances of MO as soon as multiple\n"
+    "instances become unnecessary.";
 }
 
 

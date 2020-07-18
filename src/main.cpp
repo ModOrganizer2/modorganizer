@@ -852,12 +852,7 @@ int main(int argc, char *argv[])
 
   SingleInstance::Flags siFlags = SingleInstance::NoFlags;
 
-  if (arguments.contains("update")) {
-    arguments.removeAll("update");
-    siFlags |= SingleInstance::ForcePrimary;
-  }
-
-  if (arguments.contains("--multiple")) {
+  if (cl.multiple()) {
     arguments.removeAll("--multiple");
     siFlags |= SingleInstance::AllowMultiple;
   }

@@ -34,16 +34,6 @@ SingleInstance::SingleInstance(Flags flags, QObject *parent) :
   m_SharedMem.setKey(s_Key);
 
   if (!m_SharedMem.create(1)) {
-    if (flags.testFlag(ForcePrimary)) {
-      while (m_SharedMem.error() == QSharedMemory::AlreadyExists) {
-        Sleep(500);
-        if (m_SharedMem.create(1)) {
-          m_OwnsSM = true;
-          break;
-        }
-      }
-    }
-
     if (m_SharedMem.error() == QSharedMemory::AlreadyExists) {
       if (!flags.testFlag(AllowMultiple)) {
         m_SharedMem.attach();

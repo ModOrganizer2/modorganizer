@@ -40,19 +40,9 @@ public:
   {
     NoFlags      = 0x00,
 
-
-    // when set, this will be treated as the primary instance even if
-    // another instance is running. This is used after an update since the
-    // other instance is assumed to be in the process of quitting
-    //
-    // todo: this makes no sense. The second instance after an update needs
-    // to delete the files from before the update so the first instance
-    // needs to quit first anyway
-    ForcePrimary = 0x01,
-
     // if another instance is running, run this one disconnected from the
     // shared memory
-    AllowMultiple = 0x02
+    AllowMultiple = 0x01
   };
 
 	using Flags = QFlags<Flag>;
