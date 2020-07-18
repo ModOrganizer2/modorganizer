@@ -27,18 +27,20 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 class MOShortcut {
 
 public:
-  MOShortcut(const QString& link);
+  MOShortcut(const QString& link={});
 
   /// true iff intialized using a valid moshortcut link
-  operator bool() const { return m_valid; }
+  bool isValid() const { return m_valid; }
 
   bool hasInstance() const { return m_hasInstance; }
-  
+
   bool hasExecutable() const { return m_hasExecutable; }
 
   const QString& instance() const { return m_instance; }
 
   const QString& executable() const { return m_executable; }
+
+  QString toString() const;
 
 private:
   QString m_instance;

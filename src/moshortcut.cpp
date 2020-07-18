@@ -40,3 +40,12 @@ MOShortcut::MOShortcut(const QString& link)
 		m_hasExecutable=true;
   }
 }
+
+QString MOShortcut::toString() const
+{
+  if (m_hasInstance) {
+    return "moshortcut://" + m_instance + ":" + m_executable;
+  } else {
+    return "moshortcut://" + m_executable;
+  }
+}

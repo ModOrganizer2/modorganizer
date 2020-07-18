@@ -83,4 +83,6 @@ bool ModOrganizerExiting();
 bool ModOrganizerCanCloseNow();
 void ResetExitFlag();
 
+bool isNxmLink(const QString& link);
+
 #endif // UTIL_H

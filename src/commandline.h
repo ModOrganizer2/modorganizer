@@ -1,5 +1,6 @@
 #pragma once
 
+#include "moshortcut.h"
 #include <vector>
 #include <memory>
 
@@ -92,15 +93,27 @@ public:
   CommandLine();
 
   std::optional<int> run(const std::wstring& line);
+  void clear();
+
   std::string usage(const Command* c=nullptr) const;
 
   bool multiple() const;
+  std::optional<QString> profile() const;
+  const MOShortcut& shortcut() const;
+  std::optional<QString> nxmLink() const;
+  std::optional<QString> executable() const;
+
+  const QStringList& untouched() const;
 
 private:
   po::options_description m_visibleOptions, m_allOptions;
   po::positional_options_description m_positional;
   std::vector<std::unique_ptr<Command>> m_commands;
   po::variables_map m_vm;
+  MOShortcut m_shortcut;
+  std::optional<QString> m_nxmLink;
+  std::optional<QString> m_executable;
+  QStringList m_untouched;
 
   void createOptions();
   std::string more() const;

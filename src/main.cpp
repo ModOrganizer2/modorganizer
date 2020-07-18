@@ -225,18 +225,13 @@ static bool HaveWriteAccess(const std::wstring &path)
 }
 
 
-QString determineProfile(QStringList &arguments, const Settings &settings)
+QString determineProfile(const cl::CommandLine& cl, const Settings &settings)
 {
   auto selectedProfileName = settings.game().selectedProfileName();
 
-  { // see if there is a profile on the command line
-    int profileIndex = arguments.indexOf("-p", 1);
-    if ((profileIndex != -1) && (profileIndex < arguments.size() - 1)) {
-      log::debug("profile overwritten on command line");
-      selectedProfileName = arguments.at(profileIndex + 1);
-    }
-    arguments.removeAt(profileIndex);
-    arguments.removeAt(profileIndex);
+  if (cl.profile()) {
+    log::debug("profile overwritten on command line");
+    selectedProfileName = *cl.profile();
   }
 
   if (!selectedProfileName) {
@@ -481,7 +476,7 @@ static QString getVersionDisplayString()
 
 
 int runApplication(
-  MOApplication &application, QStringList& arguments,
+  MOApplication &application, const cl::CommandLine& cl,
   SingleInstance &instance, const QString &splashPath)
 {
   TimeThis tt("runApplication() to exec()");
@@ -635,57 +630,51 @@ int runApplication(
     organizer.updateExecutablesList();
     organizer.updateModInfoFromDisc();
 
-    QString selectedProfileName = determineProfile(arguments, settings);
+    QString selectedProfileName = determineProfile(cl, settings);
     organizer.setCurrentProfile(selectedProfileName);
 
     // if we have a command line parameter, it is either a nxm link or
     // a binary to start
-	  if (arguments.size() > 1) {
-		  if (MOShortcut shortcut{ arguments.at(1) }) {
-			  if (shortcut.hasExecutable()) {
-				  try {
-					  organizer.processRunner()
-              .setFromShortcut(shortcut)
-              .setWaitForCompletion()
-              .run();
-
-					  return 0;
-				  }
-				  catch (const std::exception &e) {
-					  reportError(
-						  QObject::tr("failed to start shortcut: %1").arg(e.what()));
-					  return 1;
-				  }
-			  }
-		  }
-		  else if (OrganizerCore::isNxmLink(arguments.at(1))) {
-			  log::debug("starting download from command line: {}", arguments.at(1));
-			  organizer.externalMessage(arguments.at(1));
-		  }
-		  else {
-			  QString exeName = arguments.at(1);
-			  log::debug("starting {} from command line", exeName);
-
-			  arguments.removeFirst(); // remove application name (ModOrganizer.exe)
-			  arguments.removeFirst(); // remove binary name
-
-        try
-        {
-          // pass the remaining parameters to the binary
-          organizer.processRunner()
-            .setFromFileOrExecutable(exeName, arguments)
+    if (cl.shortcut().isValid()) {
+      if (cl.shortcut().hasExecutable()) {
+        try {
+	      organizer.processRunner()
+            .setFromShortcut(cl.shortcut())
             .setWaitForCompletion()
             .run();
-				  return 0;
-			  }
-			  catch (const std::exception &e)
-        {
-				  reportError(
-					  QObject::tr("failed to start application: %1").arg(e.what()));
-				  return 1;
-			  }
-		  }
-	  }
+
+	      return 0;
+        }
+        catch (const std::exception &e) {
+	        reportError(
+		        QObject::tr("failed to start shortcut: %1").arg(e.what()));
+	        return 1;
+        }
+      }
+    } else if (cl.nxmLink()) {
+      log::debug("starting download from command line: {}", *cl.nxmLink());
+      organizer.externalMessage(*cl.nxmLink());
+    } else if (cl.executable()) {
+      const QString exeName = *cl.executable();
+      log::debug("starting {} from command line", exeName);
+
+      try
+      {
+        // pass the remaining parameters to the binary
+        organizer.processRunner()
+          .setFromFileOrExecutable(exeName, cl.untouched())
+          .setWaitForCompletion()
+          .run();
+
+	    return 0;
+      }
+      catch (const std::exception &e)
+      {
+	    reportError(
+		    QObject::tr("failed to start application: %1").arg(e.what()));
+	    return 1;
+      }
+    }
 
     QPixmap pixmap;
 
@@ -857,15 +846,13 @@ int main(int argc, char *argv[])
     siFlags |= SingleInstance::AllowMultiple;
   }
 
-  MOShortcut moshortcut{ arguments.size() > 1 ? arguments.at(1) : "" };
-
   SingleInstance instance(siFlags);
   if (instance.ephemeral()) {
-    if (moshortcut ||
-        arguments.size() > 1 && OrganizerCore::isNxmLink(arguments.at(1)))
-    {
-      log::debug("not primary instance, sending shortcut/download message");
-      instance.sendMessage(arguments.at(1));
+    if (cl.shortcut().isValid()) {
+      instance.sendMessage(cl.shortcut().toString());
+      return 0;
+    } else if (cl.nxmLink()) {
+      instance.sendMessage(*cl.nxmLink());
       return 0;
     } else if (arguments.size() == 1) {
       QMessageBox::information(
@@ -887,8 +874,8 @@ int main(int argc, char *argv[])
 
     try {
       InstanceManager& instanceManager = InstanceManager::instance();
-      if (moshortcut && moshortcut.hasInstance())
-        instanceManager.overrideInstance(moshortcut.instance());
+      if (cl.shortcut().isValid() && cl.shortcut().hasInstance())
+        instanceManager.overrideInstance(cl.shortcut().instance());
       dataPath = instanceManager.determineDataPath();
     } catch (const std::exception &e) {
       if (strcmp(e.what(),"Canceled"))
@@ -920,12 +907,12 @@ int main(int argc, char *argv[])
 
     tt.stop();
 
-    const int result = runApplication(application, arguments, instance, splash);
+    const int result = runApplication(application, cl, instance, splash);
     if (result != RestartExitCode) {
       return result;
     }
 
     argc = 1;
-    moshortcut = MOShortcut("");
+    cl.clear();
   } while (true);
 }

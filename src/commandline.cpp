@@ -1,5 +1,6 @@
 #include "commandline.h"
 #include "env.h"
+#include "shared/util.h"
 
 namespace cl
 {
@@ -29,20 +30,21 @@ std::optional<int> CommandLine::run(const std::wstring& line)
 
     po::store(parsed, m_vm);
 
+    auto opts = po::collect_unrecognized(
+      parsed.options, po::include_positional);
+
+
     if (m_vm.count("command")) {
       const auto commandName = m_vm["command"].as<std::string>();
 
       for (auto&& c : m_commands) {
         if (c->name() == commandName) {
+          // remove the command name itself
+          opts.erase(opts.begin());
+
           auto co = c->options();
           co.add_options()
             ("help", "shows this message");
-
-          auto opts = po::collect_unrecognized(
-            parsed.options, po::include_positional);
-
-          // remove the command name itself
-          opts.erase(opts.begin());
 
           po::wcommand_line_parser parser(opts);
           parser.options(co);
@@ -72,6 +74,26 @@ std::optional<int> CommandLine::run(const std::wstring& line)
       return 0;
     }
 
+    if (!opts.empty()) {
+      const auto qs = QString::fromStdWString(opts[0]);
+      m_shortcut = qs;
+
+      if (!m_shortcut.isValid()) {
+        if (isNxmLink(qs)) {
+          m_nxmLink = qs;
+        } else {
+          m_executable = qs;
+        }
+      }
+
+      // remove the shortcut/nxm/executable
+      opts.erase(opts.begin());
+
+      for (auto&& o : opts) {
+        m_untouched.push_back(QString::fromStdWString(o));
+      }
+    }
+
     return {};
   }
   catch(po::error& e)
@@ -86,11 +108,19 @@ std::optional<int> CommandLine::run(const std::wstring& line)
   }
 }
 
+void CommandLine::clear()
+{
+  m_vm.clear();
+  m_shortcut = {};
+  m_nxmLink = {};
+}
+
 void CommandLine::createOptions()
 {
   m_visibleOptions.add_options()
-    ("help",     "shows this message")
-    ("multiple", "allows multiple instances of MO to run; see below");
+    ("help",      "show this message")
+    ("multiple",  "allow multiple instances of MO to run; see below")
+    ("profile,p", po::value<std::string>(), "use the given profile (defaults to last used)");
 
   po::options_description options;
   options.add_options()
@@ -148,20 +178,50 @@ bool CommandLine::multiple() const
   return (m_vm.count("multiple") > 0);
 }
 
+std::optional<QString> CommandLine::profile() const
+{
+  if (m_vm.count("profile")) {
+    return QString::fromStdString(m_vm["profile"].as<std::string>());
+  }
+
+  return {};
+}
+
+const MOShortcut& CommandLine::shortcut() const
+{
+  return m_shortcut;
+}
+
+std::optional<QString> CommandLine::nxmLink() const
+{
+  return m_nxmLink;
+}
+
+std::optional<QString> CommandLine::executable() const
+{
+  return m_executable;
+}
+
+const QStringList& CommandLine::untouched() const
+{
+  return m_untouched;
+}
+
 std::string CommandLine::more() const
 {
   return
-    "--multiple can be used to allow multiple instances of MO to run\n"
-    "simultaneously. This is unsupported and can create all sorts of weird\n"
-    "problems. To minimize the problems:\n"
-    "\n"
-    "  1) Never have multiple MO instances opened that manage the same game\n"
-    "     instance.\n"
-    "  2) If an executable is launched from an instance, only this instance\n"
-    "     may launch executables until all instances are closed.\n"
-    "\n"
-    "It is recommended to close _all_ instances of MO as soon as multiple\n"
-    "instances become unnecessary.";
+    "Multiple instances\n"
+    "  --multiple can be used to allow multiple instances of MO to run\n"
+    "  simultaneously. This is unsupported and can create all sorts of weird\n"
+    "  problems. To minimize the problems:\n"
+    "  \n"
+    "    1) Never have multiple MO instances opened that manage the same\n"
+    "       game instance.\n"
+    "    2) If an executable is launched from an instance, only this\n"
+    "       instance may launch executables until all instances are closed.\n"
+    "  \n"
+    "  It is recommended to close _all_ instances of MO as soon as multiple\n"
+    "  instances become unnecessary.";
 }
 
 

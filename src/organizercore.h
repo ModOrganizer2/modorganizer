@@ -191,9 +191,6 @@ public:
   };
 
 public:
-
-  static bool isNxmLink(const QString &link) { return link.startsWith("nxm://", Qt::CaseInsensitive); }
-
   OrganizerCore(Settings &settings);
 
   ~OrganizerCore();

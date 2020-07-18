@@ -38,6 +38,7 @@
 #include "shared/directoryentry.h"
 #include "shared/filesorigin.h"
 #include "shared/fileentry.h"
+#include "shared/util.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -395,7 +396,9 @@ void OrganizerCore::profileRemoved(QString const& profileName)
 
 void OrganizerCore::externalMessage(const QString &message)
 {
-  if (MOShortcut moshortcut{ message } ) {
+  MOShortcut moshortcut(message);
+
+  if (moshortcut.isValid()) {
     if(moshortcut.hasExecutable()) {
       processRunner()
         .setFromShortcut(moshortcut)
@@ -555,12 +558,16 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
   QString profileDir = profileBaseDir.absoluteFilePath(profileName);
 
   if (!QDir(profileDir).exists()) {
+    log::error("profile '{}' does not exist", profileName);
+
     // selected profile doesn't exist. Ensure there is at least one profile,
     // then pick any one
     createDefaultProfile();
 
     profileDir = profileBaseDir.absoluteFilePath(
         profileBaseDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot).at(0));
+
+    log::error("picked profile '{}' instead", QDir(profileDir).dirName());
   }
 
   // Keep the old profile to emit signal-changed:
