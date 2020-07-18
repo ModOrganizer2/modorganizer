@@ -20,7 +20,12 @@ public:
   po::options_description options() const;
   std::string usage() const;
 
-  int run(po::variables_map& vm);
+  virtual bool allow_unregistered() const;
+
+  std::optional<int> run(
+    const std::wstring& originalLine,
+    po::variables_map vm,
+    std::vector<std::wstring> untouched);
 
 protected:
   struct Meta
@@ -30,7 +35,16 @@ protected:
 
   virtual po::options_description doOptions() const;
   virtual Meta meta() const = 0;
-  virtual int doRun(po::variables_map& vm) = 0;
+  virtual std::optional<int> doRun() = 0;
+
+  const std::wstring& originalCmd() const;
+  const po::variables_map& vm() const;
+  const std::vector<std::wstring>& untouched() const;
+
+private:
+  std::wstring m_original;
+  po::variables_map m_vm;
+  std::vector<std::wstring> m_untouched;
 };
 
 
@@ -39,7 +53,36 @@ class CrashDumpCommand : public Command
 protected:
   po::options_description doOptions() const;
   Meta meta() const override;
-  int doRun(po::variables_map& vm) override;
+  std::optional<int> doRun() override;
+};
+
+
+// this is the `launch` command used when starting a process from within the
+// virtualized directory, see processrunner.cpp
+//
+// it has its own parsing of the command line to extract the argument after
+// `launch` and use it as the cwd of the process, but pass the remaining
+// arguments verbatim
+//
+// this is very old code that should probably never be changed
+//
+// note that it's actually buggy; in particular, it doesn't handle multiple
+// whitespace between arguments
+//
+class LaunchCommand : public Command
+{
+public:
+  bool allow_unregistered() const override;
+
+protected:
+  po::options_description doOptions() const;
+  Meta meta() const override;
+  std::optional<int> doRun() override;
+
+  int SpawnWaitProcess(LPCWSTR workingDirectory, LPCWSTR commandLine);
+
+  LPCWSTR UntouchedCommandLineArguments(
+    int parseArgCount, std::vector<std::wstring>& parsedArgs);
 };
 
 
@@ -48,7 +91,7 @@ class CommandLine
 public:
   CommandLine();
 
-  int run(int argc, char** argv);
+  std::optional<int> run(const std::wstring& line);
   std::string usage(const Command* c=nullptr) const;
 
 private:

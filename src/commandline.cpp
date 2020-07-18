@@ -8,15 +8,22 @@ CommandLine::CommandLine()
 {
   createOptions();
   m_commands.push_back(std::make_unique<CrashDumpCommand>());
+  m_commands.push_back(std::make_unique<LaunchCommand>());
 }
 
-int CommandLine::run(int argc, char** argv)
+std::optional<int> CommandLine::run(const std::wstring& line)
 {
   try
   {
     po::variables_map vm;
 
-    auto parsed = po::command_line_parser(argc, argv)
+    auto args = po::split_winmain(line);
+    if (!args.empty()) {
+      // remove program name
+      args.erase(args.begin());
+    }
+
+    auto parsed = po::wcommand_line_parser(args)
       .options(m_allOptions)
       .positional(m_positional)
       .allow_unregistered()
@@ -25,10 +32,10 @@ int CommandLine::run(int argc, char** argv)
     po::store(parsed, vm);
 
     if (vm.count("command")) {
-      const auto cmd = vm["command"].as<std::string>();
+      const auto commandName = vm["command"].as<std::string>();
 
       for (auto&& c : m_commands) {
-        if (c->name() == cmd) {
+        if (c->name() == commandName) {
           auto co = c->options();
           co.add_options()
             ("help", "shows this message");
@@ -39,9 +46,14 @@ int CommandLine::run(int argc, char** argv)
           // remove the command name itself
           opts.erase(opts.begin());
 
-          parsed = po::command_line_parser(opts)
-            .options(co)
-            .run();
+          po::wcommand_line_parser parser(opts);
+          parser.options(co);
+
+          if (c->allow_unregistered()) {
+            parser.allow_unregistered();
+          }
+
+          parsed = parser.run();
 
           po::store(parsed, vm);
 
@@ -51,7 +63,7 @@ int CommandLine::run(int argc, char** argv)
             return 0;
           }
 
-          return c->run(vm);
+          return c->run(line, vm, opts);
         }
       }
     }
@@ -62,13 +74,16 @@ int CommandLine::run(int argc, char** argv)
       return 0;
     }
 
-    return -1;
+    return {};
   }
   catch(po::error& e)
   {
     env::Console console;
-    std::cerr << e.what() << "\n";
-    std::cerr << usage() << "\n";
+
+    std::cerr
+      << e.what() << "\n"
+      << usage() << "\n";
+
     return 1;
   }
 }
@@ -80,7 +95,8 @@ void CommandLine::createOptions()
 
   po::options_description options;
   options.add_options()
-    ("command", po::value<std::string>(), "command to execute");
+    ("command", po::value<std::string>(), "command")
+    ("subargs", po::value<std::vector<std::string> >(), "args");
 
   m_positional
     .add("command", 1)
@@ -135,6 +151,11 @@ std::string Command::description() const
   return meta().description;
 }
 
+bool Command::allow_unregistered() const
+{
+  return false;
+}
+
 po::options_description Command::options() const
 {
   return doOptions();
@@ -161,11 +182,32 @@ std::string Command::usage() const
   return oss.str();
 }
 
-int Command::run(po::variables_map& vm)
+std::optional<int> Command::run(
+  const std::wstring& originalLine,
+  po::variables_map vm,
+  std::vector<std::wstring> untouched)
 {
-  return doRun(vm);
+  m_original = originalLine;
+  m_vm = vm;
+  m_untouched = untouched;
+
+  return doRun();
 }
 
+const std::wstring& Command::originalCmd() const
+{
+  return m_original;
+}
+
+const po::variables_map& Command::vm() const
+{
+  return m_vm;
+}
+
+const std::vector<std::wstring>& Command::untouched() const
+{
+  return m_untouched;
+}
 
 
 po::options_description CrashDumpCommand::doOptions() const
@@ -183,11 +225,11 @@ Command::Meta CrashDumpCommand::meta() const
   return {"crashdump", "writes a crashdump for a running process of MO"};
 }
 
-int CrashDumpCommand::doRun(po::variables_map& vm)
+std::optional<int> CrashDumpCommand::doRun()
 {
   env::Console console;
 
-  const auto typeString = vm["type"].as<std::string>();
+  const auto typeString = vm()["type"].as<std::string>();
   const auto type = env::coreDumpTypeFromString(typeString);
 
   // dump
@@ -200,6 +242,87 @@ int CrashDumpCommand::doRun(po::variables_map& vm)
   std::wcin.get();
 
   return (b ? 0 : 1);
+}
+
+
+bool LaunchCommand::allow_unregistered() const
+{
+  return true;
+}
+
+po::options_description LaunchCommand::doOptions() const
+{
+  return {};
+}
+
+Command::Meta LaunchCommand::meta() const
+{
+  return {"launch", ""};
+}
+
+std::optional<int> LaunchCommand::doRun()
+{
+  // needs at least the working directory and process name
+  if (untouched().size() < 2) {
+    return 1;
+  }
+
+  std::vector<std::wstring> arg;
+  auto args = UntouchedCommandLineArguments(2, arg);
+
+  return SpawnWaitProcess(arg[1].c_str(), args);
+}
+
+int LaunchCommand::SpawnWaitProcess(LPCWSTR workingDirectory, LPCWSTR commandLine)
+{
+  PROCESS_INFORMATION pi{ 0 };
+  STARTUPINFO si{ 0 };
+  si.cb = sizeof(si);
+  std::wstring commandLineCopy = commandLine;
+
+  if (!CreateProcessW(NULL, &commandLineCopy[0], NULL, NULL, FALSE, 0, NULL, workingDirectory, &si, &pi)) {
+    // A bit of a problem where to log the error message here, at least this way you can get the message
+    // using a either DebugView or a live debugger:
+    std::wostringstream ost;
+    ost << L"CreateProcess failed: " << commandLine << ", " << GetLastError();
+    OutputDebugStringW(ost.str().c_str());
+    return -1;
+  }
+
+  WaitForSingleObject(pi.hProcess, INFINITE);
+
+  DWORD exitCode = (DWORD)-1;
+  ::GetExitCodeProcess(pi.hProcess, &exitCode);
+  CloseHandle(pi.hThread);
+  CloseHandle(pi.hProcess);
+  return static_cast<int>(exitCode);
+}
+
+// Parses the first parseArgCount arguments of the current process command line and returns
+// them in parsedArgs, the rest of the command line is returned untouched.
+LPCWSTR LaunchCommand::UntouchedCommandLineArguments(
+  int parseArgCount, std::vector<std::wstring>& parsedArgs)
+{
+  LPCWSTR cmd = GetCommandLineW();
+  LPCWSTR arg = nullptr; // to skip executable name
+  for (; parseArgCount >= 0 && *cmd; ++cmd)
+  {
+    if (*cmd == '"') {
+      int escaped = 0;
+      for (++cmd; *cmd && (*cmd != '"' || escaped % 2 != 0); ++cmd)
+        escaped = *cmd == '\\' ? escaped + 1 : 0;
+    }
+    if (*cmd == ' ') {
+      if (arg)
+        if (cmd-1 > arg && *arg == '"' && *(cmd-1) == '"')
+          parsedArgs.push_back(std::wstring(arg+1, cmd-1));
+        else
+          parsedArgs.push_back(std::wstring(arg, cmd));
+      arg = cmd + 1;
+      --parseArgCount;
+    }
+  }
+  return cmd;
 }
 
 } // namespace
