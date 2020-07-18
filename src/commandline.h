@@ -99,6 +99,8 @@ public:
 
   bool multiple() const;
   std::optional<QString> profile() const;
+  std::optional<QString> instance() const;
+
   const MOShortcut& shortcut() const;
   std::optional<QString> nxmLink() const;
   std::optional<QString> executable() const;

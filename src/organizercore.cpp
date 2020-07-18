@@ -555,9 +555,24 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
   log::debug("selecting profile '{}'", profileName);
 
   QDir profileBaseDir(settings().paths().profiles());
-  QString profileDir = profileBaseDir.absoluteFilePath(profileName);
 
-  if (!QDir(profileDir).exists()) {
+  const auto subdirs = profileBaseDir.entryList(
+    QDir::AllDirs | QDir::NoDotAndDotDot);
+
+  QString profileDir;
+
+  // the profile name may not have the correct case, which breaks other parts
+  // of the ui like the profile combobox, which walks directories on its own
+  //
+  // find the real name with the correct case by walking the directories
+  for (auto&& dirName : subdirs) {
+    if (QString::compare(dirName, profileName, Qt::CaseInsensitive) == 0) {
+      profileDir = profileBaseDir.absoluteFilePath(dirName);
+      break;
+    }
+  }
+
+  if (profileDir.isEmpty()) {
     log::error("profile '{}' does not exist", profileName);
 
     // selected profile doesn't exist. Ensure there is at least one profile,

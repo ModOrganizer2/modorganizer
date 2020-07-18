@@ -120,6 +120,7 @@ void CommandLine::createOptions()
   m_visibleOptions.add_options()
     ("help",      "show this message")
     ("multiple",  "allow multiple instances of MO to run; see below")
+    ("instance,i", po::value<std::string>(), "use the given instance (defaults to last used)")
     ("profile,p", po::value<std::string>(), "use the given profile (defaults to last used)");
 
   po::options_description options;
@@ -182,6 +183,17 @@ std::optional<QString> CommandLine::profile() const
 {
   if (m_vm.count("profile")) {
     return QString::fromStdString(m_vm["profile"].as<std::string>());
+  }
+
+  return {};
+}
+
+std::optional<QString> CommandLine::instance() const
+{
+  if (m_shortcut.isValid() && m_shortcut.hasInstance()) {
+    return m_shortcut.instance();
+  } else if (m_vm.count("instance")) {
+    return QString::fromStdString(m_vm["instance"].as<std::string>());
   }
 
   return {};

@@ -874,8 +874,10 @@ int main(int argc, char *argv[])
 
     try {
       InstanceManager& instanceManager = InstanceManager::instance();
-      if (cl.shortcut().isValid() && cl.shortcut().hasInstance())
-        instanceManager.overrideInstance(cl.shortcut().instance());
+
+      if (cl.instance())
+        instanceManager.overrideInstance(*cl.instance());
+
       dataPath = instanceManager.determineDataPath();
     } catch (const std::exception &e) {
       if (strcmp(e.what(),"Canceled"))
