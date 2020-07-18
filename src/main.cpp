@@ -112,19 +112,19 @@ bool createAndMakeWritable(const std::wstring &subPath) {
   }
 }
 
-bool bootstrap()
+void purgeOldFiles()
 {
-  // remove the temporary backup directory in case we're restarting after an update
+  // remove the temporary backup directory in case we're restarting after an
+  // update
   QString backupDirectory = qApp->applicationDirPath() + "/update_backup";
   if (QDir(backupDirectory).exists()) {
     shellDelete(QStringList(backupDirectory));
   }
 
   // cycle log file
-  removeOldFiles(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath()),
-                 "usvfs*.log", 5, QDir::Name);
-
-  return true;
+  removeOldFiles(
+    qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath()),
+    "usvfs*.log", 5, QDir::Name);
 }
 
 thread_local LPTOP_LEVEL_EXCEPTION_FILTER prevUnhandledExceptionFilter = nullptr;
@@ -533,8 +533,9 @@ static QString getVersionDisplayString()
 }
 
 
-int runApplication(MOApplication &application, SingleInstance &instance,
-                   const QString &splashPath)
+int runApplication(
+  MOApplication &application, QStringList& arguments,
+  SingleInstance &instance, const QString &splashPath)
 {
   TimeThis tt("runApplication() to exec()");
 
@@ -555,16 +556,12 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     log::debug("this is a portable instance");
   }
 
-  if (!bootstrap()) {
-    reportError("failed to set up data paths");
-    InstanceManager::instance().clearCurrentInstance();
-    return 1;
+  if (!instance.secondary()) {
+    purgeOldFiles();
   }
 
   QWindowsWindowFunctions::setWindowActivationBehavior(
     QWindowsWindowFunctions::AlwaysActivateWindow);
-
-  QStringList arguments = application.arguments();
 
   try {
     log::info("working directory: {}", QDir::currentPath());
@@ -573,6 +570,11 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     log::getDefault().setLevel(settings.diagnostics().logLevel());
 
     log::debug("using ini at '{}'", settings.filename());
+
+    if (instance.secondary()) {
+      log::debug("another instance of MO is running but --multiple was given");
+    }
+
 
     // global crashDumpType sits in OrganizerCore to make a bit less ugly to
     // update it when the settings are changed during runtime
@@ -929,16 +931,23 @@ int main(int argc, char *argv[])
 
   setupPath();
 
-  bool forcePrimary = false;
+
+  SingleInstance::Flags siFlags = SingleInstance::NoFlags;
+
   if (arguments.contains("update")) {
     arguments.removeAll("update");
-    forcePrimary = true;
+    siFlags |= SingleInstance::ForcePrimary;
+  }
+
+  if (arguments.contains("--multiple")) {
+    arguments.removeAll("--multiple");
+    siFlags |= SingleInstance::AllowMultiple;
   }
 
   MOShortcut moshortcut{ arguments.size() > 1 ? arguments.at(1) : "" };
 
-  SingleInstance instance(forcePrimary);
-  if (!instance.primaryInstance()) {
+  SingleInstance instance(siFlags);
+  if (instance.ephemeral()) {
     if (moshortcut ||
         arguments.size() > 1 && OrganizerCore::isNxmLink(arguments.at(1)))
     {
@@ -998,7 +1007,7 @@ int main(int argc, char *argv[])
 
     tt.stop();
 
-    const int result = runApplication(application, instance, splash);
+    const int result = runApplication(application, arguments, instance, splash);
     if (result != RestartExitCode) {
       return result;
     }

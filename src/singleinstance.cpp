@@ -28,33 +28,38 @@ static const int s_Timeout = 5000;
 
 using MOBase::reportError;
 
-SingleInstance::SingleInstance(bool forcePrimary, QObject *parent) :
-  QObject(parent), m_PrimaryInstance(false)
+SingleInstance::SingleInstance(Flags flags, QObject *parent) :
+  QObject(parent), m_Ephemeral(false), m_OwnsSM(false)
 {
   m_SharedMem.setKey(s_Key);
+
   if (!m_SharedMem.create(1)) {
-    if (forcePrimary) {
+    if (flags.testFlag(ForcePrimary)) {
       while (m_SharedMem.error() == QSharedMemory::AlreadyExists) {
         Sleep(500);
         if (m_SharedMem.create(1)) {
-          m_PrimaryInstance = true;
+          m_OwnsSM = true;
           break;
         }
       }
     }
 
     if (m_SharedMem.error() == QSharedMemory::AlreadyExists) {
-      m_SharedMem.attach();
-      m_PrimaryInstance = false;
+      if (!flags.testFlag(AllowMultiple)) {
+        m_SharedMem.attach();
+        m_Ephemeral = true;
+      }
     }
+
     if ((m_SharedMem.error() != QSharedMemory::NoError) &&
         (m_SharedMem.error() != QSharedMemory::AlreadyExists)) {
       throw MOBase::MyException(tr("SHM error: %1").arg(m_SharedMem.errorString()));
     }
   } else {
-    m_PrimaryInstance = true;
+    m_OwnsSM = true;
   }
-  if (m_PrimaryInstance) {
+
+  if (m_OwnsSM) {
     connect(&m_Server, SIGNAL(newConnection()), this, SLOT(receiveMessage()), Qt::QueuedConnection);
     // has to be called before listen
     m_Server.setSocketOptions(QLocalServer::WorldAccessOption);
@@ -65,7 +70,7 @@ SingleInstance::SingleInstance(bool forcePrimary, QObject *parent) :
 
 void SingleInstance::sendMessage(const QString &message)
 {
-  if (m_PrimaryInstance) {
+  if (m_OwnsSM) {
     // nobody there to receive the message
     return;
   }
