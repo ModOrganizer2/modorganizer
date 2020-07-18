@@ -64,6 +64,7 @@
 #include <boost/thread.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <boost/program_options.hpp>
 
 // openssl
 #include <tlhelp32.h>

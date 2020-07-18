@@ -49,6 +49,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "env.h"
 #include "envmodule.h"
 #include "shared/util.h"
+#include "commandline.h"
 
 #include <eh.h>
 #include "shared/windows_error.h"
@@ -811,22 +812,6 @@ int runApplication(
   return 1;
 }
 
-int doCoreDump(env::CoreDumpTypes type)
-{
-  env::Console c;
-
-  // dump
-  const auto b = env::coredumpOther(type);
-  if (!b) {
-    std::wcerr << L"\n>>>> a minidump file was not written\n\n";
-  }
-
-  std::wcerr << L"Press enter to continue...";
-  std::wcin.get();
-
-  return (b ? 0 : 1);
-}
-
 log::Levels convertQtLevel(QtMsgType t)
 {
   switch (t)
@@ -895,17 +880,11 @@ void initLogging()
 int main(int argc, char *argv[])
 {
   TimeThis tt("main to runApplication()");
+  cl::CommandLine cl;
 
-  // handle --crashdump first
-  for (int i=1; i<argc; ++i) {
-    if (std::strcmp(argv[i], "--crashdump") == 0) {
-      return doCoreDump(env::CoreDumpTypes::Mini);
-    } else if (std::strcmp(argv[i], "--crashdump-data") == 0) {
-      return doCoreDump(env::CoreDumpTypes::Data);
-    } else if (std::strcmp(argv[i], "--crashdump-full") == 0) {
-      return doCoreDump(env::CoreDumpTypes::Full);
-    }
-  }
+  const auto r = cl.run(argc, argv);
+  if (r >= 0)
+    return r;
 
   initLogging();
 

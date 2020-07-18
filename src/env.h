@@ -307,6 +307,10 @@ enum class CoreDumpTypes
   Full
 };
 
+
+CoreDumpTypes coreDumpTypeFromString(const std::string& s);
+std::string toString(CoreDumpTypes type);
+
 // creates a minidump file for this process
 //
 bool coredump(CoreDumpTypes type);

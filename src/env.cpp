@@ -16,9 +16,15 @@ using namespace MOBase;
 Console::Console()
   : m_hasConsole(false), m_in(nullptr), m_out(nullptr), m_err(nullptr)
 {
-  // open a console
-  if (!AllocConsole()) {
-    // failed, ignore
+  // try to attach to parent
+  if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
+    if (GetLastError() != ERROR_ACCESS_DENIED) {
+      // parent has no console, create one
+      if (!AllocConsole()) {
+        // failed, ignore
+        return;
+      }
+    }
   }
 
   m_hasConsole = true;
@@ -1031,6 +1037,36 @@ HandlePtr dumpFile()
 
   return {};
 }
+
+
+CoreDumpTypes coreDumpTypeFromString(const std::string& s)
+{
+  if (s == "data")
+    return env::CoreDumpTypes::Data;
+  else if (s == "full")
+    return env::CoreDumpTypes::Full;
+  else
+    return env::CoreDumpTypes::Mini;
+}
+
+std::string toString(CoreDumpTypes type)
+{
+  switch (type)
+  {
+    case CoreDumpTypes::Mini:
+      return "mini";
+
+    case CoreDumpTypes::Data:
+      return "data";
+
+    case CoreDumpTypes::Full:
+      return "full";
+
+    default:
+      return "?";
+  }
+}
+
 
 bool createMiniDump(HANDLE process, CoreDumpTypes type)
 {

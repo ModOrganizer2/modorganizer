@@ -11,6 +11,7 @@ endif()
 
 add_filter(NAME src/application GROUPS
 	iuserinterface
+	commandline
 	main
 	moapplication
 	moshortcut
