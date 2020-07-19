@@ -14,9 +14,7 @@ constexpr bool AlwaysSortDirectoriesFirst = true;
 
 const QString& directoryFileType()
 {
-  static QString name;
-
-  if (name.isEmpty()) {
+  static const QString name = [] {
     const DWORD flags = SHGFI_TYPENAME;
     SHFILEINFOW sfi = {};
 
@@ -30,14 +28,87 @@ const QString& directoryFileType()
         "SHGetFileInfoW failed for folder file type, {}",
         formatSystemMessage(e));
 
-      name = "File folder";
+      return QString("File folder");
     } else {
-      name = QString::fromWCharArray(sfi.szTypeName);
+      return QString::fromWCharArray(sfi.szTypeName);
     }
-  }
+  }();
 
   return name;
 }
+
+const QString& cachedFileTypeNoExtension()
+{
+  static const QString name = [] {
+    const DWORD flags = SHGFI_TYPENAME;
+    SHFILEINFOW sfi = {};
+
+    // dummy filename with no extension
+    const auto r = SHGetFileInfoW(L"file", 0, &sfi, sizeof(sfi), flags);
+
+    if (!r) {
+      const auto e = GetLastError();
+
+      log::error(
+        "SHGetFileInfoW failed for file without extension, {}",
+        formatSystemMessage(e));
+
+      return QString("File");
+    } else {
+      return QString::fromWCharArray(sfi.szTypeName);
+    }
+  }();
+
+  return name;
+}
+
+const QString& cachedFileType(const std::wstring& file, bool isOnFilesystem)
+{
+  static std::map<std::wstring, QString, std::less<>> map;
+  static std::mutex mutex;
+
+  const auto dot = file.find_last_of(L'.');
+  if (dot == std::wstring::npos) {
+    return cachedFileTypeNoExtension();
+  }
+
+  std::scoped_lock lock(mutex);
+  const auto sv = std::wstring_view(file.c_str() + dot, file.size() - dot);
+
+  auto itor = map.find(sv);
+  if (itor != map.end()) {
+    return itor->second;
+  }
+
+
+  DWORD flags = SHGFI_TYPENAME;
+
+  if (!isOnFilesystem) {
+    // files from archives are not on the filesystem; this flag forces
+    // SHGetFileInfoW() to only work with the filename
+    flags |= SHGFI_USEFILEATTRIBUTES;
+  }
+
+  SHFILEINFOW sfi = {};
+  const auto r = SHGetFileInfoW(file.c_str(), 0, &sfi, sizeof(sfi), flags);
+
+  QString s;
+
+  if (!r) {
+    const auto e = GetLastError();
+
+    log::error(
+      "SHGetFileInfoW failed for '{}', {}",
+      file, formatSystemMessage(e));
+
+    s = cachedFileTypeNoExtension();
+  } else {
+    s = QString::fromWCharArray(sfi.szTypeName);
+  }
+
+  return map.emplace(sv, s).first->second;
+}
+
 
 
 FileTreeItem::FileTreeItem(
@@ -176,50 +247,59 @@ public:
   }
 };
 
-void FileTreeItem::sort()
+void FileTreeItem::queueSort()
 {
   if (!m_children.empty()) {
-    m_model->sortItem(*this, true);
+    m_model->queueSortItem(this);
+  }
+}
+
+void FileTreeItem::makeSortingStale()
+{
+  m_sortingStale = true;
+
+  for (auto& c : m_children) {
+    c->makeSortingStale();
   }
 }
 
 void FileTreeItem::sort(int column, Qt::SortOrder order, bool force)
 {
-  if (!force && !m_expanded) {
+  if (!m_expanded) {
     m_sortingStale = true;
     return;
   }
 
-  if (m_sortingStale) {
+  if (m_sortingStale || force) {
     //log::debug("sorting is stale for {}, sorting now", debugName());
     m_sortingStale = false;
+
+    std::sort(m_children.begin(), m_children.end(), [&](auto&& a, auto&& b) {
+      int r = 0;
+
+      if (a->isDirectory() && !b->isDirectory()) {
+        if constexpr (AlwaysSortDirectoriesFirst) {
+          return true;
+        } else {
+          r = -1;
+        }
+      } else if (!a->isDirectory() && b->isDirectory()) {
+        if constexpr (AlwaysSortDirectoriesFirst) {
+          return false;
+        } else {
+          r = 1;
+        }
+      } else {
+        r = FileTreeItem::Sorter::compare(column, a.get(), b.get());
+      }
+
+      if (order == Qt::AscendingOrder) {
+        return (r < 0);
+      } else {
+        return (r > 0);
+      }
+    });
   }
-
-  std::sort(m_children.begin(), m_children.end(), [&](auto&& a, auto&& b) {
-    int r = 0;
-
-    if (a->isDirectory() && !b->isDirectory()) {
-      if constexpr (AlwaysSortDirectoriesFirst) {
-        return true;
-      } else {
-        r = -1;
-      }
-    } else if (!a->isDirectory() && b->isDirectory()) {
-      if constexpr (AlwaysSortDirectoriesFirst) {
-        return false;
-      } else {
-        r = 1;
-      }
-    } else {
-      r = FileTreeItem::Sorter::compare(column, a.get(), b.get());
-    }
-
-    if (order == Qt::AscendingOrder) {
-      return (r < 0);
-    } else {
-      return (r > 0);
-    }
-  });
 
   for (auto& child : m_children) {
     child->sort(column, order, force);
@@ -321,28 +401,11 @@ void FileTreeItem::getFileType() const
     return;
   }
 
-  DWORD flags = SHGFI_TYPENAME;
-
-  if (isFromArchive()) {
-    // files from archives are not on the filesystem; this flag forces
-    // SHGetFileInfoW() to only work with the filename
-    flags |= SHGFI_USEFILEATTRIBUTES;
-  }
-
-  SHFILEINFOW sfi = {};
-  const auto r = SHGetFileInfoW(
-    m_wsRealPath.c_str(), 0, &sfi, sizeof(sfi), flags);
-
-  if (!r) {
-    const auto e = GetLastError();
-
-    log::error(
-      "SHGetFileInfoW failed for '{}', {}",
-      m_realPath, formatSystemMessage(e));
-
+  const auto& t = cachedFileType(m_wsRealPath, !isFromArchive());
+  if (t.isEmpty()) {
     m_fileType.fail();
   } else {
-    m_fileType.set(QString::fromWCharArray(sfi.szTypeName));
+    m_fileType.set(t);
   }
 }
 

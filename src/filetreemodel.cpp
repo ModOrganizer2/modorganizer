@@ -196,13 +196,13 @@ void* makeInternalPointer(FileTreeItem* item)
 FileTreeModel::FileTreeModel(OrganizerCore& core, QObject* parent) :
   QAbstractItemModel(parent), m_core(core), m_enabled(true),
   m_root(FileTreeItem::createDirectory(this, nullptr, L"", L"")),
-  m_flags(NoFlags), m_fullyLoaded(false)
+  m_flags(NoFlags), m_fullyLoaded(false), m_sortingEnabled(true)
 {
   m_root->setExpanded(true);
+  m_sortTimer.setSingleShot(true);
 
   connect(&m_removeTimer, &QTimer::timeout, [&]{ removeItems(); });
   connect(&m_sortTimer, &QTimer::timeout, [&]{ sortItems(); });
-
   connect(&m_iconPendingTimer, &QTimer::timeout, [&]{ updatePendingIcons(); });
 }
 
@@ -212,6 +212,7 @@ void FileTreeModel::refresh()
 
   m_fullyLoaded = false;
   update(*m_root, *m_core.directoryStructure(), L"", false);
+  sortItem(*m_root, false);
 }
 
 void FileTreeModel::clear()
@@ -251,6 +252,17 @@ bool FileTreeModel::enabled() const
 void FileTreeModel::setEnabled(bool b)
 {
   m_enabled = b;
+}
+
+void FileTreeModel::aboutToExpandAll()
+{
+  m_sortingEnabled = false;
+}
+
+void FileTreeModel::expandedAll()
+{
+  m_sortingEnabled = true;
+  sortItem(*m_root, false);
 }
 
 const FileTreeModel::SortInfo& FileTreeModel::sortInfo() const
@@ -360,6 +372,10 @@ void FileTreeModel::doFetchMore(const QModelIndex& parent, bool forFetch)
 
   const auto parentPath = item->dataRelativeParentPath();
   update(*item, *parentEntry, parentPath.toStdWString(), forFetch);
+
+  if (!forFetch) {
+    sortItem(*item, false);
+  }
 }
 
 QVariant FileTreeModel::data(const QModelIndex& index, int role) const
@@ -485,7 +501,7 @@ void FileTreeModel::sort(int column, Qt::SortOrder order)
   m_sort.column = column;
   m_sort.order = order;
 
-  sortItem(*m_root, false);
+  sortItem(*m_root, true);
 }
 
 FileTreeItem* FileTreeModel::itemFromIndex(const QModelIndex& index) const
@@ -558,11 +574,15 @@ void FileTreeModel::update(
   }
 
   if (added) {
+    parentItem.makeSortingStale();
+
     // see comment at the top of this file
-    if (forFetching)
-      queueSortItem(&parentItem);
-    else
-      sortItem(parentItem, true);
+    if (forFetching) {
+      // don't pass a specific item, this will start a timer and re-sort the
+      // whole tree, which is faster than potentially queuing every single
+      // node if the whole tree is expanded
+      queueSortItem(nullptr);
+    }
   }
 }
 
@@ -873,21 +893,32 @@ void FileTreeModel::removeItems()
 
 void FileTreeModel::queueSortItem(FileTreeItem* item)
 {
-  m_sortItems.push_back(item);
+  if (!m_sortingEnabled) {
+    return;
+  }
+
+  if (item) {
+    m_sortItems.push_back(item);
+  }
+
   m_sortTimer.start(1);
 }
 
 void FileTreeModel::sortItems()
 {
   // see comment at the top of this file
-  trace(log::debug("sort item timer: sorting {} items", m_sortItems.size()));
 
-  auto copy = std::move(m_sortItems);
-  m_sortItems.clear();
-  m_sortTimer.stop();
+  if (m_sortItems.empty()) {
+    sortItem(*m_root, false);
+  } else {
+    log::debug("sort item timer: sorting {} items", m_sortItems.size());
 
-  for (auto&& f : copy) {
-    sortItem(*f, true);
+    auto items = std::move(m_sortItems);
+    m_sortItems.clear();
+
+    for (auto* item : items) {
+      sortItem(*item, false);
+    }
   }
 }
 
