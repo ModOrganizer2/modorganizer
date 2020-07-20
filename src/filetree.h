@@ -25,6 +25,9 @@ public:
   bool fullyLoaded() const;
   void ensureFullyLoaded();
 
+  void expandAll();
+  void collapseAll();
+
   void open(FileTreeItem* item=nullptr);
   void openHooked(FileTreeItem* item=nullptr);
   void preview(FileTreeItem* item=nullptr);

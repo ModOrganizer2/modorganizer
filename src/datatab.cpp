@@ -118,9 +118,9 @@ void DataTab::updateTree()
 void DataTab::ensureFullyLoaded()
 {
   if (!m_filetree->fullyLoaded()) {
-    m_filter.proxyModel()->setRecursiveFilteringEnabled(false);
+    m_filter.setFilteringEnabled(false);
     m_filetree->ensureFullyLoaded();
-    m_filter.proxyModel()->setRecursiveFilteringEnabled(true);
+    m_filter.setFilteringEnabled(true);
   }
 }
 

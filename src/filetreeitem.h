@@ -93,6 +93,7 @@ public:
   }
 
   void sort(int column, Qt::SortOrder order, bool force);
+  void makeSortingStale();
 
   FileTreeItem* parent()
   {
@@ -223,7 +224,7 @@ public:
     m_expanded = b;
 
     if (m_expanded && m_sortingStale) {
-      sort();
+      queueSort();
     }
   }
 
@@ -314,7 +315,7 @@ private:
     std::wstring dataRelativeParentPath, bool isDirectory, std::wstring file);
 
   void getFileType() const;
-  void sort();
+  void queueSort();
 };
 
 #endif // MODORGANIZER_FILETREEITEM_INCLUDED

@@ -802,11 +802,11 @@ void FileTree::addCommonMenus(QMenu& menu)
     .addTo(menu);
 
   MenuItem(tr("Ex&pand All"))
-    .callback([&]{ m_tree->expandAll(); })
+    .callback([&]{ expandAll(); })
     .addTo(menu);
 
   MenuItem(tr("&Collapse All"))
-    .callback([&]{ m_tree->collapseAll(); })
+    .callback([&]{ collapseAll(); })
     .addTo(menu);
 }
 
@@ -819,4 +819,16 @@ QModelIndex FileTree::proxiedIndex(const QModelIndex& index)
   } else {
     return index;
   }
+}
+
+void FileTree::collapseAll()
+{
+  m_tree->collapseAll();
+}
+
+void FileTree::expandAll()
+{
+  m_model->aboutToExpandAll();
+  m_tree->expandAll();
+  m_model->expandedAll();
 }

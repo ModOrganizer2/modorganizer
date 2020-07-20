@@ -61,6 +61,10 @@ public:
   bool enabled() const;
   void setEnabled(bool b);
 
+  void aboutToExpandAll();
+  void expandedAll();
+
+
   const SortInfo& sortInfo() const;
 
   QModelIndex index(int row, int col, const QModelIndex& parent={}) const override;
@@ -77,6 +81,7 @@ public:
 
   FileTreeItem* itemFromIndex(const QModelIndex& index) const;
   void sortItem(FileTreeItem& item, bool force);
+  void queueSortItem(FileTreeItem* item);
 
 private:
   class Range;
@@ -92,11 +97,12 @@ private:
   mutable QTimer m_iconPendingTimer;
   SortInfo m_sort;
   bool m_fullyLoaded;
+  bool m_sortingEnabled;
 
   // see top of filetreemodel.cpp
   std::vector<FileTreeItem*> m_removeItems;
-  QTimer m_removeTimer;
   std::vector<FileTreeItem*> m_sortItems;
+  QTimer m_removeTimer;
   QTimer m_sortTimer;
 
 
@@ -113,12 +119,11 @@ private:
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
     const std::wstring& parentPath, bool forFetching);
 
-  void doFetchMore(const QModelIndex& parent, bool forFetch);
+  void doFetchMore(const QModelIndex& parent, bool forFetch, bool doSort);
 
   void queueRemoveItem(FileTreeItem* item);
   void removeItems();
 
-  void queueSortItem(FileTreeItem* item);
   void sortItems();
 
 
