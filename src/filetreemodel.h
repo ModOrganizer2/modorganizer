@@ -119,7 +119,7 @@ private:
     FileTreeItem& parentItem, const MOShared::DirectoryEntry& parentEntry,
     const std::wstring& parentPath, bool forFetching);
 
-  void doFetchMore(const QModelIndex& parent, bool forFetch);
+  void doFetchMore(const QModelIndex& parent, bool forFetch, bool doSort);
 
   void queueRemoveItem(FileTreeItem* item);
   void removeItems();

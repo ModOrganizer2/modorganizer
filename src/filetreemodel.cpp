@@ -227,7 +227,7 @@ void FileTreeModel::clear()
 void FileTreeModel::recursiveFetchMore(const QModelIndex& m)
 {
   if (canFetchMore(m)) {
-    doFetchMore(m, false);
+    doFetchMore(m, false, false);
   }
 
   for (int i=0; i<rowCount(m); ++i) {
@@ -240,6 +240,7 @@ void FileTreeModel::ensureFullyLoaded()
   if (!m_fullyLoaded) {
     TimeThis tt("FileTreeModel:: fully loading for search");
     recursiveFetchMore(QModelIndex());
+    sortItem(*m_root, false);
     m_fullyLoaded = true;
   }
 }
@@ -350,10 +351,11 @@ bool FileTreeModel::canFetchMore(const QModelIndex& parent) const
 
 void FileTreeModel::fetchMore(const QModelIndex& parent)
 {
-  doFetchMore(parent, true);
+  doFetchMore(parent, true, true);
 }
 
-void FileTreeModel::doFetchMore(const QModelIndex& parent, bool forFetch)
+void FileTreeModel::doFetchMore(
+  const QModelIndex& parent, bool forFetch, bool doSort)
 {
   FileTreeItem* item = itemFromIndex(parent);
   if (!item) {
@@ -373,7 +375,7 @@ void FileTreeModel::doFetchMore(const QModelIndex& parent, bool forFetch)
   const auto parentPath = item->dataRelativeParentPath();
   update(*item, *parentEntry, parentPath.toStdWString(), forFetch);
 
-  if (!forFetch) {
+  if (!forFetch && doSort) {
     sortItem(*item, false);
   }
 }
