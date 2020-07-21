@@ -96,6 +96,7 @@ ConflictListModel::ConflictListModel(QTreeView* tree, std::vector<Column> column
 
 void ConflictListModel::clear()
 {
+  beginResetModel();
   m_items.clear();
   endResetModel();
 }
@@ -129,16 +130,39 @@ int ConflictListModel::columnCount(const QModelIndex&) const
   return static_cast<int>(m_columns.size());
 }
 
+const ConflictItem* ConflictListModel::itemFromIndex(
+  const QModelIndex& index) const
+{
+  const auto row = index.row();
+  if (row < 0) {
+    return nullptr;
+  }
+
+  const auto i = static_cast<std::size_t>(row);
+  if (i >= m_items.size()) {
+    return nullptr;
+  }
+
+  return &m_items[i];
+}
+
+QModelIndex ConflictListModel::indexFromItem(
+  const ConflictItem* item, int col)
+{
+  for (std::size_t i=0; i<m_items.size(); ++i) {
+    if (&m_items[i] == item) {
+      return createIndex(static_cast<int>(i), col);
+    }
+  }
+
+  return {};
+}
+
 QVariant ConflictListModel::data(const QModelIndex& index, int role) const
 {
   if (role == Qt::DisplayRole || role == Qt::FontRole) {
-    const auto row = index.row();
-    if (row < 0) {
-      return {};
-    }
-
-    const auto i = static_cast<std::size_t>(row);
-    if (i >= m_items.size()) {
+    const ConflictItem* item = itemFromIndex(index);
+    if (!item) {
       return {};
     }
 
@@ -152,12 +176,10 @@ QVariant ConflictListModel::data(const QModelIndex& index, int role) const
       return {};
     }
 
-    const auto& item = m_items[i];
-
     if (role == Qt::DisplayRole) {
-      return (item.*m_columns[c].getText)();
+      return (item->*m_columns[c].getText)();
     } else if (role == Qt::FontRole) {
-      if (item.isArchive()) {
+      if (item->isArchive()) {
         QFont f = m_tree->font();
         f.setItalic(true);
         return f;
@@ -191,7 +213,31 @@ void ConflictListModel::sort(int colIndex, Qt::SortOrder order)
   m_sortColumn = colIndex;
   m_sortOrder = order;
 
+  emit layoutAboutToBeChanged({}, QAbstractItemModel::VerticalSortHint);
+
+  const auto oldList = persistentIndexList();
+  std::vector<std::pair<const ConflictItem*, int>> oldItems;
+
+  const auto itemCount = oldList.size();
+  oldItems.reserve(static_cast<std::size_t>(itemCount));
+
+  for (int i=0; i<itemCount; ++i) {
+    const QModelIndex& index = oldList[i];
+    oldItems.push_back({itemFromIndex(index), index.column()});
+  }
+
   doSort();
+
+  QModelIndexList newList;
+  newList.reserve(itemCount);
+
+  for (int i=0; i<itemCount; ++i) {
+    const auto& pair = oldItems[static_cast<std::size_t>(i)];
+    newList.append(indexFromItem(pair.first, pair.second));
+  }
+
+  changePersistentIndexList(oldList, newList);
+
   emit layoutChanged({}, QAbstractItemModel::VerticalSortHint);
 }
 
@@ -202,8 +248,10 @@ void ConflictListModel::add(ConflictItem item)
 
 void ConflictListModel::finished()
 {
+  beginResetModel();
   endResetModel();
-  doSort();
+
+  sort(m_sortColumn, m_sortOrder);
 }
 
 const ConflictItem* ConflictListModel::getItem(std::size_t row) const
