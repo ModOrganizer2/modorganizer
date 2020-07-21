@@ -6218,6 +6218,16 @@ void MainWindow::on_showHiddenBox_toggled(bool checked)
 
 void MainWindow::on_bossButton_clicked()
 {
+  const auto r = QMessageBox::question(
+    this, tr("Sorting plugins"),
+    tr("Are you sure you want to sort your plugins list?"),
+    QMessageBox::Yes | QMessageBox::No);
+
+  if (r != QMessageBox::Yes) {
+    return;
+  }
+
+
   m_OrganizerCore.savePluginList();
 
   setEnabled(false);
