@@ -3309,6 +3309,29 @@ void MainWindow::visitWebPage_clicked()
   }
 }
 
+void MainWindow::visitNexusOrWebPage(const QModelIndex& idx)
+{
+  int row_idx = idx.data(Qt::UserRole + 1).toInt();
+
+  ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
+  if (!info) {
+    log::error("mod {} not found", row_idx);
+    return;
+  }
+
+  int modID = info->getNexusID();
+  QString gameName = info->getGameName();
+  const auto url = info->parseCustomURL();
+
+  if (modID > 0) {
+    linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
+  } else if (url.isValid()) {
+    linkClicked(url.toString());
+  } else {
+    log::error("mod '{}' has no valid link", info->name());
+  }
+}
+
 void MainWindow::visitNexusOrWebPage_clicked() {
   QItemSelectionModel* selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
@@ -3320,43 +3343,14 @@ void MainWindow::visitNexusOrWebPage_clicked() {
         return;
       }
     }
-    int row_idx;
-    ModInfo::Ptr info;
-    QString gameName;
 
     for (QModelIndex idx : selection->selectedRows()) {
-      row_idx = idx.data(Qt::UserRole + 1).toInt();
-      info = ModInfo::getByIndex(row_idx);
-      int modID = info->getNexusID();
-      gameName = info->getGameName();
-      const auto url = info->parseCustomURL();
-      if (modID > 0) {
-        linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
-      }
-      else if (url.isValid()) {
-        linkClicked(url.toString());
-      }
-      else {
-        log::error("mod '{}' has no valid link", info->name());
-      }
+      visitNexusOrWebPage(idx);
     }
   }
   else {
-    int modID = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole).toInt();
-    QString gameName = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole + 4).toString();
-    if (modID > 0) {
-      linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
-    }
-    else {
-      ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-      const auto url = info->parseCustomURL();
-      if (url.isValid()) {
-        linkClicked(url.toString());
-      }
-      else {
-        MessageDialog::showMessage(tr("No valid Web Page for this mod"), this);
-      }
-    }
+    QModelIndex idx = m_OrganizerCore.modList()->index(m_ContextRow, 0);
+    visitNexusOrWebPage(idx);
   }
 }
 
@@ -3865,7 +3859,10 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
   if (modifiers.testFlag(Qt::ControlModifier)) {
     try {
       m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
-      openExplorer_clicked();
+
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
+      shell::Explore(modInfo->absolutePath());
+
       // workaround to cancel the editor that might have opened because of
       // selection-click
       ui->modList->closePersistentEditor(index);
@@ -3877,7 +3874,8 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
   else if (modifiers.testFlag(Qt::ShiftModifier)) {
     try {
       m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
-      visitNexusOrWebPage_clicked();
+      QModelIndex idx = m_OrganizerCore.modList()->index(m_ContextRow, 0);
+      visitNexusOrWebPage(idx);
       ui->modList->closePersistentEditor(index);
     }
     catch (const std::exception & e) {
@@ -6220,6 +6218,16 @@ void MainWindow::on_showHiddenBox_toggled(bool checked)
 
 void MainWindow::on_bossButton_clicked()
 {
+  const auto r = QMessageBox::question(
+    this, tr("Sorting plugins"),
+    tr("Are you sure you want to sort your plugins list?"),
+    QMessageBox::Yes | QMessageBox::No);
+
+  if (r != QMessageBox::Yes) {
+    return;
+  }
+
+
   m_OrganizerCore.savePluginList();
 
   setEnabled(false);

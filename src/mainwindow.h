@@ -251,7 +251,7 @@ private:
   void fixCategories();
 
   bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
-   
+
   // Performs checks, sets the m_NumberOfProblems and signals checkForProblemsDone().
   void checkForProblemsImpl();
 
@@ -498,6 +498,7 @@ private slots:
     ModListSortProxy::FilterMode mode, ModListSortProxy::SeparatorsMode sep);
 
   void displayModInformation(const QString &modName, ModInfoTabIDs tabID);
+  void visitNexusOrWebPage(const QModelIndex& idx);
 
   void modRenamed(const QString &oldName, const QString &newName);
   void modRemoved(const QString &fileName);

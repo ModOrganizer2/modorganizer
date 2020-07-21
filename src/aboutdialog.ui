@@ -397,6 +397,11 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">Hakan &quot;Nyks45&quot; Albayrak (Turkish)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string>...and all other contributors!</string>
                </property>
                <property name="toolTip">

@@ -78,6 +78,9 @@ private:
   int m_sortColumn;
   Qt::SortOrder m_sortOrder;
 
+  const ConflictItem* itemFromIndex(const QModelIndex& index) const;
+  QModelIndex indexFromItem(const ConflictItem* item, int col);
+
   void doSort();
 };
 
