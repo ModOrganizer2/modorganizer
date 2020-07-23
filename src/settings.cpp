@@ -68,17 +68,24 @@ Settings::Settings(const QString& path) :
   m_Network(m_Settings), m_Nexus(*this, m_Settings), m_Steam(*this, m_Settings),
   m_Interface(m_Settings), m_Diagnostics(m_Settings)
 {
-  if (s_Instance != nullptr) {
-    throw std::runtime_error("second instance of \"Settings\" created");
-  } else {
-    s_Instance = this;
-  }
 }
 
 Settings::~Settings()
 {
   MOBase::QuestionBoxMemory::setCallbacks({}, {}, {});
-  s_Instance = nullptr;
+
+  if (s_Instance == this) {
+    s_Instance = nullptr;
+  }
+}
+
+void Settings::setGlobalInstance()
+{
+  if (s_Instance != nullptr) {
+    throw std::runtime_error("second instance of \"Settings\" created");
+  } else {
+    s_Instance = this;
+  }
 }
 
 Settings &Settings::instance()

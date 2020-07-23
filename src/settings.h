@@ -681,6 +681,7 @@ public:
   ~Settings();
 
   static Settings &instance();
+  void setGlobalInstance();
 
   // name of the ini file
   //

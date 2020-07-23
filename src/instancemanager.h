@@ -49,6 +49,7 @@ public:
   bool allowedToChangeInstance() const;
   static bool isPortablePath(const QString& dataPath);
 
+  QString instancesPath() const;
   QStringList instanceNames() const;
   std::vector<QDir> instancePaths() const;
 
@@ -56,7 +57,6 @@ private:
 
   InstanceManager();
 
-  QString instancesPath() const;
   QString instancePath(const QString& instanceName) const;
 
   bool deleteLocalInstance(const QString &instanceId) const;

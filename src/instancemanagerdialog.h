@@ -5,16 +5,30 @@
 
 namespace Ui { class InstanceManagerDialog; };
 
+class InstanceInfo;
+class PluginContainer;
+
 class InstanceManagerDialog : public QDialog
 {
   Q_OBJECT
 
 public:
-  explicit InstanceManagerDialog(QWidget *parent = nullptr);
+  explicit InstanceManagerDialog(
+    const PluginContainer& pc, QWidget *parent = nullptr);
+
   ~InstanceManagerDialog();
+
+  void select(std::size_t i);
 
 private:
   std::unique_ptr<Ui::InstanceManagerDialog> ui;
+  const PluginContainer& m_pc;
+  std::vector<std::unique_ptr<InstanceInfo>> m_instances;
+
+  void onSelection();
+  void createNew();
+
+  void fill(const InstanceInfo& ii);
 };
 
 #endif // MODORGANIZER_INSTANCEMANAGERDIALOG_INCLUDED

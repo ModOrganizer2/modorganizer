@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "tutorialmanager.h"
 #include "nxmaccessmanager.h"
 #include "instancemanager.h"
+#include "instancemanagerdialog.h"
 #include "organizercore.h"
 #include "env.h"
 #include "envmodule.h"
@@ -298,6 +299,8 @@ int runApplication(
   try
   {
     Settings settings(dataPath + "/" + QString::fromStdWString(AppConfig::iniFileName()));
+    settings.setGlobalInstance();
+
     log::getDefault().setLevel(settings.diagnostics().logLevel());
 
     log::debug("using ini at '{}'", settings.filename());
@@ -428,6 +431,12 @@ int runApplication(
       }
 
       tt.stop();
+
+      QTimer::singleShot(std::chrono::milliseconds(1), [&]
+      {
+        InstanceManagerDialog dlg(*pluginContainer, &mainWindow);
+        dlg.exec();
+      });
 
       res = application.exec();
       mainWindow.close();
