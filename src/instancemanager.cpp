@@ -20,9 +20,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "instancemanager.h"
 #include "selectiondialog.h"
+#include "settings.h"
+#include "shared/appconfig.h"
+#include "plugincontainer.h"
+#include <report.h>
+#include <iplugingame.h>
 #include <utility.h>
 #include <log.h>
-#include "shared/appconfig.h"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QStandardPaths>
@@ -54,6 +59,11 @@ void InstanceManager::overrideInstance(const QString& instanceName)
   m_overrideInstance = true;
 }
 
+void InstanceManager::overrideProfile(const QString& profileName)
+{
+  m_overrideProfileName = profileName;
+  m_overrideProfile = true;
+}
 
 QString InstanceManager::currentInstance() const
 {
@@ -355,6 +365,226 @@ QString InstanceManager::determineDataPath()
 
     return dataPath;
   }
+}
+
+QString InstanceManager::determineProfile(const Settings &settings)
+{
+  auto selectedProfileName = settings.game().selectedProfileName();
+
+  if (m_overrideProfile) {
+    log::debug("profile overwritten on command line");
+    selectedProfileName = m_overrideProfileName;
+  }
+
+  if (!selectedProfileName) {
+    log::debug("no configured profile");
+    selectedProfileName = "Default";
+  }
+
+  return *selectedProfileName;
+}
+
+bool InstanceManager::determineGameEdition(
+  Settings& settings, IPluginGame* game)
+{
+  QString edition;
+
+  if (auto v=settings.game().edition()) {
+    edition = *v;
+  } else {
+    QStringList editions = game->gameVariants();
+    if (editions.size() < 2) {
+      edition = "";
+      return true;
+    }
+
+    SelectionDialog selection(
+      QObject::tr("Please select the game edition you have (MO can't "
+        "start the game correctly if this is set "
+        "incorrectly!)"),
+      nullptr);
+
+    selection.setWindowFlag(Qt::WindowStaysOnTopHint, true);
+
+    int index = 0;
+    for (const QString &edition : editions) {
+      selection.addChoice(edition, "", index++);
+    }
+
+    if (selection.exec() == QDialog::Rejected) {
+      return false;
+    }
+
+    edition = selection.getChoiceString();
+    settings.game().setEdition(edition);
+  }
+
+  game->setGameVariant(edition);
+
+  return true;
+}
+
+MOBase::IPluginGame *selectGame(
+  Settings &settings, QDir const &gamePath, MOBase::IPluginGame *game)
+{
+  settings.game().setName(game->gameName());
+
+  QString gameDir = gamePath.absolutePath();
+  game->setGamePath(gameDir);
+
+  settings.game().setDirectory(gameDir);
+
+  return game;
+}
+
+MOBase::IPluginGame* InstanceManager::determineCurrentGame(
+  const QString& moPath, Settings& settings, const PluginContainer &plugins)
+{
+  //Determine what game we are running where. Be very paranoid in case the
+  //user has done something odd.
+
+  //If the game name has been set up, try to use that.
+  const auto gameName = settings.game().name();
+  const bool gameConfigured = (gameName.has_value() && *gameName != "");
+
+  if (gameConfigured) {
+    MOBase::IPluginGame *game = plugins.managedGame(*gameName);
+    if (game == nullptr) {
+      reportError(
+        QObject::tr("Plugin to handle %1 no longer installed. An antivirus might have deleted files.")
+        .arg(*gameName));
+
+      return nullptr;
+    }
+
+    auto gamePath = settings.game().directory();
+    if (!gamePath || *gamePath == "") {
+      gamePath = game->gameDirectory().absolutePath();
+    }
+
+    QDir gameDir(*gamePath);
+    QFileInfo directoryInfo(gameDir.path());
+
+    if (directoryInfo.isSymLink()) {
+      reportError(QObject::tr("The configured path to the game directory (%1) appears to be a symbolic (or other) link. "
+        "This setup is incompatible with MO2's VFS and will not run correctly.").arg(*gamePath));
+    }
+
+    if (game->looksValid(gameDir)) {
+      return selectGame(settings, gameDir, game);
+    }
+  }
+
+  //If we've made it this far and the instance is already configured for a game, something has gone wrong.
+  //Tell the user about it.
+  if (gameConfigured) {
+    const auto gamePath = settings.game().directory();
+
+    reportError(
+      QObject::tr("Could not use configuration settings for game \"%1\", path \"%2\".")
+      .arg(*gameName).arg(gamePath ? *gamePath : ""));
+  }
+
+  SelectionDialog selection(gameConfigured ?
+    QObject::tr("Please select the installation of %1 to manage").arg(*gameName) :
+    QObject::tr("Please select the game to manage"), nullptr, QSize(32, 32));
+
+  for (IPluginGame *game : plugins.plugins<IPluginGame>()) {
+    //If a game is already configured, skip any plugins that are not for that game
+    if (gameConfigured && gameName->compare(game->gameName(), Qt::CaseInsensitive) != 0)
+      continue;
+
+    //Only add games that are installed
+    if (game->isInstalled()) {
+      QString path = game->gameDirectory().absolutePath();
+      selection.addChoice(game->gameIcon(), game->gameName(), path, QVariant::fromValue(game));
+    }
+  }
+
+  selection.addChoice(QString("Browse..."), QString(), QVariant::fromValue(static_cast<IPluginGame *>(nullptr)));
+
+  while (selection.exec() != QDialog::Rejected) {
+    IPluginGame * game = selection.getChoiceData().value<IPluginGame *>();
+    QString gamePath = selection.getChoiceDescription();
+    QFileInfo directoryInfo(gamePath);
+    if (directoryInfo.isSymLink()) {
+      reportError(QObject::tr("The configured path to the game directory (%1) appears to be a symbolic (or other) link. "
+        "This setup is incompatible with MO2's VFS and will not run correctly.").arg(gamePath));
+    }
+    if (game != nullptr) {
+      return selectGame(settings, game->gameDirectory(), game);
+    }
+
+    gamePath = QFileDialog::getExistingDirectory(nullptr, gameConfigured ?
+      QObject::tr("Please select the installation of %1 to manage").arg(*gameName) :
+      QObject::tr("Please select the game to manage"),
+      QString(), QFileDialog::ShowDirsOnly);
+
+    if (!gamePath.isEmpty()) {
+      QDir gameDir(gamePath);
+      QFileInfo directoryInfo(gamePath);
+      if (directoryInfo.isSymLink()) {
+        reportError(QObject::tr("The configured path to the game directory (%1) appears to be a symbolic (or other) link. "
+          "This setup is incompatible with MO2's VFS and will not run correctly.").arg(gamePath));
+      }
+      QList<IPluginGame *> possibleGames;
+      for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
+        //If a game is already configured, skip any plugins that are not for that game
+        if (gameConfigured && gameName->compare(game->gameName(), Qt::CaseInsensitive) != 0)
+          continue;
+
+        //Only try plugins that look valid for this directory
+        if (game->looksValid(gameDir)) {
+          possibleGames.append(game);
+        }
+      }
+
+      if (possibleGames.count() > 1) {
+        SelectionDialog browseSelection(gameConfigured ?
+          QObject::tr("Please select the installation of %1 to manage").arg(*gameName) :
+          QObject::tr("Please select the game to manage"),
+          nullptr, QSize(32, 32));
+
+        for (IPluginGame *game : possibleGames) {
+          browseSelection.addChoice(game->gameIcon(), game->gameName(), gamePath, QVariant::fromValue(game));
+        }
+
+        if (browseSelection.exec() == QDialog::Accepted) {
+          return selectGame(settings, gameDir, browseSelection.getChoiceData().value<IPluginGame *>());
+        } else {
+          reportError(gameConfigured ?
+            QObject::tr("Canceled finding %1 in \"%2\".").arg(*gameName).arg(gamePath) :
+            QObject::tr("Canceled finding game in \"%1\".").arg(gamePath));
+        }
+      } else if(possibleGames.count() == 1) {
+        return selectGame(settings, gameDir, possibleGames[0]);
+      } else {
+        if (gameConfigured) {
+          reportError(
+            QObject::tr("%1 not identified in \"%2\". The directory is required to contain the game binary.")
+            .arg(*gameName).arg(gamePath));
+        } else {
+          QString supportedGames;
+
+          for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
+            supportedGames += "<li>" + game->gameName() + "</li>";
+          }
+
+          QString text = QObject::tr(
+            "No game identified in \"%1\". The directory is required to "
+            "contain the game binary.<br><br>"
+            "<b>These are the games supported by Mod Organizer:</b>"
+            "<ul>%2</ul>")
+            .arg(gamePath)
+            .arg(supportedGames);
+
+          reportError(text);
+        }
+      }
+    }
+  }
+
+  return nullptr;
 }
 
 

@@ -24,18 +24,26 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QString>
 #include <QSettings>
 
+namespace MOBase { class IPluginGame; }
+
+class Settings;
+class PluginContainer;
 
 class InstanceManager {
 
 public:
-
   static InstanceManager &instance();
 
-  QString determineDataPath();
-  void clearCurrentInstance();
-
   void overrideInstance(const QString& instanceName);
+  void overrideProfile(const QString& profileName);
 
+  QString determineDataPath();
+  QString determineProfile(const Settings &settings);
+  bool determineGameEdition(Settings& settings, MOBase::IPluginGame* game);
+  MOBase::IPluginGame* determineCurrentGame(
+    const QString& moPath, Settings& settings, const PluginContainer &plugins);
+
+  void clearCurrentInstance();
   QString currentInstance() const;
 
   bool allowedToChangeInstance() const;
@@ -69,4 +77,6 @@ private:
   bool m_Reset {false};
   bool m_overrideInstance{false};
   QString m_overrideInstanceName;
+  bool m_overrideProfile{false};
+  QString m_overrideProfileName;
 };
