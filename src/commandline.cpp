@@ -67,6 +67,7 @@ std::optional<int> CommandLine::run(const std::wstring& line)
       .run();
 
     po::store(parsed, m_vm);
+    po::notify(m_vm);
 
     auto opts = po::collect_unrecognized(
       parsed.options, po::include_positional);
@@ -80,28 +81,43 @@ std::optional<int> CommandLine::run(const std::wstring& line)
           // remove the command name itself
           opts.erase(opts.begin());
 
-          auto co = c->options();
-          co.add_options()
-            ("help", "shows this message");
+          try
+          {
+            po::wcommand_line_parser parser(opts);
 
-          po::wcommand_line_parser parser(opts);
-          parser.options(co);
+            auto co = c->allOptions();
+            parser.options(co);
 
-          if (c->allow_unregistered()) {
-            parser.allow_unregistered();
+            if (c->allow_unregistered()) {
+              parser.allow_unregistered();
+            }
+
+            auto pos = c->positional();
+            parser.positional(pos);
+
+            parsed = parser.run();
+
+            po::store(parsed, m_vm);
+            po::notify(m_vm);
+
+            if (m_vm.count("help")) {
+              env::Console console;
+              std::cout << usage(c.get()) << "\n";
+              return 0;
+            }
+
+            return c->run(line, m_vm, opts);
           }
-
-          parsed = parser.run();
-
-          po::store(parsed, m_vm);
-
-          if (m_vm.count("help")) {
+          catch(po::error& e)
+          {
             env::Console console;
-            std::cout << usage(c.get()) << "\n";
-            return 0;
-          }
 
-          return c->run(line, m_vm, opts);
+            std::cerr
+              << e.what() << "\n"
+              << usage(c.get()) << "\n";
+
+            return 1;
+          }
         }
       }
     }
@@ -157,7 +173,7 @@ void CommandLine::createOptions()
 {
   m_visibleOptions.add_options()
     ("help",      "show this message")
-    ("multiple",  "allow multiple instances of MO to run; see below")
+    ("multiple",  "allow multiple MO processes to run; see below")
     ("instance,i", po::value<std::string>(), "use the given instance (defaults to last used)")
     ("profile,p", po::value<std::string>(), "use the given profile (defaults to last used)");
 
@@ -184,10 +200,10 @@ std::string CommandLine::usage(const Command* c) const
 
   if (c) {
     oss
-      << "  ModOrganizer.exe [options] " << c->name() << " [command-options]\n"
+      << "  ModOrganizer.exe [global-options] " << c->usageLine() << "\n"
       << "\n"
       << "Command options:\n"
-      << c->options() << "\n";
+      << c->visibleOptions() << "\n";
   } else {
     oss
       << "  ModOrganizer.exe [options] [[command] [command-options]]\n"
@@ -263,18 +279,24 @@ const QStringList& CommandLine::untouched() const
 std::string CommandLine::more() const
 {
   return
-    "Multiple instances\n"
-    "  --multiple can be used to allow multiple instances of MO to run\n"
+    "Multiple processes\n"
+    "  A note on terminology: 'instance' can either mean an MO process\n"
+    "  that's running on the system, or a set of mods and profiles managed\n"
+    "  by MO. To avoid confusion, the term 'process' is used below for the\n"
+    "  former.\n"
+    "  \n"
+    "  --multiple can be used to allow multiple MO processes to run\n"
     "  simultaneously. This is unsupported and can create all sorts of weird\n"
-    "  problems. To minimize the problems:\n"
+    "  problems. To minimize these:\n"
     "  \n"
-    "    1) Never have multiple MO instances opened that manage the same\n"
+    "    1) Never have multiple MO processes running that manage the same\n"
     "       game instance.\n"
-    "    2) If an executable is launched from an instance, only this\n"
-    "       instance may launch executables until all instances are closed.\n"
+    "    2) If an executable is launched from an MO process, only this\n"
+    "       process may launch executables until all processes are \n"
+    "       terminated.\n"
     "  \n"
-    "  It is recommended to close _all_ instances of MO as soon as multiple\n"
-    "  instances become unnecessary.";
+    "  It is recommended to close _all_ MO processes as soon as multiple\n"
+    "  processes become unnecessary.";
 }
 
 
@@ -288,21 +310,64 @@ std::string Command::description() const
   return meta().description;
 }
 
+std::string Command::usageLine() const
+{
+  return name() + " " + getUsageLine();
+}
+
 bool Command::allow_unregistered() const
 {
   return false;
 }
 
-po::options_description Command::options() const
+po::options_description Command::allOptions() const
 {
-  return doOptions();
+  po::options_description d;
+
+  d.add(visibleOptions());
+  d.add(getInternalOptions());
+
+  return d;
 }
 
-po::options_description Command::doOptions() const
+po::options_description Command::visibleOptions() const
+{
+  po::options_description d(getVisibleOptions());
+
+  d.add_options()
+    ("help", "shows this message");
+
+  return d;
+}
+
+po::positional_options_description Command::positional() const
+{
+  return getPositional();
+}
+
+std::string Command::getUsageLine() const
+{
+  return "[options]";
+}
+
+po::options_description Command::getVisibleOptions() const
 {
   // no-op
   return {};
 }
+
+po::options_description Command::getInternalOptions() const
+{
+  // no-op
+  return {};
+}
+
+po::positional_options_description Command::getPositional() const
+{
+  // no-op
+  return {};
+}
+
 
 std::string Command::usage() const
 {
@@ -314,7 +379,7 @@ std::string Command::usage() const
     << "    ModOrganizer.exe [options] [[command] [command-options]]\n"
     << "\n"
     << "Options:\n"
-    << options() << "\n";
+    << visibleOptions() << "\n";
 
   return oss.str();
 }
@@ -347,7 +412,7 @@ const std::vector<std::wstring>& Command::untouched() const
 }
 
 
-po::options_description CrashDumpCommand::doOptions() const
+po::options_description CrashDumpCommand::getVisibleOptions() const
 {
   po::options_description d;
 
@@ -385,11 +450,6 @@ std::optional<int> CrashDumpCommand::doRun()
 bool LaunchCommand::allow_unregistered() const
 {
   return true;
-}
-
-po::options_description LaunchCommand::doOptions() const
-{
-  return {};
 }
 
 Command::Meta LaunchCommand::meta() const
@@ -463,14 +523,39 @@ LPCWSTR LaunchCommand::UntouchedCommandLineArguments(
 }
 
 
-bool ExeCommand::allow_unregistered() const
+std::string ExeCommand::getUsageLine() const
 {
-  return true;
+  return "[options] exe-name";
 }
 
-po::options_description ExeCommand::doOptions() const
+po::options_description ExeCommand::getVisibleOptions() const
 {
-  return {};
+  po::options_description d;
+
+  d.add_options()
+    ("arguments,a", po::value<std::string>()->default_value(""), "override arguments")
+    ("cwd,c",       po::value<std::string>()->default_value(""), "override working directory");
+
+  return d;
+}
+
+po::options_description ExeCommand::getInternalOptions() const
+{
+  po::options_description d;
+
+  d.add_options()
+    ("exe-name", po::value<std::string>()->required(), "executable name");
+
+  return d;
+}
+
+po::positional_options_description ExeCommand::getPositional() const
+{
+  po::positional_options_description d;
+
+  d.add("exe-name", 1);
+
+  return d;
 }
 
 Command::Meta ExeCommand::meta() const
@@ -480,16 +565,17 @@ Command::Meta ExeCommand::meta() const
 
 std::optional<int> ExeCommand::doRun()
 {
-  return {};
+  const auto exe = vm()["exe-name"].as<std::string>();
+  const auto args = vm()["arguments"].as<std::string>();
+  const auto cwd = vm()["cwd"].as<std::string>();
+
+
+
+  return 0;
 }
 
 
-bool RunCommand::allow_unregistered() const
-{
-  return true;
-}
-
-po::options_description RunCommand::doOptions() const
+po::options_description RunCommand::getOptions() const
 {
   return {};
 }

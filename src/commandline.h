@@ -17,8 +17,11 @@ public:
 
   std::string name() const;
   std::string description() const;
+  std::string usageLine() const;
 
-  po::options_description options() const;
+  po::options_description allOptions() const;
+  po::options_description visibleOptions() const;
+  po::positional_options_description positional() const;
   std::string usage() const;
 
   virtual bool allow_unregistered() const;
@@ -34,7 +37,11 @@ protected:
     std::string name, description;
   };
 
-  virtual po::options_description doOptions() const;
+  virtual std::string getUsageLine() const;
+  virtual po::options_description getVisibleOptions() const;
+  virtual po::options_description getInternalOptions() const;
+  virtual po::positional_options_description getPositional() const;
+
   virtual Meta meta() const = 0;
   virtual std::optional<int> doRun() = 0;
 
@@ -52,7 +59,7 @@ private:
 class CrashDumpCommand : public Command
 {
 protected:
-  po::options_description doOptions() const;
+  po::options_description getVisibleOptions() const override;
   Meta meta() const override;
   std::optional<int> doRun() override;
 };
@@ -76,7 +83,6 @@ public:
   bool allow_unregistered() const override;
 
 protected:
-  po::options_description doOptions() const;
   Meta meta() const override;
   std::optional<int> doRun() override;
 
@@ -89,11 +95,11 @@ protected:
 
 class ExeCommand : public Command
 {
-public:
-  bool allow_unregistered() const override;
-
 protected:
-  po::options_description doOptions() const;
+  std::string getUsageLine() const override;
+  po::options_description getVisibleOptions() const override;
+  po::options_description getInternalOptions() const override;
+  po::positional_options_description getPositional() const override;
   Meta meta() const override;
   std::optional<int> doRun() override;
 };
@@ -101,11 +107,8 @@ protected:
 
 class RunCommand : public Command
 {
-public:
-  bool allow_unregistered() const override;
-
 protected:
-  po::options_description doOptions() const;
+  po::options_description getOptions() const;
   Meta meta() const override;
   std::optional<int> doRun() override;
 };
