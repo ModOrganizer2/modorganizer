@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "shared/appconfig.h"
 #include "plugincontainer.h"
+#include "env.h"
 #include <report.h>
 #include <iplugingame.h>
 #include <utility.h>
@@ -37,20 +38,38 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-static const char COMPANY_NAME[]     = "Tannin";
-static const char APPLICATION_NAME[] = "Mod Organizer";
-static const char INSTANCE_KEY[]     = "CurrentInstance";
+const QString Organization = "Mod Organizer Team";
+const QString Application = "Mod Organizer";
+const QString InstanceValue = "CurrentInstance";
 
 
 InstanceManager::InstanceManager()
-  : m_AppSettings(COMPANY_NAME, APPLICATION_NAME)
+  : m_AppSettings(Organization, Application)
 {
+  updateRegistryKey();
 }
 
 InstanceManager &InstanceManager::instance()
 {
   static InstanceManager s_Instance;
   return s_Instance;
+}
+
+void InstanceManager::updateRegistryKey()
+{
+  const QString OldOrganization = "Tannin";
+  const QString OldApplication = "Mod Organizer";
+  const QString OldInstanceValue = "CurrentInstance";
+
+  const QString OldRootKey = "Software\\" + OldOrganization;
+
+  if (env::registryValueExists(OldRootKey + "\\" + OldApplication, OldInstanceValue)) {
+    QSettings old(OldOrganization, OldApplication);
+    setCurrentInstance(old.value(OldInstanceValue).toString());
+    old.remove(OldInstanceValue);
+  }
+
+  env::deleteRegistryKeyIfEmpty(OldRootKey);
 }
 
 void InstanceManager::overrideInstance(const QString& instanceName)
@@ -70,7 +89,7 @@ QString InstanceManager::currentInstance() const
   if (m_overrideInstance)
     return m_overrideInstanceName;
   else
-    return m_AppSettings.value(INSTANCE_KEY, "").toString();
+    return m_AppSettings.value(InstanceValue, "").toString();
 }
 
 void InstanceManager::clearCurrentInstance()
@@ -82,7 +101,7 @@ void InstanceManager::clearCurrentInstance()
 
 void InstanceManager::setCurrentInstance(const QString &name)
 {
-  m_AppSettings.setValue(INSTANCE_KEY, name);
+  m_AppSettings.setValue(InstanceValue, name);
 }
 
 bool InstanceManager::deleteLocalInstance(const QString &instanceId) const

@@ -71,6 +71,8 @@ private:
   bool portableInstall() const;
   bool portableInstallIsLocked() const;
 
+  void updateRegistryKey();
+
 private:
 
   QSettings m_AppSettings;

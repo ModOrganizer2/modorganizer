@@ -301,6 +301,15 @@ struct Association
 Association getAssociation(const QFileInfo& file);
 
 
+// returns whether the given value exists
+//
+bool registryValueExists(const QString& key, const QString& value);
+
+// deletes a registry key if it's empty or only contains empty keys
+//
+void deleteRegistryKeyIfEmpty(const QString& name);
+
+
 enum class CoreDumpTypes
 {
   Mini = 1,
