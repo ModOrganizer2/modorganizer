@@ -91,7 +91,7 @@ class GamePage : public Page
 {
 public:
   GamePage(CreateInstanceDialog& dlg, std::size_t i)
-    : Page(dlg, i)
+    : Page(dlg, i), m_selection(nullptr)
   {
     createGames();
     fillList();
@@ -117,7 +117,47 @@ public:
       }
     }
 
+    m_selection = checked;
     selectButton(checked);
+  }
+
+  void selectCustom()
+  {
+    const auto path = QFileDialog::getExistingDirectory(
+      &m_dlg, QObject::tr("Find game installation"));
+
+    if (path.isEmpty()) {
+      selectButton(m_selection);
+      return;
+    }
+
+    for (auto& g : m_games) {
+      if (g->game->looksValid(path)) {
+        g->dir = path;
+        g->installed = true;
+        select(g->game);
+        updateButton(g.get());
+        return;
+      }
+    }
+
+    warnUnrecognized(path);
+    selectButton(m_selection);
+  }
+
+  void warnUnrecognized(const QString& path)
+  {
+    QString supportedGames;
+    for (auto* game : m_pc.plugins<MOBase::IPluginGame>()) {
+      supportedGames += "<li>" + game->gameName() + "</li>";
+    }
+
+    QMessageBox::warning(&m_dlg,
+      QObject::tr("Unrecognized game"),
+      QObject::tr(
+        "The folder %1 does not seem to contain a game Mod Organizer can "
+        "manage.<br><br><b>These are the games that can be managed:</b>"
+        "<ul>%2</ul>").arg(path).arg(supportedGames));
   }
 
 private:
@@ -141,6 +181,7 @@ private:
   };
 
   std::vector<std::unique_ptr<Game>> m_games;
+  Game* m_selection;
 
 
   Game* findGame(MOBase::IPluginGame* game)
@@ -163,21 +204,9 @@ private:
     }
   }
 
-  void createButton(Game* g)
-  {
-    g->button = new QCommandLinkButton;
-    g->button->setCheckable(true);
-
-    updateButton(g);
-
-    QObject::connect(g->button, &QAbstractButton::clicked, [g, this] {
-      select(g->game);
-    });
-  }
-
   void updateButton(Game* g)
   {
-    if (!g->button) {
+    if (!g || !g->button) {
       return;
     }
 
@@ -192,17 +221,67 @@ private:
 
   void selectButton(Game* g)
   {
+    // go through each game, set the button that is for game `g` as active;
+    // some button might not exist, which happens when selecting a custom
+    // folder for a game that was considered uninstalled
+
     for (const auto& gg : m_games) {
-      if (!gg->button) {
+      if (!g) {
+        // nothing should be selected
+        if (gg->button) {
+          gg->button->setChecked(false);
+        }
+
         continue;
       }
 
-      if (g) {
-        gg->button->setChecked(gg->game == g->game);
+      if (gg->game == g->game) {
+        // this is the button that should be selected
+
+        if (!gg->button) {
+          // this happens when the button wasn't visible because the game
+          // was not installed; create it and show it
+          // and it has a button, just check it
+          createGameButton(gg.get());
+          ui->games->addButton(gg->button, QDialogButtonBox::AcceptRole);
+        }
+
+        gg->button->setChecked(true);
+        gg->button->setFocus();
       } else {
-        gg->button->setChecked(false);
+        // this is not the button you're looking for
+        if (gg->button) {
+          gg->button->setChecked(false);
+        }
       }
     }
+  }
+
+  QCommandLinkButton* createCustomButton()
+  {
+    auto* b = new QCommandLinkButton;
+
+    b->setText(QObject::tr("Browse..."));
+    b->setDescription(
+      QObject::tr("The folder must contain a valid game installation"));
+
+    QObject::connect(b, &QAbstractButton::clicked, [&] {
+      selectCustom();
+    });
+
+    return b;
+  }
+
+  void createGameButton(Game* g)
+  {
+    g->button = new QCommandLinkButton;
+    g->button->setCheckable(true);
+
+    updateButton(g);
+
+    QObject::connect(g->button, &QAbstractButton::clicked, [g, this] {
+      select(g->game);
+    });
   }
 
   void fillList()
@@ -210,6 +289,8 @@ private:
     const bool showAll = ui->showAllGames->isChecked();
 
     ui->games->clear();
+
+    ui->games->addButton(createCustomButton(), QDialogButtonBox::AcceptRole);
 
     for (auto& g : m_games) {
       g->button = nullptr;
@@ -219,7 +300,7 @@ private:
         continue;
       }
 
-      createButton(g.get());
+      createGameButton(g.get());
       ui->games->addButton(g->button, QDialogButtonBox::AcceptRole);
     }
   }
