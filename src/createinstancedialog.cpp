@@ -11,8 +11,8 @@ namespace cid
 class Page
 {
 public:
-  Page(CreateInstanceDialog& dlg, std::size_t i)
-    : ui(dlg.getUI()), m_dlg(dlg), m_pc(dlg.pluginContainer()), m_index(i)
+  Page(CreateInstanceDialog& dlg)
+    : ui(dlg.getUI()), m_dlg(dlg), m_pc(dlg.pluginContainer())
   {
   }
 
@@ -55,21 +55,24 @@ public:
     return nullptr;
   }
 
+  virtual QString instanceName() const
+  {
+    // no-op
+    return {};
+  }
+
 protected:
   Ui::CreateInstanceDialog* ui;
   CreateInstanceDialog& m_dlg;
   const PluginContainer& m_pc;
-
-private:
-  std::size_t m_index;
 };
 
 
 class TypePage : public Page
 {
 public:
-  TypePage(CreateInstanceDialog& dlg, std::size_t i)
-    : Page(dlg, i), m_type(CreateInstanceDialog::NoType)
+  TypePage(CreateInstanceDialog& dlg)
+    : Page(dlg), m_type(CreateInstanceDialog::NoType)
   {
     ui->createGlobal->setDescription(
       ui->createGlobal->description()
@@ -124,8 +127,8 @@ private:
 class GamePage : public Page
 {
 public:
-  GamePage(CreateInstanceDialog& dlg, std::size_t i)
-    : Page(dlg, i), m_selection(nullptr)
+  GamePage(CreateInstanceDialog& dlg)
+    : Page(dlg), m_selection(nullptr)
   {
     createGames();
     fillList();
@@ -474,11 +477,93 @@ private:
 };
 
 
+class EditionsPage : public Page
+{
+public:
+  EditionsPage(CreateInstanceDialog& dlg)
+    : Page(dlg), m_previousGame(nullptr)
+  {
+  }
+
+  bool ready() const override
+  {
+    return !m_selection.isEmpty();
+  }
+
+  bool skip() const override
+  {
+    auto* g = m_dlg.selectedGame();
+    if (!g) {
+      // shouldn't happen
+      return true;
+    }
+
+    const auto variants = g->gameVariants();
+    return (variants.size() < 2);
+  }
+
+  void activated() override
+  {
+    auto* g = m_dlg.selectedGame();
+
+    if (m_previousGame != g) {
+      m_previousGame = g;
+      m_selection = "";
+      fillList();
+    }
+  }
+
+  void select(const QString& variant)
+  {
+    for (auto* b : m_buttons) {
+      if (b->text() == variant) {
+        m_selection = variant;
+        b->setChecked(true);
+      } else {
+        b->setChecked(false);
+      }
+    }
+
+    updateNavigation();
+  }
+
+private:
+  MOBase::IPluginGame* m_previousGame;
+  std::vector<QCommandLinkButton*> m_buttons;
+  QString m_selection;
+
+  void fillList()
+  {
+    ui->editions->clear();
+    m_buttons.clear();
+
+    auto* g = m_dlg.selectedGame();
+    if (!g) {
+      // shouldn't happen
+      return;
+    }
+
+    const auto variants = g->gameVariants();
+    for (auto& v : variants) {
+      auto* b = new QCommandLinkButton(v);
+      b->setCheckable(true);
+
+      QObject::connect(b, &QAbstractButton::clicked, [v, this] {
+        select(v);
+      });
+
+      ui->editions->addButton(b, QDialogButtonBox::AcceptRole);
+      m_buttons.push_back(b);
+    }
+  }
+};
+
+
 class NamePage : public Page
 {
 public:
-  NamePage(CreateInstanceDialog& dlg, std::size_t i)
-    : Page(dlg, i), m_modified(false), m_okay(false)
+  NamePage(CreateInstanceDialog& dlg)
+    : Page(dlg), m_modified(false), m_okay(false)
   {
     m_originalLabel = ui->instanceNameLabel->text();
 
@@ -515,6 +600,16 @@ public:
     updateWarnings();
   }
 
+  QString instanceName() const override
+  {
+    if (!m_okay) {
+      return {};
+    }
+
+    const auto text = ui->instanceName->text().trimmed();
+    return InstanceManager::instance().sanitizeInstanceName(text);
+  }
+
 private:
   QString m_originalLabel;
   bool m_modified;
@@ -534,16 +629,16 @@ private:
 
     auto& m = InstanceManager::instance();
 
-    const auto name = ui->instanceName->text().trimmed();
+    const auto text = ui->instanceName->text().trimmed();
 
-    if (name.isEmpty()) {
+    if (text.isEmpty()) {
       empty = true;
     } else {
-      const auto sanitized = m.sanitizeInstanceName(name);
-      if (name != sanitized) {
+      const auto sanitized = m.sanitizeInstanceName(text);
+      if (text != sanitized) {
         invalid = true;
       } else {
-        exists = m.instanceExists(name);
+        exists = m.instanceExists(text);
       }
     }
 
@@ -569,9 +664,31 @@ private:
 class PathsPage : public Page
 {
 public:
-  PathsPage(CreateInstanceDialog& dlg, std::size_t i)
-    : Page(dlg, i)
+  PathsPage(CreateInstanceDialog& dlg)
+    : Page(dlg)
   {
+    QObject::connect(
+      ui->advancedPathOptions, &QCheckBox::clicked, [&]{ onAdvanced(); });
+
+    ui->pathPages->setCurrentIndex(0);
+  }
+
+  void activated() override
+  {
+    const auto root = InstanceManager::instance().instancesPath();
+    const auto path = QDir::toNativeSeparators(root + "/" + m_dlg.instanceName());
+
+    ui->location->setText(path);
+  }
+
+private:
+  void onAdvanced()
+  {
+    if (ui->advancedPathOptions->isChecked()) {
+      ui->pathPages->setCurrentIndex(1);
+    } else {
+      ui->pathPages->setCurrentIndex(0);
+    }
   }
 };
 
@@ -586,10 +703,11 @@ CreateInstanceDialog::CreateInstanceDialog(
 
   ui->setupUi(this);
 
-  m_pages.push_back(std::make_unique<TypePage>(*this, 0));
-  m_pages.push_back(std::make_unique<GamePage>(*this, 1));
-  m_pages.push_back(std::make_unique<NamePage>(*this, 2));
-  m_pages.push_back(std::make_unique<PathsPage>(*this, 3));
+  m_pages.push_back(std::make_unique<TypePage>(*this));
+  m_pages.push_back(std::make_unique<GamePage>(*this));
+  m_pages.push_back(std::make_unique<EditionsPage>(*this));
+  m_pages.push_back(std::make_unique<NamePage>(*this));
+  m_pages.push_back(std::make_unique<PathsPage>(*this));
 
   ui->pages->setCurrentIndex(0);
 
@@ -671,4 +789,16 @@ MOBase::IPluginGame* CreateInstanceDialog::selectedGame() const
   }
 
   return nullptr;
+}
+
+QString CreateInstanceDialog::instanceName() const
+{
+  for (auto&& p : m_pages) {
+    const auto s = p->instanceName();
+    if (!s.isEmpty()) {
+      return s;
+    }
+  }
+
+  return {};
 }

@@ -37,6 +37,7 @@ public:
 
   Types selectedType() const;
   MOBase::IPluginGame* selectedGame() const;
+  QString instanceName() const;
 
 private:
   std::unique_ptr<Ui::CreateInstanceDialog> ui;
