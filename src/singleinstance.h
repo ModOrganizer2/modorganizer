@@ -36,19 +36,9 @@ class SingleInstance : public QObject
   Q_OBJECT
 
 public:
-  enum Flag
-  {
-    NoFlags      = 0x00,
-
-    // if another instance is running, run this one disconnected from the
-    // shared memory
-    AllowMultiple = 0x01
-  };
-
-	using Flags = QFlags<Flag>;
-
-
-  explicit SingleInstance(Flags flags, QObject *parent = 0);
+  // `allowMultiple`: if another instance is running, run this one
+  // disconnected from the shared memory
+  explicit SingleInstance(bool allowMultiple, QObject *parent = 0);
 
   /**
    * @return true if this instance's job is to forward data to the primary
@@ -96,7 +86,5 @@ private:
   QLocalServer m_Server;
 
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(SingleInstance::Flags);
 
 #endif // SINGLEINSTANCE_H

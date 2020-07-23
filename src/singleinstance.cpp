@@ -28,14 +28,14 @@ static const int s_Timeout = 5000;
 
 using MOBase::reportError;
 
-SingleInstance::SingleInstance(Flags flags, QObject *parent) :
+SingleInstance::SingleInstance(bool allowMultiple, QObject *parent) :
   QObject(parent), m_Ephemeral(false), m_OwnsSM(false)
 {
   m_SharedMem.setKey(s_Key);
 
   if (!m_SharedMem.create(1)) {
     if (m_SharedMem.error() == QSharedMemory::AlreadyExists) {
-      if (!flags.testFlag(AllowMultiple)) {
+      if (!allowMultiple) {
         m_SharedMem.attach();
         m_Ephemeral = true;
       }

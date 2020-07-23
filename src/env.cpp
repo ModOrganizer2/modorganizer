@@ -400,11 +400,18 @@ QString path()
   return get("PATH");
 }
 
-QString addPath(const QString& s)
+QString appendToPath(const QString& s)
 {
   auto old = path();
-  set("PATH", get("PATH") + ";" + s);
- return old;
+  set("PATH", old + ";" + s);
+  return old;
+}
+
+QString prependToPath(const QString& s)
+{
+  auto old = path();
+  set("PATH", s + ";" + old);
+  return old;
 }
 
 QString setPath(const QString& s)

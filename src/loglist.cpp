@@ -327,3 +327,29 @@ void initLogging()
 
   qInstallMessageHandler(qtLogCallback);
 }
+
+bool createAndMakeWritable(const std::wstring &subPath) {
+  QString const dataPath = qApp->property("dataPath").toString();
+  QString fullPath = dataPath + "/" + QString::fromStdWString(subPath);
+
+  if (!QDir(fullPath).exists() && !QDir().mkdir(fullPath)) {
+    QMessageBox::critical(nullptr, QObject::tr("Error"),
+      QObject::tr("Failed to create \"%1\". Your user "
+        "account probably lacks permission.")
+      .arg(fullPath));
+    return false;
+  } else {
+    return true;
+  }
+}
+
+bool setLogDirectory(const QString& dir)
+{
+  const auto logFile = dir + "/logs/mo_interface.log";
+
+  if (!createAndMakeWritable(AppConfig::logPath())) {
+    return false;
+  }
+
+  log::getDefault().setFile(MOBase::log::File::single(logFile.toStdWString()));
+}

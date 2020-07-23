@@ -488,7 +488,7 @@ DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle)
   }
 
   const QString moPath = QCoreApplication::applicationDirPath();
-  const auto oldPath = env::addPath(QDir::toNativeSeparators(moPath));
+  const auto oldPath = env::appendToPath(QDir::toNativeSeparators(moPath));
 
   PROCESS_INFORMATION pi = {};
   BOOL success = FALSE;

@@ -38,7 +38,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <log.h>
 #include <utility.h>
 
-#pragma comment(linker, "/manifestDependency:\"name='dlls' processorArchitecture='x86' version='1.0.0.0' type='win32' \"")
+// see addDllsToPath() below
+#pragma comment(linker, "/manifestDependency:\"" \
+    "name='dlls' " \
+    "processorArchitecture='x86' " \
+    "version='1.0.0.0' " \
+    "type='win32' \"")
+
 
 using namespace MOBase;
 using namespace MOShared;
@@ -46,21 +52,6 @@ using namespace MOShared;
 void sanityChecks(const env::Environment& env);
 int checkIncompatibleModule(const env::Module& m);
 int checkPathsForSanity(MOBase::IPluginGame& game, const Settings& s);
-
-bool createAndMakeWritable(const std::wstring &subPath) {
-  QString const dataPath = qApp->property("dataPath").toString();
-  QString fullPath = dataPath + "/" + QString::fromStdWString(subPath);
-
-  if (!QDir(fullPath).exists() && !QDir().mkdir(fullPath)) {
-    QMessageBox::critical(nullptr, QObject::tr("Error"),
-                          QObject::tr("Failed to create \"%1\". Your user "
-                                      "account probably lacks permission.")
-                              .arg(fullPath));
-    return false;
-  } else {
-    return true;
-  }
-}
 
 void purgeOldFiles()
 {
@@ -305,36 +296,47 @@ MOBase::IPluginGame *determineCurrentGame(
 }
 
 
-// extend path to include dll directory so plugins don't need a manifest
-// (using AddDllDirectory would be an alternative to this but it seems fairly
-// complicated esp.
-//  since it isn't easily accessible on Windows < 8
-//  SetDllDirectory replaces other search directories and this seems to
-//  propagate to child processes)
-void setupPath()
+// This adds the `dlls` directory to the path so the dlls can be found. How
+// MO is able to find dlls in there is a bit convoluted:
+//
+// Dependencies on DLLs can be baked into an executable by passing a
+// `manifestdependency` option to the linker. This can be done on the command
+// line or with a pragma. Typically, the dependency will not be a hardcoded
+// filename, but an assembly name, such as Microsoft.Windows.Common-Controls.
+//
+// When Windows loads the exe, it will look for this assembly in a variety of
+// places, such as in the WinSxS folder, but also in the program's folder. It
+// will look for `assemblyname.dll` or `assemblyname/assemblyname.dll` and try
+// to load that.
+//
+// If these files don't exist, then the loader gets creative and looks for
+// `assemblyname.manifest` and `assemblyname/assemblyname.manifest`. A manifest
+// file is just an XML file that can contain a list of DLLs to load for this
+// assembly.
+//
+// In MO's case, there's a `pragma` at the beginning of this file which adds
+// `dlls` as an "assembly" dependency. This is a bit of a hack to just force
+// the loader to eventually find `dlls/dlls.manifest`, which contains the list
+// of all the DLLs MO requires to load.
+//
+// This file was handwritten in `modorganizer/src/dlls.manifest.qt5` and
+// is copied and renamed in CMakeLists.txt into `bin/dlls/dlls.manifest`. Note
+// that the useless and incorrect .qt5 extension is removed.
+//
+void addDllsToPath()
 {
-  static const int BUFSIZE = 4096;
+  const auto dllsPath = QDir::toNativeSeparators(
+    QCoreApplication::applicationDirPath() + "/dlls");
 
-  QCoreApplication::setLibraryPaths(QStringList(QCoreApplication::applicationDirPath() + "/dlls") + QCoreApplication::libraryPaths());
+  QCoreApplication::setLibraryPaths(
+    QStringList(dllsPath) + QCoreApplication::libraryPaths());
 
-  boost::scoped_array<TCHAR> oldPath(new TCHAR[BUFSIZE]);
-  DWORD offset = ::GetEnvironmentVariable(TEXT("PATH"), oldPath.get(), BUFSIZE);
-  if (offset > BUFSIZE) {
-    oldPath.reset(new TCHAR[offset]);
-    ::GetEnvironmentVariable(TEXT("PATH"), oldPath.get(), offset);
-  }
-
-  std::wstring newPath(ToWString(QDir::toNativeSeparators(
-    QCoreApplication::applicationDirPath())) + L"\\dlls");
-  newPath += L";";
-  newPath += oldPath.get();
-
-  ::SetEnvironmentVariableW(L"PATH", newPath.c_str());
+  env::prependToPath(dllsPath);
 }
 
 int runApplication(
   MOApplication &application, const cl::CommandLine& cl,
-  SingleInstance &instance, const QString &splashPath)
+  SingleInstance &instance, const QString &dataPath)
 {
   TimeThis tt("runApplication() to exec()");
 
@@ -343,7 +345,6 @@ int runApplication(
     createVersionInfo().displayString(3), GITID,
     QCoreApplication::applicationDirPath(), MOShared::getUsvfsVersionString());
 
-  const QString dataPath = application.property("dataPath").toString();
   log::info("data path: {}", dataPath);
 
   if (InstanceManager::isPortablePath(dataPath)) {
@@ -429,8 +430,14 @@ int runApplication(
     checkPathsForSanity(*game, settings);
 
     bool useSplash = settings.useSplash();
+    QString splashPath;
 
     if (useSplash) {
+      splashPath = dataPath + "/splash.png";
+      if (!QFile::exists(dataPath + "/splash.png")) {
+        splashPath = ":/MO/gui/splash";
+      }
+
       if (splashPath.startsWith(':')) {
         // currently using MO splash, see if the plugin contains one
         QString pluginSplash
@@ -599,111 +606,101 @@ int runApplication(
   return 1;
 }
 
+int forwardToPrimary(SingleInstance& instance, const cl::CommandLine& cl)
+{
+  if (cl.shortcut().isValid()) {
+    instance.sendMessage(cl.shortcut().toString());
+  } else if (cl.nxmLink()) {
+    instance.sendMessage(*cl.nxmLink());
+  } else {
+    QMessageBox::information(
+      nullptr, QObject::tr("Mod Organizer"),
+      QObject::tr("An instance of Mod Organizer is already running"));
+  }
+
+  return 0;
+}
+
+void resetForRestart(cl::CommandLine& cl)
+{
+  LogModel::instance().clear();
+  ResetExitFlag();
+
+  // make sure the log file isn't locked in case MO was restarted and
+  // the previous instance gets deleted
+  log::getDefault().setFile({});
+
+  // don't reprocess command line
+  cl.clear();
+}
+
+QString determineDataPath(const cl::CommandLine& cl)
+{
+  try
+  {
+    InstanceManager& instanceManager = InstanceManager::instance();
+
+    if (cl.instance())
+      instanceManager.overrideInstance(*cl.instance());
+
+    return instanceManager.determineDataPath();
+  }
+  catch (const std::exception &e)
+  {
+    if (strcmp(e.what(),"Canceled")) {
+      QMessageBox::critical(nullptr, QObject::tr("Failed to set up instance"), e.what());
+    }
+
+    return {};
+  }
+}
+
 int main(int argc, char *argv[])
 {
   cl::CommandLine cl;
 
-  const auto r = cl.run(GetCommandLineW());
-  if (r)
+  if (auto r=cl.run(GetCommandLineW())) {
     return *r;
-
-  TimeThis tt("main to runApplication()");
-
-  // in loglist.cpp
-  initLogging();
-
-  //Make sure the configured temp folder exists
-  QDir tempDir = QDir::temp();
-  if (!tempDir.exists())
-    tempDir.root().mkpath(tempDir.canonicalPath());
-
-  //Should allow for better scaling of ui with higher resolution displays
-  QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-
-  MOApplication application(argc, argv);
-  QStringList arguments = application.arguments();
-
-  SetThisThreadName("main");
-
-  setupPath();
-
-
-  SingleInstance::Flags siFlags = SingleInstance::NoFlags;
-
-  if (cl.multiple()) {
-    arguments.removeAll("--multiple");
-    siFlags |= SingleInstance::AllowMultiple;
   }
 
-  SingleInstance instance(siFlags);
+  TimeThis tt("main to runApplication()");
+  SetThisThreadName("main");
+
+  initLogging();
+  auto application = MOApplication::create(argc, argv);
+  addDllsToPath();
+
+  SingleInstance instance(cl.multiple());
   if (instance.ephemeral()) {
-    if (cl.shortcut().isValid()) {
-      instance.sendMessage(cl.shortcut().toString());
-      return 0;
-    } else if (cl.nxmLink()) {
-      instance.sendMessage(*cl.nxmLink());
-      return 0;
-    } else if (arguments.size() == 1) {
-      QMessageBox::information(
-          nullptr, QObject::tr("Mod Organizer"),
-          QObject::tr("An instance of Mod Organizer is already running"));
-      return 0;
-    }
-  } // we continue for the primary instance OR if MO was called with parameters
+    return forwardToPrimary(instance, cl);
+  }
 
-  do {
-    LogModel::instance().clear();
-    ResetExitFlag();
+  for (;;)
+  {
+    // resets things when MO is "restarted"
+    resetForRestart(cl);
 
-    // make sure the log file isn't locked in case MO was restarted and
-    // the previous instance gets deleted
-    log::getDefault().setFile({});
-
-    QString dataPath;
-
-    try {
-      InstanceManager& instanceManager = InstanceManager::instance();
-
-      if (cl.instance())
-        instanceManager.overrideInstance(*cl.instance());
-
-      dataPath = instanceManager.determineDataPath();
-    } catch (const std::exception &e) {
-      if (strcmp(e.what(),"Canceled"))
-        QMessageBox::critical(nullptr, QObject::tr("Failed to set up instance"), e.what());
+    const QString dataPath = determineDataPath(cl);
+    if (dataPath.isEmpty()) {
       return 1;
     }
+
     application.setProperty("dataPath", dataPath);
+    setExceptionHandler();
 
-    // initialize dump collection only after "dataPath" since the crashes are stored under it
-    setUnhandledExceptionHandler();
-
-    const auto logFile =
-      qApp->property("dataPath").toString() + "/logs/mo_interface.log";
-
-    if (!createAndMakeWritable(AppConfig::logPath())) {
+    if (!setLogDirectory(dataPath)) {
       reportError("Failed to create log folder");
       InstanceManager::instance().clearCurrentInstance();
       return 1;
     }
 
-    log::getDefault().setFile(MOBase::log::File::single(logFile.toStdWString()));
-
     log::debug("command line: '{}'", QString::fromWCharArray(GetCommandLineW()));
-
-    QString splash = dataPath + "/splash.png";
-    if (!QFile::exists(dataPath + "/splash.png")) {
-      splash = ":/MO/gui/splash";
-    }
 
     tt.stop();
 
-    const int result = runApplication(application, cl, instance, splash);
+    const int result = runApplication(application, cl, instance, dataPath);
     if (result != RestartExitCode) {
       return result;
     }
-
-    argc = 1;
-    cl.clear();
-  } while (true);
+  }
 }

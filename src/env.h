@@ -236,7 +236,8 @@ QString get(const QString& name);
 QString set(const QString& name, const QString& value);
 
 QString path();
-QString addPath(const QString& s);
+QString appendToPath(const QString& s);
+QString prependToPath(const QString& s);
 QString setPath(const QString& s);
 
 
