@@ -165,20 +165,34 @@ QString getSplashPath(
     return {};
   }
 
+  // try splash from instance directory
   const QString splashPath = dataPath + "/splash.png";
   if (QFile::exists(dataPath + "/splash.png")) {
-    return splashPath;
+    QImage image(splashPath);
+    if (!image.isNull()) {
+      return splashPath;
+    }
   }
 
-  // currently using MO splash, see if the plugin contains one
+  // try splash from plugin
   QString pluginSplash = QString(":/%1/splash").arg(game->gameShortName());
-  QImage image(pluginSplash);
-
-  if (image.isNull()) {
-    return {};
+  if (QFile::exists(pluginSplash)) {
+    QImage image(pluginSplash);
+    if (!image.isNull()) {
+      image.save(splashPath);
+      return pluginSplash;
+    }
   }
 
-  image.save(splashPath);
+  // try default splash from resource
+  QString defaultSplash = ":/MO/gui/splash";
+  if (QFile::exists(defaultSplash)) {
+    QImage image(defaultSplash);
+    if (!image.isNull()) {
+      return defaultSplash;
+    }
+  }
+
   return splashPath;
 }
 
