@@ -17,82 +17,31 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-#ifdef LEAK_CHECK_WITH_VLD
-#include <wchar.h>
-#include <vld.h>
-#endif // LEAK_CHECK_WITH_VLD
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <DbgHelp.h>
-
-#include "shared/appconfig.h"
-#include <utility.h>
-#include <scopeguard.h>
 #include "mainwindow.h"
-#include <report.h>
-#include "modlist.h"
-#include "profile.h"
-#include "spawn.h"
-#include "executableslist.h"
 #include "singleinstance.h"
-#include "utility.h"
 #include "loglist.h"
 #include "selectiondialog.h"
 #include "moapplication.h"
 #include "tutorialmanager.h"
 #include "nxmaccessmanager.h"
 #include "instancemanager.h"
-#include "moshortcut.h"
 #include "organizercore.h"
 #include "env.h"
 #include "envmodule.h"
-#include "shared/util.h"
 #include "commandline.h"
 
-#include <eh.h>
-#include "shared/windows_error.h"
+#include "shared/util.h"
+#include "shared/appconfig.h"
+
+#include <report.h>
 #include <usvfs.h>
 #include <log.h>
-
-#include <QApplication>
-#include <QPushButton>
-#include <QListWidget>
-#include <QComboBox>
-#include <QCheckBox>
-#include <QDir>
-#include <QFileInfo>
-#include <QWhatsThis>
-#include <QToolBar>
-#include <QFileDialog>
-#include <QDesktopServices>
-#include <QMessageBox>
-#include <QSharedMemory>
-#include <QBuffer>
-#include <QSplashScreen>
-#include <QDirIterator>
-#include <QDesktopServices>
-#include <QLibraryInfo>
-#include <QSslSocket>
-#include <QtPlatformHeaders/QWindowsWindowFunctions>
-
-#include <boost/scoped_array.hpp>
-
-#include <ShellAPI.h>
-
-#include <cstdarg>
-#include <iostream>
-#include <sstream>
-#include <stdexcept>
-
+#include <utility.h>
 
 #pragma comment(linker, "/manifestDependency:\"name='dlls' processorArchitecture='x86' version='1.0.0.0' type='win32' \"")
 
-
 using namespace MOBase;
 using namespace MOShared;
-
 
 void sanityChecks(const env::Environment& env);
 int checkIncompatibleModule(const env::Module& m);
