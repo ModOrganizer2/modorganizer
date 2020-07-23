@@ -123,57 +123,6 @@ void setUnhandledExceptionHandler()
   prevTerminateHandler = std::set_terminate(terminateHandler);
 }
 
-
-static bool HaveWriteAccess(const std::wstring &path)
-{
-  bool writable = false;
-
-  const static SECURITY_INFORMATION requestedFileInformation = OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION;
-
-  DWORD length = 0;
-  if (!::GetFileSecurityW(path.c_str(), requestedFileInformation, nullptr, 0UL, &length)
-      && (::GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
-    std::string tempBuffer;
-    tempBuffer.reserve(length);
-    PSECURITY_DESCRIPTOR security = (PSECURITY_DESCRIPTOR)tempBuffer.data();
-    if (security
-        && ::GetFileSecurity(path.c_str(), requestedFileInformation, security, length, &length)) {
-      HANDLE token = nullptr;
-      const static DWORD tokenDesiredAccess = TOKEN_IMPERSONATE | TOKEN_QUERY | TOKEN_DUPLICATE | STANDARD_RIGHTS_READ;
-      if (!::OpenThreadToken(::GetCurrentThread(), tokenDesiredAccess, TRUE, &token)) {
-        if (!::OpenProcessToken(::GetCurrentProcess(), tokenDesiredAccess, &token)) {
-          throw std::runtime_error("Unable to get any thread or process token");
-        }
-      }
-
-      HANDLE impersonatedToken = nullptr;
-      if (::DuplicateToken(token, SecurityImpersonation, &impersonatedToken)) {
-        GENERIC_MAPPING mapping = { 0xFFFFFFFF };
-        mapping.GenericRead = FILE_GENERIC_READ;
-        mapping.GenericWrite = FILE_GENERIC_WRITE;
-        mapping.GenericExecute = FILE_GENERIC_EXECUTE;
-        mapping.GenericAll = FILE_ALL_ACCESS;
-
-        DWORD genericAccessRights = FILE_GENERIC_WRITE;
-        ::MapGenericMask(&genericAccessRights, &mapping);
-
-        PRIVILEGE_SET privileges = { 0 };
-        DWORD grantedAccess = 0;
-        DWORD privilegesLength = sizeof(privileges);
-        BOOL result = 0;
-        if (::AccessCheck(security, impersonatedToken, genericAccessRights, &mapping, &privileges, &privilegesLength, &grantedAccess, &result)) {
-          writable = result != 0;
-        }
-        ::CloseHandle(impersonatedToken);
-      }
-
-      ::CloseHandle(token);
-    }
-  }
-  return writable;
-}
-
-
 QString determineProfile(const cl::CommandLine& cl, const Settings &settings)
 {
   auto selectedProfileName = settings.game().selectedProfileName();
@@ -383,47 +332,6 @@ void setupPath()
   ::SetEnvironmentVariableW(L"PATH", newPath.c_str());
 }
 
-void preloadDll(const QString& filename)
-{
-  if (GetModuleHandleW(filename.toStdWString().c_str())) {
-    // already loaded, this can happen when "restarting" MO by switching
-    // instances, for example
-    return;
-  }
-
-  const auto appPath = QDir::toNativeSeparators(
-    QCoreApplication::applicationDirPath());
-
-  const auto dllPath = appPath + "\\" + filename;
-
-  if (!QFile::exists(dllPath)) {
-    log::warn("{} not found", dllPath);
-    return;
-  }
-
-  if (!LoadLibraryW(dllPath.toStdWString().c_str())) {
-    const auto e = GetLastError();
-    log::warn("failed to load {}: {}", dllPath, formatSystemMessage(e));
-  }
-}
-
-void preloadSsl()
-{
-#if Q_PROCESSOR_WORDSIZE == 8
-  preloadDll("libcrypto-1_1-x64.dll");
-  preloadDll("libssl-1_1-x64.dll");
-#elif Q_PROCESSOR_WORDSIZE == 4
-  preloadDll("libcrypto-1_1.dll");
-  preloadDll("libssl-1_1.dll");
-#endif
-}
-
-static QString getVersionDisplayString()
-{
-  return createVersionInfo().displayString(3);
-}
-
-
 int runApplication(
   MOApplication &application, const cl::CommandLine& cl,
   SingleInstance &instance, const QString &splashPath)
@@ -432,13 +340,8 @@ int runApplication(
 
   log::info(
     "starting Mod Organizer version {} revision {} in {}, usvfs: {}",
-    getVersionDisplayString(), GITID, QCoreApplication::applicationDirPath(),
-    MOShared::getUsvfsVersionString());
-
-  preloadSsl();
-  if (!QSslSocket::supportsSsl()) {
-    log::warn("no ssl support");
-  }
+    createVersionInfo().displayString(3), GITID,
+    QCoreApplication::applicationDirPath(), MOShared::getUsvfsVersionString());
 
   const QString dataPath = application.property("dataPath").toString();
   log::info("data path: {}", dataPath);
