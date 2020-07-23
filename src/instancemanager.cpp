@@ -104,30 +104,67 @@ void InstanceManager::setCurrentInstance(const QString &name)
   m_AppSettings.setValue(InstanceValue, name);
 }
 
-bool InstanceManager::deleteLocalInstance(const QString &instanceId) const
+bool InstanceManager::deleteLocalInstance(const QString& instanceId) const
 {
-  bool result = true;
-  QString instancePath = QDir::fromNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/" + instanceId);
+  QString dir = instancePath(instanceId);
 
-  if (QMessageBox::warning(nullptr, QObject::tr("Deleting folder"),
-                           QObject::tr("I'm about to delete the following folder: \"%1\". Proceed?").arg(instancePath), QMessageBox::No | QMessageBox::Yes, QMessageBox::No) == QMessageBox::No ){
-    return false;
-  }
+  const auto Recycle = QMessageBox::Save;
+  const auto Delete = QMessageBox::Yes;
+  const auto Cancel = QMessageBox::Cancel;
 
-  if (!MOBase::shellDelete(QStringList(instancePath),true))
+  const auto r = MOBase::TaskDialog()
+    .title(QObject::tr("Deleting instance folder"))
+    .main(QObject::tr("This will delete the instance folder."))
+    .content(dir)
+    .icon(QMessageBox::Warning)
+    .button({QObject::tr("Move the folder to the recycle bin"), Recycle})
+    .button({QObject::tr("Delete the folder permanently"), Delete})
+    .button({QObject::tr("Cancel"), Cancel})
+    .exec();
+
+  std::wstring error;
+
+  switch (r)
   {
-    log::warn(
-      "Failed to shell-delete \"{}\" (errorcode {}), trying regular delete",
-      instancePath, ::GetLastError());
-
-    if (!MOBase::removeDir(instancePath))
+    case Recycle:
     {
-      log::warn("regular delete failed too");
-      result = false;
+      if (MOBase::shellDelete(QStringList(dir), true)) {
+        return true;
+      }
+
+      const auto e = GetLastError();
+      error = formatSystemMessage(e);
+      log::warn("failed to move to trash '{}', {}", dir, error);
+
+      break;
+    }
+
+    case Delete:
+    {
+      if (MOBase::shellDelete(QStringList(dir), false)) {
+        return true;
+      }
+
+      const auto e = GetLastError();
+      error = formatSystemMessage(e);
+      log::warn("failed to delete '{}', {}", dir, error);
+
+      break;
+    }
+
+    default:
+    {
+      return true;
     }
   }
 
-  return result;
+  QMessageBox::critical(
+    nullptr, QObject::tr("Error"), QObject::tr(
+      "Could not delete instance folder \"%1\".\n\n%2")
+        .arg(dir).arg(error),
+    QMessageBox::Ok);
+
+  return false;
 }
 
 QString InstanceManager::manageInstances(const QStringList &instanceList) const
@@ -147,17 +184,7 @@ QString InstanceManager::manageInstances(const QStringList &instanceList) const
 	}
 	else {
 		QString choice = selection.getChoiceData().toString();
-		{
-			if (QMessageBox::warning(nullptr, QObject::tr("Are you sure?"),
-				QObject::tr("Are you really sure you want to delete the Instance \"%1\" with all its files?").arg(choice), QMessageBox::No | QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
-			{
-				if (!deleteLocalInstance(choice))
-				{
-					QMessageBox::warning(nullptr, QObject::tr("Failed to delete Instance"),
-						QObject::tr("Could not delete Instance \"%1\". \nIf the folder was still in use, restart MO and try again.").arg(choice), QMessageBox::Ok);
-				}
-			}
-		}
+		deleteLocalInstance(choice);
 	}
 	return(manageInstances(instances()));
 }
@@ -278,8 +305,12 @@ QString InstanceManager::chooseInstance(const QStringList &instanceList) const
   }
 }
 
+QString InstanceManager::instancePath(const QString& instanceName) const
+{
+  return QDir::fromNativeSeparators(instancesPath() + "/" + instanceName);
+}
 
-QString InstanceManager::instancePath() const
+QString InstanceManager::instancesPath() const
 {
   return QDir::fromNativeSeparators(
         QStandardPaths::writableLocation(QStandardPaths::DataLocation));
@@ -292,7 +323,7 @@ QStringList InstanceManager::instances() const
     "cache", "qtwebengine",
   };
 
-  const auto dirs = QDir(instancePath())
+  const auto dirs = QDir(instancesPath())
     .entryList(QDir::Dirs | QDir::NoDotAndDotDot);
 
   QStringList list;

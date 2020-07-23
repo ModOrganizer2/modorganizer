@@ -53,7 +53,8 @@ private:
 
   InstanceManager();
 
-  QString instancePath() const;
+  QString instancesPath() const;
+  QString instancePath(const QString& instanceName) const;
 
   QStringList instances() const;
 
