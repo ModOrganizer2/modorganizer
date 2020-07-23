@@ -182,14 +182,14 @@ QString InstanceManager::manageInstances(const QStringList &instanceList) const
   }
 
   if (selection.exec() == QDialog::Rejected) {
-    return (chooseInstance(instances()));
+    return (chooseInstance(instanceNames()));
   }
   else {
     QString choice = selection.getChoiceData().toString();
     deleteLocalInstance(choice);
   }
 
-  return(manageInstances(instances()));
+  return(manageInstances(instanceNames()));
 }
 
 QString InstanceManager::queryInstanceName(const QStringList &instanceList) const
@@ -301,7 +301,7 @@ QString InstanceManager::chooseInstance(const QStringList &instanceList) const
       case Special::Portable: return QString();
       case Special::Manage: {
 
-        return(manageInstances(instances()));
+        return(manageInstances(instanceNames()));
       }
       default: throw std::runtime_error("invalid selection");
     }
@@ -319,22 +319,32 @@ QString InstanceManager::instancesPath() const
         QStandardPaths::writableLocation(QStandardPaths::DataLocation));
 }
 
-
-QStringList InstanceManager::instances() const
+std::vector<QDir> InstanceManager::instancePaths() const
 {
   const std::set<QString> ignore = {
     "cache", "qtwebengine",
   };
 
-  const auto dirs = QDir(instancesPath())
-    .entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+  const QDir root(instancesPath());
+  const auto dirs = root.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
 
-  QStringList list;
+  std::vector<QDir> list;
 
   for (auto&& d : dirs) {
     if (!ignore.contains(QFileInfo(d).fileName().toLower())) {
-      list.push_back(d);
+      list.push_back(root.filePath(d));
     }
+  }
+
+  return list;
+}
+
+QStringList InstanceManager::instanceNames() const
+{
+  QStringList list;
+
+  for (auto&& d : instancePaths()) {
+    list.push_back(d.dirName());
   }
 
   return list;
@@ -402,7 +412,7 @@ QString InstanceManager::determineDataPath()
 
 
   if (!m_overrideInstance && (instanceId.isEmpty() || !QFileInfo::exists(dataPath))) {
-    instanceId = chooseInstance(instances());
+    instanceId = chooseInstance(instanceNames());
     setCurrentInstance(instanceId);
     if (!instanceId.isEmpty()) {
       dataPath = QDir::fromNativeSeparators(

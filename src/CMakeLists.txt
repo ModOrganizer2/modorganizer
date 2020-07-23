@@ -29,7 +29,6 @@ add_filter(NAME src/core GROUPS
 	categories
 	archivefiletree
 	installationmanager
-	instancemanager
 	loadmechanism
 	nexusinterface
 	nxmaccessmanager
@@ -82,6 +81,11 @@ add_filter(NAME src/env GROUPS
 add_filter(NAME src/executables GROUPS
 	executableslist
 	editexecutablesdialog
+)
+
+add_filter(NAME src/instances GROUPS
+	instancemanager
+	instancemanagerdialog
 )
 
 add_filter(NAME src/loot GROUPS
