@@ -112,7 +112,7 @@ void InstanceManagerDialog::onSelection()
 
 void InstanceManagerDialog::createNew()
 {
-  CreateInstanceDialog dlg(this);
+  CreateInstanceDialog dlg(m_pc, this);
   dlg.exec();
 }
 
