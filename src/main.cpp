@@ -599,71 +599,6 @@ int runApplication(
   return 1;
 }
 
-log::Levels convertQtLevel(QtMsgType t)
-{
-  switch (t)
-  {
-    case QtDebugMsg:
-      return log::Debug;
-
-    case QtWarningMsg:
-      return log::Warning;
-
-    case QtCriticalMsg:  // fall-through
-    case QtFatalMsg:
-      return log::Error;
-
-    case QtInfoMsg:  // fall-through
-    default:
-      return log::Info;
-  }
-}
-
-void qtLogCallback(
-  QtMsgType type, const QMessageLogContext& context, const QString& message)
-{
-  std::string_view file = "";
-
-  if (type != QtDebugMsg) {
-    if (context.file) {
-      file = context.file;
-
-      const auto lastSep = file.find_last_of("/\\");
-      if (lastSep != std::string_view::npos) {
-        file = {context.file + lastSep + 1};
-      }
-    }
-  }
-
-  if (file.empty()) {
-    log::log(
-      convertQtLevel(type), "{}",
-      message.toStdString());
-  } else {
-    log::log(
-      convertQtLevel(type), "[{}:{}] {}",
-      file, context.line, message.toStdString());
-  }
-}
-
-void initLogging()
-{
-  LogModel::create();
-
-  log::LoggerConfiguration conf;
-  conf.maxLevel = MOBase::log::Debug;
-  conf.pattern = "%^[%Y-%m-%d %H:%M:%S.%e %L] %v%$";
-  conf.utc = true;
-
-  log::createDefault(conf);
-
-  log::getDefault().setCallback(
-    [](log::Entry e){ LogModel::instance().add(e); });
-
-  qInstallMessageHandler(qtLogCallback);
-}
-
-
 int main(int argc, char *argv[])
 {
   cl::CommandLine cl;
@@ -673,6 +608,8 @@ int main(int argc, char *argv[])
     return *r;
 
   TimeThis tt("main to runApplication()");
+
+  // in loglist.cpp
   initLogging();
 
   //Make sure the configured temp folder exists

@@ -82,4 +82,7 @@ private:
   void onNewEntry();
 };
 
+
+void initLogging();
+
 #endif // LOGBUFFER_H
