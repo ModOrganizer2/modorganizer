@@ -388,6 +388,94 @@ std::unique_ptr<QSplashScreen> createSplash(
   return splash;
 }
 
+bool determineGameEdition(Settings& settings, IPluginGame* game)
+{
+  QString edition;
+
+  if (auto v=settings.game().edition()) {
+    edition = *v;
+  } else {
+    QStringList editions = game->gameVariants();
+    if (editions.size() < 2) {
+      edition = "";
+      return true;
+    }
+
+    SelectionDialog selection(
+      QObject::tr("Please select the game edition you have (MO can't "
+        "start the game correctly if this is set "
+        "incorrectly!)"),
+      nullptr);
+
+    selection.setWindowFlag(Qt::WindowStaysOnTopHint, true);
+
+    int index = 0;
+    for (const QString &edition : editions) {
+      selection.addChoice(edition, "", index++);
+    }
+
+    if (selection.exec() == QDialog::Rejected) {
+      return false;
+    }
+
+    edition = selection.getChoiceString();
+    settings.game().setEdition(edition);
+  }
+
+  game->setGameVariant(edition);
+
+  return true;
+}
+
+std::optional<int> handleCommandLine(
+  const cl::CommandLine& cl, OrganizerCore& organizer)
+{
+  // if we have a command line parameter, it is either a nxm link or
+  // a binary to start
+  if (cl.shortcut().isValid()) {
+    if (cl.shortcut().hasExecutable()) {
+      try {
+        organizer.processRunner()
+          .setFromShortcut(cl.shortcut())
+          .setWaitForCompletion()
+          .run();
+
+        return 0;
+      }
+      catch (const std::exception &e) {
+        reportError(
+          QObject::tr("failed to start shortcut: %1").arg(e.what()));
+        return 1;
+      }
+    }
+  } else if (cl.nxmLink()) {
+    log::debug("starting download from command line: {}", *cl.nxmLink());
+    organizer.externalMessage(*cl.nxmLink());
+  } else if (cl.executable()) {
+    const QString exeName = *cl.executable();
+    log::debug("starting {} from command line", exeName);
+
+    try
+    {
+      // pass the remaining parameters to the binary
+      organizer.processRunner()
+        .setFromFileOrExecutable(exeName, cl.untouched())
+        .setWaitForCompletion()
+        .run();
+
+      return 0;
+    }
+    catch (const std::exception &e)
+    {
+      reportError(
+        QObject::tr("failed to start application: %1").arg(e.what()));
+      return 1;
+    }
+  }
+
+  return {};
+}
+
 int runApplication(
   MOApplication &application, const cl::CommandLine& cl,
   SingleInstance &instance, const QString &dataPath)
@@ -475,38 +563,16 @@ int runApplication(
     organizer.setManagedGame(game);
     organizer.createDefaultProfile();
 
-    QString edition;
-
-    if (auto v=settings.game().edition()) {
-      edition = *v;
-    } else {
-      QStringList editions = game->gameVariants();
-      if (editions.size() > 1) {
-        SelectionDialog selection(
-            QObject::tr("Please select the game edition you have (MO can't "
-                        "start the game correctly if this is set "
-                        "incorrectly!)"),
-            nullptr);
-        selection.setWindowFlag(Qt::WindowStaysOnTopHint, true);
-        int index = 0;
-        for (const QString &edition : editions) {
-          selection.addChoice(edition, "", index++);
-        }
-        if (selection.exec() == QDialog::Rejected) {
-          return 1;
-        } else {
-          edition = selection.getChoiceString();
-          settings.game().setEdition(edition);
-        }
-      }
+    if (!determineGameEdition(settings, game)) {
+      return 1;
     }
 
-    game->setGameVariant(edition);
-
     log::info(
-      "using game plugin '{}' ('{}', steam id '{}') at {}",
-      game->gameName(), game->gameShortName(), game->steamAPPId(),
-      game->gameDirectory().absolutePath());
+      "using game plugin '{}' ('{}', variant {}, steam id '{}') at {}",
+      game->gameName(), game->gameShortName(),
+      (settings.game().edition().value_or("").isEmpty() ?
+        "(none)" : *settings.game().edition()),
+      game->steamAPPId(), game->gameDirectory().absolutePath());
 
     CategoryFactory::instance().loadCategories();
     organizer.updateExecutablesList();
@@ -515,47 +581,8 @@ int runApplication(
     QString selectedProfileName = determineProfile(cl, settings);
     organizer.setCurrentProfile(selectedProfileName);
 
-    // if we have a command line parameter, it is either a nxm link or
-    // a binary to start
-    if (cl.shortcut().isValid()) {
-      if (cl.shortcut().hasExecutable()) {
-        try {
-	      organizer.processRunner()
-            .setFromShortcut(cl.shortcut())
-            .setWaitForCompletion()
-            .run();
-
-	      return 0;
-        }
-        catch (const std::exception &e) {
-	        reportError(
-		        QObject::tr("failed to start shortcut: %1").arg(e.what()));
-	        return 1;
-        }
-      }
-    } else if (cl.nxmLink()) {
-      log::debug("starting download from command line: {}", *cl.nxmLink());
-      organizer.externalMessage(*cl.nxmLink());
-    } else if (cl.executable()) {
-      const QString exeName = *cl.executable();
-      log::debug("starting {} from command line", exeName);
-
-      try
-      {
-        // pass the remaining parameters to the binary
-        organizer.processRunner()
-          .setFromFileOrExecutable(exeName, cl.untouched())
-          .setWaitForCompletion()
-          .run();
-
-	    return 0;
-      }
-      catch (const std::exception &e)
-      {
-	    reportError(
-		    QObject::tr("failed to start application: %1").arg(e.what()));
-	    return 1;
-      }
+    if (auto r=handleCommandLine(cl, organizer)) {
+      return *r;
     }
 
     auto splash = createSplash(settings, dataPath, game);
@@ -611,7 +638,9 @@ int runApplication(
 
     settings.geometry().resetIfNeeded();
     return res;
-  } catch (const std::exception &e) {
+  }
+  catch (const std::exception &e)
+  {
     reportError(e.what());
   }
 
