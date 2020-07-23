@@ -53,6 +53,10 @@ public:
   QStringList instanceNames() const;
   std::vector<QDir> instancePaths() const;
 
+  QString sanitizeInstanceName(const QString &name) const;
+  QString makeUniqueName(const QString& instanceName) const;
+  bool instanceExists(const QString& instanceName) const;
+
 private:
 
   InstanceManager();
@@ -63,7 +67,6 @@ private:
 
   QString manageInstances(const QStringList &instanceList) const;
 
-  QString sanitizeInstanceName(const QString &name) const;
   void setCurrentInstance(const QString &name);
 
   QString queryInstanceName(const QStringList &instanceList) const;

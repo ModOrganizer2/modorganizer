@@ -3,6 +3,7 @@
 
 #include <QDialog>
 
+namespace MOBase { class IPluginGame; }
 namespace Ui { class CreateInstanceDialog; };
 namespace cid { class Page; }
 
@@ -13,6 +14,13 @@ class CreateInstanceDialog : public QDialog
   Q_OBJECT
 
 public:
+  enum Types
+  {
+    NoType = 0,
+    Global,
+    Portable
+  };
+
   explicit CreateInstanceDialog(
     const PluginContainer& pc, QWidget *parent = nullptr);
 
@@ -23,13 +31,17 @@ public:
 
   void next();
   void back();
+  void selectPage(std::size_t i);
+
+  void updateNavigation();
+
+  Types selectedType() const;
+  MOBase::IPluginGame* selectedGame() const;
 
 private:
   std::unique_ptr<Ui::CreateInstanceDialog> ui;
   const PluginContainer& m_pc;
   std::vector<std::unique_ptr<cid::Page>> m_pages;
-
-  void updateNavigationButtons();
 };
 
 #endif // MODORGANIZER_CREATEINSTANCEDIALOG_INCLUDED

@@ -305,9 +305,12 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QLabel" name="label_4">
+           <widget class="QLabel" name="instanceNameLabel">
             <property name="text">
-             <string>&lt;h3&gt;Pick a name for this instance.&lt;/h3&gt;</string>
+             <string>&lt;h3&gt;Customize the name for this &lt;span style=&quot;white-space: nowrap;&quot;&gt;%1&lt;/span&gt; instance.&lt;/h3&gt;</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -318,12 +321,26 @@
         <widget class="QWidget" name="widget_9" native="true">
          <layout class="QVBoxLayout" name="verticalLayout_8">
           <property name="spacing">
-           <number>0</number>
+           <number>9</number>
           </property>
           <item>
            <widget class="QLineEdit" name="instanceName">
             <property name="placeholderText">
              <string>Instance name</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="instanceNameExists">
+            <property name="text">
+             <string>There is already an instance with this name.</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="instanceNameInvalid">
+            <property name="text">
+             <string>The name contains invalid characters. It must be a valid folder name.</string>
             </property>
            </widget>
           </item>

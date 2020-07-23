@@ -650,6 +650,27 @@ MOBase::IPluginGame* InstanceManager::determineCurrentGame(
   return nullptr;
 }
 
+QString InstanceManager::makeUniqueName(const QString& instanceName) const
+{
+  const QString sanitized = sanitizeInstanceName(instanceName);
+
+  QString name = sanitized;
+  for (int i=2; i<100; ++i) {
+    if (!instanceExists(name)) {
+      return name;
+    }
+
+    name = QString("%1 (%2)").arg(sanitized).arg(i);
+  }
+
+  return {};
+}
+
+bool InstanceManager::instanceExists(const QString& instanceName) const
+{
+  const QDir root = instancesPath();
+  return root.exists(instanceName);
+}
 
 QString InstanceManager::sanitizeInstanceName(const QString &name) const
 {

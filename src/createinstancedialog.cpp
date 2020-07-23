@@ -21,9 +21,38 @@ public:
     return true;
   }
 
+  virtual bool skip() const
+  {
+    // no-op
+    return false;
+  }
+
+  virtual void activated()
+  {
+    // no-op
+  }
+
+  void updateNavigation()
+  {
+    m_dlg.updateNavigation();
+  }
+
   void next()
   {
     m_dlg.next();
+  }
+
+
+  virtual CreateInstanceDialog::Types selectedType() const
+  {
+    // no-op
+    return CreateInstanceDialog::NoType;
+  }
+
+  virtual MOBase::IPluginGame* selectedGame() const
+  {
+    // no-op
+    return nullptr;
   }
 
 protected:
@@ -40,7 +69,7 @@ class TypePage : public Page
 {
 public:
   TypePage(CreateInstanceDialog& dlg, std::size_t i)
-    : Page(dlg, i)
+    : Page(dlg, i), m_type(CreateInstanceDialog::NoType)
   {
     ui->createGlobal->setDescription(
       ui->createGlobal->description()
@@ -59,12 +88,17 @@ public:
 
   bool ready() const override
   {
-    return m_global.has_value();
+    return (m_type != CreateInstanceDialog::NoType);
+  }
+
+  CreateInstanceDialog::Types selectedType() const
+  {
+    return m_type;
   }
 
   void global()
   {
-    m_global = true;
+    m_type = CreateInstanceDialog::Global;
 
     ui->createGlobal->setChecked(true);
     ui->createPortable->setChecked(false);
@@ -74,7 +108,7 @@ public:
 
   void portable()
   {
-    m_global = false;
+    m_type = CreateInstanceDialog::Portable;
 
     ui->createGlobal->setChecked(false);
     ui->createPortable->setChecked(true);
@@ -83,7 +117,7 @@ public:
   }
 
 private:
-  std::optional<bool> m_global;
+  CreateInstanceDialog::Types m_type;
 };
 
 
@@ -99,26 +133,40 @@ public:
     QObject::connect(ui->showAllGames, &QCheckBox::clicked, [&]{ fillList(); });
   }
 
+  bool ready() const override
+  {
+    return (m_selection != nullptr);
+  }
+
+  MOBase::IPluginGame* selectedGame() const override
+  {
+    if (!m_selection) {
+      return nullptr;
+    }
+
+    return m_selection->game;
+  }
+
   void select(MOBase::IPluginGame* game)
   {
     Game* checked = findGame(game);
-    if (!checked) {
-      return;
-    }
 
-    if (!checked->installed) {
-      const auto path = QFileDialog::getExistingDirectory(
-        &m_dlg, QObject::tr("Find game installation"));
+    if (checked) {
+      if (!checked->installed) {
+        const auto path = QFileDialog::getExistingDirectory(
+          &m_dlg, QObject::tr("Find game installation"));
 
-      if (path.isEmpty()) {
-        checked = nullptr;
-      } else {
-        checked = checkInstallation(path, checked);
+        if (path.isEmpty()) {
+          checked = nullptr;
+        } else {
+          checked = checkInstallation(path, checked);
+        }
       }
     }
 
     m_selection = checked;
     selectButton(checked);
+    updateNavigation();
   }
 
   void selectCustom()
@@ -430,8 +478,90 @@ class NamePage : public Page
 {
 public:
   NamePage(CreateInstanceDialog& dlg, std::size_t i)
-    : Page(dlg, i)
+    : Page(dlg, i), m_modified(false), m_okay(false)
   {
+    m_originalLabel = ui->instanceNameLabel->text();
+
+    QObject::connect(
+      ui->instanceName, &QLineEdit::textEdited, [&]{ onChanged(); });
+  }
+
+  bool ready() const override
+  {
+    return m_okay;
+  }
+
+  bool skip() const override
+  {
+    return (m_dlg.selectedType() == CreateInstanceDialog::Portable);
+  }
+
+  void activated() override
+  {
+    auto* g = m_dlg.selectedGame();
+    if (!g) {
+      // shouldn't happen, next should be disabled
+      return;
+    }
+
+    ui->instanceNameLabel->setText(m_originalLabel.arg(g->gameName()));
+
+    if (!m_modified || ui->instanceName->text().isEmpty()) {
+      const auto n = InstanceManager::instance().makeUniqueName(g->gameName());
+      ui->instanceName->setText(n);
+      m_modified = false;
+    }
+
+    updateWarnings();
+  }
+
+private:
+  QString m_originalLabel;
+  bool m_modified;
+  bool m_okay;
+
+  void onChanged()
+  {
+    m_modified = true;
+    updateWarnings();
+  }
+
+  void updateWarnings()
+  {
+    bool exists = false;
+    bool invalid = false;
+    bool empty = false;
+
+    auto& m = InstanceManager::instance();
+
+    const auto name = ui->instanceName->text().trimmed();
+
+    if (name.isEmpty()) {
+      empty = true;
+    } else {
+      const auto sanitized = m.sanitizeInstanceName(name);
+      if (name != sanitized) {
+        invalid = true;
+      } else {
+        exists = m.instanceExists(name);
+      }
+    }
+
+    if (exists) {
+      m_okay = false;
+      ui->instanceNameExists->setVisible(true);
+      ui->instanceNameInvalid->setVisible(false);
+    } else if (invalid) {
+      m_okay = false;
+      ui->instanceNameExists->setVisible(false);
+      ui->instanceNameInvalid->setVisible(true);
+    } else {
+      m_okay = !empty;
+      ui->instanceNameExists->setVisible(false);
+      ui->instanceNameInvalid->setVisible(false);
+    }
+
+    updateNavigation();
   }
 };
 
@@ -463,7 +593,7 @@ CreateInstanceDialog::CreateInstanceDialog(
 
   ui->pages->setCurrentIndex(0);
 
-  updateNavigationButtons();
+  updateNavigation();
 
   connect(ui->next, &QPushButton::clicked, [&]{ next(); });
   connect(ui->back, &QPushButton::clicked, [&]{ back(); });
@@ -483,21 +613,62 @@ const PluginContainer& CreateInstanceDialog::pluginContainer()
 
 void CreateInstanceDialog::next()
 {
-  ui->pages->setCurrentIndex(ui->pages->currentIndex() + 1);
-  updateNavigationButtons();
+  selectPage(ui->pages->currentIndex() + 1);
 }
 
 void CreateInstanceDialog::back()
 {
-  ui->pages->setCurrentIndex(ui->pages->currentIndex() - 1);
-  updateNavigationButtons();
+  selectPage(ui->pages->currentIndex() - 1);
 }
 
-void CreateInstanceDialog::updateNavigationButtons()
+void CreateInstanceDialog::selectPage(std::size_t i)
+{
+  while (i < m_pages.size()) {
+    if (!m_pages[i]->skip()) {
+      break;
+    }
+
+    ++i;
+  }
+
+  if (i >= m_pages.size()) {
+    return;
+  }
+
+  ui->pages->setCurrentIndex(static_cast<int>(i));
+  m_pages[i]->activated();
+
+  updateNavigation();
+}
+
+void CreateInstanceDialog::updateNavigation()
 {
   const auto i = ui->pages->currentIndex();
   const auto last = (i == (ui->pages->count() - 1));
 
   ui->next->setEnabled(m_pages[i]->ready() && !last);
   ui->back->setEnabled(i > 0);
+}
+
+CreateInstanceDialog::Types CreateInstanceDialog::selectedType() const
+{
+  for (auto&& p : m_pages) {
+    const auto t = p->selectedType();
+    if (t != NoType) {
+      return t;
+    }
+  }
+
+  return NoType;
+}
+
+MOBase::IPluginGame* CreateInstanceDialog::selectedGame() const
+{
+  for (auto&& p : m_pages) {
+    if (auto* g=p->selectedGame()) {
+      return g;
+    }
+  }
+
+  return nullptr;
 }
