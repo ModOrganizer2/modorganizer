@@ -554,7 +554,7 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="1" column="0">
+                 <item row="3" column="0">
                   <spacer name="verticalSpacer_3">
                    <property name="orientation">
                     <enum>Qt::Vertical</enum>
@@ -567,8 +567,26 @@
                    </property>
                   </spacer>
                  </item>
+                 <item row="2" column="0" colspan="3">
+                  <widget class="QLabel" name="locationExists">
+                   <property name="text">
+                    <string>This folder already exists.</string>
+                   </property>
+                  </widget>
+                 </item>
                  <item row="0" column="1">
-                  <widget class="QLineEdit" name="location"/>
+                  <widget class="QLineEdit" name="location">
+                   <property name="placeholderText">
+                    <string>Folder</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="0" colspan="3">
+                  <widget class="QLabel" name="locationInvalid">
+                   <property name="text">
+                    <string>The folder contains invalid characters.</string>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </widget>
@@ -604,10 +622,17 @@
                  <property name="bottomMargin">
                   <number>0</number>
                  </property>
-                 <item row="4" column="0">
-                  <widget class="QLabel" name="label_13">
+                 <item row="4" column="3">
+                  <widget class="QToolButton" name="browseOverwrite">
                    <property name="text">
-                    <string>Overwrite</string>
+                    <string>...</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="3">
+                  <widget class="QToolButton" name="browseMods">
+                   <property name="text">
+                    <string>...</string>
                    </property>
                   </widget>
                  </item>
@@ -618,6 +643,27 @@
                    </property>
                   </widget>
                  </item>
+                 <item row="4" column="2">
+                  <widget class="QLineEdit" name="overwrite">
+                   <property name="placeholderText">
+                    <string>Folder</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="2">
+                  <widget class="QLineEdit" name="mods">
+                   <property name="placeholderText">
+                    <string>Folder</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="4" column="0">
+                  <widget class="QLabel" name="label_13">
+                   <property name="text">
+                    <string>Overwrite</string>
+                   </property>
+                  </widget>
+                 </item>
                  <item row="0" column="0">
                   <widget class="QLabel" name="label_8">
                    <property name="text">
@@ -625,28 +671,29 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="6" column="0">
-                  <spacer name="verticalSpacer_4">
-                   <property name="orientation">
-                    <enum>Qt::Vertical</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>20</width>
-                     <height>40</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                 <item row="3" column="0">
-                  <widget class="QLabel" name="label_12">
+                 <item row="1" column="3">
+                  <widget class="QToolButton" name="browseDownloads">
                    <property name="text">
-                    <string>Profiles</string>
+                    <string>...</string>
                    </property>
                   </widget>
                  </item>
-                 <item row="2" column="2">
-                  <widget class="QLineEdit" name="mods"/>
+                 <item row="3" column="2">
+                  <widget class="QLineEdit" name="profiles">
+                   <property name="placeholderText">
+                    <string>Folder</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="5" column="0" colspan="4">
+                  <widget class="QLabel" name="advancedDirExists">
+                   <property name="text">
+                    <string>The folder %1 already exists.</string>
+                   </property>
+                   <property name="wordWrap">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
                  </item>
                  <item row="1" column="0">
                   <widget class="QLabel" name="label_9">
@@ -656,18 +703,27 @@
                   </widget>
                  </item>
                  <item row="1" column="2">
-                  <widget class="QLineEdit" name="downloads"/>
-                 </item>
-                 <item row="3" column="2">
-                  <widget class="QLineEdit" name="profiles"/>
-                 </item>
-                 <item row="4" column="2">
-                  <widget class="QLineEdit" name="overwrite"/>
+                  <widget class="QLineEdit" name="downloads">
+                   <property name="placeholderText">
+                    <string>Folder</string>
+                   </property>
+                  </widget>
                  </item>
                  <item row="0" column="2">
-                  <widget class="QLineEdit" name="base"/>
+                  <widget class="QLineEdit" name="base">
+                   <property name="placeholderText">
+                    <string>Folder</string>
+                   </property>
+                  </widget>
                  </item>
-                 <item row="5" column="0" colspan="4">
+                 <item row="3" column="0">
+                  <widget class="QLabel" name="label_12">
+                   <property name="text">
+                    <string>Profiles</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="8" column="0" colspan="4">
                   <widget class="QLabel" name="label_11">
                    <property name="text">
                     <string>Use &lt;code&gt;%BASE_DIR%&lt;/code&gt; to refer to the Base Directory.</string>
@@ -681,20 +737,6 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="1" column="3">
-                  <widget class="QToolButton" name="browseDownloads">
-                   <property name="text">
-                    <string>...</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="4" column="3">
-                  <widget class="QToolButton" name="browseOverwrite">
-                   <property name="text">
-                    <string>...</string>
-                   </property>
-                  </widget>
-                 </item>
                  <item row="3" column="3">
                   <widget class="QToolButton" name="browseProfiles">
                    <property name="text">
@@ -702,10 +744,26 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="2" column="3">
-                  <widget class="QToolButton" name="browseMods">
+                 <item row="7" column="0">
+                  <spacer name="verticalSpacer_4">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item row="6" column="0" colspan="4">
+                  <widget class="QLabel" name="advancedDirInvalid">
                    <property name="text">
-                    <string>...</string>
+                    <string>The folder %1 contains invalid characters.</string>
+                   </property>
+                   <property name="wordWrap">
+                    <bool>true</bool>
                    </property>
                   </widget>
                  </item>

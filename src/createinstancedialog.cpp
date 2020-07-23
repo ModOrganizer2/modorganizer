@@ -2,11 +2,157 @@
 #include "ui_createinstancedialog.h"
 #include "instancemanager.h"
 #include "plugincontainer.h"
+#include "shared/appconfig.h"
 #include <report.h>
 #include <iplugingame.h>
 
 namespace cid
 {
+
+class PathChecker
+{
+public:
+  PathChecker(QLabel* existsLabel, QLabel* invalidLabel)
+    : m_exists(existsLabel), m_invalid(invalidLabel)
+  {
+    m_existsOriginal = m_exists->text();
+    m_invalidOriginal = m_invalid->text();
+  }
+
+  QString sanitizeFileName(const QString& name) const
+  {
+    QString new_name = name;
+
+    // Restrict the allowed characters
+    new_name = new_name.remove(QRegExp("[^A-Za-z0-9 _=+;!@#$%^'\\-\\.\\[\\]\\{\\}\\(\\)]"));
+
+    // Don't end in spaces and periods
+    new_name = new_name.remove(QRegExp("\\.*$"));
+    new_name = new_name.remove(QRegExp(" *$"));
+
+    // Recurse until stuff stops changing
+    if (new_name != name) {
+      return sanitizeFileName(new_name);
+    }
+
+    return new_name;
+  }
+
+  // same thing as above, but allows path separators and colons
+  //
+  QString sanitizePath(const QString& path) const
+  {
+    QString new_name = path;
+
+    // Restrict the allowed characters
+    new_name = new_name.remove(QRegExp("[^\\\\\\/A-Za-z0-9 _=+;!@#$%^:'\\-\\.\\[\\]\\{\\}\\(\\)]"));
+
+    // Don't end in spaces and periods
+    new_name = new_name.remove(QRegExp("\\.*$"));
+    new_name = new_name.remove(QRegExp(" *$"));
+
+    // Recurse until stuff stops changing
+    if (new_name != path) {
+      return sanitizeFileName(new_name);
+    }
+
+    return new_name;
+  }
+
+  bool checkName(QString parentDir, QString name) const
+  {
+    bool exists = false;
+    bool invalid = false;
+    bool empty = false;
+
+    name = name.trimmed();
+
+    if (name.isEmpty()) {
+      empty = true;
+    } else {
+      const QString sanitized = sanitizeFileName(name);
+
+      if (name != sanitized) {
+        invalid = true;
+      } else {
+        exists = QDir(parentDir).exists(name);
+      }
+    }
+
+    bool okay = false;
+
+    if (exists) {
+      m_exists->setVisible(true);
+      setPossiblePlaceholder(m_exists, m_existsOriginal, QDir(parentDir).filePath(name));
+      m_invalid->setVisible(false);
+    } else if (invalid) {
+      m_exists->setVisible(false);
+      m_invalid->setVisible(true);
+      setPossiblePlaceholder(m_invalid, m_invalidOriginal, name);
+    } else {
+      okay = !empty;
+      m_exists->setVisible(false);
+      m_invalid->setVisible(false);
+    }
+
+    return okay;
+  }
+
+  bool checkPath(QString path) const
+  {
+    bool exists = false;
+    bool invalid = false;
+    bool empty = false;
+
+    path = path.trimmed();
+
+    if (path.isEmpty()) {
+      empty = true;
+    } else {
+      const QString sanitized = sanitizePath(path);
+
+      if (path != sanitized) {
+        invalid = true;
+      } else {
+        exists = QDir(path).exists();
+      }
+    }
+
+    bool okay = false;
+
+    if (exists) {
+      m_exists->setVisible(true);
+      setPossiblePlaceholder(m_exists, m_existsOriginal, path);
+      m_invalid->setVisible(false);
+    } else if (invalid) {
+      m_exists->setVisible(false);
+      m_invalid->setVisible(true);
+      setPossiblePlaceholder(m_invalid, m_invalidOriginal, path);
+    } else {
+      okay = !empty;
+      m_exists->setVisible(false);
+      m_invalid->setVisible(false);
+    }
+
+    return okay;
+  }
+
+private:
+  QLabel* m_exists;
+  QString m_existsOriginal;
+
+  QLabel* m_invalid;
+  QString m_invalidOriginal;
+
+  void setPossiblePlaceholder(
+    QLabel* label, const QString& s, const QString& arg) const
+  {
+    if (label->text().contains("%1")) {
+      label->setText(s.arg(arg));
+    }
+  }
+};
+
 
 class Page
 {
@@ -562,8 +708,9 @@ private:
 class NamePage : public Page
 {
 public:
-  NamePage(CreateInstanceDialog& dlg)
-    : Page(dlg), m_modified(false), m_okay(false)
+  NamePage(CreateInstanceDialog& dlg) :
+    Page(dlg), m_modified(false), m_okay(false),
+    m_checker(ui->instanceNameExists, ui->instanceNameInvalid)
   {
     m_originalLabel = ui->instanceNameLabel->text();
 
@@ -607,10 +754,11 @@ public:
     }
 
     const auto text = ui->instanceName->text().trimmed();
-    return InstanceManager::instance().sanitizeInstanceName(text);
+    return m_checker.sanitizeFileName(text);
   }
 
 private:
+  PathChecker m_checker;
   QString m_originalLabel;
   bool m_modified;
   bool m_okay;
@@ -623,39 +771,9 @@ private:
 
   void updateWarnings()
   {
-    bool exists = false;
-    bool invalid = false;
-    bool empty = false;
+    const auto root = InstanceManager::instance().instancesPath();
 
-    auto& m = InstanceManager::instance();
-
-    const auto text = ui->instanceName->text().trimmed();
-
-    if (text.isEmpty()) {
-      empty = true;
-    } else {
-      const auto sanitized = m.sanitizeInstanceName(text);
-      if (text != sanitized) {
-        invalid = true;
-      } else {
-        exists = m.instanceExists(text);
-      }
-    }
-
-    if (exists) {
-      m_okay = false;
-      ui->instanceNameExists->setVisible(true);
-      ui->instanceNameInvalid->setVisible(false);
-    } else if (invalid) {
-      m_okay = false;
-      ui->instanceNameExists->setVisible(false);
-      ui->instanceNameInvalid->setVisible(true);
-    } else {
-      m_okay = !empty;
-      ui->instanceNameExists->setVisible(false);
-      ui->instanceNameInvalid->setVisible(false);
-    }
-
+    m_okay = m_checker.checkName(root, ui->instanceName->text());
     updateNavigation();
   }
 };
@@ -664,31 +782,109 @@ private:
 class PathsPage : public Page
 {
 public:
-  PathsPage(CreateInstanceDialog& dlg)
-    : Page(dlg)
+  PathsPage(CreateInstanceDialog& dlg) :
+    Page(dlg),
+    m_checker(ui->locationExists, ui->locationInvalid),
+    m_advancedChecker(ui->advancedDirExists, ui->advancedDirInvalid)
   {
+    QObject::connect(ui->location, &QLineEdit::textEdited, [&]{ onChanged(); });
+    QObject::connect(ui->base, &QLineEdit::textEdited, [&]{ onChanged(); });
+    QObject::connect(ui->downloads, &QLineEdit::textEdited, [&]{ onChanged(); });
+    QObject::connect(ui->mods, &QLineEdit::textEdited, [&]{ onChanged(); });
+    QObject::connect(ui->profiles, &QLineEdit::textEdited, [&]{ onChanged(); });
+    QObject::connect(ui->overwrite, &QLineEdit::textEdited, [&]{ onChanged(); });
+
     QObject::connect(
       ui->advancedPathOptions, &QCheckBox::clicked, [&]{ onAdvanced(); });
 
     ui->pathPages->setCurrentIndex(0);
   }
 
+  bool ready() const override
+  {
+    return checkPaths();
+  }
+
   void activated() override
   {
-    const auto root = InstanceManager::instance().instancesPath();
-    const auto path = QDir::toNativeSeparators(root + "/" + m_dlg.instanceName());
+    const auto name = m_dlg.instanceName();
 
-    ui->location->setText(path);
+    setPaths(name, (m_lastInstanceName != name));
+    checkPaths();
+    updateNavigation();
+
+    m_lastInstanceName = name;
   }
 
 private:
+  PathChecker m_checker, m_advancedChecker;
+  QString m_lastInstanceName;
+
+  void onChanged()
+  {
+    checkPaths();
+    updateNavigation();
+  }
+
+  bool checkPaths() const
+  {
+    if (ui->advancedPathOptions->isChecked()) {
+      return
+        checkAdvancedPath(ui->base->text()) &&
+        checkVarPath(ui->downloads->text());
+    } else {
+      return m_checker.checkPath(ui->location->text());
+    }
+  }
+
+  bool checkAdvancedPath(const QString& path) const
+  {
+    return m_advancedChecker.checkPath(path);
+  }
+
+  bool checkVarPath(QString path) const
+  {
+    path.replace("%BASE_DIR%", ui->base->text());
+    return checkAdvancedPath(path);
+  }
+
   void onAdvanced()
   {
     if (ui->advancedPathOptions->isChecked()) {
+      ui->base->setText(ui->location->text());
       ui->pathPages->setCurrentIndex(1);
     } else {
+      ui->location->setText(ui->base->text());
       ui->pathPages->setCurrentIndex(0);
     }
+
+    checkPaths();
+  }
+
+  void setPaths(const QString& name, bool force)
+  {
+    const auto root = InstanceManager::instance().instancesPath();
+    const auto path = QDir::toNativeSeparators(root + "/" + name);
+
+    setIfEmpty(ui->location, path, force);
+
+    setIfEmpty(ui->base, path, force);
+    setIfEmpty(ui->downloads, makeDefaultPath(AppConfig::downloadPath()), force);
+    setIfEmpty(ui->mods, makeDefaultPath(AppConfig::modsPath()), force);
+    setIfEmpty(ui->profiles, makeDefaultPath(AppConfig::profilesPath()), force);
+    setIfEmpty(ui->overwrite, makeDefaultPath(AppConfig::overwritePath()), force);
+  }
+
+  void setIfEmpty(QLineEdit* e, const QString& path, bool force)
+  {
+    if (e->text().isEmpty() || force) {
+      e->setText(path);
+    }
+  }
+
+  QString makeDefaultPath(const std::wstring& dir)
+  {
+    return "%BASE_DIR%\\" + QString::fromStdWString(dir);
   }
 };
 
@@ -702,6 +898,7 @@ CreateInstanceDialog::CreateInstanceDialog(
   using namespace cid;
 
   ui->setupUi(this);
+  m_originalNext = ui->next->text();
 
   m_pages.push_back(std::make_unique<TypePage>(*this));
   m_pages.push_back(std::make_unique<GamePage>(*this));
@@ -731,24 +928,62 @@ const PluginContainer& CreateInstanceDialog::pluginContainer()
 
 void CreateInstanceDialog::next()
 {
-  selectPage(ui->pages->currentIndex() + 1);
+  const auto i = ui->pages->currentIndex();
+  const auto last = (i == (ui->pages->count() - 1));
+
+  if (last) {
+    finish();
+  } else {
+    changePage(+1);
+  }
 }
 
 void CreateInstanceDialog::back()
 {
-  selectPage(ui->pages->currentIndex() - 1);
+  changePage(-1);
+}
+
+void CreateInstanceDialog::changePage(int d)
+{
+  std::size_t i = static_cast<std::size_t>(ui->pages->currentIndex());
+
+  if (d > 0) {
+    for (;;) {
+      ++i;
+
+      if (i >= m_pages.size()) {
+        break;
+      }
+
+      if (!m_pages[i]->skip()) {
+        break;
+      }
+    }
+  } else {
+    for (;;) {
+      if (i == 0) {
+        break;
+      }
+
+      --i;
+
+      if (!m_pages[i]->skip()) {
+        break;
+      }
+    }
+  }
+
+  if (i < m_pages.size()) {
+    selectPage(i);
+  }
+}
+
+void CreateInstanceDialog::finish()
+{
 }
 
 void CreateInstanceDialog::selectPage(std::size_t i)
 {
-  while (i < m_pages.size()) {
-    if (!m_pages[i]->skip()) {
-      break;
-    }
-
-    ++i;
-  }
-
   if (i >= m_pages.size()) {
     return;
   }
@@ -764,8 +999,14 @@ void CreateInstanceDialog::updateNavigation()
   const auto i = ui->pages->currentIndex();
   const auto last = (i == (ui->pages->count() - 1));
 
-  ui->next->setEnabled(m_pages[i]->ready() && !last);
+  ui->next->setEnabled(m_pages[i]->ready());
   ui->back->setEnabled(i > 0);
+
+  if (last) {
+    ui->next->setText(tr("Finish"));
+  } else {
+    ui->next->setText(m_originalNext);
+  }
 }
 
 CreateInstanceDialog::Types CreateInstanceDialog::selectedType() const

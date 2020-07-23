@@ -32,6 +32,8 @@ public:
   void next();
   void back();
   void selectPage(std::size_t i);
+  void changePage(int d);
+  void finish();
 
   void updateNavigation();
 
@@ -43,6 +45,7 @@ private:
   std::unique_ptr<Ui::CreateInstanceDialog> ui;
   const PluginContainer& m_pc;
   std::vector<std::unique_ptr<cid::Page>> m_pages;
+  QString m_originalNext;
 };
 
 #endif // MODORGANIZER_CREATEINSTANCEDIALOG_INCLUDED
