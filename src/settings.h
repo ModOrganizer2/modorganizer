@@ -169,7 +169,7 @@ public:
 
   // assumes the given widget is a top-level
   //
-  void centerOnMainWindowMonitor(QWidget* w);
+  void centerOnMainWindowMonitor(QWidget* w) const;
 
   // saves the monitor number of the given window
   //

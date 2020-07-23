@@ -473,13 +473,43 @@ bool OrganizerCore::checkPathSymlinks() {
   return true;
 }
 
-bool OrganizerCore::bootstrap() {
-  return createDirectory(m_Settings.paths().profiles()) &&
-         createDirectory(m_Settings.paths().mods()) &&
-         createDirectory(m_Settings.paths().downloads()) &&
-         createDirectory(m_Settings.paths().overwrite()) &&
-         createDirectory(QString::fromStdWString(crashDumpsPath())) &&
-         checkPathSymlinks() && cycleDiagnostics();
+bool OrganizerCore::bootstrap()
+{
+  const auto dirs = {
+    m_Settings.paths().profiles(),
+    m_Settings.paths().mods(),
+    m_Settings.paths().downloads(),
+    m_Settings.paths().overwrite(),
+    QString::fromStdWString(crashDumpsPath())
+  };
+
+  for (auto&& dir : dirs) {
+    if (!createDirectory(dir)) {
+      return false;
+    }
+  }
+
+  if (!checkPathSymlinks()) {
+    return false;
+  }
+
+  if (!cycleDiagnostics()) {
+    return false;
+  }
+
+  // log if there are any dmp files
+  const auto hasCrashDumps =
+    !QDir(QString::fromStdWString(crashDumpsPath()))
+      .entryList({"*.dmp"}, QDir::Files)
+      .empty();
+
+  if (hasCrashDumps) {
+    log::debug(
+      "there are crash dumps in '{}'",
+      QString::fromStdWString(crashDumpsPath()));
+  }
+
+  return true;
 }
 
 void OrganizerCore::createDefaultProfile()

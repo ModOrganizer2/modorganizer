@@ -71,7 +71,7 @@ public:
 };
 
 
-MOApplication::MOApplication(int argc, char** argv)
+MOApplication::MOApplication(int& argc, char** argv)
   : QApplication(argc, argv)
 {
   connect(&m_StyleWatcher, &QFileSystemWatcher::fileChanged, [&](auto&& file){
@@ -83,7 +83,7 @@ MOApplication::MOApplication(int argc, char** argv)
   setStyle(new ProxyStyle(style()));
 }
 
-MOApplication MOApplication::create(int argc, char** argv)
+MOApplication MOApplication::create(int& argc, char** argv)
 {
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
   return MOApplication(argc, argv);

@@ -29,7 +29,7 @@ class MOApplication : public QApplication
   Q_OBJECT
 
 public:
-  static MOApplication create(int argc, char** argv);
+  static MOApplication create(int& argc, char** argv);
   virtual bool notify (QObject* receiver, QEvent* event);
 
 public slots:
@@ -42,7 +42,7 @@ private:
   QFileSystemWatcher m_StyleWatcher;
   QString m_DefaultStyle;
 
-  MOApplication(int argc, char** argv);
+  MOApplication(int& argc, char** argv);
 };
 
 

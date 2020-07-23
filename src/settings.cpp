@@ -876,7 +876,7 @@ void GeometrySettings::setCenterDialogs(bool b)
   set(m_Settings, "Settings", "center_dialogs", b);
 }
 
-void GeometrySettings::centerOnMainWindowMonitor(QWidget* w)
+void GeometrySettings::centerOnMainWindowMonitor(QWidget* w) const
 {
   const auto monitor = getOptional<int>(
     m_Settings, "Geometry", "MainWindow_monitor").value_or(-1);

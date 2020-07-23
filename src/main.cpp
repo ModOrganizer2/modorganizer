@@ -68,26 +68,31 @@ void purgeOldFiles()
     "usvfs*.log", 5, QDir::Name);
 }
 
-thread_local LPTOP_LEVEL_EXCEPTION_FILTER prevUnhandledExceptionFilter = nullptr;
-thread_local std::terminate_handler prevTerminateHandler = nullptr;
+thread_local LPTOP_LEVEL_EXCEPTION_FILTER g_prevExceptionFilter = nullptr;
+thread_local std::terminate_handler g_prevTerminateHandler = nullptr;
 
-LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs)
+LONG WINAPI onUnhandledException(_EXCEPTION_POINTERS* ptrs)
 {
   const std::wstring& dumpPath = OrganizerCore::crashDumpsPath();
-  int dumpRes =
-    CreateMiniDump(exceptionPtrs, OrganizerCore::getGlobalCrashDumpsType(), dumpPath.c_str());
-  if (!dumpRes)
-    log::error("ModOrganizer has crashed, crash dump created.");
-  else
-    log::error("ModOrganizer has crashed, CreateMiniDump failed ({}, error {}).", dumpRes, GetLastError());
 
-  if (prevUnhandledExceptionFilter && exceptionPtrs)
-    return prevUnhandledExceptionFilter(exceptionPtrs);
+  const int r = CreateMiniDump(
+    ptrs, OrganizerCore::getGlobalCrashDumpsType(), dumpPath.c_str());
+
+  if (r == 0) {
+    log::error("ModOrganizer has crashed, crash dump created.");
+  } else {
+    log::error(
+      "ModOrganizer has crashed, CreateMiniDump failed ({}, error {}).",
+      r, GetLastError());
+  }
+
+  if (g_prevExceptionFilter && ptrs)
+    return g_prevExceptionFilter(ptrs);
   else
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
-void terminateHandler() noexcept
+void onTerminate() noexcept
 {
   __try
   {
@@ -96,22 +101,22 @@ void terminateHandler() noexcept
   }
   __except
     (
-      MyUnhandledExceptionFilter(GetExceptionInformation()), EXCEPTION_EXECUTE_HANDLER
+      onUnhandledException(GetExceptionInformation()), EXCEPTION_EXECUTE_HANDLER
       )
   {
   }
 
-  if (prevTerminateHandler) {
-    prevTerminateHandler();
+  if (g_prevTerminateHandler) {
+    g_prevTerminateHandler();
   } else {
     std::abort();
   }
 }
 
-void setUnhandledExceptionHandler()
+void setExceptionHandlers()
 {
-  prevUnhandledExceptionFilter = SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
-  prevTerminateHandler = std::set_terminate(terminateHandler);
+  g_prevExceptionFilter = SetUnhandledExceptionFilter(onUnhandledException);
+  g_prevTerminateHandler = std::set_terminate(onTerminate);
 }
 
 QString determineProfile(const cl::CommandLine& cl, const Settings &settings)
@@ -334,6 +339,55 @@ void addDllsToPath()
   env::prependToPath(dllsPath);
 }
 
+QString getSplashPath(
+  const Settings& settings, const QString& dataPath,
+  const MOBase::IPluginGame* game)
+{
+  if (!settings.useSplash()) {
+    return {};
+  }
+
+  const QString splashPath = dataPath + "/splash.png";
+  if (QFile::exists(dataPath + "/splash.png")) {
+    return splashPath;
+  }
+
+  // currently using MO splash, see if the plugin contains one
+  QString pluginSplash = QString(":/%1/splash").arg(game->gameShortName());
+  QImage image(pluginSplash);
+
+  if (image.isNull()) {
+    return {};
+  }
+
+  image.save(splashPath);
+  return splashPath;
+}
+
+std::unique_ptr<QSplashScreen> createSplash(
+  const Settings& settings, const QString& dataPath,
+  const MOBase::IPluginGame* game)
+{
+  const auto splashPath = getSplashPath(settings, dataPath, game);
+  if (splashPath.isEmpty()) {
+    return {};
+  }
+
+  QPixmap image(splashPath);
+  if (image.isNull()) {
+    log::error("failed to load splash from {}", splashPath);
+    return {};
+  }
+
+  auto splash = std::make_unique<QSplashScreen>(image);
+  settings.geometry().centerOnMainWindowMonitor(splash.get());
+
+  splash->show();
+  splash->activateWindow();
+
+  return splash;
+}
+
 int runApplication(
   MOApplication &application, const cl::CommandLine& cl,
   SingleInstance &instance, const QString &dataPath)
@@ -351,6 +405,8 @@ int runApplication(
     log::debug("this is a portable instance");
   }
 
+  log::info("working directory: {}", QDir::currentPath());
+
   if (!instance.secondary()) {
     purgeOldFiles();
   }
@@ -358,9 +414,8 @@ int runApplication(
   QWindowsWindowFunctions::setWindowActivationBehavior(
     QWindowsWindowFunctions::AlwaysActivateWindow);
 
-  try {
-    log::info("working directory: {}", QDir::currentPath());
-
+  try
+  {
     Settings settings(dataPath + "/" + QString::fromStdWString(AppConfig::iniFileName()));
     log::getDefault().setLevel(settings.diagnostics().logLevel());
 
@@ -369,7 +424,6 @@ int runApplication(
     if (instance.secondary()) {
       log::debug("another instance of MO is running but --multiple was given");
     }
-
 
     // global crashDumpType sits in OrganizerCore to make a bit less ugly to
     // update it when the settings are changed during runtime
@@ -385,8 +439,10 @@ int runApplication(
       checkIncompatibleModule(m);
     });
 
-    log::debug("initializing core");
+    // this must outlive `organizer`
     std::unique_ptr<PluginContainer> pluginContainer;
+
+    log::debug("initializing core");
     OrganizerCore organizer(settings);
     if (!organizer.bootstrap()) {
       reportError("failed to set up data paths");
@@ -394,25 +450,11 @@ int runApplication(
       return 1;
     }
 
-    {
-      // log if there are any dmp files
-      const auto hasCrashDumps =
-        !QDir(QString::fromStdWString(organizer.crashDumpsPath()))
-          .entryList({"*.dmp"}, QDir::Files)
-          .empty();
-
-      if (hasCrashDumps) {
-        log::debug(
-          "there are crash dumps in '{}'",
-          QString::fromStdWString(organizer.crashDumpsPath()));
-      }
-    }
-
     log::debug("initializing plugins");
     pluginContainer = std::make_unique<PluginContainer>(&organizer);
     pluginContainer->loadPlugins();
 
-    MOBase::IPluginGame *game = determineCurrentGame(
+    MOBase::IPluginGame* game = determineCurrentGame(
         application.applicationDirPath(), settings, *pluginContainer);
 
     if (game == nullptr) {
@@ -429,25 +471,6 @@ int runApplication(
 
     checkPathsForSanity(*game, settings);
 
-    bool useSplash = settings.useSplash();
-    QString splashPath;
-
-    if (useSplash) {
-      splashPath = dataPath + "/splash.png";
-      if (!QFile::exists(dataPath + "/splash.png")) {
-        splashPath = ":/MO/gui/splash";
-      }
-
-      if (splashPath.startsWith(':')) {
-        // currently using MO splash, see if the plugin contains one
-        QString pluginSplash
-          = QString(":/%1/splash").arg(game->gameShortName());
-        QImage image(pluginSplash);
-        if (!image.isNull()) {
-          image.save(dataPath + "/splash.png");
-        }
-      }
-    }
 
     organizer.setManagedGame(game);
     organizer.createDefaultProfile();
@@ -535,18 +558,7 @@ int runApplication(
       }
     }
 
-    QPixmap pixmap;
-
-    QSplashScreen splash;
-
-    if (useSplash) {
-      pixmap = QPixmap(splashPath);
-      splash.setPixmap(pixmap);
-
-      settings.geometry().centerOnMainWindowMonitor(&splash);
-      splash.show();
-      splash.activateWindow();
-    }
+    auto splash = createSplash(settings, dataPath, game);
 
     QString apiKey;
     if (settings.nexus().apiKey(apiKey)) {
@@ -582,10 +594,10 @@ int runApplication(
       mainWindow.show();
       mainWindow.activateWindow();
 
-      if (useSplash) {
+      if (splash) {
         // don't pass mainwindow as it just waits half a second for it
         // instead of proceding
-        splash.finish(nullptr);
+        splash->finish(nullptr);
       }
 
       tt.stop();
@@ -655,6 +667,35 @@ QString determineDataPath(const cl::CommandLine& cl)
   }
 }
 
+int doOneRun(
+  cl::CommandLine& cl, MOApplication& application, SingleInstance& instance)
+{
+  TimeThis tt("doOneRun() to runApplication()");
+
+  // resets things when MO is "restarted"
+  resetForRestart(cl);
+
+  const QString dataPath = determineDataPath(cl);
+  if (dataPath.isEmpty()) {
+    return 1;
+  }
+
+  application.setProperty("dataPath", dataPath);
+  setExceptionHandlers();
+
+  if (!setLogDirectory(dataPath)) {
+    reportError("Failed to create log folder");
+    InstanceManager::instance().clearCurrentInstance();
+    return 1;
+  }
+
+  log::debug("command line: '{}'", QString::fromWCharArray(GetCommandLineW()));
+
+  tt.stop();
+
+  return runApplication(application, cl, instance, dataPath);
+}
+
 int main(int argc, char *argv[])
 {
   cl::CommandLine cl;
@@ -663,7 +704,8 @@ int main(int argc, char *argv[])
     return *r;
   }
 
-  TimeThis tt("main to runApplication()");
+  TimeThis tt("main() to doOneRun()");
+
   SetThisThreadName("main");
 
   initLogging();
@@ -675,32 +717,15 @@ int main(int argc, char *argv[])
     return forwardToPrimary(instance, cl);
   }
 
+  tt.stop();
+
   for (;;)
   {
-    // resets things when MO is "restarted"
-    resetForRestart(cl);
-
-    const QString dataPath = determineDataPath(cl);
-    if (dataPath.isEmpty()) {
-      return 1;
+    const auto r = doOneRun(cl, application, instance);
+    if (r == RestartExitCode) {
+      continue;
     }
 
-    application.setProperty("dataPath", dataPath);
-    setExceptionHandler();
-
-    if (!setLogDirectory(dataPath)) {
-      reportError("Failed to create log folder");
-      InstanceManager::instance().clearCurrentInstance();
-      return 1;
-    }
-
-    log::debug("command line: '{}'", QString::fromWCharArray(GetCommandLineW()));
-
-    tt.stop();
-
-    const int result = runApplication(application, cl, instance, dataPath);
-    if (result != RestartExitCode) {
-      return result;
-    }
+    return r;
   }
 }

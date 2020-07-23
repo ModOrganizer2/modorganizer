@@ -352,4 +352,6 @@ bool setLogDirectory(const QString& dir)
   }
 
   log::getDefault().setFile(MOBase::log::File::single(logFile.toStdWString()));
+
+  return true;
 }
