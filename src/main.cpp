@@ -270,6 +270,8 @@ std::optional<int> handleCommandLine(
   return {};
 }
 
+void openInstanceManager(PluginContainer& pc, QWidget* parent);
+
 int runApplication(
   MOApplication &application, const cl::CommandLine& cl,
   SingleInstance &instance, const QString &dataPath)
@@ -298,8 +300,9 @@ int runApplication(
 
   try
   {
-    Settings settings(dataPath + "/" + QString::fromStdWString(AppConfig::iniFileName()));
-    settings.setGlobalInstance();
+    Settings settings(
+      dataPath + "/" + QString::fromStdWString(AppConfig::iniFileName()),
+      true);
 
     log::getDefault().setLevel(settings.diagnostics().logLevel());
 
@@ -434,8 +437,7 @@ int runApplication(
 
       QTimer::singleShot(std::chrono::milliseconds(1), [&]
       {
-        InstanceManagerDialog dlg(*pluginContainer, &mainWindow);
-        dlg.exec();
+        openInstanceManager(*pluginContainer, &mainWindow);
       });
 
       res = application.exec();

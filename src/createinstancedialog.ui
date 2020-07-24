@@ -60,6 +60,24 @@
      <property name="currentIndex">
       <number>0</number>
      </property>
+     <widget class="QWidget" name="page_10">
+      <layout class="QVBoxLayout" name="verticalLayout_21">
+       <item>
+        <widget class="QLabel" name="label_15">
+         <property name="text">
+          <string>&lt;h3&gt;What is an instance?&lt;/h3&gt;
+&lt;p&gt;An instance is a full set of mods, downloads, profiles and configuration for a game. Each game must be managed in its own instance. Mod Organizer can freely switch between instances.&lt;/p&gt;</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
      <widget class="QWidget" name="page">
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
@@ -816,6 +834,67 @@
               </widget>
              </item>
             </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="page_11">
+      <layout class="QVBoxLayout" name="verticalLayout_22">
+       <item>
+        <widget class="QWidget" name="widget_18" native="true">
+         <layout class="QVBoxLayout" name="verticalLayout_24">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="label_16">
+            <property name="text">
+             <string>&lt;h3&gt;Confirmation&lt;/h3&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_17">
+            <property name="text">
+             <string>The instance is about to be created. Review the information below and press 'Finish'.</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QWidget" name="widget_19" native="true">
+         <layout class="QVBoxLayout" name="verticalLayout_23">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QPlainTextEdit" name="plainTextEdit">
+            <property name="textInteractionFlags">
+             <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+            </property>
            </widget>
           </item>
          </layout>

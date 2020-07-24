@@ -8,6 +8,12 @@
 #include "shared/appconfig.h"
 #include <iplugingame.h>
 
+void openInstanceManager(PluginContainer& pc, QWidget* parent)
+{
+  InstanceManagerDialog dlg(pc, parent);
+  dlg.exec();
+}
+
 class InstanceInfo
 {
 public:

@@ -214,6 +214,16 @@ protected:
 };
 
 
+class InfoPage : public Page
+{
+public:
+  InfoPage(CreateInstanceDialog& dlg)
+    : Page(dlg)
+  {
+  }
+};
+
+
 class TypePage : public Page
 {
 public:
@@ -345,7 +355,7 @@ public:
   void warnUnrecognized(const QString& path)
   {
     QString supportedGames;
-    for (auto* game : m_pc.plugins<MOBase::IPluginGame>()) {
+    for (auto* game : sortedGamePlugins()) {
       supportedGames += "<li>" + game->gameName() + "</li>";
     }
 
@@ -381,6 +391,21 @@ private:
   Game* m_selection;
 
 
+  std::vector<MOBase::IPluginGame*> sortedGamePlugins() const
+  {
+    std::vector<MOBase::IPluginGame*> v;
+
+    for (auto* game : m_pc.plugins<MOBase::IPluginGame>()) {
+      v.push_back(game);
+    }
+
+    std::sort(v.begin(), v.end(), [](auto* a, auto* b) {
+      return (a->gameName() < b->gameName());
+    });
+
+    return v;
+  }
+
   Game* findGame(MOBase::IPluginGame* game)
   {
     for (auto& g : m_games) {
@@ -396,7 +421,7 @@ private:
   {
     m_games.clear();
 
-    for (auto* game : m_pc.plugins<MOBase::IPluginGame>()) {
+    for (auto* game : sortedGamePlugins()) {
       m_games.push_back(std::make_unique<Game>(game));
     }
   }
@@ -563,9 +588,9 @@ private:
       .title(QObject::tr("Unrecognized game"))
       .main(QObject::tr("Unrecognized game"))
       .content(QObject::tr(
-        "The folder %1 does not seem to contain installation for "
+        "The folder %1 does not seem to contain an installation for "
         "<span style=\"white-space: nowrap; font-weight: bold;\">%2</span> or "
-        "any other game Mod Organizer can manage.")
+        "for any other game Mod Organizer can manage.")
           .arg(path)
           .arg(game->gameName()))
       .button({
@@ -800,6 +825,11 @@ public:
     ui->pathPages->setCurrentIndex(0);
   }
 
+  bool skip() const override
+  {
+    return (m_dlg.selectedType() == CreateInstanceDialog::Portable);
+  }
+
   bool ready() const override
   {
     return checkPaths();
@@ -900,11 +930,13 @@ CreateInstanceDialog::CreateInstanceDialog(
   ui->setupUi(this);
   m_originalNext = ui->next->text();
 
+  m_pages.push_back(std::make_unique<InfoPage>(*this));
   m_pages.push_back(std::make_unique<TypePage>(*this));
   m_pages.push_back(std::make_unique<GamePage>(*this));
   m_pages.push_back(std::make_unique<EditionsPage>(*this));
   m_pages.push_back(std::make_unique<NamePage>(*this));
   m_pages.push_back(std::make_unique<PathsPage>(*this));
+  m_pages.push_back(std::make_unique<InfoPage>(*this));
 
   ui->pages->setCurrentIndex(0);
 
@@ -926,10 +958,21 @@ const PluginContainer& CreateInstanceDialog::pluginContainer()
   return m_pc;
 }
 
+bool CreateInstanceDialog::isOnLastPage() const
+{
+  for (int i=ui->pages->currentIndex() + 1; i < ui->pages->count(); ++i) {
+    if (!m_pages[i]->skip()) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 void CreateInstanceDialog::next()
 {
   const auto i = ui->pages->currentIndex();
-  const auto last = (i == (ui->pages->count() - 1));
+  const auto last = isOnLastPage();
 
   if (last) {
     finish();
@@ -997,7 +1040,7 @@ void CreateInstanceDialog::selectPage(std::size_t i)
 void CreateInstanceDialog::updateNavigation()
 {
   const auto i = ui->pages->currentIndex();
-  const auto last = (i == (ui->pages->count() - 1));
+  const auto last = isOnLastPage();
 
   ui->next->setEnabled(m_pages[i]->ready());
   ui->back->setEnabled(i > 0);

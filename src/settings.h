@@ -195,7 +195,7 @@ private:
 class WidgetSettings
 {
 public:
-  WidgetSettings(QSettings& s);
+  WidgetSettings(QSettings& s, bool globalInstance);
 
   // selected index for a combobox
   //
@@ -677,11 +677,10 @@ class Settings : public QObject
   Q_OBJECT;
 
 public:
-  Settings(const QString& path);
+  Settings(const QString& path, bool globalInstance=false);
   ~Settings();
 
   static Settings &instance();
-  void setGlobalInstance();
 
   // name of the ini file
   //

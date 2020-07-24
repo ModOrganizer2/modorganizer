@@ -36,6 +36,7 @@ public:
   void finish();
 
   void updateNavigation();
+  bool isOnLastPage() const;
 
   Types selectedType() const;
   MOBase::IPluginGame* selectedGame() const;

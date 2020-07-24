@@ -5952,20 +5952,24 @@ void MainWindow::on_actionNotifications_triggered()
   scheduleCheckForProblems();
 }
 
+void openInstanceManager(PluginContainer& pc, QWidget* parent);
+
 void MainWindow::on_actionChange_Game_triggered()
 {
-  if (m_OrganizerCore.settings().interface().showChangeGameConfirmation()) {
-    const auto r = QMessageBox::question(
-      this, tr("Are you sure?"), tr("This will restart MO, continue?"),
-      QMessageBox::Yes | QMessageBox::Cancel);
+  openInstanceManager(m_PluginContainer, this);
 
-    if (r != QMessageBox::Yes) {
-      return;
-    }
-  }
-
-  InstanceManager::instance().clearCurrentInstance();
-  ExitModOrganizer(Exit::Restart);
+  //if (m_OrganizerCore.settings().interface().showChangeGameConfirmation()) {
+  //  const auto r = QMessageBox::question(
+  //    this, tr("Are you sure?"), tr("This will restart MO, continue?"),
+  //    QMessageBox::Yes | QMessageBox::Cancel);
+  //
+  //  if (r != QMessageBox::Yes) {
+  //    return;
+  //  }
+  //}
+  //
+  //InstanceManager::instance().clearCurrentInstance();
+  //ExitModOrganizer(Exit::Restart);
 }
 
 void MainWindow::setCategoryListVisible(bool visible)

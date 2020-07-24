@@ -61,30 +61,28 @@ QString toString(EndorsementState s)
 
 Settings *Settings::s_Instance = nullptr;
 
-Settings::Settings(const QString& path) :
+Settings::Settings(const QString& path, bool globalInstance) :
   m_Settings(path, QSettings::IniFormat),
-  m_Game(m_Settings), m_Geometry(m_Settings), m_Widgets(m_Settings),
-  m_Colors(m_Settings), m_Plugins(m_Settings), m_Paths(m_Settings),
-  m_Network(m_Settings), m_Nexus(*this, m_Settings), m_Steam(*this, m_Settings),
+  m_Game(m_Settings), m_Geometry(m_Settings),
+  m_Widgets(m_Settings, globalInstance), m_Colors(m_Settings),
+  m_Plugins(m_Settings), m_Paths(m_Settings), m_Network(m_Settings),
+  m_Nexus(*this, m_Settings), m_Steam(*this, m_Settings),
   m_Interface(m_Settings), m_Diagnostics(m_Settings)
 {
+  if (globalInstance) {
+    if (s_Instance != nullptr) {
+      throw std::runtime_error("second instance of \"Settings\" created");
+    } else {
+      s_Instance = this;
+    }
+  }
 }
 
 Settings::~Settings()
 {
-  MOBase::QuestionBoxMemory::setCallbacks({}, {}, {});
-
   if (s_Instance == this) {
+    MOBase::QuestionBoxMemory::setCallbacks({}, {}, {});
     s_Instance = nullptr;
-  }
-}
-
-void Settings::setGlobalInstance()
-{
-  if (s_Instance != nullptr) {
-    throw std::runtime_error("second instance of \"Settings\" created");
-  } else {
-    s_Instance = this;
   }
 }
 
@@ -1011,13 +1009,15 @@ void GeometrySettings::restoreDocks(QMainWindow* mw) const
 }
 
 
-WidgetSettings::WidgetSettings(QSettings& s)
+WidgetSettings::WidgetSettings(QSettings& s, bool globalInstance)
   : m_Settings(s)
 {
-  MOBase::QuestionBoxMemory::setCallbacks(
-    [this](auto&& w, auto&& f){ return questionButton(w, f); },
-    [this](auto&& w, auto&& b){ setQuestionWindowButton(w, b); },
-    [this](auto&& w, auto&& f, auto&& b){ setQuestionFileButton(w, f, b); });
+  if (globalInstance) {
+    MOBase::QuestionBoxMemory::setCallbacks(
+      [this](auto&& w, auto&& f){ return questionButton(w, f); },
+      [this](auto&& w, auto&& b){ setQuestionWindowButton(w, b); },
+      [this](auto&& w, auto&& f, auto&& b){ setQuestionFileButton(w, f, b); });
+  }
 }
 
 std::optional<int> WidgetSettings::index(const QComboBox* cb) const
