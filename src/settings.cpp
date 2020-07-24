@@ -1464,6 +1464,8 @@ QSet<QString> PluginSettings::readBlacklist() const
 }
 
 
+const QString PathSettings::BaseDirVariable = "%BASE_DIR%";
+
 PathSettings::PathSettings(QSettings& settings)
   : m_Settings(settings)
 {
@@ -1511,10 +1513,10 @@ QString PathSettings::getConfigurablePath(const QString &key,
   bool resolve) const
 {
   QString result = QDir::fromNativeSeparators(
-    get<QString>(m_Settings, "Settings", key, QString("%BASE_DIR%/") + def));
+    get<QString>(m_Settings, "Settings", key, makeDefaultPath(def)));
 
   if (resolve) {
-    result.replace("%BASE_DIR%", base());
+    result = PathSettings::resolve(result, base());
   }
 
   return result;
@@ -1527,6 +1529,18 @@ void PathSettings::setConfigurablePath(const QString &key, const QString& path)
   } else {
     set(m_Settings, "Settings", key, path);
   }
+}
+
+QString PathSettings::resolve(const QString& path, const QString& baseDir)
+{
+  QString s = path;
+  s.replace(BaseDirVariable, baseDir);
+  return s;
+}
+
+QString PathSettings::makeDefaultPath(const QString dirName)
+{
+  return BaseDirVariable + "/" + dirName;
 }
 
 QString PathSettings::base() const

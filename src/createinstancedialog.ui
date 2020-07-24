@@ -891,7 +891,21 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QTextEdit" name="review"/>
+           <widget class="QTextEdit" name="review">
+            <property name="lineWrapMode">
+             <enum>QTextEdit::NoWrap</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTextEdit" name="creationLog">
+            <property name="lineWrapMode">
+             <enum>QTextEdit::NoWrap</enum>
+            </property>
+            <property name="textInteractionFlags">
+             <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>

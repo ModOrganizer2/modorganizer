@@ -391,6 +391,9 @@ private:
 class PathSettings
 {
 public:
+  // %BASE_DIR%
+  static const QString BaseDirVariable;
+
   PathSettings(QSettings& settings);
 
   QString base() const;
@@ -417,6 +420,15 @@ public:
   //
   std::map<QString, QString> recent() const;
   void setRecent(const std::map<QString, QString>& map);
+
+
+  // resolves %BASE_DIR%
+  //
+  static QString resolve(const QString& path, const QString& baseDir);
+
+  // returns %BASE_DIR%/dirName
+  //
+  static QString makeDefaultPath(const QString dirName);
 
 private:
   QSettings& m_Settings;

@@ -28,9 +28,23 @@ public:
     QString mods;
     QString profiles;
     QString overwrite;
+    QString ini;
 
     auto operator<=>(const Paths&) const = default;
   };
+
+  struct CreationInfo
+  {
+    Types type;
+    MOBase::IPluginGame* game;
+    QString gameLocation;
+    QString gameEdition;
+    QString instanceName;
+    QString dataPath;
+    QString iniPath;
+    Paths paths;
+  };
+
 
   explicit CreateInstanceDialog(
     const PluginContainer& pc, QWidget *parent = nullptr);
@@ -54,7 +68,10 @@ public:
   QString gameLocation() const;
   QString gameEdition() const;
   QString instanceName() const;
+  QString dataPath() const;
   Paths paths() const;
+
+  CreationInfo creationInfo() const;
 
 private:
   std::unique_ptr<Ui::CreateInstanceDialog> ui;
@@ -74,6 +91,9 @@ private:
 
     return T();
   }
+
+  void logCreation(const QString& s);
+  void logCreation(const std::wstring& s);
 };
 
 #endif // MODORGANIZER_CREATEINSTANCEDIALOG_INCLUDED

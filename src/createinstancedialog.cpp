@@ -2,12 +2,18 @@
 #include "ui_createinstancedialog.h"
 #include "instancemanager.h"
 #include "plugincontainer.h"
+#include "settings.h"
 #include "shared/appconfig.h"
 #include <report.h>
 #include <iplugingame.h>
+#include <utility.h>
+
+using namespace MOBase;
 
 namespace cid
 {
+
+using MOBase::TaskDialog;
 
 class PathChecker
 {
@@ -153,6 +159,12 @@ private:
   }
 };
 
+QString makeDefaultPath(const std::wstring& dir)
+{
+  return QDir::toNativeSeparators(
+    PathSettings::makeDefaultPath(QString::fromStdWString(dir)));
+}
+
 
 class Page
 {
@@ -195,7 +207,7 @@ public:
     return CreateInstanceDialog::NoType;
   }
 
-  virtual MOBase::IPluginGame* selectedGame() const
+  virtual IPluginGame* selectedGame() const
   {
     // no-op
     return nullptr;
@@ -315,7 +327,7 @@ public:
     return (m_selection != nullptr);
   }
 
-  MOBase::IPluginGame* selectedGame() const override
+  IPluginGame* selectedGame() const override
   {
     if (!m_selection) {
       return nullptr;
@@ -330,10 +342,10 @@ public:
       return {};
     }
 
-    return m_selection->dir;
+    return QDir::toNativeSeparators(m_selection->dir);
   }
 
-  void select(MOBase::IPluginGame* game)
+  void select(IPluginGame* game)
   {
     Game* checked = findGame(game);
 
@@ -397,12 +409,12 @@ public:
 private:
   struct Game
   {
-    MOBase::IPluginGame* game = nullptr;
+    IPluginGame* game = nullptr;
     QCommandLinkButton* button = nullptr;
     QString dir;
     bool installed = false;
 
-    Game(MOBase::IPluginGame* g)
+    Game(IPluginGame* g)
       : game(g), installed(g->isInstalled())
     {
       if (installed) {
@@ -418,11 +430,11 @@ private:
   Game* m_selection;
 
 
-  std::vector<MOBase::IPluginGame*> sortedGamePlugins() const
+  std::vector<IPluginGame*> sortedGamePlugins() const
   {
-    std::vector<MOBase::IPluginGame*> v;
+    std::vector<IPluginGame*> v;
 
-    for (auto* game : m_pc.plugins<MOBase::IPluginGame>()) {
+    for (auto* game : m_pc.plugins<IPluginGame>()) {
       v.push_back(game);
     }
 
@@ -433,7 +445,7 @@ private:
     return v;
   }
 
-  Game* findGame(MOBase::IPluginGame* game)
+  Game* findGame(IPluginGame* game)
   {
     for (auto& g : m_games) {
       if (g->game == game) {
@@ -598,9 +610,9 @@ private:
     return g;
   }
 
-  MOBase::IPluginGame* findAnotherGame(const QString& path)
+  IPluginGame* findAnotherGame(const QString& path)
   {
-    for (auto* otherGame : m_pc.plugins<MOBase::IPluginGame>()) {
+    for (auto* otherGame : m_pc.plugins<IPluginGame>()) {
       if (otherGame->looksValid(path)) {
         return otherGame;
       }
@@ -609,9 +621,9 @@ private:
     return nullptr;
   }
 
-  bool confirmUnknown(const QString& path, MOBase::IPluginGame* game)
+  bool confirmUnknown(const QString& path, IPluginGame* game)
   {
-    const auto r = MOBase::TaskDialog(&m_dlg)
+    const auto r = TaskDialog(&m_dlg)
       .title(QObject::tr("Unrecognized game"))
       .main(QObject::tr("Unrecognized game"))
       .content(QObject::tr(
@@ -632,11 +644,11 @@ private:
     return (r == QMessageBox::Ignore);
   }
 
-  MOBase::IPluginGame* confirmOtherGame(
+  IPluginGame* confirmOtherGame(
     const QString& path,
-    MOBase::IPluginGame* selectedGame, MOBase::IPluginGame* guessedGame)
+    IPluginGame* selectedGame, IPluginGame* guessedGame)
   {
-    const auto r = MOBase::TaskDialog(&m_dlg)
+    const auto r = TaskDialog(&m_dlg)
       .title(QObject::tr("Incorrect game"))
       .main(QObject::tr("Incorrect game"))
       .content(QObject::tr(
@@ -742,7 +754,7 @@ public:
   }
 
 private:
-  MOBase::IPluginGame* m_previousGame;
+  IPluginGame* m_previousGame;
   std::vector<QCommandLinkButton*> m_buttons;
   QString m_selection;
 
@@ -868,10 +880,6 @@ public:
     ui->pathPages->setCurrentIndex(0);
   }
 
-  bool skip() const override
-  {
-    return (m_dlg.instanceType() == CreateInstanceDialog::Portable);
-  }
 
   bool ready() const override
   {
@@ -934,7 +942,7 @@ private:
 
   bool checkVarPath(QString path) const
   {
-    path.replace("%BASE_DIR%", ui->base->text());
+    path = PathSettings::resolve(path, ui->base->text());
     return checkAdvancedPath(path);
   }
 
@@ -971,11 +979,6 @@ private:
       e->setText(path);
     }
   }
-
-  QString makeDefaultPath(const std::wstring& dir)
-  {
-    return "%BASE_DIR%\\" + QString::fromStdWString(dir);
-  }
 };
 
 
@@ -990,54 +993,52 @@ public:
   void activated() override
   {
     ui->review->setPlainText(makeReview());
+    ui->creationLog->clear();
+  }
+
+  QString toLocalizedString(CreateInstanceDialog::Types t) const
+  {
+    switch (t)
+    {
+      case CreateInstanceDialog::Global:
+        return QObject::tr("Global");
+
+      case CreateInstanceDialog::Portable:
+        return QObject::tr("Portable");
+
+      default:
+        return QObject::tr("Instance type: %1").arg(QObject::tr("?"));
+    }
   }
 
   QString makeReview() const
   {
     QStringList lines;
-
     const auto paths = m_dlg.paths();
 
-    // type
-    switch (m_dlg.instanceType())
-    {
-      case CreateInstanceDialog::Global:
-      {
-        lines.push_back(QObject::tr("Instance type: %1").arg(QObject::tr("Global")));
-        lines.push_back(QObject::tr("Instance name: %1").arg(m_dlg.instanceName()));
+    lines.push_back(QObject::tr("Instance type: %1").arg(toLocalizedString(m_dlg.instanceType())));
+    lines.push_back(QObject::tr("Instance location: %1").arg(m_dlg.dataPath()));
 
-        if (paths.downloads.isEmpty()) {
-          // simple settings
-          lines.push_back(QObject::tr("Instance location: %1").arg(paths.base));
-        } else {
-          // advanced settings
-          lines.push_back(QObject::tr("Instance base folder: %1").arg(paths.base));
-          lines.push_back(dirLine(QObject::tr("Downloads"), paths.downloads));
-          lines.push_back(dirLine(QObject::tr("Mods"), paths.mods));
-          lines.push_back(dirLine(QObject::tr("Profiles"), paths.profiles));
-          lines.push_back(dirLine(QObject::tr("Overwrite"), paths.overwrite));
-        }
+    if (m_dlg.instanceType() != CreateInstanceDialog::Portable) {
+      lines.push_back(QObject::tr("Instance name: %1").arg(m_dlg.instanceName()));
+    }
 
-        break;
+    if (paths.downloads.isEmpty()) {
+      // simple settings
+      if (paths.base != m_dlg.dataPath()) {
+        lines.push_back(QObject::tr("Base directory: %1").arg(paths.base));
       }
-
-      case CreateInstanceDialog::Portable:
-      {
-        lines.push_back(QObject::tr("Instance type: %1").arg(QObject::tr("Portable")));
-        lines.push_back(QObject::tr("Instance location: %1").arg(qApp->applicationDirPath()));
-        break;
-      }
-
-      default:
-      {
-        lines.push_back(QObject::tr("Instance type: %1").arg(QObject::tr("?")));
-      }
+    } else {
+      // advanced settings
+      lines.push_back(QObject::tr("Base directory: %1").arg(paths.base));
+      lines.push_back(dirLine(QObject::tr("Downloads"), paths.downloads));
+      lines.push_back(dirLine(QObject::tr("Mods"), paths.mods));
+      lines.push_back(dirLine(QObject::tr("Profiles"), paths.profiles));
+      lines.push_back(dirLine(QObject::tr("Overwrite"), paths.overwrite));
     }
 
     // game
-    MOBase::IPluginGame* game = m_dlg.game();
-
-    QString name = game->gameName();
+    QString name = m_dlg.game()->gameName();
     if (!m_dlg.gameEdition().isEmpty()) {
       name += " (" + m_dlg.gameEdition() + ")";
     }
@@ -1157,8 +1158,195 @@ void CreateInstanceDialog::changePage(int d)
   }
 }
 
+
+class Failed {};
+
+class DirectoryCreator
+{
+public:
+  DirectoryCreator(const DirectoryCreator&) = delete;
+  DirectoryCreator& operator=(const DirectoryCreator&) = delete;
+
+  static std::unique_ptr<DirectoryCreator> create(
+    const QDir& target, std::function<void (QString)> log)
+  {
+    return std::unique_ptr<DirectoryCreator>(new DirectoryCreator(target, log));
+  }
+
+  ~DirectoryCreator()
+  {
+    rollback();
+  }
+
+  void commit()
+  {
+    m_created.clear();
+  }
+
+  void rollback() noexcept
+  {
+    try
+    {
+      for (auto itor=m_created.rbegin(); itor!=m_created.rend(); ++itor) {
+        const auto r = shell::DeleteDirectoryRecursive(*itor);
+        if (!r) {
+          m_logger(r.toString());
+        }
+      }
+
+      m_created.clear();
+    }
+    catch(...)
+    {
+      // eat it
+    }
+  }
+
+private:
+  std::function<void (QString)> m_logger;
+
+  DirectoryCreator(const QDir& target, std::function<void (QString)> log)
+    : m_logger(log)
+  {
+    try
+    {
+      const QString s = QDir::toNativeSeparators(target.absolutePath());
+      const QStringList cs = s.split("\\");
+
+      if (cs.empty()) {
+        return;
+      }
+
+      QDir d(cs[0]);
+
+      for (int i=1; i<cs.size(); ++i) {
+        d = d.filePath(cs[i]);
+
+        if (!d.exists()) {
+          m_logger(QObject::tr("Creating %1").arg(d.path()));
+          const auto r = shell::CreateDirectories(d);
+
+          if (!r) {
+            m_logger(r.toString());
+            throw Failed();
+          }
+
+          m_created.push_back(d);
+        }
+      }
+    }
+    catch(...)
+    {
+      rollback();
+      throw;
+    }
+  }
+
+private:
+  std::vector<QDir> m_created;
+};
+
 void CreateInstanceDialog::finish()
 {
+  ui->creationLog->clear();
+  logCreation(tr("Creating instance..."));
+
+  const auto& m = InstanceManager::instance();
+  const auto ci = creationInfo();
+
+  auto logger = [&](QString s) {
+    logCreation(s);
+  };
+
+  auto createDir = [&](QString path) {
+    return DirectoryCreator::create(path, logger);
+  };
+
+
+  try
+  {
+    std::vector<std::unique_ptr<DirectoryCreator>> dirs;
+
+    dirs.push_back(createDir(ci.dataPath));
+    dirs.push_back(createDir(ci.paths.base));
+    dirs.push_back(createDir(PathSettings::resolve(ci.paths.downloads, ci.paths.base)));
+    dirs.push_back(createDir(PathSettings::resolve(ci.paths.mods, ci.paths.base)));
+    dirs.push_back(createDir(PathSettings::resolve(ci.paths.profiles, ci.paths.base)));
+    dirs.push_back(createDir(PathSettings::resolve(ci.paths.overwrite, ci.paths.base)));
+
+
+    Settings s(ci.iniPath);
+    s.game().setName(ci.game->gameName());
+    s.game().setDirectory(ci.gameLocation);
+
+    if (!ci.gameEdition.isEmpty()) {
+      s.game().setEdition(ci.gameEdition);
+    }
+
+    if (ci.type == Global) {
+      if (ci.paths.base != ci.dataPath) {
+        s.paths().setBase(ci.paths.base);
+      }
+
+      if (ci.paths.downloads != cid::makeDefaultPath(AppConfig::downloadPath())) {
+        s.paths().setDownloads(ci.paths.downloads);
+      }
+
+      if (ci.paths.mods != cid::makeDefaultPath(AppConfig::modsPath())) {
+        s.paths().setMods(ci.paths.mods);
+      }
+
+      if (ci.paths.profiles != cid::makeDefaultPath(AppConfig::profilesPath())) {
+        s.paths().setProfiles(ci.paths.profiles);
+      }
+
+      if (ci.paths.overwrite != cid::makeDefaultPath(AppConfig::overwritePath())) {
+        s.paths().setOverwrite(ci.paths.overwrite);
+      }
+    }
+
+
+    logCreation(tr("Writing %1...").arg(ci.iniPath));
+
+    const auto r = s.sync();
+    if (r != QSettings::NoError) {
+      switch (r)
+      {
+        case QSettings::AccessError:
+          logCreation(formatSystemMessage(ERROR_ACCESS_DENIED));
+          break;
+
+        case QSettings::FormatError:
+          logCreation(tr("Format error."));
+          break;
+
+        default:
+          logCreation(tr("Error %1.").arg(static_cast<int>(r)));
+          break;
+      }
+
+      throw Failed();
+    }
+
+    for (auto& d : dirs) {
+      d->commit();
+    }
+
+    logCreation(tr("Done."));
+  }
+  catch(Failed&)
+  {
+  }
+}
+
+void CreateInstanceDialog::logCreation(const QString& s)
+{
+  ui->creationLog->insertPlainText(s + "\n");
+}
+
+void CreateInstanceDialog::logCreation(const std::wstring& s)
+{
+  logCreation(QString::fromStdWString(s));
 }
 
 void CreateInstanceDialog::selectPage(std::size_t i)
@@ -1213,7 +1401,72 @@ QString CreateInstanceDialog::instanceName() const
   return getSelected(&cid::Page::selectedInstanceName);
 }
 
+QString CreateInstanceDialog::dataPath() const
+{
+  QString s;
+
+  if (instanceType() == Portable) {
+    s = QDir(qApp->applicationDirPath()).absolutePath();
+  } else {
+    s = InstanceManager::instance().instancePath(instanceName());
+  }
+
+  return QDir::toNativeSeparators(s);
+}
+
 CreateInstanceDialog::Paths CreateInstanceDialog::paths() const
 {
   return getSelected(&cid::Page::selectedPaths);
+}
+
+CreateInstanceDialog::CreationInfo CreateInstanceDialog::creationInfo() const
+{
+  CreationInfo ci;
+
+  ci.type         = getSelected(&cid::Page::selectedInstanceType);
+  ci.game         = getSelected(&cid::Page::selectedGame);
+  ci.gameLocation = getSelected(&cid::Page::selectedGameLocation);
+  ci.gameEdition  = getSelected(&cid::Page::selectedGameEdition);
+  ci.instanceName = getSelected(&cid::Page::selectedInstanceName);
+  ci.paths        = getSelected(&cid::Page::selectedPaths);
+  ci.dataPath     = dataPath();
+
+  ci.paths.base = QDir(ci.paths.base).absolutePath();
+
+  if (ci.paths.downloads.isEmpty()) {
+    ci.paths.downloads = cid::makeDefaultPath(AppConfig::downloadPath());
+  } else if (!ci.paths.downloads.contains(PathSettings::BaseDirVariable)) {
+    ci.paths.downloads = QDir(ci.paths.downloads).absolutePath();
+  }
+
+  if (ci.paths.mods.isEmpty()) {
+    ci.paths.mods = cid::makeDefaultPath(AppConfig::modsPath());
+  } else if (!ci.paths.mods.contains(PathSettings::BaseDirVariable)) {
+    ci.paths.mods = QDir(ci.paths.mods).absolutePath();
+  }
+
+  if (ci.paths.profiles.isEmpty()) {
+    ci.paths.profiles = cid::makeDefaultPath(AppConfig::profilesPath());
+  } else if (!ci.paths.profiles.contains(PathSettings::BaseDirVariable)) {
+    ci.paths.profiles = QDir(ci.paths.profiles).absolutePath();
+  }
+
+  if (ci.paths.overwrite.isEmpty()) {
+    ci.paths.overwrite = cid::makeDefaultPath(AppConfig::overwritePath());
+  } else if (!ci.paths.overwrite.contains(PathSettings::BaseDirVariable)) {
+    ci.paths.overwrite = QDir(ci.paths.overwrite).absolutePath();
+  }
+
+  ci.iniPath = QFileInfo(
+    ci.dataPath + "/" + QString::fromStdWString(AppConfig::iniFileName()))
+      .absoluteFilePath();
+
+  ci.paths.base = QDir::toNativeSeparators(ci.paths.base);
+  ci.paths.downloads = QDir::toNativeSeparators(ci.paths.downloads);
+  ci.paths.mods = QDir::toNativeSeparators(ci.paths.mods);
+  ci.paths.profiles = QDir::toNativeSeparators(ci.paths.profiles);
+  ci.paths.overwrite = QDir::toNativeSeparators(ci.paths.overwrite);
+  ci.paths.ini = QDir::toNativeSeparators(ci.paths.ini);
+
+  return ci;
 }
