@@ -891,11 +891,7 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QPlainTextEdit" name="plainTextEdit">
-            <property name="textInteractionFlags">
-             <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
-            </property>
-           </widget>
+           <widget class="QTextEdit" name="review"/>
           </item>
          </layout>
         </widget>

@@ -189,7 +189,7 @@ public:
   }
 
 
-  virtual CreateInstanceDialog::Types selectedType() const
+  virtual CreateInstanceDialog::Types selectedInstanceType() const
   {
     // no-op
     return CreateInstanceDialog::NoType;
@@ -201,7 +201,25 @@ public:
     return nullptr;
   }
 
-  virtual QString instanceName() const
+  virtual QString selectedGameLocation() const
+  {
+    // no-op
+    return {};
+  }
+
+  virtual QString selectedGameEdition() const
+  {
+    // no-op
+    return {};
+  }
+
+  virtual QString selectedInstanceName() const
+  {
+    // no-op
+    return {};
+  }
+
+  virtual CreateInstanceDialog::Paths selectedPaths() const
   {
     // no-op
     return {};
@@ -250,7 +268,7 @@ public:
     return (m_type != CreateInstanceDialog::NoType);
   }
 
-  CreateInstanceDialog::Types selectedType() const
+  CreateInstanceDialog::Types selectedInstanceType() const override
   {
     return m_type;
   }
@@ -304,6 +322,15 @@ public:
     }
 
     return m_selection->game;
+  }
+
+  QString selectedGameLocation() const override
+  {
+    if (!m_selection) {
+      return {};
+    }
+
+    return m_selection->dir;
   }
 
   void select(MOBase::IPluginGame* game)
@@ -663,7 +690,7 @@ public:
 
   bool skip() const override
   {
-    auto* g = m_dlg.selectedGame();
+    auto* g = m_dlg.game();
     if (!g) {
       // shouldn't happen
       return true;
@@ -675,7 +702,7 @@ public:
 
   void activated() override
   {
-    auto* g = m_dlg.selectedGame();
+    auto* g = m_dlg.game();
 
     if (m_previousGame != g) {
       m_previousGame = g;
@@ -698,6 +725,22 @@ public:
     updateNavigation();
   }
 
+  QString selectedGameEdition() const override
+  {
+    auto* g = m_dlg.game();
+    if (!g) {
+      // shouldn't happen
+      return {};
+    }
+
+    const auto variants = g->gameVariants();
+    if (variants.size() < 2) {
+      return {};
+    } else {
+      return m_selection;
+    }
+  }
+
 private:
   MOBase::IPluginGame* m_previousGame;
   std::vector<QCommandLinkButton*> m_buttons;
@@ -708,7 +751,7 @@ private:
     ui->editions->clear();
     m_buttons.clear();
 
-    auto* g = m_dlg.selectedGame();
+    auto* g = m_dlg.game();
     if (!g) {
       // shouldn't happen
       return;
@@ -750,12 +793,12 @@ public:
 
   bool skip() const override
   {
-    return (m_dlg.selectedType() == CreateInstanceDialog::Portable);
+    return (m_dlg.instanceType() == CreateInstanceDialog::Portable);
   }
 
   void activated() override
   {
-    auto* g = m_dlg.selectedGame();
+    auto* g = m_dlg.game();
     if (!g) {
       // shouldn't happen, next should be disabled
       return;
@@ -772,7 +815,7 @@ public:
     updateWarnings();
   }
 
-  QString instanceName() const override
+  QString selectedInstanceName() const override
   {
     if (!m_okay) {
       return {};
@@ -827,7 +870,7 @@ public:
 
   bool skip() const override
   {
-    return (m_dlg.selectedType() == CreateInstanceDialog::Portable);
+    return (m_dlg.instanceType() == CreateInstanceDialog::Portable);
   }
 
   bool ready() const override
@@ -844,6 +887,23 @@ public:
     updateNavigation();
 
     m_lastInstanceName = name;
+  }
+
+  CreateInstanceDialog::Paths selectedPaths() const override
+  {
+    CreateInstanceDialog::Paths p;
+
+    if (ui->advancedPathOptions->isChecked()) {
+      p.base = ui->base->text();
+      p.downloads = ui->downloads->text();
+      p.mods = ui->mods->text();
+      p.profiles = ui->profiles->text();
+      p.overwrite = ui->overwrite->text();
+    } else {
+      p.base = ui->location->text();
+    }
+
+    return p;
   }
 
 private:
@@ -918,6 +978,82 @@ private:
   }
 };
 
+
+class ConfirmationPage : public Page
+{
+public:
+  ConfirmationPage(CreateInstanceDialog& dlg)
+    : Page(dlg)
+  {
+  }
+
+  void activated() override
+  {
+    ui->review->setPlainText(makeReview());
+  }
+
+  QString makeReview() const
+  {
+    QStringList lines;
+
+    const auto paths = m_dlg.paths();
+
+    // type
+    switch (m_dlg.instanceType())
+    {
+      case CreateInstanceDialog::Global:
+      {
+        lines.push_back(QObject::tr("Instance type: %1").arg(QObject::tr("Global")));
+        lines.push_back(QObject::tr("Instance name: %1").arg(m_dlg.instanceName()));
+
+        if (paths.downloads.isEmpty()) {
+          // simple settings
+          lines.push_back(QObject::tr("Instance location: %1").arg(paths.base));
+        } else {
+          // advanced settings
+          lines.push_back(QObject::tr("Instance base folder: %1").arg(paths.base));
+          lines.push_back(dirLine(QObject::tr("Downloads"), paths.downloads));
+          lines.push_back(dirLine(QObject::tr("Mods"), paths.mods));
+          lines.push_back(dirLine(QObject::tr("Profiles"), paths.profiles));
+          lines.push_back(dirLine(QObject::tr("Overwrite"), paths.overwrite));
+        }
+
+        break;
+      }
+
+      case CreateInstanceDialog::Portable:
+      {
+        lines.push_back(QObject::tr("Instance type: %1").arg(QObject::tr("Portable")));
+        lines.push_back(QObject::tr("Instance location: %1").arg(qApp->applicationDirPath()));
+        break;
+      }
+
+      default:
+      {
+        lines.push_back(QObject::tr("Instance type: %1").arg(QObject::tr("?")));
+      }
+    }
+
+    // game
+    MOBase::IPluginGame* game = m_dlg.game();
+
+    QString name = game->gameName();
+    if (!m_dlg.gameEdition().isEmpty()) {
+      name += " (" + m_dlg.gameEdition() + ")";
+    }
+
+    lines.push_back(QObject::tr("Game: %1").arg(name));
+    lines.push_back(QObject::tr("Game location: %1").arg(m_dlg.gameLocation()));
+
+    return lines.join("\n");
+  }
+
+  QString dirLine(const QString& caption, const QString& path) const
+  {
+    return QString("  - %1: %2").arg(caption).arg(path);
+  }
+};
+
 } // namespace
 
 
@@ -936,7 +1072,7 @@ CreateInstanceDialog::CreateInstanceDialog(
   m_pages.push_back(std::make_unique<EditionsPage>(*this));
   m_pages.push_back(std::make_unique<NamePage>(*this));
   m_pages.push_back(std::make_unique<PathsPage>(*this));
-  m_pages.push_back(std::make_unique<InfoPage>(*this));
+  m_pages.push_back(std::make_unique<ConfirmationPage>(*this));
 
   ui->pages->setCurrentIndex(0);
 
@@ -1052,37 +1188,32 @@ void CreateInstanceDialog::updateNavigation()
   }
 }
 
-CreateInstanceDialog::Types CreateInstanceDialog::selectedType() const
+CreateInstanceDialog::Types CreateInstanceDialog::instanceType() const
 {
-  for (auto&& p : m_pages) {
-    const auto t = p->selectedType();
-    if (t != NoType) {
-      return t;
-    }
-  }
-
-  return NoType;
+  return getSelected(&cid::Page::selectedInstanceType);
 }
 
-MOBase::IPluginGame* CreateInstanceDialog::selectedGame() const
+MOBase::IPluginGame* CreateInstanceDialog::game() const
 {
-  for (auto&& p : m_pages) {
-    if (auto* g=p->selectedGame()) {
-      return g;
-    }
-  }
+  return getSelected(&cid::Page::selectedGame);
+}
 
-  return nullptr;
+QString CreateInstanceDialog::gameLocation() const
+{
+  return getSelected(&cid::Page::selectedGameLocation);
+}
+
+QString CreateInstanceDialog::gameEdition() const
+{
+  return getSelected(&cid::Page::selectedGameEdition);
 }
 
 QString CreateInstanceDialog::instanceName() const
 {
-  for (auto&& p : m_pages) {
-    const auto s = p->instanceName();
-    if (!s.isEmpty()) {
-      return s;
-    }
-  }
+  return getSelected(&cid::Page::selectedInstanceName);
+}
 
-  return {};
+CreateInstanceDialog::Paths CreateInstanceDialog::paths() const
+{
+  return getSelected(&cid::Page::selectedPaths);
 }

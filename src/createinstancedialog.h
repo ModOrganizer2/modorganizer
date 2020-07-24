@@ -21,6 +21,17 @@ public:
     Portable
   };
 
+  struct Paths
+  {
+    QString base;
+    QString downloads;
+    QString mods;
+    QString profiles;
+    QString overwrite;
+
+    auto operator<=>(const Paths&) const = default;
+  };
+
   explicit CreateInstanceDialog(
     const PluginContainer& pc, QWidget *parent = nullptr);
 
@@ -38,15 +49,31 @@ public:
   void updateNavigation();
   bool isOnLastPage() const;
 
-  Types selectedType() const;
-  MOBase::IPluginGame* selectedGame() const;
+  Types instanceType() const;
+  MOBase::IPluginGame* game() const;
+  QString gameLocation() const;
+  QString gameEdition() const;
   QString instanceName() const;
+  Paths paths() const;
 
 private:
   std::unique_ptr<Ui::CreateInstanceDialog> ui;
   const PluginContainer& m_pc;
   std::vector<std::unique_ptr<cid::Page>> m_pages;
   QString m_originalNext;
+
+  template <class T>
+  T getSelected(T (cid::Page::*mf)() const) const
+  {
+    for (auto&& p : m_pages) {
+      const auto t = (p.get()->*mf)();
+      if (t != T()) {
+        return t;
+      }
+    }
+
+    return T();
+  }
 };
 
 #endif // MODORGANIZER_CREATEINSTANCEDIALOG_INCLUDED
