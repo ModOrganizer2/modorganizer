@@ -85,6 +85,7 @@ add_filter(NAME src/executables GROUPS
 
 add_filter(NAME src/instances GROUPS
 	createinstancedialog
+	createinstancedialogpages
 	instancemanager
 	instancemanagerdialog
 )
