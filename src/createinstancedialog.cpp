@@ -2,10 +2,8 @@
 #include "ui_createinstancedialog.h"
 #include "createinstancedialogpages.h"
 #include "instancemanager.h"
-//#include "plugincontainer.h"
 #include "settings.h"
 #include "shared/appconfig.h"
-//#include <report.h>
 #include <iplugingame.h>
 #include <utility.h>
 
@@ -79,6 +77,9 @@ void CreateInstanceDialog::back()
 void CreateInstanceDialog::changePage(int d)
 {
   std::size_t i = static_cast<std::size_t>(ui->pages->currentIndex());
+
+  // goes back or forwards until an unskippable page is reached, or the
+  // first/last page
 
   if (d > 0) {
     for (;;) {
@@ -359,7 +360,7 @@ QString CreateInstanceDialog::dataPath() const
   QString s;
 
   if (instanceType() == Portable) {
-    s = QDir(qApp->applicationDirPath()).absolutePath();
+    s = QDir(InstanceManager::portablePath()).absolutePath();
   } else {
     s = InstanceManager::instance().instancePath(instanceName());
   }
@@ -372,8 +373,31 @@ CreateInstanceDialog::Paths CreateInstanceDialog::paths() const
   return getSelected(&cid::Page::selectedPaths);
 }
 
+void fixVarDir(QString& path, const std::wstring& defaultDir)
+{
+  if (path.isEmpty()) {
+    path = cid::makeDefaultPath(defaultDir);
+  } else if (!path.contains(PathSettings::BaseDirVariable)) {
+    path = QDir(path).absolutePath();
+  }
+
+  path = QDir::toNativeSeparators(path);
+}
+
+void fixDirPath(QString& path)
+{
+  path = QDir::toNativeSeparators(QDir(path).absolutePath());
+}
+
+void fixFilePath(QString& path)
+{
+  path = QDir::toNativeSeparators(QFileInfo(path).absolutePath());
+}
+
 CreateInstanceDialog::CreationInfo CreateInstanceDialog::creationInfo() const
 {
+  const auto iniFilename = QString::fromStdWString(AppConfig::iniFileName());
+
   CreationInfo ci;
 
   ci.type         = getSelected(&cid::Page::selectedInstanceType);
@@ -383,43 +407,15 @@ CreateInstanceDialog::CreationInfo CreateInstanceDialog::creationInfo() const
   ci.instanceName = getSelected(&cid::Page::selectedInstanceName);
   ci.paths        = getSelected(&cid::Page::selectedPaths);
   ci.dataPath     = dataPath();
+  ci.iniPath      = ci.dataPath + "/" + iniFilename;
 
-  ci.paths.base = QDir(ci.paths.base).absolutePath();
+  fixDirPath(ci.paths.base);
+  fixFilePath(ci.paths.ini);
 
-  if (ci.paths.downloads.isEmpty()) {
-    ci.paths.downloads = cid::makeDefaultPath(AppConfig::downloadPath());
-  } else if (!ci.paths.downloads.contains(PathSettings::BaseDirVariable)) {
-    ci.paths.downloads = QDir(ci.paths.downloads).absolutePath();
-  }
-
-  if (ci.paths.mods.isEmpty()) {
-    ci.paths.mods = cid::makeDefaultPath(AppConfig::modsPath());
-  } else if (!ci.paths.mods.contains(PathSettings::BaseDirVariable)) {
-    ci.paths.mods = QDir(ci.paths.mods).absolutePath();
-  }
-
-  if (ci.paths.profiles.isEmpty()) {
-    ci.paths.profiles = cid::makeDefaultPath(AppConfig::profilesPath());
-  } else if (!ci.paths.profiles.contains(PathSettings::BaseDirVariable)) {
-    ci.paths.profiles = QDir(ci.paths.profiles).absolutePath();
-  }
-
-  if (ci.paths.overwrite.isEmpty()) {
-    ci.paths.overwrite = cid::makeDefaultPath(AppConfig::overwritePath());
-  } else if (!ci.paths.overwrite.contains(PathSettings::BaseDirVariable)) {
-    ci.paths.overwrite = QDir(ci.paths.overwrite).absolutePath();
-  }
-
-  ci.iniPath = QFileInfo(
-    ci.dataPath + "/" + QString::fromStdWString(AppConfig::iniFileName()))
-      .absoluteFilePath();
-
-  ci.paths.base = QDir::toNativeSeparators(ci.paths.base);
-  ci.paths.downloads = QDir::toNativeSeparators(ci.paths.downloads);
-  ci.paths.mods = QDir::toNativeSeparators(ci.paths.mods);
-  ci.paths.profiles = QDir::toNativeSeparators(ci.paths.profiles);
-  ci.paths.overwrite = QDir::toNativeSeparators(ci.paths.overwrite);
-  ci.paths.ini = QDir::toNativeSeparators(ci.paths.ini);
+  fixVarDir(ci.paths.downloads, AppConfig::downloadPath());
+  fixVarDir(ci.paths.mods, AppConfig::modsPath());
+  fixVarDir(ci.paths.profiles, AppConfig::profilesPath());
+  fixVarDir(ci.paths.overwrite, AppConfig::overwritePath());
 
   return ci;
 }

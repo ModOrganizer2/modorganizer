@@ -48,6 +48,7 @@ public:
 
   bool allowedToChangeInstance() const;
   static bool isPortablePath(const QString& dataPath);
+  static QString portablePath();
 
   QString instancesPath() const;
   QStringList instanceNames() const;

@@ -588,7 +588,7 @@
                  <item row="2" column="0" colspan="3">
                   <widget class="QLabel" name="locationExists">
                    <property name="text">
-                    <string>This folder already exists.</string>
+                    <string>Warning: This folder already exists.</string>
                    </property>
                   </widget>
                  </item>
@@ -602,7 +602,7 @@
                  <item row="1" column="0" colspan="3">
                   <widget class="QLabel" name="locationInvalid">
                    <property name="text">
-                    <string>The folder contains invalid characters.</string>
+                    <string>Warning: The folder contains invalid characters.</string>
                    </property>
                   </widget>
                  </item>
@@ -706,7 +706,7 @@
                  <item row="5" column="0" colspan="4">
                   <widget class="QLabel" name="advancedDirExists">
                    <property name="text">
-                    <string>The folder %1 already exists.</string>
+                    <string>Warning: The folder %1 already exists.</string>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>
@@ -778,7 +778,7 @@
                  <item row="6" column="0" colspan="4">
                   <widget class="QLabel" name="advancedDirInvalid">
                    <property name="text">
-                    <string>The folder %1 contains invalid characters.</string>
+                    <string>Warning: The folder %1 contains invalid characters.</string>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>

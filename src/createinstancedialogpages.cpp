@@ -15,19 +15,11 @@ using MOBase::TaskDialog;
 
 QString makeDefaultPath(const std::wstring& dir)
 {
-  return QDir::toNativeSeparators(
-    PathSettings::makeDefaultPath(QString::fromStdWString(dir)));
+  return QDir::toNativeSeparators(PathSettings::makeDefaultPath(
+    QString::fromStdWString(dir)));
 }
 
-
-PathChecker::PathChecker(QLabel* existsLabel, QLabel* invalidLabel)
-  : m_exists(existsLabel), m_invalid(invalidLabel)
-{
-  m_existsOriginal = m_exists->text();
-  m_invalidOriginal = m_invalid->text();
-}
-
-QString PathChecker::sanitizeFileName(const QString& name) const
+QString sanitizeFileName(const QString& name)
 {
   QString new_name = name;
 
@@ -48,7 +40,7 @@ QString PathChecker::sanitizeFileName(const QString& name) const
 
 // same thing as above, but allows path separators and colons
 //
-QString PathChecker::sanitizePath(const QString& path) const
+QString sanitizePath(const QString& path)
 {
   QString new_name = path;
 
@@ -67,91 +59,29 @@ QString PathChecker::sanitizePath(const QString& path) const
   return new_name;
 }
 
-bool PathChecker::checkName(QString parentDir, QString name) const
+void setPossiblePlaceholder(
+  QLabel* label, const QString& s, const QString& arg)
 {
-  bool exists = false;
-  bool invalid = false;
-  bool empty = false;
-
-  name = name.trimmed();
-
-  if (name.isEmpty()) {
-    empty = true;
-  } else {
-    const QString sanitized = sanitizeFileName(name);
-
-    if (name != sanitized) {
-      invalid = true;
-    } else {
-      exists = QDir(parentDir).exists(name);
-    }
-  }
-
-  bool okay = false;
-
-  if (exists) {
-    m_exists->setVisible(true);
-    setPossiblePlaceholder(m_exists, m_existsOriginal, QDir(parentDir).filePath(name));
-    m_invalid->setVisible(false);
-  } else if (invalid) {
-    m_exists->setVisible(false);
-    m_invalid->setVisible(true);
-    setPossiblePlaceholder(m_invalid, m_invalidOriginal, name);
-  } else {
-    okay = !empty;
-    m_exists->setVisible(false);
-    m_invalid->setVisible(false);
-  }
-
-  return okay;
 }
 
-bool PathChecker::checkPath(QString path) const
+
+PlaceholderLabel::PlaceholderLabel(QLabel* label)
+  : m_label(label), m_original(label->text())
 {
-  bool exists = false;
-  bool invalid = false;
-  bool empty = false;
-
-  path = path.trimmed();
-
-  if (path.isEmpty()) {
-    empty = true;
-  } else {
-    const QString sanitized = sanitizePath(path);
-
-    if (path != sanitized) {
-      invalid = true;
-    } else {
-      exists = QDir(path).exists();
-    }
-  }
-
-  bool okay = false;
-
-  if (exists) {
-    m_exists->setVisible(true);
-    setPossiblePlaceholder(m_exists, m_existsOriginal, path);
-    m_invalid->setVisible(false);
-  } else if (invalid) {
-    m_exists->setVisible(false);
-    m_invalid->setVisible(true);
-    setPossiblePlaceholder(m_invalid, m_invalidOriginal, path);
-  } else {
-    okay = !empty;
-    m_exists->setVisible(false);
-    m_invalid->setVisible(false);
-  }
-
-  return okay;
 }
 
-void PathChecker::setPossiblePlaceholder(
-  QLabel* label, const QString& s, const QString& arg) const
+void PlaceholderLabel::setText(const QString& arg)
 {
-  if (label->text().contains("%1")) {
-    label->setText(s.arg(arg));
+  if (m_original.contains("%1")) {
+    m_label->setText(m_original.arg(arg));
   }
 }
+
+void PlaceholderLabel::setVisible(bool b)
+{
+  m_label->setVisible(b);
+}
+
 
 
 Page::Page(CreateInstanceDialog& dlg)
@@ -238,7 +168,7 @@ TypePage::TypePage(CreateInstanceDialog& dlg)
 
   ui->createPortable->setDescription(
     ui->createPortable->description()
-    .arg(qApp->applicationDirPath()));
+    .arg(InstanceManager::portablePath()));
 
   QObject::connect(
     ui->createGlobal, &QAbstractButton::clicked, [&]{ global(); });
@@ -727,10 +657,9 @@ void EditionsPage::fillList()
 
 NamePage::NamePage(CreateInstanceDialog& dlg) :
   Page(dlg), m_modified(false), m_okay(false),
-  m_checker(ui->instanceNameExists, ui->instanceNameInvalid)
+  m_label(ui->instanceNameLabel), m_exists(ui->instanceNameExists),
+  m_invalid(ui->instanceNameInvalid)
 {
-  m_originalLabel = ui->instanceNameLabel->text();
-
   QObject::connect(
     ui->instanceName, &QLineEdit::textEdited, [&]{ onChanged(); });
 }
@@ -753,7 +682,7 @@ void NamePage::activated()
     return;
   }
 
-  ui->instanceNameLabel->setText(m_originalLabel.arg(g->gameName()));
+  m_label.setText(g->gameName());
 
   if (!m_modified || ui->instanceName->text().isEmpty()) {
     const auto n = InstanceManager::instance().makeUniqueName(g->gameName());
@@ -771,7 +700,7 @@ QString NamePage::selectedInstanceName() const
   }
 
   const auto text = ui->instanceName->text().trimmed();
-  return m_checker.sanitizeFileName(text);
+  return sanitizeFileName(text);
 }
 
 void NamePage::onChanged()
@@ -784,15 +713,55 @@ void NamePage::updateWarnings()
 {
   const auto root = InstanceManager::instance().instancesPath();
 
-  m_okay = m_checker.checkName(root, ui->instanceName->text());
+  m_okay = checkName(root, ui->instanceName->text());
   updateNavigation();
+}
+
+bool NamePage::checkName(QString parentDir, QString name)
+{
+  bool exists = false;
+  bool invalid = false;
+  bool empty = false;
+
+  name = name.trimmed();
+
+  if (name.isEmpty()) {
+    empty = true;
+  } else {
+    const QString sanitized = sanitizeFileName(name);
+
+    if (name != sanitized) {
+      invalid = true;
+    } else {
+      exists = QDir(parentDir).exists(name);
+    }
+  }
+
+  bool okay = false;
+
+  if (exists) {
+    m_exists.setVisible(true);
+    m_exists.setText(QDir(parentDir).filePath(name));
+    m_invalid.setVisible(false);
+  } else if (invalid) {
+    m_exists.setVisible(false);
+    m_invalid.setVisible(true);
+    m_invalid.setText(name);
+  } else {
+    okay = !empty;
+    m_exists.setVisible(false);
+    m_invalid.setVisible(false);
+  }
+
+  return okay;
 }
 
 
 PathsPage::PathsPage(CreateInstanceDialog& dlg) :
-  Page(dlg),
-  m_checker(ui->locationExists, ui->locationInvalid),
-  m_advancedChecker(ui->advancedDirExists, ui->advancedDirInvalid)
+  Page(dlg), m_lastType(CreateInstanceDialog::NoType),
+  m_simpleExists(ui->locationExists), m_simpleInvalid(ui->locationInvalid),
+  m_advancedExists(ui->advancedDirExists),
+  m_advancedInvalid(ui->advancedDirInvalid)
 {
   QObject::connect(ui->location, &QLineEdit::textEdited, [&]{ onChanged(); });
   QObject::connect(ui->base, &QLineEdit::textEdited, [&]{ onChanged(); });
@@ -816,12 +785,16 @@ bool PathsPage::ready() const
 void PathsPage::activated()
 {
   const auto name = m_dlg.instanceName();
+  const auto type = m_dlg.instanceType();
 
-  setPaths(name, (m_lastInstanceName != name));
+  const bool changed = (m_lastInstanceName != name) || (m_lastType != type);
+
+  setPaths(name, changed);
   checkPaths();
   updateNavigation();
 
   m_lastInstanceName = name;
+  m_lastType = type;
 }
 
 CreateInstanceDialog::Paths PathsPage::selectedPaths() const
@@ -852,21 +825,23 @@ bool PathsPage::checkPaths() const
   if (ui->advancedPathOptions->isChecked()) {
     return
       checkAdvancedPath(ui->base->text()) &&
-      checkVarPath(ui->downloads->text());
+      checkAdvancedPath(resolve(ui->downloads->text())) &&
+      checkAdvancedPath(resolve(ui->mods->text())) &&
+      checkAdvancedPath(resolve(ui->profiles->text())) &&
+      checkAdvancedPath(resolve(ui->overwrite->text()));
   } else {
-    return m_checker.checkPath(ui->location->text());
+    return checkPath(ui->location->text(), m_simpleExists, m_simpleInvalid);
   }
 }
 
 bool PathsPage::checkAdvancedPath(const QString& path) const
 {
-  return m_advancedChecker.checkPath(path);
+  return checkPath(path, m_advancedExists, m_advancedInvalid);
 }
 
-bool PathsPage::checkVarPath(QString path) const
+QString PathsPage::resolve(const QString& path) const
 {
-  path = PathSettings::resolve(path, ui->base->text());
-  return checkAdvancedPath(path);
+  return PathSettings::resolve(path, ui->base->text());
 }
 
 void PathsPage::onAdvanced()
@@ -884,12 +859,20 @@ void PathsPage::onAdvanced()
 
 void PathsPage::setPaths(const QString& name, bool force)
 {
-  const auto root = InstanceManager::instance().instancesPath();
-  const auto path = QDir::toNativeSeparators(root + "/" + name);
+  QString path;
+
+  if (m_dlg.instanceType() == CreateInstanceDialog::Portable) {
+    path = InstanceManager::portablePath();
+  } else {
+    const auto root = InstanceManager::instance().instancesPath();
+    path = root + "/" + name;
+  }
+
+  path = QDir::toNativeSeparators(QDir(path).canonicalPath());
 
   setIfEmpty(ui->location, path, force);
-
   setIfEmpty(ui->base, path, force);
+
   setIfEmpty(ui->downloads, makeDefaultPath(AppConfig::downloadPath()), force);
   setIfEmpty(ui->mods, makeDefaultPath(AppConfig::modsPath()), force);
   setIfEmpty(ui->profiles, makeDefaultPath(AppConfig::profilesPath()), force);
@@ -901,6 +884,61 @@ void PathsPage::setIfEmpty(QLineEdit* e, const QString& path, bool force)
   if (e->text().isEmpty() || force) {
     e->setText(path);
   }
+}
+
+bool PathsPage::checkPath(
+  QString path,
+  PlaceholderLabel& existsLabel, PlaceholderLabel& invalidLabel) const
+{
+  bool exists = false;
+  bool invalid = false;
+  bool empty = false;
+
+  path = QDir::toNativeSeparators(path.trimmed());
+
+  if (path.isEmpty()) {
+    empty = true;
+  } else {
+    const QString sanitized = sanitizePath(path);
+
+    if (path != sanitized) {
+      invalid = true;
+    } else {
+      if (m_dlg.instanceType() == CreateInstanceDialog::Portable) {
+        // the default data path for a portable instance is the application
+        // directory, so it's not an error if it exists
+        if (QDir(path) != InstanceManager::instance().portablePath()) {
+          exists = QDir(path).exists();
+        }
+      } else {
+        exists = QDir(path).exists();
+      }
+    }
+  }
+
+  bool okay = true;
+
+  if (invalid) {
+    okay = false;
+    existsLabel.setVisible(false);
+    invalidLabel.setVisible(true);
+    invalidLabel.setText(path);
+  } else if (empty) {
+    okay = false;
+    existsLabel.setVisible(false);
+    invalidLabel.setVisible(false);
+  } else if (exists) {
+    // this is just a warning
+    existsLabel.setVisible(true);
+    existsLabel.setText(path);
+    invalidLabel.setVisible(false);
+  } else {
+    okay = true;
+    existsLabel.setVisible(false);
+    invalidLabel.setVisible(false);
+  }
+
+  return okay;
 }
 
 

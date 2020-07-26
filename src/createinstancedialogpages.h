@@ -13,29 +13,17 @@ namespace cid
 
 QString makeDefaultPath(const std::wstring& dir);
 
-class PathChecker
+
+class PlaceholderLabel
 {
 public:
-  PathChecker(QLabel* existsLabel, QLabel* invalidLabel);
-
-  QString sanitizeFileName(const QString& name) const;
-
-  // same thing as above, but allows path separators and colons
-  //
-  QString sanitizePath(const QString& path) const;
-
-  bool checkName(QString parentDir, QString name) const;
-  bool checkPath(QString path) const;
+  PlaceholderLabel(QLabel* label);
+  void setText(const QString& arg);
+  void setVisible(bool b);
 
 private:
-  QLabel* m_exists;
-  QString m_existsOriginal;
-
-  QLabel* m_invalid;
-  QString m_invalidOriginal;
-
-  void setPossiblePlaceholder(
-    QLabel* label, const QString& s, const QString& arg) const;
+  QLabel* m_label;
+  QString m_original;
 };
 
 
@@ -168,13 +156,13 @@ public:
   QString selectedInstanceName() const override;
 
 private:
-  PathChecker m_checker;
-  QString m_originalLabel;
+  mutable PlaceholderLabel m_label, m_exists, m_invalid;
   bool m_modified;
   bool m_okay;
 
   void onChanged();
   void updateWarnings();
+  bool checkName(QString parentDir, QString name);
 };
 
 
@@ -189,16 +177,21 @@ public:
   CreateInstanceDialog::Paths selectedPaths() const override;
 
 private:
-  PathChecker m_checker, m_advancedChecker;
   QString m_lastInstanceName;
+  CreateInstanceDialog::Types m_lastType;
+  mutable PlaceholderLabel m_simpleExists, m_simpleInvalid;
+  mutable PlaceholderLabel m_advancedExists, m_advancedInvalid;
 
   void onChanged();
   bool checkPaths() const;
   bool checkAdvancedPath(const QString& path) const;
-  bool checkVarPath(QString path) const;
+  QString resolve(const QString& path) const;
   void onAdvanced();
   void setPaths(const QString& name, bool force);
   void setIfEmpty(QLineEdit* e, const QString& path, bool force);
+  bool checkPath(
+    QString path,
+    PlaceholderLabel& existsLabel, PlaceholderLabel& invalidLabel) const;
 };
 
 

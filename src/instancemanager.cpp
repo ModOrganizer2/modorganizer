@@ -353,7 +353,12 @@ QStringList InstanceManager::instanceNames() const
 
 bool InstanceManager::isPortablePath(const QString& dataPath)
 {
-  return (dataPath == qApp->applicationDirPath());
+  return (dataPath == portablePath());
+}
+
+QString InstanceManager::portablePath()
+{
+  return qApp->applicationDirPath();
 }
 
 bool InstanceManager::portableInstall() const
