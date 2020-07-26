@@ -269,6 +269,10 @@ void GamePage::select(IPluginGame* game)
   m_selection = checked;
   selectButton(checked);
   updateNavigation();
+
+  if (checked) {
+    next();
+  }
 }
 
 void GamePage::selectCustom()
@@ -277,6 +281,7 @@ void GamePage::selectCustom()
     &m_dlg, QObject::tr("Find game installation"));
 
   if (path.isEmpty()) {
+    // reselect the previous button
     selectButton(m_selection);
     return;
   }
@@ -408,7 +413,7 @@ QCommandLinkButton* GamePage::createCustomButton()
 
   QObject::connect(b, &QAbstractButton::clicked, [&] {
     selectCustom();
-    });
+  });
 
   return b;
 }
@@ -422,7 +427,7 @@ void GamePage::createGameButton(Game* g)
 
   QObject::connect(g->button, &QAbstractButton::clicked, [g, this] {
     select(g->game);
-    });
+  });
 }
 
 void GamePage::fillList()
@@ -759,6 +764,7 @@ bool NamePage::checkName(QString parentDir, QString name)
 
 PathsPage::PathsPage(CreateInstanceDialog& dlg) :
   Page(dlg), m_lastType(CreateInstanceDialog::NoType),
+  m_label(ui->pathsLabel),
   m_simpleExists(ui->locationExists), m_simpleInvalid(ui->locationInvalid),
   m_advancedExists(ui->advancedDirExists),
   m_advancedInvalid(ui->advancedDirInvalid)
@@ -793,6 +799,7 @@ void PathsPage::activated()
   checkPaths();
   updateNavigation();
 
+  m_label.setText(m_dlg.game()->gameName());
   m_lastInstanceName = name;
   m_lastType = type;
 }
@@ -868,7 +875,7 @@ void PathsPage::setPaths(const QString& name, bool force)
     path = root + "/" + name;
   }
 
-  path = QDir::toNativeSeparators(QDir(path).canonicalPath());
+  path = QDir::toNativeSeparators(QDir::cleanPath(path));
 
   setIfEmpty(ui->location, path, force);
   setIfEmpty(ui->base, path, force);

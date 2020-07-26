@@ -179,6 +179,7 @@ public:
 private:
   QString m_lastInstanceName;
   CreateInstanceDialog::Types m_lastType;
+  PlaceholderLabel m_label;
   mutable PlaceholderLabel m_simpleExists, m_simpleInvalid;
   mutable PlaceholderLabel m_advancedExists, m_advancedInvalid;
 

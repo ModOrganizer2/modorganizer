@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>493</width>
-    <height>423</height>
+    <height>444</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -58,7 +58,7 @@
    <item>
     <widget class="QStackedWidget" name="pages">
      <property name="currentIndex">
-      <number>0</number>
+      <number>5</number>
      </property>
      <widget class="QWidget" name="page_10">
       <layout class="QVBoxLayout" name="verticalLayout_21">
@@ -506,12 +506,15 @@
             <property name="text">
              <string>&lt;h3&gt;Select a folder where the data should be stored.&lt;/h3&gt;</string>
             </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="label_7">
+           <widget class="QLabel" name="pathsLabel">
             <property name="text">
-             <string>This includes downloads, mods, profiles and overwrite. If there is enough space on this drive, you should use the default folder.</string>
+             <string>This includes downloads, mods, profiles and overwrite for your &lt;b&gt;%1&lt;/b&gt; instance. If there is enough space on this drive, you should use the default folder.</string>
             </property>
             <property name="wordWrap">
              <bool>true</bool>
@@ -744,7 +747,7 @@
                  <item row="8" column="0" colspan="4">
                   <widget class="QLabel" name="label_11">
                    <property name="text">
-                    <string>Use &lt;code&gt;%BASE_DIR%&lt;/code&gt; to refer to the Base Directory.</string>
+                    <string>Use %BASE_DIR% to refer to the Base Directory.</string>
                    </property>
                   </widget>
                  </item>
