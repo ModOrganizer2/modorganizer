@@ -45,6 +45,7 @@ public:
 
   void clearCurrentInstance();
   QString currentInstance() const;
+  void setCurrentInstance(const QString &name);
 
   bool allowedToChangeInstance() const;
   static bool isPortablePath(const QString& dataPath);
@@ -66,8 +67,6 @@ private:
   bool deleteLocalInstance(const QString &instanceId) const;
 
   QString manageInstances(const QStringList &instanceList) const;
-
-  void setCurrentInstance(const QString &name);
 
   QString queryInstanceName(const QStringList &instanceList) const;
   QString chooseInstance(const QStringList &instanceList) const;

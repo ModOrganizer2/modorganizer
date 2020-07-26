@@ -3,6 +3,7 @@
 #include "createinstancedialogpages.h"
 #include "instancemanager.h"
 #include "settings.h"
+#include "shared/util.h"
 #include "shared/appconfig.h"
 #include <iplugingame.h>
 #include <utility.h>
@@ -27,6 +28,7 @@ CreateInstanceDialog::CreateInstanceDialog(
   m_pages.push_back(std::make_unique<ConfirmationPage>(*this));
 
   ui->pages->setCurrentIndex(0);
+  ui->launch->setChecked(true);
 
   updateNavigation();
 
@@ -287,6 +289,14 @@ void CreateInstanceDialog::finish()
     }
 
     logCreation(tr("Done."));
+
+    if (ui->launch->isChecked()) {
+      InstanceManager::instance().setCurrentInstance(ci.instanceName);
+      ExitModOrganizer(Exit::Restart);
+    } else {
+      ui->next->setEnabled(false);
+      ui->cancel->setText(tr("Close"));
+    }
   }
   catch(Failed&)
   {
@@ -328,6 +338,10 @@ void CreateInstanceDialog::updateNavigation()
   } else {
     ui->next->setText(m_originalNext);
   }
+
+  // this may have been changed by finish() if the launch checkbox wasn't
+  // checked
+  ui->cancel->setText(tr("Cancel"));
 }
 
 CreateInstanceDialog::Types CreateInstanceDialog::instanceType() const
