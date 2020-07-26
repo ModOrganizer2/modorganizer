@@ -19,7 +19,7 @@ CreateInstanceDialog::CreateInstanceDialog(
   ui->setupUi(this);
   m_originalNext = ui->next->text();
 
-  m_pages.push_back(std::make_unique<InfoPage>(*this));
+  m_pages.push_back(std::make_unique<IntroPage>(*this));
   m_pages.push_back(std::make_unique<TypePage>(*this));
   m_pages.push_back(std::make_unique<GamePage>(*this));
   m_pages.push_back(std::make_unique<EditionsPage>(*this));
@@ -30,10 +30,15 @@ CreateInstanceDialog::CreateInstanceDialog(
   ui->pages->setCurrentIndex(0);
   ui->launch->setChecked(true);
 
+  if (m_pages[0]->skip()) {
+    next();
+  }
+
   updateNavigation();
 
   connect(ui->next, &QPushButton::clicked, [&]{ next(); });
   connect(ui->back, &QPushButton::clicked, [&]{ back(); });
+  connect(ui->cancel, &QPushButton::clicked, [&]{ reject(); });
 }
 
 CreateInstanceDialog::~CreateInstanceDialog() = default;
@@ -289,6 +294,10 @@ void CreateInstanceDialog::finish()
     }
 
     logCreation(tr("Done."));
+
+    if (ui->hideIntro->isChecked()) {
+      GlobalSettings::setHideCreateInstanceIntro(true);
+    }
 
     if (ui->launch->isChecked()) {
       InstanceManager::instance().setCurrentInstance(ci.instanceName);

@@ -58,7 +58,7 @@
    <item>
     <widget class="QStackedWidget" name="pages">
      <property name="currentIndex">
-      <number>5</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="page_10">
       <layout class="QVBoxLayout" name="verticalLayout_21">
@@ -75,6 +75,26 @@
           <bool>true</bool>
          </property>
         </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="hideIntro">
+         <property name="text">
+          <string>Never show this again</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_6">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </widget>
@@ -258,7 +278,7 @@
                <x>0</x>
                <y>0</y>
                <width>455</width>
-               <height>287</height>
+               <height>308</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -368,7 +388,7 @@
                <x>0</x>
                <y>0</y>
                <width>455</width>
-               <height>257</height>
+               <height>278</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_17">

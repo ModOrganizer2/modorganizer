@@ -153,9 +153,14 @@ CreateInstanceDialog::Paths Page::selectedPaths() const
 }
 
 
-InfoPage::InfoPage(CreateInstanceDialog& dlg)
+IntroPage::IntroPage(CreateInstanceDialog& dlg)
   : Page(dlg)
 {
+}
+
+bool IntroPage::skip() const
+{
+  return GlobalSettings::hideCreateInstanceIntro();
 }
 
 

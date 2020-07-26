@@ -53,10 +53,12 @@ protected:
 };
 
 
-class InfoPage : public Page
+class IntroPage : public Page
 {
 public:
-  InfoPage(CreateInstanceDialog& dlg);
+  IntroPage(CreateInstanceDialog& dlg);
+
+  bool skip() const override;
 };
 
 

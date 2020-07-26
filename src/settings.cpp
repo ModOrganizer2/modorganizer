@@ -2201,3 +2201,18 @@ QSettings GlobalSettings::settings()
 
   return QSettings(Organization, Application);
 }
+
+bool GlobalSettings::hideCreateInstanceIntro()
+{
+  return settings().value("HideCreateInstanceIntro", false).toBool();
+}
+
+void GlobalSettings::setHideCreateInstanceIntro(bool b)
+{
+  settings().setValue("HideCreateInstanceIntro", b);
+}
+
+void GlobalSettings::resetDialogs()
+{
+  setHideCreateInstanceIntro(false);
+}

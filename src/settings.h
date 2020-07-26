@@ -838,6 +838,12 @@ public:
   static QString currentInstance();
   static void setCurrentInstance(const QString& s);
 
+  static bool hideCreateInstanceIntro();
+  static void setHideCreateInstanceIntro(bool b);
+
+  // resets anything that the user can disable
+  static void resetDialogs();
+
 private:
   static QSettings settings();
 };
