@@ -827,6 +827,22 @@ private:
 };
 
 
+// manages global settings in the registry
+//
+class GlobalSettings
+{
+public:
+  // migrates the old settings from the Tannin key to the new one
+  static void updateRegistryKey();
+
+  static QString currentInstance();
+  static void setCurrentInstance(const QString& s);
+
+private:
+  static QSettings settings();
+};
+
+
 // helper class that calls restoreGeometry() in the constructor and
 // saveGeometry() in the destructor
 //

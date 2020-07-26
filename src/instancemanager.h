@@ -75,11 +75,7 @@ private:
   bool portableInstall() const;
   bool portableInstallIsLocked() const;
 
-  void updateRegistryKey();
-
 private:
-
-  QSettings m_AppSettings;
   bool m_Reset {false};
   bool m_overrideInstance{false};
   QString m_overrideInstanceName;

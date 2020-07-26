@@ -2165,3 +2165,39 @@ void DiagnosticsSettings::setSpawnDelay(std::chrono::seconds t)
 {
   set(m_Settings, "Settings", "spawn_delay", t.count());
 }
+
+
+void GlobalSettings::updateRegistryKey()
+{
+  const QString OldOrganization = "Tannin";
+  const QString OldApplication = "Mod Organizer";
+  const QString OldInstanceValue = "CurrentInstance";
+
+  const QString OldRootKey = "Software\\" + OldOrganization;
+
+  if (env::registryValueExists(OldRootKey + "\\" + OldApplication, OldInstanceValue)) {
+    QSettings old(OldOrganization, OldApplication);
+    setCurrentInstance(old.value(OldInstanceValue).toString());
+    old.remove(OldInstanceValue);
+  }
+
+  env::deleteRegistryKeyIfEmpty(OldRootKey);
+}
+
+QString GlobalSettings::currentInstance()
+{
+  return settings().value("CurrentInstance", "").toString();
+}
+
+void GlobalSettings::setCurrentInstance(const QString& s)
+{
+  settings().setValue("CurrentInstance", s);
+}
+
+QSettings GlobalSettings::settings()
+{
+  const QString Organization = "Mod Organizer Team";
+  const QString Application = "Mod Organizer";
+
+  return QSettings(Organization, Application);
+}

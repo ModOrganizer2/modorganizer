@@ -943,6 +943,9 @@
                <property name="text">
                 <string>Launch the new instance</string>
                </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
               </widget>
              </item>
             </layout>

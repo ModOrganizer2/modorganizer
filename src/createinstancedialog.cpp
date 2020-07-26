@@ -294,8 +294,7 @@ void CreateInstanceDialog::finish()
       InstanceManager::instance().setCurrentInstance(ci.instanceName);
       ExitModOrganizer(Exit::Restart);
     } else {
-      ui->next->setEnabled(false);
-      ui->cancel->setText(tr("Close"));
+      close();
     }
   }
   catch(Failed&)
@@ -338,10 +337,6 @@ void CreateInstanceDialog::updateNavigation()
   } else {
     ui->next->setText(m_originalNext);
   }
-
-  // this may have been changed by finish() if the launch checkbox wasn't
-  // checked
-  ui->cancel->setText(tr("Cancel"));
 }
 
 CreateInstanceDialog::Types CreateInstanceDialog::instanceType() const
