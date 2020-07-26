@@ -1334,6 +1334,30 @@ void MainWindow::hookUpWindowTutorials()
   }
 }
 
+bool MainWindow::shouldStartTutorial() const
+{
+  if (GlobalSettings::hideTutorialQuestion()) {
+    return false;
+  }
+
+  QMessageBox dlg(
+    QMessageBox::Question, tr("Show tutorial?"),
+    tr("You are starting Mod Organizer for the first time. "
+      "Do you want to show a tutorial of its basic features? If you choose "
+      "no you can always start the tutorial from the \"Help\"-menu."),
+    QMessageBox::Yes | QMessageBox::No);
+
+  dlg.setCheckBox(new QCheckBox(tr("Never ask to show tutorials")));
+
+  const auto r = dlg.exec();
+
+  if (dlg.checkBox()->isChecked()) {
+    GlobalSettings::setHideTutorialQuestion(true);
+  }
+
+  return (r == QMessageBox::Yes);
+}
+
 void MainWindow::showEvent(QShowEvent *event)
 {
   QMainWindow::showEvent(event);
@@ -1360,11 +1384,7 @@ void MainWindow::showEvent(QShowEvent *event)
     if (m_OrganizerCore.settings().firstStart()) {
       QString firstStepsTutorial = ToQString(AppConfig::firstStepsTutorial());
       if (TutorialManager::instance().hasTutorial(firstStepsTutorial)) {
-        if (QMessageBox::question(this, tr("Show tutorial?"),
-                                  tr("You are starting Mod Organizer for the first time. "
-                                     "Do you want to show a tutorial of its basic features? If you choose "
-                                     "no you can always start the tutorial from the \"Help\"-menu."),
-                                  QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+        if (shouldStartTutorial()) {
           TutorialManager::instance().activateTutorial("MainWindow", firstStepsTutorial);
         }
       } else {

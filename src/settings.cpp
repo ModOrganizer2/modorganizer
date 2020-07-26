@@ -2212,7 +2212,18 @@ void GlobalSettings::setHideCreateInstanceIntro(bool b)
   settings().setValue("HideCreateInstanceIntro", b);
 }
 
+bool GlobalSettings::hideTutorialQuestion()
+{
+  return settings().value("HideTutorialQuestion", false).toBool();
+}
+
+void GlobalSettings::setHideTutorialQuestion(bool b)
+{
+  settings().setValue("HideTutorialQuestion", b);
+}
+
 void GlobalSettings::resetDialogs()
 {
   setHideCreateInstanceIntro(false);
+  setHideTutorialQuestion(false);
 }

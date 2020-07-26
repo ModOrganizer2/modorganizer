@@ -841,6 +841,9 @@ public:
   static bool hideCreateInstanceIntro();
   static void setHideCreateInstanceIntro(bool b);
 
+  static bool hideTutorialQuestion();
+  static void setHideTutorialQuestion(bool b);
+
   // resets anything that the user can disable
   static void resetDialogs();
 

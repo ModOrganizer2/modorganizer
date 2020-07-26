@@ -506,6 +506,7 @@ private slots:
   void hideSaveGameInfo();
 
   void hookUpWindowTutorials();
+  bool shouldStartTutorial() const;
 
   void resumeDownload(int downloadIndex);
   void endorseMod(ModInfo::Ptr mod);
