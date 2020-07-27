@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "shared/appconfig.h"
 #include "plugincontainer.h"
+#include "shared/util.h"
 #include <report.h>
 #include <iplugingame.h>
 #include <utility.h>
@@ -73,6 +74,12 @@ void InstanceManager::clearCurrentInstance()
   setCurrentInstance("");
   m_Reset = true;
   m_overrideInstance = false;
+}
+
+void InstanceManager::switchToInstance(const QString& instanceName)
+{
+  setCurrentInstance(instanceName);
+  ExitModOrganizer(Exit::Restart);
 }
 
 void InstanceManager::setCurrentInstance(const QString &name)

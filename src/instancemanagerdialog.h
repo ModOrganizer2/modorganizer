@@ -19,8 +19,11 @@ public:
   ~InstanceManagerDialog();
 
   void select(std::size_t i);
+  void openSelectedInstance();
 
 private:
+  static const std::size_t NoSelection = -1;
+
   std::unique_ptr<Ui::InstanceManagerDialog> ui;
   const PluginContainer& m_pc;
   std::vector<std::unique_ptr<InstanceInfo>> m_instances;
@@ -28,6 +31,7 @@ private:
   void onSelection();
   void createNew();
 
+  std::size_t singleSelection() const;
   void fill(const InstanceInfo& ii);
 };
 

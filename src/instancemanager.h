@@ -34,6 +34,10 @@ class InstanceManager
 public:
   static InstanceManager &instance();
 
+  // restarts MO
+  //
+  void switchToInstance(const QString& instanceName);
+
   void overrideInstance(const QString& instanceName);
   void overrideProfile(const QString& profileName);
 

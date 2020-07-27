@@ -92,6 +92,7 @@ InstanceManagerDialog::InstanceManagerDialog(
 
   connect(ui->createNew, &QPushButton::clicked, [&]{ createNew(); });
   connect(ui->list, &QListWidget::itemSelectionChanged, [&]{ onSelection(); });
+  //connect(ui->list, &QListWidget::itemActivated, [&]{ openSelectedInstance(); });
 }
 
 InstanceManagerDialog::~InstanceManagerDialog() = default;
@@ -106,20 +107,40 @@ void InstanceManagerDialog::select(std::size_t i)
   fill(*ii);
 }
 
-void InstanceManagerDialog::onSelection()
+void InstanceManagerDialog::openSelectedInstance()
 {
-  const auto sel = ui->list->selectionModel()->selectedIndexes();
-  if (sel.size() != 1) {
+  const auto i = singleSelection();
+  if (i == NoSelection) {
     return;
   }
 
-  select(static_cast<std::size_t>(sel[0].row()));
+  InstanceManager::instance().switchToInstance(m_instances[i]->name());
+}
+
+void InstanceManagerDialog::onSelection()
+{
+  const auto i = singleSelection();
+  if (i == NoSelection) {
+    return;
+  }
+
+  select(i);
 }
 
 void InstanceManagerDialog::createNew()
 {
   CreateInstanceDialog dlg(m_pc, this);
   dlg.exec();
+}
+
+std::size_t InstanceManagerDialog::singleSelection() const
+{
+  const auto sel = ui->list->selectionModel()->selectedIndexes();
+  if (sel.size() != 1) {
+    return NoSelection;
+  }
+
+  return static_cast<std::size_t>(sel[0].row());
 }
 
 void InstanceManagerDialog::fill(const InstanceInfo& ii)

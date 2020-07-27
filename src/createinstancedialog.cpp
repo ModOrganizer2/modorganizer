@@ -300,8 +300,7 @@ void CreateInstanceDialog::finish()
     }
 
     if (ui->launch->isChecked()) {
-      InstanceManager::instance().setCurrentInstance(ci.instanceName);
-      ExitModOrganizer(Exit::Restart);
+      InstanceManager::instance().switchToInstance(ci.instanceName);
     } else {
       close();
     }
