@@ -2,7 +2,7 @@
 name: Game support Request
 about: Request support for a new game.
 title: Add support for game [GAME NAME]
-labels: additionale game support
+labels: additional game support
 assignees: ''
 
 ---
