@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-**This template is usueful to add basic support using https://github.com/ModOrganizer2/modorganizer-basic_games.** 
+**This template is useful to add basic support using https://github.com/ModOrganizer2/modorganizer-basic_games.** 
 
 **If you are vaguely familiar with programming you can try following the instructions on that link to get something working yourself. If you have trouble with that please fill in this template.**
 
