@@ -9,7 +9,7 @@ assignees: ''
 
 **This template is usuefull to add basic support using https://github.com/Holt59/modorganizer-basic_games.** 
 
-**If you are vagually familiar with programming you can try folowing the instructions on that link to get something working yourself. If you have trouble with that please fill in this template.**
+**If you are vaguely familiar with programming you can try following the instructions on that link to get something working yourself. If you have trouble with that please fill in this template.**
 
 **Please provide the following information for the game (remove the optional lines you do not use):**
 
