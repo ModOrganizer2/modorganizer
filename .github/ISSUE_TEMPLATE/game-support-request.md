@@ -1,13 +1,13 @@
 ---
 name: Game support Request
-about: Request support for a new game.
+about: Request support for a new game
 title: Add support for game [GAME NAME]
 labels: 'additional games support, Feature Request, area: mo2 game plugins'
 assignees: ''
 
 ---
 
-**This template is usuefull to add basic support using https://github.com/ModOrganizer2/modorganizer-basic_games.** 
+**This template is usueful to add basic support using https://github.com/ModOrganizer2/modorganizer-basic_games.** 
 
 **If you are vaguely familiar with programming you can try following the instructions on that link to get something working yourself. If you have trouble with that please fill in this template.**
 
