@@ -2,7 +2,7 @@
 name: Game support Request
 about: Request support for a new game.
 title: Add support for game [GAME NAME]
-labels: additional game support
+labels: 'additional games support, Feature Request, area: mo2 game plugins'
 assignees: ''
 
 ---
