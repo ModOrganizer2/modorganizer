@@ -182,6 +182,16 @@
            </widget>
           </item>
           <item>
+           <widget class="QLabel" name="portableExistsLabel">
+            <property name="text">
+             <string>A portable instance already exists.</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
            <spacer name="verticalSpacer">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
@@ -266,8 +276,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>63</width>
-                  <height>16</height>
+                  <width>455</width>
+                  <height>286</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_26">
@@ -402,8 +412,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>63</width>
-               <height>16</height>
+               <width>455</width>
+               <height>278</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_17">

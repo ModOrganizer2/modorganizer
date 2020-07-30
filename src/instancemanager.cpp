@@ -344,7 +344,7 @@ QString InstanceManager::portablePath()
   return qApp->applicationDirPath();
 }
 
-bool InstanceManager::portableInstall() const
+bool InstanceManager::portableInstanceExists() const
 {
   return QFile::exists(qApp->applicationDirPath() + "/" +
                        QString::fromStdWString(AppConfig::iniFileName()));
@@ -356,7 +356,6 @@ bool InstanceManager::portableInstallIsLocked() const
   return QFile::exists(qApp->applicationDirPath() + "/" +
                        QString::fromStdWString(AppConfig::portableLockFileName()));
 }
-
 
 bool InstanceManager::allowedToChangeInstance() const
 {
@@ -388,7 +387,7 @@ QString InstanceManager::determineDataPath()
   {
     instanceId.clear();
   }
-  if (instanceId.isEmpty() && !m_Reset && (m_overrideInstance || portableInstall()))
+  if (instanceId.isEmpty() && !m_Reset && (m_overrideInstance || portableInstanceExists()))
   {
     // startup, apparently using portable mode before
     return qApp->applicationDirPath();

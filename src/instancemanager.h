@@ -54,6 +54,7 @@ public:
   bool allowedToChangeInstance() const;
   static bool isPortablePath(const QString& dataPath);
   static QString portablePath();
+  bool portableInstanceExists() const;
 
   QString instancesPath() const;
   QStringList instanceNames() const;
@@ -76,7 +77,6 @@ private:
   QString chooseInstance(const QStringList &instanceList) const;
 
   void createDataPath(const QString &dataPath) const;
-  bool portableInstall() const;
   bool portableInstallIsLocked() const;
 
 private:

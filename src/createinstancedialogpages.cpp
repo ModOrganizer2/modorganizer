@@ -171,11 +171,19 @@ TypePage::TypePage(CreateInstanceDialog& dlg)
 {
   ui->createGlobal->setDescription(
     ui->createGlobal->description()
-    .arg(InstanceManager::instance().instancesPath()));
+      .arg(InstanceManager::instance().instancesPath()));
 
   ui->createPortable->setDescription(
     ui->createPortable->description()
-    .arg(InstanceManager::portablePath()));
+      .arg(InstanceManager::portablePath()));
+
+  if (InstanceManager::instance().portableInstanceExists()) {
+    ui->createPortable->setEnabled(false);
+    ui->portableExistsLabel->setVisible(true);
+  } else {
+    ui->createPortable->setEnabled(true);
+    ui->portableExistsLabel->setVisible(false);
+  }
 
   QObject::connect(
     ui->createGlobal, &QAbstractButton::clicked, [&]{ global(); });
