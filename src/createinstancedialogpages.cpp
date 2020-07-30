@@ -313,15 +313,22 @@ void GamePage::warnUnrecognized(const QString& path)
 {
   QString supportedGames;
   for (auto* game : sortedGamePlugins()) {
-    supportedGames += "<li>" + game->gameName() + "</li>";
+    supportedGames += game->gameName() + "\n";
   }
 
-  QMessageBox::warning(&m_dlg,
-    QObject::tr("Unrecognized game"),
-    QObject::tr(
-      "The folder %1 does not seem to contain a game Mod Organizer can "
-      "manage.<br><br><b>These are the games that can be managed:</b>"
-      "<ul>%2</ul>").arg(path).arg(supportedGames));
+  QMessageBox dlg(&m_dlg);
+
+  dlg.setWindowTitle(QObject::tr("Unrecognized game"));
+  dlg.setText(QObject::tr(
+    "The folder %1 does not seem to contain a game Mod Organizer can "
+    "manage.").arg(path));
+  dlg.setInformativeText(
+    QObject::tr("See details for the list of supported games."));
+  dlg.setDetailedText(supportedGames);
+  dlg.setIcon(QMessageBox::Warning);
+  dlg.setStandardButtons(QMessageBox::Ok);
+
+  dlg.exec();
 }
 
 std::vector<IPluginGame*> GamePage::sortedGamePlugins() const
@@ -334,7 +341,7 @@ std::vector<IPluginGame*> GamePage::sortedGamePlugins() const
 
   std::sort(v.begin(), v.end(), [](auto* a, auto* b) {
     return (a->gameName() < b->gameName());
-    });
+  });
 
   return v;
 }
