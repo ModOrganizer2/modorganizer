@@ -154,8 +154,7 @@ public:
   static APILimits parseLimits(const QList<QNetworkReply::RawHeaderPair>& headers);
 
   ~NexusInterface();
-
-  static NexusInterface *instance(PluginContainer *pluginContainer);
+  static NexusInterface& instance();
 
   /**
    * @return the access manager object used to connect to nexus
@@ -535,7 +534,7 @@ private:
 
 private:
 
-  NexusInterface(PluginContainer *pluginContainer);
+  NexusInterface();
   void nextRequest();
   void requestFinished(std::list<NXMRequestInfo>::iterator iter);
   MOBase::IPluginGame *getGame(QString gameName) const;

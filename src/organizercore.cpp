@@ -95,12 +95,12 @@ OrganizerCore::OrganizerCore(Settings &settings)
   , m_PluginContainer(nullptr)
   , m_CurrentProfile(nullptr)
   , m_Settings(settings)
-  , m_Updater(NexusInterface::instance(m_PluginContainer))
+  , m_Updater(&NexusInterface::instance())
   , m_ModList(m_PluginContainer, this)
   , m_PluginList(this)
   , m_DirectoryRefresher(new DirectoryRefresher(settings.refreshThreadCount()))
   , m_DirectoryStructure(new DirectoryEntry(L"data", nullptr, 0))
-  , m_DownloadManager(NexusInterface::instance(m_PluginContainer), this)
+  , m_DownloadManager(&NexusInterface::instance(), this)
   , m_DirectoryUpdate(false)
   , m_ArchivesInit(false)
   , m_PluginListsWriter(std::bind(&OrganizerCore::savePluginList, this))
@@ -108,8 +108,7 @@ OrganizerCore::OrganizerCore(Settings &settings)
   env::setHandleCloserThreadCount(settings.refreshThreadCount());
   m_DownloadManager.setOutputDirectory(m_Settings.paths().downloads(), false);
 
-  NexusInterface::instance(m_PluginContainer)->setCacheDirectory(
-    m_Settings.paths().cache());
+  NexusInterface::instance().setCacheDirectory(m_Settings.paths().cache());
 
   m_InstallationManager.setModsDirectory(m_Settings.paths().mods());
   m_InstallationManager.setDownloadDirectory(m_Settings.paths().downloads());
@@ -122,9 +121,9 @@ OrganizerCore::OrganizerCore(Settings &settings)
   connect(&m_ModList, SIGNAL(removeOrigin(QString)), this,
           SLOT(removeOrigin(QString)));
 
-  connect(NexusInterface::instance(m_PluginContainer)->getAccessManager(),
+  connect(NexusInterface::instance().getAccessManager(),
           SIGNAL(validateSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
-  connect(NexusInterface::instance(m_PluginContainer)->getAccessManager(),
+  connect(NexusInterface::instance().getAccessManager(),
           SIGNAL(validateFailed(QString)), this, SLOT(loginFailed(QString)));
 
   // This seems awfully imperative
@@ -332,8 +331,7 @@ Settings &OrganizerCore::settings()
 
 bool OrganizerCore::nexusApi(bool retry)
 {
-  NXMAccessManager *accessManager
-      = NexusInterface::instance(m_PluginContainer)->getAccessManager();
+  auto* accessManager = NexusInterface::instance().getAccessManager();
 
   if ((accessManager->validateAttempted() || accessManager->validated())
       && !retry) {
@@ -1424,13 +1422,13 @@ void OrganizerCore::updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::P
 
 void OrganizerCore::loggedInAction(QWidget* parent, std::function<void ()> f)
 {
-  if (NexusInterface::instance(m_PluginContainer)->getAccessManager()->validated()) {
+  if (NexusInterface::instance().getAccessManager()->validated()) {
     f();
   } else {
     QString apiKey;
     if (settings().nexus().apiKey(apiKey)) {
       doAfterLogin([f]{ f(); });
-      NexusInterface::instance(m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
+      NexusInterface::instance().getAccessManager()->apiCheck(apiKey);
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus"), parent);
     }
@@ -1704,7 +1702,7 @@ void OrganizerCore::loginSuccessful(bool necessary)
   }
 
   m_PostLoginTasks.clear();
-  NexusInterface::instance(m_PluginContainer)->loginCompleted();
+  NexusInterface::instance().loginCompleted();
 }
 
 void OrganizerCore::loginSuccessfulUpdate(bool necessary)
@@ -1742,7 +1740,7 @@ void OrganizerCore::loginFailed(const QString &message)
                                qApp->activeWindow());
     m_PostLoginTasks.clear();
   }
-  NexusInterface::instance(m_PluginContainer)->loginCompleted();
+  NexusInterface::instance().loginCompleted();
 }
 
 void OrganizerCore::loginFailedUpdate(const QString &message)

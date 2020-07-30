@@ -5,29 +5,45 @@
 #include "settingsdialog.h"
 #include "nxmaccessmanager.h"
 
-class NexusSettingsTab : public SettingsTab
+class NexusConnectionUI : public QObject
 {
+  Q_OBJECT;
+
 public:
-  NexusSettingsTab(Settings& settings, SettingsDialog& dialog);
-  void update();
+  NexusConnectionUI(Settings& s, QWidget* parent=nullptr);
+
+  void set(
+    QAbstractButton* connectButton,
+    QAbstractButton* disconnectButton,
+    QAbstractButton* manualButton,
+    QListWidget* logList);
+
+  void connect();
+  void manual();
+  void disconnect();
+
+signals:
+  void stateChanged();
+  void keyChanged();
 
 private:
+  QWidget* m_parent;
+  Settings& m_settings;
+  QAbstractButton* m_connect;
+  QAbstractButton* m_disconnect;
+  QAbstractButton* m_manual;
+  QListWidget* m_log;
+
   std::unique_ptr<NexusSSOLogin> m_nexusLogin;
   std::unique_ptr<NexusKeyValidator> m_nexusValidator;
 
-  void on_nexusConnect_clicked();
-  void on_nexusManualKey_clicked();
-  void on_nexusDisconnect_clicked();
-  void on_clearCacheButton_clicked();
-  void on_associateButton_clicked();
+  void addLog(const QString& s);
+
+  void updateState();
 
   void validateKey(const QString& key);
   bool setKey(const QString& key);
   bool clearKey();
-
-  void updateNexusState();
-  void updateNexusButtons();
-  void updateNexusData();
 
   void onSSOKeyChanged(const QString& key);
   void onSSOStateChanged(NexusSSOLogin::States s, const QString& e);
@@ -35,8 +51,21 @@ private:
   void onValidatorFinished(
     ValidationAttempt::Result r, const QString& message,
     std::optional<APIUserAccount> useR);
+};
 
-  void addNexusLog(const QString& s);
+
+class NexusSettingsTab : public SettingsTab
+{
+public:
+  NexusSettingsTab(Settings& settings, SettingsDialog& dialog);
+  void update();
+
+private:
+  NexusConnectionUI m_connectionUI;
+
+  void on_clearCacheButton_clicked();
+  void on_associateButton_clicked();
+  void updateNexusData();
 };
 
 #endif // SETTINGSDIALOGNEXUS_H

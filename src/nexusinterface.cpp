@@ -26,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <utility.h>
 #include "shared/util.h"
 #include <log.h>
+#include <moassert.h>
 
 #include <QApplication>
 #include <QNetworkCookieJar>
@@ -50,7 +51,7 @@ void throttledWarning(const APIUserAccount& user)
 
 
 NexusBridge::NexusBridge(PluginContainer *pluginContainer, const QString &subModule)
-  : m_Interface(NexusInterface::instance(pluginContainer))
+  : m_Interface(&NexusInterface::instance())
   , m_SubModule(subModule)
 {
 }
@@ -234,8 +235,8 @@ APILimits NexusInterface::parseLimits(
 }
 
 
-NexusInterface::NexusInterface(PluginContainer *pluginContainer)
-  : m_PluginContainer(pluginContainer)
+NexusInterface::NexusInterface()
+  : m_PluginContainer(nullptr)
 {
   m_User.limits(defaultAPILimits());
   m_MOVersion = createVersionInfo();
@@ -255,10 +256,10 @@ NexusInterface::~NexusInterface()
   cleanup();
 }
 
-NexusInterface *NexusInterface::instance(PluginContainer *pluginContainer)
+NexusInterface& NexusInterface::instance()
 {
-  static NexusInterface s_Instance(pluginContainer);
-  return &s_Instance;
+  static NexusInterface ni;
+  return ni;
 }
 
 void NexusInterface::setCacheDirectory(const QString &directory)
@@ -284,7 +285,7 @@ void NexusInterface::interpretNexusFileName(const QString &fileName, QString &mo
   static const QRegularExpression complex(R"(^([a-zA-Z0-9_'"\-.() ]*?)([-_ ][VvRr]+[0-9]+(?:(?:[\.][0-9]+){0,2}|(?:[_][0-9]+){0,2}|(?:[-.][0-9]+){0,2})?[ab]?)??-([1-9][0-9]+)?-.*?\.(zip|rar|7z))");
   //complex regex explanation:
   //group 1: modname.
-  //group 2: optional version, 
+  //group 2: optional version,
   //  assumed to start with v (empty most of the time).
   //group 3: NexusId,
   //  assumed wrapped in "-", will miss single digit IDs for better accuracy.

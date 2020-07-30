@@ -266,7 +266,7 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
   createFromOverwrite(pluginContainer, game, directoryStructure);
 
   std::sort(s_Collection.begin(), s_Collection.end(), ModInfo::ByName);
-  
+
   parallelMap(std::begin(s_Collection), std::end(s_Collection), &ModInfo::prefetch, refreshThreadCount);
 
   updateIndices();
@@ -295,7 +295,7 @@ ModInfo::ModInfo(PluginContainer *pluginContainer)
 }
 
 
-bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver)
+bool ModInfo::checkAllForUpdate(QObject *receiver)
 {
   bool updatesAvailable = true;
 
@@ -348,19 +348,19 @@ bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
     }
 
     for (auto game : organizedGames)
-      NexusInterface::instance(pluginContainer)->requestUpdates(game.second, receiver, QVariant(), game.first, QString());
+      NexusInterface::instance().requestUpdates(game.second, receiver, QVariant(), game.first, QString());
   } else if (earliest < QDateTime::currentDateTimeUtc().addMonths(-1)) {
     for (auto gameName : games)
-      NexusInterface::instance(pluginContainer)->requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::MONTH, receiver, QVariant(true), QString());
+      NexusInterface::instance().requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::MONTH, receiver, QVariant(true), QString());
   } else if (earliest < QDateTime::currentDateTimeUtc().addDays(-7)) {
     for (auto gameName : games)
-      NexusInterface::instance(pluginContainer)->requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::MONTH, receiver, QVariant(false), QString());
+      NexusInterface::instance().requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::MONTH, receiver, QVariant(false), QString());
   } else if (earliest < QDateTime::currentDateTimeUtc().addDays(-1)) {
     for (auto gameName : games)
-      NexusInterface::instance(pluginContainer)->requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::WEEK, receiver, QVariant(false), QString());
+      NexusInterface::instance().requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::WEEK, receiver, QVariant(false), QString());
   } else {
     for (auto gameName : games)
-      NexusInterface::instance(pluginContainer)->requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::DAY, receiver, QVariant(false), QString());
+      NexusInterface::instance().requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::DAY, receiver, QVariant(false), QString());
   }
 
   return updatesAvailable;
@@ -400,7 +400,7 @@ std::set<QSharedPointer<ModInfo>> ModInfo::filteredMods(QString gameName, QVaria
   return finalMods;
 }
 
-void ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *receiver, std::multimap<QString, int> IDs)
+void ModInfo::manualUpdateCheck(QObject *receiver, std::multimap<QString, int> IDs)
 {
   std::vector<QSharedPointer<ModInfo>> mods;
   std::set<std::pair<QString, int>> organizedGames;
@@ -438,7 +438,7 @@ void ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *recei
     }
 
     for (auto game : organizedGames) {
-      NexusInterface::instance(pluginContainer)->requestUpdates(game.second, receiver, QVariant(), game.first, QString());
+      NexusInterface::instance().requestUpdates(game.second, receiver, QVariant(), game.first, QString());
     }
   } else {
     log::info("None of the selected mods can be updated.");

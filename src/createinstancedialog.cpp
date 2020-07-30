@@ -25,6 +25,7 @@ CreateInstanceDialog::CreateInstanceDialog(
   m_pages.push_back(std::make_unique<EditionsPage>(*this));
   m_pages.push_back(std::make_unique<NamePage>(*this));
   m_pages.push_back(std::make_unique<PathsPage>(*this));
+  m_pages.push_back(std::make_unique<NexusPage>(*this));
   m_pages.push_back(std::make_unique<ConfirmationPage>(*this));
 
   ui->pages->setCurrentIndex(0);

@@ -997,6 +997,26 @@ bool PathsPage::checkPath(
 }
 
 
+NexusPage::NexusPage(CreateInstanceDialog& dlg)
+  : Page(dlg)
+{
+}
+
+bool NexusPage::ready() const
+{
+  return true;
+}
+
+bool NexusPage::skip() const
+{
+  return Settings::instance().nexus().hasApiKey();
+}
+
+void NexusPage::activated()
+{
+}
+
+
 ConfirmationPage::ConfirmationPage(CreateInstanceDialog& dlg)
   : Page(dlg)
 {

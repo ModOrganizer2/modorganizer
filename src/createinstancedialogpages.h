@@ -203,6 +203,20 @@ private:
 };
 
 
+class NexusPage : public Page
+{
+public:
+  NexusPage(CreateInstanceDialog& dlg);
+
+  bool ready() const override;
+  bool skip() const override;
+  void activated() override;
+
+private:
+
+};
+
+
 class ConfirmationPage : public Page
 {
 public:
