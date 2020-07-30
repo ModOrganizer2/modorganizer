@@ -1,10 +1,12 @@
 #ifndef MODORGANIZER_CREATEINSTANCEDIALOGPAGES_INCLUDED
 #define MODORGANIZER_CREATEINSTANCEDIALOGPAGES_INCLUDED
 
+#include "createinstancedialog.h"
+#include <filterwidget.h>
+
 #include <QLabel>
 #include <QLineEdit>
 #include <QCommandLinkButton>
-#include "createinstancedialog.h"
 
 namespace MOBase { class IPluginGame; }
 
@@ -107,16 +109,19 @@ private:
 
   std::vector<std::unique_ptr<Game>> m_games;
   Game* m_selection;
-
+  MOBase::FilterWidget m_filter;
 
   std::vector<MOBase::IPluginGame*> sortedGamePlugins() const;
   Game* findGame(MOBase::IPluginGame* game);
   void createGames();
   void updateButton(Game* g);
   void selectButton(Game* g);
+  void clearButtons();
+  void addButton(QAbstractButton* b);
   QCommandLinkButton* createCustomButton();
   void createGameButton(Game* g);
   void fillList();
+  void onFilter();
   Game* checkInstallation(const QString& path, Game* g);
   MOBase::IPluginGame* findAnotherGame(const QString& path);
   bool confirmUnknown(const QString& path, MOBase::IPluginGame* game);

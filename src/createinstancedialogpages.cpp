@@ -12,6 +12,7 @@ namespace cid
 
 using MOBase::IPluginGame;
 using MOBase::TaskDialog;
+using MOBase::FilterWidget;
 
 QString makeDefaultPath(const std::wstring& dir)
 {
@@ -228,6 +229,9 @@ GamePage::GamePage(CreateInstanceDialog& dlg)
   createGames();
   fillList();
 
+  m_filter.setEdit(ui->gamesFilter);
+
+  QObject::connect(&m_filter, &FilterWidget::changed, [&]{ fillList(); });
   QObject::connect(ui->showAllGames, &QCheckBox::clicked, [&]{ fillList(); });
 }
 
@@ -362,6 +366,7 @@ void GamePage::updateButton(Game* g)
   }
 
   g->button->setText(g->game->gameName());
+  g->button->setIcon(g->game->gameIcon());
 
   if (g->installed) {
     g->button->setDescription(g->dir);
@@ -394,7 +399,7 @@ void GamePage::selectButton(Game* g)
         // was not installed; create it and show it
         // and it has a button, just check it
         createGameButton(gg.get());
-        ui->games->addButton(gg->button, QDialogButtonBox::AcceptRole);
+        addButton(gg->button);
       }
 
       gg->button->setChecked(true);
@@ -439,9 +444,8 @@ void GamePage::fillList()
 {
   const bool showAll = ui->showAllGames->isChecked();
 
-  ui->games->clear();
-
-  ui->games->addButton(createCustomButton(), QDialogButtonBox::AcceptRole);
+  clearButtons();
+  addButton(createCustomButton());
 
   for (auto& g : m_games) {
     g->button = nullptr;
@@ -451,9 +455,41 @@ void GamePage::fillList()
       continue;
     }
 
+    if (!m_filter.matches(g->game->gameName())) {
+      continue;
+    }
+
     createGameButton(g.get());
-    ui->games->addButton(g->button, QDialogButtonBox::AcceptRole);
+    addButton(g->button);
   }
+}
+
+void GamePage::clearButtons()
+{
+  auto* ly = static_cast<QVBoxLayout*>(ui->games->layout());
+
+  ui->games->setUpdatesEnabled(false);
+
+  // delete all children
+  qDeleteAll(ui->games->findChildren<QWidget*>("", Qt::FindDirectChildrenOnly));
+
+  // stretch widgets added with addStretch() are not in the parent widget,
+  // they have to be deleted from the layout itself
+  while (auto* child=ly->takeAt(0))
+    delete child;
+
+  // add a stretch, buttons will be added before
+  ly->addStretch();
+
+  ui->games->setUpdatesEnabled(true);
+}
+
+void GamePage::addButton(QAbstractButton* b)
+{
+  auto* ly = static_cast<QVBoxLayout*>(ui->games->layout());
+
+  // insert before the stretch
+  ly->insertWidget(ly->count() - 1, b);
 }
 
 GamePage::Game* GamePage::checkInstallation(const QString& path, Game* g)
