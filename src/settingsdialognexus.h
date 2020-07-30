@@ -5,14 +5,16 @@
 #include "settingsdialog.h"
 #include "nxmaccessmanager.h"
 
+// used by the settings dialog and the create instance dialog
+//
 class NexusConnectionUI : public QObject
 {
   Q_OBJECT;
 
 public:
-  NexusConnectionUI(Settings& s, QWidget* parent=nullptr);
-
-  void set(
+  NexusConnectionUI(
+    Settings& s,
+    QWidget* parent,
     QAbstractButton* connectButton,
     QAbstractButton* disconnectButton,
     QAbstractButton* manualButton,
@@ -61,7 +63,7 @@ public:
   void update();
 
 private:
-  NexusConnectionUI m_connectionUI;
+  std::unique_ptr<NexusConnectionUI> m_connectionUI;
 
   void on_clearCacheButton_clicked();
   void on_associateButton_clicked();

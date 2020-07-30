@@ -3,6 +3,7 @@
 #include "instancemanager.h"
 #include "settings.h"
 #include "plugincontainer.h"
+#include "settingsdialognexus.h"
 #include "shared/appconfig.h"
 #include <iplugingame.h>
 #include <report.h>
@@ -998,9 +999,21 @@ bool PathsPage::checkPath(
 
 
 NexusPage::NexusPage(CreateInstanceDialog& dlg)
-  : Page(dlg)
+  : Page(dlg), m_skip(false)
 {
+  m_connectionUI.reset(new NexusConnectionUI(
+    Settings::instance(), &m_dlg,
+    ui->nexusConnect,
+    nullptr,
+    ui->nexusManual,
+    ui->nexusLog));
+
+  // just check it once, or connecting and then going back and forth would skip
+  // the page, which would be unexpected
+  m_skip = Settings::instance().nexus().hasApiKey();
 }
+
+NexusPage::~NexusPage() = default;
 
 bool NexusPage::ready() const
 {
@@ -1009,7 +1022,7 @@ bool NexusPage::ready() const
 
 bool NexusPage::skip() const
 {
-  return Settings::instance().nexus().hasApiKey();
+  return m_skip;
 }
 
 void NexusPage::activated()

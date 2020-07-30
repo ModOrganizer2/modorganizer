@@ -71,34 +71,30 @@ private:
 };
 
 
-NexusConnectionUI::NexusConnectionUI(Settings& s, QWidget* parent) :
-  m_parent(parent), m_settings(s),
-  m_connect(nullptr), m_disconnect(nullptr), m_manual(nullptr), m_log(nullptr)
-{
-}
-
-void NexusConnectionUI::set(
+NexusConnectionUI::NexusConnectionUI(
+  Settings& s,
+  QWidget* parent,
   QAbstractButton* connectButton,
   QAbstractButton* disconnectButton,
   QAbstractButton* manualButton,
-  QListWidget* logList)
+  QListWidget* logList) :
+    m_parent(parent), m_settings(s),
+    m_connect(connectButton),
+    m_disconnect(disconnectButton),
+    m_manual(manualButton),
+    m_log(logList)
 {
-  m_connect = connectButton;
   if (m_connect) {
     QObject::connect(m_connect, &QPushButton::clicked, [&]{ connect(); });
   }
 
-  m_disconnect = disconnectButton;
   if (m_disconnect) {
     QObject::connect(m_disconnect, &QPushButton::clicked, [&]{ disconnect(); });
   }
 
-  m_manual = manualButton;
   if (m_manual) {
     QObject::connect(manualButton, &QPushButton::clicked, [&]{ manual(); });
   }
-
-  m_log = logList;
 
   if (m_settings.nexus().hasApiKey()) {
     addLog(tr("Connected."));
@@ -296,7 +292,7 @@ void NexusConnectionUI::updateState()
 
 
 NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
-  : SettingsTab(s, d), m_connectionUI(s, &d)
+  : SettingsTab(s, d)
 {
   ui->offlineBox->setChecked(settings().network().offlineMode());
   ui->proxyBox->setChecked(settings().network().useProxy());
@@ -330,18 +326,19 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
     ui->preferredServersList->sortItems(Qt::DescendingOrder);
   }
 
-  m_connectionUI.set(
+  m_connectionUI.reset(new NexusConnectionUI(
+    settings(), &dialog(),
     ui->nexusConnect,
     ui->nexusDisconnect,
     ui->nexusManualKey,
-    ui->nexusLog);
+    ui->nexusLog));
 
   QObject::connect(
-    &m_connectionUI, &NexusConnectionUI::stateChanged, &d,
+    m_connectionUI.get(), &NexusConnectionUI::stateChanged, &d,
     [&]{ updateNexusData(); }, Qt::QueuedConnection);
 
   QObject::connect(
-    &m_connectionUI, &NexusConnectionUI::keyChanged, &d,
+    m_connectionUI.get(), &NexusConnectionUI::keyChanged, &d,
     [&]{ dialog().setExitNeeded(Exit::Restart); });
 
 

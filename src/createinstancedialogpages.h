@@ -9,6 +9,8 @@
 #include <QCommandLinkButton>
 
 namespace MOBase { class IPluginGame; }
+class NexusConnectionUI;
+
 
 namespace cid
 {
@@ -207,13 +209,15 @@ class NexusPage : public Page
 {
 public:
   NexusPage(CreateInstanceDialog& dlg);
+  ~NexusPage();
 
   bool ready() const override;
   bool skip() const override;
   void activated() override;
 
 private:
-
+  std::unique_ptr<NexusConnectionUI> m_connectionUI;
+  bool m_skip;
 };
 
 
