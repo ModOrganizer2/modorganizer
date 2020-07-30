@@ -21,50 +21,6 @@ QString makeDefaultPath(const std::wstring& dir)
     QString::fromStdWString(dir)));
 }
 
-QString sanitizeFileName(const QString& name)
-{
-  QString new_name = name;
-
-  // Restrict the allowed characters
-  new_name = new_name.remove(QRegExp("[^A-Za-z0-9 _=+;!@#$%^'\\-\\.\\[\\]\\{\\}\\(\\)]"));
-
-  // Don't end in spaces and periods
-  new_name = new_name.remove(QRegExp("\\.*$"));
-  new_name = new_name.remove(QRegExp(" *$"));
-
-  // Recurse until stuff stops changing
-  if (new_name != name) {
-    return sanitizeFileName(new_name);
-  }
-
-  return new_name;
-}
-
-// same thing as above, but allows path separators and colons
-//
-QString sanitizePath(const QString& path)
-{
-  QString new_name = path;
-
-  // Restrict the allowed characters
-  new_name = new_name.remove(QRegExp("[^\\\\\\/A-Za-z0-9 _=+;!@#$%^:'\\-\\.\\[\\]\\{\\}\\(\\)]"));
-
-  // Don't end in spaces and periods
-  new_name = new_name.remove(QRegExp("\\.*$"));
-  new_name = new_name.remove(QRegExp(" *$"));
-
-  // Recurse until stuff stops changing
-  if (new_name != path) {
-    return sanitizeFileName(new_name);
-  }
-
-  return new_name;
-}
-
-void setPossiblePlaceholder(
-  QLabel* label, const QString& s, const QString& arg)
-{
-}
 
 
 PlaceholderLabel::PlaceholderLabel(QLabel* label)
@@ -762,7 +718,7 @@ QString NamePage::selectedInstanceName() const
   }
 
   const auto text = ui->instanceName->text().trimmed();
-  return sanitizeFileName(text);
+  return InstanceManager::instance().sanitizeInstanceName(text);
 }
 
 void NamePage::onChanged()
@@ -790,12 +746,10 @@ bool NamePage::checkName(QString parentDir, QString name)
   if (name.isEmpty()) {
     empty = true;
   } else {
-    const QString sanitized = sanitizeFileName(name);
-
-    if (name != sanitized) {
-      invalid = true;
-    } else {
+    if (InstanceManager::instance().validInstanceName(name)) {
       exists = QDir(parentDir).exists(name);
+    } else {
+      invalid = true;
     }
   }
 
@@ -963,11 +917,9 @@ bool PathsPage::checkPath(
   if (path.isEmpty()) {
     empty = true;
   } else {
-    const QString sanitized = sanitizePath(path);
+    const QDir d(path);
 
-    if (path != sanitized) {
-      invalid = true;
-    } else {
+    if (InstanceManager::instance().validInstanceName(d.dirName())) {
       if (m_dlg.instanceType() == CreateInstanceDialog::Portable) {
         // the default data path for a portable instance is the application
         // directory, so it's not an error if it exists
@@ -977,6 +929,8 @@ bool PathsPage::checkPath(
       } else {
         exists = QDir(path).exists();
       }
+    } else {
+      invalid = true;
     }
   }
 

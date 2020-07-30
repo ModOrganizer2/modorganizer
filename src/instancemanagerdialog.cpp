@@ -8,8 +8,12 @@
 #include "shared/appconfig.h"
 #include <iplugingame.h>
 
+namespace shell = MOBase::shell;
+
 void openInstanceManager(PluginContainer& pc, QWidget* parent)
 {
+  //CreateInstanceDialog dlg(pc, parent);
+  //dlg.exec();
   InstanceManagerDialog dlg(pc, parent);
   dlg.exec();
 }
@@ -77,12 +81,20 @@ InstanceManagerDialog::InstanceManagerDialog(
   ui->splitter->setStretchFactor(0, 0);
   ui->splitter->setStretchFactor(1, 1);
 
+  auto* model = new QStandardItemModel;
+  ui->list->setModel(model);
+
+  m_filter.setEdit(ui->filter);
+  m_filter.setList(ui->list);
+  m_filter.setUpdateDelay(false);
+  m_filter.setFilteredBorder(false);
+
   auto& m = InstanceManager::instance();
 
   for (auto&& d : m.instancePaths()) {
     auto ii = std::make_unique<InstanceInfo>(d);
 
-    ui->list->addItem(ii->name());
+    model->appendRow(new QStandardItem(ii->name()));
     m_instances.push_back(std::move(ii));
   }
 
@@ -91,8 +103,12 @@ InstanceManagerDialog::InstanceManagerDialog(
   }
 
   connect(ui->createNew, &QPushButton::clicked, [&]{ createNew(); });
-  connect(ui->list, &QListWidget::itemSelectionChanged, [&]{ onSelection(); });
+  connect(ui->list->selectionModel(), &QItemSelectionModel::selectionChanged, [&]{ onSelection(); });
   //connect(ui->list, &QListWidget::itemActivated, [&]{ openSelectedInstance(); });
+  connect(ui->rename, &QPushButton::clicked, [&]{ rename(); });
+  connect(ui->exploreLocation, &QPushButton::clicked, [&]{ exploreLocation(); });
+  connect(ui->exploreBaseDirectory, &QPushButton::clicked, [&]{ exploreBaseDirectory(); });
+  connect(ui->exploreGame, &QPushButton::clicked, [&]{ exploreGame(); });
 }
 
 InstanceManagerDialog::~InstanceManagerDialog() = default;
@@ -105,11 +121,15 @@ void InstanceManagerDialog::select(std::size_t i)
 
   const auto& ii = m_instances[i];
   fill(*ii);
+
+  ui->list->selectionModel()->select(
+    m_filter.mapFromSource(m_filter.sourceModel()->index(i, 0)),
+    QItemSelectionModel::ClearAndSelect);
 }
 
 void InstanceManagerDialog::openSelectedInstance()
 {
-  const auto i = singleSelection();
+  const auto i = singleSelectionIndex();
   if (i == NoSelection) {
     return;
   }
@@ -117,9 +137,107 @@ void InstanceManagerDialog::openSelectedInstance()
   InstanceManager::instance().switchToInstance(m_instances[i]->name());
 }
 
+void InstanceManagerDialog::rename()
+{
+  auto* i = singleSelection();
+  if (!i) {
+    return;
+  }
+
+  auto& m = InstanceManager::instance();
+  if (m.currentInstance() == i->name()) {
+    QMessageBox::information(this,
+      tr("Rename instance"), tr("The active instance cannot be renamed"));
+    return;
+  }
+
+  QDialog dlg(this);
+  dlg.setWindowTitle(tr("Rename instance"));
+
+  auto* ly = new QVBoxLayout(&dlg);
+
+  auto* bb = new QDialogButtonBox(
+    QDialogButtonBox::Cancel | QDialogButtonBox::Ok);
+
+  auto* text = new QLineEdit(i->name());
+  text->selectAll();
+
+  auto* error = new QLabel;
+
+  ly->addWidget(new QLabel(tr("Instance name")));
+  ly->addWidget(text);
+  ly->addWidget(error);
+  ly->addStretch();
+  ly->addWidget(bb);
+
+  connect(text, &QLineEdit::textChanged, [&] {
+    bool okay = false;
+
+    if (!m.validInstanceName(text->text())) {
+      error->setText(tr("The instance name must be a valid folder name."));
+    } else {
+      const auto name = m.sanitizeInstanceName(text->text());
+
+      if ((name != i->name()) && m.instanceExists(text->text())) {
+        error->setText(tr("An instance with this name already exists."));
+      } else {
+        okay = true;
+      }
+    }
+
+    error->setVisible(!okay);
+    bb->button(QDialogButtonBox::Ok)->setEnabled(okay);
+  });
+
+  connect(bb, &QDialogButtonBox::accepted, [&]{ dlg.accept(); });
+  connect(bb, &QDialogButtonBox::rejected, [&]{ dlg.reject(); });
+
+  dlg.resize({400, 120});
+  if (dlg.exec() != QDialog::Accepted) {
+    return;
+  }
+
+
+  const QString newName = m.sanitizeInstanceName(text->text());
+  const QString src = QDir::toNativeSeparators(i->location());
+  const QString dest = QDir::toNativeSeparators(
+    QFileInfo(i->location()).dir().path() + "/" + newName);
+
+  const auto r = shell::Rename(src, dest, false);
+  if (!r) {
+    QMessageBox::critical(
+      this, tr("Error"),
+      tr("Failed to rename \"%1\" to \"%2\": %3")
+        .arg(src).arg(dest).arg(r.toString()));
+
+    return;
+  }
+}
+
+void InstanceManagerDialog::exploreLocation()
+{
+  if (const auto* i=singleSelection()) {
+    shell::Explore(i->location());
+  }
+}
+
+void InstanceManagerDialog::exploreBaseDirectory()
+{
+  if (const auto* i=singleSelection()) {
+    shell::Explore(i->baseDirectory());
+  }
+}
+
+void InstanceManagerDialog::exploreGame()
+{
+  if (const auto* i=singleSelection()) {
+    shell::Explore(i->gamePath());
+  }
+}
+
 void InstanceManagerDialog::onSelection()
 {
-  const auto i = singleSelection();
+  const auto i = singleSelectionIndex();
   if (i == NoSelection) {
     return;
   }
@@ -133,14 +251,36 @@ void InstanceManagerDialog::createNew()
   dlg.exec();
 }
 
-std::size_t InstanceManagerDialog::singleSelection() const
+std::size_t InstanceManagerDialog::singleSelectionIndex() const
 {
-  const auto sel = ui->list->selectionModel()->selectedIndexes();
+  const auto sel = m_filter.mapSelectionToSource(
+    ui->list->selectionModel()->selection());
+
   if (sel.size() != 1) {
     return NoSelection;
   }
 
-  return static_cast<std::size_t>(sel[0].row());
+  return static_cast<std::size_t>(sel.indexes()[0].row());
+}
+
+InstanceInfo* InstanceManagerDialog::singleSelection()
+{
+  const auto i = singleSelectionIndex();
+  if (i == NoSelection) {
+    return nullptr;
+  }
+
+  return m_instances[i].get();
+}
+
+const InstanceInfo* InstanceManagerDialog::singleSelection() const
+{
+  const auto i = singleSelectionIndex();
+  if (i == NoSelection) {
+    return nullptr;
+  }
+
+  return m_instances[i].get();
 }
 
 void InstanceManagerDialog::fill(const InstanceInfo& ii)

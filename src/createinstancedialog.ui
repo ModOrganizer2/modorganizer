@@ -77,9 +77,12 @@
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="hideIntro">
+        <widget class="LinkLabel" name="label_19">
          <property name="text">
-          <string>Never show this again</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ModOrganizer2/modorganizer/wiki/Instance&quot;&gt;More information&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="openExternalLinks">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -95,6 +98,13 @@
           </size>
          </property>
         </spacer>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="hideIntro">
+         <property name="text">
+          <string>Never show this page again</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -1202,6 +1212,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>LinkLabel</class>
+   <extends>QLabel</extends>
+   <header location="global">linklabel.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="resources.qrc"/>
  </resources>

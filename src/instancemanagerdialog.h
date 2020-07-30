@@ -1,6 +1,7 @@
 #ifndef MODORGANIZER_INSTANCEMANAGERDIALOG_INCLUDED
 #define MODORGANIZER_INSTANCEMANAGERDIALOG_INCLUDED
 
+#include <filterwidget.h>
 #include <QDialog>
 
 namespace Ui { class InstanceManagerDialog; };
@@ -21,17 +22,26 @@ public:
   void select(std::size_t i);
   void openSelectedInstance();
 
+  void rename();
+  void exploreLocation();
+  void exploreBaseDirectory();
+  void exploreGame();
+
 private:
   static const std::size_t NoSelection = -1;
 
   std::unique_ptr<Ui::InstanceManagerDialog> ui;
   const PluginContainer& m_pc;
   std::vector<std::unique_ptr<InstanceInfo>> m_instances;
+  MOBase::FilterWidget m_filter;
 
   void onSelection();
   void createNew();
 
-  std::size_t singleSelection() const;
+  std::size_t singleSelectionIndex() const;
+  InstanceInfo* singleSelection();
+  const InstanceInfo* singleSelection() const;
+
   void fill(const InstanceInfo& ii);
 };
 

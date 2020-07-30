@@ -63,6 +63,7 @@ public:
   QString sanitizeInstanceName(const QString &name) const;
   QString makeUniqueName(const QString& instanceName) const;
   bool instanceExists(const QString& instanceName) const;
+  bool validInstanceName(const QString& instanceName) const;
   QString instancePath(const QString& instanceName) const;
 
 private:

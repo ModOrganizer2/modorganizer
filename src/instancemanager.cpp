@@ -676,3 +676,12 @@ QString InstanceManager::sanitizeInstanceName(const QString &name) const
   }
   return new_name;
 }
+
+bool InstanceManager::validInstanceName(const QString& instanceName) const
+{
+  if (instanceName.isEmpty()) {
+    return false;
+  }
+
+  return (instanceName == sanitizeInstanceName(instanceName));
+}
