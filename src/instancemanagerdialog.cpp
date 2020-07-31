@@ -21,15 +21,19 @@ void openInstanceManager(PluginContainer& pc, QWidget* parent)
 class InstanceInfo
 {
 public:
-  InstanceInfo(QDir dir) :
-    m_dir(std::move(dir)),
+  InstanceInfo(QDir dir, bool isPortable) :
+    m_dir(std::move(dir)), m_portable(isPortable),
     m_settings(dir.filePath(QString::fromStdWString(AppConfig::iniFileName())))
   {
   }
 
   QString name() const
   {
-    return m_dir.dirName();
+    if (m_portable) {
+      return QObject::tr("Portable");
+    } else {
+      return m_dir.dirName();
+    }
   }
 
   QString gameName() const
@@ -66,52 +70,83 @@ public:
     return m_settings.paths().base();
   }
 
+  bool isPortable() const
+  {
+    return m_portable;
+  }
+
 private:
   QDir m_dir;
+  bool m_portable;
   Settings m_settings;
 };
 
 
+InstanceManagerDialog::~InstanceManagerDialog() = default;
+
 InstanceManagerDialog::InstanceManagerDialog(
-  const PluginContainer& pc, QWidget *parent)
-    : QDialog(parent), ui(new Ui::InstanceManagerDialog), m_pc(pc)
+  const PluginContainer& pc, QWidget *parent) :
+    QDialog(parent), ui(new Ui::InstanceManagerDialog), m_pc(pc),
+    m_model(nullptr)
 {
   ui->setupUi(this);
   ui->splitter->setSizes({200, 1});
   ui->splitter->setStretchFactor(0, 0);
   ui->splitter->setStretchFactor(1, 1);
 
-  auto* model = new QStandardItemModel;
-  ui->list->setModel(model);
+  m_model = new QStandardItemModel;
+  ui->list->setModel(m_model);
 
   m_filter.setEdit(ui->filter);
   m_filter.setList(ui->list);
   m_filter.setUpdateDelay(false);
   m_filter.setFilteredBorder(false);
 
+  updateInstances();
+  updateList();
+
+  connect(ui->createNew, &QPushButton::clicked, [&]{ createNew(); });
+
+  connect(ui->list->selectionModel(), &QItemSelectionModel::selectionChanged, [&]{ onSelection(); });
+  //connect(ui->list, &QListWidget::itemActivated, [&]{ openSelectedInstance(); });
+
+  connect(ui->rename, &QPushButton::clicked, [&]{ rename(); });
+  connect(ui->exploreLocation, &QPushButton::clicked, [&]{ exploreLocation(); });
+  connect(ui->exploreBaseDirectory, &QPushButton::clicked, [&]{ exploreBaseDirectory(); });
+  connect(ui->exploreGame, &QPushButton::clicked, [&]{ exploreGame(); });
+
+  connect(ui->switchToInstance, &QPushButton::clicked, [&]{ openSelectedInstance(); });
+  connect(ui->close, &QPushButton::clicked, [&]{ close(); });
+}
+
+void InstanceManagerDialog::updateInstances()
+{
   auto& m = InstanceManager::instance();
 
-  for (auto&& d : m.instancePaths()) {
-    auto ii = std::make_unique<InstanceInfo>(d);
+  m_instances.clear();
 
-    model->appendRow(new QStandardItem(ii->name()));
-    m_instances.push_back(std::move(ii));
+  if (m.portableInstanceExists()) {
+    m_instances.push_back(std::make_unique<InstanceInfo>(
+      m.portablePath(), true));
+  }
+
+  for (auto&& d : m.instancePaths()) {
+    m_instances.push_back(std::make_unique<InstanceInfo>(d, false));
+  }
+}
+
+void InstanceManagerDialog::updateList()
+{
+  m_model->clear();
+
+  for (auto&& ii : m_instances) {
+    m_model->appendRow(new QStandardItem(ii->name()));
   }
 
   if (!m_instances.empty()) {
     select(0);
   }
-
-  connect(ui->createNew, &QPushButton::clicked, [&]{ createNew(); });
-  connect(ui->list->selectionModel(), &QItemSelectionModel::selectionChanged, [&]{ onSelection(); });
-  //connect(ui->list, &QListWidget::itemActivated, [&]{ openSelectedInstance(); });
-  connect(ui->rename, &QPushButton::clicked, [&]{ rename(); });
-  connect(ui->exploreLocation, &QPushButton::clicked, [&]{ exploreLocation(); });
-  connect(ui->exploreBaseDirectory, &QPushButton::clicked, [&]{ exploreBaseDirectory(); });
-  connect(ui->exploreGame, &QPushButton::clicked, [&]{ exploreGame(); });
 }
-
-InstanceManagerDialog::~InstanceManagerDialog() = default;
 
 void InstanceManagerDialog::select(std::size_t i)
 {
@@ -120,7 +155,7 @@ void InstanceManagerDialog::select(std::size_t i)
   }
 
   const auto& ii = m_instances[i];
-  fill(*ii);
+  fillData(*ii);
 
   ui->list->selectionModel()->select(
     m_filter.mapFromSource(m_filter.sourceModel()->index(i, 0)),
@@ -212,6 +247,8 @@ void InstanceManagerDialog::rename()
 
     return;
   }
+
+
 }
 
 void InstanceManagerDialog::exploreLocation()
@@ -283,11 +320,32 @@ const InstanceInfo* InstanceManagerDialog::singleSelection() const
   return m_instances[i].get();
 }
 
-void InstanceManagerDialog::fill(const InstanceInfo& ii)
+void InstanceManagerDialog::fillData(const InstanceInfo& ii)
 {
   ui->name->setText(ii.name());
   ui->location->setText(ii.location());
   ui->baseDirectory->setText(ii.baseDirectory());
   ui->gameName->setText(ii.gameName());
   ui->gameDir->setText(ii.gamePath());
+
+  const auto& m = InstanceManager::instance();
+
+  ui->rename->setEnabled(!ii.isPortable());
+
+  if (ii.isPortable()) {
+    ui->convertToPortable->setVisible(false);
+    ui->convertToGlobal->setVisible(true);
+    ui->convertToGlobal->setEnabled(true);
+  } else {
+    ui->convertToPortable->setVisible(true);
+    ui->convertToGlobal->setVisible(false);
+
+    if (m.portableInstanceExists()) {
+      ui->convertToPortable->setEnabled(false);
+      ui->convertToPortable->setToolTip(tr("A portable instance already exists."));
+    } else {
+      ui->convertToPortable->setEnabled(false);
+      ui->convertToPortable->setToolTip("");
+    }
+  }
 }

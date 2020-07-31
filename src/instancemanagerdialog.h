@@ -34,6 +34,9 @@ private:
   const PluginContainer& m_pc;
   std::vector<std::unique_ptr<InstanceInfo>> m_instances;
   MOBase::FilterWidget m_filter;
+  QStandardItemModel* m_model;
+
+  void updateInstances();
 
   void onSelection();
   void createNew();
@@ -42,7 +45,8 @@ private:
   InstanceInfo* singleSelection();
   const InstanceInfo* singleSelection() const;
 
-  void fill(const InstanceInfo& ii);
+  void updateList();
+  void fillData(const InstanceInfo& ii);
 };
 
 #endif // MODORGANIZER_INSTANCEMANAGERDIALOG_INCLUDED
