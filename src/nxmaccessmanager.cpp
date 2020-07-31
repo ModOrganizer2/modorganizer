@@ -772,10 +772,46 @@ NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
   setCookieJar(new PersistentCookieJar(QDir::fromNativeSeparators(
     Settings::instance().paths().cache() + "/nexus_cookies.dat")));
 
-  if (networkAccessible() == QNetworkAccessManager::UnknownAccessibility) {
-    // why is this necessary all of a sudden?
-    setNetworkAccessible(QNetworkAccessManager::Accessible);
+  networkAccessibleFix();
+}
+
+void NXMAccessManager::networkAccessibleFix()
+{
+  // Qt 5.14 seems to have introduced a regression with network accessibility
+  // where some users say MO can't access the network at all
+  //
+  // some users use a vpn, one other had a dns resolver
+  //
+  // it looks like networkAccessible() is sometimes set to NotAccessible,
+  // which prevents all network requests from even reaching the OS
+  //
+  // there are some events that seem like they should be fired, like
+  // QNetworkAccessManager::networkAccessibleChanged, but they're not
+  //
+  // the only solution that seems to kinda work is just to start a timer,
+  // check when networkAccessible() is changed to NotAccessible and revert it
+  // to UnknownAccessibility
+  //
+  // see also:
+  // https://github.com/ModOrganizer2/modorganizer/issues/1173
+  // https://bugreports.qt.io/browse/QTBUG-55180
+
+  // check first
+  if (networkAccessible() == QNetworkAccessManager::NotAccessible) {
+    log::debug("network is not accessible, forcing to unknown");
+    setNetworkAccessible(QNetworkAccessManager::UnknownAccessibility);
   }
+
+  auto* t = new QTimer(this);
+
+  connect(t, &QTimer::timeout, [&]{
+    if (networkAccessible() == QNetworkAccessManager::NotAccessible) {
+      log::debug("network is not accessible, forcing to unknown");
+      setNetworkAccessible(QNetworkAccessManager::UnknownAccessibility);
+    }
+  });
+
+  t->start(std::chrono::seconds(1));
 }
 
 void NXMAccessManager::setTopLevelWidget(QWidget* w)
