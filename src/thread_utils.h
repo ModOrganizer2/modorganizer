@@ -1,11 +1,30 @@
 #ifndef MO2_THREAD_UTILS_H
 #define MO2_THREAD_UTILS_H
 
+#include <log.h>
 #include <functional>
 #include <mutex>
 #include <thread>
 
+// in main.cpp
+void setUnhandledExceptionHandler();
+LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs);
+
+
 namespace MOShared {
+
+// starts an std::thread with an unhandled exception handler for core dumps
+// and a top-level catch
+//
+template <class F>
+std::thread startSafeThread(F&& f)
+{
+  return std::thread([f=std::forward<F>(f)] {
+    setUnhandledExceptionHandler();
+    f();
+  });
+}
+
 
 /**
  * Class that can be used to perform thread-safe memoization.
@@ -26,7 +45,7 @@ struct MemoizedLocked {
   template <class Callable>
   MemoizedLocked(Callable &&callable, T value = {}) :
     m_Fn{ std::forward<Callable>(callable) }, m_Value{ std::move(value) } { }
-  
+
   template <class... Args>
   T& value(Args&&... args) const {
     if (m_NeedUpdating) {
@@ -66,7 +85,7 @@ private:
  *
  */
 template <class It, class Callable>
-void parallelMap(It begin, It end, Callable callable, std::size_t nThreads) 
+void parallelMap(It begin, It end, Callable callable, std::size_t nThreads)
 {
   std::mutex m;
   std::vector<std::thread> threads(nThreads);
@@ -75,7 +94,7 @@ void parallelMap(It begin, It end, Callable callable, std::size_t nThreads)
   //  - The mutex is only used to fetch/increment the iterator.
   //  - The callable is copied in each thread to avoid conflicts.
   for (auto &thread: threads) {
-    thread = std::thread([&m, &begin, end, callable]() {
+    thread = startSafeThread([&m, &begin, end, callable]() {
       while (true) {
         decltype(begin) it;
         {
