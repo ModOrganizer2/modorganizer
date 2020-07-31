@@ -40,7 +40,7 @@ const QString& directoryFileType()
 const QString& cachedFileTypeNoExtension()
 {
   static const QString name = [] {
-    const DWORD flags = SHGFI_TYPENAME;
+    const DWORD flags = SHGFI_TYPENAME | SHGFI_USEFILEATTRIBUTES;
     SHFILEINFOW sfi = {};
 
     // dummy filename with no extension
