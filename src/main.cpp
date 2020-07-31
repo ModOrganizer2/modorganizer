@@ -905,8 +905,19 @@ int main(int argc, char *argv[])
   if (!tempDir.exists())
     tempDir.root().mkpath(tempDir.canonicalPath());
 
-  //Should allow for better scaling of ui with higher resolution displays
+
+  // qt 5.14 changed how fraction font scaling works; by default 125% is
+  // rounded to 100% and 150% is rounded to 200%, which doesn't make any sense
+  //
+  // force qt to use the exact scaling value by change the policy to
+  // PassThrough
+  //
+  QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
+    Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+
+  // MO is somewhat high dpi aware
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+
 
   if (argc >= 4) {
     std::vector<std::wstring> arg;
