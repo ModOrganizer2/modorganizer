@@ -127,9 +127,9 @@ bool bootstrap()
   return true;
 }
 
-LPTOP_LEVEL_EXCEPTION_FILTER prevUnhandledExceptionFilter = nullptr;
+thread_local LPTOP_LEVEL_EXCEPTION_FILTER prevUnhandledExceptionFilter = nullptr;
 
-static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs)
+LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs)
 {
   const std::wstring& dumpPath = OrganizerCore::crashDumpsPath();
   int dumpRes =
@@ -139,10 +139,31 @@ static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *except
   else
     log::error("ModOrganizer has crashed, CreateMiniDump failed ({}, error {}).", dumpRes, GetLastError());
 
-  if (prevUnhandledExceptionFilter)
+  if (prevUnhandledExceptionFilter && exceptionPtrs)
     return prevUnhandledExceptionFilter(exceptionPtrs);
   else
     return EXCEPTION_CONTINUE_SEARCH;
+}
+
+void terminateHandler() noexcept
+{
+  __try
+  {
+    // force an exception to get a valid stack trace for this thread
+    *(int*)0 = 42;
+  }
+  __except
+    (
+      MyUnhandledExceptionFilter(GetExceptionInformation()), EXCEPTION_EXECUTE_HANDLER
+      )
+  {
+  }
+}
+
+void setUnhandledExceptionHandler()
+{
+  prevUnhandledExceptionFilter = SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
+  std::set_terminate(terminateHandler);
 }
 
 // Parses the first parseArgCount arguments of the current process command line and returns
@@ -170,6 +191,7 @@ LPCWSTR UntouchedCommandLineArguments(int parseArgCount, std::vector<std::wstrin
   }
   return cmd;
 }
+
 
 static int SpawnWaitProcess(LPCWSTR workingDirectory, LPCWSTR commandLine) {
   PROCESS_INFORMATION pi{ 0 };
@@ -947,7 +969,7 @@ int main(int argc, char *argv[])
     application.setProperty("dataPath", dataPath);
 
     // initialize dump collection only after "dataPath" since the crashes are stored under it
-    prevUnhandledExceptionFilter = SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
+    setUnhandledExceptionHandler();
 
     const auto logFile =
       qApp->property("dataPath").toString() + "/logs/mo_interface.log";
