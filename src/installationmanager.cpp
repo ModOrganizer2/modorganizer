@@ -657,15 +657,19 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
     modName.update(guessedModName, GUESS_GOOD);
   }
 
-  m_CurrentFile = fileInfo.absoluteFilePath();
-  if (fileInfo.dir() == QDir(m_DownloadsDirectory)) {
-    m_CurrentFile = fileInfo.fileName();
+  // If the file is in a temporary directory, then it is not the original installation
+  // file, so we do not overwrite m_CurrentFile.
+  if (fileInfo.dir() != QDir::temp()) {
+    m_CurrentFile = fileInfo.absoluteFilePath();
+    if (fileInfo.dir() == QDir(m_DownloadsDirectory)) {
+      m_CurrentFile = fileInfo.fileName();
+    }
   }
   log::debug("using mod name \"{}\" (id {}) -> {}", QString(modName), modID, m_CurrentFile);
 
-  //If there's an archive already open, close it. This happens with the bundle
-  //installer when it uncompresses a split archive, then finds it has a real archive
-  //to deal with.
+  // If there's an archive already open, close it. This happens with the bundle
+  // installer when it uncompresses a split archive, then finds it has a real archive
+  // to deal with.
   m_ArchiveHandler->close();
 
   // open the archive and construct the directory tree the installers work on
