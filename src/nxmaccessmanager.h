@@ -269,8 +269,6 @@ private:
   NexusKeyValidator m_validator;
   States m_validationState;
 
-  void networkAccessibleFix();
-
   void startValidationCheck(const QString& key);
 
   void onValidatorFinished(
