@@ -1,4 +1,5 @@
 #include "iconfetcher.h"
+#include "thread_utils.h"
 #include "shared/util.h"
 
 void IconFetcher::Waiter::wait()
@@ -25,7 +26,7 @@ IconFetcher::IconFetcher()
   m_quickCache.file = getPixmapIcon(QFileIconProvider::File);
   m_quickCache.directory = getPixmapIcon(QFileIconProvider::Folder);
 
-  m_thread = std::thread([&]{ threadFun(); });
+  m_thread = MOShared::startSafeThread([&]{ threadFun(); });
 }
 
 IconFetcher::~IconFetcher()

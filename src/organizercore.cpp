@@ -221,7 +221,7 @@ void OrganizerCore::updateExecutablesList()
 void OrganizerCore::updateModInfoFromDisc() {
   ModInfo::updateFromDisc(
     m_Settings.paths().mods(), &m_DirectoryStructure,
-    m_PluginContainer, m_Settings.interface().displayForeign(), 
+    m_PluginContainer, m_Settings.interface().displayForeign(),
     m_Settings.refreshThreadCount(), managedGame());
 }
 
@@ -371,7 +371,7 @@ void OrganizerCore::downloadRequestedNXM(const QString &url)
   }
 }
 
-void OrganizerCore::userInterfaceInitialized() 
+void OrganizerCore::userInterfaceInitialized()
 {
   m_UserInterfaceInitialized(m_UserInterface->mainWindow());
 }
@@ -1139,7 +1139,7 @@ void OrganizerCore::refreshModList(bool saveChanges)
 
   ModInfo::updateFromDisc(
     m_Settings.paths().mods(), &m_DirectoryStructure,
-    m_PluginContainer, m_Settings.interface().displayForeign(), 
+    m_PluginContainer, m_Settings.interface().displayForeign(),
     m_Settings.refreshThreadCount(), managedGame());
 
   m_CurrentProfile->refreshModStatus();
@@ -1473,7 +1473,7 @@ void OrganizerCore::directory_refreshed()
     m_StructureDeleter.join();
   }
 
-  m_StructureDeleter = std::thread([=]{
+  m_StructureDeleter = MOShared::startSafeThread([=]{
     log::debug("structure deleter thread start");
     delete newStructure;
     log::debug("structure deleter thread done");

@@ -1,6 +1,7 @@
 #ifndef ENV_ENVFS_H
 #define ENV_ENVFS_H
 
+#include "thread_utils.h"
 #include <thread>
 
 namespace env
@@ -125,7 +126,7 @@ private:
     ThreadInfo()
       : busy(true), ready(false), stop(false)
     {
-      thread = std::thread([&]{ run(); });
+      thread = MOShared::startSafeThread([&]{ run(); });
     }
 
     ~ThreadInfo()

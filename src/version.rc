@@ -3,8 +3,8 @@
 // If VS_FF_PRERELEASE is not set, MO labels the build as a release and uses VER_FILEVERSION to determine version number.
 // Otherwise, if letters are used in VER_FILEVERSION_STR, uses the full MOBase::VersionInfo parser
 // Otherwise, uses the numbers from VER_FILEVERSION and sets the release type as pre-alpha
-#define VER_FILEVERSION     2,3,0
-#define VER_FILEVERSION_STR "2.3.0\0"
+#define VER_FILEVERSION     2,3,1
+#define VER_FILEVERSION_STR "2.3.1\0"
 
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION     VER_FILEVERSION
