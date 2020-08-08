@@ -65,7 +65,7 @@ private:
   OrganizerCore *m_Proxied;
   PluginContainer *m_PluginContainer;
 
-  const QString &m_PluginName;
+  QString m_PluginName;
 
 };
 
