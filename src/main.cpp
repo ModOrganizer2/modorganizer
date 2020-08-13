@@ -128,6 +128,7 @@ bool bootstrap()
 }
 
 thread_local LPTOP_LEVEL_EXCEPTION_FILTER prevUnhandledExceptionFilter = nullptr;
+thread_local std::terminate_handler prevTerminateHandler = nullptr;
 
 LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs)
 {
@@ -158,12 +159,18 @@ void terminateHandler() noexcept
       )
   {
   }
+
+  if (prevTerminateHandler) {
+    prevTerminateHandler();
+  } else {
+    std::abort();
+  }
 }
 
 void setUnhandledExceptionHandler()
 {
   prevUnhandledExceptionFilter = SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
-  std::set_terminate(terminateHandler);
+  prevTerminateHandler = std::set_terminate(terminateHandler);
 }
 
 // Parses the first parseArgCount arguments of the current process command line and returns
