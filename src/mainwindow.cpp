@@ -168,7 +168,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef Q_MOC_RUN
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/assign.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 #endif
@@ -5903,6 +5903,8 @@ bool MainWindow::extractProgress(QProgressDialog &progress, int percentage, std:
 
 void MainWindow::extractBSATriggered()
 {
+  using namespace boost::placeholders;
+
   QTreeWidgetItem *item = m_ContextItem;
   QString origin;
 
