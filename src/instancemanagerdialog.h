@@ -26,6 +26,7 @@ public:
   void exploreLocation();
   void exploreBaseDirectory();
   void exploreGame();
+  void deleteInstance();
 
 private:
   static const std::size_t NoSelection = -1;
@@ -47,6 +48,12 @@ private:
 
   void updateList();
   void fillData(const InstanceInfo& ii);
+  void clearData();
+  void setButtonsEnabled(bool b);
+
+  bool deletePortable(const InstanceInfo& ii);
+  bool deleteGlobal(const InstanceInfo& ii);
+  bool doDelete(const QStringList& files, bool recycle);
 };
 
 #endif // MODORGANIZER_INSTANCEMANAGERDIALOG_INCLUDED

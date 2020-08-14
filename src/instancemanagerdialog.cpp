@@ -6,9 +6,11 @@
 #include "selectiondialog.h"
 #include "plugincontainer.h"
 #include "shared/appconfig.h"
+#include <utility.h>
+#include <report.h>
 #include <iplugingame.h>
 
-namespace shell = MOBase::shell;
+using namespace MOBase;
 
 void openInstanceManager(PluginContainer& pc, QWidget* parent)
 {
@@ -54,7 +56,7 @@ public:
   QString gamePath() const
   {
     if (auto n=m_settings.game().directory()) {
-      return *n;
+      return QDir::toNativeSeparators(*n);
     } else {
       return {};
     }
@@ -62,17 +64,30 @@ public:
 
   QString location() const
   {
-    return m_dir.path();
+    return QDir::toNativeSeparators(m_dir.path());
   }
 
   QString baseDirectory() const
   {
-    return m_settings.paths().base();
+    return QDir::toNativeSeparators(m_settings.paths().base());
   }
 
   bool isPortable() const
   {
     return m_portable;
+  }
+
+  bool isActive() const
+  {
+    auto& m = InstanceManager::instance();
+
+    if (m_portable && m.currentInstance() == "") {
+      return true;
+    } else if (m.currentInstance() == name()) {
+      return true;
+    }
+
+    return false;
   }
 
 private:
@@ -90,6 +105,7 @@ InstanceManagerDialog::InstanceManagerDialog(
     m_model(nullptr)
 {
   ui->setupUi(this);
+
   ui->splitter->setSizes({200, 1});
   ui->splitter->setStretchFactor(0, 0);
   ui->splitter->setStretchFactor(1, 1);
@@ -114,6 +130,7 @@ InstanceManagerDialog::InstanceManagerDialog(
   connect(ui->exploreLocation, &QPushButton::clicked, [&]{ exploreLocation(); });
   connect(ui->exploreBaseDirectory, &QPushButton::clicked, [&]{ exploreBaseDirectory(); });
   connect(ui->exploreGame, &QPushButton::clicked, [&]{ exploreGame(); });
+  connect(ui->deleteInstance, &QPushButton::clicked, [&]{ deleteInstance(); });
 
   connect(ui->switchToInstance, &QPushButton::clicked, [&]{ openSelectedInstance(); });
   connect(ui->close, &QPushButton::clicked, [&]{ close(); });
@@ -137,29 +154,51 @@ void InstanceManagerDialog::updateInstances()
 
 void InstanceManagerDialog::updateList()
 {
+  const auto prevSelIndex = singleSelectionIndex();
+  const auto* prevSel = singleSelection();
+
   m_model->clear();
 
-  for (auto&& ii : m_instances) {
-    m_model->appendRow(new QStandardItem(ii->name()));
+  const std::size_t NoSel = -1;
+  std::size_t sel = NoSel;
+
+  for (std::size_t i=0; i<m_instances.size(); ++i) {
+    const auto& ii = *m_instances[i];
+    m_model->appendRow(new QStandardItem(ii.name()));
+
+    if (&ii == prevSel) {
+      sel = i;
+    }
   }
 
-  if (!m_instances.empty()) {
-    select(0);
+
+  if (m_instances.empty()) {
+    select(-1);
+  } else {
+    if (sel == NoSel) {
+      if (prevSelIndex >= m_instances.size()) {
+        sel = m_instances.size() - 1;
+      } else {
+        sel = prevSelIndex;
+      }
+    }
+
+    select(sel);
   }
 }
 
 void InstanceManagerDialog::select(std::size_t i)
 {
-  if (i >= m_instances.size()) {
-    return;
+  if (i < m_instances.size()) {
+    const auto& ii = m_instances[i];
+    fillData(*ii);
+
+    ui->list->selectionModel()->select(
+      m_filter.mapFromSource(m_filter.sourceModel()->index(i, 0)),
+      QItemSelectionModel::ClearAndSelect);
+  } else {
+    clearData();
   }
-
-  const auto& ii = m_instances[i];
-  fillData(*ii);
-
-  ui->list->selectionModel()->select(
-    m_filter.mapFromSource(m_filter.sourceModel()->index(i, 0)),
-    QItemSelectionModel::ClearAndSelect);
 }
 
 void InstanceManagerDialog::openSelectedInstance()
@@ -180,9 +219,9 @@ void InstanceManagerDialog::rename()
   }
 
   auto& m = InstanceManager::instance();
-  if (m.currentInstance() == i->name()) {
+  if (i->isActive()) {
     QMessageBox::information(this,
-      tr("Rename instance"), tr("The active instance cannot be renamed"));
+      tr("Rename instance"), tr("The active instance cannot be renamed."));
     return;
   }
 
@@ -234,7 +273,7 @@ void InstanceManagerDialog::rename()
 
 
   const QString newName = m.sanitizeInstanceName(text->text());
-  const QString src = QDir::toNativeSeparators(i->location());
+  const QString src = i->location();
   const QString dest = QDir::toNativeSeparators(
     QFileInfo(i->location()).dir().path() + "/" + newName);
 
@@ -247,8 +286,6 @@ void InstanceManagerDialog::rename()
 
     return;
   }
-
-
 }
 
 void InstanceManagerDialog::exploreLocation()
@@ -270,6 +307,160 @@ void InstanceManagerDialog::exploreGame()
   if (const auto* i=singleSelection()) {
     shell::Explore(i->gamePath());
   }
+}
+
+void InstanceManagerDialog::deleteInstance()
+{
+  const auto* i = singleSelection();
+  if (!i) {
+    return;
+  }
+
+  auto& m = InstanceManager::instance();
+  if (i->isActive()) {
+    QMessageBox::information(this,
+      tr("Deleting instance"), tr("The active instance cannot be deleted."));
+    return;
+  }
+
+  if (i->isPortable()) {
+    deletePortable(*i);
+  } else {
+    deleteGlobal(*i);
+  }
+
+  updateInstances();
+  updateList();
+}
+
+bool InstanceManagerDialog::deletePortable(const InstanceInfo& i)
+{
+  const auto Recycle = QMessageBox::Save;
+  const auto Delete = QMessageBox::Yes;
+  const auto Cancel = QMessageBox::Cancel;
+
+  const std::vector<std::wstring> fileNames = {
+    AppConfig::iniFileName(),
+  };
+
+  const std::vector<std::wstring> dirNames = {
+    AppConfig::dumpsDir(),
+    AppConfig::downloadPath(),
+    AppConfig::logPath(),
+    AppConfig::modsPath(),
+    AppConfig::overwritePath(),
+    AppConfig::profilesPath(),
+    AppConfig::cachePath()
+  };
+
+  QStringList files;
+  for (const auto& n : fileNames) {
+    files.push_back(QDir::toNativeSeparators(
+      i.location() + "/" + QString::fromStdWString(n)));
+  }
+
+  QStringList dirs;
+  for (const auto& n : dirNames) {
+    dirs.push_back(QDir::toNativeSeparators(
+      i.location() + "/" + QString::fromStdWString(n)));
+  }
+
+  QString details = QObject::tr("These files will be deleted:");
+  for (const auto& f : files) {
+    details += "\n  - " + f;
+  }
+
+  details += "\n\n" + QObject::tr("These folders will be deleted:");
+  for (const auto& d : dirs) {
+    details += "\n  - " + d;
+  }
+
+
+  QStringList all;
+  all.append(files);
+  all.append(dirs);
+
+
+  const auto r = MOBase::TaskDialog(this)
+    .title(("Deleting portable instance"))
+    .main(tr("This will delete the data of the portable instance."))
+    .content(tr(
+      "The data is in %1. Only the relevant files and folders will be "
+      "deleted. The Mod Organizer installation itself will be untouched.")
+        .arg(i.location()))
+    .details(details)
+    .icon(QMessageBox::Warning)
+    .button({tr("Move the data to the recycle bin"), Recycle})
+    .button({tr("Delete the data permanently"), Delete})
+    .button({tr("Cancel"), Cancel})
+    .exec();
+
+  switch (r)
+  {
+    case Recycle:
+      return doDelete(all, true);
+
+    case Delete:
+      return doDelete(all, false);
+
+    case Cancel:  // fall-through
+    default:
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool InstanceManagerDialog::deleteGlobal(const InstanceInfo& i)
+{
+  const auto Recycle = QMessageBox::Save;
+  const auto Delete = QMessageBox::Yes;
+  const auto Cancel = QMessageBox::Cancel;
+
+  const auto r = MOBase::TaskDialog(this)
+    .title(tr("Deleting instance"))
+    .main(tr("The instance folder will be deleted."))
+    .content(i.location())
+    .icon(QMessageBox::Warning)
+    .button({tr("Move the folder to the recycle bin"), Recycle})
+    .button({tr("Delete the folder permanently"), Delete})
+    .button({tr("Cancel"), Cancel})
+    .exec();
+
+  switch (r)
+  {
+    case Recycle:
+      return doDelete(QStringList(i.location()), true);
+
+    case Delete:
+      return doDelete(QStringList(i.location()), false);
+
+    case Cancel:  // fall-through
+    default:
+    {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool InstanceManagerDialog::doDelete(const QStringList& files, bool recycle)
+{
+  if (MOBase::shellDelete(files, recycle, this)) {
+    return true;
+  }
+
+  const auto e = GetLastError();
+  if (e == ERROR_CANCELLED) {
+    log::debug("deletion cancelled by user");
+  } else {
+    log::error("failed to delete, {}", formatSystemMessage(e));
+  }
+
+  return false;
 }
 
 void InstanceManagerDialog::onSelection()
@@ -327,6 +518,7 @@ void InstanceManagerDialog::fillData(const InstanceInfo& ii)
   ui->baseDirectory->setText(ii.baseDirectory());
   ui->gameName->setText(ii.gameName());
   ui->gameDir->setText(ii.gamePath());
+  setButtonsEnabled(true);
 
   const auto& m = InstanceManager::instance();
 
@@ -348,4 +540,36 @@ void InstanceManagerDialog::fillData(const InstanceInfo& ii)
       ui->convertToPortable->setToolTip("");
     }
   }
+
+
+  // these are not currently implemented; the ui sets them correctly above,
+  // but force them hidden for now
+  ui->convertToPortable->setVisible(false);
+  ui->convertToGlobal->setVisible(false);
+}
+
+void InstanceManagerDialog::clearData()
+{
+  ui->name->clear();
+  ui->location->clear();
+  ui->baseDirectory->clear();
+  ui->gameName->clear();
+  ui->gameDir->clear();
+
+  setButtonsEnabled(false);
+
+  ui->convertToPortable->setVisible(false);
+  ui->convertToGlobal->setVisible(false);
+}
+
+void InstanceManagerDialog::setButtonsEnabled(bool b)
+{
+  ui->rename->setEnabled(b);
+  ui->exploreLocation->setEnabled(b);
+  ui->exploreBaseDirectory->setEnabled(b);
+  ui->exploreGame->setEnabled(b);
+  ui->convertToPortable->setEnabled(b);
+  ui->convertToGlobal->setEnabled(b);
+  ui->deleteInstance->setEnabled(b);
+  ui->switchToInstance->setEnabled(b);
 }

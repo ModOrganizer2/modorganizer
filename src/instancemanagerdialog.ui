@@ -305,18 +305,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QPushButton" name="deleteInstance">
-                 <property name="text">
-                  <string>Delete instance</string>
-                 </property>
-                 <property name="icon">
-                  <iconset resource="resources.qrc">
-                   <normaloff>:/MO/gui/remove</normaloff>:/MO/gui/remove</iconset>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_2">
+                <spacer name="horizontalSpacer_3">
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>
                  </property>
@@ -327,6 +316,17 @@
                   </size>
                  </property>
                 </spacer>
+               </item>
+               <item>
+                <widget class="QPushButton" name="deleteInstance">
+                 <property name="text">
+                  <string>Delete instance</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="resources.qrc">
+                   <normaloff>:/MO/gui/remove</normaloff>:/MO/gui/remove</iconset>
+                 </property>
+                </widget>
                </item>
               </layout>
              </widget>
