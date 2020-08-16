@@ -20,6 +20,7 @@ public:
   ~InstanceManagerDialog();
 
   void select(std::size_t i);
+  void select(const QString& name);
   void selectActiveInstance();
   void openSelectedInstance();
 
@@ -27,9 +28,11 @@ public:
   void exploreLocation();
   void exploreBaseDirectory();
   void exploreGame();
-  void deleteInstance();
+
   void convertToGlobal();
   void convertToPortable();
+  void openINI();
+  void deleteInstance();
 
 private:
   static const std::size_t NoSelection = -1;

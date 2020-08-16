@@ -11,8 +11,9 @@
 using namespace MOBase;
 
 CreateInstanceDialog::CreateInstanceDialog(
-  const PluginContainer& pc, QWidget *parent)
-    : QDialog(parent), ui(new Ui::CreateInstanceDialog), m_pc(pc)
+  const PluginContainer& pc, QWidget *parent) :
+    QDialog(parent), ui(new Ui::CreateInstanceDialog), m_pc(pc),
+    m_switching(false)
 {
   using namespace cid;
 
@@ -302,8 +303,9 @@ void CreateInstanceDialog::finish()
 
     if (ui->launch->isChecked()) {
       InstanceManager::instance().switchToInstance(ci.instanceName);
+      m_switching = true;
     } else {
-      close();
+      accept();
     }
   }
   catch(Failed&)
@@ -389,6 +391,11 @@ QString CreateInstanceDialog::dataPath() const
 CreateInstanceDialog::Paths CreateInstanceDialog::paths() const
 {
   return getSelected(&cid::Page::selectedPaths);
+}
+
+bool CreateInstanceDialog::switching() const
+{
+  return m_switching;
 }
 
 void fixVarDir(QString& path, const std::wstring& defaultDir)

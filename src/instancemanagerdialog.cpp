@@ -20,7 +20,7 @@ void openInstanceManager(PluginContainer& pc, QWidget* parent)
   dlg.exec();
 }
 
-QString iniFile(const QDir& dir)
+QString makeIniFile(const QDir& dir)
 {
   return dir.filePath(QString::fromStdWString(AppConfig::iniFileName()));
 }
@@ -52,9 +52,16 @@ public:
   };
 
 
-  InstanceInfo(QDir dir, bool isPortable) :
-    m_dir(std::move(dir)), m_portable(isPortable), m_settings(iniFile(dir))
+  InstanceInfo(QDir dir, bool isPortable)
+    : m_portable(isPortable)
   {
+    setDir(dir);
+  }
+
+  void setDir(const QDir& dir)
+  {
+    m_dir = dir;
+    m_settings.reset(new Settings(makeIniFile(dir)));
   }
 
   QString name() const
@@ -68,8 +75,8 @@ public:
 
   QString gameName() const
   {
-    if (auto n=m_settings.game().name()) {
-      if (auto e=m_settings.game().edition()) {
+    if (auto n=m_settings->game().name()) {
+      if (auto e=m_settings->game().edition()) {
         if (!e->isEmpty()) {
           return *n + " (" + *e + ")";
         }
@@ -83,7 +90,7 @@ public:
 
   QString gamePath() const
   {
-    if (auto n=m_settings.game().directory()) {
+    if (auto n=m_settings->game().directory()) {
       return QDir::toNativeSeparators(*n);
     } else {
       return {};
@@ -97,7 +104,12 @@ public:
 
   QString baseDirectory() const
   {
-    return QDir::toNativeSeparators(m_settings.paths().base());
+    return QDir::toNativeSeparators(m_settings->paths().base());
+  }
+
+  QString iniFile() const
+  {
+    return makeIniFile(m_dir);
   }
 
   bool isPortable() const
@@ -169,7 +181,7 @@ public:
 
 
     const auto loc = location();
-    const auto base = m_settings.paths().base();
+    const auto base = m_settings->paths().base();
 
 
     // directories that might contain the individual files and directories
@@ -192,18 +204,18 @@ public:
     // all the directories that are part of an instance; none of them are
     // mandatory for deletion
     const std::vector<Object> dirs = {
-      m_settings.paths().downloads(),
-      m_settings.paths().mods(),
-      m_settings.paths().cache(),
-      m_settings.paths().profiles(),
-      m_settings.paths().overwrite(),
+      m_settings->paths().downloads(),
+      m_settings->paths().mods(),
+      m_settings->paths().cache(),
+      m_settings->paths().profiles(),
+      m_settings->paths().overwrite(),
       m_dir.filePath(QString::fromStdWString(AppConfig::dumpsDir())),
       m_dir.filePath(QString::fromStdWString(AppConfig::logPath())),
     };
 
     // all the files that are part of an instance
     const std::vector<Object> files = {
-      {iniFile(m_dir), true},   // the ini file must be deleted
+      {iniFile(), true},   // the ini file must be deleted
     };
 
 
@@ -270,9 +282,9 @@ public:
   }
 
 private:
+  const bool m_portable;
   QDir m_dir;
-  bool m_portable;
-  Settings m_settings;
+  std::unique_ptr<Settings> m_settings;
 };
 
 
@@ -310,10 +322,11 @@ InstanceManagerDialog::InstanceManagerDialog(
   connect(ui->exploreLocation, &QPushButton::clicked, [&]{ exploreLocation(); });
   connect(ui->exploreBaseDirectory, &QPushButton::clicked, [&]{ exploreBaseDirectory(); });
   connect(ui->exploreGame, &QPushButton::clicked, [&]{ exploreGame(); });
-  connect(ui->deleteInstance, &QPushButton::clicked, [&]{ deleteInstance(); });
 
   connect(ui->convertToGlobal, &QPushButton::clicked, [&]{ convertToGlobal(); });
   connect(ui->convertToPortable, &QPushButton::clicked, [&]{ convertToPortable(); });
+  connect(ui->openINI, &QPushButton::clicked, [&]{ openINI(); });
+  connect(ui->deleteInstance, &QPushButton::clicked, [&]{ deleteInstance(); });
 
   connect(ui->switchToInstance, &QPushButton::clicked, [&]{ openSelectedInstance(); });
   connect(ui->close, &QPushButton::clicked, [&]{ close(); });
@@ -385,6 +398,18 @@ void InstanceManagerDialog::select(std::size_t i)
   } else {
     clearData();
   }
+}
+
+void InstanceManagerDialog::select(const QString& name)
+{
+  for (std::size_t i=0; i<m_instances.size(); ++i) {
+    if (m_instances[i]->name() == name) {
+      select(i);
+      return;
+    }
+  }
+
+  log::error("can't select instance {}, not in list", name);
 }
 
 void InstanceManagerDialog::selectActiveInstance()
@@ -492,6 +517,8 @@ void InstanceManagerDialog::rename()
     return;
   }
 
+  const auto selIndex = singleSelectionIndex();
+
   auto& m = InstanceManager::instance();
   if (i->isActive()) {
     QMessageBox::information(this,
@@ -519,6 +546,10 @@ void InstanceManagerDialog::rename()
 
     return;
   }
+
+  m_model->item(selIndex)->setText(newName);
+  i->setDir(dest);
+  fillData(*i);
 }
 
 void InstanceManagerDialog::exploreLocation()
@@ -539,6 +570,13 @@ void InstanceManagerDialog::exploreGame()
 {
   if (const auto* i=singleSelection()) {
     shell::Explore(i->gamePath());
+  }
+}
+
+void InstanceManagerDialog::openINI()
+{
+  if (const auto* i=singleSelection()) {
+    shell::Open(i->iniFile());
   }
 }
 
@@ -665,7 +703,19 @@ void InstanceManagerDialog::onSelection()
 void InstanceManagerDialog::createNew()
 {
   CreateInstanceDialog dlg(m_pc, this);
-  dlg.exec();
+  if (dlg.exec() != QDialog::Accepted) {
+    return;
+  }
+
+  if (dlg.switching()) {
+    // restarting MO
+    return;
+  }
+
+  updateInstances();
+  updateList();
+
+  select(dlg.instanceName());
 }
 
 std::size_t InstanceManagerDialog::singleSelectionIndex() const

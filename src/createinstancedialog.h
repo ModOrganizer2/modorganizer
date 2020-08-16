@@ -70,6 +70,7 @@ public:
   QString instanceName() const;
   QString dataPath() const;
   Paths paths() const;
+  bool switching() const;
 
   CreationInfo creationInfo() const;
 
@@ -78,6 +79,7 @@ private:
   const PluginContainer& m_pc;
   std::vector<std::unique_ptr<cid::Page>> m_pages;
   QString m_originalNext;
+  bool m_switching;
 
   template <class T>
   T getSelected(T (cid::Page::*mf)() const) const

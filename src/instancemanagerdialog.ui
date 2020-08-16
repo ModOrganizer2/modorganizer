@@ -107,6 +107,18 @@
               <property name="editTriggers">
                <set>QAbstractItemView::NoEditTriggers</set>
               </property>
+              <property name="verticalScrollMode">
+               <enum>QAbstractItemView::ScrollPerPixel</enum>
+              </property>
+              <property name="horizontalScrollMode">
+               <enum>QAbstractItemView::ScrollPerPixel</enum>
+              </property>
+              <property name="resizeMode">
+               <enum>QListView::Adjust</enum>
+              </property>
+              <property name="uniformItemSizes">
+               <bool>true</bool>
+              </property>
              </widget>
             </item>
             <item>
@@ -305,6 +317,13 @@
                 <widget class="QPushButton" name="convertToGlobal">
                  <property name="text">
                   <string>Convert to global</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="openINI">
+                 <property name="text">
+                  <string>Open INI</string>
                  </property>
                 </widget>
                </item>
