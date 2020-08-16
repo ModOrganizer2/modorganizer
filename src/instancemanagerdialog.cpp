@@ -29,6 +29,29 @@ QString iniFile(const QDir& dir)
 class InstanceInfo
 {
 public:
+  struct Object
+  {
+    QString path;
+    bool mandatoryDelete;
+
+    Object(QString p, bool d=false)
+      : path(std::move(p)), mandatoryDelete(d)
+    {
+    }
+
+    bool operator<(const Object& o) const
+    {
+      if (mandatoryDelete && !o.mandatoryDelete) {
+        return true;
+      } else if (!mandatoryDelete && o.mandatoryDelete) {
+        return false;
+      }
+
+      return false;
+    }
+  };
+
+
   InstanceInfo(QDir dir, bool isPortable) :
     m_dir(std::move(dir)), m_portable(isPortable), m_settings(iniFile(dir))
   {
@@ -98,7 +121,7 @@ public:
   // returns a list of files and folders that must be deleted when deleting
   // this instance
   //
-  QStringList filesForDeletion() const
+  std::vector<Object> objectsForDeletion() const
   {
     // native separators and ending slash
     auto prettyDir = [](auto s) {
@@ -151,47 +174,48 @@ public:
 
     // directories that might contain the individual files and directories
     // set in the path settings
-    QStringList roots;
+    std::vector<Object> roots;
 
     // a portable instance has its location in the installation directory,
     // don't delete that
     if (!isPortable()) {
-      roots.append(loc);
+      roots.push_back({loc, true});
     }
 
     // the base directory is the location directory by default, don't add it
     // if it's the same
     if (canonicalDir(base) != canonicalDir(loc)) {
-      roots.append(base);
+      roots.push_back({base, false});
     }
 
 
-    // all the directories that are part of an instance
-    const QStringList dirs = {
+    // all the directories that are part of an instance; none of them are
+    // mandatory for deletion
+    const std::vector<Object> dirs = {
       m_settings.paths().downloads(),
       m_settings.paths().mods(),
-      m_settings.paths().overwrite(),
-      m_settings.paths().profiles(),
       m_settings.paths().cache(),
+      m_settings.paths().profiles(),
+      m_settings.paths().overwrite(),
       m_dir.filePath(QString::fromStdWString(AppConfig::dumpsDir())),
       m_dir.filePath(QString::fromStdWString(AppConfig::logPath())),
     };
 
     // all the files that are part of an instance
-    const QStringList files = {
-      iniFile(m_dir),
+    const std::vector<Object> files = {
+      {iniFile(m_dir), true},   // the ini file must be deleted
     };
 
 
     // this will contain the root directories, plus all the individual
     // directories that are not inside these roots
-    QStringList cleanDirs;
+    std::vector<Object> cleanDirs;
 
     for (const auto& f : dirs) {
       bool inRoots = false;
 
       for (const auto& root : roots) {
-        if (dirInRoot(root, f)) {
+        if (dirInRoot(root.path, f.path)) {
           inRoots = true;
           break;
         }
@@ -199,28 +223,29 @@ public:
 
       if (!inRoots) {
         // not in roots, this is a path that was changed by the user
-        cleanDirs.append(prettyDir(f));
+        cleanDirs.push_back({prettyDir(f.path), f.mandatoryDelete});
       }
     }
 
-    // adding the roots
-    for (const auto& root : roots) {
-      cleanDirs.append(prettyDir(root));
+    // prepending the roots
+    for (auto itor=roots.rbegin(); itor!=roots.rend(); ++itor) {
+      cleanDirs.insert(
+        cleanDirs.begin(),
+        {prettyDir(itor->path), itor->mandatoryDelete});
     }
 
-    cleanDirs.sort(Qt::CaseInsensitive);
 
 
     // this will contain the individual files that are not inside the roots;
     // not that this only contains the INI file for now, so most of this is
     // useless
-    QStringList cleanFiles;
+    std::vector<Object> cleanFiles;
 
     for (const auto& f : files) {
       bool inRoots = false;
 
       for (const auto& root : roots) {
-        if (fileInRoot(root, f)) {
+        if (fileInRoot(root.path, f.path)) {
           inRoots = true;
           break;
         }
@@ -228,17 +253,18 @@ public:
 
       if (!inRoots) {
         // not in roots, this is a path that was changed by the user
-        cleanFiles.append(prettyFile(f));
+        cleanFiles.push_back({prettyFile(f.path), f.mandatoryDelete});
       }
     }
 
-    cleanFiles.sort(Qt::CaseInsensitive);
-
 
     // contains all the directories and files to be deleted
-    QStringList all;
-    all.append(cleanDirs);
-    all.append(cleanFiles);
+    std::vector<Object> all;
+    all.insert(all.end(), cleanDirs.begin(), cleanDirs.end());
+    all.insert(all.end(), cleanFiles.begin(), cleanFiles.end());
+
+    // mandatory on top
+    std::stable_sort(all.begin(), all.end());
 
     return all;
   }
@@ -534,60 +560,65 @@ void InstanceManagerDialog::deleteInstance()
   const auto Delete = QMessageBox::Yes;
   const auto Cancel = QMessageBox::Cancel;
 
-  const auto files = i->filesForDeletion();
+  const auto files = i->objectsForDeletion();
 
   MOBase::TaskDialog dlg(this);
 
   dlg
-    .title(("Deleting instance"))
-    .main(QObject::tr("These files and folders will be deleted"))
+    .title(tr("Deleting instance"))
+    .main(tr("These files and folders will be deleted"))
+    .content(tr("All checked items will be deleted."))
     .icon(QMessageBox::Warning)
     .button({tr("Move to the recycle bin"), Recycle})
     .button({tr("Delete permanently"), Delete})
     .button({tr("Cancel"), Cancel});
 
-  auto* list = new QPlainTextEdit();
-  list->setReadOnly(true);
-  list->setWordWrapMode(QTextOption::NoWrap);
-  list->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+
+  auto* list = new QListWidget();
+  list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
   list->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-  list->setMaximumHeight(150);
+  list->setMaximumHeight(160);
 
   for (const auto& f : files) {
-    list->appendPlainText(f);
-  }
+    auto* item = new QListWidgetItem(f.path);
 
-  list->moveCursor(QTextCursor::MoveOperation::Start);
+    if (f.mandatoryDelete) {
+      item->setFlags(item->flags() & (~Qt::ItemIsEnabled));
+    } else {
+      item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+    }
+
+    item->setCheckState(Qt::Checked);
+    list->addItem(item);
+  }
 
   dlg.addContent(list);
 
+
   const auto r = dlg.exec();
 
-  switch (r)
-  {
-    case Recycle:
-    {
-      if (!doDelete(files, true)) {
-        return;
-      }
+  if (r != Recycle && r != Delete) {
+    return;
+  }
 
-      break;
+
+  QStringList selected;
+
+  for (int i=0; i<list->count(); ++i) {
+    if (list->item(i)->checkState() == Qt::Checked) {
+      selected.append(list->item(i)->text());
     }
+  }
 
-    case Delete:
-    {
-      if (!doDelete(files, false)) {
-        return;
-      }
+  if (selected.isEmpty()) {
+    QMessageBox::information(
+      this, tr("Deleting instance"), tr("Nothing to delete."));
 
-      break;
-    }
+    return;
+  }
 
-    case Cancel:  // fall-through
-    default:
-    {
-      return;
-    }
+  if (!doDelete(selected, (r == Recycle))) {
+    return;
   }
 
   updateInstances();
@@ -613,39 +644,12 @@ bool InstanceManagerDialog::doDelete(const QStringList& files, bool recycle)
 
 void InstanceManagerDialog::convertToGlobal()
 {
-  const auto* i = singleSelection();
-  if (!i) {
-    return;
-  }
-
-  if (!i->isPortable()) {
-    log::error("can't convert to global, this is not a portable instance");
-    return;
-  }
-
-  const auto& m = InstanceManager::instance();
-
-  const auto name = getInstanceName(
-    this,
-    tr("Convert to global instance"),
-    tr(
-      "This will move all the instance data currently in Mod Organizer's "
-      "installation folder into a global instance. If the operation fails or "
-      "is cancelled, no data should be lost, but the move will need to be "
-      "completed or cleaned up manually.<br><br>"
-      "Source: %1<br>"
-      "Destination: %2")
-        .arg(i->location())
-        .arg(QDir::toNativeSeparators(m.instancesPath())),
-    tr("Name of the new instance"));
-
-  if (name.isEmpty()) {
-    return;
-  }
+  // not implemented
 }
 
 void InstanceManagerDialog::convertToPortable()
 {
+  // not implemented
 }
 
 void InstanceManagerDialog::onSelection()
@@ -725,6 +729,10 @@ void InstanceManagerDialog::fillData(const InstanceInfo& ii)
       ui->convertToPortable->setToolTip("");
     }
   }
+
+  // not implemented, hide the buttons
+  ui->convertToPortable->setVisible(false);
+  ui->convertToGlobal->setVisible(false);
 }
 
 void InstanceManagerDialog::clearData()
