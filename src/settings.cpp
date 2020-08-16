@@ -1545,8 +1545,10 @@ QString PathSettings::makeDefaultPath(const QString dirName)
 
 QString PathSettings::base() const
 {
+  const QString dataPath = QFileInfo(m_Settings.fileName()).dir().path();
+
   return QDir::fromNativeSeparators(get<QString>(m_Settings,
-    "Settings", "base_directory", qApp->property("dataPath").toString()));
+    "Settings", "base_directory", dataPath));
 }
 
 QString PathSettings::downloads(bool resolve) const

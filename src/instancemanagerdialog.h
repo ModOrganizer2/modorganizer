@@ -20,6 +20,7 @@ public:
   ~InstanceManagerDialog();
 
   void select(std::size_t i);
+  void selectActiveInstance();
   void openSelectedInstance();
 
   void rename();
@@ -27,6 +28,8 @@ public:
   void exploreBaseDirectory();
   void exploreGame();
   void deleteInstance();
+  void convertToGlobal();
+  void convertToPortable();
 
 private:
   static const std::size_t NoSelection = -1;
