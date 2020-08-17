@@ -40,30 +40,6 @@ namespace fs = std::filesystem;
 const int max_scan_for_context_menu = 50;
 
 
-int naturalCompare(const QString& a, const QString& b)
-{
-  static QCollator c = []{
-    QCollator c;
-    c.setNumericMode(true);
-    c.setCaseSensitivity(Qt::CaseInsensitive);
-    return c;
-  }();
-
-
-  // todo: remove this once the fix is released
-  // see https://bugreports.qt.io/projects/QTBUG/issues/QTBUG-81673
-  // and https://codereview.qt-project.org/c/qt/qtbase/+/287966/5/src/corelib/text/qcollator_win.cpp
-  if (!a.size()) {
-    return b.size() ? -1 : 0;
-  }
-  if (!b.size()) {
-    return +1;
-  }
-
-
-  return c.compare(a, b);
-}
-
 bool canPreviewFile(
   const PluginContainer& pluginContainer,
   bool isArchive, const QString& filename)

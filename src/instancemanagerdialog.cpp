@@ -191,13 +191,17 @@ public:
     // a portable instance has its location in the installation directory,
     // don't delete that
     if (!isPortable()) {
-      roots.push_back({loc, true});
+      if (QDir(loc).exists()) {
+        roots.push_back({loc, true});
+      }
     }
 
     // the base directory is the location directory by default, don't add it
     // if it's the same
     if (canonicalDir(base) != canonicalDir(loc)) {
-      roots.push_back({base, false});
+      if (QDir(base).exists()) {
+        roots.push_back({base, false});
+      }
     }
 
 
@@ -234,8 +238,11 @@ public:
       }
 
       if (!inRoots) {
-        // not in roots, this is a path that was changed by the user
-        cleanDirs.push_back({prettyDir(f.path), f.mandatoryDelete});
+        // not in roots, this is a path that was changed by the user; make
+        // sure it exists
+        if (QDir(f.path).exists()) {
+          cleanDirs.push_back({prettyDir(f.path), f.mandatoryDelete});
+        }
       }
     }
 
@@ -264,8 +271,11 @@ public:
       }
 
       if (!inRoots) {
-        // not in roots, this is a path that was changed by the user
-        cleanFiles.push_back({prettyFile(f.path), f.mandatoryDelete});
+        // not in roots, this is a path that was changed by the user; make
+        // sure it exists
+        if (QFileInfo(f.path).exists()) {
+          cleanFiles.push_back({prettyFile(f.path), f.mandatoryDelete});
+        }
       }
     }
 
@@ -338,13 +348,19 @@ void InstanceManagerDialog::updateInstances()
 
   m_instances.clear();
 
-  if (m.portableInstanceExists()) {
-    m_instances.push_back(std::make_unique<InstanceInfo>(
-      m.portablePath(), true));
-  }
-
   for (auto&& d : m.instancePaths()) {
     m_instances.push_back(std::make_unique<InstanceInfo>(d, false));
+  }
+
+  // sort first, prepend portable after so it's always on top
+  std::sort(m_instances.begin(), m_instances.end(), [](auto&& a, auto&& b) {
+    return (MOBase::naturalCompare(a->name(), b->name()) < 0);
+  });
+
+  if (m.portableInstanceExists()) {
+    m_instances.insert(
+      m_instances.begin(),
+      std::make_unique<InstanceInfo>(m.portablePath(), true));
   }
 }
 

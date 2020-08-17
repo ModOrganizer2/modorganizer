@@ -7,13 +7,13 @@
 #include "shared/appconfig.h"
 #include <iplugingame.h>
 #include <report.h>
+#include <utility.h>
 
 namespace cid
 {
 
-using MOBase::IPluginGame;
+using namespace MOBase;
 using MOBase::TaskDialog;
-using MOBase::FilterWidget;
 
 QString makeDefaultPath(const std::wstring& dir)
 {
@@ -305,7 +305,7 @@ std::vector<IPluginGame*> GamePage::sortedGamePlugins() const
   }
 
   std::sort(v.begin(), v.end(), [](auto* a, auto* b) {
-    return (a->gameName() < b->gameName());
+    return (naturalCompare(a->gameName(), b->gameName()) < 0);
   });
 
   return v;
