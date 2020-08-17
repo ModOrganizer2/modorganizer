@@ -498,24 +498,6 @@ class NexusSettings
 public:
   NexusSettings(Settings& parent, QSettings& settings);
 
-  // if the key exists from the credentials store, puts it in `apiKey` and
-  // returns true; otherwise, returns false and leaves `apiKey` untouched
-  //
-  bool apiKey(QString& apiKey) const;
-
-  // sets the api key in the credentials store, removes it if empty; returns
-  // false on errors
-  //
-  bool setApiKey(const QString& apiKey);
-
-  // removes the api key from the credentials store; returns false on errors
-  //
-  bool clearApiKey();
-
-  // returns whether an API key is currently stored
-  //
-  bool hasApiKey() const;
-
   // returns whether endorsement integration is enabled
   //
   bool endorsementIntegration() const;
@@ -843,6 +825,24 @@ public:
 
   static bool hideTutorialQuestion();
   static void setHideTutorialQuestion(bool b);
+
+  // if the key exists from the credentials store, puts it in `apiKey` and
+  // returns true; otherwise, returns false and leaves `apiKey` untouched
+  //
+  static bool nexusApiKey(QString& apiKey);
+
+  // sets the api key in the credentials store, removes it if empty; returns
+  // false on errors
+  //
+  static bool setNexusApiKey(const QString& apiKey);
+
+  // removes the api key from the credentials store; returns false on errors
+  //
+  static bool clearNexusApiKey();
+
+  // returns whether an API key is currently stored
+  //
+  static bool hasNexusApiKey();
 
   // resets anything that the user can disable
   static void resetDialogs();

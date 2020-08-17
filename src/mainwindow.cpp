@@ -4226,7 +4226,7 @@ void MainWindow::checkModsForUpdates()
     NexusInterface::instance().requestTrackingInfo(this, QVariant(), QString());
   } else {
     QString apiKey;
-    if (m_OrganizerCore.settings().nexus().apiKey(apiKey)) {
+    if (GlobalSettings::nexusApiKey(apiKey)) {
       m_OrganizerCore.doAfterLogin([this] () { this->checkModsForUpdates(); });
       NexusInterface::instance().getAccessManager()->apiCheck(apiKey);
     } else {
@@ -5434,7 +5434,7 @@ void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
     ModInfo::manualUpdateCheck(this, IDs);
   } else {
     QString apiKey;
-    if (m_OrganizerCore.settings().nexus().apiKey(apiKey)) {
+    if (GlobalSettings::nexusApiKey(apiKey)) {
       m_OrganizerCore.doAfterLogin([=]() { this->modUpdateCheck(IDs); });
       NexusInterface::instance().getAccessManager()->apiCheck(apiKey);
     } else

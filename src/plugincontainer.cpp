@@ -173,10 +173,21 @@ bool PluginContainer::verifyPlugin(IPlugin *plugin)
 {
   if (plugin == nullptr) {
     return false;
-  } else if (!plugin->init(new OrganizerProxy(m_Organizer, this, plugin))) {
+  }
+
+  IOrganizer* proxy = nullptr;
+
+  if (m_Organizer) {
+    proxy = new OrganizerProxy(m_Organizer, this, plugin);
+  } else {
+    proxy = new DummyOrganizerProxy(plugin);
+  }
+
+  if (!plugin->init(proxy)) {
     log::warn("plugin failed to initialize");
     return false;
   }
+
   return true;
 }
 
@@ -200,7 +211,9 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
       return false;
     }
     plugin->setProperty("filename", fileName);
-    m_Organizer->settings().plugins().registerPlugin(pluginObj);
+    if (m_Organizer) {
+      m_Organizer->settings().plugins().registerPlugin(pluginObj);
+    }
   }
 
   { // diagnosis plugin
@@ -244,7 +257,9 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
     IPluginInstaller *installer = qobject_cast<IPluginInstaller*>(plugin);
     if (verifyPlugin(installer)) {
       bf::at_key<IPluginInstaller>(m_Plugins).push_back(installer);
-      m_Organizer->installationManager()->registerInstaller(installer);
+      if (m_Organizer) {
+        m_Organizer->installationManager()->registerInstaller(installer);
+      }
       return true;
     }
   }
@@ -317,7 +332,7 @@ void PluginContainer::unloadPlugins()
   }
 
   // disconnect all slots before unloading plugins so plugins don't have to take care of that
-  if (m_Organizer != nullptr) {
+  if (m_Organizer) {
     m_Organizer->disconnectPlugins();
   }
 
@@ -363,24 +378,28 @@ void PluginContainer::loadPlugins()
     registerPlugin(plugin, "");
   }
 
-  QFile loadCheck(qApp->property("dataPath").toString() + "/plugin_loadcheck.tmp");
-  if (loadCheck.exists() && loadCheck.open(QIODevice::ReadOnly)) {
-    // oh, there was a failed plugin load last time. Find out which plugin was loaded last
-    QString fileName;
-    while (!loadCheck.atEnd()) {
-      fileName = QString::fromUtf8(loadCheck.readLine().constData()).trimmed();
-    }
-    if (QMessageBox::question(nullptr, QObject::tr("Plugin error"),
-      QObject::tr("It appears the plugin \"%1\" failed to load last startup and caused MO to crash. Do you want to disable it?\n"
-         "(Please note: If this is the first time you see this message for this plugin you may want to give it another try. "
-         "The plugin may be able to recover from the problem)").arg(fileName),
-          QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes) {
-      m_Organizer->settings().plugins().addBlacklist(fileName);
-    }
-    loadCheck.close();
-  }
+  QFile loadCheck;
 
-  loadCheck.open(QIODevice::WriteOnly);
+  if (m_Organizer) {
+    loadCheck.setFileName(qApp->property("dataPath").toString() + "/plugin_loadcheck.tmp");
+    if (loadCheck.exists() && loadCheck.open(QIODevice::ReadOnly)) {
+      // oh, there was a failed plugin load last time. Find out which plugin was loaded last
+      QString fileName;
+      while (!loadCheck.atEnd()) {
+        fileName = QString::fromUtf8(loadCheck.readLine().constData()).trimmed();
+      }
+      if (QMessageBox::question(nullptr, QObject::tr("Plugin error"),
+        QObject::tr("It appears the plugin \"%1\" failed to load last startup and caused MO to crash. Do you want to disable it?\n"
+           "(Please note: If this is the first time you see this message for this plugin you may want to give it another try. "
+           "The plugin may be able to recover from the problem)").arg(fileName),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes) {
+        m_Organizer->settings().plugins().addBlacklist(fileName);
+      }
+      loadCheck.close();
+    }
+
+    loadCheck.open(QIODevice::WriteOnly);
+  }
 
   QString pluginPath = qApp->applicationDirPath() + "/" + ToQString(AppConfig::pluginPath());
   log::debug("looking for plugins in {}", QDir::toNativeSeparators(pluginPath));
@@ -388,13 +407,20 @@ void PluginContainer::loadPlugins()
 
   while (iter.hasNext()) {
     iter.next();
-    if (m_Organizer->settings().plugins().blacklisted(iter.fileName())) {
-      log::debug("plugin \"{}\" blacklisted", iter.fileName());
-      continue;
+
+    if (m_Organizer) {
+      if (m_Organizer->settings().plugins().blacklisted(iter.fileName())) {
+        log::debug("plugin \"{}\" blacklisted", iter.fileName());
+        continue;
+      }
     }
-    loadCheck.write(iter.fileName().toUtf8());
-    loadCheck.write("\n");
-    loadCheck.flush();
+
+    if (loadCheck.isOpen()) {
+      loadCheck.write(iter.fileName().toUtf8());
+      loadCheck.write("\n");
+      loadCheck.flush();
+    }
+
     QString pluginName = iter.filePath();
     if (QLibrary::isLibrary(pluginName)) {
       std::unique_ptr<QPluginLoader> pluginLoader(new QPluginLoader(pluginName, this));
@@ -416,12 +442,16 @@ void PluginContainer::loadPlugins()
   }
 
   // remove the load check file on success
-  loadCheck.remove();
+  if (loadCheck.isOpen()) {
+    loadCheck.remove();
+  }
 
-  bf::at_key<IPluginDiagnose>(m_Plugins).push_back(m_Organizer);
   bf::at_key<IPluginDiagnose>(m_Plugins).push_back(this);
 
-  m_Organizer->connectPlugins(this);
+  if (m_Organizer) {
+    bf::at_key<IPluginDiagnose>(m_Plugins).push_back(m_Organizer);
+    m_Organizer->connectPlugins(this);
+  }
 }
 
 

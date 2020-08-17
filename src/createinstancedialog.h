@@ -8,6 +8,7 @@ namespace Ui { class CreateInstanceDialog; };
 namespace cid { class Page; }
 
 class PluginContainer;
+class Settings;
 
 class CreateInstanceDialog : public QDialog
 {
@@ -47,12 +48,14 @@ public:
 
 
   explicit CreateInstanceDialog(
-    const PluginContainer& pc, QWidget *parent = nullptr);
+    const PluginContainer& pc, Settings* s, QWidget *parent = nullptr);
 
   ~CreateInstanceDialog();
 
   Ui::CreateInstanceDialog* getUI();
+
   const PluginContainer& pluginContainer();
+  Settings* settings();
 
   void next();
   void back();
@@ -77,6 +80,7 @@ public:
 private:
   std::unique_ptr<Ui::CreateInstanceDialog> ui;
   const PluginContainer& m_pc;
+  Settings* m_settings;
   std::vector<std::unique_ptr<cid::Page>> m_pages;
   QString m_originalNext;
   bool m_switching;

@@ -11,8 +11,8 @@
 using namespace MOBase;
 
 CreateInstanceDialog::CreateInstanceDialog(
-  const PluginContainer& pc, QWidget *parent) :
-    QDialog(parent), ui(new Ui::CreateInstanceDialog), m_pc(pc),
+  const PluginContainer& pc, Settings* s, QWidget *parent) :
+    QDialog(parent), ui(new Ui::CreateInstanceDialog), m_pc(pc), m_settings(s),
     m_switching(false)
 {
   using namespace cid;
@@ -53,6 +53,11 @@ Ui::CreateInstanceDialog* CreateInstanceDialog::getUI()
 const PluginContainer& CreateInstanceDialog::pluginContainer()
 {
   return m_pc;
+}
+
+Settings* CreateInstanceDialog::settings()
+{
+  return m_settings;
 }
 
 bool CreateInstanceDialog::isOnLastPage() const

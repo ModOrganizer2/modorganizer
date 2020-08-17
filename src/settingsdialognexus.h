@@ -13,8 +13,8 @@ class NexusConnectionUI : public QObject
 
 public:
   NexusConnectionUI(
-    Settings& s,
     QWidget* parent,
+    Settings* s,
     QAbstractButton* connectButton,
     QAbstractButton* disconnectButton,
     QAbstractButton* manualButton,
@@ -30,7 +30,7 @@ signals:
 
 private:
   QWidget* m_parent;
-  Settings& m_settings;
+  Settings* m_settings;
   QAbstractButton* m_connect;
   QAbstractButton* m_disconnect;
   QAbstractButton* m_manual;

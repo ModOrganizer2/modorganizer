@@ -964,7 +964,8 @@ NexusPage::NexusPage(CreateInstanceDialog& dlg)
   : Page(dlg), m_skip(false)
 {
   m_connectionUI.reset(new NexusConnectionUI(
-    Settings::instance(), &m_dlg,
+    &m_dlg,
+    dlg.settings(),
     ui->nexusConnect,
     nullptr,
     ui->nexusManual,
@@ -972,7 +973,7 @@ NexusPage::NexusPage(CreateInstanceDialog& dlg)
 
   // just check it once, or connecting and then going back and forth would skip
   // the page, which would be unexpected
-  m_skip = Settings::instance().nexus().hasApiKey();
+  m_skip = GlobalSettings::hasNexusApiKey();
 }
 
 NexusPage::~NexusPage() = default;

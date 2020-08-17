@@ -33,6 +33,7 @@ add_filter(NAME src/core GROUPS
 	nexusinterface
 	nxmaccessmanager
 	organizercore
+	plugincontainer
 	apiuseraccount
 	processrunner
 	qdirfiletree
@@ -136,7 +137,6 @@ add_filter(NAME src/modlist GROUPS
 )
 
 add_filter(NAME src/plugins GROUPS
-	plugincontainer
 	pluginlist
 	pluginlistsortproxy
 	pluginlistview

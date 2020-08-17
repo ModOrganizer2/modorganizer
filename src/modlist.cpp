@@ -1528,3 +1528,44 @@ void ModList::disableSelected(const QItemSelectionModel *selectionModel)
     m_Profile->setModsEnabled(QList<unsigned int>(), modsToDisable);
   }
 }
+
+
+QString DummyModList::displayName(const QString &internalName) const
+{
+  return {};
+}
+
+QStringList DummyModList::allMods() const
+{
+  return {};
+}
+
+IModList::ModStates DummyModList::state(const QString &name) const
+{
+  return 0;
+}
+
+bool DummyModList::setActive(const QString &name, bool active)
+{
+  return true;
+}
+
+int DummyModList::priority(const QString &name) const
+{
+  return -1;
+}
+
+bool DummyModList::setPriority(const QString &name, int newPriority)
+{
+  return true;
+}
+
+bool DummyModList::onModStateChanged(const std::function<void(const QString&, ModStates)> &func)
+{
+  return true;
+}
+
+bool DummyModList::onModMoved(const std::function<void (const QString &, int, int)> &func)
+{
+  return true;
+}

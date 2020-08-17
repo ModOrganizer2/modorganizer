@@ -287,3 +287,215 @@ bool OrganizerProxy::onPluginSettingChanged(std::function<void(QString const&, c
   // Always call this one, otherwise plugin cannot detect they are being enabled / disabled:
   return m_Proxied->onPluginSettingChanged(func);
 }
+
+
+
+DummyOrganizerProxy::DummyOrganizerProxy(const QString &pluginName) :
+  m_PluginName(pluginName),
+  m_mods(new DummyModList), m_plugins(new DummyPluginList)
+{
+}
+
+DummyOrganizerProxy::~DummyOrganizerProxy() = default;
+
+IModRepositoryBridge *DummyOrganizerProxy::createNexusBridge() const
+{
+  return nullptr;
+}
+
+QString DummyOrganizerProxy::profileName() const
+{
+  return {};
+}
+
+QString DummyOrganizerProxy::profilePath() const
+{
+  return {};
+}
+
+QString DummyOrganizerProxy::downloadsPath() const
+{
+  return {};
+}
+
+QString DummyOrganizerProxy::overwritePath() const
+{
+  return {};
+}
+
+QString DummyOrganizerProxy::basePath() const
+{
+  return {};
+}
+
+QString DummyOrganizerProxy::modsPath() const
+{
+  return {};
+}
+
+VersionInfo DummyOrganizerProxy::appVersion() const
+{
+  return {};
+}
+
+IModInterface *DummyOrganizerProxy::getMod(const QString &name) const
+{
+  return nullptr;
+}
+
+IPluginGame *DummyOrganizerProxy::getGame(const QString &gameName) const
+{
+  return nullptr;
+}
+
+IModInterface *DummyOrganizerProxy::createMod(MOBase::GuessedValue<QString> &name)
+{
+  return nullptr;
+}
+
+bool DummyOrganizerProxy::removeMod(IModInterface *mod)
+{
+  return true;
+}
+
+void DummyOrganizerProxy::modDataChanged(IModInterface *mod)
+{
+}
+
+QVariant DummyOrganizerProxy::pluginSetting(const QString &pluginName, const QString &key) const
+{
+  if (key == "enabled") {
+    return true;
+  }
+
+  return {};
+}
+
+void DummyOrganizerProxy::setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value)
+{
+}
+
+QVariant DummyOrganizerProxy::persistent(const QString &pluginName, const QString &key, const QVariant &def) const
+{
+  return {};
+}
+
+void DummyOrganizerProxy::setPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync)
+{
+}
+
+QString DummyOrganizerProxy::pluginDataPath() const
+{
+  return qApp->applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()) + "/data";
+}
+
+HANDLE DummyOrganizerProxy::startApplication(
+  const QString& exe, const QStringList& args, const QString &cwd,
+  const QString& profile, const QString &overwrite, bool ignoreOverwrite)
+{
+  return INVALID_HANDLE_VALUE;
+}
+
+bool DummyOrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
+{
+  return true;
+}
+
+bool DummyOrganizerProxy::onAboutToRun(const std::function<bool (const QString &)> &func)
+{
+  return true;
+}
+
+bool DummyOrganizerProxy::onFinishedRun(const std::function<void (const QString &, unsigned int)> &func)
+{
+  return true;
+}
+
+bool DummyOrganizerProxy::onModInstalled(const std::function<void (const QString &)> &func)
+{
+  return true;
+}
+
+bool DummyOrganizerProxy::onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func)
+{
+  return true;
+}
+
+bool DummyOrganizerProxy::onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func)
+{
+  return true;
+}
+
+bool DummyOrganizerProxy::onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func)
+{
+  return true;
+}
+
+void DummyOrganizerProxy::refreshModList(bool saveChanges)
+{
+}
+
+IModInterface *DummyOrganizerProxy::installMod(const QString &fileName, const QString &nameSuggestion)
+{
+  return nullptr;
+}
+
+QString DummyOrganizerProxy::resolvePath(const QString &fileName) const
+{
+  return {};
+}
+
+QStringList DummyOrganizerProxy::listDirectories(const QString &directoryName) const
+{
+  return {};
+}
+
+QStringList DummyOrganizerProxy::findFiles(const QString &path, const std::function<bool(const QString&)> &filter) const
+{
+  return {};
+}
+
+QStringList DummyOrganizerProxy::findFiles(const QString& path, const QStringList& globFilters) const
+{
+  return {};
+}
+
+QStringList DummyOrganizerProxy::getFileOrigins(const QString &fileName) const
+{
+  return {};
+}
+
+QList<MOBase::IOrganizer::FileInfo> DummyOrganizerProxy::findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const
+{
+  return {};
+}
+
+MOBase::IDownloadManager *DummyOrganizerProxy::downloadManager() const
+{
+  return nullptr;
+}
+
+MOBase::IPluginList *DummyOrganizerProxy::pluginList() const
+{
+  return m_plugins.get();
+}
+
+MOBase::IModList *DummyOrganizerProxy::modList() const
+{
+  return m_mods.get();
+}
+
+MOBase::IProfile *DummyOrganizerProxy::profile() const
+{
+  return nullptr;
+}
+
+MOBase::IPluginGame const *DummyOrganizerProxy::managedGame() const
+{
+  return nullptr;
+}
+
+QStringList DummyOrganizerProxy::modsSortedByProfilePriority() const
+{
+  return {};
+}

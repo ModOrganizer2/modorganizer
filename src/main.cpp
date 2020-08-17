@@ -26,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nxmaccessmanager.h"
 #include "instancemanager.h"
 #include "instancemanagerdialog.h"
+#include "createinstancedialog.h"
 #include "organizercore.h"
 #include "env.h"
 #include "envmodule.h"
@@ -329,6 +330,9 @@ int runApplication(
     // this must outlive `organizer`
     std::unique_ptr<PluginContainer> pluginContainer;
 
+    log::debug("initializing nexus interface");
+    NexusInterface ni(&settings);
+
     log::debug("initializing core");
     OrganizerCore organizer(settings);
     if (!organizer.bootstrap()) {
@@ -394,8 +398,8 @@ int runApplication(
     auto splash = createSplash(settings, dataPath, game);
 
     QString apiKey;
-    if (settings.nexus().apiKey(apiKey)) {
-      NexusInterface::instance().getAccessManager()->apiCheck(apiKey);
+    if (GlobalSettings::nexusApiKey(apiKey)) {
+      ni.getAccessManager()->apiCheck(apiKey);
     }
 
     log::debug("initializing tutorials");
@@ -415,8 +419,7 @@ int runApplication(
       // set up main window and its data structures
       MainWindow mainWindow(settings, organizer, *pluginContainer);
 
-      NexusInterface::instance()
-        .getAccessManager()->setTopLevelWidget(&mainWindow);
+      ni.getAccessManager()->setTopLevelWidget(&mainWindow);
 
       QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), &application,
                        SLOT(setStyleFile(QString)));
@@ -443,8 +446,7 @@ int runApplication(
       res = application.exec();
       mainWindow.close();
 
-      NexusInterface::instance()
-        .getAccessManager()->setTopLevelWidget(nullptr);
+      ni.getAccessManager()->setTopLevelWidget(nullptr);
     }
 
     settings.geometry().resetIfNeeded();
@@ -507,6 +509,7 @@ QString determineDataPath(const cl::CommandLine& cl)
   }
 }
 
+
 int doOneRun(
   cl::CommandLine& cl, MOApplication& application, SingleInstance& instance)
 {
@@ -514,6 +517,18 @@ int doOneRun(
 
   // resets things when MO is "restarted"
   resetForRestart(cl);
+
+
+  //{
+  //  NexusInterface ni(nullptr);
+  //
+  //  PluginContainer pc(nullptr);
+  //  pc.loadPlugins();
+  //
+  //  CreateInstanceDialog dlg(pc, nullptr);
+  //  dlg.exec();
+  //}
+
 
   const QString dataPath = determineDataPath(cl);
   if (dataPath.isEmpty()) {

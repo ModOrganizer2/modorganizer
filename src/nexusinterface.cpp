@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nxmaccessmanager.h"
 #include "selectiondialog.h"
 #include "bbcode.h"
+#include "settings.h"
 #include <utility.h>
 #include "shared/util.h"
 #include <log.h>
@@ -235,15 +236,31 @@ APILimits NexusInterface::parseLimits(
 }
 
 
-NexusInterface::NexusInterface()
+static NexusInterface* g_instance = nullptr;
+
+NexusInterface::NexusInterface(Settings* s)
   : m_PluginContainer(nullptr)
 {
+  MO_ASSERT(!g_instance);
+  g_instance = this;
+
   m_User.limits(defaultAPILimits());
   m_MOVersion = createVersionInfo();
 
-  m_AccessManager = new NXMAccessManager(this, m_MOVersion.displayString(3));
+  m_AccessManager = new NXMAccessManager(
+    this, s, m_MOVersion.displayString(3));
+
   m_DiskCache = new QNetworkDiskCache(this);
+
   connect(m_AccessManager, SIGNAL(requestNXMDownload(QString)), this, SLOT(downloadRequestedNXM(QString)));
+}
+
+NexusInterface::~NexusInterface()
+{
+  cleanup();
+
+  MO_ASSERT(g_instance == this);
+  g_instance = nullptr;
 }
 
 NXMAccessManager *NexusInterface::getAccessManager()
@@ -251,15 +268,10 @@ NXMAccessManager *NexusInterface::getAccessManager()
   return m_AccessManager;
 }
 
-NexusInterface::~NexusInterface()
-{
-  cleanup();
-}
-
 NexusInterface& NexusInterface::instance()
 {
-  static NexusInterface ni;
-  return ni;
+  MO_ASSERT(g_instance);
+  return *g_instance;
 }
 
 void NexusInterface::setCacheDirectory(const QString &directory)

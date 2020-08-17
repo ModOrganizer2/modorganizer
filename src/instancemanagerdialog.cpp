@@ -718,7 +718,7 @@ void InstanceManagerDialog::onSelection()
 
 void InstanceManagerDialog::createNew()
 {
-  CreateInstanceDialog dlg(m_pc, this);
+  CreateInstanceDialog dlg(m_pc, &Settings::instance(), this);
   if (dlg.exec() != QDialog::Accepted) {
     return;
   }

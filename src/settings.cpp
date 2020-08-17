@@ -1812,37 +1812,6 @@ NexusSettings::NexusSettings(Settings& parent, QSettings& settings)
 {
 }
 
-bool NexusSettings::apiKey(QString& apiKey) const
-{
-  QString tempKey = getWindowsCredential("APIKEY");
-  if (tempKey.isEmpty())
-    return false;
-
-  apiKey = tempKey;
-  return true;
-}
-
-bool NexusSettings::setApiKey(const QString& apiKey)
-{
-  if (!setWindowsCredential("APIKEY", apiKey)) {
-    const auto e = GetLastError();
-    log::error("Storing API key failed: {}", formatSystemMessage(e));
-    return false;
-  }
-
-  return true;
-}
-
-bool NexusSettings::clearApiKey()
-{
-  return setApiKey("");
-}
-
-bool NexusSettings::hasApiKey() const
-{
-  return !getWindowsCredential("APIKEY").isEmpty();
-}
-
 bool NexusSettings::endorsementIntegration() const
 {
   return get<bool>(m_Settings, "Settings", "endorsement_integration", true);
@@ -2222,6 +2191,37 @@ bool GlobalSettings::hideTutorialQuestion()
 void GlobalSettings::setHideTutorialQuestion(bool b)
 {
   settings().setValue("HideTutorialQuestion", b);
+}
+
+bool GlobalSettings::nexusApiKey(QString& apiKey)
+{
+  QString tempKey = getWindowsCredential("APIKEY");
+  if (tempKey.isEmpty())
+    return false;
+
+  apiKey = tempKey;
+  return true;
+}
+
+bool GlobalSettings::setNexusApiKey(const QString& apiKey)
+{
+  if (!setWindowsCredential("APIKEY", apiKey)) {
+    const auto e = GetLastError();
+    log::error("Storing API key failed: {}", formatSystemMessage(e));
+    return false;
+  }
+
+  return true;
+}
+
+bool GlobalSettings::clearNexusApiKey()
+{
+  return setNexusApiKey("");
+}
+
+bool GlobalSettings::hasNexusApiKey()
+{
+  return !getWindowsCredential("APIKEY").isEmpty();
 }
 
 void GlobalSettings::resetDialogs()

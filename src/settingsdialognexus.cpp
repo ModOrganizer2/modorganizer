@@ -72,13 +72,14 @@ private:
 
 
 NexusConnectionUI::NexusConnectionUI(
-  Settings& s,
   QWidget* parent,
+  Settings* s,
   QAbstractButton* connectButton,
   QAbstractButton* disconnectButton,
   QAbstractButton* manualButton,
   QListWidget* logList) :
-    m_parent(parent), m_settings(s),
+    m_parent(parent),
+    m_settings(s),
     m_connect(connectButton),
     m_disconnect(disconnectButton),
     m_manual(manualButton),
@@ -96,7 +97,7 @@ NexusConnectionUI::NexusConnectionUI(
     QObject::connect(manualButton, &QPushButton::clicked, [&]{ manual(); });
   }
 
-  if (m_settings.nexus().hasApiKey()) {
+  if (GlobalSettings::hasNexusApiKey()) {
     addLog(tr("Connected."));
   } else {
     addLog(tr("Not connected."));
@@ -162,7 +163,7 @@ void NexusConnectionUI::validateKey(const QString& key)
 {
   if (!m_nexusValidator) {
     m_nexusValidator.reset(new NexusKeyValidator(
-      *NexusInterface::instance().getAccessManager()));
+      m_settings, *NexusInterface::instance().getAccessManager()));
 
     m_nexusValidator->finished = [&](auto&& r, auto&& m, auto&& u) {
       onValidatorFinished(r, m, u);
@@ -231,7 +232,7 @@ void NexusConnectionUI::addLog(const QString& s)
 
 bool NexusConnectionUI::setKey(const QString& key)
 {
-  const bool ret = m_settings.nexus().setApiKey(key);
+  const bool ret = GlobalSettings::setNexusApiKey(key);
   updateState();
 
   emit keyChanged();
@@ -241,7 +242,7 @@ bool NexusConnectionUI::setKey(const QString& key)
 
 bool NexusConnectionUI::clearKey()
 {
-  const auto ret = m_settings.nexus().clearApiKey();
+  const auto ret = GlobalSettings::clearNexusApiKey();
 
   NexusInterface::instance().getAccessManager()->clearApiKey();
   updateState();
@@ -274,7 +275,7 @@ void NexusConnectionUI::updateState()
     setButton(m_disconnect, false);
     setButton(m_manual, true, QObject::tr("Cancel"));
   }
-  else if (m_settings.nexus().hasApiKey()) {
+  else if (GlobalSettings::hasNexusApiKey()) {
     // api key is present
     setButton(m_connect, false, QObject::tr("Connect to Nexus"));
     setButton(m_disconnect, true);
@@ -327,7 +328,8 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
   }
 
   m_connectionUI.reset(new NexusConnectionUI(
-    settings(), &dialog(),
+    &dialog(),
+    &settings(),
     ui->nexusConnect,
     ui->nexusDisconnect,
     ui->nexusManualKey,

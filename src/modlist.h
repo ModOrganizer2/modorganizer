@@ -397,5 +397,19 @@ private:
 
 };
 
+
+class DummyModList : public MOBase::IModList
+{
+public:
+  QString displayName(const QString &internalName) const override;
+  QStringList allMods() const override;
+  ModStates state(const QString &name) const override;
+  bool setActive(const QString &name, bool active) override;
+  int priority(const QString &name) const override;
+  bool setPriority(const QString &name, int newPriority) override;
+  bool onModStateChanged(const std::function<void(const QString&, ModStates)> &func) override;
+  bool onModMoved(const std::function<void (const QString &, int, int)> &func) override;
+};
+
 #endif // MODLIST_H
 

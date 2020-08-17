@@ -48,8 +48,8 @@ const QString NexusSSO("wss://sso.nexusmods.com");
 const QString NexusSSOPage("https://www.nexusmods.com/sso?id=%1&application=modorganizer2");
 
 
-ValidationProgressDialog::ValidationProgressDialog(NexusKeyValidator& v)
-  : m_validator(v), m_updateTimer(nullptr), m_first(true)
+ValidationProgressDialog::ValidationProgressDialog(Settings* s, NexusKeyValidator& v)
+  : m_settings(s), m_validator(v), m_updateTimer(nullptr), m_first(true)
 {
   ui.reset(new Ui::ValidationProgressDialog);
   ui->setupUi(this);
@@ -98,7 +98,10 @@ void ValidationProgressDialog::stop()
 void ValidationProgressDialog::showEvent(QShowEvent* e)
 {
   if (m_first) {
-    Settings::instance().geometry().centerOnMainWindowMonitor(this);
+    if (m_settings) {
+      m_settings->geometry().centerOnMainWindowMonitor(this);
+    }
+
     m_first = false;
   }
 }
@@ -592,14 +595,23 @@ void ValidationAttempt::cleanup()
 }
 
 
-NexusKeyValidator::NexusKeyValidator(NXMAccessManager& am)
-  : m_manager(am)
+NexusKeyValidator::NexusKeyValidator(Settings* s, NXMAccessManager& am)
+  : m_settings(s), m_manager(am)
 {
 }
 
 NexusKeyValidator::~NexusKeyValidator()
 {
   cancel();
+}
+
+std::vector<std::chrono::seconds> NexusKeyValidator::getTimeouts() const
+{
+  if (m_settings) {
+    return m_settings->nexus().validationTimeouts();
+  } else {
+    return {10s, 15s, 20s};
+  }
 }
 
 void NexusKeyValidator::start(const QString& key, Behaviour b)
@@ -611,7 +623,7 @@ void NexusKeyValidator::start(const QString& key, Behaviour b)
 
   m_key = key;
 
-  const auto timeouts = Settings::instance().nexus().validationTimeouts();
+  const auto timeouts = getTimeouts();
 
   switch (b)
   {
@@ -755,10 +767,11 @@ void NexusKeyValidator::setFinished(
 }
 
 
-NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
+NXMAccessManager::NXMAccessManager(QObject *parent, Settings* s, const QString &moVersion)
   : QNetworkAccessManager(parent)
+  , m_Settings(s)
   , m_MOVersion(moVersion)
-  , m_validator(*this)
+  , m_validator(s, *this)
   , m_validationState(NotChecked)
 {
   m_validator.finished = [&](auto&& r, auto&& m, auto&& u) {
@@ -769,8 +782,10 @@ NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
     onValidatorAttemptFinished(a);
   };
 
-  setCookieJar(new PersistentCookieJar(QDir::fromNativeSeparators(
-    Settings::instance().paths().cache() + "/nexus_cookies.dat")));
+  if (m_Settings) {
+    setCookieJar(new PersistentCookieJar(QDir::fromNativeSeparators(
+      m_Settings->paths().cache() + "/nexus_cookies.dat")));
+  }
 
   if (networkAccessible() == QNetworkAccessManager::UnknownAccessibility) {
     // why is this necessary all of a sudden?
@@ -963,7 +978,7 @@ void NXMAccessManager::clearApiKey()
 void NXMAccessManager::startProgress()
 {
   if (!m_ProgressDialog) {
-    m_ProgressDialog.reset(new ValidationProgressDialog(m_validator));
+    m_ProgressDialog.reset(new ValidationProgressDialog(m_Settings, m_validator));
   }
 
   m_ProgressDialog->start();

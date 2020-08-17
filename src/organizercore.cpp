@@ -339,7 +339,7 @@ bool OrganizerCore::nexusApi(bool retry)
     return false;
   } else {
     QString apiKey;
-    if (m_Settings.nexus().apiKey(apiKey)) {
+    if (GlobalSettings::nexusApiKey(apiKey)) {
       // credentials stored or user entered them manually
       log::debug("attempt to verify nexus api key");
       accessManager->apiCheck(apiKey);
@@ -1426,7 +1426,7 @@ void OrganizerCore::loggedInAction(QWidget* parent, std::function<void ()> f)
     f();
   } else {
     QString apiKey;
-    if (settings().nexus().apiKey(apiKey)) {
+    if (GlobalSettings::nexusApiKey(apiKey)) {
       doAfterLogin([f]{ f(); });
       NexusInterface::instance().getAccessManager()->apiCheck(apiKey);
     } else {
