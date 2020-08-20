@@ -5360,6 +5360,7 @@ void MainWindow::initDownloadView()
   connect(ui->downloadView, SIGNAL(queryInfoMd5(int)), m_OrganizerCore.downloadManager(), SLOT(queryInfoMd5(int)));
   connect(ui->downloadView, SIGNAL(visitOnNexus(int)), m_OrganizerCore.downloadManager(), SLOT(visitOnNexus(int)));
   connect(ui->downloadView, SIGNAL(openFile(int)), m_OrganizerCore.downloadManager(), SLOT(openFile(int)));
+  connect(ui->downloadView, SIGNAL(openMetaFile(int)), m_OrganizerCore.downloadManager(), SLOT(openMetaFile(int)));
   connect(ui->downloadView, SIGNAL(openInDownloadsFolder(int)), m_OrganizerCore.downloadManager(), SLOT(openInDownloadsFolder(int)));
   connect(ui->downloadView, SIGNAL(removeDownload(int, bool)), m_OrganizerCore.downloadManager(), SLOT(removeDownload(int, bool)));
   connect(ui->downloadView, SIGNAL(restoreDownload(int)), m_OrganizerCore.downloadManager(), SLOT(restoreDownload(int)));

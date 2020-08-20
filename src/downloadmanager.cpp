@@ -1091,6 +1091,29 @@ void DownloadManager::openFile(int index)
   return;
 }
 
+void DownloadManager::openMetaFile(int index) {
+  if (index < 0 || index >= m_ActiveDownloads.size()) {
+    reportError(tr("OpenMetaFile: invalid download index %1").arg(index));
+    return;
+  }
+
+  auto path = QDir(m_OutputDirectory);
+  auto metaPath = getFilePath(index) + ".meta";
+  if (path.exists(metaPath)) {
+    shell::Open(metaPath);
+    return;
+  }
+
+  auto info = m_ActiveDownloads[index];
+  info->m_FileInfo->repository = "Nexus";
+
+  if (path.exists(metaPath)) {
+    shell::Open(metaPath);
+  } else {
+    shell::Explore(m_OutputDirectory);
+  }
+}
+
 void DownloadManager::openInDownloadsFolder(int index)
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {

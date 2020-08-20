@@ -221,6 +221,7 @@ void DownloadListWidget::onCustomContextMenu(const QPoint &point)
         else
           menu.addAction(tr("Visit on Nexus"), this, SLOT(issueVisitOnNexus()));
         menu.addAction(tr("Open File"), this, SLOT(issueOpenFile()));
+        menu.addAction(tr("Open Meta File"), this, SLOT(issueOpenMetaFile()));
         menu.addAction(tr("Reveal in Explorer"), this, SLOT(issueOpenInDownloadsFolder()));
 
         menu.addSeparator();
@@ -313,6 +314,10 @@ void DownloadListWidget::issueVisitOnNexus()
 void DownloadListWidget::issueOpenFile()
 {
   emit openFile(m_ContextRow);
+}
+
+void DownloadListWidget::issueOpenMetaFile() {
+  emit openMetaFile(m_ContextRow);
 }
 
 void DownloadListWidget::issueOpenInDownloadsFolder()

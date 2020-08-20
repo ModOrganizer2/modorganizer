@@ -453,6 +453,8 @@ public slots:
 
   void openFile(int index);
 
+  void openMetaFile(int index);
+
   void openInDownloadsFolder(int index);
 
   void nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
