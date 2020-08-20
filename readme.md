@@ -70,6 +70,7 @@ Here is a complete list:
 * https://github.com/ModOrganizer2/modorganizer-installer_bain
 * https://github.com/ModOrganizer2/modorganizer-installer_bundle
 * https://github.com/ModOrganizer2/modorganizer-installer_fomod
+* https://github.com/ModOrganizer2/modorganizer-installer_fomod_csharp
 * https://github.com/ModOrganizer2/modorganizer-installer_manual
 * https://github.com/ModOrganizer2/modorganizer-installer_ncc
 * https://github.com/ModOrganizer2/modorganizer-installer_quick
