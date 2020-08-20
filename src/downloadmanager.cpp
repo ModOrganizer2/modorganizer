@@ -1093,7 +1093,7 @@ void DownloadManager::openFile(int index)
 
 void DownloadManager::openMetaFile(int index) {
   if (index < 0 || index >= m_ActiveDownloads.size()) {
-    reportError(tr("OpenMetaFile: invalid download index %1").arg(index));
+    reportError("OpenMetaFile: invalid download index "+index);
     return;
   }
 
