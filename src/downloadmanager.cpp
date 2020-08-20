@@ -1097,21 +1097,25 @@ void DownloadManager::openMetaFile(int index) {
     return;
   }
 
-  auto path = QDir(m_OutputDirectory);
-  auto metaPath = getFilePath(index) + ".meta";
+  const auto path = QDir(m_OutputDirectory);
+  const auto filePath = getFilePath(index);
+  const auto metaPath = filePath + ".meta";
+
+  if (path.exists(metaPath)) {
+    shell::Open(metaPath);
+    return;
+  }
+  else {
+    QSettings metaFile(metaPath, QSettings::IniFormat);
+    metaFile.setValue("removed", false);
+  }
+
   if (path.exists(metaPath)) {
     shell::Open(metaPath);
     return;
   }
 
-  auto info = m_ActiveDownloads[index];
-  info->m_FileInfo->repository = "Nexus";
-
-  if (path.exists(metaPath)) {
-    shell::Open(metaPath);
-  } else {
-    shell::Explore(m_OutputDirectory);
-  }
+  shell::Explore(filePath);
 }
 
 void DownloadManager::openInDownloadsFolder(int index)
