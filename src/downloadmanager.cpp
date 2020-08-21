@@ -1091,6 +1091,33 @@ void DownloadManager::openFile(int index)
   return;
 }
 
+void DownloadManager::openMetaFile(int index) {
+  if (index < 0 || index >= m_ActiveDownloads.size()) {
+    log::error("OpenMetaFile: invalid download index {}", index);
+    return;
+  }
+
+  const auto path = QDir(m_OutputDirectory);
+  const auto filePath = getFilePath(index);
+  const auto metaPath = filePath + ".meta";
+
+  if (path.exists(metaPath)) {
+    shell::Open(metaPath);
+    return;
+  }
+  else {
+    QSettings metaFile(metaPath, QSettings::IniFormat);
+    metaFile.setValue("removed", false);
+  }
+
+  if (path.exists(metaPath)) {
+    shell::Open(metaPath);
+    return;
+  }
+
+  shell::Explore(filePath);
+}
+
 void DownloadManager::openInDownloadsFolder(int index)
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
