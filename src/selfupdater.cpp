@@ -114,32 +114,39 @@ void SelfUpdater::testForUpdate(const Settings& settings)
         return;
       }
 
-      QJsonObject newest;
+      // We store all releases:
+      CandidatesMap mreleases;
       for (const QJsonValue &releaseVal : releases) {
         QJsonObject release = releaseVal.toObject();
         if (!release["draft"].toBool() && (Settings::instance().usePrereleases()
                                            || !release["prerelease"].toBool())) {
-          if (newest.empty() || (VersionInfo(release["tag_name"].toString())
-                                 > VersionInfo(newest["tag_name"].toString()))) {
-            newest = release;
-          }
+          auto version = VersionInfo(release["tag_name"].toString());
+          mreleases[version] = release;
         }
       }
 
-      if (!newest.empty()) {
-        VersionInfo newestVer(newest["tag_name"].toString());
-        if (newestVer > this->m_MOVersion) {
-          m_UpdateCandidate = newest;
+      if (!mreleases.empty()) {
+        auto lastKey = mreleases.begin()->first;
+        if (lastKey > this->m_MOVersion) {
+
+          // Fill m_UpdateCandidates with version strictly greater than the 
+          // current version:
+          m_UpdateCandidates.clear();
+          for (auto p : mreleases) {
+            if (p.first > this->m_MOVersion) {
+              m_UpdateCandidates.insert(p);
+            }
+          }
           log::info("update available: {} -> {}",
-                 this->m_MOVersion.displayString(3),
-                 newestVer.displayString(3));
+            this->m_MOVersion.displayString(3),
+            lastKey.displayString(3));
           emit updateAvailable();
-        } else if (newestVer < this->m_MOVersion) {
+        } else if (lastKey < this->m_MOVersion) {
           // this could happen if the user switches from using prereleases to
           // stable builds. Should we downgrade?
           log::debug("This version is newer than the latest released one: {} -> {}",
-                 this->m_MOVersion.displayString(3),
-                 newestVer.displayString(3));
+                this->m_MOVersion.displayString(3),
+                lastKey.displayString(3));
         }
       }
     });
@@ -153,21 +160,52 @@ void SelfUpdater::testForUpdate(const Settings& settings)
 void SelfUpdater::startUpdate()
 {
   // the button can't be pressed if there isn't an update candidate
-  Q_ASSERT(!m_UpdateCandidate.empty());
+  Q_ASSERT(!m_UpdateCandidates.empty());
+
+  auto latestRelease = m_UpdateCandidates.begin()->second;
 
   QMessageBox query(QMessageBox::Question,
                     tr("New update available (%1)")
-                        .arg(m_UpdateCandidate["tag_name"].toString()), tr("Do you want to install update? All your mods and setup will be left untouched.\nSelect Show Details option to see the full change-log."),
+                        .arg(latestRelease["tag_name"].toString()), tr("Do you want to install update? All your mods and setup will be left untouched.\nSelect Show Details option to see the full change-log."),
                     QMessageBox::Yes | QMessageBox::Cancel, m_Parent);
 
-  query.setDetailedText(m_UpdateCandidate["body"].toString());
+  // We concatenate release details. We only include pre-release if those are
+  // the latest release:
+  QString details;
+  bool includePreRelease = true;
+  for (auto& p : m_UpdateCandidates) {
+    auto& release = p.second;
+
+    // Ignore details for pre-release after a release has been found:
+    if (release["prerelease"].toBool() && !includePreRelease) {
+      continue;
+    }
+
+    // Stop including pre-release as soon as we find a non-prerelease:
+    if (!release["prelease"].toBool()) {
+      includePreRelease = false;
+    }
+
+    details += "\n# " + release["tag_name"].toString() + "\n";
+    details += release["body"].toString();
+  }
+
+  // Need to call setDetailedText to create the QTextEdit and then be able to retrieve it:
+  query.setDetailedText(details);
+  QTextEdit* textEdit = query.findChild<QTextEdit*>();
+
+  // If we have the text edit, we can call setMarkdown to get proper formatting.
+  if (textEdit) {
+    textEdit->setMarkdown(details);
+  }
+
   query.button(QMessageBox::Yes)->setText(tr("Install"));
 
   int res = query.exec();
 
   if (query.result() == QMessageBox::Yes) {
     bool found = false;
-    for (const QJsonValue &assetVal : m_UpdateCandidate["assets"].toArray()) {
+    for (const QJsonValue &assetVal : latestRelease["assets"].toArray()) {
       QJsonObject asset = assetVal.toObject();
       if (asset["content_type"].toString() == "application/x-msdownload") {
         openOutputFile(asset["name"].toString());
