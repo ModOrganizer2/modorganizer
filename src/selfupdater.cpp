@@ -186,7 +186,7 @@ void SelfUpdater::startUpdate()
       includePreRelease = false;
     }
 
-    details += "\n# " + release["tag_name"].toString() + "\n";
+    details += "\n# " + release["tag_name"].toString() + "\n---\n";
     details += release["body"].toString();
   }
 
