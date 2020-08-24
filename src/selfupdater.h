@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SELFUPDATER_H
 #define SELFUPDATER_H
 
+#include <map>
 
 #include <versioninfo.h>
 #include <github.h>
@@ -141,7 +142,10 @@ private:
   int m_Attempts;
 
   GitHub m_GitHub;
-  QJsonObject m_UpdateCandidate;
+
+  // Map from version to release, in decreasing order (first element is the latest release):
+  using CandidatesMap = std::map<MOBase::VersionInfo, QJsonObject, std::greater<>>;
+  CandidatesMap m_UpdateCandidates;
 
 };
 
