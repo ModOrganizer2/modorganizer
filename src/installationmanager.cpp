@@ -369,7 +369,7 @@ QString InstallationManager::generateBackupName(const QString &directoryName) co
 }
 
 
-bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *merge) const
+bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *merge)
 {
   QString targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory + "\\" + modName);
 
@@ -406,6 +406,12 @@ bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *me
           targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory) + "/" + modName;
         }
       } else if (overwriteDialog.action() == QueryOverwriteDialog::ACT_REPLACE) {
+        unsigned int idx = ModInfo::getIndex(modName);
+        if (idx != UINT_MAX) {
+          auto modInfo = ModInfo::getByIndex(idx);
+          // mark the old install file as uninstalled
+          emit modReplaced(modInfo->getInstallationFile());
+        }
         // save original settings like categories. Because it makes sense
         QString metaFilename = targetDirectory + "/meta.ini";
         QFile settingsFile(metaFilename);
