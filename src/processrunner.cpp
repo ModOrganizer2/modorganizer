@@ -19,12 +19,16 @@ void adjustForVirtualized(
   // "environment" with the appropriate paths fixed:
   // (i.e. mods\FNIS\path\exe => game\data\path\exe)
   QString cwdPath = sp.currentDirectory.absolutePath();
-  bool virtualizedCwd = cwdPath.startsWith(modsPath, Qt::CaseInsensitive);
+  QString trailedModsPath = modsPath;
+  if (!trailedModsPath.endsWith('/')) {
+    trailedModsPath = trailedModsPath + '/';
+  }
+  bool virtualizedCwd = cwdPath.startsWith(trailedModsPath, Qt::CaseInsensitive);
   QString binPath = sp.binary.absoluteFilePath();
-  bool virtualizedBin = binPath.startsWith(modsPath, Qt::CaseInsensitive);
+  bool virtualizedBin = binPath.startsWith(trailedModsPath, Qt::CaseInsensitive);
   if (virtualizedCwd || virtualizedBin) {
     if (virtualizedCwd) {
-      int cwdOffset = cwdPath.indexOf('/', modsPath.length() + 1);
+      int cwdOffset = cwdPath.indexOf('/', trailedModsPath.length());
       QString adjustedCwd = cwdPath.mid(cwdOffset, -1);
       cwdPath = game->dataDirectory().absolutePath();
       if (cwdOffset >= 0)
@@ -33,7 +37,7 @@ void adjustForVirtualized(
     }
 
     if (virtualizedBin) {
-      int binOffset = binPath.indexOf('/', modsPath.length() + 1);
+      int binOffset = binPath.indexOf('/', trailedModsPath.length());
       QString adjustedBin = binPath.mid(binOffset, -1);
       binPath = game->dataDirectory().absolutePath();
       if (binOffset >= 0)
