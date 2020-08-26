@@ -550,12 +550,15 @@ Most mods do not have optional esps, so chances are good you are looking at an e
                       <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
+                    <property name="toolTip">
+                     <string>Files that exist in other mods but are overwritten by this mod</string>
+                    </property>
                     <property name="styleSheet">
                      <string notr="true">border: none;
 text-align: left;</string>
                     </property>
                     <property name="text">
-                     <string>The following conflicted files are provided by this mod</string>
+                     <string>Winning file conflicts:</string>
                     </property>
                    </widget>
                   </item>
@@ -583,6 +586,9 @@ text-align: left;</string>
                <widget class="QTreeView" name="overwriteTree">
                 <property name="contextMenuPolicy">
                  <enum>Qt::CustomContextMenu</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Files that exist in other mods but are overwritten by this mod</string>
                 </property>
                 <property name="alternatingRowColors">
                  <bool>true</bool>
@@ -613,12 +619,15 @@ text-align: left;</string>
                       <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
+                    <property name="toolTip">
+                     <string>Files that are unused because they are overwritten by other mods</string>
+                    </property>
                     <property name="styleSheet">
                      <string notr="true">border: none;
 text-align: left;</string>
                     </property>
                     <property name="text">
-                     <string>The following conflicted files are provided by other mods</string>
+                     <string>Losing file conflicts:</string>
                     </property>
                    </widget>
                   </item>
@@ -643,6 +652,9 @@ text-align: left;</string>
                <widget class="QTreeView" name="overwrittenTree">
                 <property name="contextMenuPolicy">
                  <enum>Qt::CustomContextMenu</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Files that are unused because they are overwritten by other mods</string>
                 </property>
                 <property name="alternatingRowColors">
                  <bool>true</bool>
@@ -672,6 +684,9 @@ text-align: left;</string>
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>Files that have no conflicts</string>
                     </property>
                     <property name="styleSheet">
                      <string notr="true">border: none;
@@ -703,6 +718,9 @@ text-align: left;</string>
                <widget class="QTreeView" name="noConflictTree">
                 <property name="contextMenuPolicy">
                  <enum>Qt::CustomContextMenu</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Files that have no conflicts</string>
                 </property>
                 <property name="alternatingRowColors">
                  <bool>true</bool>
