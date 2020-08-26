@@ -741,6 +741,12 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
     int modIndex = ModInfo::getIndex(modName);
     if (modIndex != UINT_MAX) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+      auto dlIdx = m_DownloadManager.indexByName(QFileInfo(fileName).fileName());
+      if (dlIdx != -1) {
+        int modId = m_DownloadManager.getModID(dlIdx);
+        int fileId = m_DownloadManager.getFileInfo(dlIdx)->fileID;
+        modInfo->addInstalledFile(modId, fileId);
+      }
       if (hasIniTweaks && (m_UserInterface != nullptr)
           && (QMessageBox::question(qApp->activeWindow(), tr("Configure Mod"),
                                     tr("This mod contains ini tweaks. Do you "
