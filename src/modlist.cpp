@@ -1156,8 +1156,10 @@ void ModList::removeRowForce(int row, const QModelIndex &parent)
   if (wasEnabled) {
     emit removeOrigin(modInfo->name());
   }
-
-  emit modUninstalled(modInfo->getInstallationFile());
+  auto flags = modInfo->getFlags();
+  if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) == flags.end()) {
+    emit modUninstalled(modInfo->getInstallationFile());
+  }
 }
 
 bool ModList::removeRows(int row, int count, const QModelIndex &parent)
