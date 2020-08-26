@@ -247,6 +247,8 @@ void OrganizerCore::setUserInterface(IUserInterface* ui)
             SLOT(modRenamed(QString, QString)));
     connect(&m_ModList, SIGNAL(modUninstalled(QString)), w,
             SLOT(modRemoved(QString)));
+    connect(&m_InstallationManager, SIGNAL(modReplaced(QString)), w,
+            SLOT(modRemoved(QString)));
     connect(&m_ModList, SIGNAL(removeSelectedMods()), w,
             SLOT(removeMod_clicked()));
     connect(&m_ModList, SIGNAL(clearOverwrite()), w,

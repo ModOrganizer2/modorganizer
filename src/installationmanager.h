@@ -185,7 +185,7 @@ public:
    * @param merge if this value is not null, the value will be set to whether the use chose to merge or replace
    * @return true if we can proceed with the installation, false if the user canceled or in case of an unrecoverable error
    */
-  virtual bool testOverwrite(MOBase::GuessedValue<QString> &modName, bool *merge = nullptr) const;
+  virtual bool testOverwrite(MOBase::GuessedValue<QString> &modName, bool *merge = nullptr);
 
   QString generateBackupName(const QString &directoryName) const;
 
@@ -224,6 +224,11 @@ signals:
    * @brief Progress update from the extraction.
    */
   void progressUpdate();
+
+  /**
+ * @brief An existing mod has been replaced with a newly installed one.
+ */
+  void modReplaced(const QString fileName);
 
 private:
 
