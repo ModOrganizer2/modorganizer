@@ -637,18 +637,6 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
   }
 
   emit postDataChanged();
-
-  IModList::ModStates newState = state(modID);
-  if (oldState != newState) {
-    try {
-      m_ModStateChanged(info->name(), newState);
-    } catch (const std::exception &e) {
-      log::error("failed to invoke state changed notification: {}", e.what());
-    } catch (...) {
-      log::error("failed to invoke state changed notification: unknown exception");
-    }
-  }
-
   return result;
 }
 
@@ -957,9 +945,6 @@ bool ModList::setActive(const QString &name, bool active)
     return false;
   } else {
     m_Profile->setModEnabled(modIndex, active);
-
-    IModList::ModStates newState = state(modIndex);
-    m_ModStateChanged(name, newState);
     return true;
   }
 }
@@ -985,12 +970,6 @@ int ModList::setActive(const QStringList& names, bool active) {
   }
   else {
     m_Profile->setModsEnabled({}, indices);
-  }
-
-  // Notify callbacks:
-  for (auto modIndex : indices) {
-    IModList::ModStates newState = state(modIndex);
-    m_ModStateChanged(ModInfo::getByIndex(modIndex)->name(), newState);
   }
 
   return indices.size();
@@ -1026,6 +1005,13 @@ bool ModList::onModStateChanged(const std::function<void (const QString &, IModL
 {
   auto conn = m_ModStateChanged.connect(func);
   return conn.connected();
+}
+
+void ModList::notifyModStateChanged(QList<unsigned int> modIndices) const {
+  for (auto modIndex : modIndices) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+    m_ModStateChanged(modInfo->name(), state(modIndex));
+  }
 }
 
 bool ModList::onModMoved(const std::function<void (const QString &, int, int)> &func)

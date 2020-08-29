@@ -1552,6 +1552,9 @@ void OrganizerCore::modStatusChanged(unsigned int index)
     m_DirectoryStructure->getFileRegister()->sortOrigins();
 
     refreshLists();
+
+    m_ModList.notifyModStateChanged({ index });
+
   } catch (const std::exception &e) {
     reportError(tr("failed to update mod list: %1").arg(e.what()));
   }
@@ -1601,6 +1604,8 @@ void OrganizerCore::modStatusChanged(QList<unsigned int> index) {
     m_DirectoryStructure->getFileRegister()->sortOrigins();
 
     refreshLists();
+
+    m_ModList.notifyModStateChanged(index);
   } catch (const std::exception &e) {
     reportError(tr("failed to update mod list: %1").arg(e.what()));
   }

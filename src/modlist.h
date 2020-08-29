@@ -124,6 +124,14 @@ public:
 
   void highlightMods(const QItemSelectionModel *selection, const MOShared::DirectoryEntry &directoryEntry);
 
+  /**
+   * @brief Notify the most list that the state of the specified mods has changed. This is used
+   * to notify the plugin that registered through onModStateChanged().
+   *
+   * @param modIndices Indices of the mods that changed.
+   */
+  void notifyModStateChanged(QList<unsigned int> modIndices) const;
+
 public:
 
   /// \copydoc MOBase::IModList::displayName
