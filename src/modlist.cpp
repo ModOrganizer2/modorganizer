@@ -952,6 +952,8 @@ bool ModList::setActive(const QString &name, bool active)
 {
   unsigned int modIndex = ModInfo::getIndex(name);
   if (modIndex == UINT_MAX) {
+    log::debug("Trying to {} mod {} which does not exist.",
+      active ? "enable" : "disable", name);
     return false;
   } else {
     m_Profile->setModEnabled(modIndex, active);
@@ -970,13 +972,11 @@ int ModList::setActive(const QStringList& names, bool active) {
   for (const auto& name : names) {
     auto modIndex = ModInfo::getIndex(name);
     if (modIndex != UINT_MAX) {
-
-      // This check is not done by the bulk Profile::setModsEnabled, so we
-      // do it here.
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-      if (!modInfo->alwaysEnabled()) {
-        indices.append(modIndex);
-      }
+      indices.append(modIndex);
+    }
+    else {
+      log::debug("Trying to {} mod {} which does not exist.", 
+        active ? "enable" : "disable", name);
     }
   }
 
