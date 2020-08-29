@@ -822,7 +822,7 @@ void ModList::modInfoChanged(ModInfo::Ptr info)
   if (info->name() == m_ChangeInfo.name) {
     IModList::ModStates newState = state(info->name());
     if (m_ChangeInfo.state != newState) {
-      m_ModStateChanged(info->name(), newState);
+      m_ModStateChanged({ {info->name(), newState} });
     }
 
     int row = ModInfo::getIndex(info->name());
@@ -1001,17 +1001,20 @@ bool ModList::setPriority(const QString &name, int newPriority)
   }
 }
 
-bool ModList::onModStateChanged(const std::function<void (const QString &, IModList::ModStates)> &func)
+bool ModList::onModStateChanged(const std::function<void(const std::map<QString, ModStates>&)>& func)
 {
   auto conn = m_ModStateChanged.connect(func);
   return conn.connected();
 }
 
-void ModList::notifyModStateChanged(QList<unsigned int> modIndices) const {
+void ModList::notifyModStateChanged(QList<unsigned int> modIndices) const 
+{
+  std::map<QString, ModStates> mods;
   for (auto modIndex : modIndices) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-    m_ModStateChanged(modInfo->name(), state(modIndex));
+    mods.emplace(modInfo->name(), state(modIndex));
   }
+  m_ModStateChanged(mods);
 }
 
 bool ModList::onModMoved(const std::function<void (const QString &, int, int)> &func)

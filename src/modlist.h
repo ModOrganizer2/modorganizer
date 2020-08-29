@@ -70,7 +70,7 @@ public:
     COL_LASTCOLUMN = COL_NOTES,
   };
 
-  typedef boost::signals2::signal<void (const QString &, ModStates)> SignalModStateChanged;
+  typedef boost::signals2::signal<void (const std::map<QString, ModStates>&)> SignalModStateChanged;
   typedef boost::signals2::signal<void (const QString &, int, int)> SignalModMoved;
 
 public:
@@ -156,7 +156,7 @@ public:
   virtual bool setPriority(const QString &name, int newPriority) override;
 
   /// \copydoc MOBase::IModList::onModStateChanged
-  virtual bool onModStateChanged(const std::function<void (const QString &, ModStates)> &func) override;
+  virtual bool onModStateChanged(const std::function<void(const std::map<QString, ModStates>&)>& func) override;
 
   /// \copydoc MOBase::IModList::onModMoved
   virtual bool onModMoved(const std::function<void (const QString &, int, int)> &func) override;
