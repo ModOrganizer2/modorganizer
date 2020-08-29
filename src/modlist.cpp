@@ -962,6 +962,40 @@ bool ModList::setActive(const QString &name, bool active)
   }
 }
 
+int ModList::setActive(const QStringList& names, bool active) {
+
+  // We only add indices for mods that exist (modIndex != UINT_MAX)
+  // and that can be enabled / disabled.
+  QList<unsigned int> indices;
+  for (const auto& name : names) {
+    auto modIndex = ModInfo::getIndex(name);
+    if (modIndex != UINT_MAX) {
+
+      // This check is not done by the bulk Profile::setModsEnabled, so we
+      // do it here.
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+      if (!modInfo->alwaysEnabled()) {
+        indices.append(modIndex);
+      }
+    }
+  }
+
+  if (active) {
+    m_Profile->setModsEnabled(indices, {});
+  }
+  else {
+    m_Profile->setModsEnabled({}, indices);
+  }
+
+  // Notify callbacks:
+  for (auto modIndex : indices) {
+    IModList::ModStates newState = state(modIndex);
+    m_ModStateChanged(ModInfo::getByIndex(modIndex)->name(), newState);
+  }
+
+  return indices.size();
+}
+
 int ModList::priority(const QString &name) const
 {
   unsigned int modIndex = ModInfo::getIndex(name);

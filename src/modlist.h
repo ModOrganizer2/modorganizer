@@ -138,6 +138,9 @@ public:
   /// \copydoc MOBase::IModList::setActive
   virtual bool setActive(const QString &name, bool active) override;
 
+  /// \copydoc MOBase::IModList::setActive
+  int setActive(const QStringList& names, bool active) override;
+
   /// \copydoc MOBase::IModList::priority
   virtual int priority(const QString &name) const override;
 
