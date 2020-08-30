@@ -222,18 +222,19 @@ public:
 public:
 
   virtual QStringList pluginNames() const override;
-  virtual PluginStates state(const QString &name) const;
+  virtual PluginStates state(const QString &name) const override;
   virtual void setState(const QString &name, PluginStates state) override;
-  virtual int priority(const QString &name) const;
-  virtual int loadOrder(const QString &name) const;
+  virtual int priority(const QString &name) const override;
+  virtual int loadOrder(const QString &name) const override;
+  virtual bool setPriority(const QString& name, int newPriority) override;
   virtual bool onRefreshed(const std::function<void()> &callback);
-  virtual bool isMaster(const QString &name) const;
+  virtual bool isMaster(const QString &name) const override;
   virtual bool isLight(const QString &name) const;
   virtual bool isLightFlagged(const QString &name) const;
-  virtual QStringList masters(const QString &name) const;
-  virtual QString origin(const QString &name) const;
+  virtual QStringList masters(const QString &name) const override;
+  virtual QString origin(const QString &name) const override;
   virtual void setLoadOrder(const QStringList &pluginList) override;
-  virtual bool onPluginMoved(const std::function<void (const QString &, int, int)> &func);
+  virtual bool onPluginMoved(const std::function<void (const QString &, int, int)> &func) override;
   virtual bool onPluginStateChanged(const std::function<void (const QString &, PluginStates)> &func) override;
 
 public: // implementation of the QAbstractTableModel interface
