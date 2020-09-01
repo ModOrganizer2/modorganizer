@@ -637,18 +637,6 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
   }
 
   emit postDataChanged();
-
-  IModList::ModStates newState = state(modID);
-  if (oldState != newState) {
-    try {
-      m_ModStateChanged(info->name(), newState);
-    } catch (const std::exception &e) {
-      log::error("failed to invoke state changed notification: {}", e.what());
-    } catch (...) {
-      log::error("failed to invoke state changed notification: unknown exception");
-    }
-  }
-
   return result;
 }
 
@@ -834,7 +822,7 @@ void ModList::modInfoChanged(ModInfo::Ptr info)
   if (info->name() == m_ChangeInfo.name) {
     IModList::ModStates newState = state(info->name());
     if (m_ChangeInfo.state != newState) {
-      m_ModStateChanged(info->name(), newState);
+      m_ModStateChanged({ {info->name(), newState} });
     }
 
     int row = ModInfo::getIndex(info->name());
@@ -952,14 +940,39 @@ bool ModList::setActive(const QString &name, bool active)
 {
   unsigned int modIndex = ModInfo::getIndex(name);
   if (modIndex == UINT_MAX) {
+    log::debug("Trying to {} mod {} which does not exist.",
+      active ? "enable" : "disable", name);
     return false;
   } else {
     m_Profile->setModEnabled(modIndex, active);
-
-    IModList::ModStates newState = state(modIndex);
-    m_ModStateChanged(name, newState);
     return true;
   }
+}
+
+int ModList::setActive(const QStringList& names, bool active) {
+
+  // We only add indices for mods that exist (modIndex != UINT_MAX)
+  // and that can be enabled / disabled.
+  QList<unsigned int> indices;
+  for (const auto& name : names) {
+    auto modIndex = ModInfo::getIndex(name);
+    if (modIndex != UINT_MAX) {
+      indices.append(modIndex);
+    }
+    else {
+      log::debug("Trying to {} mod {} which does not exist.", 
+        active ? "enable" : "disable", name);
+    }
+  }
+
+  if (active) {
+    m_Profile->setModsEnabled(indices, {});
+  }
+  else {
+    m_Profile->setModsEnabled({}, indices);
+  }
+
+  return indices.size();
 }
 
 int ModList::priority(const QString &name) const
@@ -988,10 +1001,20 @@ bool ModList::setPriority(const QString &name, int newPriority)
   }
 }
 
-bool ModList::onModStateChanged(const std::function<void (const QString &, IModList::ModStates)> &func)
+bool ModList::onModStateChanged(const std::function<void(const std::map<QString, ModStates>&)>& func)
 {
   auto conn = m_ModStateChanged.connect(func);
   return conn.connected();
+}
+
+void ModList::notifyModStateChanged(QList<unsigned int> modIndices) const 
+{
+  std::map<QString, ModStates> mods;
+  for (auto modIndex : modIndices) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+    mods.emplace(modInfo->name(), state(modIndex));
+  }
+  m_ModStateChanged(mods);
 }
 
 bool ModList::onModMoved(const std::function<void (const QString &, int, int)> &func)

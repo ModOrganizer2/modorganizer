@@ -70,7 +70,7 @@ public:
     COL_LASTCOLUMN = COL_NOTES,
   };
 
-  typedef boost::signals2::signal<void (const QString &, ModStates)> SignalModStateChanged;
+  typedef boost::signals2::signal<void (const std::map<QString, ModStates>&)> SignalModStateChanged;
   typedef boost::signals2::signal<void (const QString &, int, int)> SignalModMoved;
 
 public:
@@ -124,6 +124,14 @@ public:
 
   void highlightMods(const QItemSelectionModel *selection, const MOShared::DirectoryEntry &directoryEntry);
 
+  /**
+   * @brief Notify the mod list that the state of the specified mods has changed. This is used
+   * to notify the plugin that registered through onModStateChanged().
+   *
+   * @param modIndices Indices of the mods that changed.
+   */
+  void notifyModStateChanged(QList<unsigned int> modIndices) const;
+
 public:
 
   /// \copydoc MOBase::IModList::displayName
@@ -138,6 +146,9 @@ public:
   /// \copydoc MOBase::IModList::setActive
   virtual bool setActive(const QString &name, bool active) override;
 
+  /// \copydoc MOBase::IModList::setActive
+  int setActive(const QStringList& names, bool active) override;
+
   /// \copydoc MOBase::IModList::priority
   virtual int priority(const QString &name) const override;
 
@@ -145,7 +156,7 @@ public:
   virtual bool setPriority(const QString &name, int newPriority) override;
 
   /// \copydoc MOBase::IModList::onModStateChanged
-  virtual bool onModStateChanged(const std::function<void (const QString &, ModStates)> &func) override;
+  virtual bool onModStateChanged(const std::function<void(const std::map<QString, ModStates>&)>& func) override;
 
   /// \copydoc MOBase::IModList::onModMoved
   virtual bool onModMoved(const std::function<void (const QString &, int, int)> &func) override;
