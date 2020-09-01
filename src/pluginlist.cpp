@@ -766,6 +766,29 @@ int PluginList::priority(const QString &name) const
   }
 }
 
+bool PluginList::setPriority(const QString& name, int newPriority) {
+
+  if (newPriority < 0 || newPriority >= static_cast<int>(m_ESPsByPriority.size())) {
+    return false;
+  }
+
+  auto oldPriority = priority(name);
+  if (oldPriority == -1) {
+    return false;
+  }
+
+  int rowIndex = findPluginByPriority(oldPriority);
+
+  // We need to increment newPriority if its above the old one, otherwise the 
+  // plugin is place right below the new priority.
+  if (oldPriority < newPriority) {
+    newPriority += 1;
+  }
+  changePluginPriority({ rowIndex }, newPriority);
+
+  return true;
+}
+
 int PluginList::loadOrder(const QString &name) const
 {
   auto iter = m_ESPsByName.find(name.toLower());
