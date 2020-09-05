@@ -312,10 +312,14 @@ void PluginList::enableESP(const QString &name, bool enable)
   std::map<QString, int>::iterator iter = m_ESPsByName.find(name.toLower());
 
   if (iter != m_ESPsByName.end()) {
+    auto enabled = m_ESPs[iter->second].enabled;
     m_ESPs[iter->second].enabled =
         enable | m_ESPs[iter->second].forceEnabled;
 
     emit writePluginsList();
+    if (enabled != m_ESPs[iter->second].enabled) {
+      pluginStatesChanged({ name }, state(name));
+    }
   } else {
     reportError(tr("Plugin not found: %1").arg(qUtf8Printable(name)));
   }
@@ -335,30 +339,36 @@ int PluginList::findPluginByPriority(int priority)
 void PluginList::enableSelected(const QItemSelectionModel *selectionModel)
 {
   if (selectionModel->hasSelection()) {
-    bool dirty = false;
+    QStringList dirty;
     for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
       int rowIndex = findPluginByPriority(row.data().toInt());
       if (!m_ESPs[rowIndex].enabled) {
         m_ESPs[rowIndex].enabled = true;
-        dirty = true;
+        dirty.append(m_ESPs[rowIndex].name);
       }
     }
-    if (dirty) emit writePluginsList();
+    if (!dirty.isEmpty()) {
+      emit writePluginsList();
+      pluginStatesChanged(dirty, IPluginList::PluginState::STATE_ACTIVE);
+    }
   }
 }
 
 void PluginList::disableSelected(const QItemSelectionModel *selectionModel)
 {
   if (selectionModel->hasSelection()) {
-    bool dirty = false;
+    QStringList dirty;
     for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
       int rowIndex = findPluginByPriority(row.data().toInt());
       if (!m_ESPs[rowIndex].forceEnabled && m_ESPs[rowIndex].enabled) {
         m_ESPs[rowIndex].enabled = false;
-        dirty = true;
+        dirty.append(m_ESPs[rowIndex].name);
       }
     }
-    if (dirty) emit writePluginsList();
+    if (!dirty.isEmpty()) {
+      emit writePluginsList();
+      pluginStatesChanged(dirty, IPluginList::PluginState::STATE_INACTIVE);
+    }
   }
 }
 
@@ -367,10 +377,17 @@ void PluginList::enableAll()
 {
   if (QMessageBox::question(nullptr, tr("Confirm"), tr("Really enable all plugins?"),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    QStringList dirty;
     for (ESPInfo &info : m_ESPs) {
-      info.enabled = true;
+      if (!info.enabled) {
+        info.enabled = true;
+        dirty.append(info.name);
+      }
     }
-    emit writePluginsList();
+    if (!dirty.isEmpty()) {
+      emit writePluginsList();
+      pluginStatesChanged(dirty, IPluginList::PluginState::STATE_ACTIVE);
+    }
   }
 }
 
@@ -379,12 +396,17 @@ void PluginList::disableAll()
 {
   if (QMessageBox::question(nullptr, tr("Confirm"), tr("Really disable all plugins?"),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    QStringList dirty;
     for (ESPInfo &info : m_ESPs) {
-      if (!info.forceEnabled) {
+      if (!info.forceEnabled && info.enabled) {
         info.enabled = false;
+        dirty.append(info.name);
       }
     }
-    emit writePluginsList();
+    if (!dirty.isEmpty()) {
+      emit writePluginsList();
+      pluginStatesChanged(dirty, IPluginList::PluginState::STATE_INACTIVE);
+    }
   }
 }
 
@@ -853,10 +875,21 @@ QString PluginList::origin(const QString &name) const
   }
 }
 
-bool PluginList::onPluginStateChanged(const std::function<void (const QString &, PluginStates)> &func)
+bool PluginList::onPluginStateChanged(const std::function<void(const std::map<QString, PluginStates>&)>& func)
 {
   auto conn = m_PluginStateChanged.connect(func);
   return conn.connected();
+}
+
+void PluginList::pluginStatesChanged(QStringList const& pluginNames, IPluginList::PluginStates state) const {
+  if (pluginNames.isEmpty()) {
+    return;
+  }
+  std::map<QString, IPluginList::PluginStates> infos;
+  for (auto& name : pluginNames) {
+    infos[name] = state;
+  }
+  m_PluginStateChanged(infos);
 }
 
 bool PluginList::onRefreshed(const std::function<void ()> &callback)
@@ -1324,7 +1357,7 @@ bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int
   IPluginList::PluginStates newState = state(modName);
   if (oldState != newState) {
     try {
-      m_PluginStateChanged(modName, newState);
+      pluginStatesChanged({ modName }, newState);
       testMasters();
       emit dataChanged(
           this->index(0, 0),
