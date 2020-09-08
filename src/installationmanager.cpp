@@ -369,7 +369,7 @@ QString InstallationManager::generateBackupName(const QString &directoryName) co
 }
 
 
-bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *merge)
+IPluginInstaller::EInstallResult InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *merge)
 {
   QString targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory + "\\" + modName);
 
@@ -388,7 +388,7 @@ bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *me
         QString backupDirectory = generateBackupName(targetDirectory);
         if (!copyDir(targetDirectory, backupDirectory, false)) {
           reportError(tr("Failed to create backup"));
-          return false;
+          return IPluginInstaller::RESULT_FAILED;
         }
       }
       if (merge != nullptr) {
@@ -401,7 +401,7 @@ bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *me
         if (ok && !name.isEmpty()) {
           modName.update(name, GUESS_USER);
           if (!ensureValidModName(modName)) {
-            return false;
+            return IPluginInstaller::RESULT_FAILED;
           }
           targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory) + "/" + modName;
         }
@@ -436,18 +436,20 @@ bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *me
         } else {
           log::error("failed to restore original settings: {}", metaFilename);
         }
-        return true;
+        return IPluginInstaller::RESULT_SUCCESS;
       } else if (overwriteDialog.action() == QueryOverwriteDialog::ACT_MERGE) {
-        return true;
+        return IPluginInstaller::RESULT_SUCCESS;
+      } else /* if (overwriteDialog.action() == QueryOverwriteDialog::ACT_NONE) */ {
+        return IPluginInstaller::RESULT_CANCELED;
       }
     } else {
-      return false;
+      return IPluginInstaller::RESULT_CANCELED;
     }
   }
 
   QDir().mkdir(targetDirectory);
 
-  return true;
+  return IPluginInstaller::RESULT_SUCCESS;;
 }
 
 
@@ -476,8 +478,9 @@ IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QSt
 
   bool merge = false;
   // determine target directory
-  if (!testOverwrite(modName, &merge)) {
-    return IPluginInstaller::RESULT_FAILED;
+  IPluginInstaller::EInstallResult result = testOverwrite(modName, &merge);
+  if (result != IPluginInstaller::RESULT_SUCCESS) {
+    return result;
   }
 
   QString targetDirectory = QDir(m_ModsDirectory + "/" + modName).canonicalPath();
