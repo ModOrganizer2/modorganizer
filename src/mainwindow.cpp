@@ -4199,7 +4199,7 @@ void MainWindow::checkModsForUpdates()
       m_OrganizerCore.doAfterLogin([this] () { this->checkModsForUpdates(); });
       NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else {
-      log::warn("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.");
+      log::warn(tr("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.").toStdString());
     }
   }
 
@@ -5406,7 +5406,7 @@ void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
       m_OrganizerCore.doAfterLogin([=]() { this->modUpdateCheck(IDs); });
       NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else
-      log::warn("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.");
+      log::warn(tr("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.").toStdString());
   }
 }
 
@@ -5524,10 +5524,10 @@ void MainWindow::nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVa
   }
   QVariantList resultList = resultData.toList();
 
-  QFutureWatcher<std::pair<QString, std::set<QSharedPointer<ModInfo>>>> *watcher = new QFutureWatcher<std::pair<QString, std::set<QSharedPointer<ModInfo>>>>();
-  QObject::connect(watcher, &QFutureWatcher<std::set<QSharedPointer<ModInfo>>>::finished, this, &MainWindow::finishUpdateInfo);
-  QFuture<std::pair<QString, std::set<QSharedPointer<ModInfo>>>> future = QtConcurrent::run([=]() -> std::pair<QString, std::set<QSharedPointer<ModInfo>>> {
-    return std::make_pair(gameNameReal, ModInfo::filteredMods(gameNameReal, resultList, userData.toBool(), true));
+  QFutureWatcher<QPair<QString, std::set<QSharedPointer<ModInfo>>>> *watcher = new QFutureWatcher<QPair<QString, std::set<QSharedPointer<ModInfo>>>>();
+  QObject::connect(watcher, &QFutureWatcher<QPair<QString, std::set<QSharedPointer<ModInfo>>>>::finished, this, &MainWindow::finishUpdateInfo);
+  QFuture<QPair<QString, std::set<QSharedPointer<ModInfo>>>> future = QtConcurrent::run([=]() -> QPair<QString, std::set<QSharedPointer<ModInfo>>> {
+    return qMakePair(gameNameReal, ModInfo::filteredMods(gameNameReal, resultList, userData.toBool(), true));
   });
   watcher->setFuture(future);
   if (m_ModListSortProxy != nullptr)
@@ -5536,13 +5536,13 @@ void MainWindow::nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVa
 
 void MainWindow::finishUpdateInfo()
 {
-  QFutureWatcher<std::pair<QString, std::set<QSharedPointer<ModInfo>>>> *watcher = static_cast<QFutureWatcher<std::pair<QString, std::set<QSharedPointer<ModInfo>>>> *>(sender());
+  QFutureWatcher<QPair<QString, std::set<QSharedPointer<ModInfo>>>> *watcher = static_cast<QFutureWatcher<QPair<QString, std::set<QSharedPointer<ModInfo>>>> *>(sender());
   
   QString game = watcher->result().first;
   auto finalMods = watcher->result().second;
 
   if (finalMods.empty()) {
-    log::info("None of your {} mods appear to have had recent file updates.", game);
+    log::info(tr("None of your {} mods appear to have had recent file updates.").toStdString(), game);
   }
 
   std::set<std::pair<QString, int>> organizedGames;
@@ -5553,7 +5553,7 @@ void MainWindow::finishUpdateInfo()
   }
 
   if (!finalMods.empty() && organizedGames.empty())
-    log::warn("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.");
+    log::warn(tr("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.").toStdString());
 
   for (auto game : organizedGames)
     NexusInterface::instance(&m_PluginContainer)->requestUpdates(game.second, this, QVariant(), game.first, QString());
