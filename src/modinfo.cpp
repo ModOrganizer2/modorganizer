@@ -323,7 +323,7 @@ bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
       }
     }
     if (gamePlugin != nullptr && gamePlugin->gameNexusName().isEmpty()) {
-      log::warn(tr("The update check has found a mod with a Nexus ID and source game of {}, but this game is not a valid Nexus source.").toStdString(), gamePlugin->gameName());
+      log::warn("{}", tr("The update check has found a mod with a Nexus ID and source game of %1, but this game is not a valid Nexus source.").arg(gamePlugin->gameName()));
       itr = games.erase(itr);
     }
   }
