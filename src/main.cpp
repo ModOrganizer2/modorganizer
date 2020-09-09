@@ -740,7 +740,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
     QPixmap pixmap;
 
-    QSplashScreen splash(nullptr);
+    QSplashScreen splash;
 
     if (useSplash) {
       pixmap = QPixmap(splashPath);
