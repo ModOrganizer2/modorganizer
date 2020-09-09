@@ -313,7 +313,7 @@ bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
   }
 
   // Detect invalid source games
-  for (auto itr = games.begin(); itr != games.end(); ++itr) {
+  for (auto itr = games.begin(); itr != games.end();) {
     auto gamePlugins = pluginContainer->plugins<IPluginGame>();
     IPluginGame* gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
     for (auto plugin : gamePlugins) {
@@ -325,6 +325,8 @@ bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
     if (gamePlugin != nullptr && gamePlugin->gameNexusName().isEmpty()) {
       log::warn("{}", tr("The update check has found a mod with a Nexus ID and source game of %1, but this game is not a valid Nexus source.").arg(gamePlugin->gameName()));
       itr = games.erase(itr);
+    } else {
+      ++itr;
     }
   }
 
