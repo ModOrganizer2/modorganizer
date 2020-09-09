@@ -5524,10 +5524,10 @@ void MainWindow::nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVa
   }
   QVariantList resultList = resultData.toList();
 
-  QFutureWatcher<std::set<QSharedPointer<ModInfo>>> *watcher = new QFutureWatcher<std::set<QSharedPointer<ModInfo>>>();
+  QFutureWatcher<std::pair<QString, std::set<QSharedPointer<ModInfo>>>> *watcher = new QFutureWatcher<std::pair<QString, std::set<QSharedPointer<ModInfo>>>>();
   QObject::connect(watcher, &QFutureWatcher<std::set<QSharedPointer<ModInfo>>>::finished, this, &MainWindow::finishUpdateInfo);
-  QFuture<std::set<QSharedPointer<ModInfo>>> future = QtConcurrent::run([=]() -> std::set<QSharedPointer<ModInfo>> {
-    return ModInfo::filteredMods(gameNameReal, resultList, userData.toBool(), true);
+  QFuture<std::pair<QString, std::set<QSharedPointer<ModInfo>>>> future = QtConcurrent::run([=]() -> std::pair<QString, std::set<QSharedPointer<ModInfo>>> {
+    return std::make_pair(gameNameReal, ModInfo::filteredMods(gameNameReal, resultList, userData.toBool(), true));
   });
   watcher->setFuture(future);
   if (m_ModListSortProxy != nullptr)
@@ -5536,12 +5536,13 @@ void MainWindow::nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVa
 
 void MainWindow::finishUpdateInfo()
 {
-  QFutureWatcher<std::set<QSharedPointer<ModInfo>>> *watcher = static_cast<QFutureWatcher<std::set<QSharedPointer<ModInfo>>> *>(sender());
-
-  auto finalMods = watcher->result();
+  QFutureWatcher<std::pair<QString, std::set<QSharedPointer<ModInfo>>>> *watcher = static_cast<QFutureWatcher<std::pair<QString, std::set<QSharedPointer<ModInfo>>>> *>(sender());
+  
+  QString game = watcher->result().first;
+  auto finalMods = watcher->result().second;
 
   if (finalMods.empty()) {
-    log::info("None of your mods appear to have had recent file updates.");
+    log::info("None of your {} mods appear to have had recent file updates.", game);
   }
 
   std::set<std::pair<QString, int>> organizedGames;

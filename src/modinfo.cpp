@@ -312,6 +312,22 @@ bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
     }
   }
 
+  // Detect invalid source games
+  for (auto itr = games.begin(); itr != games.end(); ++itr) {
+    auto gamePlugins = pluginContainer->plugins<IPluginGame>();
+    IPluginGame* gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
+    for (auto plugin : gamePlugins) {
+      if (plugin != nullptr && plugin->gameShortName().compare(*itr, Qt::CaseInsensitive) == 0) {
+        gamePlugin = plugin;
+        break;
+      }
+    }
+    if (gamePlugin != nullptr && gamePlugin->gameNexusName().isEmpty()) {
+      log::warn("The update check has found a mod with a Nexus ID and source game of {}, but this game is not a valid Nexus source.", gamePlugin->gameName());
+      itr = games.erase(itr);
+    }
+  }
+
   if (latest < QDateTime::currentDateTimeUtc().addMonths(-1)) {
     std::set<std::pair<QString, int>> organizedGames;
     for (auto mod : s_Collection) {
