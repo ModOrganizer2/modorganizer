@@ -72,5 +72,5 @@ on_failure:
     Invoke-RestMethod https://raw.githubusercontent.com/DiscordHooks/appveyor-discord-webhook/master/send.ps1 -o send.ps1
 
     if($env:APPVEYOR_SCHEDULED_BUILD -ne 'True'){
-        ./send.ps1 success $env:WEBHOOK_URL
+        ./send.ps1 failure $env:WEBHOOK_URL
     }
