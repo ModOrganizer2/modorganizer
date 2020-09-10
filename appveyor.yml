@@ -16,6 +16,8 @@ init:
 environment:
   WEBHOOK_URL:
     secure: gOKbXaZM9ImtMD5XrYITvdyZUW/az082G9OIN1EC1VaKiI9iefpxhBavJ6Al6CzIZvQ+3pxnLqjmNgA7cDc22wcj2kB4hSG5qhbTI8wGa8jLQ5L65nuRZ3vrIqghBz9G3GLglgZkg6eqH9r3Kqc6UzcpCGzxxPOqm550nRcIiUU=
+  NIGHTLY_URL:
+    secure: gOKbXaZM9ImtMD5XrYITvdyZUW/az082G9OIN1EC1VbngVyqZj9o7q5L/k9ShHGFWbePlAtFD5H4GgYMQLpXFEQraiXntZZTeqawjN6TRCUGki1KhZPRpn7wfZz+pKkIIuB3QsxkIF/bnjEDAiQFEysiRMveyRZ5XNiHWi0I16w=
   MO_VERSION: 2.3.0
   VER_STUB_NORMAL: dev-appveyor
   VER_STUB_NIGHTLY: dev-nightly-
@@ -58,12 +60,17 @@ on_success:
     Set-Location -Path $env:APPVEYOR_BUILD_FOLDER
 
     Invoke-RestMethod https://raw.githubusercontent.com/DiscordHooks/appveyor-discord-webhook/master/send.ps1 -o send.ps1
-
-    ./send.ps1 success $env:WEBHOOK_URL
+    if($env:APPVEYOR_SCHEDULED_BUILD -eq 'True'){
+        ./send.ps1 success $env:WEBHOOK_URL
+    } else {
+        ./send.ps1 success $env:NIGHTLY_URL
+    }
 on_failure:
 - ps: >-
     Set-Location -Path $env:APPVEYOR_BUILD_FOLDER
 
     Invoke-RestMethod https://raw.githubusercontent.com/DiscordHooks/appveyor-discord-webhook/master/send.ps1 -o send.ps1
 
-    ./send.ps1 failure $env:WEBHOOK_URL
+    if($env:APPVEYOR_SCHEDULED_BUILD -ne 'True'){
+        ./send.ps1 success $env:WEBHOOK_URL
+    }
