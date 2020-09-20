@@ -66,6 +66,10 @@ public:
   virtual bool alwaysEnabled() const override { return true; }
   virtual void addInstalledFile(int, int) override {}
 
+  virtual QVariant pluginSetting(const QString& pluginName, const QString& key, const QVariant& defaultValue) const override { return defaultValue; }
+  virtual std::map<QString, QVariant> pluginSettings(const QString& pluginName) const override { return {}; }
+  virtual bool setPluginSetting(const QString& pluginName, const QString& key, const QVariant& value) override { return false; }
+
   ModInfo::EModType modType() const { return m_ModType; }
 
 protected:
