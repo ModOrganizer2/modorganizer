@@ -47,6 +47,8 @@ public:
   virtual MOBase::VersionInfo newestVersion() const override { return QString(); }
   virtual MOBase::VersionInfo ignoredVersion() const override { return QString(); }
   virtual QString installationFile() const override { return ""; }
+  virtual bool converted() const override { return false; }
+  virtual bool validated() const override { return false; }
   virtual int getFixedPriority() const override { return std::numeric_limits<int>::max(); }
   virtual QString gameName() const override { return ""; }
   virtual int modId() const override { return -1; }

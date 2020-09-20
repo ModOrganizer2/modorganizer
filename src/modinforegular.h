@@ -397,6 +397,8 @@ public:
 
   virtual QString gameName() const override { return m_GameName; }
   virtual QString installationFile() const override { return m_InstallationFile; }
+  virtual bool converted() const override { return m_Converted; }
+  virtual bool validated() const override { return m_Validated; }
   virtual std::set<std::pair<int, int>> installedFiles() const override { return m_InstalledFileIDs; }
 
 private:

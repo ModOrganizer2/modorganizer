@@ -45,6 +45,8 @@ public:
   virtual MOBase::VersionInfo newestVersion() const override { return QString(); }
   virtual MOBase::VersionInfo ignoredVersion() const override { return QString(); }
   virtual QString installationFile() const override { return ""; }
+  virtual bool converted() const override { return false; }
+  virtual bool validated() const override { return false; }
   virtual QString gameName() const override { return ""; }
   virtual int modId() const override { return -1; }
   virtual QDateTime getExpires() const override { return QDateTime(); }
