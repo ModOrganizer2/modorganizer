@@ -402,6 +402,12 @@ public:
   virtual void setCustomURL(QString const &) override;
   virtual QString getCustomURL() const override;
 
+public: // Plugin operations:
+
+  virtual QVariant pluginSetting(const QString& pluginName, const QString& key, const QVariant& defaultValue) const override;
+  virtual std::map<QString, QVariant> pluginSettings(const QString& pluginName) const override;
+  virtual bool setPluginSetting(const QString& pluginName, const QString& key, const QVariant& value) override;
+
 private:
 
   void setEndorsedState(EEndorsedState endorsedState);
@@ -448,6 +454,9 @@ private:
 
   int m_NexusID;
   std::set<std::pair<int, int>> m_InstalledFileIDs;
+
+  // List of plugin settings:
+  std::map<QString, std::map<QString, QVariant>> m_PluginSettings;
 
   bool m_MetaInfoChanged;
   bool m_IsAlternate;

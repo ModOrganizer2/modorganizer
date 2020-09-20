@@ -67,6 +67,10 @@ public:
   virtual QStringList archives(bool checkOnDisk = false) override;
   virtual void addInstalledFile(int, int) override {}
 
+  virtual QVariant pluginSetting(const QString& pluginName, const QString& key, const QVariant& defaultValue) const override { return defaultValue; }
+  virtual std::map<QString, QVariant> pluginSettings(const QString& pluginName) const override { return {}; }
+  virtual bool setPluginSetting(const QString& pluginName, const QString& key, const QVariant& value) override { return false; }
+
 private:
   ModInfoOverwrite(PluginContainer *pluginContainer, const MOBase::IPluginGame* game, MOShared::DirectoryEntry **directoryStructure);
 
