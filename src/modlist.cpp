@@ -224,7 +224,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       else
         return modInfo->name();
     } else if (column == COL_VERSION) {
-      VersionInfo verInfo = modInfo->getVersion();
+      VersionInfo verInfo = modInfo->version();
       QString version = verInfo.displayString();
       if (role != Qt::EditRole) {
         if (version.isEmpty() && modInfo->canBeUpdated()) {
@@ -240,7 +240,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         return m_Profile->getModPriority(modIndex);
       }
     } else if (column == COL_MODID) {
-      int modID = modInfo->getNexusID();
+      int modID = modInfo->modId();
       if (modID > 0) {
         return modID;
       }
@@ -250,16 +250,16 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     } else if (column == COL_GAME) {
       if (m_PluginContainer != nullptr) {
         for (auto game : m_PluginContainer->plugins<IPluginGame>()) {
-          if (game->gameShortName().compare(modInfo->getGameName(), Qt::CaseInsensitive) == 0)
+          if (game->gameShortName().compare(modInfo->gameName(), Qt::CaseInsensitive) == 0)
             return game->gameName();
         }
       }
-      return modInfo->getGameName();
+      return modInfo->gameName();
     } else if (column == COL_CATEGORY) {
       if (modInfo->hasFlag(ModInfo::FLAG_FOREIGN)) {
         return tr("Non-MO");
       } else {
-        int category = modInfo->getPrimaryCategory();
+        int category = modInfo->primaryCategory();
         if (category != -1) {
           CategoryFactory &categoryFactory = CategoryFactory::instance();
           if (categoryFactory.categoryExists(category)) {
@@ -333,7 +333,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         return m_Profile->getModPriority(modIndex);
       }
     } else {
-      return modInfo->getNexusID();
+      return modInfo->modId();
     }
   } else if (role == Qt::UserRole + 1) {
     return modIndex;
@@ -348,7 +348,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
   } else if (role == Qt::UserRole + 3) {
     return contentsToIcons(modInfo->getContents());
   } else if (role == Qt::UserRole + 4) {
-    return modInfo->getGameName();
+    return modInfo->gameName();
   } else if (role == Qt::FontRole) {
     QFont result;
     auto flags = modInfo->getFlags();
@@ -379,14 +379,14 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         return QIcon(":/MO/gui/update_available");
       } else if (modInfo->downgradeAvailable()) {
         return QIcon(":/MO/gui/warning");
-      } else if (modInfo->getVersion().scheme() == VersionInfo::SCHEME_DATE) {
+      } else if (modInfo->version().scheme() == VersionInfo::SCHEME_DATE) {
         return QIcon(":/MO/gui/version_date");
       }
     }
     return QVariant();
   } else if (role == Qt::ForegroundRole) {
-    if ((modInfo->hasFlag(ModInfo::FLAG_SEPARATOR) || (column == COL_NOTES)) && modInfo->getColor().isValid()) {
-      return ColorSettings::idealTextColor(modInfo->getColor());
+    if ((modInfo->hasFlag(ModInfo::FLAG_SEPARATOR) || (column == COL_NOTES)) && modInfo->color().isValid()) {
+      return ColorSettings::idealTextColor(modInfo->color());
     } else if (column == COL_NAME) {
       int highlight = modInfo->getHighlight();
       if (highlight & ModInfo::HIGHLIGHT_IMPORTANT)
@@ -394,7 +394,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       else if (highlight & ModInfo::HIGHLIGHT_INVALID)
         return QBrush(Qt::darkGray);
     } else if (column == COL_VERSION) {
-      if (!modInfo->getNewestVersion().isValid()) {
+      if (!modInfo->newestVersion().isValid()) {
         return QVariant();
       } else if (modInfo->updateAvailable() || modInfo->downgradeAvailable()) {
         return QBrush(Qt::red);
@@ -411,8 +411,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     bool overwritten = m_Overwritten.find(modIndex) != m_Overwritten.end();
     bool archiveOverwritten = m_ArchiveOverwritten.find(modIndex) != m_ArchiveOverwritten.end();
     bool archiveLooseOverwritten = m_ArchiveLooseOverwritten.find(modIndex) != m_ArchiveLooseOverwritten.end();
-    if (column == COL_NOTES && modInfo->getColor().isValid()) {
-      return modInfo->getColor();
+    if (column == COL_NOTES && modInfo->color().isValid()) {
+      return modInfo->color();
     } else if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
       return Settings::instance().colors().modlistContainsPlugin();
     } else if (overwritten || archiveLooseOverwritten) {
@@ -424,10 +424,10 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     } else if (archiveOverwrite) {
       return Settings::instance().colors().modlistOverwrittenArchive();
     } else if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)
-               && modInfo->getColor().isValid()
+               && modInfo->color().isValid()
                && ((role != ViewMarkingScrollBar::DEFAULT_ROLE)
                     || Settings::instance().colors().colorSeparatorScrollbar())) {
-      return modInfo->getColor();
+      return modInfo->color();
     } else {
       return QVariant();
     }
@@ -460,7 +460,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         return QString();
       }
     } else if (column == COL_VERSION) {
-      QString text = tr("installed version: \"%1\", newest version: \"%2\"").arg(modInfo->getVersion().displayString(3)).arg(modInfo->getNewestVersion().displayString(3));
+      QString text = tr("installed version: \"%1\", newest version: \"%2\"").arg(modInfo->version().displayString(3)).arg(modInfo->newestVersion().displayString(3));
       if (modInfo->downgradeAvailable()) {
         text += "<br>" + tr("The newest version on Nexus seems to be older than the one you have installed. This could either mean the version you have has been withdrawn "
                           "(i.e. due to a bug) or the author uses a non-standard versioning scheme and that newest version is actually newer. "
@@ -471,7 +471,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       } else if (modInfo->getNexusFileStatus() == 6) {
         text += "<br>" + tr("This file has been marked as \"Deleted\"! You may want to check for an update or remove the nexus ID from this mod!");
       }
-      if (modInfo->getNexusID() > 0) {
+      if (modInfo->modId() > 0) {
         if (!modInfo->canBeUpdated()) {
           qint64 remains = QDateTime::currentDateTimeUtc().secsTo(modInfo->getExpires());
           qint64 minutes = remains / 60;
@@ -611,7 +611,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
         }
       } break;
       case COL_VERSION: {
-        VersionInfo::VersionScheme scheme = info->getVersion().scheme();
+        VersionInfo::VersionScheme scheme = info->version().scheme();
         VersionInfo version(value.toString(), scheme, true);
         if (version.isValid()) {
           info->setVersion(version);
@@ -885,7 +885,7 @@ IModList::ModStates ModList::state(unsigned int modIndex) const
     if (modInfo->isEmpty()) {
       result |= IModList::STATE_EMPTY;
     }
-    if (modInfo->endorsedState() == ModInfo::ENDORSED_TRUE) {
+    if (modInfo->endorsedState() == EndorsedState::ENDORSED_TRUE) {
       result |= IModList::STATE_ENDORSED;
     }
     if (modInfo->isValid()) {
@@ -1181,7 +1181,7 @@ void ModList::removeRowForce(int row, const QModelIndex &parent)
   }
   auto flags = modInfo->getFlags();
   if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) == flags.end()) {
-    emit modUninstalled(modInfo->getInstallationFile());
+    emit modUninstalled(modInfo->installationFile());
   }
 }
 

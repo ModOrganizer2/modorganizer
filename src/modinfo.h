@@ -95,19 +95,6 @@ public:
     HIGHLIGHT_PLUGIN = 8
   };
 
-  enum EEndorsedState {
-    ENDORSED_FALSE,
-    ENDORSED_TRUE,
-    ENDORSED_UNKNOWN,
-    ENDORSED_NEVER
-  };
-
-  enum ETrackedState {
-    TRACKED_FALSE,
-    TRACKED_TRUE,
-    TRACKED_UNKNOWN,
-  };
-
   enum EModType {
     MOD_DEFAULT,
     MOD_DLC,
@@ -371,6 +358,7 @@ public:
 
   virtual void addCategory(const QString &categoryName) override;
   virtual bool removeCategory(const QString &categoryName) override;
+
   virtual QStringList categories() const override;
 
   /**
@@ -439,47 +427,19 @@ public:
   virtual QString absolutePath() const = 0;
 
   /**
-   * @brief getter for the installation file
-   *
-   * @return file used to install this mod from
-   */
-  virtual QString getInstallationFile() const = 0;
-
-  /**
    * @return version object for machine based comparisons
    **/
-  virtual MOBase::VersionInfo getVersion() const { return m_Version; }
-
-  /**
-   * @brief getter for the newest version number of this mod
-   *
-   * @return newest version of the mod
-   **/
-  virtual MOBase::VersionInfo getNewestVersion() const = 0;
+  virtual MOBase::VersionInfo version() const { return m_Version; }
 
   /**
    * @return the repository from which the file was downloaded. Only relevant regular mods
    */
-  virtual QString repository() const { return ""; }
+  virtual QString repository() const override { return ""; }
 
   /**
    * @brief ignore the newest version for updates
    */
   virtual void ignoreUpdate(bool ignore) = 0;
-
-  /**
-   * @brief getter for the nexus mod id
-   *
-   * @return the nexus mod id. may be 0 if the mod id isn't known or doesn't exist
-   **/
-  virtual int getNexusID() const = 0;
-
-  /**
-  * @brief getter for the source game repository
-  *
-  * @return the source game repository. should default to the active game.
-  **/
-  virtual QString getGameName() const = 0;
 
   /**
    * @return the fixed priority of mods of this type or INT_MIN if the priority of mods
@@ -574,16 +534,6 @@ public:
   virtual void setNexusFileStatus(int status) = 0;
 
   /**
-   * @return comments for this mod
-   */
-  virtual QString comments() const = 0;
-
-  /**
-   * @return notes for this mod
-   */
-  virtual QString notes() const = 0;
-
-  /**
    * @return creation time of this mod
    */
   virtual QDateTime creationTime() const = 0;
@@ -633,13 +583,13 @@ public:
    */
   virtual QStringList archives(bool checkOnDisk = false) = 0;
 
-  /*
-   *@return the color choosen by the user for the mod/separator
+  /**
+   * @return the color choosen by the user for the mod/separator
    */
-  virtual QColor getColor() const { return QColor(); }
+  virtual QColor color() const override { return QColor(); }
 
-  /*
-   *@return true if the color has been set successfully.
+  /**
+   * 
    */
   virtual void setColor(QColor) { }
 
@@ -669,7 +619,7 @@ public:
   /**
    * @return id of the primary category of this mod
    */
-  int getPrimaryCategory() const { return m_PrimaryCategory; }
+  int primaryCategory() const override { return m_PrimaryCategory; }
 
   /**
    * @brief sets the new primary category of the mod
@@ -685,12 +635,12 @@ public:
   /**
    * @return true if the file has been endorsed on nexus
    */
-  virtual EEndorsedState endorsedState() const { return ENDORSED_NEVER; }
+  virtual MOBase::EndorsedState endorsedState() const override { return MOBase::EndorsedState::ENDORSED_NEVER; }
 
   /**
    * @return true if the file is being tracked on nexus
    */
-  virtual ETrackedState trackedState() const { return TRACKED_FALSE; }
+  virtual MOBase::TrackedState trackedState() const override { return MOBase::TrackedState::TRACKED_FALSE; }
 
   /**
    * @brief updates the mod to flag it as converted in order to ignore the alternate game warning
@@ -765,7 +715,7 @@ public:
   /**
    * @brief returns the custom url
    **/
-  virtual QString getCustomURL() const { return ""; }
+  virtual QString url() const override { return ""; }
 
   /**
    * If hasCustomURL() is true and getCustomURL() is not empty, tries to parse

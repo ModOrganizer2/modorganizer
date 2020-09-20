@@ -410,7 +410,7 @@ IPluginInstaller::EInstallResult InstallationManager::testOverwrite(GuessedValue
         if (idx != UINT_MAX) {
           auto modInfo = ModInfo::getByIndex(idx);
           // mark the old install file as uninstalled
-          emit modReplaced(modInfo->getInstallationFile());
+          emit modReplaced(modInfo->installationFile());
         }
         // save original settings like categories. Because it makes sense
         QString metaFilename = targetDirectory + "/meta.ini";

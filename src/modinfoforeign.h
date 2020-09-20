@@ -42,10 +42,11 @@ public:
   virtual QString notes() const override { return ""; }
   virtual QDateTime creationTime() const override;
   virtual QString absolutePath() const override;
-  virtual MOBase::VersionInfo getNewestVersion() const override { return QString(); }
-  virtual QString getInstallationFile() const override { return ""; }
-  virtual QString getGameName() const override { return ""; }
-  virtual int getNexusID() const override { return -1; }
+  virtual MOBase::VersionInfo newestVersion() const override { return QString(); }
+  virtual MOBase::VersionInfo ignoredVersion() const override { return QString(); }
+  virtual QString installationFile() const override { return ""; }
+  virtual QString gameName() const override { return ""; }
+  virtual int modId() const override { return -1; }
   virtual QDateTime getExpires() const override { return QDateTime(); }
   virtual std::vector<QString> getIniTweaks() const override { return std::vector<QString>(); }
   virtual std::vector<ModInfo::EFlag> getFlags() const override;
@@ -65,6 +66,7 @@ public:
   virtual QStringList stealFiles() const override { return m_Archives + QStringList(m_ReferenceFile); }
   virtual bool alwaysEnabled() const override { return true; }
   virtual void addInstalledFile(int, int) override {}
+  virtual std::set<std::pair<int, int>> installedFiles() const override { return {}; }
 
   ModInfo::EModType modType() const { return m_ModType; }
 

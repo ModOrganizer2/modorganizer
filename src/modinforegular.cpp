@@ -34,8 +34,8 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGa
   , m_Converted(false)
   , m_Validated(false)
   , m_MetaInfoChanged(false)
-  , m_EndorsedState(ENDORSED_UNKNOWN)
-  , m_TrackedState(TRACKED_UNKNOWN)
+  , m_EndorsedState(EndorsedState::ENDORSED_UNKNOWN)
+  , m_TrackedState(TrackedState::TRACKED_UNKNOWN)
   , m_NexusBridge(pluginContainer)
 {
   m_CreationTime = QFileInfo(path.absolutePath()).birthTime();
@@ -166,17 +166,18 @@ void ModInfoRegular::readMeta()
   m_LastNexusUpdate  = QDateTime::fromString(metaFile.value("lastNexusUpdate", "").toString(), Qt::ISODate);
   m_NexusLastModified = QDateTime::fromString(metaFile.value("nexusLastModified", QDateTime::currentDateTimeUtc()).toString(), Qt::ISODate);
   m_Color            = metaFile.value("color",QColor()).value<QColor>();
-  m_TrackedState = metaFile.value("tracked", false).toBool() ? TRACKED_TRUE : TRACKED_FALSE;
+  m_TrackedState = metaFile.value("tracked", false).toBool() ? TrackedState::TRACKED_TRUE : TrackedState::TRACKED_FALSE;
   if (metaFile.contains("endorsed")) {
     if (metaFile.value("endorsed").canConvert<int>()) {
+      using ut = std::underlying_type_t<EndorsedState>;
       switch (metaFile.value("endorsed").toInt()) {
-        case ENDORSED_FALSE: m_EndorsedState = ENDORSED_FALSE; break;
-        case ENDORSED_TRUE:  m_EndorsedState = ENDORSED_TRUE;  break;
-        case ENDORSED_NEVER: m_EndorsedState = ENDORSED_NEVER; break;
-        default: m_EndorsedState = ENDORSED_UNKNOWN; break;
+        case static_cast<ut>(EndorsedState::ENDORSED_FALSE): m_EndorsedState = EndorsedState::ENDORSED_FALSE; break;
+        case static_cast<ut>(EndorsedState::ENDORSED_TRUE):  m_EndorsedState = EndorsedState::ENDORSED_TRUE;  break;
+        case static_cast<ut>(EndorsedState::ENDORSED_NEVER): m_EndorsedState = EndorsedState::ENDORSED_NEVER; break;
+        default: m_EndorsedState = EndorsedState::ENDORSED_UNKNOWN; break;
       }
     } else {
-      m_EndorsedState = metaFile.value("endorsed", false).toBool() ? ENDORSED_TRUE : ENDORSED_FALSE;
+      m_EndorsedState = metaFile.value("endorsed", false).toBool() ? EndorsedState::ENDORSED_TRUE : EndorsedState::ENDORSED_FALSE;
     }
   }
 
@@ -236,10 +237,10 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("converted", m_Converted);
       metaFile.setValue("validated", m_Validated);
       metaFile.setValue("color", m_Color);
-      if (m_EndorsedState != ENDORSED_UNKNOWN) {
-        metaFile.setValue("endorsed", m_EndorsedState);
+      if (m_EndorsedState != EndorsedState::ENDORSED_UNKNOWN) {
+        metaFile.setValue("endorsed", static_cast<std::underlying_type_t<EndorsedState>>(m_EndorsedState));
       }
-      metaFile.setValue("tracked", m_TrackedState);
+      metaFile.setValue("tracked", static_cast<std::underlying_type_t<TrackedState>>(m_TrackedState));
 
       metaFile.remove("installedFiles");
       metaFile.beginWriteArray("installedFiles");
@@ -295,15 +296,15 @@ void ModInfoRegular::nxmDescriptionAvailable(QString, int, QVariant, QVariant re
   QVariantMap result = resultData.toMap();
   setNexusDescription(result["description"].toString());
 
-  if ((m_EndorsedState != ENDORSED_NEVER) && (result.contains("endorsement"))) {
+  if ((m_EndorsedState != EndorsedState::ENDORSED_NEVER) && (result.contains("endorsement"))) {
     QVariantMap endorsement = result["endorsement"].toMap();
     QString endorsementStatus = endorsement["endorse_status"].toString();
     if (endorsementStatus.compare("Endorsed", Qt::CaseInsensitive) == 00)
-      setEndorsedState(ENDORSED_TRUE);
+      setEndorsedState(EndorsedState::ENDORSED_TRUE);
     else if (endorsementStatus.compare("Abstained", Qt::CaseInsensitive) == 00)
-      setEndorsedState(ENDORSED_NEVER);
+      setEndorsedState(EndorsedState::ENDORSED_NEVER);
     else
-      setEndorsedState(ENDORSED_FALSE);
+      setEndorsedState(EndorsedState::ENDORSED_FALSE);
   }
   m_LastNexusQuery = QDateTime::currentDateTimeUtc();
   m_NexusLastModified = QDateTime::fromSecsSinceEpoch(result["updated_timestamp"].toInt(), Qt::UTC);
@@ -318,11 +319,11 @@ void ModInfoRegular::nxmEndorsementToggled(QString, int, QVariant, QVariant resu
 {
   QMap results = resultData.toMap();
   if (results["status"].toString().compare("Endorsed") == 0) {
-    m_EndorsedState = ENDORSED_TRUE;
+    m_EndorsedState = EndorsedState::ENDORSED_TRUE;
   } else if (results["status"].toString().compare("Abstained") == 0) {
-    m_EndorsedState = ENDORSED_NEVER;
+    m_EndorsedState = EndorsedState::ENDORSED_NEVER;
   } else {
-    m_EndorsedState = ENDORSED_FALSE;
+    m_EndorsedState = EndorsedState::ENDORSED_FALSE;
   }
   m_MetaInfoChanged = true;
   saveMeta();
@@ -333,9 +334,9 @@ void ModInfoRegular::nxmEndorsementToggled(QString, int, QVariant, QVariant resu
 void ModInfoRegular::nxmTrackingToggled(QString, int, QVariant, bool tracked)
 {
   if (tracked)
-    m_TrackedState = TRACKED_TRUE;
+    m_TrackedState = TrackedState::TRACKED_TRUE;
   else
-    m_TrackedState = TRACKED_FALSE;
+    m_TrackedState = TrackedState::TRACKED_FALSE;
   m_MetaInfoChanged = true;
   saveMeta();
   emit modDetailsUpdated(true);
@@ -500,7 +501,7 @@ void ModInfoRegular::setNexusDescription(const QString &description)
   }
 }
 
-void ModInfoRegular::setEndorsedState(EEndorsedState endorsedState)
+void ModInfoRegular::setEndorsedState(EndorsedState endorsedState)
 {
   if (endorsedState != m_EndorsedState) {
     m_EndorsedState = endorsedState;
@@ -508,7 +509,7 @@ void ModInfoRegular::setEndorsedState(EEndorsedState endorsedState)
   }
 }
 
-void ModInfoRegular::setTrackedState(ETrackedState trackedState)
+void ModInfoRegular::setTrackedState(TrackedState trackedState)
 {
   if (trackedState != m_TrackedState) {
     m_TrackedState = trackedState;
@@ -529,22 +530,22 @@ void ModInfoRegular::addNexusCategory(int categoryID)
 
 void ModInfoRegular::setIsEndorsed(bool endorsed)
 {
-  if (m_EndorsedState != ENDORSED_NEVER) {
-    m_EndorsedState = endorsed ? ENDORSED_TRUE : ENDORSED_FALSE;
+  if (m_EndorsedState != EndorsedState::ENDORSED_NEVER) {
+    m_EndorsedState = endorsed ? EndorsedState::ENDORSED_TRUE : EndorsedState::ENDORSED_FALSE;
     m_MetaInfoChanged = true;
   }
 }
 
 void ModInfoRegular::setNeverEndorse()
 {
-  m_EndorsedState = ENDORSED_NEVER;
+  m_EndorsedState = EndorsedState::ENDORSED_NEVER;
   m_MetaInfoChanged = true;
 }
 
 void ModInfoRegular::setIsTracked(bool tracked)
 {
-  if (tracked != (m_TrackedState == TRACKED_TRUE)) {
-    m_TrackedState = tracked ? TRACKED_TRUE : TRACKED_FALSE;
+  if (tracked != (m_TrackedState == TrackedState::TRACKED_TRUE)) {
+    m_TrackedState = tracked ? TrackedState::TRACKED_TRUE : TrackedState::TRACKED_FALSE;
     m_MetaInfoChanged = true;
   }
 }
@@ -555,7 +556,7 @@ void ModInfoRegular::setColor(QColor color)
   m_MetaInfoChanged = true;
 }
 
-QColor ModInfoRegular::getColor() const
+QColor ModInfoRegular::color() const
 {
   return m_Color;
 }
@@ -568,15 +569,15 @@ bool ModInfoRegular::remove()
 
 void ModInfoRegular::endorse(bool doEndorse)
 {
-  if (doEndorse != (m_EndorsedState == ENDORSED_TRUE)) {
-    m_NexusBridge.requestToggleEndorsement(m_GameName, getNexusID(), m_Version.canonicalString(), doEndorse, QVariant(1));
+  if (doEndorse != (m_EndorsedState == EndorsedState::ENDORSED_TRUE)) {
+    m_NexusBridge.requestToggleEndorsement(m_GameName, modId(), m_Version.canonicalString(), doEndorse, QVariant(1));
   }
 }
 
 void ModInfoRegular::track(bool doTrack)
 {
-  if (doTrack != (m_TrackedState == TRACKED_TRUE)) {
-    m_NexusBridge.requestToggleTracking(m_GameName, getNexusID(), doTrack, QVariant(1));
+  if (doTrack != (m_TrackedState == TrackedState::TRACKED_TRUE)) {
+    m_NexusBridge.requestToggleTracking(m_GameName, modId(), doTrack, QVariant(1));
   }
 }
 
@@ -629,12 +630,12 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 {
   std::vector<ModInfo::EFlag> result = ModInfoWithConflictInfo::getFlags();
   if ((m_NexusID > 0) &&
-      (endorsedState() == ENDORSED_FALSE) &&
+      (endorsedState() == EndorsedState::ENDORSED_FALSE) &&
       Settings::instance().nexus().endorsementIntegration()) {
     result.push_back(ModInfo::FLAG_NOTENDORSED);
   }
   if ((m_NexusID > 0) &&
-      (trackedState() == TRACKED_TRUE)) {
+      (trackedState() == TrackedState::TRACKED_TRUE)) {
     result.push_back(ModInfo::FLAG_TRACKED);
   }
   if (!isValid() && !m_Validated) {
@@ -736,12 +737,12 @@ QString ModInfoRegular::repository() const
   return m_Repository;
 }
 
-ModInfoRegular::EEndorsedState ModInfoRegular::endorsedState() const
+EndorsedState ModInfoRegular::endorsedState() const
 {
   return m_EndorsedState;
 }
 
-ModInfoRegular::ETrackedState ModInfoRegular::trackedState() const
+TrackedState ModInfoRegular::trackedState() const
 {
   return m_TrackedState;
 }
@@ -791,7 +792,7 @@ void ModInfoRegular::setCustomURL(QString const &url)
   m_MetaInfoChanged = true;
 }
 
-QString ModInfoRegular::getCustomURL() const
+QString ModInfoRegular::url() const
 {
   return m_CustomURL;
 }

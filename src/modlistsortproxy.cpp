@@ -198,14 +198,14 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
         lt = comp < 0;
     } break;
     case ModList::COL_CATEGORY: {
-      if (leftMod->getPrimaryCategory() != rightMod->getPrimaryCategory()) {
-        if (leftMod->getPrimaryCategory() < 0) lt = false;
-        else if (rightMod->getPrimaryCategory() < 0) lt = true;
+      if (leftMod->primaryCategory() != rightMod->primaryCategory()) {
+        if (leftMod->primaryCategory() < 0) lt = false;
+        else if (rightMod->primaryCategory() < 0) lt = true;
         else {
           try {
             CategoryFactory &categories = CategoryFactory::instance();
-            QString leftCatName = categories.getCategoryName(categories.getCategoryIndex(leftMod->getPrimaryCategory()));
-            QString rightCatName = categories.getCategoryName(categories.getCategoryIndex(rightMod->getPrimaryCategory()));
+            QString leftCatName = categories.getCategoryName(categories.getCategoryIndex(leftMod->primaryCategory()));
+            QString rightCatName = categories.getCategoryName(categories.getCategoryIndex(rightMod->primaryCategory()));
             lt = leftCatName < rightCatName;
           } catch (const std::exception &e) {
             log::error("failed to compare categories: {}", e.what());
@@ -214,12 +214,12 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
       }
     } break;
     case ModList::COL_MODID: {
-      if (leftMod->getNexusID() != rightMod->getNexusID())
-        lt = leftMod->getNexusID() < rightMod->getNexusID();
+      if (leftMod->modId() != rightMod->modId())
+        lt = leftMod->modId() < rightMod->modId();
     } break;
     case ModList::COL_VERSION: {
-      if (leftMod->getVersion() != rightMod->getVersion())
-        lt = leftMod->getVersion() < rightMod->getVersion();
+      if (leftMod->version() != rightMod->version())
+        lt = leftMod->version() < rightMod->version();
     } break;
     case ModList::COL_INSTALLTIME: {
       QDateTime leftTime = left.data().toDateTime();
@@ -228,8 +228,8 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
         return leftTime < rightTime;
     } break;
     case ModList::COL_GAME: {
-      if (leftMod->getGameName() != rightMod->getGameName()) {
-        lt = leftMod->getGameName() < rightMod->getGameName();
+      if (leftMod->gameName() != rightMod->gameName()) {
+        lt = leftMod->gameName() < rightMod->gameName();
       }
       else {
         int comp = QString::compare(leftMod->name(), rightMod->name(), Qt::CaseInsensitive);
@@ -392,7 +392,7 @@ bool ModListSortProxy::categoryMatchesMod(
 
     case CategoryFactory::Endorsed:
     {
-      b = (info->endorsedState() == ModInfo::ENDORSED_TRUE);
+      b = (info->endorsedState() == EndorsedState::ENDORSED_TRUE);
       break;
     }
 
@@ -425,13 +425,13 @@ bool ModListSortProxy::categoryMatchesMod(
         return false;
       }
 
-      b = (info->getNexusID() > 0);
+      b = (info->modId() > 0);
       break;
     }
 
     case CategoryFactory::Tracked:
     {
-      b = (info->trackedState() == ModInfo::TRACKED_TRUE);
+      b = (info->trackedState() == TrackedState::TRACKED_TRUE);
       break;
     }
 
@@ -531,7 +531,7 @@ bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
           bool ok;
           int filterID = currentKeyword.toInt(&ok);
           if (ok) {
-            int modID = info->getNexusID();
+            int modID = info->modId();
             while (modID > 0) {
               if (modID == filterID) {
                 foundKeyword = true;

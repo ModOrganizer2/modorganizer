@@ -68,9 +68,9 @@ void NexusTab::update()
 
   clear();
 
-  ui->modID->setText(QString("%1").arg(mod().getNexusID()));
+  ui->modID->setText(QString("%1").arg(mod().modId()));
 
-  QString gameName = mod().getGameName();
+  QString gameName = mod().gameName();
   ui->sourceGame->addItem(
     core().managedGame()->gameName(),
     core().managedGame()->gameShortName());
@@ -98,10 +98,10 @@ void NexusTab::update()
     [&](const QUrl& url){ shell::Open(url); });
 
   ui->endorse->setEnabled(
-    (mod().endorsedState() == ModInfo::ENDORSED_FALSE) ||
-    (mod().endorsedState() == ModInfo::ENDORSED_NEVER));
+    (mod().endorsedState() == EndorsedState::ENDORSED_FALSE) ||
+    (mod().endorsedState() == EndorsedState::ENDORSED_NEVER));
 
-  setHasData(mod().getNexusID() >= 0);
+  setHasData(mod().modId() >= 0);
 }
 
 void NexusTab::firstActivation()
@@ -126,10 +126,10 @@ bool NexusTab::usesOriginFiles() const
 
 void NexusTab::updateVersionColor()
 {
-  if (mod().getVersion() != mod().getNewestVersion()) {
+  if (mod().version() != mod().newestVersion()) {
     ui->version->setStyleSheet("color: red");
     ui->version->setToolTip(tr("Current Version: %1").arg(
-      mod().getNewestVersion().canonicalString()));
+      mod().newestVersion().canonicalString()));
   } else {
     ui->version->setStyleSheet("color: green");
     ui->version->setToolTip(tr("No update available"));
@@ -138,11 +138,11 @@ void NexusTab::updateVersionColor()
 
 void NexusTab::updateWebpage()
 {
-  const int modID = mod().getNexusID();
+  const int modID = mod().modId();
 
   if (isValidModID(modID)) {
     const QString nexusLink = NexusInterface::instance(&plugin())
-      ->getModURL(modID, mod().getGameName());
+      ->getModURL(modID, mod().gameName());
 
     ui->visitNexus->setToolTip(nexusLink);
     refreshData(modID);
@@ -150,9 +150,9 @@ void NexusTab::updateWebpage()
     onModChanged();
   }
 
-  ui->version->setText(mod().getVersion().displayString());
+  ui->version->setText(mod().version().displayString());
   ui->hasCustomURL->setChecked(mod().hasCustomURL());
-  ui->customURL->setText(mod().getCustomURL());
+  ui->customURL->setText(mod().url());
   ui->customURL->setEnabled(mod().hasCustomURL());
   ui->visitCustomURL->setEnabled(mod().hasCustomURL());
   ui->visitCustomURL->setToolTip(mod().parseCustomURL().toString());
@@ -162,7 +162,7 @@ void NexusTab::updateWebpage()
 
 void NexusTab::updateTracking()
 {
-  if (mod().trackedState() == ModInfo::TRACKED_TRUE) {
+  if (mod().trackedState() == TrackedState::TRACKED_TRUE) {
     ui->track->setChecked(true);
     ui->track->setText(tr("Tracked"));
   } else {
@@ -301,7 +301,7 @@ void NexusTab::onModIDChanged()
     return;
   }
 
-  const int oldID = mod().getNexusID();
+  const int oldID = mod().modId();
   const int newID = ui->modID->text().toInt();
 
   if (oldID != newID){
@@ -326,7 +326,7 @@ void NexusTab::onSourceGameChanged()
     if (game->gameName() == ui->sourceGame->currentText()) {
       mod().setGameName(game->gameShortName()); 
       mod().setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
-      refreshData(mod().getNexusID());
+      refreshData(mod().modId());
       return;
     }
   }
@@ -345,7 +345,7 @@ void NexusTab::onVersionChanged()
 
 void NexusTab::onRefreshBrowser()
 {
-  const auto modID = mod().getNexusID();
+  const auto modID = mod().modId();
 
   if (isValidModID(modID)) {
     mod().setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
@@ -357,11 +357,11 @@ void NexusTab::onRefreshBrowser()
 
 void NexusTab::onVisitNexus()
 {
-  const int modID = mod().getNexusID();
+  const int modID = mod().modId();
 
   if (isValidModID(modID)) {
     const QString nexusLink = NexusInterface::instance(&plugin())
-      ->getModURL(modID, mod().getGameName());
+      ->getModURL(modID, mod().gameName());
 
     shell::Open(QUrl(nexusLink));
   }
@@ -379,7 +379,7 @@ void NexusTab::onTrack()
   // use modPtr() instead of mod() or this because the callback may be
   // executed after the dialog is closed
   core().loggedInAction(parentWidget(), [m=modPtr()] {
-    if (m->trackedState() == ModInfo::TRACKED_TRUE) {
+    if (m->trackedState() == TrackedState::TRACKED_TRUE) {
       m->track(false);
     } else {
       m->track(true);

@@ -20,7 +20,7 @@ public:
   //TODO: Fix renaming method to avoid priority reset
   virtual bool setName(const QString& name);
 
-  virtual int getNexusID() const override { return -1; }
+  virtual int modId() const override { return -1; }
   virtual void setGameName(const QString& gameName) override {}
   virtual void setNexusID(int /*modID*/) override {}
   virtual void endorse(bool /*doEndorse*/) override {}
@@ -33,8 +33,8 @@ public:
   virtual int getHighlight() const override;
   virtual QString getDescription() const override;
   virtual QString name() const override;
-  virtual QString getGameName() const override { return ""; }
-  virtual QString getInstallationFile() const override { return ""; }
+  virtual QString gameName() const override { return ""; }
+  virtual QString installationFile() const override { return ""; }
   virtual QString repository() const override { return ""; }
   virtual int getNexusFileStatus() const override { return 0; }
   virtual void setNexusFileStatus(int) override {}
