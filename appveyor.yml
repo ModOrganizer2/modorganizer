@@ -21,19 +21,19 @@ environment:
   VER_STUB_NIGHTLY: dev-nightly-
 build_script:
 - pwsh: >-
-    REM Maintenance comments:
+    # Maintenance comments:
 
-    REM APPVEYOR_BUILD_FOLDER= "c:\projects\modorganizer-slug"
+    # APPVEYOR_BUILD_FOLDER= "c:\projects\modorganizer-slug"
 
-    REM -Need to update py3 version used to invoke unimake.py once in a while.
+    # -Need to update py3 version used to invoke unimake.py once in a while.
 
-    REM -Need update MO_VERSION env variable after each release.
+    # -Need update MO_VERSION env variable after each release.
 
-    REM -Always clones umbrella master
+    # -Always clones umbrella master
 
-    REM -Will checkout all the branches matching the one that triggered the build on the main repo.
+    # -Will checkout all the branches matching the one that triggered the build on the main repo.
 
-    REM End comments.
+    # End comments.
 
     git clone --depth=1 https://github.com/ModOrganizer2/modorganizer-umbrella.git c:\projects\modorganizer-umbrella
 
