@@ -407,6 +407,7 @@ public: // Plugin operations:
   virtual QVariant pluginSetting(const QString& pluginName, const QString& key, const QVariant& defaultValue) const override;
   virtual std::map<QString, QVariant> pluginSettings(const QString& pluginName) const override;
   virtual bool setPluginSetting(const QString& pluginName, const QString& key, const QVariant& value) override;
+  virtual std::map<QString, QVariant> clearPluginSettings(const QString& pluginName) override;
 
 private:
 
