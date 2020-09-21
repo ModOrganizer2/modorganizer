@@ -43,7 +43,7 @@ build_script:
 
     git checkout $(git show-ref --verify --quiet refs/remotes/origin/${env:APPVEYOR_REPO_BRANCH} || echo '-b') ${env:APPVEYOR_REPO_BRANCH}
 
-    C:\Python38-x64\python.exe unimake.py -d %APPVEYOR_BUILD_FOLDER%\modorganizer-build -s Appveyor_Build=True -s Feature_Branch=${env:APPVEYOR_REPO_BRANCH} -s override_build_version=${env:APPVEYOR_BUILD_VERSION}
+    C:\Python38-x64\python.exe unimake.py -d ${env:APPVEYOR_BUILD_FOLDER}\modorganizer-build -s Appveyor_Build=True -s Feature_Branch=${env:APPVEYOR_REPO_BRANCH} -s override_build_version=${env:APPVEYOR_BUILD_VERSION}
 test: off
 artifacts:
 - path: '\modorganizer-build\install\bin'
