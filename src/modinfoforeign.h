@@ -69,6 +69,7 @@ public:
   virtual QVariant pluginSetting(const QString& pluginName, const QString& key, const QVariant& defaultValue) const override { return defaultValue; }
   virtual std::map<QString, QVariant> pluginSettings(const QString& pluginName) const override { return {}; }
   virtual bool setPluginSetting(const QString& pluginName, const QString& key, const QVariant& value) override { return false; }
+  virtual std::map<QString, QVariant> clearPluginSettings(const QString& pluginName) override { return {}; }
 
   ModInfo::EModType modType() const { return m_ModType; }
 

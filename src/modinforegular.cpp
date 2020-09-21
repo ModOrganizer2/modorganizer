@@ -906,3 +906,15 @@ bool ModInfoRegular::setPluginSetting(const QString& pluginName, const QString& 
   saveMeta();
   return true;
 }
+
+std::map<QString, QVariant> ModInfoRegular::clearPluginSettings(const QString& pluginName)
+{
+  auto itp = m_PluginSettings.find(pluginName);
+  if (itp == std::end(m_PluginSettings)) {
+    return {};
+  }
+  auto settings = itp->second;
+  m_PluginSettings.erase(itp);
+  saveMeta();
+  return settings;
+}
