@@ -20,7 +20,7 @@ environment:
   VER_STUB_NORMAL: dev-appveyor-
   VER_STUB_NIGHTLY: dev-nightly-
 build_script:
-- ps: >-
+- pwsh: >-
     REM Maintenance comments:
 
     REM APPVEYOR_BUILD_FOLDER= "c:\projects\modorganizer-slug"
@@ -35,18 +35,13 @@ build_script:
 
     REM End comments.
 
+    git clone --depth=1 https://github.com/ModOrganizer2/modorganizer-umbrella.git c:\projects\modorganizer-umbrella
 
-    git clone --depth=1 https://github.com/ModOrganizer2/modorganizer-umbrella.git c:\projects\modorganizer-umbrella 2> $null
-
-
-    mkdir ${env:APPVEYOR_BUILD_FOLDER}\modorganizer-build -type directory
-
+    New-Item -ItemType Directory -Path  ${env:APPVEYOR_BUILD_FOLDER}\modorganizer-build
 
     cd c:\projects\modorganizer-umbrella
 
-
     git checkout $(git show-ref --verify --quiet refs/remotes/origin/${env:APPVEYOR_REPO_BRANCH} || echo '-b') ${env:APPVEYOR_REPO_BRANCH}
-
 
     C:\Python38-x64\python.exe unimake.py -d %APPVEYOR_BUILD_FOLDER%\modorganizer-build -s Appveyor_Build=True -s Feature_Branch=${env:APPVEYOR_REPO_BRANCH} -s override_build_version=${env:APPVEYOR_BUILD_VERSION}
 test: off
