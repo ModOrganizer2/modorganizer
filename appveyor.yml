@@ -35,6 +35,8 @@ build_script:
 
     # End comments.
 
+    $ErrorActionPreference = 'Stop'
+
     git clone --depth=1 --no-single-branch https://github.com/ModOrganizer2/modorganizer-umbrella.git c:\projects\modorganizer-umbrella
 
     New-Item -ItemType Directory -Path  ${env:APPVEYOR_BUILD_FOLDER}\modorganizer-build
