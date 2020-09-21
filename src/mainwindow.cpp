@@ -1893,12 +1893,16 @@ QDir MainWindow::currentSavesDir() const
     iniPath += "/" + iniFiles[0];
 
     wchar_t path[MAX_PATH];
-    ::GetPrivateProfileStringW(
-          L"General", L"SLocalSavePath", L"Saves",
-          path, MAX_PATH,
-          iniPath.toStdWString().c_str()
-          );
-    savesDir.setPath(m_OrganizerCore.managedGame()->documentsDirectory().absoluteFilePath(QString::fromWCharArray(path)));
+    if (::GetPrivateProfileStringW(
+      L"General", L"SLocalSavePath", L"",
+      path, MAX_PATH,
+      iniPath.toStdWString().c_str()
+    )) {
+      savesDir.setPath(m_OrganizerCore.managedGame()->documentsDirectory().absoluteFilePath(QString::fromWCharArray(path)));
+    }
+    else {
+      savesDir = m_OrganizerCore.managedGame()->savesDirectory();
+    }
   }
 
   return savesDir;

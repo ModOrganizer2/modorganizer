@@ -205,6 +205,17 @@ void ModInfoRegular::readMeta()
   }
   metaFile.endArray();
 
+  // Plugin settings:
+  metaFile.beginGroup("Plugins");
+  for (auto pluginName: metaFile.childGroups()) {
+    metaFile.beginGroup(pluginName);
+    for (auto settingKey : metaFile.childKeys()) {
+      m_PluginSettings[pluginName][settingKey] = metaFile.value(settingKey);
+    }
+    metaFile.endGroup();
+  }
+  metaFile.endGroup();
+
   m_MetaInfoChanged = false;
 }
 
@@ -250,6 +261,18 @@ void ModInfoRegular::saveMeta()
         metaFile.setValue("fileid", iter->second);
       }
       metaFile.endArray();
+
+      // Plugin settings:
+      metaFile.remove("Plugins");
+      metaFile.beginGroup("Plugins");
+      for (const auto& [pluginName, pluginSettings]: m_PluginSettings) {
+        metaFile.beginGroup(pluginName);
+        for (const auto& [settingName, settingValue]: pluginSettings) {
+          metaFile.setValue(settingName, settingValue);
+        }
+        metaFile.endGroup();
+      }
+      metaFile.endGroup();
 
       metaFile.sync(); // sync needs to be called to ensure the file is created
 
@@ -849,4 +872,37 @@ std::vector<QString> ModInfoRegular::getIniTweaks() const
   }
   metaFile.endArray();
   return result;
+}
+
+
+std::map<QString, QVariant> ModInfoRegular::pluginSettings(const QString& pluginName) const 
+{
+  auto itp = m_PluginSettings.find(pluginName);
+  if (itp == std::end(m_PluginSettings)) {
+    return {};
+  }
+  return itp->second;
+}
+
+QVariant ModInfoRegular::pluginSetting(const QString& pluginName, const QString& key, const QVariant& defaultValue) const
+{
+  auto itp = m_PluginSettings.find(pluginName);
+  if (itp == std::end(m_PluginSettings)) {
+    return defaultValue;
+  }
+
+  auto its = itp->second.find(key);
+  if (its == std::end(itp->second)) {
+    return defaultValue;
+  }
+
+  return its->second;
+}
+
+bool ModInfoRegular::setPluginSetting(const QString& pluginName, const QString& key, const QVariant& value)
+{
+  m_PluginSettings[pluginName][key] = value;
+  m_MetaInfoChanged = true;
+  saveMeta();
+  return true;
 }
