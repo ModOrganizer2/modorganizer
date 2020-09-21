@@ -34,6 +34,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <map>
 #include <errorcodes.h>
 
+#include "modinfo.h"
+
 
 /**
  * @brief manages the installation of mod archives
@@ -61,6 +63,22 @@ public:
   void setParentWidget(QWidget *widget);
 
   void setURL(const QString &url);
+
+  /**
+   * @brief Notify all installer plugins that an installation is about to start.
+   *
+   * @param archive Path to the archive that is going to be installed.
+   * @param currentMod The mod being re-installed, or a null pointer for new installation.
+   */
+  void notifyInstallationStart(QString const& archive, ModInfo::Ptr currentMod);
+
+  /**
+   * @brief notify all installer plugins that an installation has ended.
+   *
+   * @param result The result of the installation process.
+   * @param currentMod The newly install mod, if result is SUCCESS, a null pointer otherwise.
+   */
+  void notifyInstallationEnd(MOBase::IPluginInstaller::EInstallResult result, ModInfo::Ptr newMod);
 
   /**
    * @brief update the directory where mods are to be installed
