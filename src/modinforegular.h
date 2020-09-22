@@ -254,7 +254,7 @@ public:
    *
    * @return the nexus mod id. may be 0 if the mod id isn't known or doesn't exist
    **/
-  int modId() const override { return m_NexusID; }
+  int nexusId() const override { return m_NexusID; }
 
   /**
    * @return the fixed priority of mods of this type or INT_MIN if the priority of mods

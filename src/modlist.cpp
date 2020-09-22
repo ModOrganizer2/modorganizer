@@ -240,7 +240,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         return m_Profile->getModPriority(modIndex);
       }
     } else if (column == COL_MODID) {
-      int modID = modInfo->modId();
+      int modID = modInfo->nexusId();
       if (modID > 0) {
         return modID;
       }
@@ -333,7 +333,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         return m_Profile->getModPriority(modIndex);
       }
     } else {
-      return modInfo->modId();
+      return modInfo->nexusId();
     }
   } else if (role == Qt::UserRole + 1) {
     return modIndex;
@@ -471,7 +471,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       } else if (modInfo->getNexusFileStatus() == 6) {
         text += "<br>" + tr("This file has been marked as \"Deleted\"! You may want to check for an update or remove the nexus ID from this mod!");
       }
-      if (modInfo->modId() > 0) {
+      if (modInfo->nexusId() > 0) {
         if (!modInfo->canBeUpdated()) {
           qint64 remains = QDateTime::currentDateTimeUtc().secsTo(modInfo->getExpires());
           qint64 minutes = remains / 60;

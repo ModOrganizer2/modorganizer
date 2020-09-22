@@ -570,14 +570,14 @@ bool ModInfoRegular::remove()
 void ModInfoRegular::endorse(bool doEndorse)
 {
   if (doEndorse != (m_EndorsedState == EndorsedState::ENDORSED_TRUE)) {
-    m_NexusBridge.requestToggleEndorsement(m_GameName, modId(), m_Version.canonicalString(), doEndorse, QVariant(1));
+    m_NexusBridge.requestToggleEndorsement(m_GameName, nexusId(), m_Version.canonicalString(), doEndorse, QVariant(1));
   }
 }
 
 void ModInfoRegular::track(bool doTrack)
 {
   if (doTrack != (m_TrackedState == TrackedState::TRACKED_TRUE)) {
-    m_NexusBridge.requestToggleTracking(m_GameName, modId(), doTrack, QVariant(1));
+    m_NexusBridge.requestToggleTracking(m_GameName, nexusId(), doTrack, QVariant(1));
   }
 }
 

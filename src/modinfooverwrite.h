@@ -51,7 +51,7 @@ public:
   virtual bool validated() const override { return false; }
   virtual int getFixedPriority() const override { return std::numeric_limits<int>::max(); }
   virtual QString gameName() const override { return ""; }
-  virtual int modId() const override { return -1; }
+  virtual int nexusId() const override { return -1; }
   virtual QDateTime getExpires() const override { return QDateTime(); }
   virtual std::vector<QString> getIniTweaks() const override { return std::vector<QString>(); }
   virtual std::vector<ModInfo::EFlag> getFlags() const override;

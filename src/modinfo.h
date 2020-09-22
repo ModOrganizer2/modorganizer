@@ -292,11 +292,9 @@ public: // IModInterface implementations / Re-declaration
   virtual QString repository() const override { return ""; }
 
   /**
-   * @return the ID of this mod on the repository.
-   *
-   * @note For Nexus, this is the Nexus ID of the mod.
+   * @return the nexus ID of this mod on the repository.
    */
-  virtual int modId() const = 0;
+  virtual int nexusId() const = 0;
 
   /**
    * @return the current version of this mod.

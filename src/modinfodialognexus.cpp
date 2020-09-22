@@ -68,7 +68,7 @@ void NexusTab::update()
 
   clear();
 
-  ui->modID->setText(QString("%1").arg(mod().modId()));
+  ui->modID->setText(QString("%1").arg(mod().nexusId()));
 
   QString gameName = mod().gameName();
   ui->sourceGame->addItem(
@@ -101,7 +101,7 @@ void NexusTab::update()
     (mod().endorsedState() == EndorsedState::ENDORSED_FALSE) ||
     (mod().endorsedState() == EndorsedState::ENDORSED_NEVER));
 
-  setHasData(mod().modId() >= 0);
+  setHasData(mod().nexusId() >= 0);
 }
 
 void NexusTab::firstActivation()
@@ -138,7 +138,7 @@ void NexusTab::updateVersionColor()
 
 void NexusTab::updateWebpage()
 {
-  const int modID = mod().modId();
+  const int modID = mod().nexusId();
 
   if (isValidModID(modID)) {
     const QString nexusLink = NexusInterface::instance(&plugin())
@@ -301,7 +301,7 @@ void NexusTab::onModIDChanged()
     return;
   }
 
-  const int oldID = mod().modId();
+  const int oldID = mod().nexusId();
   const int newID = ui->modID->text().toInt();
 
   if (oldID != newID){
@@ -326,7 +326,7 @@ void NexusTab::onSourceGameChanged()
     if (game->gameName() == ui->sourceGame->currentText()) {
       mod().setGameName(game->gameShortName()); 
       mod().setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
-      refreshData(mod().modId());
+      refreshData(mod().nexusId());
       return;
     }
   }
@@ -345,7 +345,7 @@ void NexusTab::onVersionChanged()
 
 void NexusTab::onRefreshBrowser()
 {
-  const auto modID = mod().modId();
+  const auto modID = mod().nexusId();
 
   if (isValidModID(modID)) {
     mod().setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
@@ -357,7 +357,7 @@ void NexusTab::onRefreshBrowser()
 
 void NexusTab::onVisitNexus()
 {
-  const int modID = mod().modId();
+  const int modID = mod().nexusId();
 
   if (isValidModID(modID)) {
     const QString nexusLink = NexusInterface::instance(&plugin())

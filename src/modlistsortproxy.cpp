@@ -214,8 +214,8 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
       }
     } break;
     case ModList::COL_MODID: {
-      if (leftMod->modId() != rightMod->modId())
-        lt = leftMod->modId() < rightMod->modId();
+      if (leftMod->nexusId() != rightMod->nexusId())
+        lt = leftMod->nexusId() < rightMod->nexusId();
     } break;
     case ModList::COL_VERSION: {
       if (leftMod->version() != rightMod->version())
@@ -425,7 +425,7 @@ bool ModListSortProxy::categoryMatchesMod(
         return false;
       }
 
-      b = (info->modId() > 0);
+      b = (info->nexusId() > 0);
       break;
     }
 
@@ -531,7 +531,7 @@ bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
           bool ok;
           int filterID = currentKeyword.toInt(&ok);
           if (ok) {
-            int modID = info->modId();
+            int modID = info->nexusId();
             while (modID > 0) {
               if (modID == filterID) {
                 foundKeyword = true;
