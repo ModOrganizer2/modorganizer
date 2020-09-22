@@ -68,9 +68,11 @@ public:
    * @brief Notify all installer plugins that an installation is about to start.
    *
    * @param archive Path to the archive that is going to be installed.
-   * @param currentMod The mod being re-installed, or a null pointer for new installation.
+   * @param reinstallation True if this is a reinstallation, false otherwise.
+   * @param currentMod The installed mod corresponding to the archive being installed, or a null
+   *     if there is no such mod.
    */
-  void notifyInstallationStart(QString const& archive, ModInfo::Ptr currentMod);
+  void notifyInstallationStart(QString const& archive, bool reinstallation, ModInfo::Ptr currentMod);
 
   /**
    * @brief notify all installer plugins that an installation has ended.

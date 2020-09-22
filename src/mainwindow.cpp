@@ -2319,7 +2319,7 @@ void MainWindow::installMod(QString fileName)
     if (fileName.isEmpty()) {
       return;
     } else {
-      m_OrganizerCore.installMod(fileName, nullptr, QString());
+      m_OrganizerCore.installMod(fileName, false, nullptr, QString());
     }
   } catch (const std::exception &e) {
     reportError(e.what());
@@ -2808,7 +2808,7 @@ void MainWindow::reinstallMod_clicked()
       fullInstallationFile = m_OrganizerCore.downloadManager()->getOutputDirectory() + "/" + installationFile;
     }
     if (QFile::exists(fullInstallationFile)) {
-      m_OrganizerCore.installMod(fullInstallationFile, modInfo, modInfo->name());
+      m_OrganizerCore.installMod(fullInstallationFile, true, modInfo, modInfo->name());
     } else {
       QMessageBox::information(this, tr("Failed"), tr("Installation file no longer exists"));
     }

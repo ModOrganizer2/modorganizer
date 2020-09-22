@@ -869,10 +869,10 @@ QStringList InstallationManager::getSupportedExtensions() const
   return QStringList(std::begin(m_SupportedExtensions), std::end(m_SupportedExtensions));
 }
 
-void InstallationManager::notifyInstallationStart(QString const& archive, ModInfo::Ptr  currentMod)
+void InstallationManager::notifyInstallationStart(QString const& archive, bool reinstallation, ModInfo::Ptr  currentMod)
 {
   for (auto* installer : m_Installers) {
-    installer->onInstallationStart(archive, currentMod.get());
+    installer->onInstallationStart(archive, reinstallation, currentMod.get());
   }
 }
 
