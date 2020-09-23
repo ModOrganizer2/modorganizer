@@ -235,7 +235,14 @@ public:
    *
    * @return newest version of the mod
    **/
-  MOBase::VersionInfo getNewestVersion() const override { return m_NewestVersion; }
+  MOBase::VersionInfo newestVersion() const override { return m_NewestVersion; }
+
+  /**
+   * @brief getter for the newest version number of this mod
+   *
+   * @return newest version of the mod
+   **/
+  MOBase::VersionInfo ignoredVersion() const override { return m_IgnoredVersion; }
 
   /**
    * @brief ignore the newest version for updates
@@ -243,25 +250,11 @@ public:
   void ignoreUpdate(bool ignore) override;
 
   /**
-   * @brief getter for the installation file
-   *
-   * @return file used to install this mod from
-   */
-  virtual QString getInstallationFile() const override { return m_InstallationFile; }
-
-  /**
-   * @brief getter for the source game repository
-   *
-   * @return the source game repository. should default to the active game.
-   **/
-  QString getGameName() const override { return m_GameName; }
-
-  /**
    * @brief getter for the nexus mod id
    *
    * @return the nexus mod id. may be 0 if the mod id isn't known or doesn't exist
    **/
-  int getNexusID() const override { return m_NexusID; }
+  int nexusId() const override { return m_NexusID; }
 
   /**
    * @return the fixed priority of mods of this type or INT_MIN if the priority of mods
@@ -345,12 +338,12 @@ public:
   /**
    * @return true if the file has been endorsed on nexus
    */
-  virtual EEndorsedState endorsedState() const override;
+  virtual MOBase::EndorsedState endorsedState() const override;
 
   /**
    * @return true if the file is being tracked on nexus
    */
-  virtual ETrackedState trackedState() const override;
+  virtual MOBase::TrackedState trackedState() const override;
 
   /**
    * @brief get the last time nexus was checked for file updates on this mod
@@ -386,7 +379,7 @@ public:
 
   virtual void setColor(QColor color) override;
 
-  virtual QColor getColor() const override;
+  virtual QColor color() const override;
 
   virtual void addInstalledFile(int modId, int fileId) override;
 
@@ -400,7 +393,13 @@ public:
   virtual void setHasCustomURL(bool b) override;
   virtual bool hasCustomURL() const override;
   virtual void setCustomURL(QString const &) override;
-  virtual QString getCustomURL() const override;
+  virtual QString url() const override;
+
+  virtual QString gameName() const override { return m_GameName; }
+  virtual QString installationFile() const override { return m_InstallationFile; }
+  virtual bool converted() const override { return m_Converted; }
+  virtual bool validated() const override { return m_Validated; }
+  virtual std::set<std::pair<int, int>> installedFiles() const override { return m_InstalledFileIDs; }
 
 public: // Plugin operations:
 
@@ -411,8 +410,8 @@ public: // Plugin operations:
 
 private:
 
-  void setEndorsedState(EEndorsedState endorsedState);
-  void setTrackedState(ETrackedState trackedState);
+  void setEndorsedState(MOBase::EndorsedState endorsedState);
+  void setTrackedState(MOBase::TrackedState trackedState);
 
 private slots:
 
@@ -467,8 +466,8 @@ private:
   MOBase::VersionInfo m_NewestVersion;
   MOBase::VersionInfo m_IgnoredVersion;
 
-  EEndorsedState m_EndorsedState;
-  ETrackedState m_TrackedState;
+  MOBase::EndorsedState m_EndorsedState;
+  MOBase::TrackedState m_TrackedState;
 
   NexusBridge m_NexusBridge;
 

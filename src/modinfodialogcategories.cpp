@@ -79,7 +79,7 @@ void CategoriesTab::updatePrimary()
 {
   ui->primaryCategories->clear();
 
-  int primaryCategory = mod().getPrimaryCategory();
+  int primaryCategory = mod().primaryCategory();
 
   addChecked(ui->categories->invisibleRootItem());
 

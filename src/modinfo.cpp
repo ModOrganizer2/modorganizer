@@ -180,11 +180,11 @@ bool ModInfo::removeMod(unsigned int index)
   ModInfo::Ptr modInfo = s_Collection[index];
   s_ModsByName.erase(s_ModsByName.find(modInfo->name()));
 
-  auto iter = s_ModsByModID.find(std::pair<QString, int>(modInfo->getGameName(), modInfo->getNexusID()));
+  auto iter = s_ModsByModID.find(std::pair<QString, int>(modInfo->gameName(), modInfo->nexusId()));
   if (iter != s_ModsByModID.end()) {
     std::vector<unsigned int> indices = iter->second;
     indices.erase(std::remove(indices.begin(), indices.end(), index), indices.end());
-    s_ModsByModID[std::pair<QString, int>(modInfo->getGameName(), modInfo->getNexusID())] = indices;
+    s_ModsByModID[std::pair<QString, int>(modInfo->gameName(), modInfo->nexusId())] = indices;
   }
 
   // physically remove the mod directory
@@ -281,8 +281,8 @@ void ModInfo::updateIndices()
 
   for (unsigned int i = 0; i < s_Collection.size(); ++i) {
     QString modName = s_Collection[i]->internalName();
-    QString game = s_Collection[i]->getGameName();
-    int modID = s_Collection[i]->getNexusID();
+    QString game = s_Collection[i]->gameName();
+    int modID = s_Collection[i]->nexusId();
     s_ModsByName[modName] = i;
     s_ModsByModID[std::pair<QString, int>(game, modID)].push_back(i);
   }
@@ -308,7 +308,7 @@ bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
         earliest = mod->getLastNexusUpdate();
       if (mod->getLastNexusUpdate() > latest)
         latest = mod->getLastNexusUpdate();
-      games.insert(mod->getGameName().toLower());
+      games.insert(mod->gameName().toLower());
     }
   }
 
@@ -334,7 +334,7 @@ bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
     std::set<std::pair<QString, int>> organizedGames;
     for (auto mod : s_Collection) {
       if (mod->canBeUpdated() && mod->getLastNexusUpdate() < QDateTime::currentDateTimeUtc().addMonths(-1)) {
-        organizedGames.insert(std::make_pair<QString, int>(mod->getGameName().toLower(), mod->getNexusID()));
+        organizedGames.insert(std::make_pair<QString, int>(mod->gameName().toLower(), mod->nexusId()));
       }
     }
 
@@ -372,7 +372,7 @@ std::set<QSharedPointer<ModInfo>> ModInfo::filteredMods(QString gameName, QVaria
   for (QVariant result : updateData) {
     QVariantMap update = result.toMap();
     std::copy_if(s_Collection.begin(), s_Collection.end(), std::inserter(finalMods, finalMods.end()), [=](QSharedPointer<ModInfo> info) -> bool {
-      if (info->getNexusID() == update["mod_id"].toInt() && info->getGameName().compare(gameName, Qt::CaseInsensitive) == 0)
+      if (info->nexusId() == update["mod_id"].toInt() && info->gameName().compare(gameName, Qt::CaseInsensitive) == 0)
         if (info->getLastNexusUpdate().addSecs(-3600) < QDateTime::fromSecsSinceEpoch(update["latest_file_update"].toInt(), Qt::UTC))
           return true;
       return false;
@@ -381,13 +381,13 @@ std::set<QSharedPointer<ModInfo>> ModInfo::filteredMods(QString gameName, QVaria
 
   if (addOldMods)
     for (auto mod : s_Collection)
-      if (mod->getLastNexusUpdate() < QDateTime::currentDateTimeUtc().addMonths(-1) && mod->getGameName().compare(gameName, Qt::CaseInsensitive) == 0)
+      if (mod->getLastNexusUpdate() < QDateTime::currentDateTimeUtc().addMonths(-1) && mod->gameName().compare(gameName, Qt::CaseInsensitive) == 0)
         finalMods.insert(mod);
 
   if (markUpdated) {
     std::set<QSharedPointer<ModInfo>> updates;
     std::copy_if(s_Collection.begin(), s_Collection.end(), std::inserter(updates, updates.end()), [=](QSharedPointer<ModInfo> info) -> bool {
-      if (info->getGameName().compare(gameName, Qt::CaseInsensitive) == 0 && info->canBeUpdated())
+      if (info->gameName().compare(gameName, Qt::CaseInsensitive) == 0 && info->canBeUpdated())
         return true;
       return false;
     });
@@ -419,7 +419,7 @@ void ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *recei
     }
   }
   mods.erase(
-    std::remove_if(mods.begin(), mods.end(), [](ModInfo::Ptr mod) -> bool { return mod->getNexusID() <= 0; }),
+    std::remove_if(mods.begin(), mods.end(), [](ModInfo::Ptr mod) -> bool { return mod->nexusId() <= 0; }),
     mods.end()
   );
   for (auto mod : mods) {
@@ -434,7 +434,7 @@ void ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *recei
     log::info("Checking updates for {} mods...", mods.size());
 
     for (auto mod : mods) {
-      organizedGames.insert(std::make_pair<QString, int>(mod->getGameName().toLower(), mod->getNexusID()));
+      organizedGames.insert(std::make_pair<QString, int>(mod->gameName().toLower(), mod->nexusId()));
     }
 
     for (auto game : organizedGames) {
@@ -526,14 +526,14 @@ bool ModInfo::categorySet(int categoryID) const
 
 QUrl ModInfo::parseCustomURL() const
 {
-  if (!hasCustomURL() || getCustomURL().isEmpty()) {
+  if (!hasCustomURL() || url().isEmpty()) {
     return {};
   }
 
-  const auto url = QUrl::fromUserInput(getCustomURL());
+  const auto url = QUrl::fromUserInput(this->url());
 
   if (!url.isValid()) {
-    log::error("mod '{}' has an invalid custom url '{}'", name(), getCustomURL());
+    log::error("mod '{}' has an invalid custom url '{}'", name(), this->url());
     return {};
   }
 

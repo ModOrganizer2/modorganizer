@@ -163,7 +163,7 @@ void NotesTab::updateCommentsColor(bool clear)
   QPalette commentPalette = QPalette();
   
   if (!clear) {
-    auto modColor = mod().getColor();
+    auto modColor = mod().color();
     if (modColor.isValid()) {
       commentPalette.setColor(QPalette::Base, modColor);
       commentPalette.setColor(QPalette::Text, ColorSettings::idealTextColor(modColor));
@@ -219,7 +219,7 @@ void NotesTab::onSetColor()
   QColorDialog dialog(m_parent);
   dialog.setOption(QColorDialog::ShowAlphaChannel);
 
-  QColor currentColor = mod().getColor();
+  QColor currentColor = mod().color();
   
   if (currentColor.isValid()) {
     dialog.setCurrentColor(currentColor);
@@ -256,5 +256,5 @@ void NotesTab::checkHasData()
   setHasData(
     !ui->comments->text().isEmpty() ||
     !ui->notes->toPlainText().isEmpty() ||
-    mod().getColor().isValid());
+    mod().color().isValid());
 }

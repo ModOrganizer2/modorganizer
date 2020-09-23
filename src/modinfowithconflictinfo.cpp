@@ -5,6 +5,7 @@
 #include "shared/fileentry.h"
 #include <filesystem>
 
+#include "iplugingame.h"
 #include "moddatachecker.h"
 #include "qdirfiletree.h"
 

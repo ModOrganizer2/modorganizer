@@ -2581,7 +2581,7 @@ void MainWindow::modInstalled(const QString &modName)
   // force an update to happen
   std::multimap<QString, int> IDs;
   ModInfo::Ptr info = ModInfo::getByIndex(ModInfo::getIndex(modName));
-  IDs.insert(std::make_pair<QString, int>(info->getGameName(), info->getNexusID()));
+  IDs.insert(std::make_pair<QString, int>(info->gameName(), info->nexusId()));
   modUpdateCheck(IDs);
 }
 
@@ -2794,7 +2794,7 @@ void MainWindow::modRemoved(const QString &fileName)
 void MainWindow::reinstallMod_clicked()
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
-  QString installationFile = modInfo->getInstallationFile();
+  QString installationFile = modInfo->installationFile();
   if (installationFile.length() != 0) {
     QString fullInstallationFile;
     QFileInfo fileInfo(installationFile);
@@ -3258,8 +3258,8 @@ void MainWindow::visitOnNexus_clicked()
     for (QModelIndex idx : selection->selectedRows()) {
       row_idx = idx.data(Qt::UserRole + 1).toInt();
       info = ModInfo::getByIndex(row_idx);
-      int modID = info->getNexusID();
-      gameName = info->getGameName();
+      int modID = info->nexusId();
+      gameName = info->gameName();
       if (modID > 0)  {
         linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
       } else {
@@ -3323,8 +3323,8 @@ void MainWindow::visitNexusOrWebPage(const QModelIndex& idx)
     return;
   }
 
-  int modID = info->getNexusID();
-  QString gameName = info->getGameName();
+  int modID = info->nexusId();
+  QString gameName = info->gameName();
   const auto url = info->parseCustomURL();
 
   if (modID > 0) {
@@ -3669,7 +3669,7 @@ void MainWindow::setColor_clicked()
   QColorDialog dialog(this);
   dialog.setOption(QColorDialog::ShowAlphaChannel);
 
-  QColor currentColor = modInfo->getColor();
+  QColor currentColor = modInfo->color();
   if (currentColor.isValid()) {
     dialog.setCurrentColor(currentColor);
   }
@@ -4244,8 +4244,8 @@ void MainWindow::changeVersioningScheme() {
     static VersionInfo::VersionScheme schemes[] = { VersionInfo::SCHEME_REGULAR, VersionInfo::SCHEME_DECIMALMARK, VersionInfo::SCHEME_NUMBERSANDLETTERS };
 
     for (int i = 0; i < sizeof(schemes) / sizeof(VersionInfo::VersionScheme) && !success; ++i) {
-      VersionInfo verOld(info->getVersion().canonicalString(), schemes[i]);
-      VersionInfo verNew(info->getNewestVersion().canonicalString(), schemes[i]);
+      VersionInfo verOld(info->version().canonicalString(), schemes[i]);
+      VersionInfo verNew(info->newestVersion().canonicalString(), schemes[i]);
       if (verOld < verNew) {
         info->setVersion(verOld);
         info->setNewestVersion(verNew);
@@ -4254,7 +4254,7 @@ void MainWindow::changeVersioningScheme() {
     }
     if (!success) {
       QMessageBox::information(this, tr("Sorry"),
-          tr("I don't know a versioning scheme where %1 is newer than %2.").arg(info->getNewestVersion().canonicalString()).arg(info->getVersion().canonicalString()),
+          tr("I don't know a versioning scheme where %1 is newer than %2.").arg(info->newestVersion().canonicalString()).arg(info->version().canonicalString()),
           QMessageBox::Ok);
     }
   }
@@ -4283,11 +4283,11 @@ void MainWindow::checkModUpdates_clicked()
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
       ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-      IDs.insert(std::make_pair<QString, int>(info->getGameName(), info->getNexusID()));
+      IDs.insert(std::make_pair<QString, int>(info->gameName(), info->nexusId()));
     }
   } else {
     ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-    IDs.insert(std::make_pair<QString, int>(info->getGameName(), info->getNexusID()));
+    IDs.insert(std::make_pair<QString, int>(info->gameName(), info->nexusId()));
   }
   modUpdateCheck(IDs);
 }
@@ -4324,7 +4324,7 @@ void MainWindow::addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu,
           info->setPrimaryCategory(categoryID);
         }
       });
-      categoryBox->setChecked(categoryID == info->getPrimaryCategory());
+      categoryBox->setChecked(categoryID == info->primaryCategory());
       action->setDefaultWidget(categoryBox);
     } catch (const std::exception &e) {
       log::error("failed to create category checkbox: {}", e.what());
@@ -4572,17 +4572,17 @@ void MainWindow::exportModListCSV()
           if (mod_Note->isChecked())
             builder.setRowField("#Note", QString("%1").arg(info->comments().remove(',')));
 					if (primary_Category->isChecked())
-						builder.setRowField("#Primary_Category", (m_CategoryFactory.categoryExists(info->getPrimaryCategory())) ? m_CategoryFactory.getCategoryNameByID(info->getPrimaryCategory()) : "");
+						builder.setRowField("#Primary_Category", (m_CategoryFactory.categoryExists(info->primaryCategory())) ? m_CategoryFactory.getCategoryNameByID(info->primaryCategory()) : "");
 					if (nexus_ID->isChecked())
-						builder.setRowField("#Nexus_ID", info->getNexusID());
+						builder.setRowField("#Nexus_ID", info->nexusId());
 					if (mod_Nexus_URL->isChecked())
-						builder.setRowField("#Mod_Nexus_URL",(info->getNexusID()>0)? NexusInterface::instance(&m_PluginContainer)->getModURL(info->getNexusID(), info->getGameName()) : "");
+						builder.setRowField("#Mod_Nexus_URL",(info->nexusId()>0)? NexusInterface::instance(&m_PluginContainer)->getModURL(info->nexusId(), info->gameName()) : "");
 					if (mod_Version->isChecked())
-						builder.setRowField("#Mod_Version", info->getVersion().canonicalString());
+						builder.setRowField("#Mod_Version", info->version().canonicalString());
 					if (install_Date->isChecked())
 						builder.setRowField("#Install_Date", info->creationTime().toString("yyyy/MM/dd HH:mm:ss"));
 					if (download_File_Name->isChecked())
-						builder.setRowField("#Download_File_Name", info->getInstallationFile());
+						builder.setRowField("#Download_File_Name", info->installationFile());
 
 					builder.writeRow();
 				}
@@ -4730,7 +4730,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
             menu.addAction(tr("Mark as converted/working"), this, SLOT(markConverted_clicked()));
           }
           menu.addSeparator();
-          if (info->getNexusID() > 0) {
+          if (info->nexusId() > 0) {
             menu.addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
           }
 
@@ -4759,7 +4759,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         addModSendToContextMenu(&menu);
         menu.addAction(tr("Select Color..."), this, SLOT(setColor_clicked()));
 
-        if(info->getColor().isValid())
+        if(info->color().isValid())
           menu.addAction(tr("Reset Color"), this, SLOT(resetColor_clicked()));
 
         menu.addSeparator();
@@ -4783,7 +4783,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           menu.addAction(tr("Change versioning scheme"), this, SLOT(changeVersioningScheme()));
         }
 
-        if (info->getNexusID() > 0)
+        if (info->nexusId() > 0)
           menu.addAction(tr("Force-check updates"), this, SLOT(checkModUpdates_clicked()));
         if (info->updateIgnored()) {
           menu.addAction(tr("Un-ignore update"), this, SLOT(unignoreUpdate()));
@@ -4815,22 +4815,22 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         if (contextColumn == ModList::COL_NOTES) {
           menu.addAction(tr("Select Color..."), this, SLOT(setColor_clicked()));
 
-          if (info->getColor().isValid())
+          if (info->color().isValid())
             menu.addAction(tr("Reset Color"), this, SLOT(resetColor_clicked()));
 
           menu.addSeparator();
         }
 
-        if (info->getNexusID() > 0 && Settings::instance().nexus().endorsementIntegration()) {
+        if (info->nexusId() > 0 && Settings::instance().nexus().endorsementIntegration()) {
           switch (info->endorsedState()) {
-            case ModInfo::ENDORSED_TRUE: {
+            case EndorsedState::ENDORSED_TRUE: {
               menu.addAction(tr("Un-Endorse"), this, SLOT(unendorse_clicked()));
             } break;
-            case ModInfo::ENDORSED_FALSE: {
+            case EndorsedState::ENDORSED_FALSE: {
               menu.addAction(tr("Endorse"), this, SLOT(endorse_clicked()));
               menu.addAction(tr("Won't endorse"), this, SLOT(dontendorse_clicked()));
             } break;
-            case ModInfo::ENDORSED_NEVER: {
+            case EndorsedState::ENDORSED_NEVER: {
               menu.addAction(tr("Endorse"), this, SLOT(endorse_clicked()));
             } break;
             default: {
@@ -4841,12 +4841,12 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           }
         }
 
-        if (info->getNexusID() > 0) {
+        if (info->nexusId() > 0) {
           switch (info->trackedState()) {
-            case ModInfo::TRACKED_FALSE: {
+            case TrackedState::TRACKED_FALSE: {
               menu.addAction(tr("Start tracking"), this, SLOT(track_clicked()));
             } break;
-            case ModInfo::TRACKED_TRUE: {
+            case TrackedState::TRACKED_TRUE: {
               menu.addAction(tr("Stop tracking"), this, SLOT(untrack_clicked()));
             } break;
             default: {
@@ -4870,7 +4870,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
         menu.addSeparator();
 
-        if (info->getNexusID() > 0)  {
+        if (info->nexusId() > 0)  {
           menu.addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
         }
 
@@ -5552,7 +5552,7 @@ void MainWindow::finishUpdateInfo()
   std::set<std::pair<QString, int>> organizedGames;
   for (auto mod : finalMods) {
     if (mod->canBeUpdated()) {
-      organizedGames.insert(std::make_pair<QString, int>(mod->getGameName().toLower(), mod->getNexusID()));
+      organizedGames.insert(std::make_pair<QString, int>(mod->gameName().toLower(), mod->nexusId()));
     }
   }
 
@@ -5584,7 +5584,7 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
   for (auto mod : modsList) {
     bool foundUpdate = false;
     bool oldFile = false;
-    QString installedFile = mod->getInstallationFile();
+    QString installedFile = mod->installationFile();
     if (!installedFile.isEmpty()) {
       QVariantMap foundFile;
       for (auto file : files) {
@@ -5676,7 +5676,7 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
       mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
     }
     mod->setNexusDescription(result["description"].toString());
-    if ((mod->endorsedState() != ModInfo::ENDORSED_NEVER) && (result.contains("endorsement"))) {
+    if ((mod->endorsedState() != EndorsedState::ENDORSED_NEVER) && (result.contains("endorsement"))) {
       QVariantMap endorsement = result["endorsement"].toMap();
       QString endorsementStatus = endorsement["endorse_status"].toString();
       if (endorsementStatus.compare("Endorsed") == 00)
@@ -5746,15 +5746,15 @@ void MainWindow::nxmTrackedModsAvailable(QVariant userData, QVariant resultData,
 
   for (unsigned int i = 0; i < ModInfo::getNumMods(); i++) {
     auto modInfo = ModInfo::getByIndex(i);
-    if (modInfo->getNexusID() <= 0)
+    if (modInfo->nexusId() <= 0)
       continue;
 
     bool found = false;
     auto resultsList = resultData.toList();
     for (auto item : resultsList) {
       auto results = item.toMap();
-      if ((gameNames[results["domain_name"].toString()].compare(modInfo->getGameName(), Qt::CaseInsensitive) == 0) &&
-          (results["mod_id"].toInt() == modInfo->getNexusID())) {
+      if ((gameNames[results["domain_name"].toString()].compare(modInfo->gameName(), Qt::CaseInsensitive) == 0) &&
+          (results["mod_id"].toInt() == modInfo->nexusId())) {
         found = true;
         break;
       }
