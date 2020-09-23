@@ -868,3 +868,19 @@ QStringList InstallationManager::getSupportedExtensions() const
 {
   return QStringList(std::begin(m_SupportedExtensions), std::end(m_SupportedExtensions));
 }
+
+void InstallationManager::notifyInstallationStart(QString const& archive, bool reinstallation, ModInfo::Ptr  currentMod)
+{
+  for (auto* installer : m_Installers) {
+    installer->onInstallationStart(archive, reinstallation, currentMod.get());
+  }
+}
+
+void InstallationManager::notifyInstallationEnd(
+  MOBase::IPluginInstaller::EInstallResult result,
+  ModInfo::Ptr  newMod)
+{
+  for (auto* installer : m_Installers) {
+    installer->onInstallationEnd(result, newMod.get());
+  }
+}

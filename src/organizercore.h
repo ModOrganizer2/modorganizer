@@ -309,7 +309,7 @@ public:
   QVariant persistent(const QString &pluginName, const QString &key, const QVariant &def) const;
   void setPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync);
   QString pluginDataPath() const;
-  virtual MOBase::IModInterface *installMod(const QString &fileName, const QString &initModName);
+  virtual MOBase::IModInterface *installMod(const QString &fileName, bool reinstallation, ModInfo::Ptr currentMod, const QString &initModName);
   QString resolvePath(const QString &fileName) const;
   QStringList listDirectories(const QString &directoryName) const;
   QStringList findFiles(const QString &path, const std::function<bool (const QString &)> &filter) const;

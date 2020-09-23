@@ -713,6 +713,8 @@ QString OrganizerCore::pluginDataPath() const
 }
 
 MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
+                                                 bool reinstallation,
+                                                 ModInfo::Ptr currentMod,
                                                  const QString &initModName)
 {
   if (m_CurrentProfile == nullptr) {
@@ -733,7 +735,9 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
   }
   m_CurrentProfile->writeModlistNow();
   m_InstallationManager.setModsDirectory(m_Settings.paths().mods());
-  if (m_InstallationManager.install(fileName, modName, hasIniTweaks) == IPluginInstaller::RESULT_SUCCESS) {
+  m_InstallationManager.notifyInstallationStart(fileName, reinstallation, currentMod);
+  auto result = m_InstallationManager.install(fileName, modName, hasIniTweaks);
+  if (result == IPluginInstaller::RESULT_SUCCESS) {
     MessageDialog::showMessage(tr("Installation successful"),
                                qApp->activeWindow());
     refreshModList();
@@ -758,18 +762,22 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
       }
       m_ModInstalled(modName);
       m_DownloadManager.markInstalled(fileName);
+      m_InstallationManager.notifyInstallationEnd(result, modInfo);
       emit modInstalled(modName);
       return modInfo.data();
     } else {
       reportError(tr("mod not found: %1").arg(qUtf8Printable(modName)));
     }
-  } else if (m_InstallationManager.wasCancelled()) {
-    QMessageBox::information(qApp->activeWindow(), tr("Extraction cancelled"),
-                             tr("The installation was cancelled while extracting files. "
-                               "If this was prior to a FOMOD setup, this warning may be ignored. "
-                               "However, if this was during installation, the mod will likely be missing files."),
-                             QMessageBox::Ok);
-    refreshModList();
+  } else {
+    m_InstallationManager.notifyInstallationEnd(result, nullptr);
+    if (m_InstallationManager.wasCancelled()) {
+      QMessageBox::information(qApp->activeWindow(), tr("Extraction cancelled"),
+        tr("The installation was cancelled while extracting files. "
+          "If this was prior to a FOMOD setup, this warning may be ignored. "
+          "However, if this was during installation, the mod will likely be missing files."),
+        QMessageBox::Ok);
+      refreshModList();
+    }
   }
   return nullptr;
 }
@@ -788,6 +796,7 @@ void OrganizerCore::installDownload(int index)
     QString gameName = m_DownloadManager.getGameName(index);
     int modID        = m_DownloadManager.getModID(index);
     int fileID       = m_DownloadManager.getFileInfo(index)->fileID;
+    ModInfo::Ptr currentMod = nullptr;
     GuessedValue<QString> modName;
 
     // see if there already are mods with the specified mod id
@@ -798,6 +807,7 @@ void OrganizerCore::installDownload(int index)
         if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP)
             == flags.end()) {
           modName.update((*iter)->name(), GUESS_PRESET);
+          currentMod = *iter;
           (*iter)->saveMeta();
         }
       }
@@ -807,7 +817,9 @@ void OrganizerCore::installDownload(int index)
 
     bool hasIniTweaks = false;
     m_InstallationManager.setModsDirectory(m_Settings.paths().mods());
-    if (m_InstallationManager.install(fileName, modName, hasIniTweaks) == IPluginInstaller::RESULT_SUCCESS) {
+    m_InstallationManager.notifyInstallationStart(fileName, false, currentMod);
+    auto result = m_InstallationManager.install(fileName, modName, hasIniTweaks);
+    if (result == IPluginInstaller::RESULT_SUCCESS) {
       MessageDialog::showMessage(tr("Installation successful"),
                                  qApp->activeWindow());
       refreshModList();
@@ -828,19 +840,23 @@ void OrganizerCore::installDownload(int index)
         }
 
         m_ModInstalled(modName);
+        m_InstallationManager.notifyInstallationEnd(IPluginInstaller::RESULT_SUCCESS, modInfo);
       } else {
         reportError(tr("mod not found: %1").arg(qUtf8Printable(modName)));
       }
       m_DownloadManager.markInstalled(index);
-
       emit modInstalled(modName);
-    } else if (m_InstallationManager.wasCancelled()) {
-      QMessageBox::information(qApp->activeWindow(), tr("Extraction cancelled"),
-        tr("The installation was cancelled while extracting files. "
-          "If this was prior to a FOMOD setup, this warning may be ignored. "
-          "However, if this was during installation, the mod will likely be missing files."),
-        QMessageBox::Ok);
-      refreshModList();
+    }
+    else {
+      m_InstallationManager.notifyInstallationEnd(result, nullptr);
+      if (m_InstallationManager.wasCancelled()) {
+        QMessageBox::information(qApp->activeWindow(), tr("Extraction cancelled"),
+          tr("The installation was cancelled while extracting files. "
+            "If this was prior to a FOMOD setup, this warning may be ignored. "
+            "However, if this was during installation, the mod will likely be missing files."),
+          QMessageBox::Ok);
+        refreshModList();
+      }
     }
   } catch (const std::exception &e) {
     reportError(e.what());

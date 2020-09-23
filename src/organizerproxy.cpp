@@ -208,7 +208,7 @@ void OrganizerProxy::refreshModList(bool saveChanges)
 
 IModInterface *OrganizerProxy::installMod(const QString &fileName, const QString &nameSuggestion)
 {
-  return m_Proxied->installMod(fileName, nameSuggestion);
+  return m_Proxied->installMod(fileName, false, nullptr, nameSuggestion);
 }
 
 QString OrganizerProxy::resolvePath(const QString &fileName) const
