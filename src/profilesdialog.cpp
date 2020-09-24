@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "transfersavesdialog.h"
 #include "utility.h"
 #include "settings.h"
+#include "localsavegames.h"
 
 #include <QDir>
 #include <QDirIterator>
@@ -76,6 +77,11 @@ ProfilesDialog::ProfilesDialog(const QString &profileName, MOBase::IPluginGame c
   if (invalidation == nullptr) {
     ui->invalidationBox->setToolTip(tr("Archive invalidation isn't required for this game."));
     ui->invalidationBox->setEnabled(false);
+  }
+
+  if (!game->feature<LocalSavegames>()) {
+    ui->localSavesBox->setToolTip(tr("This game does not support profile-specific game saves."));
+    ui->localSavesBox->setEnabled(false);
   }
 }
 
