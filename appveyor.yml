@@ -42,8 +42,10 @@ build_script:
     New-Item -ItemType Directory -Path  ${env:APPVEYOR_BUILD_FOLDER}\modorganizer-build
 
     cd c:\projects\modorganizer-umbrella
+    
+    ($env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH -eq $null) ? ($branch = $env:APPVEYOR_REPO_BRANCH) : ($branch = $env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH)
 
-    git checkout $(git show-ref --verify --quiet refs/remotes/origin/${env:APPVEYOR_REPO_BRANCH} || echo '-b') ${env:APPVEYOR_REPO_BRANCH}
+    git checkout $(git show-ref --verify --quiet refs/remotes/origin/${branch} || echo '-b') ${branch}
 
     C:\Python38-x64\python.exe unimake.py -d ${env:APPVEYOR_BUILD_FOLDER}\modorganizer-build -s Appveyor_Build=True -s Feature_Branch=${env:APPVEYOR_REPO_BRANCH} -s override_build_version=${env:APPVEYOR_BUILD_VERSION}
 
