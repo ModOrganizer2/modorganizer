@@ -1887,10 +1887,10 @@ QDir MainWindow::currentSavesDir() const
       return m_OrganizerCore.managedGame()->savesDirectory();
     }
 
-    QString iniPath = m_OrganizerCore.currentProfile()->localSettingsEnabled()
+    QDir iniDir = m_OrganizerCore.currentProfile()->localSettingsEnabled()
                     ? m_OrganizerCore.currentProfile()->absolutePath()
                     : m_OrganizerCore.managedGame()->documentsDirectory().absolutePath();
-    iniPath += "/" + iniFiles[0];
+    QString iniPath = iniDir.absoluteFilePath(iniFiles[0]);
 
     wchar_t path[MAX_PATH];
     if (::GetPrivateProfileStringW(
