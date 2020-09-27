@@ -889,7 +889,7 @@ QString Profile::getIniFileName() const
     return m_Directory.absoluteFilePath(iniFiles[0]);
 }
 
-QString Profile::iniFilePath(QString iniFile) const
+QString Profile::absoluteIniFilePath(QString iniFile) const
 {
   // This is the file to which the given iniFile would be mapped, as
   // an absolute file path:

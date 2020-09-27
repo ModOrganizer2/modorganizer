@@ -203,7 +203,7 @@ public:
    *
    * @return the absolute path for the given INI file for this profile.
    */
-  QString iniFilePath(QString iniFile) const override;
+  QString absoluteIniFilePath(QString iniFile) const override;
 
   /**
    * @return the path of the tweak ini in this profile
