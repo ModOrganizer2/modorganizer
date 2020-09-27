@@ -96,7 +96,7 @@ public:
 
   typedef boost::signals2::signal<void ()> SignalRefreshed;
   typedef boost::signals2::signal<void (const QString &, int, int)> SignalPluginMoved;
-  typedef boost::signals2::signal<void (const QString &, PluginStates)> SignalPluginStateChanged;
+  typedef boost::signals2::signal<void (const std::map<QString, PluginStates>&)> SignalPluginStateChanged;
 
 public:
 
@@ -235,7 +235,7 @@ public:
   virtual QString origin(const QString &name) const override;
   virtual void setLoadOrder(const QStringList &pluginList) override;
   virtual bool onPluginMoved(const std::function<void (const QString &, int, int)> &func) override;
-  virtual bool onPluginStateChanged(const std::function<void (const QString &, PluginStates)> &func) override;
+  virtual bool onPluginStateChanged(const std::function<void (const std::map<QString, PluginStates>&)> &func) override;
 
 public: // implementation of the QAbstractTableModel interface
 
@@ -360,6 +360,15 @@ private:
   void fixPriorities();
 
   int findPluginByPriority(int priority);
+
+  /**
+   * @brief Notify MO2 plugins that the states of the given plugins have changed to the given state.
+   *
+   * @param pluginNames Names of the plugin.
+   * @param state New state of the plugin.
+   *
+   */
+  void pluginStatesChanged(QStringList const& pluginNames, IPluginList::PluginStates state) const;
 
 private:
 
