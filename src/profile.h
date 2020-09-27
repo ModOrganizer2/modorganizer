@@ -196,6 +196,16 @@ public:
   QString getIniFileName() const;
 
   /**
+   * @brief Retrieve the absolute file to the corresponding file.
+   *
+   * @param iniFile INI file to retrieve a path for. This can either be the
+   *     name of a file or a path to the absolute file outside of the profile.
+   *
+   * @return the absolute path for the given INI file for this profile.
+   */
+  QString absoluteIniFilePath(QString iniFile) const override;
+
+  /**
    * @return the path of the tweak ini in this profile
    */
   QString getProfileTweaks() const;

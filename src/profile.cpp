@@ -889,6 +889,31 @@ QString Profile::getIniFileName() const
     return m_Directory.absoluteFilePath(iniFiles[0]);
 }
 
+QString Profile::absoluteIniFilePath(QString iniFile) const
+{
+  // This is the file to which the given iniFile would be mapped, as
+  // an absolute file path:
+  QFileInfo targetIniFile(m_GamePlugin->documentsDirectory(), iniFile);
+
+  bool isGameIni = false;
+  for (auto gameIni : m_GamePlugin->iniFiles()) {
+    // We compare the target file, not the actual ones:
+    if (QFileInfo(m_GamePlugin->documentsDirectory(), gameIni) == targetIniFile) {
+      isGameIni = true;
+      break;
+    }
+  }
+
+  // Local-settings are not enabled, or the iniFile is not in the list of INI
+  // files for the current game.
+  if (!localSettingsEnabled() || !isGameIni) {
+    return targetIniFile.absoluteFilePath();
+  }
+
+  // If we reach here, the file is in the profile:
+  return m_Directory.absoluteFilePath(targetIniFile.fileName());
+}
+
 QString Profile::getProfileTweaks() const
 {
   return QDir::cleanPath(m_Directory.absoluteFilePath(ToQString(AppConfig::profileTweakIni())));
