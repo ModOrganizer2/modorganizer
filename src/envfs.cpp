@@ -315,11 +315,6 @@ void forEachEntryImpl(
         break;
       }
     }
-
-    if (AllocSize - iosb.Information > (ULONG)FIELD_OFFSET(FILE_DIRECTORY_INFORMATION, FileName[256])) {
-      // NO_MORE_FILES
-      break;
-    }
   }
 }
 
