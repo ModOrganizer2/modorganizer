@@ -1932,11 +1932,21 @@ void MainWindow::refreshSaveList()
 
   QDir savesDir = currentSavesDir();
   savesDir.setNameFilters(filters);
+  savesDir.setFilter(QDir::Files);
+  QDirIterator it(savesDir, QDirIterator::Subdirectories);
   log::debug("reading save games from {}", savesDir.absolutePath());
 
-  QFileInfoList files = savesDir.entryInfoList(QDir::Files, QDir::Time);
+  QFileInfoList files;
+  while (it.hasNext()) {
+    it.next();
+    files.append(it.fileInfo());
+  }
+  std::sort(files.begin(), files.end(), [](auto const& lhs, auto const& rhs) { 
+    return lhs.fileTime(QFileDevice::FileModificationTime) < rhs.fileTime(QFileDevice::FileModificationTime); 
+  });
+
   for (const QFileInfo &file : files) {
-    QListWidgetItem *item = new QListWidgetItem(file.fileName());
+    QListWidgetItem *item = new QListWidgetItem(savesDir.relativeFilePath(file.absoluteFilePath()));
     item->setData(Qt::UserRole, file.absoluteFilePath());
     ui->savegameList->addItem(item);
   }

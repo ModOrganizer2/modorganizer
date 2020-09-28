@@ -276,8 +276,6 @@ void TransferSavesDialog::on_localCharacterList_currentTextChanged(const QString
 void TransferSavesDialog::refreshSaves(SaveCollection &saveCollection, QString const &savedir)
 {
   saveCollection.clear();
-  QDir savesDir(savedir);
-  savesDir.setNameFilters(QStringList() << QString("*.%1").arg(m_GamePlugin->savegameExtension()));
 
   SaveGameInfo const *info = m_GamePlugin->feature<SaveGameInfo>();
   if (info == nullptr) {
@@ -285,10 +283,26 @@ void TransferSavesDialog::refreshSaves(SaveCollection &saveCollection, QString c
     info = &dummyInfo;
   }
 
-  QStringList files = savesDir.entryList(QDir::Files, QDir::Time);
-  for (const QString &filename : files) {
-    QString file = savesDir.absoluteFilePath(filename);
-    MOBase::ISaveGame const *save = info->getSaveGameInfo(file);
+  QStringList filters;
+  filters << QString("*.") + m_GamePlugin->savegameExtension();
+
+  QDir savesDir(savedir);
+  savesDir.setNameFilters(QStringList() << QString("*.") + m_GamePlugin->savegameExtension());
+  savesDir.setFilter(QDir::Files);
+  QDirIterator it(savesDir, QDirIterator::Subdirectories);
+  log::debug("reading save games from {}", savesDir.absolutePath());
+
+  QFileInfoList files;
+  while (it.hasNext()) {
+    it.next();
+    files.append(it.fileInfo());
+  }
+  std::sort(files.begin(), files.end(), [](auto const& lhs, auto const& rhs) {
+    return lhs.fileTime(QFileDevice::FileModificationTime) < rhs.fileTime(QFileDevice::FileModificationTime);
+    });
+
+  for (const QFileInfo &file: files) {
+    MOBase::ISaveGame const *save = info->getSaveGameInfo(file.absoluteFilePath());
     saveCollection[save->getSaveGroupIdentifier()].push_back(
                                 std::unique_ptr<MOBase::ISaveGame const>(save));
   }
