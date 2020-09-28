@@ -15,10 +15,10 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, SettingsDialog& d)
   for (IPlugin *plugin : settings().plugins().plugins()) {
     if (handledNames.contains(plugin->name()))
       continue;
-    QListWidgetItem *listItem = new QListWidgetItem(plugin->name(), ui->pluginsList);
-    listItem->setData(Qt::UserRole, QVariant::fromValue((void*)plugin));
-    listItem->setData(Qt::UserRole + 1, settings().plugins().settings(plugin->name()));
-    listItem->setData(Qt::UserRole + 2, settings().plugins().descriptions(plugin->name()));
+    QListWidgetItem *listItem = new QListWidgetItem(plugin->localizedName(), ui->pluginsList);
+    listItem->setData(ROLE_PLUGIN, QVariant::fromValue((void*)plugin));
+    listItem->setData(ROLE_SETTINGS, settings().plugins().settings(plugin->name()));
+    listItem->setData(ROLE_DESCRIPTIONS, settings().plugins().descriptions(plugin->name()));
     ui->pluginsList->addItem(listItem);
     handledNames.insert(plugin->name());
   }
@@ -37,13 +37,18 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, SettingsDialog& d)
   QObject::connect(delShortcut, &QShortcut::activated, &dialog(), [&]{ deleteBlacklistItem(); });
 }
 
+IPlugin* PluginsSettingsTab::plugin(QListWidgetItem* pluginItem) const
+{
+  return static_cast<IPlugin*>(qvariant_cast<void*>(pluginItem->data(ROLE_PLUGIN)));
+}
+
 void PluginsSettingsTab::update()
 {
   // transfer plugin settings to in-memory structure
   for (int i = 0; i < ui->pluginsList->count(); ++i) {
     QListWidgetItem *item = ui->pluginsList->item(i);
     settings().plugins().setSettings(
-      item->text(), item->data(Qt::UserRole + 1).toMap());
+      plugin(item)->name(), item->data(ROLE_SETTINGS).toMap());
   }
 
   // set plugin blacklist
@@ -72,8 +77,8 @@ void PluginsSettingsTab::on_pluginsList_currentItemChanged(QListWidgetItem *curr
   ui->versionLabel->setText(plugin->version().canonicalString());
   ui->descriptionLabel->setText(plugin->description());
 
-  QVariantMap settings = current->data(Qt::UserRole + 1).toMap();
-  QVariantMap descriptions = current->data(Qt::UserRole + 2).toMap();
+  QVariantMap settings = current->data(ROLE_SETTINGS).toMap();
+  QVariantMap descriptions = current->data(ROLE_DESCRIPTIONS).toMap();
   ui->pluginSettingsList->setEnabled(settings.count() != 0);
   for (auto iter = settings.begin(); iter != settings.end(); ++iter) {
     QTreeWidgetItem *newItem = new QTreeWidgetItem(QStringList(iter.key()));
@@ -107,13 +112,13 @@ void PluginsSettingsTab::deleteBlacklistItem()
 void PluginsSettingsTab::storeSettings(QListWidgetItem *pluginItem)
 {
   if (pluginItem != nullptr) {
-    QVariantMap settings = pluginItem->data(Qt::UserRole + 1).toMap();
+    QVariantMap settings = pluginItem->data(ROLE_SETTINGS).toMap();
 
     for (int i = 0; i < ui->pluginSettingsList->topLevelItemCount(); ++i) {
       const QTreeWidgetItem *item = ui->pluginSettingsList->topLevelItem(i);
       settings[item->text(0)] = item->data(1, Qt::DisplayRole);
     }
 
-    pluginItem->setData(Qt::UserRole + 1, settings);
+    pluginItem->setData(ROLE_SETTINGS, settings);
   }
 }
