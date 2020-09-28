@@ -805,9 +805,10 @@ bool Profile::localSettingsEnabled() const
   if (enabled) {
     QStringList missingFiles;
     for (QString file : m_GamePlugin->iniFiles()) {
-      if (!QFile::exists(m_Directory.filePath(file))) {
-        log::warn("missing {} in {}", file, m_Directory.path());
-        missingFiles << file;
+      QString fileName = QFileInfo(file).fileName();
+      if (!QFile::exists(m_Directory.filePath(fileName))) {
+        log::warn("missing {} in {}", fileName, m_Directory.path());
+        missingFiles << fileName;
       }
     }
     if (!missingFiles.empty()) {
@@ -837,7 +838,7 @@ bool Profile::enableLocalSettings(bool enable)
     if (res == QMessageBox::Yes) {
       QStringList filesToDelete;
       for (QString file : m_GamePlugin->iniFiles()) {
-        filesToDelete << m_Directory.absoluteFilePath(file);
+        filesToDelete << m_Directory.absoluteFilePath(QFileInfo(file).fileName());
       }
       shellDelete(filesToDelete, true);
     } else if (res == QMessageBox::No) {
@@ -886,7 +887,7 @@ QString Profile::getIniFileName() const
   if (iniFiles.isEmpty())
     return "";
   else
-    return m_Directory.absoluteFilePath(iniFiles[0]);
+    return m_Directory.absoluteFilePath(QFileInfo(iniFiles[0]).fileName());
 }
 
 QString Profile::absoluteIniFilePath(QString iniFile) const
