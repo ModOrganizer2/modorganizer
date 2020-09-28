@@ -182,7 +182,9 @@ void TransferSavesDialog::on_moveToLocalBtn_clicked()
 {
   QString character = ui->globalCharacterList->currentItem()->text();
   if (transferCharacters(
-          character, MOVE_SAVES TO_PROFILE, m_GlobalSaves[character],
+          character, MOVE_SAVES TO_PROFILE,
+          m_GamePlugin->savesDirectory(),
+          m_GlobalSaves[character],
           m_Profile.savePath(),
           [this](const QString &source, const QString &destination) -> bool {
             return shellMove(source, destination, this);
@@ -199,7 +201,9 @@ void TransferSavesDialog::on_copyToLocalBtn_clicked()
 {
   QString character = ui->globalCharacterList->currentItem()->text();
   if (transferCharacters(
-          character, COPY_SAVES TO_PROFILE, m_GlobalSaves[character],
+          character, COPY_SAVES TO_PROFILE,
+          m_GamePlugin->savesDirectory(),
+          m_GlobalSaves[character],
           m_Profile.savePath(),
           [this](const QString &source, const QString &destination) -> bool {
             return shellCopy(source, destination, this);
@@ -214,7 +218,9 @@ void TransferSavesDialog::on_moveToGlobalBtn_clicked()
 {
   QString character = ui->localCharacterList->currentItem()->text();
   if (transferCharacters(
-          character, MOVE_SAVES TO_GLOBAL, m_LocalSaves[character],
+          character, MOVE_SAVES TO_GLOBAL,
+          m_Profile.savePath(),
+          m_LocalSaves[character],
           m_GamePlugin->savesDirectory().absolutePath(),
           [this](const QString &source, const QString &destination) -> bool {
             return shellMove(source, destination, this);
@@ -231,7 +237,9 @@ void TransferSavesDialog::on_copyToGlobalBtn_clicked()
 {
   QString character = ui->localCharacterList->currentItem()->text();
   if (transferCharacters(
-          character, COPY_SAVES TO_GLOBAL, m_LocalSaves[character],
+          character, COPY_SAVES TO_GLOBAL,
+          m_Profile.savePath(),
+          m_LocalSaves[character],
           m_GamePlugin->savesDirectory().absolutePath(),
           [this](const QString &source, const QString &destination) -> bool {
             return shellCopy(source, destination, this);
@@ -326,8 +334,10 @@ void TransferSavesDialog::refreshCharacters(const SaveCollection &saveCollection
 }
 
 bool TransferSavesDialog::transferCharacters(
-    QString const &character, char const *message, SaveList &saves,
-    QString const &dest,
+    QString const &character, char const *message, 
+    QDir const& sourceDirectory,
+    SaveList &saves,
+    QDir const& destination,
     const std::function<bool(const QString &, const QString &)> &method,
     char const *errmsg)
 {
@@ -339,11 +349,10 @@ bool TransferSavesDialog::transferCharacters(
 
   OverwriteMode overwriteMode = OVERWRITE_ASK;
 
-  QDir destination(dest);
   for (SaveListItem const &save : saves) {
     for (QString source : save->allFiles()) {
       QFileInfo sourceFile(source);
-      QString destinationFile(destination.absoluteFilePath(sourceFile.fileName()));
+      QString destinationFile(destination.absoluteFilePath(sourceDirectory.relativeFilePath(source)));
 
       //If the file is already there, let them skip (or not).
       if (QFile::exists(destinationFile)) {
