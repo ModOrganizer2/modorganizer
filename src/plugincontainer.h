@@ -48,6 +48,16 @@ private:
 
 public:
 
+  /**
+   * @brief Retrieved the (localized) names of interfaces implemented by the given
+   *     plugin.
+   *
+   * @param plugin The plugin to retrieve interface for.
+   *
+   * @return the (localized) names of interfaces implemented by this plugin.
+   */
+  QStringList implementedInterfaces(const MOBase::IPlugin *plugin) const;
+
   PluginContainer(OrganizerCore *organizer);
   virtual ~PluginContainer();
 
@@ -56,16 +66,38 @@ public:
   void loadPlugins();
   void unloadPlugins();
 
+  /**
+   * @brief Find the game plugin corresponding to the given name.
+   *
+   * @param name The name of the game to find a plugin for (as returned by
+   *     IPluginGame::gameName()).
+   *
+   * @return the game plugin for the given name, or a null pointer if no
+   *     plugin exists for this game.
+   */
   MOBase::IPluginGame *managedGame(const QString &name) const;
 
+  /**
+   * @brief Retrieve the list of plugins of the given type.
+   *
+   * @return the list of plugins of the specified type.
+   *
+   * @tparam T The type of plugin to retrieve.
+   */
   template <typename T>
   const std::vector<T*> &plugins() const {
     typename boost::fusion::result_of::at_key<const PluginMap, T>::type temp = boost::fusion::at_key<T>(m_Plugins);
     return temp;
   }
 
+  /**
+   * @return the preview generator.
+   */
   const PreviewGenerator &previewGenerator() const;
 
+  /**
+   * @return the list of plugin file names, including proxied plugins.
+   */
   QStringList pluginFileNames() const;
 
 public: // IPluginDiagnose interface

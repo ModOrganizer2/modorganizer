@@ -21,6 +21,88 @@ using namespace MOShared;
 
 namespace bf = boost::fusion;
 
+template <class T>
+struct PluginTypeName;
+
+template <> struct PluginTypeName<QObject> { static QString get() { return {}; } };
+template <> struct PluginTypeName<MOBase::IPlugin> { static QString get() { return QT_TR_NOOP("Plugin"); } };
+template <> struct PluginTypeName<MOBase::IPluginDiagnose> { static QString get() { return QT_TR_NOOP("Diagnose"); } };
+template <> struct PluginTypeName<MOBase::IPluginGame> { static QString get() { return QT_TR_NOOP("Game"); } };
+template <> struct PluginTypeName<MOBase::IPluginInstaller> { static QString get() { return QT_TR_NOOP("Installer"); } };
+template <> struct PluginTypeName<MOBase::IPluginModPage> { static QString get() { return QT_TR_NOOP("Mod Page"); } };
+template <> struct PluginTypeName<MOBase::IPluginPreview> { static QString get() { return QT_TR_NOOP("Preview"); } };
+template <> struct PluginTypeName<MOBase::IPluginTool> { static QString get() { return QT_TR_NOOP("Tool"); } };
+template <> struct PluginTypeName<MOBase::IPluginProxy> { static QString get() { return QT_TR_NOOP("Proxy"); } };
+template <> struct PluginTypeName<MOBase::IPluginFileMapper> { static QString get() { return QT_TR_NOOP("File Mapper"); } };
+
+template <class Reducer, template <class> class Mapper, class BfMap>
+struct plugin_map_iterate_impl;
+
+template <class Reducer, template <class> class Mapper>
+struct plugin_map_iterate_impl<Reducer, Mapper, bf::map<>>
+{
+  template <class U, class... Args>
+  static auto apply(Reducer const& r, U &&u, Args const&... args) {
+    return std::forward<U>(u);
+  }
+};
+
+template <
+  class Reducer,
+  template <class> class Mapper, 
+  class K, class V, class... Ps
+>
+struct plugin_map_iterate_impl<Reducer, Mapper, bf::map<bf::pair<K, V>, Ps... >>
+{
+  template <class U, class... Args>
+  static auto apply(Reducer const& r, U&& u, Args const&... args) {
+    return plugin_map_iterate_impl<Reducer, Mapper, bf::map<Ps... >>::apply(r, r(Mapper<K>::get(args... ), u), args... );
+  }
+};
+
+template <template <class> class M, class B, class R, class U, class... Args>
+auto plugin_map_iterate(R const& r, U &&init, Args const&... args) {
+  return plugin_map_iterate_impl<R, M, B>::apply(r, std::forward<U>(init), args... );
+}
+
+template <class T>
+struct PluginTypeNameIf {
+  static QString get(QObject* plugin) {
+    if (qobject_cast<T*>(plugin)) {
+      return PluginTypeName<T>::get();
+    }
+    return {};
+  }
+};
+
+
+QStringList PluginContainer::implementedInterfaces(const IPlugin* plugin) const
+{
+  // Find the correspond QObject - Can this be done safely with a cast?
+  auto& objects = bf::at_key<QObject>(m_Plugins);
+  auto it = std::find_if(std::begin(objects), std::end(objects), [plugin](QObject *obj) {
+    return qobject_cast<IPlugin*>(obj) == plugin;
+  });
+
+  if (it == std::end(objects)) {
+    return {};
+  }
+
+  // Find all the names:
+  auto names = plugin_map_iterate<PluginTypeNameIf, PluginMap>([](QString name, QStringList value) {
+    if (name.isEmpty()) {
+      return value;
+    }
+    return value << name;
+  }, QStringList(), *it);
+
+  // If the plugin implements at least one interface other than IPlugin, remove IPlugin:
+  if (names.size() > 1) {
+    names.removeAll(PluginTypeName<IPlugin>::get());
+  }
+
+  return names;
+}
 
 PluginContainer::PluginContainer(OrganizerCore *organizer)
   : m_Organizer(organizer)
