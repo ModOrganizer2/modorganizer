@@ -72,26 +72,13 @@ private:
 public:
 
   /**
-   * @brief Retrieved the (localized) names of interfaces implemented by the given
-   *     plugin.
+   * @brief Retrieved the (localized) names of the various plugin interfaces.
    *
-   * @param plugin The plugin to retrieve interface for.
-   *
-   * @return the (localized) names of interfaces implemented by this plugin.
+   * @return the (localized) names of the various plugin interfaces.
    */
-  QStringList implementedInterfaces(MOBase::IPlugin *plugin) const;
+  static QStringList pluginInterfaces();
 
-  /**
-   * @brief Return the (localized) name of the most important interface implemented by
-   *     the given plugin.
-   *
-   * The order of interfaces is defined in X.
-   *
-   * @param plugin The plugin to retrieve the interface for.
-   *
-   * @return the (localized) name of the most important interface implemented by this plugin.
-   */
-  QString topImplementedInterface(MOBase::IPlugin* plugin) const;
+public:
 
   PluginContainer(OrganizerCore *organizer);
   virtual ~PluginContainer();
@@ -124,6 +111,28 @@ public:
     typename boost::fusion::result_of::at_key<const PluginMap, T>::type temp = boost::fusion::at_key<T>(m_Plugins);
     return temp;
   }
+
+  /**
+   * @brief Retrieved the (localized) names of interfaces implemented by the given
+   *     plugin.
+   *
+   * @param plugin The plugin to retrieve interface for.
+   *
+   * @return the (localized) names of interfaces implemented by this plugin.
+   */
+  QStringList implementedInterfaces(MOBase::IPlugin* plugin) const;
+
+  /**
+   * @brief Return the (localized) name of the most important interface implemented by
+   *     the given plugin.
+   *
+   * The order of interfaces is defined in X.
+   *
+   * @param plugin The plugin to retrieve the interface for.
+   *
+   * @return the (localized) name of the most important interface implemented by this plugin.
+   */
+  QString topImplementedInterface(MOBase::IPlugin* plugin) const;
 
   /**
    * @return the preview generator.

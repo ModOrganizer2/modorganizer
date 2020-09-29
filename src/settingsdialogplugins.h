@@ -7,21 +7,21 @@
 class PluginsSettingsTab : public SettingsTab
 {
 public:
-  PluginsSettingsTab(Settings& settings, SettingsDialog& dialog);
+  PluginsSettingsTab(Settings& settings, PluginContainer* pluginContainer, SettingsDialog& dialog);
 
   void update();
   void closing() override;
 
 private:
-  void on_pluginsList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+  void on_pluginsList_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
   void deleteBlacklistItem();
-  void storeSettings(QListWidgetItem *pluginItem);
+  void storeSettings(QTreeWidgetItem *pluginItem);
 
   /**
    * @brief Retrieve the plugin associated to the given item in the list.
    *
    */
-  MOBase::IPlugin* plugin(QListWidgetItem *pluginItem) const;
+  MOBase::IPlugin* plugin(QTreeWidgetItem *pluginItem) const;
 
   constexpr static int ROLE_PLUGIN = Qt::UserRole;
   constexpr static int ROLE_SETTINGS = Qt::UserRole + 1;

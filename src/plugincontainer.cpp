@@ -34,58 +34,22 @@ template <> struct PluginTypeName<MOBase::IPluginTool> { static QString value() 
 template <> struct PluginTypeName<MOBase::IPluginProxy> { static QString value() { return QT_TR_NOOP("Proxy"); } };
 template <> struct PluginTypeName<MOBase::IPluginFileMapper> { static QString value() { return QT_TR_NOOP("File Mapper"); } };
 
-QStringList PluginContainer::implementedInterfaces(IPlugin* plugin) const
+
+QStringList PluginContainer::pluginInterfaces()
 {
-  // We need a QObject to be able to qobject_cast<> to the plugin types:
-  QObject* oPlugin = as_qobject(plugin);
-
-  if (!oPlugin) {
-    return {};
-  }
-
   // Find all the names:
   QStringList names;
-  boost::mp11::mp_for_each<PluginTypeOrder>([oPlugin, &names](const auto *p) {
+  boost::mp11::mp_for_each<PluginTypeOrder>([&names](const auto* p) {
     using plugin_type = std::decay_t<decltype(*p)>;
-    if (qobject_cast<plugin_type*>(oPlugin)) {
-      auto name = PluginTypeName<plugin_type>::value();
-      if (!name.isEmpty()) {
-        names.append(name);
-      }
+    auto name = PluginTypeName<plugin_type>::value();
+    if (!name.isEmpty()) {
+      names.append(name);
     }
   });
-
-  // If the plugin implements at least one interface other than IPlugin, remove IPlugin:
-  if (names.size() > 1) {
-    names.removeAll(PluginTypeName<IPlugin>::value());
-  }
 
   return names;
 }
 
-QString PluginContainer::topImplementedInterface(IPlugin* plugin) const
-{
-  // We need a QObject to be able to qobject_cast<> to the plugin types:
-  QObject* oPlugin = as_qobject(plugin);
-
-  if (!oPlugin) {
-    return {};
-  }
-
-  // Find all the names:
-  QString name;
-  boost::mp11::mp_for_each<PluginTypeOrder>([oPlugin, &name](auto *p) {
-    using plugin_type = std::decay_t<decltype(*p)>;
-    if (name.isEmpty() && qobject_cast<plugin_type*>(oPlugin)) {
-      auto tname = PluginTypeName<plugin_type>::value();
-      if (!tname.isEmpty()) {
-        name = tname;
-      }
-    }
-  });
-
-  return name;
-}
 
 PluginContainer::PluginContainer(OrganizerCore *organizer)
   : m_Organizer(organizer)
@@ -116,6 +80,61 @@ void PluginContainer::setUserInterface(IUserInterface *userInterface, QWidget *w
   }
 
   m_UserInterface = userInterface;
+}
+
+
+QStringList PluginContainer::implementedInterfaces(IPlugin* plugin) const
+{
+  // We need a QObject to be able to qobject_cast<> to the plugin types:
+  QObject* oPlugin = as_qobject(plugin);
+
+  if (!oPlugin) {
+    return {};
+  }
+
+  // Find all the names:
+  QStringList names;
+  boost::mp11::mp_for_each<PluginTypeOrder>([oPlugin, &names](const auto* p) {
+    using plugin_type = std::decay_t<decltype(*p)>;
+    if (qobject_cast<plugin_type*>(oPlugin)) {
+      auto name = PluginTypeName<plugin_type>::value();
+      if (!name.isEmpty()) {
+        names.append(name);
+      }
+    }
+    });
+
+  // If the plugin implements at least one interface other than IPlugin, remove IPlugin:
+  if (names.size() > 1) {
+    names.removeAll(PluginTypeName<IPlugin>::value());
+  }
+
+  return names;
+}
+
+
+QString PluginContainer::topImplementedInterface(IPlugin* plugin) const
+{
+  // We need a QObject to be able to qobject_cast<> to the plugin types:
+  QObject* oPlugin = as_qobject(plugin);
+
+  if (!oPlugin) {
+    return {};
+  }
+
+  // Find all the names:
+  QString name;
+  boost::mp11::mp_for_each<PluginTypeOrder>([oPlugin, &name](auto* p) {
+    using plugin_type = std::decay_t<decltype(*p)>;
+    if (name.isEmpty() && qobject_cast<plugin_type*>(oPlugin)) {
+      auto tname = PluginTypeName<plugin_type>::value();
+      if (!tname.isEmpty()) {
+        name = tname;
+      }
+    }
+    });
+
+  return name;
 }
 
 
