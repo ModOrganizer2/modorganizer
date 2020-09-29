@@ -24,7 +24,6 @@ namespace bf = boost::fusion;
 template <class T>
 struct PluginTypeName;
 
-template <> struct PluginTypeName<QObject> { static QString value() { return {}; } };
 template <> struct PluginTypeName<MOBase::IPlugin> { static QString value() { return QT_TR_NOOP("Plugin"); } };
 template <> struct PluginTypeName<MOBase::IPluginDiagnose> { static QString value() { return QT_TR_NOOP("Diagnose"); } };
 template <> struct PluginTypeName<MOBase::IPluginGame> { static QString value() { return QT_TR_NOOP("Game"); } };
@@ -35,28 +34,24 @@ template <> struct PluginTypeName<MOBase::IPluginTool> { static QString value() 
 template <> struct PluginTypeName<MOBase::IPluginProxy> { static QString value() { return QT_TR_NOOP("Proxy"); } };
 template <> struct PluginTypeName<MOBase::IPluginFileMapper> { static QString value() { return QT_TR_NOOP("File Mapper"); } };
 
-QStringList PluginContainer::implementedInterfaces(const IPlugin* plugin) const
+QStringList PluginContainer::implementedInterfaces(IPlugin* plugin) const
 {
-  // Find the correspond QObject - Can this be done safely with a cast?
-  auto& objects = bf::at_key<QObject>(m_Plugins);
-  auto it = std::find_if(std::begin(objects), std::end(objects), [plugin](QObject *obj) {
-    return qobject_cast<IPlugin*>(obj) == plugin;
-  });
+  // We need a QObject to be able to qobject_cast<> to the plugin types:
+  QObject* oPlugin = as_qobject(plugin);
 
-  if (it == std::end(objects)) {
+  if (!oPlugin) {
     return {};
   }
 
-  // We need a QObject to be able to qobject_cast<> to the plugin types:
-  const QObject* oPlugin = *it;
-
   // Find all the names:
   QStringList names;
-  bf::for_each(m_Plugins, [oPlugin, &names](auto const& p) {
-    using key_type = typename std::decay_t<decltype(p)>::first_type;
-    auto name = PluginTypeName<key_type>::value();
-    if (!name.isEmpty()) {
-      names.append(name);
+  boost::mp11::mp_for_each<PluginTypeOrder>([oPlugin, &names](const auto *p) {
+    using plugin_type = std::decay_t<decltype(*p)>;
+    if (qobject_cast<plugin_type*>(oPlugin)) {
+      auto name = PluginTypeName<plugin_type>::value();
+      if (!name.isEmpty()) {
+        names.append(name);
+      }
     }
   });
 
@@ -66,6 +61,30 @@ QStringList PluginContainer::implementedInterfaces(const IPlugin* plugin) const
   }
 
   return names;
+}
+
+QString PluginContainer::topImplementedInterface(IPlugin* plugin) const
+{
+  // We need a QObject to be able to qobject_cast<> to the plugin types:
+  QObject* oPlugin = as_qobject(plugin);
+
+  if (!oPlugin) {
+    return {};
+  }
+
+  // Find all the names:
+  QString name;
+  boost::mp11::mp_for_each<PluginTypeOrder>([oPlugin, &name](auto *p) {
+    using plugin_type = std::decay_t<decltype(*p)>;
+    if (name.isEmpty() && qobject_cast<plugin_type*>(oPlugin)) {
+      auto tname = PluginTypeName<plugin_type>::value();
+      if (!tname.isEmpty()) {
+        name = tname;
+      }
+    }
+  });
+
+  return name;
 }
 
 PluginContainer::PluginContainer(OrganizerCore *organizer)
@@ -78,6 +97,7 @@ PluginContainer::~PluginContainer() {
   m_Organizer = nullptr;
   unloadPlugins();
 }
+
 
 void PluginContainer::setUserInterface(IUserInterface *userInterface, QWidget *widget)
 {
@@ -114,6 +134,21 @@ QStringList PluginContainer::pluginFileNames() const
   return result;
 }
 
+
+QObject* PluginContainer::as_qobject(MOBase::IPlugin* plugin) const
+{
+  // Find the correspond QObject - Can this be done safely with a cast?
+  auto& objects = bf::at_key<QObject>(m_Plugins);
+  auto it = std::find_if(std::begin(objects), std::end(objects), [plugin](QObject* obj) {
+    return qobject_cast<IPlugin*>(obj) == plugin;
+    });
+
+  if (it == std::end(objects)) {
+    return nullptr;
+  }
+
+  return *it;
+}
 
 bool PluginContainer::verifyPlugin(IPlugin *plugin)
 {
