@@ -637,7 +637,7 @@ MOBase::IPluginGame *OrganizerCore::getGame(const QString &name) const
 MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
 {
   bool merge = false;
-  if (!m_InstallationManager.testOverwrite(name, &merge)) {
+  if (m_InstallationManager.testOverwrite(name, &merge) != IPluginInstaller::EInstallResult::RESULT_SUCCESS) {
     return nullptr;
   }
 
