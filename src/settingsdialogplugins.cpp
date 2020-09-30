@@ -8,16 +8,39 @@
 using MOBase::IPlugin;
 
 PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginContainer, SettingsDialog& d)
-  : SettingsTab(s, d)
+  : SettingsTab(s, d), m_pluginContainer(pluginContainer)
 {
   ui->pluginSettingsList->setStyleSheet("QTreeWidget::item {padding-right: 10px;}");
 
+  populatePluginList();
+
+  // display plugin blacklist
+  for (const QString &pluginName : settings().plugins().blacklist()) {
+    ui->pluginBlacklist->addItem(pluginName);
+  }
+
+  m_filter.setEdit(ui->pluginFilterEdit);
+
+  QObject::connect(
+    ui->pluginsList, &QTreeWidget::currentItemChanged,
+    [&](auto* current, auto* previous) { on_pluginsList_currentItemChanged(current, previous); });
+
+  QShortcut *delShortcut = new QShortcut(
+    QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
+  QObject::connect(delShortcut, &QShortcut::activated, &dialog(), [&] { deleteBlacklistItem(); });
+  QObject::connect(&m_filter, &MOBase::FilterWidget::changed, [&] { populatePluginList(); });
+}
+
+void PluginsSettingsTab::populatePluginList()
+{
+  ui->pluginsList->clear();
+
   // Create top-level tree widget:
-  QStringList pluginInterfaces = pluginContainer->pluginInterfaces();
+  QStringList pluginInterfaces = m_pluginContainer->pluginInterfaces();
   pluginInterfaces.sort(Qt::CaseInsensitive);
   std::map<QString, QTreeWidgetItem*> topItems;
   for (QString interfaceName : pluginInterfaces) {
-    auto *item = new QTreeWidgetItem(ui->pluginsList, { interfaceName });
+    auto* item = new QTreeWidgetItem(ui->pluginsList, { interfaceName });
     item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
     auto font = item->font(0);
     font.setBold(true);
@@ -29,11 +52,17 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginConta
 
   // display plugin settings
   QSet<QString> handledNames;
-  for (IPlugin *plugin : settings().plugins().plugins()) {
-    if (handledNames.contains(plugin->name()))
+  for (IPlugin* plugin : settings().plugins().plugins()) {
+    if (handledNames.contains(plugin->name())) {
       continue;
+    }
+    if (!m_filter.matches([plugin](const QRegularExpression& regex) {
+        return regex.match(plugin->localizedName()).hasMatch();
+      })) {
+      continue;
+    }
     QTreeWidgetItem* listItem = new QTreeWidgetItem(
-      topItems.at(pluginContainer->topImplementedInterface(plugin)));
+      topItems.at(m_pluginContainer->topImplementedInterface(plugin)));
     listItem->setData(0, Qt::DisplayRole, plugin->localizedName());
     listItem->setData(0, ROLE_PLUGIN, QVariant::fromValue((void*)plugin));
     listItem->setData(0, ROLE_SETTINGS, settings().plugins().settings(plugin->name()));
@@ -46,23 +75,13 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginConta
     handledNames.insert(plugin->name());
   }
 
-  ui->pluginsList->sortByColumn(0, Qt::AscendingOrder);
-
-  // display plugin blacklist
-  for (const QString &pluginName : settings().plugins().blacklist()) {
-    ui->pluginBlacklist->addItem(pluginName);
+  for (auto& [k, item] : topItems) {
+    if (item->childCount() == 0) {
+      item->setHidden(true);
+    }
   }
 
-  m_filter.setEdit(ui->pluginFilterEdit);
-  m_filter.setList(ui->pluginsList);
-
-  QObject::connect(
-    ui->pluginsList, &QTreeWidget::currentItemChanged,
-    [&](auto* current, auto* previous) { on_pluginsList_currentItemChanged(current, previous); });
-
-  QShortcut *delShortcut = new QShortcut(
-    QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
-  QObject::connect(delShortcut, &QShortcut::activated, &dialog(), [&]{ deleteBlacklistItem(); });
+  ui->pluginsList->sortByColumn(0, Qt::AscendingOrder);
 }
 
 IPlugin* PluginsSettingsTab::plugin(QTreeWidgetItem* pluginItem) const

@@ -19,6 +19,13 @@ private:
   void deleteBlacklistItem();
   void storeSettings(QTreeWidgetItem *pluginItem);
 
+private slots:
+  /**
+   * @brief Clear and repopulate the plugin list.
+   *
+   */
+  void populatePluginList();
+
   /**
    * @brief Retrieve the plugin associated to the given item in the list.
    *
@@ -30,6 +37,8 @@ private:
   constexpr static int ROLE_DESCRIPTIONS = Qt::UserRole + 2;
 
 private:
+
+  PluginContainer* m_pluginContainer;
 
   MOBase::FilterWidget m_filter;
 };
