@@ -1042,19 +1042,28 @@
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_9">
          <item>
-          <widget class="QTreeWidget" name="pluginsList">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <column>
-            <property name="text">
-             <string notr="true">1</string>
-            </property>
-           </column>
-          </widget>
+          <layout class="QVBoxLayout" name="verticalLayout_15">
+           <item>
+            <widget class="QTreeWidget" name="pluginsList">
+             <column>
+              <property name="text">
+               <string notr="true">1</string>
+              </property>
+             </column>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_4">
+             <item>
+              <widget class="QLineEdit" name="pluginFilterEdit">
+               <property name="placeholderText">
+                <string/>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
          </item>
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,1">
@@ -1615,7 +1624,6 @@ programs you are intentionally running.</string>
   <tabstop>preferredServersList</tabstop>
   <tabstop>steamUserEdit</tabstop>
   <tabstop>steamPassEdit</tabstop>
-  <tabstop>pluginsList</tabstop>
   <tabstop>pluginSettingsList</tabstop>
   <tabstop>pluginBlacklist</tabstop>
   <tabstop>appIDEdit</tabstop>

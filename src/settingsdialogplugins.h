@@ -1,6 +1,8 @@
 #ifndef SETTINGSDIALOGPLUGINS_H
 #define SETTINGSDIALOGPLUGINS_H
 
+#include "filterwidget.h"
+
 #include "settings.h"
 #include "settingsdialog.h"
 
@@ -26,6 +28,10 @@ private:
   constexpr static int ROLE_PLUGIN = Qt::UserRole;
   constexpr static int ROLE_SETTINGS = Qt::UserRole + 1;
   constexpr static int ROLE_DESCRIPTIONS = Qt::UserRole + 2;
+
+private:
+
+  MOBase::FilterWidget m_filter;
 };
 
 #endif // SETTINGSDIALOGPLUGINS_H

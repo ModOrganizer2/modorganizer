@@ -33,7 +33,8 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginConta
     if (handledNames.contains(plugin->name()))
       continue;
     QTreeWidgetItem* listItem = new QTreeWidgetItem(
-      topItems.at(pluginContainer->topImplementedInterface(plugin)), { plugin->localizedName() });
+      topItems.at(pluginContainer->topImplementedInterface(plugin)));
+    listItem->setData(0, Qt::DisplayRole, plugin->localizedName());
     listItem->setData(0, ROLE_PLUGIN, QVariant::fromValue((void*)plugin));
     listItem->setData(0, ROLE_SETTINGS, settings().plugins().settings(plugin->name()));
     listItem->setData(0, ROLE_DESCRIPTIONS, settings().plugins().descriptions(plugin->name()));
@@ -51,6 +52,9 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginConta
   for (const QString &pluginName : settings().plugins().blacklist()) {
     ui->pluginBlacklist->addItem(pluginName);
   }
+
+  m_filter.setEdit(ui->pluginFilterEdit);
+  m_filter.setList(ui->pluginsList);
 
   QObject::connect(
     ui->pluginsList, &QTreeWidget::currentItemChanged,
