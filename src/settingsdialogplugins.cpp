@@ -12,29 +12,6 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginConta
 {
   ui->pluginSettingsList->setStyleSheet("QTreeWidget::item {padding-right: 10px;}");
 
-  populatePluginList();
-
-  // display plugin blacklist
-  for (const QString &pluginName : settings().plugins().blacklist()) {
-    ui->pluginBlacklist->addItem(pluginName);
-  }
-
-  m_filter.setEdit(ui->pluginFilterEdit);
-
-  QObject::connect(
-    ui->pluginsList, &QTreeWidget::currentItemChanged,
-    [&](auto* current, auto* previous) { on_pluginsList_currentItemChanged(current, previous); });
-
-  QShortcut *delShortcut = new QShortcut(
-    QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
-  QObject::connect(delShortcut, &QShortcut::activated, &dialog(), [&] { deleteBlacklistItem(); });
-  QObject::connect(&m_filter, &MOBase::FilterWidget::changed, [&] { populatePluginList(); });
-}
-
-void PluginsSettingsTab::populatePluginList()
-{
-  ui->pluginsList->clear();
-
   // Create top-level tree widget:
   QStringList pluginInterfaces = m_pluginContainer->pluginInterfaces();
   pluginInterfaces.sort(Qt::CaseInsensitive);
@@ -57,7 +34,7 @@ void PluginsSettingsTab::populatePluginList()
       continue;
     }
     if (!m_filter.matches([plugin](const QRegularExpression& regex) {
-        return regex.match(plugin->localizedName()).hasMatch();
+      return regex.match(plugin->localizedName()).hasMatch();
       })) {
       continue;
     }
@@ -67,10 +44,6 @@ void PluginsSettingsTab::populatePluginList()
     listItem->setData(0, ROLE_PLUGIN, QVariant::fromValue((void*)plugin));
     listItem->setData(0, ROLE_SETTINGS, settings().plugins().settings(plugin->name()));
     listItem->setData(0, ROLE_DESCRIPTIONS, settings().plugins().descriptions(plugin->name()));
-
-    if (handledNames.isEmpty()) {
-      listItem->setSelected(true);
-    }
 
     handledNames.insert(plugin->name());
   }
@@ -82,6 +55,66 @@ void PluginsSettingsTab::populatePluginList()
   }
 
   ui->pluginsList->sortByColumn(0, Qt::AscendingOrder);
+
+  // display plugin blacklist
+  for (const QString &pluginName : settings().plugins().blacklist()) {
+    ui->pluginBlacklist->addItem(pluginName);
+  }
+
+  m_filter.setEdit(ui->pluginFilterEdit);
+
+  QObject::connect(
+    ui->pluginsList, &QTreeWidget::currentItemChanged,
+    [&](auto* current, auto* previous) { on_pluginsList_currentItemChanged(current, previous); });
+
+  QShortcut *delShortcut = new QShortcut(
+    QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
+  QObject::connect(delShortcut, &QShortcut::activated, &dialog(), [&] { deleteBlacklistItem(); });
+  QObject::connect(&m_filter, &MOBase::FilterWidget::changed, [&] { filterPluginList(); });
+
+  filterPluginList();
+}
+
+void PluginsSettingsTab::filterPluginList()
+{
+  QTreeWidgetItem* firstNotHidden = nullptr;
+
+  for (auto i = 0; i < ui->pluginsList->topLevelItemCount(); ++i) {
+    auto* topLevelItem = ui->pluginsList->topLevelItem(i);
+
+    bool found = false;
+    for (auto j = 0; j < topLevelItem->childCount(); ++j) {
+      auto* item = topLevelItem->child(j);
+      auto* plugin = this->plugin(item);
+
+      if (m_filter.matches([plugin](const QRegularExpression& regex) {
+        return regex.match(plugin->localizedName()).hasMatch();
+        })) {
+        found = true;
+        item->setHidden(false);
+
+        if (firstNotHidden == nullptr) {
+          firstNotHidden = item;
+        }
+      }
+      else {
+        item->setHidden(true);
+      }
+    }
+
+    topLevelItem->setHidden(!found);
+  }
+
+  // Unselect item if hidden:
+  auto selectedItems = ui->pluginsList->selectedItems();
+  if (!selectedItems.isEmpty() && selectedItems[0]->isHidden()) {
+    selectedItems[0]->setSelected(false);
+  
+    if (firstNotHidden) {
+      firstNotHidden->setSelected(true);
+    }
+  }
+
 }
 
 IPlugin* PluginsSettingsTab::plugin(QTreeWidgetItem* pluginItem) const

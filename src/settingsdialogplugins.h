@@ -21,10 +21,10 @@ private:
 
 private slots:
   /**
-   * @brief Clear and repopulate the plugin list.
+   * @brief Filter the plugin list according to the filter widget.
    *
    */
-  void populatePluginList();
+  void filterPluginList();
 
   /**
    * @brief Retrieve the plugin associated to the given item in the list.
