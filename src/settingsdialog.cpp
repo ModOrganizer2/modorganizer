@@ -43,7 +43,7 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings& setti
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new DiagnosticsSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new NexusSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new SteamSettingsTab(settings, *this)));
-  m_tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsSettingsTab(settings, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsSettingsTab(settings, m_pluginContainer, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsSettingsTab(settings, *this)));
 }
 

@@ -21,6 +21,35 @@ using namespace MOShared;
 
 namespace bf = boost::fusion;
 
+template <class T>
+struct PluginTypeName;
+
+template <> struct PluginTypeName<MOBase::IPlugin> { static QString value() { return QT_TR_NOOP("Plugin"); } };
+template <> struct PluginTypeName<MOBase::IPluginDiagnose> { static QString value() { return QT_TR_NOOP("Diagnose"); } };
+template <> struct PluginTypeName<MOBase::IPluginGame> { static QString value() { return QT_TR_NOOP("Game"); } };
+template <> struct PluginTypeName<MOBase::IPluginInstaller> { static QString value() { return QT_TR_NOOP("Installer"); } };
+template <> struct PluginTypeName<MOBase::IPluginModPage> { static QString value() { return QT_TR_NOOP("Mod Page"); } };
+template <> struct PluginTypeName<MOBase::IPluginPreview> { static QString value() { return QT_TR_NOOP("Preview"); } };
+template <> struct PluginTypeName<MOBase::IPluginTool> { static QString value() { return QT_TR_NOOP("Tool"); } };
+template <> struct PluginTypeName<MOBase::IPluginProxy> { static QString value() { return QT_TR_NOOP("Proxy"); } };
+template <> struct PluginTypeName<MOBase::IPluginFileMapper> { static QString value() { return QT_TR_NOOP("File Mapper"); } };
+
+
+QStringList PluginContainer::pluginInterfaces()
+{
+  // Find all the names:
+  QStringList names;
+  boost::mp11::mp_for_each<PluginTypeOrder>([&names](const auto* p) {
+    using plugin_type = std::decay_t<decltype(*p)>;
+    auto name = PluginTypeName<plugin_type>::value();
+    if (!name.isEmpty()) {
+      names.append(name);
+    }
+  });
+
+  return names;
+}
+
 
 PluginContainer::PluginContainer(OrganizerCore *organizer)
   : m_Organizer(organizer)
@@ -32,6 +61,7 @@ PluginContainer::~PluginContainer() {
   m_Organizer = nullptr;
   unloadPlugins();
 }
+
 
 void PluginContainer::setUserInterface(IUserInterface *userInterface, QWidget *widget)
 {
@@ -53,6 +83,61 @@ void PluginContainer::setUserInterface(IUserInterface *userInterface, QWidget *w
 }
 
 
+QStringList PluginContainer::implementedInterfaces(IPlugin* plugin) const
+{
+  // We need a QObject to be able to qobject_cast<> to the plugin types:
+  QObject* oPlugin = as_qobject(plugin);
+
+  if (!oPlugin) {
+    return {};
+  }
+
+  // Find all the names:
+  QStringList names;
+  boost::mp11::mp_for_each<PluginTypeOrder>([oPlugin, &names](const auto* p) {
+    using plugin_type = std::decay_t<decltype(*p)>;
+    if (qobject_cast<plugin_type*>(oPlugin)) {
+      auto name = PluginTypeName<plugin_type>::value();
+      if (!name.isEmpty()) {
+        names.append(name);
+      }
+    }
+    });
+
+  // If the plugin implements at least one interface other than IPlugin, remove IPlugin:
+  if (names.size() > 1) {
+    names.removeAll(PluginTypeName<IPlugin>::value());
+  }
+
+  return names;
+}
+
+
+QString PluginContainer::topImplementedInterface(IPlugin* plugin) const
+{
+  // We need a QObject to be able to qobject_cast<> to the plugin types:
+  QObject* oPlugin = as_qobject(plugin);
+
+  if (!oPlugin) {
+    return {};
+  }
+
+  // Find all the names:
+  QString name;
+  boost::mp11::mp_for_each<PluginTypeOrder>([oPlugin, &name](auto* p) {
+    using plugin_type = std::decay_t<decltype(*p)>;
+    if (name.isEmpty() && qobject_cast<plugin_type*>(oPlugin)) {
+      auto tname = PluginTypeName<plugin_type>::value();
+      if (!tname.isEmpty()) {
+        name = tname;
+      }
+    }
+    });
+
+  return name;
+}
+
+
 QStringList PluginContainer::pluginFileNames() const
 {
   QStringList result;
@@ -68,6 +153,21 @@ QStringList PluginContainer::pluginFileNames() const
   return result;
 }
 
+
+QObject* PluginContainer::as_qobject(MOBase::IPlugin* plugin) const
+{
+  // Find the correspond QObject - Can this be done safely with a cast?
+  auto& objects = bf::at_key<QObject>(m_Plugins);
+  auto it = std::find_if(std::begin(objects), std::end(objects), [plugin](QObject* obj) {
+    return qobject_cast<IPlugin*>(obj) == plugin;
+    });
+
+  if (it == std::end(objects)) {
+    return nullptr;
+  }
+
+  return *it;
+}
 
 bool PluginContainer::verifyPlugin(IPlugin *plugin)
 {
