@@ -182,7 +182,9 @@ void TransferSavesDialog::on_moveToLocalBtn_clicked()
 {
   QString character = ui->globalCharacterList->currentItem()->text();
   if (transferCharacters(
-          character, MOVE_SAVES TO_PROFILE, m_GlobalSaves[character],
+          character, MOVE_SAVES TO_PROFILE,
+          m_GamePlugin->savesDirectory(),
+          m_GlobalSaves[character],
           m_Profile.savePath(),
           [this](const QString &source, const QString &destination) -> bool {
             return shellMove(source, destination, this);
@@ -199,7 +201,9 @@ void TransferSavesDialog::on_copyToLocalBtn_clicked()
 {
   QString character = ui->globalCharacterList->currentItem()->text();
   if (transferCharacters(
-          character, COPY_SAVES TO_PROFILE, m_GlobalSaves[character],
+          character, COPY_SAVES TO_PROFILE,
+          m_GamePlugin->savesDirectory(),
+          m_GlobalSaves[character],
           m_Profile.savePath(),
           [this](const QString &source, const QString &destination) -> bool {
             return shellCopy(source, destination, this);
@@ -214,7 +218,9 @@ void TransferSavesDialog::on_moveToGlobalBtn_clicked()
 {
   QString character = ui->localCharacterList->currentItem()->text();
   if (transferCharacters(
-          character, MOVE_SAVES TO_GLOBAL, m_LocalSaves[character],
+          character, MOVE_SAVES TO_GLOBAL,
+          m_Profile.savePath(),
+          m_LocalSaves[character],
           m_GamePlugin->savesDirectory().absolutePath(),
           [this](const QString &source, const QString &destination) -> bool {
             return shellMove(source, destination, this);
@@ -231,7 +237,9 @@ void TransferSavesDialog::on_copyToGlobalBtn_clicked()
 {
   QString character = ui->localCharacterList->currentItem()->text();
   if (transferCharacters(
-          character, COPY_SAVES TO_GLOBAL, m_LocalSaves[character],
+          character, COPY_SAVES TO_GLOBAL,
+          m_Profile.savePath(),
+          m_LocalSaves[character],
           m_GamePlugin->savesDirectory().absolutePath(),
           [this](const QString &source, const QString &destination) -> bool {
             return shellCopy(source, destination, this);
@@ -276,8 +284,6 @@ void TransferSavesDialog::on_localCharacterList_currentTextChanged(const QString
 void TransferSavesDialog::refreshSaves(SaveCollection &saveCollection, QString const &savedir)
 {
   saveCollection.clear();
-  QDir savesDir(savedir);
-  savesDir.setNameFilters(QStringList() << QString("*.%1").arg(m_GamePlugin->savegameExtension()));
 
   SaveGameInfo const *info = m_GamePlugin->feature<SaveGameInfo>();
   if (info == nullptr) {
@@ -285,10 +291,26 @@ void TransferSavesDialog::refreshSaves(SaveCollection &saveCollection, QString c
     info = &dummyInfo;
   }
 
-  QStringList files = savesDir.entryList(QDir::Files, QDir::Time);
-  for (const QString &filename : files) {
-    QString file = savesDir.absoluteFilePath(filename);
-    MOBase::ISaveGame const *save = info->getSaveGameInfo(file);
+  QStringList filters;
+  filters << QString("*.") + m_GamePlugin->savegameExtension();
+
+  QDir savesDir(savedir);
+  savesDir.setNameFilters(QStringList() << QString("*.") + m_GamePlugin->savegameExtension());
+  savesDir.setFilter(QDir::Files);
+  QDirIterator it(savesDir, QDirIterator::Subdirectories);
+  log::debug("reading save games from {}", savesDir.absolutePath());
+
+  QFileInfoList files;
+  while (it.hasNext()) {
+    it.next();
+    files.append(it.fileInfo());
+  }
+  std::sort(files.begin(), files.end(), [](auto const& lhs, auto const& rhs) {
+    return lhs.fileTime(QFileDevice::FileModificationTime) < rhs.fileTime(QFileDevice::FileModificationTime);
+    });
+
+  for (const QFileInfo &file: files) {
+    MOBase::ISaveGame const *save = info->getSaveGameInfo(file.absoluteFilePath());
     saveCollection[save->getSaveGroupIdentifier()].push_back(
                                 std::unique_ptr<MOBase::ISaveGame const>(save));
   }
@@ -312,8 +334,10 @@ void TransferSavesDialog::refreshCharacters(const SaveCollection &saveCollection
 }
 
 bool TransferSavesDialog::transferCharacters(
-    QString const &character, char const *message, SaveList &saves,
-    QString const &dest,
+    QString const &character, char const *message, 
+    QDir const& sourceDirectory,
+    SaveList &saves,
+    QDir const& destination,
     const std::function<bool(const QString &, const QString &)> &method,
     char const *errmsg)
 {
@@ -325,11 +349,10 @@ bool TransferSavesDialog::transferCharacters(
 
   OverwriteMode overwriteMode = OVERWRITE_ASK;
 
-  QDir destination(dest);
   for (SaveListItem const &save : saves) {
     for (QString source : save->allFiles()) {
       QFileInfo sourceFile(source);
-      QString destinationFile(destination.absoluteFilePath(sourceFile.fileName()));
+      QString destinationFile(destination.absoluteFilePath(sourceDirectory.relativeFilePath(source)));
 
       //If the file is already there, let them skip (or not).
       if (QFile::exists(destinationFile)) {

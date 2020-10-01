@@ -92,8 +92,9 @@ private:
                          QPushButton *move);
 
   bool transferCharacters(
-      QString const &character, char const *message, SaveList &saves,
-      QString const &dest,
+      QString const &character, char const *message,
+      QDir const& sourceDirectory, SaveList &saves,
+      QDir const& dest,
       const std::function<bool(const QString &, const QString &)> &method,
       char const *errmsg);
 };
