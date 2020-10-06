@@ -183,7 +183,7 @@ private:
 
 
 FilterList::FilterList(Ui::MainWindow* ui, OrganizerCore* organizer, PluginContainer* pluginContainer, CategoryFactory* factory)
-  : ui(ui), m_Organizer(organizer), m_pluginContainer(pluginContainer, m_factory(factory)
+  : ui(ui), m_Organizer(organizer), m_pluginContainer(pluginContainer), m_factory(factory)
 {
   auto* eventFilter = new CriteriaItemFilter(
     ui->filters, [&](auto* item, int dir){ return cycleItem(item, dir); });
