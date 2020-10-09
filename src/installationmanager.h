@@ -62,8 +62,6 @@ public:
 
   void setParentWidget(QWidget *widget);
 
-  void setURL(const QString &url);
-
   /**
    * @brief Notify all installer plugins that an installation is about to start.
    *
@@ -300,8 +298,6 @@ private:
   // paths to temporary files:
   std::map<std::shared_ptr<const MOBase::FileTreeEntry>, QString> m_CreatedFiles;
   std::set<QString> m_TempFilesToDelete;
-
-  QString m_URL;
 };
 
 

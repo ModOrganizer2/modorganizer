@@ -790,6 +790,19 @@ public: // Methods after this do not come from IModInterface:
   virtual void setCustomURL(QString const&) {}
 
   /**
+   * @brief Sets the URL for this mod.
+   *
+   * In practice, this is a shortcut for setHasCustomURL followed by
+   * setCustomURL.
+   *
+   * @param url The new URL.
+   */
+  void setUrl(QString const& url) override {
+    setHasCustomURL(true);
+    setCustomURL(url);
+  }
+
+  /**
    * If hasCustomURL() is true and getCustomURL() is not empty, tries to parse
    * the url using QUrl::fromUserInput() and returns it. Otherwise, returns an
    * empty QUrl.
