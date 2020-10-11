@@ -33,7 +33,6 @@ add_filter(NAME src/core GROUPS
 	nexusinterface
 	nxmaccessmanager
 	organizercore
-	organizerproxy
 	apiuseraccount
 	processrunner
 	qdirfiletree
@@ -145,6 +144,14 @@ add_filter(NAME src/profiles GROUPS
 	profile
 	profileinputdialog
 	profilesdialog
+)
+
+add_filter(NAME src/proxies GROUPS
+	downloadmanagerproxy
+	modlistproxy
+	organizerproxy
+	pluginlistproxy
+	proxyutils
 )
 
 add_filter(NAME src/register GROUPS

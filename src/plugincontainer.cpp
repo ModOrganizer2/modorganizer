@@ -173,7 +173,7 @@ bool PluginContainer::verifyPlugin(IPlugin *plugin)
 {
   if (plugin == nullptr) {
     return false;
-  } else if (!plugin->init(new OrganizerProxy(m_Organizer, this, plugin->name()))) {
+  } else if (!plugin->init(new OrganizerProxy(m_Organizer, this, plugin))) {
     log::warn("plugin failed to initialize");
     return false;
   }

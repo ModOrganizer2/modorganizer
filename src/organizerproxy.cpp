@@ -5,6 +5,10 @@
 #include "plugincontainer.h"
 #include "settings.h"
 #include "glob_matching.h"
+#include "downloadmanagerproxy.h"
+#include "modlistproxy.h"
+#include "pluginlistproxy.h"
+#include "proxyutils.h"
 
 #include <QObject>
 #include <QApplication>
@@ -13,16 +17,19 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-OrganizerProxy::OrganizerProxy(OrganizerCore *organizer, PluginContainer *pluginContainer, const QString &pluginName)
+OrganizerProxy::OrganizerProxy(OrganizerCore* organizer, PluginContainer* pluginContainer, MOBase::IPlugin* plugin)
   : m_Proxied(organizer)
   , m_PluginContainer(pluginContainer)
-  , m_PluginName(pluginName)
+  , m_Plugin(plugin)
+  , m_DownloadManagerProxy(std::make_unique<DownloadManagerProxy>(this, organizer->downloadManager()))
+  , m_ModListProxy(std::make_unique<ModListProxy>(this, organizer->modList()))
+  , m_PluginListProxy(std::make_unique<PluginListProxy>(this, organizer->pluginList()))
 {
 }
 
 IModRepositoryBridge *OrganizerProxy::createNexusBridge() const
 {
-  return new NexusBridge(m_PluginContainer, m_PluginName);
+  return new NexusBridge(m_PluginContainer, m_Plugin->name());
 }
 
 QString OrganizerProxy::profileName() const
@@ -171,36 +178,6 @@ bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
   }
 }
 
-bool OrganizerProxy::onAboutToRun(const std::function<bool (const QString &)> &func)
-{
-  return m_Proxied->onAboutToRun(func);
-}
-
-bool OrganizerProxy::onFinishedRun(const std::function<void (const QString &, unsigned int)> &func)
-{
-  return m_Proxied->onFinishedRun(func);
-}
-
-bool OrganizerProxy::onModInstalled(const std::function<void (const QString &)> &func)
-{
-  return m_Proxied->onModInstalled(func);
-}
-
-bool OrganizerProxy::onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func)
-{
-  return m_Proxied->onUserInterfaceInitialized(func);
-}
-
-bool OrganizerProxy::onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func)
-{
-  return m_Proxied->onProfileChanged(func);
-}
-
-bool OrganizerProxy::onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func)
-{
-  return m_Proxied->onPluginSettingChanged(func);
-}
-
 void OrganizerProxy::refreshModList(bool saveChanges)
 {
   m_Proxied->refreshModList(saveChanges);
@@ -254,17 +231,17 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerProxy::findFileInfos(const QString 
 
 MOBase::IDownloadManager *OrganizerProxy::downloadManager() const
 {
-  return m_Proxied->downloadManager();
+  return m_DownloadManagerProxy.get();
 }
 
 MOBase::IPluginList *OrganizerProxy::pluginList() const
 {
-  return m_Proxied->pluginList();
+  return m_PluginListProxy.get();
 }
 
 MOBase::IModList *OrganizerProxy::modList() const
 {
-  return m_Proxied->modList();
+  return m_ModListProxy.get();
 }
 
 MOBase::IProfile *OrganizerProxy::profile() const
@@ -280,4 +257,36 @@ MOBase::IPluginGame const *OrganizerProxy::managedGame() const
 QStringList OrganizerProxy::modsSortedByProfilePriority() const
 {
   return m_Proxied->modsSortedByProfilePriority();
+}
+
+// CALLBACKS
+
+bool OrganizerProxy::onAboutToRun(const std::function<bool(const QString&)>& func)
+{
+  return m_Proxied->onAboutToRun(MOShared::callIfPluginActive(this, func, true));
+}
+
+bool OrganizerProxy::onFinishedRun(const std::function<void(const QString&, unsigned int)>& func)
+{
+  return m_Proxied->onFinishedRun(MOShared::callIfPluginActive(this, func));
+}
+
+bool OrganizerProxy::onModInstalled(const std::function<void(const QString&)>& func)
+{
+  return m_Proxied->onModInstalled(MOShared::callIfPluginActive(this, func));
+}
+
+bool OrganizerProxy::onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func)
+{
+  return m_Proxied->onUserInterfaceInitialized(MOShared::callIfPluginActive(this, func));
+}
+
+bool OrganizerProxy::onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func)
+{
+  return m_Proxied->onProfileChanged(MOShared::callIfPluginActive(this, func));
+}
+
+bool OrganizerProxy::onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func)
+{
+  return m_Proxied->onPluginSettingChanged(MOShared::callIfPluginActive(this, func));
 }
