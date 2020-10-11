@@ -195,6 +195,7 @@ add_filter(NAME src/utilities GROUPS
 	shared/windows_error
 	thread_utils
 	json
+	glob_matching
 )
 
 add_filter(NAME src/widgets GROUPS
