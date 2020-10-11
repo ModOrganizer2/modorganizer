@@ -872,7 +872,9 @@ QStringList InstallationManager::getSupportedExtensions() const
 void InstallationManager::notifyInstallationStart(QString const& archive, bool reinstallation, ModInfo::Ptr  currentMod)
 {
   for (auto* installer : m_Installers) {
-    installer->onInstallationStart(archive, reinstallation, currentMod.get());
+    if (installer->isActive()) {
+      installer->onInstallationStart(archive, reinstallation, currentMod.get());
+    }
   }
 }
 
@@ -881,6 +883,8 @@ void InstallationManager::notifyInstallationEnd(
   ModInfo::Ptr  newMod)
 {
   for (auto* installer : m_Installers) {
-    installer->onInstallationEnd(result, newMod.get());
+    if (installer->isActive()) {
+      installer->onInstallationEnd(result, newMod.get());
+    }
   }
 }
