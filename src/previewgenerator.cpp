@@ -38,13 +38,17 @@ void PreviewGenerator::registerPlugin(MOBase::IPluginPreview *plugin)
 
 bool PreviewGenerator::previewSupported(const QString &fileExtension) const
 {
-  return m_PreviewPlugins.find(fileExtension.toLower()) != m_PreviewPlugins.end();
+  auto it = m_PreviewPlugins.find(fileExtension.toLower());
+  if (it == m_PreviewPlugins.end()) {
+    return false;
+  }
+  return it->second->isActive();
 }
 
 QWidget *PreviewGenerator::genPreview(const QString &fileName) const
 {
   auto iter = m_PreviewPlugins.find(QFileInfo(fileName).suffix().toLower());
-  if (iter != m_PreviewPlugins.end()) {
+  if (iter != m_PreviewPlugins.end() && iter->second->isActive()) {
     return iter->second->genFilePreview(fileName, m_MaxSize);
   } else {
     return nullptr;
