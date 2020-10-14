@@ -122,11 +122,6 @@ void InstallationManager::setParentWidget(QWidget *widget)
   }
 }
 
-void InstallationManager::setURL(QString const &url)
-{
-  m_URL = url;
-}
-
 void InstallationManager::queryPassword() {
   m_Password = QInputDialog::getText(m_ParentWidget, tr("Password required"),
     tr("Password"), QLineEdit::Password);
@@ -533,13 +528,6 @@ IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QSt
   settingsFile.setValue("nexusFileStatus", fileCategoryID);
   settingsFile.setValue("installationFile", m_CurrentFile);
   settingsFile.setValue("repository", repository);
-
-  if (!m_URL.isEmpty() || !settingsFile.contains("url")) {
-    settingsFile.setValue("url", m_URL);
-  }
-
-  //cleanup of m_URL or this will persist across installs.
-  m_URL = "";
 
   if (!merge) {
     // this does not clear the list we have in memory but the mod is going to have to be re-read anyway
