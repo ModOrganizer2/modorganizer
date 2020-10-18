@@ -278,7 +278,8 @@ bool OrganizerProxy::onModInstalled(const std::function<void(const QString&)>& f
 
 bool OrganizerProxy::onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func)
 {
-  return m_Proxied->onUserInterfaceInitialized(MOShared::callIfPluginActive(this, func));
+  // Always call this one to allow plugin to initialize themselves even when not active:
+  return m_Proxied->onUserInterfaceInitialized(func);
 }
 
 bool OrganizerProxy::onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func)
@@ -288,5 +289,6 @@ bool OrganizerProxy::onProfileChanged(std::function<void(MOBase::IProfile*, MOBa
 
 bool OrganizerProxy::onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func)
 {
-  return m_Proxied->onPluginSettingChanged(MOShared::callIfPluginActive(this, func));
+  // Always call this one, otherwise plugin cannot detect they are being enabled / disabled:
+  return m_Proxied->onPluginSettingChanged(func);
 }
