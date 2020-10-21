@@ -37,6 +37,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStringList>
 #include <QFileSystemWatcher>
 #include <QSettings>
+#include <boost/signals2.hpp>
 
 namespace MOBase { class IPluginGame; }
 
@@ -125,6 +126,8 @@ private:
   private:
     DownloadInfo() : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_SpeedDiff(std::tuple<int,int,int,int,int>(0,0,0,0,0)), m_HasData(false) {}
   };
+
+  using SignalDownloadCallback = boost::signals2::signal<void(int)>;
 
 public:
 
@@ -367,11 +370,16 @@ public:
    */
   void refreshList();
 
-  virtual int startDownloadURLs(const QStringList &urls);
+public: // IDownloadManager interface:
 
-  virtual int startDownloadNexusFile(int modID, int fileID);
+  int startDownloadURLs(const QStringList &urls) override;
+  int startDownloadNexusFile(int modID, int fileID) override;
+  QString downloadPath(int id) override;
 
-  virtual QString downloadPath(int id);
+  bool onDownloadComplete(const std::function<void(int)>& callback) override;
+  bool onDownloadPaused(const std::function<void(int)>& callback) override;
+  bool onDownloadFailed(const std::function<void(int)>& callback) override;
+  bool onDownloadRemoved(const std::function<void(int)>& callback) override;
 
   /**
    * @brief retrieve a download index from the filename
@@ -383,7 +391,7 @@ public:
 
   void pauseAll();
 
-signals:
+Q_SIGNALS:
 
   void aboutToUpdate();
 
@@ -555,6 +563,11 @@ private:
   QVector<int> m_AlphabeticalTranslation;
 
   QFileSystemWatcher m_DirWatcher;
+
+  SignalDownloadCallback m_DownloadComplete;
+  SignalDownloadCallback m_DownloadPaused;
+  SignalDownloadCallback m_DownloadFailed;
+  SignalDownloadCallback m_DownloadRemoved;
 
   //The dirWatcher is actually triggering off normal Mo operations such as deleting downloads or editing .meta files
   //so it needs to be disabled during operations that are known to cause the creation or deletion of files in the Downloads folder.

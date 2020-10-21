@@ -1,18 +1,28 @@
 #ifndef ORGANIZERPROXY_H
 #define ORGANIZERPROXY_H
 
+#include <memory>
 
+#include <iplugin.h>
 #include <imoinfo.h>
 
 class OrganizerCore;
 class PluginContainer;
+class DownloadManagerProxy;
+class ModListProxy;
+class PluginListProxy;
 
 class OrganizerProxy : public MOBase::IOrganizer
 {
 
 public:
 
-  OrganizerProxy(OrganizerCore *organizer, PluginContainer *pluginContainer, const QString &pluginName);
+  OrganizerProxy(OrganizerCore *organizer, PluginContainer *pluginContainer, MOBase::IPlugin *plugin);
+
+  /**
+   * @return the plugin corresponding to this proxy.
+   */
+  MOBase::IPlugin* plugin() const { return m_Plugin;  }
 
   virtual MOBase::IModRepositoryBridge *createNexusBridge() const;
   virtual QString profileName() const;
@@ -65,7 +75,11 @@ private:
   OrganizerCore *m_Proxied;
   PluginContainer *m_PluginContainer;
 
-  QString m_PluginName;
+  MOBase::IPlugin *m_Plugin;
+
+  std::unique_ptr<DownloadManagerProxy> m_DownloadManagerProxy;
+  std::unique_ptr<ModListProxy> m_ModListProxy;
+  std::unique_ptr<PluginListProxy> m_PluginListProxy;
 
 };
 

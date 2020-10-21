@@ -694,6 +694,7 @@ void DownloadManager::removeFile(int index, bool deleteFile)
     if(!download->m_Hidden)
       metaSettings.setValue("removed", true);
   }
+  m_DownloadRemoved(index);
 
   endDisableDirWatcher();
 }
@@ -1453,13 +1454,19 @@ void DownloadManager::setState(DownloadManager::DownloadInfo *info, DownloadMana
   }
   info->m_State = state;
   switch (state) {
-    case STATE_PAUSED:
+    case STATE_PAUSED: {
+      info->m_Reply->abort();
+      info->m_Output.close();
+      m_DownloadPaused(row);
+    } break;
     case STATE_ERROR: {
       info->m_Reply->abort();
       info->m_Output.close();
+      m_DownloadFailed(row);
     } break;
     case STATE_CANCELED: {
       info->m_Reply->abort();
+      m_DownloadFailed(row);
     } break;
     case STATE_FETCHINGMODINFO: {
       m_RequestIDs.insert(m_NexusInterface->requestDescription(info->m_FileInfo->gameName, info->m_FileInfo->modID, this, info->m_DownloadID, QString()));
@@ -1473,7 +1480,7 @@ void DownloadManager::setState(DownloadManager::DownloadInfo *info, DownloadMana
     } break;
     case STATE_READY: {
       createMetaFile(info);
-      emit downloadComplete(row);
+      m_DownloadComplete(row);
     } break;
     default: /* NOP */ break;
   }
@@ -1790,6 +1797,26 @@ int DownloadManager::startDownloadNexusFile(int modID, int fileID)
 QString DownloadManager::downloadPath(int id)
 {
   return getFilePath(id);
+}
+
+bool DownloadManager::onDownloadComplete(const std::function<void(int)>& callback)
+{
+  return m_DownloadComplete.connect(callback).connected();
+}
+
+bool DownloadManager::onDownloadPaused(const std::function<void(int)>& callback)
+{
+  return m_DownloadPaused.connect(callback).connected();
+}
+
+bool DownloadManager::onDownloadFailed(const std::function<void(int)>& callback)
+{
+  return m_DownloadFailed.connect(callback).connected();
+}
+
+bool DownloadManager::onDownloadRemoved(const std::function<void(int)>& callback)
+{
+  return m_DownloadRemoved.connect(callback).connected();
 }
 
 int DownloadManager::indexByName(const QString &fileName) const

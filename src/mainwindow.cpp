@@ -5094,6 +5094,9 @@ void MainWindow::on_actionSettings_triggered()
   instManager->setModsDirectory(settings.paths().mods());
   instManager->setDownloadDirectory(settings.paths().downloads());
 
+  // Schedule a problem check since diagnose plugins may have been enabled / disabled.
+  scheduleCheckForProblems();
+
   fixCategories();
   refreshFilters();
 
