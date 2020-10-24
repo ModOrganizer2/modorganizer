@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "shared/appconfig.h"
 #include "bsainvalidation.h"
 #include "iplugingame.h"
+#include "organizercore.h"
 #include "profile.h"
 #include "profileinputdialog.h"
 #include "report.h"
@@ -49,11 +50,11 @@ using namespace MOShared;
 Q_DECLARE_METATYPE(Profile::Ptr)
 
 
-ProfilesDialog::ProfilesDialog(const QString &profileName, MOBase::IPluginGame const *game, QWidget *parent)
+ProfilesDialog::ProfilesDialog(const QString &profileName, OrganizerCore &organizer, QWidget *parent)
   : TutorableDialog("Profiles", parent)
   , ui(new Ui::ProfilesDialog)
   , m_FailState(false)
-  , m_Game(game)
+  , m_Game(organizer.managedGame())
   , m_ActiveProfileName("")
 {
   ui->setupUi(this);
@@ -72,17 +73,21 @@ ProfilesDialog::ProfilesDialog(const QString &profileName, MOBase::IPluginGame c
     }
   }
 
-  BSAInvalidation *invalidation = game->feature<BSAInvalidation>();
+  BSAInvalidation *invalidation = m_Game->feature<BSAInvalidation>();
 
   if (invalidation == nullptr) {
     ui->invalidationBox->setToolTip(tr("Archive invalidation isn't required for this game."));
     ui->invalidationBox->setEnabled(false);
   }
 
-  if (!game->feature<LocalSavegames>()) {
+  if (!m_Game->feature<LocalSavegames>()) {
     ui->localSavesBox->setToolTip(tr("This game does not support profile-specific game saves."));
     ui->localSavesBox->setEnabled(false);
   }
+
+  connect(this, &ProfilesDialog::profileCreated, &organizer, &OrganizerCore::profileCreated);
+  connect(this, &ProfilesDialog::profileRenamed, &organizer, &OrganizerCore::profileRenamed);
+  connect(this, &ProfilesDialog::profileRemoved, &organizer, &OrganizerCore::profileRemoved);
 }
 
 ProfilesDialog::~ProfilesDialog()
@@ -133,9 +138,11 @@ void ProfilesDialog::createProfile(const QString &name, bool useDefaultSettings)
 {
   try {
     QListWidgetItem *newItem = new QListWidgetItem(name, ui->profilesList);
-    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(new Profile(name, m_Game, useDefaultSettings))));
+    Profile* profile = new Profile(name, m_Game, useDefaultSettings);
+    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(profile)));
     ui->profilesList->addItem(newItem);
     m_FailState = false;
+    emit profileCreated(profile);
   } catch (const std::exception&) {
     m_FailState = true;
     throw;
@@ -146,9 +153,11 @@ void ProfilesDialog::createProfile(const QString &name, const Profile &reference
 {
   try {
     QListWidgetItem *newItem = new QListWidgetItem(name, ui->profilesList);
-    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(Profile::createPtrFrom(name, reference, m_Game))));
+    Profile* profile = Profile::createPtrFrom(name, reference, m_Game);
+    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(profile)));
     ui->profilesList->addItem(newItem);
     m_FailState = false;
+    emit profileCreated(profile);
   } catch (const std::exception&) {
     m_FailState = true;
     throw;
@@ -231,6 +240,8 @@ void ProfilesDialog::on_removeProfileButton_clicked()
         log::warn("regular delete failed too");
       }
     }
+
+    emit profileRemoved(profileToDelete->name());
   }
 }
 
@@ -254,7 +265,11 @@ void ProfilesDialog::on_renameButton_clicked()
   }
 
   ui->profilesList->currentItem()->setText(name);
+  
+  QString oldName = currentProfile->name();
   currentProfile->rename(name);
+
+  emit profileRenamed(currentProfile.get(), oldName, name);
 }
 
 
