@@ -138,11 +138,11 @@ void ProfilesDialog::createProfile(const QString &name, bool useDefaultSettings)
 {
   try {
     QListWidgetItem *newItem = new QListWidgetItem(name, ui->profilesList);
-    Profile* profile = new Profile(name, m_Game, useDefaultSettings);
-    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(profile)));
+    auto profile = Profile::Ptr(new Profile(name, m_Game, useDefaultSettings));
+    newItem->setData(Qt::UserRole, QVariant::fromValue(profile));
     ui->profilesList->addItem(newItem);
     m_FailState = false;
-    emit profileCreated(profile);
+    emit profileCreated(profile.get());
   } catch (const std::exception&) {
     m_FailState = true;
     throw;
@@ -153,11 +153,11 @@ void ProfilesDialog::createProfile(const QString &name, const Profile &reference
 {
   try {
     QListWidgetItem *newItem = new QListWidgetItem(name, ui->profilesList);
-    Profile* profile = Profile::createPtrFrom(name, reference, m_Game);
-    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(profile)));
+    auto profile = Profile::Ptr(Profile::createPtrFrom(name, reference, m_Game));
+    newItem->setData(Qt::UserRole, QVariant::fromValue(profile));
     ui->profilesList->addItem(newItem);
     m_FailState = false;
-    emit profileCreated(profile);
+    emit profileCreated(profile.get());
   } catch (const std::exception&) {
     m_FailState = true;
     throw;
