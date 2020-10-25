@@ -310,7 +310,6 @@ public:
   MOBase::IModInterface *getMod(const QString &name) const;
   MOBase::IPluginGame *getGame(const QString &gameName) const;
   MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
-  bool removeMod(MOBase::IModInterface *mod);
   void modDataChanged(MOBase::IModInterface *mod);
   QVariant pluginSetting(const QString &pluginName, const QString &key) const;
   void setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value);

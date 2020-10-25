@@ -82,11 +82,6 @@ IModInterface *OrganizerProxy::createMod(MOBase::GuessedValue<QString> &name)
   return m_Proxied->createMod(name);
 }
 
-bool OrganizerProxy::removeMod(IModInterface *mod)
-{
-  return m_Proxied->removeMod(mod);
-}
-
 void OrganizerProxy::modDataChanged(IModInterface *mod)
 {
   m_Proxied->modDataChanged(mod);

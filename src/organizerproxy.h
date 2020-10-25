@@ -35,7 +35,6 @@ public:
   virtual MOBase::IModInterface *getMod(const QString &name) const;
   virtual MOBase::IPluginGame *getGame(const QString &gameName) const;
   virtual MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
-  virtual bool removeMod(MOBase::IModInterface *mod);
   virtual void modDataChanged(MOBase::IModInterface *mod);
   virtual QVariant pluginSetting(const QString &pluginName, const QString &key) const;
   virtual void setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value);

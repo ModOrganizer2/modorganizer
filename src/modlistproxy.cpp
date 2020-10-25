@@ -22,6 +22,11 @@ QStringList ModListProxy::allModsByProfilePriority(MOBase::IProfile* profile) co
   return m_Proxied->allModsByProfilePriority(profile);
 }
 
+bool ModListProxy::removeMod(MOBase::IModInterface* mod)
+{
+  return m_Proxied->removeMod(mod);
+}
+
 IModList::ModStates ModListProxy::state(const QString& name) const
 {
   return m_Proxied->state(name);

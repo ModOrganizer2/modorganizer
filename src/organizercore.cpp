@@ -665,17 +665,6 @@ MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
       .data();
 }
 
-bool OrganizerCore::removeMod(MOBase::IModInterface *mod)
-{
-  unsigned int index = ModInfo::getIndex(mod->name());
-  if (index == UINT_MAX) {
-    return mod->remove();
-  } else {
-    return ModInfo::removeMod(index);
-  }
-  m_ModList.notifyModRemoved(mod->name());
-}
-
 void OrganizerCore::modDataChanged(MOBase::IModInterface *)
 {
   refresh(false);
