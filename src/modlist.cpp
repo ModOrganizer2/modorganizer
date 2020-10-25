@@ -77,6 +77,8 @@ ModList::ModList(PluginContainer *pluginContainer, OrganizerCore *organizer)
 
 ModList::~ModList()
 {
+  m_ModInstalled.disconnect_all_slots();
+  m_ModRemoved.disconnect_all_slots();
   m_ModStateChanged.disconnect_all_slots();
   m_ModMoved.disconnect_all_slots();
 }
@@ -1001,10 +1003,29 @@ bool ModList::setPriority(const QString &name, int newPriority)
   }
 }
 
+bool ModList::onModInstalled(const std::function<void(MOBase::IModInterface*)>& func)
+{
+  return m_ModInstalled.connect(func).connected();
+}
+
+bool ModList::onModRemoved(const std::function<void(QString const&)>& func)
+{
+  return m_ModRemoved.connect(func).connected();
+}
+
 bool ModList::onModStateChanged(const std::function<void(const std::map<QString, ModStates>&)>& func)
 {
-  auto conn = m_ModStateChanged.connect(func);
-  return conn.connected();
+  return m_ModStateChanged.connect(func).connected();
+}
+
+void ModList::notifyModInstalled(MOBase::IModInterface* mod) const
+{
+  m_ModInstalled(mod);
+}
+
+void ModList::notifyModRemoved(QString const& modName) const
+{
+  m_ModRemoved(modName);
 }
 
 void ModList::notifyModStateChanged(QList<unsigned int> modIndices) const 

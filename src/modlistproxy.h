@@ -20,6 +20,8 @@ public:
   int setActive(const QStringList& names, bool active) override;
   int priority(const QString& name) const override;
   bool setPriority(const QString& name, int newPriority) override;
+  bool onModInstalled(const std::function<void(MOBase::IModInterface *)>& func) override;
+  bool onModRemoved(const std::function<void(QString const&)>& func) override;
   bool onModStateChanged(const std::function<void(const std::map<QString, ModStates>&)>& func) override;
   bool onModMoved(const std::function<void(const QString&, int, int)>& func) override;
 

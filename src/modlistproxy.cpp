@@ -42,6 +42,16 @@ bool ModListProxy::setPriority(const QString& name, int newPriority)
   return m_Proxied->setPriority(name, newPriority);
 }
 
+bool ModListProxy::onModInstalled(const std::function<void(IModInterface*)>& func)
+{
+  return m_Proxied->onModInstalled(MOShared::callIfPluginActive(m_OrganizerProxy, func));
+}
+
+bool ModListProxy::onModRemoved(const std::function<void(QString const&)>& func)
+{
+  return m_Proxied->onModRemoved(MOShared::callIfPluginActive(m_OrganizerProxy, func));
+}
+
 bool ModListProxy::onModStateChanged(const std::function<void(const std::map<QString, ModStates>&)>& func)
 {
   return m_Proxied->onModStateChanged(MOShared::callIfPluginActive(m_OrganizerProxy, func));

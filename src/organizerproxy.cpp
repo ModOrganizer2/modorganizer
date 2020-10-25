@@ -271,11 +271,6 @@ bool OrganizerProxy::onFinishedRun(const std::function<void(const QString&, unsi
   return m_Proxied->onFinishedRun(MOShared::callIfPluginActive(this, func));
 }
 
-bool OrganizerProxy::onModInstalled(const std::function<void(const QString&)>& func)
-{
-  return m_Proxied->onModInstalled(MOShared::callIfPluginActive(this, func));
-}
-
 bool OrganizerProxy::onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func)
 {
   // Always call this one to allow plugin to initialize themselves even when not active:

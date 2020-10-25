@@ -80,7 +80,6 @@ private:
 
   using SignalAboutToRunApplication = boost::signals2::signal<bool (const QString&), SignalCombinerAnd>;
   using SignalFinishedRunApplication = boost::signals2::signal<void (const QString&, unsigned int)>;
-  using SignalModInstalled = boost::signals2::signal<void (const QString&)>;
   using SignalUserInterfaceInitialized = boost::signals2::signal<void (QMainWindow*)>;
   using SignalProfileChanged = boost::signals2::signal<void (MOBase::IProfile *, MOBase::IProfile *)>;
   using SignalPluginSettingChanged = boost::signals2::signal<void (QString const&, const QString& key, const QVariant&, const QVariant&)>;
@@ -321,8 +320,6 @@ public:
   void refreshModList(bool saveChanges = true);
   QStringList modsSortedByProfilePriority() const;
 
-
-  bool onModInstalled(const std::function<void(const QString&)>& func);
   bool onAboutToRun(const std::function<bool(const QString&)>& func);
   bool onFinishedRun(const std::function<void(const QString&, unsigned int)>& func);
   bool onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func);
@@ -440,7 +437,6 @@ private:
 
   SignalAboutToRunApplication m_AboutToRun;
   SignalFinishedRunApplication m_FinishedRun;
-  SignalModInstalled m_ModInstalled;
   SignalUserInterfaceInitialized m_UserInterfaceInitialized;
   SignalProfileChanged m_ProfileChanged;
   SignalPluginSettingChanged m_PluginSettingChanged;

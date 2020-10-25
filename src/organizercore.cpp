@@ -301,7 +301,6 @@ void OrganizerCore::disconnectPlugins()
 {
   m_AboutToRun.disconnect_all_slots();
   m_FinishedRun.disconnect_all_slots();
-  m_ModInstalled.disconnect_all_slots();
   m_UserInterfaceInitialized.disconnect_all_slots();
   m_ProfileChanged.disconnect_all_slots();
   m_PluginSettingChanged.disconnect_all_slots();
@@ -674,6 +673,7 @@ bool OrganizerCore::removeMod(MOBase::IModInterface *mod)
   } else {
     return ModInfo::removeMod(index);
   }
+  m_ModList.notifyModRemoved(mod->name());
 }
 
 void OrganizerCore::modDataChanged(MOBase::IModInterface *)
@@ -760,7 +760,7 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
         m_UserInterface->displayModInformation(
           modInfo, modIndex, ModInfoTabIDs::IniFiles);
       }
-      m_ModInstalled(modName);
+      m_ModList.notifyModInstalled(modInfo.get());
       m_DownloadManager.markInstalled(fileName);
       m_InstallationManager.notifyInstallationEnd(result, modInfo);
       emit modInstalled(modName);
@@ -839,7 +839,7 @@ void OrganizerCore::installDownload(int index)
             modInfo, modIndex, ModInfoTabIDs::IniFiles);
         }
 
-        m_ModInstalled(modName);
+        m_ModList.notifyModInstalled(modInfo.get());
         m_InstallationManager.notifyInstallationEnd(IPluginInstaller::RESULT_SUCCESS, modInfo);
       } else {
         reportError(tr("mod not found: %1").arg(qUtf8Printable(modName)));
@@ -1129,13 +1129,6 @@ bool OrganizerCore::onFinishedRun(
     const std::function<void(const QString &, unsigned int)> &func)
 {
   auto conn = m_FinishedRun.connect(func);
-  return conn.connected();
-}
-
-bool OrganizerCore::onModInstalled(
-    const std::function<void(const QString &)> &func)
-{
-  auto conn = m_ModInstalled.connect(func);
   return conn.connected();
 }
 
