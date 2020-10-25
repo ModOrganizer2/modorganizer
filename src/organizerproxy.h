@@ -57,7 +57,7 @@ public:
   virtual HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "",
                                   const QString &profile = "", const QString &forcedCustomOverwrite = "", bool ignoreCustomOverwrite = false);
   virtual bool waitForApplication(HANDLE handle, LPDWORD exitCode = nullptr) const;
-  virtual void refreshModList(bool saveChanges);
+  virtual void refresh(bool saveChanges);
 
   virtual bool onAboutToRun(const std::function<bool(const QString&)> &func);
   virtual bool onFinishedRun(const std::function<void (const QString&, unsigned int)> &func);

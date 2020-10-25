@@ -678,7 +678,7 @@ bool OrganizerCore::removeMod(MOBase::IModInterface *mod)
 
 void OrganizerCore::modDataChanged(MOBase::IModInterface *)
 {
-  refreshModList(false);
+  refresh(false);
 }
 
 QVariant OrganizerCore::pluginSetting(const QString &pluginName,
@@ -740,7 +740,7 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
   if (result == IPluginInstaller::RESULT_SUCCESS) {
     MessageDialog::showMessage(tr("Installation successful"),
                                qApp->activeWindow());
-    refreshModList();
+    refresh();
 
     int modIndex = ModInfo::getIndex(modName);
     if (modIndex != UINT_MAX) {
@@ -776,7 +776,7 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
           "If this was prior to a FOMOD setup, this warning may be ignored. "
           "However, if this was during installation, the mod will likely be missing files."),
         QMessageBox::Ok);
-      refreshModList();
+      refresh();
     }
   }
   return nullptr;
@@ -822,7 +822,7 @@ void OrganizerCore::installDownload(int index)
     if (result == IPluginInstaller::RESULT_SUCCESS) {
       MessageDialog::showMessage(tr("Installation successful"),
                                  qApp->activeWindow());
-      refreshModList();
+      refresh();
 
       int modIndex = ModInfo::getIndex(modName);
       if (modIndex != UINT_MAX) {
@@ -855,7 +855,7 @@ void OrganizerCore::installDownload(int index)
             "If this was prior to a FOMOD setup, this warning may be ignored. "
             "However, if this was during installation, the mod will likely be missing files."),
           QMessageBox::Ok);
-        refreshModList();
+        refresh();
       }
     }
   } catch (const std::exception &e) {
@@ -1147,7 +1147,7 @@ bool OrganizerCore::onPluginSettingChanged(std::function<void(QString const&, co
   return m_PluginSettingChanged.connect(func).connected();
 }
 
-void OrganizerCore::refreshModList(bool saveChanges)
+void OrganizerCore::refresh(bool saveChanges)
 {
   // don't lose changes!
   if (saveChanges) {
@@ -1168,6 +1168,8 @@ void OrganizerCore::refreshModList(bool saveChanges)
 
 void OrganizerCore::refreshESPList(bool force)
 {
+  TimeThis tt("OrganizerCore::refreshESPList()");
+
   if (m_DirectoryUpdate) {
     // don't mess up the esp list if we're currently updating the directory
     // structure
@@ -1526,7 +1528,7 @@ void OrganizerCore::directory_refreshed()
 
 void OrganizerCore::profileRefresh()
 {
-  refreshModList();
+  refresh();
 }
 
 void OrganizerCore::modStatusChanged(unsigned int index)

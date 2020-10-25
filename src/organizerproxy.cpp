@@ -178,9 +178,9 @@ bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
   }
 }
 
-void OrganizerProxy::refreshModList(bool saveChanges)
+void OrganizerProxy::refresh(bool saveChanges)
 {
-  m_Proxied->refreshModList(saveChanges);
+  m_Proxied->refresh(saveChanges);
 }
 
 IModInterface *OrganizerProxy::installMod(const QString &fileName, const QString &nameSuggestion)

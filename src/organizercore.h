@@ -317,7 +317,7 @@ public:
   DownloadManager *downloadManager();
   PluginList *pluginList();
   ModList *modList();
-  void refreshModList(bool saveChanges = true);
+  void refresh(bool saveChanges = true);
   QStringList modsSortedByProfilePriority() const;
 
   bool onAboutToRun(const std::function<bool(const QString&)>& func);
