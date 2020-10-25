@@ -3603,7 +3603,7 @@ void MainWindow::createEmptyMod_clicked()
     }
   }
 
-  if (m_OrganizerCore.getMod(name) != nullptr) {
+  if (m_OrganizerCore.modList()->getMod(name) != nullptr) {
     reportError(tr("A mod with this name already exists"));
     return;
   }
@@ -3638,13 +3638,13 @@ void MainWindow::createSeparator_clicked()
       GUESS_USER);
     if (!ok) { return; }
   }
-  if (m_OrganizerCore.getMod(name) != nullptr)
+  if (m_OrganizerCore.modList()->getMod(name) != nullptr)
   {
     reportError(tr("A separator with this name already exists"));
     return;
   }
   name->append("_separator");
-  if (m_OrganizerCore.getMod(name) != nullptr)
+  if (m_OrganizerCore.modList()->getMod(name) != nullptr)
   {
     return;
   }
@@ -3739,7 +3739,7 @@ void MainWindow::createModFromOverwrite()
     }
   }
 
-  if (m_OrganizerCore.getMod(name) != nullptr) {
+  if (m_OrganizerCore.modList()->getMod(name) != nullptr) {
     reportError(tr("A mod with this name already exists"));
     return;
   }

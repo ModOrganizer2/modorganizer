@@ -618,12 +618,6 @@ MOBase::VersionInfo OrganizerCore::appVersion() const
   return m_Updater.getVersion();
 }
 
-MOBase::IModInterface *OrganizerCore::getMod(const QString &name) const
-{
-  unsigned int index = ModInfo::getIndex(name);
-  return index == UINT_MAX ? nullptr : ModInfo::getByIndex(index).data();
-}
-
 MOBase::IPluginGame *OrganizerCore::getGame(const QString &name) const
 {
   for (IPluginGame *game : m_PluginContainer->plugins<IPluginGame>()) {

@@ -159,6 +159,9 @@ public:
   virtual QStringList allMods() const override;
   virtual QStringList allModsByProfilePriority(MOBase::IProfile* profile = nullptr) const override;
 
+  // \copydoc MOBase::IModList::getMod
+  MOBase::IModInterface* getMod(const QString& name) const override;
+
   // \copydoc MOBase::IModList::remove
   bool removeMod(MOBase::IModInterface* mod) override;
 

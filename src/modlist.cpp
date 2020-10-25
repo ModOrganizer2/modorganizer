@@ -939,6 +939,12 @@ QStringList ModList::allModsByProfilePriority(MOBase::IProfile* profile) const
   return m_Organizer->modsSortedByProfilePriority(mo2Profile);
 }
 
+MOBase::IModInterface* ModList::getMod(const QString& name) const
+{
+  unsigned int index = ModInfo::getIndex(name);
+  return index == UINT_MAX ? nullptr : ModInfo::getByIndex(index).data();
+}
+
 bool ModList::removeMod(MOBase::IModInterface* mod)
 {
   unsigned int index = ModInfo::getIndex(mod->name());

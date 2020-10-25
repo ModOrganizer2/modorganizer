@@ -67,11 +67,6 @@ VersionInfo OrganizerProxy::appVersion() const
   return m_Proxied->appVersion();
 }
 
-IModInterface *OrganizerProxy::getMod(const QString &name) const
-{
-  return m_Proxied->getMod(name);
-}
-
 IPluginGame *OrganizerProxy::getGame(const QString &gameName) const
 {
   return m_Proxied->getGame(gameName);

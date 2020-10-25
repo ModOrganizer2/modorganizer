@@ -307,7 +307,6 @@ public:
   QString basePath() const;
   QString modsPath() const;
   MOBase::VersionInfo appVersion() const;
-  MOBase::IModInterface *getMod(const QString &name) const;
   MOBase::IPluginGame *getGame(const QString &gameName) const;
   MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
   void modDataChanged(MOBase::IModInterface *mod);
