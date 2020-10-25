@@ -17,6 +17,11 @@ QStringList ModListProxy::allMods() const
   return m_Proxied->allMods();
 }
 
+QStringList ModListProxy::allModsByProfilePriority(MOBase::IProfile* profile) const
+{
+  return m_Proxied->allModsByProfilePriority(profile);
+}
+
 IModList::ModStates ModListProxy::state(const QString& name) const
 {
   return m_Proxied->state(name);

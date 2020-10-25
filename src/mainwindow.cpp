@@ -3775,7 +3775,7 @@ void MainWindow::moveOverwriteContentToExistingMod()
 
       QString modAbsolutePath;
 
-      for (const auto& mod : m_OrganizerCore.modsSortedByProfilePriority()) {
+      for (const auto& mod : m_OrganizerCore.modsSortedByProfilePriority(m_OrganizerCore.currentProfile())) {
         if (result.compare(mod) == 0) {
           ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(mod));
           modAbsolutePath = modInfo->absolutePath();
@@ -6549,7 +6549,7 @@ void MainWindow::sendSelectedModsToSeparator_clicked()
 
       int newPriority = INT_MAX;
       bool foundSection = false;
-      for (auto mod : m_OrganizerCore.modsSortedByProfilePriority()) {
+      for (auto mod : m_OrganizerCore.modsSortedByProfilePriority(m_OrganizerCore.currentProfile())) {
         unsigned int modIndex = ModInfo::getIndex(mod);
         ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
         if (!foundSection && result.compare(mod) == 0) {

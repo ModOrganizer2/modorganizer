@@ -67,8 +67,6 @@ public:
 
   virtual MOBase::IPluginGame const *managedGame() const;
 
-  virtual QStringList modsSortedByProfilePriority() const;
-
 private:
 
   OrganizerCore *m_Proxied;

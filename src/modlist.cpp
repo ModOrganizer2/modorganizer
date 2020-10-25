@@ -931,6 +931,14 @@ QStringList ModList::allMods() const
   return result;
 }
 
+QStringList ModList::allModsByProfilePriority(MOBase::IProfile* profile) const
+{
+  Profile* mo2Profile = profile == nullptr ?
+    m_Organizer->currentProfile()
+    : dynamic_cast<Profile*>(profile);
+  return m_Organizer->modsSortedByProfilePriority(mo2Profile);
+}
+
 IModList::ModStates ModList::state(const QString &name) const
 {
   unsigned int modIndex = ModInfo::getIndex(name);

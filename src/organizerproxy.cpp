@@ -254,11 +254,6 @@ MOBase::IPluginGame const *OrganizerProxy::managedGame() const
   return m_Proxied->managedGame();
 }
 
-QStringList OrganizerProxy::modsSortedByProfilePriority() const
-{
-  return m_Proxied->modsSortedByProfilePriority();
-}
-
 // CALLBACKS
 
 bool OrganizerProxy::onAboutToRun(const std::function<bool(const QString&)>& func)

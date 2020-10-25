@@ -289,6 +289,15 @@ public:
   static void setGlobalCrashDumpsType(CrashDumpsType crashDumpsType);
   static std::wstring crashDumpsPath();
 
+  /**
+   * @brief Returns the name of all the mods in the priority order of the given profile.
+   *
+   * @param profile Profile to use for the mod order.
+   *
+   * @return the name of all the mods in the priority order of the given profile.
+   */
+  QStringList modsSortedByProfilePriority(Profile* profile) const;
+
 public:
   MOBase::IModRepositoryBridge *createNexusBridge() const;
   QString profileName() const;
@@ -318,7 +327,6 @@ public:
   PluginList *pluginList();
   ModList *modList();
   void refresh(bool saveChanges = true);
-  QStringList modsSortedByProfilePriority() const;
 
   bool onAboutToRun(const std::function<bool(const QString&)>& func);
   bool onFinishedRun(const std::function<void(const QString&, unsigned int)>& func);

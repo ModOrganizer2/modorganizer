@@ -974,13 +974,13 @@ ModList *OrganizerCore::modList()
   return &m_ModList;
 }
 
-QStringList OrganizerCore::modsSortedByProfilePriority() const
+QStringList OrganizerCore::modsSortedByProfilePriority(Profile *profile) const
 {
   QStringList res;
-  for (int i = currentProfile()->getPriorityMinimum();
-           i < currentProfile()->getPriorityMinimum() + (int)currentProfile()->numRegularMods();
+  for (int i = profile->getPriorityMinimum();
+           i < profile->getPriorityMinimum() + (int)profile->numRegularMods();
            ++i) {
-    int modIndex = currentProfile()->modIndexByPriority(i);
+    int modIndex = profile->modIndexByPriority(i);
     auto modInfo = ModInfo::getByIndex(modIndex);
     if (!modInfo->hasFlag(ModInfo::FLAG_OVERWRITE) &&
         !modInfo->hasFlag(ModInfo::FLAG_BACKUP)) {

@@ -15,6 +15,7 @@ public:
 
   QString displayName(const QString& internalName) const override;
   QStringList allMods() const override;
+  QStringList allModsByProfilePriority(MOBase::IProfile* profile = nullptr) const override;
   ModStates state(const QString& name) const override;
   bool setActive(const QString& name, bool active) override;
   int setActive(const QStringList& names, bool active) override;
