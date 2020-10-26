@@ -57,11 +57,14 @@ public:
   virtual bool waitForApplication(HANDLE handle, LPDWORD exitCode = nullptr) const;
   virtual void refresh(bool saveChanges);
 
-  virtual bool onAboutToRun(const std::function<bool(const QString&)> &func);
-  virtual bool onFinishedRun(const std::function<void (const QString&, unsigned int)> &func);
-  virtual bool onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func);
-  virtual bool onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func);
-  virtual bool onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func);
+  virtual bool onAboutToRun(const std::function<bool(const QString&)> &func) override;
+  virtual bool onFinishedRun(const std::function<void (const QString&, unsigned int)> &func) override;
+  virtual bool onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func) override;
+  virtual bool onProfileCreated(std::function<void(MOBase::IProfile*)> const& func) override;
+  virtual bool onProfileRenamed(std::function<void(MOBase::IProfile*, QString const&, QString const&)> const& func) override;
+  virtual bool onProfileRemoved(std::function<void(QString const&)> const& func) override;
+  virtual bool onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func) override;
+  virtual bool onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func) override;
 
   virtual MOBase::IPluginGame const *managedGame() const;
 

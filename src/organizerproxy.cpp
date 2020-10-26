@@ -262,6 +262,21 @@ bool OrganizerProxy::onUserInterfaceInitialized(std::function<void(QMainWindow*)
   return m_Proxied->onUserInterfaceInitialized(func);
 }
 
+bool OrganizerProxy::onProfileCreated(std::function<void(IProfile*)> const& func)
+{
+  return m_Proxied->onProfileCreated(MOShared::callIfPluginActive(this, func));
+}
+
+bool OrganizerProxy::onProfileRenamed(std::function<void(IProfile*, QString const&, QString const&)> const& func)
+{
+  return m_Proxied->onProfileRenamed(MOShared::callIfPluginActive(this, func));
+}
+
+bool OrganizerProxy::onProfileRemoved(std::function<void(QString const&)> const& func)
+{
+  return m_Proxied->onProfileRemoved(MOShared::callIfPluginActive(this, func));
+}
+
 bool OrganizerProxy::onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func)
 {
   return m_Proxied->onProfileChanged(MOShared::callIfPluginActive(this, func));

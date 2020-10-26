@@ -1765,9 +1765,9 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 
     if (ui->profileBox->currentIndex() == 0) {
       ui->profileBox->setCurrentIndex(previousIndex);
-      ProfilesDialog(ui->profileBox->currentText(), m_OrganizerCore.managedGame(), this).exec();
+      ProfilesDialog(ui->profileBox->currentText(), m_OrganizerCore, this).exec();
       while (!refreshProfiles()) {
-        ProfilesDialog(ui->profileBox->currentText(), m_OrganizerCore.managedGame(), this).exec();
+        ProfilesDialog(ui->profileBox->currentText(), m_OrganizerCore, this).exec();
       }
     } else {
       activateSelectedProfile();
@@ -2432,7 +2432,7 @@ void MainWindow::on_actionAdd_Profile_triggered()
 {
   for (;;) {
     ProfilesDialog profilesDialog(m_OrganizerCore.currentProfile()->name(),
-                                  m_OrganizerCore.managedGame(),
+                                  m_OrganizerCore,
                                   this);
 
     // workaround: need to disable monitoring of the saves directory, otherwise the active

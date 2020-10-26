@@ -377,6 +377,22 @@ void OrganizerCore::userInterfaceInitialized()
   m_UserInterfaceInitialized(m_UserInterface->mainWindow());
 }
 
+void OrganizerCore::profileCreated(MOBase::IProfile* profile)
+{
+  m_ProfileCreated(profile);
+}
+
+void OrganizerCore::profileRenamed(MOBase::IProfile* profile, QString const& oldName, QString const& newName)
+{
+  m_ProfileRenamed(profile, oldName, newName);
+}
+
+void OrganizerCore::profileRemoved(QString const& profileName)
+{
+  m_ProfileRemoved(profileName);
+}
+
+
 void OrganizerCore::externalMessage(const QString &message)
 {
   if (MOShortcut moshortcut{ message } ) {
@@ -469,6 +485,7 @@ void OrganizerCore::createDefaultProfile()
   if (QDir(profilesPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot).size()
       == 0) {
     Profile newProf("Default", managedGame(), false);
+    m_ProfileCreated(&newProf);
   }
 }
 
@@ -1118,6 +1135,21 @@ bool OrganizerCore::onFinishedRun(
 bool OrganizerCore::onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func)
 {
   return m_UserInterfaceInitialized.connect(func).connected();
+}
+
+bool OrganizerCore::onProfileCreated(std::function<void(MOBase::IProfile*)> const& func)
+{
+  return m_ProfileCreated.connect(func).connected();
+}
+
+bool OrganizerCore::onProfileRenamed(std::function<void(MOBase::IProfile*, QString const&, QString const&)> const& func)
+{
+  return m_ProfileRenamed.connect(func).connected();
+}
+
+bool OrganizerCore::onProfileRemoved(std::function<void(QString const&)> const& func)
+{
+  return m_ProfileRemoved.connect(func).connected();
 }
 
 bool OrganizerCore::onProfileChanged(std::function<void(IProfile*, IProfile*)> const& func)

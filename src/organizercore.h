@@ -81,6 +81,9 @@ private:
   using SignalAboutToRunApplication = boost::signals2::signal<bool (const QString&), SignalCombinerAnd>;
   using SignalFinishedRunApplication = boost::signals2::signal<void (const QString&, unsigned int)>;
   using SignalUserInterfaceInitialized = boost::signals2::signal<void (QMainWindow*)>;
+  using SignalProfileCreated = boost::signals2::signal<void(MOBase::IProfile*)>;
+  using SignalProfileRenamed = boost::signals2::signal<void(MOBase::IProfile*, QString const&, QString const&)>;
+  using SignalProfileRemoved = boost::signals2::signal<void(QString const&)>;
   using SignalProfileChanged = boost::signals2::signal<void (MOBase::IProfile *, MOBase::IProfile *)>;
   using SignalPluginSettingChanged = boost::signals2::signal<void (QString const&, const QString& key, const QVariant&, const QVariant&)>;
 
@@ -329,6 +332,9 @@ public:
   bool onAboutToRun(const std::function<bool(const QString&)>& func);
   bool onFinishedRun(const std::function<void(const QString&, unsigned int)>& func);
   bool onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func);
+  bool onProfileCreated(std::function<void(MOBase::IProfile*)> const& func);
+  bool onProfileRenamed(std::function<void(MOBase::IProfile*, QString const&, QString const&)> const& func);
+  bool onProfileRemoved(std::function<void(QString const&)> const& func);
   bool onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func);
   bool onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func);
 
@@ -369,6 +375,10 @@ public slots:
   void downloadRequestedNXM(const QString &url);
 
   void userInterfaceInitialized();
+
+  void profileCreated(MOBase::IProfile* profile);
+  void profileRenamed(MOBase::IProfile* profile, QString const& oldName, QString const& newName);
+  void profileRemoved(QString const& profileName);
 
   bool nexusApi(bool retry = false);
 
@@ -444,6 +454,9 @@ private:
   SignalAboutToRunApplication m_AboutToRun;
   SignalFinishedRunApplication m_FinishedRun;
   SignalUserInterfaceInitialized m_UserInterfaceInitialized;
+  SignalProfileCreated m_ProfileCreated;
+  SignalProfileRenamed m_ProfileRenamed;
+  SignalProfileRemoved m_ProfileRemoved;
   SignalProfileChanged m_ProfileChanged;
   SignalPluginSettingChanged m_PluginSettingChanged;
 
