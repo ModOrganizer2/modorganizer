@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "tutorabledialog.h"
 class Profile;
+class OrganizerCore;
 
 class QListWidget;
 class QListWidgetItem;
@@ -46,9 +47,10 @@ public:
   * @brief constructor
   *
   * @param profileName currently enabled profile
+  * @param organizer
   * @param parent parent widget
   **/
- explicit ProfilesDialog(const QString &profileName, MOBase::IPluginGame const *game, QWidget *parent = 0);
+ explicit ProfilesDialog(const QString &profileName, OrganizerCore &organizer, QWidget *parent = 0);
   ~ProfilesDialog();
 
   // also saves and restores geometry
@@ -60,6 +62,23 @@ public:
    * @todo the notion of a fail state makes little sense in the current dialog
    **/
   bool failed() const { return m_FailState; }
+
+signals:
+
+  /**
+   * @brief Signal emitted when a profile is created.
+   */
+  void profileCreated(Profile* profile);
+
+  /**
+   * @brief Signal emitted when a profile is renamed.
+   */
+  void profileRenamed(Profile* profile, QString const& oldName, QString const& newName);
+
+  /**
+   * @brief Signal emitted when a profile has been removed.
+   */
+  void profileRemoved(QString const& profileName);
 
 protected:
 
