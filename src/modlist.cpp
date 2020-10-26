@@ -77,6 +77,8 @@ ModList::ModList(PluginContainer *pluginContainer, OrganizerCore *organizer)
 
 ModList::~ModList()
 {
+  m_ModInstalled.disconnect_all_slots();
+  m_ModRemoved.disconnect_all_slots();
   m_ModStateChanged.disconnect_all_slots();
   m_ModMoved.disconnect_all_slots();
 }
@@ -929,6 +931,31 @@ QStringList ModList::allMods() const
   return result;
 }
 
+QStringList ModList::allModsByProfilePriority(MOBase::IProfile* profile) const
+{
+  Profile* mo2Profile = profile == nullptr ?
+    m_Organizer->currentProfile() : static_cast<Profile*>(profile);
+  return m_Organizer->modsSortedByProfilePriority(mo2Profile);
+}
+
+MOBase::IModInterface* ModList::getMod(const QString& name) const
+{
+  unsigned int index = ModInfo::getIndex(name);
+  return index == UINT_MAX ? nullptr : ModInfo::getByIndex(index).data();
+}
+
+bool ModList::removeMod(MOBase::IModInterface* mod)
+{
+  unsigned int index = ModInfo::getIndex(mod->name());
+  if (index == UINT_MAX) {
+    return mod->remove();
+  }
+  else {
+    return ModInfo::removeMod(index);
+  }
+  notifyModRemoved(mod->name());
+}
+
 IModList::ModStates ModList::state(const QString &name) const
 {
   unsigned int modIndex = ModInfo::getIndex(name);
@@ -1001,10 +1028,29 @@ bool ModList::setPriority(const QString &name, int newPriority)
   }
 }
 
+bool ModList::onModInstalled(const std::function<void(MOBase::IModInterface*)>& func)
+{
+  return m_ModInstalled.connect(func).connected();
+}
+
+bool ModList::onModRemoved(const std::function<void(QString const&)>& func)
+{
+  return m_ModRemoved.connect(func).connected();
+}
+
 bool ModList::onModStateChanged(const std::function<void(const std::map<QString, ModStates>&)>& func)
 {
-  auto conn = m_ModStateChanged.connect(func);
-  return conn.connected();
+  return m_ModStateChanged.connect(func).connected();
+}
+
+void ModList::notifyModInstalled(MOBase::IModInterface* mod) const
+{
+  m_ModInstalled(mod);
+}
+
+void ModList::notifyModRemoved(QString const& modName) const
+{
+  m_ModRemoved(modName);
 }
 
 void ModList::notifyModStateChanged(QList<unsigned int> modIndices) const 
@@ -1175,6 +1221,8 @@ void ModList::removeRowForce(int row, const QModelIndex &parent)
   endRemoveRows();
   m_Profile->refreshModStatus();  // removes the mod from the status list
   m_Profile->writeModlist(); // this ensures the modified list gets written back before new mods can be installed
+
+  notifyModRemoved(modInfo->name());
 
   if (wasEnabled) {
     emit removeOrigin(modInfo->name());

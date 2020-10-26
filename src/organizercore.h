@@ -80,7 +80,6 @@ private:
 
   using SignalAboutToRunApplication = boost::signals2::signal<bool (const QString&), SignalCombinerAnd>;
   using SignalFinishedRunApplication = boost::signals2::signal<void (const QString&, unsigned int)>;
-  using SignalModInstalled = boost::signals2::signal<void (const QString&)>;
   using SignalUserInterfaceInitialized = boost::signals2::signal<void (QMainWindow*)>;
   using SignalProfileCreated = boost::signals2::signal<void(MOBase::IProfile*)>;
   using SignalProfileRenamed = boost::signals2::signal<void(MOBase::IProfile*, QString const&, QString const&)>;
@@ -293,6 +292,15 @@ public:
   static void setGlobalCrashDumpsType(CrashDumpsType crashDumpsType);
   static std::wstring crashDumpsPath();
 
+  /**
+   * @brief Returns the name of all the mods in the priority order of the given profile.
+   *
+   * @param profile Profile to use for the mod order.
+   *
+   * @return the name of all the mods in the priority order of the given profile.
+   */
+  QStringList modsSortedByProfilePriority(Profile* profile) const;
+
 public:
   MOBase::IModRepositoryBridge *createNexusBridge() const;
   QString profileName() const;
@@ -302,10 +310,8 @@ public:
   QString basePath() const;
   QString modsPath() const;
   MOBase::VersionInfo appVersion() const;
-  MOBase::IModInterface *getMod(const QString &name) const;
   MOBase::IPluginGame *getGame(const QString &gameName) const;
   MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
-  bool removeMod(MOBase::IModInterface *mod);
   void modDataChanged(MOBase::IModInterface *mod);
   QVariant pluginSetting(const QString &pluginName, const QString &key) const;
   void setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value);
@@ -321,11 +327,8 @@ public:
   DownloadManager *downloadManager();
   PluginList *pluginList();
   ModList *modList();
-  void refreshModList(bool saveChanges = true);
-  QStringList modsSortedByProfilePriority() const;
+  void refresh(bool saveChanges = true);
 
-
-  bool onModInstalled(const std::function<void(const QString&)>& func);
   bool onAboutToRun(const std::function<bool(const QString&)>& func);
   bool onFinishedRun(const std::function<void(const QString&, unsigned int)>& func);
   bool onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func);
@@ -450,7 +453,6 @@ private:
 
   SignalAboutToRunApplication m_AboutToRun;
   SignalFinishedRunApplication m_FinishedRun;
-  SignalModInstalled m_ModInstalled;
   SignalUserInterfaceInitialized m_UserInterfaceInitialized;
   SignalProfileCreated m_ProfileCreated;
   SignalProfileRenamed m_ProfileRenamed;

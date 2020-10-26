@@ -32,10 +32,8 @@ public:
   virtual QString basePath() const;
   virtual QString modsPath() const;
   virtual MOBase::VersionInfo appVersion() const;
-  virtual MOBase::IModInterface *getMod(const QString &name) const;
   virtual MOBase::IPluginGame *getGame(const QString &gameName) const;
   virtual MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
-  virtual bool removeMod(MOBase::IModInterface *mod);
   virtual void modDataChanged(MOBase::IModInterface *mod);
   virtual QVariant pluginSetting(const QString &pluginName, const QString &key) const;
   virtual void setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value);
@@ -57,11 +55,10 @@ public:
   virtual HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "",
                                   const QString &profile = "", const QString &forcedCustomOverwrite = "", bool ignoreCustomOverwrite = false);
   virtual bool waitForApplication(HANDLE handle, LPDWORD exitCode = nullptr) const;
-  virtual void refreshModList(bool saveChanges);
+  virtual void refresh(bool saveChanges);
 
   virtual bool onAboutToRun(const std::function<bool(const QString&)> &func) override;
   virtual bool onFinishedRun(const std::function<void (const QString&, unsigned int)> &func) override;
-  virtual bool onModInstalled(const std::function<void (const QString&)> &func) override;
   virtual bool onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func) override;
   virtual bool onProfileCreated(std::function<void(MOBase::IProfile*)> const& func) override;
   virtual bool onProfileRenamed(std::function<void(MOBase::IProfile*, QString const&, QString const&)> const& func) override;
@@ -70,8 +67,6 @@ public:
   virtual bool onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func) override;
 
   virtual MOBase::IPluginGame const *managedGame() const;
-
-  virtual QStringList modsSortedByProfilePriority() const;
 
 private:
 

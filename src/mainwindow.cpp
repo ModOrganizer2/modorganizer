@@ -1730,7 +1730,7 @@ void MainWindow::activateSelectedProfile()
   m_ModListSortProxy->setProfile(m_OrganizerCore.currentProfile());
 
   refreshSaveList();
-  m_OrganizerCore.refreshModList();
+  m_OrganizerCore.refresh();
   updateModCount();
   updatePluginCount();
   ui->statusBar->updateNormalMessage(m_OrganizerCore);
@@ -2683,7 +2683,7 @@ void MainWindow::restoreBackup_clicked()
         if (!modDir.rename(modInfo->absolutePath(), destinationPath)) {
           reportError(tr("failed to rename \"%1\" to \"%2\"").arg(modInfo->absolutePath()).arg(destinationPath));
         }
-        m_OrganizerCore.refreshModList();
+        m_OrganizerCore.refresh();
       }
     }
   }
@@ -2833,7 +2833,7 @@ void MainWindow::backupMod_clicked()
     QMessageBox::information(this, tr("Failed"),
       tr("Failed to create backup."));
   }
-  m_OrganizerCore.refreshModList();
+  m_OrganizerCore.refresh();
 }
 
 void MainWindow::resumeDownload(int downloadIndex)
@@ -3603,7 +3603,7 @@ void MainWindow::createEmptyMod_clicked()
     }
   }
 
-  if (m_OrganizerCore.getMod(name) != nullptr) {
+  if (m_OrganizerCore.modList()->getMod(name) != nullptr) {
     reportError(tr("A mod with this name already exists"));
     return;
   }
@@ -3618,7 +3618,7 @@ void MainWindow::createEmptyMod_clicked()
     return;
   }
 
-  m_OrganizerCore.refreshModList();
+  m_OrganizerCore.refresh();
 
   if (newPriority >= 0) {
     m_OrganizerCore.modList()->changeModPriority(ModInfo::getIndex(name), newPriority);
@@ -3638,13 +3638,13 @@ void MainWindow::createSeparator_clicked()
       GUESS_USER);
     if (!ok) { return; }
   }
-  if (m_OrganizerCore.getMod(name) != nullptr)
+  if (m_OrganizerCore.modList()->getMod(name) != nullptr)
   {
     reportError(tr("A separator with this name already exists"));
     return;
   }
   name->append("_separator");
-  if (m_OrganizerCore.getMod(name) != nullptr)
+  if (m_OrganizerCore.modList()->getMod(name) != nullptr)
   {
     return;
   }
@@ -3656,7 +3656,7 @@ void MainWindow::createSeparator_clicked()
   }
 
   if (m_OrganizerCore.createMod(name) == nullptr) { return; }
-  m_OrganizerCore.refreshModList();
+  m_OrganizerCore.refresh();
 
   if (newPriority >= 0)
   {
@@ -3739,7 +3739,7 @@ void MainWindow::createModFromOverwrite()
     }
   }
 
-  if (m_OrganizerCore.getMod(name) != nullptr) {
+  if (m_OrganizerCore.modList()->getMod(name) != nullptr) {
     reportError(tr("A mod with this name already exists"));
     return;
   }
@@ -3775,7 +3775,7 @@ void MainWindow::moveOverwriteContentToExistingMod()
 
       QString modAbsolutePath;
 
-      for (const auto& mod : m_OrganizerCore.modsSortedByProfilePriority()) {
+      for (const auto& mod : m_OrganizerCore.modsSortedByProfilePriority(m_OrganizerCore.currentProfile())) {
         if (result.compare(mod) == 0) {
           ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(mod));
           modAbsolutePath = modInfo->absolutePath();
@@ -3811,7 +3811,7 @@ void MainWindow::doMoveOverwriteContentToMod(const QString &modAbsolutePath)
     log::error("Move operation failed: {}", formatSystemMessage(e));
   }
 
-  m_OrganizerCore.refreshModList();
+  m_OrganizerCore.refresh();
 }
 
 void MainWindow::clearOverwrite()
@@ -3835,7 +3835,7 @@ void MainWindow::clearOverwrite()
         delList.push_back(overwriteDir.absoluteFilePath(f));
       if (shellDelete(delList, true)) {
         scheduleCheckForProblems();
-        m_OrganizerCore.refreshModList();
+        m_OrganizerCore.refresh();
       } else {
         const auto e = GetLastError();
         log::error("Delete operation failed: {}", formatSystemMessage(e));
@@ -5133,9 +5133,7 @@ void MainWindow::on_actionSettings_triggered()
       ui->dataTabShowFromArchives->setCheckState(Qt::Checked);
       ui->dataTabShowFromArchives->setEnabled(true);
     }
-    m_OrganizerCore.refreshModList();
-    m_OrganizerCore.refreshDirectoryStructure();
-    m_OrganizerCore.refreshLists();
+    m_OrganizerCore.refresh();
   }
 
   if (settings.paths().cache() != oldCacheDirectory) {
@@ -6358,7 +6356,7 @@ void MainWindow::on_restoreModsButton_clicked()
         tr("Failed to restore the backup. Errorcode: %1")
           .arg(formatSystemMessage(e)));
     }
-    m_OrganizerCore.refreshModList(false);
+    m_OrganizerCore.refresh(false);
   }
 }
 
@@ -6551,7 +6549,7 @@ void MainWindow::sendSelectedModsToSeparator_clicked()
 
       int newPriority = INT_MAX;
       bool foundSection = false;
-      for (auto mod : m_OrganizerCore.modsSortedByProfilePriority()) {
+      for (auto mod : m_OrganizerCore.modsSortedByProfilePriority(m_OrganizerCore.currentProfile())) {
         unsigned int modIndex = ModInfo::getIndex(mod);
         ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
         if (!foundSection && result.compare(mod) == 0) {

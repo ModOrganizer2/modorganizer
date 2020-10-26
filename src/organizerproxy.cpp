@@ -67,11 +67,6 @@ VersionInfo OrganizerProxy::appVersion() const
   return m_Proxied->appVersion();
 }
 
-IModInterface *OrganizerProxy::getMod(const QString &name) const
-{
-  return m_Proxied->getMod(name);
-}
-
 IPluginGame *OrganizerProxy::getGame(const QString &gameName) const
 {
   return m_Proxied->getGame(gameName);
@@ -80,11 +75,6 @@ IPluginGame *OrganizerProxy::getGame(const QString &gameName) const
 IModInterface *OrganizerProxy::createMod(MOBase::GuessedValue<QString> &name)
 {
   return m_Proxied->createMod(name);
-}
-
-bool OrganizerProxy::removeMod(IModInterface *mod)
-{
-  return m_Proxied->removeMod(mod);
 }
 
 void OrganizerProxy::modDataChanged(IModInterface *mod)
@@ -178,9 +168,9 @@ bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
   }
 }
 
-void OrganizerProxy::refreshModList(bool saveChanges)
+void OrganizerProxy::refresh(bool saveChanges)
 {
-  m_Proxied->refreshModList(saveChanges);
+  m_Proxied->refresh(saveChanges);
 }
 
 IModInterface *OrganizerProxy::installMod(const QString &fileName, const QString &nameSuggestion)
@@ -254,11 +244,6 @@ MOBase::IPluginGame const *OrganizerProxy::managedGame() const
   return m_Proxied->managedGame();
 }
 
-QStringList OrganizerProxy::modsSortedByProfilePriority() const
-{
-  return m_Proxied->modsSortedByProfilePriority();
-}
-
 // CALLBACKS
 
 bool OrganizerProxy::onAboutToRun(const std::function<bool(const QString&)>& func)
@@ -269,11 +254,6 @@ bool OrganizerProxy::onAboutToRun(const std::function<bool(const QString&)>& fun
 bool OrganizerProxy::onFinishedRun(const std::function<void(const QString&, unsigned int)>& func)
 {
   return m_Proxied->onFinishedRun(MOShared::callIfPluginActive(this, func));
-}
-
-bool OrganizerProxy::onModInstalled(const std::function<void(const QString&)>& func)
-{
-  return m_Proxied->onModInstalled(MOShared::callIfPluginActive(this, func));
 }
 
 bool OrganizerProxy::onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func)

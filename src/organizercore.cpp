@@ -301,7 +301,6 @@ void OrganizerCore::disconnectPlugins()
 {
   m_AboutToRun.disconnect_all_slots();
   m_FinishedRun.disconnect_all_slots();
-  m_ModInstalled.disconnect_all_slots();
   m_UserInterfaceInitialized.disconnect_all_slots();
   m_ProfileChanged.disconnect_all_slots();
   m_PluginSettingChanged.disconnect_all_slots();
@@ -636,12 +635,6 @@ MOBase::VersionInfo OrganizerCore::appVersion() const
   return m_Updater.getVersion();
 }
 
-MOBase::IModInterface *OrganizerCore::getMod(const QString &name) const
-{
-  unsigned int index = ModInfo::getIndex(name);
-  return index == UINT_MAX ? nullptr : ModInfo::getByIndex(index).data();
-}
-
 MOBase::IPluginGame *OrganizerCore::getGame(const QString &name) const
 {
   for (IPluginGame *game : m_PluginContainer->plugins<IPluginGame>()) {
@@ -683,19 +676,9 @@ MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
       .data();
 }
 
-bool OrganizerCore::removeMod(MOBase::IModInterface *mod)
-{
-  unsigned int index = ModInfo::getIndex(mod->name());
-  if (index == UINT_MAX) {
-    return mod->remove();
-  } else {
-    return ModInfo::removeMod(index);
-  }
-}
-
 void OrganizerCore::modDataChanged(MOBase::IModInterface *)
 {
-  refreshModList(false);
+  refresh(false);
 }
 
 QVariant OrganizerCore::pluginSetting(const QString &pluginName,
@@ -757,7 +740,7 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
   if (result == IPluginInstaller::RESULT_SUCCESS) {
     MessageDialog::showMessage(tr("Installation successful"),
                                qApp->activeWindow());
-    refreshModList();
+    refresh();
 
     int modIndex = ModInfo::getIndex(modName);
     if (modIndex != UINT_MAX) {
@@ -777,7 +760,7 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
         m_UserInterface->displayModInformation(
           modInfo, modIndex, ModInfoTabIDs::IniFiles);
       }
-      m_ModInstalled(modName);
+      m_ModList.notifyModInstalled(modInfo.get());
       m_DownloadManager.markInstalled(fileName);
       m_InstallationManager.notifyInstallationEnd(result, modInfo);
       emit modInstalled(modName);
@@ -793,7 +776,7 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
           "If this was prior to a FOMOD setup, this warning may be ignored. "
           "However, if this was during installation, the mod will likely be missing files."),
         QMessageBox::Ok);
-      refreshModList();
+      refresh();
     }
   }
   return nullptr;
@@ -839,7 +822,7 @@ void OrganizerCore::installDownload(int index)
     if (result == IPluginInstaller::RESULT_SUCCESS) {
       MessageDialog::showMessage(tr("Installation successful"),
                                  qApp->activeWindow());
-      refreshModList();
+      refresh();
 
       int modIndex = ModInfo::getIndex(modName);
       if (modIndex != UINT_MAX) {
@@ -856,7 +839,7 @@ void OrganizerCore::installDownload(int index)
             modInfo, modIndex, ModInfoTabIDs::IniFiles);
         }
 
-        m_ModInstalled(modName);
+        m_ModList.notifyModInstalled(modInfo.get());
         m_InstallationManager.notifyInstallationEnd(IPluginInstaller::RESULT_SUCCESS, modInfo);
       } else {
         reportError(tr("mod not found: %1").arg(qUtf8Printable(modName)));
@@ -872,7 +855,7 @@ void OrganizerCore::installDownload(int index)
             "If this was prior to a FOMOD setup, this warning may be ignored. "
             "However, if this was during installation, the mod will likely be missing files."),
           QMessageBox::Ok);
-        refreshModList();
+        refresh();
       }
     }
   } catch (const std::exception &e) {
@@ -991,13 +974,13 @@ ModList *OrganizerCore::modList()
   return &m_ModList;
 }
 
-QStringList OrganizerCore::modsSortedByProfilePriority() const
+QStringList OrganizerCore::modsSortedByProfilePriority(Profile *profile) const
 {
   QStringList res;
-  for (int i = currentProfile()->getPriorityMinimum();
-           i < currentProfile()->getPriorityMinimum() + (int)currentProfile()->numRegularMods();
+  for (int i = profile->getPriorityMinimum();
+           i < profile->getPriorityMinimum() + (int)profile->numRegularMods();
            ++i) {
-    int modIndex = currentProfile()->modIndexByPriority(i);
+    int modIndex = profile->modIndexByPriority(i);
     auto modInfo = ModInfo::getByIndex(modIndex);
     if (!modInfo->hasFlag(ModInfo::FLAG_OVERWRITE) &&
         !modInfo->hasFlag(ModInfo::FLAG_BACKUP)) {
@@ -1149,13 +1132,6 @@ bool OrganizerCore::onFinishedRun(
   return conn.connected();
 }
 
-bool OrganizerCore::onModInstalled(
-    const std::function<void(const QString &)> &func)
-{
-  auto conn = m_ModInstalled.connect(func);
-  return conn.connected();
-}
-
 bool OrganizerCore::onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func)
 {
   return m_UserInterfaceInitialized.connect(func).connected();
@@ -1186,7 +1162,7 @@ bool OrganizerCore::onPluginSettingChanged(std::function<void(QString const&, co
   return m_PluginSettingChanged.connect(func).connected();
 }
 
-void OrganizerCore::refreshModList(bool saveChanges)
+void OrganizerCore::refresh(bool saveChanges)
 {
   // don't lose changes!
   if (saveChanges) {
@@ -1207,6 +1183,8 @@ void OrganizerCore::refreshModList(bool saveChanges)
 
 void OrganizerCore::refreshESPList(bool force)
 {
+  TimeThis tt("OrganizerCore::refreshESPList()");
+
   if (m_DirectoryUpdate) {
     // don't mess up the esp list if we're currently updating the directory
     // structure
@@ -1565,7 +1543,7 @@ void OrganizerCore::directory_refreshed()
 
 void OrganizerCore::profileRefresh()
 {
-  refreshModList();
+  refresh();
 }
 
 void OrganizerCore::modStatusChanged(unsigned int index)
