@@ -1232,6 +1232,7 @@ void OrganizerCore::refreshBSAList()
 
     if (m_UserInterface != nullptr) {
       m_UserInterface->updateBSAList(m_DefaultArchives, m_ActiveArchives);
+      m_UserInterface->archivesWriter().write();
     }
 
     m_ArchivesInit = true;
