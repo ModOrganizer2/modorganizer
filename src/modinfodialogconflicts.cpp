@@ -886,82 +886,111 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
 
   std::wstring before, after;
 
+  auto currOrigin = m_tab->origin();
+
   if (!alternatives.empty()) {
     const bool showAllAlts = ui->conflictsAdvancedShowAll->isChecked();
 
     int beforePrio = 0;
     int afterPrio = std::numeric_limits<int>::max();
 
-    for (const auto& alt : alternatives)
-    {
-      const auto& altOrigin = ds.getOriginByID(alt.first);
-
+    if (currOrigin->getID() == fileOrigin) {
+      // current origin is the active winner, all alternatives go in 'before'
+      
       if (showAllAlts) {
-        // fills 'before' and 'after' with all the alternatives that come
-        // before and after this mod in terms of priority
-
-        if (altOrigin.getPriority() < m_tab->origin()->getPriority()) {
-          // add all the mods having a lower priority than this one
+        for (const auto& alt : alternatives)
+        {
+          const auto& altOrigin = ds.getOriginByID(alt.first);
           if (!before.empty()) {
             before += L", ";
           }
 
           before += altOrigin.getName();
-        } else if (altOrigin.getPriority() > m_tab->origin()->getPriority()) {
-          // add all the mods having a higher priority than this one
+        }
+      }
+      else {
+        // only add nearest, which is the last element of alternatives
+        const auto& altOrigin = ds.getOriginByID((alternatives.end()-1)->first);
+
+        before += altOrigin.getName();
+      }
+
+    }
+    else {
+      // current mod is one of the alternatives, find it's position
+      
+      auto currOrgId = currOrigin->getID();
+
+      auto currModIter = std::find_if(alternatives.begin(), alternatives.end(),
+        [&currOrgId](auto const& alt) {
+          return currOrgId == alt.first;
+      });
+
+      if (currModIter != alternatives.end()) {
+        
+        if (showAllAlts) {
+          // fills 'before' and 'after' with all the alternatives that come
+          // before and after the current mod, trusting the alternatives vector to be 
+          // alredy sorted correctly
+          
+          for (auto iter = alternatives.begin(); iter != alternatives.end(); iter++) {
+            
+            const auto& altOrigin = ds.getOriginByID(iter->first);
+
+            if (iter < currModIter) {
+              // mod comes before current
+
+              if (!before.empty()) {
+                before += L", ";
+              }
+
+              before += altOrigin.getName();
+            }
+            else if (iter > currModIter) {
+              // mod comes after current
+
+              if (!after.empty()) {
+                after += L", ";
+              }
+
+              after += altOrigin.getName();
+            }
+          }
+
+          // also add the active winner origin (the one outsiede alternatives) to 'after'
           if (!after.empty()) {
             after += L", ";
           }
+          after += ds.getOriginByID(fileOrigin).getName();
 
-          after += altOrigin.getName();
+
         }
-      } else {
-        // keep track of the nearest mods that come before and after this one
-        // in terms of priority
+        else {
+          // only show nearest origins
 
-        if (altOrigin.getPriority() < m_tab->origin()->getPriority()) {
-          // the alternative has a lower priority than this mod
-
-          if (altOrigin.getPriority() > beforePrio) {
-            // the alternative has a higher priority and therefore is closer
-            // to this mod, use it
-            before = altOrigin.getName();
-            beforePrio = altOrigin.getPriority();
+          // before
+          if (currModIter > alternatives.begin()) {
+            auto previousOrigId = (currModIter-1)->first;
+            before += ds.getOriginByID(previousOrigId).getName();
           }
-        }
 
-        if (altOrigin.getPriority() > m_tab->origin()->getPriority()) {
-          // the alternative has a higher priority than this mod
-
-          if (altOrigin.getPriority() < afterPrio) {
-            // the alternative has a lower priority and there is closer
-            // to this mod, use it
-            after = altOrigin.getName();
-            afterPrio = altOrigin.getPriority();
+          // after
+          if (currModIter < (alternatives.end() - 1)) {
+            auto followingOrigId = (currModIter + 1)->first;
+            after += ds.getOriginByID(followingOrigId).getName();
           }
+          else {
+            // current mod is last of alternatives, so closest to the active winner
+
+            after += ds.getOriginByID(fileOrigin).getName();
+          }
+          
         }
+
       }
-    }
-
-    // the primary origin is never in the list of alternatives, so it has to
-    // be handled separately
-    //
-    // if 'after' is not empty, it means at least one alternative with a higher
-    // priority than this mod was found; if the user only wants to see the
-    // nearest mods, it's not worth checking for the primary origin because it
-    // will always have a higher priority than the alternatives (or it wouldn't
-    // be the primary)
-    if (after.empty() || showAllAlts) {
-      const FilesOrigin& realOrigin = ds.getOriginByID(fileOrigin);
-
-      // if no mods overwrite this file, the primary origin is the same as this
-      // mod, so ignore that
-      if (realOrigin.getID() != m_tab->origin()->getID()) {
-        if (!after.empty()) {
-          after += L", ";
-        }
-
-        after += realOrigin.getName();
+      else {
+        log::error("Mod {} not found in the list of origins for file {}", currOrigin->getName(), fileName);
+        return {};
       }
     }
   }
