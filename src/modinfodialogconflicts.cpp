@@ -625,10 +625,7 @@ void GeneralConflictsTab::restoreState(const Settings& s)
 bool GeneralConflictsTab::update()
 {
   clear();
-
-  int numNonConflicting = 0;
-  int numOverwrite = 0;
-  int numOverwritten = 0;
+  m_counts.clear();
 
   if (m_tab->origin() != nullptr) {
     const auto rootPath = m_tab->mod().absolutePath();
@@ -640,29 +637,46 @@ bool GeneralConflictsTab::update()
 
       bool archive = false;
       const int fileOrigin = file->getOrigin(archive);
+      
+      ++m_counts.numTotalFiles;
+
       const auto& alternatives = file->getAlternatives();
 
       if (fileOrigin == m_tab->origin()->getID()) {
+        // current mod is primary origin, the winner
+        (archive) ? ++m_counts.numTotalArchive : ++m_counts.numTotalLoose;
+
         if (!alternatives.empty()) {
           m_overwriteModel->add(createOverwriteItem(
               file->getIndex(), archive,
               std::move(fileName), std::move(relativeName), alternatives));
 
-          ++numOverwrite;
+          ++m_counts.numOverwrite;
+          (archive) ? ++m_counts.numOverwriteArchive : ++m_counts.numOverwriteLoose;
         } else {
           // otherwise, put the file in the noconflict tree
             m_noConflictModel->add(createNoConflictItem(
             file->getIndex(), archive,
               std::move(fileName), std::move(relativeName)));
 
-          ++numNonConflicting;
+          ++m_counts.numNonConflicting;
+          (archive) ? ++m_counts.numNonConflictingArchive : ++m_counts.numNonConflictingLoose;
         }
       } else {
+        auto currId = m_tab->origin()->getID();
+        auto currModAlt = std::find_if(alternatives.begin(), alternatives.end(),
+          [&currId](auto const& alt) {
+            return currId == alt.first;
+          });
+        bool currModFileArchive = currModAlt->second.first.size() > 0;
+
         m_overwrittenModel->add(createOverwrittenItem(
           file->getIndex(), fileOrigin, archive,
           std::move(fileName), std::move(relativeName)));
 
-        ++numOverwritten;
+        ++m_counts.numOverwritten;
+        (currModFileArchive) ? ++m_counts.numOverwrittenArchive : ++m_counts.numOverwrittenLoose;
+        (currModFileArchive) ? ++m_counts.numTotalArchive : ++m_counts.numTotalLoose;
       }
     }
 
@@ -671,11 +685,9 @@ bool GeneralConflictsTab::update()
     m_noConflictModel->finished();
   }
 
-  ui->overwriteCount->display(numOverwrite);
-  ui->overwrittenCount->display(numOverwritten);
-  ui->noConflictCount->display(numNonConflicting);
+  updateUICounters();
 
-  return (numOverwrite > 0 || numOverwritten > 0);
+  return (m_counts.numOverwrite > 0 || m_counts.numOverwritten > 0);
 }
 
 ConflictItem GeneralConflictsTab::createOverwriteItem(
@@ -721,6 +733,68 @@ ConflictItem GeneralConflictsTab::createOverwrittenItem(
   return ConflictItem(
     QString(), std::move(relativeName), std::move(after),
     index, std::move(fileName), true, std::move(altOrigin), archive);
+}
+
+QString percent(int a, int b) {
+  if (b == 0) {
+    return QString::number(0, 'f', 2);
+  }
+  return QString::number((((float)a / (float)b) * 100), 'f', 2);
+}
+
+void GeneralConflictsTab::updateUICounters()
+{
+  ui->overwriteCount->display(m_counts.numOverwrite);
+  ui->overwrittenCount->display(m_counts.numOverwritten);
+  ui->noConflictCount->display(m_counts.numNonConflicting);
+
+  QString tooltipBase = tr("<table cellspacing=\"5\">"
+    "<tr><th>Type</th><th>%1</th><th>Total</th><th>Percent</th></tr>"
+    "<tr><td>Loose files:&emsp;</td>"
+    "<td align=right>%2</td><td align=right>%3</td><td align=right>%4%</td></tr>"
+    "<tr><td>Archive files:&emsp;</td>"
+    "<td align=right>%5</td><td align=right>%6</td><td align=right>%7%</td></tr>"
+    "<tr><td>Combined:&emsp;</td>"
+    "<td align=right>%8</td><td align=right>%9</td><td align=right>%10%</td></tr>"
+    "</table>");
+
+  QString tooltipOverwrite = tooltipBase.arg(tr("Winning"))
+    .arg(m_counts.numOverwriteLoose)
+    .arg(m_counts.numTotalLoose)
+    .arg(percent(m_counts.numOverwriteLoose, m_counts.numTotalLoose))
+    .arg(m_counts.numOverwriteArchive)
+    .arg(m_counts.numTotalArchive)
+    .arg(percent(m_counts.numOverwriteArchive, m_counts.numTotalArchive))
+    .arg(m_counts.numOverwrite)
+    .arg(m_counts.numTotalFiles)
+    .arg(percent(m_counts.numOverwrite, m_counts.numTotalFiles));
+
+  QString tooltipOverwritten = tooltipBase.arg(tr("Losing"))
+    .arg(m_counts.numOverwrittenLoose)
+    .arg(m_counts.numTotalLoose)
+    .arg(percent(m_counts.numOverwrittenLoose, m_counts.numTotalLoose))
+    .arg(m_counts.numOverwrittenArchive)
+    .arg(m_counts.numTotalArchive)
+    .arg(percent(m_counts.numOverwrittenArchive, m_counts.numTotalArchive))
+    .arg(m_counts.numOverwritten)
+    .arg(m_counts.numTotalFiles)
+    .arg(percent(m_counts.numOverwritten, m_counts.numTotalFiles));
+
+
+  QString tooltipNonConflict = tooltipBase.arg(tr("Non conflicting"))
+    .arg(m_counts.numNonConflictingLoose)
+    .arg(m_counts.numTotalLoose)
+    .arg(percent(m_counts.numNonConflictingLoose, m_counts.numTotalLoose))
+    .arg(m_counts.numNonConflictingArchive)
+    .arg(m_counts.numTotalArchive)
+    .arg(percent(m_counts.numNonConflictingArchive, m_counts.numTotalArchive))
+    .arg(m_counts.numNonConflicting)
+    .arg(m_counts.numTotalFiles)
+    .arg(percent(m_counts.numNonConflicting, m_counts.numTotalFiles));
+
+  ui->overwriteCount->setToolTip(tooltipOverwrite);
+  ui->overwrittenCount->setToolTip(tooltipOverwritten);
+  ui->noConflictCount->setToolTip(tooltipNonConflict);
 }
 
 void GeneralConflictsTab::onOverwriteActivated(const QModelIndex& index)

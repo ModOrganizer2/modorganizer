@@ -51,6 +51,39 @@ private:
   FilterWidget m_filterOverwritten;
   FilterWidget m_filterNoConflicts;
 
+  struct GeneralConflictNumbers
+  {
+    int numTotalFiles = 0;
+    int numTotalLoose = 0;
+    int numTotalArchive = 0;
+    int numNonConflicting = 0;
+    int numNonConflictingLoose = 0;
+    int numNonConflictingArchive = 0;
+    int numOverwrite = 0;
+    int numOverwriteLoose = 0;
+    int numOverwriteArchive = 0;
+    int numOverwritten = 0;
+    int numOverwrittenLoose = 0;
+    int numOverwrittenArchive = 0;
+
+    void clear() {
+      numTotalFiles = 0;
+      numTotalLoose = 0;
+      numTotalArchive = 0;
+      numNonConflicting = 0;
+      numNonConflictingLoose = 0;
+      numNonConflictingArchive = 0;
+      numOverwrite = 0;
+      numOverwriteLoose = 0;
+      numOverwriteArchive = 0;
+      numOverwritten = 0;
+      numOverwrittenLoose = 0;
+      numOverwrittenArchive = 0;
+    };
+  };
+
+  GeneralConflictNumbers m_counts;
+
   ConflictItem createOverwriteItem(
     MOShared::FileIndex index, bool archive,
     QString fileName, QString relativeName,
@@ -63,6 +96,8 @@ private:
   ConflictItem createOverwrittenItem(
     MOShared::FileIndex index, int fileOrigin, bool archive,
     QString fileName, QString relativeName);
+
+  void updateUICounters();
 
   void onOverwriteActivated(const QModelIndex& index);
   void onOverwrittenActivated(const QModelIndex& index);
@@ -140,6 +175,8 @@ private:
 
   GeneralConflictsTab m_general;
   AdvancedConflictsTab m_advanced;
+
+  
 
   Actions createMenuActions(QTreeView* tree);
   std::vector<QAction*> createGotoActions(const ConflictItem* item);
