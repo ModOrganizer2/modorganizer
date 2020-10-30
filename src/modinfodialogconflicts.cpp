@@ -887,6 +887,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
   std::wstring before, after;
 
   auto currOrigin = m_tab->origin();
+  bool isCurrOrigArchive = archive;
 
   if (!alternatives.empty()) {
     const bool showAllAlts = ui->conflictsAdvancedShowAll->isChecked();
@@ -927,6 +928,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
       });
 
       if (currModIter != alternatives.end()) {
+        isCurrOrigArchive = currModIter->second.first.size() > 0;
         
         if (showAllAlts) {
           // fills 'before' and 'after' with all the alternatives that come
@@ -1010,5 +1012,5 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
 
   return ConflictItem(
     std::move(beforeQS), std::move(relativeName), std::move(afterQS),
-    index, std::move(fileName), hasAlts, QString(), archive);
+    index, std::move(fileName), hasAlts, QString(), isCurrOrigArchive);
 }
