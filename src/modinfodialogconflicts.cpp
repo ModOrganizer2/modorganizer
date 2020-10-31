@@ -679,6 +679,12 @@ bool GeneralConflictsTab::update()
           [&currId](auto const& alt) {
             return currId == alt.first;
           });
+
+        if (currModAlt == alternatives.end()) {
+          log::error("Mod {} not found in the list of origins for file {}", m_tab->origin(), fileName);
+          continue;
+        }
+
         bool currModFileArchive = currModAlt->second.first.size() > 0;
 
         m_overwrittenModel->add(createOverwrittenItem(
