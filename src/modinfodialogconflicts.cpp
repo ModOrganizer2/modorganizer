@@ -911,7 +911,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
       }
       else {
         // only add nearest, which is the last element of alternatives
-        const auto& altOrigin = ds.getOriginByID((alternatives.end()-1)->first);
+        const auto& altOrigin = ds.getOriginByID(alternatives.back().first);
 
         before += altOrigin.getName();
       }
