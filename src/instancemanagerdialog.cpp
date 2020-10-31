@@ -112,6 +112,19 @@ public:
     return makeIniFile(m_dir);
   }
 
+  QIcon icon(const PluginContainer& plugins) const
+  {
+    const auto* game = InstanceManager::instance().gamePluginForDirectory(
+      m_dir, plugins);
+
+    if (game)
+      return game->gameIcon();
+
+    QPixmap empty(32, 32);
+    empty.fill(QColor(0, 0, 0, 0));
+    return QIcon(empty);
+  }
+
   bool isPortable() const
   {
     return m_portable;
@@ -376,7 +389,11 @@ void InstanceManagerDialog::updateList()
 
   for (std::size_t i=0; i<m_instances.size(); ++i) {
     const auto& ii = *m_instances[i];
-    m_model->appendRow(new QStandardItem(ii.name()));
+
+    auto* item = new QStandardItem(ii.name());
+    item->setIcon(ii.icon(m_pc));
+
+    m_model->appendRow(item);
 
     if (&ii == prevSel) {
       sel = i;

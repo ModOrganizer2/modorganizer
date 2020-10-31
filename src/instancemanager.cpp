@@ -637,6 +637,65 @@ MOBase::IPluginGame* InstanceManager::determineCurrentGame(
   return nullptr;
 }
 
+const MOBase::IPluginGame* InstanceManager::gamePluginForDirectory(
+  const QDir& instanceDir, const PluginContainer& plugins) const
+{
+  const QString ini =
+    QDir(instanceDir).filePath(QString::fromStdWString(AppConfig::iniFileName()));
+
+
+  Settings s(ini);
+
+  if (s.iniStatus() != QSettings::NoError)
+  {
+    log::error("failed to load settings from {}", ini);
+    return nullptr;
+  }
+
+  const auto instanceGameName = s.game().name();
+
+  if (instanceGameName && !instanceGameName->isEmpty())
+  {
+    for (const IPluginGame* game : plugins.plugins<IPluginGame>()) {
+      if (instanceGameName->compare(game->gameName(), Qt::CaseInsensitive) == 0) {
+        return game;
+      }
+    }
+
+    log::error(
+      "no plugin reports game name '{}' found in ini {}",
+      *instanceGameName, ini);
+  }
+  else
+  {
+    log::error("no game name found in ini {}", ini);
+  }
+
+
+  log::error("falling back on looksValid check");
+
+  const auto gameDir = s.game().directory();
+
+  if (gameDir && !gameDir->isEmpty())
+  {
+    for (const IPluginGame* game : plugins.plugins<IPluginGame>()) {
+      if (game->looksValid(*gameDir)) {
+        return game;
+      }
+    }
+
+    log::error(
+      "no plugins appear to support game directory '{}' from ini {}",
+      *gameDir, ini);
+  }
+  else
+  {
+    log::error("no game directory found in ini {}", ini);
+  }
+
+  return nullptr;
+}
+
 QString InstanceManager::makeUniqueName(const QString& instanceName) const
 {
   const QString sanitized = sanitizeInstanceName(instanceName);

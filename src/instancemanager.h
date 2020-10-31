@@ -47,6 +47,9 @@ public:
   MOBase::IPluginGame* determineCurrentGame(
     const QString& moPath, Settings& settings, const PluginContainer &plugins);
 
+  const MOBase::IPluginGame* gamePluginForDirectory(
+    const QDir& dir, const PluginContainer& plugins) const;
+
   void clearCurrentInstance();
   QString currentInstance() const;
   void setCurrentInstance(const QString &name);

@@ -778,6 +778,10 @@ public:
   //
   QSettings::Status sync() const;
 
+  // last status of the ini file
+  //
+  QSettings::Status iniStatus() const;
+
   void dump() const;
 
 public slots:

@@ -465,6 +465,11 @@ QSettings::Status Settings::sync() const
   return m_Settings.status();
 }
 
+QSettings::Status Settings::iniStatus() const
+{
+  return m_Settings.status();
+}
+
 void Settings::dump() const
 {
   static const QStringList ignore({
