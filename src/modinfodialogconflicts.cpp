@@ -653,7 +653,12 @@ bool GeneralConflictsTab::update()
               std::move(fileName), std::move(relativeName), alternatives));
 
           ++m_counts.numOverwrite;
-          (archive) ? ++m_counts.numOverwriteArchive : ++m_counts.numOverwriteLoose;
+          if (archive) {
+            ++m_counts.numOverwriteArchive;
+          }
+          else {
+            ++m_counts.numOverwriteLoose;
+          }
         } else {
           // otherwise, put the file in the noconflict tree
             m_noConflictModel->add(createNoConflictItem(
@@ -661,7 +666,12 @@ bool GeneralConflictsTab::update()
               std::move(fileName), std::move(relativeName)));
 
           ++m_counts.numNonConflicting;
-          (archive) ? ++m_counts.numNonConflictingArchive : ++m_counts.numNonConflictingLoose;
+          if (archive) {
+            ++m_counts.numNonConflictingArchive;
+          }
+          else {
+            ++m_counts.numNonConflictingLoose;
+          }
         }
       } else {
         auto currId = m_tab->origin()->getID();
@@ -676,8 +686,14 @@ bool GeneralConflictsTab::update()
           std::move(fileName), std::move(relativeName)));
 
         ++m_counts.numOverwritten;
-        (currModFileArchive) ? ++m_counts.numOverwrittenArchive : ++m_counts.numOverwrittenLoose;
-        (currModFileArchive) ? ++m_counts.numTotalArchive : ++m_counts.numTotalLoose;
+        if (currModFileArchive) {
+          ++m_counts.numOverwrittenArchive;
+          ++m_counts.numTotalArchive;
+        }
+        else {
+          ++m_counts.numOverwrittenLoose;
+          ++m_counts.numTotalLoose;
+        }
       }
     }
 
