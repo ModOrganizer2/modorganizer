@@ -67,18 +67,7 @@ private:
     int numOverwrittenArchive = 0;
 
     void clear() {
-      numTotalFiles = 0;
-      numTotalLoose = 0;
-      numTotalArchive = 0;
-      numNonConflicting = 0;
-      numNonConflictingLoose = 0;
-      numNonConflictingArchive = 0;
-      numOverwrite = 0;
-      numOverwriteLoose = 0;
-      numOverwriteArchive = 0;
-      numOverwritten = 0;
-      numOverwrittenLoose = 0;
-      numOverwrittenArchive = 0;
+      *this = {};
     };
   };
 

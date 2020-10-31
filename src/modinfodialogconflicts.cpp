@@ -593,6 +593,8 @@ GeneralConflictsTab::GeneralConflictsTab(
 
 void GeneralConflictsTab::clear()
 {
+  m_counts.clear();
+
   m_overwriteModel->clear();
   m_overwrittenModel->clear();
   m_noConflictModel->clear();
@@ -625,7 +627,6 @@ void GeneralConflictsTab::restoreState(const Settings& s)
 bool GeneralConflictsTab::update()
 {
   clear();
-  m_counts.clear();
 
   if (m_tab->origin() != nullptr) {
     const auto rootPath = m_tab->mod().absolutePath();
