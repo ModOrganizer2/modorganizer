@@ -687,7 +687,7 @@ bool GeneralConflictsTab::update()
           });
 
         if (currModAlt == alternatives.end()) {
-          log::error("Mod {} not found in the list of origins for file {}", m_tab->origin(), fileName);
+          log::error("Mod {} not found in the list of origins for file {}", m_tab->origin()->getName(), fileName);
           continue;
         }
 
