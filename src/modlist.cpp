@@ -977,7 +977,7 @@ int ModList::setActive(const QStringList& names, bool active) {
       indices.append(modIndex);
     }
     else {
-      log::debug("Trying to {} mod {} which does not exist.", 
+      log::debug("Trying to {} mod {} which does not exist.",
         active ? "enable" : "disable", name);
     }
   }
@@ -1043,7 +1043,7 @@ void ModList::notifyModRemoved(QString const& modName) const
   m_ModRemoved(modName);
 }
 
-void ModList::notifyModStateChanged(QList<unsigned int> modIndices) const 
+void ModList::notifyModStateChanged(QList<unsigned int> modIndices) const
 {
   std::map<QString, ModStates> mods;
   for (auto modIndex : modIndices) {
@@ -1530,7 +1530,7 @@ void ModList::disableSelected(const QItemSelectionModel *selectionModel)
 }
 
 
-QString DummyModList::displayName(const QString &internalName) const
+QString DummyModList::displayName(const QString&) const
 {
   return {};
 }
@@ -1540,32 +1540,62 @@ QStringList DummyModList::allMods() const
   return {};
 }
 
-IModList::ModStates DummyModList::state(const QString &name) const
+QStringList DummyModList::allModsByProfilePriority(MOBase::IProfile*) const
+{
+  return {};
+}
+
+IModInterface* DummyModList::getMod(const QString&) const
+{
+  return nullptr;
+}
+
+bool DummyModList::removeMod(MOBase::IModInterface*)
+{
+  return true;
+}
+
+IModList::ModStates DummyModList::state(const QString&) const
 {
   return 0;
 }
 
-bool DummyModList::setActive(const QString &name, bool active)
+bool DummyModList::setActive(const QString&, bool)
 {
   return true;
 }
 
-int DummyModList::priority(const QString &name) const
+int DummyModList::setActive(const QStringList&, bool)
+{
+  return 0;
+}
+
+int DummyModList::priority(const QString&) const
 {
   return -1;
 }
 
-bool DummyModList::setPriority(const QString &name, int newPriority)
+bool DummyModList::setPriority(const QString&, int)
 {
   return true;
 }
 
-bool DummyModList::onModStateChanged(const std::function<void(const QString&, ModStates)> &func)
+bool DummyModList::onModInstalled(const std::function<void(IModInterface *)>&)
 {
   return true;
 }
 
-bool DummyModList::onModMoved(const std::function<void (const QString &, int, int)> &func)
+bool DummyModList::onModRemoved(const std::function<void(QString const&)>&)
+{
+  return true;
+}
+
+bool DummyModList::onModStateChanged(const std::function<void(const std::map<QString, ModStates>&)>&)
+{
+  return true;
+}
+
+bool DummyModList::onModMoved(const std::function<void (const QString &, int, int)>&)
 {
   return true;
 }

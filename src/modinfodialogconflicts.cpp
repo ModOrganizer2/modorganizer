@@ -1001,7 +1001,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
 
     if (currOrigin->getID() == fileOrigin) {
       // current origin is the active winner, all alternatives go in 'before'
-      
+
       if (showAllAlts) {
         for (const auto& alt : alternatives)
         {
@@ -1023,7 +1023,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
     }
     else {
       // current mod is one of the alternatives, find its position
-      
+
       auto currOrgId = currOrigin->getID();
 
       auto currModIter = std::find_if(alternatives.begin(), alternatives.end(),
@@ -1037,14 +1037,14 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
       }
 
       isCurrOrigArchive = currModIter->isFromArchive();
-      
+
       if (showAllAlts) {
         // fills 'before' and 'after' with all the alternatives that come
-        // before and after the current mod, trusting the alternatives vector to be 
+        // before and after the current mod, trusting the alternatives vector to be
         // already sorted correctly
-        
+
         for (auto iter = alternatives.begin(); iter != alternatives.end(); iter++) {
-          
+
           const auto& altOrigin = ds.getOriginByID(iter->originID());
 
           if (iter < currModIter) {
@@ -1094,7 +1094,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
 
           after += ds.getOriginByID(fileOrigin).getName();
         }
-        
+
       }
     }
   }

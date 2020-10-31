@@ -295,7 +295,7 @@ ModInfo::ModInfo(PluginContainer *pluginContainer)
 }
 
 
-bool ModInfo::checkAllForUpdate(QObject *receiver)
+bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver)
 {
   bool updatesAvailable = true;
 

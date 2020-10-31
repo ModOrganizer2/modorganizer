@@ -801,7 +801,7 @@ bool PluginList::setPriority(const QString& name, int newPriority) {
 
   int rowIndex = findPluginByPriority(oldPriority);
 
-  // We need to increment newPriority if its above the old one, otherwise the 
+  // We need to increment newPriority if its above the old one, otherwise the
   // plugin is place right below the new priority.
   if (oldPriority < newPriority) {
     newPriority += 1;
@@ -1702,6 +1702,11 @@ void DummyPluginList::setLoadOrder(const QStringList &pluginList)
 {
 }
 
+bool DummyPluginList::setPriority(const QString&, int)
+{
+  return true;
+}
+
 bool DummyPluginList::isMaster(const QString &name) const
 {
   return false;
@@ -1727,7 +1732,7 @@ bool DummyPluginList::onPluginMoved(const std::function<void (const QString &, i
   return true;
 }
 
-bool DummyPluginList::onPluginStateChanged(const std::function<void (const QString &, PluginStates)> &func)
+bool DummyPluginList::onPluginStateChanged(const std::function<void (const std::map<QString, PluginStates>&)> &func)
 {
   return true;
 }

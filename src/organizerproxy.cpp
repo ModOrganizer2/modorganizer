@@ -290,9 +290,8 @@ bool OrganizerProxy::onPluginSettingChanged(std::function<void(QString const&, c
 
 
 
-DummyOrganizerProxy::DummyOrganizerProxy(const QString &pluginName) :
-  m_PluginName(pluginName),
-  m_mods(new DummyModList), m_plugins(new DummyPluginList)
+DummyOrganizerProxy::DummyOrganizerProxy(MOBase::IPlugin* plugin)
+  : m_mods(new DummyModList), m_plugins(new DummyPluginList)
 {
 }
 
@@ -338,11 +337,6 @@ VersionInfo DummyOrganizerProxy::appVersion() const
   return {};
 }
 
-IModInterface *DummyOrganizerProxy::getMod(const QString &name) const
-{
-  return nullptr;
-}
-
 IPluginGame *DummyOrganizerProxy::getGame(const QString &gameName) const
 {
   return nullptr;
@@ -351,11 +345,6 @@ IPluginGame *DummyOrganizerProxy::getGame(const QString &gameName) const
 IModInterface *DummyOrganizerProxy::createMod(MOBase::GuessedValue<QString> &name)
 {
   return nullptr;
-}
-
-bool DummyOrganizerProxy::removeMod(IModInterface *mod)
-{
-  return true;
 }
 
 void DummyOrganizerProxy::modDataChanged(IModInterface *mod)
@@ -411,12 +400,22 @@ bool DummyOrganizerProxy::onFinishedRun(const std::function<void (const QString 
   return true;
 }
 
-bool DummyOrganizerProxy::onModInstalled(const std::function<void (const QString &)> &func)
+bool DummyOrganizerProxy::onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func)
 {
   return true;
 }
 
-bool DummyOrganizerProxy::onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func)
+bool DummyOrganizerProxy::onProfileCreated(std::function<void(MOBase::IProfile*)> const& func)
+{
+  return true;
+}
+
+bool DummyOrganizerProxy::onProfileRenamed(std::function<void(MOBase::IProfile*, QString const&, QString const&)> const& func)
+{
+  return true;
+}
+
+bool DummyOrganizerProxy::onProfileRemoved(std::function<void(QString const&)> const& func)
 {
   return true;
 }
@@ -431,7 +430,7 @@ bool DummyOrganizerProxy::onPluginSettingChanged(std::function<void(QString cons
   return true;
 }
 
-void DummyOrganizerProxy::refreshModList(bool saveChanges)
+void DummyOrganizerProxy::refresh(bool saveChanges)
 {
 }
 
@@ -493,9 +492,4 @@ MOBase::IProfile *DummyOrganizerProxy::profile() const
 MOBase::IPluginGame const *DummyOrganizerProxy::managedGame() const
 {
   return nullptr;
-}
-
-QStringList DummyOrganizerProxy::modsSortedByProfilePriority() const
-{
-  return {};
 }

@@ -197,7 +197,7 @@ public: // Static functions:
    *
    * @return true if any mods are checked for update.
    */
-  static bool checkAllForUpdate(QObject *receiver);
+  static bool checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver);
 
   /**
    *

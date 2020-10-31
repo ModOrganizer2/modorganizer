@@ -4221,7 +4221,7 @@ void MainWindow::checkModsForUpdates()
 {
   bool checkingModsForUpdate = false;
   if (NexusInterface::instance().getAccessManager()->validated()) {
-    checkingModsForUpdate = ModInfo::checkAllForUpdate(this);
+    checkingModsForUpdate = ModInfo::checkAllForUpdate(&m_PluginContainer, this);
     NexusInterface::instance().requestEndorsementInfo(this, QVariant(), QString());
     NexusInterface::instance().requestTrackingInfo(this, QVariant(), QString());
   } else {
