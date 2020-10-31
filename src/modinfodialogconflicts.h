@@ -176,8 +176,6 @@ private:
   GeneralConflictsTab m_general;
   AdvancedConflictsTab m_advanced;
 
-  
-
   Actions createMenuActions(QTreeView* tree);
   std::vector<QAction*> createGotoActions(const ConflictItem* item);
 };
