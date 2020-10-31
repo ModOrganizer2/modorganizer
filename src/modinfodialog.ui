@@ -566,7 +566,7 @@ text-align: left;</string>
                    <widget class="QLineEdit" name="overwriteLineEdit"/>
                   </item>
                   <item>
-                   <widget class="QLCDNumber" name="overwriteCount">
+                   <widget class="LCDNumber" name="overwriteCount">
                     <property name="frameShadow">
                      <enum>QFrame::Sunken</enum>
                     </property>
@@ -635,7 +635,7 @@ text-align: left;</string>
                    <widget class="QLineEdit" name="overwrittenLineEdit"/>
                   </item>
                   <item>
-                   <widget class="QLCDNumber" name="overwrittenCount">
+                   <widget class="LCDNumber" name="overwrittenCount">
                     <property name="frameShadow">
                      <enum>QFrame::Sunken</enum>
                     </property>
@@ -701,7 +701,7 @@ text-align: left;</string>
                    <widget class="QLineEdit" name="noConflictLineEdit"/>
                   </item>
                   <item>
-                   <widget class="QLCDNumber" name="noConflictCount">
+                   <widget class="LCDNumber" name="noConflictCount">
                     <property name="frameShadow">
                      <enum>QFrame::Sunken</enum>
                     </property>
@@ -1409,6 +1409,11 @@ p, li { white-space: pre-wrap; }
    <class>TextEditor</class>
    <extends>QPlainTextEdit</extends>
    <header>texteditor.h</header>
+  </customwidget>
+  <customwidget>
+   <class>LCDNumber</class>
+   <extends>QLCDNumber</extends>
+   <header>lcdnumber.h</header>
   </customwidget>
   <customwidget>
    <class>HTMLEditor</class>
