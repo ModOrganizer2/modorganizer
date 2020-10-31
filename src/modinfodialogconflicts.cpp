@@ -918,7 +918,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
 
     }
     else {
-      // current mod is one of the alternatives, find it's position
+      // current mod is one of the alternatives, find its position
       
       auto currOrgId = currOrigin->getID();
 
@@ -933,7 +933,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
         if (showAllAlts) {
           // fills 'before' and 'after' with all the alternatives that come
           // before and after the current mod, trusting the alternatives vector to be 
-          // alredy sorted correctly
+          // already sorted correctly
           
           for (auto iter = alternatives.begin(); iter != alternatives.end(); iter++) {
             
@@ -959,7 +959,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
             }
           }
 
-          // also add the active winner origin (the one outsiede alternatives) to 'after'
+          // also add the active winner origin (the one outside alternatives) to 'after'
           if (!after.empty()) {
             after += L", ";
           }
