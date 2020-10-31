@@ -927,72 +927,70 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
           return currOrgId == alt.first;
       });
 
-      if (currModIter != alternatives.end()) {
-        isCurrOrigArchive = currModIter->second.first.size() > 0;
+      if (currModIter == alternatives.end()) {
+        log::error("Mod {} not found in the list of origins for file {}", currOrigin->getName(), fileName);
+        return {};
+      }
+
+      isCurrOrigArchive = currModIter->second.first.size() > 0;
+      
+      if (showAllAlts) {
+        // fills 'before' and 'after' with all the alternatives that come
+        // before and after the current mod, trusting the alternatives vector to be 
+        // already sorted correctly
         
-        if (showAllAlts) {
-          // fills 'before' and 'after' with all the alternatives that come
-          // before and after the current mod, trusting the alternatives vector to be 
-          // already sorted correctly
+        for (auto iter = alternatives.begin(); iter != alternatives.end(); iter++) {
           
-          for (auto iter = alternatives.begin(); iter != alternatives.end(); iter++) {
-            
-            const auto& altOrigin = ds.getOriginByID(iter->first);
+          const auto& altOrigin = ds.getOriginByID(iter->first);
 
-            if (iter < currModIter) {
-              // mod comes before current
+          if (iter < currModIter) {
+            // mod comes before current
 
-              if (!before.empty()) {
-                before += L", ";
-              }
-
-              before += altOrigin.getName();
+            if (!before.empty()) {
+              before += L", ";
             }
-            else if (iter > currModIter) {
-              // mod comes after current
 
-              if (!after.empty()) {
-                after += L", ";
-              }
+            before += altOrigin.getName();
+          }
+          else if (iter > currModIter) {
+            // mod comes after current
 
-              after += altOrigin.getName();
+            if (!after.empty()) {
+              after += L", ";
             }
+
+            after += altOrigin.getName();
           }
-
-          // also add the active winner origin (the one outside alternatives) to 'after'
-          if (!after.empty()) {
-            after += L", ";
-          }
-          after += ds.getOriginByID(fileOrigin).getName();
-
-
         }
-        else {
-          // only show nearest origins
 
-          // before
-          if (currModIter > alternatives.begin()) {
-            auto previousOrigId = (currModIter-1)->first;
-            before += ds.getOriginByID(previousOrigId).getName();
-          }
-
-          // after
-          if (currModIter < (alternatives.end() - 1)) {
-            auto followingOrigId = (currModIter + 1)->first;
-            after += ds.getOriginByID(followingOrigId).getName();
-          }
-          else {
-            // current mod is last of alternatives, so closest to the active winner
-
-            after += ds.getOriginByID(fileOrigin).getName();
-          }
-          
+        // also add the active winner origin (the one outside alternatives) to 'after'
+        if (!after.empty()) {
+          after += L", ";
         }
+        after += ds.getOriginByID(fileOrigin).getName();
+
 
       }
       else {
-        log::error("Mod {} not found in the list of origins for file {}", currOrigin->getName(), fileName);
-        return {};
+        // only show nearest origins
+
+        // before
+        if (currModIter > alternatives.begin()) {
+          auto previousOrigId = (currModIter-1)->first;
+          before += ds.getOriginByID(previousOrigId).getName();
+        }
+
+        // after
+        if (currModIter < (alternatives.end() - 1)) {
+          auto followingOrigId = (currModIter + 1)->first;
+          after += ds.getOriginByID(followingOrigId).getName();
+        }
+        else {
+          // current mod is last of alternatives, so closest to the active winner
+
+          after += ds.getOriginByID(fileOrigin).getName();
+        }
+        
       }
     }
   }
