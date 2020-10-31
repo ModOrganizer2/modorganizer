@@ -42,15 +42,36 @@ using OriginID = int;
 constexpr FileIndex InvalidFileIndex = UINT_MAX;
 constexpr OriginID InvalidOriginID = -1;
 
-
-// a vector of {originId, {archiveName, order}}
-//
-// if a file is in an archive, archiveName is the name of the bsa and order
+// if a file is in an archive, name is the name of the bsa and order
 // is the order of the associated plugin in the plugins list
-//
 // is a file is not in an archive, archiveName is empty and order is usually
 // -1
-using AlternativesVector = std::vector<std::pair<OriginID, std::pair<std::wstring, int>>>;
+struct DataArchiveOrigin
+{
+  std::wstring name = L"";
+  int order = -1;
+  
+  bool isValid() const {
+    return name.size() > 0;
+  }
+
+  DataArchiveOrigin(std::wstring pname, int porder)
+    : name(pname), order(porder) {}
+
+  DataArchiveOrigin() {}
+};
+
+struct FileAlternative
+{
+  OriginID originID = -1;
+  DataArchiveOrigin archive;
+
+  bool isFromArchive() const {
+    return archive.isValid();
+  }
+};
+
+using AlternativesVector = std::vector<FileAlternative>;
 
 struct DirectoryStats
 {

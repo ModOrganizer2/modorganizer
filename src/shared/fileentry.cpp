@@ -31,12 +31,12 @@ void FileEntry::addOrigin(
     // alternatives
     m_Origin = origin;
     m_FileTime = fileTime;
-    m_Archive = std::pair<std::wstring, int>(std::wstring(archive.begin(), archive.end()), order);
+    m_Archive = DataArchiveOrigin(std::wstring(archive.begin(), archive.end()), order);
   }
   else if (
     (m_Parent != nullptr) && (
     (m_Parent->getOriginByID(origin).getPriority() > m_Parent->getOriginByID(m_Origin).getPriority()) ||
-      (archive.size() == 0 && m_Archive.first.size() > 0 ))
+      (archive.size() == 0 && m_Archive.isValid()))
     ) {
     // If this mod has a higher priority than the origin mod OR
     // this mod has a loose file and the origin mod has an archived file,
@@ -44,7 +44,7 @@ void FileEntry::addOrigin(
 
     auto itor = std::find_if(
       m_Alternatives.begin(), m_Alternatives.end(),
-      [&](auto&& i) { return i.first == m_Origin; });
+      [&](auto&& i) { return i.originID == m_Origin; });
 
     if (itor == m_Alternatives.end()) {
       m_Alternatives.push_back({m_Origin, m_Archive});
@@ -52,7 +52,7 @@ void FileEntry::addOrigin(
 
     m_Origin = origin;
     m_FileTime = fileTime;
-    m_Archive = std::pair<std::wstring, int>(std::wstring(archive.begin(), archive.end()), order);
+    m_Archive = DataArchiveOrigin(std::wstring(archive.begin(), archive.end()), order);
   }
   else {
     // This mod is just an alternative
@@ -64,13 +64,13 @@ void FileEntry::addOrigin(
     }
 
     for (auto iter = m_Alternatives.begin(); iter != m_Alternatives.end(); ++iter) {
-      if (iter->first == origin) {
+      if (iter->originID == origin) {
         // already an origin
         return;
       }
 
       if ((m_Parent != nullptr) &&
-        (m_Parent->getOriginByID(iter->first).getPriority() < m_Parent->getOriginByID(origin).getPriority())) {
+        (m_Parent->getOriginByID(iter->originID).getPriority() < m_Parent->getOriginByID(origin).getPriority())) {
         m_Alternatives.insert(iter, {origin, {std::wstring(archive.begin(), archive.end()), order}});
         found = true;
         break;
@@ -92,23 +92,23 @@ bool FileEntry::removeOrigin(OriginID origin)
       // find alternative with the highest priority
       auto currentIter = m_Alternatives.begin();
       for (auto iter = m_Alternatives.begin(); iter != m_Alternatives.end(); ++iter) {
-        if (iter->first != origin) {
+        if (iter->originID != origin) {
           //Both files are not from archives.
-          if (!iter->second.first.size() && !currentIter->second.first.size()) {
-            if ((m_Parent->getOriginByID(iter->first).getPriority() > m_Parent->getOriginByID(currentIter->first).getPriority())) {
+          if (!iter->isFromArchive() && !currentIter->isFromArchive()) {
+            if ((m_Parent->getOriginByID(iter->originID).getPriority() > m_Parent->getOriginByID(currentIter->originID).getPriority())) {
               currentIter = iter;
             }
           }
           else {
             //Both files are from archives
-            if (iter->second.first.size() && currentIter->second.first.size()) {
-              if (iter->second.second > currentIter->second.second) {
+            if (iter->isFromArchive() && currentIter->isFromArchive()) {
+              if (iter->archive.order > currentIter->archive.order) {
                 currentIter = iter;
               }
             }
             else {
               //Only one of the two is an archive, so we change currentIter only if he is the archive one.
-              if (currentIter->second.first.size()) {
+              if (currentIter->isFromArchive()) {
                 currentIter = iter;
               }
             }
@@ -116,20 +116,20 @@ bool FileEntry::removeOrigin(OriginID origin)
         }
       }
 
-      OriginID currentID = currentIter->first;
-      m_Archive = currentIter->second;
+      OriginID currentID = currentIter->originID;
+      m_Archive = currentIter->archive;
       m_Alternatives.erase(currentIter);
 
       m_Origin = currentID;
     } else {
       m_Origin = -1;
-      m_Archive = std::pair<std::wstring, int>(L"", -1);
+      m_Archive = DataArchiveOrigin(L"", -1);
       return true;
     }
   } else {
     auto newEnd = std::remove_if(
       m_Alternatives.begin(), m_Alternatives.end(),
-      [&](auto &i) { return i.first == origin; });
+      [&](auto &i) { return i.originID == origin; });
 
     if (newEnd != m_Alternatives.end()) {
       m_Alternatives.erase(newEnd, m_Alternatives.end());
@@ -145,13 +145,13 @@ void FileEntry::sortOrigins()
   m_Alternatives.push_back({m_Origin, m_Archive});
 
   std::sort(m_Alternatives.begin(), m_Alternatives.end(), [&](auto&& LHS, auto&& RHS) {
-    if (!LHS.second.first.size() && !RHS.second.first.size()) {
-      int l = m_Parent->getOriginByID(LHS.first).getPriority();
+    if (!LHS.isFromArchive() && !RHS.isFromArchive()) {
+      int l = m_Parent->getOriginByID(LHS.originID).getPriority();
       if (l < 0) {
         l = INT_MAX;
       }
 
-      int r = m_Parent->getOriginByID(RHS.first).getPriority();
+      int r = m_Parent->getOriginByID(RHS.originID).getPriority();
       if (r < 0) {
         r = INT_MAX;
       }
@@ -159,14 +159,14 @@ void FileEntry::sortOrigins()
       return l < r;
     }
 
-    if (LHS.second.first.size() && RHS.second.first.size()) {
-      int l = LHS.second.second; if (l < 0) l = INT_MAX;
-      int r = RHS.second.second; if (r < 0) r = INT_MAX;
+    if (LHS.isFromArchive() && RHS.isFromArchive()) {
+      int l = LHS.archive.order; if (l < 0) l = INT_MAX;
+      int r = RHS.archive.order; if (r < 0) r = INT_MAX;
 
       return l < r;
     }
 
-    if (RHS.second.first.size()) {
+    if (RHS.isFromArchive()) {
       return false;
     }
 
@@ -174,8 +174,8 @@ void FileEntry::sortOrigins()
     });
 
   if (!m_Alternatives.empty()) {
-    m_Origin = m_Alternatives.back().first;
-    m_Archive = m_Alternatives.back().second;
+    m_Origin = m_Alternatives.back().originID;
+    m_Archive = m_Alternatives.back().archive;
     m_Alternatives.pop_back();
   }
 }
@@ -185,15 +185,15 @@ bool FileEntry::isFromArchive(std::wstring archiveName) const
   std::scoped_lock lock(m_OriginsMutex);
 
   if (archiveName.length() == 0) {
-    return m_Archive.first.length() != 0;
+    return m_Archive.isValid();
   }
 
-  if (m_Archive.first.compare(archiveName) == 0) {
+  if (m_Archive.name.compare(archiveName) == 0) {
     return true;
   }
 
   for (auto alternative : m_Alternatives) {
-    if (alternative.second.first.compare(archiveName) == 0) {
+    if (alternative.archive.name.compare(archiveName) == 0) {
       return true;
     }
   }
