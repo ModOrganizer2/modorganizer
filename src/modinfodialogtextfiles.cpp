@@ -23,8 +23,12 @@ public:
     return {};
   }
 
-  int rowCount(const QModelIndex& ={}) const override
+  int rowCount(const QModelIndex& index={}) const override
   {
+    // no child nodes
+    if (index.isValid())
+      return 0;
+
     return static_cast<int>(m_files.size());
   }
 
@@ -114,6 +118,7 @@ GenericFilesTab::GenericFilesTab(
 
   m_filter.setEdit(filter);
   m_filter.setList(m_list);
+  m_filter.setUpdateDelay(false);
 
   QObject::connect(
     m_list->selectionModel(), &QItemSelectionModel::currentRowChanged,

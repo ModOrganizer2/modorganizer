@@ -559,12 +559,18 @@ GeneralConflictsTab::GeneralConflictsTab(
 
   m_filterOverwrite.setEdit(ui->overwriteLineEdit);
   m_filterOverwrite.setList(ui->overwriteTree);
+  m_filterOverwrite.setUseSourceSort(true);
+  m_filterOverwrite.setUpdateDelay(false);
 
   m_filterOverwritten.setEdit(ui->overwrittenLineEdit);
   m_filterOverwritten.setList(ui->overwrittenTree);
+  m_filterOverwritten.setUseSourceSort(true);
+  m_filterOverwritten.setUpdateDelay(false);
 
   m_filterNoConflicts.setEdit(ui->noConflictLineEdit);
   m_filterNoConflicts.setList(ui->noConflictTree);
+  m_filterNoConflicts.setUseSourceSort(true);
+  m_filterNoConflicts.setUpdateDelay(false);
 
   QObject::connect(
     ui->overwriteTree, &QTreeView::doubleClicked,
@@ -789,9 +795,10 @@ AdvancedConflictsTab::AdvancedConflictsTab(
     m_tab(tab), ui(pui), m_core(oc),
     m_model(new AdvancedConflictListModel(ui->conflictsAdvancedList))
 {
-
   m_filter.setEdit(ui->conflictsAdvancedFilter);
   m_filter.setList(ui->conflictsAdvancedList);
+  m_filter.setUseSourceSort(true);
+  m_filter.setUpdateDelay(false);
 
   // left-elide the overwrites column so that the nearest are visible
   ui->conflictsAdvancedList->setItemDelegateForColumn(
