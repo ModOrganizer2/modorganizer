@@ -1129,8 +1129,8 @@ std::wstring FileTreeModel::makeModName(
   std::wstring name = origin.getName();
 
   const auto& archive = file.getArchive();
-  if (!archive.name.empty()) {
-    name += L" (" + archive.name + L")";
+  if (!archive.name().empty()) {
+    name += L" (" + archive.name() + L")";
   }
 
   return name;
@@ -1184,7 +1184,7 @@ QString FileTreeModel::makeTooltip(const FileTreeItem& item) const
     QStringList list;
 
     for (auto&& alt : alternatives) {
-      const auto& origin = m_core.directoryStructure()->getOriginByID(alt.originID);
+      const auto& origin = m_core.directoryStructure()->getOriginByID(alt.originID());
       list.push_back(QString::fromStdWString(origin.getName()));
     }
 

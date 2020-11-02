@@ -921,7 +921,7 @@ QStringList OrganizerCore::getFileOrigins(const QString &fileName) const
         m_DirectoryStructure->getOriginByID(file->getOrigin()).getName()));
     foreach (auto i, file->getAlternatives()) {
       result.append(
-          ToQString(m_DirectoryStructure->getOriginByID(i.originID).getName()));
+          ToQString(m_DirectoryStructure->getOriginByID(i.originID()).getName()));
     }
   }
   return result;
@@ -945,10 +945,10 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerCore::findFileInfos(
       info.origins.append(ToQString(
           m_DirectoryStructure->getOriginByID(file->getOrigin(fromArchive))
               .getName()));
-      info.archive = fromArchive ? ToQString(file->getArchive().name) : "";
+      info.archive = fromArchive ? ToQString(file->getArchive().name()) : "";
       foreach (auto idx, file->getAlternatives()) {
         info.origins.append(
-            ToQString(m_DirectoryStructure->getOriginByID(idx.originID).getName()));
+            ToQString(m_DirectoryStructure->getOriginByID(idx.originID()).getName()));
       }
 
       if (filter(info)) {
@@ -1049,7 +1049,7 @@ bool OrganizerCore::previewFileWithAlternatives(
     // don't bother with the vector of origins, just add them as they come
     addFunc(file->getOrigin());
     for (auto alt : file->getAlternatives()) {
-      addFunc(alt.originID);
+      addFunc(alt.originID());
     }
   } else {
     std::vector<int> origins;
@@ -1059,10 +1059,10 @@ bool OrganizerCore::previewFileWithAlternatives(
 
     // add other origins, push to front if it's the selected one
     for (auto alt : file->getAlternatives()) {
-      if (alt.originID == selectedOrigin) {
-        origins.insert(origins.begin(), alt.originID);
+      if (alt.originID() == selectedOrigin) {
+        origins.insert(origins.begin(), alt.originID());
       } else {
-        origins.push_back(alt.originID);
+        origins.push_back(alt.originID());
       }
     }
 

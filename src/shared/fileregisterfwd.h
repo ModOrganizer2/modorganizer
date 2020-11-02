@@ -46,29 +46,44 @@ constexpr OriginID InvalidOriginID = -1;
 // is the order of the associated plugin in the plugins list
 // is a file is not in an archive, archiveName is empty and order is usually
 // -1
-struct DataArchiveOrigin
+class DataArchiveOrigin
 {
-  std::wstring name = L"";
-  int order = -1;
+  std::wstring name_ = L"";
+  int order_ = -1;
+  
+public:
+
+  int order() const { return order_; }
+  const std::wstring& name() const { return name_; }
   
   bool isValid() const {
-    return name.size() > 0;
+    return name_.size() > 0;
   }
 
-  DataArchiveOrigin(std::wstring pname, int porder)
-    : name(pname), order(porder) {}
+  DataArchiveOrigin(std::wstring name, int order)
+    : name_(std::move(name)), order_(order) {}
 
-  DataArchiveOrigin() {}
+  DataArchiveOrigin() = default;
 };
 
-struct FileAlternative
+class FileAlternative
 {
-  OriginID originID = -1;
-  DataArchiveOrigin archive;
+  OriginID originID_ = -1;
+  DataArchiveOrigin archive_;
+
+public:
+
+  OriginID originID() const { return originID_; }
+  const DataArchiveOrigin& archive() const { return archive_; }
 
   bool isFromArchive() const {
-    return archive.isValid();
+    return archive_.isValid();
   }
+
+  FileAlternative() = default;
+
+  FileAlternative(OriginID originID, DataArchiveOrigin archive) 
+    : originID_(originID), archive_(std::move(archive)) {}
 };
 
 using AlternativesVector = std::vector<FileAlternative>;

@@ -145,7 +145,7 @@ void ModInfoWithConflictInfo::doConflictCheck() const
       }
 
       auto alternatives = file->getAlternatives();
-      if ((alternatives.size() == 0) || (alternatives.back().originID == dataID)) {
+      if ((alternatives.size() == 0) || (alternatives.back().originID() == dataID)) {
         // no alternatives -> no conflict
         providesAnything = true;
       } else {
@@ -155,8 +155,8 @@ void ModInfoWithConflictInfo::doConflictCheck() const
           archiveData = file->getArchive();
         else {
           for (auto alt : alternatives) {
-            if (alt.originID == origin.getID()) {
-              archiveData = alt.archive;
+            if (alt.originID() == origin.getID()) {
+              archiveData = alt.archive();
               break;
             }
           }
@@ -181,8 +181,8 @@ void ModInfoWithConflictInfo::doConflictCheck() const
 
         // Sort out the alternatives
         for (auto altInfo : alternatives) {
-          if ((altInfo.originID != dataID) && (altInfo.originID != origin.getID())) {
-            FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(altInfo.originID);
+          if ((altInfo.originID() != dataID) && (altInfo.originID() != origin.getID())) {
+            FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(altInfo.originID());
             QString altOriginName = ToQString(altOrigin.getName());
             unsigned int altIndex = ModInfo::getIndex(altOriginName);
             if (!altInfo.isFromArchive()) {
@@ -199,9 +199,9 @@ void ModInfoWithConflictInfo::doConflictCheck() const
               if (!archiveData.isValid()) {
                 m_ArchiveLooseOverwriteList.insert(altIndex);
               } else {
-                if (archiveData.order > altInfo.archive.order) {
+                if (archiveData.order() > altInfo.archive().order()) {
                   m_ArchiveOverwriteList.insert(altIndex);
-                } else if (archiveData.order < altInfo.archive.order) {
+                } else if (archiveData.order() < altInfo.archive().order()) {
                   m_ArchiveOverwrittenList.insert(altIndex);
                 }
               }

@@ -520,7 +520,7 @@ std::vector<QAction*> ConflictsTab::createGotoActions(const ConflictItem* item)
 
   // add all alternatives
   for (const auto& alt : file->getAlternatives()) {
-    const auto& o = ds.getOriginByID(alt.originID);
+    const auto& o = ds.getOriginByID(alt.originID());
     if (o.getID() != origin()->getID()) {
       mods.push_back(ToQString(o.getName()));
     }
@@ -683,7 +683,7 @@ bool GeneralConflictsTab::update()
         auto currId = m_tab->origin()->getID();
         auto currModAlt = std::find_if(alternatives.begin(), alternatives.end(),
           [&currId](auto const& alt) {
-            return currId == alt.originID;
+            return currId == alt.originID();
           });
 
         if (currModAlt == alternatives.end()) {
@@ -731,10 +731,10 @@ ConflictItem GeneralConflictsTab::createOverwriteItem(
       altString += L", ";
     }
 
-    altString += ds.getOriginByID(alt.originID).getName();
+    altString += ds.getOriginByID(alt.originID()).getName();
   }
 
-  auto origin = ToQString(ds.getOriginByID(alternatives.back().originID).getName());
+  auto origin = ToQString(ds.getOriginByID(alternatives.back().originID()).getName());
 
   return ConflictItem(
     ToQString(altString), std::move(relativeName), QString(), index,
@@ -1005,7 +1005,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
       if (showAllAlts) {
         for (const auto& alt : alternatives)
         {
-          const auto& altOrigin = ds.getOriginByID(alt.originID);
+          const auto& altOrigin = ds.getOriginByID(alt.originID());
           if (!before.empty()) {
             before += L", ";
           }
@@ -1015,7 +1015,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
       }
       else {
         // only add nearest, which is the last element of alternatives
-        const auto& altOrigin = ds.getOriginByID(alternatives.back().originID);
+        const auto& altOrigin = ds.getOriginByID(alternatives.back().originID());
 
         before += altOrigin.getName();
       }
@@ -1028,7 +1028,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
 
       auto currModIter = std::find_if(alternatives.begin(), alternatives.end(),
         [&currOrgId](auto const& alt) {
-          return currOrgId == alt.originID;
+          return currOrgId == alt.originID();
       });
 
       if (currModIter == alternatives.end()) {
@@ -1045,7 +1045,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
         
         for (auto iter = alternatives.begin(); iter != alternatives.end(); iter++) {
           
-          const auto& altOrigin = ds.getOriginByID(iter->originID);
+          const auto& altOrigin = ds.getOriginByID(iter->originID());
 
           if (iter < currModIter) {
             // mod comes before current
@@ -1080,13 +1080,13 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
 
         // before
         if (currModIter > alternatives.begin()) {
-          auto previousOrigId = (currModIter-1)->originID;
+          auto previousOrigId = (currModIter-1)->originID();
           before += ds.getOriginByID(previousOrigId).getName();
         }
 
         // after
         if (currModIter < (alternatives.end() - 1)) {
-          auto followingOrigId = (currModIter + 1)->originID;
+          auto followingOrigId = (currModIter + 1)->originID();
           after += ds.getOriginByID(followingOrigId).getName();
         }
         else {

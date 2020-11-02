@@ -172,7 +172,7 @@ void FileRegister::unregisterFile(FileEntryPtr file)
   const auto& alternatives = file->getAlternatives();
 
   for (auto iter = alternatives.begin(); iter != alternatives.end(); ++iter) {
-    m_OriginConnection->getByID(iter->originID).removeFile(file->getIndex());
+    m_OriginConnection->getByID(iter->originID()).removeFile(file->getIndex());
   }
 
   // unregister from directory
