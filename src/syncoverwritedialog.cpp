@@ -103,8 +103,8 @@ void SyncOverwriteDialog::readTree(const QString &path, DirectoryEntry *director
         int origin = entry->getOrigin(ignore);
         addToComboBox(combo, ToQString(m_DirectoryStructure->getOriginByID(origin).getName()), origin);
         const auto &alternatives = entry->getAlternatives();
-        for (auto iter = alternatives.begin(); iter != alternatives.end(); ++iter) {
-          addToComboBox(combo, ToQString(m_DirectoryStructure->getOriginByID(iter->originID()).getName()), iter->originID());
+        for (const auto& alt : alternatives) {
+          addToComboBox(combo, ToQString(m_DirectoryStructure->getOriginByID(alt.originID()).getName()), alt.originID());
         }
         combo->setCurrentIndex(combo->count() - 1);
       } else {

@@ -192,7 +192,7 @@ bool FileEntry::isFromArchive(std::wstring archiveName) const
     return true;
   }
 
-  for (auto alternative : m_Alternatives) {
+  for (const auto& alternative : m_Alternatives) {
     if (alternative.archive().name().compare(archiveName) == 0) {
       return true;
     }

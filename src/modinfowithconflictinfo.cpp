@@ -154,7 +154,7 @@ void ModInfoWithConflictInfo::doConflictCheck() const
         if (file->getOrigin() == origin.getID())
           archiveData = file->getArchive();
         else {
-          for (auto alt : alternatives) {
+          for (const auto& alt : alternatives) {
             if (alt.originID() == origin.getID()) {
               archiveData = alt.archive();
               break;
@@ -180,7 +180,7 @@ void ModInfoWithConflictInfo::doConflictCheck() const
         }
 
         // Sort out the alternatives
-        for (auto altInfo : alternatives) {
+        for (const auto& altInfo : alternatives) {
           if ((altInfo.originID() != dataID) && (altInfo.originID() != origin.getID())) {
             FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(altInfo.originID());
             QString altOriginName = ToQString(altOrigin.getName());

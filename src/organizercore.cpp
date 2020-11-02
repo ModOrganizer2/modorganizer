@@ -919,7 +919,7 @@ QStringList OrganizerCore::getFileOrigins(const QString &fileName) const
   if (file.get() != nullptr) {
     result.append(ToQString(
         m_DirectoryStructure->getOriginByID(file->getOrigin()).getName()));
-    foreach (auto i, file->getAlternatives()) {
+    foreach (const auto& i, file->getAlternatives()) {
       result.append(
           ToQString(m_DirectoryStructure->getOriginByID(i.originID()).getName()));
     }
@@ -938,7 +938,7 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerCore::findFileInfos(
     dir = dir->findSubDirectoryRecursive(ToWString(path));
   if (dir != nullptr) {
     std::vector<FileEntryPtr> files = dir->getFiles();
-    foreach (FileEntryPtr file, files) {
+    for (FileEntryPtr file : files) {
       IOrganizer::FileInfo info;
       info.filePath    = ToQString(file->getFullPath());
       bool fromArchive = false;
@@ -946,7 +946,7 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerCore::findFileInfos(
           m_DirectoryStructure->getOriginByID(file->getOrigin(fromArchive))
               .getName()));
       info.archive = fromArchive ? ToQString(file->getArchive().name()) : "";
-      foreach (auto idx, file->getAlternatives()) {
+      for (const auto& idx : file->getAlternatives()) {
         info.origins.append(
             ToQString(m_DirectoryStructure->getOriginByID(idx.originID()).getName()));
       }
@@ -1048,7 +1048,7 @@ bool OrganizerCore::previewFileWithAlternatives(
   if (selectedOrigin == -1) {
     // don't bother with the vector of origins, just add them as they come
     addFunc(file->getOrigin());
-    for (auto alt : file->getAlternatives()) {
+    for (const auto& alt : file->getAlternatives()) {
       addFunc(alt.originID());
     }
   } else {
@@ -1058,7 +1058,7 @@ bool OrganizerCore::previewFileWithAlternatives(
     origins.push_back(file->getOrigin());
 
     // add other origins, push to front if it's the selected one
-    for (auto alt : file->getAlternatives()) {
+    for (const auto& alt : file->getAlternatives()) {
       if (alt.originID() == selectedOrigin) {
         origins.insert(origins.begin(), alt.originID());
       } else {
