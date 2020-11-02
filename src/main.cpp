@@ -464,69 +464,6 @@ MOBase::IPluginGame *determineCurrentGame(
   return nullptr;
 }
 
-
-// extend path to include dll directory so plugins don't need a manifest
-// (using AddDllDirectory would be an alternative to this but it seems fairly
-// complicated esp.
-//  since it isn't easily accessible on Windows < 8
-//  SetDllDirectory replaces other search directories and this seems to
-//  propagate to child processes)
-void setupPath()
-{
-  static const int BUFSIZE = 4096;
-
-  QCoreApplication::setLibraryPaths(QStringList(QCoreApplication::applicationDirPath() + "/dlls") + QCoreApplication::libraryPaths());
-
-  boost::scoped_array<TCHAR> oldPath(new TCHAR[BUFSIZE]);
-  DWORD offset = ::GetEnvironmentVariable(TEXT("PATH"), oldPath.get(), BUFSIZE);
-  if (offset > BUFSIZE) {
-    oldPath.reset(new TCHAR[offset]);
-    ::GetEnvironmentVariable(TEXT("PATH"), oldPath.get(), offset);
-  }
-
-  std::wstring newPath(ToWString(QDir::toNativeSeparators(
-    QCoreApplication::applicationDirPath())) + L"\\dlls");
-  newPath += L";";
-  newPath += oldPath.get();
-
-  ::SetEnvironmentVariableW(L"PATH", newPath.c_str());
-}
-
-void preloadDll(const QString& filename)
-{
-  if (GetModuleHandleW(filename.toStdWString().c_str())) {
-    // already loaded, this can happen when "restarting" MO by switching
-    // instances, for example
-    return;
-  }
-
-  const auto appPath = QDir::toNativeSeparators(
-    QCoreApplication::applicationDirPath());
-
-  const auto dllPath = appPath + "\\" + filename;
-
-  if (!QFile::exists(dllPath)) {
-    log::warn("{} not found", dllPath);
-    return;
-  }
-
-  if (!LoadLibraryW(dllPath.toStdWString().c_str())) {
-    const auto e = GetLastError();
-    log::warn("failed to load {}: {}", dllPath, formatSystemMessage(e));
-  }
-}
-
-void preloadSsl()
-{
-#if Q_PROCESSOR_WORDSIZE == 8
-  preloadDll("libcrypto-1_1-x64.dll");
-  preloadDll("libssl-1_1-x64.dll");
-#elif Q_PROCESSOR_WORDSIZE == 4
-  preloadDll("libcrypto-1_1.dll");
-  preloadDll("libssl-1_1.dll");
-#endif
-}
-
 static QString getVersionDisplayString()
 {
   return createVersionInfo().displayString(3);
@@ -543,7 +480,6 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     getVersionDisplayString(), GITID, QCoreApplication::applicationDirPath(),
     MOShared::getUsvfsVersionString());
 
-  preloadSsl();
   if (!QSslSocket::supportsSsl()) {
     log::warn("no ssl support");
   }
@@ -889,6 +825,25 @@ void initLogging()
   qInstallMessageHandler(qtLogCallback);
 }
 
+void preloadDll(const QString& filename)
+{
+  if (GetModuleHandleW(filename.toStdWString().c_str()))
+    return;
+
+  const auto appPath = QDir::toNativeSeparators(QDir::currentPath());
+  const auto dllPath = appPath + "\\dlls\\" + filename;
+
+  if (!QFile::exists(dllPath)) {
+    log::warn("{} not found", dllPath);
+    return;
+  }
+
+  if (!LoadLibraryW(dllPath.toStdWString().c_str())) {
+    const auto e = GetLastError();
+    log::warn("failed to load {}: {}", dllPath, formatSystemMessage(e));
+  }
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -904,6 +859,9 @@ int main(int argc, char *argv[])
       return doCoreDump(env::CoreDumpTypes::Full);
     }
   }
+
+  preloadDll("libcrypto-1_1-x64.dll");
+  preloadDll("libssl-1_1-x64.dll");
 
   initLogging();
 
@@ -925,9 +883,10 @@ int main(int argc, char *argv[])
   MOApplication application(argc, argv);
   QStringList arguments = application.arguments();
 
-  SetThisThreadName("main");
+  env::prependToPath(QDir::toNativeSeparators(
+    QCoreApplication::applicationDirPath() + "/dlls"));
 
-  setupPath();
+  SetThisThreadName("main");
 
   bool forcePrimary = false;
   if (arguments.contains("update")) {

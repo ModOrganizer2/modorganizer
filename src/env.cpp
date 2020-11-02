@@ -394,6 +394,13 @@ QString path()
   return get("PATH");
 }
 
+QString prependToPath(const QString& s)
+{
+  auto old = path();
+  set("PATH", s + ";" + old);
+  return old;
+}
+
 QString addPath(const QString& s)
 {
   auto old = path();
