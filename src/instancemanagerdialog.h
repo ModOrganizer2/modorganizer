@@ -34,6 +34,8 @@ public:
   void openINI();
   void deleteInstance();
 
+  void setRestartOnSelect(bool b);
+
 private:
   static const std::size_t NoSelection = -1;
 
@@ -42,6 +44,7 @@ private:
   std::vector<std::unique_ptr<InstanceInfo>> m_instances;
   MOBase::FilterWidget m_filter;
   QStandardItemModel* m_model;
+  bool m_restartOnSelect;
 
   void updateInstances();
 

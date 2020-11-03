@@ -27,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "instancemanager.h"
 #include "instancemanagerdialog.h"
 #include "createinstancedialog.h"
+#include "createinstancedialogpages.h"
 #include "organizercore.h"
 #include "env.h"
 #include "envmodule.h"
@@ -273,9 +274,166 @@ std::optional<int> handleCommandLine(
 
 void openInstanceManager(PluginContainer& pc, QWidget* parent);
 
+std::optional<Instance> selectInstance()
+{
+  NexusInterface ni(nullptr);
+
+  PluginContainer pc(nullptr);
+  pc.loadPlugins();
+
+  InstanceManagerDialog dlg(pc);
+  dlg.setRestartOnSelect(false);
+
+  dlg.show();
+  dlg.activateWindow();
+  dlg.raise();
+
+  if (dlg.exec() != QDialog::Accepted) {
+    return {};
+  }
+
+  return InstanceManager::instance().currentInstance();
+}
+
+enum class SetupInstanceResults
+{
+  Ok,
+  TryAgain,
+  SelectAnother,
+  Exit
+};
+
+
+void criticalOnTop(const QString& message)
+{
+  QMessageBox mb(QMessageBox::Critical, QObject::tr("Mod Organizer"), message);
+
+  mb.show();
+  mb.activateWindow();
+  mb.raise();
+  mb.exec();
+}
+
+
+SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
+{
+  const auto setupResult = instance.setup(pc);
+
+  switch (setupResult)
+  {
+    case Instance::SetupResults::Ok:
+    {
+      return SetupInstanceResults::Ok;
+    }
+
+    case Instance::SetupResults::BadIni:
+    {
+      criticalOnTop(
+        QObject::tr("Cannot open instance '%1', failed to read INI file %2.")
+          .arg(instance.name()).arg(instance.iniPath()));
+
+      return SetupInstanceResults::SelectAnother;
+    }
+
+    case Instance::SetupResults::IniMissingGame:
+    {
+      criticalOnTop(
+        QObject::tr(
+          "Cannot open instance '%1', the managed game was not found in the INI "
+          "file %2. Select the game managed by this instance.")
+            .arg(instance.name()).arg(instance.iniPath()));
+
+      CreateInstanceDialog dlg(pc, nullptr);
+      dlg.setSinglePage<cid::GamePage>();
+
+      dlg.show();
+      dlg.activateWindow();
+      dlg.raise();
+
+      if (dlg.exec() != QDialog::Accepted) {
+        return SetupInstanceResults::Exit;
+      }
+
+      instance.setGame(
+        dlg.creationInfo().game->gameName(),
+        dlg.creationInfo().game->gameDirectory().absolutePath());
+
+      return SetupInstanceResults::TryAgain;
+    }
+
+    case Instance::SetupResults::PluginGone:
+    {
+      criticalOnTop(
+        QObject::tr(
+          "Cannot open instance '%1', the game plugin '%2' doesn't exist. It "
+          "may have been deleted by an antivirus. Select another instance.")
+            .arg(instance.name()).arg(instance.gameName()));
+
+      return SetupInstanceResults::SelectAnother;
+    }
+
+    case Instance::SetupResults::GameGone:
+    {
+      criticalOnTop(
+        QObject::tr(
+          "Cannot open instance '%1', the game directory '%2' doesn't exist or "
+          "the game plugin '%3' doesn't recognize it. Select the game managed "
+          "by this instance.")
+            .arg(instance.name())
+            .arg(instance.gameDirectory())
+            .arg(instance.gameName()));
+
+      CreateInstanceDialog dlg(pc, nullptr);
+      dlg.setSinglePage<cid::GamePage>();
+
+      dlg.show();
+      dlg.activateWindow();
+      dlg.raise();
+
+      if (dlg.exec() != QDialog::Accepted) {
+        return SetupInstanceResults::Exit;
+      }
+
+      instance.setGame(
+        dlg.creationInfo().game->gameName(),
+        dlg.creationInfo().game->gameDirectory().absolutePath());
+
+      return SetupInstanceResults::TryAgain;
+    }
+
+    case Instance::SetupResults::MissingVariant:
+    {
+      CreateInstanceDialog dlg(pc, nullptr);
+
+      dlg.getPage<cid::GamePage>()->select(
+        instance.gamePlugin(), instance.gameDirectory());
+
+      dlg.setSinglePage<cid::VariantsPage>();
+
+      dlg.show();
+      dlg.activateWindow();
+      dlg.raise();
+
+      if (dlg.exec() != QDialog::Accepted) {
+        return SetupInstanceResults::Exit;
+      }
+
+      instance.setVariant(dlg.creationInfo().gameVariant);
+
+      return SetupInstanceResults::TryAgain;
+    }
+
+    default:
+    {
+      return SetupInstanceResults::Exit;
+    }
+  }
+}
+
 int runApplication(
   MOApplication &application, const cl::CommandLine& cl,
-  SingleInstance &instance, const QString &dataPath)
+  SingleInstance &instance, const QString &dataPath,
+  Instance& currentInstance)
 {
   TimeThis tt("runApplication() to exec()");
 
@@ -345,57 +503,48 @@ int runApplication(
     pluginContainer = std::make_unique<PluginContainer>(&organizer);
     pluginContainer->loadPlugins();
 
-    MOBase::IPluginGame* game = InstanceManager::instance()
-      .determineCurrentGame(
-        application.applicationDirPath(), settings, *pluginContainer);
+    for (;;)
+    {
+      const auto setupResult = setupInstance(currentInstance, *pluginContainer);
 
-    if (game == nullptr) {
-      InstanceManager &instance = InstanceManager::instance();
-      QString instanceName = instance.currentInstance();
-
-      if (instanceName.compare("Portable", Qt::CaseInsensitive) != 0) {
-        instance.clearCurrentInstance();
+      if (setupResult == SetupInstanceResults::Ok) {
+        break;
+      } else if (setupResult == SetupInstanceResults::TryAgain) {
+        continue;
+      } else if (setupResult == SetupInstanceResults::SelectAnother) {
+        InstanceManager::instance().clearCurrentInstance();
         return RestartExitCode;
+      } else {
+        return 1;
       }
-
-      return 1;
     }
 
-    checkPathsForSanity(*game, settings);
+    checkPathsForSanity(*currentInstance.gamePlugin(), settings);
 
-
-    organizer.setManagedGame(game);
+    organizer.setManagedGame(currentInstance.gamePlugin());
     organizer.createDefaultProfile();
-
-    if (!InstanceManager::instance().determineGameEdition(settings, game)) {
-      return 1;
-    }
 
     log::info(
       "using game plugin '{}' ('{}', variant {}, steam id '{}') at {}",
-      game->gameName(), game->gameShortName(),
+      currentInstance.gamePlugin()->gameName(),
+      currentInstance.gamePlugin()->gameShortName(),
       (settings.game().edition().value_or("").isEmpty() ?
         "(none)" : *settings.game().edition()),
-      game->steamAPPId(), game->gameDirectory().absolutePath());
+      currentInstance.gamePlugin()->steamAPPId(),
+      currentInstance.gamePlugin()->gameDirectory().absolutePath());
+
 
     CategoryFactory::instance().loadCategories();
     organizer.updateExecutablesList();
     organizer.updateModInfoFromDisc();
 
-    if (cl.profile()) {
-      InstanceManager::instance().overrideProfile(*cl.profile());
-    }
-
-    QString selectedProfileName = InstanceManager::instance()
-      .determineProfile(settings);
-
-    organizer.setCurrentProfile(selectedProfileName);
+    organizer.setCurrentProfile(currentInstance.profileName());
 
     if (auto r=handleCommandLine(cl, organizer)) {
       return *r;
     }
 
-    auto splash = createSplash(settings, dataPath, game);
+    auto splash = createSplash(settings, dataPath, currentInstance.gamePlugin());
 
     QString apiKey;
     if (GlobalSettings::nexusApiKey(apiKey)) {
@@ -437,11 +586,6 @@ int runApplication(
       }
 
       tt.stop();
-
-      QTimer::singleShot(std::chrono::milliseconds(1), [&]
-      {
-        openInstanceManager(*pluginContainer, &mainWindow);
-      });
 
       res = application.exec();
       mainWindow.close();
@@ -488,28 +632,6 @@ void resetForRestart(cl::CommandLine& cl)
   cl.clear();
 }
 
-QString determineDataPath(const cl::CommandLine& cl)
-{
-  try
-  {
-    InstanceManager& instanceManager = InstanceManager::instance();
-
-    if (cl.instance())
-      instanceManager.overrideInstance(*cl.instance());
-
-    return instanceManager.determineDataPath();
-  }
-  catch (const std::exception &e)
-  {
-    if (strcmp(e.what(),"Canceled")) {
-      QMessageBox::critical(nullptr, QObject::tr("Failed to set up instance"), e.what());
-    }
-
-    return {};
-  }
-}
-
-
 int doOneRun(
   cl::CommandLine& cl, MOApplication& application, SingleInstance& instance)
 {
@@ -518,24 +640,25 @@ int doOneRun(
   // resets things when MO is "restarted"
   resetForRestart(cl);
 
+  if (cl.instance())
+    InstanceManager::instance().overrideInstance(*cl.instance());
 
-  //{
-  //  NexusInterface ni(nullptr);
-  //
-  //  PluginContainer pc(nullptr);
-  //  pc.loadPlugins();
-  //
-  //  CreateInstanceDialog dlg(pc, nullptr);
-  //  dlg.exec();
-  //}
-
-
-  const QString dataPath = determineDataPath(cl);
-  if (dataPath.isEmpty()) {
-    return 1;
+  if (cl.profile()) {
+    InstanceManager::instance().overrideProfile(*cl.profile());
   }
 
+  auto currentInstance = InstanceManager::instance().currentInstance();
+
+  if (!currentInstance)
+  {
+    currentInstance = selectInstance();
+    if (!currentInstance)
+      return 1;
+  }
+
+  const QString dataPath = currentInstance->directory().path();
   application.setProperty("dataPath", dataPath);
+
   setExceptionHandlers();
 
   if (!setLogDirectory(dataPath)) {
@@ -548,7 +671,7 @@ int doOneRun(
 
   tt.stop();
 
-  return runApplication(application, cl, instance, dataPath);
+  return runApplication(application, cl, instance, dataPath, *currentInstance);
 }
 
 int main(int argc, char *argv[])

@@ -6,6 +6,7 @@
 #include "selectiondialog.h"
 #include "plugincontainer.h"
 #include "shared/appconfig.h"
+#include "shared/util.h"
 #include <utility.h>
 #include <report.h>
 #include <iplugingame.h>
@@ -18,11 +19,6 @@ void openInstanceManager(PluginContainer& pc, QWidget* parent)
   //dlg.exec();
   InstanceManagerDialog dlg(pc, parent);
   dlg.exec();
-}
-
-QString makeIniFile(const QDir& dir)
-{
-  return dir.filePath(QString::fromStdWString(AppConfig::iniFileName()));
 }
 
 
@@ -61,7 +57,7 @@ public:
   void setDir(const QDir& dir)
   {
     m_dir = dir;
-    m_settings.reset(new Settings(makeIniFile(dir)));
+    m_settings.reset(new Settings(InstanceManager::iniPath(dir)));
   }
 
   QString name() const
@@ -109,7 +105,7 @@ public:
 
   QString iniFile() const
   {
-    return makeIniFile(m_dir);
+    return InstanceManager::iniPath(m_dir);
   }
 
   QIcon icon(const PluginContainer& plugins) const
@@ -134,10 +130,13 @@ public:
   {
     auto& m = InstanceManager::instance();
 
-    if (m_portable && m.currentInstance() == "") {
-      return true;
-    } else if (m.currentInstance() == name()) {
-      return true;
+    if (auto i=m.currentInstance())
+    {
+      if (m_portable) {
+        return i->isPortable();
+      } else {
+        return (i->name() == name());
+      }
     }
 
     return false;
@@ -316,7 +315,7 @@ InstanceManagerDialog::~InstanceManagerDialog() = default;
 InstanceManagerDialog::InstanceManagerDialog(
   const PluginContainer& pc, QWidget *parent) :
     QDialog(parent), ui(new Ui::InstanceManagerDialog), m_pc(pc),
-    m_model(nullptr)
+    m_model(nullptr), m_restartOnSelect(true)
 {
   ui->setupUi(this);
 
@@ -449,14 +448,16 @@ void InstanceManagerDialog::selectActiveInstance()
 {
   const auto active = InstanceManager::instance().currentInstance();
 
-  for (std::size_t i=0; i<m_instances.size(); ++i) {
-    if (m_instances[i]->name() == active) {
-      select(i);
+  if (active) {
+    for (std::size_t i=0; i<m_instances.size(); ++i) {
+      if (m_instances[i]->name() == active->name()) {
+        select(i);
 
-      ui->list->scrollTo(
-        m_filter.mapFromSource(m_filter.sourceModel()->index(i, 0)));
+        ui->list->scrollTo(
+          m_filter.mapFromSource(m_filter.sourceModel()->index(i, 0)));
 
-      return;
+        return;
+      }
     }
   }
 
@@ -470,7 +471,13 @@ void InstanceManagerDialog::openSelectedInstance()
     return;
   }
 
-  InstanceManager::instance().switchToInstance(m_instances[i]->name());
+  InstanceManager::instance().setCurrentInstance(m_instances[i]->name());
+
+  if (m_restartOnSelect) {
+    ExitModOrganizer(Exit::Restart);
+  }
+
+  accept();
 }
 
 QString getInstanceName(
@@ -696,6 +703,11 @@ void InstanceManagerDialog::deleteInstance()
   updateList();
 }
 
+
+void InstanceManagerDialog::setRestartOnSelect(bool b)
+{
+  m_restartOnSelect = b;
+}
 
 bool InstanceManagerDialog::doDelete(const QStringList& files, bool recycle)
 {

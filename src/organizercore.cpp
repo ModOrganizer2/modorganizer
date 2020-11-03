@@ -513,9 +513,11 @@ bool OrganizerCore::bootstrap()
 void OrganizerCore::createDefaultProfile()
 {
   QString profilesPath = settings().paths().profiles();
-  if (QDir(profilesPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot).size()
-      == 0) {
-    Profile newProf("Default", managedGame(), false);
+  if (QDir(profilesPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot).size() == 0) {
+    Profile newProf(
+      QString::fromStdWString(AppConfig::defaultProfileName()),
+      managedGame(), false);
+
     m_ProfileCreated(&newProf);
   }
 }

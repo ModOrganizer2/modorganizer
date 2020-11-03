@@ -13,7 +13,7 @@ using namespace MOBase;
 CreateInstanceDialog::CreateInstanceDialog(
   const PluginContainer& pc, Settings* s, QWidget *parent) :
     QDialog(parent), ui(new Ui::CreateInstanceDialog), m_pc(pc), m_settings(s),
-    m_switching(false)
+    m_switching(false), m_singlePage(false)
 {
   using namespace cid;
 
@@ -23,7 +23,7 @@ CreateInstanceDialog::CreateInstanceDialog(
   m_pages.push_back(std::make_unique<IntroPage>(*this));
   m_pages.push_back(std::make_unique<TypePage>(*this));
   m_pages.push_back(std::make_unique<GamePage>(*this));
-  m_pages.push_back(std::make_unique<EditionsPage>(*this));
+  m_pages.push_back(std::make_unique<VariantsPage>(*this));
   m_pages.push_back(std::make_unique<NamePage>(*this));
   m_pages.push_back(std::make_unique<PathsPage>(*this));
   m_pages.push_back(std::make_unique<NexusPage>(*this));
@@ -31,6 +31,12 @@ CreateInstanceDialog::CreateInstanceDialog(
 
   ui->pages->setCurrentIndex(0);
   ui->launch->setChecked(true);
+
+  if (!m_settings)
+  {
+    // first run of MO, there are no instances yet, force launch
+    ui->launch->setEnabled(false);
+  }
 
   if (m_pages[0]->skip()) {
     next();
@@ -77,7 +83,12 @@ void CreateInstanceDialog::next()
   const auto last = isOnLastPage();
 
   if (last) {
-    finish();
+    if (m_singlePage) {
+      // just close the dialog
+      accept();
+    } else {
+      finish();
+    }
   } else {
     changePage(+1);
   }
@@ -86,6 +97,15 @@ void CreateInstanceDialog::next()
 void CreateInstanceDialog::back()
 {
   changePage(-1);
+}
+
+void CreateInstanceDialog::setSinglePageImpl()
+{
+  m_singlePage = true;
+
+  if (m_pages[ui->pages->currentIndex()]->skip()) {
+    next();
+  }
 }
 
 void CreateInstanceDialog::changePage(int d)
@@ -247,8 +267,8 @@ void CreateInstanceDialog::finish()
     s.game().setName(ci.game->gameName());
     s.game().setDirectory(ci.gameLocation);
 
-    if (!ci.gameEdition.isEmpty()) {
-      s.game().setEdition(ci.gameEdition);
+    if (!ci.gameVariant.isEmpty()) {
+      s.game().setEdition(ci.gameVariant);
     }
 
     if (ci.type == Global) {
@@ -307,7 +327,8 @@ void CreateInstanceDialog::finish()
     }
 
     if (ui->launch->isChecked()) {
-      InstanceManager::instance().switchToInstance(ci.instanceName);
+      InstanceManager::instance().setCurrentInstance(ci.instanceName);
+      ExitModOrganizer(Exit::Restart);
       m_switching = true;
     } else {
       accept();
@@ -345,14 +366,40 @@ void CreateInstanceDialog::updateNavigation()
   const auto i = ui->pages->currentIndex();
   const auto last = isOnLastPage();
 
-  ui->next->setEnabled(m_pages[i]->ready());
-  ui->back->setEnabled(i > 0);
+  ui->next->setEnabled(canNext());
+  ui->back->setEnabled(canBack());
 
   if (last) {
     ui->next->setText(tr("Finish"));
   } else {
     ui->next->setText(m_originalNext);
   }
+}
+
+bool CreateInstanceDialog::canNext() const
+{
+  const auto i = ui->pages->currentIndex();
+  return m_pages[i]->ready();
+}
+
+bool CreateInstanceDialog::canBack() const
+{
+  auto i = ui->pages->currentIndex();
+
+  for (;;)
+  {
+    if (i == 0) {
+      break;
+    }
+
+    --i;
+
+    if (!m_pages[i]->skip()) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 CreateInstanceDialog::Types CreateInstanceDialog::instanceType() const
@@ -370,9 +417,9 @@ QString CreateInstanceDialog::gameLocation() const
   return getSelected(&cid::Page::selectedGameLocation);
 }
 
-QString CreateInstanceDialog::gameEdition() const
+QString CreateInstanceDialog::gameVariant() const
 {
-  return getSelected(&cid::Page::selectedGameEdition);
+  return getSelected(&cid::Page::selectedGameVariant);
 }
 
 QString CreateInstanceDialog::instanceName() const
@@ -433,7 +480,7 @@ CreateInstanceDialog::CreationInfo CreateInstanceDialog::creationInfo() const
   ci.type         = getSelected(&cid::Page::selectedInstanceType);
   ci.game         = getSelected(&cid::Page::selectedGame);
   ci.gameLocation = getSelected(&cid::Page::selectedGameLocation);
-  ci.gameEdition  = getSelected(&cid::Page::selectedGameEdition);
+  ci.gameVariant  = getSelected(&cid::Page::selectedGameVariant);
   ci.instanceName = getSelected(&cid::Page::selectedInstanceName);
   ci.paths        = getSelected(&cid::Page::selectedPaths);
   ci.dataPath     = dataPath();

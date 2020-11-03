@@ -43,7 +43,7 @@ void PlaceholderLabel::setVisible(bool b)
 
 
 Page::Page(CreateInstanceDialog& dlg)
-  : ui(dlg.getUI()), m_dlg(dlg), m_pc(dlg.pluginContainer())
+  : ui(dlg.getUI()), m_dlg(dlg), m_pc(dlg.pluginContainer()), m_skip(false)
 {
 }
 
@@ -54,13 +54,22 @@ bool Page::ready() const
 
 bool Page::skip() const
 {
-  // no-op
+  return m_skip || doSkip();
+}
+
+bool Page::doSkip() const
+{
   return false;
 }
 
 void Page::activated()
 {
   // no-op
+}
+
+void Page::setSkip(bool b)
+{
+  m_skip = b;
 }
 
 void Page::updateNavigation()
@@ -92,7 +101,7 @@ QString Page::selectedGameLocation() const
   return {};
 }
 
-QString Page::selectedGameEdition() const
+QString Page::selectedGameVariant() const
 {
   // no-op
   return {};
@@ -116,7 +125,7 @@ IntroPage::IntroPage(CreateInstanceDialog& dlg)
 {
 }
 
-bool IntroPage::skip() const
+bool IntroPage::doSkip() const
 {
   return GlobalSettings::hideCreateInstanceIntro();
 }
@@ -223,19 +232,24 @@ QString GamePage::selectedGameLocation() const
   return QDir::toNativeSeparators(m_selection->dir);
 }
 
-void GamePage::select(IPluginGame* game)
+void GamePage::select(IPluginGame* game, const QString& dir)
 {
   Game* checked = findGame(game);
 
   if (checked) {
     if (!checked->installed) {
-      const auto path = QFileDialog::getExistingDirectory(
-        &m_dlg, QObject::tr("Find game installation"));
+      if (dir.isEmpty()) {
+        const auto path = QFileDialog::getExistingDirectory(
+          &m_dlg, QObject::tr("Find game installation"));
 
-      if (path.isEmpty()) {
-        checked = nullptr;
+        if (path.isEmpty()) {
+          checked = nullptr;
+        } else {
+          checked = checkInstallation(path, checked);
+        }
       } else {
-        checked = checkInstallation(path, checked);
+       checked->dir = dir;
+       checked->installed = true;
       }
     }
   }
@@ -417,7 +431,6 @@ void GamePage::fillList()
   const bool showAll = ui->showAllGames->isChecked();
 
   clearButtons();
-  addButton(createCustomButton());
 
   for (auto& g : m_games) {
     g->button = nullptr;
@@ -434,6 +447,8 @@ void GamePage::fillList()
     createGameButton(g.get());
     addButton(g->button);
   }
+
+  addButton(createCustomButton());
 }
 
 void GamePage::clearButtons()
@@ -584,17 +599,17 @@ IPluginGame* GamePage::confirmOtherGame(
 }
 
 
-EditionsPage::EditionsPage(CreateInstanceDialog& dlg)
+VariantsPage::VariantsPage(CreateInstanceDialog& dlg)
   : Page(dlg), m_previousGame(nullptr)
 {
 }
 
-bool EditionsPage::ready() const
+bool VariantsPage::ready() const
 {
   return !m_selection.isEmpty();
 }
 
-bool EditionsPage::skip() const
+bool VariantsPage::doSkip() const
 {
   auto* g = m_dlg.game();
   if (!g) {
@@ -606,7 +621,7 @@ bool EditionsPage::skip() const
   return (variants.size() < 2);
 }
 
-void EditionsPage::activated()
+void VariantsPage::activated()
 {
   auto* g = m_dlg.game();
 
@@ -617,7 +632,7 @@ void EditionsPage::activated()
   }
 }
 
-void EditionsPage::select(const QString& variant)
+void VariantsPage::select(const QString& variant)
 {
   for (auto* b : m_buttons) {
     if (b->text() == variant) {
@@ -629,9 +644,13 @@ void EditionsPage::select(const QString& variant)
   }
 
   updateNavigation();
+
+  if (!m_selection.isEmpty()) {
+    next();
+  }
 }
 
-QString EditionsPage::selectedGameEdition() const
+QString VariantsPage::selectedGameVariant() const
 {
   auto* g = m_dlg.game();
   if (!g) {
@@ -647,7 +666,7 @@ QString EditionsPage::selectedGameEdition() const
   }
 }
 
-void EditionsPage::fillList()
+void VariantsPage::fillList()
 {
   ui->editions->clear();
   m_buttons.clear();
@@ -665,7 +684,7 @@ void EditionsPage::fillList()
 
     QObject::connect(b, &QAbstractButton::clicked, [v, this] {
       select(v);
-      });
+    });
 
     ui->editions->addButton(b, QDialogButtonBox::AcceptRole);
     m_buttons.push_back(b);
@@ -687,7 +706,7 @@ bool NamePage::ready() const
   return m_okay;
 }
 
-bool NamePage::skip() const
+bool NamePage::doSkip() const
 {
   return (m_dlg.instanceType() == CreateInstanceDialog::Portable);
 }
@@ -983,7 +1002,7 @@ bool NexusPage::ready() const
   return true;
 }
 
-bool NexusPage::skip() const
+bool NexusPage::doSkip() const
 {
   return m_skip;
 }
@@ -1047,8 +1066,8 @@ QString ConfirmationPage::makeReview() const
 
   // game
   QString name = m_dlg.game()->gameName();
-  if (!m_dlg.gameEdition().isEmpty()) {
-    name += " (" + m_dlg.gameEdition() + ")";
+  if (!m_dlg.gameVariant().isEmpty()) {
+    name += " (" + m_dlg.gameVariant() + ")";
   }
 
   lines.push_back(QObject::tr("Game: %1").arg(name));

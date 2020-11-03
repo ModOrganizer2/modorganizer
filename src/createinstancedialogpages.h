@@ -37,8 +37,10 @@ public:
   Page(CreateInstanceDialog& dlg);
 
   virtual bool ready() const;
-  virtual bool skip() const;
   virtual void activated();
+
+  void setSkip(bool b);
+  bool skip() const;
 
   void updateNavigation();
   void next();
@@ -46,7 +48,7 @@ public:
   virtual CreateInstanceDialog::Types selectedInstanceType() const;
   virtual MOBase::IPluginGame* selectedGame() const;
   virtual QString selectedGameLocation() const;
-  virtual QString selectedGameEdition() const;
+  virtual QString selectedGameVariant() const;
   virtual QString selectedInstanceName() const;
   virtual CreateInstanceDialog::Paths selectedPaths() const;
 
@@ -54,6 +56,9 @@ protected:
   Ui::CreateInstanceDialog* ui;
   CreateInstanceDialog& m_dlg;
   const PluginContainer& m_pc;
+  bool m_skip;
+
+  virtual bool doSkip() const;
 };
 
 
@@ -62,7 +67,8 @@ class IntroPage : public Page
 public:
   IntroPage(CreateInstanceDialog& dlg);
 
-  bool skip() const override;
+protected:
+  bool doSkip() const override;
 };
 
 
@@ -91,7 +97,7 @@ public:
   MOBase::IPluginGame* selectedGame() const override;
   QString selectedGameLocation() const override;
 
-  void select(MOBase::IPluginGame* game);
+  void select(MOBase::IPluginGame* game, const QString& dir={});
   void selectCustom();
 
   void warnUnrecognized(const QString& path);
@@ -133,17 +139,19 @@ private:
 };
 
 
-class EditionsPage : public Page
+class VariantsPage : public Page
 {
 public:
-  EditionsPage(CreateInstanceDialog& dlg);
+  VariantsPage(CreateInstanceDialog& dlg);
 
   bool ready() const override;
-  bool skip() const override;
   void activated() override;
-  QString selectedGameEdition() const override;
+  QString selectedGameVariant() const override;
 
   void select(const QString& variant);
+
+protected:
+  bool doSkip() const override;
 
 private:
   MOBase::IPluginGame* m_previousGame;
@@ -160,9 +168,11 @@ public:
   NamePage(CreateInstanceDialog& dlg);
 
   bool ready() const override;
-  bool skip() const override;
   void activated() override;
   QString selectedInstanceName() const override;
+
+protected:
+  bool doSkip() const override;
 
 private:
   mutable PlaceholderLabel m_label, m_exists, m_invalid;
@@ -212,8 +222,10 @@ public:
   ~NexusPage();
 
   bool ready() const override;
-  bool skip() const override;
   void activated() override;
+
+protected:
+  bool doSkip() const override;
 
 private:
   std::unique_ptr<NexusConnectionUI> m_connectionUI;

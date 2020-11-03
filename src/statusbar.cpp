@@ -153,10 +153,9 @@ void StatusBar::updateNormalMessage(OrganizerCore& core)
     game = tr("Unknown game");
   }
 
-  QString instance = InstanceManager::instance().currentInstance();
-  if (instance.isEmpty()) {
-    instance = tr("Portable");
-  }
+  QString instance = "?";
+  if (auto i=InstanceManager::instance().currentInstance())
+    instance = i->name();
 
   QString profile = core.profileName();
 

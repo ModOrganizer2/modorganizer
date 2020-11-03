@@ -588,11 +588,14 @@ ProcessRunner& ProcessRunner::setFromShortcut(const MOShortcut& shortcut)
 {
   const auto currentInstance = InstanceManager::instance().currentInstance();
 
-  if (shortcut.hasInstance() && shortcut.instance() != currentInstance) {
-    throw std::runtime_error(
-      QString("Refusing to run executable from different instance %1:%2")
-      .arg(shortcut.instance(),shortcut.executable())
-      .toLocal8Bit().constData());
+  if (currentInstance)
+  {
+    if (shortcut.hasInstance() && shortcut.instance() != currentInstance->name()) {
+      throw std::runtime_error(
+        QString("Refusing to run executable from different instance %1:%2")
+        .arg(shortcut.instance(),shortcut.executable())
+        .toLocal8Bit().constData());
+    }
   }
 
   const Executable& exe = m_core.executablesList()->get(shortcut.executable());
