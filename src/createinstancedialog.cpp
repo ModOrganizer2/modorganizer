@@ -99,13 +99,18 @@ void CreateInstanceDialog::back()
   changePage(-1);
 }
 
-void CreateInstanceDialog::setSinglePageImpl()
+void CreateInstanceDialog::setSinglePageImpl(const QString& instanceName)
 {
   m_singlePage = true;
 
   if (m_pages[ui->pages->currentIndex()]->skip()) {
     next();
   }
+
+  // don't show the "create a new instance" title for single pages, this is
+  // when the instance already exists but some info is missing
+  ui->title->setText(tr("Setting up instance %1").arg(instanceName));
+  setWindowTitle(tr("Setting up an instance %1").arg(instanceName));
 }
 
 void CreateInstanceDialog::changePage(int d)

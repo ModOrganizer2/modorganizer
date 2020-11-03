@@ -344,7 +344,7 @@ SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
             .arg(instance.name()).arg(instance.iniPath()));
 
       CreateInstanceDialog dlg(pc, nullptr);
-      dlg.setSinglePage<cid::GamePage>();
+      dlg.setSinglePage<cid::GamePage>(instance.name());
 
       dlg.show();
       dlg.activateWindow();
@@ -356,7 +356,7 @@ SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
 
       instance.setGame(
         dlg.creationInfo().game->gameName(),
-        dlg.creationInfo().game->gameDirectory().absolutePath());
+        dlg.creationInfo().gameLocation);
 
       return SetupInstanceResults::TryAgain;
     }
@@ -384,7 +384,7 @@ SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
             .arg(instance.gameName()));
 
       CreateInstanceDialog dlg(pc, nullptr);
-      dlg.setSinglePage<cid::GamePage>();
+      dlg.setSinglePage<cid::GamePage>(instance.name());
 
       dlg.show();
       dlg.activateWindow();
@@ -396,7 +396,7 @@ SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
 
       instance.setGame(
         dlg.creationInfo().game->gameName(),
-        dlg.creationInfo().game->gameDirectory().absolutePath());
+        dlg.creationInfo().gameLocation);
 
       return SetupInstanceResults::TryAgain;
     }
@@ -408,7 +408,7 @@ SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
       dlg.getPage<cid::GamePage>()->select(
         instance.gamePlugin(), instance.gameDirectory());
 
-      dlg.setSinglePage<cid::VariantsPage>();
+      dlg.setSinglePage<cid::VariantsPage>(instance.name());
 
       dlg.show();
       dlg.activateWindow();

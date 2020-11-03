@@ -58,7 +58,7 @@ public:
   Settings* settings();
 
   template <class Page>
-  void setSinglePage()
+  void setSinglePage(const QString& instanceName)
   {
     for (auto&& p : m_pages) {
       if (auto* tp=dynamic_cast<Page*>(p.get())) {
@@ -68,7 +68,7 @@ public:
       }
     }
 
-    setSinglePageImpl();
+    setSinglePageImpl(instanceName);
   }
 
   template <class Page>
@@ -113,7 +113,7 @@ private:
   bool m_singlePage;
 
 
-  void setSinglePageImpl();
+  void setSinglePageImpl(const QString& instanceName);
 
   template <class T>
   T getSelected(T (cid::Page::*mf)() const) const
