@@ -76,6 +76,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "statusbar.h"
 #include "filterlist.h"
 #include "datatab.h"
+#include "instancemanagerdialog.h"
 #include <utility.h>
 #include <dataarchives.h>
 #include <bsainvalidation.h>
@@ -291,7 +292,7 @@ MainWindow::MainWindow(Settings &settings
   ui->statusBar->setup(ui, settings);
 
   {
-    auto* ni = &NexusInterface::instance();
+    auto& ni = NexusInterface::instance();
 
     // there are two ways to get here:
     //  1) the user just started MO, and
@@ -311,8 +312,8 @@ MainWindow::MainWindow(Settings &settings
     //
     // in the rare case where the user restarts MO through the settings, this
     // will correctly pick up the previous values
-    updateWindowTitle(ni->getAPIUserAccount());
-    ui->statusBar->setAPI(ni->getAPIStats(), ni->getAPIUserAccount());
+    updateWindowTitle(ni.getAPIUserAccount());
+    ui->statusBar->setAPI(ni.getAPIStats(), ni.getAPIUserAccount());
   }
 
   m_Filters.reset(new FilterList(ui, &m_OrganizerCore, m_CategoryFactory));
@@ -1961,8 +1962,8 @@ void MainWindow::refreshSaveList()
     it.next();
     files.append(it.fileInfo());
   }
-  std::sort(files.begin(), files.end(), [](auto const& lhs, auto const& rhs) { 
-    return lhs.fileTime(QFileDevice::FileModificationTime) < rhs.fileTime(QFileDevice::FileModificationTime); 
+  std::sort(files.begin(), files.end(), [](auto const& lhs, auto const& rhs) {
+    return lhs.fileTime(QFileDevice::FileModificationTime) < rhs.fileTime(QFileDevice::FileModificationTime);
   });
 
   for (const QFileInfo &file : files) {
@@ -5569,7 +5570,7 @@ void MainWindow::nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVa
 void MainWindow::finishUpdateInfo()
 {
   QFutureWatcher<std::pair<QString, std::set<QSharedPointer<ModInfo>>>> *watcher = static_cast<QFutureWatcher<std::pair<QString, std::set<QSharedPointer<ModInfo>>>> *>(sender());
-  
+
   QString game = watcher->result().first;
   auto finalMods = watcher->result().second;
 
@@ -5974,24 +5975,10 @@ void MainWindow::on_actionNotifications_triggered()
   scheduleCheckForProblems();
 }
 
-void openInstanceManager(PluginContainer& pc, QWidget* parent);
-
 void MainWindow::on_actionChange_Game_triggered()
 {
-  openInstanceManager(m_PluginContainer, this);
-
-  //if (m_OrganizerCore.settings().interface().showChangeGameConfirmation()) {
-  //  const auto r = QMessageBox::question(
-  //    this, tr("Are you sure?"), tr("This will restart MO, continue?"),
-  //    QMessageBox::Yes | QMessageBox::Cancel);
-  //
-  //  if (r != QMessageBox::Yes) {
-  //    return;
-  //  }
-  //}
-  //
-  //InstanceManager::instance().clearCurrentInstance();
-  //ExitModOrganizer(Exit::Restart);
+  InstanceManagerDialog dlg(m_PluginContainer, this);
+  dlg.exec();
 }
 
 void MainWindow::setCategoryListVisible(bool visible)

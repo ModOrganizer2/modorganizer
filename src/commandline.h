@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef MODORGANIZER_COMMANDLINE_INCLUDED
+#define MODORGANIZER_COMMANDLINE_INCLUDED
 #include "moshortcut.h"
 #include <vector>
 #include <memory>
@@ -149,3 +149,5 @@ private:
 };
 
 } // namespace
+
+#endif  // MODORGANIZER_COMMANDLINE_INCLUDED

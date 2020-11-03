@@ -650,13 +650,6 @@ int doOneRun(
   // resets things when MO is "restarted"
   resetForRestart(cl);
 
-  if (cl.instance())
-    InstanceManager::instance().overrideInstance(*cl.instance());
-
-  if (cl.profile()) {
-    InstanceManager::instance().overrideProfile(*cl.profile());
-  }
-
   auto currentInstance = InstanceManager::instance().currentInstance();
 
   if (!currentInstance)
@@ -706,6 +699,13 @@ int main(int argc, char *argv[])
   }
 
   tt.stop();
+
+  if (cl.instance())
+    InstanceManager::instance().overrideInstance(*cl.instance());
+
+  if (cl.profile()) {
+    InstanceManager::instance().overrideProfile(*cl.profile());
+  }
 
   for (;;)
   {

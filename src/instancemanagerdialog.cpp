@@ -13,15 +13,6 @@
 
 using namespace MOBase;
 
-void openInstanceManager(PluginContainer& pc, QWidget* parent)
-{
-  //CreateInstanceDialog dlg(pc, parent);
-  //dlg.exec();
-  InstanceManagerDialog dlg(pc, parent);
-  dlg.exec();
-}
-
-
 class InstanceInfo
 {
 public:

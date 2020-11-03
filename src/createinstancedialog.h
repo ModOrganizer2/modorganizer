@@ -47,7 +47,7 @@ public:
   };
 
 
-  explicit CreateInstanceDialog(
+  CreateInstanceDialog(
     const PluginContainer& pc, Settings* s, QWidget *parent = nullptr);
 
   ~CreateInstanceDialog();
