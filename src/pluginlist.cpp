@@ -153,8 +153,8 @@ void PluginList::highlightPlugins(const QItemSelectionModel *selection, const MO
         for (auto plugin : plugins) {
           MOShared::FileEntryPtr file = directoryEntry.findFile(plugin.toStdWString());
           if (file && file->getOrigin() != origin.getID()) {
-            const std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = file->getAlternatives();
-            if (std::find_if(alternatives.begin(), alternatives.end(), [&](const std::pair<int, std::pair<std::wstring, int>>& element) { return element.first == origin.getID(); }) == alternatives.end())
+            const auto alternatives = file->getAlternatives();
+            if (std::find_if(alternatives.begin(), alternatives.end(), [&](const FileAlternative& element) { return element.originID() == origin.getID(); }) == alternatives.end())
               continue;
           }
           std::map<QString, int>::iterator iter = m_ESPsByName.find(plugin.toLower());

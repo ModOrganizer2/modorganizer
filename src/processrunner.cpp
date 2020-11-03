@@ -153,7 +153,7 @@ InterestingProcess findInterestingProcessInTrees(const env::Process& root)
   }
 
   auto isHidden = [&](auto&& p) {
-    for (auto h : hiddenList) {
+    for (auto& h : hiddenList) {
       if (p.name().contains(h, Qt::CaseInsensitive)) {
         return true;
       }

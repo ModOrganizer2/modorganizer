@@ -591,16 +591,16 @@ bool FileTree::showShellMenu(QPoint pos)
       }
 
       for (auto&& alt : alts) {
-        auto itor = menus.find(alt.first);
+        auto itor = menus.find(alt.originID());
         if (itor == menus.end()) {
-          itor = menus.emplace(alt.first, mw).first;
+          itor = menus.emplace(alt.originID(), mw).first;
         }
 
-        const auto fullPath = file->getFullPath(alt.first);
+        const auto fullPath = file->getFullPath(alt.originID());
         if (fullPath.empty()) {
           log::error(
             "file {} not found in origin {}",
-            item->dataRelativeFilePath(), alt.first);
+            item->dataRelativeFilePath(), alt.originID());
 
           continue;
         }
