@@ -671,6 +671,7 @@ void InstanceManagerDialog::deleteInstance()
   }
 
   dlg.addContent(list);
+  dlg.setWidth(600);
 
 
   const auto r = dlg.exec();
