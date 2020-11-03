@@ -277,9 +277,19 @@ void openInstanceManager(PluginContainer& pc, QWidget* parent);
 std::optional<Instance> selectInstance()
 {
   NexusInterface ni(nullptr);
-
   PluginContainer pc(nullptr);
   pc.loadPlugins();
+
+  if (InstanceManager::instance().instancePaths().empty()) {
+    // no instances configured
+    CreateInstanceDialog dlg(pc, nullptr);
+    if (dlg.exec() != QDialog::Accepted) {
+      return {};
+    }
+
+    return InstanceManager::instance().currentInstance();
+  }
+
 
   InstanceManagerDialog dlg(pc);
   dlg.setRestartOnSelect(false);

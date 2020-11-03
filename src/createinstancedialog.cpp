@@ -333,11 +333,17 @@ void CreateInstanceDialog::finish()
 
     if (ui->launch->isChecked()) {
       InstanceManager::instance().setCurrentInstance(ci.instanceName);
-      ExitModOrganizer(Exit::Restart);
+
+      if (m_settings) {
+        // don't restart without settings, it happens on startup when there are
+        // no instances
+        ExitModOrganizer(Exit::Restart);
+      }
+
       m_switching = true;
-    } else {
-      accept();
     }
+
+    accept();
   }
   catch(Failed&)
   {
