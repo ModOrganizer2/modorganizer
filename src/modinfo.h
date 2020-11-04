@@ -368,6 +368,17 @@ public: // IModInterface implementations / Re-declaration
    */
   virtual MOBase::EndorsedState endorsedState() const override { return MOBase::EndorsedState::ENDORSED_NEVER; }
 
+  /**
+   * @brief Retrieve a file tree corresponding to the underlying disk content
+   *     of this mod.
+   *
+   * The file tree should not be cached since it is already cached and updated when
+   * required.
+   *
+   * @return a file tree representing the content of this mod.
+   */
+  virtual std::shared_ptr<const MOBase::IFileTree> fileTree() const = 0;
+
 public: // Mutable operations:
 
   /**

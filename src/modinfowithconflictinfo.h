@@ -34,7 +34,18 @@ public:
    *
    * @return true if the content is there, false otherwise.
    */
-  virtual bool hasContent(int content) const override;
+  virtual bool hasContent(int content) const override;  /**
+   * @brief Retrieve a file tree corresponding to the underlying disk content
+   *     of this mod.
+   *
+   * The file tree should not be cached since it is already cached and updated when
+   * required.
+   *
+   * @return a file tree representing the content of this mod.
+   */
+  std::shared_ptr<const MOBase::IFileTree> fileTree() const override;
+
+public:
 
   /**
    * @brief clear all caches held for this mod
@@ -77,17 +88,6 @@ protected:
    * @return the contents for this mod.
    **/
   virtual std::set<int> doGetContents() const { return {}; }
-
-  /**
-   * @brief Retrieve a file tree corresponding to the underlying disk content
-   *     of this mod.
-   *
-   * The file tree should not be cached since it is already cached and updated when
-   * required.
-   *
-   * @return a file tree representing the content of this mod.
-   */
-  std::shared_ptr<const MOBase::IFileTree> contentFileTree() const;
 
   ModInfoWithConflictInfo(
     PluginContainer* pluginContainer,
