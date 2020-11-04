@@ -54,11 +54,11 @@ public:
 
   OriginID getOrigin(bool &archive) const
   {
-    archive = (m_Archive.first.length() != 0);
+    archive = m_Archive.isValid();
     return m_Origin;
   }
 
-  const std::pair<std::wstring, int> &getArchive() const
+  const DataArchiveOrigin &getArchive() const
   {
     return m_Archive;
   }
@@ -107,7 +107,7 @@ private:
   FileIndex m_Index;
   std::wstring m_Name;
   OriginID m_Origin;
-  std::pair<std::wstring, int> m_Archive;
+  DataArchiveOrigin m_Archive;
   AlternativesVector m_Alternatives;
   DirectoryEntry *m_Parent;
   mutable FILETIME m_FileTime;

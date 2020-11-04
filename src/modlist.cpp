@@ -854,25 +854,15 @@ void ModList::highlightMods(const QItemSelectionModel *selection, const MOShared
       ModInfo::getByIndex(i)->setPluginSelected(false);
   }
   for (QModelIndex idx : selection->selectedRows(PluginList::COL_NAME)) {
-    QString modName = idx.data().toString();
+    QString pluginName = idx.data().toString();
 
-    const MOShared::FileEntryPtr fileEntry = directoryEntry.findFile(modName.toStdWString());
+    const MOShared::FileEntryPtr fileEntry = directoryEntry.findFile(pluginName.toStdWString());
     if (fileEntry.get() != nullptr) {
-      bool archive = false;
-      std::vector<std::pair<int, std::pair<std::wstring, int>>> origins;
-      {
-        std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = fileEntry->getAlternatives();
-        origins.insert(origins.end(), std::pair<int, std::pair<std::wstring, int>>(fileEntry->getOrigin(archive), fileEntry->getArchive()));
-      }
-      for (auto originInfo : origins) {
-        MOShared::FilesOrigin& origin = directoryEntry.getOriginByID(originInfo.first);
-        for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
-          if (ModInfo::getByIndex(i)->internalName() == QString::fromStdWString(origin.getName())) {
-            ModInfo::getByIndex(i)->setPluginSelected(true);
-            break;
-          }
-        }
-      }
+
+      QString originName = QString::fromStdWString(directoryEntry.getOriginByID(fileEntry->getOrigin()).getName());
+
+      auto modInfo = ModInfo::getByName(originName);
+      modInfo->setPluginSelected(true);
     }
   }
   notifyChange(0, rowCount() - 1);

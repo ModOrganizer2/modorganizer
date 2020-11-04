@@ -520,7 +520,7 @@ std::vector<QAction*> ConflictsTab::createGotoActions(const ConflictItem* item)
 
   // add all alternatives
   for (const auto& alt : file->getAlternatives()) {
-    const auto& o = ds.getOriginByID(alt.first);
+    const auto& o = ds.getOriginByID(alt.originID());
     if (o.getID() != origin()->getID()) {
       mods.push_back(ToQString(o.getName()));
     }
@@ -683,7 +683,7 @@ bool GeneralConflictsTab::update()
         auto currId = m_tab->origin()->getID();
         auto currModAlt = std::find_if(alternatives.begin(), alternatives.end(),
           [&currId](auto const& alt) {
-            return currId == alt.first;
+            return currId == alt.originID();
           });
 
         if (currModAlt == alternatives.end()) {
@@ -691,7 +691,7 @@ bool GeneralConflictsTab::update()
           continue;
         }
 
-        bool currModFileArchive = currModAlt->second.first.size() > 0;
+        bool currModFileArchive = currModAlt->isFromArchive();
 
         m_overwrittenModel->add(createOverwrittenItem(
           file->getIndex(), fileOrigin, archive,
@@ -731,10 +731,10 @@ ConflictItem GeneralConflictsTab::createOverwriteItem(
       altString += L", ";
     }
 
-    altString += ds.getOriginByID(alt.first).getName();
+    altString += ds.getOriginByID(alt.originID()).getName();
   }
 
-  auto origin = ToQString(ds.getOriginByID(alternatives.back().first).getName());
+  auto origin = ToQString(ds.getOriginByID(alternatives.back().originID()).getName());
 
   return ConflictItem(
     ToQString(altString), std::move(relativeName), QString(), index,
@@ -1005,7 +1005,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
       if (showAllAlts) {
         for (const auto& alt : alternatives)
         {
-          const auto& altOrigin = ds.getOriginByID(alt.first);
+          const auto& altOrigin = ds.getOriginByID(alt.originID());
           if (!before.empty()) {
             before += L", ";
           }
@@ -1015,7 +1015,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
       }
       else {
         // only add nearest, which is the last element of alternatives
-        const auto& altOrigin = ds.getOriginByID(alternatives.back().first);
+        const auto& altOrigin = ds.getOriginByID(alternatives.back().originID());
 
         before += altOrigin.getName();
       }
@@ -1028,7 +1028,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
 
       auto currModIter = std::find_if(alternatives.begin(), alternatives.end(),
         [&currOrgId](auto const& alt) {
-          return currOrgId == alt.first;
+          return currOrgId == alt.originID();
       });
 
       if (currModIter == alternatives.end()) {
@@ -1036,7 +1036,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
         return {};
       }
 
-      isCurrOrigArchive = currModIter->second.first.size() > 0;
+      isCurrOrigArchive = currModIter->isFromArchive();
       
       if (showAllAlts) {
         // fills 'before' and 'after' with all the alternatives that come
@@ -1045,7 +1045,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
         
         for (auto iter = alternatives.begin(); iter != alternatives.end(); iter++) {
           
-          const auto& altOrigin = ds.getOriginByID(iter->first);
+          const auto& altOrigin = ds.getOriginByID(iter->originID());
 
           if (iter < currModIter) {
             // mod comes before current
@@ -1080,13 +1080,13 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
 
         // before
         if (currModIter > alternatives.begin()) {
-          auto previousOrigId = (currModIter-1)->first;
+          auto previousOrigId = (currModIter-1)->originID();
           before += ds.getOriginByID(previousOrigId).getName();
         }
 
         // after
         if (currModIter < (alternatives.end() - 1)) {
-          auto followingOrigId = (currModIter + 1)->first;
+          auto followingOrigId = (currModIter + 1)->originID();
           after += ds.getOriginByID(followingOrigId).getName();
         }
         else {
