@@ -227,15 +227,15 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest
         DESTINATION bin/dlls
         RENAME dlls.manifest)
 
-install(FILES ${qm_files} DESTINATION bin/dlls/translations)
+install(FILES ${qm_files} DESTINATION bin/resources/translations)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/stylesheets
 		DESTINATION bin)
 		
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tutorials
-		DESTINATION bin/dlls)
+		DESTINATION bin/resources)
 
 deploy_qt(BINARIES ModOrganizer.exe uibase.dll plugins/bsa_packer.dll)
 
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../qdds.dll DESTINATION bin/dlls/QtPlugins/imageformats)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/markdown.html DESTINATION bin/dlls/resources)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../qdds.dll DESTINATION bin/dlls/imageformats)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/markdown.html DESTINATION bin/resources)

@@ -1203,7 +1203,7 @@ void MainWindow::createHelpMenu()
 
   ActionList tutorials;
 
-  QDirIterator dirIter(QApplication::applicationDirPath() + "/dlls/tutorials", QStringList("*.js"), QDir::Files);
+  QDirIterator dirIter(QApplication::applicationDirPath() + "/resources/tutorials", QStringList("*.js"), QDir::Files);
   while (dirIter.hasNext()) {
     dirIter.next();
     QString fileName = dirIter.fileName();
@@ -1315,7 +1315,7 @@ bool MainWindow::addProfile()
 
 void MainWindow::hookUpWindowTutorials()
 {
-  QDirIterator dirIter(QApplication::applicationDirPath() + "/dlls/tutorials", QStringList("*.js"), QDir::Files);
+  QDirIterator dirIter(QApplication::applicationDirPath() + "/resources/tutorials", QStringList("*.js"), QDir::Files);
   while (dirIter.hasNext()) {
     dirIter.next();
     QString fileName = dirIter.fileName();
@@ -5185,7 +5185,7 @@ void MainWindow::installTranslator(const QString &name)
 {
   QTranslator *translator = new QTranslator(this);
   QString fileName = name + "_" + m_CurrentLanguage;
-  if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
+  if (!translator->load(fileName, qApp->applicationDirPath() + "/resources/translations")) {
     if (m_CurrentLanguage.contains(QRegularExpression("^.*_(EN|en)(-.*)?$"))) {
       log::debug("localization file %s not found", fileName);
     } // we don't actually expect localization files for English (en, en-us, en-uk, and any variation thereof)

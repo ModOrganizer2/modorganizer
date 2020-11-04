@@ -693,7 +693,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     }
 
     log::debug("initializing tutorials");
-    QString tutorialsPath = QCoreApplication::applicationDirPath() + "/dlls/tutorials/";
+    QString tutorialsPath = QCoreApplication::applicationDirPath() + "/resources/tutorials/";
     TutorialManager::init(tutorialsPath, &organizer);
 
     if (!application.setStyleFile(settings.interface().styleName().value_or(""))) {
