@@ -462,7 +462,11 @@ void InstanceManagerDialog::openSelectedInstance()
     return;
   }
 
-  InstanceManager::instance().setCurrentInstance(m_instances[i]->name());
+  if (m_instances[i]->isPortable()) {
+    InstanceManager::instance().setCurrentInstance("");
+  } else {
+    InstanceManager::instance().setCurrentInstance(m_instances[i]->name());
+  }
 
   if (m_restartOnSelect) {
     ExitModOrganizer(Exit::Restart);

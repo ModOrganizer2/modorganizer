@@ -169,23 +169,19 @@ QObject* PluginContainer::as_qobject(MOBase::IPlugin* plugin) const
   return *it;
 }
 
-bool PluginContainer::verifyPlugin(IPlugin *plugin)
+bool PluginContainer::initPlugin(IPlugin *plugin)
 {
   if (plugin == nullptr) {
     return false;
   }
 
-  IOrganizer* proxy = nullptr;
-
   if (m_Organizer) {
-    proxy = new OrganizerProxy(m_Organizer, this, plugin);
-  } else {
-    proxy = new DummyOrganizerProxy(plugin);
-  }
+    auto* proxy = new OrganizerProxy(m_Organizer, this, plugin);
 
-  if (!plugin->init(proxy)) {
-    log::warn("plugin failed to initialize");
-    return false;
+    if (!plugin->init(proxy)) {
+      log::warn("plugin failed to initialize");
+      return false;
+    }
   }
 
   return true;
@@ -196,7 +192,6 @@ void PluginContainer::registerGame(IPluginGame *game)
 {
   m_SupportedGames.insert({ game->gameName(), game });
 }
-
 
 bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
 {
@@ -210,10 +205,14 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
       log::debug("not an IPlugin");
       return false;
     }
+
     plugin->setProperty("filename", fileName);
+
     if (m_Organizer) {
       m_Organizer->settings().plugins().registerPlugin(pluginObj);
     }
+
+    pluginObj->registered();
   }
 
   { // diagnosis plugin
@@ -233,14 +232,14 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
   }
   { // mod page plugin
     IPluginModPage *modPage = qobject_cast<IPluginModPage*>(plugin);
-    if (verifyPlugin(modPage)) {
+    if (initPlugin(modPage)) {
       bf::at_key<IPluginModPage>(m_Plugins).push_back(modPage);
       return true;
     }
   }
   { // game plugin
     IPluginGame *game = qobject_cast<IPluginGame*>(plugin);
-    if (verifyPlugin(game)) {
+    if (initPlugin(game)) {
       bf::at_key<IPluginGame>(m_Plugins).push_back(game);
       registerGame(game);
       return true;
@@ -248,14 +247,14 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
   }
   { // tool plugins
     IPluginTool *tool = qobject_cast<IPluginTool*>(plugin);
-    if (verifyPlugin(tool)) {
+    if (initPlugin(tool)) {
       bf::at_key<IPluginTool>(m_Plugins).push_back(tool);
       return true;
     }
   }
   { // installer plugins
     IPluginInstaller *installer = qobject_cast<IPluginInstaller*>(plugin);
-    if (verifyPlugin(installer)) {
+    if (initPlugin(installer)) {
       bf::at_key<IPluginInstaller>(m_Plugins).push_back(installer);
       if (m_Organizer) {
         m_Organizer->installationManager()->registerInstaller(installer);
@@ -265,7 +264,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
   }
   { // preview plugins
     IPluginPreview *preview = qobject_cast<IPluginPreview*>(plugin);
-    if (verifyPlugin(preview)) {
+    if (initPlugin(preview)) {
       bf::at_key<IPluginPreview>(m_Plugins).push_back(preview);
       m_PreviewGenerator.registerPlugin(preview);
       return true;
@@ -273,7 +272,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
   }
   { // proxy plugins
     IPluginProxy *proxy = qobject_cast<IPluginProxy*>(plugin);
-    if (verifyPlugin(proxy)) {
+    if (initPlugin(proxy)) {
       bf::at_key<IPluginProxy>(m_Plugins).push_back(proxy);
       QStringList pluginNames = proxy->pluginList(
             QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
@@ -305,7 +304,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
   { // dummy plugins
     // only initialize these, no processing otherwise
     IPlugin *dummy = qobject_cast<IPlugin*>(plugin);
-    if (verifyPlugin(dummy)) {
+    if (initPlugin(dummy)) {
       bf::at_key<IPlugin>(m_Plugins).push_back(dummy);
       return true;
     }

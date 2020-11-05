@@ -334,13 +334,7 @@ std::optional<Instance> InstanceManager::currentInstance() const
     }
   }
 
-  QString path = instancePath(name);
-  if (!QFileInfo::exists(path)) {
-    // the previously used instance doesn't exist anymore
-    return {};
-  }
-
-  return Instance(QDir(path), false, profile);
+  return Instance(QDir(instancePath(name)), false, profile);
 }
 
 void InstanceManager::clearCurrentInstance()

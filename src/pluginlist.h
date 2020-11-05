@@ -410,25 +410,6 @@ private:
   bool hasInfo(const ESPInfo& esp, const AdditionalInfo* info) const;
 };
 
-
-class DummyPluginList : public MOBase::IPluginList
-{
-public:
-   QStringList pluginNames() const override;
-   PluginStates state(const QString &name) const override;
-   void setState(const QString &name, PluginStates state) override;
-   int priority(const QString &name) const override;
-   int loadOrder(const QString &name) const override;
-   void setLoadOrder(const QStringList &pluginList) override;
-   bool setPriority(const QString& name, int newPriority) override;
-   bool isMaster(const QString &name) const override;
-   QStringList masters(const QString &name) const override;
-   QString origin(const QString &name) const override;
-   bool onRefreshed(const std::function<void()> &callback) override;
-   bool onPluginMoved(const std::function<void (const QString &, int, int)> &func) override;
-   bool onPluginStateChanged(const std::function<void (const std::map<QString, PluginStates>&)> &func) override;
-};
-
 #pragma warning(pop)
 
 #endif // PLUGINLIST_H

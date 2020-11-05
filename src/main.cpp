@@ -272,22 +272,22 @@ std::optional<int> handleCommandLine(
   return {};
 }
 
-void openInstanceManager(PluginContainer& pc, QWidget* parent);
-
 std::optional<Instance> selectInstance()
 {
+  auto& m = InstanceManager::instance();
+
   NexusInterface ni(nullptr);
   PluginContainer pc(nullptr);
   pc.loadPlugins();
 
-  if (InstanceManager::instance().instancePaths().empty()) {
+  if (m.instancePaths().empty() && !m.portableInstanceExists()) {
     // no instances configured
     CreateInstanceDialog dlg(pc, nullptr);
     if (dlg.exec() != QDialog::Accepted) {
       return {};
     }
 
-    return InstanceManager::instance().currentInstance();
+    return m.currentInstance();
   }
 
 
@@ -302,7 +302,7 @@ std::optional<Instance> selectInstance()
     return {};
   }
 
-  return InstanceManager::instance().currentInstance();
+  return m.currentInstance();
 }
 
 enum class SetupInstanceResults
@@ -650,13 +650,36 @@ int doOneRun(
   // resets things when MO is "restarted"
   resetForRestart(cl);
 
-  auto currentInstance = InstanceManager::instance().currentInstance();
+  auto& m = InstanceManager::instance();
+  auto currentInstance = m.currentInstance();
 
   if (!currentInstance)
   {
     currentInstance = selectInstance();
-    if (!currentInstance)
+    if (!currentInstance) {
       return 1;
+    }
+  }
+  else
+  {
+    if (!currentInstance->directory().exists()) {
+      // the previously used instance doesn't exist anymore
+
+      if (m.instanceNames().empty() && !m.portableInstanceExists()) {
+        criticalOnTop(QObject::tr(
+          "Instance at '%1' not found. You must create a new instance")
+            .arg(currentInstance->directory().absolutePath()));
+      } else {
+        criticalOnTop(QObject::tr(
+          "Instance at '%1' not found. Select another instance.")
+            .arg(currentInstance->directory().absolutePath()));
+      }
+
+      currentInstance = selectInstance();
+      if (!currentInstance) {
+        return 1;
+      }
+    }
   }
 
   const QString dataPath = currentInstance->directory().path();
