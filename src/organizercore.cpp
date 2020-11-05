@@ -758,7 +758,7 @@ void OrganizerCore::setPersistent(const QString &pluginName, const QString &key,
   m_Settings.plugins().setPersistent(pluginName, key, value, sync);
 }
 
-QString OrganizerCore::pluginDataPath() const
+QString OrganizerCore::pluginDataPath()
 {
   return qApp->applicationDirPath() + "/" + ToQString(AppConfig::pluginPath())
          + "/data";

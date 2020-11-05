@@ -169,9 +169,9 @@ private:
 
 
   bool initPlugin(MOBase::IPlugin *plugin);
+  bool initProxyPlugin(MOBase::IPlugin *plugin);
   void registerGame(MOBase::IPluginGame *game);
   bool registerPlugin(QObject *pluginObj, const QString &fileName);
-  bool unregisterPlugin(QObject *pluginObj, const QString &fileName);
 
   OrganizerCore *m_Organizer;
 
