@@ -15,6 +15,8 @@ namespace cid
 using namespace MOBase;
 using MOBase::TaskDialog;
 
+// returns %base_dir%/dir
+//
 QString makeDefaultPath(const std::wstring& dir)
 {
   return QDir::toNativeSeparators(PathSettings::makeDefaultPath(
@@ -69,6 +71,7 @@ bool Page::ready() const
 
 bool Page::skip() const
 {
+  // setSkip() overrides this if it's true
   return m_skip || doSkip();
 }
 
@@ -149,6 +152,7 @@ bool IntroPage::doSkip() const
 TypePage::TypePage(CreateInstanceDialog& dlg)
   : Page(dlg), m_type(CreateInstanceDialog::NoType)
 {
+  // replace placeholders with actual paths
   ui->createGlobal->setDescription(
     ui->createGlobal->description()
       .arg(InstanceManager::singleton().globalInstancesRootPath()));
@@ -157,6 +161,7 @@ TypePage::TypePage(CreateInstanceDialog& dlg)
     ui->createPortable->description()
       .arg(InstanceManager::singleton().portablePath()));
 
+  // disable portable button if it already exists
   if (InstanceManager::singleton().portableInstanceExists()) {
     ui->createPortable->setEnabled(false);
     ui->portableExistsLabel->setVisible(true);
@@ -254,34 +259,47 @@ void GamePage::select(IPluginGame* game, const QString& dir)
   if (checked) {
     if (!checked->installed) {
       if (dir.isEmpty()) {
+        // the selected game has no installation directory and none was given,
+        // ask the user
+
         const auto path = QFileDialog::getExistingDirectory(
           &m_dlg, QObject::tr("Find game installation"));
 
         if (path.isEmpty()) {
+          // cancelled
           checked = nullptr;
         } else {
+          // check whether a plugin supports the given directory; this can
+          // return the same plugin, a different one, or null
           checked = checkInstallation(path, checked);
 
           if (checked) {
-            // remember this path
+            // plugin was found, remember this path
             checked->dir = path;
             checked->installed = true;
           }
         }
       } else {
+        // the selected game didn't detect anything, but a directory was given,
+        // so use that
        checked->dir = dir;
        checked->installed = true;
       }
     }
   }
 
-  m_selection = checked;
 
+  // select this plugin, if any
+  m_selection = checked;
   selectButton(checked);
+
+  // update the button associated with it in case the paths have changed
   updateButton(checked);
+
   updateNavigation();
 
   if (checked) {
+    // automatically move to the next page when a game is selected
     next();
   }
 }
@@ -297,22 +315,33 @@ void GamePage::selectCustom()
     return;
   }
 
+  // try to find a plugin that likes this directory
   for (auto& g : m_games) {
     if (g->game->looksValid(path)) {
+      // found one
       g->dir = path;
       g->installed = true;
+
+      // select it
       select(g->game);
+
+      // update the button because the path has changed
       updateButton(g.get());
+
       return;
     }
   }
 
+  // warning to the user
   warnUnrecognized(path);
+
+  // reselect the previous button
   selectButton(m_selection);
 }
 
 void GamePage::warnUnrecognized(const QString& path)
 {
+  // put the list of supported games in the details textbox
   QString supportedGames;
   for (auto* game : sortedGamePlugins()) {
     supportedGames += game->gameName() + "\n";
@@ -337,10 +366,12 @@ std::vector<IPluginGame*> GamePage::sortedGamePlugins() const
 {
   std::vector<IPluginGame*> v;
 
+  // all game plugins
   for (auto* game : m_pc.plugins<IPluginGame>()) {
     v.push_back(game);
   }
 
+  // natsort
   std::sort(v.begin(), v.end(), [](auto* a, auto* b) {
     return (naturalCompare(a->gameName(), b->gameName()) < 0);
   });
@@ -460,6 +491,11 @@ void GamePage::clearButtons()
   ly->addStretch();
 
   ui->games->setUpdatesEnabled(true);
+
+  for (auto& g : m_games) {
+    // all buttons have been deleted
+    g->button = nullptr;
+  }
 }
 
 QCommandLinkButton* GamePage::createCustomButton()
@@ -484,14 +520,13 @@ void GamePage::fillList()
   clearButtons();
 
   for (auto& g : m_games) {
-    g->button = nullptr;
-
     if (!showAll && !g->installed) {
       // not installed
       continue;
     }
 
     if (!m_filter.matches(g->game->gameName())) {
+      // filtered out
       continue;
     }
 
@@ -499,6 +534,7 @@ void GamePage::fillList()
     addButton(g->button);
   }
 
+  // browse button
   addButton(createCustomButton());
 }
 
@@ -525,6 +561,7 @@ GamePage::Game* GamePage::checkInstallation(const QString& path, Game* g)
   }
 
   if (otherGame) {
+    // an alternative was found, ask the user about it
     auto* confirmedGame = confirmOtherGame(path, g->game, otherGame);
 
     if (!confirmedGame) {
@@ -626,6 +663,9 @@ VariantsPage::VariantsPage(CreateInstanceDialog& dlg)
 
 bool VariantsPage::ready() const
 {
+  // note that this isn't called when doSkip() is true, which happens when
+  // the game has no variants
+
   return !m_selection.isEmpty();
 }
 
@@ -637,8 +677,7 @@ bool VariantsPage::doSkip() const
     return true;
   }
 
-  const auto variants = g->gameVariants();
-  return (variants.size() < 2);
+  return (g->gameVariants().size() < 2);
 }
 
 void VariantsPage::activated()
@@ -646,6 +685,7 @@ void VariantsPage::activated()
   auto* g = m_dlg.rawCreationInfo().game;
 
   if (m_previousGame != g) {
+    // recreate the list, the game has changed
     m_previousGame = g;
     m_selection = "";
     fillList();
@@ -654,9 +694,11 @@ void VariantsPage::activated()
 
 void VariantsPage::select(const QString& variant)
 {
+  m_selection = variant;
+
+  // find the button, set it checked
   for (auto* b : m_buttons) {
     if (b->text() == variant) {
-      m_selection = variant;
       b->setChecked(true);
     } else {
       b->setChecked(false);
@@ -666,6 +708,7 @@ void VariantsPage::select(const QString& variant)
   updateNavigation();
 
   if (!m_selection.isEmpty()) {
+    // automatically move to the next page when a variant is selected
     next();
   }
 }
@@ -676,8 +719,7 @@ QString VariantsPage::selectedGameVariant(MOBase::IPluginGame* game) const
     return {};
   }
 
-  const auto variants = game->gameVariants();
-  if (variants.size() < 2) {
+  if (game->gameVariants().size() < 2) {
     return {};
   } else {
     return m_selection;
@@ -695,8 +737,8 @@ void VariantsPage::fillList()
     return;
   }
 
-  const auto variants = g->gameVariants();
-  for (auto& v : variants) {
+  // for each variant, create a checkable button and add it
+  for (auto& v : g->gameVariants()) {
     auto* b = new QCommandLinkButton(v);
     b->setCheckable(true);
 
@@ -721,11 +763,13 @@ NamePage::NamePage(CreateInstanceDialog& dlg) :
 
 bool NamePage::ready() const
 {
+  // checked when textboxes change or when the page is activated
   return m_okay;
 }
 
 bool NamePage::doSkip() const
 {
+  // portable instances have no name
   return (m_dlg.rawCreationInfo().type == CreateInstanceDialog::Portable);
 }
 
@@ -739,6 +783,8 @@ void NamePage::activated()
 
   m_label.setText(g->gameName());
 
+  // generate a name if the user hasn't changed the text in case the game
+  // changed, or if it's empty
   if (!m_modified || ui->instanceName->text().isEmpty()) {
     const auto n = InstanceManager::singleton().makeUniqueName(g->gameName());
     ui->instanceName->setText(n);
@@ -833,6 +879,8 @@ PathsPage::PathsPage(CreateInstanceDialog& dlg) :
 
 bool PathsPage::ready() const
 {
+  // set when the page is activated, textboxes are changed or the advanced
+  // checkbox is toggled
   return m_okay;
 }
 
@@ -841,10 +889,15 @@ void PathsPage::activated()
   const auto name = m_dlg.rawCreationInfo().instanceName;
   const auto type = m_dlg.rawCreationInfo().type;
 
+  // if the instance name or type have changed, all the paths must be
+  // regenerated
   const bool changed = (m_lastInstanceName != name) || (m_lastType != type);
 
+
+  // generating and paths
   setPaths(name, changed);
   checkPaths();
+
   updateNavigation();
 
   m_label.setText(m_dlg.rawCreationInfo().game->gameName());
@@ -878,6 +931,7 @@ void PathsPage::onChanged()
 void PathsPage::checkPaths()
 {
   if (ui->advancedPathOptions->isChecked()) {
+    // checking advanced paths
     m_okay =
       checkAdvancedPath(ui->base->text()) &&
       checkAdvancedPath(resolve(ui->downloads->text())) &&
@@ -885,6 +939,7 @@ void PathsPage::checkPaths()
       checkAdvancedPath(resolve(ui->profiles->text())) &&
       checkAdvancedPath(resolve(ui->overwrite->text()));
   } else {
+    // checking simple path
     m_okay =
       checkSimplePath(ui->location->text());
   }
@@ -907,6 +962,9 @@ QString PathsPage::resolve(const QString& path) const
 
 void PathsPage::onAdvanced()
 {
+  // the base/location textboxes are different widgets but they represent the
+  // same base path value, so they're synced between pages
+
   if (ui->advancedPathOptions->isChecked()) {
     ui->base->setText(ui->location->text());
     ui->pathPages->setCurrentIndex(1);
@@ -920,19 +978,21 @@ void PathsPage::onAdvanced()
 
 void PathsPage::setPaths(const QString& name, bool force)
 {
-  QString path;
+  QString basePath;
 
   if (m_dlg.rawCreationInfo().type == CreateInstanceDialog::Portable) {
-    path = InstanceManager::singleton().portablePath();
+    basePath = InstanceManager::singleton().portablePath();
   } else {
     const auto root = InstanceManager::singleton().globalInstancesRootPath();
-    path = root + "/" + name;
+    basePath = root + "/" + name;
   }
 
-  path = QDir::toNativeSeparators(QDir::cleanPath(path));
+  basePath = QDir::toNativeSeparators(QDir::cleanPath(basePath));
 
-  setIfEmpty(ui->location, path, force);
-  setIfEmpty(ui->base, path, force);
+  // all paths are set regardless of advanced checkbox
+
+  setIfEmpty(ui->location, basePath, force);
+  setIfEmpty(ui->base, basePath, force);
 
   setIfEmpty(ui->downloads, makeDefaultPath(AppConfig::downloadPath()), force);
   setIfEmpty(ui->mods, makeDefaultPath(AppConfig::modsPath()), force);
@@ -951,6 +1011,8 @@ bool PathsPage::checkPath(
   QString path,
   PlaceholderLabel& existsLabel, PlaceholderLabel& invalidLabel)
 {
+  auto& m = InstanceManager::singleton();
+
   bool exists = false;
   bool invalid = false;
   bool empty = false;
@@ -962,11 +1024,11 @@ bool PathsPage::checkPath(
   } else {
     const QDir d(path);
 
-    if (InstanceManager::singleton().validInstanceName(d.dirName())) {
+    if (m.validInstanceName(d.dirName())) {
       if (m_dlg.rawCreationInfo().type == CreateInstanceDialog::Portable) {
         // the default data path for a portable instance is the application
         // directory, so it's not an error if it exists
-        if (QDir(path) != InstanceManager::singleton().portablePath()) {
+        if (QDir(path) != m.portablePath()) {
           exists = QDir(path).exists();
         }
       } else {
@@ -1023,6 +1085,7 @@ NexusPage::~NexusPage() = default;
 
 bool NexusPage::ready() const
 {
+  // this page is optional
   return true;
 }
 
