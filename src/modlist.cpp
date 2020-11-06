@@ -977,7 +977,7 @@ int ModList::setActive(const QStringList& names, bool active) {
       indices.append(modIndex);
     }
     else {
-      log::debug("Trying to {} mod {} which does not exist.", 
+      log::debug("Trying to {} mod {} which does not exist.",
         active ? "enable" : "disable", name);
     }
   }
@@ -1043,7 +1043,7 @@ void ModList::notifyModRemoved(QString const& modName) const
   m_ModRemoved(modName);
 }
 
-void ModList::notifyModStateChanged(QList<unsigned int> modIndices) const 
+void ModList::notifyModStateChanged(QList<unsigned int> modIndices) const
 {
   std::map<QString, ModStates> mods;
   for (auto modIndex : modIndices) {

@@ -7,8 +7,7 @@
 #include <thread>
 
 // in main.cpp
-void setUnhandledExceptionHandler();
-LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs);
+void setExceptionHandlers();
 
 
 namespace MOShared {
@@ -20,7 +19,7 @@ template <class F>
 std::thread startSafeThread(F&& f)
 {
   return std::thread([f=std::forward<F>(f)] {
-    setUnhandledExceptionHandler();
+    setExceptionHandlers();
     f();
   });
 }

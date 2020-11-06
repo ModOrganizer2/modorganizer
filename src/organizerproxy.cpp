@@ -9,6 +9,7 @@
 #include "modlistproxy.h"
 #include "pluginlistproxy.h"
 #include "proxyutils.h"
+#include "shared/util.h"
 
 #include <QObject>
 #include <QApplication>
@@ -104,7 +105,7 @@ void OrganizerProxy::setPersistent(const QString &pluginName, const QString &key
 
 QString OrganizerProxy::pluginDataPath() const
 {
-  return m_Proxied->pluginDataPath();
+  return OrganizerCore::pluginDataPath();
 }
 
 HANDLE OrganizerProxy::startApplication(

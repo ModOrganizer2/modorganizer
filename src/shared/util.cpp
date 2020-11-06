@@ -435,3 +435,9 @@ void ResetExitFlag()
 {
   g_exiting = false;
 }
+
+
+bool isNxmLink(const QString& link)
+{
+  return link.startsWith("nxm://", Qt::CaseInsensitive);
+}

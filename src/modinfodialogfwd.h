@@ -35,9 +35,6 @@ FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString& oldNa
 FileRenamer::RenameResults restoreHiddenFilesRecursive(FileRenamer& renamer, const QString &targetDir);
 
 
-int naturalCompare(const QString& a, const QString& b);
-
-
 class ElideLeftDelegate : public QStyledItemDelegate
 {
 public:

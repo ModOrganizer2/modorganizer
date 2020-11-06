@@ -203,7 +203,7 @@ void GenericFilesTab::select(const QModelIndex& index)
   }
 
   m_editor->setEnabled(true);
-  m_editor->load(m_model->fullPath(m_filter.map(index)));
+  m_editor->load(m_model->fullPath(m_filter.mapToSource(index)));
 }
 
 

@@ -82,4 +82,8 @@ private:
   void onNewEntry();
 };
 
+
+void initLogging();
+bool setLogDirectory(const QString& dir);
+
 #endif // LOGBUFFER_H

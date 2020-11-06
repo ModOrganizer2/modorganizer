@@ -141,8 +141,8 @@ void NexusTab::updateWebpage()
   const int modID = mod().nexusId();
 
   if (isValidModID(modID)) {
-    const QString nexusLink = NexusInterface::instance(&plugin())
-      ->getModURL(modID, mod().gameName());
+    const QString nexusLink = NexusInterface::instance()
+      .getModURL(modID, mod().gameName());
 
     ui->visitNexus->setToolTip(nexusLink);
     refreshData(modID);
@@ -360,8 +360,8 @@ void NexusTab::onVisitNexus()
   const int modID = mod().nexusId();
 
   if (isValidModID(modID)) {
-    const QString nexusLink = NexusInterface::instance(&plugin())
-      ->getModURL(modID, mod().gameName());
+    const QString nexusLink = NexusInterface::instance()
+      .getModURL(modID, mod().gameName());
 
     shell::Open(QUrl(nexusLink));
   }

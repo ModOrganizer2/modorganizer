@@ -191,9 +191,6 @@ public:
   };
 
 public:
-
-  static bool isNxmLink(const QString &link) { return link.startsWith("nxm://", Qt::CaseInsensitive); }
-
   OrganizerCore(Settings &settings);
 
   ~OrganizerCore();
@@ -317,7 +314,7 @@ public:
   void setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value);
   QVariant persistent(const QString &pluginName, const QString &key, const QVariant &def) const;
   void setPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync);
-  QString pluginDataPath() const;
+  static QString pluginDataPath();
   virtual MOBase::IModInterface *installMod(const QString &fileName, bool reinstallation, ModInfo::Ptr currentMod, const QString &initModName);
   QString resolvePath(const QString &fileName) const;
   QStringList listDirectories(const QString &directoryName) const;

@@ -169,14 +169,49 @@ QObject* PluginContainer::as_qobject(MOBase::IPlugin* plugin) const
   return *it;
 }
 
-bool PluginContainer::verifyPlugin(IPlugin *plugin)
+bool PluginContainer::initPlugin(IPlugin *plugin)
 {
+  // when MO has no instance loaded, init() is not called on plugins, except
+  // for proxy plugins, where init() is called with a null IOrganizer
+  //
+  // after proxies are initialized, instantiate() is called for all the plugins
+  // they've discovered, but as for regular plugins, init() won't be
+  // called on them if m_OrganizerCore is null
+
   if (plugin == nullptr) {
     return false;
-  } else if (!plugin->init(new OrganizerProxy(m_Organizer, this, plugin))) {
-    log::warn("plugin failed to initialize");
+  }
+
+  if (m_Organizer) {
+    auto* proxy = new OrganizerProxy(m_Organizer, this, plugin);
+
+    if (!plugin->init(proxy)) {
+      log::warn("plugin failed to initialize");
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool PluginContainer::initProxyPlugin(IPlugin *plugin)
+{
+  // see initPlugin() above for info
+
+  if (plugin == nullptr) {
     return false;
   }
+
+  IOrganizer* proxy = nullptr;
+  if (m_Organizer) {
+    proxy = new OrganizerProxy(m_Organizer, this, plugin);
+  }
+
+  if (!plugin->init(proxy)) {
+    log::warn("proxy plugin failed to initialize");
+    return false;
+  }
+
   return true;
 }
 
@@ -185,7 +220,6 @@ void PluginContainer::registerGame(IPluginGame *game)
 {
   m_SupportedGames.insert({ game->gameName(), game });
 }
-
 
 bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
 {
@@ -199,8 +233,14 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
       log::debug("not an IPlugin");
       return false;
     }
+
     plugin->setProperty("filename", fileName);
-    m_Organizer->settings().plugins().registerPlugin(pluginObj);
+
+    if (m_Organizer) {
+      m_Organizer->settings().plugins().registerPlugin(pluginObj);
+    }
+
+    pluginObj->registered();
   }
 
   { // diagnosis plugin
@@ -220,14 +260,14 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
   }
   { // mod page plugin
     IPluginModPage *modPage = qobject_cast<IPluginModPage*>(plugin);
-    if (verifyPlugin(modPage)) {
+    if (initPlugin(modPage)) {
       bf::at_key<IPluginModPage>(m_Plugins).push_back(modPage);
       return true;
     }
   }
   { // game plugin
     IPluginGame *game = qobject_cast<IPluginGame*>(plugin);
-    if (verifyPlugin(game)) {
+    if (initPlugin(game)) {
       bf::at_key<IPluginGame>(m_Plugins).push_back(game);
       registerGame(game);
       return true;
@@ -235,22 +275,24 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
   }
   { // tool plugins
     IPluginTool *tool = qobject_cast<IPluginTool*>(plugin);
-    if (verifyPlugin(tool)) {
+    if (initPlugin(tool)) {
       bf::at_key<IPluginTool>(m_Plugins).push_back(tool);
       return true;
     }
   }
   { // installer plugins
     IPluginInstaller *installer = qobject_cast<IPluginInstaller*>(plugin);
-    if (verifyPlugin(installer)) {
+    if (initPlugin(installer)) {
       bf::at_key<IPluginInstaller>(m_Plugins).push_back(installer);
-      m_Organizer->installationManager()->registerInstaller(installer);
+      if (m_Organizer) {
+        m_Organizer->installationManager()->registerInstaller(installer);
+      }
       return true;
     }
   }
   { // preview plugins
     IPluginPreview *preview = qobject_cast<IPluginPreview*>(plugin);
-    if (verifyPlugin(preview)) {
+    if (initPlugin(preview)) {
       bf::at_key<IPluginPreview>(m_Plugins).push_back(preview);
       m_PreviewGenerator.registerPlugin(preview);
       return true;
@@ -258,7 +300,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
   }
   { // proxy plugins
     IPluginProxy *proxy = qobject_cast<IPluginProxy*>(plugin);
-    if (verifyPlugin(proxy)) {
+    if (initProxyPlugin(proxy)) {
       bf::at_key<IPluginProxy>(m_Plugins).push_back(proxy);
       QStringList pluginNames = proxy->pluginList(
             QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
@@ -290,7 +332,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
   { // dummy plugins
     // only initialize these, no processing otherwise
     IPlugin *dummy = qobject_cast<IPlugin*>(plugin);
-    if (verifyPlugin(dummy)) {
+    if (initPlugin(dummy)) {
       bf::at_key<IPlugin>(m_Plugins).push_back(dummy);
       return true;
     }
@@ -317,7 +359,7 @@ void PluginContainer::unloadPlugins()
   }
 
   // disconnect all slots before unloading plugins so plugins don't have to take care of that
-  if (m_Organizer != nullptr) {
+  if (m_Organizer) {
     m_Organizer->disconnectPlugins();
   }
 
@@ -363,24 +405,28 @@ void PluginContainer::loadPlugins()
     registerPlugin(plugin, "");
   }
 
-  QFile loadCheck(qApp->property("dataPath").toString() + "/plugin_loadcheck.tmp");
-  if (loadCheck.exists() && loadCheck.open(QIODevice::ReadOnly)) {
-    // oh, there was a failed plugin load last time. Find out which plugin was loaded last
-    QString fileName;
-    while (!loadCheck.atEnd()) {
-      fileName = QString::fromUtf8(loadCheck.readLine().constData()).trimmed();
-    }
-    if (QMessageBox::question(nullptr, QObject::tr("Plugin error"),
-      QObject::tr("It appears the plugin \"%1\" failed to load last startup and caused MO to crash. Do you want to disable it?\n"
-         "(Please note: If this is the first time you see this message for this plugin you may want to give it another try. "
-         "The plugin may be able to recover from the problem)").arg(fileName),
-          QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes) {
-      m_Organizer->settings().plugins().addBlacklist(fileName);
-    }
-    loadCheck.close();
-  }
+  QFile loadCheck;
 
-  loadCheck.open(QIODevice::WriteOnly);
+  if (m_Organizer) {
+    loadCheck.setFileName(qApp->property("dataPath").toString() + "/plugin_loadcheck.tmp");
+    if (loadCheck.exists() && loadCheck.open(QIODevice::ReadOnly)) {
+      // oh, there was a failed plugin load last time. Find out which plugin was loaded last
+      QString fileName;
+      while (!loadCheck.atEnd()) {
+        fileName = QString::fromUtf8(loadCheck.readLine().constData()).trimmed();
+      }
+      if (QMessageBox::question(nullptr, QObject::tr("Plugin error"),
+        QObject::tr("It appears the plugin \"%1\" failed to load last startup and caused MO to crash. Do you want to disable it?\n"
+           "(Please note: If this is the first time you see this message for this plugin you may want to give it another try. "
+           "The plugin may be able to recover from the problem)").arg(fileName),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes) {
+        m_Organizer->settings().plugins().addBlacklist(fileName);
+      }
+      loadCheck.close();
+    }
+
+    loadCheck.open(QIODevice::WriteOnly);
+  }
 
   QString pluginPath = qApp->applicationDirPath() + "/" + ToQString(AppConfig::pluginPath());
   log::debug("looking for plugins in {}", QDir::toNativeSeparators(pluginPath));
@@ -388,13 +434,20 @@ void PluginContainer::loadPlugins()
 
   while (iter.hasNext()) {
     iter.next();
-    if (m_Organizer->settings().plugins().blacklisted(iter.fileName())) {
-      log::debug("plugin \"{}\" blacklisted", iter.fileName());
-      continue;
+
+    if (m_Organizer) {
+      if (m_Organizer->settings().plugins().blacklisted(iter.fileName())) {
+        log::debug("plugin \"{}\" blacklisted", iter.fileName());
+        continue;
+      }
     }
-    loadCheck.write(iter.fileName().toUtf8());
-    loadCheck.write("\n");
-    loadCheck.flush();
+
+    if (loadCheck.isOpen()) {
+      loadCheck.write(iter.fileName().toUtf8());
+      loadCheck.write("\n");
+      loadCheck.flush();
+    }
+
     QString pluginName = iter.filePath();
     if (QLibrary::isLibrary(pluginName)) {
       std::unique_ptr<QPluginLoader> pluginLoader(new QPluginLoader(pluginName, this));
@@ -416,12 +469,16 @@ void PluginContainer::loadPlugins()
   }
 
   // remove the load check file on success
-  loadCheck.remove();
+  if (loadCheck.isOpen()) {
+    loadCheck.remove();
+  }
 
-  bf::at_key<IPluginDiagnose>(m_Plugins).push_back(m_Organizer);
   bf::at_key<IPluginDiagnose>(m_Plugins).push_back(this);
 
-  m_Organizer->connectPlugins(this);
+  if (m_Organizer) {
+    bf::at_key<IPluginDiagnose>(m_Plugins).push_back(m_Organizer);
+    m_Organizer->connectPlugins(this);
+  }
 }
 
 

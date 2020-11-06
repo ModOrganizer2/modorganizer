@@ -190,8 +190,7 @@ public: // Static functions:
    * @brief Run a limited batch of mod update checks for "newest version" information.
    *
    */
-  static void manualUpdateCheck(
-    PluginContainer *pluginContainer, QObject *receiver, std::multimap<QString, int> IDs);
+  static void manualUpdateCheck(QObject *receiver, std::multimap<QString, int> IDs);
 
   /**
    * @brief Query nexus information for every mod and update the "newest version" information.

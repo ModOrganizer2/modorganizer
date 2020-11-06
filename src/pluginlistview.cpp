@@ -56,5 +56,3 @@ void PluginListView::setModel(QAbstractItemModel *model)
   QTreeView::setModel(model);
   setVerticalScrollBar(new ViewMarkingScrollBar(model, this));
 }
-
-#pragma once

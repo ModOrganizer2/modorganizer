@@ -38,6 +38,7 @@
 #include "shared/directoryentry.h"
 #include "shared/filesorigin.h"
 #include "shared/fileentry.h"
+#include "shared/util.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -94,12 +95,12 @@ OrganizerCore::OrganizerCore(Settings &settings)
   , m_PluginContainer(nullptr)
   , m_CurrentProfile(nullptr)
   , m_Settings(settings)
-  , m_Updater(NexusInterface::instance(m_PluginContainer))
+  , m_Updater(&NexusInterface::instance())
   , m_ModList(m_PluginContainer, this)
   , m_PluginList(this)
   , m_DirectoryRefresher(new DirectoryRefresher(settings.refreshThreadCount()))
   , m_DirectoryStructure(new DirectoryEntry(L"data", nullptr, 0))
-  , m_DownloadManager(NexusInterface::instance(m_PluginContainer), this)
+  , m_DownloadManager(&NexusInterface::instance(), this)
   , m_DirectoryUpdate(false)
   , m_ArchivesInit(false)
   , m_PluginListsWriter(std::bind(&OrganizerCore::savePluginList, this))
@@ -107,8 +108,7 @@ OrganizerCore::OrganizerCore(Settings &settings)
   env::setHandleCloserThreadCount(settings.refreshThreadCount());
   m_DownloadManager.setOutputDirectory(m_Settings.paths().downloads(), false);
 
-  NexusInterface::instance(m_PluginContainer)->setCacheDirectory(
-    m_Settings.paths().cache());
+  NexusInterface::instance().setCacheDirectory(m_Settings.paths().cache());
 
   m_InstallationManager.setModsDirectory(m_Settings.paths().mods());
   m_InstallationManager.setDownloadDirectory(m_Settings.paths().downloads());
@@ -121,9 +121,9 @@ OrganizerCore::OrganizerCore(Settings &settings)
   connect(&m_ModList, SIGNAL(removeOrigin(QString)), this,
           SLOT(removeOrigin(QString)));
 
-  connect(NexusInterface::instance(m_PluginContainer)->getAccessManager(),
+  connect(NexusInterface::instance().getAccessManager(),
           SIGNAL(validateSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
-  connect(NexusInterface::instance(m_PluginContainer)->getAccessManager(),
+  connect(NexusInterface::instance().getAccessManager(),
           SIGNAL(validateFailed(QString)), this, SLOT(loginFailed(QString)));
 
   // This seems awfully imperative
@@ -331,8 +331,7 @@ Settings &OrganizerCore::settings()
 
 bool OrganizerCore::nexusApi(bool retry)
 {
-  NXMAccessManager *accessManager
-      = NexusInterface::instance(m_PluginContainer)->getAccessManager();
+  auto* accessManager = NexusInterface::instance().getAccessManager();
 
   if ((accessManager->validateAttempted() || accessManager->validated())
       && !retry) {
@@ -340,7 +339,7 @@ bool OrganizerCore::nexusApi(bool retry)
     return false;
   } else {
     QString apiKey;
-    if (m_Settings.nexus().apiKey(apiKey)) {
+    if (GlobalSettings::nexusApiKey(apiKey)) {
       // credentials stored or user entered them manually
       log::debug("attempt to verify nexus api key");
       accessManager->apiCheck(apiKey);
@@ -395,7 +394,9 @@ void OrganizerCore::profileRemoved(QString const& profileName)
 
 void OrganizerCore::externalMessage(const QString &message)
 {
-  if (MOShortcut moshortcut{ message } ) {
+  MOShortcut moshortcut(message);
+
+  if (moshortcut.isValid()) {
     if(moshortcut.hasExecutable()) {
       processRunner()
         .setFromShortcut(moshortcut)
@@ -470,21 +471,53 @@ bool OrganizerCore::checkPathSymlinks() {
   return true;
 }
 
-bool OrganizerCore::bootstrap() {
-  return createDirectory(m_Settings.paths().profiles()) &&
-         createDirectory(m_Settings.paths().mods()) &&
-         createDirectory(m_Settings.paths().downloads()) &&
-         createDirectory(m_Settings.paths().overwrite()) &&
-         createDirectory(QString::fromStdWString(crashDumpsPath())) &&
-         checkPathSymlinks() && cycleDiagnostics();
+bool OrganizerCore::bootstrap()
+{
+  const auto dirs = {
+    m_Settings.paths().profiles(),
+    m_Settings.paths().mods(),
+    m_Settings.paths().downloads(),
+    m_Settings.paths().overwrite(),
+    QString::fromStdWString(crashDumpsPath())
+  };
+
+  for (auto&& dir : dirs) {
+    if (!createDirectory(dir)) {
+      return false;
+    }
+  }
+
+  if (!checkPathSymlinks()) {
+    return false;
+  }
+
+  if (!cycleDiagnostics()) {
+    return false;
+  }
+
+  // log if there are any dmp files
+  const auto hasCrashDumps =
+    !QDir(QString::fromStdWString(crashDumpsPath()))
+      .entryList({"*.dmp"}, QDir::Files)
+      .empty();
+
+  if (hasCrashDumps) {
+    log::debug(
+      "there are crash dumps in '{}'",
+      QString::fromStdWString(crashDumpsPath()));
+  }
+
+  return true;
 }
 
 void OrganizerCore::createDefaultProfile()
 {
   QString profilesPath = settings().paths().profiles();
-  if (QDir(profilesPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot).size()
-      == 0) {
-    Profile newProf("Default", managedGame(), false);
+  if (QDir(profilesPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot).size() == 0) {
+    Profile newProf(
+      QString::fromStdWString(AppConfig::defaultProfileName()),
+      managedGame(), false);
+
     m_ProfileCreated(&newProf);
   }
 }
@@ -552,15 +585,34 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
   log::debug("selecting profile '{}'", profileName);
 
   QDir profileBaseDir(settings().paths().profiles());
-  QString profileDir = profileBaseDir.absoluteFilePath(profileName);
 
-  if (!QDir(profileDir).exists()) {
+  const auto subdirs = profileBaseDir.entryList(
+    QDir::AllDirs | QDir::NoDotAndDotDot);
+
+  QString profileDir;
+
+  // the profile name may not have the correct case, which breaks other parts
+  // of the ui like the profile combobox, which walks directories on its own
+  //
+  // find the real name with the correct case by walking the directories
+  for (auto&& dirName : subdirs) {
+    if (QString::compare(dirName, profileName, Qt::CaseInsensitive) == 0) {
+      profileDir = profileBaseDir.absoluteFilePath(dirName);
+      break;
+    }
+  }
+
+  if (profileDir.isEmpty()) {
+    log::error("profile '{}' does not exist", profileName);
+
     // selected profile doesn't exist. Ensure there is at least one profile,
     // then pick any one
     createDefaultProfile();
 
     profileDir = profileBaseDir.absoluteFilePath(
         profileBaseDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot).at(0));
+
+    log::error("picked profile '{}' instead", QDir(profileDir).dirName());
   }
 
   // Keep the old profile to emit signal-changed:
@@ -706,7 +758,7 @@ void OrganizerCore::setPersistent(const QString &pluginName, const QString &key,
   m_Settings.plugins().setPersistent(pluginName, key, value, sync);
 }
 
-QString OrganizerCore::pluginDataPath() const
+QString OrganizerCore::pluginDataPath()
 {
   return qApp->applicationDirPath() + "/" + ToQString(AppConfig::pluginPath())
          + "/data";
@@ -1372,13 +1424,13 @@ void OrganizerCore::updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::P
 
 void OrganizerCore::loggedInAction(QWidget* parent, std::function<void ()> f)
 {
-  if (NexusInterface::instance(m_PluginContainer)->getAccessManager()->validated()) {
+  if (NexusInterface::instance().getAccessManager()->validated()) {
     f();
   } else {
     QString apiKey;
-    if (settings().nexus().apiKey(apiKey)) {
+    if (GlobalSettings::nexusApiKey(apiKey)) {
       doAfterLogin([f]{ f(); });
-      NexusInterface::instance(m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
+      NexusInterface::instance().getAccessManager()->apiCheck(apiKey);
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus"), parent);
     }
@@ -1652,7 +1704,7 @@ void OrganizerCore::loginSuccessful(bool necessary)
   }
 
   m_PostLoginTasks.clear();
-  NexusInterface::instance(m_PluginContainer)->loginCompleted();
+  NexusInterface::instance().loginCompleted();
 }
 
 void OrganizerCore::loginSuccessfulUpdate(bool necessary)
@@ -1690,7 +1742,7 @@ void OrganizerCore::loginFailed(const QString &message)
                                qApp->activeWindow());
     m_PostLoginTasks.clear();
   }
-  NexusInterface::instance(m_PluginContainer)->loginCompleted();
+  NexusInterface::instance().loginCompleted();
 }
 
 void OrganizerCore::loginFailedUpdate(const QString &message)

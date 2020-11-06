@@ -40,7 +40,7 @@ namespace MOBase { class IPluginGame; }
 
 class NexusInterface;
 class NXMAccessManager;
-
+class Settings;
 
 /**
  * @brief convenience class to make nxm requests easier
@@ -153,9 +153,10 @@ public:
   static APILimits parseLimits(const QNetworkReply* reply);
   static APILimits parseLimits(const QList<QNetworkReply::RawHeaderPair>& headers);
 
+  NexusInterface(Settings* s);
   ~NexusInterface();
 
-  static NexusInterface *instance(PluginContainer *pluginContainer);
+  static NexusInterface& instance();
 
   /**
    * @return the access manager object used to connect to nexus
@@ -534,8 +535,6 @@ private:
   static const int MAX_ACTIVE_DOWNLOADS = 6;
 
 private:
-
-  NexusInterface(PluginContainer *pluginContainer);
   void nextRequest();
   void requestFinished(std::list<NXMRequestInfo>::iterator iter);
   MOBase::IPluginGame *getGame(QString gameName) const;

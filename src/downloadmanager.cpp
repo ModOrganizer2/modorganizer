@@ -42,7 +42,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QCoreApplication>
 #include <QTextDocument>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <regex>
 
 
@@ -1841,6 +1841,8 @@ int DownloadManager::indexByInfo(const DownloadInfo* info) const
 
 void DownloadManager::nxmDownloadURLsAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID)
 {
+  using namespace boost::placeholders;
+
   std::set<int>::iterator idIter = m_RequestIDs.find(requestID);
   if (idIter == m_RequestIDs.end()) {
     return;

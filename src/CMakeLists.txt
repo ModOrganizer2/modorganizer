@@ -11,6 +11,7 @@ endif()
 
 add_filter(NAME src/application GROUPS
 	iuserinterface
+	commandline
 	main
 	moapplication
 	moshortcut
@@ -28,11 +29,11 @@ add_filter(NAME src/core GROUPS
 	categories
 	archivefiletree
 	installationmanager
-	instancemanager
 	loadmechanism
 	nexusinterface
 	nxmaccessmanager
 	organizercore
+	plugincontainer
 	apiuseraccount
 	processrunner
 	qdirfiletree
@@ -83,6 +84,13 @@ add_filter(NAME src/executables GROUPS
 	editexecutablesdialog
 )
 
+add_filter(NAME src/instances GROUPS
+	createinstancedialog
+	createinstancedialogpages
+	instancemanager
+	instancemanagerdialog
+)
+
 add_filter(NAME src/loot GROUPS
 	loot
 	lootdialog
@@ -129,7 +137,6 @@ add_filter(NAME src/modlist GROUPS
 )
 
 add_filter(NAME src/plugins GROUPS
-	plugincontainer
 	pluginlist
 	pluginlistsortproxy
 	pluginlistview
