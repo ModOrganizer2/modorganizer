@@ -274,7 +274,7 @@ std::optional<int> handleCommandLine(
 
 std::optional<Instance> selectInstance()
 {
-  auto& m = InstanceManager::instance();
+  auto& m = InstanceManager::singleton();
 
   NexusInterface ni(nullptr);
   PluginContainer pc(nullptr);
@@ -505,7 +505,7 @@ int runApplication(
     OrganizerCore organizer(settings);
     if (!organizer.bootstrap()) {
       reportError("failed to set up data paths");
-      InstanceManager::instance().clearCurrentInstance();
+      InstanceManager::singleton().clearCurrentInstance();
       return 1;
     }
 
@@ -522,7 +522,7 @@ int runApplication(
       } else if (setupResult == SetupInstanceResults::TryAgain) {
         continue;
       } else if (setupResult == SetupInstanceResults::SelectAnother) {
-        InstanceManager::instance().clearCurrentInstance();
+        InstanceManager::singleton().clearCurrentInstance();
         return RestartExitCode;
       } else {
         return 1;
@@ -650,7 +650,7 @@ int doOneRun(
   // resets things when MO is "restarted"
   resetForRestart(cl);
 
-  auto& m = InstanceManager::instance();
+  auto& m = InstanceManager::singleton();
   auto currentInstance = m.currentInstance();
 
   if (!currentInstance)
@@ -689,7 +689,7 @@ int doOneRun(
 
   if (!setLogDirectory(dataPath)) {
     reportError("Failed to create log folder");
-    InstanceManager::instance().clearCurrentInstance();
+    InstanceManager::singleton().clearCurrentInstance();
     return 1;
   }
 
@@ -724,10 +724,10 @@ int main(int argc, char *argv[])
   tt.stop();
 
   if (cl.instance())
-    InstanceManager::instance().overrideInstance(*cl.instance());
+    InstanceManager::singleton().overrideInstance(*cl.instance());
 
   if (cl.profile()) {
-    InstanceManager::instance().overrideProfile(*cl.profile());
+    InstanceManager::singleton().overrideProfile(*cl.profile());
   }
 
   // makes plugin data path available to plugins, see

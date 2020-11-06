@@ -54,7 +54,7 @@ private:
 class InstanceManager
 {
 public:
-  static InstanceManager &instance();
+  static InstanceManager& singleton();
 
   void overrideInstance(const QString& instanceName);
   void overrideProfile(const QString& profileName);

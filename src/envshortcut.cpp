@@ -149,7 +149,7 @@ Shortcut::Shortcut(const Executable& exe)
   m_target = QFileInfo(qApp->applicationFilePath()).absoluteFilePath();
 
   m_arguments = QString("\"moshortcut://%1:%2\"")
-    .arg(InstanceManager::instance().currentInstance()->name())
+    .arg(InstanceManager::singleton().currentInstance()->name())
     .arg(exe.title());
 
   m_description = QString("Run %1 with ModOrganizer").arg(exe.title());

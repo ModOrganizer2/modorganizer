@@ -586,7 +586,7 @@ ProcessRunner& ProcessRunner::setFromExecutable(const Executable& exe)
 
 ProcessRunner& ProcessRunner::setFromShortcut(const MOShortcut& shortcut)
 {
-  const auto currentInstance = InstanceManager::instance().currentInstance();
+  const auto currentInstance = InstanceManager::singleton().currentInstance();
 
   if (currentInstance)
   {

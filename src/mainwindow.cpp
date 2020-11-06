@@ -837,7 +837,7 @@ void MainWindow::setupToolbar()
     log::warn("no separator found on the toolbar, icons won't be right-aligned");
   }
 
-  if (!InstanceManager::instance().allowedToChangeInstance()) {
+  if (!InstanceManager::singleton().allowedToChangeInstance()) {
     ui->actionChange_Game->setVisible(false);
   }
 }

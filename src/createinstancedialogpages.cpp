@@ -136,13 +136,13 @@ TypePage::TypePage(CreateInstanceDialog& dlg)
 {
   ui->createGlobal->setDescription(
     ui->createGlobal->description()
-      .arg(InstanceManager::instance().instancesPath()));
+      .arg(InstanceManager::singleton().instancesPath()));
 
   ui->createPortable->setDescription(
     ui->createPortable->description()
       .arg(InstanceManager::portablePath()));
 
-  if (InstanceManager::instance().portableInstanceExists()) {
+  if (InstanceManager::singleton().portableInstanceExists()) {
     ui->createPortable->setEnabled(false);
     ui->portableExistsLabel->setVisible(true);
   } else {
@@ -722,7 +722,7 @@ void NamePage::activated()
   m_label.setText(g->gameName());
 
   if (!m_modified || ui->instanceName->text().isEmpty()) {
-    const auto n = InstanceManager::instance().makeUniqueName(g->gameName());
+    const auto n = InstanceManager::singleton().makeUniqueName(g->gameName());
     ui->instanceName->setText(n);
     m_modified = false;
   }
@@ -737,7 +737,7 @@ QString NamePage::selectedInstanceName() const
   }
 
   const auto text = ui->instanceName->text().trimmed();
-  return InstanceManager::instance().sanitizeInstanceName(text);
+  return InstanceManager::singleton().sanitizeInstanceName(text);
 }
 
 void NamePage::onChanged()
@@ -748,7 +748,7 @@ void NamePage::onChanged()
 
 void NamePage::updateWarnings()
 {
-  const auto root = InstanceManager::instance().instancesPath();
+  const auto root = InstanceManager::singleton().instancesPath();
 
   m_okay = checkName(root, ui->instanceName->text());
   updateNavigation();
@@ -765,7 +765,7 @@ bool NamePage::checkName(QString parentDir, QString name)
   if (name.isEmpty()) {
     empty = true;
   } else {
-    if (InstanceManager::instance().validInstanceName(name)) {
+    if (InstanceManager::singleton().validInstanceName(name)) {
       exists = QDir(parentDir).exists(name);
     } else {
       invalid = true;
@@ -901,7 +901,7 @@ void PathsPage::setPaths(const QString& name, bool force)
   if (m_dlg.instanceType() == CreateInstanceDialog::Portable) {
     path = InstanceManager::portablePath();
   } else {
-    const auto root = InstanceManager::instance().instancesPath();
+    const auto root = InstanceManager::singleton().instancesPath();
     path = root + "/" + name;
   }
 
@@ -938,11 +938,11 @@ bool PathsPage::checkPath(
   } else {
     const QDir d(path);
 
-    if (InstanceManager::instance().validInstanceName(d.dirName())) {
+    if (InstanceManager::singleton().validInstanceName(d.dirName())) {
       if (m_dlg.instanceType() == CreateInstanceDialog::Portable) {
         // the default data path for a portable instance is the application
         // directory, so it's not an error if it exists
-        if (QDir(path) != InstanceManager::instance().portablePath()) {
+        if (QDir(path) != InstanceManager::singleton().portablePath()) {
           exists = QDir(path).exists();
         }
       } else {

@@ -244,7 +244,7 @@ void CreateInstanceDialog::finish()
   ui->creationLog->clear();
   logCreation(tr("Creating instance..."));
 
-  const auto& m = InstanceManager::instance();
+  const auto& m = InstanceManager::singleton();
   const auto ci = creationInfo();
 
   auto logger = [&](QString s) {
@@ -332,7 +332,7 @@ void CreateInstanceDialog::finish()
     }
 
     if (ui->launch->isChecked()) {
-      InstanceManager::instance().setCurrentInstance(ci.instanceName);
+      InstanceManager::singleton().setCurrentInstance(ci.instanceName);
 
       if (m_settings) {
         // don't restart without settings, it happens on startup when there are
@@ -445,7 +445,7 @@ QString CreateInstanceDialog::dataPath() const
   if (instanceType() == Portable) {
     s = QDir(InstanceManager::portablePath()).absolutePath();
   } else {
-    s = InstanceManager::instance().instancePath(instanceName());
+    s = InstanceManager::singleton().instancePath(instanceName());
   }
 
   return QDir::toNativeSeparators(s);

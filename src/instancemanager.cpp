@@ -290,7 +290,7 @@ InstanceManager::InstanceManager()
   GlobalSettings::updateRegistryKey();
 }
 
-InstanceManager &InstanceManager::instance()
+InstanceManager &InstanceManager::singleton()
 {
   static InstanceManager s_Instance;
   return s_Instance;

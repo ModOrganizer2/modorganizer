@@ -101,7 +101,7 @@ public:
 
   QIcon icon(const PluginContainer& plugins) const
   {
-    const auto* game = InstanceManager::instance().gamePluginForDirectory(
+    const auto* game = InstanceManager::singleton().gamePluginForDirectory(
       m_dir, plugins);
 
     if (game)
@@ -119,7 +119,7 @@ public:
 
   bool isActive() const
   {
-    auto& m = InstanceManager::instance();
+    auto& m = InstanceManager::singleton();
 
     if (auto i=m.currentInstance())
     {
@@ -347,7 +347,7 @@ InstanceManagerDialog::InstanceManagerDialog(
 
 void InstanceManagerDialog::updateInstances()
 {
-  auto& m = InstanceManager::instance();
+  auto& m = InstanceManager::singleton();
 
   m_instances.clear();
 
@@ -437,7 +437,7 @@ void InstanceManagerDialog::select(const QString& name)
 
 void InstanceManagerDialog::selectActiveInstance()
 {
-  const auto active = InstanceManager::instance().currentInstance();
+  const auto active = InstanceManager::singleton().currentInstance();
 
   if (active) {
     for (std::size_t i=0; i<m_instances.size(); ++i) {
@@ -463,9 +463,9 @@ void InstanceManagerDialog::openSelectedInstance()
   }
 
   if (m_instances[i]->isPortable()) {
-    InstanceManager::instance().setCurrentInstance("");
+    InstanceManager::singleton().setCurrentInstance("");
   } else {
-    InstanceManager::instance().setCurrentInstance(m_instances[i]->name());
+    InstanceManager::singleton().setCurrentInstance(m_instances[i]->name());
   }
 
   if (m_restartOnSelect) {
@@ -479,7 +479,7 @@ QString getInstanceName(
   QWidget* parent, const QString& title, const QString& moreText,
   const QString& label, const QString& oldName={})
 {
-  auto& m = InstanceManager::instance();
+  auto& m = InstanceManager::singleton();
 
   QDialog dlg(parent);
   dlg.setWindowTitle(title);
@@ -554,7 +554,7 @@ void InstanceManagerDialog::rename()
 
   const auto selIndex = singleSelectionIndex();
 
-  auto& m = InstanceManager::instance();
+  auto& m = InstanceManager::singleton();
   if (i->isActive()) {
     QMessageBox::information(this,
       tr("Rename instance"), tr("The active instance cannot be renamed."));
@@ -622,7 +622,7 @@ void InstanceManagerDialog::deleteInstance()
     return;
   }
 
-  auto& m = InstanceManager::instance();
+  auto& m = InstanceManager::singleton();
   if (i->isActive()) {
     QMessageBox::information(this,
       tr("Deleting instance"), tr("The active instance cannot be deleted."));
@@ -800,7 +800,7 @@ void InstanceManagerDialog::fillData(const InstanceInfo& ii)
   ui->gameDir->setText(ii.gamePath());
   setButtonsEnabled(true);
 
-  const auto& m = InstanceManager::instance();
+  const auto& m = InstanceManager::singleton();
 
   ui->rename->setEnabled(!ii.isPortable());
 
