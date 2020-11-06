@@ -171,20 +171,11 @@ QObject* PluginContainer::as_qobject(MOBase::IPlugin* plugin) const
 
 bool PluginContainer::initPlugin(IPlugin *plugin)
 {
-  // when MO has no instance loaded, `init()` is not called on plugins, except
-  // for proxy plugins
+  // when MO has no instance loaded, init() is not called on plugins, except
+  // for proxy plugins, where init() is called with a null IOrganizer
   //
-  // proxy plugins are given an OrganizerProxy that has a null OrganizerCore,
-  // so there's not a lot it can do, but it can return some information; the
-  // majority of its functions are no-ops
-  //
-  // so initPlugin() (this function) is called for all plugins except proxies,
-  // and does not call init() if m_Organizer is null; initProxyPlugin() below
-  // is called only for proxy plugins and will call init() with the crippled
-  // OrganizerProxy
-  //
-  // note that after proxies are initialized, instantiate() is called for all
-  // the plugins they've discovered, but as for regular plugins, init() won't be
+  // after proxies are initialized, instantiate() is called for all the plugins
+  // they've discovered, but as for regular plugins, init() won't be
   // called on them if m_OrganizerCore is null
 
   if (plugin == nullptr) {
@@ -211,7 +202,12 @@ bool PluginContainer::initProxyPlugin(IPlugin *plugin)
     return false;
   }
 
-  if (!plugin->init(new OrganizerProxy(m_Organizer, this, plugin))) {
+  IOrganizer* proxy = nullptr;
+  if (m_Organizer) {
+    proxy = new OrganizerProxy(m_Organizer, this, plugin);
+  }
+
+  if (!plugin->init(proxy)) {
     log::warn("proxy plugin failed to initialize");
     return false;
   }

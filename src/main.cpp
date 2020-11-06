@@ -32,10 +32,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "env.h"
 #include "envmodule.h"
 #include "commandline.h"
-
 #include "shared/util.h"
 #include "shared/appconfig.h"
 
+#include <imoinfo.h>
 #include <report.h>
 #include <usvfs.h>
 #include <log.h>
@@ -729,6 +729,10 @@ int main(int argc, char *argv[])
   if (cl.profile()) {
     InstanceManager::instance().overrideProfile(*cl.profile());
   }
+
+  // makes plugin data path available to plugins, see
+  // IOrganizer::getPluginDataPath()
+  MOBase::details::setPluginDataPath(OrganizerCore::pluginDataPath());
 
   for (;;)
   {
