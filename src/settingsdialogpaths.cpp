@@ -64,7 +64,7 @@ void PathsSettingsTab::update()
     std::tie(path, setter, defaultName) = dir;
 
     QString realPath = path;
-    realPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+    realPath = PathSettings::resolve(realPath, ui->baseDirEdit->text());
 
     if (!QDir(realPath).exists()) {
       if (!QDir().mkpath(realPath)) {
@@ -113,7 +113,7 @@ void PathsSettingsTab::on_browseBaseDirBtn_clicked()
 void PathsSettingsTab::on_browseDownloadDirBtn_clicked()
 {
   QString searchPath = ui->downloadDirEdit->text();
-  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+  searchPath = PathSettings::resolve(searchPath, ui->baseDirEdit->text());
 
   QString temp = QFileDialog::getExistingDirectory(&dialog(), QObject::tr("Select download directory"), searchPath);
   if (!temp.isEmpty()) {
@@ -124,7 +124,7 @@ void PathsSettingsTab::on_browseDownloadDirBtn_clicked()
 void PathsSettingsTab::on_browseModDirBtn_clicked()
 {
   QString searchPath = ui->modDirEdit->text();
-  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+  searchPath = PathSettings::resolve(searchPath, ui->baseDirEdit->text());
 
   QString temp = QFileDialog::getExistingDirectory(&dialog(), QObject::tr("Select mod directory"), searchPath);
   if (!temp.isEmpty()) {
@@ -135,7 +135,7 @@ void PathsSettingsTab::on_browseModDirBtn_clicked()
 void PathsSettingsTab::on_browseCacheDirBtn_clicked()
 {
   QString searchPath = ui->cacheDirEdit->text();
-  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+  searchPath = PathSettings::resolve(searchPath, ui->baseDirEdit->text());
 
   QString temp = QFileDialog::getExistingDirectory(&dialog(), QObject::tr("Select cache directory"), searchPath);
   if (!temp.isEmpty()) {
@@ -146,7 +146,7 @@ void PathsSettingsTab::on_browseCacheDirBtn_clicked()
 void PathsSettingsTab::on_browseProfilesDirBtn_clicked()
 {
   QString searchPath = ui->profilesDirEdit->text();
-  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+  searchPath = PathSettings::resolve(searchPath, ui->baseDirEdit->text());
 
   QString temp = QFileDialog::getExistingDirectory(&dialog(), QObject::tr("Select profiles directory"), searchPath);
   if (!temp.isEmpty()) {
@@ -157,7 +157,7 @@ void PathsSettingsTab::on_browseProfilesDirBtn_clicked()
 void PathsSettingsTab::on_browseOverwriteDirBtn_clicked()
 {
   QString searchPath = ui->overwriteDirEdit->text();
-  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+  searchPath = PathSettings::resolve(searchPath, ui->baseDirEdit->text());
 
   QString temp = QFileDialog::getExistingDirectory(&dialog(), QObject::tr("Select overwrite directory"), searchPath);
   if (!temp.isEmpty()) {

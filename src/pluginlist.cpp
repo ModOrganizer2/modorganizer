@@ -801,7 +801,7 @@ bool PluginList::setPriority(const QString& name, int newPriority) {
 
   int rowIndex = findPluginByPriority(oldPriority);
 
-  // We need to increment newPriority if its above the old one, otherwise the 
+  // We need to increment newPriority if its above the old one, otherwise the
   // plugin is place right below the new priority.
   if (oldPriority < newPriority) {
     newPriority += 1;

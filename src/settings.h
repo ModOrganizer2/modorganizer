@@ -169,7 +169,7 @@ public:
 
   // assumes the given widget is a top-level
   //
-  void centerOnMainWindowMonitor(QWidget* w);
+  void centerOnMainWindowMonitor(QWidget* w) const;
 
   // saves the monitor number of the given window
   //
@@ -195,7 +195,7 @@ private:
 class WidgetSettings
 {
 public:
-  WidgetSettings(QSettings& s);
+  WidgetSettings(QSettings& s, bool globalInstance);
 
   // selected index for a combobox
   //
@@ -391,6 +391,9 @@ private:
 class PathSettings
 {
 public:
+  // %BASE_DIR%
+  static const QString BaseDirVariable;
+
   PathSettings(QSettings& settings);
 
   QString base() const;
@@ -417,6 +420,15 @@ public:
   //
   std::map<QString, QString> recent() const;
   void setRecent(const std::map<QString, QString>& map);
+
+
+  // resolves %BASE_DIR%
+  //
+  static QString resolve(const QString& path, const QString& baseDir);
+
+  // returns %BASE_DIR%/dirName
+  //
+  static QString makeDefaultPath(const QString dirName);
 
 private:
   QSettings& m_Settings;
@@ -485,24 +497,6 @@ class NexusSettings
 {
 public:
   NexusSettings(Settings& parent, QSettings& settings);
-
-  // if the key exists from the credentials store, puts it in `apiKey` and
-  // returns true; otherwise, returns false and leaves `apiKey` untouched
-  //
-  bool apiKey(QString& apiKey) const;
-
-  // sets the api key in the credentials store, removes it if empty; returns
-  // false on errors
-  //
-  bool setApiKey(const QString& apiKey);
-
-  // removes the api key from the credentials store; returns false on errors
-  //
-  bool clearApiKey();
-
-  // returns whether an API key is currently stored
-  //
-  bool hasApiKey() const;
 
   // returns whether endorsement integration is enabled
   //
@@ -677,7 +671,7 @@ class Settings : public QObject
   Q_OBJECT;
 
 public:
-  Settings(const QString& path);
+  Settings(const QString& path, bool globalInstance=false);
   ~Settings();
 
   static Settings &instance();
@@ -784,6 +778,10 @@ public:
   //
   QSettings::Status sync() const;
 
+  // last status of the ini file
+  //
+  QSettings::Status iniStatus() const;
+
   void dump() const;
 
 public slots:
@@ -812,6 +810,49 @@ private:
   SteamSettings m_Steam;
   InterfaceSettings m_Interface;
   DiagnosticsSettings m_Diagnostics;
+};
+
+
+// manages global settings in the registry
+//
+class GlobalSettings
+{
+public:
+  // migrates the old settings from the Tannin key to the new one
+  static void updateRegistryKey();
+
+  static QString currentInstance();
+  static void setCurrentInstance(const QString& s);
+
+  static bool hideCreateInstanceIntro();
+  static void setHideCreateInstanceIntro(bool b);
+
+  static bool hideTutorialQuestion();
+  static void setHideTutorialQuestion(bool b);
+
+  // if the key exists from the credentials store, puts it in `apiKey` and
+  // returns true; otherwise, returns false and leaves `apiKey` untouched
+  //
+  static bool nexusApiKey(QString& apiKey);
+
+  // sets the api key in the credentials store, removes it if empty; returns
+  // false on errors
+  //
+  static bool setNexusApiKey(const QString& apiKey);
+
+  // removes the api key from the credentials store; returns false on errors
+  //
+  static bool clearNexusApiKey();
+
+  // returns whether an API key is currently stored
+  //
+  static bool hasNexusApiKey();
+
+  // resets anything that the user can disable
+  static void resetDialogs();
+
+private:
+  static QSettings settings();
 };
 
 

@@ -1,72 +1,96 @@
-/*
-Copyright (C) 2016 Sebastian Herbord. All rights reserved.
-
-This file is part of Mod Organizer.
-
-Mod Organizer is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Mod Organizer is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-
-#pragma once
-
+#ifndef MODORGANIZER_INSTANCEMANAGER_INCLUDED
+#define MODORGANIZER_INSTANCEMANAGER_INCLUDED
 
 #include <QString>
 #include <QSettings>
 
+namespace MOBase { class IPluginGame; }
 
-class InstanceManager {
+class Settings;
+class PluginContainer;
 
+
+class Instance
+{
 public:
+  enum class SetupResults
+  {
+    Ok,
+    BadIni,
+    IniMissingGame,
+    PluginGone,
+    GameGone,
+    MissingVariant
+  };
 
-  static InstanceManager &instance();
+  Instance(QDir dir, bool portable, QString profileName={});
 
-  QString determineDataPath();
-  void clearCurrentInstance();
+  SetupResults setup(PluginContainer& plugins);
+
+  void setGame(const QString& name, const QString& dir);
+  void setVariant(const QString& name);
+
+  QString name() const;
+  QString gameName() const;
+  QString gameDirectory() const;
+  QDir directory() const;
+  MOBase::IPluginGame* gamePlugin() const;
+  QString profileName() const;
+  QString iniPath() const;
+  bool isPortable() const;
+
+private:
+  QDir m_dir;
+  bool m_portable;
+  QString m_gameName, m_gameDir, m_gameVariant;
+  MOBase::IPluginGame* m_plugin;
+  QString m_profile;
+
+  SetupResults getGamePlugin(PluginContainer& plugins);
+  void getProfile(const Settings& s);
+};
+
+
+class InstanceManager
+{
+public:
+  static InstanceManager& singleton();
 
   void overrideInstance(const QString& instanceName);
+  void overrideProfile(const QString& profileName);
 
-  QString currentInstance() const;
+  const MOBase::IPluginGame* gamePluginForDirectory(
+    const QDir& dir, const PluginContainer& plugins) const;
+
+  void clearCurrentInstance();
+  std::optional<Instance> currentInstance() const;
+  void setCurrentInstance(const QString &name);
 
   bool allowedToChangeInstance() const;
   static bool isPortablePath(const QString& dataPath);
+  static QString portablePath();
+  bool portableInstanceExists() const;
 
-private:
-
-  InstanceManager();
-
-  QString instancePath() const;
-
-  QStringList instances() const;
-
-  bool deleteLocalInstance(const QString &instanceId) const;
-
-  QString manageInstances(const QStringList &instanceList) const;
+  QString instancesPath() const;
+  QStringList instanceNames() const;
+  std::vector<QDir> instancePaths() const;
 
   QString sanitizeInstanceName(const QString &name) const;
-  void setCurrentInstance(const QString &name);
+  QString makeUniqueName(const QString& instanceName) const;
+  bool instanceExists(const QString& instanceName) const;
+  bool validInstanceName(const QString& instanceName) const;
+  QString instancePath(const QString& instanceName) const;
+  static QString iniPath(const QDir& instanceDir);
 
-  QString queryInstanceName(const QStringList &instanceList) const;
-  QString chooseInstance(const QStringList &instanceList) const;
-
-  void createDataPath(const QString &dataPath) const;
-  bool portableInstall() const;
+private:
+  InstanceManager();
   bool portableInstallIsLocked() const;
 
 private:
-
-  QSettings m_AppSettings;
-  bool m_Reset {false};
   bool m_overrideInstance{false};
   QString m_overrideInstanceName;
+  bool m_overrideProfile{false};
+  QString m_overrideProfileName;
 };
+
+#endif  // MODORGANIZER_INSTANCEMANAGER_INCLUDED

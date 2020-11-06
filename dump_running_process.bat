@@ -1,2 +1,2 @@
 pushd "%~dp0"
-start ModOrganizer.exe --crashdump
+start ModOrganizer.exe crashdump

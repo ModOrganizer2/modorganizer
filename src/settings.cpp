@@ -61,24 +61,29 @@ QString toString(EndorsementState s)
 
 Settings *Settings::s_Instance = nullptr;
 
-Settings::Settings(const QString& path) :
+Settings::Settings(const QString& path, bool globalInstance) :
   m_Settings(path, QSettings::IniFormat),
-  m_Game(m_Settings), m_Geometry(m_Settings), m_Widgets(m_Settings),
-  m_Colors(m_Settings), m_Plugins(m_Settings), m_Paths(m_Settings),
-  m_Network(m_Settings), m_Nexus(*this, m_Settings), m_Steam(*this, m_Settings),
+  m_Game(m_Settings), m_Geometry(m_Settings),
+  m_Widgets(m_Settings, globalInstance), m_Colors(m_Settings),
+  m_Plugins(m_Settings), m_Paths(m_Settings), m_Network(m_Settings),
+  m_Nexus(*this, m_Settings), m_Steam(*this, m_Settings),
   m_Interface(m_Settings), m_Diagnostics(m_Settings)
 {
-  if (s_Instance != nullptr) {
-    throw std::runtime_error("second instance of \"Settings\" created");
-  } else {
-    s_Instance = this;
+  if (globalInstance) {
+    if (s_Instance != nullptr) {
+      throw std::runtime_error("second instance of \"Settings\" created");
+    } else {
+      s_Instance = this;
+    }
   }
 }
 
 Settings::~Settings()
 {
-  MOBase::QuestionBoxMemory::setCallbacks({}, {}, {});
-  s_Instance = nullptr;
+  if (s_Instance == this) {
+    MOBase::QuestionBoxMemory::setCallbacks({}, {}, {});
+    s_Instance = nullptr;
+  }
 }
 
 Settings &Settings::instance()
@@ -457,6 +462,11 @@ const DiagnosticsSettings& Settings::diagnostics() const
 QSettings::Status Settings::sync() const
 {
   m_Settings.sync();
+  return m_Settings.status();
+}
+
+QSettings::Status Settings::iniStatus() const
+{
   return m_Settings.status();
 }
 
@@ -876,7 +886,7 @@ void GeometrySettings::setCenterDialogs(bool b)
   set(m_Settings, "Settings", "center_dialogs", b);
 }
 
-void GeometrySettings::centerOnMainWindowMonitor(QWidget* w)
+void GeometrySettings::centerOnMainWindowMonitor(QWidget* w) const
 {
   const auto monitor = getOptional<int>(
     m_Settings, "Geometry", "MainWindow_monitor").value_or(-1);
@@ -1004,13 +1014,15 @@ void GeometrySettings::restoreDocks(QMainWindow* mw) const
 }
 
 
-WidgetSettings::WidgetSettings(QSettings& s)
+WidgetSettings::WidgetSettings(QSettings& s, bool globalInstance)
   : m_Settings(s)
 {
-  MOBase::QuestionBoxMemory::setCallbacks(
-    [this](auto&& w, auto&& f){ return questionButton(w, f); },
-    [this](auto&& w, auto&& b){ setQuestionWindowButton(w, b); },
-    [this](auto&& w, auto&& f, auto&& b){ setQuestionFileButton(w, f, b); });
+  if (globalInstance) {
+    MOBase::QuestionBoxMemory::setCallbacks(
+      [this](auto&& w, auto&& f){ return questionButton(w, f); },
+      [this](auto&& w, auto&& b){ setQuestionWindowButton(w, b); },
+      [this](auto&& w, auto&& f, auto&& b){ setQuestionFileButton(w, f, b); });
+  }
 }
 
 std::optional<int> WidgetSettings::index(const QComboBox* cb) const
@@ -1457,6 +1469,8 @@ QSet<QString> PluginSettings::readBlacklist() const
 }
 
 
+const QString PathSettings::BaseDirVariable = "%BASE_DIR%";
+
 PathSettings::PathSettings(QSettings& settings)
   : m_Settings(settings)
 {
@@ -1504,10 +1518,10 @@ QString PathSettings::getConfigurablePath(const QString &key,
   bool resolve) const
 {
   QString result = QDir::fromNativeSeparators(
-    get<QString>(m_Settings, "Settings", key, QString("%BASE_DIR%/") + def));
+    get<QString>(m_Settings, "Settings", key, makeDefaultPath(def)));
 
   if (resolve) {
-    result.replace("%BASE_DIR%", base());
+    result = PathSettings::resolve(result, base());
   }
 
   return result;
@@ -1522,10 +1536,24 @@ void PathSettings::setConfigurablePath(const QString &key, const QString& path)
   }
 }
 
+QString PathSettings::resolve(const QString& path, const QString& baseDir)
+{
+  QString s = path;
+  s.replace(BaseDirVariable, baseDir);
+  return s;
+}
+
+QString PathSettings::makeDefaultPath(const QString dirName)
+{
+  return BaseDirVariable + "/" + dirName;
+}
+
 QString PathSettings::base() const
 {
+  const QString dataPath = QFileInfo(m_Settings.fileName()).dir().path();
+
   return QDir::fromNativeSeparators(get<QString>(m_Settings,
-    "Settings", "base_directory", qApp->property("dataPath").toString()));
+    "Settings", "base_directory", dataPath));
 }
 
 QString PathSettings::downloads(bool resolve) const
@@ -1787,37 +1815,6 @@ void NetworkSettings::dump() const
 NexusSettings::NexusSettings(Settings& parent, QSettings& settings)
   : m_Parent(parent), m_Settings(settings)
 {
-}
-
-bool NexusSettings::apiKey(QString& apiKey) const
-{
-  QString tempKey = getWindowsCredential("APIKEY");
-  if (tempKey.isEmpty())
-    return false;
-
-  apiKey = tempKey;
-  return true;
-}
-
-bool NexusSettings::setApiKey(const QString& apiKey)
-{
-  if (!setWindowsCredential("APIKEY", apiKey)) {
-    const auto e = GetLastError();
-    log::error("Storing API key failed: {}", formatSystemMessage(e));
-    return false;
-  }
-
-  return true;
-}
-
-bool NexusSettings::clearApiKey()
-{
-  return setApiKey("");
-}
-
-bool NexusSettings::hasApiKey() const
-{
-  return !getWindowsCredential("APIKEY").isEmpty();
 }
 
 bool NexusSettings::endorsementIntegration() const
@@ -2143,4 +2140,97 @@ std::chrono::seconds DiagnosticsSettings::spawnDelay() const
 void DiagnosticsSettings::setSpawnDelay(std::chrono::seconds t)
 {
   set(m_Settings, "Settings", "spawn_delay", t.count());
+}
+
+
+void GlobalSettings::updateRegistryKey()
+{
+  const QString OldOrganization = "Tannin";
+  const QString OldApplication = "Mod Organizer";
+  const QString OldInstanceValue = "CurrentInstance";
+
+  const QString OldRootKey = "Software\\" + OldOrganization;
+
+  if (env::registryValueExists(OldRootKey + "\\" + OldApplication, OldInstanceValue)) {
+    QSettings old(OldOrganization, OldApplication);
+    setCurrentInstance(old.value(OldInstanceValue).toString());
+    old.remove(OldInstanceValue);
+  }
+
+  env::deleteRegistryKeyIfEmpty(OldRootKey);
+}
+
+QString GlobalSettings::currentInstance()
+{
+  return settings().value("CurrentInstance", "").toString();
+}
+
+void GlobalSettings::setCurrentInstance(const QString& s)
+{
+  settings().setValue("CurrentInstance", s);
+}
+
+QSettings GlobalSettings::settings()
+{
+  const QString Organization = "Mod Organizer Team";
+  const QString Application = "Mod Organizer";
+
+  return QSettings(Organization, Application);
+}
+
+bool GlobalSettings::hideCreateInstanceIntro()
+{
+  return settings().value("HideCreateInstanceIntro", false).toBool();
+}
+
+void GlobalSettings::setHideCreateInstanceIntro(bool b)
+{
+  settings().setValue("HideCreateInstanceIntro", b);
+}
+
+bool GlobalSettings::hideTutorialQuestion()
+{
+  return settings().value("HideTutorialQuestion", false).toBool();
+}
+
+void GlobalSettings::setHideTutorialQuestion(bool b)
+{
+  settings().setValue("HideTutorialQuestion", b);
+}
+
+bool GlobalSettings::nexusApiKey(QString& apiKey)
+{
+  QString tempKey = getWindowsCredential("APIKEY");
+  if (tempKey.isEmpty())
+    return false;
+
+  apiKey = tempKey;
+  return true;
+}
+
+bool GlobalSettings::setNexusApiKey(const QString& apiKey)
+{
+  if (!setWindowsCredential("APIKEY", apiKey)) {
+    const auto e = GetLastError();
+    log::error("Storing API key failed: {}", formatSystemMessage(e));
+    return false;
+  }
+
+  return true;
+}
+
+bool GlobalSettings::clearNexusApiKey()
+{
+  return setNexusApiKey("");
+}
+
+bool GlobalSettings::hasNexusApiKey()
+{
+  return !getWindowsCredential("APIKEY").isEmpty();
+}
+
+void GlobalSettings::resetDialogs()
+{
+  setHideCreateInstanceIntro(false);
+  setHideTutorialQuestion(false);
 }

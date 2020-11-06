@@ -311,21 +311,21 @@ void ModInfoWithConflictInfo::diskContentModified() {
 void ModInfoWithConflictInfo::prefetch() {
   // Populating the tree to 1-depth (IFileTree is lazy, so size() forces the
   // tree to populate the first level):
-  contentFileTree()->size();
+  fileTree()->size();
 }
 
 bool ModInfoWithConflictInfo::doIsValid() const {
   auto mdc = m_GamePlugin->feature<ModDataChecker>();
 
   if (mdc) {
-    auto qdirfiletree = contentFileTree();
+    auto qdirfiletree = fileTree();
     return mdc->dataLooksValid(qdirfiletree) == ModDataChecker::CheckReturn::VALID;
   }
 
   return true;
 }
 
-std::shared_ptr<const IFileTree> ModInfoWithConflictInfo::contentFileTree() const {
+std::shared_ptr<const IFileTree> ModInfoWithConflictInfo::fileTree() const {
   return m_FileTree.value();
 }
 

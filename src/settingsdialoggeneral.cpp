@@ -177,6 +177,7 @@ void GeneralSettingsTab::selectStyle()
 void GeneralSettingsTab::resetDialogs()
 {
   settings().widgets().resetQuestionButtons();
+  GlobalSettings::resetDialogs();
 }
 
 void GeneralSettingsTab::onExploreStyles()

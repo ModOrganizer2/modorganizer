@@ -76,6 +76,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "statusbar.h"
 #include "filterlist.h"
 #include "datatab.h"
+#include "instancemanagerdialog.h"
 #include <utility.h>
 #include <dataarchives.h>
 #include <bsainvalidation.h>
@@ -168,7 +169,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef Q_MOC_RUN
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/assign.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 #endif
@@ -291,7 +292,7 @@ MainWindow::MainWindow(Settings &settings
   ui->statusBar->setup(ui, settings);
 
   {
-    auto* ni = NexusInterface::instance(&m_PluginContainer);
+    auto& ni = NexusInterface::instance();
 
     // there are two ways to get here:
     //  1) the user just started MO, and
@@ -311,8 +312,8 @@ MainWindow::MainWindow(Settings &settings
     //
     // in the rare case where the user restarts MO through the settings, this
     // will correctly pick up the previous values
-    updateWindowTitle(ni->getAPIUserAccount());
-    ui->statusBar->setAPI(ni->getAPIStats(), ni->getAPIUserAccount());
+    updateWindowTitle(ni.getAPIUserAccount());
+    ui->statusBar->setAPI(ni.getAPIStats(), ni.getAPIUserAccount());
   }
 
   m_Filters.reset(new FilterList(ui, &m_OrganizerCore, m_CategoryFactory));
@@ -439,24 +440,24 @@ MainWindow::MainWindow(Settings &settings
   connect(m_OrganizerCore.updater(), SIGNAL(updateAvailable()), this, SLOT(updateAvailable()));
   connect(m_OrganizerCore.updater(), SIGNAL(motdAvailable(QString)), this, SLOT(motdReceived(QString)));
 
-  connect(NexusInterface::instance(&pluginContainer), SIGNAL(requestNXMDownload(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
-  connect(NexusInterface::instance(&pluginContainer), SIGNAL(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(QString,int,int,QVariant,QVariant,int)));
-  connect(NexusInterface::instance(&pluginContainer), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusApi()));
+  connect(&NexusInterface::instance(), SIGNAL(requestNXMDownload(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
+  connect(&NexusInterface::instance(), SIGNAL(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(QString,int,int,QVariant,QVariant,int)));
+  connect(&NexusInterface::instance(), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusApi()));
 
   connect(
-    NexusInterface::instance(&pluginContainer)->getAccessManager(),
+    NexusInterface::instance().getAccessManager(),
     SIGNAL(credentialsReceived(const APIUserAccount&)),
     this,
     SLOT(updateWindowTitle(const APIUserAccount&)));
 
   connect(
-    NexusInterface::instance(&pluginContainer)->getAccessManager(),
+    NexusInterface::instance().getAccessManager(),
     SIGNAL(credentialsReceived(const APIUserAccount&)),
-    NexusInterface::instance(&m_PluginContainer),
+    &NexusInterface::instance(),
     SLOT(setUserAccount(const APIUserAccount&)));
 
   connect(
-    NexusInterface::instance(&pluginContainer),
+    &NexusInterface::instance(),
     SIGNAL(requestsChanged(const APIStats&, const APIUserAccount&)),
     this,
     SLOT(onRequestsChanged(const APIStats&, const APIUserAccount&)));
@@ -836,7 +837,7 @@ void MainWindow::setupToolbar()
     log::warn("no separator found on the toolbar, icons won't be right-aligned");
   }
 
-  if (!InstanceManager::instance().allowedToChangeInstance()) {
+  if (!InstanceManager::singleton().allowedToChangeInstance()) {
     ui->actionChange_Game->setVisible(false);
   }
 }
@@ -1334,6 +1335,30 @@ void MainWindow::hookUpWindowTutorials()
   }
 }
 
+bool MainWindow::shouldStartTutorial() const
+{
+  if (GlobalSettings::hideTutorialQuestion()) {
+    return false;
+  }
+
+  QMessageBox dlg(
+    QMessageBox::Question, tr("Show tutorial?"),
+    tr("You are starting Mod Organizer for the first time. "
+      "Do you want to show a tutorial of its basic features? If you choose "
+      "no you can always start the tutorial from the \"Help\"-menu."),
+    QMessageBox::Yes | QMessageBox::No);
+
+  dlg.setCheckBox(new QCheckBox(tr("Never ask to show tutorials")));
+
+  const auto r = dlg.exec();
+
+  if (dlg.checkBox()->isChecked()) {
+    GlobalSettings::setHideTutorialQuestion(true);
+  }
+
+  return (r == QMessageBox::Yes);
+}
+
 void MainWindow::showEvent(QShowEvent *event)
 {
   QMainWindow::showEvent(event);
@@ -1360,11 +1385,7 @@ void MainWindow::showEvent(QShowEvent *event)
     if (m_OrganizerCore.settings().firstStart()) {
       QString firstStepsTutorial = ToQString(AppConfig::firstStepsTutorial());
       if (TutorialManager::instance().hasTutorial(firstStepsTutorial)) {
-        if (QMessageBox::question(this, tr("Show tutorial?"),
-                                  tr("You are starting Mod Organizer for the first time. "
-                                     "Do you want to show a tutorial of its basic features? If you choose "
-                                     "no you can always start the tutorial from the \"Help\"-menu."),
-                                  QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+        if (shouldStartTutorial()) {
           TutorialManager::instance().activateTutorial("MainWindow", firstStepsTutorial);
         }
       } else {
@@ -1891,9 +1912,9 @@ QDir MainWindow::currentSavesDir() const
 
     wchar_t path[MAX_PATH];
     if (::GetPrivateProfileStringW(
-      L"General", L"SLocalSavePath", L"",
-      path, MAX_PATH,
-      iniPath.toStdWString().c_str()
+          L"General", L"SLocalSavePath", L"",
+          path, MAX_PATH,
+          iniPath.toStdWString().c_str()
     )) {
       savesDir.setPath(m_OrganizerCore.managedGame()->documentsDirectory().absoluteFilePath(QString::fromWCharArray(path)));
     }
@@ -1941,8 +1962,8 @@ void MainWindow::refreshSaveList()
     it.next();
     files.append(it.fileInfo());
   }
-  std::sort(files.begin(), files.end(), [](auto const& lhs, auto const& rhs) { 
-    return lhs.fileTime(QFileDevice::FileModificationTime) < rhs.fileTime(QFileDevice::FileModificationTime); 
+  std::sort(files.begin(), files.end(), [](auto const& lhs, auto const& rhs) {
+    return lhs.fileTime(QFileDevice::FileModificationTime) < rhs.fileTime(QFileDevice::FileModificationTime);
   });
 
   for (const QFileInfo &file : files) {
@@ -3268,7 +3289,7 @@ void MainWindow::visitOnNexus_clicked()
       int modID = info->nexusId();
       gameName = info->gameName();
       if (modID > 0)  {
-        linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
+        linkClicked(NexusInterface::instance().getModURL(modID, gameName));
       } else {
         log::error("mod '{}' has no nexus id", info->name());
       }
@@ -3278,7 +3299,7 @@ void MainWindow::visitOnNexus_clicked()
     int modID = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole).toInt();
     QString gameName = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole + 4).toString();
     if (modID > 0)  {
-      linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
+      linkClicked(NexusInterface::instance().getModURL(modID, gameName));
     } else {
       MessageDialog::showMessage(tr("Nexus ID for this mod is unknown"), this);
     }
@@ -3335,7 +3356,7 @@ void MainWindow::visitNexusOrWebPage(const QModelIndex& idx)
   const auto url = info->parseCustomURL();
 
   if (modID > 0) {
-    linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
+    linkClicked(NexusInterface::instance().getModURL(modID, gameName));
   } else if (url.isValid()) {
     linkClicked(url.toString());
   } else {
@@ -4200,15 +4221,15 @@ void MainWindow::saveArchiveList()
 void MainWindow::checkModsForUpdates()
 {
   bool checkingModsForUpdate = false;
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
+  if (NexusInterface::instance().getAccessManager()->validated()) {
     checkingModsForUpdate = ModInfo::checkAllForUpdate(&m_PluginContainer, this);
-    NexusInterface::instance(&m_PluginContainer)->requestEndorsementInfo(this, QVariant(), QString());
-    NexusInterface::instance(&m_PluginContainer)->requestTrackingInfo(this, QVariant(), QString());
+    NexusInterface::instance().requestEndorsementInfo(this, QVariant(), QString());
+    NexusInterface::instance().requestTrackingInfo(this, QVariant(), QString());
   } else {
     QString apiKey;
-    if (m_OrganizerCore.settings().nexus().apiKey(apiKey)) {
+    if (GlobalSettings::nexusApiKey(apiKey)) {
       m_OrganizerCore.doAfterLogin([this] () { this->checkModsForUpdates(); });
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
+      NexusInterface::instance().getAccessManager()->apiCheck(apiKey);
     } else {
       log::warn("{}", tr("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus."));
     }
@@ -4583,7 +4604,7 @@ void MainWindow::exportModListCSV()
 					if (nexus_ID->isChecked())
 						builder.setRowField("#Nexus_ID", info->nexusId());
 					if (mod_Nexus_URL->isChecked())
-						builder.setRowField("#Mod_Nexus_URL",(info->nexusId()>0)? NexusInterface::instance(&m_PluginContainer)->getModURL(info->nexusId(), info->gameName()) : "");
+						builder.setRowField("#Mod_Nexus_URL",(info->nexusId()>0)? NexusInterface::instance().getModURL(info->nexusId(), info->gameName()) : "");
 					if (mod_Version->isChecked())
 						builder.setRowField("#Mod_Version", info->version().canonicalString());
 					if (install_Date->isChecked())
@@ -5137,7 +5158,7 @@ void MainWindow::on_actionSettings_triggered()
   }
 
   if (settings.paths().cache() != oldCacheDirectory) {
-    NexusInterface::instance(&m_PluginContainer)->setCacheDirectory(
+    NexusInterface::instance().setCacheDirectory(
       settings.paths().cache());
   }
 
@@ -5171,7 +5192,7 @@ void MainWindow::on_actionNexus_triggered()
   QString gameName = game->gameShortName();
   if (game->gameNexusName().isEmpty() && game->primarySources().count())
     gameName = game->primarySources()[0];
-  QDesktopServices::openUrl(QUrl(NexusInterface::instance(&m_PluginContainer)->getGameURL(gameName)));
+  QDesktopServices::openUrl(QUrl(NexusInterface::instance().getGameURL(gameName)));
 }
 
 
@@ -5330,9 +5351,9 @@ void MainWindow::actionEndorseMO()
 
   if (QMessageBox::question(this, tr("Endorse Mod Organizer"),
                             tr("Do you want to endorse Mod Organizer on %1 now?").arg(
-                                      NexusInterface::instance(&m_PluginContainer)->getGameURL(game->gameShortName())),
+                                      NexusInterface::instance().getGameURL(game->gameShortName())),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    NexusInterface::instance(&m_PluginContainer)->requestToggleEndorsement(
+    NexusInterface::instance().requestToggleEndorsement(
       game->gameShortName(), game->nexusModOrganizerID(), m_OrganizerCore.getVersion().canonicalString(), true, this, QVariant(), QString());
   }
 }
@@ -5346,9 +5367,9 @@ void MainWindow::actionWontEndorseMO()
   if (QMessageBox::question(this, tr("Abstain from Endorsing Mod Organizer"),
     tr("Are you sure you want to abstain from endorsing Mod Organizer 2?\n"
       "You will have to visit the mod page on the %1 Nexus site to change your mind.").arg(
-      NexusInterface::instance(&m_PluginContainer)->getGameURL(game->gameShortName())),
+      NexusInterface::instance().getGameURL(game->gameShortName())),
     QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    NexusInterface::instance(&m_PluginContainer)->requestToggleEndorsement(
+    NexusInterface::instance().requestToggleEndorsement(
       game->gameShortName(), game->nexusModOrganizerID(), m_OrganizerCore.getVersion().canonicalString(), false, this, QVariant(), QString());
   }
 }
@@ -5410,13 +5431,13 @@ void MainWindow::updateDownloadView()
 
 void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
 {
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
-    ModInfo::manualUpdateCheck(&m_PluginContainer, this, IDs);
+  if (NexusInterface::instance().getAccessManager()->validated()) {
+    ModInfo::manualUpdateCheck(this, IDs);
   } else {
     QString apiKey;
-    if (m_OrganizerCore.settings().nexus().apiKey(apiKey)) {
+    if (GlobalSettings::nexusApiKey(apiKey)) {
       m_OrganizerCore.doAfterLogin([=]() { this->modUpdateCheck(IDs); });
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
+      NexusInterface::instance().getAccessManager()->apiCheck(apiKey);
     } else
       log::warn("{}", tr("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus."));
   }
@@ -5549,7 +5570,7 @@ void MainWindow::nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVa
 void MainWindow::finishUpdateInfo()
 {
   QFutureWatcher<std::pair<QString, std::set<QSharedPointer<ModInfo>>>> *watcher = static_cast<QFutureWatcher<std::pair<QString, std::set<QSharedPointer<ModInfo>>>> *>(sender());
-  
+
   QString game = watcher->result().first;
   auto finalMods = watcher->result().second;
 
@@ -5568,7 +5589,7 @@ void MainWindow::finishUpdateInfo()
     log::warn("{}", tr("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests."));
 
   for (auto game : organizedGames)
-    NexusInterface::instance(&m_PluginContainer)->requestUpdates(game.second, this, QVariant(), game.first, QString());
+    NexusInterface::instance().requestUpdates(game.second, this, QVariant(), game.first, QString());
 
   disconnect(sender());
   delete sender();
@@ -5655,7 +5676,7 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
   }
 
   if (requiresInfo)
-    NexusInterface::instance(&m_PluginContainer)->requestModInfo(gameNameReal, modID, this, QVariant(), QString());
+    NexusInterface::instance().requestModInfo(gameNameReal, modID, this, QVariant(), QString());
 }
 
 void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
@@ -5883,6 +5904,8 @@ bool MainWindow::extractProgress(QProgressDialog &progress, int percentage, std:
 
 void MainWindow::extractBSATriggered()
 {
+  using namespace boost::placeholders;
+
   QTreeWidgetItem *item = m_ContextItem;
   QString origin;
 
@@ -5954,18 +5977,8 @@ void MainWindow::on_actionNotifications_triggered()
 
 void MainWindow::on_actionChange_Game_triggered()
 {
-  if (m_OrganizerCore.settings().interface().showChangeGameConfirmation()) {
-    const auto r = QMessageBox::question(
-      this, tr("Are you sure?"), tr("This will restart MO, continue?"),
-      QMessageBox::Yes | QMessageBox::Cancel);
-
-    if (r != QMessageBox::Yes) {
-      return;
-    }
-  }
-
-  InstanceManager::instance().clearCurrentInstance();
-  ExitModOrganizer(Exit::Restart);
+  InstanceManagerDialog dlg(m_PluginContainer, this);
+  dlg.exec();
 }
 
 void MainWindow::setCategoryListVisible(bool visible)

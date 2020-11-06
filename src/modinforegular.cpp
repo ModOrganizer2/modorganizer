@@ -682,7 +682,7 @@ std::set<int> ModInfoRegular::doGetContents() const
   ModDataContent* contentFeature = m_GamePlugin->feature<ModDataContent>();
 
   if (contentFeature) {
-    auto result = contentFeature->getContentsFor(contentFileTree());
+    auto result = contentFeature->getContentsFor(fileTree());
     return std::set<int>(std::begin(result), std::end(result));
   }
 

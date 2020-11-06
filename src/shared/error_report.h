@@ -17,16 +17,20 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
+#ifndef MODORGANIZER_SHARED_ERROR_REPORT_INCLUDED
+#define MODORGANIZER_SHARED_ERROR_REPORT_INCLUDED
 
 #include <tchar.h>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <string>
 
-namespace MOShared {
+namespace MOShared
+{
 
 void reportError(LPCSTR format, ...);
 void reportError(LPCWSTR format, ...);
 
 } // namespace MOShared
+
+#endif  // MODORGANIZER_SHARED_ERROR_REPORT_INCLUDED

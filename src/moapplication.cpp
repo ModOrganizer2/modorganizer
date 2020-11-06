@@ -24,16 +24,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "shared/appconfig.h"
 #include <QFile>
 #include <QStringList>
-#if QT_VERSION < QT_VERSION_CHECK(5,0,0)
-#include <QPlastiqueStyle>
-#include <QCleanlooksStyle>
-#endif
 #include <QProxyStyle>
 #include <QStyleFactory>
 #include <QPainter>
 #include <QStyleOption>
-
-
 #include <QDebug>
 
 
@@ -77,7 +71,7 @@ public:
 };
 
 
-MOApplication::MOApplication(int &argc, char **argv)
+MOApplication::MOApplication(int& argc, char** argv)
   : QApplication(argc, argv)
 {
   connect(&m_StyleWatcher, &QFileSystemWatcher::fileChanged, [&](auto&& file){
@@ -89,8 +83,13 @@ MOApplication::MOApplication(int &argc, char **argv)
   setStyle(new ProxyStyle(style()));
 }
 
+MOApplication MOApplication::create(int& argc, char** argv)
+{
+  QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+  return MOApplication(argc, argv);
+}
 
-bool MOApplication::setStyleFile(const QString &styleName)
+bool MOApplication::setStyleFile(const QString& styleName)
 {
   // remove all files from watch
   QStringList currentWatch = m_StyleWatcher.files();
@@ -114,7 +113,7 @@ bool MOApplication::setStyleFile(const QString &styleName)
 }
 
 
-bool MOApplication::notify(QObject *receiver, QEvent *event)
+bool MOApplication::notify(QObject* receiver, QEvent* event)
 {
   try {
     return QApplication::notify(receiver, event);
@@ -134,7 +133,7 @@ bool MOApplication::notify(QObject *receiver, QEvent *event)
 }
 
 
-void MOApplication::updateStyle(const QString &fileName)
+void MOApplication::updateStyle(const QString& fileName)
 {
   if (QStyleFactory::keys().contains(fileName)) {
     setStyle(QStyleFactory::create(fileName));

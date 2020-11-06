@@ -190,8 +190,7 @@ public: // Static functions:
    * @brief Run a limited batch of mod update checks for "newest version" information.
    *
    */
-  static void manualUpdateCheck(
-    PluginContainer *pluginContainer, QObject *receiver, std::multimap<QString, int> IDs);
+  static void manualUpdateCheck(QObject *receiver, std::multimap<QString, int> IDs);
 
   /**
    * @brief Query nexus information for every mod and update the "newest version" information.
@@ -367,6 +366,17 @@ public: // IModInterface implementations / Re-declaration
    * @return the endorsement state of this mod.
    */
   virtual MOBase::EndorsedState endorsedState() const override { return MOBase::EndorsedState::ENDORSED_NEVER; }
+
+  /**
+   * @brief Retrieve a file tree corresponding to the underlying disk content
+   *     of this mod.
+   *
+   * The file tree should not be cached since it is already cached and updated when
+   * required.
+   *
+   * @return a file tree representing the content of this mod.
+   */
+  virtual std::shared_ptr<const MOBase::IFileTree> fileTree() const = 0;
 
 public: // Mutable operations:
 

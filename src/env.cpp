@@ -16,9 +16,15 @@ using namespace MOBase;
 Console::Console()
   : m_hasConsole(false), m_in(nullptr), m_out(nullptr), m_err(nullptr)
 {
-  // open a console
-  if (!AllocConsole()) {
-    // failed, ignore
+  // try to attach to parent
+  if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
+    if (GetLastError() != ERROR_ACCESS_DENIED) {
+      // parent has no console, create one
+      if (!AllocConsole()) {
+        // failed, ignore
+        return;
+      }
+    }
   }
 
   m_hasConsole = true;
@@ -394,18 +400,18 @@ QString path()
   return get("PATH");
 }
 
+QString appendToPath(const QString& s)
+{
+  auto old = path();
+  set("PATH", old + ";" + s);
+  return old;
+}
+
 QString prependToPath(const QString& s)
 {
   auto old = path();
   set("PATH", s + ";" + old);
   return old;
-}
-
-QString addPath(const QString& s)
-{
-  auto old = path();
-  set("PATH", get("PATH") + ";" + s);
- return old;
 }
 
 QString setPath(const QString& s)
@@ -840,6 +846,166 @@ Association getAssociation(const QFileInfo& targetInfo)
 }
 
 
+struct RegistryKeyCloser
+{
+  using pointer = HKEY;
+
+  void operator()(HKEY key)
+  {
+    if (key != 0) {
+      ::RegCloseKey(key);
+    }
+  }
+};
+
+using RegistryKeyPtr = std::unique_ptr<HKEY, RegistryKeyCloser>;
+
+RegistryKeyPtr openRegistryKey(HKEY parent, const wchar_t* name)
+{
+  HKEY subkey = 0;
+
+  auto r = ::RegOpenKeyExW(
+    parent, name,
+    0, KEY_SET_VALUE|KEY_ENUMERATE_SUB_KEYS|KEY_QUERY_VALUE,
+    &subkey);
+
+  if (r != ERROR_SUCCESS) {
+    return {};
+  }
+
+  return RegistryKeyPtr(subkey);
+}
+
+bool keyHasValues(HKEY key)
+{
+  auto name = std::make_unique<wchar_t[]>(1000 + 1);
+  DWORD nameSize = 1000;
+
+  // note that RegEnumValueW() also enumerates the default value if it exists
+  auto r = ::RegEnumValueW(
+    key, 0, name.get(), &nameSize, nullptr, nullptr, nullptr, nullptr);
+
+  if (r != ERROR_NO_MORE_ITEMS) {
+    return true;
+  }
+
+  // no values, no default, it's empty
+  return false;
+}
+
+bool forEachSubKey(HKEY key, std::function<bool (const wchar_t* name)> f)
+{
+  auto name = std::make_unique<wchar_t[]>(1000 + 1);
+  DWORD nameSize = 1000;
+
+  DWORD i = 0;
+
+  // something would be really wrong if it had more than 100 keys
+  while (i < 100)
+  {
+    auto r = ::RegEnumKeyExW(
+      key, i, name.get(), &nameSize, nullptr, nullptr, nullptr, nullptr);
+
+    if (r == ERROR_NO_MORE_ITEMS) {
+      // no more subkeys
+      break;
+    }
+
+    if (r == ERROR_SUCCESS) {
+      // a subkey exists
+      auto subkey = openRegistryKey(key, name.get());
+
+      if (!subkey) {
+        // can't open it, stop
+        return false;
+      }
+
+      // fire callback
+      if (!f(name.get())) {
+        return false;
+      }
+    } else {
+      // something went wrong, stop
+      return false;
+    }
+
+    ++i;
+  }
+
+  return true;
+}
+
+bool isKeyEmpty(HKEY key)
+{
+  // check for any values
+  if (keyHasValues(key)) {
+    return false;
+  }
+
+  auto r = forEachSubKey(key, [&](const wchar_t* name) {
+    // a subkey exists, recursively check if it's empty
+    auto subkey = openRegistryKey(key, name);
+
+    if (!subkey) {
+      // can't open, stop
+      return false;
+    }
+
+    if (!isKeyEmpty(subkey.get())) {
+      // not empty, stop
+      return false;
+    }
+
+    // empty, go on
+    return true;
+  });
+
+  if (!r) {
+    // something went wrong or some subkey has values
+    return false;
+  }
+
+  // key has no values and has either no subkeys or all subkeys are empty
+  return true;
+}
+
+void deleteRegistryKeyIfEmpty(const QString& name)
+{
+  if (name.isEmpty()) {
+    return;
+  }
+
+  auto key = openRegistryKey(HKEY_CURRENT_USER, name.toStdWString().c_str());
+  if (!key) {
+    return;
+  }
+
+  if (!isKeyEmpty(key.get())) {
+    return;
+  }
+
+  ::RegDeleteTreeW(HKEY_CURRENT_USER, name.toStdWString().c_str());
+}
+
+bool registryValueExists(const QString& keyName, const QString& valueName)
+{
+  auto key = openRegistryKey(
+    HKEY_CURRENT_USER, keyName.toStdWString().c_str());
+
+  if (!key) {
+    return false;
+  }
+
+  DWORD type = 0;
+
+  auto r = ::RegQueryValueExW(
+    key.get(), valueName.toStdWString().c_str(),
+    nullptr, &type, nullptr, nullptr);
+
+  return (r == ERROR_SUCCESS);
+}
+
+
 // returns the filename of the given process or the current one
 //
 std::wstring processFilename(HANDLE process=INVALID_HANDLE_VALUE)
@@ -1038,6 +1204,36 @@ HandlePtr dumpFile()
 
   return {};
 }
+
+
+CoreDumpTypes coreDumpTypeFromString(const std::string& s)
+{
+  if (s == "data")
+    return env::CoreDumpTypes::Data;
+  else if (s == "full")
+    return env::CoreDumpTypes::Full;
+  else
+    return env::CoreDumpTypes::Mini;
+}
+
+std::string toString(CoreDumpTypes type)
+{
+  switch (type)
+  {
+    case CoreDumpTypes::Mini:
+      return "mini";
+
+    case CoreDumpTypes::Data:
+      return "data";
+
+    case CoreDumpTypes::Full:
+      return "full";
+
+    default:
+      return "?";
+  }
+}
+
 
 bool createMiniDump(HANDLE process, CoreDumpTypes type)
 {
