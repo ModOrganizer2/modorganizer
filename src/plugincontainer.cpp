@@ -239,8 +239,6 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
     if (m_Organizer) {
       m_Organizer->settings().plugins().registerPlugin(pluginObj);
     }
-
-    pluginObj->registered();
   }
 
   { // diagnosis plugin
@@ -269,6 +267,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
     IPluginGame *game = qobject_cast<IPluginGame*>(plugin);
     if (initPlugin(game)) {
       bf::at_key<IPluginGame>(m_Plugins).push_back(game);
+      game->detectGame();
       registerGame(game);
       return true;
     }
