@@ -13,6 +13,12 @@ using namespace MOBase;
 
 class Failed {};
 
+// create() will create all the directories in `target`; if any path component
+// fails to create, it will throw Failed
+//
+// unless commit() is called, all the created directories will be deleted in
+// the destructor
+//
 class DirectoryCreator
 {
 public:
@@ -39,6 +45,7 @@ public:
   {
     try
     {
+      // delete each directory starting from the end
       for (auto itor=m_created.rbegin(); itor!=m_created.rend(); ++itor) {
         const auto r = shell::DeleteDirectoryRecursive(*itor);
         if (!r) {
@@ -62,6 +69,7 @@ private:
   {
     try
     {
+      // split on separators
       const QString s = QDir::toNativeSeparators(target.absolutePath());
       const QStringList cs = s.split("\\");
 
@@ -69,8 +77,10 @@ private:
         return;
       }
 
+      // root directory
       QDir d(cs[0]);
 
+      // for each directory after the root
       for (int i=1; i<cs.size(); ++i) {
         d = d.filePath(cs[i]);
 
