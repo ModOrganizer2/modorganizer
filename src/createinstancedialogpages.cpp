@@ -101,7 +101,7 @@ QString Page::selectedGameLocation() const
   return {};
 }
 
-QString Page::selectedGameVariant() const
+QString Page::selectedGameVariant(MOBase::IPluginGame*) const
 {
   // no-op
   return {};
@@ -246,6 +246,12 @@ void GamePage::select(IPluginGame* game, const QString& dir)
           checked = nullptr;
         } else {
           checked = checkInstallation(path, checked);
+
+          if (checked) {
+            // remember this path
+            checked->dir = path;
+            checked->installed = true;
+          }
         }
       } else {
        checked->dir = dir;
@@ -255,7 +261,9 @@ void GamePage::select(IPluginGame* game, const QString& dir)
   }
 
   m_selection = checked;
+
   selectButton(checked);
+  updateButton(checked);
   updateNavigation();
 
   if (checked) {
@@ -611,7 +619,7 @@ bool VariantsPage::ready() const
 
 bool VariantsPage::doSkip() const
 {
-  auto* g = m_dlg.game();
+  auto* g = m_dlg.rawCreationInfo().game;
   if (!g) {
     // shouldn't happen
     return true;
@@ -623,7 +631,7 @@ bool VariantsPage::doSkip() const
 
 void VariantsPage::activated()
 {
-  auto* g = m_dlg.game();
+  auto* g = m_dlg.rawCreationInfo().game;
 
   if (m_previousGame != g) {
     m_previousGame = g;
@@ -650,15 +658,13 @@ void VariantsPage::select(const QString& variant)
   }
 }
 
-QString VariantsPage::selectedGameVariant() const
+QString VariantsPage::selectedGameVariant(MOBase::IPluginGame* game) const
 {
-  auto* g = m_dlg.game();
-  if (!g) {
-    // shouldn't happen
+  if (!game) {
     return {};
   }
 
-  const auto variants = g->gameVariants();
+  const auto variants = game->gameVariants();
   if (variants.size() < 2) {
     return {};
   } else {
@@ -671,7 +677,7 @@ void VariantsPage::fillList()
   ui->editions->clear();
   m_buttons.clear();
 
-  auto* g = m_dlg.game();
+  auto* g = m_dlg.rawCreationInfo().game;
   if (!g) {
     // shouldn't happen
     return;
@@ -708,12 +714,12 @@ bool NamePage::ready() const
 
 bool NamePage::doSkip() const
 {
-  return (m_dlg.instanceType() == CreateInstanceDialog::Portable);
+  return (m_dlg.rawCreationInfo().type == CreateInstanceDialog::Portable);
 }
 
 void NamePage::activated()
 {
-  auto* g = m_dlg.game();
+  auto* g = m_dlg.rawCreationInfo().game;
   if (!g) {
     // shouldn't happen, next should be disabled
     return;
@@ -820,8 +826,8 @@ bool PathsPage::ready() const
 
 void PathsPage::activated()
 {
-  const auto name = m_dlg.instanceName();
-  const auto type = m_dlg.instanceType();
+  const auto name = m_dlg.rawCreationInfo().instanceName;
+  const auto type = m_dlg.rawCreationInfo().type;
 
   const bool changed = (m_lastInstanceName != name) || (m_lastType != type);
 
@@ -829,7 +835,7 @@ void PathsPage::activated()
   checkPaths();
   updateNavigation();
 
-  m_label.setText(m_dlg.game()->gameName());
+  m_label.setText(m_dlg.rawCreationInfo().game->gameName());
   m_lastInstanceName = name;
   m_lastType = type;
 }
@@ -898,7 +904,7 @@ void PathsPage::setPaths(const QString& name, bool force)
 {
   QString path;
 
-  if (m_dlg.instanceType() == CreateInstanceDialog::Portable) {
+  if (m_dlg.rawCreationInfo().type == CreateInstanceDialog::Portable) {
     path = InstanceManager::singleton().portablePath();
   } else {
     const auto root = InstanceManager::singleton().globalInstancesRootPath();
@@ -939,7 +945,7 @@ bool PathsPage::checkPath(
     const QDir d(path);
 
     if (InstanceManager::singleton().validInstanceName(d.dirName())) {
-      if (m_dlg.instanceType() == CreateInstanceDialog::Portable) {
+      if (m_dlg.rawCreationInfo().type == CreateInstanceDialog::Portable) {
         // the default data path for a portable instance is the application
         // directory, so it's not an error if it exists
         if (QDir(path) != InstanceManager::singleton().portablePath()) {
@@ -1041,37 +1047,41 @@ QString ConfirmationPage::toLocalizedString(CreateInstanceDialog::Types t) const
 QString ConfirmationPage::makeReview() const
 {
   QStringList lines;
-  const auto paths = m_dlg.paths();
 
-  lines.push_back(QObject::tr("Instance type: %1").arg(toLocalizedString(m_dlg.instanceType())));
-  lines.push_back(QObject::tr("Instance location: %1").arg(m_dlg.dataPath()));
+  const auto ci = m_dlg.rawCreationInfo();
 
-  if (m_dlg.instanceType() != CreateInstanceDialog::Portable) {
-    lines.push_back(QObject::tr("Instance name: %1").arg(m_dlg.instanceName()));
+  lines.push_back(QObject::tr("Instance type: %1")
+    .arg(toLocalizedString(ci.type)));
+
+  lines.push_back(QObject::tr("Instance location: %1")
+    .arg(ci.dataPath));
+
+  if (ci.type != CreateInstanceDialog::Portable) {
+    lines.push_back(QObject::tr("Instance name: %1").arg(ci.instanceName));
   }
 
-  if (paths.downloads.isEmpty()) {
+  if (ci.paths.downloads.isEmpty()) {
     // simple settings
-    if (paths.base != m_dlg.dataPath()) {
-      lines.push_back(QObject::tr("Base directory: %1").arg(paths.base));
+    if (ci.paths.base != ci.dataPath) {
+      lines.push_back(QObject::tr("Base directory: %1").arg(ci.paths.base));
     }
   } else {
     // advanced settings
-    lines.push_back(QObject::tr("Base directory: %1").arg(paths.base));
-    lines.push_back(dirLine(QObject::tr("Downloads"), paths.downloads));
-    lines.push_back(dirLine(QObject::tr("Mods"), paths.mods));
-    lines.push_back(dirLine(QObject::tr("Profiles"), paths.profiles));
-    lines.push_back(dirLine(QObject::tr("Overwrite"), paths.overwrite));
+    lines.push_back(QObject::tr("Base directory: %1").arg(ci.paths.base));
+    lines.push_back(dirLine(QObject::tr("Downloads"), ci.paths.downloads));
+    lines.push_back(dirLine(QObject::tr("Mods"), ci.paths.mods));
+    lines.push_back(dirLine(QObject::tr("Profiles"), ci.paths.profiles));
+    lines.push_back(dirLine(QObject::tr("Overwrite"), ci.paths.overwrite));
   }
 
   // game
-  QString name = m_dlg.game()->gameName();
-  if (!m_dlg.gameVariant().isEmpty()) {
-    name += " (" + m_dlg.gameVariant() + ")";
+  QString name = ci.game->gameName();
+  if (!ci.gameVariant.isEmpty()) {
+    name += " (" + ci.gameVariant + ")";
   }
 
   lines.push_back(QObject::tr("Game: %1").arg(name));
-  lines.push_back(QObject::tr("Game location: %1").arg(m_dlg.gameLocation()));
+  lines.push_back(QObject::tr("Game location: %1").arg(ci.gameLocation));
 
   return lines.join("\n");
 }

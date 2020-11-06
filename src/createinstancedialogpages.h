@@ -48,7 +48,7 @@ public:
   virtual CreateInstanceDialog::Types selectedInstanceType() const;
   virtual MOBase::IPluginGame* selectedGame() const;
   virtual QString selectedGameLocation() const;
-  virtual QString selectedGameVariant() const;
+  virtual QString selectedGameVariant(MOBase::IPluginGame* game) const;
   virtual QString selectedInstanceName() const;
   virtual CreateInstanceDialog::Paths selectedPaths() const;
 
@@ -146,7 +146,7 @@ public:
 
   bool ready() const override;
   void activated() override;
-  QString selectedGameVariant() const override;
+  QString selectedGameVariant(MOBase::IPluginGame* game) const override;
 
   void select(const QString& variant);
 

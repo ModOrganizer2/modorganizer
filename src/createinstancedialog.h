@@ -10,11 +10,25 @@ namespace cid { class Page; }
 class PluginContainer;
 class Settings;
 
+// this is a wizard for creating a new instance, it is made out of Page objects,
+// see createinstancedialogpages.h
+//
+// each page can give back one or more pieces of information that is collected
+// in creationInfo() and used by finish() to do the actual creation
+//
+// pages can be disabled if they return true in skip(), which happens globally
+// for some (IntroPage has a setting in the registry), depending on context
+// (NexusPage is skipped if the API key already exists) or explicitly (when
+// only some info about the instance is missing on startup, such as a game
+// variant)
+//
 class CreateInstanceDialog : public QDialog
 {
   Q_OBJECT
 
 public:
+  // instance type
+  //
   enum Types
   {
     NoType = 0,
@@ -22,6 +36,10 @@ public:
     Portable
   };
 
+  // all the paths required by the instance, some may be empty, such as
+  // basically all of them except for `base` when the user doesn't use the
+  // "Advanced" part of the paths page
+  //
   struct Paths
   {
     QString base;
@@ -34,6 +52,8 @@ public:
     auto operator<=>(const Paths&) const = default;
   };
 
+  // all the info filled in the various pages
+  //
   struct CreationInfo
   {
     Types type;
@@ -53,10 +73,11 @@ public:
   ~CreateInstanceDialog();
 
   Ui::CreateInstanceDialog* getUI();
-
   const PluginContainer& pluginContainer();
   Settings* settings();
 
+  // disables all the pages except for the given one, used on startup when some
+  // specific info is missing
   template <class Page>
   void setSinglePage(const QString& instanceName)
   {
@@ -71,6 +92,8 @@ public:
     setSinglePageImpl(instanceName);
   }
 
+  // returns the page having the give path, or null
+  //
   template <class Page>
   Page* getPage()
   {
@@ -83,24 +106,59 @@ public:
     return nullptr;
   }
 
+
+  // moves to the next page  calls finish() if on the last one
+  //
   void next();
+
+  // moves to the previous page, if any
+  //
   void back();
+
+  // whether the current page reports that it is ready; if this is the last
+  // page, next() would call finish()
+  //
+  bool canNext() const;
+
+  // whether the current page is not the first one and there is an enabled page
+  // prior
+  //
+  bool canBack() const;
+
+  // selects the given page by index; this doesn't check if the page should be
+  // skipped
+  //
   void selectPage(std::size_t i);
+
+  // moves by `d` pages, can be negative to move back
+  //
   void changePage(int d);
+
+  // creates the instance and closes the dialog
+  //
   void finish();
 
+
+  // updates the navigation buttons based on the current page
+  //
   void updateNavigation();
+
+  // whether this is the last enabled page
+  //
   bool isOnLastPage() const;
 
-  Types instanceType() const;
-  MOBase::IPluginGame* game() const;
-  QString gameLocation() const;
-  QString gameVariant() const;
-  QString instanceName() const;
-  QString dataPath() const;
-  Paths paths() const;
+  // returns whether the user has requested to switch to the new instance
+  //
   bool switching() const;
 
+  // gathers the info from all the pages as it appears, paths are not fixed;
+  // see creationInfo()
+  //
+  CreationInfo rawCreationInfo() const;
+
+  // gathers the info from all the pages: paths are converted to absolute and
+  // the base dir variable is expanded everywhere; see rawCreationInfo()
+  //
   CreationInfo creationInfo() const;
 
 private:
@@ -113,13 +171,26 @@ private:
   bool m_singlePage;
 
 
+  // called from setSinglePage(), does whatever doesn't need the T
+  //
   void setSinglePageImpl(const QString& instanceName);
 
-  template <class T>
-  T getSelected(T (cid::Page::*mf)() const) const
+  // adds a line to the creation log
+  //
+  void logCreation(const QString& s);
+  void logCreation(const std::wstring& s);
+
+  // calls the given member function on all pages until one returns an object
+  // that's not empty; used by gatherInfo()
+  //
+  template <class MF, class... Args>
+  auto getSelected(MF mf, Args&&... args) const
   {
+    // return type
+    using T = decltype((std::declval<cid::Page>().*mf)(std::forward<Args>(args)...));
+
     for (auto&& p : m_pages) {
-      const auto t = (p.get()->*mf)();
+      const auto t = (p.get()->*mf)(std::forward<Args>(args)...);
       if (t != T()) {
         return t;
       }
@@ -127,12 +198,6 @@ private:
 
     return T();
   }
-
-  void logCreation(const QString& s);
-  void logCreation(const std::wstring& s);
-
-  bool canNext() const;
-  bool canBack() const;
 };
 
 #endif // MODORGANIZER_CREATEINSTANCEDIALOG_INCLUDED

@@ -13,7 +13,9 @@
 
 using namespace MOBase;
 
-
+// returns the icon for the given instance or an empty 32x32 icon if the game
+// plugin couldn't be found
+//
 QIcon instanceIcon(const PluginContainer& pc, const Instance& i)
 {
   const auto* game = InstanceManager::singleton()
@@ -25,6 +27,78 @@ QIcon instanceIcon(const PluginContainer& pc, const Instance& i)
   QPixmap empty(32, 32);
   empty.fill(QColor(0, 0, 0, 0));
   return QIcon(empty);
+}
+
+// pops up a dialog to ask for an instance name when renaming
+//
+QString getInstanceName(
+  QWidget* parent, const QString& title, const QString& moreText,
+  const QString& label, const QString& oldName={})
+{
+  auto& m = InstanceManager::singleton();
+
+  QDialog dlg(parent);
+  dlg.setWindowTitle(title);
+
+  auto* ly = new QVBoxLayout(&dlg);
+
+  auto* bb = new QDialogButtonBox(
+    QDialogButtonBox::Cancel | QDialogButtonBox::Ok);
+
+  auto* text = new QLineEdit(oldName);
+  text->selectAll();
+
+  auto* error = new QLabel;
+
+  if (!moreText.isEmpty()) {
+    auto* lb = new QLabel(moreText);
+    lb->setWordWrap(true);
+    ly->addWidget(lb);
+    ly->addSpacing(10);
+  }
+
+  auto* lb = new QLabel(label);
+  lb->setWordWrap(true);
+  ly->addWidget(lb);
+
+  ly->addWidget(text);
+  ly->addWidget(error);
+  ly->addStretch();
+  ly->addWidget(bb);
+
+  auto check = [&] {
+    bool okay = false;
+
+    if (text->text().isEmpty()) {
+      error->setText("");
+    } else if (!m.validInstanceName(text->text())) {
+      error->setText(QObject::tr("The instance name must be a valid folder name."));
+    } else {
+      const auto name = m.sanitizeInstanceName(text->text());
+
+      if ((name != oldName) && m.instanceExists(text->text())) {
+        error->setText(QObject::tr("An instance with this name already exists."));
+      } else {
+        okay = true;
+      }
+    }
+
+    error->setVisible(!okay);
+    bb->button(QDialogButtonBox::Ok)->setEnabled(okay);
+  };
+
+  QObject::connect(text, &QLineEdit::textChanged, [&] { check(); });
+  QObject::connect(bb, &QDialogButtonBox::accepted, [&]{ dlg.accept(); });
+  QObject::connect(bb, &QDialogButtonBox::rejected, [&]{ dlg.reject(); });
+
+  check();
+
+  dlg.resize({400, 120});
+  if (dlg.exec() != QDialog::Accepted) {
+    return {};
+  }
+
+  return m.sanitizeInstanceName(text->text());
 }
 
 
@@ -106,9 +180,9 @@ void InstanceManagerDialog::updateList()
 
   m_model->clear();
 
-  const std::size_t NoSel = -1;
-  std::size_t sel = NoSel;
+  std::size_t sel = NoSelection;
 
+  // creating items for instances
   for (std::size_t i=0; i<m_instances.size(); ++i) {
     const auto& ii = *m_instances[i];
 
@@ -128,7 +202,7 @@ void InstanceManagerDialog::updateList()
     if (m_instances.empty()) {
       select(-1);
     } else {
-      if (sel == NoSel) {
+      if (sel == NoSelection) {
         if (prevSelIndex >= m_instances.size()) {
           sel = m_instances.size() - 1;
         } else {
@@ -207,76 +281,6 @@ void InstanceManagerDialog::openSelectedInstance()
   accept();
 }
 
-QString getInstanceName(
-  QWidget* parent, const QString& title, const QString& moreText,
-  const QString& label, const QString& oldName={})
-{
-  auto& m = InstanceManager::singleton();
-
-  QDialog dlg(parent);
-  dlg.setWindowTitle(title);
-
-  auto* ly = new QVBoxLayout(&dlg);
-
-  auto* bb = new QDialogButtonBox(
-    QDialogButtonBox::Cancel | QDialogButtonBox::Ok);
-
-  auto* text = new QLineEdit(oldName);
-  text->selectAll();
-
-  auto* error = new QLabel;
-
-  if (!moreText.isEmpty()) {
-    auto* lb = new QLabel(moreText);
-    lb->setWordWrap(true);
-    ly->addWidget(lb);
-    ly->addSpacing(10);
-  }
-
-  auto* lb = new QLabel(label);
-  lb->setWordWrap(true);
-  ly->addWidget(lb);
-
-  ly->addWidget(text);
-  ly->addWidget(error);
-  ly->addStretch();
-  ly->addWidget(bb);
-
-  auto check = [&] {
-    bool okay = false;
-
-    if (text->text().isEmpty()) {
-      error->setText("");
-    } else if (!m.validInstanceName(text->text())) {
-      error->setText(QObject::tr("The instance name must be a valid folder name."));
-    } else {
-      const auto name = m.sanitizeInstanceName(text->text());
-
-      if ((name != oldName) && m.instanceExists(text->text())) {
-        error->setText(QObject::tr("An instance with this name already exists."));
-      } else {
-        okay = true;
-      }
-    }
-
-    error->setVisible(!okay);
-    bb->button(QDialogButtonBox::Ok)->setEnabled(okay);
-  };
-
-  QObject::connect(text, &QLineEdit::textChanged, [&] { check(); });
-  QObject::connect(bb, &QDialogButtonBox::accepted, [&]{ dlg.accept(); });
-  QObject::connect(bb, &QDialogButtonBox::rejected, [&]{ dlg.reject(); });
-
-  check();
-
-  dlg.resize({400, 120});
-  if (dlg.exec() != QDialog::Accepted) {
-    return {};
-  }
-
-  return m.sanitizeInstanceName(text->text());
-}
-
 void InstanceManagerDialog::rename()
 {
   auto* i = singleSelection();
@@ -293,6 +297,8 @@ void InstanceManagerDialog::rename()
     return;
   }
 
+
+  // getting new name
   const auto newName = getInstanceName(
     this, tr("Rename instance"), "", tr("Instance name"), i->name());
 
@@ -300,11 +306,16 @@ void InstanceManagerDialog::rename()
     return;
   }
 
+
+  // renaming
   const QString src = i->directory();
   const QString dest = QDir::toNativeSeparators(
     QFileInfo(src).dir().path() + "/" + newName);
 
+  log::info("renaming {} to {}", src, dest);
+
   const auto r = shell::Rename(src, dest, false);
+
   if (!r) {
     QMessageBox::critical(
       this, tr("Error"),
@@ -314,6 +325,8 @@ void InstanceManagerDialog::rename()
     return;
   }
 
+
+  // updating ui
   auto newInstance = std::make_unique<Instance>(dest, false);
   i = newInstance.get();
 
@@ -365,6 +378,8 @@ void InstanceManagerDialog::deleteInstance()
     return;
   }
 
+  // creating dialog
+
   const auto Recycle = QMessageBox::Save;
   const auto Delete = QMessageBox::Yes;
   const auto Cancel = QMessageBox::Cancel;
@@ -388,6 +403,8 @@ void InstanceManagerDialog::deleteInstance()
   list->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
   list->setMaximumHeight(160);
 
+
+  // filling the list
   for (const auto& f : files) {
     auto* item = new QListWidgetItem(f.path);
 
@@ -412,6 +429,7 @@ void InstanceManagerDialog::deleteInstance()
   }
 
 
+  // gathering all the selected items
   QStringList selected;
 
   for (int i=0; i<list->count(); ++i) {
@@ -427,10 +445,14 @@ void InstanceManagerDialog::deleteInstance()
     return;
   }
 
+
+  // deleting
   if (!doDelete(selected, (r == Recycle))) {
     return;
   }
 
+
+  // updating ui
   updateInstances();
   updateList();
 }
@@ -501,7 +523,7 @@ void InstanceManagerDialog::createNew()
   updateInstances();
   updateList();
 
-  select(dlg.instanceName());
+  select(dlg.creationInfo().instanceName);
 }
 
 std::size_t InstanceManagerDialog::singleSelectionIndex() const

@@ -413,49 +413,6 @@ bool CreateInstanceDialog::canBack() const
   return false;
 }
 
-CreateInstanceDialog::Types CreateInstanceDialog::instanceType() const
-{
-  return getSelected(&cid::Page::selectedInstanceType);
-}
-
-MOBase::IPluginGame* CreateInstanceDialog::game() const
-{
-  return getSelected(&cid::Page::selectedGame);
-}
-
-QString CreateInstanceDialog::gameLocation() const
-{
-  return getSelected(&cid::Page::selectedGameLocation);
-}
-
-QString CreateInstanceDialog::gameVariant() const
-{
-  return getSelected(&cid::Page::selectedGameVariant);
-}
-
-QString CreateInstanceDialog::instanceName() const
-{
-  return getSelected(&cid::Page::selectedInstanceName);
-}
-
-QString CreateInstanceDialog::dataPath() const
-{
-  QString s;
-
-  if (instanceType() == Portable) {
-    s = QDir(InstanceManager::singleton().portablePath()).absolutePath();
-  } else {
-    s = InstanceManager::singleton().instancePath(instanceName());
-  }
-
-  return QDir::toNativeSeparators(s);
-}
-
-CreateInstanceDialog::Paths CreateInstanceDialog::paths() const
-{
-  return getSelected(&cid::Page::selectedPaths);
-}
-
 bool CreateInstanceDialog::switching() const
 {
   return m_switching;
@@ -482,7 +439,8 @@ void fixFilePath(QString& path)
   path = QDir::toNativeSeparators(QFileInfo(path).absolutePath());
 }
 
-CreateInstanceDialog::CreationInfo CreateInstanceDialog::creationInfo() const
+CreateInstanceDialog::CreationInfo
+CreateInstanceDialog::rawCreationInfo() const
 {
   const auto iniFilename = QString::fromStdWString(AppConfig::iniFileName());
 
@@ -491,11 +449,26 @@ CreateInstanceDialog::CreationInfo CreateInstanceDialog::creationInfo() const
   ci.type         = getSelected(&cid::Page::selectedInstanceType);
   ci.game         = getSelected(&cid::Page::selectedGame);
   ci.gameLocation = getSelected(&cid::Page::selectedGameLocation);
-  ci.gameVariant  = getSelected(&cid::Page::selectedGameVariant);
+  ci.gameVariant  = getSelected(&cid::Page::selectedGameVariant, ci.game);
   ci.instanceName = getSelected(&cid::Page::selectedInstanceName);
   ci.paths        = getSelected(&cid::Page::selectedPaths);
-  ci.dataPath     = dataPath();
+
+  if (ci.type == Portable) {
+    ci.dataPath = QDir(InstanceManager::singleton().portablePath()).absolutePath();
+  } else {
+    ci.dataPath = InstanceManager::singleton().instancePath(ci.instanceName);
+  }
+
+  ci.dataPath     = QDir::toNativeSeparators(ci.dataPath);
   ci.iniPath      = ci.dataPath + "/" + iniFilename;
+
+  return ci;
+}
+
+CreateInstanceDialog::CreationInfo
+CreateInstanceDialog::creationInfo() const
+{
+  auto ci = rawCreationInfo();
 
   fixDirPath(ci.paths.base);
   fixFilePath(ci.paths.ini);
