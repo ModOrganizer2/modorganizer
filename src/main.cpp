@@ -708,8 +708,7 @@ int main(int argc, char *argv[])
 
   TimeThis tt("main() to doOneRun()");
 
-  env::prependToPath(QDir::toNativeSeparators(
-    QCoreApplication::applicationDirPath() + "/dlls"));
+  SetThisThreadName("main");
 
   initLogging();
   auto application = MOApplication::create(argc, argv);
