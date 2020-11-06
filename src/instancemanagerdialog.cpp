@@ -13,292 +13,19 @@
 
 using namespace MOBase;
 
-class InstanceInfo
+
+QIcon instanceIcon(const PluginContainer& pc, const Instance& i)
 {
-public:
-  struct Object
-  {
-    QString path;
-    bool mandatoryDelete;
+  const auto* game = InstanceManager::singleton()
+    .gamePluginForDirectory(i.directory(), pc);
 
-    Object(QString p, bool d=false)
-      : path(std::move(p)), mandatoryDelete(d)
-    {
-    }
+  if (game)
+    return game->gameIcon();
 
-    bool operator<(const Object& o) const
-    {
-      if (mandatoryDelete && !o.mandatoryDelete) {
-        return true;
-      } else if (!mandatoryDelete && o.mandatoryDelete) {
-        return false;
-      }
-
-      return false;
-    }
-  };
-
-
-  InstanceInfo(QDir dir, bool isPortable)
-    : m_portable(isPortable)
-  {
-    setDir(dir);
-  }
-
-  void setDir(const QDir& dir)
-  {
-    m_dir = dir;
-    m_settings.reset(new Settings(InstanceManager::singleton().iniPath(dir)));
-  }
-
-  QString name() const
-  {
-    if (m_portable) {
-      return QObject::tr("Portable");
-    } else {
-      return m_dir.dirName();
-    }
-  }
-
-  QString gameName() const
-  {
-    if (auto n=m_settings->game().name()) {
-      if (auto e=m_settings->game().edition()) {
-        if (!e->isEmpty()) {
-          return *n + " (" + *e + ")";
-        }
-      }
-
-      return *n;
-    } else {
-      return {};
-    }
-  }
-
-  QString gamePath() const
-  {
-    if (auto n=m_settings->game().directory()) {
-      return QDir::toNativeSeparators(*n);
-    } else {
-      return {};
-    }
-  }
-
-  QString location() const
-  {
-    return QDir::toNativeSeparators(m_dir.path());
-  }
-
-  QString baseDirectory() const
-  {
-    return QDir::toNativeSeparators(m_settings->paths().base());
-  }
-
-  QString iniFile() const
-  {
-    return InstanceManager::singleton().iniPath(m_dir);
-  }
-
-  QIcon icon(const PluginContainer& plugins) const
-  {
-    const auto* game = InstanceManager::singleton().gamePluginForDirectory(
-      m_dir, plugins);
-
-    if (game)
-      return game->gameIcon();
-
-    QPixmap empty(32, 32);
-    empty.fill(QColor(0, 0, 0, 0));
-    return QIcon(empty);
-  }
-
-  bool isPortable() const
-  {
-    return m_portable;
-  }
-
-  bool isActive() const
-  {
-    auto& m = InstanceManager::singleton();
-
-    if (auto i=m.currentInstance())
-    {
-      if (m_portable) {
-        return i->isPortable();
-      } else {
-        return (i->name() == name());
-      }
-    }
-
-    return false;
-  }
-
-  // returns a list of files and folders that must be deleted when deleting
-  // this instance
-  //
-  std::vector<Object> objectsForDeletion() const
-  {
-    // native separators and ending slash
-    auto prettyDir = [](auto s) {
-      if (!s.endsWith("/") || !s.endsWith("\\")) {
-        s += "/";
-      }
-
-      return QDir::toNativeSeparators(s);
-    };
-
-    // native separators
-    auto prettyFile = [](auto s) {
-      return QDir::toNativeSeparators(s);
-    };
-
-
-    // lowercase, native separators and ending slash
-    auto canonicalDir = [](auto s) {
-      s = s.toLower();
-      if (!s.endsWith("/") || !s.endsWith("\\")) {
-        s += "/";
-      }
-
-      return QDir::toNativeSeparators(s);
-    };
-
-    // lower and native separators
-    auto canonicalFile = [](auto s) {
-      return QDir::toNativeSeparators(s.toLower());
-    };
-
-
-
-    // whether the given directory is contained in the root
-    auto dirInRoot = [&](auto root, auto dir) {
-      return canonicalDir(dir).startsWith(canonicalDir(root));
-    };
-
-    // whether the given file is contained in the root
-    auto fileInRoot = [&](auto root, auto file) {
-      return canonicalFile(file).startsWith(canonicalDir(root));
-    };
-
-
-
-
-    const auto loc = location();
-    const auto base = m_settings->paths().base();
-
-
-    // directories that might contain the individual files and directories
-    // set in the path settings
-    std::vector<Object> roots;
-
-    // a portable instance has its location in the installation directory,
-    // don't delete that
-    if (!isPortable()) {
-      if (QDir(loc).exists()) {
-        roots.push_back({loc, true});
-      }
-    }
-
-    // the base directory is the location directory by default, don't add it
-    // if it's the same
-    if (canonicalDir(base) != canonicalDir(loc)) {
-      if (QDir(base).exists()) {
-        roots.push_back({base, false});
-      }
-    }
-
-
-    // all the directories that are part of an instance; none of them are
-    // mandatory for deletion
-    const std::vector<Object> dirs = {
-      m_settings->paths().downloads(),
-      m_settings->paths().mods(),
-      m_settings->paths().cache(),
-      m_settings->paths().profiles(),
-      m_settings->paths().overwrite(),
-      m_dir.filePath(QString::fromStdWString(AppConfig::dumpsDir())),
-      m_dir.filePath(QString::fromStdWString(AppConfig::logPath())),
-    };
-
-    // all the files that are part of an instance
-    const std::vector<Object> files = {
-      {iniFile(), true},   // the ini file must be deleted
-    };
-
-
-    // this will contain the root directories, plus all the individual
-    // directories that are not inside these roots
-    std::vector<Object> cleanDirs;
-
-    for (const auto& f : dirs) {
-      bool inRoots = false;
-
-      for (const auto& root : roots) {
-        if (dirInRoot(root.path, f.path)) {
-          inRoots = true;
-          break;
-        }
-      }
-
-      if (!inRoots) {
-        // not in roots, this is a path that was changed by the user; make
-        // sure it exists
-        if (QDir(f.path).exists()) {
-          cleanDirs.push_back({prettyDir(f.path), f.mandatoryDelete});
-        }
-      }
-    }
-
-    // prepending the roots
-    for (auto itor=roots.rbegin(); itor!=roots.rend(); ++itor) {
-      cleanDirs.insert(
-        cleanDirs.begin(),
-        {prettyDir(itor->path), itor->mandatoryDelete});
-    }
-
-
-
-    // this will contain the individual files that are not inside the roots;
-    // not that this only contains the INI file for now, so most of this is
-    // useless
-    std::vector<Object> cleanFiles;
-
-    for (const auto& f : files) {
-      bool inRoots = false;
-
-      for (const auto& root : roots) {
-        if (fileInRoot(root.path, f.path)) {
-          inRoots = true;
-          break;
-        }
-      }
-
-      if (!inRoots) {
-        // not in roots, this is a path that was changed by the user; make
-        // sure it exists
-        if (QFileInfo(f.path).exists()) {
-          cleanFiles.push_back({prettyFile(f.path), f.mandatoryDelete});
-        }
-      }
-    }
-
-
-    // contains all the directories and files to be deleted
-    std::vector<Object> all;
-    all.insert(all.end(), cleanDirs.begin(), cleanDirs.end());
-    all.insert(all.end(), cleanFiles.begin(), cleanFiles.end());
-
-    // mandatory on top
-    std::stable_sort(all.begin(), all.end());
-
-    return all;
-  }
-
-private:
-  const bool m_portable;
-  QDir m_dir;
-  std::unique_ptr<Settings> m_settings;
-};
+  QPixmap empty(32, 32);
+  empty.fill(QColor(0, 0, 0, 0));
+  return QIcon(empty);
+}
 
 
 InstanceManagerDialog::~InstanceManagerDialog() = default;
@@ -352,7 +79,7 @@ void InstanceManagerDialog::updateInstances()
   m_instances.clear();
 
   for (auto&& d : m.globalInstancePaths()) {
-    m_instances.push_back(std::make_unique<InstanceInfo>(d, false));
+    m_instances.push_back(std::make_unique<Instance>(d, false));
   }
 
   // sort first, prepend portable after so it's always on top
@@ -363,7 +90,12 @@ void InstanceManagerDialog::updateInstances()
   if (m.portableInstanceExists()) {
     m_instances.insert(
       m_instances.begin(),
-      std::make_unique<InstanceInfo>(m.portablePath(), true));
+      std::make_unique<Instance>(m.portablePath(), true));
+  }
+
+  // read all inis, ignore errors
+  for (auto&& i : m_instances) {
+    i->readFromIni();
   }
 }
 
@@ -381,7 +113,7 @@ void InstanceManagerDialog::updateList()
     const auto& ii = *m_instances[i];
 
     auto* item = new QStandardItem(ii.name());
-    item->setIcon(ii.icon(m_pc));
+    item->setIcon(instanceIcon(m_pc, ii));
 
     m_model->appendRow(item);
 
@@ -568,9 +300,9 @@ void InstanceManagerDialog::rename()
     return;
   }
 
-  const QString src = i->location();
+  const QString src = i->directory();
   const QString dest = QDir::toNativeSeparators(
-    QFileInfo(i->location()).dir().path() + "/" + newName);
+    QFileInfo(src).dir().path() + "/" + newName);
 
   const auto r = shell::Rename(src, dest, false);
   if (!r) {
@@ -582,15 +314,19 @@ void InstanceManagerDialog::rename()
     return;
   }
 
+  auto newInstance = std::make_unique<Instance>(dest, false);
+  i = newInstance.get();
+
   m_model->item(selIndex)->setText(newName);
-  i->setDir(dest);
+  m_instances[selIndex] = std::move(newInstance);
+
   fillData(*i);
 }
 
 void InstanceManagerDialog::exploreLocation()
 {
   if (const auto* i=singleSelection()) {
-    shell::Explore(i->location());
+    shell::Explore(i->directory());
   }
 }
 
@@ -604,14 +340,14 @@ void InstanceManagerDialog::exploreBaseDirectory()
 void InstanceManagerDialog::exploreGame()
 {
   if (const auto* i=singleSelection()) {
-    shell::Explore(i->gamePath());
+    shell::Explore(i->gameDirectory());
   }
 }
 
 void InstanceManagerDialog::openINI()
 {
   if (const auto* i=singleSelection()) {
-    shell::Open(i->iniFile());
+    shell::Open(i->iniPath());
   }
 }
 
@@ -707,6 +443,15 @@ void InstanceManagerDialog::setRestartOnSelect(bool b)
 
 bool InstanceManagerDialog::doDelete(const QStringList& files, bool recycle)
 {
+  // logging
+  for (auto&& f : files) {
+    if (recycle) {
+      log::info("will recycle {}", f);
+    } else {
+      log::info("will delete {}", f);
+    }
+  }
+
   if (MOBase::shellDelete(files, recycle, this)) {
     return true;
   }
@@ -771,7 +516,7 @@ std::size_t InstanceManagerDialog::singleSelectionIndex() const
   return static_cast<std::size_t>(sel.indexes()[0].row());
 }
 
-InstanceInfo* InstanceManagerDialog::singleSelection()
+const Instance* InstanceManagerDialog::singleSelection() const
 {
   const auto i = singleSelectionIndex();
   if (i == NoSelection) {
@@ -781,23 +526,13 @@ InstanceInfo* InstanceManagerDialog::singleSelection()
   return m_instances[i].get();
 }
 
-const InstanceInfo* InstanceManagerDialog::singleSelection() const
-{
-  const auto i = singleSelectionIndex();
-  if (i == NoSelection) {
-    return nullptr;
-  }
-
-  return m_instances[i].get();
-}
-
-void InstanceManagerDialog::fillData(const InstanceInfo& ii)
+void InstanceManagerDialog::fillData(const Instance& ii)
 {
   ui->name->setText(ii.name());
-  ui->location->setText(ii.location());
+  ui->location->setText(ii.directory());
   ui->baseDirectory->setText(ii.baseDirectory());
   ui->gameName->setText(ii.gameName());
-  ui->gameDir->setText(ii.gamePath());
+  ui->gameDir->setText(ii.gameDirectory());
   setButtonsEnabled(true);
 
   const auto& m = InstanceManager::singleton();

@@ -55,15 +55,64 @@ public:
   };
 
 
+  // a file or directory owned by this instance, used by objectsForDeletion()
+  //
+  struct Object
+  {
+    // path to the file or directory
+    QString path;
+
+    // whether this object must be deleted to properly delete the instance;
+    // typically true only for the instance directory itself, but not for the
+    // base directory, etc.
+    bool mandatoryDelete;
+
+
+    Object(QString p, bool d=false)
+      : path(std::move(p)), mandatoryDelete(d)
+    {
+    }
+
+    // puts mandatory delete on top
+    //
+    bool operator<(const Object& o) const
+    {
+      if (mandatoryDelete && !o.mandatoryDelete) {
+        return true;
+      } else if (!mandatoryDelete && o.mandatoryDelete) {
+        return false;
+      }
+
+      return false;
+    }
+  };
+
+
+
   // an instance that lives in the given directory; `portable` must be `true`
   // if this is a portable instance
   //
   // `profileName` can be given to override what's in the INI; this typically
   // happens when the profile is overriden on the command line
   //
-  Instance(QDir dir, bool portable, QString profileName={});
+  Instance(QString dir, bool portable, QString profileName={});
 
-  // finds the appropriate game plugin and sets it up so MO can use it
+
+  // reads in values from the INI if they were not given yet:
+  //  - game name
+  //  - game directory
+  //  - game variant
+  //  - profile name
+  //
+  // note that setup() already calls this
+  //
+  // returns false if the ini couldn't be read from
+  //
+  bool readFromIni();
+
+
+  // finds the appropriate game plugin and sets it up so MO can use it; this
+  // calls readFromIni() first
   //
   // setup() tries to recover from some errors, but can fail for a variety of
   // reasons, see SetupResults
@@ -88,22 +137,32 @@ public:
   QString name() const;
 
   // returns either:
-  // 1) the game name from the INI,
-  // 2) gameName() from the game plugin if it was missing, or
-  // 3) whatever was given in setGame()
+  //   1) the game name from the INI, if readFromIni() was called;
+  //   2) gameName() from the game plugin if it was missing and setup() was
+  //      called; or
+  //   3) whatever was given in setGame()
   //
   QString gameName() const;
 
   // returns either:
-  // 1) the game directory from the INI,
-  // 2) gameDirectory() from the game plugin if it was missing, or
-  // 3) whatever was given in setGame()
+  //   1) the game directory from the INI, if readFromIni() was called;
+  //   2) gameDirectory() from the game plugin if it was missing and setup()
+  //      was called; or
+  //   3) whatever was given in setGame()
   //
   QString gameDirectory() const;
 
-  // returns the instance directory; can be called without setup()
+  // returns the instance directory as given in the constructor
   //
-  QDir directory() const;
+  QString directory() const;
+
+  // returns the base directory; empty if readFromIni() hasn't been called
+  //
+  QString baseDirectory() const;
+
+  // returns whether this is a portable instance, as given in the constructor
+  //
+  bool isPortable() const;
 
   // returns the selected game plugin; will return null if setup() hasn't been
   // called, or if it failed
@@ -111,8 +170,8 @@ public:
   MOBase::IPluginGame* gamePlugin() const;
 
   // returns either:
-  // 1) the profile name given in the constructor,
-  // 2) the profile name from the INI, or
+  // 1) the profile name given in the constructor if not empty;
+  // 2) the profile name from the INI if readFromIni() was called, or
   // 3) the default profile name if it's missing (see
   //    AppConfig::defaultProfileName())
   //
@@ -123,15 +182,21 @@ public:
   //
   QString iniPath() const;
 
-  // returns whether this is a portable instance; this is the flag given in the
-  // constructor
+  // whether this is the currently active instance in MO
   //
-  bool isPortable() const;
+  bool isActive() const;
+
+  // returns a list of files and directories that must be deleted when deleting
+  // this instance; this will read the INI and fail if it's not accessible
+  //
+  // returns an empty list on failure
+  //
+  std::vector<Object> objectsForDeletion() const;
 
 private:
-  QDir m_dir;
+  QString m_dir;
   bool m_portable;
-  QString m_gameName, m_gameDir, m_gameVariant;
+  QString m_gameName, m_gameDir, m_gameVariant, m_baseDir;
   MOBase::IPluginGame* m_plugin;
   QString m_profile;
 
@@ -142,6 +207,10 @@ private:
   // figures out the profile name for this instance
   //
   void getProfile(const Settings& s);
+
+  // updates the ini with the given values and the ones found by setup()
+  //
+  void updateIni();
 };
 
 
@@ -175,7 +244,7 @@ public:
   // returns null if all of this fails
   //
   const MOBase::IPluginGame* gamePluginForDirectory(
-    const QDir& dir, const PluginContainer& plugins) const;
+    const QString& dir, const PluginContainer& plugins) const;
 
   // clears the instance name from the registry; on restart, this will make MO
   // either select the portable instance if it exists, or display the instance
@@ -221,7 +290,7 @@ public:
   // returns the list of absolute path to all existing global instances; this
   // does not include the portable instance
   //
-  std::vector<QDir> globalInstancePaths() const;
+  std::vector<QString> globalInstancePaths() const;
 
   // returns `name` modified so that it is a valid instance name
   //
@@ -253,7 +322,7 @@ public:
   // returns the absolute path to the INI file for the given instance directory;
   // the file may not exist
   //
-  QString iniPath(const QDir& instanceDir) const;
+  QString iniPath(const QString& instanceDir) const;
 
 private:
   InstanceManager();

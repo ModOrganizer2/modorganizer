@@ -330,7 +330,7 @@
                <item>
                 <widget class="QPushButton" name="deleteInstance">
                  <property name="text">
-                  <string>Delete instance</string>
+                  <string>Delete instance...</string>
                  </property>
                  <property name="icon">
                   <iconset resource="resources.qrc">

@@ -38,7 +38,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-Instance::Instance(QDir dir, bool portable, QString profileName) :
+Instance::Instance(QString dir, bool portable, QString profileName) :
   m_dir(std::move(dir)), m_portable(portable), m_plugin(nullptr),
   m_profile(std::move(profileName))
 {
@@ -49,7 +49,7 @@ QString Instance::name() const
   if (isPortable())
     return QObject::tr("Portable");
   else
-    return m_dir.dirName();
+    return QDir(m_dir).dirName();
 }
 
 QString Instance::gameName() const
@@ -62,9 +62,14 @@ QString Instance::gameDirectory() const
   return m_gameDir;
 }
 
-QDir Instance::directory() const
+QString Instance::directory() const
 {
   return m_dir;
+}
+
+QString Instance::baseDirectory() const
+{
+  return m_baseDir;
 }
 
 MOBase::IPluginGame* Instance::gamePlugin() const
@@ -87,13 +92,29 @@ bool Instance::isPortable() const
   return m_portable;
 }
 
-Instance::SetupResults Instance::setup(PluginContainer& plugins)
+bool Instance::isActive() const
+{
+  auto& m = InstanceManager::singleton();
+
+  if (auto i=m.currentInstance())
+  {
+    if (m_portable) {
+      return i->isPortable();
+    } else {
+      return (i->name() == name());
+    }
+  }
+
+  return false;
+}
+
+bool Instance::readFromIni()
 {
   Settings s(iniPath());
 
   if (s.iniStatus() != QSettings::NoError) {
     log::error("can't read ini {}", iniPath());
-    return SetupResults::BadIni;
+    return false;
   }
 
   // game name and directory are from ini unless overridden by setGame()
@@ -107,27 +128,61 @@ Instance::SetupResults Instance::setup(PluginContainer& plugins)
       m_gameDir = *v;
   }
 
-  // getting game plugin
-  const auto r = getGamePlugin(plugins);
-  if (r != SetupResults::Ok) {
-    return r;
-  }
-
-  // getting game variant, error if it's missing and required by the plugin
   if (m_gameVariant.isEmpty()) {
     if (auto v=s.game().edition()) {
       m_gameVariant = *v;
     }
   }
 
+  if (m_baseDir.isEmpty()) {
+    m_baseDir = s.paths().base();
+  }
+
+  // figuring out profile from ini if it's missing
+  getProfile(s);
+
+  return true;
+}
+
+Instance::SetupResults Instance::setup(PluginContainer& plugins)
+{
+  // read initial values from the ini
+  if (!readFromIni()) {
+    return SetupResults::BadIni;
+  }
+
+  // getting game plugin
+  const auto r = getGamePlugin(plugins);
+  if (r != SetupResults::Ok) {
+    return r;
+  }
+
+  // error if the variant missing and required by the plugin
   if (m_gameVariant.isEmpty() && m_plugin->gameVariants().size() > 1) {
     return SetupResults::MissingVariant;
   } else {
     m_plugin->setGameVariant(m_gameVariant);
   }
 
-  // figuring out profile from ini if it's missing
-  getProfile(s);
+  // update the ini in case anything was missing
+  updateIni();
+
+  // the game directory may be different than what the plugin detected, the user
+  // can change it in the settings and might have multiple versions of the game
+  // installed
+  m_plugin->setGamePath(m_gameDir);
+
+  return SetupResults::Ok;
+}
+
+void Instance::updateIni()
+{
+  Settings s(iniPath());
+
+  if (s.iniStatus() != QSettings::NoError) {
+    log::error("can't open ini {}", iniPath());
+    return;
+  }
 
   // updating the settings since some of these values might have been missing
   s.game().setName(m_gameName);
@@ -138,13 +193,6 @@ Instance::SetupResults Instance::setup(PluginContainer& plugins)
     // don't write a variant to the ini if the plugin doesn't require one
     s.game().setEdition(m_gameVariant);
   }
-
-  // the game directory may be different than what the plugin detected, the user
-  // can change it in the settings and might have multiple versions of the game
-  // installed
-  m_plugin->setGamePath(m_gameDir);
-
-  return SetupResults::Ok;
 }
 
 void Instance::setGame(const QString& name, const QString& dir)
@@ -272,7 +320,6 @@ Instance::SetupResults Instance::getGamePlugin(PluginContainer& plugins)
   }
 }
 
-
 void Instance::getProfile(const Settings& s)
 {
   if (!m_profile.isEmpty()) {
@@ -293,6 +340,176 @@ void Instance::getProfile(const Settings& s)
     "no profile found in ini {}, using default '{}'",
     iniPath(), m_profile);
 }
+
+// returns a list of files and folders that must be deleted when deleting
+// this instance
+//
+std::vector<Instance::Object> Instance::objectsForDeletion() const
+{
+  // native separators and ending slash
+  auto prettyDir = [](auto s) {
+    if (!s.endsWith("/") || !s.endsWith("\\")) {
+      s += "/";
+    }
+
+    return QDir::toNativeSeparators(s);
+  };
+
+  // native separators
+  auto prettyFile = [](auto s) {
+    return QDir::toNativeSeparators(s);
+  };
+
+
+  // lowercase, native separators and ending slash
+  auto canonicalDir = [](QString s) {
+    s = s.toLower();
+
+    if (!s.endsWith("/") || !s.endsWith("\\")) {
+      s += "/";
+    }
+
+    return QDir::toNativeSeparators(s);
+  };
+
+  // lower and native separators
+  auto canonicalFile = [](auto s) {
+    return QDir::toNativeSeparators(s.toLower());
+  };
+
+
+
+  // whether the given directory is contained in the root
+  auto dirInRoot = [&](const QString& root, const QString& dir) {
+    return canonicalDir(dir).startsWith(canonicalDir(root));
+  };
+
+  // whether the given file is contained in the root
+  auto fileInRoot = [&](const QString& root, const QString& file) {
+    return canonicalFile(file).startsWith(canonicalDir(root));
+  };
+
+
+  Settings settings(iniPath());
+
+  if (settings.iniStatus() != QSettings::NoError) {
+    log::error("can't read ini {}", iniPath());
+    return {};
+  }
+
+
+
+  const QString loc = directory();
+  const QString base = settings.paths().base();
+
+
+  // directories that might contain the individual files and directories
+  // set in the path settings
+  std::vector<Object> roots;
+
+  // a portable instance has its location in the installation directory,
+  // don't delete that
+  if (!isPortable()) {
+    if (QDir(loc).exists()) {
+      roots.push_back({loc, true});
+    }
+  }
+
+  // the base directory is the location directory by default, don't add it
+  // if it's the same
+  if (canonicalDir(base) != canonicalDir(loc)) {
+    if (QDir(base).exists()) {
+      roots.push_back({base, false});
+    }
+  }
+
+
+  // all the directories that are part of an instance; none of them are
+  // mandatory for deletion
+  const std::vector<Object> dirs = {
+    settings.paths().downloads(),
+    settings.paths().mods(),
+    settings.paths().cache(),
+    settings.paths().profiles(),
+    settings.paths().overwrite(),
+    QDir(m_dir).filePath(QString::fromStdWString(AppConfig::dumpsDir())),
+    QDir(m_dir).filePath(QString::fromStdWString(AppConfig::logPath())),
+  };
+
+  // all the files that are part of an instance
+  const std::vector<Object> files = {
+    {iniPath(), true},   // the ini file must be deleted
+  };
+
+
+  // this will contain the root directories, plus all the individual
+  // directories that are not inside these roots
+  std::vector<Object> cleanDirs;
+
+  for (const auto& f : dirs) {
+    bool inRoots = false;
+
+    for (const auto& root : roots) {
+      if (dirInRoot(root.path, f.path)) {
+        inRoots = true;
+        break;
+      }
+    }
+
+    if (!inRoots) {
+      // not in roots, this is a path that was changed by the user; make
+      // sure it exists
+      if (QDir(f.path).exists()) {
+        cleanDirs.push_back({prettyDir(f.path), f.mandatoryDelete});
+      }
+    }
+  }
+
+  // prepending the roots
+  for (auto itor=roots.rbegin(); itor!=roots.rend(); ++itor) {
+    cleanDirs.insert(
+      cleanDirs.begin(),
+      {prettyDir(itor->path), itor->mandatoryDelete});
+  }
+
+
+
+  // this will contain the individual files that are not inside the roots;
+  // not that this only contains the INI file for now, so most of this is
+  // useless
+  std::vector<Object> cleanFiles;
+
+  for (const auto& f : files) {
+    bool inRoots = false;
+
+    for (const auto& root : roots) {
+      if (fileInRoot(root.path, f.path)) {
+        inRoots = true;
+        break;
+      }
+    }
+
+    if (!inRoots) {
+      // not in roots, this is a path that was changed by the user; make
+      // sure it exists
+      if (QFileInfo(f.path).exists()) {
+        cleanFiles.push_back({prettyFile(f.path), f.mandatoryDelete});
+      }
+    }
+  }
+
+
+  // contains all the directories and files to be deleted
+  std::vector<Object> all;
+  all.insert(all.end(), cleanDirs.begin(), cleanDirs.end());
+  all.insert(all.end(), cleanFiles.begin(), cleanFiles.end());
+
+  // mandatory on top
+  std::stable_sort(all.begin(), all.end());
+
+  return all;
+}
+
 
 
 InstanceManager::InstanceManager()
@@ -327,20 +544,20 @@ std::optional<Instance> InstanceManager::currentInstance() const
 
   if (!allowedToChangeInstance()) {
     // force portable instance
-    return Instance(QDir(portablePath()), true, profile);
+    return Instance(portablePath(), true, profile);
   }
 
   if (name.isEmpty()) {
     if (portableInstanceExists()) {
       // use portable
-      return Instance(QDir(portablePath()), true, profile);
+      return Instance(portablePath(), true, profile);
     } else {
       // no instance set
       return {};
     }
   }
 
-  return Instance(QDir(instancePath(name)), false, profile);
+  return Instance(instancePath(name), false, profile);
 }
 
 void InstanceManager::clearCurrentInstance()
@@ -365,12 +582,13 @@ QString InstanceManager::globalInstancesRootPath() const
         QStandardPaths::writableLocation(QStandardPaths::DataLocation));
 }
 
-QString InstanceManager::iniPath(const QDir& instanceDir) const
+QString InstanceManager::iniPath(const QString& instanceDir) const
 {
-  return instanceDir.filePath(QString::fromStdWString(AppConfig::iniFileName()));
+  return QDir(instanceDir).filePath(
+    QString::fromStdWString(AppConfig::iniFileName()));
 }
 
-std::vector<QDir> InstanceManager::globalInstancePaths() const
+std::vector<QString> InstanceManager::globalInstancePaths() const
 {
   const std::set<QString> ignore = {
     "cache", "qtwebengine",
@@ -379,7 +597,7 @@ std::vector<QDir> InstanceManager::globalInstancePaths() const
   const QDir root(globalInstancesRootPath());
   const auto dirs = root.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
 
-  std::vector<QDir> list;
+  std::vector<QString> list;
 
   for (auto&& d : dirs) {
     if (!ignore.contains(QFileInfo(d).fileName().toLower())) {
@@ -416,7 +634,7 @@ bool InstanceManager::allowedToChangeInstance() const
 }
 
 const MOBase::IPluginGame* InstanceManager::gamePluginForDirectory(
-  const QDir& instanceDir, const PluginContainer& plugins) const
+  const QString& instanceDir, const PluginContainer& plugins) const
 {
   const QString ini = iniPath(instanceDir);
 

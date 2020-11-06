@@ -662,17 +662,17 @@ int doOneRun(
   }
   else
   {
-    if (!currentInstance->directory().exists()) {
+    if (!QDir(currentInstance->directory()).exists()) {
       // the previously used instance doesn't exist anymore
 
       if (m.hasAnyInstances()) {
         criticalOnTop(QObject::tr(
           "Instance at '%1' not found. Select another instance.")
-          .arg(currentInstance->directory().absolutePath()));
+          .arg(currentInstance->directory()));
       } else {
         criticalOnTop(QObject::tr(
           "Instance at '%1' not found. You must create a new instance")
-            .arg(currentInstance->directory().absolutePath()));
+            .arg(currentInstance->directory()));
       }
 
       currentInstance = selectInstance();
@@ -682,7 +682,7 @@ int doOneRun(
     }
   }
 
-  const QString dataPath = currentInstance->directory().path();
+  const QString dataPath = currentInstance->directory();
   application.setProperty("dataPath", dataPath);
 
   setExceptionHandlers();
