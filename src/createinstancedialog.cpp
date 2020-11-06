@@ -443,7 +443,7 @@ QString CreateInstanceDialog::dataPath() const
   QString s;
 
   if (instanceType() == Portable) {
-    s = QDir(InstanceManager::portablePath()).absolutePath();
+    s = QDir(InstanceManager::singleton().portablePath()).absolutePath();
   } else {
     s = InstanceManager::singleton().instancePath(instanceName());
   }

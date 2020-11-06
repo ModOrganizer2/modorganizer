@@ -48,7 +48,7 @@ public:
   void setDir(const QDir& dir)
   {
     m_dir = dir;
-    m_settings.reset(new Settings(InstanceManager::iniPath(dir)));
+    m_settings.reset(new Settings(InstanceManager::singleton().iniPath(dir)));
   }
 
   QString name() const
@@ -96,7 +96,7 @@ public:
 
   QString iniFile() const
   {
-    return InstanceManager::iniPath(m_dir);
+    return InstanceManager::singleton().iniPath(m_dir);
   }
 
   QIcon icon(const PluginContainer& plugins) const
@@ -351,7 +351,7 @@ void InstanceManagerDialog::updateInstances()
 
   m_instances.clear();
 
-  for (auto&& d : m.instancePaths()) {
+  for (auto&& d : m.globalInstancePaths()) {
     m_instances.push_back(std::make_unique<InstanceInfo>(d, false));
   }
 

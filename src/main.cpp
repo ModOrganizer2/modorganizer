@@ -280,7 +280,7 @@ std::optional<Instance> selectInstance()
   PluginContainer pc(nullptr);
   pc.loadPlugins();
 
-  if (m.instancePaths().empty() && !m.portableInstanceExists()) {
+  if (!m.hasAnyInstances()) {
     // no instances configured
     CreateInstanceDialog dlg(pc, nullptr);
     if (dlg.exec() != QDialog::Accepted) {
@@ -454,10 +454,6 @@ int runApplication(
 
   log::info("data path: {}", dataPath);
 
-  if (InstanceManager::isPortablePath(dataPath)) {
-    log::debug("this is a portable instance");
-  }
-
   log::info("working directory: {}", QDir::currentPath());
 
   if (!instance.secondary()) {
@@ -527,6 +523,10 @@ int runApplication(
       } else {
         return 1;
       }
+    }
+
+    if (currentInstance.isPortable()) {
+      log::debug("this is a portable instance");
     }
 
     checkPathsForSanity(*currentInstance.gamePlugin(), settings);
@@ -665,13 +665,13 @@ int doOneRun(
     if (!currentInstance->directory().exists()) {
       // the previously used instance doesn't exist anymore
 
-      if (m.instanceNames().empty() && !m.portableInstanceExists()) {
-        criticalOnTop(QObject::tr(
-          "Instance at '%1' not found. You must create a new instance")
-            .arg(currentInstance->directory().absolutePath()));
-      } else {
+      if (m.hasAnyInstances()) {
         criticalOnTop(QObject::tr(
           "Instance at '%1' not found. Select another instance.")
+          .arg(currentInstance->directory().absolutePath()));
+      } else {
+        criticalOnTop(QObject::tr(
+          "Instance at '%1' not found. You must create a new instance")
             .arg(currentInstance->directory().absolutePath()));
       }
 

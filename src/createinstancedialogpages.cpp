@@ -136,11 +136,11 @@ TypePage::TypePage(CreateInstanceDialog& dlg)
 {
   ui->createGlobal->setDescription(
     ui->createGlobal->description()
-      .arg(InstanceManager::singleton().instancesPath()));
+      .arg(InstanceManager::singleton().globalInstancesRootPath()));
 
   ui->createPortable->setDescription(
     ui->createPortable->description()
-      .arg(InstanceManager::portablePath()));
+      .arg(InstanceManager::singleton().portablePath()));
 
   if (InstanceManager::singleton().portableInstanceExists()) {
     ui->createPortable->setEnabled(false);
@@ -748,7 +748,7 @@ void NamePage::onChanged()
 
 void NamePage::updateWarnings()
 {
-  const auto root = InstanceManager::singleton().instancesPath();
+  const auto root = InstanceManager::singleton().globalInstancesRootPath();
 
   m_okay = checkName(root, ui->instanceName->text());
   updateNavigation();
@@ -899,9 +899,9 @@ void PathsPage::setPaths(const QString& name, bool force)
   QString path;
 
   if (m_dlg.instanceType() == CreateInstanceDialog::Portable) {
-    path = InstanceManager::portablePath();
+    path = InstanceManager::singleton().portablePath();
   } else {
-    const auto root = InstanceManager::singleton().instancesPath();
+    const auto root = InstanceManager::singleton().globalInstancesRootPath();
     path = root + "/" + name;
   }
 
