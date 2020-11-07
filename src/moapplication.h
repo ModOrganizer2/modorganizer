@@ -37,7 +37,10 @@ class MOApplication : public QApplication
 public:
   MOApplication(cl::CommandLine& cl, int& argc, char** argv);
 
+  // sets up everything, creates the main window and runs it
+  //
   int run(SingleInstance& si);
+
   virtual bool notify(QObject* receiver, QEvent* event);
 
 public slots:
@@ -52,6 +55,8 @@ private:
   cl::CommandLine& m_cl;
 
   int doOneRun(SingleInstance& singleInstance);
+
+  std::optional<Instance> getCurrentInstance();
 
   int runApplication(
     SingleInstance& singleInstance,

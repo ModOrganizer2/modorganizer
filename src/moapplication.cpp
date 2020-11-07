@@ -160,8 +160,13 @@ int MOApplication::run(SingleInstance& singleInstance)
   // IOrganizer::getPluginDataPath()
   MOBase::details::setPluginDataPath(OrganizerCore::pluginDataPath());
 
+  // MO runs in a loop because it can be restarted in several ways, such as
+  // when switching instances or changing some settings
   for (;;)
   {
+    // resets things when MO is "restarted"
+    resetForRestart();
+
     const auto r = doOneRun(singleInstance);
     if (r == RestartExitCode) {
       continue;
@@ -175,39 +180,9 @@ int MOApplication::doOneRun(SingleInstance& singleInstance)
 {
   TimeThis tt("doOneRun() to runApplication()");
 
-  // resets things when MO is "restarted"
-  resetForRestart();
-
-  auto& m = InstanceManager::singleton();
-  auto currentInstance = m.currentInstance();
-
-  if (!currentInstance)
-  {
-    currentInstance = selectInstance();
-    if (!currentInstance) {
-      return 1;
-    }
-  }
-  else
-  {
-    if (!QDir(currentInstance->directory()).exists()) {
-      // the previously used instance doesn't exist anymore
-
-      if (m.hasAnyInstances()) {
-        MOShared::criticalOnTop(QObject::tr(
-          "Instance at '%1' not found. Select another instance.")
-          .arg(currentInstance->directory()));
-      } else {
-        MOShared::criticalOnTop(QObject::tr(
-          "Instance at '%1' not found. You must create a new instance")
-          .arg(currentInstance->directory()));
-      }
-
-      currentInstance = selectInstance();
-      if (!currentInstance) {
-        return 1;
-      }
-    }
+  auto currentInstance = getCurrentInstance();
+  if (!currentInstance) {
+    return 1;
   }
 
   const QString dataPath = currentInstance->directory();
@@ -226,6 +201,37 @@ int MOApplication::doOneRun(SingleInstance& singleInstance)
   tt.stop();
 
   return runApplication(singleInstance, dataPath, *currentInstance);
+}
+
+std::optional<Instance> MOApplication::getCurrentInstance()
+{
+  auto& m = InstanceManager::singleton();
+  auto currentInstance = m.currentInstance();
+
+  if (!currentInstance)
+  {
+    currentInstance = selectInstance();
+  }
+  else
+  {
+    if (!QDir(currentInstance->directory()).exists()) {
+      // the previously used instance doesn't exist anymore
+
+      if (m.hasAnyInstances()) {
+        MOShared::criticalOnTop(QObject::tr(
+          "Instance at '%1' not found. Select another instance.")
+          .arg(currentInstance->directory()));
+      } else {
+        MOShared::criticalOnTop(QObject::tr(
+          "Instance at '%1' not found. You must create a new instance")
+          .arg(currentInstance->directory()));
+      }
+
+      currentInstance = selectInstance();
+    }
+  }
+
+  return currentInstance;
 }
 
 int MOApplication::runApplication(
