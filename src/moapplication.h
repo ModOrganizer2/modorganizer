@@ -24,15 +24,21 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileSystemWatcher>
 
 class Settings;
+class SingleInstance;
+class Instance;
+
 namespace MOBase { class IPluginGame; }
+namespace cl { class CommandLine; }
 
 class MOApplication : public QApplication
 {
   Q_OBJECT
 
 public:
-  static MOApplication create(int& argc, char** argv);
-  virtual bool notify (QObject* receiver, QEvent* event);
+  MOApplication(cl::CommandLine& cl, int& argc, char** argv);
+
+  int run(SingleInstance& si);
+  virtual bool notify(QObject* receiver, QEvent* event);
 
 public slots:
   bool setStyleFile(const QString& style);
@@ -43,8 +49,16 @@ private slots:
 private:
   QFileSystemWatcher m_StyleWatcher;
   QString m_DefaultStyle;
+  cl::CommandLine& m_cl;
 
-  MOApplication(int& argc, char** argv);
+  int doOneRun(SingleInstance& singleInstance);
+
+  int runApplication(
+    SingleInstance& singleInstance,
+    const QString &dataPath, Instance& currentInstance);
+
+  void purgeOldFiles();
+  void resetForRestart();
 };
 
 

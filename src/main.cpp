@@ -45,21 +45,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
-void purgeOldFiles()
-{
-  // remove the temporary backup directory in case we're restarting after an
-  // update
-  QString backupDirectory = qApp->applicationDirPath() + "/update_backup";
-  if (QDir(backupDirectory).exists()) {
-    shellDelete(QStringList(backupDirectory));
-  }
-
-  // cycle log file
-  removeOldFiles(
-    qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath()),
-    "usvfs*.log", 5, QDir::Name);
-}
-
 thread_local LPTOP_LEVEL_EXCEPTION_FILTER g_prevExceptionFilter = nullptr;
 thread_local std::terminate_handler g_prevTerminateHandler = nullptr;
 
@@ -111,180 +96,6 @@ void setExceptionHandlers()
   g_prevTerminateHandler = std::set_terminate(onTerminate);
 }
 
-int runApplication(
-  MOApplication &application, const cl::CommandLine& cl,
-  SingleInstance &instance, const QString &dataPath,
-  Instance& currentInstance)
-{
-  TimeThis tt("runApplication() to exec()");
-
-  log::info(
-    "starting Mod Organizer version {} revision {} in {}, usvfs: {}",
-    createVersionInfo().displayString(3), GITID,
-    QCoreApplication::applicationDirPath(), MOShared::getUsvfsVersionString());
-
-  log::info("data path: {}", dataPath);
-
-  log::info("working directory: {}", QDir::currentPath());
-
-  if (!instance.secondary()) {
-    purgeOldFiles();
-  }
-
-  QWindowsWindowFunctions::setWindowActivationBehavior(
-    QWindowsWindowFunctions::AlwaysActivateWindow);
-
-  try
-  {
-    Settings settings(
-      dataPath + "/" + QString::fromStdWString(AppConfig::iniFileName()),
-      true);
-
-    log::getDefault().setLevel(settings.diagnostics().logLevel());
-
-    log::debug("using ini at '{}'", settings.filename());
-
-    if (instance.secondary()) {
-      log::debug("another instance of MO is running but --multiple was given");
-    }
-
-    // global crashDumpType sits in OrganizerCore to make a bit less ugly to
-    // update it when the settings are changed during runtime
-    OrganizerCore::setGlobalCrashDumpsType(settings.diagnostics().crashDumpsType());
-
-    env::Environment env;
-    env.dump(settings);
-    settings.dump();
-    sanity::checkEnvironment(env);
-
-    const auto moduleNotification = env.onModuleLoaded(qApp, [](auto&& m) {
-      log::debug("loaded module {}", m.toString());
-      sanity::checkIncompatibleModule(m);
-    });
-
-    // this must outlive `organizer`
-    std::unique_ptr<PluginContainer> pluginContainer;
-
-    log::debug("initializing nexus interface");
-    NexusInterface ni(&settings);
-
-    log::debug("initializing core");
-    OrganizerCore organizer(settings);
-    if (!organizer.bootstrap()) {
-      reportError("failed to set up data paths");
-      InstanceManager::singleton().clearCurrentInstance();
-      return 1;
-    }
-
-    log::debug("initializing plugins");
-    pluginContainer = std::make_unique<PluginContainer>(&organizer);
-    pluginContainer->loadPlugins();
-
-    for (;;)
-    {
-      const auto setupResult = setupInstance(currentInstance, *pluginContainer);
-
-      if (setupResult == SetupInstanceResults::Okay) {
-        break;
-      } else if (setupResult == SetupInstanceResults::TryAgain) {
-        continue;
-      } else if (setupResult == SetupInstanceResults::SelectAnother) {
-        InstanceManager::singleton().clearCurrentInstance();
-        return RestartExitCode;
-      } else {
-        return 1;
-      }
-    }
-
-    if (currentInstance.isPortable()) {
-      log::debug("this is a portable instance");
-    }
-
-    sanity::checkPaths(*currentInstance.gamePlugin(), settings);
-
-    organizer.setManagedGame(currentInstance.gamePlugin());
-    organizer.createDefaultProfile();
-
-    log::info(
-      "using game plugin '{}' ('{}', variant {}, steam id '{}') at {}",
-      currentInstance.gamePlugin()->gameName(),
-      currentInstance.gamePlugin()->gameShortName(),
-      (settings.game().edition().value_or("").isEmpty() ?
-        "(none)" : *settings.game().edition()),
-      currentInstance.gamePlugin()->steamAPPId(),
-      currentInstance.gamePlugin()->gameDirectory().absolutePath());
-
-
-    CategoryFactory::instance().loadCategories();
-    organizer.updateExecutablesList();
-    organizer.updateModInfoFromDisc();
-
-    organizer.setCurrentProfile(currentInstance.profileName());
-
-    if (auto r=cl.setupCore(organizer)) {
-      return *r;
-    }
-
-    MOSplash splash(settings, dataPath, currentInstance.gamePlugin());
-
-    QString apiKey;
-    if (GlobalSettings::nexusApiKey(apiKey)) {
-      ni.getAccessManager()->apiCheck(apiKey);
-    }
-
-    log::debug("initializing tutorials");
-    TutorialManager::init(
-        qApp->applicationDirPath() + "/"
-            + QString::fromStdWString(AppConfig::tutorialsPath()) + "/",
-        &organizer);
-
-    if (!application.setStyleFile(settings.interface().styleName().value_or(""))) {
-      // disable invalid stylesheet
-      settings.interface().setStyleName("");
-    }
-
-    int res = 1;
-
-    {
-      // scope to control lifetime of mainwindow
-      // set up main window and its data structures
-      MainWindow mainWindow(settings, organizer, *pluginContainer);
-
-      // qt resets the thread name somewhere when creating the main window
-      MOShared::SetThisThreadName("main");
-
-      ni.getAccessManager()->setTopLevelWidget(&mainWindow);
-
-      QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), &application,
-                       SLOT(setStyleFile(QString)));
-      QObject::connect(&instance, SIGNAL(messageSent(QString)), &organizer,
-                       SLOT(externalMessage(QString)));
-
-      log::debug("displaying main window");
-      mainWindow.show();
-      mainWindow.activateWindow();
-
-      splash.close();
-
-      tt.stop();
-
-      res = application.exec();
-      mainWindow.close();
-
-      ni.getAccessManager()->setTopLevelWidget(nullptr);
-    }
-
-    settings.geometry().resetIfNeeded();
-    return res;
-  }
-  catch (const std::exception &e)
-  {
-    reportError(e.what());
-  }
-
-  return 1;
-}
-
 int forwardToPrimary(SingleInstance& instance, const cl::CommandLine& cl)
 {
   if (cl.shortcut().isValid()) {
@@ -300,118 +111,25 @@ int forwardToPrimary(SingleInstance& instance, const cl::CommandLine& cl)
   return 0;
 }
 
-void resetForRestart(cl::CommandLine& cl)
-{
-  LogModel::instance().clear();
-  ResetExitFlag();
-
-  // make sure the log file isn't locked in case MO was restarted and
-  // the previous instance gets deleted
-  log::getDefault().setFile({});
-
-  // don't reprocess command line
-  cl.clear();
-}
-
-int doOneRun(
-  cl::CommandLine& cl, MOApplication& application, SingleInstance& instance)
-{
-  TimeThis tt("doOneRun() to runApplication()");
-
-  // resets things when MO is "restarted"
-  resetForRestart(cl);
-
-  auto& m = InstanceManager::singleton();
-  auto currentInstance = m.currentInstance();
-
-  if (!currentInstance)
-  {
-    currentInstance = selectInstance();
-    if (!currentInstance) {
-      return 1;
-    }
-  }
-  else
-  {
-    if (!QDir(currentInstance->directory()).exists()) {
-      // the previously used instance doesn't exist anymore
-
-      if (m.hasAnyInstances()) {
-        MOShared::criticalOnTop(QObject::tr(
-          "Instance at '%1' not found. Select another instance.")
-          .arg(currentInstance->directory()));
-      } else {
-        MOShared::criticalOnTop(QObject::tr(
-          "Instance at '%1' not found. You must create a new instance")
-            .arg(currentInstance->directory()));
-      }
-
-      currentInstance = selectInstance();
-      if (!currentInstance) {
-        return 1;
-      }
-    }
-  }
-
-  const QString dataPath = currentInstance->directory();
-  application.setProperty("dataPath", dataPath);
-
-  setExceptionHandlers();
-
-  if (!setLogDirectory(dataPath)) {
-    reportError("Failed to create log folder");
-    InstanceManager::singleton().clearCurrentInstance();
-    return 1;
-  }
-
-  log::debug("command line: '{}'", QString::fromWCharArray(GetCommandLineW()));
-
-  tt.stop();
-
-  return runApplication(application, cl, instance, dataPath, *currentInstance);
-}
 
 int main(int argc, char *argv[])
 {
   MOShared::SetThisThreadName("main");
 
   cl::CommandLine cl;
-
   if (auto r=cl.run(GetCommandLineW())) {
     return *r;
   }
 
-  TimeThis tt("main() to doOneRun()");
-
   initLogging();
 
-  auto application = MOApplication::create(argc, argv);
+  QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+  MOApplication app(cl, argc, argv);
 
   SingleInstance instance(cl.multiple());
   if (instance.ephemeral()) {
     return forwardToPrimary(instance, cl);
   }
 
-  tt.stop();
-
-  if (cl.instance())
-    InstanceManager::singleton().overrideInstance(*cl.instance());
-
-  if (cl.profile()) {
-    InstanceManager::singleton().overrideProfile(*cl.profile());
-  }
-
-  // makes plugin data path available to plugins, see
-  // IOrganizer::getPluginDataPath()
-  MOBase::details::setPluginDataPath(OrganizerCore::pluginDataPath());
-
-  for (;;)
-  {
-    const auto r = doOneRun(cl, application, instance);
-    if (r == RestartExitCode) {
-      continue;
-    }
-
-    return r;
-  }
+  return app.run(instance);
 }
