@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "moapplication.h"
 #include "settings.h"
 #include "env.h"
+#include "shared/util.h"
 #include <iplugingame.h>
 #include <report.h>
 #include <utility.h>

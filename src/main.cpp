@@ -32,6 +32,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "env.h"
 #include "envmodule.h"
 #include "commandline.h"
+#include "sanitychecks.h"
 #include "shared/util.h"
 #include "shared/appconfig.h"
 #include "shared/error_report.h"
@@ -41,13 +42,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <log.h>
 #include <utility.h>
 
-
 using namespace MOBase;
 using namespace MOShared;
-
-void sanityChecks(const env::Environment& env);
-int checkIncompatibleModule(const env::Module& m);
-int checkPathsForSanity(MOBase::IPluginGame& game, const Settings& s);
 
 void purgeOldFiles()
 {
@@ -159,11 +155,11 @@ int runApplication(
     env::Environment env;
     env.dump(settings);
     settings.dump();
-    sanityChecks(env);
+    sanity::checkEnvironment(env);
 
     const auto moduleNotification = env.onModuleLoaded(qApp, [](auto&& m) {
       log::debug("loaded module {}", m.toString());
-      checkIncompatibleModule(m);
+      sanity::checkIncompatibleModule(m);
     });
 
     // this must outlive `organizer`
@@ -204,7 +200,7 @@ int runApplication(
       log::debug("this is a portable instance");
     }
 
-    checkPathsForSanity(*currentInstance.gamePlugin(), settings);
+    sanity::checkPaths(*currentInstance.gamePlugin(), settings);
 
     organizer.setManagedGame(currentInstance.gamePlugin());
     organizer.createDefaultProfile();
@@ -249,9 +245,13 @@ int runApplication(
 
     int res = 1;
 
-    { // scope to control lifetime of mainwindow
+    {
+      // scope to control lifetime of mainwindow
       // set up main window and its data structures
       MainWindow mainWindow(settings, organizer, *pluginContainer);
+
+      // qt resets the thread name somewhere when creating the main window
+      MOShared::SetThisThreadName("main");
 
       ni.getAccessManager()->setTopLevelWidget(&mainWindow);
 
@@ -373,6 +373,8 @@ int doOneRun(
 
 int main(int argc, char *argv[])
 {
+  MOShared::SetThisThreadName("main");
+
   cl::CommandLine cl;
 
   if (auto r=cl.run(GetCommandLineW())) {
@@ -380,8 +382,6 @@ int main(int argc, char *argv[])
   }
 
   TimeThis tt("main() to doOneRun()");
-
-  SetThisThreadName("main");
 
   initLogging();
 
