@@ -21,9 +21,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "instancemanager.h"
 #include "selectiondialog.h"
 #include "settings.h"
-#include "shared/appconfig.h"
 #include "plugincontainer.h"
+#include "nexusinterface.h"
+#include "createinstancedialog.h"
+#include "instancemanagerdialog.h"
+#include "createinstancedialogpages.h"
+#include "shared/appconfig.h"
 #include "shared/util.h"
+#include "shared/error_report.h"
 #include <report.h>
 #include <iplugingame.h>
 #include <utility.h>
@@ -750,4 +755,154 @@ bool InstanceManager::validInstanceName(const QString& instanceName) const
   }
 
   return (instanceName == sanitizeInstanceName(instanceName));
+}
+
+
+
+std::optional<Instance> selectInstance()
+{
+  auto& m = InstanceManager::singleton();
+
+  NexusInterface ni(nullptr);
+  PluginContainer pc(nullptr);
+  pc.loadPlugins();
+
+  if (!m.hasAnyInstances()) {
+    // no instances configured
+    CreateInstanceDialog dlg(pc, nullptr);
+    if (dlg.exec() != QDialog::Accepted) {
+      return {};
+    }
+
+    return m.currentInstance();
+  }
+
+
+  InstanceManagerDialog dlg(pc);
+  dlg.setRestartOnSelect(false);
+
+  dlg.show();
+  dlg.activateWindow();
+  dlg.raise();
+
+  if (dlg.exec() != QDialog::Accepted) {
+    return {};
+  }
+
+  return m.currentInstance();
+}
+
+SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
+{
+  const auto setupResult = instance.setup(pc);
+
+  switch (setupResult)
+  {
+    case Instance::SetupResults::Ok:
+    {
+      return SetupInstanceResults::Ok;
+    }
+
+    case Instance::SetupResults::BadIni:
+    {
+      MOShared::criticalOnTop(
+        QObject::tr("Cannot open instance '%1', failed to read INI file %2.")
+        .arg(instance.name()).arg(instance.iniPath()));
+
+      return SetupInstanceResults::SelectAnother;
+    }
+
+    case Instance::SetupResults::IniMissingGame:
+    {
+      MOShared::criticalOnTop(
+        QObject::tr(
+          "Cannot open instance '%1', the managed game was not found in the INI "
+          "file %2. Select the game managed by this instance.")
+        .arg(instance.name()).arg(instance.iniPath()));
+
+      CreateInstanceDialog dlg(pc, nullptr);
+      dlg.setSinglePage<cid::GamePage>(instance.name());
+
+      dlg.show();
+      dlg.activateWindow();
+      dlg.raise();
+
+      if (dlg.exec() != QDialog::Accepted) {
+        return SetupInstanceResults::Exit;
+      }
+
+      instance.setGame(
+        dlg.creationInfo().game->gameName(),
+        dlg.creationInfo().gameLocation);
+
+      return SetupInstanceResults::TryAgain;
+    }
+
+    case Instance::SetupResults::PluginGone:
+    {
+      MOShared::criticalOnTop(
+        QObject::tr(
+          "Cannot open instance '%1', the game plugin '%2' doesn't exist. It "
+          "may have been deleted by an antivirus. Select another instance.")
+        .arg(instance.name()).arg(instance.gameName()));
+
+      return SetupInstanceResults::SelectAnother;
+    }
+
+    case Instance::SetupResults::GameGone:
+    {
+      MOShared::criticalOnTop(
+        QObject::tr(
+          "Cannot open instance '%1', the game directory '%2' doesn't exist or "
+          "the game plugin '%3' doesn't recognize it. Select the game managed "
+          "by this instance.")
+        .arg(instance.name())
+        .arg(instance.gameDirectory())
+        .arg(instance.gameName()));
+
+      CreateInstanceDialog dlg(pc, nullptr);
+      dlg.setSinglePage<cid::GamePage>(instance.name());
+
+      dlg.show();
+      dlg.activateWindow();
+      dlg.raise();
+
+      if (dlg.exec() != QDialog::Accepted) {
+        return SetupInstanceResults::Exit;
+      }
+
+      instance.setGame(
+        dlg.creationInfo().game->gameName(),
+        dlg.creationInfo().gameLocation);
+
+      return SetupInstanceResults::TryAgain;
+    }
+
+    case Instance::SetupResults::MissingVariant:
+    {
+      CreateInstanceDialog dlg(pc, nullptr);
+
+      dlg.getPage<cid::GamePage>()->select(
+        instance.gamePlugin(), instance.gameDirectory());
+
+      dlg.setSinglePage<cid::VariantsPage>(instance.name());
+
+      dlg.show();
+      dlg.activateWindow();
+      dlg.raise();
+
+      if (dlg.exec() != QDialog::Accepted) {
+        return SetupInstanceResults::Exit;
+      }
+
+      instance.setVariant(dlg.creationInfo().gameVariant);
+
+      return SetupInstanceResults::TryAgain;
+    }
+
+    default:
+    {
+      return SetupInstanceResults::Exit;
+    }
+  }
 }

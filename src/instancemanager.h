@@ -332,4 +332,41 @@ private:
   std::optional<QString> m_overrideProfileName;
 };
 
+
+// see setupInstance()
+//
+enum class SetupInstanceResults
+{
+  Ok,
+  TryAgain,
+  SelectAnother,
+  Exit
+};
+
+// if there are no instances configured, global or portable, shows the
+// create instance dialog and returns the new instance or empty if the user
+// cancelled
+//
+// if there is at least one instance available, unconditionally show the
+// instance manager dialog and returns the selected instnace or empty if the
+// user cancelled
+//
+std::optional<Instance> selectInstance();
+
+// calls instance.setup() tries to handle problems by itself:
+//
+//  - if the ini is missing some information, will show dialogs and ask the user
+//    to fill in what's required (such as the game directory, variant, etc.);
+//    if successful, returns TryAgain and setupInstance() can be called again
+//    with the same instance
+//
+//  - if the instance cannot be used (no game plugin found for it, ini can't
+//    be read, etc.), returns SelectAnother
+//
+//  - if the user cancels at any point, returns Exit
+//
+//  - if the instance has been set up correctly, returns Ok
+//
+SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc);
+
 #endif  // MODORGANIZER_INSTANCEMANAGER_INCLUDED
