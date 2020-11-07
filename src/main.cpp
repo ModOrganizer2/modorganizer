@@ -115,55 +115,6 @@ void setExceptionHandlers()
   g_prevTerminateHandler = std::set_terminate(onTerminate);
 }
 
-std::optional<int> handleCommandLine(
-  const cl::CommandLine& cl, OrganizerCore& organizer)
-{
-  // if we have a command line parameter, it is either a nxm link or
-  // a binary to start
-  if (cl.shortcut().isValid()) {
-    if (cl.shortcut().hasExecutable()) {
-      try {
-        organizer.processRunner()
-          .setFromShortcut(cl.shortcut())
-          .setWaitForCompletion()
-          .run();
-
-        return 0;
-      }
-      catch (const std::exception &e) {
-        reportError(
-          QObject::tr("failed to start shortcut: %1").arg(e.what()));
-        return 1;
-      }
-    }
-  } else if (cl.nxmLink()) {
-    log::debug("starting download from command line: {}", *cl.nxmLink());
-    organizer.externalMessage(*cl.nxmLink());
-  } else if (cl.executable()) {
-    const QString exeName = *cl.executable();
-    log::debug("starting {} from command line", exeName);
-
-    try
-    {
-      // pass the remaining parameters to the binary
-      organizer.processRunner()
-        .setFromFileOrExecutable(exeName, cl.untouched())
-        .setWaitForCompletion()
-        .run();
-
-      return 0;
-    }
-    catch (const std::exception &e)
-    {
-      reportError(
-        QObject::tr("failed to start application: %1").arg(e.what()));
-      return 1;
-    }
-  }
-
-  return {};
-}
-
 int runApplication(
   MOApplication &application, const cl::CommandLine& cl,
   SingleInstance &instance, const QString &dataPath,
@@ -274,7 +225,7 @@ int runApplication(
 
     organizer.setCurrentProfile(currentInstance.profileName());
 
-    if (auto r=handleCommandLine(cl, organizer)) {
+    if (auto r=cl.setupCore(organizer)) {
       return *r;
     }
 

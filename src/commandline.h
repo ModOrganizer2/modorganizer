@@ -4,6 +4,8 @@
 #include <vector>
 #include <memory>
 
+class OrganizerCore;
+
 namespace cl
 {
 
@@ -193,6 +195,18 @@ protected:
 // if moshortcut:// is detected and has an instance, it will override -i if both
 // are given
 //
+//
+// the command is used in two phases:
+//
+//    1) run() is called in main() shortly after startup; it parses the command
+//       line and runs the given command, if any
+//
+//    2) if the command did not request to exit, the instance is loaded
+//       in main() et al. and setupCore() is called; it handles moshortcut,
+//       nxm links and starting executables/binaries
+//
+// either can return an exit code, which will make MO exit immediately
+//
 class CommandLine
 {
 public:
@@ -205,6 +219,14 @@ public:
   // if MO must quit
   //
   std::optional<int> run(const std::wstring& line);
+
+  // handles moshortcut, nxm links and starting processes
+  //
+  // returns an empty optional if execution should continue, or a return code
+  // if MO must quit
+  //
+  std::optional<int> setupCore(OrganizerCore& organizer) const;
+
 
   // clears parsed options, used when MO is "restarted" so the options aren't
   // processed again

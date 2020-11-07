@@ -1,9 +1,14 @@
 #include "commandline.h"
 #include "env.h"
+#include "organizercore.h"
 #include "shared/util.h"
+#include <log.h>
+#include <report.h>
 
 namespace cl
 {
+
+using namespace MOBase;
 
 std::string pad_right(std::string s, std::size_t n, char c=' ')
 {
@@ -193,6 +198,54 @@ std::optional<int> CommandLine::run(const std::wstring& line)
 
     return 1;
   }
+}
+
+std::optional<int> CommandLine::setupCore(OrganizerCore& organizer) const
+{
+  // if we have a command line parameter, it is either a nxm link or
+  // a binary to start
+  if (m_shortcut.isValid()) {
+    if (m_shortcut.hasExecutable()) {
+      try {
+        organizer.processRunner()
+          .setFromShortcut(m_shortcut)
+          .setWaitForCompletion()
+          .run();
+
+        return 0;
+      }
+      catch (const std::exception &e) {
+        reportError(
+          QObject::tr("failed to start shortcut: %1").arg(e.what()));
+        return 1;
+      }
+    }
+  } else if (m_nxmLink) {
+    log::debug("starting download from command line: {}", *m_nxmLink);
+    organizer.externalMessage(*m_nxmLink);
+  } else if (m_executable) {
+    const QString exeName = *m_executable;
+    log::debug("starting {} from command line", exeName);
+
+    try
+    {
+      // pass the remaining parameters to the binary
+      organizer.processRunner()
+        .setFromFileOrExecutable(exeName, m_untouched)
+        .setWaitForCompletion()
+        .run();
+
+      return 0;
+    }
+    catch (const std::exception &e)
+    {
+      reportError(
+        QObject::tr("failed to start application: %1").arg(e.what()));
+      return 1;
+    }
+  }
+
+  return {};
 }
 
 void CommandLine::clear()
