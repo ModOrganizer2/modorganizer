@@ -32,7 +32,7 @@ public:
   enum class SetupResults
   {
     // instance is ready to be used
-    Ok,
+    Okay,
 
     // error while reading the INI
     BadIni,
@@ -337,7 +337,7 @@ private:
 //
 enum class SetupInstanceResults
 {
-  Ok,
+  Okay,
   TryAgain,
   SelectAnother,
   Exit
@@ -348,7 +348,7 @@ enum class SetupInstanceResults
 // cancelled
 //
 // if there is at least one instance available, unconditionally show the
-// instance manager dialog and returns the selected instnace or empty if the
+// instance manager dialog and returns the selected instance or empty if the
 // user cancelled
 //
 std::optional<Instance> selectInstance();
@@ -365,7 +365,7 @@ std::optional<Instance> selectInstance();
 //
 //  - if the user cancels at any point, returns Exit
 //
-//  - if the instance has been set up correctly, returns Ok
+//  - if the instance has been set up correctly, returns Okay
 //
 SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc);
 

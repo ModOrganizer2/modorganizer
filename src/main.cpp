@@ -237,7 +237,7 @@ int runApplication(
     {
       const auto setupResult = setupInstance(currentInstance, *pluginContainer);
 
-      if (setupResult == SetupInstanceResults::Ok) {
+      if (setupResult == SetupInstanceResults::Okay) {
         break;
       } else if (setupResult == SetupInstanceResults::TryAgain) {
         continue;

@@ -158,7 +158,7 @@ Instance::SetupResults Instance::setup(PluginContainer& plugins)
 
   // getting game plugin
   const auto r = getGamePlugin(plugins);
-  if (r != SetupResults::Ok) {
+  if (r != SetupResults::Okay) {
     return r;
   }
 
@@ -177,7 +177,7 @@ Instance::SetupResults Instance::setup(PluginContainer& plugins)
   // installed
   m_plugin->setGamePath(m_gameDir);
 
-  return SetupResults::Ok;
+  return SetupResults::Okay;
 }
 
 void Instance::updateIni()
@@ -248,7 +248,7 @@ Instance::SetupResults Instance::getGamePlugin(PluginContainer& plugins)
         }
 
         m_plugin = game;
-        return SetupResults::Ok;
+        return SetupResults::Okay;
       }
     }
 
@@ -272,7 +272,7 @@ Instance::SetupResults Instance::getGamePlugin(PluginContainer& plugins)
         m_plugin = game;
         m_gameName = game->gameName();
 
-        return SetupResults::Ok;
+        return SetupResults::Okay;
       }
     }
 
@@ -301,7 +301,7 @@ Instance::SetupResults Instance::getGamePlugin(PluginContainer& plugins)
           m_plugin = game;
           m_gameDir = game->gameDirectory().absolutePath();
 
-          return SetupResults::Ok;
+          return SetupResults::Okay;
         } else {
           log::warn(
             "found plugin {} that matches name in ini {}, but no game install "
@@ -763,48 +763,126 @@ std::optional<Instance> selectInstance()
 {
   auto& m = InstanceManager::singleton();
 
+  // since there is no instance currently active, load plugins with a null
+  // OrganizerCore; see PluginContainer::initPlugin()
   NexusInterface ni(nullptr);
   PluginContainer pc(nullptr);
   pc.loadPlugins();
 
-  if (!m.hasAnyInstances()) {
-    // no instances configured
-    CreateInstanceDialog dlg(pc, nullptr);
+  if (m.hasAnyInstances()) {
+    // there is at least one instance available, show the instance manager
+    // dialog
+    InstanceManagerDialog dlg(pc);
+
+    // the dialog normally restarts MO when an instance is selected, but this
+    // is not necessary here since MO hasn't really started yet
+    dlg.setRestartOnSelect(false);
+
+    dlg.show();
+    dlg.activateWindow();
+    dlg.raise();
+
     if (dlg.exec() != QDialog::Accepted) {
       return {};
     }
 
-    return m.currentInstance();
+  } else {
+    // no instances configured, ask the user to create one
+    CreateInstanceDialog dlg(pc, nullptr);
+
+    if (dlg.exec() != QDialog::Accepted) {
+      return {};
+    }
   }
 
+  // return the new instance or the selection
+  return m.currentInstance();
+}
 
-  InstanceManagerDialog dlg(pc);
-  dlg.setRestartOnSelect(false);
+// shows the game selection page of the create instance dialog so the user can
+// pick which game is managed by this instance
+//
+// this is used below in setupInstance() when the game directory is gone or
+// no plugins can recognize it
+//
+SetupInstanceResults selectGame(Instance& instance, PluginContainer& pc)
+{
+  CreateInstanceDialog dlg(pc, nullptr);
+
+  // only show the game page
+  dlg.setSinglePage<cid::GamePage>(instance.name());
 
   dlg.show();
   dlg.activateWindow();
   dlg.raise();
 
   if (dlg.exec() != QDialog::Accepted) {
-    return {};
+    // cancelled
+    return SetupInstanceResults::Exit;
   }
 
-  return m.currentInstance();
+  // this info will be used instead of the ini, which should fix this
+  // particular problem
+  instance.setGame(
+    dlg.creationInfo().game->gameName(),
+    dlg.creationInfo().gameLocation);
+
+  return SetupInstanceResults::TryAgain;
+}
+
+// shows the game variant page of the create instance dialog so the user can
+// pick which game variant is installed
+//
+// this is used below in setupInstance() when there is no variant in the ini
+// but the game plugin requires one; this can happen when the ini is broken
+// or when a new variant has become supported by the plugin for a game the
+// user already has an instance for
+//
+SetupInstanceResults selectVariant(Instance& instance, PluginContainer& pc)
+{
+  CreateInstanceDialog dlg(pc, nullptr);
+
+  // the variant page uses the game page to know which game was selected, so
+  // set it manually
+  dlg.getPage<cid::GamePage>()->select(
+    instance.gamePlugin(), instance.gameDirectory());
+
+  // only show the variant page
+  dlg.setSinglePage<cid::VariantsPage>(instance.name());
+
+  dlg.show();
+  dlg.activateWindow();
+  dlg.raise();
+
+  if (dlg.exec() != QDialog::Accepted) {
+    return SetupInstanceResults::Exit;
+  }
+
+  // this info will be used instead of the ini, which should fix this
+  // particular problem
+  instance.setVariant(dlg.creationInfo().gameVariant);
+
+  return SetupInstanceResults::TryAgain;
 }
 
 SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
 {
+  // set up the instance
   const auto setupResult = instance.setup(pc);
 
   switch (setupResult)
   {
-    case Instance::SetupResults::Ok:
+    case Instance::SetupResults::Okay:
     {
-      return SetupInstanceResults::Ok;
+      // all good
+      return SetupInstanceResults::Okay;
     }
 
     case Instance::SetupResults::BadIni:
     {
+      // unreadable ini, there's not much that can be done, select another
+      // instance
+
       MOShared::criticalOnTop(
         QObject::tr("Cannot open instance '%1', failed to read INI file %2.")
         .arg(instance.name()).arg(instance.iniPath()));
@@ -814,32 +892,26 @@ SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
 
     case Instance::SetupResults::IniMissingGame:
     {
+      // both the game name and directory are missing from the ini; although
+      // this shouldn't happen, setup() is able to handle when either is
+      // missing, but not both
+      //
+      // ask the user for the game managed by this instance
+
       MOShared::criticalOnTop(
         QObject::tr(
           "Cannot open instance '%1', the managed game was not found in the INI "
           "file %2. Select the game managed by this instance.")
         .arg(instance.name()).arg(instance.iniPath()));
 
-      CreateInstanceDialog dlg(pc, nullptr);
-      dlg.setSinglePage<cid::GamePage>(instance.name());
-
-      dlg.show();
-      dlg.activateWindow();
-      dlg.raise();
-
-      if (dlg.exec() != QDialog::Accepted) {
-        return SetupInstanceResults::Exit;
-      }
-
-      instance.setGame(
-        dlg.creationInfo().game->gameName(),
-        dlg.creationInfo().gameLocation);
-
-      return SetupInstanceResults::TryAgain;
+      return selectGame(instance, pc);
     }
 
     case Instance::SetupResults::PluginGone:
     {
+      // there is no plugin that can handle the game name/directory from the
+      // ini, so this instance is unusable
+
       MOShared::criticalOnTop(
         QObject::tr(
           "Cannot open instance '%1', the game plugin '%2' doesn't exist. It "
@@ -851,6 +923,9 @@ SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
 
     case Instance::SetupResults::GameGone:
     {
+      // the game directory doesn't exist or the plugin doesn't recognize it;
+      // ask the user for the game managed by this instance
+
       MOShared::criticalOnTop(
         QObject::tr(
           "Cannot open instance '%1', the game directory '%2' doesn't exist or "
@@ -860,48 +935,18 @@ SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
         .arg(instance.gameDirectory())
         .arg(instance.gameName()));
 
-      CreateInstanceDialog dlg(pc, nullptr);
-      dlg.setSinglePage<cid::GamePage>(instance.name());
-
-      dlg.show();
-      dlg.activateWindow();
-      dlg.raise();
-
-      if (dlg.exec() != QDialog::Accepted) {
-        return SetupInstanceResults::Exit;
-      }
-
-      instance.setGame(
-        dlg.creationInfo().game->gameName(),
-        dlg.creationInfo().gameLocation);
-
-      return SetupInstanceResults::TryAgain;
+      return selectGame(instance, pc);
     }
 
     case Instance::SetupResults::MissingVariant:
     {
-      CreateInstanceDialog dlg(pc, nullptr);
-
-      dlg.getPage<cid::GamePage>()->select(
-        instance.gamePlugin(), instance.gameDirectory());
-
-      dlg.setSinglePage<cid::VariantsPage>(instance.name());
-
-      dlg.show();
-      dlg.activateWindow();
-      dlg.raise();
-
-      if (dlg.exec() != QDialog::Accepted) {
-        return SetupInstanceResults::Exit;
-      }
-
-      instance.setVariant(dlg.creationInfo().gameVariant);
-
-      return SetupInstanceResults::TryAgain;
+      // the game variant is missing from the ini, ask the user for it
+      return selectVariant(instance, pc);
     }
 
     default:
     {
+      // shouldn't happen
       return SetupInstanceResults::Exit;
     }
   }
