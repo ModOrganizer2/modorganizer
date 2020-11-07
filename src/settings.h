@@ -195,6 +195,10 @@ private:
 class WidgetSettings
 {
 public:
+  // globalInstance is forwarded from the Settings constructor; WidgetSettings
+  // has the callbacks used by QuestionBoxMemory and those are global, so they
+  // should only be set by the global instance
+  //
   WidgetSettings(QSettings& s, bool globalInstance);
 
   // selected index for a combobox
@@ -671,6 +675,20 @@ class Settings : public QObject
   Q_OBJECT;
 
 public:
+  // there is one Settings global object for MO when an instance is loaded, but
+  // other Settings objects are required in several places, such as in the
+  // Instance class, the instance dialogs, etc.
+  //
+  // any Settings object created with globalInstance==false won't set the
+  // singleton
+  //
+  // only WidgetSettings need to know whether it created from a globalInstance,
+  // see its constructor
+  //
+  // @param path           path to an ini file
+  // @param globalInsance  whether this is the global instance; creates the
+  //                       singleton and asserts if it already exists
+  //
   Settings(const QString& path, bool globalInstance=false);
   ~Settings();
 

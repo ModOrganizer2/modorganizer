@@ -18,6 +18,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "moapplication.h"
+#include "settings.h"
+#include <iplugingame.h>
 #include <report.h>
 #include <utility.h>
 #include <log.h>
@@ -146,4 +148,75 @@ void MOApplication::updateStyle(const QString& fileName)
       log::warn("invalid stylesheet: {}", fileName);
     }
   }
+}
+
+
+MOSplash::MOSplash(
+  const Settings& settings, const QString& dataPath,
+  const MOBase::IPluginGame* game)
+{
+  const auto splashPath = getSplashPath(settings, dataPath, game);
+  if (splashPath.isEmpty()) {
+    return;
+  }
+
+  QPixmap image(splashPath);
+  if (image.isNull()) {
+    log::error("failed to load splash from {}", splashPath);
+    return;
+  }
+
+  ss_.reset(new QSplashScreen(image));
+  settings.geometry().centerOnMainWindowMonitor(ss_.get());
+
+  ss_->show();
+  ss_->activateWindow();
+}
+
+void MOSplash::close()
+{
+  if (ss_) {
+    // don't pass mainwindow as it just waits half a second for it
+    // instead of proceding
+    ss_->finish(nullptr);
+  }
+}
+
+QString MOSplash::getSplashPath(
+  const Settings& settings, const QString& dataPath,
+  const MOBase::IPluginGame* game) const
+{
+  if (!settings.useSplash()) {
+    return {};
+  }
+
+  // try splash from instance directory
+  const QString splashPath = dataPath + "/splash.png";
+  if (QFile::exists(dataPath + "/splash.png")) {
+    QImage image(splashPath);
+    if (!image.isNull()) {
+      return splashPath;
+    }
+  }
+
+  // try splash from plugin
+  QString pluginSplash = QString(":/%1/splash").arg(game->gameShortName());
+  if (QFile::exists(pluginSplash)) {
+    QImage image(pluginSplash);
+    if (!image.isNull()) {
+      image.save(splashPath);
+      return pluginSplash;
+    }
+  }
+
+  // try default splash from resource
+  QString defaultSplash = ":/MO/gui/splash";
+  if (QFile::exists(defaultSplash)) {
+    QImage image(defaultSplash);
+    if (!image.isNull()) {
+      return defaultSplash;
+    }
+  }
+
+  return splashPath;
 }

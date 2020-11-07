@@ -23,6 +23,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QApplication>
 #include <QFileSystemWatcher>
 
+class Settings;
+namespace MOBase { class IPluginGame; }
 
 class MOApplication : public QApplication
 {
@@ -45,5 +47,22 @@ private:
   MOApplication(int& argc, char** argv);
 };
 
+
+class MOSplash
+{
+public:
+  MOSplash(
+    const Settings& settings, const QString& dataPath,
+    const MOBase::IPluginGame* game);
+
+  void close();
+
+private:
+  std::unique_ptr<QSplashScreen> ss_;
+
+  QString getSplashPath(
+    const Settings& settings, const QString& dataPath,
+    const MOBase::IPluginGame* game) const;
+};
 
 #endif // MOAPPLICATION_H

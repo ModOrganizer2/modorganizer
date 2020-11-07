@@ -160,69 +160,6 @@ void addDllsToPath()
   env::prependToPath(dllsPath);
 }
 
-QString getSplashPath(
-  const Settings& settings, const QString& dataPath,
-  const MOBase::IPluginGame* game)
-{
-  if (!settings.useSplash()) {
-    return {};
-  }
-
-  // try splash from instance directory
-  const QString splashPath = dataPath + "/splash.png";
-  if (QFile::exists(dataPath + "/splash.png")) {
-    QImage image(splashPath);
-    if (!image.isNull()) {
-      return splashPath;
-    }
-  }
-
-  // try splash from plugin
-  QString pluginSplash = QString(":/%1/splash").arg(game->gameShortName());
-  if (QFile::exists(pluginSplash)) {
-    QImage image(pluginSplash);
-    if (!image.isNull()) {
-      image.save(splashPath);
-      return pluginSplash;
-    }
-  }
-
-  // try default splash from resource
-  QString defaultSplash = ":/MO/gui/splash";
-  if (QFile::exists(defaultSplash)) {
-    QImage image(defaultSplash);
-    if (!image.isNull()) {
-      return defaultSplash;
-    }
-  }
-
-  return splashPath;
-}
-
-std::unique_ptr<QSplashScreen> createSplash(
-  const Settings& settings, const QString& dataPath,
-  const MOBase::IPluginGame* game)
-{
-  const auto splashPath = getSplashPath(settings, dataPath, game);
-  if (splashPath.isEmpty()) {
-    return {};
-  }
-
-  QPixmap image(splashPath);
-  if (image.isNull()) {
-    log::error("failed to load splash from {}", splashPath);
-    return {};
-  }
-
-  auto splash = std::make_unique<QSplashScreen>(image);
-  settings.geometry().centerOnMainWindowMonitor(splash.get());
-
-  splash->show();
-  splash->activateWindow();
-
-  return splash;
-}
-
 std::optional<int> handleCommandLine(
   const cl::CommandLine& cl, OrganizerCore& organizer)
 {
@@ -554,7 +491,7 @@ int runApplication(
       return *r;
     }
 
-    auto splash = createSplash(settings, dataPath, currentInstance.gamePlugin());
+    MOSplash splash(settings, dataPath, currentInstance.gamePlugin());
 
     QString apiKey;
     if (GlobalSettings::nexusApiKey(apiKey)) {
@@ -589,11 +526,7 @@ int runApplication(
       mainWindow.show();
       mainWindow.activateWindow();
 
-      if (splash) {
-        // don't pass mainwindow as it just waits half a second for it
-        // instead of proceding
-        splash->finish(nullptr);
-      }
+      splash.close();
 
       tt.stop();
 

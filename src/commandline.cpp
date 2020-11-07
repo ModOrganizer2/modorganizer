@@ -592,6 +592,8 @@ std::optional<int> ExeCommand::doRun()
   const auto args = vm()["arguments"].as<std::string>();
   const auto cwd = vm()["cwd"].as<std::string>();
 
+  std::cout << "not implemented\n";
+
   return 0;
 }
 
@@ -608,6 +610,7 @@ Command::Meta RunCommand::meta() const
 
 std::optional<int> RunCommand::doRun()
 {
+  std::cout << "not implemented\n";
   return {};
 }
 
