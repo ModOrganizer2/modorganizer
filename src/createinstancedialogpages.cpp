@@ -863,19 +863,29 @@ PathsPage::PathsPage(CreateInstanceDialog& dlg) :
   m_advancedInvalid(ui->advancedDirInvalid),
   m_okay(false)
 {
-  QObject::connect(ui->location, &QLineEdit::textEdited, [&]{ onChanged(); });
-  QObject::connect(ui->base, &QLineEdit::textEdited, [&]{ onChanged(); });
-  QObject::connect(ui->downloads, &QLineEdit::textEdited, [&]{ onChanged(); });
-  QObject::connect(ui->mods, &QLineEdit::textEdited, [&]{ onChanged(); });
-  QObject::connect(ui->profiles, &QLineEdit::textEdited, [&]{ onChanged(); });
-  QObject::connect(ui->overwrite, &QLineEdit::textEdited, [&]{ onChanged(); });
+  using O = QObject;
+  using E = QLineEdit;
+  using B = QAbstractButton;
+
+  O::connect(ui->location,  &E::textEdited, [&]{ onChanged(); });
+  O::connect(ui->base,      &E::textEdited, [&]{ onChanged(); });
+  O::connect(ui->downloads, &E::textEdited, [&]{ onChanged(); });
+  O::connect(ui->mods,      &E::textEdited, [&]{ onChanged(); });
+  O::connect(ui->profiles,  &E::textEdited, [&]{ onChanged(); });
+  O::connect(ui->overwrite, &E::textEdited, [&]{ onChanged(); });
+
+  O::connect(ui->browseLocation,  &B::clicked, [&]{ browse(ui->location); });
+  O::connect(ui->browseBase,      &B::clicked, [&]{ browse(ui->base); });
+  O::connect(ui->browseDownloads, &B::clicked, [&]{ browse(ui->downloads); });
+  O::connect(ui->browseMods,      &B::clicked, [&]{ browse(ui->mods); });
+  O::connect(ui->browseProfiles,  &B::clicked, [&]{ browse(ui->profiles); });
+  O::connect(ui->browseOverwrite, &B::clicked, [&]{ browse(ui->overwrite); });
 
   QObject::connect(
     ui->advancedPathOptions, &QCheckBox::clicked, [&]{ onAdvanced(); });
 
   ui->pathPages->setCurrentIndex(0);
 }
-
 
 bool PathsPage::ready() const
 {
@@ -926,6 +936,16 @@ void PathsPage::onChanged()
 {
   checkPaths();
   updateNavigation();
+}
+
+void PathsPage::browse(QLineEdit* e)
+{
+  const auto s = QFileDialog::getExistingDirectory(&m_dlg, {}, e->text());
+  if (s.isNull() || s.isEmpty()) {
+    return;
+  }
+
+  e->setText(QDir::toNativeSeparators(s));
 }
 
 void PathsPage::checkPaths()

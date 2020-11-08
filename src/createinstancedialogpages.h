@@ -487,6 +487,10 @@ private:
   //
   void onChanged();
 
+  // opens a browse directory dialog and sets the given textbox
+  //
+  void browse(QLineEdit* e);
+
   // checks the simple or advanced paths, sets m_okay
   //
   void checkPaths();
