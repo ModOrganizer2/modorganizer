@@ -38,7 +38,6 @@ public:
   //
   void openSelectedInstance();
 
-
   // renames the currently selected instance
   //
   void rename();
@@ -109,6 +108,10 @@ private:
   // opens the create instance dialog
   //
   void createNew();
+
+  // shows a confirmation to the user before switching
+  //
+  bool confirmSwitch(const Instance& to);
 
 
   // returns the index of selected instance, NoSelection if none

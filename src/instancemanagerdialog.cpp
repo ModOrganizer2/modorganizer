@@ -294,10 +294,16 @@ void InstanceManagerDialog::openSelectedInstance()
     return;
   }
 
-  if (m_instances[i]->isPortable()) {
+  const auto& to = *m_instances[i];
+
+  if (!confirmSwitch(to)) {
+    return;
+  }
+
+  if (to.isPortable()) {
     InstanceManager::singleton().setCurrentInstance("");
   } else {
-    InstanceManager::singleton().setCurrentInstance(m_instances[i]->name());
+    InstanceManager::singleton().setCurrentInstance(to.name());
   }
 
   if (m_restartOnSelect) {
@@ -305,6 +311,38 @@ void InstanceManagerDialog::openSelectedInstance()
   }
 
   accept();
+}
+
+bool InstanceManagerDialog::confirmSwitch(const Instance& to)
+{
+  // there might not be a global Settings object if this is called on startup
+  // when there's no current instance
+  const auto* s = Settings::maybeInstance();
+
+  // if there is are no settings, no instances are loaded and the confirmation
+  // wouldn't make sense
+  if (!s) {
+    return true;
+  }
+
+  if (!s->interface().showChangeGameConfirmation()) {
+    // user disabled confirmation
+    return true;
+  }
+
+  MOBase::TaskDialog dlg(this);
+
+  const auto r = dlg
+    .title(tr("Switching instances"))
+    .main(tr("Mod Organizer must restart to manage the instance '%1'.")
+      .arg(to.name()))
+    .content(tr("This confirmation can be disabled in the settings."))
+    .icon(QMessageBox::Question)
+    .button({tr("Restart Mod Organizer"), QMessageBox::Ok})
+    .button({tr("Cancel"), QMessageBox::Cancel})
+    .exec();
+
+  return (r == QMessageBox::Ok);
 }
 
 void InstanceManagerDialog::rename()
