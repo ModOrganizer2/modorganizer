@@ -2110,23 +2110,23 @@ void DiagnosticsSettings::setLootLogLevel(lootcli::LogLevels level)
   set(m_Settings, "Settings", "loot_log_level", level);
 }
 
-CrashDumpsType DiagnosticsSettings::crashDumpsType() const
+env::CoreDumpTypes DiagnosticsSettings::coreDumpType() const
 {
-  return get<CrashDumpsType>(m_Settings,
-    "Settings", "crash_dumps_type", CrashDumpsType::Mini);
+  return get<env::CoreDumpTypes>(m_Settings,
+    "Settings", "crash_dumps_type", env::CoreDumpTypes::Mini);
 }
 
-void DiagnosticsSettings::setCrashDumpsType(CrashDumpsType type)
+void DiagnosticsSettings::setCoreDumpType(env::CoreDumpTypes type)
 {
   set(m_Settings, "Settings", "crash_dumps_type", type);
 }
 
-int DiagnosticsSettings::crashDumpsMax() const
+int DiagnosticsSettings::maxCoreDumps() const
 {
   return get<int>(m_Settings, "Settings", "crash_dumps_max", 5);
 }
 
-void DiagnosticsSettings::setCrashDumpsMax(int n)
+void DiagnosticsSettings::setMaxCoreDumps(int n)
 {
   set(m_Settings, "Settings", "crash_dumps_max", n);
 }

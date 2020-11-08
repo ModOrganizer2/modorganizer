@@ -13,7 +13,7 @@ DiagnosticsSettingsTab::DiagnosticsSettingsTab(Settings& s, SettingsDialog& d)
   setLootLogLevel();
   setCrashDumpTypesBox();
 
-  ui->dumpsMaxEdit->setValue(settings().diagnostics().crashDumpsMax());
+  ui->dumpsMaxEdit->setValue(settings().diagnostics().maxCoreDumps());
 
   QString logsPath = qApp->property("dataPath").toString()
     + "/" + QString::fromStdWString(AppConfig::logPath());
@@ -22,7 +22,7 @@ DiagnosticsSettingsTab::DiagnosticsSettingsTab(Settings& s, SettingsDialog& d)
     ui->diagnosticsExplainedLabel->text()
     .replace("LOGS_FULL_PATH", logsPath)
     .replace("LOGS_DIR", QString::fromStdWString(AppConfig::logPath()))
-    .replace("DUMPS_FULL_PATH", QString::fromStdWString(OrganizerCore::crashDumpsPath()))
+    .replace("DUMPS_FULL_PATH", QString::fromStdWString(OrganizerCore::getGlobalCoreDumpPath()))
     .replace("DUMPS_DIR", QString::fromStdWString(AppConfig::dumpsDir()))
   );
 }
@@ -78,13 +78,13 @@ void DiagnosticsSettingsTab::setCrashDumpTypesBox()
     ui->dumpsTypeBox->addItem(text, static_cast<int>(type));
   };
 
-  add(QObject::tr("None"), CrashDumpsType::None);
-  add(QObject::tr("Mini (recommended)"), CrashDumpsType::Mini);
-  add(QObject::tr("Data"), CrashDumpsType::Data);
-  add(QObject::tr("Full"), CrashDumpsType::Full);
+  add(QObject::tr("None"), env::CoreDumpTypes::None);
+  add(QObject::tr("Mini (recommended)"), env::CoreDumpTypes::Mini);
+  add(QObject::tr("Data"), env::CoreDumpTypes::Data);
+  add(QObject::tr("Full"), env::CoreDumpTypes::Full);
 
   const auto current = static_cast<int>(
-    settings().diagnostics().crashDumpsType());
+    settings().diagnostics().coreDumpType());
 
   for (int i=0; i<ui->dumpsTypeBox->count(); ++i) {
     if (ui->dumpsTypeBox->itemData(i) == current) {
@@ -99,10 +99,10 @@ void DiagnosticsSettingsTab::update()
   settings().diagnostics().setLogLevel(
     static_cast<log::Levels>(ui->logLevelBox->currentData().toInt()));
 
-  settings().diagnostics().setCrashDumpsType(
-    static_cast<CrashDumpsType>(ui->dumpsTypeBox->currentData().toInt()));
+  settings().diagnostics().setCoreDumpType(
+    static_cast<env::CoreDumpTypes>(ui->dumpsTypeBox->currentData().toInt()));
 
-  settings().diagnostics().setCrashDumpsMax(ui->dumpsMaxEdit->value());
+  settings().diagnostics().setMaxCoreDumps(ui->dumpsMaxEdit->value());
 
   settings().diagnostics().setLootLogLevel(
     static_cast<lootcli::LogLevels>(ui->lootLogLevel->currentData().toInt()));

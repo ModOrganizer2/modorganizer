@@ -107,17 +107,22 @@ LogLevel toUsvfsLogLevel(log::Levels level)
   }
 }
 
-CrashDumpsType crashDumpsType(int type)
+CrashDumpsType toUsvfsCrashDumpsType(env::CoreDumpTypes type)
 {
-  switch (static_cast<CrashDumpsType>(type)) {
-  case CrashDumpsType::Mini:
-    return CrashDumpsType::Mini;
-  case CrashDumpsType::Data:
-    return CrashDumpsType::Data;
-  case CrashDumpsType::Full:
-    return CrashDumpsType::Full;
-  default:
-    return CrashDumpsType::None;
+  switch (type)
+  {
+    case env::CoreDumpTypes::None:
+      return CrashDumpsType::None;
+
+    case env::CoreDumpTypes::Data:
+      return CrashDumpsType::Data;
+
+    case env::CoreDumpTypes::Full:
+      return CrashDumpsType::Full;
+
+    case env::CoreDumpTypes::Mini:
+    default:
+      return CrashDumpsType::Mini;
   }
 }
 
@@ -128,9 +133,9 @@ UsvfsConnector::UsvfsConnector()
   const auto& s = Settings::instance();
 
   const LogLevel logLevel = toUsvfsLogLevel(s.diagnostics().logLevel());
-  const CrashDumpsType dumpType = s.diagnostics().crashDumpsType();
+  const auto dumpType = toUsvfsCrashDumpsType(s.diagnostics().coreDumpType());
   const auto delay = duration_cast<milliseconds>(s.diagnostics().spawnDelay());
-  std::string dumpPath = MOShared::ToString(OrganizerCore::crashDumpsPath(), true);
+  std::string dumpPath = MOShared::ToString(OrganizerCore::getGlobalCoreDumpPath(), true);
 
   usvfsParameters* params = usvfsCreateParameters();
 
@@ -224,7 +229,7 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
 }
 
 void UsvfsConnector::updateParams(
-  MOBase::log::Levels logLevel, CrashDumpsType crashDumpsType,
+  MOBase::log::Levels logLevel, env::CoreDumpTypes coreDumpType,
   const QString& crashDumpsPath, std::chrono::seconds spawnDelay,
   QString executableBlacklist)
 {
@@ -234,7 +239,7 @@ void UsvfsConnector::updateParams(
 
   usvfsSetDebugMode(p, FALSE);
   usvfsSetLogLevel(p, toUsvfsLogLevel(logLevel));
-  usvfsSetCrashDumpType(p, crashDumpsType);
+  usvfsSetCrashDumpType(p, toUsvfsCrashDumpsType(coreDumpType));
   usvfsSetCrashDumpPath(p, crashDumpsPath.toStdString().c_str());
   usvfsSetProcessDelay(p, duration_cast<milliseconds>(spawnDelay).count());
 

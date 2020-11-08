@@ -5084,7 +5084,7 @@ void MainWindow::on_actionSettings_triggered()
   bool proxy = settings.network().useProxy();
   DownloadManager *dlManager = m_OrganizerCore.downloadManager();
   const bool oldCheckForUpdates = settings.checkForUpdates();
-  const int oldMaxDumps = settings.diagnostics().crashDumpsMax();
+  const int oldMaxDumps = settings.diagnostics().maxCoreDumps();
 
 
   SettingsDialog dialog(&m_PluginContainer, settings, this);
@@ -5171,7 +5171,7 @@ void MainWindow::on_actionSettings_triggered()
 
   m_OrganizerCore.setLogLevel(settings.diagnostics().logLevel());
 
-  if (settings.diagnostics().crashDumpsMax() != oldMaxDumps) {
+  if (settings.diagnostics().maxCoreDumps() != oldMaxDumps) {
     m_OrganizerCore.cycleDiagnostics();
   }
 

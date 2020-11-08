@@ -188,8 +188,6 @@ int MOApplication::doOneRun(SingleInstance& singleInstance)
   const QString dataPath = currentInstance->directory();
   setProperty("dataPath", dataPath);
 
-  setExceptionHandlers();
-
   if (!setLogDirectory(dataPath)) {
     reportError("Failed to create log folder");
     InstanceManager::singleton().clearCurrentInstance();
@@ -272,7 +270,7 @@ int MOApplication::runApplication(
 
     // global crashDumpType sits in OrganizerCore to make a bit less ugly to
     // update it when the settings are changed during runtime
-    OrganizerCore::setGlobalCrashDumpsType(settings.diagnostics().crashDumpsType());
+    OrganizerCore::setGlobalCoreDumpType(settings.diagnostics().coreDumpType());
 
     env::Environment env;
     env.dump(settings);

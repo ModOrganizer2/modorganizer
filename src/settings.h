@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SETTINGS_H
 
 #include "loadmechanism.h"
+#include "envdump.h"
 #include <filterwidget.h>
 #include <lootcli/lootcli.h>
 #include <questionboxmemory.h>
@@ -651,13 +652,13 @@ public:
 
   // crash dump type for both MO and usvfs
   //
-  CrashDumpsType crashDumpsType() const;
-  void setCrashDumpsType(CrashDumpsType type);
+  env::CoreDumpTypes coreDumpType() const;
+  void setCoreDumpType(env::CoreDumpTypes type);
 
   // maximum number of dump files keps, for both MO and usvfs
   //
-  int crashDumpsMax() const;
-  void setCrashDumpsMax(int n);
+  int maxCoreDumps() const;
+  void setMaxCoreDumps(int n);
 
   std::chrono::seconds spawnDelay() const;
   void setSpawnDelay(std::chrono::seconds t);

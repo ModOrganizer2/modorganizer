@@ -3,8 +3,9 @@
 #include "moapplication.h"
 #include "organizercore.h"
 #include "commandline.h"
+#include "env.h"
+#include "thread_utils.h"
 #include "shared/util.h"
-#include <usvfs.h>
 #include <log.h>
 
 using namespace MOBase;
@@ -17,6 +18,7 @@ int forwardToPrimary(SingleInstance& instance, const cl::CommandLine& cl);
 int main(int argc, char *argv[])
 {
   MOShared::SetThisThreadName("main");
+  setExceptionHandlers();
 
   cl::CommandLine cl;
   if (auto r=cl.run(GetCommandLineW())) {
@@ -53,20 +55,20 @@ int forwardToPrimary(SingleInstance& instance, const cl::CommandLine& cl)
 
 LONG WINAPI onUnhandledException(_EXCEPTION_POINTERS* ptrs)
 {
-  const std::wstring& dumpPath = OrganizerCore::crashDumpsPath();
+  const auto path = OrganizerCore::getGlobalCoreDumpPath();
+  const auto type = OrganizerCore::getGlobalCoreDumpType();
 
-  const int r = CreateMiniDump(
-    ptrs, OrganizerCore::getGlobalCrashDumpsType(), dumpPath.c_str());
+  const auto r = env::coredump(path.empty() ? nullptr : path.c_str(), type);
 
-  if (r == 0) {
-    log::error("ModOrganizer has crashed, crash dump created.");
+  if (r) {
+    log::error("ModOrganizer has crashed, core dump created.");
   } else {
-    log::error(
-      "ModOrganizer has crashed, CreateMiniDump failed ({}, error {}).",
-      r, GetLastError());
+    log::error("ModOrganizer has crashed, core dump failed");
   }
 
-  if (g_prevExceptionFilter && ptrs)
+  // g_prevExceptionFilter somehow sometimes point to this function, making this
+  // recurse and create hundreds of core dump, not sure why
+  if (g_prevExceptionFilter && ptrs && g_prevExceptionFilter != onUnhandledException)
     return g_prevExceptionFilter(ptrs);
   else
     return EXCEPTION_CONTINUE_SEARCH;
@@ -95,6 +97,11 @@ void onTerminate() noexcept
 
 void setExceptionHandlers()
 {
+  if (g_prevExceptionFilter) {
+    // already called
+    return;
+  }
+
   g_prevExceptionFilter = SetUnhandledExceptionFilter(onUnhandledException);
   g_prevTerminateHandler = std::set_terminate(onTerminate);
 }

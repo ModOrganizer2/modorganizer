@@ -70,6 +70,7 @@ add_filter(NAME src/downloads GROUPS
 
 add_filter(NAME src/env GROUPS
 	env
+	envdump
 	envfs
 	envmetrics
 	envmodule
