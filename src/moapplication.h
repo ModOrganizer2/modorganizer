@@ -26,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 class Settings;
 class SingleInstance;
 class Instance;
+class PluginContainer;
 
 namespace MOBase { class IPluginGame; }
 namespace cl { class CommandLine; }
@@ -57,11 +58,7 @@ private:
   int doOneRun(SingleInstance& singleInstance);
 
   std::optional<Instance> getCurrentInstance();
-
-  int runApplication(
-    SingleInstance& singleInstance,
-    const QString &dataPath, Instance& currentInstance);
-
+  std::optional<int> setupInstanceLoop(Instance& currentInstance, PluginContainer& pc);
   void purgeOldFiles();
   void resetForRestart();
 };

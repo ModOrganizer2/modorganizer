@@ -164,27 +164,36 @@ int MOApplication::run(SingleInstance& singleInstance)
   // when switching instances or changing some settings
   for (;;)
   {
-    // resets things when MO is "restarted"
-    resetForRestart();
+    try
+    {
+      // resets things when MO is "restarted"
+      resetForRestart();
 
-    const auto r = doOneRun(singleInstance);
-    if (r == RestartExitCode) {
-      continue;
+      const auto r = doOneRun(singleInstance);
+      if (r == RestartExitCode) {
+        continue;
+      }
+
+      return r;
     }
-
-    return r;
+    catch (const std::exception &e)
+    {
+      reportError(e.what());
+      return 1;
+    }
   }
 }
 
 int MOApplication::doOneRun(SingleInstance& singleInstance)
 {
-  TimeThis tt("doOneRun() to runApplication()");
-
+  // figuring out the current instance
   auto currentInstance = getCurrentInstance();
   if (!currentInstance) {
     return 1;
   }
 
+  // first time the data path is available, set the global property and log
+  // directory, then log a bunch of debug stuff
   const QString dataPath = currentInstance->directory();
   setProperty("dataPath", dataPath);
 
@@ -196,9 +205,162 @@ int MOApplication::doOneRun(SingleInstance& singleInstance)
 
   log::debug("command line: '{}'", QString::fromWCharArray(GetCommandLineW()));
 
-  tt.stop();
+  log::info(
+    "starting Mod Organizer version {} revision {} in {}, usvfs: {}",
+    createVersionInfo().displayString(3), GITID,
+    QCoreApplication::applicationDirPath(), MOShared::getUsvfsVersionString());
 
-  return runApplication(singleInstance, dataPath, *currentInstance);
+  if (singleInstance.secondary()) {
+    log::debug("another instance of MO is running but --multiple was given");
+  }
+
+  log::info("data path: {}", currentInstance->directory());
+  log::info("working directory: {}", QDir::currentPath());
+
+
+  // deleting old files, only for the main instance
+  if (!singleInstance.secondary()) {
+    purgeOldFiles();
+  }
+
+  QWindowsWindowFunctions::setWindowActivationBehavior(
+    QWindowsWindowFunctions::AlwaysActivateWindow);
+
+
+  // loading settings
+  Settings settings(currentInstance->iniPath(), true);
+  log::getDefault().setLevel(settings.diagnostics().logLevel());
+  log::debug("using ini at '{}'", settings.filename());
+
+  OrganizerCore::setGlobalCoreDumpType(settings.diagnostics().coreDumpType());
+
+
+  // logging and checking
+  env::Environment env;
+  env.dump(settings);
+  settings.dump();
+  sanity::checkEnvironment(env);
+
+  const auto moduleNotification = env.onModuleLoaded(qApp, [](auto&& m) {
+    log::debug("loaded module {}", m.toString());
+    sanity::checkIncompatibleModule(m);
+  });
+
+
+  // this must outlive `organizer`
+  std::unique_ptr<PluginContainer> pluginContainer;
+
+  // nexus interface
+  log::debug("initializing nexus interface");
+  NexusInterface ni(&settings);
+
+  // organizer core
+  log::debug("initializing core");
+  OrganizerCore organizer(settings);
+  if (!organizer.bootstrap()) {
+    reportError("failed to set up data paths");
+    InstanceManager::singleton().clearCurrentInstance();
+    return 1;
+  }
+
+  // plugins
+  log::debug("initializing plugins");
+  pluginContainer = std::make_unique<PluginContainer>(&organizer);
+  pluginContainer->loadPlugins();
+
+  // instance
+  if (auto r=setupInstanceLoop(*currentInstance, *pluginContainer)) {
+    return *r;
+  }
+
+  if (currentInstance->isPortable()) {
+    log::debug("this is a portable instance");
+  }
+
+  sanity::checkPaths(*currentInstance->gamePlugin(), settings);
+
+  // setting up organizer core
+  organizer.setManagedGame(currentInstance->gamePlugin());
+  organizer.createDefaultProfile();
+
+  log::info(
+    "using game plugin '{}' ('{}', variant {}, steam id '{}') at {}",
+    currentInstance->gamePlugin()->gameName(),
+    currentInstance->gamePlugin()->gameShortName(),
+    (settings.game().edition().value_or("").isEmpty() ?
+      "(none)" : *settings.game().edition()),
+    currentInstance->gamePlugin()->steamAPPId(),
+    currentInstance->gamePlugin()->gameDirectory().absolutePath());
+
+  CategoryFactory::instance().loadCategories();
+  organizer.updateExecutablesList();
+  organizer.updateModInfoFromDisc();
+  organizer.setCurrentProfile(currentInstance->profileName());
+
+  // checking command line
+  if (auto r=m_cl.setupCore(organizer)) {
+    return *r;
+  }
+
+  // show splash
+  MOSplash splash(
+    settings, currentInstance->directory(), currentInstance->gamePlugin());
+
+  // start an api check
+  QString apiKey;
+  if (GlobalSettings::nexusApiKey(apiKey)) {
+    ni.getAccessManager()->apiCheck(apiKey);
+  }
+
+  // tutorials
+  log::debug("initializing tutorials");
+  TutorialManager::init(
+      qApp->applicationDirPath() + "/"
+          + QString::fromStdWString(AppConfig::tutorialsPath()) + "/",
+      &organizer);
+
+  // styling
+  if (!setStyleFile(settings.interface().styleName().value_or(""))) {
+    // disable invalid stylesheet
+    settings.interface().setStyleName("");
+  }
+
+
+  int res = 1;
+
+  {
+    MainWindow mainWindow(settings, organizer, *pluginContainer);
+
+    // qt resets the thread name somewhere when creating the main window
+    MOShared::SetThisThreadName("main");
+
+    // the nexus interface can show dialogs, make sure they're parented to the
+    // main window
+    ni.getAccessManager()->setTopLevelWidget(&mainWindow);
+
+    QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), this,
+                      SLOT(setStyleFile(QString)));
+
+    QObject::connect(&singleInstance, SIGNAL(messageSent(QString)), &organizer,
+                      SLOT(externalMessage(QString)));
+
+
+    log::debug("displaying main window");
+    mainWindow.show();
+    mainWindow.activateWindow();
+    splash.close();
+
+    res = exec();
+    mainWindow.close();
+
+    // main window is about to be destroyed
+    ni.getAccessManager()->setTopLevelWidget(nullptr);
+  }
+
+  // reset geometry if the flag was set from the settings dialog
+  settings.geometry().resetIfNeeded();
+
+  return res;
 }
 
 std::optional<Instance> MOApplication::getCurrentInstance()
@@ -232,177 +394,24 @@ std::optional<Instance> MOApplication::getCurrentInstance()
   return currentInstance;
 }
 
-int MOApplication::runApplication(
-  SingleInstance& singleInstance,
-  const QString &dataPath, Instance& currentInstance)
+std::optional<int> MOApplication::setupInstanceLoop(
+  Instance& currentInstance, PluginContainer& pc)
 {
-  TimeThis tt("runApplication() to exec()");
-
-  log::info(
-    "starting Mod Organizer version {} revision {} in {}, usvfs: {}",
-    createVersionInfo().displayString(3), GITID,
-    QCoreApplication::applicationDirPath(), MOShared::getUsvfsVersionString());
-
-  log::info("data path: {}", dataPath);
-
-  log::info("working directory: {}", QDir::currentPath());
-
-  if (!singleInstance.secondary()) {
-    purgeOldFiles();
-  }
-
-  QWindowsWindowFunctions::setWindowActivationBehavior(
-    QWindowsWindowFunctions::AlwaysActivateWindow);
-
-  try
+  for (;;)
   {
-    Settings settings(
-      dataPath + "/" + QString::fromStdWString(AppConfig::iniFileName()),
-      true);
+    const auto setupResult = setupInstance(currentInstance, pc);
 
-    log::getDefault().setLevel(settings.diagnostics().logLevel());
-
-    log::debug("using ini at '{}'", settings.filename());
-
-    if (singleInstance.secondary()) {
-      log::debug("another instance of MO is running but --multiple was given");
-    }
-
-    // global crashDumpType sits in OrganizerCore to make a bit less ugly to
-    // update it when the settings are changed during runtime
-    OrganizerCore::setGlobalCoreDumpType(settings.diagnostics().coreDumpType());
-
-    env::Environment env;
-    env.dump(settings);
-    settings.dump();
-    sanity::checkEnvironment(env);
-
-    const auto moduleNotification = env.onModuleLoaded(qApp, [](auto&& m) {
-      log::debug("loaded module {}", m.toString());
-      sanity::checkIncompatibleModule(m);
-    });
-
-    // this must outlive `organizer`
-    std::unique_ptr<PluginContainer> pluginContainer;
-
-    log::debug("initializing nexus interface");
-    NexusInterface ni(&settings);
-
-    log::debug("initializing core");
-    OrganizerCore organizer(settings);
-    if (!organizer.bootstrap()) {
-      reportError("failed to set up data paths");
+    if (setupResult == SetupInstanceResults::Okay) {
+      return {};
+    } else if (setupResult == SetupInstanceResults::TryAgain) {
+      continue;
+    } else if (setupResult == SetupInstanceResults::SelectAnother) {
       InstanceManager::singleton().clearCurrentInstance();
+      return RestartExitCode;
+    } else {
       return 1;
     }
-
-    log::debug("initializing plugins");
-    pluginContainer = std::make_unique<PluginContainer>(&organizer);
-    pluginContainer->loadPlugins();
-
-    for (;;)
-    {
-      const auto setupResult = setupInstance(currentInstance, *pluginContainer);
-
-      if (setupResult == SetupInstanceResults::Okay) {
-        break;
-      } else if (setupResult == SetupInstanceResults::TryAgain) {
-        continue;
-      } else if (setupResult == SetupInstanceResults::SelectAnother) {
-        InstanceManager::singleton().clearCurrentInstance();
-        return RestartExitCode;
-      } else {
-        return 1;
-      }
-    }
-
-    if (currentInstance.isPortable()) {
-      log::debug("this is a portable instance");
-    }
-
-    sanity::checkPaths(*currentInstance.gamePlugin(), settings);
-
-    organizer.setManagedGame(currentInstance.gamePlugin());
-    organizer.createDefaultProfile();
-
-    log::info(
-      "using game plugin '{}' ('{}', variant {}, steam id '{}') at {}",
-      currentInstance.gamePlugin()->gameName(),
-      currentInstance.gamePlugin()->gameShortName(),
-      (settings.game().edition().value_or("").isEmpty() ?
-        "(none)" : *settings.game().edition()),
-      currentInstance.gamePlugin()->steamAPPId(),
-      currentInstance.gamePlugin()->gameDirectory().absolutePath());
-
-
-    CategoryFactory::instance().loadCategories();
-    organizer.updateExecutablesList();
-    organizer.updateModInfoFromDisc();
-
-    organizer.setCurrentProfile(currentInstance.profileName());
-
-    if (auto r=m_cl.setupCore(organizer)) {
-      return *r;
-    }
-
-    MOSplash splash(settings, dataPath, currentInstance.gamePlugin());
-
-    QString apiKey;
-    if (GlobalSettings::nexusApiKey(apiKey)) {
-      ni.getAccessManager()->apiCheck(apiKey);
-    }
-
-    log::debug("initializing tutorials");
-    TutorialManager::init(
-        qApp->applicationDirPath() + "/"
-            + QString::fromStdWString(AppConfig::tutorialsPath()) + "/",
-        &organizer);
-
-    if (!setStyleFile(settings.interface().styleName().value_or(""))) {
-      // disable invalid stylesheet
-      settings.interface().setStyleName("");
-    }
-
-    int res = 1;
-
-    {
-      // scope to control lifetime of mainwindow
-      // set up main window and its data structures
-      MainWindow mainWindow(settings, organizer, *pluginContainer);
-
-      // qt resets the thread name somewhere when creating the main window
-      MOShared::SetThisThreadName("main");
-
-      ni.getAccessManager()->setTopLevelWidget(&mainWindow);
-
-      QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), this,
-                       SLOT(setStyleFile(QString)));
-      QObject::connect(&singleInstance, SIGNAL(messageSent(QString)), &organizer,
-                       SLOT(externalMessage(QString)));
-
-      log::debug("displaying main window");
-      mainWindow.show();
-      mainWindow.activateWindow();
-
-      splash.close();
-
-      tt.stop();
-
-      res = exec();
-      mainWindow.close();
-
-      ni.getAccessManager()->setTopLevelWidget(nullptr);
-    }
-
-    settings.geometry().resetIfNeeded();
-    return res;
   }
-  catch (const std::exception &e)
-  {
-    reportError(e.what());
-  }
-
-  return 1;
 }
 
 void MOApplication::purgeOldFiles()
