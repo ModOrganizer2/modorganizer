@@ -78,6 +78,16 @@ public:
   //
   void setRestartOnSelect(bool b);
 
+
+  // saves geometry
+  //
+  void done(int r) override;
+
+protected:
+  // restores geometry
+  //
+  void showEvent(QShowEvent* e) override;
+
 private:
   static const std::size_t NoSelection = -1;
 

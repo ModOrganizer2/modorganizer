@@ -86,12 +86,18 @@ Settings::~Settings()
   }
 }
 
-Settings &Settings::instance()
+Settings& Settings::instance()
 {
   if (s_Instance == nullptr) {
     throw std::runtime_error("no instance of \"Settings\"");
   }
+
   return *s_Instance;
+}
+
+Settings* Settings::maybeInstance()
+{
+  return s_Instance;
 }
 
 void Settings::processUpdates(

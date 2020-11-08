@@ -693,7 +693,15 @@ public:
   Settings(const QString& path, bool globalInstance=false);
   ~Settings();
 
-  static Settings &instance();
+
+  // throws if there is no global Settings instance
+  //
+  static Settings& instance();
+
+  // returns null if there is no global Settings instance
+  //
+  static Settings* maybeInstance();
+
 
   // name of the ini file
   //

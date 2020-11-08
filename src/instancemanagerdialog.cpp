@@ -111,7 +111,7 @@ InstanceManagerDialog::InstanceManagerDialog(
 {
   ui->setupUi(this);
 
-  ui->splitter->setSizes({200, 1});
+  ui->splitter->setSizes({250, 1});
   ui->splitter->setStretchFactor(0, 0);
   ui->splitter->setStretchFactor(1, 1);
 
@@ -144,6 +144,32 @@ InstanceManagerDialog::InstanceManagerDialog(
 
   connect(ui->switchToInstance, &QPushButton::clicked, [&]{ openSelectedInstance(); });
   connect(ui->close, &QPushButton::clicked, [&]{ close(); });
+}
+
+void InstanceManagerDialog::showEvent(QShowEvent* e)
+{
+  // there might not be a global Settings object if this is called on startup
+  // when there's no current instance
+  const auto* s = Settings::maybeInstance();
+
+  if (s) {
+    s->geometry().restoreGeometry(this);
+  }
+
+  QDialog::showEvent(e);
+}
+
+void InstanceManagerDialog::done(int r)
+{
+  // there might not be a global Settings object if this is called on startup
+  // when there's no current instance
+  auto* s = Settings::maybeInstance();
+
+  if (s) {
+    s->geometry().saveGeometry(this);
+  }
+
+  QDialog::done(r);
 }
 
 void InstanceManagerDialog::updateInstances()
