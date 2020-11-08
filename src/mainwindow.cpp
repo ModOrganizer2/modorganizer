@@ -2224,6 +2224,8 @@ void MainWindow::readSettings()
   }
 
   s.widgets().restoreIndex(ui->groupCombo);
+  s.widgets().restoreIndex(ui->tabWidget);
+
   m_Filters->restoreState(s);
 
   {
@@ -2299,6 +2301,7 @@ void MainWindow::storeSettings()
 
   s.widgets().saveIndex(ui->groupCombo);
   s.widgets().saveIndex(ui->executablesListBox);
+  s.widgets().saveIndex(ui->tabWidget);
 
   m_Filters->saveState(s);
   m_DataTab->saveState(s);
