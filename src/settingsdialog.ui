@@ -1044,9 +1044,6 @@
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
-         <property name="handleWidth">
-          <number>2</number>
-         </property>
          <widget class="QWidget" name="widget" native="true">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -1055,6 +1052,18 @@
            </sizepolicy>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_6">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
            <item>
             <widget class="QSplitter" name="splitter_2">
              <property name="sizePolicy">
@@ -1066,11 +1075,20 @@
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
              </property>
-             <property name="handleWidth">
-              <number>2</number>
-             </property>
              <widget class="QWidget" name="widget" native="true">
               <layout class="QVBoxLayout" name="verticalLayout_15">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
                <item>
                 <widget class="QTreeWidget" name="pluginsList">
                  <column>
@@ -1095,6 +1113,18 @@
              </widget>
              <widget class="QWidget" name="widget" native="true">
               <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,1">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
                <item>
                 <layout class="QFormLayout" name="formLayout_2">
                  <item row="0" column="0">
@@ -1182,21 +1212,17 @@
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="verticalWidget" native="true">
+         <widget class="QGroupBox" name="verticalGroupBox">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
             <horstretch>0</horstretch>
             <verstretch>1</verstretch>
            </sizepolicy>
           </property>
+          <property name="title">
+           <string>Blacklisted Plugins (use &lt;del&gt; to remove):</string>
+          </property>
           <layout class="QVBoxLayout" name="verticalLayout_16">
-           <item>
-            <widget class="QLabel" name="label_18">
-             <property name="text">
-              <string>Blacklisted Plugins (use &lt;del&gt; to remove):</string>
-             </property>
-            </widget>
-           </item>
            <item>
             <widget class="QListWidget" name="pluginBlacklist"/>
            </item>
@@ -1614,14 +1640,14 @@ programs you are intentionally running.</string>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ColorTable</class>
-   <extends>QTableWidget</extends>
-   <header>colortable.h</header>
-  </customwidget>
-  <customwidget>
    <class>LinkLabel</class>
    <extends>QLabel</extends>
    <header location="global">linklabel.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ColorTable</class>
+   <extends>QTableWidget</extends>
+   <header>colortable.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
