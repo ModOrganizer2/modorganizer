@@ -1,9 +1,13 @@
+#include "sanitychecks.h"
 #include "env.h"
 #include "envmodule.h"
 #include "settings.h"
 #include <iplugingame.h>
 #include <log.h>
 #include <utility.h>
+
+namespace sanity
+{
 
 using namespace MOBase;
 
@@ -368,7 +372,7 @@ int checkProtected(const QDir& d, const QString& what)
   return 0;
 }
 
-int checkPathsForSanity(IPluginGame& game, const Settings& s)
+int checkPaths(IPluginGame& game, const Settings& s)
 {
   log::debug("checking paths");
 
@@ -390,7 +394,7 @@ int checkPathsForSanity(IPluginGame& game, const Settings& s)
   return n;
 }
 
-void sanityChecks(const env::Environment& e)
+void checkEnvironment(const env::Environment& e)
 {
   log::debug("running sanity checks...");
 
@@ -404,3 +408,5 @@ void sanityChecks(const env::Environment& e)
     "sanity checks done, {}",
     (n > 0 ? "problems were found" : "everything looks okay"));
 }
+
+} // namespace

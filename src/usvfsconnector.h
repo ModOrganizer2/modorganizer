@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <usvfsparameters.h>
 #include <log.h>
 #include "executableinfo.h"
+#include "envdump.h"
 
 
 class LogWorker : public QThread {
@@ -87,7 +88,7 @@ public:
   void updateMapping(const MappingType &mapping);
 
   void updateParams(
-    MOBase::log::Levels logLevel, CrashDumpsType crashDumpsType,
+    MOBase::log::Levels logLevel, env::CoreDumpTypes coreDumpType,
     const QString& crashDumpsPath, std::chrono::seconds spawnDelay,
     QString executableBlacklist);
 

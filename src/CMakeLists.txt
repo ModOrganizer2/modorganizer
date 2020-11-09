@@ -15,9 +15,9 @@ add_filter(NAME src/application GROUPS
 	main
 	moapplication
 	moshortcut
+	multiprocess
 	sanitychecks
 	selfupdater
-	singleinstance
 )
 
 add_filter(NAME src/browser GROUPS
@@ -70,6 +70,7 @@ add_filter(NAME src/downloads GROUPS
 
 add_filter(NAME src/env GROUPS
 	env
+	envdump
 	envfs
 	envmetrics
 	envmodule

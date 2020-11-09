@@ -1,9 +1,14 @@
 #include "commandline.h"
 #include "env.h"
+#include "organizercore.h"
 #include "shared/util.h"
+#include <log.h>
+#include <report.h>
 
 namespace cl
 {
+
+using namespace MOBase;
 
 std::string pad_right(std::string s, std::size_t n, char c=' ')
 {
@@ -13,6 +18,8 @@ std::string pad_right(std::string s, std::size_t n, char c=' ')
   return s;
 }
 
+// formats the list of pairs in two columns
+//
 std::string table(
   const std::vector<std::pair<std::string, std::string>>& v,
   std::size_t indent, std::size_t spacing)
@@ -60,6 +67,9 @@ std::optional<int> CommandLine::run(const std::wstring& line)
       args.erase(args.begin());
     }
 
+    // parsing the first part of the command line, including global options and
+    // command name, but not the rest, which will be collected below
+
     auto parsed = po::wcommand_line_parser(args)
       .options(m_allOptions)
       .positional(m_positional)
@@ -69,20 +79,29 @@ std::optional<int> CommandLine::run(const std::wstring& line)
     po::store(parsed, m_vm);
     po::notify(m_vm);
 
+    // collect options past the command name
     auto opts = po::collect_unrecognized(
       parsed.options, po::include_positional);
 
 
     if (m_vm.count("command")) {
+      // there's a word as the first argument; this may be a command name or
+      // an old style exe name/binary
+
       const auto commandName = m_vm["command"].as<std::string>();
 
+      // look for the command by name first
       for (auto&& c : m_commands) {
         if (c->name() == commandName) {
+          // this is a command
+
           // remove the command name itself
           opts.erase(opts.begin());
 
           try
           {
+            // parse the the remainder of the command line according to the
+            // command's options
             po::wcommand_line_parser parser(opts);
 
             auto co = c->allOptions();
@@ -106,6 +125,7 @@ std::optional<int> CommandLine::run(const std::wstring& line)
               return 0;
             }
 
+            // run the command
             return c->run(line, m_vm, opts);
           }
           catch(po::error& e)
@@ -122,6 +142,12 @@ std::optional<int> CommandLine::run(const std::wstring& line)
       }
     }
 
+
+    // the first word on the command line is not a valid command, try the other
+    // stuff; this is used in setupCore() below when called from
+    // MOApplication::doOneRun()
+
+    // look for help
     if (m_vm.count("help")) {
       env::Console console;
       std::cout << usage() << "\n";
@@ -130,12 +156,25 @@ std::optional<int> CommandLine::run(const std::wstring& line)
 
     if (!opts.empty()) {
       const auto qs = QString::fromStdWString(opts[0]);
+
+      if (qs.startsWith("--")) {
+        // assume that for something like `ModOrganizer.exe --bleh`, it's just
+        // a bad option instead of an executable that starts with "--"
+        env::Console console;
+        std::cerr << "\nUnrecognized option " << qs.toStdString() << "\n";
+
+        return 1;
+      }
+
+      // try as an moshorcut://
       m_shortcut = qs;
 
       if (!m_shortcut.isValid()) {
+        // not a shortcut, try a link
         if (isNxmLink(qs)) {
           m_nxmLink = qs;
         } else {
+          // assume an executable name/binary
           m_executable = qs;
         }
       }
@@ -162,6 +201,52 @@ std::optional<int> CommandLine::run(const std::wstring& line)
   }
 }
 
+std::optional<int> CommandLine::setupCore(OrganizerCore& organizer) const
+{
+  if (m_shortcut.isValid()) {
+    if (m_shortcut.hasExecutable()) {
+      try {
+        organizer.processRunner()
+          .setFromShortcut(m_shortcut)
+          .setWaitForCompletion()
+          .run();
+
+        return 0;
+      }
+      catch (const std::exception &e) {
+        reportError(
+          QObject::tr("failed to start shortcut: %1").arg(e.what()));
+        return 1;
+      }
+    }
+  } else if (m_nxmLink) {
+    log::debug("starting download from command line: {}", *m_nxmLink);
+    organizer.externalMessage(*m_nxmLink);
+  } else if (m_executable) {
+    const QString exeName = *m_executable;
+    log::debug("starting {} from command line", exeName);
+
+    try
+    {
+      // pass the remaining parameters to the binary
+      organizer.processRunner()
+        .setFromFileOrExecutable(exeName, m_untouched)
+        .setWaitForCompletion()
+        .run();
+
+      return 0;
+    }
+    catch (const std::exception &e)
+    {
+      reportError(
+        QObject::tr("failed to start application: %1").arg(e.what()));
+      return 1;
+    }
+  }
+
+  return {};
+}
+
 void CommandLine::clear()
 {
   m_vm.clear();
@@ -182,6 +267,7 @@ void CommandLine::createOptions()
     ("command", po::value<std::string>(), "command")
     ("subargs", po::value<std::vector<std::string> >(), "args");
 
+  // one command name, followed by any arguments for that command
   m_positional
     .add("command", 1)
     .add("subargs", -1);
@@ -210,6 +296,7 @@ std::string CommandLine::usage(const Command* c) const
       << "\n"
       << "Commands:\n";
 
+    // name and description for all commands
     std::vector<std::pair<std::string, std::string>> v;
     for (auto&& c : m_commands) {
       v.push_back({c->name(), c->description()});
@@ -224,6 +311,7 @@ std::string CommandLine::usage(const Command* c) const
     << "Global options:\n"
     << m_visibleOptions << "\n";
 
+  // show the more text unless this is usage for a specific command
   if (!c) {
     oss << "\n" << more() << "\n";
   }
@@ -247,6 +335,8 @@ std::optional<QString> CommandLine::profile() const
 
 std::optional<QString> CommandLine::instance() const
 {
+  // note that moshortcut:// overrides -i
+
   if (m_shortcut.isValid() && m_shortcut.hasInstance()) {
     return m_shortcut.instance();
   } else if (m_vm.count("instance")) {
@@ -368,21 +458,6 @@ po::positional_options_description Command::getPositional() const
   return {};
 }
 
-
-std::string Command::usage() const
-{
-  std::ostringstream oss;
-
-  oss
-    << "\n"
-    << "Usage:\n"
-    << "    ModOrganizer.exe [options] [[command] [command-options]]\n"
-    << "\n"
-    << "Options:\n"
-    << visibleOptions() << "\n";
-
-  return oss.str();
-}
 
 std::optional<int> Command::run(
   const std::wstring& originalLine,
@@ -569,7 +644,7 @@ std::optional<int> ExeCommand::doRun()
   const auto args = vm()["arguments"].as<std::string>();
   const auto cwd = vm()["cwd"].as<std::string>();
 
-
+  std::cout << "not implemented\n";
 
   return 0;
 }
@@ -587,6 +662,7 @@ Command::Meta RunCommand::meta() const
 
 std::optional<int> RunCommand::doRun()
 {
+  std::cout << "not implemented\n";
   return {};
 }
 

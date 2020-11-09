@@ -13,6 +13,7 @@
 #include "moshortcut.h"
 #include "processrunner.h"
 #include "uilocker.h"
+#include "envdump.h"
 #include <imoinfo.h>
 #include <iplugindiagnose.h>
 #include <versioninfo.h>
@@ -277,17 +278,17 @@ public:
   void prepareVFS();
 
   void updateVFSParams(
-    MOBase::log::Levels logLevel, CrashDumpsType crashDumpsType,
-    const QString& crashDumpsPath, std::chrono::seconds spawnDelay,
+    MOBase::log::Levels logLevel, env::CoreDumpTypes coreDumpType,
+    const QString& coreDumpsPath, std::chrono::seconds spawnDelay,
     QString executableBlacklist);
 
   void setLogLevel(MOBase::log::Levels level);
 
   bool cycleDiagnostics();
 
-  static CrashDumpsType getGlobalCrashDumpsType() { return m_globalCrashDumpsType; }
-  static void setGlobalCrashDumpsType(CrashDumpsType crashDumpsType);
-  static std::wstring crashDumpsPath();
+  static env::CoreDumpTypes getGlobalCoreDumpType();
+  static void setGlobalCoreDumpType(env::CoreDumpTypes type);
+  static std::wstring getGlobalCoreDumpPath();
 
   /**
    * @brief Returns the name of all the mods in the priority order of the given profile.
@@ -487,8 +488,6 @@ private:
   UsvfsConnector m_USVFS;
 
   UILocker m_UILocker;
-
-  static CrashDumpsType m_globalCrashDumpsType;
 };
 
 #endif // ORGANIZERCORE_H

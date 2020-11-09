@@ -76,8 +76,7 @@
 using namespace MOShared;
 using namespace MOBase;
 
-//static
-CrashDumpsType OrganizerCore::m_globalCrashDumpsType = CrashDumpsType::None;
+static env::CoreDumpTypes g_coreDumpType = env::CoreDumpTypes::Mini;
 
 template <typename InputIterator>
 QStringList toStringList(InputIterator current, InputIterator end)
@@ -478,7 +477,7 @@ bool OrganizerCore::bootstrap()
     m_Settings.paths().mods(),
     m_Settings.paths().downloads(),
     m_Settings.paths().overwrite(),
-    QString::fromStdWString(crashDumpsPath())
+    QString::fromStdWString(getGlobalCoreDumpPath())
   };
 
   for (auto&& dir : dirs) {
@@ -497,14 +496,14 @@ bool OrganizerCore::bootstrap()
 
   // log if there are any dmp files
   const auto hasCrashDumps =
-    !QDir(QString::fromStdWString(crashDumpsPath()))
+    !QDir(QString::fromStdWString(getGlobalCoreDumpPath()))
       .entryList({"*.dmp"}, QDir::Files)
       .empty();
 
   if (hasCrashDumps) {
     log::debug(
       "there are crash dumps in '{}'",
-      QString::fromStdWString(crashDumpsPath()));
+      QString::fromStdWString(getGlobalCoreDumpPath()));
   }
 
   return true;
@@ -528,13 +527,14 @@ void OrganizerCore::prepareVFS()
 }
 
 void OrganizerCore::updateVFSParams(
-  log::Levels logLevel, CrashDumpsType crashDumpsType,
+  log::Levels logLevel, env::CoreDumpTypes coreDumpType,
   const QString& crashDumpsPath,
   std::chrono::seconds spawnDelay, QString executableBlacklist)
 {
-  setGlobalCrashDumpsType(crashDumpsType);
+  setGlobalCoreDumpType(coreDumpType);
+
   m_USVFS.updateParams(
-    logLevel, crashDumpsType, crashDumpsPath, spawnDelay, executableBlacklist);
+    logLevel, coreDumpType, crashDumpsPath, spawnDelay, executableBlacklist);
 }
 
 void OrganizerCore::setLogLevel(log::Levels level)
@@ -543,8 +543,8 @@ void OrganizerCore::setLogLevel(log::Levels level)
 
   updateVFSParams(
     m_Settings.diagnostics().logLevel(),
-    m_Settings.diagnostics().crashDumpsType(),
-    QString::fromStdWString(crashDumpsPath()),
+    m_Settings.diagnostics().coreDumpType(),
+    QString::fromStdWString(getGlobalCoreDumpPath()),
     m_Settings.diagnostics().spawnDelay(),
     m_Settings.executablesBlacklist());
 
@@ -553,8 +553,8 @@ void OrganizerCore::setLogLevel(log::Levels level)
 
 bool OrganizerCore::cycleDiagnostics()
 {
-  const auto maxDumps = settings().diagnostics().crashDumpsMax();
-  const auto path = QString::fromStdWString(crashDumpsPath());
+  const auto maxDumps = settings().diagnostics().maxCoreDumps();
+  const auto path = QString::fromStdWString(getGlobalCoreDumpPath());
 
   if (maxDumps > 0) {
     removeOldFiles(path, "*.dmp", maxDumps, QDir::Time|QDir::Reversed);
@@ -563,16 +563,26 @@ bool OrganizerCore::cycleDiagnostics()
   return true;
 }
 
-void OrganizerCore::setGlobalCrashDumpsType(CrashDumpsType type)
+env::CoreDumpTypes OrganizerCore::getGlobalCoreDumpType()
 {
-  m_globalCrashDumpsType = type;
+  return g_coreDumpType;
 }
 
-std::wstring OrganizerCore::crashDumpsPath() {
-  return (
-    qApp->property("dataPath").toString() + "/"
-    + QString::fromStdWString(AppConfig::dumpsDir())
-    ).toStdWString();
+void OrganizerCore::setGlobalCoreDumpType(env::CoreDumpTypes type)
+{
+  g_coreDumpType = type;
+}
+
+std::wstring OrganizerCore::getGlobalCoreDumpPath()
+{
+  if (qApp) {
+    const auto dp = qApp->property("dataPath");
+    if (!dp.isNull()) {
+      return dp.toString().toStdWString() + L"/" + AppConfig::dumpsDir();
+    }
+  }
+
+  return {};
 }
 
 void OrganizerCore::setCurrentProfile(const QString &profileName)

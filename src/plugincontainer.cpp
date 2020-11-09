@@ -405,22 +405,58 @@ void PluginContainer::loadPlugins()
   }
 
   QFile loadCheck;
+  QString skipPlugin;
 
   if (m_Organizer) {
     loadCheck.setFileName(qApp->property("dataPath").toString() + "/plugin_loadcheck.tmp");
+
     if (loadCheck.exists() && loadCheck.open(QIODevice::ReadOnly)) {
       // oh, there was a failed plugin load last time. Find out which plugin was loaded last
       QString fileName;
       while (!loadCheck.atEnd()) {
         fileName = QString::fromUtf8(loadCheck.readLine().constData()).trimmed();
       }
-      if (QMessageBox::question(nullptr, QObject::tr("Plugin error"),
-        QObject::tr("It appears the plugin \"%1\" failed to load last startup and caused MO to crash. Do you want to disable it?\n"
-           "(Please note: If this is the first time you see this message for this plugin you may want to give it another try. "
-           "The plugin may be able to recover from the problem)").arg(fileName),
-            QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes) {
-        m_Organizer->settings().plugins().addBlacklist(fileName);
+
+      log::warn("loadcheck file found for plugin '{}'", fileName);
+
+      MOBase::TaskDialog dlg;
+
+      const auto Skip = QMessageBox::Ignore;
+      const auto Blacklist = QMessageBox::Cancel;
+      const auto Load = QMessageBox::Ok;
+
+      const auto r = dlg
+        .title(tr("Plugin error"))
+        .main(tr(
+          "Mod Organizer failed to load the plugin '%1' last time it was started.")
+            .arg(fileName))
+        .content(tr(
+          "The plugin can be skipped for this session, blacklisted, "
+          "or loaded normally, in which case it might fail again. Blacklisted "
+          "plugins can be re-enabled later in the settings."))
+        .icon(QMessageBox::Warning)
+        .button({tr("Skip this plugin"), Skip})
+        .button({tr("Blacklist this plugin"), Blacklist})
+        .button({tr("Load this plugin"), Load})
+        .exec();
+
+      switch (r)
+      {
+        case Skip:
+          log::warn("user wants to skip plugin '{}'", fileName);
+          skipPlugin = fileName;
+          break;
+
+        case Blacklist:
+          log::warn("user wants to blacklist plugin '{}'", fileName);
+          m_Organizer->settings().plugins().addBlacklist(fileName);
+          break;
+
+        case Load:
+          log::warn("user wants to load plugin '{}' anyway", fileName);
+          break;
       }
+
       loadCheck.close();
     }
 
@@ -433,6 +469,11 @@ void PluginContainer::loadPlugins()
 
   while (iter.hasNext()) {
     iter.next();
+
+    if (skipPlugin == iter.fileName()) {
+      log::debug("plugin \"{}\" skipped for this session", iter.fileName());
+      continue;
+    }
 
     if (m_Organizer) {
       if (m_Organizer->settings().plugins().blacklisted(iter.fileName())) {
@@ -467,10 +508,24 @@ void PluginContainer::loadPlugins()
     }
   }
 
-  // remove the load check file on success
-  if (loadCheck.isOpen()) {
-    loadCheck.remove();
+  if (skipPlugin.isEmpty()) {
+    // remove the load check file on success
+    if (loadCheck.isOpen()) {
+      loadCheck.remove();
+    }
+  } else {
+    // remember the plugin for next time
+    if (loadCheck.isOpen()) {
+      loadCheck.close();
+    }
+
+    log::warn("user skipped plugin '{}', remembering in loadcheck", skipPlugin);
+    loadCheck.open(QIODevice::WriteOnly);
+    loadCheck.write(skipPlugin.toUtf8());
+    loadCheck.write("\n");
+    loadCheck.flush();
   }
+
 
   bf::at_key<IPluginDiagnose>(m_Plugins).push_back(this);
 

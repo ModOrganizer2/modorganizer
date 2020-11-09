@@ -31,6 +31,14 @@ namespace MOShared
 void reportError(LPCSTR format, ...);
 void reportError(LPCWSTR format, ...);
 
+// shows a critical message box that's raised to the top of the zorder, useful
+// for messages without a main window, which sometimes makes them pop up behind
+// all other windows
+//
+// the dialog is not topmost, it's just raised once when shown
+//
+void criticalOnTop(const QString& message);
+
 } // namespace MOShared
 
 #endif  // MODORGANIZER_SHARED_ERROR_REPORT_INCLUDED

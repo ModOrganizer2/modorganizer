@@ -4,49 +4,103 @@
 #include <vector>
 #include <memory>
 
+class OrganizerCore;
+
 namespace cl
 {
 
 namespace po = boost::program_options;
 
-
+// base class for all commands
+//
 class Command
 {
 public:
   virtual ~Command() = default;
 
+  // command name, used on the command line to invoke it; this is meta().name
+  //
   std::string name() const;
+
+  // command short description, shown in general help; this is
+  // meta().description
+  //
   std::string description() const;
+
+  // usage line, puts together the name and whatever getUsageLine() returns
+  //
   std::string usageLine() const;
 
-  po::options_description allOptions() const;
-  po::options_description visibleOptions() const;
-  po::positional_options_description positional() const;
-  std::string usage() const;
 
+  // returns all options for this command, including hidden ones; used to parse
+  // the command line
+  //
+  po::options_description allOptions() const;
+
+  // returns visible options, used to display usage
+  //
+  po::options_description visibleOptions() const;
+
+  // returns positional arguments
+  //
+  po::positional_options_description positional() const;
+
+  // whether the command allows for unregistered options; this is only used for
+  // the old `launch` command and shouldn't be used anywhere else
+  //
   virtual bool allow_unregistered() const;
 
+  // runs this command, eventually calls doRun()
+  //
   std::optional<int> run(
     const std::wstring& originalLine,
     po::variables_map vm,
     std::vector<std::wstring> untouched);
 
 protected:
+  // meta information about this command, returned by derived classes
+  //
   struct Meta
   {
     std::string name, description;
   };
 
+  // returns the usage line for this command, not including the name
+  //
   virtual std::string getUsageLine() const;
+
+  // returns visible options specific to this command
+  //
   virtual po::options_description getVisibleOptions() const;
+
+  // returns hidden options specific to this command
+  //
   virtual po::options_description getInternalOptions() const;
+
+  // returns positional arguments specific to this command
+  //
   virtual po::positional_options_description getPositional() const;
 
+
+  // meta
+  //
   virtual Meta meta() const = 0;
+
+  // runs the command
+  //
   virtual std::optional<int> doRun() = 0;
 
+
+  // returns the original command line
+  //
   const std::wstring& originalCmd() const;
+
+  // variables
+  //
   const po::variables_map& vm() const;
+
+  // returns unparsed options, only used by launch
+  //
   const std::vector<std::wstring>& untouched() const;
 
 private:
@@ -56,6 +110,8 @@ private:
 };
 
 
+// generates a crash dump for another MO process
+//
 class CrashDumpCommand : public Command
 {
 protected:
@@ -93,6 +149,8 @@ protected:
 };
 
 
+// runs a configured executable
+//
 class ExeCommand : public Command
 {
 protected:
@@ -105,6 +163,8 @@ protected:
 };
 
 
+// runs an arbitrary executable
+//
 class RunCommand : public Command
 {
 protected:
@@ -114,24 +174,96 @@ protected:
 };
 
 
+// parses the command line and runs any given command
+//
+// the command line used to support a few commands but with no real conventions;
+// those are mostly preserved for backwards compatibility, but deprecated:
+//
+//   - moshortcut:// for desktop/taskbar shortcuts, may contain an instance name
+//     and a configured executable or arbitrary binary (still used in MO for
+//     shortcuts)
+//
+//   - nxm:// links
+//
+//   - the name of a configured executable or path to binary, followed by
+//     arbitrary parameters, forwarded to the program
+//
+// any command added CommandLine will unfortunately break any executable with
+// the same name: `ModOrganizer.exe run` used to launch a program named "run"
+// but will now execute the command "run"
+//
+// if moshortcut:// is detected and has an instance, it will override -i if both
+// are given
+//
+//
+// the command is used in two phases:
+//
+//    1) run() is called in main() shortly after startup; it parses the command
+//       line and runs the given command, if any
+//
+//    2) if the command did not request to exit, the instance is loaded
+//       in main() et al. and setupCore() is called; it handles moshortcut,
+//       nxm links and starting executables/binaries
+//
+// either can return an exit code, which will make MO exit immediately
+//
 class CommandLine
 {
 public:
   CommandLine();
 
+  // parses the given command line and executes the appropriate command, if
+  // any
+  //
+  // returns an empty optional if execution should continue, or a return code
+  // if MO must quit
+  //
   std::optional<int> run(const std::wstring& line);
+
+  // handles moshortcut, nxm links and starting processes
+  //
+  // returns an empty optional if execution should continue, or a return code
+  // if MO must quit
+  //
+  std::optional<int> setupCore(OrganizerCore& organizer) const;
+
+
+  // clears parsed options, used when MO is "restarted" so the options aren't
+  // processed again
+  //
   void clear();
 
+  // global usage string plus usage for the given command, if any
+  //
   std::string usage(const Command* c=nullptr) const;
 
+
+  // whether --multiple was given
+  //
   bool multiple() const;
+
+  // profile override (-p)
+  //
   std::optional<QString> profile() const;
+
+  // instance override (-i)
+  //
   std::optional<QString> instance() const;
 
+  // returns the data parsed from an moshortcut:// option, if any
+  //
   const MOShortcut& shortcut() const;
+
+  // returns the nxm:// link, if any
+  //
   std::optional<QString> nxmLink() const;
+
+  // returns the executable/binary, if any
   std::optional<QString> executable() const;
 
+  // returns the list of arguments, excluding moshortcut or executable name;
+  // deprecated, only use with executable()
+  //
   const QStringList& untouched() const;
 
 private:

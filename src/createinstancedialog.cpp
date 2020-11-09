@@ -10,6 +10,105 @@
 
 using namespace MOBase;
 
+
+class Failed {};
+
+// create() will create all the directories in `target`; if any path component
+// fails to create, it will throw Failed
+//
+// unless commit() is called, all the created directories will be deleted in
+// the destructor
+//
+class DirectoryCreator
+{
+public:
+  DirectoryCreator(const DirectoryCreator&) = delete;
+  DirectoryCreator& operator=(const DirectoryCreator&) = delete;
+
+  static std::unique_ptr<DirectoryCreator> create(
+    const QDir& target, std::function<void (QString)> log)
+  {
+    return std::unique_ptr<DirectoryCreator>(new DirectoryCreator(target, log));
+  }
+
+  ~DirectoryCreator()
+  {
+    rollback();
+  }
+
+  void commit()
+  {
+    m_created.clear();
+  }
+
+  void rollback() noexcept
+  {
+    try
+    {
+      // delete each directory starting from the end
+      for (auto itor=m_created.rbegin(); itor!=m_created.rend(); ++itor) {
+        const auto r = shell::DeleteDirectoryRecursive(*itor);
+        if (!r) {
+          m_logger(r.toString());
+        }
+      }
+
+      m_created.clear();
+    }
+    catch(...)
+    {
+      // eat it
+    }
+  }
+
+private:
+  std::function<void (QString)> m_logger;
+
+  DirectoryCreator(const QDir& target, std::function<void (QString)> log)
+    : m_logger(log)
+  {
+    try
+    {
+      // split on separators
+      const QString s = QDir::toNativeSeparators(target.absolutePath());
+      const QStringList cs = s.split("\\");
+
+      if (cs.empty()) {
+        return;
+      }
+
+      // root directory
+      QDir d(cs[0]);
+
+      // for each directory after the root
+      for (int i=1; i<cs.size(); ++i) {
+        d = d.filePath(cs[i]);
+
+        if (!d.exists()) {
+          m_logger(QObject::tr("Creating %1").arg(d.path()));
+          const auto r = shell::CreateDirectories(d);
+
+          if (!r) {
+            m_logger(r.toString());
+            throw Failed();
+          }
+
+          m_created.push_back(d);
+        }
+      }
+    }
+    catch(...)
+    {
+      rollback();
+      throw;
+    }
+  }
+
+private:
+  std::vector<QDir> m_created;
+};
+
+
 CreateInstanceDialog::CreateInstanceDialog(
   const PluginContainer& pc, Settings* s, QWidget *parent) :
     QDialog(parent), ui(new Ui::CreateInstanceDialog), m_pc(pc), m_settings(s),
@@ -42,7 +141,15 @@ CreateInstanceDialog::CreateInstanceDialog(
     next();
   }
 
+  ui->next->setFocus();
+
   updateNavigation();
+
+  addShortcutAction(QKeySequence::Find, Actions::Find);
+
+  addShortcut(Qt::ALT+Qt::Key_Left, [&]{ back(); });
+  addShortcut(Qt::ALT+Qt::Key_Right, [&]{ next(false); });
+  addShortcut(Qt::CTRL+Qt::Key_Return, [&]{ next(); });
 
   connect(ui->next, &QPushButton::clicked, [&]{ next(); });
   connect(ui->back, &QPushButton::clicked, [&]{ back(); });
@@ -77,17 +184,23 @@ bool CreateInstanceDialog::isOnLastPage() const
   return true;
 }
 
-void CreateInstanceDialog::next()
+void CreateInstanceDialog::next(bool allowFinish)
 {
+  if (!canNext()) {
+    return;
+  }
+
   const auto i = ui->pages->currentIndex();
   const auto last = isOnLastPage();
 
   if (last) {
-    if (m_singlePage) {
-      // just close the dialog
-      accept();
-    } else {
-      finish();
+    if (allowFinish) {
+      if (m_singlePage) {
+        // just close the dialog
+        accept();
+      } else {
+        finish();
+      }
     }
   } else {
     changePage(+1);
@@ -96,7 +209,38 @@ void CreateInstanceDialog::next()
 
 void CreateInstanceDialog::back()
 {
+  if (!canBack()) {
+    return;
+  }
+
   changePage(-1);
+}
+
+void CreateInstanceDialog::addShortcut(
+  QKeySequence seq, std::function<void ()> f)
+{
+  auto* sc = new QShortcut(seq, this);
+
+  sc->setAutoRepeat(false);
+  sc->setContext(Qt::WidgetWithChildrenShortcut);
+
+  QObject::connect(sc, &QShortcut::activated, f);
+}
+
+void CreateInstanceDialog::addShortcutAction(QKeySequence seq, Actions a)
+{
+  addShortcut(seq, [this, a]{ doAction(a); });
+}
+
+void CreateInstanceDialog::doAction(Actions a)
+{
+  std::size_t i = static_cast<std::size_t>(ui->pages->currentIndex());
+
+  if (i >= m_pages.size()) {
+    return;
+  }
+
+  m_pages[i]->action(a);
 }
 
 void CreateInstanceDialog::setSinglePageImpl(const QString& instanceName)
@@ -121,6 +265,7 @@ void CreateInstanceDialog::changePage(int d)
   // first/last page
 
   if (d > 0) {
+    // forwards
     for (;;) {
       ++i;
 
@@ -133,6 +278,7 @@ void CreateInstanceDialog::changePage(int d)
       }
     }
   } else {
+    // backwards
     for (;;) {
       if (i == 0) {
         break;
@@ -150,94 +296,6 @@ void CreateInstanceDialog::changePage(int d)
     selectPage(i);
   }
 }
-
-
-class Failed {};
-
-class DirectoryCreator
-{
-public:
-  DirectoryCreator(const DirectoryCreator&) = delete;
-  DirectoryCreator& operator=(const DirectoryCreator&) = delete;
-
-  static std::unique_ptr<DirectoryCreator> create(
-    const QDir& target, std::function<void (QString)> log)
-  {
-    return std::unique_ptr<DirectoryCreator>(new DirectoryCreator(target, log));
-  }
-
-  ~DirectoryCreator()
-  {
-    rollback();
-  }
-
-  void commit()
-  {
-    m_created.clear();
-  }
-
-  void rollback() noexcept
-  {
-    try
-    {
-      for (auto itor=m_created.rbegin(); itor!=m_created.rend(); ++itor) {
-        const auto r = shell::DeleteDirectoryRecursive(*itor);
-        if (!r) {
-          m_logger(r.toString());
-        }
-      }
-
-      m_created.clear();
-    }
-    catch(...)
-    {
-      // eat it
-    }
-  }
-
-private:
-  std::function<void (QString)> m_logger;
-
-  DirectoryCreator(const QDir& target, std::function<void (QString)> log)
-    : m_logger(log)
-  {
-    try
-    {
-      const QString s = QDir::toNativeSeparators(target.absolutePath());
-      const QStringList cs = s.split("\\");
-
-      if (cs.empty()) {
-        return;
-      }
-
-      QDir d(cs[0]);
-
-      for (int i=1; i<cs.size(); ++i) {
-        d = d.filePath(cs[i]);
-
-        if (!d.exists()) {
-          m_logger(QObject::tr("Creating %1").arg(d.path()));
-          const auto r = shell::CreateDirectories(d);
-
-          if (!r) {
-            m_logger(r.toString());
-            throw Failed();
-          }
-
-          m_created.push_back(d);
-        }
-      }
-    }
-    catch(...)
-    {
-      rollback();
-      throw;
-    }
-  }
-
-private:
-  std::vector<QDir> m_created;
-};
 
 void CreateInstanceDialog::finish()
 {
@@ -260,6 +318,8 @@ void CreateInstanceDialog::finish()
   {
     std::vector<std::unique_ptr<DirectoryCreator>> dirs;
 
+    // creating all these directories; if any of them fail, this throws and
+    // any newly created directory will be deleted in DirectoryCreator's dtor
     dirs.push_back(createDir(ci.dataPath));
     dirs.push_back(createDir(ci.paths.base));
     dirs.push_back(createDir(PathSettings::resolve(ci.paths.downloads, ci.paths.base)));
@@ -268,6 +328,7 @@ void CreateInstanceDialog::finish()
     dirs.push_back(createDir(PathSettings::resolve(ci.paths.overwrite, ci.paths.base)));
 
 
+    // creating ini
     Settings s(ci.iniPath);
     s.game().setName(ci.game->gameName());
     s.game().setDirectory(ci.gameLocation);
@@ -301,7 +362,9 @@ void CreateInstanceDialog::finish()
 
     logCreation(tr("Writing %1...").arg(ci.iniPath));
 
+    // writing ini
     const auto r = s.sync();
+
     if (r != QSettings::NoError) {
       switch (r)
       {
@@ -321,16 +384,15 @@ void CreateInstanceDialog::finish()
       throw Failed();
     }
 
+
+    // committing all the directories so they don't get deleted
     for (auto& d : dirs) {
       d->commit();
     }
 
     logCreation(tr("Done."));
 
-    if (ui->hideIntro->isChecked()) {
-      GlobalSettings::setHideCreateInstanceIntro(true);
-    }
-
+    // launch the new instance
     if (ui->launch->isChecked()) {
       InstanceManager::singleton().setCurrentInstance(ci.instanceName);
 
@@ -338,15 +400,16 @@ void CreateInstanceDialog::finish()
         // don't restart without settings, it happens on startup when there are
         // no instances
         ExitModOrganizer(Exit::Restart);
+        m_switching = true;
       }
-
-      m_switching = true;
     }
 
+    // close the dialog
     accept();
   }
   catch(Failed&)
   {
+    // if Failed was thrown, all the directories have been deleted
   }
 }
 
@@ -413,76 +476,13 @@ bool CreateInstanceDialog::canBack() const
   return false;
 }
 
-CreateInstanceDialog::Types CreateInstanceDialog::instanceType() const
-{
-  return getSelected(&cid::Page::selectedInstanceType);
-}
-
-MOBase::IPluginGame* CreateInstanceDialog::game() const
-{
-  return getSelected(&cid::Page::selectedGame);
-}
-
-QString CreateInstanceDialog::gameLocation() const
-{
-  return getSelected(&cid::Page::selectedGameLocation);
-}
-
-QString CreateInstanceDialog::gameVariant() const
-{
-  return getSelected(&cid::Page::selectedGameVariant);
-}
-
-QString CreateInstanceDialog::instanceName() const
-{
-  return getSelected(&cid::Page::selectedInstanceName);
-}
-
-QString CreateInstanceDialog::dataPath() const
-{
-  QString s;
-
-  if (instanceType() == Portable) {
-    s = QDir(InstanceManager::portablePath()).absolutePath();
-  } else {
-    s = InstanceManager::singleton().instancePath(instanceName());
-  }
-
-  return QDir::toNativeSeparators(s);
-}
-
-CreateInstanceDialog::Paths CreateInstanceDialog::paths() const
-{
-  return getSelected(&cid::Page::selectedPaths);
-}
-
 bool CreateInstanceDialog::switching() const
 {
   return m_switching;
 }
 
-void fixVarDir(QString& path, const std::wstring& defaultDir)
-{
-  if (path.isEmpty()) {
-    path = cid::makeDefaultPath(defaultDir);
-  } else if (!path.contains(PathSettings::BaseDirVariable)) {
-    path = QDir(path).absolutePath();
-  }
-
-  path = QDir::toNativeSeparators(path);
-}
-
-void fixDirPath(QString& path)
-{
-  path = QDir::toNativeSeparators(QDir(path).absolutePath());
-}
-
-void fixFilePath(QString& path)
-{
-  path = QDir::toNativeSeparators(QFileInfo(path).absolutePath());
-}
-
-CreateInstanceDialog::CreationInfo CreateInstanceDialog::creationInfo() const
+CreateInstanceDialog::CreationInfo
+CreateInstanceDialog::rawCreationInfo() const
 {
   const auto iniFilename = QString::fromStdWString(AppConfig::iniFileName());
 
@@ -491,11 +491,52 @@ CreateInstanceDialog::CreationInfo CreateInstanceDialog::creationInfo() const
   ci.type         = getSelected(&cid::Page::selectedInstanceType);
   ci.game         = getSelected(&cid::Page::selectedGame);
   ci.gameLocation = getSelected(&cid::Page::selectedGameLocation);
-  ci.gameVariant  = getSelected(&cid::Page::selectedGameVariant);
+  ci.gameVariant  = getSelected(&cid::Page::selectedGameVariant, ci.game);
   ci.instanceName = getSelected(&cid::Page::selectedInstanceName);
   ci.paths        = getSelected(&cid::Page::selectedPaths);
-  ci.dataPath     = dataPath();
+
+  if (ci.type == Portable) {
+    ci.dataPath = QDir(InstanceManager::singleton().portablePath()).absolutePath();
+  } else {
+    ci.dataPath = InstanceManager::singleton().instancePath(ci.instanceName);
+  }
+
+  ci.dataPath     = QDir::toNativeSeparators(ci.dataPath);
   ci.iniPath      = ci.dataPath + "/" + iniFilename;
+
+  return ci;
+}
+
+CreateInstanceDialog::CreationInfo
+CreateInstanceDialog::creationInfo() const
+{
+  auto fixVarDir = [](QString& path, const std::wstring& defaultDir)
+  {
+    // if the path is empty, it wasn't filled by the user, probably because
+    // the "Advanced" checkbox wasn't checked, so use the base dir variable
+    // with the default dir
+
+    if (path.isEmpty()) {
+      path = cid::makeDefaultPath(defaultDir);
+    } else if (!path.contains(PathSettings::BaseDirVariable)) {
+      path = QDir(path).absolutePath();
+    }
+
+    path = QDir::toNativeSeparators(path);
+  };
+
+  auto fixDirPath = [](QString& path)
+  {
+    path = QDir::toNativeSeparators(QDir(path).absolutePath());
+  };
+
+  auto fixFilePath = [](QString& path)
+  {
+    path = QDir::toNativeSeparators(QFileInfo(path).absolutePath());
+  };
+
+
+  auto ci = rawCreationInfo();
 
   fixDirPath(ci.paths.base);
   fixFilePath(ci.paths.ini);

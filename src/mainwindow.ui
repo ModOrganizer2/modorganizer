@@ -1768,16 +1768,16 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/instance_switch</normaloff>:/MO/gui/instance_switch</iconset>
    </property>
    <property name="text">
-    <string>&amp;Change Game...</string>
+    <string>Manage Instan&amp;ces...</string>
    </property>
    <property name="iconText">
-    <string>&amp;Change Game</string>
+    <string>Manage Instan&amp;ces...</string>
    </property>
    <property name="toolTip">
-    <string>Open the Instance selection dialog to manage a different Game</string>
+    <string>Open the instance manager window to manage a different instance</string>
    </property>
    <property name="statusTip">
-    <string>Open the Instance selection dialog to manage a different Game</string>
+    <string>Open the instance manager window to manage a different instance</string>
    </property>
   </action>
   <action name="actionExit">
@@ -1878,6 +1878,11 @@ p, li { white-space: pre-wrap; }
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
+   <class>LinkLabel</class>
+   <extends>QLabel</extends>
+   <header location="global">linklabel.h</header>
+  </customwidget>
+  <customwidget>
    <class>MOBase::LineEditClear</class>
    <extends>QLineEdit</extends>
    <header>lineeditclear.h</header>
@@ -1916,11 +1921,6 @@ p, li { white-space: pre-wrap; }
    <class>StatusBar</class>
    <extends>QStatusBar</extends>
    <header>statusbar.h</header>
-  </customwidget>
-  <customwidget>
-   <class>LinkLabel</class>
-   <extends>QLabel</extends>
-   <header location="global">linklabel.h</header>
   </customwidget>
  </customwidgets>
  <resources>
