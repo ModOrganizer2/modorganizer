@@ -13,7 +13,7 @@ using namespace MOBase;
 thread_local LPTOP_LEVEL_EXCEPTION_FILTER g_prevExceptionFilter = nullptr;
 thread_local std::terminate_handler g_prevTerminateHandler = nullptr;
 
-int forwardToPrimary(SingleInstance& instance, const cl::CommandLine& cl);
+int forwardToPrimary(MOMultiProcess& multiProcess, const cl::CommandLine& cl);
 
 int main(int argc, char *argv[])
 {
@@ -32,22 +32,22 @@ int main(int argc, char *argv[])
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
   MOApplication app(cl, argc, argv);
 
-  SingleInstance instance(cl.multiple());
-  if (instance.ephemeral()) {
-    return forwardToPrimary(instance, cl);
+  MOMultiProcess multiProcess(cl.multiple());
+  if (multiProcess.ephemeral()) {
+    return forwardToPrimary(multiProcess, cl);
   }
 
   tt.stop();
 
-  return app.run(instance);
+  return app.run(multiProcess);
 }
 
-int forwardToPrimary(SingleInstance& instance, const cl::CommandLine& cl)
+int forwardToPrimary(MOMultiProcess& multiProcess, const cl::CommandLine& cl)
 {
   if (cl.shortcut().isValid()) {
-    instance.sendMessage(cl.shortcut().toString());
+    multiProcess.sendMessage(cl.shortcut().toString());
   } else if (cl.nxmLink()) {
-    instance.sendMessage(*cl.nxmLink());
+    multiProcess.sendMessage(*cl.nxmLink());
   } else {
     QMessageBox::information(
       nullptr, QObject::tr("Mod Organizer"),

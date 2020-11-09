@@ -24,7 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileSystemWatcher>
 
 class Settings;
-class SingleInstance;
+class MOMultiProcess;
 class Instance;
 class PluginContainer;
 
@@ -40,7 +40,7 @@ public:
 
   // sets up everything, creates the main window and runs it
   //
-  int run(SingleInstance& si);
+  int run(MOMultiProcess& multiProcess);
 
   virtual bool notify(QObject* receiver, QEvent* event);
 
@@ -55,7 +55,7 @@ private:
   QString m_DefaultStyle;
   cl::CommandLine& m_cl;
 
-  int doOneRun(SingleInstance& singleInstance);
+  int doOneRun(MOMultiProcess& multiProcess);
 
   std::optional<Instance> getCurrentInstance();
   std::optional<int> setupInstanceLoop(Instance& currentInstance, PluginContainer& pc);

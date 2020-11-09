@@ -144,7 +144,8 @@ std::optional<int> CommandLine::run(const std::wstring& line)
 
 
     // the first word on the command line is not a valid command, try the other
-    // stuff; this is handled in main.cpp
+    // stuff; this is used in setupCore() below when called from
+    // MOApplication::doOneRun()
 
     // look for help
     if (m_vm.count("help")) {
@@ -202,8 +203,6 @@ std::optional<int> CommandLine::run(const std::wstring& line)
 
 std::optional<int> CommandLine::setupCore(OrganizerCore& organizer) const
 {
-  // if we have a command line parameter, it is either a nxm link or
-  // a binary to start
   if (m_shortcut.isValid()) {
     if (m_shortcut.hasExecutable()) {
       try {

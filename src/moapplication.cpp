@@ -147,7 +147,7 @@ MOApplication::MOApplication(cl::CommandLine& cl, int& argc, char** argv)
   addDllsToPath();
 }
 
-int MOApplication::run(SingleInstance& singleInstance)
+int MOApplication::run(MOMultiProcess& multiProcess)
 {
   TimeThis tt("MOApplication run() to doOneRun()");
 
@@ -174,7 +174,7 @@ int MOApplication::run(SingleInstance& singleInstance)
       resetForRestart();
 
       tt.stop();
-      const auto r = doOneRun(singleInstance);
+      const auto r = doOneRun(multiProcess);
       if (r == RestartExitCode) {
         continue;
       }
@@ -189,7 +189,7 @@ int MOApplication::run(SingleInstance& singleInstance)
   }
 }
 
-int MOApplication::doOneRun(SingleInstance& singleInstance)
+int MOApplication::doOneRun(MOMultiProcess& multiProcess)
 {
   TimeThis tt("MOApplication::doOneRun() instances");
 
@@ -217,7 +217,7 @@ int MOApplication::doOneRun(SingleInstance& singleInstance)
     createVersionInfo().displayString(3), GITID,
     QCoreApplication::applicationDirPath(), MOShared::getUsvfsVersionString());
 
-  if (singleInstance.secondary()) {
+  if (multiProcess.secondary()) {
     log::debug("another instance of MO is running but --multiple was given");
   }
 
@@ -228,7 +228,7 @@ int MOApplication::doOneRun(SingleInstance& singleInstance)
   tt.start("MOApplication::doOneRun() settings");
 
   // deleting old files, only for the main instance
-  if (!singleInstance.secondary()) {
+  if (!multiProcess.secondary()) {
     purgeOldFiles();
   }
 
@@ -365,7 +365,7 @@ int MOApplication::doOneRun(SingleInstance& singleInstance)
     QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), this,
                       SLOT(setStyleFile(QString)));
 
-    QObject::connect(&singleInstance, SIGNAL(messageSent(QString)), &organizer,
+    QObject::connect(&multiProcess, SIGNAL(messageSent(QString)), &organizer,
                       SLOT(externalMessage(QString)));
 
 
