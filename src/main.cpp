@@ -17,6 +17,8 @@ int forwardToPrimary(SingleInstance& instance, const cl::CommandLine& cl);
 
 int main(int argc, char *argv[])
 {
+  TimeThis tt("main()");
+
   MOShared::SetThisThreadName("main");
   setExceptionHandlers();
 
@@ -34,6 +36,8 @@ int main(int argc, char *argv[])
   if (instance.ephemeral()) {
     return forwardToPrimary(instance, cl);
   }
+
+  tt.stop();
 
   return app.run(instance);
 }

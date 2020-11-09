@@ -135,6 +135,8 @@ void addDllsToPath()
 MOApplication::MOApplication(cl::CommandLine& cl, int& argc, char** argv)
   : QApplication(argc, argv), m_cl(cl)
 {
+  TimeThis tt("MOApplication()");
+
   connect(&m_StyleWatcher, &QFileSystemWatcher::fileChanged, [&](auto&& file){
     log::debug("style file '{}' changed, reloading", file);
     updateStyle(file);
@@ -147,6 +149,8 @@ MOApplication::MOApplication(cl::CommandLine& cl, int& argc, char** argv)
 
 int MOApplication::run(SingleInstance& singleInstance)
 {
+  TimeThis tt("MOApplication run() to doOneRun()");
+
   auto& m = InstanceManager::singleton();
 
   if (m_cl.instance())
@@ -169,6 +173,7 @@ int MOApplication::run(SingleInstance& singleInstance)
       // resets things when MO is "restarted"
       resetForRestart();
 
+      tt.stop();
       const auto r = doOneRun(singleInstance);
       if (r == RestartExitCode) {
         continue;
@@ -186,6 +191,8 @@ int MOApplication::run(SingleInstance& singleInstance)
 
 int MOApplication::doOneRun(SingleInstance& singleInstance)
 {
+  TimeThis tt("MOApplication::doOneRun() instances");
+
   // figuring out the current instance
   auto currentInstance = getCurrentInstance();
   if (!currentInstance) {
@@ -218,6 +225,8 @@ int MOApplication::doOneRun(SingleInstance& singleInstance)
   log::info("working directory: {}", QDir::currentPath());
 
 
+  tt.start("MOApplication::doOneRun() settings");
+
   // deleting old files, only for the main instance
   if (!singleInstance.secondary()) {
     purgeOldFiles();
@@ -235,6 +244,8 @@ int MOApplication::doOneRun(SingleInstance& singleInstance)
   OrganizerCore::setGlobalCoreDumpType(settings.diagnostics().coreDumpType());
 
 
+  tt.start("MOApplication::doOneRun() log and checks");
+
   // logging and checking
   env::Environment env;
   env.dump(settings);
@@ -251,11 +262,14 @@ int MOApplication::doOneRun(SingleInstance& singleInstance)
   std::unique_ptr<PluginContainer> pluginContainer;
 
   // nexus interface
+  tt.start("MOApplication::doOneRun() NexusInterface");
   log::debug("initializing nexus interface");
   NexusInterface ni(&settings);
 
   // organizer core
+  tt.start("MOApplication::doOneRun() OrganizerCore");
   log::debug("initializing core");
+
   OrganizerCore organizer(settings);
   if (!organizer.bootstrap()) {
     reportError("failed to set up data paths");
@@ -264,7 +278,9 @@ int MOApplication::doOneRun(SingleInstance& singleInstance)
   }
 
   // plugins
+  tt.start("MOApplication::doOneRun() plugins");
   log::debug("initializing plugins");
+
   pluginContainer = std::make_unique<PluginContainer>(&organizer);
   pluginContainer->loadPlugins();
 
@@ -276,6 +292,8 @@ int MOApplication::doOneRun(SingleInstance& singleInstance)
   if (currentInstance->isPortable()) {
     log::debug("this is a portable instance");
   }
+
+  tt.start("MOApplication::doOneRun() OrganizerCore setup");
 
   sanity::checkPaths(*currentInstance->gamePlugin(), settings);
 
@@ -298,13 +316,18 @@ int MOApplication::doOneRun(SingleInstance& singleInstance)
   organizer.setCurrentProfile(currentInstance->profileName());
 
   // checking command line
+  tt.start("MOApplication::doOneRun() command line");
   if (auto r=m_cl.setupCore(organizer)) {
     return *r;
   }
 
   // show splash
+  tt.start("MOApplication::doOneRun() splash");
+
   MOSplash splash(
     settings, currentInstance->directory(), currentInstance->gamePlugin());
+
+  tt.start("MOApplication::doOneRun() finishing");
 
   // start an api check
   QString apiKey;
@@ -329,6 +352,7 @@ int MOApplication::doOneRun(SingleInstance& singleInstance)
   int res = 1;
 
   {
+    tt.start("MOApplication::doOneRun() MainWindow setup");
     MainWindow mainWindow(settings, organizer, *pluginContainer);
 
     // qt resets the thread name somewhere when creating the main window
@@ -349,6 +373,8 @@ int MOApplication::doOneRun(SingleInstance& singleInstance)
     mainWindow.show();
     mainWindow.activateWindow();
     splash.close();
+
+    tt.stop();
 
     res = exec();
     mainWindow.close();
