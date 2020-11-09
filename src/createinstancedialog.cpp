@@ -141,7 +141,15 @@ CreateInstanceDialog::CreateInstanceDialog(
     next();
   }
 
+  ui->next->setFocus();
+
   updateNavigation();
+
+  addShortcutAction(QKeySequence::Find, Actions::Find);
+
+  addShortcut(Qt::ALT+Qt::Key_Left, [&]{ back(); });
+  addShortcut(Qt::ALT+Qt::Key_Right, [&]{ next(false); });
+  addShortcut(Qt::CTRL+Qt::Key_Return, [&]{ next(); });
 
   connect(ui->next, &QPushButton::clicked, [&]{ next(); });
   connect(ui->back, &QPushButton::clicked, [&]{ back(); });
@@ -176,17 +184,23 @@ bool CreateInstanceDialog::isOnLastPage() const
   return true;
 }
 
-void CreateInstanceDialog::next()
+void CreateInstanceDialog::next(bool allowFinish)
 {
+  if (!canNext()) {
+    return;
+  }
+
   const auto i = ui->pages->currentIndex();
   const auto last = isOnLastPage();
 
   if (last) {
-    if (m_singlePage) {
-      // just close the dialog
-      accept();
-    } else {
-      finish();
+    if (allowFinish) {
+      if (m_singlePage) {
+        // just close the dialog
+        accept();
+      } else {
+        finish();
+      }
     }
   } else {
     changePage(+1);
@@ -195,7 +209,38 @@ void CreateInstanceDialog::next()
 
 void CreateInstanceDialog::back()
 {
+  if (!canBack()) {
+    return;
+  }
+
   changePage(-1);
+}
+
+void CreateInstanceDialog::addShortcut(
+  QKeySequence seq, std::function<void ()> f)
+{
+  auto* sc = new QShortcut(seq, this);
+
+  sc->setAutoRepeat(false);
+  sc->setContext(Qt::WidgetWithChildrenShortcut);
+
+  QObject::connect(sc, &QShortcut::activated, f);
+}
+
+void CreateInstanceDialog::addShortcutAction(QKeySequence seq, Actions a)
+{
+  addShortcut(seq, [this, a]{ doAction(a); });
+}
+
+void CreateInstanceDialog::doAction(Actions a)
+{
+  std::size_t i = static_cast<std::size_t>(ui->pages->currentIndex());
+
+  if (i >= m_pages.size()) {
+    return;
+  }
+
+  m_pages[i]->action(a);
 }
 
 void CreateInstanceDialog::setSinglePageImpl(const QString& instanceName)
@@ -346,11 +391,6 @@ void CreateInstanceDialog::finish()
     }
 
     logCreation(tr("Done."));
-
-    // remember settings
-    if (ui->hideIntro->isChecked()) {
-      GlobalSettings::setHideCreateInstanceIntro(true);
-    }
 
     // launch the new instance
     if (ui->launch->isChecked()) {

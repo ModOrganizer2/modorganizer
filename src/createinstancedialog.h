@@ -27,6 +27,11 @@ class CreateInstanceDialog : public QDialog
   Q_OBJECT
 
 public:
+  enum class Actions
+  {
+    Find = 1
+  };
+
   // instance type
   //
   enum Types
@@ -107,9 +112,10 @@ public:
   }
 
 
-  // moves to the next page  calls finish() if on the last one
+  // moves to the next page; if `allowFinish` is true, calls finish() if
+  // currently on the last page
   //
-  void next();
+  void next(bool allowFinish=true);
 
   // moves to the previous page, if any
   //
@@ -170,6 +176,19 @@ private:
   bool m_switching;
   bool m_singlePage;
 
+
+  // creates a shortcut for the given sequence
+  //
+  void addShortcut(QKeySequence seq, std::function<void ()> f);
+
+  // creates a shortcut for the given sequence and executes the action when
+  // activated
+  //
+  void addShortcutAction(QKeySequence seq, Actions a);
+
+  // calls action() with the given action on the selected page, if any
+  //
+  void doAction(Actions a);
 
   // called from setSinglePage(), does whatever doesn't need the T
   //

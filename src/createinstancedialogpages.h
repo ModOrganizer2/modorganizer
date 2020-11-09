@@ -60,7 +60,7 @@ public:
 
   // called every time a page is shown in the screen
   //
-  virtual void activated();
+  void activated();
 
   // overrides whether this page should be skipped; this is used by
   // CreateInstanceDialog::setSinglePage() to disable all other pages
@@ -80,6 +80,12 @@ public:
   // advance once the user has made the proper selection
   //
   void next();
+
+
+  // called from the dialog when an action is requested on the current page;
+  // returns true when handled
+  //
+  virtual bool action(CreateInstanceDialog::Actions a);
 
 
   // returns the instance type
@@ -111,7 +117,13 @@ protected:
   CreateInstanceDialog& m_dlg;
   const PluginContainer& m_pc;
   bool m_skip;
+  bool m_firstActivation;
 
+
+  // called every time a page is shown in the screen; `firstTime` is true for
+  // first activation
+  //
+  virtual void doActivated(bool firstTime);
 
   // implemented by derived classes, overridden by setSkip(true)
   //
@@ -128,6 +140,12 @@ public:
 
 protected:
   bool doSkip() const override;
+
+private:
+  // the setting is only checked once when opening the dialog, or going forwards
+  // then back after checking the box wouldn't show the intro page any more,
+  // which would be unexpected
+  bool m_skip;
 };
 
 
@@ -153,6 +171,11 @@ public:
   // selects a portable instance
   //
   void portable();
+
+protected:
+  // focuses global instance button on first activation
+  //
+  void doActivated(bool firstTime) override;
 
 private:
   CreateInstanceDialog::Types m_type;
@@ -186,6 +209,10 @@ public:
   // whether a game has been selected
   //
   bool ready() const override;
+
+  // handles find
+  //
+  bool action(CreateInstanceDialog::Actions a) override;
 
   // returns the selected game
   //
@@ -262,7 +289,6 @@ private:
   //
   Game* findGame(MOBase::IPluginGame* game);
 
-
   // creates the ui for the given game button
   //
   void createGameButton(Game* g);
@@ -275,8 +301,13 @@ private:
   //
   void updateButton(Game* g);
 
-  // called when a button has been clicked; selects the game or asks the user
-  // for directory, depending
+  // game buttons are toggles, this creates the button for the given game if
+  // it doesn't exist and toggles it on
+  //
+  // the button might not exist if, for example:
+  //   1) this game is currently filtered out (not installed, doesn't match
+  //      filter text, etc) and,
+  //   2) the user browses to a directory that a hidden plugin can use
   //
   void selectButton(Game* g);
 
@@ -343,7 +374,7 @@ public:
   // uses the game selected in the previous page to fill the list, this must be
   // called every time because the user may go back in forth in the wizard
   //
-  void activated() override;
+  void doActivated(bool firstTime) override;
 
   // returns the selected variant, if any
   //
@@ -388,18 +419,18 @@ public:
   //
   bool ready() const override;
 
-  // uses the selected game to generate an instance name
-  //
-  // as long as the user hasn't modified the textbox, this will regenerate a new
-  // instance name every time the selected game changes
-  //
-  void activated() override;
-
   // returns the instance name
   //
   QString selectedInstanceName() const override;
 
 protected:
+  // uses the selected game to generate an instance name
+  //
+  // as long as the user hasn't modified the textbox, this will regenerate a new
+  // instance name every time the selected game changes
+  //
+  void doActivated(bool firstTime) override;
+
   // returns true for portable instances
   //
   bool doSkip() const override;
@@ -451,15 +482,16 @@ public:
   //
   bool ready() const override;
 
+  // returns the selected paths
+  //
+  CreateInstanceDialog::Paths selectedPaths() const override;
+
+protected:
   // resets all the paths if the instance type or instance name have changed,
   // the current values are kept as long as these don't change; also updates the
   // game name in the ui
   //
-  void activated() override;
-
-  // returns the selected paths
-  //
-  CreateInstanceDialog::Paths selectedPaths() const override;
+  void doActivated(bool firstTime) override;
 
 private:
   // instance name the last time this page was active
@@ -572,7 +604,7 @@ public:
 
   // recreates the log with the latest settings
   //
-  void activated() override;
+  void doActivated(bool firstTime) override;
 
   // returns the text for the log
   //
