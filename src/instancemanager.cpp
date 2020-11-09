@@ -21,9 +21,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "instancemanager.h"
 #include "selectiondialog.h"
 #include "settings.h"
-#include "shared/appconfig.h"
 #include "plugincontainer.h"
+#include "nexusinterface.h"
+#include "createinstancedialog.h"
+#include "instancemanagerdialog.h"
+#include "createinstancedialogpages.h"
+#include "shared/appconfig.h"
 #include "shared/util.h"
+#include "shared/error_report.h"
 #include <report.h>
 #include <iplugingame.h>
 #include <utility.h>
@@ -38,7 +43,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-Instance::Instance(QDir dir, bool portable, QString profileName) :
+Instance::Instance(QString dir, bool portable, QString profileName) :
   m_dir(std::move(dir)), m_portable(portable), m_plugin(nullptr),
   m_profile(std::move(profileName))
 {
@@ -49,7 +54,7 @@ QString Instance::name() const
   if (isPortable())
     return QObject::tr("Portable");
   else
-    return m_dir.dirName();
+    return QDir(m_dir).dirName();
 }
 
 QString Instance::gameName() const
@@ -62,9 +67,14 @@ QString Instance::gameDirectory() const
   return m_gameDir;
 }
 
-QDir Instance::directory() const
+QString Instance::directory() const
 {
   return m_dir;
+}
+
+QString Instance::baseDirectory() const
+{
+  return m_baseDir;
 }
 
 MOBase::IPluginGame* Instance::gamePlugin() const
@@ -79,7 +89,7 @@ QString Instance::profileName() const
 
 QString Instance::iniPath() const
 {
-  return InstanceManager::iniPath(m_dir);
+  return InstanceManager::singleton().iniPath(m_dir);
 }
 
 bool Instance::isPortable() const
@@ -87,15 +97,32 @@ bool Instance::isPortable() const
   return m_portable;
 }
 
-Instance::SetupResults Instance::setup(PluginContainer& plugins)
+bool Instance::isActive() const
+{
+  auto& m = InstanceManager::singleton();
+
+  if (auto i=m.currentInstance())
+  {
+    if (m_portable) {
+      return i->isPortable();
+    } else {
+      return (i->name() == name());
+    }
+  }
+
+  return false;
+}
+
+bool Instance::readFromIni()
 {
   Settings s(iniPath());
 
   if (s.iniStatus() != QSettings::NoError) {
     log::error("can't read ini {}", iniPath());
-    return SetupResults::BadIni;
+    return false;
   }
 
+  // game name and directory are from ini unless overridden by setGame()
   if (m_gameName.isEmpty()) {
     if (auto v=s.game().name())
       m_gameName = *v;
@@ -106,35 +133,71 @@ Instance::SetupResults Instance::setup(PluginContainer& plugins)
       m_gameDir = *v;
   }
 
-  const auto r = getGamePlugin(plugins);
-  if (r != SetupResults::Ok) {
-    return r;
-  }
-
   if (m_gameVariant.isEmpty()) {
     if (auto v=s.game().edition()) {
       m_gameVariant = *v;
     }
   }
 
+  if (m_baseDir.isEmpty()) {
+    m_baseDir = s.paths().base();
+  }
+
+  // figuring out profile from ini if it's missing
+  getProfile(s);
+
+  return true;
+}
+
+Instance::SetupResults Instance::setup(PluginContainer& plugins)
+{
+  // read initial values from the ini
+  if (!readFromIni()) {
+    return SetupResults::BadIni;
+  }
+
+  // getting game plugin
+  const auto r = getGamePlugin(plugins);
+  if (r != SetupResults::Okay) {
+    return r;
+  }
+
+  // error if the variant missing and required by the plugin
   if (m_gameVariant.isEmpty() && m_plugin->gameVariants().size() > 1) {
     return SetupResults::MissingVariant;
   } else {
     m_plugin->setGameVariant(m_gameVariant);
   }
 
-  getProfile(s);
+  // update the ini in case anything was missing
+  updateIni();
 
+  // the game directory may be different than what the plugin detected, the user
+  // can change it in the settings and might have multiple versions of the game
+  // installed
+  m_plugin->setGamePath(m_gameDir);
+
+  return SetupResults::Okay;
+}
+
+void Instance::updateIni()
+{
+  Settings s(iniPath());
+
+  if (s.iniStatus() != QSettings::NoError) {
+    log::error("can't open ini {}", iniPath());
+    return;
+  }
+
+  // updating the settings since some of these values might have been missing
   s.game().setName(m_gameName);
   s.game().setDirectory(m_gameDir);
   s.game().setSelectedProfileName(m_profile);
 
-  if (!m_gameVariant.isEmpty())
+  if (!m_gameVariant.isEmpty()) {
+    // don't write a variant to the ini if the plugin doesn't require one
     s.game().setEdition(m_gameVariant);
-
-  m_plugin->setGamePath(m_gameDir);
-
-  return SetupResults::Ok;
+  }
 }
 
 void Instance::setGame(const QString& name, const QString& dir)
@@ -185,7 +248,7 @@ Instance::SetupResults Instance::getGamePlugin(PluginContainer& plugins)
         }
 
         m_plugin = game;
-        return SetupResults::Ok;
+        return SetupResults::Okay;
       }
     }
 
@@ -209,7 +272,7 @@ Instance::SetupResults Instance::getGamePlugin(PluginContainer& plugins)
         m_plugin = game;
         m_gameName = game->gameName();
 
-        return SetupResults::Ok;
+        return SetupResults::Okay;
       }
     }
 
@@ -238,7 +301,7 @@ Instance::SetupResults Instance::getGamePlugin(PluginContainer& plugins)
           m_plugin = game;
           m_gameDir = game->gameDirectory().absolutePath();
 
-          return SetupResults::Ok;
+          return SetupResults::Okay;
         } else {
           log::warn(
             "found plugin {} that matches name in ini {}, but no game install "
@@ -262,7 +325,6 @@ Instance::SetupResults Instance::getGamePlugin(PluginContainer& plugins)
   }
 }
 
-
 void Instance::getProfile(const Settings& s)
 {
   if (!m_profile.isEmpty()) {
@@ -284,6 +346,176 @@ void Instance::getProfile(const Settings& s)
     iniPath(), m_profile);
 }
 
+// returns a list of files and folders that must be deleted when deleting
+// this instance
+//
+std::vector<Instance::Object> Instance::objectsForDeletion() const
+{
+  // native separators and ending slash
+  auto prettyDir = [](auto s) {
+    if (!s.endsWith("/") || !s.endsWith("\\")) {
+      s += "/";
+    }
+
+    return QDir::toNativeSeparators(s);
+  };
+
+  // native separators
+  auto prettyFile = [](auto s) {
+    return QDir::toNativeSeparators(s);
+  };
+
+
+  // lowercase, native separators and ending slash
+  auto canonicalDir = [](QString s) {
+    s = s.toLower();
+
+    if (!s.endsWith("/") || !s.endsWith("\\")) {
+      s += "/";
+    }
+
+    return QDir::toNativeSeparators(s);
+  };
+
+  // lower and native separators
+  auto canonicalFile = [](auto s) {
+    return QDir::toNativeSeparators(s.toLower());
+  };
+
+
+
+  // whether the given directory is contained in the root
+  auto dirInRoot = [&](const QString& root, const QString& dir) {
+    return canonicalDir(dir).startsWith(canonicalDir(root));
+  };
+
+  // whether the given file is contained in the root
+  auto fileInRoot = [&](const QString& root, const QString& file) {
+    return canonicalFile(file).startsWith(canonicalDir(root));
+  };
+
+
+  Settings settings(iniPath());
+
+  if (settings.iniStatus() != QSettings::NoError) {
+    log::error("can't read ini {}", iniPath());
+    return {};
+  }
+
+
+
+  const QString loc = directory();
+  const QString base = settings.paths().base();
+
+
+  // directories that might contain the individual files and directories
+  // set in the path settings
+  std::vector<Object> roots;
+
+  // a portable instance has its location in the installation directory,
+  // don't delete that
+  if (!isPortable()) {
+    if (QDir(loc).exists()) {
+      roots.push_back({loc, true});
+    }
+  }
+
+  // the base directory is the location directory by default, don't add it
+  // if it's the same
+  if (canonicalDir(base) != canonicalDir(loc)) {
+    if (QDir(base).exists()) {
+      roots.push_back({base, false});
+    }
+  }
+
+
+  // all the directories that are part of an instance; none of them are
+  // mandatory for deletion
+  const std::vector<Object> dirs = {
+    settings.paths().downloads(),
+    settings.paths().mods(),
+    settings.paths().cache(),
+    settings.paths().profiles(),
+    settings.paths().overwrite(),
+    QDir(m_dir).filePath(QString::fromStdWString(AppConfig::dumpsDir())),
+    QDir(m_dir).filePath(QString::fromStdWString(AppConfig::logPath())),
+  };
+
+  // all the files that are part of an instance
+  const std::vector<Object> files = {
+    {iniPath(), true},   // the ini file must be deleted
+  };
+
+
+  // this will contain the root directories, plus all the individual
+  // directories that are not inside these roots
+  std::vector<Object> cleanDirs;
+
+  for (const auto& f : dirs) {
+    bool inRoots = false;
+
+    for (const auto& root : roots) {
+      if (dirInRoot(root.path, f.path)) {
+        inRoots = true;
+        break;
+      }
+    }
+
+    if (!inRoots) {
+      // not in roots, this is a path that was changed by the user; make
+      // sure it exists
+      if (QDir(f.path).exists()) {
+        cleanDirs.push_back({prettyDir(f.path), f.mandatoryDelete});
+      }
+    }
+  }
+
+  // prepending the roots
+  for (auto itor=roots.rbegin(); itor!=roots.rend(); ++itor) {
+    cleanDirs.insert(
+      cleanDirs.begin(),
+      {prettyDir(itor->path), itor->mandatoryDelete});
+  }
+
+
+
+  // this will contain the individual files that are not inside the roots;
+  // not that this only contains the INI file for now, so most of this is
+  // useless
+  std::vector<Object> cleanFiles;
+
+  for (const auto& f : files) {
+    bool inRoots = false;
+
+    for (const auto& root : roots) {
+      if (fileInRoot(root.path, f.path)) {
+        inRoots = true;
+        break;
+      }
+    }
+
+    if (!inRoots) {
+      // not in roots, this is a path that was changed by the user; make
+      // sure it exists
+      if (QFileInfo(f.path).exists()) {
+        cleanFiles.push_back({prettyFile(f.path), f.mandatoryDelete});
+      }
+    }
+  }
+
+
+  // contains all the directories and files to be deleted
+  std::vector<Object> all;
+  all.insert(all.end(), cleanDirs.begin(), cleanDirs.end());
+  all.insert(all.end(), cleanFiles.begin(), cleanFiles.end());
+
+  // mandatory on top
+  std::stable_sort(all.begin(), all.end());
+
+  return all;
+}
+
+
 
 InstanceManager::InstanceManager()
 {
@@ -299,48 +531,44 @@ InstanceManager &InstanceManager::singleton()
 void InstanceManager::overrideInstance(const QString& instanceName)
 {
   m_overrideInstanceName = instanceName;
-  m_overrideInstance = true;
 }
 
 void InstanceManager::overrideProfile(const QString& profileName)
 {
   m_overrideProfileName = profileName;
-  m_overrideProfile = true;
 }
 
 std::optional<Instance> InstanceManager::currentInstance() const
 {
-  const QString profile = m_overrideProfile ? m_overrideProfileName : "";
+  const QString profile = m_overrideProfileName ?
+    *m_overrideProfileName : "";
 
-  if (portableInstallIsLocked()) {
+  const QString name = m_overrideInstanceName ?
+    *m_overrideInstanceName : GlobalSettings::currentInstance();
+
+
+  if (!allowedToChangeInstance()) {
     // force portable instance
-    return Instance(QDir(portablePath()), true, profile);
+    return Instance(portablePath(), true, profile);
   }
-
-  QString name;
-
-  if (m_overrideInstance)
-    name = m_overrideInstanceName;
-  else
-    name = GlobalSettings::currentInstance();
 
   if (name.isEmpty()) {
     if (portableInstanceExists()) {
       // use portable
-      return Instance(QDir(portablePath()), true, profile);
+      return Instance(portablePath(), true, profile);
     } else {
       // no instance set
       return {};
     }
   }
 
-  return Instance(QDir(instancePath(name)), false, profile);
+  return Instance(instancePath(name), false, profile);
 }
 
 void InstanceManager::clearCurrentInstance()
 {
   setCurrentInstance("");
-  m_overrideInstance = false;
+  m_overrideInstanceName = {};
 }
 
 void InstanceManager::setCurrentInstance(const QString &name)
@@ -350,30 +578,31 @@ void InstanceManager::setCurrentInstance(const QString &name)
 
 QString InstanceManager::instancePath(const QString& instanceName) const
 {
-  return QDir::fromNativeSeparators(instancesPath() + "/" + instanceName);
+  return QDir::fromNativeSeparators(globalInstancesRootPath() + "/" + instanceName);
 }
 
-QString InstanceManager::instancesPath() const
+QString InstanceManager::globalInstancesRootPath() const
 {
   return QDir::fromNativeSeparators(
         QStandardPaths::writableLocation(QStandardPaths::DataLocation));
 }
 
-QString InstanceManager::iniPath(const QDir& instanceDir)
+QString InstanceManager::iniPath(const QString& instanceDir) const
 {
-  return instanceDir.filePath(QString::fromStdWString(AppConfig::iniFileName()));
+  return QDir(instanceDir).filePath(
+    QString::fromStdWString(AppConfig::iniFileName()));
 }
 
-std::vector<QDir> InstanceManager::instancePaths() const
+std::vector<QString> InstanceManager::globalInstancePaths() const
 {
   const std::set<QString> ignore = {
     "cache", "qtwebengine",
   };
 
-  const QDir root(instancesPath());
+  const QDir root(globalInstancesRootPath());
   const auto dirs = root.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
 
-  std::vector<QDir> list;
+  std::vector<QString> list;
 
   for (auto&& d : dirs) {
     if (!ignore.contains(QFileInfo(d).fileName().toLower())) {
@@ -384,24 +613,12 @@ std::vector<QDir> InstanceManager::instancePaths() const
   return list;
 }
 
-QStringList InstanceManager::instanceNames() const
+bool InstanceManager::hasAnyInstances() const
 {
-  QStringList list;
-
-  for (auto&& d : instancePaths()) {
-    list.push_back(d.dirName());
-  }
-
-  return list;
+  return portableInstanceExists() || !globalInstancePaths().empty();
 }
 
-
-bool InstanceManager::isPortablePath(const QString& dataPath)
-{
-  return (dataPath == portablePath());
-}
-
-QString InstanceManager::portablePath()
+QString InstanceManager::portablePath() const
 {
   return qApp->applicationDirPath();
 }
@@ -412,23 +629,21 @@ bool InstanceManager::portableInstanceExists() const
                        QString::fromStdWString(AppConfig::iniFileName()));
 }
 
-
-bool InstanceManager::portableInstallIsLocked() const
-{
-  return QFile::exists(qApp->applicationDirPath() + "/" +
-                       QString::fromStdWString(AppConfig::portableLockFileName()));
-}
-
 bool InstanceManager::allowedToChangeInstance() const
 {
-  return !portableInstallIsLocked();
+  const auto lockFile =
+    qApp->applicationDirPath() + "/" +
+    QString::fromStdWString(AppConfig::portableLockFileName());
+
+  return !QFile::exists(lockFile);
 }
 
 const MOBase::IPluginGame* InstanceManager::gamePluginForDirectory(
-  const QDir& instanceDir, const PluginContainer& plugins) const
+  const QString& instanceDir, const PluginContainer& plugins) const
 {
   const QString ini = iniPath(instanceDir);
 
+  // reading ini
   Settings s(ini);
 
   if (s.iniStatus() != QSettings::NoError)
@@ -437,6 +652,7 @@ const MOBase::IPluginGame* InstanceManager::gamePluginForDirectory(
     return nullptr;
   }
 
+  // using game name from ini, if available
   const auto instanceGameName = s.game().name();
 
   if (instanceGameName && !instanceGameName->isEmpty())
@@ -448,7 +664,7 @@ const MOBase::IPluginGame* InstanceManager::gamePluginForDirectory(
     }
 
     log::error(
-      "no plugin reports game name '{}' found in ini {}",
+      "no plugin has game name '{}' that was found in ini {}",
       *instanceGameName, ini);
   }
   else
@@ -457,8 +673,7 @@ const MOBase::IPluginGame* InstanceManager::gamePluginForDirectory(
   }
 
 
-  log::error("falling back on looksValid check");
-
+  // using game directory from ini, if available
   const auto gameDir = s.game().directory();
 
   if (gameDir && !gameDir->isEmpty())
@@ -470,13 +685,24 @@ const MOBase::IPluginGame* InstanceManager::gamePluginForDirectory(
     }
 
     log::error(
-      "no plugins appear to support game directory '{}' from ini {}",
+      "no plugin appears to support game directory '{}' from ini {}",
       *gameDir, ini);
   }
   else
   {
     log::error("no game directory found in ini {}", ini);
   }
+
+
+  // looking for a plugin that can handle the directory
+  log::debug("falling back on looksValid check");
+
+  for (const IPluginGame* game : plugins.plugins<IPluginGame>()) {
+    if (game->looksValid(instanceDir)) {
+      return game;
+    }
+  }
+
 
   return nullptr;
 }
@@ -485,6 +711,7 @@ QString InstanceManager::makeUniqueName(const QString& instanceName) const
 {
   const QString sanitized = sanitizeInstanceName(instanceName);
 
+  // trying "name (N)"
   QString name = sanitized;
   for (int i=2; i<100; ++i) {
     if (!instanceExists(name)) {
@@ -499,7 +726,7 @@ QString InstanceManager::makeUniqueName(const QString& instanceName) const
 
 bool InstanceManager::instanceExists(const QString& instanceName) const
 {
-  const QDir root = instancesPath();
+  const QDir root = globalInstancesRootPath();
   return root.exists(instanceName);
 }
 
@@ -528,4 +755,199 @@ bool InstanceManager::validInstanceName(const QString& instanceName) const
   }
 
   return (instanceName == sanitizeInstanceName(instanceName));
+}
+
+
+
+std::optional<Instance> selectInstance()
+{
+  auto& m = InstanceManager::singleton();
+
+  // since there is no instance currently active, load plugins with a null
+  // OrganizerCore; see PluginContainer::initPlugin()
+  NexusInterface ni(nullptr);
+  PluginContainer pc(nullptr);
+  pc.loadPlugins();
+
+  if (m.hasAnyInstances()) {
+    // there is at least one instance available, show the instance manager
+    // dialog
+    InstanceManagerDialog dlg(pc);
+
+    // the dialog normally restarts MO when an instance is selected, but this
+    // is not necessary here since MO hasn't really started yet
+    dlg.setRestartOnSelect(false);
+
+    dlg.show();
+    dlg.activateWindow();
+    dlg.raise();
+
+    if (dlg.exec() != QDialog::Accepted) {
+      return {};
+    }
+
+  } else {
+    // no instances configured, ask the user to create one
+    CreateInstanceDialog dlg(pc, nullptr);
+
+    if (dlg.exec() != QDialog::Accepted) {
+      return {};
+    }
+  }
+
+  // return the new instance or the selection
+  return m.currentInstance();
+}
+
+// shows the game selection page of the create instance dialog so the user can
+// pick which game is managed by this instance
+//
+// this is used below in setupInstance() when the game directory is gone or
+// no plugins can recognize it
+//
+SetupInstanceResults selectGame(Instance& instance, PluginContainer& pc)
+{
+  CreateInstanceDialog dlg(pc, nullptr);
+
+  // only show the game page
+  dlg.setSinglePage<cid::GamePage>(instance.name());
+
+  dlg.show();
+  dlg.activateWindow();
+  dlg.raise();
+
+  if (dlg.exec() != QDialog::Accepted) {
+    // cancelled
+    return SetupInstanceResults::Exit;
+  }
+
+  // this info will be used instead of the ini, which should fix this
+  // particular problem
+  instance.setGame(
+    dlg.creationInfo().game->gameName(),
+    dlg.creationInfo().gameLocation);
+
+  return SetupInstanceResults::TryAgain;
+}
+
+// shows the game variant page of the create instance dialog so the user can
+// pick which game variant is installed
+//
+// this is used below in setupInstance() when there is no variant in the ini
+// but the game plugin requires one; this can happen when the ini is broken
+// or when a new variant has become supported by the plugin for a game the
+// user already has an instance for
+//
+SetupInstanceResults selectVariant(Instance& instance, PluginContainer& pc)
+{
+  CreateInstanceDialog dlg(pc, nullptr);
+
+  // the variant page uses the game page to know which game was selected, so
+  // set it manually
+  dlg.getPage<cid::GamePage>()->select(
+    instance.gamePlugin(), instance.gameDirectory());
+
+  // only show the variant page
+  dlg.setSinglePage<cid::VariantsPage>(instance.name());
+
+  dlg.show();
+  dlg.activateWindow();
+  dlg.raise();
+
+  if (dlg.exec() != QDialog::Accepted) {
+    return SetupInstanceResults::Exit;
+  }
+
+  // this info will be used instead of the ini, which should fix this
+  // particular problem
+  instance.setVariant(dlg.creationInfo().gameVariant);
+
+  return SetupInstanceResults::TryAgain;
+}
+
+SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
+{
+  // set up the instance
+  const auto setupResult = instance.setup(pc);
+
+  switch (setupResult)
+  {
+    case Instance::SetupResults::Okay:
+    {
+      // all good
+      return SetupInstanceResults::Okay;
+    }
+
+    case Instance::SetupResults::BadIni:
+    {
+      // unreadable ini, there's not much that can be done, select another
+      // instance
+
+      MOShared::criticalOnTop(
+        QObject::tr("Cannot open instance '%1', failed to read INI file %2.")
+        .arg(instance.name()).arg(instance.iniPath()));
+
+      return SetupInstanceResults::SelectAnother;
+    }
+
+    case Instance::SetupResults::IniMissingGame:
+    {
+      // both the game name and directory are missing from the ini; although
+      // this shouldn't happen, setup() is able to handle when either is
+      // missing, but not both
+      //
+      // ask the user for the game managed by this instance
+
+      MOShared::criticalOnTop(
+        QObject::tr(
+          "Cannot open instance '%1', the managed game was not found in the INI "
+          "file %2. Select the game managed by this instance.")
+        .arg(instance.name()).arg(instance.iniPath()));
+
+      return selectGame(instance, pc);
+    }
+
+    case Instance::SetupResults::PluginGone:
+    {
+      // there is no plugin that can handle the game name/directory from the
+      // ini, so this instance is unusable
+
+      MOShared::criticalOnTop(
+        QObject::tr(
+          "Cannot open instance '%1', the game plugin '%2' doesn't exist. It "
+          "may have been deleted by an antivirus. Select another instance.")
+        .arg(instance.name()).arg(instance.gameName()));
+
+      return SetupInstanceResults::SelectAnother;
+    }
+
+    case Instance::SetupResults::GameGone:
+    {
+      // the game directory doesn't exist or the plugin doesn't recognize it;
+      // ask the user for the game managed by this instance
+
+      MOShared::criticalOnTop(
+        QObject::tr(
+          "Cannot open instance '%1', the game directory '%2' doesn't exist or "
+          "the game plugin '%3' doesn't recognize it. Select the game managed "
+          "by this instance.")
+        .arg(instance.name())
+        .arg(instance.gameDirectory())
+        .arg(instance.gameName()));
+
+      return selectGame(instance, pc);
+    }
+
+    case Instance::SetupResults::MissingVariant:
+    {
+      // the game variant is missing from the ini, ask the user for it
+      return selectVariant(instance, pc);
+    }
+
+    default:
+    {
+      // shouldn't happen
+      return SetupInstanceResults::Exit;
+    }
+  }
 }

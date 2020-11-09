@@ -345,7 +345,10 @@ bool createAndMakeWritable(const std::wstring &subPath) {
 
 bool setLogDirectory(const QString& dir)
 {
-  const auto logFile = dir + "/logs/mo_interface.log";
+  const auto logFile =
+    dir + "/" +
+    QString::fromStdWString(AppConfig::logPath()) + "/" +
+    QString::fromStdWString(AppConfig::logFileName());
 
   if (!createAndMakeWritable(AppConfig::logPath())) {
     return false;

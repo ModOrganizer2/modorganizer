@@ -51,4 +51,14 @@ void reportError(LPCWSTR format, ...)
   MessageBoxW(nullptr, buffer, L"Error", MB_OK | MB_ICONERROR);
 }
 
+void criticalOnTop(const QString& message)
+{
+  QMessageBox mb(QMessageBox::Critical, QObject::tr("Mod Organizer"), message);
+
+  mb.show();
+  mb.activateWindow();
+  mb.raise();
+  mb.exec();
+}
+
 } // namespace MOShared

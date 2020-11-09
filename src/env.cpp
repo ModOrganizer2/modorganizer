@@ -4,6 +4,7 @@
 #include "envsecurity.h"
 #include "envshortcut.h"
 #include "envwindows.h"
+#include "envdump.h"
 #include "settings.h"
 #include <log.h>
 #include <utility.h>
@@ -1182,8 +1183,16 @@ HandlePtr tempFile(const std::wstring dir)
   return {};
 }
 
-HandlePtr dumpFile()
+HandlePtr dumpFile(const wchar_t* dir)
 {
+  // try the given directory, if any
+  if (dir) {
+    HandlePtr h = tempFile(dir);
+    if (h.get() != INVALID_HANDLE_VALUE) {
+      return h;
+    }
+  }
+
   // try the current directory
   HandlePtr h = tempFile(L".");
   if (h.get() != INVALID_HANDLE_VALUE) {
@@ -1193,10 +1202,10 @@ HandlePtr dumpFile()
   std::wclog << L"cannot write dump file in current directory\n";
 
   // try the temp directory
-  const auto dir = tempDir();
+  const auto temp = tempDir();
 
-  if (!dir.empty()) {
-    h = tempFile(dir.c_str());
+  if (!temp.empty()) {
+    h = tempFile(temp.c_str());
     if (h.get() != INVALID_HANDLE_VALUE) {
       return h;
     }
@@ -1235,11 +1244,11 @@ std::string toString(CoreDumpTypes type)
 }
 
 
-bool createMiniDump(HANDLE process, CoreDumpTypes type)
+bool createMiniDump(const wchar_t* dir, HANDLE process, CoreDumpTypes type)
 {
   const DWORD pid = GetProcessId(process);
 
-  const HandlePtr file = dumpFile();
+  const HandlePtr file = dumpFile(dir);
   if (!file) {
     std::wcerr << L"nowhere to write the dump file\n";
     return false;
@@ -1278,10 +1287,10 @@ bool createMiniDump(HANDLE process, CoreDumpTypes type)
 }
 
 
-bool coredump(CoreDumpTypes type)
+bool coredump(const wchar_t* dir, CoreDumpTypes type)
 {
   std::wclog << L"creating minidump for the current process\n";
-  return createMiniDump(GetCurrentProcess(), type);
+  return createMiniDump(dir, GetCurrentProcess(), type);
 }
 
 bool coredumpOther(CoreDumpTypes type)
@@ -1309,7 +1318,7 @@ bool coredumpOther(CoreDumpTypes type)
     return false;
   }
 
-  return createMiniDump(handle.get(), type);
+  return createMiniDump(nullptr, handle.get(), type);
 }
 
 } // namespace

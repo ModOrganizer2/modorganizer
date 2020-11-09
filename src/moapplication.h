@@ -23,14 +23,26 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QApplication>
 #include <QFileSystemWatcher>
 
+class Settings;
+class MOMultiProcess;
+class Instance;
+class PluginContainer;
+
+namespace MOBase { class IPluginGame; }
+namespace cl { class CommandLine; }
 
 class MOApplication : public QApplication
 {
   Q_OBJECT
 
 public:
-  static MOApplication create(int& argc, char** argv);
-  virtual bool notify (QObject* receiver, QEvent* event);
+  MOApplication(cl::CommandLine& cl, int& argc, char** argv);
+
+  // sets up everything, creates the main window and runs it
+  //
+  int run(MOMultiProcess& multiProcess);
+
+  virtual bool notify(QObject* receiver, QEvent* event);
 
 public slots:
   bool setStyleFile(const QString& style);
@@ -41,9 +53,32 @@ private slots:
 private:
   QFileSystemWatcher m_StyleWatcher;
   QString m_DefaultStyle;
+  cl::CommandLine& m_cl;
 
-  MOApplication(int& argc, char** argv);
+  int doOneRun(MOMultiProcess& multiProcess);
+
+  std::optional<Instance> getCurrentInstance();
+  std::optional<int> setupInstanceLoop(Instance& currentInstance, PluginContainer& pc);
+  void purgeOldFiles();
+  void resetForRestart();
 };
 
+
+class MOSplash
+{
+public:
+  MOSplash(
+    const Settings& settings, const QString& dataPath,
+    const MOBase::IPluginGame* game);
+
+  void close();
+
+private:
+  std::unique_ptr<QSplashScreen> ss_;
+
+  QString getSplashPath(
+    const Settings& settings, const QString& dataPath,
+    const MOBase::IPluginGame* game) const;
+};
 
 #endif // MOAPPLICATION_H

@@ -309,27 +309,6 @@ bool registryValueExists(const QString& key, const QString& value);
 //
 void deleteRegistryKeyIfEmpty(const QString& name);
 
-
-enum class CoreDumpTypes
-{
-  Mini = 1,
-  Data,
-  Full
-};
-
-
-CoreDumpTypes coreDumpTypeFromString(const std::string& s);
-std::string toString(CoreDumpTypes type);
-
-// creates a minidump file for this process
-//
-bool coredump(CoreDumpTypes type);
-
-// finds another process with the same name as this one and creates a minidump
-// file for it
-//
-bool coredumpOther(CoreDumpTypes type);
-
 } // namespace env
 
 #endif // ENV_ENV_H
