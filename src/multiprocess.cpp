@@ -1,4 +1,4 @@
-#include "singleinstance.h"
+#include "multiprocess.h"
 #include "utility.h"
 #include <report.h>
 #include <log.h>

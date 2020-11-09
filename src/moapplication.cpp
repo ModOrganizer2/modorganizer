@@ -25,7 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "organizercore.h"
 #include "thread_utils.h"
 #include "loglist.h"
-#include "singleinstance.h"
+#include "multiprocess.h"
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
 #include "tutorialmanager.h"

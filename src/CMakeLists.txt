@@ -15,9 +15,9 @@ add_filter(NAME src/application GROUPS
 	main
 	moapplication
 	moshortcut
+	multiprocess
 	sanitychecks
 	selfupdater
-	singleinstance
 )
 
 add_filter(NAME src/browser GROUPS

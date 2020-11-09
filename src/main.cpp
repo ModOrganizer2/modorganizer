@@ -1,4 +1,4 @@
-#include "singleinstance.h"
+#include "multiprocess.h"
 #include "loglist.h"
 #include "moapplication.h"
 #include "organizercore.h"
