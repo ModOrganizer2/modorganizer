@@ -95,34 +95,34 @@ std::optional<int> CommandLine::run(const std::wstring& line)
         if (c->name() == commandName) {
           // this is a command
 
-          // remove the command name itself
-          opts.erase(opts.begin());
+            // remove the command name itself
+            opts.erase(opts.begin());
 
           try
           {
-            // parse the the remainder of the command line according to the
-            // command's options
-            po::wcommand_line_parser parser(opts);
+            // legacy commands handle their own parsing, such as 'launch'; don't
+            // attempt to parse anything here
+            if (!c->legacy()) {
+              // parse the the remainder of the command line according to the
+              // command's options
+              po::wcommand_line_parser parser(opts);
 
-            auto co = c->allOptions();
-            parser.options(co);
+              auto co = c->allOptions();
+              parser.options(co);
 
-            if (c->allow_unregistered()) {
-              parser.allow_unregistered();
-            }
+              auto pos = c->positional();
+              parser.positional(pos);
 
-            auto pos = c->positional();
-            parser.positional(pos);
+              parsed = parser.run();
 
-            parsed = parser.run();
+              po::store(parsed, m_vm);
+              po::notify(m_vm);
 
-            po::store(parsed, m_vm);
-            po::notify(m_vm);
-
-            if (m_vm.count("help")) {
-              env::Console console;
-              std::cout << usage(c.get()) << "\n";
-              return 0;
+              if (m_vm.count("help")) {
+                env::Console console;
+                std::cout << usage(c.get()) << "\n";
+                return 0;
+              }
             }
 
             // run the command
@@ -405,11 +405,6 @@ std::string Command::usageLine() const
   return name() + " " + getUsageLine();
 }
 
-bool Command::allow_unregistered() const
-{
-  return false;
-}
-
 po::options_description Command::allOptions() const
 {
   po::options_description d;
@@ -433,6 +428,11 @@ po::options_description Command::visibleOptions() const
 po::positional_options_description Command::positional() const
 {
   return getPositional();
+}
+
+bool Command::legacy() const
+{
+  return true;
 }
 
 std::string Command::getUsageLine() const
@@ -522,14 +522,14 @@ std::optional<int> CrashDumpCommand::doRun()
 }
 
 
-bool LaunchCommand::allow_unregistered() const
-{
-  return true;
-}
-
 Command::Meta LaunchCommand::meta() const
 {
   return {"launch", "(internal, do not use)"};
+}
+
+bool LaunchCommand::legacy() const
+{
+  return true;
 }
 
 std::optional<int> LaunchCommand::doRun()

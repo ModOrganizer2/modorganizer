@@ -17,8 +17,6 @@ int forwardToPrimary(MOMultiProcess& multiProcess, const cl::CommandLine& cl);
 
 int main(int argc, char *argv[])
 {
-  TimeThis tt("main()");
-
   MOShared::SetThisThreadName("main");
   setExceptionHandlers();
 
@@ -28,6 +26,9 @@ int main(int argc, char *argv[])
   }
 
   initLogging();
+
+  // must be after logging
+  TimeThis tt("main()");
 
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
   MOApplication app(cl, argc, argv);

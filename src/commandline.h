@@ -45,10 +45,10 @@ public:
   //
   po::positional_options_description positional() const;
 
-  // whether the command allows for unregistered options; this is only used for
-  // the old `launch` command and shouldn't be used anywhere else
+  // when this returns true, the command line is not parsed at all and doRun()
+  // is expected to use untouched()
   //
-  virtual bool allow_unregistered() const;
+  virtual bool legacy() const;
 
   // runs this command, eventually calls doRun()
   //
@@ -136,7 +136,7 @@ protected:
 class LaunchCommand : public Command
 {
 public:
-  bool allow_unregistered() const override;
+  bool legacy() const override;
 
 protected:
   Meta meta() const override;
