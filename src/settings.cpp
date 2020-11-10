@@ -1296,6 +1296,11 @@ void PluginSettings::registerPlugin(IPlugin *plugin)
       .arg(setting.description)
       .arg(setting.defaultValue.toString());
   }
+
+  if (!m_PluginSettings.contains("enabled")) {
+    m_PluginSettings[plugin->name()]["enabled"] = true;
+    m_PluginDescriptions[plugin->name()]["enabled"] = QString();
+  }
 }
 
 std::vector<MOBase::IPlugin*> PluginSettings::plugins() const
