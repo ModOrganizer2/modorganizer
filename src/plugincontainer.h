@@ -22,6 +22,30 @@ class IUserInterface;
 #include <boost/mp11.hpp>
 #endif // Q_MOC_RUN
 #include <vector>
+#include <memory>
+
+
+class OrganizerProxy;
+
+
+// Small class that allows calling check() for plugin requirements
+// without passing the IOrganizer.
+class PluginRequirementProxy {
+public:
+
+  std::vector<unsigned int> problems() const;
+  QString description(unsigned int id) const;
+
+private:
+
+  const MOBase::PluginRequirement* m_Requirement;
+  OrganizerProxy* m_Proxy;
+
+  PluginRequirementProxy(const MOBase::PluginRequirement* requirement, OrganizerProxy* proxy);
+
+  friend class PluginContainer;
+
+};
 
 
 class PluginContainer : public QObject, public MOBase::IPluginDiagnose
@@ -32,18 +56,24 @@ class PluginContainer : public QObject, public MOBase::IPluginDiagnose
 
 private:
 
-  typedef boost::fusion::map<
-  boost::fusion::pair<QObject, std::vector<QObject*>>,
-  boost::fusion::pair<MOBase::IPlugin, std::vector<MOBase::IPlugin*>>,
-  boost::fusion::pair<MOBase::IPluginDiagnose, std::vector<MOBase::IPluginDiagnose*>>,
-  boost::fusion::pair<MOBase::IPluginGame, std::vector<MOBase::IPluginGame*>>,
-  boost::fusion::pair<MOBase::IPluginInstaller, std::vector<MOBase::IPluginInstaller*>>,
-  boost::fusion::pair<MOBase::IPluginModPage, std::vector<MOBase::IPluginModPage*>>,
-  boost::fusion::pair<MOBase::IPluginPreview, std::vector<MOBase::IPluginPreview*>>,
-  boost::fusion::pair<MOBase::IPluginTool, std::vector<MOBase::IPluginTool*>>,
-  boost::fusion::pair<MOBase::IPluginProxy, std::vector<MOBase::IPluginProxy*>>,
-  boost::fusion::pair<MOBase::IPluginFileMapper, std::vector<MOBase::IPluginFileMapper*>>
-  > PluginMap;
+  using PluginMap = boost::fusion::map<
+    boost::fusion::pair<QObject, std::vector<QObject*>>,
+    boost::fusion::pair<MOBase::IPlugin, std::vector<MOBase::IPlugin*>>,
+    boost::fusion::pair<MOBase::IPluginDiagnose, std::vector<MOBase::IPluginDiagnose*>>,
+    boost::fusion::pair<MOBase::IPluginGame, std::vector<MOBase::IPluginGame*>>,
+    boost::fusion::pair<MOBase::IPluginInstaller, std::vector<MOBase::IPluginInstaller*>>,
+    boost::fusion::pair<MOBase::IPluginModPage, std::vector<MOBase::IPluginModPage*>>,
+    boost::fusion::pair<MOBase::IPluginPreview, std::vector<MOBase::IPluginPreview*>>,
+    boost::fusion::pair<MOBase::IPluginTool, std::vector<MOBase::IPluginTool*>>,
+    boost::fusion::pair<MOBase::IPluginProxy, std::vector<MOBase::IPluginProxy*>>,
+    boost::fusion::pair<MOBase::IPluginFileMapper, std::vector<MOBase::IPluginFileMapper*>>
+  >;
+
+  using AccessPluginMap = boost::fusion::map<
+    boost::fusion::pair<MOBase::IPluginDiagnose, std::map<MOBase::IPluginDiagnose*, MOBase::IPlugin*>>,
+    boost::fusion::pair<MOBase::IPluginFileMapper, std::map<MOBase::IPluginFileMapper*, MOBase::IPlugin*>>,
+    boost::fusion::pair<QString, std::map<QString, MOBase::IPlugin*>>
+  >;
 
   static const unsigned int PROBLEM_PLUGINSNOTLOADED = 1;
 
@@ -113,6 +143,71 @@ public:
   }
 
   /**
+   * @brief Check if a plugin implement a given interface.
+   *
+   * @param plugin The plugin to check.
+   *
+   * @return true if the plugin implements the interface, false otherwise.
+   *
+   * @tparam The interface type.
+   */
+  template <typename T>
+  bool implementInterface(MOBase::IPlugin* plugin) const {
+    // We need a QObject to be able to qobject_cast<> to the plugin types:
+    QObject* oPlugin = as_qobject(plugin);
+
+    if (!oPlugin) {
+      return false;
+    }
+
+    // Find all the names:
+    bool implement = false;
+    boost::mp11::mp_for_each<PluginTypeOrder>([oPlugin, &implement](const auto* p) {
+      using plugin_type = std::decay_t<decltype(*p)>;
+      if (qobject_cast<plugin_type*>(oPlugin)) {
+        implement = true;
+      }
+    });
+
+    return implement;
+  }
+
+  /**
+   * @brief Retrieve a plugin from its name or a corresponding non-IPlugin
+   *     interface.
+   *
+   * @param t Name of the plugin to retrieve, or non-IPlugin interface.
+   *
+   * @return the corresponding plugin, or a null pointer.
+   */
+  MOBase::IPlugin* plugin(QString const& pluginName) const;
+  MOBase::IPlugin* plugin(MOBase::IPluginDiagnose* diagnose) const;
+  MOBase::IPlugin* plugin(MOBase::IPluginFileMapper* mapper) const;
+
+  /**
+   * @brief Check if the given plugin is enabled.
+   *
+   * @param plugin The plugin to check.
+   *
+   * @return true if the plugin is enabled, false otherwise.
+   */
+  bool isEnabled(MOBase::IPlugin *plugin) const;
+
+  // These are friendly methods that called isEnabled(plugin(arg)).
+  bool isEnabled(QString const& pluginName) const;
+  bool isEnabled(MOBase::IPluginDiagnose* diagnose) const;
+  bool isEnabled(MOBase::IPluginFileMapper* mapper) const;
+
+  /**
+   * @brief Retrieve the requirements for the given plugin.
+   *
+   * @param plugin The plugin to retrieve the requirements for.
+   *
+   * @return the requirements (as proxy) for the given plugin.
+   */
+  std::vector<PluginRequirementProxy> requirements(MOBase::IPlugin* plugin) const;
+
+  /**
    * @brief Retrieved the (localized) names of interfaces implemented by the given
    *     plugin.
    *
@@ -178,6 +273,12 @@ private:
   IUserInterface *m_UserInterface;
 
   PluginMap m_Plugins;
+
+  // This maps allow access to IPlugin* from name or diagnose/mapper object.
+  AccessPluginMap m_AccessPlugins;
+
+  std::map<MOBase::IPlugin*, OrganizerProxy*> m_Proxies;
+  std::map<MOBase::IPlugin*, std::vector<std::unique_ptr<const MOBase::PluginRequirement>>> m_Requirements;
 
   std::map<QString, MOBase::IPluginGame*> m_SupportedGames;
   std::vector<boost::signals2::connection> m_DiagnosisConnections;

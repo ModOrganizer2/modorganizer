@@ -35,6 +35,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <errorcodes.h>
 
 #include "modinfo.h"
+#include "plugincontainer.h"
 
 
 /**
@@ -88,6 +89,11 @@ public:
   void setModsDirectory(const QString &modsDirectory) { m_ModsDirectory = modsDirectory; }
 
   /**
+   *
+   */
+  void setPluginContainer(const PluginContainer* pluginContainer);
+
+  /**
    * @brief update the directory where downloads are stored
    * @param downloadDirectory the download directory
    */
@@ -126,8 +132,8 @@ public:
    * @brief register an installer-plugin
    * @param the installer to register
    */
-  void registerInstaller(MOBase::IPluginInstaller *installer); 
-  
+  void registerInstaller(MOBase::IPluginInstaller *installer);
+
   /**
    * @return the extensions of archives supported by this installation manager.
    */
@@ -167,7 +173,7 @@ public:
    *
    * The flatten argument is not present here while it is present in the deprecated QStringList
    * version for multiple reasons: 1) it was never used, 2) it is kind of fishy because there
-   * is no way to know if a file is going to be overriden, 3) it is quite easy to flatten a 
+   * is no way to know if a file is going to be overriden, 3) it is quite easy to flatten a
    * IFileTree and thus to given a list of entries flattened (this was not possible with the
    * QStringList version since these were based on the name of the file inside the archive).
    */
@@ -185,7 +191,7 @@ public:
    * @return the path to the created file.
    */
   virtual QString createFile(std::shared_ptr<const MOBase::FileTreeEntry> entry) override;
-  
+
   /**
    * @brief Installs the given archive.
    *
@@ -278,6 +284,9 @@ private:
   bool extractFiles(QString extractPath, QString title, bool showFilenames, bool silent);
 
 private:
+
+  // The plugin container, mostly to check if installer are enabled or not:
+  const PluginContainer *m_PluginContainer;
 
   bool m_IsRunning;
 

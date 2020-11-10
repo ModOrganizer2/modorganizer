@@ -287,6 +287,7 @@ void OrganizerCore::connectPlugins(PluginContainer *container)
       m_InstallationManager.getSupportedExtensions());
   m_PluginContainer = container;
   m_Updater.setPluginContainer(m_PluginContainer);
+  m_InstallationManager.setPluginContainer(m_PluginContainer);
   m_DownloadManager.setPluginContainer(m_PluginContainer);
   m_ModList.setPluginContainer(m_PluginContainer);
 
@@ -2040,7 +2041,7 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString &profileName,
   for (MOBase::IPluginFileMapper *mapper :
        m_PluginContainer->plugins<MOBase::IPluginFileMapper>()) {
     IPlugin *plugin = dynamic_cast<IPlugin *>(mapper);
-    if (plugin->isActive()) {
+    if (m_PluginContainer->isEnabled(plugin)) {
       MappingType pluginMap = mapper->mappings();
       result.reserve(result.size() + pluginMap.size());
       result.insert(result.end(), pluginMap.begin(), pluginMap.end());

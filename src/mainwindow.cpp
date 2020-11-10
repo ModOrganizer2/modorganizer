@@ -1132,7 +1132,7 @@ void MainWindow::checkForProblemsImpl()
     size_t numProblems = 0;
     for (QObject *pluginObj : m_PluginContainer.plugins<QObject>()) {
       IPlugin *plugin = qobject_cast<IPlugin*>(pluginObj);
-      if (plugin == nullptr || plugin->isActive()) {
+      if (plugin == nullptr || m_PluginContainer.isEnabled(plugin)) {
         IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(pluginObj);
         if (diagnose != nullptr)
           numProblems += diagnose->activeProblems().size();
@@ -1663,9 +1663,11 @@ void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
     }
   );
 
+  // TODO: I don't know when this method is called? Maybe the check should be perform when
+  // the context menu is opened?
   // Remove inactive plugins
   toolPlugins.erase(
-    std::remove_if(toolPlugins.begin(), toolPlugins.end(), [](IPluginTool *plugin) -> bool { return !plugin->isActive(); }),
+    std::remove_if(toolPlugins.begin(), toolPlugins.end(), [this](IPluginTool *plugin) { return !m_PluginContainer.isEnabled(plugin); }),
     toolPlugins.end()
     );
 
@@ -5972,7 +5974,7 @@ void MainWindow::on_actionNotifications_triggered()
 
   future.waitForFinished();
 
-  ProblemsDialog problems(m_PluginContainer.plugins<QObject>(), this);
+  ProblemsDialog problems(m_PluginContainer, this);
   problems.exec();
 
   scheduleCheckForProblems();

@@ -83,6 +83,16 @@ void OrganizerProxy::modDataChanged(IModInterface *mod)
   m_Proxied->modDataChanged(mod);
 }
 
+bool OrganizerProxy::isPluginEnabled(QString const& pluginName) const
+{
+  return m_PluginContainer->isEnabled(pluginName);
+}
+
+bool OrganizerProxy::isPluginEnabled(IPlugin* plugin) const
+{
+  return m_PluginContainer->isEnabled(plugin);
+}
+
 QVariant OrganizerProxy::pluginSetting(const QString &pluginName, const QString &key) const
 {
   return m_Proxied->pluginSetting(pluginName, key);

@@ -18,14 +18,17 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "previewgenerator.h"
+
 #include <QFileInfo>
 #include <QLabel>
 #include <QImageReader>
 #include <QTextEdit>
 #include <utility.h>
 
-PreviewGenerator::PreviewGenerator()
-{
+#include "plugincontainer.h"
+
+PreviewGenerator::PreviewGenerator(const PluginContainer* pluginContainer) :
+  m_PluginContainer(pluginContainer) {
   m_MaxSize = QGuiApplication::primaryScreen()->size() * 0.8;
 }
 
@@ -42,13 +45,13 @@ bool PreviewGenerator::previewSupported(const QString &fileExtension) const
   if (it == m_PreviewPlugins.end()) {
     return false;
   }
-  return it->second->isActive();
+  return m_PluginContainer->isEnabled(it->second);
 }
 
 QWidget *PreviewGenerator::genPreview(const QString &fileName) const
 {
   auto iter = m_PreviewPlugins.find(QFileInfo(fileName).suffix().toLower());
-  if (iter != m_PreviewPlugins.end() && iter->second->isActive()) {
+  if (iter != m_PreviewPlugins.end() && m_PluginContainer->isEnabled(iter->second)) {
     return iter->second->genFilePreview(fileName, m_MaxSize);
   } else {
     return nullptr;

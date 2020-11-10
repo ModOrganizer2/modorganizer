@@ -51,9 +51,26 @@ QStringList PluginContainer::pluginInterfaces()
 }
 
 
+// PluginRequirementProxy
+
+std::vector<unsigned int> PluginRequirementProxy::problems() const
+{
+  return m_Requirement->problems(m_Proxy);
+}
+QString PluginRequirementProxy::description(unsigned int id) const
+{
+  return m_Requirement->description(id);
+}
+PluginRequirementProxy::PluginRequirementProxy(const MOBase::PluginRequirement* requirement, OrganizerProxy* proxy) :
+  m_Requirement(requirement), m_Proxy(proxy) { }
+
+
+// PluginContainer
+
 PluginContainer::PluginContainer(OrganizerCore *organizer)
   : m_Organizer(organizer)
   , m_UserInterface(nullptr)
+  , m_PreviewGenerator(this)
 {
 }
 
@@ -184,11 +201,16 @@ bool PluginContainer::initPlugin(IPlugin *plugin)
 
   if (m_Organizer) {
     auto* proxy = new OrganizerProxy(m_Organizer, this, plugin);
+    m_Proxies[plugin] = proxy;
 
     if (!plugin->init(proxy)) {
       log::warn("plugin failed to initialize");
       return false;
     }
+  }
+
+  for (auto* requirement : plugin->requirements()) {
+    m_Requirements[plugin].emplace_back(requirement);
   }
 
   return true;
@@ -202,14 +224,19 @@ bool PluginContainer::initProxyPlugin(IPlugin *plugin)
     return false;
   }
 
-  IOrganizer* proxy = nullptr;
+  OrganizerProxy* proxy = nullptr;
   if (m_Organizer) {
     proxy = new OrganizerProxy(m_Organizer, this, plugin);
+    m_Proxies[plugin] = proxy;
   }
 
   if (!plugin->init(proxy)) {
     log::warn("proxy plugin failed to initialize");
     return false;
+  }
+
+  for (auto* requirement : plugin->requirements()) {
+    m_Requirements[plugin].emplace_back(requirement);
   }
 
   return true;
@@ -227,24 +254,25 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
   // way to cast directly between IPlugin* and IPluginDiagnose*
   bf::at_key<QObject>(m_Plugins).push_back(plugin);
 
-  { // generic treatment for all plugins
-    IPlugin *pluginObj = qobject_cast<IPlugin*>(plugin);
-    if (pluginObj == nullptr) {
-      log::debug("not an IPlugin");
-      return false;
-    }
+  // generic treatment for all plugins
+  IPlugin *pluginObj = qobject_cast<IPlugin*>(plugin);
+  if (pluginObj == nullptr) {
+    log::debug("not an IPlugin");
+    return false;
+  }
+  bf::at_key<QString>(m_AccessPlugins)[pluginObj->name()] = pluginObj;
 
-    plugin->setProperty("filename", fileName);
+  plugin->setProperty("filename", fileName);
 
-    if (m_Organizer) {
-      m_Organizer->settings().plugins().registerPlugin(pluginObj);
-    }
+  if (m_Organizer) {
+    m_Organizer->settings().plugins().registerPlugin(pluginObj);
   }
 
   { // diagnosis plugin
     IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(plugin);
     if (diagnose != nullptr) {
       bf::at_key<IPluginDiagnose>(m_Plugins).push_back(diagnose);
+      bf::at_key<IPluginDiagnose>(m_AccessPlugins)[diagnose] = pluginObj;
       m_DiagnosisConnections.push_back(
             diagnose->onInvalidated([&] () { emit diagnosisUpdate(); })
             );
@@ -254,6 +282,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
     IPluginFileMapper *mapper = qobject_cast<IPluginFileMapper*>(plugin);
     if (mapper != nullptr) {
       bf::at_key<IPluginFileMapper>(m_Plugins).push_back(mapper);
+      bf::at_key<IPluginFileMapper>(m_AccessPlugins)[mapper] = pluginObj;
     }
   }
   { // mod page plugin
@@ -381,6 +410,73 @@ void PluginContainer::unloadPlugins()
     }
     delete loader;
   }
+}
+
+bool PluginContainer::isEnabled(IPlugin* plugin) const
+{
+  // Check if it's a game plugin:
+  if (implementInterface<IPluginGame>(plugin)) {
+    return plugin == m_Organizer->managedGame();
+  }
+
+  // Check if the plugin is enabled:
+  if (!m_Organizer->pluginSetting(plugin->name(), "enabled").toBool()) {
+    return false;
+  }
+
+  // Check the requirements:
+  auto* proxy = m_Proxies.at(plugin);
+  for (auto& requirement : m_Requirements.at(plugin)) {
+    if (!requirement->problems(proxy).empty()) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+MOBase::IPlugin* PluginContainer::plugin(QString const& pluginName) const
+{
+  auto& map = bf::at_key<QString>(m_AccessPlugins);
+  auto it = map.find(pluginName);
+  if (it == std::end(map)) {
+    return nullptr;
+  }
+  return it->second;
+}
+
+MOBase::IPlugin* PluginContainer::plugin(MOBase::IPluginDiagnose* diagnose) const
+{
+  auto& map = bf::at_key<IPluginDiagnose>(m_AccessPlugins);
+  auto it = map.find(diagnose);
+  if (it == std::end(map)) {
+    return nullptr;
+  }
+  return it->second;
+}
+
+MOBase::IPlugin* PluginContainer::plugin(MOBase::IPluginFileMapper* mapper) const
+{
+  auto& map = bf::at_key<IPluginFileMapper>(m_AccessPlugins);
+  auto it = map.find(mapper);
+  if (it == std::end(map)) {
+    return nullptr;
+  }
+  return it->second;
+}
+
+bool PluginContainer::isEnabled(QString const& pluginName) const { return isEnabled(plugin(pluginName)); }
+bool PluginContainer::isEnabled(MOBase::IPluginDiagnose* diagnose) const { return isEnabled(plugin(diagnose)); }
+bool PluginContainer::isEnabled(MOBase::IPluginFileMapper* mapper) const { return isEnabled(plugin(mapper)); }
+
+std::vector<PluginRequirementProxy> PluginContainer::requirements(IPlugin* plugin) const
+{
+  auto* proxy = m_Proxies.at(plugin);
+  std::vector<PluginRequirementProxy> proxies;
+  for (auto& requirement : m_Requirements.at(plugin)) {
+    proxies.push_back(PluginRequirementProxy(requirement.get(), proxy));
+  }
+  return proxies;
 }
 
 IPluginGame *PluginContainer::managedGame(const QString &name) const
