@@ -473,12 +473,18 @@ void InstanceManagerDialog::deleteInstance()
     auto* item = new QListWidgetItem(f.path);
 
     if (f.mandatoryDelete) {
+      // disable, cannot uncheck mandatory items
       item->setFlags(item->flags() & (~Qt::ItemIsEnabled));
+
+      // checked by default
+      item->setCheckState(Qt::Checked);
     } else {
       item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+
+      // unchecked by default
+      item->setCheckState(Qt::Unchecked);
     }
 
-    item->setCheckState(Qt::Checked);
     list->addItem(item);
   }
 
