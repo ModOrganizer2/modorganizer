@@ -95,8 +95,8 @@ std::optional<int> CommandLine::run(const std::wstring& line)
         if (c->name() == commandName) {
           // this is a command
 
-            // remove the command name itself
-            opts.erase(opts.begin());
+          // remove the command name itself
+          opts.erase(opts.begin());
 
           try
           {
