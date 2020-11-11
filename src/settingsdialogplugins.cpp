@@ -225,6 +225,8 @@ void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
   else {
     // Custom check for proxy + current game:
     if (m_pluginContainer->implementInterface<IPluginProxy>(plugin)) {
+
+      // Current game:
       auto* game = m_pluginContainer->managedGame();
       if (m_pluginContainer->requirements(game).proxy() == plugin) {
         QMessageBox::warning(
@@ -233,6 +235,25 @@ void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
           ui->enabledCheckbox->setChecked(true);
           return;
       }
+
+      // Check the proxied plugins:
+      auto proxied = requirements.proxied();
+      QStringList pluginNames;
+      for (auto& p : proxied) {
+        pluginNames.append(p->localizedName());
+      }
+      pluginNames.sort();
+      QString message = QObject::tr(
+        "<p>Disabling this plugin will prevent the following plugins from working correctly:</p><ul>%1</ul>"
+        "<p>Do you want to continue? You will need to restart ModOrganizer2 for the change to take effect.</p>")
+        .arg("<li>" + pluginNames.join("</li><li>") + "</li>");
+      if (QMessageBox::warning(
+        parentWidget(), QObject::tr("Really disable plugin?"), message,
+        QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
+        ui->enabledCheckbox->setChecked(true);
+        return;
+      }
+
     }
 
     // Check if the plugins is required for other plugins:
@@ -254,6 +275,11 @@ void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
       }
     }
     m_pluginContainer->setEnabled(plugin, false, true);
+  }
+
+  // Proxy was disabled / enabled, need restart:
+  if (m_pluginContainer->implementInterface<IPluginProxy>(plugin)) {
+    dialog().setExitNeeded(Exit::Restart);
   }
 
   updateListItems();

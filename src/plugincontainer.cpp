@@ -58,20 +58,31 @@ PluginRequirements::PluginRequirements(PluginContainer* pluginContainer, MOBase:
   , m_Plugin(plugin)
   , m_PluginProxy(pluginProxy)
   , m_Organizer(proxy)
-{
-  for (auto* requirement : plugin->requirements()) {
-    m_Requirements.emplace_back(requirement);
-  }
+{ }
 
-  // TODO:
-  if (pluginProxy) {
-    m_Requirements.emplace_back(PluginRequirementFactory::pluginDependency(pluginProxy->name()));
+void PluginRequirements::fetchRequirements() {
+  for (auto* requirement : m_Plugin->requirements()) {
+    m_Requirements.emplace_back(requirement);
   }
 }
 
 IPluginProxy* PluginRequirements::proxy() const
 {
   return m_PluginProxy;
+}
+
+std::vector<IPlugin*> PluginRequirements::proxied() const
+{
+  std::vector<IPlugin*> children;
+  if (dynamic_cast<IPluginProxy*>(m_Plugin)) {
+    for (auto* obj : m_PluginContainer->plugins<QObject>()) {
+      auto* plugin = qobject_cast<IPlugin*>(obj);
+      if (plugin && m_PluginContainer->requirements(plugin).proxy() == m_Plugin) {
+        children.push_back(plugin);
+      }
+    }
+  }
+  return children;
 }
 
 IPlugin* PluginRequirements::master() const
@@ -322,12 +333,15 @@ bool PluginContainer::initPlugin(IPlugin *plugin, IPluginProxy *pluginProxy)
     return true;
   }
 
+  auto [it, bl] = m_Requirements.emplace(plugin, PluginRequirements(this, plugin, proxy, pluginProxy));
+
   if (!plugin->init(proxy)) {
     log::warn("plugin failed to initialize");
     return false;
   }
 
-  m_Requirements.emplace(plugin, PluginRequirements(this, plugin, proxy, pluginProxy));
+  // Update requirements:
+  it->second.fetchRequirements();
 
   return true;
 }
@@ -519,11 +533,8 @@ bool PluginContainer::isEnabled(IPlugin* plugin) const
     return false;
   }
 
-  // Check the requirements (if a plugin checks in init(), the requirements have
-  // not been computed yet):
-  auto it = m_Requirements.find(plugin);
-
-  return it == std::end(m_Requirements) ? true : it->second.canEnable();
+  // Check the requirements:
+  return m_Requirements.at(plugin).canEnable();
 }
 
 void PluginContainer::setEnabled(MOBase::IPlugin* plugin, bool enable, bool dependencies)

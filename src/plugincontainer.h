@@ -50,6 +50,11 @@ public:
   MOBase::IPluginProxy* proxy() const;
 
   /**
+   * @return the list of plugins this plugin proxies (if it's a proxy plugin).
+   */
+  std::vector<MOBase::IPlugin*> proxied() const;
+
+  /**
    * @return the master of this plugin, if any.
    */
   MOBase::IPlugin* master() const;
@@ -80,6 +85,11 @@ private:
 
   // Accumulator version for requiredFor() to avoid infinite recursion.
   void requiredFor(std::vector<MOBase::IPlugin*>& required, std::set<MOBase::IPlugin*>& visited) const;
+
+  // Retrieve the requirements from the underlying plugin, take ownership on them
+  // and store them. We cannot do this in the constructor because we want to have a
+  // constructed object before calling init().
+  void fetchRequirements();
 
   friend class PluginContainer;
 
