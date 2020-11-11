@@ -78,8 +78,7 @@ std::vector<IPluginRequirement::Problem> PluginRequirements::problems() const
 {
   std::vector<IPluginRequirement::Problem> result;
   for (auto& requirement : m_Requirements) {
-    auto p = requirement->check(m_Organizer);
-    if (p) {
+    if (auto p = requirement->check(m_Organizer)) {
       result.push_back(*p);
     }
   }
