@@ -40,9 +40,24 @@ public:
   bool canEnable() const;
 
   /**
+   * @return true if this plugin has requirements (satisfied or not).
+   */
+  bool hasRequirements() const;
+
+  /**
    * @return the proxy that created this plugin, if any.
    */
   MOBase::IPluginProxy* proxy() const;
+
+  /**
+   * @return the master of this plugin, if any.
+   */
+  MOBase::IPlugin* master() const;
+
+  /**
+   * @return the plugins this plugin is master of.
+   */
+  std::vector<MOBase::IPlugin*> children() const;
 
   /**
    * @return the list of problems to be resolved before enabling the plugin.

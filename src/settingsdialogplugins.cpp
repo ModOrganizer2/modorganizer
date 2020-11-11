@@ -31,20 +31,28 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginConta
   // display plugin settings
   QSet<QString> handledNames;
   for (IPlugin* plugin : settings().plugins().plugins()) {
-    if (handledNames.contains(plugin->name())) {
+    if (handledNames.contains(plugin->name()) || !plugin->master().isEmpty()) {
       continue;
     }
-    if (!m_filter.matches([plugin](const QRegularExpression& regex) {
-      return regex.match(plugin->localizedName()).hasMatch();
-      })) {
-      continue;
-    }
+
     QTreeWidgetItem* listItem = new QTreeWidgetItem(
       topItems.at(m_pluginContainer->topImplementedInterface(plugin)));
     listItem->setData(0, Qt::DisplayRole, plugin->localizedName());
     listItem->setData(0, ROLE_PLUGIN, QVariant::fromValue((void*)plugin));
     listItem->setData(0, ROLE_SETTINGS, settings().plugins().settings(plugin->name()));
     listItem->setData(0, ROLE_DESCRIPTIONS, settings().plugins().descriptions(plugin->name()));
+
+    // Handle child item:
+    auto children = m_pluginContainer->requirements(plugin).children();
+    for (auto* child : children) {
+      QTreeWidgetItem* childItem = new QTreeWidgetItem(listItem);
+      childItem->setData(0, Qt::DisplayRole, child->localizedName());
+      childItem->setData(0, ROLE_PLUGIN, QVariant::fromValue((void*)child));
+      childItem->setData(0, ROLE_SETTINGS, settings().plugins().settings(child->name()));
+      childItem->setData(0, ROLE_DESCRIPTIONS, settings().plugins().descriptions(child->name()));
+
+      handledNames.insert(child->name());
+    }
 
     handledNames.insert(plugin->name());
   }
@@ -90,7 +98,13 @@ void PluginsSettingsTab::updateListItems()
 
       bool inactive = !m_pluginContainer->implementInterface<IPluginGame>(plugin)
         && !m_pluginContainer->isEnabled(plugin);
-      // TODO: Better display.
+
+      auto font = item->font(0);
+      font.setItalic(inactive);
+      item->setFont(0, font);
+      for (auto k = 0; k < item->childCount(); ++k) {
+        item->child(k)->setFont(0, font);
+      }
     }
   }
 
@@ -108,9 +122,18 @@ void PluginsSettingsTab::filterPluginList()
       auto* item = topLevelItem->child(j);
       auto* plugin = this->plugin(item);
 
-      if (m_filter.matches([plugin](const QRegularExpression& regex) {
+      // Check the item or the child - If any match (item or child), the whole
+      // group is displayed.
+      bool match = m_filter.matches([plugin](const QRegularExpression& regex) {
         return regex.match(plugin->localizedName()).hasMatch();
-        })) {
+      });
+      for (auto* child : m_pluginContainer->requirements(plugin).children()) {
+        m_filter.matches([child](const QRegularExpression& regex) {
+          return regex.match(child->localizedName()).hasMatch();
+        });
+      }
+
+      if (match) {
         found = true;
         item->setHidden(false);
 
@@ -251,7 +274,8 @@ void PluginsSettingsTab::on_pluginsList_currentItemChanged(QTreeWidgetItem *curr
   ui->descriptionLabel->setText(plugin->description());
 
   ui->enabledCheckbox->setVisible(
-    !m_pluginContainer->implementInterface<MOBase::IPluginGame>(plugin));
+    !m_pluginContainer->implementInterface<MOBase::IPluginGame>(plugin)
+    && plugin->master().isEmpty());
   ui->enabledCheckbox->setChecked(m_pluginContainer->isEnabled(plugin));
 
   QVariantMap settings = current->data(0, ROLE_SETTINGS).toMap();

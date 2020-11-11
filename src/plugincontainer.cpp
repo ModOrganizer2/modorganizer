@@ -69,9 +69,29 @@ PluginRequirements::PluginRequirements(PluginContainer* pluginContainer, MOBase:
   }
 }
 
-MOBase::IPluginProxy* PluginRequirements::proxy() const
+IPluginProxy* PluginRequirements::proxy() const
 {
   return m_PluginProxy;
+}
+
+IPlugin* PluginRequirements::master() const
+{
+  if (m_Plugin->master().isEmpty()) {
+    return nullptr;
+  }
+  return m_PluginContainer->plugin(m_Plugin->master());
+}
+
+std::vector<IPlugin*> PluginRequirements::children() const
+{
+  std::vector<IPlugin*> children;
+  for (auto* obj : m_PluginContainer->plugins<QObject>()) {
+    auto* plugin = qobject_cast<IPlugin*>(obj);
+    if (plugin && plugin->master().compare(m_Plugin->name(), Qt::CaseInsensitive) == 0) {
+      children.push_back(plugin);
+    }
+  }
+  return children;
 }
 
 std::vector<IPluginRequirement::Problem> PluginRequirements::problems() const
@@ -88,6 +108,11 @@ std::vector<IPluginRequirement::Problem> PluginRequirements::problems() const
 bool PluginRequirements::canEnable() const
 {
   return problems().empty();
+}
+
+bool PluginRequirements::hasRequirements() const
+{
+  return !m_Requirements.empty();
 }
 
 QStringList PluginRequirements::requiredGames() const
@@ -304,6 +329,11 @@ bool PluginContainer::initPlugin(IPlugin *plugin, IPluginProxy *pluginProxy)
 
   m_Requirements.emplace(plugin, PluginRequirements(this, plugin, proxy, pluginProxy));
 
+  if (!plugin->master().isEmpty() && m_Requirements.at(plugin).hasRequirements()) {
+    log::warn("a plugin cannot have requirements if it has a master");
+    return false;
+  }
+
   return true;
 }
 
@@ -503,11 +533,19 @@ bool PluginContainer::isEnabled(IPlugin* plugin) const
 
 void PluginContainer::setEnabled(MOBase::IPlugin* plugin, bool enable, bool dependencies)
 {
+  // If required, disable dependencies:
   if (!enable && dependencies) {
     for (auto* p : requirements(plugin).requiredFor()) {
       setEnabled(p, false, false);  // No need to "recurse" here since requiredFor already does it.
     }
   }
+
+  // Always disable/enable child plugins:
+  for (auto* p : requirements(plugin).children()) {
+    // "Child" plugin should have no dependencies.
+    setEnabled(p, enable, false);
+  }
+
   m_Organizer->setPersistent(plugin->name(), "enabled", enable, true);
 }
 
