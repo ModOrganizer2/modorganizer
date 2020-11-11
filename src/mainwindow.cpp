@@ -4872,7 +4872,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           }
         }
 
-        if (info->nexusId() > 0) {
+        if (info->nexusId() > 0 && Settings::instance().nexus().trackedIntegration()) {
           switch (info->trackedState()) {
             case TrackedState::TRACKED_FALSE: {
               menu.addAction(tr("Start tracking"), this, SLOT(track_clicked()));

@@ -513,6 +513,11 @@ public:
   EndorsementState endorsementState() const;
   void setEndorsementState(EndorsementState s);
 
+  // returns whether tracked integration is enabled
+  //
+  bool trackedIntegration() const;
+  void setTrackedIntegration(bool b) const;
+
   // registers MO as the handler for nxm links
   //
   // if 'force' is true, the registration dialog will be shown even if the user
