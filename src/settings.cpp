@@ -1280,19 +1280,22 @@ void PluginSettings::registerPlugin(IPlugin *plugin)
     const QString settingName = plugin->name() + "/" + setting.key;
 
     QVariant temp = get<QVariant>(
-      m_Settings, "Plugins", settingName, setting.defaultValue);
+      m_Settings, "Plugins", settingName, QVariant());
 
-    if (!temp.convert(setting.defaultValue.type())) {
+    // No previous enabled? Skip.
+    if (setting.key == "enabled" && (!temp.isValid() || !temp.canConvert<bool>())) {
+      continue;
+    }
+
+    if (!temp.isValid()) {
+      temp = setting.defaultValue;
+    }
+    else if (!temp.convert(setting.defaultValue.type())) {
       log::warn(
         "failed to interpret \"{}\" as correct type for \"{}\" in plugin \"{}\", using default",
         temp.toString(), setting.key, plugin->name());
 
       temp = setting.defaultValue;
-
-      // If there was no previous "enabled" value, skip it:
-      if (setting.key == "enabled") {
-        continue;
-      }
     }
 
     m_PluginSettings[plugin->name()][setting.key] = temp;
