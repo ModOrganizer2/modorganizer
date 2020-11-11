@@ -329,11 +329,6 @@ bool PluginContainer::initPlugin(IPlugin *plugin, IPluginProxy *pluginProxy)
 
   m_Requirements.emplace(plugin, PluginRequirements(this, plugin, proxy, pluginProxy));
 
-  if (!plugin->master().isEmpty() && m_Requirements.at(plugin).hasRequirements()) {
-    log::warn("a plugin cannot have requirements if it has a master");
-    return false;
-  }
-
   return true;
 }
 
