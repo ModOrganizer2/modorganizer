@@ -38,10 +38,10 @@ public:
 
 private:
 
-  const MOBase::PluginRequirement* m_Requirement;
+  const MOBase::IPluginRequirement* m_Requirement;
   OrganizerProxy* m_Proxy;
 
-  PluginRequirementProxy(const MOBase::PluginRequirement* requirement, OrganizerProxy* proxy);
+  PluginRequirementProxy(const MOBase::IPluginRequirement* requirement, OrganizerProxy* proxy);
 
   friend class PluginContainer;
 
@@ -160,16 +160,7 @@ public:
       return false;
     }
 
-    // Find all the names:
-    bool implement = false;
-    boost::mp11::mp_for_each<PluginTypeOrder>([oPlugin, &implement](const auto* p) {
-      using plugin_type = std::decay_t<decltype(*p)>;
-      if (qobject_cast<plugin_type*>(oPlugin)) {
-        implement = true;
-      }
-    });
-
-    return implement;
+    return qobject_cast<T*>(oPlugin);
   }
 
   /**
@@ -278,7 +269,7 @@ private:
   AccessPluginMap m_AccessPlugins;
 
   std::map<MOBase::IPlugin*, OrganizerProxy*> m_Proxies;
-  std::map<MOBase::IPlugin*, std::vector<std::unique_ptr<const MOBase::PluginRequirement>>> m_Requirements;
+  std::map<MOBase::IPlugin*, std::vector<std::unique_ptr<const MOBase::IPluginRequirement>>> m_Requirements;
 
   std::map<QString, MOBase::IPluginGame*> m_SupportedGames;
   std::vector<boost::signals2::connection> m_DiagnosisConnections;

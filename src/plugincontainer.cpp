@@ -61,7 +61,7 @@ QString PluginRequirementProxy::description(unsigned int id) const
 {
   return m_Requirement->description(id);
 }
-PluginRequirementProxy::PluginRequirementProxy(const MOBase::PluginRequirement* requirement, OrganizerProxy* proxy) :
+PluginRequirementProxy::PluginRequirementProxy(const MOBase::IPluginRequirement* requirement, OrganizerProxy* proxy) :
   m_Requirement(requirement), m_Proxy(proxy) { }
 
 
@@ -203,14 +203,18 @@ bool PluginContainer::initPlugin(IPlugin *plugin)
     auto* proxy = new OrganizerProxy(m_Organizer, this, plugin);
     m_Proxies[plugin] = proxy;
 
+    // Create requirements before init() in case a plugin use
+    // IOrganizer::isPluginEnabled on himself during init().
+    m_Requirements.emplace(plugin, 0);
+
     if (!plugin->init(proxy)) {
       log::warn("plugin failed to initialize");
       return false;
     }
-  }
 
-  for (auto* requirement : plugin->requirements()) {
-    m_Requirements[plugin].emplace_back(requirement);
+    for (auto* requirement : plugin->requirements()) {
+      m_Requirements[plugin].emplace_back(requirement);
+    }
   }
 
   return true;
@@ -230,6 +234,9 @@ bool PluginContainer::initProxyPlugin(IPlugin *plugin)
     m_Proxies[plugin] = proxy;
   }
 
+  // Create requirements before init() in case a plugin use
+  // IOrganizer::isPluginEnabled on himself during init().
+  m_Requirements.emplace(plugin, 0);
   if (!plugin->init(proxy)) {
     log::warn("proxy plugin failed to initialize");
     return false;
@@ -420,7 +427,7 @@ bool PluginContainer::isEnabled(IPlugin* plugin) const
   }
 
   // Check if the plugin is enabled:
-  if (!m_Organizer->pluginSetting(plugin->name(), "enabled").toBool()) {
+  if (!m_Organizer->persistent(plugin->name(), "enabled", true).toBool()) {
     return false;
   }
 
@@ -465,9 +472,18 @@ MOBase::IPlugin* PluginContainer::plugin(MOBase::IPluginFileMapper* mapper) cons
   return it->second;
 }
 
-bool PluginContainer::isEnabled(QString const& pluginName) const { return isEnabled(plugin(pluginName)); }
-bool PluginContainer::isEnabled(MOBase::IPluginDiagnose* diagnose) const { return isEnabled(plugin(diagnose)); }
-bool PluginContainer::isEnabled(MOBase::IPluginFileMapper* mapper) const { return isEnabled(plugin(mapper)); }
+bool PluginContainer::isEnabled(QString const& pluginName) const {
+  IPlugin* p = plugin(pluginName);
+  return p ? isEnabled(p) : false;
+}
+bool PluginContainer::isEnabled(MOBase::IPluginDiagnose* diagnose) const {
+  IPlugin* p = plugin(diagnose);
+  return p ? isEnabled(p) : false;
+}
+bool PluginContainer::isEnabled(MOBase::IPluginFileMapper* mapper) const {
+  IPlugin* p = plugin(mapper);
+  return p ? isEnabled(p) : false;
+}
 
 std::vector<PluginRequirementProxy> PluginContainer::requirements(IPlugin* plugin) const
 {
