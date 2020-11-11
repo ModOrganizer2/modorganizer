@@ -180,10 +180,6 @@ void PluginContainer::setUserInterface(IUserInterface *userInterface, QWidget *w
     for (IPluginModPage *modPage : bf::at_key<IPluginModPage>(m_Plugins)) {
       userInterface->registerModPage(modPage);
     }
-
-    for (IPluginTool *tool : bf::at_key<IPluginTool>(m_Plugins)) {
-      userInterface->registerPluginTool(tool);
-    }
   }
 
   m_UserInterface = userInterface;

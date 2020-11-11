@@ -129,10 +129,6 @@ public:
 
   void saveArchiveList();
 
-  void registerPluginTool(MOBase::IPluginTool *tool, QString name = QString(), QMenu *menu = nullptr);
-  void registerPluginTools(std::vector<MOBase::IPluginTool *> toolPlugins);
-  void registerModPage(MOBase::IPluginModPage *modPage);
-
   void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);
 
   void installTranslator(const QString &name);
@@ -160,7 +156,6 @@ public slots:
 
   void directory_refreshed();
 
-  void toolPluginInvoke();
   void modPagePluginInvoke();
 
 signals:
@@ -212,7 +207,11 @@ private:
   void setToolbarSize(const QSize& s);
   void setToolbarButtonStyle(Qt::ToolButtonStyle s);
 
+  void registerModPage(MOBase::IPluginModPage* modPage);
+  void registerPluginTool(MOBase::IPluginTool* tool, QString name = QString(), QMenu* menu = nullptr);
+
   void updateToolbarMenu();
+  void updateToolMenu();
   void updateViewMenu();
 
   QMenu* createPopupMenu() override;

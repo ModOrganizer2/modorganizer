@@ -467,6 +467,7 @@ MainWindow::MainWindow(Settings &settings
   connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(toolBar_customContextMenuRequested(QPoint)));
   connect(ui->menuToolbars, &QMenu::aboutToShow, [&]{ updateToolbarMenu(); });
   connect(ui->menuView, &QMenu::aboutToShow, [&]{ updateViewMenu(); });
+  connect(ui->actionTool->menu(), &QMenu::aboutToShow, [&] { updateToolMenu(); });
 
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this, &MainWindow::modInstalled);
   connect(&m_OrganizerCore, &OrganizerCore::close, this, &QMainWindow::close);
@@ -507,8 +508,6 @@ MainWindow::MainWindow(Settings &settings
   for (const QString &fileName : m_PluginContainer.pluginFileNames()) {
     installTranslator(QFileInfo(fileName).baseName());
   }
-
-  registerPluginTools(m_PluginContainer.plugins<IPluginTool>());
 
   for (IPluginModPage *modPagePlugin : m_PluginContainer.plugins<IPluginModPage>()) {
     registerModPage(modPagePlugin);
@@ -1597,22 +1596,6 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event)
   return false;
 }
 
-
-void MainWindow::toolPluginInvoke()
-{
-  QAction *triggeredAction = qobject_cast<QAction*>(sender());
-  IPluginTool *plugin = qobject_cast<IPluginTool*>(triggeredAction->data().value<QObject*>());
-  if (plugin != nullptr) {
-    try {
-      plugin->display();
-    } catch (const std::exception &e) {
-      reportError(tr("Plugin \"%1\" failed: %2").arg(plugin->name()).arg(e.what()));
-    } catch (...) {
-      reportError(tr("Plugin \"%1\" failed").arg(plugin->name()));
-    }
-  }
-}
-
 void MainWindow::modPagePluginInvoke()
 {
   QAction *triggeredAction = qobject_cast<QAction*>(sender());
@@ -1648,23 +1631,41 @@ void MainWindow::registerPluginTool(IPluginTool *tool, QString name, QMenu *menu
   QAction *action = new QAction(tool->icon(), name, menu);
   action->setToolTip(tool->tooltip());
   tool->setParentWidget(this);
-  action->setData(QVariant::fromValue((QObject*)tool));
-  connect(action, SIGNAL(triggered()), this, SLOT(toolPluginInvoke()), Qt::QueuedConnection);
+  connect(action, &QAction::triggered, this, [this, tool]() {
+      try {
+        tool->display();
+      }
+      catch (const std::exception& e) {
+        reportError(tr("Plugin \"%1\" failed: %2").arg(tool->localizedName()).arg(e.what()));
+      }
+      catch (...) {
+        reportError(tr("Plugin \"%1\" failed").arg(tool->localizedName()));
+      }
+  }, Qt::QueuedConnection);
 
   menu->addAction(action);
-  if (!m_PluginContainer.isEnabled(tool)) {
-    action->setVisible(false);
-  }
 }
 
-void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
+void MainWindow::updateToolMenu()
 {
+  // Clear the menu:
+  ui->actionTool->menu()->clear();
+
+  std::vector<IPluginTool*> toolPlugins = m_PluginContainer.plugins<IPluginTool>();
+
   // Sort the plugins by display name
-  std::sort(toolPlugins.begin(), toolPlugins.end(),
+  std::sort(std::begin(toolPlugins), std::end(toolPlugins),
     [](IPluginTool *left, IPluginTool *right) {
       return left->displayName().toLower() < right->displayName().toLower();
     }
   );
+
+  // Remove disabled plugins:
+  toolPlugins.erase(
+    std::remove_if(std::begin(toolPlugins), std::end(toolPlugins), [&](auto* tool) {
+      return !m_PluginContainer.isEnabled(tool);
+    }),
+    toolPlugins.end());
 
   // Group the plugins into submenus
   QMap<QString, QList<QPair<QString, IPluginTool *>>> submenuMap;

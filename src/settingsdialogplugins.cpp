@@ -88,10 +88,9 @@ void PluginsSettingsTab::updateListItems()
       auto* item = topLevelItem->child(j);
       auto* plugin = this->plugin(item);
 
-      if (!m_pluginContainer->implementInterface<IPluginGame>(plugin)
-        && !m_pluginContainer->isEnabled(plugin)) {
-        item->setBackgroundColor(0, Qt::gray);
-      }
+      bool inactive = !m_pluginContainer->implementInterface<IPluginGame>(plugin)
+        && !m_pluginContainer->isEnabled(plugin);
+      // TODO: Better display.
     }
   }
 
@@ -198,7 +197,7 @@ void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
       return;
     }
 
-    m_pluginContainer->setEnabled(plugin, false, true);
+    m_pluginContainer->setEnabled(plugin, true, false);
   }
   else {
     // Custom check for proxy + current game:
