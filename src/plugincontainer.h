@@ -34,25 +34,6 @@ class OrganizerProxy;
 class PluginRequirements {
 public:
 
-  // Small intermediate class.
-  struct Problem {
-  public:
-
-    QString description() const { return m_Requirement->description(m_Id); }
-
-
-  private:
-    Problem(const MOBase::IPluginRequirement* requirement, unsigned int id) :
-      m_Requirement(requirement), m_Id(id) { }
-
-    const MOBase::IPluginRequirement* m_Requirement;
-    unsigned int m_Id;
-
-    friend class PluginRequirements;
-  };
-
-public:
-
   /**
    * @return true if the plugin can be enabled (all requirements are met).
    */
@@ -66,7 +47,7 @@ public:
   /**
    * @return the list of problems to be resolved before enabling the plugin.
    */
-  std::vector<Problem> problems() const;
+  std::vector<MOBase::IPluginRequirement::Problem> problems() const;
 
   /**
    * @return the name of the games (gameName()) this plugin can be used with, or an empty

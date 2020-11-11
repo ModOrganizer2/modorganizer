@@ -74,12 +74,13 @@ MOBase::IPluginProxy* PluginRequirements::proxy() const
   return m_PluginProxy;
 }
 
-std::vector<PluginRequirements::Problem> PluginRequirements::problems() const
+std::vector<IPluginRequirement::Problem> PluginRequirements::problems() const
 {
-  std::vector<Problem> result;
+  std::vector<IPluginRequirement::Problem> result;
   for (auto& requirement : m_Requirements) {
-    for (auto p : requirement->problems(m_Organizer)) {
-      result.push_back(Problem(requirement.get(), p));
+    auto p = requirement->check(m_Organizer);
+    if (p) {
+      result.push_back(*p);
     }
   }
   return result;

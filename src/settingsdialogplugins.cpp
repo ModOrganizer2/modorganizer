@@ -187,7 +187,7 @@ void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
     if (!problems.empty()) {
       QStringList descriptions;
       for (auto& problem : problems) {
-        descriptions.append(problem.description());
+        descriptions.append(problem.shortDescription());
       }
       QMessageBox::warning(
         parentWidget(), QObject::tr("Cannot enable plugin"),
