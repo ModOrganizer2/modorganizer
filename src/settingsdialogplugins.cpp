@@ -242,12 +242,13 @@ void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
       for (auto& p : proxied) {
         pluginNames.append(p->localizedName());
       }
+      pluginNames.removeDuplicates();
       pluginNames.sort();
       QString message = QObject::tr(
-        "<p>Disabling this plugin will prevent the following plugins from working correctly:</p><ul>%1</ul>"
+        "<p>Disabling this plugin will prevent the following plugins from working:</p><ul>%1</ul>"
         "<p>Do you want to continue? You will need to restart ModOrganizer2 for the change to take effect.</p>")
         .arg("<li>" + pluginNames.join("</li><li>") + "</li>");
-      if (QMessageBox::warning(
+      if (QMessageBox::critical(
         parentWidget(), QObject::tr("Really disable plugin?"), message,
         QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
         ui->enabledCheckbox->setChecked(true);
@@ -263,6 +264,7 @@ void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
       for (auto& p : requiredFor) {
         pluginNames.append(p->localizedName());
       }
+      pluginNames.removeDuplicates();
       pluginNames.sort();
       QString message = QObject::tr(
         "<p>Disabling this plugin will also disable the following plugins:</p><ul>%1</ul><p>Do you want to continue?</p>")
