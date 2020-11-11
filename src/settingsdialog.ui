@@ -1694,6 +1694,9 @@ programs you are intentionally running.</string>
   <tabstop>nexusLog</tabstop>
   <tabstop>offlineBox</tabstop>
   <tabstop>endorsementBox</tabstop>
+  <tabstop>trackedBox</tabstop>
+  <tabstop>proxyBox</tabstop>
+  <tabstop>hideAPICounterBox</tabstop>
   <tabstop>associateButton</tabstop>
   <tabstop>clearCacheButton</tabstop>
   <tabstop>knownServersList</tabstop>
