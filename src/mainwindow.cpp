@@ -1652,6 +1652,9 @@ void MainWindow::registerPluginTool(IPluginTool *tool, QString name, QMenu *menu
   connect(action, SIGNAL(triggered()), this, SLOT(toolPluginInvoke()), Qt::QueuedConnection);
 
   menu->addAction(action);
+  if (!m_PluginContainer.isEnabled(tool)) {
+    action->setVisible(false);
+  }
 }
 
 void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
@@ -1662,14 +1665,6 @@ void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
       return left->displayName().toLower() < right->displayName().toLower();
     }
   );
-
-  // TODO: I don't know when this method is called? Maybe the check should be perform when
-  // the context menu is opened?
-  // Remove inactive plugins
-  toolPlugins.erase(
-    std::remove_if(toolPlugins.begin(), toolPlugins.end(), [this](IPluginTool *plugin) { return !m_PluginContainer.isEnabled(plugin); }),
-    toolPlugins.end()
-    );
 
   // Group the plugins into submenus
   QMap<QString, QList<QPair<QString, IPluginTool *>>> submenuMap;
