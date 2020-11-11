@@ -265,9 +265,13 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
   }
   { // game plugin
     IPluginGame *game = qobject_cast<IPluginGame*>(plugin);
+
+    if (game) {
+      game->detectGame();
+    }
+
     if (initPlugin(game)) {
       bf::at_key<IPluginGame>(m_Plugins).push_back(game);
-      game->detectGame();
       registerGame(game);
       return true;
     }
