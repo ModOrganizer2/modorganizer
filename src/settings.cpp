@@ -1288,6 +1288,11 @@ void PluginSettings::registerPlugin(IPlugin *plugin)
         temp.toString(), setting.key, plugin->name());
 
       temp = setting.defaultValue;
+
+      // If there was no previous "enabled" value, skip it:
+      if (setting.key == "enabled") {
+        continue;
+      }
     }
 
     m_PluginSettings[plugin->name()][setting.key] = temp;
@@ -1297,9 +1302,15 @@ void PluginSettings::registerPlugin(IPlugin *plugin)
       .arg(setting.defaultValue.toString());
   }
 
-  if (!m_PluginSettings.contains("enabled")) {
-    m_PluginSettings[plugin->name()]["enabled"] = true;
-    m_PluginDescriptions[plugin->name()]["enabled"] = QString();
+  // Handle previous "enabled" settings:
+  if (m_PluginSettings[plugin->name()].contains("enabled")) {
+    setPersistent(plugin->name(), "enabled", m_PluginSettings[plugin->name()]["enabled"].toBool(), true);
+    m_PluginSettings[plugin->name()].remove("enabled");
+    m_PluginDescriptions[plugin->name()].remove("enabled");
+
+    // We need to drop it manually in Settings since it is not possible to remove plugin
+    // settings:
+    remove(m_Settings, "Plugins", plugin->name() + "/enabled");
   }
 }
 

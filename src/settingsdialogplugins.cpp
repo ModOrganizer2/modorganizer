@@ -3,9 +3,10 @@
 #include "noeditdelegate.h"
 #include <iplugin.h>
 
+#include "organizercore.h"
 #include "plugincontainer.h"
 
-using MOBase::IPlugin;
+using namespace MOBase;
 
 PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginContainer, SettingsDialog& d)
   : SettingsTab(s, d), m_pluginContainer(pluginContainer)
@@ -66,13 +67,34 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginConta
   QObject::connect(
     ui->pluginsList, &QTreeWidget::currentItemChanged,
     [&](auto* current, auto* previous) { on_pluginsList_currentItemChanged(current, previous); });
+  QObject::connect(
+    ui->enabledCheckbox, &QCheckBox::clicked,
+    [&](bool checked) { on_checkboxEnabled_clicked(checked); });
 
   QShortcut *delShortcut = new QShortcut(
     QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
   QObject::connect(delShortcut, &QShortcut::activated, &dialog(), [&] { deleteBlacklistItem(); });
-  QObject::connect(&m_filter, &MOBase::FilterWidget::changed, [&] { filterPluginList(); });
+  QObject::connect(&m_filter, &FilterWidget::changed, [&] { filterPluginList(); });
 
+  updateListItems();
   filterPluginList();
+}
+
+void PluginsSettingsTab::updateListItems()
+{
+  for (auto i = 0; i < ui->pluginsList->topLevelItemCount(); ++i) {
+    auto* topLevelItem = ui->pluginsList->topLevelItem(i);
+    for (auto j = 0; j < topLevelItem->childCount(); ++j) {
+      auto* item = topLevelItem->child(j);
+      auto* plugin = this->plugin(item);
+
+      if (!m_pluginContainer->implementInterface<IPluginGame>(plugin)
+        && !m_pluginContainer->isEnabled(plugin)) {
+        item->setBackgroundColor(0, Qt::gray);
+      }
+    }
+  }
+
 }
 
 void PluginsSettingsTab::filterPluginList()
@@ -109,7 +131,7 @@ void PluginsSettingsTab::filterPluginList()
   auto selectedItems = ui->pluginsList->selectedItems();
   if (!selectedItems.isEmpty() && selectedItems[0]->isHidden()) {
     selectedItems[0]->setSelected(false);
-  
+
     if (firstNotHidden) {
       firstNotHidden->setSelected(true);
     }
@@ -150,6 +172,71 @@ void PluginsSettingsTab::closing()
   storeSettings(ui->pluginsList->currentItem());
 }
 
+void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
+{
+  // Retrieve the plugin:
+  auto *item = ui->pluginsList->currentItem();
+  if (!item || !item->data(0, ROLE_PLUGIN).isValid()) {
+    return;
+  }
+  IPlugin* plugin = this->plugin(item);
+  const auto& requirements = m_pluginContainer->requirements(plugin);
+
+  // User wants to enable:
+  if (checked) {
+    auto problems = requirements.problems();
+    if (!problems.empty()) {
+      QStringList descriptions;
+      for (auto& problem : problems) {
+        descriptions.append(problem.description());
+      }
+      QMessageBox::warning(
+        parentWidget(), QObject::tr("Cannot enable plugin"),
+        QObject::tr("<p>This plugin cannot be enabled:<p><ul>%1</ul>")
+        .arg("<li>" + descriptions.join("</li><li>") + "</li>"), QMessageBox::Ok);
+      ui->enabledCheckbox->setChecked(false);
+      return;
+    }
+
+    m_pluginContainer->setEnabled(plugin, false, true);
+  }
+  else {
+    // Custom check for proxy + current game:
+    if (m_pluginContainer->implementInterface<IPluginProxy>(plugin)) {
+      auto* game = m_pluginContainer->managedGame();
+      if (m_pluginContainer->requirements(game).proxy() == plugin) {
+        QMessageBox::warning(
+          parentWidget(), QObject::tr("Cannot disable plugin"),
+          QObject::tr("This plugin is used by the current game plugin and cannot disabled."), QMessageBox::Ok);
+          ui->enabledCheckbox->setChecked(true);
+          return;
+      }
+    }
+
+    // Check if the plugins is required for other plugins:
+    auto requiredFor = requirements.requiredFor();
+    if (!requiredFor.empty()) {
+      QStringList pluginNames;
+      for (auto& p : requiredFor) {
+        pluginNames.append(p->localizedName());
+      }
+      pluginNames.sort();
+      QString message = QObject::tr(
+        "<p>Disabling this plugin will also disable the following plugins:</p><ul>%1</ul><p>Do you want to continue?</p>")
+        .arg("<li>" + pluginNames.join("</li><li>") + "</li>");
+      if (QMessageBox::warning(
+        parentWidget(), QObject::tr("Really disable plugin?"), message,
+        QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
+        ui->enabledCheckbox->setChecked(true);
+        return;
+      }
+    }
+    m_pluginContainer->setEnabled(plugin, false, true);
+  }
+
+  updateListItems();
+}
+
 void PluginsSettingsTab::on_pluginsList_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous)
 {
   storeSettings(previous);
@@ -163,6 +250,10 @@ void PluginsSettingsTab::on_pluginsList_currentItemChanged(QTreeWidgetItem *curr
   ui->authorLabel->setText(plugin->author());
   ui->versionLabel->setText(plugin->version().canonicalString());
   ui->descriptionLabel->setText(plugin->description());
+
+  ui->enabledCheckbox->setVisible(
+    !m_pluginContainer->implementInterface<MOBase::IPluginGame>(plugin));
+  ui->enabledCheckbox->setChecked(m_pluginContainer->isEnabled(plugin));
 
   QVariantMap settings = current->data(0, ROLE_SETTINGS).toMap();
   QVariantMap descriptions = current->data(0, ROLE_DESCRIPTIONS).toMap();

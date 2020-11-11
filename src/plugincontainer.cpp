@@ -53,17 +53,107 @@ QStringList PluginContainer::pluginInterfaces()
 
 // PluginRequirementProxy
 
-std::vector<unsigned int> PluginRequirementProxy::problems() const
+PluginRequirements::PluginRequirements(PluginContainer* pluginContainer, MOBase::IPlugin* plugin, IOrganizer* proxy, MOBase::IPluginProxy* pluginProxy)
+  : m_PluginContainer(pluginContainer)
+  , m_Plugin(plugin)
+  , m_PluginProxy(pluginProxy)
+  , m_Organizer(proxy)
 {
-  return m_Requirement->problems(m_Proxy);
-}
-QString PluginRequirementProxy::description(unsigned int id) const
-{
-  return m_Requirement->description(id);
-}
-PluginRequirementProxy::PluginRequirementProxy(const MOBase::IPluginRequirement* requirement, OrganizerProxy* proxy) :
-  m_Requirement(requirement), m_Proxy(proxy) { }
+  for (auto* requirement : plugin->requirements()) {
+    m_Requirements.emplace_back(requirement);
+  }
 
+  // TODO:
+  if (pluginProxy) {
+    m_Requirements.emplace_back(PluginRequirementFactory::pluginDependency(pluginProxy->name()));
+  }
+}
+
+MOBase::IPluginProxy* PluginRequirements::proxy() const
+{
+  return m_PluginProxy;
+}
+
+std::vector<PluginRequirements::Problem> PluginRequirements::problems() const
+{
+  std::vector<Problem> result;
+  for (auto& requirement : m_Requirements) {
+    for (auto p : requirement->problems(m_Organizer)) {
+      result.push_back(Problem(requirement.get(), p));
+    }
+  }
+  return result;
+}
+
+bool PluginRequirements::canEnable() const
+{
+  return problems().empty();
+}
+
+QStringList PluginRequirements::requiredGames() const
+{
+  // We look for a "GameDependencyRequirement" - There can be only one since otherwise
+  // it'd mean that the plugin requires two games at once.
+  for (auto& requirement : m_Requirements) {
+    if (auto* gdep = dynamic_cast<const GameDependencyRequirement*>(requirement.get())) {
+      return gdep->gameNames();
+    }
+  }
+
+  return {};
+}
+
+std::vector<MOBase::IPlugin*> PluginRequirements::requiredFor() const
+{
+  std::vector<MOBase::IPlugin*> required;
+  std::set<MOBase::IPlugin*> visited;
+  requiredFor(required, visited);
+  return required;
+}
+
+
+void PluginRequirements::requiredFor(std::vector<MOBase::IPlugin*> &required, std::set<MOBase::IPlugin*>& visited) const
+{
+  // Handle cyclic dependencies.
+  if (visited.contains(m_Plugin)) {
+    return;
+  }
+  visited.insert(m_Plugin);
+
+
+  for (auto& [plugin, requirements] : m_PluginContainer->m_Requirements) {
+
+    // If the plugin is not enabled, discard:
+    if (!m_PluginContainer->isEnabled(plugin)) {
+      continue;
+    }
+
+    // Check the requirements:
+    for (auto& requirement : requirements.m_Requirements) {
+
+      // We check for plugin dependency. Game dependency are not checked this way.
+      if (auto* pdep = dynamic_cast<const PluginDependencyRequirement*>(requirement.get())) {
+
+        // Check if at least one of the plugin in the requirements is enabled (except this
+        // one):
+        bool oneEnabled = false;
+        for (auto& pluginName : pdep->pluginNames()) {
+          if (pluginName != m_Plugin->name() && m_PluginContainer->isEnabled(pluginName)) {
+            oneEnabled = true;
+            break;
+          }
+        }
+
+        // No plugin enabled found, so the plugin requires this plugin:
+        if (!oneEnabled) {
+          required.push_back(plugin);
+          requirements.requiredFor(required, visited);
+          break;
+        }
+      }
+    }
+  }
+}
 
 // PluginContainer
 
@@ -186,7 +276,7 @@ QObject* PluginContainer::as_qobject(MOBase::IPlugin* plugin) const
   return *it;
 }
 
-bool PluginContainer::initPlugin(IPlugin *plugin)
+bool PluginContainer::initPlugin(IPlugin *plugin, IPluginProxy *pluginProxy)
 {
   // when MO has no instance loaded, init() is not called on plugins, except
   // for proxy plugins, where init() is called with a null IOrganizer
@@ -199,63 +289,34 @@ bool PluginContainer::initPlugin(IPlugin *plugin)
     return false;
   }
 
-  if (m_Organizer) {
-    auto* proxy = new OrganizerProxy(m_Organizer, this, plugin);
-    m_Proxies[plugin] = proxy;
-
-    // Create requirements before init() in case a plugin use
-    // IOrganizer::isPluginEnabled on himself during init().
-    m_Requirements.emplace(plugin, 0);
-
-    if (!plugin->init(proxy)) {
-      log::warn("plugin failed to initialize");
-      return false;
-    }
-
-    for (auto* requirement : plugin->requirements()) {
-      m_Requirements[plugin].emplace_back(requirement);
-    }
-  }
-
-  return true;
-}
-
-bool PluginContainer::initProxyPlugin(IPlugin *plugin)
-{
-  // see initPlugin() above for info
-
-  if (plugin == nullptr) {
-    return false;
-  }
-
   OrganizerProxy* proxy = nullptr;
   if (m_Organizer) {
     proxy = new OrganizerProxy(m_Organizer, this, plugin);
-    m_Proxies[plugin] = proxy;
   }
 
-  // Create requirements before init() in case a plugin use
-  // IOrganizer::isPluginEnabled on himself during init().
-  m_Requirements.emplace(plugin, 0);
+  // Check if it is a proxy plugin:
+  bool isProxy = dynamic_cast<IPluginProxy*>(plugin);
+
+  if (!m_Organizer && !isProxy) {
+    return true;
+  }
+
   if (!plugin->init(proxy)) {
-    log::warn("proxy plugin failed to initialize");
+    log::warn("plugin failed to initialize");
     return false;
   }
 
-  for (auto* requirement : plugin->requirements()) {
-    m_Requirements[plugin].emplace_back(requirement);
-  }
+  m_Requirements.emplace(plugin, PluginRequirements(this, plugin, proxy, pluginProxy));
 
   return true;
 }
-
 
 void PluginContainer::registerGame(IPluginGame *game)
 {
   m_SupportedGames.insert({ game->gameName(), game });
 }
 
-bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
+bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName, MOBase::IPluginProxy* pluginProxy)
 {
   // Storing the original QObject* is a bit of a hack as I couldn't figure out any
   // way to cast directly between IPlugin* and IPluginDiagnose*
@@ -294,34 +355,32 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
   }
   { // mod page plugin
     IPluginModPage *modPage = qobject_cast<IPluginModPage*>(plugin);
-    if (initPlugin(modPage)) {
+    if (initPlugin(modPage, pluginProxy)) {
       bf::at_key<IPluginModPage>(m_Plugins).push_back(modPage);
       return true;
     }
   }
   { // game plugin
     IPluginGame *game = qobject_cast<IPluginGame*>(plugin);
-
     if (game) {
       game->detectGame();
-    }
-
-    if (initPlugin(game)) {
-      bf::at_key<IPluginGame>(m_Plugins).push_back(game);
-      registerGame(game);
-      return true;
+      if (initPlugin(game, pluginProxy)) {
+        bf::at_key<IPluginGame>(m_Plugins).push_back(game);
+        registerGame(game);
+        return true;
+      }
     }
   }
   { // tool plugins
     IPluginTool *tool = qobject_cast<IPluginTool*>(plugin);
-    if (initPlugin(tool)) {
+    if (initPlugin(tool, pluginProxy)) {
       bf::at_key<IPluginTool>(m_Plugins).push_back(tool);
       return true;
     }
   }
   { // installer plugins
     IPluginInstaller *installer = qobject_cast<IPluginInstaller*>(plugin);
-    if (initPlugin(installer)) {
+    if (initPlugin(installer, pluginProxy)) {
       bf::at_key<IPluginInstaller>(m_Plugins).push_back(installer);
       if (m_Organizer) {
         m_Organizer->installationManager()->registerInstaller(installer);
@@ -331,7 +390,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
   }
   { // preview plugins
     IPluginPreview *preview = qobject_cast<IPluginPreview*>(plugin);
-    if (initPlugin(preview)) {
+    if (initPlugin(preview, pluginProxy)) {
       bf::at_key<IPluginPreview>(m_Plugins).push_back(preview);
       m_PreviewGenerator.registerPlugin(preview);
       return true;
@@ -339,7 +398,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
   }
   { // proxy plugins
     IPluginProxy *proxy = qobject_cast<IPluginProxy*>(plugin);
-    if (initProxyPlugin(proxy)) {
+    if (initPlugin(proxy, pluginProxy)) {
       bf::at_key<IPluginProxy>(m_Plugins).push_back(proxy);
       QStringList pluginNames = proxy->pluginList(
             QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
@@ -349,7 +408,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
           QList<QObject*> matchingPlugins = proxy->instantiate(pluginName);
           for (QObject *proxiedPlugin : matchingPlugins) {
             if (proxiedPlugin != nullptr) {
-              if (registerPlugin(proxiedPlugin, pluginName)) {
+              if (registerPlugin(proxiedPlugin, pluginName, proxy)) {
                 log::debug("loaded plugin \"{}\"", QFileInfo(pluginName).fileName());
               }
               else {
@@ -371,7 +430,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
   { // dummy plugins
     // only initialize these, no processing otherwise
     IPlugin *dummy = qobject_cast<IPlugin*>(plugin);
-    if (initPlugin(dummy)) {
+    if (initPlugin(dummy, pluginProxy)) {
       bf::at_key<IPlugin>(m_Plugins).push_back(dummy);
       return true;
     }
@@ -419,6 +478,14 @@ void PluginContainer::unloadPlugins()
   }
 }
 
+IPlugin* PluginContainer::managedGame() const
+{
+  // TODO: This const_cast is safe but ugly. Most methods require a IPlugin*, so
+  // returning a const-version if painful. This should be fixed by making methods accept
+  // a const IPlugin* instead, but there are a few tricks with qobject_cast and const.
+  return const_cast<IPluginGame*>(m_Organizer->managedGame());
+}
+
 bool PluginContainer::isEnabled(IPlugin* plugin) const
 {
   // Check if it's a game plugin:
@@ -431,15 +498,21 @@ bool PluginContainer::isEnabled(IPlugin* plugin) const
     return false;
   }
 
-  // Check the requirements:
-  auto* proxy = m_Proxies.at(plugin);
-  for (auto& requirement : m_Requirements.at(plugin)) {
-    if (!requirement->problems(proxy).empty()) {
-      return false;
+  // Check the requirements (if a plugin checks in init(), the requirements have
+  // not been computed yet):
+  auto it = m_Requirements.find(plugin);
+
+  return it == std::end(m_Requirements) ? true : it->second.canEnable();
+}
+
+void PluginContainer::setEnabled(MOBase::IPlugin* plugin, bool enable, bool dependencies)
+{
+  if (!enable && dependencies) {
+    for (auto* p : requirements(plugin).requiredFor()) {
+      setEnabled(p, false, false);  // No need to "recurse" here since requiredFor already does it.
     }
   }
-
-  return true;
+  m_Organizer->setPersistent(plugin->name(), "enabled", enable, true);
 }
 
 MOBase::IPlugin* PluginContainer::plugin(QString const& pluginName) const
@@ -485,14 +558,9 @@ bool PluginContainer::isEnabled(MOBase::IPluginFileMapper* mapper) const {
   return p ? isEnabled(p) : false;
 }
 
-std::vector<PluginRequirementProxy> PluginContainer::requirements(IPlugin* plugin) const
+const PluginRequirements& PluginContainer::requirements(IPlugin* plugin) const
 {
-  auto* proxy = m_Proxies.at(plugin);
-  std::vector<PluginRequirementProxy> proxies;
-  for (auto& requirement : m_Requirements.at(plugin)) {
-    proxies.push_back(PluginRequirementProxy(requirement.get(), proxy));
-  }
-  return proxies;
+  return m_Requirements.at(plugin);
 }
 
 IPluginGame *PluginContainer::managedGame(const QString &name) const
@@ -517,7 +585,7 @@ void PluginContainer::loadPlugins()
   unloadPlugins();
 
   for (QObject *plugin : QPluginLoader::staticInstances()) {
-    registerPlugin(plugin, "");
+    registerPlugin(plugin, "", nullptr);
   }
 
   QFile loadCheck;
@@ -613,7 +681,7 @@ void PluginContainer::loadPlugins()
           "failed to load plugin {}: {}",
           pluginName, pluginLoader->errorString());
       } else {
-        if (registerPlugin(pluginLoader->instance(), pluginName)) {
+        if (registerPlugin(pluginLoader->instance(), pluginName, nullptr)) {
           log::debug("loaded plugin \"{}\"", QFileInfo(pluginName).fileName());
           m_PluginLoaders.push_back(pluginLoader.release());
         } else {

@@ -27,23 +27,76 @@ class IUserInterface;
 
 class OrganizerProxy;
 
-
-// Small class that allows calling check() for plugin requirements
-// without passing the IOrganizer.
-class PluginRequirementProxy {
+/**
+ * @brief Class that wrap multiple requirements for a plugin together. THis
+ *     class owns the requirements.
+ */
+class PluginRequirements {
 public:
 
-  std::vector<unsigned int> problems() const;
-  QString description(unsigned int id) const;
+  // Small intermediate class.
+  struct Problem {
+  public:
+
+    QString description() const { return m_Requirement->description(m_Id); }
+
+
+  private:
+    Problem(const MOBase::IPluginRequirement* requirement, unsigned int id) :
+      m_Requirement(requirement), m_Id(id) { }
+
+    const MOBase::IPluginRequirement* m_Requirement;
+    unsigned int m_Id;
+
+    friend class PluginRequirements;
+  };
+
+public:
+
+  /**
+   * @return true if the plugin can be enabled (all requirements are met).
+   */
+  bool canEnable() const;
+
+  /**
+   * @return the proxy that created this plugin, if any.
+   */
+  MOBase::IPluginProxy* proxy() const;
+
+  /**
+   * @return the list of problems to be resolved before enabling the plugin.
+   */
+  std::vector<Problem> problems() const;
+
+  /**
+   * @return the name of the games (gameName()) this plugin can be used with, or an empty
+   *     list if this plugin does not require particular games.
+   */
+  QStringList requiredGames() const;
+
+  /**
+   * @return the list of plugins currently enabled that would have to be disabled
+   *     if this plugin was disabled.
+   */
+  std::vector<MOBase::IPlugin*> requiredFor() const;
 
 private:
 
-  const MOBase::IPluginRequirement* m_Requirement;
-  OrganizerProxy* m_Proxy;
-
-  PluginRequirementProxy(const MOBase::IPluginRequirement* requirement, OrganizerProxy* proxy);
+  // Accumulator version for requiredFor() to avoid infinite recursion.
+  void requiredFor(std::vector<MOBase::IPlugin*>& required, std::set<MOBase::IPlugin*>& visited) const;
 
   friend class PluginContainer;
+
+  PluginContainer* m_PluginContainer;
+  MOBase::IPlugin* m_Plugin;
+  MOBase::IPluginProxy* m_PluginProxy;
+  std::vector<std::unique_ptr<const MOBase::IPluginRequirement>> m_Requirements;
+  MOBase::IOrganizer* m_Organizer;
+  std::vector<MOBase::IPlugin*> m_RequiredFor;
+
+  PluginRequirements(
+    PluginContainer* pluginContainer, MOBase::IPlugin* plugin,
+    MOBase::IOrganizer* proxy, MOBase::IPluginProxy* pluginProxy);
 
 };
 
@@ -176,18 +229,33 @@ public:
   MOBase::IPlugin* plugin(MOBase::IPluginFileMapper* mapper) const;
 
   /**
+   * @return the IPlugin interface to the currently managed game.
+   */
+  MOBase::IPlugin* managedGame() const;
+
+  /**
    * @brief Check if the given plugin is enabled.
    *
    * @param plugin The plugin to check.
    *
    * @return true if the plugin is enabled, false otherwise.
    */
-  bool isEnabled(MOBase::IPlugin *plugin) const;
+  bool isEnabled(MOBase::IPlugin* plugin) const;
 
   // These are friendly methods that called isEnabled(plugin(arg)).
   bool isEnabled(QString const& pluginName) const;
   bool isEnabled(MOBase::IPluginDiagnose* diagnose) const;
   bool isEnabled(MOBase::IPluginFileMapper* mapper) const;
+
+  /**
+   * @brief Enable or disable a plugin.
+   *
+   * @param plugin The plugin to enable or disable.
+   * @param enable true to enable, false to disable.
+   * @param dependencies If true and enable is false, dependencies will also
+   *     be disabled (see PluginRequirements::requiredFor).
+   */
+  void setEnabled(MOBase::IPlugin* plugin, bool enable, bool dependencies = true);
 
   /**
    * @brief Retrieve the requirements for the given plugin.
@@ -196,7 +264,7 @@ public:
    *
    * @return the requirements (as proxy) for the given plugin.
    */
-  std::vector<PluginRequirementProxy> requirements(MOBase::IPlugin* plugin) const;
+  const PluginRequirements& requirements(MOBase::IPlugin* plugin) const;
 
   /**
    * @brief Retrieved the (localized) names of interfaces implemented by the given
@@ -244,6 +312,8 @@ signals:
 
 private:
 
+  friend class PluginRequirements;
+
   /**
    * @brief Find the QObject* corresponding to the given plugin.
    *
@@ -253,11 +323,19 @@ private:
    */
   QObject* as_qobject(MOBase::IPlugin* plugin) const;
 
+  /**
+   * @brief Initialize a plugin.
+   *
+   * @param plugin The plugin to initialize.
+   * @param proxy The proxy that created this plugin (can be null).
+   *
+   * @return true if the plugin was initialized correctly, false otherwise.
+   */
+  bool initPlugin(MOBase::IPlugin *plugin, MOBase::IPluginProxy* proxy);
 
-  bool initPlugin(MOBase::IPlugin *plugin);
-  bool initProxyPlugin(MOBase::IPlugin *plugin);
   void registerGame(MOBase::IPluginGame *game);
-  bool registerPlugin(QObject *pluginObj, const QString &fileName);
+
+  bool registerPlugin(QObject *pluginObj, const QString &fileName, MOBase::IPluginProxy *proxy);
 
   OrganizerCore *m_Organizer;
 
@@ -268,8 +346,7 @@ private:
   // This maps allow access to IPlugin* from name or diagnose/mapper object.
   AccessPluginMap m_AccessPlugins;
 
-  std::map<MOBase::IPlugin*, OrganizerProxy*> m_Proxies;
-  std::map<MOBase::IPlugin*, std::vector<std::unique_ptr<const MOBase::IPluginRequirement>>> m_Requirements;
+  std::map<MOBase::IPlugin*, PluginRequirements> m_Requirements;
 
   std::map<QString, MOBase::IPluginGame*> m_SupportedGames;
   std::vector<boost::signals2::connection> m_DiagnosisConnections;
