@@ -21,6 +21,54 @@ using namespace MOShared;
 
 namespace bf = boost::fusion;
 
+// Welcome to the wonderful world of MO2 plugin management!
+//
+// We'll start by the C++ side.
+//
+// There are 9 types of MO2 plugins, two of which cannot be standalone: IPluginDiagnose
+// and IPluginFileMapper. This means that you can have a class implementing IPluginGame,
+// IPluginDiagnose and IPluginFileMapper. It is not possible for a class to implement
+// two full plugin types (e.g. IPluginPreview and IPluginTool).
+//
+// Plugins are fetch as QObject initially and must be "qobject-casted" to the right type.
+//
+// Plugins are stored in the PluginContainer class in various C++ containers: there is a vector
+// that stores all the plugin as QObject, multiple vectors that stores the plugin of each types,
+// a map to find IPlugin object from their names or from IPluginDiagnose or IFileMapper (since
+// these do not inherit IPlugin, they cannot be downcasted).
+//
+// Requirements for plugins are stored in m_Requirements:
+// - IPluginGame cannot be enabled by user. A game plugin is considered enable only if it is
+//   the one corresponding to the currently managed games.
+// - If a plugin has a master plugin (IPlugin::master()), it cannot be enabled/disabled by users,
+//   and will follow the enabled/disabled state of its parent.
+// - Each plugin has an "enabled" setting stored in persistence. A plugin is considered disabled
+//   if the setting is false.
+// - If the setting is true or does not exist, a plugin is considered disabled if one of its
+//   requirements is not met.
+// - Users cannot enable a plugin if one of its requirements is not met.
+//
+// Now let's move to the Proxy side... Or the as of now, the Python side.
+//
+// Proxied plugins are much more annoying because they can implement all interfaces, and are
+// given to MO2 as separate plugins... A Python class implementing IPluginGame and IPluginDiagnose
+// will be seen by MO2 as two separate QObject, and they will all have the same name.
+//
+// When a proxied plugin is registered, a few things must be taken care of:
+// - There can only be one plugin mapped to a name in the PluginContainer class, so we keep the
+//   plugin corresponding to the most relevant class (see PluginTypeOrder), e.g. if the class
+//   inherits both IPluginGame and IPluginFileMapper, we map the name to the C++ QObject corresponding
+//   to the IPluginGame.
+// - When a proxied plugin implements multiple interfaces, the IPlugin corresponding to the most
+//   important interface is set as the parent (hidden) of the other IPlugin through PluginRequirements.
+//   This way, the plugin are managed together (enabled/disabled state). The "fake" children plugins
+//   will not be returned by PluginRequirements::children().
+// - Since each interface corresponds to a different QObject, we need to take care not to call
+//   IPlugin::init() on each QObject, but only on the first one.
+//
+// All the proxied plugins are linked to the proxy plugin by PluginRequirements. If the proxy plugin
+// is disabled, the proxied plugins are not even loaded so not visible in the plugin management tab.
+
 template <class T>
 struct PluginTypeName;
 
