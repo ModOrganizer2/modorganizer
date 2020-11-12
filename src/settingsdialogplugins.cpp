@@ -242,7 +242,6 @@ void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
       for (auto& p : proxied) {
         pluginNames.append(p->localizedName());
       }
-      pluginNames.removeDuplicates();
       pluginNames.sort();
       QString message = QObject::tr(
         "<p>Disabling this plugin will prevent the following plugins from working:</p><ul>%1</ul>"
@@ -264,7 +263,6 @@ void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
       for (auto& p : requiredFor) {
         pluginNames.append(p->localizedName());
       }
-      pluginNames.removeDuplicates();
       pluginNames.sort();
       QString message = QObject::tr(
         "<p>Disabling this plugin will also disable the following plugins:</p><ul>%1</ul><p>Do you want to continue?</p>")

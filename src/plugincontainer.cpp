@@ -53,12 +53,18 @@ QStringList PluginContainer::pluginInterfaces()
 
 // PluginRequirementProxy
 
-PluginRequirements::PluginRequirements(PluginContainer* pluginContainer, MOBase::IPlugin* plugin, IOrganizer* proxy, MOBase::IPluginProxy* pluginProxy)
+PluginRequirements::PluginRequirements(
+  PluginContainer* pluginContainer, MOBase::IPlugin* plugin, IOrganizer* proxy,
+  MOBase::IPluginProxy* pluginProxy)
   : m_PluginContainer(pluginContainer)
   , m_Plugin(plugin)
   , m_PluginProxy(pluginProxy)
+  , m_Master(nullptr)
   , m_Organizer(proxy)
-{ }
+{
+  // There are a lots of things we cannot set here (e.g. m_Master) because we do not
+  // know the order plugins are loaded.
+}
 
 void PluginRequirements::fetchRequirements() {
   for (auto* requirement : m_Plugin->requirements()) {
@@ -87,10 +93,21 @@ std::vector<IPlugin*> PluginRequirements::proxied() const
 
 IPlugin* PluginRequirements::master() const
 {
+  // If we have a m_Master, it was forced and thus override the default master().
+  if (m_Master) {
+    return m_Master;
+  }
+
   if (m_Plugin->master().isEmpty()) {
     return nullptr;
   }
+
   return m_PluginContainer->plugin(m_Plugin->master());
+}
+
+void PluginRequirements::setMaster(IPlugin* master)
+{
+  m_Master = master;
 }
 
 std::vector<IPlugin*> PluginRequirements::children() const
@@ -98,7 +115,14 @@ std::vector<IPlugin*> PluginRequirements::children() const
   std::vector<IPlugin*> children;
   for (auto* obj : m_PluginContainer->plugins<QObject>()) {
     auto* plugin = qobject_cast<IPlugin*>(obj);
-    if (plugin && plugin->master().compare(m_Plugin->name(), Qt::CaseInsensitive) == 0) {
+
+    // Not checking master() but requirements().master() due to "hidden"
+    // masters.
+    // If the master has the same name as the plugin, this is a "hidden"
+    // master, we do not had it here.
+    if (plugin
+        && m_PluginContainer->requirements(plugin).master() == m_Plugin
+        && plugin->name() != m_Plugin->name()) {
       children.push_back(plugin);
     }
   }
@@ -205,7 +229,6 @@ PluginContainer::~PluginContainer() {
   unloadPlugins();
 }
 
-
 void PluginContainer::setUserInterface(IUserInterface *userInterface, QWidget *widget)
 {
   for (IPluginProxy *proxy : bf::at_key<IPluginProxy>(m_Plugins)) {
@@ -220,7 +243,6 @@ void PluginContainer::setUserInterface(IUserInterface *userInterface, QWidget *w
 
   m_UserInterface = userInterface;
 }
-
 
 QStringList PluginContainer::implementedInterfaces(IPlugin* plugin) const
 {
@@ -251,7 +273,6 @@ QStringList PluginContainer::implementedInterfaces(IPlugin* plugin) const
   return names;
 }
 
-
 QString PluginContainer::topImplementedInterface(IPlugin* plugin) const
 {
   // We need a QObject to be able to qobject_cast<> to the plugin types:
@@ -276,6 +297,21 @@ QString PluginContainer::topImplementedInterface(IPlugin* plugin) const
   return name;
 }
 
+bool PluginContainer::isBetterInterface(QObject* lhs, QObject* rhs) const
+{
+  int count = 0, lhsIdx = -1, rhsIdx = -1;
+  boost::mp11::mp_for_each<PluginTypeOrder>([&](const auto* p) {
+    using plugin_type = std::decay_t<decltype(*p)>;
+    if (lhsIdx < 0 && qobject_cast<plugin_type*>(lhs)) {
+      lhsIdx = count;
+    }
+    if (rhsIdx < 0 && qobject_cast<plugin_type*>(rhs)) {
+      rhsIdx = count;
+    }
+    ++count;
+  });
+  return lhsIdx < rhsIdx;
+}
 
 QStringList PluginContainer::pluginFileNames() const
 {
@@ -292,14 +328,13 @@ QStringList PluginContainer::pluginFileNames() const
   return result;
 }
 
-
 QObject* PluginContainer::as_qobject(MOBase::IPlugin* plugin) const
 {
   // Find the correspond QObject - Can this be done safely with a cast?
   auto& objects = bf::at_key<QObject>(m_Plugins);
   auto it = std::find_if(std::begin(objects), std::end(objects), [plugin](QObject* obj) {
     return qobject_cast<IPlugin*>(obj) == plugin;
-    });
+  });
 
   if (it == std::end(objects)) {
     return nullptr;
@@ -351,19 +386,44 @@ void PluginContainer::registerGame(IPluginGame *game)
   m_SupportedGames.insert({ game->gameName(), game });
 }
 
-bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName, MOBase::IPluginProxy* pluginProxy)
+IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileName, MOBase::IPluginProxy* pluginProxy)
 {
-  // Storing the original QObject* is a bit of a hack as I couldn't figure out any
-  // way to cast directly between IPlugin* and IPluginDiagnose*
-  bf::at_key<QObject>(m_Plugins).push_back(plugin);
 
   // generic treatment for all plugins
   IPlugin *pluginObj = qobject_cast<IPlugin*>(plugin);
   if (pluginObj == nullptr) {
-    log::debug("not an IPlugin");
-    return false;
+    log::debug("PluginContainer::registerPlugin() called with a non IPlugin QObject.");
+    return nullptr;
   }
-  bf::at_key<QString>(m_AccessPlugins)[pluginObj->name()] = pluginObj;
+
+  // If we already a plugin with this name:
+  auto& mapNames = bf::at_key<QString>(m_AccessPlugins);
+  if (mapNames.contains(pluginObj->name())) {
+
+    IPlugin* other = mapNames[pluginObj->name()];
+
+    // If both plugins are from the same proxy and the same file, this is usually
+    // ok (in theory some one could write two different classes from the same Python file/module):
+    if (pluginProxy && m_Requirements.at(other).proxy() == pluginProxy
+      && as_qobject(other)->property("filename") == fileName) {
+      if (isBetterInterface(plugin, as_qobject(other))) {
+        log::debug("replacing plugin '{}' with interfaces [{}] by one with interfaces [{}]",
+          pluginObj->name(), implementedInterfaces(other).join(", "), implementedInterfaces(pluginObj).join(", "));
+        bf::at_key<QString>(m_AccessPlugins)[pluginObj->name()] = pluginObj;
+      }
+    }
+    else {
+      log::warn("Trying to register two plugins with the name '{}', the second one will not be registered.",
+        pluginObj->name());
+    }
+  }
+  else {
+    bf::at_key<QString>(m_AccessPlugins)[pluginObj->name()] = pluginObj;
+  }
+
+  // Storing the original QObject* is a bit of a hack as I couldn't figure out any
+  // way to cast directly between IPlugin* and IPluginDiagnose*
+  bf::at_key<QObject>(m_Plugins).push_back(plugin);
 
   plugin->setProperty("filename", fileName);
 
@@ -392,7 +452,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName, M
     IPluginModPage *modPage = qobject_cast<IPluginModPage*>(plugin);
     if (initPlugin(modPage, pluginProxy)) {
       bf::at_key<IPluginModPage>(m_Plugins).push_back(modPage);
-      return true;
+      return modPage;
     }
   }
   { // game plugin
@@ -402,7 +462,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName, M
       if (initPlugin(game, pluginProxy)) {
         bf::at_key<IPluginGame>(m_Plugins).push_back(game);
         registerGame(game);
-        return true;
+        return game;
       }
     }
   }
@@ -410,7 +470,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName, M
     IPluginTool *tool = qobject_cast<IPluginTool*>(plugin);
     if (initPlugin(tool, pluginProxy)) {
       bf::at_key<IPluginTool>(m_Plugins).push_back(tool);
-      return true;
+      return tool;
     }
   }
   { // installer plugins
@@ -420,7 +480,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName, M
       if (m_Organizer) {
         m_Organizer->installationManager()->registerInstaller(installer);
       }
-      return true;
+      return installer;
     }
   }
   { // preview plugins
@@ -428,7 +488,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName, M
     if (initPlugin(preview, pluginProxy)) {
       bf::at_key<IPluginPreview>(m_Plugins).push_back(preview);
       m_PreviewGenerator.registerPlugin(preview);
-      return true;
+      return preview;
     }
   }
   { // proxy plugins
@@ -439,12 +499,21 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName, M
             QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
       for (const QString &pluginName : pluginNames) {
         try {
-          // we get a list of matching plugins as proxies don't necessarily have a good way of supporting multiple inheritance
+          // We get a list of matching plugins as proxies can return multiple plugins
+          // per file and do not  have a good way of supporting multiple inheritance.
           QList<QObject*> matchingPlugins = proxy->instantiate(pluginName);
+
+          // We are going to group plugin by names and "fix" them later:
+          std::map<QString, std::vector<IPlugin*>> proxiedByNames;
+
           for (QObject *proxiedPlugin : matchingPlugins) {
             if (proxiedPlugin != nullptr) {
-              if (registerPlugin(proxiedPlugin, pluginName, proxy)) {
-                log::debug("loaded plugin \"{}\"", QFileInfo(pluginName).fileName());
+              if (IPlugin* proxied = registerPlugin(proxiedPlugin, pluginName, proxy); proxied) {
+                log::debug("loaded plugin '{}' from '{}' - [{}]",
+                  proxied->name(), QFileInfo(pluginName).fileName(), implementedInterfaces(proxied).join(", "));
+
+                // Store the plugin for later:
+                proxiedByNames[proxied->name()].push_back(proxied);
               }
               else {
                 log::warn(
@@ -454,11 +523,28 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName, M
               }
             }
           }
+
+          // Fake masters:
+          for (auto& [name, proxiedPlugins] : proxiedByNames) {
+            if (proxiedPlugins.size() > 1) {
+              auto it = std::min_element(std::begin(proxiedPlugins), std::end(proxiedPlugins),
+                [&](auto const& lhs, auto const& rhs) {
+                  return isBetterInterface(as_qobject(lhs), as_qobject(rhs));
+                });
+
+              for (auto& proxiedPlugin : proxiedPlugins) {
+                if (proxiedPlugin != *it) {
+                  m_Requirements.at(proxiedPlugin).setMaster(*it);
+                }
+              }
+            }
+          }
+
         } catch (const std::exception &e) {
           reportError(QObject::tr("failed to initialize plugin %1: %2").arg(pluginName).arg(e.what()));
         }
       }
-      return true;
+      return proxy;
     }
   }
 
@@ -467,13 +553,13 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName, M
     IPlugin *dummy = qobject_cast<IPlugin*>(plugin);
     if (initPlugin(dummy, pluginProxy)) {
       bf::at_key<IPlugin>(m_Plugins).push_back(dummy);
-      return true;
+      return dummy;
     }
   }
 
   log::debug("no matching plugin interface");
 
-  return false;
+  return nullptr;
 }
 
 struct clearPlugins
@@ -531,6 +617,12 @@ bool PluginContainer::isEnabled(IPlugin* plugin) const
   // Check if the plugin is enabled:
   if (!m_Organizer->persistent(plugin->name(), "enabled", true).toBool()) {
     return false;
+  }
+
+  auto& requirements = m_Requirements.at(plugin);
+
+  if (requirements.master()) {
+    return isEnabled(requirements.master());
   }
 
   // Check the requirements:
@@ -721,8 +813,9 @@ void PluginContainer::loadPlugins()
           "failed to load plugin {}: {}",
           pluginName, pluginLoader->errorString());
       } else {
-        if (registerPlugin(pluginLoader->instance(), pluginName, nullptr)) {
-          log::debug("loaded plugin \"{}\"", QFileInfo(pluginName).fileName());
+        if (IPlugin* plugin = registerPlugin(pluginLoader->instance(), pluginName, nullptr); plugin) {
+          log::debug("loaded plugin '{}' from '{}' - [{}]",
+            plugin->name(), QFileInfo(pluginName).fileName(), implementedInterfaces(plugin).join(", "));
           m_PluginLoaders.push_back(pluginLoader.release());
         } else {
           m_FailedPlugins.push_back(pluginName);

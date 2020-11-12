@@ -91,11 +91,15 @@ private:
   // constructed object before calling init().
   void fetchRequirements();
 
+  // Set the master for this plugin. This is required to "fake" masters for proxied plugins.
+  void setMaster(MOBase::IPlugin* master);
+
   friend class PluginContainer;
 
   PluginContainer* m_PluginContainer;
   MOBase::IPlugin* m_Plugin;
   MOBase::IPluginProxy* m_PluginProxy;
+  MOBase::IPlugin* m_Master;
   std::vector<std::unique_ptr<const MOBase::IPluginRequirement>> m_Requirements;
   MOBase::IOrganizer* m_Organizer;
   std::vector<MOBase::IPlugin*> m_RequiredFor;
@@ -107,6 +111,9 @@ private:
 };
 
 
+/**
+ *
+ */
 class PluginContainer : public QObject, public MOBase::IPluginDiagnose
 {
 
@@ -229,6 +236,10 @@ public:
    * @param t Name of the plugin to retrieve, or non-IPlugin interface.
    *
    * @return the corresponding plugin, or a null pointer.
+   *
+   * @note It is possible to have multiple plugins for the same name when
+   *     dealing with proxied plugins (e.g. Python), in which case the
+   *     most important one will be returned, as specified in PluginTypeOrder.
    */
   MOBase::IPlugin* plugin(QString const& pluginName) const;
   MOBase::IPlugin* plugin(MOBase::IPluginDiagnose* diagnose) const;
@@ -321,6 +332,17 @@ private:
   friend class PluginRequirements;
 
   /**
+   * @brief Check if a plugin implements a "better" interface than another
+   *     one, as specified by PluginTypeOrder.
+   *
+   * @param lhs, rhs The plugin to compare.
+   *
+   * @return true if the left plugin implements a better interface than the right
+   *     one, false otherwise (or if both implements the same interface).
+   */
+  bool isBetterInterface(QObject* lhs, QObject* rhs) const;
+
+  /**
    * @brief Find the QObject* corresponding to the given plugin.
    *
    * @param plugin The plugin to find the QObject* for.
@@ -341,7 +363,7 @@ private:
 
   void registerGame(MOBase::IPluginGame *game);
 
-  bool registerPlugin(QObject *pluginObj, const QString &fileName, MOBase::IPluginProxy *proxy);
+  MOBase::IPlugin* registerPlugin(QObject *pluginObj, const QString &fileName, MOBase::IPluginProxy *proxy);
 
   OrganizerCore *m_Organizer;
 
