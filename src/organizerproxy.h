@@ -69,6 +69,10 @@ public:
   virtual QVariant pluginSetting(const QString& pluginName, const QString& key) const override;
   virtual void setPluginSetting(const QString& pluginName, const QString& key, const QVariant& value) override;
   virtual bool onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func) override;
+  virtual bool onPluginEnabled(std::function<void(const MOBase::IPlugin*)> const& func) override;
+  virtual bool onPluginEnabled(const QString& pluginName, std::function<void()> const& func) override;
+  virtual bool onPluginDisabled(std::function<void(const MOBase::IPlugin*)> const& func) override;
+  virtual bool onPluginDisabled(const QString& pluginName, std::function<void()> const& func) override;
 
   virtual MOBase::IPluginGame const *managedGame() const;
 

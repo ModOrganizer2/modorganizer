@@ -325,6 +325,12 @@ public: // IPluginDiagnose interface
 
 signals:
 
+  /**
+   * @brief Emitted plugins are enabled or disabled.
+   */
+  void pluginEnabled(MOBase::IPlugin*);
+  void pluginDisabled(MOBase::IPlugin*);
+
   void diagnosisUpdate();
 
 private:

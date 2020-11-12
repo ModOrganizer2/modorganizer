@@ -293,8 +293,36 @@ bool OrganizerProxy::onProfileChanged(std::function<void(MOBase::IProfile*, MOBa
   return m_Proxied->onProfileChanged(MOShared::callIfPluginActive(this, func));
 }
 
+// Always call these one, otherwise plugin cannot detect they are being enabled / disabled:
 bool OrganizerProxy::onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func)
 {
-  // Always call this one, otherwise plugin cannot detect they are being enabled / disabled:
   return m_Proxied->onPluginSettingChanged(func);
+}
+
+bool OrganizerProxy::onPluginEnabled(std::function<void(const IPlugin*)> const& func)
+{
+  return m_Proxied->onPluginEnabled(func);
+}
+
+bool OrganizerProxy::onPluginEnabled(const QString& pluginName, std::function<void()> const& func)
+{
+  return m_Proxied->onPluginEnabled([=](const IPlugin* plugin) {
+    if (plugin->name().compare(pluginName, Qt::CaseInsensitive) == 0) {
+      func();
+    }
+  });
+}
+
+bool OrganizerProxy::onPluginDisabled(std::function<void(const IPlugin*)> const& func)
+{
+  return m_Proxied->onPluginDisabled(func);
+}
+
+bool OrganizerProxy::onPluginDisabled(const QString& pluginName, std::function<void()> const& func)
+{
+  return m_Proxied->onPluginDisabled([=](const IPlugin* plugin) {
+    if (plugin->name().compare(pluginName, Qt::CaseInsensitive) == 0) {
+      func();
+    }
+  });
 }

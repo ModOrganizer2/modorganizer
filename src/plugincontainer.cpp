@@ -624,6 +624,13 @@ void PluginContainer::setEnabled(MOBase::IPlugin* plugin, bool enable, bool depe
   }
 
   m_Organizer->setPersistent(plugin->name(), "enabled", enable, true);
+
+  if (enable) {
+    emit pluginEnabled(plugin);
+  }
+  else {
+    emit pluginDisabled(plugin);
+  }
 }
 
 MOBase::IPlugin* PluginContainer::plugin(QString const& pluginName) const

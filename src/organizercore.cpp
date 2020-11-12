@@ -295,6 +295,11 @@ void OrganizerCore::connectPlugins(PluginContainer *container)
     m_GamePlugin = m_PluginContainer->managedGame(m_GameName);
     emit managedGameChanged(m_GamePlugin);
   }
+
+  connect(m_PluginContainer, &PluginContainer::pluginEnabled,
+    [&](IPlugin* plugin) { m_PluginEnabled(plugin); });
+  connect(m_PluginContainer, &PluginContainer::pluginDisabled,
+    [&](IPlugin* plugin) { m_PluginDisabled(plugin); });
 }
 
 void OrganizerCore::disconnectPlugins()
@@ -1223,6 +1228,16 @@ bool OrganizerCore::onProfileChanged(std::function<void(IProfile*, IProfile*)> c
 bool OrganizerCore::onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func)
 {
   return m_PluginSettingChanged.connect(func).connected();
+}
+
+bool OrganizerCore::onPluginEnabled(std::function<void(const IPlugin*)> const& func)
+{
+  return m_PluginEnabled.connect(func).connected();
+}
+
+bool OrganizerCore::onPluginDisabled(std::function<void(const IPlugin*)> const& func)
+{
+  return m_PluginDisabled.connect(func).connected();
 }
 
 void OrganizerCore::refresh(bool saveChanges)
