@@ -860,9 +860,11 @@ void ModList::highlightMods(const QItemSelectionModel *selection, const MOShared
     if (fileEntry.get() != nullptr) {
 
       QString originName = QString::fromStdWString(directoryEntry.getOriginByID(fileEntry->getOrigin()).getName());
-
-      auto modInfo = ModInfo::getByName(originName);
-      modInfo->setPluginSelected(true);
+      const auto index = ModInfo::getIndex(originName);
+      if (index != UINT_MAX) {
+        auto modInfo = ModInfo::getByIndex(index);
+        modInfo->setPluginSelected(true);
+      }
     }
   }
   notifyChange(0, rowCount() - 1);
