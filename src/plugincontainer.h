@@ -331,6 +331,20 @@ private:
 
   friend class PluginRequirements;
 
+
+  /**
+   * @brief Retrieved the (localized) names of interfaces implemented by the given
+   *     plugin.
+   *
+   * @param plugin The plugin to retrieve interface for.
+   *
+   * @return the (localized) names of interfaces implemented by this plugin.
+   *
+   * @note This function can be used to get implemented interfaces before registering
+   *     a plugin.
+   */
+  QStringList implementedInterfaces(QObject* plugin) const;
+
   /**
    * @brief Check if a plugin implements a "better" interface than another
    *     one, as specified by PluginTypeOrder.

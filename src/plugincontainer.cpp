@@ -253,6 +253,11 @@ QStringList PluginContainer::implementedInterfaces(IPlugin* plugin) const
     return {};
   }
 
+  return implementedInterfaces(oPlugin);
+}
+
+QStringList PluginContainer::implementedInterfaces(QObject * oPlugin) const
+{
   // Find all the names:
   QStringList names;
   boost::mp11::mp_for_each<PluginTypeOrder>([oPlugin, &names](const auto* p) {
@@ -275,26 +280,8 @@ QStringList PluginContainer::implementedInterfaces(IPlugin* plugin) const
 
 QString PluginContainer::topImplementedInterface(IPlugin* plugin) const
 {
-  // We need a QObject to be able to qobject_cast<> to the plugin types:
-  QObject* oPlugin = as_qobject(plugin);
-
-  if (!oPlugin) {
-    return {};
-  }
-
-  // Find all the names:
-  QString name;
-  boost::mp11::mp_for_each<PluginTypeOrder>([oPlugin, &name](auto* p) {
-    using plugin_type = std::decay_t<decltype(*p)>;
-    if (name.isEmpty() && qobject_cast<plugin_type*>(oPlugin)) {
-      auto tname = PluginTypeName<plugin_type>::value();
-      if (!tname.isEmpty()) {
-        name = tname;
-      }
-    }
-    });
-
-  return name;
+  auto interfaces = implementedInterfaces(plugin);
+  return interfaces.isEmpty() ? "" : interfaces[0];
 }
 
 bool PluginContainer::isBetterInterface(QObject* lhs, QObject* rhs) const
@@ -408,7 +395,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
       && as_qobject(other)->property("filename") == fileName) {
       if (isBetterInterface(plugin, as_qobject(other))) {
         log::debug("replacing plugin '{}' with interfaces [{}] by one with interfaces [{}]",
-          pluginObj->name(), implementedInterfaces(other).join(", "), implementedInterfaces(pluginObj).join(", "));
+          pluginObj->name(), implementedInterfaces(other).join(", "), implementedInterfaces(plugin).join(", "));
         bf::at_key<QString>(m_AccessPlugins)[pluginObj->name()] = pluginObj;
       }
     }
@@ -562,15 +549,6 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
   return nullptr;
 }
 
-struct clearPlugins
-{
-    template<typename T>
-    void operator()(T& t) const
-    {
-      t.second.clear();
-    }
-};
-
 void PluginContainer::unloadPlugins()
 {
   if (m_UserInterface != nullptr) {
@@ -582,7 +560,7 @@ void PluginContainer::unloadPlugins()
     m_Organizer->disconnectPlugins();
   }
 
-  bf::for_each(m_Plugins, clearPlugins());
+  bf::for_each(m_Plugins, [](auto& t) { t.second.clear(); });
 
   for (const boost::signals2::connection &connection : m_DiagnosisConnections) {
     connection.disconnect();
@@ -614,15 +592,16 @@ bool PluginContainer::isEnabled(IPlugin* plugin) const
     return plugin == m_Organizer->managedGame();
   }
 
-  // Check if the plugin is enabled:
-  if (!m_Organizer->persistent(plugin->name(), "enabled", true).toBool()) {
-    return false;
-  }
-
+  // Check the master, if any:
   auto& requirements = m_Requirements.at(plugin);
 
   if (requirements.master()) {
     return isEnabled(requirements.master());
+  }
+
+  // Check if the plugin is enabled:
+  if (!m_Organizer->persistent(plugin->name(), "enabled", true).toBool()) {
+    return false;
   }
 
   // Check the requirements:

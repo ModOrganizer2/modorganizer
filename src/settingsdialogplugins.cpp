@@ -31,7 +31,7 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginConta
   // display plugin settings
   QSet<QString> handledNames;
   for (IPlugin* plugin : settings().plugins().plugins()) {
-    if (handledNames.contains(plugin->name()) || !plugin->master().isEmpty()) {
+    if (handledNames.contains(plugin->name()) || m_pluginContainer->requirements(plugin).master()) {
       continue;
     }
 
