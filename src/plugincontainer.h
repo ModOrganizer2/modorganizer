@@ -376,10 +376,12 @@ private:
    *
    * @param plugin The plugin to initialize.
    * @param proxy The proxy that created this plugin (can be null).
+   * @param skipInit If true, IPlugin::init() will not be called, regardless
+   *     of the state of the container.
    *
    * @return true if the plugin was initialized correctly, false otherwise.
    */
-  bool initPlugin(MOBase::IPlugin *plugin, MOBase::IPluginProxy* proxy);
+  bool initPlugin(MOBase::IPlugin *plugin, MOBase::IPluginProxy* proxy, bool skipInit);
 
   void registerGame(MOBase::IPluginGame *game);
 

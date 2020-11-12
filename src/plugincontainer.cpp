@@ -330,7 +330,7 @@ QObject* PluginContainer::as_qobject(MOBase::IPlugin* plugin) const
   return *it;
 }
 
-bool PluginContainer::initPlugin(IPlugin *plugin, IPluginProxy *pluginProxy)
+bool PluginContainer::initPlugin(IPlugin *plugin, IPluginProxy *pluginProxy, bool skipInit)
 {
   // when MO has no instance loaded, init() is not called on plugins, except
   // for proxy plugins, where init() is called with a null IOrganizer
@@ -357,7 +357,7 @@ bool PluginContainer::initPlugin(IPlugin *plugin, IPluginProxy *pluginProxy)
 
   auto [it, bl] = m_Requirements.emplace(plugin, PluginRequirements(this, plugin, proxy, pluginProxy));
 
-  if (!plugin->init(proxy)) {
+  if (!skipInit && !plugin->init(proxy)) {
     log::warn("plugin failed to initialize");
     return false;
   }
@@ -384,6 +384,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
   }
 
   // If we already a plugin with this name:
+  bool skipInit = false;
   auto& mapNames = bf::at_key<QString>(m_AccessPlugins);
   if (mapNames.contains(pluginObj->name())) {
 
@@ -393,6 +394,10 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
     // ok (in theory some one could write two different classes from the same Python file/module):
     if (pluginProxy && m_Requirements.at(other).proxy() == pluginProxy
       && as_qobject(other)->property("filename") == fileName) {
+
+      // Plugin has already been initialized:
+      skipInit = true;
+
       if (isBetterInterface(plugin, as_qobject(other))) {
         log::debug("replacing plugin '{}' with interfaces [{}] by one with interfaces [{}]",
           pluginObj->name(), implementedInterfaces(other).join(", "), implementedInterfaces(plugin).join(", "));
@@ -402,6 +407,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
     else {
       log::warn("Trying to register two plugins with the name '{}', the second one will not be registered.",
         pluginObj->name());
+      return nullptr;
     }
   }
   else {
@@ -437,7 +443,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
   }
   { // mod page plugin
     IPluginModPage *modPage = qobject_cast<IPluginModPage*>(plugin);
-    if (initPlugin(modPage, pluginProxy)) {
+    if (initPlugin(modPage, pluginProxy, skipInit)) {
       bf::at_key<IPluginModPage>(m_Plugins).push_back(modPage);
       return modPage;
     }
@@ -446,7 +452,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
     IPluginGame *game = qobject_cast<IPluginGame*>(plugin);
     if (game) {
       game->detectGame();
-      if (initPlugin(game, pluginProxy)) {
+      if (initPlugin(game, pluginProxy, skipInit)) {
         bf::at_key<IPluginGame>(m_Plugins).push_back(game);
         registerGame(game);
         return game;
@@ -455,14 +461,14 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
   }
   { // tool plugins
     IPluginTool *tool = qobject_cast<IPluginTool*>(plugin);
-    if (initPlugin(tool, pluginProxy)) {
+    if (initPlugin(tool, pluginProxy, skipInit)) {
       bf::at_key<IPluginTool>(m_Plugins).push_back(tool);
       return tool;
     }
   }
   { // installer plugins
     IPluginInstaller *installer = qobject_cast<IPluginInstaller*>(plugin);
-    if (initPlugin(installer, pluginProxy)) {
+    if (initPlugin(installer, pluginProxy, skipInit)) {
       bf::at_key<IPluginInstaller>(m_Plugins).push_back(installer);
       if (m_Organizer) {
         m_Organizer->installationManager()->registerInstaller(installer);
@@ -472,7 +478,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
   }
   { // preview plugins
     IPluginPreview *preview = qobject_cast<IPluginPreview*>(plugin);
-    if (initPlugin(preview, pluginProxy)) {
+    if (initPlugin(preview, pluginProxy, skipInit)) {
       bf::at_key<IPluginPreview>(m_Plugins).push_back(preview);
       m_PreviewGenerator.registerPlugin(preview);
       return preview;
@@ -480,7 +486,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
   }
   { // proxy plugins
     IPluginProxy *proxy = qobject_cast<IPluginProxy*>(plugin);
-    if (initPlugin(proxy, pluginProxy)) {
+    if (initPlugin(proxy, pluginProxy, skipInit)) {
       bf::at_key<IPluginProxy>(m_Plugins).push_back(proxy);
       QStringList pluginNames = proxy->pluginList(
             QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
@@ -538,7 +544,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
   { // dummy plugins
     // only initialize these, no processing otherwise
     IPlugin *dummy = qobject_cast<IPlugin*>(plugin);
-    if (initPlugin(dummy, pluginProxy)) {
+    if (initPlugin(dummy, pluginProxy, skipInit)) {
       bf::at_key<IPlugin>(m_Plugins).push_back(dummy);
       return dummy;
     }
@@ -561,6 +567,8 @@ void PluginContainer::unloadPlugins()
   }
 
   bf::for_each(m_Plugins, [](auto& t) { t.second.clear(); });
+  bf::for_each(m_AccessPlugins, [](auto& t) { t.second.clear(); });
+  m_Requirements.clear();
 
   for (const boost::signals2::connection &connection : m_DiagnosisConnections) {
     connection.disconnect();
