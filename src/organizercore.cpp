@@ -1465,10 +1465,13 @@ void OrganizerCore::loggedInAction(QWidget* parent, std::function<void ()> f)
 
 void OrganizerCore::requestDownload(const QUrl &url, QNetworkReply *reply)
 {
-  if (m_PluginContainer != nullptr) {
-    for (IPluginModPage *modPage :
-         m_PluginContainer->plugins<MOBase::IPluginModPage>()) {
-      ModRepositoryFileInfo *fileInfo = new ModRepositoryFileInfo();
+  if (!m_PluginContainer) {
+    return;
+  }
+  for (IPluginModPage *modPage :
+        m_PluginContainer->plugins<MOBase::IPluginModPage>()) {
+    if (m_PluginContainer->isEnabled(modPage)) {
+      ModRepositoryFileInfo* fileInfo = new ModRepositoryFileInfo();
       if (modPage->handlesDownload(url, reply->url(), *fileInfo)) {
         fileInfo->repository = modPage->name();
         m_DownloadManager.addDownload(reply, fileInfo);
