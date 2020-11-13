@@ -467,6 +467,11 @@ MainWindow::MainWindow(Settings &settings
   connect(ui->menuToolbars, &QMenu::aboutToShow, [&]{ updateToolbarMenu(); });
   connect(ui->menuView, &QMenu::aboutToShow, [&]{ updateViewMenu(); });
   connect(ui->actionTool->menu(), &QMenu::aboutToShow, [&] { updateToolMenu(); });
+  connect(&m_PluginContainer, &PluginContainer::pluginEnabled, this, [this](IPlugin* plugin) {
+    if (m_PluginContainer.implementInterface<IPluginModPage>(plugin)) { updateModPageMenu(); } });
+  connect(&m_PluginContainer, &PluginContainer::pluginDisabled, this, [this](IPlugin* plugin) {
+    if (m_PluginContainer.implementInterface<IPluginModPage>(plugin)) { updateModPageMenu(); } });
+
 
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this, &MainWindow::modInstalled);
   connect(&m_OrganizerCore, &OrganizerCore::close, this, &QMainWindow::close);
@@ -508,9 +513,7 @@ MainWindow::MainWindow(Settings &settings
     installTranslator(QFileInfo(fileName).baseName());
   }
 
-  for (IPluginModPage *modPagePlugin : m_PluginContainer.plugins<IPluginModPage>()) {
-    registerModPage(modPagePlugin);
-  }
+  updateModPageMenu();
 
   // refresh profiles so the current profile can be activated
   refreshProfiles(false);
@@ -1670,13 +1673,6 @@ void MainWindow::updateToolMenu()
 
 void MainWindow::registerModPage(IPluginModPage *modPage)
 {
-  // turn the browser action into a drop-down menu if necessary
-  if (!ui->actionModPage->isVisible()) {
-    ui->toolBar->removeAction(ui->actionNexus);
-    ui->actionModPage->menu()->addAction(ui->actionNexus);
-    ui->actionModPage->setVisible(true);
-  }
-
   QAction *action = new QAction(modPage->icon(), modPage->displayName(), this);
   modPage->setParentWidget(this);
   connect(action, &QAction::triggered, this, [this, modPage]() {
@@ -1701,6 +1697,41 @@ void MainWindow::registerModPage(IPluginModPage *modPage)
   ui->actionModPage->menu()->addAction(action);
 }
 
+void MainWindow::updateModPageMenu()
+{
+  // Clear the menu:
+  ui->actionModPage->menu()->clear();
+  ui->actionModPage->menu()->addAction(ui->actionNexus);
+
+  std::vector<IPluginModPage*> modPagePlugins = m_PluginContainer.plugins<IPluginModPage>();
+
+  // Sort the plugins by display name
+  std::sort(std::begin(modPagePlugins), std::end(modPagePlugins),
+    [](IPluginModPage* left, IPluginModPage* right) {
+      return left->displayName().toLower() < right->displayName().toLower();
+    }
+  );
+
+  // Remove disabled plugins:
+  modPagePlugins.erase(
+    std::remove_if(std::begin(modPagePlugins), std::end(modPagePlugins), [&](auto* tool) {
+      return !m_PluginContainer.isEnabled(tool);
+      }),
+    modPagePlugins.end());
+
+  for (auto* modPagePlugin : modPagePlugins) {
+    registerModPage(modPagePlugin);
+  }
+
+  // No mod page plugin and the menu was visible:
+  if (modPagePlugins.empty()) {
+    ui->toolBar->insertAction(ui->actionAdd_Profile, ui->actionNexus);
+  }
+  else {
+    ui->toolBar->removeAction(ui->actionNexus);
+  }
+  ui->actionModPage->setVisible(!modPagePlugins.empty());
+}
 
 void MainWindow::startExeAction()
 {

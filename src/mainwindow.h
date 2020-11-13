@@ -210,6 +210,7 @@ private:
 
   void updateToolbarMenu();
   void updateToolMenu();
+  void updateModPageMenu();
   void updateViewMenu();
 
   QMenu* createPopupMenu() override;
