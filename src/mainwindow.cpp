@@ -260,7 +260,6 @@ MainWindow::MainWindow(Settings &settings
   , m_ContextItem(nullptr)
   , m_ContextAction(nullptr)
   , m_ContextRow(-1)
-  , m_browseModPage(nullptr)
   , m_CurrentSaveView(nullptr)
   , m_OrganizerCore(organizerCore)
   , m_PluginContainer(pluginContainer)
@@ -811,6 +810,7 @@ static QModelIndex mapToModel(const QAbstractItemModel *targetModel, QModelIndex
 
 void MainWindow::setupToolbar()
 {
+  setupActionMenu(ui->actionModPage);
   setupActionMenu(ui->actionTool);
   setupActionMenu(ui->actionHelp);
   setupActionMenu(ui->actionEndorseMO);
@@ -1596,29 +1596,6 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event)
   return false;
 }
 
-void MainWindow::modPagePluginInvoke()
-{
-  QAction *triggeredAction = qobject_cast<QAction*>(sender());
-  IPluginModPage *plugin = qobject_cast<IPluginModPage*>(triggeredAction->data().value<QObject*>());
-  if (plugin != nullptr) {
-    if (plugin->useIntegratedBrowser()) {
-
-      if (!m_IntegratedBrowser) {
-        m_IntegratedBrowser.reset(new BrowserDialog);
-
-        connect(
-          m_IntegratedBrowser.get(), SIGNAL(requestDownload(QUrl,QNetworkReply*)),
-          &m_OrganizerCore, SLOT(requestDownload(QUrl,QNetworkReply*)));
-      }
-
-      m_IntegratedBrowser->setWindowTitle(plugin->displayName());
-      m_IntegratedBrowser->openUrl(plugin->pageURL());
-    } else {
-      QDesktopServices::openUrl(QUrl(plugin->pageURL()));
-    }
-  }
-}
-
 void MainWindow::registerPluginTool(IPluginTool *tool, QString name, QMenu *menu)
 {
   if (!menu) {
@@ -1694,23 +1671,34 @@ void MainWindow::updateToolMenu()
 void MainWindow::registerModPage(IPluginModPage *modPage)
 {
   // turn the browser action into a drop-down menu if necessary
-  if (!m_browseModPage) {
-    m_browseModPage = new QAction(ui->actionNexus->icon(), tr("Browse Mod Page"), this);
-    setupActionMenu(m_browseModPage);
-
-    m_browseModPage->menu()->addAction(ui->actionNexus);
-
-    ui->toolBar->insertAction(ui->actionNexus, m_browseModPage);
+  if (!ui->actionModPage->isVisible()) {
     ui->toolBar->removeAction(ui->actionNexus);
+    ui->actionModPage->menu()->addAction(ui->actionNexus);
+    ui->actionModPage->setVisible(true);
   }
 
   QAction *action = new QAction(modPage->icon(), modPage->displayName(), this);
   modPage->setParentWidget(this);
-  action->setData(QVariant::fromValue(reinterpret_cast<QObject*>(modPage)));
+  connect(action, &QAction::triggered, this, [this, modPage]() {
+    if (modPage->useIntegratedBrowser()) {
 
-  connect(action, SIGNAL(triggered()), this, SLOT(modPagePluginInvoke()), Qt::QueuedConnection);
+      if (!m_IntegratedBrowser) {
+        m_IntegratedBrowser.reset(new BrowserDialog);
 
-  m_browseModPage->menu()->addAction(action);
+        connect(
+          m_IntegratedBrowser.get(), SIGNAL(requestDownload(QUrl, QNetworkReply*)),
+          &m_OrganizerCore, SLOT(requestDownload(QUrl, QNetworkReply*)));
+      }
+
+      m_IntegratedBrowser->setWindowTitle(modPage->displayName());
+      m_IntegratedBrowser->openUrl(modPage->pageURL());
+    }
+    else {
+      QDesktopServices::openUrl(QUrl(modPage->pageURL()));
+    }
+  }, Qt::QueuedConnection);
+
+  ui->actionModPage->menu()->addAction(action);
 }
 
 

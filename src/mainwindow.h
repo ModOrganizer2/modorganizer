@@ -156,8 +156,6 @@ public slots:
 
   void directory_refreshed();
 
-  void modPagePluginInvoke();
-
 signals:
 
   /**
@@ -324,8 +322,6 @@ private:
   QPersistentModelIndex m_ContextIdx;
   QTreeWidgetItem *m_ContextItem;
   QAction *m_ContextAction;
-
-  QAction* m_browseModPage;
 
   CategoryFactory &m_CategoryFactory;
 
