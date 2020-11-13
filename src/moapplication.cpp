@@ -170,12 +170,13 @@ int MOApplication::run(MOMultiProcess& multiProcess)
   {
     try
     {
-      // resets things when MO is "restarted"
-      resetForRestart();
-
       tt.stop();
+
       const auto r = doOneRun(multiProcess);
+
       if (r == RestartExitCode) {
+        // resets things when MO is "restarted"
+        resetForRestart();
         continue;
       }
 
@@ -396,12 +397,20 @@ std::optional<Instance> MOApplication::getCurrentInstance()
 
   if (!currentInstance)
   {
+    // clear any overrides that might have been given on the command line
+    m.clearOverrides();
+    m_cl.clear();
+
     currentInstance = selectInstance();
   }
   else
   {
     if (!QDir(currentInstance->directory()).exists()) {
       // the previously used instance doesn't exist anymore
+
+      // clear any overrides that might have been given on the command line
+      m.clearOverrides();
+      m_cl.clear();
 
       if (m.hasAnyInstances()) {
         MOShared::criticalOnTop(QObject::tr(
@@ -466,6 +475,9 @@ void MOApplication::resetForRestart()
 
   // don't reprocess command line
   m_cl.clear();
+
+  // clear instance and profile overrides
+  InstanceManager::singleton().clearOverrides();
 }
 
 bool MOApplication::setStyleFile(const QString& styleName)

@@ -232,6 +232,11 @@ public:
   //
   void overrideProfile(const QString& profileName);
 
+  // clears instance and profile overrides, used when restarting MO to select
+  // another instance
+  //
+  void clearOverrides();
+
   // returns a game plugin that considers the given directory valid
   //
   // this will check for an INI file in the directory and use its game name
