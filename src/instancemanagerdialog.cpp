@@ -580,13 +580,17 @@ void InstanceManagerDialog::onSelection()
 
 void InstanceManagerDialog::createNew()
 {
-  CreateInstanceDialog dlg(m_pc, &Settings::instance(), this);
+  // there might not be settings available; the dialog can be shown when the
+  // last selected instance doesn't exist anymore
+  CreateInstanceDialog dlg(m_pc, Settings::maybeInstance(), this);
+
   if (dlg.exec() != QDialog::Accepted) {
     return;
   }
 
   if (dlg.switching()) {
     // restarting MO
+    accept();
     return;
   }
 

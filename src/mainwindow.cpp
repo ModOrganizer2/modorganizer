@@ -1966,7 +1966,7 @@ void MainWindow::refreshSaveList()
     files.append(it.fileInfo());
   }
   std::sort(files.begin(), files.end(), [](auto const& lhs, auto const& rhs) {
-    return lhs.fileTime(QFileDevice::FileModificationTime) < rhs.fileTime(QFileDevice::FileModificationTime);
+    return lhs.fileTime(QFileDevice::FileModificationTime) > rhs.fileTime(QFileDevice::FileModificationTime);
   });
 
   for (const QFileInfo &file : files) {
