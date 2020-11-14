@@ -81,9 +81,9 @@ void GeneralSettingsTab::addLanguages()
 
   const QRegExp exp(pattern);
 
-  QDirIterator iter(
-    QCoreApplication::applicationDirPath() + "/translations",
-    QDir::Files);
+  QString translationsPath = qApp->applicationDirPath()
+    + "/" + QString::fromStdWString(AppConfig::translationsPath());
+  QDirIterator iter(translationsPath, QDir::Files);
 
   std::vector<std::pair<QString, QString>> languages;
 
