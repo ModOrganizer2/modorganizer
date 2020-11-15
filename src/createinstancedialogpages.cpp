@@ -925,7 +925,7 @@ PathsPage::PathsPage(CreateInstanceDialog& dlg) :
   };
 
   auto setBrowse = [&](QAbstractButton* b, QLineEdit* e) {
-    QObject::connect(b, &QAbstractButton::clicked, [&]{ browse(e); });
+    QObject::connect(b, &QAbstractButton::clicked, [this, e]{ browse(e); });
   };
 
   setEdit(ui->location);
