@@ -1204,7 +1204,9 @@ void MainWindow::createHelpMenu()
 
   ActionList tutorials;
 
-  QDirIterator dirIter(QApplication::applicationDirPath() + "/tutorials", QStringList("*.js"), QDir::Files);
+  QString tutorialPath = QApplication::applicationDirPath() 
+    + "/" + QString::fromStdWString(AppConfig::tutorialsPath()) + "/";
+  QDirIterator dirIter(tutorialPath, QStringList("*.js"), QDir::Files);
   while (dirIter.hasNext()) {
     dirIter.next();
     QString fileName = dirIter.fileName();
@@ -1316,7 +1318,8 @@ bool MainWindow::addProfile()
 
 void MainWindow::hookUpWindowTutorials()
 {
-  QDirIterator dirIter(QApplication::applicationDirPath() + "/tutorials", QStringList("*.js"), QDir::Files);
+  QString tutorialPath = QApplication::applicationDirPath() + "/" + QString::fromStdWString(AppConfig::tutorialsPath()) + "/";
+  QDirIterator dirIter(tutorialPath, QStringList("*.js"), QDir::Files);
   while (dirIter.hasNext()) {
     dirIter.next();
     QString fileName = dirIter.fileName();
@@ -1963,7 +1966,7 @@ void MainWindow::refreshSaveList()
     files.append(it.fileInfo());
   }
   std::sort(files.begin(), files.end(), [](auto const& lhs, auto const& rhs) {
-    return lhs.fileTime(QFileDevice::FileModificationTime) < rhs.fileTime(QFileDevice::FileModificationTime);
+    return lhs.fileTime(QFileDevice::FileModificationTime) > rhs.fileTime(QFileDevice::FileModificationTime);
   });
 
   for (const QFileInfo &file : files) {
@@ -5209,7 +5212,9 @@ void MainWindow::installTranslator(const QString &name)
 {
   QTranslator *translator = new QTranslator(this);
   QString fileName = name + "_" + m_CurrentLanguage;
-  if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
+  QString translationsPath = qApp->applicationDirPath() 
+    + "/" + QString::fromStdWString(AppConfig::translationsPath());
+  if (!translator->load(fileName, translationsPath)) {
     if (m_CurrentLanguage.contains(QRegularExpression("^.*_(EN|en)(-.*)?$"))) {
       log::debug("localization file %s not found", fileName);
     } // we don't actually expect localization files for English (en, en-us, en-uk, and any variation thereof)

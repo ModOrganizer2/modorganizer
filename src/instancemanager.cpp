@@ -538,6 +538,12 @@ void InstanceManager::overrideProfile(const QString& profileName)
   m_overrideProfileName = profileName;
 }
 
+void InstanceManager::clearOverrides()
+{
+  m_overrideInstanceName = {};
+  m_overrideProfileName = {};
+}
+
 std::optional<Instance> InstanceManager::currentInstance() const
 {
   const QString profile = m_overrideProfileName ?

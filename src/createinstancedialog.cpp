@@ -131,7 +131,7 @@ CreateInstanceDialog::CreateInstanceDialog(
   ui->pages->setCurrentIndex(0);
   ui->launch->setChecked(true);
 
-  if (!m_settings)
+  if (!InstanceManager::singleton().hasAnyInstances())
   {
     // first run of MO, there are no instances yet, force launch
     ui->launch->setEnabled(false);
@@ -314,6 +314,10 @@ void CreateInstanceDialog::finish()
   };
 
 
+  // don't restart if this is the first instance, it'll be selected and opened
+  const bool mustRestart = InstanceManager::singleton().hasAnyInstances();
+
+
   try
   {
     std::vector<std::unique_ptr<DirectoryCreator>> dirs;
@@ -396,9 +400,7 @@ void CreateInstanceDialog::finish()
     if (ui->launch->isChecked()) {
       InstanceManager::singleton().setCurrentInstance(ci.instanceName);
 
-      if (m_settings) {
-        // don't restart without settings, it happens on startup when there are
-        // no instances
+      if (mustRestart) {
         ExitModOrganizer(Exit::Restart);
         m_switching = true;
       }
