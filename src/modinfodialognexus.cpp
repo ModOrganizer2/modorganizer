@@ -20,6 +20,7 @@ NexusTab::NexusTab(ModInfoDialogTabContext cx) :
 {
   ui->modID->setValidator(new QIntValidator(ui->modID));
   ui->endorse->setVisible(core().settings().nexus().endorsementIntegration());
+  ui->track->setVisible(core().settings().nexus().trackedIntegration());
 
   connect(ui->modID, &QLineEdit::editingFinished, [&]{ onModIDChanged(); });
   connect(

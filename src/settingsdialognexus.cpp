@@ -298,6 +298,7 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
   ui->offlineBox->setChecked(settings().network().offlineMode());
   ui->proxyBox->setChecked(settings().network().useProxy());
   ui->endorsementBox->setChecked(settings().nexus().endorsementIntegration());
+  ui->trackedBox->setChecked(settings().nexus().trackedIntegration());
   ui->hideAPICounterBox->setChecked(settings().interface().hideAPICounter());
 
   // display server preferences
@@ -355,6 +356,7 @@ void NexusSettingsTab::update()
   settings().network().setOfflineMode(ui->offlineBox->isChecked());
   settings().network().setUseProxy(ui->proxyBox->isChecked());
   settings().nexus().setEndorsementIntegration(ui->endorsementBox->isChecked());
+  settings().nexus().setTrackedIntegration(ui->trackedBox->isChecked());
   settings().interface().setHideAPICounter(ui->hideAPICounterBox->isChecked());
 
   auto servers = settings().network().servers();

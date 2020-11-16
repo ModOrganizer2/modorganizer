@@ -1850,6 +1850,16 @@ void NexusSettings::setEndorsementState(EndorsementState s)
   }
 }
 
+bool NexusSettings::trackedIntegration() const
+{
+  return get<bool>(m_Settings, "Settings", "tracked_integration", true);
+}
+
+void NexusSettings::setTrackedIntegration(bool b) const
+{
+  set(m_Settings, "Settings", "tracked_integration", b);
+}
+
 void NexusSettings::registerAsNXMHandler(bool force)
 {
   const auto nxmPath = QCoreApplication::applicationDirPath() + "/nxmhandler.exe";

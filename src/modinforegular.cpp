@@ -251,8 +251,10 @@ void ModInfoRegular::saveMeta()
       if (m_EndorsedState != EndorsedState::ENDORSED_UNKNOWN) {
         metaFile.setValue("endorsed", static_cast<std::underlying_type_t<EndorsedState>>(m_EndorsedState));
       }
-      metaFile.setValue("tracked", static_cast<std::underlying_type_t<TrackedState>>(m_TrackedState));
-
+      if (m_TrackedState != TrackedState::TRACKED_UNKNOWN) {
+        metaFile.setValue("tracked", static_cast<std::underlying_type_t<TrackedState>>(m_TrackedState));
+      }
+      
       metaFile.remove("installedFiles");
       metaFile.beginWriteArray("installedFiles");
       int idx = 0;
@@ -658,7 +660,8 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
     result.push_back(ModInfo::FLAG_NOTENDORSED);
   }
   if ((m_NexusID > 0) &&
-      (trackedState() == TrackedState::TRACKED_TRUE)) {
+      (trackedState() == TrackedState::TRACKED_TRUE) &&
+      Settings::instance().nexus().trackedIntegration()) {
     result.push_back(ModInfo::FLAG_TRACKED);
   }
   if (!isValid() && !m_Validated) {
