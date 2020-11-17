@@ -217,20 +217,6 @@ void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
 
   // User wants to enable:
   if (checked) {
-    auto problems = requirements.problems();
-    if (!problems.empty()) {
-      QStringList descriptions;
-      for (auto& problem : problems) {
-        descriptions.append(problem.shortDescription());
-      }
-      QMessageBox::warning(
-        parentWidget(), QObject::tr("Cannot enable plugin"),
-        QObject::tr("<p>This plugin cannot be enabled:<p><ul>%1</ul>")
-        .arg("<li>" + descriptions.join("</li><li>") + "</li>"), QMessageBox::Ok);
-      ui->enabledCheckbox->setChecked(false);
-      return;
-    }
-
     m_pluginContainer->setEnabled(plugin, true, false);
   }
   else {
@@ -302,18 +288,42 @@ void PluginsSettingsTab::on_pluginsList_currentItemChanged(QTreeWidgetItem *curr
   ui->versionLabel->setText(plugin->version().canonicalString());
   ui->descriptionLabel->setText(plugin->description());
 
-  ui->enabledCheckbox->setDisabled(false);
-  ui->enabledCheckbox->setToolTip("");
+  // Checkbox, do not show for children or game plugins, disable
+  // if the plugin cannot be enabled.
   ui->enabledCheckbox->setVisible(
     !m_pluginContainer->implementInterface<IPluginGame>(plugin)
     && plugin->master().isEmpty());
+
+  bool enabled = m_pluginContainer->isEnabled(plugin);
+  auto& requirements = m_pluginContainer->requirements(plugin);
+  auto problems = requirements.problems();
+
   if (m_pluginContainer->requirements(plugin).isCorePlugin()) {
     ui->enabledCheckbox->setDisabled(true);
     ui->enabledCheckbox->setToolTip(
       QObject::tr("This plugin is required for Mod Organizer to work properly and cannot be disabled."));
   }
-
-  ui->enabledCheckbox->setChecked(m_pluginContainer->isEnabled(plugin));
+  // Plugin is enable or can be enabled.
+  else if (enabled || problems.empty()) {
+    ui->enabledCheckbox->setDisabled(false);
+    ui->enabledCheckbox->setToolTip("");
+    ui->enabledCheckbox->setChecked(enabled);
+  }
+  // Plugin is disable and cannot be enabled.
+  else {
+    ui->enabledCheckbox->setDisabled(true);
+    ui->enabledCheckbox->setChecked(false);
+    if (problems.size() == 1) {
+      ui->enabledCheckbox->setToolTip(problems[0].shortDescription());
+    }
+    else {
+      QStringList descriptions;
+      for (auto& problem : problems) {
+        descriptions.append(problem.shortDescription());
+      }
+      ui->enabledCheckbox->setToolTip("<ul><li>" + descriptions.join("</li><li>") + "</li></ul>");
+    }
+  }
 
   QVariantMap settings = current->data(0, ROLE_SETTINGS).toMap();
   QVariantMap descriptions = current->data(0, ROLE_DESCRIPTIONS).toMap();

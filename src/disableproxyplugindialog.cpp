@@ -1,6 +1,6 @@
 #include "disableproxyplugindialog.h"
 
-#include "ui_proxyplugindialog.h"
+#include "ui_disableproxyplugindialog.h"
 
 using namespace MOBase;
 
