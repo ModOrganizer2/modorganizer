@@ -25,6 +25,7 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginConta
     item->setFont(0, font);
     topItems[interfaceName] = item;
     item->setExpanded(true);
+    item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
   }
   ui->pluginsList->setHeaderHidden(true);
 
@@ -112,6 +113,7 @@ void PluginsSettingsTab::updateListItems()
 
 void PluginsSettingsTab::filterPluginList()
 {
+  auto selectedItems = ui->pluginsList->selectedItems();
   QTreeWidgetItem* firstNotHidden = nullptr;
 
   for (auto i = 0; i < ui->pluginsList->topLevelItemCount(); ++i) {
@@ -150,13 +152,21 @@ void PluginsSettingsTab::filterPluginList()
   }
 
   // Unselect item if hidden:
-  auto selectedItems = ui->pluginsList->selectedItems();
-  if (!selectedItems.isEmpty() && selectedItems[0]->isHidden()) {
-    selectedItems[0]->setSelected(false);
-
-    if (firstNotHidden) {
-      firstNotHidden->setSelected(true);
+  if (firstNotHidden) {
+    ui->pluginDescription->setVisible(true);
+    ui->pluginSettingsList->setVisible(true);
+    ui->noPluginLabel->setVisible(false);
+    if (selectedItems.isEmpty()) {
+      ui->pluginsList->setCurrentItem(firstNotHidden);
     }
+    else if (selectedItems[0]->isHidden()) {
+      ui->pluginsList->setCurrentItem(firstNotHidden);
+    }
+  }
+  else {
+    ui->pluginDescription->setVisible(false);
+    ui->pluginSettingsList->setVisible(false);
+    ui->noPluginLabel->setVisible(true);
   }
 
 }
