@@ -285,7 +285,7 @@ private:
 
 private:
 
-  // The plugin container, mostly to check if installer are enabled or not:
+  // The plugin container, mostly to check if installer are enabled or not.
   const PluginContainer *m_PluginContainer;
 
   bool m_IsRunning;
@@ -298,13 +298,13 @@ private:
   std::vector<MOBase::IPluginInstaller*> m_Installers;
   std::set<QString, CaseInsensitive> m_SupportedExtensions;
 
-  // Archive management:
+  // Archive management.
   std::unique_ptr<Archive> m_ArchiveHandler;
   QString m_CurrentFile;
   QString m_Password;
 
   // Map from entries in the tree that is used by the installer and absolute
-  // paths to temporary files:
+  // paths to temporary files.
   std::map<std::shared_ptr<const MOBase::FileTreeEntry>, QString> m_CreatedFiles;
   std::set<QString> m_TempFilesToDelete;
 };
