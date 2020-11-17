@@ -3,6 +3,7 @@
 #include "noeditdelegate.h"
 #include <iplugin.h>
 
+#include "disableproxyplugindialog.h"
 #include "organizercore.h"
 #include "plugincontainer.h"
 
@@ -242,29 +243,20 @@ void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
         QMessageBox::warning(
           parentWidget(), QObject::tr("Cannot disable plugin"),
           QObject::tr("The '%1' plugin is used by the current game plugin and cannot disabled.")
-            .arg(plugin->localizedName()), QMessageBox::Ok);
-          ui->enabledCheckbox->setChecked(true);
-          return;
-      }
-
-      // Check the proxied plugins:
-      auto proxied = requirements.proxied();
-      QStringList pluginNames;
-      for (auto& p : proxied) {
-        pluginNames.append(p->localizedName());
-      }
-      pluginNames.sort();
-      QString message = QObject::tr(
-        "<p>Disabling the '%1' plugin will prevent the following plugins from working:</p><ul>%1</ul>"
-        "<p>Do you want to continue? You will need to restart ModOrganizer2 for the change to take effect.</p>")
-        .arg(plugin->localizedName()).arg("<li>" + pluginNames.join("</li><li>") + "</li>");
-      if (QMessageBox::critical(
-        parentWidget(), QObject::tr("Really disable plugin?"), message,
-        QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
+          .arg(plugin->localizedName()), QMessageBox::Ok);
         ui->enabledCheckbox->setChecked(true);
         return;
       }
 
+      // Check the proxied plugins:
+      auto proxied = requirements.proxied();
+      if (!proxied.empty()) {
+        DisableProxyPluginDialog dialog(plugin, proxied, parentWidget());
+        if (dialog.exec() != QDialog::Accepted) {
+          ui->enabledCheckbox->setChecked(true);
+          return;
+        }
+      }
     }
 
     // Check if the plugins is required for other plugins:
