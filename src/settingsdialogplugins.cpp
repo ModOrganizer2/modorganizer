@@ -241,7 +241,8 @@ void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
       if (m_pluginContainer->requirements(game).proxy() == plugin) {
         QMessageBox::warning(
           parentWidget(), QObject::tr("Cannot disable plugin"),
-          QObject::tr("This plugin is used by the current game plugin and cannot disabled."), QMessageBox::Ok);
+          QObject::tr("The '%1' plugin is used by the current game plugin and cannot disabled.")
+            .arg(plugin->localizedName()), QMessageBox::Ok);
           ui->enabledCheckbox->setChecked(true);
           return;
       }
@@ -254,9 +255,9 @@ void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
       }
       pluginNames.sort();
       QString message = QObject::tr(
-        "<p>Disabling this plugin will prevent the following plugins from working:</p><ul>%1</ul>"
+        "<p>Disabling the '%1' plugin will prevent the following plugins from working:</p><ul>%1</ul>"
         "<p>Do you want to continue? You will need to restart ModOrganizer2 for the change to take effect.</p>")
-        .arg("<li>" + pluginNames.join("</li><li>") + "</li>");
+        .arg(plugin->localizedName()).arg("<li>" + pluginNames.join("</li><li>") + "</li>");
       if (QMessageBox::critical(
         parentWidget(), QObject::tr("Really disable plugin?"), message,
         QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
@@ -275,8 +276,8 @@ void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
       }
       pluginNames.sort();
       QString message = QObject::tr(
-        "<p>Disabling this plugin will also disable the following plugins:</p><ul>%1</ul><p>Do you want to continue?</p>")
-        .arg("<li>" + pluginNames.join("</li><li>") + "</li>");
+        "<p>Disabling the '%1' plugin will also disable the following plugins:</p><ul>%1</ul><p>Do you want to continue?</p>")
+        .arg(plugin->localizedName()).arg("<li>" + pluginNames.join("</li><li>") + "</li>");
       if (QMessageBox::warning(
         parentWidget(), QObject::tr("Really disable plugin?"), message,
         QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
@@ -310,7 +311,7 @@ void PluginsSettingsTab::on_pluginsList_currentItemChanged(QTreeWidgetItem *curr
   ui->descriptionLabel->setText(plugin->description());
 
   ui->enabledCheckbox->setVisible(
-    !m_pluginContainer->implementInterface<MOBase::IPluginGame>(plugin)
+    !m_pluginContainer->requirements(plugin).isCorePlugin()
     && plugin->master().isEmpty());
   ui->enabledCheckbox->setChecked(m_pluginContainer->isEnabled(plugin));
 

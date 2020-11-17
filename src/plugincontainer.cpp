@@ -101,6 +101,10 @@ QStringList PluginContainer::pluginInterfaces()
 
 // PluginRequirementProxy
 
+const std::set<QString> PluginRequirements::s_CorePlugins{
+  "INI Bakery"
+};
+
 PluginRequirements::PluginRequirements(
   PluginContainer* pluginContainer, MOBase::IPlugin* plugin, IOrganizer* proxy,
   MOBase::IPluginProxy* pluginProxy)
@@ -191,6 +195,16 @@ std::vector<IPluginRequirement::Problem> PluginRequirements::problems() const
 bool PluginRequirements::canEnable() const
 {
   return problems().empty();
+}
+
+bool PluginRequirements::isCorePlugin() const
+{
+  // Let's consider game plugins as "core":
+  if (m_PluginContainer->implementInterface<IPluginGame>(m_Plugin)) {
+    return true;
+  }
+
+  return s_CorePlugins.contains(m_Plugin->name());
 }
 
 bool PluginRequirements::hasRequirements() const
@@ -405,7 +419,11 @@ bool PluginContainer::initPlugin(IPlugin *plugin, IPluginProxy *pluginProxy, boo
 
   auto [it, bl] = m_Requirements.emplace(plugin, PluginRequirements(this, plugin, proxy, pluginProxy));
 
-  if (!skipInit && !plugin->init(proxy)) {
+  if (skipInit) {
+    return true;
+  }
+
+  if (!plugin->init(proxy)) {
     log::warn("plugin failed to initialize");
     return false;
   }

@@ -40,6 +40,12 @@ public:
   bool canEnable() const;
 
   /**
+   * @return true if this is a core plugin, i.e. a plugin that should not be
+   *     manually enabled or disabled by the user.
+   */
+  bool isCorePlugin() const;
+
+  /**
    * @return true if this plugin has requirements (satisfied or not).
    */
   bool hasRequirements() const;
@@ -82,6 +88,9 @@ public:
   std::vector<MOBase::IPlugin*> requiredFor() const;
 
 private:
+
+  // The list of "Core" plugins.
+  static const std::set<QString> s_CorePlugins;
 
   // Accumulator version for requiredFor() to avoid infinite recursion.
   void requiredFor(std::vector<MOBase::IPlugin*>& required, std::set<MOBase::IPlugin*>& visited) const;
