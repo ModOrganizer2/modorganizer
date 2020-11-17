@@ -167,7 +167,7 @@ std::vector<IPlugin*> PluginRequirements::children() const
     // Not checking master() but requirements().master() due to "hidden"
     // masters.
     // If the master has the same name as the plugin, this is a "hidden"
-    // master, we do not had it here.
+    // master, we do not add it here.
     if (plugin
         && m_PluginContainer->requirements(plugin).master() == m_Plugin
         && plugin->name() != m_Plugin->name()) {
