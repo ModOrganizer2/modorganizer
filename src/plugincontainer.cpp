@@ -413,11 +413,11 @@ bool PluginContainer::initPlugin(IPlugin *plugin, IPluginProxy *pluginProxy, boo
   // Check if it is a proxy plugin:
   bool isProxy = dynamic_cast<IPluginProxy*>(plugin);
 
+  auto [it, bl] = m_Requirements.emplace(plugin, PluginRequirements(this, plugin, proxy, pluginProxy));
+
   if (!m_Organizer && !isProxy) {
     return true;
   }
-
-  auto [it, bl] = m_Requirements.emplace(plugin, PluginRequirements(this, plugin, proxy, pluginProxy));
 
   if (skipInit) {
     return true;
@@ -615,8 +615,6 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
       return dummy;
     }
   }
-
-  log::debug("no matching plugin interface");
 
   return nullptr;
 }
