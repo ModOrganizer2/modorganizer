@@ -128,7 +128,7 @@ void PluginsSettingsTab::filterPluginList()
         return regex.match(plugin->localizedName()).hasMatch();
       });
       for (auto* child : m_pluginContainer->requirements(plugin).children()) {
-        m_filter.matches([child](const QRegularExpression& regex) {
+        match = match || m_filter.matches([child](const QRegularExpression& regex) {
           return regex.match(child->localizedName()).hasMatch();
         });
       }
