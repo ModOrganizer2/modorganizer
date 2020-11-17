@@ -310,9 +310,17 @@ void PluginsSettingsTab::on_pluginsList_currentItemChanged(QTreeWidgetItem *curr
   ui->versionLabel->setText(plugin->version().canonicalString());
   ui->descriptionLabel->setText(plugin->description());
 
+  ui->enabledCheckbox->setDisabled(false);
+  ui->enabledCheckbox->setToolTip("");
   ui->enabledCheckbox->setVisible(
-    !m_pluginContainer->requirements(plugin).isCorePlugin()
+    !m_pluginContainer->implementInterface<IPluginGame>(plugin)
     && plugin->master().isEmpty());
+  if (m_pluginContainer->requirements(plugin).isCorePlugin()) {
+    ui->enabledCheckbox->setDisabled(true);
+    ui->enabledCheckbox->setToolTip(
+      QObject::tr("This plugin is required for Mod Organizer to work properly and cannot be disabled."));
+  }
+
   ui->enabledCheckbox->setChecked(m_pluginContainer->isEnabled(plugin));
 
   QVariantMap settings = current->data(0, ROLE_SETTINGS).toMap();
