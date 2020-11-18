@@ -186,6 +186,7 @@ add_filter(NAME src/settingsdialog GROUPS
 	settingsdialogplugins
 	settingsdialogsteam
 	settingsdialogworkarounds
+	disableproxyplugindialog
 )
 
 add_filter(NAME src/utilities GROUPS

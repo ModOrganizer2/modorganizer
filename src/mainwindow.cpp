@@ -260,7 +260,6 @@ MainWindow::MainWindow(Settings &settings
   , m_ContextItem(nullptr)
   , m_ContextAction(nullptr)
   , m_ContextRow(-1)
-  , m_browseModPage(nullptr)
   , m_CurrentSaveView(nullptr)
   , m_OrganizerCore(organizerCore)
   , m_PluginContainer(pluginContainer)
@@ -467,6 +466,12 @@ MainWindow::MainWindow(Settings &settings
   connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(toolBar_customContextMenuRequested(QPoint)));
   connect(ui->menuToolbars, &QMenu::aboutToShow, [&]{ updateToolbarMenu(); });
   connect(ui->menuView, &QMenu::aboutToShow, [&]{ updateViewMenu(); });
+  connect(ui->actionTool->menu(), &QMenu::aboutToShow, [&] { updateToolMenu(); });
+  connect(&m_PluginContainer, &PluginContainer::pluginEnabled, this, [this](IPlugin* plugin) {
+    if (m_PluginContainer.implementInterface<IPluginModPage>(plugin)) { updateModPageMenu(); } });
+  connect(&m_PluginContainer, &PluginContainer::pluginDisabled, this, [this](IPlugin* plugin) {
+    if (m_PluginContainer.implementInterface<IPluginModPage>(plugin)) { updateModPageMenu(); } });
+
 
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this, &MainWindow::modInstalled);
   connect(&m_OrganizerCore, &OrganizerCore::close, this, &QMainWindow::close);
@@ -508,11 +513,7 @@ MainWindow::MainWindow(Settings &settings
     installTranslator(QFileInfo(fileName).baseName());
   }
 
-  registerPluginTools(m_PluginContainer.plugins<IPluginTool>());
-
-  for (IPluginModPage *modPagePlugin : m_PluginContainer.plugins<IPluginModPage>()) {
-    registerModPage(modPagePlugin);
-  }
+  updateModPageMenu();
 
   // refresh profiles so the current profile can be activated
   refreshProfiles(false);
@@ -812,6 +813,7 @@ static QModelIndex mapToModel(const QAbstractItemModel *targetModel, QModelIndex
 
 void MainWindow::setupToolbar()
 {
+  setupActionMenu(ui->actionModPage);
   setupActionMenu(ui->actionTool);
   setupActionMenu(ui->actionHelp);
   setupActionMenu(ui->actionEndorseMO);
@@ -1132,7 +1134,7 @@ void MainWindow::checkForProblemsImpl()
     size_t numProblems = 0;
     for (QObject *pluginObj : m_PluginContainer.plugins<QObject>()) {
       IPlugin *plugin = qobject_cast<IPlugin*>(pluginObj);
-      if (plugin == nullptr || plugin->isActive()) {
+      if (plugin == nullptr || m_PluginContainer.isEnabled(plugin)) {
         IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(pluginObj);
         if (diagnose != nullptr)
           numProblems += diagnose->activeProblems().size();
@@ -1600,45 +1602,6 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event)
   return false;
 }
 
-
-void MainWindow::toolPluginInvoke()
-{
-  QAction *triggeredAction = qobject_cast<QAction*>(sender());
-  IPluginTool *plugin = qobject_cast<IPluginTool*>(triggeredAction->data().value<QObject*>());
-  if (plugin != nullptr) {
-    try {
-      plugin->display();
-    } catch (const std::exception &e) {
-      reportError(tr("Plugin \"%1\" failed: %2").arg(plugin->name()).arg(e.what()));
-    } catch (...) {
-      reportError(tr("Plugin \"%1\" failed").arg(plugin->name()));
-    }
-  }
-}
-
-void MainWindow::modPagePluginInvoke()
-{
-  QAction *triggeredAction = qobject_cast<QAction*>(sender());
-  IPluginModPage *plugin = qobject_cast<IPluginModPage*>(triggeredAction->data().value<QObject*>());
-  if (plugin != nullptr) {
-    if (plugin->useIntegratedBrowser()) {
-
-      if (!m_IntegratedBrowser) {
-        m_IntegratedBrowser.reset(new BrowserDialog);
-
-        connect(
-          m_IntegratedBrowser.get(), SIGNAL(requestDownload(QUrl,QNetworkReply*)),
-          &m_OrganizerCore, SLOT(requestDownload(QUrl,QNetworkReply*)));
-      }
-
-      m_IntegratedBrowser->setWindowTitle(plugin->displayName());
-      m_IntegratedBrowser->openUrl(plugin->pageURL());
-    } else {
-      QDesktopServices::openUrl(QUrl(plugin->pageURL()));
-    }
-  }
-}
-
 void MainWindow::registerPluginTool(IPluginTool *tool, QString name, QMenu *menu)
 {
   if (!menu) {
@@ -1651,26 +1614,41 @@ void MainWindow::registerPluginTool(IPluginTool *tool, QString name, QMenu *menu
   QAction *action = new QAction(tool->icon(), name, menu);
   action->setToolTip(tool->tooltip());
   tool->setParentWidget(this);
-  action->setData(QVariant::fromValue((QObject*)tool));
-  connect(action, SIGNAL(triggered()), this, SLOT(toolPluginInvoke()), Qt::QueuedConnection);
+  connect(action, &QAction::triggered, this, [this, tool]() {
+      try {
+        tool->display();
+      }
+      catch (const std::exception& e) {
+        reportError(tr("Plugin \"%1\" failed: %2").arg(tool->localizedName()).arg(e.what()));
+      }
+      catch (...) {
+        reportError(tr("Plugin \"%1\" failed").arg(tool->localizedName()));
+      }
+  }, Qt::QueuedConnection);
 
   menu->addAction(action);
 }
 
-void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
+void MainWindow::updateToolMenu()
 {
+  // Clear the menu:
+  ui->actionTool->menu()->clear();
+
+  std::vector<IPluginTool*> toolPlugins = m_PluginContainer.plugins<IPluginTool>();
+
   // Sort the plugins by display name
-  std::sort(toolPlugins.begin(), toolPlugins.end(),
+  std::sort(std::begin(toolPlugins), std::end(toolPlugins),
     [](IPluginTool *left, IPluginTool *right) {
       return left->displayName().toLower() < right->displayName().toLower();
     }
   );
 
-  // Remove inactive plugins
+  // Remove disabled plugins:
   toolPlugins.erase(
-    std::remove_if(toolPlugins.begin(), toolPlugins.end(), [](IPluginTool *plugin) -> bool { return !plugin->isActive(); }),
-    toolPlugins.end()
-    );
+    std::remove_if(std::begin(toolPlugins), std::end(toolPlugins), [&](auto* tool) {
+      return !m_PluginContainer.isEnabled(tool);
+    }),
+    toolPlugins.end());
 
   // Group the plugins into submenus
   QMap<QString, QList<QPair<QString, IPluginTool *>>> submenuMap;
@@ -1698,26 +1676,65 @@ void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
 
 void MainWindow::registerModPage(IPluginModPage *modPage)
 {
-  // turn the browser action into a drop-down menu if necessary
-  if (!m_browseModPage) {
-    m_browseModPage = new QAction(ui->actionNexus->icon(), tr("Browse Mod Page"), this);
-    setupActionMenu(m_browseModPage);
-
-    m_browseModPage->menu()->addAction(ui->actionNexus);
-
-    ui->toolBar->insertAction(ui->actionNexus, m_browseModPage);
-    ui->toolBar->removeAction(ui->actionNexus);
-  }
-
   QAction *action = new QAction(modPage->icon(), modPage->displayName(), this);
   modPage->setParentWidget(this);
-  action->setData(QVariant::fromValue(reinterpret_cast<QObject*>(modPage)));
+  connect(action, &QAction::triggered, this, [this, modPage]() {
+    if (modPage->useIntegratedBrowser()) {
 
-  connect(action, SIGNAL(triggered()), this, SLOT(modPagePluginInvoke()), Qt::QueuedConnection);
+      if (!m_IntegratedBrowser) {
+        m_IntegratedBrowser.reset(new BrowserDialog);
 
-  m_browseModPage->menu()->addAction(action);
+        connect(
+          m_IntegratedBrowser.get(), SIGNAL(requestDownload(QUrl, QNetworkReply*)),
+          &m_OrganizerCore, SLOT(requestDownload(QUrl, QNetworkReply*)));
+      }
+
+      m_IntegratedBrowser->setWindowTitle(modPage->displayName());
+      m_IntegratedBrowser->openUrl(modPage->pageURL());
+    }
+    else {
+      QDesktopServices::openUrl(QUrl(modPage->pageURL()));
+    }
+  }, Qt::QueuedConnection);
+
+  ui->actionModPage->menu()->addAction(action);
 }
 
+void MainWindow::updateModPageMenu()
+{
+  // Clear the menu:
+  ui->actionModPage->menu()->clear();
+  ui->actionModPage->menu()->addAction(ui->actionNexus);
+
+  std::vector<IPluginModPage*> modPagePlugins = m_PluginContainer.plugins<IPluginModPage>();
+
+  // Sort the plugins by display name
+  std::sort(std::begin(modPagePlugins), std::end(modPagePlugins),
+    [](IPluginModPage* left, IPluginModPage* right) {
+      return left->displayName().toLower() < right->displayName().toLower();
+    }
+  );
+
+  // Remove disabled plugins:
+  modPagePlugins.erase(
+    std::remove_if(std::begin(modPagePlugins), std::end(modPagePlugins), [&](auto* tool) {
+      return !m_PluginContainer.isEnabled(tool);
+      }),
+    modPagePlugins.end());
+
+  for (auto* modPagePlugin : modPagePlugins) {
+    registerModPage(modPagePlugin);
+  }
+
+  // No mod page plugin and the menu was visible:
+  if (modPagePlugins.empty()) {
+    ui->toolBar->insertAction(ui->actionAdd_Profile, ui->actionNexus);
+  }
+  else {
+    ui->toolBar->removeAction(ui->actionNexus);
+  }
+  ui->actionModPage->setVisible(!modPagePlugins.empty());
+}
 
 void MainWindow::startExeAction()
 {
@@ -5977,7 +5994,7 @@ void MainWindow::on_actionNotifications_triggered()
 
   future.waitForFinished();
 
-  ProblemsDialog problems(m_PluginContainer.plugins<QObject>(), this);
+  ProblemsDialog problems(m_PluginContainer, this);
   problems.exec();
 
   scheduleCheckForProblems();

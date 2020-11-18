@@ -78,7 +78,8 @@ static T resolveFunction(QLibrary &lib, const char *name)
 }
 
 InstallationManager::InstallationManager()
-    : m_ParentWidget(nullptr),
+    :
+      m_ParentWidget(nullptr),
       m_SupportedExtensions({"zip", "rar", "7z", "fomod", "001"}),
       m_IsRunning(false) {
   m_ArchiveHandler = CreateArchive();
@@ -106,7 +107,7 @@ InstallationManager::InstallationManager()
   // Connect the query password slot - This is the only way I found to be able to query user
   // from a separate thread. We use a BlockingQueuedConnection so that calling passwordRequested()
   // will block until the end of the slot.
-  connect(this, &InstallationManager::passwordRequested, 
+  connect(this, &InstallationManager::passwordRequested,
     this, &InstallationManager::queryPassword, Qt::BlockingQueuedConnection);
 }
 
@@ -120,6 +121,11 @@ void InstallationManager::setParentWidget(QWidget *widget)
   for (IPluginInstaller *installer : m_Installers) {
     installer->setParentWidget(widget);
   }
+}
+
+void InstallationManager::setPluginContainer(const PluginContainer* pluginContainer)
+{
+  m_PluginContainer = pluginContainer;
 }
 
 void InstallationManager::queryPassword() {
@@ -284,7 +290,7 @@ QStringList InstallationManager::extractFiles(std::vector<std::shared_ptr<const 
 }
 
 
-QString InstallationManager::createFile(std::shared_ptr<const MOBase::FileTreeEntry> entry) 
+QString InstallationManager::createFile(std::shared_ptr<const MOBase::FileTreeEntry> entry)
 {
   // Use QTemporaryFile to create the temporary file with the given template:
   QTemporaryFile tempFile(QDir::cleanPath(QDir::tempPath() + QDir::separator() + "mo2-install"));
@@ -308,11 +314,11 @@ QString InstallationManager::createFile(std::shared_ptr<const MOBase::FileTreeEn
   return QDir::toNativeSeparators(absPath);
 }
 
-void InstallationManager::cleanCreatedFiles(std::shared_ptr<const MOBase::IFileTree> fileTree) 
+void InstallationManager::cleanCreatedFiles(std::shared_ptr<const MOBase::IFileTree> fileTree)
 {
   // We simply have to check if all the entries have fileTree as a parent:
   for (auto it = std::begin(m_CreatedFiles); it != std::end(m_CreatedFiles); ) {
-    
+
     // Find the parent - Could this be in FileTreeEntry?
     bool found = false;
     {
@@ -495,12 +501,12 @@ IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QSt
     if (QFile::exists(destPath)) {
       QFile::remove(destPath);
     }
-    
+
     QDir dir = QFileInfo(destPath).absoluteDir();
     if (!dir.exists()) {
       dir.mkpath(".");
     }
-    
+
     QFile::copy(p.second, destPath);
   }
 
@@ -691,7 +697,7 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
   }
   ON_BLOCK_EXIT(std::bind(&InstallationManager::postInstallCleanup, this));
 
-  std::shared_ptr<IFileTree> filesTree = 
+  std::shared_ptr<IFileTree> filesTree =
     archiveOpen ? ArchiveFileTree::makeTree(*m_ArchiveHandler) : nullptr;
   IPluginInstaller::EInstallResult installResult = IPluginInstaller::RESULT_NOTATTEMPTED;
 
@@ -701,7 +707,7 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
 
   for (IPluginInstaller *installer : m_Installers) {
     // don't use inactive installers (installer can't be null here but vc static code analysis thinks it could)
-    if ((installer == nullptr) || !installer->isActive()) {
+    if ((installer == nullptr) || !m_PluginContainer->isEnabled(installer)) {
       continue;
     }
 
@@ -731,7 +737,7 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
             if (p == nullptr) {
               throw IncompatibilityException(tr("Invalid file tree returned by plugin."));
             }
-            
+
             // Detach the file tree (this ensure the parent is null and call to path()
             // stops at this root):
             p->detach();
@@ -786,7 +792,7 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
       case IPluginInstaller::RESULT_SUCCESSCANCEL: {
         if (filesTree != nullptr) {
           auto iniTweakEntry = filesTree->find("INI Tweaks", FileTreeEntry::DIRECTORY);
-          hasIniTweaks = iniTweakEntry != nullptr 
+          hasIniTweaks = iniTweakEntry != nullptr
             && !iniTweakEntry->astree()->empty();
         }
         return IPluginInstaller::RESULT_SUCCESS;
@@ -860,7 +866,7 @@ QStringList InstallationManager::getSupportedExtensions() const
 void InstallationManager::notifyInstallationStart(QString const& archive, bool reinstallation, ModInfo::Ptr  currentMod)
 {
   for (auto* installer : m_Installers) {
-    if (installer->isActive()) {
+    if (m_PluginContainer->isEnabled(installer)) {
       installer->onInstallationStart(archive, reinstallation, currentMod.get());
     }
   }
@@ -871,7 +877,7 @@ void InstallationManager::notifyInstallationEnd(
   ModInfo::Ptr  newMod)
 {
   for (auto* installer : m_Installers) {
-    if (installer->isActive()) {
+    if (m_PluginContainer->isEnabled(installer)) {
       installer->onInstallationEnd(result, newMod.get());
     }
   }

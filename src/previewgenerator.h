@@ -26,10 +26,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <functional>
 #include <ipluginpreview.h>
 
+class PluginContainer;
+
 class PreviewGenerator
 {
 public:
-  PreviewGenerator();
+  PreviewGenerator(const PluginContainer* pluginContainer);
 
   void registerPlugin(MOBase::IPluginPreview *plugin);
 
@@ -44,8 +46,8 @@ private:
 
 private:
 
+  const PluginContainer* m_PluginContainer;
   std::map<QString, MOBase::IPluginPreview*> m_PreviewPlugins;
-
   QSize m_MaxSize;
 
 };

@@ -287,6 +287,7 @@ void OrganizerCore::connectPlugins(PluginContainer *container)
       m_InstallationManager.getSupportedExtensions());
   m_PluginContainer = container;
   m_Updater.setPluginContainer(m_PluginContainer);
+  m_InstallationManager.setPluginContainer(m_PluginContainer);
   m_DownloadManager.setPluginContainer(m_PluginContainer);
   m_ModList.setPluginContainer(m_PluginContainer);
 
@@ -294,6 +295,11 @@ void OrganizerCore::connectPlugins(PluginContainer *container)
     m_GamePlugin = m_PluginContainer->managedGame(m_GameName);
     emit managedGameChanged(m_GamePlugin);
   }
+
+  connect(m_PluginContainer, &PluginContainer::pluginEnabled,
+    [&](IPlugin* plugin) { m_PluginEnabled(plugin); });
+  connect(m_PluginContainer, &PluginContainer::pluginDisabled,
+    [&](IPlugin* plugin) { m_PluginDisabled(plugin); });
 }
 
 void OrganizerCore::disconnectPlugins()
@@ -1224,6 +1230,16 @@ bool OrganizerCore::onPluginSettingChanged(std::function<void(QString const&, co
   return m_PluginSettingChanged.connect(func).connected();
 }
 
+bool OrganizerCore::onPluginEnabled(std::function<void(const IPlugin*)> const& func)
+{
+  return m_PluginEnabled.connect(func).connected();
+}
+
+bool OrganizerCore::onPluginDisabled(std::function<void(const IPlugin*)> const& func)
+{
+  return m_PluginDisabled.connect(func).connected();
+}
+
 void OrganizerCore::refresh(bool saveChanges)
 {
   // don't lose changes!
@@ -1449,10 +1465,13 @@ void OrganizerCore::loggedInAction(QWidget* parent, std::function<void ()> f)
 
 void OrganizerCore::requestDownload(const QUrl &url, QNetworkReply *reply)
 {
-  if (m_PluginContainer != nullptr) {
-    for (IPluginModPage *modPage :
-         m_PluginContainer->plugins<MOBase::IPluginModPage>()) {
-      ModRepositoryFileInfo *fileInfo = new ModRepositoryFileInfo();
+  if (!m_PluginContainer) {
+    return;
+  }
+  for (IPluginModPage *modPage :
+        m_PluginContainer->plugins<MOBase::IPluginModPage>()) {
+    if (m_PluginContainer->isEnabled(modPage)) {
+      ModRepositoryFileInfo* fileInfo = new ModRepositoryFileInfo();
       if (modPage->handlesDownload(url, reply->url(), *fileInfo)) {
         fileInfo->repository = modPage->name();
         m_DownloadManager.addDownload(reply, fileInfo);
@@ -2040,7 +2059,7 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString &profileName,
   for (MOBase::IPluginFileMapper *mapper :
        m_PluginContainer->plugins<MOBase::IPluginFileMapper>()) {
     IPlugin *plugin = dynamic_cast<IPlugin *>(mapper);
-    if (plugin->isActive()) {
+    if (m_PluginContainer->isEnabled(plugin)) {
       MappingType pluginMap = mapper->mappings();
       result.reserve(result.size() + pluginMap.size());
       result.insert(result.end(), pluginMap.begin(), pluginMap.end());

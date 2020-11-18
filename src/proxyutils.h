@@ -10,7 +10,7 @@ namespace MOShared {
   template <class Fn, class T = int>
   auto callIfPluginActive(OrganizerProxy* proxy, Fn&& callback, T defaultReturn = T{}) {
     return [fn = std::forward<Fn>(callback), proxy, defaultReturn](auto&& ...args) {
-      if (proxy->plugin()->isActive()) {
+      if (proxy->isPluginEnabled(proxy->plugin())) {
         return fn(std::forward<decltype(args)>(args)...);
       }
       else {

@@ -87,6 +87,7 @@ private:
   using SignalProfileRemoved = boost::signals2::signal<void(QString const&)>;
   using SignalProfileChanged = boost::signals2::signal<void (MOBase::IProfile *, MOBase::IProfile *)>;
   using SignalPluginSettingChanged = boost::signals2::signal<void (QString const&, const QString& key, const QVariant&, const QVariant&)>;
+  using SignalPluginEnabled = boost::signals2::signal<void(MOBase::IPlugin*)>;
 
 public:
 
@@ -335,6 +336,8 @@ public:
   bool onProfileRemoved(std::function<void(QString const&)> const& func);
   bool onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func);
   bool onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func);
+  bool onPluginEnabled(std::function<void(const MOBase::IPlugin*)> const& func);
+  bool onPluginDisabled(std::function<void(const MOBase::IPlugin*)> const& func);
 
   bool getArchiveParsing() const
   {
@@ -457,6 +460,8 @@ private:
   SignalProfileRemoved m_ProfileRemoved;
   SignalProfileChanged m_ProfileChanged;
   SignalPluginSettingChanged m_PluginSettingChanged;
+  SignalPluginEnabled m_PluginEnabled;
+  SignalPluginEnabled m_PluginDisabled;
 
   ModList m_ModList;
   PluginList m_PluginList;

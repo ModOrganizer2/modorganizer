@@ -1280,9 +1280,17 @@ void PluginSettings::registerPlugin(IPlugin *plugin)
     const QString settingName = plugin->name() + "/" + setting.key;
 
     QVariant temp = get<QVariant>(
-      m_Settings, "Plugins", settingName, setting.defaultValue);
+      m_Settings, "Plugins", settingName, QVariant());
 
-    if (!temp.convert(setting.defaultValue.type())) {
+    // No previous enabled? Skip.
+    if (setting.key == "enabled" && (!temp.isValid() || !temp.canConvert<bool>())) {
+      continue;
+    }
+
+    if (!temp.isValid()) {
+      temp = setting.defaultValue;
+    }
+    else if (!temp.convert(setting.defaultValue.type())) {
       log::warn(
         "failed to interpret \"{}\" as correct type for \"{}\" in plugin \"{}\", using default",
         temp.toString(), setting.key, plugin->name());
@@ -1295,6 +1303,17 @@ void PluginSettings::registerPlugin(IPlugin *plugin)
     m_PluginDescriptions[plugin->name()][setting.key] = QString("%1 (default: %2)")
       .arg(setting.description)
       .arg(setting.defaultValue.toString());
+  }
+
+  // Handle previous "enabled" settings:
+  if (m_PluginSettings[plugin->name()].contains("enabled")) {
+    setPersistent(plugin->name(), "enabled", m_PluginSettings[plugin->name()]["enabled"].toBool(), true);
+    m_PluginSettings[plugin->name()].remove("enabled");
+    m_PluginDescriptions[plugin->name()].remove("enabled");
+
+    // We need to drop it manually in Settings since it is not possible to remove plugin
+    // settings:
+    remove(m_Settings, "Plugins", plugin->name() + "/enabled");
   }
 }
 
