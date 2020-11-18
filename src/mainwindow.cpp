@@ -1206,7 +1206,7 @@ void MainWindow::createHelpMenu()
 
   ActionList tutorials;
 
-  QString tutorialPath = QApplication::applicationDirPath() 
+  QString tutorialPath = QApplication::applicationDirPath()
     + "/" + QString::fromStdWString(AppConfig::tutorialsPath()) + "/";
   QDirIterator dirIter(tutorialPath, QStringList("*.js"), QDir::Files);
   while (dirIter.hasNext()) {
@@ -1532,7 +1532,6 @@ void MainWindow::displaySaveGameInfo(QListWidgetItem *newItem)
     return;
   }
 
-  QString const &save = newItem->data(Qt::UserRole).toString();
   if (m_CurrentSaveView == nullptr) {
     IPluginGame const *game = m_OrganizerCore.managedGame();
     SaveGameInfo const *info = game->feature<SaveGameInfo>();
@@ -1543,7 +1542,7 @@ void MainWindow::displaySaveGameInfo(QListWidgetItem *newItem)
       return;
     }
   }
-  m_CurrentSaveView->setSave(save);
+  m_CurrentSaveView->setSave(*m_SaveGames[ui->savegameList->row(newItem)]);
 
   QWindow *window = m_CurrentSaveView->window()->windowHandle();
   QRect screenRect;
@@ -1964,35 +1963,22 @@ void MainWindow::stopMonitorSaves()
 
 void MainWindow::refreshSaveList()
 {
-  ui->savegameList->clear();
+  TimeThis tt("MainWindow::refreshSaveList()");
 
   startMonitorSaves(); // re-starts monitoring
 
-  QStringList filters;
-  filters << QString("*.") + m_OrganizerCore.managedGame()->savegameExtension();
-
   QDir savesDir = currentSavesDir();
-  savesDir.setNameFilters(filters);
-  savesDir.setFilter(QDir::Files);
-  QDirIterator it(savesDir, QDirIterator::Subdirectories);
-  log::debug("reading save games from {}", savesDir.absolutePath());
-
-  QFileInfoList files;
-  while (it.hasNext()) {
-    it.next();
-    files.append(it.fileInfo());
-  }
-  std::sort(files.begin(), files.end(), [](auto const& lhs, auto const& rhs) {
-    return lhs.fileTime(QFileDevice::FileModificationTime) > rhs.fileTime(QFileDevice::FileModificationTime);
+  MOBase::log::debug("reading save games from {}", savesDir.absolutePath());
+  m_SaveGames = m_OrganizerCore.managedGame()->listSaves(savesDir);
+  std::sort(m_SaveGames.begin(), m_SaveGames.end(), [](auto const& lhs, auto const& rhs) {
+    return lhs->getCreationTime() > rhs->getCreationTime();
   });
 
-  for (const QFileInfo &file : files) {
-    QListWidgetItem *item = new QListWidgetItem(savesDir.relativeFilePath(file.absoluteFilePath()));
-    item->setData(Qt::UserRole, file.absoluteFilePath());
-    ui->savegameList->addItem(item);
+  ui->savegameList->clear();
+  for (auto& save: m_SaveGames) {
+    ui->savegameList->addItem(savesDir.relativeFilePath(save->getFilepath()));
   }
 }
-
 
 static bool BySortValue(const std::pair<UINT32, QTreeWidgetItem*> &LHS, const std::pair<UINT32, QTreeWidgetItem*> &RHS)
 {
@@ -4960,20 +4946,15 @@ void MainWindow::deleteSavegame_clicked()
   int count = 0;
 
   for (const QModelIndex &idx : ui->savegameList->selectionModel()->selectedIndexes()) {
-    QString name = idx.data(Qt::UserRole).toString();
+
+    auto& saveGame = m_SaveGames[idx.row()];
 
     if (count < 10) {
-      savesMsgLabel += "<li>" + QFileInfo(name).completeBaseName() + "</li>";
+      savesMsgLabel += "<li>" + QFileInfo(saveGame->getFilepath()).completeBaseName() + "</li>";
     }
     ++count;
 
-    if (info == nullptr) {
-      deleteFiles.push_back(name);
-    } else {
-      ISaveGame const *save = info->getSaveGameInfo(name);
-      deleteFiles += save->allFiles();
-      delete save;
-    }
+    deleteFiles += saveGame->allFiles();
   }
 
   if (count > 10) {
@@ -5032,8 +5013,8 @@ void MainWindow::on_savegameList_customContextMenuRequested(const QPoint& pos)
     QAction* action = menu.addAction(tr("Enable Mods..."));
     action->setEnabled(false);
     if (selection->selectedIndexes().count() == 1) {
-      QString save = ui->savegameList->currentItem()->data(Qt::UserRole).toString();
-      SaveGameInfo::MissingAssets missing = info->getMissingAssets(save);
+      auto& save = m_SaveGames[selection->selectedIndexes()[0].row()];
+      SaveGameInfo::MissingAssets missing = info->getMissingAssets(*save);
       if (missing.size() != 0) {
         connect(action, &QAction::triggered, this, [this, missing] { fixMods_clicked(missing); });
         action->setEnabled(true);
@@ -5229,7 +5210,7 @@ void MainWindow::installTranslator(const QString &name)
 {
   QTranslator *translator = new QTranslator(this);
   QString fileName = name + "_" + m_CurrentLanguage;
-  QString translationsPath = qApp->applicationDirPath() 
+  QString translationsPath = qApp->applicationDirPath()
     + "/" + QString::fromStdWString(AppConfig::translationsPath());
   if (!translator->load(fileName, translationsPath)) {
     if (m_CurrentLanguage.contains(QRegularExpression("^.*_(EN|en)(-.*)?$"))) {

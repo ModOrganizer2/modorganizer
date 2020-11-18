@@ -334,6 +334,7 @@ private:
 
   QTime m_StartTime;
   //SaveGameInfoWidget *m_CurrentSaveView;
+  std::vector<std::shared_ptr<const MOBase::ISaveGame>> m_SaveGames;
   MOBase::ISaveGameInfoWidget *m_CurrentSaveView;
 
   OrganizerCore &m_OrganizerCore;
