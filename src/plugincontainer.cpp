@@ -119,9 +119,7 @@ PluginRequirements::PluginRequirements(
 }
 
 void PluginRequirements::fetchRequirements() {
-  for (auto* requirement : m_Plugin->requirements()) {
-    m_Requirements.emplace_back(requirement);
-  }
+  m_Requirements = m_Plugin->requirements();
 }
 
 IPluginProxy* PluginRequirements::proxy() const
