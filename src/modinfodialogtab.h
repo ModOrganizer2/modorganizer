@@ -2,7 +2,6 @@
 #define MODINFODIALOGTAB_H
 
 #include "modinfodialogfwd.h"
-#include <QObject>
 
 namespace MOShared { class FilesOrigin; }
 namespace Ui { class ModInfoDialog; }

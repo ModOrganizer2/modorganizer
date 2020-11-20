@@ -28,18 +28,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <imodlist.h>
 
-#include <QFile>
-#include <QListWidget>
-#include <QNetworkReply>
-#include <QNetworkAccessManager>
-#ifndef Q_MOC_RUN
-#include <boost/signals2.hpp>
-#endif
-#include <set>
-#include <vector>
-#include <QVector>
-
-
 class QSortFilterProxyModel;
 class PluginContainer;
 class OrganizerCore;

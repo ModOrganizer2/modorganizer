@@ -1,8 +1,6 @@
 #ifndef MODORGANIZER_MOSHORTCUT_INCLUDED
 #define MODORGANIZER_MOSHORTCUT_INCLUDED
 
-#include <QString>
-
 class MOShortcut
 {
 public:

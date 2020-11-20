@@ -18,7 +18,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "windows_error.h"
-#include <sstream>
 
 namespace MOShared {
 

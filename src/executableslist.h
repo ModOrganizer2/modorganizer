@@ -22,12 +22,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "executableinfo.h"
 
-#include <vector>
-#include <optional>
-
-#include <QFileInfo>
-#include <QMetaType>
-
 namespace MOBase { class IPluginGame; class ExecutableInfo; }
 class Settings;
 

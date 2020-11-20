@@ -19,12 +19,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "pluginlistsortproxy.h"
 #include "messagedialog.h"
-#include <QMenu>
-#include <QCheckBox>
-#include <QApplication>
-#include <QWidgetAction>
-#include <QTreeView>
-
 
 PluginListSortProxy::PluginListSortProxy(QObject *parent)
   : QSortFilterProxyModel(parent),
@@ -35,9 +29,6 @@ PluginListSortProxy::PluginListSortProxy(QObject *parent)
   m_EnabledColumns.set(PluginList::COL_MODINDEX);
   this->setDynamicSortFilter(true);
 }
-
-
-
 
 
 void PluginListSortProxy::setEnabledColumns(unsigned int columns)

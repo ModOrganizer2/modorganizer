@@ -27,18 +27,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "selfupdater.h"
 #include "persistentcookiejar.h"
 #include "settings.h"
-#include <QMessageBox>
-#include <QPushButton>
-#include <QNetworkProxy>
-#include <QNetworkRequest>
-#include <QNetworkCookie>
-#include <QNetworkCookieJar>
-#include <QCoreApplication>
-#include <QDir>
-#include <QUrlQuery>
-#include <QThread>
-#include <QJsonDocument>
-#include <QJsonArray>
 
 using namespace MOBase;
 using namespace std::chrono_literals;

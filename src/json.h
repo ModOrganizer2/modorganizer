@@ -2,10 +2,6 @@
 #define MODORGANIZER_JSON_INCLUDED
 
 #include <log.h>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QJsonValue>
 
 namespace json
 {

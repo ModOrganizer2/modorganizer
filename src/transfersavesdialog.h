@@ -24,14 +24,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "profile.h"
 
 class QListWidget;
-#include <QObject>
 class QPushButton;
-#include <QString>
 class QWidget;
-
-#include <memory>
-#include <map>
-#include <vector>
 
 namespace Ui { class TransferSavesDialog; }
 namespace MOBase { class IPluginGame; }

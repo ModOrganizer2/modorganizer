@@ -2,7 +2,6 @@
 #define MODORGANIZER_FILETREEITEM_INCLUDED
 
 #include "shared/fileregisterfwd.h"
-#include <QFileIconProvider>
 
 class FileTreeModel;
 

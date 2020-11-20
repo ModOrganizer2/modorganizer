@@ -1,13 +1,6 @@
 #ifndef CSVBUILDER_H
 #define CSVBUILDER_H
 
-
-#include <vector>
-#include <QString>
-#include <QVariant>
-#include <QTextStream>
-
-
 class CSVException : public std::exception {
 
 public:

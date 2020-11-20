@@ -32,18 +32,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "localsavegames.h"
 
-#include <QDir>
-#include <QDirIterator>
-#include <QInputDialog>
-#include <QLineEdit>
-#include <QListWidgetItem>
-#include <QMessageBox>
-#include <QWhatsThis>
-
-#include <Windows.h>
-
-#include <exception>
-
 using namespace MOBase;
 using namespace MOShared;
 

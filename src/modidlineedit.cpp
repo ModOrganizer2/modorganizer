@@ -1,8 +1,4 @@
 #include "modidlineedit.h"
-#include <QWhatsThis>
-
-#include <QEvent>
-#include <QWhatsThisClickedEvent>
 
 ModIDLineEdit::ModIDLineEdit(QWidget *parent) : QLineEdit(parent) {}
 ModIDLineEdit::ModIDLineEdit(const QString &text, QWidget *parent) : QLineEdit(text, parent) {}

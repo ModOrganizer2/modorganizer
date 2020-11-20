@@ -50,25 +50,6 @@ namespace MOBase { class ISaveGame; }
 
 namespace MOShared { class DirectoryEntry; }
 
-#include <QByteArray>
-#include <QDir>
-#include <QFileInfo>
-#include <QFileSystemWatcher>
-#include <QList>
-#include <QMainWindow>
-#include <QObject>
-#include <QPersistentModelIndex>
-#include <QProcess>
-#include <QString>
-#include <QStringList>
-#include <QTime>
-#include <QTimer>
-#include <QHeaderView>
-#include <QVariant>
-#include <Qt>
-#include <QtConcurrent/QtConcurrentRun>
-#include <QFutureWatcher>
-
 class QAction;
 class QAbstractItemModel;
 class QDateTime;
@@ -83,19 +64,6 @@ class QTranslator;
 class QTreeWidgetItem;
 class QUrl;
 class QWidget;
-
-#ifndef Q_MOC_RUN
-#include <boost/signals2.hpp>
-#endif
-
-//Sigh - just for HANDLE
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-
-#include <functional>
-#include <set>
-#include <string>
-#include <vector>
 
 namespace Ui {
     class MainWindow;

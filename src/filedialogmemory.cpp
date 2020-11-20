@@ -19,7 +19,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "filedialogmemory.h"
 #include "settings.h"
-#include <QFileDialog>
 
 static std::map<QString, QString> g_Cache;
 

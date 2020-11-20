@@ -1,8 +1,5 @@
 #include "genericicondelegate.h"
 #include "pluginlist.h"
-#include <QList>
-#include <QPixmapCache>
-
 
 GenericIconDelegate::GenericIconDelegate(QObject *parent, int role, int logicalIndex, int compactSize)
   : IconDelegate(parent)

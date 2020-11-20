@@ -1,9 +1,6 @@
 #ifndef FORCEDLOADDIALOG_H
 #define FORCEDLOADDIALOG_H
 
-#include <QDialog>
-#include <QPushButton>
-
 #include "executableinfo.h"
 #include "iplugingame.h"
 

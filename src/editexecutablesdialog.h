@@ -21,13 +21,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define EDITEXECUTABLESDIALOG_H
 
 #include "tutorabledialog.h"
-#include <QListWidgetItem>
 #include "executableslist.h"
 #include "profile.h"
 #include "iplugingame.h"
-#include <QTimer>
-#include <QAbstractButton>
-#include <optional>
 
 namespace Ui {
     class EditExecutablesDialog;

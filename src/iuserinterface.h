@@ -6,8 +6,6 @@
 #include <iplugintool.h>
 #include <ipluginmodpage.h>
 #include <delayedfilewriter.h>
-#include <QMenu>
-#include <QMainWindow>
 
 
 class IUserInterface

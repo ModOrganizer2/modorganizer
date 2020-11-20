@@ -21,10 +21,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "downloadmanager.h"
 #include <utility.h>
 #include <log.h>
-#include <QEvent>
-#include <QColor>
-#include <QIcon>
-#include <QSortFilterProxyModel>
 
 using namespace MOBase;
 

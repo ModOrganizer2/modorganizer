@@ -2,7 +2,6 @@
 #include "ui_modinfodialog.h"
 #include "modinfodialog.h"
 #include "settings.h"
-#include <QMessageBox>
 
 class FileListModel : public QAbstractItemModel
 {

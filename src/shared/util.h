@@ -21,8 +21,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define UTIL_H
 
 #include <log.h>
-#include <string>
-#include <filesystem>
 #include <versioninfo.h>
 
 class Executable;

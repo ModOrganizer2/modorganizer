@@ -20,8 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DISABLEPROXYPLUGINDIALOG_H
 #define DISABLEPROXYPLUGINDIALOG_H
 
-#include <QDialog>
-
 #include "ipluginproxy.h"
 
 namespace Ui { class DisableProxyPluginDialog; }

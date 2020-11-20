@@ -1,8 +1,6 @@
 #ifndef FILERENAMER_H
 #define FILERENAMER_H
 
-#include <QWidget>
-
 namespace MOBase::shell { class Result; }
 
 /**

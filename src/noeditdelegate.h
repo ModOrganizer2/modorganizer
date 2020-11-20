@@ -1,8 +1,6 @@
 #ifndef NOEDITDELEGATE_H
 #define NOEDITDELEGATE_H
 
-#include <QStyledItemDelegate>
-
 class NoEditDelegate: public QStyledItemDelegate {
 public:
   NoEditDelegate(QObject *parent = nullptr);

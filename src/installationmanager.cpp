@@ -17,8 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <tuple>
-
 #include "installationmanager.h"
 
 #include "utility.h"
@@ -33,29 +31,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nexusinterface.h"
 #include "selectiondialog.h"
 #include "modinfo.h"
+
 #include <scopeguard.h>
-#include <utility.h>
-#include <scopeguard.h>
-
-#include <QFileInfo>
-#include <QLibrary>
-#include <QInputDialog>
-#include <QRegExp>
-#include <QDir>
-#include <QMessageBox>
-#include <QSettings>
-#include <QPushButton>
-#include <QApplication>
-#include <QDateTime>
-#include <QDirIterator>
-#include <QDebug>
-#include <QTextDocument>
-#include <QtConcurrent/QtConcurrentRun>
-
-#include <Shellapi.h>
-
-#include <boost/assign.hpp>
-#include <boost/scoped_ptr.hpp>
 
 #include "archivefiletree.h"
 

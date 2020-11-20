@@ -4,10 +4,6 @@
 #include "createinstancedialog.h"
 #include <filterwidget.h>
 
-#include <QLabel>
-#include <QLineEdit>
-#include <QCommandLinkButton>
-
 namespace MOBase { class IPluginGame; }
 class NexusConnectionUI;
 

@@ -2,9 +2,6 @@
 #define MO2_THREAD_UTILS_H
 
 #include <log.h>
-#include <functional>
-#include <mutex>
-#include <thread>
 
 // in main.cpp
 void setExceptionHandlers();

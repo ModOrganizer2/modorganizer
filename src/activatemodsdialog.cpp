@@ -20,14 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "activatemodsdialog.h"
 #include "ui_activatemodsdialog.h"
 
-#include <QComboBox>
-#include <QHeaderView>
-#include <QLabel>
-#include <QString>
-#include <QTableWidget>
-
-#include <QtGlobal>
-
 ActivateModsDialog::ActivateModsDialog(SaveGameInfo::MissingAssets const &missingAssets, QWidget *parent)
   : TutorableDialog("ActivateMods", parent), ui(new Ui::ActivateModsDialog)
 {

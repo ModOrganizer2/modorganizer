@@ -23,21 +23,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "serverinfo.h"
 #include <idownloadmanager.h>
 #include <modrepositoryfileinfo.h>
-#include <set>
-#include <QObject>
-#include <QUrl>
-#include <QQueue>
-#include <QFile>
-#include <QNetworkReply>
-#include <QTime>
-#include <QTimer>
-#include <QElapsedTimer>
-#include <QVector>
-#include <QMap>
-#include <QStringList>
-#include <QFileSystemWatcher>
-#include <QSettings>
-#include <boost/signals2.hpp>
 
 namespace MOBase { class IPluginGame; }
 

@@ -1,8 +1,6 @@
 #ifndef APIUSERACCOUNT_H
 #define APIUSERACCOUNT_H
 
-#include <QString>
-
 /**
 * represents user account types on a mod provider website such as nexus
 */

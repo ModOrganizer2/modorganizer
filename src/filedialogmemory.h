@@ -20,11 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef FILEDIALOGMEMORY_H
 #define FILEDIALOGMEMORY_H
 
-
-#include <map>
-#include <QString>
-#include <QFileDialog>
-
 class Settings;
 
 class FileDialogMemory

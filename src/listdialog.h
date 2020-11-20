@@ -1,8 +1,6 @@
 #ifndef LISTDIALOG_H
 #define LISTDIALOG_H
 
-#include <QDialog>
-
 namespace Ui {
 class ListDialog;
 }

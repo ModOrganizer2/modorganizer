@@ -1,9 +1,6 @@
 #ifndef MODORGANIZER_INSTANCEMANAGER_INCLUDED
 #define MODORGANIZER_INSTANCEMANAGER_INCLUDED
 
-#include <QString>
-#include <QSettings>
-
 namespace MOBase { class IPluginGame; }
 
 class Settings;

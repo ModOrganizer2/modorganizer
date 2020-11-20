@@ -20,10 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef PREVIEWGENERATOR_H
 #define PREVIEWGENERATOR_H
 
-#include <QString>
-#include <QWidget>
-#include <map>
-#include <functional>
 #include <ipluginpreview.h>
 
 class PluginContainer;

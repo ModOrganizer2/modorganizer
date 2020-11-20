@@ -18,14 +18,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "browserview.h"
-
-#include <QEvent>
-#include <QKeyEvent>
-#include <QNetworkDiskCache>
-#include <QWebEngineContextMenuData>
-#include <QWebEngineSettings>
-#include <QMenu>
-#include <Shlwapi.h>
 #include "utility.h"
 
 

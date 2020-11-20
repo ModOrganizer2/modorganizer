@@ -6,12 +6,6 @@
 #include "moddatacontent.h"
 #include "settings.h"
 
-#include <QApplication>
-#include <QDirIterator>
-#include <QSettings>
-
-#include <sstream>
-
 using namespace MOBase;
 using namespace MOShared;
 

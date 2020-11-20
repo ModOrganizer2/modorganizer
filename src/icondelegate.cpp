@@ -19,11 +19,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "icondelegate.h"
 #include <log.h>
-#include <QHBoxLayout>
-#include <QLabel>
-#include <QPainter>
-#include <QDebug>
-#include <QPixmapCache>
 
 using namespace MOBase;
 

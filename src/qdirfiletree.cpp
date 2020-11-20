@@ -1,7 +1,5 @@
 #include "qdirfiletree.h"
 
-#include <QDirIterator>
-
 using namespace MOBase;
 
 class QDirFileTreeImpl : public QDirFileTree {

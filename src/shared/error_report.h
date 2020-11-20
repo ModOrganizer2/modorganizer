@@ -20,11 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MODORGANIZER_SHARED_ERROR_REPORT_INCLUDED
 #define MODORGANIZER_SHARED_ERROR_REPORT_INCLUDED
 
-#include <tchar.h>
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <string>
-
 namespace MOShared
 {
 

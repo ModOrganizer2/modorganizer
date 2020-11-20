@@ -20,8 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MODLISTSORTPROXY_H
 #define MODLISTSORTPROXY_H
 
-#include <QSortFilterProxyModel>
-#include <bitset>
 #include "modlist.h"
 
 class Profile;

@@ -35,30 +35,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <safewritefile.h>
 #include <gameplugins.h>
 
-#include <QtDebug>
-#include <QMessageBox>
-#include <QMimeData>
-#include <QCoreApplication>
-#include <QDateTime>
-#include <QDir>
-#include <QFile>
-#include <QTextCodec>
-#include <QFileInfo>
-#include <QListWidgetItem>
-#include <QRegularExpression>
-#include <QString>
-#include <QApplication>
-#include <QKeyEvent>
-#include <QSortFilterProxyModel>
-
-#include <ctime>
-#include <algorithm>
-#include <stdexcept>
-
-
 using namespace MOBase;
 using namespace MOShared;
-
 
 static bool ByName(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS)
 {

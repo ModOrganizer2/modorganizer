@@ -1,8 +1,6 @@
 #ifndef MODORGANIZER_CREATEINSTANCEDIALOG_INCLUDED
 #define MODORGANIZER_CREATEINSTANCEDIALOG_INCLUDED
 
-#include <QDialog>
-
 namespace MOBase { class IPluginGame; }
 namespace Ui { class CreateInstanceDialog; };
 namespace cid { class Page; }

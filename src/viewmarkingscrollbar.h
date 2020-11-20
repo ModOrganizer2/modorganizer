@@ -1,10 +1,6 @@
 #ifndef VIEWMARKINGSCROLLBAR_H
 #define VIEWMARKINGSCROLLBAR_H
 
-#include <QScrollBar>
-#include <QAbstractItemModel>
-
-
 class ViewMarkingScrollBar : public QScrollBar
 {
 public:

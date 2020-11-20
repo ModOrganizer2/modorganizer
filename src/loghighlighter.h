@@ -20,8 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef LOGHIGHLIGHTER_H
 #define LOGHIGHLIGHTER_H
 
-#include <QSyntaxHighlighter>
-
 /**
  * @brief Syntax highlighter to make log files from mo.dll more readable.
  * @note this is currently not used!

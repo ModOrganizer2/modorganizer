@@ -1,6 +1,5 @@
 #include "modconflicticondelegate.h"
 #include <log.h>
-#include <QList>
 
 using namespace MOBase;
 

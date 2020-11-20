@@ -1,8 +1,6 @@
 #include "savetextasdialog.h"
 #include "ui_savetextasdialog.h"
 #include <report.h>
-#include <QClipboard>
-#include <QFileDialog>
 
 
 using MOBase::reportError;

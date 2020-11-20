@@ -1,9 +1,6 @@
 #include "modinfodialogfwd.h"
 #include "modinfo.h"
 #include <filterwidget.h>
-#include <QPushButton>
-#include <QTreeWidget>
-#include <QCheckBox>
 
 namespace Ui { class MainWindow; }
 class OrganizerCore;

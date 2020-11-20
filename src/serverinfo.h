@@ -1,10 +1,6 @@
 #ifndef SERVERINFO_H
 #define SERVERINFO_H
 
-#include <QString>
-#include <QDate>
-#include <QMetaType>
-
 class ServerInfo
 {
 public:

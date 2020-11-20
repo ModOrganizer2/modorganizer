@@ -1,8 +1,6 @@
 #ifndef MODLISTVIEW_H
 #define MODLISTVIEW_H
 
-#include <QTreeView>
-#include <QDragEnterEvent>
 #include "viewmarkingscrollbar.h"
 
 class ModListView : public QTreeView

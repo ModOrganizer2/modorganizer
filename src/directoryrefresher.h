@@ -22,12 +22,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "shared/fileregisterfwd.h"
 #include "profile.h"
-#include <QObject>
-#include <QMutex>
-#include <QStringList>
-#include <vector>
-#include <set>
-#include <tuple>
 
 /**
  * @brief used to asynchronously generate the virtual view of the combined data directory

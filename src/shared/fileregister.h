@@ -2,8 +2,6 @@
 #define MO_REGISTER_FILESREGISTER_INCLUDED
 
 #include "fileregisterfwd.h"
-#include <mutex>
-#include <boost/shared_ptr.hpp>
 
 namespace MOShared
 {

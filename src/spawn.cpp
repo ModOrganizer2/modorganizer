@@ -27,17 +27,15 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "envmodule.h"
 #include "settings.h"
 #include "settingsdialogworkarounds.h"
+
 #include <errorcodes.h>
 #include <report.h>
 #include <log.h>
 #include <usvfs.h>
-#include <Shellapi.h>
+
 #include "shared/appconfig.h"
 #include "shared/windows_error.h"
-#include <QApplication>
-#include <QMessageBox>
-#include <QtDebug>
-#include <Shellapi.h>
+
 #include <fmt/format.h>
 
 using namespace MOBase;

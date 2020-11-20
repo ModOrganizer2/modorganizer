@@ -1,9 +1,6 @@
 #ifndef MO_STATUSBAR_H
 #define MO_STATUSBAR_H
 
-#include <QStatusBar>
-#include <QProgressBar>
-
 struct APIStats;
 class APIUserAccount;
 class Settings;

@@ -1,8 +1,6 @@
 #ifndef MODIDLINEEDIT_H
 #define MODIDLINEEDIT_H
 
-#include <QLineEdit>
-
 class ModIDLineEdit : public QLineEdit
 {
   Q_OBJECT

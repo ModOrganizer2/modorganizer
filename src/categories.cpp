@@ -23,12 +23,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <report.h>
 #include <log.h>
 
-#include <QObject>
-#include <QFile>
-#include <QDir>
-#include <QList>
-#include <QCoreApplication>
-
 
 using namespace MOBase;
 

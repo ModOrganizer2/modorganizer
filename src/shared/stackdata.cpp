@@ -1,13 +1,7 @@
 #include "stackdata.h"
 
 #include "util.h"
-#include <DbgHelp.h>
-#include <sstream>
-#include <TlHelp32.h>
-#include <set>
 #include "error_report.h"
-#include <boost/predef.h>
-
 
 using namespace MOShared;
 

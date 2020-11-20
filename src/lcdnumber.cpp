@@ -17,9 +17,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "lcdnumber.h"
 
-#include <QToolTip>
-#include <QTimer>
-
 LCDNumber::LCDNumber(QWidget *parent)
   : QLCDNumber(parent)
 {

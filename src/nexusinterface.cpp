@@ -29,13 +29,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <log.h>
 #include <moassert.h>
 
-#include <QApplication>
-#include <QNetworkCookieJar>
-#include <QJsonDocument>
-#include <QRegularExpression>
-
-#include <regex>
-
 
 using namespace MOBase;
 using namespace MOShared;

@@ -15,10 +15,6 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <QLCDNumber>
-#include <QMouseEvent>
-#include <QWidget>
-
 class LCDNumber : public QLCDNumber
 {
   Q_OBJECT

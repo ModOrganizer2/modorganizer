@@ -32,20 +32,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <utility.h>
 #include <report.h>
 
-#include <QTimer>
-#include <QFileInfo>
-#include <QRegExp>
-#include <QDirIterator>
-#include <QDesktopServices>
-#include <QInputDialog>
-#include <QMessageBox>
-#include <QCoreApplication>
-#include <QTextDocument>
-
-#include <boost/bind/bind.hpp>
-#include <regex>
-
-
 using namespace MOBase;
 
 

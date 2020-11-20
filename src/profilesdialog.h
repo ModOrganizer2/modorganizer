@@ -26,7 +26,6 @@ class OrganizerCore;
 
 class QListWidget;
 class QListWidgetItem;
-#include <QObject>
 class QString;
 
 namespace Ui { class ProfilesDialog; }

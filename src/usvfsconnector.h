@@ -23,13 +23,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <exception>
 #include <filemapping.h>
-#include <QString>
-#include <QThread>
-#include <QFile>
-#include <QDebug>
-#include <QList>
 #include <usvfsparameters.h>
 #include <log.h>
+
 #include "executableinfo.h"
 #include "envdump.h"
 

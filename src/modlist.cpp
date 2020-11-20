@@ -36,30 +36,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <utility.h>
 #include <report.h>
 
-#include <QFileInfo>
-#include <QDir>
-#include <QDirIterator>
-#include <QMimeData>
-#include <QStandardItemModel>
-#include <QMessageBox>
-#include <QStringList>
-#include <QEvent>
-#include <QContextMenuEvent>
-#include <QMenu>
-#include <QCheckBox>
-#include <QWidgetAction>
-#include <QAbstractItemView>
-#include <QSortFilterProxyModel>
-#include <QApplication>
-#include <QFontDatabase>
-
-#include <sstream>
-#include <stdexcept>
-#include <algorithm>
-
-
 using namespace MOBase;
-
 
 ModList::ModList(PluginContainer *pluginContainer, OrganizerCore *organizer)
   : QAbstractItemModel(organizer)

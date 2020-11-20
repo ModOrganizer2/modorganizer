@@ -1,9 +1,6 @@
 #ifndef ENV_SECURITY_H
 #define ENV_SECURITY_H
 
-#include <QUuid>
-#include <QString>
-
 namespace env
 {
 

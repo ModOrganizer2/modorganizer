@@ -33,38 +33,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <report.h>
 #include "shared/util.h"
 
-#include <QApplication>
-#include <QCoreApplication>
-#include <QDir>
-#include <QFileInfo>
-#include <QLibrary>
-#include <QMessageBox>
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QProcess>
-#include <QProgressDialog>
-#include <QRegExp>
-#include <QStringList>
-#include <QTimer>
-#include <QUrl>
-#include <QVariantList>
-#include <QVariantMap>
-#include <QAbstractButton>
-
-#include <Qt>
-#include <QtDebug>
-#include <QtAlgorithms>
-
-#include <boost/bind/bind.hpp>
-
-#include <Windows.h> //for VS_FIXEDFILEINFO, GetLastError
-
-#include <exception>
-#include <map>
-#include <stddef.h> //for size_t
-#include <stdexcept>
-
 using namespace MOBase;
 using namespace MOShared;
 

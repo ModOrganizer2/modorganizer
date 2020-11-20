@@ -33,17 +33,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <gameplugins.h>
 
-#include <QApplication>
-#include <QDir>
-#include <QString>
-#include <QTextCodec>
-
-#include <fstream>
-
-
 using namespace MOBase;
 using namespace MOShared;
-
 
 DirectoryStats::DirectoryStats()
 {

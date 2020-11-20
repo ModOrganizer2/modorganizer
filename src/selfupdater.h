@@ -20,25 +20,15 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SELFUPDATER_H
 #define SELFUPDATER_H
 
-#include <map>
-
 #include <versioninfo.h>
 #include <github.h>
 
+class Settings;
 class Archive;
 class NexusInterface;
 class PluginContainer;
+
 namespace MOBase { class IPluginGame; }
-
-#include <QFile>
-#include <QObject>
-#include <QString>
-#include <QVariant>
-#include <QtGlobal> //for qint64
-
-class QNetworkReply;
-class QProgressDialog;
-class Settings;
 
 /**
  * @brief manages updates for Mod Organizer itself

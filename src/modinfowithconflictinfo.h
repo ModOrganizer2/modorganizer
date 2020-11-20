@@ -6,9 +6,6 @@
 #include "thread_utils.h"
 #include "modinfo.h"
 
-#include <set>
-#include <QTime>
-
 class ModInfoWithConflictInfo : public ModInfo
 {
 

@@ -13,16 +13,10 @@ class IUserInterface;
 #include <ipluginproxy.h>
 #include <iplugininstaller.h>
 #include <ipluginfilemapper.h>
-#include <QtPlugin>
-#include <QPluginLoader>
-#include <QFile>
+
 #ifndef Q_MOC_RUN
-#include <boost/fusion/container.hpp>
-#include <boost/fusion/include/at_key.hpp>
 #include <boost/mp11.hpp>
 #endif // Q_MOC_RUN
-#include <vector>
-#include <memory>
 
 
 class OrganizerProxy;

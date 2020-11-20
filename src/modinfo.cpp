@@ -38,10 +38,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <unmanagedmods.h>
 #include <log.h>
 
-#include <QApplication>
-#include <QDirIterator>
-#include <QMutexLocker>
-
 using namespace MOBase;
 using namespace MOShared;
 

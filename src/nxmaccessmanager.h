@@ -21,14 +21,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define NXMACCESSMANAGER_H
 
 #include "apiuseraccount.h"
-#include <QNetworkAccessManager>
-#include <QTimer>
-#include <QNetworkReply>
-#include <QProgressDialog>
-#include <QElapsedTimer>
-#include <QDialogButtonBox>
-#include <QWebSocket>
-#include <set>
 
 namespace MOBase { class IPluginGame; }
 namespace Ui { class ValidationProgressDialog; }

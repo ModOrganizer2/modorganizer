@@ -1,8 +1,6 @@
 #ifndef MODINFOFOREIGN_H
 #define MODINFOFOREIGN_H
 
-#include <limits>
-
 #include "modinfowithconflictinfo.h"
 
 class ModInfoForeign: public ModInfoWithConflictInfo

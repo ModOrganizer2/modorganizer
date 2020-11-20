@@ -20,11 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef WINDOWS_ERROR_H
 #define WINDOWS_ERROR_H
 
-
-#include <stdexcept>
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-
 namespace MOShared {
 
 class windows_error : public std::runtime_error {

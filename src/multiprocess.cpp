@@ -2,7 +2,6 @@
 #include "utility.h"
 #include <report.h>
 #include <log.h>
-#include <QLocalSocket>
 
 static const char s_Key[] = "mo-43d1a3ad-eeb0-4818-97c9-eda5216c29b5";
 static const int s_Timeout = 5000;

@@ -1,9 +1,6 @@
 #ifndef ENV_WINDOWS_H
 #define ENV_WINDOWS_H
 
-#include <QString>
-#include <optional>
-
 namespace env
 {
 

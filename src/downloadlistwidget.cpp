@@ -20,15 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "downloadlist.h"
 #include "downloadlistwidget.h"
 #include <log.h>
-#include <QPainter>
-#include <QMouseEvent>
-#include <QMenu>
-#include <QMessageBox>
-#include <QSortFilterProxyModel>
-#include <QApplication>
-#include <QHeaderView>
-#include <QCheckBox>
-#include <QWidgetAction>
 
 using namespace MOBase;
 

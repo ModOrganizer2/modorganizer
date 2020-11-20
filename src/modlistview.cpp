@@ -1,9 +1,5 @@
 #include "modlistview.h"
 #include <widgetutility.h>
-#include <QUrl>
-#include <QMimeData>
-#include <QProxyStyle>
-
 
 class ModListViewStyle: public QProxyStyle {
 public:

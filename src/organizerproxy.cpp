@@ -11,9 +11,6 @@
 #include "proxyutils.h"
 #include "shared/util.h"
 
-#include <QObject>
-#include <QApplication>
-
 using namespace MOBase;
 using namespace MOShared;
 

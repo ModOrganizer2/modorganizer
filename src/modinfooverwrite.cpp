@@ -3,9 +3,6 @@
 #include "shared/appconfig.h"
 #include "settings.h"
 
-#include <QApplication>
-#include <QDirIterator>
-
 ModInfoOverwrite::ModInfoOverwrite(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, MOShared::DirectoryEntry **directoryStructure) 
   : ModInfoWithConflictInfo(pluginContainer, game, directoryStructure)
 {

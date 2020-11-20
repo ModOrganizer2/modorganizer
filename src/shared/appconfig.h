@@ -20,10 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef APPCONFIG_H
 #define APPCONFIG_H
 
-#include <string>
-
 namespace AppConfig {
-
 
 #define PARWSTRING wstring
 #define APPPARAM(partype, parid, value) partype parid ();

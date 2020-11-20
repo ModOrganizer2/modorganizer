@@ -1,11 +1,6 @@
 #ifndef MODORGANIZER_MOMULTIPROCESS_INCLUDED
 #define MODORGANIZER_MOMULTIPROCESS_INCLUDED
 
-#include <QObject>
-#include <QSharedMemory>
-#include <QLocalServer>
-
-
 /**
  * used to ensure only a single process of Mod Organizer is started and to
  * allow ephemeral processes to send messages to the primary (visible) one.

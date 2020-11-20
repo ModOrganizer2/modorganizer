@@ -1,7 +1,6 @@
 #include "envshell.h"
 #include <log.h>
 #include <utility.h>
-#include <windowsx.h>
 
 namespace env
 {

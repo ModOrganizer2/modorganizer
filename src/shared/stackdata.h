@@ -1,11 +1,6 @@
 #ifndef STACKDATA_H
 #define STACKDATA_H
 
-
-#include <string>
-#include <Windows.h>
-
-
 namespace MOShared {
 
 

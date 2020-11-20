@@ -3,9 +3,6 @@
 
 #include "forcedloaddialogwidget.h"
 
-#include <QComboBox>
-#include <QLabel>
-
 using namespace MOBase;
 
 ForcedLoadDialog::ForcedLoadDialog(const IPluginGame *game, QWidget *parent) :

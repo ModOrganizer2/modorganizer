@@ -20,16 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef BROWSERDIALOG_H
 #define BROWSERDIALOG_H
 
-#include <QDialog>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QTimer>
-#include <QWebEngineView>
-#include <QQueue>
-#include <QTabWidget>
-#include <QAtomicInt>
-
-
 namespace Ui {
     class BrowserDialog;
 }

@@ -20,9 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MOTDDIALOG_H
 #define MOTDDIALOG_H
 
-#include <QDialog>
-#include <QUrl>
-
 namespace Ui {
 class MotDDialog;
 }

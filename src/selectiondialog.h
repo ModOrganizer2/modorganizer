@@ -20,9 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SELECTIONDIALOG_H
 #define SELECTIONDIALOG_H
 
-#include <QDialog>
-#include <QAbstractButton>
-
 namespace Ui {
 class SelectionDialog;
 }

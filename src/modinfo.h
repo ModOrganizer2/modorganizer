@@ -27,18 +27,6 @@ class PluginContainer;
 class QDir;
 class QDateTime;
 
-#include <QMutex>
-#include <QSharedPointer>
-#include <QString>
-#include <QStringList>
-#include <QColor>
-
-#include <boost/function.hpp>
-
-#include <map>
-#include <set>
-#include <vector>
-
 namespace MOBase { class IPluginGame; }
 namespace MOShared { class DirectoryEntry; }
 

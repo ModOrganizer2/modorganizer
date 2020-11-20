@@ -5,17 +5,8 @@
 
 #include "leaktrace.h"
 #include "stackdata.h"
-#include <Windows.h>
-#include <DbgHelp.h>
-#include <set>
-#include <map>
-#include <vector>
-#include <sstream>
-#include <algorithm>
-
 
 using namespace MOShared;
-
 
 static struct __TraceData {
   void regTrace(void *pointer, const char *functionName, int line) {

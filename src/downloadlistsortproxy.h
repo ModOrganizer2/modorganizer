@@ -20,10 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DOWNLOADLISTSORTPROXY_H
 #define DOWNLOADLISTSORTPROXY_H
 
-
-#include <QSortFilterProxyModel>
-
-
 class DownloadManager;
 
 

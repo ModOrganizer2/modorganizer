@@ -20,11 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef PLUGINLISTSORTPROXY_H
 #define PLUGINLISTSORTPROXY_H
 
-
-#include <bitset>
-#include <QSortFilterProxyModel>
 #include "pluginlist.h"
-
 
 class PluginListSortProxy : public QSortFilterProxyModel
 {

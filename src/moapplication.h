@@ -20,9 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MOAPPLICATION_H
 #define MOAPPLICATION_H
 
-#include <QApplication>
-#include <QFileSystemWatcher>
-
 class Settings;
 class MOMultiProcess;
 class Instance;

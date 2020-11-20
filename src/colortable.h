@@ -1,8 +1,6 @@
 #ifndef COLORTABLE_H
 #define COLORTABLE_H
 
-#include <QTableWidget>
-
 class Settings;
 
 // a QTableWidget to view and modify color settings

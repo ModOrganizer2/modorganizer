@@ -23,7 +23,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_motddialog.h"
 #include "organizercore.h"
 #include <utility.h>
-#include <Shlwapi.h>
 
 using namespace MOBase;
 

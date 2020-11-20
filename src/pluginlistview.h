@@ -1,8 +1,6 @@
 #ifndef PLUGINLISTVIEW_H
 #define PLUGINLISTVIEW_H
 
-#include <QTreeView>
-#include <QDragEnterEvent>
 #include "viewmarkingscrollbar.h"
 
 class PluginListView : public QTreeView

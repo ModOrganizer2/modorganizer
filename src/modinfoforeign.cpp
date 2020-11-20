@@ -3,8 +3,6 @@
 #include "iplugingame.h"
 #include "utility.h"
 
-#include <QApplication>
-
 using namespace MOBase;
 using namespace MOShared;
 

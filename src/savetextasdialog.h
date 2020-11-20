@@ -1,8 +1,6 @@
 #ifndef SAVETEXTASDIALOG_H
 #define SAVETEXTASDIALOG_H
 
-#include <QDialog>
-
 namespace Ui {
 class SaveTextAsDialog;
 }

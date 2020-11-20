@@ -24,15 +24,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include <log.h>
 
-#include <QFileInfo>
-#include <QDir>
-#include <QDebug>
-#include <QCoreApplication>
-
-
-#include <algorithm>
-
-
 using namespace MOBase;
 
 ExecutablesList::iterator ExecutablesList::begin()

@@ -20,8 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef QUERYOVERWRITEDIALOG_H
 #define QUERYOVERWRITEDIALOG_H
 
-#include <QDialog>
-
 namespace Ui {
 class QueryOverwriteDialog;
 }

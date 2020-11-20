@@ -27,12 +27,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <report.h>
 #include <log.h>
 
-#include <QDir>
-#include <QDirIterator>
-#include <QComboBox>
-#include <QStringList>
-
-
 using namespace MOBase;
 using namespace MOShared;
 

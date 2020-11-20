@@ -18,8 +18,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "error_report.h"
-#include <sstream>
-#include <stdio.h>
 
 namespace MOShared {
 

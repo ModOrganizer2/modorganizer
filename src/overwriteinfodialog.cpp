@@ -22,10 +22,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "report.h"
 #include "utility.h"
 #include "organizercore.h"
-#include <QMessageBox>
-#include <QMenu>
-#include <QShortcut>
-#include <Shlwapi.h>
 
 using namespace MOBase;
 

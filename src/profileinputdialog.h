@@ -20,8 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef PROFILEINPUTDIALOG_H
 #define PROFILEINPUTDIALOG_H
 
-#include <QDialog>
-
 namespace Ui {
 class ProfileInputDialog;
 }

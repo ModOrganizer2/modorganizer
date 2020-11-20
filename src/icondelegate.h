@@ -21,9 +21,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define ICONDELEGATE_H
 
 #include "modinfo.h"
-#include <QStyledItemDelegate>
-#include <QAbstractProxyModel>
-
 
 class IconDelegate : public QStyledItemDelegate
 {

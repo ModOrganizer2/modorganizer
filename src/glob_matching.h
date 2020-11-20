@@ -6,10 +6,6 @@
 #ifndef GLOB_MATCHING_H
 #define GLOB_MATCHING_H
 
-#include <cctype>
-#include <string_view>
-#include <QString>
-
 namespace MOShared {
 
   /**

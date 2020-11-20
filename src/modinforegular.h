@@ -1,8 +1,6 @@
 #ifndef MODINFOREGULAR_H
 #define MODINFOREGULAR_H
 
-#include <limits>
-
 #include "modinfowithconflictinfo.h"
 #include "nexusinterface.h"
 

@@ -2,8 +2,6 @@
 #define ENV_SHELL_H
 
 #include "env.h"
-#include <QFileInfo>
-#include <QPoint>
 
 namespace env
 {

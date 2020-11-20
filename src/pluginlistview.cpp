@@ -1,9 +1,5 @@
 #include "pluginlistview.h"
 #include <widgetutility.h>
-#include <QUrl>
-#include <QMimeData>
-#include <QProxyStyle>
-
 
 class PluginListViewStyle : public QProxyStyle {
 public:

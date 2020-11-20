@@ -1,11 +1,7 @@
 #ifndef PROBLEMSDIALOG_H
 #define PROBLEMSDIALOG_H
 
-
-#include <QDialog>
-#include <QUrl>
 #include <iplugindiagnose.h>
-
 
 namespace Ui {
 class ProblemsDialog;

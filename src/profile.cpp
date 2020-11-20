@@ -34,31 +34,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfoforeign.h"
 #include <questionboxmemory.h>
 
-#include <QApplication>
-#include <QFile>                                   // for QFile
-#include <QFlags>                                  // for operator|, QFlags
-#include <QIODevice>                               // for QIODevice, etc
-#include <QMessageBox>
-#include <QScopedArrayPointer>
-#include <QStringList>                             // for QStringList
-#include <QtGlobal>                                // for qUtf8Printable
-#include <QBuffer>
-#include <QDirIterator>
-
-#include <Windows.h>
-
-#include <assert.h>                                // for assert
-#include <limits.h>                                // for UINT_MAX, INT_MAX, etc
-#include <stddef.h>                                // for size_t
-#include <string.h>                                // for wcslen
-
-#include <algorithm>                               // for max, min
-#include <exception>                               // for exception
-#include <functional>
-#include <set>                                     // for set
-#include <utility>                                 // for find
-#include <stdexcept>
-
 using namespace MOBase;
 using namespace MOShared;
 

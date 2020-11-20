@@ -23,16 +23,6 @@
 #include "moddatacontent.h"
 #include <log.h>
 
-#include <QDir>
-#include <QFileInfo>
-#include <QList>
-#include <QObject>
-#include <QSettings>
-#include <QString>
-#include <QStringList>
-#include <QThread>
-#include <QVariant>
-
 class ModListSortProxy;
 class PluginListSortProxy;
 class Profile;

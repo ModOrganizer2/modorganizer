@@ -24,13 +24,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <scriptextender.h>
 #include "shared/appconfig.h"
 #include <log.h>
-#include <QFile>
-#include <QFileInfo>
-#include <QDir>
-#include <QString>
-#include <QMessageBox>
-#include <QCryptographicHash>
-#include <QCoreApplication>
 
 using namespace MOBase;
 using namespace MOShared;

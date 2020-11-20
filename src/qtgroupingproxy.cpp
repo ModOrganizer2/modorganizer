@@ -20,10 +20,6 @@
 #include "qtgroupingproxy.h"
 #include <log.h>
 
-#include <QDebug>
-#include <QIcon>
-#include <QInputDialog>
-
 using namespace MOBase;
 
 /*!

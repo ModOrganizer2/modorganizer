@@ -1,9 +1,6 @@
 #ifndef MODORGANIZER_ICONFETCHER_INCLUDED
 #define MODORGANIZER_ICONFETCHER_INCLUDED
 
-#include <QFileIconProvider>
-#include <mutex>
-
 class IconFetcher
 {
 public:

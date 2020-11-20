@@ -20,8 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CREDENTIALSDIALOG_H
 #define CREDENTIALSDIALOG_H
 
-#include <QDialog>
-
 namespace Ui {
 class CredentialsDialog;
 }

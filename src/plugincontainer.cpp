@@ -6,15 +6,6 @@
 #include "iuserinterface.h"
 #include <idownloadmanager.h>
 #include "shared/appconfig.h"
-#include <QAction>
-#include <QToolButton>
-#include <QCoreApplication>
-#include <QMessageBox>
-#include <QDirIterator>
-#include <boost/fusion/sequence/intrinsic/at_key.hpp>
-#include <boost/fusion/include/at_key.hpp>
-#include <boost/fusion/algorithm/iteration/for_each.hpp>
-#include <boost/fusion/include/for_each.hpp>
 
 using namespace MOBase;
 using namespace MOShared;

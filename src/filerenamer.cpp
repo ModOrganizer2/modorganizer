@@ -1,8 +1,6 @@
 #include "filerenamer.h"
 #include <utility.h>
 #include <log.h>
-#include <QMessageBox>
-#include <QFileInfo>
 
 using namespace MOBase;
 

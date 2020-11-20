@@ -22,14 +22,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "organizercore.h"
 #include "envmodule.h"
 #include "shared/util.h"
-#include <memory>
-#include <sstream>
-#include <iomanip>
+
 #include <usvfs.h>
-#include <QTemporaryFile>
-#include <QProgressDialog>
-#include <QDateTime>
-#include <QCoreApplication>
 #include <qstandardpaths.h>
 
 static const char SHMID[] = "mod_organizer_instance";

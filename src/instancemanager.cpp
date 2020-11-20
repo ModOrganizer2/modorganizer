@@ -34,13 +34,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <utility.h>
 #include <log.h>
 
-#include <QCoreApplication>
-#include <QDir>
-#include <QStandardPaths>
-#include <QInputDialog>
-#include <QMessageBox>
-#include <cstdint>
-
 using namespace MOBase;
 
 Instance::Instance(QString dir, bool portable, QString profileName) :

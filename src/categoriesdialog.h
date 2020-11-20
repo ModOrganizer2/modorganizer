@@ -21,7 +21,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define CATEGORIESDIALOG_H
 
 #include "tutorabledialog.h"
-#include <set>
 
 namespace Ui {
 class CategoriesDialog;

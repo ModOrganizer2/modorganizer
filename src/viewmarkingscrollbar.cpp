@@ -1,7 +1,4 @@
 #include "viewmarkingscrollbar.h"
-#include <QStyle>
-#include <QStyleOptionSlider>
-#include <QPainter>
 
 ViewMarkingScrollBar::ViewMarkingScrollBar(QAbstractItemModel *model, QWidget *parent, int role)
   : QScrollBar(parent)

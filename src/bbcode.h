@@ -20,10 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef BBCODE_H
 #define BBCODE_H
 
-
-#include <QString>
-
-
 namespace BBCode {
 
 /**

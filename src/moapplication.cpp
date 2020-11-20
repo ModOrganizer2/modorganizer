@@ -31,20 +31,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "tutorialmanager.h"
 #include "sanitychecks.h"
 #include "mainwindow.h"
+#include "shared/appconfig.h"
 #include "shared/error_report.h"
 #include "shared/util.h"
+
 #include <iplugingame.h>
 #include <report.h>
 #include <utility.h>
 #include <log.h>
-#include "shared/appconfig.h"
-#include <QFile>
-#include <QStringList>
-#include <QProxyStyle>
-#include <QStyleFactory>
-#include <QPainter>
-#include <QStyleOption>
-#include <QDebug>
 
 // see addDllsToPath() below
 #pragma comment(linker, "/manifestDependency:\"" \

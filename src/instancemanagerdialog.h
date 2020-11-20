@@ -2,7 +2,6 @@
 #define MODORGANIZER_INSTANCEMANAGERDIALOG_INCLUDED
 
 #include <filterwidget.h>
-#include <QDialog>
 
 namespace Ui { class InstanceManagerDialog; };
 

@@ -20,11 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef LOADMECHANISM_H
 #define LOADMECHANISM_H
 
-
-#include <QDir>
-#include <QString>
-
-
 /**
  * @brief manages the various load mechanisms supported by Mod Organizer
  **/

@@ -2,7 +2,6 @@
 #include "ui_forcedloaddialogwidget.h"
 #include "executableinfo.h"
 #include <log.h>
-#include <QFileDialog>
 
 using namespace MOBase;
 

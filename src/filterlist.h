@@ -2,7 +2,6 @@
 #define MODORGANIZER_CATEGORIESLIST_INCLUDED
 
 #include "modlistsortproxy.h"
-#include <QTreeWidgetItem>
 
 namespace Ui { class MainWindow; };
 class CategoryFactory;

@@ -1,8 +1,5 @@
 #include "persistentcookiejar.h"
 #include <log.h>
-#include <QTemporaryFile>
-#include <QDataStream>
-#include <QNetworkCookie>
 
 using namespace MOBase;
 

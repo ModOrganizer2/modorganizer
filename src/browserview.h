@@ -20,13 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef NEXUSVIEW_H
 #define NEXUSVIEW_H
 
-
-class QEvent;
-class QUrl;
-class QWidget;
-#include <QWebEngineView>
-#include <QWebEnginePage>
-
 /**
  * @brief web view used to display a nexus page
  **/

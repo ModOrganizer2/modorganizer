@@ -1,7 +1,6 @@
 #include "texteditor.h"
 #include "utility.h"
 #include <log.h>
-#include <QSplitter>
 
 using namespace MOBase;
 

@@ -1,8 +1,6 @@
 #ifndef ORGANIZERPROXY_H
 #define ORGANIZERPROXY_H
 
-#include <memory>
-
 #include <iplugin.h>
 #include <imoinfo.h>
 

@@ -1,11 +1,7 @@
 #ifndef MODINFOOVERWRITE_H
 #define MODINFOOVERWRITE_H
 
-#include <limits>
-
 #include "modinfowithconflictinfo.h"
-
-#include <QDateTime>
 
 class ModInfoOverwrite : public ModInfoWithConflictInfo
 {

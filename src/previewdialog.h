@@ -1,8 +1,6 @@
 #ifndef PREVIEWDIALOG_H
 #define PREVIEWDIALOG_H
 
-#include <QDialog>
-
 namespace Ui {
 class PreviewDialog;
 }

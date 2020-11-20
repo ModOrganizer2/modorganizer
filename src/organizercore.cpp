@@ -40,39 +40,6 @@
 #include "shared/fileentry.h"
 #include "shared/util.h"
 
-#include <QApplication>
-#include <QCoreApplication>
-#include <QDialog>
-#include <QDialogButtonBox>
-#include <QMessageBox>
-#include <QNetworkInterface>
-#include <QProcess>
-#include <QTimer>
-#include <QUrl>
-#include <QWidget>
-
-#include <QtDebug>
-#include <QtGlobal> // for qUtf8Printable, etc
-
-#include <Psapi.h>
-#include <Shlobj.h>
-#include <tlhelp32.h>
-#include <tchar.h> // for _tcsicmp
-
-#include <limits.h>
-#include <stddef.h>
-#include <string.h> // for memset, wcsrchr
-
-#include <exception>
-#include <functional>
-#include <boost/algorithm/string/predicate.hpp>
-#include <memory>
-#include <set>
-#include <string> //for wstring
-#include <tuple>
-#include <utility>
-
-
 using namespace MOShared;
 using namespace MOBase;
 

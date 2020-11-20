@@ -1,9 +1,6 @@
 #ifndef MODORGANIZER_UILOCKER_INCLUDED
 #define MODORGANIZER_UILOCKER_INCLUDED
 
-#include <QMainWindow>
-#include <mutex>
-
 class UILockerInterface;
 
 class UILocker

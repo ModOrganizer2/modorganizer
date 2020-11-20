@@ -20,12 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SPAWN_H
 #define SPAWN_H
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <tchar.h>
-#include <QFileInfo>
-#include <QDir>
-
 class Settings;
 
 namespace spawn

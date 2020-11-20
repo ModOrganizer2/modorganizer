@@ -20,8 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DOWNLOADLIST_H
 #define DOWNLOADLIST_H
 
-#include <QAbstractTableModel>
-
 class DownloadManager;
 
 

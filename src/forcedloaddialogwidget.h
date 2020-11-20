@@ -1,7 +1,6 @@
 #ifndef FORCEDLOADDIALOGWIDGET_H
 #define FORCEDLOADDIALOGWIDGET_H
 
-#include <QWidget>
 #include "iplugingame.h"
 
 namespace Ui {

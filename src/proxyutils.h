@@ -1,8 +1,6 @@
 #ifndef PROXYUTILS_H
 #define PROXYUTILS_H
 
-#include <type_traits>
-
 #include "organizerproxy.h"
 
 namespace MOShared {

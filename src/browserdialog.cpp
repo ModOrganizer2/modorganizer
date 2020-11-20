@@ -29,15 +29,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <utility.h>
 #include <log.h>
 
-#include <QWebEngineSettings>
-#include <QNetworkCookieJar>
-#include <QNetworkCookie>
-#include <QMenu>
-#include <QInputDialog>
-#include <QWebEngineHistory>
-#include <QDir>
-#include <QKeyEvent>
-
 using namespace MOBase;
 
 

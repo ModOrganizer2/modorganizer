@@ -1,8 +1,5 @@
 #include "uilocker.h"
 #include "mainwindow.h"
-#include <QGraphicsDropShadowEffect>
-#include <QMenuBar>
-#include <QStatusBar>
 
 class UILockerInterface
 {

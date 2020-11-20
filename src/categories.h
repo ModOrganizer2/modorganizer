@@ -20,13 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CATEGORIES_H
 #define CATEGORIES_H
 
-
-#include <QString>
-#include <vector>
-#include <map>
-#include <functional>
-
-
 /**
  * @brief Manage the available mod categories
  * @warning member functions of this class currently use a wild mix of ids and indexes to look up categories,

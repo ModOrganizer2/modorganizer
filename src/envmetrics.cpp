@@ -1,10 +1,8 @@
 #include "envmetrics.h"
 #include "env.h"
-#include <Windows.h>
 #include <shellscalingapi.h>
 #include <log.h>
 #include <utility.h>
-#include <QDesktopWidget>
 
 namespace env
 {

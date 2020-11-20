@@ -1,9 +1,6 @@
 #ifndef PERSISTENTCOOKIEJAR_H
 #define PERSISTENTCOOKIEJAR_H
 
-#include <QNetworkCookieJar>
-
-
 class PersistentCookieJar : public QNetworkCookieJar {
 
   Q_OBJECT

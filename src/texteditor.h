@@ -1,8 +1,6 @@
 #ifndef MO_TEXTEDITOR_H
 #define MO_TEXTEDITOR_H
 
-#include <QPlainTextEdit>
-
 class TextEditor;
 
 class TextEditorToolbar : public QFrame

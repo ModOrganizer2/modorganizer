@@ -20,25 +20,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef PROFILE_H
 #define PROFILE_H
 
-
 #include "modinfo.h"
 #include <iprofile.h>
 #include <delayedfilewriter.h>
 #include "executableinfo.h"
-
-#include <QByteArray>
-#include <QDir>
-#include <QObject>
-#include <QString>
-#include <QSettings>
-#include <QList>
-
-#include <boost/shared_ptr.hpp>
-
-#include <string>
-#include <tuple>
-#include <vector>
-
 
 namespace MOBase { class IPluginGame; }
 

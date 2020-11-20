@@ -3,7 +3,6 @@
 #include "loot.h"
 #include "organizercore.h"
 #include <utility.h>
-#include <QWebChannel>
 
 using namespace MOBase;
 

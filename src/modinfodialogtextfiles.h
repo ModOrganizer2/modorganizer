@@ -3,8 +3,6 @@
 
 #include "modinfodialogtab.h"
 #include "filterwidget.h"
-#include <QSplitter>
-#include <QListView>
 
 using namespace MOBase;
 

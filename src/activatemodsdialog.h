@@ -23,13 +23,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "savegameinfo.h"
 #include "tutorabledialog.h"
 
-#include <QObject>
-
-class QString;
-class QWidget;
-
-#include <set>
-
 namespace Ui {
     class ActivateModsDialog;
 }

@@ -2,11 +2,13 @@
 #include <algorithm>
 #include <assert.h>
 #include <bitset>
+#include <cctype>
 #include <cstdarg>
 #include <cstdint>
 #include <ctime>
 #include <deque>
 #include <exception>
+#include <filesystem>
 #include <functional>
 #include <fstream>
 #include <iomanip>
@@ -22,16 +24,19 @@
 #include <sstream>
 #include <stddef.h>
 #include <stdexcept>
-#include <string.h>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <tuple>
+#include <type_traits>
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <tchar.h>
 #include <wchar.h>
 
 // windows
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <DbgHelp.h>
 #include <eh.h>
@@ -45,6 +50,7 @@
 #include <windowsx.h>
 
 // boost
+#include <boost/predef.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/assign.hpp>
@@ -172,6 +178,7 @@
 #include <QPersistentModelIndex>
 #include <QPixmap>
 #include <QPixmapCache>
+#include <QPlainTextEdit>
 #include <QPluginLoader>
 #include <QPoint>
 #include <QPointer>
@@ -242,6 +249,7 @@
 #include <QVariantMap>
 #include <QVector>
 #include <QVersionNumber>
+#include <QWebChannel>
 #include <QWebEngineContextMenuData>
 #include <QWebEngineHistory>
 #include <QWebEnginePage>

@@ -23,14 +23,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "downloadmanager.h"
 #include "downloadlist.h"
 #include "downloadlistsortproxy.h"
-#include <QWidget>
-#include <QItemDelegate>
-#include <QLabel>
-#include <QProgressBar>
-#include <QTreeView>
-#include <QHeaderView>
-#include <QStyledItemDelegate>
-
 
 namespace Ui {
   class DownloadListWidget;

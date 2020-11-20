@@ -1,8 +1,6 @@
 #ifndef ENV_SHORTCUT_H
 #define ENV_SHORTCUT_H
 
-#include <QString>
-
 class Executable;
 
 namespace env

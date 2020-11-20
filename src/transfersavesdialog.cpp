@@ -26,19 +26,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <utility.h>
 #include <log.h>
 
-#include <QtDebug>
-#include <QDateTime>
-#include <QDir>
-#include <QFile>
-#include <QFileInfo>
-#include <QFlags>
-#include <QLabel>
-#include <QListWidget>
-#include <QListWidgetItem>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QStringList>
-
 using namespace MOBase;
 using namespace MOShared;
 

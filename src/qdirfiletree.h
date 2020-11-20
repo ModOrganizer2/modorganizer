@@ -20,8 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef ARCHIVEFILENETRY_H
 #define ARCHIVEFILENTRY_H
 
-#include <QDir>
-
 #include "ifiletree.h"
 
 

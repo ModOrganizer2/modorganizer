@@ -27,15 +27,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <versioninfo.h>
 #include <imodrepositorybridge.h>
 
-#include <QNetworkReply>
-#include <QNetworkDiskCache>
-#include <QQueue>
-#include <QVariant>
-#include <QTimer>
-
-#include <list>
-#include <set>
-
 namespace MOBase { class IPluginGame; }
 
 class NexusInterface;

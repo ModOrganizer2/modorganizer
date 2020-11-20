@@ -22,11 +22,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "categories.h"
 #include "utility.h"
 #include "settings.h"
-#include <QItemDelegate>
-#include <QRegExpValidator>
-#include <QLineEdit>
-#include <QMenu>
-
 
 class NewIDValidator : public QIntValidator {
 public:

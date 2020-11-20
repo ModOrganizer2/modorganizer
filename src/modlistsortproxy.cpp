@@ -25,13 +25,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "organizercore.h"
 
 #include <log.h>
-#include <QMenu>
-#include <QCheckBox>
-#include <QWidgetAction>
-#include <QApplication>
-#include <QMimeData>
-#include <QDebug>
-#include <QTreeView>
 
 using namespace MOBase;
 
