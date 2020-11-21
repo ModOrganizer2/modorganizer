@@ -345,6 +345,7 @@ private:
 
   std::unique_ptr<BrowserDialog> m_IntegratedBrowser;
 
+  QTimer m_SavesWatcherTimer;
   QFileSystemWatcher m_SavesWatcher;
 
   QByteArray m_ArchiveListHash;

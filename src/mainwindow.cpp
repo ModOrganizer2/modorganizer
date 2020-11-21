@@ -430,7 +430,10 @@ MainWindow::MainWindow(Settings &settings
     this, &MainWindow::refresherProgress);
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(error(QString)), this, SLOT(showError(QString)));
 
-  connect(&m_SavesWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(refreshSavesIfOpen()));
+  m_SavesWatcherTimer.setSingleShot(true);
+  m_SavesWatcherTimer.setInterval(500);
+  connect(&m_SavesWatcher, &QFileSystemWatcher::directoryChanged, [this]() { m_SavesWatcherTimer.start(); });
+  connect(&m_SavesWatcherTimer, &QTimer::timeout, this, &MainWindow::refreshSavesIfOpen);
 
   connect(&m_OrganizerCore.settings(), SIGNAL(languageChanged(QString)), this, SLOT(languageChange(QString)));
   connect(&m_OrganizerCore.settings(), SIGNAL(styleChanged(QString)), this, SIGNAL(styleChanged(QString)));
