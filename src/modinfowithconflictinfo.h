@@ -34,7 +34,9 @@ public:
    *
    * @return true if the content is there, false otherwise.
    */
-  virtual bool hasContent(int content) const override;  /**
+  virtual bool hasContent(int content) const override;
+
+  /**
    * @brief Retrieve a file tree corresponding to the underlying disk content
    *     of this mod.
    *

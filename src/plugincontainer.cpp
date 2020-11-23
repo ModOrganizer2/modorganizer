@@ -289,15 +289,17 @@ PluginContainer::~PluginContainer() {
   unloadPlugins();
 }
 
-void PluginContainer::setUserInterface(IUserInterface *userInterface, QWidget *widget)
+void PluginContainer::setUserInterface(IUserInterface *userInterface)
 {
-  for (IPluginProxy *proxy : bf::at_key<IPluginProxy>(m_Plugins)) {
-    proxy->setParentWidget(widget);
-  }
-
-  if (userInterface != nullptr) {
-    for (IPluginModPage *modPage : bf::at_key<IPluginModPage>(m_Plugins)) {
-      userInterface->registerModPage(modPage);
+  if (userInterface) {
+    for (IPluginProxy* proxy : bf::at_key<IPluginProxy>(m_Plugins)) {
+      proxy->setParentWidget(userInterface->mainWindow());
+    }
+    for (IPluginModPage* modPage : bf::at_key<IPluginModPage>(m_Plugins)) {
+      modPage->setParentWidget(userInterface->mainWindow());
+    }
+    for (IPluginTool* tool : bf::at_key<IPluginTool>(m_Plugins)) {
+      tool->setParentWidget(userInterface->mainWindow());
     }
   }
 

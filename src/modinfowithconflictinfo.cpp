@@ -15,7 +15,7 @@ namespace fs = std::filesystem;
 
 ModInfoWithConflictInfo::ModInfoWithConflictInfo(
   PluginContainer *pluginContainer, const MOBase::IPluginGame* gamePlugin, DirectoryEntry **directoryStructure)
-  : ModInfo(pluginContainer), m_GamePlugin(gamePlugin), 
+  : ModInfo(pluginContainer), m_GamePlugin(gamePlugin),
   m_FileTree([this]() { return QDirFileTree::makeTree(absolutePath()); }),
   m_Valid([this]() { return doIsValid(); }),
   m_Contents([this]() { return doGetContents(); }),
@@ -27,7 +27,7 @@ void ModInfoWithConflictInfo::clearCaches()
 }
 
 std::vector<ModInfo::EFlag> ModInfoWithConflictInfo::getFlags() const
-{ 
+{
   std::vector<ModInfo::EFlag> result = std::vector<ModInfo::EFlag>();
   if (hasHiddenFiles()) {
     result.push_back(ModInfo::FLAG_HIDDEN_FILES);

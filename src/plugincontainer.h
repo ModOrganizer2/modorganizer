@@ -188,7 +188,7 @@ public:
   PluginContainer(OrganizerCore *organizer);
   virtual ~PluginContainer();
 
-  void setUserInterface(IUserInterface *userInterface, QWidget *widget);
+  void setUserInterface(IUserInterface *userInterface);
 
   void loadPlugins();
   void unloadPlugins();

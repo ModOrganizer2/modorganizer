@@ -511,6 +511,7 @@ MainWindow::MainWindow(Settings &settings
   m_Tutorial.expose("espList", m_OrganizerCore.pluginList());
 
   m_OrganizerCore.setUserInterface(this);
+  m_PluginContainer.setUserInterface(this);
   connect(this, &MainWindow::userInterfaceInitialized, &m_OrganizerCore, &OrganizerCore::userInterfaceInitialized);
   for (const QString &fileName : m_PluginContainer.pluginFileNames()) {
     installTranslator(QFileInfo(fileName).baseName());
@@ -703,7 +704,7 @@ MainWindow::~MainWindow()
   try {
     cleanup();
 
-    m_PluginContainer.setUserInterface(nullptr, nullptr);
+    m_PluginContainer.setUserInterface(nullptr);
     m_OrganizerCore.setUserInterface(nullptr);
 
     if (m_IntegratedBrowser) {
@@ -1679,7 +1680,6 @@ void MainWindow::updateToolMenu()
 void MainWindow::registerModPage(IPluginModPage *modPage)
 {
   QAction *action = new QAction(modPage->icon(), modPage->displayName(), this);
-  modPage->setParentWidget(this);
   connect(action, &QAction::triggered, this, [this, modPage]() {
     if (modPage->useIntegratedBrowser()) {
 
