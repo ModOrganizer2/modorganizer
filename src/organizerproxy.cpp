@@ -155,7 +155,7 @@ bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
   auto runner = m_Proxied->processRunner();
 
   const auto r = runner
-    .setWaitForCompletion(ProcessRunner::ForceWait, UILocker::OutputRequired)
+    .setWaitForCompletion(ProcessRunner::ForceWait | ProcessRunner::Refresh, UILocker::OutputRequired)
     .attachToProcess(handle);
 
   if (exitCode) {
