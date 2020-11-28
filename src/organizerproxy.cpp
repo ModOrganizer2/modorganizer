@@ -144,7 +144,7 @@ HANDLE OrganizerProxy::startApplication(
   return runner.stealProcessHandle().release();
 }
 
-bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
+bool OrganizerProxy::waitForApplication(HANDLE handle, bool refresh, LPDWORD exitCode) const
 {
   const auto pid = ::GetProcessId(handle);
 
@@ -154,8 +154,14 @@ bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
 
   auto runner = m_Proxied->processRunner();
 
+  ProcessRunner::WaitFlags waitFlags = ProcessRunner::ForceWait;
+
+  if (refresh) {
+    waitFlags |= ProcessRunner::Refresh;
+  }
+
   const auto r = runner
-    .setWaitForCompletion(ProcessRunner::ForceWait, UILocker::OutputRequired)
+    .setWaitForCompletion(waitFlags, UILocker::OutputRequired)
     .attachToProcess(handle);
 
   if (exitCode) {
