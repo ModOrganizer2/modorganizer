@@ -3,7 +3,7 @@
 
 #include <ifiletree.h>
 
-#include "thread_utils.h"
+#include "memoizedlock.h"
 #include "modinfo.h"
 
 #include <set>
@@ -34,7 +34,9 @@ public:
    *
    * @return true if the content is there, false otherwise.
    */
-  virtual bool hasContent(int content) const override;  /**
+  virtual bool hasContent(int content) const override;
+
+  /**
    * @brief Retrieve a file tree corresponding to the underlying disk content
    *     of this mod.
    *
@@ -145,9 +147,9 @@ protected:
 
 private:
 
-  MOShared::MemoizedLocked<std::shared_ptr<const MOBase::IFileTree>> m_FileTree;
-  MOShared::MemoizedLocked<bool> m_Valid;
-  MOShared::MemoizedLocked<std::set<int>> m_Contents;
+  MOBase::MemoizedLocked<std::shared_ptr<const MOBase::IFileTree>> m_FileTree;
+  MOBase::MemoizedLocked<bool> m_Valid;
+  MOBase::MemoizedLocked<std::set<int>> m_Contents;
 
   MOShared::DirectoryEntry **m_DirectoryStructure;
 

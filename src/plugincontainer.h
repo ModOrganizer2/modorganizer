@@ -109,7 +109,7 @@ private:
   MOBase::IPlugin* m_Plugin;
   MOBase::IPluginProxy* m_PluginProxy;
   MOBase::IPlugin* m_Master;
-  std::vector<std::unique_ptr<const MOBase::IPluginRequirement>> m_Requirements;
+  std::vector<std::shared_ptr<const MOBase::IPluginRequirement>> m_Requirements;
   MOBase::IOrganizer* m_Organizer;
   std::vector<MOBase::IPlugin*> m_RequiredFor;
 
@@ -188,7 +188,7 @@ public:
   PluginContainer(OrganizerCore *organizer);
   virtual ~PluginContainer();
 
-  void setUserInterface(IUserInterface *userInterface, QWidget *widget);
+  void setUserInterface(IUserInterface *userInterface);
 
   void loadPlugins();
   void unloadPlugins();
