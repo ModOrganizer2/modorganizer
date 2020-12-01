@@ -6491,6 +6491,8 @@ void MainWindow::dropEvent(QDropEvent *event)
 
 void MainWindow::keyReleaseEvent(QKeyEvent *event)
 {
+  // if the ui is locked, ignore the ALT key event
+  // alt-tabbing out of a game triggers this
   if (!UILocker::instance().locked()) {
     // if the menubar is hidden, pressing Alt will make it visible
     if (event->key() == Qt::Key_Alt) {
