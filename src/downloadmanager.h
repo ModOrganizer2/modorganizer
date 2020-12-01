@@ -181,12 +181,6 @@ public:
   QString getOutputDirectory() const { return m_OutputDirectory; }
 
   /**
-   * @brief set the list of supported extensions
-   * @param extensions list of supported extensions
-   */
-  void setSupportedExtensions(const QStringList &extensions);
-
-  /**
    * @brief sets whether hidden files are to be shown after all
    */
   void setShowHidden(bool showHidden);
@@ -558,7 +552,6 @@ private:
   QVector<DownloadInfo*> m_ActiveDownloads;
 
   QString m_OutputDirectory;
-  QStringList m_SupportedExtensions;
   std::set<int> m_RequestIDs;
   QVector<int> m_AlphabeticalTranslation;
 

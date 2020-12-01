@@ -80,7 +80,6 @@ static T resolveFunction(QLibrary &lib, const char *name)
 InstallationManager::InstallationManager()
     :
       m_ParentWidget(nullptr),
-      m_SupportedExtensions({"zip", "rar", "7z", "fomod", "001"}),
       m_IsRunning(false) {
   m_ArchiveHandler = CreateArchive();
   if (!m_ArchiveHandler->isValid()) {
@@ -606,7 +605,7 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
   ON_BLOCK_EXIT([this]() { m_IsRunning = false; });
 
   QFileInfo fileInfo(fileName);
-  if (m_SupportedExtensions.find(fileInfo.suffix()) == m_SupportedExtensions.end()) {
+  if (!getSupportedExtensions().contains(fileInfo.suffix(), Qt::CaseInsensitive)) {
     reportError(tr("File format \"%1\" not supported").arg(fileInfo.suffix()));
     return IPluginInstaller::RESULT_FAILED;
   }
@@ -851,16 +850,20 @@ void InstallationManager::registerInstaller(IPluginInstaller *installer)
 {
   m_Installers.push_back(installer);
   installer->setInstallationManager(this);
-  IPluginInstallerCustom *installerCustom = dynamic_cast<IPluginInstallerCustom*>(installer);
-  if (installerCustom != nullptr) {
-    std::set<QString> extensions = installerCustom->supportedExtensions();
-    m_SupportedExtensions.insert(extensions.begin(), extensions.end());
-  }
 }
 
 QStringList InstallationManager::getSupportedExtensions() const
 {
-  return QStringList(std::begin(m_SupportedExtensions), std::end(m_SupportedExtensions));
+  std::set<QString, CaseInsensitive> supportedExtensions({ "zip", "rar", "7z", "fomod", "001" });
+  for (auto* installer : m_PluginContainer->plugins<IPluginInstaller>()) {
+    if (m_PluginContainer->isEnabled(installer)) {
+      if (auto* installerCustom = dynamic_cast<IPluginInstallerCustom*>(installer)) {
+        std::set<QString> extensions = installerCustom->supportedExtensions();
+        supportedExtensions.insert(extensions.begin(), extensions.end());
+      }
+    }
+  }
+  return QStringList(supportedExtensions.begin(), supportedExtensions.end());
 }
 
 void InstallationManager::notifyInstallationStart(QString const& archive, bool reinstallation, ModInfo::Ptr  currentMod)

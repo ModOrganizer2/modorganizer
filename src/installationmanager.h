@@ -296,7 +296,6 @@ private:
   QString m_DownloadsDirectory;
 
   std::vector<MOBase::IPluginInstaller*> m_Installers;
-  std::set<QString, CaseInsensitive> m_SupportedExtensions;
 
   // Archive management.
   std::unique_ptr<Archive> m_ArchiveHandler;
