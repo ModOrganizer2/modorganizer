@@ -1411,6 +1411,7 @@ p, li { white-space: pre-wrap; }
    <addaction name="actionChange_Game"/>
    <addaction name="actionInstallMod"/>
    <addaction name="actionNexus"/>
+   <addaction name="actionModPage"/>
    <addaction name="actionAdd_Profile"/>
    <addaction name="actionModify_Executables"/>
    <addaction name="actionTool"/>
@@ -1682,6 +1683,27 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionModPage">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/MO/gui/resources/internet-web-browser.png</normaloff>:/MO/gui/resources/internet-web-browser.png</iconset>
+   </property>
+   <property name="text">
+    <string>Browse Mod Page</string>
+   </property>
+   <property name="iconText">
+    <string>Browse Mod Page</string>
+   </property>
+   <property name="toolTip">
+    <string>Browse Mod Page</string>
+   </property>
+   <property name="statusTip">
+    <string>Browse Mod Page</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
    </property>
   </action>
   <action name="actionUpdate">

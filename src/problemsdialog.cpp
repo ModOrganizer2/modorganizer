@@ -7,12 +7,13 @@
 #include <QPushButton>
 #include <Shellapi.h>
 
+#include "plugincontainer.h"
 
 using namespace MOBase;
 
 
-ProblemsDialog::ProblemsDialog(std::vector<QObject *> pluginObjects, QWidget *parent) :
-  QDialog(parent), ui(new Ui::ProblemsDialog), m_PluginObjects(pluginObjects),
+ProblemsDialog::ProblemsDialog(const PluginContainer& pluginContainer, QWidget *parent) :
+  QDialog(parent), ui(new Ui::ProblemsDialog), m_PluginContainer(pluginContainer),
   m_hasProblems(false)
 {
   ui->setupUi(this);
@@ -40,14 +41,10 @@ void ProblemsDialog::runDiagnosis()
   m_hasProblems = false;
   ui->problemsWidget->clear();
 
-  for(QObject *pluginObj : m_PluginObjects) {
-    IPlugin *plugin = qobject_cast<IPlugin*>(pluginObj);
-    if (plugin != nullptr && !plugin->isActive())
+  for (IPluginDiagnose *diagnose : m_PluginContainer.plugins<IPluginDiagnose>()) {
+    if (!m_PluginContainer.isEnabled(diagnose)) {
       continue;
-
-    IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(pluginObj);
-    if (diagnose == nullptr)
-      continue;
+    }
 
     std::vector<unsigned int> activeProblems = diagnose->activeProblems();
     foreach (unsigned int key, activeProblems) {

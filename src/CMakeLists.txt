@@ -186,6 +186,7 @@ add_filter(NAME src/settingsdialog GROUPS
 	settingsdialogplugins
 	settingsdialogsteam
 	settingsdialogworkarounds
+	disableproxyplugindialog
 )
 
 add_filter(NAME src/utilities GROUPS
@@ -231,17 +232,15 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt5
         DESTINATION bin/dlls
         RENAME dlls.manifest)
 
-install(FILES ${qm_files} DESTINATION bin/resources/translations)
+install(FILES ${qm_files} DESTINATION bin/translations)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/stylesheets
-		DESTINATION bin)
-		
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tutorials
-		DESTINATION bin/resources)
+                  ${CMAKE_CURRENT_SOURCE_DIR}/tutorials
+        DESTINATION bin)
 
 deploy_qt(BINARIES ModOrganizer.exe uibase.dll plugins/bsa_packer.dll)
 

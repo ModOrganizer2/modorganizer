@@ -35,8 +35,6 @@ public:
   virtual MOBase::IPluginGame *getGame(const QString &gameName) const;
   virtual MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
   virtual void modDataChanged(MOBase::IModInterface *mod);
-  virtual QVariant pluginSetting(const QString &pluginName, const QString &key) const;
-  virtual void setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value);
   virtual QVariant persistent(const QString &pluginName, const QString &key, const QVariant &def = QVariant()) const;
   virtual void setPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync = true);
   virtual QString pluginDataPath() const;
@@ -54,7 +52,7 @@ public:
   virtual MOBase::IProfile *profile() const override;
   virtual HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "",
                                   const QString &profile = "", const QString &forcedCustomOverwrite = "", bool ignoreCustomOverwrite = false);
-  virtual bool waitForApplication(HANDLE handle, LPDWORD exitCode = nullptr) const;
+  virtual bool waitForApplication(HANDLE handle, bool refresh = true, LPDWORD exitCode = nullptr) const;
   virtual void refresh(bool saveChanges);
 
   virtual bool onAboutToRun(const std::function<bool(const QString&)> &func) override;
@@ -64,7 +62,17 @@ public:
   virtual bool onProfileRenamed(std::function<void(MOBase::IProfile*, QString const&, QString const&)> const& func) override;
   virtual bool onProfileRemoved(std::function<void(QString const&)> const& func) override;
   virtual bool onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func) override;
+
+  // Plugin related:
+  virtual bool isPluginEnabled(QString const& pluginName) const override;
+  virtual bool isPluginEnabled(MOBase::IPlugin* plugin) const override;
+  virtual QVariant pluginSetting(const QString& pluginName, const QString& key) const override;
+  virtual void setPluginSetting(const QString& pluginName, const QString& key, const QVariant& value) override;
   virtual bool onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func) override;
+  virtual bool onPluginEnabled(std::function<void(const MOBase::IPlugin*)> const& func) override;
+  virtual bool onPluginEnabled(const QString& pluginName, std::function<void()> const& func) override;
+  virtual bool onPluginDisabled(std::function<void(const MOBase::IPlugin*)> const& func) override;
+  virtual bool onPluginDisabled(const QString& pluginName, std::function<void()> const& func) override;
 
   virtual MOBase::IPluginGame const *managedGame() const;
 

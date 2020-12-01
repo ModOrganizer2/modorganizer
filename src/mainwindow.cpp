@@ -260,7 +260,6 @@ MainWindow::MainWindow(Settings &settings
   , m_ContextItem(nullptr)
   , m_ContextAction(nullptr)
   , m_ContextRow(-1)
-  , m_browseModPage(nullptr)
   , m_CurrentSaveView(nullptr)
   , m_OrganizerCore(organizerCore)
   , m_PluginContainer(pluginContainer)
@@ -431,7 +430,10 @@ MainWindow::MainWindow(Settings &settings
     this, &MainWindow::refresherProgress);
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(error(QString)), this, SLOT(showError(QString)));
 
-  connect(&m_SavesWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(refreshSavesIfOpen()));
+  m_SavesWatcherTimer.setSingleShot(true);
+  m_SavesWatcherTimer.setInterval(500);
+  connect(&m_SavesWatcher, &QFileSystemWatcher::directoryChanged, [this]() { m_SavesWatcherTimer.start(); });
+  connect(&m_SavesWatcherTimer, &QTimer::timeout, this, &MainWindow::refreshSavesIfOpen);
 
   connect(&m_OrganizerCore.settings(), SIGNAL(languageChanged(QString)), this, SLOT(languageChange(QString)));
   connect(&m_OrganizerCore.settings(), SIGNAL(styleChanged(QString)), this, SIGNAL(styleChanged(QString)));
@@ -467,6 +469,12 @@ MainWindow::MainWindow(Settings &settings
   connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(toolBar_customContextMenuRequested(QPoint)));
   connect(ui->menuToolbars, &QMenu::aboutToShow, [&]{ updateToolbarMenu(); });
   connect(ui->menuView, &QMenu::aboutToShow, [&]{ updateViewMenu(); });
+  connect(ui->actionTool->menu(), &QMenu::aboutToShow, [&] { updateToolMenu(); });
+  connect(&m_PluginContainer, &PluginContainer::pluginEnabled, this, [this](IPlugin* plugin) {
+    if (m_PluginContainer.implementInterface<IPluginModPage>(plugin)) { updateModPageMenu(); } });
+  connect(&m_PluginContainer, &PluginContainer::pluginDisabled, this, [this](IPlugin* plugin) {
+    if (m_PluginContainer.implementInterface<IPluginModPage>(plugin)) { updateModPageMenu(); } });
+
 
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this, &MainWindow::modInstalled);
   connect(&m_OrganizerCore, &OrganizerCore::close, this, &QMainWindow::close);
@@ -503,16 +511,13 @@ MainWindow::MainWindow(Settings &settings
   m_Tutorial.expose("espList", m_OrganizerCore.pluginList());
 
   m_OrganizerCore.setUserInterface(this);
+  m_PluginContainer.setUserInterface(this);
   connect(this, &MainWindow::userInterfaceInitialized, &m_OrganizerCore, &OrganizerCore::userInterfaceInitialized);
   for (const QString &fileName : m_PluginContainer.pluginFileNames()) {
     installTranslator(QFileInfo(fileName).baseName());
   }
 
-  registerPluginTools(m_PluginContainer.plugins<IPluginTool>());
-
-  for (IPluginModPage *modPagePlugin : m_PluginContainer.plugins<IPluginModPage>()) {
-    registerModPage(modPagePlugin);
-  }
+  updateModPageMenu();
 
   // refresh profiles so the current profile can be activated
   refreshProfiles(false);
@@ -699,7 +704,7 @@ MainWindow::~MainWindow()
   try {
     cleanup();
 
-    m_PluginContainer.setUserInterface(nullptr, nullptr);
+    m_PluginContainer.setUserInterface(nullptr);
     m_OrganizerCore.setUserInterface(nullptr);
 
     if (m_IntegratedBrowser) {
@@ -812,6 +817,7 @@ static QModelIndex mapToModel(const QAbstractItemModel *targetModel, QModelIndex
 
 void MainWindow::setupToolbar()
 {
+  setupActionMenu(ui->actionModPage);
   setupActionMenu(ui->actionTool);
   setupActionMenu(ui->actionHelp);
   setupActionMenu(ui->actionEndorseMO);
@@ -1132,7 +1138,7 @@ void MainWindow::checkForProblemsImpl()
     size_t numProblems = 0;
     for (QObject *pluginObj : m_PluginContainer.plugins<QObject>()) {
       IPlugin *plugin = qobject_cast<IPlugin*>(pluginObj);
-      if (plugin == nullptr || plugin->isActive()) {
+      if (plugin == nullptr || m_PluginContainer.isEnabled(plugin)) {
         IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(pluginObj);
         if (diagnose != nullptr)
           numProblems += diagnose->activeProblems().size();
@@ -1204,9 +1210,7 @@ void MainWindow::createHelpMenu()
 
   ActionList tutorials;
 
-  QString tutorialPath = QApplication::applicationDirPath() 
-    + "/" + QString::fromStdWString(AppConfig::tutorialsPath()) + "/";
-  QDirIterator dirIter(tutorialPath, QStringList("*.js"), QDir::Files);
+  QDirIterator dirIter(QApplication::applicationDirPath() + "/tutorials", QStringList("*.js"), QDir::Files);
   while (dirIter.hasNext()) {
     dirIter.next();
     QString fileName = dirIter.fileName();
@@ -1318,8 +1322,7 @@ bool MainWindow::addProfile()
 
 void MainWindow::hookUpWindowTutorials()
 {
-  QString tutorialPath = QApplication::applicationDirPath() + "/" + QString::fromStdWString(AppConfig::tutorialsPath()) + "/";
-  QDirIterator dirIter(tutorialPath, QStringList("*.js"), QDir::Files);
+  QDirIterator dirIter(QApplication::applicationDirPath() + "/tutorials", QStringList("*.js"), QDir::Files);
   while (dirIter.hasNext()) {
     dirIter.next();
     QString fileName = dirIter.fileName();
@@ -1530,7 +1533,6 @@ void MainWindow::displaySaveGameInfo(QListWidgetItem *newItem)
     return;
   }
 
-  QString const &save = newItem->data(Qt::UserRole).toString();
   if (m_CurrentSaveView == nullptr) {
     IPluginGame const *game = m_OrganizerCore.managedGame();
     SaveGameInfo const *info = game->feature<SaveGameInfo>();
@@ -1541,7 +1543,7 @@ void MainWindow::displaySaveGameInfo(QListWidgetItem *newItem)
       return;
     }
   }
-  m_CurrentSaveView->setSave(save);
+  m_CurrentSaveView->setSave(*m_SaveGames[ui->savegameList->row(newItem)]);
 
   QWindow *window = m_CurrentSaveView->window()->windowHandle();
   QRect screenRect;
@@ -1600,45 +1602,6 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event)
   return false;
 }
 
-
-void MainWindow::toolPluginInvoke()
-{
-  QAction *triggeredAction = qobject_cast<QAction*>(sender());
-  IPluginTool *plugin = qobject_cast<IPluginTool*>(triggeredAction->data().value<QObject*>());
-  if (plugin != nullptr) {
-    try {
-      plugin->display();
-    } catch (const std::exception &e) {
-      reportError(tr("Plugin \"%1\" failed: %2").arg(plugin->name()).arg(e.what()));
-    } catch (...) {
-      reportError(tr("Plugin \"%1\" failed").arg(plugin->name()));
-    }
-  }
-}
-
-void MainWindow::modPagePluginInvoke()
-{
-  QAction *triggeredAction = qobject_cast<QAction*>(sender());
-  IPluginModPage *plugin = qobject_cast<IPluginModPage*>(triggeredAction->data().value<QObject*>());
-  if (plugin != nullptr) {
-    if (plugin->useIntegratedBrowser()) {
-
-      if (!m_IntegratedBrowser) {
-        m_IntegratedBrowser.reset(new BrowserDialog);
-
-        connect(
-          m_IntegratedBrowser.get(), SIGNAL(requestDownload(QUrl,QNetworkReply*)),
-          &m_OrganizerCore, SLOT(requestDownload(QUrl,QNetworkReply*)));
-      }
-
-      m_IntegratedBrowser->setWindowTitle(plugin->displayName());
-      m_IntegratedBrowser->openUrl(plugin->pageURL());
-    } else {
-      QDesktopServices::openUrl(QUrl(plugin->pageURL()));
-    }
-  }
-}
-
 void MainWindow::registerPluginTool(IPluginTool *tool, QString name, QMenu *menu)
 {
   if (!menu) {
@@ -1651,26 +1614,41 @@ void MainWindow::registerPluginTool(IPluginTool *tool, QString name, QMenu *menu
   QAction *action = new QAction(tool->icon(), name, menu);
   action->setToolTip(tool->tooltip());
   tool->setParentWidget(this);
-  action->setData(QVariant::fromValue((QObject*)tool));
-  connect(action, SIGNAL(triggered()), this, SLOT(toolPluginInvoke()), Qt::QueuedConnection);
+  connect(action, &QAction::triggered, this, [this, tool]() {
+      try {
+        tool->display();
+      }
+      catch (const std::exception& e) {
+        reportError(tr("Plugin \"%1\" failed: %2").arg(tool->localizedName()).arg(e.what()));
+      }
+      catch (...) {
+        reportError(tr("Plugin \"%1\" failed").arg(tool->localizedName()));
+      }
+  }, Qt::QueuedConnection);
 
   menu->addAction(action);
 }
 
-void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
+void MainWindow::updateToolMenu()
 {
+  // Clear the menu:
+  ui->actionTool->menu()->clear();
+
+  std::vector<IPluginTool*> toolPlugins = m_PluginContainer.plugins<IPluginTool>();
+
   // Sort the plugins by display name
-  std::sort(toolPlugins.begin(), toolPlugins.end(),
+  std::sort(std::begin(toolPlugins), std::end(toolPlugins),
     [](IPluginTool *left, IPluginTool *right) {
       return left->displayName().toLower() < right->displayName().toLower();
     }
   );
 
-  // Remove inactive plugins
+  // Remove disabled plugins:
   toolPlugins.erase(
-    std::remove_if(toolPlugins.begin(), toolPlugins.end(), [](IPluginTool *plugin) -> bool { return !plugin->isActive(); }),
-    toolPlugins.end()
-    );
+    std::remove_if(std::begin(toolPlugins), std::end(toolPlugins), [&](auto* tool) {
+      return !m_PluginContainer.isEnabled(tool);
+    }),
+    toolPlugins.end());
 
   // Group the plugins into submenus
   QMap<QString, QList<QPair<QString, IPluginTool *>>> submenuMap;
@@ -1698,26 +1676,64 @@ void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
 
 void MainWindow::registerModPage(IPluginModPage *modPage)
 {
-  // turn the browser action into a drop-down menu if necessary
-  if (!m_browseModPage) {
-    m_browseModPage = new QAction(ui->actionNexus->icon(), tr("Browse Mod Page"), this);
-    setupActionMenu(m_browseModPage);
-
-    m_browseModPage->menu()->addAction(ui->actionNexus);
-
-    ui->toolBar->insertAction(ui->actionNexus, m_browseModPage);
-    ui->toolBar->removeAction(ui->actionNexus);
-  }
-
   QAction *action = new QAction(modPage->icon(), modPage->displayName(), this);
-  modPage->setParentWidget(this);
-  action->setData(QVariant::fromValue(reinterpret_cast<QObject*>(modPage)));
+  connect(action, &QAction::triggered, this, [this, modPage]() {
+    if (modPage->useIntegratedBrowser()) {
 
-  connect(action, SIGNAL(triggered()), this, SLOT(modPagePluginInvoke()), Qt::QueuedConnection);
+      if (!m_IntegratedBrowser) {
+        m_IntegratedBrowser.reset(new BrowserDialog);
 
-  m_browseModPage->menu()->addAction(action);
+        connect(
+          m_IntegratedBrowser.get(), SIGNAL(requestDownload(QUrl, QNetworkReply*)),
+          &m_OrganizerCore, SLOT(requestDownload(QUrl, QNetworkReply*)));
+      }
+
+      m_IntegratedBrowser->setWindowTitle(modPage->displayName());
+      m_IntegratedBrowser->openUrl(modPage->pageURL());
+    }
+    else {
+      QDesktopServices::openUrl(QUrl(modPage->pageURL()));
+    }
+  }, Qt::QueuedConnection);
+
+  ui->actionModPage->menu()->addAction(action);
 }
 
+void MainWindow::updateModPageMenu()
+{
+  // Clear the menu:
+  ui->actionModPage->menu()->clear();
+  ui->actionModPage->menu()->addAction(ui->actionNexus);
+
+  std::vector<IPluginModPage*> modPagePlugins = m_PluginContainer.plugins<IPluginModPage>();
+
+  // Sort the plugins by display name
+  std::sort(std::begin(modPagePlugins), std::end(modPagePlugins),
+    [](IPluginModPage* left, IPluginModPage* right) {
+      return left->displayName().toLower() < right->displayName().toLower();
+    }
+  );
+
+  // Remove disabled plugins:
+  modPagePlugins.erase(
+    std::remove_if(std::begin(modPagePlugins), std::end(modPagePlugins), [&](auto* tool) {
+      return !m_PluginContainer.isEnabled(tool);
+      }),
+    modPagePlugins.end());
+
+  for (auto* modPagePlugin : modPagePlugins) {
+    registerModPage(modPagePlugin);
+  }
+
+  // No mod page plugin and the menu was visible:
+  if (modPagePlugins.empty()) {
+    ui->toolBar->insertAction(ui->actionAdd_Profile, ui->actionNexus);
+  }
+  else {
+    ui->toolBar->removeAction(ui->actionNexus);
+  }
+  ui->actionModPage->setVisible(!modPagePlugins.empty());
+}
 
 void MainWindow::startExeAction()
 {
@@ -1947,35 +1963,22 @@ void MainWindow::stopMonitorSaves()
 
 void MainWindow::refreshSaveList()
 {
-  ui->savegameList->clear();
+  TimeThis tt("MainWindow::refreshSaveList()");
 
   startMonitorSaves(); // re-starts monitoring
 
-  QStringList filters;
-  filters << QString("*.") + m_OrganizerCore.managedGame()->savegameExtension();
-
   QDir savesDir = currentSavesDir();
-  savesDir.setNameFilters(filters);
-  savesDir.setFilter(QDir::Files);
-  QDirIterator it(savesDir, QDirIterator::Subdirectories);
-  log::debug("reading save games from {}", savesDir.absolutePath());
-
-  QFileInfoList files;
-  while (it.hasNext()) {
-    it.next();
-    files.append(it.fileInfo());
-  }
-  std::sort(files.begin(), files.end(), [](auto const& lhs, auto const& rhs) {
-    return lhs.fileTime(QFileDevice::FileModificationTime) > rhs.fileTime(QFileDevice::FileModificationTime);
+  MOBase::log::debug("reading save games from {}", savesDir.absolutePath());
+  m_SaveGames = m_OrganizerCore.managedGame()->listSaves(savesDir);
+  std::sort(m_SaveGames.begin(), m_SaveGames.end(), [](auto const& lhs, auto const& rhs) {
+    return lhs->getCreationTime() > rhs->getCreationTime();
   });
 
-  for (const QFileInfo &file : files) {
-    QListWidgetItem *item = new QListWidgetItem(savesDir.relativeFilePath(file.absoluteFilePath()));
-    item->setData(Qt::UserRole, file.absoluteFilePath());
-    ui->savegameList->addItem(item);
+  ui->savegameList->clear();
+  for (auto& save: m_SaveGames) {
+    ui->savegameList->addItem(savesDir.relativeFilePath(save->getFilepath()));
   }
 }
-
 
 static bool BySortValue(const std::pair<UINT32, QTreeWidgetItem*> &LHS, const std::pair<UINT32, QTreeWidgetItem*> &RHS)
 {
@@ -4943,20 +4946,15 @@ void MainWindow::deleteSavegame_clicked()
   int count = 0;
 
   for (const QModelIndex &idx : ui->savegameList->selectionModel()->selectedIndexes()) {
-    QString name = idx.data(Qt::UserRole).toString();
+
+    auto& saveGame = m_SaveGames[idx.row()];
 
     if (count < 10) {
-      savesMsgLabel += "<li>" + QFileInfo(name).completeBaseName() + "</li>";
+      savesMsgLabel += "<li>" + QFileInfo(saveGame->getFilepath()).completeBaseName() + "</li>";
     }
     ++count;
 
-    if (info == nullptr) {
-      deleteFiles.push_back(name);
-    } else {
-      ISaveGame const *save = info->getSaveGameInfo(name);
-      deleteFiles += save->allFiles();
-      delete save;
-    }
+    deleteFiles += saveGame->allFiles();
   }
 
   if (count > 10) {
@@ -5015,8 +5013,8 @@ void MainWindow::on_savegameList_customContextMenuRequested(const QPoint& pos)
     QAction* action = menu.addAction(tr("Enable Mods..."));
     action->setEnabled(false);
     if (selection->selectedIndexes().count() == 1) {
-      QString save = ui->savegameList->currentItem()->data(Qt::UserRole).toString();
-      SaveGameInfo::MissingAssets missing = info->getMissingAssets(save);
+      auto& save = m_SaveGames[selection->selectedIndexes()[0].row()];
+      SaveGameInfo::MissingAssets missing = info->getMissingAssets(*save);
       if (missing.size() != 0) {
         connect(action, &QAction::triggered, this, [this, missing] { fixMods_clicked(missing); });
         action->setEnabled(true);
@@ -5212,9 +5210,7 @@ void MainWindow::installTranslator(const QString &name)
 {
   QTranslator *translator = new QTranslator(this);
   QString fileName = name + "_" + m_CurrentLanguage;
-  QString translationsPath = qApp->applicationDirPath() 
-    + "/" + QString::fromStdWString(AppConfig::translationsPath());
-  if (!translator->load(fileName, translationsPath)) {
+  if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
     if (m_CurrentLanguage.contains(QRegularExpression("^.*_(EN|en)(-.*)?$"))) {
       log::debug("localization file %s not found", fileName);
     } // we don't actually expect localization files for English (en, en-us, en-uk, and any variation thereof)
@@ -5977,7 +5973,7 @@ void MainWindow::on_actionNotifications_triggered()
 
   future.waitForFinished();
 
-  ProblemsDialog problems(m_PluginContainer.plugins<QObject>(), this);
+  ProblemsDialog problems(m_PluginContainer, this);
   problems.exec();
 
   scheduleCheckForProblems();

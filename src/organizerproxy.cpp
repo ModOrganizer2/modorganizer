@@ -83,6 +83,16 @@ void OrganizerProxy::modDataChanged(IModInterface *mod)
   m_Proxied->modDataChanged(mod);
 }
 
+bool OrganizerProxy::isPluginEnabled(QString const& pluginName) const
+{
+  return m_PluginContainer->isEnabled(pluginName);
+}
+
+bool OrganizerProxy::isPluginEnabled(IPlugin* plugin) const
+{
+  return m_PluginContainer->isEnabled(plugin);
+}
+
 QVariant OrganizerProxy::pluginSetting(const QString &pluginName, const QString &key) const
 {
   return m_Proxied->pluginSetting(pluginName, key);
@@ -134,7 +144,7 @@ HANDLE OrganizerProxy::startApplication(
   return runner.stealProcessHandle().release();
 }
 
-bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
+bool OrganizerProxy::waitForApplication(HANDLE handle, bool refresh, LPDWORD exitCode) const
 {
   const auto pid = ::GetProcessId(handle);
 
@@ -144,8 +154,14 @@ bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
 
   auto runner = m_Proxied->processRunner();
 
+  ProcessRunner::WaitFlags waitFlags = ProcessRunner::ForceWait;
+
+  if (refresh) {
+    waitFlags |= ProcessRunner::Refresh;
+  }
+
   const auto r = runner
-    .setWaitForCompletion(ProcessRunner::ForceWait, UILocker::OutputRequired)
+    .setWaitForCompletion(waitFlags, UILocker::OutputRequired)
     .attachToProcess(handle);
 
   if (exitCode) {
@@ -283,8 +299,36 @@ bool OrganizerProxy::onProfileChanged(std::function<void(MOBase::IProfile*, MOBa
   return m_Proxied->onProfileChanged(MOShared::callIfPluginActive(this, func));
 }
 
+// Always call these one, otherwise plugin cannot detect they are being enabled / disabled:
 bool OrganizerProxy::onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func)
 {
-  // Always call this one, otherwise plugin cannot detect they are being enabled / disabled:
   return m_Proxied->onPluginSettingChanged(func);
+}
+
+bool OrganizerProxy::onPluginEnabled(std::function<void(const IPlugin*)> const& func)
+{
+  return m_Proxied->onPluginEnabled(func);
+}
+
+bool OrganizerProxy::onPluginEnabled(const QString& pluginName, std::function<void()> const& func)
+{
+  return m_Proxied->onPluginEnabled([=](const IPlugin* plugin) {
+    if (plugin->name().compare(pluginName, Qt::CaseInsensitive) == 0) {
+      func();
+    }
+  });
+}
+
+bool OrganizerProxy::onPluginDisabled(std::function<void(const IPlugin*)> const& func)
+{
+  return m_Proxied->onPluginDisabled(func);
+}
+
+bool OrganizerProxy::onPluginDisabled(const QString& pluginName, std::function<void()> const& func)
+{
+  return m_Proxied->onPluginDisabled([=](const IPlugin* plugin) {
+    if (plugin->name().compare(pluginName, Qt::CaseInsensitive) == 0) {
+      func();
+    }
+  });
 }

@@ -16,10 +16,17 @@ public:
 
 private:
   void on_pluginsList_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
+  void on_checkboxEnabled_clicked(bool checked);
   void deleteBlacklistItem();
   void storeSettings(QTreeWidgetItem *pluginItem);
 
 private slots:
+
+  /**
+   * @brief Update the list item to display inactive plugins.
+   */
+  void updateListItems();
+
   /**
    * @brief Filter the plugin list according to the filter widget.
    *
