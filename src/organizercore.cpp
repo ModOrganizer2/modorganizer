@@ -72,6 +72,7 @@
 #include <tuple>
 #include <utility>
 
+#include "organizerproxy.h"
 
 using namespace MOShared;
 using namespace MOBase;
@@ -96,7 +97,7 @@ OrganizerCore::OrganizerCore(Settings &settings)
   , m_Settings(settings)
   , m_Updater(&NexusInterface::instance())
   , m_ModList(m_PluginContainer, this)
-  , m_PluginList(this)
+  , m_PluginList(*this)
   , m_DirectoryRefresher(new DirectoryRefresher(settings.refreshThreadCount()))
   , m_DirectoryStructure(new DirectoryEntry(L"data", nullptr, 0))
   , m_DownloadManager(&NexusInterface::instance(), this)
@@ -1527,6 +1528,11 @@ PluginListSortProxy *OrganizerCore::createPluginListProxyModel()
 IPluginGame const *OrganizerCore::managedGame() const
 {
   return m_GamePlugin;
+}
+
+IOrganizer const* OrganizerCore::managedGameOrganizer() const
+{
+  return m_PluginContainer->requirements(m_GamePlugin).m_Organizer;
 }
 
 std::vector<QString> OrganizerCore::enabledArchives()

@@ -55,6 +55,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <algorithm>
 #include <stdexcept>
 
+#include "organizercore.h"
 
 using namespace MOBase;
 using namespace MOShared;
@@ -94,8 +95,9 @@ static QString TruncateString(const QString& text)
 }
 
 
-PluginList::PluginList(QObject *parent)
-  : QAbstractItemModel(parent)
+PluginList::PluginList(OrganizerCore& organizer)
+  : QAbstractItemModel(&organizer)
+  , m_Organizer(organizer)
   , m_FontMetrics(QFont())
 {
   connect(this, SIGNAL(writePluginsList()), this, SLOT(generatePluginIndexes()));
@@ -267,7 +269,7 @@ void PluginList::refresh(const QString &profileName
   updateIndices();
 
   if (gamePlugins) {
-    gamePlugins->readPluginLists(this);
+    gamePlugins->readPluginLists(m_Organizer.managedGameOrganizer()->pluginList());
   }
 
   testMasters();
@@ -546,7 +548,7 @@ void PluginList::saveTo(const QString &lockedOrderFileName
 {
   GamePlugins *gamePlugins = m_GamePlugin->feature<GamePlugins>();
   if (gamePlugins) {
-    gamePlugins->writePluginLists(this);
+    gamePlugins->writePluginLists(m_Organizer.managedGameOrganizer()->pluginList());
   }
 
   writeLockedOrder(lockedOrderFileName);
@@ -875,13 +877,12 @@ QString PluginList::origin(const QString &name) const
   }
 }
 
-bool PluginList::onPluginStateChanged(const std::function<void(const std::map<QString, PluginStates>&)>& func)
+boost::signals2::connection PluginList::onPluginStateChanged(const std::function<void(const std::map<QString, PluginStates>&)>& func)
 {
-  auto conn = m_PluginStateChanged.connect(func);
-  return conn.connected();
+  return m_PluginStateChanged.connect(func);
 }
 
-void PluginList::pluginStatesChanged(QStringList const& pluginNames, IPluginList::PluginStates state) const {
+void PluginList::pluginStatesChanged(QStringList const& pluginNames, PluginStates state) const {
   if (pluginNames.isEmpty()) {
     return;
   }
@@ -892,17 +893,15 @@ void PluginList::pluginStatesChanged(QStringList const& pluginNames, IPluginList
   m_PluginStateChanged(infos);
 }
 
-bool PluginList::onRefreshed(const std::function<void ()> &callback)
+boost::signals2::connection PluginList::onRefreshed(const std::function<void ()> &callback)
 {
-  auto conn = m_Refreshed.connect(callback);
-  return conn.connected();
+  return m_Refreshed.connect(callback);
 }
 
 
-bool PluginList::onPluginMoved(const std::function<void (const QString &, int, int)> &func)
+boost::signals2::connection PluginList::onPluginMoved(const std::function<void (const QString &, int, int)> &func)
 {
-  auto conn = m_PluginMoved.connect(func);
-  return conn.connected();
+  return m_PluginMoved.connect(func);
 }
 
 

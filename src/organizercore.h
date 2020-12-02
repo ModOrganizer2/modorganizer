@@ -234,6 +234,13 @@ public:
   MOBase::IPluginGame const *managedGame() const;
 
   /**
+   * @brief Retrieve the organizer proxy of the currently managed game.
+   *
+   */
+  MOBase::IOrganizer const* managedGameOrganizer() const;
+
+
+  /**
    * @return the list of contents for the currently managed game, or an empty vector
    *     if the game plugin does not implement the ModDataContent feature.
    */

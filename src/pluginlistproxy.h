@@ -2,6 +2,7 @@
 #define PLUGINLISTPROXY_H
 
 #include <ipluginlist.h>
+#include "pluginlist.h"
 
 class OrganizerProxy;
 
@@ -10,8 +11,8 @@ class PluginListProxy : public MOBase::IPluginList
 
 public:
 
-  PluginListProxy(OrganizerProxy* oproxy, IPluginList* pluginlist);
-  virtual ~PluginListProxy() { }
+  PluginListProxy(OrganizerProxy* oproxy, PluginList* pluginlist);
+  virtual ~PluginListProxy();
 
   QStringList pluginNames() const override;
   PluginStates state(const QString& name) const override;
@@ -30,7 +31,13 @@ public:
 private:
 
   OrganizerProxy* m_OrganizerProxy;
-  IPluginList* m_Proxied;
+  PluginList* m_Proxied;
+
+  PluginList::SignalRefreshed m_Refreshed;
+  PluginList::SignalPluginMoved m_PluginMoved;
+  PluginList::SignalPluginStateChanged m_PluginStateChanged;
+
+  std::vector<boost::signals2::connection> m_Connections;
 };
 
 #endif // ORGANIZERPROXY_H

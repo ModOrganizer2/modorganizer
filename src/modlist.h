@@ -49,7 +49,7 @@ class OrganizerCore;
  * This is used in a view in the main window of MO. It combines general information about
  * the mods from ModInfo with status information from the Profile
  **/
-class ModList : public QAbstractItemModel, public MOBase::IModList
+class ModList : public QAbstractItemModel
 {
   Q_OBJECT
 
@@ -70,9 +70,11 @@ public:
     COL_LASTCOLUMN = COL_NOTES,
   };
 
+  friend class ModListProxy;
+
   using SignalModInstalled = boost::signals2::signal<void(MOBase::IModInterface*)>;
   using SignalModRemoved = boost::signals2::signal<void(QString const&)>;
-  using SignalModStateChanged = boost::signals2::signal<void (const std::map<QString, ModStates>&)>;
+  using SignalModStateChanged = boost::signals2::signal<void (const std::map<QString, MOBase::IModList::ModStates>&)>;
   using SignalModMoved = boost::signals2::signal<void (const QString &, int, int)>;
 
 public:
@@ -153,37 +155,37 @@ public:
 public:
 
   /// \copydoc MOBase::IModList::displayName
-  virtual QString displayName(const QString &internalName) const override;
+  QString displayName(const QString &internalName) const;
 
   /// \copydoc MOBase::IModList::allMods
-  virtual QStringList allMods() const override;
-  virtual QStringList allModsByProfilePriority(MOBase::IProfile* profile = nullptr) const override;
+  QStringList allMods() const;
+  QStringList allModsByProfilePriority(MOBase::IProfile* profile = nullptr) const;
 
   // \copydoc MOBase::IModList::getMod
-  MOBase::IModInterface* getMod(const QString& name) const override;
+  MOBase::IModInterface* getMod(const QString& name) const;
 
   // \copydoc MOBase::IModList::remove
-  bool removeMod(MOBase::IModInterface* mod) override;
+  bool removeMod(MOBase::IModInterface* mod);
 
   /// \copydoc MOBase::IModList::state
-  virtual ModStates state(const QString &name) const override;
+  MOBase::IModList::ModStates state(const QString &name) const;
 
   /// \copydoc MOBase::IModList::setActive
-  virtual bool setActive(const QString &name, bool active) override;
+  bool setActive(const QString &name, bool active);
 
   /// \copydoc MOBase::IModList::setActive
-  int setActive(const QStringList& names, bool active) override;
+  int setActive(const QStringList& names, bool active);
 
   /// \copydoc MOBase::IModList::priority
-  virtual int priority(const QString &name) const override;
+  int priority(const QString &name) const;
 
   /// \copydoc MOBase::IModList::setPriority
-  virtual bool setPriority(const QString &name, int newPriority) override;
+  bool setPriority(const QString &name, int newPriority);
 
-  bool onModInstalled(const std::function<void(MOBase::IModInterface*)>& func) override;
-  bool onModRemoved(const std::function<void(QString const&)>& func) override;
-  bool onModStateChanged(const std::function<void(const std::map<QString, ModStates>&)>& func) override;
-  bool onModMoved(const std::function<void (const QString &, int, int)> &func) override;
+  boost::signals2::connection onModInstalled(const std::function<void(MOBase::IModInterface*)>& func);
+  boost::signals2::connection onModRemoved(const std::function<void(QString const&)>& func);
+  boost::signals2::connection onModStateChanged(const std::function<void(const std::map<QString, MOBase::IModList::ModStates>&)>& func);
+  boost::signals2::connection onModMoved(const std::function<void (const QString &, int, int)> &func);
 
 public: // implementation of virtual functions of QAbstractItemModel
 
@@ -335,7 +337,7 @@ private:
 
   bool dropMod(const QMimeData *mimeData, int row, const QModelIndex &parent);
 
-  ModStates state(unsigned int modIndex) const;
+  MOBase::IModList::ModStates state(unsigned int modIndex) const;
 
   bool moveSelection(QAbstractItemView *itemView, int direction);
 
@@ -359,7 +361,7 @@ private:
 
   struct TModInfoChange {
     QString name;
-    QFlags<IModList::ModState> state;
+    QFlags<MOBase::IModList::ModState> state;
   };
 
 private:

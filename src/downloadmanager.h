@@ -48,7 +48,7 @@ class OrganizerCore;
 /*!
  * \brief manages downloading of files and provides progress information for gui elements
  **/
-class DownloadManager : public MOBase::IDownloadManager
+class DownloadManager : public QObject
 {
   Q_OBJECT
 
@@ -126,6 +126,8 @@ private:
   private:
     DownloadInfo() : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_SpeedDiff(std::tuple<int,int,int,int,int>(0,0,0,0,0)), m_HasData(false) {}
   };
+
+  friend class DownloadManagerProxy;
 
   using SignalDownloadCallback = boost::signals2::signal<void(int)>;
 
@@ -366,14 +368,14 @@ public:
 
 public: // IDownloadManager interface:
 
-  int startDownloadURLs(const QStringList &urls) override;
-  int startDownloadNexusFile(int modID, int fileID) override;
-  QString downloadPath(int id) override;
+  int startDownloadURLs(const QStringList &urls);
+  int startDownloadNexusFile(int modID, int fileID);
+  QString downloadPath(int id);
 
-  bool onDownloadComplete(const std::function<void(int)>& callback) override;
-  bool onDownloadPaused(const std::function<void(int)>& callback) override;
-  bool onDownloadFailed(const std::function<void(int)>& callback) override;
-  bool onDownloadRemoved(const std::function<void(int)>& callback) override;
+  boost::signals2::connection onDownloadComplete(const std::function<void(int)>& callback);
+  boost::signals2::connection onDownloadPaused(const std::function<void(int)>& callback);
+  boost::signals2::connection onDownloadFailed(const std::function<void(int)>& callback);
+  boost::signals2::connection onDownloadRemoved(const std::function<void(int)>& callback);
 
   /**
    * @brief retrieve a download index from the filename

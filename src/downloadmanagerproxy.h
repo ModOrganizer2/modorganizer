@@ -2,6 +2,7 @@
 #define DOWNLOADMANAGERPROXY_H
 
 #include <idownloadmanager.h>
+#include "downloadmanager.h"
 
 class OrganizerProxy;
 
@@ -10,8 +11,8 @@ class DownloadManagerProxy : public MOBase::IDownloadManager
 
 public:
 
-  DownloadManagerProxy(OrganizerProxy* oproxy, IDownloadManager* downloadManager);
-  virtual ~DownloadManagerProxy() { }
+  DownloadManagerProxy(OrganizerProxy* oproxy, DownloadManager* downloadManager);
+  virtual ~DownloadManagerProxy();
 
   int startDownloadURLs(const QStringList& urls) override;
   int startDownloadNexusFile(int modID, int fileID) override;
@@ -25,7 +26,14 @@ public:
 private:
 
   OrganizerProxy* m_OrganizerProxy;
-  IDownloadManager* m_Proxied;
+  DownloadManager* m_Proxied;
+
+  DownloadManager::SignalDownloadCallback m_DownloadComplete;
+  DownloadManager::SignalDownloadCallback m_DownloadPaused;
+  DownloadManager::SignalDownloadCallback m_DownloadFailed;
+  DownloadManager::SignalDownloadCallback m_DownloadRemoved;
+
+  std::vector<boost::signals2::connection> m_Connections;
 };
 
 #endif // ORGANIZERPROXY_H
