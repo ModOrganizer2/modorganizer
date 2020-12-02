@@ -117,9 +117,6 @@ InstallationManager::~InstallationManager()
 void InstallationManager::setParentWidget(QWidget *widget)
 {
   m_ParentWidget = widget;
-  for (IPluginInstaller *installer : m_Installers) {
-    installer->setParentWidget(widget);
-  }
 }
 
 void InstallationManager::setPluginContainer(const PluginContainer* pluginContainer)
@@ -700,11 +697,13 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
     archiveOpen ? ArchiveFileTree::makeTree(*m_ArchiveHandler) : nullptr;
   IPluginInstaller::EInstallResult installResult = IPluginInstaller::RESULT_NOTATTEMPTED;
 
-  std::sort(m_Installers.begin(), m_Installers.end(), [] (IPluginInstaller *LHS, IPluginInstaller *RHS) {
-            return LHS->priority() > RHS->priority();
-      });
+  auto installers = m_PluginContainer->plugins<IPluginInstaller>();
 
-  for (IPluginInstaller *installer : m_Installers) {
+  std::sort(installers.begin(), installers.end(), [] (IPluginInstaller* lhs, IPluginInstaller* rhs) {
+    return lhs->priority() > rhs->priority();
+  });
+
+  for (IPluginInstaller *installer : installers) {
     // don't use inactive installers (installer can't be null here but vc static code analysis thinks it could)
     if ((installer == nullptr) || !m_PluginContainer->isEnabled(installer)) {
       continue;
@@ -846,12 +845,6 @@ QString InstallationManager::getErrorString(Archive::Error errorCode)
   }
 }
 
-void InstallationManager::registerInstaller(IPluginInstaller *installer)
-{
-  m_Installers.push_back(installer);
-  installer->setInstallationManager(this);
-}
-
 QStringList InstallationManager::getSupportedExtensions() const
 {
   std::set<QString, CaseInsensitive> supportedExtensions({ "zip", "rar", "7z", "fomod", "001" });
@@ -868,7 +861,8 @@ QStringList InstallationManager::getSupportedExtensions() const
 
 void InstallationManager::notifyInstallationStart(QString const& archive, bool reinstallation, ModInfo::Ptr  currentMod)
 {
-  for (auto* installer : m_Installers) {
+  auto& installers = m_PluginContainer->plugins<IPluginInstaller>();
+  for (auto* installer : installers) {
     if (m_PluginContainer->isEnabled(installer)) {
       installer->onInstallationStart(archive, reinstallation, currentMod.get());
     }
@@ -879,7 +873,8 @@ void InstallationManager::notifyInstallationEnd(
   MOBase::IPluginInstaller::EInstallResult result,
   ModInfo::Ptr  newMod)
 {
-  for (auto* installer : m_Installers) {
+  auto& installers = m_PluginContainer->plugins<IPluginInstaller>();
+  for (auto* installer : installers) {
     if (m_PluginContainer->isEnabled(installer)) {
       installer->onInstallationEnd(result, newMod.get());
     }

@@ -301,6 +301,9 @@ void PluginContainer::setUserInterface(IUserInterface *userInterface)
     for (IPluginTool* tool : bf::at_key<IPluginTool>(m_Plugins)) {
       tool->setParentWidget(userInterface->mainWindow());
     }
+    for (IPluginInstaller* installer : bf::at_key<IPluginInstaller>(m_Plugins)) {
+      installer->setParentWidget(userInterface->mainWindow());
+    }
   }
 
   m_UserInterface = userInterface;
@@ -537,7 +540,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
     if (initPlugin(installer, pluginProxy, skipInit)) {
       bf::at_key<IPluginInstaller>(m_Plugins).push_back(installer);
       if (m_Organizer) {
-        m_Organizer->installationManager()->registerInstaller(installer);
+        installer->setInstallationManager(m_Organizer->installationManager());
       }
       return installer;
     }
