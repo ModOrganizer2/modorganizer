@@ -21,6 +21,21 @@ namespace MOShared {
     };
   }
 
+  // We need to connect to the organizer.
+  template <class Signal, class T = int>
+  auto callSignalIfPluginActive(OrganizerProxy* proxy, const Signal& signal, T defaultReturn = T{}) {
+    return callIfPluginActive(proxy, [&signal](auto&&... args) {
+      return signal(std::forward<decltype(args)>(args)...);
+    }, defaultReturn);
+  }
+
+  template <class Signal, class T = int>
+  auto callSignalAlways(const Signal& signal) {
+    return [&signal](auto&&... args) {
+      return signal(std::forward<decltype(args)>(args)...);
+    };
+  }
+
 }
 
 #endif

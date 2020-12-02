@@ -1184,58 +1184,56 @@ bool OrganizerCore::previewFile(
   return true;
 }
 
-bool OrganizerCore::onAboutToRun(
+boost::signals2::connection OrganizerCore::onAboutToRun(
     const std::function<bool(const QString &)> &func)
 {
-  auto conn = m_AboutToRun.connect(func);
-  return conn.connected();
+  return m_AboutToRun.connect(func);
 }
 
-bool OrganizerCore::onFinishedRun(
+boost::signals2::connection OrganizerCore::onFinishedRun(
     const std::function<void(const QString &, unsigned int)> &func)
 {
-  auto conn = m_FinishedRun.connect(func);
-  return conn.connected();
+  return m_FinishedRun.connect(func);
 }
 
-bool OrganizerCore::onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func)
+boost::signals2::connection OrganizerCore::onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func)
 {
-  return m_UserInterfaceInitialized.connect(func).connected();
+  return m_UserInterfaceInitialized.connect(func);
 }
 
-bool OrganizerCore::onProfileCreated(std::function<void(MOBase::IProfile*)> const& func)
+boost::signals2::connection OrganizerCore::onProfileCreated(std::function<void(MOBase::IProfile*)> const& func)
 {
-  return m_ProfileCreated.connect(func).connected();
+  return m_ProfileCreated.connect(func);
 }
 
-bool OrganizerCore::onProfileRenamed(std::function<void(MOBase::IProfile*, QString const&, QString const&)> const& func)
+boost::signals2::connection OrganizerCore::onProfileRenamed(std::function<void(MOBase::IProfile*, QString const&, QString const&)> const& func)
 {
-  return m_ProfileRenamed.connect(func).connected();
+  return m_ProfileRenamed.connect(func);
 }
 
-bool OrganizerCore::onProfileRemoved(std::function<void(QString const&)> const& func)
+boost::signals2::connection OrganizerCore::onProfileRemoved(std::function<void(QString const&)> const& func)
 {
-  return m_ProfileRemoved.connect(func).connected();
+  return m_ProfileRemoved.connect(func);
 }
 
-bool OrganizerCore::onProfileChanged(std::function<void(IProfile*, IProfile*)> const& func)
+boost::signals2::connection OrganizerCore::onProfileChanged(std::function<void(IProfile*, IProfile*)> const& func)
 {
-  return m_ProfileChanged.connect(func).connected();
+  return m_ProfileChanged.connect(func);
 }
 
-bool OrganizerCore::onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func)
+boost::signals2::connection OrganizerCore::onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func)
 {
-  return m_PluginSettingChanged.connect(func).connected();
+  return m_PluginSettingChanged.connect(func);
 }
 
-bool OrganizerCore::onPluginEnabled(std::function<void(const IPlugin*)> const& func)
+boost::signals2::connection OrganizerCore::onPluginEnabled(std::function<void(const IPlugin*)> const& func)
 {
-  return m_PluginEnabled.connect(func).connected();
+  return m_PluginEnabled.connect(func);
 }
 
-bool OrganizerCore::onPluginDisabled(std::function<void(const IPlugin*)> const& func)
+boost::signals2::connection OrganizerCore::onPluginDisabled(std::function<void(const IPlugin*)> const& func)
 {
-  return m_PluginDisabled.connect(func).connected();
+  return m_PluginDisabled.connect(func);
 }
 
 void OrganizerCore::refresh(bool saveChanges)

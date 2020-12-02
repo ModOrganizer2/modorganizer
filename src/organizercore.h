@@ -61,6 +61,8 @@ class OrganizerCore : public QObject, public MOBase::IPluginDiagnose
 
 private:
 
+  friend class OrganizerProxy;
+
   struct SignalCombinerAnd
   {
     typedef bool result_type;
@@ -87,7 +89,7 @@ private:
   using SignalProfileRemoved = boost::signals2::signal<void(QString const&)>;
   using SignalProfileChanged = boost::signals2::signal<void (MOBase::IProfile *, MOBase::IProfile *)>;
   using SignalPluginSettingChanged = boost::signals2::signal<void (QString const&, const QString& key, const QVariant&, const QVariant&)>;
-  using SignalPluginEnabled = boost::signals2::signal<void(MOBase::IPlugin*)>;
+  using SignalPluginEnabled = boost::signals2::signal<void(const MOBase::IPlugin*)>;
 
 public:
 
@@ -328,16 +330,16 @@ public:
   ModList *modList();
   void refresh(bool saveChanges = true);
 
-  bool onAboutToRun(const std::function<bool(const QString&)>& func);
-  bool onFinishedRun(const std::function<void(const QString&, unsigned int)>& func);
-  bool onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func);
-  bool onProfileCreated(std::function<void(MOBase::IProfile*)> const& func);
-  bool onProfileRenamed(std::function<void(MOBase::IProfile*, QString const&, QString const&)> const& func);
-  bool onProfileRemoved(std::function<void(QString const&)> const& func);
-  bool onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func);
-  bool onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func);
-  bool onPluginEnabled(std::function<void(const MOBase::IPlugin*)> const& func);
-  bool onPluginDisabled(std::function<void(const MOBase::IPlugin*)> const& func);
+  boost::signals2::connection onAboutToRun(const std::function<bool(const QString&)>& func);
+  boost::signals2::connection onFinishedRun(const std::function<void(const QString&, unsigned int)>& func);
+  boost::signals2::connection onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func);
+  boost::signals2::connection onProfileCreated(std::function<void(MOBase::IProfile*)> const& func);
+  boost::signals2::connection onProfileRenamed(std::function<void(MOBase::IProfile*, QString const&, QString const&)> const& func);
+  boost::signals2::connection onProfileRemoved(std::function<void(QString const&)> const& func);
+  boost::signals2::connection onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func);
+  boost::signals2::connection onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func);
+  boost::signals2::connection onPluginEnabled(std::function<void(const MOBase::IPlugin*)> const& func);
+  boost::signals2::connection onPluginDisabled(std::function<void(const MOBase::IPlugin*)> const& func);
 
   bool getArchiveParsing() const
   {
