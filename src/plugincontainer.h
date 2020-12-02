@@ -103,6 +103,7 @@ private:
   // Set the master for this plugin. This is required to "fake" masters for proxied plugins.
   void setMaster(MOBase::IPlugin* master);
 
+  friend class OrganizerCore;
   friend class PluginContainer;
 
   PluginContainer* m_PluginContainer;
@@ -110,12 +111,12 @@ private:
   MOBase::IPluginProxy* m_PluginProxy;
   MOBase::IPlugin* m_Master;
   std::vector<std::shared_ptr<const MOBase::IPluginRequirement>> m_Requirements;
-  MOBase::IOrganizer* m_Organizer;
+  OrganizerProxy* m_Organizer;
   std::vector<MOBase::IPlugin*> m_RequiredFor;
 
   PluginRequirements(
     PluginContainer* pluginContainer, MOBase::IPlugin* plugin,
-    MOBase::IOrganizer* proxy, MOBase::IPluginProxy* pluginProxy);
+    OrganizerProxy* proxy, MOBase::IPluginProxy* pluginProxy);
 
 };
 
@@ -189,6 +190,10 @@ public:
   virtual ~PluginContainer();
 
   void setUserInterface(IUserInterface *userInterface);
+
+  void loadPlugin(QString const& filepath);
+  void unloadPlugin(QString const& filepath);
+  void reloadPlugin(QString const& filepath);
 
   void loadPlugins();
   void unloadPlugins();
@@ -352,6 +357,49 @@ private:
 
   friend class PluginRequirements;
 
+  /**
+   * @return the organizer proxy for the given plugin.
+   */
+  OrganizerProxy* organizerProxy(MOBase::IPlugin* plugin) const;
+
+  /**
+   * @return the proxy plugin that instantiated the given plugin, or a null pointer
+   *   if the plugin was not instantiated by a proxy.
+   */
+  MOBase::IPluginProxy* pluginProxy(MOBase::IPlugin* plugin) const;
+
+  /**
+   * @return the path to the file or folder corresponding to the plugin.
+   */
+  QString filepath(MOBase::IPlugin* plugin) const;
+
+  /**
+   * @brief Unload the given plugin.
+   *
+   * This function is not public because it's kind of dangerous trying to unload
+   * plugin directly since some plugins are linked together.
+   *
+   * @param plugin The plugin to unload/unregister.
+   * @param object The QObject corresponding to the plugin.
+   */
+  void unloadPlugin(MOBase::IPlugin* plugin, QObject* object);
+
+  /**
+   * @brief Load plugins from the given filepath using the given proxy.
+   *
+   * @param filepath Path to a folder/file containing plugin(s) that can be load by the given proxy.
+   * @param proxy Proxy to use to load plugins.
+   *
+   * @return the list of created plugins.
+   */
+  std::vector<MOBase::IPlugin*> loadProxied(const QString& filepath, MOBase::IPluginProxy* proxy);
+
+  /**
+   * @brief Simulate MO2 startup for the given plugins.
+   *
+   * @param plugins Plugins to simulate startup for.
+   */
+  void simulateStartup(const std::vector<MOBase::IPlugin*>& plugins) const;
 
   /**
    * @brief Retrieved the (localized) names of interfaces implemented by the given
@@ -399,6 +447,7 @@ private:
   bool initPlugin(MOBase::IPlugin *plugin, MOBase::IPluginProxy* proxy, bool skipInit);
 
   void registerGame(MOBase::IPluginGame *game);
+  void unregisterGame(MOBase::IPluginGame* game);
 
   MOBase::IPlugin* registerPlugin(QObject *pluginObj, const QString &fileName, MOBase::IPluginProxy *proxy);
 

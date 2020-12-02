@@ -106,7 +106,7 @@ const std::set<QString> PluginRequirements::s_CorePlugins{
 };
 
 PluginRequirements::PluginRequirements(
-  PluginContainer* pluginContainer, MOBase::IPlugin* plugin, IOrganizer* proxy,
+  PluginContainer* pluginContainer, MOBase::IPlugin* plugin, OrganizerProxy* proxy,
   MOBase::IPluginProxy* pluginProxy)
   : m_PluginContainer(pluginContainer)
   , m_Plugin(plugin)
@@ -431,6 +431,8 @@ bool PluginContainer::initPlugin(IPlugin *plugin, IPluginProxy *pluginProxy, boo
     return false;
   }
 
+  proxy->setParent(as_qobject(plugin));
+
   // Update requirements:
   it->second.fetchRequirements();
 
@@ -442,7 +444,12 @@ void PluginContainer::registerGame(IPluginGame *game)
   m_SupportedGames.insert({ game->gameName(), game });
 }
 
-IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileName, MOBase::IPluginProxy* pluginProxy)
+void PluginContainer::unregisterGame(MOBase::IPluginGame* game)
+{
+  m_SupportedGames.erase(game->gameName());
+}
+
+IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString& filepath, MOBase::IPluginProxy* pluginProxy)
 {
 
   // generic treatment for all plugins
@@ -462,7 +469,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
     // If both plugins are from the same proxy and the same file, this is usually
     // ok (in theory some one could write two different classes from the same Python file/module):
     if (pluginProxy && m_Requirements.at(other).proxy() == pluginProxy
-      && as_qobject(other)->property("filepath") == fileName) {
+      && this->filepath(other) == QDir::cleanPath(filepath)) {
 
       // Plugin has already been initialized:
       skipInit = true;
@@ -487,7 +494,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
   // way to cast directly between IPlugin* and IPluginDiagnose*
   bf::at_key<QObject>(m_Plugins).push_back(plugin);
 
-  plugin->setProperty("filepath", fileName);
+  plugin->setProperty("filepath", QDir::cleanPath(filepath));
 
   if (m_Organizer) {
     m_Organizer->settings().plugins().registerPlugin(pluginObj);
@@ -499,8 +506,8 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
       bf::at_key<IPluginDiagnose>(m_Plugins).push_back(diagnose);
       bf::at_key<IPluginDiagnose>(m_AccessPlugins)[diagnose] = pluginObj;
       m_DiagnosisConnections.push_back(
-            diagnose->onInvalidated([&] () { emit diagnosisUpdate(); })
-            );
+        diagnose->onInvalidated([&] () { emit diagnosisUpdate(); })
+      );
     }
   }
   { // file mapper plugin
@@ -514,6 +521,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
     IPluginModPage *modPage = qobject_cast<IPluginModPage*>(plugin);
     if (initPlugin(modPage, pluginProxy, skipInit)) {
       bf::at_key<IPluginModPage>(m_Plugins).push_back(modPage);
+      emit pluginRegistered(modPage);
       return modPage;
     }
   }
@@ -524,6 +532,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
       if (initPlugin(game, pluginProxy, skipInit)) {
         bf::at_key<IPluginGame>(m_Plugins).push_back(game);
         registerGame(game);
+        emit pluginRegistered(game);
         return game;
       }
     }
@@ -532,6 +541,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
     IPluginTool *tool = qobject_cast<IPluginTool*>(plugin);
     if (initPlugin(tool, pluginProxy, skipInit)) {
       bf::at_key<IPluginTool>(m_Plugins).push_back(tool);
+      emit pluginRegistered(tool);
       return tool;
     }
   }
@@ -542,6 +552,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
       if (m_Organizer) {
         installer->setInstallationManager(m_Organizer->installationManager());
       }
+      emit pluginRegistered(installer);
       return installer;
     }
   }
@@ -557,55 +568,12 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
     IPluginProxy *proxy = qobject_cast<IPluginProxy*>(plugin);
     if (initPlugin(proxy, pluginProxy, skipInit)) {
       bf::at_key<IPluginProxy>(m_Plugins).push_back(proxy);
-      QStringList pluginNames = proxy->pluginList(
+      emit pluginRegistered(proxy);
+
+      QStringList filepaths = proxy->pluginList(
             QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
-      for (const QString &pluginName : pluginNames) {
-        try {
-          // We get a list of matching plugins as proxies can return multiple plugins
-          // per file and do not  have a good way of supporting multiple inheritance.
-          QList<QObject*> matchingPlugins = proxy->load(pluginName);
-
-          // We are going to group plugin by names and "fix" them later:
-          std::map<QString, std::vector<IPlugin*>> proxiedByNames;
-
-          for (QObject *proxiedPlugin : matchingPlugins) {
-            if (proxiedPlugin != nullptr) {
-
-              if (IPlugin* proxied = registerPlugin(proxiedPlugin, pluginName, proxy); proxied) {
-                log::debug("loaded plugin '{}' from '{}' - [{}]",
-                  proxied->name(), QFileInfo(pluginName).fileName(), implementedInterfaces(proxied).join(", "));
-
-                // Store the plugin for later:
-                proxiedByNames[proxied->name()].push_back(proxied);
-              }
-              else {
-                log::warn(
-                  "plugin \"{}\" failed to load. If this plugin is for an older version of MO "
-                  "you have to update it or delete it if no update exists.",
-                  pluginName);
-              }
-            }
-          }
-
-          // Fake masters:
-          for (auto& [name, proxiedPlugins] : proxiedByNames) {
-            if (proxiedPlugins.size() > 1) {
-              auto it = std::min_element(std::begin(proxiedPlugins), std::end(proxiedPlugins),
-                [&](auto const& lhs, auto const& rhs) {
-                  return isBetterInterface(as_qobject(lhs), as_qobject(rhs));
-                });
-
-              for (auto& proxiedPlugin : proxiedPlugins) {
-                if (proxiedPlugin != *it) {
-                  m_Requirements.at(proxiedPlugin).setMaster(*it);
-                }
-              }
-            }
-          }
-
-        } catch (const std::exception &e) {
-          reportError(QObject::tr("failed to initialize plugin %1: %2").arg(pluginName).arg(e.what()));
-        }
+      for (const QString& filepath : filepaths) {
+        loadProxied(filepath, proxy);
       }
       return proxy;
     }
@@ -616,6 +584,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
     IPlugin *dummy = qobject_cast<IPlugin*>(plugin);
     if (initPlugin(dummy, pluginProxy, skipInit)) {
       bf::at_key<IPlugin>(m_Plugins).push_back(dummy);
+      emit pluginRegistered(dummy);
       return dummy;
     }
   }
@@ -623,34 +592,59 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
   return nullptr;
 }
 
-void PluginContainer::unloadPlugins()
+std::vector<IPlugin*> PluginContainer::loadProxied(const QString& filepath, IPluginProxy* proxy)
 {
-  if (m_UserInterface != nullptr) {
-    m_UserInterface->disconnectPlugins();
-  }
+  std::vector<IPlugin*> proxiedPlugins;
 
-  // disconnect all slots before unloading plugins so plugins don't have to take care of that
-  if (m_Organizer) {
-    m_Organizer->disconnectPlugins();
-  }
+  try {
+    // We get a list of matching plugins as proxies can return multiple plugins
+    // per file and do not  have a good way of supporting multiple inheritance.
+    QList<QObject*> matchingPlugins = proxy->load(filepath);
 
-  bf::for_each(m_Plugins, [](auto& t) { t.second.clear(); });
-  bf::for_each(m_AccessPlugins, [](auto& t) { t.second.clear(); });
-  m_Requirements.clear();
+    // We are going to group plugin by names and "fix" them later:
+    std::map<QString, std::vector<IPlugin*>> proxiedByNames;
 
-  for (const boost::signals2::connection &connection : m_DiagnosisConnections) {
-    connection.disconnect();
-  }
-  m_DiagnosisConnections.clear();
+    for (QObject* proxiedPlugin : matchingPlugins) {
+      if (proxiedPlugin != nullptr) {
 
-  while (!m_PluginLoaders.empty()) {
-    QPluginLoader *loader = m_PluginLoaders.back();
-    m_PluginLoaders.pop_back();
-    if ((loader != nullptr) && !loader->unload()) {
-      log::debug("failed to unload {}: {}", loader->fileName(), loader->errorString());
+        if (IPlugin* proxied = registerPlugin(proxiedPlugin, filepath, proxy); proxied) {
+          log::debug("loaded plugin '{}' from '{}' - [{}]",
+            proxied->name(), QFileInfo(filepath).fileName(), implementedInterfaces(proxied).join(", "));
+
+          // Store the plugin for later:
+          proxiedPlugins.push_back(proxied);
+          proxiedByNames[proxied->name()].push_back(proxied);
+        }
+        else {
+          log::warn(
+            "plugin \"{}\" failed to load. If this plugin is for an older version of MO "
+            "you have to update it or delete it if no update exists.",
+            filepath);
+        }
+      }
     }
-    delete loader;
+
+    // Fake masters:
+    for (auto& [name, proxiedPlugins] : proxiedByNames) {
+      if (proxiedPlugins.size() > 1) {
+        auto it = std::min_element(std::begin(proxiedPlugins), std::end(proxiedPlugins),
+          [&](auto const& lhs, auto const& rhs) {
+            return isBetterInterface(as_qobject(lhs), as_qobject(rhs));
+          });
+
+        for (auto& proxiedPlugin : proxiedPlugins) {
+          if (proxiedPlugin != *it) {
+            m_Requirements.at(proxiedPlugin).setMaster(*it);
+          }
+        }
+      }
+    }
   }
+  catch (const std::exception& e) {
+    reportError(QObject::tr("failed to initialize plugin %1: %2").arg(filepath).arg(e.what()));
+  }
+
+  return proxiedPlugins;
 }
 
 IPlugin* PluginContainer::managedGame() const
@@ -757,6 +751,21 @@ const PluginRequirements& PluginContainer::requirements(IPlugin* plugin) const
   return m_Requirements.at(plugin);
 }
 
+OrganizerProxy* PluginContainer::organizerProxy(MOBase::IPlugin* plugin) const
+{
+  return requirements(plugin).m_Organizer;
+}
+
+MOBase::IPluginProxy* PluginContainer::pluginProxy(MOBase::IPlugin* plugin) const
+{
+  return requirements(plugin).proxy();
+}
+
+QString PluginContainer::filepath(MOBase::IPlugin* plugin) const
+{
+  return as_qobject(plugin)->property("filepath").toString();
+}
+
 IPluginGame *PluginContainer::managedGame(const QString &name) const
 {
   auto iter = m_SupportedGames.find(name);
@@ -770,6 +779,193 @@ IPluginGame *PluginContainer::managedGame(const QString &name) const
 const PreviewGenerator &PluginContainer::previewGenerator() const
 {
   return m_PreviewGenerator;
+}
+
+void PluginContainer::simulateStartup(const std::vector<IPlugin*>& plugins) const
+{
+  // setUserInterface()
+  if (m_UserInterface) {
+    for (auto* plugin : plugins) {
+      if (auto* proxy = dynamic_cast<IPluginProxy*>(plugin)) {
+        proxy->setParentWidget(m_UserInterface->mainWindow());
+      }
+      if (auto* modPage = dynamic_cast<IPluginModPage*>(plugin)) {
+        modPage->setParentWidget(m_UserInterface->mainWindow());
+      }
+      if (auto* tool = dynamic_cast<IPluginTool*>(plugin)) {
+        tool->setParentWidget(m_UserInterface->mainWindow());
+      }
+      if (auto* installer = dynamic_cast<IPluginInstaller*>(plugin)) {
+        installer->setParentWidget(m_UserInterface->mainWindow());
+      }
+    }
+  }
+
+  // Simulate callbacks, e.g. onUserInterfaceInitialized and onProfileChanged.
+  for (auto* plugin : plugins) {
+    auto* oproxy = organizerProxy(plugin);
+    oproxy->m_UserInterfaceInitialized(m_UserInterface->mainWindow());
+    oproxy->m_ProfileChanged(nullptr, m_Organizer->currentProfile());
+  }
+}
+
+void PluginContainer::loadPlugin(QString const& filepath)
+{
+  std::vector<IPlugin*> plugins;
+  if (QFileInfo(filepath).isFile() && QLibrary::isLibrary(filepath)) {
+    std::unique_ptr<QPluginLoader> pluginLoader(new QPluginLoader(filepath, this));
+    if (pluginLoader->instance() == nullptr) {
+      log::error("failed to load plugin {}: {}", filepath, pluginLoader->errorString());
+    }
+    else {
+      if (IPlugin* plugin = registerPlugin(pluginLoader->instance(), filepath, nullptr)) {
+        log::debug("loaded plugin '{}' from '{}' - [{}]",
+          plugin->name(), QFileInfo(filepath).fileName(), implementedInterfaces(plugin).join(", "));
+        m_PluginLoaders.push_back(pluginLoader.release());
+        plugins.push_back(plugin);
+      }
+      else {
+        m_FailedPlugins.push_back(filepath);
+        log::warn("plugin \"{}\" failed to load (may be outdated)", filepath);
+      }
+    }
+  }
+  else {
+    // We need to check if this can be handled by a proxy.
+    for (auto* proxy : this->plugins<IPluginProxy>()) {
+      auto filepaths = proxy->pluginList(
+        QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
+      if (filepaths.contains(filepath)) {
+        plugins = loadProxied(filepath, proxy);
+        break;
+      }
+    }
+  }
+
+  for (auto* plugin : plugins) {
+    emit pluginRegistered(plugin);
+  }
+
+  simulateStartup(plugins);
+}
+
+void PluginContainer::unloadPlugin(MOBase::IPlugin* plugin, QObject* object)
+{
+  if (auto* game = qobject_cast<IPluginGame*>(object)) {
+    unregisterGame(game);
+  }
+
+  // We need to do this BEFORE unloading from the proxy otherwise the
+  // qobject_cast won't work.
+  bf::for_each(m_Plugins, [object](auto& t) {
+    using type = typename std::decay_t<decltype(t.second)>::value_type;
+
+    // We do not want to remove from QObject since we are iterating over them.
+    if constexpr (!std::is_same<type, QObject*>{}) {
+      auto itp = std::find(t.second.begin(), t.second.end(), qobject_cast<type>(object));
+      if (itp != t.second.end()) {
+        t.second.erase(itp);
+      }
+    }
+  });
+
+  emit pluginUnregistered(plugin);
+
+  // Remove from the members.
+  if (auto* diagnose = qobject_cast<IPluginDiagnose*>(object)) {
+    bf::at_key<IPluginDiagnose>(m_AccessPlugins).erase(diagnose);
+  }
+  if (auto* mapper = qobject_cast<IPluginFileMapper*>(object)) {
+    bf::at_key<IPluginFileMapper>(m_AccessPlugins).erase(mapper);
+  }
+
+  auto& mapNames = bf::at_key<QString>(m_AccessPlugins);
+  if (mapNames.contains(plugin->name())) {
+    mapNames.erase(plugin->name());
+  }
+
+  m_Organizer->settings().plugins().unregisterPlugin(plugin);
+
+  // Is this a proxied plugin?
+  auto* proxy = pluginProxy(plugin);
+
+  if (proxy) {
+    proxy->unload(filepath(plugin));
+  }
+  else {
+    // We need to find the loader.
+    auto it = std::find_if(m_PluginLoaders.begin(), m_PluginLoaders.end(),
+      [object](auto* loader) { return loader->instance() == object; });
+
+    if (it != m_PluginLoaders.end()) {
+      if (!(*it)->unload()) {
+        log::error("failed to unload {}: {}", (*it)->fileName(), (*it)->errorString());
+      }
+      delete* it;
+      m_PluginLoaders.erase(it);
+    }
+    else {
+      log::error("loader for plugin {} does not exist, cannot unload", plugin->name());
+    }
+
+  }
+
+  // Do this at the end.
+  m_Requirements.erase(plugin);
+}
+
+void PluginContainer::unloadPlugin(QString const& filepath)
+{
+  // We need to find all the plugins from the given path and
+  // unload them:
+  QString cleanPath = QDir::cleanPath(filepath);
+  auto &objects = bf::at_key<QObject>(m_Plugins);
+  for (auto it = objects.begin(); it != objects.end(); ) {
+    auto* plugin = qobject_cast<IPlugin*>(*it);
+    if (this->filepath(plugin) == filepath) {
+      unloadPlugin(plugin, *it);
+      it = objects.erase(it);
+    }
+    else {
+      ++it;
+    }
+  }
+}
+
+void PluginContainer::reloadPlugin(QString const& filepath)
+{
+  unloadPlugin(filepath);
+  loadPlugin(filepath);
+}
+
+void PluginContainer::unloadPlugins()
+{
+  if (m_UserInterface != nullptr) {
+    m_UserInterface->disconnectPlugins();
+  }
+
+  // disconnect all slots before unloading plugins so plugins don't have to take care of that
+  if (m_Organizer) {
+    m_Organizer->disconnectPlugins();
+  }
+
+  bf::for_each(m_Plugins, [](auto& t) { t.second.clear(); });
+  bf::for_each(m_AccessPlugins, [](auto& t) { t.second.clear(); });
+  m_Requirements.clear();
+
+  for (const boost::signals2::connection& connection : m_DiagnosisConnections) {
+    connection.disconnect();
+  }
+  m_DiagnosisConnections.clear();
+
+  while (!m_PluginLoaders.empty()) {
+    QPluginLoader* loader = m_PluginLoaders.back();
+    m_PluginLoaders.pop_back();
+    if ((loader != nullptr) && !loader->unload()) {
+      log::debug("failed to unload {}: {}", loader->fileName(), loader->errorString());
+    }
+    delete loader;
+  }
 }
 
 void PluginContainer::loadPlugins()
