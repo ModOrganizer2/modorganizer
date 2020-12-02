@@ -294,14 +294,6 @@ void DownloadManager::setOutputDirectory(const QString &outputDirectory, const b
   m_DirWatcher.addPath(m_OutputDirectory);
 }
 
-
-void DownloadManager::setSupportedExtensions(const QStringList &extensions)
-{
-  m_SupportedExtensions = extensions;
-  // this happens only during initialization so don't refresh yet as that will
-  // happen later during initDownloadView
-}
-
 void DownloadManager::setShowHidden(bool showHidden)
 {
   m_ShowHidden = showHidden;
@@ -312,11 +304,6 @@ void DownloadManager::setPluginContainer(PluginContainer *pluginContainer)
 {
   m_NexusInterface->setPluginContainer(pluginContainer);
 }
-
-
-
-
-
 
 void DownloadManager::refreshList()
 {
@@ -338,8 +325,9 @@ void DownloadManager::refreshList()
       }
     }
 
-    QStringList nameFilters(m_SupportedExtensions);
-    foreach (const QString &extension, m_SupportedExtensions) {
+    QStringList supportedExtensions = m_OrganizerCore->installationManager()->getSupportedExtensions();
+    QStringList nameFilters(supportedExtensions);
+    for (const auto& extension : supportedExtensions) {
       nameFilters.append("*." + extension);
     }
 

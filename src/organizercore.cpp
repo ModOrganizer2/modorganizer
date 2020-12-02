@@ -283,8 +283,6 @@ void OrganizerCore::checkForUpdates()
 
 void OrganizerCore::connectPlugins(PluginContainer *container)
 {
-  m_DownloadManager.setSupportedExtensions(
-      m_InstallationManager.getSupportedExtensions());
   m_PluginContainer = container;
   m_Updater.setPluginContainer(m_PluginContainer);
   m_InstallationManager.setPluginContainer(m_PluginContainer);
