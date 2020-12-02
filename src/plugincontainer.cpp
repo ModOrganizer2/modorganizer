@@ -459,7 +459,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
     // If both plugins are from the same proxy and the same file, this is usually
     // ok (in theory some one could write two different classes from the same Python file/module):
     if (pluginProxy && m_Requirements.at(other).proxy() == pluginProxy
-      && as_qobject(other)->property("filename") == fileName) {
+      && as_qobject(other)->property("filepath") == fileName) {
 
       // Plugin has already been initialized:
       skipInit = true;
@@ -484,7 +484,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
   // way to cast directly between IPlugin* and IPluginDiagnose*
   bf::at_key<QObject>(m_Plugins).push_back(plugin);
 
-  plugin->setProperty("filename", fileName);
+  plugin->setProperty("filepath", fileName);
 
   if (m_Organizer) {
     m_Organizer->settings().plugins().registerPlugin(pluginObj);
@@ -560,13 +560,14 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString &fileNam
         try {
           // We get a list of matching plugins as proxies can return multiple plugins
           // per file and do not  have a good way of supporting multiple inheritance.
-          QList<QObject*> matchingPlugins = proxy->instantiate(pluginName);
+          QList<QObject*> matchingPlugins = proxy->load(pluginName);
 
           // We are going to group plugin by names and "fix" them later:
           std::map<QString, std::vector<IPlugin*>> proxiedByNames;
 
           for (QObject *proxiedPlugin : matchingPlugins) {
             if (proxiedPlugin != nullptr) {
+
               if (IPlugin* proxied = registerPlugin(proxiedPlugin, pluginName, proxy); proxied) {
                 log::debug("loaded plugin '{}' from '{}' - [{}]",
                   proxied->name(), QFileInfo(pluginName).fileName(), implementedInterfaces(proxied).join(", "));
