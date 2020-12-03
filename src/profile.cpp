@@ -124,7 +124,9 @@ Profile::Profile(const QDir &directory, IPluginGame const *gamePlugin)
                              QSettings::IniFormat);
   findProfileSettings();
 
-  if (!QFile::exists(m_Directory.filePath("modlist.txt"))) {
+  restoreModList();
+
+  if (!m_Directory.exists("modlist.txt")) {
     log::warn("missing modlist.txt in {}", directory.path());
     touchFile(m_Directory.filePath("modlist.txt"));
   }
@@ -223,6 +225,7 @@ void Profile::doWriteModlist()
   if (!m_Directory.exists()) return;
 
   try {
+    backupModList();
     QString fileName = getModlistFileName();
     SafeWriteFile file(fileName);
 
@@ -252,8 +255,10 @@ void Profile::doWriteModlist()
     }
 
     file.commitIfDifferent(m_LastModlistHash);
+    removeModListBackup();
   } catch (const std::exception &e) {
     reportError(tr("failed to write mod list: %1").arg(e.what()));
+    restoreModList();
     return;
   }
 }
@@ -302,8 +307,12 @@ void Profile::renameModInAllProfiles(const QString& oldName, const QString& newN
   while (profileIter.hasNext()) {
     profileIter.next();
     QFile modList(profileIter.filePath() + "/modlist.txt");
-    if (modList.exists())
+    if (modList.exists()) {
+      restoreModListInProfile(profileIter.filePath());
+      backupModListInProfile(profileIter.filePath());
       renameModInList(modList, oldName, newName);
+      removeModListBackupInProfile(profileIter.filePath());
+    }
     else
       log::warn("Profile has no modlist.txt: {}", profileIter.filePath());
   }
@@ -1190,4 +1199,67 @@ void Profile::debugDump() const
     unmanaged.enabled, unmanaged.total,
     localSavesEnabled() ? "yes" : "no",
     localSettingsEnabled() ? "yes" : "no");
+}
+
+//static
+void Profile::backupModListInProfile(const QString& profilePath)
+{
+  QDir dir(profilePath);
+  if (!dir.exists()) {
+    log::warn("profile does not exist at {}", profilePath);
+    return;
+  }
+  if (dir.exists("modlist.txt.bak") && !dir.remove("modlist.txt.bak")) {
+    log::warn("modlist.txt.bak already exists and failed to remove");
+  }
+  if (!dir.rename("modlist.txt", "modlist.txt.bak")) {
+    log::warn("failed to rename modlist.txt to modlist.txt.bak");
+  }
+}
+
+//static
+void Profile::restoreModListInProfile(const QString& profilePath)
+{
+  QDir dir(profilePath);
+  if (!dir.exists()) {
+    log::warn("profile does not exist at {}", profilePath);
+    return;
+  }
+  if (dir.exists("modlist.txt.bak")) {
+    log::warn("modlist.txt.bak exists in {}, restoring...", profilePath);
+    if (dir.exists("modlist.txt") && !dir.remove("modlist.txt")) {
+      log::warn("failed to remove old modlist.txt");
+    }
+    if (!dir.rename("modlist.txt.bak", "modlist.txt")) {
+      log::warn("failed to rename modlist.txt.bak to modlist.txt");
+    }
+  }
+}
+
+//static
+void Profile::removeModListBackupInProfile(const QString& profilePath)
+{
+  QDir dir(profilePath);
+  if (!dir.exists()) {
+    log::warn("profile does not exist at {}", profilePath);
+    return;
+  }
+  if (dir.exists("modlist.txt.bak") && !dir.remove("modlist.txt.bak")) {
+    log::warn("unable to remove modlist.txt.bak in {}", profilePath);
+  }
+}
+
+void Profile::backupModList()
+{
+  backupModListInProfile(m_Directory.path());
+}
+
+void Profile::restoreModList()
+{
+  restoreModListInProfile(m_Directory.path());
+}
+
+void Profile::removeModListBackup()
+{
+  removeModListBackupInProfile(m_Directory.path());
 }

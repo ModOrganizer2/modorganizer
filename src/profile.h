@@ -398,6 +398,15 @@ private:
 
   static void renameModInList(QFile &modList, const QString &oldName, const QString &newName);
 
+  static void backupModListInProfile(const QString& profilePath);
+  static void restoreModListInProfile(const QString& profilePath);
+  static void removeModListBackupInProfile(const QString& profilePath);
+
+  void backupModList();
+  void restoreModList();
+  void removeModListBackup();
+  
+
 private:
 
   QDir m_Directory;
