@@ -850,6 +850,11 @@ void PluginContainer::loadPlugin(QString const& filepath)
 void PluginContainer::unloadPlugin(MOBase::IPlugin* plugin, QObject* object)
 {
   if (auto* game = qobject_cast<IPluginGame*>(object)) {
+
+    if (game == managedGame()) {
+      throw Exception("cannot unload the plugin for the currently managed game");
+    }
+
     unregisterGame(game);
   }
 
