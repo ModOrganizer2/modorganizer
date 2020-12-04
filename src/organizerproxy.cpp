@@ -54,8 +54,6 @@ void OrganizerProxy::connectSignals()
 
 void OrganizerProxy::disconnectSignals()
 {
-  log::debug("Disconnecting organizer proxy for plugin '{}'.", m_PluginName);
-
   // Disconnect the child proxies.
   m_DownloadManagerProxy->disconnectSignals();
   m_ModListProxy->disconnectSignals();
