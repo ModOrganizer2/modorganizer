@@ -550,6 +550,16 @@ void DownloadManager::addNXMDownload(const QString &url)
   validGames.append(m_ManagedGame->validShortNames());
   for (auto game : validGames) {
     MOBase::IPluginGame* gamePlugin = m_OrganizerCore->getGame(game);
+
+    // some game plugins give names in validShortNames() that may refer to other
+    // plugins, like ttw returning "FalloutNV" and "Fallout3"; if these plugins
+    // are not loaded, getGame() might return null
+    if (!gamePlugin) {
+      // log an error, it's most probably not normal
+      log::error("no plugin for game '{}', an antivirus might have deleted it", game);
+      continue;
+    }
+
     if (
         nxmInfo.game().compare(gamePlugin->gameShortName(), Qt::CaseInsensitive) == 0 ||
         nxmInfo.game().compare(gamePlugin->gameNexusName(), Qt::CaseInsensitive) == 0
