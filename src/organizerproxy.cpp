@@ -22,7 +22,6 @@ OrganizerProxy::OrganizerProxy(OrganizerCore* organizer, PluginContainer* plugin
   : m_Proxied(organizer)
   , m_PluginContainer(pluginContainer)
   , m_Plugin(plugin)
-  , m_PluginName(plugin->name())
   , m_DownloadManagerProxy(std::make_unique<DownloadManagerProxy>(this, organizer->downloadManager()))
   , m_ModListProxy(std::make_unique<ModListProxy>(this, organizer->modList()))
   , m_PluginListProxy(std::make_unique<PluginListProxy>(this, organizer->pluginList())) { }

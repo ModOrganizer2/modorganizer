@@ -106,7 +106,6 @@ private:
   PluginContainer *m_PluginContainer;
 
   MOBase::IPlugin *m_Plugin;
-  QString m_PluginName;
 
   OrganizerCore::SignalAboutToRunApplication m_AboutToRun;
   OrganizerCore::SignalFinishedRunApplication m_FinishedRun;
