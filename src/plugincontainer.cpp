@@ -696,7 +696,7 @@ QString PluginContainer::filepath(MOBase::IPlugin* plugin) const
   return as_qobject(plugin)->property("filepath").toString();
 }
 
-IPluginGame *PluginContainer::managedGame(const QString &name) const
+IPluginGame *PluginContainer::game(const QString &name) const
 {
   auto iter = m_SupportedGames.find(name);
   if (iter != m_SupportedGames.end()) {

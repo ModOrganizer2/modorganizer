@@ -204,22 +204,19 @@ public:
    */
   void startPlugins(IUserInterface* userInterface);
 
+  /**
+   * @brief Load, unload or reload the plugin at the given path.
+   *
+   */
   void loadPlugin(QString const& filepath);
   void unloadPlugin(QString const& filepath);
   void reloadPlugin(QString const& filepath);
 
-  void loadPlugins();
-
   /**
-   * @brief Find the game plugin corresponding to the given name.
+   * @brief Load all plugins.
    *
-   * @param name The name of the game to find a plugin for (as returned by
-   *     IPluginGame::gameName()).
-   *
-   * @return the game plugin for the given name, or a null pointer if no
-   *     plugin exists for this game.
    */
-  MOBase::IPluginGame *managedGame(const QString &name) const;
+  void loadPlugins();
 
   /**
    * @brief Retrieve the list of plugins of the given type.
@@ -270,6 +267,17 @@ public:
   MOBase::IPlugin* plugin(QString const& pluginName) const;
   MOBase::IPlugin* plugin(MOBase::IPluginDiagnose* diagnose) const;
   MOBase::IPlugin* plugin(MOBase::IPluginFileMapper* mapper) const;
+
+  /**
+   * @brief Find the game plugin corresponding to the given name.
+   *
+   * @param name The name of the game to find a plugin for (as returned by
+   *     IPluginGame::gameName()).
+   *
+   * @return the game plugin for the given name, or a null pointer if no
+   *     plugin exists for this game.
+   */
+  MOBase::IPluginGame* game(const QString& name) const;
 
   /**
    * @return the IPlugin interface to the currently managed game.

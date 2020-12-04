@@ -291,7 +291,7 @@ void OrganizerCore::connectPlugins(PluginContainer *container)
   m_ModList.setPluginContainer(m_PluginContainer);
 
   if (!m_GameName.isEmpty()) {
-    m_GamePlugin = m_PluginContainer->managedGame(m_GameName);
+    m_GamePlugin = m_PluginContainer->game(m_GameName);
     emit managedGameChanged(m_GamePlugin);
   }
 
