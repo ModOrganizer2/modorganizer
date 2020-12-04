@@ -635,6 +635,8 @@ private slots: // ui slots
   void on_saveModsButton_clicked();
   void on_managedArchiveLabel_linkHovered(const QString &link);
 
+  void onPluginRegistrationChanged();
+
   void storeSettings();
   void readSettings();
   void setupModList();

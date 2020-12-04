@@ -474,16 +474,8 @@ MainWindow::MainWindow(Settings &settings
     if (m_PluginContainer.implementInterface<IPluginModPage>(plugin)) { updateModPageMenu(); } });
   connect(&m_PluginContainer, &PluginContainer::pluginDisabled, this, [this](IPlugin* plugin) {
     if (m_PluginContainer.implementInterface<IPluginModPage>(plugin)) { updateModPageMenu(); } });
-  connect(&m_PluginContainer, &PluginContainer::pluginRegistered, this, [this](IPlugin* plugin) {
-    updateModPageMenu();
-    scheduleCheckForProblems();
-    updateDownloadView();
-  });
-  connect(&m_PluginContainer, &PluginContainer::pluginUnregistered, this, [this](IPlugin* plugin) {
-    updateModPageMenu();
-    scheduleCheckForProblems();
-    updateDownloadView();
-  });
+  connect(&m_PluginContainer, &PluginContainer::pluginRegistered, this, &MainWindow::onPluginRegistrationChanged);
+  connect(&m_PluginContainer, &PluginContainer::pluginUnregistered, this, &MainWindow::onPluginRegistrationChanged);
 
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this, &MainWindow::modInstalled);
   connect(&m_OrganizerCore, &OrganizerCore::close, this, &QMainWindow::close);
@@ -5197,6 +5189,13 @@ void MainWindow::on_actionSettings_triggered()
       m_OrganizerCore.checkForUpdates();
     }
   }
+}
+
+void MainWindow::onPluginRegistrationChanged()
+{
+  updateModPageMenu();
+  scheduleCheckForProblems();
+  updateDownloadView();
 }
 
 void MainWindow::on_actionNexus_triggered()
