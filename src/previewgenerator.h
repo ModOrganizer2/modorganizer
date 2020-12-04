@@ -31,7 +31,7 @@ class PluginContainer;
 class PreviewGenerator
 {
 public:
-  PreviewGenerator(const PluginContainer* pluginContainer);
+  PreviewGenerator(const PluginContainer& pluginContainer);
 
   bool previewSupported(const QString &fileExtension) const;
 
@@ -39,7 +39,7 @@ public:
 
 private:
 
-  const PluginContainer* m_PluginContainer;
+  const PluginContainer& m_PluginContainer;
   QSize m_MaxSize;
 
 };

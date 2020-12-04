@@ -280,7 +280,7 @@ void PluginRequirements::requiredFor(std::vector<MOBase::IPlugin*> &required, st
 PluginContainer::PluginContainer(OrganizerCore *organizer)
   : m_Organizer(organizer)
   , m_UserInterface(nullptr)
-  , m_PreviewGenerator(this)
+  , m_PreviewGenerator(*this)
 {
 }
 
@@ -397,6 +397,7 @@ bool PluginContainer::initPlugin(IPlugin *plugin, IPluginProxy *pluginProxy, boo
   OrganizerProxy* proxy = nullptr;
   if (m_Organizer) {
     proxy = new OrganizerProxy(m_Organizer, this, plugin);
+    proxy->setParent(as_qobject(plugin));
   }
 
   // Check if it is a proxy plugin:
@@ -416,8 +417,6 @@ bool PluginContainer::initPlugin(IPlugin *plugin, IPluginProxy *pluginProxy, boo
     log::warn("plugin failed to initialize");
     return false;
   }
-
-  proxy->setParent(as_qobject(plugin));
 
   // Update requirements:
   it->second.fetchRequirements();
@@ -732,12 +731,17 @@ void PluginContainer::startPluginsImpl(const std::vector<QObject*>& plugins) con
   }
 
   // Trigger initial callbacks, e.g. onUserInterfaceInitialized and onProfileChanged.
-  for (auto* object : plugins) {
-    auto* plugin = qobject_cast<IPlugin*>(object);
-    auto* oproxy = organizerProxy(plugin);
-    oproxy->connectSignals();
-    oproxy->m_UserInterfaceInitialized(m_UserInterface->mainWindow());
-    oproxy->m_ProfileChanged(nullptr, m_Organizer->currentProfile());
+  if (m_Organizer) {
+    for (auto* object : plugins) {
+      auto* plugin = qobject_cast<IPlugin*>(object);
+      auto* oproxy = organizerProxy(plugin);
+      oproxy->connectSignals();
+      oproxy->m_ProfileChanged(nullptr, m_Organizer->currentProfile());
+
+      if (m_UserInterface) {
+        oproxy->m_UserInterfaceInitialized(m_UserInterface->mainWindow());
+      }
+    }
   }
 }
 

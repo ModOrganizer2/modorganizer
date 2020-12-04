@@ -462,8 +462,10 @@ private:
 
   MOBase::IPlugin* registerPlugin(QObject *pluginObj, const QString &fileName, MOBase::IPluginProxy *proxy);
 
+  // Core organizer, can be null (e.g. on first MO2 startup).
   OrganizerCore *m_Organizer;
 
+  // Main user interface, can be null until MW has been initialized.
   IUserInterface *m_UserInterface;
 
   PluginMap m_Plugins;

@@ -29,14 +29,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-PreviewGenerator::PreviewGenerator(const PluginContainer* pluginContainer) :
+PreviewGenerator::PreviewGenerator(const PluginContainer& pluginContainer) :
   m_PluginContainer(pluginContainer) {
   m_MaxSize = QGuiApplication::primaryScreen()->size() * 0.8;
 }
 
 bool PreviewGenerator::previewSupported(const QString &fileExtension) const
 {
-  auto& previews = m_PluginContainer->plugins<IPluginPreview>();
+  auto& previews = m_PluginContainer.plugins<IPluginPreview>();
   for (auto* preview : previews) {
     if (preview->supportedExtensions().contains(fileExtension)) {
       return true;
@@ -48,9 +48,9 @@ bool PreviewGenerator::previewSupported(const QString &fileExtension) const
 QWidget *PreviewGenerator::genPreview(const QString &fileName) const
 {
   const QString ext = QFileInfo(fileName).suffix().toLower();
-  auto& previews = m_PluginContainer->plugins<IPluginPreview>();
+  auto& previews = m_PluginContainer.plugins<IPluginPreview>();
   for (auto* preview : previews) {
-    if (m_PluginContainer->isEnabled(preview) && preview->supportedExtensions().contains(ext)) {
+    if (m_PluginContainer.isEnabled(preview) && preview->supportedExtensions().contains(ext)) {
       return preview->genFilePreview(fileName, m_MaxSize);
     }
   }
