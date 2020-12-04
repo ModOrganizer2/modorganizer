@@ -592,6 +592,28 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString& filepat
   return nullptr;
 }
 
+MOBase::IPlugin* PluginContainer::loadQtPlugin(const QString& filepath)
+{
+  std::unique_ptr<QPluginLoader> pluginLoader(new QPluginLoader(filepath, this));
+  if (pluginLoader->instance() == nullptr) {
+    m_FailedPlugins.push_back(filepath);
+    log::error("failed to load plugin {}: {}",filepath, pluginLoader->errorString());
+  }
+  else {
+    if (IPlugin* plugin = registerPlugin(pluginLoader->instance(), filepath, nullptr); plugin) {
+      log::debug("loaded plugin '{}' from '{}' - [{}]",
+        plugin->name(), QFileInfo(filepath).fileName(), implementedInterfaces(plugin).join(", "));
+      m_PluginLoaders.push_back(pluginLoader.release());
+      return plugin;
+    }
+    else {
+      m_FailedPlugins.push_back(filepath);
+      log::warn("plugin '{}' failed to load (may be outdated)", filepath);
+    }
+  }
+  return nullptr;
+}
+
 std::vector<IPlugin*> PluginContainer::loadProxied(const QString& filepath, IPluginProxy* proxy)
 {
   std::vector<IPlugin*> proxiedPlugins;
@@ -813,21 +835,9 @@ void PluginContainer::loadPlugin(QString const& filepath)
 {
   std::vector<IPlugin*> plugins;
   if (QFileInfo(filepath).isFile() && QLibrary::isLibrary(filepath)) {
-    std::unique_ptr<QPluginLoader> pluginLoader(new QPluginLoader(filepath, this));
-    if (pluginLoader->instance() == nullptr) {
-      log::error("failed to load plugin {}: {}", filepath, pluginLoader->errorString());
-    }
-    else {
-      if (IPlugin* plugin = registerPlugin(pluginLoader->instance(), filepath, nullptr)) {
-        log::debug("loaded plugin '{}' from '{}' - [{}]",
-          plugin->name(), QFileInfo(filepath).fileName(), implementedInterfaces(plugin).join(", "));
-        m_PluginLoaders.push_back(pluginLoader.release());
-        plugins.push_back(plugin);
-      }
-      else {
-        m_FailedPlugins.push_back(filepath);
-        log::warn("plugin \"{}\" failed to load (may be outdated)", filepath);
-      }
+    IPlugin* plugin = loadQtPlugin(filepath);
+    if (plugin) {
+      plugins.push_back(plugin);
     }
   }
   else {
@@ -1062,24 +1072,9 @@ void PluginContainer::loadPlugins()
       loadCheck.flush();
     }
 
-    QString pluginName = iter.filePath();
-    if (QLibrary::isLibrary(pluginName)) {
-      std::unique_ptr<QPluginLoader> pluginLoader(new QPluginLoader(pluginName, this));
-      if (pluginLoader->instance() == nullptr) {
-        m_FailedPlugins.push_back(pluginName);
-        log::error(
-          "failed to load plugin {}: {}",
-          pluginName, pluginLoader->errorString());
-      } else {
-        if (IPlugin* plugin = registerPlugin(pluginLoader->instance(), pluginName, nullptr); plugin) {
-          log::debug("loaded plugin '{}' from '{}' - [{}]",
-            plugin->name(), QFileInfo(pluginName).fileName(), implementedInterfaces(plugin).join(", "));
-          m_PluginLoaders.push_back(pluginLoader.release());
-        } else {
-          m_FailedPlugins.push_back(pluginName);
-          log::warn("plugin \"{}\" failed to load (may be outdated)", pluginName);
-        }
-      }
+    QString filepath = iter.filePath();
+    if (QLibrary::isLibrary(filepath)) {
+      loadQtPlugin(filepath);
     }
   }
 

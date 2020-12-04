@@ -395,6 +395,13 @@ private:
   std::vector<MOBase::IPlugin*> loadProxied(const QString& filepath, MOBase::IPluginProxy* proxy);
 
   /**
+   * @brief Load the Qt plugin from the given file.
+   *
+   * @param filepath Path to the DLL containing the Qt plugin.
+   */
+  MOBase::IPlugin* loadQtPlugin(const QString& filepath);
+
+  /**
    * @brief Simulate MO2 startup for the given plugins.
    *
    * @param plugins Plugins to simulate startup for.
