@@ -43,7 +43,7 @@ OrganizerProxy::OrganizerProxy(OrganizerCore* organizer, PluginContainer* plugin
 
 OrganizerProxy::~OrganizerProxy()
 {
-  log::debug("~OrganizerProxy() for {}.", m_PluginName);
+  log::debug("Deleting organizer proxy for plugin '{}'.", m_PluginName);
   for (auto& conn : m_Connections) {
     conn.disconnect();
   }

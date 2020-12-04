@@ -855,8 +855,8 @@ void PluginContainer::unloadPlugin(MOBase::IPlugin* plugin, QObject* object)
     unregisterGame(game);
   }
 
-  // We need to do this BEFORE unloading from the proxy otherwise the
-  // qobject_cast won't work.
+  // We need to remove from the m_Plugins maps BEFORE unloading from the proxy
+  // otherwise the qobject_cast to check the plugin type will not work.
   bf::for_each(m_Plugins, [object](auto& t) {
     using type = typename std::decay_t<decltype(t.second)>::value_type;
 
