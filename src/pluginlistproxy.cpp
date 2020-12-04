@@ -6,18 +6,26 @@ using namespace MOBase;
 using namespace MOShared;
 
 PluginListProxy::PluginListProxy(OrganizerProxy* oproxy, PluginList* pluginlist) :
-  m_OrganizerProxy(oproxy), m_Proxied(pluginlist)
+  m_OrganizerProxy(oproxy), m_Proxied(pluginlist) { }
+
+PluginListProxy::~PluginListProxy()
+{
+  disconnectSignals();
+}
+
+void PluginListProxy::connectSignals()
 {
   m_Connections.push_back(m_Proxied->onRefreshed(callSignalIfPluginActive(m_OrganizerProxy, m_Refreshed)));
   m_Connections.push_back(m_Proxied->onPluginMoved(callSignalIfPluginActive(m_OrganizerProxy, m_PluginMoved)));
   m_Connections.push_back(m_Proxied->onPluginStateChanged(callSignalIfPluginActive(m_OrganizerProxy, m_PluginStateChanged)));
 }
 
-PluginListProxy::~PluginListProxy()
+void PluginListProxy::disconnectSignals()
 {
   for (auto& conn : m_Connections) {
     conn.disconnect();
   }
+  m_Connections.clear();
 }
 
 QStringList PluginListProxy::pluginNames() const

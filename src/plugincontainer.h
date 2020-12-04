@@ -186,10 +186,23 @@ public:
 
 public:
 
-  PluginContainer(OrganizerCore *organizer);
+  PluginContainer(OrganizerCore* organizer);
   virtual ~PluginContainer();
 
-  void setUserInterface(IUserInterface *userInterface);
+  /**
+   * @brief Start the plugins.
+   *
+   * This function should not be called before MO2 is ready and plugins can be
+   * started, and will do the following:
+   *   - connect the callbacks of the plugins,
+   *   - set the parent widget for plugins that can have one,
+   *   - notify plugins that MO2 has been started, including:
+   *     - triggering a call to the "profile changed" callback for the initial profile,
+   *     - triggering a call to the "user interface initialized" callback.
+   *
+   * @param userInterface The main user interface to use for the plugins.
+   */
+  void startPlugins(IUserInterface* userInterface);
 
   void loadPlugin(QString const& filepath);
   void unloadPlugin(QString const& filepath);
@@ -392,21 +405,15 @@ private:
    *
    * @return the list of created plugins.
    */
-  std::vector<MOBase::IPlugin*> loadProxied(const QString& filepath, MOBase::IPluginProxy* proxy);
+  std::vector<QObject*> loadProxied(const QString& filepath, MOBase::IPluginProxy* proxy);
 
-  /**
-   * @brief Load the Qt plugin from the given file.
-   *
-   * @param filepath Path to the DLL containing the Qt plugin.
-   */
-  MOBase::IPlugin* loadQtPlugin(const QString& filepath);
+  // Load the Qt plugin from the given file.
+  QObject* loadQtPlugin(const QString& filepath);
 
-  /**
-   * @brief Simulate MO2 startup for the given plugins.
-   *
-   * @param plugins Plugins to simulate startup for.
-   */
-  void simulateStartup(const std::vector<MOBase::IPlugin*>& plugins) const;
+  // See startPlugins for more details. This is simply an intermediate function
+  // that can be used when loading plugins after initialization. This uses the
+  // user interface in m_UserInterface.
+  void startPluginsImpl(const std::vector<QObject*>& plugins) const;
 
   /**
    * @brief Retrieved the (localized) names of interfaces implemented by the given

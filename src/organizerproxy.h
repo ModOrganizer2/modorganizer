@@ -21,10 +21,14 @@ public:
   OrganizerProxy(OrganizerCore *organizer, PluginContainer *pluginContainer, MOBase::IPlugin *plugin);
   ~OrganizerProxy();
 
+public:
+
   /**
    * @return the plugin corresponding to this proxy.
    */
   MOBase::IPlugin* plugin() const { return m_Plugin;  }
+
+public: // IOrganizer interface
 
   virtual MOBase::IModRepositoryBridge *createNexusBridge() const;
   virtual QString profileName() const;
@@ -82,6 +86,19 @@ protected:
 
   // The container needs access to some callbacks to simulate startup.
   friend class PluginContainer;
+
+  /**
+   * @brief Connect the signals from this proxy and all the child proxies (plugin list, mod
+   *   list, etc.) to the actual implementation. Before this call, plugins can register signals
+   *   but they won't be triggered.
+   */
+  void connectSignals();
+
+  /**
+   * @brief Disconnect the signals from this proxy and all the child proxies (plugin list, mod
+   *   list, etc.) from the actual implementation.
+   */
+  void disconnectSignals();
 
 private:
 

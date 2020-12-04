@@ -7,7 +7,14 @@ using namespace MOBase;
 using namespace MOShared;
 
 ModListProxy::ModListProxy(OrganizerProxy* oproxy, ModList* modlist) :
-  m_OrganizerProxy(oproxy), m_Proxied(modlist)
+  m_OrganizerProxy(oproxy), m_Proxied(modlist) { }
+
+ModListProxy::~ModListProxy()
+{
+  disconnectSignals();
+}
+
+void ModListProxy::connectSignals()
 {
   m_Connections.push_back(m_Proxied->onModInstalled(callSignalIfPluginActive(m_OrganizerProxy, m_ModInstalled)));
   m_Connections.push_back(m_Proxied->onModMoved(callSignalIfPluginActive(m_OrganizerProxy, m_ModMoved)));
@@ -15,11 +22,12 @@ ModListProxy::ModListProxy(OrganizerProxy* oproxy, ModList* modlist) :
   m_Connections.push_back(m_Proxied->onModStateChanged(callSignalIfPluginActive(m_OrganizerProxy, m_ModStateChanged)));
 }
 
-ModListProxy::~ModListProxy()
+void ModListProxy::disconnectSignals()
 {
   for (auto& conn : m_Connections) {
     conn.disconnect();
   }
+  m_Connections.clear();
 }
 
 QString ModListProxy::displayName(const QString& internalName) const

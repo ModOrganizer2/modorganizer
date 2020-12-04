@@ -25,7 +25,14 @@ OrganizerProxy::OrganizerProxy(OrganizerCore* organizer, PluginContainer* plugin
   , m_PluginName(plugin->name())
   , m_DownloadManagerProxy(std::make_unique<DownloadManagerProxy>(this, organizer->downloadManager()))
   , m_ModListProxy(std::make_unique<ModListProxy>(this, organizer->modList()))
-  , m_PluginListProxy(std::make_unique<PluginListProxy>(this, organizer->pluginList()))
+  , m_PluginListProxy(std::make_unique<PluginListProxy>(this, organizer->pluginList())) { }
+
+OrganizerProxy::~OrganizerProxy()
+{
+  disconnectSignals();
+}
+
+void OrganizerProxy::connectSignals()
 {
   m_Connections.push_back(m_Proxied->onAboutToRun(callSignalIfPluginActive(this, m_AboutToRun, true)));
   m_Connections.push_back(m_Proxied->onFinishedRun(callSignalIfPluginActive(this, m_FinishedRun)));
@@ -39,14 +46,25 @@ OrganizerProxy::OrganizerProxy(OrganizerCore* organizer, PluginContainer* plugin
   m_Connections.push_back(m_Proxied->onPluginEnabled(callSignalAlways(m_PluginEnabled)));
   m_Connections.push_back(m_Proxied->onPluginDisabled(callSignalAlways(m_PluginDisabled)));
 
+  // Connect the child proxies.
+  m_DownloadManagerProxy->connectSignals();
+  m_ModListProxy->connectSignals();
+  m_PluginListProxy->connectSignals();
 }
 
-OrganizerProxy::~OrganizerProxy()
+void OrganizerProxy::disconnectSignals()
 {
-  log::debug("Deleting organizer proxy for plugin '{}'.", m_PluginName);
+  log::debug("Disconnecting organizer proxy for plugin '{}'.", m_PluginName);
+
+  // Disconnect the child proxies.
+  m_DownloadManagerProxy->disconnectSignals();
+  m_ModListProxy->disconnectSignals();
+  m_PluginListProxy->disconnectSignals();
+
   for (auto& conn : m_Connections) {
     conn.disconnect();
   }
+  m_Connections.clear();
 }
 
 IModRepositoryBridge *OrganizerProxy::createNexusBridge() const

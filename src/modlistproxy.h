@@ -31,6 +31,12 @@ public:
 
 private:
 
+  friend class OrganizerProxy;
+
+  // See OrganizerProxy::connectSignals().
+  void connectSignals();
+  void disconnectSignals();
+
   OrganizerProxy* m_OrganizerProxy;
   ModList* m_Proxied;
 
