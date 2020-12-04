@@ -201,7 +201,6 @@ public:
 
   void setUserInterface(IUserInterface* ui);
   void connectPlugins(PluginContainer *container);
-  void disconnectPlugins();
 
   void setManagedGame(MOBase::IPluginGame *game);
 

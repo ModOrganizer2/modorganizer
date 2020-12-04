@@ -209,7 +209,6 @@ public:
   void reloadPlugin(QString const& filepath);
 
   void loadPlugins();
-  void unloadPlugins();
 
   /**
    * @brief Find the game plugin corresponding to the given name.
@@ -370,21 +369,29 @@ private:
 
   friend class PluginRequirements;
 
-  /**
-   * @return the organizer proxy for the given plugin.
-   */
+  // Unload all the plugins.
+  void unloadPlugins();
+
+  // Retrieve the organizer proxy for the given plugin.
   OrganizerProxy* organizerProxy(MOBase::IPlugin* plugin) const;
 
-  /**
-   * @return the proxy plugin that instantiated the given plugin, or a null pointer
-   *   if the plugin was not instantiated by a proxy.
-   */
+  // Retrieve the proxy plugin that instantiated the given plugin, or a null pointer
+  // if the plugin was not instantiated by a proxy.
   MOBase::IPluginProxy* pluginProxy(MOBase::IPlugin* plugin) const;
 
-  /**
-   * @return the path to the file or folder corresponding to the plugin.
-   */
+  // Retrieve the path to the file or folder corresponding to the plugin.
   QString filepath(MOBase::IPlugin* plugin) const;
+
+  // Load plugins from the given filepath using the given proxy.
+  std::vector<QObject*> loadProxied(const QString& filepath, MOBase::IPluginProxy* proxy);
+
+  // Load the Qt plugin from the given file.
+  QObject* loadQtPlugin(const QString& filepath);
+
+  // See startPlugins for more details. This is simply an intermediate function
+  // that can be used when loading plugins after initialization. This uses the
+  // user interface in m_UserInterface.
+  void startPluginsImpl(const std::vector<QObject*>& plugins) const;
 
   /**
    * @brief Unload the given plugin.
@@ -396,24 +403,6 @@ private:
    * @param object The QObject corresponding to the plugin.
    */
   void unloadPlugin(MOBase::IPlugin* plugin, QObject* object);
-
-  /**
-   * @brief Load plugins from the given filepath using the given proxy.
-   *
-   * @param filepath Path to a folder/file containing plugin(s) that can be load by the given proxy.
-   * @param proxy Proxy to use to load plugins.
-   *
-   * @return the list of created plugins.
-   */
-  std::vector<QObject*> loadProxied(const QString& filepath, MOBase::IPluginProxy* proxy);
-
-  // Load the Qt plugin from the given file.
-  QObject* loadQtPlugin(const QString& filepath);
-
-  // See startPlugins for more details. This is simply an intermediate function
-  // that can be used when loading plugins after initialization. This uses the
-  // user interface in m_UserInterface.
-  void startPluginsImpl(const std::vector<QObject*>& plugins) const;
 
   /**
    * @brief Retrieved the (localized) names of interfaces implemented by the given

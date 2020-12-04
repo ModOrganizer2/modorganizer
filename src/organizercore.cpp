@@ -301,25 +301,6 @@ void OrganizerCore::connectPlugins(PluginContainer *container)
     [&](IPlugin* plugin) { m_PluginDisabled(plugin); });
 }
 
-void OrganizerCore::disconnectPlugins()
-{
-  m_AboutToRun.disconnect_all_slots();
-  m_FinishedRun.disconnect_all_slots();
-  m_UserInterfaceInitialized.disconnect_all_slots();
-  m_ProfileChanged.disconnect_all_slots();
-  m_PluginSettingChanged.disconnect_all_slots();
-
-  m_ModList.disconnectSlots();
-  m_PluginList.disconnectSlots();
-  m_Updater.setPluginContainer(nullptr);
-  m_DownloadManager.setPluginContainer(nullptr);
-  m_ModList.setPluginContainer(nullptr);
-
-  m_Settings.plugins().clearPlugins();
-  m_GamePlugin      = nullptr;
-  m_PluginContainer = nullptr;
-}
-
 void OrganizerCore::setManagedGame(MOBase::IPluginGame *game)
 {
   m_GameName   = game->gameName();

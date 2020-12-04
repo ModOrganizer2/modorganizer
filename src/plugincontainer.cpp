@@ -943,11 +943,6 @@ void PluginContainer::reloadPlugin(QString const& filepath)
 
 void PluginContainer::unloadPlugins()
 {
-  // disconnect all slots before unloading plugins so plugins don't have to take care of that
-  if (m_Organizer) {
-    m_Organizer->disconnectPlugins();
-  }
-
   bf::for_each(m_Plugins, [](auto& t) { t.second.clear(); });
   bf::for_each(m_AccessPlugins, [](auto& t) { t.second.clear(); });
   m_Requirements.clear();
