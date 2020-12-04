@@ -560,7 +560,6 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString& filepat
     IPluginPreview *preview = qobject_cast<IPluginPreview*>(plugin);
     if (initPlugin(preview, pluginProxy, skipInit)) {
       bf::at_key<IPluginPreview>(m_Plugins).push_back(preview);
-      m_PreviewGenerator.registerPlugin(preview);
       return preview;
     }
   }
