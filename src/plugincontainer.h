@@ -103,6 +103,7 @@ private:
   // Set the master for this plugin. This is required to "fake" masters for proxied plugins.
   void setMaster(MOBase::IPlugin* master);
 
+  friend class OrganizerCore;
   friend class PluginContainer;
 
   PluginContainer* m_PluginContainer;
@@ -110,12 +111,12 @@ private:
   MOBase::IPluginProxy* m_PluginProxy;
   MOBase::IPlugin* m_Master;
   std::vector<std::shared_ptr<const MOBase::IPluginRequirement>> m_Requirements;
-  MOBase::IOrganizer* m_Organizer;
+  OrganizerProxy* m_Organizer;
   std::vector<MOBase::IPlugin*> m_RequiredFor;
 
   PluginRequirements(
     PluginContainer* pluginContainer, MOBase::IPlugin* plugin,
-    MOBase::IOrganizer* proxy, MOBase::IPluginProxy* pluginProxy);
+    OrganizerProxy* proxy, MOBase::IPluginProxy* pluginProxy);
 
 };
 
@@ -185,24 +186,37 @@ public:
 
 public:
 
-  PluginContainer(OrganizerCore *organizer);
+  PluginContainer(OrganizerCore* organizer);
   virtual ~PluginContainer();
 
-  void setUserInterface(IUserInterface *userInterface);
-
-  void loadPlugins();
-  void unloadPlugins();
+  /**
+   * @brief Start the plugins.
+   *
+   * This function should not be called before MO2 is ready and plugins can be
+   * started, and will do the following:
+   *   - connect the callbacks of the plugins,
+   *   - set the parent widget for plugins that can have one,
+   *   - notify plugins that MO2 has been started, including:
+   *     - triggering a call to the "profile changed" callback for the initial profile,
+   *     - triggering a call to the "user interface initialized" callback.
+   *
+   * @param userInterface The main user interface to use for the plugins.
+   */
+  void startPlugins(IUserInterface* userInterface);
 
   /**
-   * @brief Find the game plugin corresponding to the given name.
+   * @brief Load, unload or reload the plugin at the given path.
    *
-   * @param name The name of the game to find a plugin for (as returned by
-   *     IPluginGame::gameName()).
-   *
-   * @return the game plugin for the given name, or a null pointer if no
-   *     plugin exists for this game.
    */
-  MOBase::IPluginGame *managedGame(const QString &name) const;
+  void loadPlugin(QString const& filepath);
+  void unloadPlugin(QString const& filepath);
+  void reloadPlugin(QString const& filepath);
+
+  /**
+   * @brief Load all plugins.
+   *
+   */
+  void loadPlugins();
 
   /**
    * @brief Retrieve the list of plugins of the given type.
@@ -253,6 +267,17 @@ public:
   MOBase::IPlugin* plugin(QString const& pluginName) const;
   MOBase::IPlugin* plugin(MOBase::IPluginDiagnose* diagnose) const;
   MOBase::IPlugin* plugin(MOBase::IPluginFileMapper* mapper) const;
+
+  /**
+   * @brief Find the game plugin corresponding to the given name.
+   *
+   * @param name The name of the game to find a plugin for (as returned by
+   *     IPluginGame::gameName()).
+   *
+   * @return the game plugin for the given name, or a null pointer if no
+   *     plugin exists for this game.
+   */
+  MOBase::IPluginGame* game(const QString& name) const;
 
   /**
    * @return the IPlugin interface to the currently managed game.
@@ -335,10 +360,16 @@ public: // IPluginDiagnose interface
 signals:
 
   /**
-   * @brief Emitted plugins are enabled or disabled.
+   * @brief Emitted when plugins are enabled or disabled.
    */
   void pluginEnabled(MOBase::IPlugin*);
   void pluginDisabled(MOBase::IPlugin*);
+
+  /**
+   * @brief Emitted when plugins are registered or unregistered.
+   */
+  void pluginRegistered(MOBase::IPlugin*);
+  void pluginUnregistered(MOBase::IPlugin*);
 
   void diagnosisUpdate();
 
@@ -346,6 +377,40 @@ private:
 
   friend class PluginRequirements;
 
+  // Unload all the plugins.
+  void unloadPlugins();
+
+  // Retrieve the organizer proxy for the given plugin.
+  OrganizerProxy* organizerProxy(MOBase::IPlugin* plugin) const;
+
+  // Retrieve the proxy plugin that instantiated the given plugin, or a null pointer
+  // if the plugin was not instantiated by a proxy.
+  MOBase::IPluginProxy* pluginProxy(MOBase::IPlugin* plugin) const;
+
+  // Retrieve the path to the file or folder corresponding to the plugin.
+  QString filepath(MOBase::IPlugin* plugin) const;
+
+  // Load plugins from the given filepath using the given proxy.
+  std::vector<QObject*> loadProxied(const QString& filepath, MOBase::IPluginProxy* proxy);
+
+  // Load the Qt plugin from the given file.
+  QObject* loadQtPlugin(const QString& filepath);
+
+  // See startPlugins for more details. This is simply an intermediate function
+  // that can be used when loading plugins after initialization. This uses the
+  // user interface in m_UserInterface.
+  void startPluginsImpl(const std::vector<QObject*>& plugins) const;
+
+  /**
+   * @brief Unload the given plugin.
+   *
+   * This function is not public because it's kind of dangerous trying to unload
+   * plugin directly since some plugins are linked together.
+   *
+   * @param plugin The plugin to unload/unregister.
+   * @param object The QObject corresponding to the plugin.
+   */
+  void unloadPlugin(MOBase::IPlugin* plugin, QObject* object);
 
   /**
    * @brief Retrieved the (localized) names of interfaces implemented by the given
@@ -393,11 +458,14 @@ private:
   bool initPlugin(MOBase::IPlugin *plugin, MOBase::IPluginProxy* proxy, bool skipInit);
 
   void registerGame(MOBase::IPluginGame *game);
+  void unregisterGame(MOBase::IPluginGame* game);
 
   MOBase::IPlugin* registerPlugin(QObject *pluginObj, const QString &fileName, MOBase::IPluginProxy *proxy);
 
+  // Core organizer, can be null (e.g. on first MO2 startup).
   OrganizerCore *m_Organizer;
 
+  // Main user interface, can be null until MW has been initialized.
   IUserInterface *m_UserInterface;
 
   PluginMap m_Plugins;

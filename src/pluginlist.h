@@ -43,6 +43,8 @@ namespace MOBase { class IPluginGame; }
 #include <vector>
 #include <map>
 
+class OrganizerCore;
+
 
 template <class C>
 class ChangeBracket {
@@ -79,7 +81,7 @@ private:
 /**
  * @brief model representing the plugins (.esp/.esm) in the current virtual data folder
  **/
-class PluginList : public QAbstractItemModel, public MOBase::IPluginList
+class PluginList : public QAbstractItemModel
 {
   Q_OBJECT
   friend class ChangeBracket<PluginList>;
@@ -94,9 +96,13 @@ public:
     COL_LASTCOLUMN = COL_MODINDEX
   };
 
-  typedef boost::signals2::signal<void ()> SignalRefreshed;
-  typedef boost::signals2::signal<void (const QString &, int, int)> SignalPluginMoved;
-  typedef boost::signals2::signal<void (const std::map<QString, PluginStates>&)> SignalPluginStateChanged;
+  using PluginStates = MOBase::IPluginList::PluginStates;
+
+  friend class PluginListProxy;
+
+  using SignalRefreshed = boost::signals2::signal<void ()>;
+  using SignalPluginMoved = boost::signals2::signal<void (const QString &, int, int)>;
+  using SignalPluginStateChanged = boost::signals2::signal<void (const std::map<QString, PluginStates>&)>;
 
 public:
 
@@ -105,7 +111,7 @@ public:
    *
    * @param parent parent object
    **/
-  PluginList(QObject *parent = nullptr);
+  PluginList(OrganizerCore &organizer);
 
   ~PluginList();
 
@@ -221,21 +227,22 @@ public:
 
 public:
 
-  virtual QStringList pluginNames() const override;
-  virtual PluginStates state(const QString &name) const override;
-  virtual void setState(const QString &name, PluginStates state) override;
-  virtual int priority(const QString &name) const override;
-  virtual int loadOrder(const QString &name) const override;
-  virtual bool setPriority(const QString& name, int newPriority) override;
-  virtual bool onRefreshed(const std::function<void()> &callback);
-  virtual bool isMaster(const QString &name) const override;
-  virtual bool isLight(const QString &name) const;
-  virtual bool isLightFlagged(const QString &name) const;
-  virtual QStringList masters(const QString &name) const override;
-  virtual QString origin(const QString &name) const override;
-  virtual void setLoadOrder(const QStringList &pluginList) override;
-  virtual bool onPluginMoved(const std::function<void (const QString &, int, int)> &func) override;
-  virtual bool onPluginStateChanged(const std::function<void (const std::map<QString, PluginStates>&)> &func) override;
+  QStringList pluginNames() const;
+  PluginStates state(const QString &name) const;
+  void setState(const QString &name, PluginStates state);
+  int priority(const QString &name) const;
+  int loadOrder(const QString &name) const;
+  bool setPriority(const QString& name, int newPriority);
+  bool isMaster(const QString &name) const;
+  bool isLight(const QString &name) const;
+  bool isLightFlagged(const QString &name) const;
+  QStringList masters(const QString &name) const;
+  QString origin(const QString &name) const;
+  void setLoadOrder(const QStringList& pluginList);
+
+  boost::signals2::connection onRefreshed(const std::function<void()>& callback);
+  boost::signals2::connection onPluginMoved(const std::function<void(const QString&, int, int)>& func);
+  boost::signals2::connection onPluginStateChanged(const std::function<void (const std::map<QString, PluginStates>&)> &func);
 
 public: // implementation of the QAbstractTableModel interface
 
@@ -368,9 +375,11 @@ private:
    * @param state New state of the plugin.
    *
    */
-  void pluginStatesChanged(QStringList const& pluginNames, IPluginList::PluginStates state) const;
+  void pluginStatesChanged(QStringList const& pluginNames, PluginStates state) const;
 
 private:
+
+  OrganizerCore& m_Organizer;
 
   std::vector<ESPInfo> m_ESPs;
   mutable std::map<QString, QByteArray> m_LastSaveHash;

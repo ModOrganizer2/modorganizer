@@ -201,7 +201,7 @@ QString DownloadManager::DownloadInfo::currentURL()
 
 
 DownloadManager::DownloadManager(NexusInterface *nexusInterface, QObject *parent) :
-  IDownloadManager(parent), m_NexusInterface(nexusInterface), m_DirWatcher(), m_ShowHidden(false),
+  m_NexusInterface(nexusInterface), m_DirWatcher(), m_ShowHidden(false),
   m_ParentWidget(nullptr)
 {
   m_OrganizerCore = dynamic_cast<OrganizerCore*>(parent);
@@ -1797,24 +1797,24 @@ QString DownloadManager::downloadPath(int id)
   return getFilePath(id);
 }
 
-bool DownloadManager::onDownloadComplete(const std::function<void(int)>& callback)
+boost::signals2::connection DownloadManager::onDownloadComplete(const std::function<void(int)>& callback)
 {
-  return m_DownloadComplete.connect(callback).connected();
+  return m_DownloadComplete.connect(callback);
 }
 
-bool DownloadManager::onDownloadPaused(const std::function<void(int)>& callback)
+boost::signals2::connection DownloadManager::onDownloadPaused(const std::function<void(int)>& callback)
 {
-  return m_DownloadPaused.connect(callback).connected();
+  return m_DownloadPaused.connect(callback);
 }
 
-bool DownloadManager::onDownloadFailed(const std::function<void(int)>& callback)
+boost::signals2::connection DownloadManager::onDownloadFailed(const std::function<void(int)>& callback)
 {
-  return m_DownloadFailed.connect(callback).connected();
+  return m_DownloadFailed.connect(callback);
 }
 
-bool DownloadManager::onDownloadRemoved(const std::function<void(int)>& callback)
+boost::signals2::connection DownloadManager::onDownloadRemoved(const std::function<void(int)>& callback)
 {
-  return m_DownloadRemoved.connect(callback).connected();
+  return m_DownloadRemoved.connect(callback);
 }
 
 int DownloadManager::indexByName(const QString &fileName) const

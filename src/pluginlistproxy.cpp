@@ -3,11 +3,32 @@
 #include "proxyutils.h"
 
 using namespace MOBase;
+using namespace MOShared;
 
-PluginListProxy::PluginListProxy(OrganizerProxy* oproxy, IPluginList* pluginlist) :
+PluginListProxy::PluginListProxy(OrganizerProxy* oproxy, PluginList* pluginlist) :
   m_OrganizerProxy(oproxy), m_Proxied(pluginlist) { }
 
-QStringList PluginListProxy::pluginNames() const 
+PluginListProxy::~PluginListProxy()
+{
+  disconnectSignals();
+}
+
+void PluginListProxy::connectSignals()
+{
+  m_Connections.push_back(m_Proxied->onRefreshed(callSignalIfPluginActive(m_OrganizerProxy, m_Refreshed)));
+  m_Connections.push_back(m_Proxied->onPluginMoved(callSignalIfPluginActive(m_OrganizerProxy, m_PluginMoved)));
+  m_Connections.push_back(m_Proxied->onPluginStateChanged(callSignalIfPluginActive(m_OrganizerProxy, m_PluginStateChanged)));
+}
+
+void PluginListProxy::disconnectSignals()
+{
+  for (auto& conn : m_Connections) {
+    conn.disconnect();
+  }
+  m_Connections.clear();
+}
+
+QStringList PluginListProxy::pluginNames() const
 {
   return m_Proxied->pluginNames();
 }
@@ -57,17 +78,17 @@ QString PluginListProxy::origin(const QString& name) const
   return m_Proxied->origin(name);
 }
 
-bool PluginListProxy::onRefreshed(const std::function<void()>& callback) 
+bool PluginListProxy::onRefreshed(const std::function<void()>& func)
 {
-  return m_Proxied->onRefreshed(MOShared::callIfPluginActive(m_OrganizerProxy, callback));
+  return m_Refreshed.connect(func).connected();
 }
 
 bool PluginListProxy::onPluginMoved(const std::function<void(const QString&, int, int)>& func)
 {
-  return m_Proxied->onPluginMoved(MOShared::callIfPluginActive(m_OrganizerProxy, func));
+  return m_PluginMoved.connect(func).connected();
 }
 
 bool PluginListProxy::onPluginStateChanged(const std::function<void(const std::map<QString, PluginStates>&)> &func)
 {
-  return m_Proxied->onPluginStateChanged(MOShared::callIfPluginActive(m_OrganizerProxy, func));
+  return m_PluginStateChanged.connect(func).connected();
 }

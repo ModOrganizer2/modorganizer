@@ -6,7 +6,8 @@
 #include <iplugin.h>
 #include <imoinfo.h>
 
-class OrganizerCore;
+#include "organizercore.h"
+
 class PluginContainer;
 class DownloadManagerProxy;
 class ModListProxy;
@@ -18,11 +19,16 @@ class OrganizerProxy : public MOBase::IOrganizer
 public:
 
   OrganizerProxy(OrganizerCore *organizer, PluginContainer *pluginContainer, MOBase::IPlugin *plugin);
+  ~OrganizerProxy();
+
+public:
 
   /**
    * @return the plugin corresponding to this proxy.
    */
   MOBase::IPlugin* plugin() const { return m_Plugin;  }
+
+public: // IOrganizer interface
 
   virtual MOBase::IModRepositoryBridge *createNexusBridge() const;
   virtual QString profileName() const;
@@ -76,12 +82,43 @@ public:
 
   virtual MOBase::IPluginGame const *managedGame() const;
 
+protected:
+
+  // The container needs access to some callbacks to simulate startup.
+  friend class PluginContainer;
+
+  /**
+   * @brief Connect the signals from this proxy and all the child proxies (plugin list, mod
+   *   list, etc.) to the actual implementation. Before this call, plugins can register signals
+   *   but they won't be triggered.
+   */
+  void connectSignals();
+
+  /**
+   * @brief Disconnect the signals from this proxy and all the child proxies (plugin list, mod
+   *   list, etc.) from the actual implementation.
+   */
+  void disconnectSignals();
+
 private:
 
   OrganizerCore *m_Proxied;
   PluginContainer *m_PluginContainer;
 
   MOBase::IPlugin *m_Plugin;
+
+  OrganizerCore::SignalAboutToRunApplication m_AboutToRun;
+  OrganizerCore::SignalFinishedRunApplication m_FinishedRun;
+  OrganizerCore::SignalUserInterfaceInitialized m_UserInterfaceInitialized;
+  OrganizerCore::SignalProfileCreated m_ProfileCreated;
+  OrganizerCore::SignalProfileRenamed m_ProfileRenamed;
+  OrganizerCore::SignalProfileRemoved m_ProfileRemoved;
+  OrganizerCore::SignalProfileChanged m_ProfileChanged;
+  OrganizerCore::SignalPluginSettingChanged m_PluginSettingChanged;
+  OrganizerCore::SignalPluginEnabled m_PluginEnabled;
+  OrganizerCore::SignalPluginEnabled m_PluginDisabled;
+
+  std::vector<boost::signals2::connection> m_Connections;
 
   std::unique_ptr<DownloadManagerProxy> m_DownloadManagerProxy;
   std::unique_ptr<ModListProxy> m_ModListProxy;

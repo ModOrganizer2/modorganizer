@@ -2,6 +2,7 @@
 #define MODLISTPROXY_H
 
 #include <imodlist.h>
+#include "modlist.h"
 
 class OrganizerProxy;
 
@@ -10,8 +11,8 @@ class ModListProxy : public MOBase::IModList
 
 public:
 
-  ModListProxy(OrganizerProxy* oproxy, IModList* modlist);
-  virtual ~ModListProxy() { }
+  ModListProxy(OrganizerProxy* oproxy, ModList* modlist);
+  virtual ~ModListProxy();
 
   QString displayName(const QString& internalName) const override;
   QStringList allMods() const override;
@@ -30,8 +31,21 @@ public:
 
 private:
 
+  friend class OrganizerProxy;
+
+  // See OrganizerProxy::connectSignals().
+  void connectSignals();
+  void disconnectSignals();
+
   OrganizerProxy* m_OrganizerProxy;
-  IModList* m_Proxied;
+  ModList* m_Proxied;
+
+  ModList::SignalModInstalled m_ModInstalled;
+  ModList::SignalModMoved m_ModMoved;
+  ModList::SignalModRemoved m_ModRemoved;
+  ModList::SignalModStateChanged m_ModStateChanged;
+
+  std::vector<boost::signals2::connection> m_Connections;
 };
 
 #endif // ORGANIZERPROXY_H

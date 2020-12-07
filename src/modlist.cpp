@@ -1020,19 +1020,19 @@ bool ModList::setPriority(const QString &name, int newPriority)
   }
 }
 
-bool ModList::onModInstalled(const std::function<void(MOBase::IModInterface*)>& func)
+boost::signals2::connection ModList::onModInstalled(const std::function<void(MOBase::IModInterface*)>& func)
 {
-  return m_ModInstalled.connect(func).connected();
+  return m_ModInstalled.connect(func);
 }
 
-bool ModList::onModRemoved(const std::function<void(QString const&)>& func)
+boost::signals2::connection ModList::onModRemoved(const std::function<void(QString const&)>& func)
 {
-  return m_ModRemoved.connect(func).connected();
+  return m_ModRemoved.connect(func);
 }
 
-bool ModList::onModStateChanged(const std::function<void(const std::map<QString, ModStates>&)>& func)
+boost::signals2::connection ModList::onModStateChanged(const std::function<void(const std::map<QString, IModList::ModStates>&)>& func)
 {
-  return m_ModStateChanged.connect(func).connected();
+  return m_ModStateChanged.connect(func);
 }
 
 void ModList::notifyModInstalled(MOBase::IModInterface* mod) const
@@ -1047,7 +1047,7 @@ void ModList::notifyModRemoved(QString const& modName) const
 
 void ModList::notifyModStateChanged(QList<unsigned int> modIndices) const
 {
-  std::map<QString, ModStates> mods;
+  std::map<QString, IModList::ModStates> mods;
   for (auto modIndex : modIndices) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
     mods.emplace(modInfo->name(), state(modIndex));
@@ -1055,10 +1055,9 @@ void ModList::notifyModStateChanged(QList<unsigned int> modIndices) const
   m_ModStateChanged(mods);
 }
 
-bool ModList::onModMoved(const std::function<void (const QString &, int, int)> &func)
+boost::signals2::connection ModList::onModMoved(const std::function<void (const QString &, int, int)> &func)
 {
-  auto conn = m_ModMoved.connect(func);
-  return conn.connected();
+  return m_ModMoved.connect(func);
 }
 
 bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &parent)

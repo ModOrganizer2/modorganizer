@@ -304,9 +304,10 @@ public:
   //
   void clearPlugins();
 
-  // adds the given plugin to the list and loads all of its settings
+  // adds/removes the given plugin to the list and loads all of its settings
   //
   void registerPlugin(MOBase::IPlugin *plugin);
+  void unregisterPlugin(MOBase::IPlugin* plugin);
 
   // returns all the registered plugins
   //

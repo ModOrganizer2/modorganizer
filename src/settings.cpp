@@ -1317,6 +1317,16 @@ void PluginSettings::registerPlugin(IPlugin *plugin)
   }
 }
 
+void PluginSettings::unregisterPlugin(IPlugin* plugin)
+{
+  auto it = std::find(m_Plugins.begin(), m_Plugins.end(), plugin);
+  if (it != m_Plugins.end()) {
+    m_Plugins.erase(it);
+  }
+  m_PluginSettings.remove(plugin->name());
+  m_PluginDescriptions.remove(plugin->name());
+}
+
 std::vector<MOBase::IPlugin*> PluginSettings::plugins() const
 {
   return m_Plugins;

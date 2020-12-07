@@ -17,8 +17,6 @@ public:
 
   virtual void installTranslator(const QString &name) = 0;
 
-  virtual void disconnectPlugins() = 0;
-
   virtual bool closeWindow() = 0;
   virtual void setWindowEnabled(bool enabled) = 0;
 

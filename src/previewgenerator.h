@@ -31,9 +31,7 @@ class PluginContainer;
 class PreviewGenerator
 {
 public:
-  PreviewGenerator(const PluginContainer* pluginContainer);
-
-  void registerPlugin(MOBase::IPluginPreview *plugin);
+  PreviewGenerator(const PluginContainer& pluginContainer);
 
   bool previewSupported(const QString &fileExtension) const;
 
@@ -41,13 +39,7 @@ public:
 
 private:
 
-  QWidget *genImagePreview(const QString &fileName) const;
-  QWidget *genTxtPreview(const QString &fileName) const;
-
-private:
-
-  const PluginContainer* m_PluginContainer;
-  std::map<QString, MOBase::IPluginPreview*> m_PreviewPlugins;
+  const PluginContainer& m_PluginContainer;
   QSize m_MaxSize;
 
 };

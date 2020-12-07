@@ -474,7 +474,8 @@ MainWindow::MainWindow(Settings &settings
     if (m_PluginContainer.implementInterface<IPluginModPage>(plugin)) { updateModPageMenu(); } });
   connect(&m_PluginContainer, &PluginContainer::pluginDisabled, this, [this](IPlugin* plugin) {
     if (m_PluginContainer.implementInterface<IPluginModPage>(plugin)) { updateModPageMenu(); } });
-
+  connect(&m_PluginContainer, &PluginContainer::pluginRegistered, this, &MainWindow::onPluginRegistrationChanged);
+  connect(&m_PluginContainer, &PluginContainer::pluginUnregistered, this, &MainWindow::onPluginRegistrationChanged);
 
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this, &MainWindow::modInstalled);
   connect(&m_OrganizerCore, &OrganizerCore::close, this, &QMainWindow::close);
@@ -511,8 +512,6 @@ MainWindow::MainWindow(Settings &settings
   m_Tutorial.expose("espList", m_OrganizerCore.pluginList());
 
   m_OrganizerCore.setUserInterface(this);
-  m_PluginContainer.setUserInterface(this);
-  connect(this, &MainWindow::userInterfaceInitialized, &m_OrganizerCore, &OrganizerCore::userInterfaceInitialized);
   for (const QString &fileName : m_PluginContainer.pluginFileNames()) {
     installTranslator(QFileInfo(fileName).baseName());
   }
@@ -704,7 +703,6 @@ MainWindow::~MainWindow()
   try {
     cleanup();
 
-    m_PluginContainer.setUserInterface(nullptr);
     m_OrganizerCore.setUserInterface(nullptr);
 
     if (m_IntegratedBrowser) {
@@ -740,14 +738,6 @@ void MainWindow::updateWindowTitle(const APIUserAccount& user)
 void MainWindow::onRequestsChanged(const APIStats& stats, const APIUserAccount& user)
 {
   ui->statusBar->setAPI(stats, user);
-}
-
-
-void MainWindow::disconnectPlugins()
-{
-  if (ui->actionTool->menu() != nullptr) {
-    ui->actionTool->menu()->clear();
-  }
 }
 
 
@@ -1412,8 +1402,8 @@ void MainWindow::showEvent(QShowEvent *event)
     m_WasVisible = true;
     updateProblemsButton();
 
-    // Notify plugin that the UI is initialized:
-    emit userInterfaceInitialized();
+    // Notify plugin that the MO2 is ready:
+    m_PluginContainer.startPlugins(this);
   }
 }
 
@@ -5188,6 +5178,13 @@ void MainWindow::on_actionSettings_triggered()
       m_OrganizerCore.checkForUpdates();
     }
   }
+}
+
+void MainWindow::onPluginRegistrationChanged()
+{
+  updateModPageMenu();
+  scheduleCheckForProblems();
+  updateDownloadView();
 }
 
 void MainWindow::on_actionNexus_triggered()

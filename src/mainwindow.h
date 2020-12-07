@@ -133,8 +133,6 @@ public:
 
   void installTranslator(const QString &name);
 
-  virtual void disconnectPlugins();
-
   void displayModInformation(
     ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tabID) override;
 
@@ -167,12 +165,6 @@ signals:
    * @brief emitted when the selected style changes
    */
   void styleChanged(const QString &styleFile);
-
-  /**
-   * @brief emitted when the user interface has been completely initialized
-   */
-  void userInterfaceInitialized();
-
 
   void modListDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
 
@@ -634,6 +626,8 @@ private slots: // ui slots
   void on_restoreModsButton_clicked();
   void on_saveModsButton_clicked();
   void on_managedArchiveLabel_linkHovered(const QString &link);
+
+  void onPluginRegistrationChanged();
 
   void storeSettings();
   void readSettings();

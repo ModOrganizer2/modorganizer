@@ -129,12 +129,6 @@ public:
   static QString getErrorString(Archive::Error errorCode);
 
   /**
-   * @brief register an installer-plugin
-   * @param the installer to register
-   */
-  void registerInstaller(MOBase::IPluginInstaller *installer);
-
-  /**
    * @return the extensions of archives supported by this installation manager.
    */
   QStringList getSupportedExtensions() const override;
@@ -256,13 +250,6 @@ signals:
 
 private:
 
-  struct ByPriority {
-    bool operator()(MOBase::IPluginInstaller *LHS, MOBase::IPluginInstaller *RHS) const
-    {
-      return LHS->priority() > RHS->priority();
-    }
-  };
-
   struct CaseInsensitive {
       bool operator() (const QString &LHS, const QString &RHS) const
       {
@@ -294,8 +281,6 @@ private:
 
   QString m_ModsDirectory;
   QString m_DownloadsDirectory;
-
-  std::vector<MOBase::IPluginInstaller*> m_Installers;
 
   // Archive management.
   std::unique_ptr<Archive> m_ArchiveHandler;
