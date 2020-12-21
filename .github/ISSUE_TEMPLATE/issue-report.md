@@ -20,7 +20,7 @@ Steps to reproduce the behavior:
 ## Environment:
 
 * Mod Organizer Version that exhibits the issue:
-* Last Mod Organizer Verison that did not exhibit the issue (if applicable):
+* Last Mod Organizer Version that did not exhibit the issue (if applicable):
 * Desktop OS/version used to run Mod Organizer:
 
 ## Details:
