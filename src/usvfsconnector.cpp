@@ -188,6 +188,8 @@ UsvfsConnector::~UsvfsConnector()
 
 void UsvfsConnector::updateMapping(const MappingType &mapping)
 {
+  const auto start = std::chrono::high_resolution_clock::now();
+
   QProgressDialog progress(qApp->activeWindow());
   progress.setLabelText(tr("Preparing vfs"));
   progress.setMaximum(static_cast<int>(mapping.size()));
@@ -225,7 +227,12 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
     }
   }
 
-  log::debug("VFS mappings updated <linked {} dirs, {} files>", dirs, files);
+  const auto end = std::chrono::high_resolution_clock::now();
+  const auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+  log::debug(
+    "VFS mappings updated, linked {} dirs and {} files in {}ms",
+    dirs, files, time.count());
 }
 
 void UsvfsConnector::updateParams(
