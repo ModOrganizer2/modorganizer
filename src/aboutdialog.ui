@@ -431,6 +431,11 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">6788</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">blacksol</string>
                </property>
               </item>
@@ -512,6 +517,11 @@
               <item>
                <property name="text">
                 <string notr="true">SuperSandro2000</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Trosski</string>
                </property>
               </item>
               <item>
