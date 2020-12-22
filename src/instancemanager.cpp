@@ -644,6 +644,13 @@ bool InstanceManager::allowedToChangeInstance() const
   return !QFile::exists(lockFile);
 }
 
+MOBase::IPluginGame* InstanceManager::gamePluginForDirectory(
+  const QString& instanceDir, PluginContainer& plugins) const
+{
+  return const_cast<MOBase::IPluginGame*>(gamePluginForDirectory(
+    instanceDir, const_cast<const PluginContainer&>(plugins)));
+}
+
 const MOBase::IPluginGame* InstanceManager::gamePluginForDirectory(
   const QString& instanceDir, const PluginContainer& plugins) const
 {
