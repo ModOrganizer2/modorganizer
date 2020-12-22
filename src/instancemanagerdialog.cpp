@@ -16,17 +16,55 @@ using namespace MOBase;
 // returns the icon for the given instance or an empty 32x32 icon if the game
 // plugin couldn't be found
 //
-QIcon instanceIcon(const PluginContainer& pc, const Instance& i)
+QIcon instanceIcon(PluginContainer& pc, const Instance& i)
 {
-  const auto* game = InstanceManager::singleton()
+  auto* game = InstanceManager::singleton()
     .gamePluginForDirectory(i.directory(), pc);
 
-  if (game)
-    return game->gameIcon();
+  if (!game) {
+    QPixmap empty(32, 32);
+    empty.fill(QColor(0, 0, 0, 0));
+    return QIcon(empty);
+  }
 
-  QPixmap empty(32, 32);
-  empty.fill(QColor(0, 0, 0, 0));
-  return QIcon(empty);
+  // it's possible to have the game installed in a way that the game plugin
+  // couldn't auto detect; in this case, the instance would have a valid game
+  // directory, but the plugin wouldn't know about it
+  //
+  // it's also possible, but unlikely, to have multiple installations of the
+  // same game that have different icons for the same exe
+  //
+  // so the game directory specified for the instance needs to be given to the
+  // game plugin to get the appropriate icon, but since these game plugin
+  // objects are created on startup and are global, they should retain their
+  // auto detected path
+  //
+  // if not, creating a new instance for a specific plugin would use the game
+  // directory of the instance for which the icon was most recently shown, which
+  // would be really inconsistent
+  //
+  //
+  // this game plugin could also be the currently active plugin for the
+  // current instance, which should _definitely_ keep pointing to the same
+  // directory as before
+
+
+  // remember old game directory
+  //
+  // note that gameDirectory() returns a QDir, which doesn't support empty
+  // strings (they get converted to "." automatically!), but the plugin _will_
+  // try to return an empty string when the game has not been auto-detected
+  //
+  // so gameDirectory() _cannot_ reliably be used if `isInstalled()` is false
+  const QString old = game->isInstalled() ? game->gameDirectory().path() : "";
+
+  // revert
+  Guard g([&]{ game->setGamePath(old); });
+
+  // set directory for this instance
+  game->setGamePath(i.gameDirectory());
+
+  return game->gameIcon();
 }
 
 // pops up a dialog to ask for an instance name when renaming
@@ -105,7 +143,7 @@ QString getInstanceName(
 InstanceManagerDialog::~InstanceManagerDialog() = default;
 
 InstanceManagerDialog::InstanceManagerDialog(
-  const PluginContainer& pc, QWidget *parent) :
+  PluginContainer& pc, QWidget *parent) :
     QDialog(parent), ui(new Ui::InstanceManagerDialog), m_pc(pc),
     m_model(nullptr), m_restartOnSelect(true)
 {

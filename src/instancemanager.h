@@ -251,6 +251,9 @@ public:
   const MOBase::IPluginGame* gamePluginForDirectory(
     const QString& dir, const PluginContainer& plugins) const;
 
+  MOBase::IPluginGame* gamePluginForDirectory(
+    const QString& dir, PluginContainer& plugins) const;
+
   // clears the instance name from the registry; on restart, this will make MO
   // either select the portable instance if it exists, or display the instance
   // selection/creation dialog

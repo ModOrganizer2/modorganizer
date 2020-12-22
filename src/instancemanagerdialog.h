@@ -17,7 +17,7 @@ class InstanceManagerDialog : public QDialog
 
 public:
   explicit InstanceManagerDialog(
-    const PluginContainer& pc, QWidget *parent = nullptr);
+    PluginContainer& pc, QWidget *parent = nullptr);
 
   ~InstanceManagerDialog();
 
@@ -91,7 +91,7 @@ private:
   static const std::size_t NoSelection = -1;
 
   std::unique_ptr<Ui::InstanceManagerDialog> ui;
-  const PluginContainer& m_pc;
+  PluginContainer& m_pc;
   std::vector<std::unique_ptr<Instance>> m_instances;
   MOBase::FilterWidget m_filter;
   QStandardItemModel* m_model;
