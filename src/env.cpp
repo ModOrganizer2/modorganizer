@@ -345,7 +345,9 @@ void Environment::dump(const Settings& s) const
 
   log::debug("modules loaded in process:");
   for (const auto& m : loadedModules()) {
-    log::debug(" . {}", m.toString());
+    if (m.interesting()) {
+      log::debug(" . {}", m.toString());
+    }
   }
 
   log::debug("displays:");

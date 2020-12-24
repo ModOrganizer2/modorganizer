@@ -1971,14 +1971,14 @@ void NexusSettings::dump() const
   log::debug("nxmhandler settings:");
 
   QSettings handler("HKEY_CURRENT_USER\\Software\\Classes\\nxm\\", QSettings::NativeFormat);
-  log::debug(" - primary: {}", handler.value("shell/open/command/Default").toString());
+  log::debug(" . primary: {}", handler.value("shell/open/command/Default").toString());
 
   const auto noregister = getOptional<bool>(s, "General", "noregister");
 
   if (noregister) {
-    log::debug(" - noregister: {}", *noregister);
+    log::debug(" . noregister: {}", *noregister);
   } else {
-    log::debug(" - noregister: (not found)");
+    log::debug(" . noregister: (not found)");
   }
 
   ScopedReadArray sra(s, "handlers");
@@ -1988,10 +1988,10 @@ void NexusSettings::dump() const
     const auto executable = sra.get<QVariant>("executable");
     const auto arguments = sra.get<QVariant>("arguments");
 
-    log::debug(" - handler:");
-    log::debug("    - games:      {}", games.toString());
-    log::debug("    - executable: {}", executable.toString());
-    log::debug("    - arguments:  {}", arguments.toString());
+    log::debug(" . handler:");
+    log::debug("    . games:      {}", games.toString());
+    log::debug("    . executable: {}", executable.toString());
+    log::debug("    . arguments:  {}", arguments.toString());
   });
 }
 

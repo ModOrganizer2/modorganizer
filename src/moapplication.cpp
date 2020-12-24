@@ -254,7 +254,10 @@ int MOApplication::doOneRun(MOMultiProcess& multiProcess)
   sanity::checkEnvironment(env);
 
   const auto moduleNotification = env.onModuleLoaded(qApp, [](auto&& m) {
-    log::debug("loaded module {}", m.toString());
+    if (m.interesting()) {
+      log::debug("loaded module {}", m.toString());
+    }
+
     sanity::checkIncompatibleModule(m);
   });
 
