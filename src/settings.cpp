@@ -1970,6 +1970,9 @@ void NexusSettings::dump() const
 
   log::debug("nxmhandler settings:");
 
+  QSettings handler("HKEY_CURRENT_USER\\Software\\Classes\\nxm\\", QSettings::NativeFormat);
+  log::debug(" - primary: {}", handler.value("shell/open/command/Default").toString());
+
   const auto noregister = getOptional<bool>(s, "General", "noregister");
 
   if (noregister) {
