@@ -479,7 +479,9 @@ QSettings::Status Settings::iniStatus() const
 void Settings::dump() const
 {
   static const QStringList ignore({
-    "username", "password", "nexus_api_key", "nexus_username", "nexus_password"
+    "username", "password",
+    "nexus_api_key", "nexus_username", "nexus_password",
+    "steam_username"
     });
 
   log::debug("settings:");
