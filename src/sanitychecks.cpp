@@ -279,7 +279,8 @@ int checkUsvfsIncompatibilites(const env::Module& m)
   // these dlls seems to interfere with usvfs
 
   static const std::map<QString, QString> names = {
-    {"mactype64.dll", "Mactype"}
+    {"mactype64.dll", "Mactype"},
+    {"epclient64.dll", "Citrix ICA Client"}
   };
 
   const QFileInfo file(m.path());
@@ -290,7 +291,7 @@ int checkUsvfsIncompatibilites(const env::Module& m)
       log::warn("{}", QObject::tr(
         "%1 is loaded. This program is known to cause issues with "
         "Mod Organizer and its virtual filesystem, such script extenders "
-        "refusing to run. Consider uninstalling it.")
+        "or others programs refusing to run. Consider uninstalling it.")
         .arg(p.second));
 
       log::warn("{}", file.absoluteFilePath());
