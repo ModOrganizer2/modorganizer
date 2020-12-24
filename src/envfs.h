@@ -12,8 +12,9 @@ struct File
   std::wstring name;
   std::wstring lcname;
   FILETIME lastModified;
+  uint64_t size;
 
-  File(std::wstring_view name, FILETIME ft);
+  File(std::wstring_view name, FILETIME ft, uint64_t size);
 };
 
 struct Directory
@@ -174,7 +175,7 @@ private:
 
 using DirStartF = void (void*, std::wstring_view);
 using DirEndF = void (void*, std::wstring_view);
-using FileF = void (void*, std::wstring_view, FILETIME);
+using FileF = void (void*, std::wstring_view, FILETIME, uint64_t);
 
 void setHandleCloserThreadCount(std::size_t n);
 
