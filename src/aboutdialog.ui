@@ -441,17 +441,7 @@
               </item>
               <item>
                <property name="text">
-                <string notr="true">DoubleYou</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Drew Warwick</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">deathneko11</string>
+                <string notr="true">BlueAmulet</string>
                </property>
               </item>
               <item>
@@ -462,6 +452,21 @@
               <item>
                <property name="text">
                 <string notr="true">Brixified</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">deathneko11</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">DoubleYou</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Drew Warwick</string>
                </property>
               </item>
               <item>
@@ -536,12 +541,12 @@
               </item>
               <item>
                <property name="text">
-                <string notr="true">z929669</string>
+                <string notr="true">thosrtanner</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string notr="true">thosrtanner</string>
+                <string notr="true">z929669</string>
                </property>
               </item>
              </widget>
