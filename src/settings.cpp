@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settingsutilities.h"
 #include "serverinfo.h"
 #include "executableslist.h"
+#include "instancemanager.h"
 #include "shared/appconfig.h"
 #include "env.h"
 #include "envmetrics.h"
@@ -499,6 +500,7 @@ void Settings::dump() const
   }
 
   m_Network.dump();
+  m_Nexus.dump();
 }
 
 void Settings::managedGameChanged(IPluginGame const *gamePlugin)
@@ -1526,7 +1528,7 @@ std::map<QString, QString> PathSettings::recent() const
     if (name.isValid() && dir.isValid()) {
       map.emplace(name.toString(), dir.toString());
     }
-    });
+  });
 
   return map;
 }
@@ -1893,7 +1895,10 @@ void NexusSettings::setTrackedIntegration(bool b) const
 
 void NexusSettings::registerAsNXMHandler(bool force)
 {
-  const auto nxmPath = QCoreApplication::applicationDirPath() + "/nxmhandler.exe";
+  const auto nxmPath =
+    QCoreApplication::applicationDirPath() + "/" +
+    QString::fromStdWString(AppConfig::nxmHandlerExe());
+
   const auto executable = QCoreApplication::applicationFilePath();
 
   QString mode = force ? "forcereg" : "reg";
@@ -1944,6 +1949,47 @@ std::vector<std::chrono::seconds> NexusSettings::validationTimeouts() const
         v = {10s, 15s, 20s};
 
     return v;
+}
+
+void NexusSettings::dump() const
+{
+  const auto iniPath =
+    InstanceManager::singleton().globalInstancesRootPath() + "/" +
+    QString::fromStdWString(AppConfig::nxmHandlerIni());
+
+  if (!QFileInfo(iniPath).exists()) {
+    log::debug("nxm ini not found at {}", iniPath);
+    return;
+  }
+
+  QSettings s(iniPath, QSettings::IniFormat);
+  if (const auto st=s.status(); st != QSettings::NoError) {
+    log::debug("can't read nxm ini from {}", iniPath);
+    return;
+  }
+
+  log::debug("nxmhandler settings:");
+
+  const auto noregister = getOptional<bool>(s, "General", "noregister");
+
+  if (noregister) {
+    log::debug(" - noregister: {}", *noregister);
+  } else {
+    log::debug(" - noregister: (not found)");
+  }
+
+  ScopedReadArray sra(s, "handlers");
+
+  sra.for_each([&] {
+    const auto games = sra.get<QVariant>("games");
+    const auto executable = sra.get<QVariant>("executable");
+    const auto arguments = sra.get<QVariant>("arguments");
+
+    log::debug(" - handler:");
+    log::debug("    - games:      {}", games.toString());
+    log::debug("    - executable: {}", executable.toString());
+    log::debug("    - arguments:  {}", arguments.toString());
+  });
 }
 
 
