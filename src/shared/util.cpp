@@ -210,12 +210,13 @@ std::wstring GetFileVersionString(const std::wstring &fileName)
 
 VersionInfo createVersionInfo()
 {
-  VS_FIXEDFILEINFO version = GetFileVersion(QApplication::applicationFilePath().toStdWString());
+  VS_FIXEDFILEINFO version = GetFileVersion(env::thisProcessPath().native());
 
   if (version.dwFileFlags & VS_FF_PRERELEASE)
   {
     // Pre-release builds need annotating
-    QString versionString = QString::fromStdWString(GetFileVersionString(QApplication::applicationFilePath().toStdWString()));
+    QString versionString = QString::fromStdWString(
+      GetFileVersionString(env::thisProcessPath().native()));
 
     // The pre-release flag can be set without the string specifying what type of pre-release
     bool noLetters = true;

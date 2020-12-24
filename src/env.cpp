@@ -6,6 +6,7 @@
 #include "envwindows.h"
 #include "envdump.h"
 #include "settings.h"
+#include "shared/util.h"
 #include <log.h>
 #include <utility.h>
 
@@ -1009,7 +1010,7 @@ bool registryValueExists(const QString& keyName, const QString& valueName)
 
 // returns the filename of the given process or the current one
 //
-std::wstring processFilename(HANDLE process=INVALID_HANDLE_VALUE)
+std::filesystem::path processPath(HANDLE process=INVALID_HANDLE_VALUE)
 {
   // double the buffer size 10 times
   const int MaxTries = 10;
@@ -1045,7 +1046,7 @@ std::wstring processFilename(HANDLE process=INVALID_HANDLE_VALUE)
       const std::wstring s(buffer.get(), writtenSize);
       const std::filesystem::path path(s);
 
-      return path.filename().native();
+      return path;
     }
   }
 
@@ -1060,6 +1061,21 @@ std::wstring processFilename(HANDLE process=INVALID_HANDLE_VALUE)
 
   std::wcerr << L"failed to get filename for " << what << L"\n";
   return {};
+}
+
+std::wstring processFilename(HANDLE process=INVALID_HANDLE_VALUE)
+{
+  const auto p = processPath(process);
+  if (p.empty()) {
+    return {};
+  }
+
+  return p.filename().native();
+}
+
+std::filesystem::path thisProcessPath()
+{
+  return processPath();
 }
 
 DWORD findOtherPid()
@@ -1126,6 +1142,19 @@ std::wstring tempDir()
   return std::wstring(buffer, buffer + written);
 }
 
+std::wstring safeVersion()
+{
+  try
+  {
+    // this can throw
+    return MOShared::createVersionInfo().displayString(3).toStdWString() + L"-";
+  }
+  catch(...)
+  {
+    return {};
+  }
+}
+
 HandlePtr tempFile(const std::wstring dir)
 {
   // maximum tries of incrementing the counter
@@ -1139,7 +1168,7 @@ HandlePtr tempFile(const std::wstring dir)
   // i can go until MaxTries
   std::wostringstream oss;
   oss
-    << L"ModOrganizer-"
+    << L"ModOrganizer-" << safeVersion()
     << std::setw(4) << (1900 + tm->tm_year)
     << std::setw(2) << std::setfill(L'0') << (tm->tm_mon + 1)
     << std::setw(2) << std::setfill(L'0') << tm->tm_mday << "T"
