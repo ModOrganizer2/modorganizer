@@ -1123,10 +1123,6 @@ void Profile::debugDump() const
 
 
   for (const auto& status : m_ModStatus) {
-    if (status.m_Overwrite) {
-      continue;
-    }
-
     auto index = m_ModIndexByPriority.find(status.m_Priority);
     if (index == m_ModIndexByPriority.end()) {
       log::error("mod with priority {} not in priority map", status.m_Priority);
@@ -1136,6 +1132,10 @@ void Profile::debugDump() const
     auto m = ModInfo::getByIndex(index->second);
     if (!m) {
       log::error("mod index {} with priority {} not found", index->second, status.m_Priority);
+      continue;
+    }
+
+    if (m->hasFlag(ModInfo::FLAG_OVERWRITE)) {
       continue;
     }
 

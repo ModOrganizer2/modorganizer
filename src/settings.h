@@ -528,6 +528,10 @@ public:
 
   std::vector<std::chrono::seconds> validationTimeouts() const;
 
+  // dumps nxmhandler stuff
+  //
+  void dump() const;
+
 private:
   Settings& m_Parent;
   QSettings& m_Settings;

@@ -18,6 +18,8 @@ APPPARAM(std::wstring, proxyDLLOrig, L"steam_api_orig.dll") // needs to be ident
 APPPARAM(std::wstring, proxyDLLSource, L"proxy.dll")
 APPPARAM(std::wstring, vfs32DLLName, L"usvfs_x86.dll")
 APPPARAM(std::wstring, vfs64DLLName, L"usvfs_x64.dll")
+APPPARAM(std::wstring, nxmHandlerExe, L"nxmhandler.exe")
+APPPARAM(std::wstring, nxmHandlerIni, L"nxmhandler.ini")
 APPPARAM(std::wstring, portableLockFileName, L"portable.txt")
 APPPARAM(const wchar_t*, localSavePlaceholder, L"__MOProfileSave__\\")
 

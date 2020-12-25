@@ -309,6 +309,10 @@ bool registryValueExists(const QString& key, const QString& value);
 //
 void deleteRegistryKeyIfEmpty(const QString& name);
 
+// returns the path to this process
+//
+std::filesystem::path thisProcessPath();
+
 } // namespace env
 
 #endif // ENV_ENV_H

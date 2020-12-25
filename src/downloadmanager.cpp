@@ -24,11 +24,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
 #include "iplugingame.h"
+#include "envfs.h"
 #include <nxmurl.h>
 #include <taskprogressmanager.h>
 #include "utility.h"
 #include "selectiondialog.h"
 #include "bbcode.h"
+#include "shared/util.h"
 #include <utility.h>
 #include <report.h>
 
@@ -77,7 +79,9 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createNew(const Mo
   return info;
 }
 
-DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(const QString &filePath, bool showHidden, const QString outputDirectory)
+DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(
+  const QString &filePath, bool showHidden, const QString outputDirectory,
+  std::optional<uint64_t> fileSize)
 {
   DownloadInfo *info = new DownloadInfo;
 
@@ -113,7 +117,7 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(con
 
   info->m_DownloadID = s_NextDownloadID++;
   info->m_Output.setFileName(filePath);
-  info->m_TotalSize = QFileInfo(filePath).size();
+  info->m_TotalSize = fileSize ? *fileSize : QFileInfo(filePath).size();
   info->m_PreResumeSize = info->m_TotalSize;
   info->m_CurrentUrl = 0;
   info->m_Urls = metaFile.value("url", "").toString().split(";");
@@ -325,13 +329,15 @@ void DownloadManager::refreshList()
       }
     }
 
-    QStringList supportedExtensions = m_OrganizerCore->installationManager()->getSupportedExtensions();
-    QStringList nameFilters(supportedExtensions);
+    const QStringList supportedExtensions = m_OrganizerCore->installationManager()->getSupportedExtensions();
+    std::vector<std::wstring> nameFilters;
     for (const auto& extension : supportedExtensions) {
-      nameFilters.append("*." + extension);
+      nameFilters.push_back(L"." + extension.toLower().toStdWString());
     }
 
-    nameFilters.append(QString("*").append(UNFINISHED));
+    nameFilters.push_back(QString(UNFINISHED).toLower().toStdWString());
+
+
     QDir dir(QDir::fromNativeSeparators(m_OutputDirectory));
 
     // find orphaned meta files and delete them (sounds cruel but it's better for everyone)
@@ -348,27 +354,64 @@ void DownloadManager::refreshList()
       shellDelete(orphans, true);
     }
 
-    // add existing downloads to list
-    foreach (QString file, dir.entryList(nameFilters, QDir::Files, QDir::Time)) {
-      bool Exists = false;
-      for (QVector<DownloadInfo*>::const_iterator Iter = m_ActiveDownloads.begin(); Iter != m_ActiveDownloads.end() && !Exists; ++Iter) {
-        if (QString::compare((*Iter)->m_FileName, file, Qt::CaseInsensitive) == 0) {
-          Exists = true;
-        } else if (QString::compare(QFileInfo((*Iter)->m_Output.fileName()).fileName(), file, Qt::CaseInsensitive) == 0) {
-          Exists = true;
-        }
-      }
-      if (Exists) {
-        continue;
-      }
 
-      QString fileName = QDir::fromNativeSeparators(m_OutputDirectory) + "/" + file;
+    std::set<std::wstring> seen;
 
-      DownloadInfo *info = DownloadInfo::createFromMeta(fileName, m_ShowHidden, m_OutputDirectory);
-      if (info != nullptr) {
-        m_ActiveDownloads.push_front(info);
-      }
+    struct Context
+    {
+      DownloadManager& self;
+      std::set<std::wstring>& seen;
+      std::vector<std::wstring>& extensions;
+    };
+
+    Context cx = {*this, seen, nameFilters};
+
+    for (auto&& d : m_ActiveDownloads) {
+      cx.seen.insert(d->m_FileName.toLower().toStdWString());
+      cx.seen.insert(QFileInfo(d->m_Output.fileName()).fileName().toLower().toStdWString());
     }
+
+
+    env::forEachEntry(
+      QDir::toNativeSeparators(m_OutputDirectory).toStdWString(), &cx, nullptr, nullptr,
+      [](void* data, std::wstring_view f, FILETIME, uint64_t size) {
+        auto& cx = *static_cast<Context*>(data);
+
+        std::wstring lc = MOShared::ToLowerCopy(f);
+
+        bool interestingExt = false;
+        for (auto&& ext : cx.extensions) {
+          if (lc.ends_with(ext)) {
+            interestingExt = true;
+            break;
+          }
+        }
+
+        if (!interestingExt) {
+          return;
+        }
+
+        if (cx.seen.contains(lc)) {
+          return;
+        }
+
+        QString fileName =
+          QDir::fromNativeSeparators(cx.self.m_OutputDirectory) + "/" +
+          QString::fromWCharArray(f.data(), f.size());
+
+        DownloadInfo *info = DownloadInfo::createFromMeta(
+          fileName, cx.self.m_ShowHidden, cx.self.m_OutputDirectory, size);
+
+        if (info == nullptr) {
+          return;
+        }
+
+        cx.self.m_ActiveDownloads.push_front(info);
+        cx.seen.insert(std::move(lc));
+        cx.seen.insert(QFileInfo(info->m_Output.fileName()).fileName().toLower().toStdWString());
+    });
+
+    log::debug("saw {} downloads", m_ActiveDownloads.size());
 
     emit update(-1);
 

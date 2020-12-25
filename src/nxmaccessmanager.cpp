@@ -376,7 +376,7 @@ void ValidationAttempt::start(NXMAccessManager& m, const QString& key)
   m_timeout.start();
 
   log::debug(
-    "validator: attempt started with timeout of {} seconds", timeout().count());
+    "nexus: attempt started with timeout of {} seconds", timeout().count());
 }
 
 bool ValidationAttempt::sendRequest(
@@ -458,11 +458,11 @@ void ValidationAttempt::onFinished()
     return;
   }
 
-  log::debug("validator attempt: request has finished");
+  log::debug("nexus: request has finished");
 
   if (!m_reply) {
     // shouldn't happen
-    log::error("validator attempt: reply is null");
+    log::error("nexus: reply is null");
     setFailure(HardError, QObject::tr("Internal error"));
     return;
   }
@@ -472,7 +472,7 @@ void ValidationAttempt::onFinished()
 
   if (code == 0) {
     // request wasn't even sent
-    log::error("validator attempt: code is 0");
+    log::error("nexus: code is 0");
     setFailure(SoftError, m_reply->errorString());
     return;
   }
@@ -539,7 +539,7 @@ void ValidationAttempt::onFinished()
 
 void ValidationAttempt::onSslErrors(const QList<QSslError>& errors)
 {
-  log::error("validator attempt: ssl errors");
+  log::error("nexus: ssl errors");
 
   for (auto& e : errors) {
     log::error("  . {}", e.errorString());
@@ -557,7 +557,7 @@ void ValidationAttempt::setFailure(Result r, const QString& error)
 {
   if (r != Cancelled) {
     // don't spam the log
-    log::error("validator attempt: {}", error);
+    log::error("nexus: {}", error);
   }
 
   cleanup();
@@ -572,7 +572,7 @@ void ValidationAttempt::setFailure(Result r, const QString& error)
 
 void ValidationAttempt::setSuccess(const APIUserAccount& user)
 {
-  log::debug("validator attempt successful");
+  log::debug("nexus connection successful");
   cleanup();
 
   m_result = Success;
@@ -617,7 +617,7 @@ std::vector<std::chrono::seconds> NexusKeyValidator::getTimeouts() const
 void NexusKeyValidator::start(const QString& key, Behaviour b)
 {
   if (isActive()) {
-    log::debug("validator: trying to start while ongoing; ignoring");
+    log::debug("nexus: trying to start while ongoing; ignoring");
     return;
   }
 
@@ -655,7 +655,7 @@ void NexusKeyValidator::createAttempts(
 
 void NexusKeyValidator::cancel()
 {
-  log::debug("validator: cancelled");
+  log::debug("nexus: connection cancelled");
 
   for (auto&& a : m_attempts) {
     a->cancel();

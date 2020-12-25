@@ -636,7 +636,7 @@ void DirectoryEntry::addFiles(
       onDirectoryEnd((Context*)pcx, path);
     },
 
-    [](void* pcx, std::wstring_view path, FILETIME ft)
+    [](void* pcx, std::wstring_view path, FILETIME ft, uint64_t)
     {
       onFile((Context*)pcx, path, ft);
     }

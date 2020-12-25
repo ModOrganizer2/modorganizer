@@ -298,14 +298,17 @@ void forEachEntryImpl(
         ObjectName.MaximumLength = ObjectName.Length;
 
         if (DirInfo->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-          dirStartF(cx, toStringView(&oa));
-          forEachEntryImpl(cx, hc, buffers, &oa, depth+1, dirStartF, dirEndF, fileF);
-          dirEndF(cx, toStringView(&oa));
+          if (dirStartF && dirEndF) {
+            dirStartF(cx, toStringView(&oa));
+            forEachEntryImpl(cx, hc, buffers, &oa, depth+1, dirStartF, dirEndF, fileF);
+            dirEndF(cx, toStringView(&oa));
+          }
         } else {
           FILETIME ft;
           ft.dwLowDateTime = DirInfo->LastWriteTime.LowPart;
           ft.dwHighDateTime = DirInfo->LastWriteTime.HighPart;
-          fileF(cx, toStringView(&oa), ft);
+
+          fileF(cx, toStringView(&oa), ft, DirInfo->AllocationSize.QuadPart);
         }
       }
 
@@ -380,20 +383,20 @@ Directory getFilesAndDirs(const std::wstring& path)
       cx->current.pop();
     },
 
-    [](void* pcx, std::wstring_view path, FILETIME ft) {
+    [](void* pcx, std::wstring_view path, FILETIME ft, uint64_t s) {
       Context* cx = (Context*)pcx;
 
-      cx->current.top()->files.push_back(File(path, ft));
+      cx->current.top()->files.push_back(File(path, ft, s));
     }
   );
 
   return root;
 }
 
-File::File(std::wstring_view n, FILETIME ft) :
+File::File(std::wstring_view n, FILETIME ft, uint64_t s) :
   name(n.begin(), n.end()),
   lcname(MOShared::ToLowerCopy(name)),
-  lastModified(ft)
+  lastModified(ft), size(s)
 {
 }
 
@@ -429,7 +432,11 @@ void getFilesAndDirsWithFindImpl(const std::wstring& path, Directory& d)
           getFilesAndDirsWithFindImpl(newPath, d.dirs.back());
         }
       } else {
-        d.files.push_back(File(findData.cFileName, findData.ftLastWriteTime));
+        const auto size =
+          (findData.nFileSizeHigh * (MAXDWORD+1)) + findData.nFileSizeLow;
+
+        d.files.push_back(File(
+          findData.cFileName, findData.ftLastWriteTime, size));
       }
 
       result = ::FindNextFileW(searchHandle, &findData);
