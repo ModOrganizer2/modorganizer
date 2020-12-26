@@ -135,6 +135,7 @@ add_filter(NAME src/modinfo/dialog GROUPS
 add_filter(NAME src/modlist GROUPS
 	modlist
 	modlistsortproxy
+	modlistbypriorityproxy
 	modlistview
 )
 

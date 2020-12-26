@@ -369,6 +369,8 @@ private:
 
 private:
 
+  friend class ModListByPriorityProxy;
+
   OrganizerCore *m_Organizer;
   Profile *m_Profile;
 

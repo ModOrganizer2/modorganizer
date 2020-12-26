@@ -87,6 +87,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "listdialog.h"
 #include "envshortcut.h"
 #include "browserdialog.h"
+#include "modlistbypriorityproxy.h"
 
 #include "directoryrefresher.h"
 #include "shared/directoryentry.h"
@@ -543,6 +544,8 @@ MainWindow::MainWindow(Settings &settings
   processUpdates();
 
   ui->statusBar->updateNormalMessage(m_OrganizerCore);
+
+  on_groupCombo_currentIndexChanged(0);
 }
 
 void MainWindow::setupModList()
@@ -5935,7 +5938,7 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
                                        Qt::UserRole + 2);
       } break;
     default: {
-        newModel = nullptr;
+      newModel = nullptr;
       } break;
   }
 
@@ -5948,7 +5951,8 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
     connect(ui->modList, SIGNAL(collapsed(QModelIndex)), newModel, SLOT(collapsed(QModelIndex)));
     connect(newModel, SIGNAL(expandItem(QModelIndex)), this, SLOT(expandModList(QModelIndex)));
   } else {
-    m_ModListSortProxy->setSourceModel(m_OrganizerCore.modList());
+    m_ModListSortProxy->setSourceModel(new ModListByPriorityProxy(m_OrganizerCore.modList(), this));
+    // m_ModListSortProxy->setSourceModel(m_OrganizerCore.modList());
   }
   modFilterActive(m_ModListSortProxy->isFilterActive());
 }

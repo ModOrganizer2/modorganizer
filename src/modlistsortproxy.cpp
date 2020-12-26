@@ -383,7 +383,7 @@ bool ModListSortProxy::categoryMatchesMod(
       b = (hasConflictFlag(info->getConflictFlags()));
       break;
     }
-	
+
     case CategoryFactory::HasHiddenFiles:
     {
       b = (info->hasFlag(ModInfo::FLAG_HIDDEN_FILES));
@@ -645,7 +645,7 @@ bool ModListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action
 void ModListSortProxy::setSourceModel(QAbstractItemModel *sourceModel)
 {
   QSortFilterProxyModel::setSourceModel(sourceModel);
-  QtGroupingProxy *proxy = qobject_cast<QtGroupingProxy*>(sourceModel);
+  QAbstractProxyModel *proxy = qobject_cast<QAbstractProxyModel*>(sourceModel);
   if (proxy != nullptr) {
     sourceModel = proxy->sourceModel();
   }
