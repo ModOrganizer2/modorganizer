@@ -36,6 +36,7 @@ public:
   virtual QDateTime getNexusLastModified() const override { return QDateTime(); }
   virtual void setNexusLastModified(QDateTime) override {}
   virtual QString getNexusDescription() const override { return QString(); }
+  virtual bool isBackup() const override { return true; }
 
   virtual void addInstalledFile(int, int) override {}
 
