@@ -38,6 +38,7 @@ void ModListByPriorityProxy::buildTree()
   m_IndexToItem.clear();
 
   TreeItem* root = &m_Root;
+  std::unique_ptr<TreeItem> overwrite;
   for (auto& [priority, index] : m_Profile->getAllIndexesByPriority()) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
 
@@ -49,16 +50,19 @@ void ModListByPriorityProxy::buildTree()
       root = item;
     }
     else if (modInfo->isOverwrite()) {
-      m_Root.children.push_back(std::make_unique<TreeItem>(modInfo, index, &m_Root));
-      item = m_Root.children.back().get();
+      // do not push here, because the overwrite is usually not at the right position
+      overwrite = std::make_unique<TreeItem>(modInfo, index, &m_Root);
+      item = overwrite.get();
     }
     else {
       root->children.push_back(std::make_unique<TreeItem>(modInfo, index, root));
       item = root->children.back().get();
     }
-    m_IndexToItem[index] = item;
 
+    m_IndexToItem[index] = item;
   }
+
+  m_Root.children.push_back(std::move(overwrite));
 
   endResetModel();
 
@@ -154,6 +158,58 @@ bool ModListByPriorityProxy::setData(const QModelIndex& index, const QVariant& v
   return QAbstractProxyModel::setData(index, value, role);
 }
 
+bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const
+{
+  if (!parent.isValid()) {
+    // the row may be outside of the children list if we insert at the end
+    if (row >= m_Root.children.size()) {
+      return false;
+    }
+
+    if (row >= 0 && (m_Root.children[row]->mod->isSeparator() || m_Root.children[row]->mod->isOverwrite())) {
+      return false;
+    }
+  }
+
+  return QAbstractProxyModel::canDropMimeData(data, action, row, column, parent);
+}
+
+bool ModListByPriorityProxy::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent)
+{
+  // we need to fix the source row
+  int sourceRow = -1;
+
+  if (row >= 0) {
+    if (!parent.isValid()) {
+      if (row < m_Root.children.size()) {
+        sourceRow = m_Root.children[row]->index;
+      }
+      else {
+        sourceRow = ModInfo::getNumMods();
+      }
+    }
+    else {
+      auto* item = static_cast<TreeItem*>(parent.internalPointer());
+      QStringList what;
+      for (auto& child : item->children) {
+        what.append(QString::number(child->index));
+      }
+
+      if (row < item->children.size()) {
+        sourceRow = item->children[row]->index;
+      }
+      else if (parent.row() + 1 < m_Root.children.size()) {
+        sourceRow = m_Root.children[parent.row() + 1]->index;
+      }
+    }
+  }
+  else if (parent.isValid()) {
+    // this is a drop in a separator
+    sourceRow = m_Root.children[parent.row() + 1]->index;
+  }
+
+  return sourceModel()->dropMimeData(data, action, sourceRow, column, QModelIndex());
+}
 
 Qt::ItemFlags ModListByPriorityProxy::flags(const QModelIndex& idx) const
 {

@@ -636,10 +636,7 @@ bool ModListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action
     --row;
   }
 
-  QModelIndex proxyIndex = index(row, column, parent);
-  QModelIndex sourceIndex = mapToSource(proxyIndex);
-  return this->sourceModel()->dropMimeData(data, action, sourceIndex.row(), sourceIndex.column(),
-                                           sourceIndex.parent());
+  return QSortFilterProxyModel::dropMimeData(data, action, row, column, parent);
 }
 
 void ModListSortProxy::setSourceModel(QAbstractItemModel *sourceModel)
