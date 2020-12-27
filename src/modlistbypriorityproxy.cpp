@@ -73,7 +73,7 @@ void ModListByPriorityProxy::buildTree()
 void ModListByPriorityProxy::expandItems(const QModelIndex& index)
 {
   for (int row = 0; row < rowCount(index); row++) {
-    QModelIndex idx = this->index(row, 0, QModelIndex());
+    QModelIndex idx = this->index(row, 0, index);
     if (!m_CollapsedItems.contains(idx.data(Qt::DisplayRole).toString())) {
       emit expandItem(idx);
     }
