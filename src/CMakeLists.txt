@@ -99,6 +99,7 @@ add_filter(NAME src/loot GROUPS
 
 add_filter(NAME src/mainwindow GROUPS
 	datatab
+	downloadstab
 	iconfetcher
 	filetree
 	filetreeitem

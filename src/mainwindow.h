@@ -39,6 +39,7 @@ class CategoryFactory;
 class OrganizerCore;
 class FilterList;
 class DataTab;
+class DownloadsTab;
 class BrowserDialog;
 
 class PluginListSortProxy;
@@ -234,9 +235,6 @@ private:
 
   bool populateMenuCategories(QMenu *menu, int targetID);
 
-  void initDownloadView();
-  void updateDownloadView();
-
   // remove invalid category-references from mods
   void fixCategories();
 
@@ -298,6 +296,7 @@ private:
 
   std::unique_ptr<FilterList> m_Filters;
   std::unique_ptr<DataTab> m_DataTab;
+  std::unique_ptr<DownloadsTab> m_DownloadsTab;
 
   int m_OldProfileIndex;
 
@@ -498,7 +497,6 @@ private slots:
   void hookUpWindowTutorials();
   bool shouldStartTutorial() const;
 
-  void resumeDownload(int downloadIndex);
   void endorseMod(ModInfo::Ptr mod);
   void unendorseMod(ModInfo::Ptr mod);
   void trackMod(ModInfo::Ptr mod, bool doTrack);
@@ -545,7 +543,6 @@ private slots:
 
   void modFilterActive(bool active);
   void espFilterChanged(const QString &filter);
-  void downloadFilterChanged(const QString &filter);
 
   void expandModList(const QModelIndex &index);
 
@@ -602,7 +599,6 @@ private slots: // ui slots
   void on_centralWidget_customContextMenuRequested(const QPoint &pos);
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_clearFiltersButton_clicked();
-  void on_btnRefreshDownloads_clicked();
   void on_executablesListBox_currentIndexChanged(int index);
   void on_modList_customContextMenuRequested(const QPoint &pos);
   void on_modList_doubleClicked(const QModelIndex &index);

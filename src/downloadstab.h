@@ -1,0 +1,34 @@
+#ifndef MODORGANIZER_DOWNLOADTAB_INCLUDED
+#define MODORGANIZER_DOWNLOADTAB_INCLUDED
+
+namespace Ui { class MainWindow; }
+class OrganizerCore;
+class DownloadListWidget;
+
+class DownloadsTab : public QObject
+{
+  Q_OBJECT;
+
+public:
+  DownloadsTab(OrganizerCore& core, Ui::MainWindow* ui);
+
+  void update();
+
+private:
+  struct DownloadsTabUi
+  {
+    QPushButton* refresh;
+    DownloadListWidget* list;
+    QCheckBox* showHidden;
+    QLineEdit* filter;
+  };
+
+  OrganizerCore& m_core;
+  DownloadsTabUi ui;
+
+  void refresh();
+  void downloadFilterChanged(const QString &filter);
+  void resumeDownload(int downloadIndex);
+};
+
+#endif // MODORGANIZER_DOWNLOADTAB_INCLUDED
