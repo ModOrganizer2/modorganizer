@@ -546,6 +546,17 @@ MainWindow::MainWindow(Settings &settings
   ui->statusBar->updateNormalMessage(m_OrganizerCore);
 }
 
+void MainWindow::updateModListByPriorityProxy()
+{
+  if (m_ModListSortProxy->sortColumn() == ModList::COL_PRIORITY && m_ModListSortProxy->sortOrder() == Qt::AscendingOrder) {
+    m_ModListSortProxy->setSourceModel(m_ModListByPriorityProxy);
+    emit m_OrganizerCore.modList()->layoutChanged();
+  }
+  else {
+    m_ModListSortProxy->setSourceModel(m_OrganizerCore.modList());
+  }
+}
+
 void MainWindow::setupModList()
 {
   m_ModListByPriorityProxy = new ModListByPriorityProxy(m_OrganizerCore.currentProfile(), &m_OrganizerCore);
@@ -561,13 +572,7 @@ void MainWindow::setupModList()
   connect(m_ModListSortProxy, &QAbstractItemModel::layoutAboutToBeChanged,
     this, [this](const QList<QPersistentModelIndex>& parents, QAbstractItemModel::LayoutChangeHint hint) {
       if (hint == QAbstractItemModel::VerticalSortHint) {
-        if (m_ModListSortProxy->sortColumn() == ModList::COL_PRIORITY && m_ModListSortProxy->sortOrder() == Qt::AscendingOrder) {
-          m_ModListSortProxy->setSourceModel(m_ModListByPriorityProxy);
-          emit m_OrganizerCore.modList()->layoutChanged();
-        }
-        else {
-          m_ModListSortProxy->setSourceModel(m_OrganizerCore.modList());
-        }
+        updateModListByPriorityProxy();
       }
     });
 
@@ -5968,13 +5973,7 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
     connect(ui->modList, SIGNAL(collapsed(QModelIndex)), newModel, SLOT(collapsed(QModelIndex)));
     connect(newModel, SIGNAL(expandItem(QModelIndex)), this, SLOT(expandModList(QModelIndex)));
   } else {
-    if (m_ModListSortProxy->sortColumn() == ModList::COL_PRIORITY && m_ModListSortProxy->sortOrder() == Qt::AscendingOrder) {
-      m_ModListSortProxy->setSourceModel(m_ModListByPriorityProxy);
-      emit m_OrganizerCore.modList()->layoutChanged();
-    }
-    else {
-      m_ModListSortProxy->setSourceModel(m_OrganizerCore.modList());
-    }
+    updateModListByPriorityProxy();
   }
   modFilterActive(m_ModListSortProxy->isFilterActive());
 }

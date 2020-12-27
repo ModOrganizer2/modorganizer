@@ -608,6 +608,7 @@ private slots: // ui slots
   void storeSettings();
   void readSettings();
   void setupModList();
+  void updateModListByPriorityProxy();
 };
 
 #endif // MAINWINDOW_H
