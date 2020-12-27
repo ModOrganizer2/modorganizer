@@ -160,14 +160,17 @@ bool ModListByPriorityProxy::setData(const QModelIndex& index, const QVariant& v
 
 bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const
 {
-  if (!parent.isValid()) {
+  if (!parent.isValid() && row >= 0) {
+
     // the row may be outside of the children list if we insert at the end
     if (row >= m_Root.children.size()) {
       return false;
     }
 
-    if (row >= 0 && (m_Root.children[row]->mod->isSeparator() || m_Root.children[row]->mod->isOverwrite())) {
-      return false;
+    if (row > 0 && m_Root.children[row - 1]->mod->isSeparator()) {
+      if (m_Root.children[row]->mod->isSeparator() || m_Root.children[row]->mod->isOverwrite()) {
+        return false;
+      }
     }
   }
 
