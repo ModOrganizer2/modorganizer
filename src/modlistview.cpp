@@ -4,7 +4,6 @@
 #include <QMimeData>
 #include <QProxyStyle>
 
-
 class ModListViewStyle: public QProxyStyle {
 public:
   ModListViewStyle(QStyle *style, int indentation);
@@ -57,3 +56,26 @@ void ModListView::setModel(QAbstractItemModel *model)
   setVerticalScrollBar(new ViewMarkingScrollBar(model, this));
 }
 
+void ModListView::dragMoveEvent(QDragMoveEvent* event)
+{
+  if (autoExpandDelay() >= 0) {
+    openTimer.start(autoExpandDelay(), this);
+  }
+  QAbstractItemView::dragMoveEvent(event);
+}
+
+void ModListView::timerEvent(QTimerEvent* event)
+{
+  if (event->timerId() == openTimer.timerId()) {
+    QPoint pos = viewport()->mapFromGlobal(QCursor::pos());
+    if (state() == QAbstractItemView::DraggingState
+      && viewport()->rect().contains(pos)) {
+      QModelIndex index = indexAt(pos);
+      setExpanded(index, true);
+    }
+    openTimer.stop();
+  }
+  else {
+    QTreeView::timerEvent(event);
+  }
+}

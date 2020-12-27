@@ -10,15 +10,27 @@ class ModListView : public QTreeView
   Q_OBJECT
 public:
   explicit ModListView(QWidget *parent = 0);
-  virtual void dragEnterEvent(QDragEnterEvent *event);
-  virtual void setModel(QAbstractItemModel *model);
+  void setModel(QAbstractItemModel *model) override;
+
 signals:
   void dropModeUpdate(bool dropOnRows);
-  
+
 public slots:
+
+protected:
+
+  // replace the auto-expand timer from QTreeView to avoid
+  // auto-collapsing
+  QBasicTimer openTimer;
+
+  void timerEvent(QTimerEvent* event) override;
+  void dragMoveEvent(QDragMoveEvent* event) override;
+  void dragEnterEvent(QDragEnterEvent* event) override;
+
 private:
 
   ViewMarkingScrollBar *m_Scrollbar;
+
 };
 
 #endif // MODLISTVIEW_H
