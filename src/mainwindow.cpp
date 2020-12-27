@@ -5432,6 +5432,10 @@ void MainWindow::updateDownloadView()
 
 void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
 {
+  if (m_OrganizerCore.settings().network().offlineMode()) {
+    return;
+  }
+
   if (NexusInterface::instance().getAccessManager()->validated()) {
     ModInfo::manualUpdateCheck(this, IDs);
   } else {
