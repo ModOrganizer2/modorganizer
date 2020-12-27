@@ -26,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "imoinfo.h"
 #include "iuserinterface.h"
 #include "modinfo.h"
+#include "modlistbypriorityproxy.h"
 #include "modlistsortproxy.h"
 #include "tutorialcontrol.h"
 #include "plugincontainer.h" //class PluginContainer;
@@ -297,6 +298,7 @@ private:
   QStringList m_DefaultArchives;
 
   ModListSortProxy *m_ModListSortProxy;
+  ModListByPriorityProxy *m_ModListByPriorityProxy;
 
   PluginListSortProxy *m_PluginListSortProxy;
 

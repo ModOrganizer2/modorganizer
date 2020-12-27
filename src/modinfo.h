@@ -379,6 +379,11 @@ public: // IModInterface implementations / Re-declaration
   virtual std::shared_ptr<const MOBase::IFileTree> fileTree() const = 0;
 
   /**
+   * @return true if this object represents a regular mod.
+   */
+  virtual bool isRegular() const { return false; }
+
+  /**
    * @return true if this object represents the overwrite mod.
    */
   virtual bool isOverwrite() const { return false; }
@@ -490,11 +495,6 @@ public: // Mutable operations:
   virtual bool remove() = 0;
 
 public: // Methods after this do not come from IModInterface:
-
-  /**
-   * @return true if this mod is a regular mod, false otherwise.
-   */
-  virtual bool isRegular() const { return false; }
 
   /**
    * @return true if this mod is empty, false otherwise.

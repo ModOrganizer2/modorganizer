@@ -544,14 +544,22 @@ MainWindow::MainWindow(Settings &settings
   processUpdates();
 
   ui->statusBar->updateNormalMessage(m_OrganizerCore);
-
-  on_groupCombo_currentIndexChanged(0);
 }
 
 void MainWindow::setupModList()
 {
-  m_ModListSortProxy = m_OrganizerCore.createModListProxyModel();
+  m_ModListByPriorityProxy = new ModListByPriorityProxy(m_OrganizerCore.currentProfile(), &m_OrganizerCore);
+  connect(ui->modList, SIGNAL(expanded(QModelIndex)), m_ModListByPriorityProxy, SLOT(expanded(QModelIndex)));
+  connect(ui->modList, SIGNAL(collapsed(QModelIndex)), m_ModListByPriorityProxy, SLOT(collapsed(QModelIndex)));
+  connect(m_ModListByPriorityProxy, SIGNAL(expandItem(QModelIndex)), this, SLOT(expandModList(QModelIndex)));
+
+  m_ModListSortProxy = new ModListSortProxy(m_OrganizerCore.currentProfile(), &m_OrganizerCore);
   ui->modList->setModel(m_ModListSortProxy);
+
+  m_ModListByPriorityProxy->setSourceModel(m_OrganizerCore.modList());
+  m_ModListSortProxy->setSourceModel(m_ModListByPriorityProxy);
+  emit m_OrganizerCore.modList()->layoutChanged();
+
   ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
 
 
@@ -1267,15 +1275,7 @@ void MainWindow::espFilterChanged(const QString &filter)
 
 void MainWindow::expandModList(const QModelIndex &index)
 {
-  QAbstractItemModel *model = ui->modList->model();
-
-  for (int i = 0; i < model->rowCount(); ++i) {
-    QModelIndex targetIdx = model->index(i, 0);
-    if (model->data(targetIdx).toString() == index.data().toString()) {
-      ui->modList->expand(targetIdx);
-      break;
-    }
-  }
+  ui->modList->expand(m_ModListSortProxy->mapFromSource(index));
 }
 
 
@@ -1679,6 +1679,7 @@ void MainWindow::activateSelectedProfile()
   m_OrganizerCore.setCurrentProfile(ui->profileBox->currentText());
 
   m_ModListSortProxy->setProfile(m_OrganizerCore.currentProfile());
+  m_ModListByPriorityProxy->setProfile(m_OrganizerCore.currentProfile());
 
   m_SavesTab->refreshSaveList();
   m_OrganizerCore.refresh();
@@ -5951,8 +5952,8 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
     connect(ui->modList, SIGNAL(collapsed(QModelIndex)), newModel, SLOT(collapsed(QModelIndex)));
     connect(newModel, SIGNAL(expandItem(QModelIndex)), this, SLOT(expandModList(QModelIndex)));
   } else {
-    m_ModListSortProxy->setSourceModel(new ModListByPriorityProxy(m_OrganizerCore.modList(), this));
-    // m_ModListSortProxy->setSourceModel(m_OrganizerCore.modList());
+    m_ModListSortProxy->setSourceModel(m_ModListByPriorityProxy);
+    emit m_OrganizerCore.modList()->layoutChanged();
   }
   modFilterActive(m_ModListSortProxy->isFilterActive());
 }

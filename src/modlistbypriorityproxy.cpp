@@ -1,12 +1,13 @@
 #include "modlistbypriorityproxy.h"
 
 #include "modinfo.h"
+#include "profile.h"
 #include "modlist.h"
+#include "log.h"
 
-ModListByPriorityProxy::ModListByPriorityProxy(ModList* modList, QObject* parent) :
-  QAbstractProxyModel(parent), m_ModList(modList)
+ModListByPriorityProxy::ModListByPriorityProxy(Profile* profile, QObject* parent) :
+  QAbstractProxyModel(parent), m_Profile(profile)
 {
-  setSourceModel(modList);
 }
 
 ModListByPriorityProxy::~ModListByPriorityProxy()
@@ -16,7 +17,14 @@ ModListByPriorityProxy::~ModListByPriorityProxy()
 void ModListByPriorityProxy::setSourceModel(QAbstractItemModel* model)
 {
   QAbstractProxyModel::setSourceModel(model);
-  // connect(sourceModel(), &QAbstractItemModel::layoutChanged, this, &ModListByPriorityProxy::buildTree);
+
+  if (sourceModel()) {
+    m_CollapsedItems.clear();
+    connect(sourceModel(), &QAbstractItemModel::layoutChanged, this, &ModListByPriorityProxy::buildTree, Qt::UniqueConnection);
+    connect(sourceModel(), &QAbstractItemModel::rowsRemoved, this, [this]() { buildTree(); }, Qt::UniqueConnection);
+    connect(sourceModel(), &QAbstractItemModel::modelReset, this, &ModListByPriorityProxy::buildTree, Qt::UniqueConnection);
+    buildTree();
+  }
 }
 
 void ModListByPriorityProxy::buildTree()
@@ -25,73 +33,48 @@ void ModListByPriorityProxy::buildTree()
 
   beginResetModel();
 
+  // reset the root
+  m_Root = { };
+  m_IndexToItem.clear();
+
+  TreeItem* root = &m_Root;
+  for (auto& [priority, index] : m_Profile->getAllIndexesByPriority()) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
+
+    TreeItem* item;
+
+    if (modInfo->isSeparator()) {
+      m_Root.children.push_back(std::make_unique<TreeItem>(modInfo, index, &m_Root));
+      item = m_Root.children.back().get();
+      root = item;
+    }
+    else if (modInfo->isOverwrite()) {
+      m_Root.children.push_back(std::make_unique<TreeItem>(modInfo, index, &m_Root));
+      item = m_Root.children.back().get();
+    }
+    else {
+      root->children.push_back(std::make_unique<TreeItem>(modInfo, index, root));
+      item = root->children.back().get();
+    }
+    m_IndexToItem[index] = item;
+
+  }
+
   endResetModel();
 
+  // restore expand-state
+  expandItems(QModelIndex());
 }
 
-std::vector<ModListByPriorityProxy::ModInfoWithPriority> ModListByPriorityProxy::topLevelItems() const
+void ModListByPriorityProxy::expandItems(const QModelIndex& index)
 {
-  std::vector<ModListByPriorityProxy::ModInfoWithPriority> items;
-  bool separator = false;
-  for (auto& [priority, index] : m_ModList->m_Profile->getAllIndexesByPriority()) {
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-    if (modInfo->isSeparator()) {
-      items.emplace_back(modInfo, priority);
-      separator = true;
+  for (int row = 0; row < rowCount(index); row++) {
+    QModelIndex idx = this->index(row, 0, QModelIndex());
+    if (!m_CollapsedItems.contains(idx.data(Qt::DisplayRole).toString())) {
+      emit expandItem(idx);
     }
-    else if (modInfo->isOverwrite() || !separator) {
-      items.emplace_back(modInfo, priority);
-    }
+    expandItems(idx);
   }
-
-  return items;
-}
-
-std::vector<ModListByPriorityProxy::ModInfoWithPriority> ModListByPriorityProxy::childItems(int priority) const
-{
-  std::vector<ModListByPriorityProxy::ModInfoWithPriority> children;
-  for (auto& [p, index] : m_ModList->m_Profile->getAllIndexesByPriority()) {
-    if (p > priority) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-      if (modInfo->isSeparator()) {
-        break;
-      }
-      children.emplace_back(modInfo, p);
-    }
-  }
-  return children;
-}
-
-std::optional<ModListByPriorityProxy::ModInfoWithPriority> ModListByPriorityProxy::separator(int priority) const
-{
-  // overwrites
-  if (priority == ULONG_MAX) {
-    return {};
-  }
-
-  auto& indexByPriority = m_ModList->m_Profile->getAllIndexesByPriority();
-
-  auto it = indexByPriority.find(priority);
-  if (it == std::end(indexByPriority)) {
-    return {};
-  }
-
-  {
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(it->second);
-    if (modInfo->isSeparator() || modInfo->isOverwrite()) {
-      return {};
-    }
-  }
-
-  auto rit = std::reverse_iterator{ it };
-  for (; rit != std::rend(indexByPriority); ++rit) {
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(rit->second);
-    if (modInfo->isSeparator()) {
-      return ModInfoWithPriority{ modInfo, rit->first };
-    }
-  }
-
-  return {};
 }
 
 QModelIndex ModListByPriorityProxy::mapFromSource(const QModelIndex& sourceIndex) const
@@ -100,24 +83,8 @@ QModelIndex ModListByPriorityProxy::mapFromSource(const QModelIndex& sourceIndex
     return QModelIndex();
   }
 
-  auto topItems = topLevelItems();
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(sourceIndex.row());
-
-  for (std::size_t i = 0; i < topItems.size(); ++i) {
-    if (topItems[i].mod == modInfo) {
-      return createIndex(i, sourceIndex.column(), modInfo.get());
-    }
-  }
-
-  auto sep = separator(m_ModList->priority(modInfo->name()));
-  auto children = childItems(sep->priority);
-  for (std::size_t i = 0; i < children.size(); ++i) {
-    if (children[i].mod == modInfo) {
-      return createIndex(i, sourceIndex.column(), modInfo.get());
-    }
-  }
-
-  return QModelIndex();
+  auto* item = m_IndexToItem.at(sourceIndex.row());
+  return createIndex(item->parent->childIndex(item), sourceIndex.column(), item);
 }
 
 QModelIndex ModListByPriorityProxy::mapToSource(const QModelIndex& proxyIndex) const
@@ -125,32 +92,23 @@ QModelIndex ModListByPriorityProxy::mapToSource(const QModelIndex& proxyIndex) c
   if (!proxyIndex.isValid()) {
     return QModelIndex();
   }
-  auto topItems = topLevelItems();
-  ModInfo::Ptr modInfo;
-  if (proxyIndex.parent().isValid()) {
-    ModInfo::Ptr parentInfo = topItems[proxyIndex.parent().row()].mod;
-    modInfo = childItems(m_ModList->priority(parentInfo->name()))[proxyIndex.row()].mod;
-  }
-  else {
-    modInfo = topItems[proxyIndex.row()].mod;
-  }
-  return sourceModel()->index(ModInfo::getIndex(modInfo->name()), proxyIndex.column(), mapToSource(proxyIndex.parent()));
+  auto* item = static_cast<TreeItem*>(proxyIndex.internalPointer());
+  return sourceModel()->index(item->index, proxyIndex.column());
 }
 
 int ModListByPriorityProxy::rowCount(const QModelIndex& parent) const
 {
-  auto topItems = topLevelItems();
   if (!parent.isValid()) {
-    return topItems.size();
+    return m_Root.children.size();
   }
 
-  ModInfo::Ptr modInfo = topItems[parent.row()].mod;
-  if (!modInfo->isSeparator()) {
-    return 0;
+  auto* item = static_cast<TreeItem*>(parent.internalPointer());
+
+  if (item->mod->isSeparator()) {
+    return item->children.size();
   }
 
-  auto priority = m_ModList->priority(modInfo->name());
-  return childItems(priority).size();
+  return 0;
 }
 
 int ModListByPriorityProxy::columnCount(const QModelIndex& index) const
@@ -161,54 +119,90 @@ int ModListByPriorityProxy::columnCount(const QModelIndex& index) const
 
 QModelIndex ModListByPriorityProxy::parent(const QModelIndex& child) const
 {
-
-  auto topItems = topLevelItems();
-  ModInfo::Ptr modInfo;
-  if (child.parent().isValid()) {
-    ModInfo::Ptr parentInfo = topItems[child.parent().row()].mod;
-    modInfo = childItems(m_ModList->priority(parentInfo->name()))[child.row()].mod;
-  }
-  else {
-    modInfo = topItems[child.row()].mod;
-  }
-
-  auto sep = separator(m_ModList->priority(modInfo->name()));
-
-  if (!sep) {
+  if (!child.isValid()) {
     return QModelIndex();
   }
 
-  for (std::size_t i = 0; i < topItems.size(); ++i) {
-    if (topItems[i].mod == sep->mod) {
-      return createIndex(i, child.column(), sep->mod.get());
-    }
+  auto* item = static_cast<TreeItem*>(child.internalPointer());
+
+  if (!item->parent || item->parent == &m_Root) {
+    return QModelIndex();
   }
 
-  return QModelIndex();
+  return createIndex(item->parent->parent->childIndex(item->parent), 0, item->parent);
 }
 
 bool ModListByPriorityProxy::hasChildren(const QModelIndex& parent) const
 {
   if (!parent.isValid()) {
-    return false;
+    return m_Root.children.size() > 0;
   }
-  ModInfo* modInfo = static_cast<ModInfo*>(parent.internalPointer());
-  for (auto& item : topLevelItems()) {
-    if (modInfo == item.mod) {
-      return modInfo->isSeparator() && !childItems(item.priority).empty();
+  auto* item = static_cast<TreeItem*>(parent.internalPointer());
+  return item->children.size() > 0;
+}
+
+bool ModListByPriorityProxy::setData(const QModelIndex& index, const QVariant& value, int role)
+{
+  // only care about the "name" column
+  if (index.column() == 0 && role == Qt::EditRole) {
+    QString oldValue = data(index, role).toString();
+    if (m_CollapsedItems.contains(oldValue)) {
+      m_CollapsedItems.erase(oldValue);
+      m_CollapsedItems.insert(value.toString());
     }
   }
-  return false;
+  return QAbstractProxyModel::setData(index, value, role);
+}
+
+
+Qt::ItemFlags ModListByPriorityProxy::flags(const QModelIndex& idx) const
+{
+  if (!idx.isValid()) {
+    return sourceModel()->flags(QModelIndex());
+  }
+
+  // we check the flags of the root node and if drop is not enabled, it
+  // means we are dragging files.
+  Qt::ItemFlags rootFlags = sourceModel()->flags(QModelIndex());
+  if (!rootFlags.testFlag(Qt::ItemIsDropEnabled)) {
+    return sourceModel()->flags(mapToSource(idx));
+  }
+
+  auto flags = sourceModel()->flags(mapToSource(idx));
+  auto* item = static_cast<TreeItem*>(idx.internalPointer());
+
+  if (item->mod->isSeparator()) {
+    flags |= Qt::ItemIsDropEnabled;
+  }
+
+  return flags;
 }
 
 QModelIndex ModListByPriorityProxy::index(int row, int column, const QModelIndex& parent) const
 {
-  auto topItems = topLevelItems();
+  if (!hasIndex(row, column, parent)) {
+    return QModelIndex();
+  }
+
+  const TreeItem* parentItem;
   if (!parent.isValid()) {
-    return createIndex(row, column, topItems[row].mod.get());
+    parentItem = &m_Root;
   }
   else {
-    auto children = childItems(topItems[parent.row()].priority);
-    return createIndex(row, column, children[row].mod.get());
+    parentItem = static_cast<TreeItem*>(parent.internalPointer());
   }
+  return createIndex(row, column, parentItem->children[row].get());
+}
+
+void ModListByPriorityProxy::expanded(const QModelIndex& index)
+{
+  auto it = m_CollapsedItems.find(index.data(Qt::DisplayRole).toString());
+  if (it != m_CollapsedItems.end()) {
+    m_CollapsedItems.erase(it);
+  }
+}
+
+void ModListByPriorityProxy::collapsed(const QModelIndex& index)
+{
+  m_CollapsedItems.insert(index.data(Qt::DisplayRole).toString());
 }
