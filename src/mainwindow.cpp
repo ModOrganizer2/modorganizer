@@ -1275,9 +1275,10 @@ void MainWindow::espFilterChanged(const QString &filter)
 
 void MainWindow::expandModList(const QModelIndex &index)
 {
-  ui->modList->expand(m_ModListSortProxy->mapFromSource(index));
+  if (index.model() == m_ModListSortProxy->sourceModel()) {
+    ui->modList->expand(m_ModListSortProxy->mapFromSource(index));
+  }
 }
-
 
 bool MainWindow::addProfile()
 {
