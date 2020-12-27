@@ -41,6 +41,7 @@ ModListView::ModListView(QWidget *parent)
 {
   setVerticalScrollBar(m_Scrollbar);
   MOBase::setCustomizableColumns(this);
+  setAutoExpandDelay(500);
 }
 
 void ModListView::dragEnterEvent(QDragEnterEvent *event)
