@@ -63,7 +63,6 @@ ImagesTab::ImagesTab(ModInfoDialogTabContext cx) :
   ui->imagesShowDDS->setEnabled(m_ddsAvailable);
 
   m_filter.setEdit(ui->imagesFilter);
-  m_filter.setUpdateDelay(false);
   connect(&m_filter, &FilterWidget::changed, [&]{ onFilterChanged(); });
 
   connect(ui->imagesExplore, &QAbstractButton::clicked, [&]{ onExplore(); });

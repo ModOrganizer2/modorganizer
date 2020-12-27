@@ -54,7 +54,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "downloadlistwidget.h"
 #include "messagedialog.h"
 #include "installationmanager.h"
-#include "downloadlistsortproxy.h"
 #include "motddialog.h"
 #include "filedialogmemory.h"
 #include "tutorialmanager.h"

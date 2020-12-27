@@ -41,9 +41,14 @@ void DownloadList::setMetaDisplay(bool metaDisplay)
 }
 
 
-int DownloadList::rowCount(const QModelIndex&) const
+int DownloadList::rowCount(const QModelIndex& parent) const
 {
-  return m_Manager->numTotalDownloads() + m_Manager->numPendingDownloads();
+  if (!parent.isValid()) {
+    // root item
+    return m_Manager->numTotalDownloads() + m_Manager->numPendingDownloads();
+  } else {
+    return 0;
+  }
 }
 
 
@@ -202,4 +207,75 @@ void DownloadList::update(int row)
     emit dataChanged(this->index(row, 0, QModelIndex()), this->index(row, this->columnCount(QModelIndex())-1, QModelIndex()));
   else
     log::error("invalid row {} in download list, update failed", row);
+}
+
+bool DownloadList::lessThan(const QModelIndex &left, const QModelIndex &right)
+{
+  int leftIndex  = left.row();
+  int rightIndex = right.row();
+  if ((leftIndex < m_Manager->numTotalDownloads())
+      && (rightIndex < m_Manager->numTotalDownloads())) {
+    if (left.column() == DownloadList::COL_NAME) {
+      return m_Manager->getFileName(left.row()).compare(m_Manager->getFileName(right.row()), Qt::CaseInsensitive) < 0;
+    } else if (left.column() == DownloadList::COL_MODNAME) {
+      QString leftName, rightName;
+
+      if (!m_Manager->isInfoIncomplete(left.row())) {
+        const MOBase::ModRepositoryFileInfo *info = m_Manager->getFileInfo(left.row());
+        leftName = info->modName;
+      }
+
+      if (!m_Manager->isInfoIncomplete(right.row())) {
+        const MOBase::ModRepositoryFileInfo *info = m_Manager->getFileInfo(right.row());
+        rightName = info->modName;
+      }
+
+      return leftName.compare(rightName, Qt::CaseInsensitive) < 0;
+    } else if (left.column() == DownloadList::COL_VERSION) {
+        MOBase::VersionInfo versionLeft, versionRight;
+
+        if (!m_Manager->isInfoIncomplete(left.row())) {
+          const MOBase::ModRepositoryFileInfo *info = m_Manager->getFileInfo(left.row());
+          versionLeft = info->version;
+        }
+
+        if (!m_Manager->isInfoIncomplete(right.row())) {
+          const MOBase::ModRepositoryFileInfo *info = m_Manager->getFileInfo(right.row());
+          versionRight = info->version;
+        }
+
+        return versionLeft < versionRight;
+    } else if (left.column() == DownloadList::COL_ID) {
+      int leftID=0, rightID=0;
+
+      if (!m_Manager->isInfoIncomplete(left.row())) {
+        const MOBase::ModRepositoryFileInfo *info = m_Manager->getFileInfo(left.row());
+        leftID = info->modID;
+      }
+
+      if (!m_Manager->isInfoIncomplete(right.row())) {
+        const MOBase::ModRepositoryFileInfo *info = m_Manager->getFileInfo(right.row());
+        rightID = info->modID;
+      }
+
+      return leftID < rightID;
+    } else if (left.column() == DownloadList::COL_STATUS) {
+      DownloadManager::DownloadState leftState = m_Manager->getState(left.row());
+      DownloadManager::DownloadState rightState = m_Manager->getState(right.row());
+      if (leftState == rightState)
+        return m_Manager->getFileTime(left.row()) < m_Manager->getFileTime(right.row());
+      else
+        return leftState > rightState;
+    } else if (left.column() == DownloadList::COL_SIZE) {
+      return m_Manager->getFileSize(left.row()) < m_Manager->getFileSize(right.row());
+    } else if (left.column() == DownloadList::COL_FILETIME) {
+      return m_Manager->getFileTime(left.row()) < m_Manager->getFileTime(right.row());
+    } else if (left.column() == DownloadList::COL_SOURCEGAME) {
+      return m_Manager->getDisplayGameName(left.row()) < m_Manager->getDisplayGameName(right.row());
+    } else {
+      return leftIndex < rightIndex;
+    }
+  } else {
+    return leftIndex < rightIndex;
+  }
 }

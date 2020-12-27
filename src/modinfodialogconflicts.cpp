@@ -560,17 +560,14 @@ GeneralConflictsTab::GeneralConflictsTab(
   m_filterOverwrite.setEdit(ui->overwriteLineEdit);
   m_filterOverwrite.setList(ui->overwriteTree);
   m_filterOverwrite.setUseSourceSort(true);
-  m_filterOverwrite.setUpdateDelay(false);
 
   m_filterOverwritten.setEdit(ui->overwrittenLineEdit);
   m_filterOverwritten.setList(ui->overwrittenTree);
   m_filterOverwritten.setUseSourceSort(true);
-  m_filterOverwritten.setUpdateDelay(false);
 
   m_filterNoConflicts.setEdit(ui->noConflictLineEdit);
   m_filterNoConflicts.setList(ui->noConflictTree);
   m_filterNoConflicts.setUseSourceSort(true);
-  m_filterNoConflicts.setUpdateDelay(false);
 
   QObject::connect(
     ui->overwriteTree, &QTreeView::doubleClicked,
@@ -644,7 +641,7 @@ bool GeneralConflictsTab::update()
 
       bool archive = false;
       const int fileOrigin = file->getOrigin(archive);
-      
+
       ++m_counts.numTotalFiles;
 
       const auto& alternatives = file->getAlternatives();
@@ -895,7 +892,6 @@ AdvancedConflictsTab::AdvancedConflictsTab(
   m_filter.setEdit(ui->conflictsAdvancedFilter);
   m_filter.setList(ui->conflictsAdvancedList);
   m_filter.setUseSourceSort(true);
-  m_filter.setUpdateDelay(false);
 
   // left-elide the overwrites column so that the nearest are visible
   ui->conflictsAdvancedList->setItemDelegateForColumn(

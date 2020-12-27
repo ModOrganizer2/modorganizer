@@ -247,7 +247,6 @@ GamePage::GamePage(CreateInstanceDialog& dlg)
   fillList();
 
   m_filter.setEdit(ui->gamesFilter);
-  m_filter.setUpdateDelay(0);
 
   QObject::connect(&m_filter, &FilterWidget::changed, [&]{ fillList(); });
   QObject::connect(ui->showAllGames, &QCheckBox::clicked, [&]{ fillList(); });

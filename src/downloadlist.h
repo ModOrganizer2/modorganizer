@@ -85,6 +85,8 @@ public:
    **/
   virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
 
+  bool lessThan(const QModelIndex &left, const QModelIndex &right);
+
 public slots:
 
   /**

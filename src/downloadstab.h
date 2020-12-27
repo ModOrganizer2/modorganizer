@@ -1,6 +1,8 @@
 #ifndef MODORGANIZER_DOWNLOADTAB_INCLUDED
 #define MODORGANIZER_DOWNLOADTAB_INCLUDED
 
+#include <filterwidget.h>
+
 namespace Ui { class MainWindow; }
 class OrganizerCore;
 class DownloadListWidget;
@@ -25,9 +27,9 @@ private:
 
   OrganizerCore& m_core;
   DownloadsTabUi ui;
+  MOBase::FilterWidget m_filter;
 
   void refresh();
-  void downloadFilterChanged(const QString &filter);
   void resumeDownload(int downloadIndex);
 };
 

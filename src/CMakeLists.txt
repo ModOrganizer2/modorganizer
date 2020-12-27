@@ -63,7 +63,6 @@ add_filter(NAME src/dialogs GROUPS
 
 add_filter(NAME src/downloads GROUPS
 	downloadlist
-	downloadlistsortproxy
 	downloadlistwidget
 	downloadmanager
 )

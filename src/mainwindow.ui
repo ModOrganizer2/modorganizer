@@ -1361,7 +1361,7 @@ p, li { white-space: pre-wrap; }
                 </spacer>
                </item>
                <item>
-                <widget class="MOBase::LineEditClear" name="downloadFilterEdit">
+                <widget class="QLineEdit" name="downloadFilterEdit">
                  <property name="toolTip">
                   <string>Filter the list of downloads.</string>
                  </property>
