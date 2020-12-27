@@ -831,7 +831,7 @@ SetupInstanceResults selectGame(Instance& instance, PluginContainer& pc)
 
   if (dlg.exec() != QDialog::Accepted) {
     // cancelled
-    return SetupInstanceResults::Exit;
+    return SetupInstanceResults::SelectAnother;
   }
 
   // this info will be used instead of the ini, which should fix this
@@ -868,7 +868,7 @@ SetupInstanceResults selectVariant(Instance& instance, PluginContainer& pc)
   dlg.raise();
 
   if (dlg.exec() != QDialog::Accepted) {
-    return SetupInstanceResults::Exit;
+    return SetupInstanceResults::SelectAnother;
   }
 
   // this info will be used instead of the ini, which should fix this
