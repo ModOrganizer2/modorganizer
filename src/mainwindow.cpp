@@ -557,8 +557,19 @@ void MainWindow::setupModList()
   ui->modList->setModel(m_ModListSortProxy);
 
   m_ModListByPriorityProxy->setSourceModel(m_OrganizerCore.modList());
-  m_ModListSortProxy->setSourceModel(m_ModListByPriorityProxy);
-  emit m_OrganizerCore.modList()->layoutChanged();
+
+  connect(m_ModListSortProxy, &QAbstractItemModel::layoutAboutToBeChanged,
+    this, [this](const QList<QPersistentModelIndex>& parents, QAbstractItemModel::LayoutChangeHint hint) {
+      if (hint == QAbstractItemModel::VerticalSortHint) {
+        if (m_ModListSortProxy->sortColumn() == ModList::COL_PRIORITY) {
+          m_ModListSortProxy->setSourceModel(m_ModListByPriorityProxy);
+          emit m_OrganizerCore.modList()->layoutChanged();
+        }
+        else {
+          m_ModListSortProxy->setSourceModel(m_OrganizerCore.modList());
+        }
+      }
+    });
 
   ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
 
@@ -5953,8 +5964,13 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
     connect(ui->modList, SIGNAL(collapsed(QModelIndex)), newModel, SLOT(collapsed(QModelIndex)));
     connect(newModel, SIGNAL(expandItem(QModelIndex)), this, SLOT(expandModList(QModelIndex)));
   } else {
-    m_ModListSortProxy->setSourceModel(m_ModListByPriorityProxy);
-    emit m_OrganizerCore.modList()->layoutChanged();
+    if (m_ModListSortProxy->sortColumn() == ModList::COL_PRIORITY) {
+      m_ModListSortProxy->setSourceModel(m_ModListByPriorityProxy);
+      emit m_OrganizerCore.modList()->layoutChanged();
+    }
+    else {
+      m_ModListSortProxy->setSourceModel(m_OrganizerCore.modList());
+    }
   }
   modFilterActive(m_ModListSortProxy->isFilterActive());
 }
