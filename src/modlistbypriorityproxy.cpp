@@ -160,6 +160,37 @@ bool ModListByPriorityProxy::setData(const QModelIndex& index, const QVariant& v
 
 bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const
 {
+  bool firstRowSeparator = false;
+  try {
+    QByteArray encoded = data->data("application/x-qabstractitemmodeldatalist");
+    QDataStream stream(&encoded, QIODevice::ReadOnly);
+
+    int firstRowPriority = INT_MAX;
+    unsigned int firstRowIndex = -1;
+
+    while (!stream.atEnd()) {
+      int sourceRow, col;
+      QMap<int, QVariant> roleDataMap;
+      stream >> sourceRow >> col >> roleDataMap;
+      if (col == 0) {
+        if (m_Profile->getModPriority(sourceRow) < firstRowPriority) {
+          firstRowIndex = sourceRow;
+          firstRowPriority = m_Profile->getModPriority(sourceRow);
+        }
+      }
+    }
+
+    firstRowSeparator = firstRowIndex != -1 && ModInfo::getByIndex(firstRowIndex)->isSeparator();
+  }
+  catch (std::exception const&) {
+
+  }
+
+  // first row is a separator, we can drop it anywhere
+  if (firstRowSeparator) {
+    return QAbstractProxyModel::canDropMimeData(data, action, row, column, parent);
+  }
+
   if (!parent.isValid() && row >= 0) {
 
     // the row may be outside of the children list if we insert at the end
