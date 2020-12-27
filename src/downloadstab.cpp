@@ -17,6 +17,9 @@ DownloadsTab::DownloadsTab(OrganizerCore& core, Ui::MainWindow* mwui)
   ui.list->setItemDelegate(new DownloadProgressDelegate(
     m_core.downloadManager(), ui.list));
 
+  ui.list->setDragEnabled(true);
+  ui.list->setDragDropMode(QAbstractItemView::DragDropMode::DragDrop);
+
   update();
 
   m_filter.setEdit(ui.filter);

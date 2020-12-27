@@ -90,6 +90,18 @@ QVariant DownloadList::headerData(int section, Qt::Orientation orientation, int 
   }
 }
 
+Qt::ItemFlags DownloadList::flags(const QModelIndex& idx) const
+{
+  return QAbstractTableModel::flags(idx) | Qt::ItemIsDragEnabled;
+}
+
+QMimeData* DownloadList::mimeData(const QModelIndexList& indexes) const
+{
+  QMimeData* result = QAbstractItemModel::mimeData(indexes);
+  result->setData("text/plain", "archive");
+  return result;
+}
+
 QVariant DownloadList::data(const QModelIndex &index, int role) const
 {
   bool pendingDownload = index.row() >= m_Manager->numTotalDownloads();

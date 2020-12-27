@@ -1087,6 +1087,32 @@ boost::signals2::connection ModList::onModMoved(const std::function<void (const 
   return m_ModMoved.connect(func);
 }
 
+int ModList::dropPriority(int row, const QModelIndex& parent) const
+{
+  if (row == -1) {
+    row = parent.row();
+  }
+
+  if ((row < 0) || (static_cast<unsigned int>(row) >= ModInfo::getNumMods())) {
+    return -1;
+  }
+
+  int newPriority = 0;
+  {
+    if ((row < 0) || (row > static_cast<int>(m_Profile->numRegularMods()))) {
+      newPriority = m_Profile->numRegularMods() + 1;
+    }
+    else {
+      newPriority = m_Profile->getModPriority(row);
+    }
+    if (newPriority == -1) {
+      newPriority = m_Profile->numRegularMods() + 1;
+    }
+  }
+
+  return newPriority;
+}
+
 bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &parent)
 {
   if (row == -1) {
@@ -1160,7 +1186,6 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
 
 bool ModList::dropMod(const QMimeData *mimeData, int row, const QModelIndex &parent)
 {
-
   try {
     QByteArray encoded = mimeData->data("application/x-qabstractitemmodeldatalist");
     QDataStream stream(&encoded, QIODevice::ReadOnly);
@@ -1175,26 +1200,12 @@ bool ModList::dropMod(const QMimeData *mimeData, int row, const QModelIndex &par
       }
     }
 
-    if (row == -1) {
-      row = parent.row();
-    }
-
-    if ((row < 0) || (static_cast<unsigned int>(row) >= ModInfo::getNumMods())) {
+    int newPriority = dropPriority(row, parent);
+    if (newPriority == -1) {
       return false;
     }
-
-    int newPriority = 0;
-    {
-      if ((row < 0) || (row > static_cast<int>(m_Profile->numRegularMods()))) {
-        newPriority = m_Profile->numRegularMods() + 1;
-      } else {
-        newPriority = m_Profile->getModPriority(row);
-      }
-      if (newPriority == -1) {
-        newPriority = m_Profile->numRegularMods() + 1;
-      }
-    }
     changeModPriority(sourceRows, newPriority);
+
   } catch (const std::exception &e) {
     reportError(tr("drag&drop failed: %1").arg(e.what()));
   }
@@ -1202,6 +1213,37 @@ bool ModList::dropMod(const QMimeData *mimeData, int row, const QModelIndex &par
   return false;
 }
 
+bool ModList::dropArchive(const QMimeData* mimeData, int row, const QModelIndex& parent)
+{
+  int priority = dropPriority(row, parent);
+  if (priority == -1) {
+    return false;
+  }
+
+  try {
+    QByteArray encoded = mimeData->data("application/x-qabstractitemmodeldatalist");
+    QDataStream stream(&encoded, QIODevice::ReadOnly);
+    std::vector<int> sourceRows;
+
+    while (!stream.atEnd()) {
+      int sourceRow, col;
+      QMap<int, QVariant> roleDataMap;
+      stream >> sourceRow >> col >> roleDataMap;
+      if (col == 0) {
+        sourceRows.push_back(sourceRow);
+      }
+    }
+
+    if (sourceRows.size() == 1) {
+      emit downloadArchiveDropped(sourceRows[0], priority);
+    }
+  }
+  catch (const std::exception& e) {
+    reportError(tr("drag&drop failed: %1").arg(e.what()));
+  }
+
+  return false;
+}
 
 bool ModList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, int row, int, const QModelIndex &parent)
 {
@@ -1214,10 +1256,14 @@ bool ModList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, int
   if (mimeData->hasUrls()) {
     return dropURLs(mimeData, row, parent);
   } else if (mimeData->hasText()) {
-    return dropMod(mimeData, row, parent);
-  } else {
-    return false;
+    if (mimeData->text() == "mod") {
+      return dropMod(mimeData, row, parent);
+    }
+    else if (mimeData->text() == "archive") {
+      return dropArchive(mimeData, row, parent);
+    }
   }
+  return false;
 }
 
 void ModList::removeRowForce(int row, const QModelIndex &parent)

@@ -830,13 +830,13 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
   return nullptr;
 }
 
-void OrganizerCore::installDownload(int index)
+ModInfo::Ptr OrganizerCore::installDownload(int index, int priority)
 {
   if (m_InstallationManager.isRunning()) {
     QMessageBox::information(
       qApp->activeWindow(), tr("Installation cancelled"),
       tr("Another installation is currently in progress."), QMessageBox::Ok);
-    return;
+    return nullptr;
   }
 
   try {
@@ -873,9 +873,14 @@ void OrganizerCore::installDownload(int index)
       refresh();
 
       int modIndex = ModInfo::getIndex(modName);
+      ModInfo::Ptr modInfo = nullptr;
       if (modIndex != UINT_MAX) {
-        ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+        modInfo = ModInfo::getByIndex(modIndex);
         modInfo->addInstalledFile(modID, fileID);
+
+        if (priority != -1) {
+          m_ModList.changeModPriority(modIndex, priority);
+        }
 
         if (hasIniTweaks && m_UserInterface != nullptr
             && (QMessageBox::question(qApp->activeWindow(), tr("Configure Mod"),
@@ -894,6 +899,7 @@ void OrganizerCore::installDownload(int index)
       }
       m_DownloadManager.markInstalled(index);
       emit modInstalled(modName);
+      return modInfo;
     }
     else {
       m_InstallationManager.notifyInstallationEnd(result, nullptr);
@@ -909,6 +915,8 @@ void OrganizerCore::installDownload(int index)
   } catch (const std::exception &e) {
     reportError(e.what());
   }
+
+  return nullptr;
 }
 
 QString OrganizerCore::resolvePath(const QString &fileName) const

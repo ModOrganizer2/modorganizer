@@ -578,7 +578,6 @@ void MainWindow::setupModList()
 
   ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
 
-
   connect(
     ui->modList, SIGNAL(dropModeUpdate(bool)),
     m_OrganizerCore.modList(), SLOT(dropModeUpdate(bool)));
@@ -653,6 +652,10 @@ void MainWindow::setupModList()
   ui->modList->header()->setSectionHidden(ModList::COL_NAME, false);
 
   ui->modList->installEventFilter(m_OrganizerCore.modList());
+
+  connect(m_OrganizerCore.modList(), &ModList::downloadArchiveDropped, this, [this](int row, int priority) {
+    m_OrganizerCore.installDownload(row, priority);
+  });
 }
 
 void MainWindow::resetActionIcons()
@@ -742,6 +745,7 @@ MainWindow::~MainWindow()
       QMessageBox::Ok);
   }
 }
+
 
 void MainWindow::updateWindowTitle(const APIUserAccount& user)
 {
@@ -2483,15 +2487,23 @@ void MainWindow::modorder_changed()
 
 void MainWindow::modInstalled(const QString &modName)
 {
-  QModelIndexList posList =
-      m_OrganizerCore.modList()->match(m_OrganizerCore.modList()->index(0, 0), Qt::DisplayRole, modName);
-  if (posList.count() == 1) {
-    ui->modList->scrollTo(posList.at(0));
+  unsigned int index = ModInfo::getIndex(modName);
+
+  if (index == UINT_MAX) {
+    return;
   }
+
+  QModelIndex qIndex = m_OrganizerCore.modList()->index(index, 0);
+
+  if (m_ModListSortProxy->sourceModel() == m_ModListByPriorityProxy) {
+    qIndex = m_ModListByPriorityProxy->mapFromSource(qIndex);
+    ui->modList->expand(m_ModListSortProxy->mapFromSource(qIndex));
+  }
+  ui->modList->scrollTo(m_ModListSortProxy->mapFromSource(qIndex));
 
   // force an update to happen
   std::multimap<QString, int> IDs;
-  ModInfo::Ptr info = ModInfo::getByIndex(ModInfo::getIndex(modName));
+  ModInfo::Ptr info = ModInfo::getByIndex(index);
   IDs.insert(std::make_pair<QString, int>(info->gameName(), info->nexusId()));
   modUpdateCheck(IDs);
 }

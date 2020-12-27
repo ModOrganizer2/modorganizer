@@ -376,7 +376,7 @@ public slots:
 
   void refreshLists();
 
-  void installDownload(int downloadIndex);
+  ModInfo::Ptr installDownload(int downloadIndex, int priority = -1);
 
   void modStatusChanged(unsigned int index);
   void modStatusChanged(QList<unsigned int> index);

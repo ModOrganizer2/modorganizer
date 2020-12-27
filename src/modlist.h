@@ -310,6 +310,10 @@ signals:
 
   void postDataChanged();
 
+  // emitted when an item is dropped from the download list, the row is from the
+  // download list
+  void downloadArchiveDropped(int row, int priority);
+
 protected:
 
   // event filter, handles event from the header and the tree view itself
@@ -335,10 +339,6 @@ private:
   QVariant modData(int modID, int modelColumn, int role) const;
 
   bool renameMod(int index, const QString &newName);
-
-  bool dropURLs(const QMimeData *mimeData, int row, const QModelIndex &parent);
-
-  bool dropMod(const QMimeData *mimeData, int row, const QModelIndex &parent);
 
   MOBase::IModList::ModStates state(unsigned int modIndex) const;
 
@@ -366,6 +366,16 @@ private:
     QString name;
     QFlags<MOBase::IModList::ModState> state;
   };
+
+private:
+
+  bool dropURLs(const QMimeData* mimeData, int row, const QModelIndex& parent);
+  bool dropMod(const QMimeData* mimeData, int row, const QModelIndex& parent);
+  bool dropArchive(const QMimeData* mimeData, int row, const QModelIndex& parent);
+
+  // return the priority of the mod for a drop event
+  //
+  int dropPriority(int row, const QModelIndex& parent) const;
 
 private:
 
