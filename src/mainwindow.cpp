@@ -4555,7 +4555,11 @@ void MainWindow::initModListContextMenu(QMenu *menu)
 {
   menu->addAction(tr("Install Mod..."), this, SLOT(installMod_clicked()));
   menu->addAction(tr("Create empty mod"), this, SLOT(createEmptyMod_clicked()));
+
+  menu->addSeparator();
   menu->addAction(tr("Create Separator"), this, SLOT(createSeparator_clicked()));
+  menu->addAction(tr("Collapse all"), ui->modList, &QTreeView::collapseAll);
+  menu->addAction(tr("Expand all"), ui->modList, &QTreeView::expandAll);
 
   menu->addSeparator();
 
