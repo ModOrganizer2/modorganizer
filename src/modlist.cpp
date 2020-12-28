@@ -1108,7 +1108,7 @@ int ModList::dropPriority(int row, const QModelIndex& parent) const
   return newPriority;
 }
 
-std::vector<int> ModList::sourceRows(const QMimeData* mimeData) const
+std::vector<int> ModList::sourceRows(const QMimeData* mimeData)
 {
   QByteArray encoded = mimeData->data("application/x-qabstractitemmodeldatalist");
   QDataStream stream(&encoded, QIODevice::ReadOnly);
@@ -1125,7 +1125,7 @@ std::vector<int> ModList::sourceRows(const QMimeData* mimeData) const
   return sourceRows;
 }
 
-std::optional<std::pair<QString, QString>> ModList::relativeUrl(const QUrl& url) const
+std::optional<std::pair<QString, QString>> ModList::relativeUrl(const QUrl& url)
 {
   if (!url.isLocalFile()) {
     return {};
@@ -1211,7 +1211,7 @@ bool ModList::dropMod(const QMimeData *mimeData, int row, const QModelIndex &par
   }
 
   try {
-    std::vector<int> sourceRows = this->sourceRows(mimeData);
+    std::vector<int> sourceRows = ModList::sourceRows(mimeData);
     changeModPriority(sourceRows, newPriority);
 
   } catch (const std::exception &e) {
@@ -1229,7 +1229,7 @@ bool ModList::dropArchive(const QMimeData* mimeData, int row, const QModelIndex&
   }
 
   try {
-    std::vector<int> sourceRows = this->sourceRows(mimeData);
+    std::vector<int> sourceRows = ModList::sourceRows(mimeData);
     if (sourceRows.size() == 1) {
       emit downloadArchiveDropped(sourceRows[0], priority);
     }

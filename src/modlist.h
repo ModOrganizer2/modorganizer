@@ -372,12 +372,12 @@ private:
   // retrieve the relative path of file and its origin given a URL from Mime data
   // returns an empty optional if the URL is not a valid file for dropping
   //
-  std::optional<std::pair<QString, QString>> relativeUrl(const QUrl&) const;
+  static std::optional<std::pair<QString, QString>> relativeUrl(const QUrl&);
 
   // return the source rows from the given mime data for drag&drop of mods or
   // installation archives
   //
-  std::vector<int> sourceRows(const QMimeData* mimeData) const;
+  static std::vector<int> sourceRows(const QMimeData* mimeData);
 
   bool dropURLs(const QMimeData* mimeData, int row, const QModelIndex& parent);
   bool dropMod(const QMimeData* mimeData, int row, const QModelIndex& parent);
