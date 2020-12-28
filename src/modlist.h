@@ -215,7 +215,7 @@ public: // implementation of virtual functions of QAbstractItemModel
 
 public slots:
 
-
+  void onDragEnter(const QMimeData* data);
   void enableSelected(const QItemSelectionModel *selectionModel);
   void disableSelected(const QItemSelectionModel *selectionModel);
 
@@ -399,6 +399,7 @@ private:
 
   mutable bool m_Modified;
   bool m_InNotifyChange;
+  bool m_DropOnMod = false;
 
   QFontMetrics m_FontMetrics;
 

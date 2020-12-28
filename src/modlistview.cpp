@@ -18,6 +18,12 @@ void ModListView::setModel(QAbstractItemModel *model)
   setVerticalScrollBar(new ViewMarkingScrollBar(model, this));
 }
 
+void ModListView::dragEnterEvent(QDragEnterEvent* event)
+{
+  emit dragEntered(event->mimeData());
+  QTreeView::dragEnterEvent(event);
+}
+
 void ModListView::dragMoveEvent(QDragMoveEvent* event)
 {
   if (autoExpandDelay() >= 0) {

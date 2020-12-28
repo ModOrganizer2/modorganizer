@@ -578,6 +578,8 @@ void MainWindow::setupModList()
 
   ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
 
+  connect(ui->modList, &ModListView::dragEntered, m_OrganizerCore.modList(), &ModList::onDragEnter);
+
   connect(
     ui->modList->header(), SIGNAL(sortIndicatorChanged(int,Qt::SortOrder)),
     this, SLOT(modListSortIndicatorChanged(int,Qt::SortOrder)));

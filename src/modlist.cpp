@@ -664,7 +664,6 @@ QVariant ModList::headerData(int section, Qt::Orientation orientation,
   return QAbstractItemModel::headerData(section, orientation, role);
 }
 
-
 Qt::ItemFlags ModList::flags(const QModelIndex &modelIndex) const
 {
   Qt::ItemFlags result = QAbstractItemModel::flags(modelIndex);
@@ -688,10 +687,15 @@ Qt::ItemFlags ModList::flags(const QModelIndex &modelIndex) const
         result |= Qt::ItemIsEditable;
       }
     }
+    if (modInfo->isSeparator() || m_DropOnMod) {
+      result |= Qt::ItemIsDropEnabled;
+    }
+  }
+  else if (!m_DropOnMod) {
+    result |= Qt::ItemIsDropEnabled;
   }
 
-  // drop check is handled by canDropMimeData
-  return result | Qt::ItemIsDropEnabled;
+  return result;
 }
 
 
@@ -1241,6 +1245,11 @@ bool ModList::dropArchive(const QMimeData* mimeData, int row, const QModelIndex&
   return false;
 }
 
+void ModList::onDragEnter(const QMimeData* mimeData)
+{
+  m_DropOnMod = mimeData->hasUrls();
+}
+
 bool ModList::canDropMimeData(const QMimeData* mimeData, Qt::DropAction action, int row, int column, const QModelIndex& parent) const
 {
   if (action == Qt::IgnoreAction) {
@@ -1261,8 +1270,7 @@ bool ModList::canDropMimeData(const QMimeData* mimeData, Qt::DropAction action, 
   else if (mimeData->hasText()) {
     // drop on item
     if (row == -1 && parent.isValid()) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(parent.row());
-      return modInfo->isSeparator();
+      return true;
     }
     else if (hasIndex(row, column, parent)) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
