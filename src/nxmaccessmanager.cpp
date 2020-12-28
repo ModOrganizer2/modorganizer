@@ -303,7 +303,7 @@ void NexusSSOLogin::onMessage(const QString& s)
     // first answer
 
     // open browser
-    const auto url = NexusSSOPage.arg(m_guid);
+    const QUrl url = NexusSSOPage.arg(m_guid);
     shell::Open(url);
 
     m_timeout.stop();

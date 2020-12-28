@@ -300,6 +300,8 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
   ui->endorsementBox->setChecked(settings().nexus().endorsementIntegration());
   ui->trackedBox->setChecked(settings().nexus().trackedIntegration());
   ui->hideAPICounterBox->setChecked(settings().interface().hideAPICounter());
+  ui->useCustomBrowser->setChecked(settings().network().useCustomBrowser());
+  ui->browserCommand->setText(settings().network().customBrowserCommand());
 
   // display server preferences
   for (const auto& server : s.network().servers()) {
@@ -345,10 +347,13 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
     [&]{ dialog().setExitNeeded(Exit::Restart); });
 
 
-  QObject::connect(ui->clearCacheButton, &QPushButton::clicked, [&]{ on_clearCacheButton_clicked(); });
-  QObject::connect(ui->associateButton, &QPushButton::clicked, [&]{ on_associateButton_clicked(); });
+  QObject::connect(ui->clearCacheButton, &QPushButton::clicked, [&]{ clearCache(); });
+  QObject::connect(ui->associateButton, &QPushButton::clicked, [&]{ associate(); });
+  QObject::connect(ui->useCustomBrowser, &QCheckBox::clicked, [&]{ updateCustomBrowser(); });
+  QObject::connect(ui->browseCustomBrowser, &QPushButton::clicked, [&]{ browseCustomBrowser(); });
 
   updateNexusData();
+  updateCustomBrowser();
 }
 
 void NexusSettingsTab::update()
@@ -358,6 +363,8 @@ void NexusSettingsTab::update()
   settings().nexus().setEndorsementIntegration(ui->endorsementBox->isChecked());
   settings().nexus().setTrackedIntegration(ui->trackedBox->isChecked());
   settings().interface().setHideAPICounter(ui->hideAPICounterBox->isChecked());
+  settings().network().setUseCustomBrowser(ui->useCustomBrowser->isChecked());
+  settings().network().setCustomBrowserCommand(ui->browserCommand->text());
 
   auto servers = settings().network().servers();
 
@@ -407,13 +414,13 @@ void NexusSettingsTab::update()
   settings().network().updateServers(servers);
 }
 
-void NexusSettingsTab::on_clearCacheButton_clicked()
+void NexusSettingsTab::clearCache()
 {
   QDir(Settings::instance().paths().cache()).removeRecursively();
   NexusInterface::instance().clearCache();
 }
 
-void NexusSettingsTab::on_associateButton_clicked()
+void NexusSettingsTab::associate()
 {
   Settings::instance().nexus().registerAsNXMHandler(true);
 }
@@ -441,4 +448,26 @@ void NexusSettingsTab::updateNexusData()
     ui->nexusDailyRequests->setText(QObject::tr("N/A"));
     ui->nexusHourlyRequests->setText(QObject::tr("N/A"));
   }
+}
+
+void NexusSettingsTab::updateCustomBrowser()
+{
+  ui->browserCommand->setEnabled(ui->useCustomBrowser->isChecked());
+}
+
+void NexusSettingsTab::browseCustomBrowser ()
+{
+  const QString Filters =
+    QObject::tr("Executables (*.exe)") + ";;" +
+    QObject::tr("All Files (*.*)");
+
+  QString file = QFileDialog::getOpenFileName(
+    parentWidget(), QObject::tr("Select the browser executable"),
+    ui->browserCommand->text(), Filters);
+
+  if (file.isNull() || file == "") {
+    return;
+  }
+
+  ui->browserCommand->setText(file + " \"%1\"");
 }

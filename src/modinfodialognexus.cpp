@@ -217,11 +217,11 @@ void NexusTab::onModChanged()
       padding-top: 20px;
       padding-bottom: 20px;
     }
-    
+
     img {
       max-width: 100%;
     }
-  
+
     figure.quote {
       position: relative;
       padding: 24px;
@@ -257,7 +257,7 @@ void NexusTab::onModChanged()
       display: inline-block;
       cursor: pointer;
     }
-  
+
     details summary::-webkit-details-marker {
       display:none;
     }
@@ -268,7 +268,7 @@ void NexusTab::onModChanged()
 
     a
     {
-      /*should avoid overflow with long links forcing wordwrap regardless of spaces*/  
+      /*should avoid overflow with long links forcing wordwrap regardless of spaces*/
       overflow-wrap: break-word;
       word-wrap: break-word;
 
@@ -325,7 +325,7 @@ void NexusTab::onSourceGameChanged()
 
   for (auto game : plugin().plugins<MOBase::IPluginGame>()) {
     if (game->gameName() == ui->sourceGame->currentText()) {
-      mod().setGameName(game->gameShortName()); 
+      mod().setGameName(game->gameShortName());
       mod().setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
       refreshData(mod().nexusId());
       return;
@@ -411,7 +411,7 @@ void NexusTab::onCustomURLChanged()
 
 void NexusTab::onVisitCustomURL()
 {
-  const auto url = mod().parseCustomURL();
+  const QUrl url = mod().parseCustomURL();
   if (url.isValid()) {
     shell::Open(url);
   }

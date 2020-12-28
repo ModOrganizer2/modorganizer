@@ -1109,7 +1109,7 @@ void DownloadManager::visitOnNexus(int index)
 
   QString gameName = info->m_FileInfo->gameName;
   if (modID > 0) {
-    QDesktopServices::openUrl(QUrl(m_NexusInterface->getModURL(modID, gameName)));
+    shell::Open(QUrl(m_NexusInterface->getModURL(modID, gameName)));
   }
   else {
     emit showMessage(tr("Nexus ID for this Mod is unknown"));

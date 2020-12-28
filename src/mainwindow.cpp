@@ -1678,7 +1678,7 @@ void MainWindow::registerModPage(IPluginModPage *modPage)
       m_IntegratedBrowser->openUrl(modPage->pageURL());
     }
     else {
-      QDesktopServices::openUrl(QUrl(modPage->pageURL()));
+      shell::Open(QUrl(modPage->pageURL()));
     }
   }, Qt::QueuedConnection);
 
@@ -2408,17 +2408,17 @@ void MainWindow::helpTriggered()
 
 void MainWindow::wikiTriggered()
 {
-  QDesktopServices::openUrl(QUrl("https://modorganizer2.github.io/"));
+  shell::Open(QUrl("https://modorganizer2.github.io/"));
 }
 
 void MainWindow::discordTriggered()
 {
-  QDesktopServices::openUrl(QUrl("https://discord.gg/cYwdcxj"));
+  shell::Open(QUrl("https://discord.gg/cYwdcxj"));
 }
 
 void MainWindow::issueTriggered()
 {
-  QDesktopServices::openUrl(QUrl("https://github.com/Modorganizer2/modorganizer/issues"));
+  shell::Open(QUrl("https://github.com/Modorganizer2/modorganizer/issues"));
 }
 
 void MainWindow::tutorialTriggered()
@@ -5177,13 +5177,13 @@ void MainWindow::on_actionNexus_triggered()
   QString gameName = game->gameShortName();
   if (game->gameNexusName().isEmpty() && game->primarySources().count())
     gameName = game->primarySources()[0];
-  QDesktopServices::openUrl(QUrl(NexusInterface::instance().getGameURL(gameName)));
+  shell::Open(QUrl(NexusInterface::instance().getGameURL(gameName)));
 }
 
 
 void MainWindow::linkClicked(const QString &url)
 {
-  QDesktopServices::openUrl(QUrl(url));
+  shell::Open(QUrl(url));
 }
 
 

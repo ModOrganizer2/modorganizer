@@ -66,7 +66,8 @@ Settings::Settings(const QString& path, bool globalInstance) :
   m_Settings(path, QSettings::IniFormat),
   m_Game(m_Settings), m_Geometry(m_Settings),
   m_Widgets(m_Settings, globalInstance), m_Colors(m_Settings),
-  m_Plugins(m_Settings), m_Paths(m_Settings), m_Network(m_Settings),
+  m_Plugins(m_Settings), m_Paths(m_Settings),
+  m_Network(m_Settings, globalInstance),
   m_Nexus(*this, m_Settings), m_Steam(*this, m_Settings),
   m_Interface(m_Settings), m_Diagnostics(m_Settings)
 {
@@ -1670,9 +1671,21 @@ void PathSettings::setOverwrite(const QString& path)
 }
 
 
-NetworkSettings::NetworkSettings(QSettings& settings)
+NetworkSettings::NetworkSettings(QSettings& settings, bool globalInstance)
   : m_Settings(settings)
 {
+  if (globalInstance) {
+    updateCustomBrowser();
+  }
+}
+
+void NetworkSettings::updateCustomBrowser()
+{
+  if (useCustomBrowser()) {
+    MOBase::shell::SetUrlHandler(customBrowserCommand());
+  } else {
+    MOBase::shell::SetUrlHandler("");
+  }
 }
 
 bool NetworkSettings::offlineMode() const
@@ -1802,6 +1815,28 @@ void NetworkSettings::updateFromOldMap()
   const auto servers = serversFromOldMap();
   removeSection(m_Settings, "Servers");
   updateServers(servers);
+}
+
+bool NetworkSettings::useCustomBrowser() const
+{
+  return get<bool>(m_Settings, "Settings", "use_custom_browser", false);
+}
+
+void NetworkSettings::setUseCustomBrowser(bool b)
+{
+  set(m_Settings, "Settings", "use_custom_browser", b);
+  updateCustomBrowser();
+}
+
+QString NetworkSettings::customBrowserCommand() const
+{
+  return get<QString>(m_Settings, "Settings", "custom_browser", "");
+}
+
+void NetworkSettings::setCustomBrowserCommand(const QString& s)
+{
+  set(m_Settings, "Settings", "custom_browser", s);
+  updateCustomBrowser();
 }
 
 ServerList NetworkSettings::serversFromOldMap() const
