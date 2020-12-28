@@ -32,6 +32,9 @@ public:
   void stopMonitorSaves();
   void hideSaveGameInfo();
 
+protected:
+  bool eventFilter(QObject* object, QEvent* e) override;
+
 private:
   struct SavesTabUi
   {

@@ -1503,10 +1503,7 @@ void MainWindow::cleanup()
 
 bool MainWindow::eventFilter(QObject *object, QEvent *event)
 {
-  if ((object == ui->savegameList) &&
-      ((event->type() == QEvent::Leave) || (event->type() == QEvent::WindowDeactivate))) {
-    m_SavesTab->hideSaveGameInfo();
-  } else if (event->type() == QEvent::StatusTip && object != this) {
+  if (event->type() == QEvent::StatusTip && object != this) {
     QMainWindow::event(event);
     return true;
   }

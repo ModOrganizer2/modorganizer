@@ -32,6 +32,24 @@ SavesTab::SavesTab(QWidget* window, OrganizerCore& core, Ui::MainWindow* mwui)
   connect(
     ui.list, &QListWidget::itemEntered,
     [&](auto* item){ saveSelectionChanged(item); });
+
+  ui.list->installEventFilter(this);
+}
+
+bool SavesTab::eventFilter(QObject* object, QEvent* e)
+{
+  if (object == ui.list) {
+    if (e->type() == QEvent::Leave || e->type() == QEvent::WindowDeactivate) {
+      hideSaveGameInfo();
+    } else if (e->type() == QEvent::KeyPress) {
+      QKeyEvent *keyEvent = static_cast<QKeyEvent*>(e);
+      if (keyEvent->key() == Qt::Key_Delete) {
+        deleteSavegame();
+      }
+    }
+  }
+
+  return false;
 }
 
 void SavesTab::displaySaveGameInfo(QListWidgetItem *newItem)
