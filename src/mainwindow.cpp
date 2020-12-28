@@ -2551,10 +2551,14 @@ void MainWindow::modInstalled(const QString &modName)
   QModelIndex qIndex = m_OrganizerCore.modList()->index(index, 0);
 
   if (m_ModListSortProxy->sourceModel() == m_ModListByPriorityProxy) {
+    m_ModListByPriorityProxy->refresh();
     qIndex = m_ModListByPriorityProxy->mapFromSource(qIndex);
     ui->modList->expand(m_ModListSortProxy->mapFromSource(qIndex));
   }
+
+  ui->modList->setCurrentIndex(m_ModListSortProxy->mapFromSource(qIndex));
   ui->modList->scrollTo(m_ModListSortProxy->mapFromSource(qIndex));
+  ui->modList->setFocus(Qt::OtherFocusReason);
 
   // force an update to happen
   std::multimap<QString, int> IDs;
