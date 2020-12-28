@@ -20,13 +20,8 @@ signals:
 
 protected:
 
-  // replace the auto-expand timer from QTreeView to avoid
-  // auto-collapsing
-  QBasicTimer m_openTimer;
-
   bool m_inDragMoveEvent = false;
 
-  void timerEvent(QTimerEvent* event) override;
   void dragEnterEvent(QDragEnterEvent* event) override;
   void dragMoveEvent(QDragMoveEvent* event) override;
   void dropEvent(QDropEvent* event) override;
