@@ -548,9 +548,12 @@ MainWindow::MainWindow(Settings &settings
 
 void MainWindow::updateModListByPriorityProxy()
 {
+  if (ui->groupCombo->currentIndex() != 0) {
+    return;
+  }
   if (m_ModListSortProxy->sortColumn() == ModList::COL_PRIORITY && m_ModListSortProxy->sortOrder() == Qt::AscendingOrder) {
     m_ModListSortProxy->setSourceModel(m_ModListByPriorityProxy);
-    emit m_OrganizerCore.modList()->layoutChanged();
+    m_ModListByPriorityProxy->refresh();
   }
   else {
     m_ModListSortProxy->setSourceModel(m_OrganizerCore.modList());
@@ -579,6 +582,7 @@ void MainWindow::setupModList()
   ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
 
   connect(ui->modList, &ModListView::dragEntered, m_OrganizerCore.modList(), &ModList::onDragEnter);
+  connect(m_OrganizerCore.modList(), &ModList::modPrioritiesChanged, this, &MainWindow::onModPrioritiesChanged);
 
   connect(
     ui->modList->header(), SIGNAL(sortIndicatorChanged(int,Qt::SortOrder)),
@@ -2435,8 +2439,58 @@ void MainWindow::esplist_changed()
   updatePluginCount();
 }
 
-void MainWindow::modorder_changed()
+QModelIndex MainWindow::modViewIndexToModel(const QModelIndex& index) const
 {
+  auto sindex = index;
+
+  // remove the sort proxy.
+  sindex = m_ModListSortProxy->mapToSource(index);
+
+  // if there is another proxy
+  if (auto* proxy = qobject_cast<QAbstractProxyModel*>(m_ModListSortProxy->sourceModel())) {
+    sindex = proxy->mapToSource(sindex);
+  }
+
+  return sindex;
+}
+
+QModelIndex MainWindow::modModelIndexToView(const QModelIndex& index) const
+{
+  auto dindex = index;
+
+  // if there is another proxy than the sort
+  if (auto* proxy = qobject_cast<QAbstractProxyModel*>(m_ModListSortProxy->sourceModel())) {
+    dindex = proxy->mapFromSource(dindex);
+  }
+
+  // add the sort proxy
+  dindex = m_ModListSortProxy->mapFromSource(dindex);
+
+  return dindex;
+
+}
+
+void MainWindow::onModPrioritiesChanged(std::vector<int> const& indices)
+{
+  // if we have collapsible separators, we need to refresh, expand if necessary,
+  // and recreate the selection
+  if (m_ModListSortProxy->sourceModel() == m_ModListByPriorityProxy) {
+
+    // manually retain the selection and restore it after
+    QModelIndex current = modViewIndexToModel(ui->modList->currentIndex());
+    std::vector<QModelIndex> selected;
+    for (const auto& idx : ui->modList->selectionModel()->selectedRows()) {
+      selected.push_back(modViewIndexToModel(idx));
+    }
+
+    m_ModListByPriorityProxy->refresh();
+
+    ui->modList->setCurrentIndex(modModelIndexToView(current));
+    for (auto idx : selected) {
+      ui->modList->selectionModel()->select(modModelIndexToView(idx), QItemSelectionModel::Select | QItemSelectionModel::Rows);
+    }
+  }
+
   for (unsigned int i = 0; i < m_OrganizerCore.currentProfile()->numMods(); ++i) {
     int priority = m_OrganizerCore.currentProfile()->getModPriority(i);
     if (m_OrganizerCore.currentProfile()->modEnabled(i)) {
@@ -2453,7 +2507,7 @@ void MainWindow::modorder_changed()
   { // refresh selection
     QModelIndex current = ui->modList->currentIndex();
     if (current.isValid()) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(current.data(Qt::UserRole + 1).toInt());
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(current.data(ModList::IndexRole).toInt());
       // clear caches on all mods conflicting with the moved mod
       for (int i :  modInfo->getModOverwrite()) {
         ModInfo::getByIndex(i)->clearCaches();
@@ -2478,8 +2532,9 @@ void MainWindow::modorder_changed()
       m_OrganizerCore.modList()->setOverwriteMarkers(modInfo->getModOverwrite(), modInfo->getModOverwritten());
       m_OrganizerCore.modList()->setArchiveOverwriteMarkers(modInfo->getModArchiveOverwrite(), modInfo->getModArchiveOverwritten());
       m_OrganizerCore.modList()->setArchiveLooseOverwriteMarkers(modInfo->getModArchiveLooseOverwrite(), modInfo->getModArchiveLooseOverwritten());
-      if (m_ModListSortProxy != nullptr)
+      if (m_ModListSortProxy != nullptr) {
         m_ModListSortProxy->invalidate();
+      }
       ui->modList->verticalScrollBar()->repaint();
     }
   }
@@ -2624,7 +2679,7 @@ void MainWindow::modlistSelectionsChanged(const QItemSelection &selected)
   if (selected.count()) {
     auto selection = selected.last();
     auto index = selection.indexes().last();
-    ModInfo::Ptr selectedMod = ModInfo::getByIndex(index.data(Qt::UserRole + 1).toInt());
+    ModInfo::Ptr selectedMod = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
     m_OrganizerCore.modList()->setOverwriteMarkers(selectedMod->getModOverwrite(), selectedMod->getModOverwritten());
     m_OrganizerCore.modList()->setArchiveOverwriteMarkers(selectedMod->getModArchiveOverwrite(), selectedMod->getModArchiveOverwritten());
     m_OrganizerCore.modList()->setArchiveLooseOverwriteMarkers(selectedMod->getModArchiveLooseOverwrite(), selectedMod->getModArchiveLooseOverwritten());
@@ -2669,7 +2724,7 @@ void MainWindow::removeMod_clicked()
       int i = 0;
       for (QModelIndex idx : selection->selectedRows()) {
         QString name = idx.data().toString();
-        if (!ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->isRegular()) {
+        if (!ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->isRegular()) {
           continue;
         }
 
@@ -2684,7 +2739,7 @@ void MainWindow::removeMod_clicked()
           mods += "<li>...</li>";
         }
 
-        modNames.append(ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->name());
+        modNames.append(ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->name());
         ++i;
       }
       if (QMessageBox::question(this, tr("Confirm"),
@@ -2776,7 +2831,7 @@ void MainWindow::endorse_clicked()
     }
 
     for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(true);
+      ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->endorse(true);
     }
   });
 }
@@ -2786,7 +2841,7 @@ void MainWindow::dontendorse_clicked()
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->setNeverEndorse();
+      ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->setNeverEndorse();
     }
   }
   else {
@@ -2812,7 +2867,7 @@ void MainWindow::unendorse_clicked()
     }
 
     for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(false);
+      ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->endorse(false);
     }
   });
 }
@@ -2831,7 +2886,7 @@ void MainWindow::track_clicked()
   m_OrganizerCore.loggedInAction(this, [this] {
     QItemSelectionModel *selection = ui->modList->selectionModel();
     for (auto idx : selection->selectedRows()) {
-      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->track(true);
+      ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->track(true);
     }
   });
 }
@@ -2841,7 +2896,7 @@ void MainWindow::untrack_clicked()
   m_OrganizerCore.loggedInAction(this, [this] {
     QItemSelectionModel *selection = ui->modList->selectionModel();
     for (auto idx : selection->selectedRows()) {
-      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->track(false);
+      ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->track(false);
     }
   });
 }
@@ -3033,7 +3088,7 @@ void MainWindow::ignoreMissingData_clicked()
     std::vector<ModInfo::Ptr> changed;
 
     for (QModelIndex idx : rows) {
-      int row_idx = idx.data(Qt::UserRole + 1).toInt();
+      int row_idx = idx.data(ModList::IndexRole).toInt();
       ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
       info->markValidated(true);
       changed.push_back(info);
@@ -3058,7 +3113,7 @@ void MainWindow::markConverted_clicked()
     std::vector<ModInfo::Ptr> changed;
 
     for (QModelIndex idx : rows) {
-      int row_idx = idx.data(Qt::UserRole + 1).toInt();
+      int row_idx = idx.data(ModList::IndexRole).toInt();
       ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
       info->markConverted(true);
       changed.push_back(info);
@@ -3097,7 +3152,7 @@ void MainWindow::restoreHiddenFiles_clicked()
     for (QModelIndex idx : selection->selectedRows()) {
 
       QString name = idx.data().toString();
-      int row_idx = idx.data(Qt::UserRole + 1).toInt();
+      int row_idx = idx.data(ModList::IndexRole).toInt();
       ModInfo::Ptr modInfo = ModInfo::getByIndex(row_idx);
       const auto flags = modInfo->getFlags();
 
@@ -3116,7 +3171,7 @@ void MainWindow::restoreHiddenFiles_clicked()
         mods += "<li>...</li>";
       }
 
-      modNames.append(ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->name());
+      modNames.append(ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->name());
       ++i;
     }
     if (QMessageBox::question(this, tr("Confirm"),
@@ -3125,7 +3180,7 @@ void MainWindow::restoreHiddenFiles_clicked()
 
       for (QModelIndex idx : selection->selectedRows()) {
 
-        int row_idx = idx.data(Qt::UserRole + 1).toInt();
+        int row_idx = idx.data(ModList::IndexRole).toInt();
         ModInfo::Ptr modInfo = ModInfo::getByIndex(row_idx);
 
         const auto flags = modInfo->getFlags();
@@ -3186,7 +3241,7 @@ void MainWindow::visitOnNexus_clicked()
     QString gameName;
 
     for (QModelIndex idx : selection->selectedRows()) {
-      row_idx = idx.data(Qt::UserRole + 1).toInt();
+      row_idx = idx.data(ModList::IndexRole).toInt();
       info = ModInfo::getByIndex(row_idx);
       int modID = info->nexusId();
       gameName = info->gameName();
@@ -3224,7 +3279,7 @@ void MainWindow::visitWebPage_clicked()
     ModInfo::Ptr info;
     QString gameName;
     for (QModelIndex idx : selection->selectedRows()) {
-      row_idx = idx.data(Qt::UserRole + 1).toInt();
+      row_idx = idx.data(ModList::IndexRole).toInt();
       info = ModInfo::getByIndex(row_idx);
 
       const auto url = info->parseCustomURL();
@@ -3245,7 +3300,7 @@ void MainWindow::visitWebPage_clicked()
 
 void MainWindow::visitNexusOrWebPage(const QModelIndex& idx)
 {
-  int row_idx = idx.data(Qt::UserRole + 1).toInt();
+  int row_idx = idx.data(ModList::IndexRole).toInt();
 
   ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
   if (!info) {
@@ -3293,7 +3348,7 @@ void MainWindow::openExplorer_clicked()
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
       shell::Explore(info->absolutePath());
     }
   }
@@ -3332,7 +3387,7 @@ void MainWindow::openExplorer_activated()
 		if (selection->hasSelection() && selection->selectedRows().count() == 1 ) {
 
 			QModelIndex idx = selection->currentIndex();
-			ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+			ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
 			std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
 			if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
@@ -3621,7 +3676,7 @@ void MainWindow::setColor_clicked()
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
        info->setColor(currentColor);
     }
   }
@@ -3637,7 +3692,7 @@ void MainWindow::resetColor_clicked()
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
        info->setColor(color);
     }
   }
@@ -4196,7 +4251,7 @@ void MainWindow::ignoreUpdate() {
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
       info->ignoreUpdate(true);
     }
   }
@@ -4214,7 +4269,7 @@ void MainWindow::checkModUpdates_clicked()
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
       IDs.insert(std::make_pair<QString, int>(info->gameName(), info->nexusId()));
     }
   } else {
@@ -4229,7 +4284,7 @@ void MainWindow::unignoreUpdate()
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
       info->ignoreUpdate(false);
     }
   }
@@ -4640,6 +4695,12 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
       initModListContextMenu(allMods);
       allMods->setTitle(tr("All Mods"));
       menu.addMenu(allMods);
+
+      if (m_ModListSortProxy->sourceModel() == m_ModListByPriorityProxy) {
+        menu.addAction(tr("Collapse all"), ui->modList, &QTreeView::collapseAll);
+        menu.addAction(tr("Expand all"), ui->modList, &QTreeView::expandAll);
+      }
+
       menu.addSeparator();
 
       ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);

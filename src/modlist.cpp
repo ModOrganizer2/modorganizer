@@ -336,7 +336,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     } else {
       return modInfo->nexusId();
     }
-  } else if (role == Qt::UserRole + 1) {
+  } else if (role == IndexRole) {
     return modIndex;
   } else if (role == Qt::UserRole + 2) {
     switch (column) {
@@ -592,8 +592,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
         }
         if (ok) {
           m_Profile->setModPriority(modID, newPriority);
-
-          emit modorder_changed();
+          emit modPrioritiesChanged({ modID });
           result = true;
         } else {
           result = false;
@@ -765,7 +764,7 @@ void ModList::changeModPriority(std::vector<int> sourceIndices, int newPriority)
 
   emit layoutChanged();
 
-  emit modorder_changed();
+  emit modPrioritiesChanged(sourceIndices);
 }
 
 
@@ -777,8 +776,7 @@ void ModList::changeModPriority(int sourceIndex, int newPriority)
   m_Profile->setModPriority(sourceIndex, newPriority);
 
   emit layoutChanged();
-
-  emit modorder_changed();
+  emit modPrioritiesChanged({ sourceIndex });
 }
 
 void ModList::setOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten)
@@ -1525,17 +1523,18 @@ bool ModList::moveSelection(QAbstractItemView *itemView, int direction)
       rows.swapItemsAt(i, rows.size() - i - 1);
     }
   }
+  std::vector<int> allIndex;
   for (QModelIndex idx : rows) {
-    if (filterModel != nullptr) {
-      idx = filterModel->mapToSource(idx);
-    }
-    int newPriority = m_Profile->getModPriority(idx.row()) + offset;
+    auto index = idx.data(IndexRole).toInt();
+    allIndex.push_back(index);
+    int newPriority = m_Profile->getModPriority(index) + offset;
     if ((newPriority >= 0) && (newPriority < static_cast<int>(m_Profile->numRegularMods()))) {
-      m_Profile->setModPriority(idx.row(), newPriority);
-      notifyChange(idx.row());
+      m_Profile->setModPriority(index, newPriority);
+      notifyChange(index);
     }
   }
-  emit modorder_changed();
+
+  emit modPrioritiesChanged(allIndex);
   return true;
 }
 
@@ -1547,7 +1546,7 @@ bool ModList::deleteSelection(QAbstractItemView *itemView)
   if (rows.count() > 1) {
     emit removeSelectedMods();
   } else if (rows.count() == 1) {
-    removeRow(rows[0].data(Qt::UserRole + 1).toInt(), QModelIndex());
+    removeRow(rows[0].data(IndexRole).toInt(), QModelIndex());
   }
   return true;
 }
@@ -1562,7 +1561,7 @@ bool ModList::toggleSelection(QAbstractItemView *itemView)
   QList<unsigned int> modsToDisable;
   QModelIndexList dirtyMods;
   for (QModelIndex idx : selectionModel->selectedRows()) {
-    int modId = idx.data(Qt::UserRole + 1).toInt();
+    int modId = idx.data(IndexRole).toInt();
     if (m_Profile->modEnabled(modId)) {
       modsToDisable.append(modId);
       dirtyMods.append(idx);

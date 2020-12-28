@@ -55,6 +55,10 @@ class ModList : public QAbstractItemModel
 
 public:
 
+  // role of the index of the mod
+  //
+  constexpr static int IndexRole = Qt::UserRole + 1;
+
   enum EColumn {
     COL_NAME,
     COL_CONFLICTFLAGS,
@@ -69,8 +73,6 @@ public:
     COL_NOTES,
     COL_LASTCOLUMN = COL_NOTES,
   };
-
-  friend class ModListProxy;
 
   using SignalModInstalled = boost::signals2::signal<void(MOBase::IModInterface*)>;
   using SignalModRemoved = boost::signals2::signal<void(QString const&)>;
@@ -222,12 +224,12 @@ public slots:
 signals:
 
   /**
-   * @brief emitted whenever the sorting in the list was changed by the user
+   * @brief Emitted whenever the priority of mods changes
    *
-   * the sorting of the list can only be manually changed if the list is sorted by priority
-   * in which case the move is intended to change the priority of a mod
+   * The sorting of the list can only be manually changed if the list is sorted by priority
+   * in which case the move is intended to change the priority of a mod.
    **/
-  void modorder_changed();
+  void modPrioritiesChanged(std::vector<int> const& index);
 
   /**
    * @brief emitted when the model wants a text to be displayed by the UI
@@ -389,6 +391,7 @@ private:
 
 private:
 
+  friend class ModListProxy;
   friend class ModListByPriorityProxy;
 
   OrganizerCore *m_Organizer;

@@ -148,7 +148,7 @@ public:
   ModInfo::Ptr previousModInList();
 
 public slots:
-  void modorder_changed();
+  void onModPrioritiesChanged(std::vector<int> const& indices);
   void esplist_changed();
   void refresherProgress(const DirectoryRefreshProgress* p);
 
@@ -607,8 +607,13 @@ private slots: // ui slots
 
   void storeSettings();
   void readSettings();
+
   void setupModList();
   void updateModListByPriorityProxy();
+
+  // map index from the modlist view to the modlist model, handling proxy
+  QModelIndex modViewIndexToModel(const QModelIndex& index) const;
+  QModelIndex modModelIndexToView(const QModelIndex& index) const;
 };
 
 #endif // MAINWINDOW_H

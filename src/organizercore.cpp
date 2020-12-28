@@ -255,8 +255,6 @@ void OrganizerCore::setUserInterface(IUserInterface* ui)
       SLOT(clearOverwrite()));
     connect(&m_ModList, SIGNAL(fileMoved(QString, QString, QString)), w,
             SLOT(fileMoved(QString, QString, QString)));
-    connect(&m_ModList, SIGNAL(modorder_changed()), w,
-            SLOT(modorder_changed()));
     connect(&m_PluginList, SIGNAL(writePluginsList()), w,
       SLOT(esplist_changed()));
     connect(&m_PluginList, SIGNAL(esplist_changed()), w,

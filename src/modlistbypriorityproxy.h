@@ -26,6 +26,7 @@ public:
   ~ModListByPriorityProxy();
 
   void setProfile(Profile* profile) { m_Profile = profile; }
+  void refresh();
 
   void setSourceModel(QAbstractItemModel* sourceModel) override;
 
