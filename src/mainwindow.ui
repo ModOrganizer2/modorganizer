@@ -1413,6 +1413,7 @@ p, li { white-space: pre-wrap; }
    <addaction name="actionNexus"/>
    <addaction name="actionModPage"/>
    <addaction name="actionAdd_Profile"/>
+   <addaction name="action_Refresh"/>
    <addaction name="actionModify_Executables"/>
    <addaction name="actionTool"/>
    <addaction name="actionSettings"/>
@@ -1482,6 +1483,7 @@ p, li { white-space: pre-wrap; }
      <addaction name="actionToolBarTextOnly"/>
      <addaction name="actionToolBarIconsAndText"/>
     </widget>
+    <addaction name="action_Refresh"/>
     <addaction name="menuToolbars"/>
     <addaction name="actionViewLog"/>
     <addaction name="separator"/>
@@ -1894,6 +1896,18 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="text">
     <string>Log</string>
+   </property>
+  </action>
+  <action name="action_Refresh">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/MO/gui/resources/view-refresh.png</normaloff>:/MO/gui/resources/view-refresh.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Refresh</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
    </property>
   </action>
  </widget>

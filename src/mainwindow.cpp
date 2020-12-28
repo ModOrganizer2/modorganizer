@@ -487,7 +487,6 @@ MainWindow::MainWindow(Settings &settings
 
   new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Enter), this, SLOT(openExplorer_activated()));
   new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Return), this, SLOT(openExplorer_activated()));
-  new QShortcut(QKeySequence::Refresh, this, SLOT(refreshProfile_activated()));
 
   setFilterShortcuts(ui->modList, ui->modFilterEdit);
   setFilterShortcuts(ui->espList, ui->espFilterEdit);
@@ -2290,6 +2289,11 @@ void MainWindow::tutorialTriggered()
 void MainWindow::on_actionInstallMod_triggered()
 {
   installMod();
+}
+
+void MainWindow::on_action_Refresh_triggered()
+{
+  refreshProfile_activated();
 }
 
 void MainWindow::on_actionAdd_Profile_triggered()
