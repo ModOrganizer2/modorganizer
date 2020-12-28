@@ -29,6 +29,8 @@ void ModListView::dragMoveEvent(QDragMoveEvent* event)
   if (autoExpandDelay() >= 0) {
     openTimer.start(autoExpandDelay(), this);
   }
+
+  // bypass QTreeView
   QAbstractItemView::dragMoveEvent(event);
 }
 

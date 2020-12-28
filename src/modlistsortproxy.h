@@ -78,9 +78,9 @@ public:
   void setProfile(Profile *profile);
 
 
-  virtual Qt::ItemFlags flags(const QModelIndex &modelIndex) const;
-  virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action,
-                            int row, int column, const QModelIndex &parent);
+  Qt::ItemFlags flags(const QModelIndex &modelIndex) const override;
+  bool canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const override;
+  bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) override;
 
   virtual void setSourceModel(QAbstractItemModel *sourceModel) override;
 
