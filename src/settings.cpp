@@ -470,7 +470,34 @@ const DiagnosticsSettings& Settings::diagnostics() const
 QSettings::Status Settings::sync() const
 {
   m_Settings.sync();
-  return m_Settings.status();
+
+  const auto s = m_Settings.status();
+
+  // there's a bug in Qt at least until 5.15.0 where a utf-8 bom in the ini is
+  // handled correctly but still sets FormatError
+  //
+  // see qsettings.cpp, in QConfFileSettingsPrivate::readIniFile(), there's a
+  // specific check for utf-8, which adjusts `dataPos` so it's skipped, but
+  // the FLUSH_CURRENT_SECTION() macro uses `currentSectionStart`, and that one
+  // isn't adjusted when changing `dataPos` on the first line and so stays 0
+  //
+  // this puts the bom in `unparsedIniSections` and eventually sets FormatError
+  // somewhere
+  //
+  //
+  // the other problem is that the status is never reset, not even when calling
+  // sync(), so the FormatError that's returned here is actually from reading
+  // the ini, not writing it
+  //
+  //
+  // since it's impossible to get a FormatError on write, it's considered to
+  // be a NoError here
+
+  if (s == QSettings::FormatError) {
+    return QSettings::NoError;
+  } else {
+    return s;
+  }
 }
 
 QSettings::Status Settings::iniStatus() const

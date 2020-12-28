@@ -359,9 +359,6 @@ int MOApplication::doOneRun(MOMultiProcess& multiProcess)
     tt.start("MOApplication::doOneRun() MainWindow setup");
     MainWindow mainWindow(settings, organizer, *pluginContainer);
 
-    // qt resets the thread name somewhere when creating the main window
-    MOShared::SetThisThreadName("main");
-
     // the nexus interface can show dialogs, make sure they're parented to the
     // main window
     ni.getAccessManager()->setTopLevelWidget(&mainWindow);

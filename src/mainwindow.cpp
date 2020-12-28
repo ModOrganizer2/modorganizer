@@ -286,6 +286,10 @@ MainWindow::MainWindow(Settings &settings
   QWebEngineProfile::defaultProfile()->setCachePath(settings.paths().cache());
   QWebEngineProfile::defaultProfile()->setPersistentStoragePath(settings.paths().cache());
 
+  // qt resets the thread name somewhere within the QWebEngineProfile calls
+  // above
+  MOShared::SetThisThreadName("main");
+
   ui->setupUi(this);
   languageChange(settings.interface().language());
   ui->statusBar->setup(ui, settings);
