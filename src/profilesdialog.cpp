@@ -250,6 +250,12 @@ void ProfilesDialog::on_renameButton_clicked()
 {
   Profile::Ptr currentProfile = ui->profilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
 
+  if (currentProfile->name() == m_ActiveProfileName) {
+    QMessageBox::warning(this, tr("Renaming active profile"),
+      tr("The active profile cannot be renamed. Please change to a different profile first."));
+    return;
+  }
+
   bool valid = false;
   QString name;
 
@@ -265,7 +271,7 @@ void ProfilesDialog::on_renameButton_clicked()
   }
 
   ui->profilesList->currentItem()->setText(name);
-  
+
   QString oldName = currentProfile->name();
   currentProfile->rename(name);
 
