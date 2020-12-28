@@ -105,6 +105,7 @@ add_filter(NAME src/mainwindow GROUPS
 	filetreemodel
 	filterlist
 	mainwindow
+	savestab
 	statusbar
 )
 
