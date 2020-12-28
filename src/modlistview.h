@@ -12,11 +12,6 @@ public:
   explicit ModListView(QWidget *parent = 0);
   void setModel(QAbstractItemModel *model) override;
 
-signals:
-  void dropModeUpdate(bool dropOnRows);
-
-public slots:
-
 protected:
 
   // replace the auto-expand timer from QTreeView to avoid
@@ -25,7 +20,6 @@ protected:
 
   void timerEvent(QTimerEvent* event) override;
   void dragMoveEvent(QDragMoveEvent* event) override;
-  void dragEnterEvent(QDragEnterEvent* event) override;
 
 private:
 

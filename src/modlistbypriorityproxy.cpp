@@ -210,62 +210,42 @@ bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropActi
 
 bool ModListByPriorityProxy::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent)
 {
-  // we need to fix the source row
+  // we need to fix the source model row
   int sourceRow = -1;
 
-  if (row >= 0) {
-    if (!parent.isValid()) {
-      if (row < m_Root.children.size()) {
-        sourceRow = m_Root.children[row]->index;
-      }
-      else {
-        sourceRow = ModInfo::getNumMods();
-      }
-    }
-    else {
-      auto* item = static_cast<TreeItem*>(parent.internalPointer());
-      QStringList what;
-      for (auto& child : item->children) {
-        what.append(QString::number(child->index));
-      }
-
-      if (row < item->children.size()) {
-        sourceRow = item->children[row]->index;
-      }
-      else if (parent.row() + 1 < m_Root.children.size()) {
-        sourceRow = m_Root.children[parent.row() + 1]->index;
-      }
+  if (data->hasUrls()) {
+    if (parent.isValid()) {
+      sourceRow = static_cast<TreeItem*>(parent.internalPointer())->index;
     }
   }
-  else if (parent.isValid()) {
-    // this is a drop in a separator
-    sourceRow = m_Root.children[parent.row() + 1]->index;
+  else {
+    if (row >= 0) {
+      if (!parent.isValid()) {
+        if (row < m_Root.children.size()) {
+          sourceRow = m_Root.children[row]->index;
+        }
+        else {
+          sourceRow = ModInfo::getNumMods();
+        }
+      }
+      else {
+        auto* item = static_cast<TreeItem*>(parent.internalPointer());
+
+        if (row < item->children.size()) {
+          sourceRow = item->children[row]->index;
+        }
+        else if (parent.row() + 1 < m_Root.children.size()) {
+          sourceRow = m_Root.children[parent.row() + 1]->index;
+        }
+      }
+    }
+    else if (parent.isValid()) {
+      // this is a drop in a separator
+      sourceRow = m_Root.children[parent.row() + 1]->index;
+    }
   }
 
   return sourceModel()->dropMimeData(data, action, sourceRow, column, QModelIndex());
-}
-
-Qt::ItemFlags ModListByPriorityProxy::flags(const QModelIndex& idx) const
-{
-  if (!idx.isValid()) {
-    return sourceModel()->flags(QModelIndex());
-  }
-
-  // we check the flags of the root node and if drop is not enabled, it
-  // means we are dragging files.
-  Qt::ItemFlags rootFlags = sourceModel()->flags(QModelIndex());
-  if (!rootFlags.testFlag(Qt::ItemIsDropEnabled)) {
-    return sourceModel()->flags(mapToSource(idx));
-  }
-
-  auto flags = sourceModel()->flags(mapToSource(idx));
-  auto* item = static_cast<TreeItem*>(idx.internalPointer());
-
-  if (item->mod->isSeparator()) {
-    flags |= Qt::ItemIsDropEnabled;
-  }
-
-  return flags;
 }
 
 QModelIndex ModListByPriorityProxy::index(int row, int column, const QModelIndex& parent) const

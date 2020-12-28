@@ -178,6 +178,11 @@ public: // Static functions:
   static unsigned int getIndex(const QString &name);
 
   /**
+   * @brief Retrieve the overwrite mod.
+   */
+  static ModInfo::Ptr getOverwrite() { return s_Overwrite; }
+
+  /**
    * @brief Find the first mod that fulfills the filter function (after no particular order).
    *
    * @param filter A function to filter mods by. Should return true for a match.
@@ -981,6 +986,7 @@ protected:
 protected:
 
   static std::vector<ModInfo::Ptr> s_Collection;
+  static ModInfo::Ptr s_Overwrite;
   static std::map<QString, unsigned int> s_ModsByName;
 
   int m_PrimaryCategory;
@@ -992,7 +998,7 @@ protected:
 
 private:
 
-  static void createFromOverwrite(PluginContainer* pluginContainer,
+  static ModInfo::Ptr createFromOverwrite(PluginContainer* pluginContainer,
     const MOBase::IPluginGame* game,
     MOShared::DirectoryEntry** directoryStructure);
 

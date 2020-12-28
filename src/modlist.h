@@ -199,11 +199,13 @@ public: // implementation of virtual functions of QAbstractItemModel
   virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
   virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
   virtual Qt::ItemFlags flags(const QModelIndex &modelIndex) const;
-  virtual Qt::DropActions supportedDropActions() const { return Qt::MoveAction | Qt::CopyAction; }
-  virtual QStringList mimeTypes() const;
-  virtual QMimeData *mimeData(const QModelIndexList &indexes) const;
-  virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
-  virtual bool removeRows(int row, int count, const QModelIndex &parent);
+  virtual bool removeRows(int row, int count, const QModelIndex& parent);
+
+  Qt::DropActions supportedDropActions() const override { return Qt::MoveAction | Qt::CopyAction; }
+  QStringList mimeTypes() const override;
+  QMimeData *mimeData(const QModelIndexList &indexes) const override;
+  bool canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const override;
+  bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) override;
 
   virtual QModelIndex index(int row, int column,
                             const QModelIndex &parent = QModelIndex()) const;
@@ -213,10 +215,8 @@ public: // implementation of virtual functions of QAbstractItemModel
 
 public slots:
 
-  void dropModeUpdate(bool dropOnItems);
 
   void enableSelected(const QItemSelectionModel *selectionModel);
-
   void disableSelected(const QItemSelectionModel *selectionModel);
 
 signals:
@@ -369,6 +369,16 @@ private:
 
 private:
 
+  // retrieve the relative path of file and its origin given a URL from Mime data
+  // returns an empty optional if the URL is not a valid file for dropping
+  //
+  std::optional<std::pair<QString, QString>> relativeUrl(const QUrl&) const;
+
+  // return the source rows from the given mime data for drag&drop of mods or
+  // installation archives
+  //
+  std::vector<int> sourceRows(const QMimeData* mimeData) const;
+
   bool dropURLs(const QMimeData* mimeData, int row, const QModelIndex& parent);
   bool dropMod(const QMimeData* mimeData, int row, const QModelIndex& parent);
   bool dropArchive(const QMimeData* mimeData, int row, const QModelIndex& parent);
@@ -391,8 +401,6 @@ private:
   bool m_InNotifyChange;
 
   QFontMetrics m_FontMetrics;
-
-  bool m_DropOnItems;
 
   std::set<unsigned int> m_Overwrite;
   std::set<unsigned int> m_Overwritten;

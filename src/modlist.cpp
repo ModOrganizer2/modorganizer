@@ -69,7 +69,6 @@ ModList::ModList(PluginContainer *pluginContainer, OrganizerCore *organizer)
   , m_Modified(false)
   , m_InNotifyChange(false)
   , m_FontMetrics(QFont())
-  , m_DropOnItems(false)
   , m_PluginContainer(pluginContainer)
 {
   m_LastCheck.start();
@@ -689,14 +688,10 @@ Qt::ItemFlags ModList::flags(const QModelIndex &modelIndex) const
         result |= Qt::ItemIsEditable;
       }
     }
-    if (m_DropOnItems
-        && (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) == flags.end())) {
-      result |= Qt::ItemIsDropEnabled;
-    }
-  } else {
-    if (!m_DropOnItems) result |= Qt::ItemIsDropEnabled;
   }
-  return result;
+
+  // drop check is handled by canDropMimeData
+  return result | Qt::ItemIsDropEnabled;
 }
 
 
@@ -1113,6 +1108,52 @@ int ModList::dropPriority(int row, const QModelIndex& parent) const
   return newPriority;
 }
 
+std::vector<int> ModList::sourceRows(const QMimeData* mimeData) const
+{
+  QByteArray encoded = mimeData->data("application/x-qabstractitemmodeldatalist");
+  QDataStream stream(&encoded, QIODevice::ReadOnly);
+  std::vector<int> sourceRows;
+
+  while (!stream.atEnd()) {
+    int sourceRow, col;
+    QMap<int, QVariant> roleDataMap;
+    stream >> sourceRow >> col >> roleDataMap;
+    if (col == 0) {
+      sourceRows.push_back(sourceRow);
+    }
+  }
+  return sourceRows;
+}
+
+std::optional<std::pair<QString, QString>> ModList::relativeUrl(const QUrl& url) const
+{
+  if (!url.isLocalFile()) {
+    return {};
+  }
+
+  QDir allModsDir(Settings::instance().paths().mods());
+  QDir overwriteDir(Settings::instance().paths().overwrite());
+
+  QFileInfo sourceInfo(url.toLocalFile());
+  QString sourceFile = sourceInfo.canonicalFilePath();
+
+  QString relativePath;
+  QString originName;
+
+  if (sourceFile.startsWith(allModsDir.canonicalPath())) {
+    QDir relativeDir(allModsDir.relativeFilePath(sourceFile));
+    QStringList splitPath = relativeDir.path().split("/");
+    originName = splitPath[0];
+    splitPath.pop_front();
+    return { { splitPath.join("/"), originName } };
+  }
+  else if (sourceFile.startsWith(overwriteDir.canonicalPath())) {
+    return { { overwriteDir.relativeFilePath(sourceFile), ModInfo::getOverwrite()->name() } };
+  }
+
+  return {};
+}
+
 bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &parent)
 {
   if (row == -1) {
@@ -1121,44 +1162,22 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
   QDir modDir = QDir(modInfo->absolutePath());
 
-  QDir allModsDir(Settings::instance().paths().mods());
-  QDir overwriteDir(Settings::instance().paths().overwrite());
-
   QStringList sourceList;
   QStringList targetList;
   QList<QPair<QString,QString>> relativePathList;
 
-  unsigned int overwriteIndex = ModInfo::findMod([] (ModInfo::Ptr mod) -> bool {
-    std::vector<ModInfo::EFlag> flags = mod->getFlags();
-    return std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end(); });
-
-  QString overwriteName = ModInfo::getByIndex(overwriteIndex)->name();
-
   for (auto url : mimeData->urls()) {
-    if (!url.isLocalFile()) {
-      log::debug("URL drop ignored: \"{}\" is not a local file", url.url());
+    auto p = relativeUrl(url);
+
+    if (!p) {
+      log::debug("URL drop ignored: \"{}\" is not a local file or not a known file to MO", url.url());
       continue;
     }
+
+    auto [relativePath, originName] = *p;
 
     QFileInfo sourceInfo(url.toLocalFile());
     QString sourceFile = sourceInfo.canonicalFilePath();
-
-    QString relativePath;
-    QString originName;
-
-    if (sourceFile.startsWith(allModsDir.canonicalPath())) {
-      QDir relativeDir(allModsDir.relativeFilePath(sourceFile));
-      QStringList splitPath = relativeDir.path().split("/");
-      originName = splitPath[0];
-      splitPath.pop_front();
-      relativePath = splitPath.join("/");
-    } else if (sourceFile.startsWith(overwriteDir.canonicalPath())) {
-      originName = overwriteName;
-      relativePath = overwriteDir.relativeFilePath(sourceFile);
-    } else {
-      log::debug("URL drop ignored: \"{}\" is not a known file to MO", sourceFile);
-      continue;
-    }
 
     QFileInfo targetInfo(modDir.absoluteFilePath(relativePath));
     sourceList << sourceFile;
@@ -1186,24 +1205,13 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
 
 bool ModList::dropMod(const QMimeData *mimeData, int row, const QModelIndex &parent)
 {
+  int newPriority = dropPriority(row, parent);
+  if (newPriority == -1) {
+    return false;
+  }
+
   try {
-    QByteArray encoded = mimeData->data("application/x-qabstractitemmodeldatalist");
-    QDataStream stream(&encoded, QIODevice::ReadOnly);
-    std::vector<int> sourceRows;
-
-    while (!stream.atEnd()) {
-      int sourceRow, col;
-      QMap<int,  QVariant> roleDataMap;
-      stream >> sourceRow >> col >> roleDataMap;
-      if (col == 0) {
-        sourceRows.push_back(sourceRow);
-      }
-    }
-
-    int newPriority = dropPriority(row, parent);
-    if (newPriority == -1) {
-      return false;
-    }
+    std::vector<int> sourceRows = this->sourceRows(mimeData);
     changeModPriority(sourceRows, newPriority);
 
   } catch (const std::exception &e) {
@@ -1221,25 +1229,48 @@ bool ModList::dropArchive(const QMimeData* mimeData, int row, const QModelIndex&
   }
 
   try {
-    QByteArray encoded = mimeData->data("application/x-qabstractitemmodeldatalist");
-    QDataStream stream(&encoded, QIODevice::ReadOnly);
-    std::vector<int> sourceRows;
-
-    while (!stream.atEnd()) {
-      int sourceRow, col;
-      QMap<int, QVariant> roleDataMap;
-      stream >> sourceRow >> col >> roleDataMap;
-      if (col == 0) {
-        sourceRows.push_back(sourceRow);
-      }
-    }
-
+    std::vector<int> sourceRows = this->sourceRows(mimeData);
     if (sourceRows.size() == 1) {
       emit downloadArchiveDropped(sourceRows[0], priority);
     }
   }
   catch (const std::exception& e) {
     reportError(tr("drag&drop failed: %1").arg(e.what()));
+  }
+
+  return false;
+}
+
+bool ModList::canDropMimeData(const QMimeData* mimeData, Qt::DropAction action, int row, int column, const QModelIndex& parent) const
+{
+  if (action == Qt::IgnoreAction) {
+    return false;
+  }
+
+  if (mimeData->hasUrls()) {
+    for (auto& url : mimeData->urls()) {
+      if (!relativeUrl(url)) {
+        return false;
+      }
+    }
+    if (row == -1 && parent.isValid()) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(parent.row());
+      return modInfo->isRegular() && !modInfo->isSeparator();
+    }
+  }
+  else if (mimeData->hasText()) {
+    // drop on item
+    if (row == -1 && parent.isValid()) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(parent.row());
+      return modInfo->isSeparator();
+    }
+    else if (hasIndex(row, column, parent)) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
+      return modInfo->isSeparator() || !parent.isValid();
+    }
+    else {
+      return true;
+    }
   }
 
   return false;
@@ -1406,15 +1437,6 @@ QMap<int, QVariant> ModList::itemData(const QModelIndex &index) const
   result[Qt::UserRole] = data(index, Qt::UserRole);
   return result;
 }
-
-
-void ModList::dropModeUpdate(bool dropOnItems)
-{
-  if (m_DropOnItems != dropOnItems) {
-    m_DropOnItems = dropOnItems;
-  }
-}
-
 
 QString ModList::getColumnName(int column)
 {

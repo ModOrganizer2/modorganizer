@@ -47,6 +47,7 @@ using namespace MOShared;
 
 
 std::vector<ModInfo::Ptr> ModInfo::s_Collection;
+ModInfo::Ptr ModInfo::s_Overwrite;
 std::map<QString, unsigned int> ModInfo::s_ModsByName;
 std::map<std::pair<QString, int>, std::vector<unsigned int>> ModInfo::s_ModsByModID;
 int ModInfo::s_NextID;
@@ -108,13 +109,14 @@ ModInfo::Ptr ModInfo::createFromPlugin(const QString &modName,
   return result;
 }
 
-void ModInfo::createFromOverwrite(PluginContainer *pluginContainer,
-                                  const MOBase::IPluginGame* game,
-                                  MOShared::DirectoryEntry **directoryStructure)
+ModInfo::Ptr ModInfo::createFromOverwrite(
+  PluginContainer *pluginContainer, const MOBase::IPluginGame* game,
+  MOShared::DirectoryEntry **directoryStructure)
 {
   QMutexLocker locker(&s_Mutex);
-
-  s_Collection.push_back(ModInfo::Ptr(new ModInfoOverwrite(pluginContainer, game, directoryStructure)));
+  ModInfo::Ptr overwrite = ModInfo::Ptr(new ModInfoOverwrite(pluginContainer, game, directoryStructure));
+  s_Collection.push_back(overwrite);
+  return overwrite;
 }
 
 unsigned int ModInfo::getNumMods()
@@ -237,6 +239,7 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
   QMutexLocker lock(&s_Mutex);
   s_Collection.clear();
   s_NextID = 0;
+  s_Overwrite = nullptr;
 
   { // list all directories in the mod directory and make a mod out of each
     QDir mods(QDir::fromNativeSeparators(modDirectory));
@@ -263,7 +266,7 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
     }
   }
 
-  createFromOverwrite(pluginContainer, game, directoryStructure);
+  s_Overwrite = createFromOverwrite(pluginContainer, game, directoryStructure);
 
   std::sort(s_Collection.begin(), s_Collection.end(), ModInfo::ByName);
 
