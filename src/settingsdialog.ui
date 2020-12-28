@@ -836,7 +836,7 @@
         </widget>
        </item>
        <item>
-        <layout class="QGridLayout" name="gridLayout_8">
+        <layout class="QGridLayout" name="gridLayout_8" columnstretch="1,1">
          <item row="1" column="0">
           <widget class="QCheckBox" name="proxyBox">
            <property name="statusTip">
@@ -847,6 +847,26 @@
            </property>
            <property name="text">
             <string>Use HTTP Proxy (Uses System Settings)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QCheckBox" name="trackedBox">
+           <property name="text">
+            <string>Tracked Integration</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QCheckBox" name="endorsementBox">
+           <property name="text">
+            <string>Endorsement Integration</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -863,16 +883,6 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="QCheckBox" name="endorsementBox">
-           <property name="text">
-            <string>Endorsement Integration</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
          <item row="2" column="0">
           <widget class="QCheckBox" name="hideAPICounterBox">
            <property name="toolTip">
@@ -886,14 +896,58 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
-          <widget class="QCheckBox" name="trackedBox">
-           <property name="text">
-            <string>Tracked Integration</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
+         <item row="2" column="1">
+          <widget class="QWidget" name="widget_7" native="true">
+           <layout class="QHBoxLayout" name="horizontalLayout_9">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QCheckBox" name="useCustomBrowser">
+              <property name="toolTip">
+               <string>Use &quot;%1&quot; as a placeholder for the URL.</string>
+              </property>
+              <property name="statusTip">
+               <string>Use &quot;%1&quot; as a placeholder for the URL.</string>
+              </property>
+              <property name="whatsThis">
+               <string>Use &quot;%1&quot; as a placeholder for the URL.</string>
+              </property>
+              <property name="text">
+               <string>Custom browser</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="browserCommand">
+              <property name="toolTip">
+               <string>Use &quot;%1&quot; as a placeholder for the URL.</string>
+              </property>
+              <property name="statusTip">
+               <string>Use &quot;%1&quot; as a placeholder for the URL.</string>
+              </property>
+              <property name="whatsThis">
+               <string>Use &quot;%1&quot; as a placeholder for the URL.</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QToolButton" name="browseCustomBrowser">
+              <property name="text">
+               <string>...</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </widget>
          </item>
         </layout>

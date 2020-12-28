@@ -65,9 +65,12 @@ public:
 private:
   std::unique_ptr<NexusConnectionUI> m_connectionUI;
 
-  void on_clearCacheButton_clicked();
-  void on_associateButton_clicked();
+  void clearCache();
+  void associate();
+
   void updateNexusData();
+  void updateCustomBrowser();
+  void browseCustomBrowser();
 };
 
 #endif // SETTINGSDIALOGNEXUS_H

@@ -158,7 +158,6 @@ InstanceManagerDialog::InstanceManagerDialog(
 
   m_filter.setEdit(ui->filter);
   m_filter.setList(ui->list);
-  m_filter.setUpdateDelay(false);
   m_filter.setFilteredBorder(false);
 
   updateInstances();

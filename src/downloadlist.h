@@ -85,6 +85,10 @@ public:
    **/
   virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
 
+  // used in DownloadsTab as the sorting predicate for the filter widget
+  //
+  bool lessThanPredicate(const QModelIndex &left, const QModelIndex &right);
+
 public slots:
 
   /**

@@ -27,7 +27,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "iuserinterface.h"
 #include "modinfo.h"
 #include "modlistsortproxy.h"
-#include "savegameinfo.h"
 #include "tutorialcontrol.h"
 #include "plugincontainer.h" //class PluginContainer;
 #include "iplugingame.h" //namespace MOBase { class IPluginGame; }
@@ -39,6 +38,8 @@ class CategoryFactory;
 class OrganizerCore;
 class FilterList;
 class DataTab;
+class DownloadsTab;
+class SavesTab;
 class BrowserDialog;
 
 class PluginListSortProxy;
@@ -46,7 +47,6 @@ namespace BSA { class Archive; }
 
 namespace MOBase { class IPluginModPage; }
 namespace MOBase { class IPluginTool; }
-namespace MOBase { class ISaveGame; }
 
 namespace MOShared { class DirectoryEntry; }
 
@@ -122,7 +122,6 @@ public:
 
   bool addProfile();
   void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives);
-  void refreshSaveList();
 
   void setModListSorting(int index);
   void setESPListSorting(int index);
@@ -234,9 +233,6 @@ private:
 
   bool populateMenuCategories(QMenu *menu, int targetID);
 
-  void initDownloadView();
-  void updateDownloadView();
-
   // remove invalid category-references from mods
   void fixCategories();
 
@@ -246,8 +242,6 @@ private:
   void checkForProblemsImpl();
 
   void setCategoryListVisible(bool visible);
-
-  void displaySaveGameInfo(QListWidgetItem *newItem);
 
   bool errorReported(QString &logFile);
 
@@ -264,11 +258,6 @@ private:
   void addPluginSendToContextMenu(QMenu *menu);
 
   QMenu *openFolderMenu();
-
-  QDir currentSavesDir() const;
-
-  void startMonitorSaves();
-  void stopMonitorSaves();
 
   void dropLocalFile(const QUrl &url, const QString &outputDir, bool move);
 
@@ -298,6 +287,8 @@ private:
 
   std::unique_ptr<FilterList> m_Filters;
   std::unique_ptr<DataTab> m_DataTab;
+  std::unique_ptr<DownloadsTab> m_DownloadsTab;
+  std::unique_ptr<SavesTab> m_SavesTab;
 
   int m_OldProfileIndex;
 
@@ -325,9 +316,6 @@ private:
   QFuture<void> m_MetaSave;
 
   QTime m_StartTime;
-  //SaveGameInfoWidget *m_CurrentSaveView;
-  std::vector<std::shared_ptr<const MOBase::ISaveGame>> m_SaveGames;
-  MOBase::ISaveGameInfoWidget *m_CurrentSaveView;
 
   OrganizerCore &m_OrganizerCore;
   PluginContainer &m_PluginContainer;
@@ -336,9 +324,6 @@ private:
   std::vector<QTranslator*> m_Translators;
 
   std::unique_ptr<BrowserDialog> m_IntegratedBrowser;
-
-  QTimer m_SavesWatcherTimer;
-  QFileSystemWatcher m_SavesWatcher;
 
   QByteArray m_ArchiveListHash;
 
@@ -361,7 +346,6 @@ private:
   Executable* getSelectedExecutable();
 
 private slots:
-
   void updateWindowTitle(const APIUserAccount& user);
   void showMessage(const QString &message);
   void showError(const QString &message);
@@ -411,9 +395,6 @@ private slots:
   void sendSelectedModsToBottom_clicked();
   void sendSelectedModsToPriority_clicked();
   void sendSelectedModsToSeparator_clicked();
-  // savegame context menu
-  void deleteSavegame_clicked();
-  void fixMods_clicked(SaveGameInfo::MissingAssets const &missingAssets);
   // data-tree context menu
 
   // pluginlist context menu
@@ -428,7 +409,6 @@ private slots:
   void linkMenu();
 
   void languageChange(const QString &newLanguage);
-  void saveSelectionChanged(QListWidgetItem *newItem);
 
   void windowTutorialFinished(const QString &windowName);
 
@@ -493,12 +473,9 @@ private slots:
   void modRenamed(const QString &oldName, const QString &newName);
   void modRemoved(const QString &fileName);
 
-  void hideSaveGameInfo();
-
   void hookUpWindowTutorials();
   bool shouldStartTutorial() const;
 
-  void resumeDownload(int downloadIndex);
   void endorseMod(ModInfo::Ptr mod);
   void unendorseMod(ModInfo::Ptr mod);
   void trackMod(ModInfo::Ptr mod, bool doTrack);
@@ -545,7 +522,6 @@ private slots:
 
   void modFilterActive(bool active);
   void espFilterChanged(const QString &filter);
-  void downloadFilterChanged(const QString &filter);
 
   void expandModList(const QModelIndex &index);
 
@@ -565,7 +541,6 @@ private slots:
   void ignoreUpdate();
   void unignoreUpdate();
 
-  void refreshSavesIfOpen();
   void about();
 
   void modListSortIndicatorChanged(int column, Qt::SortOrder order);
@@ -602,14 +577,12 @@ private slots: // ui slots
   void on_centralWidget_customContextMenuRequested(const QPoint &pos);
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_clearFiltersButton_clicked();
-  void on_btnRefreshDownloads_clicked();
   void on_executablesListBox_currentIndexChanged(int index);
   void on_modList_customContextMenuRequested(const QPoint &pos);
   void on_modList_doubleClicked(const QModelIndex &index);
   void on_listOptionsBtn_pressed();
   void on_espList_doubleClicked(const QModelIndex &index);
   void on_profileBox_currentIndexChanged(int index);
-  void on_savegameList_customContextMenuRequested(const QPoint &pos);
   void on_startButton_clicked();
   void on_tabWidget_currentChanged(int index);
 

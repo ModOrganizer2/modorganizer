@@ -66,7 +66,8 @@ Settings::Settings(const QString& path, bool globalInstance) :
   m_Settings(path, QSettings::IniFormat),
   m_Game(m_Settings), m_Geometry(m_Settings),
   m_Widgets(m_Settings, globalInstance), m_Colors(m_Settings),
-  m_Plugins(m_Settings), m_Paths(m_Settings), m_Network(m_Settings),
+  m_Plugins(m_Settings), m_Paths(m_Settings),
+  m_Network(m_Settings, globalInstance),
   m_Nexus(*this, m_Settings), m_Steam(*this, m_Settings),
   m_Interface(m_Settings), m_Diagnostics(m_Settings)
 {
@@ -469,7 +470,34 @@ const DiagnosticsSettings& Settings::diagnostics() const
 QSettings::Status Settings::sync() const
 {
   m_Settings.sync();
-  return m_Settings.status();
+
+  const auto s = m_Settings.status();
+
+  // there's a bug in Qt at least until 5.15.0 where a utf-8 bom in the ini is
+  // handled correctly but still sets FormatError
+  //
+  // see qsettings.cpp, in QConfFileSettingsPrivate::readIniFile(), there's a
+  // specific check for utf-8, which adjusts `dataPos` so it's skipped, but
+  // the FLUSH_CURRENT_SECTION() macro uses `currentSectionStart`, and that one
+  // isn't adjusted when changing `dataPos` on the first line and so stays 0
+  //
+  // this puts the bom in `unparsedIniSections` and eventually sets FormatError
+  // somewhere
+  //
+  //
+  // the other problem is that the status is never reset, not even when calling
+  // sync(), so the FormatError that's returned here is actually from reading
+  // the ini, not writing it
+  //
+  //
+  // since it's impossible to get a FormatError on write, it's considered to
+  // be a NoError here
+
+  if (s == QSettings::FormatError) {
+    return QSettings::NoError;
+  } else {
+    return s;
+  }
 }
 
 QSettings::Status Settings::iniStatus() const
@@ -1670,9 +1698,21 @@ void PathSettings::setOverwrite(const QString& path)
 }
 
 
-NetworkSettings::NetworkSettings(QSettings& settings)
+NetworkSettings::NetworkSettings(QSettings& settings, bool globalInstance)
   : m_Settings(settings)
 {
+  if (globalInstance) {
+    updateCustomBrowser();
+  }
+}
+
+void NetworkSettings::updateCustomBrowser()
+{
+  if (useCustomBrowser()) {
+    MOBase::shell::SetUrlHandler(customBrowserCommand());
+  } else {
+    MOBase::shell::SetUrlHandler("");
+  }
 }
 
 bool NetworkSettings::offlineMode() const
@@ -1802,6 +1842,28 @@ void NetworkSettings::updateFromOldMap()
   const auto servers = serversFromOldMap();
   removeSection(m_Settings, "Servers");
   updateServers(servers);
+}
+
+bool NetworkSettings::useCustomBrowser() const
+{
+  return get<bool>(m_Settings, "Settings", "use_custom_browser", false);
+}
+
+void NetworkSettings::setUseCustomBrowser(bool b)
+{
+  set(m_Settings, "Settings", "use_custom_browser", b);
+  updateCustomBrowser();
+}
+
+QString NetworkSettings::customBrowserCommand() const
+{
+  return get<QString>(m_Settings, "Settings", "custom_browser", "");
+}
+
+void NetworkSettings::setCustomBrowserCommand(const QString& s)
+{
+  set(m_Settings, "Settings", "custom_browser", s);
+  updateCustomBrowser();
 }
 
 ServerList NetworkSettings::serversFromOldMap() const

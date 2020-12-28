@@ -32,9 +32,23 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-void DownloadProgressDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+DownloadProgressDelegate::DownloadProgressDelegate(
+  DownloadManager* manager, DownloadListWidget* list)
+    : QStyledItemDelegate(list), m_Manager(manager), m_List(list)
 {
-  QModelIndex sourceIndex = m_SortProxy->mapToSource(index);
+}
+
+void DownloadProgressDelegate::paint(
+  QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+  QModelIndex sourceIndex;
+
+  if (auto* proxy=dynamic_cast<QSortFilterProxyModel*>(m_List->model())) {
+    sourceIndex = proxy->mapToSource(index);
+  } else {
+    sourceIndex = index;
+  }
+
   bool pendingDownload = (sourceIndex.row() >= m_Manager->numTotalDownloads());
   if (sourceIndex.column() == DownloadList::COL_STATUS && !pendingDownload
       && m_Manager->getState(sourceIndex.row()) == DownloadManager::STATE_DOWNLOADING) {

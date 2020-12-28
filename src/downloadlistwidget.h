@@ -22,7 +22,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "downloadmanager.h"
 #include "downloadlist.h"
-#include "downloadlistsortproxy.h"
 #include <QWidget>
 #include <QItemDelegate>
 #include <QLabel>
@@ -36,19 +35,21 @@ namespace Ui {
   class DownloadListWidget;
 }
 
+class DownloadListWidget;
+
 class DownloadProgressDelegate : public QStyledItemDelegate
 {
   Q_OBJECT
 
 public:
-  DownloadProgressDelegate(DownloadManager *manager, DownloadListSortProxy *sortProxy, QWidget *parent = 0) : QStyledItemDelegate(parent), m_Manager(manager), m_SortProxy(sortProxy) {}
+  DownloadProgressDelegate(DownloadManager* manager, DownloadListWidget* list);
 
   void paint(QPainter *painter, const QStyleOptionViewItem &option,
     const QModelIndex &index) const override;
 
 private:
-  DownloadManager *m_Manager;
-  DownloadListSortProxy *m_SortProxy;
+  DownloadManager* m_Manager;
+  DownloadListWidget* m_List;
 };
 
 class DownloadListHeader : public QHeaderView

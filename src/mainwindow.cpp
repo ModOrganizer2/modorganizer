@@ -49,12 +49,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "categoriesdialog.h"
 #include "modinfodialog.h"
 #include "overwriteinfodialog.h"
-#include "activatemodsdialog.h"
 #include "downloadlist.h"
 #include "downloadlistwidget.h"
 #include "messagedialog.h"
 #include "installationmanager.h"
-#include "downloadlistsortproxy.h"
 #include "motddialog.h"
 #include "filedialogmemory.h"
 #include "tutorialmanager.h"
@@ -76,6 +74,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "statusbar.h"
 #include "filterlist.h"
 #include "datatab.h"
+#include "downloadstab.h"
+#include "savestab.h"
 #include "instancemanagerdialog.h"
 #include <utility.h>
 #include <dataarchives.h>
@@ -260,7 +260,6 @@ MainWindow::MainWindow(Settings &settings
   , m_ContextItem(nullptr)
   , m_ContextAction(nullptr)
   , m_ContextRow(-1)
-  , m_CurrentSaveView(nullptr)
   , m_OrganizerCore(organizerCore)
   , m_PluginContainer(pluginContainer)
   , m_DidUpdateMasterList(false)
@@ -285,6 +284,10 @@ MainWindow::MainWindow(Settings &settings
   QWebEngineProfile::defaultProfile()->setHttpCacheMaximumSize(52428800);
   QWebEngineProfile::defaultProfile()->setCachePath(settings.paths().cache());
   QWebEngineProfile::defaultProfile()->setPersistentStoragePath(settings.paths().cache());
+
+  // qt resets the thread name somewhere within the QWebEngineProfile calls
+  // above
+  MOShared::SetThisThreadName("main");
 
   ui->setupUi(this);
   languageChange(settings.interface().language());
@@ -347,11 +350,11 @@ MainWindow::MainWindow(Settings &settings
   ui->bsaList->setLocalMoveOnly(true);
   ui->bsaList->setHeaderHidden(true);
 
-  initDownloadView();
-
   const bool pluginListAdjusted =
     settings.geometry().restoreState(ui->espList->header());
 
+
+  // data tab
   m_DataTab.reset(new DataTab(m_OrganizerCore, m_PluginContainer, this, ui));
   m_DataTab->restoreState(settings);
 
@@ -364,6 +367,13 @@ MainWindow::MainWindow(Settings &settings
   connect(
     m_DataTab.get(), &DataTab::displayModInformation,
     [&](auto&& m, auto&& i, auto&& tab){ displayModInformation(m, i, tab); });
+
+
+  // downloads tab
+  m_DownloadsTab.reset(new DownloadsTab(m_OrganizerCore, ui));
+
+  // saves tab
+  m_SavesTab.reset(new SavesTab(this, m_OrganizerCore, ui));
 
   // Hide stuff we do not need:
   IPluginGame const* game = m_OrganizerCore.managedGame();
@@ -394,9 +404,6 @@ MainWindow::MainWindow(Settings &settings
 
   ui->openFolderMenu->setMenu(openFolderMenu());
 
-  ui->savegameList->installEventFilter(this);
-  ui->savegameList->setMouseTracking(true);
-
   // don't allow mouse wheel to switch grouping, too many people accidentally
   // turn on grouping and then don't understand what happened
   EventFilter *noWheel
@@ -414,8 +421,6 @@ MainWindow::MainWindow(Settings &settings
 
   connect(&m_PluginContainer, SIGNAL(diagnosisUpdate()), this, SLOT(scheduleCheckForProblems()));
 
-  connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(saveSelectionChanged(QListWidgetItem*)));
-
   connect(m_ModListSortProxy, SIGNAL(filterActive(bool)), this, SLOT(modFilterActive(bool)));
   connect(m_ModListSortProxy, SIGNAL(layoutChanged()), this, SLOT(updateModCount()));
   connect(ui->modFilterEdit, SIGNAL(textChanged(QString)), m_ModListSortProxy, SLOT(updateFilter(QString)));
@@ -429,11 +434,6 @@ MainWindow::MainWindow(Settings &settings
     &DirectoryRefresher::progress,
     this, &MainWindow::refresherProgress);
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(error(QString)), this, SLOT(showError(QString)));
-
-  m_SavesWatcherTimer.setSingleShot(true);
-  m_SavesWatcherTimer.setInterval(500);
-  connect(&m_SavesWatcher, &QFileSystemWatcher::directoryChanged, [this]() { m_SavesWatcherTimer.start(); });
-  connect(&m_SavesWatcherTimer, &QTimer::timeout, this, &MainWindow::refreshSavesIfOpen);
 
   connect(&m_OrganizerCore.settings(), SIGNAL(languageChanged(QString)), this, SLOT(languageChange(QString)));
   connect(&m_OrganizerCore.settings(), SIGNAL(styleChanged(QString)), this, SIGNAL(styleChanged(QString)));
@@ -487,7 +487,6 @@ MainWindow::MainWindow(Settings &settings
 
   new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Enter), this, SLOT(openExplorer_activated()));
   new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Return), this, SLOT(openExplorer_activated()));
-
   new QShortcut(QKeySequence::Refresh, this, SLOT(refreshProfile_activated()));
 
   setFilterShortcuts(ui->modList, ui->modFilterEdit);
@@ -717,7 +716,6 @@ MainWindow::~MainWindow()
       QMessageBox::Ok);
   }
 }
-
 
 void MainWindow::updateWindowTitle(const APIUserAccount& user)
 {
@@ -1265,15 +1263,6 @@ void MainWindow::espFilterChanged(const QString &filter)
   updatePluginCount();
 }
 
-void MainWindow::downloadFilterChanged(const QString &filter)
-{
-  if (!filter.isEmpty()) {
-    ui->downloadView->setStyleSheet("QTreeView { border: 2px ridge #f00; }");
-  } else {
-    ui->downloadView->setStyleSheet("");
-  }
-}
-
 void MainWindow::expandModList(const QModelIndex &index)
 {
   QAbstractItemModel *model = ui->modList->model();
@@ -1512,79 +1501,9 @@ void MainWindow::cleanup()
   m_MetaSave.waitForFinished();
 }
 
-void MainWindow::displaySaveGameInfo(QListWidgetItem *newItem)
-{
-  // don't display the widget if the main window doesn't have focus
-  //
-  // this goes against the standard behaviour for tooltips, which are displayed
-  // on hover regardless of focus, but this widget is so large and busy that
-  // it's probably better this way
-  if (!isActiveWindow()){
-    return;
-  }
-
-  if (m_CurrentSaveView == nullptr) {
-    IPluginGame const *game = m_OrganizerCore.managedGame();
-    SaveGameInfo const *info = game->feature<SaveGameInfo>();
-    if (info != nullptr) {
-      m_CurrentSaveView = info->getSaveGameWidget(this);
-    }
-    if (m_CurrentSaveView == nullptr) {
-      return;
-    }
-  }
-  m_CurrentSaveView->setSave(*m_SaveGames[ui->savegameList->row(newItem)]);
-
-  QWindow *window = m_CurrentSaveView->window()->windowHandle();
-  QRect screenRect;
-  if (window == nullptr)
-    screenRect = QGuiApplication::primaryScreen()->geometry();
-  else
-    screenRect = window->screen()->geometry();
-
-  QPoint pos = QCursor::pos();
-  if (pos.x() + m_CurrentSaveView->width() > screenRect.right()) {
-    pos.rx() -= (m_CurrentSaveView->width() + 2);
-  } else {
-    pos.rx() += 5;
-  }
-
-  if (pos.y() + m_CurrentSaveView->height() > screenRect.bottom()) {
-    pos.ry() -= (m_CurrentSaveView->height() + 10);
-  } else {
-    pos.ry() += 20;
-  }
-  m_CurrentSaveView->move(pos);
-
-  m_CurrentSaveView->show();
-  m_CurrentSaveView->setProperty("displayItem", QVariant::fromValue(static_cast<void *>(newItem)));
-}
-
-
-void MainWindow::saveSelectionChanged(QListWidgetItem *newItem)
-{
-  if (newItem == nullptr) {
-    hideSaveGameInfo();
-  } else if (m_CurrentSaveView == nullptr || newItem != m_CurrentSaveView->property("displayItem").value<void*>()) {
-    displaySaveGameInfo(newItem);
-  }
-}
-
-
-void MainWindow::hideSaveGameInfo()
-{
-  if (m_CurrentSaveView != nullptr) {
-    m_CurrentSaveView->deleteLater();
-    m_CurrentSaveView = nullptr;
-  }
-}
-
 bool MainWindow::eventFilter(QObject *object, QEvent *event)
 {
-  if ((object == ui->savegameList) &&
-      ((event->type() == QEvent::Leave) || (event->type() == QEvent::WindowDeactivate))) {
-    hideSaveGameInfo();
-  } else if (event->type() == QEvent::StatusTip && object != this) {
+  if (event->type() == QEvent::StatusTip && object != this) {
     QMainWindow::event(event);
     return true;
   }
@@ -1682,7 +1601,7 @@ void MainWindow::registerModPage(IPluginModPage *modPage)
       m_IntegratedBrowser->openUrl(modPage->pageURL());
     }
     else {
-      QDesktopServices::openUrl(QUrl(modPage->pageURL()));
+      shell::Open(QUrl(modPage->pageURL()));
     }
   }, Qt::QueuedConnection);
 
@@ -1759,7 +1678,7 @@ void MainWindow::activateSelectedProfile()
 
   m_ModListSortProxy->setProfile(m_OrganizerCore.currentProfile());
 
-  refreshSaveList();
+  m_SavesTab->refreshSaveList();
   m_OrganizerCore.refresh();
   updateModCount();
   updatePluginCount();
@@ -1805,14 +1724,16 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 
     LocalSavegames *saveGames = m_OrganizerCore.managedGame()->feature<LocalSavegames>();
     if (saveGames != nullptr) {
-      if (saveGames->prepareProfile(m_OrganizerCore.currentProfile()))
-        refreshSaveList();
+      if (saveGames->prepareProfile(m_OrganizerCore.currentProfile())) {
+        m_SavesTab->refreshSaveList();
+      }
     }
 
     BSAInvalidation *invalidation = m_OrganizerCore.managedGame()->feature<BSAInvalidation>();
     if (invalidation != nullptr) {
-      if (invalidation->prepareProfile(m_OrganizerCore.currentProfile()))
+      if (invalidation->prepareProfile(m_OrganizerCore.currentProfile())) {
         QTimer::singleShot(5, &m_OrganizerCore, SLOT(profileRefresh()));
+      }
     }
   }
 }
@@ -1896,78 +1817,6 @@ void MainWindow::refreshExecutablesList()
 
   ui->executablesListBox->setCurrentIndex(1);
   ui->executablesListBox->setEnabled(true);
-}
-
-void MainWindow::refreshSavesIfOpen()
-{
-  if (ui->tabWidget->currentWidget() == ui->savesTab) {
-    refreshSaveList();
-  }
-}
-
-QDir MainWindow::currentSavesDir() const
-{
-  QDir savesDir;
-  if (m_OrganizerCore.currentProfile()->localSavesEnabled()) {
-    savesDir.setPath(m_OrganizerCore.currentProfile()->savePath());
-  } else {
-    auto iniFiles = m_OrganizerCore.managedGame()->iniFiles();
-
-    if (iniFiles.isEmpty()) {
-      return m_OrganizerCore.managedGame()->savesDirectory();
-    }
-
-    QString iniPath = m_OrganizerCore.currentProfile()->absoluteIniFilePath(iniFiles[0]);
-
-    wchar_t path[MAX_PATH];
-    if (::GetPrivateProfileStringW(
-          L"General", L"SLocalSavePath", L"",
-          path, MAX_PATH,
-          iniPath.toStdWString().c_str()
-    )) {
-      savesDir.setPath(m_OrganizerCore.managedGame()->documentsDirectory().absoluteFilePath(QString::fromWCharArray(path)));
-    }
-    else {
-      savesDir = m_OrganizerCore.managedGame()->savesDirectory();
-    }
-  }
-
-  return savesDir;
-}
-
-void MainWindow::startMonitorSaves()
-{
-  stopMonitorSaves();
-
-  QDir savesDir = currentSavesDir();
-
-  m_SavesWatcher.addPath(savesDir.absolutePath());
-}
-
-void MainWindow::stopMonitorSaves()
-{
-  if (m_SavesWatcher.directories().length() > 0) {
-    m_SavesWatcher.removePaths(m_SavesWatcher.directories());
-  }
-}
-
-void MainWindow::refreshSaveList()
-{
-  TimeThis tt("MainWindow::refreshSaveList()");
-
-  startMonitorSaves(); // re-starts monitoring
-
-  QDir savesDir = currentSavesDir();
-  MOBase::log::debug("reading save games from {}", savesDir.absolutePath());
-  m_SaveGames = m_OrganizerCore.managedGame()->listSaves(savesDir);
-  std::sort(m_SaveGames.begin(), m_SaveGames.end(), [](auto const& lhs, auto const& rhs) {
-    return lhs->getCreationTime() > rhs->getCreationTime();
-  });
-
-  ui->savegameList->clear();
-  for (auto& save: m_SaveGames) {
-    ui->savegameList->addItem(savesDir.relativeFilePath(save->getFilepath()));
-  }
 }
 
 static bool BySortValue(const std::pair<UINT32, QTreeWidgetItem*> &LHS, const std::pair<UINT32, QTreeWidgetItem*> &RHS)
@@ -2310,11 +2159,6 @@ QMainWindow* MainWindow::mainWindow()
   return this;
 }
 
-void MainWindow::on_btnRefreshDownloads_clicked()
-{
-  m_OrganizerCore.downloadManager()->refreshList();
-}
-
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
   QWidget* currentWidget = ui->tabWidget->widget(index);
@@ -2325,7 +2169,7 @@ void MainWindow::on_tabWidget_currentChanged(int index)
   } else if (currentWidget == ui->dataTab) {
     m_DataTab->activated();
   } else if (currentWidget == ui->savesTab) {
-    refreshSaveList();
+    m_SavesTab->refreshSaveList();
   }
 }
 
@@ -2417,17 +2261,17 @@ void MainWindow::helpTriggered()
 
 void MainWindow::wikiTriggered()
 {
-  QDesktopServices::openUrl(QUrl("https://modorganizer2.github.io/"));
+  shell::Open(QUrl("https://modorganizer2.github.io/"));
 }
 
 void MainWindow::discordTriggered()
 {
-  QDesktopServices::openUrl(QUrl("https://discord.gg/cYwdcxj"));
+  shell::Open(QUrl("https://discord.gg/cYwdcxj"));
 }
 
 void MainWindow::issueTriggered()
 {
-  QDesktopServices::openUrl(QUrl("https://github.com/Modorganizer2/modorganizer/issues"));
+  shell::Open(QUrl("https://github.com/Modorganizer2/modorganizer/issues"));
 }
 
 void MainWindow::tutorialTriggered()
@@ -2457,9 +2301,9 @@ void MainWindow::on_actionAdd_Profile_triggered()
 
     // workaround: need to disable monitoring of the saves directory, otherwise the active
     // profile directory is locked
-    stopMonitorSaves();
+    m_SavesTab->stopMonitorSaves();
     profilesDialog.exec();
-    refreshSaveList(); // since the save list may now be outdated we have to refresh it completely
+    m_SavesTab->refreshSaveList(); // since the save list may now be outdated we have to refresh it completely
 
     if (refreshProfiles() && !profilesDialog.failed()) {
       break;
@@ -2468,14 +2312,16 @@ void MainWindow::on_actionAdd_Profile_triggered()
 
   LocalSavegames *saveGames = m_OrganizerCore.managedGame()->feature<LocalSavegames>();
   if (saveGames != nullptr) {
-    if (saveGames->prepareProfile(m_OrganizerCore.currentProfile()))
-      refreshSaveList();
+    if (saveGames->prepareProfile(m_OrganizerCore.currentProfile())) {
+      m_SavesTab->refreshSaveList();
+    }
   }
 
   BSAInvalidation *invalidation = m_OrganizerCore.managedGame()->feature<BSAInvalidation>();
   if (invalidation != nullptr) {
-    if (invalidation->prepareProfile(m_OrganizerCore.currentProfile()))
+    if (invalidation->prepareProfile(m_OrganizerCore.currentProfile())) {
       QTimer::singleShot(5, &m_OrganizerCore, SLOT(profileRefresh()));
+    }
   }
 }
 
@@ -2856,13 +2702,6 @@ void MainWindow::backupMod_clicked()
   m_OrganizerCore.refresh();
 }
 
-void MainWindow::resumeDownload(int downloadIndex)
-{
-  m_OrganizerCore.loggedInAction(this, [this, downloadIndex] {
-    m_OrganizerCore.downloadManager()->resumeDownload(downloadIndex);
-  });
-}
-
 
 void MainWindow::endorseMod(ModInfo::Ptr mod)
 {
@@ -3134,41 +2973,51 @@ void MainWindow::displayModInformation(int row, ModInfoTabIDs tabID)
 
 void MainWindow::ignoreMissingData_clicked()
 {
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    for (QModelIndex idx : selection->selectedRows()) {
+  const auto rows = ui->modList->selectionModel()->selectedRows();
+
+  if (rows.count() > 1) {
+    std::vector<ModInfo::Ptr> changed;
+
+    for (QModelIndex idx : rows) {
       int row_idx = idx.data(Qt::UserRole + 1).toInt();
       ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
       info->markValidated(true);
-      connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
+      changed.push_back(info);
+    }
 
-      emit modListDataChanged(m_OrganizerCore.modList()->index(row_idx, 0), m_OrganizerCore.modList()->index(row_idx, m_OrganizerCore.modList()->columnCount() - 1));
+    for (auto&& m : changed) {
+      int row_idx = ModInfo::getIndex(m->internalName());
+      m_OrganizerCore.modList()->notifyChange(row_idx);
     }
   } else {
     ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
     info->markValidated(true);
-    connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
-
-    emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
+    m_OrganizerCore.modList()->notifyChange(m_ContextRow);
   }
 }
 
 void MainWindow::markConverted_clicked()
 {
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    for (QModelIndex idx : selection->selectedRows()) {
+  const auto rows = ui->modList->selectionModel()->selectedRows();
+
+  if (rows.count() > 1) {
+    std::vector<ModInfo::Ptr> changed;
+
+    for (QModelIndex idx : rows) {
       int row_idx = idx.data(Qt::UserRole + 1).toInt();
       ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
       info->markConverted(true);
-      connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
-      emit modListDataChanged(m_OrganizerCore.modList()->index(row_idx, 0), m_OrganizerCore.modList()->index(row_idx, m_OrganizerCore.modList()->columnCount() - 1));
+      changed.push_back(info);
+    }
+
+    for (auto&& m : changed) {
+      int row_idx = ModInfo::getIndex(m->internalName());
+      m_OrganizerCore.modList()->notifyChange(row_idx);
     }
   } else {
     ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
     info->markConverted(true);
-    connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
-    emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
+    m_OrganizerCore.modList()->notifyChange(m_ContextRow);
   }
 }
 
@@ -4925,100 +4774,6 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
   }
 }
 
-
-void MainWindow::deleteSavegame_clicked()
-{
-  SaveGameInfo const *info = m_OrganizerCore.managedGame()->feature<SaveGameInfo>();
-
-  QString savesMsgLabel;
-  QStringList deleteFiles;
-
-  int count = 0;
-
-  for (const QModelIndex &idx : ui->savegameList->selectionModel()->selectedIndexes()) {
-
-    auto& saveGame = m_SaveGames[idx.row()];
-
-    if (count < 10) {
-      savesMsgLabel += "<li>" + QFileInfo(saveGame->getFilepath()).completeBaseName() + "</li>";
-    }
-    ++count;
-
-    deleteFiles += saveGame->allFiles();
-  }
-
-  if (count > 10) {
-    savesMsgLabel += "<li><i>... " + tr("%1 more").arg(count - 10) + "</i></li>";
-  }
-
-  if (QMessageBox::question(this, tr("Confirm"),
-                            tr("Are you sure you want to remove the following %n save(s)?<br>"
-                               "<ul>%1</ul><br>"
-                               "Removed saves will be sent to the Recycle Bin.", "", count)
-                              .arg(savesMsgLabel),
-                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    shellDelete(deleteFiles, true); // recycle bin delete.
-    refreshSaveList();
-  }
-}
-
-
-void MainWindow::fixMods_clicked(SaveGameInfo::MissingAssets const &missingAssets)
-{
-  ActivateModsDialog dialog(missingAssets, this);
-  if (dialog.exec() == QDialog::Accepted) {
-    // activate the required mods, then enable all esps
-    std::set<QString> modsToActivate = dialog.getModsToActivate();
-    for (std::set<QString>::iterator iter = modsToActivate.begin(); iter != modsToActivate.end(); ++iter) {
-      if ((*iter != "<data>") && (*iter != "<overwrite>")) {
-        unsigned int modIndex = ModInfo::getIndex(*iter);
-        m_OrganizerCore.currentProfile()->setModEnabled(modIndex, true);
-      }
-    }
-
-    m_OrganizerCore.currentProfile()->writeModlist();
-    m_OrganizerCore.refreshLists();
-
-    std::set<QString> espsToActivate = dialog.getESPsToActivate();
-    for (std::set<QString>::iterator iter = espsToActivate.begin(); iter != espsToActivate.end(); ++iter) {
-      m_OrganizerCore.pluginList()->enableESP(*iter);
-    }
-    m_OrganizerCore.saveCurrentLists();
-  }
-}
-
-
-void MainWindow::on_savegameList_customContextMenuRequested(const QPoint& pos)
-{
-  QItemSelectionModel* selection = ui->savegameList->selectionModel();
-
-  if (!selection->hasSelection()) {
-    return;
-  }
-
-  QMenu menu;
-
-  SaveGameInfo const* info = this->m_OrganizerCore.managedGame()->feature<SaveGameInfo>();
-  if (info != nullptr) {
-    QAction* action = menu.addAction(tr("Enable Mods..."));
-    action->setEnabled(false);
-    if (selection->selectedIndexes().count() == 1) {
-      auto& save = m_SaveGames[selection->selectedIndexes()[0].row()];
-      SaveGameInfo::MissingAssets missing = info->getMissingAssets(*save);
-      if (missing.size() != 0) {
-        connect(action, &QAction::triggered, this, [this, missing] { fixMods_clicked(missing); });
-        action->setEnabled(true);
-      }
-    }
-  }
-
-  QString deleteMenuLabel = tr("Delete %n save(s)", "", selection->selectedIndexes().count());
-
-  menu.addAction(deleteMenuLabel, this, SLOT(deleteSavegame_clicked()));
-
-  menu.exec(ui->savegameList->viewport()->mapToGlobal(pos));
-}
-
 void MainWindow::linkToolbar()
 {
   Executable* exe = getSelectedExecutable();
@@ -5161,7 +4916,7 @@ void MainWindow::on_actionSettings_triggered()
   }
 
   ui->statusBar->checkSettings(m_OrganizerCore.settings());
-  updateDownloadView();
+  m_DownloadsTab->update();
 
   m_OrganizerCore.setLogLevel(settings.diagnostics().logLevel());
 
@@ -5184,7 +4939,7 @@ void MainWindow::onPluginRegistrationChanged()
 {
   updateModPageMenu();
   scheduleCheckForProblems();
-  updateDownloadView();
+  m_DownloadsTab->update();
 }
 
 void MainWindow::on_actionNexus_triggered()
@@ -5193,13 +4948,13 @@ void MainWindow::on_actionNexus_triggered()
   QString gameName = game->gameShortName();
   if (game->gameNexusName().isEmpty() && game->primarySources().count())
     gameName = game->primarySources()[0];
-  QDesktopServices::openUrl(QUrl(NexusInterface::instance().getGameURL(gameName)));
+  shell::Open(QUrl(NexusInterface::instance().getGameURL(gameName)));
 }
 
 
 void MainWindow::linkClicked(const QString &url)
 {
-  QDesktopServices::openUrl(QUrl(url));
+  shell::Open(QUrl(url));
 }
 
 
@@ -5240,7 +4995,9 @@ void MainWindow::languageChange(const QString &newLanguage)
 
   createHelpMenu();
 
-  updateDownloadView();
+  if (m_DownloadsTab) {
+    m_DownloadsTab->update();
+  }
 
   QMenu *listOptionsMenu = new QMenu(ui->listOptionsBtn);
   initModListContextMenu(listOptionsMenu);
@@ -5375,63 +5132,12 @@ void MainWindow::actionWontEndorseMO()
   }
 }
 
-void MainWindow::initDownloadView()
-{
-  DownloadList *sourceModel = new DownloadList(m_OrganizerCore.downloadManager(), ui->downloadView);
-  DownloadListSortProxy *sortProxy = new DownloadListSortProxy(m_OrganizerCore.downloadManager(), ui->downloadView);
-  sortProxy->setSourceModel(sourceModel);
-  connect(ui->downloadFilterEdit, SIGNAL(textChanged(QString)), sortProxy, SLOT(updateFilter(QString)));
-  connect(ui->downloadFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(downloadFilterChanged(QString)));
-
-  ui->downloadView->setSourceModel(sourceModel);
-  ui->downloadView->setModel(sortProxy);
-  ui->downloadView->setManager(m_OrganizerCore.downloadManager());
-  ui->downloadView->setItemDelegate(new DownloadProgressDelegate(m_OrganizerCore.downloadManager(), sortProxy, ui->downloadView));
-  updateDownloadView();
-
-  connect(ui->downloadView, SIGNAL(installDownload(int)), &m_OrganizerCore, SLOT(installDownload(int)));
-  connect(ui->downloadView, SIGNAL(queryInfo(int)), m_OrganizerCore.downloadManager(), SLOT(queryInfo(int)));
-  connect(ui->downloadView, SIGNAL(queryInfoMd5(int)), m_OrganizerCore.downloadManager(), SLOT(queryInfoMd5(int)));
-  connect(ui->downloadView, SIGNAL(visitOnNexus(int)), m_OrganizerCore.downloadManager(), SLOT(visitOnNexus(int)));
-  connect(ui->downloadView, SIGNAL(openFile(int)), m_OrganizerCore.downloadManager(), SLOT(openFile(int)));
-  connect(ui->downloadView, SIGNAL(openMetaFile(int)), m_OrganizerCore.downloadManager(), SLOT(openMetaFile(int)));
-  connect(ui->downloadView, SIGNAL(openInDownloadsFolder(int)), m_OrganizerCore.downloadManager(), SLOT(openInDownloadsFolder(int)));
-  connect(ui->downloadView, SIGNAL(removeDownload(int, bool)), m_OrganizerCore.downloadManager(), SLOT(removeDownload(int, bool)));
-  connect(ui->downloadView, SIGNAL(restoreDownload(int)), m_OrganizerCore.downloadManager(), SLOT(restoreDownload(int)));
-  connect(ui->downloadView, SIGNAL(cancelDownload(int)), m_OrganizerCore.downloadManager(), SLOT(cancelDownload(int)));
-  connect(ui->downloadView, SIGNAL(pauseDownload(int)), m_OrganizerCore.downloadManager(), SLOT(pauseDownload(int)));
-  connect(ui->downloadView, SIGNAL(resumeDownload(int)), this, SLOT(resumeDownload(int)));
-}
-
-void MainWindow::updateDownloadView()
-{
-  // this means downlaodTab initialization hasnt happened yet
-  if (ui->downloadView->model() == nullptr) {
-    return;
-  }
-  // set the view attribute and default row sizes
-  if (m_OrganizerCore.settings().interface().compactDownloads()) {
-    ui->downloadView->setProperty("downloadView", "compact");
-    setStyleSheet("DownloadListWidget::item { padding: 4px 2px; }");
-  } else {
-    ui->downloadView->setProperty("downloadView", "standard");
-    setStyleSheet("DownloadListWidget::item { padding: 16px 4px; }");
-  }
-  //setStyleSheet("DownloadListWidget::item:hover { padding: 0px; }");
-  //setStyleSheet("DownloadListWidget::item:selected { padding: 0px; }");
-
-  // reapply global stylesheet on the widget level (!) to override the defaults
-  //ui->downloadView->setStyleSheet(styleSheet());
-
-  ui->downloadView->setMetaDisplay(m_OrganizerCore.settings().interface().metaDownloads());
-  ui->downloadView->style()->unpolish(ui->downloadView);
-  ui->downloadView->style()->polish(ui->downloadView);
-  qobject_cast<DownloadListHeader*>(ui->downloadView->header())->customResizeSections();
-  m_OrganizerCore.downloadManager()->refreshList();
-}
-
 void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
 {
+  if (m_OrganizerCore.settings().network().offlineMode()) {
+    return;
+  }
+
   if (NexusInterface::instance().getAccessManager()->validated()) {
     ModInfo::manualUpdateCheck(this, IDs);
   } else {
@@ -6246,10 +5952,22 @@ void MainWindow::on_showHiddenBox_toggled(bool checked)
 
 void MainWindow::on_bossButton_clicked()
 {
-  const auto r = QMessageBox::question(
-    this, tr("Sorting plugins"),
-    tr("Are you sure you want to sort your plugins list?"),
-    QMessageBox::Yes | QMessageBox::No);
+  const bool offline = m_OrganizerCore.settings().network().offlineMode();
+
+  auto r = QMessageBox::No;
+
+  if (offline) {
+    r = QMessageBox::question(
+      this, tr("Sorting plugins"),
+      tr("Are you sure you want to sort your plugins list?") + "\r\n\r\n" +
+      tr("Note: You are currently in offline mode and LOOT will not update the master list."),
+      QMessageBox::Yes | QMessageBox::No);
+  } else {
+    r = QMessageBox::question(
+      this, tr("Sorting plugins"),
+      tr("Are you sure you want to sort your plugins list?"),
+      QMessageBox::Yes | QMessageBox::No);
+  }
 
   if (r != QMessageBox::Yes) {
     return;
@@ -6261,8 +5979,15 @@ void MainWindow::on_bossButton_clicked()
   setEnabled(false);
   ON_BLOCK_EXIT([&] () { setEnabled(true); });
 
-  if (runLoot(this, m_OrganizerCore, m_DidUpdateMasterList)) {
-    m_DidUpdateMasterList = true;
+  // don't try to update the master list in offline mode
+  const bool didUpdateMasterList = offline ? true : m_DidUpdateMasterList;
+
+  if (runLoot(this, m_OrganizerCore, didUpdateMasterList)) {
+    // don't assume the master list was updated in offline mode
+    if (!offline) {
+      m_DidUpdateMasterList = true;
+    }
+
     m_OrganizerCore.refreshESPList(false);
     m_OrganizerCore.savePluginList();
   }

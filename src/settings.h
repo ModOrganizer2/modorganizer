@@ -447,7 +447,10 @@ private:
 class NetworkSettings
 {
 public:
-  NetworkSettings(QSettings& settings);
+  // globalInstance is forwarded from the Settings constructor; NetworkSettings
+  // will set the global URL custom command
+  //
+  NetworkSettings(QSettings& settings, bool globalInstance);
 
   // whether the user has disabled online features
   //
@@ -477,6 +480,16 @@ public:
   //
   void updateFromOldMap();
 
+  // whether to use a custom command to open links
+  //
+  bool useCustomBrowser() const;
+  void setUseCustomBrowser(bool b);
+
+  // custom command to open links
+  //
+  QString customBrowserCommand() const;
+  void setCustomBrowserCommand(const QString& s);
+
   void dump() const;
 
 private:
@@ -485,6 +498,10 @@ private:
   // for pre 2.2.1 ini files
   //
   ServerList serversFromOldMap() const;
+
+  // sets the custom command in uibase, called when the settings change
+  //
+  void updateCustomBrowser();
 };
 
 
@@ -693,8 +710,8 @@ public:
   // any Settings object created with globalInstance==false won't set the
   // singleton
   //
-  // only WidgetSettings need to know whether it created from a globalInstance,
-  // see its constructor
+  // some sub-objects like WidgetSettings and NetworkSettings need to know
+  // whether they were created from a globalInstance, see their constructor
   //
   // @param path           path to an ini file
   // @param globalInsance  whether this is the global instance; creates the

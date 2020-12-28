@@ -63,7 +63,6 @@ add_filter(NAME src/dialogs GROUPS
 
 add_filter(NAME src/downloads GROUPS
 	downloadlist
-	downloadlistsortproxy
 	downloadlistwidget
 	downloadmanager
 )
@@ -99,12 +98,14 @@ add_filter(NAME src/loot GROUPS
 
 add_filter(NAME src/mainwindow GROUPS
 	datatab
+	downloadstab
 	iconfetcher
 	filetree
 	filetreeitem
 	filetreemodel
 	filterlist
 	mainwindow
+	savestab
 	statusbar
 )
 

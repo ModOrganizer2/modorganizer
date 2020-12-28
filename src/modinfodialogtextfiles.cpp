@@ -118,7 +118,6 @@ GenericFilesTab::GenericFilesTab(
 
   m_filter.setEdit(filter);
   m_filter.setList(m_list);
-  m_filter.setUpdateDelay(false);
 
   QObject::connect(
     m_list->selectionModel(), &QItemSelectionModel::currentRowChanged,

@@ -303,7 +303,7 @@ void NexusSSOLogin::onMessage(const QString& s)
     // first answer
 
     // open browser
-    const auto url = NexusSSOPage.arg(m_guid);
+    const QUrl url = NexusSSOPage.arg(m_guid);
     shell::Open(url);
 
     m_timeout.stop();
@@ -932,6 +932,11 @@ bool NXMAccessManager::validateWaiting() const
 void NXMAccessManager::apiCheck(const QString &apiKey, bool force)
 {
   if (m_validator.isActive()) {
+    return;
+  }
+
+  if (m_Settings && m_Settings->network().offlineMode()) {
+    m_validationState = NotChecked;
     return;
   }
 
