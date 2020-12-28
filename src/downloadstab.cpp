@@ -22,7 +22,7 @@ DownloadsTab::DownloadsTab(OrganizerCore& core, Ui::MainWindow* mwui)
   m_filter.setEdit(ui.filter);
   m_filter.setList(ui.list);
   m_filter.setSortPredicate([sourceModel](auto&& left, auto&& right) {
-    return sourceModel->lessThan(left, right);
+    return sourceModel->lessThanPredicate(left, right);
   });
 
   connect(ui.refresh, &QPushButton::clicked, [&]{ refresh(); });

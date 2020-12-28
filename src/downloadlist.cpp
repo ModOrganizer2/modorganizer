@@ -209,7 +209,7 @@ void DownloadList::update(int row)
     log::error("invalid row {} in download list, update failed", row);
 }
 
-bool DownloadList::lessThan(const QModelIndex &left, const QModelIndex &right)
+bool DownloadList::lessThanPredicate(const QModelIndex &left, const QModelIndex &right)
 {
   int leftIndex  = left.row();
   int rightIndex = right.row();
