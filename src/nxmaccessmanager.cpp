@@ -935,6 +935,11 @@ void NXMAccessManager::apiCheck(const QString &apiKey, bool force)
     return;
   }
 
+  if (m_Settings && m_Settings->network().offlineMode()) {
+    m_validationState = NotChecked;
+    return;
+  }
+
   if (force) {
     m_validationState = NotChecked;
   }

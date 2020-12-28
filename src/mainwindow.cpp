@@ -6181,10 +6181,22 @@ void MainWindow::on_showHiddenBox_toggled(bool checked)
 
 void MainWindow::on_bossButton_clicked()
 {
-  const auto r = QMessageBox::question(
-    this, tr("Sorting plugins"),
-    tr("Are you sure you want to sort your plugins list?"),
-    QMessageBox::Yes | QMessageBox::No);
+  const bool offline = m_OrganizerCore.settings().network().offlineMode();
+
+  auto r = QMessageBox::No;
+
+  if (offline) {
+    r = QMessageBox::question(
+      this, tr("Sorting plugins"),
+      tr("Are you sure you want to sort your plugins list?") + "\r\n\r\n" +
+      tr("Note: You are currently in offline mode and LOOT will not update the master list."),
+      QMessageBox::Yes | QMessageBox::No);
+  } else {
+    r = QMessageBox::question(
+      this, tr("Sorting plugins"),
+      tr("Are you sure you want to sort your plugins list?"),
+      QMessageBox::Yes | QMessageBox::No);
+  }
 
   if (r != QMessageBox::Yes) {
     return;
@@ -6196,8 +6208,15 @@ void MainWindow::on_bossButton_clicked()
   setEnabled(false);
   ON_BLOCK_EXIT([&] () { setEnabled(true); });
 
-  if (runLoot(this, m_OrganizerCore, m_DidUpdateMasterList)) {
-    m_DidUpdateMasterList = true;
+  // don't try to update the master list in offline mode
+  const bool didUpdateMasterList = offline ? true : m_DidUpdateMasterList;
+
+  if (runLoot(this, m_OrganizerCore, didUpdateMasterList)) {
+    // don't assume the master list was updated in offline mode
+    if (!offline) {
+      m_DidUpdateMasterList = true;
+    }
+
     m_OrganizerCore.refreshESPList(false);
     m_OrganizerCore.savePluginList();
   }

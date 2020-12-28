@@ -1430,7 +1430,7 @@ void OrganizerCore::loggedInAction(QWidget* parent, std::function<void ()> f)
 {
   if (NexusInterface::instance().getAccessManager()->validated()) {
     f();
-  } else {
+  } else if (!m_Settings.network().offlineMode()) {
     QString apiKey;
     if (GlobalSettings::nexusApiKey(apiKey)) {
       doAfterLogin([f]{ f(); });
