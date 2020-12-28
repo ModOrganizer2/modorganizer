@@ -164,14 +164,17 @@ bool ModListByPriorityProxy::setData(const QModelIndex& index, const QVariant& v
 
 bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const
 {
+  bool hasSeparator = false;
+  bool firstRowSeparator = false;
+
   if (data->hasText()) {
-    bool firstRowSeparator = false;
 
     try {
       int firstRowPriority = INT_MAX;
       unsigned int firstRowIndex = -1;
 
       for (auto sourceRow : ModList::sourceRows(data)) {
+        hasSeparator = hasSeparator || ModInfo::getByIndex(sourceRow)->isSeparator();
         if (m_Profile->getModPriority(sourceRow) < firstRowPriority) {
           firstRowIndex = sourceRow;
           firstRowPriority = m_Profile->getModPriority(sourceRow);
@@ -183,13 +186,20 @@ bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropActi
     catch (std::exception const&) {
 
     }
-
-    // first row is a separator, we can drop it anywhere
-    if (firstRowSeparator) {
-      return QAbstractProxyModel::canDropMimeData(data, action, row, column, parent);
-    }
   }
 
+  // row = -1 and invalid parent means we're dropping onto an item, we don't want to drop
+  // separators onto items
+  if (hasSeparator && row == -1 && parent.isValid()) {
+    return !static_cast<TreeItem*>(parent.internalPointer())->mod->isSeparator();
+  }
+
+  // first row is a separator, we can drop it anywhere
+  if (firstRowSeparator) {
+    return QAbstractProxyModel::canDropMimeData(data, action, row, column, parent);
+  }
+
+  // top-level drop is disabled unless it's before the first separator
   if (!parent.isValid() && row >= 0) {
 
     // the row may be outside of the children list if we insert at the end
