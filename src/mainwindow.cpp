@@ -2553,7 +2553,9 @@ void MainWindow::restoreBackup_clicked()
         if (!modDir.rename(modInfo->absolutePath(), destinationPath)) {
           reportError(tr("failed to rename \"%1\" to \"%2\"").arg(modInfo->absolutePath()).arg(destinationPath));
         }
+
         m_OrganizerCore.refresh();
+        updateModCount();
       }
     }
   }
@@ -2703,7 +2705,9 @@ void MainWindow::backupMod_clicked()
     QMessageBox::information(this, tr("Failed"),
       tr("Failed to create backup."));
   }
+
   m_OrganizerCore.refresh();
+  updateModCount();
 }
 
 
@@ -3321,6 +3325,8 @@ void MainWindow::refreshProfile_activated()
 
 void MainWindow::updateModCount()
 {
+  TimeThis tt("updateModCount");
+
   int activeCount = 0;
   int visActiveCount = 0;
   int backupCount = 0;
