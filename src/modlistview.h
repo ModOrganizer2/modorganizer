@@ -12,6 +12,8 @@ public:
   explicit ModListView(QWidget *parent = 0);
   void setModel(QAbstractItemModel *model) override;
 
+  QModelIndexList selectedIndexes() const;
+
 signals:
 
   void dragEntered(const QMimeData* mimeData);
@@ -20,11 +22,14 @@ protected:
 
   // replace the auto-expand timer from QTreeView to avoid
   // auto-collapsing
-  QBasicTimer openTimer;
+  QBasicTimer m_openTimer;
+
+  bool m_inDragMoveEvent = false;
 
   void timerEvent(QTimerEvent* event) override;
   void dragEnterEvent(QDragEnterEvent* event) override;
   void dragMoveEvent(QDragMoveEvent* event) override;
+  void dropEvent(QDropEvent* event) override;
 
 private:
 
