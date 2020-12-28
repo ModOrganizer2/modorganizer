@@ -3118,41 +3118,51 @@ void MainWindow::displayModInformation(int row, ModInfoTabIDs tabID)
 
 void MainWindow::ignoreMissingData_clicked()
 {
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    for (QModelIndex idx : selection->selectedRows()) {
+  const auto rows = ui->modList->selectionModel()->selectedRows();
+
+  if (rows.count() > 1) {
+    std::vector<ModInfo::Ptr> changed;
+
+    for (QModelIndex idx : rows) {
       int row_idx = idx.data(Qt::UserRole + 1).toInt();
       ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
       info->markValidated(true);
-      connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
+      changed.push_back(info);
+    }
 
-      emit modListDataChanged(m_OrganizerCore.modList()->index(row_idx, 0), m_OrganizerCore.modList()->index(row_idx, m_OrganizerCore.modList()->columnCount() - 1));
+    for (auto&& m : changed) {
+      int row_idx = ModInfo::getIndex(m->internalName());
+      m_OrganizerCore.modList()->notifyChange(row_idx);
     }
   } else {
     ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
     info->markValidated(true);
-    connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
-
-    emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
+    m_OrganizerCore.modList()->notifyChange(m_ContextRow);
   }
 }
 
 void MainWindow::markConverted_clicked()
 {
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    for (QModelIndex idx : selection->selectedRows()) {
+  const auto rows = ui->modList->selectionModel()->selectedRows();
+
+  if (rows.count() > 1) {
+    std::vector<ModInfo::Ptr> changed;
+
+    for (QModelIndex idx : rows) {
       int row_idx = idx.data(Qt::UserRole + 1).toInt();
       ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
       info->markConverted(true);
-      connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
-      emit modListDataChanged(m_OrganizerCore.modList()->index(row_idx, 0), m_OrganizerCore.modList()->index(row_idx, m_OrganizerCore.modList()->columnCount() - 1));
+      changed.push_back(info);
+    }
+
+    for (auto&& m : changed) {
+      int row_idx = ModInfo::getIndex(m->internalName());
+      m_OrganizerCore.modList()->notifyChange(row_idx);
     }
   } else {
     ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
     info->markConverted(true);
-    connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
-    emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
+    m_OrganizerCore.modList()->notifyChange(m_ContextRow);
   }
 }
 
