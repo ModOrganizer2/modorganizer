@@ -25,6 +25,14 @@ struct ValueConverter<T, std::enable_if_t<std::is_enum_v<T>>>
   }
 };
 
+template <>
+struct ValueConverter<QVariantList>
+{
+  static QString convert(const QVariantList& t)
+  {
+    return QString("%1").arg(QVariant(t).toStringList().join(","));
+  }
+};
 
 bool shouldLogSetting(const QString& displayName);
 

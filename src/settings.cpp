@@ -1063,6 +1063,41 @@ WidgetSettings::WidgetSettings(QSettings& s, bool globalInstance)
   }
 }
 
+std::vector<QModelIndex> WidgetSettings::allIndex(const QAbstractItemModel* model, int column, const QModelIndex& parent) const
+{
+  std::vector<QModelIndex> index;
+  for (std::size_t i = 0; i < model->rowCount(parent); ++i) {
+    index.push_back(model->index(i, column, parent));
+
+    auto cindex = allIndex(model, column, index.back());
+    index.insert(index.end(), cindex.begin(), cindex.end());
+  }
+  return index;
+}
+
+void WidgetSettings::saveTreeState(const QTreeView* tv, int role)
+{
+  QVariantList expanded;
+  for (auto index : allIndex(tv->model())) {
+    if (tv->isExpanded(index)) {
+      expanded.append(index.data(role));
+    }
+  }
+  set(m_Settings, "Widgets", indexSettingName(tv), expanded);
+}
+
+void WidgetSettings::restoreTreeState(QTreeView* tv, int role) const
+{
+  if (auto expanded = getOptional<QVariantList>(m_Settings, "Widgets", indexSettingName(tv))) {
+    tv->collapseAll();
+    for (auto index : allIndex(tv->model())) {
+      if (expanded->contains(index.data(role))) {
+        tv->expand(index);
+      }
+    }
+  }
+}
+
 std::optional<int> WidgetSettings::index(const QComboBox* cb) const
 {
   return getOptional<int>(m_Settings, "Widgets", indexSettingName(cb));

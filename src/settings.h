@@ -202,6 +202,12 @@ public:
   //
   WidgetSettings(QSettings& s, bool globalInstance);
 
+  // tree state - this saves the list of expanded items based on the given role
+  //
+  std::vector<QModelIndex> allIndex(const QAbstractItemModel* model, int column = 0, const QModelIndex& parent = QModelIndex()) const;
+  void saveTreeState(const QTreeView* tv, int role = Qt::DisplayRole);
+  void restoreTreeState(QTreeView* tv, int role = Qt::DisplayRole) const;
+
   // selected index for a combobox
   //
   std::optional<int> index(const QComboBox* cb) const;

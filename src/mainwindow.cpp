@@ -2103,6 +2103,7 @@ void MainWindow::readSettings()
 
   s.widgets().restoreIndex(ui->groupCombo);
   s.widgets().restoreIndex(ui->tabWidget);
+  s.widgets().restoreTreeState(ui->modList);
 
   m_Filters->restoreState(s);
 
@@ -2177,6 +2178,7 @@ void MainWindow::storeSettings()
   s.geometry().saveState(ui->downloadView->header());
   s.geometry().saveState(ui->modList->header());
 
+  s.widgets().saveTreeState(ui->modList);
   s.widgets().saveIndex(ui->groupCombo);
   s.widgets().saveIndex(ui->executablesListBox);
   s.widgets().saveIndex(ui->tabWidget);
