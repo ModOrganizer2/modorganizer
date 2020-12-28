@@ -58,6 +58,7 @@ private:
   void saveSelectionChanged(QListWidgetItem *newItem);
   void fixMods(SaveGameInfo::MissingAssets const &missingAssets);
   void refreshSavesIfOpen();
+  void openInExplorer();
 };
 
 #endif // MODORGANIZER_SAVESTAB_INCLUDED

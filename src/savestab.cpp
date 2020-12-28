@@ -264,8 +264,9 @@ void SavesTab::onContextMenu(const QPoint& pos)
   }
 
   QString deleteMenuLabel = tr("Delete %n save(s)", "", selection->selectedIndexes().count());
-
   menu.addAction(deleteMenuLabel, [&]{ deleteSavegame(); });
+
+  menu.addAction(tr("Open in Explorer..."), [&]{ openInExplorer(); });
 
   menu.exec(ui.list->viewport()->mapToGlobal(pos));
 }
@@ -293,4 +294,17 @@ void SavesTab::fixMods(SaveGameInfo::MissingAssets const &missingAssets)
 
     m_core.saveCurrentLists();
   }
+}
+
+void SavesTab::openInExplorer()
+{
+  const SaveGameInfo* info = m_core.managedGame()->feature<SaveGameInfo>();
+
+  const auto sel = ui.list->selectionModel()->selectedIndexes();
+  if (sel.empty()) {
+    return;
+  }
+
+  auto& saveGame = m_SaveGames[sel[0].row()];
+  shell::Explore(saveGame->getFilepath());
 }
