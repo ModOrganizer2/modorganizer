@@ -31,8 +31,13 @@ void ModListView::dragEnterEvent(QDragEnterEvent* event)
 
 void ModListView::dragMoveEvent(QDragMoveEvent* event)
 {
+  if (autoExpandDelay() >= 0) {
+    m_openTimer.start(autoExpandDelay(), this);
+  }
+
+  // bypass QTreeView
   m_inDragMoveEvent = true;
-  QTreeView::dragMoveEvent(event);
+  QAbstractItemView::dragMoveEvent(event);
   m_inDragMoveEvent = false;
 }
 
@@ -45,3 +50,18 @@ void ModListView::dropEvent(QDropEvent* event)
   m_inDragMoveEvent = false;
 }
 
+void ModListView::timerEvent(QTimerEvent* event)
+{
+  if (event->timerId() == m_openTimer.timerId()) {
+    QPoint pos = viewport()->mapFromGlobal(QCursor::pos());
+    if (state() == QAbstractItemView::DraggingState
+      && viewport()->rect().contains(pos)) {
+      QModelIndex index = indexAt(pos);
+      setExpanded(index, true);
+    }
+    m_openTimer.stop();
+  }
+  else {
+    QTreeView::timerEvent(event);
+  }
+}
