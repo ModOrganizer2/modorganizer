@@ -1493,13 +1493,32 @@ QString ModList::getColumnToolTip(int column) const
   }
 }
 
+QModelIndex ModList::indexToProxy(QAbstractItemModel* proxyModel, const QModelIndex& index)
+{
+  if (!proxyModel) {
+    return QModelIndex();
+  }
+
+  if (proxyModel == this) {
+    return index;
+  }
+
+  if (auto* proxy = qobject_cast<QAbstractProxyModel*>(proxyModel)) {
+    return proxy->mapFromSource(indexToProxy(proxy->sourceModel(), index));
+  }
+
+  return QModelIndex();
+}
 
 bool ModList::moveSelection(QAbstractItemView *itemView, int direction)
 {
   QItemSelectionModel *selectionModel = itemView->selectionModel();
+  int currentIndex = itemView->currentIndex().data(IndexRole).toInt();
 
   const QAbstractProxyModel *proxyModel = qobject_cast<const QAbstractProxyModel*>(selectionModel->model());
   const QSortFilterProxyModel *filterModel = nullptr;
+
+  emit layoutAboutToBeChanged();
 
   while ((filterModel == nullptr) && (proxyModel != nullptr)) {
     filterModel = qobject_cast<const QSortFilterProxyModel*>(proxyModel);
@@ -1534,7 +1553,18 @@ bool ModList::moveSelection(QAbstractItemView *itemView, int direction)
     }
   }
 
+  emit layoutChanged();
+
   emit modPrioritiesChanged(allIndex);
+
+  // reset the selection and the index
+  itemView->setCurrentIndex(indexToProxy(itemView->model(), index(currentIndex, 0)));
+  for (auto idx : allIndex) {
+    itemView->selectionModel()->select(
+      indexToProxy(itemView->selectionModel()->model(), index(idx, 0)),
+      QItemSelectionModel::Select | QItemSelectionModel::Rows);
+  }
+
   return true;
 }
 

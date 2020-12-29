@@ -610,10 +610,6 @@ private slots: // ui slots
 
   void setupModList();
   void updateModListByPriorityProxy();
-
-  // map index from the modlist view to the modlist model, handling proxy
-  QModelIndex modViewIndexToModel(const QModelIndex& index) const;
-  QModelIndex modModelIndexToView(const QModelIndex& index) const;
 };
 
 #endif // MAINWINDOW_H

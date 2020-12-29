@@ -2439,58 +2439,8 @@ void MainWindow::esplist_changed()
   updatePluginCount();
 }
 
-QModelIndex MainWindow::modViewIndexToModel(const QModelIndex& index) const
-{
-  auto sindex = index;
-
-  // remove the sort proxy.
-  sindex = m_ModListSortProxy->mapToSource(index);
-
-  // if there is another proxy
-  if (auto* proxy = qobject_cast<QAbstractProxyModel*>(m_ModListSortProxy->sourceModel())) {
-    sindex = proxy->mapToSource(sindex);
-  }
-
-  return sindex;
-}
-
-QModelIndex MainWindow::modModelIndexToView(const QModelIndex& index) const
-{
-  auto dindex = index;
-
-  // if there is another proxy than the sort
-  if (auto* proxy = qobject_cast<QAbstractProxyModel*>(m_ModListSortProxy->sourceModel())) {
-    dindex = proxy->mapFromSource(dindex);
-  }
-
-  // add the sort proxy
-  dindex = m_ModListSortProxy->mapFromSource(dindex);
-
-  return dindex;
-
-}
-
 void MainWindow::onModPrioritiesChanged(std::vector<int> const& indices)
 {
-  // if we have collapsible separators, we need to refresh, expand if necessary,
-  // and recreate the selection
-  if (m_ModListSortProxy->sourceModel() == m_ModListByPriorityProxy) {
-
-    // manually retain the selection and restore it after
-    QModelIndex current = modViewIndexToModel(ui->modList->currentIndex());
-    std::vector<QModelIndex> selected;
-    for (const auto& idx : ui->modList->selectionModel()->selectedRows()) {
-      selected.push_back(modViewIndexToModel(idx));
-    }
-
-    m_ModListByPriorityProxy->refresh();
-
-    ui->modList->setCurrentIndex(modModelIndexToView(current));
-    for (auto idx : selected) {
-      ui->modList->selectionModel()->select(modModelIndexToView(idx), QItemSelectionModel::Select | QItemSelectionModel::Rows);
-    }
-  }
-
   for (unsigned int i = 0; i < m_OrganizerCore.currentProfile()->numMods(); ++i) {
     int priority = m_OrganizerCore.currentProfile()->getModPriority(i);
     if (m_OrganizerCore.currentProfile()->modEnabled(i)) {

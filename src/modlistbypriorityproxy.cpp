@@ -20,8 +20,9 @@ void ModListByPriorityProxy::setSourceModel(QAbstractItemModel* model)
 
   if (sourceModel()) {
     m_CollapsedItems.clear();
+    connect(sourceModel(), &QAbstractItemModel::layoutChanged, this, [this]() { buildTree(); }, Qt::UniqueConnection);
     connect(sourceModel(), &QAbstractItemModel::rowsRemoved, this, [this]() { buildTree(); }, Qt::UniqueConnection);
-    // connect(sourceModel(), &QAbstractItemModel::modelReset, this, &ModListByPriorityProxy::buildTree, Qt::UniqueConnection);
+    connect(sourceModel(), &QAbstractItemModel::modelReset, this, &ModListByPriorityProxy::buildTree, Qt::UniqueConnection);
     refresh();
   }
 }
