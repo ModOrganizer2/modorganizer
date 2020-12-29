@@ -29,19 +29,6 @@ public:
     }
   }
 
-  QRect subElementRect(QStyle::SubElement element, const QStyleOption* option, const QWidget* widget) const override
-  {
-    QRect rect = QProxyStyle::subElementRect(element, option, widget);
-    switch (element) {
-    case SE_ItemViewItemCheckIndicator:
-    case SE_ItemViewItemDecoration:
-    case SE_ItemViewItemText:
-    case SE_ItemViewItemFocusRect:
-      rect.adjust(-20, 0, 0, 0);
-      break;
-    }
-    return rect;
-  }
 };
 
 class ModListStyledItemDelegated : public QStyledItemDelegate
@@ -80,6 +67,17 @@ ModListView::ModListView(QWidget* parent)
   setItemDelegate(new ModListStyledItemDelegated(this));
 }
 
+QRect ModListView::visualRect(const QModelIndex& index) const
+{
+  QRect rect = QTreeView::visualRect(index);
+  if (index.isValid() && !index.model()->hasChildren(index) && index.parent().isValid()) {
+    auto parentIndex = index.parent().data(ModList::IndexRole).toInt();
+    if (ModInfo::getByIndex(parentIndex)->isSeparator()) {
+      rect.adjust(-indentation(), 0, 0, 0);
+    }
+  }
+  return rect;
+}
 
 void ModListView::setModel(QAbstractItemModel* model)
 {

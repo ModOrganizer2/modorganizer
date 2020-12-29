@@ -26,6 +26,8 @@ public:
   explicit ModListView(QWidget* parent = 0);
   void setModel(QAbstractItemModel* model) override;
 
+  QRect visualRect(const QModelIndex& index) const override;
+
 signals:
 
   void dragEntered(const QMimeData* mimeData);
