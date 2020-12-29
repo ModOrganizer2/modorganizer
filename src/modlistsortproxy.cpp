@@ -592,23 +592,39 @@ void ModListSortProxy::setOptions(
   }
 }
 
-bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) const
+bool ModListSortProxy::filterAcceptsRow(int source_row, const QModelIndex &parent) const
 {
   if (m_Profile == nullptr) {
     return false;
   }
 
-  if (row >= static_cast<int>(m_Profile->numMods())) {
-    log::warn("invalid row index: {}", row);
+  if (source_row >= static_cast<int>(m_Profile->numMods())) {
+    log::warn("invalid row index: {}", source_row);
     return false;
   }
 
-  QModelIndex idx = sourceModel()->index(row, 0, parent);
+  QModelIndex idx = sourceModel()->index(source_row, 0, parent);
   if (!idx.isValid()) {
     log::debug("invalid mod index");
     return false;
   }
+
+  unsigned int index = ULONG_MAX;
+  {
+    bool ok = false;
+    index = idx.data(ModList::IndexRole).toInt(&ok);
+    if (!ok) {
+      index = ULONG_MAX;
+    }
+  }
+
   if (sourceModel()->hasChildren(idx)) {
+    // we need to check the separator itself first
+    if (index < ModInfo::getNumMods() && ModInfo::getByIndex(index)->isSeparator()) {
+      if (filterMatchesMod(ModInfo::getByIndex(index), false)) {
+        return true;
+      }
+    }
     for (int i = 0; i < sourceModel()->rowCount(idx); ++i) {
       if (filterAcceptsRow(i, idx)) {
         return true;
@@ -617,8 +633,7 @@ bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) cons
 
     return false;
   } else {
-    bool modEnabled = idx.sibling(row, 0).data(Qt::CheckStateRole).toInt() == Qt::Checked;
-    unsigned int index = idx.data(Qt::UserRole + 1).toInt();
+    bool modEnabled = idx.sibling(source_row, 0).data(Qt::CheckStateRole).toInt() == Qt::Checked;
     return filterMatchesMod(ModInfo::getByIndex(index), modEnabled);
   }
 }
