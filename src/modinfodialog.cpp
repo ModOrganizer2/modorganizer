@@ -776,7 +776,7 @@ void ModInfoDialog::onTabMoved()
 
 void ModInfoDialog::onNextMod()
 {
-  auto mod = m_mainWindow->nextModInList();
+  auto mod = m_mainWindow->nextModInList(ModInfo::getIndex(m_mod->name()));
   if (!mod || mod == m_mod) {
     return;
   }
@@ -787,7 +787,7 @@ void ModInfoDialog::onNextMod()
 
 void ModInfoDialog::onPreviousMod()
 {
-  auto mod = m_mainWindow->previousModInList();
+  auto mod = m_mainWindow->previousModInList(ModInfo::getIndex(m_mod->name()));
   if (!mod || mod == m_mod) {
     return;
   }

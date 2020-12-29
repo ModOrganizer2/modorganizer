@@ -56,25 +56,6 @@ public:
   int nextMod(int index) const;
   int prevMod(int index) const;
 
-  // invalidate the top-level model
-  //
-  void invalidate();
-
-  // enable/disable all visible mods
-  //
-  void enableAllVisible();
-  void disableAllVisible();
-
-  // enable/disable all selected mods
-  //
-  void enableSelected();
-  void disableSelected();
-
-  // set the filter criteria/options for mods
-  //
-  void setFilterCriteria(const std::vector<ModListSortProxy::Criteria>& criteria);
-  void setFilterOptions(ModListSortProxy::FilterMode mode, ModListSortProxy::SeparatorsMode sep);
-
   // check if the given mod is visible
   //
   bool isModVisible(unsigned int index) const;
@@ -96,6 +77,27 @@ signals:
 
 public slots:
 
+  // invalidate the top-level model
+  //
+  void invalidate();
+
+  // enable/disable all visible mods
+  //
+  void enableAllVisible();
+  void disableAllVisible();
+
+  // enable/disable all selected mods
+  //
+  void enableSelected();
+  void disableSelected();
+
+  // set the filter criteria/options for mods
+  //
+  void setFilterCriteria(const std::vector<ModListSortProxy::Criteria>& criteria);
+  void setFilterOptions(ModListSortProxy::FilterMode mode, ModListSortProxy::SeparatorsMode sep);
+
+  // update the mod counter
+  //
   void updateModCount();
 
 protected:

@@ -144,8 +144,8 @@ public:
 
   virtual MOBase::DelayedFileWriterBase &archivesWriter() override { return m_ArchiveListWriter; }
 
-  ModInfo::Ptr nextModInList();
-  ModInfo::Ptr previousModInList();
+  ModInfo::Ptr nextModInList(int modIndex);
+  ModInfo::Ptr previousModInList(int modIndex);
 
 public slots:
   void onModPrioritiesChanged(std::vector<int> const& indices);
@@ -232,7 +232,7 @@ private:
    */
   void replaceCategoriesFromMenu(QMenu *menu, int modRow);
 
-  bool populateMenuCategories(QMenu *menu, int targetID);
+  bool populateMenuCategories(int modIndex, QMenu *menu, int targetID);
 
   // remove invalid category-references from mods
   void fixCategories();
@@ -246,7 +246,7 @@ private:
 
   bool errorReported(QString &logFile);
 
-  void updateESPLock(bool locked);
+  void updateESPLock(int espIndex, bool locked);
 
   static void setupNetworkProxy(bool activate);
   void activateProxy(bool activate);
@@ -301,9 +301,6 @@ private:
 
   int m_OldExecutableIndex;
 
-  int m_ContextRow;
-  QPersistentModelIndex m_ContextIdx;
-  QTreeWidgetItem *m_ContextItem;
   QAction *m_ContextAction;
 
   CategoryFactory &m_CategoryFactory;
@@ -356,7 +353,7 @@ private slots:
   void wikiTriggered();
   void discordTriggered();
   void tutorialTriggered();
-  void extractBSATriggered();
+  void extractBSATriggered(QTreeWidgetItem* item);
 
   //modlist shortcuts
   void openExplorer_activated();
@@ -364,30 +361,30 @@ private slots:
 
   // modlist context menu
   void installMod_clicked();
-  void createEmptyMod_clicked();
-  void createSeparator_clicked();
-  void restoreBackup_clicked();
+  void createEmptyMod_clicked(int modIndex);
+  void createSeparator_clicked(int modIndex);
+  void restoreBackup_clicked(int modIndex);
   void renameMod_clicked();
-  void removeMod_clicked();
-  void setColor_clicked();
-  void resetColor_clicked();
-  void backupMod_clicked();
-  void reinstallMod_clicked();
+  void removeMod_clicked(int modIndex);
+  void setColor_clicked(int modIndex);
+  void resetColor_clicked(int modIndex);
+  void backupMod_clicked(int modIndex);
+  void reinstallMod_clicked(int modIndex);
   void endorse_clicked();
-  void dontendorse_clicked();
+  void dontendorse_clicked(int modIndex);
   void unendorse_clicked();
   void track_clicked();
   void untrack_clicked();
-  void ignoreMissingData_clicked();
-  void markConverted_clicked();
-  void restoreHiddenFiles_clicked();
-  void visitOnNexus_clicked();
-  void visitWebPage_clicked();
-  void visitNexusOrWebPage_clicked();
-  void openExplorer_clicked();
+  void ignoreMissingData_clicked(int modIndex);
+  void markConverted_clicked(int modIndex);
+  void restoreHiddenFiles_clicked(int modIndex);
+  void visitOnNexus_clicked(int modIndex);
+  void visitWebPage_clicked(int modIndex);
+  void visitNexusOrWebPage_clicked(int modIndex);
+  void openExplorer_clicked(int modIndex);
   void openPluginOriginExplorer_clicked();
   void openOriginInformation_clicked();
-  void information_clicked();
+  void information_clicked(int modIndex);
   void enableSelectedMods_clicked();
   void disableSelectedMods_clicked();
   void sendSelectedModsToTop_clicked();
@@ -438,10 +435,10 @@ private slots:
 
   void originModified(int originID);
 
-  void addRemoveCategories_MenuHandler();
-  void replaceCategories_MenuHandler();
+  void addRemoveCategories_MenuHandler(int modIndex, const QModelIndex& rowIdx);
+  void replaceCategories_MenuHandler(int modIndex);
 
-  void addPrimaryCategoryCandidates();
+  void addPrimaryCategoryCandidates(int modIndex);
 
   void modInstalled(const QString &modName);
 
@@ -479,9 +476,6 @@ private slots:
   void unendorseMod(ModInfo::Ptr mod);
   void trackMod(ModInfo::Ptr mod, bool doTrack);
   void cancelModListEditor();
-
-  void lockESPIndex();
-  void unlockESPIndex();
 
   void enableVisibleMods();
   void disableVisibleMods();
@@ -527,13 +521,13 @@ private slots:
   void allowListResize();
 
   void toolBar_customContextMenuRequested(const QPoint &point);
-  void removeFromToolbar();
+  void removeFromToolbar(QAction* action);
   void overwriteClosed(int);
 
-  void changeVersioningScheme();
-  void checkModUpdates_clicked();
-  void ignoreUpdate();
-  void unignoreUpdate();
+  void changeVersioningScheme(int modIndex);
+  void checkModUpdates_clicked(int modIndex);
+  void ignoreUpdate(int modIndex);
+  void unignoreUpdate(int modIndex);
 
   void about();
 
@@ -571,7 +565,6 @@ private slots: // ui slots
   void on_executablesListBox_currentIndexChanged(int index);
   void on_modList_customContextMenuRequested(const QPoint &pos);
   void on_modList_doubleClicked(const QModelIndex &index);
-  void on_listOptionsBtn_pressed();
   void on_espList_doubleClicked(const QModelIndex &index);
   void on_profileBox_currentIndexChanged(int index);
   void on_startButton_clicked();
