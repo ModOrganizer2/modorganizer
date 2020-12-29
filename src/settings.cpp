@@ -2162,6 +2162,16 @@ void InterfaceSettings::setStyleName(const QString& name)
   set(m_Settings, "Settings", "style", name);
 }
 
+bool InterfaceSettings::collapsibleSeparators() const
+{
+  return get<bool>(m_Settings, "Settings", "collapsible_separators", true);
+}
+
+void InterfaceSettings::setCollapsibleSeparators(bool b)
+{
+  set(m_Settings, "Settings", "collapsible_separators", b);
+}
+
 bool InterfaceSettings::compactDownloads() const
 {
   return get<bool>(m_Settings, "Settings", "compact_downloads", false);

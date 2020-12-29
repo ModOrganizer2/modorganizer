@@ -617,6 +617,11 @@ public:
   std::optional<QString> styleName() const;
   void setStyleName(const QString& name);
 
+  // whether to use collapsible separators when possible
+  //
+  bool collapsibleSeparators() const;
+  void setCollapsibleSeparators(bool b);
+
   // whether to show compact downloads
   //
   bool compactDownloads() const;

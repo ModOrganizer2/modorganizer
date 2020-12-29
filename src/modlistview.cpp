@@ -76,8 +76,10 @@ ModListView::ModListView(QWidget* parent)
   setItemDelegate(new ModListStyledItemDelegated(this));
 }
 
-void ModListView::refreshStyle()
+void ModListView::refresh()
 {
+  updateGroupByProxy(-1);
+
   // maybe there is a better way but I did not find one
   QString sheet = styleSheet();
   setStyleSheet("QTreeView { }");
@@ -496,7 +498,8 @@ void ModListView::updateGroupByProxy(int groupIndex)
     m_byNexusIdProxy->setGroupedColumn(ModList::COL_MODID);
     m_sortProxy->setSourceModel(m_byNexusIdProxy);
   }
-  else if (m_sortProxy->sortColumn() == ModList::COL_PRIORITY
+  else if (m_core->settings().interface().collapsibleSeparators()
+    && m_sortProxy->sortColumn() == ModList::COL_PRIORITY
     && m_sortProxy->sortOrder() == Qt::AscendingOrder) {
     m_sortProxy->setSourceModel(m_byPriorityProxy);
     m_byPriorityProxy->refresh();

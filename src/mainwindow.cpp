@@ -692,7 +692,6 @@ void MainWindow::allowListResize()
 void MainWindow::updateStyle(const QString&)
 {
   resetActionIcons();
-  ui->modList->refreshStyle();
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)
@@ -4619,6 +4618,7 @@ void MainWindow::on_actionSettings_triggered()
 
   fixCategories();
   refreshFilters();
+  ui->modList->refresh();
 
   if (settings.paths().profiles() != oldProfilesDirectory) {
     refreshProfiles();

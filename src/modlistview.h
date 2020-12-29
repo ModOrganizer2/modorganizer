@@ -65,10 +65,9 @@ public:
   //
   QRect visualRect(const QModelIndex& index) const override;
 
-  // refresh the style of the mod list, this needs to be called when the
-  // stylesheet is changed
+  // refresh the view (to call when settings have been changed)
   //
-  void refreshStyle();
+  void refresh();
 
 signals:
 
