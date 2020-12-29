@@ -46,17 +46,17 @@ public:
 
 class ModListStyledItemDelegated : public QStyledItemDelegate
 {
-  QTreeView* m_view;
+  ModListView* m_view;
 
 public:
 
-  ModListStyledItemDelegated(QTreeView* view) :
+  ModListStyledItemDelegated(ModListView* view) :
     QStyledItemDelegate(view), m_view(view) { }
 
   using QStyledItemDelegate::QStyledItemDelegate;
   void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override {
     QStyleOptionViewItem opt(option);
-    if (index.column() == 0) {
+    if (index.column() == 0 && m_view->hasCollapsibleSeparators()) {
       if (!index.model()->hasChildren(index) && index.parent().isValid()) {
         auto parentIndex = index.parent().data(ModList::IndexRole).toInt();
         if (ModInfo::getByIndex(parentIndex)->isSeparator()) {
@@ -665,10 +665,12 @@ void ModListView::setup(OrganizerCore& core, Ui::MainWindow* mwui)
 QRect ModListView::visualRect(const QModelIndex& index) const
 {
   QRect rect = QTreeView::visualRect(index);
-  if (index.isValid() && !index.model()->hasChildren(index) && index.parent().isValid()) {
-    auto parentIndex = index.parent().data(ModList::IndexRole).toInt();
-    if (ModInfo::getByIndex(parentIndex)->isSeparator()) {
-      rect.adjust(-indentation(), 0, 0, 0);
+  if (hasCollapsibleSeparators()) {
+    if (index.isValid() && !index.model()->hasChildren(index) && index.parent().isValid()) {
+      auto parentIndex = index.parent().data(ModList::IndexRole).toInt();
+      if (ModInfo::getByIndex(parentIndex)->isSeparator()) {
+        rect.adjust(-indentation(), 0, 0, 0);
+      }
     }
   }
   return rect;
