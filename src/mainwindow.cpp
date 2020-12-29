@@ -1713,9 +1713,22 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 
     if (ui->profileBox->currentIndex() == 0) {
       ui->profileBox->setCurrentIndex(previousIndex);
-      ProfilesDialog(ui->profileBox->currentText(), m_OrganizerCore, this).exec();
+
+      std::optional<QString> newSelection;
+
+      ProfilesDialog dlg(ui->profileBox->currentText(), m_OrganizerCore, this);
+      dlg.exec();
+      newSelection = dlg.selectedProfile();
+
       while (!refreshProfiles()) {
-        ProfilesDialog(ui->profileBox->currentText(), m_OrganizerCore, this).exec();
+        ProfilesDialog dlg(ui->profileBox->currentText(), m_OrganizerCore, this);
+        dlg.exec();
+        newSelection = dlg.selectedProfile();
+      }
+
+      if (newSelection) {
+        ui->profileBox->setCurrentText(*newSelection);
+        activateSelectedProfile();
       }
     } else {
       activateSelectedProfile();

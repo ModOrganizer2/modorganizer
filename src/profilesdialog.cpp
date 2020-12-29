@@ -115,11 +115,29 @@ void ProfilesDialog::showEvent(QShowEvent *event)
   }
 }
 
-void ProfilesDialog::on_closeButton_clicked()
+void ProfilesDialog::on_close_clicked()
 {
   close();
 }
 
+void ProfilesDialog::on_select_clicked()
+{
+  const Profile::Ptr currentProfile = ui->profilesList->currentItem()
+    ->data(Qt::UserRole)
+    .value<Profile::Ptr>();
+
+  if (!currentProfile) {
+    return;
+  }
+
+  m_Selected = currentProfile->name();
+  close();
+}
+
+std::optional<QString> ProfilesDialog::selectedProfile() const
+{
+  return m_Selected;
+}
 
 QListWidgetItem *ProfilesDialog::addItem(const QString &name)
 {
@@ -142,6 +160,7 @@ void ProfilesDialog::createProfile(const QString &name, bool useDefaultSettings)
     newItem->setData(Qt::UserRole, QVariant::fromValue(profile));
     ui->profilesList->addItem(newItem);
     m_FailState = false;
+    ui->profilesList->setCurrentItem(newItem);
     emit profileCreated(profile.get());
   } catch (const std::exception&) {
     m_FailState = true;
@@ -157,6 +176,7 @@ void ProfilesDialog::createProfile(const QString &name, const Profile &reference
     newItem->setData(Qt::UserRole, QVariant::fromValue(profile));
     ui->profilesList->addItem(newItem);
     m_FailState = false;
+    ui->profilesList->setCurrentItem(newItem);
     emit profileCreated(profile.get());
   } catch (const std::exception&) {
     m_FailState = true;
@@ -346,6 +366,11 @@ void ProfilesDialog::on_profilesList_currentItemChanged(QListWidgetItem *current
     ui->removeProfileButton->setEnabled(false);
     ui->renameButton->setEnabled(false);
   }
+}
+
+void ProfilesDialog::on_profilesList_itemActivated(QListWidgetItem* item)
+{
+  on_select_clicked();
 }
 
 void ProfilesDialog::on_localSavesBox_stateChanged(int state)

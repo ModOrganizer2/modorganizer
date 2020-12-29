@@ -63,6 +63,11 @@ public:
    **/
   bool failed() const { return m_FailState; }
 
+  // if the dialog was closed with the 'select' button, returns the name of the
+  // selected profile; if the dialog was closed with 'cancel', returns empty
+  //
+  std::optional<QString> selectedProfile() const;
+
 signals:
 
   /**
@@ -95,7 +100,8 @@ private:
 
 private slots:
 
-  void on_closeButton_clicked();
+  void on_close_clicked();
+  void on_select_clicked();
 
   void on_addProfileButton_clicked();
 
@@ -104,6 +110,7 @@ private slots:
   void on_copyProfileButton_clicked();
 
   void on_profilesList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+  void on_profilesList_itemActivated(QListWidgetItem* item);
 
   void on_removeProfileButton_clicked();
 
@@ -119,6 +126,7 @@ private:
   bool m_FailState;
   MOBase::IPluginGame const *m_Game;
   QString m_ActiveProfileName;
+  std::optional<QString> m_Selected;
 };
 
 #endif // PROFILESDIALOG_H
