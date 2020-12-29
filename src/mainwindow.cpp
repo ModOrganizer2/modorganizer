@@ -4207,11 +4207,13 @@ void MainWindow::initModListContextMenu(QMenu *menu)
 {
   menu->addAction(tr("Install Mod..."), [&]() { installMod_clicked(); });
   menu->addAction(tr("Create empty mod"), [&]() { createEmptyMod_clicked(-1); });
-
-  menu->addSeparator();
   menu->addAction(tr("Create Separator"), [&]() { createSeparator_clicked(-1); });
-  menu->addAction(tr("Collapse all"), ui->modList, &QTreeView::collapseAll);
-  menu->addAction(tr("Expand all"), ui->modList, &QTreeView::expandAll);
+
+  if (ui->modList->hasCollapsibleSeparators()) {
+    menu->addSeparator();
+    menu->addAction(tr("Collapse all"), ui->modList, &QTreeView::collapseAll);
+    menu->addAction(tr("Expand all"), ui->modList, &QTreeView::expandAll);
+  }
 
   menu->addSeparator();
 
