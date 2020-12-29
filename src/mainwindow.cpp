@@ -2764,20 +2764,20 @@ void MainWindow::setWindowEnabled(bool enabled)
 
 ModInfo::Ptr MainWindow::nextModInList()
 {
-  int index = ui->modList->nextMod(m_ContextRow);
-  if (index == -1) {
+  m_ContextRow = ui->modList->nextMod(m_ContextRow);
+  if (m_ContextRow == -1) {
     return {};
   }
-  return ModInfo::getByIndex(index);
+  return ModInfo::getByIndex(m_ContextRow);
 }
 
 ModInfo::Ptr MainWindow::previousModInList()
 {
-  int index = ui->modList->prevMod(m_ContextRow);
-  if (index == -1) {
+  m_ContextRow = ui->modList->prevMod(m_ContextRow);
+  if (m_ContextRow == -1) {
     return {};
   }
-  return ModInfo::getByIndex(index);
+  return ModInfo::getByIndex(m_ContextRow);
 }
 
 void MainWindow::displayModInformation(const QString &modName, ModInfoTabIDs tabID)
@@ -3479,13 +3479,13 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
   }
 
   bool indexOk = false;
-  int modIndex = index.data(ModList::IndexRole).toInt(&indexOk);
+  m_ContextRow = index.data(ModList::IndexRole).toInt(&indexOk);
 
-  if (!indexOk || modIndex < 0 || modIndex >= ModInfo::getNumMods()) {
+  if (!indexOk || m_ContextRow < 0 || m_ContextRow >= ModInfo::getNumMods()) {
     return;
   }
 
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
 
   Qt::KeyboardModifiers modifiers = QApplication::queryKeyboardModifiers();
   if (modifiers.testFlag(Qt::ControlModifier)) {
@@ -3502,7 +3502,7 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
   }
   else if (modifiers.testFlag(Qt::ShiftModifier)) {
     try {
-      QModelIndex idx = m_OrganizerCore.modList()->index(modIndex, 0);
+      QModelIndex idx = m_OrganizerCore.modList()->index(m_ContextRow, 0);
       visitNexusOrWebPage(idx);
       ui->modList->closePersistentEditor(index);
     }
@@ -3526,7 +3526,7 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
         case ModList::COL_CONFLICTFLAGS: tab = ModInfoTabIDs::Conflicts; break;
       }
 
-      displayModInformation(modIndex, tab);
+      displayModInformation(m_ContextRow, tab);
       // workaround to cancel the editor that might have opened because of
       // selection-click
       ui->modList->closePersistentEditor(index);

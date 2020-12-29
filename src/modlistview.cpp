@@ -107,13 +107,14 @@ int ModListView::nextMod(int modIndex) const
   auto index = start;
 
   for (;;) {
-    index = model()->index((index.row() + 1) % model()->rowCount(), 0);
-    modIndex = indexViewToModel(index).data(ModList::IndexRole).toInt();
+    index = nextIndex(index);
 
     if (index == start || !index.isValid()) {
       // wrapped around, give up
       break;
     }
+
+    modIndex = index.data(ModList::IndexRole).toInt();
 
     ModInfo::Ptr mod = ModInfo::getByIndex(modIndex);
 
@@ -137,18 +138,14 @@ int ModListView::prevMod(int modIndex) const
   auto index = start;
 
   for (;;) {
-    int row = index.row() - 1;
-    if (row == -1) {
-      row = model()->rowCount() - 1;
-    }
-
-    index = model()->index(row, 0);
-    modIndex = indexViewToModel(index).data(ModList::IndexRole).toInt();
+    index = prevIndex(index);
 
     if (index == start || !index.isValid()) {
       // wrapped around, give up
       break;
     }
+
+    modIndex = index.data(ModList::IndexRole).toInt();
 
     // skip overwrite and backups and separators
     ModInfo::Ptr mod = ModInfo::getByIndex(modIndex);
@@ -284,6 +281,43 @@ QModelIndex ModListView::indexViewToModel(const QModelIndex& index) const
   else {
     return QModelIndex();
   }
+}
+
+QModelIndex ModListView::nextIndex(const QModelIndex& index) const
+{
+  auto* model = index.model();
+
+  if (model->rowCount(index) > 0) {
+    return model->index(0, index.column(), index);
+  }
+
+  if (index.parent().isValid()) {
+    if (index.row() + 1 < model->rowCount(index.parent())) {
+      return index.model()->index(index.row() + 1, index.column(), index.parent());
+    }
+    else {
+      return index.model()->index((index.parent().row() + 1) % model->rowCount(index.parent().parent()), index.column(), index.parent().parent());;
+    }
+  }
+  else {
+    return index.model()->index((index.row() + 1) % model->rowCount(index.parent()), index.column(), index.parent());
+  }
+}
+
+QModelIndex ModListView::prevIndex(const QModelIndex& index) const
+{
+  if (index.row() == 0 && index.parent().isValid()) {
+    return index.parent();
+  }
+
+  auto* model = index.model();
+  auto prev = model->index((index.row() - 1) % model->rowCount(index.parent()), index.column(), index.parent());
+
+  if (model->rowCount(prev) > 0) {
+    return model->index(model->rowCount(prev) - 1, index.column(), prev);
+  }
+
+  return prev;
 }
 
 std::vector<QModelIndex> ModListView::allIndex(

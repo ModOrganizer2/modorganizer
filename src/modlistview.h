@@ -105,6 +105,11 @@ protected:
   QModelIndex indexModelToView(const QModelIndex& index) const;
   QModelIndex indexViewToModel(const QModelIndex& index) const;
 
+  // returns the next/previous index of the given index
+  //
+  QModelIndex nextIndex(const QModelIndex& index) const;
+  QModelIndex prevIndex(const QModelIndex& index) const;
+
   // all index for the given model under the given index, recursively
   //
   std::vector<QModelIndex> allIndex(
