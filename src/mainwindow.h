@@ -557,6 +557,7 @@ private slots: // ui slots
   // actions
   void on_actionAdd_Profile_triggered();
   void on_actionInstallMod_triggered();
+  void on_action_Refresh_triggered();
   void on_actionModify_Executables_triggered();
   void on_actionNexus_triggered();
   void on_actionNotifications_triggered();

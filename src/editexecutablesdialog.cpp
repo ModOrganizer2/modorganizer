@@ -71,6 +71,9 @@ EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, int sel, QWidget
   loadCustomOverwrites();
   loadForcedLibraries();
 
+
+  QStringList modNames;
+
   for (auto&& m : m_organizerCore.modList()->allMods()) {
     auto mod = ModInfo::getByName(m);
     if (!mod->hasAnyOfTheseFlags({ ModInfo::FLAG_FOREIGN,
@@ -78,8 +81,15 @@ EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, int sel, QWidget
                                    ModInfo::FLAG_OVERWRITE,
                                    ModInfo::FLAG_SEPARATOR })) {
       ui->mods->addItem(m);
+      modNames.push_back(m);
     }
   }
+
+  auto* c = new QCompleter(modNames);
+  c->setCaseSensitivity(Qt::CaseInsensitive);
+  c->setCompletionMode(QCompleter::UnfilteredPopupCompletion);
+  ui->mods->setCompleter(c);
+
 
   fillList();
   setDirty(false);
@@ -170,9 +180,51 @@ EditExecutablesDialog::getForcedLibraries() const
   return m_forcedLibraries;
 }
 
-void EditExecutablesDialog::commitChanges()
+bool EditExecutablesDialog::checkOutputMods(const ExecutablesList& exes)
+{
+  // make sure the output mods for exes exist since the combobox is editable
+  //
+  // it'd be convenient for users to automatically create mods here if they're
+  // not found, but this is a can of worms: it would require a refresh
+  // because getIndex() still won't find it after calling
+  // OrganizerCore::createMod(), which is a problem if the user just clicked
+  // Apply and continued doing things
+  //
+  // triggering a refresh while this dialog is up doesn't sound like a very
+  // smart thing to do for now, so this just shows an error
+
+  for (const auto& e : exes) {
+    auto modName = m_customOverwrites.find(e.title());
+
+    if (modName && modName->enabled) {
+      if (modName->value.isEmpty()) {
+        QMessageBox::critical(
+          this, tr("Empty output mod"),
+          tr("The output mod for %2 is empty.").arg(e.title()));
+
+        return false;
+      } else if (ModInfo::getIndex(modName->value) == UINT_MAX) {
+        QMessageBox::critical(
+          this, tr("Output mod not found"),
+          tr("The output mod '%1' for %2 does not exist.")
+            .arg(modName->value).arg(e.title()));
+
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+bool EditExecutablesDialog::commitChanges()
 {
   const auto newExecutables = getExecutablesList();
+
+  if (!checkOutputMods(newExecutables)) {
+    return false;
+  }
+
   auto* profile = m_organizerCore.currentProfile();
 
   // remove all the custom overwrites and forced libraries
@@ -201,6 +253,8 @@ void EditExecutablesDialog::commitChanges()
   m_organizerCore.setExecutablesList(newExecutables);
 
   setDirty(false);
+
+  return true;
 }
 
 void EditExecutablesDialog::setDirty(bool b)
@@ -651,6 +705,11 @@ void EditExecutablesDialog::on_createFilesInMod_toggled(bool checked)
 
   ui->mods->setEnabled(checked);
   save();
+
+  if (checked) {
+    ui->mods->lineEdit()->selectAll();
+    ui->mods->setFocus();
+  }
 }
 
 void EditExecutablesDialog::on_forceLoadLibraries_toggled(bool checked)
@@ -776,8 +835,9 @@ void EditExecutablesDialog::on_configureLibraries_clicked()
 void EditExecutablesDialog::on_buttons_clicked(QAbstractButton* b)
 {
   if (b == ui->buttons->button(QDialogButtonBox::Ok)) {
-    commitChanges();
-    accept();
+    if (commitChanges()) {
+      accept();
+    }
   } else if (b == ui->buttons->button(QDialogButtonBox::Apply)) {
     commitChanges();
   } else {

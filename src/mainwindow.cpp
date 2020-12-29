@@ -487,7 +487,6 @@ MainWindow::MainWindow(Settings &settings
 
   new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Enter), this, SLOT(openExplorer_activated()));
   new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Return), this, SLOT(openExplorer_activated()));
-  new QShortcut(QKeySequence::Refresh, this, SLOT(refreshProfile_activated()));
 
   setFilterShortcuts(ui->modList, ui->modFilterEdit);
   setFilterShortcuts(ui->espList, ui->espFilterEdit);
@@ -1714,9 +1713,22 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 
     if (ui->profileBox->currentIndex() == 0) {
       ui->profileBox->setCurrentIndex(previousIndex);
-      ProfilesDialog(ui->profileBox->currentText(), m_OrganizerCore, this).exec();
+
+      std::optional<QString> newSelection;
+
+      ProfilesDialog dlg(ui->profileBox->currentText(), m_OrganizerCore, this);
+      dlg.exec();
+      newSelection = dlg.selectedProfile();
+
       while (!refreshProfiles()) {
-        ProfilesDialog(ui->profileBox->currentText(), m_OrganizerCore, this).exec();
+        ProfilesDialog dlg(ui->profileBox->currentText(), m_OrganizerCore, this);
+        dlg.exec();
+        newSelection = dlg.selectedProfile();
+      }
+
+      if (newSelection) {
+        ui->profileBox->setCurrentText(*newSelection);
+        activateSelectedProfile();
       }
     } else {
       activateSelectedProfile();
@@ -2292,6 +2304,11 @@ void MainWindow::on_actionInstallMod_triggered()
   installMod();
 }
 
+void MainWindow::on_action_Refresh_triggered()
+{
+  refreshProfile_activated();
+}
+
 void MainWindow::on_actionAdd_Profile_triggered()
 {
   for (;;) {
@@ -2549,7 +2566,9 @@ void MainWindow::restoreBackup_clicked()
         if (!modDir.rename(modInfo->absolutePath(), destinationPath)) {
           reportError(tr("failed to rename \"%1\" to \"%2\"").arg(modInfo->absolutePath()).arg(destinationPath));
         }
+
         m_OrganizerCore.refresh();
+        updateModCount();
       }
     }
   }
@@ -2699,7 +2718,9 @@ void MainWindow::backupMod_clicked()
     QMessageBox::information(this, tr("Failed"),
       tr("Failed to create backup."));
   }
+
   m_OrganizerCore.refresh();
+  updateModCount();
 }
 
 
@@ -3317,6 +3338,8 @@ void MainWindow::refreshProfile_activated()
 
 void MainWindow::updateModCount()
 {
+  TimeThis tt("updateModCount");
+
   int activeCount = 0;
   int visActiveCount = 0;
   int backupCount = 0;

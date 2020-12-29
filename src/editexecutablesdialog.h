@@ -225,9 +225,10 @@ private:
   bool canMove(const QListWidgetItem* item, int direction);
   void move(QListWidgetItem* item, int direction);
   bool isTitleConflicting(const QString& s);
-  void commitChanges();
+  bool commitChanges();
   void setDirty(bool b);
   void selectIndex(int i);
+  bool checkOutputMods(const ExecutablesList& exes);
 
   void addFromFile();
   void addEmpty();
