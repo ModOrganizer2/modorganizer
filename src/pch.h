@@ -89,6 +89,7 @@
 #include <QColorDialog>
 #include <QComboBox>
 #include <QCommandLinkButton>
+#include <QCompleter>
 #include <QContextMenuEvent>
 #include <QCoreApplication>
 #include <QCryptographicHash>
