@@ -133,12 +133,17 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
                                 const QModelIndex &right) const
 {
   if (sourceModel()->hasChildren(left) || sourceModel()->hasChildren(right)) {
-    return QSortFilterProxyModel::lessThan(left, right);
+    // when sorting by priority, we do not want to use the parent lessThan because
+    // it uses the display role which can be inconsistent (e.g. for backups)
+    if (sortColumn() != ModList::COL_PRIORITY) {
+      return QSortFilterProxyModel::lessThan(left, right);
+    }
   }
 
   bool lOk, rOk;
-  int leftIndex  = left.data(Qt::UserRole + 1).toInt(&lOk);
-  int rightIndex = right.data(Qt::UserRole + 1).toInt(&rOk);
+  int leftIndex  = left.data(ModList::IndexRole).toInt(&lOk);
+  int rightIndex = right.data(ModList::IndexRole).toInt(&rOk);
+
   if (!lOk || !rOk) {
     return false;
   }

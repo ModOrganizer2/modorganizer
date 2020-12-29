@@ -43,6 +43,7 @@ void ModListByPriorityProxy::buildTree()
 
   TreeItem* root = &m_Root;
   std::unique_ptr<TreeItem> overwrite;
+  std::vector<std::unique_ptr<TreeItem>> backups;
   for (auto& [priority, index] : m_Profile->getAllIndexesByPriority()) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
 
@@ -58,6 +59,10 @@ void ModListByPriorityProxy::buildTree()
       overwrite = std::make_unique<TreeItem>(modInfo, index, &m_Root);
       item = overwrite.get();
     }
+    else if (modInfo->isBackup()) {
+      backups.push_back(std::make_unique<TreeItem>(modInfo, index, &m_Root));
+      item = backups.back().get();
+    }
     else {
       root->children.push_back(std::make_unique<TreeItem>(modInfo, index, root));
       item = root->children.back().get();
@@ -66,6 +71,8 @@ void ModListByPriorityProxy::buildTree()
     m_IndexToItem[index] = item;
   }
 
+  m_Root.children.insert(m_Root.children.begin(),
+    std::make_move_iterator(backups.begin()), std::make_move_iterator(backups.end()));
   m_Root.children.push_back(std::move(overwrite));
 
   endResetModel();
@@ -101,6 +108,7 @@ QModelIndex ModListByPriorityProxy::mapToSource(const QModelIndex& proxyIndex) c
     return QModelIndex();
   }
   auto* item = static_cast<TreeItem*>(proxyIndex.internalPointer());
+
   return sourceModel()->index(item->index, proxyIndex.column());
 }
 
@@ -124,7 +132,6 @@ int ModListByPriorityProxy::columnCount(const QModelIndex& index) const
   return sourceModel()->columnCount(mapToSource(index));
 }
 
-
 QModelIndex ModListByPriorityProxy::parent(const QModelIndex& child) const
 {
   if (!child.isValid()) {
@@ -137,7 +144,7 @@ QModelIndex ModListByPriorityProxy::parent(const QModelIndex& child) const
     return QModelIndex();
   }
 
-  return createIndex(item->parent->parent->childIndex(item->parent), 0, item->parent);
+  return createIndex(item->parent->parent->childIndex(item->parent), child.column(), item->parent);
 }
 
 bool ModListByPriorityProxy::hasChildren(const QModelIndex& parent) const
@@ -270,6 +277,7 @@ QModelIndex ModListByPriorityProxy::index(int row, int column, const QModelIndex
   else {
     parentItem = static_cast<TreeItem*>(parent.internalPointer());
   }
+
   return createIndex(row, column, parentItem->children[row].get());
 }
 
