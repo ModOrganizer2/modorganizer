@@ -558,8 +558,6 @@ void MainWindow::updateModListByPriorityProxy()
 
 void MainWindow::setupModList()
 {
-  ui->modList->setIndentation(0);
-
   m_ModListByPriorityProxy = new ModListByPriorityProxy(m_OrganizerCore.currentProfile(), &m_OrganizerCore);
   connect(ui->modList, SIGNAL(expanded(QModelIndex)), m_ModListByPriorityProxy, SLOT(expanded(QModelIndex)));
   connect(ui->modList, SIGNAL(collapsed(QModelIndex)), m_ModListByPriorityProxy, SLOT(collapsed(QModelIndex)));

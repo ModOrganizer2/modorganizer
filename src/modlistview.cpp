@@ -4,18 +4,22 @@
 #include <QMimeData>
 #include <QProxyStyle>
 
+#include "modlist.h"
+#include "log.h"
+
 class ModListProxyStyle : public QProxyStyle {
 public:
 
   using QProxyStyle::QProxyStyle;
 
-  void drawPrimitive(PrimitiveElement element, const QStyleOption* option, QPainter* painter, const QWidget* widget) const
+  void drawPrimitive(PrimitiveElement element, const QStyleOption* option, QPainter* painter, const QWidget* widget) const override
   {
     if (element == QStyle::PE_IndicatorItemViewItemDrop)
     {
       QStyleOption opt(*option);
-      opt.rect.setLeft(20);
+      opt.rect.setLeft(0);
       if (auto* view = qobject_cast<const QTreeView*>(widget)) {
+        opt.rect.setLeft(view->indentation());
         opt.rect.setRight(widget->width());
       }
       QProxyStyle::drawPrimitive(element, &opt, painter, widget);
@@ -24,25 +28,43 @@ public:
       QProxyStyle::drawPrimitive(element, option, painter, widget);
     }
   }
+
+  QRect subElementRect(QStyle::SubElement element, const QStyleOption* option, const QWidget* widget) const override
+  {
+    QRect rect = QProxyStyle::subElementRect(element, option, widget);
+    switch (element) {
+    case SE_ItemViewItemCheckIndicator:
+    case SE_ItemViewItemDecoration:
+    case SE_ItemViewItemText:
+    case SE_ItemViewItemFocusRect:
+      rect.adjust(-20, 0, 0, 0);
+      break;
+    }
+    return rect;
+  }
 };
 
 class ModListStyledItemDelegated : public QStyledItemDelegate
 {
+  QTreeView* m_view;
+
 public:
+
+  ModListStyledItemDelegated(QTreeView* view) :
+    QStyledItemDelegate(view), m_view(view) { }
+
   using QStyledItemDelegate::QStyledItemDelegate;
   void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override {
     QStyleOptionViewItem opt(option);
-    if (index.column() == 0)
-      opt.rect.adjust(opt.rect.height(), 0, 0, 0);
-    QStyledItemDelegate::paint(painter, opt, index);
     if (index.column() == 0) {
-      QStyleOptionViewItem branch;
-      branch.rect = QRect(0, opt.rect.y(), opt.rect.height(), opt.rect.height());
-      branch.state = option.state;
-      const QWidget* widget = option.widget;
-      QStyle* style = widget ? widget->style() : QApplication::style();
-      style->drawPrimitive(QStyle::PE_IndicatorBranch, &branch, painter, widget);
+      if (!index.model()->hasChildren(index) && index.parent().isValid()) {
+        auto parentIndex = index.parent().data(ModList::IndexRole).toInt();
+        if (ModInfo::getByIndex(parentIndex)->isSeparator()) {
+          opt.rect.adjust(-m_view->indentation(), 0, 0, 0);
+        }
+      }
     }
+    QStyledItemDelegate::paint(painter, opt, index);
   }
 };
 
@@ -54,10 +76,10 @@ ModListView::ModListView(QWidget* parent)
   MOBase::setCustomizableColumns(this);
   setAutoExpandDelay(1000);
 
-  setIndentation(0);
   setStyle(new ModListProxyStyle(style()));
   setItemDelegate(new ModListStyledItemDelegated(this));
 }
+
 
 void ModListView::setModel(QAbstractItemModel* model)
 {
