@@ -422,10 +422,6 @@ MainWindow::MainWindow(Settings &settings
 
   connect(&m_PluginContainer, SIGNAL(diagnosisUpdate()), this, SLOT(scheduleCheckForProblems()));
 
-  connect(m_ModListSortProxy, SIGNAL(filterActive(bool)), this, SLOT(modFilterActive(bool)));
-  connect(m_ModListSortProxy, SIGNAL(layoutChanged()), this, SLOT(updateModCount()));
-  connect(ui->modFilterEdit, SIGNAL(textChanged(QString)), m_ModListSortProxy, SLOT(updateFilter(QString)));
-
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), m_PluginListSortProxy, SLOT(updateFilter(QString)));
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(espFilterChanged(QString)));
 
@@ -658,6 +654,15 @@ void MainWindow::setupModList()
 
   connect(m_OrganizerCore.modList(), &ModList::downloadArchiveDropped, this, [this](int row, int priority) {
     m_OrganizerCore.installDownload(row, priority);
+  });
+
+  connect(m_ModListSortProxy, &ModListSortProxy::filterActive, this, &MainWindow::modFilterActive);
+  connect(ui->modFilterEdit, &QLineEdit::textChanged, m_ModListSortProxy, &ModListSortProxy::updateFilter);
+  connect(m_ModListSortProxy, &QAbstractItemModel::layoutChanged, this, &MainWindow::updateModCount);
+  connect(m_ModListSortProxy, &QAbstractItemModel::layoutChanged, this, [&]() {
+    if (m_ModListSortProxy->sourceModel() == m_ModListByPriorityProxy) {
+      m_ModListByPriorityProxy->refreshExpandedItems();
+    }
   });
 }
 
@@ -5835,7 +5840,6 @@ void MainWindow::onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>
   }
 
   ui->currentCategoryLabel->setText(label);
-  ui->modList->reset();
 }
 
 void MainWindow::onFiltersOptions(

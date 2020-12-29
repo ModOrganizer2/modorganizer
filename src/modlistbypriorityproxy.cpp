@@ -82,7 +82,7 @@ void ModListByPriorityProxy::buildTree()
   expandItems(QModelIndex());
 }
 
-void ModListByPriorityProxy::expandItems(const QModelIndex& index)
+void ModListByPriorityProxy::expandItems(const QModelIndex& index) const
 {
   for (int row = 0; row < rowCount(index); row++) {
     QModelIndex idx = this->index(row, 0, index);
@@ -296,6 +296,11 @@ QModelIndex ModListByPriorityProxy::index(int row, int column, const QModelIndex
 void ModListByPriorityProxy::onDropEnter(const QMimeData*, ModListView::DropPosition dropPosition)
 {
   m_DropPosition = dropPosition;
+}
+
+void ModListByPriorityProxy::refreshExpandedItems() const
+{
+  expandItems(QModelIndex());
 }
 
 void ModListByPriorityProxy::expanded(const QModelIndex& index)
