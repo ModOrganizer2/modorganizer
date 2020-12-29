@@ -1272,7 +1272,7 @@ bool ModList::canDropMimeData(const QMimeData* mimeData, Qt::DropAction action, 
     }
     else if (hasIndex(row, column, parent)) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
-      return modInfo->isSeparator() || !parent.isValid();
+      return !modInfo->isBackup() && (modInfo->isSeparator() || !parent.isValid());
     }
     else {
       return true;
