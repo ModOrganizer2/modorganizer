@@ -2501,7 +2501,6 @@ void MainWindow::modInstalled(const QString &modName)
   QModelIndex qIndex = m_OrganizerCore.modList()->index(index, 0);
 
   if (m_ModListSortProxy->sourceModel() == m_ModListByPriorityProxy) {
-    m_ModListByPriorityProxy->refresh();
     qIndex = m_ModListByPriorityProxy->mapFromSource(qIndex);
     ui->modList->expand(m_ModListSortProxy->mapFromSource(qIndex));
   }
