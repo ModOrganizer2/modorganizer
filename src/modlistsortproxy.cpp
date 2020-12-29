@@ -80,32 +80,6 @@ Qt::ItemFlags ModListSortProxy::flags(const QModelIndex &modelIndex) const
   return flags;
 }
 
-void ModListSortProxy::enableAllVisible()
-{
-  if (m_Profile == nullptr) return;
-
-  QList<unsigned int> modsToEnable;
-  for (int i = 0; i < this->rowCount(); ++i) {
-    int modID = mapToSource(index(i, 0)).data(Qt::UserRole + 1).toInt();
-    modsToEnable.append(modID);
-  }
-  m_Profile->setModsEnabled(modsToEnable, QList<unsigned int>());
-  invalidate();
-}
-
-void ModListSortProxy::disableAllVisible()
-{
-  if (m_Profile == nullptr) return;
-
-  QList<unsigned int> modsToDisable;
-  for (int i = 0; i < this->rowCount(); ++i) {
-    int modID = mapToSource(index(i, 0)).data(Qt::UserRole + 1).toInt();
-    modsToDisable.append(modID);
-  }
-  m_Profile->setModsEnabled(QList<unsigned int>(), modsToDisable);
-  invalidate();
-}
-
 unsigned long ModListSortProxy::flagsId(const std::vector<ModInfo::EFlag> &flags) const
 {
   unsigned long result = 0;

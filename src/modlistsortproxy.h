@@ -84,17 +84,6 @@ public:
 
   virtual void setSourceModel(QAbstractItemModel *sourceModel) override;
 
-
-  /**
-   * @brief enable all mods visible under the current filter
-   **/
-  void enableAllVisible();
-
-  /**
-   * @brief disable all mods visible under the current filter
-   **/
-  void disableAllVisible();
-
   /**
    * @brief tests if a filtere matches for a mod
    * @param info mod information

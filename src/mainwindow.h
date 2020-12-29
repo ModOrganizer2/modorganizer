@@ -297,9 +297,6 @@ private:
 
   QStringList m_DefaultArchives;
 
-  ModListSortProxy *m_ModListSortProxy;
-  ModListByPriorityProxy *m_ModListByPriorityProxy;
-
   PluginListSortProxy *m_PluginListSortProxy;
 
   int m_OldExecutableIndex;
@@ -521,12 +518,7 @@ private slots:
   void modlistChanged(const QModelIndexList &indicies, int role);
   void fileMoved(const QString &filePath, const QString &oldOriginName, const QString &newOriginName);
 
-
-  void modFilterActive(bool active);
   void espFilterChanged(const QString &filter);
-
-  void expandModList(const QModelIndex &index);
-
   void resizeLists(bool pluginListCustom);
 
   /**
@@ -545,14 +537,10 @@ private slots:
 
   void about();
 
-  void modListSortIndicatorChanged(int column, Qt::SortOrder order);
-  void modListSectionResized(int logicalIndex, int oldSize, int newSize);
-
   void modlistSelectionsChanged(const QItemSelection &current);
   void esplistSelectionsChanged(const QItemSelection &current);
 
   void resetActionIcons();
-  void updateModCount();
   void updatePluginCount();
 
 private slots: // ui slots
@@ -591,7 +579,6 @@ private slots: // ui slots
 
   void on_espList_customContextMenuRequested(const QPoint &pos);
   void on_displayCategoriesBtn_toggled(bool checked);
-  void on_groupCombo_currentIndexChanged(int index);
   void on_linkButton_pressed();
   void on_showHiddenBox_toggled(bool checked);
   void on_bsaList_itemChanged(QTreeWidgetItem *item, int column);
@@ -609,7 +596,6 @@ private slots: // ui slots
   void readSettings();
 
   void setupModList();
-  void updateModListByPriorityProxy();
 };
 
 #endif // MAINWINDOW_H
