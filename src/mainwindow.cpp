@@ -582,6 +582,7 @@ void MainWindow::setupModList()
   ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
 
   connect(ui->modList, &ModListView::dragEntered, m_OrganizerCore.modList(), &ModList::onDragEnter);
+  connect(ui->modList, &ModListView::dropEntered, m_ModListByPriorityProxy, &ModListByPriorityProxy::onDropEnter);
   connect(m_OrganizerCore.modList(), &ModList::modPrioritiesChanged, this, &MainWindow::onModPrioritiesChanged);
 
   connect(

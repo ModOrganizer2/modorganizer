@@ -13,6 +13,7 @@
 #include <QSet>
 
 #include "modinfo.h"
+#include "modlistview.h"
 
 class ModList;
 class Profile;
@@ -48,6 +49,7 @@ signals:
 
 public slots:
 
+  void onDropEnter(const QMimeData* data, ModListView::DropPosition dropPosition);
   void expanded(const QModelIndex& index);
   void collapsed(const QModelIndex& index);
 
@@ -82,6 +84,7 @@ private:
 
 private:
   Profile* m_Profile;
+  ModListView::DropPosition m_DropPosition = ModListView::DropPosition::OnItem;
 };
 
 #endif //GROUPINGPROXY_H

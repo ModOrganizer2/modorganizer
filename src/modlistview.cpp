@@ -3,16 +3,16 @@
 #include <QUrl>
 #include <QMimeData>
 
-ModListView::ModListView(QWidget *parent)
+ModListView::ModListView(QWidget* parent)
   : QTreeView(parent)
-  , m_Scrollbar(new ViewMarkingScrollBar(this->model(), this))
+  , m_scrollbar(new ViewMarkingScrollBar(this->model(), this))
 {
-  setVerticalScrollBar(m_Scrollbar);
+  setVerticalScrollBar(m_scrollbar);
   MOBase::setCustomizableColumns(this);
   setAutoExpandDelay(500);
 }
 
-void ModListView::setModel(QAbstractItemModel *model)
+void ModListView::setModel(QAbstractItemModel* model)
 {
   QTreeView::setModel(model);
   setVerticalScrollBar(new ViewMarkingScrollBar(model, this));
@@ -38,6 +38,8 @@ void ModListView::dragMoveEvent(QDragMoveEvent* event)
 
 void ModListView::dropEvent(QDropEvent* event)
 {
+  emit dropEntered(event->mimeData(), static_cast<DropPosition>(dropIndicatorPosition()));
+
   m_inDragMoveEvent = true;
   QTreeView::dropEvent(event);
   m_inDragMoveEvent = false;

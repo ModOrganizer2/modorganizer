@@ -215,8 +215,13 @@ bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropActi
       return false;
     }
 
+    // if the previous row is a collapsed separator, disable dropping
     if (row > 0 && m_Root.children[row - 1]->mod->isSeparator()) {
-      if (m_Root.children[row]->mod->isSeparator() || m_Root.children[row]->mod->isOverwrite()) {
+      // we cannot use the name of the mod directly because it does not exactly
+      // match the display value (e.g. for separators)
+      QString display = sourceModel()->index(m_Root.children[row - 1]->index, ModList::COL_NAME).data(Qt::DisplayRole).toString();
+      if (m_CollapsedItems.contains(display)
+        && (m_Root.children[row]->mod->isSeparator() || m_Root.children[row]->mod->isOverwrite())) {
         return false;
       }
     }
@@ -240,6 +245,12 @@ bool ModListByPriorityProxy::dropMimeData(const QMimeData* data, Qt::DropAction 
       if (!parent.isValid()) {
         if (row < m_Root.children.size()) {
           sourceRow = m_Root.children[row]->index;
+          if (row > 0
+            && m_Root.children[row - 1]->mod->isSeparator()
+            && !m_Root.children[row - 1]->children.empty()
+            && m_DropPosition == ModListView::DropPosition::BelowItem) {
+            sourceRow = m_Root.children[row - 1]->children[0]->index;
+          }
         }
         else {
           sourceRow = ModInfo::getNumMods();
@@ -280,6 +291,11 @@ QModelIndex ModListByPriorityProxy::index(int row, int column, const QModelIndex
   }
 
   return createIndex(row, column, parentItem->children[row].get());
+}
+
+void ModListByPriorityProxy::onDropEnter(const QMimeData*, ModListView::DropPosition dropPosition)
+{
+  m_DropPosition = dropPosition;
 }
 
 void ModListByPriorityProxy::expanded(const QModelIndex& index)
