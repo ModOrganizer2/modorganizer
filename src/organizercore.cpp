@@ -692,8 +692,8 @@ MOBase::IPluginGame *OrganizerCore::getGame(const QString &name) const
 
 MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
 {
-  bool merge = false;
-  if (m_InstallationManager.testOverwrite(name, &merge) != IPluginInstaller::EInstallResult::RESULT_SUCCESS) {
+  auto result = m_InstallationManager.testOverwrite(name);
+  if (!result) {
     return nullptr;
   }
 
@@ -706,7 +706,7 @@ MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
 
   QSettings settingsFile(targetDirectory + "/meta.ini", QSettings::IniFormat);
 
-  if (!merge) {
+  if (!result.merged()) {
     settingsFile.setValue("modid", 0);
     settingsFile.setValue("version", "");
     settingsFile.setValue("newestVersion", "");
@@ -783,7 +783,7 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
   m_InstallationManager.setModsDirectory(m_Settings.paths().mods());
   m_InstallationManager.notifyInstallationStart(fileName, reinstallation, currentMod);
   auto result = m_InstallationManager.install(fileName, modName, hasIniTweaks);
-  if (result == IPluginInstaller::RESULT_SUCCESS) {
+  if (result) {
     MessageDialog::showMessage(tr("Installation successful"),
                                qApp->activeWindow());
     refresh();
@@ -865,7 +865,7 @@ ModInfo::Ptr OrganizerCore::installDownload(int index, int priority)
     m_InstallationManager.setModsDirectory(m_Settings.paths().mods());
     m_InstallationManager.notifyInstallationStart(fileName, false, currentMod);
     auto result = m_InstallationManager.install(fileName, modName, hasIniTweaks);
-    if (result == IPluginInstaller::RESULT_SUCCESS) {
+    if (result) {
       MessageDialog::showMessage(tr("Installation successful"),
                                  qApp->activeWindow());
       refresh();
@@ -876,7 +876,7 @@ ModInfo::Ptr OrganizerCore::installDownload(int index, int priority)
         modInfo = ModInfo::getByIndex(modIndex);
         modInfo->addInstalledFile(modID, fileID);
 
-        if (priority != -1) {
+        if (priority != -1 && !result.mergedOrReplaced()) {
           m_ModList.changeModPriority(modIndex, priority);
         }
 
@@ -891,7 +891,7 @@ ModInfo::Ptr OrganizerCore::installDownload(int index, int priority)
         }
 
         m_ModList.notifyModInstalled(modInfo.get());
-        m_InstallationManager.notifyInstallationEnd(IPluginInstaller::RESULT_SUCCESS, modInfo);
+        m_InstallationManager.notifyInstallationEnd(result, modInfo);
       } else {
         reportError(tr("mod not found: %1").arg(qUtf8Printable(modName)));
       }
