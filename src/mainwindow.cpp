@@ -2447,6 +2447,16 @@ void MainWindow::esplist_changed()
 
 void MainWindow::onModPrioritiesChanged(std::vector<int> const& indices)
 {
+  // expand separator whose priority has changed
+  if (m_ModListSortProxy->sourceModel() == m_ModListByPriorityProxy) {
+    for (auto index : indices) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
+      if (modInfo->isSeparator()) {
+        ui->modList->expand(m_ModListSortProxy->mapFromSource(m_ModListByPriorityProxy->mapFromSource(m_OrganizerCore.modList()->index(index, 0))));
+      }
+    }
+  }
+
   for (unsigned int i = 0; i < m_OrganizerCore.currentProfile()->numMods(); ++i) {
     int priority = m_OrganizerCore.currentProfile()->getModPriority(i);
     if (m_OrganizerCore.currentProfile()->modEnabled(i)) {
@@ -3800,17 +3810,18 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
     return;
   }
 
-  QModelIndex sourceIdx = mapToModel(m_OrganizerCore.modList(), index);
-  if (!sourceIdx.isValid()) {
+  bool indexOk = false;
+  int modIndex = index.data(ModList::IndexRole).toInt(&indexOk);
+
+  if (!indexOk || modIndex < 0 || modIndex >= ModInfo::getNumMods()) {
     return;
   }
+
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
 
   Qt::KeyboardModifiers modifiers = QApplication::queryKeyboardModifiers();
   if (modifiers.testFlag(Qt::ControlModifier)) {
     try {
-      m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
-
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
       shell::Explore(modInfo->absolutePath());
 
       // workaround to cancel the editor that might have opened because of
@@ -3823,8 +3834,7 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
   }
   else if (modifiers.testFlag(Qt::ShiftModifier)) {
     try {
-      m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
-      QModelIndex idx = m_OrganizerCore.modList()->index(m_ContextRow, 0);
+      QModelIndex idx = m_OrganizerCore.modList()->index(modIndex, 0);
       visitNexusOrWebPage(idx);
       ui->modList->closePersistentEditor(index);
     }
@@ -3832,14 +3842,14 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
       reportError(e.what());
     }
   }
-  else{
+  else if (m_ModListSortProxy->sourceModel() == m_ModListByPriorityProxy && modInfo->isSeparator()) {
+    ui->modList->setExpanded(index, !ui->modList->isExpanded(index));
+  }
+  else {
     try {
-      m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
-      sourceIdx.column();
-
       auto tab = ModInfoTabIDs::None;
 
-      switch (sourceIdx.column()) {
+      switch (index.column()) {
         case ModList::COL_NOTES: tab = ModInfoTabIDs::Notes; break;
         case ModList::COL_VERSION: tab = ModInfoTabIDs::Nexus; break;
         case ModList::COL_MODID: tab = ModInfoTabIDs::Nexus; break;
@@ -3848,7 +3858,7 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
         case ModList::COL_CONFLICTFLAGS: tab = ModInfoTabIDs::Conflicts; break;
       }
 
-      displayModInformation(sourceIdx.row(), tab);
+      displayModInformation(modIndex, tab);
       // workaround to cancel the editor that might have opened because of
       // selection-click
       ui->modList->closePersistentEditor(index);
