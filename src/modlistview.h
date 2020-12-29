@@ -5,6 +5,9 @@
 #include <QDragEnterEvent>
 #include "viewmarkingscrollbar.h"
 
+namespace Ui { class MainWindow; }
+class OrganizerCore;
+
 class ModListView : public QTreeView
 {
   Q_OBJECT

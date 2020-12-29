@@ -558,6 +558,8 @@ void MainWindow::updateModListByPriorityProxy()
 
 void MainWindow::setupModList()
 {
+  ui->modList->setIndentation(0);
+
   m_ModListByPriorityProxy = new ModListByPriorityProxy(m_OrganizerCore.currentProfile(), &m_OrganizerCore);
   connect(ui->modList, SIGNAL(expanded(QModelIndex)), m_ModListByPriorityProxy, SLOT(expanded(QModelIndex)));
   connect(ui->modList, SIGNAL(collapsed(QModelIndex)), m_ModListByPriorityProxy, SLOT(collapsed(QModelIndex)));
@@ -2521,15 +2523,18 @@ void MainWindow::modInstalled(const QString &modName)
     ui->modList->expand(m_ModListSortProxy->mapFromSource(qIndex));
   }
 
-  ui->modList->setCurrentIndex(m_ModListSortProxy->mapFromSource(qIndex));
-  ui->modList->scrollTo(m_ModListSortProxy->mapFromSource(qIndex));
-  ui->modList->setFocus(Qt::OtherFocusReason);
+  qIndex = m_ModListSortProxy->mapFromSource(qIndex);
 
   // force an update to happen
   std::multimap<QString, int> IDs;
   ModInfo::Ptr info = ModInfo::getByIndex(index);
   IDs.insert(std::make_pair<QString, int>(info->gameName(), info->nexusId()));
   modUpdateCheck(IDs);
+
+  ui->modList->setFocus(Qt::OtherFocusReason);
+  ui->modList->scrollTo(qIndex);
+  // ui->modList->setCurrentIndex(qIndex);
+  ui->modList->selectionModel()->select(qIndex, QItemSelectionModel::Select | QItemSelectionModel::Rows);
 }
 
 void MainWindow::showMessage(const QString &message)
