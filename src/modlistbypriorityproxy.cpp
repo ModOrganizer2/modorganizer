@@ -23,6 +23,7 @@ void ModListByPriorityProxy::setSourceModel(QAbstractItemModel* model)
     connect(sourceModel(), &QAbstractItemModel::layoutChanged, this, [this]() { buildTree(); }, Qt::UniqueConnection);
     connect(sourceModel(), &QAbstractItemModel::rowsRemoved, this, [this]() { buildTree(); }, Qt::UniqueConnection);
     connect(sourceModel(), &QAbstractItemModel::modelReset, this, &ModListByPriorityProxy::buildTree, Qt::UniqueConnection);
+    connect(sourceModel(), &QAbstractItemModel::dataChanged, this, &ModListByPriorityProxy::modelDataChanged, Qt::UniqueConnection);
     refresh();
   }
 }
@@ -90,6 +91,22 @@ void ModListByPriorityProxy::expandItems(const QModelIndex& index) const
       emit expandItem(idx);
     }
     expandItems(idx);
+  }
+}
+
+void ModListByPriorityProxy::modelDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles)
+{
+  QModelIndex proxyTopLeft = mapFromSource(topLeft);
+  if (!proxyTopLeft.isValid()) {
+    return;
+  }
+
+  if (topLeft == bottomRight) {
+    emit dataChanged(proxyTopLeft, proxyTopLeft);
+  }
+  else {
+    QModelIndex proxyBottomRight = mapFromSource(bottomRight);
+    emit dataChanged(proxyTopLeft, proxyBottomRight);
   }
 }
 

@@ -221,6 +221,9 @@ public slots:
   void enableSelected(const QItemSelectionModel *selectionModel);
   void disableSelected(const QItemSelectionModel *selectionModel);
 
+  void moveMods(const QModelIndexList& indices, int offset);
+  bool toggleState(const QModelIndexList& indices);
+
 signals:
 
   /**
@@ -291,11 +294,6 @@ signals:
   void tutorialModlistUpdate();
 
   /**
-   * @brief emitted to have all selected mods deleted
-   */
-  void removeSelectedMods();
-
-  /**
    * @brief fileMoved emitted when a file is moved from one mod to another
    * @param relativePath relative path of the file moved
    * @param oldOriginName name of the origin that previously contained the file
@@ -315,11 +313,6 @@ signals:
   // emitted when an item is dropped from the download list, the row is from the
   // download list
   void downloadArchiveDropped(int row, int priority);
-
-protected:
-
-  // event filter, handles event from the header and the tree view itself
-  bool eventFilter(QObject *obj, QEvent *event);
 
 private:
 
@@ -343,12 +336,6 @@ private:
   bool renameMod(int index, const QString &newName);
 
   MOBase::IModList::ModStates state(unsigned int modIndex) const;
-
-  bool moveSelection(QAbstractItemView *itemView, int direction);
-
-  bool deleteSelection(QAbstractItemView *itemView);
-
-  bool toggleSelection(QAbstractItemView *itemView);
 
 private slots:
 

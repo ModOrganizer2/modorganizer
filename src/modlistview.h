@@ -74,6 +74,10 @@ signals:
   void dragEntered(const QMimeData* mimeData);
   void dropEntered(const QMimeData* mimeData, DropPosition position);
 
+  // emitted when selected mods must be removed
+  //
+  void removeSelectedMods();
+
 public slots:
 
   // invalidate the top-level model
@@ -121,10 +125,17 @@ protected:
   //
   QModelIndexList selectedIndexes() const;
 
+  bool moveSelection(int key);
+  bool removeSelection();
+  bool toggleSelectionState();
+
   void timerEvent(QTimerEvent* event) override;
   void dragEnterEvent(QDragEnterEvent* event) override;
   void dragMoveEvent(QDragMoveEvent* event) override;
   void dropEvent(QDropEvent* event) override;
+  bool event(QEvent* event) override;
+
+protected slots:
 
 private:
 

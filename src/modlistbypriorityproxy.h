@@ -58,6 +58,10 @@ public slots:
   void expanded(const QModelIndex& index);
   void collapsed(const QModelIndex& index);
 
+protected:
+
+  void modelDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles = QVector<int>());
+
 private:
 
   void buildTree();

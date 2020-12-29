@@ -5,6 +5,8 @@
 
 #include <widgetutility.h>
 
+#include <utility.h>
+
 #include "ui_mainwindow.h"
 
 #include "organizercore.h"
@@ -15,6 +17,8 @@
 #include "modflagicondelegate.h"
 #include "modconflicticondelegate.h"
 #include "genericicondelegate.h"
+#include "shared/directoryentry.h"
+#include "shared/filesorigin.h"
 
 class ModListProxyStyle : public QProxyStyle {
 public:
@@ -346,17 +350,62 @@ void ModListView::expandItem(const QModelIndex& index) {
 
 void ModListView::onModPrioritiesChanged(std::vector<int> const& indices)
 {
-  if (m_sortProxy != nullptr) {
     // expand separator whose priority has changed
-    if (hasCollapsibleSeparators()) {
-      for (auto index : indices) {
-        ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-        if (modInfo->isSeparator()) {
-          expand(indexModelToView(m_core->modList()->index(index, 0)));
-        }
+  if (hasCollapsibleSeparators()) {
+    for (auto index : indices) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
+      if (modInfo->isSeparator()) {
+        expand(indexModelToView(m_core->modList()->index(index, 0)));
       }
     }
+  }
+
+  for (unsigned int i = 0; i < m_core->currentProfile()->numMods(); ++i) {
+    int priority = m_core->currentProfile()->getModPriority(i);
+    if (m_core->currentProfile()->modEnabled(i)) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
+      // priorities in the directory structure are one higher because data is 0
+      m_core->directoryStructure()->getOriginByName(MOBase::ToWString(modInfo->internalName())).setPriority(priority + 1);
+    }
+  }
+  m_core->refreshBSAList();
+  m_core->currentProfile()->writeModlist();
+  m_core->directoryStructure()->getFileRegister()->sortOrigins();
+
+  if (m_sortProxy) {
     m_sortProxy->invalidate();
+  }
+
+  { // refresh selection
+    QModelIndex current = currentIndex();
+    if (current.isValid()) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(current.data(ModList::IndexRole).toInt());
+      // clear caches on all mods conflicting with the moved mod
+      for (int i : modInfo->getModOverwrite()) {
+        ModInfo::getByIndex(i)->clearCaches();
+      }
+      for (int i : modInfo->getModOverwritten()) {
+        ModInfo::getByIndex(i)->clearCaches();
+      }
+      for (int i : modInfo->getModArchiveOverwrite()) {
+        ModInfo::getByIndex(i)->clearCaches();
+      }
+      for (int i : modInfo->getModArchiveOverwritten()) {
+        ModInfo::getByIndex(i)->clearCaches();
+      }
+      for (int i : modInfo->getModArchiveLooseOverwrite()) {
+        ModInfo::getByIndex(i)->clearCaches();
+      }
+      for (int i : modInfo->getModArchiveLooseOverwritten()) {
+        ModInfo::getByIndex(i)->clearCaches();
+      }
+      // update conflict check on the moved mod
+      modInfo->doConflictCheck();
+      m_core->modList()->setOverwriteMarkers(modInfo->getModOverwrite(), modInfo->getModOverwritten());
+      m_core->modList()->setArchiveOverwriteMarkers(modInfo->getModArchiveOverwrite(), modInfo->getModArchiveOverwritten());
+      m_core->modList()->setArchiveLooseOverwriteMarkers(modInfo->getModArchiveLooseOverwrite(), modInfo->getModArchiveLooseOverwritten());
+      verticalScrollBar()->repaint();
+    }
   }
 }
 
@@ -573,9 +622,6 @@ void ModListView::setup(OrganizerCore& core, Ui::MainWindow* mwui)
   setItemDelegateForColumn(ModList::COL_CONFLICTFLAGS, conflictFlagDelegate);
   setItemDelegateForColumn(ModList::COL_CONTENT, contentDelegate);
 
-  // TODO: Check if this is really useful.
-  header()->installEventFilter(m_core->modList());
-
   if (m_core->settings().geometry().restoreState(header())) {
     // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
     for (int column = 0; column <= ModList::COL_LASTCOLUMN; ++column) {
@@ -602,9 +648,6 @@ void ModListView::setup(OrganizerCore& core, Ui::MainWindow* mwui)
 
   // prevent the name-column from being hidden
   header()->setSectionHidden(ModList::COL_NAME, false);
-
-  // TODO: Move the event filter in ModListView.
-  installEventFilter(core.modList());
 
   connect(m_core->modList(), &ModList::downloadArchiveDropped, this, [this](int row, int priority) {
     m_core->installDownload(row, priority);
@@ -683,4 +726,80 @@ void ModListView::timerEvent(QTimerEvent* event)
   else {
     QTreeView::timerEvent(event);
   }
+}
+
+bool ModListView::moveSelection(int key)
+{
+  QModelIndex cindex = indexViewToModel(currentIndex());
+  QModelIndexList sourceRows;
+  for (auto& index : selectionModel()->selectedRows()) {
+    sourceRows.append(indexViewToModel(index));
+  }
+
+  int offset = key == Qt::Key_Up ? -1 : 1;
+  if (m_sortProxy->sortOrder() == Qt::DescendingOrder) {
+    offset = -offset;
+  }
+
+  m_core->modList()->moveMods(sourceRows, offset);
+
+  // reset the selection and the index
+  setCurrentIndex(indexModelToView(cindex));
+  for (auto idx : sourceRows) {
+    selectionModel()->select(indexModelToView(idx), QItemSelectionModel::Select | QItemSelectionModel::Rows);
+  }
+
+  return true;
+}
+
+bool ModListView::removeSelection()
+{
+  if (selectionModel()->hasSelection()) {
+    QModelIndexList rows = selectionModel()->selectedRows();
+    if (rows.count() > 1) {
+      emit removeSelectedMods();
+    }
+    else if (rows.count() == 1) {
+      // this does not work, I don't know why
+      // model()->removeRow(rows[0].row(), rows[0].parent());
+      m_core->modList()->removeRow(indexViewToModel(rows[0]).row());
+    }
+  }
+  return true;
+}
+
+bool ModListView::toggleSelectionState()
+{
+  if (!selectionModel()->hasSelection()) {
+    return true;
+  }
+
+  QModelIndexList selected;
+  for (QModelIndex idx : selectionModel()->selectedRows()) {
+    selected.append(indexViewToModel(idx));
+  }
+
+  return m_core->modList()->toggleState(selected);
+}
+
+bool ModListView::event(QEvent* event)
+{
+  Profile* profile = m_core->currentProfile();
+  if (event->type() == QEvent::KeyPress && profile) {
+    QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+
+    if (keyEvent->modifiers() == Qt::ControlModifier
+      && sortColumn() == ModList::COL_PRIORITY
+      && (keyEvent->key() == Qt::Key_Up || keyEvent->key() == Qt::Key_Down)) {
+      return moveSelection(keyEvent->key());
+    }
+    else if (keyEvent->key() == Qt::Key_Delete) {
+      return removeSelection();
+    }
+    else if (keyEvent->key() == Qt::Key_Space) {
+      return toggleSelectionState();
+    }
+    return QTreeView::event(event);
+  }
+  return QTreeView::event(event);
 }

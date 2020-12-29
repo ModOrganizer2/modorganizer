@@ -73,13 +73,6 @@ void ModListSortProxy::setCriteria(const std::vector<Criteria>& criteria)
   }
 }
 
-Qt::ItemFlags ModListSortProxy::flags(const QModelIndex &modelIndex) const
-{
-  Qt::ItemFlags flags = sourceModel()->flags(mapToSource(modelIndex));
-
-  return flags;
-}
-
 unsigned long ModListSortProxy::flagsId(const std::vector<ModInfo::EFlag> &flags) const
 {
   unsigned long result = 0;

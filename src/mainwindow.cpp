@@ -540,9 +540,12 @@ void MainWindow::setupModList()
 {
   ui->modList->setup(m_OrganizerCore, ui);
 
+  connect(ui->modList, &ModListView::removeSelectedMods, [=]() { removeMod_clicked(-1); });
+
   // keep here for now
   connect(ui->modList->selectionModel(), &QItemSelectionModel::selectionChanged,
     this, &MainWindow::modlistSelectionsChanged);
+  connect(m_OrganizerCore.modList(), &ModList::modPrioritiesChanged, [&]() { m_ArchiveListWriter.write(); });
 }
 
 void MainWindow::resetActionIcons()
@@ -2280,54 +2283,6 @@ void MainWindow::esplist_changed()
   updatePluginCount();
 }
 
-void MainWindow::onModPrioritiesChanged(std::vector<int> const& indices)
-{
-  for (unsigned int i = 0; i < m_OrganizerCore.currentProfile()->numMods(); ++i) {
-    int priority = m_OrganizerCore.currentProfile()->getModPriority(i);
-    if (m_OrganizerCore.currentProfile()->modEnabled(i)) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
-      // priorities in the directory structure are one higher because data is 0
-      m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(modInfo->internalName())).setPriority(priority + 1);
-    }
-  }
-  m_OrganizerCore.refreshBSAList();
-  m_OrganizerCore.currentProfile()->writeModlist();
-  m_ArchiveListWriter.write();
-  m_OrganizerCore.directoryStructure()->getFileRegister()->sortOrigins();
-
-  { // refresh selection
-    QModelIndex current = ui->modList->currentIndex();
-    if (current.isValid()) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(current.data(ModList::IndexRole).toInt());
-      // clear caches on all mods conflicting with the moved mod
-      for (int i :  modInfo->getModOverwrite()) {
-        ModInfo::getByIndex(i)->clearCaches();
-      }
-      for (int i :  modInfo->getModOverwritten()) {
-        ModInfo::getByIndex(i)->clearCaches();
-      }
-      for (int i : modInfo->getModArchiveOverwrite()) {
-          ModInfo::getByIndex(i)->clearCaches();
-      }
-      for (int i : modInfo->getModArchiveOverwritten()) {
-          ModInfo::getByIndex(i)->clearCaches();
-      }
-      for (int i : modInfo->getModArchiveLooseOverwrite()) {
-        ModInfo::getByIndex(i)->clearCaches();
-      }
-      for (int i : modInfo->getModArchiveLooseOverwritten()) {
-        ModInfo::getByIndex(i)->clearCaches();
-      }
-      // update conflict check on the moved mod
-      modInfo->doConflictCheck();
-      m_OrganizerCore.modList()->setOverwriteMarkers(modInfo->getModOverwrite(), modInfo->getModOverwritten());
-      m_OrganizerCore.modList()->setArchiveOverwriteMarkers(modInfo->getModArchiveOverwrite(), modInfo->getModArchiveOverwritten());
-      m_OrganizerCore.modList()->setArchiveLooseOverwriteMarkers(modInfo->getModArchiveLooseOverwrite(), modInfo->getModArchiveLooseOverwritten());
-      ui->modList->verticalScrollBar()->repaint();
-    }
-  }
-}
-
 void MainWindow::modInstalled(const QString &modName)
 {
   unsigned int index = ModInfo::getIndex(modName);
@@ -2528,7 +2483,6 @@ void MainWindow::removeMod_clicked(int modIndex)
     reportError(tr("failed to remove mod: %1").arg(e.what()));
   }
 }
-
 
 void MainWindow::modRemoved(const QString &fileName)
 {

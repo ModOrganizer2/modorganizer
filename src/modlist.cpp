@@ -1510,100 +1510,58 @@ QModelIndex ModList::indexToProxy(QAbstractItemModel* proxyModel, const QModelIn
   return QModelIndex();
 }
 
-bool ModList::moveSelection(QAbstractItemView *itemView, int direction)
+void ModList::moveMods(const QModelIndexList& indices, int offset)
 {
-  QItemSelectionModel *selectionModel = itemView->selectionModel();
-  int currentIndex = itemView->currentIndex().data(IndexRole).toInt();
-
-  const QAbstractProxyModel *proxyModel = qobject_cast<const QAbstractProxyModel*>(selectionModel->model());
-  const QSortFilterProxyModel *filterModel = nullptr;
+  // retrieve the mod index and sort them by priority to avoid issue
+  // when moving them
+  std::vector<int> allIndex;
+  for (auto& idx : indices) {
+    auto index = idx.data(IndexRole).toInt();
+    allIndex.push_back(index);
+  }
+  std::sort(allIndex.begin(), allIndex.end(), [=](int lhs, int rhs) {
+    bool cmp = m_Profile->getModPriority(lhs) < m_Profile->getModPriority(rhs);
+    return offset > 0 ? !cmp : cmp;
+  });
 
   emit layoutAboutToBeChanged();
 
-  while ((filterModel == nullptr) && (proxyModel != nullptr)) {
-    filterModel = qobject_cast<const QSortFilterProxyModel*>(proxyModel);
-    if (filterModel == nullptr) {
-      proxyModel = qobject_cast<const QAbstractProxyModel*>(proxyModel->sourceModel());
-    }
-  }
-  if (filterModel == nullptr) {
-    return true;
-  }
-
-  int offset = -1;
-  if (((direction < 0) && (filterModel->sortOrder() == Qt::DescendingOrder)) ||
-      ((direction > 0) && (filterModel->sortOrder() == Qt::AscendingOrder))) {
-    offset = 1;
-  }
-
-  QModelIndexList rows = selectionModel->selectedRows();
-  if (direction > 0) {
-    for (int i = 0; i < rows.size() / 2; ++i) {
-      rows.swapItemsAt(i, rows.size() - i - 1);
-    }
-  }
-  std::vector<int> allIndex;
-  for (QModelIndex idx : rows) {
-    auto index = idx.data(IndexRole).toInt();
-    allIndex.push_back(index);
+  std::vector<int> notify;
+  for (auto index : allIndex) {
     int newPriority = m_Profile->getModPriority(index) + offset;
     if ((newPriority >= 0) && (newPriority < static_cast<int>(m_Profile->numRegularMods()))) {
       m_Profile->setModPriority(index, newPriority);
-      notifyChange(index);
+      notify.push_back(index);
     }
   }
 
   emit layoutChanged();
 
+  for (auto index : notify) {
+    notifyChange(index);
+  }
+
   emit modPrioritiesChanged(allIndex);
-
-  // reset the selection and the index
-  itemView->setCurrentIndex(indexToProxy(itemView->model(), index(currentIndex, 0)));
-  for (auto idx : allIndex) {
-    itemView->selectionModel()->select(
-      indexToProxy(itemView->selectionModel()->model(), index(idx, 0)),
-      QItemSelectionModel::Select | QItemSelectionModel::Rows);
-  }
-
-  return true;
 }
 
-bool ModList::deleteSelection(QAbstractItemView *itemView)
-{
-  QItemSelectionModel *selectionModel = itemView->selectionModel();
-
-  QModelIndexList rows = selectionModel->selectedRows();
-  if (rows.count() > 1) {
-    emit removeSelectedMods();
-  } else if (rows.count() == 1) {
-    removeRow(rows[0].data(IndexRole).toInt(), QModelIndex());
-  }
-  return true;
-}
-
-bool ModList::toggleSelection(QAbstractItemView *itemView)
+bool ModList::toggleState(const QModelIndexList& indices)
 {
   emit aboutToChangeData();
 
-  QItemSelectionModel *selectionModel = itemView->selectionModel();
-
   QList<unsigned int> modsToEnable;
   QList<unsigned int> modsToDisable;
-  QModelIndexList dirtyMods;
-  for (QModelIndex idx : selectionModel->selectedRows()) {
-    int modId = idx.data(IndexRole).toInt();
-    if (m_Profile->modEnabled(modId)) {
-      modsToDisable.append(modId);
-      dirtyMods.append(idx);
+  for (auto index : indices) {
+    auto idx = index.data(IndexRole).toInt();
+    if (m_Profile->modEnabled(idx)) {
+      modsToDisable.append(idx);
     } else {
-      modsToEnable.append(modId);
-      dirtyMods.append(idx);
+      modsToEnable.append(idx);
     }
   }
 
   m_Profile->setModsEnabled(modsToEnable, modsToDisable);
 
-  emit modlistChanged(dirtyMods, 0);
+  emit modlistChanged(indices, 0);
   emit tutorialModlistUpdate();
 
   m_Modified = true;
@@ -1614,26 +1572,6 @@ bool ModList::toggleSelection(QAbstractItemView *itemView)
   emit postDataChanged();
 
   return true;
-}
-
-bool ModList::eventFilter(QObject *obj, QEvent *event)
-{
-  if ((event->type() == QEvent::KeyPress) && (m_Profile != nullptr)) {
-    QAbstractItemView *itemView = qobject_cast<QAbstractItemView*>(obj);
-    QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-
-    if ((itemView != nullptr)
-        && (keyEvent->modifiers() == Qt::ControlModifier)
-        && ((keyEvent->key() == Qt::Key_Up) || (keyEvent->key() == Qt::Key_Down))) {
-      return moveSelection(itemView, keyEvent->key() == Qt::Key_Up ? -1 : 1);
-    } else if (keyEvent->key() == Qt::Key_Delete) {
-      return deleteSelection(itemView);
-    } else if (keyEvent->key() == Qt::Key_Space) {
-      return toggleSelection(itemView);
-    }
-    return QAbstractItemModel::eventFilter(obj, event);
-  }
-  return QAbstractItemModel::eventFilter(obj, event);
 }
 
 //note: caller needs to make sure sort proxy is updated

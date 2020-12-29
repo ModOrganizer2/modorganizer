@@ -77,8 +77,6 @@ public:
 
   void setProfile(Profile *profile);
 
-
-  Qt::ItemFlags flags(const QModelIndex &modelIndex) const override;
   bool canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const override;
   bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) override;
 

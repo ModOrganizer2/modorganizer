@@ -148,7 +148,6 @@ public:
   ModInfo::Ptr previousModInList(int modIndex);
 
 public slots:
-  void onModPrioritiesChanged(std::vector<int> const& indices);
   void esplist_changed();
   void refresherProgress(const DirectoryRefreshProgress* p);
 
