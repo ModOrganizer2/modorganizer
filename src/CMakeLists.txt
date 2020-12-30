@@ -138,6 +138,8 @@ add_filter(NAME src/modlist GROUPS
 	modlistsortproxy
 	modlistbypriorityproxy
 	modlistview
+	modlistviewactions
+	modlistcontextmenu
 )
 
 add_filter(NAME src/plugins GROUPS

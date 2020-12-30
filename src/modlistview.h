@@ -13,9 +13,11 @@
 
 namespace Ui { class MainWindow; }
 
+class FilterList;
 class OrganizerCore;
 class Profile;
 class ModListByPriorityProxy;
+class ModListViewActions;
 
 class ModListView : public QTreeView
 {
@@ -35,7 +37,7 @@ public:
   explicit ModListView(QWidget* parent = 0);
   void setModel(QAbstractItemModel* model) override;
 
-  void setup(OrganizerCore& core, Ui::MainWindow* mwui);
+  void setup(OrganizerCore& core, ModListViewActions* actions, Ui::MainWindow* mwui);
 
   // set the current profile
   //
@@ -48,6 +50,10 @@ public:
   // the column by which the mod list is currently sorted
   //
   int sortColumn() const;
+
+  // retrieve the actions from the view
+  //
+  ModListViewActions& actions() const;
 
   // retrieve the next/previous mod in the current view, the given index
   // should be a mod index (not a model row), and the return value will be
@@ -180,6 +186,7 @@ private:
 
   OrganizerCore* m_core;
   ModListViewUi ui;
+  ModListViewActions* m_actions;
 
   ModListSortProxy* m_sortProxy;
   ModListByPriorityProxy* m_byPriorityProxy;

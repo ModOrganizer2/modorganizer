@@ -207,7 +207,6 @@ private:
 
   bool refreshProfiles(bool selectProfile = true);
   void refreshExecutablesList();
-  void installMod(QString fileName = "");
 
   bool modifyExecutablesDialog(int selection);
   void displayModInformation(int row, ModInfoTabIDs tab=ModInfoTabIDs::None);
@@ -251,7 +250,6 @@ private:
   bool createBackup(const QString &filePath, const QDateTime &time);
   QString queryRestore(const QString &filePath);
 
-  void initModListContextMenu(QMenu *menu);
   void addModSendToContextMenu(QMenu *menu);
   void addPluginSendToContextMenu(QMenu *menu);
 
@@ -358,8 +356,6 @@ private slots:
 
   // modlist context menu
   void installMod_clicked();
-  void createEmptyMod_clicked(int modIndex);
-  void createSeparator_clicked(int modIndex);
   void restoreBackup_clicked(int modIndex);
   void renameMod_clicked();
   void removeMod_clicked(int modIndex);
@@ -473,9 +469,6 @@ private slots:
   void trackMod(ModInfo::Ptr mod, bool doTrack);
   void cancelModListEditor();
 
-  void enableVisibleMods();
-  void disableVisibleMods();
-  void exportModListCSV();
   void openInstanceFolder();
   void openLogsFolder();
   void openInstallFolder();

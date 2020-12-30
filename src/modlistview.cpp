@@ -17,6 +17,7 @@
 #include "log.h"
 #include "modflagicondelegate.h"
 #include "modconflicticondelegate.h"
+#include "modlistviewactions.h"
 #include "modlistdropinfo.h"
 #include "genericicondelegate.h"
 #include "shared/directoryentry.h"
@@ -116,6 +117,11 @@ bool ModListView::hasCollapsibleSeparators() const
 int ModListView::sortColumn() const
 {
   return m_sortProxy ? m_sortProxy->sortColumn() : -1;
+}
+
+ModListViewActions& ModListView::actions() const
+{
+  return *m_actions;
 }
 
 int ModListView::nextMod(int modIndex) const
@@ -634,10 +640,11 @@ void ModListView::updateGroupByProxy(int groupIndex)
   }
 }
 
-void ModListView::setup(OrganizerCore& core, Ui::MainWindow* mwui)
+void ModListView::setup(OrganizerCore& core, ModListViewActions* actions, Ui::MainWindow* mwui)
 {
   // attributes
   m_core = &core;
+  m_actions = actions;
   ui = { mwui->groupCombo, mwui->activeModsCounter, mwui->modFilterEdit, mwui->clearFiltersButton };
 
   connect(m_core, &OrganizerCore::modInstalled, this, &ModListView::onModInstalled);

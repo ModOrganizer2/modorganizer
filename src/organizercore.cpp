@@ -1510,18 +1510,16 @@ void OrganizerCore::requestDownload(const QUrl &url, QNetworkReply *reply)
   }
 }
 
-ModListSortProxy *OrganizerCore::createModListProxyModel()
-{
-  ModListSortProxy *result = new ModListSortProxy(m_CurrentProfile.get(), this);
-  result->setSourceModel(&m_ModList);
-  return result;
-}
-
 PluginListSortProxy *OrganizerCore::createPluginListProxyModel()
 {
   PluginListSortProxy *result = new PluginListSortProxy(this);
   result->setSourceModel(&m_PluginList);
   return result;
+}
+
+PluginContainer& OrganizerCore::pluginContainer() const
+{
+  return *m_PluginContainer;
 }
 
 IPluginGame const *OrganizerCore::managedGame() const

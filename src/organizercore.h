@@ -227,8 +227,11 @@ public:
 
   MOBase::VersionInfo getVersion() const { return m_Updater.getVersion(); }
 
-  ModListSortProxy *createModListProxyModel();
   PluginListSortProxy *createPluginListProxyModel();
+
+  // return the plugin container
+  //
+  PluginContainer& pluginContainer() const;
 
   MOBase::IPluginGame const *managedGame() const;
 
