@@ -60,9 +60,20 @@ public:
   void sendModsToPriority(const QModelIndexList& index) const;
   void sendModsToSeparator(const QModelIndexList& index) const;
 
+  // actions for most type of mods
+  void removeMods(const QModelIndexList& indices) const;
+  void ignoreMissingData(const QModelIndexList& indices) const;
+  void markConverted(const QModelIndexList& indices) const;
+  void visitOnNexus(const QModelIndexList& indices) const;
+  void visitWebPage(const QModelIndexList& indices) const;
+
   // open the Windows explorer for the specified mods
   //
   void openExplorer(const QModelIndexList& index) const;
+
+  // backup-specific actions
+  //
+  void restoreBackup(const QModelIndex& index) const;
 
   // overwrite-specific actions
   //

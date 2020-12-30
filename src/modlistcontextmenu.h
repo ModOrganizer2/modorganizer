@@ -10,6 +10,7 @@
 #include "modinfo.h"
 
 class ModListView;
+class ModListViewActions;
 class OrganizerCore;
 
 class ModListGlobalContextMenu : public QMenu
@@ -49,6 +50,7 @@ public: // TODO: Move this to private when all is done
   QModelIndex m_index;
   QModelIndexList m_selected;
   ModListView* m_view;
+  ModListViewActions& m_actions; // shortcut for m_view->actions()
 
 };
 

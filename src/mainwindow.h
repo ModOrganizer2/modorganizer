@@ -151,6 +151,8 @@ public slots:
 
   void directory_refreshed();
 
+  void updatePluginCount();
+
 signals:
 
   /**
@@ -347,7 +349,6 @@ private slots:
 
   // modlist context menu
   void installMod_clicked();
-  void restoreBackup_clicked(int modIndex);
   void renameMod_clicked();
   void removeMod_clicked(int modIndex);
   void setColor_clicked(int modIndex);
@@ -498,7 +499,6 @@ private slots:
   void esplistSelectionsChanged(const QItemSelection &current);
 
   void resetActionIcons();
-  void updatePluginCount();
 
 private slots: // ui slots
   // actions

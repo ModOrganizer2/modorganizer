@@ -46,6 +46,7 @@ ModListContextMenu::ModListContextMenu(OrganizerCore& core, const QModelIndex& i
   , m_core(core)
   , m_index(index)
   , m_view(view)
+  , m_actions(view->actions())
 {
   if (view->selectionModel()->hasSelection()) {
     m_selected = view->indexViewToModel(view->selectionModel()->selectedRows());
@@ -99,10 +100,10 @@ QMenu* ModListContextMenu::createSendToContextMenu()
 {
   QMenu* menu = new QMenu(m_view);
   menu->setTitle(tr("Send to... "));
-  menu->addAction(tr("Top"), [=]() { m_view->actions().sendModsToTop(m_selected); });
-  menu->addAction(tr("Bottom"), [=]() { m_view->actions().sendModsToBottom(m_selected); });
-  menu->addAction(tr("Priority..."), [=]() { m_view->actions().sendModsToPriority(m_selected); });
-  menu->addAction(tr("Separator..."), [=]() { m_view->actions().sendModsToSeparator(m_selected); });
+  menu->addAction(tr("Top"), [=]() { m_actions.sendModsToTop(m_selected); });
+  menu->addAction(tr("Bottom"), [=]() { m_actions.sendModsToBottom(m_selected); });
+  menu->addAction(tr("Priority..."), [=]() { m_actions.sendModsToPriority(m_selected); });
+  menu->addAction(tr("Separator..."), [=]() { m_actions.sendModsToSeparator(m_selected); });
   return menu;
 }
 
@@ -110,11 +111,11 @@ void ModListContextMenu::addOverwriteActions(ModInfo::Ptr mod)
 {
   if (QDir(mod->absolutePath()).count() > 2) {
     addAction(tr("Sync to Mods..."), [=]() { m_core.syncOverwrite(); });
-    addAction(tr("Create Mod..."), [=]() { m_view->actions().createModFromOverwrite(); });
-    addAction(tr("Move content to Mod..."), [=]() { m_view->actions().moveOverwriteContentToExistingMod(); });
-    addAction(tr("Clear Overwrite..."), [=]() { m_view->actions().clearOverwrite(); });
+    addAction(tr("Create Mod..."), [=]() { m_actions.createModFromOverwrite(); });
+    addAction(tr("Move content to Mod..."), [=]() { m_actions.moveOverwriteContentToExistingMod(); });
+    addAction(tr("Clear Overwrite..."), [=]() { m_actions.clearOverwrite(); });
   }
-  addAction(tr("Open in Explorer"), [=]() { m_view->actions().openExplorer(m_selected); });
+  addAction(tr("Open in Explorer"), [=]() { m_actions.openExplorer(m_selected); });
 }
 
 void ModListContextMenu::addSeparatorActions(ModInfo::Ptr mod)
@@ -131,7 +132,27 @@ void ModListContextMenu::addForeignActions(ModInfo::Ptr mod)
 
 void ModListContextMenu::addBackupActions(ModInfo::Ptr mod)
 {
+  auto flags = mod->getFlags();
+  addAction(tr("Restore Backup"), [=]() { m_actions.restoreBackup(m_index); });
+  addAction(tr("Remove Backup..."), [=]() { m_actions.removeMods(m_selected); });
+  addSeparator();
+  if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_INVALID) != flags.end()) {
+    addAction(tr("Ignore missing data"), [=]() { m_actions.ignoreMissingData(m_selected); });
+  }
+  if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_ALTERNATE_GAME) != flags.end()) {
+    addAction(tr("Mark as converted/working"), [=]() { m_actions.markConverted(m_selected); });
+  }
+  addSeparator();
+  if (mod->nexusId() > 0) {
+    addAction(tr("Visit on Nexus"), [=]() { m_actions.visitOnNexus(m_selected); });
+  }
 
+  const auto url = mod->parseCustomURL();
+  if (url.isValid()) {
+    addAction(tr("Visit on %1").arg(url.host()), [=]() { m_actions.visitWebPage(m_selected); });
+  }
+
+  addAction(tr("Open in Explorer"), [=]() { m_actions.openExplorer(m_selected); });
 }
 
 void ModListContextMenu::addRegularActions(ModInfo::Ptr mod)

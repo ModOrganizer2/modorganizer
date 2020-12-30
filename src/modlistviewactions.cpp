@@ -4,6 +4,7 @@
 #include <QGroupBox>
 #include <QInputDialog>
 #include <QLabel>
+#include <QRegExp>
 
 #include <log.h>
 #include <report.h>
@@ -505,11 +506,181 @@ void ModListViewActions::sendModsToSeparator(const QModelIndexList& index) const
   }
 }
 
+void ModListViewActions::removeMods(const QModelIndexList& indices) const
+{
+  const int max_items = 20;
+
+  try {
+    if (indices.size() > 1) {
+      QString mods;
+      QStringList modNames;
+
+      int i = 0;
+      for (auto& idx : indices) {
+        QString name = idx.data().toString();
+        if (!ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->isRegular()) {
+          continue;
+        }
+
+        // adds an item for the mod name until `i` reaches `max_items`, which
+        // adds one "..." item; subsequent mods are not shown on the list but
+        // are still added to `modNames` below so they can be removed correctly
+
+        if (i < max_items) {
+          mods += "<li>" + name + "</li>";
+        }
+        else if (i == max_items) {
+          mods += "<li>...</li>";
+        }
+
+        modNames.append(ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->name());
+        ++i;
+      }
+      if (QMessageBox::question(m_view, tr("Confirm"),
+        tr("Remove the following mods?<br><ul>%1</ul>").arg(mods),
+        QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+        // use mod names instead of indexes because those become invalid during the removal
+        DownloadManager::startDisableDirWatcher();
+        for (QString name : modNames) {
+          m_core.modList()->removeRowForce(ModInfo::getIndex(name), QModelIndex());
+        }
+        DownloadManager::endDisableDirWatcher();
+      }
+    }
+    else if (!indices.isEmpty()) {
+      m_core.modList()->removeRow(indices[0].data(ModList::IndexRole).toInt(), QModelIndex());
+    }
+    m_view->updateModCount();
+    m_main->updatePluginCount();
+  }
+  catch (const std::exception& e) {
+    reportError(tr("failed to remove mod: %1").arg(e.what()));
+  }
+}
+
+void ModListViewActions::ignoreMissingData(const QModelIndexList& indices) const
+{
+  for (auto& idx : indices) {
+    int row_idx = idx.data(ModList::IndexRole).toInt();
+    ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
+    info->markValidated(true);
+    m_core.modList()->notifyChange(row_idx);
+  }
+}
+
+void ModListViewActions::markConverted(const QModelIndexList& indices) const
+{
+  for (auto& idx : indices) {
+    int row_idx = idx.data(ModList::IndexRole).toInt();
+    ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
+    info->markConverted(true);
+    m_core.modList()->notifyChange(row_idx);
+  }
+}
+
+void ModListViewActions::visitOnNexus(const QModelIndexList& indices) const
+{
+  if (indices.size() > 1) {
+    if (indices.size() > 10) {
+      if (QMessageBox::question(m_view, tr("Opening Nexus Links"),
+        tr("You are trying to open %1 links to Nexus Mods.  Are you sure you want to do this?").arg(indices.size()),
+        QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+        return;
+      }
+    }
+    int row_idx;
+    ModInfo::Ptr info;
+    QString gameName;
+
+    for (auto& idx : indices) {
+      row_idx = idx.data(ModList::IndexRole).toInt();
+      info = ModInfo::getByIndex(row_idx);
+      int modID = info->nexusId();
+      gameName = info->gameName();
+      if (modID > 0) {
+        shell::Open(QUrl(NexusInterface::instance().getModURL(modID, gameName)));
+      }
+      else {
+        log::error("mod '{}' has no nexus id", info->name());
+      }
+    }
+  }
+  else if (!indices.isEmpty()) {
+    int modID = indices[0].data(Qt::UserRole).toInt();
+    QString gameName = indices[0].data(Qt::UserRole + 4).toString();
+    if (modID > 0) {
+      shell::Open(QUrl(NexusInterface::instance().getModURL(modID, gameName)));
+    }
+    else {
+      MessageDialog::showMessage(tr("Nexus ID for this mod is unknown"), m_view);
+    }
+  }
+}
+
+void ModListViewActions::visitWebPage(const QModelIndexList& indices) const
+{
+  if (indices.size() > 1) {
+    if (indices.size() > 10) {
+      if (QMessageBox::question(m_view, tr("Opening Web Pages"),
+        tr("You are trying to open %1 Web Pages.  Are you sure you want to do this?").arg(indices.size()),
+        QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+        return;
+      }
+    }
+    int row_idx;
+    ModInfo::Ptr info;
+    QString gameName;
+    for (auto& idx : indices) {
+      row_idx = idx.data(ModList::IndexRole).toInt();
+      info = ModInfo::getByIndex(row_idx);
+
+      const auto url = info->parseCustomURL();
+      if (url.isValid()) {
+        shell::Open(url);
+      }
+    }
+  }
+  else if (!indices.isEmpty()) {
+    ModInfo::Ptr info = ModInfo::getByIndex(indices[0].data(ModList::IndexRole).toInt());
+
+    const auto url = info->parseCustomURL();
+    if (url.isValid()) {
+      shell::Open(url);
+    }
+  }
+}
+
 void ModListViewActions::openExplorer(const QModelIndexList& index) const
 {
   for (auto& idx : index) {
     ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
     shell::Explore(info->absolutePath());
+  }
+}
+
+void ModListViewActions::restoreBackup(const QModelIndex& index) const
+{
+  QRegExp backupRegEx("(.*)_backup[0-9]*$");
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
+  if (backupRegEx.indexIn(modInfo->name()) != -1) {
+    QString regName = backupRegEx.cap(1);
+    QDir modDir(QDir::fromNativeSeparators(m_core.settings().paths().mods()));
+    if (!modDir.exists(regName) ||
+      (QMessageBox::question(m_view, tr("Overwrite?"),
+        tr("This will replace the existing mod \"%1\". Continue?").arg(regName),
+        QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)) {
+      if (modDir.exists(regName) && !shellDelete(QStringList(modDir.absoluteFilePath(regName)))) {
+        reportError(tr("failed to remove mod \"%1\"").arg(regName));
+      }
+      else {
+        QString destinationPath = QDir::fromNativeSeparators(m_core.settings().paths().mods()) + "/" + regName;
+        if (!modDir.rename(modInfo->absolutePath(), destinationPath)) {
+          reportError(tr("failed to rename \"%1\" to \"%2\"").arg(modInfo->absolutePath()).arg(destinationPath));
+        }
+        m_core.refresh();
+        m_view->updateModCount();
+      }
+    }
   }
 }
 

@@ -2365,32 +2365,6 @@ void MainWindow::renameMod_clicked()
   }
 }
 
-
-void MainWindow::restoreBackup_clicked(int modIndex)
-{
-  QRegExp backupRegEx("(.*)_backup[0-9]*$");
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-  if (backupRegEx.indexIn(modInfo->name()) != -1) {
-    QString regName = backupRegEx.cap(1);
-    QDir modDir(QDir::fromNativeSeparators(m_OrganizerCore.settings().paths().mods()));
-    if (!modDir.exists(regName) ||
-        (QMessageBox::question(this, tr("Overwrite?"),
-          tr("This will replace the existing mod \"%1\". Continue?").arg(regName),
-          QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)) {
-      if (modDir.exists(regName) && !shellDelete(QStringList(modDir.absoluteFilePath(regName)))) {
-        reportError(tr("failed to remove mod \"%1\"").arg(regName));
-      } else {
-        QString destinationPath = QDir::fromNativeSeparators(m_OrganizerCore.settings().paths().mods()) + "/" + regName;
-        if (!modDir.rename(modInfo->absolutePath(), destinationPath)) {
-          reportError(tr("failed to rename \"%1\" to \"%2\"").arg(modInfo->absolutePath()).arg(destinationPath));
-        }
-        m_OrganizerCore.refresh();
-        ui->modList->updateModCount();
-      }
-    }
-  }
-}
-
 void MainWindow::modlistChanged(const QModelIndex&, int)
 {
   m_OrganizerCore.currentProfile()->writeModlist();
@@ -2850,7 +2824,7 @@ void MainWindow::visitOnNexus_clicked(int modIndex)
 
 void MainWindow::visitWebPage_clicked(int index)
 {
-  QItemSelectionModel *selection = ui->modList->selectionModel();
+  QItemSelectionModel* selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     int count = selection->selectedRows().count();
     if (count > 10) {
@@ -3740,26 +3714,6 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
       // context menu for mod backups
       else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) {
-        menu.addAction(tr("Restore Backup"), [=]() { restoreBackup_clicked(modIndex); });
-        menu.addAction(tr("Remove Backup..."), [=]() { removeMod_clicked(modIndex); });
-        menu.addSeparator();
-        if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_INVALID) != flags.end()) {
-          menu.addAction(tr("Ignore missing data"), [=]() { ignoreMissingData_clicked(modIndex); });
-        }
-        if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_ALTERNATE_GAME) != flags.end()) {
-          menu.addAction(tr("Mark as converted/working"), [=]() { markConverted_clicked(modIndex); });
-        }
-        menu.addSeparator();
-        if (info->nexusId() > 0) {
-          menu.addAction(tr("Visit on Nexus"), [=]() { visitOnNexus_clicked(modIndex); });
-        }
-
-        const auto url = info->parseCustomURL();
-        if (url.isValid()) {
-          menu.addAction(tr("Visit on %1").arg(url.host()), [=]() { visitWebPage_clicked(modIndex); });
-        }
-
-        menu.addAction(tr("Open in Explorer"), [=]() { ui->modList->actions().openExplorer({ contextIdx }); });
       }
 
       // separator
