@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "downloadlist.h"
 #include "downloadmanager.h"
+#include "modlistdropinfo.h"
 #include <utility.h>
 #include <log.h>
 #include <QEvent>
@@ -98,7 +99,7 @@ Qt::ItemFlags DownloadList::flags(const QModelIndex& idx) const
 QMimeData* DownloadList::mimeData(const QModelIndexList& indexes) const
 {
   QMimeData* result = QAbstractItemModel::mimeData(indexes);
-  result->setData("text/plain", "archive");
+  result->setData("text/plain", ModListDropInfo::DOWNLOAD_TEXT);
   return result;
 }
 

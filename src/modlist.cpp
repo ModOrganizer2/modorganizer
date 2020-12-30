@@ -28,6 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "organizercore.h"
 #include "modinforegular.h"
+#include "modlistdropinfo.h"
 #include "shared/directoryentry.h"
 #include "shared/fileentry.h"
 #include "shared/filesorigin.h"
@@ -59,128 +60,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 using namespace MOBase;
-
-
-ModList::DropInfo::DropInfo(const QMimeData* mimeData, OrganizerCore& core) :
-  m_rows{}, m_download{ -1 }, m_localUrls{}, m_url{}
-{
-  // this only check if the drop is valid, not if the content of the drop
-  // matches the target, a drop is valid if either
-  // 1. it contains items from another model (drag&drop in modlist or from download list)
-  // 2. it contains URLs from MO2 (overwrite or from another mod)
-  // 3. it contains a single URL to an external folder
-  // 4. it contains a single URL to a valid archive for MO2
-  try {
-    if (mimeData->hasUrls()) {
-      for (auto& url : mimeData->urls()) {
-        auto p = relativeUrl(url);
-        if (p) {
-          m_localUrls.push_back(*p);
-        }
-      }
-
-      // external drop
-      if (m_localUrls.empty() && mimeData->urls().size() == 1) {
-        auto url = mimeData->urls()[0];
-        if (url.isLocalFile() && !relativeUrl(url)) {
-          QFileInfo info(url.toLocalFile());
-          if (info.isDir()) {
-            m_url = url;
-          }
-          else if (core.installationManager()->getSupportedExtensions().contains(info.suffix(), Qt::CaseInsensitive)) {
-            m_url = url;
-          }
-        }
-      }
-
-    }
-    else if (mimeData->hasText()) {
-      QByteArray encoded = mimeData->data("application/x-qabstractitemmodeldatalist");
-      QDataStream stream(&encoded, QIODevice::ReadOnly);
-
-      while (!stream.atEnd()) {
-        int sourceRow, col;
-        QMap<int, QVariant> roleDataMap;
-        stream >> sourceRow >> col >> roleDataMap;
-        if (col == 0) {
-          m_rows.push_back(sourceRow);
-        }
-      }
-
-      if (mimeData->text() != "mod") {
-        if (mimeData->text() == "archive" && m_rows.size() == 1) {
-          m_download = m_rows[0];
-        }
-        m_rows = {};
-      }
-    }
-  }
-  catch (std::exception const&) {
-    m_rows = {};
-    m_download = -1;
-    m_localUrls.clear();
-    m_url = {};
-  }
-}
-
-std::optional<ModList::DropInfo::RelativeUrl> ModList::DropInfo::relativeUrl(const QUrl& url) const
-{
-  if (!url.isLocalFile()) {
-    return {};
-  }
-
-  QDir allModsDir(Settings::instance().paths().mods());
-  QDir overwriteDir(Settings::instance().paths().overwrite());
-
-  QFileInfo sourceInfo(url.toLocalFile());
-  QString sourceFile = sourceInfo.canonicalFilePath();
-
-  QString relativePath;
-  QString originName;
-
-  if (sourceFile.startsWith(allModsDir.canonicalPath())) {
-    QDir relativeDir(allModsDir.relativeFilePath(sourceFile));
-    QStringList splitPath = relativeDir.path().split("/");
-    originName = splitPath[0];
-    splitPath.pop_front();
-    return { { url, splitPath.join("/"), originName } };
-  }
-  else if (sourceFile.startsWith(overwriteDir.canonicalPath())) {
-    return { { url, overwriteDir.relativeFilePath(sourceFile), ModInfo::getOverwrite()->name() } };
-  }
-
-  return {};
-}
-
-bool ModList::DropInfo::isValid() const
-{
-  return isLocalFileDrop() || isModDrop() || isDownloadDrop() || m_url.isLocalFile();
-}
-
-bool ModList::DropInfo::isLocalFileDrop() const
-{
-  return !m_localUrls.empty();
-}
-
-bool ModList::DropInfo::isModDrop() const
-{
-  return !m_rows.empty();
-}
-
-bool ModList::DropInfo::isDownloadDrop() const
-{
-  return m_download != -1;
-}
-
-bool ModList::DropInfo::isExternalArchiveDrop() const
-{
-  return m_url.isLocalFile() && QFileInfo(m_url.toLocalFile()).isFile();
-}
-
-bool ModList::DropInfo::isExternalFolderDrop() const
-{
-  return m_url.isLocalFile() && QFileInfo(m_url.toLocalFile()).isDir();
-}
 
 ModList::ModList(PluginContainer *pluginContainer, OrganizerCore *organizer)
   : QAbstractItemModel(organizer)
@@ -829,7 +708,7 @@ QStringList ModList::mimeTypes() const
 QMimeData *ModList::mimeData(const QModelIndexList &indexes) const
 {
   QMimeData *result = QAbstractItemModel::mimeData(indexes);
-  result->setData("text/plain", "mod");
+  result->setData("text/plain", ModListDropInfo::MOD_TEXT);
   return result;
 }
 
@@ -1231,12 +1110,7 @@ int ModList::dropPriority(int row, const QModelIndex& parent) const
   return newPriority;
 }
 
-ModList::DropInfo ModList::dropInfo(const QMimeData* mimeData) const
-{
-  return DropInfo(mimeData, *m_Organizer);
-}
-
-bool ModList::dropURLs(const DropInfo& dropInfo, int row, const QModelIndex &parent)
+bool ModList::dropLocalFiles(const ModListDropInfo& dropInfo, int row, const QModelIndex &parent)
 {
   if (row == -1) {
     row = parent.row();
@@ -1279,7 +1153,7 @@ bool ModList::dropURLs(const DropInfo& dropInfo, int row, const QModelIndex &par
 
 void ModList::onDragEnter(const QMimeData* mimeData)
 {
-  m_DropOnMod = dropInfo(mimeData).isLocalFileDrop();
+  m_DropOnMod = ModListDropInfo(mimeData, *m_Organizer).isLocalFileDrop();
 }
 
 bool ModList::canDropMimeData(const QMimeData* mimeData, Qt::DropAction action, int row, int column, const QModelIndex& parent) const
@@ -1288,7 +1162,7 @@ bool ModList::canDropMimeData(const QMimeData* mimeData, Qt::DropAction action, 
     return false;
   }
 
-  DropInfo dropInfo(mimeData, *m_Organizer);
+  ModListDropInfo dropInfo(mimeData, *m_Organizer);
 
   if (dropInfo.isLocalFileDrop()) {
     if (row == -1 && parent.isValid()) {
@@ -1319,7 +1193,7 @@ bool ModList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, int
     return true;
   }
 
-  DropInfo dropInfo(mimeData, *m_Organizer);
+  ModListDropInfo dropInfo(mimeData, *m_Organizer);
 
   if (!m_Profile || !dropInfo.isValid()) {
     return false;
@@ -1331,7 +1205,7 @@ bool ModList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, int
   }
 
   if (dropInfo.isLocalFileDrop()) {
-    return dropURLs(dropInfo, row, parent);
+    return dropLocalFiles(dropInfo, row, parent);
   }
   else {
     if (dropInfo.isModDrop()) {

@@ -18,6 +18,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "modlistsortproxy.h"
+#include "modlistdropinfo.h"
 #include "modinfo.h"
 #include "profile.h"
 #include "messagedialog.h"
@@ -607,7 +608,7 @@ bool ModListSortProxy::filterAcceptsRow(int source_row, const QModelIndex &paren
 
 bool ModListSortProxy::canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const
 {
-  auto dropInfo = m_Organizer->modList()->dropInfo(data);
+  ModListDropInfo dropInfo(data, *m_Organizer);
 
   if (!dropInfo.isLocalFileDrop() && sortColumn() != ModList::COL_PRIORITY) {
     return false;
@@ -630,7 +631,7 @@ bool ModListSortProxy::canDropMimeData(const QMimeData* data, Qt::DropAction act
 bool ModListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action,
                                     int row, int column, const QModelIndex &parent)
 {
-  auto dropInfo = m_Organizer->modList()->dropInfo(data);
+  ModListDropInfo dropInfo(data, *m_Organizer);
 
   if (!dropInfo.isLocalFileDrop() && sortColumn() != ModList::COL_PRIORITY) {
     QWidget *wid = qApp->activeWindow()->findChild<QTreeView*>("modList");

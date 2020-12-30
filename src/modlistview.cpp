@@ -17,6 +17,7 @@
 #include "log.h"
 #include "modflagicondelegate.h"
 #include "modconflicticondelegate.h"
+#include "modlistdropinfo.h"
 #include "genericicondelegate.h"
 #include "shared/directoryentry.h"
 #include "shared/filesorigin.h"
@@ -516,6 +517,91 @@ void ModListView::updateModCount()
   );
 }
 
+void ModListView::onExternalFolderDropped(const QUrl& url, int priority)
+{
+  QFileInfo fileInfo(url.toLocalFile());
+
+  GuessedValue<QString> name;
+  name.setFilter(&fixDirectoryName);
+  name.update(fileInfo.fileName(), GUESS_PRESET);
+
+  do {
+    bool ok;
+    name.update(QInputDialog::getText(this, tr("Copy Folder..."),
+      tr("This will copy the content of %1 to a new mod.\n"
+        "Please enter the name:").arg(fileInfo.fileName()), QLineEdit::Normal, name, &ok),
+      GUESS_USER);
+    if (!ok) {
+      return;
+    }
+  } while (name->isEmpty());
+
+  if (m_core->modList()->getMod(name) != nullptr) {
+    reportError(tr("A mod with this name already exists."));
+    return;
+  }
+
+  IModInterface* newMod = m_core->createMod(name);
+  if (!newMod) {
+    return;
+  }
+
+  if (!copyDir(fileInfo.absoluteFilePath(), newMod->absolutePath(), true)) {
+    return;
+  }
+
+  m_core->refresh();
+
+  if (priority != -1) {
+    m_core->modList()->changeModPriority(ModInfo::getIndex(name), priority);
+  }
+}
+
+bool ModListView::moveSelection(int key)
+{
+  QModelIndex cindex = indexViewToModel(currentIndex());
+  QModelIndexList sourceRows = indexViewToModel(selectionModel()->selectedRows());
+
+  int offset = key == Qt::Key_Up ? -1 : 1;
+  if (m_sortProxy->sortOrder() == Qt::DescendingOrder) {
+    offset = -offset;
+  }
+
+  m_core->modList()->shiftMods(sourceRows, offset);
+
+  // reset the selection and the index
+  setCurrentIndex(indexModelToView(cindex));
+  for (auto idx : sourceRows) {
+    selectionModel()->select(indexModelToView(idx), QItemSelectionModel::Select | QItemSelectionModel::Rows);
+  }
+
+  return true;
+}
+
+bool ModListView::removeSelection()
+{
+  if (selectionModel()->hasSelection()) {
+    QModelIndexList rows = selectionModel()->selectedRows();
+    if (rows.count() > 1) {
+      emit removeSelectedMods();
+    }
+    else if (rows.count() == 1) {
+      // this does not work, I don't know why
+      // model()->removeRow(rows[0].row(), rows[0].parent());
+      m_core->modList()->removeRow(indexViewToModel(rows[0]).row());
+    }
+  }
+  return true;
+}
+
+bool ModListView::toggleSelectionState()
+{
+  if (!selectionModel()->hasSelection()) {
+    return true;
+  }
+  return m_core->modList()->toggleState(indexViewToModel(selectionModel()->selectedRows()));
+}
+
 void ModListView::updateGroupByProxy(int groupIndex)
 {
   // if the index is -1, we do not refresh unless we are grouping
@@ -683,6 +769,14 @@ void ModListView::dragEnterEvent(QDragEnterEvent* event)
 {
   emit dragEntered(event->mimeData());
   QTreeView::dragEnterEvent(event);
+
+
+  ModListDropInfo dropInfo(event->mimeData(), *m_core);
+
+  if (dropInfo.isValid() && !dropInfo.isLocalFileDrop()
+    && sortColumn() != ModList::COL_PRIORITY) {
+    log::warn("Drag&Drop is only supported when sorting by priority.");
+  }
 }
 
 void ModListView::dragMoveEvent(QDragMoveEvent* event)
@@ -720,91 +814,6 @@ void ModListView::timerEvent(QTimerEvent* event)
   else {
     QTreeView::timerEvent(event);
   }
-}
-
-void ModListView::onExternalFolderDropped(const QUrl& url, int priority)
-{
-  QFileInfo fileInfo(url.toLocalFile());
-
-  GuessedValue<QString> name;
-  name.setFilter(&fixDirectoryName);
-  name.update(fileInfo.fileName(), GUESS_PRESET);
-
-  do {
-    bool ok;
-    name.update(QInputDialog::getText(this, tr("Copy Folder..."),
-      tr("This will copy the content of %1 to a new mod.\n"
-        "Please enter the name:").arg(fileInfo.fileName()), QLineEdit::Normal, name, &ok),
-      GUESS_USER);
-    if (!ok) {
-      return;
-    }
-  } while (name->isEmpty());
-
-  if (m_core->modList()->getMod(name) != nullptr) {
-    reportError(tr("A mod with this name already exists."));
-    return;
-  }
-
-  IModInterface* newMod = m_core->createMod(name);
-  if (!newMod) {
-    return;
-  }
-
-  if (!copyDir(fileInfo.absoluteFilePath(), newMod->absolutePath(), true)) {
-    return;
-  }
-
-  m_core->refresh();
-
-  if (priority != -1) {
-    m_core->modList()->changeModPriority(ModInfo::getIndex(name), priority);
-  }
-}
-
-bool ModListView::moveSelection(int key)
-{
-  QModelIndex cindex = indexViewToModel(currentIndex());
-  QModelIndexList sourceRows = indexViewToModel(selectionModel()->selectedRows());
-
-  int offset = key == Qt::Key_Up ? -1 : 1;
-  if (m_sortProxy->sortOrder() == Qt::DescendingOrder) {
-    offset = -offset;
-  }
-
-  m_core->modList()->shiftMods(sourceRows, offset);
-
-  // reset the selection and the index
-  setCurrentIndex(indexModelToView(cindex));
-  for (auto idx : sourceRows) {
-    selectionModel()->select(indexModelToView(idx), QItemSelectionModel::Select | QItemSelectionModel::Rows);
-  }
-
-  return true;
-}
-
-bool ModListView::removeSelection()
-{
-  if (selectionModel()->hasSelection()) {
-    QModelIndexList rows = selectionModel()->selectedRows();
-    if (rows.count() > 1) {
-      emit removeSelectedMods();
-    }
-    else if (rows.count() == 1) {
-      // this does not work, I don't know why
-      // model()->removeRow(rows[0].row(), rows[0].parent());
-      m_core->modList()->removeRow(indexViewToModel(rows[0]).row());
-    }
-  }
-  return true;
-}
-
-bool ModListView::toggleSelectionState()
-{
-  if (!selectionModel()->hasSelection()) {
-    return true;
-  }
-  return m_core->modList()->toggleState(indexViewToModel(selectionModel()->selectedRows()));
 }
 
 bool ModListView::event(QEvent* event)

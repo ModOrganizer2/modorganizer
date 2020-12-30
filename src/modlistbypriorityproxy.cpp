@@ -4,6 +4,7 @@
 #include "profile.h"
 #include "organizercore.h"
 #include "modlist.h"
+#include "modlistdropinfo.h"
 #include "log.h"
 
 ModListByPriorityProxy::ModListByPriorityProxy(Profile* profile, OrganizerCore& core, QObject* parent) :
@@ -195,7 +196,7 @@ bool ModListByPriorityProxy::setData(const QModelIndex& index, const QVariant& v
 
 bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const
 {
-  auto dropInfo = m_core.modList()->dropInfo(data);
+  ModListDropInfo dropInfo(data, m_core);
 
   if (!dropInfo.isValid() || dropInfo.isLocalFileDrop()) {
     return QAbstractProxyModel::canDropMimeData(data, action, row, column, parent);
@@ -265,7 +266,7 @@ bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropActi
 bool ModListByPriorityProxy::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent)
 {
   // we need to fix the source model row
-  auto dropInfo = m_core.modList()->dropInfo(data);
+  ModListDropInfo dropInfo(data, m_core);
   int sourceRow = -1;
 
   if (dropInfo.isLocalFileDrop()) {
