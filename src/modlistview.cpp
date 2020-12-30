@@ -575,7 +575,7 @@ bool ModListView::moveSelection(int key)
     offset = -offset;
   }
 
-  m_core->modList()->shiftMods(sourceRows, offset);
+  m_core->modList()->shiftModsPriority(sourceRows, offset);
 
   // reset the selection and the index
   setCurrentIndex(indexModelToView(cindex));

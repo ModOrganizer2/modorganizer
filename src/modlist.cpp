@@ -1417,7 +1417,7 @@ QString ModList::getColumnToolTip(int column) const
   }
 }
 
-void ModList::shiftMods(const QModelIndexList& indices, int offset)
+void ModList::shiftModsPriority(const QModelIndexList& indices, int offset)
 {
   // retrieve the mod index and sort them by priority to avoid issue
   // when moving them
@@ -1449,6 +1449,26 @@ void ModList::shiftMods(const QModelIndexList& indices, int offset)
   }
 
   emit modPrioritiesChanged(allIndex);
+}
+
+void ModList::changeModsPriority(const QModelIndexList& indices, int priority)
+{
+  if (indices.isEmpty()) {
+    return;
+  }
+
+  std::vector<int> allIndex;
+  for (auto& idx : indices) {
+    auto index = idx.data(IndexRole).toInt();
+    allIndex.push_back(index);
+  }
+
+  if (allIndex.size() == 1) {
+    changeModPriority(allIndex[0], priority);
+  }
+  else {
+    changeModPriority(allIndex, priority);
+  }
 }
 
 bool ModList::toggleState(const QModelIndexList& indices)

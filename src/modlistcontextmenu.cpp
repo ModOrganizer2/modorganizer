@@ -45,6 +45,7 @@ ModListContextMenu::ModListContextMenu(OrganizerCore& core, const QModelIndex& i
   QMenu(view)
   , m_core(core)
   , m_index()
+  , m_view(view)
 {
   if (view->selectionModel()->hasSelection()) {
     m_index = view->indexViewToModel(view->selectionModel()->selectedRows());
@@ -68,20 +69,23 @@ ModListContextMenu::ModListContextMenu(OrganizerCore& core, const QModelIndex& i
   // Add type-specific items
   ModInfo::Ptr info = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
 
+  // TODO:
+  // - Don't forget to check for the sort priority for "Send To... "
+
   if (info->isOverwrite()) {
-    addOverwriteActions(core, view);
+    addOverwriteActions();
   }
   else if (info->isBackup()) {
-    addBackupActions(core, view);
+    addBackupActions();
   }
   else if (info->isSeparator()) {
-    addSeparatorActions(core, view);
+    addSeparatorActions();
   }
   else if (info->isForeign()) {
-    addForeignActions(core, view);
+    addForeignActions();
   }
   else {
-    addRegularActions(core, view);
+    addRegularActions();
   }
 
   // add information for all except foreign
@@ -91,27 +95,40 @@ ModListContextMenu::ModListContextMenu(OrganizerCore& core, const QModelIndex& i
   }
 }
 
-void ModListContextMenu::addOverwriteActions(OrganizerCore& core, ModListView* modListView)
+QMenu* ModListContextMenu::createSendToContextMenu()
+{
+  QMenu* menu = new QMenu(m_view);
+  menu->setTitle(tr("Send to... "));
+  menu->addAction(tr("Top"), [=]() { m_view->actions().sendModsToTop(m_index); });
+  menu->addAction(tr("Bottom"), [=]() { m_view->actions().sendModsToBottom(m_index); });
+  menu->addAction(tr("Priority..."), [=]() { m_view->actions().sendModsToPriority(m_index); });
+  menu->addAction(tr("Separator..."), [=]() { m_view->actions().sendModsToSeparator(m_index); });
+  return menu;
+}
+
+void ModListContextMenu::addOverwriteActions()
 {
 
 }
 
-void ModListContextMenu::addSeparatorActions(OrganizerCore& core, ModListView* modListView)
+void ModListContextMenu::addSeparatorActions()
 {
 
 }
 
-void ModListContextMenu::addForeignActions(OrganizerCore& core, ModListView* modListView)
+void ModListContextMenu::addForeignActions()
+{
+  if (m_view->sortColumn() == ModList::COL_PRIORITY) {
+    addMenu(createSendToContextMenu());
+  }
+}
+
+void ModListContextMenu::addBackupActions()
 {
 
 }
 
-void ModListContextMenu::addBackupActions(OrganizerCore& core, ModListView* modListView)
-{
-
-}
-
-void ModListContextMenu::addRegularActions(OrganizerCore& core, ModListView* modListView)
+void ModListContextMenu::addRegularActions()
 {
 
 }

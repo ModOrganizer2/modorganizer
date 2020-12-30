@@ -244,14 +244,11 @@ private:
   bool createBackup(const QString &filePath, const QDateTime &time);
   QString queryRestore(const QString &filePath);
 
-  void addModSendToContextMenu(QMenu *menu);
   void addPluginSendToContextMenu(QMenu *menu);
 
   QMenu *openFolderMenu();
 
   void dropLocalFile(const QUrl &url, const QString &outputDir, bool move);
-
-  void sendSelectedModsToPriority(int newPriority);
 
   void toggleMO2EndorseState();
   void toggleUpdateAction();
@@ -374,10 +371,6 @@ private slots:
   void information_clicked(int modIndex);
   void enableSelectedMods_clicked();
   void disableSelectedMods_clicked();
-  void sendSelectedModsToTop_clicked();
-  void sendSelectedModsToBottom_clicked();
-  void sendSelectedModsToPriority_clicked();
-  void sendSelectedModsToSeparator_clicked();
   // data-tree context menu
 
   // pluginlist context menu

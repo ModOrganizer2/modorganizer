@@ -226,7 +226,11 @@ public slots:
 
   // shift the priority of mods at the given indices by the given offset
   //
-  void shiftMods(const QModelIndexList& indices, int offset);
+  void shiftModsPriority(const QModelIndexList& indices, int offset);
+
+  // change the priority of the mods specified by the given indices
+  //
+  void changeModsPriority(const QModelIndexList& indices, int priority);
 
   // toggle the active state of mods at the given indices
   //

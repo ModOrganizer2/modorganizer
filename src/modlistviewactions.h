@@ -53,6 +53,12 @@ public:
   void displayModInformation(unsigned int index, ModInfoTabIDs tab = ModInfoTabIDs::None) const;
   void displayModInformation(ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tabID = ModInfoTabIDs::None) const;
 
+  // move mods to top/bottom, start the "Send to priority" and "Send to separator" dialog
+  //
+  void sendModsToTop(const QModelIndexList& index) const;
+  void sendModsToBottom(const QModelIndexList& index) const;
+  void sendModsToPriority(const QModelIndexList& index) const;
+  void sendModsToSeparator(const QModelIndexList& index) const;
 
 private:
 

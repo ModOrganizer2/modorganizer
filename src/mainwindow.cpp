@@ -3832,22 +3832,6 @@ QMenu *MainWindow::openFolderMenu()
 	return FolderMenu;
 }
 
-void MainWindow::addModSendToContextMenu(QMenu *menu)
-{
-  if (ui->modList->sortColumn() != ModList::COL_PRIORITY)
-    return;
-
-  QMenu *sub_menu = new QMenu(menu);
-  sub_menu->setTitle(tr("Send to"));
-  sub_menu->addAction(tr("Top"), [&]() { sendSelectedModsToTop_clicked(); });
-  sub_menu->addAction(tr("Bottom"), [&]() { sendSelectedModsToBottom_clicked(); });
-  sub_menu->addAction(tr("Priority..."), [&]() { sendSelectedModsToPriority_clicked(); });
-  sub_menu->addAction(tr("Separator..."), [&]() { sendSelectedModsToSeparator_clicked(); });
-
-  menu->addMenu(sub_menu);
-  menu->addSeparator();
-}
-
 void MainWindow::addPluginSendToContextMenu(QMenu *menu)
 {
   if (m_PluginListSortProxy->sortColumn() != PluginList::COL_PRIORITY)
@@ -3932,7 +3916,10 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu.addAction(tr("Rename Separator..."), [=]() { renameMod_clicked(); });
         menu.addAction(tr("Remove Separator..."), [=]() { removeMod_clicked(modIndex); });
         menu.addSeparator();
-        addModSendToContextMenu(&menu);
+        if (ui->modList->sortColumn() == ModList::COL_PRIORITY) {
+          menu.addMenu(menu.createSendToContextMenu());
+          menu.addSeparator();
+        }
         menu.addAction(tr("Select Color..."), [=]() { setColor_clicked(modIndex); });
 
         if (info->color().isValid()) {
@@ -3944,7 +3931,6 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
       // foregin
       else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
-        addModSendToContextMenu(&menu);
       }
 
       // regular
@@ -3981,7 +3967,10 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
         menu.addSeparator();
 
-        addModSendToContextMenu(&menu);
+        if (ui->modList->sortColumn() == ModList::COL_PRIORITY) {
+          menu.addMenu(menu.createSendToContextMenu());
+          menu.addSeparator();
+        }
 
         menu.addAction(tr("Rename Mod..."), [=]() { renameMod_clicked(); });
         menu.addAction(tr("Reinstall Mod"), [=]() { reinstallMod_clicked(modIndex); });
@@ -5476,98 +5465,4 @@ void MainWindow::on_clearFiltersButton_clicked()
 {
   ui->modFilterEdit->clear();
 	deselectFilters();
-}
-
-void MainWindow::sendSelectedModsToPriority(int newPriority)
-{
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection()) {
-    std::vector<int> modsToMove;
-    for (auto idx : selection->selectedRows(ModList::COL_PRIORITY)) {
-      modsToMove.push_back(m_OrganizerCore.currentProfile()->modIndexByPriority(idx.data().toInt()));
-    }
-
-    if (modsToMove.size() == 1) {
-      m_OrganizerCore.modList()->changeModPriority(modsToMove[0], newPriority);
-    }
-    else {
-      m_OrganizerCore.modList()->changeModPriority(modsToMove, newPriority);
-    }
-  }
-}
-
-void MainWindow::sendSelectedModsToTop_clicked()
-{
-  sendSelectedModsToPriority(0);
-}
-
-void MainWindow::sendSelectedModsToBottom_clicked()
-{
-  sendSelectedModsToPriority(INT_MAX);
-}
-
-void MainWindow::sendSelectedModsToPriority_clicked()
-{
-  bool ok;
-  int newPriority = QInputDialog::getInt(this,
-    tr("Set Priority"), tr("Set the priority of the selected mods"),
-    0, 0, INT_MAX, 1, &ok);
-  if (!ok) return;
-
- sendSelectedModsToPriority(newPriority);
-}
-
-void MainWindow::sendSelectedModsToSeparator_clicked()
-{
-  QStringList separators;
-  auto indexesByPriority = m_OrganizerCore.currentProfile()->getAllIndexesByPriority();
-  for (auto iter = indexesByPriority.begin(); iter != indexesByPriority.end(); iter++) {
-    if ((iter->second != UINT_MAX)) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(iter->second);
-      if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)) {
-        separators << modInfo->name().chopped(10);  // Chops the "_separator" away from the name
-      }
-    }
-  }
-
-  ListDialog dialog(this);
-  dialog.setWindowTitle("Select a separator...");
-  dialog.setChoices(separators);
-
-  if (dialog.exec() == QDialog::Accepted) {
-    QString result = dialog.getChoice();
-    if (!result.isEmpty()) {
-      result += "_separator";
-
-      int newPriority = INT_MAX;
-      bool foundSection = false;
-      for (auto mod : m_OrganizerCore.modsSortedByProfilePriority(m_OrganizerCore.currentProfile())) {
-        unsigned int modIndex = ModInfo::getIndex(mod);
-        ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-        if (!foundSection && result.compare(mod) == 0) {
-          foundSection = true;
-        } else if (foundSection && modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)) {
-          newPriority = m_OrganizerCore.currentProfile()->getModPriority(modIndex);
-          break;
-        }
-      }
-
-      QItemSelectionModel *selection = ui->modList->selectionModel();
-      if (selection->hasSelection()) {
-        std::vector<int> modsToMove;
-        for (QModelIndex idx : selection->selectedRows(ModList::COL_PRIORITY)) {
-          modsToMove.push_back(m_OrganizerCore.currentProfile()->modIndexByPriority(idx.data().toInt()));
-        }
-        if (modsToMove.size() == 1) {
-          int oldPriority = m_OrganizerCore.currentProfile()->getModPriority(modsToMove[0]);
-          if (oldPriority < newPriority)
-            --newPriority;
-          m_OrganizerCore.modList()->changeModPriority(modsToMove[0], newPriority);
-        }
-        else {
-          m_OrganizerCore.modList()->changeModPriority(modsToMove, newPriority);
-        }
-      }
-    }
-  }
 }

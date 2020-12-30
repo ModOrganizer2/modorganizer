@@ -11,6 +11,7 @@
 #include "categories.h"
 #include "filedialogmemory.h"
 #include "filterlist.h"
+#include "listdialog.h"
 #include "modinfodialog.h"
 #include "modlist.h"
 #include "modlistview.h"
@@ -427,6 +428,73 @@ void ModListViewActions::displayModInformation(ModInfo::Ptr modInfo, unsigned in
       DirectoryRefresher::cleanStructure(m_core.directoryStructure());
       m_core.directoryStructure()->getFileRegister()->sortOrigins();
       m_core.refreshLists();
+    }
+  }
+}
+
+void ModListViewActions::sendModsToTop(const QModelIndexList& index) const
+{
+  m_core.modList()->changeModsPriority(index, 0);
+}
+
+void ModListViewActions::sendModsToBottom(const QModelIndexList& index) const
+{
+  m_core.modList()->changeModsPriority(index, std::numeric_limits<int>::max());
+}
+
+void ModListViewActions::sendModsToPriority(const QModelIndexList& index) const
+{
+  bool ok;
+  int priority = QInputDialog::getInt(m_view,
+    tr("Set Priority"), tr("Set the priority of the selected mods"),
+    0, 0, std::numeric_limits<int>::max(), 1, &ok);
+  if (!ok) return;
+
+  m_core.modList()->changeModsPriority(index, priority);
+}
+
+void ModListViewActions::sendModsToSeparator(const QModelIndexList& index) const
+{
+  QStringList separators;
+  auto indexesByPriority = m_core.currentProfile()->getAllIndexesByPriority();
+  for (auto iter = indexesByPriority.begin(); iter != indexesByPriority.end(); iter++) {
+    if ((iter->second != UINT_MAX)) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(iter->second);
+      if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+        separators << modInfo->name().chopped(10);  // Chops the "_separator" away from the name
+      }
+    }
+  }
+
+  ListDialog dialog(m_view);
+  dialog.setWindowTitle("Select a separator...");
+  dialog.setChoices(separators);
+
+  if (dialog.exec() == QDialog::Accepted) {
+    QString result = dialog.getChoice();
+    if (!result.isEmpty()) {
+      result += "_separator";
+
+      int newPriority = std::numeric_limits<int>::max();
+      bool foundSection = false;
+      for (auto mod : m_core.modsSortedByProfilePriority(m_core.currentProfile())) {
+        unsigned int modIndex = ModInfo::getIndex(mod);
+        ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+        if (!foundSection && result.compare(mod) == 0) {
+          foundSection = true;
+        }
+        else if (foundSection && modInfo->isSeparator()) {
+          newPriority = m_core.currentProfile()->getModPriority(modIndex);
+          break;
+        }
+      }
+
+      if (index.size() == 1
+        && m_core.currentProfile()->getModPriority(index[0].data(ModList::IndexRole).toInt()) < newPriority) {
+        --newPriority;
+      }
+
+      m_core.modList()->changeModsPriority(index, newPriority);
     }
   }
 }

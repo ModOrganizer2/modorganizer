@@ -29,18 +29,23 @@ public:
   //
   ModListContextMenu(OrganizerCore& core, const QModelIndex& index, ModListView* modListView);
 
-private:
+public: // TODO: Move this to private when all is done
+
+  // create the "Send to... " context menu
+  //
+  QMenu* createSendToContextMenu();
 
   // add actions/menus to this menu for each type of mod
   //
-  void addOverwriteActions(OrganizerCore& core, ModListView* modListView);
-  void addSeparatorActions(OrganizerCore& core, ModListView* modListView);
-  void addForeignActions(OrganizerCore& core, ModListView* modListView);
-  void addBackupActions(OrganizerCore& core, ModListView* modListView);
-  void addRegularActions(OrganizerCore& core, ModListView* modListView);
+  void addOverwriteActions();
+  void addSeparatorActions();
+  void addForeignActions();
+  void addBackupActions();
+  void addRegularActions();
 
   OrganizerCore& m_core;
   QModelIndexList m_index;
+  ModListView* m_view;
 
 };
 
