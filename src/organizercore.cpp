@@ -756,74 +756,12 @@ QString OrganizerCore::pluginDataPath()
          + "/data";
 }
 
-MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
+MOBase::IModInterface *OrganizerCore::installMod(const QString & archivePath,
                                                  bool reinstallation,
                                                  ModInfo::Ptr currentMod,
                                                  const QString &initModName)
 {
-  if (m_CurrentProfile == nullptr) {
-    return nullptr;
-  }
-
-  if (m_InstallationManager.isRunning()) {
-    QMessageBox::information(
-      qApp->activeWindow(), tr("Installation cancelled"),
-      tr("Another installation is currently in progress."), QMessageBox::Ok);
-    return nullptr;
-  }
-
-  bool hasIniTweaks = false;
-  GuessedValue<QString> modName;
-  if (!initModName.isEmpty()) {
-    modName.update(initModName, GUESS_USER);
-  }
-  m_CurrentProfile->writeModlistNow();
-  m_InstallationManager.setModsDirectory(m_Settings.paths().mods());
-  m_InstallationManager.notifyInstallationStart(fileName, reinstallation, currentMod);
-  auto result = m_InstallationManager.install(fileName, modName, hasIniTweaks);
-  if (result) {
-    MessageDialog::showMessage(tr("Installation successful"),
-                               qApp->activeWindow());
-    refresh();
-
-    int modIndex = ModInfo::getIndex(modName);
-    if (modIndex != UINT_MAX) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-      auto dlIdx = m_DownloadManager.indexByName(QFileInfo(fileName).fileName());
-      if (dlIdx != -1) {
-        int modId = m_DownloadManager.getModID(dlIdx);
-        int fileId = m_DownloadManager.getFileInfo(dlIdx)->fileID;
-        modInfo->addInstalledFile(modId, fileId);
-      }
-      if (hasIniTweaks && (m_UserInterface != nullptr)
-          && (QMessageBox::question(qApp->activeWindow(), tr("Configure Mod"),
-                                    tr("This mod contains ini tweaks. Do you "
-                                       "want to configure them now?"),
-                                    QMessageBox::Yes | QMessageBox::No)
-              == QMessageBox::Yes)) {
-        m_UserInterface->displayModInformation(
-          modInfo, modIndex, ModInfoTabIDs::IniFiles);
-      }
-      m_ModList.notifyModInstalled(modInfo.get());
-      m_DownloadManager.markInstalled(fileName);
-      m_InstallationManager.notifyInstallationEnd(result, modInfo);
-      emit modInstalled(modName);
-      return modInfo.data();
-    } else {
-      reportError(tr("mod not found: %1").arg(qUtf8Printable(modName)));
-    }
-  } else {
-    m_InstallationManager.notifyInstallationEnd(result, nullptr);
-    if (m_InstallationManager.wasCancelled()) {
-      QMessageBox::information(qApp->activeWindow(), tr("Extraction cancelled"),
-        tr("The installation was cancelled while extracting files. "
-          "If this was prior to a FOMOD setup, this warning may be ignored. "
-          "However, if this was during installation, the mod will likely be missing files."),
-        QMessageBox::Ok);
-      refresh();
-    }
-  }
-  return nullptr;
+  return installArchive(archivePath, -1, reinstallation, currentMod, initModName).get();
 }
 
 ModInfo::Ptr OrganizerCore::installDownload(int index, int priority)
@@ -912,6 +850,82 @@ ModInfo::Ptr OrganizerCore::installDownload(int index, int priority)
     reportError(e.what());
   }
 
+  return nullptr;
+}
+
+ModInfo::Ptr OrganizerCore::installArchive(
+  const QString& archivePath, int priority, bool reinstallation,
+  ModInfo::Ptr currentMod, const QString& initModName)
+{
+  if (m_CurrentProfile == nullptr) {
+    return nullptr;
+  }
+
+  if (m_InstallationManager.isRunning()) {
+    QMessageBox::information(
+      qApp->activeWindow(), tr("Installation cancelled"),
+      tr("Another installation is currently in progress."), QMessageBox::Ok);
+    return nullptr;
+  }
+
+  bool hasIniTweaks = false;
+  GuessedValue<QString> modName;
+  if (!initModName.isEmpty()) {
+    modName.update(initModName, GUESS_USER);
+  }
+  m_CurrentProfile->writeModlistNow();
+  m_InstallationManager.setModsDirectory(m_Settings.paths().mods());
+  m_InstallationManager.notifyInstallationStart(archivePath, reinstallation, currentMod);
+  auto result = m_InstallationManager.install(archivePath, modName, hasIniTweaks);
+  if (result) {
+    MessageDialog::showMessage(tr("Installation successful"),
+      qApp->activeWindow());
+    refresh();
+
+    int modIndex = ModInfo::getIndex(modName);
+    if (modIndex != UINT_MAX) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+      auto dlIdx = m_DownloadManager.indexByName(QFileInfo(archivePath).fileName());
+      if (dlIdx != -1) {
+        int modId = m_DownloadManager.getModID(dlIdx);
+        int fileId = m_DownloadManager.getFileInfo(dlIdx)->fileID;
+        modInfo->addInstalledFile(modId, fileId);
+      }
+
+      if (priority != -1 && !result.mergedOrReplaced()) {
+        m_ModList.changeModPriority(modIndex, priority);
+      }
+
+      if (hasIniTweaks && (m_UserInterface != nullptr)
+        && (QMessageBox::question(qApp->activeWindow(), tr("Configure Mod"),
+          tr("This mod contains ini tweaks. Do you "
+            "want to configure them now?"),
+          QMessageBox::Yes | QMessageBox::No)
+          == QMessageBox::Yes)) {
+        m_UserInterface->displayModInformation(
+          modInfo, modIndex, ModInfoTabIDs::IniFiles);
+      }
+      m_ModList.notifyModInstalled(modInfo.get());
+      m_DownloadManager.markInstalled(archivePath);
+      m_InstallationManager.notifyInstallationEnd(result, modInfo);
+      emit modInstalled(modName);
+      return modInfo;
+    }
+    else {
+      reportError(tr("mod not found: %1").arg(qUtf8Printable(modName)));
+    }
+  }
+  else {
+    m_InstallationManager.notifyInstallationEnd(result, nullptr);
+    if (m_InstallationManager.wasCancelled()) {
+      QMessageBox::information(qApp->activeWindow(), tr("Extraction cancelled"),
+        tr("The installation was cancelled while extracting files. "
+          "If this was prior to a FOMOD setup, this warning may be ignored. "
+          "However, if this was during installation, the mod will likely be missing files."),
+        QMessageBox::Ok);
+      refresh();
+    }
+  }
   return nullptr;
 }
 

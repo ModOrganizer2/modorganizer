@@ -23,10 +23,10 @@ class ModListByPriorityProxy : public QAbstractProxyModel
   Q_OBJECT
 
 public:
-  explicit ModListByPriorityProxy(Profile* profile, QObject* parent = nullptr);
+  explicit ModListByPriorityProxy(Profile* profile, OrganizerCore& core, QObject* parent = nullptr);
   ~ModListByPriorityProxy();
 
-  void setProfile(Profile* profile) { m_Profile = profile; }
+  void setProfile(Profile* profile);
   void refresh();
 
   void setSourceModel(QAbstractItemModel* sourceModel) override;
@@ -92,8 +92,9 @@ private:
   std::set<QString> m_CollapsedItems;
 
 private:
-  Profile* m_Profile;
-  ModListView::DropPosition m_DropPosition = ModListView::DropPosition::OnItem;
+  OrganizerCore& m_core;
+  Profile* m_profile;
+  ModListView::DropPosition m_dropPosition = ModListView::DropPosition::OnItem;
 };
 
 #endif //GROUPINGPROXY_H

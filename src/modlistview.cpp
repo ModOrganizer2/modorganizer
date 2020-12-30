@@ -6,6 +6,7 @@
 #include <widgetutility.h>
 
 #include <utility.h>
+#include <report.h>
 
 #include "ui_mainwindow.h"
 
@@ -19,6 +20,8 @@
 #include "genericicondelegate.h"
 #include "shared/directoryentry.h"
 #include "shared/filesorigin.h"
+
+using namespace MOBase;
 
 class ModListProxyStyle : public QProxyStyle {
 public:
@@ -70,6 +73,11 @@ public:
 
 ModListView::ModListView(QWidget* parent)
   : QTreeView(parent)
+  , m_core(nullptr)
+  , m_sortProxy(nullptr)
+  , m_byPriorityProxy(nullptr)
+  , m_byCategoryProxy(nullptr)
+  , m_byNexusIdProxy(nullptr)
   , m_scrollbar(new ViewMarkingScrollBar(this->model(), this))
 {
   setVerticalScrollBar(m_scrollbar);
@@ -547,7 +555,7 @@ void ModListView::setup(OrganizerCore& core, Ui::MainWindow* mwui)
   connect(m_core, &OrganizerCore::modInstalled, this, &ModListView::onModInstalled);
   connect(core.modList(), &ModList::modPrioritiesChanged, this, &ModListView::onModPrioritiesChanged);
 
-  m_byPriorityProxy = new ModListByPriorityProxy(core.currentProfile(), &core);
+  m_byPriorityProxy = new ModListByPriorityProxy(core.currentProfile(), core, this);
   m_byPriorityProxy->setSourceModel(core.modList());
   connect(this, &QTreeView::expanded, m_byPriorityProxy, &ModListByPriorityProxy::expanded);
   connect(this, &QTreeView::collapsed, m_byPriorityProxy, &ModListByPriorityProxy::collapsed);
@@ -629,9 +637,13 @@ void ModListView::setup(OrganizerCore& core, Ui::MainWindow* mwui)
   // prevent the name-column from being hidden
   header()->setSectionHidden(ModList::COL_NAME, false);
 
-  connect(m_core->modList(), &ModList::downloadArchiveDropped, this, [this](int row, int priority) {
+  connect(m_core->modList(), &ModList::downloadArchiveDropped, [=](int row, int priority) {
     m_core->installDownload(row, priority);
   });
+  connect(m_core->modList(), &ModList::externalArchiveDropped, [=](const QUrl& url, int priority) {
+    m_core->installArchive(url.toLocalFile(), priority, false, nullptr);
+  });
+  connect(m_core->modList(), &ModList::externalFolderDropped, this, &ModListView::onExternalFolderDropped);
 
   connect(m_sortProxy, &ModListSortProxy::filterActive, this, &ModListView::onModFilterActive);
   connect(ui.filter, &QLineEdit::textChanged, m_sortProxy, &ModListSortProxy::updateFilter);
@@ -710,13 +722,50 @@ void ModListView::timerEvent(QTimerEvent* event)
   }
 }
 
+void ModListView::onExternalFolderDropped(const QUrl& url, int priority)
+{
+  QFileInfo fileInfo(url.toLocalFile());
+
+  GuessedValue<QString> name;
+  name.setFilter(&fixDirectoryName);
+  name.update(fileInfo.fileName(), GUESS_PRESET);
+
+  do {
+    bool ok;
+    name.update(QInputDialog::getText(this, tr("Copy Folder..."),
+      tr("This will copy the content of %1 to a new mod.\n"
+        "Please enter the name:").arg(fileInfo.fileName()), QLineEdit::Normal, name, &ok),
+      GUESS_USER);
+    if (!ok) {
+      return;
+    }
+  } while (name->isEmpty());
+
+  if (m_core->modList()->getMod(name) != nullptr) {
+    reportError(tr("A mod with this name already exists."));
+    return;
+  }
+
+  IModInterface* newMod = m_core->createMod(name);
+  if (!newMod) {
+    return;
+  }
+
+  if (!copyDir(fileInfo.absoluteFilePath(), newMod->absolutePath(), true)) {
+    return;
+  }
+
+  m_core->refresh();
+
+  if (priority != -1) {
+    m_core->modList()->changeModPriority(ModInfo::getIndex(name), priority);
+  }
+}
+
 bool ModListView::moveSelection(int key)
 {
   QModelIndex cindex = indexViewToModel(currentIndex());
-  QModelIndexList sourceRows;
-  for (auto& index : selectionModel()->selectedRows()) {
-    sourceRows.append(indexViewToModel(index));
-  }
+  QModelIndexList sourceRows = indexViewToModel(selectionModel()->selectedRows());
 
   int offset = key == Qt::Key_Up ? -1 : 1;
   if (m_sortProxy->sortOrder() == Qt::DescendingOrder) {
@@ -755,13 +804,7 @@ bool ModListView::toggleSelectionState()
   if (!selectionModel()->hasSelection()) {
     return true;
   }
-
-  QModelIndexList selected;
-  for (QModelIndex idx : selectionModel()->selectedRows()) {
-    selected.append(indexViewToModel(idx));
-  }
-
-  return m_core->modList()->toggleState(selected);
+  return m_core->modList()->toggleState(indexViewToModel(selectionModel()->selectedRows()));
 }
 
 bool ModListView::event(QEvent* event)

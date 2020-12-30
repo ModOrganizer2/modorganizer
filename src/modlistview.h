@@ -123,6 +123,12 @@ protected:
   //
   QModelIndexList selectedIndexes() const;
 
+  // drop from external folder
+  //
+  void onExternalFolderDropped(const QUrl& url, int priority);
+
+  // method to react to various key events
+  //
   bool moveSelection(int key);
   bool removeSelection();
   bool toggleSelectionState();

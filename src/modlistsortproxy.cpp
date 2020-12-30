@@ -611,11 +611,13 @@ bool ModListSortProxy::canDropMimeData(const QMimeData* data, Qt::DropAction act
     return false;
   }
 
+  auto dropInfo = m_Organizer->modList()->dropInfo(data);
+
   // disable drop install with group proxy, except the one for collapsible separator
   // - it would be nice to be able to "install to category" or something like that but
   //   it's a bit more complicated since the drop position is based on the category, so
   //   just disabling for now
-  if (data->hasText() && data->text() == "archive") {
+  if (dropInfo.isDownloadDrop()) {
     // maybe there is a cleaner way?
     if (qobject_cast<QtGroupingProxy*>(sourceModel())) {
       return false;
@@ -628,14 +630,18 @@ bool ModListSortProxy::canDropMimeData(const QMimeData* data, Qt::DropAction act
 bool ModListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action,
                                     int row, int column, const QModelIndex &parent)
 {
-  if (!data->hasUrls() && (sortColumn() != ModList::COL_PRIORITY)) {
+  auto dropInfo = m_Organizer->modList()->dropInfo(data);
+
+  if (!dropInfo.isLocalFileDrop() && sortColumn() != ModList::COL_PRIORITY) {
     QWidget *wid = qApp->activeWindow()->findChild<QTreeView*>("modList");
     MessageDialog::showMessage(tr("Drag&Drop is only supported when sorting by priority"), wid);
     return false;
   }
-  if ((row == -1) && (column == -1)) {
+
+  if (row == -1 && column == -1) {
     return sourceModel()->dropMimeData(data, action, -1, -1, mapToSource(parent));
   }
+
   // in the regular model, when dropping between rows, the row-value passed to
   // the sourceModel is inconsistent between ascending and descending ordering.
   // This should fix that

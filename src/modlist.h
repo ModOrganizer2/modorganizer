@@ -319,7 +319,16 @@ signals:
 
   // emitted when an item is dropped from the download list, the row is from the
   // download list
+  //
   void downloadArchiveDropped(int row, int priority);
+
+  // emitted when an external archive is dropped on the mod list
+  //
+  void externalArchiveDropped(const QUrl& url, int priority);
+
+  // emitted when an external folder is dropped on the mod list
+  //
+  void externalFolderDropped(const QUrl& url, int priority);
 
 private:
 
@@ -365,19 +374,79 @@ private:
 
 private:
 
-  // retrieve the relative path of file and its origin given a URL from Mime data
-  // returns an empty optional if the URL is not a valid file for dropping
+  // small class that extract information from mimeData
   //
-  static std::optional<std::pair<QString, QString>> relativeUrl(const QUrl&);
+  class DropInfo {
+  public:
 
-  // return the source rows from the given mime data for drag&drop of mods or
-  // installation archives
+    struct RelativeUrl {
+      const QUrl url;
+      const QString relativePath;
+      const QString originName;
+    };
+
+    // returns true if this drop is valid
+    //
+    bool isValid() const;
+
+    // returns true if these data corresponds to drag&drop
+    // of local files (e.g. from overwrite)
+    //
+    bool isLocalFileDrop() const;
+
+    // returns true if these data corresponds to drag&drop
+    // of mod in the list
+    //
+    bool isModDrop() const;
+
+    // returns true if these data corresponds to drag&drop
+    // from the download list
+    //
+    bool isDownloadDrop() const;
+
+    // returns true if these data corresponds to dropping
+    // an archive for installation
+    //
+    bool isExternalArchiveDrop() const;
+
+    // returns true if these data corresponds to dropping
+    // a folder for copy
+    //
+    bool isExternalFolderDrop() const;
+
+    const auto& rows() const { return m_rows; }
+    const auto& download() const { return m_download; }
+    const auto& localUrls() const { return m_localUrls; }
+    const auto& externalUrl() const { return m_url; }
+
+  private:
+
+    friend class ModList;
+
+    // retrieve the relative path of file and its origin given a URL from Mime data
+    // returns an empty optional if the URL is not a valid file for dropping
+    //
+    std::optional<RelativeUrl> relativeUrl(const QUrl&) const;
+
+  private:
+    DropInfo(const QMimeData* mimeData, OrganizerCore& core);
+
+    // rows for drag&drop between views
+    std::vector<int> m_rows;
+    int m_download; // -1 if invalid
+
+    // local URLs from the data (relative path + origin name)
+    std::vector<RelativeUrl> m_localUrls;
+
+    // external URL
+    QUrl m_url;
+  };
+
+  // create a DropInfo object from the given data
   //
-  static std::vector<int> sourceRows(const QMimeData* mimeData);
+  DropInfo dropInfo(const QMimeData* mimeData) const;
 
-  bool dropURLs(const QMimeData* mimeData, int row, const QModelIndex& parent);
-  bool dropMod(const QMimeData* mimeData, int row, const QModelIndex& parent);
-  bool dropArchive(const QMimeData* mimeData, int row, const QModelIndex& parent);
+  bool dropURLs(const DropInfo& dropInfo, int row, const QModelIndex& parent);
 
   // return the priority of the mod for a drop event
   //
@@ -386,6 +455,7 @@ private:
 private:
 
   friend class ModListProxy;
+  friend class ModListSortProxy;
   friend class ModListByPriorityProxy;
 
   OrganizerCore *m_Organizer;
