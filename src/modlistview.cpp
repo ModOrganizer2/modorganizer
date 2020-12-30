@@ -438,6 +438,8 @@ void ModListView::onModFilterActive(bool filterActive)
 
 void ModListView::updateModCount()
 {
+  TimeThis tt("updateModCount");
+
   int activeCount = 0;
   int visActiveCount = 0;
   int backupCount = 0;
