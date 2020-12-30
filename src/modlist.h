@@ -365,11 +365,6 @@ private:
 
 private:
 
-  // convert an index of the modlist to an index for the given model, assuming
-  // the given model is a proxy (of a proxy (of... )) the modlist
-  //
-  QModelIndex indexToProxy(QAbstractItemModel* proxyModel, const QModelIndex& index);
-
   // retrieve the relative path of file and its origin given a URL from Mime data
   // returns an empty optional if the URL is not a valid file for dropping
   //

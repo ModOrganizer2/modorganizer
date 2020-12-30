@@ -1493,23 +1493,6 @@ QString ModList::getColumnToolTip(int column) const
   }
 }
 
-QModelIndex ModList::indexToProxy(QAbstractItemModel* proxyModel, const QModelIndex& index)
-{
-  if (!proxyModel) {
-    return QModelIndex();
-  }
-
-  if (proxyModel == this) {
-    return index;
-  }
-
-  if (auto* proxy = qobject_cast<QAbstractProxyModel*>(proxyModel)) {
-    return proxy->mapFromSource(indexToProxy(proxy->sourceModel(), index));
-  }
-
-  return QModelIndex();
-}
-
 void ModList::shiftMods(const QModelIndexList& indices, int offset)
 {
   // retrieve the mod index and sort them by priority to avoid issue
