@@ -721,7 +721,6 @@ QtGroupingProxy::flags( const QModelIndex &idx ) const
                                                         m_rootNode.parent() );
         if ( (originalIdx.flags() & Qt::ItemIsUserCheckable) == 0 )
         {
-          log::debug("row {} is not checkable", originalRow);
           checkable = false;
         }
       }
