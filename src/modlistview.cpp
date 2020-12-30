@@ -76,7 +76,7 @@ ModListView::ModListView(QWidget* parent)
   MOBase::setCustomizableColumns(this);
   setAutoExpandDelay(1000);
 
-  setStyle(new ModListProxyStyle());
+  setStyle(new ModListProxyStyle(style()));
   setItemDelegate(new ModListStyledItemDelegated(this));
 }
 
@@ -84,10 +84,13 @@ void ModListView::refresh()
 {
   updateGroupByProxy(-1);
 
-  // maybe there is a better way but I did not find one
-  QString sheet = styleSheet();
-  setStyleSheet("QTreeView { }");
-  setStyleSheet(sheet);
+  // since we use a proxy, modifying the stylesheet messes things
+  // up by and this fixes it (force update style and fix drop indicator
+  // after changing the stylesheet)
+  if (auto* proxy = qobject_cast<QProxyStyle*>(style())) {
+    auto* s = proxy->baseStyle();
+    setStyle(new ModListProxyStyle(s));
+  }
 }
 
 void ModListView::setProfile(Profile* profile)
