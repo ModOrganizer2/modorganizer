@@ -7,6 +7,8 @@
 #include <QModelIndex>
 #include <QTreeView>
 
+#include "modinfo.h"
+
 class ModListView;
 class OrganizerCore;
 
@@ -37,14 +39,15 @@ public: // TODO: Move this to private when all is done
 
   // add actions/menus to this menu for each type of mod
   //
-  void addOverwriteActions();
-  void addSeparatorActions();
-  void addForeignActions();
-  void addBackupActions();
-  void addRegularActions();
+  void addOverwriteActions(ModInfo::Ptr mod);
+  void addSeparatorActions(ModInfo::Ptr mod);
+  void addForeignActions(ModInfo::Ptr mod);
+  void addBackupActions(ModInfo::Ptr mod);
+  void addRegularActions(ModInfo::Ptr mod);
 
   OrganizerCore& m_core;
-  QModelIndexList m_index;
+  QModelIndex m_index;
+  QModelIndexList m_selected;
   ModListView* m_view;
 
 };

@@ -7,6 +7,7 @@
 
 #include <log.h>
 #include <report.h>
+#include <utility.h>
 
 #include "categories.h"
 #include "filedialogmemory.h"
@@ -16,6 +17,7 @@
 #include "modlist.h"
 #include "modlistview.h"
 #include "mainwindow.h"
+#include "messagedialog.h"
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
 #include "savetextasdialog.h"
@@ -387,7 +389,11 @@ void ModListViewActions::displayModInformation(ModInfo::Ptr modInfo, unsigned in
       dialog->show();
       dialog->raise();
       dialog->activateWindow();
-      connect(dialog, SIGNAL(finished(int)), this, SLOT(overwriteClosed(int)));
+      connect(dialog, &QDialog::finished, [=]() {
+        m_core.modList()->modInfoChanged(modInfo);
+        dialog->deleteLater();
+        m_core.refreshDirectoryStructure();
+      });
     }
     catch (const std::exception& e) {
       reportError(tr("Failed to display overwrite dialog: %1").arg(e.what()));
@@ -495,6 +501,126 @@ void ModListViewActions::sendModsToSeparator(const QModelIndexList& index) const
       }
 
       m_core.modList()->changeModsPriority(index, newPriority);
+    }
+  }
+}
+
+void ModListViewActions::openExplorer(const QModelIndexList& index) const
+{
+  for (auto& idx : index) {
+    ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+    shell::Explore(info->absolutePath());
+  }
+}
+
+void ModListViewActions::moveOverwriteContentsTo(const QString& absolutePath) const
+{
+  ModInfo::Ptr overwriteInfo = ModInfo::getOverwrite();
+  bool successful = shellMove((QDir::toNativeSeparators(overwriteInfo->absolutePath()) + "\\*"),
+    (QDir::toNativeSeparators(absolutePath)), false, m_view);
+
+  if (successful) {
+    MessageDialog::showMessage(tr("Move successful."), m_view);
+  }
+  else {
+    const auto e = GetLastError();
+    log::error("Move operation failed: {}", formatSystemMessage(e));
+  }
+
+  m_core.refresh();
+}
+
+void ModListViewActions::createModFromOverwrite() const
+{
+  GuessedValue<QString> name;
+  name.setFilter(&fixDirectoryName);
+
+  while (name->isEmpty()) {
+    bool ok;
+    name.update(QInputDialog::getText(m_view, tr("Create Mod..."),
+      tr("This will move all files from overwrite into a new, regular mod.\n"
+        "Please enter a name:"), QLineEdit::Normal, "", &ok),
+      GUESS_USER);
+    if (!ok) {
+      return;
+    }
+  }
+
+  if (m_core.modList()->getMod(name) != nullptr) {
+    reportError(tr("A mod with this name already exists"));
+    return;
+  }
+
+  const IModInterface* newMod = m_core.createMod(name);
+  if (newMod == nullptr) {
+    return;
+  }
+
+  moveOverwriteContentsTo(newMod->absolutePath());
+}
+
+void ModListViewActions::moveOverwriteContentToExistingMod() const
+{
+  QStringList mods;
+  auto indexesByPriority = m_core.currentProfile()->getAllIndexesByPriority();
+  for (auto& iter : indexesByPriority) {
+    if ((iter.second != UINT_MAX)) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(iter.second);
+      if (!modInfo->hasFlag(ModInfo::FLAG_SEPARATOR) && !modInfo->hasFlag(ModInfo::FLAG_FOREIGN) && !modInfo->hasFlag(ModInfo::FLAG_OVERWRITE)) {
+        mods << modInfo->name();
+      }
+    }
+  }
+
+  ListDialog dialog(m_view);
+  dialog.setWindowTitle("Select a mod...");
+  dialog.setChoices(mods);
+
+  if (dialog.exec() == QDialog::Accepted) {
+    QString result = dialog.getChoice();
+    if (!result.isEmpty()) {
+
+      QString modAbsolutePath;
+
+      for (const auto& mod : m_core.modsSortedByProfilePriority(m_core.currentProfile())) {
+        if (result.compare(mod) == 0) {
+          ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(mod));
+          modAbsolutePath = modInfo->absolutePath();
+          break;
+        }
+      }
+
+      if (modAbsolutePath.isNull()) {
+        log::warn("Mod {} has not been found, for some reason", result);
+        return;
+      }
+
+      moveOverwriteContentsTo(modAbsolutePath);
+    }
+  }
+}
+
+void ModListViewActions::clearOverwrite() const
+{
+  ModInfo::Ptr modInfo = ModInfo::getOverwrite();
+  if (modInfo)
+  {
+    QDir overwriteDir(modInfo->absolutePath());
+    if (QMessageBox::question(m_view, tr("Are you sure?"),
+      tr("About to recursively delete:\n") + overwriteDir.absolutePath(),
+      QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Ok)
+    {
+      QStringList delList;
+      for (auto f : overwriteDir.entryList(QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot))
+        delList.push_back(overwriteDir.absoluteFilePath(f));
+      if (shellDelete(delList, true)) {
+        emit overwriteCleared();
+        m_core.refresh();
+      }
+      else {
+        const auto e = GetLastError();
+        log::error("Delete operation failed: {}", formatSystemMessage(e));
+      }
     }
   }
 }

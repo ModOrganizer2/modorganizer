@@ -535,14 +535,17 @@ MainWindow::MainWindow(Settings &settings
 
 void MainWindow::setupModList()
 {
-  ui->modList->setup(m_OrganizerCore, new ModListViewActions(m_OrganizerCore, *m_Filters, m_CategoryFactory, this, ui->modList), ui);
+  auto* actions = new ModListViewActions(m_OrganizerCore, *m_Filters, m_CategoryFactory, this, ui->modList);
+  ui->modList->setup(m_OrganizerCore, actions, ui);
 
+  connect(actions, &ModListViewActions::overwriteCleared, [=]() { scheduleCheckForProblems(); });
   connect(ui->modList, &ModListView::removeSelectedMods, [=]() { removeMod_clicked(-1); });
+  connect(m_OrganizerCore.modList(), &ModList::clearOverwrite, actions, &ModListViewActions::clearOverwrite);
+  connect(m_OrganizerCore.modList(), &ModList::modPrioritiesChanged, [&]() { m_ArchiveListWriter.write(); });
 
   // keep here for now
   connect(ui->modList->selectionModel(), &QItemSelectionModel::selectionChanged,
     this, &MainWindow::modlistSelectionsChanged);
-  connect(m_OrganizerCore.modList(), &ModList::modPrioritiesChanged, [&]() { m_ArchiveListWriter.write(); });
 }
 
 void MainWindow::resetActionIcons()
@@ -2925,21 +2928,6 @@ void MainWindow::visitNexusOrWebPage_clicked(int index) {
   }
 }
 
-void MainWindow::openExplorer_clicked(int index)
-{
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
-      shell::Explore(info->absolutePath());
-    }
-  }
-  else {
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-    shell::Explore(modInfo->absolutePath());
-  }
-}
-
 void MainWindow::openPluginOriginExplorer_clicked()
 {
   QItemSelectionModel *selection = ui->espList->selectionModel();
@@ -3119,127 +3107,6 @@ void MainWindow::resetColor_clicked(int modIndex)
   }
 
   m_OrganizerCore.settings().colors().removePreviousSeparatorColor();
-}
-
-void MainWindow::createModFromOverwrite()
-{
-  GuessedValue<QString> name;
-  name.setFilter(&fixDirectoryName);
-
-  while (name->isEmpty()) {
-    bool ok;
-    name.update(QInputDialog::getText(this, tr("Create Mod..."),
-                                      tr("This will move all files from overwrite into a new, regular mod.\n"
-                                         "Please enter a name:"), QLineEdit::Normal, "", &ok),
-                GUESS_USER);
-    if (!ok) {
-      return;
-    }
-  }
-
-  if (m_OrganizerCore.modList()->getMod(name) != nullptr) {
-    reportError(tr("A mod with this name already exists"));
-    return;
-  }
-
-  const IModInterface *newMod = m_OrganizerCore.createMod(name);
-  if (newMod == nullptr) {
-    return;
-  }
-
-  doMoveOverwriteContentToMod(newMod->absolutePath());
-}
-
-void MainWindow::moveOverwriteContentToExistingMod()
-{
-  QStringList mods;
-  auto indexesByPriority = m_OrganizerCore.currentProfile()->getAllIndexesByPriority();
-  for (auto & iter : indexesByPriority) {
-    if ((iter.second != UINT_MAX)) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(iter.second);
-      if (!modInfo->hasFlag(ModInfo::FLAG_SEPARATOR) && !modInfo->hasFlag(ModInfo::FLAG_FOREIGN) && !modInfo->hasFlag(ModInfo::FLAG_OVERWRITE)) {
-        mods << modInfo->name();
-      }
-    }
-  }
-
-  ListDialog dialog(this);
-  dialog.setWindowTitle("Select a mod...");
-  dialog.setChoices(mods);
-
-  if (dialog.exec() == QDialog::Accepted) {
-    QString result = dialog.getChoice();
-    if (!result.isEmpty()) {
-
-      QString modAbsolutePath;
-
-      for (const auto& mod : m_OrganizerCore.modsSortedByProfilePriority(m_OrganizerCore.currentProfile())) {
-        if (result.compare(mod) == 0) {
-          ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(mod));
-          modAbsolutePath = modInfo->absolutePath();
-          break;
-        }
-      }
-
-      if (modAbsolutePath.isNull()) {
-        log::warn("Mod {} has not been found, for some reason", result);
-        return;
-      }
-
-      doMoveOverwriteContentToMod(modAbsolutePath);
-    }
-  }
-}
-
-void MainWindow::doMoveOverwriteContentToMod(const QString &modAbsolutePath)
-{
-  unsigned int overwriteIndex = ModInfo::findMod([](ModInfo::Ptr mod) -> bool {
-    std::vector<ModInfo::EFlag> flags = mod->getFlags();
-    return std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end(); });
-
-  ModInfo::Ptr overwriteInfo = ModInfo::getByIndex(overwriteIndex);
-  bool successful = shellMove((QDir::toNativeSeparators(overwriteInfo->absolutePath()) + "\\*"),
-    (QDir::toNativeSeparators(modAbsolutePath)), false, this);
-
-  if (successful) {
-    MessageDialog::showMessage(tr("Move successful."), this);
-  }
-  else {
-    const auto e = GetLastError();
-    log::error("Move operation failed: {}", formatSystemMessage(e));
-  }
-
-  m_OrganizerCore.refresh();
-}
-
-void MainWindow::clearOverwrite()
-{
-  unsigned int overwriteIndex = ModInfo::findMod([](ModInfo::Ptr mod) -> bool {
-    std::vector<ModInfo::EFlag> flags = mod->getFlags();
-    return std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE)
-      != flags.end();
-  });
-
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(overwriteIndex);
-  if (modInfo)
-  {
-    QDir overwriteDir(modInfo->absolutePath());
-    if (QMessageBox::question(this, tr("Are you sure?"),
-      tr("About to recursively delete:\n") + overwriteDir.absolutePath(),
-      QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Ok)
-    {
-      QStringList delList;
-      for (auto f : overwriteDir.entryList(QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot))
-        delList.push_back(overwriteDir.absoluteFilePath(f));
-      if (shellDelete(delList, true)) {
-        scheduleCheckForProblems();
-        m_OrganizerCore.refresh();
-      } else {
-        const auto e = GetLastError();
-        log::error("Delete operation failed: {}", formatSystemMessage(e));
-      }
-    }
-  }
 }
 
 void MainWindow::cancelModListEditor()
@@ -3869,13 +3736,6 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
       // context menu for overwrites
       if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
-        if (QDir(info->absolutePath()).count() > 2) {
-          menu.addAction(tr("Sync to Mods..."), [=]() { m_OrganizerCore.syncOverwrite(); });
-          menu.addAction(tr("Create Mod..."), [=]() { createModFromOverwrite(); });
-          menu.addAction(tr("Move content to Mod..."), [=]() { moveOverwriteContentToExistingMod(); });
-          menu.addAction(tr("Clear Overwrite..."), [=]() { clearOverwrite(); });
-        }
-        menu.addAction(tr("Open in Explorer"), [=]() { openExplorer_clicked(modIndex); });
       }
 
       // context menu for mod backups
@@ -3899,7 +3759,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           menu.addAction(tr("Visit on %1").arg(url.host()), [=]() { visitWebPage_clicked(modIndex); });
         }
 
-        menu.addAction(tr("Open in Explorer"), [=]() { openExplorer_clicked(modIndex); });
+        menu.addAction(tr("Open in Explorer"), [=]() { ui->modList->actions().openExplorer({ contextIdx }); });
       }
 
       // separator
@@ -4049,7 +3909,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           menu.addAction(tr("Visit on %1").arg(url.host()), [=]() { visitWebPage_clicked(modIndex); });
         }
 
-        menu.addAction(tr("Open in Explorer"), [&, modIndex]() { openExplorer_clicked(modIndex); });
+        menu.addAction(tr("Open in Explorer"), [=]() { ui->modList->actions().openExplorer({ contextIdx }); });
       }
 
       if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) == flags.end()) {

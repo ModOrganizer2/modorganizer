@@ -365,7 +365,6 @@ private slots:
   void visitOnNexus_clicked(int modIndex);
   void visitWebPage_clicked(int modIndex);
   void visitNexusOrWebPage_clicked(int modIndex);
-  void openExplorer_clicked(int modIndex);
   void openPluginOriginExplorer_clicked();
   void openOriginInformation_clicked();
   void information_clicked(int modIndex);
@@ -389,17 +388,6 @@ private slots:
   void windowTutorialFinished(const QString &windowName);
 
   BSA::EErrorCode extractBSA(BSA::Archive &archive, BSA::Folder::Ptr folder, const QString &destination, QProgressDialog &extractProgress);
-
-  void createModFromOverwrite();
-  /**
-   * @brief sends the content of the overwrite folder to an already existing mod
-   */
-  void moveOverwriteContentToExistingMod();
-  /**
-   * @brief actually sends the content of the overwrite folder to specified mod
-   */
-  void doMoveOverwriteContentToMod(const QString &modAbsolutePath);
-  void clearOverwrite();
 
   // nexus related
   void checkModsForUpdates();

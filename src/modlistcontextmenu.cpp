@@ -44,14 +44,14 @@ ModListGlobalContextMenu::ModListGlobalContextMenu(OrganizerCore& core, ModListV
 ModListContextMenu::ModListContextMenu(OrganizerCore& core, const QModelIndex& index, ModListView* view) :
   QMenu(view)
   , m_core(core)
-  , m_index()
+  , m_index(index)
   , m_view(view)
 {
   if (view->selectionModel()->hasSelection()) {
-    m_index = view->indexViewToModel(view->selectionModel()->selectedRows());
+    m_selected = view->indexViewToModel(view->selectionModel()->selectedRows());
   }
   else {
-    m_index = { index };
+    m_selected = { index };
   }
 
 
@@ -73,24 +73,24 @@ ModListContextMenu::ModListContextMenu(OrganizerCore& core, const QModelIndex& i
   // - Don't forget to check for the sort priority for "Send To... "
 
   if (info->isOverwrite()) {
-    addOverwriteActions();
+    addOverwriteActions(info);
   }
   else if (info->isBackup()) {
-    addBackupActions();
+    addBackupActions(info);
   }
   else if (info->isSeparator()) {
-    addSeparatorActions();
+    addSeparatorActions(info);
   }
   else if (info->isForeign()) {
-    addForeignActions();
+    addForeignActions(info);
   }
   else {
-    addRegularActions();
+    addRegularActions(info);
   }
 
   // add information for all except foreign
   if (!info->isForeign()) {
-    QAction* infoAction = addAction(tr("Information..."), [=]() { view->actions().displayModInformation(m_index[0].row()); });
+    QAction* infoAction = addAction(tr("Information..."), [=]() { view->actions().displayModInformation(m_index.data(ModList::IndexRole).toInt()); });
     setDefaultAction(infoAction);
   }
 }
@@ -99,36 +99,42 @@ QMenu* ModListContextMenu::createSendToContextMenu()
 {
   QMenu* menu = new QMenu(m_view);
   menu->setTitle(tr("Send to... "));
-  menu->addAction(tr("Top"), [=]() { m_view->actions().sendModsToTop(m_index); });
-  menu->addAction(tr("Bottom"), [=]() { m_view->actions().sendModsToBottom(m_index); });
-  menu->addAction(tr("Priority..."), [=]() { m_view->actions().sendModsToPriority(m_index); });
-  menu->addAction(tr("Separator..."), [=]() { m_view->actions().sendModsToSeparator(m_index); });
+  menu->addAction(tr("Top"), [=]() { m_view->actions().sendModsToTop(m_selected); });
+  menu->addAction(tr("Bottom"), [=]() { m_view->actions().sendModsToBottom(m_selected); });
+  menu->addAction(tr("Priority..."), [=]() { m_view->actions().sendModsToPriority(m_selected); });
+  menu->addAction(tr("Separator..."), [=]() { m_view->actions().sendModsToSeparator(m_selected); });
   return menu;
 }
 
-void ModListContextMenu::addOverwriteActions()
+void ModListContextMenu::addOverwriteActions(ModInfo::Ptr mod)
+{
+  if (QDir(mod->absolutePath()).count() > 2) {
+    addAction(tr("Sync to Mods..."), [=]() { m_core.syncOverwrite(); });
+    addAction(tr("Create Mod..."), [=]() { m_view->actions().createModFromOverwrite(); });
+    addAction(tr("Move content to Mod..."), [=]() { m_view->actions().moveOverwriteContentToExistingMod(); });
+    addAction(tr("Clear Overwrite..."), [=]() { m_view->actions().clearOverwrite(); });
+  }
+  addAction(tr("Open in Explorer"), [=]() { m_view->actions().openExplorer(m_selected); });
+}
+
+void ModListContextMenu::addSeparatorActions(ModInfo::Ptr mod)
 {
 
 }
 
-void ModListContextMenu::addSeparatorActions()
-{
-
-}
-
-void ModListContextMenu::addForeignActions()
+void ModListContextMenu::addForeignActions(ModInfo::Ptr mod)
 {
   if (m_view->sortColumn() == ModList::COL_PRIORITY) {
     addMenu(createSendToContextMenu());
   }
 }
 
-void ModListContextMenu::addBackupActions()
+void ModListContextMenu::addBackupActions(ModInfo::Ptr mod)
 {
 
 }
 
-void ModListContextMenu::addRegularActions()
+void ModListContextMenu::addRegularActions(ModInfo::Ptr mod)
 {
 
 }

@@ -60,6 +60,26 @@ public:
   void sendModsToPriority(const QModelIndexList& index) const;
   void sendModsToSeparator(const QModelIndexList& index) const;
 
+  // open the Windows explorer for the specified mods
+  //
+  void openExplorer(const QModelIndexList& index) const;
+
+  // overwrite-specific actions
+  //
+  void createModFromOverwrite() const;
+  void moveOverwriteContentToExistingMod() const;
+  void clearOverwrite() const;
+
+signals:
+
+  // emitted when the overwrite mod has been clear
+  //
+  void overwriteCleared() const;
+
+private:
+
+  void moveOverwriteContentsTo(const QString& absolutePath) const;
+
 private:
 
   OrganizerCore& m_core;
