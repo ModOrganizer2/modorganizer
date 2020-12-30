@@ -353,13 +353,14 @@ void ModListView::expandItem(const QModelIndex& index) {
 
 void ModListView::onModPrioritiesChanged(std::vector<int> const& indices)
 {
-    // expand separator whose priority has changed
-  if (hasCollapsibleSeparators()) {
-    for (auto index : indices) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-      if (modInfo->isSeparator()) {
-        expand(indexModelToView(m_core->modList()->index(index, 0)));
-      }
+  // expand separator whose priority has changed
+  for (auto index : indices) {
+    auto idx = indexModelToView(m_core->modList()->index(index, 0));
+    if (hasCollapsibleSeparators() && model()->hasChildren(idx)) {
+      expand(idx);
+    }
+    if (idx.parent().isValid()) {
+      expand(idx.parent());
     }
   }
 
