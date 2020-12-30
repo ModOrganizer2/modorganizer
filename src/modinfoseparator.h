@@ -47,6 +47,7 @@ public:
   virtual QDateTime creationTime() const override { return QDateTime(); }
   virtual QString getNexusDescription() const override { return QString(); }
   virtual void addInstalledFile(int /*modId*/, int /*fileId*/) override { }
+  virtual bool isSeparator() const override { return true; }
 
 protected:
   virtual bool doIsValid() const override { return true; }

@@ -49,6 +49,7 @@ public:
   virtual bool validated() const override { return false; }
   virtual QString gameName() const override { return ""; }
   virtual int nexusId() const override { return -1; }
+  virtual bool isForeign() const override { return true; }
   virtual QDateTime getExpires() const override { return QDateTime(); }
   virtual std::vector<QString> getIniTweaks() const override { return std::vector<QString>(); }
   virtual std::vector<ModInfo::EFlag> getFlags() const override;
