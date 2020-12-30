@@ -982,7 +982,7 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerCore::findFileInfos(
 {
   QList<IOrganizer::FileInfo> result;
   DirectoryEntry *dir = m_DirectoryStructure;
-  if (!path.isEmpty())
+  if (!path.isEmpty() && path != ".")
     dir = dir->findSubDirectoryRecursive(ToWString(path));
   if (dir != nullptr) {
     std::vector<FileEntryPtr> files = dir->getFiles();
