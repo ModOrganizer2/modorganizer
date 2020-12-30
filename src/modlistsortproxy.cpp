@@ -607,11 +607,11 @@ bool ModListSortProxy::filterAcceptsRow(int source_row, const QModelIndex &paren
 
 bool ModListSortProxy::canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const
 {
-  if (!data->hasUrls() && sortColumn() != ModList::COL_PRIORITY) {
+  auto dropInfo = m_Organizer->modList()->dropInfo(data);
+
+  if (!dropInfo.isLocalFileDrop() && sortColumn() != ModList::COL_PRIORITY) {
     return false;
   }
-
-  auto dropInfo = m_Organizer->modList()->dropInfo(data);
 
   // disable drop install with group proxy, except the one for collapsible separator
   // - it would be nice to be able to "install to category" or something like that but
