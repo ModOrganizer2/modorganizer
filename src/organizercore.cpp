@@ -1785,13 +1785,7 @@ void OrganizerCore::loginFailedUpdate(const QString &message)
 
 void OrganizerCore::syncOverwrite()
 {
-  unsigned int overwriteIndex         = ModInfo::findMod([](ModInfo::Ptr mod) -> bool {
-    std::vector<ModInfo::EFlag> flags = mod->getFlags();
-    return std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE)
-           != flags.end();
-  });
-
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(overwriteIndex);
+  ModInfo::Ptr modInfo = ModInfo::getOverwrite();
   SyncOverwriteDialog syncDialog(modInfo->absolutePath(), m_DirectoryStructure,
                                  qApp->activeWindow());
   if (syncDialog.exec() == QDialog::Accepted) {

@@ -3654,12 +3654,7 @@ void MainWindow::addRemoveCategoriesFromMenu(QMenu *menu, int modRow, int refere
   }
 }
 
-void MainWindow::addRemoveCategories_MenuHandler(int modIndex, const QModelIndex& rowIdx) {
-  QMenu *menu = qobject_cast<QMenu*>(sender());
-  if (menu == nullptr) {
-    log::error("not a menu?");
-    return;
-  }
+void MainWindow::addRemoveCategories_MenuHandler(QMenu* menu, int modIndex, const QModelIndex& rowIdx) {
 
   QList<QPersistentModelIndex> selected;
   for (const QModelIndex &idx : ui->modList->selectionModel()->selectedRows()) {
@@ -3695,13 +3690,8 @@ void MainWindow::addRemoveCategories_MenuHandler(int modIndex, const QModelIndex
   refreshFilters();
 }
 
-void MainWindow::replaceCategories_MenuHandler(int modIndex) {
-  QMenu *menu = qobject_cast<QMenu*>(sender());
-  if (menu == nullptr) {
-    log::error("not a menu?");
-    return;
-  }
-
+void MainWindow::replaceCategories_MenuHandler(QMenu* menu, int modIndex)
+{
   QList<QPersistentModelIndex> selected;
   for (const QModelIndex &idx : ui->modList->selectionModel()->selectedRows()) {
     selected.append(QPersistentModelIndex(idx));
@@ -3879,8 +3869,10 @@ void MainWindow::unignoreUpdate(int modIndex)
   }
 }
 
-void MainWindow::addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu,
-                                              ModInfo::Ptr info) {
+void MainWindow::setPrimaryCategoryCandidates(QMenu *primaryCategoryMenu,
+                                              ModInfo::Ptr info)
+{
+  primaryCategoryMenu->clear();
   const std::set<int> &categories = info->getCategories();
   for (int categoryID : categories) {
     int catIdx = m_CategoryFactory.getCategoryIndex(categoryID);
@@ -3903,19 +3895,6 @@ void MainWindow::addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu,
     action->setData(categoryID);
     primaryCategoryMenu->addAction(action);
   }
-}
-
-void MainWindow::addPrimaryCategoryCandidates(int modIndex)
-{
-  QMenu *menu = qobject_cast<QMenu*>(sender());
-  if (menu == nullptr) {
-    log::error("not a menu?");
-    return;
-  }
-  menu->clear();
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-
-  addPrimaryCategoryCandidates(menu, modInfo);
 }
 
 void MainWindow::enableVisibleMods()
@@ -4292,10 +4271,10 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
       ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
       std::vector<ModInfo::EFlag> flags = info->getFlags();
 
-      // Context menu for overwrites
+      // context menu for overwrites
       if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
         if (QDir(info->absolutePath()).count() > 2) {
-          menu.addAction(tr("Sync to Mods..."), &m_OrganizerCore, SLOT(syncOverwrite()));
+          menu.addAction(tr("Sync to Mods..."), [=]() { m_OrganizerCore.syncOverwrite(); });
           menu.addAction(tr("Create Mod..."), [=]() { createModFromOverwrite(); });
           menu.addAction(tr("Move content to Mod..."), [=]() { moveOverwriteContentToExistingMod(); });
           menu.addAction(tr("Clear Overwrite..."), [=]() { clearOverwrite(); });
@@ -4303,7 +4282,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu.addAction(tr("Open in Explorer"), [=]() { openExplorer_clicked(modIndex); });
       }
 
-      // Context menu for mod backups
+      // context menu for mod backups
       else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) {
         menu.addAction(tr("Restore Backup"), [=]() { restoreBackup_clicked(modIndex); });
         menu.addAction(tr("Remove Backup..."), [=]() { removeMod_clicked(modIndex); });
@@ -4332,10 +4311,10 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu.addSeparator();
         QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"), &menu);
         populateMenuCategories(modIndex, addRemoveCategoriesMenu, 0);
-        connect(addRemoveCategoriesMenu, &QMenu::aboutToHide, [=]() { addRemoveCategories_MenuHandler(modIndex, contextIdx); });
+        connect(addRemoveCategoriesMenu, &QMenu::aboutToHide, [=]() { addRemoveCategories_MenuHandler(addRemoveCategoriesMenu, modIndex, contextIdx); });
         addMenuAsPushButton(&menu, addRemoveCategoriesMenu);
         QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"), &menu);
-        connect(primaryCategoryMenu, &QMenu::aboutToShow, [=]() { addPrimaryCategoryCandidates(modIndex); });
+        connect(primaryCategoryMenu, &QMenu::aboutToShow, [=]() { setPrimaryCategoryCandidates(primaryCategoryMenu, info); });
         addMenuAsPushButton(&menu, primaryCategoryMenu);
         menu.addSeparator();
         menu.addAction(tr("Rename Separator..."), [=]() { renameMod_clicked(); });
@@ -4350,17 +4329,21 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
         menu.addSeparator();
       }
+
+      // foregin
       else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
         addModSendToContextMenu(&menu);
       }
+
+      // regular
       else {
         QMenu* addRemoveCategoriesMenu = new QMenu(tr("Change Categories"), &menu);
         populateMenuCategories(modIndex, addRemoveCategoriesMenu, 0);
-        connect(addRemoveCategoriesMenu, &QMenu::aboutToHide, [=]() { addRemoveCategories_MenuHandler(modIndex, contextIdx); });
+        connect(addRemoveCategoriesMenu, &QMenu::aboutToHide, [=]() { addRemoveCategories_MenuHandler(addRemoveCategoriesMenu, modIndex, contextIdx); });
         addMenuAsPushButton(&menu, addRemoveCategoriesMenu);
 
         QMenu* primaryCategoryMenu = new QMenu(tr("Primary Category"), &menu);
-        connect(primaryCategoryMenu, &QMenu::aboutToShow, [=]() { addPrimaryCategoryCandidates(modIndex); });
+        connect(primaryCategoryMenu, &QMenu::aboutToShow, [=]() { setPrimaryCategoryCandidates(primaryCategoryMenu, info); });
         addMenuAsPushButton(&menu, primaryCategoryMenu);
 
         menu.addSeparator();

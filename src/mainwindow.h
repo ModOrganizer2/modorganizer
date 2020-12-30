@@ -129,8 +129,6 @@ public:
 
   void saveArchiveList();
 
-  void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);
-
   void installTranslator(const QString &name);
 
   void displayModInformation(
@@ -434,10 +432,9 @@ private slots:
 
   void originModified(int originID);
 
-  void addRemoveCategories_MenuHandler(int modIndex, const QModelIndex& rowIdx);
-  void replaceCategories_MenuHandler(int modIndex);
-
-  void addPrimaryCategoryCandidates(int modIndex);
+  void setPrimaryCategoryCandidates(QMenu* menu, ModInfo::Ptr info);
+  void addRemoveCategories_MenuHandler(QMenu* menu, int modIndex, const QModelIndex& rowIdx);
+  void replaceCategories_MenuHandler(QMenu* menu, int modIndex);
 
   void modInstalled(const QString &modName);
 
