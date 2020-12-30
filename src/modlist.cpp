@@ -1510,7 +1510,7 @@ QModelIndex ModList::indexToProxy(QAbstractItemModel* proxyModel, const QModelIn
   return QModelIndex();
 }
 
-void ModList::moveMods(const QModelIndexList& indices, int offset)
+void ModList::shiftMods(const QModelIndexList& indices, int offset)
 {
   // retrieve the mod index and sort them by priority to avoid issue
   // when moving them
@@ -1574,28 +1574,17 @@ bool ModList::toggleState(const QModelIndexList& indices)
   return true;
 }
 
-//note: caller needs to make sure sort proxy is updated
-void ModList::enableSelected(const QItemSelectionModel *selectionModel)
+void ModList::setActive(const QModelIndexList& indices, bool active)
 {
-  if (selectionModel->hasSelection()) {
-    QList<unsigned int> modsToEnable;
-    for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
-      int modID = m_Profile->modIndexByPriority(row.data().toInt());
-      modsToEnable.append(modID);
-    }
-    m_Profile->setModsEnabled(modsToEnable, QList<unsigned int>());
+  QList<unsigned int> mods;
+  for (auto& index : indices) {
+    mods.append(index.data(IndexRole).toInt());
   }
-}
 
-//note: caller needs to make sure sort proxy is updated
-void ModList::disableSelected(const QItemSelectionModel *selectionModel)
-{
-  if (selectionModel->hasSelection()) {
-    QList<unsigned int> modsToDisable;
-    for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
-      int modID = m_Profile->modIndexByPriority(row.data().toInt());
-      modsToDisable.append(modID);
-    }
-    m_Profile->setModsEnabled(QList<unsigned int>(), modsToDisable);
+  if (active) {
+    m_Profile->setModsEnabled(mods, {});
+  }
+  else {
+    m_Profile->setModsEnabled({}, mods);
   }
 }

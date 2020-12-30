@@ -218,10 +218,17 @@ public: // implementation of virtual functions of QAbstractItemModel
 public slots:
 
   void onDragEnter(const QMimeData* data);
-  void enableSelected(const QItemSelectionModel *selectionModel);
-  void disableSelected(const QItemSelectionModel *selectionModel);
 
-  void moveMods(const QModelIndexList& indices, int offset);
+  // enable/disable mods at the given indices.
+  //
+  void setActive(const QModelIndexList& indices, bool active);
+
+  // shift the priority of mods at the given indices by the given offset
+  //
+  void shiftMods(const QModelIndexList& indices, int offset);
+
+  // toggle the active state of mods at the given indices
+  //
   bool toggleState(const QModelIndexList& indices);
 
 signals:

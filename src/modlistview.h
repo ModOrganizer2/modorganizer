@@ -80,10 +80,6 @@ signals:
 
 public slots:
 
-  // invalidate the top-level model
-  //
-  void invalidate();
-
   // enable/disable all visible mods
   //
   void enableAllVisible();
@@ -108,7 +104,9 @@ protected:
   // map from/to the view indexes to the model
   //
   QModelIndex indexModelToView(const QModelIndex& index) const;
+  QModelIndexList indexModelToView(const QModelIndexList& index) const;
   QModelIndex indexViewToModel(const QModelIndex& index) const;
+  QModelIndexList indexViewToModel(const QModelIndexList& index) const;
 
   // returns the next/previous index of the given index
   //
@@ -117,7 +115,7 @@ protected:
 
   // all index for the given model under the given index, recursively
   //
-  std::vector<QModelIndex> allIndex(
+  QModelIndexList allIndex(
     const QAbstractItemModel* model, int column = 0, const QModelIndex& index = QModelIndex()) const;
 
   // re-implemented to fake the return value to allow drag-and-drop on

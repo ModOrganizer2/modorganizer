@@ -171,64 +171,28 @@ int ModListView::prevMod(int modIndex) const
   return -1;
 }
 
-void ModListView::invalidate()
-{
-  if (m_sortProxy) {
-    m_sortProxy->invalidate();
-  }
-}
-
 void ModListView::enableAllVisible()
 {
-  Profile* profile = m_core->currentProfile();
-
-  QList<unsigned int> modsToEnable;
-  for (auto& index : allIndex(model())) {
-    modsToEnable.append(index.data(ModList::IndexRole).toInt());
-  }
-  profile->setModsEnabled(modsToEnable, {});
-  invalidate();
+  m_core->modList()->setActive(indexViewToModel(allIndex(model())), true);
 }
 
 void ModListView::disableAllVisible()
 {
-  MOBase::log::debug("disableAllVisible: {}", model()->rowCount());
-  Profile* profile = m_core->currentProfile();
-
-  QList<unsigned int> modsToDisable;
-  for (auto& index : allIndex(model())) {
-    modsToDisable.append(index.data(ModList::IndexRole).toInt());
-  }
-  profile->setModsEnabled({}, modsToDisable);
-  invalidate();
+  m_core->modList()->setActive(indexViewToModel(allIndex(model())), false);
 }
 
 void ModListView::enableSelected()
 {
-  Profile* profile = m_core->currentProfile();
   if (selectionModel()->hasSelection()) {
-    QList<unsigned int> modsToEnable;
-    for (auto row : selectionModel()->selectedRows(ModList::COL_PRIORITY)) {
-      int modID = profile->modIndexByPriority(row.data().toInt());
-      modsToEnable.append(modID);
-    }
-    profile->setModsEnabled(modsToEnable, {});
+    m_core->modList()->setActive(indexViewToModel(selectionModel()->selectedRows()), true);
   }
-  invalidate();
 }
 
 void ModListView::disableSelected()
 {
-  Profile* profile = m_core->currentProfile();
   if (selectionModel()->hasSelection()) {
-    QList<unsigned int> modsToDisable;
-    for (auto row : selectionModel()->selectedRows(ModList::COL_PRIORITY)) {
-      int modID = profile->modIndexByPriority(row.data().toInt());
-      modsToDisable.append(modID);
-    }
-    profile->setModsEnabled({}, modsToDisable);
+    m_core->modList()->setActive(indexViewToModel(selectionModel()->selectedRows()), false);
   }
-  invalidate();
 }
 
 void ModListView::setFilterCriteria(const std::vector<ModListSortProxy::Criteria>& criteria)
@@ -279,6 +243,15 @@ QModelIndex ModListView::indexModelToView(const QModelIndex& index) const
   return qindex;
 }
 
+QModelIndexList ModListView::indexModelToView(const QModelIndexList& index) const
+{
+  QModelIndexList result;
+  for (auto& idx : index) {
+    result.append(indexModelToView(idx));
+  }
+  return result;
+}
+
 QModelIndex ModListView::indexViewToModel(const QModelIndex& index) const
 {
   if (index.model() == m_core->modList()) {
@@ -290,6 +263,15 @@ QModelIndex ModListView::indexViewToModel(const QModelIndex& index) const
   else {
     return QModelIndex();
   }
+}
+
+QModelIndexList ModListView::indexViewToModel(const QModelIndexList& index) const
+{
+  QModelIndexList result;
+  for (auto& idx : index) {
+    result.append(indexViewToModel(idx));
+  }
+  return result;
 }
 
 QModelIndex ModListView::nextIndex(const QModelIndex& index) const
@@ -329,15 +311,13 @@ QModelIndex ModListView::prevIndex(const QModelIndex& index) const
   return prev;
 }
 
-std::vector<QModelIndex> ModListView::allIndex(
+QModelIndexList ModListView::allIndex(
   const QAbstractItemModel* model, int column, const QModelIndex& parent) const
 {
-  std::vector<QModelIndex> index;
+  QModelIndexList index;
   for (std::size_t i = 0; i < model->rowCount(parent); ++i) {
-    index.push_back(model->index(i, column, parent));
-
-    auto cindex = allIndex(model, column, index.back());
-    index.insert(index.end(), cindex.begin(), cindex.end());
+    index.append(model->index(i, column, parent));
+    index.append(allIndex(model, column, index.back()));
   }
   return index;
 }
@@ -375,10 +355,6 @@ void ModListView::onModPrioritiesChanged(std::vector<int> const& indices)
   m_core->refreshBSAList();
   m_core->currentProfile()->writeModlist();
   m_core->directoryStructure()->getFileRegister()->sortOrigins();
-
-  if (m_sortProxy) {
-    m_sortProxy->invalidate();
-  }
 
   { // refresh selection
     QModelIndex current = currentIndex();
@@ -431,7 +407,7 @@ void ModListView::onModInstalled(const QString& modName)
   setFocus(Qt::OtherFocusReason);
   scrollTo(qIndex);
   setCurrentIndex(qIndex);
-  selectionModel()->select(qIndex, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+  selectionModel()->select(qIndex, QItemSelectionModel::SelectCurrent | QItemSelectionModel::Rows);
 }
 
 void ModListView::onModFilterActive(bool filterActive)
@@ -666,6 +642,12 @@ void ModListView::setup(OrganizerCore& core, Ui::MainWindow* mwui)
   });
 }
 
+void ModListView::setModel(QAbstractItemModel* model)
+{
+  QTreeView::setModel(model);
+  setVerticalScrollBar(new ViewMarkingScrollBar(model, this));
+}
+
 QRect ModListView::visualRect(const QModelIndex& index) const
 {
   QRect rect = QTreeView::visualRect(index);
@@ -678,12 +660,6 @@ QRect ModListView::visualRect(const QModelIndex& index) const
     }
   }
   return rect;
-}
-
-void ModListView::setModel(QAbstractItemModel* model)
-{
-  QTreeView::setModel(model);
-  setVerticalScrollBar(new ViewMarkingScrollBar(model, this));
 }
 
 QModelIndexList ModListView::selectedIndexes() const
@@ -747,7 +723,7 @@ bool ModListView::moveSelection(int key)
     offset = -offset;
   }
 
-  m_core->modList()->moveMods(sourceRows, offset);
+  m_core->modList()->shiftMods(sourceRows, offset);
 
   // reset the selection and the index
   setCurrentIndex(indexModelToView(cindex));

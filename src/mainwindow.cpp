@@ -3833,15 +3833,17 @@ void MainWindow::ignoreUpdate(int modIndex)
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+      auto index = idx.data(ModList::IndexRole).toInt();
+      ModInfo::Ptr info = ModInfo::getByIndex(index);
       info->ignoreUpdate(true);
+      m_OrganizerCore.modList()->notifyChange(index);
     }
   }
   else {
     ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
     info->ignoreUpdate(true);
+    m_OrganizerCore.modList()->notifyChange(modIndex);
   }
-  ui->modList->invalidate();
 }
 
 void MainWindow::checkModUpdates_clicked(int modIndex)
@@ -3867,13 +3869,14 @@ void MainWindow::unignoreUpdate(int modIndex)
     for (QModelIndex idx : selection->selectedRows()) {
       ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
       info->ignoreUpdate(false);
+      m_OrganizerCore.modList()->notifyChange(idx.data(ModList::IndexRole).toInt());
     }
   }
   else {
     ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
     info->ignoreUpdate(false);
+    m_OrganizerCore.modList()->notifyChange(modIndex);
   }
-  ui->modList->invalidate();
 }
 
 void MainWindow::addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu,
@@ -4970,7 +4973,6 @@ void MainWindow::nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVa
     return std::make_pair(gameNameReal, ModInfo::filteredMods(gameNameReal, resultList, userData.toBool(), true));
   });
   watcher->setFuture(future);
-  ui->modList->invalidate();
 }
 
 void MainWindow::finishUpdateInfo()
@@ -4989,6 +4991,7 @@ void MainWindow::finishUpdateInfo()
     if (mod->canBeUpdated()) {
       organizedGames.insert(std::make_pair<QString, int>(mod->gameName().toLower(), mod->nexusId()));
     }
+    m_OrganizerCore.modList()->notifyChange(ModInfo::getIndex(mod->name()));
   }
 
   if (!finalMods.empty() && organizedGames.empty())
@@ -5073,7 +5076,7 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
     if (foundUpdate) {
       // Just get the standard data updates for endorsements and descriptions
       mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
-      ui->modList->invalidate();
+      m_OrganizerCore.modList()->notifyChange(ModInfo::getIndex(mod->name()));
     } else {
       // Scrape mod data here so we can use the mod version if no file update was located
       requiresInfo = true;
@@ -5087,7 +5090,6 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
 void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
 {
   QVariantMap result = resultData.toMap();
-  bool foundUpdate = false;
   QString gameNameReal;
   for (IPluginGame *game : m_PluginContainer.plugins<IPluginGame>()) {
     if (game->gameNexusName() == gameName) {
@@ -5097,6 +5099,7 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
   }
   std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameNameReal, modID);
   for (auto mod : modsList) {
+    bool foundUpdate = false;
     QDateTime now = QDateTime::currentDateTimeUtc();
     QDateTime updateTarget = mod->getExpires();
     if (now >= updateTarget) {
@@ -5123,9 +5126,10 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
     mod->setLastNexusQuery(QDateTime::currentDateTimeUtc());
     mod->setNexusLastModified(QDateTime::fromSecsSinceEpoch(result["updated_timestamp"].toInt(), Qt::UTC));
     mod->saveMeta();
-  }
-  if (foundUpdate) {
-    ui->modList->invalidate();
+
+    if (foundUpdate) {
+      m_OrganizerCore.modList()->notifyChange(ModInfo::getIndex(mod->name()));
+    }
   }
 }
 
