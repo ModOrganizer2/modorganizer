@@ -105,14 +105,14 @@ public slots:
   //
   void updateModCount();
 
-protected:
-
   // map from/to the view indexes to the model
   //
   QModelIndex indexModelToView(const QModelIndex& index) const;
   QModelIndexList indexModelToView(const QModelIndexList& index) const;
   QModelIndex indexViewToModel(const QModelIndex& index) const;
   QModelIndexList indexViewToModel(const QModelIndexList& index) const;
+
+protected:
 
   // returns the next/previous index of the given index
   //

@@ -4,8 +4,12 @@
 #include <QObject>
 #include <QString>
 
+#include "modinfo.h"
+#include "modinfodialogfwd.h"
+
 class CategoryFactory;
 class FilterList;
+class MainWindow;
 class ModListView;
 class OrganizerCore;
 
@@ -15,14 +19,14 @@ class ModListViewActions : public QObject
 
 public:
 
-  // the nxmReceiver is a (hopefully temporary) "hack" because it would require a lots of change
-  // to do otherwise since NXM is mostly based on the old Qt signal-slot system
+  // currently passing the main window itself because a lots of stuff needs it but
+  // it would be nice to avoid passing it at some point
   //
   ModListViewActions(
     OrganizerCore& core,
     FilterList& filters,
     CategoryFactory& categoryFactory,
-    QObject* nxmReceiver,
+    MainWindow* mainWindow,
     ModListView* view);
 
   // install the mod from the given archive
@@ -43,12 +47,19 @@ public:
   //
   void exportModListCSV() const;
 
+  // display mod information
+  //
+  void displayModInformation(const QString& modName, ModInfoTabIDs tabID = ModInfoTabIDs::None) const;
+  void displayModInformation(unsigned int index, ModInfoTabIDs tab = ModInfoTabIDs::None) const;
+  void displayModInformation(ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tabID = ModInfoTabIDs::None) const;
+
+
 private:
 
   OrganizerCore& m_core;
   FilterList& m_filters;
   CategoryFactory& m_categories;
-  QObject* m_receiver;  // receiver for NXM signals (temporary)
+  MainWindow* m_main;
   ModListView* m_view;
 };
 

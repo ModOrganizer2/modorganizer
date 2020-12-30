@@ -23,13 +23,21 @@ class ModListContextMenu : public QMenu
 {
   Q_OBJECT
 
+public:
+
+  // creates a new context menu, the given index is the one for the click and should be valid
+  //
+  ModListContextMenu(OrganizerCore& core, const QModelIndex& index, ModListView* modListView);
+
 private:
 
-  friend class ModListView;
-
-  // creates a new context menu that will act on the given mod list
-  // index (those should be index from the modlist)
-  ModListContextMenu(OrganizerCore& core, const QModelIndexList& index, ModListView* modListView);
+  // add actions/menus to this menu for each type of mod
+  //
+  void addOverwriteActions(OrganizerCore& core, ModListView* modListView);
+  void addSeparatorActions(OrganizerCore& core, ModListView* modListView);
+  void addForeignActions(OrganizerCore& core, ModListView* modListView);
+  void addBackupActions(OrganizerCore& core, ModListView* modListView);
+  void addRegularActions(OrganizerCore& core, ModListView* modListView);
 
   OrganizerCore& m_core;
   QModelIndexList m_index;

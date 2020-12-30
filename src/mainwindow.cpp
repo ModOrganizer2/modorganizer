@@ -2629,70 +2629,9 @@ void MainWindow::overwriteClosed(int)
   m_OrganizerCore.refreshDirectoryStructure();
 }
 
-
-void MainWindow::displayModInformation(
-  ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tabID)
+void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tabID)
 {
-  if (!m_OrganizerCore.modList()->modInfoAboutToChange(modInfo)) {
-    log::debug("A different mod information dialog is open. If this is incorrect, please restart MO");
-    return;
-  }
-  std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-  if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
-    QDialog *dialog = this->findChild<QDialog*>("__overwriteDialog");
-    try {
-      if (dialog == nullptr) {
-        dialog = new OverwriteInfoDialog(modInfo, this);
-        dialog->setObjectName("__overwriteDialog");
-      } else {
-        qobject_cast<OverwriteInfoDialog*>(dialog)->setModInfo(modInfo);
-      }
-
-      dialog->show();
-      dialog->raise();
-      dialog->activateWindow();
-      connect(dialog, SIGNAL(finished(int)), this, SLOT(overwriteClosed(int)));
-    } catch (const std::exception &e) {
-      reportError(tr("Failed to display overwrite dialog: %1").arg(e.what()));
-    }
-  } else {
-    modInfo->saveMeta();
-
-    ModInfoDialog dialog(this, &m_OrganizerCore, &m_PluginContainer, modInfo);
-    connect(&dialog, SIGNAL(originModified(int)), this, SLOT(originModified(int)));
-
-	  //Open the tab first if we want to use the standard indexes of the tabs.
-	  if (tabID != ModInfoTabIDs::None) {
-		  dialog.selectTab(tabID);
-	  }
-
-    dialog.exec();
-
-    modInfo->saveMeta();
-    emit modInfoDisplayed();
-    m_OrganizerCore.modList()->modInfoChanged(modInfo);
-  }
-
-  if (m_OrganizerCore.currentProfile()->modEnabled(modIndex)
-      && !modInfo->hasFlag(ModInfo::FLAG_FOREIGN)) {
-    FilesOrigin& origin = m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(modInfo->name()));
-    origin.enable(false);
-
-    if (m_OrganizerCore.directoryStructure()->originExists(ToWString(modInfo->name()))) {
-      FilesOrigin& origin = m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(modInfo->name()));
-      origin.enable(false);
-
-      m_OrganizerCore.directoryRefresher()->addModToStructure(m_OrganizerCore.directoryStructure()
-                                             , modInfo->name()
-                                             , m_OrganizerCore.currentProfile()->getModPriority(modIndex)
-                                             , modInfo->absolutePath()
-                                             , modInfo->stealFiles()
-                                             , modInfo->archives());
-      DirectoryRefresher::cleanStructure(m_OrganizerCore.directoryStructure());
-      m_OrganizerCore.directoryStructure()->getFileRegister()->sortOrigins();
-      m_OrganizerCore.refreshLists();
-    }
-  }
+  ui->modList->actions().displayModInformation(modInfo, modIndex, tabID);
 }
 
 bool MainWindow::closeWindow()
@@ -2722,26 +2661,6 @@ ModInfo::Ptr MainWindow::previousModInList(int modIndex)
   }
   return ModInfo::getByIndex(modIndex);
 }
-
-void MainWindow::displayModInformation(const QString &modName, ModInfoTabIDs tabID)
-{
-  unsigned int index = ModInfo::getIndex(modName);
-  if (index == UINT_MAX) {
-    log::error("failed to resolve mod name {}", modName);
-    return;
-  }
-
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-  displayModInformation(modInfo, index, tabID);
-}
-
-
-void MainWindow::displayModInformation(int row, ModInfoTabIDs tabID)
-{
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
-  displayModInformation(modInfo, row, tabID);
-}
-
 
 void MainWindow::ignoreMissingData_clicked(int modIndex)
 {
@@ -3141,7 +3060,7 @@ void MainWindow::updatePluginCount()
 void MainWindow::information_clicked(int modIndex)
 {
   try {
-    displayModInformation(modIndex);
+    ui->modList->actions().displayModInformation(modIndex);
   } catch (const std::exception &e) {
     reportError(e.what());
   }
@@ -3388,7 +3307,7 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
         case ModList::COL_CONFLICTFLAGS: tab = ModInfoTabIDs::Conflicts; break;
       }
 
-      displayModInformation(modIndex, tab);
+      ui->modList->actions().displayModInformation(modIndex, tab);
       // workaround to cancel the editor that might have opened because of
       // selection-click
       ui->modList->closePersistentEditor(index);
@@ -3424,7 +3343,7 @@ void MainWindow::openOriginInformation_clicked()
     std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
     if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-      displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+      ui->modList->actions().displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
     }
   }
   catch (const std::exception &e) {
@@ -3473,7 +3392,7 @@ void MainWindow::on_espList_doubleClicked(const QModelIndex &index)
         }
         else {
 
-          displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+          ui->modList->actions().displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
           // workaround to cancel the editor that might have opened because of
           // selection-click
           ui->espList->closePersistentEditor(index);
@@ -3950,27 +3869,16 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
     QTreeView *modList = findChild<QTreeView*>("modList");
 
     QModelIndex contextIdx = mapToModel(m_OrganizerCore.modList(), ui->modList->indexAt(pos));
-    int modIndex = ui->modList->indexAt(pos).data(ModList::IndexRole).toInt();
 
-    int contextColumn = contextIdx.column();
-
-    if (modIndex == -1) {
+    if (!contextIdx.isValid()) {
       // no selection
       ModListGlobalContextMenu(m_OrganizerCore, ui->modList).exec(modList->viewport()->mapToGlobal(pos));
     }
     else {
-      QMenu menu(this);
+      int modIndex = ui->modList->indexAt(pos).data(ModList::IndexRole).toInt();
+      int contextColumn = contextIdx.column();
 
-      QMenu *allMods = new ModListGlobalContextMenu(m_OrganizerCore, ui->modList, this);
-      allMods->setTitle(tr("All Mods"));
-      menu.addMenu(allMods);
-
-      if (ui->modList->hasCollapsibleSeparators()) {
-        menu.addAction(tr("Collapse all"), ui->modList, &QTreeView::collapseAll);
-        menu.addAction(tr("Expand all"), ui->modList, &QTreeView::expandAll);
-      }
-
-      menu.addSeparator();
+      ModListContextMenu menu(m_OrganizerCore, contextIdx, ui->modList);
 
       ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
       std::vector<ModInfo::EFlag> flags = info->getFlags();

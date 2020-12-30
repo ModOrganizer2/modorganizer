@@ -5,28 +5,37 @@
 #include <QInputDialog>
 #include <QLabel>
 
+#include <log.h>
 #include <report.h>
 
 #include "categories.h"
 #include "filedialogmemory.h"
 #include "filterlist.h"
+#include "modinfodialog.h"
 #include "modlist.h"
 #include "modlistview.h"
+#include "mainwindow.h"
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
 #include "savetextasdialog.h"
 #include "organizercore.h"
+#include "overwriteinfodialog.h"
 #include "csvbuilder.h"
+#include "shared/filesorigin.h"
+#include "shared/directoryentry.h"
+#include "shared/fileregister.h"
+#include "directoryrefresher.h"
 
 using namespace MOBase;
+using namespace MOShared;
 
 ModListViewActions::ModListViewActions(
-  OrganizerCore& core, FilterList& filters, CategoryFactory& categoryFactory, QObject* nxmReceiver, ModListView* view) :
+  OrganizerCore& core, FilterList& filters, CategoryFactory& categoryFactory, MainWindow* mainWindow, ModListView* view) :
   QObject(view)
   , m_core(core)
   , m_filters(filters)
   , m_categories(categoryFactory)
-  , m_receiver(nxmReceiver)
+  , m_main(mainWindow)
   , m_view(view)
 {
 
@@ -143,9 +152,9 @@ void ModListViewActions::checkModsForUpdates() const
 {
   bool checkingModsForUpdate = false;
   if (NexusInterface::instance().getAccessManager()->validated()) {
-    checkingModsForUpdate = ModInfo::checkAllForUpdate(&m_core.pluginContainer(), m_receiver);
-    NexusInterface::instance().requestEndorsementInfo(m_receiver, QVariant(), QString());
-    NexusInterface::instance().requestTrackingInfo(m_receiver, QVariant(), QString());
+    checkingModsForUpdate = ModInfo::checkAllForUpdate(&m_core.pluginContainer(), m_main);
+    NexusInterface::instance().requestEndorsementInfo(m_main, QVariant(), QString());
+    NexusInterface::instance().requestTrackingInfo(m_main, QVariant(), QString());
   } else {
     QString apiKey;
     if (GlobalSettings::nexusApiKey(apiKey)) {
@@ -334,6 +343,90 @@ void ModListViewActions::exportModListCSV() const
     }
     catch (const std::exception& e) {
       reportError(tr("export failed: %1").arg(e.what()));
+    }
+  }
+}
+
+void ModListViewActions::displayModInformation(const QString& modName, ModInfoTabIDs tab) const
+{
+  unsigned int index = ModInfo::getIndex(modName);
+  if (index == UINT_MAX) {
+    log::error("failed to resolve mod name {}", modName);
+    return;
+  }
+
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
+  displayModInformation(modInfo, index, tab);
+}
+
+void ModListViewActions::displayModInformation(unsigned int index, ModInfoTabIDs tab) const
+{
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
+  displayModInformation(modInfo, index, tab);
+}
+
+void ModListViewActions::displayModInformation(ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tab) const
+{
+  if (!m_core.modList()->modInfoAboutToChange(modInfo)) {
+    log::debug("a different mod information dialog is open. If this is incorrect, please restart MO");
+    return;
+  }
+  std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+  if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
+    QDialog* dialog = m_main->findChild<QDialog*>("__overwriteDialog");
+    try {
+      if (dialog == nullptr) {
+        dialog = new OverwriteInfoDialog(modInfo, m_main);
+        dialog->setObjectName("__overwriteDialog");
+      }
+      else {
+        qobject_cast<OverwriteInfoDialog*>(dialog)->setModInfo(modInfo);
+      }
+
+      dialog->show();
+      dialog->raise();
+      dialog->activateWindow();
+      connect(dialog, SIGNAL(finished(int)), this, SLOT(overwriteClosed(int)));
+    }
+    catch (const std::exception& e) {
+      reportError(tr("Failed to display overwrite dialog: %1").arg(e.what()));
+    }
+  }
+  else {
+    modInfo->saveMeta();
+
+    ModInfoDialog dialog(m_main, &m_core, &m_core.pluginContainer(), modInfo);
+    connect(&dialog, SIGNAL(originModified(int)), this, SLOT(originModified(int)));
+
+    //Open the tab first if we want to use the standard indexes of the tabs.
+    if (tab != ModInfoTabIDs::None) {
+      dialog.selectTab(tab);
+    }
+
+    dialog.exec();
+
+    modInfo->saveMeta();
+    m_core.modList()->modInfoChanged(modInfo);
+  }
+
+  if (m_core.currentProfile()->modEnabled(modIndex)
+    && !modInfo->hasFlag(ModInfo::FLAG_FOREIGN)) {
+    FilesOrigin& origin = m_core.directoryStructure()->getOriginByName(ToWString(modInfo->name()));
+    origin.enable(false);
+
+    if (m_core.directoryStructure()->originExists(ToWString(modInfo->name()))) {
+      FilesOrigin& origin = m_core.directoryStructure()->getOriginByName(ToWString(modInfo->name()));
+      origin.enable(false);
+
+      m_core.directoryRefresher()->addModToStructure(m_core.directoryStructure()
+        , modInfo->name()
+        , m_core.currentProfile()->getModPriority(modIndex)
+        , modInfo->absolutePath()
+        , modInfo->stealFiles()
+        , modInfo->archives());
+      DirectoryRefresher::cleanStructure(m_core.directoryStructure());
+      m_core.directoryStructure()->getFileRegister()->sortOrigins();
+      m_core.refreshLists();
     }
   }
 }

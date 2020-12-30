@@ -154,11 +154,6 @@ public slots:
 signals:
 
   /**
-   * @brief emitted after the information dialog has been closed
-   */
-  void modInfoDisplayed();
-
-  /**
    * @brief emitted when the selected style changes
    */
   void styleChanged(const QString &styleFile);
@@ -209,7 +204,6 @@ private:
   void refreshExecutablesList();
 
   bool modifyExecutablesDialog(int selection);
-  void displayModInformation(int row, ModInfoTabIDs tab=ModInfoTabIDs::None);
 
   /**
    * Sets category selections from menu; for multiple mods, this will only apply
@@ -455,7 +449,6 @@ private slots:
   void onFiltersOptions(
     ModListSortProxy::FilterMode mode, ModListSortProxy::SeparatorsMode sep);
 
-  void displayModInformation(const QString &modName, ModInfoTabIDs tabID);
   void visitNexusOrWebPage(const QModelIndex& idx);
 
   void modRenamed(const QString &oldName, const QString &newName);
