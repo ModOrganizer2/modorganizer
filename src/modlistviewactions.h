@@ -68,6 +68,7 @@ public:
   void markConverted(const QModelIndexList& indices) const;
   void visitOnNexus(const QModelIndexList& indices) const;
   void visitWebPage(const QModelIndexList& indices) const;
+  void visitNexusOrWebPage(const QModelIndexList& indices) const;
 
   // set/reset color of the given selection, using the given reference index (index
   // at which the context menu was shown)

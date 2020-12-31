@@ -590,72 +590,76 @@ void ModListViewActions::markConverted(const QModelIndexList& indices) const
 
 void ModListViewActions::visitOnNexus(const QModelIndexList& indices) const
 {
-  if (indices.size() > 1) {
-    if (indices.size() > 10) {
-      if (QMessageBox::question(m_view, tr("Opening Nexus Links"),
-        tr("You are trying to open %1 links to Nexus Mods.  Are you sure you want to do this?").arg(indices.size()),
-        QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
-        return;
-      }
-    }
-    int row_idx;
-    ModInfo::Ptr info;
-    QString gameName;
-
-    for (auto& idx : indices) {
-      row_idx = idx.data(ModList::IndexRole).toInt();
-      info = ModInfo::getByIndex(row_idx);
-      int modID = info->nexusId();
-      gameName = info->gameName();
-      if (modID > 0) {
-        shell::Open(QUrl(NexusInterface::instance().getModURL(modID, gameName)));
-      }
-      else {
-        log::error("mod '{}' has no nexus id", info->name());
-      }
+  if (indices.size() > 10) {
+    if (QMessageBox::question(m_view, tr("Opening Nexus Links"),
+      tr("You are trying to open %1 links to Nexus Mods.  Are you sure you want to do this?").arg(indices.size()),
+      QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+      return;
     }
   }
-  else if (!indices.isEmpty()) {
-    int modID = indices[0].data(Qt::UserRole).toInt();
-    QString gameName = indices[0].data(Qt::UserRole + 4).toString();
+
+  for (auto& idx : indices) {
+    ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+    int modID = info->nexusId();
+    QString gameName = info->gameName();
     if (modID > 0) {
       shell::Open(QUrl(NexusInterface::instance().getModURL(modID, gameName)));
     }
     else {
-      MessageDialog::showMessage(tr("Nexus ID for this mod is unknown"), m_view);
+      log::error("mod '{}' has no nexus id", info->name());
     }
   }
 }
 
 void ModListViewActions::visitWebPage(const QModelIndexList& indices) const
 {
-  if (indices.size() > 1) {
-    if (indices.size() > 10) {
-      if (QMessageBox::question(m_view, tr("Opening Web Pages"),
-        tr("You are trying to open %1 Web Pages.  Are you sure you want to do this?").arg(indices.size()),
-        QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
-        return;
-      }
-    }
-    int row_idx;
-    ModInfo::Ptr info;
-    QString gameName;
-    for (auto& idx : indices) {
-      row_idx = idx.data(ModList::IndexRole).toInt();
-      info = ModInfo::getByIndex(row_idx);
-
-      const auto url = info->parseCustomURL();
-      if (url.isValid()) {
-        shell::Open(url);
-      }
+  if (indices.size() > 10) {
+    if (QMessageBox::question(m_view, tr("Opening Web Pages"),
+      tr("You are trying to open %1 Web Pages.  Are you sure you want to do this?").arg(indices.size()),
+      QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+      return;
     }
   }
-  else if (!indices.isEmpty()) {
-    ModInfo::Ptr info = ModInfo::getByIndex(indices[0].data(ModList::IndexRole).toInt());
+
+  for (auto& idx : indices) {
+    ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
 
     const auto url = info->parseCustomURL();
     if (url.isValid()) {
       shell::Open(url);
+    }
+  }
+}
+
+void ModListViewActions::visitNexusOrWebPage(const QModelIndexList& indices) const
+{
+  if (indices.size() > 10) {
+    if (QMessageBox::question(m_view, tr("Opening Web Pages"),
+      tr("You are trying to open %1 Web Pages.  Are you sure you want to do this?").arg(indices.size()),
+      QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+      return;
+    }
+  }
+
+  for (auto& idx : indices) {
+    ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+    if (!info) {
+      log::error("mod {} not found", idx.data(ModList::IndexRole).toInt());
+      continue;
+    }
+
+    int modID = info->nexusId();
+    QString gameName = info->gameName();
+    const auto url = info->parseCustomURL();
+
+    if (modID > 0) {
+      shell::Open(QUrl(NexusInterface::instance().getModURL(modID, gameName)));
+    }
+    else if (url.isValid()) {
+      shell::Open(url);
+    }
+    else {
+      log::error("mod '{}' has no valid link", info->name());
     }
   }
 }
