@@ -1,4 +1,5 @@
 #include "viewmarkingscrollbar.h"
+#include "modelutils.h"
 #include <QStyle>
 #include <QStyleOptionSlider>
 #include <QPainter>
@@ -27,11 +28,13 @@ void ViewMarkingScrollBar::paintEvent(QPaintEvent *event)
   QRect handleRect = style()->subControlRect(QStyle::CC_ScrollBar, &styleOption, QStyle::SC_ScrollBarSlider, this);
   QRect innerRect = style()->subControlRect(QStyle::CC_ScrollBar, &styleOption, QStyle::SC_ScrollBarGroove, this);
 
-  painter.translate(innerRect.topLeft() + QPoint(0, 3));
-  qreal scale = static_cast<qreal>(innerRect.height() - 3) / static_cast<qreal>(m_Model->rowCount());
+  auto indices = flatIndex(m_Model, 0, QModelIndex());
 
-  for (int i = 0; i < m_Model->rowCount(); ++i) {
-    QVariant data = m_Model->data(m_Model->index(i, 0), m_Role);
+  painter.translate(innerRect.topLeft() + QPoint(0, 3));
+  qreal scale = static_cast<qreal>(innerRect.height() - 3) / static_cast<qreal>(indices.size());
+
+  for (int i = 0; i < indices.size(); ++i) {
+    QVariant data = indices[i].data(m_Role);
     if (data.isValid()) {
       QColor col = data.value<QColor>();
       painter.setPen(col);

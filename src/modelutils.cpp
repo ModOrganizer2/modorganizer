@@ -2,6 +2,17 @@
 
 #include <QAbstractProxyModel>
 
+QModelIndexList flatIndex(
+  const QAbstractItemModel* model, int column, const QModelIndex& parent)
+{
+  QModelIndexList index;
+  for (std::size_t i = 0; i < model->rowCount(parent); ++i) {
+    index.append(model->index(i, column, parent));
+    index.append(flatIndex(model, column, index.back()));
+  }
+  return index;
+}
+
 QModelIndex indexModelToView(const QModelIndex& index, const QAbstractItemView* view)
 {
   // we need to stack the proxy

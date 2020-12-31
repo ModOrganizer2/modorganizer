@@ -169,12 +169,12 @@ std::optional<unsigned int> ModListView::prevMod(unsigned int  modIndex) const
 
 void ModListView::enableAllVisible()
 {
-  m_core->modList()->setActive(indexViewToModel(allIndex(model())), true);
+  m_core->modList()->setActive(indexViewToModel(flatIndex(model())), true);
 }
 
 void ModListView::disableAllVisible()
 {
-  m_core->modList()->setActive(indexViewToModel(allIndex(model())), false);
+  m_core->modList()->setActive(indexViewToModel(flatIndex(model())), false);
 }
 
 void ModListView::setFilterCriteria(const std::vector<ModListSortProxy::Criteria>& criteria)
@@ -252,17 +252,6 @@ QModelIndex ModListView::prevIndex(const QModelIndex& index) const
   }
 
   return prev;
-}
-
-QModelIndexList ModListView::allIndex(
-  const QAbstractItemModel* model, int column, const QModelIndex& parent) const
-{
-  QModelIndexList index;
-  for (std::size_t i = 0; i < model->rowCount(parent); ++i) {
-    index.append(model->index(i, column, parent));
-    index.append(allIndex(model, column, index.back()));
-  }
-  return index;
 }
 
 std::pair<QModelIndex, QModelIndexList> ModListView::selected() const

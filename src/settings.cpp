@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "instancemanager.h"
 #include "shared/appconfig.h"
 #include "env.h"
+#include "modelutils.h"
 #include "envmetrics.h"
 #include <expanderwidget.h>
 #include <utility.h>
@@ -1063,22 +1064,10 @@ WidgetSettings::WidgetSettings(QSettings& s, bool globalInstance)
   }
 }
 
-std::vector<QModelIndex> WidgetSettings::allIndex(const QAbstractItemModel* model, int column, const QModelIndex& parent) const
-{
-  std::vector<QModelIndex> index;
-  for (std::size_t i = 0; i < model->rowCount(parent); ++i) {
-    index.push_back(model->index(i, column, parent));
-
-    auto cindex = allIndex(model, column, index.back());
-    index.insert(index.end(), cindex.begin(), cindex.end());
-  }
-  return index;
-}
-
 void WidgetSettings::saveTreeState(const QTreeView* tv, int role)
 {
   QVariantList expanded;
-  for (auto index : allIndex(tv->model())) {
+  for (auto index : flatIndex(tv->model())) {
     if (tv->isExpanded(index)) {
       expanded.append(index.data(role));
     }
@@ -1090,7 +1079,7 @@ void WidgetSettings::restoreTreeState(QTreeView* tv, int role) const
 {
   if (auto expanded = getOptional<QVariantList>(m_Settings, "Widgets", indexSettingName(tv))) {
     tv->collapseAll();
-    for (auto index : allIndex(tv->model())) {
+    for (auto index : flatIndex(tv->model())) {
       if (expanded->contains(index.data(role))) {
         tv->expand(index);
       }

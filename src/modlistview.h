@@ -124,11 +124,6 @@ protected:
   QModelIndex nextIndex(const QModelIndex& index) const;
   QModelIndex prevIndex(const QModelIndex& index) const;
 
-  // all index for the given model under the given index, recursively
-  //
-  QModelIndexList allIndex(
-    const QAbstractItemModel* model, int column = 0, const QModelIndex& index = QModelIndex()) const;
-
   // re-implemented to fake the return value to allow drag-and-drop on
   // itself for separators
   //
