@@ -310,16 +310,6 @@ MainWindow::MainWindow(Settings &settings
     ui->statusBar->setAPI(ni.getAPIStats(), ni.getAPIUserAccount());
   }
 
-  m_Filters.reset(new FilterList(ui, &m_OrganizerCore, m_CategoryFactory));
-
-  connect(
-    m_Filters.get(), &FilterList::criteriaChanged,
-    [&](auto&& v) { onFiltersCriteria(v); });
-
-  connect(
-    m_Filters.get(), &FilterList::optionsChanged,
-    [&](auto&& mode, auto&& sep) { onFiltersOptions(mode, sep); });
-
   ui->logList->setCore(m_OrganizerCore);
 
 
@@ -532,7 +522,7 @@ MainWindow::MainWindow(Settings &settings
 
 void MainWindow::setupModList()
 {
-  ui->modList->setup(m_OrganizerCore, m_CategoryFactory, *m_Filters, this, ui);
+  ui->modList->setup(m_OrganizerCore, m_CategoryFactory, this, ui);
 
   connect(&ui->modList->actions(), &ModListViewActions::overwriteCleared, [=]() { scheduleCheckForProblems(); });
   connect(&ui->modList->actions(), &ModListViewActions::originModified, this, &MainWindow::originModified);
@@ -1224,7 +1214,7 @@ void MainWindow::showEvent(QShowEvent *event)
 
   if (!m_WasVisible) {
     readSettings();
-    refreshFilters();
+    ui->modList->refreshFilters();
 
     // this needs to be connected here instead of in the constructor because the
     // actual changing of the stylesheet is done by MOApplication, which
@@ -1952,11 +1942,9 @@ void MainWindow::readSettings()
     ui->executablesListBox->setCurrentIndex(*v);
   }
 
-  s.widgets().restoreIndex(ui->groupCombo);
   s.widgets().restoreIndex(ui->tabWidget);
-  s.widgets().restoreTreeState(ui->modList);
 
-  m_Filters->restoreState(s);
+  ui->modList->restoreState(s);
 
   {
     s.geometry().restoreVisibility(ui->categoriesGroup, false);
@@ -2027,14 +2015,10 @@ void MainWindow::storeSettings()
 
   s.geometry().saveState(ui->espList->header());
   s.geometry().saveState(ui->downloadView->header());
-  s.geometry().saveState(ui->modList->header());
 
-  s.widgets().saveTreeState(ui->modList);
-  s.widgets().saveIndex(ui->groupCombo);
   s.widgets().saveIndex(ui->executablesListBox);
   s.widgets().saveIndex(ui->tabWidget);
 
-  m_Filters->saveState(s);
   m_DataTab->saveState(s);
 
   s.interface().setFilterOptions(FilterWidget::options());
@@ -2340,20 +2324,6 @@ void MainWindow::modlistChanged(const QModelIndexList&, int)
 
 void MainWindow::modlistSelectionsChanged(const QItemSelection &selected)
 {
-  if (selected.count()) {
-    auto selection = selected.last();
-    auto index = selection.indexes().last();
-    ModInfo::Ptr selectedMod = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
-    m_OrganizerCore.modList()->setOverwriteMarkers(selectedMod->getModOverwrite(), selectedMod->getModOverwritten());
-    m_OrganizerCore.modList()->setArchiveOverwriteMarkers(selectedMod->getModArchiveOverwrite(), selectedMod->getModArchiveOverwritten());
-    m_OrganizerCore.modList()->setArchiveLooseOverwriteMarkers(selectedMod->getModArchiveLooseOverwrite(), selectedMod->getModArchiveLooseOverwritten());
-  } else {
-    m_OrganizerCore.modList()->setOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
-    m_OrganizerCore.modList()->setArchiveOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
-    m_OrganizerCore.modList()->setArchiveLooseOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
-  }
-  ui->modList->verticalScrollBar()->repaint();
-
   m_OrganizerCore.pluginList()->highlightPlugins(ui->modList->selectionModel(), *m_OrganizerCore.directoryStructure(), *m_OrganizerCore.currentProfile());
   ui->espList->verticalScrollBar()->repaint();
 }
@@ -2823,7 +2793,7 @@ void MainWindow::on_actionSettings_triggered()
   scheduleCheckForProblems();
 
   fixCategories();
-  refreshFilters();
+  ui->modList->refreshFilters();
   ui->modList->refresh();
 
   if (settings.paths().profiles() != oldProfilesDirectory) {
@@ -2962,7 +2932,6 @@ void MainWindow::originModified(int originID)
 
   DirectoryRefresher::cleanStructure(m_OrganizerCore.directoryStructure());
 }
-
 
 void MainWindow::enableSelectedPlugins_clicked()
 {
@@ -3606,70 +3575,6 @@ void MainWindow::on_displayCategoriesBtn_toggled(bool checked)
   setCategoryListVisible(checked);
 }
 
-void MainWindow::deselectFilters()
-{
-  m_Filters->clearSelection();
-}
-
-void MainWindow::refreshFilters()
-{
-  QItemSelection currentSelection = ui->modList->selectionModel()->selection();
-
-  int idxRow = ui->modList->currentIndex().row();
-  QVariant currentIndexName = ui->modList->model()->index(idxRow, 0).data();
-  ui->modList->setCurrentIndex(QModelIndex());
-
-  m_Filters->refresh();
-
-  ui->modList->selectionModel()->select(currentSelection, QItemSelectionModel::Select);
-
-  QModelIndexList matchList;
-  if (currentIndexName.isValid()) {
-    matchList = ui->modList->model()->match(
-      ui->modList->model()->index(0, 0),
-      Qt::DisplayRole,
-      currentIndexName);
-  }
-
-  if (matchList.size() > 0) {
-    ui->modList->setCurrentIndex(matchList.at(0));
-  }
-}
-
-void MainWindow::onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>& criteria)
-{
-  ui->modList->setFilterCriteria(criteria);
-
-  QString label = "?";
-
-  if (criteria.empty()) {
-    label = "";
-  } else if (criteria.size() == 1) {
-    const auto& c = criteria[0];
-
-    if (c.type == ModListSortProxy::TypeContent) {
-      const auto *content = m_OrganizerCore.modDataContents().findById(c.id);
-      label = content ? content->name() : QString();
-    } else {
-      label = m_CategoryFactory.getCategoryNameByID(c.id);
-    }
-
-    if (label.isEmpty()) {
-      log::error("category {}:{} not found", c.type, c.id);
-    }
-  } else {
-    label = tr("<Multiple>");
-  }
-
-  ui->currentCategoryLabel->setText(label);
-}
-
-void MainWindow::onFiltersOptions(
-  ModListSortProxy::FilterMode mode, ModListSortProxy::SeparatorsMode sep)
-{
-  ui->modList->setFilterOptions(mode, sep);
-}
-
 void MainWindow::updateESPLock(int espIndex, bool locked)
 {
   QItemSelection currentSelection = ui->espList->selectionModel()->selection();
@@ -4078,10 +3983,4 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
   }
 
   QMainWindow::keyReleaseEvent(event);
-}
-
-void MainWindow::on_clearFiltersButton_clicked()
-{
-  ui->modFilterEdit->clear();
-	deselectFilters();
 }

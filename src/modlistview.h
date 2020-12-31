@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include <QLabel>
 #include <QTreeView>
 #include <QDragEnterEvent>
 #include <QLCDNumber>
@@ -39,7 +40,12 @@ public:
   explicit ModListView(QWidget* parent = 0);
   void setModel(QAbstractItemModel* model) override;
 
-  void setup(OrganizerCore& core, CategoryFactory& factory, FilterList& filters, MainWindow* mw, Ui::MainWindow* mwui);
+  void setup(OrganizerCore& core, CategoryFactory& factory, MainWindow* mw, Ui::MainWindow* mwui);
+
+  // restore/save the state between session
+  //
+  void restoreState(const Settings& s);
+  void saveState(Settings& s) const;
 
   // set the current profile
   //
@@ -97,6 +103,10 @@ public slots:
   //
   void updateModCount();
 
+  // refresh the filters
+  //
+  void refreshFilters();
+
   // map from/to the view indexes to the model
   //
   QModelIndex indexModelToView(const QModelIndex& index) const;
@@ -142,12 +152,19 @@ protected slots:
   void onCustomContextMenuRequested(const QPoint& pos);
   void onDoubleClicked(const QModelIndex& index);
   void onSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
+  void onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>& filters);
 
 private:
 
   void onModPrioritiesChanged(std::vector<int> const& indices);
   void onModInstalled(const QString& modName);
   void onModFilterActive(bool filterActive);
+
+  // get/set the selected items on the view, this method return/take indices
+  // from the mod list model, not the view, so it's safe to restore
+  //
+  std::pair<QModelIndex, QModelIndexList> selected() const;
+  void setSelected(const QModelIndex& current, const QModelIndexList& selected);
 
   // call expand() after fixing the index if it comes from the source
   // of the proxy
@@ -175,12 +192,14 @@ private:
     // the mod counter
     QLCDNumber* counter;
 
-    // the text filter and clear filter button
+    // filters related
     QLineEdit* filter;
+    QLabel* currentCategory;
     QPushButton* clearFilters;
   };
 
   OrganizerCore* m_core;
+  std::unique_ptr<FilterList> m_filters;
   CategoryFactory* m_categories;
   ModListViewUi ui;
   ModListViewActions* m_actions;

@@ -10,6 +10,7 @@
 
 #include "ui_mainwindow.h"
 
+#include "filterlist.h"
 #include "organizercore.h"
 #include "modlist.h"
 #include "modlistsortproxy.h"
@@ -327,6 +328,20 @@ QModelIndexList ModListView::allIndex(
   return index;
 }
 
+std::pair<QModelIndex, QModelIndexList> ModListView::selected() const
+{
+  return { indexViewToModel(currentIndex()), indexViewToModel(selectionModel()->selectedRows()) };
+}
+
+void ModListView::setSelected(const QModelIndex& current, const QModelIndexList& selected)
+{
+  // reset the selection and the index
+  setCurrentIndex(indexModelToView(current));
+  for (auto idx : selected) {
+    selectionModel()->select(indexModelToView(idx), QItemSelectionModel::Select | QItemSelectionModel::Rows);
+  }
+}
+
 void ModListView::expandItem(const QModelIndex& index) {
   if (index.model() == m_sortProxy->sourceModel()) {
     expand(m_sortProxy->mapFromSource(index));
@@ -515,6 +530,19 @@ void ModListView::updateModCount()
   );
 }
 
+void ModListView::refreshFilters()
+{
+  auto [current, sourceRows] = selected();
+
+  int idxRow = currentIndex().row();
+  QVariant currentIndexName = model()->index(idxRow, 0).data();
+  setCurrentIndex(QModelIndex());
+
+  m_filters->refresh();
+
+  setSelected(current, sourceRows);
+}
+
 void ModListView::onExternalFolderDropped(const QUrl& url, int priority)
 {
   QFileInfo fileInfo(url.toLocalFile());
@@ -557,8 +585,7 @@ void ModListView::onExternalFolderDropped(const QUrl& url, int priority)
 
 bool ModListView::moveSelection(int key)
 {
-  QModelIndex cindex = indexViewToModel(currentIndex());
-  QModelIndexList sourceRows = indexViewToModel(selectionModel()->selectedRows());
+  auto [cindex, sourceRows] = selected();
 
   int offset = key == Qt::Key_Up ? -1 : 1;
   if (m_sortProxy->sortOrder() == Qt::DescendingOrder) {
@@ -568,10 +595,7 @@ bool ModListView::moveSelection(int key)
   m_core->modList()->shiftModsPriority(sourceRows, offset);
 
   // reset the selection and the index
-  setCurrentIndex(indexModelToView(cindex));
-  for (auto idx : sourceRows) {
-    selectionModel()->select(indexModelToView(idx), QItemSelectionModel::Select | QItemSelectionModel::Rows);
-  }
+  setSelected(cindex, sourceRows);
 
   return true;
 }
@@ -620,14 +644,14 @@ void ModListView::updateGroupByProxy(int groupIndex)
   }
 }
 
-
-void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, FilterList& filters, MainWindow* mw, Ui::MainWindow* mwui)
+void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindow* mw, Ui::MainWindow* mwui)
 {
   // attributes
   m_core = &core;
+  m_filters.reset(new FilterList(mwui, core, factory));
   m_categories = &factory;
-  m_actions = new ModListViewActions(core, filters, factory, mw, this);
-  ui = { mwui->groupCombo, mwui->activeModsCounter, mwui->modFilterEdit, mwui->clearFiltersButton };
+  m_actions = new ModListViewActions(core, *m_filters, factory, mw, this);
+  ui = { mwui->groupCombo, mwui->activeModsCounter, mwui->modFilterEdit, mwui->currentCategoryLabel, mwui->clearFiltersButton };
 
   connect(m_core, &OrganizerCore::modInstalled, this, &ModListView::onModInstalled);
   connect(core.modList(), &ModList::modPrioritiesChanged, this, &ModListView::onModPrioritiesChanged);
@@ -724,13 +748,41 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, FilterLis
   connect(m_core->modList(), &ModList::externalFolderDropped, this, &ModListView::onExternalFolderDropped);
 
   connect(m_sortProxy, &ModListSortProxy::filterActive, this, &ModListView::onModFilterActive);
-  connect(ui.filter, &QLineEdit::textChanged, m_sortProxy, &ModListSortProxy::updateFilter);
   connect(m_sortProxy, &QAbstractItemModel::layoutChanged, this, [&]() {
     if (hasCollapsibleSeparators()) {
       m_byPriorityProxy->refreshExpandedItems();
     }
-  });
+    });
   connect(selectionModel(), &QItemSelectionModel::selectionChanged, this, &ModListView::onSelectionChanged);
+
+  // filters
+  connect(m_filters.get(), &FilterList::criteriaChanged, [=](auto&& v) { onFiltersCriteria(v); });
+  connect(m_filters.get(), &FilterList::optionsChanged, [=](auto&& mode, auto&& sep) { setFilterOptions(mode, sep); });
+  connect(ui.filter, &QLineEdit::textChanged, m_sortProxy, &ModListSortProxy::updateFilter);
+  connect(ui.clearFilters, &QPushButton::clicked, [=]() {
+      ui.filter->clear();
+      m_filters->clearSelection();
+    });
+}
+
+void ModListView::restoreState(const Settings& s)
+{
+  s.geometry().restoreState(header());
+
+  s.widgets().restoreIndex(ui.groupBy);
+  s.widgets().restoreTreeState(this);
+
+  m_filters->restoreState(s);
+}
+
+void ModListView::saveState(Settings& s) const
+{
+  s.geometry().saveState(header());
+
+  s.widgets().saveIndex(ui.groupBy);
+  s.widgets().saveTreeState(this);
+
+  m_filters->saveState(s);
 }
 
 void ModListView::setModel(QAbstractItemModel* model)
@@ -858,6 +910,52 @@ void ModListView::onSelectionChanged(const QItemSelection& selected, const QItem
       }
     }
   }
+
+  if (selected.count()) {
+    auto index = selected.indexes().last();
+    ModInfo::Ptr selectedMod = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
+    m_core->modList()->setOverwriteMarkers(selectedMod->getModOverwrite(), selectedMod->getModOverwritten());
+    m_core->modList()->setArchiveOverwriteMarkers(selectedMod->getModArchiveOverwrite(), selectedMod->getModArchiveOverwritten());
+    m_core->modList()->setArchiveLooseOverwriteMarkers(selectedMod->getModArchiveLooseOverwrite(), selectedMod->getModArchiveLooseOverwritten());
+  }
+  else {
+    m_core->modList()->setOverwriteMarkers({}, {});
+    m_core->modList()->setArchiveOverwriteMarkers({}, {});
+    m_core->modList()->setArchiveLooseOverwriteMarkers({}, {});
+  }
+  verticalScrollBar()->repaint();
+
+}
+
+void ModListView::onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>& criteria)
+{
+  setFilterCriteria(criteria);
+
+  QString label = "?";
+
+  if (criteria.empty()) {
+    label = "";
+  }
+  else if (criteria.size() == 1) {
+    const auto& c = criteria[0];
+
+    if (c.type == ModListSortProxy::TypeContent) {
+      const auto* content = m_core->modDataContents().findById(c.id);
+      label = content ? content->name() : QString();
+    }
+    else {
+      label = m_categories->getCategoryNameByID(c.id);
+    }
+
+    if (label.isEmpty()) {
+      log::error("category {}:{} not found", c.type, c.id);
+    }
+  }
+  else {
+    label = tr("<Multiple>");
+  }
+
+  ui.currentCategory->setText(label);
 }
 
 void ModListView::dragEnterEvent(QDragEnterEvent* event)

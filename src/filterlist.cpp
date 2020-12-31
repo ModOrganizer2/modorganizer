@@ -181,8 +181,8 @@ private:
 };
 
 
-FilterList::FilterList(Ui::MainWindow* ui, OrganizerCore* organizer, CategoryFactory& factory)
-  : ui(ui), m_Organizer(organizer), m_factory(factory)
+FilterList::FilterList(Ui::MainWindow* ui, OrganizerCore& core, CategoryFactory& factory)
+  : ui(ui), m_core(core), m_factory(factory)
 {
   auto* eventFilter = new CriteriaItemFilter(
     ui->filters, [&](auto* item, int dir){ return cycleItem(item, dir); });
@@ -234,7 +234,7 @@ QTreeWidgetItem* FilterList::addCriteriaItem(
 
 void FilterList::addContentCriteria()
 {
-  m_Organizer->modDataContents().forEachContent([this](auto const& content) {
+  m_core.modDataContents().forEachContent([this](auto const& content) {
     addCriteriaItem(
       nullptr, QString("<%1>").arg(tr("Contains %1").arg(content.name())),
       content.id(), ModListSortProxy::TypeContent);

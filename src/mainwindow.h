@@ -149,7 +149,6 @@ public slots:
   void directory_refreshed();
 
   void updatePluginCount();
-  void refreshFilters();
 
 signals:
 
@@ -253,7 +252,6 @@ private:
 
   MOBase::TutorialControl m_Tutorial;
 
-  std::unique_ptr<FilterList> m_Filters;
   std::unique_ptr<DataTab> m_DataTab;
   std::unique_ptr<DownloadsTab> m_DownloadsTab;
   std::unique_ptr<SavesTab> m_SavesTab;
@@ -370,11 +368,6 @@ private slots:
 
   void onRequestsChanged(const APIStats& stats, const APIUserAccount& user);
 
-  void deselectFilters();
-  void onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>& filters);
-  void onFiltersOptions(
-    ModListSortProxy::FilterMode mode, ModListSortProxy::SeparatorsMode sep);
-
   void modRenamed(const QString &oldName, const QString &newName);
   void modRemoved(const QString &fileName);
 
@@ -457,7 +450,6 @@ private slots: // ui slots
 
   void on_centralWidget_customContextMenuRequested(const QPoint &pos);
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
-  void on_clearFiltersButton_clicked();
   void on_executablesListBox_currentIndexChanged(int index);
   void on_espList_doubleClicked(const QModelIndex &index);
   void on_profileBox_currentIndexChanged(int index);
