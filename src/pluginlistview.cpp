@@ -247,11 +247,26 @@ bool PluginListView::toggleSelectionState()
 
 bool PluginListView::event(QEvent* event)
 {
-  Profile* profile = m_core->currentProfile();
+  auto* profile = m_core->currentProfile();
   if (event->type() == QEvent::KeyPress && profile) {
     QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
 
     if (keyEvent->modifiers() == Qt::ControlModifier
+      && (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter)) {
+      if (selectionModel()->hasSelection() && selectionModel()->selectedRows().count() == 1) {
+        QModelIndex idx = selectionModel()->currentIndex();
+        QString fileName = idx.data().toString();
+
+        if (ModInfo::getIndex(m_core->pluginList()->origin(fileName)) == UINT_MAX) {
+          return false;
+        }
+
+        auto modIndex = ModInfo::getIndex(m_core->pluginList()->origin(fileName));
+        m_modActions->openExplorer({ m_core->modList()->index(modIndex, 0) });
+        return true;
+      }
+    }
+    else if (keyEvent->modifiers() == Qt::ControlModifier
       && (sortColumn() == PluginList::COL_PRIORITY || sortColumn() == PluginList::COL_MODINDEX)
       && (keyEvent->key() == Qt::Key_Up || keyEvent->key() == Qt::Key_Down)) {
       return moveSelection(keyEvent->key());

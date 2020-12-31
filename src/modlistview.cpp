@@ -964,20 +964,28 @@ void ModListView::timerEvent(QTimerEvent* event)
 
 bool ModListView::event(QEvent* event)
 {
-  Profile* profile = m_core->currentProfile();
-  if (event->type() == QEvent::KeyPress && profile) {
+  if (event->type() == QEvent::KeyPress) {
     QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
 
     if (keyEvent->modifiers() == Qt::ControlModifier
-      && sortColumn() == ModList::COL_PRIORITY
-      && (keyEvent->key() == Qt::Key_Up || keyEvent->key() == Qt::Key_Down)) {
-      return moveSelection(keyEvent->key());
+      && (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter)) {
+      if (selectionModel()->hasSelection() && selectionModel()->selectedRows().count() == 1) {
+        m_actions->openExplorer({ indexViewToModel(selectionModel()->currentIndex()) });
+        return true;
+      }
     }
-    else if (keyEvent->key() == Qt::Key_Delete) {
-      return removeSelection();
-    }
-    else if (keyEvent->key() == Qt::Key_Space) {
-      return toggleSelectionState();
+    else if (m_core->currentProfile()) {
+      if (keyEvent->modifiers() == Qt::ControlModifier
+        && sortColumn() == ModList::COL_PRIORITY
+        && (keyEvent->key() == Qt::Key_Up || keyEvent->key() == Qt::Key_Down)) {
+        return moveSelection(keyEvent->key());
+      }
+      else if (keyEvent->key() == Qt::Key_Delete) {
+        return removeSelection();
+      }
+      else if (keyEvent->key() == Qt::Key_Space) {
+        return toggleSelectionState();
+      }
     }
     return QTreeView::event(event);
   }

@@ -450,9 +450,6 @@ MainWindow::MainWindow(Settings &settings
 
   connect(ui->espList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(esplistSelectionsChanged(QItemSelection)));
 
-  new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Enter), this, SLOT(openExplorer_activated()));
-  new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Return), this, SLOT(openExplorer_activated()));
-
   setFilterShortcuts(ui->modList, ui->modFilterEdit);
   setFilterShortcuts(ui->espList, ui->espFilterEdit);
   setFilterShortcuts(ui->downloadView, ui->downloadFilterEdit);
@@ -2338,45 +2335,6 @@ bool MainWindow::closeWindow()
 void MainWindow::setWindowEnabled(bool enabled)
 {
   setEnabled(enabled);
-}
-
-void MainWindow::openExplorer_activated()
-{
-	if (ui->modList->hasFocus()) {
-		QItemSelectionModel *selection = ui->modList->selectionModel();
-		if (selection->hasSelection() && selection->selectedRows().count() == 1 ) {
-
-			QModelIndex idx = selection->currentIndex();
-			ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
-			std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-
-			if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-        shell::Explore(modInfo->absolutePath());
-			}
-
-		}
-	}
-
-	if (ui->espList->hasFocus()) {
-		QItemSelectionModel *selection = ui->espList->selectionModel();
-
-		if (selection->hasSelection() && selection->selectedRows().count() == 1) {
-
-			QModelIndex idx = selection->currentIndex();
-			QString fileName = idx.data().toString();
-
-
-      unsigned int modInfoIndex = ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName));
-      if (modInfoIndex != UINT_MAX) {
-        ModInfo::Ptr modInfo = ModInfo::getByIndex(modInfoIndex);
-        std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-
-        if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-          shell::Explore(modInfo->absolutePath());
-        }
-      }
-		}
-	}
 }
 
 void MainWindow::refreshProfile_activated()

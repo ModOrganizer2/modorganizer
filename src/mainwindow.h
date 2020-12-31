@@ -316,8 +316,7 @@ private slots:
   void tutorialTriggered();
   void extractBSATriggered(QTreeWidgetItem* item);
 
-  //modlist shortcuts
-  void openExplorer_activated();
+  // modlist shortcuts
   void refreshProfile_activated();
 
   void linkToolbar();
