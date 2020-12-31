@@ -433,8 +433,13 @@ void ModListViewActions::displayModInformation(ModInfo::Ptr modInfo, unsigned in
   else {
     modInfo->saveMeta();
 
-    ModInfoDialog dialog(m_main, &m_core, &m_core.pluginContainer(), modInfo);
+    ModInfoDialog dialog(m_core, m_core.pluginContainer(), modInfo, m_view);
     connect(&dialog, &ModInfoDialog::originModified, this, &ModListViewActions::originModified);
+    connect(&dialog, &ModInfoDialog::modChanged, [=](unsigned int index) {
+      auto idx = m_view->indexModelToView(m_core.modList()->index(index, 0));
+      m_view->selectionModel()->select(idx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+      m_view->scrollTo(idx);
+    });
 
     //Open the tab first if we want to use the standard indexes of the tabs.
     if (tab != ModInfoTabIDs::None) {

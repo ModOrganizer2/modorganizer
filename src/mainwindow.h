@@ -142,9 +142,6 @@ public:
 
   virtual MOBase::DelayedFileWriterBase &archivesWriter() override { return m_ArchiveListWriter; }
 
-  ModInfo::Ptr nextModInList(int modIndex);
-  ModInfo::Ptr previousModInList(int modIndex);
-
 public slots:
   void esplist_changed();
   void refresherProgress(const DirectoryRefreshProgress* p);
@@ -428,7 +425,6 @@ private slots:
 
   void toolBar_customContextMenuRequested(const QPoint &point);
   void removeFromToolbar(QAction* action);
-  void overwriteClosed(int);
 
   void about();
 

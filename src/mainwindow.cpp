@@ -48,7 +48,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "categories.h"
 #include "categoriesdialog.h"
 #include "genericicondelegate.h"
-#include "modinfodialog.h"
 #include "overwriteinfodialog.h"
 #include "downloadlist.h"
 #include "downloadlistwidget.h"
@@ -2377,16 +2376,6 @@ void MainWindow::windowTutorialFinished(const QString &windowName)
   m_OrganizerCore.settings().interface().setTutorialCompleted(windowName);
 }
 
-void MainWindow::overwriteClosed(int)
-{
-  OverwriteInfoDialog *dialog = this->findChild<OverwriteInfoDialog*>("__overwriteDialog");
-  if (dialog != nullptr) {
-    m_OrganizerCore.modList()->modInfoChanged(dialog->modInfo());
-    dialog->deleteLater();
-  }
-  m_OrganizerCore.refreshDirectoryStructure();
-}
-
 void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tabID)
 {
   ui->modList->actions().displayModInformation(modInfo, modIndex, tabID);
@@ -2400,24 +2389,6 @@ bool MainWindow::closeWindow()
 void MainWindow::setWindowEnabled(bool enabled)
 {
   setEnabled(enabled);
-}
-
-ModInfo::Ptr MainWindow::nextModInList(int modIndex)
-{
-  modIndex = ui->modList->nextMod(modIndex);
-  if (modIndex == -1) {
-    return {};
-  }
-  return ModInfo::getByIndex(modIndex);
-}
-
-ModInfo::Ptr MainWindow::previousModInList(int modIndex)
-{
-  modIndex = ui->modList->prevMod(modIndex);
-  if (modIndex == -1) {
-    return {};
-  }
-  return ModInfo::getByIndex(modIndex);
 }
 
 void MainWindow::openPluginOriginExplorer_clicked()

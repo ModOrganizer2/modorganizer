@@ -58,11 +58,10 @@ public:
   ModListViewActions& actions() const;
 
   // retrieve the next/previous mod in the current view, the given index
-  // should be a mod index (not a model row), and the return value will be
-  // a mod index or -1 if no mod was found
+  // should be a mod index (not a model row)
   //
-  int nextMod(int index) const;
-  int prevMod(int index) const;
+  std::optional<unsigned int> nextMod(unsigned int index) const;
+  std::optional<unsigned int> prevMod(unsigned int index) const;
 
   // check if the given mod is visible
   //
@@ -142,6 +141,7 @@ protected slots:
 
   void onCustomContextMenuRequested(const QPoint& pos);
   void onDoubleClicked(const QModelIndex& index);
+  void onSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
 
 private:
 

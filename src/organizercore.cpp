@@ -15,7 +15,6 @@
 #include "profile.h"
 #include "credentialsdialog.h"
 #include "filedialogmemory.h"
-#include "modinfodialog.h"
 #include "spawn.h"
 #include "syncoverwritedialog.h"
 #include "nxmaccessmanager.h"

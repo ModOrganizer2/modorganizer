@@ -128,7 +128,7 @@ ModListViewActions& ModListView::actions() const
   return *m_actions;
 }
 
-int ModListView::nextMod(int modIndex) const
+std::optional<unsigned int> ModListView::nextMod(unsigned int modIndex) const
 {
   const QModelIndex start = indexModelToView(m_core->modList()->index(modIndex, 0));
 
@@ -156,10 +156,10 @@ int ModListView::nextMod(int modIndex) const
     return modIndex;
   }
 
-  return -1;
+  return {};
 }
 
-int ModListView::prevMod(int modIndex) const
+std::optional<unsigned int> ModListView::prevMod(unsigned int  modIndex) const
 {
   const QModelIndex start = indexModelToView(m_core->modList()->index(modIndex, 0));
 
@@ -187,7 +187,7 @@ int ModListView::prevMod(int modIndex) const
     return modIndex;
   }
 
-  return -1;
+  return {};
 }
 
 void ModListView::enableAllVisible()
@@ -730,6 +730,7 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, FilterLis
       m_byPriorityProxy->refreshExpandedItems();
     }
   });
+  connect(selectionModel(), &QItemSelectionModel::selectionChanged, this, &ModListView::onSelectionChanged);
 }
 
 void ModListView::setModel(QAbstractItemModel* model)
@@ -844,6 +845,17 @@ void ModListView::onDoubleClicked(const QModelIndex& index)
     }
     catch (const std::exception& e) {
       reportError(e.what());
+    }
+  }
+}
+
+void ModListView::onSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
+{
+  if (hasCollapsibleSeparators()) {
+    for (auto& idx : selected.indexes()) {
+      if (idx.parent().isValid() && !isExpanded(idx.parent())) {
+        setExpanded(idx.parent(), true);
+      }
     }
   }
 }
