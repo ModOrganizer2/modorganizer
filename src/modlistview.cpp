@@ -27,30 +27,6 @@
 
 using namespace MOBase;
 
-class ModListProxyStyle : public QProxyStyle {
-public:
-
-  using QProxyStyle::QProxyStyle;
-
-  void drawPrimitive(PrimitiveElement element, const QStyleOption* option, QPainter* painter, const QWidget* widget) const override
-  {
-    if (element == QStyle::PE_IndicatorItemViewItemDrop)
-    {
-      QStyleOption opt(*option);
-      opt.rect.setLeft(0);
-      if (auto* view = qobject_cast<const QTreeView*>(widget)) {
-        opt.rect.setLeft(view->indentation());
-        opt.rect.setRight(widget->width());
-      }
-      QProxyStyle::drawPrimitive(element, &opt, painter, widget);
-    }
-    else {
-      QProxyStyle::drawPrimitive(element, option, painter, widget);
-    }
-  }
-
-};
-
 class ModListStyledItemDelegated : public QStyledItemDelegate
 {
   ModListView* m_view;
@@ -87,7 +63,6 @@ ModListView::ModListView(QWidget* parent)
   MOBase::setCustomizableColumns(this);
   setAutoExpandDelay(1000);
 
-  setStyle(new ModListProxyStyle(style()));
   setItemDelegate(new ModListStyledItemDelegated(this));
 
   connect(this, &ModListView::doubleClicked, this, &ModListView::onDoubleClicked);
@@ -97,10 +72,6 @@ ModListView::ModListView(QWidget* parent)
 void ModListView::refresh()
 {
   updateGroupByProxy(-1);
-
-  // since we use a proxy, modifying the stylesheet breaks it
-  // so we need to reset it
-  setStyle(new ModListProxyStyle(QApplication::style()));
 }
 
 void ModListView::setProfile(Profile* profile)

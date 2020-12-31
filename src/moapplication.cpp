@@ -65,6 +65,13 @@ public:
 
   void drawPrimitive(PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const {
     if(element == QStyle::PE_IndicatorItemViewItemDrop) {
+
+      QRect rect(option->rect);
+      if (auto* view = qobject_cast<const QTreeView*>(widget)) {
+        rect.setLeft(view->indentation());
+        rect.setRight(widget->width());
+      }
+
       painter->setRenderHint(QPainter::Antialiasing, true);
 
       QColor col(option->palette.windowText().color());
@@ -75,16 +82,16 @@ public:
 
       painter->setPen(pen);
       painter->setBrush(brush);
-      if(option->rect.height() == 0) {
+      if(rect.height() == 0) {
         QPoint tri[3] = {
-          option->rect.topLeft(),
-          option->rect.topLeft() + QPoint(-5,  5),
-          option->rect.topLeft() + QPoint(-5, -5)
+          rect.topLeft(),
+          rect.topLeft() + QPoint(-5,  5),
+          rect.topLeft() + QPoint(-5, -5)
         };
         painter->drawPolygon(tri, 3);
-        painter->drawLine(QPoint(option->rect.topLeft().x(), option->rect.topLeft().y()), option->rect.topRight());
+        painter->drawLine(QPoint(rect.topLeft().x(), rect.topLeft().y()), rect.topRight());
       } else {
-        painter->drawRoundedRect(option->rect, 5, 5);
+        painter->drawRoundedRect(rect, 5, 5);
       }
     } else {
       QProxyStyle::drawPrimitive(element, option, painter, widget);
