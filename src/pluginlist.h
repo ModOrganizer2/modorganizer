@@ -257,15 +257,9 @@ public: // implementation of the QAbstractTableModel interface
 
 public slots:
 
-  /**
-   * @brief enables ALL plugins
-   **/
-  void enableAll();
-
-  /**
-   * @brief disables ALL plugins
-   **/
-  void disableAll();
+  // enable/disable all plugins
+  //
+  void setEnabledAll(bool enabled);
 
   // enable/disable plugins at the given indices.
   //
@@ -273,7 +267,7 @@ public slots:
 
   // send plugins to the given priority
   //
-  void sendToPriority(const QModelIndexList& selectionModel, int priority);
+  void sendToPriority(const QModelIndexList& indices, int priority);
 
   // shift the priority of mods at the given indices by the given offset
   //

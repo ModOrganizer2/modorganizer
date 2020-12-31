@@ -349,43 +349,24 @@ void PluginList::setEnabled(const QModelIndexList& indices, bool enabled)
   }
   if (!dirty.isEmpty()) {
     emit writePluginsList();
-    pluginStatesChanged(dirty, IPluginList::PluginState::STATE_ACTIVE);
+    pluginStatesChanged(dirty,
+      enabled ? IPluginList::PluginState::STATE_ACTIVE : IPluginList::PluginState::STATE_INACTIVE);
   }
 }
 
-void PluginList::enableAll()
+void PluginList::setEnabledAll(bool enabled)
 {
-  if (QMessageBox::question(nullptr, tr("Confirm"), tr("Really enable all plugins?"),
-                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    QStringList dirty;
-    for (ESPInfo &info : m_ESPs) {
-      if (!info.enabled) {
-        info.enabled = true;
-        dirty.append(info.name);
-      }
-    }
-    if (!dirty.isEmpty()) {
-      emit writePluginsList();
-      pluginStatesChanged(dirty, IPluginList::PluginState::STATE_ACTIVE);
+  QStringList dirty;
+  for (ESPInfo &info : m_ESPs) {
+    if (info.enabled != enabled) {
+      info.enabled = enabled;
+      dirty.append(info.name);
     }
   }
-}
-
-void PluginList::disableAll()
-{
-  if (QMessageBox::question(nullptr, tr("Confirm"), tr("Really disable all plugins?"),
-                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    QStringList dirty;
-    for (ESPInfo &info : m_ESPs) {
-      if (!info.forceEnabled && info.enabled) {
-        info.enabled = false;
-        dirty.append(info.name);
-      }
-    }
-    if (!dirty.isEmpty()) {
-      emit writePluginsList();
-      pluginStatesChanged(dirty, IPluginList::PluginState::STATE_INACTIVE);
-    }
+  if (!dirty.isEmpty()) {
+    emit writePluginsList();
+    pluginStatesChanged(dirty,
+      enabled ? IPluginList::PluginState::STATE_ACTIVE : IPluginList::PluginState::STATE_INACTIVE);
   }
 }
 
@@ -404,7 +385,7 @@ void PluginList::sendToPriority(const QModelIndexList& indices, int newPriority)
 
 void PluginList::shiftPluginsPriority(const QModelIndexList& indices, int offset)
 {
-  // retrieve the mod index and sort them by priority to avoid issue
+  // retrieve the plugin index and sort them by priority to avoid issue
   // when moving them
   std::vector<int> allIndex;
   for (auto& idx : indices) {

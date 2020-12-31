@@ -27,8 +27,20 @@ PluginListContextMenu::PluginListContextMenu(
 
   addSeparator();
 
-  addAction(tr("Enable all"), m_core.pluginList(), &PluginList::enableAll);
-  addAction(tr("Disable all"), m_core.pluginList(), &PluginList::disableAll);
+  addAction(tr("Enable all"), [=]() {
+    if (QMessageBox::question(
+      m_view->topLevelWidget(), tr("Confirm"), tr("Really enable all plugins?"),
+      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+      m_core.pluginList()->setEnabledAll(true);
+    }
+  });
+  addAction(tr("Disable all"), [=]() {
+    if (QMessageBox::question(
+      m_view->topLevelWidget(), tr("Confirm"), tr("Really disable all plugins?"),
+      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+      m_core.pluginList()->setEnabledAll(false);
+    }
+  });
 
   addSeparator();
 
