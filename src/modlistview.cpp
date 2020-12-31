@@ -677,27 +677,25 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   m_sortProxy = new ModListSortProxy(core.currentProfile(), &core);
   setModel(m_sortProxy);
 
-  connect(m_sortProxy, &QAbstractItemModel::layoutAboutToBeChanged,
-    this, [this](const QList<QPersistentModelIndex>& parents, QAbstractItemModel::LayoutChangeHint hint) {
+  // update the proxy when changing the sort column/direction and the group
+  connect(m_sortProxy, &QAbstractItemModel::layoutAboutToBeChanged, [this](auto&& parents, auto&& hint) {
       if (hint == QAbstractItemModel::VerticalSortHint) {
         updateGroupByProxy(-1);
       }
     });
-  sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
-
-  connect(ui.groupBy, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [&](int index) {
+  connect(ui.groupBy, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index) {
     updateGroupByProxy(index);
     onModFilterActive(m_sortProxy->isFilterActive());
-  });
+    });
+  sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
 
   connect(this, &ModListView::dragEntered, core.modList(), &ModList::onDragEnter);
   connect(this, &ModListView::dropEntered, m_byPriorityProxy, &ModListByPriorityProxy::onDropEnter);
 
   connect(model(), &QAbstractItemModel::layoutChanged, this, &ModListView::updateModCount);
 
-  connect(header(), &QHeaderView::sortIndicatorChanged, this, [&](int, Qt::SortOrder) {
-    verticalScrollBar()->repaint(); });
-  connect(header(), &QHeaderView::sectionResized, this, [&](int logicalIndex, int oldSize, int newSize) {
+  connect(header(), &QHeaderView::sortIndicatorChanged, [=](int, Qt::SortOrder) { verticalScrollBar()->repaint(); });
+  connect(header(), &QHeaderView::sectionResized, [=](int logicalIndex, int oldSize, int newSize) {
     m_sortProxy->setColumnVisible(logicalIndex, newSize != 0); });
 
   GenericIconDelegate* contentDelegate = new GenericIconDelegate(this, Qt::UserRole + 3, ModList::COL_CONTENT, 150);
