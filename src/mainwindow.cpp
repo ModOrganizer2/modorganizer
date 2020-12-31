@@ -206,7 +206,6 @@ QString UnmanagedModName()
 
 bool runLoot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList);
 
-
 void setFilterShortcuts(QWidget* widget, QLineEdit* edit)
 {
   auto activate = [=] {
@@ -240,7 +239,6 @@ void setFilterShortcuts(QWidget* widget, QLineEdit* edit)
   hookActivate(edit);
   hookReset(edit);
 }
-
 
 MainWindow::MainWindow(Settings &settings
                        , OrganizerCore &organizerCore
@@ -536,11 +534,10 @@ MainWindow::MainWindow(Settings &settings
 void MainWindow::setupModList()
 {
   auto* actions = new ModListViewActions(m_OrganizerCore, *m_Filters, m_CategoryFactory, this, ui->modList);
-  ui->modList->setup(m_OrganizerCore, actions, ui);
+  ui->modList->setup(m_OrganizerCore, m_CategoryFactory, actions, ui);
 
   connect(actions, &ModListViewActions::overwriteCleared, [=]() { scheduleCheckForProblems(); });
   connect(actions, &ModListViewActions::originModified, this, &MainWindow::originModified);
-  connect(ui->modList, &ModListView::removeSelectedMods, [=]() { removeMod_clicked(-1); });
   connect(m_OrganizerCore.modList(), &ModList::clearOverwrite, actions, &ModListViewActions::clearOverwrite);
   connect(m_OrganizerCore.modList(), &ModList::modPrioritiesChanged, [&]() { m_ArchiveListWriter.write(); });
 
@@ -636,7 +633,6 @@ MainWindow::~MainWindow()
   }
 }
 
-
 void MainWindow::updateWindowTitle(const APIUserAccount& user)
 {
   //"\xe2\x80\x93" is an "em dash", a longer "-"
@@ -652,12 +648,10 @@ void MainWindow::updateWindowTitle(const APIUserAccount& user)
   this->setWindowTitle(title);
 }
 
-
 void MainWindow::onRequestsChanged(const APIStats& stats, const APIUserAccount& user)
 {
   ui->statusBar->setAPI(stats, user);
 }
-
 
 void MainWindow::resizeLists(bool pluginListCustom)
 {
@@ -676,7 +670,6 @@ void MainWindow::resizeLists(bool pluginListCustom)
     ui->espList->header()->setSectionResizeMode(0, QHeaderView::Stretch);
   }
 }
-
 
 void MainWindow::allowListResize()
 {
@@ -703,7 +696,6 @@ void MainWindow::resizeEvent(QResizeEvent *event)
   m_Tutorial.resize(event->size());
   QMainWindow::resizeEvent(event);
 }
-
 
 static QModelIndex mapToModel(const QAbstractItemModel *targetModel, QModelIndex idx)
 {
@@ -997,7 +989,6 @@ void MainWindow::updateProblemsButton()
   }
 }
 
-
 bool MainWindow::errorReported(QString &logFile)
 {
   QDir dir(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath()));
@@ -1059,11 +1050,8 @@ void MainWindow::checkForProblemsImpl()
 
 void MainWindow::about()
 {
-  AboutDialog dialog(m_OrganizerCore.getVersion().displayString(3), this);
-  connect(&dialog, SIGNAL(linkClicked(QString)), this, SLOT(linkClicked(QString)));
-  dialog.exec();
+  AboutDialog(m_OrganizerCore.getVersion().displayString(3), this).exec();
 }
-
 
 void MainWindow::createEndorseMenu()
 {
@@ -1083,7 +1071,6 @@ void MainWindow::createEndorseMenu()
   connect(wontEndorseAction, SIGNAL(triggered()), this, SLOT(actionWontEndorseMO()));
   menu->addAction(wontEndorseAction);
 }
-
 
 void MainWindow::createHelpMenu()
 {
@@ -1679,7 +1666,6 @@ bool MainWindow::refreshProfiles(bool selectProfile)
   return profileBox->count() > 1;
 }
 
-
 void MainWindow::refreshExecutablesList()
 {
   QAbstractItemModel *model = ui->executablesListBox->model();
@@ -1913,12 +1899,10 @@ void MainWindow::fixCategories()
   }
 }
 
-
 void MainWindow::setupNetworkProxy(bool activate)
 {
   QNetworkProxyFactory::setUseSystemConfiguration(activate);
 }
-
 
 void MainWindow::activateProxy(bool activate)
 {
@@ -2167,7 +2151,6 @@ void MainWindow::tutorialTriggered()
   }
 }
 
-
 void MainWindow::on_actionInstallMod_triggered()
 {
   ui->modList->actions().installMod();
@@ -2225,14 +2208,12 @@ void MainWindow::on_actionModify_Executables_triggered()
   }
 }
 
-
 void MainWindow::setModListSorting(int index)
 {
   Qt::SortOrder order = ((index & 0x01) != 0) ? Qt::DescendingOrder : Qt::AscendingOrder;
   int column = index >> 1;
   ui->modList->header()->setSortIndicator(column, order);
 }
-
 
 void MainWindow::setESPListSorting(int index)
 {
@@ -2301,11 +2282,6 @@ void MainWindow::showError(const QString &message)
   reportError(message);
 }
 
-void MainWindow::installMod_clicked()
-{
-  ui->modList->actions().installMod();
-}
-
 void MainWindow::modRenamed(const QString &oldName, const QString &newName)
 {
   Profile::renameModInAllProfiles(oldName, newName);
@@ -2353,16 +2329,6 @@ void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName
   }
 }
 
-
-void MainWindow::renameMod_clicked()
-{
-  try {
-    ui->modList->edit(ui->modList->currentIndex());
-  } catch (const std::exception &e) {
-    reportError(tr("failed to rename mod: %1").arg(e.what()));
-  }
-}
-
 void MainWindow::modlistChanged(const QModelIndex&, int)
 {
   m_OrganizerCore.currentProfile()->writeModlist();
@@ -2401,192 +2367,11 @@ void MainWindow::esplistSelectionsChanged(const QItemSelection &selected)
   ui->modList->verticalScrollBar()->repaint();
 }
 
-void MainWindow::removeMod_clicked(int modIndex)
-{
-  const int max_items = 20;
-
-  try {
-    QItemSelectionModel *selection = ui->modList->selectionModel();
-    if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-      QString mods;
-      QStringList modNames;
-
-      int i = 0;
-      for (QModelIndex idx : selection->selectedRows()) {
-        QString name = idx.data().toString();
-        if (!ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->isRegular()) {
-          continue;
-        }
-
-        // adds an item for the mod name until `i` reaches `max_items`, which
-        // adds one "..." item; subsequent mods are not shown on the list but
-        // are still added to `modNames` below so they can be removed correctly
-
-        if (i < max_items) {
-          mods += "<li>" + name + "</li>";
-        }
-        else if (i == max_items) {
-          mods += "<li>...</li>";
-        }
-
-        modNames.append(ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->name());
-        ++i;
-      }
-      if (QMessageBox::question(this, tr("Confirm"),
-                                tr("Remove the following mods?<br><ul>%1</ul>").arg(mods),
-                                QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-        // use mod names instead of indexes because those become invalid during the removal
-        DownloadManager::startDisableDirWatcher();
-        for (QString name : modNames) {
-          m_OrganizerCore.modList()->removeRowForce(ModInfo::getIndex(name), QModelIndex());
-        }
-        DownloadManager::endDisableDirWatcher();
-      }
-    } else {
-      m_OrganizerCore.modList()->removeRow(modIndex, QModelIndex());
-    }
-    ui->modList->updateModCount();
-    updatePluginCount();
-  } catch (const std::exception &e) {
-    reportError(tr("failed to remove mod: %1").arg(e.what()));
-  }
-}
-
 void MainWindow::modRemoved(const QString &fileName)
 {
   if (!fileName.isEmpty() && !QFileInfo(fileName).isAbsolute()) {
     m_OrganizerCore.downloadManager()->markUninstalled(fileName);
   }
-}
-
-
-void MainWindow::reinstallMod_clicked(int modIndex)
-{
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-  QString installationFile = modInfo->installationFile();
-  if (installationFile.length() != 0) {
-    QString fullInstallationFile;
-    QFileInfo fileInfo(installationFile);
-    if (fileInfo.isAbsolute()) {
-      if (fileInfo.exists()) {
-        fullInstallationFile = installationFile;
-      } else {
-        fullInstallationFile = m_OrganizerCore.downloadManager()->getOutputDirectory() + "/" + fileInfo.fileName();
-      }
-    } else {
-      fullInstallationFile = m_OrganizerCore.downloadManager()->getOutputDirectory() + "/" + installationFile;
-    }
-    if (QFile::exists(fullInstallationFile)) {
-      m_OrganizerCore.installMod(fullInstallationFile, true, modInfo, modInfo->name());
-    } else {
-      QMessageBox::information(this, tr("Failed"), tr("Installation file no longer exists"));
-    }
-  } else {
-    QMessageBox::information(this, tr("Failed"),
-                             tr("Mods installed with old versions of MO can't be reinstalled in this way."));
-  }
-}
-
-void MainWindow::backupMod_clicked(int modIndex)
-{
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-  QString backupDirectory = m_OrganizerCore.installationManager()->generateBackupName(modInfo->absolutePath());
-  if (!copyDir(modInfo->absolutePath(), backupDirectory, false)) {
-    QMessageBox::information(this, tr("Failed"),
-      tr("Failed to create backup."));
-  }
-  m_OrganizerCore.refresh();
-  ui->modList->updateModCount();
-}
-
-
-void MainWindow::endorseMod(ModInfo::Ptr mod)
-{
-  m_OrganizerCore.loggedInAction(this, [this, mod] {
-    mod->endorse(true);
-  });
-}
-
-
-void MainWindow::endorse_clicked()
-{
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-
-  m_OrganizerCore.loggedInAction(this, [this] {
-    QItemSelectionModel *selection = ui->modList->selectionModel();
-    if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-      MessageDialog::showMessage(tr("Endorsing multiple mods will take a while. Please wait..."), this);
-    }
-
-    for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->endorse(true);
-    }
-  });
-}
-
-void MainWindow::dontendorse_clicked(int modIndex)
-{
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->setNeverEndorse();
-    }
-  }
-  else {
-    ModInfo::getByIndex(modIndex)->setNeverEndorse();
-  }
-}
-
-
-void MainWindow::unendorseMod(ModInfo::Ptr mod)
-{
-  m_OrganizerCore.loggedInAction(this, [mod] {
-    mod->endorse(false);
-  });
-}
-
-
-void MainWindow::unendorse_clicked()
-{
-  m_OrganizerCore.loggedInAction(this, [this] {
-    QItemSelectionModel *selection = ui->modList->selectionModel();
-    if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-      MessageDialog::showMessage(tr("Unendorsing multiple mods will take a while. Please wait..."), this);
-    }
-
-    for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->endorse(false);
-    }
-  });
-}
-
-
-void MainWindow::trackMod(ModInfo::Ptr mod, bool doTrack)
-{
-  m_OrganizerCore.loggedInAction(this, [mod, doTrack] {
-    mod->track(doTrack);
-  });
-}
-
-
-void MainWindow::track_clicked()
-{
-  m_OrganizerCore.loggedInAction(this, [this] {
-    QItemSelectionModel *selection = ui->modList->selectionModel();
-    for (auto idx : selection->selectedRows()) {
-      ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->track(true);
-    }
-  });
-}
-
-void MainWindow::untrack_clicked()
-{
-  m_OrganizerCore.loggedInAction(this, [this] {
-    QItemSelectionModel *selection = ui->modList->selectionModel();
-    for (auto idx : selection->selectedRows()) {
-      ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->track(false);
-    }
-  });
 }
 
 void MainWindow::windowTutorialFinished(const QString &windowName)
@@ -2635,269 +2420,6 @@ ModInfo::Ptr MainWindow::previousModInList(int modIndex)
     return {};
   }
   return ModInfo::getByIndex(modIndex);
-}
-
-void MainWindow::ignoreMissingData_clicked(int modIndex)
-{
-  const auto rows = ui->modList->selectionModel()->selectedRows();
-
-  if (rows.count() > 1) {
-    std::vector<ModInfo::Ptr> changed;
-
-    for (QModelIndex idx : rows) {
-      int row_idx = idx.data(ModList::IndexRole).toInt();
-      ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
-      info->markValidated(true);
-      changed.push_back(info);
-    }
-
-    for (auto&& m : changed) {
-      int row_idx = ModInfo::getIndex(m->internalName());
-      m_OrganizerCore.modList()->notifyChange(row_idx);
-    }
-  } else {
-    ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
-    info->markValidated(true);
-    m_OrganizerCore.modList()->notifyChange(modIndex);
-  }
-}
-
-void MainWindow::markConverted_clicked(int modIndex)
-{
-  const auto rows = ui->modList->selectionModel()->selectedRows();
-
-  if (rows.count() > 1) {
-    std::vector<ModInfo::Ptr> changed;
-
-    for (QModelIndex idx : rows) {
-      int row_idx = idx.data(ModList::IndexRole).toInt();
-      ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
-      info->markConverted(true);
-      changed.push_back(info);
-    }
-
-    for (auto&& m : changed) {
-      int row_idx = ModInfo::getIndex(m->internalName());
-      m_OrganizerCore.modList()->notifyChange(row_idx);
-    }
-  } else {
-    ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
-    info->markConverted(true);
-    m_OrganizerCore.modList()->notifyChange(modIndex);
-  }
-}
-
-
-void MainWindow::restoreHiddenFiles_clicked(int modIndex)
-{
-  const int max_items = 20;
-  QItemSelectionModel* selection = ui->modList->selectionModel();
-
-  QFlags<FileRenamer::RenameFlags> flags = FileRenamer::UNHIDE;
-  flags |= FileRenamer::MULTIPLE;
-
-  FileRenamer renamer(this, flags);
-
-  FileRenamer::RenameResults result = FileRenamer::RESULT_OK;
-
-  // multi selection
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    QString mods;
-    QStringList modNames;
-    int i = 0;
-
-    for (QModelIndex idx : selection->selectedRows()) {
-
-      QString name = idx.data().toString();
-      int row_idx = idx.data(ModList::IndexRole).toInt();
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(row_idx);
-      const auto flags = modInfo->getFlags();
-
-      if (!modInfo->isRegular() ||
-          std::find(flags.begin(), flags.end(), ModInfo::FLAG_HIDDEN_FILES) == flags.end()) {
-        continue;
-      }
-
-      // adds an item for the mod name until `i` reaches `max_items`, which
-      // adds one "..." item; subsequent mods are not shown on the list but
-      // are still added to `modNames` below so they can be removed correctly
-      if (i < max_items) {
-        mods += "<li>" + name + "</li>";
-      }
-      else if (i == max_items) {
-        mods += "<li>...</li>";
-      }
-
-      modNames.append(ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->name());
-      ++i;
-    }
-    if (QMessageBox::question(this, tr("Confirm"),
-        tr("Restore all hidden files in the following mods?<br><ul>%1</ul>").arg(mods),
-        QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-
-      for (QModelIndex idx : selection->selectedRows()) {
-
-        int row_idx = idx.data(ModList::IndexRole).toInt();
-        ModInfo::Ptr modInfo = ModInfo::getByIndex(row_idx);
-
-        const auto flags = modInfo->getFlags();
-        if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_HIDDEN_FILES) != flags.end()) {
-          const QString modDir = modInfo->absolutePath();
-
-          auto partialResult = restoreHiddenFilesRecursive(renamer, modDir);
-
-          if (partialResult == FileRenamer::RESULT_CANCEL) {
-            result = FileRenamer::RESULT_CANCEL;
-            break;
-          }
-          originModified((m_OrganizerCore.directoryStructure()->getOriginByName(
-            ToWString(modInfo->internalName()))).getID());
-        }
-      }
-    }
-  }
-  else {
-    //single selection
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-    const QString modDir = modInfo->absolutePath();
-
-    if (QMessageBox::question(this, tr("Are you sure?"),
-        tr("About to restore all hidden files in:\n") + modInfo->name(),
-        QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Ok) {
-
-      result = restoreHiddenFilesRecursive(renamer, modDir);
-
-      originModified((m_OrganizerCore.directoryStructure()->getOriginByName(
-        ToWString(modInfo->internalName()))).getID());
-    }
-  }
-
-  if (result == FileRenamer::RESULT_CANCEL){
-    log::debug("Restoring hidden files operation cancelled");
-  }
-  else {
-    log::debug("Finished restoring hidden files");
-  }
-}
-
-
-void MainWindow::visitOnNexus_clicked(int modIndex)
-{
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    int count = selection->selectedRows().count();
-    if (count > 10) {
-      if (QMessageBox::question(this, tr("Opening Nexus Links"),
-            tr("You are trying to open %1 links to Nexus Mods.  Are you sure you want to do this?").arg(count),
-            QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
-        return;
-      }
-    }
-    int row_idx;
-    ModInfo::Ptr info;
-    QString gameName;
-
-    for (QModelIndex idx : selection->selectedRows()) {
-      row_idx = idx.data(ModList::IndexRole).toInt();
-      info = ModInfo::getByIndex(row_idx);
-      int modID = info->nexusId();
-      gameName = info->gameName();
-      if (modID > 0)  {
-        linkClicked(NexusInterface::instance().getModURL(modID, gameName));
-      } else {
-        log::error("mod '{}' has no nexus id", info->name());
-      }
-    }
-  }
-  else {
-    int modID = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(modIndex, 0), Qt::UserRole).toInt();
-    QString gameName = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(modIndex, 0), Qt::UserRole + 4).toString();
-    if (modID > 0)  {
-      linkClicked(NexusInterface::instance().getModURL(modID, gameName));
-    } else {
-      MessageDialog::showMessage(tr("Nexus ID for this mod is unknown"), this);
-    }
-  }
-}
-
-void MainWindow::visitWebPage_clicked(int index)
-{
-  QItemSelectionModel* selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    int count = selection->selectedRows().count();
-    if (count > 10) {
-      if (QMessageBox::question(this, tr("Opening Web Pages"),
-        tr("You are trying to open %1 Web Pages.  Are you sure you want to do this?").arg(count),
-        QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
-        return;
-      }
-    }
-    int row_idx;
-    ModInfo::Ptr info;
-    QString gameName;
-    for (QModelIndex idx : selection->selectedRows()) {
-      row_idx = idx.data(ModList::IndexRole).toInt();
-      info = ModInfo::getByIndex(row_idx);
-
-      const auto url = info->parseCustomURL();
-      if (url.isValid()) {
-        linkClicked(url.toString());
-      }
-    }
-  }
-  else {
-    ModInfo::Ptr info = ModInfo::getByIndex(index);
-
-    const auto url = info->parseCustomURL();
-    if (url.isValid()) {
-      linkClicked(url.toString());
-    }
-  }
-}
-
-void MainWindow::visitNexusOrWebPage(const QModelIndex& idx)
-{
-  int row_idx = idx.data(ModList::IndexRole).toInt();
-
-  ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
-  if (!info) {
-    log::error("mod {} not found", row_idx);
-    return;
-  }
-
-  int modID = info->nexusId();
-  QString gameName = info->gameName();
-  const auto url = info->parseCustomURL();
-
-  if (modID > 0) {
-    linkClicked(NexusInterface::instance().getModURL(modID, gameName));
-  } else if (url.isValid()) {
-    linkClicked(url.toString());
-  } else {
-    log::error("mod '{}' has no valid link", info->name());
-  }
-}
-
-void MainWindow::visitNexusOrWebPage_clicked(int index) {
-  QItemSelectionModel* selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    int count = selection->selectedRows().count();
-    if (count > 10) {
-      if (QMessageBox::question(this, tr("Opening Web Pages"),
-        tr("You are trying to open %1 Web Pages.  Are you sure you want to do this?").arg(count),
-        QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
-        return;
-      }
-    }
-
-    for (QModelIndex idx : selection->selectedRows()) {
-      visitNexusOrWebPage(idx);
-    }
-  }
-  else {
-    QModelIndex idx = m_OrganizerCore.modList()->index(index, 0);
-    visitNexusOrWebPage(idx);
-  }
 }
 
 void MainWindow::openPluginOriginExplorer_clicked()
@@ -3017,144 +2539,10 @@ void MainWindow::updatePluginCount()
   );
 }
 
-void MainWindow::information_clicked(int modIndex)
-{
-  try {
-    ui->modList->actions().displayModInformation(modIndex);
-  } catch (const std::exception &e) {
-    reportError(e.what());
-  }
-}
-
-void MainWindow::setColor_clicked(int modIndex)
-{
-  auto& settings = m_OrganizerCore.settings();
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-
-  QColorDialog dialog(this);
-  dialog.setOption(QColorDialog::ShowAlphaChannel);
-
-  QColor currentColor = modInfo->color();
-  if (currentColor.isValid()) {
-    dialog.setCurrentColor(currentColor);
-  }
-  else if (auto c=settings.colors().previousSeparatorColor()) {
-    dialog.setCurrentColor(*c);
-  }
-
-  if (!dialog.exec())
-    return;
-
-  currentColor = dialog.currentColor();
-  if (!currentColor.isValid())
-    return;
-
-  settings.colors().setPreviousSeparatorColor(currentColor);
-
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
-       info->setColor(currentColor);
-    }
-  }
-  else {
-    modInfo->setColor(currentColor);
-  }
-}
-
-void MainWindow::resetColor_clicked(int modIndex)
-{
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-  QColor color = QColor();
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
-       info->setColor(color);
-    }
-  }
-  else {
-    modInfo->setColor(color);
-  }
-
-  m_OrganizerCore.settings().colors().removePreviousSeparatorColor();
-}
-
 void MainWindow::cancelModListEditor()
 {
   ui->modList->setEnabled(false);
   ui->modList->setEnabled(true);
-}
-
-void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
-{
-  if (!index.isValid()) {
-    return;
-  }
-
-  if (m_OrganizerCore.modList()->timeElapsedSinceLastChecked() <= QApplication::doubleClickInterval()) {
-    // don't interpret double click if we only just checked a mod
-    return;
-  }
-
-  bool indexOk = false;
-  int modIndex = index.data(ModList::IndexRole).toInt(&indexOk);
-
-  if (!indexOk || modIndex < 0 || modIndex >= ModInfo::getNumMods()) {
-    return;
-  }
-
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-
-  Qt::KeyboardModifiers modifiers = QApplication::queryKeyboardModifiers();
-  if (modifiers.testFlag(Qt::ControlModifier)) {
-    try {
-      shell::Explore(modInfo->absolutePath());
-
-      // workaround to cancel the editor that might have opened because of
-      // selection-click
-      ui->modList->closePersistentEditor(index);
-    }
-    catch (const std::exception &e) {
-      reportError(e.what());
-    }
-  }
-  else if (modifiers.testFlag(Qt::ShiftModifier)) {
-    try {
-      QModelIndex idx = m_OrganizerCore.modList()->index(modIndex, 0);
-      visitNexusOrWebPage(idx);
-      ui->modList->closePersistentEditor(index);
-    }
-    catch (const std::exception & e) {
-      reportError(e.what());
-    }
-  }
-  else if (ui->modList->hasCollapsibleSeparators() && modInfo->isSeparator()) {
-    ui->modList->setExpanded(index, !ui->modList->isExpanded(index));
-  }
-  else {
-    try {
-      auto tab = ModInfoTabIDs::None;
-
-      switch (index.column()) {
-        case ModList::COL_NOTES: tab = ModInfoTabIDs::Notes; break;
-        case ModList::COL_VERSION: tab = ModInfoTabIDs::Nexus; break;
-        case ModList::COL_MODID: tab = ModInfoTabIDs::Nexus; break;
-        case ModList::COL_GAME: tab = ModInfoTabIDs::Nexus; break;
-        case ModList::COL_CATEGORY: tab = ModInfoTabIDs::Categories; break;
-        case ModList::COL_CONFLICTFLAGS: tab = ModInfoTabIDs::Conflicts; break;
-      }
-
-      ui->modList->actions().displayModInformation(modIndex, tab);
-      // workaround to cancel the editor that might have opened because of
-      // selection-click
-      ui->modList->closePersistentEditor(index);
-    }
-    catch (const std::exception &e) {
-      reportError(e.what());
-    }
-  }
 }
 
 void MainWindow::openOriginInformation_clicked()
@@ -3244,123 +2632,6 @@ void MainWindow::on_espList_doubleClicked(const QModelIndex &index)
   }
 }
 
-bool MainWindow::populateMenuCategories(int modIndex, QMenu *menu, int targetID)
-{
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-  const std::set<int> &categories = modInfo->getCategories();
-
-  bool childEnabled = false;
-
-  for (unsigned int i = 1; i < m_CategoryFactory.numCategories(); ++i) {
-    if (m_CategoryFactory.getParentID(i) == targetID) {
-      QMenu *targetMenu = menu;
-      if (m_CategoryFactory.hasChildren(i)) {
-        targetMenu = menu->addMenu(m_CategoryFactory.getCategoryName(i).replace('&', "&&"));
-      }
-
-      int id = m_CategoryFactory.getCategoryID(i);
-      QScopedPointer<QCheckBox> checkBox(new QCheckBox(targetMenu));
-      bool enabled = categories.find(id) != categories.end();
-      checkBox->setText(m_CategoryFactory.getCategoryName(i).replace('&', "&&"));
-      if (enabled) {
-        childEnabled = true;
-      }
-      checkBox->setChecked(enabled ? Qt::Checked : Qt::Unchecked);
-
-      QScopedPointer<QWidgetAction> checkableAction(new QWidgetAction(targetMenu));
-      checkableAction->setDefaultWidget(checkBox.take());
-      checkableAction->setData(id);
-      targetMenu->addAction(checkableAction.take());
-
-      if (m_CategoryFactory.hasChildren(i)) {
-        if (populateMenuCategories(modIndex, targetMenu, m_CategoryFactory.getCategoryID(i)) || enabled) {
-          targetMenu->setIcon(QIcon(":/MO/gui/resources/check.png"));
-        }
-      }
-    }
-  }
-  return childEnabled;
-}
-
-void MainWindow::replaceCategoriesFromMenu(QMenu *menu, int modRow)
-{
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(modRow);
-  for (QAction* action : menu->actions()) {
-    if (action->menu() != nullptr) {
-      replaceCategoriesFromMenu(action->menu(), modRow);
-    } else {
-      QWidgetAction *widgetAction = qobject_cast<QWidgetAction*>(action);
-      if (widgetAction != nullptr) {
-        QCheckBox *checkbox = qobject_cast<QCheckBox*>(widgetAction->defaultWidget());
-        modInfo->setCategory(widgetAction->data().toInt(), checkbox->isChecked());
-      }
-    }
-  }
-}
-
-void MainWindow::addRemoveCategoriesFromMenu(QMenu *menu, int modRow, int referenceRow)
-{
-  if (referenceRow != -1 && referenceRow != modRow) {
-    ModInfo::Ptr editedModInfo = ModInfo::getByIndex(referenceRow);
-    for (QAction* action : menu->actions()) {
-      if (action->menu() != nullptr) {
-        addRemoveCategoriesFromMenu(action->menu(), modRow, referenceRow);
-      } else {
-        QWidgetAction *widgetAction = qobject_cast<QWidgetAction*>(action);
-        if (widgetAction != nullptr) {
-          QCheckBox *checkbox = qobject_cast<QCheckBox*>(widgetAction->defaultWidget());
-          int categoryId = widgetAction->data().toInt();
-          bool checkedBefore = editedModInfo->categorySet(categoryId);
-          bool checkedAfter = checkbox->isChecked();
-
-          if (checkedBefore != checkedAfter) { // only update if the category was changed on the edited mod
-            ModInfo::Ptr currentModInfo = ModInfo::getByIndex(modRow);
-            currentModInfo->setCategory(categoryId, checkedAfter);
-          }
-        }
-      }
-    }
-  } else {
-    replaceCategoriesFromMenu(menu, modRow);
-  }
-}
-
-void MainWindow::addRemoveCategories_MenuHandler(QMenu* menu, int modIndex, const QModelIndex& rowIdx) {
-
-  QList<QPersistentModelIndex> selected;
-  for (const QModelIndex &idx : ui->modList->selectionModel()->selectedRows()) {
-    selected.append(QPersistentModelIndex(idx));
-  }
-
-  if (selected.size() > 0) {
-    int minRow = INT_MAX;
-    int maxRow = -1;
-
-    for (const QPersistentModelIndex &idx : selected) {
-      log::debug("change categories on: {}", idx.data().toString());
-      QModelIndex modIdx = mapToModel(m_OrganizerCore.modList(), idx);
-      if (modIdx.row() != rowIdx.row()) {
-        addRemoveCategoriesFromMenu(menu, modIdx.row(), rowIdx.row());
-      }
-      if (idx.row() < minRow) minRow = idx.row();
-      if (idx.row() > maxRow) maxRow = idx.row();
-    }
-    replaceCategoriesFromMenu(menu, rowIdx.row());
-
-    m_OrganizerCore.modList()->notifyChange(minRow, maxRow + 1);
-
-    for (const QPersistentModelIndex &idx : selected) {
-      ui->modList->selectionModel()->select(idx, QItemSelectionModel::Select | QItemSelectionModel::Rows);
-    }
-  } else {
-    //For single mod selections, just do a replace
-    replaceCategoriesFromMenu(menu, modIndex);
-    m_OrganizerCore.modList()->notifyChange(modIndex);
-  }
-
-  refreshFilters();
-}
-
 void MainWindow::saveArchiveList()
 {
   if (m_OrganizerCore.isArchivesInit()) {
@@ -3377,110 +2648,6 @@ void MainWindow::saveArchiveList()
     archiveFile.commitIfDifferent(m_ArchiveListHash);
   } else {
     log::debug("archive list not initialised");
-  }
-}
-
-void MainWindow::checkModsForUpdates()
-{
-  bool checkingModsForUpdate = false;
-  if (NexusInterface::instance().getAccessManager()->validated()) {
-    checkingModsForUpdate = ModInfo::checkAllForUpdate(&m_PluginContainer, this);
-    NexusInterface::instance().requestEndorsementInfo(this, QVariant(), QString());
-    NexusInterface::instance().requestTrackingInfo(this, QVariant(), QString());
-  } else {
-    QString apiKey;
-    if (GlobalSettings::nexusApiKey(apiKey)) {
-      m_OrganizerCore.doAfterLogin([this] () { this->checkModsForUpdates(); });
-      NexusInterface::instance().getAccessManager()->apiCheck(apiKey);
-    } else {
-      log::warn("{}", tr("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus."));
-    }
-  }
-
-  bool updatesAvailable = false;
-  for (auto mod : m_OrganizerCore.modList()->allMods()) {
-    ModInfo::Ptr modInfo = ModInfo::getByName(mod);
-    if (modInfo->updateAvailable()) {
-      updatesAvailable = true;
-      break;
-    }
-  }
-
-  if (updatesAvailable || checkingModsForUpdate) {
-    ui->modList->setFilterCriteria({{
-        ModListSortProxy::TypeSpecial,
-        CategoryFactory::UpdateAvailable,
-        false}
-    });
-
-    m_Filters->setSelection({{
-      ModListSortProxy::TypeSpecial,
-      CategoryFactory::UpdateAvailable,
-      false
-    }});
-  }
-}
-
-void MainWindow::ignoreUpdate(int modIndex)
-{
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    for (QModelIndex idx : selection->selectedRows()) {
-      auto index = idx.data(ModList::IndexRole).toInt();
-      ModInfo::Ptr info = ModInfo::getByIndex(index);
-      info->ignoreUpdate(true);
-      m_OrganizerCore.modList()->notifyChange(index);
-    }
-  }
-  else {
-    ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
-    info->ignoreUpdate(true);
-    m_OrganizerCore.modList()->notifyChange(modIndex);
-  }
-}
-
-void MainWindow::unignoreUpdate(int modIndex)
-{
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
-      info->ignoreUpdate(false);
-      m_OrganizerCore.modList()->notifyChange(idx.data(ModList::IndexRole).toInt());
-    }
-  }
-  else {
-    ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
-    info->ignoreUpdate(false);
-    m_OrganizerCore.modList()->notifyChange(modIndex);
-  }
-}
-
-void MainWindow::setPrimaryCategoryCandidates(QMenu *primaryCategoryMenu,
-                                              ModInfo::Ptr info)
-{
-  primaryCategoryMenu->clear();
-  const std::set<int> &categories = info->getCategories();
-  for (int categoryID : categories) {
-    int catIdx = m_CategoryFactory.getCategoryIndex(categoryID);
-    QWidgetAction *action = new QWidgetAction(primaryCategoryMenu);
-    try {
-      QRadioButton *categoryBox = new QRadioButton(
-          m_CategoryFactory.getCategoryName(catIdx).replace('&', "&&"),
-          primaryCategoryMenu);
-      connect(categoryBox, &QRadioButton::toggled, [info, categoryID](bool enable) {
-        if (enable) {
-          info->setPrimaryCategory(categoryID);
-        }
-      });
-      categoryBox->setChecked(categoryID == info->primaryCategory());
-      action->setDefaultWidget(categoryBox);
-    } catch (const std::exception &e) {
-      log::error("failed to create category checkbox: {}", e.what());
-    }
-
-    action->setData(categoryID);
-    primaryCategoryMenu->addAction(action);
   }
 }
 
@@ -3549,15 +2716,6 @@ void MainWindow::openMyGamesFolder()
   shell::Explore(m_OrganizerCore.managedGame()->documentsDirectory());
 }
 
-static void addMenuAsPushButton(QMenu *menu, QMenu *subMenu)
-{
-  QPushButton *pushBtn = new QPushButton(subMenu->title());
-  pushBtn->setMenu(subMenu);
-  QWidgetAction *action = new QWidgetAction(menu);
-  action->setDefaultWidget(pushBtn);
-  menu->addAction(action);
-}
-
 QMenu *MainWindow::openFolderMenu()
 {
 	QMenu *FolderMenu = new QMenu(this);
@@ -3600,25 +2758,6 @@ void MainWindow::addPluginSendToContextMenu(QMenu *menu)
 
   menu->addMenu(sub_menu);
   menu->addSeparator();
-}
-
-void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
-{
-  try {
-    QModelIndex contextIdx = mapToModel(m_OrganizerCore.modList(), ui->modList->indexAt(pos));
-
-    if (!contextIdx.isValid()) {
-      // no selection
-      ModListGlobalContextMenu(m_OrganizerCore, ui->modList).exec(ui->modList->viewport()->mapToGlobal(pos));
-    }
-    else {
-      ModListContextMenu(contextIdx, m_OrganizerCore, m_CategoryFactory, ui->modList).exec(ui->modList->viewport()->mapToGlobal(pos));
-    }
-  } catch (const std::exception &e) {
-    reportError(tr("Exception: ").arg(e.what()));
-  } catch (...) {
-    reportError(tr("Unknown exception"));
-  }
 }
 
 void MainWindow::linkToolbar()
@@ -3799,13 +2938,6 @@ void MainWindow::on_actionNexus_triggered()
   shell::Open(QUrl(NexusInterface::instance().getGameURL(gameName)));
 }
 
-
-void MainWindow::linkClicked(const QString &url)
-{
-  shell::Open(QUrl(url));
-}
-
-
 void MainWindow::installTranslator(const QString &name)
 {
   QTranslator *translator = new QTranslator(this);
@@ -3819,7 +2951,6 @@ void MainWindow::installTranslator(const QString &name)
   qApp->installTranslator(translator);
   m_Translators.push_back(translator);
 }
-
 
 void MainWindow::languageChange(const QString &newLanguage)
 {
@@ -3902,7 +3033,6 @@ void MainWindow::updateAvailable()
   ui->actionUpdate->setToolTip(tr("Update available"));
   ui->statusBar->setUpdateAvailable(true);
 }
-
 
 void MainWindow::motdReceived(const QString &motd)
 {
@@ -4343,7 +3473,6 @@ void MainWindow::nxmDownloadURLs(QString, int, int, QVariant, QVariant resultDat
   m_OrganizerCore.settings().network().updateServers(servers);
 }
 
-
 void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, int, QNetworkReply::NetworkError error, const QString &errorString)
 {
   if (error == QNetworkReply::ContentAccessDenied || error == QNetworkReply::ContentNotFoundError) {
@@ -4366,7 +3495,6 @@ void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, in
     MessageDialog::showMessage(tr("Request to Nexus failed: %1").arg(errorString), this);
   }
 }
-
 
 BSA::EErrorCode MainWindow::extractBSA(BSA::Archive &archive, BSA::Folder::Ptr folder, const QString &destination,
                            QProgressDialog &progress)
@@ -4732,7 +3860,6 @@ void MainWindow::on_bossButton_clicked()
     return;
   }
 
-
   m_OrganizerCore.savePluginList();
 
   setEnabled(false);
@@ -4752,11 +3879,9 @@ void MainWindow::on_bossButton_clicked()
   }
 }
 
-
 const char *MainWindow::PATTERN_BACKUP_GLOB = ".????_??_??_??_??_??";
 const char *MainWindow::PATTERN_BACKUP_REGEX = "\\.(\\d\\d\\d\\d_\\d\\d_\\d\\d_\\d\\d_\\d\\d_\\d\\d)";
 const char *MainWindow::PATTERN_BACKUP_DATE = "yyyy_MM_dd_hh_mm_ss";
-
 
 bool MainWindow::createBackup(const QString &filePath, const QDateTime &time)
 {

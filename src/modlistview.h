@@ -13,6 +13,7 @@
 
 namespace Ui { class MainWindow; }
 
+class CategoryFactory;
 class FilterList;
 class OrganizerCore;
 class Profile;
@@ -37,7 +38,7 @@ public:
   explicit ModListView(QWidget* parent = 0);
   void setModel(QAbstractItemModel* model) override;
 
-  void setup(OrganizerCore& core, ModListViewActions* actions, Ui::MainWindow* mwui);
+  void setup(OrganizerCore& core, CategoryFactory& factory, ModListViewActions* actions, Ui::MainWindow* mwui);
 
   // set the current profile
   //
@@ -79,10 +80,6 @@ signals:
 
   void dragEntered(const QMimeData* mimeData);
   void dropEntered(const QMimeData* mimeData, DropPosition position);
-
-  // emitted when selected mods must be removed
-  //
-  void removeSelectedMods();
 
 public slots:
 
@@ -142,6 +139,9 @@ protected:
 
 protected slots:
 
+  void onCustomContextMenuRequested(const QPoint& pos);
+  void onDoubleClicked(const QModelIndex& index);
+
 private:
 
   void onModPrioritiesChanged(std::vector<int> const& indices);
@@ -180,6 +180,7 @@ private:
   };
 
   OrganizerCore* m_core;
+  CategoryFactory* m_categories;
   ModListViewUi ui;
   ModListViewActions* m_actions;
 

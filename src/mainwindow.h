@@ -208,25 +208,6 @@ private:
 
   bool modifyExecutablesDialog(int selection);
 
-  /**
-   * Sets category selections from menu; for multiple mods, this will only apply
-   * the changes made in the menu (which is the delta between the current menu selection and the reference mod)
-   * @param menu the menu after editing by the user
-   * @param modRow index of the mod to edit
-   * @param referenceRow row of the reference mod
-   */
-  void addRemoveCategoriesFromMenu(QMenu *menu, int modRow, int referenceRow);
-
-  /**
-   * Sets category selections from menu; for multiple mods, this will completely
-   * replace the current set of categories on each selected with those selected in the menu
-   * @param menu the menu after editing by the user
-   * @param modRow index of the mod to edit
-   */
-  void replaceCategoriesFromMenu(QMenu *menu, int modRow);
-
-  bool populateMenuCategories(int modIndex, QMenu *menu, int targetID);
-
   // remove invalid category-references from mods
   void fixCategories();
 
@@ -348,36 +329,14 @@ private slots:
   void openExplorer_activated();
   void refreshProfile_activated();
 
-  // modlist context menu
-  void installMod_clicked();
-  void renameMod_clicked();
-  void removeMod_clicked(int modIndex);
-  void setColor_clicked(int modIndex);
-  void resetColor_clicked(int modIndex);
-  void backupMod_clicked(int modIndex);
-  void reinstallMod_clicked(int modIndex);
-  void endorse_clicked();
-  void dontendorse_clicked(int modIndex);
-  void unendorse_clicked();
-  void track_clicked();
-  void untrack_clicked();
-  void ignoreMissingData_clicked(int modIndex);
-  void markConverted_clicked(int modIndex);
-  void restoreHiddenFiles_clicked(int modIndex);
-  void visitOnNexus_clicked(int modIndex);
-  void visitWebPage_clicked(int modIndex);
-  void visitNexusOrWebPage_clicked(int modIndex);
-  void openPluginOriginExplorer_clicked();
-  void openOriginInformation_clicked();
-  void information_clicked(int modIndex);
-  // data-tree context menu
-
   // pluginlist context menu
   void enableSelectedPlugins_clicked();
   void disableSelectedPlugins_clicked();
   void sendSelectedPluginsToTop_clicked();
   void sendSelectedPluginsToBottom_clicked();
   void sendSelectedPluginsToPriority_clicked();
+  void openOriginInformation_clicked();
+  void openPluginOriginExplorer_clicked();
 
   void linkToolbar();
   void linkDesktop();
@@ -390,10 +349,6 @@ private slots:
   BSA::EErrorCode extractBSA(BSA::Archive &archive, BSA::Folder::Ptr folder, const QString &destination, QProgressDialog &extractProgress);
 
   // nexus related
-  void checkModsForUpdates();
-
-  void linkClicked(const QString &url);
-
   void updateAvailable();
 
   void actionEndorseMO();
@@ -402,9 +357,6 @@ private slots:
   void motdReceived(const QString &motd);
 
   void originModified(int originID);
-
-  void setPrimaryCategoryCandidates(QMenu* menu, ModInfo::Ptr info);
-  void addRemoveCategories_MenuHandler(QMenu* menu, int modIndex, const QModelIndex& rowIdx);
 
   void modInstalled(const QString &modName);
 
@@ -426,17 +378,12 @@ private slots:
   void onFiltersOptions(
     ModListSortProxy::FilterMode mode, ModListSortProxy::SeparatorsMode sep);
 
-  void visitNexusOrWebPage(const QModelIndex& idx);
-
   void modRenamed(const QString &oldName, const QString &newName);
   void modRemoved(const QString &fileName);
 
   void hookUpWindowTutorials();
   bool shouldStartTutorial() const;
 
-  void endorseMod(ModInfo::Ptr mod);
-  void unendorseMod(ModInfo::Ptr mod);
-  void trackMod(ModInfo::Ptr mod, bool doTrack);
   void cancelModListEditor();
 
   void openInstanceFolder();
@@ -483,9 +430,6 @@ private slots:
   void removeFromToolbar(QAction* action);
   void overwriteClosed(int);
 
-  void ignoreUpdate(int modIndex);
-  void unignoreUpdate(int modIndex);
-
   void about();
 
   void modlistSelectionsChanged(const QItemSelection &current);
@@ -519,8 +463,6 @@ private slots: // ui slots
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_clearFiltersButton_clicked();
   void on_executablesListBox_currentIndexChanged(int index);
-  void on_modList_customContextMenuRequested(const QPoint &pos);
-  void on_modList_doubleClicked(const QModelIndex &index);
   void on_espList_doubleClicked(const QModelIndex &index);
   void on_profileBox_currentIndexChanged(int index);
   void on_startButton_clicked();

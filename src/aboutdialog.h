@@ -40,10 +40,6 @@ public:
   explicit AboutDialog(const QString &version, QWidget *parent = 0);
   ~AboutDialog();
 
-signals:
-
-  void linkClicked(QString link);
-
 private:
 
   enum Licenses {

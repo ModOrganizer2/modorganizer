@@ -19,6 +19,7 @@
 #include "modconflicticondelegate.h"
 #include "modlistviewactions.h"
 #include "modlistdropinfo.h"
+#include "modlistcontextmenu.h"
 #include "genericicondelegate.h"
 #include "shared/directoryentry.h"
 #include "shared/filesorigin.h"
@@ -88,6 +89,9 @@ ModListView::ModListView(QWidget* parent)
 
   setStyle(new ModListProxyStyle(style()));
   setItemDelegate(new ModListStyledItemDelegated(this));
+
+  connect(this, &ModListView::doubleClicked, this, &ModListView::onDoubleClicked);
+  connect(this, &ModListView::customContextMenuRequested, this, &ModListView::onCustomContextMenuRequested);
 }
 
 void ModListView::refresh()
@@ -574,17 +578,7 @@ bool ModListView::moveSelection(int key)
 
 bool ModListView::removeSelection()
 {
-  if (selectionModel()->hasSelection()) {
-    QModelIndexList rows = selectionModel()->selectedRows();
-    if (rows.count() > 1) {
-      emit removeSelectedMods();
-    }
-    else if (rows.count() == 1) {
-      // this does not work, I don't know why
-      // model()->removeRow(rows[0].row(), rows[0].parent());
-      m_core->modList()->removeRow(indexViewToModel(rows[0]).row());
-    }
-  }
+  m_actions->removeMods(indexViewToModel(selectionModel()->selectedRows()));
   return true;
 }
 
@@ -626,10 +620,11 @@ void ModListView::updateGroupByProxy(int groupIndex)
   }
 }
 
-void ModListView::setup(OrganizerCore& core, ModListViewActions* actions, Ui::MainWindow* mwui)
+void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, ModListViewActions* actions, Ui::MainWindow* mwui)
 {
   // attributes
   m_core = &core;
+  m_categories = &factory;
   m_actions = actions;
   ui = { mwui->groupCombo, mwui->activeModsCounter, mwui->modFilterEdit, mwui->clearFiltersButton };
 
@@ -758,6 +753,97 @@ QRect ModListView::visualRect(const QModelIndex& index) const
 QModelIndexList ModListView::selectedIndexes() const
 {
   return m_inDragMoveEvent ? QModelIndexList() : QTreeView::selectedIndexes();
+}
+
+void ModListView::onCustomContextMenuRequested(const QPoint& pos)
+{
+  try {
+    QModelIndex contextIdx = indexViewToModel(indexAt(pos));
+
+    if (!contextIdx.isValid()) {
+      // no selection
+      ModListGlobalContextMenu(*m_core, this).exec(viewport()->mapToGlobal(pos));
+    }
+    else {
+      ModListContextMenu(contextIdx, *m_core, *m_categories, this).exec(viewport()->mapToGlobal(pos));
+    }
+  }
+  catch (const std::exception& e) {
+    reportError(tr("Exception: ").arg(e.what()));
+  }
+  catch (...) {
+    reportError(tr("Unknown exception"));
+  }
+}
+
+void ModListView::onDoubleClicked(const QModelIndex& index)
+{
+  if (!index.isValid()) {
+    return;
+  }
+
+  if (m_core->modList()->timeElapsedSinceLastChecked() <= QApplication::doubleClickInterval()) {
+    // don't interpret double click if we only just checked a mod
+    return;
+  }
+
+  bool indexOk = false;
+  int modIndex = index.data(ModList::IndexRole).toInt(&indexOk);
+
+  if (!indexOk || modIndex < 0 || modIndex >= ModInfo::getNumMods()) {
+    return;
+  }
+
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+
+  Qt::KeyboardModifiers modifiers = QApplication::queryKeyboardModifiers();
+  if (modifiers.testFlag(Qt::ControlModifier)) {
+    try {
+      shell::Explore(modInfo->absolutePath());
+
+      // workaround to cancel the editor that might have opened because of
+      // selection-click
+      closePersistentEditor(index);
+    }
+    catch (const std::exception& e) {
+      reportError(e.what());
+    }
+  }
+  else if (modifiers.testFlag(Qt::ShiftModifier)) {
+    try {
+      QModelIndex idx = m_core->modList()->index(modIndex, 0);
+      actions().visitNexusOrWebPage({ idx });
+      closePersistentEditor(index);
+    }
+    catch (const std::exception& e) {
+      reportError(e.what());
+    }
+  }
+  else if (hasCollapsibleSeparators() && modInfo->isSeparator()) {
+    setExpanded(index, !isExpanded(index));
+  }
+  else {
+    try {
+      auto tab = ModInfoTabIDs::None;
+
+      switch (index.column()) {
+      case ModList::COL_NOTES: tab = ModInfoTabIDs::Notes; break;
+      case ModList::COL_VERSION: tab = ModInfoTabIDs::Nexus; break;
+      case ModList::COL_MODID: tab = ModInfoTabIDs::Nexus; break;
+      case ModList::COL_GAME: tab = ModInfoTabIDs::Nexus; break;
+      case ModList::COL_CATEGORY: tab = ModInfoTabIDs::Categories; break;
+      case ModList::COL_CONFLICTFLAGS: tab = ModInfoTabIDs::Conflicts; break;
+      }
+
+      actions().displayModInformation(modIndex, tab);
+      // workaround to cancel the editor that might have opened because of
+      // selection-click
+      closePersistentEditor(index);
+    }
+    catch (const std::exception& e) {
+      reportError(e.what());
+    }
+  }
 }
 
 void ModListView::dragEnterEvent(QDragEnterEvent* event)
