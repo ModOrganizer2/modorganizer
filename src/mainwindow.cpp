@@ -3363,45 +3363,6 @@ void MainWindow::addRemoveCategories_MenuHandler(QMenu* menu, int modIndex, cons
   refreshFilters();
 }
 
-void MainWindow::replaceCategories_MenuHandler(QMenu* menu, int modIndex)
-{
-  QList<QPersistentModelIndex> selected;
-  for (const QModelIndex &idx : ui->modList->selectionModel()->selectedRows()) {
-    selected.append(QPersistentModelIndex(idx));
-  }
-
-  if (selected.size() > 0) {
-    QStringList selectedMods;
-    int minRow = INT_MAX;
-    int maxRow = -1;
-    for (int i = 0; i < selected.size(); ++i) {
-      QModelIndex temp = mapToModel(m_OrganizerCore.modList(), selected.at(i));
-      selectedMods.append(temp.data().toString());
-      replaceCategoriesFromMenu(menu, mapToModel(m_OrganizerCore.modList(), selected.at(i)).row());
-      if (temp.row() < minRow) minRow = temp.row();
-      if (temp.row() > maxRow) maxRow = temp.row();
-    }
-
-    m_OrganizerCore.modList()->notifyChange(minRow, maxRow + 1);
-
-    // find mods by their name because indices are invalidated
-    QAbstractItemModel *model = ui->modList->model();
-    for (const QString &mod : selectedMods) {
-      QModelIndexList matches = model->match(model->index(0, 0), Qt::DisplayRole, mod, 1,
-                                             Qt::MatchFixedString | Qt::MatchCaseSensitive | Qt::MatchRecursive);
-      if (matches.size() > 0) {
-        ui->modList->selectionModel()->select(matches.at(0), QItemSelectionModel::Select | QItemSelectionModel::Rows);
-      }
-    }
-  } else {
-    //For single mod selections, just do a replace
-    replaceCategoriesFromMenu(menu, modIndex);
-    m_OrganizerCore.modList()->notifyChange(modIndex);
-  }
-
-  refreshFilters();
-}
-
 void MainWindow::saveArchiveList()
 {
   if (m_OrganizerCore.isArchivesInit()) {
@@ -3703,7 +3664,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
       int modIndex = ui->modList->indexAt(pos).data(ModList::IndexRole).toInt();
       int contextColumn = contextIdx.column();
 
-      ModListContextMenu menu(m_OrganizerCore, contextIdx, ui->modList);
+      ModListContextMenu menu(contextIdx, m_OrganizerCore, m_CategoryFactory, ui->modList);
 
       ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
       std::vector<ModInfo::EFlag> flags = info->getFlags();
@@ -3718,29 +3679,6 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
       // separator
       else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end()){
-        menu.addSeparator();
-        QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"), &menu);
-        populateMenuCategories(modIndex, addRemoveCategoriesMenu, 0);
-        connect(addRemoveCategoriesMenu, &QMenu::aboutToHide, [=]() { addRemoveCategories_MenuHandler(addRemoveCategoriesMenu, modIndex, contextIdx); });
-        addMenuAsPushButton(&menu, addRemoveCategoriesMenu);
-        QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"), &menu);
-        connect(primaryCategoryMenu, &QMenu::aboutToShow, [=]() { setPrimaryCategoryCandidates(primaryCategoryMenu, info); });
-        addMenuAsPushButton(&menu, primaryCategoryMenu);
-        menu.addSeparator();
-        menu.addAction(tr("Rename Separator..."), [=]() { renameMod_clicked(); });
-        menu.addAction(tr("Remove Separator..."), [=]() { removeMod_clicked(modIndex); });
-        menu.addSeparator();
-        if (ui->modList->sortColumn() == ModList::COL_PRIORITY) {
-          menu.addMenu(menu.createSendToContextMenu());
-          menu.addSeparator();
-        }
-        menu.addAction(tr("Select Color..."), [=]() { setColor_clicked(modIndex); });
-
-        if (info->color().isValid()) {
-          menu.addAction(tr("Reset Color"), [=]() { resetColor_clicked(modIndex); });
-        }
-
-        menu.addSeparator();
       }
 
       // foregin
@@ -3864,9 +3802,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         }
 
         menu.addAction(tr("Open in Explorer"), [=]() { ui->modList->actions().openExplorer({ contextIdx }); });
-      }
 
-      if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) == flags.end()) {
         QAction* infoAction = menu.addAction(tr("Information..."), [=]() { information_clicked(modIndex); });
         menu.setDefaultAction(infoAction);
       }

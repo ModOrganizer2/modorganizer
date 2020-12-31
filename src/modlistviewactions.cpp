@@ -506,6 +506,16 @@ void ModListViewActions::sendModsToSeparator(const QModelIndexList& index) const
   }
 }
 
+void ModListViewActions::renameMod(const QModelIndex& index) const
+{
+  try {
+    m_view->edit(index);
+  }
+  catch (const std::exception& e) {
+    reportError(tr("failed to rename mod: %1").arg(e.what()));
+  }
+}
+
 void ModListViewActions::removeMods(const QModelIndexList& indices) const
 {
   const int max_items = 20;
@@ -647,6 +657,94 @@ void ModListViewActions::visitWebPage(const QModelIndexList& indices) const
     if (url.isValid()) {
       shell::Open(url);
     }
+  }
+}
+
+void ModListViewActions::setColor(const QModelIndexList& indices, const QModelIndex& refIndex) const
+{
+  auto& settings = m_core.settings();
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(refIndex.data(ModList::IndexRole).toInt());
+
+  QColorDialog dialog(m_view);
+  dialog.setOption(QColorDialog::ShowAlphaChannel);
+
+  QColor currentColor = modInfo->color();
+  if (currentColor.isValid()) {
+    dialog.setCurrentColor(currentColor);
+  }
+  else if (auto c = settings.colors().previousSeparatorColor()) {
+    dialog.setCurrentColor(*c);
+  }
+
+  if (!dialog.exec())
+    return;
+
+  currentColor = dialog.currentColor();
+  if (!currentColor.isValid())
+    return;
+
+  settings.colors().setPreviousSeparatorColor(currentColor);
+
+  for (auto& idx : indices) {
+    ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+    info->setColor(currentColor);
+  }
+
+}
+
+void ModListViewActions::resetColor(const QModelIndexList& indices, const QModelIndex& refIndex) const
+{
+  for (auto& idx : indices) {
+    ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+    info->setColor(QColor());
+  }
+  m_core.settings().colors().removePreviousSeparatorColor();
+}
+
+void ModListViewActions::setCategories(ModInfo::Ptr mod, const std::vector<std::pair<int, bool>>& categories) const
+{
+  for (auto& [id, enabled] : categories) {
+    mod->setCategory(id, enabled);
+  }
+}
+
+void ModListViewActions::setCategoriesIf(ModInfo::Ptr mod, ModInfo::Ptr ref, const std::vector<std::pair<int, bool>>& categories) const
+{
+  for (auto& [id, enabled] : categories) {
+    if (ref->categorySet(id) != enabled) {
+      mod->setCategory(id, enabled);
+    }
+  }
+}
+
+void ModListViewActions::setCategories(const QModelIndexList& selected, const QModelIndex& ref,
+  const std::vector<std::pair<int, bool>>& categories) const
+{
+  ModInfo::Ptr refMod = ModInfo::getByIndex(ref.data(ModList::IndexRole).toInt());
+  if (selected.size() > 1) {
+
+    for (auto& idx : selected) {
+      if (idx.row() != ref.row()) {
+        setCategoriesIf(
+          ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt()),
+          refMod, categories);
+      }
+    }
+    setCategories(refMod, categories);
+  }
+  else if (!selected.isEmpty()) {
+    // for single mod selections, just do a replace
+    setCategories(refMod, categories);
+  }
+
+  for (auto& idx : selected) {
+    m_core.modList()->notifyChange(idx.data(ModList::IndexRole).toInt());
+  }
+
+  // reset the selection manually - still needed
+  auto viewIndices = m_view->indexModelToView(selected);
+  for (auto& idx : viewIndices) {
+    m_view->selectionModel()->select(idx, QItemSelectionModel::Select | QItemSelectionModel::Rows);
   }
 }
 

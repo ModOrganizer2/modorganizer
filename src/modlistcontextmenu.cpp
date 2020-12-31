@@ -29,22 +29,126 @@ ModListGlobalContextMenu::ModListGlobalContextMenu(OrganizerCore& core, ModListV
       QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
       view->enableAllVisible();
     }
-  });
+    });
   addAction(tr("Disable all visible"), [=]() {
     if (QMessageBox::question(view, tr("Confirm"), tr("Really disable all visible mods?"),
       QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
       view->disableAllVisible();
     }
-  });
+    });
   addAction(tr("Check for updates"), [=]() { view->actions().checkModsForUpdates(); });
   addAction(tr("Refresh"), &core, &OrganizerCore::profileRefresh);
   addAction(tr("Export to csv..."), [=]() { view->actions().exportModListCSV(); });
 }
 
-ModListContextMenu::ModListContextMenu(OrganizerCore& core, const QModelIndex& index, ModListView* view) :
+
+ModListChangeCategoryMenu::ModListChangeCategoryMenu(CategoryFactory& categories, ModInfo::Ptr mod, QMenu* parent)
+  : QMenu(tr("Change Categories"), parent)
+{
+  populate(this, categories, mod);
+}
+
+std::vector<std::pair<int, bool>> ModListChangeCategoryMenu::categories() const
+{
+  return categories(this);
+}
+
+std::vector<std::pair<int, bool>> ModListChangeCategoryMenu::categories(const QMenu* menu) const
+{
+  std::vector<std::pair<int, bool>> cats;
+  for (QAction* action : menu->actions()) {
+    if (action->menu() != nullptr) {
+      auto pcats = categories(action->menu());
+      cats.insert(cats.end(), pcats.begin(), pcats.end());
+    }
+    else {
+      QWidgetAction* widgetAction = qobject_cast<QWidgetAction*>(action);
+      if (widgetAction != nullptr) {
+        QCheckBox* checkbox = qobject_cast<QCheckBox*>(widgetAction->defaultWidget());
+        cats.emplace_back(widgetAction->data().toInt(), checkbox->isChecked());
+      }
+    }
+  }
+  return cats;
+}
+
+bool ModListChangeCategoryMenu::populate(QMenu* menu, CategoryFactory& factory, ModInfo::Ptr mod, int targetId)
+{
+  const std::set<int>& categories = mod->getCategories();
+
+  bool childEnabled = false;
+
+  for (unsigned int i = 1; i < factory.numCategories(); ++i) {
+    if (factory.getParentID(i) == targetId) {
+      QMenu* targetMenu = menu;
+      if (factory.hasChildren(i)) {
+        targetMenu = menu->addMenu(factory.getCategoryName(i).replace('&', "&&"));
+      }
+
+      int id = factory.getCategoryID(i);
+      QScopedPointer<QCheckBox> checkBox(new QCheckBox(targetMenu));
+      bool enabled = categories.find(id) != categories.end();
+      checkBox->setText(factory.getCategoryName(i).replace('&', "&&"));
+      if (enabled) {
+        childEnabled = true;
+      }
+      checkBox->setChecked(enabled ? Qt::Checked : Qt::Unchecked);
+
+      QScopedPointer<QWidgetAction> checkableAction(new QWidgetAction(targetMenu));
+      checkableAction->setDefaultWidget(checkBox.take());
+      checkableAction->setData(id);
+      targetMenu->addAction(checkableAction.take());
+
+      if (factory.hasChildren(i)) {
+        if (populate(targetMenu, factory, mod, factory.getCategoryID(i)) || enabled) {
+          targetMenu->setIcon(QIcon(":/MO/gui/resources/check.png"));
+        }
+      }
+    }
+  }
+  return childEnabled;
+}
+
+ModListPrimaryCategoryMenu::ModListPrimaryCategoryMenu(CategoryFactory& categories, ModInfo::Ptr mod, QMenu* parent)
+  : QMenu(tr("Primary Category"), parent)
+{
+  connect(this, &QMenu::aboutToShow, [=]() { populate(categories, mod); });
+}
+
+void ModListPrimaryCategoryMenu::populate(const CategoryFactory& factory, ModInfo::Ptr mod)
+{
+  clear();
+  const std::set<int>& categories = mod->getCategories();
+  for (int categoryID : categories) {
+    int catIdx = factory.getCategoryIndex(categoryID);
+    QWidgetAction* action = new QWidgetAction(this);
+    try {
+      QRadioButton* categoryBox = new QRadioButton(
+        factory.getCategoryName(catIdx).replace('&', "&&"),
+        this);
+      connect(categoryBox, &QRadioButton::toggled, [mod, categoryID](bool enable) {
+        if (enable) {
+          mod->setPrimaryCategory(categoryID);
+        }
+      });
+      categoryBox->setChecked(categoryID == mod->primaryCategory());
+      action->setDefaultWidget(categoryBox);
+    }
+    catch (const std::exception& e) {
+      log::error("failed to create category checkbox: {}", e.what());
+    }
+
+    action->setData(categoryID);
+    addAction(action);
+  }
+}
+
+ModListContextMenu::ModListContextMenu(
+  const QModelIndex& index, OrganizerCore& core, CategoryFactory& categories, ModListView* view) :
   QMenu(view)
   , m_core(core)
-  , m_index(index)
+  , m_categories(categories)
+  , m_index(index.model() == view->model() ? view->indexViewToModel(index) : index)
   , m_view(view)
   , m_actions(view->actions())
 {
@@ -54,7 +158,6 @@ ModListContextMenu::ModListContextMenu(OrganizerCore& core, const QModelIndex& i
   else {
     m_selected = { index };
   }
-
 
   QMenu* allMods = new ModListGlobalContextMenu(core, view, view);
   allMods->setTitle(tr("All Mods"));
@@ -96,6 +199,15 @@ ModListContextMenu::ModListContextMenu(OrganizerCore& core, const QModelIndex& i
   }
 }
 
+void ModListContextMenu::addMenuAsPushButton(QMenu* menu)
+{
+  QPushButton* pushBtn = new QPushButton(menu->title());
+  pushBtn->setMenu(menu);
+  QWidgetAction* action = new QWidgetAction(this);
+  action->setDefaultWidget(pushBtn);
+  addAction(action);
+}
+
 QMenu* ModListContextMenu::createSendToContextMenu()
 {
   QMenu* menu = new QMenu(m_view);
@@ -120,7 +232,35 @@ void ModListContextMenu::addOverwriteActions(ModInfo::Ptr mod)
 
 void ModListContextMenu::addSeparatorActions(ModInfo::Ptr mod)
 {
+  addSeparator();
 
+  // categories
+  ModListChangeCategoryMenu* categoriesMenu = new ModListChangeCategoryMenu(m_categories, mod, this);
+  connect(categoriesMenu, &QMenu::aboutToHide, [=]() {
+    m_actions.setCategories(m_selected, m_index, categoriesMenu->categories());
+  });
+  addMenuAsPushButton(categoriesMenu);
+
+  ModListPrimaryCategoryMenu* primaryCategoryMenu = new ModListPrimaryCategoryMenu(m_categories, mod, this);
+  addMenuAsPushButton(primaryCategoryMenu);
+  addSeparator();
+
+
+  addAction(tr("Rename Separator..."), [=]() { m_actions.renameMod(m_index); });
+  addAction(tr("Remove Separator..."), [=]() { m_actions.removeMods(m_selected); });
+  addSeparator();
+
+  if (m_view->sortColumn() == ModList::COL_PRIORITY) {
+    addMenu(createSendToContextMenu());
+    addSeparator();
+  }
+  addAction(tr("Select Color..."), [=]() { m_actions.setColor(m_selected, m_index); });
+
+  if (mod->color().isValid()) {
+    addAction(tr("Reset Color"), [=]() { m_actions.resetColor(m_selected, m_index); });
+  }
+
+  addSeparator();
 }
 
 void ModListContextMenu::addForeignActions(ModInfo::Ptr mod)

@@ -60,12 +60,28 @@ public:
   void sendModsToPriority(const QModelIndexList& index) const;
   void sendModsToSeparator(const QModelIndexList& index) const;
 
-  // actions for most type of mods
+  // actions for most regular mods
+  //
+  void renameMod(const QModelIndex& index) const;
   void removeMods(const QModelIndexList& indices) const;
   void ignoreMissingData(const QModelIndexList& indices) const;
   void markConverted(const QModelIndexList& indices) const;
   void visitOnNexus(const QModelIndexList& indices) const;
   void visitWebPage(const QModelIndexList& indices) const;
+
+  // set/reset color of the given selection, using the given reference index (index
+  // at which the context menu was shown)
+  //
+  void setColor(const QModelIndexList& indices, const QModelIndex& refIndex) const;
+  void resetColor(const QModelIndexList& indices, const QModelIndex& refIndex) const;
+
+  // set the category of the mod in the given list, using the given index as reference
+  // - the categories are set as-is on the refernce mod
+  // - for the other mods, the category is only set if the current state of the category
+  //   on the reference is different
+  //
+  void setCategories(const QModelIndexList& selected, const QModelIndex& ref,
+    const std::vector<std::pair<int, bool>>& categories) const;
 
   // open the Windows explorer for the specified mods
   //
@@ -89,7 +105,18 @@ signals:
 
 private:
 
+  // move the contents of the overwrite to the given path
+  //
   void moveOverwriteContentsTo(const QString& absolutePath) const;
+
+  // set the category of the given mod based on the given array
+  //
+  void setCategories(ModInfo::Ptr mod, const std::vector<std::pair<int, bool>>& categories) const;
+
+  // set the category of the given mod if the category from the reference mod does not match
+  // the one in the array of categories
+  //
+  void setCategoriesIf(ModInfo::Ptr mod, ModInfo::Ptr ref, const std::vector<std::pair<int, bool>>& categories) const;
 
 private:
 

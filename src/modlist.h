@@ -131,6 +131,8 @@ public:
 
   void highlightMods(const QItemSelectionModel *selection, const MOShared::DirectoryEntry &directoryEntry);
 
+public:
+
   /**
    * @brief Notify the mod list that the given mod has been installed. This is used
    * to notify the plugin that registered through onModInstalled().

@@ -152,6 +152,7 @@ public slots:
   void directory_refreshed();
 
   void updatePluginCount();
+  void refreshFilters();
 
 signals:
 
@@ -406,7 +407,6 @@ private slots:
 
   void setPrimaryCategoryCandidates(QMenu* menu, ModInfo::Ptr info);
   void addRemoveCategories_MenuHandler(QMenu* menu, int modIndex, const QModelIndex& rowIdx);
-  void replaceCategories_MenuHandler(QMenu* menu, int modIndex);
 
   void modInstalled(const QString &modName);
 
@@ -426,7 +426,6 @@ private slots:
   void onRequestsChanged(const APIStats& stats, const APIUserAccount& user);
 
   void deselectFilters();
-  void refreshFilters();
   void onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>& filters);
   void onFiltersOptions(
     ModListSortProxy::FilterMode mode, ModListSortProxy::SeparatorsMode sep);
