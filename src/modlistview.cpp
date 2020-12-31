@@ -964,23 +964,45 @@ void ModListView::timerEvent(QTimerEvent* event)
 
 bool ModListView::event(QEvent* event)
 {
-  if (event->type() == QEvent::KeyPress) {
+  if (event->type() == QEvent::KeyPress
+    && m_core->currentProfile()
+    && selectionModel()->hasSelection()) {
     QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
 
-    if (keyEvent->modifiers() == Qt::ControlModifier
-      && (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter)) {
-      if (selectionModel()->hasSelection() && selectionModel()->selectedRows().count() == 1) {
-        m_actions->openExplorer({ indexViewToModel(selectionModel()->currentIndex()) });
-        return true;
+    auto index = selectionModel()->currentIndex();
+
+    if (keyEvent->modifiers() == Qt::ControlModifier) {
+      // ctrl+enter open explorer
+      if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {
+        if (selectionModel()->selectedRows().count() == 1) {
+          m_actions->openExplorer({ indexViewToModel(index) });
+          return true;
+        }
       }
-    }
-    else if (m_core->currentProfile()) {
-      if (keyEvent->modifiers() == Qt::ControlModifier
+      // ctrl+up/down move selection
+      else if (keyEvent->modifiers() == Qt::ControlModifier
         && sortColumn() == ModList::COL_PRIORITY
         && (keyEvent->key() == Qt::Key_Up || keyEvent->key() == Qt::Key_Down)) {
         return moveSelection(keyEvent->key());
       }
-      else if (keyEvent->key() == Qt::Key_Delete) {
+    }
+    else if (keyEvent->modifiers() == Qt::ShiftModifier) {
+      // shift+enter expand
+      if ((keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter)
+        && selectionModel()->selectedRows().count() == 1) {
+        if (model()->hasChildren(index)) {
+          setExpanded(index, !isExpanded(index));
+        }
+        else if (index.parent().isValid()) {
+          setExpanded(index.parent(), false);
+          selectionModel()->select(index.parent(),
+            QItemSelectionModel::SelectCurrent | QItemSelectionModel::Rows);
+          setCurrentIndex(index.parent());
+        }
+      }
+    }
+    else {
+      if (keyEvent->key() == Qt::Key_Delete) {
         return removeSelection();
       }
       else if (keyEvent->key() == Qt::Key_Space) {
