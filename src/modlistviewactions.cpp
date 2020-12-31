@@ -434,7 +434,7 @@ void ModListViewActions::displayModInformation(ModInfo::Ptr modInfo, unsigned in
     modInfo->saveMeta();
 
     ModInfoDialog dialog(m_main, &m_core, &m_core.pluginContainer(), modInfo);
-    connect(&dialog, SIGNAL(originModified(int)), this, SLOT(originModified(int)));
+    connect(&dialog, &ModInfoDialog::originModified, this, &ModListViewActions::originModified);
 
     //Open the tab first if we want to use the standard indexes of the tabs.
     if (tab != ModInfoTabIDs::None) {
