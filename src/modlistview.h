@@ -16,6 +16,7 @@ namespace Ui { class MainWindow; }
 class CategoryFactory;
 class FilterList;
 class OrganizerCore;
+class MainWindow;
 class Profile;
 class ModListByPriorityProxy;
 class ModListViewActions;
@@ -38,7 +39,7 @@ public:
   explicit ModListView(QWidget* parent = 0);
   void setModel(QAbstractItemModel* model) override;
 
-  void setup(OrganizerCore& core, CategoryFactory& factory, ModListViewActions* actions, Ui::MainWindow* mwui);
+  void setup(OrganizerCore& core, CategoryFactory& factory, FilterList& filters, MainWindow* mw, Ui::MainWindow* mwui);
 
   // set the current profile
   //

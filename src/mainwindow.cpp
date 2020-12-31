@@ -533,12 +533,10 @@ MainWindow::MainWindow(Settings &settings
 
 void MainWindow::setupModList()
 {
-  auto* actions = new ModListViewActions(m_OrganizerCore, *m_Filters, m_CategoryFactory, this, ui->modList);
-  ui->modList->setup(m_OrganizerCore, m_CategoryFactory, actions, ui);
+  ui->modList->setup(m_OrganizerCore, m_CategoryFactory, *m_Filters, this, ui);
 
-  connect(actions, &ModListViewActions::overwriteCleared, [=]() { scheduleCheckForProblems(); });
-  connect(actions, &ModListViewActions::originModified, this, &MainWindow::originModified);
-  connect(m_OrganizerCore.modList(), &ModList::clearOverwrite, actions, &ModListViewActions::clearOverwrite);
+  connect(&ui->modList->actions(), &ModListViewActions::overwriteCleared, [=]() { scheduleCheckForProblems(); });
+  connect(&ui->modList->actions(), &ModListViewActions::originModified, this, &MainWindow::originModified);
   connect(m_OrganizerCore.modList(), &ModList::modPrioritiesChanged, [&]() { m_ArchiveListWriter.write(); });
 
   // keep here for now

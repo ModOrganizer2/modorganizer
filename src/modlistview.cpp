@@ -620,16 +620,18 @@ void ModListView::updateGroupByProxy(int groupIndex)
   }
 }
 
-void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, ModListViewActions* actions, Ui::MainWindow* mwui)
+
+void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, FilterList& filters, MainWindow* mw, Ui::MainWindow* mwui)
 {
   // attributes
   m_core = &core;
   m_categories = &factory;
-  m_actions = actions;
+  m_actions = new ModListViewActions(core, filters, factory, mw, this);
   ui = { mwui->groupCombo, mwui->activeModsCounter, mwui->modFilterEdit, mwui->clearFiltersButton };
 
   connect(m_core, &OrganizerCore::modInstalled, this, &ModListView::onModInstalled);
   connect(core.modList(), &ModList::modPrioritiesChanged, this, &ModListView::onModPrioritiesChanged);
+  connect(core.modList(), &ModList::clearOverwrite, m_actions, &ModListViewActions::clearOverwrite);
 
   m_byPriorityProxy = new ModListByPriorityProxy(core.currentProfile(), core, this);
   m_byPriorityProxy->setSourceModel(core.modList());
