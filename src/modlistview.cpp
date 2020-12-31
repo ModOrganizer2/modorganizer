@@ -98,13 +98,9 @@ void ModListView::refresh()
 {
   updateGroupByProxy(-1);
 
-  // since we use a proxy, modifying the stylesheet messes things
-  // up by and this fixes it (force update style and fix drop indicator
-  // after changing the stylesheet)
-  if (auto* proxy = qobject_cast<QProxyStyle*>(style())) {
-    auto* s = proxy->baseStyle();
-    setStyle(new ModListProxyStyle(s));
-  }
+  // since we use a proxy, modifying the stylesheet breaks it
+  // so we need to reset it
+  setStyle(new ModListProxyStyle(QApplication::style()));
 }
 
 void ModListView::setProfile(Profile* profile)
