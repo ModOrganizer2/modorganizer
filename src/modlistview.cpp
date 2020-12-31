@@ -27,6 +27,14 @@
 
 using namespace MOBase;
 
+// delegate to remove indentation for mods when using collapsible
+// separator
+//
+// the delegate works by removing the indentation of the child items
+// before drawing, but unfortunately this normally breaks event
+// handling (e.g. checkbox, edit, etc.), so we also need to override
+// the visualRect() function from the mod list view.
+//
 class ModListStyledItemDelegated : public QStyledItemDelegate
 {
   ModListView* m_view;
@@ -301,32 +309,34 @@ std::pair<QModelIndex, QModelIndexList> ModListView::selected() const
 
 void ModListView::setSelected(const QModelIndex& current, const QModelIndexList& selected)
 {
-  // reset the selection and the index
   setCurrentIndex(indexModelToView(current));
   for (auto idx : selected) {
     selectionModel()->select(indexModelToView(idx), QItemSelectionModel::Select | QItemSelectionModel::Rows);
   }
 }
 
-void ModListView::expandItem(const QModelIndex& index) {
+void ModListView::expandItem(const QModelIndex& index)
+{
+  // the group proxy (QtGroupingProxy and ModListByPriorityProxy) emit
+  // those with their own index, so we need to do this manually
   if (index.model() == m_sortProxy->sourceModel()) {
-    expand(m_sortProxy->mapFromSource(index));
+    setExpanded(m_sortProxy->mapFromSource(index), true);
   }
   else if (index.model() == model()) {
-    expand(index);
+    setExpanded(index, true);
   }
 }
 
 void ModListView::onModPrioritiesChanged(std::vector<int> const& indices)
 {
-  // expand separator whose priority has changed
+  // expand separator whose priority has changed and parents
   for (auto index : indices) {
     auto idx = indexModelToView(m_core->modList()->index(index, 0));
     if (hasCollapsibleSeparators() && model()->hasChildren(idx)) {
-      expand(idx);
+      setExpanded(idx, true);
     }
     if (idx.parent().isValid()) {
-      expand(idx.parent());
+      setExpanded(idx.parent(), true);
     }
   }
 
@@ -386,7 +396,7 @@ void ModListView::onModInstalled(const QString& modName)
   QModelIndex qIndex = indexModelToView(m_core->modList()->index(index, 0));
 
   if (hasCollapsibleSeparators()) {
-    expand(qIndex);
+    setExpanded(qIndex, true);
   }
 
   // focus, scroll to and select
@@ -500,10 +510,7 @@ void ModListView::refreshFilters()
 {
   auto [current, sourceRows] = selected();
 
-  int idxRow = currentIndex().row();
-  QVariant currentIndexName = model()->index(idxRow, 0).data();
   setCurrentIndex(QModelIndex());
-
   m_filters->refresh();
 
   setSelected(current, sourceRows);
@@ -538,6 +545,8 @@ void ModListView::onExternalFolderDropped(const QUrl& url, int priority)
     return;
   }
 
+  // TODO: this is currently a silent copy, which can take some time, but there is
+  // no clean method to do this in uibase
   if (!copyDir(fileInfo.absoluteFilePath(), newMod->absolutePath(), true)) {
     return;
   }
@@ -757,6 +766,8 @@ void ModListView::setModel(QAbstractItemModel* model)
 
 QRect ModListView::visualRect(const QModelIndex& index) const
 {
+  // this shift the visualRect() from QTreeView to match the new actual
+  // zone after removing indentation (see the ModListStyledItemDelegated)
   QRect rect = QTreeView::visualRect(index);
   if (hasCollapsibleSeparators()) {
     if (index.isValid() && !index.model()->hasChildren(index) && index.parent().isValid()) {
@@ -771,6 +782,15 @@ QRect ModListView::visualRect(const QModelIndex& index) const
 
 QModelIndexList ModListView::selectedIndexes() const
 {
+  // during drag&drop events, we fake the return value of selectedIndexes()
+  // to allow drag&drop of a parent into its children
+  //
+  // this is only "active" during the actual dragXXXEvent and dropEvent method,
+  // not during the whole drag&drop event
+  //
+  // selectedIndexes() is a protected method from QTreeView which is little
+  // used so this should not break anything
+  //
   return m_inDragMoveEvent ? QModelIndexList() : QTreeView::selectedIndexes();
 }
 
@@ -815,14 +835,10 @@ void ModListView::onDoubleClicked(const QModelIndex& index)
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
 
-  Qt::KeyboardModifiers modifiers = QApplication::queryKeyboardModifiers();
+  const auto modifiers = QApplication::queryKeyboardModifiers();
   if (modifiers.testFlag(Qt::ControlModifier)) {
     try {
       shell::Explore(modInfo->absolutePath());
-
-      // workaround to cancel the editor that might have opened because of
-      // selection-click
-      closePersistentEditor(index);
     }
     catch (const std::exception& e) {
       reportError(e.what());
@@ -830,9 +846,7 @@ void ModListView::onDoubleClicked(const QModelIndex& index)
   }
   else if (modifiers.testFlag(Qt::ShiftModifier)) {
     try {
-      QModelIndex idx = m_core->modList()->index(modIndex, 0);
-      actions().visitNexusOrWebPage({ idx });
-      closePersistentEditor(index);
+      actions().visitNexusOrWebPage({ indexViewToModel(index) });
     }
     catch (const std::exception& e) {
       reportError(e.what());
@@ -855,14 +869,15 @@ void ModListView::onDoubleClicked(const QModelIndex& index)
       }
 
       actions().displayModInformation(modIndex, tab);
-      // workaround to cancel the editor that might have opened because of
-      // selection-click
-      closePersistentEditor(index);
     }
     catch (const std::exception& e) {
       reportError(e.what());
     }
   }
+
+  // workaround to cancel the editor that might have opened because of
+  // selection-click
+  closePersistentEditor(index);
 }
 
 void ModListView::onSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
@@ -924,10 +939,14 @@ void ModListView::onFiltersCriteria(const std::vector<ModListSortProxy::Criteria
 
 void ModListView::dragEnterEvent(QDragEnterEvent* event)
 {
+  // this event is used by the modlist to check if we are draggin
+  // to a mod (local files) or to a priority (mods, downloads, external
+  // files)
   emit dragEntered(event->mimeData());
   QTreeView::dragEnterEvent(event);
 
-
+  // there is no drop event for invalid data since canDropMimeData
+  // returns false, so we notify user on drag enter
   ModListDropInfo dropInfo(event->mimeData(), *m_core);
 
   if (dropInfo.isValid() && !dropInfo.isLocalFileDrop()
@@ -938,11 +957,13 @@ void ModListView::dragEnterEvent(QDragEnterEvent* event)
 
 void ModListView::dragMoveEvent(QDragMoveEvent* event)
 {
+  // this replace the openTimer from QTreeView to prevent
+  // auto-collapse of items
   if (autoExpandDelay() >= 0) {
     m_openTimer.start(autoExpandDelay(), this);
   }
 
-  // bypass QTreeView
+  // see selectedIndexes()
   m_inDragMoveEvent = true;
   QAbstractItemView::dragMoveEvent(event);
   m_inDragMoveEvent = false;
@@ -950,8 +971,12 @@ void ModListView::dragMoveEvent(QDragMoveEvent* event)
 
 void ModListView::dropEvent(QDropEvent* event)
 {
+  // this event is used by the byPriorityProxy to know if allow
+  // dropping mod between a separator and its first mod (there
+  // is no way to deduce this except using dropIndicatorPosition())
   emit dropEntered(event->mimeData(), static_cast<DropPosition>(dropIndicatorPosition()));
 
+  // see selectedIndexes()
   m_inDragMoveEvent = true;
   QTreeView::dropEvent(event);
   m_inDragMoveEvent = false;
@@ -959,6 +984,7 @@ void ModListView::dropEvent(QDropEvent* event)
 
 void ModListView::timerEvent(QTimerEvent* event)
 {
+  // prevent auto-collapse, see dragMoveEvent()
   if (event->timerId() == m_openTimer.timerId()) {
     QPoint pos = viewport()->mapFromGlobal(QCursor::pos());
     if (state() == QAbstractItemView::DraggingState
