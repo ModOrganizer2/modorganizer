@@ -257,7 +257,7 @@ void ModListContextMenu::addSeparatorActions(ModInfo::Ptr mod)
   addAction(tr("Select Color..."), [=]() { m_actions.setColor(m_selected, m_index); });
 
   if (mod->color().isValid()) {
-    addAction(tr("Reset Color"), [=]() { m_actions.resetColor(m_selected, m_index); });
+    addAction(tr("Reset Color"), [=]() { m_actions.resetColor(m_selected); });
   }
 
   addSeparator();
@@ -297,5 +297,121 @@ void ModListContextMenu::addBackupActions(ModInfo::Ptr mod)
 
 void ModListContextMenu::addRegularActions(ModInfo::Ptr mod)
 {
+  auto flags = mod->getFlags();
 
+  // categories
+  ModListChangeCategoryMenu* categoriesMenu = new ModListChangeCategoryMenu(m_categories, mod, this);
+  connect(categoriesMenu, &QMenu::aboutToHide, [=]() {
+    m_actions.setCategories(m_selected, m_index, categoriesMenu->categories());
+    });
+  addMenuAsPushButton(categoriesMenu);
+
+  ModListPrimaryCategoryMenu* primaryCategoryMenu = new ModListPrimaryCategoryMenu(m_categories, mod, this);
+  addMenuAsPushButton(primaryCategoryMenu);
+  addSeparator();
+
+  if (mod->downgradeAvailable()) {
+    addAction(tr("Change versioning scheme"), [=]() { m_actions.changeVersioningScheme(m_index); });
+  }
+
+  if (mod->nexusId() > 0)
+    addAction(tr("Force-check updates"), [=]() { m_actions.checkModsForUpdates(m_selected); });
+  if (mod->updateIgnored()) {
+    addAction(tr("Un-ignore update"), [=]() { m_actions.setIgnoreUpdate(m_selected, false); });
+  }
+  else {
+    if (mod->updateAvailable() || mod->downgradeAvailable()) {
+      addAction(tr("Ignore update"), [=]() { m_actions.setIgnoreUpdate(m_selected, true); });
+    }
+  }
+  addSeparator();
+
+  addAction(tr("Enable selected"), [=]() { m_core.modList()->setActive(m_selected, true); });
+  addAction(tr("Disable selected"), [=]() { m_core.modList()->setActive(m_selected, false); });
+
+  addSeparator();
+
+
+  if (m_view->sortColumn() == ModList::COL_PRIORITY) {
+    addMenu(createSendToContextMenu());
+    addSeparator();
+  }
+
+  addAction(tr("Rename Mod..."), [=]() { m_actions.renameMod(m_index); });
+  addAction(tr("Reinstall Mod"), [=]() { m_actions.reinstallMod(m_index); });
+  addAction(tr("Remove Mod..."), [=]() { m_actions.removeMods(m_selected); });
+  addAction(tr("Create Backup"), [=]() { m_actions.createBackup(m_index); });
+
+  if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_HIDDEN_FILES) != flags.end()) {
+    addAction(tr("Restore hidden files"), [=]() { m_actions.restoreHiddenFiles(m_selected); });
+  }
+
+  addSeparator();
+
+  if (m_index.column() == ModList::COL_NOTES) {
+    addAction(tr("Select Color..."), [=]() { m_actions.setColor(m_selected, m_index); });
+    if (mod->color().isValid()) {
+      addAction(tr("Reset Color"), [=]() { m_actions.resetColor(m_selected); });
+    }
+    addSeparator();
+  }
+
+  if (mod->nexusId() > 0 && Settings::instance().nexus().endorsementIntegration()) {
+    switch (mod->endorsedState()) {
+    case EndorsedState::ENDORSED_TRUE: {
+      addAction(tr("Un-Endorse"), [=]() { m_actions.setEndorsed(m_selected, false); });
+    } break;
+    case EndorsedState::ENDORSED_FALSE: {
+      addAction(tr("Endorse"), [=]() { m_actions.setEndorsed(m_selected, true); });
+      addAction(tr("Won't endorse"), [=]() { m_actions.willNotEndorsed(m_selected); });
+    } break;
+    case EndorsedState::ENDORSED_NEVER: {
+      addAction(tr("Endorse"), [=]() { m_actions.setEndorsed(m_selected, true); });
+    } break;
+    default: {
+      QAction* action = new QAction(tr("Endorsement state unknown"), this);
+      action->setEnabled(false);
+      addAction(action);
+    } break;
+    }
+  }
+
+  if (mod->nexusId() > 0 && Settings::instance().nexus().trackedIntegration()) {
+    switch (mod->trackedState()) {
+    case TrackedState::TRACKED_FALSE: {
+      addAction(tr("Start tracking"), [=]() { m_actions.setTracked(m_selected, true); });
+    } break;
+    case TrackedState::TRACKED_TRUE: {
+      addAction(tr("Stop tracking"), [=]() { m_actions.setTracked(m_selected, false); });
+    } break;
+    default: {
+      QAction* action = new QAction(tr("Tracked state unknown"), this);
+      action->setEnabled(false);
+      addAction(action);
+    } break;
+    }
+  }
+
+  addSeparator();
+
+  if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_INVALID) != flags.end()) {
+    addAction(tr("Ignore missing data"), [=]() { m_actions.ignoreMissingData(m_selected); });
+  }
+
+  if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_ALTERNATE_GAME) != flags.end()) {
+    addAction(tr("Mark as converted/working"), [=]() { m_actions.markConverted(m_selected); });
+  }
+
+  addSeparator();
+
+  if (mod->nexusId() > 0) {
+    addAction(tr("Visit on Nexus"), [=]() { m_actions.visitOnNexus(m_selected); });
+  }
+
+  const auto url = mod->parseCustomURL();
+  if (url.isValid()) {
+    addAction(tr("Visit on %1").arg(url.host()), [=]() { m_actions.visitWebPage(m_selected); });
+  }
+
+  addAction(tr("Open in Explorer"), [=]() { m_actions.openExplorer(m_selected); });
 }

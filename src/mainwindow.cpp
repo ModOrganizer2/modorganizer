@@ -539,6 +539,7 @@ void MainWindow::setupModList()
   ui->modList->setup(m_OrganizerCore, actions, ui);
 
   connect(actions, &ModListViewActions::overwriteCleared, [=]() { scheduleCheckForProblems(); });
+  connect(actions, &ModListViewActions::originModified, this, &MainWindow::originModified);
   connect(ui->modList, &ModListView::removeSelectedMods, [=]() { removeMod_clicked(-1); });
   connect(m_OrganizerCore.modList(), &ModList::clearOverwrite, actions, &ModListViewActions::clearOverwrite);
   connect(m_OrganizerCore.modList(), &ModList::modPrioritiesChanged, [&]() { m_ArchiveListWriter.write(); });
@@ -2287,10 +2288,7 @@ void MainWindow::modInstalled(const QString &modName)
   }
 
   // force an update to happen
-  std::multimap<QString, int> IDs;
-  ModInfo::Ptr info = ModInfo::getByIndex(index);
-  IDs.insert(std::make_pair<QString, int>(info->gameName(), info->nexusId()));
-  modUpdateCheck(IDs);
+  ui->modList->actions().checkModsForUpdates({ m_OrganizerCore.modList()->index(index, 0) });
 }
 
 void MainWindow::showMessage(const QString &message)
@@ -3423,35 +3421,6 @@ void MainWindow::checkModsForUpdates()
   }
 }
 
-void MainWindow::changeVersioningScheme(int modIndex) {
-  if (QMessageBox::question(this, tr("Continue?"),
-        tr("The versioning scheme decides which version is considered newer than another.\n"
-           "This function will guess the versioning scheme under the assumption that the installed version is outdated."),
-        QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Yes) {
-
-    ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
-
-    bool success = false;
-
-    static VersionInfo::VersionScheme schemes[] = { VersionInfo::SCHEME_REGULAR, VersionInfo::SCHEME_DECIMALMARK, VersionInfo::SCHEME_NUMBERSANDLETTERS };
-
-    for (int i = 0; i < sizeof(schemes) / sizeof(VersionInfo::VersionScheme) && !success; ++i) {
-      VersionInfo verOld(info->version().canonicalString(), schemes[i]);
-      VersionInfo verNew(info->newestVersion().canonicalString(), schemes[i]);
-      if (verOld < verNew) {
-        info->setVersion(verOld);
-        info->setNewestVersion(verNew);
-        success = true;
-      }
-    }
-    if (!success) {
-      QMessageBox::information(this, tr("Sorry"),
-          tr("I don't know a versioning scheme where %1 is newer than %2.").arg(info->newestVersion().canonicalString()).arg(info->version().canonicalString()),
-          QMessageBox::Ok);
-    }
-  }
-}
-
 void MainWindow::ignoreUpdate(int modIndex)
 {
   QItemSelectionModel *selection = ui->modList->selectionModel();
@@ -3468,22 +3437,6 @@ void MainWindow::ignoreUpdate(int modIndex)
     info->ignoreUpdate(true);
     m_OrganizerCore.modList()->notifyChange(modIndex);
   }
-}
-
-void MainWindow::checkModUpdates_clicked(int modIndex)
-{
-  std::multimap<QString, int> IDs;
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    for (QModelIndex idx : selection->selectedRows()) {
-      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
-      IDs.insert(std::make_pair<QString, int>(info->gameName(), info->nexusId()));
-    }
-  } else {
-    ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
-    IDs.insert(std::make_pair<QString, int>(info->gameName(), info->nexusId()));
-  }
-  modUpdateCheck(IDs);
 }
 
 void MainWindow::unignoreUpdate(int modIndex)
@@ -3652,162 +3605,14 @@ void MainWindow::addPluginSendToContextMenu(QMenu *menu)
 void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 {
   try {
-    QTreeView *modList = findChild<QTreeView*>("modList");
-
     QModelIndex contextIdx = mapToModel(m_OrganizerCore.modList(), ui->modList->indexAt(pos));
 
     if (!contextIdx.isValid()) {
       // no selection
-      ModListGlobalContextMenu(m_OrganizerCore, ui->modList).exec(modList->viewport()->mapToGlobal(pos));
+      ModListGlobalContextMenu(m_OrganizerCore, ui->modList).exec(ui->modList->viewport()->mapToGlobal(pos));
     }
     else {
-      int modIndex = ui->modList->indexAt(pos).data(ModList::IndexRole).toInt();
-      int contextColumn = contextIdx.column();
-
-      ModListContextMenu menu(contextIdx, m_OrganizerCore, m_CategoryFactory, ui->modList);
-
-      ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
-      std::vector<ModInfo::EFlag> flags = info->getFlags();
-
-      // context menu for overwrites
-      if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
-      }
-
-      // context menu for mod backups
-      else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) {
-      }
-
-      // separator
-      else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end()){
-      }
-
-      // foregin
-      else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
-      }
-
-      // regular
-      else {
-        QMenu* addRemoveCategoriesMenu = new QMenu(tr("Change Categories"), &menu);
-        populateMenuCategories(modIndex, addRemoveCategoriesMenu, 0);
-        connect(addRemoveCategoriesMenu, &QMenu::aboutToHide, [=]() { addRemoveCategories_MenuHandler(addRemoveCategoriesMenu, modIndex, contextIdx); });
-        addMenuAsPushButton(&menu, addRemoveCategoriesMenu);
-
-        QMenu* primaryCategoryMenu = new QMenu(tr("Primary Category"), &menu);
-        connect(primaryCategoryMenu, &QMenu::aboutToShow, [=]() { setPrimaryCategoryCandidates(primaryCategoryMenu, info); });
-        addMenuAsPushButton(&menu, primaryCategoryMenu);
-
-        menu.addSeparator();
-
-        if (info->downgradeAvailable()) {
-          menu.addAction(tr("Change versioning scheme"), [=]() { changeVersioningScheme(modIndex); });
-        }
-
-        if (info->nexusId() > 0)
-          menu.addAction(tr("Force-check updates"), [=]() { checkModUpdates_clicked(modIndex); });
-        if (info->updateIgnored()) {
-          menu.addAction(tr("Un-ignore update"), [=]() { unignoreUpdate(modIndex); });
-        }
-        else {
-          if (info->updateAvailable() || info->downgradeAvailable()) {
-            menu.addAction(tr("Ignore update"), [=]() { ignoreUpdate(modIndex); });
-          }
-        }
-        menu.addSeparator();
-
-        menu.addAction(tr("Enable selected"), [=]() { enableSelectedMods_clicked(); });
-        menu.addAction(tr("Disable selected"), [=]() { disableSelectedMods_clicked(); });
-
-        menu.addSeparator();
-
-        if (ui->modList->sortColumn() == ModList::COL_PRIORITY) {
-          menu.addMenu(menu.createSendToContextMenu());
-          menu.addSeparator();
-        }
-
-        menu.addAction(tr("Rename Mod..."), [=]() { renameMod_clicked(); });
-        menu.addAction(tr("Reinstall Mod"), [=]() { reinstallMod_clicked(modIndex); });
-        menu.addAction(tr("Remove Mod..."), [=]() { removeMod_clicked(modIndex); });
-        menu.addAction(tr("Create Backup"), [=]() { backupMod_clicked(modIndex); });
-
-        if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_HIDDEN_FILES) != flags.end()) {
-          menu.addAction(tr("Restore hidden files"), [=]() { restoreHiddenFiles_clicked(modIndex); });
-        }
-
-        menu.addSeparator();
-
-        if (contextColumn == ModList::COL_NOTES) {
-          menu.addAction(tr("Select Color..."), [=]() { setColor_clicked(modIndex); });
-          if (info->color().isValid()) {
-            menu.addAction(tr("Reset Color"), [=]() { resetColor_clicked(modIndex); });
-          }
-          menu.addSeparator();
-        }
-
-        if (info->nexusId() > 0 && Settings::instance().nexus().endorsementIntegration()) {
-          switch (info->endorsedState()) {
-            case EndorsedState::ENDORSED_TRUE: {
-              menu.addAction(tr("Un-Endorse"), [=]() { unendorse_clicked(); });
-            } break;
-            case EndorsedState::ENDORSED_FALSE: {
-              menu.addAction(tr("Endorse"), [=]() { endorse_clicked(); });
-              menu.addAction(tr("Won't endorse"), [=]() { dontendorse_clicked(modIndex); });
-            } break;
-            case EndorsedState::ENDORSED_NEVER: {
-              menu.addAction(tr("Endorse"), [=]() { endorse_clicked(); });
-            } break;
-            default: {
-              QAction *action = new QAction(tr("Endorsement state unknown"), &menu);
-              action->setEnabled(false);
-              menu.addAction(action);
-            } break;
-          }
-        }
-
-        if (info->nexusId() > 0 && Settings::instance().nexus().trackedIntegration()) {
-          switch (info->trackedState()) {
-            case TrackedState::TRACKED_FALSE: {
-              menu.addAction(tr("Start tracking"), [=]() { track_clicked(); });
-            } break;
-            case TrackedState::TRACKED_TRUE: {
-              menu.addAction(tr("Stop tracking"), [=]() { untrack_clicked(); });
-            } break;
-            default: {
-              QAction *action = new QAction(tr("Tracked state unknown"), &menu);
-              action->setEnabled(false);
-              menu.addAction(action);
-            } break;
-          }
-        }
-
-        menu.addSeparator();
-
-        std::vector<ModInfo::EFlag> flags = info->getFlags();
-        if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_INVALID) != flags.end()) {
-          menu.addAction(tr("Ignore missing data"), [=]() { ignoreMissingData_clicked(modIndex); });
-        }
-
-        if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_ALTERNATE_GAME) != flags.end()) {
-          menu.addAction(tr("Mark as converted/working"), [=]() { markConverted_clicked(modIndex); });
-        }
-
-        menu.addSeparator();
-
-        if (info->nexusId() > 0)  {
-          menu.addAction(tr("Visit on Nexus"), [=]() { visitOnNexus_clicked(modIndex); });
-        }
-
-        const auto url = info->parseCustomURL();
-        if (url.isValid()) {
-          menu.addAction(tr("Visit on %1").arg(url.host()), [=]() { visitWebPage_clicked(modIndex); });
-        }
-
-        menu.addAction(tr("Open in Explorer"), [=]() { ui->modList->actions().openExplorer({ contextIdx }); });
-
-        QAction* infoAction = menu.addAction(tr("Information..."), [=]() { information_clicked(modIndex); });
-        menu.setDefaultAction(infoAction);
-      }
-
-      menu.exec(modList->viewport()->mapToGlobal(pos));
+      ModListContextMenu(contextIdx, m_OrganizerCore, m_CategoryFactory, ui->modList).exec(ui->modList->viewport()->mapToGlobal(pos));
     }
   } catch (const std::exception &e) {
     reportError(tr("Exception: ").arg(e.what()));
@@ -4091,18 +3896,6 @@ void MainWindow::sendSelectedPluginsToPriority_clicked()
   m_OrganizerCore.pluginList()->sendToPriority(ui->espList->selectionModel(), newPriority);
 }
 
-
-void MainWindow::enableSelectedMods_clicked()
-{
-  ui->modList->enableSelected();
-}
-
-
-void MainWindow::disableSelectedMods_clicked()
-{
-  ui->modList->disableSelected();
-}
-
 void MainWindow::updateAvailable()
 {
   ui->actionUpdate->setEnabled(true);
@@ -4163,24 +3956,6 @@ void MainWindow::actionWontEndorseMO()
     QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     NexusInterface::instance().requestToggleEndorsement(
       game->gameShortName(), game->nexusModOrganizerID(), m_OrganizerCore.getVersion().canonicalString(), false, this, QVariant(), QString());
-  }
-}
-
-void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
-{
-  if (m_OrganizerCore.settings().network().offlineMode()) {
-    return;
-  }
-
-  if (NexusInterface::instance().getAccessManager()->validated()) {
-    ModInfo::manualUpdateCheck(this, IDs);
-  } else {
-    QString apiKey;
-    if (GlobalSettings::nexusApiKey(apiKey)) {
-      m_OrganizerCore.doAfterLogin([=]() { this->modUpdateCheck(IDs); });
-      NexusInterface::instance().getAccessManager()->apiCheck(apiKey);
-    } else
-      log::warn("{}", tr("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus."));
   }
 }
 

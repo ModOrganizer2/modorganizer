@@ -193,6 +193,36 @@ void ModListViewActions::checkModsForUpdates() const
   }
 }
 
+void ModListViewActions::checkModsForUpdates(std::multimap<QString, int> const& IDs) const
+{
+  if (m_core.settings().network().offlineMode()) {
+    return;
+  }
+
+  if (NexusInterface::instance().getAccessManager()->validated()) {
+    ModInfo::manualUpdateCheck(m_main, IDs);
+  }
+  else {
+    QString apiKey;
+    if (GlobalSettings::nexusApiKey(apiKey)) {
+      m_core.doAfterLogin([=]() { checkModsForUpdates(IDs); });
+      NexusInterface::instance().getAccessManager()->apiCheck(apiKey);
+    }
+    else
+      log::warn("{}", tr("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus."));
+  }
+}
+
+void ModListViewActions::checkModsForUpdates(const QModelIndexList& indices) const
+{
+  std::multimap<QString, int> ids;
+  for (auto& idx : indices) {
+    ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+    ids.insert(std::make_pair<QString, int>(info->gameName(), info->nexusId()));
+  }
+  checkModsForUpdates(ids);
+}
+
 void ModListViewActions::exportModListCSV() const
 {
   QDialog selection(m_view);
@@ -509,7 +539,7 @@ void ModListViewActions::sendModsToSeparator(const QModelIndexList& index) const
 void ModListViewActions::renameMod(const QModelIndex& index) const
 {
   try {
-    m_view->edit(index);
+    m_view->edit(m_view->indexModelToView(index));
   }
   catch (const std::exception& e) {
     reportError(tr("failed to rename mod: %1").arg(e.what()));
@@ -578,13 +608,52 @@ void ModListViewActions::ignoreMissingData(const QModelIndexList& indices) const
   }
 }
 
+void ModListViewActions::setIgnoreUpdate(const QModelIndexList& indices, bool ignore) const
+{
+  for (auto& idx : indices) {
+    int modIdx = idx.data(ModList::IndexRole).toInt();
+    ModInfo::Ptr info = ModInfo::getByIndex(modIdx);
+    info->ignoreUpdate(ignore);
+    m_core.modList()->notifyChange(modIdx);
+  }
+}
+
+void ModListViewActions::changeVersioningScheme(const QModelIndex& index) const {
+  if (QMessageBox::question(m_view, tr("Continue?"),
+    tr("The versioning scheme decides which version is considered newer than another.\n"
+      "This function will guess the versioning scheme under the assumption that the installed version is outdated."),
+    QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Yes) {
+
+    ModInfo::Ptr info = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
+
+    bool success = false;
+
+    static VersionInfo::VersionScheme schemes[] = { VersionInfo::SCHEME_REGULAR, VersionInfo::SCHEME_DECIMALMARK, VersionInfo::SCHEME_NUMBERSANDLETTERS };
+
+    for (int i = 0; i < sizeof(schemes) / sizeof(VersionInfo::VersionScheme) && !success; ++i) {
+      VersionInfo verOld(info->version().canonicalString(), schemes[i]);
+      VersionInfo verNew(info->newestVersion().canonicalString(), schemes[i]);
+      if (verOld < verNew) {
+        info->setVersion(verOld);
+        info->setNewestVersion(verNew);
+        success = true;
+      }
+    }
+    if (!success) {
+      QMessageBox::information(m_view, tr("Sorry"),
+        tr("I don't know a versioning scheme where %1 is newer than %2.").arg(info->newestVersion().canonicalString()).arg(info->version().canonicalString()),
+        QMessageBox::Ok);
+    }
+  }
+}
+
 void ModListViewActions::markConverted(const QModelIndexList& indices) const
 {
   for (auto& idx : indices) {
-    int row_idx = idx.data(ModList::IndexRole).toInt();
-    ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
+    int modIdx = idx.data(ModList::IndexRole).toInt();
+    ModInfo::Ptr info = ModInfo::getByIndex(modIdx);
     info->markConverted(true);
-    m_core.modList()->notifyChange(row_idx);
+    m_core.modList()->notifyChange(modIdx);
   }
 }
 
@@ -664,6 +733,159 @@ void ModListViewActions::visitNexusOrWebPage(const QModelIndexList& indices) con
   }
 }
 
+void ModListViewActions::reinstallMod(const QModelIndex& index) const
+{
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
+  QString installationFile = modInfo->installationFile();
+  if (installationFile.length() != 0) {
+    QString fullInstallationFile;
+    QFileInfo fileInfo(installationFile);
+    if (fileInfo.isAbsolute()) {
+      if (fileInfo.exists()) {
+        fullInstallationFile = installationFile;
+      }
+      else {
+        fullInstallationFile = m_core.downloadManager()->getOutputDirectory() + "/" + fileInfo.fileName();
+      }
+    }
+    else {
+      fullInstallationFile = m_core.downloadManager()->getOutputDirectory() + "/" + installationFile;
+    }
+    if (QFile::exists(fullInstallationFile)) {
+      m_core.installMod(fullInstallationFile, true, modInfo, modInfo->name());
+    }
+    else {
+      QMessageBox::information(m_view, tr("Failed"), tr("Installation file no longer exists"));
+    }
+  }
+  else {
+    QMessageBox::information(m_view, tr("Failed"),
+      tr("Mods installed with old versions of MO can't be reinstalled in this way."));
+  }
+}
+
+void ModListViewActions::createBackup(const QModelIndex& index) const
+{
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
+  QString backupDirectory = m_core.installationManager()->generateBackupName(modInfo->absolutePath());
+  if (!copyDir(modInfo->absolutePath(), backupDirectory, false)) {
+    QMessageBox::information(m_view, tr("Failed"),
+      tr("Failed to create backup."));
+  }
+  m_core.refresh();
+  m_view->updateModCount();
+}
+
+void ModListViewActions::restoreHiddenFiles(const QModelIndexList& indices) const
+{
+  const int max_items = 20;
+
+  QFlags<FileRenamer::RenameFlags> flags = FileRenamer::UNHIDE;
+  flags |= FileRenamer::MULTIPLE;
+
+  FileRenamer renamer(m_view, flags);
+
+  FileRenamer::RenameResults result = FileRenamer::RESULT_OK;
+
+  // multi selection
+  if (indices.size() > 1) {
+
+    QStringList modNames;
+    for (auto& idx : indices) {
+
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+      const auto flags = modInfo->getFlags();
+
+      if (!modInfo->isRegular() ||
+        std::find(flags.begin(), flags.end(), ModInfo::FLAG_HIDDEN_FILES) == flags.end()) {
+        continue;
+      }
+
+      modNames.append(idx.data(Qt::DisplayRole).toString());
+    }
+
+    QString mods = "<li>" + modNames.mid(0, max_items).join("</li><li>") + "</li>";
+    if (modNames.size() > max_items) {
+      mods += "<li>...</li>";
+    }
+
+    if (QMessageBox::question(m_view, tr("Confirm"),
+      tr("Restore all hidden files in the following mods?<br><ul>%1</ul>").arg(mods),
+      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+
+      for (auto& idx : indices) {
+
+        ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+
+        const auto flags = modInfo->getFlags();
+        if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_HIDDEN_FILES) != flags.end()) {
+          const QString modDir = modInfo->absolutePath();
+
+          auto partialResult = restoreHiddenFilesRecursive(renamer, modDir);
+
+          if (partialResult == FileRenamer::RESULT_CANCEL) {
+            result = FileRenamer::RESULT_CANCEL;
+            break;
+          }
+          emit originModified((m_core.directoryStructure()->getOriginByName(
+            ToWString(modInfo->internalName()))).getID());
+        }
+      }
+    }
+  }
+  else if (!indices.isEmpty()) {
+    //single selection
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(indices[0].data(ModList::IndexRole).toInt());
+    const QString modDir = modInfo->absolutePath();
+
+    if (QMessageBox::question(m_view, tr("Are you sure?"),
+      tr("About to restore all hidden files in:\n") + modInfo->name(),
+      QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Ok) {
+
+      result = restoreHiddenFilesRecursive(renamer, modDir);
+
+      emit originModified((m_core.directoryStructure()->getOriginByName(
+        ToWString(modInfo->internalName()))).getID());
+    }
+  }
+
+  if (result == FileRenamer::RESULT_CANCEL) {
+    log::debug("Restoring hidden files operation cancelled");
+  }
+  else {
+    log::debug("Finished restoring hidden files");
+  }
+}
+
+void ModListViewActions::setTracked(const QModelIndexList& indices, bool tracked) const
+{
+  m_core.loggedInAction(m_view, [=] {
+    for (auto& idx : indices) {
+      ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->track(tracked);
+    }
+  });
+}
+
+void ModListViewActions::setEndorsed(const QModelIndexList& indices, bool endorsed) const
+{
+  m_core.loggedInAction(m_view, [=] {
+    if (indices.size() > 1) {
+      MessageDialog::showMessage(tr("Endorsing multiple mods will take a while. Please wait..."), m_view);
+    }
+
+    for (auto& idx : indices) {
+      ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->endorse(endorsed);
+    }
+  });
+}
+
+void ModListViewActions::willNotEndorsed(const QModelIndexList& indices) const
+{
+  for (auto& idx : indices) {
+    ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->setNeverEndorse();
+  }
+}
+
 void ModListViewActions::setColor(const QModelIndexList& indices, const QModelIndex& refIndex) const
 {
   auto& settings = m_core.settings();
@@ -696,7 +918,7 @@ void ModListViewActions::setColor(const QModelIndexList& indices, const QModelIn
 
 }
 
-void ModListViewActions::resetColor(const QModelIndexList& indices, const QModelIndex& refIndex) const
+void ModListViewActions::resetColor(const QModelIndexList& indices) const
 {
   for (auto& idx : indices) {
     ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());

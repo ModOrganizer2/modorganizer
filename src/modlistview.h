@@ -91,11 +91,6 @@ public slots:
   void enableAllVisible();
   void disableAllVisible();
 
-  // enable/disable all selected mods
-  //
-  void enableSelected();
-  void disableSelected();
-
   // set the filter criteria/options for mods
   //
   void setFilterCriteria(const std::vector<ModListSortProxy::Criteria>& criteria);

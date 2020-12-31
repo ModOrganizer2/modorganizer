@@ -42,6 +42,7 @@ public:
   // check all mods for update
   //
   void checkModsForUpdates() const;
+  void checkModsForUpdates(const QModelIndexList& indices) const;
 
   // start the "Export Mod List" dialog
   //
@@ -65,16 +66,24 @@ public:
   void renameMod(const QModelIndex& index) const;
   void removeMods(const QModelIndexList& indices) const;
   void ignoreMissingData(const QModelIndexList& indices) const;
+  void setIgnoreUpdate(const QModelIndexList& indices, bool ignore) const;
+  void changeVersioningScheme(const QModelIndex& indices) const;
   void markConverted(const QModelIndexList& indices) const;
   void visitOnNexus(const QModelIndexList& indices) const;
   void visitWebPage(const QModelIndexList& indices) const;
   void visitNexusOrWebPage(const QModelIndexList& indices) const;
+  void reinstallMod(const QModelIndex& index) const;
+  void createBackup(const QModelIndex& index) const;
+  void restoreHiddenFiles(const QModelIndexList& indices) const;
+  void setTracked(const QModelIndexList& indices, bool tracked) const;
+  void setEndorsed(const QModelIndexList& indices, bool endorsed) const;
+  void willNotEndorsed(const QModelIndexList& indices) const;
 
   // set/reset color of the given selection, using the given reference index (index
   // at which the context menu was shown)
   //
   void setColor(const QModelIndexList& indices, const QModelIndex& refIndex) const;
-  void resetColor(const QModelIndexList& indices, const QModelIndex& refIndex) const;
+  void resetColor(const QModelIndexList& indices) const;
 
   // set the category of the mod in the given list, using the given index as reference
   // - the categories are set as-is on the refernce mod
@@ -104,6 +113,10 @@ signals:
   //
   void overwriteCleared() const;
 
+  // emitted when the origin of a file is modified
+  //
+  void originModified(int originId) const;
+
 private:
 
   // move the contents of the overwrite to the given path
@@ -118,6 +131,10 @@ private:
   // the one in the array of categories
   //
   void setCategoriesIf(ModInfo::Ptr mod, ModInfo::Ptr ref, const std::vector<std::pair<int, bool>>& categories) const;
+
+  // check the given mods from update, the map should map game names to nexus ID
+  //
+  void checkModsForUpdates(std::multimap<QString, int> const& IDs) const;
 
 private:
 

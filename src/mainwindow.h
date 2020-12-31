@@ -370,8 +370,6 @@ private slots:
   void openPluginOriginExplorer_clicked();
   void openOriginInformation_clicked();
   void information_clicked(int modIndex);
-  void enableSelectedMods_clicked();
-  void disableSelectedMods_clicked();
   // data-tree context menu
 
   // pluginlist context menu
@@ -409,8 +407,6 @@ private slots:
   void addRemoveCategories_MenuHandler(QMenu* menu, int modIndex, const QModelIndex& rowIdx);
 
   void modInstalled(const QString &modName);
-
-  void modUpdateCheck(std::multimap<QString, int> IDs);
 
   void finishUpdateInfo();
 
@@ -487,8 +483,6 @@ private slots:
   void removeFromToolbar(QAction* action);
   void overwriteClosed(int);
 
-  void changeVersioningScheme(int modIndex);
-  void checkModUpdates_clicked(int modIndex);
   void ignoreUpdate(int modIndex);
   void unignoreUpdate(int modIndex);
 
