@@ -56,6 +56,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
+// style proxy that changes the appearance of drop indicators
+//
 class ProxyStyle : public QProxyStyle {
 public:
   ProxyStyle(QStyle *baseStyle = 0)
@@ -66,22 +68,23 @@ public:
   void drawPrimitive(PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const {
     if(element == QStyle::PE_IndicatorItemViewItemDrop) {
 
+      // 1. full-width drop indicator
       QRect rect(option->rect);
       if (auto* view = qobject_cast<const QTreeView*>(widget)) {
         rect.setLeft(view->indentation());
         rect.setRight(widget->width());
       }
 
+      // 2. stylish drop indicator
       painter->setRenderHint(QPainter::Antialiasing, true);
 
       QColor col(option->palette.windowText().color());
       QPen pen(col);
       pen.setWidth(2);
       col.setAlpha(50);
-      QBrush brush(col);
 
       painter->setPen(pen);
-      painter->setBrush(brush);
+      painter->setBrush(QBrush(col));
       if(rect.height() == 0) {
         QPoint tri[3] = {
           rect.topLeft(),
