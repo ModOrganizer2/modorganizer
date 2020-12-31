@@ -124,9 +124,6 @@ public:
   bool addProfile();
   void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives);
 
-  void setModListSorting(int index);
-  void setESPListSorting(int index);
-
   void saveArchiveList();
 
   void installTranslator(const QString &name);
@@ -214,15 +211,11 @@ private:
 
   bool errorReported(QString &logFile);
 
-  void updateESPLock(int espIndex, bool locked);
-
   static void setupNetworkProxy(bool activate);
   void activateProxy(bool activate);
 
   bool createBackup(const QString &filePath, const QDateTime &time);
   QString queryRestore(const QString &filePath);
-
-  void addPluginSendToContextMenu(QMenu *menu);
 
   QMenu *openFolderMenu();
 

@@ -321,6 +321,8 @@ MainWindow::MainWindow(Settings &settings
 
   setupModList();
   ui->espList->setup(m_OrganizerCore, this, ui);
+  connect(ui->espList->selectionModel(), &QItemSelectionModel::selectionChanged,
+    [=](auto&& selection) { esplistSelectionsChanged(selection); });
 
   ui->bsaList->setLocalMoveOnly(true);
   ui->bsaList->setHeaderHidden(true);
@@ -447,8 +449,6 @@ MainWindow::MainWindow(Settings &settings
 
   m_CheckBSATimer.setSingleShot(true);
   connect(&m_CheckBSATimer, SIGNAL(timeout()), this, SLOT(checkBSAList()));
-
-  connect(ui->espList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(esplistSelectionsChanged(QItemSelection)));
 
   setFilterShortcuts(ui->modList, ui->modFilterEdit);
   setFilterShortcuts(ui->espList, ui->espFilterEdit);
@@ -2164,31 +2164,6 @@ void MainWindow::on_actionModify_Executables_triggered()
   }
 }
 
-void MainWindow::setModListSorting(int index)
-{
-  Qt::SortOrder order = ((index & 0x01) != 0) ? Qt::DescendingOrder : Qt::AscendingOrder;
-  int column = index >> 1;
-  ui->modList->header()->setSortIndicator(column, order);
-}
-
-void MainWindow::setESPListSorting(int index)
-{
-  switch (index) {
-    case 0: {
-      ui->espList->header()->setSortIndicator(1, Qt::AscendingOrder);
-    } break;
-    case 1: {
-      ui->espList->header()->setSortIndicator(1, Qt::DescendingOrder);
-    } break;
-    case 2: {
-      ui->espList->header()->setSortIndicator(0, Qt::AscendingOrder);
-    } break;
-    case 3: {
-      ui->espList->header()->setSortIndicator(0, Qt::DescendingOrder);
-    } break;
-  }
-}
-
 void MainWindow::refresherProgress(const DirectoryRefreshProgress* p)
 {
   if (p->finished()) {
@@ -3297,21 +3272,6 @@ void MainWindow::setCategoryListVisible(bool visible)
 void MainWindow::on_displayCategoriesBtn_toggled(bool checked)
 {
   setCategoryListVisible(checked);
-}
-
-void MainWindow::updateESPLock(int espIndex, bool locked)
-{
-  QItemSelection currentSelection = ui->espList->selectionModel()->selection();
-  if (currentSelection.count() == 0) {
-    // this path is probably useless
-    m_OrganizerCore.pluginList()->lockESPIndex(espIndex, locked);
-  } else {
-    Q_FOREACH (const QModelIndex &idx, currentSelection.indexes()) {
-      if (m_OrganizerCore.pluginList()->isEnabled(mapToModel(m_OrganizerCore.pluginList(), idx).row())) {
-        m_OrganizerCore.pluginList()->lockESPIndex(mapToModel(m_OrganizerCore.pluginList(), idx).row(), locked);
-      }
-    }
-  }
 }
 
 void MainWindow::removeFromToolbar(QAction* action)
