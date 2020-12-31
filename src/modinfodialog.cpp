@@ -174,11 +174,10 @@ bool ModInfoDialog::TabInfo::isVisible() const
   return (realPos != -1);
 }
 
-
 ModInfoDialog::ModInfoDialog(
   OrganizerCore& core, PluginContainer& plugin,
-  ModInfo::Ptr mod, ModListView* modListView) :
-    TutorableDialog("ModInfoDialog", modListView),
+  ModInfo::Ptr mod, ModListView* modListView, QWidget *parent) :
+    TutorableDialog("ModInfoDialog", parent),
     ui(new Ui::ModInfoDialog),
     m_core(core),
     m_plugin(plugin),

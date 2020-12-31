@@ -53,7 +53,7 @@ class ModInfoDialog : public MOBase::TutorableDialog
 public:
   ModInfoDialog(
     OrganizerCore& core, PluginContainer& plugin,
-    ModInfo::Ptr mod, ModListView* view);
+    ModInfo::Ptr mod, ModListView* view, QWidget* parent = nullptr);
 
   ~ModInfoDialog();
 

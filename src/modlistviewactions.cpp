@@ -433,7 +433,7 @@ void ModListViewActions::displayModInformation(ModInfo::Ptr modInfo, unsigned in
   else {
     modInfo->saveMeta();
 
-    ModInfoDialog dialog(m_core, m_core.pluginContainer(), modInfo, m_view);
+    ModInfoDialog dialog(m_core, m_core.pluginContainer(), modInfo, m_view, m_main);
     connect(&dialog, &ModInfoDialog::originModified, this, &ModListViewActions::originModified);
     connect(&dialog, &ModInfoDialog::modChanged, [=](unsigned int index) {
       auto idx = m_view->indexModelToView(m_core.modList()->index(index, 0));
