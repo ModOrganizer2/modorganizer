@@ -60,7 +60,6 @@ public:
   ModListStyledItemDelegated(ModListView* view) :
     QStyledItemDelegate(view), m_view(view) { }
 
-  using QStyledItemDelegate::QStyledItemDelegate;
   void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override {
     QStyleOptionViewItem opt(option);
     if (index.column() == 0 && m_view->hasCollapsibleSeparators()) {
