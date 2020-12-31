@@ -71,6 +71,7 @@ void ModListSortProxy::setCriteria(const std::vector<Criteria>& criteria)
     m_Criteria = criteria;
     updateFilterActive();
     invalidateFilter();
+    emit filterInvalidated();
   }
 }
 
@@ -238,6 +239,7 @@ void ModListSortProxy::updateFilter(const QString& filter)
   m_Filter = filter;
   updateFilterActive();
   invalidateFilter();
+  emit filterInvalidated();
 }
 
 bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EConflictFlag> &flags) const
@@ -557,6 +559,7 @@ void ModListSortProxy::setOptions(
     m_FilterMode = mode;
     m_FilterSeparators = separators;
     invalidateFilter();
+    emit filterInvalidated();
   }
 }
 

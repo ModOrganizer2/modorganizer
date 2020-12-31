@@ -747,15 +747,10 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   });
   connect(m_core->modList(), &ModList::externalFolderDropped, this, &ModListView::onExternalFolderDropped);
 
-  connect(m_sortProxy, &ModListSortProxy::filterActive, this, &ModListView::onModFilterActive);
-  connect(m_sortProxy, &QAbstractItemModel::layoutChanged, this, [&]() {
-    if (hasCollapsibleSeparators()) {
-      m_byPriorityProxy->refreshExpandedItems();
-    }
-    });
   connect(selectionModel(), &QItemSelectionModel::selectionChanged, this, &ModListView::onSelectionChanged);
 
   // filters
+  connect(m_sortProxy, &ModListSortProxy::filterActive, this, &ModListView::onModFilterActive);
   connect(m_filters.get(), &FilterList::criteriaChanged, [=](auto&& v) { onFiltersCriteria(v); });
   connect(m_filters.get(), &FilterList::optionsChanged, [=](auto&& mode, auto&& sep) { setFilterOptions(mode, sep); });
   connect(ui.filter, &QLineEdit::textChanged, m_sortProxy, &ModListSortProxy::updateFilter);
@@ -763,6 +758,11 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
       ui.filter->clear();
       m_filters->clearSelection();
     });
+  connect(m_sortProxy, &ModListSortProxy::filterInvalidated, [=]() {
+    if (hasCollapsibleSeparators()) {
+      m_byPriorityProxy->refreshExpandedItems();
+    }
+  });
 }
 
 void ModListView::restoreState(const Settings& s)

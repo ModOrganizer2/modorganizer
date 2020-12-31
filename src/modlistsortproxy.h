@@ -121,6 +121,7 @@ public slots:
 signals:
 
   void filterActive(bool active);
+  void filterInvalidated();
 
 protected:
 
