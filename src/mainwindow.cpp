@@ -2868,12 +2868,14 @@ void MainWindow::disableSelectedPlugins_clicked()
 
 void MainWindow::sendSelectedPluginsToTop_clicked()
 {
-  m_OrganizerCore.pluginList()->sendToPriority(ui->espList->selectionModel(), 0);
+  m_OrganizerCore.pluginList()->sendToPriority(
+    ui->espList->indexViewToModel(ui->espList->selectionModel()->selectedRows()), 0);
 }
 
 void MainWindow::sendSelectedPluginsToBottom_clicked()
 {
-  m_OrganizerCore.pluginList()->sendToPriority(ui->espList->selectionModel(), INT_MAX);
+  m_OrganizerCore.pluginList()->sendToPriority(
+    ui->espList->indexViewToModel(ui->espList->selectionModel()->selectedRows()), INT_MAX);
 }
 
 void MainWindow::sendSelectedPluginsToPriority_clicked()
@@ -2884,7 +2886,8 @@ void MainWindow::sendSelectedPluginsToPriority_clicked()
     0, 0, INT_MAX, 1, &ok);
   if (!ok) return;
 
-  m_OrganizerCore.pluginList()->sendToPriority(ui->espList->selectionModel(), newPriority);
+  m_OrganizerCore.pluginList()->sendToPriority(
+    ui->espList->indexViewToModel(ui->espList->selectionModel()->selectedRows()), newPriority);
 }
 
 void MainWindow::updateAvailable()

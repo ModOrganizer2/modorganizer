@@ -117,6 +117,20 @@ void PluginListView::onFilterChanged(const QString& filter)
   updatePluginCount();
 }
 
+std::pair<QModelIndex, QModelIndexList> PluginListView::selected() const
+{
+  return { indexViewToModel(currentIndex()), indexViewToModel(selectionModel()->selectedRows()) };
+}
+
+void PluginListView::setSelected(const QModelIndex& current, const QModelIndexList& selected)
+{
+  setCurrentIndex(indexModelToView(current));
+  for (auto idx : selected) {
+    selectionModel()->select(indexModelToView(idx), QItemSelectionModel::Select | QItemSelectionModel::Rows);
+  }
+}
+
+
 void PluginListView::setup(OrganizerCore& core, MainWindow* mw, Ui::MainWindow* mwui)
 {
   m_core = &core;
@@ -128,9 +142,53 @@ void PluginListView::setup(OrganizerCore& core, MainWindow* mw, Ui::MainWindow* 
 
   sortByColumn(PluginList::COL_PRIORITY, Qt::AscendingOrder);
   setItemDelegateForColumn(PluginList::COL_FLAGS, new GenericIconDelegate(this));
-  installEventFilter(core.pluginList());
 
   connect(ui.filter, &QLineEdit::textChanged, m_sortProxy, &PluginListSortProxy::updateFilter);
   connect(ui.filter, &QLineEdit::textChanged, this, &PluginListView::onFilterChanged);
 
+}
+
+bool PluginListView::moveSelection(int key)
+{
+  auto [cindex, sourceRows] = selected();
+
+  int offset = key == Qt::Key_Up ? -1 : 1;
+  if (m_sortProxy->sortOrder() == Qt::DescendingOrder) {
+    offset = -offset;
+  }
+
+  m_core->pluginList()->shiftPluginsPriority(sourceRows, offset);
+
+  // reset the selection and the index
+  setSelected(cindex, sourceRows);
+
+  return true;
+}
+
+bool PluginListView::toggleSelectionState()
+{
+  if (!selectionModel()->hasSelection()) {
+    return true;
+  }
+  m_core->pluginList()->toggleState(indexViewToModel(selectionModel()->selectedRows()));
+  return true;
+}
+
+bool PluginListView::event(QEvent* event)
+{
+  Profile* profile = m_core->currentProfile();
+  if (event->type() == QEvent::KeyPress && profile) {
+    QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+
+    if (keyEvent->modifiers() == Qt::ControlModifier
+      && (sortColumn() == PluginList::COL_PRIORITY || sortColumn() == PluginList::COL_MODINDEX)
+      && (keyEvent->key() == Qt::Key_Up || keyEvent->key() == Qt::Key_Down)) {
+      return moveSelection(keyEvent->key());
+    }
+    else if (keyEvent->key() == Qt::Key_Space) {
+      return toggleSelectionState();
+    }
+    return QTreeView::event(event);
+  }
+  return QTreeView::event(event);
 }

@@ -412,20 +412,60 @@ void PluginList::disableAll()
   }
 }
 
-void PluginList::sendToPriority(const QItemSelectionModel *selectionModel, int newPriority)
+void PluginList::sendToPriority(const QModelIndexList& indices, int newPriority)
 {
-  if (selectionModel->hasSelection()) {
-    std::vector<int> pluginsToMove;
-    for (auto row: selectionModel->selectedRows(COL_PRIORITY)) {
-      int rowIndex = findPluginByPriority(row.data().toInt());
-      if (!m_ESPs[rowIndex].forceEnabled) {
-        pluginsToMove.push_back(rowIndex);
-      }
-    }
-    if (pluginsToMove.size()) {
-      changePluginPriority(pluginsToMove, newPriority);
+  std::vector<int> pluginsToMove;
+  for (auto& idx : indices) {
+    int rowIndex = findPluginByPriority(idx.row());
+    if (!m_ESPs[rowIndex].forceEnabled) {
+      pluginsToMove.push_back(rowIndex);
     }
   }
+  if (pluginsToMove.size()) {
+    changePluginPriority(pluginsToMove, newPriority);
+  }
+}
+
+void PluginList::shiftPluginsPriority(const QModelIndexList& indices, int offset)
+{
+  // retrieve the mod index and sort them by priority to avoid issue
+  // when moving them
+  std::vector<int> allIndex;
+  for (auto& idx : indices) {
+    allIndex.push_back(idx.row());
+  }
+  std::sort(allIndex.begin(), allIndex.end(), [=](int lhs, int rhs) {
+    bool cmp = m_ESPs[lhs].priority < m_ESPs[rhs].priority;
+    return offset > 0 ? !cmp : cmp;
+    });
+
+  emit layoutAboutToBeChanged();
+  for (auto index : allIndex) {
+    int newPriority = m_ESPs[index].priority + offset;
+    if (newPriority >= 0 && newPriority < rowCount()) {
+      setPluginPriority(index, newPriority);
+    }
+  }
+  emit layoutChanged();
+
+  refreshLoadOrder();
+}
+
+void PluginList::toggleState(const QModelIndexList& indices)
+{
+  QModelIndex minRow, maxRow;
+  for (auto& idx : indices) {
+    if (!minRow.isValid() || (idx.row() < minRow.row())) {
+      minRow = idx;
+    }
+    if (!maxRow.isValid() || (idx.row() > maxRow.row())) {
+      maxRow = idx;
+    }
+    int oldState = idx.data(Qt::CheckStateRole).toInt();
+    setData(idx, oldState == Qt::Unchecked ? Qt::Checked : Qt::Unchecked, Qt::CheckStateRole);
+  }
+
+  emit dataChanged(minRow, maxRow);
 }
 
 bool PluginList::isEnabled(const QString &name)
@@ -540,7 +580,6 @@ void PluginList::writeLockedOrder(const QString &fileName) const
   }
   file.commit();
 }
-
 
 void PluginList::saveTo(const QString &lockedOrderFileName
                         , const QString& deleterFileName
@@ -898,12 +937,10 @@ boost::signals2::connection PluginList::onRefreshed(const std::function<void ()>
   return m_Refreshed.connect(callback);
 }
 
-
 boost::signals2::connection PluginList::onPluginMoved(const std::function<void (const QString &, int, int)> &func)
 {
   return m_PluginMoved.connect(func);
 }
-
 
 void PluginList::updateIndices()
 {
@@ -951,7 +988,6 @@ void PluginList::generatePluginIndexes()
   emit esplist_changed();
 }
 
-
 int PluginList::rowCount(const QModelIndex &parent) const
 {
   if (!parent.isValid()) {
@@ -965,7 +1001,6 @@ int PluginList::columnCount(const QModelIndex &) const
 {
   return COL_LASTCOLUMN + 1;
 }
-
 
 void PluginList::testMasters()
 {
@@ -1371,7 +1406,6 @@ bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int
   return result;
 }
 
-
 QVariant PluginList::headerData(int section, Qt::Orientation orientation,
                              int role) const
 {
@@ -1384,7 +1418,6 @@ QVariant PluginList::headerData(int section, Qt::Orientation orientation,
   }
   return QAbstractItemModel::headerData(section, orientation, role);
 }
-
 
 Qt::ItemFlags PluginList::flags(const QModelIndex &modelIndex) const
 {
@@ -1405,7 +1438,6 @@ Qt::ItemFlags PluginList::flags(const QModelIndex &modelIndex) const
 
   return result;
 }
-
 
 void PluginList::setPluginPriority(int row, int &newPriority)
 {
@@ -1463,7 +1495,6 @@ void PluginList::setPluginPriority(int row, int &newPriority)
 
   updateIndices();
 }
-
 
 void PluginList::changePluginPriority(std::vector<int> rows, int newPriority)
 {
@@ -1561,82 +1592,6 @@ QModelIndex PluginList::parent(const QModelIndex&) const
 {
   return QModelIndex();
 }
-
-
-bool PluginList::eventFilter(QObject *obj, QEvent *event)
-{
-  if (event->type() == QEvent::KeyPress) {
-    QAbstractItemView *itemView = qobject_cast<QAbstractItemView*>(obj);
-
-    if (itemView == nullptr) {
-      return QAbstractItemModel::eventFilter(obj, event);
-    }
-
-    QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-    // ctrl+up and ctrl+down -> increase or decrease priority of selected plugins
-    if ((keyEvent->modifiers() == Qt::ControlModifier) &&
-        ((keyEvent->key() == Qt::Key_Up) || (keyEvent->key() == Qt::Key_Down))) {
-      QItemSelectionModel *selectionModel = itemView->selectionModel();
-      const QSortFilterProxyModel *proxyModel = qobject_cast<const QSortFilterProxyModel*>(selectionModel->model());
-      if (proxyModel != nullptr) {
-        int diff = -1;
-        if (((keyEvent->key() == Qt::Key_Up) && (proxyModel->sortOrder() == Qt::DescendingOrder)) ||
-            ((keyEvent->key() == Qt::Key_Down) && (proxyModel->sortOrder() == Qt::AscendingOrder))) {
-          diff = 1;
-        }
-        QModelIndexList rows = selectionModel->selectedRows();
-        // remove elements that aren't supposed to be movable
-        QMutableListIterator<QModelIndex> iter(rows);
-        while (iter.hasNext()) {
-          if ((iter.next().flags() & Qt::ItemIsDragEnabled) == 0) {
-            iter.remove();
-          }
-        }
-        if (keyEvent->key() == Qt::Key_Down) {
-          for (int i = 0; i < rows.size() / 2; ++i) {
-            rows.swapItemsAt(i, rows.size() - i - 1);
-          }
-        }
-        for (QModelIndex idx : rows) {
-          idx = proxyModel->mapToSource(idx);
-          int newPriority = m_ESPs[idx.row()].priority + diff;
-          if ((newPriority >= 0) && (newPriority < rowCount())) {
-            setPluginPriority(idx.row(), newPriority);
-          }
-        }
-        refreshLoadOrder();
-      }
-      return true;
-    } else if (keyEvent->key() == Qt::Key_Space) {
-      QItemSelectionModel *selectionModel = itemView->selectionModel();
-      const QSortFilterProxyModel *proxyModel = qobject_cast<const QSortFilterProxyModel*>(selectionModel->model());
-      QList<QPersistentModelIndex> indices;
-      for (QModelIndex idx : selectionModel->selectedRows()) {
-        indices.append(idx);
-      }
-
-      QModelIndex minRow, maxRow;
-      for (QModelIndex idx : indices) {
-        if (proxyModel != nullptr) {
-          idx = proxyModel->mapToSource(idx);
-        }
-        if (!minRow.isValid() || (idx.row() < minRow.row())) {
-          minRow = idx;
-        }
-        if (!maxRow.isValid() || (idx.row() > maxRow.row())) {
-          maxRow = idx;
-        }
-        int oldState = idx.data(Qt::CheckStateRole).toInt();
-        setData(idx, oldState == Qt::Unchecked ? Qt::Checked : Qt::Unchecked, Qt::CheckStateRole);
-      }
-      emit dataChanged(minRow, maxRow);
-
-      return true;
-    }
-  }
-  return QAbstractItemModel::eventFilter(obj, event);
-}
-
 
 PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
                              const QString &originName, const QString &fullPath,

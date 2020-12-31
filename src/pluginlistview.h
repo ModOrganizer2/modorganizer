@@ -43,6 +43,21 @@ protected slots:
 
   void onFilterChanged(const QString& filter);
 
+protected:
+
+  // method to react to various key events
+  //
+  bool moveSelection(int key);
+  bool toggleSelectionState();
+
+  // get/set the selected items on the view, this method return/take indices
+  // from the mod list model, not the view, so it's safe to restore
+  //
+  std::pair<QModelIndex, QModelIndexList> selected() const;
+  void setSelected(const QModelIndex& current, const QModelIndexList& selected);
+
+  bool event(QEvent* event) override;
+
 private:
 
   struct PluginListViewUi

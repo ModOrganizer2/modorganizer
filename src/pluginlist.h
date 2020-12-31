@@ -214,8 +214,6 @@ public:
   bool isESPLocked(int index) const;
   void lockESPIndex(int index, bool lock);
 
-  bool eventFilter(QObject *obj, QEvent *event);
-
   static QString getColumnName(int column);
   static QString getColumnToolTip(int column);
 
@@ -279,10 +277,17 @@ public slots:
    **/
   void disableAll();
 
-  /**
-  *  @brief moves selected plugins to specified priority
-  **/
-  void sendToPriority(const QItemSelectionModel *selectionModel, int priority);
+  // send plugins to the given priority
+  //
+  void sendToPriority(const QModelIndexList& selectionModel, int priority);
+
+  // shift the priority of mods at the given indices by the given offset
+  //
+  void shiftPluginsPriority(const QModelIndexList& indices, int offset);
+
+  // toggle the active state of mods at the given indices
+  //
+  void toggleState(const QModelIndexList& indices);
 
   /**
    * @brief The currently managed game has changed
