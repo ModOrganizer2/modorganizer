@@ -39,8 +39,9 @@ ModListViewActions::ModListViewActions(
   , m_core(core)
   , m_filters(filters)
   , m_categories(categoryFactory)
-  , m_main(mainWindow)
   , m_view(view)
+  , m_parent(mainWindow)
+  , m_main(mainWindow)
 {
 
 }
@@ -55,7 +56,7 @@ void ModListViewActions::installMod(const QString& archivePath) const
         *iter = "*." + *iter;
       }
 
-      path = FileDialogMemory::getOpenFileName("installMod", m_view, tr("Choose Mod"), QString(),
+      path = FileDialogMemory::getOpenFileName("installMod", m_parent, tr("Choose Mod"), QString(),
         tr("Mod Archive").append(QString(" (%1)").arg(extensions.join(" "))));
     }
 
@@ -78,7 +79,7 @@ void ModListViewActions::createEmptyMod(int modIndex) const
 
   while (name->isEmpty()) {
     bool ok;
-    name.update(QInputDialog::getText(m_view, tr("Create Mod..."),
+    name.update(QInputDialog::getText(m_parent, tr("Create Mod..."),
       tr("This will create an empty mod.\n"
         "Please enter a name:"), QLineEdit::Normal, "", &ok),
       GUESS_USER);
@@ -116,7 +117,7 @@ void ModListViewActions::createSeparator(int modIndex) const
   while (name->isEmpty())
   {
     bool ok;
-    name.update(QInputDialog::getText(m_view, tr("Create Separator..."),
+    name.update(QInputDialog::getText(m_parent, tr("Create Separator..."),
       tr("This will create a new separator.\n"
         "Please enter a name:"), QLineEdit::Normal, "", &ok),
       GUESS_USER);
@@ -225,7 +226,7 @@ void ModListViewActions::checkModsForUpdates(const QModelIndexList& indices) con
 
 void ModListViewActions::exportModListCSV() const
 {
-  QDialog selection(m_view);
+  QDialog selection(m_parent);
   QGridLayout* grid = new QGridLayout;
   selection.setWindowTitle(tr("Export to csv"));
 
@@ -371,7 +372,7 @@ void ModListViewActions::exportModListCSV() const
         }
       }
 
-      SaveTextAsDialog saveDialog(m_view);
+      SaveTextAsDialog saveDialog(m_parent);
       saveDialog.setText(buffer.data());
       saveDialog.exec();
     }
@@ -407,10 +408,10 @@ void ModListViewActions::displayModInformation(ModInfo::Ptr modInfo, unsigned in
   }
   std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
   if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
-    QDialog* dialog = m_main->findChild<QDialog*>("__overwriteDialog");
+    QDialog* dialog = m_parent->findChild<QDialog*>("__overwriteDialog");
     try {
       if (dialog == nullptr) {
-        dialog = new OverwriteInfoDialog(modInfo, m_main);
+        dialog = new OverwriteInfoDialog(modInfo, m_parent);
         dialog->setObjectName("__overwriteDialog");
       }
       else {
@@ -433,7 +434,7 @@ void ModListViewActions::displayModInformation(ModInfo::Ptr modInfo, unsigned in
   else {
     modInfo->saveMeta();
 
-    ModInfoDialog dialog(m_core, m_core.pluginContainer(), modInfo, m_view, m_main);
+    ModInfoDialog dialog(m_core, m_core.pluginContainer(), modInfo, m_view, m_parent);
     connect(&dialog, &ModInfoDialog::originModified, this, &ModListViewActions::originModified);
     connect(&dialog, &ModInfoDialog::modChanged, [=](unsigned int index) {
       auto idx = m_view->indexModelToView(m_core.modList()->index(index, 0));
@@ -486,7 +487,7 @@ void ModListViewActions::sendModsToBottom(const QModelIndexList& index) const
 void ModListViewActions::sendModsToPriority(const QModelIndexList& index) const
 {
   bool ok;
-  int priority = QInputDialog::getInt(m_view,
+  int priority = QInputDialog::getInt(m_parent,
     tr("Set Priority"), tr("Set the priority of the selected mods"),
     0, 0, std::numeric_limits<int>::max(), 1, &ok);
   if (!ok) return;
@@ -507,7 +508,7 @@ void ModListViewActions::sendModsToSeparator(const QModelIndexList& index) const
     }
   }
 
-  ListDialog dialog(m_view);
+  ListDialog dialog(m_parent);
   dialog.setWindowTitle("Select a separator...");
   dialog.setChoices(separators);
 
@@ -580,7 +581,7 @@ void ModListViewActions::removeMods(const QModelIndexList& indices) const
         modNames.append(ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->name());
         ++i;
       }
-      if (QMessageBox::question(m_view, tr("Confirm"),
+      if (QMessageBox::question(m_parent, tr("Confirm"),
         tr("Remove the following mods?<br><ul>%1</ul>").arg(mods),
         QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
         // use mod names instead of indexes because those become invalid during the removal
@@ -623,7 +624,7 @@ void ModListViewActions::setIgnoreUpdate(const QModelIndexList& indices, bool ig
 }
 
 void ModListViewActions::changeVersioningScheme(const QModelIndex& index) const {
-  if (QMessageBox::question(m_view, tr("Continue?"),
+  if (QMessageBox::question(m_parent, tr("Continue?"),
     tr("The versioning scheme decides which version is considered newer than another.\n"
       "This function will guess the versioning scheme under the assumption that the installed version is outdated."),
     QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Yes) {
@@ -644,7 +645,7 @@ void ModListViewActions::changeVersioningScheme(const QModelIndex& index) const 
       }
     }
     if (!success) {
-      QMessageBox::information(m_view, tr("Sorry"),
+      QMessageBox::information(m_parent, tr("Sorry"),
         tr("I don't know a versioning scheme where %1 is newer than %2.").arg(info->newestVersion().canonicalString()).arg(info->version().canonicalString()),
         QMessageBox::Ok);
     }
@@ -664,7 +665,7 @@ void ModListViewActions::markConverted(const QModelIndexList& indices) const
 void ModListViewActions::visitOnNexus(const QModelIndexList& indices) const
 {
   if (indices.size() > 10) {
-    if (QMessageBox::question(m_view, tr("Opening Nexus Links"),
+    if (QMessageBox::question(m_parent, tr("Opening Nexus Links"),
       tr("You are trying to open %1 links to Nexus Mods.  Are you sure you want to do this?").arg(indices.size()),
       QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
       return;
@@ -687,7 +688,7 @@ void ModListViewActions::visitOnNexus(const QModelIndexList& indices) const
 void ModListViewActions::visitWebPage(const QModelIndexList& indices) const
 {
   if (indices.size() > 10) {
-    if (QMessageBox::question(m_view, tr("Opening Web Pages"),
+    if (QMessageBox::question(m_parent, tr("Opening Web Pages"),
       tr("You are trying to open %1 Web Pages.  Are you sure you want to do this?").arg(indices.size()),
       QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
       return;
@@ -707,7 +708,7 @@ void ModListViewActions::visitWebPage(const QModelIndexList& indices) const
 void ModListViewActions::visitNexusOrWebPage(const QModelIndexList& indices) const
 {
   if (indices.size() > 10) {
-    if (QMessageBox::question(m_view, tr("Opening Web Pages"),
+    if (QMessageBox::question(m_parent, tr("Opening Web Pages"),
       tr("You are trying to open %1 Web Pages.  Are you sure you want to do this?").arg(indices.size()),
       QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
       return;
@@ -759,11 +760,11 @@ void ModListViewActions::reinstallMod(const QModelIndex& index) const
       m_core.installMod(fullInstallationFile, true, modInfo, modInfo->name());
     }
     else {
-      QMessageBox::information(m_view, tr("Failed"), tr("Installation file no longer exists"));
+      QMessageBox::information(m_parent, tr("Failed"), tr("Installation file no longer exists"));
     }
   }
   else {
-    QMessageBox::information(m_view, tr("Failed"),
+    QMessageBox::information(m_parent, tr("Failed"),
       tr("Mods installed with old versions of MO can't be reinstalled in this way."));
   }
 }
@@ -773,7 +774,7 @@ void ModListViewActions::createBackup(const QModelIndex& index) const
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
   QString backupDirectory = m_core.installationManager()->generateBackupName(modInfo->absolutePath());
   if (!copyDir(modInfo->absolutePath(), backupDirectory, false)) {
-    QMessageBox::information(m_view, tr("Failed"),
+    QMessageBox::information(m_parent, tr("Failed"),
       tr("Failed to create backup."));
   }
   m_core.refresh();
@@ -787,7 +788,7 @@ void ModListViewActions::restoreHiddenFiles(const QModelIndexList& indices) cons
   QFlags<FileRenamer::RenameFlags> flags = FileRenamer::UNHIDE;
   flags |= FileRenamer::MULTIPLE;
 
-  FileRenamer renamer(m_view, flags);
+  FileRenamer renamer(m_parent, flags);
 
   FileRenamer::RenameResults result = FileRenamer::RESULT_OK;
 
@@ -813,7 +814,7 @@ void ModListViewActions::restoreHiddenFiles(const QModelIndexList& indices) cons
       mods += "<li>...</li>";
     }
 
-    if (QMessageBox::question(m_view, tr("Confirm"),
+    if (QMessageBox::question(m_parent, tr("Confirm"),
       tr("Restore all hidden files in the following mods?<br><ul>%1</ul>").arg(mods),
       QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
 
@@ -842,7 +843,7 @@ void ModListViewActions::restoreHiddenFiles(const QModelIndexList& indices) cons
     ModInfo::Ptr modInfo = ModInfo::getByIndex(indices[0].data(ModList::IndexRole).toInt());
     const QString modDir = modInfo->absolutePath();
 
-    if (QMessageBox::question(m_view, tr("Are you sure?"),
+    if (QMessageBox::question(m_parent, tr("Are you sure?"),
       tr("About to restore all hidden files in:\n") + modInfo->name(),
       QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Ok) {
 
@@ -863,7 +864,7 @@ void ModListViewActions::restoreHiddenFiles(const QModelIndexList& indices) cons
 
 void ModListViewActions::setTracked(const QModelIndexList& indices, bool tracked) const
 {
-  m_core.loggedInAction(m_view, [=] {
+  m_core.loggedInAction(m_parent, [=] {
     for (auto& idx : indices) {
       ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt())->track(tracked);
     }
@@ -872,9 +873,9 @@ void ModListViewActions::setTracked(const QModelIndexList& indices, bool tracked
 
 void ModListViewActions::setEndorsed(const QModelIndexList& indices, bool endorsed) const
 {
-  m_core.loggedInAction(m_view, [=] {
+  m_core.loggedInAction(m_parent, [=] {
     if (indices.size() > 1) {
-      MessageDialog::showMessage(tr("Endorsing multiple mods will take a while. Please wait..."), m_view);
+      MessageDialog::showMessage(tr("Endorsing multiple mods will take a while. Please wait..."), m_parent);
     }
 
     for (auto& idx : indices) {
@@ -895,7 +896,7 @@ void ModListViewActions::setColor(const QModelIndexList& indices, const QModelIn
   auto& settings = m_core.settings();
   ModInfo::Ptr modInfo = ModInfo::getByIndex(refIndex.data(ModList::IndexRole).toInt());
 
-  QColorDialog dialog(m_view);
+  QColorDialog dialog(m_parent);
   dialog.setOption(QColorDialog::ShowAlphaChannel);
 
   QColor currentColor = modInfo->color();
@@ -994,7 +995,7 @@ void ModListViewActions::restoreBackup(const QModelIndex& index) const
     QString regName = backupRegEx.cap(1);
     QDir modDir(QDir::fromNativeSeparators(m_core.settings().paths().mods()));
     if (!modDir.exists(regName) ||
-      (QMessageBox::question(m_view, tr("Overwrite?"),
+      (QMessageBox::question(m_parent, tr("Overwrite?"),
         tr("This will replace the existing mod \"%1\". Continue?").arg(regName),
         QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)) {
       if (modDir.exists(regName) && !shellDelete(QStringList(modDir.absoluteFilePath(regName)))) {
@@ -1016,10 +1017,10 @@ void ModListViewActions::moveOverwriteContentsTo(const QString& absolutePath) co
 {
   ModInfo::Ptr overwriteInfo = ModInfo::getOverwrite();
   bool successful = shellMove((QDir::toNativeSeparators(overwriteInfo->absolutePath()) + "\\*"),
-    (QDir::toNativeSeparators(absolutePath)), false, m_view);
+    (QDir::toNativeSeparators(absolutePath)), false, m_parent);
 
   if (successful) {
-    MessageDialog::showMessage(tr("Move successful."), m_view);
+    MessageDialog::showMessage(tr("Move successful."), m_parent);
   }
   else {
     const auto e = GetLastError();
@@ -1036,7 +1037,7 @@ void ModListViewActions::createModFromOverwrite() const
 
   while (name->isEmpty()) {
     bool ok;
-    name.update(QInputDialog::getText(m_view, tr("Create Mod..."),
+    name.update(QInputDialog::getText(m_parent, tr("Create Mod..."),
       tr("This will move all files from overwrite into a new, regular mod.\n"
         "Please enter a name:"), QLineEdit::Normal, "", &ok),
       GUESS_USER);
@@ -1071,7 +1072,7 @@ void ModListViewActions::moveOverwriteContentToExistingMod() const
     }
   }
 
-  ListDialog dialog(m_view);
+  ListDialog dialog(m_parent);
   dialog.setWindowTitle("Select a mod...");
   dialog.setChoices(mods);
 
@@ -1105,7 +1106,7 @@ void ModListViewActions::clearOverwrite() const
   if (modInfo)
   {
     QDir overwriteDir(modInfo->absolutePath());
-    if (QMessageBox::question(m_view, tr("Are you sure?"),
+    if (QMessageBox::question(m_parent, tr("Are you sure?"),
       tr("About to recursively delete:\n") + overwriteDir.absolutePath(),
       QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Ok)
     {

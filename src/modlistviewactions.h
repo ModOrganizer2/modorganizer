@@ -141,8 +141,11 @@ private:
   OrganizerCore& m_core;
   FilterList& m_filters;
   CategoryFactory& m_categories;
-  MainWindow* m_main;
   ModListView* m_view;
+  QWidget* m_parent;
+
+  // hope to get rid of this some day
+  MainWindow* m_main;
 };
 
 #endif
