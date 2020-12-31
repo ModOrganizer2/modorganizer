@@ -258,16 +258,6 @@ public: // implementation of the QAbstractTableModel interface
 public slots:
 
   /**
-  * @brief enables selected plugins
-  **/
-  void enableSelected(const QItemSelectionModel *selectionModel);
-
-  /**
-  * @brief disables selected plugins
-  **/
-  void disableSelected(const QItemSelectionModel *selectionModel);
-
-  /**
    * @brief enables ALL plugins
    **/
   void enableAll();
@@ -276,6 +266,10 @@ public slots:
    * @brief disables ALL plugins
    **/
   void disableAll();
+
+  // enable/disable plugins at the given indices.
+  //
+  void setEnabled(const QModelIndexList& indices, bool enabled);
 
   // send plugins to the given priority
   //

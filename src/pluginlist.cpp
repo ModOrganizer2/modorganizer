@@ -338,42 +338,20 @@ int PluginList::findPluginByPriority(int priority)
   return -1;
 }
 
-void PluginList::enableSelected(const QItemSelectionModel *selectionModel)
+void PluginList::setEnabled(const QModelIndexList& indices, bool enabled)
 {
-  if (selectionModel->hasSelection()) {
-    QStringList dirty;
-    for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
-      int rowIndex = findPluginByPriority(row.data().toInt());
-      if (!m_ESPs[rowIndex].enabled) {
-        m_ESPs[rowIndex].enabled = true;
-        dirty.append(m_ESPs[rowIndex].name);
-      }
-    }
-    if (!dirty.isEmpty()) {
-      emit writePluginsList();
-      pluginStatesChanged(dirty, IPluginList::PluginState::STATE_ACTIVE);
+  QStringList dirty;
+  for (auto& idx : indices) {
+    if (m_ESPs[idx.row()].enabled != enabled) {
+      m_ESPs[idx.row()].enabled = enabled;
+      dirty.append(m_ESPs[idx.row()].name);
     }
   }
-}
-
-void PluginList::disableSelected(const QItemSelectionModel *selectionModel)
-{
-  if (selectionModel->hasSelection()) {
-    QStringList dirty;
-    for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
-      int rowIndex = findPluginByPriority(row.data().toInt());
-      if (!m_ESPs[rowIndex].forceEnabled && m_ESPs[rowIndex].enabled) {
-        m_ESPs[rowIndex].enabled = false;
-        dirty.append(m_ESPs[rowIndex].name);
-      }
-    }
-    if (!dirty.isEmpty()) {
-      emit writePluginsList();
-      pluginStatesChanged(dirty, IPluginList::PluginState::STATE_INACTIVE);
-    }
+  if (!dirty.isEmpty()) {
+    emit writePluginsList();
+    pluginStatesChanged(dirty, IPluginList::PluginState::STATE_ACTIVE);
   }
 }
-
 
 void PluginList::enableAll()
 {
@@ -392,7 +370,6 @@ void PluginList::enableAll()
     }
   }
 }
-
 
 void PluginList::disableAll()
 {
@@ -416,9 +393,8 @@ void PluginList::sendToPriority(const QModelIndexList& indices, int newPriority)
 {
   std::vector<int> pluginsToMove;
   for (auto& idx : indices) {
-    int rowIndex = findPluginByPriority(idx.row());
-    if (!m_ESPs[rowIndex].forceEnabled) {
-      pluginsToMove.push_back(rowIndex);
+    if (!m_ESPs[idx.row()].forceEnabled) {
+      pluginsToMove.push_back(idx.row());
     }
   }
   if (pluginsToMove.size()) {

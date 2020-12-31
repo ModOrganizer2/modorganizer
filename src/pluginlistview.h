@@ -11,6 +11,7 @@ namespace Ui {
 
 class OrganizerCore;
 class MainWindow;
+class ModListViewActions;
 class PluginListSortProxy;
 
 class PluginListView : public QTreeView
@@ -40,6 +41,9 @@ public:
 
 
 protected slots:
+
+  void onCustomContextMenuRequested(const QPoint& pos);
+  void onDoubleClicked(const QModelIndex& index);
 
   void onFilterChanged(const QString& filter);
 
@@ -73,6 +77,8 @@ private:
   PluginListViewUi ui;
 
   PluginListSortProxy* m_sortProxy;
+
+  ModListViewActions* m_modActions;
 
   ViewMarkingScrollBar* m_Scrollbar;
 };

@@ -74,7 +74,7 @@ public:
   ModListContextMenu(
     const QModelIndex& index, OrganizerCore& core, CategoryFactory& categories, ModListView* modListView);
 
-public: // TODO: Move this to private when all is done
+private:
 
   // create the "Send to... " context menu
   //

@@ -320,15 +320,6 @@ private slots:
   void openExplorer_activated();
   void refreshProfile_activated();
 
-  // pluginlist context menu
-  void enableSelectedPlugins_clicked();
-  void disableSelectedPlugins_clicked();
-  void sendSelectedPluginsToTop_clicked();
-  void sendSelectedPluginsToBottom_clicked();
-  void sendSelectedPluginsToPriority_clicked();
-  void openOriginInformation_clicked();
-  void openPluginOriginExplorer_clicked();
-
   void linkToolbar();
   void linkDesktop();
   void linkMenu();
@@ -444,12 +435,10 @@ private slots: // ui slots
   void on_centralWidget_customContextMenuRequested(const QPoint &pos);
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_executablesListBox_currentIndexChanged(int index);
-  void on_espList_doubleClicked(const QModelIndex &index);
   void on_profileBox_currentIndexChanged(int index);
   void on_startButton_clicked();
   void on_tabWidget_currentChanged(int index);
 
-  void on_espList_customContextMenuRequested(const QPoint &pos);
   void on_displayCategoriesBtn_toggled(bool checked);
   void on_linkButton_pressed();
   void on_showHiddenBox_toggled(bool checked);

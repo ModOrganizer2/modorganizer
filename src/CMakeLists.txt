@@ -146,6 +146,7 @@ add_filter(NAME src/plugins GROUPS
 	pluginlist
 	pluginlistsortproxy
 	pluginlistview
+	pluginlistcontextmenu
 )
 
 add_filter(NAME src/previews GROUPS

@@ -2340,28 +2340,6 @@ void MainWindow::setWindowEnabled(bool enabled)
   setEnabled(enabled);
 }
 
-void MainWindow::openPluginOriginExplorer_clicked()
-{
-  QItemSelectionModel *selection = ui->espList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 0) {
-    for (QModelIndex idx : selection->selectedRows()) {
-      QString fileName = idx.data().toString();
-      unsigned int modIndex = ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName));
-      if (modIndex == UINT_MAX) {
-        continue;
-      }
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-      shell::Explore(modInfo->absolutePath());
-    }
-  }
-  else {
-    QModelIndex idx = selection->currentIndex();
-    QString fileName = idx.data().toString();
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
-    shell::Explore(modInfo->absolutePath());
-  }
-}
-
 void MainWindow::openExplorer_activated()
 {
 	if (ui->modList->hasFocus()) {
@@ -2404,93 +2382,6 @@ void MainWindow::openExplorer_activated()
 void MainWindow::refreshProfile_activated()
 {
 	m_OrganizerCore.profileRefresh();
-}
-
-void MainWindow::openOriginInformation_clicked()
-{
-  try {
-    QItemSelectionModel *selection = ui->espList->selectionModel();
-    //we don't want to open multiple modinfodialogs.
-    /*if (selection->hasSelection() && selection->selectedRows().count() > 0) {
-
-      for (QModelIndex idx : selection->selectedRows()) {
-        QString fileName = idx.data().toString();
-        ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
-        std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-
-        if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-          displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
-        }
-      }
-    }
-    else {}*/
-    QModelIndex idx = selection->currentIndex();
-    QString fileName = idx.data().toString();
-
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
-    std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-
-    if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-      ui->modList->actions().displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
-    }
-  }
-  catch (const std::exception &e) {
-    reportError(e.what());
-  }
-}
-
-void MainWindow::on_espList_doubleClicked(const QModelIndex &index)
-{
-  if (!index.isValid()) {
-    return;
-  }
-
-  if (m_OrganizerCore.pluginList()->timeElapsedSinceLastChecked() <= QApplication::doubleClickInterval()) {
-    // don't interpret double click if we only just checked a plugin
-    return;
-  }
-
-  QModelIndex sourceIdx = mapToModel(m_OrganizerCore.pluginList(), index);
-  if (!sourceIdx.isValid()) {
-    return;
-  }
-  try {
-
-    QItemSelectionModel *selection = ui->espList->selectionModel();
-
-    if (selection->hasSelection() && selection->selectedRows().count() == 1) {
-
-      QModelIndex idx = selection->currentIndex();
-      QString fileName = idx.data().toString();
-
-      if (ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)) == UINT_MAX)
-        return;
-
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
-      std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-
-      if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-
-        Qt::KeyboardModifiers modifiers = QApplication::queryKeyboardModifiers();
-        if (modifiers.testFlag(Qt::ControlModifier)) {
-          openExplorer_activated();
-          // workaround to cancel the editor that might have opened because of
-          // selection-click
-          ui->espList->closePersistentEditor(index);
-        }
-        else {
-
-          ui->modList->actions().displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
-          // workaround to cancel the editor that might have opened because of
-          // selection-click
-          ui->espList->closePersistentEditor(index);
-        }
-      }
-    }
-  }
-  catch (const std::exception &e) {
-    reportError(e.what());
-  }
 }
 
 void MainWindow::saveArchiveList()
@@ -2604,21 +2495,6 @@ QMenu *MainWindow::openFolderMenu()
   FolderMenu->addAction(tr("Open MO2 Logs folder"), this, SLOT(openLogsFolder()));
 
 	return FolderMenu;
-}
-
-void MainWindow::addPluginSendToContextMenu(QMenu *menu)
-{
-  if (ui->espList->sortColumn() != PluginList::COL_PRIORITY)
-    return;
-
-  QMenu *sub_menu = new QMenu(this);
-  sub_menu->setTitle(tr("Send to"));
-  sub_menu->addAction(tr("Top"), [&]() { sendSelectedPluginsToTop_clicked(); });
-  sub_menu->addAction(tr("Bottom"), [&]() { sendSelectedPluginsToBottom_clicked(); });
-  sub_menu->addAction(tr("Priority..."), [&]() { sendSelectedPluginsToPriority_clicked(); });
-
-  menu->addMenu(sub_menu);
-  menu->addSeparator();
 }
 
 void MainWindow::linkToolbar()
@@ -2853,41 +2729,6 @@ void MainWindow::originModified(int originID)
     origin.getName(), origin.getPath(), origin.getPriority(), dummy);
 
   DirectoryRefresher::cleanStructure(m_OrganizerCore.directoryStructure());
-}
-
-void MainWindow::enableSelectedPlugins_clicked()
-{
-  m_OrganizerCore.pluginList()->enableSelected(ui->espList->selectionModel());
-}
-
-
-void MainWindow::disableSelectedPlugins_clicked()
-{
-  m_OrganizerCore.pluginList()->disableSelected(ui->espList->selectionModel());
-}
-
-void MainWindow::sendSelectedPluginsToTop_clicked()
-{
-  m_OrganizerCore.pluginList()->sendToPriority(
-    ui->espList->indexViewToModel(ui->espList->selectionModel()->selectedRows()), 0);
-}
-
-void MainWindow::sendSelectedPluginsToBottom_clicked()
-{
-  m_OrganizerCore.pluginList()->sendToPriority(
-    ui->espList->indexViewToModel(ui->espList->selectionModel()->selectedRows()), INT_MAX);
-}
-
-void MainWindow::sendSelectedPluginsToPriority_clicked()
-{
-  bool ok;
-  int newPriority = QInputDialog::getInt(this,
-    tr("Set Priority"), tr("Set the priority of the selected plugins"),
-    0, 0, INT_MAX, 1, &ok);
-  if (!ok) return;
-
-  m_OrganizerCore.pluginList()->sendToPriority(
-    ui->espList->indexViewToModel(ui->espList->selectionModel()->selectedRows()), newPriority);
 }
 
 void MainWindow::updateAvailable()
@@ -3549,71 +3390,6 @@ void MainWindow::toolBar_customContextMenuRequested(const QPoint &point)
   // did not click a link button, show the default context menu
   auto* m = createPopupMenu();
   m->exec(ui->toolBar->mapToGlobal(point));
-}
-
-void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
-{
-
-  int espIndex = ui->espList->indexViewToModel(ui->espList->indexAt(pos)).row();
-
-  QMenu menu;
-  menu.addAction(tr("Enable selected"), [=]() { enableSelectedPlugins_clicked(); });
-  menu.addAction(tr("Disable selected"), [=]() { disableSelectedPlugins_clicked(); });
-
-  menu.addSeparator();
-
-  menu.addAction(tr("Enable all"), m_OrganizerCore.pluginList(), &PluginList::enableAll);
-  menu.addAction(tr("Disable all"), m_OrganizerCore.pluginList(), &PluginList::disableAll);
-
-  menu.addSeparator();
-
-  addPluginSendToContextMenu(&menu);
-
-  QItemSelection currentSelection = ui->espList->selectionModel()->selection();
-  bool hasLocked = false;
-  bool hasUnlocked = false;
-  for (const QModelIndex &idx : currentSelection.indexes()) {
-    int row = ui->espList->indexViewToModel(idx).row();
-    if (m_OrganizerCore.pluginList()->isEnabled(row)) {
-      if (m_OrganizerCore.pluginList()->isESPLocked(row)) {
-        hasLocked = true;
-      } else {
-        hasUnlocked = true;
-      }
-    }
-  }
-
-  if (hasLocked) {
-    menu.addAction(tr("Unlock load order"), [&, espIndex]() { updateESPLock(espIndex, false); });
-  }
-  if (hasUnlocked) {
-    menu.addAction(tr("Lock load order"), [&, espIndex]() { updateESPLock(espIndex, true); });
-  }
-
-  menu.addSeparator();
-
-
-  QModelIndex idx = ui->espList->selectionModel()->currentIndex();
-  unsigned int modInfoIndex = ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(idx.data().toString()));
-  //this is to avoid showing the option on game files like skyrim.esm
-  if (modInfoIndex != UINT_MAX) {
-    menu.addAction(tr("Open Origin in Explorer"), [=]() { openPluginOriginExplorer_clicked(); });
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(modInfoIndex);
-    std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-
-    if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) == flags.end()) {
-      QAction* infoAction = menu.addAction(tr("Open Origin Info..."), [=]() { openOriginInformation_clicked(); });
-      menu.setDefaultAction(infoAction);
-    }
-  }
-
-  try {
-    menu.exec(ui->espList->viewport()->mapToGlobal(pos));
-  } catch (const std::exception &e) {
-    reportError(tr("Exception: ").arg(e.what()));
-  } catch (...) {
-    reportError(tr("Unknown exception"));
-  }
 }
 
 Executable* MainWindow::getSelectedExecutable()

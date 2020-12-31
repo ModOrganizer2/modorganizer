@@ -3,14 +3,20 @@
 #include <QUrl>
 #include <QMimeData>
 
+#include <report.h>
 #include <widgetutility.h>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "organizercore.h"
 #include "pluginlistsortproxy.h"
+#include "pluginlistcontextmenu.h"
+#include "modlistview.h"
+#include "modlistviewactions.h"
 #include "genericicondelegate.h"
 #include "modelutils.h"
+
+using namespace MOBase;
 
 PluginListView::PluginListView(QWidget *parent)
   : QTreeView(parent)
@@ -135,6 +141,7 @@ void PluginListView::setup(OrganizerCore& core, MainWindow* mw, Ui::MainWindow* 
 {
   m_core = &core;
   ui = { mwui->activePluginsCounter, mwui->espFilterEdit };
+  m_modActions = &mwui->modList->actions();
 
   m_sortProxy = new PluginListSortProxy(&core);
   m_sortProxy->setSourceModel(core.pluginList());
@@ -146,6 +153,70 @@ void PluginListView::setup(OrganizerCore& core, MainWindow* mw, Ui::MainWindow* 
   connect(ui.filter, &QLineEdit::textChanged, m_sortProxy, &PluginListSortProxy::updateFilter);
   connect(ui.filter, &QLineEdit::textChanged, this, &PluginListView::onFilterChanged);
 
+  // using a lambda here to avoid storing the mod list actions
+  connect(this, &QTreeView::customContextMenuRequested, [=](auto&& pos) { onCustomContextMenuRequested(pos); });
+  connect(this, &QTreeView::doubleClicked, [=](auto&& index) { onDoubleClicked(index); });
+}
+
+void PluginListView::onCustomContextMenuRequested(const QPoint& pos)
+{
+  try {
+    PluginListContextMenu menu(indexViewToModel(indexAt(pos)), *m_core, this);
+    connect(&menu, &PluginListContextMenu::openModInformation, [=](auto&& modIndex) {
+      m_modActions->displayModInformation(modIndex); });
+    menu.exec(viewport()->mapToGlobal(pos));
+  }
+  catch (const std::exception& e) {
+    reportError(tr("Exception: ").arg(e.what()));
+  }
+  catch (...) {
+    reportError(tr("Unknown exception"));
+  }
+}
+
+void PluginListView::onDoubleClicked(const QModelIndex& index)
+{
+  if (!index.isValid()) {
+    return;
+  }
+
+  if (m_core->pluginList()->timeElapsedSinceLastChecked() <= QApplication::doubleClickInterval()) {
+    // don't interpret double click if we only just checked a plugin
+    return;
+  }
+
+  try {
+    if (selectionModel()->hasSelection() && selectionModel()->selectedRows().count() == 1) {
+
+      QModelIndex idx = selectionModel()->currentIndex();
+      QString fileName = idx.data().toString();
+
+      if (ModInfo::getIndex(m_core->pluginList()->origin(fileName)) == UINT_MAX) {
+        return;
+      }
+
+      auto modIndex = ModInfo::getIndex(m_core->pluginList()->origin(fileName));
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+
+      if (modInfo->isRegular() || modInfo->isOverwrite()) {
+
+        Qt::KeyboardModifiers modifiers = QApplication::queryKeyboardModifiers();
+        if (modifiers.testFlag(Qt::ControlModifier)) {
+          m_modActions->openExplorer({ m_core->modList()->index(modIndex, 0) });
+        }
+        else {
+          m_modActions->displayModInformation(ModInfo::getIndex(m_core->pluginList()->origin(fileName)));
+        }
+
+        // workaround to cancel the editor that might have opened because of
+        // selection-click
+        closePersistentEditor(index);
+      }
+    }
+  }
+  catch (const std::exception& e) {
+    reportError(e.what());
+  }
 }
 
 bool PluginListView::moveSelection(int key)
