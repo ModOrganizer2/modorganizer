@@ -447,8 +447,7 @@ void ModListViewActions::displayModInformation(ModInfo::Ptr modInfo, unsigned in
     m_core.modList()->modInfoChanged(modInfo);
   }
 
-  if (m_core.currentProfile()->modEnabled(modIndex)
-    && !modInfo->hasFlag(ModInfo::FLAG_FOREIGN)) {
+  if (m_core.currentProfile()->modEnabled(modIndex) && !modInfo->isForeign()) {
     FilesOrigin& origin = m_core.directoryStructure()->getOriginByName(ToWString(modInfo->name()));
     origin.enable(false);
 
@@ -497,7 +496,7 @@ void ModListViewActions::sendModsToSeparator(const QModelIndexList& index) const
   for (auto iter = indexesByPriority.begin(); iter != indexesByPriority.end(); iter++) {
     if ((iter->second != UINT_MAX)) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(iter->second);
-      if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+      if (modInfo->isSeparator()) {
         separators << modInfo->name().chopped(10);  // Chops the "_separator" away from the name
       }
     }
@@ -1061,7 +1060,7 @@ void ModListViewActions::moveOverwriteContentToExistingMod() const
   for (auto& iter : indexesByPriority) {
     if ((iter.second != UINT_MAX)) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(iter.second);
-      if (!modInfo->hasFlag(ModInfo::FLAG_SEPARATOR) && !modInfo->hasFlag(ModInfo::FLAG_FOREIGN) && !modInfo->hasFlag(ModInfo::FLAG_OVERWRITE)) {
+      if (!modInfo->isSeparator() && !modInfo->isForeign() && !modInfo->isOverwrite()) {
         mods << modInfo->name();
       }
     }
