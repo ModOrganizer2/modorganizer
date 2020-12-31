@@ -150,8 +150,24 @@ void PluginListView::setup(OrganizerCore& core, MainWindow* mw, Ui::MainWindow* 
   sortByColumn(PluginList::COL_PRIORITY, Qt::AscendingOrder);
   setItemDelegateForColumn(PluginList::COL_FLAGS, new GenericIconDelegate(this));
 
+  // counter
+  connect(core.pluginList(), &PluginList::writePluginsList, [=]() { updatePluginCount(); });
+  connect(core.pluginList(), &PluginList::esplist_changed, [=]() { updatePluginCount(); });
+
+  // filter
   connect(ui.filter, &QLineEdit::textChanged, m_sortProxy, &PluginListSortProxy::updateFilter);
   connect(ui.filter, &QLineEdit::textChanged, this, &PluginListView::onFilterChanged);
+
+  // highligth mod list when selected
+  connect(selectionModel(), &QItemSelectionModel::selectionChanged, [=](auto&& selected) {
+    std::vector<unsigned int> pluginIndices;
+    for (auto& idx : indexViewToModel(selectionModel()->selectedRows())) {
+      pluginIndices.push_back(idx.row());
+    }
+    m_core->modList()->highlightMods(pluginIndices, *m_core->directoryStructure());
+    mwui->modList->verticalScrollBar()->repaint();
+    mwui->modList->repaint();
+  });
 
   // using a lambda here to avoid storing the mod list actions
   connect(this, &QTreeView::customContextMenuRequested, [=](auto&& pos) { onCustomContextMenuRequested(pos); });

@@ -217,7 +217,11 @@ public:
   static QString getColumnName(int column);
   static QString getColumnToolTip(int column);
 
-  void highlightPlugins(const QItemSelectionModel *selection, const MOShared::DirectoryEntry &directoryEntry, const Profile &profile);
+  // highlight plugins contained in the mods at the given indices
+  //
+  void highlightPlugins(
+    const std::vector<unsigned int>& modIndices,
+    const MOShared::DirectoryEntry &directoryEntry);
 
   void refreshLoadOrder();
 

@@ -135,19 +135,19 @@ QString PluginList::getColumnToolTip(int column)
   }
 }
 
-void PluginList::highlightPlugins(const QItemSelectionModel *selection, const MOShared::DirectoryEntry &directoryEntry, const Profile &profile)
+void PluginList::highlightPlugins(
+  const std::vector<unsigned int>& modIndices,
+  const MOShared::DirectoryEntry &directoryEntry)
 {
+  auto* profile = m_Organizer.currentProfile();
+
   for (auto &esp : m_ESPs) {
     esp.modSelected = false;
   }
 
-  for (QModelIndex idx : selection->selectedRows(ModList::COL_PRIORITY)) {
-    int modIndex = idx.data(Qt::UserRole + 1).toInt();
-    if (modIndex == UINT_MAX)
-      continue;
-
+  for (auto& modIndex : modIndices) {
     ModInfo::Ptr selectedMod = ModInfo::getByIndex(modIndex);
-    if (!selectedMod.isNull() && profile.modEnabled(modIndex)) {
+    if (!selectedMod.isNull() && profile->modEnabled(modIndex)) {
       QDir dir(selectedMod->absolutePath());
       QStringList plugins = dir.entryList(QStringList() << "*.esp" << "*.esm" << "*.esl");
       const MOShared::FilesOrigin& origin = directoryEntry.getOriginByName(selectedMod->internalName().toStdWString());

@@ -845,13 +845,15 @@ int ModList::timeElapsedSinceLastChecked() const
   return m_LastCheck.elapsed();
 }
 
-void ModList::highlightMods(const QItemSelectionModel *selection, const MOShared::DirectoryEntry &directoryEntry)
+void ModList::highlightMods(
+  const std::vector<unsigned int>& pluginIndices,
+  const MOShared::DirectoryEntry &directoryEntry)
 {
   for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
       ModInfo::getByIndex(i)->setPluginSelected(false);
   }
-  for (QModelIndex idx : selection->selectedRows(PluginList::COL_NAME)) {
-    QString pluginName = idx.data().toString();
+  for (auto idx : pluginIndices) {
+    QString pluginName = m_Organizer->pluginList()->getName(idx);
 
     const MOShared::FileEntryPtr fileEntry = directoryEntry.findFile(pluginName.toStdWString());
     if (fileEntry.get() != nullptr) {

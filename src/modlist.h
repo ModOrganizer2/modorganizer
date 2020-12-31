@@ -129,7 +129,11 @@ public:
 
   int timeElapsedSinceLastChecked() const;
 
-  void highlightMods(const QItemSelectionModel *selection, const MOShared::DirectoryEntry &directoryEntry);
+  // highlight mods containing the plugins at the given indices
+  //
+  void highlightMods(
+    const std::vector<unsigned int>& pluginIndices,
+    const MOShared::DirectoryEntry &directoryEntry);
 
 public:
 

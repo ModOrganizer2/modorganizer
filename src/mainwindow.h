@@ -140,7 +140,6 @@ public:
   virtual MOBase::DelayedFileWriterBase &archivesWriter() override { return m_ArchiveListWriter; }
 
 public slots:
-  void esplist_changed();
   void refresherProgress(const DirectoryRefreshProgress* p);
 
   void directory_refreshed();
@@ -396,9 +395,6 @@ private slots:
   void removeFromToolbar(QAction* action);
 
   void about();
-
-  void modlistSelectionsChanged(const QItemSelection &current);
-  void esplistSelectionsChanged(const QItemSelection &current);
 
   void resetActionIcons();
 

@@ -321,8 +321,6 @@ MainWindow::MainWindow(Settings &settings
 
   setupModList();
   ui->espList->setup(m_OrganizerCore, this, ui);
-  connect(ui->espList->selectionModel(), &QItemSelectionModel::selectionChanged,
-    [=](auto&& selection) { esplistSelectionsChanged(selection); });
 
   ui->bsaList->setLocalMoveOnly(true);
   ui->bsaList->setHeaderHidden(true);
@@ -514,10 +512,6 @@ void MainWindow::setupModList()
   connect(&ui->modList->actions(), &ModListViewActions::overwriteCleared, [=]() { scheduleCheckForProblems(); });
   connect(&ui->modList->actions(), &ModListViewActions::originModified, this, &MainWindow::originModified);
   connect(m_OrganizerCore.modList(), &ModList::modPrioritiesChanged, [&]() { m_ArchiveListWriter.write(); });
-
-  // keep here for now
-  connect(ui->modList->selectionModel(), &QItemSelectionModel::selectionChanged,
-    this, &MainWindow::modlistSelectionsChanged);
 }
 
 void MainWindow::resetActionIcons()
@@ -2186,11 +2180,6 @@ void MainWindow::directory_refreshed()
   }
 }
 
-void MainWindow::esplist_changed()
-{
-  ui->espList->updatePluginCount();
-}
-
 void MainWindow::modInstalled(const QString &modName)
 {
   unsigned int index = ModInfo::getIndex(modName);
@@ -2263,26 +2252,11 @@ void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName
 void MainWindow::modlistChanged(const QModelIndex&, int)
 {
   m_OrganizerCore.currentProfile()->writeModlist();
-  ui->modList->updateModCount();
 }
 
 void MainWindow::modlistChanged(const QModelIndexList&, int)
 {
   m_OrganizerCore.currentProfile()->writeModlist();
-  ui->modList->updateModCount();
-}
-
-void MainWindow::modlistSelectionsChanged(const QItemSelection &selected)
-{
-  m_OrganizerCore.pluginList()->highlightPlugins(ui->modList->selectionModel(), *m_OrganizerCore.directoryStructure(), *m_OrganizerCore.currentProfile());
-  ui->espList->verticalScrollBar()->repaint();
-}
-
-void MainWindow::esplistSelectionsChanged(const QItemSelection &selected)
-{
-  m_OrganizerCore.modList()->highlightMods(ui->espList->selectionModel(), *m_OrganizerCore.directoryStructure());
-  ui->modList->verticalScrollBar()->repaint();
-  ui->modList->repaint();
 }
 
 void MainWindow::modRemoved(const QString &fileName)

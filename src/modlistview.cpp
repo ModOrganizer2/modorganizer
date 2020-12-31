@@ -594,6 +594,8 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   connect(m_core, &OrganizerCore::modInstalled, this, &ModListView::onModInstalled);
   connect(core.modList(), &ModList::modPrioritiesChanged, this, &ModListView::onModPrioritiesChanged);
   connect(core.modList(), &ModList::clearOverwrite, m_actions, &ModListViewActions::clearOverwrite);
+  connect(core.modList(), qOverload<QModelIndex const&, int>(&ModList::modlistChanged), [=]() { updateModCount(); });
+  connect(core.modList(), qOverload<QModelIndexList const&, int>(&ModList::modlistChanged), [=]() { updateModCount(); });
 
   m_byPriorityProxy = new ModListByPriorityProxy(core.currentProfile(), core, this);
   m_byPriorityProxy->setSourceModel(core.modList());
@@ -671,6 +673,16 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
 
     header()->setSectionResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
   }
+
+  // highligth plugins
+  connect(selectionModel(), &QItemSelectionModel::selectionChanged, [=](auto&& selected) {
+    std::vector<unsigned int> modIndices;
+    for (auto& idx : selectionModel()->selectedRows()) {
+      modIndices.push_back(idx.data(ModList::IndexRole).toInt());
+    }
+    m_core->pluginList()->highlightPlugins(modIndices, *m_core->directoryStructure());
+    mwui->espList->verticalScrollBar()->repaint();
+  });
 
   // prevent the name-column from being hidden
   header()->setSectionHidden(ModList::COL_NAME, false);
