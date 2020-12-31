@@ -2478,12 +2478,6 @@ void MainWindow::updatePluginCount()
   );
 }
 
-void MainWindow::cancelModListEditor()
-{
-  ui->modList->setEnabled(false);
-  ui->modList->setEnabled(true);
-}
-
 void MainWindow::openOriginInformation_clicked()
 {
   try {

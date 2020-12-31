@@ -374,8 +374,6 @@ private slots:
   void hookUpWindowTutorials();
   bool shouldStartTutorial() const;
 
-  void cancelModListEditor();
-
   void openInstanceFolder();
   void openLogsFolder();
   void openInstallFolder();
