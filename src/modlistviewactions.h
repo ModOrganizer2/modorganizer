@@ -29,8 +29,7 @@ public:
     CategoryFactory& categoryFactory,
     ModListView* view,
     PluginListView* pluginView,
-    QObject* nxmReceiver,
-    QWidget* parent);
+    QObject* nxmReceiver);
 
   // install the mod from the given archive
   //

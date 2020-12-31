@@ -36,14 +36,14 @@ using namespace MOShared;
 
 ModListViewActions::ModListViewActions(
   OrganizerCore& core, FilterList& filters, CategoryFactory& categoryFactory,
-  ModListView* view, PluginListView* pluginView, QObject* nxmReceiver, QWidget* parent) :
-  QObject(parent)
+  ModListView* view, PluginListView* pluginView, QObject* nxmReceiver) :
+  QObject(view)
   , m_core(core)
   , m_filters(filters)
   , m_categories(categoryFactory)
   , m_view(view)
   , m_pluginView(pluginView)
-  , m_parent(parent)
+  , m_parent(view->topLevelWidget())
   , m_receiver(nxmReceiver)
 {
 

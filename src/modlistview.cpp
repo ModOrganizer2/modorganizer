@@ -577,7 +577,7 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   m_core = &core;
   m_filters.reset(new FilterList(mwui, core, factory));
   m_categories = &factory;
-  m_actions = new ModListViewActions(core, *m_filters, factory, this, mwui->espList, mw, mw);
+  m_actions = new ModListViewActions(core, *m_filters, factory, this, mwui->espList, mw);
   ui = { mwui->groupCombo, mwui->activeModsCounter, mwui->modFilterEdit, mwui->currentCategoryLabel, mwui->clearFiltersButton };
 
   connect(m_core, &OrganizerCore::modInstalled, this, &ModListView::onModInstalled);
