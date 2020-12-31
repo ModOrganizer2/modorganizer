@@ -11,6 +11,7 @@ class CategoryFactory;
 class FilterList;
 class MainWindow;
 class ModListView;
+class PluginListView;
 class OrganizerCore;
 
 class ModListViewActions : public QObject
@@ -26,8 +27,10 @@ public:
     OrganizerCore& core,
     FilterList& filters,
     CategoryFactory& categoryFactory,
-    MainWindow* mainWindow,
-    ModListView* view);
+    ModListView* view,
+    PluginListView* pluginView,
+    QObject* nxmReceiver,
+    QWidget* parent);
 
   // install the mod from the given archive
   //
@@ -142,10 +145,9 @@ private:
   FilterList& m_filters;
   CategoryFactory& m_categories;
   ModListView* m_view;
+  PluginListView* m_pluginView;
+  QObject* m_receiver;
   QWidget* m_parent;
-
-  // hope to get rid of this some day
-  MainWindow* m_main;
 };
 
 #endif

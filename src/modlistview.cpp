@@ -24,6 +24,8 @@
 #include "genericicondelegate.h"
 #include "shared/directoryentry.h"
 #include "shared/filesorigin.h"
+#include "mainwindow.h"
+#include "modelutils.h"
 
 using namespace MOBase;
 
@@ -197,61 +199,22 @@ bool ModListView::isModVisible(ModInfo::Ptr mod) const
 
 QModelIndex ModListView::indexModelToView(const QModelIndex& index) const
 {
-  if (index.model() != m_core->modList()) {
-    return QModelIndex();
-  }
-
-  // we need to stack the proxy
-  std::vector<QAbstractProxyModel*> proxies;
-  {
-    auto* currentModel = model();
-    while (auto* proxy = qobject_cast<QAbstractProxyModel*>(currentModel)) {
-      proxies.push_back(proxy);
-      currentModel = proxy->sourceModel();
-    }
-  }
-
-  if (proxies.empty() || proxies.back()->sourceModel() != m_core->modList()) {
-    return QModelIndex();
-  }
-
-  auto qindex = index;
-  for (auto rit = proxies.rbegin(); rit != proxies.rend(); ++rit) {
-    qindex = (*rit)->mapFromSource(qindex);
-  }
-
-  return qindex;
+  return ::indexModelToView(index, this);
 }
 
 QModelIndexList ModListView::indexModelToView(const QModelIndexList& index) const
 {
-  QModelIndexList result;
-  for (auto& idx : index) {
-    result.append(indexModelToView(idx));
-  }
-  return result;
+  return ::indexModelToView(index, this);
 }
 
 QModelIndex ModListView::indexViewToModel(const QModelIndex& index) const
 {
-  if (index.model() == m_core->modList()) {
-    return index;
-  }
-  else if (auto* proxy = qobject_cast<const QAbstractProxyModel*>(index.model())) {
-    return indexViewToModel(proxy->mapToSource(index));
-  }
-  else {
-    return QModelIndex();
-  }
+  return ::indexViewToModel(index, m_core->modList());
 }
 
 QModelIndexList ModListView::indexViewToModel(const QModelIndexList& index) const
 {
-  QModelIndexList result;
-  for (auto& idx : index) {
-    result.append(indexViewToModel(idx));
-  }
-  return result;
+  return ::indexViewToModel(index, m_core->modList());
 }
 
 QModelIndex ModListView::nextIndex(const QModelIndex& index) const
@@ -625,7 +588,7 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   m_core = &core;
   m_filters.reset(new FilterList(mwui, core, factory));
   m_categories = &factory;
-  m_actions = new ModListViewActions(core, *m_filters, factory, mw, this);
+  m_actions = new ModListViewActions(core, *m_filters, factory, this, mwui->espList, mw, mw);
   ui = { mwui->groupCombo, mwui->activeModsCounter, mwui->modFilterEdit, mwui->currentCategoryLabel, mwui->clearFiltersButton };
 
   connect(m_core, &OrganizerCore::modInstalled, this, &ModListView::onModInstalled);

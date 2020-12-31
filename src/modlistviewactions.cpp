@@ -17,7 +17,6 @@
 #include "modinfodialog.h"
 #include "modlist.h"
 #include "modlistview.h"
-#include "mainwindow.h"
 #include "messagedialog.h"
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
@@ -25,6 +24,7 @@
 #include "organizercore.h"
 #include "overwriteinfodialog.h"
 #include "csvbuilder.h"
+#include "pluginlistview.h"
 #include "shared/filesorigin.h"
 #include "shared/directoryentry.h"
 #include "shared/fileregister.h"
@@ -33,15 +33,18 @@
 using namespace MOBase;
 using namespace MOShared;
 
+
 ModListViewActions::ModListViewActions(
-  OrganizerCore& core, FilterList& filters, CategoryFactory& categoryFactory, MainWindow* mainWindow, ModListView* view) :
-  QObject(view)
+  OrganizerCore& core, FilterList& filters, CategoryFactory& categoryFactory,
+  ModListView* view, PluginListView* pluginView, QObject* nxmReceiver, QWidget* parent) :
+  QObject(parent)
   , m_core(core)
   , m_filters(filters)
   , m_categories(categoryFactory)
   , m_view(view)
-  , m_parent(mainWindow)
-  , m_main(mainWindow)
+  , m_pluginView(pluginView)
+  , m_parent(parent)
+  , m_receiver(nxmReceiver)
 {
 
 }
@@ -157,9 +160,9 @@ void ModListViewActions::checkModsForUpdates() const
 {
   bool checkingModsForUpdate = false;
   if (NexusInterface::instance().getAccessManager()->validated()) {
-    checkingModsForUpdate = ModInfo::checkAllForUpdate(&m_core.pluginContainer(), m_main);
-    NexusInterface::instance().requestEndorsementInfo(m_main, QVariant(), QString());
-    NexusInterface::instance().requestTrackingInfo(m_main, QVariant(), QString());
+    checkingModsForUpdate = ModInfo::checkAllForUpdate(&m_core.pluginContainer(), m_receiver);
+    NexusInterface::instance().requestEndorsementInfo(m_receiver, QVariant(), QString());
+    NexusInterface::instance().requestTrackingInfo(m_receiver, QVariant(), QString());
   } else {
     QString apiKey;
     if (GlobalSettings::nexusApiKey(apiKey)) {
@@ -201,7 +204,7 @@ void ModListViewActions::checkModsForUpdates(std::multimap<QString, int> const& 
   }
 
   if (NexusInterface::instance().getAccessManager()->validated()) {
-    ModInfo::manualUpdateCheck(m_main, IDs);
+    ModInfo::manualUpdateCheck(m_receiver, IDs);
   }
   else {
     QString apiKey;
@@ -596,7 +599,7 @@ void ModListViewActions::removeMods(const QModelIndexList& indices) const
       m_core.modList()->removeRow(indices[0].data(ModList::IndexRole).toInt(), QModelIndex());
     }
     m_view->updateModCount();
-    m_main->updatePluginCount();
+    m_pluginView->updatePluginCount();
   }
   catch (const std::exception& e) {
     reportError(tr("failed to remove mod: %1").arg(e.what()));

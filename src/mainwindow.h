@@ -148,8 +148,6 @@ public slots:
 
   void directory_refreshed();
 
-  void updatePluginCount();
-
 signals:
 
   /**
@@ -261,8 +259,6 @@ private:
   std::vector<QString> m_ModNameList; // the mod-list to go with the directory structure
 
   QStringList m_DefaultArchives;
-
-  PluginListSortProxy *m_PluginListSortProxy;
 
   int m_OldExecutableIndex;
 
@@ -406,7 +402,6 @@ private slots:
   void modlistChanged(const QModelIndexList &indicies, int role);
   void fileMoved(const QString &filePath, const QString &oldOriginName, const QString &newOriginName);
 
-  void espFilterChanged(const QString &filter);
   void resizeLists(bool pluginListCustom);
 
   /**

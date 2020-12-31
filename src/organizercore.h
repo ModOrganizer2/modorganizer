@@ -227,8 +227,6 @@ public:
 
   MOBase::VersionInfo getVersion() const { return m_Updater.getVersion(); }
 
-  PluginListSortProxy *createPluginListProxyModel();
-
   // return the plugin container
   //
   PluginContainer& pluginContainer() const;

@@ -227,6 +227,7 @@ add_filter(NAME src/widgets GROUPS
 	qtgroupingproxy
 	texteditor
 	viewmarkingscrollbar
+	modelutils
 )
 
 

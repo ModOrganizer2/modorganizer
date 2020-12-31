@@ -11,7 +11,6 @@
 #include "modrepositoryfileinfo.h"
 #include "nexusinterface.h"
 #include "plugincontainer.h"
-#include "pluginlistsortproxy.h"
 #include "profile.h"
 #include "credentialsdialog.h"
 #include "filedialogmemory.h"
@@ -1505,13 +1504,6 @@ void OrganizerCore::requestDownload(const QUrl &url, QNetworkReply *reply)
       m_DownloadManager.addDownload(reply, new ModRepositoryFileInfo());
     }
   }
-}
-
-PluginListSortProxy *OrganizerCore::createPluginListProxyModel()
-{
-  PluginListSortProxy *result = new PluginListSortProxy(this);
-  result->setSourceModel(&m_PluginList);
-  return result;
 }
 
 PluginContainer& OrganizerCore::pluginContainer() const

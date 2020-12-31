@@ -320,14 +320,7 @@ MainWindow::MainWindow(Settings &settings
   TaskProgressManager::instance().tryCreateTaskbar();
 
   setupModList();
-
-  // set up plugin list
-  m_PluginListSortProxy = m_OrganizerCore.createPluginListProxyModel();
-
-  ui->espList->setModel(m_PluginListSortProxy);
-  ui->espList->sortByColumn(PluginList::COL_PRIORITY, Qt::AscendingOrder);
-  ui->espList->setItemDelegateForColumn(PluginList::COL_FLAGS, new GenericIconDelegate(ui->espList));
-  ui->espList->installEventFilter(m_OrganizerCore.pluginList());
+  ui->espList->setup(m_OrganizerCore, this, ui);
 
   ui->bsaList->setLocalMoveOnly(true);
   ui->bsaList->setHeaderHidden(true);
@@ -399,9 +392,6 @@ MainWindow::MainWindow(Settings &settings
   }
 
   connect(&m_PluginContainer, SIGNAL(diagnosisUpdate()), this, SLOT(scheduleCheckForProblems()));
-
-  connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), m_PluginListSortProxy, SLOT(updateFilter(QString)));
-  connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(espFilterChanged(QString)));
 
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(refreshed()), this, SLOT(directory_refreshed()));
   connect(
@@ -513,10 +503,10 @@ MainWindow::MainWindow(Settings &settings
   refreshExecutablesList();
   updatePinnedExecutables();
   resetActionIcons();
-  updatePluginCount();
   processUpdates();
 
   ui->modList->updateModCount();
+  ui->espList->updatePluginCount();
   ui->statusBar->updateNormalMessage(m_OrganizerCore);
 }
 
@@ -1129,18 +1119,6 @@ void MainWindow::createHelpMenu()
   menu->addAction(tr("About Qt"), qApp, SLOT(aboutQt()));
 }
 
-void MainWindow::espFilterChanged(const QString &filter)
-{
-  if (!filter.isEmpty()) {
-    ui->espList->setStyleSheet("QTreeView { border: 2px ridge #f00; }");
-    ui->activePluginsCounter->setStyleSheet("QLCDNumber { border: 2px ridge #f00; }");
-  } else {
-    ui->espList->setStyleSheet("");
-    ui->activePluginsCounter->setStyleSheet("");
-  }
-  updatePluginCount();
-}
-
 bool MainWindow::addProfile()
 {
   QComboBox *profileBox = findChild<QComboBox*>("profileBox");
@@ -1544,7 +1522,7 @@ void MainWindow::activateSelectedProfile()
   m_SavesTab->refreshSaveList();
   m_OrganizerCore.refresh();
   ui->modList->updateModCount();
-  updatePluginCount();
+  ui->espList->updatePluginCount();
   ui->statusBar->updateNormalMessage(m_OrganizerCore);
 }
 
@@ -2238,7 +2216,7 @@ void MainWindow::directory_refreshed()
 
 void MainWindow::esplist_changed()
 {
-  updatePluginCount();
+  ui->espList->updatePluginCount();
 }
 
 void MainWindow::modInstalled(const QString &modName)
@@ -2332,6 +2310,7 @@ void MainWindow::esplistSelectionsChanged(const QItemSelection &selected)
 {
   m_OrganizerCore.modList()->highlightMods(ui->espList->selectionModel(), *m_OrganizerCore.directoryStructure());
   ui->modList->verticalScrollBar()->repaint();
+  ui->modList->repaint();
 }
 
 void MainWindow::modRemoved(const QString &fileName)
@@ -2425,57 +2404,6 @@ void MainWindow::openExplorer_activated()
 void MainWindow::refreshProfile_activated()
 {
 	m_OrganizerCore.profileRefresh();
-}
-
-void MainWindow::updatePluginCount()
-{
-  int activeMasterCount = 0;
-  int activeLightMasterCount = 0;
-  int activeRegularCount = 0;
-  int masterCount = 0;
-  int lightMasterCount = 0;
-  int regularCount = 0;
-  int activeVisibleCount = 0;
-
-  PluginList *list = m_OrganizerCore.pluginList();
-  QString filter = ui->espFilterEdit->text();
-
-  for (QString plugin : list->pluginNames()) {
-    bool active = list->isEnabled(plugin);
-    bool visible = m_PluginListSortProxy->filterMatchesPlugin(plugin);
-    if (list->isLight(plugin) || list->isLightFlagged(plugin)) {
-      lightMasterCount++;
-      activeLightMasterCount += active;
-      activeVisibleCount += visible && active;
-    } else if (list->isMaster(plugin)) {
-      masterCount++;
-      activeMasterCount += active;
-      activeVisibleCount += visible && active;
-    } else {
-      regularCount++;
-      activeRegularCount += active;
-      activeVisibleCount += visible && active;
-    }
-  }
-
-  int activeCount = activeMasterCount + activeLightMasterCount + activeRegularCount;
-  int totalCount = masterCount + lightMasterCount + regularCount;
-
-  ui->activePluginsCounter->display(activeVisibleCount);
-  ui->activePluginsCounter->setToolTip(tr("<table cellspacing=\"6\">"
-    "<tr><th>Type</th><th>Active      </th><th>Total</th></tr>"
-    "<tr><td>All plugins:</td><td align=right>%1    </td><td align=right>%2</td></tr>"
-    "<tr><td>ESMs:</td><td align=right>%3    </td><td align=right>%4</td></tr>"
-    "<tr><td>ESPs:</td><td align=right>%7    </td><td align=right>%8</td></tr>"
-    "<tr><td>ESMs+ESPs:</td><td align=right>%9    </td><td align=right>%10</td></tr>"
-    "<tr><td>ESLs:</td><td align=right>%5    </td><td align=right>%6</td></tr>"
-    "</table>")
-    .arg(activeCount).arg(totalCount)
-    .arg(activeMasterCount).arg(masterCount)
-    .arg(activeLightMasterCount).arg(lightMasterCount)
-    .arg(activeRegularCount).arg(regularCount)
-    .arg(activeMasterCount+activeRegularCount).arg(masterCount+regularCount)
-  );
 }
 
 void MainWindow::openOriginInformation_clicked()
@@ -2680,7 +2608,7 @@ QMenu *MainWindow::openFolderMenu()
 
 void MainWindow::addPluginSendToContextMenu(QMenu *menu)
 {
-  if (m_PluginListSortProxy->sortColumn() != PluginList::COL_PRIORITY)
+  if (ui->espList->sortColumn() != PluginList::COL_PRIORITY)
     return;
 
   QMenu *sub_menu = new QMenu(this);
@@ -3623,7 +3551,7 @@ void MainWindow::toolBar_customContextMenuRequested(const QPoint &point)
 void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
 {
 
-  int espIndex = m_PluginListSortProxy->mapToSource(ui->espList->indexAt(pos)).row();
+  int espIndex = ui->espList->indexViewToModel(ui->espList->indexAt(pos)).row();
 
   QMenu menu;
   menu.addAction(tr("Enable selected"), [=]() { enableSelectedPlugins_clicked(); });
@@ -3642,7 +3570,7 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
   bool hasLocked = false;
   bool hasUnlocked = false;
   for (const QModelIndex &idx : currentSelection.indexes()) {
-    int row = m_PluginListSortProxy->mapToSource(idx).row();
+    int row = ui->espList->indexViewToModel(idx).row();
     if (m_OrganizerCore.pluginList()->isEnabled(row)) {
       if (m_OrganizerCore.pluginList()->isESPLocked(row)) {
         hasLocked = true;
