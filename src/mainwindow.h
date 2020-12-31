@@ -276,8 +276,6 @@ private:
 
   QByteArray m_ArchiveListHash;
 
-  bool m_DidUpdateMasterList;
-
   MOBase::DelayedFileWriter m_ArchiveListWriter;
 
   QAction* m_LinkToolbar;
@@ -431,7 +429,6 @@ private slots: // ui slots
   void on_linkButton_pressed();
   void on_showHiddenBox_toggled(bool checked);
   void on_bsaList_itemChanged(QTreeWidgetItem *item, int column);
-  void on_bossButton_clicked();
 
   void on_saveButton_clicked();
   void on_restoreButton_clicked();
