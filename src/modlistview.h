@@ -36,6 +36,14 @@ public:
     OnViewport = DropIndicatorPosition::OnViewport
   };
 
+  // indiucate the groupby mode
+  enum class GroupByMode {
+    NONE,
+    SEPARATOR,
+    CATEGORY,
+    NEXUS_ID
+  };
+
 public:
   explicit ModListView(QWidget* parent = 0);
 
@@ -57,6 +65,10 @@ public:
   // the column by which the mod list is currently sorted
   //
   int sortColumn() const;
+
+  // the current group mode
+  //
+  GroupByMode groupByMode() const;
 
   // retrieve the actions from the view
   //
@@ -173,6 +185,8 @@ private:
   //
   void updateGroupByProxy(int groupIndex);
 
+  // index in the groupby combo
+  //
   enum GroupBy {
     NONE = 0,
     CATEGORY = 1,

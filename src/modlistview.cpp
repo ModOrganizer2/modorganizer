@@ -103,12 +103,31 @@ void ModListView::setProfile(Profile* profile)
 
 bool ModListView::hasCollapsibleSeparators() const
 {
-  return m_sortProxy != nullptr && m_sortProxy->sourceModel() == m_byPriorityProxy;
+  return groupByMode() == GroupByMode::SEPARATOR;
 }
 
 int ModListView::sortColumn() const
 {
   return m_sortProxy ? m_sortProxy->sortColumn() : -1;
+}
+
+ModListView::GroupByMode ModListView::groupByMode() const
+{
+  if (m_sortProxy == nullptr) {
+    return GroupByMode::NONE;
+  }
+  else if (m_sortProxy->sourceModel() == m_byPriorityProxy) {
+    return GroupByMode::SEPARATOR;
+  }
+  else if (m_sortProxy->sourceModel() == m_byCategoryProxy) {
+    return GroupByMode::CATEGORY;
+  }
+  else if (m_sortProxy->sourceModel() == m_byNexusIdProxy) {
+    return GroupByMode::NEXUS_ID;
+  }
+  else {
+    return GroupByMode::NONE;
+  }
 }
 
 ModListViewActions& ModListView::actions() const
