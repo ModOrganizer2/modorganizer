@@ -10,11 +10,16 @@
 using namespace MOBase;
 
 ModListGlobalContextMenu::ModListGlobalContextMenu(OrganizerCore& core, ModListView* view, QWidget* parent)
+  : ModListGlobalContextMenu(core, view, QModelIndex(), parent)
+{
+}
+
+ModListGlobalContextMenu::ModListGlobalContextMenu(OrganizerCore& core, ModListView* view, const QModelIndex& index, QWidget* parent)
   : QMenu(parent)
 {
   addAction(tr("Install Mod..."), [=]() { view->actions().installMod(); });
-  addAction(tr("Create empty mod"), [=]() { view->actions().createEmptyMod(-1); });
-  addAction(tr("Create Separator"), [=]() { view->actions().createSeparator(-1); });
+  addAction(tr("Create empty mod"), [=]() { view->actions().createEmptyMod(index); });
+  addAction(tr("Create Separator"), [=]() { view->actions().createSeparator(index); });
 
   if (view->hasCollapsibleSeparators()) {
     addSeparator();
@@ -24,14 +29,14 @@ ModListGlobalContextMenu::ModListGlobalContextMenu(OrganizerCore& core, ModListV
 
   addSeparator();
 
-  addAction(tr("Enable all visible"), [=]() {
+  addAction(tr("Enable all parent"), [=]() {
     if (QMessageBox::question(view, tr("Confirm"), tr("Really enable all visible mods?"),
       QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
       view->enableAllVisible();
     }
     });
   addAction(tr("Disable all visible"), [=]() {
-    if (QMessageBox::question(view, tr("Confirm"), tr("Really disable all visible mods?"),
+    if (QMessageBox::question(parent, tr("Confirm"), tr("Really disable all visible mods?"),
       QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
       view->disableAllVisible();
     }
@@ -171,7 +176,7 @@ ModListContextMenu::ModListContextMenu(
 
   ModInfo::Ptr info = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
 
-  QMenu* allMods = new ModListGlobalContextMenu(core, view, view);
+  QMenu* allMods = new ModListGlobalContextMenu(core, view, m_index, view->topLevelWidget());
   allMods->setTitle(tr("All Mods"));
   addMenu(allMods);
 

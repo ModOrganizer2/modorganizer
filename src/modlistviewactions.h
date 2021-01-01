@@ -36,10 +36,10 @@ public:
   void installMod(const QString& archivePath = "") const;
 
   // create an empty mod/a separator before the given mod or at
-  // the end of the list if the index is -1
+  // the end of the list if the index is invalid
   //
-  void createEmptyMod(int modIndex) const;
-  void createSeparator(int modIndex) const;
+  void createEmptyMod(const QModelIndex& index = QModelIndex()) const;
+  void createSeparator(const QModelIndex& index = QModelIndex()) const;
 
   // check all mods for update
   //

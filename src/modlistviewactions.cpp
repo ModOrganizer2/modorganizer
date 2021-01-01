@@ -75,7 +75,7 @@ void ModListViewActions::installMod(const QString& archivePath) const
   }
 }
 
-void ModListViewActions::createEmptyMod(int modIndex) const
+void ModListViewActions::createEmptyMod(const QModelIndex& index) const
 {
   GuessedValue<QString> name;
   name.setFilter(&fixDirectoryName);
@@ -97,8 +97,8 @@ void ModListViewActions::createEmptyMod(int modIndex) const
   }
 
   int newPriority = -1;
-  if (modIndex >= 0 && m_view->sortColumn() == ModList::COL_PRIORITY) {
-    newPriority = m_core.currentProfile()->getModPriority(modIndex);
+  if (index.isValid() && m_view->sortColumn() == ModList::COL_PRIORITY) {
+    newPriority = m_core.currentProfile()->getModPriority(index.data(ModList::IndexRole).toInt());
   }
 
   IModInterface* newMod = m_core.createMod(name);
@@ -113,12 +113,11 @@ void ModListViewActions::createEmptyMod(int modIndex) const
   }
 }
 
-void ModListViewActions::createSeparator(int modIndex) const
+void ModListViewActions::createSeparator(const QModelIndex& index) const
 {
   GuessedValue<QString> name;
   name.setFilter(&fixDirectoryName);
-  while (name->isEmpty())
-  {
+  while (name->isEmpty()) {
     bool ok;
     name.update(QInputDialog::getText(m_parent, tr("Create Separator..."),
       tr("This will create a new separator.\n"
@@ -126,28 +125,24 @@ void ModListViewActions::createSeparator(int modIndex) const
       GUESS_USER);
     if (!ok) { return; }
   }
-  if (m_core.modList()->getMod(name) != nullptr)
-  {
+  if (m_core.modList()->getMod(name) != nullptr) {
     reportError(tr("A separator with this name already exists"));
     return;
   }
   name->append("_separator");
-  if (m_core.modList()->getMod(name) != nullptr)
-  {
+  if (m_core.modList()->getMod(name) != nullptr) {
     return;
   }
 
   int newPriority = -1;
-  if (modIndex >= 0 && m_view->sortColumn() == ModList::COL_PRIORITY)
-  {
-    newPriority = m_core.currentProfile()->getModPriority(modIndex);
+  if (index.isValid() && m_view->sortColumn() == ModList::COL_PRIORITY) {
+    newPriority = m_core.currentProfile()->getModPriority(index.data(ModList::IndexRole).toInt());
   }
 
   if (m_core.createMod(name) == nullptr) { return; }
   m_core.refresh();
 
-  if (newPriority >= 0)
-  {
+  if (newPriority >= 0) {
     m_core.modList()->changeModPriority(ModInfo::getIndex(name), newPriority);
   }
 

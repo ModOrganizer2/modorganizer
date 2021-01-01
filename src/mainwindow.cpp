@@ -366,7 +366,7 @@ MainWindow::MainWindow(Settings &settings
   m_LinkStartMenu = linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Start Menu"), this, SLOT(linkMenu()));
   ui->linkButton->setMenu(linkMenu);
 
-  ui->listOptionsBtn->setMenu(new ModListGlobalContextMenu(m_OrganizerCore, ui->modList, ui->listOptionsBtn));
+  ui->listOptionsBtn->setMenu(new ModListGlobalContextMenu(m_OrganizerCore, ui->modList, this));
 
   ui->openFolderMenu->setMenu(openFolderMenu());
 

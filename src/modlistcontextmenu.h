@@ -19,8 +19,14 @@ class ModListGlobalContextMenu : public QMenu
   Q_OBJECT
 public:
 
-  ModListGlobalContextMenu(
-    OrganizerCore& core, ModListView* modListView, QWidget* parent = nullptr);
+  ModListGlobalContextMenu(OrganizerCore& core, ModListView* view, QWidget* parent = nullptr);
+
+protected:
+
+  friend class ModListContextMenu;
+
+  // creates a "All mods" context menu for the given index (can be invalid).
+  ModListGlobalContextMenu(OrganizerCore& core, ModListView* view, const QModelIndex& index, QWidget* parent = nullptr);
 
 };
 
