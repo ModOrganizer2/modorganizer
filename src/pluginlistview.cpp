@@ -21,17 +21,11 @@ using namespace MOBase;
 PluginListView::PluginListView(QWidget *parent)
   : QTreeView(parent)
   , m_sortProxy(nullptr)
-  , m_Scrollbar(new ViewMarkingScrollBar(this->model(), Qt::BackgroundRole, this))
+  , m_Scrollbar(new ViewMarkingScrollBar(this, Qt::BackgroundRole))
   , m_didUpdateMasterList(false)
 {
   setVerticalScrollBar(m_Scrollbar);
   MOBase::setCustomizableColumns(this);
-}
-
-void PluginListView::setModel(QAbstractItemModel *model)
-{
-  QTreeView::setModel(model);
-  setVerticalScrollBar(new ViewMarkingScrollBar(model, Qt::BackgroundRole, this));
 }
 
 int PluginListView::sortColumn() const
@@ -41,22 +35,22 @@ int PluginListView::sortColumn() const
 
 QModelIndex PluginListView::indexModelToView(const QModelIndex& index) const
 {
-  return ::indexModelToView(index, this);
+  return MOShared::indexModelToView(index, this);
 }
 
 QModelIndexList PluginListView::indexModelToView(const QModelIndexList& index) const
 {
-  return ::indexModelToView(index, this);
+  return MOShared::indexModelToView(index, this);
 }
 
 QModelIndex PluginListView::indexViewToModel(const QModelIndex& index) const
 {
-  return ::indexViewToModel(index, m_core->pluginList());
+  return MOShared::indexViewToModel(index, m_core->pluginList());
 }
 
 QModelIndexList PluginListView::indexViewToModel(const QModelIndexList& index) const
 {
-  return ::indexViewToModel(index, m_core->pluginList());
+  return MOShared::indexViewToModel(index, m_core->pluginList());
 }
 
 void PluginListView::updatePluginCount()

@@ -19,7 +19,6 @@ class PluginListView : public QTreeView
   Q_OBJECT
 public:
   explicit PluginListView(QWidget* parent = nullptr);
-  void setModel(QAbstractItemModel* model) override;
 
   void setup(OrganizerCore& core, MainWindow* mw, Ui::MainWindow* mwui);
 

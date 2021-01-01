@@ -27,7 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-IconDelegate::IconDelegate(QObject *parent)
+IconDelegate::IconDelegate(QObject* parent)
   : QStyledItemDelegate(parent)
 {
 }
@@ -66,7 +66,12 @@ void IconDelegate::paintIcons(
 
 void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-  QStyledItemDelegate::paint(painter, option, index);
+  if (auto* w = qobject_cast<QAbstractItemView*>(parent())) {
+    w->itemDelegate()->paint(painter, option, index);
+  }
+  else {
+    QStyledItemDelegate::paint(painter, option, index);
+  }
   paintIcons(painter, option, index, getIcons(index));
 }
 

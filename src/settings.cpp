@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <iplugingame.h>
 
 using namespace MOBase;
+using namespace MOShared;
 
 
 EndorsementState endorsementStateFromString(const QString& s)

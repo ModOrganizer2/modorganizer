@@ -1,20 +1,20 @@
 #ifndef VIEWMARKINGSCROLLBAR_H
 #define VIEWMARKINGSCROLLBAR_H
 
-#include <QAbstractItemModel>
+#include <QTreeView>
 #include <QScrollBar>
 
 
 class ViewMarkingScrollBar : public QScrollBar
 {
 public:
-  ViewMarkingScrollBar(QAbstractItemModel *model, int role, QWidget* parent = nullptr);
+  ViewMarkingScrollBar(QTreeView* view, int role);
 
 protected:
   void paintEvent(QPaintEvent *event) override;
 
 private:
-  QAbstractItemModel* m_model;
+  QTreeView* m_view;
   int m_role;
 };
 

@@ -4,9 +4,11 @@
 #include <QStyleOptionSlider>
 #include <QPainter>
 
-ViewMarkingScrollBar::ViewMarkingScrollBar(QAbstractItemModel* model, int role, QWidget *parent)
-  : QScrollBar(parent)
-  , m_model(model)
+using namespace MOShared;
+
+ViewMarkingScrollBar::ViewMarkingScrollBar(QTreeView* view, int role)
+  : QScrollBar(view)
+  , m_view(view)
   , m_role(role)
 {
   // not implemented for horizontal sliders
@@ -15,7 +17,7 @@ ViewMarkingScrollBar::ViewMarkingScrollBar(QAbstractItemModel* model, int role, 
 
 void ViewMarkingScrollBar::paintEvent(QPaintEvent* event)
 {
-  if (m_model == nullptr) {
+  if (m_view->model() == nullptr) {
     return;
   }
   QScrollBar::paintEvent(event);
@@ -28,17 +30,27 @@ void ViewMarkingScrollBar::paintEvent(QPaintEvent* event)
   QRect handleRect = style()->subControlRect(QStyle::CC_ScrollBar, &styleOption, QStyle::SC_ScrollBarSlider, this);
   QRect innerRect = style()->subControlRect(QStyle::CC_ScrollBar, &styleOption, QStyle::SC_ScrollBarGroove, this);
 
-  auto indices = flatIndex(m_model, 0, QModelIndex());
+  auto indices = visibleIndex(m_view, 0);
 
   painter.translate(innerRect.topLeft() + QPoint(0, 3));
   qreal scale = static_cast<qreal>(innerRect.height() - 3) / static_cast<qreal>(indices.size());
 
   for (int i = 0; i < indices.size(); ++i) {
     QVariant data = indices[i].data(m_role);
-    if (data.isValid()) {
-      QColor col = data.value<QColor>();
-      painter.setPen(col);
-      painter.setBrush(col);
+    QColor color;
+
+    if (data.canConvert<QColor>()) {
+      color = data.value<QColor>();
+    }
+
+    auto childrenColor = MOShared::childrenColor(indices[i], m_view, m_role);
+    if (childrenColor.isValid()) {
+      color = childrenColor;
+    }
+
+    if (color.isValid()) {
+      painter.setPen(color);
+      painter.setBrush(color);
       painter.drawRect(QRect(2, i * scale - 2, handleRect.width() - 5, 3));
     }
   }

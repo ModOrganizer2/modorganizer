@@ -2,6 +2,8 @@
 
 #include <QAbstractProxyModel>
 
+namespace MOShared {
+
 QModelIndexList flatIndex(
   const QAbstractItemModel* model, int column, const QModelIndex& parent)
 {
@@ -11,6 +13,26 @@ QModelIndexList flatIndex(
     index.append(flatIndex(model, column, index.back()));
   }
   return index;
+}
+
+static QModelIndexList visibleIndexImpl(QTreeView* view, int column, const QModelIndex& parent)
+{
+  if (parent.isValid() && !view->isExpanded(parent)) {
+    return {};
+  }
+
+  auto* model = view->model();
+  QModelIndexList index;
+  for (std::size_t i = 0; i < model->rowCount(parent); ++i) {
+    index.append(model->index(i, column, parent));
+    index.append(visibleIndexImpl(view, column, index.back()));
+  }
+  return index;
+}
+
+QModelIndexList visibleIndex(QTreeView* view, int column)
+{
+  return visibleIndexImpl(view, column, QModelIndex());
 }
 
 QModelIndex indexModelToView(const QModelIndex& index, const QAbstractItemView* view)
@@ -66,4 +88,40 @@ QModelIndexList indexViewToModel(const QModelIndexList& index, const QAbstractIt
     result.append(indexViewToModel(idx, model));
   }
   return result;
+}
+
+QColor childrenColor(const QModelIndex& index, QTreeView* view, int role)
+{
+  auto* model = view->model();
+  auto rowIndex = index.sibling(index.row(), 0);
+
+  if (model->hasChildren(rowIndex) && !view->isExpanded(rowIndex)) {
+
+    // this is a non-expanded item
+    std::vector<QColor> colors;
+    for (int i = 0; i < model->rowCount(rowIndex); ++i) {
+      auto childData = model->data(model->index(i, index.column(), rowIndex), role);
+      if (childData.isValid() && childData.canConvert<QColor>()) {
+        colors.push_back(childData.value<QColor>());
+      }
+    }
+
+    if (colors.empty()) {
+      return QColor();
+    }
+
+    int r = 0, g = 0, b = 0, a = 0;
+    for (auto& color : colors) {
+      r += color.red();
+      g += color.green();
+      b += color.blue();
+      a += color.alpha();
+    }
+
+    return QColor(r / colors.size(), g / colors.size(), b / colors.size(), a / colors.size());
+  }
+
+  return QColor();
+}
+
 }

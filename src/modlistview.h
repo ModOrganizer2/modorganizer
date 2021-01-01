@@ -38,7 +38,6 @@ public:
 
 public:
   explicit ModListView(QWidget* parent = 0);
-  void setModel(QAbstractItemModel* model) override;
 
   void setup(OrganizerCore& core, CategoryFactory& factory, MainWindow* mw, Ui::MainWindow* mwui);
 

@@ -28,6 +28,7 @@
 #include "modelutils.h"
 
 using namespace MOBase;
+using namespace MOShared;
 
 // delegate to remove indentation for mods when using collapsible
 // separator
@@ -57,6 +58,13 @@ public:
       }
     }
     QStyledItemDelegate::paint(painter, opt, index);
+
+    auto color = childrenColor(index, m_view, Qt::BackgroundRole);
+    if (color.isValid()) {
+      // int shift = 3 * opt.rect.height() / 4;
+      // opt.rect.adjust(0, shift, 0, 0);
+      painter->fillRect(opt.rect, color);
+    }
   }
 };
 
@@ -67,7 +75,7 @@ ModListView::ModListView(QWidget* parent)
   , m_byPriorityProxy(nullptr)
   , m_byCategoryProxy(nullptr)
   , m_byNexusIdProxy(nullptr)
-  , m_scrollbar(new ViewMarkingScrollBar(this->model(), ModList::ScrollMarkRole, this))
+  , m_scrollbar(new ViewMarkingScrollBar(this, ModList::ScrollMarkRole))
 {
   setVerticalScrollBar(m_scrollbar);
   MOBase::setCustomizableColumns(this);
@@ -78,13 +86,6 @@ ModListView::ModListView(QWidget* parent)
   connect(this, &ModListView::doubleClicked, this, &ModListView::onDoubleClicked);
   connect(this, &ModListView::customContextMenuRequested, this, &ModListView::onCustomContextMenuRequested);
 }
-
-void ModListView::setModel(QAbstractItemModel* model)
-{
-  QTreeView::setModel(model);
-  setVerticalScrollBar(new ViewMarkingScrollBar(model, ModList::ScrollMarkRole, this));
-}
-
 
 void ModListView::refresh()
 {
