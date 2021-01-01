@@ -595,16 +595,17 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
     }
     result = true;
     emit dataChanged(index, index);
-  } else if (role == Qt::EditRole) {
+  }
+  else if (role == Qt::EditRole) {
     switch (index.column()) {
       case COL_NAME: {
         auto flags = info->getFlags();
-        if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())
-        {
+        if (info->isSeparator()) {
           result = renameMod(modID, value.toString() + "_separator");
         }
-        else
+        else {
           result = renameMod(modID, value.toString());
+        }
       } break;
       case COL_PRIORITY: {
         bool ok = false;
@@ -625,7 +626,6 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
         int newID = value.toInt(&ok);
         if (ok) {
           info->setNexusID(newID);
-          emit modlistChanged(index, role);
           emit tutorialModlistUpdate();
           result = true;
         } else {
