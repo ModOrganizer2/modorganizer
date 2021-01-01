@@ -207,6 +207,7 @@ private:
     QLineEdit* filter;
     QLabel* currentCategory;
     QPushButton* clearFilters;
+    QComboBox* filterSeparators;
   };
 
   OrganizerCore* m_core;

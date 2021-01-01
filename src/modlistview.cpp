@@ -621,10 +621,18 @@ void ModListView::updateGroupByProxy(int groupIndex)
     && m_sortProxy->sortColumn() == ModList::COL_PRIORITY
     && m_sortProxy->sortOrder() == Qt::AscendingOrder) {
     m_sortProxy->setSourceModel(m_byPriorityProxy);
-    m_byPriorityProxy->refresh();
   }
   else {
     m_sortProxy->setSourceModel(m_core->modList());
+  }
+
+  if (hasCollapsibleSeparators()) {
+    ui.filterSeparators->setCurrentIndex(ModListSortProxy::SeparatorFilter);
+    m_byPriorityProxy->refresh();
+    ui.filterSeparators->setEnabled(false);
+  }
+  else {
+    ui.filterSeparators->setEnabled(true);
   }
 }
 
@@ -635,7 +643,10 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   m_filters.reset(new FilterList(mwui, core, factory));
   m_categories = &factory;
   m_actions = new ModListViewActions(core, *m_filters, factory, this, mwui->espList, mw);
-  ui = { mwui->groupCombo, mwui->activeModsCounter, mwui->modFilterEdit, mwui->currentCategoryLabel, mwui->clearFiltersButton };
+  ui = {
+    mwui->groupCombo, mwui->activeModsCounter, mwui->modFilterEdit,
+    mwui->currentCategoryLabel, mwui->clearFiltersButton, mwui->filtersSeparators
+  };
 
   connect(m_core, &OrganizerCore::modInstalled, this, &ModListView::onModInstalled);
   connect(core.modList(), &ModList::modPrioritiesChanged, this, &ModListView::onModPrioritiesChanged);

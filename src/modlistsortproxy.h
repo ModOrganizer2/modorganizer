@@ -98,6 +98,9 @@ public:
   void setCriteria(const std::vector<Criteria>& criteria);
   void setOptions(FilterMode mode, SeparatorsMode separators);
 
+  auto filterMode() const { return m_FilterMode; }
+  auto separatorsMode() const { return m_FilterSeparators; }
+
   /**
    * @brief tests if the specified index has child nodes
    * @param parent the node to test
