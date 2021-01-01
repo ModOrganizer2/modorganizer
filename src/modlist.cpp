@@ -61,6 +61,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
+const int ModList::ModUserRole = Qt::UserRole + QMetaEnum::fromType<ModListRole>().keyCount();
+
 ModList::ModList(PluginContainer *pluginContainer, OrganizerCore *organizer)
   : QAbstractItemModel(organizer)
   , m_Organizer(organizer)
@@ -130,7 +132,7 @@ QVariant ModList::getOverwriteData(int column, int role) const
       }
     } break;
     case Qt::TextAlignmentRole: return QVariant(Qt::AlignCenter | Qt::AlignVCenter);
-    case Qt::UserRole: return -1;
+    case GroupingRole: return -1;
     case Qt::ForegroundRole: return QBrush(Qt::red);
     case Qt::ToolTipRole: return tr("This entry contains files that have been created inside the virtual data tree (i.e. by the construction kit)");
     default: return QVariant();
@@ -298,7 +300,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     } else {
       return QVariant();
     }
-  } else if (role == Qt::TextAlignmentRole) {
+  }
+  else if (role == Qt::TextAlignmentRole) {
     auto flags = modInfo->getFlags();
     if (column == COL_NAME) {
       if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_CENTER) {
@@ -313,7 +316,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     } else {
       return QVariant(Qt::AlignCenter | Qt::AlignVCenter);
     }
-  } else if (role == Qt::UserRole) {
+  }
+  else if (role == GroupingRole) {
     if (column == COL_CATEGORY) {
       QVariantList categoryNames;
       std::set<int> categories = modInfo->getCategories();
@@ -326,7 +330,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       } else {
         return QVariant();
       }
-    } else if (column == COL_PRIORITY) {
+    }
+    else if (column == COL_PRIORITY) {
       int priority = modInfo->getFixedPriority();
       if (priority != INT_MIN) {
         return priority;
@@ -336,9 +341,11 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     } else {
       return modInfo->nexusId();
     }
-  } else if (role == IndexRole) {
+  }
+  else if (role == IndexRole) {
     return modIndex;
-  } else if (role == Qt::UserRole + 2) {
+  }
+  else if (role == AggrRole) {
     switch (column) {
       case COL_MODID:    return QtGroupingProxy::AGGR_FIRST;
       case COL_VERSION:  return QtGroupingProxy::AGGR_MAX;
@@ -346,11 +353,23 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       case COL_PRIORITY: return QtGroupingProxy::AGGR_MIN;
       default: return QtGroupingProxy::AGGR_NONE;
     }
-  } else if (role == Qt::UserRole + 3) {
+  }
+  else if (role == ContentsRole) {
     return contentsToIcons(modInfo->getContents());
-  } else if (role == Qt::UserRole + 4) {
+  }
+  else if (role == NameRole) {
     return modInfo->gameName();
-  } else if (role == Qt::FontRole) {
+  }
+  else if (role == PriorityRole) {
+    int priority = modInfo->getFixedPriority();
+    if (priority != std::numeric_limits<int>::min()) {
+      return priority;
+    }
+    else {
+      return m_Profile->getModPriority(modIndex);
+    }
+  }
+  else if (role == Qt::FontRole) {
     QFont result;
     auto flags = modInfo->getFlags();
     if (column == COL_NAME) {
@@ -374,7 +393,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
     }
     return result;
-  } else if (role == Qt::DecorationRole) {
+  }
+  else if (role == Qt::DecorationRole) {
     if (column == COL_VERSION) {
       if (modInfo->updateAvailable()) {
         return QIcon(":/MO/gui/update_available");
@@ -385,7 +405,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
     }
     return QVariant();
-  } else if (role == Qt::ForegroundRole) {
+  }
+  else if (role == Qt::ForegroundRole) {
     if ((modInfo->hasFlag(ModInfo::FLAG_SEPARATOR) || (column == COL_NOTES)) && modInfo->color().isValid()) {
       return ColorSettings::idealTextColor(modInfo->color());
     } else if (column == COL_NAME) {
@@ -404,8 +425,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
     }
     return QVariant();
-  } else if ((role == Qt::BackgroundRole)
-             || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
+  }
+  else if (role == Qt::BackgroundRole || role == ScrollMarkRole) {
     bool overwrite = m_Overwrite.find(modIndex) != m_Overwrite.end();
     bool archiveOverwrite = m_ArchiveOverwrite.find(modIndex) != m_ArchiveOverwrite.end();
     bool archiveLooseOverwrite = m_ArchiveLooseOverwrite.find(modIndex) != m_ArchiveLooseOverwrite.end();
@@ -424,15 +445,15 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       return Settings::instance().colors().modlistOverwritingArchive();
     } else if (archiveOverwrite) {
       return Settings::instance().colors().modlistOverwrittenArchive();
-    } else if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)
-               && modInfo->color().isValid()
-               && ((role != ViewMarkingScrollBar::DEFAULT_ROLE)
-                    || Settings::instance().colors().colorSeparatorScrollbar())) {
+    } else if (modInfo->isSeparator() && modInfo->color().isValid()
+               && (role != ScrollMarkRole
+                 || Settings::instance().colors().colorSeparatorScrollbar())) {
       return modInfo->color();
     } else {
       return QVariant();
     }
-  } else if (role == Qt::ToolTipRole) {
+  }
+  else if (role == Qt::ToolTipRole) {
     if (column == COL_FLAGS) {
       QString result;
 
@@ -507,7 +528,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     } else {
       return QVariant();
     }
-  } else {
+  }
+  else {
     return QVariant();
   }
 }
@@ -1366,7 +1388,9 @@ QModelIndex ModList::parent(const QModelIndex&) const
 QMap<int, QVariant> ModList::itemData(const QModelIndex &index) const
 {
   QMap<int, QVariant> result = QAbstractItemModel::itemData(index);
-  result[Qt::UserRole] = data(index, Qt::UserRole);
+  for (int role = Qt::UserRole; role < ModUserRole; ++role) {
+    result[role] = data(index, role);
+  }
   return result;
 }
 

@@ -1,21 +1,21 @@
 #ifndef VIEWMARKINGSCROLLBAR_H
 #define VIEWMARKINGSCROLLBAR_H
 
-#include <QScrollBar>
 #include <QAbstractItemModel>
+#include <QScrollBar>
 
 
 class ViewMarkingScrollBar : public QScrollBar
 {
 public:
-  static const int DEFAULT_ROLE = Qt::UserRole + 42;
-public:
-  ViewMarkingScrollBar(QAbstractItemModel *model, QWidget *parent = 0, int role = DEFAULT_ROLE);
+  ViewMarkingScrollBar(QAbstractItemModel *model, int role, QWidget* parent = nullptr);
+
 protected:
-  virtual void paintEvent(QPaintEvent *event);
+  void paintEvent(QPaintEvent *event) override;
+
 private:
-  QAbstractItemModel *m_Model;
-  int m_Role;
+  QAbstractItemModel* m_model;
+  int m_role;
 };
 
 

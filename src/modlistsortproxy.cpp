@@ -120,18 +120,7 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
   ModInfo::Ptr leftMod = ModInfo::getByIndex(leftIndex);
   ModInfo::Ptr rightMod = ModInfo::getByIndex(rightIndex);
 
-  bool lt = false;
-
-  {
-    QModelIndex leftPrioIdx = left.sibling(left.row(), ModList::COL_PRIORITY);
-    QVariant leftPrio = leftPrioIdx.data();
-    if (!leftPrio.isValid()) leftPrio = left.data(Qt::UserRole);
-    QModelIndex rightPrioIdx = right.sibling(right.row(), ModList::COL_PRIORITY);
-    QVariant rightPrio = rightPrioIdx.data();
-    if (!rightPrio.isValid()) rightPrio = right.data(Qt::UserRole);
-
-    lt = leftPrio.toInt() < rightPrio.toInt();
-  }
+  bool lt = left.data(ModList::PriorityRole).toInt() < right.data(ModList::PriorityRole).toInt();
 
   switch (left.column()) {
     case ModList::COL_FLAGS: {

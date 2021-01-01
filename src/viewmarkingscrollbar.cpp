@@ -4,18 +4,18 @@
 #include <QStyleOptionSlider>
 #include <QPainter>
 
-ViewMarkingScrollBar::ViewMarkingScrollBar(QAbstractItemModel *model, QWidget *parent, int role)
+ViewMarkingScrollBar::ViewMarkingScrollBar(QAbstractItemModel* model, int role, QWidget *parent)
   : QScrollBar(parent)
-  , m_Model(model)
-  , m_Role(role)
+  , m_model(model)
+  , m_role(role)
 {
   // not implemented for horizontal sliders
   Q_ASSERT(this->orientation() == Qt::Vertical);
 }
 
-void ViewMarkingScrollBar::paintEvent(QPaintEvent *event)
+void ViewMarkingScrollBar::paintEvent(QPaintEvent* event)
 {
-  if (m_Model == nullptr) {
+  if (m_model == nullptr) {
     return;
   }
   QScrollBar::paintEvent(event);
@@ -28,13 +28,13 @@ void ViewMarkingScrollBar::paintEvent(QPaintEvent *event)
   QRect handleRect = style()->subControlRect(QStyle::CC_ScrollBar, &styleOption, QStyle::SC_ScrollBarSlider, this);
   QRect innerRect = style()->subControlRect(QStyle::CC_ScrollBar, &styleOption, QStyle::SC_ScrollBarGroove, this);
 
-  auto indices = flatIndex(m_Model, 0, QModelIndex());
+  auto indices = flatIndex(m_model, 0, QModelIndex());
 
   painter.translate(innerRect.topLeft() + QPoint(0, 3));
   qreal scale = static_cast<qreal>(innerRect.height() - 3) / static_cast<qreal>(indices.size());
 
   for (int i = 0; i < indices.size(); ++i) {
-    QVariant data = indices[i].data(m_Role);
+    QVariant data = indices[i].data(m_role);
     if (data.isValid()) {
       QColor col = data.value<QColor>();
       painter.setPen(col);

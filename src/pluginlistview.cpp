@@ -21,7 +21,7 @@ using namespace MOBase;
 PluginListView::PluginListView(QWidget *parent)
   : QTreeView(parent)
   , m_sortProxy(nullptr)
-  , m_Scrollbar(new ViewMarkingScrollBar(this->model(), this))
+  , m_Scrollbar(new ViewMarkingScrollBar(this->model(), Qt::BackgroundRole, this))
   , m_didUpdateMasterList(false)
 {
   setVerticalScrollBar(m_Scrollbar);
@@ -31,7 +31,7 @@ PluginListView::PluginListView(QWidget *parent)
 void PluginListView::setModel(QAbstractItemModel *model)
 {
   QTreeView::setModel(model);
-  setVerticalScrollBar(new ViewMarkingScrollBar(model, this));
+  setVerticalScrollBar(new ViewMarkingScrollBar(model, Qt::BackgroundRole, this));
 }
 
 int PluginListView::sortColumn() const

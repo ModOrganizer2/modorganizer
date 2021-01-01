@@ -159,23 +159,26 @@ ModListContextMenu::ModListContextMenu(
     m_selected = { index };
   }
 
+  ModInfo::Ptr info = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
+
   QMenu* allMods = new ModListGlobalContextMenu(core, view, view);
   allMods->setTitle(tr("All Mods"));
   addMenu(allMods);
 
-  if (view->hasCollapsibleSeparators()) {
+  auto viewIndex = view->indexModelToView(m_index);
+  if (view->model()->hasChildren(viewIndex)) {
+    bool expanded = view->isExpanded(viewIndex);
     addAction(tr("Collapse all"), view, &QTreeView::collapseAll);
+    addAction(tr("Collapse others"), [=]() {
+      m_view->collapseAll();
+      m_view->setExpanded(viewIndex, expanded);
+    });
     addAction(tr("Expand all"), view, &QTreeView::expandAll);
   }
 
   addSeparator();
 
   // Add type-specific items
-  ModInfo::Ptr info = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
-
-  // TODO:
-  // - Don't forget to check for the sort priority for "Send To... "
-
   if (info->isOverwrite()) {
     addOverwriteActions(info);
   }

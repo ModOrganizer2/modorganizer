@@ -67,7 +67,7 @@ ModListView::ModListView(QWidget* parent)
   , m_byPriorityProxy(nullptr)
   , m_byCategoryProxy(nullptr)
   , m_byNexusIdProxy(nullptr)
-  , m_scrollbar(new ViewMarkingScrollBar(this->model(), this))
+  , m_scrollbar(new ViewMarkingScrollBar(this->model(), ModList::ScrollMarkRole, this))
 {
   setVerticalScrollBar(m_scrollbar);
   MOBase::setCustomizableColumns(this);
@@ -78,6 +78,13 @@ ModListView::ModListView(QWidget* parent)
   connect(this, &ModListView::doubleClicked, this, &ModListView::onDoubleClicked);
   connect(this, &ModListView::customContextMenuRequested, this, &ModListView::onCustomContextMenuRequested);
 }
+
+void ModListView::setModel(QAbstractItemModel* model)
+{
+  QTreeView::setModel(model);
+  setVerticalScrollBar(new ViewMarkingScrollBar(model, ModList::ScrollMarkRole, this));
+}
+
 
 void ModListView::refresh()
 {
@@ -593,12 +600,13 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   connect(m_byPriorityProxy, &ModListByPriorityProxy::expandItem, this, &ModListView::expandItem);
 
   m_byCategoryProxy = new QtGroupingProxy(core.modList(), QModelIndex(), ModList::COL_CATEGORY,
-    Qt::UserRole, 0, Qt::UserRole + 2);
+    ModList::GroupingRole, 0, ModList::AggrRole);
   connect(this, &QTreeView::expanded, m_byCategoryProxy, &QtGroupingProxy::expanded);
   connect(this, &QTreeView::collapsed, m_byCategoryProxy, &QtGroupingProxy::collapsed);
   connect(m_byCategoryProxy, &QtGroupingProxy::expandItem, this, &ModListView::expandItem);
-  m_byNexusIdProxy = new QtGroupingProxy(core.modList(), QModelIndex(), ModList::COL_MODID, Qt::DisplayRole,
-      QtGroupingProxy::FLAG_NOGROUPNAME | QtGroupingProxy::FLAG_NOSINGLE, Qt::UserRole + 2);
+  m_byNexusIdProxy = new QtGroupingProxy(core.modList(), QModelIndex(), ModList::COL_MODID,
+    ModList::GroupingRole, QtGroupingProxy::FLAG_NOGROUPNAME | QtGroupingProxy::FLAG_NOSINGLE,
+    ModList::AggrRole);
   connect(this, &QTreeView::expanded, m_byNexusIdProxy, &QtGroupingProxy::expanded);
   connect(this, &QTreeView::collapsed, m_byNexusIdProxy, &QtGroupingProxy::collapsed);
   connect(m_byNexusIdProxy, &QtGroupingProxy::expandItem, this, &ModListView::expandItem);
@@ -627,7 +635,7 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   connect(header(), &QHeaderView::sectionResized, [=](int logicalIndex, int oldSize, int newSize) {
     m_sortProxy->setColumnVisible(logicalIndex, newSize != 0); });
 
-  GenericIconDelegate* contentDelegate = new GenericIconDelegate(this, Qt::UserRole + 3, ModList::COL_CONTENT, 150);
+  GenericIconDelegate* contentDelegate = new GenericIconDelegate(this, ModList::ContentsRole, ModList::COL_CONTENT, 150);
   ModFlagIconDelegate* flagDelegate = new ModFlagIconDelegate(this, ModList::COL_FLAGS, 120);
   ModConflictIconDelegate* conflictFlagDelegate = new ModConflictIconDelegate(this, ModList::COL_CONFLICTFLAGS, 80);
 
@@ -720,12 +728,6 @@ void ModListView::saveState(Settings& s) const
   s.widgets().saveTreeState(this);
 
   m_filters->saveState(s);
-}
-
-void ModListView::setModel(QAbstractItemModel* model)
-{
-  QTreeView::setModel(model);
-  setVerticalScrollBar(new ViewMarkingScrollBar(model, this));
 }
 
 QRect ModListView::visualRect(const QModelIndex& index) const

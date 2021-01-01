@@ -990,7 +990,7 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     return checkstateData(modelIndex);
   } else if (role == Qt::ForegroundRole) {
     return foregroundData(modelIndex);
-  } else if (role == Qt::BackgroundRole || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
+  } else if (role == Qt::BackgroundRole) {
     return backgroundData(modelIndex);
   } else if (role == Qt::FontRole) {
     return fontData(modelIndex);

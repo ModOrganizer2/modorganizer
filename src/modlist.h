@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFile>
 #include <QListWidget>
 #include <QNetworkReply>
+#include <QMetaEnum>
 #include <QNetworkAccessManager>
 #ifndef Q_MOC_RUN
 #include <boost/signals2.hpp>
@@ -56,9 +57,34 @@ class ModList : public QAbstractItemModel
 
 public:
 
-  // role of the index of the mod
-  //
-  constexpr static int IndexRole = Qt::UserRole + 1;
+  enum ModListRole {
+
+    // data(GroupingRole) contains the "group" role - This is used by the
+    // category and Nexus ID grouping proxy (but not the ByPriority proxy)
+    GroupingRole = Qt::UserRole,
+
+    IndexRole = Qt::UserRole + 1,
+
+    // data(AggrRole) contains aggregation information (for
+    // grouping I assume?)
+    AggrRole = Qt::UserRole + 2,
+
+    // data(ContentsRole) contains mod data contents as a QVariantList
+    // containing icon paths
+    ContentsRole = Qt::UserRole + 3,
+
+    NameRole = Qt::UserRole + 4,
+
+    PriorityRole = Qt::UserRole + 5,
+
+    // marking role for the scrollbar
+    ScrollMarkRole = Qt::UserRole + 6
+  };
+
+  Q_ENUM(ModListRole)
+
+  // this is the first available role
+  static const int ModUserRole;
 
   enum EColumn {
     COL_NAME,

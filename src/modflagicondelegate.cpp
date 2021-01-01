@@ -1,4 +1,5 @@
 #include "modflagicondelegate.h"
+#include "modlist.h"
 #include <log.h>
 #include <QList>
 
@@ -39,7 +40,7 @@ QList<QString> ModFlagIconDelegate::getIconsForFlags(
 
 QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const
 {
-  QVariant modid = index.data(Qt::UserRole + 1);
+  QVariant modid = index.data(ModList::IndexRole);
 
   if (modid.isValid()) {
     ModInfo::Ptr info = ModInfo::getByIndex(modid.toInt());
@@ -71,7 +72,7 @@ QString ModFlagIconDelegate::getFlagIcon(ModInfo::EFlag flag)
 
 size_t ModFlagIconDelegate::getNumIcons(const QModelIndex &index) const
 {
-  unsigned int modIdx = index.data(Qt::UserRole + 1).toInt();
+  unsigned int modIdx = index.data(ModList::IndexRole).toInt();
   if (modIdx < ModInfo::getNumMods()) {
     ModInfo::Ptr info = ModInfo::getByIndex(modIdx);
     std::vector<ModInfo::EFlag> flags = info->getFlags();
@@ -85,7 +86,7 @@ size_t ModFlagIconDelegate::getNumIcons(const QModelIndex &index) const
 QSize ModFlagIconDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &modelIndex) const
 {
   size_t count = getNumIcons(modelIndex);
-  unsigned int index = modelIndex.data(Qt::UserRole + 1).toInt();
+  unsigned int index = modelIndex.data(ModList::IndexRole).toInt();
   QSize result;
   if (index < ModInfo::getNumMods()) {
     result = QSize(static_cast<int>(count) * 40, 20);
