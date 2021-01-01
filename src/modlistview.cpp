@@ -49,16 +49,21 @@ public:
 
   void initStyleOption(QStyleOptionViewItem* option, const QModelIndex& index) const override
   {
+    // the parent version always overwrite the background brush, so
+    // we need to save it and restore it
+    auto backgroundColor = option->backgroundBrush.color();
     QStyledItemDelegate::initStyleOption(option, index);
-    auto color = childrenColor(index, m_view, Qt::BackgroundRole);
-    if (color.isValid()) {
-      option->backgroundBrush = color;
+
+    if (backgroundColor.isValid()) {
+      option->backgroundBrush = backgroundColor;
     }
   }
 
   void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override
   {
     QStyleOptionViewItem opt(option);
+
+    // remove items indentaiton when using collapsible separators
     if (index.column() == 0 && m_view->hasCollapsibleSeparators()) {
       if (!index.model()->hasChildren(index) && index.parent().isValid()) {
         auto parentIndex = index.parent().data(ModList::IndexRole).toInt();
@@ -67,6 +72,28 @@ public:
         }
       }
     }
+
+    // compute required color from children, otherwise fallback to the
+    // color from the model, and draw the background here
+    auto color = childrenColor(index, m_view, Qt::BackgroundRole);
+    if (!color.isValid()) {
+      color = index.data(Qt::BackgroundRole).value<QColor>();
+    }
+    else {
+      // disable alternating row if the color is from the children
+      opt.features &= ~QStyleOptionViewItem::Alternate;
+    }
+    opt.backgroundBrush = color;
+
+    // compute ideal foreground color for some rows
+    if (color.isValid()) {
+      if ((index.column() == ModList::COL_NAME
+        && ModInfo::getByIndex(index.data(ModList::IndexRole).toInt())->isSeparator())
+        || index.column() == ModList::COL_NOTES) {
+        opt.palette.setBrush(QPalette::Text, ColorSettings::idealTextColor(color));
+      }
+    }
+
     QStyledItemDelegate::paint(painter, opt, index);
   }
 };
