@@ -87,13 +87,19 @@ public:
   void setColor(const QModelIndexList& indices, const QModelIndex& refIndex) const;
   void resetColor(const QModelIndexList& indices) const;
 
-  // set the category of the mod in the given list, using the given index as reference
+  // set the category of the mods in the given list, using the given index as reference
   // - the categories are set as-is on the refernce mod
   // - for the other mods, the category is only set if the current state of the category
   //   on the reference is different
   //
   void setCategories(const QModelIndexList& selected, const QModelIndex& ref,
     const std::vector<std::pair<int, bool>>& categories) const;
+
+  // set the primary category of the mods in the given list, adding the appropriate
+  // category to the mods unless force is false, in which case the primary category
+  // is set only on mods that have this category
+  //
+  void setPrimaryCategory(const QModelIndexList& selected, int category, bool force = true);
 
   // open the Windows explorer for the specified mods
   //

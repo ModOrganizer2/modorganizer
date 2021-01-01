@@ -126,13 +126,9 @@ void ModListPrimaryCategoryMenu::populate(const CategoryFactory& factory, ModInf
       QRadioButton* categoryBox = new QRadioButton(
         factory.getCategoryName(catIdx).replace('&', "&&"),
         this);
-      connect(categoryBox, &QRadioButton::toggled, [mod, categoryID](bool enable) {
-        if (enable) {
-          mod->setPrimaryCategory(categoryID);
-        }
-      });
       categoryBox->setChecked(categoryID == mod->primaryCategory());
       action->setDefaultWidget(categoryBox);
+      action->setData(categoryID);
     }
     catch (const std::exception& e) {
       log::error("failed to create category checkbox: {}", e.what());
@@ -141,6 +137,20 @@ void ModListPrimaryCategoryMenu::populate(const CategoryFactory& factory, ModInf
     action->setData(categoryID);
     addAction(action);
   }
+}
+
+int ModListPrimaryCategoryMenu::primaryCategory() const
+{
+  for (QAction* action : actions()) {
+    QWidgetAction* widgetAction = qobject_cast<QWidgetAction*>(action);
+    if (widgetAction) {
+      QRadioButton* button = qobject_cast<QRadioButton*>(widgetAction->defaultWidget());
+      if (button && button->isChecked()) {
+        return widgetAction->data().toInt();
+      }
+    }
+  }
+  return -1;
 }
 
 ModListContextMenu::ModListContextMenu(
@@ -245,6 +255,12 @@ void ModListContextMenu::addSeparatorActions(ModInfo::Ptr mod)
   addMenuAsPushButton(categoriesMenu);
 
   ModListPrimaryCategoryMenu* primaryCategoryMenu = new ModListPrimaryCategoryMenu(m_categories, mod, this);
+  connect(primaryCategoryMenu, &QMenu::aboutToHide, [=]() {
+    int category = primaryCategoryMenu->primaryCategory();
+    if (category != -1) {
+      m_actions.setPrimaryCategory(m_selected, category);
+    }
+  });
   addMenuAsPushButton(primaryCategoryMenu);
   addSeparator();
 
@@ -310,6 +326,12 @@ void ModListContextMenu::addRegularActions(ModInfo::Ptr mod)
   addMenuAsPushButton(categoriesMenu);
 
   ModListPrimaryCategoryMenu* primaryCategoryMenu = new ModListPrimaryCategoryMenu(m_categories, mod, this);
+  connect(primaryCategoryMenu, &QMenu::aboutToHide, [=]() {
+    int category = primaryCategoryMenu->primaryCategory();
+    if (category != -1) {
+      m_actions.setPrimaryCategory(m_selected, category);
+    }
+  });
   addMenuAsPushButton(primaryCategoryMenu);
   addSeparator();
 

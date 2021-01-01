@@ -956,7 +956,6 @@ void ModListViewActions::setCategories(const QModelIndexList& selected, const QM
 {
   ModInfo::Ptr refMod = ModInfo::getByIndex(ref.data(ModList::IndexRole).toInt());
   if (selected.size() > 1) {
-
     for (auto& idx : selected) {
       if (idx.row() != ref.row()) {
         setCategoriesIf(
@@ -973,6 +972,23 @@ void ModListViewActions::setCategories(const QModelIndexList& selected, const QM
 
   for (auto& idx : selected) {
     m_core.modList()->notifyChange(idx.data(ModList::IndexRole).toInt());
+  }
+
+  // reset the selection manually - still needed
+  auto viewIndices = m_view->indexModelToView(selected);
+  for (auto& idx : viewIndices) {
+    m_view->selectionModel()->select(idx, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+  }
+}
+
+void ModListViewActions::setPrimaryCategory(const QModelIndexList& selected, int category, bool force)
+{
+  for (auto& idx : selected) {
+    ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+    if (force || info->categorySet(category)) {
+      info->setCategory(category, true);
+      info->setPrimaryCategory(category);
+    }
   }
 
   // reset the selection manually - still needed

@@ -55,6 +55,10 @@ public:
 
   ModListPrimaryCategoryMenu(CategoryFactory& categories, ModInfo::Ptr mod, QMenu* parent = nullptr);
 
+  // return the selected primary category
+  //
+  int primaryCategory() const;
+
 private:
 
   // populate the categories
