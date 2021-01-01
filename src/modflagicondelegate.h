@@ -9,7 +9,7 @@ class ModFlagIconDelegate : public IconDelegate
 
 public:
   explicit ModFlagIconDelegate(QObject *parent = 0, int logicalIndex = -1, int compactSize = 120);
-  virtual QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
+  QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 
   static QList<QString> getIconsForFlags(
     std::vector<ModInfo::EFlag> flags, bool compact);
@@ -20,8 +20,8 @@ public slots:
   void columnResized(int logicalIndex, int oldSize, int newSize);
 
 protected:
-  virtual QList<QString> getIcons(const QModelIndex &index) const;
-  virtual size_t getNumIcons(const QModelIndex &index) const;
+  QList<QString> getIcons(const QModelIndex &index) const override;
+  size_t getNumIcons(const QModelIndex &index) const override;
 
 private:
   int m_LogicalIndex;

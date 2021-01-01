@@ -5,18 +5,6 @@
 
 using namespace MOBase;
 
-ModInfo::EConflictFlag ModConflictIconDelegate::m_ConflictFlags[4] = { ModInfo::FLAG_CONFLICT_MIXED
-                                                         , ModInfo::FLAG_CONFLICT_OVERWRITE
-                                                         , ModInfo::FLAG_CONFLICT_OVERWRITTEN
-                                                         , ModInfo::FLAG_CONFLICT_REDUNDANT };
-
-ModInfo::EConflictFlag ModConflictIconDelegate::m_ArchiveLooseConflictFlags[2] = { ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE
-                                                                     , ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN };
-
-ModInfo::EConflictFlag ModConflictIconDelegate::m_ArchiveConflictFlags[3] = { ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED
-                                                                , ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE
-                                                                , ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN };
-
 ModConflictIconDelegate::ModConflictIconDelegate(QObject *parent, int logicalIndex, int compactSize)
   : IconDelegate(parent)
   , m_LogicalIndex(logicalIndex)
@@ -44,7 +32,7 @@ QList<QString> ModConflictIconDelegate::getIconsForFlags(
   // insert conflict icons to provide nicer alignment
   { // insert loose file conflicts first
     auto iter = std::find_first_of(flags.begin(), flags.end(),
-                                    m_ConflictFlags, m_ConflictFlags + 4);
+                                    s_ConflictFlags.begin(), s_ConflictFlags.end());
     if (iter != flags.end()) {
       result.append(getFlagIcon(*iter));
       flags.erase(iter);
@@ -65,8 +53,8 @@ QList<QString> ModConflictIconDelegate::getIconsForFlags(
   }
 
   { // insert loose vs archive overwritten third
-    auto iter = std::find_first_of(flags.begin(), flags.end(),
-      m_ArchiveLooseConflictFlags + 1, m_ArchiveLooseConflictFlags + 2);
+    auto iter = std::find(flags.begin(), flags.end(),
+      ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN);
     if (iter != flags.end()) {
       result.append(getFlagIcon(*iter));
       flags.erase(iter);
@@ -77,7 +65,7 @@ QList<QString> ModConflictIconDelegate::getIconsForFlags(
 
   { // insert archive conflicts last
     auto iter = std::find_first_of(flags.begin(), flags.end(),
-      m_ArchiveConflictFlags, m_ArchiveConflictFlags + 3);
+      s_ArchiveConflictFlags.begin(), s_ArchiveConflictFlags.end());
     if (iter != flags.end()) {
       result.append(getFlagIcon(*iter));
       flags.erase(iter);
@@ -133,7 +121,8 @@ size_t ModConflictIconDelegate::getNumIcons(const QModelIndex &index) const
     ModInfo::Ptr info = ModInfo::getByIndex(modIdx);
     std::vector<ModInfo::EConflictFlag> flags = info->getConflictFlags();
     size_t count = flags.size();
-    if (std::find_first_of(flags.begin(), flags.end(), m_ConflictFlags, m_ConflictFlags + 4) == flags.end()) {
+    if (std::find_first_of(flags.begin(), flags.end(),
+      s_ConflictFlags.begin(), s_ConflictFlags.end()) == flags.end()) {
       ++count;
     }
     return count;
@@ -141,7 +130,6 @@ size_t ModConflictIconDelegate::getNumIcons(const QModelIndex &index) const
     return 0;
   }
 }
-
 
 QSize ModConflictIconDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &modelIndex) const
 {
@@ -158,4 +146,3 @@ QSize ModConflictIconDelegate::sizeHint(const QStyleOptionViewItem &option, cons
   }
   return result;
 }
-

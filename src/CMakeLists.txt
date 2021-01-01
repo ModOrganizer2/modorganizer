@@ -132,6 +132,11 @@ add_filter(NAME src/modinfo/dialog GROUPS
 	modinfodialogtab
 	modinfodialogtextfiles
 )
+
+add_filter(NAME src/modinfo/dialog/widgets GROUPS
+	modidlineedit
+)
+
 add_filter(NAME src/modlist GROUPS
 	modlist
 	modlistdropinfo
@@ -140,6 +145,11 @@ add_filter(NAME src/modlist GROUPS
 	modlistview
 	modlistviewactions
 	modlistcontextmenu
+)
+
+add_filter(NAME src/delegates GROUPS
+	modflagicondelegate
+	modconflicticondelegate
 )
 
 add_filter(NAME src/plugins GROUPS
@@ -221,9 +231,6 @@ add_filter(NAME src/widgets GROUPS
 	lcdnumber
 	loglist
 	loghighlighter
-	modflagicondelegate
-	modconflicticondelegate
-	modidlineedit
 	noeditdelegate
 	qtgroupingproxy
 	texteditor
