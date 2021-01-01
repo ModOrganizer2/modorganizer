@@ -187,8 +187,18 @@ ModInfoDialog::ModInfoDialog(
 {
   ui->setupUi(this);
 
-  auto* sc = new QShortcut(QKeySequence::Delete, this);
-  connect(sc, &QShortcut::activated, [&]{ onDeleteShortcut(); });
+  {
+    auto* sc = new QShortcut(QKeySequence::Delete, this);
+    connect(sc, &QShortcut::activated, [&] { onDeleteShortcut(); });
+  }
+  {
+    auto* sc = new QShortcut(QKeySequence::MoveToNextPage, this);
+    connect(sc, &QShortcut::activated, [&] { onNextMod(); });
+  }
+  {
+    auto* sc = new QShortcut(QKeySequence::MoveToPreviousPage, this);
+    connect(sc, &QShortcut::activated, [&] { onPreviousMod(); });
+  }
 
   setMod(mod);
   createTabs();
