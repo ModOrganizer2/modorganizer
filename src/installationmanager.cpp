@@ -186,19 +186,26 @@ bool InstallationManager::extractFiles(QString extractPath, QString title, bool 
     // Cancelling progress only cancel the extraction, we do not force exiting the event-loop:
     connect(installationProgress, &QProgressDialog::canceled, [this]() { m_ArchiveHandler->cancel(); });
 
+    std::mutex mutex;
     int currentProgress = 0;
     QString currentFileName;
 
     // The callbacks:
-    auto progressCallback = [this, &currentProgress](auto progressType, uint64_t current, uint64_t total) {
+    auto progressCallback = [this, &currentProgress, &mutex](auto progressType, uint64_t current, uint64_t total) {
       if (progressType == Archive::ProgressType::EXTRACTION) {
-        currentProgress = static_cast<int>(100 * current / total);
+        {
+          std::scoped_lock guard(mutex);
+          currentProgress = static_cast<int>(100 * current / total);
+        }
         emit progressUpdate();
       }
     };
-    Archive::FileChangeCallback fileChangeCallback = [this, &currentFileName](auto changeType, std::wstring const& file) {
+    Archive::FileChangeCallback fileChangeCallback = [this, &currentFileName, &mutex](auto changeType, std::wstring const& file) {
       if (changeType == Archive::FileChangeType::EXTRACTION_START) {
-        currentFileName = QString::fromStdWString(file);
+        {
+          std::scoped_lock guard(mutex);
+          currentFileName = QString::fromStdWString(file);
+        }
         emit progressUpdate();
       }
     };
@@ -222,6 +229,7 @@ bool InstallationManager::extractFiles(QString extractPath, QString title, bool 
 
     while (!futureWatcher.isFinished()) {
       loop.processEvents(QEventLoop::AllEvents | QEventLoop::WaitForMoreEvents);
+      std::scoped_lock guard(mutex);
       if (currentProgress != installationProgress->value()) {
         installationProgress->setValue(currentProgress);
       }
