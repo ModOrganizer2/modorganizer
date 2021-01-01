@@ -1965,6 +1965,7 @@ void MainWindow::storeSettings()
   s.widgets().saveIndex(ui->tabWidget);
 
   m_DataTab->saveState(s);
+  ui->modList->saveState(s);
 
   s.interface().setFilterOptions(FilterWidget::options());
 }
