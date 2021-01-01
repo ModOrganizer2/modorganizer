@@ -30,7 +30,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "isavegameinfowidget.h"
 #include "nexusinterface.h"
 #include "organizercore.h"
-#include "pluginlistsortproxy.h"
 #include "previewgenerator.h"
 #include "serverinfo.h"
 #include "savegameinfo.h"
@@ -39,8 +38,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "instancemanager.h"
 #include "report.h"
 #include "modlist.h"
-#include "modlistsortproxy.h"
-#include "qtgroupingproxy.h"
 #include "profile.h"
 #include "pluginlist.h"
 #include "profilesdialog.h"
@@ -82,7 +79,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "listdialog.h"
 #include "envshortcut.h"
 #include "browserdialog.h"
-#include "modlistbypriorityproxy.h"
 #include "modlistviewactions.h"
 #include "modlistcontextmenu.h"
 
@@ -92,7 +88,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "shared/filesorigin.h"
 
 #include <QAbstractItemDelegate>
-#include <QAbstractProxyModel>
 #include <QAction>
 #include <QApplication>
 #include <QButtonGroup>
@@ -662,24 +657,6 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 {
   m_Tutorial.resize(event->size());
   QMainWindow::resizeEvent(event);
-}
-
-static QModelIndex mapToModel(const QAbstractItemModel *targetModel, QModelIndex idx)
-{
-  QModelIndex result = idx;
-  const QAbstractItemModel *model = idx.model();
-  while (model != targetModel) {
-    if (model == nullptr) {
-      return QModelIndex();
-    }
-    const QAbstractProxyModel *proxyModel = qobject_cast<const QAbstractProxyModel*>(model);
-    if (proxyModel == nullptr) {
-      return QModelIndex();
-    }
-    result = proxyModel->mapToSource(result);
-    model = proxyModel->sourceModel();
-  }
-  return result;
 }
 
 void MainWindow::setupToolbar()
