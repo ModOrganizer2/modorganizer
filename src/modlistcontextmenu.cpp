@@ -221,7 +221,7 @@ void ModListContextMenu::addMenuAsPushButton(QMenu* menu)
   addAction(action);
 }
 
-QMenu* ModListContextMenu::createSendToContextMenu()
+void ModListContextMenu::addSendToContextMenu()
 {
   QMenu* menu = new QMenu(m_view);
   menu->setTitle(tr("Send to... "));
@@ -229,7 +229,25 @@ QMenu* ModListContextMenu::createSendToContextMenu()
   menu->addAction(tr("Bottom"), [=]() { m_actions.sendModsToBottom(m_selected); });
   menu->addAction(tr("Priority..."), [=]() { m_actions.sendModsToPriority(m_selected); });
   menu->addAction(tr("Separator..."), [=]() { m_actions.sendModsToSeparator(m_selected); });
-  return menu;
+  addMenu(menu);
+}
+
+void ModListContextMenu::addCategoryContextMenus(ModInfo::Ptr mod)
+{
+  ModListChangeCategoryMenu* categoriesMenu = new ModListChangeCategoryMenu(m_categories, mod, this);
+  connect(categoriesMenu, &QMenu::aboutToHide, [=]() {
+    m_actions.setCategories(m_selected, m_index, categoriesMenu->categories());
+  });
+  addMenuAsPushButton(categoriesMenu);
+
+  ModListPrimaryCategoryMenu* primaryCategoryMenu = new ModListPrimaryCategoryMenu(m_categories, mod, this);
+  connect(primaryCategoryMenu, &QMenu::aboutToHide, [=]() {
+    int category = primaryCategoryMenu->primaryCategory();
+    if (category != -1) {
+      m_actions.setPrimaryCategory(m_selected, category);
+    }
+  });
+  addMenuAsPushButton(primaryCategoryMenu);
 }
 
 void ModListContextMenu::addOverwriteActions(ModInfo::Ptr mod)
@@ -245,23 +263,7 @@ void ModListContextMenu::addOverwriteActions(ModInfo::Ptr mod)
 
 void ModListContextMenu::addSeparatorActions(ModInfo::Ptr mod)
 {
-  addSeparator();
-
-  // categories
-  ModListChangeCategoryMenu* categoriesMenu = new ModListChangeCategoryMenu(m_categories, mod, this);
-  connect(categoriesMenu, &QMenu::aboutToHide, [=]() {
-    m_actions.setCategories(m_selected, m_index, categoriesMenu->categories());
-  });
-  addMenuAsPushButton(categoriesMenu);
-
-  ModListPrimaryCategoryMenu* primaryCategoryMenu = new ModListPrimaryCategoryMenu(m_categories, mod, this);
-  connect(primaryCategoryMenu, &QMenu::aboutToHide, [=]() {
-    int category = primaryCategoryMenu->primaryCategory();
-    if (category != -1) {
-      m_actions.setPrimaryCategory(m_selected, category);
-    }
-  });
-  addMenuAsPushButton(primaryCategoryMenu);
+  addCategoryContextMenus(mod);
   addSeparator();
 
 
@@ -270,7 +272,7 @@ void ModListContextMenu::addSeparatorActions(ModInfo::Ptr mod)
   addSeparator();
 
   if (m_view->sortColumn() == ModList::COL_PRIORITY) {
-    addMenu(createSendToContextMenu());
+    addSendToContextMenu();
     addSeparator();
   }
   addAction(tr("Select Color..."), [=]() { m_actions.setColor(m_selected, m_index); });
@@ -285,7 +287,7 @@ void ModListContextMenu::addSeparatorActions(ModInfo::Ptr mod)
 void ModListContextMenu::addForeignActions(ModInfo::Ptr mod)
 {
   if (m_view->sortColumn() == ModList::COL_PRIORITY) {
-    addMenu(createSendToContextMenu());
+    addSendToContextMenu();
   }
 }
 
@@ -318,21 +320,7 @@ void ModListContextMenu::addRegularActions(ModInfo::Ptr mod)
 {
   auto flags = mod->getFlags();
 
-  // categories
-  ModListChangeCategoryMenu* categoriesMenu = new ModListChangeCategoryMenu(m_categories, mod, this);
-  connect(categoriesMenu, &QMenu::aboutToHide, [=]() {
-    m_actions.setCategories(m_selected, m_index, categoriesMenu->categories());
-    });
-  addMenuAsPushButton(categoriesMenu);
-
-  ModListPrimaryCategoryMenu* primaryCategoryMenu = new ModListPrimaryCategoryMenu(m_categories, mod, this);
-  connect(primaryCategoryMenu, &QMenu::aboutToHide, [=]() {
-    int category = primaryCategoryMenu->primaryCategory();
-    if (category != -1) {
-      m_actions.setPrimaryCategory(m_selected, category);
-    }
-  });
-  addMenuAsPushButton(primaryCategoryMenu);
+  addCategoryContextMenus(mod);
   addSeparator();
 
   if (mod->downgradeAvailable()) {
@@ -358,7 +346,7 @@ void ModListContextMenu::addRegularActions(ModInfo::Ptr mod)
 
 
   if (m_view->sortColumn() == ModList::COL_PRIORITY) {
-    addMenu(createSendToContextMenu());
+    addSendToContextMenu();
     addSeparator();
   }
 

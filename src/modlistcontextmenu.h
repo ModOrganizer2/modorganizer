@@ -80,9 +80,13 @@ public:
 
 private:
 
-  // create the "Send to... " context menu
+  // adds the "Send to... " context menu
   //
-  QMenu* createSendToContextMenu();
+  void addSendToContextMenu();
+
+  // adds the categories menu (change/primary)
+  //
+  void addCategoryContextMenus(ModInfo::Ptr mod);
 
   // special menu for categories
   //
