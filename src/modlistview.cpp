@@ -47,7 +47,17 @@ public:
   ModListStyledItemDelegated(ModListView* view) :
     QStyledItemDelegate(view), m_view(view) { }
 
-  void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override {
+  void initStyleOption(QStyleOptionViewItem* option, const QModelIndex& index) const override
+  {
+    QStyledItemDelegate::initStyleOption(option, index);
+    auto color = childrenColor(index, m_view, Qt::BackgroundRole);
+    if (color.isValid()) {
+      option->backgroundBrush = color;
+    }
+  }
+
+  void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override
+  {
     QStyleOptionViewItem opt(option);
     if (index.column() == 0 && m_view->hasCollapsibleSeparators()) {
       if (!index.model()->hasChildren(index) && index.parent().isValid()) {
@@ -58,13 +68,6 @@ public:
       }
     }
     QStyledItemDelegate::paint(painter, opt, index);
-
-    auto color = childrenColor(index, m_view, Qt::BackgroundRole);
-    if (color.isValid()) {
-      // int shift = 3 * opt.rect.height() / 4;
-      // opt.rect.adjust(0, shift, 0, 0);
-      painter->fillRect(opt.rect, color);
-    }
   }
 };
 
