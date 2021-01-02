@@ -219,9 +219,9 @@ void OrganizerCore::updateExecutablesList()
 
 void OrganizerCore::updateModInfoFromDisc() {
   ModInfo::updateFromDisc(
-    m_Settings.paths().mods(), &m_DirectoryStructure,
-    m_PluginContainer, m_Settings.interface().displayForeign(),
-    m_Settings.refreshThreadCount(), managedGame());
+    m_Settings.paths().mods(), *this,
+    m_Settings.interface().displayForeign(),
+    m_Settings.refreshThreadCount());
 }
 
 void OrganizerCore::setUserInterface(IUserInterface* ui)
@@ -692,8 +692,7 @@ MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
 
   // shouldn't this use the existing mod in case of a merge? also, this does not refresh the indices
   // in the ModInfo structure
-  return ModInfo::createFrom(m_PluginContainer, m_GamePlugin, QDir(targetDirectory), &m_DirectoryStructure)
-      .data();
+  return ModInfo::createFrom(QDir(targetDirectory), *this).data();
 }
 
 void OrganizerCore::modDataChanged(MOBase::IModInterface *)
@@ -1219,11 +1218,7 @@ void OrganizerCore::refresh(bool saveChanges)
     m_CurrentProfile->writeModlistNow(true);
   }
 
-  ModInfo::updateFromDisc(
-    m_Settings.paths().mods(), &m_DirectoryStructure,
-    m_PluginContainer, m_Settings.interface().displayForeign(),
-    m_Settings.refreshThreadCount(), managedGame());
-
+  updateModInfoFromDisc();
   m_CurrentProfile->refreshModStatus();
 
   m_ModList.notifyChange(-1);

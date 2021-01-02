@@ -6,8 +6,7 @@
 #include <QApplication>
 #include <QDirIterator>
 
-ModInfoOverwrite::ModInfoOverwrite(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, MOShared::DirectoryEntry **directoryStructure) 
-  : ModInfoWithConflictInfo(pluginContainer, game, directoryStructure)
+ModInfoOverwrite::ModInfoOverwrite(OrganizerCore& core) : ModInfoWithConflictInfo(core)
 {
 }
 
@@ -60,7 +59,7 @@ QString ModInfoOverwrite::getDescription() const
             "modified (i.e. by the construction kit)");
 }
 
-QStringList ModInfoOverwrite::archives(bool checkOnDisk) 
+QStringList ModInfoOverwrite::archives(bool checkOnDisk)
 {
   QStringList result;
   QDir dir(this->absolutePath());

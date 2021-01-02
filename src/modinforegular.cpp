@@ -5,6 +5,9 @@
 #include "report.h"
 #include "moddatacontent.h"
 #include "settings.h"
+#include "organizercore.h"
+#include "plugincontainer.h"
+#include <iplugingame.h>
 
 #include <QApplication>
 #include <QDirIterator>
@@ -24,25 +27,25 @@ namespace {
   }
 }
 
-ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGame *game, const QDir &path, DirectoryEntry **directoryStructure)
-  : ModInfoWithConflictInfo(pluginContainer, game, directoryStructure)
+ModInfoRegular::ModInfoRegular(const QDir &path, OrganizerCore& core)
+  : ModInfoWithConflictInfo(core)
   , m_Name(path.dirName())
   , m_Path(path.absolutePath())
   , m_Repository()
-  , m_GameName(game->gameShortName())
+  , m_GameName(core.managedGame()->gameShortName())
   , m_IsAlternate(false)
   , m_Converted(false)
   , m_Validated(false)
   , m_MetaInfoChanged(false)
   , m_EndorsedState(EndorsedState::ENDORSED_UNKNOWN)
   , m_TrackedState(TrackedState::TRACKED_UNKNOWN)
-  , m_NexusBridge(pluginContainer)
+  , m_NexusBridge(&core.pluginContainer())
 {
   m_CreationTime = QFileInfo(path.absolutePath()).birthTime();
   // read out the meta-file for information
   readMeta();
-  if (m_GameName.compare(game->gameShortName(), Qt::CaseInsensitive) != 0)
-    if (!game->primarySources().contains(m_GameName, Qt::CaseInsensitive))
+  if (m_GameName.compare(core.managedGame()->gameShortName(), Qt::CaseInsensitive) != 0)
+    if (!core.managedGame()->primarySources().contains(m_GameName, Qt::CaseInsensitive))
       m_IsAlternate = true;
 
   //populate m_Archives
@@ -588,12 +591,6 @@ QColor ModInfoRegular::color() const
   return m_Color;
 }
 
-bool ModInfoRegular::remove()
-{
-  m_MetaInfoChanged = false;
-  return shellDelete(QStringList(absolutePath()), true);
-}
-
 void ModInfoRegular::endorse(bool doEndorse)
 {
   if (doEndorse != (m_EndorsedState == EndorsedState::ENDORSED_TRUE)) {
@@ -684,7 +681,7 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 
 std::set<int> ModInfoRegular::doGetContents() const
 {
-  ModDataContent* contentFeature = m_GamePlugin->feature<ModDataContent>();
+  ModDataContent* contentFeature = m_Core.managedGame()->feature<ModDataContent>();
 
   if (contentFeature) {
     auto result = contentFeature->getContentsFor(fileTree());

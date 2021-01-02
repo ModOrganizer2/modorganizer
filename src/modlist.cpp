@@ -1009,16 +1009,7 @@ MOBase::IModInterface* ModList::getMod(const QString& name) const
 
 bool ModList::removeMod(MOBase::IModInterface* mod)
 {
-  unsigned int index = ModInfo::getIndex(mod->name());
-  bool result = false;
-  if (index == UINT_MAX) {
-    if (auto* p = dynamic_cast<ModInfo*>(mod)) {
-      result = p->remove();
-    }
-  }
-  else {
-    result = ModInfo::removeMod(index);
-  }
+  bool result = ModInfo::removeMod(ModInfo::getIndex(mod->name()));
   if (result) {
     notifyModRemoved(mod->name());
   }

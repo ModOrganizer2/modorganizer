@@ -5,6 +5,7 @@
 #include "shared/fileentry.h"
 #include <filesystem>
 
+#include "organizercore.h"
 #include "iplugingame.h"
 #include "moddatachecker.h"
 #include "qdirfiletree.h"
@@ -13,13 +14,12 @@ using namespace MOBase;
 using namespace MOShared;
 namespace fs = std::filesystem;
 
-ModInfoWithConflictInfo::ModInfoWithConflictInfo(
-  PluginContainer *pluginContainer, const MOBase::IPluginGame* gamePlugin, DirectoryEntry **directoryStructure)
-  : ModInfo(pluginContainer), m_GamePlugin(gamePlugin),
+ModInfoWithConflictInfo::ModInfoWithConflictInfo(OrganizerCore& core) :
+  ModInfo(core),
   m_FileTree([this]() { return QDirFileTree::makeTree(absolutePath()); }),
   m_Valid([this]() { return doIsValid(); }),
   m_Contents([this]() { return doGetContents(); }),
-  m_DirectoryStructure(directoryStructure), m_HasLooseOverwrite(false), m_HasHiddenFiles(false) {}
+  m_HasLooseOverwrite(false), m_HasHiddenFiles(false) {}
 
 void ModInfoWithConflictInfo::clearCaches()
 {
@@ -95,8 +95,8 @@ void ModInfoWithConflictInfo::doConflictCheck() const
   bool hasHiddenFiles = false;
 
   int dataID = 0;
-  if ((*m_DirectoryStructure)->originExists(L"data")) {
-    dataID = (*m_DirectoryStructure)->getOriginByName(L"data").getID();
+  if (m_Core.directoryStructure()->originExists(L"data")) {
+    dataID = m_Core.directoryStructure()->getOriginByName(L"data").getID();
   }
 
   std::wstring name = ToWString(this->name());
@@ -106,8 +106,8 @@ void ModInfoWithConflictInfo::doConflictCheck() const
   m_ArchiveConflictState = CONFLICT_NONE;
   m_ArchiveConflictLooseState = CONFLICT_NONE;
 
-  if ((*m_DirectoryStructure)->originExists(name)) {
-    FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
+  if (m_Core.directoryStructure()->originExists(name)) {
+    FilesOrigin &origin = m_Core.directoryStructure()->getOriginByName(name);
     std::vector<FileEntryPtr> files = origin.getFiles();
     std::set<const DirectoryEntry*> checkedDirs;
 
@@ -164,7 +164,7 @@ void ModInfoWithConflictInfo::doConflictCheck() const
 
         // If this is not the origin then determine the correct overwrite
         if (file->getOrigin() != origin.getID()) {
-          FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(file->getOrigin());
+          FilesOrigin &altOrigin = m_Core.directoryStructure()->getOriginByID(file->getOrigin());
           unsigned int altIndex = ModInfo::getIndex(ToQString(altOrigin.getName()));
           if (!file->isFromArchive()) {
             if (!archiveData.isValid())
@@ -182,7 +182,7 @@ void ModInfoWithConflictInfo::doConflictCheck() const
         // Sort out the alternatives
         for (const auto& altInfo : alternatives) {
           if ((altInfo.originID() != dataID) && (altInfo.originID() != origin.getID())) {
-            FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(altInfo.originID());
+            FilesOrigin &altOrigin = m_Core.directoryStructure()->getOriginByID(altInfo.originID());
             QString altOriginName = ToQString(altOrigin.getName());
             unsigned int altIndex = ModInfo::getIndex(altOriginName);
             if (!altInfo.isFromArchive()) {
@@ -276,8 +276,8 @@ ModInfoWithConflictInfo::EConflictType ModInfoWithConflictInfo::isLooseArchiveCo
 bool ModInfoWithConflictInfo::isRedundant() const
 {
   std::wstring name = ToWString(this->name());
-  if ((*m_DirectoryStructure)->originExists(name)) {
-    FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
+  if (m_Core.directoryStructure()->originExists(name)) {
+    FilesOrigin &origin = m_Core.directoryStructure()->getOriginByName(name);
     std::vector<FileEntryPtr> files = origin.getFiles();
     bool ignore = false;
     for (auto iter = files.begin(); iter != files.end(); ++iter) {
@@ -315,7 +315,7 @@ void ModInfoWithConflictInfo::prefetch() {
 }
 
 bool ModInfoWithConflictInfo::doIsValid() const {
-  auto mdc = m_GamePlugin->feature<ModDataChecker>();
+  auto mdc = m_Core.managedGame()->feature<ModDataChecker>();
 
   if (mdc) {
     auto qdirfiletree = fileTree();
