@@ -91,7 +91,6 @@ public:
 
   void setData(int column, int role, const QVariant& value) {
     if (role == StateRole) {
-      MOBase::log::debug("setData: {}, {}, {}", column, role, value.toInt());
       setState(static_cast<States>(value.toInt()));
     }
     else {
