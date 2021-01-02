@@ -206,9 +206,7 @@ void PluginListView::setup(OrganizerCore& core, MainWindow* mw, Ui::MainWindow* 
     for (auto& idx : indexViewToModel(selectionModel()->selectedRows())) {
       pluginIndices.push_back(idx.row());
     }
-    m_core->modList()->highlightMods(pluginIndices, *m_core->directoryStructure());
-    mwui->modList->verticalScrollBar()->repaint();
-    mwui->modList->repaint();
+    mwui->modList->setHighlightedMods(pluginIndices);
   });
 
   // using a lambda here to avoid storing the mod list actions

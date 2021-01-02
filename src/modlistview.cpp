@@ -22,6 +22,7 @@
 #include "modlistdropinfo.h"
 #include "modlistcontextmenu.h"
 #include "genericicondelegate.h"
+#include "shared/fileentry.h"
 #include "shared/directoryentry.h"
 #include "shared/filesorigin.h"
 #include "mainwindow.h"
@@ -123,7 +124,7 @@ ModListView::ModListView(QWidget* parent)
   , m_byPriorityProxy(nullptr)
   , m_byCategoryProxy(nullptr)
   , m_byNexusIdProxy(nullptr)
-  , m_overwrite{ {}, {}, {}, {}, {}, {} }
+  , m_markers{ {}, {}, {}, {}, {}, {} }
   , m_scrollbar(new ModListViewMarkingScrollBar(this))
 {
   setVerticalScrollBar(m_scrollbar);
@@ -954,30 +955,30 @@ void ModListView::onDoubleClicked(const QModelIndex& index)
 
 void ModListView::clearOverwriteMarkers()
 {
-  m_overwrite.overwrite.clear();
-  m_overwrite.overwritten.clear();
-  m_overwrite.archiveOverwrite.clear();
-  m_overwrite.archiveOverwritten.clear();
-  m_overwrite.archiveLooseOverwrite.clear();
-  m_overwrite.archiveLooseOverwritten.clear();
+  m_markers.overwrite.clear();
+  m_markers.overwritten.clear();
+  m_markers.archiveOverwrite.clear();
+  m_markers.archiveOverwritten.clear();
+  m_markers.archiveLooseOverwrite.clear();
+  m_markers.archiveLooseOverwritten.clear();
 }
 
 void ModListView::setOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten)
 {
-  m_overwrite.overwrite = overwrite;
-  m_overwrite.overwritten = overwritten;
+  m_markers.overwrite = overwrite;
+  m_markers.overwritten = overwritten;
 }
 
 void ModListView::setArchiveOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten)
 {
-  m_overwrite.archiveOverwrite = overwrite;
-  m_overwrite.archiveOverwritten = overwritten;
+  m_markers.archiveOverwrite = overwrite;
+  m_markers.archiveOverwritten = overwritten;
 }
 
 void ModListView::setArchiveLooseOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten)
 {
-  m_overwrite.archiveLooseOverwrite = overwrite;
-  m_overwrite.archiveLooseOverwritten = overwritten;
+  m_markers.archiveLooseOverwrite = overwrite;
+  m_markers.archiveLooseOverwritten = overwritten;
 }
 
 void ModListView::setOverwriteMarkers(ModInfo::Ptr mod)
@@ -996,19 +997,38 @@ void ModListView::setOverwriteMarkers(ModInfo::Ptr mod)
   verticalScrollBar()->repaint();
 }
 
+void ModListView::setHighlightedMods(const std::vector<unsigned int>& pluginIndices)
+{
+  m_markers.highlight.clear();
+  auto& directoryEntry = *m_core->directoryStructure();
+  for (auto idx : pluginIndices) {
+    QString pluginName = m_core->pluginList()->getName(idx);
+
+    const MOShared::FileEntryPtr fileEntry = directoryEntry.findFile(pluginName.toStdWString());
+    if (fileEntry.get() != nullptr) {
+      QString originName = QString::fromStdWString(directoryEntry.getOriginByID(fileEntry->getOrigin()).getName());
+      const auto index = ModInfo::getIndex(originName);
+      if (index != UINT_MAX) {
+        m_markers.highlight.insert(index);
+      }
+    }
+  }
+  dataChanged(model()->index(0, 0), model()->index(model()->rowCount(), model()->columnCount()));
+  verticalScrollBar()->repaint();
+}
+
 QColor ModListView::markerColor(const QModelIndex& index) const
 {
   unsigned int modIndex = index.data(ModList::IndexRole).toInt();
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-  bool overwrite = m_overwrite.overwrite.find(modIndex) != m_overwrite.overwrite.end();
-  bool archiveOverwrite = m_overwrite.archiveOverwrite.find(modIndex) != m_overwrite.archiveOverwrite.end();
-  bool archiveLooseOverwrite = m_overwrite.archiveOverwritten.find(modIndex) != m_overwrite.archiveOverwritten.end();
-  bool overwritten = m_overwrite.overwritten.find(modIndex) != m_overwrite.overwritten.end();
-  bool archiveOverwritten = m_overwrite.archiveOverwritten.find(modIndex) != m_overwrite.archiveOverwritten.end();
-  bool archiveLooseOverwritten = m_overwrite.archiveLooseOverwritten.find(modIndex) != m_overwrite.archiveLooseOverwritten.end();
+  bool highligth = m_markers.highlight.find(modIndex) != m_markers.highlight.end();
+  bool overwrite = m_markers.overwrite.find(modIndex) != m_markers.overwrite.end();
+  bool archiveOverwrite = m_markers.archiveOverwrite.find(modIndex) != m_markers.archiveOverwrite.end();
+  bool archiveLooseOverwrite = m_markers.archiveOverwritten.find(modIndex) != m_markers.archiveOverwritten.end();
+  bool overwritten = m_markers.overwritten.find(modIndex) != m_markers.overwritten.end();
+  bool archiveOverwritten = m_markers.archiveOverwritten.find(modIndex) != m_markers.archiveOverwritten.end();
+  bool archiveLooseOverwritten = m_markers.archiveLooseOverwritten.find(modIndex) != m_markers.archiveLooseOverwritten.end();
 
-  // TODO: Move this here
-  if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
+  if (highligth) {
     return Settings::instance().colors().modlistContainsPlugin();
   }
   else if (overwritten || archiveLooseOverwritten) {

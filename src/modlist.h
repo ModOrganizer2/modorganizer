@@ -151,12 +151,6 @@ public:
 
   int timeElapsedSinceLastChecked() const;
 
-  // highlight mods containing the plugins at the given indices
-  //
-  void highlightMods(
-    const std::vector<unsigned int>& pluginIndices,
-    const MOShared::DirectoryEntry &directoryEntry);
-
 public:
 
   /**

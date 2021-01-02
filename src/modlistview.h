@@ -118,6 +118,10 @@ public slots:
   //
   void refreshFilters();
 
+  // set highligth markers
+  //
+  void setHighlightedMods(const std::vector<unsigned int>& pluginIndices);
+
 protected:
 
   friend class ModListContextMenu;
@@ -239,14 +243,18 @@ private:
   QtGroupingProxy* m_byCategoryProxy;
   QtGroupingProxy* m_byNexusIdProxy;
 
-  struct OverwriteInfo {
+  struct MarkerInfos {
+    // conflicts
     std::set<unsigned int> overwrite;
     std::set<unsigned int> overwritten;
     std::set<unsigned int> archiveOverwrite;
     std::set<unsigned int> archiveOverwritten;
     std::set<unsigned int> archiveLooseOverwrite;
     std::set<unsigned int> archiveLooseOverwritten;
-  } m_overwrite;
+
+    // selected plugins
+    std::set<unsigned int> highlight;
+  } m_markers;
 
   ViewMarkingScrollBar* m_scrollbar;
 

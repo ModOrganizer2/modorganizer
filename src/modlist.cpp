@@ -874,30 +874,6 @@ int ModList::timeElapsedSinceLastChecked() const
   return m_LastCheck.elapsed();
 }
 
-void ModList::highlightMods(
-  const std::vector<unsigned int>& pluginIndices,
-  const MOShared::DirectoryEntry &directoryEntry)
-{
-  for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
-      ModInfo::getByIndex(i)->setPluginSelected(false);
-  }
-  for (auto idx : pluginIndices) {
-    QString pluginName = m_Organizer->pluginList()->getName(idx);
-
-    const MOShared::FileEntryPtr fileEntry = directoryEntry.findFile(pluginName.toStdWString());
-    if (fileEntry.get() != nullptr) {
-
-      QString originName = QString::fromStdWString(directoryEntry.getOriginByID(fileEntry->getOrigin()).getName());
-      const auto index = ModInfo::getIndex(originName);
-      if (index != UINT_MAX) {
-        auto modInfo = ModInfo::getByIndex(index);
-        modInfo->setPluginSelected(true);
-      }
-    }
-  }
-  notifyChange(0, rowCount() - 1);
-}
-
 IModList::ModStates ModList::state(unsigned int modIndex) const
 {
   IModList::ModStates result;
