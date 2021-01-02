@@ -598,6 +598,35 @@ bool ModListView::toggleSelectionState()
   return m_core->modList()->toggleState(indexViewToModel(selectionModel()->selectedRows()));
 }
 
+bool ModListView::copySelection()
+{
+  if (!selectionModel()->hasSelection()) {
+    return true;
+  }
+
+  // sort to reflect the visual order
+  QModelIndexList selectedRows = selectionModel()->selectedRows();
+  std::sort(selectedRows.begin(), selectedRows.end(), [=](const auto& lidx, const auto& ridx) {
+    return visualRect(lidx).top() < visualRect(ridx).top();
+  });
+
+  QStringList rows;
+  for (auto& idx : selectedRows) {
+    ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+    QString name = idx.data(Qt::DisplayRole).toString();
+    if (model()->hasChildren(idx)
+      || (sortColumn() == ModList::COL_PRIORITY
+        && groupByMode() == GroupByMode::NONE
+        && info->isSeparator())) {
+      name = "[" + name + "]";
+    }
+    rows.append(name);
+  }
+
+  QGuiApplication::clipboard()->setText(rows.join("\n"));
+  return true;
+}
+
 void ModListView::updateGroupByProxy(int groupIndex)
 {
   // if the index is -1, we do not refresh unless we are grouping
@@ -1043,10 +1072,12 @@ bool ModListView::event(QEvent* event)
         }
       }
       // ctrl+up/down move selection
-      else if (keyEvent->modifiers() == Qt::ControlModifier
-        && sortColumn() == ModList::COL_PRIORITY
+      else if (sortColumn() == ModList::COL_PRIORITY
         && (keyEvent->key() == Qt::Key_Up || keyEvent->key() == Qt::Key_Down)) {
         return moveSelection(keyEvent->key());
+      }
+      else if (keyEvent->key() == Qt::Key_C) {
+        return copySelection();
       }
     }
     else if (keyEvent->modifiers() == Qt::ShiftModifier) {

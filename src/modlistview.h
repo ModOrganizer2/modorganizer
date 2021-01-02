@@ -149,6 +149,7 @@ protected:
   bool moveSelection(int key);
   bool removeSelection();
   bool toggleSelectionState();
+  bool copySelection();
 
   void timerEvent(QTimerEvent* event) override;
   void dragEnterEvent(QDragEnterEvent* event) override;
