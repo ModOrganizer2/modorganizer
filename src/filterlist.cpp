@@ -12,7 +12,14 @@ using Criteria = ModListSortProxy::Criteria;
 
 class FilterList::CriteriaItem : public QTreeWidgetItem
 {
+
+  static constexpr int IDRole = Qt::UserRole;
+  static constexpr int TypeRole = Qt::UserRole + 1;
+
 public:
+
+  static constexpr int StateRole = Qt::UserRole + 2;
+
   enum States
   {
     FirstState = 0,
@@ -58,27 +65,41 @@ public:
 
   void nextState()
   {
-    m_state = static_cast<States>(m_state + 1);
-    if (m_state > LastState) {
-      m_state = FirstState;
+    auto s = static_cast<States>(m_state + 1);
+    if (s > LastState) {
+      s = FirstState;
     }
-
-    updateState();
+    setState(s);
   }
 
   void previousState()
   {
-    m_state = static_cast<States>(m_state - 1);
-    if (m_state < FirstState) {
-      m_state = LastState;
+    auto s = static_cast<States>(m_state - 1);
+    if (s < FirstState) {
+      s = LastState;
     }
+    setState(s);
+  }
 
-    updateState();
+  QVariant data(int column, int role) const
+  {
+    if (role == StateRole) {
+      return m_state;
+    }
+    return QTreeWidgetItem::data(column, role);
+  }
+
+  void setData(int column, int role, const QVariant& value) {
+    if (role == StateRole) {
+      MOBase::log::debug("setData: {}, {}, {}", column, role, value.toInt());
+      setState(static_cast<States>(value.toInt()));
+    }
+    else {
+      QTreeWidgetItem::setData(column, role, value);
+    }
   }
 
 private:
-  const int IDRole = Qt::UserRole;
-  const int TypeRole = Qt::UserRole + 1;
 
   FilterList* m_list;
   States m_state;
@@ -212,10 +233,17 @@ FilterList::FilterList(Ui::MainWindow* ui, OrganizerCore& core, CategoryFactory&
 void FilterList::restoreState(const Settings& s)
 {
   s.widgets().restoreIndex(ui->filtersSeparators);
+  s.widgets().restoreChecked(ui->filtersAnd);
+  s.widgets().restoreChecked(ui->filtersOr);
+  s.widgets().restoreTreeCheckState(ui->filters, CriteriaItem::StateRole);
+  checkCriteria();
 }
 
 void FilterList::saveState(Settings& s) const
 {
+  s.widgets().saveTreeCheckState(ui->filters, CriteriaItem::StateRole);
+  s.widgets().saveChecked(ui->filtersAnd);
+  s.widgets().saveChecked(ui->filtersOr);
   s.widgets().saveIndex(ui->filtersSeparators);
 }
 

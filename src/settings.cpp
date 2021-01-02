@@ -1065,7 +1065,30 @@ WidgetSettings::WidgetSettings(QSettings& s, bool globalInstance)
   }
 }
 
-void WidgetSettings::saveTreeState(const QTreeView* tv, int role)
+void WidgetSettings::saveTreeCheckState(const QTreeView* tv, int role)
+{
+  QVariantList data;
+  for (auto index : flatIndex(tv->model())) {
+    data.append(index.data(role));
+  }
+  set(m_Settings, "Widgets", indexSettingName(tv), data);
+}
+
+void WidgetSettings::restoreTreeCheckState(QTreeView* tv, int role) const
+{
+  if (auto states = getOptional<QVariantList>(m_Settings, "Widgets", indexSettingName(tv))) {
+    auto allIndex = flatIndex(tv->model());
+    MOBase::log::debug("restoreTreeCheckState: {}, {}", states->size(), allIndex.size());
+    if (states->size() != allIndex.size()) {
+      return;
+    }
+    for (int i = 0; i < states->size(); ++i) {
+      tv->model()->setData(allIndex[i], states->at(i), role);
+    }
+  }
+}
+
+void WidgetSettings::saveTreeExpandState(const QTreeView* tv, int role)
 {
   QVariantList expanded;
   for (auto index : flatIndex(tv->model())) {
@@ -1076,7 +1099,7 @@ void WidgetSettings::saveTreeState(const QTreeView* tv, int role)
   set(m_Settings, "Widgets", indexSettingName(tv), expanded);
 }
 
-void WidgetSettings::restoreTreeState(QTreeView* tv, int role) const
+void WidgetSettings::restoreTreeExpandState(QTreeView* tv, int role) const
 {
   if (auto expanded = getOptional<QVariantList>(m_Settings, "Widgets", indexSettingName(tv))) {
     tv->collapseAll();

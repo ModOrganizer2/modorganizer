@@ -1170,8 +1170,8 @@ void MainWindow::showEvent(QShowEvent *event)
   QMainWindow::showEvent(event);
 
   if (!m_WasVisible) {
-    readSettings();
     ui->modList->refreshFilters();
+    readSettings();
 
     // this needs to be connected here instead of in the constructor because the
     // actual changing of the stylesheet is done by MOApplication, which

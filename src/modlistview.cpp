@@ -804,7 +804,7 @@ void ModListView::restoreState(const Settings& s)
   s.geometry().restoreState(header());
 
   s.widgets().restoreIndex(ui.groupBy);
-  s.widgets().restoreTreeState(this);
+  s.widgets().restoreTreeExpandState(this);
 
   m_filters->restoreState(s);
 }
@@ -814,7 +814,7 @@ void ModListView::saveState(Settings& s) const
   s.geometry().saveState(header());
 
   s.widgets().saveIndex(ui.groupBy);
-  s.widgets().saveTreeState(this);
+  s.widgets().saveTreeExpandState(this);
 
   m_filters->saveState(s);
 }
