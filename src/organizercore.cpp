@@ -235,21 +235,6 @@ void OrganizerCore::setUserInterface(IUserInterface* ui)
     w = m_UserInterface->mainWindow();
   }
 
-  if (w) {
-    connect(&m_ModList, SIGNAL(showMessage(QString)), w,
-            SLOT(showMessage(QString)));
-    connect(&m_ModList, SIGNAL(modRenamed(QString, QString)), w,
-            SLOT(modRenamed(QString, QString)));
-    connect(&m_ModList, SIGNAL(modUninstalled(QString)), w,
-            SLOT(modRemoved(QString)));
-    connect(&m_InstallationManager, SIGNAL(modReplaced(QString)), w,
-            SLOT(modRemoved(QString)));
-    connect(&m_ModList, SIGNAL(fileMoved(QString, QString, QString)), w,
-            SLOT(fileMoved(QString, QString, QString)));
-    connect(&m_DownloadManager, SIGNAL(showMessage(QString)), w,
-            SLOT(showMessage(QString)));
-  }
-
   m_InstallationManager.setParentWidget(w);
   m_Updater.setUserInterface(w);
   m_UILocker.setUserInterface(w);

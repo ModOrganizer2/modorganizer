@@ -464,6 +464,18 @@ MainWindow::MainWindow(Settings &settings
   m_Tutorial.expose("espList", m_OrganizerCore.pluginList());
 
   m_OrganizerCore.setUserInterface(this);
+  connect(m_OrganizerCore.modList(), &ModList::showMessage,
+    [=](auto&& message) { showMessage(message); });
+  connect(m_OrganizerCore.modList(), &ModList::modRenamed,
+    [=](auto&& oldName, auto&& newName) { modRenamed(oldName, newName); });
+  connect(m_OrganizerCore.modList(), &ModList::modUninstalled,
+    [=](auto&& name) { modRemoved(name); });
+  connect(m_OrganizerCore.modList(), &ModList::fileMoved,
+    [=](auto&& ...args) { fileMoved(args...); });
+  connect(m_OrganizerCore.installationManager(), &InstallationManager::modReplaced,
+    [=](auto&& name) { modRemoved(name); });
+  connect(m_OrganizerCore.downloadManager(), &DownloadManager::showMessage,
+    [=](auto&& message) { showMessage(message); });
   for (const QString &fileName : m_PluginContainer.pluginFileNames()) {
     installTranslator(QFileInfo(fileName).baseName());
   }
