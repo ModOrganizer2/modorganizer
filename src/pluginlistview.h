@@ -30,15 +30,6 @@ public:
   //
   void updatePluginCount();
 
-  // TODO: Move these to private when possible.
-  // map from/to the view indexes to the model
-  //
-  QModelIndex indexModelToView(const QModelIndex& index) const;
-  QModelIndexList indexModelToView(const QModelIndexList& index) const;
-  QModelIndex indexViewToModel(const QModelIndex& index) const;
-  QModelIndexList indexViewToModel(const QModelIndexList& index) const;
-
-
 protected slots:
 
   void onCustomContextMenuRequested(const QPoint& pos);
@@ -48,6 +39,15 @@ protected slots:
   void onSortButtonClicked();
 
 protected:
+
+  friend class PluginListContextMenu;
+
+  // map from/to the view indexes to the model
+  //
+  QModelIndex indexModelToView(const QModelIndex& index) const;
+  QModelIndexList indexModelToView(const QModelIndexList& index) const;
+  QModelIndex indexViewToModel(const QModelIndex& index) const;
+  QModelIndexList indexViewToModel(const QModelIndexList& index) const;
 
   // method to react to various key events
   //
