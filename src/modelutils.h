@@ -20,11 +20,6 @@ QModelIndexList indexModelToView(const QModelIndexList& index, const QAbstractIt
 QModelIndex indexViewToModel(const QModelIndex& index, const QAbstractItemModel* model);
 QModelIndexList indexViewToModel(const QModelIndexList& index, const QAbstractItemModel* model);
 
-// retrieve the color of the children of the given index for the given, or an invalid
-// color if the item is expanded or the children do not have colors for the given role
-//
-QColor childrenColor(const QModelIndex& index, QTreeView* view, int role);
-
 }
 
 #endif

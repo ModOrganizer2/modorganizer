@@ -464,33 +464,11 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     return QVariant();
   }
   else if (role == Qt::BackgroundRole || role == ScrollMarkRole) {
-    bool overwrite = m_Overwrite.find(modIndex) != m_Overwrite.end();
-    bool archiveOverwrite = m_ArchiveOverwrite.find(modIndex) != m_ArchiveOverwrite.end();
-    bool archiveLooseOverwrite = m_ArchiveLooseOverwrite.find(modIndex) != m_ArchiveLooseOverwrite.end();
-    bool overwritten = m_Overwritten.find(modIndex) != m_Overwritten.end();
-    bool archiveOverwritten = m_ArchiveOverwritten.find(modIndex) != m_ArchiveOverwritten.end();
-    bool archiveLooseOverwritten = m_ArchiveLooseOverwritten.find(modIndex) != m_ArchiveLooseOverwritten.end();
     if (column == COL_NOTES && modInfo->color().isValid()) {
       return modInfo->color();
     }
-    else if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
-      return Settings::instance().colors().modlistContainsPlugin();
-    }
-    else if (overwritten || archiveLooseOverwritten) {
-      return Settings::instance().colors().modlistOverwritingLoose();
-    }
-    else if (overwrite || archiveLooseOverwrite) {
-      return Settings::instance().colors().modlistOverwrittenLoose();
-    }
-    else if (archiveOverwritten) {
-      return Settings::instance().colors().modlistOverwritingArchive();
-    }
-    else if (archiveOverwrite) {
-      return Settings::instance().colors().modlistOverwrittenArchive();
-    }
     else if (modInfo->isSeparator() && modInfo->color().isValid()
-               && (role != ScrollMarkRole
-                 || Settings::instance().colors().colorSeparatorScrollbar())) {
+               && (role != ScrollMarkRole || Settings::instance().colors().colorSeparatorScrollbar())) {
       return modInfo->color();
     }
     else {
@@ -849,27 +827,6 @@ void ModList::changeModPriority(int sourceIndex, int newPriority)
 
   emit layoutChanged();
   emit modPrioritiesChanged({ index(sourceIndex, 0) });
-}
-
-void ModList::setOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten)
-{
-  m_Overwrite = overwrite;
-  m_Overwritten = overwritten;
-  notifyChange(0, rowCount() - 1);
-}
-
-void ModList::setArchiveOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten)
-{
-  m_ArchiveOverwrite = overwrite;
-  m_ArchiveOverwritten = overwritten;
-  notifyChange(0, rowCount() - 1);
-}
-
-void ModList::setArchiveLooseOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten)
-{
-  m_ArchiveLooseOverwrite = overwrite;
-  m_ArchiveLooseOverwritten = overwritten;
-  notifyChange(0, rowCount() - 1);
 }
 
 void ModList::setPluginContainer(PluginContainer *pluginContianer)
@@ -1393,12 +1350,6 @@ void ModList::notifyChange(int rowStart, int rowEnd)
   Guard g([&]{ m_InNotifyChange = false; });
 
   if (rowStart < 0) {
-    m_Overwrite.clear();
-    m_Overwritten.clear();
-    m_ArchiveOverwrite.clear();
-    m_ArchiveOverwritten.clear();
-    m_ArchiveLooseOverwrite.clear();
-    m_ArchiveLooseOverwritten.clear();
     beginResetModel();
     endResetModel();
   } else {

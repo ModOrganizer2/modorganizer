@@ -166,9 +166,26 @@ protected slots:
 
 private:
 
+  friend class ModListStyledItemDelegated;
+  friend class ModListViewMarkingScrollBar;
+
   void onModPrioritiesChanged(const QModelIndexList& indices);
   void onModInstalled(const QString& modName);
   void onModFilterActive(bool filterActive);
+
+  // overwrite markers
+  void clearOverwriteMarkers();
+  void setOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten);
+  void setArchiveOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten);
+  void setArchiveLooseOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten);
+
+  // set overwrite markers from the mod and repaint (if mod is nullptr, clear overwrite and repaint)
+  //
+  void setOverwriteMarkers(ModInfo::Ptr mod);
+
+  // retrieve the marker color for the given index
+  //
+  QColor markerColor(const QModelIndex& index) const;
 
   // get/set the selected items on the view, this method return/take indices
   // from the mod list model, not the view, so it's safe to restore
@@ -219,9 +236,17 @@ private:
 
   ModListSortProxy* m_sortProxy;
   ModListByPriorityProxy* m_byPriorityProxy;
-
   QtGroupingProxy* m_byCategoryProxy;
   QtGroupingProxy* m_byNexusIdProxy;
+
+  struct OverwriteInfo {
+    std::set<unsigned int> overwrite;
+    std::set<unsigned int> overwritten;
+    std::set<unsigned int> archiveOverwrite;
+    std::set<unsigned int> archiveOverwritten;
+    std::set<unsigned int> archiveLooseOverwrite;
+    std::set<unsigned int> archiveLooseOverwritten;
+  } m_overwrite;
 
   ViewMarkingScrollBar* m_scrollbar;
 

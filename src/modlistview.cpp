@@ -75,7 +75,7 @@ public:
 
     // compute required color from children, otherwise fallback to the
     // color from the model, and draw the background here
-    auto color = childrenColor(index, m_view, Qt::BackgroundRole);
+    auto color = m_view->markerColor(index);
     if (!color.isValid()) {
       color = index.data(Qt::BackgroundRole).value<QColor>();
     }
@@ -98,6 +98,24 @@ public:
   }
 };
 
+class ModListViewMarkingScrollBar : public ViewMarkingScrollBar {
+  ModListView* m_view;
+public:
+  ModListViewMarkingScrollBar(ModListView* view) :
+    ViewMarkingScrollBar(view, ModList::ScrollMarkRole), m_view(view) { }
+
+
+  QColor color(const QModelIndex& index) const override
+  {
+    auto color = m_view->markerColor(index);
+    if (!color.isValid()) {
+      color = ViewMarkingScrollBar::color(index);
+    }
+    return color;
+  }
+
+};
+
 ModListView::ModListView(QWidget* parent)
   : QTreeView(parent)
   , m_core(nullptr)
@@ -105,7 +123,8 @@ ModListView::ModListView(QWidget* parent)
   , m_byPriorityProxy(nullptr)
   , m_byCategoryProxy(nullptr)
   , m_byNexusIdProxy(nullptr)
-  , m_scrollbar(new ViewMarkingScrollBar(this, ModList::ScrollMarkRole))
+  , m_overwrite{ {}, {}, {}, {}, {}, {} }
+  , m_scrollbar(new ModListViewMarkingScrollBar(this))
 {
   setVerticalScrollBar(m_scrollbar);
   MOBase::setCustomizableColumns(this);
@@ -386,10 +405,7 @@ void ModListView::onModPrioritiesChanged(const QModelIndexList& indices)
       }
       // update conflict check on the moved mod
       modInfo->doConflictCheck();
-      m_core->modList()->setOverwriteMarkers(modInfo->getModOverwrite(), modInfo->getModOverwritten());
-      m_core->modList()->setArchiveOverwriteMarkers(modInfo->getModArchiveOverwrite(), modInfo->getModArchiveOverwritten());
-      m_core->modList()->setArchiveLooseOverwriteMarkers(modInfo->getModArchiveLooseOverwrite(), modInfo->getModArchiveLooseOverwritten());
-      verticalScrollBar()->repaint();
+      setOverwriteMarkers(modInfo);
     }
   }
 }
@@ -681,6 +697,7 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   connect(core.modList(), &ModList::modPrioritiesChanged, [=](auto&& indices) { onModPrioritiesChanged(indices); });
   connect(core.modList(), &ModList::clearOverwrite, [=] { m_actions->clearOverwrite(); });
   connect(core.modList(), &ModList::modStatesChanged, [=] { updateModCount(); });
+  connect(core.modList(), &ModList::modelReset, [=] { clearOverwriteMarkers(); });
 
   m_byPriorityProxy = new ModListByPriorityProxy(core.currentProfile(), core, this);
   m_byPriorityProxy->setSourceModel(core.modList());
@@ -935,6 +952,108 @@ void ModListView::onDoubleClicked(const QModelIndex& index)
   closePersistentEditor(index);
 }
 
+void ModListView::clearOverwriteMarkers()
+{
+  m_overwrite.overwrite.clear();
+  m_overwrite.overwritten.clear();
+  m_overwrite.archiveOverwrite.clear();
+  m_overwrite.archiveOverwritten.clear();
+  m_overwrite.archiveLooseOverwrite.clear();
+  m_overwrite.archiveLooseOverwritten.clear();
+}
+
+void ModListView::setOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten)
+{
+  m_overwrite.overwrite = overwrite;
+  m_overwrite.overwritten = overwritten;
+}
+
+void ModListView::setArchiveOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten)
+{
+  m_overwrite.archiveOverwrite = overwrite;
+  m_overwrite.archiveOverwritten = overwritten;
+}
+
+void ModListView::setArchiveLooseOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten)
+{
+  m_overwrite.archiveLooseOverwrite = overwrite;
+  m_overwrite.archiveLooseOverwritten = overwritten;
+}
+
+void ModListView::setOverwriteMarkers(ModInfo::Ptr mod)
+{
+  if (mod) {
+    setOverwriteMarkers(mod->getModOverwrite(), mod->getModOverwritten());
+    setArchiveOverwriteMarkers(mod->getModArchiveOverwrite(), mod->getModArchiveOverwritten());
+    setArchiveLooseOverwriteMarkers(mod->getModArchiveLooseOverwrite(), mod->getModArchiveLooseOverwritten());
+  }
+  else {
+    setOverwriteMarkers({}, {});
+    setArchiveOverwriteMarkers({}, {});
+    setArchiveLooseOverwriteMarkers({}, {});
+  }
+  dataChanged(model()->index(0, 0), model()->index(model()->rowCount(), model()->columnCount()));
+  verticalScrollBar()->repaint();
+}
+
+QColor ModListView::markerColor(const QModelIndex& index) const
+{
+  unsigned int modIndex = index.data(ModList::IndexRole).toInt();
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+  bool overwrite = m_overwrite.overwrite.find(modIndex) != m_overwrite.overwrite.end();
+  bool archiveOverwrite = m_overwrite.archiveOverwrite.find(modIndex) != m_overwrite.archiveOverwrite.end();
+  bool archiveLooseOverwrite = m_overwrite.archiveOverwritten.find(modIndex) != m_overwrite.archiveOverwritten.end();
+  bool overwritten = m_overwrite.overwritten.find(modIndex) != m_overwrite.overwritten.end();
+  bool archiveOverwritten = m_overwrite.archiveOverwritten.find(modIndex) != m_overwrite.archiveOverwritten.end();
+  bool archiveLooseOverwritten = m_overwrite.archiveLooseOverwritten.find(modIndex) != m_overwrite.archiveLooseOverwritten.end();
+
+  // TODO: Move this here
+  if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
+    return Settings::instance().colors().modlistContainsPlugin();
+  }
+  else if (overwritten || archiveLooseOverwritten) {
+    return Settings::instance().colors().modlistOverwritingLoose();
+  }
+  else if (overwrite || archiveLooseOverwrite) {
+    return Settings::instance().colors().modlistOverwrittenLoose();
+  }
+  else if (archiveOverwritten) {
+    return Settings::instance().colors().modlistOverwritingArchive();
+  }
+  else if (archiveOverwrite) {
+    return Settings::instance().colors().modlistOverwrittenArchive();
+  }
+
+  // collapsed separator
+  auto rowIndex = index.sibling(index.row(), 0);
+  if (hasCollapsibleSeparators() && model()->hasChildren(rowIndex) && !isExpanded(rowIndex)) {
+
+    std::vector<QColor> colors;
+    for (int i = 0; i < model()->rowCount(rowIndex); ++i) {
+      auto childColor = markerColor(model()->index(i, index.column(), rowIndex));
+      if (childColor.isValid()) {
+        colors.push_back(childColor);
+      }
+    }
+
+    if (colors.empty()) {
+      return QColor();
+    }
+
+    int r = 0, g = 0, b = 0, a = 0;
+    for (auto& color : colors) {
+      r += color.red();
+      g += color.green();
+      b += color.blue();
+      a += color.alpha();
+    }
+
+    return QColor(r / colors.size(), g / colors.size(), b / colors.size(), a / colors.size());
+  }
+
+  return QColor();
+}
+
 void ModListView::onSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
 {
   if (hasCollapsibleSeparators()) {
@@ -948,16 +1067,11 @@ void ModListView::onSelectionChanged(const QItemSelection& selected, const QItem
   if (selected.count()) {
     auto index = selected.indexes().last();
     ModInfo::Ptr selectedMod = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
-    m_core->modList()->setOverwriteMarkers(selectedMod->getModOverwrite(), selectedMod->getModOverwritten());
-    m_core->modList()->setArchiveOverwriteMarkers(selectedMod->getModArchiveOverwrite(), selectedMod->getModArchiveOverwritten());
-    m_core->modList()->setArchiveLooseOverwriteMarkers(selectedMod->getModArchiveLooseOverwrite(), selectedMod->getModArchiveLooseOverwritten());
+    setOverwriteMarkers(selectedMod);
   }
   else {
-    m_core->modList()->setOverwriteMarkers({}, {});
-    m_core->modList()->setArchiveOverwriteMarkers({}, {});
-    m_core->modList()->setArchiveLooseOverwriteMarkers({}, {});
+    setOverwriteMarkers(nullptr);
   }
-  verticalScrollBar()->repaint();
 
 }
 

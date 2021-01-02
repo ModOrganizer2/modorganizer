@@ -142,11 +142,7 @@ public:
   void changeModPriority(int sourceIndex, int newPriority);
   void changeModPriority(std::vector<int> sourceIndices, int newPriority);
 
-  void setOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten);
   void setPluginContainer(PluginContainer *pluginContainer);
-
-  void setArchiveOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten);
-  void setArchiveLooseOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten);
 
   bool modInfoAboutToChange(ModInfo::Ptr info);
   void modInfoChanged(ModInfo::Ptr info);
@@ -419,13 +415,6 @@ private:
   bool m_DropOnMod = false;
 
   QFontMetrics m_FontMetrics;
-
-  std::set<unsigned int> m_Overwrite;
-  std::set<unsigned int> m_Overwritten;
-  std::set<unsigned int> m_ArchiveOverwrite;
-  std::set<unsigned int> m_ArchiveOverwritten;
-  std::set<unsigned int> m_ArchiveLooseOverwrite;
-  std::set<unsigned int> m_ArchiveLooseOverwritten;
 
   TModInfoChange m_ChangeInfo;
 

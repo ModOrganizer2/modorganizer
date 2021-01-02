@@ -181,52 +181,6 @@ bool ModListByPriorityProxy::hasChildren(const QModelIndex& parent) const
   return item->children.size() > 0;
 }
 
-QVariant ModListByPriorityProxy::data(const QModelIndex& index, int role) const
-{
-  auto sourceIndex = mapToSource(index);
-  if (!sourceIndex.isValid()) {
-    return QVariant();
-  }
-
-  auto sourceData = sourceModel()->data(sourceIndex, role);
-  if (role != Qt::BackgroundRole && role != ModList::ScrollMarkRole) {
-    return sourceData;
-  }
-
-  if (!hasChildren(index)) {
-    return sourceData;
-  }
-
-  bool expanded = !m_CollapsedItems.contains(index.sibling(index.row(), 0).data(Qt::DisplayRole).toString());
-
-  if (expanded) {
-    return sourceData;
-  }
-
-  // this is a non-expanded item
-  std::vector<QColor> colors;
-  for (int i = 0; i < rowCount(index); ++i) {
-    auto childData = sourceModel()->data(mapToSource(this->index(i, index.column(), index)), role);
-    if (childData.isValid() && childData.canConvert<QColor>()) {
-      colors.push_back(childData.value<QColor>());
-    }
-  }
-
-  if (true || colors.empty()) {
-    return sourceData;
-  }
-
-  int r = 0, g = 0, b = 0, a = 0;
-  for (auto& color : colors) {
-    r += color.red();
-    g += color.green();
-    b += color.blue();
-    a += color.alpha();
-  }
-
-  return QColor(r / colors.size(), g / colors.size(), b / colors.size(), a / colors.size());
-}
-
 bool ModListByPriorityProxy::setData(const QModelIndex& index, const QVariant& value, int role)
 {
   // only care about the "name" column

@@ -15,6 +15,15 @@ ViewMarkingScrollBar::ViewMarkingScrollBar(QTreeView* view, int role)
   Q_ASSERT(this->orientation() == Qt::Vertical);
 }
 
+QColor ViewMarkingScrollBar::color(const QModelIndex& index) const
+{
+  auto data = index.data(m_role);
+  if (data.canConvert<QColor>()) {
+    return data.value<QColor>();
+  }
+  return QColor();
+}
+
 void ViewMarkingScrollBar::paintEvent(QPaintEvent* event)
 {
   if (m_view->model() == nullptr) {
@@ -36,18 +45,7 @@ void ViewMarkingScrollBar::paintEvent(QPaintEvent* event)
   qreal scale = static_cast<qreal>(innerRect.height() - 3) / static_cast<qreal>(indices.size());
 
   for (int i = 0; i < indices.size(); ++i) {
-    QVariant data = indices[i].data(m_role);
-    QColor color;
-
-    if (data.canConvert<QColor>()) {
-      color = data.value<QColor>();
-    }
-
-    auto childrenColor = MOShared::childrenColor(indices[i], m_view, m_role);
-    if (childrenColor.isValid()) {
-      color = childrenColor;
-    }
-
+    QColor color = this->color(indices[i]);
     if (color.isValid()) {
       painter.setPen(color);
       painter.setBrush(color);
