@@ -151,8 +151,6 @@ signals:
    */
   void styleChanged(const QString &styleFile);
 
-  void modListDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
-
   void checkForProblemsDone();
 
 protected:
