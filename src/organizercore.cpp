@@ -690,6 +690,8 @@ MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
     settingsFile.endArray();
   }
 
+  // shouldn't this use the existing mod in case of a merge? also, this does not refresh the indices
+  // in the ModInfo structure
   return ModInfo::createFrom(m_PluginContainer, m_GamePlugin, QDir(targetDirectory), &m_DirectoryStructure)
       .data();
 }

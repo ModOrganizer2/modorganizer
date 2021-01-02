@@ -254,7 +254,7 @@ void ModInfoRegular::saveMeta()
       if (m_TrackedState != TrackedState::TRACKED_UNKNOWN) {
         metaFile.setValue("tracked", static_cast<std::underlying_type_t<TrackedState>>(m_TrackedState));
       }
-      
+
       metaFile.remove("installedFiles");
       metaFile.beginWriteArray("installedFiles");
       int idx = 0;
@@ -462,6 +462,8 @@ bool ModInfoRegular::setName(const QString &name)
 
   std::map<QString, unsigned int>::iterator nameIter = s_ModsByName.find(m_Name);
   if (nameIter != s_ModsByName.end()) {
+    QMutexLocker locker(&s_Mutex);
+
     unsigned int index = nameIter->second;
     s_ModsByName.erase(nameIter);
 
@@ -879,7 +881,7 @@ std::vector<QString> ModInfoRegular::getIniTweaks() const
 }
 
 
-std::map<QString, QVariant> ModInfoRegular::pluginSettings(const QString& pluginName) const 
+std::map<QString, QVariant> ModInfoRegular::pluginSettings(const QString& pluginName) const
 {
   auto itp = m_PluginSettings.find(pluginName);
   if (itp == std::end(m_PluginSettings)) {

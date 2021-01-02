@@ -91,6 +91,7 @@ ModInfo::Ptr ModInfo::createFrom(PluginContainer *pluginContainer, const MOBase:
   } else {
     result = ModInfo::Ptr(new ModInfoRegular(pluginContainer, game, dir, directoryStructure));
   }
+  result->m_Index = s_Collection.size();
   s_Collection.push_back(result);
   return result;
 }
@@ -105,6 +106,7 @@ ModInfo::Ptr ModInfo::createFromPlugin(const QString &modName,
   QMutexLocker locker(&s_Mutex);
   ModInfo::Ptr result = ModInfo::Ptr(
       new ModInfoForeign(modName, espName, bsaNames, modType, game, directoryStructure, pluginContainer));
+  result->m_Index = s_Collection.size();
   s_Collection.push_back(result);
   return result;
 }
@@ -115,6 +117,7 @@ ModInfo::Ptr ModInfo::createFromOverwrite(
 {
   QMutexLocker locker(&s_Mutex);
   ModInfo::Ptr overwrite = ModInfo::Ptr(new ModInfoOverwrite(pluginContainer, game, directoryStructure));
+  overwrite->m_Index = s_Collection.size();
   s_Collection.push_back(overwrite);
   return overwrite;
 }
@@ -286,6 +289,7 @@ void ModInfo::updateIndices()
     QString modName = s_Collection[i]->internalName();
     QString game = s_Collection[i]->gameName();
     int modID = s_Collection[i]->nexusId();
+    s_Collection[i]->m_Index = i;
     s_ModsByName[modName] = i;
     s_ModsByModID[std::pair<QString, int>(game, modID)].push_back(i);
   }
