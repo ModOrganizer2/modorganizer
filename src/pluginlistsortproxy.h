@@ -42,8 +42,6 @@ public:
 
   void setEnabledColumns(unsigned int columns);
 
-  virtual Qt::ItemFlags flags(const QModelIndex &modelIndex) const;
-
   virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
 
   bool filterMatchesPlugin(const QString &plugin) const;
