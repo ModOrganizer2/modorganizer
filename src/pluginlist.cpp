@@ -396,14 +396,12 @@ void PluginList::shiftPluginsPriority(const QModelIndexList& indices, int offset
     return offset > 0 ? !cmp : cmp;
     });
 
-  emit layoutAboutToBeChanged();
   for (auto index : allIndex) {
     int newPriority = m_ESPs[index].priority + offset;
     if (newPriority >= 0 && newPriority < rowCount()) {
       setPluginPriority(index, newPriority);
     }
   }
-  emit layoutChanged();
 
   refreshLoadOrder();
 }
