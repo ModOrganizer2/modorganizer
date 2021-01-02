@@ -958,18 +958,19 @@ MOBase::IModInterface* ModList::getMod(const QString& name) const
 bool ModList::removeMod(MOBase::IModInterface* mod)
 {
   unsigned int index = ModInfo::getIndex(mod->name());
+  bool result = false;
   if (index == UINT_MAX) {
     if (auto* p = dynamic_cast<ModInfo*>(mod)) {
-      return p->remove();
-    }
-    else {
-      return false;
+      result = p->remove();
     }
   }
   else {
-    return ModInfo::removeMod(index);
+    result = ModInfo::removeMod(index);
   }
-  notifyModRemoved(mod->name());
+  if (result) {
+    notifyModRemoved(mod->name());
+  }
+  return result;
 }
 
 MOBase::IModInterface* ModList::renameMod(MOBase::IModInterface* mod, const QString& name)
