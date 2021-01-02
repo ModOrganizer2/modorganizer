@@ -631,10 +631,10 @@ bool ModListView::copySelection()
   for (auto& idx : selectedRows) {
     ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
     QString name = idx.data(Qt::DisplayRole).toString();
-    if (model()->hasChildren(idx)
-      || (sortColumn() == ModList::COL_PRIORITY
-        && groupByMode() == GroupByMode::NONE
-        && info->isSeparator())) {
+    if (model()->hasChildren(idx) || (
+      sortColumn() == ModList::COL_PRIORITY
+      && (groupByMode() == GroupByMode::NONE || groupByMode() == GroupByMode::SEPARATOR)
+      && info->isSeparator())) {
       name = "[" + name + "]";
     }
     rows.append(name);
