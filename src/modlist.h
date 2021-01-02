@@ -352,6 +352,12 @@ signals:
 
 private:
 
+  // retrieve the display name of a mod or convert from a user-provided
+  // name to internal name
+  //
+  QString getDisplayName(ModInfo::Ptr info) const;
+  QString makeInternalName(ModInfo::Ptr info, QString name) const;
+
   QVariant getOverwriteData(int column, int role) const;
 
   QString getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const;

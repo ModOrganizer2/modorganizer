@@ -113,6 +113,22 @@ int ModList::columnCount(const QModelIndex &) const
   return COL_LASTCOLUMN + 1;
 }
 
+QString ModList::getDisplayName(ModInfo::Ptr info) const
+{
+  QString name = info->name();
+  if (info->isSeparator()) {
+    name = name.replace("_separator", "");
+  }
+  return name;
+}
+
+QString ModList::makeInternalName(ModInfo::Ptr info, QString name) const
+{
+  if (info->isSeparator()) {
+    name += "_separator";
+  }
+  return name;
+}
 
 QVariant ModList::getOverwriteData(int column, int role) const
 {
@@ -218,15 +234,11 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         || (column == COL_CONTENT)
         || (column == COL_CONFLICTFLAGS)) {
       return QVariant();
-    } else if (column == COL_NAME) {
-      auto flags = modInfo->getFlags();
-      if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())
-      {
-        return modInfo->name().replace("_separator", "");
-      }
-      else
-        return modInfo->name();
-    } else if (column == COL_VERSION) {
+    }
+    else if (column == COL_NAME) {
+      return getDisplayName(modInfo);
+    }
+    else if (column == COL_VERSION) {
       VersionInfo verInfo = modInfo->version();
       QString version = verInfo.displayString();
       if (role != Qt::EditRole) {
@@ -235,14 +247,17 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         }
       }
       return version;
-    } else if (column == COL_PRIORITY) {
+    }
+    else if (column == COL_PRIORITY) {
       int priority = modInfo->getFixedPriority();
       if (priority != INT_MIN) {
         return QVariant(); // hide priority for mods where it's fixed
-      } else {
+      }
+      else {
         return m_Profile->getModPriority(modIndex);
       }
-    } else if (column == COL_MODID) {
+    }
+    else if (column == COL_MODID) {
       int modID = modInfo->nexusId();
       if (modID > 0) {
         return modID;
@@ -250,7 +265,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       else {
         return QVariant();
       }
-    } else if (column == COL_GAME) {
+    }
+    else if (column == COL_GAME) {
       if (m_PluginContainer != nullptr) {
         for (auto game : m_PluginContainer->plugins<IPluginGame>()) {
           if (game->gameShortName().compare(modInfo->gameName(), Qt::CaseInsensitive) == 0)
@@ -258,10 +274,12 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         }
       }
       return modInfo->gameName();
-    } else if (column == COL_CATEGORY) {
+    }
+    else if (column == COL_CATEGORY) {
       if (modInfo->hasFlag(ModInfo::FLAG_FOREIGN)) {
         return tr("Non-MO");
-      } else {
+      }
+      else {
         int category = modInfo->primaryCategory();
         if (category != -1) {
           CategoryFactory &categoryFactory = CategoryFactory::instance();
@@ -269,51 +287,63 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
             try {
               int categoryIdx = categoryFactory.getCategoryIndex(category);
               return categoryFactory.getCategoryName(categoryIdx);
-            } catch (const std::exception &e) {
+            }
+            catch (const std::exception &e) {
               log::error("failed to retrieve category name: {}", e.what());
               return QString();
             }
-          } else {
+          }
+          else {
             log::warn("category {} doesn't exist (may have been removed)", category);
             modInfo->setCategory(category, false);
             return QString();
           }
-        } else {
+        }
+        else {
           return QVariant();
         }
       }
-    } else if (column == COL_INSTALLTIME) {
+    }
+    else if (column == COL_INSTALLTIME) {
       // display installation time for mods that can be updated
       if (modInfo->creationTime().isValid()) {
         return modInfo->creationTime();
-      } else {
+      }
+      else {
         return QVariant();
       }
-    } else if (column == COL_NOTES) {
+    }
+    else if (column == COL_NOTES) {
       return modInfo->comments();
-    } else {
+    }
+    else {
       return tr("invalid");
     }
-  } else if ((role == Qt::CheckStateRole) && (column == 0)) {
+  }
+  else if ((role == Qt::CheckStateRole) && (column == 0)) {
     if (modInfo->canBeEnabled()) {
       return m_Profile->modEnabled(modIndex) ? Qt::Checked : Qt::Unchecked;
-    } else {
+    }
+    else {
       return QVariant();
     }
   }
   else if (role == Qt::TextAlignmentRole) {
-    auto flags = modInfo->getFlags();
     if (column == COL_NAME) {
       if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_CENTER) {
         return QVariant(Qt::AlignCenter | Qt::AlignVCenter);
-      } else {
+      }
+      else {
         return QVariant(Qt::AlignLeft | Qt::AlignVCenter);
       }
-    } else if (column == COL_VERSION) {
+    }
+    else if (column == COL_VERSION) {
       return QVariant(Qt::AlignRight | Qt::AlignVCenter);
-    } else if (column == COL_NOTES) {
+    }
+    else if (column == COL_NOTES) {
       return QVariant(Qt::AlignLeft | Qt::AlignVCenter);
-    } else {
+    }
+    else {
       return QVariant(Qt::AlignCenter | Qt::AlignVCenter);
     }
   }
@@ -327,7 +357,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
       if (categoryNames.count() != 0) {
         return categoryNames;
-      } else {
+      }
+      else {
         return QVariant();
       }
     }
@@ -335,10 +366,12 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       int priority = modInfo->getFixedPriority();
       if (priority != INT_MIN) {
         return priority;
-      } else {
+      }
+      else {
         return m_Profile->getModPriority(modIndex);
       }
-    } else {
+    }
+    else {
       return modInfo->nexusId();
     }
   }
@@ -371,20 +404,19 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
   }
   else if (role == Qt::FontRole) {
     QFont result;
-    auto flags = modInfo->getFlags();
     if (column == COL_NAME) {
-      if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())
-      {
-        //result.setCapitalization(QFont::AllUppercase);
+      if (modInfo->isSeparator()) {
         result.setItalic(true);
-        //result.setUnderline(true);
         result.setBold(true);
-      } else if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_INVALID) {
+      }
+      else if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_INVALID) {
         result.setItalic(true);
       }
-    } else if ((column == COL_CATEGORY) && (modInfo->hasFlag(ModInfo::FLAG_FOREIGN))) {
+    }
+    else if (column == COL_CATEGORY && modInfo->isForeign()) {
       result.setItalic(true);
-    } else if (column == COL_VERSION) {
+    }
+    else if (column == COL_VERSION) {
       if (modInfo->updateAvailable() || modInfo->downgradeAvailable()) {
         result.setWeight(QFont::Bold);
       }
@@ -398,9 +430,11 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     if (column == COL_VERSION) {
       if (modInfo->updateAvailable()) {
         return QIcon(":/MO/gui/update_available");
-      } else if (modInfo->downgradeAvailable()) {
+      }
+      else if (modInfo->downgradeAvailable()) {
         return QIcon(":/MO/gui/warning");
-      } else if (modInfo->version().scheme() == VersionInfo::SCHEME_DATE) {
+      }
+      else if (modInfo->version().scheme() == VersionInfo::SCHEME_DATE) {
         return QIcon(":/MO/gui/version_date");
       }
     }
@@ -409,16 +443,21 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
   else if (role == Qt::ForegroundRole) {
     if (column == COL_NAME) {
       int highlight = modInfo->getHighlight();
-      if (highlight & ModInfo::HIGHLIGHT_IMPORTANT)
+      if (highlight & ModInfo::HIGHLIGHT_IMPORTANT) {
         return QBrush(Qt::darkRed);
-      else if (highlight & ModInfo::HIGHLIGHT_INVALID)
+      }
+      else if (highlight & ModInfo::HIGHLIGHT_INVALID) {
         return QBrush(Qt::darkGray);
-    } else if (column == COL_VERSION) {
+      }
+    }
+    else if (column == COL_VERSION) {
       if (!modInfo->newestVersion().isValid()) {
         return QVariant();
-      } else if (modInfo->updateAvailable() || modInfo->downgradeAvailable()) {
+      }
+      else if (modInfo->updateAvailable() || modInfo->downgradeAvailable()) {
         return QBrush(Qt::red);
-      } else {
+      }
+      else {
         return QBrush(Qt::darkGreen);
       }
     }
@@ -433,21 +472,28 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     bool archiveLooseOverwritten = m_ArchiveLooseOverwritten.find(modIndex) != m_ArchiveLooseOverwritten.end();
     if (column == COL_NOTES && modInfo->color().isValid()) {
       return modInfo->color();
-    } else if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
+    }
+    else if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
       return Settings::instance().colors().modlistContainsPlugin();
-    } else if (overwritten || archiveLooseOverwritten) {
+    }
+    else if (overwritten || archiveLooseOverwritten) {
       return Settings::instance().colors().modlistOverwritingLoose();
-    } else if (overwrite || archiveLooseOverwrite) {
+    }
+    else if (overwrite || archiveLooseOverwrite) {
       return Settings::instance().colors().modlistOverwrittenLoose();
-    } else if (archiveOverwritten) {
+    }
+    else if (archiveOverwritten) {
       return Settings::instance().colors().modlistOverwritingArchive();
-    } else if (archiveOverwrite) {
+    }
+    else if (archiveOverwrite) {
       return Settings::instance().colors().modlistOverwrittenArchive();
-    } else if (modInfo->isSeparator() && modInfo->color().isValid()
+    }
+    else if (modInfo->isSeparator() && modInfo->color().isValid()
                && (role != ScrollMarkRole
                  || Settings::instance().colors().colorSeparatorScrollbar())) {
       return modInfo->color();
-    } else {
+    }
+    else {
       return QVariant();
     }
   }
@@ -461,7 +507,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
 
       return result;
-    } else if (column == COL_CONFLICTFLAGS) {
+    }
+    else if (column == COL_CONFLICTFLAGS) {
       QString result;
 
       for (ModInfo::EConflictFlag flag : modInfo->getConflictFlags()) {
@@ -470,16 +517,20 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
 
       return result;
-    } else if (column == COL_CONTENT) {
+    }
+    else if (column == COL_CONTENT) {
       return contentsToToolTip(modInfo->getContents());
-    } else if (column == COL_NAME) {
+    }
+    else if (column == COL_NAME) {
       try {
         return modInfo->getDescription();
-      } catch (const std::exception &e) {
+      }
+      catch (const std::exception &e) {
         log::error("invalid mod description: {}", e.what());
         return QString();
       }
-    } else if (column == COL_VERSION) {
+    }
+    else if (column == COL_VERSION) {
       QString text = tr("installed version: \"%1\", newest version: \"%2\"").arg(modInfo->version().displayString(3)).arg(modInfo->newestVersion().displayString(3));
       if (modInfo->downgradeAvailable()) {
         text += "<br>" + tr("The newest version on Nexus seems to be older than the one you have installed. This could either mean the version you have has been withdrawn "
@@ -488,7 +539,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
       if (modInfo->getNexusFileStatus() == 4) {
         text += "<br>" + tr("This file has been marked as \"Old\". There is most likely an updated version of this file available.");
-      } else if (modInfo->getNexusFileStatus() == 6) {
+      }
+      else if (modInfo->getNexusFileStatus() == 6) {
         text += "<br>" + tr("This file has been marked as \"Deleted\"! You may want to check for an update or remove the nexus ID from this mod!");
       }
       if (modInfo->nexusId() > 0) {
@@ -502,7 +554,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         }
       }
       return text;
-    } else if (column == COL_CATEGORY) {
+    }
+    else if (column == COL_CATEGORY) {
       const std::set<int> &categories = modInfo->getCategories();
       std::wostringstream categoryString;
       categoryString << ToWString(tr("Categories: <br>"));
@@ -514,16 +567,19 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         }
         try {
           categoryString << "<span style=\"white-space: nowrap;\"><i>" << ToWString(categoryFactory.getCategoryName(categoryFactory.getCategoryIndex(*catIter))) << "</font></span>";
-        } catch (const std::exception &e) {
+        }
+        catch (const std::exception &e) {
           log::error("failed to generate tooltip: {}", e.what());
           return QString();
         }
       }
 
       return ToQString(categoryString.str());
-    } else if (column == COL_NOTES) {
+    }
+    else if (column == COL_NOTES) {
       return getFlagText(ModInfo::FLAG_NOTES, modInfo);
-    } else {
+    }
+    else {
       return QVariant();
     }
   }
@@ -597,13 +653,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
   else if (role == Qt::EditRole) {
     switch (index.column()) {
       case COL_NAME: {
-        auto flags = info->getFlags();
-        if (info->isSeparator()) {
-          result = renameMod(modID, value.toString() + "_separator");
-        }
-        else {
-          result = renameMod(modID, value.toString());
-        }
+        result = renameMod(modID, makeInternalName(info, value.toString()));
       } break;
       case COL_PRIORITY: {
         bool ok = false;
@@ -691,7 +741,6 @@ Qt::ItemFlags ModList::flags(const QModelIndex &modelIndex) const
   }
   if (modelIndex.isValid()) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modelIndex.row());
-    std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
     if (modInfo->getFixedPriority() == INT_MIN) {
       result |= Qt::ItemIsDragEnabled;
       result |= Qt::ItemIsUserCheckable;
@@ -700,9 +749,8 @@ Qt::ItemFlags ModList::flags(const QModelIndex &modelIndex) const
           (modelIndex.column() == COL_MODID)) {
         result |= Qt::ItemIsEditable;
       }
-      if (((modelIndex.column() == COL_NAME) ||
-           (modelIndex.column() == COL_NOTES))
-          && (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) == flags.end())) {
+      if ((modelIndex.column() == COL_NAME || modelIndex.column() == COL_NOTES)
+          && !modInfo->isForeign()) {
         result |= Qt::ItemIsEditable;
       }
     }
@@ -1279,8 +1327,7 @@ void ModList::removeRowForce(int row, const QModelIndex &parent)
   if (wasEnabled) {
     emit removeOrigin(modInfo->name());
   }
-  auto flags = modInfo->getFlags();
-  if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) == flags.end()) {
+  if (!modInfo->isBackup()) {
     emit modUninstalled(modInfo->installationFile());
   }
 }
@@ -1298,8 +1345,7 @@ bool ModList::removeRows(int row, int count, const QModelIndex &parent)
 
   if (count == 1) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
-    std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-    if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) && (QDir(modInfo->absolutePath()).count() > 2)) {
+    if (modInfo->isOverwrite() && QDir(modInfo->absolutePath()).count() > 2) {
       emit clearOverwrite();
       success = true;
     }
@@ -1314,7 +1360,7 @@ bool ModList::removeRows(int row, int count, const QModelIndex &parent)
     success = true;
 
     QMessageBox confirmBox(QMessageBox::Question, tr("Confirm"),
-                           tr("Are you sure you want to remove \"%1\"?").arg(modInfo->name()),
+                           tr("Are you sure you want to remove \"%1\"?").arg(getDisplayName(modInfo)),
                            QMessageBox::Yes | QMessageBox::No);
 
     if (confirmBox.exec() == QMessageBox::Yes) {
