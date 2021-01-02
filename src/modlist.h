@@ -270,13 +270,16 @@ public slots:
 
 signals:
 
-  /**
-   * @brief Emitted whenever the priority of mods changes
-   *
-   * The sorting of the list can only be manually changed if the list is sorted by priority
-   * in which case the move is intended to change the priority of a mod.
-   **/
-  void modPrioritiesChanged(std::vector<int> const& index);
+  // emitted when the priority of one or multiple mods have changed
+  //
+  // the sorting of the list can only be manually changed if the list is sorted by priority
+  // in which case the move is intended to change the priority of a mod.
+  //
+  void modPrioritiesChanged(const QModelIndexList& indices);
+
+  // emitted when the state (active/inactive) of one or multiple mods have changed
+  //
+  void modStatesChanged(const QModelIndexList& indices);
 
   /**
    * @brief emitted when the model wants a text to be displayed by the UI
@@ -311,26 +314,6 @@ signals:
    * @param fileName filename of the mod being uninstalled
    */
   void modUninstalled(const QString &fileName);
-
-  /**
-   * @brief emitted whenever a row in the list has changed
-   *
-   * @param index the index of the changed field
-   * @param role role of the field that changed
-   * @note this signal must only be emitted if the row really did change.
-   *       Slots handling this signal therefore do not have to verify that a change has happened
-   **/
-  void modlistChanged(const QModelIndex &index, int role);
-
-  /**
-  * @brief emitted whenever multiple row sin the list has changed
-  *
-  * @param indicies the list of indicies of the changed field
-  * @param role role of the field that changed
-  * @note this signal must only be emitted if the row really did change.
-  *       Slots handling this signal therefore do not have to verify that a change has happened
-  **/
-  void modlistChanged(const QModelIndexList &indicies, int role);
 
   /**
    * @brief QML seems to handle overloaded signals poorly - create unique signal for tutorials

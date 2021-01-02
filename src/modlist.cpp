@@ -588,7 +588,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
       m_Profile->setModEnabled(modID, enabled);
       m_Modified = true;
       m_LastCheck.restart();
-      emit modlistChanged(index, role);
+      emit modStatesChanged({ index });
       emit tutorialModlistUpdate();
     }
     result = true;
@@ -613,7 +613,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
         }
         if (ok) {
           m_Profile->setModPriority(modID, newPriority);
-          emit modPrioritiesChanged({ modID });
+          emit modPrioritiesChanged({ index });
           result = true;
         } else {
           result = false;
@@ -737,35 +737,34 @@ void ModList::changeModPriority(std::vector<int> sourceIndices, int newPriority)
   if (m_Profile == nullptr) return;
 
   emit layoutAboutToBeChanged();
-  Profile *profile = m_Profile;
 
   // sort the moving mods by ascending priorities
   std::sort(sourceIndices.begin(), sourceIndices.end(),
-    [profile](const int &LHS, const int &RHS) {
-    return profile->getModPriority(LHS) > profile->getModPriority(RHS);
+    [=](const int &LHS, const int &RHS) {
+    return m_Profile->getModPriority(LHS) > m_Profile->getModPriority(RHS);
   });
 
   // move mods that are decreasing in priority
   for (std::vector<int>::const_iterator iter = sourceIndices.begin();
        iter != sourceIndices.end(); ++iter) {
-    int oldPriority = profile->getModPriority(*iter);
+    int oldPriority = m_Profile->getModPriority(*iter);
     if (oldPriority > newPriority) {
-      profile->setModPriority(*iter, newPriority);
+      m_Profile->setModPriority(*iter, newPriority);
       m_ModMoved(ModInfo::getByIndex(*iter)->name(), oldPriority, newPriority);
     }
   }
 
   // sort the moving mods by descending priorities
   std::sort(sourceIndices.begin(), sourceIndices.end(),
-    [profile](const int &LHS, const int &RHS) {
-    return profile->getModPriority(LHS) < profile->getModPriority(RHS);
+    [=](const int &LHS, const int &RHS) {
+    return m_Profile->getModPriority(LHS) < m_Profile->getModPriority(RHS);
   });
 
   // if at least one mod is increasing in priority, the target index is
   // that of the row BELOW the dropped location, otherwise it's the one above
   for (std::vector<int>::const_iterator iter = sourceIndices.begin();
     iter != sourceIndices.end(); ++iter) {
-    int oldPriority = profile->getModPriority(*iter);
+    int oldPriority = m_Profile->getModPriority(*iter);
     if (oldPriority < newPriority) {
       --newPriority;
       break;
@@ -775,16 +774,21 @@ void ModList::changeModPriority(std::vector<int> sourceIndices, int newPriority)
   // move mods that are increasing in priority
   for (std::vector<int>::const_iterator iter = sourceIndices.begin();
     iter != sourceIndices.end(); ++iter) {
-    int oldPriority = profile->getModPriority(*iter);
+    int oldPriority = m_Profile->getModPriority(*iter);
     if (oldPriority < newPriority) {
-      profile->setModPriority(*iter, newPriority);
+      m_Profile->setModPriority(*iter, newPriority);
       m_ModMoved(ModInfo::getByIndex(*iter)->name(), oldPriority, newPriority);
     }
   }
 
   emit layoutChanged();
 
-  emit modPrioritiesChanged(sourceIndices);
+  QModelIndexList indices;
+  for (auto& idx : sourceIndices) {
+    indices.append(index(idx, 0, QModelIndex()));
+  }
+
+  emit modPrioritiesChanged(indices);
 }
 
 
@@ -796,7 +800,7 @@ void ModList::changeModPriority(int sourceIndex, int newPriority)
   m_Profile->setModPriority(sourceIndex, newPriority);
 
   emit layoutChanged();
-  emit modPrioritiesChanged({ sourceIndex });
+  emit modPrioritiesChanged({ index(sourceIndex, 0) });
 }
 
 void ModList::setOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten)
@@ -1473,7 +1477,7 @@ void ModList::shiftModsPriority(const QModelIndexList& indices, int offset)
     notifyChange(index);
   }
 
-  emit modPrioritiesChanged(allIndex);
+  emit modPrioritiesChanged(indices);
 }
 
 void ModList::changeModsPriority(const QModelIndexList& indices, int priority)
@@ -1513,7 +1517,7 @@ bool ModList::toggleState(const QModelIndexList& indices)
 
   m_Profile->setModsEnabled(modsToEnable, modsToDisable);
 
-  emit modlistChanged(indices, 0);
+  emit modStatesChanged(indices);
   emit tutorialModlistUpdate();
 
   m_Modified = true;

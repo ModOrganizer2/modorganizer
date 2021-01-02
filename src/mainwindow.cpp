@@ -2226,16 +2226,6 @@ void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName
   }
 }
 
-void MainWindow::modlistChanged(const QModelIndex&, int)
-{
-  m_OrganizerCore.currentProfile()->writeModlist();
-}
-
-void MainWindow::modlistChanged(const QModelIndexList&, int)
-{
-  m_OrganizerCore.currentProfile()->writeModlist();
-}
-
 void MainWindow::modRemoved(const QString &fileName)
 {
   if (!fileName.isEmpty() && !QFileInfo(fileName).isAbsolute()) {

@@ -165,7 +165,7 @@ protected slots:
 
 private:
 
-  void onModPrioritiesChanged(std::vector<int> const& indices);
+  void onModPrioritiesChanged(const QModelIndexList& indices);
   void onModInstalled(const QString& modName);
   void onModFilterActive(bool filterActive);
 

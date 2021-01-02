@@ -118,6 +118,7 @@ OrganizerCore::OrganizerCore(Settings &settings)
 
   connect(&m_ModList, SIGNAL(removeOrigin(QString)), this,
           SLOT(removeOrigin(QString)));
+  connect(&m_ModList, &ModList::modStatesChanged, [=] { currentProfile()->writeModlist(); });
 
   connect(NexusInterface::instance().getAccessManager(),
           SIGNAL(validateSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
@@ -235,10 +236,6 @@ void OrganizerCore::setUserInterface(IUserInterface* ui)
   }
 
   if (w) {
-    connect(&m_ModList, SIGNAL(modlistChanged(QModelIndex, int)), w,
-            SLOT(modlistChanged(QModelIndex, int)));
-    connect(&m_ModList, SIGNAL(modlistChanged(QModelIndexList, int)), w,
-            SLOT(modlistChanged(QModelIndexList, int)));
     connect(&m_ModList, SIGNAL(showMessage(QString)), w,
             SLOT(showMessage(QString)));
     connect(&m_ModList, SIGNAL(modRenamed(QString, QString)), w,

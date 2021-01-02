@@ -336,11 +336,11 @@ void ModListView::expandItem(const QModelIndex& index)
   }
 }
 
-void ModListView::onModPrioritiesChanged(std::vector<int> const& indices)
+void ModListView::onModPrioritiesChanged(const QModelIndexList& indices)
 {
   // expand separator whose priority has changed and parents
   for (auto index : indices) {
-    auto idx = indexModelToView(m_core->modList()->index(index, 0));
+    auto idx = indexModelToView(index);
     if (hasCollapsibleSeparators() && model()->hasChildren(idx)) {
       setExpanded(idx, true);
     }
@@ -648,17 +648,16 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
     mwui->currentCategoryLabel, mwui->clearFiltersButton, mwui->filtersSeparators
   };
 
-  connect(m_core, &OrganizerCore::modInstalled, this, &ModListView::onModInstalled);
-  connect(core.modList(), &ModList::modPrioritiesChanged, this, &ModListView::onModPrioritiesChanged);
-  connect(core.modList(), &ModList::clearOverwrite, m_actions, &ModListViewActions::clearOverwrite);
-  connect(core.modList(), qOverload<QModelIndex const&, int>(&ModList::modlistChanged), [=]() { updateModCount(); });
-  connect(core.modList(), qOverload<QModelIndexList const&, int>(&ModList::modlistChanged), [=]() { updateModCount(); });
+  connect(m_core, &OrganizerCore::modInstalled, [=](auto&& name) { onModInstalled(name); });
+  connect(core.modList(), &ModList::modPrioritiesChanged, [=](auto&& indices) { onModPrioritiesChanged(indices); });
+  connect(core.modList(), &ModList::clearOverwrite, [=] { m_actions->clearOverwrite(); });
+  connect(core.modList(), &ModList::modStatesChanged, [=] { updateModCount(); });
 
   m_byPriorityProxy = new ModListByPriorityProxy(core.currentProfile(), core, this);
   m_byPriorityProxy->setSourceModel(core.modList());
-  connect(this, &QTreeView::expanded, m_byPriorityProxy, &ModListByPriorityProxy::expanded);
-  connect(this, &QTreeView::collapsed, m_byPriorityProxy, &ModListByPriorityProxy::collapsed);
-  connect(m_byPriorityProxy, &ModListByPriorityProxy::expandItem, this, &ModListView::expandItem);
+  connect(this, &QTreeView::expanded, [=](auto&& name) { m_byPriorityProxy->expanded(name); });
+  connect(this, &QTreeView::collapsed, [=](auto&& name) { m_byPriorityProxy->collapsed(name); });
+  connect(m_byPriorityProxy, &ModListByPriorityProxy::expandItem, [=](auto&& index) { expandItem(index); });
 
   m_byCategoryProxy = new QtGroupingProxy(core.modList(), QModelIndex(), ModList::COL_CATEGORY,
     ModList::GroupingRole, 0, ModList::AggrRole);
