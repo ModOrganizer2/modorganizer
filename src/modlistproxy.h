@@ -19,6 +19,7 @@ public:
   QStringList allModsByProfilePriority(MOBase::IProfile* profile = nullptr) const override;
   MOBase::IModInterface* getMod(const QString& name) const override;
   bool removeMod(MOBase::IModInterface* mod) override;
+  MOBase::IModInterface* renameMod(MOBase::IModInterface* mod, const QString& name) override;
   ModStates state(const QString& name) const override;
   bool setActive(const QString& name, bool active) override;
   int setActive(const QStringList& names, bool active) override;

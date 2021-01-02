@@ -167,6 +167,9 @@ public:
   // \copydoc MOBase::IModList::remove
   bool removeMod(MOBase::IModInterface* mod);
 
+  // \copydoc MOBase::IModList::renameMod
+  MOBase::IModInterface* renameMod(MOBase::IModInterface* mod, const QString& name);
+
   /// \copydoc MOBase::IModList::state
   MOBase::IModList::ModStates state(const QString &name) const;
 
