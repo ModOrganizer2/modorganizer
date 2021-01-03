@@ -22,6 +22,7 @@
 #include "modlistdropinfo.h"
 #include "modlistcontextmenu.h"
 #include "genericicondelegate.h"
+#include "copyeventfilter.h"
 #include "shared/fileentry.h"
 #include "shared/directoryentry.h"
 #include "shared/filesorigin.h"
@@ -135,6 +136,21 @@ ModListView::ModListView(QWidget* parent)
 
   connect(this, &ModListView::doubleClicked, this, &ModListView::onDoubleClicked);
   connect(this, &ModListView::customContextMenuRequested, this, &ModListView::onCustomContextMenuRequested);
+
+  installEventFilter(new CopyEventFilter(this, [=](auto& index) {
+    QVariant mIndex = index.data(ModList::IndexRole);
+    QString name = index.data(Qt::DisplayRole).toString();
+    if (mIndex.isValid() && hasCollapsibleSeparators()) {
+      ModInfo::Ptr info = ModInfo::getByIndex(mIndex.toInt());
+      if (info->isSeparator()) {
+        name = "[" + name + "]";
+      }
+    }
+    else if (model()->hasChildren(index)) {
+      name = "[" + name + "]";
+    }
+    return name;
+  }));
 }
 
 void ModListView::refresh()
@@ -613,35 +629,6 @@ bool ModListView::toggleSelectionState()
     return true;
   }
   return m_core->modList()->toggleState(indexViewToModel(selectionModel()->selectedRows()));
-}
-
-bool ModListView::copySelection()
-{
-  if (!selectionModel()->hasSelection()) {
-    return true;
-  }
-
-  // sort to reflect the visual order
-  QModelIndexList selectedRows = selectionModel()->selectedRows();
-  std::sort(selectedRows.begin(), selectedRows.end(), [=](const auto& lidx, const auto& ridx) {
-    return visualRect(lidx).top() < visualRect(ridx).top();
-  });
-
-  QStringList rows;
-  for (auto& idx : selectedRows) {
-    ModInfo::Ptr info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
-    QString name = idx.data(Qt::DisplayRole).toString();
-    if (model()->hasChildren(idx) || (
-      sortColumn() == ModList::COL_PRIORITY
-      && (groupByMode() == GroupByMode::NONE || groupByMode() == GroupByMode::SEPARATOR)
-      && info->isSeparator())) {
-      name = "[" + name + "]";
-    }
-    rows.append(name);
-  }
-
-  QGuiApplication::clipboard()->setText(rows.join("\n"));
-  return true;
 }
 
 void ModListView::updateGroupByProxy(int groupIndex)
@@ -1224,9 +1211,6 @@ bool ModListView::event(QEvent* event)
       else if (sortColumn() == ModList::COL_PRIORITY
         && (keyEvent->key() == Qt::Key_Up || keyEvent->key() == Qt::Key_Down)) {
         return moveSelection(keyEvent->key());
-      }
-      else if (keyEvent->key() == Qt::Key_C) {
-        return copySelection();
       }
     }
     else if (keyEvent->modifiers() == Qt::ShiftModifier) {

@@ -12,6 +12,7 @@
 #include "pluginlistsortproxy.h"
 #include "pluginlistcontextmenu.h"
 #include "modlistview.h"
+#include "copyeventfilter.h"
 #include "modlistviewactions.h"
 #include "genericicondelegate.h"
 #include "modelutils.h"
@@ -26,6 +27,7 @@ PluginListView::PluginListView(QWidget *parent)
 {
   setVerticalScrollBar(m_Scrollbar);
   MOBase::setCustomizableColumns(this);
+  installEventFilter(new CopyEventFilter(this));
 }
 
 int PluginListView::sortColumn() const

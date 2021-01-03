@@ -236,6 +236,7 @@ add_filter(NAME src/widgets GROUPS
 	texteditor
 	viewmarkingscrollbar
 	modelutils
+	copyeventfilter
 )
 
 

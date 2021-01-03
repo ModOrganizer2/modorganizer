@@ -149,7 +149,6 @@ protected:
   bool moveSelection(int key);
   bool removeSelection();
   bool toggleSelectionState();
-  bool copySelection();
 
   // re-implemented to fix indentation with collapsible separators
   //

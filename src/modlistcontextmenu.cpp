@@ -29,7 +29,7 @@ ModListGlobalContextMenu::ModListGlobalContextMenu(OrganizerCore& core, ModListV
 
   addSeparator();
 
-  addAction(tr("Enable all parent"), [=]() {
+  addAction(tr("Enable all visible"), [=]() {
     if (QMessageBox::question(view, tr("Confirm"), tr("Really enable all visible mods?"),
       QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
       view->enableAllVisible();
