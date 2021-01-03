@@ -1045,7 +1045,9 @@ QColor ModListView::markerColor(const QModelIndex& index) const
 
   // collapsed separator
   auto rowIndex = index.sibling(index.row(), 0);
-  if (hasCollapsibleSeparators() && model()->hasChildren(rowIndex) && !isExpanded(rowIndex)) {
+  if (hasCollapsibleSeparators()
+    && m_core->settings().interface().collapsibleSeparatorsConflicts()
+    && model()->hasChildren(rowIndex) && !isExpanded(rowIndex)) {
 
     std::vector<QColor> colors;
     for (int i = 0; i < model()->rowCount(rowIndex); ++i) {
@@ -1071,6 +1073,37 @@ QColor ModListView::markerColor(const QModelIndex& index) const
   }
 
   return QColor();
+}
+
+std::vector<ModInfo::EConflictFlag> ModListView::conflictFlags(const QModelIndex& index, bool* forceCompact) const
+{
+  ModInfo::Ptr info = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
+
+  auto flags = info->getConflictFlags();
+  bool compact = false;
+  if (info->isSeparator()
+    && hasCollapsibleSeparators()
+    && m_core->settings().interface().collapsibleSeparatorsConflicts()
+    && !isExpanded(index.sibling(index.row(), 0))) {
+
+    // combine the child conflicts
+    std::set<ModInfo::EConflictFlag> eFlags(flags.begin(), flags.end());
+    for (int i = 0; i < model()->rowCount(index); ++i) {
+      auto cIndex = model()->index(i, index.column(), index).data(ModList::IndexRole).toInt();
+      auto cFlags = ModInfo::getByIndex(cIndex)->getConflictFlags();
+      eFlags.insert(cFlags.begin(), cFlags.end());
+    }
+    flags = { eFlags.begin(), eFlags.end() };
+
+    // force compact because there can be a lots of flags here
+    compact = true;
+  }
+
+  if (forceCompact) {
+    *forceCompact = true;
+  }
+
+  return flags;
 }
 
 void ModListView::onSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected)

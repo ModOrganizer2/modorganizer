@@ -93,28 +93,9 @@ QList<QString> ModConflictIconDelegate::getIcons(const QModelIndex &index) const
     return {};
   }
 
-  ModInfo::Ptr info = ModInfo::getByIndex(modIndex.toInt());
-
-  auto flags = info->getConflictFlags();
-  bool compact = m_Compact;
-  if (info->isSeparator()
-    && m_View->hasCollapsibleSeparators()
-    && !m_View->isExpanded(index.sibling(index.row(), 0))) {
-
-    // combine the child conflicts
-    std::set<ModInfo::EConflictFlag> eFlags(flags.begin(), flags.end());
-    for (int i = 0; i < m_View->model()->rowCount(index); ++i) {
-      auto cIndex = m_View->model()->index(i, index.column(), index).data(ModList::IndexRole).toInt();
-      auto cFlags = ModInfo::getByIndex(cIndex)->getConflictFlags();
-      eFlags.insert(cFlags.begin(), cFlags.end());
-    }
-    flags = { eFlags.begin(), eFlags.end() };
-
-    // force compact because there can be a lots of flags here
-    compact = true;
-  }
-
-  return getIconsForFlags(flags, compact);
+  bool compact;
+  auto flags = m_View->conflictFlags(index, &compact);
+  return getIconsForFlags(flags, compact || m_Compact);
 }
 
 QString ModConflictIconDelegate::getFlagIcon(ModInfo::EConflictFlag flag)

@@ -2185,6 +2185,16 @@ void InterfaceSettings::setCollapsibleSeparators(bool b)
   set(m_Settings, "Settings", "collapsible_separators", b);
 }
 
+bool InterfaceSettings::collapsibleSeparatorsConflicts() const
+{
+  return get<bool>(m_Settings, "Settings", "collapsible_separators_conflicts", true);
+}
+
+void InterfaceSettings::setCollapsibleSeparatorsConflicts(bool b)
+{
+  set(m_Settings, "Settings", "collapsible_separators_conflicts", b);
+}
+
 bool InterfaceSettings::compactDownloads() const
 {
   return get<bool>(m_Settings, "Settings", "compact_downloads", false);

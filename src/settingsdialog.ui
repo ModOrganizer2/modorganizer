@@ -403,6 +403,9 @@
          <layout class="QVBoxLayout" name="verticalLayout_17">
           <item>
            <widget class="QCheckBox" name="collapsibleSeparatorsBox">
+            <property name="toolTip">
+             <string>Allow collapsing separators when sorting by ascending priority.</string>
+            </property>
             <property name="text">
              <string>Use collapsible separators</string>
             </property>
@@ -411,6 +414,22 @@
             </property>
             <property name="tristate">
              <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="collapsibleSeparatorsConflictsBox">
+            <property name="toolTip">
+             <string>Display mod conflicts on separator when collapsed.</string>
+            </property>
+            <property name="whatsThis">
+             <string>Display mod conflicts on separator when collapsed.</string>
+            </property>
+            <property name="text">
+             <string>Show conflicts on separators</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
             </property>
            </widget>
           </item>

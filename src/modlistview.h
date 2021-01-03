@@ -170,6 +170,7 @@ protected slots:
 
 private:
 
+  friend class ModConflictIconDelegate;
   friend class ModListStyledItemDelegated;
   friend class ModListViewMarkingScrollBar;
 
@@ -190,6 +191,11 @@ private:
   // retrieve the marker color for the given index
   //
   QColor markerColor(const QModelIndex& index) const;
+
+  // retrieve the conflicts flags for the given index
+  //
+  std::vector<ModInfo::EConflictFlag> conflictFlags(
+    const QModelIndex& index, bool* forceCompact = nullptr) const;
 
   // get/set the selected items on the view, this method return/take indices
   // from the mod list model, not the view, so it's safe to restore

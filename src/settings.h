@@ -626,6 +626,11 @@ public:
   bool collapsibleSeparators() const;
   void setCollapsibleSeparators(bool b);
 
+  // whether to display mod conflicts on separators when collapsed
+  //
+  bool collapsibleSeparatorsConflicts() const;
+  void setCollapsibleSeparatorsConflicts(bool b);
+
   // whether to show compact downloads
   //
   bool compactDownloads() const;
