@@ -130,7 +130,7 @@ ModListView::ModListView(QWidget* parent)
 {
   setVerticalScrollBar(m_scrollbar);
   MOBase::setCustomizableColumns(this);
-  setAutoExpandDelay(1000);
+  setAutoExpandDelay(750);
 
   setItemDelegate(new ModListStyledItemDelegated(this));
 
