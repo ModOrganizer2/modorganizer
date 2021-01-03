@@ -142,12 +142,12 @@ add_filter(NAME src/modlist GROUPS
 	modlistdropinfo
 	modlistsortproxy
 	modlistbypriorityproxy
+)
+
+add_filter(NAME src/modlist/view GROUPS
 	modlistview
 	modlistviewactions
 	modlistcontextmenu
-)
-
-add_filter(NAME src/delegates GROUPS
 	modflagicondelegate
 	modconflicticondelegate
 )

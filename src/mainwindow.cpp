@@ -44,7 +44,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "editexecutablesdialog.h"
 #include "categories.h"
 #include "categoriesdialog.h"
-#include "genericicondelegate.h"
 #include "overwriteinfodialog.h"
 #include "downloadlist.h"
 #include "downloadlistwidget.h"
