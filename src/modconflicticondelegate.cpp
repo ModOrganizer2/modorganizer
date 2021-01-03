@@ -1,12 +1,14 @@
 #include "modconflicticondelegate.h"
 #include "modlist.h"
+#include "modlistview.h"
 #include <log.h>
 #include <QList>
 
 using namespace MOBase;
 
-ModConflictIconDelegate::ModConflictIconDelegate(QObject *parent, int logicalIndex, int compactSize)
-  : IconDelegate(parent)
+ModConflictIconDelegate::ModConflictIconDelegate(ModListView* view, int logicalIndex, int compactSize)
+  : IconDelegate(view)
+  , m_View(view)
   , m_LogicalIndex(logicalIndex)
   , m_CompactSize(compactSize)
   , m_Compact(false)
@@ -26,7 +28,7 @@ QList<QString> ModConflictIconDelegate::getIconsForFlags(
   QList<QString> result;
 
   // Don't do flags for overwrite
-  if (std::find(flags.begin(), flags.end(),ModInfo::FLAG_OVERWRITE_CONFLICT) != flags.end())
+  if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE_CONFLICT) != flags.end())
     return result;
 
   // insert conflict icons to provide nicer alignment
@@ -85,14 +87,34 @@ QList<QString> ModConflictIconDelegate::getIconsForFlags(
 
 QList<QString> ModConflictIconDelegate::getIcons(const QModelIndex &index) const
 {
-  QVariant modid = index.data(ModList::IndexRole);
+  QVariant modIndex = index.data(ModList::IndexRole);
 
-  if (modid.isValid()) {
-    ModInfo::Ptr info = ModInfo::getByIndex(modid.toInt());
-    return getIconsForFlags(info->getConflictFlags(), m_Compact);
+  if (!modIndex.isValid()) {
+    return {};
   }
 
-  return {};
+  ModInfo::Ptr info = ModInfo::getByIndex(modIndex.toInt());
+
+  auto flags = info->getConflictFlags();
+  bool compact = m_Compact;
+  if (info->isSeparator()
+    && m_View->hasCollapsibleSeparators()
+    && !m_View->isExpanded(index.sibling(index.row(), 0))) {
+    MOBase::log::debug("Recurse for sep {}: {} {} {}", info->name(), info->isSeparator(), m_View->hasCollapsibleSeparators(), m_View->isExpanded(index));
+    // combine the child conflicts
+    std::set<ModInfo::EConflictFlag> eFlags(flags.begin(), flags.end());
+    for (int i = 0; i < m_View->model()->rowCount(index); ++i) {
+      auto cIndex = m_View->model()->index(i, index.column(), index).data(ModList::IndexRole).toInt();
+      auto cFlags = ModInfo::getByIndex(cIndex)->getConflictFlags();
+      eFlags.insert(cFlags.begin(), cFlags.end());
+    }
+    flags = { eFlags.begin(), eFlags.end() };
+
+    // force compact because there can be a lots of flags here
+    compact = true;
+  }
+
+  return getIconsForFlags(flags, compact);
 }
 
 QString ModConflictIconDelegate::getFlagIcon(ModInfo::EConflictFlag flag)

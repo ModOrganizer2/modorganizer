@@ -5,23 +5,24 @@
 
 #include "icondelegate.h"
 
+class ModListView;
+
 class ModConflictIconDelegate : public IconDelegate
 {
   Q_OBJECT;
 
 public:
-  explicit ModConflictIconDelegate(QObject *parent = 0, int logicalIndex = -1, int compactSize = 80);
-  QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
-
-  static QList<QString> getIconsForFlags(
-    std::vector<ModInfo::EConflictFlag> flags, bool compact);
-
-  static QString getFlagIcon(ModInfo::EConflictFlag flag);
+  explicit ModConflictIconDelegate(ModListView* parent = nullptr, int logicalIndex = -1, int compactSize = 80);
+  QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex &index) const override;
 
 public slots:
   void columnResized(int logicalIndex, int oldSize, int newSize);
 
 protected:
+
+  static QList<QString> getIconsForFlags(std::vector<ModInfo::EConflictFlag> flags, bool compact);
+  static QString getFlagIcon(ModInfo::EConflictFlag flag);
+
   QList<QString> getIcons(const QModelIndex &index) const override;
   size_t getNumIcons(const QModelIndex &index) const override;
 
@@ -42,6 +43,7 @@ private:
     ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN
   };
 
+  ModListView* m_View;
   int m_LogicalIndex;
   int m_CompactSize;
   bool m_Compact;
