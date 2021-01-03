@@ -853,6 +853,15 @@ QRect ModListView::visualRect(const QModelIndex& index) const
   return rect;
 }
 
+void ModListView::drawBranches(QPainter* painter, const QRect& rect, const QModelIndex& index) const
+{
+  QRect r(rect);
+  if (hasCollapsibleSeparators() && index.parent().isValid()) {
+    r.adjust(-indentation(), 0, 0 -indentation(), 0);
+  }
+  QTreeView::drawBranches(painter, r, index);
+}
+
 QModelIndexList ModListView::selectedIndexes() const
 {
   // during drag&drop events, we fake the return value of selectedIndexes()

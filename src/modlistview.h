@@ -155,6 +155,8 @@ protected:
   bool toggleSelectionState();
   bool copySelection();
 
+  void drawBranches(QPainter* painter, const QRect& rect, const QModelIndex& index) const override;
+
   void timerEvent(QTimerEvent* event) override;
   void dragEnterEvent(QDragEnterEvent* event) override;
   void dragMoveEvent(QDragMoveEvent* event) override;

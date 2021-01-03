@@ -78,13 +78,11 @@ public:
     PriorityRole = Qt::UserRole + 5,
 
     // marking role for the scrollbar
-    ScrollMarkRole = Qt::UserRole + 6
+    ScrollMarkRole = Qt::UserRole + 6,
+
+    // this is the first available role
+    ModUserRole = Qt::UserRole + 7
   };
-
-  Q_ENUM(ModListRole)
-
-  // this is the first available role
-  static const int ModUserRole;
 
   enum EColumn {
     COL_NAME,

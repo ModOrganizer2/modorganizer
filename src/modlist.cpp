@@ -61,8 +61,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-const int ModList::ModUserRole = Qt::UserRole + QMetaEnum::fromType<ModListRole>().keyCount();
-
 ModList::ModList(PluginContainer *pluginContainer, OrganizerCore *organizer)
   : QAbstractItemModel(organizer)
   , m_Organizer(organizer)

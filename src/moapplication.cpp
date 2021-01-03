@@ -60,13 +60,13 @@ using namespace MOShared;
 //
 class ProxyStyle : public QProxyStyle {
 public:
-  ProxyStyle(QStyle *baseStyle = 0)
+  ProxyStyle(QStyle* baseStyle = 0)
     : QProxyStyle(baseStyle)
   {
   }
 
-  void drawPrimitive(PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const {
-    if(element == QStyle::PE_IndicatorItemViewItemDrop) {
+  void drawPrimitive(PrimitiveElement element, const QStyleOption* option, QPainter* painter, const QWidget* widget) const {
+    if (element == QStyle::PE_IndicatorItemViewItemDrop) {
 
       // 1. full-width drop indicator
       QRect rect(option->rect);
@@ -85,7 +85,7 @@ public:
 
       painter->setPen(pen);
       painter->setBrush(QBrush(col));
-      if(rect.height() == 0) {
+      if (rect.height() == 0) {
         QPoint tri[3] = {
           rect.topLeft(),
           rect.topLeft() + QPoint(-5,  5),
@@ -93,13 +93,16 @@ public:
         };
         painter->drawPolygon(tri, 3);
         painter->drawLine(QPoint(rect.topLeft().x(), rect.topLeft().y()), rect.topRight());
-      } else {
+      }
+      else {
         painter->drawRoundedRect(rect, 5, 5);
       }
-    } else {
+    }
+    else {
       QProxyStyle::drawPrimitive(element, option, painter, widget);
     }
   }
+
 };
 
 
@@ -535,8 +538,8 @@ bool MOApplication::notify(QObject* receiver, QEvent* event)
 void MOApplication::updateStyle(const QString& fileName)
 {
   if (QStyleFactory::keys().contains(fileName)) {
-    setStyle(QStyleFactory::create(fileName));
     setStyleSheet("");
+    setStyle(new ProxyStyle(QStyleFactory::create(fileName)));
   } else {
     setStyle(new ProxyStyle(QStyleFactory::create(m_DefaultStyle)));
     if (QFile::exists(fileName)) {
