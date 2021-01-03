@@ -829,13 +829,10 @@ QRect ModListView::visualRect(const QModelIndex& index) const
   // this shift the visualRect() from QTreeView to match the new actual
   // zone after removing indentation (see the ModListStyledItemDelegated)
   QRect rect = QTreeView::visualRect(index);
-  if (hasCollapsibleSeparators()) {
-    if (index.isValid() && !index.model()->hasChildren(index) && index.parent().isValid()) {
-      auto parentIndex = index.parent().data(ModList::IndexRole).toInt();
-      if (ModInfo::getByIndex(parentIndex)->isSeparator()) {
-        rect.adjust(-indentation(), 0, 0, 0);
-      }
-    }
+  if (hasCollapsibleSeparators()
+    && index.column() == 0 && index.isValid()
+    && index.parent().isValid()) {
+    rect.adjust(-indentation(), 0, 0, 0);
   }
   return rect;
 }
