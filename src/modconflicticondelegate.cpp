@@ -100,7 +100,7 @@ QList<QString> ModConflictIconDelegate::getIcons(const QModelIndex &index) const
   if (info->isSeparator()
     && m_View->hasCollapsibleSeparators()
     && !m_View->isExpanded(index.sibling(index.row(), 0))) {
-    MOBase::log::debug("Recurse for sep {}: {} {} {}", info->name(), info->isSeparator(), m_View->hasCollapsibleSeparators(), m_View->isExpanded(index));
+
     // combine the child conflicts
     std::set<ModInfo::EConflictFlag> eFlags(flags.begin(), flags.end());
     for (int i = 0; i < m_View->model()->rowCount(index); ++i) {
