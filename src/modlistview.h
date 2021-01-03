@@ -85,10 +85,6 @@ public:
   bool isModVisible(unsigned int index) const;
   bool isModVisible(ModInfo::Ptr mod) const;
 
-  // re-implemented to fix indentation with collapsible separators
-  //
-  QRect visualRect(const QModelIndex& index) const override;
-
   // refresh the view (to call when settings have been changed)
   //
   void refresh();
@@ -155,6 +151,9 @@ protected:
   bool toggleSelectionState();
   bool copySelection();
 
+  // re-implemented to fix indentation with collapsible separators
+  //
+  QRect visualRect(const QModelIndex& index) const override;
   void drawBranches(QPainter* painter, const QRect& rect, const QModelIndex& index) const override;
 
   void timerEvent(QTimerEvent* event) override;

@@ -855,6 +855,12 @@ QRect ModListView::visualRect(const QModelIndex& index) const
 
 void ModListView::drawBranches(QPainter* painter, const QRect& rect, const QModelIndex& index) const
 {
+  // the branches are the small indicator left to the row (there are none in the default style, and
+  // the VS dark style only has background for these)
+  //
+  // the branches are not shifted left with the visualRect() change and since MO2 uses stylesheet,
+  // it is not possible to shift those in the proxy style so we have to shift it here.
+  //
   QRect r(rect);
   if (hasCollapsibleSeparators() && index.parent().isValid()) {
     r.adjust(-indentation(), 0, 0 -indentation(), 0);
