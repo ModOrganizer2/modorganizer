@@ -652,8 +652,10 @@ void ModListSortProxy::setSourceModel(QAbstractItemModel *sourceModel)
   if (proxy != nullptr) {
     sourceModel = proxy->sourceModel();
   }
-  connect(sourceModel, SIGNAL(aboutToChangeData()), this, SLOT(aboutToChangeData()), Qt::UniqueConnection);
-  connect(sourceModel, SIGNAL(postDataChanged()), this, SLOT(postDataChanged()), Qt::UniqueConnection);
+  if (sourceModel) {
+    connect(sourceModel, SIGNAL(aboutToChangeData()), this, SLOT(aboutToChangeData()), Qt::UniqueConnection);
+    connect(sourceModel, SIGNAL(postDataChanged()), this, SLOT(postDataChanged()), Qt::UniqueConnection);
+  }
 }
 
 void ModListSortProxy::aboutToChangeData()

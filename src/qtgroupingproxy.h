@@ -47,12 +47,13 @@ public:
   };
 
 public:
-  explicit QtGroupingProxy( QAbstractItemModel *model, QModelIndex rootNode = QModelIndex(),
+  explicit QtGroupingProxy( QModelIndex rootNode = QModelIndex(),
                             int groupedColumn = -1, int groupedRole = Qt::DisplayRole,
                             unsigned int flags = 0,
                             int aggregateRole = Qt::DisplayRole);
   ~QtGroupingProxy();
 
+  void setSourceModel(QAbstractItemModel* model) override;
   void setGroupedColumn( int groupedColumn );
 
   /* QAbstractProxyModel methods */
@@ -79,10 +80,10 @@ public:
   virtual QModelIndex addEmptyGroup( const RowData &data );
   virtual bool removeGroup( const QModelIndex &idx );
 
-  QStringList expandedState();
+  void refreshExpandedItems() const ;
 
 signals:
-  void expandItem(const QModelIndex &index);
+  void expandItem(const QModelIndex &index) const;
 
 public slots:
   /**
