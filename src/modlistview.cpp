@@ -702,16 +702,16 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
 
   m_byPriorityProxy = new ModListByPriorityProxy(core.currentProfile(), core, this);
   m_byCategoryProxy = new QtGroupingProxy(QModelIndex(), ModList::COL_CATEGORY, ModList::GroupingRole, 0, ModList::AggrRole);
-  m_byNexusIdProxy = new QtGroupingProxy(QModelIndex(), ModList::COL_MODID,
-    ModList::GroupingRole, QtGroupingProxy::FLAG_NOGROUPNAME | QtGroupingProxy::FLAG_NOSINGLE, ModList::AggrRole);
+  m_byNexusIdProxy = new QtGroupingProxy(QModelIndex(), ModList::COL_MODID, ModList::GroupingRole,
+    QtGroupingProxy::FLAG_NOGROUPNAME | QtGroupingProxy::FLAG_NOSINGLE, ModList::AggrRole);
 
-  QObject::connect(this, &QTreeView::expanded, [=](const QModelIndex& index) {
+  connect(this, &QTreeView::expanded, [=](const QModelIndex& index) {
     auto it = m_collapsed[m_sortProxy->sourceModel()].find(index.data(Qt::DisplayRole).toString());
     if (it != m_collapsed[m_sortProxy->sourceModel()].end()) {
       m_collapsed[m_sortProxy->sourceModel()].erase(it);
     }
   });
-  QObject::connect(this, &QTreeView::collapsed, [=](const QModelIndex& index) {
+  connect(this, &QTreeView::collapsed, [=](const QModelIndex& index) {
     m_collapsed[m_sortProxy->sourceModel()].insert(index.data(Qt::DisplayRole).toString());
   });
 
