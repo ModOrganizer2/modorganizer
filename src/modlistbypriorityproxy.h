@@ -44,28 +44,17 @@ public:
   QModelIndex mapFromSource(const QModelIndex& sourceIndex) const override;
   QModelIndex mapToSource(const QModelIndex& proxyIndex) const override;
 
-  // check the internal state for expanded/collapse items and emit a expandItem
-  // signal for each of the expanded item, useful to refresh the tree state after
-  // layout modification
-  void refreshExpandedItems() const;
-
-signals:
-  void expandItem(const QModelIndex& index) const;
-
 public slots:
 
   void onDropEnter(const QMimeData* data, ModListView::DropPosition dropPosition);
-  void expanded(const QModelIndex& index);
-  void collapsed(const QModelIndex& index);
 
-protected:
+protected slots:
 
   void modelDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles = QVector<int>());
 
 private:
 
   void buildTree();
-  void expandItems(const QModelIndex& index) const;
 
   struct TreeItem {
     ModInfo::Ptr mod;

@@ -1,6 +1,8 @@
 #ifndef MODLISTVIEW_H
 #define MODLISTVIEW_H
 
+#include <map>
+#include <set>
 #include <vector>
 
 #include <QLabel>
@@ -203,10 +205,9 @@ private:
   std::pair<QModelIndex, QModelIndexList> selected() const;
   void setSelected(const QModelIndex& current, const QModelIndexList& selected);
 
-  // call expand() after fixing the index if it comes from the source
-  // of the proxy
+  // refresh stored expanded items for the current intermediate proxy
   //
-  void expandItem(const QModelIndex& index);
+  void refreshExpandedItems();
 
   // refresh the group-by proxy, if the index is -1 will refresh the
   // current one (e.g. when changing the sort column)
@@ -248,6 +249,10 @@ private:
   ModListByPriorityProxy* m_byPriorityProxy;
   QtGroupingProxy* m_byCategoryProxy;
   QtGroupingProxy* m_byNexusIdProxy;
+
+  // maintain collapsed items for each proxy to avoid
+  // losing them on model reset
+  std::map<QAbstractItemModel*, std::set<QString>> m_collapsed;
 
   struct MarkerInfos {
     // conflicts

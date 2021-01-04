@@ -88,20 +88,6 @@ void ModListByPriorityProxy::buildTree()
   m_Root.children.push_back(std::move(overwrite));
 
   endResetModel();
-
-  // restore expand-state
-  expandItems(QModelIndex());
-}
-
-void ModListByPriorityProxy::expandItems(const QModelIndex& index) const
-{
-  for (int row = 0; row < rowCount(index); row++) {
-    QModelIndex idx = this->index(row, 0, index);
-    if (!m_CollapsedItems.contains(idx.data(Qt::DisplayRole).toString())) {
-      emit expandItem(idx);
-    }
-    expandItems(idx);
-  }
 }
 
 void ModListByPriorityProxy::modelDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles)
@@ -333,22 +319,4 @@ QModelIndex ModListByPriorityProxy::index(int row, int column, const QModelIndex
 void ModListByPriorityProxy::onDropEnter(const QMimeData*, ModListView::DropPosition dropPosition)
 {
   m_dropPosition = dropPosition;
-}
-
-void ModListByPriorityProxy::refreshExpandedItems() const
-{
-  expandItems(QModelIndex());
-}
-
-void ModListByPriorityProxy::expanded(const QModelIndex& index)
-{
-  auto it = m_CollapsedItems.find(index.data(Qt::DisplayRole).toString());
-  if (it != m_CollapsedItems.end()) {
-    m_CollapsedItems.erase(it);
-  }
-}
-
-void ModListByPriorityProxy::collapsed(const QModelIndex& index)
-{
-  m_CollapsedItems.insert(index.data(Qt::DisplayRole).toString());
 }

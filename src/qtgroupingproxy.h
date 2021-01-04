@@ -80,22 +80,6 @@ public:
   virtual QModelIndex addEmptyGroup( const RowData &data );
   virtual bool removeGroup( const QModelIndex &idx );
 
-  void refreshExpandedItems() const ;
-
-signals:
-  void expandItem(const QModelIndex &index) const;
-
-public slots:
-  /**
-   * @brief update expanded state
-   * @param index index of the expanded/collapsed item (from the base model!)
-   */
-  void expanded(const QModelIndex &index);
-  /**
-   * @brief update expanded state
-   * @param index index of the expanded/collapsed item (from the base model!)
-   */
-  void collapsed(const QModelIndex &index);
 protected slots:
   virtual void buildTree();
 
@@ -159,7 +143,6 @@ protected:
   void dumpGroups() const;
 
 private:
-  QSet<QString> m_expandedItems;
   unsigned int m_flags;
   int m_groupedRole;
 

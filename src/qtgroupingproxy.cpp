@@ -213,19 +213,6 @@ QtGroupingProxy::buildTree()
   }
 
   endResetModel();
-
-  // restore expand-state
-  refreshExpandedItems();
-}
-
-void QtGroupingProxy::refreshExpandedItems() const
-{
-  for (int row = 0; row < rowCount(); row++) {
-    QModelIndex idx = index(row, 0, QModelIndex());
-    if (m_expandedItems.contains(idx.data(Qt::UserRole).toString())) {
-      emit expandItem(idx);
-    }
-  }
 }
 
 QList<int>
@@ -1048,15 +1035,4 @@ QtGroupingProxy::dumpGroups() const
   debug << m_groupHash.value( std::numeric_limits<quint32>::max() );
 
   log::debug("{}", s);
-}
-
-
-void QtGroupingProxy::expanded(const QModelIndex &index)
-{
-  m_expandedItems.insert(index.data(Qt::UserRole).toString());
-}
-
-void QtGroupingProxy::collapsed(const QModelIndex &index)
-{
-  m_expandedItems.remove(index.data(Qt::UserRole).toString());
 }

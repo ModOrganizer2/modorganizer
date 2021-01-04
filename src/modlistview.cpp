@@ -360,15 +360,14 @@ void ModListView::setSelected(const QModelIndex& current, const QModelIndexList&
   }
 }
 
-void ModListView::expandItem(const QModelIndex& index)
+void ModListView::refreshExpandedItems()
 {
-  // the group proxy (QtGroupingProxy and ModListByPriorityProxy) emit
-  // those with their own index, so we need to do this manually
-  if (index.model() == m_sortProxy->sourceModel()) {
-    setExpanded(m_sortProxy->mapFromSource(index), true);
-  }
-  else if (index.model() == model()) {
-    setExpanded(index, true);
+  auto* model = m_sortProxy->sourceModel();
+  for (auto i = 0; i < model->rowCount(); ++i) {
+    auto idx = model->index(i, 0);
+    if (!m_collapsed[model].contains(idx.data(Qt::DisplayRole).toString())) {
+      setExpanded(m_sortProxy->mapFromSource(idx), true);
+    }
   }
 }
 
@@ -631,18 +630,6 @@ bool ModListView::toggleSelectionState()
   return m_core->modList()->toggleState(indexViewToModel(selectionModel()->selectedRows()));
 }
 
-// helper function because QtGroupingProxy and ModListByPriorityProxy
-// have similar methods but do not share a common parent class
-template <class Proxy>
-void setProxy(OrganizerCore* core, QTreeView* view, ModListSortProxy* sortProxy, Proxy* proxy)
-{
-  proxy->setSourceModel(core->modList());
-  sortProxy->setSourceModel(proxy);
-  QObject::connect(view, &QTreeView::expanded, proxy, &Proxy::expanded);
-  QObject::connect(view, &QTreeView::collapsed, proxy, &Proxy::collapsed);
-  proxy->refreshExpandedItems();
-}
-
 void ModListView::updateGroupByProxy(int groupIndex)
 {
   // if the index is -1, we do not refresh unless we are grouping
@@ -655,21 +642,29 @@ void ModListView::updateGroupByProxy(int groupIndex)
   }
 
   auto* previousModel = m_sortProxy->sourceModel();
+  QAbstractProxyModel* nextProxy = nullptr;
 
   if (groupIndex == GroupBy::CATEGORY) {
-    setProxy(m_core, this, m_sortProxy, m_byCategoryProxy);
+    nextProxy = m_byCategoryProxy;
   }
   else if (groupIndex == GroupBy::NEXUS_ID) {
-    setProxy(m_core, this, m_sortProxy, m_byNexusIdProxy);
+    nextProxy = m_byNexusIdProxy;
   }
   else if (m_core->settings().interface().collapsibleSeparators()
     && m_sortProxy->sortColumn() == ModList::COL_PRIORITY
     && m_sortProxy->sortOrder() == Qt::AscendingOrder) {
-    setProxy(m_core, this, m_sortProxy, m_byPriorityProxy);
+    nextProxy = m_byPriorityProxy;
   }
-  else {
-    m_sortProxy->setSourceModel(m_core->modList());
+
+  QAbstractItemModel* nextModel = m_core->modList();
+  if (nextProxy) {
+    nextProxy->setSourceModel(m_core->modList());
+    nextModel = nextProxy;
   }
+  m_sortProxy->setSourceModel(nextModel);
+
+  // expand items previously expanded
+  refreshExpandedItems();
 
   if (hasCollapsibleSeparators()) {
     ui.filterSeparators->setCurrentIndex(ModListSortProxy::SeparatorFilter);
@@ -682,11 +677,8 @@ void ModListView::updateGroupByProxy(int groupIndex)
   // reset the source model of the old proxy because we do not want to
   // react to signals
   //
-  // also stop notifying the old proxy when items are expanded
-  //
   if (auto* proxy = qobject_cast<QAbstractProxyModel*>(previousModel)) {
     proxy->setSourceModel(nullptr);
-    disconnect(this, nullptr, proxy, nullptr);
   }
 }
 
@@ -709,12 +701,19 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   connect(core.modList(), &ModList::modelReset, [=] { clearOverwriteMarkers(); });
 
   m_byPriorityProxy = new ModListByPriorityProxy(core.currentProfile(), core, this);
-  connect(m_byPriorityProxy, &ModListByPriorityProxy::expandItem, [=](auto&& index) { expandItem(index); });
   m_byCategoryProxy = new QtGroupingProxy(QModelIndex(), ModList::COL_CATEGORY, ModList::GroupingRole, 0, ModList::AggrRole);
-  connect(m_byCategoryProxy, &QtGroupingProxy::expandItem, [=](auto&& index) { expandItem(index); });
   m_byNexusIdProxy = new QtGroupingProxy(QModelIndex(), ModList::COL_MODID,
     ModList::GroupingRole, QtGroupingProxy::FLAG_NOGROUPNAME | QtGroupingProxy::FLAG_NOSINGLE, ModList::AggrRole);
-  connect(m_byNexusIdProxy, &QtGroupingProxy::expandItem, [=](auto&& index) { expandItem(index); });
+
+  QObject::connect(this, &QTreeView::expanded, [=](const QModelIndex& index) {
+    auto it = m_collapsed[m_sortProxy->sourceModel()].find(index.data(Qt::DisplayRole).toString());
+    if (it != m_collapsed[m_sortProxy->sourceModel()].end()) {
+      m_collapsed[m_sortProxy->sourceModel()].erase(it);
+    }
+  });
+  QObject::connect(this, &QTreeView::collapsed, [=](const QModelIndex& index) {
+    m_collapsed[m_sortProxy->sourceModel()].insert(index.data(Qt::DisplayRole).toString());
+  });
 
   m_sortProxy = new ModListSortProxy(core.currentProfile(), &core);
   setModel(m_sortProxy);
@@ -810,7 +809,7 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
     });
   connect(m_sortProxy, &ModListSortProxy::filterInvalidated, [=]() {
     if (hasCollapsibleSeparators()) {
-      m_byPriorityProxy->refreshExpandedItems();
+      refreshExpandedItems();
     }
   });
 }
