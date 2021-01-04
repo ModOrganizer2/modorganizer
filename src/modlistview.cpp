@@ -700,11 +700,14 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   connect(core.modList(), &ModList::modStatesChanged, [=] { updateModCount(); });
   connect(core.modList(), &ModList::modelReset, [=] { clearOverwriteMarkers(); });
 
+  // proxy for various group by
   m_byPriorityProxy = new ModListByPriorityProxy(core.currentProfile(), core, this);
   m_byCategoryProxy = new QtGroupingProxy(QModelIndex(), ModList::COL_CATEGORY, ModList::GroupingRole, 0, ModList::AggrRole);
   m_byNexusIdProxy = new QtGroupingProxy(QModelIndex(), ModList::COL_MODID, ModList::GroupingRole,
     QtGroupingProxy::FLAG_NOGROUPNAME | QtGroupingProxy::FLAG_NOSINGLE, ModList::AggrRole);
 
+  // we need to store the expanded/collapsed state of all items and restore them 1) when
+  // switching proxies, 2) when filtering and 3) when reseting the mod list.
   connect(this, &QTreeView::expanded, [=](const QModelIndex& index) {
     auto it = m_collapsed[m_sortProxy->sourceModel()].find(index.data(Qt::DisplayRole).toString());
     if (it != m_collapsed[m_sortProxy->sourceModel()].end()) {
@@ -714,22 +717,26 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   connect(this, &QTreeView::collapsed, [=](const QModelIndex& index) {
     m_collapsed[m_sortProxy->sourceModel()].insert(index.data(Qt::DisplayRole).toString());
   });
+  connect(core.modList(), &ModList::modelReset, [=] { refreshExpandedItems(); });
 
+  // the top-level proxy
   m_sortProxy = new ModListSortProxy(core.currentProfile(), &core);
   setModel(m_sortProxy);
 
   // update the proxy when changing the sort column/direction and the group
   connect(m_sortProxy, &QAbstractItemModel::layoutAboutToBeChanged, [this](auto&& parents, auto&& hint) {
-      if (hint == QAbstractItemModel::VerticalSortHint) {
-        updateGroupByProxy(-1);
-      }
-    });
+    if (hint == QAbstractItemModel::VerticalSortHint) {
+      updateGroupByProxy(-1);
+    }
+  });
   connect(ui.groupBy, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index) {
     updateGroupByProxy(index);
     onModFilterActive(m_sortProxy->isFilterActive());
-    });
+  });
   sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
 
+  // inform the mod list about the type of item being dropped at the beginning of a drag
+  // and the position of the drop indicator at the end (only for by-priority)
   connect(this, &ModListView::dragEntered, core.modList(), &ModList::onDragEnter);
   connect(this, &ModListView::dropEntered, m_byPriorityProxy, &ModListByPriorityProxy::onDropEnter);
 
