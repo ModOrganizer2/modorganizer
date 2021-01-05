@@ -206,9 +206,11 @@ std::optional<int> CommandLine::setupCore(OrganizerCore& organizer) const
   if (m_shortcut.isValid()) {
     if (m_shortcut.hasExecutable()) {
       try {
+        // make sure MO doesn't exit even if locking is disabled, ForceWait and
+        // PreventExit will do that
         organizer.processRunner()
           .setFromShortcut(m_shortcut)
-          .setWaitForCompletion()
+          .setWaitForCompletion(ProcessRunner::ForceWait, UILocker::PreventExit)
           .run();
 
         return 0;
@@ -229,9 +231,12 @@ std::optional<int> CommandLine::setupCore(OrganizerCore& organizer) const
     try
     {
       // pass the remaining parameters to the binary
+      //
+      // make sure MO doesn't exit even if locking is disabled, ForceWait and
+      // PreventExit will do that
       organizer.processRunner()
         .setFromFileOrExecutable(exeName, m_untouched)
-        .setWaitForCompletion()
+        .setWaitForCompletion(ProcessRunner::ForceWait, UILocker::PreventExit)
         .run();
 
       return 0;
