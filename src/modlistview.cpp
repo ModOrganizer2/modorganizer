@@ -155,7 +155,7 @@ ModListView::ModListView(QWidget* parent)
 
 void ModListView::refresh()
 {
-  updateGroupByProxy(-1);
+  updateGroupByProxy();
 }
 
 void ModListView::setProfile(Profile* profile)
@@ -630,17 +630,9 @@ bool ModListView::toggleSelectionState()
   return m_core->modList()->toggleState(indexViewToModel(selectionModel()->selectedRows()));
 }
 
-void ModListView::updateGroupByProxy(int groupIndex)
+void ModListView::updateGroupByProxy()
 {
-  // if the index is -1, we do not refresh unless we are grouping
-  // by separator
-  if (groupIndex == -1) {
-    if (ui.groupBy->currentIndex() != GroupBy::NONE) {
-      return;
-    }
-    groupIndex = ui.groupBy->currentIndex();
-  }
-
+  int groupIndex = ui.groupBy->currentIndex();
   auto* previousModel = m_sortProxy->sourceModel();
   QAbstractProxyModel* nextProxy = nullptr;
 
@@ -661,7 +653,17 @@ void ModListView::updateGroupByProxy(int groupIndex)
     nextProxy->setSourceModel(m_core->modList());
     nextModel = nextProxy;
   }
-  m_sortProxy->setSourceModel(nextModel);
+
+  if (nextModel != previousModel) {
+    m_sortProxy->setSourceModel(nextModel);
+
+    // reset the source model of the old proxy because we do not want to
+    // react to signals
+    //
+    if (auto* proxy = qobject_cast<QAbstractProxyModel*>(previousModel)) {
+      proxy->setSourceModel(nullptr);
+    }
+  }
 
   // expand items previously expanded
   refreshExpandedItems();
@@ -672,13 +674,6 @@ void ModListView::updateGroupByProxy(int groupIndex)
   }
   else {
     ui.filterSeparators->setEnabled(true);
-  }
-
-  // reset the source model of the old proxy because we do not want to
-  // react to signals
-  //
-  if (auto* proxy = qobject_cast<QAbstractProxyModel*>(previousModel)) {
-    proxy->setSourceModel(nullptr);
   }
 }
 
@@ -717,20 +712,20 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   connect(this, &QTreeView::collapsed, [=](const QModelIndex& index) {
     m_collapsed[m_sortProxy->sourceModel()].insert(index.data(Qt::DisplayRole).toString());
   });
-  connect(core.modList(), &ModList::modelReset, [=] { refreshExpandedItems(); });
 
   // the top-level proxy
   m_sortProxy = new ModListSortProxy(core.currentProfile(), &core);
   setModel(m_sortProxy);
+  connect(m_sortProxy, &ModList::modelReset, [=] { refreshExpandedItems(); });
 
   // update the proxy when changing the sort column/direction and the group
   connect(m_sortProxy, &QAbstractItemModel::layoutAboutToBeChanged, [this](auto&& parents, auto&& hint) {
     if (hint == QAbstractItemModel::VerticalSortHint) {
-      updateGroupByProxy(-1);
+      updateGroupByProxy();
     }
   });
   connect(ui.groupBy, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index) {
-    updateGroupByProxy(index);
+    updateGroupByProxy();
     onModFilterActive(m_sortProxy->isFilterActive());
   });
   sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);

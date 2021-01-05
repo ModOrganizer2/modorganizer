@@ -212,7 +212,7 @@ private:
   // refresh the group-by proxy, if the index is -1 will refresh the
   // current one (e.g. when changing the sort column)
   //
-  void updateGroupByProxy(int groupIndex);
+  void updateGroupByProxy();
 
   // index in the groupby combo
   //
