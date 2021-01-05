@@ -228,7 +228,7 @@ const std::chrono::milliseconds Infinite(-1);
 // waits for completion, times out after `wait` if not Infinite
 //
 std::optional<ProcessRunner::Results> timedWait(
-  HANDLE handle, DWORD pid, UILocker::Session& ls,
+  HANDLE handle, DWORD pid, UILocker::Session* ls,
   std::chrono::milliseconds wait, std::atomic<bool>& interrupt)
 {
   using namespace std::chrono;
@@ -249,35 +249,38 @@ std::optional<ProcessRunner::Results> timedWait(
 
     // the process is still running
 
-    // check the lock widget
-    switch (ls.result())
-    {
-      case UILocker::StillLocked:
+    // check the lock widget; the session can be null when running shortcuts
+    // with locking disabled, in which case the user cannot force unlock
+    if (ls) {
+      switch (ls->result())
       {
-        break;
-      }
+        case UILocker::StillLocked:
+        {
+          break;
+        }
 
-      case UILocker::ForceUnlocked:
-      {
-        log::debug("waiting for {} force unlocked by user", pid);
-        return ProcessRunner::ForceUnlocked;
-      }
+        case UILocker::ForceUnlocked:
+        {
+          log::debug("waiting for {} force unlocked by user", pid);
+          return ProcessRunner::ForceUnlocked;
+        }
 
-      case UILocker::Cancelled:
-      {
-        log::debug("waiting for {} cancelled by user", pid);
-        return ProcessRunner::Cancelled;
-      }
+        case UILocker::Cancelled:
+        {
+          log::debug("waiting for {} cancelled by user", pid);
+          return ProcessRunner::Cancelled;
+        }
 
-      case UILocker::NoResult:  // fall-through
-      default:
-      {
-        // shouldn't happen
-        log::debug(
-          "unexpected result {} while waiting for {}",
-          static_cast<int>(ls.result()), pid);
+        case UILocker::NoResult:  // fall-through
+        default:
+        {
+          // shouldn't happen
+          log::debug(
+            "unexpected result {} while waiting for {}",
+            static_cast<int>(ls->result()), pid);
 
-        return ProcessRunner::Error;
+          return ProcessRunner::Error;
+        }
       }
     }
 
@@ -296,7 +299,7 @@ std::optional<ProcessRunner::Results> timedWait(
 }
 
 ProcessRunner::Results waitForProcessesThreadImpl(
-  HANDLE job, UILocker::Session& ls, std::atomic<bool>& interrupt)
+  HANDLE job, UILocker::Session* ls, std::atomic<bool>& interrupt)
 {
   using namespace std::chrono;
 
@@ -315,8 +318,11 @@ ProcessRunner::Results waitForProcessesThreadImpl(
       return ProcessRunner::Completed;
     }
 
-    // update the lock widget
-    ls.setInfo(ip.p.pid(), ip.p.name());
+    // update the lock widget; the session can be null when running shortcuts
+    // with locking disabled
+    if (ls) {
+      ls->setInfo(ip.p.pid(), ip.p.name());
+    }
 
     if (ip.p.pid() != currentPID) {
       // log any change in the process being waited for
@@ -354,15 +360,19 @@ ProcessRunner::Results waitForProcessesThreadImpl(
 }
 
 void waitForProcessesThread(
-  ProcessRunner::Results& result, HANDLE job, UILocker::Session& ls,
+  ProcessRunner::Results& result, HANDLE job, UILocker::Session* ls,
   std::atomic<bool>& interrupt)
 {
   result = waitForProcessesThreadImpl(job, ls, interrupt);
-  ls.unlock();
+
+  // the session can be null when running shortcuts with locking disabled
+  if (ls) {
+    ls->unlock();
+  }
 }
 
 ProcessRunner::Results waitForProcesses(
-  const std::vector<HANDLE>& initialProcesses, UILocker::Session& ls)
+  const std::vector<HANDLE>& initialProcesses, UILocker::Session* ls)
 {
   if (initialProcesses.empty()) {
     // nothing to wait for
@@ -415,7 +425,7 @@ ProcessRunner::Results waitForProcesses(
 
   auto* t = QThread::create(
     waitForProcessesThread,
-    std::ref(results), monitor, std::ref(ls), std::ref(interrupt));
+    std::ref(results), monitor, ls, std::ref(interrupt));
 
   QEventLoop events;
   QObject::connect(t, &QThread::finished, [&]{
@@ -436,7 +446,7 @@ ProcessRunner::Results waitForProcesses(
 }
 
 ProcessRunner::Results waitForProcess(
-  HANDLE initialProcess, LPDWORD exitCode, UILocker::Session& ls)
+  HANDLE initialProcess, LPDWORD exitCode, UILocker::Session* ls)
 {
   std::vector<HANDLE> processes = {initialProcess};
 
@@ -862,8 +872,10 @@ ProcessRunner::Results ProcessRunner::postRun()
     m_lockReason = UILocker::LockUI;
   }
 
+  const bool lockEnabled = m_core.settings().interface().lockGUI();
+
   if (mustWait) {
-    if (!m_core.settings().interface().lockGUI()) {
+    if (!lockEnabled) {
       // at least tell the user what's going on
       log::debug(
         "locking is disabled, but the output of the application is required; "
@@ -877,7 +889,7 @@ ProcessRunner::Results ProcessRunner::postRun()
       return Running;
     }
 
-    if (!m_core.settings().interface().lockGUI()) {
+    if (!lockEnabled) {
       // disabling locking is like clicking on unlock immediately
       log::debug("not waiting for process because locking is disabled");
       return ForceUnlocked;
@@ -886,9 +898,23 @@ ProcessRunner::Results ProcessRunner::postRun()
 
   auto r = Error;
 
-  withLock([&](auto& ls) {
-    r = waitForProcess(m_handle.get(), &m_exitCode, ls);
-  });
+  if (mustWait && m_lockReason == UILocker::PreventExit && !lockEnabled) {
+    // this happens when running shortcuts and locking is disabled
+    //
+    // MO must stay alive until all processes are dead or child processes
+    // may not get hooked properly, but the user has disabled locking the ui
+    //
+    // this is a bit of an edge case, but that means the user wants to run
+    // shortcuts without seeing the lock dialog, so allow them to do that
+    //
+    // MO will be running in the background with no visual feedback, but that's
+    // how it is
+    r = waitForProcess(m_handle.get(), &m_exitCode, nullptr);
+  } else {
+    withLock([&](auto& ls) {
+      r = waitForProcess(m_handle.get(), &m_exitCode, &ls);
+    });
+  }
 
   if (shouldRefresh(r)) {
     m_core.afterRun(m_sp.binary, m_exitCode);
@@ -940,7 +966,7 @@ ProcessRunner::Results ProcessRunner::waitForAllUSVFSProcessesWithLock(
         return;
       }
 
-      r = waitForProcesses(processes, ls);
+      r = waitForProcesses(processes, &ls);
 
       if (r != Completed) {
         // error, cancelled, or unlocked
