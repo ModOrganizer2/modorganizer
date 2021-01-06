@@ -18,8 +18,15 @@ ModListGlobalContextMenu::ModListGlobalContextMenu(OrganizerCore& core, ModListV
   : QMenu(parent)
 {
   addAction(tr("Install Mod..."), [=]() { view->actions().installMod(); });
-  addAction(tr("Create empty mod"), [=]() { view->actions().createEmptyMod(index); });
-  addAction(tr("Create Separator"), [=]() { view->actions().createSeparator(index); });
+
+  auto modIndex = index.data(ModList::IndexRole);
+  if (modIndex.isValid()) {
+    auto info = ModInfo::getByIndex(modIndex.toInt());
+    if (!info->isBackup()) {
+      addAction(tr("Create empty mod"), [=]() { view->actions().createEmptyMod(index); });
+      addAction(tr("Create Separator"), [=]() { view->actions().createSeparator(index); });
+    }
+  }
 
   if (view->hasCollapsibleSeparators()) {
     addSeparator();
