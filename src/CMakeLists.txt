@@ -103,7 +103,6 @@ add_filter(NAME src/mainwindow GROUPS
 	filetree
 	filetreeitem
 	filetreemodel
-	filterlist
 	mainwindow
 	savestab
 	statusbar
@@ -145,6 +144,7 @@ add_filter(NAME src/modlist GROUPS
 )
 
 add_filter(NAME src/modlist/view GROUPS
+	filterlist
 	modlistview
 	modlistviewactions
 	modlistcontextmenu
@@ -202,6 +202,7 @@ add_filter(NAME src/settingsdialog GROUPS
 	settingsdialogplugins
 	settingsdialogsteam
 	settingsdialogworkarounds
+	settingsdialoguserinterface
 	disableproxyplugindialog
 )
 

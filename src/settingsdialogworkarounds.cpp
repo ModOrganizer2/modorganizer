@@ -24,7 +24,6 @@ WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
 
   ui->hideUncheckedBox->setChecked(settings().game().hideUncheckedPlugins());
   ui->forceEnableBox->setChecked(settings().game().forceEnableCoreFiles());
-  ui->displayForeignBox->setChecked(settings().interface().displayForeign());
   ui->lockGUIBox->setChecked(settings().interface().lockGUI());
   ui->enableArchiveParsingBox->setChecked(settings().archiveParsing());
 
@@ -48,7 +47,6 @@ void WorkaroundsSettingsTab::update()
 
   settings().game().setHideUncheckedPlugins(ui->hideUncheckedBox->isChecked());
   settings().game().setForceEnableCoreFiles(ui->forceEnableBox->isChecked());
-  settings().interface().setDisplayForeign(ui->displayForeignBox->isChecked());
   settings().interface().setLockGUI(ui->lockGUIBox->isChecked());
   settings().setArchiveParsing(ui->enableArchiveParsingBox->isChecked());
   settings().setExecutablesBlacklist(m_ExecutableBlacklist);

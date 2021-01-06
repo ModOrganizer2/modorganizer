@@ -234,7 +234,10 @@ void FilterList::restoreState(const Settings& s)
   s.widgets().restoreIndex(ui->filtersSeparators);
   s.widgets().restoreChecked(ui->filtersAnd);
   s.widgets().restoreChecked(ui->filtersOr);
-  s.widgets().restoreTreeCheckState(ui->filters, CriteriaItem::StateRole);
+
+  if (m_core.settings().interface().saveFilters()) {
+    s.widgets().restoreTreeCheckState(ui->filters, CriteriaItem::StateRole);
+  }
   checkCriteria();
 }
 

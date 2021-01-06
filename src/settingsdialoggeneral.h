@@ -22,7 +22,6 @@ private:
 
   void onExploreStyles();
   void onEditCategories();
-  void onResetColors();
   void onResetDialogs();
 };
 

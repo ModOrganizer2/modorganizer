@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settingsdialogpaths.h"
 #include "settingsdialogplugins.h"
 #include "settingsdialogsteam.h"
+#include "settingsdialoguserinterface.h"
 #include "settingsdialogworkarounds.h"
 
 using namespace MOBase;
@@ -39,6 +40,7 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings& setti
   ui->setupUi(this);
 
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new GeneralSettingsTab(settings, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(new UserInterfaceSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new PathsSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new DiagnosticsSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new NexusSettingsTab(settings, *this)));

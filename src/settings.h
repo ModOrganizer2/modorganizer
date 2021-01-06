@@ -631,6 +631,11 @@ public:
   bool collapsibleSeparatorsConflicts() const;
   void setCollapsibleSeparatorsConflicts(bool b);
 
+  // whether to save/restore filter states between runs
+  //
+  bool saveFilters() const;
+  void setSaveFilters(bool b);
+
   // whether to show compact downloads
   //
   bool compactDownloads() const;
