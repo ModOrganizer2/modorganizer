@@ -1506,67 +1506,91 @@ void MainWindow::activateSelectedProfile()
 
 void MainWindow::on_profileBox_currentIndexChanged(int index)
 {
-  if (ui->profileBox->isEnabled()) {
-    int previousIndex = m_OldProfileIndex;
-    m_OldProfileIndex = index;
+  if (!ui->profileBox->isEnabled()) {
+    return;
+  }
 
-    if ((previousIndex != -1) &&
+  int previousIndex = m_OldProfileIndex;
+  m_OldProfileIndex = index;
+
+  // select has changed, save stuff
+  if ((previousIndex != -1) &&
       (m_OrganizerCore.currentProfile() != nullptr) &&
       m_OrganizerCore.currentProfile()->exists()) {
-      m_OrganizerCore.saveCurrentLists();
-    }
+    m_OrganizerCore.saveCurrentLists();
+  }
 
-    // Avoid doing any refresh if currentProfile is already set but previous index was -1
-    // as it means that this is happening during initialization so everything has already been set.
-    if (previousIndex == -1
+  // Avoid doing any refresh if currentProfile is already set but previous
+  // index was -1 as it means that this is happening during initialization so
+  // everything has already been set.
+  if (previousIndex == -1
       && m_OrganizerCore.currentProfile() != nullptr
       && m_OrganizerCore.currentProfile()->exists()
-      && ui->profileBox->currentText() == m_OrganizerCore.currentProfile()->name()) {
-      return;
-    }
+      && ui->profileBox->currentText() == m_OrganizerCore.currentProfile()->name()){
+    return;
+  }
 
-    // ensure the new index is valid
-    if (index < 0 || index >= ui->profileBox->count()) {
-      log::debug("invalid profile index, using last profile");
-      ui->profileBox->setCurrentIndex(ui->profileBox->count() - 1);
-    }
+  // ensure the new index is valid
+  if (index < 0 || index >= ui->profileBox->count()) {
+    log::debug("invalid profile index, using last profile");
+    ui->profileBox->setCurrentIndex(ui->profileBox->count() - 1);
+  }
 
-    if (ui->profileBox->currentIndex() == 0) {
-      ui->profileBox->setCurrentIndex(previousIndex);
 
-      std::optional<QString> newSelection;
+  // handle <manage> item
+  if (ui->profileBox->currentIndex() == 0) {
+    // remember the profile name that was selected before, previousIndex can't
+    // be used again because adding/deleting profiles will change the order
+    // in the list
+    const QString previousName = ui->profileBox->itemText(previousIndex);
 
-      ProfilesDialog dlg(ui->profileBox->currentText(), m_OrganizerCore, this);
+    // show the dialog
+    ProfilesDialog dlg(previousName, m_OrganizerCore, this);
+    dlg.exec();
+
+    // check if the user clicked 'select' to select another profile
+    std::optional<QString> newSelection = dlg.selectedProfile();
+
+    // refresh the profile box; this loops until there is at least one profile
+    // available, which shouldn't really happen because the dialog won't allow
+    // it
+    //
+    // the `false` to refreshProfiles() is so it doesn't try to select the
+    // profile in the list because 1) it's done just below, and 2) it might be
+    // wrong profile if there's something in newSelection
+    while (!refreshProfiles(false)) {
+      ProfilesDialog dlg(previousName, m_OrganizerCore, this);
       dlg.exec();
       newSelection = dlg.selectedProfile();
-
-      while (!refreshProfiles()) {
-        ProfilesDialog dlg(ui->profileBox->currentText(), m_OrganizerCore, this);
-        dlg.exec();
-        newSelection = dlg.selectedProfile();
-      }
-
-      if (newSelection) {
-        ui->profileBox->setCurrentText(*newSelection);
-        activateSelectedProfile();
-      }
-    }
-    else {
-      activateSelectedProfile();
     }
 
-    LocalSavegames* saveGames = m_OrganizerCore.managedGame()->feature<LocalSavegames>();
-    if (saveGames != nullptr) {
-      if (saveGames->prepareProfile(m_OrganizerCore.currentProfile())) {
-        m_SavesTab->refreshSaveList();
-      }
+    // note that setCurrentText() is recursive, it will re-execute this function
+    if (newSelection) {
+      ui->profileBox->setCurrentText(*newSelection);
+    } else {
+      ui->profileBox->setCurrentText(previousName);
     }
 
-    BSAInvalidation* invalidation = m_OrganizerCore.managedGame()->feature<BSAInvalidation>();
-    if (invalidation != nullptr) {
-      if (invalidation->prepareProfile(m_OrganizerCore.currentProfile())) {
-        QTimer::singleShot(5, &m_OrganizerCore, SLOT(profileRefresh()));
-      }
+    // nothing else to do because setCurrentText() is recursive and will
+    // have re-executed on_profileBox_currentIndexChanged() again, doing all
+    // the stuff below for the new selection
+    return;
+  }
+
+
+  activateSelectedProfile();
+
+  LocalSavegames *saveGames = m_OrganizerCore.managedGame()->feature<LocalSavegames>();
+  if (saveGames != nullptr) {
+    if (saveGames->prepareProfile(m_OrganizerCore.currentProfile())) {
+      m_SavesTab->refreshSaveList();
+    }
+  }
+
+  BSAInvalidation *invalidation = m_OrganizerCore.managedGame()->feature<BSAInvalidation>();
+  if (invalidation != nullptr) {
+    if (invalidation->prepareProfile(m_OrganizerCore.currentProfile())) {
+      QTimer::singleShot(5, &m_OrganizerCore, SLOT(profileRefresh()));
     }
   }
 }
