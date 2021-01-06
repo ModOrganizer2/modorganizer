@@ -17,10 +17,10 @@ CopyEventFilter::CopyEventFilter(
 
 }
 
-bool CopyEventFilter::copySelection() const
+void CopyEventFilter::copySelection() const
 {
   if (!m_view->selectionModel()->hasSelection()) {
-    return true;
+    return;
   }
 
   // sort to reflect the visual order
@@ -35,7 +35,6 @@ bool CopyEventFilter::copySelection() const
   }
 
   QGuiApplication::clipboard()->setText(rows.join("\n"));
-  return true;
 }
 
 bool CopyEventFilter::eventFilter(QObject* sender, QEvent* event)
@@ -44,7 +43,8 @@ bool CopyEventFilter::eventFilter(QObject* sender, QEvent* event)
     QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
     if (keyEvent->modifiers() == Qt::ControlModifier
       && keyEvent->key() == Qt::Key_C) {
-      return copySelection();
+      copySelection();
+      return true;
     }
   }
   return QObject::eventFilter(sender, event);

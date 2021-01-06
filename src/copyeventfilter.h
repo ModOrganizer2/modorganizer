@@ -29,7 +29,7 @@ public:
   // copy the selection of the view associated with this
   // event filter into the clipboard
   //
-  bool copySelection() const;
+  void copySelection() const;
 
   bool eventFilter(QObject* sender, QEvent* event) override;
 
