@@ -194,30 +194,6 @@ QString ModList::getConflictFlagText(ModInfo::EConflictFlag flag, ModInfo::Ptr m
   }
 }
 
-
-QVariantList ModList::contentsToIcons(const std::set<int> &contents) const
-{
-  QVariantList result;
-  m_Organizer->modDataContents().forEachContentInOrOut(
-    contents,
-    [&result](auto const& content) { result.append(content.icon()); },
-    [&result](auto const&) { result.append(QString()); });
-  return result;
-}
-
-QString ModList::contentsToToolTip(const std::set<int> &contents) const
-{
-  QString result("<table cellspacing=7>");
-  m_Organizer->modDataContents().forEachContentIn(contents, [&result](auto const& content) {
-    result.append(QString("<tr><td><img src=\"%1\" width=32/></td>"
-      "<td valign=\"middle\">%2</td></tr>")
-      .arg(content.icon()).arg(content.name()));
-    });
-  result.append("</table>");
-  return result;
-}
-
-
 QVariant ModList::data(const QModelIndex &modelIndex, int role) const
 {
   if (m_Profile == nullptr) return QVariant();
@@ -385,9 +361,6 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       default: return QtGroupingProxy::AGGR_NONE;
     }
   }
-  else if (role == ContentsRole) {
-    return contentsToIcons(modInfo->getContents());
-  }
   else if (role == GameNameRole) {
     return modInfo->gameName();
   }
@@ -493,9 +466,6 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
 
       return result;
-    }
-    else if (column == COL_CONTENT) {
-      return contentsToToolTip(modInfo->getContents());
     }
     else if (column == COL_NAME) {
       try {

@@ -27,9 +27,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-IconDelegate::IconDelegate(QObject* parent)
-  : QStyledItemDelegate(parent)
+IconDelegate::IconDelegate(QTreeView* view, int column, int compactSize) :
+  QStyledItemDelegate(view), m_column(column), m_compactSize(compactSize), m_compact(false)
 {
+  if (view) {
+    connect(view->header(), &QHeaderView::sectionResized, [=](int column, int, int size) {
+      if (column == m_column) {
+        m_compact = size < m_compactSize;
+      }
+      });
+  }
 }
 
 void IconDelegate::paintIcons(

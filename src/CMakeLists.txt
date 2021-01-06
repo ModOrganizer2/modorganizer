@@ -149,6 +149,7 @@ add_filter(NAME src/modlist/view GROUPS
 	modlistviewactions
 	modlistcontextmenu
 	modflagicondelegate
+	modcontenticondelegate
 	modconflicticondelegate
 )
 

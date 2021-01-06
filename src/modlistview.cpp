@@ -18,6 +18,7 @@
 #include "log.h"
 #include "modflagicondelegate.h"
 #include "modconflicticondelegate.h"
+#include "modcontenticondelegate.h"
 #include "modlistviewactions.h"
 #include "modlistdropinfo.h"
 #include "modlistcontextmenu.h"
@@ -741,17 +742,9 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   connect(header(), &QHeaderView::sectionResized, [=](int logicalIndex, int oldSize, int newSize) {
     m_sortProxy->setColumnVisible(logicalIndex, newSize != 0); });
 
-  GenericIconDelegate* contentDelegate = new GenericIconDelegate(this, ModList::ContentsRole, ModList::COL_CONTENT, 150);
-  ModFlagIconDelegate* flagDelegate = new ModFlagIconDelegate(this, ModList::COL_FLAGS, 120);
-  ModConflictIconDelegate* conflictFlagDelegate = new ModConflictIconDelegate(this, ModList::COL_CONFLICTFLAGS, 80);
-
-  connect(header(), &QHeaderView::sectionResized, contentDelegate, &GenericIconDelegate::columnResized);
-  connect(header(), &QHeaderView::sectionResized, flagDelegate, &ModFlagIconDelegate::columnResized);
-  connect(header(), &QHeaderView::sectionResized, conflictFlagDelegate, &ModConflictIconDelegate::columnResized);
-
-  setItemDelegateForColumn(ModList::COL_FLAGS, flagDelegate);
-  setItemDelegateForColumn(ModList::COL_CONFLICTFLAGS, conflictFlagDelegate);
-  setItemDelegateForColumn(ModList::COL_CONTENT, contentDelegate);
+  setItemDelegateForColumn(ModList::COL_FLAGS, new ModFlagIconDelegate(this, ModList::COL_FLAGS, 120));
+  setItemDelegateForColumn(ModList::COL_CONFLICTFLAGS, new ModConflictIconDelegate(this, ModList::COL_CONFLICTFLAGS, 80));
+  setItemDelegateForColumn(ModList::COL_CONTENT, new ModContentIconDelegate(this, ModList::COL_CONTENT, 150));
 
   if (m_core->settings().geometry().restoreState(header())) {
     // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
@@ -1116,6 +1109,66 @@ std::vector<ModInfo::EConflictFlag> ModListView::conflictFlags(const QModelIndex
   }
 
   return flags;
+}
+
+std::set<int> ModListView::contents(const QModelIndex& index, bool* includeChildren) const
+{
+  auto modIndex = index.data(ModList::IndexRole);
+  if (!modIndex.isValid()) {
+    return {};
+  }
+  ModInfo::Ptr info = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
+  auto contents = info->getContents();
+  bool children = false;
+
+  if (info->isSeparator()
+    && hasCollapsibleSeparators()
+    && m_core->settings().interface().collapsibleSeparatorsConflicts()
+    && !isExpanded(index.sibling(index.row(), 0))) {
+
+    // combine the child contents
+    std::set eContents(contents.begin(), contents.end());
+    for (int i = 0; i < model()->rowCount(index); ++i) {
+      auto cIndex = model()->index(i, index.column(), index).data(ModList::IndexRole).toInt();
+      auto cContents = ModInfo::getByIndex(cIndex)->getContents();
+      eContents.insert(cContents.begin(), cContents.end());
+    }
+    contents = { eContents.begin(), eContents.end() };
+    children = true;
+  }
+
+  if (includeChildren) {
+    *includeChildren = children;
+  }
+
+  return contents;
+}
+
+QList<QString> ModListView::contentsIcons(const QModelIndex& index, bool* forceCompact) const
+{
+  auto contents = this->contents(index, forceCompact);
+  QList<QString> result;
+  m_core->modDataContents().forEachContentInOrOut(
+    contents,
+    [&result](auto const& content) { result.append(content.icon()); },
+    [&result](auto const&) { result.append(QString()); });
+  return result;
+}
+
+QString ModListView::contentsTooltip(const QModelIndex& index) const
+{
+  auto contents = this->contents(index, nullptr);
+  if (contents.empty()) {
+    return {};
+  }
+  QString result("<table cellspacing=7>");
+  m_core->modDataContents().forEachContentIn(contents, [&result](auto const& content) {
+    result.append(QString("<tr><td><img src=\"%1\" width=32/></td>"
+      "<td valign=\"middle\">%2</td></tr>")
+      .arg(content.icon()).arg(content.name()));
+    });
+  result.append("</table>");
+  return result;
 }
 
 void ModListView::onSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected)

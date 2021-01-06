@@ -5,19 +5,9 @@
 
 using namespace MOBase;
 
-ModFlagIconDelegate::ModFlagIconDelegate(QObject *parent, int logicalIndex, int compactSize)
-  : IconDelegate(parent)
-  , m_LogicalIndex(logicalIndex)
-  , m_CompactSize(compactSize)
-  , m_Compact(false)
+ModFlagIconDelegate::ModFlagIconDelegate(QTreeView* view, int column, int compactSize)
+  : IconDelegate(view, column, compactSize)
 {
-}
-
-void ModFlagIconDelegate::columnResized(int logicalIndex, int, int newSize)
-{
-  if (logicalIndex == m_LogicalIndex) {
-    m_Compact = newSize < m_CompactSize;
-  }
 }
 
 QList<QString> ModFlagIconDelegate::getIconsForFlags(
@@ -44,7 +34,7 @@ QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const
 
   if (modid.isValid()) {
     ModInfo::Ptr info = ModInfo::getByIndex(modid.toInt());
-    return getIconsForFlags(info->getFlags(), m_Compact);
+    return getIconsForFlags(info->getFlags(), compact());
   }
 
   return {};

@@ -173,6 +173,7 @@ protected slots:
 private:
 
   friend class ModConflictIconDelegate;
+  friend class ModContentIconDelegate;
   friend class ModListStyledItemDelegated;
   friend class ModListViewMarkingScrollBar;
 
@@ -198,6 +199,12 @@ private:
   //
   std::vector<ModInfo::EConflictFlag> conflictFlags(
     const QModelIndex& index, bool* forceCompact = nullptr) const;
+
+  // retrieve the content icons and tooltip for the given index
+  //
+  std::set<int> contents(const QModelIndex& index, bool* includeChildren) const;
+  QList<QString> contentsIcons(const QModelIndex& index, bool* forceCompact = nullptr) const;
+  QString contentsTooltip(const QModelIndex& index) const;
 
   // get/set the selected items on the view, this method return/take indices
   // from the mod list model, not the view, so it's safe to restore
