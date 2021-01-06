@@ -155,13 +155,13 @@ signals:
 
 protected:
 
-  virtual void showEvent(QShowEvent *event);
-  virtual void paintEvent(QPaintEvent* event);
-  virtual void closeEvent(QCloseEvent *event);
-  virtual bool eventFilter(QObject *obj, QEvent *event);
-  virtual void resizeEvent(QResizeEvent *event);
-  virtual void dragEnterEvent(QDragEnterEvent *event);
-  virtual void dropEvent(QDropEvent *event);
+  void showEvent(QShowEvent *event) override;
+  void paintEvent(QPaintEvent* event) override;
+  void closeEvent(QCloseEvent *event) override;
+  bool eventFilter(QObject *obj, QEvent *event) override;
+  void resizeEvent(QResizeEvent *event) override;
+  void dragEnterEvent(QDragEnterEvent *event) override;
+  void dropEvent(QDropEvent *event) override;
   void keyReleaseEvent(QKeyEvent *event) override;
 
 private slots:
@@ -304,7 +304,6 @@ private slots:
   void tutorialTriggered();
   void extractBSATriggered(QTreeWidgetItem* item);
 
-  // modlist shortcuts
   void refreshProfile_activated();
 
   void linkToolbar();
