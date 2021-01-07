@@ -183,25 +183,6 @@ bool ModListByPriorityProxy::setData(const QModelIndex& index, const QVariant& v
   return QAbstractProxyModel::setData(index, value, role);
 }
 
-std::pair<bool, bool> ModListByPriorityProxy::dropSeparators(const ModListDropInfo& dropInfo) const
-{
-  bool hasSeparator = false;
-  unsigned int firstRowIndex = -1;
-
-  int firstRowPriority = INT_MAX;
-  for (auto sourceRow : dropInfo.rows()) {
-    hasSeparator = hasSeparator || ModInfo::getByIndex(sourceRow)->isSeparator();
-    if (m_profile->getModPriority(sourceRow) < firstRowPriority) {
-      firstRowIndex = sourceRow;
-      firstRowPriority = m_profile->getModPriority(sourceRow);
-    }
-  }
-
-  bool firstRowSeparator = firstRowIndex != -1 && ModInfo::getByIndex(firstRowIndex)->isSeparator();
-
-  return { hasSeparator, firstRowSeparator };
-}
-
 bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const
 {
   ModListDropInfo dropInfo(data, m_core);
@@ -211,8 +192,19 @@ bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropActi
   }
 
   if (dropInfo.isModDrop()) {
+    bool hasSeparator = false;
+    unsigned int firstRowIndex = -1;
 
-    auto [hasSeparator, firstRowSeparator] = dropSeparators(dropInfo);
+    int firstRowPriority = INT_MAX;
+    for (auto sourceRow : dropInfo.rows()) {
+      hasSeparator = hasSeparator || ModInfo::getByIndex(sourceRow)->isSeparator();
+      if (m_profile->getModPriority(sourceRow) < firstRowPriority) {
+        firstRowIndex = sourceRow;
+        firstRowPriority = m_profile->getModPriority(sourceRow);
+      }
+    }
+
+    bool firstRowSeparator = firstRowIndex != -1 && ModInfo::getByIndex(firstRowIndex)->isSeparator();
 
     // row = -1 and invalid parent means we're dropping onto an item, we don't want to drop
     // separators onto items or items into their own separator

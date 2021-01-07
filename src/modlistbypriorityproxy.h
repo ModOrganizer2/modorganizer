@@ -55,11 +55,6 @@ protected slots:
 
 private:
 
-  // returns a pair of boolean, the first one indicates if the drop info
-  // contains separators, the first one if the first row is a separator
-  //
-  std::pair<bool, bool> dropSeparators(const ModListDropInfo& dropInfo) const;
-
   void buildTree();
 
   struct TreeItem {
