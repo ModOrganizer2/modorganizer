@@ -217,10 +217,8 @@ std::optional<unsigned int> ModListView::nextMod(unsigned int modIndex) const
 
     ModInfo::Ptr mod = ModInfo::getByIndex(modIndex);
 
-    // skip overwrite and backups and separators
-    if (mod->hasFlag(ModInfo::FLAG_OVERWRITE) ||
-      mod->hasFlag(ModInfo::FLAG_BACKUP) ||
-      mod->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+    // skip overwrite, backups and separators
+    if (mod->isOverwrite() || mod->isBackup() || mod->isSeparator()) {
       continue;
     }
 
@@ -246,12 +244,9 @@ std::optional<unsigned int> ModListView::prevMod(unsigned int  modIndex) const
 
     modIndex = index.data(ModList::IndexRole).toInt();
 
-    // skip overwrite and backups and separators
+    // skip overwrite, backups and separators
     ModInfo::Ptr mod = ModInfo::getByIndex(modIndex);
-
-    if (mod->hasFlag(ModInfo::FLAG_OVERWRITE) ||
-      mod->hasFlag(ModInfo::FLAG_BACKUP) ||
-      mod->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+    if (mod->isOverwrite() || mod->isBackup() || mod->isSeparator()) {
       continue;
     }
 
@@ -1078,6 +1073,37 @@ QColor ModListView::markerColor(const QModelIndex& index) const
   }
 
   return QColor();
+}
+
+std::vector<ModInfo::EFlag> ModListView::modFlags(const QModelIndex& index, bool* forceCompact) const
+{
+  ModInfo::Ptr info = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
+
+  auto flags = info->getFlags();
+  bool compact = false;
+  if (info->isSeparator()
+    && hasCollapsibleSeparators()
+    && m_core->settings().interface().collapsibleSeparatorsConflicts()
+    && !isExpanded(index.sibling(index.row(), 0))) {
+
+    // combine the child conflicts
+    std::set eFlags(flags.begin(), flags.end());
+    for (int i = 0; i < model()->rowCount(index); ++i) {
+      auto cIndex = model()->index(i, index.column(), index).data(ModList::IndexRole).toInt();
+      auto cFlags = ModInfo::getByIndex(cIndex)->getFlags();
+      eFlags.insert(cFlags.begin(), cFlags.end());
+    }
+    flags = { eFlags.begin(), eFlags.end() };
+
+    // force compact because there can be a lots of flags here
+    compact = true;
+  }
+
+  if (forceCompact) {
+    *forceCompact = true;
+  }
+
+  return flags;
 }
 
 std::vector<ModInfo::EConflictFlag> ModListView::conflictFlags(const QModelIndex& index, bool* forceCompact) const

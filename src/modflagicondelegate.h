@@ -6,12 +6,14 @@
 #include "icondelegate.h"
 #include "modinfo.h"
 
+class ModListView;
+
 class ModFlagIconDelegate : public IconDelegate
 {
   Q_OBJECT;
 
 public:
-  explicit ModFlagIconDelegate(QTreeView* view, int column = -1, int compactSize = 120);
+  explicit ModFlagIconDelegate(ModListView* view, int column = -1, int compactSize = 120);
   QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 
 protected:
@@ -24,6 +26,9 @@ protected:
   // constructor for color table
   //
   ModFlagIconDelegate() : ModFlagIconDelegate(nullptr) { }
+
+private:
+  ModListView* m_view;
 
 };
 

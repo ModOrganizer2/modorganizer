@@ -173,6 +173,7 @@ protected slots:
 private:
 
   friend class ModConflictIconDelegate;
+  friend class ModFlagIconDelegate;
   friend class ModContentIconDelegate;
   friend class ModListStyledItemDelegated;
   friend class ModListViewMarkingScrollBar;
@@ -194,6 +195,11 @@ private:
   // retrieve the marker color for the given index
   //
   QColor markerColor(const QModelIndex& index) const;
+
+  // retrieve the mod flags for the given index
+  //
+  std::vector<ModInfo::EFlag> modFlags(
+    const QModelIndex& index, bool* forceCompact = nullptr) const;
 
   // retrieve the conflicts flags for the given index
   //

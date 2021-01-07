@@ -1,12 +1,13 @@
 #include "modflagicondelegate.h"
 #include "modlist.h"
+#include "modlistview.h"
 #include <log.h>
 #include <QList>
 
 using namespace MOBase;
 
-ModFlagIconDelegate::ModFlagIconDelegate(QTreeView* view, int column, int compactSize)
-  : IconDelegate(view, column, compactSize)
+ModFlagIconDelegate::ModFlagIconDelegate(ModListView* view, int column, int compactSize)
+  : IconDelegate(view, column, compactSize), m_view(view)
 {
 }
 
@@ -33,8 +34,9 @@ QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const
   QVariant modid = index.data(ModList::IndexRole);
 
   if (modid.isValid()) {
-    ModInfo::Ptr info = ModInfo::getByIndex(modid.toInt());
-    return getIconsForFlags(info->getFlags(), compact());
+    bool compact;
+    auto flags = m_view->modFlags(index, &compact);
+    return getIconsForFlags(flags, compact || this->compact());
   }
 
   return {};
