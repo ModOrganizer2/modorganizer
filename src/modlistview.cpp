@@ -1311,6 +1311,30 @@ void ModListView::timerEvent(QTimerEvent* event)
   }
 }
 
+void ModListView::mousePressEvent(QMouseEvent* event)
+{
+  // we call the parent class first so that we can use the actual
+  // selection state of the item after
+  QTreeView::mousePressEvent(event);
+
+  const auto index = indexAt(event->pos());
+
+  if (event->isAccepted()
+    && hasCollapsibleSeparators()
+    && index.isValid() && model()->hasChildren(indexAt(event->pos()))
+    && (event->modifiers() & Qt::AltModifier)) {
+
+    const auto flag = selectionModel()->isSelected(index) ?
+      QItemSelectionModel::Select : QItemSelectionModel::Deselect;
+    const bool expanded = isExpanded(index);
+    const QItemSelection selection(
+      model()->index(0, index.column(), index),
+      model()->index(model()->rowCount(index) - 1, index.column(), index));
+    selectionModel()->select(selection, flag | QItemSelectionModel::Rows);
+    setExpanded(index, expanded);
+  }
+}
+
 bool ModListView::event(QEvent* event)
 {
   if (event->type() == QEvent::KeyPress
