@@ -169,7 +169,6 @@ protected slots:
 
   void onCustomContextMenuRequested(const QPoint& pos);
   void onDoubleClicked(const QModelIndex& index);
-  void onSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
   void onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>& filters);
 
 private:
@@ -183,6 +182,11 @@ private:
   void onModPrioritiesChanged(const QModelIndexList& indices);
   void onModInstalled(const QString& modName);
   void onModFilterActive(bool filterActive);
+
+  // refresh the overwrite markers and the highligthed plugins from
+  // the current selection
+  //
+  void refreshMarkersAndPlugins();
 
   // clear overwrite markers (without repainting)
   //
@@ -266,6 +270,10 @@ private:
   ModListByPriorityProxy* m_byPriorityProxy;
   QtGroupingProxy* m_byCategoryProxy;
   QtGroupingProxy* m_byNexusIdProxy;
+
+  // marker used to avoid calling refreshing markers to many
+  // time in a row
+  QTimer m_refreshMarkersTimer;
 
   // maintain collapsed items for each proxy to avoid
   // losing them on model reset

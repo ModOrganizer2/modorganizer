@@ -138,6 +138,14 @@ ModListView::ModListView(QWidget* parent)
   connect(this, &ModListView::doubleClicked, this, &ModListView::onDoubleClicked);
   connect(this, &ModListView::customContextMenuRequested, this, &ModListView::onCustomContextMenuRequested);
 
+  // the timeout is pretty small because its main purpose is to avoid
+  // refreshing multiple times when calling expandAll() or collapseAll()
+  // which emit a lots of expanded/collapsed signals in a very small
+  // time window
+  m_refreshMarkersTimer.setInterval(50);
+  m_refreshMarkersTimer.setSingleShot(true);
+  connect(&m_refreshMarkersTimer, &QTimer::timeout, [=] { refreshMarkersAndPlugins(); });
+
   installEventFilter(new CopyEventFilter(this, [=](auto& index) {
     QVariant mIndex = index.data(ModList::IndexRole);
     QString name = index.data(Qt::DisplayRole).toString();
@@ -432,8 +440,8 @@ void ModListView::onModInstalled(const QString& modName)
 
   QModelIndex qIndex = indexModelToView(m_core->modList()->index(index, 0));
 
-  if (hasCollapsibleSeparators()) {
-    setExpanded(qIndex, true);
+  if (hasCollapsibleSeparators() && qIndex.parent().isValid()) {
+    setExpanded(qIndex.parent(), true);
   }
 
   // focus, scroll to and select
@@ -777,7 +785,9 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   });
   connect(m_core->modList(), &ModList::externalFolderDropped, this, &ModListView::onExternalFolderDropped);
 
-  connect(selectionModel(), &QItemSelectionModel::selectionChanged, this, &ModListView::onSelectionChanged);
+  connect(selectionModel(), &QItemSelectionModel::selectionChanged, [=] { m_refreshMarkersTimer.start(); });
+  connect(this, &QTreeView::collapsed, [=] { m_refreshMarkersTimer.start(); });
+  connect(this, &QTreeView::expanded, [=] { m_refreshMarkersTimer.start(); });
 
   // filters
   connect(m_sortProxy, &ModListSortProxy::filterActive, this, &ModListView::onModFilterActive);
@@ -974,6 +984,34 @@ void ModListView::setOverwriteMarkers(const QModelIndexList& indexes)
   dataChanged(model()->index(0, 0), model()->index(model()->rowCount(), model()->columnCount()));
   verticalScrollBar()->repaint();
 }
+
+void ModListView::refreshMarkersAndPlugins()
+{
+  QModelIndexList indexes = selectionModel()->selectedRows();
+
+  if (m_core->settings().interface().collapsibleSeparatorsConflicts()) {
+    for (auto& idx : selectionModel()->selectedRows()) {
+      if (hasCollapsibleSeparators()
+        && model()->hasChildren(idx)
+        && !isExpanded(idx)) {
+        for (int i = 0; i < model()->rowCount(idx); ++i) {
+          indexes.append(model()->index(i, idx.column(), idx));
+        }
+      }
+    }
+  }
+
+  setOverwriteMarkers(indexes);
+
+  // highligth plugins
+  std::vector<unsigned int> modIndices;
+  for (auto& idx : indexes) {
+    modIndices.push_back(idx.data(ModList::IndexRole).toInt());
+  }
+  m_core->pluginList()->highlightPlugins(modIndices, *m_core->directoryStructure());
+  ui.pluginList->verticalScrollBar()->repaint();
+}
+
 
 void ModListView::setHighlightedMods(const std::vector<unsigned int>& pluginIndices)
 {
@@ -1176,41 +1214,6 @@ QString ModListView::contentsTooltip(const QModelIndex& index) const
   return result;
 }
 
-void ModListView::onSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
-{
-  if (hasCollapsibleSeparators()) {
-    for (auto& idx : selected.indexes()) {
-      if (idx.parent().isValid() && !isExpanded(idx.parent())) {
-        setExpanded(idx.parent(), true);
-      }
-    }
-  }
-
-  QModelIndexList indexes = selectionModel()->selectedRows();
-
-  if (m_core->settings().interface().collapsibleSeparatorsConflicts()) {
-    for (auto& idx : selectionModel()->selectedRows()) {
-      if (hasCollapsibleSeparators()
-        && model()->hasChildren(idx)
-        && !isExpanded(idx)) {
-        for (int i = 0; i < model()->rowCount(idx); ++i) {
-          indexes.append(model()->index(i, idx.column(), idx));
-        }
-      }
-    }
-  }
-
-  setOverwriteMarkers(indexes);
-
-  // highligth plugins
-  std::vector<unsigned int> modIndices;
-  for (auto& idx : indexes) {
-    modIndices.push_back(idx.data(ModList::IndexRole).toInt());
-  }
-  m_core->pluginList()->highlightPlugins(modIndices, *m_core->directoryStructure());
-  ui.pluginList->verticalScrollBar()->repaint();
-}
-
 void ModListView::onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>& criteria)
 {
   setFilterCriteria(criteria);
@@ -1319,12 +1322,10 @@ void ModListView::mousePressEvent(QMouseEvent* event)
 
     const auto flag = selectionModel()->isSelected(index) ?
       QItemSelectionModel::Select : QItemSelectionModel::Deselect;
-    const bool expanded = isExpanded(index);
     const QItemSelection selection(
       model()->index(0, index.column(), index),
       model()->index(model()->rowCount(index) - 1, index.column(), index));
     selectionModel()->select(selection, flag | QItemSelectionModel::Rows);
-    setExpanded(index, expanded);
   }
 }
 
