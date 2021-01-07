@@ -1295,10 +1295,18 @@ void ModListView::dragMoveEvent(QDragMoveEvent* event)
 
 void ModListView::dropEvent(QDropEvent* event)
 {
+  // from Qt source
+  QModelIndex index;
+  if (viewport()->rect().contains(event->pos())) {
+    index = indexAt(event->pos());
+    if (!index.isValid() || !visualRect(index).contains(event->pos()))
+      index = QModelIndex();
+  }
+
   // this event is used by the byPriorityProxy to know if allow
   // dropping mod between a separator and its first mod (there
   // is no way to deduce this except using dropIndicatorPosition())
-  emit dropEntered(event->mimeData(), static_cast<DropPosition>(dropIndicatorPosition()));
+  emit dropEntered(event->mimeData(), isExpanded(index), static_cast<DropPosition>(dropIndicatorPosition()));
 
   // see selectedIndexes()
   m_inDragMoveEvent = true;

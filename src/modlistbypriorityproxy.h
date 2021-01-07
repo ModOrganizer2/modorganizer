@@ -16,6 +16,7 @@
 #include "modlistview.h"
 
 class ModList;
+class ModListDropInfo;
 class Profile;
 
 class ModListByPriorityProxy : public QAbstractProxyModel
@@ -46,13 +47,18 @@ public:
 
 public slots:
 
-  void onDropEnter(const QMimeData* data, ModListView::DropPosition dropPosition);
+  void onDropEnter(const QMimeData* data, bool dropExpanded, ModListView::DropPosition dropPosition);
 
 protected slots:
 
   void modelDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles = QVector<int>());
 
 private:
+
+  // returns a pair of boolean, the first one indicates if the drop info
+  // contains separators, the first one if the first row is a separator
+  //
+  std::pair<bool, bool> dropSeparators(const ModListDropInfo& dropInfo) const;
 
   void buildTree();
 
@@ -83,6 +89,8 @@ private:
 private:
   OrganizerCore& m_core;
   Profile* m_profile;
+
+  bool m_dropExpanded = false;
   ModListView::DropPosition m_dropPosition = ModListView::DropPosition::OnItem;
 };
 

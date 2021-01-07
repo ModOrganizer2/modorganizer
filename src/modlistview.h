@@ -90,8 +90,14 @@ public:
 
 signals:
 
+  // emitted for dragEnter events
+  //
   void dragEntered(const QMimeData* mimeData);
-  void dropEntered(const QMimeData* mimeData, DropPosition position);
+
+  // emitted for dropEnter events, the boolean indicates if the drop target
+  // is expanded and the position of the indicator
+  //
+  void dropEntered(const QMimeData* mimeData, bool dropExpanded, DropPosition position);
 
 public slots:
 
