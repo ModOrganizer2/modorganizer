@@ -1333,11 +1333,56 @@ void ModListView::timerEvent(QTimerEvent* event)
 
 void ModListView::mousePressEvent(QMouseEvent* event)
 {
+  // disable edit if Alt is pressed
+  auto triggers = editTriggers();
+  if (event->modifiers() & Qt::AltModifier) {
+    setEditTriggers(NoEditTriggers);
+  }
+
   // we call the parent class first so that we can use the actual
   // selection state of the item after
   QTreeView::mousePressEvent(event);
 
+  // restore triggers
+  setEditTriggers(triggers);
+
   const auto index = indexAt(event->pos());
+
+  if (event->isAccepted()
+    && hasCollapsibleSeparators()
+    && index.isValid() && model()->hasChildren(indexAt(event->pos()))
+    && (event->modifiers() & Qt::AltModifier)) {
+
+    const auto flag = selectionModel()->isSelected(index) ?
+      QItemSelectionModel::Select : QItemSelectionModel::Deselect;
+    const QItemSelection selection(
+      model()->index(0, index.column(), index),
+      model()->index(model()->rowCount(index) - 1, index.column(), index));
+    selectionModel()->select(selection, flag | QItemSelectionModel::Rows);
+  }
+}
+
+void ModListView::mouseReleaseEvent(QMouseEvent* event)
+{
+  // this is a duplicate of mousePressEvent because for some reason
+  // the selection is not always triggered in mousePressEvent and only
+  // doing it here create a small lag between the selection of the
+  // separator and the children
+
+  // disable edit if Alt is pressed
+  auto triggers = editTriggers();
+  if (event->modifiers() & Qt::AltModifier) {
+    setEditTriggers(NoEditTriggers);
+  }
+
+  // we call the parent class first so that we can use the actual
+  // selection state of the item after
+  QTreeView::mouseReleaseEvent(event);
+
+  const auto index = indexAt(event->pos());
+
+  // restore triggers
+  setEditTriggers(triggers);
 
   if (event->isAccepted()
     && hasCollapsibleSeparators()

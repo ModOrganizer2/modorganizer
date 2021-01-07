@@ -165,6 +165,7 @@ protected:
   void dragMoveEvent(QDragMoveEvent* event) override;
   void dropEvent(QDropEvent* event) override;
   void mousePressEvent(QMouseEvent* event) override;
+  void mouseReleaseEvent(QMouseEvent* event) override;
   bool event(QEvent* event) override;
 
 protected slots:
