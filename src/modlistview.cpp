@@ -417,7 +417,7 @@ void ModListView::onModPrioritiesChanged(const QModelIndexList& indices)
       }
       // update conflict check on the moved mod
       modInfo->doConflictCheck();
-      setOverwriteMarkers(modInfo);
+      setOverwriteMarkers(selectionModel()->selectedRows());
     }
   }
 }
@@ -682,7 +682,8 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   m_actions = new ModListViewActions(core, *m_filters, factory, this, mwui->espList, mw);
   ui = {
     mwui->groupCombo, mwui->activeModsCounter, mwui->modFilterEdit,
-    mwui->currentCategoryLabel, mwui->clearFiltersButton, mwui->filtersSeparators
+    mwui->currentCategoryLabel, mwui->clearFiltersButton, mwui->filtersSeparators,
+    mwui->espList
   };
 
   connect(m_core, &OrganizerCore::modInstalled, [=](auto&& name) { onModInstalled(name); });
@@ -764,16 +765,6 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
 
     header()->setSectionResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
   }
-
-  // highligth plugins
-  connect(selectionModel(), &QItemSelectionModel::selectionChanged, [=](auto&& selected) {
-    std::vector<unsigned int> modIndices;
-    for (auto& idx : selectionModel()->selectedRows()) {
-      modIndices.push_back(idx.data(ModList::IndexRole).toInt());
-    }
-    m_core->pluginList()->highlightPlugins(modIndices, *m_core->directoryStructure());
-    mwui->espList->verticalScrollBar()->repaint();
-  });
 
   // prevent the name-column from being hidden
   header()->setSectionHidden(ModList::COL_NAME, false);
@@ -962,35 +953,23 @@ void ModListView::clearOverwriteMarkers()
   m_markers.archiveLooseOverwritten.clear();
 }
 
-void ModListView::setOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten)
+void ModListView::setOverwriteMarkers(const QModelIndexList& indexes)
 {
-  m_markers.overwrite = overwrite;
-  m_markers.overwritten = overwritten;
-}
-
-void ModListView::setArchiveOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten)
-{
-  m_markers.archiveOverwrite = overwrite;
-  m_markers.archiveOverwritten = overwritten;
-}
-
-void ModListView::setArchiveLooseOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten)
-{
-  m_markers.archiveLooseOverwrite = overwrite;
-  m_markers.archiveLooseOverwritten = overwritten;
-}
-
-void ModListView::setOverwriteMarkers(ModInfo::Ptr mod)
-{
-  if (mod) {
-    setOverwriteMarkers(mod->getModOverwrite(), mod->getModOverwritten());
-    setArchiveOverwriteMarkers(mod->getModArchiveOverwrite(), mod->getModArchiveOverwritten());
-    setArchiveLooseOverwriteMarkers(mod->getModArchiveLooseOverwrite(), mod->getModArchiveLooseOverwritten());
-  }
-  else {
-    setOverwriteMarkers({}, {});
-    setArchiveOverwriteMarkers({}, {});
-    setArchiveLooseOverwriteMarkers({}, {});
+  const auto insert = [](auto& dest, const auto& from) {
+    dest.insert(from.begin(), from.end());
+  };
+  clearOverwriteMarkers();
+  for (auto& idx : indexes) {
+    auto mIndex = idx.data(ModList::IndexRole);
+    if (mIndex.isValid()) {
+      auto info = ModInfo::getByIndex(mIndex.toInt());
+      insert(m_markers.overwrite, info->getModOverwrite());
+      insert(m_markers.overwritten, info->getModOverwritten());
+      insert(m_markers.archiveOverwrite, info->getModArchiveOverwrite());
+      insert(m_markers.archiveOverwritten, info->getModArchiveOverwritten());
+      insert(m_markers.archiveLooseOverwrite, info->getModArchiveLooseOverwrite());
+      insert(m_markers.archiveLooseOverwritten, info->getModArchiveLooseOverwritten());
+    }
   }
   dataChanged(model()->index(0, 0), model()->index(model()->rowCount(), model()->columnCount()));
   verticalScrollBar()->repaint();
@@ -1207,15 +1186,29 @@ void ModListView::onSelectionChanged(const QItemSelection& selected, const QItem
     }
   }
 
-  if (selected.count()) {
-    auto index = selected.indexes().last();
-    ModInfo::Ptr selectedMod = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
-    setOverwriteMarkers(selectedMod);
-  }
-  else {
-    setOverwriteMarkers(nullptr);
+  QModelIndexList indexes = selectionModel()->selectedRows();
+
+  if (m_core->settings().interface().collapsibleSeparatorsConflicts()) {
+    for (auto& idx : selectionModel()->selectedRows()) {
+      if (hasCollapsibleSeparators()
+        && model()->hasChildren(idx)
+        && !isExpanded(idx)) {
+        for (int i = 0; i < model()->rowCount(idx); ++i) {
+          indexes.append(model()->index(i, idx.column(), idx));
+        }
+      }
+    }
   }
 
+  setOverwriteMarkers(indexes);
+
+  // highligth plugins
+  std::vector<unsigned int> modIndices;
+  for (auto& idx : indexes) {
+    modIndices.push_back(idx.data(ModList::IndexRole).toInt());
+  }
+  m_core->pluginList()->highlightPlugins(modIndices, *m_core->directoryStructure());
+  ui.pluginList->verticalScrollBar()->repaint();
 }
 
 void ModListView::onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>& criteria)

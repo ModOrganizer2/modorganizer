@@ -23,6 +23,7 @@ class MainWindow;
 class Profile;
 class ModListByPriorityProxy;
 class ModListViewActions;
+class PluginListView;
 
 class ModListView : public QTreeView
 {
@@ -183,15 +184,14 @@ private:
   void onModInstalled(const QString& modName);
   void onModFilterActive(bool filterActive);
 
-  // overwrite markers
-  void clearOverwriteMarkers();
-  void setOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten);
-  void setArchiveOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten);
-  void setArchiveLooseOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten);
-
-  // set overwrite markers from the mod and repaint (if mod is nullptr, clear overwrite and repaint)
+  // clear overwrite markers (without repainting)
   //
-  void setOverwriteMarkers(ModInfo::Ptr mod);
+  void clearOverwriteMarkers();
+
+  // set overwrite markers from the mod in the given list and repaint (if the list
+  // is empty, clear overwrite and repaint)
+  //
+  void setOverwriteMarkers(const QModelIndexList& indexes);
 
   // retrieve the marker color for the given index
   //
@@ -251,6 +251,9 @@ private:
     QLabel* currentCategory;
     QPushButton* clearFilters;
     QComboBox* filterSeparators;
+
+    // the plugin list (for highligths)
+    PluginListView* pluginList;
   };
 
   OrganizerCore* m_core;

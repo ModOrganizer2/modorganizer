@@ -868,46 +868,35 @@ public: // Nexus stuff
 
 public: // Conflicts
 
-  /**
-   * @return retrieve list of mods (as mod index) that are overwritten by this one.
-   *    Updates may be delayed.
-   */
-  virtual std::set<unsigned int> getModOverwrite() const {
-    return std::set<unsigned int>(); }
+  // retrieve the list of mods (as mod index) that are overwritten by this one.
+  // Updates may be delayed.
+  //
+  virtual const std::set<unsigned int>& getModOverwrite() const { return s_EmptySet; }
 
-  /**
-   * @return list of mods (as mod index) that overwrite this one. Updates may be delayed.
-   */
-  virtual std::set<unsigned int> getModOverwritten() const {
-    return std::set<unsigned int>(); }
+  // retrieve the list of mods (as mod index) that overwrite this one.
+  // Updates may be delayed.
+  //
+  virtual const std::set<unsigned int>& getModOverwritten() const { return s_EmptySet; }
 
-  /**
-   * @return retrieve list of mods (as mod index) with archives that are overwritten by
-   *     this one. Updates may be delayed
-   */
-  virtual std::set<unsigned int> getModArchiveOverwrite() const {
-    return std::set<unsigned int>(); }
+  // retrieve the list of mods (as mod index) with archives that are overwritten by
+  // this one. Updates may be delayed
+  //
+  virtual const std::set<unsigned int>& getModArchiveOverwrite() const { return s_EmptySet; }
 
-  /**
-   * @return list of mods (as mod index) with archives that overwrite this one. Updates
-   *     may be delayed.
-   */
-  virtual std::set<unsigned int> getModArchiveOverwritten() const {
-    return std::set<unsigned int>(); }
+  // retrieve the list of mods (as mod index) with archives that overwrite this one. Updates
+  // may be delayed.
+  //
+  virtual const std::set<unsigned int>& getModArchiveOverwritten() const { return s_EmptySet; }
 
-  /**
-   * @return the list of mods (as mod index) with archives that are overwritten by loose
-   *     files of this mod. Updates may be delayed.
-   */
-  virtual std::set<unsigned int> getModArchiveLooseOverwrite() const {
-    return std::set<unsigned int>(); }
+  // retrieve the list of mods (as mod index) with archives that are overwritten by loose
+  // files of this mod. Updates may be delayed.
+  //
+  virtual const std::set<unsigned int>& getModArchiveLooseOverwrite() const { return s_EmptySet; }
 
-  /**
-   * @return the list of mods (as mod index) with loose files that overwrite this one's
-   *     archive files. Updates may be delayed.
-   */
-  virtual std::set<unsigned int> getModArchiveLooseOverwritten() const {
-    return std::set<unsigned int>(); }
+  // retrieve the list of mods (as mod index) with loose files that overwrite this one's
+  // archive files. Updates may be delayed.
+  //
+  virtual const std::set<unsigned int>& getModArchiveLooseOverwritten() const { return s_EmptySet; }
 
   /**
    * @brief Update conflict information.
@@ -959,6 +948,10 @@ protected:
   std::set<int> m_Categories;
   MOBase::VersionInfo m_Version;
   bool m_PluginSelected = false;
+
+  // empty set that can be returned in overwrite functions by
+  // default
+  static const std::set<unsigned int> s_EmptySet;
 
 protected:
 

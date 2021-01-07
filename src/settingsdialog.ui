@@ -318,13 +318,13 @@ If you disable this feature, MO will only display official DLCs this way. Please
                <item>
                 <widget class="QCheckBox" name="collapsibleSeparatorsConflictsBox">
                  <property name="toolTip">
-                  <string>Display mod conflicts on separator when collapsed.</string>
+                  <string>Display mod conflicts on and from separator when collapsed, and show plugins from collapsed separators.</string>
                  </property>
                  <property name="whatsThis">
-                  <string>Display mod conflicts on separator when collapsed.</string>
+                  <string>Display mod conflicts on and from separator when collapsed, and show plugins from collapsed separators.</string>
                  </property>
                  <property name="text">
-                  <string>Show conflicts on separators</string>
+                  <string>Show conflicts and plugins on separators and from separators</string>
                  </property>
                  <property name="checked">
                   <bool>true</bool>
