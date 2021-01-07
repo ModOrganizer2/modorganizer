@@ -65,8 +65,18 @@ public:
   {
   }
 
-  void drawPrimitive(PrimitiveElement element, const QStyleOption* option, QPainter* painter, const QWidget* widget) const {
+  void drawPrimitive(
+    PrimitiveElement element, const QStyleOption* option,
+    QPainter* painter, const QWidget* widget) const override
+  {
     if (element == QStyle::PE_IndicatorItemViewItemDrop) {
+
+      // 0. Fix a bug that made the drop indicator sometimes appear on top
+      // of the mod list when selecting a mod.
+      if (option->rect.height() == 0
+        && option->rect.bottomRight() == QPoint(-1, -1)) {
+        return;
+      }
 
       // 1. full-width drop indicator
       QRect rect(option->rect);
