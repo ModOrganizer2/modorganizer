@@ -57,10 +57,6 @@ public:
   void restoreState(const Settings& s);
   void saveState(Settings& s) const;
 
-  // set the current profile
-  //
-  void setProfile(Profile* profile);
-
   // check if collapsible separators are currently used
   //
   bool hasCollapsibleSeparators() const;
@@ -170,6 +166,7 @@ protected slots:
   void onCustomContextMenuRequested(const QPoint& pos);
   void onDoubleClicked(const QModelIndex& index);
   void onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>& filters);
+  void onProfileChanged(Profile* oldProfile, Profile* newProfile);
 
 private:
 

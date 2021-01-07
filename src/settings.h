@@ -631,6 +631,11 @@ public:
   bool collapsibleSeparatorsConflicts() const;
   void setCollapsibleSeparatorsConflicts(bool b);
 
+  // whether each profile should have its own expansion state
+  //
+  bool collapsibleSeparatorsPerProfile() const;
+  void setCollapsibleSeparatorsPerProfile(bool b);
+
   // whether to save/restore filter states between runs
   //
   bool saveFilters() const;

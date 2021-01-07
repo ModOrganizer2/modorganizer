@@ -331,6 +331,19 @@ If you disable this feature, MO will only display official DLCs this way. Please
                  </property>
                 </widget>
                </item>
+               <item>
+                <widget class="QCheckBox" name="collapsibleSeparatorsPerProfileBox">
+                 <property name="toolTip">
+                  <string>Do not share the collapse/expanded state of separators between profiles.</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>Do not share the collapse/expanded state of separators between profiles.</string>
+                 </property>
+                 <property name="text">
+                  <string>Profile-specific collapse states for separators</string>
+                 </property>
+                </widget>
+               </item>
               </layout>
              </widget>
             </item>

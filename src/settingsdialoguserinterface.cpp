@@ -15,6 +15,7 @@ UserInterfaceSettingsTab::UserInterfaceSettingsTab(Settings& s, SettingsDialog& 
   // connect before setting to trigger
   QObject::connect(ui->collapsibleSeparatorsBox, &QGroupBox::toggled, [=](auto&& on) {
     ui->collapsibleSeparatorsConflictsBox->setEnabled(on);
+    ui->collapsibleSeparatorsPerProfileBox->setEnabled(on);
   });
 
   // mod list
@@ -22,6 +23,7 @@ UserInterfaceSettingsTab::UserInterfaceSettingsTab(Settings& s, SettingsDialog& 
   ui->colorSeparatorsBox->setChecked(settings().colors().colorSeparatorScrollbar());
   ui->collapsibleSeparatorsConflictsBox->setChecked(settings().interface().collapsibleSeparatorsConflicts());
   ui->collapsibleSeparatorsBox->setChecked(settings().interface().collapsibleSeparators());
+  ui->collapsibleSeparatorsPerProfileBox->setChecked(settings().interface().collapsibleSeparatorsPerProfile());
   ui->saveFiltersBox->setChecked(settings().interface().saveFilters());
 
   // download list
@@ -42,6 +44,7 @@ void UserInterfaceSettingsTab::update()
   settings().interface().setDisplayForeign(ui->displayForeignBox->isChecked());
   settings().interface().setCollapsibleSeparators(ui->collapsibleSeparatorsBox->isChecked());
   settings().interface().setCollapsibleSeparatorsConflicts(ui->collapsibleSeparatorsConflictsBox->isChecked());
+  settings().interface().setCollapsibleSeparatorsPerProfile(ui->collapsibleSeparatorsPerProfileBox->isChecked());
   settings().interface().setSaveFilters(ui->saveFiltersBox->isChecked());
 
   // download list

@@ -167,10 +167,24 @@ void ModListView::refresh()
   updateGroupByProxy();
 }
 
-void ModListView::setProfile(Profile* profile)
+void ModListView::onProfileChanged(Profile* oldProfile, Profile* newProfile)
 {
-  m_sortProxy->setProfile(profile);
-  m_byPriorityProxy->setProfile(profile);
+  const auto perProfileSeparators =
+    m_core->settings().interface().collapsibleSeparatorsPerProfile();
+
+  // save expanded/collapsed state of separators
+  if (oldProfile && perProfileSeparators) {
+    auto& collapsed = m_collapsed[m_byPriorityProxy];
+    oldProfile->storeSetting("UserInterface", "collapsed_separators", QStringList(collapsed.begin(), collapsed.end()));
+  }
+
+  m_sortProxy->setProfile(newProfile);
+  m_byPriorityProxy->setProfile(newProfile);
+
+  if (newProfile && perProfileSeparators) {
+    auto collapsed = newProfile->setting("UserInterface", "collapsed_separators", QStringList()).toStringList();
+    m_collapsed[m_byPriorityProxy] = { collapsed.begin(), collapsed.end() };
+  }
 }
 
 bool ModListView::hasCollapsibleSeparators() const
@@ -694,7 +708,9 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
     mwui->espList
   };
 
+
   connect(m_core, &OrganizerCore::modInstalled, [=](auto&& name) { onModInstalled(name); });
+  connect(m_core, &OrganizerCore::profileChanged, this, &ModListView::onProfileChanged);
   connect(core.modList(), &ModList::modPrioritiesChanged, [=](auto&& indices) { onModPrioritiesChanged(indices); });
   connect(core.modList(), &ModList::clearOverwrite, [=] { m_actions->clearOverwrite(); });
   connect(core.modList(), &ModList::modStatesChanged, [=] { updateModCount(); });

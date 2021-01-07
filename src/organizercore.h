@@ -406,6 +406,13 @@ signals:
 
   void close();
 
+  // emitted when the profile is changed, before notifying plugins
+  //
+  // the new profile can be stored but the old one is temporary and
+  // should not be
+  //
+  void profileChanged(Profile* oldProfile, Profile* newProfile);
+
   // Notify that the directory structure is ready to be used on the main thread
   // Use queued connections
   void directoryStructureReady();

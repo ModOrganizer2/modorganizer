@@ -602,6 +602,7 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
 
   m_CurrentProfile->debugDump();
 
+  emit profileChanged(oldProfile.get(), m_CurrentProfile.get());
   m_ProfileChanged(oldProfile.get(), m_CurrentProfile.get());
 }
 

@@ -2195,6 +2195,16 @@ void InterfaceSettings::setCollapsibleSeparatorsConflicts(bool b)
   set(m_Settings, "Settings", "collapsible_separators_conflicts", b);
 }
 
+bool InterfaceSettings::collapsibleSeparatorsPerProfile() const
+{
+  return get<bool>(m_Settings, "Settings", "collapsible_separators_per_profile", false);
+}
+
+void InterfaceSettings::setCollapsibleSeparatorsPerProfile(bool b)
+{
+  set(m_Settings, "Settings", "collapsible_separators_per_profile", b);
+}
+
 bool InterfaceSettings::saveFilters() const
 {
   return get<bool>(m_Settings, "Settings", "save_filters", false);
