@@ -82,18 +82,29 @@ public:
     if (!color.isValid()) {
       color = index.data(Qt::BackgroundRole).value<QColor>();
     }
-    else {
-      // disable alternating row if the color is from the children
-      opt.features &= ~QStyleOptionViewItem::Alternate;
-    }
     opt.backgroundBrush = color;
+
+    // we need to find the background color to compute the ideal text color
+    // but the mod list view uses alternate color so we need to find the
+    // right color
+    auto bg = opt.palette.base().color();
+    auto vrow = (opt.rect.y() - m_view->verticalOffset()) / opt.rect.height();
+    if (vrow % 2 == 1) {
+      bg = opt.palette.alternateBase().color();
+    }
 
     // compute ideal foreground color for some rows
     if (color.isValid()) {
       if ((index.column() == ModList::COL_NAME
         && ModInfo::getByIndex(index.data(ModList::IndexRole).toInt())->isSeparator())
         || index.column() == ModList::COL_NOTES) {
-        opt.palette.setBrush(QPalette::Text, ColorSettings::idealTextColor(color));
+
+        // combine the color with the background and then find the "ideal" text color
+        const auto a = color.alpha() / 255.;
+        int r = (1 - a) * bg.red() + a * color.red(),
+          g = (1 - a) * bg.green() + a * color.green(),
+          b = (1 - a) * bg.blue() + a * color.blue();
+        opt.palette.setBrush(QPalette::Text, ColorSettings::idealTextColor(QColor(r, g, b)));
       }
     }
 

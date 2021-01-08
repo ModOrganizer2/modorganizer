@@ -1326,12 +1326,12 @@ void ColorSettings::setColorSeparatorScrollbar(bool b)
 
 QColor ColorSettings::idealTextColor(const QColor& rBackgroundColor)
 {
-  if (rBackgroundColor.alpha() == 0)
+  if (rBackgroundColor.alpha() < 50)
     return QColor(Qt::black);
 
-  const int THRESHOLD = 106 * 255.0f / rBackgroundColor.alpha();
-  int BackgroundDelta = (rBackgroundColor.red() * 0.299) + (rBackgroundColor.green() * 0.587) + (rBackgroundColor.blue() * 0.114);
-  return QColor((255 - BackgroundDelta <= THRESHOLD) ? Qt::black : Qt::white);
+  // "inverse' of luminance of the background
+  int iLuminance = (rBackgroundColor.red() * 0.299) + (rBackgroundColor.green() * 0.587) + (rBackgroundColor.blue() * 0.114);
+  return QColor(iLuminance >= 128 ? Qt::black : Qt::white);
 }
 
 
