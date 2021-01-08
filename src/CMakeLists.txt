@@ -151,6 +151,7 @@ add_filter(NAME src/modlist/view GROUPS
 	modflagicondelegate
 	modcontenticondelegate
 	modconflicticondelegate
+	modlistversiondelegate
 )
 
 add_filter(NAME src/plugins GROUPS

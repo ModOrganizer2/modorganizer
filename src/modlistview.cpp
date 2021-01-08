@@ -19,6 +19,7 @@
 #include "modflagicondelegate.h"
 #include "modconflicticondelegate.h"
 #include "modcontenticondelegate.h"
+#include "modlistversiondelegate.h"
 #include "modlistviewactions.h"
 #include "modlistdropinfo.h"
 #include "modlistcontextmenu.h"
@@ -776,6 +777,7 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   setItemDelegateForColumn(ModList::COL_FLAGS, new ModFlagIconDelegate(this, ModList::COL_FLAGS, 120));
   setItemDelegateForColumn(ModList::COL_CONFLICTFLAGS, new ModConflictIconDelegate(this, ModList::COL_CONFLICTFLAGS, 80));
   setItemDelegateForColumn(ModList::COL_CONTENT, new ModContentIconDelegate(this, ModList::COL_CONTENT, 150));
+  setItemDelegateForColumn(ModList::COL_VERSION, new ModListVersionDelegate(this));
 
   if (m_core->settings().geometry().restoreState(header())) {
     // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
