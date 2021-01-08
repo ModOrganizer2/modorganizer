@@ -49,6 +49,8 @@ void IconDelegate::paintIcons(
   int iconWidth = icons.size() > 0 ? ((option.rect.width() / icons.size()) - 4) : 16;
   iconWidth = std::min(16, iconWidth);
 
+  const int margin = (option.rect.height() - iconWidth) / 2;
+
   painter->translate(option.rect.topLeft());
   for (const QString &iconId : icons) {
     if (iconId.isEmpty()) {
@@ -64,7 +66,7 @@ void IconDelegate::paintIcons(
       }
       QPixmapCache::insert(fullIconId, icon);
     }
-    painter->drawPixmap(x, 2, iconWidth, iconWidth, icon);
+    painter->drawPixmap(x, margin, iconWidth, iconWidth, icon);
     x += iconWidth + 4;
   }
 
@@ -79,6 +81,7 @@ void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
   else {
     QStyledItemDelegate::paint(painter, option, index);
   }
+
   paintIcons(painter, option, index, getIcons(index));
 }
 
