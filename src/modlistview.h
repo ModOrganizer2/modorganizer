@@ -180,7 +180,7 @@ private:
   friend class ModConflictIconDelegate;
   friend class ModFlagIconDelegate;
   friend class ModContentIconDelegate;
-  friend class ModListStyledItemDelegated;
+  friend class ModListStyledItemDelegate;
   friend class ModListViewMarkingScrollBar;
 
   void onModPrioritiesChanged(const QModelIndexList& indices);

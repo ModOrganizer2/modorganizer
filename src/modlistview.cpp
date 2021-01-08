@@ -41,13 +41,13 @@ using namespace MOShared;
 // handling (e.g. checkbox, edit, etc.), so we also need to override
 // the visualRect() function from the mod list view.
 //
-class ModListStyledItemDelegated : public QStyledItemDelegate
+class ModListStyledItemDelegate : public QStyledItemDelegate
 {
   ModListView* m_view;
 
 public:
 
-  ModListStyledItemDelegated(ModListView* view) :
+  ModListStyledItemDelegate(ModListView* view) :
     QStyledItemDelegate(view), m_view(view) { }
 
   void initStyleOption(QStyleOptionViewItem* option, const QModelIndex& index) const override
@@ -144,7 +144,7 @@ ModListView::ModListView(QWidget* parent)
   MOBase::setCustomizableColumns(this);
   setAutoExpandDelay(750);
 
-  setItemDelegate(new ModListStyledItemDelegated(this));
+  setItemDelegate(new ModListStyledItemDelegate(this));
 
   connect(this, &ModListView::doubleClicked, this, &ModListView::onDoubleClicked);
   connect(this, &ModListView::customContextMenuRequested, this, &ModListView::onCustomContextMenuRequested);
@@ -855,7 +855,7 @@ void ModListView::saveState(Settings& s) const
 QRect ModListView::visualRect(const QModelIndex& index) const
 {
   // this shift the visualRect() from QTreeView to match the new actual
-  // zone after removing indentation (see the ModListStyledItemDelegated)
+  // zone after removing indentation (see the ModListStyledItemDelegate)
   QRect rect = QTreeView::visualRect(index);
   if (hasCollapsibleSeparators()
     && index.column() == 0 && index.isValid()
