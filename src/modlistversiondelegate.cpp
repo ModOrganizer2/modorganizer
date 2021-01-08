@@ -41,8 +41,10 @@ void ModListVersionDelegate::paint(QPainter* painter, const QStyleOptionViewItem
       QSize pm = icon.actualSize(opt.decorationSize);
       pm.rwidth() += 2 * margin;
       opt.rect.setRect(opt.rect.x(), opt.rect.y(), pm.width(), opt.rect.height());
-
       drawDecoration(painter, opt, opt.rect, pixmap);
+
+      // add margin for next icon (if any)
+      opt.rect.adjust(opt.decorationSize.width() + margin, 0, 0, 0);
     }
 
     if (downgrade) {
@@ -51,7 +53,7 @@ void ModListVersionDelegate::paint(QPainter* painter, const QStyleOptionViewItem
 
       QSize pm = icon.actualSize(opt.decorationSize);
       pm.rwidth() += 2 * margin;
-      opt.rect.setRect(opt.rect.x() + opt.decorationSize.width() + margin, opt.rect.y(), pm.width(), opt.rect.height());
+      opt.rect.setRect(opt.rect.x(), opt.rect.y(), pm.width(), opt.rect.height());
 
       drawDecoration(painter, opt, opt.rect, pixmap);
 
