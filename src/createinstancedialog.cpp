@@ -455,7 +455,7 @@ void CreateInstanceDialog::updateNavigation()
 bool CreateInstanceDialog::canNext() const
 {
   const auto i = ui->pages->currentIndex();
-  return m_pages[i]->ready();
+  return m_pages[i]->skip() || m_pages[i]->ready();
 }
 
 bool CreateInstanceDialog::canBack() const
