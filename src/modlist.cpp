@@ -555,15 +555,16 @@ bool ModList::renameMod(int index, const QString &newName)
     m_Profile->cancelModlistWrite();
 
 
-    if (modInfo->setName(nameFixed))
+    if (modInfo->setName(nameFixed)) {
       // Notice there is a good chance that setName() updated the modinfo indexes
       // the modRenamed() call will refresh the indexes in the current profile
       // and update the modlists in all profiles
       emit modRenamed(oldName, nameFixed);
-  }
+    }
 
-  // invalidate the currently displayed state of this list
-  notifyChange(-1);
+    // invalidate the currently displayed state of this list
+    notifyChange(-1);
+  }
   return true;
 }
 
