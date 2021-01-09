@@ -282,9 +282,23 @@ bool CategoryFactory::categoryExists(int id) const
 }
 
 
-bool CategoryFactory::isDecendantOf(int id, int parentID) const
+bool CategoryFactory::isDescendantOf(int id, int parentID) const
 {
+  // handles cycles
+  std::set<int> seen;
+  return isDescendantOfImpl(id, parentID, seen);
+}
+
+bool CategoryFactory::isDescendantOfImpl(
+  int id, int parentID, std::set<int>& seen) const
+{
+  if (!seen.insert(id).second) {
+    log::error("cycle in category: {}", id);
+    return false;
+  }
+
   std::map<int, unsigned int>::const_iterator iter = m_IDMap.find(id);
+
   if (iter != m_IDMap.end()) {
     unsigned int index = iter->second;
     if (m_Categories[index].m_ParentID == 0) {
@@ -292,7 +306,7 @@ bool CategoryFactory::isDecendantOf(int id, int parentID) const
     } else if (m_Categories[index].m_ParentID == parentID) {
       return true;
     } else {
-      return isDecendantOf(m_Categories[index].m_ParentID, parentID);
+      return isDescendantOfImpl(m_Categories[index].m_ParentID, parentID, seen);
     }
   } else {
     log::warn("{} is no valid category id", id);
