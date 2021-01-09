@@ -282,7 +282,7 @@ bool CategoryFactory::categoryExists(int id) const
 }
 
 
-bool CategoryFactory::isDecendantOf(int id, int parentID) const
+bool CategoryFactory::isDescendantOf(int id, int parentID) const
 {
   std::map<int, unsigned int>::const_iterator iter = m_IDMap.find(id);
   if (iter != m_IDMap.end()) {
@@ -291,8 +291,11 @@ bool CategoryFactory::isDecendantOf(int id, int parentID) const
       return false;
     } else if (m_Categories[index].m_ParentID == parentID) {
       return true;
+    } else if (m_Categories[index].m_ParentID == id) {
+      log::warn("category '{}' ({}) is its own parent", m_Categories[index].m_Name, id);
+      return false;
     } else {
-      return isDecendantOf(m_Categories[index].m_ParentID, parentID);
+      return isDescendantOf(m_Categories[index].m_ParentID, parentID);
     }
   } else {
     log::warn("{} is no valid category id", id);

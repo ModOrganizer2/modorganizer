@@ -516,7 +516,7 @@ bool ModInfo::categorySet(int categoryID) const
 {
   for (std::set<int>::const_iterator iter = m_Categories.begin(); iter != m_Categories.end(); ++iter) {
     if ((*iter == categoryID) ||
-        (CategoryFactory::instance().isDecendantOf(*iter, categoryID))) {
+        (CategoryFactory::instance().isDescendantOf(*iter, categoryID))) {
       return true;
     }
   }
