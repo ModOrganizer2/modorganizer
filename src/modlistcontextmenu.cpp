@@ -27,6 +27,10 @@ ModListGlobalContextMenu::ModListGlobalContextMenu(OrganizerCore& core, ModListV
       addAction(tr("Create Separator"), [=]() { view->actions().createSeparator(index); });
     }
   }
+  else {
+    addAction(tr("Create empty mod"), [=]() { view->actions().createEmptyMod(); });
+    addAction(tr("Create Separator"), [=]() { view->actions().createSeparator(); });
+  }
 
   if (view->hasCollapsibleSeparators()) {
     addSeparator();
