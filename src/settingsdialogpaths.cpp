@@ -90,14 +90,27 @@ void PathsSettingsTab::update()
     settings().paths().setBase("");
   }
 
+  const auto binaryPath = settings().game().plugin()->binaryName();
   QFileInfo oldGameExe(
-    settings().game().plugin()->gameDirectory().absoluteFilePath(
-      settings().game().plugin()->binaryName()));
-
+    settings().game().plugin()->gameDirectory().absoluteFilePath(binaryPath));
   QFileInfo newGameExe(ui->managedGameDirEdit->text());
 
   if (oldGameExe != newGameExe) {
-    settings().game().setDirectory(newGameExe.absolutePath());
+    QDir folder = newGameExe.absoluteDir();
+    while (folder.exists() && !folder.isRoot()
+      && QFileInfo(folder.filePath(binaryPath)) != newGameExe) {
+      folder.cdUp();
+    }
+
+    if (folder.exists(binaryPath)) {
+      settings().game().setDirectory(folder.absolutePath());
+    }
+    else {
+      QMessageBox::warning(parentWidget(), QObject::tr("Error"),
+        QObject::tr("Failed to extract the game folder from \"%1\". Your version of the game "
+          "might not be supported by the current game plugin.").arg(newGameExe.absoluteFilePath()));
+
+    }
   }
 }
 
