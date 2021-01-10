@@ -123,8 +123,7 @@ void ModListViewActions::createEmptyMod(const QModelIndex& index) const
     }
   }
 
-  IModInterface* newMod = m_core.createMod(name);
-  if (newMod == nullptr) {
+  if (m_core.createMod(name) == nullptr) {
     return;
   }
 
@@ -164,16 +163,22 @@ void ModListViewActions::createSeparator(const QModelIndex& index) const
     newPriority = m_core.currentProfile()->getModPriority(index.data(ModList::IndexRole).toInt());
   }
 
-  if (m_core.createMod(name) == nullptr) { return; }
+  if (m_core.createMod(name) == nullptr) {
+    return;
+  }
+
   m_core.refresh();
 
+  const auto mIndex = ModInfo::getIndex(name);
   if (newPriority >= 0) {
-    m_core.modList()->changeModPriority(ModInfo::getIndex(name), newPriority);
+    m_core.modList()->changeModPriority(mIndex, newPriority);
   }
 
   if (auto c = m_core.settings().colors().previousSeparatorColor()) {
-    ModInfo::getByIndex(ModInfo::getIndex(name))->setColor(*c);
+    ModInfo::getByIndex(mIndex)->setColor(*c);
   }
+
+  m_view->scrollToAndSelect(m_view->indexModelToView(m_core.modList()->index(mIndex, 0)));
 }
 
 void ModListViewActions::checkModsForUpdates() const
