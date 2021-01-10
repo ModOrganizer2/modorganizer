@@ -102,7 +102,7 @@ public:
           rect.topLeft() + QPoint(-5, -5)
         };
         painter->drawPolygon(tri, 3);
-        painter->drawLine(QPoint(rect.topLeft().x(), rect.topLeft().y()), rect.topRight());
+        painter->drawLine(rect.topLeft(), rect.topRight());
       }
       else {
         painter->drawRoundedRect(rect, 5, 5);
