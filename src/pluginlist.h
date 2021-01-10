@@ -214,12 +214,14 @@ public:
   bool isESPLocked(int index) const;
   void lockESPIndex(int index, bool lock);
 
-  bool eventFilter(QObject *obj, QEvent *event);
-
   static QString getColumnName(int column);
   static QString getColumnToolTip(int column);
 
-  void highlightPlugins(const QItemSelectionModel *selection, const MOShared::DirectoryEntry &directoryEntry, const Profile &profile);
+  // highlight plugins contained in the mods at the given indices
+  //
+  void highlightPlugins(
+    const std::vector<unsigned int>& modIndices,
+    const MOShared::DirectoryEntry &directoryEntry);
 
   void refreshLoadOrder();
 
@@ -259,30 +261,25 @@ public: // implementation of the QAbstractTableModel interface
 
 public slots:
 
-  /**
-  * @brief enables selected plugins
-  **/
-  void enableSelected(const QItemSelectionModel *selectionModel);
+  // enable/disable all plugins
+  //
+  void setEnabledAll(bool enabled);
 
-  /**
-  * @brief disables selected plugins
-  **/
-  void disableSelected(const QItemSelectionModel *selectionModel);
+  // enable/disable plugins at the given indices.
+  //
+  void setEnabled(const QModelIndexList& indices, bool enabled);
 
-  /**
-   * @brief enables ALL plugins
-   **/
-  void enableAll();
+  // send plugins to the given priority
+  //
+  void sendToPriority(const QModelIndexList& indices, int priority);
 
-  /**
-   * @brief disables ALL plugins
-   **/
-  void disableAll();
+  // shift the priority of mods at the given indices by the given offset
+  //
+  void shiftPluginsPriority(const QModelIndexList& indices, int offset);
 
-  /**
-  *  @brief moves selected plugins to specified priority
-  **/
-  void sendToPriority(const QItemSelectionModel *selectionModel, int priority);
+  // toggle the active state of mods at the given indices
+  //
+  void toggleState(const QModelIndexList& indices);
 
   /**
    * @brief The currently managed game has changed

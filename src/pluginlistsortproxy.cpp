@@ -36,10 +36,6 @@ PluginListSortProxy::PluginListSortProxy(QObject *parent)
   this->setDynamicSortFilter(true);
 }
 
-
-
-
-
 void PluginListSortProxy::setEnabledColumns(unsigned int columns)
 {
   emit layoutAboutToBeChanged();
@@ -49,32 +45,16 @@ void PluginListSortProxy::setEnabledColumns(unsigned int columns)
   emit layoutChanged();
 }
 
-
-Qt::ItemFlags PluginListSortProxy::flags(const QModelIndex &modelIndex) const
-{
-/*  Qt::ItemFlags flags;
-  QModelIndex index = mapToSource(modelIndex);
-  if (index.isValid()) {
-    flags = sourceModel()->flags(index);
-  }
-  return flags;*/
-
-  return sourceModel()->flags(mapToSource(modelIndex));
-}
-
-
 void PluginListSortProxy::updateFilter(const QString &filter)
 {
   m_CurrentFilter = filter;
   invalidateFilter();
 }
 
-
 bool PluginListSortProxy::filterAcceptsRow(int row, const QModelIndex&) const
 {
   return filterMatchesPlugin(sourceModel()->data(sourceModel()->index(row, 0)).toString());
 }
-
 
 bool PluginListSortProxy::lessThan(const QModelIndex &left,
                                    const QModelIndex &right) const
@@ -109,7 +89,6 @@ bool PluginListSortProxy::lessThan(const QModelIndex &left,
   }
 }
 
-
 bool PluginListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action,
                                        int row, int column, const QModelIndex &parent)
 {
@@ -135,7 +114,6 @@ bool PluginListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction act
     return this->sourceModel()->dropMimeData(data, action, sourceIndex.row(), sourceIndex.column(),
                                              sourceIndex.parent());
 }
-
 
 bool PluginListSortProxy::filterMatchesPlugin(const QString &plugin) const
 {
@@ -173,4 +151,3 @@ bool PluginListSortProxy::filterMatchesPlugin(const QString &plugin) const
   else
     return true;
 }
-

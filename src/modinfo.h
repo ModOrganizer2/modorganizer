@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "imodinterface.h"
 #include "versioninfo.h"
 
+class OrganizerCore;
 class PluginContainer;
 class QDir;
 class QDateTime;
@@ -107,12 +108,9 @@ public: // Static functions:
   /**
    * @brief Read the mod directory and Mod ModInfo objects for all subdirectories.
    */
-  static void updateFromDisc(const QString &modDirectory,
-                             MOShared::DirectoryEntry **directoryStructure,
-                             PluginContainer *pluginContainer,
-                             bool displayForeign,
-                             std::size_t refreshThreadCount,
-                             MOBase::IPluginGame const *game);
+  static void updateFromDisc(
+    const QString &modDirectory, OrganizerCore& core,
+    bool displayForeign, std::size_t refreshThreadCount);
 
   static void clear() { s_Collection.clear(); s_ModsByName.clear(); s_ModsByModID.clear(); }
 
@@ -178,6 +176,11 @@ public: // Static functions:
   static unsigned int getIndex(const QString &name);
 
   /**
+   * @brief Retrieve the overwrite mod.
+   */
+  static ModInfo::Ptr getOverwrite() { return s_Overwrite; }
+
+  /**
    * @brief Find the first mod that fulfills the filter function (after no particular order).
    *
    * @param filter A function to filter mods by. Should return true for a match.
@@ -204,30 +207,6 @@ public: // Static functions:
    */
   static std::set<ModInfo::Ptr> filteredMods(
     QString gameName, QVariantList updateData, bool addOldMods = false, bool markUpdated = false);
-
-  /**
-   * @brief Create a new mod from the specified directory and add it to the collection.
-   *
-   * @param dir Directory to create from.
-   *
-   * @return pointer to the info-structure of the newly created/added mod.
-   */
-  static ModInfo::Ptr createFrom(
-    PluginContainer *pluginContainer, const MOBase::IPluginGame *game,
-    const QDir &dir, MOShared::DirectoryEntry **directoryStructure);
-
-  /**
-   * @brief Create a new "foreign-managed" mod from a tuple of plugin and archives.
-   *
-   * @param espName Name of the plugin.
-   * @param bsaNames Names of archives.
-   *
-   * @return a new mod.
-   */
-  static ModInfo::Ptr createFromPlugin(
-    const QString &modName, const QString &espName, const QStringList &bsaNames,
-    ModInfo::EModType modType, const MOBase::IPluginGame* game,
-    MOShared::DirectoryEntry **directoryStructure, PluginContainer *pluginContainer);
 
   /**
    * @brief Check wheter a name corresponds to a separator or not,
@@ -379,6 +358,11 @@ public: // IModInterface implementations / Re-declaration
   virtual std::shared_ptr<const MOBase::IFileTree> fileTree() const = 0;
 
   /**
+   * @return true if this object represents a regular mod.
+   */
+  virtual bool isRegular() const { return false; }
+
+  /**
    * @return true if this object represents the overwrite mod.
    */
   virtual bool isOverwrite() const { return false; }
@@ -481,20 +465,7 @@ public: // Mutable operations:
    */
   virtual bool setName(const QString& name) = 0;
 
-  /**
-   * @brief Deletes the mod from the disc. This does not update the global ModInfo structure or
-   *     indices.
-   *
-   * @return true on success, false otherwise.
-   */
-  virtual bool remove() = 0;
-
 public: // Methods after this do not come from IModInterface:
-
-  /**
-   * @return true if this mod is a regular mod, false otherwise.
-   */
-  virtual bool isRegular() const { return false; }
 
   /**
    * @return true if this mod is empty, false otherwise.
@@ -964,7 +935,7 @@ protected:
   /**
    *
    */
-  ModInfo(PluginContainer *pluginContainer);
+  ModInfo(OrganizerCore& core);
 
   /**
    * @brief Prefetch content for this mod.
@@ -974,32 +945,59 @@ protected:
    * using multiple threads for all the mods.
    */
   virtual void prefetch() = 0;
-
-  static void updateIndices();
   static bool ByName(const ModInfo::Ptr &LHS, const ModInfo::Ptr &RHS);
 
 protected:
 
-  static std::vector<ModInfo::Ptr> s_Collection;
-  static std::map<QString, unsigned int> s_ModsByName;
+  // the mod list
+  OrganizerCore& m_Core;
+
+  // the index of the mod in s_Collection, only valid after updateIndices()
+  int m_Index;
 
   int m_PrimaryCategory;
   std::set<int> m_Categories;
-
   MOBase::VersionInfo m_Version;
-
   bool m_PluginSelected = false;
 
-private:
+protected:
 
-  static void createFromOverwrite(PluginContainer* pluginContainer,
-    const MOBase::IPluginGame* game,
-    MOShared::DirectoryEntry** directoryStructure);
+  friend class OrganizerCore;
 
-private:
+  /**
+   * @brief Create a new mod from the specified directory and add it to the collection.
+   *
+   * @param dir Directory to create from.
+   *
+   * @return pointer to the info-structure of the newly created/added mod.
+   */
+  static ModInfo::Ptr createFrom(const QDir& dir, OrganizerCore& core);
+
+  /**
+   * @brief Create a new "foreign-managed" mod from a tuple of plugin and archives.
+   *
+   * @param espName Name of the plugin.
+   * @param bsaNames Names of archives.
+   *
+   * @return a new mod.
+   */
+  static ModInfo::Ptr createFromPlugin(
+    const QString& modName, const QString& espName, const QStringList& bsaNames,
+    ModInfo::EModType modType, OrganizerCore& core);
+
+  static ModInfo::Ptr createFromOverwrite(OrganizerCore& core);
+
+  // update the m_Index attribute of all mods and the various mapping
+  //
+  static void updateIndices();
+
+protected:
 
   static QMutex s_Mutex;
-  static std::map<std::pair<QString, int>, std::vector<unsigned int> > s_ModsByModID;
+  static std::vector<ModInfo::Ptr> s_Collection;
+  static ModInfo::Ptr s_Overwrite;
+  static std::map<QString, unsigned int> s_ModsByName;
+  static std::map<std::pair<QString, int>, std::vector<unsigned int>> s_ModsByModID;
   static int s_NextID;
 
 };

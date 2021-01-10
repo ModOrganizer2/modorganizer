@@ -42,7 +42,7 @@ public:
 
 private:
 
-  ModInfoBackup(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, const QDir &path, MOShared::DirectoryEntry **directoryStructure);
+  ModInfoBackup(const QDir& path, OrganizerCore& core);
 
 };
 

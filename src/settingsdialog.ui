@@ -23,8 +23,8 @@
       <attribute name="title">
        <string>General</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0,1">
-       <item row="5" column="0" colspan="2">
+      <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0,1,0">
+       <item row="6" column="0" colspan="2">
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -37,7 +37,55 @@
          </property>
         </spacer>
        </item>
-       <item row="0" column="0" rowspan="2">
+       <item row="2" column="1">
+        <widget class="QGroupBox" name="groupBox_6">
+         <property name="title">
+          <string>Updates</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QCheckBox" name="checkForUpdates">
+            <property name="toolTip">
+             <string>Check for Mod Organizer updates on Github on startup.</string>
+            </property>
+            <property name="whatsThis">
+             <string>Check for Mod Organizer updates on Github on startup.</string>
+            </property>
+            <property name="text">
+             <string>Check for updates</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="usePrereleaseBox">
+            <property name="toolTip">
+             <string>Update to non-stable releases.</string>
+            </property>
+            <property name="whatsThis">
+             <string>Update to non-stable releases.</string>
+            </property>
+            <property name="text">
+             <string>Install Pre-releases (Betas)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_9">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="0" column="0" rowspan="3">
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
           <string>User Interface</string>
@@ -241,7 +289,7 @@
          </layout>
         </widget>
        </item>
-       <item row="3" column="0" colspan="2">
+       <item row="4" column="0" colspan="2">
         <widget class="QGroupBox" name="ModlistGroupBox">
          <property name="title">
           <string>Colors</string>
@@ -342,41 +390,56 @@
         </widget>
        </item>
        <item row="1" column="1">
-        <widget class="QGroupBox" name="groupBox_6">
-         <property name="title">
-          <string>Updates</string>
+        <widget class="QGroupBox" name="groupBox_4">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_3">
+         <property name="title">
+          <string>Mod List</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_17">
           <item>
-           <widget class="QCheckBox" name="checkForUpdates">
+           <widget class="QCheckBox" name="collapsibleSeparatorsBox">
             <property name="toolTip">
-             <string>Check for Mod Organizer updates on Github on startup.</string>
-            </property>
-            <property name="whatsThis">
-             <string>Check for Mod Organizer updates on Github on startup.</string>
+             <string>Allow collapsing separators when sorting by ascending priority.</string>
             </property>
             <property name="text">
-             <string>Check for updates</string>
+             <string>Use collapsible separators</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+            <property name="tristate">
+             <bool>false</bool>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="usePrereleaseBox">
+           <widget class="QCheckBox" name="collapsibleSeparatorsConflictsBox">
             <property name="toolTip">
-             <string>Update to non-stable releases.</string>
+             <string>Display mod conflicts on separator when collapsed.</string>
             </property>
             <property name="whatsThis">
-             <string>Update to non-stable releases.</string>
+             <string>Display mod conflicts on separator when collapsed.</string>
             </property>
             <property name="text">
-             <string>Install Pre-releases (Betas)</string>
+             <string>Show conflicts on separators</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
           <item>
-           <spacer name="verticalSpacer_9">
+           <spacer name="verticalSpacer_12">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Expanding</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>

@@ -32,7 +32,6 @@ public:
   virtual void setIsEndorsed(bool) override {}
   virtual void setNeverEndorse() override {}
   virtual void setIsTracked(bool) override {}
-  virtual bool remove() override { return false; }
   virtual void endorse(bool) override {}
   virtual void track(bool) override {}
   virtual bool isEmpty() const override { return false; }
@@ -81,9 +80,8 @@ public:
 protected:
   ModInfoForeign(const QString &modName, const QString &referenceFile,
                  const QStringList &archives, ModInfo::EModType modType,
-                 const MOBase::IPluginGame *gamePlugin,
-                 MOShared::DirectoryEntry **directoryStructure, PluginContainer *pluginContainer);  
-  
+                 OrganizerCore &core);
+
 private:
 
   QString m_Name;

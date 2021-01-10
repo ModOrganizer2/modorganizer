@@ -34,7 +34,6 @@ public:
   virtual void setIsEndorsed(bool) override {}
   virtual void setNeverEndorse() override {}
   virtual void setIsTracked(bool) override {}
-  virtual bool remove() override { return false; }
   virtual void endorse(bool) override {}
   virtual void track(bool) override {}
   virtual bool alwaysEnabled() const override { return true; }
@@ -78,7 +77,7 @@ public:
   virtual std::map<QString, QVariant> clearPluginSettings(const QString& pluginName) override { return {}; }
 
 private:
-  ModInfoOverwrite(PluginContainer *pluginContainer, const MOBase::IPluginGame* game, MOShared::DirectoryEntry **directoryStructure);
+  ModInfoOverwrite(OrganizerCore& core);
 
 };
 

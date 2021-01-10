@@ -11,11 +11,9 @@
 #include "modrepositoryfileinfo.h"
 #include "nexusinterface.h"
 #include "plugincontainer.h"
-#include "pluginlistsortproxy.h"
 #include "profile.h"
 #include "credentialsdialog.h"
 #include "filedialogmemory.h"
-#include "modinfodialog.h"
 #include "spawn.h"
 #include "syncoverwritedialog.h"
 #include "nxmaccessmanager.h"
@@ -120,6 +118,7 @@ OrganizerCore::OrganizerCore(Settings &settings)
 
   connect(&m_ModList, SIGNAL(removeOrigin(QString)), this,
           SLOT(removeOrigin(QString)));
+  connect(&m_ModList, &ModList::modStatesChanged, [=] { currentProfile()->writeModlist(); });
 
   connect(NexusInterface::instance().getAccessManager(),
           SIGNAL(validateSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
@@ -220,9 +219,9 @@ void OrganizerCore::updateExecutablesList()
 
 void OrganizerCore::updateModInfoFromDisc() {
   ModInfo::updateFromDisc(
-    m_Settings.paths().mods(), &m_DirectoryStructure,
-    m_PluginContainer, m_Settings.interface().displayForeign(),
-    m_Settings.refreshThreadCount(), managedGame());
+    m_Settings.paths().mods(), *this,
+    m_Settings.interface().displayForeign(),
+    m_Settings.refreshThreadCount());
 }
 
 void OrganizerCore::setUserInterface(IUserInterface* ui)
@@ -234,35 +233,6 @@ void OrganizerCore::setUserInterface(IUserInterface* ui)
   QWidget* w = nullptr;
   if (m_UserInterface) {
     w = m_UserInterface->mainWindow();
-  }
-
-  if (w) {
-    connect(&m_ModList, SIGNAL(modlistChanged(QModelIndex, int)), w,
-            SLOT(modlistChanged(QModelIndex, int)));
-    connect(&m_ModList, SIGNAL(modlistChanged(QModelIndexList, int)), w,
-            SLOT(modlistChanged(QModelIndexList, int)));
-    connect(&m_ModList, SIGNAL(showMessage(QString)), w,
-            SLOT(showMessage(QString)));
-    connect(&m_ModList, SIGNAL(modRenamed(QString, QString)), w,
-            SLOT(modRenamed(QString, QString)));
-    connect(&m_ModList, SIGNAL(modUninstalled(QString)), w,
-            SLOT(modRemoved(QString)));
-    connect(&m_InstallationManager, SIGNAL(modReplaced(QString)), w,
-            SLOT(modRemoved(QString)));
-    connect(&m_ModList, SIGNAL(removeSelectedMods()), w,
-            SLOT(removeMod_clicked()));
-    connect(&m_ModList, SIGNAL(clearOverwrite()), w,
-      SLOT(clearOverwrite()));
-    connect(&m_ModList, SIGNAL(fileMoved(QString, QString, QString)), w,
-            SLOT(fileMoved(QString, QString, QString)));
-    connect(&m_ModList, SIGNAL(modorder_changed()), w,
-            SLOT(modorder_changed()));
-    connect(&m_PluginList, SIGNAL(writePluginsList()), w,
-      SLOT(esplist_changed()));
-    connect(&m_PluginList, SIGNAL(esplist_changed()), w,
-      SLOT(esplist_changed()));
-    connect(&m_DownloadManager, SIGNAL(showMessage(QString)), w,
-            SLOT(showMessage(QString)));
   }
 
   m_InstallationManager.setParentWidget(w);
@@ -694,8 +664,8 @@ MOBase::IPluginGame *OrganizerCore::getGame(const QString &name) const
 
 MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
 {
-  bool merge = false;
-  if (m_InstallationManager.testOverwrite(name, &merge) != IPluginInstaller::EInstallResult::RESULT_SUCCESS) {
+  auto result = m_InstallationManager.testOverwrite(name);
+  if (!result) {
     return nullptr;
   }
 
@@ -708,7 +678,7 @@ MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
 
   QSettings settingsFile(targetDirectory + "/meta.ini", QSettings::IniFormat);
 
-  if (!merge) {
+  if (!result.merged()) {
     settingsFile.setValue("modid", 0);
     settingsFile.setValue("version", "");
     settingsFile.setValue("newestVersion", "");
@@ -720,8 +690,9 @@ MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
     settingsFile.endArray();
   }
 
-  return ModInfo::createFrom(m_PluginContainer, m_GamePlugin, QDir(targetDirectory), &m_DirectoryStructure)
-      .data();
+  // shouldn't this use the existing mod in case of a merge? also, this does not refresh the indices
+  // in the ModInfo structure
+  return ModInfo::createFrom(QDir(targetDirectory), *this).data();
 }
 
 void OrganizerCore::modDataChanged(MOBase::IModInterface *)
@@ -760,83 +731,21 @@ QString OrganizerCore::pluginDataPath()
          + "/data";
 }
 
-MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
+MOBase::IModInterface *OrganizerCore::installMod(const QString & archivePath,
                                                  bool reinstallation,
                                                  ModInfo::Ptr currentMod,
                                                  const QString &initModName)
 {
-  if (m_CurrentProfile == nullptr) {
-    return nullptr;
-  }
-
-  if (m_InstallationManager.isRunning()) {
-    QMessageBox::information(
-      qApp->activeWindow(), tr("Installation cancelled"),
-      tr("Another installation is currently in progress."), QMessageBox::Ok);
-    return nullptr;
-  }
-
-  bool hasIniTweaks = false;
-  GuessedValue<QString> modName;
-  if (!initModName.isEmpty()) {
-    modName.update(initModName, GUESS_USER);
-  }
-  m_CurrentProfile->writeModlistNow();
-  m_InstallationManager.setModsDirectory(m_Settings.paths().mods());
-  m_InstallationManager.notifyInstallationStart(fileName, reinstallation, currentMod);
-  auto result = m_InstallationManager.install(fileName, modName, hasIniTweaks);
-  if (result == IPluginInstaller::RESULT_SUCCESS) {
-    MessageDialog::showMessage(tr("Installation successful"),
-                               qApp->activeWindow());
-    refresh();
-
-    int modIndex = ModInfo::getIndex(modName);
-    if (modIndex != UINT_MAX) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-      auto dlIdx = m_DownloadManager.indexByName(QFileInfo(fileName).fileName());
-      if (dlIdx != -1) {
-        int modId = m_DownloadManager.getModID(dlIdx);
-        int fileId = m_DownloadManager.getFileInfo(dlIdx)->fileID;
-        modInfo->addInstalledFile(modId, fileId);
-      }
-      if (hasIniTweaks && (m_UserInterface != nullptr)
-          && (QMessageBox::question(qApp->activeWindow(), tr("Configure Mod"),
-                                    tr("This mod contains ini tweaks. Do you "
-                                       "want to configure them now?"),
-                                    QMessageBox::Yes | QMessageBox::No)
-              == QMessageBox::Yes)) {
-        m_UserInterface->displayModInformation(
-          modInfo, modIndex, ModInfoTabIDs::IniFiles);
-      }
-      m_ModList.notifyModInstalled(modInfo.get());
-      m_DownloadManager.markInstalled(fileName);
-      m_InstallationManager.notifyInstallationEnd(result, modInfo);
-      emit modInstalled(modName);
-      return modInfo.data();
-    } else {
-      reportError(tr("mod not found: %1").arg(qUtf8Printable(modName)));
-    }
-  } else {
-    m_InstallationManager.notifyInstallationEnd(result, nullptr);
-    if (m_InstallationManager.wasCancelled()) {
-      QMessageBox::information(qApp->activeWindow(), tr("Extraction cancelled"),
-        tr("The installation was cancelled while extracting files. "
-          "If this was prior to a FOMOD setup, this warning may be ignored. "
-          "However, if this was during installation, the mod will likely be missing files."),
-        QMessageBox::Ok);
-      refresh();
-    }
-  }
-  return nullptr;
+  return installArchive(archivePath, -1, reinstallation, currentMod, initModName).get();
 }
 
-void OrganizerCore::installDownload(int index)
+ModInfo::Ptr OrganizerCore::installDownload(int index, int priority)
 {
   if (m_InstallationManager.isRunning()) {
     QMessageBox::information(
       qApp->activeWindow(), tr("Installation cancelled"),
       tr("Another installation is currently in progress."), QMessageBox::Ok);
-    return;
+    return nullptr;
   }
 
   try {
@@ -867,15 +776,20 @@ void OrganizerCore::installDownload(int index)
     m_InstallationManager.setModsDirectory(m_Settings.paths().mods());
     m_InstallationManager.notifyInstallationStart(fileName, false, currentMod);
     auto result = m_InstallationManager.install(fileName, modName, hasIniTweaks);
-    if (result == IPluginInstaller::RESULT_SUCCESS) {
+    if (result) {
       MessageDialog::showMessage(tr("Installation successful"),
                                  qApp->activeWindow());
       refresh();
 
       int modIndex = ModInfo::getIndex(modName);
+      ModInfo::Ptr modInfo = nullptr;
       if (modIndex != UINT_MAX) {
-        ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+        modInfo = ModInfo::getByIndex(modIndex);
         modInfo->addInstalledFile(modID, fileID);
+
+        if (priority != -1 && !result.mergedOrReplaced()) {
+          m_ModList.changeModPriority(modIndex, priority);
+        }
 
         if (hasIniTweaks && m_UserInterface != nullptr
             && (QMessageBox::question(qApp->activeWindow(), tr("Configure Mod"),
@@ -888,12 +802,13 @@ void OrganizerCore::installDownload(int index)
         }
 
         m_ModList.notifyModInstalled(modInfo.get());
-        m_InstallationManager.notifyInstallationEnd(IPluginInstaller::RESULT_SUCCESS, modInfo);
+        m_InstallationManager.notifyInstallationEnd(result, modInfo);
       } else {
         reportError(tr("mod not found: %1").arg(qUtf8Printable(modName)));
       }
       m_DownloadManager.markInstalled(index);
       emit modInstalled(modName);
+      return modInfo;
     }
     else {
       m_InstallationManager.notifyInstallationEnd(result, nullptr);
@@ -909,6 +824,84 @@ void OrganizerCore::installDownload(int index)
   } catch (const std::exception &e) {
     reportError(e.what());
   }
+
+  return nullptr;
+}
+
+ModInfo::Ptr OrganizerCore::installArchive(
+  const QString& archivePath, int priority, bool reinstallation,
+  ModInfo::Ptr currentMod, const QString& initModName)
+{
+  if (m_CurrentProfile == nullptr) {
+    return nullptr;
+  }
+
+  if (m_InstallationManager.isRunning()) {
+    QMessageBox::information(
+      qApp->activeWindow(), tr("Installation cancelled"),
+      tr("Another installation is currently in progress."), QMessageBox::Ok);
+    return nullptr;
+  }
+
+  bool hasIniTweaks = false;
+  GuessedValue<QString> modName;
+  if (!initModName.isEmpty()) {
+    modName.update(initModName, GUESS_USER);
+  }
+  m_CurrentProfile->writeModlistNow();
+  m_InstallationManager.setModsDirectory(m_Settings.paths().mods());
+  m_InstallationManager.notifyInstallationStart(archivePath, reinstallation, currentMod);
+  auto result = m_InstallationManager.install(archivePath, modName, hasIniTweaks);
+  if (result) {
+    MessageDialog::showMessage(tr("Installation successful"),
+      qApp->activeWindow());
+    refresh();
+
+    int modIndex = ModInfo::getIndex(modName);
+    if (modIndex != UINT_MAX) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+      auto dlIdx = m_DownloadManager.indexByName(QFileInfo(archivePath).fileName());
+      if (dlIdx != -1) {
+        int modId = m_DownloadManager.getModID(dlIdx);
+        int fileId = m_DownloadManager.getFileInfo(dlIdx)->fileID;
+        modInfo->addInstalledFile(modId, fileId);
+      }
+
+      if (priority != -1 && !result.mergedOrReplaced()) {
+        m_ModList.changeModPriority(modIndex, priority);
+      }
+
+      if (hasIniTweaks && (m_UserInterface != nullptr)
+        && (QMessageBox::question(qApp->activeWindow(), tr("Configure Mod"),
+          tr("This mod contains ini tweaks. Do you "
+            "want to configure them now?"),
+          QMessageBox::Yes | QMessageBox::No)
+          == QMessageBox::Yes)) {
+        m_UserInterface->displayModInformation(
+          modInfo, modIndex, ModInfoTabIDs::IniFiles);
+      }
+      m_ModList.notifyModInstalled(modInfo.get());
+      m_DownloadManager.markInstalled(archivePath);
+      m_InstallationManager.notifyInstallationEnd(result, modInfo);
+      emit modInstalled(modName);
+      return modInfo;
+    }
+    else {
+      reportError(tr("mod not found: %1").arg(qUtf8Printable(modName)));
+    }
+  }
+  else {
+    m_InstallationManager.notifyInstallationEnd(result, nullptr);
+    if (m_InstallationManager.wasCancelled()) {
+      QMessageBox::information(qApp->activeWindow(), tr("Extraction cancelled"),
+        tr("The installation was cancelled while extracting files. "
+          "If this was prior to a FOMOD setup, this warning may be ignored. "
+          "However, if this was during installation, the mod will likely be missing files."),
+        QMessageBox::Ok);
+      refresh();
+    }
+  }
+  return nullptr;
 }
 
 QString OrganizerCore::resolvePath(const QString &fileName) const
@@ -1225,11 +1218,7 @@ void OrganizerCore::refresh(bool saveChanges)
     m_CurrentProfile->writeModlistNow(true);
   }
 
-  ModInfo::updateFromDisc(
-    m_Settings.paths().mods(), &m_DirectoryStructure,
-    m_PluginContainer, m_Settings.interface().displayForeign(),
-    m_Settings.refreshThreadCount(), managedGame());
-
+  updateModInfoFromDisc();
   m_CurrentProfile->refreshModStatus();
 
   m_ModList.notifyChange(-1);
@@ -1492,18 +1481,9 @@ void OrganizerCore::requestDownload(const QUrl &url, QNetworkReply *reply)
   }
 }
 
-ModListSortProxy *OrganizerCore::createModListProxyModel()
+PluginContainer& OrganizerCore::pluginContainer() const
 {
-  ModListSortProxy *result = new ModListSortProxy(m_CurrentProfile.get(), this);
-  result->setSourceModel(&m_ModList);
-  return result;
-}
-
-PluginListSortProxy *OrganizerCore::createPluginListProxyModel()
-{
-  PluginListSortProxy *result = new PluginListSortProxy(this);
-  result->setSourceModel(&m_PluginList);
-  return result;
+  return *m_PluginContainer;
 }
 
 IPluginGame const *OrganizerCore::managedGame() const
@@ -1767,13 +1747,7 @@ void OrganizerCore::loginFailedUpdate(const QString &message)
 
 void OrganizerCore::syncOverwrite()
 {
-  unsigned int overwriteIndex         = ModInfo::findMod([](ModInfo::Ptr mod) -> bool {
-    std::vector<ModInfo::EFlag> flags = mod->getFlags();
-    return std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE)
-           != flags.end();
-  });
-
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(overwriteIndex);
+  ModInfo::Ptr modInfo = ModInfo::getOverwrite();
   SyncOverwriteDialog syncDialog(modInfo->absolutePath(), m_DirectoryStructure,
                                  qApp->activeWindow());
   if (syncDialog.exec() == QDialog::Accepted) {

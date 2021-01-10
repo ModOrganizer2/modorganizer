@@ -91,10 +91,7 @@ protected:
    **/
   virtual std::set<int> doGetContents() const { return {}; }
 
-  ModInfoWithConflictInfo(
-    PluginContainer* pluginContainer,
-    const MOBase::IPluginGame* gamePlugin,
-    MOShared::DirectoryEntry** directoryStructure);
+  ModInfoWithConflictInfo(OrganizerCore& core);
 
 private:
 
@@ -142,16 +139,11 @@ protected:
    */
   virtual void prefetch() override;
 
-  // Current game plugin running in MO2:
-  MOBase::IPluginGame const * const m_GamePlugin;
-
 private:
 
   MOBase::MemoizedLocked<std::shared_ptr<const MOBase::IFileTree>> m_FileTree;
   MOBase::MemoizedLocked<bool> m_Valid;
   MOBase::MemoizedLocked<std::set<int>> m_Contents;
-
-  MOShared::DirectoryEntry **m_DirectoryStructure;
 
   mutable EConflictType m_CurrentConflictState;
   mutable EConflictType m_ArchiveConflictState;

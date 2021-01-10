@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "downloadlist.h"
 #include "downloadmanager.h"
+#include "modlistdropinfo.h"
 #include <utility.h>
 #include <log.h>
 #include <QEvent>
@@ -88,6 +89,18 @@ QVariant DownloadList::headerData(int section, Qt::Orientation orientation, int 
   } else {
     return QAbstractItemModel::headerData(section, orientation, role);
   }
+}
+
+Qt::ItemFlags DownloadList::flags(const QModelIndex& idx) const
+{
+  return QAbstractTableModel::flags(idx) | Qt::ItemIsDragEnabled;
+}
+
+QMimeData* DownloadList::mimeData(const QModelIndexList& indexes) const
+{
+  QMimeData* result = QAbstractItemModel::mimeData(indexes);
+  result->setData("text/plain", ModListDropInfo::DOWNLOAD_TEXT);
+  return result;
 }
 
 QVariant DownloadList::data(const QModelIndex &index, int role) const

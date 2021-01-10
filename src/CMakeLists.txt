@@ -132,16 +132,31 @@ add_filter(NAME src/modinfo/dialog GROUPS
 	modinfodialogtab
 	modinfodialogtextfiles
 )
+
+add_filter(NAME src/modinfo/dialog/widgets GROUPS
+	modidlineedit
+)
+
 add_filter(NAME src/modlist GROUPS
 	modlist
+	modlistdropinfo
 	modlistsortproxy
+	modlistbypriorityproxy
+)
+
+add_filter(NAME src/modlist/view GROUPS
 	modlistview
+	modlistviewactions
+	modlistcontextmenu
+	modflagicondelegate
+	modconflicticondelegate
 )
 
 add_filter(NAME src/plugins GROUPS
 	pluginlist
 	pluginlistsortproxy
 	pluginlistview
+	pluginlistcontextmenu
 )
 
 add_filter(NAME src/previews GROUPS
@@ -216,13 +231,12 @@ add_filter(NAME src/widgets GROUPS
 	lcdnumber
 	loglist
 	loghighlighter
-	modflagicondelegate
-	modconflicticondelegate
-	modidlineedit
 	noeditdelegate
 	qtgroupingproxy
 	texteditor
 	viewmarkingscrollbar
+	modelutils
+	copyeventfilter
 )
 
 

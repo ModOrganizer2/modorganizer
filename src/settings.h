@@ -202,6 +202,16 @@ public:
   //
   WidgetSettings(QSettings& s, bool globalInstance);
 
+  // tree item check - this saves the list of expanded items based on the given role
+  //
+  void saveTreeCheckState(const QTreeView* tv, int role = Qt::CheckStateRole);
+  void restoreTreeCheckState(QTreeView* tv, int role = Qt::CheckStateRole) const;
+
+  // tree state - this saves the list of expanded items based on the given role
+  //
+  void saveTreeExpandState(const QTreeView* tv, int role = Qt::DisplayRole);
+  void restoreTreeExpandState(QTreeView* tv, int role = Qt::DisplayRole) const;
+
   // selected index for a combobox
   //
   std::optional<int> index(const QComboBox* cb) const;
@@ -610,6 +620,16 @@ public:
   //
   std::optional<QString> styleName() const;
   void setStyleName(const QString& name);
+
+  // whether to use collapsible separators when possible
+  //
+  bool collapsibleSeparators() const;
+  void setCollapsibleSeparators(bool b);
+
+  // whether to display mod conflicts on separators when collapsed
+  //
+  bool collapsibleSeparatorsConflicts() const;
+  void setCollapsibleSeparatorsConflicts(bool b);
 
   // whether to show compact downloads
   //

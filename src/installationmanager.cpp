@@ -64,6 +64,12 @@ using namespace MOBase;
 using namespace MOShared;
 
 
+InstallationResult::InstallationResult(IPluginInstaller::EInstallResult result) :
+  m_result(result), m_name(), m_iniTweaks(false), m_backup(false), m_merged(false), m_replaced(false)
+{
+}
+
+
 template <typename T>
 static T resolveFunction(QLibrary &lib, const char *name)
 {
@@ -353,8 +359,7 @@ IPluginInstaller::EInstallResult InstallationManager::installArchive(GuessedValu
   // in earlier versions the modName was copied here and the copy passed to install. I don't know why I did this and it causes
   // a problem if this is called by the bundle installer and the bundled installer adds additional names that then end up being used,
   // because the caller will then not have the right name.
-  bool iniTweaks;
-  return install(archiveName, modName, iniTweaks, modId);
+  return install(archiveName, modName, modId).result();
 }
 
 
@@ -374,9 +379,12 @@ QString InstallationManager::generateBackupName(const QString &directoryName) co
 }
 
 
-IPluginInstaller::EInstallResult InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *merge)
+InstallationResult InstallationManager::testOverwrite(GuessedValue<QString> &modName)
 {
   QString targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory + "\\" + modName);
+
+  // this is only returned on success
+  InstallationResult result{ IPluginInstaller::RESULT_SUCCESS };
 
   while (QDir(targetDirectory).exists()) {
     Settings &settings(Settings::instance());
@@ -393,12 +401,14 @@ IPluginInstaller::EInstallResult InstallationManager::testOverwrite(GuessedValue
         QString backupDirectory = generateBackupName(targetDirectory);
         if (!copyDir(targetDirectory, backupDirectory, false)) {
           reportError(tr("Failed to create backup"));
-          return IPluginInstaller::RESULT_FAILED;
+          return { IPluginInstaller::RESULT_FAILED };
         }
       }
-      if (merge != nullptr) {
-        *merge = (overwriteDialog.action() == QueryOverwriteDialog::ACT_MERGE);
-      }
+
+      result.m_merged = overwriteDialog.action() == QueryOverwriteDialog::ACT_MERGE;
+      result.m_replaced = overwriteDialog.action() == QueryOverwriteDialog::ACT_REPLACE;
+      result.m_backup = overwriteDialog.backup();
+
       if (overwriteDialog.action() == QueryOverwriteDialog::ACT_RENAME) {
         bool ok = false;
         QString name = QInputDialog::getText(m_ParentWidget, tr("Mod Name"), tr("Name"),
@@ -406,7 +416,7 @@ IPluginInstaller::EInstallResult InstallationManager::testOverwrite(GuessedValue
         if (ok && !name.isEmpty()) {
           modName.update(name, GUESS_USER);
           if (!ensureValidModName(modName)) {
-            return IPluginInstaller::RESULT_FAILED;
+            return { IPluginInstaller::RESULT_FAILED };
           }
           targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory) + "/" + modName;
         }
@@ -441,20 +451,20 @@ IPluginInstaller::EInstallResult InstallationManager::testOverwrite(GuessedValue
         } else {
           log::error("failed to restore original settings: {}", metaFilename);
         }
-        return IPluginInstaller::RESULT_SUCCESS;
+        return result;
       } else if (overwriteDialog.action() == QueryOverwriteDialog::ACT_MERGE) {
-        return IPluginInstaller::RESULT_SUCCESS;
+        return result;
       } else /* if (overwriteDialog.action() == QueryOverwriteDialog::ACT_NONE) */ {
-        return IPluginInstaller::RESULT_CANCELED;
+        return  { IPluginInstaller::RESULT_CANCELED };
       }
     } else {
-      return IPluginInstaller::RESULT_CANCELED;
+      return { IPluginInstaller::RESULT_CANCELED };
     }
   }
 
   QDir().mkdir(targetDirectory);
 
-  return IPluginInstaller::RESULT_SUCCESS;;
+  return result;
 }
 
 
@@ -473,27 +483,30 @@ bool InstallationManager::ensureValidModName(GuessedValue<QString> &name) const
   return true;
 }
 
-IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QString> &modName, QString gameName, int modID,
-                                    const QString &version, const QString &newestVersion,
-                                    int categoryID, int fileCategoryID, const QString &repository)
+InstallationResult InstallationManager::doInstall(
+  GuessedValue<QString> &modName, QString gameName, int modID,
+  const QString &version, const QString &newestVersion,
+  int categoryID, int fileCategoryID, const QString &repository)
 {
   if (!ensureValidModName(modName)) {
-    return IPluginInstaller::RESULT_FAILED;
+    return { IPluginInstaller::RESULT_FAILED };
   }
 
   bool merge = false;
   // determine target directory
-  IPluginInstaller::EInstallResult result = testOverwrite(modName, &merge);
-  if (result != IPluginInstaller::RESULT_SUCCESS) {
+  InstallationResult result = testOverwrite(modName);
+  if (!result) {
     return result;
   }
+
+  result.m_name = modName;
 
   QString targetDirectory = QDir(m_ModsDirectory + "/" + modName).canonicalPath();
   QString targetDirectoryNative = QDir::toNativeSeparators(targetDirectory);
 
   log::debug("installing to \"{}\"", targetDirectoryNative);
   if (!extractFiles(targetDirectory, "", true, false)) {
-    return IPluginInstaller::RESULT_CANCELED;
+    return { IPluginInstaller::RESULT_CANCELED };
   }
 
   // Copy the created files:
@@ -547,7 +560,7 @@ IPluginInstaller::EInstallResult InstallationManager::doInstall(GuessedValue<QSt
     settingsFile.endGroup();
   }
 
-  return IPluginInstaller::RESULT_SUCCESS;
+  return result;
 }
 
 
@@ -601,10 +614,8 @@ void InstallationManager::postInstallCleanup()
   }
 }
 
-IPluginInstaller::EInstallResult InstallationManager::install(const QString &fileName,
-                                  GuessedValue<QString> &modName,
-                                  bool &hasIniTweaks,
-                                  int modID)
+InstallationResult InstallationManager::install(
+  const QString &fileName, GuessedValue<QString> &modName, int modID)
 {
   m_IsRunning = true;
   ON_BLOCK_EXIT([this]() { m_IsRunning = false; });
@@ -612,7 +623,7 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
   QFileInfo fileInfo(fileName);
   if (!getSupportedExtensions().contains(fileInfo.suffix(), Qt::CaseInsensitive)) {
     reportError(tr("File format \"%1\" not supported").arg(fileInfo.suffix()));
-    return IPluginInstaller::RESULT_FAILED;
+    return InstallationResult(IPluginInstaller::RESULT_FAILED);
   }
 
   modName.setFilter(&fixDirectoryName);
@@ -703,13 +714,14 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
 
   std::shared_ptr<IFileTree> filesTree =
     archiveOpen ? ArchiveFileTree::makeTree(*m_ArchiveHandler) : nullptr;
-  IPluginInstaller::EInstallResult installResult = IPluginInstaller::RESULT_NOTATTEMPTED;
 
   auto installers = m_PluginContainer->plugins<IPluginInstaller>();
 
   std::sort(installers.begin(), installers.end(), [] (IPluginInstaller* lhs, IPluginInstaller* rhs) {
     return lhs->priority() > rhs->priority();
   });
+
+  InstallationResult installResult(IPluginInstaller::RESULT_NOTATTEMPTED);
 
   for (IPluginInstaller *installer : installers) {
     // don't use inactive installers (installer can't be null here but vc static code analysis thinks it could)
@@ -718,11 +730,11 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
     }
 
     // try only manual installers if that was requested
-    if (installResult == IPluginInstaller::RESULT_MANUALREQUESTED) {
+    if (installResult.result() == IPluginInstaller::RESULT_MANUALREQUESTED) {
       if (!installer->isManualInstaller()) {
         continue;
       }
-    } else if (installResult != IPluginInstaller::RESULT_NOTATTEMPTED) {
+    } else if (installResult.result() != IPluginInstaller::RESULT_NOTATTEMPTED) {
       break;
     }
 
@@ -732,9 +744,9 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
             = dynamic_cast<IPluginInstallerSimple *>(installer);
         if ((installerSimple != nullptr) && (filesTree != nullptr)
             && (installer->isArchiveSupported(filesTree))) {
-          installResult
+          installResult.m_result
               = installerSimple->install(modName, filesTree, version, modID);
-          if (installResult == IPluginInstaller::RESULT_SUCCESS) {
+          if (installResult) {
 
             // Downcast to an actual ArchiveFileTree and map to the archive. Test if
             // the tree is still an ArchiveFileTree, otherwize it means the installer
@@ -755,12 +767,13 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
 
             // the simple installer only prepares the installation, the rest
             // works the same for all installers
-            installResult = doInstall(modName, gameName, modID, version, newestVersion, categoryID, fileCategoryID, repository);
+            installResult = doInstall(modName, gameName, modID, version,
+              newestVersion, categoryID, fileCategoryID, repository);
           }
         }
       }
 
-      if (installResult != IPluginInstaller::RESULT_CANCELED) { // custom case
+      if (installResult.result() != IPluginInstaller::RESULT_CANCELED) { // custom case
         IPluginInstallerCustom *installerCustom
             = dynamic_cast<IPluginInstallerCustom *>(installer);
         if ((installerCustom != nullptr)
@@ -771,7 +784,7 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
           std::set<QString> installerExt
               = installerCustom->supportedExtensions();
           if (installerExt.find(fileInfo.suffix()) != installerExt.end()) {
-            installResult
+            installResult.m_result
                 = installerCustom->install(modName, gameName, fileName, version, modID);
             unsigned int idx = ModInfo::getIndex(modName);
             if (idx != UINT_MAX) {
@@ -787,7 +800,7 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
 
     // act upon the installation result. at this point the files have already been
     // extracted to the correct location
-    switch (installResult) {
+    switch (installResult.result()) {
       case IPluginInstaller::RESULT_FAILED: {
         QMessageBox::information(qApp->activeWindow(), tr("Installation failed"),
           tr("Something went wrong while installing this mod."),
@@ -798,10 +811,11 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
       case IPluginInstaller::RESULT_SUCCESSCANCEL: {
         if (filesTree != nullptr) {
           auto iniTweakEntry = filesTree->find("INI Tweaks", FileTreeEntry::DIRECTORY);
-          hasIniTweaks = iniTweakEntry != nullptr
+          installResult.m_iniTweaks = iniTweakEntry != nullptr
             && !iniTweakEntry->astree()->empty();
         }
-        return IPluginInstaller::RESULT_SUCCESS;
+        installResult.m_result = IPluginInstaller::RESULT_SUCCESS;
+        return installResult;
       } break;
       case IPluginInstaller::RESULT_NOTATTEMPTED:
       case IPluginInstaller::RESULT_MANUALREQUESTED: {
@@ -811,7 +825,7 @@ IPluginInstaller::EInstallResult InstallationManager::install(const QString &fil
         return installResult;
     }
   }
-  if (installResult == IPluginInstaller::RESULT_NOTATTEMPTED) {
+  if (installResult.result() == IPluginInstaller::RESULT_NOTATTEMPTED) {
     reportError(tr("None of the available installer plugins were able to handle that archive.\n"
       "This is likely due to a corrupted or incompatible download or unrecognized archive format."));
   }
@@ -877,14 +891,12 @@ void InstallationManager::notifyInstallationStart(QString const& archive, bool r
   }
 }
 
-void InstallationManager::notifyInstallationEnd(
-  MOBase::IPluginInstaller::EInstallResult result,
-  ModInfo::Ptr  newMod)
+void InstallationManager::notifyInstallationEnd(const InstallationResult& result, ModInfo::Ptr  newMod)
 {
   auto& installers = m_PluginContainer->plugins<IPluginInstaller>();
   for (auto* installer : installers) {
     if (m_PluginContainer->isEnabled(installer)) {
-      installer->onInstallationEnd(result, newMod.get());
+      installer->onInstallationEnd(result.result(), newMod.get());
     }
   }
 }

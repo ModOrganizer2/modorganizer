@@ -24,12 +24,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "instancemanager.h"
 #include "shared/appconfig.h"
 #include "env.h"
+#include "modelutils.h"
 #include "envmetrics.h"
 #include <expanderwidget.h>
 #include <utility.h>
 #include <iplugingame.h>
 
 using namespace MOBase;
+using namespace MOShared;
 
 
 EndorsementState endorsementStateFromString(const QString& s)
@@ -1060,6 +1062,52 @@ WidgetSettings::WidgetSettings(QSettings& s, bool globalInstance)
       [this](auto&& w, auto&& f){ return questionButton(w, f); },
       [this](auto&& w, auto&& b){ setQuestionWindowButton(w, b); },
       [this](auto&& w, auto&& f, auto&& b){ setQuestionFileButton(w, f, b); });
+  }
+}
+
+void WidgetSettings::saveTreeCheckState(const QTreeView* tv, int role)
+{
+  QVariantList data;
+  for (auto index : flatIndex(tv->model())) {
+    data.append(index.data(role));
+  }
+  set(m_Settings, "Widgets", indexSettingName(tv), data);
+}
+
+void WidgetSettings::restoreTreeCheckState(QTreeView* tv, int role) const
+{
+  if (auto states = getOptional<QVariantList>(m_Settings, "Widgets", indexSettingName(tv))) {
+    auto allIndex = flatIndex(tv->model());
+    MOBase::log::debug("restoreTreeCheckState: {}, {}", states->size(), allIndex.size());
+    if (states->size() != allIndex.size()) {
+      return;
+    }
+    for (int i = 0; i < states->size(); ++i) {
+      tv->model()->setData(allIndex[i], states->at(i), role);
+    }
+  }
+}
+
+void WidgetSettings::saveTreeExpandState(const QTreeView* tv, int role)
+{
+  QVariantList expanded;
+  for (auto index : flatIndex(tv->model())) {
+    if (tv->isExpanded(index)) {
+      expanded.append(index.data(role));
+    }
+  }
+  set(m_Settings, "Widgets", indexSettingName(tv), expanded);
+}
+
+void WidgetSettings::restoreTreeExpandState(QTreeView* tv, int role) const
+{
+  if (auto expanded = getOptional<QVariantList>(m_Settings, "Widgets", indexSettingName(tv))) {
+    tv->collapseAll();
+    for (auto index : flatIndex(tv->model())) {
+      if (expanded->contains(index.data(role))) {
+        tv->expand(index);
+      }
+    }
   }
 }
 
@@ -2125,6 +2173,26 @@ std::optional<QString> InterfaceSettings::styleName() const
 void InterfaceSettings::setStyleName(const QString& name)
 {
   set(m_Settings, "Settings", "style", name);
+}
+
+bool InterfaceSettings::collapsibleSeparators() const
+{
+  return get<bool>(m_Settings, "Settings", "collapsible_separators", true);
+}
+
+void InterfaceSettings::setCollapsibleSeparators(bool b)
+{
+  set(m_Settings, "Settings", "collapsible_separators", b);
+}
+
+bool InterfaceSettings::collapsibleSeparatorsConflicts() const
+{
+  return get<bool>(m_Settings, "Settings", "collapsible_separators_conflicts", true);
+}
+
+void InterfaceSettings::setCollapsibleSeparatorsConflicts(bool b)
+{
+  set(m_Settings, "Settings", "collapsible_separators_conflicts", b);
 }
 
 bool InterfaceSettings::compactDownloads() const

@@ -187,12 +187,6 @@ public:
   virtual void setIsTracked(bool tracked) override;
 
   /**
-   * @brief delete the mod from the disc. This does not update the global ModInfo structure or indices
-   * @return true if the mod was successfully removed
-   **/
-  bool remove() override;
-
-  /**
    * @brief endorse or un-endorse the mod
    * @param doEndorse if true, the mod is endorsed, if false, it's un-endorsed.
    * @note if doEndorse doesn't differ from the current value, nothing happens.
@@ -424,7 +418,7 @@ protected:
 
   virtual std::set<int> doGetContents() const override;
 
-  ModInfoRegular(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, const QDir &path, MOShared::DirectoryEntry **directoryStructure);
+  ModInfoRegular(const QDir& path, OrganizerCore& core);
 
 private:
 

@@ -34,40 +34,48 @@ using namespace MOBase;
     \ingroup model-view
 */
 
-QtGroupingProxy::QtGroupingProxy(QAbstractItemModel *model, QModelIndex rootNode, int groupedColumn, int groupedRole, unsigned int flags , int aggregateRole)
+QtGroupingProxy::QtGroupingProxy(QModelIndex rootNode, int groupedColumn, int groupedRole, unsigned int flags, int aggregateRole)
   : QAbstractProxyModel()
-  , m_rootNode( rootNode )
-  , m_groupedColumn( 0 )
-  , m_groupedRole( groupedRole )
-  , m_aggregateRole( aggregateRole )
-  , m_flags( flags )
+  , m_rootNode(rootNode)
+  , m_groupedColumn(0)
+  , m_groupedRole(groupedRole)
+  , m_aggregateRole(aggregateRole)
+  , m_flags(flags)
 {
-  setSourceModel( model );
-
-  // signal proxies
-  connect( sourceModel(),
-           SIGNAL( dataChanged( const QModelIndex&, const QModelIndex& ) ),
-           this, SLOT( modelDataChanged( const QModelIndex&, const QModelIndex& ) )
-           );
-  connect( sourceModel(), SIGNAL( rowsInserted( const QModelIndex&, int, int ) ),
-           SLOT( modelRowsInserted( const QModelIndex &, int, int ) ) );
-  connect( sourceModel(), SIGNAL(rowsAboutToBeInserted( const QModelIndex &, int ,int )),
-           SLOT(modelRowsAboutToBeInserted( const QModelIndex &, int ,int )));
-  connect( sourceModel(), SIGNAL( rowsRemoved( const QModelIndex&, int, int ) ),
-           SLOT( modelRowsRemoved( const QModelIndex&, int, int ) ) );
-  connect( sourceModel(), SIGNAL(rowsAboutToBeRemoved( const QModelIndex &, int ,int )),
-           SLOT(modelRowsAboutToBeRemoved(QModelIndex,int,int)) );
-  connect( sourceModel(), SIGNAL(layoutChanged()), SLOT(buildTree()) );
-  connect( sourceModel(), SIGNAL(dataChanged(QModelIndex,QModelIndex)),
-           SLOT(modelDataChanged(QModelIndex,QModelIndex)) );
-  connect( sourceModel(), SIGNAL(modelReset()), this, SLOT(resetModel()) );
-
-  if( groupedColumn != -1 )
-    setGroupedColumn( groupedColumn );
+  if (groupedColumn != -1) {
+    setGroupedColumn(groupedColumn);
+  }
 }
 
 QtGroupingProxy::~QtGroupingProxy()
 {
+}
+
+void QtGroupingProxy::setSourceModel(QAbstractItemModel* model)
+{
+  if (sourceModel()) {
+    disconnect(sourceModel(), nullptr, this, nullptr);
+  }
+
+  QAbstractProxyModel::setSourceModel(model);
+
+  if (sourceModel()) {
+    // signal proxies
+    connect(sourceModel(), SIGNAL(rowsInserted(const QModelIndex&, int, int)),
+      SLOT(modelRowsInserted(const QModelIndex&, int, int)));
+    connect(sourceModel(), SIGNAL(rowsAboutToBeInserted(const QModelIndex&, int, int)),
+      SLOT(modelRowsAboutToBeInserted(const QModelIndex&, int, int)));
+    connect(sourceModel(), SIGNAL(rowsRemoved(const QModelIndex&, int, int)),
+      SLOT(modelRowsRemoved(const QModelIndex&, int, int)));
+    connect(sourceModel(), SIGNAL(rowsAboutToBeRemoved(const QModelIndex&, int, int)),
+      SLOT(modelRowsAboutToBeRemoved(QModelIndex, int, int)));
+    connect(sourceModel(), SIGNAL(layoutChanged()), SLOT(buildTree()));
+    connect(sourceModel(), SIGNAL(dataChanged(QModelIndex, QModelIndex)),
+      SLOT(modelDataChanged(QModelIndex, QModelIndex)));
+    connect(sourceModel(), SIGNAL(modelReset()), this, SLOT(resetModel()));
+
+    buildTree();
+  }
 }
 
 void
@@ -205,13 +213,6 @@ QtGroupingProxy::buildTree()
   }
 
   endResetModel();
-  // restore expand-state
-  for( int row = 0; row < rowCount(); row++ ) {
-    QModelIndex idx = index( row, 0, QModelIndex() );
-    if (m_expandedItems.contains(idx.data(Qt::UserRole).toString())) {
-      emit expandItem(idx);
-    }
-  }
 }
 
 QList<int>
@@ -721,7 +722,6 @@ QtGroupingProxy::flags( const QModelIndex &idx ) const
                                                         m_rootNode.parent() );
         if ( (originalIdx.flags() & Qt::ItemIsUserCheckable) == 0 )
         {
-          log::debug("row {} is not checkable", originalRow);
           checkable = false;
         }
       }
@@ -1035,15 +1035,4 @@ QtGroupingProxy::dumpGroups() const
   debug << m_groupHash.value( std::numeric_limits<quint32>::max() );
 
   log::debug("{}", s);
-}
-
-
-void QtGroupingProxy::expanded(const QModelIndex &index)
-{
-  m_expandedItems.insert(index.data(Qt::UserRole).toString());
-}
-
-void QtGroupingProxy::collapsed(const QModelIndex &index)
-{
-  m_expandedItems.remove(index.data(Qt::UserRole).toString());
 }
