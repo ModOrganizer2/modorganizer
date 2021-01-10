@@ -73,7 +73,7 @@ public:
     // containing icon paths
     ContentsRole = Qt::UserRole + 3,
 
-    NameRole = Qt::UserRole + 4,
+    GameNameRole = Qt::UserRole + 4,
 
     PriorityRole = Qt::UserRole + 5,
 

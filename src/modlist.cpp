@@ -388,7 +388,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
   else if (role == ContentsRole) {
     return contentsToIcons(modInfo->getContents());
   }
-  else if (role == NameRole) {
+  else if (role == GameNameRole) {
     return modInfo->gameName();
   }
   else if (role == PriorityRole) {
