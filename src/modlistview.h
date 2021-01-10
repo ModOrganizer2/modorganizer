@@ -79,10 +79,15 @@ public:
   std::optional<unsigned int> nextMod(unsigned int index) const;
   std::optional<unsigned int> prevMod(unsigned int index) const;
 
-  // check if the given mod is visible
+  // check if the given mod is visible, i.e. not filtered (returns true
+  // for collapsed mods)
   //
   bool isModVisible(unsigned int index) const;
   bool isModVisible(ModInfo::Ptr mod) const;
+
+  // focus the view, select the given index and scroll to it
+  //
+  void scrollToAndSelect(const QModelIndex& index);
 
   // refresh the view (to call when settings have been changed)
   //

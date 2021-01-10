@@ -390,6 +390,15 @@ void ModListView::setSelected(const QModelIndex& current, const QModelIndexList&
   }
 }
 
+void ModListView::scrollToAndSelect(const QModelIndex& index)
+{
+  // focus, scroll to and select
+  scrollTo(index);
+  setCurrentIndex(index);
+  selectionModel()->select(index, QItemSelectionModel::SelectCurrent | QItemSelectionModel::Rows);
+  QTimer::singleShot(0, [=] { setFocus(); });
+}
+
 void ModListView::refreshExpandedItems()
 {
   auto* model = m_sortProxy->sourceModel();
@@ -470,11 +479,7 @@ void ModListView::onModInstalled(const QString& modName)
     setExpanded(qIndex.parent(), true);
   }
 
-  // focus, scroll to and select
-  setFocus(Qt::OtherFocusReason);
-  scrollTo(qIndex);
-  setCurrentIndex(qIndex);
-  selectionModel()->select(qIndex, QItemSelectionModel::SelectCurrent | QItemSelectionModel::Rows);
+  scrollToAndSelect(qIndex);
 }
 
 void ModListView::onModFilterActive(bool filterActive)
@@ -589,6 +594,8 @@ void ModListView::refreshFilters()
 
 void ModListView::onExternalFolderDropped(const QUrl& url, int priority)
 {
+  setWindowState(Qt::WindowActive);
+
   QFileInfo fileInfo(url.toLocalFile());
 
   GuessedValue<QString> name;
@@ -624,9 +631,12 @@ void ModListView::onExternalFolderDropped(const QUrl& url, int priority)
 
   m_core->refresh();
 
+  const auto index = ModInfo::getIndex(name);
   if (priority != -1) {
-    m_core->modList()->changeModPriority(ModInfo::getIndex(name), priority);
+    m_core->modList()->changeModPriority(index, priority);
   }
+
+  scrollToAndSelect(indexModelToView(m_core->modList()->index(index, 0)));
 }
 
 bool ModListView::moveSelection(int key)
