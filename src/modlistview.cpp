@@ -820,6 +820,7 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
     m_core->installDownload(row, priority);
   });
   connect(m_core->modList(), &ModList::externalArchiveDropped, [=](const QUrl& url, int priority) {
+    setWindowState(Qt::WindowActive);
     m_core->installArchive(url.toLocalFile(), priority, false, nullptr);
   });
   connect(m_core->modList(), &ModList::externalFolderDropped, this, &ModListView::onExternalFolderDropped);
