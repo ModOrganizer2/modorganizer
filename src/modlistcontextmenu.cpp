@@ -190,6 +190,7 @@ ModListContextMenu::ModListContextMenu(
   auto viewIndex = view->indexModelToView(m_index);
   if (view->model()->hasChildren(viewIndex)) {
     bool expanded = view->isExpanded(viewIndex);
+    addSeparator();
     addAction(tr("Collapse all"), view, &QTreeView::collapseAll);
     addAction(tr("Collapse others"), [=]() {
       m_view->collapseAll();
