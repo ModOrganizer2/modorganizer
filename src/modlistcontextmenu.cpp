@@ -23,13 +23,14 @@ ModListGlobalContextMenu::ModListGlobalContextMenu(OrganizerCore& core, ModListV
   if (modIndex.isValid()) {
     auto info = ModInfo::getByIndex(modIndex.toInt());
     if (!info->isBackup()) {
-      addAction(tr("Create empty mod"), [=]() { view->actions().createEmptyMod(index); });
-      addAction(tr("Create Separator"), [=]() { view->actions().createSeparator(index); });
+      addAction(info->isSeparator() ? tr("Create empty mod inside") : tr("Create empty mod before"),
+        [=]() { view->actions().createEmptyMod(index); });
+      addAction(tr("Create separator before"), [=]() { view->actions().createSeparator(index); });
     }
   }
   else {
-    addAction(tr("Create empty mod"), [=]() { view->actions().createEmptyMod(); });
-    addAction(tr("Create Separator"), [=]() { view->actions().createSeparator(); });
+    addAction(tr("Create empty mod at the end"), [=]() { view->actions().createEmptyMod(); });
+    addAction(tr("Create separator at the end"), [=]() { view->actions().createSeparator(); });
   }
 
   if (view->hasCollapsibleSeparators()) {

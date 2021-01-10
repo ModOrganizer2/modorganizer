@@ -396,7 +396,7 @@ void ModListView::scrollToAndSelect(const QModelIndex& index)
   scrollTo(index);
   setCurrentIndex(index);
   selectionModel()->select(index, QItemSelectionModel::SelectCurrent | QItemSelectionModel::Rows);
-  QTimer::singleShot(0, [=] { setFocus(); });
+  QTimer::singleShot(50, [=] { setFocus(); });
 }
 
 void ModListView::refreshExpandedItems()
