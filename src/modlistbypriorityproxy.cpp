@@ -234,10 +234,8 @@ bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropActi
   }
 
   // the row may be outside of the children list if we insert at the end
-  if (!parent.isValid()) {
-    if (row >= m_Root.children.size()) {
-      return false;
-    }
+  if (!parent.isValid() && row >= m_Root.children.size()) {
+    return false;
   }
 
   return QAbstractProxyModel::canDropMimeData(data, action, row, column, parent);
