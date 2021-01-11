@@ -277,7 +277,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
                <string>Save the current filters when closing MO2 and restore them on startup.</string>
               </property>
               <property name="text">
-               <string>Remembers selected filters after restarting MO</string>
+               <string>Remember selected filters after restarting MO</string>
               </property>
              </widget>
             </item>
