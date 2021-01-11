@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
   setExceptionHandlers();
 
   cl::CommandLine cl;
-  if (auto r=cl.run(GetCommandLineW())) {
+  if (auto r=cl.process(GetCommandLineW())) {
     return *r;
   }
 
@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
         }
       }
 
-      if (auto r=cl.setupCore(app.core())) {
+      if (auto r=cl.run(app.core())) {
         return *r;
       }
 

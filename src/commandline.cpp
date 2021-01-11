@@ -49,6 +49,7 @@ std::string table(
 
 
 CommandLine::CommandLine()
+  : m_command(nullptr)
 {
   createOptions();
   m_commands.push_back(std::make_unique<ExeCommand>());
@@ -57,7 +58,7 @@ CommandLine::CommandLine()
   m_commands.push_back(std::make_unique<LaunchCommand>());
 }
 
-std::optional<int> CommandLine::run(const std::wstring& line)
+std::optional<int> CommandLine::process(const std::wstring& line)
 {
   try
   {
@@ -125,8 +126,10 @@ std::optional<int> CommandLine::run(const std::wstring& line)
               }
             }
 
-            // run the command
-            return c->run(line, m_vm, opts);
+            c->process(line, m_vm, opts);
+            m_command = c.get();
+
+            return m_command->runPreOrganizer();
           }
           catch(po::error& e)
           {
@@ -201,7 +204,7 @@ std::optional<int> CommandLine::run(const std::wstring& line)
   }
 }
 
-std::optional<int> CommandLine::setupCore(OrganizerCore& organizer) const
+std::optional<int> CommandLine::run(OrganizerCore& organizer) const
 {
   if (m_shortcut.isValid()) {
     if (m_shortcut.hasExecutable()) {
@@ -247,6 +250,8 @@ std::optional<int> CommandLine::setupCore(OrganizerCore& organizer) const
         QObject::tr("failed to start application: %1").arg(e.what()));
       return 1;
     }
+  } else if (m_command) {
+    return m_command->runPostOrganizer();
   }
 
   return {};
@@ -437,7 +442,7 @@ po::positional_options_description Command::positional() const
 
 bool Command::legacy() const
 {
-  return true;
+  return false;
 }
 
 std::string Command::getUsageLine() const
@@ -463,8 +468,7 @@ po::positional_options_description Command::getPositional() const
   return {};
 }
 
-
-std::optional<int> Command::run(
+void Command::process(
   const std::wstring& originalLine,
   po::variables_map vm,
   std::vector<std::wstring> untouched)
@@ -472,8 +476,16 @@ std::optional<int> Command::run(
   m_original = originalLine;
   m_vm = vm;
   m_untouched = untouched;
+}
 
-  return doRun();
+std::optional<int> Command::runPreOrganizer()
+{
+  return {};
+}
+
+std::optional<int> Command::runPostOrganizer()
+{
+  return {};
 }
 
 const std::wstring& Command::originalCmd() const
@@ -507,7 +519,7 @@ Command::Meta CrashDumpCommand::meta() const
   return {"crashdump", "writes a crashdump for a running process of MO"};
 }
 
-std::optional<int> CrashDumpCommand::doRun()
+std::optional<int> CrashDumpCommand::runPreOrganizer()
 {
   env::Console console;
 
@@ -537,7 +549,7 @@ bool LaunchCommand::legacy() const
   return true;
 }
 
-std::optional<int> LaunchCommand::doRun()
+std::optional<int> LaunchCommand::runPreOrganizer()
 {
   // needs at least the working directory and process name
   if (untouched().size() < 2) {
@@ -643,7 +655,7 @@ Command::Meta ExeCommand::meta() const
   return {"exe", "launches a configured executable"};
 }
 
-std::optional<int> ExeCommand::doRun()
+std::optional<int> ExeCommand::runPostOrganizer()
 {
   const auto exe = vm()["exe-name"].as<std::string>();
   const auto args = vm()["arguments"].as<std::string>();
@@ -665,7 +677,7 @@ Command::Meta RunCommand::meta() const
   return {"run", "launches an arbitrary program"};
 }
 
-std::optional<int> RunCommand::doRun()
+std::optional<int> RunCommand::runPostOrganizer()
 {
   std::cout << "not implemented\n";
   return {};

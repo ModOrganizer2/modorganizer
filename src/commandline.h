@@ -50,12 +50,17 @@ public:
   //
   virtual bool legacy() const;
 
-  // runs this command, eventually calls doRun()
   //
-  std::optional<int> run(
+  //
+  void process(
     const std::wstring& originalLine,
     po::variables_map vm,
     std::vector<std::wstring> untouched);
+
+  //
+  //
+  virtual std::optional<int> runPreOrganizer();
+  virtual std::optional<int> runPostOrganizer();
 
 protected:
   // meta information about this command, returned by derived classes
@@ -86,10 +91,6 @@ protected:
   //
   virtual Meta meta() const = 0;
 
-  // runs the command
-  //
-  virtual std::optional<int> doRun() = 0;
-
 
   // returns the original command line
   //
@@ -117,7 +118,7 @@ class CrashDumpCommand : public Command
 protected:
   po::options_description getVisibleOptions() const override;
   Meta meta() const override;
-  std::optional<int> doRun() override;
+  std::optional<int> runPreOrganizer() override;
 };
 
 
@@ -140,7 +141,7 @@ public:
 
 protected:
   Meta meta() const override;
-  std::optional<int> doRun() override;
+  std::optional<int> runPreOrganizer() override;
 
   int SpawnWaitProcess(LPCWSTR workingDirectory, LPCWSTR commandLine);
 
@@ -159,7 +160,7 @@ protected:
   po::options_description getInternalOptions() const override;
   po::positional_options_description getPositional() const override;
   Meta meta() const override;
-  std::optional<int> doRun() override;
+  std::optional<int> runPostOrganizer() override;
 };
 
 
@@ -170,7 +171,7 @@ class RunCommand : public Command
 protected:
   po::options_description getOptions() const;
   Meta meta() const override;
-  std::optional<int> doRun() override;
+  std::optional<int> runPostOrganizer() override;
 };
 
 
@@ -218,14 +219,14 @@ public:
   // returns an empty optional if execution should continue, or a return code
   // if MO must quit
   //
-  std::optional<int> run(const std::wstring& line);
+  std::optional<int> process(const std::wstring& line);
 
   // handles moshortcut, nxm links and starting processes
   //
   // returns an empty optional if execution should continue, or a return code
   // if MO must quit
   //
-  std::optional<int> setupCore(OrganizerCore& organizer) const;
+  std::optional<int> run(OrganizerCore& organizer) const;
 
 
   // clears parsed options, used when MO is "restarted" so the options aren't
@@ -275,6 +276,7 @@ private:
   std::optional<QString> m_nxmLink;
   std::optional<QString> m_executable;
   QStringList m_untouched;
+  Command* m_command;
 
   void createOptions();
   std::string more() const;
