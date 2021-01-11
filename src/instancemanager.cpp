@@ -544,7 +544,7 @@ void InstanceManager::clearOverrides()
   m_overrideProfileName = {};
 }
 
-std::optional<Instance> InstanceManager::currentInstance() const
+std::unique_ptr<Instance> InstanceManager::currentInstance() const
 {
   const QString profile = m_overrideProfileName ?
     *m_overrideProfileName : "";
@@ -555,20 +555,20 @@ std::optional<Instance> InstanceManager::currentInstance() const
 
   if (!allowedToChangeInstance()) {
     // force portable instance
-    return Instance(portablePath(), true, profile);
+    return std::make_unique<Instance>(portablePath(), true, profile);
   }
 
   if (name.isEmpty()) {
     if (portableInstanceExists()) {
       // use portable
-      return Instance(portablePath(), true, profile);
+      return std::make_unique<Instance>(portablePath(), true, profile);
     } else {
       // no instance set
       return {};
     }
   }
 
-  return Instance(instancePath(name), false, profile);
+  return std::make_unique<Instance>(instancePath(name), false, profile);
 }
 
 void InstanceManager::clearCurrentInstance()
@@ -772,7 +772,7 @@ bool InstanceManager::validInstanceName(const QString& instanceName) const
 
 
 
-std::optional<Instance> selectInstance()
+std::unique_ptr<Instance> selectInstance()
 {
   auto& m = InstanceManager::singleton();
 

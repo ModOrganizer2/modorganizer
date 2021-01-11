@@ -4,8 +4,10 @@
 #include "organizercore.h"
 #include "commandline.h"
 #include "env.h"
+#include "instancemanager.h"
 #include "thread_utils.h"
 #include "shared/util.h"
+#include <report.h>
 #include <log.h>
 
 using namespace MOBase;
@@ -31,7 +33,7 @@ int main(int argc, char *argv[])
   TimeThis tt("main()");
 
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-  MOApplication app(cl, argc, argv);
+  MOApplication app(argc, argv);
 
   MOMultiProcess multiProcess(cl.multiple());
   if (multiProcess.ephemeral()) {
@@ -40,7 +42,61 @@ int main(int argc, char *argv[])
 
   tt.stop();
 
-  return app.run(multiProcess);
+
+  // MO runs in a loop because it can be restarted in several ways, such as
+  // when switching instances or changing some settings
+  for (;;)
+  {
+    try
+    {
+      auto& m = InstanceManager::singleton();
+
+      if (cl.instance()) {
+        m.overrideInstance(*cl.instance());
+      }
+
+      if (cl.profile()) {
+        m.overrideProfile(*cl.profile());
+      }
+
+      {
+        const auto r = app.setup(multiProcess);
+
+        if (r == RestartExitCode) {
+          // resets things when MO is "restarted"
+          app.resetForRestart();
+
+          // don't reprocess command line
+          cl.clear();
+
+          continue;
+        }
+      }
+
+      if (auto r=cl.setupCore(app.core())) {
+        return *r;
+      }
+
+      const auto r = app.run(multiProcess);
+
+      if (r == RestartExitCode) {
+        // resets things when MO is "restarted"
+        app.resetForRestart();
+
+        // don't reprocess command line
+        cl.clear();
+
+        continue;
+      }
+
+      return r;
+    }
+    catch (const std::exception &e)
+    {
+      reportError(e.what());
+      return 1;
+    }
+  }
 }
 
 int forwardToPrimary(MOMultiProcess& multiProcess, const cl::CommandLine& cl)

@@ -27,20 +27,24 @@ class Settings;
 class MOMultiProcess;
 class Instance;
 class PluginContainer;
+class OrganizerCore;
+class NexusInterface;
 
 namespace MOBase { class IPluginGame; }
-namespace cl { class CommandLine; }
+namespace env { class ModuleNotification; }
 
 class MOApplication : public QApplication
 {
   Q_OBJECT
 
 public:
-  MOApplication(cl::CommandLine& cl, int& argc, char** argv);
+  MOApplication(int& argc, char** argv);
 
-  // sets up everything, creates the main window and runs it
-  //
+  int setup(MOMultiProcess& multiProcess);
   int run(MOMultiProcess& multiProcess);
+  void resetForRestart();
+
+  OrganizerCore& core();
 
   virtual bool notify(QObject* receiver, QEvent* event);
 
@@ -51,16 +55,21 @@ private slots:
   void updateStyle(const QString& fileName);
 
 private:
-  QFileSystemWatcher m_StyleWatcher;
-  QString m_DefaultStyle;
-  cl::CommandLine& m_cl;
+  QFileSystemWatcher m_styleWatcher;
+  QString m_defaultStyle;
+  std::unique_ptr<env::ModuleNotification> m_modules;
+
+  std::unique_ptr<Instance> m_instance;
+  std::unique_ptr<Settings> m_settings;
+  std::unique_ptr<NexusInterface> m_nexus;
+  std::unique_ptr<PluginContainer> m_plugins;
+  std::unique_ptr<OrganizerCore> m_core;
 
   int doOneRun(MOMultiProcess& multiProcess);
 
-  std::optional<Instance> getCurrentInstance();
+  std::unique_ptr<Instance> getCurrentInstance();
   std::optional<int> setupInstanceLoop(Instance& currentInstance, PluginContainer& pc);
   void purgeOldFiles();
-  void resetForRestart();
 };
 
 
