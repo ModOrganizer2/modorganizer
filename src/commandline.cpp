@@ -2,6 +2,7 @@
 #include "env.h"
 #include "organizercore.h"
 #include "shared/util.h"
+#include "shared/error_report.h"
 #include <log.h>
 #include <report.h>
 
@@ -251,7 +252,7 @@ std::optional<int> CommandLine::run(OrganizerCore& organizer) const
       return 1;
     }
   } else if (m_command) {
-    return m_command->runPostOrganizer();
+    return m_command->runPostOrganizer(organizer);
   }
 
   return {};
@@ -483,7 +484,7 @@ std::optional<int> Command::runPreOrganizer()
   return {};
 }
 
-std::optional<int> Command::runPostOrganizer()
+std::optional<int> Command::runPostOrganizer(OrganizerCore&)
 {
   return {};
 }
@@ -655,13 +656,43 @@ Command::Meta ExeCommand::meta() const
   return {"exe", "launches a configured executable"};
 }
 
-std::optional<int> ExeCommand::runPostOrganizer()
+std::optional<int> ExeCommand::runPostOrganizer(OrganizerCore& organizer)
 {
-  const auto exe = vm()["exe-name"].as<std::string>();
-  const auto args = vm()["arguments"].as<std::string>();
-  const auto cwd = vm()["cwd"].as<std::string>();
+  const auto exe = QString::fromStdString(vm()["exe-name"].as<std::string>());
 
-  std::cout << "not implemented\n";
+  const auto& exes = *organizer.executablesList();
+
+  auto itor = exes.find(exe);
+  if (itor == exes.end()) {
+    MOShared::criticalOnTop(QObject::tr("Executable '%1' not found.").arg(exe));
+    return 1;
+  }
+
+  try {
+    // make sure MO doesn't exit even if locking is disabled, ForceWait and
+    // PreventExit will do that
+    auto p = organizer.processRunner();
+
+    p.setFromExecutable(*itor);
+
+    if (vm().count("arguments")) {
+      p.setArguments(QString::fromStdString(vm()["arguments"].as<std::string>()));
+    }
+
+    if (vm().count("cwd")) {
+      p.setCurrentDirectory(QString::fromStdString(vm()["cwd"].as<std::string>()));
+    }
+
+    p.setWaitForCompletion(ProcessRunner::ForceWait, UILocker::PreventExit);
+    p.run();
+
+    return 0;
+  }
+  catch (const std::exception &e) {
+    reportError(
+      QObject::tr("failed to start shortcut: %1").arg(e.what()));
+    return 1;
+  }
 
   return 0;
 }
@@ -677,7 +708,7 @@ Command::Meta RunCommand::meta() const
   return {"run", "launches an arbitrary program"};
 }
 
-std::optional<int> RunCommand::runPostOrganizer()
+std::optional<int> RunCommand::runPostOrganizer(OrganizerCore&)
 {
   std::cout << "not implemented\n";
   return {};

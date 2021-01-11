@@ -60,7 +60,7 @@ public:
   //
   //
   virtual std::optional<int> runPreOrganizer();
-  virtual std::optional<int> runPostOrganizer();
+  virtual std::optional<int> runPostOrganizer(OrganizerCore& organizer);
 
 protected:
   // meta information about this command, returned by derived classes
@@ -160,7 +160,7 @@ protected:
   po::options_description getInternalOptions() const override;
   po::positional_options_description getPositional() const override;
   Meta meta() const override;
-  std::optional<int> runPostOrganizer() override;
+  std::optional<int> runPostOrganizer(OrganizerCore& organizer) override;
 };
 
 
@@ -171,7 +171,7 @@ class RunCommand : public Command
 protected:
   po::options_description getOptions() const;
   Meta meta() const override;
-  std::optional<int> runPostOrganizer() override;
+  std::optional<int> runPostOrganizer(OrganizerCore& organizer) override;
 };
 
 
