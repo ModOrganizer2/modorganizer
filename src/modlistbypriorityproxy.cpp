@@ -243,8 +243,9 @@ bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropActi
 
 bool ModListByPriorityProxy::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent)
 {
-  // we need to fix the source model row
-  ModListDropInfo dropInfo(data, m_core);
+  // we need to fix the source model row if we are dropping at a
+  // given priority (not a local file)
+  const ModListDropInfo dropInfo(data, m_core);
   int sourceRow = -1;
 
   if (dropInfo.isLocalFileDrop()) {
@@ -257,8 +258,14 @@ bool ModListByPriorityProxy::dropMimeData(const QMimeData* data, Qt::DropAction 
     if (row >= 0) {
       if (!parent.isValid()) {
         if (row < m_Root.children.size()) {
+
           if (m_sortOrder == Qt::AscendingOrder) {
             sourceRow = m_Root.children[row]->index;
+
+            // fix bug when dropping a mod just below an expanded separator
+            //
+            // by default, Qt consider it's a drop at the end of that separator
+            // but we want to make it a drop at the beginning
             if (row > 0
               && m_sortOrder == Qt::AscendingOrder
               && m_Root.children[row - 1]->mod->isSeparator()
@@ -270,6 +277,9 @@ bool ModListByPriorityProxy::dropMimeData(const QMimeData* data, Qt::DropAction 
           }
           else {
             sourceRow = m_Root.children[row - 1]->index;
+
+            // fix drop below a collapsed separator or at the end of an expanded
+            // separator, above the next item
             if (row > 0
               && m_sortOrder == Qt::DescendingOrder
               && m_Root.children[row - 1]->mod->isSeparator()
@@ -284,15 +294,21 @@ bool ModListByPriorityProxy::dropMimeData(const QMimeData* data, Qt::DropAction 
           sourceRow = ModInfo::getNumMods();
         }
       }
+
+      // the parent is valid, we are dropping in a separator
       else {
         auto* item = static_cast<TreeItem*>(parent.internalPointer());
 
+        // we usually need to decrement the row in descending priority, but if
+        // it's the first row, we need to go back to the separator itself
         if (m_sortOrder == Qt::DescendingOrder
           && row == 0 && m_dropPosition == ModListView::DropPosition::AboveItem) {
           sourceRow = item->index;
         }
         else {
 
+          // in descending priority, we decrement the row to fix the drop position
+          // because this is not done by the sort proxy for us
           if (m_sortOrder == Qt::DescendingOrder) {
             row--;
           }
@@ -308,11 +324,24 @@ bool ModListByPriorityProxy::dropMimeData(const QMimeData* data, Qt::DropAction 
 
       }
     }
+
+    // row < 0 and valid parent means we are dropping into an item,
+    // which can only be a separator since dropping into non-separators
+    // is disabled
+    //
+    // we want to drop at the end of the separator, so we need to find
+    // the right priority
     else if (parent.isValid()) {
-      // this is a drop in a separator
+
+      // in ascending priority, we take the priority of the next top-level
+      // item, which can be a separator or the overwrite mod, but is guaranteed
+      // to exist
       if (m_sortOrder == Qt::AscendingOrder) {
         sourceRow = m_Root.children[parent.row() + 1]->index;
       }
+
+      // in descending priority, we take the separator itself if it's empty or
+      // its last children
       else {
         auto* item = m_Root.children[parent.row()].get();
         sourceRow = item->children.empty() ? item->index : item->children.back()->index;

@@ -622,9 +622,7 @@ bool ModListSortProxy::canDropMimeData(const QMimeData* data, Qt::DropAction act
     }
   }
 
-  // in the regular model, when dropping between rows, the row-value passed to
-  // the sourceModel is inconsistent between ascending and descending ordering.
-  // This should fix that
+  // see dropMimeData for details
   if (sortOrder() == Qt::DescendingOrder && row != -1 && !sourceIsByPriorityProxy()) {
     --row;
   }
@@ -648,8 +646,11 @@ bool ModListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action
   }
 
   // in the regular model, when dropping between rows, the row-value passed to
-  // the sourceModel is inconsistent between ascending and descending ordering.
-  // This should fix that
+  // the sourceModel is inconsistent between ascending and descending ordering
+  //
+  // we want to fix that, but we cannot do it for the by-priority proxy because
+  // it messes up with non top-level items, so we simply forward the row and the
+  // by-priority proxy will fix the row for us
   if (sortOrder() == Qt::DescendingOrder && row != -1 && !sourceIsByPriorityProxy()) {
     --row;
   }
