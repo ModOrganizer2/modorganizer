@@ -104,9 +104,6 @@ void ModListByPriorityProxy::buildTree()
       std::make_move_iterator(backups.begin()), std::make_move_iterator(backups.end()));
   }
 
-  // we do not really care about their position in the root
-  // as long as those are not in a separator
-
   endResetModel();
 }
 

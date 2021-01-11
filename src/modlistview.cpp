@@ -209,6 +209,11 @@ int ModListView::sortColumn() const
   return m_sortProxy ? m_sortProxy->sortColumn() : -1;
 }
 
+Qt::SortOrder ModListView::sortOrder() const
+{
+  return m_sortProxy ? m_sortProxy->sortOrder() : Qt::AscendingOrder;
+}
+
 ModListView::GroupByMode ModListView::groupByMode() const
 {
   if (m_sortProxy == nullptr) {

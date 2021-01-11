@@ -620,7 +620,7 @@ bool ModListSortProxy::canDropMimeData(const QMimeData* data, Qt::DropAction act
   // in the regular model, when dropping between rows, the row-value passed to
   // the sourceModel is inconsistent between ascending and descending ordering.
   // This should fix that
-  if (sortOrder() == Qt::DescendingOrder) {
+  if (sortOrder() == Qt::DescendingOrder && row != -1) {
     --row;
   }
 
@@ -645,7 +645,7 @@ bool ModListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action
   // in the regular model, when dropping between rows, the row-value passed to
   // the sourceModel is inconsistent between ascending and descending ordering.
   // This should fix that
-  if (sortOrder() == Qt::DescendingOrder) {
+  if (sortOrder() == Qt::DescendingOrder && row != -1) {
     --row;
   }
 
