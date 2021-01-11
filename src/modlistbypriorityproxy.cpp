@@ -43,6 +43,11 @@ void ModListByPriorityProxy::setProfile(Profile* profile)
   m_profile = profile;
 }
 
+void ModListByPriorityProxy::setSortOrder(Qt::SortOrder order)
+{
+  m_sortOrder = order;
+}
+
 void ModListByPriorityProxy::buildTree()
 {
   if (!sourceModel()) return;
@@ -56,7 +61,9 @@ void ModListByPriorityProxy::buildTree()
   TreeItem* root = &m_Root;
   std::unique_ptr<TreeItem> overwrite;
   std::vector<std::unique_ptr<TreeItem>> backups;
-  for (auto& [priority, index] : m_profile->getAllIndexesByPriority()) {
+
+  auto fn = [&](const auto& p) {
+    auto& [priority, index] = p;
     ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
 
     TreeItem* item;
@@ -81,11 +88,24 @@ void ModListByPriorityProxy::buildTree()
     }
 
     m_IndexToItem[index] = item;
+  };
+
+  auto& ibp = m_profile->getAllIndexesByPriority();
+  if (m_sortOrder == Qt::AscendingOrder) {
+    std::for_each(ibp.begin(), ibp.end(), fn);
+    m_Root.children.insert(m_Root.children.begin(),
+      std::make_move_iterator(backups.begin()), std::make_move_iterator(backups.end()));
+    m_Root.children.push_back(std::move(overwrite));
+  }
+  else {
+    std::for_each(ibp.rbegin(), ibp.rend(), fn);
+    m_Root.children.insert(m_Root.children.begin(), std::move(overwrite));
+    m_Root.children.insert(m_Root.children.end(),
+      std::make_move_iterator(backups.begin()), std::make_move_iterator(backups.end()));
   }
 
-  m_Root.children.insert(m_Root.children.begin(),
-    std::make_move_iterator(backups.begin()), std::make_move_iterator(backups.end()));
-  m_Root.children.push_back(std::move(overwrite));
+  // we do not really care about their position in the root
+  // as long as those are not in a separator
 
   endResetModel();
 }
@@ -185,7 +205,8 @@ bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropActi
     int firstRowPriority = INT_MAX;
     for (auto sourceRow : dropInfo.rows()) {
       hasSeparator = hasSeparator || ModInfo::getByIndex(sourceRow)->isSeparator();
-      if (m_profile->getModPriority(sourceRow) < firstRowPriority) {
+      if (m_sortOrder == Qt::AscendingOrder && m_profile->getModPriority(sourceRow) < firstRowPriority
+        || m_sortOrder == Qt::DescendingOrder && m_profile->getModPriority(sourceRow) > firstRowPriority) {
         firstRowIndex = sourceRow;
         firstRowPriority = m_profile->getModPriority(sourceRow);
       }
@@ -193,7 +214,7 @@ bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropActi
 
     bool firstRowSeparator = firstRowIndex != -1 && ModInfo::getByIndex(firstRowIndex)->isSeparator();
 
-    // row = -1 and invalid parent means we're dropping onto an item, we don't want to drop
+    // row = -1 and valid parent means we're dropping onto an item, we don't want to drop
     // separators onto items or items into their own separator
     if (row == -1 && parent.isValid()) {
       auto* parentItem = static_cast<TreeItem*>(parent.internalPointer());
@@ -216,8 +237,10 @@ bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropActi
   }
 
   // the row may be outside of the children list if we insert at the end
-  if (!parent.isValid() && row >= m_Root.children.size()) {
-    return false;
+  if (!parent.isValid()) {
+    if (row >= m_Root.children.size()) {
+      return false;
+    }
   }
 
   return QAbstractProxyModel::canDropMimeData(data, action, row, column, parent);
@@ -237,15 +260,25 @@ bool ModListByPriorityProxy::dropMimeData(const QMimeData* data, Qt::DropAction 
   else {
 
     if (row >= 0) {
+      MOBase::log::debug("row={}, name={}, expand={}, drop={}", row, m_Root.children[row]->mod->name(), m_dropExpanded, m_dropPosition);
       if (!parent.isValid()) {
         if (row < m_Root.children.size()) {
           sourceRow = m_Root.children[row]->index;
           if (row > 0
+            && m_sortOrder == Qt::AscendingOrder
             && m_Root.children[row - 1]->mod->isSeparator()
             && !m_Root.children[row - 1]->children.empty()
             && m_dropExpanded
             && m_dropPosition == ModListView::DropPosition::BelowItem) {
-            sourceRow = m_Root.children[row - 1]->children[0]->index;
+              sourceRow = m_Root.children[row - 1]->children[0]->index;
+          }
+          else if (row > 0
+            && m_sortOrder == Qt::DescendingOrder
+            && m_Root.children[row]->mod->isSeparator()
+            && !m_Root.children[row]->children.empty()
+            && (!m_dropExpanded
+              || m_dropPosition == ModListView::DropPosition::AboveItem)) {
+              sourceRow = m_Root.children[row]->children.back()->index;
           }
         }
         else {
@@ -265,7 +298,13 @@ bool ModListByPriorityProxy::dropMimeData(const QMimeData* data, Qt::DropAction 
     }
     else if (parent.isValid()) {
       // this is a drop in a separator
-      sourceRow = m_Root.children[parent.row() + 1]->index;
+      if (m_sortOrder == Qt::AscendingOrder) {
+        sourceRow = m_Root.children[parent.row() + 1]->index;
+      }
+      else {
+        auto* item = m_Root.children[parent.row()].get();
+        sourceRow = item->children.empty() ? item->index : item->children.back()->index;
+      }
     }
   }
 

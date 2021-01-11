@@ -683,8 +683,8 @@ void ModListView::updateGroupByProxy()
     nextProxy = m_byNexusIdProxy;
   }
   else if (m_core->settings().interface().collapsibleSeparators()
-    && m_sortProxy->sortColumn() == ModList::COL_PRIORITY
-    && m_sortProxy->sortOrder() == Qt::AscendingOrder) {
+    && m_sortProxy->sortColumn() == ModList::COL_PRIORITY) {
+    m_byPriorityProxy->setSortOrder(m_sortProxy->sortOrder());
     nextProxy = m_byPriorityProxy;
   }
 
