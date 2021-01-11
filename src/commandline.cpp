@@ -438,6 +438,11 @@ std::string CommandLine::more() const
 }
 
 
+Command::Meta::Meta(std::string n, std::string d, std::string u, std::string m)
+  : name(n), description(d), usage(u), more(m)
+{
+}
+
 std::string Command::name() const
 {
   return meta().name;
@@ -450,12 +455,12 @@ std::string Command::description() const
 
 std::string Command::usageLine() const
 {
-  return name() + " " + getUsageLine();
+  return name() + " " + meta().usage;
 }
 
 std::string Command::moreInfo() const
 {
-  return getMoreInfo();
+  return meta().more;
 }
 
 po::options_description Command::allOptions() const
@@ -486,16 +491,6 @@ po::positional_options_description Command::positional() const
 bool Command::legacy() const
 {
   return false;
-}
-
-std::string Command::getUsageLine() const
-{
-  return "[options]";
-}
-
-std::string Command::getMoreInfo() const
-{
-  return "";
 }
 
 po::options_description Command::getVisibleOptions() const
@@ -574,7 +569,12 @@ po::options_description CrashDumpCommand::getVisibleOptions() const
 
 Command::Meta CrashDumpCommand::meta() const
 {
-  return {"crashdump", "writes a crashdump for a running process of MO"};
+  return {
+    "crashdump",
+    "writes a crashdump for a running process of MO",
+    "[options]",
+    ""
+  };
 }
 
 std::optional<int> CrashDumpCommand::runEarly()
@@ -599,7 +599,7 @@ std::optional<int> CrashDumpCommand::runEarly()
 
 Command::Meta LaunchCommand::meta() const
 {
-  return {"launch", "(internal, do not use)"};
+  return {"launch", "(internal, do not use)", "", ""};
 }
 
 bool LaunchCommand::legacy() const
@@ -673,18 +673,18 @@ LPCWSTR LaunchCommand::UntouchedCommandLineArguments(
 }
 
 
-std::string RunCommand::getUsageLine() const
+Command::Meta RunCommand::meta() const
 {
-  return "[options] NAME";
-}
+  return {
+    "run",
+    "runs a program, file or a configured executable",
+    "[options] NAME",
 
-std::string RunCommand::getMoreInfo() const
-{
-  return
     "Runs a program or a file with the virtual filesystem. If NAME is a path\n"
     "to a non-executable file, the program that is associated with the file\n"
     "extension is run instead. With -e, NAME must refer to the name of an\n"
-    "executable in the instance (for example, \"SKSE\").";
+    "executable in the instance (for example, \"SKSE\")."
+  };
 }
 
 po::options_description RunCommand::getVisibleOptions() const
@@ -716,11 +716,6 @@ po::positional_options_description RunCommand::getPositional() const
   d.add("NAME", 1);
 
   return d;
-}
-
-Command::Meta RunCommand::meta() const
-{
-  return {"run", "runs a program, file or a configured executable"};
 }
 
 bool RunCommand::canForwardToPrimary() const
@@ -787,9 +782,14 @@ std::optional<int> RunCommand::runPostOrganizer(OrganizerCore& core)
 
 
 
-std::string ReloadPluginCommand::getUsageLine() const
+Command::Meta ReloadPluginCommand::meta() const
 {
-  return "PLUGIN";
+  return {
+    "reload-plugin",
+    "reloads the given plugin",
+    "PLUGIN",
+    ""
+  };
 }
 
 po::options_description ReloadPluginCommand::getInternalOptions() const
@@ -809,11 +809,6 @@ po::positional_options_description ReloadPluginCommand::getPositional() const
   d.add("PLUGIN", 1);
 
   return d;
-}
-
-Command::Meta ReloadPluginCommand::meta() const
-{
-  return {"reload-plugin", "reloads the given plugin"};
 }
 
 bool ReloadPluginCommand::canForwardToPrimary() const
@@ -839,7 +834,11 @@ std::optional<int> ReloadPluginCommand::runPostOrganizer(OrganizerCore& core)
 
 Command::Meta RefreshCommand::meta() const
 {
-  return {"refresh", "refreshes MO (same as F5)"};
+  return {
+    "refresh",
+    "refreshes MO (same as F5)",
+    "", ""
+  };
 }
 
 bool RefreshCommand::canForwardToPrimary() const

@@ -28,11 +28,11 @@ public:
   //
   std::string description() const;
 
-  // usage line, puts together the name and whatever getUsageLine() returns
+  // usage line, puts together the name and whatever meta().usage is
   //
   std::string usageLine() const;
 
-  // shown after the usage line
+  // shown after the usage line; this is meta().more
   //
   std::string moreInfo() const;
 
@@ -74,16 +74,12 @@ protected:
   //
   struct Meta
   {
-    std::string name, description;
+    std::string name, description, usage, more;
+
+    Meta(
+      std::string name, std::string description,
+      std::string usage, std::string more);
   };
-
-  // returns the usage line for this command, not including the name
-  //
-  virtual std::string getUsageLine() const;
-
-  // returns text shown after the usage line
-  //
-  virtual std::string getMoreInfo() const;
 
   // returns visible options specific to this command
   //
@@ -166,13 +162,11 @@ protected:
 class RunCommand : public Command
 {
 protected:
-  std::string getUsageLine() const override;
-  std::string getMoreInfo() const override;
+  Meta meta() const override;
 
   po::options_description getVisibleOptions() const override;
   po::options_description getInternalOptions() const override;
   po::positional_options_description getPositional() const override;
-  Meta meta() const override;
 
   bool canForwardToPrimary() const override;
   std::optional<int> runPostOrganizer(OrganizerCore& core) override;
@@ -184,11 +178,10 @@ protected:
 class ReloadPluginCommand : public Command
 {
 protected:
-  std::string getUsageLine() const override;
+  Meta meta() const override;
 
   po::options_description getInternalOptions() const override;
   po::positional_options_description getPositional() const override;
-  Meta meta() const override;
 
   bool canForwardToPrimary() const override;
   std::optional<int> runPostOrganizer(OrganizerCore& core) override;
