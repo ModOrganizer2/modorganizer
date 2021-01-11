@@ -37,6 +37,7 @@
 #include "shared/filesorigin.h"
 #include "shared/fileentry.h"
 #include "shared/util.h"
+#include "shared/error_report.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -579,6 +580,10 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
         profileBaseDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot).at(0));
 
     log::error("picked profile '{}' instead", QDir(profileDir).dirName());
+
+    MOShared::criticalOnTop(
+      tr("The selected profile '%1' does not exist. The profile '%2' will be used instead")
+        .arg(profileName).arg(QDir(profileDir).dirName()));
   }
 
   // Keep the old profile to emit signal-changed:

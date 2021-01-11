@@ -150,26 +150,15 @@ protected:
 };
 
 
-// runs a configured executable
+// runs a program or an executable
 //
-class ExeCommand : public Command
+class RunCommand : public Command
 {
 protected:
   std::string getUsageLine() const override;
   po::options_description getVisibleOptions() const override;
   po::options_description getInternalOptions() const override;
   po::positional_options_description getPositional() const override;
-  Meta meta() const override;
-  std::optional<int> runPostOrganizer(OrganizerCore& organizer) override;
-};
-
-
-// runs an arbitrary executable
-//
-class RunCommand : public Command
-{
-protected:
-  po::options_description getOptions() const;
   Meta meta() const override;
   std::optional<int> runPostOrganizer(OrganizerCore& organizer) override;
 };

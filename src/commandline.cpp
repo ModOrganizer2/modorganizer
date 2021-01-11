@@ -1,6 +1,7 @@
 #include "commandline.h"
 #include "env.h"
 #include "organizercore.h"
+#include "instancemanager.h"
 #include "shared/util.h"
 #include "shared/error_report.h"
 #include <log.h>
@@ -53,7 +54,6 @@ CommandLine::CommandLine()
   : m_command(nullptr)
 {
   createOptions();
-  m_commands.push_back(std::make_unique<ExeCommand>());
   m_commands.push_back(std::make_unique<RunCommand>());
   m_commands.push_back(std::make_unique<CrashDumpCommand>());
   m_commands.push_back(std::make_unique<LaunchCommand>());
@@ -616,64 +616,74 @@ LPCWSTR LaunchCommand::UntouchedCommandLineArguments(
 }
 
 
-std::string ExeCommand::getUsageLine() const
+std::string RunCommand::getUsageLine() const
 {
-  return "[options] exe-name";
+  return "[options] program";
 }
 
-po::options_description ExeCommand::getVisibleOptions() const
-{
-  po::options_description d;
-
-  d.add_options()
-    ("arguments,a", po::value<std::string>()->default_value(""), "override arguments")
-    ("cwd,c",       po::value<std::string>()->default_value(""), "override working directory");
-
-  return d;
-}
-
-po::options_description ExeCommand::getInternalOptions() const
+po::options_description RunCommand::getVisibleOptions() const
 {
   po::options_description d;
 
   d.add_options()
-    ("exe-name", po::value<std::string>()->required(), "executable name");
+    ("executable,e", po::value<bool>()->default_value(false)->zero_tokens(), "the program is a configured executable name")
+    ("arguments,a", po::value<std::string>(), "override arguments")
+    ("cwd,c",       po::value<std::string>(), "override working directory");
 
   return d;
 }
 
-po::positional_options_description ExeCommand::getPositional() const
+po::options_description RunCommand::getInternalOptions() const
+{
+  po::options_description d;
+
+  d.add_options()
+    ("program", po::value<std::string>()->required(), "program or executable name");
+
+  return d;
+}
+
+po::positional_options_description RunCommand::getPositional() const
 {
   po::positional_options_description d;
 
-  d.add("exe-name", 1);
+  d.add("program", 1);
 
   return d;
 }
 
-Command::Meta ExeCommand::meta() const
+Command::Meta RunCommand::meta() const
 {
-  return {"exe", "launches a configured executable"};
+  return {"run", "runs a program, file or a configured executable"};
 }
 
-std::optional<int> ExeCommand::runPostOrganizer(OrganizerCore& organizer)
+std::optional<int> RunCommand::runPostOrganizer(OrganizerCore& organizer)
 {
-  const auto exe = QString::fromStdString(vm()["exe-name"].as<std::string>());
+  const auto program = QString::fromStdString(vm()["program"].as<std::string>());
 
-  const auto& exes = *organizer.executablesList();
-
-  auto itor = exes.find(exe);
-  if (itor == exes.end()) {
-    MOShared::criticalOnTop(QObject::tr("Executable '%1' not found.").arg(exe));
-    return 1;
-  }
-
-  try {
+  try
+  {
     // make sure MO doesn't exit even if locking is disabled, ForceWait and
     // PreventExit will do that
     auto p = organizer.processRunner();
 
-    p.setFromExecutable(*itor);
+    if (vm()["executable"].as<bool>()) {
+      const auto& exes = *organizer.executablesList();
+
+      auto itor = exes.find(program);
+      if (itor == exes.end()) {
+        MOShared::criticalOnTop(
+          QObject::tr("Executable '%1' not found in instance '%2'.")
+            .arg(program)
+            .arg(InstanceManager::singleton().currentInstance()->name()));
+
+        return 1;
+      }
+
+      p.setFromExecutable(*itor);
+    } else {
+      p.setFromFile(nullptr, QFileInfo(program));
+    }
 
     if (vm().count("arguments")) {
       p.setArguments(QString::fromStdString(vm()["arguments"].as<std::string>()));
@@ -684,34 +694,24 @@ std::optional<int> ExeCommand::runPostOrganizer(OrganizerCore& organizer)
     }
 
     p.setWaitForCompletion(ProcessRunner::ForceWait, UILocker::PreventExit);
-    p.run();
+
+    const auto r = p.run();
+    if (r == ProcessRunner::Error) {
+      MOShared::criticalOnTop(
+        QObject::tr("Failed to run '%1'. The logs might have more information.").arg(program));
+
+      return 1;
+    }
 
     return 0;
   }
   catch (const std::exception &e) {
-    reportError(
-      QObject::tr("failed to start shortcut: %1").arg(e.what()));
+    MOShared::criticalOnTop(
+      QObject::tr("Failed to run '%1'. The logs might have more information. %2")
+        .arg(program).arg(e.what()));
+
     return 1;
   }
-
-  return 0;
-}
-
-
-po::options_description RunCommand::getOptions() const
-{
-  return {};
-}
-
-Command::Meta RunCommand::meta() const
-{
-  return {"run", "launches an arbitrary program"};
-}
-
-std::optional<int> RunCommand::runPostOrganizer(OrganizerCore&)
-{
-  std::cout << "not implemented\n";
-  return {};
 }
 
 } // namespace
