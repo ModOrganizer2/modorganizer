@@ -257,25 +257,29 @@ bool ModListByPriorityProxy::dropMimeData(const QMimeData* data, Qt::DropAction 
   else {
 
     if (row >= 0) {
-      MOBase::log::debug("row={}, name={}, expand={}, drop={}", row, m_Root.children[row]->mod->name(), m_dropExpanded, m_dropPosition);
       if (!parent.isValid()) {
         if (row < m_Root.children.size()) {
-          sourceRow = m_Root.children[row]->index;
-          if (row > 0
-            && m_sortOrder == Qt::AscendingOrder
-            && m_Root.children[row - 1]->mod->isSeparator()
-            && !m_Root.children[row - 1]->children.empty()
-            && m_dropExpanded
-            && m_dropPosition == ModListView::DropPosition::BelowItem) {
+          if (m_sortOrder == Qt::AscendingOrder) {
+            sourceRow = m_Root.children[row]->index;
+            if (row > 0
+              && m_sortOrder == Qt::AscendingOrder
+              && m_Root.children[row - 1]->mod->isSeparator()
+              && !m_Root.children[row - 1]->children.empty()
+              && m_dropExpanded
+              && m_dropPosition == ModListView::DropPosition::BelowItem) {
               sourceRow = m_Root.children[row - 1]->children[0]->index;
+            }
           }
-          else if (row > 0
-            && m_sortOrder == Qt::DescendingOrder
-            && m_Root.children[row]->mod->isSeparator()
-            && !m_Root.children[row]->children.empty()
-            && (!m_dropExpanded
-              || m_dropPosition == ModListView::DropPosition::AboveItem)) {
-              sourceRow = m_Root.children[row]->children.back()->index;
+          else {
+            sourceRow = m_Root.children[row - 1]->index;
+            if (row > 0
+              && m_sortOrder == Qt::DescendingOrder
+              && m_Root.children[row - 1]->mod->isSeparator()
+              && !m_Root.children[row - 1]->children.empty()
+              && (!m_dropExpanded
+                || m_dropPosition == ModListView::DropPosition::AboveItem)) {
+              sourceRow = m_Root.children[row - 1]->children.back()->index;
+            }
           }
         }
         else {
@@ -285,12 +289,25 @@ bool ModListByPriorityProxy::dropMimeData(const QMimeData* data, Qt::DropAction 
       else {
         auto* item = static_cast<TreeItem*>(parent.internalPointer());
 
-        if (row < item->children.size()) {
-          sourceRow = item->children[row]->index;
+        if (m_sortOrder == Qt::DescendingOrder
+          && row == 0 && m_dropPosition == ModListView::DropPosition::AboveItem) {
+          sourceRow = item->index;
         }
-        else if (parent.row() + 1 < m_Root.children.size()) {
-          sourceRow = m_Root.children[parent.row() + 1]->index;
+        else {
+
+          if (m_sortOrder == Qt::DescendingOrder) {
+            row--;
+          }
+
+          if (row < item->children.size()) {
+            sourceRow = item->children[row]->index;
+          }
+          else if (parent.row() + 1 < m_Root.children.size()) {
+            sourceRow = m_Root.children[parent.row() + 1]->index;
+          }
         }
+
+
       }
     }
     else if (parent.isValid()) {
