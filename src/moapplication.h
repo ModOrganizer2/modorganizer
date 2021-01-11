@@ -40,6 +40,7 @@ class MOApplication : public QApplication
 public:
   MOApplication(int& argc, char** argv);
 
+  void firstTimeSetup(MOMultiProcess& multiProcess);
   int setup(MOMultiProcess& multiProcess);
   int run(MOMultiProcess& multiProcess);
   void resetForRestart();
@@ -65,8 +66,7 @@ private:
   std::unique_ptr<PluginContainer> m_plugins;
   std::unique_ptr<OrganizerCore> m_core;
 
-  int doOneRun(MOMultiProcess& multiProcess);
-
+  void externalMessage(const QString& message);
   std::unique_ptr<Instance> getCurrentInstance();
   std::optional<int> setupInstanceLoop(Instance& currentInstance, PluginContainer& pc);
   void purgeOldFiles();

@@ -37,10 +37,25 @@ int main(int argc, char *argv[])
 
   MOMultiProcess multiProcess(cl.multiple());
   if (multiProcess.ephemeral()) {
-    return forwardToPrimary(multiProcess, cl);
+    if (cl.forwardToPrimary(multiProcess)) {
+      return 0;
+    } else {
+      QMessageBox::information(
+        nullptr, QObject::tr("Mod Organizer"),
+        QObject::tr("An instance of Mod Organizer is already running"));
+    }
+
+    return 0;
+  }
+
+  if (auto r=cl.runPostMultiProcess(multiProcess)) {
+    return *r;
   }
 
   tt.stop();
+
+
+  app.firstTimeSetup(multiProcess);
 
 
   // MO runs in a loop because it can be restarted in several ways, such as
@@ -73,7 +88,7 @@ int main(int argc, char *argv[])
         }
       }
 
-      if (auto r=cl.run(app.core())) {
+      if (auto r=cl.runPostOrganizer(app.core())) {
         return *r;
       }
 
@@ -97,21 +112,6 @@ int main(int argc, char *argv[])
       return 1;
     }
   }
-}
-
-int forwardToPrimary(MOMultiProcess& multiProcess, const cl::CommandLine& cl)
-{
-  if (cl.shortcut().isValid()) {
-    multiProcess.sendMessage(cl.shortcut().toString());
-  } else if (cl.nxmLink()) {
-    multiProcess.sendMessage(*cl.nxmLink());
-  } else {
-    QMessageBox::information(
-      nullptr, QObject::tr("Mod Organizer"),
-      QObject::tr("An instance of Mod Organizer is already running"));
-  }
-
-  return 0;
 }
 
 LONG WINAPI onUnhandledException(_EXCEPTION_POINTERS* ptrs)

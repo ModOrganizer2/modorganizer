@@ -5,6 +5,7 @@
 #include <memory>
 
 class OrganizerCore;
+class MOMultiProcess;
 
 namespace cl
 {
@@ -59,8 +60,10 @@ public:
 
   //
   //
-  virtual std::optional<int> runPreOrganizer();
-  virtual std::optional<int> runPostOrganizer(OrganizerCore& organizer);
+  virtual std::optional<int> runEarly();
+  virtual bool canForwardToPrimary() const;
+  virtual std::optional<int> runPostMultiProcess(MOMultiProcess& mp);
+  virtual std::optional<int> runPostOrganizer(OrganizerCore& core);
 
 protected:
   // meta information about this command, returned by derived classes
@@ -118,7 +121,7 @@ class CrashDumpCommand : public Command
 protected:
   po::options_description getVisibleOptions() const override;
   Meta meta() const override;
-  std::optional<int> runPreOrganizer() override;
+  std::optional<int> runEarly() override;
 };
 
 
@@ -141,7 +144,7 @@ public:
 
 protected:
   Meta meta() const override;
-  std::optional<int> runPreOrganizer() override;
+  std::optional<int> runEarly() override;
 
   int SpawnWaitProcess(LPCWSTR workingDirectory, LPCWSTR commandLine);
 
@@ -160,7 +163,21 @@ protected:
   po::options_description getInternalOptions() const override;
   po::positional_options_description getPositional() const override;
   Meta meta() const override;
-  std::optional<int> runPostOrganizer(OrganizerCore& organizer) override;
+  std::optional<int> runPostOrganizer(OrganizerCore& core) override;
+};
+
+
+// reloads the given plugin
+//
+class ReloadPluginCommand : public Command
+{
+protected:
+  std::string getUsageLine() const override;
+  po::options_description getInternalOptions() const override;
+  po::positional_options_description getPositional() const override;
+  Meta meta() const override;
+  bool canForwardToPrimary() const override;
+  std::optional<int> runPostOrganizer(OrganizerCore& core) override;
 };
 
 
@@ -215,7 +232,9 @@ public:
   // returns an empty optional if execution should continue, or a return code
   // if MO must quit
   //
-  std::optional<int> run(OrganizerCore& organizer) const;
+  bool forwardToPrimary(MOMultiProcess& multiProcess);
+  std::optional<int> runPostMultiProcess(MOMultiProcess& mp);
+  std::optional<int> runPostOrganizer(OrganizerCore& core);
 
 
   // clears parsed options, used when MO is "restarted" so the options aren't
@@ -269,6 +288,12 @@ private:
 
   void createOptions();
   std::string more() const;
+
+  template <class... Ts>
+  void add()
+  {
+    (m_commands.push_back(std::make_unique<Ts>()), ...);
+  }
 };
 
 } // namespace

@@ -347,25 +347,6 @@ void OrganizerCore::profileRemoved(QString const& profileName)
   m_ProfileRemoved(profileName);
 }
 
-
-void OrganizerCore::externalMessage(const QString &message)
-{
-  MOShortcut moshortcut(message);
-
-  if (moshortcut.isValid()) {
-    if(moshortcut.hasExecutable()) {
-      processRunner()
-        .setFromShortcut(moshortcut)
-        .setWaitForCompletion(ProcessRunner::Refresh)
-        .run();
-    }
-  }
-  else if (isNxmLink(message)) {
-    MessageDialog::showMessage(tr("Download started"), qApp->activeWindow());
-    downloadRequestedNXM(message);
-  }
-}
-
 void OrganizerCore::downloadRequested(QNetworkReply *reply, QString gameName, int modID,
                                       const QString &fileName)
 {

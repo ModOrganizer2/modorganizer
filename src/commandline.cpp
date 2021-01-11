@@ -2,8 +2,10 @@
 #include "env.h"
 #include "organizercore.h"
 #include "instancemanager.h"
+#include "multiprocess.h"
 #include "shared/util.h"
 #include "shared/error_report.h"
+#include "shared/appconfig.h"
 #include <log.h>
 #include <report.h>
 
@@ -54,9 +56,12 @@ CommandLine::CommandLine()
   : m_command(nullptr)
 {
   createOptions();
-  m_commands.push_back(std::make_unique<RunCommand>());
-  m_commands.push_back(std::make_unique<CrashDumpCommand>());
-  m_commands.push_back(std::make_unique<LaunchCommand>());
+
+  add<
+    RunCommand,
+    ReloadPluginCommand,
+    CrashDumpCommand,
+    LaunchCommand>();
 }
 
 std::optional<int> CommandLine::process(const std::wstring& line)
@@ -130,7 +135,7 @@ std::optional<int> CommandLine::process(const std::wstring& line)
             c->process(line, m_vm, opts);
             m_command = c.get();
 
-            return m_command->runPreOrganizer();
+            return m_command->runEarly();
           }
           catch(po::error& e)
           {
@@ -170,7 +175,7 @@ std::optional<int> CommandLine::process(const std::wstring& line)
         return 1;
       }
 
-      // try as an moshorcut://
+      // try as an moshortcut://
       m_shortcut = qs;
 
       if (!m_shortcut.isValid()) {
@@ -205,14 +210,34 @@ std::optional<int> CommandLine::process(const std::wstring& line)
   }
 }
 
-std::optional<int> CommandLine::run(OrganizerCore& organizer) const
+bool CommandLine::forwardToPrimary(MOMultiProcess& multiProcess)
+{
+  if (m_shortcut.isValid()) {
+    multiProcess.sendMessage(m_shortcut.toString());
+  } else if (m_nxmLink) {
+    multiProcess.sendMessage(*m_nxmLink);
+  } else if (m_command && m_command->canForwardToPrimary()) {
+    multiProcess.sendMessage(QString::fromWCharArray(GetCommandLineW()));
+  } else {
+    return false;
+  }
+
+  return true;
+}
+
+std::optional<int> CommandLine::runPostMultiProcess(MOMultiProcess& mp)
+{
+  return {};
+}
+
+std::optional<int> CommandLine::runPostOrganizer(OrganizerCore& core)
 {
   if (m_shortcut.isValid()) {
     if (m_shortcut.hasExecutable()) {
       try {
         // make sure MO doesn't exit even if locking is disabled, ForceWait and
         // PreventExit will do that
-        organizer.processRunner()
+        core.processRunner()
           .setFromShortcut(m_shortcut)
           .setWaitForCompletion(ProcessRunner::ForceWait, UILocker::PreventExit)
           .run();
@@ -227,7 +252,7 @@ std::optional<int> CommandLine::run(OrganizerCore& organizer) const
     }
   } else if (m_nxmLink) {
     log::debug("starting download from command line: {}", *m_nxmLink);
-    organizer.externalMessage(*m_nxmLink);
+    core.downloadRequestedNXM(*m_nxmLink);
   } else if (m_executable) {
     const QString exeName = *m_executable;
     log::debug("starting {} from command line", exeName);
@@ -238,7 +263,7 @@ std::optional<int> CommandLine::run(OrganizerCore& organizer) const
       //
       // make sure MO doesn't exit even if locking is disabled, ForceWait and
       // PreventExit will do that
-      organizer.processRunner()
+      core.processRunner()
         .setFromFileOrExecutable(exeName, m_untouched)
         .setWaitForCompletion(ProcessRunner::ForceWait, UILocker::PreventExit)
         .run();
@@ -252,7 +277,7 @@ std::optional<int> CommandLine::run(OrganizerCore& organizer) const
       return 1;
     }
   } else if (m_command) {
-    return m_command->runPostOrganizer(organizer);
+    return m_command->runPostOrganizer(core);
   }
 
   return {};
@@ -479,7 +504,17 @@ void Command::process(
   m_untouched = untouched;
 }
 
-std::optional<int> Command::runPreOrganizer()
+std::optional<int> Command::runEarly()
+{
+  return {};
+}
+
+bool Command::canForwardToPrimary() const
+{
+  return false;
+}
+
+std::optional<int> Command::runPostMultiProcess(MOMultiProcess&)
 {
   return {};
 }
@@ -520,7 +555,7 @@ Command::Meta CrashDumpCommand::meta() const
   return {"crashdump", "writes a crashdump for a running process of MO"};
 }
 
-std::optional<int> CrashDumpCommand::runPreOrganizer()
+std::optional<int> CrashDumpCommand::runEarly()
 {
   env::Console console;
 
@@ -550,7 +585,7 @@ bool LaunchCommand::legacy() const
   return true;
 }
 
-std::optional<int> LaunchCommand::runPreOrganizer()
+std::optional<int> LaunchCommand::runEarly()
 {
   // needs at least the working directory and process name
   if (untouched().size() < 2) {
@@ -657,7 +692,7 @@ Command::Meta RunCommand::meta() const
   return {"run", "runs a program, file or a configured executable"};
 }
 
-std::optional<int> RunCommand::runPostOrganizer(OrganizerCore& organizer)
+std::optional<int> RunCommand::runPostOrganizer(OrganizerCore& core)
 {
   const auto program = QString::fromStdString(vm()["program"].as<std::string>());
 
@@ -665,10 +700,10 @@ std::optional<int> RunCommand::runPostOrganizer(OrganizerCore& organizer)
   {
     // make sure MO doesn't exit even if locking is disabled, ForceWait and
     // PreventExit will do that
-    auto p = organizer.processRunner();
+    auto p = core.processRunner();
 
     if (vm()["executable"].as<bool>()) {
-      const auto& exes = *organizer.executablesList();
+      const auto& exes = *core.executablesList();
 
       auto itor = exes.find(program);
       if (itor == exes.end()) {
@@ -712,6 +747,57 @@ std::optional<int> RunCommand::runPostOrganizer(OrganizerCore& organizer)
 
     return 1;
   }
+}
+
+
+
+std::string ReloadPluginCommand::getUsageLine() const
+{
+  return "plugin-name";
+}
+
+po::options_description ReloadPluginCommand::getInternalOptions() const
+{
+  po::options_description d;
+
+  d.add_options()
+    ("plugin-name", po::value<std::string>()->required(), "plugin name");
+
+  return d;
+}
+
+po::positional_options_description ReloadPluginCommand::getPositional() const
+{
+  po::positional_options_description d;
+
+  d.add("plugin-name", 1);
+
+  return d;
+}
+
+Command::Meta ReloadPluginCommand::meta() const
+{
+  return {"reload-plugin", "reloads the given plugin"};
+}
+
+bool ReloadPluginCommand::canForwardToPrimary() const
+{
+  return true;
+}
+
+std::optional<int> ReloadPluginCommand::runPostOrganizer(OrganizerCore& core)
+{
+  const QString name = QString::fromStdString(vm()["plugin-name"].as<std::string>());
+
+  QString filepath = QDir(
+    qApp->applicationDirPath() + "/" +
+    ToQString(AppConfig::pluginPath()))
+      .absoluteFilePath(name);
+
+  log::debug("reloading plugin from {}", filepath);
+  core.pluginContainer().reloadPlugin(filepath);
+
+  return {};
 }
 
 } // namespace

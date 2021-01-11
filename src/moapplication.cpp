@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "tutorialmanager.h"
 #include "sanitychecks.h"
 #include "mainwindow.h"
+#include "messagedialog.h"
 #include "shared/error_report.h"
 #include "shared/util.h"
 #include <iplugingame.h>
@@ -173,6 +174,14 @@ MOApplication::MOApplication(int& argc, char** argv)
 OrganizerCore& MOApplication::core()
 {
   return *m_core;
+}
+
+void MOApplication::firstTimeSetup(MOMultiProcess& multiProcess)
+{
+  connect(
+    &multiProcess, &MOMultiProcess::messageSent, this,
+    [this](auto&& s){ externalMessage(s); },
+    Qt::QueuedConnection);
 }
 
 int MOApplication::setup(MOMultiProcess& multiProcess)
@@ -350,11 +359,10 @@ int MOApplication::run(MOMultiProcess& multiProcess)
     // main window
     m_nexus->getAccessManager()->setTopLevelWidget(&mainWindow);
 
-    QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), this,
-                      SLOT(setStyleFile(QString)));
-
-    QObject::connect(&multiProcess, SIGNAL(messageSent(QString)), m_core.get(),
-                      SLOT(externalMessage(QString)));
+    connect(
+      &mainWindow, &MainWindow::styleChanged, this,
+      [this](auto&& file){ setStyleFile(file); },
+      Qt::QueuedConnection);
 
 
     log::debug("displaying main window");
@@ -375,6 +383,37 @@ int MOApplication::run(MOMultiProcess& multiProcess)
   m_settings->geometry().resetIfNeeded();
 
   return res;
+}
+
+void MOApplication::externalMessage(const QString& message)
+{
+  log::debug("received external message '{}'", message);
+
+  MOShortcut moshortcut(message);
+
+  if (moshortcut.isValid()) {
+    if(moshortcut.hasExecutable()) {
+      m_core->processRunner()
+        .setFromShortcut(moshortcut)
+        .setWaitForCompletion(ProcessRunner::Refresh)
+        .run();
+    }
+  } else if (isNxmLink(message)) {
+    MessageDialog::showMessage(tr("Download started"), qApp->activeWindow());
+    m_core->downloadRequestedNXM(message);
+  } else {
+    cl::CommandLine cl;
+
+    if (auto r=cl.process(message.toStdWString())) {
+      log::debug(
+        "while processing external message, command line wants to "
+        "exit; ignoring");
+
+      return;
+    }
+
+    cl.runPostOrganizer(*m_core);
+  }
 }
 
 std::unique_ptr<Instance> MOApplication::getCurrentInstance()
