@@ -32,6 +32,10 @@ public:
   //
   std::string usageLine() const;
 
+  // shown after the usage line
+  //
+  std::string moreInfo() const;
+
 
   // returns all options for this command, including hidden ones; used to parse
   // the command line
@@ -76,6 +80,10 @@ protected:
   // returns the usage line for this command, not including the name
   //
   virtual std::string getUsageLine() const;
+
+  // returns text shown after the usage line
+  //
+  virtual std::string getMoreInfo() const;
 
   // returns visible options specific to this command
   //
@@ -159,10 +167,14 @@ class RunCommand : public Command
 {
 protected:
   std::string getUsageLine() const override;
+  std::string getMoreInfo() const override;
+
   po::options_description getVisibleOptions() const override;
   po::options_description getInternalOptions() const override;
   po::positional_options_description getPositional() const override;
   Meta meta() const override;
+
+  bool canForwardToPrimary() const override;
   std::optional<int> runPostOrganizer(OrganizerCore& core) override;
 };
 
@@ -173,12 +185,26 @@ class ReloadPluginCommand : public Command
 {
 protected:
   std::string getUsageLine() const override;
+
   po::options_description getInternalOptions() const override;
   po::positional_options_description getPositional() const override;
+  Meta meta() const override;
+
+  bool canForwardToPrimary() const override;
+  std::optional<int> runPostOrganizer(OrganizerCore& core) override;
+};
+
+
+// refreshes mo
+//
+class RefreshCommand : public Command
+{
+protected:
   Meta meta() const override;
   bool canForwardToPrimary() const override;
   std::optional<int> runPostOrganizer(OrganizerCore& core) override;
 };
+
 
 
 // parses the command line and runs any given command

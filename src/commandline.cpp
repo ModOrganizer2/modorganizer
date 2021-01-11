@@ -60,6 +60,7 @@ CommandLine::CommandLine()
   add<
     RunCommand,
     ReloadPluginCommand,
+    RefreshCommand,
     CrashDumpCommand,
     LaunchCommand>();
 }
@@ -322,8 +323,14 @@ std::string CommandLine::usage(const Command* c) const
 
   if (c) {
     oss
-      << "  ModOrganizer.exe [global-options] " << c->usageLine() << "\n"
-      << "\n"
+      << "  ModOrganizer.exe [global-options] " << c->usageLine() << "\n\n";
+
+    const std::string more = c->moreInfo();
+    if (!more.empty()) {
+      oss << more << "\n\n";
+    }
+
+    oss
       << "Command options:\n"
       << c->visibleOptions() << "\n";
   } else {
@@ -335,6 +342,11 @@ std::string CommandLine::usage(const Command* c) const
     // name and description for all commands
     std::vector<std::pair<std::string, std::string>> v;
     for (auto&& c : m_commands) {
+      // don't show legacy commands
+      if (c->legacy()) {
+        continue;
+      }
+
       v.push_back({c->name(), c->description()});
     }
 
@@ -441,6 +453,11 @@ std::string Command::usageLine() const
   return name() + " " + getUsageLine();
 }
 
+std::string Command::moreInfo() const
+{
+  return getMoreInfo();
+}
+
 po::options_description Command::allOptions() const
 {
   po::options_description d;
@@ -474,6 +491,11 @@ bool Command::legacy() const
 std::string Command::getUsageLine() const
 {
   return "[options]";
+}
+
+std::string Command::getMoreInfo() const
+{
+  return "";
 }
 
 po::options_description Command::getVisibleOptions() const
@@ -653,7 +675,16 @@ LPCWSTR LaunchCommand::UntouchedCommandLineArguments(
 
 std::string RunCommand::getUsageLine() const
 {
-  return "[options] program";
+  return "[options] NAME";
+}
+
+std::string RunCommand::getMoreInfo() const
+{
+  return
+    "Runs a program or a file with the virtual filesystem. If NAME is a path\n"
+    "to a non-executable file, the program that is associated with the file\n"
+    "extension is run instead. With -e, NAME must refer to the name of an\n"
+    "executable in the instance (for example, \"SKSE\").";
 }
 
 po::options_description RunCommand::getVisibleOptions() const
@@ -661,7 +692,7 @@ po::options_description RunCommand::getVisibleOptions() const
   po::options_description d;
 
   d.add_options()
-    ("executable,e", po::value<bool>()->default_value(false)->zero_tokens(), "the program is a configured executable name")
+    ("executable,e", po::value<bool>()->default_value(false)->zero_tokens(), "the name is a configured executable name")
     ("arguments,a", po::value<std::string>(), "override arguments")
     ("cwd,c",       po::value<std::string>(), "override working directory");
 
@@ -673,7 +704,7 @@ po::options_description RunCommand::getInternalOptions() const
   po::options_description d;
 
   d.add_options()
-    ("program", po::value<std::string>()->required(), "program or executable name");
+    ("NAME", po::value<std::string>()->required(), "program or executable name");
 
   return d;
 }
@@ -682,7 +713,7 @@ po::positional_options_description RunCommand::getPositional() const
 {
   po::positional_options_description d;
 
-  d.add("program", 1);
+  d.add("NAME", 1);
 
   return d;
 }
@@ -692,9 +723,14 @@ Command::Meta RunCommand::meta() const
   return {"run", "runs a program, file or a configured executable"};
 }
 
+bool RunCommand::canForwardToPrimary() const
+{
+  return true;
+}
+
 std::optional<int> RunCommand::runPostOrganizer(OrganizerCore& core)
 {
-  const auto program = QString::fromStdString(vm()["program"].as<std::string>());
+  const auto program = QString::fromStdString(vm()["NAME"].as<std::string>());
 
   try
   {
@@ -753,7 +789,7 @@ std::optional<int> RunCommand::runPostOrganizer(OrganizerCore& core)
 
 std::string ReloadPluginCommand::getUsageLine() const
 {
-  return "plugin-name";
+  return "PLUGIN";
 }
 
 po::options_description ReloadPluginCommand::getInternalOptions() const
@@ -761,7 +797,7 @@ po::options_description ReloadPluginCommand::getInternalOptions() const
   po::options_description d;
 
   d.add_options()
-    ("plugin-name", po::value<std::string>()->required(), "plugin name");
+    ("PLUGIN", po::value<std::string>()->required(), "plugin name");
 
   return d;
 }
@@ -770,7 +806,7 @@ po::positional_options_description ReloadPluginCommand::getPositional() const
 {
   po::positional_options_description d;
 
-  d.add("plugin-name", 1);
+  d.add("PLUGIN", 1);
 
   return d;
 }
@@ -787,7 +823,7 @@ bool ReloadPluginCommand::canForwardToPrimary() const
 
 std::optional<int> ReloadPluginCommand::runPostOrganizer(OrganizerCore& core)
 {
-  const QString name = QString::fromStdString(vm()["plugin-name"].as<std::string>());
+  const QString name = QString::fromStdString(vm()["PLUGIN"].as<std::string>());
 
   QString filepath = QDir(
     qApp->applicationDirPath() + "/" +
@@ -797,6 +833,23 @@ std::optional<int> ReloadPluginCommand::runPostOrganizer(OrganizerCore& core)
   log::debug("reloading plugin from {}", filepath);
   core.pluginContainer().reloadPlugin(filepath);
 
+  return {};
+}
+
+
+Command::Meta RefreshCommand::meta() const
+{
+  return {"refresh", "refreshes MO (same as F5)"};
+}
+
+bool RefreshCommand::canForwardToPrimary() const
+{
+  return true;
+}
+
+std::optional<int> RefreshCommand::runPostOrganizer(OrganizerCore& core)
+{
+  core.refresh();
   return {};
 }
 
