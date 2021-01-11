@@ -170,19 +170,6 @@ bool ModListByPriorityProxy::hasChildren(const QModelIndex& parent) const
   return item->children.size() > 0;
 }
 
-bool ModListByPriorityProxy::setData(const QModelIndex& index, const QVariant& value, int role)
-{
-  // only care about the "name" column
-  if (index.column() == 0 && role == Qt::EditRole) {
-    QString oldValue = data(index, role).toString();
-    if (m_CollapsedItems.contains(oldValue)) {
-      m_CollapsedItems.erase(oldValue);
-      m_CollapsedItems.insert(value.toString());
-    }
-  }
-  return QAbstractProxyModel::setData(index, value, role);
-}
-
 bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const
 {
   ModListDropInfo dropInfo(data, m_core);
@@ -228,24 +215,9 @@ bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropActi
     }
   }
 
-  // top-level drop is disabled unless it's before the first separator
-  if (!parent.isValid() && row >= 0) {
-
-    // the row may be outside of the children list if we insert at the end
-    if (row >= m_Root.children.size()) {
-      return false;
-    }
-
-    // if the previous row is a collapsed separator, disable dropping
-    if (row > 0 && m_Root.children[row - 1]->mod->isSeparator()) {
-      // we cannot use the name of the mod directly because it does not exactly
-      // match the display value (e.g. for separators)
-      QString display = sourceModel()->index(m_Root.children[row - 1]->index, ModList::COL_NAME).data(Qt::DisplayRole).toString();
-      if (m_CollapsedItems.contains(display)
-        && (m_Root.children[row]->mod->isSeparator() || m_Root.children[row]->mod->isOverwrite())) {
-        return false;
-      }
-    }
+  // the row may be outside of the children list if we insert at the end
+  if (!parent.isValid() && row >= m_Root.children.size()) {
+    return false;
   }
 
   return QAbstractProxyModel::canDropMimeData(data, action, row, column, parent);

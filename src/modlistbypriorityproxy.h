@@ -38,7 +38,6 @@ public:
   int columnCount(const QModelIndex& index) const override;
   bool hasChildren(const QModelIndex& parent) const override;
 
-  bool setData(const QModelIndex& index, const QVariant& value, int role) override;
   bool canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const override;
   bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) override;
 
@@ -79,7 +78,6 @@ private:
 
   TreeItem m_Root;
   std::map<unsigned int, TreeItem*> m_IndexToItem;
-  std::set<QString> m_CollapsedItems;
 
 private:
   OrganizerCore& m_core;
