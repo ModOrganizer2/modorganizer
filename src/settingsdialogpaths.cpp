@@ -4,13 +4,12 @@
 #include <iplugingame.h>
 
 PathsSettingsTab::PathsSettingsTab(Settings& s, SettingsDialog& d)
-  : SettingsTab(s, d)
+  : SettingsTab(s, d), m_gameDir(settings().game().plugin()->gameDirectory())
 {
   ui->baseDirEdit->setText(settings().paths().base());
 
   ui->managedGameDirEdit->setText(
-    settings().game().plugin()->gameDirectory().absoluteFilePath(
-      settings().game().plugin()->binaryName()));
+    QDir::toNativeSeparators(m_gameDir.absoluteFilePath(settings().game().plugin()->binaryName())));
 
   QString basePath = settings().paths().base();
   QDir baseDir(basePath);
@@ -90,27 +89,8 @@ void PathsSettingsTab::update()
     settings().paths().setBase("");
   }
 
-  const auto binaryPath = settings().game().plugin()->binaryName();
-  QFileInfo oldGameExe(
-    settings().game().plugin()->gameDirectory().absoluteFilePath(binaryPath));
-  QFileInfo newGameExe(ui->managedGameDirEdit->text());
-
-  if (oldGameExe != newGameExe) {
-    QDir folder = newGameExe.absoluteDir();
-    while (folder.exists() && !folder.isRoot()
-      && QFileInfo(folder.filePath(binaryPath)) != newGameExe) {
-      folder.cdUp();
-    }
-
-    if (folder.exists(binaryPath)) {
-      settings().game().setDirectory(folder.absolutePath());
-    }
-    else {
-      QMessageBox::warning(parentWidget(), QObject::tr("Error"),
-        QObject::tr("Failed to extract the game folder from \"%1\". Your version of the game "
-          "might not be supported by the current game plugin.").arg(newGameExe.absoluteFilePath()));
-
-    }
+  if (m_gameDir != settings().game().plugin()->gameDirectory()) {
+    settings().game().setDirectory(m_gameDir.absolutePath());
   }
 }
 
@@ -183,8 +163,30 @@ void PathsSettingsTab::on_browseGameDirBtn_clicked()
   QFileInfo oldGameExe(ui->managedGameDirEdit->text());
 
   QString temp = QFileDialog::getOpenFileName(&dialog(), QObject::tr("Select game executable"), oldGameExe.absolutePath(), oldGameExe.fileName());
-  if (!temp.isEmpty()) {
-    ui->managedGameDirEdit->setText(temp);
+
+  if (temp.isEmpty()) {
+    return;
+  }
+
+  QFileInfo newExe(temp);
+  const auto binaryPath = settings().game().plugin()->binaryName();
+  QDir folder = newExe.absoluteDir();
+  while (folder.exists() && !folder.isRoot()
+    && QFileInfo(folder.filePath(binaryPath)) != newExe) {
+    folder.cdUp();
+  }
+
+  if (folder.exists(binaryPath)) {
+    m_gameDir = folder;
+    ui->managedGameDirEdit->setText(
+      QDir::toNativeSeparators(m_gameDir.absoluteFilePath(settings().game().plugin()->binaryName())));
+  }
+  else {
+    QMessageBox::warning(parentWidget(), QObject::tr("Error"),
+      QObject::tr("The given path was not recognized as a valid game installation. "
+        "The current game plugin requires the executable to be in a \"%1\" subfolder of the game directory.")
+      .arg(QFileInfo(binaryPath).path()));
+
   }
 }
 
