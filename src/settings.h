@@ -623,8 +623,8 @@ public:
 
   // whether to use collapsible separators when possible
   //
-  bool collapsibleSeparators() const;
-  void setCollapsibleSeparators(bool b);
+  bool collapsibleSeparators(Qt::SortOrder order) const;
+  void setCollapsibleSeparators(bool ascending, bool descending);
 
   // whether to display mod conflicts on separators when collapsed
   //

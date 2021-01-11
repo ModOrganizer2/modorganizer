@@ -13,16 +13,15 @@ UserInterfaceSettingsTab::UserInterfaceSettingsTab(Settings& s, SettingsDialog& 
 {
 
   // connect before setting to trigger
-  QObject::connect(ui->collapsibleSeparatorsBox, &QGroupBox::toggled, [=](auto&& on) {
-    ui->collapsibleSeparatorsConflictsBox->setEnabled(on);
-    ui->collapsibleSeparatorsPerProfileBox->setEnabled(on);
-  });
+  QObject::connect(ui->collapsibleSeparatorsAscBox, &QCheckBox::toggled, [=] { updateCollapsibleSeparatorsGroup(); });
+  QObject::connect(ui->collapsibleSeparatorsDscBox, &QCheckBox::toggled, [=] { updateCollapsibleSeparatorsGroup(); });
 
   // mod list
   ui->displayForeignBox->setChecked(settings().interface().displayForeign());
   ui->colorSeparatorsBox->setChecked(settings().colors().colorSeparatorScrollbar());
   ui->collapsibleSeparatorsConflictsBox->setChecked(settings().interface().collapsibleSeparatorsConflicts());
-  ui->collapsibleSeparatorsBox->setChecked(settings().interface().collapsibleSeparators());
+  ui->collapsibleSeparatorsAscBox->setChecked(settings().interface().collapsibleSeparators(Qt::AscendingOrder));
+  ui->collapsibleSeparatorsDscBox->setChecked(settings().interface().collapsibleSeparators(Qt::DescendingOrder));
   ui->collapsibleSeparatorsPerProfileBox->setChecked(settings().interface().collapsibleSeparatorsPerProfile());
   ui->saveFiltersBox->setChecked(settings().interface().saveFilters());
 
@@ -42,7 +41,8 @@ void UserInterfaceSettingsTab::update()
   // mod list
   settings().colors().setColorSeparatorScrollbar(ui->colorSeparatorsBox->isChecked());
   settings().interface().setDisplayForeign(ui->displayForeignBox->isChecked());
-  settings().interface().setCollapsibleSeparators(ui->collapsibleSeparatorsBox->isChecked());
+  settings().interface().setCollapsibleSeparators(
+    ui->collapsibleSeparatorsAscBox->isChecked(), ui->collapsibleSeparatorsDscBox->isChecked());
   settings().interface().setCollapsibleSeparatorsConflicts(ui->collapsibleSeparatorsConflictsBox->isChecked());
   settings().interface().setCollapsibleSeparatorsPerProfile(ui->collapsibleSeparatorsPerProfileBox->isChecked());
   settings().interface().setSaveFilters(ui->saveFiltersBox->isChecked());
@@ -53,4 +53,12 @@ void UserInterfaceSettingsTab::update()
 
   // colors
   ui->colorTable->commitColors();
+}
+
+void UserInterfaceSettingsTab::updateCollapsibleSeparatorsGroup()
+{
+  const auto checked = ui->collapsibleSeparatorsAscBox->isChecked() ||
+    ui->collapsibleSeparatorsDscBox->isChecked();
+  ui->collapsibleSeparatorsConflictsBox->setEnabled(checked);
+  ui->collapsibleSeparatorsPerProfileBox->setEnabled(checked);
 }

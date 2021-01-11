@@ -687,7 +687,7 @@ void ModListView::updateGroupByProxy()
   else if (groupIndex == GroupBy::NEXUS_ID) {
     nextProxy = m_byNexusIdProxy;
   }
-  else if (m_core->settings().interface().collapsibleSeparators()
+  else if (m_core->settings().interface().collapsibleSeparators(m_sortProxy->sortOrder())
     && m_sortProxy->sortColumn() == ModList::COL_PRIORITY) {
     m_byPriorityProxy->setSortOrder(m_sortProxy->sortOrder());
     nextProxy = m_byPriorityProxy;
