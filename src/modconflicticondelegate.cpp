@@ -7,19 +7,8 @@
 using namespace MOBase;
 
 ModConflictIconDelegate::ModConflictIconDelegate(ModListView* view, int logicalIndex, int compactSize)
-  : IconDelegate(view)
-  , m_View(view)
-  , m_LogicalIndex(logicalIndex)
-  , m_CompactSize(compactSize)
-  , m_Compact(false)
+  : IconDelegate(view, logicalIndex, compactSize), m_view(view)
 {
-}
-
-void ModConflictIconDelegate::columnResized(int logicalIndex, int, int newSize)
-{
-  if (logicalIndex == m_LogicalIndex) {
-    m_Compact = newSize < m_CompactSize;
-  }
 }
 
 QList<QString> ModConflictIconDelegate::getIconsForFlags(
@@ -94,8 +83,8 @@ QList<QString> ModConflictIconDelegate::getIcons(const QModelIndex &index) const
   }
 
   bool compact;
-  auto flags = m_View->conflictFlags(index, &compact);
-  return getIconsForFlags(flags, compact || m_Compact);
+  auto flags = m_view->conflictFlags(index, &compact);
+  return getIconsForFlags(flags, compact || this->compact());
 }
 
 QString ModConflictIconDelegate::getFlagIcon(ModInfo::EConflictFlag flag)
@@ -119,19 +108,13 @@ QString ModConflictIconDelegate::getFlagIcon(ModInfo::EConflictFlag flag)
 
 size_t ModConflictIconDelegate::getNumIcons(const QModelIndex &index) const
 {
-  unsigned int modIdx = index.data(ModList::IndexRole).toInt();
-  if (modIdx < ModInfo::getNumMods()) {
-    ModInfo::Ptr info = ModInfo::getByIndex(modIdx);
-    std::vector<ModInfo::EConflictFlag> flags = info->getConflictFlags();
-    size_t count = flags.size();
-    if (std::find_first_of(flags.begin(), flags.end(),
-      s_ConflictFlags.begin(), s_ConflictFlags.end()) == flags.end()) {
-      ++count;
-    }
-    return count;
-  } else {
+  QVariant modIndex = index.data(ModList::IndexRole);
+
+  if (!modIndex.isValid()) {
     return 0;
   }
+
+  return m_view->conflictFlags(index, nullptr).size();
 }
 
 QSize ModConflictIconDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &modelIndex) const

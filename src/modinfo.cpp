@@ -49,6 +49,7 @@ using namespace MOBase;
 using namespace MOShared;
 
 
+const std::set<unsigned int> ModInfo::s_EmptySet;
 std::vector<ModInfo::Ptr> ModInfo::s_Collection;
 ModInfo::Ptr ModInfo::s_Overwrite;
 std::map<QString, unsigned int> ModInfo::s_ModsByName;

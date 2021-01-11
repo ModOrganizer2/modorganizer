@@ -97,20 +97,44 @@ void ModListViewActions::createEmptyMod(const QModelIndex& index) const
   }
 
   int newPriority = -1;
-  if (index.isValid() && m_view->sortColumn() == ModList::COL_PRIORITY) {
-    newPriority = m_core.currentProfile()->getModPriority(index.data(ModList::IndexRole).toInt());
+  if (index.isValid() && index.data(ModList::IndexRole).isValid()
+    && m_view->sortColumn() == ModList::COL_PRIORITY) {
+    auto mIndex = index.data(ModList::IndexRole).toInt();
+    auto info = ModInfo::getByIndex(mIndex);
+    newPriority = m_core.currentProfile()->getModPriority(mIndex);
+    if (info->isSeparator()) {
+      auto& ibp = m_core.currentProfile()->getAllIndexesByPriority();
+
+      // start right after the current priority and look for the next
+      // separator
+      auto it = ibp.find(newPriority + 1);
+      for (; it != ibp.end(); ++it) {
+        auto info = ModInfo::getByIndex(it->second);
+        if (info->isSeparator()) {
+          newPriority = it->first;
+          break;
+        }
+      }
+
+      // no separator found, create at the end
+      if (it == ibp.end()) {
+        newPriority = -1;
+      }
+    }
   }
 
-  IModInterface* newMod = m_core.createMod(name);
-  if (newMod == nullptr) {
+  if (m_core.createMod(name) == nullptr) {
     return;
   }
 
   m_core.refresh();
 
+  const auto mIndex = ModInfo::getIndex(name);
   if (newPriority >= 0) {
-    m_core.modList()->changeModPriority(ModInfo::getIndex(name), newPriority);
+    m_core.modList()->changeModPriority(mIndex, newPriority);
   }
+
+  m_view->scrollToAndSelect(m_view->indexModelToView(m_core.modList()->index(mIndex, 0)));
 }
 
 void ModListViewActions::createSeparator(const QModelIndex& index) const
@@ -139,16 +163,22 @@ void ModListViewActions::createSeparator(const QModelIndex& index) const
     newPriority = m_core.currentProfile()->getModPriority(index.data(ModList::IndexRole).toInt());
   }
 
-  if (m_core.createMod(name) == nullptr) { return; }
+  if (m_core.createMod(name) == nullptr) {
+    return;
+  }
+
   m_core.refresh();
 
+  const auto mIndex = ModInfo::getIndex(name);
   if (newPriority >= 0) {
-    m_core.modList()->changeModPriority(ModInfo::getIndex(name), newPriority);
+    m_core.modList()->changeModPriority(mIndex, newPriority);
   }
 
   if (auto c = m_core.settings().colors().previousSeparatorColor()) {
-    ModInfo::getByIndex(ModInfo::getIndex(name))->setColor(*c);
+    ModInfo::getByIndex(mIndex)->setColor(*c);
   }
+
+  m_view->scrollToAndSelect(m_view->indexModelToView(m_core.modList()->index(mIndex, 0)));
 }
 
 void ModListViewActions::checkModsForUpdates() const

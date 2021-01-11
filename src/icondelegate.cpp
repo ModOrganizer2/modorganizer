@@ -27,9 +27,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-IconDelegate::IconDelegate(QObject* parent)
-  : QStyledItemDelegate(parent)
+IconDelegate::IconDelegate(QTreeView* view, int column, int compactSize) :
+  QStyledItemDelegate(view), m_column(column), m_compactSize(compactSize), m_compact(false)
 {
+  if (view) {
+    connect(view->header(), &QHeaderView::sectionResized, [=](int column, int, int size) {
+      if (column == m_column) {
+        m_compact = size < m_compactSize;
+      }
+      });
+  }
 }
 
 void IconDelegate::paintIcons(
@@ -41,6 +48,8 @@ void IconDelegate::paintIcons(
 
   int iconWidth = icons.size() > 0 ? ((option.rect.width() / icons.size()) - 4) : 16;
   iconWidth = std::min(16, iconWidth);
+
+  const int margin = (option.rect.height() - iconWidth) / 2;
 
   painter->translate(option.rect.topLeft());
   for (const QString &iconId : icons) {
@@ -57,7 +66,7 @@ void IconDelegate::paintIcons(
       }
       QPixmapCache::insert(fullIconId, icon);
     }
-    painter->drawPixmap(x, 2, iconWidth, iconWidth, icon);
+    painter->drawPixmap(x, margin, iconWidth, iconWidth, icon);
     x += iconWidth + 4;
   }
 
@@ -72,6 +81,7 @@ void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
   else {
     QStyledItemDelegate::paint(painter, option, index);
   }
+
   paintIcons(painter, option, index, getIcons(index));
 }
 

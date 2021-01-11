@@ -26,6 +26,7 @@ ListDialog::ListDialog(QWidget *parent)
 {
   ui->setupUi(this);
   ui->filterEdit->setFocus();
+  connect(ui->choiceList, &QListWidget::itemDoubleClicked, this, &QDialog::accept);
 }
 
 ListDialog::~ListDialog()

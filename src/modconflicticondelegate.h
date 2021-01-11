@@ -4,6 +4,7 @@
 #include <array>
 
 #include "icondelegate.h"
+#include "modinfo.h"
 
 class ModListView;
 
@@ -12,11 +13,8 @@ class ModConflictIconDelegate : public IconDelegate
   Q_OBJECT;
 
 public:
-  explicit ModConflictIconDelegate(ModListView* parent = nullptr, int logicalIndex = -1, int compactSize = 80);
+  explicit ModConflictIconDelegate(ModListView* view, int logicalIndex = -1, int compactSize = 80);
   QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex &index) const override;
-
-public slots:
-  void columnResized(int logicalIndex, int oldSize, int newSize);
 
 protected:
 
@@ -25,6 +23,10 @@ protected:
 
   QList<QString> getIcons(const QModelIndex &index) const override;
   size_t getNumIcons(const QModelIndex &index) const override;
+
+  // constructor for color table
+  //
+  ModConflictIconDelegate() : ModConflictIconDelegate(nullptr) { }
 
 private:
   static constexpr std::array s_ConflictFlags{
@@ -43,10 +45,7 @@ private:
     ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN
   };
 
-  ModListView* m_View;
-  int m_LogicalIndex;
-  int m_CompactSize;
-  bool m_Compact;
+  ModListView* m_view;
 };
 
 #endif // MODCONFLICTICONDELEGATE_H

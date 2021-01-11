@@ -18,6 +18,8 @@
 #include "log.h"
 #include "modflagicondelegate.h"
 #include "modconflicticondelegate.h"
+#include "modcontenticondelegate.h"
+#include "modlistversiondelegate.h"
 #include "modlistviewactions.h"
 #include "modlistdropinfo.h"
 #include "modlistcontextmenu.h"
@@ -40,13 +42,13 @@ using namespace MOShared;
 // handling (e.g. checkbox, edit, etc.), so we also need to override
 // the visualRect() function from the mod list view.
 //
-class ModListStyledItemDelegated : public QStyledItemDelegate
+class ModListStyledItemDelegate : public QStyledItemDelegate
 {
   ModListView* m_view;
 
 public:
 
-  ModListStyledItemDelegated(ModListView* view) :
+  ModListStyledItemDelegate(ModListView* view) :
     QStyledItemDelegate(view), m_view(view) { }
 
   void initStyleOption(QStyleOptionViewItem* option, const QModelIndex& index) const override
@@ -81,18 +83,29 @@ public:
     if (!color.isValid()) {
       color = index.data(Qt::BackgroundRole).value<QColor>();
     }
-    else {
-      // disable alternating row if the color is from the children
-      opt.features &= ~QStyleOptionViewItem::Alternate;
-    }
     opt.backgroundBrush = color;
+
+    // we need to find the background color to compute the ideal text color
+    // but the mod list view uses alternate color so we need to find the
+    // right color
+    auto bg = opt.palette.base().color();
+    auto vrow = (opt.rect.y() - m_view->verticalOffset()) / opt.rect.height();
+    if (vrow % 2 == 1) {
+      bg = opt.palette.alternateBase().color();
+    }
 
     // compute ideal foreground color for some rows
     if (color.isValid()) {
       if ((index.column() == ModList::COL_NAME
         && ModInfo::getByIndex(index.data(ModList::IndexRole).toInt())->isSeparator())
         || index.column() == ModList::COL_NOTES) {
-        opt.palette.setBrush(QPalette::Text, ColorSettings::idealTextColor(color));
+
+        // combine the color with the background and then find the "ideal" text color
+        const auto a = color.alpha() / 255.;
+        int r = (1 - a) * bg.red() + a * color.red(),
+          g = (1 - a) * bg.green() + a * color.green(),
+          b = (1 - a) * bg.blue() + a * color.blue();
+        opt.palette.setBrush(QPalette::Text, ColorSettings::idealTextColor(QColor(r, g, b)));
       }
     }
 
@@ -132,10 +145,18 @@ ModListView::ModListView(QWidget* parent)
   MOBase::setCustomizableColumns(this);
   setAutoExpandDelay(750);
 
-  setItemDelegate(new ModListStyledItemDelegated(this));
+  setItemDelegate(new ModListStyledItemDelegate(this));
 
   connect(this, &ModListView::doubleClicked, this, &ModListView::onDoubleClicked);
   connect(this, &ModListView::customContextMenuRequested, this, &ModListView::onCustomContextMenuRequested);
+
+  // the timeout is pretty small because its main purpose is to avoid
+  // refreshing multiple times when calling expandAll() or collapseAll()
+  // which emit a lots of expanded/collapsed signals in a very small
+  // time window
+  m_refreshMarkersTimer.setInterval(50);
+  m_refreshMarkersTimer.setSingleShot(true);
+  connect(&m_refreshMarkersTimer, &QTimer::timeout, [=] { refreshMarkersAndPlugins(); });
 
   installEventFilter(new CopyEventFilter(this, [=](auto& index) {
     QVariant mIndex = index.data(ModList::IndexRole);
@@ -158,10 +179,24 @@ void ModListView::refresh()
   updateGroupByProxy();
 }
 
-void ModListView::setProfile(Profile* profile)
+void ModListView::onProfileChanged(Profile* oldProfile, Profile* newProfile)
 {
-  m_sortProxy->setProfile(profile);
-  m_byPriorityProxy->setProfile(profile);
+  const auto perProfileSeparators =
+    m_core->settings().interface().collapsibleSeparatorsPerProfile();
+
+  // save expanded/collapsed state of separators
+  if (oldProfile && perProfileSeparators) {
+    auto& collapsed = m_collapsed[m_byPriorityProxy];
+    oldProfile->storeSetting("UserInterface", "collapsed_separators", QStringList(collapsed.begin(), collapsed.end()));
+  }
+
+  m_sortProxy->setProfile(newProfile);
+  m_byPriorityProxy->setProfile(newProfile);
+
+  if (newProfile && perProfileSeparators) {
+    auto collapsed = newProfile->setting("UserInterface", "collapsed_separators", QStringList()).toStringList();
+    m_collapsed[m_byPriorityProxy] = { collapsed.begin(), collapsed.end() };
+  }
 }
 
 bool ModListView::hasCollapsibleSeparators() const
@@ -216,10 +251,8 @@ std::optional<unsigned int> ModListView::nextMod(unsigned int modIndex) const
 
     ModInfo::Ptr mod = ModInfo::getByIndex(modIndex);
 
-    // skip overwrite and backups and separators
-    if (mod->hasFlag(ModInfo::FLAG_OVERWRITE) ||
-      mod->hasFlag(ModInfo::FLAG_BACKUP) ||
-      mod->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+    // skip overwrite, backups and separators
+    if (mod->isOverwrite() || mod->isBackup() || mod->isSeparator()) {
       continue;
     }
 
@@ -245,12 +278,9 @@ std::optional<unsigned int> ModListView::prevMod(unsigned int  modIndex) const
 
     modIndex = index.data(ModList::IndexRole).toInt();
 
-    // skip overwrite and backups and separators
+    // skip overwrite, backups and separators
     ModInfo::Ptr mod = ModInfo::getByIndex(modIndex);
-
-    if (mod->hasFlag(ModInfo::FLAG_OVERWRITE) ||
-      mod->hasFlag(ModInfo::FLAG_BACKUP) ||
-      mod->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+    if (mod->isOverwrite() || mod->isBackup() || mod->isSeparator()) {
       continue;
     }
 
@@ -360,6 +390,15 @@ void ModListView::setSelected(const QModelIndex& current, const QModelIndexList&
   }
 }
 
+void ModListView::scrollToAndSelect(const QModelIndex& index)
+{
+  // focus, scroll to and select
+  scrollTo(index);
+  setCurrentIndex(index);
+  selectionModel()->select(index, QItemSelectionModel::SelectCurrent | QItemSelectionModel::Rows);
+  QTimer::singleShot(50, [=] { setFocus(); });
+}
+
 void ModListView::refreshExpandedItems()
 {
   auto* model = m_sortProxy->sourceModel();
@@ -421,7 +460,7 @@ void ModListView::onModPrioritiesChanged(const QModelIndexList& indices)
       }
       // update conflict check on the moved mod
       modInfo->doConflictCheck();
-      setOverwriteMarkers(modInfo);
+      setOverwriteMarkers(selectionModel()->selectedRows());
     }
   }
 }
@@ -436,15 +475,11 @@ void ModListView::onModInstalled(const QString& modName)
 
   QModelIndex qIndex = indexModelToView(m_core->modList()->index(index, 0));
 
-  if (hasCollapsibleSeparators()) {
-    setExpanded(qIndex, true);
+  if (hasCollapsibleSeparators() && qIndex.parent().isValid()) {
+    setExpanded(qIndex.parent(), true);
   }
 
-  // focus, scroll to and select
-  setFocus(Qt::OtherFocusReason);
-  scrollTo(qIndex);
-  setCurrentIndex(qIndex);
-  selectionModel()->select(qIndex, QItemSelectionModel::SelectCurrent | QItemSelectionModel::Rows);
+  scrollToAndSelect(qIndex);
 }
 
 void ModListView::onModFilterActive(bool filterActive)
@@ -559,6 +594,8 @@ void ModListView::refreshFilters()
 
 void ModListView::onExternalFolderDropped(const QUrl& url, int priority)
 {
+  setWindowState(Qt::WindowActive);
+
   QFileInfo fileInfo(url.toLocalFile());
 
   GuessedValue<QString> name;
@@ -594,9 +631,12 @@ void ModListView::onExternalFolderDropped(const QUrl& url, int priority)
 
   m_core->refresh();
 
+  const auto index = ModInfo::getIndex(name);
   if (priority != -1) {
-    m_core->modList()->changeModPriority(ModInfo::getIndex(name), priority);
+    m_core->modList()->changeModPriority(index, priority);
   }
+
+  scrollToAndSelect(indexModelToView(m_core->modList()->index(index, 0)));
 }
 
 bool ModListView::moveSelection(int key)
@@ -686,10 +726,13 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   m_actions = new ModListViewActions(core, *m_filters, factory, this, mwui->espList, mw);
   ui = {
     mwui->groupCombo, mwui->activeModsCounter, mwui->modFilterEdit,
-    mwui->currentCategoryLabel, mwui->clearFiltersButton, mwui->filtersSeparators
+    mwui->currentCategoryLabel, mwui->clearFiltersButton, mwui->filtersSeparators,
+    mwui->espList
   };
 
+
   connect(m_core, &OrganizerCore::modInstalled, [=](auto&& name) { onModInstalled(name); });
+  connect(m_core, &OrganizerCore::profileChanged, this, &ModListView::onProfileChanged);
   connect(core.modList(), &ModList::modPrioritiesChanged, [=](auto&& indices) { onModPrioritiesChanged(indices); });
   connect(core.modList(), &ModList::clearOverwrite, [=] { m_actions->clearOverwrite(); });
   connect(core.modList(), &ModList::modStatesChanged, [=] { updateModCount(); });
@@ -741,17 +784,10 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   connect(header(), &QHeaderView::sectionResized, [=](int logicalIndex, int oldSize, int newSize) {
     m_sortProxy->setColumnVisible(logicalIndex, newSize != 0); });
 
-  GenericIconDelegate* contentDelegate = new GenericIconDelegate(this, ModList::ContentsRole, ModList::COL_CONTENT, 150);
-  ModFlagIconDelegate* flagDelegate = new ModFlagIconDelegate(this, ModList::COL_FLAGS, 120);
-  ModConflictIconDelegate* conflictFlagDelegate = new ModConflictIconDelegate(this, ModList::COL_CONFLICTFLAGS, 80);
-
-  connect(header(), &QHeaderView::sectionResized, contentDelegate, &GenericIconDelegate::columnResized);
-  connect(header(), &QHeaderView::sectionResized, flagDelegate, &ModFlagIconDelegate::columnResized);
-  connect(header(), &QHeaderView::sectionResized, conflictFlagDelegate, &ModConflictIconDelegate::columnResized);
-
-  setItemDelegateForColumn(ModList::COL_FLAGS, flagDelegate);
-  setItemDelegateForColumn(ModList::COL_CONFLICTFLAGS, conflictFlagDelegate);
-  setItemDelegateForColumn(ModList::COL_CONTENT, contentDelegate);
+  setItemDelegateForColumn(ModList::COL_FLAGS, new ModFlagIconDelegate(this, ModList::COL_FLAGS, 120));
+  setItemDelegateForColumn(ModList::COL_CONFLICTFLAGS, new ModConflictIconDelegate(this, ModList::COL_CONFLICTFLAGS, 80));
+  setItemDelegateForColumn(ModList::COL_CONTENT, new ModContentIconDelegate(this, ModList::COL_CONTENT, 150));
+  setItemDelegateForColumn(ModList::COL_VERSION, new ModListVersionDelegate(this));
 
   if (m_core->settings().geometry().restoreState(header())) {
     // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
@@ -777,16 +813,6 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
     header()->setSectionResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
   }
 
-  // highligth plugins
-  connect(selectionModel(), &QItemSelectionModel::selectionChanged, [=](auto&& selected) {
-    std::vector<unsigned int> modIndices;
-    for (auto& idx : selectionModel()->selectedRows()) {
-      modIndices.push_back(idx.data(ModList::IndexRole).toInt());
-    }
-    m_core->pluginList()->highlightPlugins(modIndices, *m_core->directoryStructure());
-    mwui->espList->verticalScrollBar()->repaint();
-  });
-
   // prevent the name-column from being hidden
   header()->setSectionHidden(ModList::COL_NAME, false);
 
@@ -794,11 +820,14 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
     m_core->installDownload(row, priority);
   });
   connect(m_core->modList(), &ModList::externalArchiveDropped, [=](const QUrl& url, int priority) {
+    setWindowState(Qt::WindowActive);
     m_core->installArchive(url.toLocalFile(), priority, false, nullptr);
   });
   connect(m_core->modList(), &ModList::externalFolderDropped, this, &ModListView::onExternalFolderDropped);
 
-  connect(selectionModel(), &QItemSelectionModel::selectionChanged, this, &ModListView::onSelectionChanged);
+  connect(selectionModel(), &QItemSelectionModel::selectionChanged, [=] { m_refreshMarkersTimer.start(); });
+  connect(this, &QTreeView::collapsed, [=] { m_refreshMarkersTimer.start(); });
+  connect(this, &QTreeView::expanded, [=] { m_refreshMarkersTimer.start(); });
 
   // filters
   connect(m_sortProxy, &ModListSortProxy::filterActive, this, &ModListView::onModFilterActive);
@@ -839,7 +868,7 @@ void ModListView::saveState(Settings& s) const
 QRect ModListView::visualRect(const QModelIndex& index) const
 {
   // this shift the visualRect() from QTreeView to match the new actual
-  // zone after removing indentation (see the ModListStyledItemDelegated)
+  // zone after removing indentation (see the ModListStyledItemDelegate)
   QRect rect = QTreeView::visualRect(index);
   if (hasCollapsibleSeparators()
     && index.column() == 0 && index.isValid()
@@ -974,39 +1003,55 @@ void ModListView::clearOverwriteMarkers()
   m_markers.archiveLooseOverwritten.clear();
 }
 
-void ModListView::setOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten)
+void ModListView::setOverwriteMarkers(const QModelIndexList& indexes)
 {
-  m_markers.overwrite = overwrite;
-  m_markers.overwritten = overwritten;
-}
-
-void ModListView::setArchiveOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten)
-{
-  m_markers.archiveOverwrite = overwrite;
-  m_markers.archiveOverwritten = overwritten;
-}
-
-void ModListView::setArchiveLooseOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten)
-{
-  m_markers.archiveLooseOverwrite = overwrite;
-  m_markers.archiveLooseOverwritten = overwritten;
-}
-
-void ModListView::setOverwriteMarkers(ModInfo::Ptr mod)
-{
-  if (mod) {
-    setOverwriteMarkers(mod->getModOverwrite(), mod->getModOverwritten());
-    setArchiveOverwriteMarkers(mod->getModArchiveOverwrite(), mod->getModArchiveOverwritten());
-    setArchiveLooseOverwriteMarkers(mod->getModArchiveLooseOverwrite(), mod->getModArchiveLooseOverwritten());
-  }
-  else {
-    setOverwriteMarkers({}, {});
-    setArchiveOverwriteMarkers({}, {});
-    setArchiveLooseOverwriteMarkers({}, {});
+  const auto insert = [](auto& dest, const auto& from) {
+    dest.insert(from.begin(), from.end());
+  };
+  clearOverwriteMarkers();
+  for (auto& idx : indexes) {
+    auto mIndex = idx.data(ModList::IndexRole);
+    if (mIndex.isValid()) {
+      auto info = ModInfo::getByIndex(mIndex.toInt());
+      insert(m_markers.overwrite, info->getModOverwrite());
+      insert(m_markers.overwritten, info->getModOverwritten());
+      insert(m_markers.archiveOverwrite, info->getModArchiveOverwrite());
+      insert(m_markers.archiveOverwritten, info->getModArchiveOverwritten());
+      insert(m_markers.archiveLooseOverwrite, info->getModArchiveLooseOverwrite());
+      insert(m_markers.archiveLooseOverwritten, info->getModArchiveLooseOverwritten());
+    }
   }
   dataChanged(model()->index(0, 0), model()->index(model()->rowCount(), model()->columnCount()));
   verticalScrollBar()->repaint();
 }
+
+void ModListView::refreshMarkersAndPlugins()
+{
+  QModelIndexList indexes = selectionModel()->selectedRows();
+
+  if (m_core->settings().interface().collapsibleSeparatorsConflicts()) {
+    for (auto& idx : selectionModel()->selectedRows()) {
+      if (hasCollapsibleSeparators()
+        && model()->hasChildren(idx)
+        && !isExpanded(idx)) {
+        for (int i = 0; i < model()->rowCount(idx); ++i) {
+          indexes.append(model()->index(i, idx.column(), idx));
+        }
+      }
+    }
+  }
+
+  setOverwriteMarkers(indexes);
+
+  // highligth plugins
+  std::vector<unsigned int> modIndices;
+  for (auto& idx : indexes) {
+    modIndices.push_back(idx.data(ModList::IndexRole).toInt());
+  }
+  m_core->pluginList()->highlightPlugins(modIndices, *m_core->directoryStructure());
+  ui.pluginList->verticalScrollBar()->repaint();
+}
+
 
 void ModListView::setHighlightedMods(const std::vector<unsigned int>& pluginIndices)
 {
@@ -1087,6 +1132,37 @@ QColor ModListView::markerColor(const QModelIndex& index) const
   return QColor();
 }
 
+std::vector<ModInfo::EFlag> ModListView::modFlags(const QModelIndex& index, bool* forceCompact) const
+{
+  ModInfo::Ptr info = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
+
+  auto flags = info->getFlags();
+  bool compact = false;
+  if (info->isSeparator()
+    && hasCollapsibleSeparators()
+    && m_core->settings().interface().collapsibleSeparatorsConflicts()
+    && !isExpanded(index.sibling(index.row(), 0))) {
+
+    // combine the child conflicts
+    std::set eFlags(flags.begin(), flags.end());
+    for (int i = 0; i < model()->rowCount(index); ++i) {
+      auto cIndex = model()->index(i, index.column(), index).data(ModList::IndexRole).toInt();
+      auto cFlags = ModInfo::getByIndex(cIndex)->getFlags();
+      eFlags.insert(cFlags.begin(), cFlags.end());
+    }
+    flags = { eFlags.begin(), eFlags.end() };
+
+    // force compact because there can be a lots of flags here
+    compact = true;
+  }
+
+  if (forceCompact) {
+    *forceCompact = true;
+  }
+
+  return flags;
+}
+
 std::vector<ModInfo::EConflictFlag> ModListView::conflictFlags(const QModelIndex& index, bool* forceCompact) const
 {
   ModInfo::Ptr info = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
@@ -1118,25 +1194,64 @@ std::vector<ModInfo::EConflictFlag> ModListView::conflictFlags(const QModelIndex
   return flags;
 }
 
-void ModListView::onSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
+std::set<int> ModListView::contents(const QModelIndex& index, bool* includeChildren) const
 {
-  if (hasCollapsibleSeparators()) {
-    for (auto& idx : selected.indexes()) {
-      if (idx.parent().isValid() && !isExpanded(idx.parent())) {
-        setExpanded(idx.parent(), true);
-      }
+  auto modIndex = index.data(ModList::IndexRole);
+  if (!modIndex.isValid()) {
+    return {};
+  }
+  ModInfo::Ptr info = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
+  auto contents = info->getContents();
+  bool children = false;
+
+  if (info->isSeparator()
+    && hasCollapsibleSeparators()
+    && m_core->settings().interface().collapsibleSeparatorsConflicts()
+    && !isExpanded(index.sibling(index.row(), 0))) {
+
+    // combine the child contents
+    std::set eContents(contents.begin(), contents.end());
+    for (int i = 0; i < model()->rowCount(index); ++i) {
+      auto cIndex = model()->index(i, index.column(), index).data(ModList::IndexRole).toInt();
+      auto cContents = ModInfo::getByIndex(cIndex)->getContents();
+      eContents.insert(cContents.begin(), cContents.end());
     }
+    contents = { eContents.begin(), eContents.end() };
+    children = true;
   }
 
-  if (selected.count()) {
-    auto index = selected.indexes().last();
-    ModInfo::Ptr selectedMod = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
-    setOverwriteMarkers(selectedMod);
-  }
-  else {
-    setOverwriteMarkers(nullptr);
+  if (includeChildren) {
+    *includeChildren = children;
   }
 
+  return contents;
+}
+
+QList<QString> ModListView::contentsIcons(const QModelIndex& index, bool* forceCompact) const
+{
+  auto contents = this->contents(index, forceCompact);
+  QList<QString> result;
+  m_core->modDataContents().forEachContentInOrOut(
+    contents,
+    [&result](auto const& content) { result.append(content.icon()); },
+    [&result](auto const&) { result.append(QString()); });
+  return result;
+}
+
+QString ModListView::contentsTooltip(const QModelIndex& index) const
+{
+  auto contents = this->contents(index, nullptr);
+  if (contents.empty()) {
+    return {};
+  }
+  QString result("<table cellspacing=7>");
+  m_core->modDataContents().forEachContentIn(contents, [&result](auto const& content) {
+    result.append(QString("<tr><td><img src=\"%1\" width=32/></td>"
+      "<td valign=\"middle\">%2</td></tr>")
+      .arg(content.icon()).arg(content.name()));
+    });
+  result.append("</table>");
+  return result;
 }
 
 void ModListView::onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>& criteria)
@@ -1204,10 +1319,18 @@ void ModListView::dragMoveEvent(QDragMoveEvent* event)
 
 void ModListView::dropEvent(QDropEvent* event)
 {
+  // from Qt source
+  QModelIndex index;
+  if (viewport()->rect().contains(event->pos())) {
+    index = indexAt(event->pos());
+    if (!index.isValid() || !visualRect(index).contains(event->pos()))
+      index = QModelIndex();
+  }
+
   // this event is used by the byPriorityProxy to know if allow
   // dropping mod between a separator and its first mod (there
   // is no way to deduce this except using dropIndicatorPosition())
-  emit dropEntered(event->mimeData(), static_cast<DropPosition>(dropIndicatorPosition()));
+  emit dropEntered(event->mimeData(), isExpanded(index), static_cast<DropPosition>(dropIndicatorPosition()));
 
   // see selectedIndexes()
   m_inDragMoveEvent = true;
@@ -1229,6 +1352,79 @@ void ModListView::timerEvent(QTimerEvent* event)
   }
   else {
     QTreeView::timerEvent(event);
+  }
+}
+
+void ModListView::mousePressEvent(QMouseEvent* event)
+{
+  // allow alt+click to select all mods inside a separator
+  // when using collapsible separators
+  //
+  // similar code is also present in mouseReleaseEvent to
+  // avoid missing events
+
+  // disable edit if Alt is pressed
+  auto triggers = editTriggers();
+  if (event->modifiers() & Qt::AltModifier) {
+    setEditTriggers(NoEditTriggers);
+  }
+
+  // we call the parent class first so that we can use the actual
+  // selection state of the item after
+  QTreeView::mousePressEvent(event);
+
+  // restore triggers
+  setEditTriggers(triggers);
+
+  const auto index = indexAt(event->pos());
+
+  if (event->isAccepted()
+    && hasCollapsibleSeparators()
+    && index.isValid() && model()->hasChildren(indexAt(event->pos()))
+    && (event->modifiers() & Qt::AltModifier)) {
+
+    const auto flag = selectionModel()->isSelected(index) ?
+      QItemSelectionModel::Select : QItemSelectionModel::Deselect;
+    const QItemSelection selection(
+      model()->index(0, index.column(), index),
+      model()->index(model()->rowCount(index) - 1, index.column(), index));
+    selectionModel()->select(selection, flag | QItemSelectionModel::Rows);
+  }
+}
+
+void ModListView::mouseReleaseEvent(QMouseEvent* event)
+{
+  // this is a duplicate of mousePressEvent because for some reason
+  // the selection is not always triggered in mousePressEvent and only
+  // doing it here create a small lag between the selection of the
+  // separator and the children
+
+  // disable edit if Alt is pressed
+  auto triggers = editTriggers();
+  if (event->modifiers() & Qt::AltModifier) {
+    setEditTriggers(NoEditTriggers);
+  }
+
+  // we call the parent class first so that we can use the actual
+  // selection state of the item after
+  QTreeView::mouseReleaseEvent(event);
+
+  const auto index = indexAt(event->pos());
+
+  // restore triggers
+  setEditTriggers(triggers);
+
+  if (event->isAccepted()
+    && hasCollapsibleSeparators()
+    && index.isValid() && model()->hasChildren(indexAt(event->pos()))
+    && (event->modifiers() & Qt::AltModifier)) {
+
+    const auto flag = selectionModel()->isSelected(index) ?
+      QItemSelectionModel::Select : QItemSelectionModel::Deselect;
+    const QItemSelection selection(
+      model()->index(0, index.column(), index),
+      model()->index(model()->rowCount(index) - 1, index.column(), index));
+    selectionModel()->select(selection, flag | QItemSelectionModel::Rows);
   }
 }
 

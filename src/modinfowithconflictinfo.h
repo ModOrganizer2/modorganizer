@@ -52,21 +52,16 @@ public:
   /**
    * @brief clear all caches held for this mod
    */
-  virtual void clearCaches() override;
+  void clearCaches() override;
 
-  virtual std::set<unsigned int> getModOverwrite() const override { return m_OverwriteList; }
+  const std::set<unsigned int>& getModOverwrite() const override { return m_OverwriteList; }
+  const std::set<unsigned int>& getModOverwritten() const override { return m_OverwrittenList; }
+  const std::set<unsigned int>& getModArchiveOverwrite() const override { return m_ArchiveOverwriteList; }
+  const std::set<unsigned int>& getModArchiveOverwritten() const override { return m_ArchiveOverwrittenList; }
+  const std::set<unsigned int>& getModArchiveLooseOverwrite() const override { return m_ArchiveLooseOverwriteList; }
+  const std::set<unsigned int>& getModArchiveLooseOverwritten() const override { return m_ArchiveLooseOverwrittenList; }
 
-  virtual std::set<unsigned int> getModOverwritten() const override { return m_OverwrittenList; }
-
-  virtual std::set<unsigned int> getModArchiveOverwrite() const override { return m_ArchiveOverwriteList; }
-
-  virtual std::set<unsigned int> getModArchiveOverwritten() const override { return m_ArchiveOverwrittenList; }
-
-  virtual std::set<unsigned int> getModArchiveLooseOverwrite() const override { return m_ArchiveLooseOverwriteList; }
-
-  virtual std::set<unsigned int> getModArchiveLooseOverwritten() const override { return m_ArchiveLooseOverwrittenList; }
-
-  virtual void doConflictCheck() const override;
+  void doConflictCheck() const override;
 
 public slots:
 

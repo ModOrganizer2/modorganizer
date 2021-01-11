@@ -69,19 +69,14 @@ public:
     // grouping I assume?)
     AggrRole = Qt::UserRole + 2,
 
-    // data(ContentsRole) contains mod data contents as a QVariantList
-    // containing icon paths
-    ContentsRole = Qt::UserRole + 3,
-
-    GameNameRole = Qt::UserRole + 4,
-
-    PriorityRole = Qt::UserRole + 5,
+    GameNameRole = Qt::UserRole + 3,
+    PriorityRole = Qt::UserRole + 4,
 
     // marking role for the scrollbar
-    ScrollMarkRole = Qt::UserRole + 6,
+    ScrollMarkRole = Qt::UserRole + 5,
 
     // this is the first available role
-    ModUserRole = Qt::UserRole + 7
+    ModUserRole = Qt::UserRole + 6
   };
 
   enum EColumn {
@@ -353,10 +348,6 @@ private:
   QString getConflictFlagText(ModInfo::EConflictFlag flag, ModInfo::Ptr modInfo) const;
 
   QString getColumnToolTip(int column) const;
-
-  QVariantList contentsToIcons(const std::set<int> &contentIds) const;
-
-  QString contentsToToolTip(const std::set<int> &contentsIds) const;
 
   ModList::EColumn getEnabledColumn(int index) const;
 

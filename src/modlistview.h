@@ -23,6 +23,7 @@ class MainWindow;
 class Profile;
 class ModListByPriorityProxy;
 class ModListViewActions;
+class PluginListView;
 
 class ModListView : public QTreeView
 {
@@ -56,10 +57,6 @@ public:
   void restoreState(const Settings& s);
   void saveState(Settings& s) const;
 
-  // set the current profile
-  //
-  void setProfile(Profile* profile);
-
   // check if collapsible separators are currently used
   //
   bool hasCollapsibleSeparators() const;
@@ -82,10 +79,15 @@ public:
   std::optional<unsigned int> nextMod(unsigned int index) const;
   std::optional<unsigned int> prevMod(unsigned int index) const;
 
-  // check if the given mod is visible
+  // check if the given mod is visible, i.e. not filtered (returns true
+  // for collapsed mods)
   //
   bool isModVisible(unsigned int index) const;
   bool isModVisible(ModInfo::Ptr mod) const;
+
+  // focus the view, select the given index and scroll to it
+  //
+  void scrollToAndSelect(const QModelIndex& index);
 
   // refresh the view (to call when settings have been changed)
   //
@@ -93,8 +95,14 @@ public:
 
 signals:
 
+  // emitted for dragEnter events
+  //
   void dragEntered(const QMimeData* mimeData);
-  void dropEntered(const QMimeData* mimeData, DropPosition position);
+
+  // emitted for dropEnter events, the boolean indicates if the drop target
+  // is expanded and the position of the indicator
+  //
+  void dropEntered(const QMimeData* mimeData, bool dropExpanded, DropPosition position);
 
 public slots:
 
@@ -161,43 +169,62 @@ protected:
   void dragEnterEvent(QDragEnterEvent* event) override;
   void dragMoveEvent(QDragMoveEvent* event) override;
   void dropEvent(QDropEvent* event) override;
+  void mousePressEvent(QMouseEvent* event) override;
+  void mouseReleaseEvent(QMouseEvent* event) override;
   bool event(QEvent* event) override;
 
 protected slots:
 
   void onCustomContextMenuRequested(const QPoint& pos);
   void onDoubleClicked(const QModelIndex& index);
-  void onSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
   void onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>& filters);
+  void onProfileChanged(Profile* oldProfile, Profile* newProfile);
 
 private:
 
   friend class ModConflictIconDelegate;
-  friend class ModListStyledItemDelegated;
+  friend class ModFlagIconDelegate;
+  friend class ModContentIconDelegate;
+  friend class ModListStyledItemDelegate;
   friend class ModListViewMarkingScrollBar;
 
   void onModPrioritiesChanged(const QModelIndexList& indices);
   void onModInstalled(const QString& modName);
   void onModFilterActive(bool filterActive);
 
-  // overwrite markers
-  void clearOverwriteMarkers();
-  void setOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten);
-  void setArchiveOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten);
-  void setArchiveLooseOverwriteMarkers(const std::set<unsigned int>& overwrite, const std::set<unsigned int>& overwritten);
-
-  // set overwrite markers from the mod and repaint (if mod is nullptr, clear overwrite and repaint)
+  // refresh the overwrite markers and the highligthed plugins from
+  // the current selection
   //
-  void setOverwriteMarkers(ModInfo::Ptr mod);
+  void refreshMarkersAndPlugins();
+
+  // clear overwrite markers (without repainting)
+  //
+  void clearOverwriteMarkers();
+
+  // set overwrite markers from the mod in the given list and repaint (if the list
+  // is empty, clear overwrite and repaint)
+  //
+  void setOverwriteMarkers(const QModelIndexList& indexes);
 
   // retrieve the marker color for the given index
   //
   QColor markerColor(const QModelIndex& index) const;
 
+  // retrieve the mod flags for the given index
+  //
+  std::vector<ModInfo::EFlag> modFlags(
+    const QModelIndex& index, bool* forceCompact = nullptr) const;
+
   // retrieve the conflicts flags for the given index
   //
   std::vector<ModInfo::EConflictFlag> conflictFlags(
     const QModelIndex& index, bool* forceCompact = nullptr) const;
+
+  // retrieve the content icons and tooltip for the given index
+  //
+  std::set<int> contents(const QModelIndex& index, bool* includeChildren) const;
+  QList<QString> contentsIcons(const QModelIndex& index, bool* forceCompact = nullptr) const;
+  QString contentsTooltip(const QModelIndex& index) const;
 
   // get/set the selected items on the view, this method return/take indices
   // from the mod list model, not the view, so it's safe to restore
@@ -237,6 +264,9 @@ private:
     QLabel* currentCategory;
     QPushButton* clearFilters;
     QComboBox* filterSeparators;
+
+    // the plugin list (for highligths)
+    PluginListView* pluginList;
   };
 
   OrganizerCore* m_core;
@@ -249,6 +279,10 @@ private:
   ModListByPriorityProxy* m_byPriorityProxy;
   QtGroupingProxy* m_byCategoryProxy;
   QtGroupingProxy* m_byNexusIdProxy;
+
+  // marker used to avoid calling refreshing markers to many
+  // time in a row
+  QTimer m_refreshMarkersTimer;
 
   // maintain collapsed items for each proxy to avoid
   // losing them on model reset

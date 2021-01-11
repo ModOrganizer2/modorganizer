@@ -1,32 +1,35 @@
 #ifndef MODFLAGICONDELEGATE_H
 #define MODFLAGICONDELEGATE_H
 
+#include <QTreeView>
+
 #include "icondelegate.h"
+#include "modinfo.h"
+
+class ModListView;
 
 class ModFlagIconDelegate : public IconDelegate
 {
   Q_OBJECT;
 
 public:
-  explicit ModFlagIconDelegate(QObject *parent = 0, int logicalIndex = -1, int compactSize = 120);
+  explicit ModFlagIconDelegate(ModListView* view, int column = -1, int compactSize = 120);
   QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 
-  static QList<QString> getIconsForFlags(
-    std::vector<ModInfo::EFlag> flags, bool compact);
-
+protected:
+  static QList<QString> getIconsForFlags(std::vector<ModInfo::EFlag> flags, bool compact);
   static QString getFlagIcon(ModInfo::EFlag flag);
 
-public slots:
-  void columnResized(int logicalIndex, int oldSize, int newSize);
-
-protected:
   QList<QString> getIcons(const QModelIndex &index) const override;
   size_t getNumIcons(const QModelIndex &index) const override;
 
+  // constructor for color table
+  //
+  ModFlagIconDelegate() : ModFlagIconDelegate(nullptr) { }
+
 private:
-  int m_LogicalIndex;
-  int m_CompactSize;
-  bool m_Compact;
+  ModListView* m_view;
+
 };
 
 #endif // MODFLAGICONDELEGATE_H

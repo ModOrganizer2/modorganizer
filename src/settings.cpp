@@ -1326,12 +1326,12 @@ void ColorSettings::setColorSeparatorScrollbar(bool b)
 
 QColor ColorSettings::idealTextColor(const QColor& rBackgroundColor)
 {
-  if (rBackgroundColor.alpha() == 0)
+  if (rBackgroundColor.alpha() < 50)
     return QColor(Qt::black);
 
-  const int THRESHOLD = 106 * 255.0f / rBackgroundColor.alpha();
-  int BackgroundDelta = (rBackgroundColor.red() * 0.299) + (rBackgroundColor.green() * 0.587) + (rBackgroundColor.blue() * 0.114);
-  return QColor((255 - BackgroundDelta <= THRESHOLD) ? Qt::black : Qt::white);
+  // "inverse' of luminance of the background
+  int iLuminance = (rBackgroundColor.red() * 0.299) + (rBackgroundColor.green() * 0.587) + (rBackgroundColor.blue() * 0.114);
+  return QColor(iLuminance >= 128 ? Qt::black : Qt::white);
 }
 
 
@@ -2193,6 +2193,26 @@ bool InterfaceSettings::collapsibleSeparatorsConflicts() const
 void InterfaceSettings::setCollapsibleSeparatorsConflicts(bool b)
 {
   set(m_Settings, "Settings", "collapsible_separators_conflicts", b);
+}
+
+bool InterfaceSettings::collapsibleSeparatorsPerProfile() const
+{
+  return get<bool>(m_Settings, "Settings", "collapsible_separators_per_profile", false);
+}
+
+void InterfaceSettings::setCollapsibleSeparatorsPerProfile(bool b)
+{
+  set(m_Settings, "Settings", "collapsible_separators_per_profile", b);
+}
+
+bool InterfaceSettings::saveFilters() const
+{
+  return get<bool>(m_Settings, "Settings", "save_filters", false);
+}
+
+void InterfaceSettings::setSaveFilters(bool b)
+{
+  set(m_Settings, "Settings", "save_filters", b);
 }
 
 bool InterfaceSettings::compactDownloads() const

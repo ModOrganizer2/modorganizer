@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>820</width>
-    <height>652</height>
+    <height>651</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,8 +23,132 @@
       <attribute name="title">
        <string>General</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0,1,0">
-       <item row="6" column="0" colspan="2">
+      <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0,0,0,0,0">
+       <item row="5" column="0">
+        <widget class="QPushButton" name="resetDialogsButton">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Reset all choices made in dialogs.</string>
+         </property>
+         <property name="whatsThis">
+          <string>Reset all choices made in dialogs.</string>
+         </property>
+         <property name="text">
+          <string>Reset Dialog Choices</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QCheckBox" name="changeGameConfirmation">
+         <property name="text">
+          <string>Show confirmation when changing instance</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QWidget" name="widget_6" native="true">
+         <layout class="QGridLayout" name="gridLayout_5" columnstretch="0,1,0">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>Language</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_10">
+            <property name="text">
+             <string>Style</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QComboBox" name="styleBox">
+            <property name="toolTip">
+             <string>Visual theme of the user interface.</string>
+            </property>
+            <property name="whatsThis">
+             <string>Visual theme of the user interface.</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QPushButton" name="exploreStyles">
+            <property name="text">
+             <string>Explore...</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1" colspan="2">
+           <widget class="QComboBox" name="languageBox">
+            <property name="toolTip">
+             <string>The language of the user interface.</string>
+            </property>
+            <property name="whatsThis">
+             <string>The language of the user interface.</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1" colspan="2">
+           <widget class="LinkLabel" name="label_33">
+            <property name="toolTip">
+             <string>https://www.transifex.com/mod-organizer-2-team/mod-organizer-2/</string>
+            </property>
+            <property name="text">
+             <string>&lt;a href=&quot;https://www.transifex.com/mod-organizer-2-team/mod-organizer-2/&quot;&gt;Help translate Mod Organizer&lt;/a&gt;</string>
+            </property>
+            <property name="openExternalLinks">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="6" column="0">
+        <widget class="QPushButton" name="categoriesBtn">
+         <property name="toolTip">
+          <string>Modify the categories available to arrange your mods.</string>
+         </property>
+         <property name="whatsThis">
+          <string>Modify the categories available to arrange your mods.</string>
+         </property>
+         <property name="text">
+          <string>Configure Mod Categories</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QCheckBox" name="centerDialogs">
+         <property name="toolTip">
+          <string>Dialogs will always be centered on the main window, but will remember their size.</string>
+         </property>
+         <property name="whatsThis">
+          <string>Dialogs will always be centered on the main window, but will remember their size.</string>
+         </property>
+         <property name="text">
+          <string>Always center dialogs</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="0" colspan="2">
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -37,7 +161,17 @@
          </property>
         </spacer>
        </item>
-       <item row="2" column="1">
+       <item row="4" column="0">
+        <widget class="QCheckBox" name="doubleClickPreviews">
+         <property name="toolTip">
+          <string>Whether double-clicking on a file opens the preview window or launches the program associated with it. This applies to the Data tab as well as the Conflicts and Filetree tabs in the mod info window.</string>
+         </property>
+         <property name="text">
+          <string>Open previews on double-click</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
         <widget class="QGroupBox" name="groupBox_6">
          <property name="title">
           <string>Updates</string>
@@ -69,388 +203,306 @@
             </property>
            </widget>
           </item>
-          <item>
-           <spacer name="verticalSpacer_9">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
          </layout>
         </widget>
        </item>
-       <item row="0" column="0" rowspan="3">
-        <widget class="QGroupBox" name="groupBox">
-         <property name="title">
-          <string>User Interface</string>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="uiTab">
+      <property name="accessibleName">
+       <string/>
+      </property>
+      <attribute name="title">
+       <string>User Interface</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_19">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_11">
+         <property name="bottomMargin">
+          <number>0</number>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_14">
-          <item>
-           <widget class="QWidget" name="widget_6" native="true">
-            <layout class="QGridLayout" name="gridLayout_5" columnstretch="0,1,0">
-             <property name="leftMargin">
-              <number>0</number>
-             </property>
-             <property name="topMargin">
-              <number>0</number>
-             </property>
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <property name="bottomMargin">
-              <number>0</number>
-             </property>
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_5">
-               <property name="text">
-                <string>Language</string>
+         <item>
+          <widget class="QGroupBox" name="groupBox_4">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="title">
+            <string>Mod List</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_17">
+            <item>
+             <widget class="QCheckBox" name="colorSeparatorsBox">
+              <property name="toolTip">
+               <string>Colors set on separators will also be shown in the mod list scrollbar at the location of the separator. This can be useful for quickly navigating to a specific separator.</string>
+              </property>
+              <property name="whatsThis">
+               <string>Colors set on separators will also be shown in the mod list scrollbar at the location of the separator. This can be useful for quickly navigating to a specific separator.</string>
+              </property>
+              <property name="text">
+               <string>Show mod list separator colors on the scrollbar</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="displayForeignBox">
+              <property name="toolTip">
+               <string>Disable this to no longer display mods installed outside MO in the mod list (left pane). Assets from those mods will then be treated as having lowest mod priority together with the original game content.</string>
+              </property>
+              <property name="whatsThis">
+               <string>By default Mod Organizer will display esp+bsa bundles installed with foreign tools as mods (left pane). This allows you to control their priority in relation to other mods. This is particularly useful if you also use Steam Workshop to install mods.
+However, if you installed loose file mods outside MO which conflict with BSAs also installed outside MO those conflicts can't be resolved correctly.
+
+If you disable this feature, MO will only display official DLCs this way. Please note that plugins (esps, esms, and esls) displayed in the right pane are completely unaffected by this feature.</string>
+              </property>
+              <property name="text">
+               <string>Display mods installed outside MO</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="saveFiltersBox">
+              <property name="toolTip">
+               <string>Save the current filters when closing MO2 and restore them on startup.</string>
+              </property>
+              <property name="whatsThis">
+               <string>Save the current filters when closing MO2 and restore them on startup.</string>
+              </property>
+              <property name="text">
+               <string>Remember selected filters after restarting MO</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_9">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Fixed</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>0</width>
+                <height>5</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="collapsibleSeparatorsBox">
+              <property name="title">
+               <string>Collapsible Separators</string>
+              </property>
+              <property name="flat">
+               <bool>false</bool>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_20">
+               <property name="leftMargin">
+                <number>7</number>
                </property>
-              </widget>
-             </item>
-             <item row="2" column="0">
-              <widget class="QLabel" name="label_10">
-               <property name="text">
-                <string>Style</string>
+               <property name="rightMargin">
+                <number>7</number>
                </property>
-              </widget>
-             </item>
-             <item row="2" column="1">
-              <widget class="QComboBox" name="styleBox">
-               <property name="toolTip">
-                <string>Visual theme of the user interface.</string>
-               </property>
-               <property name="whatsThis">
-                <string>Visual theme of the user interface.</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="2">
-              <widget class="QPushButton" name="exploreStyles">
-               <property name="text">
-                <string>Explore...</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1" colspan="2">
-              <widget class="QComboBox" name="languageBox">
-               <property name="toolTip">
-                <string>The language of the user interface.</string>
-               </property>
-               <property name="whatsThis">
-                <string>The language of the user interface.</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1" colspan="2">
-              <widget class="LinkLabel" name="label_33">
-               <property name="toolTip">
-                <string>https://www.transifex.com/mod-organizer-2-team/mod-organizer-2/</string>
-               </property>
-               <property name="text">
-                <string>&lt;a href=&quot;https://www.transifex.com/mod-organizer-2-team/mod-organizer-2/&quot;&gt;Help translate Mod Organizer&lt;/a&gt;</string>
-               </property>
-               <property name="openExternalLinks">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="centerDialogs">
-            <property name="toolTip">
-             <string>Dialogs will always be centered on the main window, but will remember their size.</string>
-            </property>
-            <property name="whatsThis">
-             <string>Dialogs will always be centered on the main window, but will remember their size.</string>
-            </property>
-            <property name="text">
-             <string>Always center dialogs</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="changeGameConfirmation">
-            <property name="text">
-             <string>Show confirmation when changing instance</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="doubleClickPreviews">
-            <property name="toolTip">
-             <string>Whether double-clicking on a file opens the preview window or launches the program associated with it. This applies to the Data tab as well as the Conflicts and Filetree tabs in the mod info window.</string>
-            </property>
-            <property name="text">
-             <string>Open previews on double-click</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="resetDialogsButton">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="toolTip">
-             <string>Reset all choices made in dialogs.</string>
-            </property>
-            <property name="whatsThis">
-             <string>Reset all choices made in dialogs.</string>
-            </property>
-            <property name="text">
-             <string>Reset Dialog Choices</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="categoriesBtn">
-            <property name="toolTip">
-             <string>Modify the categories available to arrange your mods.</string>
-            </property>
-            <property name="whatsThis">
-             <string>Modify the categories available to arrange your mods.</string>
-            </property>
-            <property name="text">
-             <string>Configure Mod Categories</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="verticalSpacer_11">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-        </widget>
+               <item>
+                <widget class="QCheckBox" name="collapsibleSeparatorsConflictsBox">
+                 <property name="toolTip">
+                  <string>Display mod conflicts on and from separator when collapsed, and show plugins from collapsed separators.</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>Display mod conflicts on and from separator when collapsed, and show plugins from collapsed separators.</string>
+                 </property>
+                 <property name="text">
+                  <string>Show conflicts and plugins on separators and from separators</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="collapsibleSeparatorsPerProfileBox">
+                 <property name="toolTip">
+                  <string>Do not share the collapse/expanded state of separators between profiles.</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>Do not share the collapse/expanded state of separators between profiles.</string>
+                 </property>
+                 <property name="text">
+                  <string>Profile-specific collapse states for separators</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_12">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Expanding</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_5">
+           <property name="title">
+            <string>Download List</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_2">
+            <item>
+             <widget class="QCheckBox" name="showMetaBox">
+              <property name="toolTip">
+               <string>Show meta information instead of file names in the download list.</string>
+              </property>
+              <property name="whatsThis">
+               <string>Show meta information instead of file names in the download list.</string>
+              </property>
+              <property name="text">
+               <string>Show Meta Information</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="compactBox">
+              <property name="toolTip">
+               <string>Make the download list more compact.</string>
+              </property>
+              <property name="whatsThis">
+               <string>Make the download list more compact.</string>
+              </property>
+              <property name="text">
+               <string>Compact List</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_5">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
        </item>
-       <item row="0" column="1">
-        <widget class="QGroupBox" name="groupBox_5">
-         <property name="title">
-          <string>Download List</string>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_18">
+         <item>
+          <widget class="QGroupBox" name="ModlistGroupBox">
+           <property name="title">
+            <string>Colors</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_13">
+            <item>
+             <widget class="ColorTable" name="colorTable">
+              <property name="editTriggers">
+               <set>QAbstractItemView::NoEditTriggers</set>
+              </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::SingleSelection</enum>
+              </property>
+              <property name="selectionBehavior">
+               <enum>QAbstractItemView::SelectRows</enum>
+              </property>
+              <property name="verticalScrollMode">
+               <enum>QAbstractItemView::ScrollPerPixel</enum>
+              </property>
+              <property name="cornerButtonEnabled">
+               <bool>false</bool>
+              </property>
+              <attribute name="horizontalHeaderVisible">
+               <bool>false</bool>
+              </attribute>
+              <attribute name="horizontalHeaderHighlightSections">
+               <bool>false</bool>
+              </attribute>
+              <attribute name="horizontalHeaderStretchLastSection">
+               <bool>true</bool>
+              </attribute>
+              <attribute name="verticalHeaderVisible">
+               <bool>false</bool>
+              </attribute>
+             </widget>
+            </item>
+            <item>
+             <widget class="QWidget" name="widget_5" native="true">
+              <layout class="QHBoxLayout" name="horizontalLayout_3">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QPushButton" name="resetColorsBtn">
+                 <property name="toolTip">
+                  <string>Reset all colors to their default value.</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>Reset all colors to their default value.</string>
+                 </property>
+                 <property name="text">
+                  <string>Reset Colors</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_13">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
-          <item>
-           <widget class="QCheckBox" name="showMetaBox">
-            <property name="toolTip">
-             <string>Show meta information instead of file names in the download list.</string>
-            </property>
-            <property name="whatsThis">
-             <string>Show meta information instead of file names in the download list.</string>
-            </property>
-            <property name="text">
-             <string>Show Meta Information</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="compactBox">
-            <property name="toolTip">
-             <string>Make the download list more compact.</string>
-            </property>
-            <property name="whatsThis">
-             <string>Make the download list more compact.</string>
-            </property>
-            <property name="text">
-             <string>Compact List</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="verticalSpacer_5">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item row="4" column="0" colspan="2">
-        <widget class="QGroupBox" name="ModlistGroupBox">
-         <property name="title">
-          <string>Colors</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_13">
-          <item>
-           <widget class="ColorTable" name="colorTable">
-            <property name="editTriggers">
-             <set>QAbstractItemView::NoEditTriggers</set>
-            </property>
-            <property name="selectionMode">
-             <enum>QAbstractItemView::SingleSelection</enum>
-            </property>
-            <property name="selectionBehavior">
-             <enum>QAbstractItemView::SelectRows</enum>
-            </property>
-            <property name="verticalScrollMode">
-             <enum>QAbstractItemView::ScrollPerPixel</enum>
-            </property>
-            <property name="cornerButtonEnabled">
-             <bool>false</bool>
-            </property>
-            <attribute name="horizontalHeaderVisible">
-             <bool>false</bool>
-            </attribute>
-            <attribute name="horizontalHeaderHighlightSections">
-             <bool>false</bool>
-            </attribute>
-            <attribute name="horizontalHeaderStretchLastSection">
-             <bool>true</bool>
-            </attribute>
-            <attribute name="verticalHeaderVisible">
-             <bool>false</bool>
-            </attribute>
-           </widget>
-          </item>
-          <item>
-           <widget class="QWidget" name="widget_5" native="true">
-            <layout class="QHBoxLayout" name="horizontalLayout_3">
-             <property name="leftMargin">
-              <number>0</number>
-             </property>
-             <property name="topMargin">
-              <number>0</number>
-             </property>
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <property name="bottomMargin">
-              <number>0</number>
-             </property>
-             <item>
-              <widget class="QCheckBox" name="colorSeparatorsBox">
-               <property name="toolTip">
-                <string>Colors set on separators will also be shown in the mod list scrollbar at the location of the separator. This can be useful for quickly navigating to a specific separator.</string>
-               </property>
-               <property name="whatsThis">
-                <string>Colors set on separators will also be shown in the mod list scrollbar at the location of the separator. This can be useful for quickly navigating to a specific separator.</string>
-               </property>
-               <property name="text">
-                <string>Show mod list separator colors on the scrollbar</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_2">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QPushButton" name="resetColorsBtn">
-               <property name="toolTip">
-                <string>Reset all colors to their default value.</string>
-               </property>
-               <property name="whatsThis">
-                <string>Reset all colors to their default value.</string>
-               </property>
-               <property name="text">
-                <string>Reset Colors</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QGroupBox" name="groupBox_4">
-         <property name="minimumSize">
+         <property name="sizeHint" stdset="0">
           <size>
-           <width>0</width>
-           <height>0</height>
+           <width>20</width>
+           <height>40</height>
           </size>
          </property>
-         <property name="title">
-          <string>Mod List</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_17">
-          <item>
-           <widget class="QCheckBox" name="collapsibleSeparatorsBox">
-            <property name="toolTip">
-             <string>Allow collapsing separators when sorting by ascending priority.</string>
-            </property>
-            <property name="text">
-             <string>Use collapsible separators</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-            <property name="tristate">
-             <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="collapsibleSeparatorsConflictsBox">
-            <property name="toolTip">
-             <string>Display mod conflicts on separator when collapsed.</string>
-            </property>
-            <property name="whatsThis">
-             <string>Display mod conflicts on separator when collapsed.</string>
-            </property>
-            <property name="text">
-             <string>Show conflicts on separators</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="verticalSpacer_12">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeType">
-             <enum>QSizePolicy::Expanding</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-        </widget>
+        </spacer>
        </item>
       </layout>
      </widget>
@@ -1520,25 +1572,6 @@ I don't yet know what the circumstances are, but user reports imply it is in som
            </property>
           </widget>
          </item>
-         <item row="2" column="1">
-          <widget class="QCheckBox" name="displayForeignBox">
-           <property name="toolTip">
-            <string>Disable this to no longer display mods installed outside MO in the mod list (left pane). Assets from those mods will then be treated as having lowest mod priority together with the original game content.</string>
-           </property>
-           <property name="whatsThis">
-            <string>By default Mod Organizer will display esp+bsa bundles installed with foreign tools as mods (left pane). This allows you to control their priority in relation to other mods. This is particularly useful if you also use Steam Workshop to install mods.
-However, if you installed loose file mods outside MO which conflict with BSAs also installed outside MO those conflicts can't be resolved correctly.
-
-If you disable this feature, MO will only display official DLCs this way. Please note that plugins (esps, esms, and esls) displayed in the right pane are completely unaffected by this feature.</string>
-           </property>
-           <property name="text">
-            <string>Display mods installed outside MO</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
          <item row="1" column="1">
           <widget class="QCheckBox" name="forceEnableBox">
            <property name="toolTip">
@@ -1572,7 +1605,7 @@ Uncheck this if you want to use Mod Organizer with total conversions (like Nehri
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
+         <item row="2" column="1">
           <widget class="QCheckBox" name="enableArchiveParsingBox">
            <property name="toolTip">
             <string>Enable parsing of Archives. This is an Experimental Feature. Has negative effects on performance and known incorrectness.</string>
@@ -1824,16 +1857,7 @@ programs you are intentionally running.</string>
   <tabstop>tabWidget</tabstop>
   <tabstop>languageBox</tabstop>
   <tabstop>styleBox</tabstop>
-  <tabstop>centerDialogs</tabstop>
-  <tabstop>resetDialogsButton</tabstop>
-  <tabstop>categoriesBtn</tabstop>
-  <tabstop>showMetaBox</tabstop>
-  <tabstop>compactBox</tabstop>
-  <tabstop>checkForUpdates</tabstop>
   <tabstop>usePrereleaseBox</tabstop>
-  <tabstop>colorTable</tabstop>
-  <tabstop>colorSeparatorsBox</tabstop>
-  <tabstop>resetColorsBtn</tabstop>
   <tabstop>baseDirEdit</tabstop>
   <tabstop>browseBaseDirBtn</tabstop>
   <tabstop>downloadDirEdit</tabstop>
@@ -1869,8 +1893,6 @@ programs you are intentionally running.</string>
   <tabstop>hideUncheckedBox</tabstop>
   <tabstop>forceEnableBox</tabstop>
   <tabstop>lockGUIBox</tabstop>
-  <tabstop>displayForeignBox</tabstop>
-  <tabstop>enableArchiveParsingBox</tabstop>
   <tabstop>bsaDateBtn</tabstop>
   <tabstop>execBlacklistBtn</tabstop>
   <tabstop>resetGeometryBtn</tabstop>

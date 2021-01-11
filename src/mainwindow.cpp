@@ -1495,7 +1495,6 @@ void MainWindow::startExeAction()
 void MainWindow::activateSelectedProfile()
 {
   m_OrganizerCore.setCurrentProfile(ui->profileBox->currentText());
-  ui->modList->setProfile(m_OrganizerCore.currentProfile());
 
   m_SavesTab->refreshSaveList();
   m_OrganizerCore.refresh();

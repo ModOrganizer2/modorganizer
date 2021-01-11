@@ -17,31 +17,16 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
   addStyles();
   selectStyle();
 
-  ui->colorTable->load(s);
-
-  // connect before setting to trigger
-  QObject::connect(ui->collapsibleSeparatorsBox, &QCheckBox::stateChanged, [=](auto&& state) {
-    ui->collapsibleSeparatorsConflictsBox->setEnabled(state == Qt::Checked);
-  });
-
   ui->centerDialogs->setChecked(settings().geometry().centerDialogs());
   ui->changeGameConfirmation->setChecked(settings().interface().showChangeGameConfirmation());
   ui->doubleClickPreviews->setChecked(settings().interface().doubleClicksOpenPreviews());
-  ui->compactBox->setChecked(settings().interface().compactDownloads());
-  ui->showMetaBox->setChecked(settings().interface().metaDownloads());
   ui->checkForUpdates->setChecked(settings().checkForUpdates());
   ui->usePrereleaseBox->setChecked(settings().usePrereleases());
-  ui->colorSeparatorsBox->setChecked(settings().colors().colorSeparatorScrollbar());
-  ui->collapsibleSeparatorsConflictsBox->setChecked(settings().interface().collapsibleSeparatorsConflicts());
-  ui->collapsibleSeparatorsBox->setChecked(settings().interface().collapsibleSeparators());
 
   QObject::connect(ui->exploreStyles, &QPushButton::clicked, [&]{ onExploreStyles(); });
 
   QObject::connect(
     ui->categoriesBtn, &QPushButton::clicked, [&]{ onEditCategories(); });
-
-  QObject::connect(
-    ui->resetColorsBtn, &QPushButton::clicked, [&]{ onResetColors(); });
 
   QObject::connect(
     ui->resetDialogsButton, &QPushButton::clicked, [&]{ onResetDialogs(); });
@@ -67,18 +52,11 @@ void GeneralSettingsTab::update()
     emit settings().styleChanged(newStyle);
   }
 
-  ui->colorTable->commitColors();
-
   settings().geometry().setCenterDialogs(ui->centerDialogs->isChecked());
   settings().interface().setShowChangeGameConfirmation(ui->changeGameConfirmation->isChecked());
   settings().interface().setDoubleClicksOpenPreviews(ui->doubleClickPreviews->isChecked());
-  settings().interface().setCompactDownloads(ui->compactBox->isChecked());
-  settings().interface().setMetaDownloads(ui->showMetaBox->isChecked());
   settings().setCheckForUpdates(ui->checkForUpdates->isChecked());
   settings().setUsePrereleases(ui->usePrereleaseBox->isChecked());
-  settings().colors().setColorSeparatorScrollbar(ui->colorSeparatorsBox->isChecked());
-  settings().interface().setCollapsibleSeparators(ui->collapsibleSeparatorsBox->isChecked());
-  settings().interface().setCollapsibleSeparatorsConflicts(ui->collapsibleSeparatorsConflictsBox->isChecked());
 }
 
 void GeneralSettingsTab::addLanguages()
@@ -202,11 +180,6 @@ void GeneralSettingsTab::onEditCategories()
   if (dialog.exec() == QDialog::Accepted) {
     dialog.commitChanges();
   }
-}
-
-void GeneralSettingsTab::onResetColors()
-{
-  ui->colorTable->resetColors();
 }
 
 void GeneralSettingsTab::onResetDialogs()

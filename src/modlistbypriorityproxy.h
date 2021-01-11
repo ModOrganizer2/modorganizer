@@ -16,6 +16,7 @@
 #include "modlistview.h"
 
 class ModList;
+class ModListDropInfo;
 class Profile;
 
 class ModListByPriorityProxy : public QAbstractProxyModel
@@ -46,7 +47,7 @@ public:
 
 public slots:
 
-  void onDropEnter(const QMimeData* data, ModListView::DropPosition dropPosition);
+  void onDropEnter(const QMimeData* data, bool dropExpanded, ModListView::DropPosition dropPosition);
 
 protected slots:
 
@@ -83,6 +84,8 @@ private:
 private:
   OrganizerCore& m_core;
   Profile* m_profile;
+
+  bool m_dropExpanded = false;
   ModListView::DropPosition m_dropPosition = ModListView::DropPosition::OnItem;
 };
 
