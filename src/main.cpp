@@ -15,8 +15,6 @@ using namespace MOBase;
 thread_local LPTOP_LEVEL_EXCEPTION_FILTER g_prevExceptionFilter = nullptr;
 thread_local std::terminate_handler g_prevTerminateHandler = nullptr;
 
-int forwardToPrimary(MOMultiProcess& multiProcess, const cl::CommandLine& cl);
-
 int main(int argc, char *argv[])
 {
   MOShared::SetThisThreadName("main");
@@ -30,24 +28,33 @@ int main(int argc, char *argv[])
   initLogging();
 
   // must be after logging
-  TimeThis tt("main()");
+  TimeThis tt("main() multiprocess");
 
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
   MOApplication app(argc, argv);
 
+
+  // check if there's another process running
   MOMultiProcess multiProcess(cl.multiple());
+
   if (multiProcess.ephemeral()) {
+    // this is not the primary process
+
     if (cl.forwardToPrimary(multiProcess)) {
+      // but there's something on the command line that could be forwarded to
+      // it, so just exit
       return 0;
-    } else {
-      QMessageBox::information(
-        nullptr, QObject::tr("Mod Organizer"),
-        QObject::tr("An instance of Mod Organizer is already running"));
     }
 
-    return 0;
+    QMessageBox::information(
+      nullptr, QObject::tr("Mod Organizer"),
+      QObject::tr("An instance of Mod Organizer is already running"));
+
+    return 1;
   }
 
+
+  // check if the command line wants to run something right now
   if (auto r=cl.runPostMultiProcess(multiProcess)) {
     return *r;
   }
@@ -55,6 +62,7 @@ int main(int argc, char *argv[])
   tt.stop();
 
 
+  // stuff that's done only once, even if MO restarts in the loop below
   app.firstTimeSetup(multiProcess);
 
 
@@ -74,6 +82,8 @@ int main(int argc, char *argv[])
         m.overrideProfile(*cl.profile());
       }
 
+
+      // set up plugins, OrganizerCore, etc.
       {
         const auto r = app.setup(multiProcess);
 
@@ -88,11 +98,16 @@ int main(int argc, char *argv[])
         }
       }
 
+
+      // check if the command line wants to run something right now
       if (auto r=cl.runPostOrganizer(app.core())) {
         return *r;
       }
 
+
+      // run the main window
       const auto r = app.run(multiProcess);
+
 
       if (r == RestartExitCode) {
         // resets things when MO is "restarted"

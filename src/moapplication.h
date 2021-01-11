@@ -40,14 +40,32 @@ class MOApplication : public QApplication
 public:
   MOApplication(int& argc, char** argv);
 
+  // called from main() only once for stuff that persists across "restarts"
+  //
   void firstTimeSetup(MOMultiProcess& multiProcess);
+
+  // called from main() each time MO "restarts", loads settings, plugins,
+  // OrganizerCore and the current instance
+  //
   int setup(MOMultiProcess& multiProcess);
+
+  // shows splash, starts an api check, shows the main window and blocks until
+  // MO exits
+  //
   int run(MOMultiProcess& multiProcess);
+
+  // called from main() when MO "restarts", must clean up everything so setup()
+  // starts fresh
+  //
   void resetForRestart();
 
+  // undefined if setup() wasn't called
+  //
   OrganizerCore& core();
 
-  virtual bool notify(QObject* receiver, QEvent* event);
+  // wraps QApplication::notify() in a catch, reports errors and ignores them
+  //
+  bool notify(QObject* receiver, QEvent* event) override;
 
 public slots:
   bool setStyleFile(const QString& style);
