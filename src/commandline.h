@@ -55,19 +55,42 @@ public:
   //
   virtual bool legacy() const;
 
+  // remembers the given values
   //
-  //
-  void process(
+  void set(
     const std::wstring& originalLine,
     po::variables_map vm,
     std::vector<std::wstring> untouched);
 
-  //
+
+  // called as soon as the command line has been parsed; return something to
+  // exit immediately
   //
   virtual std::optional<int> runEarly();
-  virtual bool canForwardToPrimary() const;
+
+  // called as soon as the multi process checks have confirmed that this is
+  // a primary instance; return something to exit immediately
+  //
   virtual std::optional<int> runPostMultiProcess(MOMultiProcess& mp);
+
+  // called after the OrganizerCore has been initialized; return something to
+  // exit immediatley
+  //
   virtual std::optional<int> runPostOrganizer(OrganizerCore& core);
+
+  // whether this command can be forwarded to the primary instance if one is
+  // already running
+  //
+  // if an instance is already running and this returns true, the whole command
+  // line is sent as a message to the primary instance, which will construct a
+  // new CommandLine and call runPostOrganizer() with it
+  //
+  // if an instance is already running and this returns false, the "an instance
+  // is already running" error dialog will be shown
+  //
+  // if this is the primary instance, this function is not called
+  //
+  virtual bool canForwardToPrimary() const;
 
 protected:
   // meta information about this command, returned by derived classes
@@ -81,6 +104,12 @@ protected:
       std::string usage, std::string more);
   };
 
+
+  // meta
+  //
+  virtual Meta meta() const = 0;
+
+
   // returns visible options specific to this command
   //
   virtual po::options_description getVisibleOptions() const;
@@ -92,11 +121,6 @@ protected:
   // returns positional arguments specific to this command
   //
   virtual po::positional_options_description getPositional() const;
-
-
-  // meta
-  //
-  virtual Meta meta() const = 0;
 
 
   // returns the original command line
@@ -238,22 +262,40 @@ class CommandLine
 public:
   CommandLine();
 
-  // parses the given command line and executes the appropriate command, if
-  // any
+  // parses the given command line and calls runEarly() on the appropriate
+  // command, if any
   //
   // returns an empty optional if execution should continue, or a return code
   // if MO must quit
   //
   std::optional<int> process(const std::wstring& line);
 
-  // handles moshortcut, nxm links and starting processes
+  // calls Command::runPostMultiProcess() on the command, if any
   //
-  // returns an empty optional if execution should continue, or a return code
-  // if MO must quit
+  std::optional<int> runPostMultiProcess(MOMultiProcess& mp);
+
+  // calls Command::runPostOrganizer() on the command, if any
+  //
+  // if MO wasn't invoked with a valid command, this also handles moshortcut,
+  // nxm links and starting processes
+  //
+  std::optional<int> runPostOrganizer(OrganizerCore& core);
+
+  // called when this instance is not the primary one
+  //
+  // if a command was executed and the command returns true for
+  // canForwardToPrimary(), this forwards the command line as an external
+  // message and returns true
+  //
+  // if the command returns false for canForwardToPrimary(), returns false
+  //
+  // if there was no valid command on the command line, this also forwards
+  // moshortcut and nxm links
+  //
+  // if there was no command, moshortcut or nxm links, this returns false, which
+  // will end up displaying an error message about an instance already running
   //
   bool forwardToPrimary(MOMultiProcess& multiProcess);
-  std::optional<int> runPostMultiProcess(MOMultiProcess& mp);
-  std::optional<int> runPostOrganizer(OrganizerCore& core);
 
 
   // clears parsed options, used when MO is "restarted" so the options aren't
@@ -287,6 +329,7 @@ public:
   std::optional<QString> nxmLink() const;
 
   // returns the executable/binary, if any
+  //
   std::optional<QString> executable() const;
 
   // returns the list of arguments, excluding moshortcut or executable name;

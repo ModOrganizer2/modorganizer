@@ -133,7 +133,7 @@ std::optional<int> CommandLine::process(const std::wstring& line)
               }
             }
 
-            c->process(line, m_vm, opts);
+            c->set(line, m_vm, opts);
             m_command = c.get();
 
             return m_command->runEarly();
@@ -228,6 +228,10 @@ bool CommandLine::forwardToPrimary(MOMultiProcess& multiProcess)
 
 std::optional<int> CommandLine::runPostMultiProcess(MOMultiProcess& mp)
 {
+  if (m_command) {
+    return m_command->runPostMultiProcess(mp);
+  }
+
   return {};
 }
 
@@ -511,7 +515,7 @@ po::positional_options_description Command::getPositional() const
   return {};
 }
 
-void Command::process(
+void Command::set(
   const std::wstring& originalLine,
   po::variables_map vm,
   std::vector<std::wstring> untouched)
