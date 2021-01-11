@@ -1357,6 +1357,12 @@ void ModListView::timerEvent(QTimerEvent* event)
 
 void ModListView::mousePressEvent(QMouseEvent* event)
 {
+  // allow alt+click to select all mods inside a separator
+  // when using collapsible separators
+  //
+  // similar code is also present in mouseReleaseEvent to
+  // avoid missing events
+
   // disable edit if Alt is pressed
   auto triggers = editTriggers();
   if (event->modifiers() & Qt::AltModifier) {
