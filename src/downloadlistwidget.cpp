@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "downloadlist.h"
 #include "downloadlistwidget.h"
+#include <report.h>
 #include <log.h>
 #include <QPainter>
 #include <QMouseEvent>
@@ -240,7 +241,7 @@ void DownloadListWidget::onCustomContextMenu(const QPoint &point)
 
         menu.addSeparator();
 
-        menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
+        menu.addAction(tr("Delete..."), this, SLOT(issueDelete()));
         if (hidden)
           menu.addAction(tr("Un-Hide"), this, SLOT(issueRestoreToView()));
         else
@@ -251,7 +252,7 @@ void DownloadListWidget::onCustomContextMenu(const QPoint &point)
         menu.addAction(tr("Reveal in Explorer"), this, SLOT(issueOpenInDownloadsFolder()));
       } else if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)
                 || (state == DownloadManager::STATE_PAUSING)) {
-        menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
+        menu.addAction(tr("Delete..."), this, SLOT(issueDelete()));
         menu.addAction(tr("Resume"), this, SLOT(issueResume()));
         menu.addAction(tr("Reveal in Explorer"), this, SLOT(issueOpenInDownloadsFolder()));
       }
@@ -297,11 +298,19 @@ void DownloadListWidget::issueQueryInfoMd5()
 
 void DownloadListWidget::issueDelete()
 {
-  if (QMessageBox::warning(nullptr, tr("Delete Files?"),
-                            tr("This will permanently delete the selected download.\n\nAre you absolutely sure you want to proceed?"),
-                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    emit removeDownload(m_ContextRow, true);
+  const auto r = MOBase::TaskDialog(this, tr("Delete download"))
+    .main("Are you sure you want to delete this download?")
+    .content(m_Manager->getFilePath(m_ContextRow))
+    .icon(QMessageBox::Question)
+    .button({tr("Move to the Recycle Bin"), QMessageBox::Yes})
+    .button({tr("Cancel"), QMessageBox::Cancel})
+    .exec();
+
+  if (r != QMessageBox::Yes) {
+    return;
   }
+
+  emit removeDownload(m_ContextRow, true);
 }
 
 void DownloadListWidget::issueRemoveFromView()
