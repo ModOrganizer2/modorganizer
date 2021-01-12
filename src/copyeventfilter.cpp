@@ -4,8 +4,8 @@
 #include <QGuiApplication>
 #include <QKeyEvent>
 
-CopyEventFilter::CopyEventFilter(QAbstractItemView* view, int role) :
-  CopyEventFilter(view, [=](auto& index) { return index.data(role).toString(); })
+CopyEventFilter::CopyEventFilter(QAbstractItemView* view, int column, int role) :
+  CopyEventFilter(view, [=](auto& index) { return index.sibling(index.row(), column).data(role).toString(); })
 {
 
 }
@@ -27,7 +27,7 @@ void CopyEventFilter::copySelection() const
   QModelIndexList selectedRows = m_view->selectionModel()->selectedRows();
   std::sort(selectedRows.begin(), selectedRows.end(), [=](const auto& lidx, const auto& ridx) {
     return m_view->visualRect(lidx).top() < m_view->visualRect(ridx).top();
-    });
+  });
 
   QStringList rows;
   for (auto& idx : selectedRows) {

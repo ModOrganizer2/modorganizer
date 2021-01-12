@@ -348,7 +348,6 @@ private slots:
   bool shouldStartTutorial() const;
 
   void openInstanceFolder();
-  void openLogsFolder();
   void openInstallFolder();
 	void openPluginsFolder();
   void openStylesheetsFolder();

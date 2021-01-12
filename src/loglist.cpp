@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "loglist.h"
 #include "organizercore.h"
+#include "copyeventfilter.h"
 
 using namespace MOBase;
 
@@ -43,6 +44,14 @@ void LogModel::add(MOBase::log::Entry e)
 {
   QMetaObject::invokeMethod(
     this, [this, e]{ onEntryAdded(std::move(e)); }, Qt::QueuedConnection);
+}
+
+QString LogModel::formattedMessage(const QModelIndex& index) const
+{
+  if (!index.isValid()) {
+    return "";
+  }
+  return QString::fromStdString(m_entries[index.row()].formattedMessage);
 }
 
 void LogModel::clear()
@@ -160,7 +169,9 @@ QVariant LogModel::headerData(int, Qt::Orientation, int) const
 
 
 LogList::LogList(QWidget* parent)
-  : QTreeView(parent), m_core(nullptr)
+  : QTreeView(parent),
+  m_core(nullptr),
+  m_copyFilter(this, [=](auto&& index) { return LogModel::instance().formattedMessage(index); })
 {
   setModel(&LogModel::instance());
 
@@ -180,6 +191,8 @@ LogList::LogList(QWidget* parent)
 
   m_timer.setSingleShot(true);
   connect(&m_timer, &QTimer::timeout, [&]{ scrollToBottom(); });
+
+  installEventFilter(&m_copyFilter);
 }
 
 void LogList::onNewEntry()
@@ -196,8 +209,7 @@ void LogList::copyToClipboard()
 {
   std::string s;
 
-  auto* m = static_cast<LogModel*>(model());
-  for (const auto& e : m->entries()) {
+  for (const auto& e : LogModel::instance().entries()) {
     s += e.formattedMessage + "\n";
   }
 
@@ -224,6 +236,7 @@ QMenu* LogList::createMenu(QWidget* parent)
 {
   auto* menu = new QMenu(parent);
 
+  menu->addAction(tr("Copy"), [&]{ m_copyFilter.copySelection(); });
   menu->addAction(tr("&Copy all"), [&]{ copyToClipboard(); });
   menu->addSeparator();
   menu->addAction(tr("C&lear all"), [&]{ clear(); });

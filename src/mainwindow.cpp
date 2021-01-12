@@ -2317,12 +2317,6 @@ void MainWindow::openInstanceFolder()
   shell::Explore(dataPath);
 }
 
-void MainWindow::openLogsFolder()
-{
-	QString logsPath = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath());
-  shell::Explore(logsPath);
-}
-
 void MainWindow::openInstallFolder()
 {
   shell::Explore(qApp->applicationDirPath());
@@ -2400,7 +2394,7 @@ QMenu *MainWindow::openFolderMenu()
 	FolderMenu->addAction(tr("Open MO2 Install folder"), this, SLOT(openInstallFolder()));
 	FolderMenu->addAction(tr("Open MO2 Plugins folder"), this, SLOT(openPluginsFolder()));
   FolderMenu->addAction(tr("Open MO2 Stylesheets folder"), this, SLOT(openStylesheetsFolder()));
-  FolderMenu->addAction(tr("Open MO2 Logs folder"), this, SLOT(openLogsFolder()));
+  FolderMenu->addAction(tr("Open MO2 Logs folder"), [=] { ui->logList->openLogsFolder(); });
 
 	return FolderMenu;
 }
