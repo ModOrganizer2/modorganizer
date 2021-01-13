@@ -907,9 +907,8 @@ QStringList ModList::allModsByProfilePriority(MOBase::IProfile* profile) const
     ++i) {
     int modIndex = mo2Profile->modIndexByPriority(i);
     auto modInfo = ModInfo::getByIndex(modIndex);
-    if (!modInfo->hasFlag(ModInfo::FLAG_OVERWRITE) &&
-      !modInfo->hasFlag(ModInfo::FLAG_BACKUP)) {
-      res.push_back(ModInfo::getByIndex(modIndex)->internalName());
+    if (!modInfo->isBackup() && !modInfo->isOverwrite()) {
+      res.push_back(modInfo->internalName());
     }
   }
   return res;
