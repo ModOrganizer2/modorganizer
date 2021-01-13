@@ -168,6 +168,13 @@ void PathsSettingsTab::on_browseGameDirBtn_clicked()
     return;
   }
 
+  // we need to find the game folder corresponding to the executable
+  //
+  // some game plugins have executable in subfolder, e.g. bin/game.exe,
+  // so we need to go up the parent folders until the concatenation of
+  // the folder and the binary path equals the game executable specified
+  // by the user
+  //
   QFileInfo newExe(temp);
   const auto binaryPath = settings().game().plugin()->binaryName();
   QDir folder = newExe.absoluteDir();
