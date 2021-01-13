@@ -436,7 +436,6 @@ MainWindow::MainWindow(Settings &settings
   connect(&m_PluginContainer, &PluginContainer::pluginUnregistered, this, &MainWindow::onPluginRegistrationChanged);
 
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this, &MainWindow::modInstalled);
-  connect(&m_OrganizerCore, &OrganizerCore::close, this, &QMainWindow::close);
 
   m_CheckBSATimer.setSingleShot(true);
   connect(&m_CheckBSATimer, SIGNAL(timeout()), this, SLOT(checkBSAList()));

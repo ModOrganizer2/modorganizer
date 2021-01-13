@@ -386,15 +386,13 @@ public slots:
 
 signals:
 
-  /**
-   * @brief emitted after a mod has been installed
-   * @node this is currently only used for tutorials
-   */
+  // emitted after a mod has been installed
+  //
   void modInstalled(const QString &modName);
 
+  // emitted when the managed game changes
+  //
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
-
-  void close();
 
   // emitted when the profile is changed, before notifying plugins
   //
@@ -412,12 +410,8 @@ private:
   void saveCurrentProfile();
   void storeSettings();
 
-  bool queryApi(QString &apiKey);
-
   void updateModActiveState(int index, bool active);
   void updateModsActiveState(const QList<unsigned int> &modIndices, bool active);
-
-  bool testForSteam(bool *found, bool *access);
 
   bool createDirectory(const QString &path);
 
