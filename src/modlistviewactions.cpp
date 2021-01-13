@@ -547,7 +547,7 @@ void ModListViewActions::sendModsToSeparator(const QModelIndexList& index) const
 
       int newPriority = std::numeric_limits<int>::max();
       bool foundSection = false;
-      for (auto mod : m_core.modsSortedByProfilePriority(m_core.currentProfile())) {
+      for (auto mod : m_core.modList()->allModsByProfilePriority()) {
         unsigned int modIndex = ModInfo::getIndex(mod);
         ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
         if (!foundSection && result.compare(mod) == 0) {
@@ -1128,7 +1128,7 @@ void ModListViewActions::moveOverwriteContentToExistingMod() const
 
       QString modAbsolutePath;
 
-      for (const auto& mod : m_core.modsSortedByProfilePriority(m_core.currentProfile())) {
+      for (const auto& mod : m_core.modList()->allModsByProfilePriority()) {
         if (result.compare(mod) == 0) {
           ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(mod));
           modAbsolutePath = modInfo->absolutePath();
