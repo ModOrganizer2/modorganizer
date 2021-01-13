@@ -348,16 +348,6 @@ public:
   boost::signals2::connection onPluginEnabled(std::function<void(const MOBase::IPlugin*)> const& func);
   boost::signals2::connection onPluginDisabled(std::function<void(const MOBase::IPlugin*)> const& func);
 
-  bool getArchiveParsing() const
-  {
-    return m_ArchiveParsing;
-  }
-
-  void setArchiveParsing(bool archiveParsing)
-  {
-    m_ArchiveParsing = archiveParsing;
-  }
-
 public: // IPluginDiagnose interface
 
   virtual std::vector<unsigned int> activeProblems() const;
@@ -505,7 +495,6 @@ private:
 
   bool m_DirectoryUpdate;
   bool m_ArchivesInit;
-  bool m_ArchiveParsing{ m_Settings.archiveParsing() };
 
   MOBase::DelayedFileWriter m_PluginListsWriter;
   UsvfsConnector m_USVFS;

@@ -1500,7 +1500,7 @@ IOrganizer const* OrganizerCore::managedGameOrganizer() const
 std::vector<QString> OrganizerCore::enabledArchives()
 {
   std::vector<QString> result;
-  if (m_ArchiveParsing) {
+  if (settings().archiveParsing()) {
     QFile archiveFile(m_CurrentProfile->getArchivesFileName());
     if (archiveFile.open(QIODevice::ReadOnly)) {
       while (!archiveFile.atEnd()) {

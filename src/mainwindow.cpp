@@ -486,7 +486,7 @@ MainWindow::MainWindow(Settings &settings
 
   ui->profileBox->setCurrentText(m_OrganizerCore.currentProfile()->name());
 
-  if (m_OrganizerCore.getArchiveParsing())
+  if (settings.archiveParsing())
   {
     ui->dataTabShowFromArchives->setCheckState(Qt::Checked);
     ui->dataTabShowFromArchives->setEnabled(true);
@@ -2455,6 +2455,7 @@ void MainWindow::on_actionSettings_triggered()
   QString oldProfilesDirectory(settings.paths().profiles());
   QString oldManagedGameDirectory(settings.game().directory().value_or(""));
   bool oldDisplayForeign(settings.interface().displayForeign());
+  bool oldArchiveParsing(settings.archiveParsing());
   bool proxy = settings.network().useProxy();
   DownloadManager *dlManager = m_OrganizerCore.downloadManager();
   const bool oldCheckForUpdates = settings.checkForUpdates();
@@ -2516,9 +2517,8 @@ void MainWindow::on_actionSettings_triggered()
   }
 
   const auto state = settings.archiveParsing();
-  if (state != m_OrganizerCore.getArchiveParsing())
+  if (state != oldArchiveParsing)
   {
-    m_OrganizerCore.setArchiveParsing(state);
     if (!state)
     {
       ui->dataTabShowFromArchives->setCheckState(Qt::Unchecked);
