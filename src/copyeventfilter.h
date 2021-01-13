@@ -23,7 +23,7 @@ class CopyEventFilter : public QObject
 
 public:
 
-  CopyEventFilter(QAbstractItemView* view, int role = Qt::DisplayRole);
+  CopyEventFilter(QAbstractItemView* view, int column = 0, int role = Qt::DisplayRole);
   CopyEventFilter(QAbstractItemView* view, std::function<QString(const QModelIndex&)> format);
 
   // copy the selection of the view associated with this
