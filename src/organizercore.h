@@ -65,7 +65,8 @@ private:
 
   struct SignalCombinerAnd
   {
-    typedef bool result_type;
+    using result_type = bool;
+
     template<typename InputIterator>
     bool operator()(InputIterator first, InputIterator last) const
     {
@@ -81,14 +82,14 @@ private:
 
 private:
 
-  using SignalAboutToRunApplication = boost::signals2::signal<bool (const QString&), SignalCombinerAnd>;
-  using SignalFinishedRunApplication = boost::signals2::signal<void (const QString&, unsigned int)>;
-  using SignalUserInterfaceInitialized = boost::signals2::signal<void (QMainWindow*)>;
+  using SignalAboutToRunApplication = boost::signals2::signal<bool(const QString&), SignalCombinerAnd>;
+  using SignalFinishedRunApplication = boost::signals2::signal<void(const QString&, unsigned int)>;
+  using SignalUserInterfaceInitialized = boost::signals2::signal<void(QMainWindow*)>;
   using SignalProfileCreated = boost::signals2::signal<void(MOBase::IProfile*)>;
   using SignalProfileRenamed = boost::signals2::signal<void(MOBase::IProfile*, QString const&, QString const&)>;
   using SignalProfileRemoved = boost::signals2::signal<void(QString const&)>;
-  using SignalProfileChanged = boost::signals2::signal<void (MOBase::IProfile *, MOBase::IProfile *)>;
-  using SignalPluginSettingChanged = boost::signals2::signal<void (QString const&, const QString& key, const QVariant&, const QVariant&)>;
+  using SignalProfileChanged = boost::signals2::signal<void(MOBase::IProfile *, MOBase::IProfile *)>;
+  using SignalPluginSettingChanged = boost::signals2::signal<void(QString const&, const QString& key, const QVariant&, const QVariant&)>;
   using SignalPluginEnabled = boost::signals2::signal<void(const MOBase::IPlugin*)>;
 
 public:
