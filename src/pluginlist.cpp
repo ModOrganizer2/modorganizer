@@ -1340,6 +1340,7 @@ bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int
         result = true;
       }
       refreshLoadOrder();
+      emit writePluginsList();
     }
   }
 
