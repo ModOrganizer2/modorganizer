@@ -40,6 +40,7 @@ UserInterfaceSettingsTab::UserInterfaceSettingsTab(Settings& s, SettingsDialog& 
   // download list
   ui->compactBox->setChecked(settings().interface().compactDownloads());
   ui->showMetaBox->setChecked(settings().interface().metaDownloads());
+  ui->hideDownloadInstallBox->setChecked(settings().interface().hideDownloadsAfterInstallation());
 
   // colors
   ui->colorTable->load(s);
@@ -67,6 +68,7 @@ void UserInterfaceSettingsTab::update()
   // download list
   settings().interface().setCompactDownloads(ui->compactBox->isChecked());
   settings().interface().setMetaDownloads(ui->showMetaBox->isChecked());
+  settings().interface().setHideDownloadsAfterInstallation(ui->hideDownloadInstallBox->isChecked());
 
   // colors
   ui->colorTable->commitColors();

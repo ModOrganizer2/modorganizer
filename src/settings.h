@@ -663,6 +663,11 @@ public:
   bool metaDownloads() const;
   void setMetaDownloads(bool b);
 
+  // whether to hide downloads after installing them
+  //
+  bool hideDownloadsAfterInstallation() const;
+  void setHideDownloadsAfterInstallation(bool b);
+
   // whether the API counter should be hidden
   //
   bool hideAPICounter() const;

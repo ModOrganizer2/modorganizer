@@ -521,6 +521,19 @@ If you disable this feature, MO will only display official DLCs this way. Please
              </widget>
             </item>
             <item>
+             <widget class="QCheckBox" name="hideDownloadInstallBox">
+              <property name="toolTip">
+               <string>Automatically hide downloads after successful installation.</string>
+              </property>
+              <property name="whatsThis">
+               <string>Automatically hide downloads after successful installation.</string>
+              </property>
+              <property name="text">
+               <string>Hide downloads after installation</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <spacer name="verticalSpacer_5">
               <property name="orientation">
                <enum>Qt::Vertical</enum>

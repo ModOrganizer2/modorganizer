@@ -2258,6 +2258,16 @@ void InterfaceSettings::setMetaDownloads(bool b)
   set(m_Settings, "Settings", "meta_downloads", b);
 }
 
+bool InterfaceSettings::hideDownloadsAfterInstallation() const
+{
+  return get<bool>(m_Settings, "Settings", "autohide_downloads", false);
+}
+
+void InterfaceSettings::setHideDownloadsAfterInstallation(bool b)
+{
+  set(m_Settings, "Settings", "autohide_downloads", b);
+}
+
 bool InterfaceSettings::hideAPICounter() const
 {
   return get<bool>(m_Settings, "Settings", "hide_api_counter", false);
