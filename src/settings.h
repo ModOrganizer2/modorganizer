@@ -638,6 +638,11 @@ public:
   bool collapsibleSeparatorsHighlightFrom() const;
   void setCollapsibleSeparatorsHighlightFrom(bool b);
 
+  // whether to show icons on collapsed separators
+  //
+  bool collapsibleSeparatorsIcons(int column) const;
+  void setCollapsibleSeparatorsIcons(int column, bool show);
+
   // whether each profile should have its own expansion state
   //
   bool collapsibleSeparatorsPerProfile() const;

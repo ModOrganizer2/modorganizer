@@ -1,6 +1,8 @@
 #ifndef SETTINGSDIALOGUSERINTERFACE_H
 #define SETTINGSDIALOGUSERINTERFACE_H
 
+#include <QCheckBox>
+
 #include "settingsdialog.h"
 #include "settings.h"
 
@@ -16,6 +18,10 @@ protected slots:
   // enable/disable the collapsible separators group depending on
   // the checkbox states
   void updateCollapsibleSeparatorsGroup();
+
+private:
+
+  const std::map<int, QCheckBox*> m_columnToBox;
 };
 
 #endif // SETTINGSDIALOGGENERAL_H

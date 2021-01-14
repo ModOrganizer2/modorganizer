@@ -787,7 +787,7 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   setItemDelegateForColumn(ModList::COL_FLAGS, new ModFlagIconDelegate(this, ModList::COL_FLAGS, 120));
   setItemDelegateForColumn(ModList::COL_CONFLICTFLAGS, new ModConflictIconDelegate(this, ModList::COL_CONFLICTFLAGS, 80));
   setItemDelegateForColumn(ModList::COL_CONTENT, new ModContentIconDelegate(this, ModList::COL_CONTENT, 150));
-  setItemDelegateForColumn(ModList::COL_VERSION, new ModListVersionDelegate(this));
+  setItemDelegateForColumn(ModList::COL_VERSION, new ModListVersionDelegate(this, core.settings()));
 
   if (m_core->settings().geometry().restoreState(header())) {
     // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
@@ -1140,6 +1140,7 @@ std::vector<ModInfo::EFlag> ModListView::modFlags(const QModelIndex& index, bool
   bool compact = false;
   if (info->isSeparator()
     && hasCollapsibleSeparators()
+    && m_core->settings().interface().collapsibleSeparatorsIcons(ModList::COL_FLAGS)
     && !isExpanded(index.sibling(index.row(), 0))) {
 
     // combine the child conflicts
@@ -1170,6 +1171,7 @@ std::vector<ModInfo::EConflictFlag> ModListView::conflictFlags(const QModelIndex
   bool compact = false;
   if (info->isSeparator()
     && hasCollapsibleSeparators()
+    && m_core->settings().interface().collapsibleSeparatorsIcons(ModList::COL_CONFLICTFLAGS)
     && !isExpanded(index.sibling(index.row(), 0))) {
 
     // combine the child conflicts
@@ -1204,6 +1206,7 @@ std::set<int> ModListView::contents(const QModelIndex& index, bool* includeChild
 
   if (info->isSeparator()
     && hasCollapsibleSeparators()
+    && m_core->settings().interface().collapsibleSeparatorsIcons(ModList::COL_CONTENT)
     && !isExpanded(index.sibling(index.row(), 0))) {
 
     // combine the child contents

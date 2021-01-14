@@ -2208,6 +2208,16 @@ void InterfaceSettings::setCollapsibleSeparatorsHighlightFrom(bool b)
   set(m_Settings, "Settings", "collapsible_separators_conflicts_from", b);
 }
 
+bool InterfaceSettings::collapsibleSeparatorsIcons(int column) const
+{
+  return get<bool>(m_Settings, "Settings", QString("collapsible_separators_icons_%1").arg(column), true);
+}
+
+void InterfaceSettings::setCollapsibleSeparatorsIcons(int column, bool show)
+{
+  set(m_Settings, "Settings", QString("collapsible_separators_icons_%1").arg(column), show);
+}
+
 bool InterfaceSettings::collapsibleSeparatorsPerProfile() const
 {
   return get<bool>(m_Settings, "Settings", "collapsible_separators_per_profile", false);

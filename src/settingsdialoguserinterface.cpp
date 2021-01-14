@@ -3,13 +3,20 @@
 #include "shared/appconfig.h"
 #include "categoriesdialog.h"
 #include "colortable.h"
+#include "modlist.h"
 #include <utility.h>
 #include <questionboxmemory.h>
 
 using namespace MOBase;
 
 UserInterfaceSettingsTab::UserInterfaceSettingsTab(Settings& s, SettingsDialog& d)
-  : SettingsTab(s, d)
+  : SettingsTab(s, d),
+  m_columnToBox{
+    { ModList::COL_CONFLICTFLAGS, ui->collapsibleSeparatorsIconsConflictsBox },
+    { ModList::COL_FLAGS, ui->collapsibleSeparatorsIconsFlagsBox },
+    { ModList::COL_CONTENT, ui->collapsibleSeparatorsIconsContentsBox},
+    { ModList::COL_VERSION, ui->collapsibleSeparatorsIconsVersionBox }
+  }
 {
 
   // connect before setting to trigger
@@ -19,12 +26,16 @@ UserInterfaceSettingsTab::UserInterfaceSettingsTab(Settings& s, SettingsDialog& 
   // mod list
   ui->displayForeignBox->setChecked(settings().interface().displayForeign());
   ui->colorSeparatorsBox->setChecked(settings().colors().colorSeparatorScrollbar());
-  ui->collapsibleSeparatorsHighlightFromBox->setChecked(settings().interface().collapsibleSeparatorsHighlightFrom());
-  ui->collapsibleSeparatorsHighlightToBox->setChecked(settings().interface().collapsibleSeparatorsHighlightTo());
   ui->collapsibleSeparatorsAscBox->setChecked(settings().interface().collapsibleSeparators(Qt::AscendingOrder));
   ui->collapsibleSeparatorsDscBox->setChecked(settings().interface().collapsibleSeparators(Qt::DescendingOrder));
+  ui->collapsibleSeparatorsHighlightFromBox->setChecked(settings().interface().collapsibleSeparatorsHighlightFrom());
+  ui->collapsibleSeparatorsHighlightToBox->setChecked(settings().interface().collapsibleSeparatorsHighlightTo());
   ui->collapsibleSeparatorsPerProfileBox->setChecked(settings().interface().collapsibleSeparatorsPerProfile());
   ui->saveFiltersBox->setChecked(settings().interface().saveFilters());
+
+  for (auto& p : m_columnToBox) {
+    p.second->setChecked(settings().interface().collapsibleSeparatorsIcons(p.first));
+  }
 
   // download list
   ui->compactBox->setChecked(settings().interface().compactDownloads());
@@ -49,6 +60,10 @@ void UserInterfaceSettingsTab::update()
   settings().interface().setCollapsibleSeparatorsPerProfile(ui->collapsibleSeparatorsPerProfileBox->isChecked());
   settings().interface().setSaveFilters(ui->saveFiltersBox->isChecked());
 
+  for (auto& p : m_columnToBox) {
+    settings().interface().setCollapsibleSeparatorsIcons(p.first, p.second->isChecked());
+  }
+
   // download list
   settings().interface().setCompactDownloads(ui->compactBox->isChecked());
   settings().interface().setMetaDownloads(ui->showMetaBox->isChecked());
@@ -61,7 +76,7 @@ void UserInterfaceSettingsTab::updateCollapsibleSeparatorsGroup()
 {
   const auto checked = ui->collapsibleSeparatorsAscBox->isChecked() ||
     ui->collapsibleSeparatorsDscBox->isChecked();
-  ui->collapsibleSeparatorsHighlightToBox->setEnabled(checked);
-  ui->collapsibleSeparatorsHighlightFromBox->setEnabled(checked);
-  ui->collapsibleSeparatorsPerProfileBox->setEnabled(checked);
+  for (auto* checkbox : ui->collapsibleSeparatorsBox->findChildren<QCheckBox*>()) {
+    checkbox->setEnabled(checked);
+  }
 }
