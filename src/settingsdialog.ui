@@ -367,22 +367,6 @@ If you disable this feature, MO will only display official DLCs this way. Please
                 </widget>
                </item>
                <item>
-                <widget class="QCheckBox" name="collapsibleSeparatorsConflictsBox">
-                 <property name="toolTip">
-                  <string>Display mod conflicts on and from separator when collapsed, and show plugins from collapsed separators.</string>
-                 </property>
-                 <property name="whatsThis">
-                  <string>Display mod conflicts on and from separator when collapsed, and show plugins from collapsed separators.</string>
-                 </property>
-                 <property name="text">
-                  <string>Show conflicts and plugins on separators and from separators</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
                 <widget class="QCheckBox" name="collapsibleSeparatorsPerProfileBox">
                  <property name="toolTip">
                   <string>Do not share the collapse/expanded state of separators between profiles.</string>
@@ -393,6 +377,63 @@ If you disable this feature, MO will only display official DLCs this way. Please
                  <property name="text">
                   <string>Profile-specific collapse states for separators</string>
                  </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QWidget" name="widget_9" native="true">
+                 <layout class="QHBoxLayout" name="horizontalLayout_12">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_34">
+                    <property name="text">
+                     <string>Show conflicts and plugins </string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="collapsibleSeparatorsHighlightToBox">
+                    <property name="toolTip">
+                     <string>Highlight collapsed separators based on conflicts and plugins from mods inside them.</string>
+                    </property>
+                    <property name="whatsThis">
+                     <string>Highlight collapsed separators based on conflicts and plugins from mods inside them.</string>
+                    </property>
+                    <property name="text">
+                     <string>on separators</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="collapsibleSeparatorsHighlightFromBox">
+                    <property name="toolTip">
+                     <string>When selecting a collapsed separator, highlight conflicting mods and plugins from mods inside the separator.</string>
+                    </property>
+                    <property name="whatsThis">
+                     <string>When selecting a collapsed separator, highlight conflicting mods and plugins from mods inside the separator.</string>
+                    </property>
+                    <property name="text">
+                     <string>from separators</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
                 </widget>
                </item>
               </layout>

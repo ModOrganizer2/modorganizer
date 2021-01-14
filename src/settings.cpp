@@ -2188,14 +2188,24 @@ void InterfaceSettings::setCollapsibleSeparators(bool ascending, bool descending
   set(m_Settings, "Settings", "collapsible_separators_dsc", descending);
 }
 
-bool InterfaceSettings::collapsibleSeparatorsConflicts() const
+bool InterfaceSettings::collapsibleSeparatorsHighlightTo() const
 {
-  return get<bool>(m_Settings, "Settings", "collapsible_separators_conflicts", true);
+  return get<bool>(m_Settings, "Settings", "collapsible_separators_conflicts_to", true);
 }
 
-void InterfaceSettings::setCollapsibleSeparatorsConflicts(bool b)
+void InterfaceSettings::setCollapsibleSeparatorsHighlightTo(bool b)
 {
-  set(m_Settings, "Settings", "collapsible_separators_conflicts", b);
+  set(m_Settings, "Settings", "collapsible_separators_conflicts_to", b);
+}
+
+bool InterfaceSettings::collapsibleSeparatorsHighlightFrom() const
+{
+  return get<bool>(m_Settings, "Settings", "collapsible_separators_conflicts_from", true);
+}
+
+void InterfaceSettings::setCollapsibleSeparatorsHighlightFrom(bool b)
+{
+  set(m_Settings, "Settings", "collapsible_separators_conflicts_from", b);
 }
 
 bool InterfaceSettings::collapsibleSeparatorsPerProfile() const

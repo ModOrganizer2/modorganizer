@@ -19,7 +19,8 @@ UserInterfaceSettingsTab::UserInterfaceSettingsTab(Settings& s, SettingsDialog& 
   // mod list
   ui->displayForeignBox->setChecked(settings().interface().displayForeign());
   ui->colorSeparatorsBox->setChecked(settings().colors().colorSeparatorScrollbar());
-  ui->collapsibleSeparatorsConflictsBox->setChecked(settings().interface().collapsibleSeparatorsConflicts());
+  ui->collapsibleSeparatorsHighlightFromBox->setChecked(settings().interface().collapsibleSeparatorsHighlightFrom());
+  ui->collapsibleSeparatorsHighlightToBox->setChecked(settings().interface().collapsibleSeparatorsHighlightTo());
   ui->collapsibleSeparatorsAscBox->setChecked(settings().interface().collapsibleSeparators(Qt::AscendingOrder));
   ui->collapsibleSeparatorsDscBox->setChecked(settings().interface().collapsibleSeparators(Qt::DescendingOrder));
   ui->collapsibleSeparatorsPerProfileBox->setChecked(settings().interface().collapsibleSeparatorsPerProfile());
@@ -43,7 +44,8 @@ void UserInterfaceSettingsTab::update()
   settings().interface().setDisplayForeign(ui->displayForeignBox->isChecked());
   settings().interface().setCollapsibleSeparators(
     ui->collapsibleSeparatorsAscBox->isChecked(), ui->collapsibleSeparatorsDscBox->isChecked());
-  settings().interface().setCollapsibleSeparatorsConflicts(ui->collapsibleSeparatorsConflictsBox->isChecked());
+  settings().interface().setCollapsibleSeparatorsHighlightFrom(ui->collapsibleSeparatorsHighlightFromBox->isChecked());
+  settings().interface().setCollapsibleSeparatorsHighlightTo(ui->collapsibleSeparatorsHighlightToBox->isChecked());
   settings().interface().setCollapsibleSeparatorsPerProfile(ui->collapsibleSeparatorsPerProfileBox->isChecked());
   settings().interface().setSaveFilters(ui->saveFiltersBox->isChecked());
 
@@ -59,6 +61,7 @@ void UserInterfaceSettingsTab::updateCollapsibleSeparatorsGroup()
 {
   const auto checked = ui->collapsibleSeparatorsAscBox->isChecked() ||
     ui->collapsibleSeparatorsDscBox->isChecked();
-  ui->collapsibleSeparatorsConflictsBox->setEnabled(checked);
+  ui->collapsibleSeparatorsHighlightToBox->setEnabled(checked);
+  ui->collapsibleSeparatorsHighlightFromBox->setEnabled(checked);
   ui->collapsibleSeparatorsPerProfileBox->setEnabled(checked);
 }
