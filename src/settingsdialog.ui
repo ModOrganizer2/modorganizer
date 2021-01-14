@@ -306,7 +306,10 @@ If you disable this feature, MO will only display official DLCs this way. Please
                <bool>false</bool>
               </property>
               <property name="checkable">
-               <bool>true</bool>
+               <bool>false</bool>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_20">
                <property name="leftMargin">
@@ -315,6 +318,54 @@ If you disable this feature, MO will only display official DLCs this way. Please
                <property name="rightMargin">
                 <number>7</number>
                </property>
+               <item>
+                <widget class="QWidget" name="widget_8" native="true">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_13">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label_18">
+                    <property name="text">
+                     <string>When sorting by</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="collapsibleSeparatorsAscBox">
+                    <property name="text">
+                     <string>ascending priority</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="collapsibleSeparatorsDscBox">
+                    <property name="text">
+                     <string>descending  priority</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
                <item>
                 <widget class="QCheckBox" name="collapsibleSeparatorsConflictsBox">
                  <property name="toolTip">

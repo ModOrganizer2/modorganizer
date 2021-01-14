@@ -28,6 +28,13 @@ public:
   ~ModListByPriorityProxy();
 
   void setProfile(Profile* profile);
+
+  // set the sort order but does not refresh the proxy
+  //
+  void setSortOrder(Qt::SortOrder order);
+
+  // refresh the proxy by rebuilding the inner structure
+  //
   void refresh();
 
   void setSourceModel(QAbstractItemModel* sourceModel) override;
@@ -83,6 +90,7 @@ private:
   OrganizerCore& m_core;
   Profile* m_profile;
 
+  Qt::SortOrder m_sortOrder = Qt::AscendingOrder;
   bool m_dropExpanded = false;
   ModListView::DropPosition m_dropPosition = ModListView::DropPosition::OnItem;
 };

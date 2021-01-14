@@ -103,22 +103,33 @@ void ModListViewActions::createEmptyMod(const QModelIndex& index) const
     auto info = ModInfo::getByIndex(mIndex);
     newPriority = m_core.currentProfile()->getModPriority(mIndex);
     if (info->isSeparator()) {
+
+      auto isSeparator = [](const auto& p) {
+        return ModInfo::getByIndex(p.second)->isSeparator();
+      };
+
       auto& ibp = m_core.currentProfile()->getAllIndexesByPriority();
 
-      // start right after the current priority and look for the next
+      // start right after/before the current priority and look for the next
       // separator
-      auto it = ibp.find(newPriority + 1);
-      for (; it != ibp.end(); ++it) {
-        auto info = ModInfo::getByIndex(it->second);
-        if (info->isSeparator()) {
+      if (m_view->sortOrder() == Qt::AscendingOrder) {
+        auto it = std::find_if(ibp.find(newPriority + 1), ibp.end(), isSeparator);
+        if (it != ibp.end()) {
           newPriority = it->first;
-          break;
+        }
+        else {
+          newPriority = -1;
         }
       }
-
-      // no separator found, create at the end
-      if (it == ibp.end()) {
-        newPriority = -1;
+      else {
+        auto it = std::find_if(std::reverse_iterator{ ibp.find(newPriority - 1) }, ibp.rend(), isSeparator);
+        if (it != ibp.rend()) {
+          newPriority = it->first + 1;
+        }
+        else {
+          // create "before" priority 0, i.e. at the end in descending priority.
+          newPriority = 0;
+        }
       }
     }
   }

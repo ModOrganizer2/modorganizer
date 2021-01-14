@@ -209,6 +209,11 @@ int ModListView::sortColumn() const
   return m_sortProxy ? m_sortProxy->sortColumn() : -1;
 }
 
+Qt::SortOrder ModListView::sortOrder() const
+{
+  return m_sortProxy ? m_sortProxy->sortOrder() : Qt::AscendingOrder;
+}
+
 ModListView::GroupByMode ModListView::groupByMode() const
 {
   if (m_sortProxy == nullptr) {
@@ -682,9 +687,9 @@ void ModListView::updateGroupByProxy()
   else if (groupIndex == GroupBy::NEXUS_ID) {
     nextProxy = m_byNexusIdProxy;
   }
-  else if (m_core->settings().interface().collapsibleSeparators()
-    && m_sortProxy->sortColumn() == ModList::COL_PRIORITY
-    && m_sortProxy->sortOrder() == Qt::AscendingOrder) {
+  else if (m_core->settings().interface().collapsibleSeparators(m_sortProxy->sortOrder())
+    && m_sortProxy->sortColumn() == ModList::COL_PRIORITY) {
+    m_byPriorityProxy->setSortOrder(m_sortProxy->sortOrder());
     nextProxy = m_byPriorityProxy;
   }
 

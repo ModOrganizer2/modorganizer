@@ -140,6 +140,10 @@ private:
   bool filterMatchesModAnd(ModInfo::Ptr info, bool enabled) const;
   bool filterMatchesModOr(ModInfo::Ptr info, bool enabled) const;
 
+  // check if the source model is the by-priority proxy
+  //
+  bool sourceIsByPriorityProxy() const;
+
 private slots:
 
   void aboutToChangeData();

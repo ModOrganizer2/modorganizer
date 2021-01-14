@@ -61,9 +61,10 @@ public:
   //
   bool hasCollapsibleSeparators() const;
 
-  // the column by which the mod list is currently sorted
+  // the column/order by which the mod list is currently sorted
   //
   int sortColumn() const;
+  Qt::SortOrder sortOrder() const;
 
   // the current group mode
   //

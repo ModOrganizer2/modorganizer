@@ -2175,14 +2175,17 @@ void InterfaceSettings::setStyleName(const QString& name)
   set(m_Settings, "Settings", "style", name);
 }
 
-bool InterfaceSettings::collapsibleSeparators() const
+bool InterfaceSettings::collapsibleSeparators(Qt::SortOrder order) const
 {
-  return get<bool>(m_Settings, "Settings", "collapsible_separators", true);
+  return get<bool>(m_Settings, "Settings",
+    order == Qt::AscendingOrder ? "collapsible_separators_asc" : "collapsible_separators_dsc",
+    order == Qt::AscendingOrder);
 }
 
-void InterfaceSettings::setCollapsibleSeparators(bool b)
+void InterfaceSettings::setCollapsibleSeparators(bool ascending, bool descending)
 {
-  set(m_Settings, "Settings", "collapsible_separators", b);
+  set(m_Settings, "Settings", "collapsible_separators_asc", ascending);
+  set(m_Settings, "Settings", "collapsible_separators_dsc", descending);
 }
 
 bool InterfaceSettings::collapsibleSeparatorsConflicts() const

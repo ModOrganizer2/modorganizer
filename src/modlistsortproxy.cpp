@@ -18,6 +18,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "modlistsortproxy.h"
+#include "modlistbypriorityproxy.h"
 #include "modlistdropinfo.h"
 #include "modinfo.h"
 #include "profile.h"
@@ -279,7 +280,6 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
 
 bool ModListSortProxy::optionsMatchMod(ModInfo::Ptr info, bool) const
 {
-
   return true;
 }
 
@@ -598,6 +598,11 @@ bool ModListSortProxy::filterAcceptsRow(int source_row, const QModelIndex &paren
   }
 }
 
+bool ModListSortProxy::sourceIsByPriorityProxy() const
+{
+  return dynamic_cast<ModListByPriorityProxy*>(sourceModel()) != nullptr;
+}
+
 bool ModListSortProxy::canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const
 {
   ModListDropInfo dropInfo(data, *m_Organizer);
@@ -615,6 +620,11 @@ bool ModListSortProxy::canDropMimeData(const QMimeData* data, Qt::DropAction act
     if (qobject_cast<QtGroupingProxy*>(sourceModel())) {
       return false;
     }
+  }
+
+  // see dropMimeData for details
+  if (sortOrder() == Qt::DescendingOrder && row != -1 && !sourceIsByPriorityProxy()) {
+    --row;
   }
 
   return QSortFilterProxyModel::canDropMimeData(data, action, row, column, parent);
@@ -636,9 +646,12 @@ bool ModListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action
   }
 
   // in the regular model, when dropping between rows, the row-value passed to
-  // the sourceModel is inconsistent between ascending and descending ordering.
-  // This should fix that
-  if (sortOrder() == Qt::DescendingOrder) {
+  // the sourceModel is inconsistent between ascending and descending ordering
+  //
+  // we want to fix that, but we cannot do it for the by-priority proxy because
+  // it messes up with non top-level items, so we simply forward the row and the
+  // by-priority proxy will fix the row for us
+  if (sortOrder() == Qt::DescendingOrder && row != -1 && !sourceIsByPriorityProxy()) {
     --row;
   }
 
