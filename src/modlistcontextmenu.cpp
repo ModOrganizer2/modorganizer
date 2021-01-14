@@ -20,17 +20,23 @@ ModListGlobalContextMenu::ModListGlobalContextMenu(OrganizerCore& core, ModListV
   addAction(tr("Install Mod..."), [=]() { view->actions().installMod(); });
 
   auto modIndex = index.data(ModList::IndexRole);
-  if (modIndex.isValid()) {
+  if (modIndex.isValid() && view->sortColumn() == ModList::COL_PRIORITY) {
     auto info = ModInfo::getByIndex(modIndex.toInt());
     if (!info->isBackup()) {
-      addAction(info->isSeparator() ? tr("Create empty mod inside") : tr("Create empty mod before"),
-        [=]() { view->actions().createEmptyMod(index); });
-      addAction(tr("Create separator before"), [=]() { view->actions().createSeparator(index); });
+      QString text = tr("Create empty mod above");
+      if (info->isSeparator()) {
+        text = tr("Create empty mod inside");
+      }
+      else if (view->sortOrder() == Qt::DescendingOrder) {
+        text = tr("Create empty mod below");
+      }
+      addAction(text, [=]() { view->actions().createEmptyMod(index); });
+      addAction(tr("Create separator above"), [=]() { view->actions().createSeparator(index); });
     }
   }
   else {
-    addAction(tr("Create empty mod at the end"), [=]() { view->actions().createEmptyMod(); });
-    addAction(tr("Create separator at the end"), [=]() { view->actions().createSeparator(); });
+    addAction(tr("Create empty mod"), [=]() { view->actions().createEmptyMod(); });
+    addAction(tr("Create separator"), [=]() { view->actions().createSeparator(); });
   }
 
   if (view->hasCollapsibleSeparators()) {

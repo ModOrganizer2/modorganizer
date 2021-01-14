@@ -172,6 +172,11 @@ void ModListViewActions::createSeparator(const QModelIndex& index) const
   int newPriority = -1;
   if (index.isValid() && m_view->sortColumn() == ModList::COL_PRIORITY) {
     newPriority = m_core.currentProfile()->getModPriority(index.data(ModList::IndexRole).toInt());
+
+    // descending order, we need to fix the priority
+    if (m_view->sortOrder() == Qt::DescendingOrder) {
+      newPriority++;
+    }
   }
 
   if (m_core.createMod(name) == nullptr) {
