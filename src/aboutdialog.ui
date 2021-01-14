@@ -220,6 +220,11 @@
                 <string notr="true">isa</string>
                </property>
               </item>
+              <item>
+               <property name="text">
+                <string>Holt59</string>
+               </property>
+              </item>
              </widget>
             </item>
            </layout>
@@ -254,11 +259,6 @@
               <item>
                <property name="text">
                 <string notr="true">przester</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Holt59</string>
                </property>
               </item>
              </widget>
@@ -491,12 +491,22 @@
               </item>
               <item>
                <property name="text">
+                <string>Luca|EzioTheDeadPoet</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">ogrotten</string>
                </property>
               </item>
               <item>
                <property name="text">
                 <string notr="true">outdatedtv</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Patchier</string>
                </property>
               </item>
               <item>
