@@ -1016,22 +1016,6 @@ ModList *OrganizerCore::modList()
   return &m_ModList;
 }
 
-QStringList OrganizerCore::modsSortedByProfilePriority(Profile *profile) const
-{
-  QStringList res;
-  for (int i = profile->getPriorityMinimum();
-           i < profile->getPriorityMinimum() + (int)profile->numRegularMods();
-           ++i) {
-    int modIndex = profile->modIndexByPriority(i);
-    auto modInfo = ModInfo::getByIndex(modIndex);
-    if (!modInfo->hasFlag(ModInfo::FLAG_OVERWRITE) &&
-        !modInfo->hasFlag(ModInfo::FLAG_BACKUP)) {
-      res.push_back(ModInfo::getByIndex(modIndex)->internalName());
-    }
-  }
-  return res;
-}
-
 bool OrganizerCore::previewFileWithAlternatives(
   QWidget* parent, QString fileName, int selectedOrigin)
 {
@@ -1500,7 +1484,7 @@ IOrganizer const* OrganizerCore::managedGameOrganizer() const
 std::vector<QString> OrganizerCore::enabledArchives()
 {
   std::vector<QString> result;
-  if (m_ArchiveParsing) {
+  if (settings().archiveParsing()) {
     QFile archiveFile(m_CurrentProfile->getArchivesFileName());
     if (archiveFile.open(QIODevice::ReadOnly)) {
       while (!archiveFile.atEnd()) {

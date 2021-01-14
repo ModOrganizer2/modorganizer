@@ -273,7 +273,7 @@ const FileTreeModel::SortInfo& FileTreeModel::sortInfo() const
 
 bool FileTreeModel::showArchives() const
 {
-  return (m_flags.testFlag(Archives) && m_core.getArchiveParsing());
+  return (m_flags.testFlag(Archives) && m_core.settings().archiveParsing());
 }
 
 QModelIndex FileTreeModel::index(

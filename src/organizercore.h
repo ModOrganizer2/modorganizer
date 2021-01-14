@@ -65,7 +65,8 @@ private:
 
   struct SignalCombinerAnd
   {
-    typedef bool result_type;
+    using result_type = bool;
+
     template<typename InputIterator>
     bool operator()(InputIterator first, InputIterator last) const
     {
@@ -81,14 +82,14 @@ private:
 
 private:
 
-  using SignalAboutToRunApplication = boost::signals2::signal<bool (const QString&), SignalCombinerAnd>;
-  using SignalFinishedRunApplication = boost::signals2::signal<void (const QString&, unsigned int)>;
-  using SignalUserInterfaceInitialized = boost::signals2::signal<void (QMainWindow*)>;
+  using SignalAboutToRunApplication = boost::signals2::signal<bool(const QString&), SignalCombinerAnd>;
+  using SignalFinishedRunApplication = boost::signals2::signal<void(const QString&, unsigned int)>;
+  using SignalUserInterfaceInitialized = boost::signals2::signal<void(QMainWindow*)>;
   using SignalProfileCreated = boost::signals2::signal<void(MOBase::IProfile*)>;
   using SignalProfileRenamed = boost::signals2::signal<void(MOBase::IProfile*, QString const&, QString const&)>;
   using SignalProfileRemoved = boost::signals2::signal<void(QString const&)>;
-  using SignalProfileChanged = boost::signals2::signal<void (MOBase::IProfile *, MOBase::IProfile *)>;
-  using SignalPluginSettingChanged = boost::signals2::signal<void (QString const&, const QString& key, const QVariant&, const QVariant&)>;
+  using SignalProfileChanged = boost::signals2::signal<void(MOBase::IProfile *, MOBase::IProfile *)>;
+  using SignalPluginSettingChanged = boost::signals2::signal<void(QString const&, const QString& key, const QVariant&, const QVariant&)>;
   using SignalPluginEnabled = boost::signals2::signal<void(const MOBase::IPlugin*)>;
 
 public:
@@ -300,15 +301,6 @@ public:
   static void setGlobalCoreDumpType(env::CoreDumpTypes type);
   static std::wstring getGlobalCoreDumpPath();
 
-  /**
-   * @brief Returns the name of all the mods in the priority order of the given profile.
-   *
-   * @param profile Profile to use for the mod order.
-   *
-   * @return the name of all the mods in the priority order of the given profile.
-   */
-  QStringList modsSortedByProfilePriority(Profile* profile) const;
-
 public:
   MOBase::IModRepositoryBridge *createNexusBridge() const;
   QString profileName() const;
@@ -348,16 +340,6 @@ public:
   boost::signals2::connection onPluginEnabled(std::function<void(const MOBase::IPlugin*)> const& func);
   boost::signals2::connection onPluginDisabled(std::function<void(const MOBase::IPlugin*)> const& func);
 
-  bool getArchiveParsing() const
-  {
-    return m_ArchiveParsing;
-  }
-
-  void setArchiveParsing(bool archiveParsing)
-  {
-    m_ArchiveParsing = archiveParsing;
-  }
-
 public: // IPluginDiagnose interface
 
   virtual std::vector<unsigned int> activeProblems() const;
@@ -396,15 +378,13 @@ public slots:
 
 signals:
 
-  /**
-   * @brief emitted after a mod has been installed
-   * @node this is currently only used for tutorials
-   */
+  // emitted after a mod has been installed
+  //
   void modInstalled(const QString &modName);
 
+  // emitted when the managed game changes
+  //
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
-
-  void close();
 
   // emitted when the profile is changed, before notifying plugins
   //
@@ -422,12 +402,8 @@ private:
   void saveCurrentProfile();
   void storeSettings();
 
-  bool queryApi(QString &apiKey);
-
   void updateModActiveState(int index, bool active);
   void updateModsActiveState(const QList<unsigned int> &modIndices, bool active);
-
-  bool testForSteam(bool *found, bool *access);
 
   bool createDirectory(const QString &path);
 
@@ -505,7 +481,6 @@ private:
 
   bool m_DirectoryUpdate;
   bool m_ArchivesInit;
-  bool m_ArchiveParsing{ m_Settings.archiveParsing() };
 
   MOBase::DelayedFileWriter m_PluginListsWriter;
   UsvfsConnector m_USVFS;

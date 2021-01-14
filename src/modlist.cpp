@@ -900,7 +900,18 @@ QStringList ModList::allModsByProfilePriority(MOBase::IProfile* profile) const
 {
   Profile* mo2Profile = profile == nullptr ?
     m_Organizer->currentProfile() : static_cast<Profile*>(profile);
-  return m_Organizer->modsSortedByProfilePriority(mo2Profile);
+
+  QStringList res;
+  for (int i = mo2Profile->getPriorityMinimum();
+    i < mo2Profile->getPriorityMinimum() + (int)mo2Profile->numRegularMods();
+    ++i) {
+    int modIndex = mo2Profile->modIndexByPriority(i);
+    auto modInfo = ModInfo::getByIndex(modIndex);
+    if (!modInfo->isBackup() && !modInfo->isOverwrite()) {
+      res.push_back(modInfo->internalName());
+    }
+  }
+  return res;
 }
 
 MOBase::IModInterface* ModList::getMod(const QString& name) const
