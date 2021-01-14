@@ -76,7 +76,10 @@ void UserInterfaceSettingsTab::updateCollapsibleSeparatorsGroup()
 {
   const auto checked = ui->collapsibleSeparatorsAscBox->isChecked() ||
     ui->collapsibleSeparatorsDscBox->isChecked();
-  for (auto* checkbox : ui->collapsibleSeparatorsBox->findChildren<QCheckBox*>()) {
-    checkbox->setEnabled(checked);
+  for (auto* widget : ui->collapsibleSeparatorsWidget->findChildren<QWidget*>()) {
+    widget->setEnabled(checked);
   }
+  ui->collapsibleSeparatorsLabel->setEnabled(true);
+  ui->collapsibleSeparatorsAscBox->setEnabled(true);
+  ui->collapsibleSeparatorsDscBox->setEnabled(true);
 }

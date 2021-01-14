@@ -313,7 +313,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
               </property>
               <layout class="QGridLayout" name="gridLayout_7">
                <item row="0" column="0">
-                <widget class="QWidget" name="widget_11" native="true">
+                <widget class="QWidget" name="collapsibleSeparatorsWidget" native="true">
                  <property name="minimumSize">
                   <size>
                    <width>0</width>
@@ -339,7 +339,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
                      <number>9</number>
                     </property>
                     <item row="0" column="0">
-                     <widget class="QLabel" name="label_18">
+                     <widget class="QLabel" name="collapsibleSeparatorsLabel">
                       <property name="text">
                        <string>When sorting by</string>
                       </property>
