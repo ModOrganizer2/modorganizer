@@ -214,6 +214,11 @@ Qt::SortOrder ModListView::sortOrder() const
   return m_sortProxy ? m_sortProxy->sortOrder() : Qt::AscendingOrder;
 }
 
+bool ModListView::isFilterActive() const
+{
+  return m_sortProxy && m_sortProxy->isFilterActive();
+}
+
 ModListView::GroupByMode ModListView::groupByMode() const
 {
   if (m_sortProxy == nullptr) {
@@ -293,16 +298,6 @@ std::optional<unsigned int> ModListView::prevMod(unsigned int  modIndex) const
   }
 
   return {};
-}
-
-void ModListView::enableAllVisible()
-{
-  m_core->modList()->setActive(indexViewToModel(flatIndex(model())), true);
-}
-
-void ModListView::disableAllVisible()
-{
-  m_core->modList()->setActive(indexViewToModel(flatIndex(model())), false);
 }
 
 void ModListView::setFilterCriteria(const std::vector<ModListSortProxy::Criteria>& criteria)

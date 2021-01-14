@@ -25,6 +25,9 @@ protected:
 
   friend class ModListContextMenu;
 
+  // populate the menu
+  void populate(OrganizerCore& core, ModListView* view, const QModelIndex& index);
+
   // creates a "All mods" context menu for the given index (can be invalid).
   ModListGlobalContextMenu(OrganizerCore& core, ModListView* view, const QModelIndex& index, QWidget* parent = nullptr);
 

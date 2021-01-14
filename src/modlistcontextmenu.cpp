@@ -17,6 +17,13 @@ ModListGlobalContextMenu::ModListGlobalContextMenu(OrganizerCore& core, ModListV
 ModListGlobalContextMenu::ModListGlobalContextMenu(OrganizerCore& core, ModListView* view, const QModelIndex& index, QWidget* parent)
   : QMenu(parent)
 {
+  connect(this, &QMenu::aboutToShow, [=, &core] { populate(core, view, index); });
+}
+
+void ModListGlobalContextMenu::populate(OrganizerCore& core, ModListView* view, const QModelIndex& index)
+{
+  clear();
+
   addAction(tr("Install Mod..."), [=]() { view->actions().installMod(); });
 
   auto modIndex = index.data(ModList::IndexRole);
@@ -47,18 +54,17 @@ ModListGlobalContextMenu::ModListGlobalContextMenu(OrganizerCore& core, ModListV
 
   addSeparator();
 
-  addAction(tr("Enable all visible"), [=]() {
-    if (QMessageBox::question(view, tr("Confirm"), tr("Really enable all visible mods?"),
-      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      view->enableAllVisible();
-    }
-    });
-  addAction(tr("Disable all visible"), [=]() {
-    if (QMessageBox::question(parent, tr("Confirm"), tr("Really disable all visible mods?"),
-      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      view->disableAllVisible();
-    }
-    });
+  QString enableTxt = tr("Enable all"),
+    disableTxt = tr("Disable all");
+
+  if (view->isFilterActive()) {
+    enableTxt = tr("Enable all matching mods");
+    disableTxt = tr("Disable all matching mods");
+  }
+
+  addAction(enableTxt, [=] { view->actions().setAllMatchingModsEnabled(true); });
+  addAction(disableTxt, [=] { view->actions().setAllMatchingModsEnabled(false); });
+
   addAction(tr("Check for updates"), [=]() { view->actions().checkModsForUpdates(); });
   addAction(tr("Refresh"), &core, &OrganizerCore::profileRefresh);
   addAction(tr("Export to csv..."), [=]() { view->actions().exportModListCSV(); });
