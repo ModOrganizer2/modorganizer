@@ -90,6 +90,9 @@ signals:
   void openMetaFile(int index);
   void openInDownloadsFolder(int index);
 
+protected:
+  void keyPressEvent(QKeyEvent* event) override;
+
 private slots:
   void onDoubleClick(const QModelIndex& index);
   void onCustomContextMenu(const QPoint& point);

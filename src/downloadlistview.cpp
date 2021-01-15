@@ -221,8 +221,7 @@ void DownloadListView::onCustomContextMenu(const QPoint &point)
   QModelIndex index = indexAt(point);
   bool hidden = false;
 
-  try
-  {
+  try {
     if (index.row() >= 0) {
       const int row = qobject_cast<QSortFilterProxyModel*>(model())->mapToSource(index).row();
       DownloadManager::DownloadState state = m_Manager->getState(row);
@@ -260,8 +259,8 @@ void DownloadListView::onCustomContextMenu(const QPoint &point)
 
       menu.addSeparator();
     }
-  } catch(std::exception&)
-  {
+  }
+  catch(std::exception&) {
     // this happens when the download index is not found, ignore it and don't
     // display download-specific actions
   }
@@ -280,6 +279,41 @@ void DownloadListView::onCustomContextMenu(const QPoint &point)
   }
 
   menu.exec(viewport()->mapToGlobal(point));
+}
+
+void DownloadListView::keyPressEvent(QKeyEvent* event)
+{
+  if (selectionModel()->hasSelection()) {
+    const int row = qobject_cast<QSortFilterProxyModel*>(model())->mapToSource(currentIndex()).row();
+    auto state = m_Manager->getState(row);
+    if (state >= DownloadManager::STATE_READY) {
+      if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+        issueInstall(row);
+      }
+      else if (event->key() == Qt::Key_Delete) {
+        issueDelete(row);
+      }
+    }
+    else if (state == DownloadManager::STATE_DOWNLOADING) {
+      if (event->key() == Qt::Key_Delete) {
+        issueCancel(row);
+      }
+      else if (event->key() == Qt::Key_Space) {
+        issuePause(event->key());
+      }
+    }
+    else if (state == DownloadManager::STATE_PAUSED
+      || state == DownloadManager::STATE_ERROR
+      || state == DownloadManager::STATE_PAUSING) {
+      if (event->key() == Qt::Key_Delete) {
+        issueDelete(row);
+      }
+      else if (event->key() == Qt::Key_Space) {
+        issueResume(row);
+      }
+    }
+  }
+  QTreeView::keyPressEvent(event);
 }
 
 void DownloadListView::issueInstall(int index)
