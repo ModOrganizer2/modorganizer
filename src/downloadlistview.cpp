@@ -266,17 +266,17 @@ void DownloadListView::onCustomContextMenu(const QPoint &point)
     // display download-specific actions
   }
 
-  menu.addAction(tr("Delete Installed Downloads..."), this, SLOT(issueDeleteCompleted()));
-  menu.addAction(tr("Delete Uninstalled Downloads..."), this, SLOT(issueDeleteUninstalled()));
-  menu.addAction(tr("Delete All Downloads..."), this, SLOT(issueDeleteAll()));
+  menu.addAction(tr("Delete Installed Downloads..."), [=] { issueDeleteCompleted(); });
+  menu.addAction(tr("Delete Uninstalled Downloads..."), [=] { issueDeleteUninstalled(); });
+  menu.addAction(tr("Delete All Downloads..."), [=] { issueDeleteAll(); });
 
   menu.addSeparator();
   if (!hidden) {
-    menu.addAction(tr("Hide Installed..."), this, SLOT(issueRemoveFromViewCompleted()));
-    menu.addAction(tr("Hide Uninstalled..."), this, SLOT(issueRemoveFromViewUninstalled()));
-    menu.addAction(tr("Hide All..."), this, SLOT(issueRemoveFromViewAll()));
+    menu.addAction(tr("Hide Installed..."), [=] { issueRemoveFromViewCompleted(); });
+    menu.addAction(tr("Hide Uninstalled..."), [=] { issueRemoveFromViewUninstalled(); });
+    menu.addAction(tr("Hide All..."), [=] { issueRemoveFromViewAll(); });
   } else {
-    menu.addAction(tr("Un-Hide All..."), this, SLOT(issueRestoreToViewAll()));
+    menu.addAction(tr("Un-Hide All..."), [=] { issueRestoreToViewAll(); } );
   }
 
   menu.exec(viewport()->mapToGlobal(point));
