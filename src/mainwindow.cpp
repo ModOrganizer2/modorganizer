@@ -46,7 +46,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "categoriesdialog.h"
 #include "overwriteinfodialog.h"
 #include "downloadlist.h"
-#include "downloadlistwidget.h"
 #include "messagedialog.h"
 #include "installationmanager.h"
 #include "motddialog.h"
