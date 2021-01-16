@@ -266,8 +266,8 @@ void ModListContextMenu::addSendToContextMenu()
 
   QMenu* menu = new QMenu(m_view);
   menu->setTitle(tr("Send to... "));
-  menu->addAction(tr("Highest priority"), [this] { m_actions.sendModsToTop(m_selected); });
-  menu->addAction(tr("Lowest priority"), [this] { m_actions.sendModsToBottom(m_selected); });
+  menu->addAction(tr("Lowest priority"), [this] { m_actions.sendModsToTop(m_selected); });
+  menu->addAction(tr("Highest priority"), [this] { m_actions.sendModsToBottom(m_selected); });
   menu->addAction(tr("Priority..."), [this] { m_actions.sendModsToPriority(m_selected); });
   menu->addAction(tr("Separator..."), [this] { m_actions.sendModsToSeparator(m_selected); });
   if (overwritten) {
