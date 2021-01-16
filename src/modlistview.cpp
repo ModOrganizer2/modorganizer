@@ -89,14 +89,13 @@ public:
     // but the mod list view uses alternate color so we need to find the
     // right color
     auto bg = opt.palette.base().color();
-    auto vrow = (opt.rect.y() - m_view->verticalOffset()) / opt.rect.height();
-    if (vrow % 2 == 1) {
+    if (opt.features & QStyleOptionViewItem::Alternate) {
       bg = opt.palette.alternateBase().color();
     }
 
     // compute ideal foreground color for some rows
     if (color.isValid()) {
-      if ((index.column() == ModList::COL_NAME
+      if (((index.column() == ModList::COL_NAME || index.column() == ModList::COL_PRIORITY)
         && ModInfo::getByIndex(index.data(ModList::IndexRole).toInt())->isSeparator())
         || index.column() == ModList::COL_NOTES) {
 
