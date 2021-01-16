@@ -1358,12 +1358,17 @@ void ModListView::dropEvent(QDropEvent* event)
   // is no way to deduce this except using dropIndicatorPosition())
   emit dropEntered(event->mimeData(), isExpanded(index), static_cast<DropPosition>(dropIndicatorPosition()));
 
+  ModListDropInfo dropInfo(event->mimeData(), *m_core);
+
   // see selectedIndexes()
   auto [current, selected] = this->selected();
   m_inDragMoveEvent = true;
   QTreeView::dropEvent(event);
   m_inDragMoveEvent = false;
-  setSelected(current, selected);
+
+  if (dropInfo.isModDrop()) {
+    setSelected(current, selected);
+  }
 }
 
 void ModListView::timerEvent(QTimerEvent* event)
