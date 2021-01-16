@@ -451,34 +451,31 @@ void ModListView::onModPrioritiesChanged(const QModelIndexList& indices)
   m_core->currentProfile()->writeModlist();
   m_core->directoryStructure()->getFileRegister()->sortOrigins();
 
-  { // refresh selection
-    QModelIndex current = currentIndex();
-    if (current.isValid()) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(current.data(ModList::IndexRole).toInt());
-      // clear caches on all mods conflicting with the moved mod
-      for (int i : modInfo->getModOverwrite()) {
-        ModInfo::getByIndex(i)->clearCaches();
-      }
-      for (int i : modInfo->getModOverwritten()) {
-        ModInfo::getByIndex(i)->clearCaches();
-      }
-      for (int i : modInfo->getModArchiveOverwrite()) {
-        ModInfo::getByIndex(i)->clearCaches();
-      }
-      for (int i : modInfo->getModArchiveOverwritten()) {
-        ModInfo::getByIndex(i)->clearCaches();
-      }
-      for (int i : modInfo->getModArchiveLooseOverwrite()) {
-        ModInfo::getByIndex(i)->clearCaches();
-      }
-      for (int i : modInfo->getModArchiveLooseOverwritten()) {
-        ModInfo::getByIndex(i)->clearCaches();
-      }
-      // update conflict check on the moved mod
-      modInfo->doConflictCheck();
-      setOverwriteMarkers(selectionModel()->selectedRows());
+  for (auto& idx : indices) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+    // clear caches on all mods conflicting with the moved mod
+    for (int i : modInfo->getModOverwrite()) {
+      ModInfo::getByIndex(i)->clearCaches();
     }
+    for (int i : modInfo->getModOverwritten()) {
+      ModInfo::getByIndex(i)->clearCaches();
+    }
+    for (int i : modInfo->getModArchiveOverwrite()) {
+      ModInfo::getByIndex(i)->clearCaches();
+    }
+    for (int i : modInfo->getModArchiveOverwritten()) {
+      ModInfo::getByIndex(i)->clearCaches();
+    }
+    for (int i : modInfo->getModArchiveLooseOverwrite()) {
+      ModInfo::getByIndex(i)->clearCaches();
+    }
+    for (int i : modInfo->getModArchiveLooseOverwritten()) {
+      ModInfo::getByIndex(i)->clearCaches();
+    }
+    // update conflict check on the moved mod
+    modInfo->doConflictCheck();
   }
+  setOverwriteMarkers(selectionModel()->selectedRows());
 }
 
 void ModListView::onModInstalled(const QString& modName)
@@ -1349,9 +1346,11 @@ void ModListView::dropEvent(QDropEvent* event)
   emit dropEntered(event->mimeData(), isExpanded(index), static_cast<DropPosition>(dropIndicatorPosition()));
 
   // see selectedIndexes()
+  auto [current, selected] = this->selected();
   m_inDragMoveEvent = true;
   QTreeView::dropEvent(event);
   m_inDragMoveEvent = false;
+  setSelected(current, selected);
 }
 
 void ModListView::timerEvent(QTimerEvent* event)
