@@ -1095,7 +1095,7 @@ QColor ModListView::markerColor(const QModelIndex& index) const
   bool highligth = m_markers.highlight.find(modIndex) != m_markers.highlight.end();
   bool overwrite = m_markers.overwrite.find(modIndex) != m_markers.overwrite.end();
   bool archiveOverwrite = m_markers.archiveOverwrite.find(modIndex) != m_markers.archiveOverwrite.end();
-  bool archiveLooseOverwrite = m_markers.archiveOverwritten.find(modIndex) != m_markers.archiveOverwritten.end();
+  bool archiveLooseOverwrite = m_markers.archiveLooseOverwrite.find(modIndex) != m_markers.archiveLooseOverwrite.end();
   bool overwritten = m_markers.overwritten.find(modIndex) != m_markers.overwritten.end();
   bool archiveOverwritten = m_markers.archiveOverwritten.find(modIndex) != m_markers.archiveOverwritten.end();
   bool archiveLooseOverwritten = m_markers.archiveLooseOverwritten.find(modIndex) != m_markers.archiveLooseOverwritten.end();
