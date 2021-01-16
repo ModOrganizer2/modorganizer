@@ -591,8 +591,6 @@ void ModListViewActions::sendModsToLastConflict(const QModelIndexList& indexes) 
     }
     auto info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
     conflicts.insert(info->getModOverwritten().begin(), info->getModOverwritten().end());
-    conflicts.insert(info->getModArchiveOverwritten().begin(), info->getModArchiveOverwritten().end());
-    conflicts.insert(info->getModArchiveLooseOverwritten().begin(), info->getModArchiveLooseOverwritten().end());
   }
 
   std::set<int> priorities;

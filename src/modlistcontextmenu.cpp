@@ -244,10 +244,7 @@ void ModListContextMenu::addSendToContextMenu()
   static const std::vector overwritten_flags{
     ModInfo::EConflictFlag::FLAG_CONFLICT_MIXED,
     ModInfo::EConflictFlag::FLAG_CONFLICT_OVERWRITTEN,
-    ModInfo::EConflictFlag::FLAG_CONFLICT_REDUNDANT,
-    ModInfo::EConflictFlag::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN,
-    ModInfo::EConflictFlag::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN,
-    ModInfo::EConflictFlag::FLAG_ARCHIVE_CONFLICT_MIXED
+    ModInfo::EConflictFlag::FLAG_CONFLICT_REDUNDANT
   };
 
   bool overwritten = false;
