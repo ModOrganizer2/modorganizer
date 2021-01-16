@@ -397,10 +397,22 @@ void ModListView::setSelected(const QModelIndex& current, const QModelIndexList&
 
 void ModListView::scrollToAndSelect(const QModelIndex& index)
 {
+  scrollToAndSelect(QModelIndexList{index});
+}
+
+void ModListView::scrollToAndSelect(const QModelIndexList& indexes, const QModelIndex& current)
+{
   // focus, scroll to and select
-  scrollTo(index);
-  setCurrentIndex(index);
-  selectionModel()->select(index, QItemSelectionModel::SelectCurrent | QItemSelectionModel::Rows);
+  if (!current.isValid() && indexes.isEmpty()) {
+    return;
+  }
+  scrollTo(current.isValid() ? current : indexes.first());
+  setCurrentIndex(current.isValid() ? current : indexes.first());
+  QItemSelection selection;
+  for (auto& idx : indexes) {
+    selection.select(idx, idx);
+  }
+  selectionModel()->select(selection, QItemSelectionModel::Select | QItemSelectionModel::Rows);
   QTimer::singleShot(50, [=] { setFocus(); });
 }
 

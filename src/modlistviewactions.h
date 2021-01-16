@@ -62,6 +62,7 @@ public:
   void sendModsToBottom(const QModelIndexList& index) const;
   void sendModsToPriority(const QModelIndexList& index) const;
   void sendModsToSeparator(const QModelIndexList& index) const;
+  void sendModsToLastConflict(const QModelIndexList& index) const;
 
   // actions for most regular mods
   //

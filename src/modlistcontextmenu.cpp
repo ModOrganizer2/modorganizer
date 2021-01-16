@@ -241,12 +241,38 @@ void ModListContextMenu::addMenuAsPushButton(QMenu* menu)
 
 void ModListContextMenu::addSendToContextMenu()
 {
+  static const std::vector overwritten_flags{
+    ModInfo::EConflictFlag::FLAG_CONFLICT_MIXED,
+    ModInfo::EConflictFlag::FLAG_CONFLICT_OVERWRITTEN,
+    ModInfo::EConflictFlag::FLAG_CONFLICT_REDUNDANT,
+    ModInfo::EConflictFlag::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN,
+    ModInfo::EConflictFlag::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN,
+    ModInfo::EConflictFlag::FLAG_ARCHIVE_CONFLICT_MIXED
+  };
+
+  bool overwritten = false;
+  for (auto& idx : m_selected) {
+    auto index = idx.data(ModList::IndexRole);
+    if (index.isValid()) {
+      auto info = ModInfo::getByIndex(index.toInt());
+      auto flags = info->getConflictFlags();
+      if (std::find_first_of(flags.begin(), flags.end(),
+        overwritten_flags.begin(), overwritten_flags.end()) != flags.end()) {
+        overwritten = true;
+        break;
+      }
+    }
+  }
+
   QMenu* menu = new QMenu(m_view);
   menu->setTitle(tr("Send to... "));
-  menu->addAction(tr("Top"), [=]() { m_actions.sendModsToTop(m_selected); });
-  menu->addAction(tr("Bottom"), [=]() { m_actions.sendModsToBottom(m_selected); });
-  menu->addAction(tr("Priority..."), [=]() { m_actions.sendModsToPriority(m_selected); });
-  menu->addAction(tr("Separator..."), [=]() { m_actions.sendModsToSeparator(m_selected); });
+  menu->addAction(tr("Highest priority"), [this] { m_actions.sendModsToTop(m_selected); });
+  menu->addAction(tr("Lowest priority"), [this] { m_actions.sendModsToBottom(m_selected); });
+  menu->addAction(tr("Priority..."), [this] { m_actions.sendModsToPriority(m_selected); });
+  menu->addAction(tr("Separator..."), [this] { m_actions.sendModsToSeparator(m_selected); });
+  if (overwritten) {
+    menu->addAction(tr("Last conflict"), [this] { m_actions.sendModsToLastConflict(m_selected); });
+  }
   addMenu(menu);
 }
 

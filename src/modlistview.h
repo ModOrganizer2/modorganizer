@@ -89,6 +89,7 @@ public:
   // focus the view, select the given index and scroll to it
   //
   void scrollToAndSelect(const QModelIndex& index);
+  void scrollToAndSelect(const QModelIndexList& indexes, const QModelIndex& current = QModelIndex());
 
   // refresh the view (to call when settings have been changed)
   //

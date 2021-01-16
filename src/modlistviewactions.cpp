@@ -576,7 +576,32 @@ void ModListViewActions::sendModsToSeparator(const QModelIndexList& index) const
       }
 
       m_core.modList()->changeModsPriority(index, newPriority);
+      m_view->scrollToAndSelect(index.first());
     }
+  }
+}
+
+void ModListViewActions::sendModsToLastConflict(const QModelIndexList& indexes) const
+{
+  std::set<unsigned int> conflicts;
+
+  for (auto& idx : indexes) {
+    if (!idx.data(ModList::IndexRole).isValid()) {
+      continue;
+    }
+    auto info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+    conflicts.insert(info->getModOverwritten().begin(), info->getModOverwritten().end());
+    conflicts.insert(info->getModArchiveOverwritten().begin(), info->getModArchiveOverwritten().end());
+    conflicts.insert(info->getModArchiveLooseOverwritten().begin(), info->getModArchiveLooseOverwritten().end());
+  }
+
+  std::set<int> priorities;
+  std::transform(conflicts.begin(), conflicts.end(), std::inserter(priorities, priorities.end()), [=](auto index) {
+    return m_core.currentProfile()->getModPriority(index);
+  });
+
+  if (!priorities.empty()) {
+    m_core.modList()->changeModsPriority(indexes, *priorities.rbegin());
   }
 }
 
