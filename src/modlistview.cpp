@@ -906,6 +906,19 @@ void ModListView::drawBranches(QPainter* painter, const QRect& rect, const QMode
   QTreeView::drawBranches(painter, r, index);
 }
 
+void ModListView::commitData(QWidget* editor)
+{
+  // maintain the selection when changing priority
+  if (currentIndex().column() == ModList::COL_PRIORITY) {
+    auto [current, selected] = this->selected();
+    QTreeView::commitData(editor);
+    setSelected(current, selected);
+  }
+  else {
+    QTreeView::commitData(editor);
+  }
+}
+
 QModelIndexList ModListView::selectedIndexes() const
 {
   // during drag&drop events, we fake the return value of selectedIndexes()

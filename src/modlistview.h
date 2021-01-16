@@ -182,6 +182,8 @@ protected slots:
   void onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>& filters);
   void onProfileChanged(Profile* oldProfile, Profile* newProfile);
 
+  void commitData(QWidget* editor) override;
+
 private:
 
   friend class ModConflictIconDelegate;
