@@ -808,6 +808,9 @@ ModInfo::Ptr OrganizerCore::installDownload(int index, int priority)
         reportError(tr("mod not found: %1").arg(qUtf8Printable(modName)));
       }
       m_DownloadManager.markInstalled(index);
+      if (settings().interface().hideDownloadsAfterInstallation()) {
+        m_DownloadManager.removeDownload(index, false);
+      }
       emit modInstalled(modName);
       return modInfo;
     }

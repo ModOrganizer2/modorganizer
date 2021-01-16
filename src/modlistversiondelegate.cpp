@@ -1,10 +1,13 @@
 #include "modlistversiondelegate.h"
 
+#include "settings.h"
 #include "modlistview.h"
 #include "log.h"
 
-ModListVersionDelegate::ModListVersionDelegate(ModListView* view) :
-  QItemDelegate(view), m_view(view) { }
+ModListVersionDelegate::ModListVersionDelegate(ModListView* view, Settings& settings) :
+  QItemDelegate(view), m_view(view), m_settings(settings)
+{
+}
 
 
 void ModListVersionDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
@@ -13,6 +16,7 @@ void ModListVersionDelegate::paint(QPainter* painter, const QStyleOptionViewItem
 
   if (m_view->hasCollapsibleSeparators()
     && m_view->model()->hasChildren(index)
+    && m_settings.interface().collapsibleSeparatorsIcons(ModList::COL_VERSION)
     && !m_view->isExpanded(index.sibling(index.row(), 0))) {
     auto* model = m_view->model();
 

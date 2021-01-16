@@ -626,10 +626,22 @@ public:
   bool collapsibleSeparators(Qt::SortOrder order) const;
   void setCollapsibleSeparators(bool ascending, bool descending);
 
-  // whether to display mod conflicts on separators when collapsed
+  // whether to highlight mod conflicts and plugins on collapsed
+  // separators
   //
-  bool collapsibleSeparatorsConflicts() const;
-  void setCollapsibleSeparatorsConflicts(bool b);
+  bool collapsibleSeparatorsHighlightTo() const;
+  void setCollapsibleSeparatorsHighlightTo(bool b);
+
+  // whether to highlight mod conflicts and plugins from separators
+  // when selected but collapsed
+  //
+  bool collapsibleSeparatorsHighlightFrom() const;
+  void setCollapsibleSeparatorsHighlightFrom(bool b);
+
+  // whether to show icons on collapsed separators
+  //
+  bool collapsibleSeparatorsIcons(int column) const;
+  void setCollapsibleSeparatorsIcons(int column, bool show);
 
   // whether each profile should have its own expansion state
   //
@@ -650,6 +662,11 @@ public:
   //
   bool metaDownloads() const;
   void setMetaDownloads(bool b);
+
+  // whether to hide downloads after installing them
+  //
+  bool hideDownloadsAfterInstallation() const;
+  void setHideDownloadsAfterInstallation(bool b);
 
   // whether the API counter should be hidden
   //

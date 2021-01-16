@@ -17,6 +17,7 @@
 #include "modinfodialog.h"
 #include "modlist.h"
 #include "modlistview.h"
+#include "modelutils.h"
 #include "messagedialog.h"
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
@@ -172,6 +173,11 @@ void ModListViewActions::createSeparator(const QModelIndex& index) const
   int newPriority = -1;
   if (index.isValid() && m_view->sortColumn() == ModList::COL_PRIORITY) {
     newPriority = m_core.currentProfile()->getModPriority(index.data(ModList::IndexRole).toInt());
+
+    // descending order, we need to fix the priority
+    if (m_view->sortOrder() == Qt::DescendingOrder) {
+      newPriority++;
+    }
   }
 
   if (m_core.createMod(name) == nullptr) {
@@ -190,6 +196,17 @@ void ModListViewActions::createSeparator(const QModelIndex& index) const
   }
 
   m_view->scrollToAndSelect(m_view->indexModelToView(m_core.modList()->index(mIndex, 0)));
+}
+
+void ModListViewActions::setAllMatchingModsEnabled(bool enabled) const
+{
+  const auto allIndex = m_view->indexViewToModel(flatIndex(m_view->model()));
+  const QString message = enabled ?
+    tr("Really enable %1 mod(s)?") : tr("Really disable %1 mod(s)?");
+  if (QMessageBox::question(m_parent, tr("Confirm"), message.arg(allIndex.size()),
+    QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    m_core.modList()->setActive(allIndex, enabled);
+  }
 }
 
 void ModListViewActions::checkModsForUpdates() const

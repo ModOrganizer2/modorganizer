@@ -2188,14 +2188,34 @@ void InterfaceSettings::setCollapsibleSeparators(bool ascending, bool descending
   set(m_Settings, "Settings", "collapsible_separators_dsc", descending);
 }
 
-bool InterfaceSettings::collapsibleSeparatorsConflicts() const
+bool InterfaceSettings::collapsibleSeparatorsHighlightTo() const
 {
-  return get<bool>(m_Settings, "Settings", "collapsible_separators_conflicts", true);
+  return get<bool>(m_Settings, "Settings", "collapsible_separators_conflicts_to", true);
 }
 
-void InterfaceSettings::setCollapsibleSeparatorsConflicts(bool b)
+void InterfaceSettings::setCollapsibleSeparatorsHighlightTo(bool b)
 {
-  set(m_Settings, "Settings", "collapsible_separators_conflicts", b);
+  set(m_Settings, "Settings", "collapsible_separators_conflicts_to", b);
+}
+
+bool InterfaceSettings::collapsibleSeparatorsHighlightFrom() const
+{
+  return get<bool>(m_Settings, "Settings", "collapsible_separators_conflicts_from", true);
+}
+
+void InterfaceSettings::setCollapsibleSeparatorsHighlightFrom(bool b)
+{
+  set(m_Settings, "Settings", "collapsible_separators_conflicts_from", b);
+}
+
+bool InterfaceSettings::collapsibleSeparatorsIcons(int column) const
+{
+  return get<bool>(m_Settings, "Settings", QString("collapsible_separators_icons_%1").arg(column), true);
+}
+
+void InterfaceSettings::setCollapsibleSeparatorsIcons(int column, bool show)
+{
+  set(m_Settings, "Settings", QString("collapsible_separators_icons_%1").arg(column), show);
 }
 
 bool InterfaceSettings::collapsibleSeparatorsPerProfile() const
@@ -2236,6 +2256,16 @@ bool InterfaceSettings::metaDownloads() const
 void InterfaceSettings::setMetaDownloads(bool b)
 {
   set(m_Settings, "Settings", "meta_downloads", b);
+}
+
+bool InterfaceSettings::hideDownloadsAfterInstallation() const
+{
+  return get<bool>(m_Settings, "Settings", "autohide_downloads", false);
+}
+
+void InterfaceSettings::setHideDownloadsAfterInstallation(bool b)
+{
+  set(m_Settings, "Settings", "autohide_downloads", b);
 }
 
 bool InterfaceSettings::hideAPICounter() const

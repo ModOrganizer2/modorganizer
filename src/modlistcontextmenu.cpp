@@ -17,20 +17,33 @@ ModListGlobalContextMenu::ModListGlobalContextMenu(OrganizerCore& core, ModListV
 ModListGlobalContextMenu::ModListGlobalContextMenu(OrganizerCore& core, ModListView* view, const QModelIndex& index, QWidget* parent)
   : QMenu(parent)
 {
+  connect(this, &QMenu::aboutToShow, [=, &core] { populate(core, view, index); });
+}
+
+void ModListGlobalContextMenu::populate(OrganizerCore& core, ModListView* view, const QModelIndex& index)
+{
+  clear();
+
   addAction(tr("Install Mod..."), [=]() { view->actions().installMod(); });
 
   auto modIndex = index.data(ModList::IndexRole);
-  if (modIndex.isValid()) {
+  if (modIndex.isValid() && view->sortColumn() == ModList::COL_PRIORITY) {
     auto info = ModInfo::getByIndex(modIndex.toInt());
     if (!info->isBackup()) {
-      addAction(info->isSeparator() ? tr("Create empty mod inside") : tr("Create empty mod before"),
-        [=]() { view->actions().createEmptyMod(index); });
-      addAction(tr("Create separator before"), [=]() { view->actions().createSeparator(index); });
+      QString text = tr("Create empty mod above");
+      if (info->isSeparator()) {
+        text = tr("Create empty mod inside");
+      }
+      else if (view->sortOrder() == Qt::DescendingOrder) {
+        text = tr("Create empty mod below");
+      }
+      addAction(text, [=]() { view->actions().createEmptyMod(index); });
+      addAction(tr("Create separator above"), [=]() { view->actions().createSeparator(index); });
     }
   }
   else {
-    addAction(tr("Create empty mod at the end"), [=]() { view->actions().createEmptyMod(); });
-    addAction(tr("Create separator at the end"), [=]() { view->actions().createSeparator(); });
+    addAction(tr("Create empty mod"), [=]() { view->actions().createEmptyMod(); });
+    addAction(tr("Create separator"), [=]() { view->actions().createSeparator(); });
   }
 
   if (view->hasCollapsibleSeparators()) {
@@ -41,18 +54,17 @@ ModListGlobalContextMenu::ModListGlobalContextMenu(OrganizerCore& core, ModListV
 
   addSeparator();
 
-  addAction(tr("Enable all visible"), [=]() {
-    if (QMessageBox::question(view, tr("Confirm"), tr("Really enable all visible mods?"),
-      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      view->enableAllVisible();
-    }
-    });
-  addAction(tr("Disable all visible"), [=]() {
-    if (QMessageBox::question(parent, tr("Confirm"), tr("Really disable all visible mods?"),
-      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      view->disableAllVisible();
-    }
-    });
+  QString enableTxt = tr("Enable all"),
+    disableTxt = tr("Disable all");
+
+  if (view->isFilterActive()) {
+    enableTxt = tr("Enable all matching mods");
+    disableTxt = tr("Disable all matching mods");
+  }
+
+  addAction(enableTxt, [=] { view->actions().setAllMatchingModsEnabled(true); });
+  addAction(disableTxt, [=] { view->actions().setAllMatchingModsEnabled(false); });
+
   addAction(tr("Check for updates"), [=]() { view->actions().checkModsForUpdates(); });
   addAction(tr("Refresh"), &core, &OrganizerCore::profileRefresh);
   addAction(tr("Export to csv..."), [=]() { view->actions().exportModListCSV(); });

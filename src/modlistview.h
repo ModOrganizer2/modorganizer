@@ -66,6 +66,10 @@ public:
   int sortColumn() const;
   Qt::SortOrder sortOrder() const;
 
+  // check if a filter is currently active
+  //
+  bool isFilterActive() const;
+
   // the current group mode
   //
   GroupByMode groupByMode() const;
@@ -106,11 +110,6 @@ signals:
   void dropEntered(const QMimeData* mimeData, bool dropExpanded, DropPosition position);
 
 public slots:
-
-  // enable/disable all visible mods
-  //
-  void enableAllVisible();
-  void disableAllVisible();
 
   // set the filter criteria/options for mods
   //

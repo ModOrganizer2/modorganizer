@@ -41,6 +41,10 @@ public:
   void createEmptyMod(const QModelIndex& index = QModelIndex()) const;
   void createSeparator(const QModelIndex& index = QModelIndex()) const;
 
+  // enable/disable all non-filtered mods
+  //
+  void setAllMatchingModsEnabled(bool enabled) const;
+
   // check all mods for update
   //
   void checkModsForUpdates() const;
