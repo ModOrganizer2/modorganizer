@@ -513,17 +513,24 @@ void ModListViewActions::displayModInformation(ModInfo::Ptr modInfo, unsigned in
   }
 }
 
-void ModListViewActions::sendModsToTop(const QModelIndexList& index) const
+void ModListViewActions::setModsPriority(const QModelIndexList& indexes, int priority) const
 {
-  m_core.modList()->changeModsPriority(index, 0);
+  auto [current, selected] = m_view->selected();
+  m_core.modList()->changeModsPriority(indexes, priority);
+  m_view->setSelected(current, selected);
 }
 
-void ModListViewActions::sendModsToBottom(const QModelIndexList& index) const
+void ModListViewActions::sendModsToTop(const QModelIndexList& indexes) const
 {
-  m_core.modList()->changeModsPriority(index, std::numeric_limits<int>::max());
+  setModsPriority(indexes, 0);
 }
 
-void ModListViewActions::sendModsToPriority(const QModelIndexList& index) const
+void ModListViewActions::sendModsToBottom(const QModelIndexList& indexes) const
+{
+  setModsPriority(indexes, std::numeric_limits<int>::max());
+}
+
+void ModListViewActions::sendModsToPriority(const QModelIndexList& indexes) const
 {
   bool ok;
   int priority = QInputDialog::getInt(m_parent,
@@ -531,10 +538,10 @@ void ModListViewActions::sendModsToPriority(const QModelIndexList& index) const
     0, 0, std::numeric_limits<int>::max(), 1, &ok);
   if (!ok) return;
 
-  m_core.modList()->changeModsPriority(index, priority);
+  setModsPriority(indexes, priority);
 }
 
-void ModListViewActions::sendModsToSeparator(const QModelIndexList& index) const
+void ModListViewActions::sendModsToSeparator(const QModelIndexList& indexes) const
 {
   QStringList separators;
   auto indexesByPriority = m_core.currentProfile()->getAllIndexesByPriority();
@@ -570,14 +577,35 @@ void ModListViewActions::sendModsToSeparator(const QModelIndexList& index) const
         }
       }
 
-      if (index.size() == 1
-        && m_core.currentProfile()->getModPriority(index[0].data(ModList::IndexRole).toInt()) < newPriority) {
+      if (indexes.size() == 1
+        && m_core.currentProfile()->getModPriority(indexes[0].data(ModList::IndexRole).toInt()) < newPriority) {
         --newPriority;
       }
 
-      m_core.modList()->changeModsPriority(index, newPriority);
-      m_view->scrollToAndSelect(index.first());
+      setModsPriority(indexes, newPriority);
     }
+  }
+}
+
+void ModListViewActions::sendModsToFirstConflict(const QModelIndexList& indexes) const
+{
+  std::set<unsigned int> conflicts;
+
+  for (auto& idx : indexes) {
+    if (!idx.data(ModList::IndexRole).isValid()) {
+      continue;
+    }
+    auto info = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+    conflicts.insert(info->getModOverwrite().begin(), info->getModOverwrite().end());
+  }
+
+  std::set<int> priorities;
+  std::transform(conflicts.begin(), conflicts.end(), std::inserter(priorities, priorities.end()), [=](auto index) {
+    return m_core.currentProfile()->getModPriority(index);
+  });
+
+  if (!priorities.empty()) {
+    setModsPriority(indexes, *priorities.begin());
   }
 }
 
@@ -599,7 +627,7 @@ void ModListViewActions::sendModsToLastConflict(const QModelIndexList& indexes) 
   });
 
   if (!priorities.empty()) {
-    m_core.modList()->changeModsPriority(indexes, *priorities.rbegin());
+    setModsPriority(indexes, *priorities.rbegin());
   }
 }
 

@@ -247,7 +247,12 @@ void ModListContextMenu::addSendToContextMenu()
     ModInfo::EConflictFlag::FLAG_CONFLICT_REDUNDANT
   };
 
-  bool overwritten = false;
+  static const std::vector overwrite_flags{
+    ModInfo::EConflictFlag::FLAG_CONFLICT_MIXED,
+    ModInfo::EConflictFlag::FLAG_CONFLICT_OVERWRITE
+  };
+
+  bool overwrite = false, overwritten = false;
   for (auto& idx : m_selected) {
     auto index = idx.data(ModList::IndexRole);
     if (index.isValid()) {
@@ -256,7 +261,10 @@ void ModListContextMenu::addSendToContextMenu()
       if (std::find_first_of(flags.begin(), flags.end(),
         overwritten_flags.begin(), overwritten_flags.end()) != flags.end()) {
         overwritten = true;
-        break;
+      }
+      if (std::find_first_of(flags.begin(), flags.end(),
+        overwrite_flags.begin(), overwrite_flags.end()) != flags.end()) {
+        overwrite = true;
       }
     }
   }
@@ -267,6 +275,9 @@ void ModListContextMenu::addSendToContextMenu()
   menu->addAction(tr("Highest priority"), [this] { m_actions.sendModsToBottom(m_selected); });
   menu->addAction(tr("Priority..."), [this] { m_actions.sendModsToPriority(m_selected); });
   menu->addAction(tr("Separator..."), [this] { m_actions.sendModsToSeparator(m_selected); });
+  if (overwrite) {
+    menu->addAction(tr("First conflict"), [this] { m_actions.sendModsToFirstConflict(m_selected); });
+  }
   if (overwritten) {
     menu->addAction(tr("Last conflict"), [this] { m_actions.sendModsToLastConflict(m_selected); });
   }
