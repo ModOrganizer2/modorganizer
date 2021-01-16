@@ -1,6 +1,6 @@
 #include "downloadstab.h"
 #include "downloadlist.h"
-#include "downloadlistwidget.h"
+#include "downloadlistview.h"
 #include "organizercore.h"
 #include "ui_mainwindow.h"
 
@@ -37,7 +37,7 @@ DownloadsTab::DownloadsTab(OrganizerCore& core, Ui::MainWindow* mwui)
   connect(ui.list, SIGNAL(restoreDownload(int)), m_core.downloadManager(), SLOT(restoreDownload(int)));
   connect(ui.list, SIGNAL(cancelDownload(int)), m_core.downloadManager(), SLOT(cancelDownload(int)));
   connect(ui.list, SIGNAL(pauseDownload(int)), m_core.downloadManager(), SLOT(pauseDownload(int)));
-  connect(ui.list, &DownloadListWidget::resumeDownload, [&](int i){ resumeDownload(i); });
+  connect(ui.list, &DownloadListView::resumeDownload, [&](int i){ resumeDownload(i); });
 }
 
 void DownloadsTab::update()
@@ -50,10 +50,10 @@ void DownloadsTab::update()
   // set the view attribute and default row sizes
   if (m_core.settings().interface().compactDownloads()) {
     ui.list->setProperty("downloadView", "compact");
-    ui.list->setStyleSheet("DownloadListWidget::item { padding: 4px 2px; }");
+    ui.list->setStyleSheet("DownloadListView::item { padding: 4px 2px; }");
   } else {
     ui.list->setProperty("downloadView", "standard");
-    ui.list->setStyleSheet("DownloadListWidget::item { padding: 16px 4px; }");
+    ui.list->setStyleSheet("DownloadListView::item { padding: 16px 4px; }");
   }
 
   ui.list->setMetaDisplay(m_core.settings().interface().metaDownloads());

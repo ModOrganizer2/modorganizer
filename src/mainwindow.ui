@@ -1282,7 +1282,7 @@ p, li { white-space: pre-wrap; }
              <item>
               <layout class="QVBoxLayout" name="downloadLayout">
                <item>
-                <widget class="DownloadListWidget" name="downloadView">
+                <widget class="DownloadListView" name="downloadView">
                  <property name="minimumSize">
                   <size>
                    <width>320</width>
@@ -1942,11 +1942,6 @@ p, li { white-space: pre-wrap; }
    <header>lcdnumber.h</header>
   </customwidget>
   <customwidget>
-   <class>DownloadListWidget</class>
-   <extends>QTreeView</extends>
-   <header>downloadlistwidget.h</header>
-  </customwidget>
-  <customwidget>
    <class>MOBase::SortableTreeWidget</class>
    <extends>QWidget</extends>
    <header>sortabletreewidget.h</header>
@@ -1960,6 +1955,11 @@ p, li { white-space: pre-wrap; }
    <class>StatusBar</class>
    <extends>QStatusBar</extends>
    <header>statusbar.h</header>
+  </customwidget>
+  <customwidget>
+   <class>DownloadListView</class>
+   <extends>QTreeView</extends>
+   <header>downloadlistview.h</header>
   </customwidget>
  </customwidgets>
  <resources>

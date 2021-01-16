@@ -5,7 +5,7 @@
 
 namespace Ui { class MainWindow; }
 class OrganizerCore;
-class DownloadListWidget;
+class DownloadListView;
 
 class DownloadsTab : public QObject
 {
@@ -20,7 +20,7 @@ private:
   struct DownloadsTabUi
   {
     QPushButton* refresh;
-    DownloadListWidget* list;
+    DownloadListView* list;
     QCheckBox* showHidden;
     QLineEdit* filter;
   };
