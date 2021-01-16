@@ -829,13 +829,16 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   // prevent the name-column from being hidden
   header()->setSectionHidden(ModList::COL_NAME, false);
 
-  connect(m_core->modList(), &ModList::downloadArchiveDropped, [=](int row, int priority) {
+  // we need QueuedConnection for the download/archive dropped otherwise the
+  // installation starts within the drop-event and it's not possible to drag&drop
+  // in the manual installer
+  connect(m_core->modList(), &ModList::downloadArchiveDropped, this, [=](int row, int priority) {
     m_core->installDownload(row, priority);
-  });
-  connect(m_core->modList(), &ModList::externalArchiveDropped, [=](const QUrl& url, int priority) {
+  }, Qt::QueuedConnection);
+  connect(m_core->modList(), &ModList::externalArchiveDropped, this, [=](const QUrl& url, int priority) {
     setWindowState(Qt::WindowActive);
     m_core->installArchive(url.toLocalFile(), priority, false, nullptr);
-  });
+  }, Qt::QueuedConnection);
   connect(m_core->modList(), &ModList::externalFolderDropped, this, &ModListView::onExternalFolderDropped);
 
   connect(selectionModel(), &QItemSelectionModel::selectionChanged, [=] { m_refreshMarkersTimer.start(); });
