@@ -66,6 +66,8 @@ public:
   void sendModsToBottom(const QModelIndexList& index) const;
   void sendModsToPriority(const QModelIndexList& index) const;
   void sendModsToSeparator(const QModelIndexList& index) const;
+  void sendModsToFirstConflict(const QModelIndexList& index) const;
+  void sendModsToLastConflict(const QModelIndexList& index) const;
 
   // actions for most regular mods
   //
@@ -147,6 +149,11 @@ private:
   // check the given mods from update, the map should map game names to nexus ID
   //
   void checkModsForUpdates(std::multimap<QString, int> const& IDs) const;
+
+  // set the priorities of the given mods while maintaining the
+  // mod list selection (which may be different from the list of mods)
+  //
+  void setModsPriority(const QModelIndexList& indexes, int priority) const;
 
 private:
 

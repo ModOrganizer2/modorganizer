@@ -93,6 +93,7 @@ public:
   // focus the view, select the given index and scroll to it
   //
   void scrollToAndSelect(const QModelIndex& index);
+  void scrollToAndSelect(const QModelIndexList& indexes, const QModelIndex& current = QModelIndex());
 
   // refresh the view (to call when settings have been changed)
   //
@@ -179,6 +180,8 @@ protected slots:
   void onDoubleClicked(const QModelIndex& index);
   void onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>& filters);
   void onProfileChanged(Profile* oldProfile, Profile* newProfile);
+
+  void commitData(QWidget* editor) override;
 
 private:
 

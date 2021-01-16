@@ -253,12 +253,46 @@ void ModListContextMenu::addMenuAsPushButton(QMenu* menu)
 
 void ModListContextMenu::addSendToContextMenu()
 {
+  static const std::vector overwritten_flags{
+    ModInfo::EConflictFlag::FLAG_CONFLICT_MIXED,
+    ModInfo::EConflictFlag::FLAG_CONFLICT_OVERWRITTEN,
+    ModInfo::EConflictFlag::FLAG_CONFLICT_REDUNDANT
+  };
+
+  static const std::vector overwrite_flags{
+    ModInfo::EConflictFlag::FLAG_CONFLICT_MIXED,
+    ModInfo::EConflictFlag::FLAG_CONFLICT_OVERWRITE
+  };
+
+  bool overwrite = false, overwritten = false;
+  for (auto& idx : m_selected) {
+    auto index = idx.data(ModList::IndexRole);
+    if (index.isValid()) {
+      auto info = ModInfo::getByIndex(index.toInt());
+      auto flags = info->getConflictFlags();
+      if (std::find_first_of(flags.begin(), flags.end(),
+        overwritten_flags.begin(), overwritten_flags.end()) != flags.end()) {
+        overwritten = true;
+      }
+      if (std::find_first_of(flags.begin(), flags.end(),
+        overwrite_flags.begin(), overwrite_flags.end()) != flags.end()) {
+        overwrite = true;
+      }
+    }
+  }
+
   QMenu* menu = new QMenu(m_view);
   menu->setTitle(tr("Send to... "));
-  menu->addAction(tr("Top"), [=]() { m_actions.sendModsToTop(m_selected); });
-  menu->addAction(tr("Bottom"), [=]() { m_actions.sendModsToBottom(m_selected); });
-  menu->addAction(tr("Priority..."), [=]() { m_actions.sendModsToPriority(m_selected); });
-  menu->addAction(tr("Separator..."), [=]() { m_actions.sendModsToSeparator(m_selected); });
+  menu->addAction(tr("Lowest priority"), [this] { m_actions.sendModsToTop(m_selected); });
+  menu->addAction(tr("Highest priority"), [this] { m_actions.sendModsToBottom(m_selected); });
+  menu->addAction(tr("Priority..."), [this] { m_actions.sendModsToPriority(m_selected); });
+  menu->addAction(tr("Separator..."), [this] { m_actions.sendModsToSeparator(m_selected); });
+  if (overwrite) {
+    menu->addAction(tr("First conflict"), [this] { m_actions.sendModsToFirstConflict(m_selected); });
+  }
+  if (overwritten) {
+    menu->addAction(tr("Last conflict"), [this] { m_actions.sendModsToLastConflict(m_selected); });
+  }
   addMenu(menu);
 }
 

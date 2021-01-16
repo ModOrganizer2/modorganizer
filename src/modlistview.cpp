@@ -89,14 +89,13 @@ public:
     // but the mod list view uses alternate color so we need to find the
     // right color
     auto bg = opt.palette.base().color();
-    auto vrow = (opt.rect.y() - m_view->verticalOffset()) / opt.rect.height();
-    if (vrow % 2 == 1) {
+    if (opt.features & QStyleOptionViewItem::Alternate) {
       bg = opt.palette.alternateBase().color();
     }
 
     // compute ideal foreground color for some rows
     if (color.isValid()) {
-      if ((index.column() == ModList::COL_NAME
+      if (((index.column() == ModList::COL_NAME || index.column() == ModList::COL_PRIORITY)
         && ModInfo::getByIndex(index.data(ModList::IndexRole).toInt())->isSeparator())
         || index.column() == ModList::COL_NOTES) {
 
@@ -392,10 +391,22 @@ void ModListView::setSelected(const QModelIndex& current, const QModelIndexList&
 
 void ModListView::scrollToAndSelect(const QModelIndex& index)
 {
+  scrollToAndSelect(QModelIndexList{index});
+}
+
+void ModListView::scrollToAndSelect(const QModelIndexList& indexes, const QModelIndex& current)
+{
   // focus, scroll to and select
-  scrollTo(index);
-  setCurrentIndex(index);
-  selectionModel()->select(index, QItemSelectionModel::SelectCurrent | QItemSelectionModel::Rows);
+  if (!current.isValid() && indexes.isEmpty()) {
+    return;
+  }
+  scrollTo(current.isValid() ? current : indexes.first());
+  setCurrentIndex(current.isValid() ? current : indexes.first());
+  QItemSelection selection;
+  for (auto& idx : indexes) {
+    selection.select(idx, idx);
+  }
+  selectionModel()->select(selection, QItemSelectionModel::Select | QItemSelectionModel::Rows);
   QTimer::singleShot(50, [=] { setFocus(); });
 }
 
@@ -435,34 +446,31 @@ void ModListView::onModPrioritiesChanged(const QModelIndexList& indices)
   m_core->currentProfile()->writeModlist();
   m_core->directoryStructure()->getFileRegister()->sortOrigins();
 
-  { // refresh selection
-    QModelIndex current = currentIndex();
-    if (current.isValid()) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(current.data(ModList::IndexRole).toInt());
-      // clear caches on all mods conflicting with the moved mod
-      for (int i : modInfo->getModOverwrite()) {
-        ModInfo::getByIndex(i)->clearCaches();
-      }
-      for (int i : modInfo->getModOverwritten()) {
-        ModInfo::getByIndex(i)->clearCaches();
-      }
-      for (int i : modInfo->getModArchiveOverwrite()) {
-        ModInfo::getByIndex(i)->clearCaches();
-      }
-      for (int i : modInfo->getModArchiveOverwritten()) {
-        ModInfo::getByIndex(i)->clearCaches();
-      }
-      for (int i : modInfo->getModArchiveLooseOverwrite()) {
-        ModInfo::getByIndex(i)->clearCaches();
-      }
-      for (int i : modInfo->getModArchiveLooseOverwritten()) {
-        ModInfo::getByIndex(i)->clearCaches();
-      }
-      // update conflict check on the moved mod
-      modInfo->doConflictCheck();
-      setOverwriteMarkers(selectionModel()->selectedRows());
+  for (auto& idx : indices) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+    // clear caches on all mods conflicting with the moved mod
+    for (int i : modInfo->getModOverwrite()) {
+      ModInfo::getByIndex(i)->clearCaches();
     }
+    for (int i : modInfo->getModOverwritten()) {
+      ModInfo::getByIndex(i)->clearCaches();
+    }
+    for (int i : modInfo->getModArchiveOverwrite()) {
+      ModInfo::getByIndex(i)->clearCaches();
+    }
+    for (int i : modInfo->getModArchiveOverwritten()) {
+      ModInfo::getByIndex(i)->clearCaches();
+    }
+    for (int i : modInfo->getModArchiveLooseOverwrite()) {
+      ModInfo::getByIndex(i)->clearCaches();
+    }
+    for (int i : modInfo->getModArchiveLooseOverwritten()) {
+      ModInfo::getByIndex(i)->clearCaches();
+    }
+    // update conflict check on the moved mod
+    modInfo->doConflictCheck();
   }
+  setOverwriteMarkers(selectionModel()->selectedRows());
 }
 
 void ModListView::onModInstalled(const QString& modName)
@@ -816,13 +824,16 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   // prevent the name-column from being hidden
   header()->setSectionHidden(ModList::COL_NAME, false);
 
-  connect(m_core->modList(), &ModList::downloadArchiveDropped, [=](int row, int priority) {
+  // we need QueuedConnection for the download/archive dropped otherwise the
+  // installation starts within the drop-event and it's not possible to drag&drop
+  // in the manual installer
+  connect(m_core->modList(), &ModList::downloadArchiveDropped, this, [=](int row, int priority) {
     m_core->installDownload(row, priority);
-  });
-  connect(m_core->modList(), &ModList::externalArchiveDropped, [=](const QUrl& url, int priority) {
+  }, Qt::QueuedConnection);
+  connect(m_core->modList(), &ModList::externalArchiveDropped, this, [=](const QUrl& url, int priority) {
     setWindowState(Qt::WindowActive);
     m_core->installArchive(url.toLocalFile(), priority, false, nullptr);
-  });
+  }, Qt::QueuedConnection);
   connect(m_core->modList(), &ModList::externalFolderDropped, this, &ModListView::onExternalFolderDropped);
 
   connect(selectionModel(), &QItemSelectionModel::selectionChanged, [=] { m_refreshMarkersTimer.start(); });
@@ -891,6 +902,19 @@ void ModListView::drawBranches(QPainter* painter, const QRect& rect, const QMode
     r.adjust(-indentation(), 0, 0 -indentation(), 0);
   }
   QTreeView::drawBranches(painter, r, index);
+}
+
+void ModListView::commitData(QWidget* editor)
+{
+  // maintain the selection when changing priority
+  if (currentIndex().column() == ModList::COL_PRIORITY) {
+    auto [current, selected] = this->selected();
+    QTreeView::commitData(editor);
+    setSelected(current, selected);
+  }
+  else {
+    QTreeView::commitData(editor);
+  }
 }
 
 QModelIndexList ModListView::selectedIndexes() const
@@ -1079,7 +1103,7 @@ QColor ModListView::markerColor(const QModelIndex& index) const
   bool highligth = m_markers.highlight.find(modIndex) != m_markers.highlight.end();
   bool overwrite = m_markers.overwrite.find(modIndex) != m_markers.overwrite.end();
   bool archiveOverwrite = m_markers.archiveOverwrite.find(modIndex) != m_markers.archiveOverwrite.end();
-  bool archiveLooseOverwrite = m_markers.archiveOverwritten.find(modIndex) != m_markers.archiveOverwritten.end();
+  bool archiveLooseOverwrite = m_markers.archiveLooseOverwrite.find(modIndex) != m_markers.archiveLooseOverwrite.end();
   bool overwritten = m_markers.overwritten.find(modIndex) != m_markers.overwritten.end();
   bool archiveOverwritten = m_markers.archiveOverwritten.find(modIndex) != m_markers.archiveOverwritten.end();
   bool archiveLooseOverwritten = m_markers.archiveLooseOverwritten.find(modIndex) != m_markers.archiveLooseOverwritten.end();
@@ -1332,10 +1356,17 @@ void ModListView::dropEvent(QDropEvent* event)
   // is no way to deduce this except using dropIndicatorPosition())
   emit dropEntered(event->mimeData(), isExpanded(index), static_cast<DropPosition>(dropIndicatorPosition()));
 
+  ModListDropInfo dropInfo(event->mimeData(), *m_core);
+
   // see selectedIndexes()
+  auto [current, selected] = this->selected();
   m_inDragMoveEvent = true;
   QTreeView::dropEvent(event);
   m_inDragMoveEvent = false;
+
+  if (dropInfo.isModDrop()) {
+    setSelected(current, selected);
+  }
 }
 
 void ModListView::timerEvent(QTimerEvent* event)
