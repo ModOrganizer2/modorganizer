@@ -3,6 +3,7 @@
 #include "organizercore.h"
 #include "instancemanager.h"
 #include "multiprocess.h"
+#include "loglist.h"
 #include "shared/util.h"
 #include "shared/error_report.h"
 #include "shared/appconfig.h"
@@ -124,19 +125,22 @@ std::optional<int> CommandLine::process(const std::wstring& line)
               parsed = parser.run();
 
               po::store(parsed, m_vm);
-              po::notify(m_vm);
 
               if (m_vm.count("help")) {
                 env::Console console;
                 std::cout << usage(c.get()) << "\n";
                 return 0;
               }
+
+              // must be below the help check because it throws if required
+              // positional arguments are missing
+              po::notify(m_vm);
             }
 
             c->set(line, m_vm, opts);
             m_command = c.get();
 
-            return m_command->runEarly();
+            return runEarly();
           }
           catch(po::error& e)
           {
@@ -163,6 +167,7 @@ std::optional<int> CommandLine::process(const std::wstring& line)
       std::cout << usage() << "\n";
       return 0;
     }
+
 
     if (!opts.empty()) {
       const auto qs = QString::fromStdWString(opts[0]);
@@ -226,6 +231,42 @@ bool CommandLine::forwardToPrimary(MOMultiProcess& multiProcess)
   return true;
 }
 
+std::optional<int> CommandLine::runEarly()
+{
+  if (m_vm.count("logs")) {
+    // in loglist.h
+    logToStdout(true);
+  }
+
+  if (m_command) {
+    return m_command->runEarly();
+  }
+
+  return {};
+}
+
+std::optional<int> CommandLine::runPostApplication(MOApplication& a)
+{
+  // handle -i with no arguments
+  if (m_vm.count("instance") && m_vm["instance"].as<std::string>() == "") {
+    env::Console c;
+
+    if (auto i=InstanceManager::singleton().currentInstance()) {
+      std::cout << i->name().toStdString() << "\n";
+    } else {
+      std::cout << "no instance configured\n";
+    }
+
+    return 0;
+  }
+
+  if (m_command) {
+    return m_command->runPostApplication(a);
+  }
+
+  return {};
+}
+
 std::optional<int> CommandLine::runPostMultiProcess(MOMultiProcess& mp)
 {
   if (m_command) {
@@ -244,7 +285,7 @@ std::optional<int> CommandLine::runPostOrganizer(OrganizerCore& core)
         // PreventExit will do that
         core.processRunner()
           .setFromShortcut(m_shortcut)
-          .setWaitForCompletion(ProcessRunner::ForceWait, UILocker::PreventExit)
+          .setWaitForCompletion(ProcessRunner::ForCommandLine, UILocker::PreventExit)
           .run();
 
         return 0;
@@ -270,7 +311,7 @@ std::optional<int> CommandLine::runPostOrganizer(OrganizerCore& core)
       // PreventExit will do that
       core.processRunner()
         .setFromFileOrExecutable(exeName, m_untouched)
-        .setWaitForCompletion(ProcessRunner::ForceWait, UILocker::PreventExit)
+        .setWaitForCompletion(ProcessRunner::ForCommandLine, UILocker::PreventExit)
         .run();
 
       return 0;
@@ -298,10 +339,23 @@ void CommandLine::clear()
 void CommandLine::createOptions()
 {
   m_visibleOptions.add_options()
-    ("help",      "show this message")
-    ("multiple",  "allow multiple MO processes to run; see below")
-    ("instance,i", po::value<std::string>(), "use the given instance (defaults to last used)")
-    ("profile,p", po::value<std::string>(), "use the given profile (defaults to last used)");
+    ("help",
+      "show this message")
+
+    ("multiple",
+      "allow multiple MO processes to run; see below")
+
+    ("logs",
+      "duplicates the logs to stdout")
+
+    ("instance,i",
+      po::value<std::string>()->implicit_value(""),
+      "use the given instance (defaults to last used)")
+
+    ("profile,p",
+      po::value<std::string>(),
+      "use the given profile (defaults to last used)");
+
 
   po::options_description options;
   options.add_options()
@@ -530,9 +584,9 @@ std::optional<int> Command::runEarly()
   return {};
 }
 
-bool Command::canForwardToPrimary() const
+std::optional<int> Command::runPostApplication(MOApplication& a)
 {
-  return false;
+  return {};
 }
 
 std::optional<int> Command::runPostMultiProcess(MOMultiProcess&)
@@ -543,6 +597,11 @@ std::optional<int> Command::runPostMultiProcess(MOMultiProcess&)
 std::optional<int> Command::runPostOrganizer(OrganizerCore&)
 {
   return {};
+}
+
+bool Command::canForwardToPrimary() const
+{
+  return false;
 }
 
 const std::wstring& Command::originalCmd() const
@@ -740,14 +799,21 @@ std::optional<int> RunCommand::runPostOrganizer(OrganizerCore& core)
     if (vm()["executable"].as<bool>()) {
       const auto& exes = *core.executablesList();
 
-      auto itor = exes.find(program);
+      // case sensitive
+      auto itor = exes.find(program, true);
       if (itor == exes.end()) {
-        MOShared::criticalOnTop(
-          QObject::tr("Executable '%1' not found in instance '%2'.")
-            .arg(program)
-            .arg(InstanceManager::singleton().currentInstance()->name()));
+        // case insensitive
+        itor = exes.find(program, false);
 
-        return 1;
+        if (itor == exes.end()) {
+          // not found
+          MOShared::criticalOnTop(
+            QObject::tr("Executable '%1' not found in instance '%2'.")
+              .arg(program)
+              .arg(InstanceManager::singleton().currentInstance()->name()));
+
+          return 1;
+        }
       }
 
       p.setFromExecutable(*itor);
@@ -763,7 +829,7 @@ std::optional<int> RunCommand::runPostOrganizer(OrganizerCore& core)
       p.setCurrentDirectory(QString::fromStdString(vm()["cwd"].as<std::string>()));
     }
 
-    p.setWaitForCompletion(ProcessRunner::ForceWait, UILocker::PreventExit);
+    p.setWaitForCompletion(ProcessRunner::ForCommandLine, UILocker::PreventExit);
 
     const auto r = p.run();
     if (r == ProcessRunner::Error) {

@@ -202,7 +202,7 @@ void FileTree::open(FileTreeItem* item)
   m_core.processRunner()
     .setFromFile(m_tree->window(), targetInfo)
     .setHooked(false)
-    .setWaitForCompletion(ProcessRunner::Refresh)
+    .setWaitForCompletion(ProcessRunner::TriggerRefresh)
     .run();
 }
 
@@ -226,7 +226,7 @@ void FileTree::openHooked(FileTreeItem* item)
   m_core.processRunner()
     .setFromFile(m_tree->window(), targetInfo)
     .setHooked(true)
-    .setWaitForCompletion(ProcessRunner::Refresh)
+    .setWaitForCompletion(ProcessRunner::TriggerRefresh)
     .run();
 }
 

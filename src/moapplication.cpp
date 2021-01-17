@@ -395,7 +395,7 @@ void MOApplication::externalMessage(const QString& message)
     if(moshortcut.hasExecutable()) {
       m_core->processRunner()
         .setFromShortcut(moshortcut)
-        .setWaitForCompletion(ProcessRunner::Refresh)
+        .setWaitForCompletion(ProcessRunner::TriggerRefresh)
         .run();
     }
   } else if (isNxmLink(message)) {

@@ -15,7 +15,16 @@ using namespace MOBase;
 thread_local LPTOP_LEVEL_EXCEPTION_FILTER g_prevExceptionFilter = nullptr;
 thread_local std::terminate_handler g_prevTerminateHandler = nullptr;
 
+int run(int argc, char *argv[]);
+
 int main(int argc, char *argv[])
+{
+  const int r = run(argc, argv);
+  std::cout << "mod organizer done\n";
+  return r;
+}
+
+int run(int argc, char *argv[])
 {
   MOShared::SetThisThreadName("main");
   setExceptionHandlers();
@@ -32,6 +41,12 @@ int main(int argc, char *argv[])
 
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
   MOApplication app(argc, argv);
+
+
+  // check if the command line wants to run something right now
+  if (auto r=cl.runPostApplication(app)) {
+    return *r;
+  }
 
 
   // check if there's another process running
@@ -95,6 +110,9 @@ int main(int argc, char *argv[])
           cl.clear();
 
           continue;
+        } else if (r != 0) {
+          // something failed, quit
+          return r;
         }
       }
 

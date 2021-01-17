@@ -1897,8 +1897,6 @@ bool OrganizerCore::beforeRun(
 
 void OrganizerCore::afterRun(const QFileInfo& binary, DWORD exitCode)
 {
-  refreshDirectoryStructure();
-
   // need to remove our stored load order because it may be outdated if a
   // foreign tool changed the file time. After removing that file,
   // refreshESPList will use the file time as the order
@@ -1913,7 +1911,7 @@ void OrganizerCore::afterRun(const QFileInfo& binary, DWORD exitCode)
   savePluginList();
   cycleDiagnostics();
 
-  //These callbacks should not fiddle with directoy structure and ESPs.
+  //These callbacks should not fiddle with directory structure and ESPs.
   m_FinishedRun(binary.absoluteFilePath(), exitCode);
 }
 

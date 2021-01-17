@@ -5,6 +5,7 @@
 #include <memory>
 
 class OrganizerCore;
+class MOApplication;
 class MOMultiProcess;
 
 namespace cl
@@ -67,6 +68,11 @@ public:
   // exit immediately
   //
   virtual std::optional<int> runEarly();
+
+  // called as soon as the MOApplication has been created, which is also the
+  // first time where Qt stuff is available
+  //
+  virtual std::optional<int> runPostApplication(MOApplication& a);
 
   // called as soon as the multi process checks have confirmed that this is
   // a primary instance; return something to exit immediately
@@ -270,6 +276,11 @@ public:
   //
   std::optional<int> process(const std::wstring& line);
 
+  // called as soon as the MOApplication has been created; this handles a few
+  // global actions and forwards to the command, if any
+  //
+  std::optional<int> runPostApplication(MOApplication& a);
+
   // calls Command::runPostMultiProcess() on the command, if any
   //
   std::optional<int> runPostMultiProcess(MOMultiProcess& mp);
@@ -356,6 +367,8 @@ private:
   {
     (m_commands.push_back(std::make_unique<Ts>()), ...);
   }
+
+  std::optional<int> runEarly();
 };
 
 } // namespace

@@ -193,7 +193,7 @@ bool OrganizerProxy::waitForApplication(HANDLE handle, bool refresh, LPDWORD exi
   ProcessRunner::WaitFlags waitFlags = ProcessRunner::ForceWait;
 
   if (refresh) {
-    waitFlags |= ProcessRunner::Refresh;
+    waitFlags |= ProcessRunner::TriggerRefresh;
   }
 
   const auto r = runner

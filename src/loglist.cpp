@@ -20,11 +20,17 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "loglist.h"
 #include "organizercore.h"
 #include "copyeventfilter.h"
+#include "env.h"
 
 using namespace MOBase;
 
 static LogModel* g_instance = nullptr;
 const std::size_t MaxLines = 1000;
+
+static std::unique_ptr<env::Console> m_console;
+static bool m_stdout = false;
+static std::mutex m_stdoutMutex;
+
 
 LogModel::LogModel()
 {
@@ -321,6 +327,21 @@ void qtLogCallback(
     log::log(
       convertQtLevel(type), "[{}:{}] {}",
       file, context.line, message.toStdString());
+  }
+}
+
+void logToStdout(bool b)
+{
+  m_stdout = b;
+
+  // logging to stdout is already set up in uibase by log::createDefault(),
+  // all it needs is to redirect stdout to the console, which is done by
+  // creating an env::Console object
+
+  if (m_stdout) {
+    m_console.reset(new env::Console);
+  } else {
+    m_console.reset();
   }
 }
 

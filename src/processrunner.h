@@ -39,12 +39,30 @@ public:
   {
     NoFlags   = 0x00,
 
-    // the ui will be refreshed once the process has completed
-    Refresh   = 0x01,
+    // the directory structure will be refreshed once the process has completed
+    TriggerRefresh   = 0x01,
 
     // the process will be waited for even if locking is disabled or the
     // process is not hooked
     ForceWait = 0x02,
+
+    // only valid with TriggerRefresh; run() will block until the refresh has
+    // completed
+    WaitForRefresh = 0x04,
+
+    // combination of flags used to run programs from the command line
+    //
+    //  1) TriggerRefresh: MO must refresh after running the program because
+    //     programs can modify files behind its back; for example, external
+    //     LOOT will modify loadorder.txt, so MO must read it back or it will
+    //     write back the old order when exiting
+    //
+    //  2) WaitForRefresh: refreshing is asynchronous, so the refresh must
+    //     complete before MO exits or stale data might be written to disk
+    //
+    //  3) ForceWait: MO must wait for the program to finish even if locking the
+    //     ui is disabled
+    ForCommandLine = TriggerRefresh | WaitForRefresh | ForceWait
   };
 
   using WaitFlags = QFlags<WaitFlag>;
