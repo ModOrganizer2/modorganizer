@@ -653,6 +653,12 @@ public:
   bool saveFilters() const;
   void setSaveFilters(bool b);
 
+  // whether to collapse groups (separators, categories, ...) after
+  // a delay when hovering (similar to auto-expand)
+  //
+  bool autoCollapseOnHover() const;
+  void setAutoCollapseOnHover(bool b);
+
   // whether to check for update after installing a mod
   //
   bool checkUpdateAfterInstallation() const;
