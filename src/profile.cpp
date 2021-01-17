@@ -410,18 +410,9 @@ void Profile::refreshModStatus()
       } else {
         namesRead.insert(lookupName);
       }
-      unsigned int modIndex = ModInfo::findMod(
-	  	  [lookupName](ModInfo::Ptr info) { 
-			    return info->name().compare(lookupName, Qt::CaseInsensitive) == 0; 
-			  }
-		  );
+      unsigned int modIndex = ModInfo::getIndex(lookupName);
       if (modIndex != UINT_MAX) {
         ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
-        if (info->name().compare(lookupName) != 0) {
-          // name in modlist.txt doesn't match case of actual folder
-          // need to rewrite the modlist to fix this
-          modStatusModified = true;
-        }
         if ((modIndex < m_ModStatus.size())
             && (info->getFixedPriority() == INT_MIN)) {
           m_ModStatus[modIndex].m_Enabled = enabled;
