@@ -32,6 +32,7 @@ UserInterfaceSettingsTab::UserInterfaceSettingsTab(Settings& s, SettingsDialog& 
   ui->collapsibleSeparatorsHighlightToBox->setChecked(settings().interface().collapsibleSeparatorsHighlightTo());
   ui->collapsibleSeparatorsPerProfileBox->setChecked(settings().interface().collapsibleSeparatorsPerProfile());
   ui->saveFiltersBox->setChecked(settings().interface().saveFilters());
+  ui->checkUpdateInstallBox->setChecked(settings().interface().checkUpdateAfterInstallation());
 
   for (auto& p : m_columnToBox) {
     p.second->setChecked(settings().interface().collapsibleSeparatorsIcons(p.first));
@@ -60,6 +61,7 @@ void UserInterfaceSettingsTab::update()
   settings().interface().setCollapsibleSeparatorsHighlightTo(ui->collapsibleSeparatorsHighlightToBox->isChecked());
   settings().interface().setCollapsibleSeparatorsPerProfile(ui->collapsibleSeparatorsPerProfileBox->isChecked());
   settings().interface().setSaveFilters(ui->saveFiltersBox->isChecked());
+  settings().interface().setCheckUpdateAfterInstallation(ui->checkUpdateInstallBox->isChecked());
 
   for (auto& p : m_columnToBox) {
     settings().interface().setCollapsibleSeparatorsIcons(p.first, p.second->isChecked());

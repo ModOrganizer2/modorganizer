@@ -282,6 +282,22 @@ If you disable this feature, MO will only display official DLCs this way. Please
              </widget>
             </item>
             <item>
+             <widget class="QCheckBox" name="checkUpdateInstallBox">
+              <property name="toolTip">
+               <string>Check if updates iare available for mods after installing them.</string>
+              </property>
+              <property name="whatsThis">
+               <string>Check if updates iare available for mods after installing them.</string>
+              </property>
+              <property name="text">
+               <string>Check for updates when installing mods</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
              <spacer name="verticalSpacer_9">
               <property name="orientation">
                <enum>Qt::Vertical</enum>
