@@ -496,21 +496,38 @@ void PluginList::readLockedOrderFrom(const QString &fileName)
       if (fields.count() == 2) {
         int priority = fields.at(1).trimmed().toInt();
         QString name = QString::fromUtf8(fields.at(0));
-        // Avoid locking a force-enabled plugin
-        if (!m_ESPs[m_ESPsByName.at(name)].forceEnabled) {
-          // Is this an open and unclaimed priority?
-          if (m_ESPs[m_ESPsByPriority.at(priority)].forceEnabled ||
-             std::find_if(m_LockedOrder.begin(), m_LockedOrder.end(), [&](const std::pair<QString, int> &a) { return a.second == priority; }) != m_LockedOrder.end()) {
-            // Attempt to find a priority but step over force-enabled plugins and already-set locks
-            int calcPriority = priority;
-            do {
-              ++calcPriority;
-            } while (calcPriority < m_ESPsByPriority.size() || (m_ESPs[m_ESPsByPriority.at(calcPriority)].forceEnabled &&
-                     std::find_if(m_LockedOrder.begin(), m_LockedOrder.end(), [&](const std::pair<QString, int> &a) { return a.second == calcPriority; }) != m_LockedOrder.end()));
-            // If we have a match, we can reassign the priority...
-            if (calcPriority < m_ESPsByPriority.size())
-              m_LockedOrder[name] = calcPriority;
-          } else {
+        int pluginIndex = 0;
+        try {
+          pluginIndex = m_ESPsByName.at(name);
+        }
+        catch (...) {
+		  // Plugin does not exist anymore.  Go ahead and set it as locked.
+          m_LockedOrder[name] = priority;
+          continue;
+        }
+        // Avoid locking a force-enabled plugin or invalid priorities
+        if (!m_ESPs[pluginIndex].forceEnabled && priority >= 0) {
+		  // Is the priority off the charts?
+          if (priority < m_ESPsByPriority.size()) {
+            // Is this an open and unclaimed priority?
+            if (m_ESPs[m_ESPsByPriority.at(priority)].forceEnabled ||
+               std::find_if(m_LockedOrder.begin(), m_LockedOrder.end(), [&](const std::pair<QString, int> &a) { return a.second == priority; }) != m_LockedOrder.end()) {
+              // Attempt to find a priority but step over force-enabled plugins and already-set locks
+              int calcPriority = priority;
+              do {
+                ++calcPriority;
+              } while (calcPriority < m_ESPsByPriority.size() && (m_ESPs[m_ESPsByPriority.at(calcPriority)].forceEnabled &&
+                       std::find_if(m_LockedOrder.begin(), m_LockedOrder.end(), [&](const std::pair<QString, int> &a) { return a.second == calcPriority; }) != m_LockedOrder.end()));
+              // If we have a match, we can reassign the priority...
+              if (calcPriority < m_ESPsByPriority.size())
+                m_LockedOrder[name] = calcPriority;
+            } else {
+              m_LockedOrder[name] = priority;
+            }
+          }
+          else {
+		    // Priority is larger than the plugin list.  Go ahead set it as locked at that priority.
+			// It'll be added to the end of the priority list later on.
             m_LockedOrder[name] = priority;
           }
         }
