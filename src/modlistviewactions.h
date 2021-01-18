@@ -150,11 +150,6 @@ private:
   //
   void checkModsForUpdates(std::multimap<QString, int> const& IDs) const;
 
-  // set the priorities of the given mods while maintaining the
-  // mod list selection (which may be different from the list of mods)
-  //
-  void setModsPriority(const QModelIndexList& indexes, int priority) const;
-
 private:
 
   OrganizerCore& m_core;

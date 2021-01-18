@@ -25,17 +25,13 @@ void ModListByPriorityProxy::setSourceModel(QAbstractItemModel* model)
   QAbstractProxyModel::setSourceModel(model);
 
   if (sourceModel()) {
-    connect(sourceModel(), &QAbstractItemModel::layoutChanged, this, &ModListByPriorityProxy::buildTree, Qt::UniqueConnection);
-    connect(sourceModel(), &QAbstractItemModel::rowsRemoved, this, &ModListByPriorityProxy::buildTree, Qt::UniqueConnection);
-    connect(sourceModel(), &QAbstractItemModel::modelReset, this, &ModListByPriorityProxy::buildTree, Qt::UniqueConnection);
-    connect(sourceModel(), &QAbstractItemModel::dataChanged, this, &ModListByPriorityProxy::modelDataChanged, Qt::UniqueConnection);
-    refresh();
-  }
-}
+    connect(sourceModel(), &QAbstractItemModel::layoutChanged, this, &ModListByPriorityProxy::onModelLayoutChanged, Qt::UniqueConnection);
+    connect(sourceModel(), &QAbstractItemModel::rowsRemoved, this, &ModListByPriorityProxy::onModelRowsRemoved, Qt::UniqueConnection);
+    connect(sourceModel(), &QAbstractItemModel::modelReset, this, &ModListByPriorityProxy::onModelReset, Qt::UniqueConnection);
+    connect(sourceModel(), &QAbstractItemModel::dataChanged, this, &ModListByPriorityProxy::onModelDataChanged, Qt::UniqueConnection);
 
-void ModListByPriorityProxy::refresh()
-{
-  buildTree();
+    onModelReset();
+  }
 }
 
 void ModListByPriorityProxy::setProfile(Profile* profile)
@@ -48,46 +44,54 @@ void ModListByPriorityProxy::setSortOrder(Qt::SortOrder order)
   m_sortOrder = order;
 }
 
+void ModListByPriorityProxy::buildMapping()
+{
+  m_IndexToItem.clear();
+  for (unsigned int index = 0; index < ModInfo::getNumMods(); ++index) {
+    m_IndexToItem[index] = std::make_unique<TreeItem>(ModInfo::getByIndex(index), index);
+  }
+}
+
 void ModListByPriorityProxy::buildTree()
 {
   if (!sourceModel()) return;
 
-  beginResetModel();
-
   // reset the root
   m_Root = { };
-  m_IndexToItem.clear();
+
+  // clear all children
+  for (auto& [index, item] : m_IndexToItem) {
+    item->children.clear();
+  }
 
   TreeItem* root = &m_Root;
-  std::unique_ptr<TreeItem> overwrite;
-  std::vector<std::unique_ptr<TreeItem>> backups;
+  TreeItem* overwrite;
+  std::vector<TreeItem*> backups;
 
   auto fn = [&](const auto& p) {
     auto& [priority, index] = p;
     ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-
-    TreeItem* item;
+    TreeItem* item = m_IndexToItem[index].get();
 
     if (modInfo->isSeparator()) {
-      m_Root.children.push_back(std::make_unique<TreeItem>(modInfo, index, &m_Root));
-      item = m_Root.children.back().get();
+      item->parent = &m_Root;
+      m_Root.children.push_back(item);
       root = item;
     }
     else if (modInfo->isOverwrite()) {
       // do not push here, because the overwrite is usually not at the right position
-      overwrite = std::make_unique<TreeItem>(modInfo, index, &m_Root);
-      item = overwrite.get();
+      item->parent = &m_Root;
+      overwrite = item;
     }
     else if (modInfo->isBackup()) {
-      backups.push_back(std::make_unique<TreeItem>(modInfo, index, &m_Root));
-      item = backups.back().get();
+      // do not push here, because backups are usually not at the right position
+      item->parent = &m_Root;
+      backups.push_back(item);
     }
     else {
-      root->children.push_back(std::make_unique<TreeItem>(modInfo, index, root));
-      item = root->children.back().get();
+      item->parent = root;
+      root->children.push_back(item);
     }
-
-    m_IndexToItem[index] = item;
   };
 
   auto& ibp = m_profile->getAllIndexesByPriority();
@@ -103,11 +107,41 @@ void ModListByPriorityProxy::buildTree()
     m_Root.children.insert(m_Root.children.end(),
       std::make_move_iterator(backups.begin()), std::make_move_iterator(backups.end()));
   }
+}
 
+void ModListByPriorityProxy::onModelRowsRemoved(const QModelIndex& parent, int first, int last)
+{
+  onModelReset();
+}
+
+void ModListByPriorityProxy::onModelLayoutChanged(const QList<QPersistentModelIndex>&, LayoutChangeHint hint)
+{
+  MOBase::log::debug("LAYOUT");
+
+  emit layoutAboutToBeChanged();
+  auto persistent = persistentIndexList();
+  buildTree();
+
+  QModelIndexList toPersistent;
+  for (auto& idx : persistent) {
+    // we can still access the TreeItem* because we did not destroy them
+    auto* item = static_cast<TreeItem*>(idx.internalPointer());
+    toPersistent.append(createIndex(item->parent->childIndex(item), idx.column(), item));
+  }
+  changePersistentIndexList(persistent, toPersistent);
+
+  emit layoutChanged({}, hint);
+}
+
+void ModListByPriorityProxy::onModelReset()
+{
+  beginResetModel();
+  buildMapping();
+  buildTree();
   endResetModel();
 }
 
-void ModListByPriorityProxy::modelDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles)
+void ModListByPriorityProxy::onModelDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles)
 {
   QModelIndex proxyTopLeft = mapFromSource(topLeft);
   if (!proxyTopLeft.isValid()) {
@@ -129,7 +163,7 @@ QModelIndex ModListByPriorityProxy::mapFromSource(const QModelIndex& sourceIndex
     return QModelIndex();
   }
 
-  auto* item = m_IndexToItem.at(sourceIndex.row());
+  auto* item = m_IndexToItem.at(sourceIndex.row()).get();
   return createIndex(item->parent->childIndex(item), sourceIndex.column(), item);
 }
 
@@ -175,7 +209,7 @@ QModelIndex ModListByPriorityProxy::parent(const QModelIndex& child) const
     return QModelIndex();
   }
 
-  return createIndex(item->parent->parent->childIndex(item->parent), child.column(), item->parent);
+  return createIndex(item->parent->parent->childIndex(item->parent), 0, item->parent);
 }
 
 bool ModListByPriorityProxy::hasChildren(const QModelIndex& parent) const
@@ -343,7 +377,7 @@ bool ModListByPriorityProxy::dropMimeData(const QMimeData* data, Qt::DropAction 
       // in descending priority, we take the separator itself if it's empty or
       // its last children
       else {
-        auto* item = m_Root.children[parent.row()].get();
+        auto* item = m_Root.children[parent.row()];
         sourceRow = item->children.empty() ? item->index : item->children.back()->index;
       }
     }
@@ -366,7 +400,7 @@ QModelIndex ModListByPriorityProxy::index(int row, int column, const QModelIndex
     parentItem = static_cast<TreeItem*>(parent.internalPointer());
   }
 
-  return createIndex(row, column, parentItem->children[row].get());
+  return createIndex(row, column, parentItem->children[row]);
 }
 
 void ModListByPriorityProxy::onDropEnter(const QMimeData*, bool dropExpanded, ModListView::DropPosition dropPosition)

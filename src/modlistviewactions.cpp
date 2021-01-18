@@ -530,21 +530,14 @@ void ModListViewActions::displayModInformation(ModInfo::Ptr modInfo, unsigned in
   }
 }
 
-void ModListViewActions::setModsPriority(const QModelIndexList& indexes, int priority) const
-{
-  auto [current, selected] = m_view->selected();
-  m_core.modList()->changeModsPriority(indexes, priority);
-  m_view->setSelected(current, selected);
-}
-
 void ModListViewActions::sendModsToTop(const QModelIndexList& indexes) const
 {
-  setModsPriority(indexes, 0);
+  m_core.modList()->changeModsPriority(indexes, 0);
 }
 
 void ModListViewActions::sendModsToBottom(const QModelIndexList& indexes) const
 {
-  setModsPriority(indexes, std::numeric_limits<int>::max());
+  m_core.modList()->changeModsPriority(indexes, std::numeric_limits<int>::max());
 }
 
 void ModListViewActions::sendModsToPriority(const QModelIndexList& indexes) const
@@ -555,7 +548,7 @@ void ModListViewActions::sendModsToPriority(const QModelIndexList& indexes) cons
     0, 0, std::numeric_limits<int>::max(), 1, &ok);
   if (!ok) return;
 
-  setModsPriority(indexes, priority);
+  m_core.modList()->changeModsPriority(indexes, priority);
 }
 
 void ModListViewActions::sendModsToSeparator(const QModelIndexList& indexes) const
@@ -599,7 +592,7 @@ void ModListViewActions::sendModsToSeparator(const QModelIndexList& indexes) con
         --newPriority;
       }
 
-      setModsPriority(indexes, newPriority);
+      m_core.modList()->changeModsPriority(indexes, newPriority);
     }
   }
 }
@@ -622,7 +615,7 @@ void ModListViewActions::sendModsToFirstConflict(const QModelIndexList& indexes)
   });
 
   if (!priorities.empty()) {
-    setModsPriority(indexes, *priorities.begin());
+    m_core.modList()->changeModsPriority(indexes, *priorities.begin());
   }
 }
 
@@ -644,7 +637,7 @@ void ModListViewActions::sendModsToLastConflict(const QModelIndexList& indexes) 
   });
 
   if (!priorities.empty()) {
-    setModsPriority(indexes, *priorities.rbegin());
+    m_core.modList()->changeModsPriority(indexes, *priorities.rbegin());
   }
 }
 

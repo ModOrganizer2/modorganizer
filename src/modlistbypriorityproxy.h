@@ -33,10 +33,6 @@ public:
   //
   void setSortOrder(Qt::SortOrder order);
 
-  // refresh the proxy by rebuilding the inner structure
-  //
-  void refresh();
-
   void setSourceModel(QAbstractItemModel* sourceModel) override;
 
   int rowCount(const QModelIndex& parent = QModelIndex()) const override;
@@ -57,21 +53,33 @@ public slots:
 
 protected slots:
 
-  void modelDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles = QVector<int>());
+  void onModelRowsRemoved(const QModelIndex& parent, int first, int last);
+  void onModelLayoutChanged(const QList<QPersistentModelIndex>& parents, LayoutChangeHint hint);
+  void onModelReset();
+  void onModelDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles = QVector<int>());
 
 private:
 
+  // fill the mapping from index to item (required by buildTree), should
+  // only be used for full model reset because it destroys existing references
+  // to tree items
+  //
+  void buildMapping();
+
+  // create the actual tree by creating parent/child associations, requires
+  // the mapping to be created (by a previous buildMapping call)
+  //
   void buildTree();
 
   struct TreeItem {
     ModInfo::Ptr mod;
     unsigned int index;
-    std::vector<std::unique_ptr<TreeItem>> children;
+    std::vector<TreeItem*> children;
     TreeItem* parent;
 
     std::size_t childIndex(TreeItem* child) const {
       for (std::size_t i = 0; i < children.size(); ++i) {
-        if (children[i].get() == child) {
+        if (children[i] == child) {
           return i;
         }
       }
@@ -84,7 +92,7 @@ private:
   };
 
   TreeItem m_Root;
-  std::map<unsigned int, TreeItem*> m_IndexToItem;
+  std::map<unsigned int, std::unique_ptr<TreeItem>> m_IndexToItem;
 
 private:
   OrganizerCore& m_core;
