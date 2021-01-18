@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define MODINFO_H
 
 #include "imodinterface.h"
+#include "ifiletree.h"
 #include "versioninfo.h"
 
 class OrganizerCore;
@@ -989,7 +990,7 @@ protected:
   static QMutex s_Mutex;
   static std::vector<ModInfo::Ptr> s_Collection;
   static ModInfo::Ptr s_Overwrite;
-  static std::map<QString, unsigned int> s_ModsByName;
+  static std::map<QString, unsigned int, MOBase::FileNameComparator> s_ModsByName;
   static std::map<std::pair<QString, int>, std::vector<unsigned int>> s_ModsByModID;
   static int s_NextID;
 
