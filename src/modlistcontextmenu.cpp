@@ -30,16 +30,19 @@ void ModListGlobalContextMenu::populate(OrganizerCore& core, ModListView* view, 
     auto info = ModInfo::getByIndex(modIndex.toInt());
     if (!info->isBackup()) {
 
-      addAction(tr("Install mod above..."), [=]() { view->actions().installMod("", index); });
 
-      QString text = tr("Create empty mod above");
+      QString installText = tr("Install mod above... ");
+      QString createText = tr("Create empty mod above");
       if (info->isSeparator()) {
-        text = tr("Create empty mod inside");
+        installText = tr("Install mod inside... ");
+        createText = tr("Create empty mod inside");
       }
       else if (view->sortOrder() == Qt::DescendingOrder) {
-        text = tr("Create empty mod below");
+        installText = tr("Install mod below... ");
+        createText = tr("Create empty mod below");
       }
-      addAction(text, [=]() { view->actions().createEmptyMod(index); });
+      addAction(installText, [=]() { view->actions().installMod("", index); });
+      addAction(createText, [=]() { view->actions().createEmptyMod(index); });
       addAction(tr("Create separator above"), [=]() { view->actions().createSeparator(index); });
     }
   }

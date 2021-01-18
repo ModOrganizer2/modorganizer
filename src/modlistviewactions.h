@@ -134,6 +134,11 @@ signals:
 
 private:
 
+  // find the priority where to install or create a mod for the
+  // given index (e.g. above, below, inside separator or at the end)
+  //
+  int findInstallPriority(const QModelIndex& current) const;
+
   // move the contents of the overwrite to the given path
   //
   void moveOverwriteContentsTo(const QString& absolutePath) const;

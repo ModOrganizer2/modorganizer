@@ -50,63 +50,8 @@ ModListViewActions::ModListViewActions(
 
 }
 
-void ModListViewActions::installMod(const QString& archivePath, const QModelIndex& index) const
+int ModListViewActions::findInstallPriority(const QModelIndex& index) const
 {
-  int newPriority = -1;
-  if (index.isValid() && m_view->sortColumn() == ModList::COL_PRIORITY) {
-    newPriority = m_core.currentProfile()->getModPriority(index.data(ModList::IndexRole).toInt());
-
-    // descending order, we need to fix the priority
-    if (m_view->sortOrder() == Qt::DescendingOrder) {
-      newPriority++;
-    }
-  }
-
-  try {
-    QString path = archivePath;
-    if (path.isEmpty()) {
-      QStringList extensions = m_core.installationManager()->getSupportedExtensions();
-      for (auto iter = extensions.begin(); iter != extensions.end(); ++iter) {
-        *iter = "*." + *iter;
-      }
-
-      path = FileDialogMemory::getOpenFileName("installMod", m_parent, tr("Choose Mod"), QString(),
-        tr("Mod Archive").append(QString(" (%1)").arg(extensions.join(" "))));
-    }
-
-    if (path.isEmpty()) {
-      return;
-    }
-    else {
-      m_core.installMod(path, newPriority, false, nullptr, QString());
-    }
-  }
-  catch (const std::exception& e) {
-    reportError(e.what());
-  }
-}
-
-void ModListViewActions::createEmptyMod(const QModelIndex& index) const
-{
-  GuessedValue<QString> name;
-  name.setFilter(&fixDirectoryName);
-
-  while (name->isEmpty()) {
-    bool ok;
-    name.update(QInputDialog::getText(m_parent, tr("Create Mod..."),
-      tr("This will create an empty mod.\n"
-        "Please enter a name:"), QLineEdit::Normal, "", &ok),
-      GUESS_USER);
-    if (!ok) {
-      return;
-    }
-  }
-
-  if (m_core.modList()->getMod(name) != nullptr) {
-    reportError(tr("A mod with this name already exists"));
-    return;
-  }
-
   int newPriority = -1;
   if (index.isValid() && index.data(ModList::IndexRole).isValid()
     && m_view->sortColumn() == ModList::COL_PRIORITY) {
@@ -145,12 +90,64 @@ void ModListViewActions::createEmptyMod(const QModelIndex& index) const
     }
   }
 
+  return newPriority;
+}
+
+void ModListViewActions::installMod(const QString& archivePath, const QModelIndex& index) const
+{
+  try {
+    QString path = archivePath;
+    if (path.isEmpty()) {
+      QStringList extensions = m_core.installationManager()->getSupportedExtensions();
+      for (auto iter = extensions.begin(); iter != extensions.end(); ++iter) {
+        *iter = "*." + *iter;
+      }
+
+      path = FileDialogMemory::getOpenFileName("installMod", m_parent, tr("Choose Mod"), QString(),
+        tr("Mod Archive").append(QString(" (%1)").arg(extensions.join(" "))));
+    }
+
+    if (path.isEmpty()) {
+      return;
+    }
+    else {
+      m_core.installMod(path, findInstallPriority(index), false, nullptr, QString());
+    }
+  }
+  catch (const std::exception& e) {
+    reportError(e.what());
+  }
+}
+
+void ModListViewActions::createEmptyMod(const QModelIndex& index) const
+{
+  GuessedValue<QString> name;
+  name.setFilter(&fixDirectoryName);
+
+  while (name->isEmpty()) {
+    bool ok;
+    name.update(QInputDialog::getText(m_parent, tr("Create Mod..."),
+      tr("This will create an empty mod.\n"
+        "Please enter a name:"), QLineEdit::Normal, "", &ok),
+      GUESS_USER);
+    if (!ok) {
+      return;
+    }
+  }
+
+  if (m_core.modList()->getMod(name) != nullptr) {
+    reportError(tr("A mod with this name already exists"));
+    return;
+  }
+
+
   if (m_core.createMod(name) == nullptr) {
     return;
   }
 
   m_core.refresh();
 
+  const int newPriority = findInstallPriority(index);
   const auto mIndex = ModInfo::getIndex(name);
   if (newPriority >= 0) {
     m_core.modList()->changeModPriority(mIndex, newPriority);
