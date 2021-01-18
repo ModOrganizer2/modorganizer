@@ -540,8 +540,8 @@ void PluginList::readLockedOrderFrom(const QString &fileName)
     }
 
     // These are some helper functions for figuring out what is already locked
-    static auto findLocked = [&](const std::pair<QString, int>& a) { return a.second == priority; };
-    static auto alreadyLocked = [&](){ return std::find_if(m_LockedOrder.begin(), m_LockedOrder.end(), findLocked) != m_LockedOrder.end(); };
+    auto findLocked = [&](const std::pair<QString, int>& a) { return a.second == priority; };
+    auto alreadyLocked = [&](){ return std::find_if(m_LockedOrder.begin(), m_LockedOrder.end(), findLocked) != m_LockedOrder.end(); };
 
     // See if we can just set the given priority
     if (!m_ESPs[priority].forceEnabled && !alreadyLocked())
