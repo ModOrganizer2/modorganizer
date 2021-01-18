@@ -650,14 +650,22 @@ void Profile::setModPriority(unsigned int index, int &newPriority)
     return;
   }
 
-  for (std::map<int, unsigned int>::iterator iter = m_ModIndexByPriority.begin(); iter != m_ModIndexByPriority.end(); iter++) {
-    if (newPriority < oldPriority && iter->first >= newPriority && iter->first < oldPriority) {
-      m_ModStatus.at(iter->second).m_Priority += 1;
+  // we need to put the mod before backups
+  auto it = std::find_if(m_ModIndexByPriority.begin(), m_ModIndexByPriority.end(), [](auto&& p) {
+    return ModInfo::getByIndex(p.second)->isBackup();
+  });
+  if (it != m_ModIndexByPriority.end() && it->first <= newPriority) {
+    newPriority = it->first - 1;
+  }
+
+  for (auto& [priority, index] : m_ModIndexByPriority) {
+    if (newPriority < oldPriority && priority >= newPriority && priority < oldPriority) {
+      m_ModStatus.at(index).m_Priority += 1;
     }
-    else if (newPriority > oldPriority && iter->first <= newPriority && iter->first > oldPriority) {
-      m_ModStatus.at(iter->second).m_Priority -= 1;
+    else if (newPriority > oldPriority && priority <= newPriority && priority > oldPriority) {
+      m_ModStatus.at(index).m_Priority -= 1;
     }
-    lastPriority = std::max(lastPriority, iter->first);
+    lastPriority = std::max(lastPriority, priority);
   }
 
   newPriority = std::min(newPriority, lastPriority);
