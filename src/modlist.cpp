@@ -609,8 +609,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
           newPriority = 0;
         }
         if (ok) {
-          m_Profile->setModPriority(modID, newPriority);
-          emit modPrioritiesChanged({ index });
+          changeModPriority(modID, newPriority);
           result = true;
         } else {
           result = false;
