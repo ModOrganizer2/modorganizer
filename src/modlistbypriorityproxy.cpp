@@ -116,8 +116,6 @@ void ModListByPriorityProxy::onModelRowsRemoved(const QModelIndex& parent, int f
 
 void ModListByPriorityProxy::onModelLayoutChanged(const QList<QPersistentModelIndex>&, LayoutChangeHint hint)
 {
-  MOBase::log::debug("LAYOUT");
-
   emit layoutAboutToBeChanged();
   auto persistent = persistentIndexList();
   buildTree();
