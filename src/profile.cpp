@@ -382,6 +382,8 @@ void Profile::refreshModStatus()
 
   std::set<QString> namesRead;
 
+  bool warnAboutOverwrite = false;
+
   // load mods from file and update enabled state and priority for them
   int index = 0;
   while (!file.atEnd()) {
@@ -405,6 +407,9 @@ void Profile::refreshModStatus()
     }
     if (modName.size() > 0) {
       QString lookupName = modName;
+      if (modName.compare("overwrite", Qt::CaseInsensitive) == 0) {
+        warnAboutOverwrite = true;
+      }
       if (namesRead.find(lookupName) != namesRead.end()) {
         continue;
       } else {
@@ -486,6 +491,19 @@ void Profile::refreshModStatus()
 
   file.close();
   updateIndices();
+
+  // User has a mod named some variation of "overwrite".  Tell them about it.
+  if (warnAboutOverwrite) {
+    QMessageBox::warning(
+      nullptr,
+      tr("Overwrite mod conflict"),
+      tr("At least one mod named \"overwrite\" was detected, disabled, and moved to the lowest priority on the mod list. "
+         "You may want to rename this mod and enable it again.")
+      );
+    // also, mark the mod-list as changed
+    modStatusModified = true;
+  }
+
   if (modStatusModified) {
     m_ModListWriter.write();
   }
