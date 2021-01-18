@@ -86,11 +86,23 @@ void MessageDialog::showMessage(const QString &text, QWidget *reference, bool br
 {
   log::debug("{}", text);
 
-  if (reference != nullptr) {
-    if (bringToFront || (qApp->activeWindow() != nullptr)) {
-      MessageDialog *dialog = new MessageDialog(text, reference);
-      dialog->show();
-      reference->activateWindow();
+  if (!reference) {
+    for (QWidget* w : qApp->topLevelWidgets()) {
+      if (dynamic_cast<QMainWindow*>(w)) {
+        reference = w;
+        break;
+      }
     }
+  }
+
+  if (!reference) {
+    return;
+  }
+
+  MessageDialog *dialog = new MessageDialog(text, reference);
+  dialog->show();
+
+  if (bringToFront) {
+    reference->activateWindow();
   }
 }

@@ -521,6 +521,13 @@ ProcessRunner& ProcessRunner::setWaitForCompletion(
 {
   m_waitFlags = flags;
   m_lockReason = reason;
+
+  if (m_waitFlags.testFlag(WaitForRefresh) && !m_waitFlags.testFlag(TriggerRefresh)) {
+    log::warn(
+      "process runner: WaitForRefresh without TriggerRefresh "
+      "makes no sense, will be ignored");
+  }
+
   return *this;
 }
 
@@ -825,8 +832,8 @@ bool ProcessRunner::shouldRefresh(Results r) const
   //  2) the mod info dialog is not set up to deal with refreshes, so that
   //     it will crash because the old DirectoryEntry's are still being used
   //     in the list
-  if (!m_waitFlags.testFlag(Refresh)) {
-    log::debug("not refreshing because the flag isn't set");
+  if (!m_waitFlags.testFlag(TriggerRefresh)) {
+    log::debug("process runner: not refreshing because the flag isn't set");
     return false;
   }
 
@@ -834,13 +841,13 @@ bool ProcessRunner::shouldRefresh(Results r) const
   {
     case Completed:
     {
-      log::debug("refreshing because the process completed");
+      log::debug("process runner: refreshing because the process completed");
       return true;
     }
 
     case ForceUnlocked:
     {
-      log::debug("refreshing because the ui was force unlocked");
+      log::debug("process runner: refreshing because the ui was force unlocked");
       return true;
     }
 
@@ -891,7 +898,10 @@ ProcessRunner::Results ProcessRunner::postRun()
 
     if (!lockEnabled) {
       // disabling locking is like clicking on unlock immediately
-      log::debug("not waiting for process because locking is disabled");
+      log::debug(
+        "process runner: not waiting for process because "
+        "locking is disabled");
+
       return ForceUnlocked;
     }
   }
@@ -917,8 +927,24 @@ ProcessRunner::Results ProcessRunner::postRun()
   }
 
   if (shouldRefresh(r)) {
+    QEventLoop loop;
+    const bool wait = m_waitFlags.testFlag(WaitForRefresh);
+
+    if (wait) {
+      QObject::connect(
+        &m_core, &OrganizerCore::directoryStructureReady,
+        &loop, &QEventLoop::quit,
+        Qt::ConnectionType::QueuedConnection);
+    }
+
     m_core.afterRun(m_sp.binary, m_exitCode);
-  }
+
+    if (wait) {
+      log::debug("process runner: waiting until refresh finishes");
+      loop.exec();
+      log::debug("process runner: refresh is done");
+    }
+}
 
   return r;
 }

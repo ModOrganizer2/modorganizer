@@ -87,6 +87,7 @@ private:
 };
 
 
+void logToStdout(bool b);
 void initLogging();
 bool setLogDirectory(const QString& dir);
 

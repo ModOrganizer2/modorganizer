@@ -27,22 +27,45 @@ class Settings;
 class MOMultiProcess;
 class Instance;
 class PluginContainer;
+class OrganizerCore;
+class NexusInterface;
 
 namespace MOBase { class IPluginGame; }
-namespace cl { class CommandLine; }
+namespace env { class ModuleNotification; }
 
 class MOApplication : public QApplication
 {
   Q_OBJECT
 
 public:
-  MOApplication(cl::CommandLine& cl, int& argc, char** argv);
+  MOApplication(int& argc, char** argv);
 
-  // sets up everything, creates the main window and runs it
+  // called from main() only once for stuff that persists across "restarts"
+  //
+  void firstTimeSetup(MOMultiProcess& multiProcess);
+
+  // called from main() each time MO "restarts", loads settings, plugins,
+  // OrganizerCore and the current instance
+  //
+  int setup(MOMultiProcess& multiProcess);
+
+  // shows splash, starts an api check, shows the main window and blocks until
+  // MO exits
   //
   int run(MOMultiProcess& multiProcess);
 
-  virtual bool notify(QObject* receiver, QEvent* event);
+  // called from main() when MO "restarts", must clean up everything so setup()
+  // starts fresh
+  //
+  void resetForRestart();
+
+  // undefined if setup() wasn't called
+  //
+  OrganizerCore& core();
+
+  // wraps QApplication::notify() in a catch, reports errors and ignores them
+  //
+  bool notify(QObject* receiver, QEvent* event) override;
 
 public slots:
   bool setStyleFile(const QString& style);
@@ -51,16 +74,20 @@ private slots:
   void updateStyle(const QString& fileName);
 
 private:
-  QFileSystemWatcher m_StyleWatcher;
-  QString m_DefaultStyle;
-  cl::CommandLine& m_cl;
+  QFileSystemWatcher m_styleWatcher;
+  QString m_defaultStyle;
+  std::unique_ptr<env::ModuleNotification> m_modules;
 
-  int doOneRun(MOMultiProcess& multiProcess);
+  std::unique_ptr<Instance> m_instance;
+  std::unique_ptr<Settings> m_settings;
+  std::unique_ptr<NexusInterface> m_nexus;
+  std::unique_ptr<PluginContainer> m_plugins;
+  std::unique_ptr<OrganizerCore> m_core;
 
-  std::optional<Instance> getCurrentInstance();
+  void externalMessage(const QString& message);
+  std::unique_ptr<Instance> getCurrentInstance();
   std::optional<int> setupInstanceLoop(Instance& currentInstance, PluginContainer& pc);
   void purgeOldFiles();
-  void resetForRestart();
 };
 
 

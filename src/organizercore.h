@@ -351,7 +351,6 @@ public: // IPluginDiagnose interface
 public slots:
 
   void profileRefresh();
-  void externalMessage(const QString &message);
 
   void syncOverwrite();
 

@@ -4,8 +4,10 @@
 #include "organizercore.h"
 #include "commandline.h"
 #include "env.h"
+#include "instancemanager.h"
 #include "thread_utils.h"
 #include "shared/util.h"
+#include <report.h>
 #include <log.h>
 
 using namespace MOBase;
@@ -13,49 +15,136 @@ using namespace MOBase;
 thread_local LPTOP_LEVEL_EXCEPTION_FILTER g_prevExceptionFilter = nullptr;
 thread_local std::terminate_handler g_prevTerminateHandler = nullptr;
 
-int forwardToPrimary(MOMultiProcess& multiProcess, const cl::CommandLine& cl);
+int run(int argc, char *argv[]);
 
 int main(int argc, char *argv[])
+{
+  const int r = run(argc, argv);
+  std::cout << "mod organizer done\n";
+  return r;
+}
+
+int run(int argc, char *argv[])
 {
   MOShared::SetThisThreadName("main");
   setExceptionHandlers();
 
   cl::CommandLine cl;
-  if (auto r=cl.run(GetCommandLineW())) {
+  if (auto r=cl.process(GetCommandLineW())) {
     return *r;
   }
 
   initLogging();
 
   // must be after logging
-  TimeThis tt("main()");
+  TimeThis tt("main() multiprocess");
 
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-  MOApplication app(cl, argc, argv);
+  MOApplication app(argc, argv);
 
+
+  // check if the command line wants to run something right now
+  if (auto r=cl.runPostApplication(app)) {
+    return *r;
+  }
+
+
+  // check if there's another process running
   MOMultiProcess multiProcess(cl.multiple());
+
   if (multiProcess.ephemeral()) {
-    return forwardToPrimary(multiProcess, cl);
+    // this is not the primary process
+
+    if (cl.forwardToPrimary(multiProcess)) {
+      // but there's something on the command line that could be forwarded to
+      // it, so just exit
+      return 0;
+    }
+
+    QMessageBox::information(
+      nullptr, QObject::tr("Mod Organizer"),
+      QObject::tr("An instance of Mod Organizer is already running"));
+
+    return 1;
+  }
+
+
+  // check if the command line wants to run something right now
+  if (auto r=cl.runPostMultiProcess(multiProcess)) {
+    return *r;
   }
 
   tt.stop();
 
-  return app.run(multiProcess);
-}
 
-int forwardToPrimary(MOMultiProcess& multiProcess, const cl::CommandLine& cl)
-{
-  if (cl.shortcut().isValid()) {
-    multiProcess.sendMessage(cl.shortcut().toString());
-  } else if (cl.nxmLink()) {
-    multiProcess.sendMessage(*cl.nxmLink());
-  } else {
-    QMessageBox::information(
-      nullptr, QObject::tr("Mod Organizer"),
-      QObject::tr("An instance of Mod Organizer is already running"));
+  // stuff that's done only once, even if MO restarts in the loop below
+  app.firstTimeSetup(multiProcess);
+
+
+  // MO runs in a loop because it can be restarted in several ways, such as
+  // when switching instances or changing some settings
+  for (;;)
+  {
+    try
+    {
+      auto& m = InstanceManager::singleton();
+
+      if (cl.instance()) {
+        m.overrideInstance(*cl.instance());
+      }
+
+      if (cl.profile()) {
+        m.overrideProfile(*cl.profile());
+      }
+
+
+      // set up plugins, OrganizerCore, etc.
+      {
+        const auto r = app.setup(multiProcess);
+
+        if (r == RestartExitCode) {
+          // resets things when MO is "restarted"
+          app.resetForRestart();
+
+          // don't reprocess command line
+          cl.clear();
+
+          continue;
+        } else if (r != 0) {
+          // something failed, quit
+          return r;
+        }
+      }
+
+
+      // check if the command line wants to run something right now
+      if (auto r=cl.runPostOrganizer(app.core())) {
+        return *r;
+      }
+
+
+      // run the main window
+      const auto r = app.run(multiProcess);
+
+
+      if (r == RestartExitCode) {
+        // resets things when MO is "restarted"
+        app.resetForRestart();
+
+        // don't reprocess command line
+        cl.clear();
+
+        continue;
+      }
+
+      return r;
+    }
+    catch (const std::exception &e)
+    {
+      reportError(e.what());
+      return 1;
+    }
   }
-
-  return 0;
 }
 
 LONG WINAPI onUnhandledException(_EXCEPTION_POINTERS* ptrs)

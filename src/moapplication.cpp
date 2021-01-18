@@ -31,7 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "tutorialmanager.h"
 #include "sanitychecks.h"
 #include "mainwindow.h"
-#include "shared/error_report.h"
+#include "messagedialog.h"
 #include "shared/util.h"
 #include <iplugingame.h>
 #include <report.h>
@@ -155,81 +155,55 @@ void addDllsToPath()
 }
 
 
-MOApplication::MOApplication(cl::CommandLine& cl, int& argc, char** argv)
-  : QApplication(argc, argv), m_cl(cl)
+MOApplication::MOApplication(int& argc, char** argv)
+  : QApplication(argc, argv)
 {
   TimeThis tt("MOApplication()");
 
-  connect(&m_StyleWatcher, &QFileSystemWatcher::fileChanged, [&](auto&& file){
+  connect(&m_styleWatcher, &QFileSystemWatcher::fileChanged, [&](auto&& file){
     log::debug("style file '{}' changed, reloading", file);
     updateStyle(file);
   });
 
-  m_DefaultStyle = style()->objectName();
+  m_defaultStyle = style()->objectName();
   setStyle(new ProxyStyle(style()));
   addDllsToPath();
 }
 
-int MOApplication::run(MOMultiProcess& multiProcess)
+OrganizerCore& MOApplication::core()
 {
-  TimeThis tt("MOApplication run() to doOneRun()");
+  return *m_core;
+}
 
-  auto& m = InstanceManager::singleton();
+void MOApplication::firstTimeSetup(MOMultiProcess& multiProcess)
+{
+  connect(
+    &multiProcess, &MOMultiProcess::messageSent, this,
+    [this](auto&& s){ externalMessage(s); },
+    Qt::QueuedConnection);
+}
 
-  if (m_cl.instance())
-    m.overrideInstance(*m_cl.instance());
-
-  if (m_cl.profile()) {
-    m.overrideProfile(*m_cl.profile());
-  }
+int MOApplication::setup(MOMultiProcess& multiProcess)
+{
+  TimeThis tt("MOApplication setup()");
 
   // makes plugin data path available to plugins, see
   // IOrganizer::getPluginDataPath()
   MOBase::details::setPluginDataPath(OrganizerCore::pluginDataPath());
 
-  // MO runs in a loop because it can be restarted in several ways, such as
-  // when switching instances or changing some settings
-  for (;;)
-  {
-    try
-    {
-      tt.stop();
-
-      const auto r = doOneRun(multiProcess);
-
-      if (r == RestartExitCode) {
-        // resets things when MO is "restarted"
-        resetForRestart();
-        continue;
-      }
-
-      return r;
-    }
-    catch (const std::exception &e)
-    {
-      reportError(e.what());
-      return 1;
-    }
-  }
-}
-
-int MOApplication::doOneRun(MOMultiProcess& multiProcess)
-{
-  TimeThis tt("MOApplication::doOneRun() instances");
-
   // figuring out the current instance
-  auto currentInstance = getCurrentInstance();
-  if (!currentInstance) {
+  m_instance = getCurrentInstance();
+  if (!m_instance) {
     return 1;
   }
 
   // first time the data path is available, set the global property and log
   // directory, then log a bunch of debug stuff
-  const QString dataPath = currentInstance->directory();
+  const QString dataPath = m_instance->directory();
   setProperty("dataPath", dataPath);
 
   if (!setLogDirectory(dataPath)) {
-    reportError("Failed to create log folder");
+    reportError(tr("Failed to create log folder."));
     InstanceManager::singleton().clearCurrentInstance();
     return 1;
   }
@@ -245,7 +219,7 @@ int MOApplication::doOneRun(MOMultiProcess& multiProcess)
     log::debug("another instance of MO is running but --multiple was given");
   }
 
-  log::info("data path: {}", currentInstance->directory());
+  log::info("data path: {}", m_instance->directory());
   log::info("working directory: {}", QDir::currentPath());
 
 
@@ -261,45 +235,42 @@ int MOApplication::doOneRun(MOMultiProcess& multiProcess)
 
 
   // loading settings
-  Settings settings(currentInstance->iniPath(), true);
-  log::getDefault().setLevel(settings.diagnostics().logLevel());
-  log::debug("using ini at '{}'", settings.filename());
+  m_settings.reset(new Settings(m_instance->iniPath(), true));
+  log::getDefault().setLevel(m_settings->diagnostics().logLevel());
+  log::debug("using ini at '{}'", m_settings->filename());
 
-  OrganizerCore::setGlobalCoreDumpType(settings.diagnostics().coreDumpType());
+  OrganizerCore::setGlobalCoreDumpType(m_settings->diagnostics().coreDumpType());
 
 
   tt.start("MOApplication::doOneRun() log and checks");
 
   // logging and checking
   env::Environment env;
-  env.dump(settings);
-  settings.dump();
+  env.dump(*m_settings);
+  m_settings->dump();
   sanity::checkEnvironment(env);
 
-  const auto moduleNotification = env.onModuleLoaded(qApp, [](auto&& m) {
+  m_modules = std::move(env.onModuleLoaded(qApp, [](auto&& m) {
     if (m.interesting()) {
       log::debug("loaded module {}", m.toString());
     }
 
     sanity::checkIncompatibleModule(m);
-  });
+  }));
 
-
-  // this must outlive `organizer`
-  std::unique_ptr<PluginContainer> pluginContainer;
 
   // nexus interface
   tt.start("MOApplication::doOneRun() NexusInterface");
   log::debug("initializing nexus interface");
-  NexusInterface ni(&settings);
+  m_nexus.reset(new NexusInterface(m_settings.get()));
 
   // organizer core
   tt.start("MOApplication::doOneRun() OrganizerCore");
   log::debug("initializing core");
 
-  OrganizerCore organizer(settings);
-  if (!organizer.bootstrap()) {
-    reportError("failed to set up data paths");
+  m_core.reset(new OrganizerCore(*m_settings));
+  if (!m_core->bootstrap()) {
+    reportError(tr("Failed to set up data paths."));
     InstanceManager::singleton().clearCurrentInstance();
     return 1;
   }
@@ -308,58 +279,59 @@ int MOApplication::doOneRun(MOMultiProcess& multiProcess)
   tt.start("MOApplication::doOneRun() plugins");
   log::debug("initializing plugins");
 
-  pluginContainer = std::make_unique<PluginContainer>(&organizer);
-  pluginContainer->loadPlugins();
+  m_plugins = std::make_unique<PluginContainer>(m_core.get());
+  m_plugins->loadPlugins();
 
   // instance
-  if (auto r=setupInstanceLoop(*currentInstance, *pluginContainer)) {
+  if (auto r=setupInstanceLoop(*m_instance, *m_plugins)) {
     return *r;
   }
 
-  if (currentInstance->isPortable()) {
+  if (m_instance->isPortable()) {
     log::debug("this is a portable instance");
   }
 
   tt.start("MOApplication::doOneRun() OrganizerCore setup");
 
-  sanity::checkPaths(*currentInstance->gamePlugin(), settings);
+  sanity::checkPaths(*m_instance->gamePlugin(), *m_settings);
 
   // setting up organizer core
-  organizer.setManagedGame(currentInstance->gamePlugin());
-  organizer.createDefaultProfile();
+  m_core->setManagedGame(m_instance->gamePlugin());
+  m_core->createDefaultProfile();
 
   log::info(
     "using game plugin '{}' ('{}', variant {}, steam id '{}') at {}",
-    currentInstance->gamePlugin()->gameName(),
-    currentInstance->gamePlugin()->gameShortName(),
-    (settings.game().edition().value_or("").isEmpty() ?
-      "(none)" : *settings.game().edition()),
-    currentInstance->gamePlugin()->steamAPPId(),
-    currentInstance->gamePlugin()->gameDirectory().absolutePath());
+    m_instance->gamePlugin()->gameName(),
+    m_instance->gamePlugin()->gameShortName(),
+    (m_settings->game().edition().value_or("").isEmpty() ?
+      "(none)" : *m_settings->game().edition()),
+    m_instance->gamePlugin()->steamAPPId(),
+    m_instance->gamePlugin()->gameDirectory().absolutePath());
 
   CategoryFactory::instance().loadCategories();
-  organizer.updateExecutablesList();
-  organizer.updateModInfoFromDisc();
-  organizer.setCurrentProfile(currentInstance->profileName());
+  m_core->updateExecutablesList();
+  m_core->updateModInfoFromDisc();
+  m_core->setCurrentProfile(m_instance->profileName());
 
+  return 0;
+}
+
+int MOApplication::run(MOMultiProcess& multiProcess)
+{
   // checking command line
-  tt.start("MOApplication::doOneRun() command line");
-  if (auto r=m_cl.setupCore(organizer)) {
-    return *r;
-  }
+  TimeThis tt("MOApplication::run()");
 
   // show splash
   tt.start("MOApplication::doOneRun() splash");
 
-  MOSplash splash(
-    settings, currentInstance->directory(), currentInstance->gamePlugin());
+  MOSplash splash(*m_settings, m_instance->directory(), m_instance->gamePlugin());
 
   tt.start("MOApplication::doOneRun() finishing");
 
   // start an api check
   QString apiKey;
   if (GlobalSettings::nexusApiKey(apiKey)) {
-    ni.getAccessManager()->apiCheck(apiKey);
+    m_nexus->getAccessManager()->apiCheck(apiKey);
   }
 
   // tutorials
@@ -367,12 +339,12 @@ int MOApplication::doOneRun(MOMultiProcess& multiProcess)
   TutorialManager::init(
       qApp->applicationDirPath() + "/"
           + QString::fromStdWString(AppConfig::tutorialsPath()) + "/",
-      &organizer);
+      m_core.get());
 
   // styling
-  if (!setStyleFile(settings.interface().styleName().value_or(""))) {
+  if (!setStyleFile(m_settings->interface().styleName().value_or(""))) {
     // disable invalid stylesheet
-    settings.interface().setStyleName("");
+    m_settings->interface().setStyleName("");
   }
 
 
@@ -380,17 +352,16 @@ int MOApplication::doOneRun(MOMultiProcess& multiProcess)
 
   {
     tt.start("MOApplication::doOneRun() MainWindow setup");
-    MainWindow mainWindow(settings, organizer, *pluginContainer);
+    MainWindow mainWindow(*m_settings, *m_core, *m_plugins);
 
     // the nexus interface can show dialogs, make sure they're parented to the
     // main window
-    ni.getAccessManager()->setTopLevelWidget(&mainWindow);
+    m_nexus->getAccessManager()->setTopLevelWidget(&mainWindow);
 
-    QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), this,
-                      SLOT(setStyleFile(QString)));
-
-    QObject::connect(&multiProcess, SIGNAL(messageSent(QString)), &organizer,
-                      SLOT(externalMessage(QString)));
+    connect(
+      &mainWindow, &MainWindow::styleChanged, this,
+      [this](auto&& file){ setStyleFile(file); },
+      Qt::QueuedConnection);
 
 
     log::debug("displaying main window");
@@ -404,16 +375,71 @@ int MOApplication::doOneRun(MOMultiProcess& multiProcess)
     mainWindow.close();
 
     // main window is about to be destroyed
-    ni.getAccessManager()->setTopLevelWidget(nullptr);
+    m_nexus->getAccessManager()->setTopLevelWidget(nullptr);
   }
 
   // reset geometry if the flag was set from the settings dialog
-  settings.geometry().resetIfNeeded();
+  m_settings->geometry().resetIfNeeded();
 
   return res;
 }
 
-std::optional<Instance> MOApplication::getCurrentInstance()
+void MOApplication::externalMessage(const QString& message)
+{
+  log::debug("received external message '{}'", message);
+
+  MOShortcut moshortcut(message);
+
+  if (moshortcut.isValid()) {
+    if(moshortcut.hasExecutable()) {
+      m_core->processRunner()
+        .setFromShortcut(moshortcut)
+        .setWaitForCompletion(ProcessRunner::TriggerRefresh)
+        .run();
+    }
+  } else if (isNxmLink(message)) {
+    MessageDialog::showMessage(tr("Download started"), qApp->activeWindow());
+    m_core->downloadRequestedNXM(message);
+  } else {
+    cl::CommandLine cl;
+
+    if (auto r=cl.process(message.toStdWString())) {
+      log::debug(
+        "while processing external message, command line wants to "
+        "exit; ignoring");
+
+      return;
+    }
+
+    if (auto i=cl.instance()) {
+      const auto ci = InstanceManager::singleton().currentInstance();
+
+      if (*i != ci->name()) {
+        reportError(tr(
+          "This shortcut or command line is for instance '%1', but the current "
+          "instance is '%2'.")
+            .arg(*i).arg(ci->name()));
+
+        return;
+      }
+    }
+
+    if (auto p=cl.profile()) {
+      if (*p != m_core->profileName()) {
+        reportError(tr(
+          "This shortcut or command line is for profile '%1', but the current "
+          "profile is '%2'.")
+            .arg(*p).arg(m_core->profileName()));
+
+        return;
+      }
+    }
+
+    cl.runPostOrganizer(*m_core);
+  }
+}
+
+std::unique_ptr<Instance> MOApplication::getCurrentInstance()
 {
   auto& m = InstanceManager::singleton();
   auto currentInstance = m.currentInstance();
@@ -422,8 +448,6 @@ std::optional<Instance> MOApplication::getCurrentInstance()
   {
     // clear any overrides that might have been given on the command line
     m.clearOverrides();
-    m_cl.clear();
-
     currentInstance = selectInstance();
   }
   else
@@ -433,14 +457,13 @@ std::optional<Instance> MOApplication::getCurrentInstance()
 
       // clear any overrides that might have been given on the command line
       m.clearOverrides();
-      m_cl.clear();
 
       if (m.hasAnyInstances()) {
-        MOShared::criticalOnTop(QObject::tr(
+        reportError(QObject::tr(
           "Instance at '%1' not found. Select another instance.")
           .arg(currentInstance->directory()));
       } else {
-        MOShared::criticalOnTop(QObject::tr(
+        reportError(QObject::tr(
           "Instance at '%1' not found. You must create a new instance")
           .arg(currentInstance->directory()));
       }
@@ -496,31 +519,34 @@ void MOApplication::resetForRestart()
   // the previous instance gets deleted
   log::getDefault().setFile({});
 
-  // don't reprocess command line
-  m_cl.clear();
-
   // clear instance and profile overrides
   InstanceManager::singleton().clearOverrides();
+
+  m_core = {};
+  m_plugins = {};
+  m_nexus = {};
+  m_settings = {};
+  m_instance = {};
 }
 
 bool MOApplication::setStyleFile(const QString& styleName)
 {
   // remove all files from watch
-  QStringList currentWatch = m_StyleWatcher.files();
+  QStringList currentWatch = m_styleWatcher.files();
   if (currentWatch.count() != 0) {
-    m_StyleWatcher.removePaths(currentWatch);
+    m_styleWatcher.removePaths(currentWatch);
   }
   // set new stylesheet or clear it
   if (styleName.length() != 0) {
     QString styleSheetName = applicationDirPath() + "/" + MOBase::ToQString(AppConfig::stylesheetsPath()) + "/" + styleName;
     if (QFile::exists(styleSheetName)) {
-      m_StyleWatcher.addPath(styleSheetName);
+      m_styleWatcher.addPath(styleSheetName);
       updateStyle(styleSheetName);
     } else {
       updateStyle(styleName);
     }
   } else {
-    setStyle(new ProxyStyle(QStyleFactory::create(m_DefaultStyle)));
+    setStyle(new ProxyStyle(QStyleFactory::create(m_defaultStyle)));
     setStyleSheet("");
   }
   return true;
@@ -551,7 +577,7 @@ void MOApplication::updateStyle(const QString& fileName)
     setStyleSheet("");
     setStyle(new ProxyStyle(QStyleFactory::create(fileName)));
   } else {
-    setStyle(new ProxyStyle(QStyleFactory::create(m_DefaultStyle)));
+    setStyle(new ProxyStyle(QStyleFactory::create(m_defaultStyle)));
     if (QFile::exists(fileName)) {
       setStyleSheet(QString("file:///%1").arg(fileName));
     } else {

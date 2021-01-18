@@ -264,7 +264,7 @@ public:
   // instance name in the registry is empty or non-existent and there is no
   // portable instance set up
   //
-  std::optional<Instance> currentInstance() const;
+  std::unique_ptr<Instance> currentInstance() const;
 
   // sets the instance name in the registry so the same instance is opened next
   // time MO runs
@@ -359,7 +359,7 @@ enum class SetupInstanceResults
 // instance manager dialog and returns the selected instance or empty if the
 // user cancelled
 //
-std::optional<Instance> selectInstance();
+std::unique_ptr<Instance> selectInstance();
 
 // calls instance.setup() tries to handle problems by itself:
 //

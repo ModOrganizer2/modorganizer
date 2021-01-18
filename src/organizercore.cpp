@@ -346,25 +346,6 @@ void OrganizerCore::profileRemoved(QString const& profileName)
   m_ProfileRemoved(profileName);
 }
 
-
-void OrganizerCore::externalMessage(const QString &message)
-{
-  MOShortcut moshortcut(message);
-
-  if (moshortcut.isValid()) {
-    if(moshortcut.hasExecutable()) {
-      processRunner()
-        .setFromShortcut(moshortcut)
-        .setWaitForCompletion(ProcessRunner::Refresh)
-        .run();
-    }
-  }
-  else if (isNxmLink(message)) {
-    MessageDialog::showMessage(tr("Download started"), qApp->activeWindow());
-    downloadRequestedNXM(message);
-  }
-}
-
 void OrganizerCore::downloadRequested(QNetworkReply *reply, QString gameName, int modID,
                                       const QString &fileName)
 {
@@ -579,6 +560,10 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
         profileBaseDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot).at(0));
 
     log::error("picked profile '{}' instead", QDir(profileDir).dirName());
+
+    reportError(
+      tr("The selected profile '%1' does not exist. The profile '%2' will be used instead")
+        .arg(profileName).arg(QDir(profileDir).dirName()));
   }
 
   // Keep the old profile to emit signal-changed:
@@ -826,7 +811,7 @@ ModInfo::Ptr OrganizerCore::installDownload(int index, int priority)
       }
     }
   } catch (const std::exception &e) {
-    reportError(e.what());
+    reportError(QString(e.what()));
   }
 
   return nullptr;
@@ -1911,8 +1896,6 @@ bool OrganizerCore::beforeRun(
 
 void OrganizerCore::afterRun(const QFileInfo& binary, DWORD exitCode)
 {
-  refreshDirectoryStructure();
-
   // need to remove our stored load order because it may be outdated if a
   // foreign tool changed the file time. After removing that file,
   // refreshESPList will use the file time as the order
@@ -1927,7 +1910,7 @@ void OrganizerCore::afterRun(const QFileInfo& binary, DWORD exitCode)
   savePluginList();
   cycleDiagnostics();
 
-  //These callbacks should not fiddle with directoy structure and ESPs.
+  //These callbacks should not fiddle with directory structure and ESPs.
   m_FinishedRun(binary.absoluteFilePath(), exitCode);
 }
 

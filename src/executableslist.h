@@ -148,8 +148,8 @@ public:
   /**
    * @brief returns an iterator for the given executable by title, or end()
    */
-  iterator find(const QString &title);
-  const_iterator find(const QString &title) const;
+  iterator find(const QString &title, bool caseSensitive=true);
+  const_iterator find(const QString &title, bool caseSensitive=true) const;
 
   /**
    * @brief determine if an executable exists

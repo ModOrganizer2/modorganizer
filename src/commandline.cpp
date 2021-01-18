@@ -1,7 +1,11 @@
 #include "commandline.h"
 #include "env.h"
 #include "organizercore.h"
+#include "instancemanager.h"
+#include "multiprocess.h"
+#include "loglist.h"
 #include "shared/util.h"
+#include "shared/appconfig.h"
 #include <log.h>
 #include <report.h>
 
@@ -49,15 +53,19 @@ std::string table(
 
 
 CommandLine::CommandLine()
+  : m_command(nullptr)
 {
   createOptions();
-  m_commands.push_back(std::make_unique<ExeCommand>());
-  m_commands.push_back(std::make_unique<RunCommand>());
-  m_commands.push_back(std::make_unique<CrashDumpCommand>());
-  m_commands.push_back(std::make_unique<LaunchCommand>());
+
+  add<
+    RunCommand,
+    ReloadPluginCommand,
+    RefreshCommand,
+    CrashDumpCommand,
+    LaunchCommand>();
 }
 
-std::optional<int> CommandLine::run(const std::wstring& line)
+std::optional<int> CommandLine::process(const std::wstring& line)
 {
   try
   {
@@ -116,17 +124,22 @@ std::optional<int> CommandLine::run(const std::wstring& line)
               parsed = parser.run();
 
               po::store(parsed, m_vm);
-              po::notify(m_vm);
 
               if (m_vm.count("help")) {
                 env::Console console;
                 std::cout << usage(c.get()) << "\n";
                 return 0;
               }
+
+              // must be below the help check because it throws if required
+              // positional arguments are missing
+              po::notify(m_vm);
             }
 
-            // run the command
-            return c->run(line, m_vm, opts);
+            c->set(line, m_vm, opts);
+            m_command = c.get();
+
+            return runEarly();
           }
           catch(po::error& e)
           {
@@ -154,6 +167,7 @@ std::optional<int> CommandLine::run(const std::wstring& line)
       return 0;
     }
 
+
     if (!opts.empty()) {
       const auto qs = QString::fromStdWString(opts[0]);
 
@@ -166,7 +180,7 @@ std::optional<int> CommandLine::run(const std::wstring& line)
         return 1;
       }
 
-      // try as an moshorcut://
+      // try as an moshortcut://
       m_shortcut = qs;
 
       if (!m_shortcut.isValid()) {
@@ -201,16 +215,76 @@ std::optional<int> CommandLine::run(const std::wstring& line)
   }
 }
 
-std::optional<int> CommandLine::setupCore(OrganizerCore& organizer) const
+bool CommandLine::forwardToPrimary(MOMultiProcess& multiProcess)
+{
+  if (m_shortcut.isValid()) {
+    multiProcess.sendMessage(m_shortcut.toString());
+  } else if (m_nxmLink) {
+    multiProcess.sendMessage(*m_nxmLink);
+  } else if (m_command && m_command->canForwardToPrimary()) {
+    multiProcess.sendMessage(QString::fromWCharArray(GetCommandLineW()));
+  } else {
+    return false;
+  }
+
+  return true;
+}
+
+std::optional<int> CommandLine::runEarly()
+{
+  if (m_vm.count("logs")) {
+    // in loglist.h
+    logToStdout(true);
+  }
+
+  if (m_command) {
+    return m_command->runEarly();
+  }
+
+  return {};
+}
+
+std::optional<int> CommandLine::runPostApplication(MOApplication& a)
+{
+  // handle -i with no arguments
+  if (m_vm.count("instance") && m_vm["instance"].as<std::string>() == "") {
+    env::Console c;
+
+    if (auto i=InstanceManager::singleton().currentInstance()) {
+      std::cout << i->name().toStdString() << "\n";
+    } else {
+      std::cout << "no instance configured\n";
+    }
+
+    return 0;
+  }
+
+  if (m_command) {
+    return m_command->runPostApplication(a);
+  }
+
+  return {};
+}
+
+std::optional<int> CommandLine::runPostMultiProcess(MOMultiProcess& mp)
+{
+  if (m_command) {
+    return m_command->runPostMultiProcess(mp);
+  }
+
+  return {};
+}
+
+std::optional<int> CommandLine::runPostOrganizer(OrganizerCore& core)
 {
   if (m_shortcut.isValid()) {
     if (m_shortcut.hasExecutable()) {
       try {
         // make sure MO doesn't exit even if locking is disabled, ForceWait and
         // PreventExit will do that
-        organizer.processRunner()
+        core.processRunner()
           .setFromShortcut(m_shortcut)
-          .setWaitForCompletion(ProcessRunner::ForceWait, UILocker::PreventExit)
+          .setWaitForCompletion(ProcessRunner::ForCommandLine, UILocker::PreventExit)
           .run();
 
         return 0;
@@ -223,7 +297,7 @@ std::optional<int> CommandLine::setupCore(OrganizerCore& organizer) const
     }
   } else if (m_nxmLink) {
     log::debug("starting download from command line: {}", *m_nxmLink);
-    organizer.externalMessage(*m_nxmLink);
+    core.downloadRequestedNXM(*m_nxmLink);
   } else if (m_executable) {
     const QString exeName = *m_executable;
     log::debug("starting {} from command line", exeName);
@@ -234,9 +308,9 @@ std::optional<int> CommandLine::setupCore(OrganizerCore& organizer) const
       //
       // make sure MO doesn't exit even if locking is disabled, ForceWait and
       // PreventExit will do that
-      organizer.processRunner()
+      core.processRunner()
         .setFromFileOrExecutable(exeName, m_untouched)
-        .setWaitForCompletion(ProcessRunner::ForceWait, UILocker::PreventExit)
+        .setWaitForCompletion(ProcessRunner::ForCommandLine, UILocker::PreventExit)
         .run();
 
       return 0;
@@ -247,6 +321,8 @@ std::optional<int> CommandLine::setupCore(OrganizerCore& organizer) const
         QObject::tr("failed to start application: %1").arg(e.what()));
       return 1;
     }
+  } else if (m_command) {
+    return m_command->runPostOrganizer(core);
   }
 
   return {};
@@ -262,10 +338,23 @@ void CommandLine::clear()
 void CommandLine::createOptions()
 {
   m_visibleOptions.add_options()
-    ("help",      "show this message")
-    ("multiple",  "allow multiple MO processes to run; see below")
-    ("instance,i", po::value<std::string>(), "use the given instance (defaults to last used)")
-    ("profile,p", po::value<std::string>(), "use the given profile (defaults to last used)");
+    ("help",
+      "show this message")
+
+    ("multiple",
+      "allow multiple MO processes to run; see below")
+
+    ("logs",
+      "duplicates the logs to stdout")
+
+    ("instance,i",
+      po::value<std::string>()->implicit_value(""),
+      "use the given instance (defaults to last used)")
+
+    ("profile,p",
+      po::value<std::string>(),
+      "use the given profile (defaults to last used)");
+
 
   po::options_description options;
   options.add_options()
@@ -291,8 +380,14 @@ std::string CommandLine::usage(const Command* c) const
 
   if (c) {
     oss
-      << "  ModOrganizer.exe [global-options] " << c->usageLine() << "\n"
-      << "\n"
+      << "  ModOrganizer.exe [global-options] " << c->usageLine() << "\n\n";
+
+    const std::string more = c->moreInfo();
+    if (!more.empty()) {
+      oss << more << "\n\n";
+    }
+
+    oss
       << "Command options:\n"
       << c->visibleOptions() << "\n";
   } else {
@@ -304,6 +399,11 @@ std::string CommandLine::usage(const Command* c) const
     // name and description for all commands
     std::vector<std::pair<std::string, std::string>> v;
     for (auto&& c : m_commands) {
+      // don't show legacy commands
+      if (c->legacy()) {
+        continue;
+      }
+
       v.push_back({c->name(), c->description()});
     }
 
@@ -395,6 +495,11 @@ std::string CommandLine::more() const
 }
 
 
+Command::Meta::Meta(std::string n, std::string d, std::string u, std::string m)
+  : name(n), description(d), usage(u), more(m)
+{
+}
+
 std::string Command::name() const
 {
   return meta().name;
@@ -407,7 +512,12 @@ std::string Command::description() const
 
 std::string Command::usageLine() const
 {
-  return name() + " " + getUsageLine();
+  return name() + " " + meta().usage;
+}
+
+std::string Command::moreInfo() const
+{
+  return meta().more;
 }
 
 po::options_description Command::allOptions() const
@@ -437,12 +547,7 @@ po::positional_options_description Command::positional() const
 
 bool Command::legacy() const
 {
-  return true;
-}
-
-std::string Command::getUsageLine() const
-{
-  return "[options]";
+  return false;
 }
 
 po::options_description Command::getVisibleOptions() const
@@ -463,8 +568,7 @@ po::positional_options_description Command::getPositional() const
   return {};
 }
 
-
-std::optional<int> Command::run(
+void Command::set(
   const std::wstring& originalLine,
   po::variables_map vm,
   std::vector<std::wstring> untouched)
@@ -472,8 +576,31 @@ std::optional<int> Command::run(
   m_original = originalLine;
   m_vm = vm;
   m_untouched = untouched;
+}
 
-  return doRun();
+std::optional<int> Command::runEarly()
+{
+  return {};
+}
+
+std::optional<int> Command::runPostApplication(MOApplication& a)
+{
+  return {};
+}
+
+std::optional<int> Command::runPostMultiProcess(MOMultiProcess&)
+{
+  return {};
+}
+
+std::optional<int> Command::runPostOrganizer(OrganizerCore&)
+{
+  return {};
+}
+
+bool Command::canForwardToPrimary() const
+{
+  return false;
 }
 
 const std::wstring& Command::originalCmd() const
@@ -504,10 +631,15 @@ po::options_description CrashDumpCommand::getVisibleOptions() const
 
 Command::Meta CrashDumpCommand::meta() const
 {
-  return {"crashdump", "writes a crashdump for a running process of MO"};
+  return {
+    "crashdump",
+    "writes a crashdump for a running process of MO",
+    "[options]",
+    ""
+  };
 }
 
-std::optional<int> CrashDumpCommand::doRun()
+std::optional<int> CrashDumpCommand::runEarly()
 {
   env::Console console;
 
@@ -529,7 +661,7 @@ std::optional<int> CrashDumpCommand::doRun()
 
 Command::Meta LaunchCommand::meta() const
 {
-  return {"launch", "(internal, do not use)"};
+  return {"launch", "(internal, do not use)", "", ""};
 }
 
 bool LaunchCommand::legacy() const
@@ -537,7 +669,7 @@ bool LaunchCommand::legacy() const
   return true;
 }
 
-std::optional<int> LaunchCommand::doRun()
+std::optional<int> LaunchCommand::runEarly()
 {
   // needs at least the working directory and process name
   if (untouched().size() < 2) {
@@ -603,71 +735,189 @@ LPCWSTR LaunchCommand::UntouchedCommandLineArguments(
 }
 
 
-std::string ExeCommand::getUsageLine() const
+Command::Meta RunCommand::meta() const
 {
-  return "[options] exe-name";
+  return {
+    "run",
+    "runs a program, file or a configured executable",
+    "[options] NAME",
+
+    "Runs a program or a file with the virtual filesystem. If NAME is a path\n"
+    "to a non-executable file, the program that is associated with the file\n"
+    "extension is run instead. With -e, NAME must refer to the name of an\n"
+    "executable in the instance (for example, \"SKSE\")."
+  };
 }
 
-po::options_description ExeCommand::getVisibleOptions() const
-{
-  po::options_description d;
-
-  d.add_options()
-    ("arguments,a", po::value<std::string>()->default_value(""), "override arguments")
-    ("cwd,c",       po::value<std::string>()->default_value(""), "override working directory");
-
-  return d;
-}
-
-po::options_description ExeCommand::getInternalOptions() const
+po::options_description RunCommand::getVisibleOptions() const
 {
   po::options_description d;
 
   d.add_options()
-    ("exe-name", po::value<std::string>()->required(), "executable name");
+    ("executable,e", po::value<bool>()->default_value(false)->zero_tokens(), "the name is a configured executable name")
+    ("arguments,a", po::value<std::string>(), "override arguments")
+    ("cwd,c",       po::value<std::string>(), "override working directory");
 
   return d;
 }
 
-po::positional_options_description ExeCommand::getPositional() const
+po::options_description RunCommand::getInternalOptions() const
+{
+  po::options_description d;
+
+  d.add_options()
+    ("NAME", po::value<std::string>()->required(), "program or executable name");
+
+  return d;
+}
+
+po::positional_options_description RunCommand::getPositional() const
 {
   po::positional_options_description d;
 
-  d.add("exe-name", 1);
+  d.add("NAME", 1);
 
   return d;
 }
 
-Command::Meta ExeCommand::meta() const
+bool RunCommand::canForwardToPrimary() const
 {
-  return {"exe", "launches a configured executable"};
+  return true;
 }
 
-std::optional<int> ExeCommand::doRun()
+std::optional<int> RunCommand::runPostOrganizer(OrganizerCore& core)
 {
-  const auto exe = vm()["exe-name"].as<std::string>();
-  const auto args = vm()["arguments"].as<std::string>();
-  const auto cwd = vm()["cwd"].as<std::string>();
+  const auto program = QString::fromStdString(vm()["NAME"].as<std::string>());
 
-  std::cout << "not implemented\n";
+  try
+  {
+    // make sure MO doesn't exit even if locking is disabled, ForceWait and
+    // PreventExit will do that
+    auto p = core.processRunner();
 
-  return 0;
+    if (vm()["executable"].as<bool>()) {
+      const auto& exes = *core.executablesList();
+
+      // case sensitive
+      auto itor = exes.find(program, true);
+      if (itor == exes.end()) {
+        // case insensitive
+        itor = exes.find(program, false);
+
+        if (itor == exes.end()) {
+          // not found
+          reportError(
+            QObject::tr("Executable '%1' not found in instance '%2'.")
+              .arg(program)
+              .arg(InstanceManager::singleton().currentInstance()->name()));
+
+          return 1;
+        }
+      }
+
+      p.setFromExecutable(*itor);
+    } else {
+      p.setFromFile(nullptr, QFileInfo(program));
+    }
+
+    if (vm().count("arguments")) {
+      p.setArguments(QString::fromStdString(vm()["arguments"].as<std::string>()));
+    }
+
+    if (vm().count("cwd")) {
+      p.setCurrentDirectory(QString::fromStdString(vm()["cwd"].as<std::string>()));
+    }
+
+    p.setWaitForCompletion(ProcessRunner::ForCommandLine, UILocker::PreventExit);
+
+    const auto r = p.run();
+    if (r == ProcessRunner::Error) {
+      reportError(
+        QObject::tr("Failed to run '%1'. The logs might have more information.").arg(program));
+
+      return 1;
+    }
+
+    return 0;
+  }
+  catch (const std::exception &e) {
+    reportError(
+      QObject::tr("Failed to run '%1'. The logs might have more information. %2")
+        .arg(program).arg(e.what()));
+
+    return 1;
+  }
 }
 
 
-po::options_description RunCommand::getOptions() const
+
+Command::Meta ReloadPluginCommand::meta() const
 {
+  return {
+    "reload-plugin",
+    "reloads the given plugin",
+    "PLUGIN",
+    ""
+  };
+}
+
+po::options_description ReloadPluginCommand::getInternalOptions() const
+{
+  po::options_description d;
+
+  d.add_options()
+    ("PLUGIN", po::value<std::string>()->required(), "plugin name");
+
+  return d;
+}
+
+po::positional_options_description ReloadPluginCommand::getPositional() const
+{
+  po::positional_options_description d;
+
+  d.add("PLUGIN", 1);
+
+  return d;
+}
+
+bool ReloadPluginCommand::canForwardToPrimary() const
+{
+  return true;
+}
+
+std::optional<int> ReloadPluginCommand::runPostOrganizer(OrganizerCore& core)
+{
+  const QString name = QString::fromStdString(vm()["PLUGIN"].as<std::string>());
+
+  QString filepath = QDir(
+    qApp->applicationDirPath() + "/" +
+    ToQString(AppConfig::pluginPath()))
+      .absoluteFilePath(name);
+
+  log::debug("reloading plugin from {}", filepath);
+  core.pluginContainer().reloadPlugin(filepath);
+
   return {};
 }
 
-Command::Meta RunCommand::meta() const
+
+Command::Meta RefreshCommand::meta() const
 {
-  return {"run", "launches an arbitrary program"};
+  return {
+    "refresh",
+    "refreshes MO (same as F5)",
+    "", ""
+  };
 }
 
-std::optional<int> RunCommand::doRun()
+bool RefreshCommand::canForwardToPrimary() const
 {
-  std::cout << "not implemented\n";
+  return true;
+}
+
+std::optional<int> RefreshCommand::runPostOrganizer(OrganizerCore& core)
+{
+  core.refresh();
   return {};
 }
 

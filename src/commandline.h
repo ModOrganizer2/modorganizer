@@ -5,6 +5,8 @@
 #include <memory>
 
 class OrganizerCore;
+class MOApplication;
+class MOMultiProcess;
 
 namespace cl
 {
@@ -27,9 +29,13 @@ public:
   //
   std::string description() const;
 
-  // usage line, puts together the name and whatever getUsageLine() returns
+  // usage line, puts together the name and whatever meta().usage is
   //
   std::string usageLine() const;
+
+  // shown after the usage line; this is meta().more
+  //
+  std::string moreInfo() const;
 
 
   // returns all options for this command, including hidden ones; used to parse
@@ -50,24 +56,65 @@ public:
   //
   virtual bool legacy() const;
 
-  // runs this command, eventually calls doRun()
+  // remembers the given values
   //
-  std::optional<int> run(
+  void set(
     const std::wstring& originalLine,
     po::variables_map vm,
     std::vector<std::wstring> untouched);
+
+
+  // called as soon as the command line has been parsed; return something to
+  // exit immediately
+  //
+  virtual std::optional<int> runEarly();
+
+  // called as soon as the MOApplication has been created, which is also the
+  // first time where Qt stuff is available
+  //
+  virtual std::optional<int> runPostApplication(MOApplication& a);
+
+  // called as soon as the multi process checks have confirmed that this is
+  // a primary instance; return something to exit immediately
+  //
+  virtual std::optional<int> runPostMultiProcess(MOMultiProcess& mp);
+
+  // called after the OrganizerCore has been initialized; return something to
+  // exit immediatley
+  //
+  virtual std::optional<int> runPostOrganizer(OrganizerCore& core);
+
+  // whether this command can be forwarded to the primary instance if one is
+  // already running
+  //
+  // if an instance is already running and this returns true, the whole command
+  // line is sent as a message to the primary instance, which will construct a
+  // new CommandLine and call runPostOrganizer() with it
+  //
+  // if an instance is already running and this returns false, the "an instance
+  // is already running" error dialog will be shown
+  //
+  // if this is the primary instance, this function is not called
+  //
+  virtual bool canForwardToPrimary() const;
 
 protected:
   // meta information about this command, returned by derived classes
   //
   struct Meta
   {
-    std::string name, description;
+    std::string name, description, usage, more;
+
+    Meta(
+      std::string name, std::string description,
+      std::string usage, std::string more);
   };
 
-  // returns the usage line for this command, not including the name
+
+  // meta
   //
-  virtual std::string getUsageLine() const;
+  virtual Meta meta() const = 0;
+
 
   // returns visible options specific to this command
   //
@@ -80,15 +127,6 @@ protected:
   // returns positional arguments specific to this command
   //
   virtual po::positional_options_description getPositional() const;
-
-
-  // meta
-  //
-  virtual Meta meta() const = 0;
-
-  // runs the command
-  //
-  virtual std::optional<int> doRun() = 0;
 
 
   // returns the original command line
@@ -117,7 +155,7 @@ class CrashDumpCommand : public Command
 protected:
   po::options_description getVisibleOptions() const override;
   Meta meta() const override;
-  std::optional<int> doRun() override;
+  std::optional<int> runEarly() override;
 };
 
 
@@ -140,7 +178,7 @@ public:
 
 protected:
   Meta meta() const override;
-  std::optional<int> doRun() override;
+  std::optional<int> runEarly() override;
 
   int SpawnWaitProcess(LPCWSTR workingDirectory, LPCWSTR commandLine);
 
@@ -149,29 +187,47 @@ protected:
 };
 
 
-// runs a configured executable
-//
-class ExeCommand : public Command
-{
-protected:
-  std::string getUsageLine() const override;
-  po::options_description getVisibleOptions() const override;
-  po::options_description getInternalOptions() const override;
-  po::positional_options_description getPositional() const override;
-  Meta meta() const override;
-  std::optional<int> doRun() override;
-};
-
-
-// runs an arbitrary executable
+// runs a program or an executable
 //
 class RunCommand : public Command
 {
 protected:
-  po::options_description getOptions() const;
   Meta meta() const override;
-  std::optional<int> doRun() override;
+
+  po::options_description getVisibleOptions() const override;
+  po::options_description getInternalOptions() const override;
+  po::positional_options_description getPositional() const override;
+
+  bool canForwardToPrimary() const override;
+  std::optional<int> runPostOrganizer(OrganizerCore& core) override;
 };
+
+
+// reloads the given plugin
+//
+class ReloadPluginCommand : public Command
+{
+protected:
+  Meta meta() const override;
+
+  po::options_description getInternalOptions() const override;
+  po::positional_options_description getPositional() const override;
+
+  bool canForwardToPrimary() const override;
+  std::optional<int> runPostOrganizer(OrganizerCore& core) override;
+};
+
+
+// refreshes mo
+//
+class RefreshCommand : public Command
+{
+protected:
+  Meta meta() const override;
+  bool canForwardToPrimary() const override;
+  std::optional<int> runPostOrganizer(OrganizerCore& core) override;
+};
+
 
 
 // parses the command line and runs any given command
@@ -212,20 +268,45 @@ class CommandLine
 public:
   CommandLine();
 
-  // parses the given command line and executes the appropriate command, if
-  // any
+  // parses the given command line and calls runEarly() on the appropriate
+  // command, if any
   //
   // returns an empty optional if execution should continue, or a return code
   // if MO must quit
   //
-  std::optional<int> run(const std::wstring& line);
+  std::optional<int> process(const std::wstring& line);
 
-  // handles moshortcut, nxm links and starting processes
+  // called as soon as the MOApplication has been created; this handles a few
+  // global actions and forwards to the command, if any
   //
-  // returns an empty optional if execution should continue, or a return code
-  // if MO must quit
+  std::optional<int> runPostApplication(MOApplication& a);
+
+  // calls Command::runPostMultiProcess() on the command, if any
   //
-  std::optional<int> setupCore(OrganizerCore& organizer) const;
+  std::optional<int> runPostMultiProcess(MOMultiProcess& mp);
+
+  // calls Command::runPostOrganizer() on the command, if any
+  //
+  // if MO wasn't invoked with a valid command, this also handles moshortcut,
+  // nxm links and starting processes
+  //
+  std::optional<int> runPostOrganizer(OrganizerCore& core);
+
+  // called when this instance is not the primary one
+  //
+  // if a command was executed and the command returns true for
+  // canForwardToPrimary(), this forwards the command line as an external
+  // message and returns true
+  //
+  // if the command returns false for canForwardToPrimary(), returns false
+  //
+  // if there was no valid command on the command line, this also forwards
+  // moshortcut and nxm links
+  //
+  // if there was no command, moshortcut or nxm links, this returns false, which
+  // will end up displaying an error message about an instance already running
+  //
+  bool forwardToPrimary(MOMultiProcess& multiProcess);
 
 
   // clears parsed options, used when MO is "restarted" so the options aren't
@@ -259,6 +340,7 @@ public:
   std::optional<QString> nxmLink() const;
 
   // returns the executable/binary, if any
+  //
   std::optional<QString> executable() const;
 
   // returns the list of arguments, excluding moshortcut or executable name;
@@ -275,9 +357,18 @@ private:
   std::optional<QString> m_nxmLink;
   std::optional<QString> m_executable;
   QStringList m_untouched;
+  Command* m_command;
 
   void createOptions();
   std::string more() const;
+
+  template <class... Ts>
+  void add()
+  {
+    (m_commands.push_back(std::make_unique<Ts>()), ...);
+  }
+
+  std::optional<int> runEarly();
 };
 
 } // namespace

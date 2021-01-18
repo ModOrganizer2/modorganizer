@@ -211,14 +211,22 @@ Executable &ExecutablesList::getByBinary(const QFileInfo &info)
   throw std::runtime_error("invalid info");
 }
 
-ExecutablesList::iterator ExecutablesList::find(const QString &title)
+ExecutablesList::iterator ExecutablesList::find(const QString &title, bool ci)
 {
-  return std::find_if(begin(), end(), [&](auto&& e) { return e.title() == title; });
+  const auto cif = ci ? Qt::CaseInsensitive : Qt::CaseSensitive;
+
+  return std::find_if(begin(), end(), [&](auto&& e) {
+    return (e.title().compare(title, cif) == 0);
+  });
 }
 
-ExecutablesList::const_iterator ExecutablesList::find(const QString &title) const
+ExecutablesList::const_iterator ExecutablesList::find(const QString &title, bool ci) const
 {
-  return std::find_if(begin(), end(), [&](auto&& e) { return e.title() == title; });
+  const auto cif = ci ? Qt::CaseInsensitive : Qt::CaseSensitive;
+
+  return std::find_if(begin(), end(), [&](auto&& e) {
+    return (e.title().compare(title, cif) == 0);
+  });
 }
 
 bool ExecutablesList::titleExists(const QString &title) const

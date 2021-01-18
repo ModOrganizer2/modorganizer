@@ -1486,7 +1486,7 @@ void MainWindow::startExeAction()
 
   m_OrganizerCore.processRunner()
     .setFromExecutable(*itor)
-    .setWaitForCompletion(ProcessRunner::Refresh)
+    .setWaitForCompletion(ProcessRunner::TriggerRefresh)
     .run();
 }
 
@@ -2033,7 +2033,7 @@ void MainWindow::on_startButton_clicked()
 
   m_OrganizerCore.processRunner()
     .setFromExecutable(*selectedExecutable)
-    .setWaitForCompletion(ProcessRunner::Refresh)
+    .setWaitForCompletion(ProcessRunner::TriggerRefresh)
     .run();
 }
 
