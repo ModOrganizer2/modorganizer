@@ -486,41 +486,88 @@ void PluginList::readLockedOrderFrom(const QString &fileName)
   }
 
   file.open(QIODevice::ReadOnly);
-
   int lineNumber = 0;
-  while (!file.atEnd()) {
-    ++lineNumber;
+  while (!file.atEnd())
+  {
     QByteArray line = file.readLine();
-    if ((line.size() > 0) && (line.at(0) != '#')) {
-      QList<QByteArray> fields = line.split('|');
-      if (fields.count() == 2) {
-        int priority = fields.at(1).trimmed().toInt();
-        QString name = QString::fromUtf8(fields.at(0));
-        // Avoid locking a force-enabled plugin
-        if (!m_ESPs[m_ESPsByName.at(name)].forceEnabled) {
-          // Is this an open and unclaimed priority?
-          if (m_ESPs[m_ESPsByPriority.at(priority)].forceEnabled ||
-             std::find_if(m_LockedOrder.begin(), m_LockedOrder.end(), [&](const std::pair<QString, int> &a) { return a.second == priority; }) != m_LockedOrder.end()) {
-            // Attempt to find a priority but step over force-enabled plugins and already-set locks
-            int calcPriority = priority;
-            do {
-              ++calcPriority;
-            } while (calcPriority < m_ESPsByPriority.size() || (m_ESPs[m_ESPsByPriority.at(calcPriority)].forceEnabled &&
-                     std::find_if(m_LockedOrder.begin(), m_LockedOrder.end(), [&](const std::pair<QString, int> &a) { return a.second == calcPriority; }) != m_LockedOrder.end()));
-            // If we have a match, we can reassign the priority...
-            if (calcPriority < m_ESPsByPriority.size())
-              m_LockedOrder[name] = calcPriority;
-          } else {
-            m_LockedOrder[name] = priority;
-          }
-        }
-      } else {
-        log::error("locked order file: invalid line #{} '{}'", lineNumber, QString::fromUtf8(line));
-        reportError(tr("The file containing locked plugin indices is broken"));
+    ++lineNumber;
+
+    // Skip empty lines or commented out lines (#)
+    if ((line.size() <= 0) || (line.at(0) == '#'))
+    {
+      continue;
+    }
+
+    QList<QByteArray> fields = line.split('|');
+    if (fields.count() != 2)
+    {
+      // Don't know how to parse this so run away
+      log::error("locked order file: invalid line #{}: {}", lineNumber, QString::fromUtf8(line).trimmed());
+      continue;
+    }
+
+    // Read the plugin name and priority
+    QString pluginName = QString::fromUtf8(fields.at(0));
+    int priority = fields.at(1).trimmed().toInt();
+    if (priority < 0)
+    {
+      // WTF do you mean a negative priority?
+      log::error("locked order file: invalid line #{}: {}", lineNumber, QString::fromUtf8(line).trimmed());
+      continue;
+    }
+
+    // Determine the index of the plugin
+    auto it = m_ESPsByName.find(pluginName);
+    if (it == m_ESPsByName.end())
+    {
+      // Plugin does not exist in the current set of plugins
+      m_LockedOrder[pluginName] = priority;
+      continue;
+    }
+    int pluginIndex = it->second;
+
+    // Do not allow locking forced plugins
+    if (m_ESPs[pluginIndex].forceEnabled)
+    {
+      continue;
+    }
+
+    // If the priority is larger than the number of plugins, just keep it locked
+    if (priority >= m_ESPsByPriority.size())
+    {
+      m_LockedOrder[pluginName] = priority;
+      continue;
+    }
+
+    // These are some helper functions for figuring out what is already locked
+    auto findLocked = [&](const std::pair<QString, int>& a) { return a.second == priority; };
+    auto alreadyLocked = [&](){ return std::find_if(m_LockedOrder.begin(), m_LockedOrder.end(), findLocked) != m_LockedOrder.end(); };
+
+    // See if we can just set the given priority
+    if (!m_ESPs[priority].forceEnabled && !alreadyLocked())
+    {
+      m_LockedOrder[pluginName] = priority;
+      continue;
+    }
+
+    // Find the next higher priority we can set the plugin to
+    while (++priority < m_ESPs.size())
+    {
+      if (!m_ESPs[priority].forceEnabled && !alreadyLocked())
+      {
+        m_LockedOrder[pluginName] = priority;
         break;
       }
     }
-  }
+
+    // See if we walked off the end of the plugin list
+    if (priority >= m_ESPs.size())
+    {
+      // I guess go ahead and lock it here at the end of the list?
+      m_LockedOrder[pluginName] = priority;
+      continue;
+    }
+  } /* while (!file.atEnd()) */
   file.close();
 }
 
