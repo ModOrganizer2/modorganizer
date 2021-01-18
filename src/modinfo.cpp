@@ -52,7 +52,7 @@ using namespace MOShared;
 const std::set<unsigned int> ModInfo::s_EmptySet;
 std::vector<ModInfo::Ptr> ModInfo::s_Collection;
 ModInfo::Ptr ModInfo::s_Overwrite;
-std::map<QString, unsigned int, ModNameCompare> ModInfo::s_ModsByName;
+std::map<QString, unsigned int, MOBase::FileNameComparator> ModInfo::s_ModsByName;
 std::map<std::pair<QString, int>, std::vector<unsigned int>> ModInfo::s_ModsByModID;
 int ModInfo::s_NextID;
 QMutex ModInfo::s_Mutex(QMutex::Recursive);
