@@ -24,12 +24,14 @@ void ModListGlobalContextMenu::populate(OrganizerCore& core, ModListView* view, 
 {
   clear();
 
-  addAction(tr("Install Mod..."), [=]() { view->actions().installMod(); });
 
   auto modIndex = index.data(ModList::IndexRole);
   if (modIndex.isValid() && view->sortColumn() == ModList::COL_PRIORITY) {
     auto info = ModInfo::getByIndex(modIndex.toInt());
     if (!info->isBackup()) {
+
+      addAction(tr("Install mod above..."), [=]() { view->actions().installMod("", index); });
+
       QString text = tr("Create empty mod above");
       if (info->isSeparator()) {
         text = tr("Create empty mod inside");
@@ -42,6 +44,7 @@ void ModListGlobalContextMenu::populate(OrganizerCore& core, ModListView* view, 
     }
   }
   else {
+    addAction(tr("Install mod..."), [=]() { view->actions().installMod(); });
     addAction(tr("Create empty mod"), [=]() { view->actions().createEmptyMod(); });
     addAction(tr("Create separator"), [=]() { view->actions().createSeparator(); });
   }

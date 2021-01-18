@@ -733,11 +733,12 @@ QString OrganizerCore::pluginDataPath()
 }
 
 MOBase::IModInterface *OrganizerCore::installMod(const QString & archivePath,
+                                                 int priority,
                                                  bool reinstallation,
                                                  ModInfo::Ptr currentMod,
                                                  const QString &initModName)
 {
-  return installArchive(archivePath, -1, reinstallation, currentMod, initModName).get();
+  return installArchive(archivePath, reinstallation ? -1 : priority, reinstallation, currentMod, initModName).get();
 }
 
 ModInfo::Ptr OrganizerCore::installDownload(int index, int priority)

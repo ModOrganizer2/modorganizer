@@ -50,8 +50,18 @@ ModListViewActions::ModListViewActions(
 
 }
 
-void ModListViewActions::installMod(const QString& archivePath) const
+void ModListViewActions::installMod(const QString& archivePath, const QModelIndex& index) const
 {
+  int newPriority = -1;
+  if (index.isValid() && m_view->sortColumn() == ModList::COL_PRIORITY) {
+    newPriority = m_core.currentProfile()->getModPriority(index.data(ModList::IndexRole).toInt());
+
+    // descending order, we need to fix the priority
+    if (m_view->sortOrder() == Qt::DescendingOrder) {
+      newPriority++;
+    }
+  }
+
   try {
     QString path = archivePath;
     if (path.isEmpty()) {
@@ -68,7 +78,7 @@ void ModListViewActions::installMod(const QString& archivePath) const
       return;
     }
     else {
-      m_core.installMod(path, false, nullptr, QString());
+      m_core.installMod(path, newPriority, false, nullptr, QString());
     }
   }
   catch (const std::exception& e) {
@@ -864,7 +874,7 @@ void ModListViewActions::reinstallMod(const QModelIndex& index) const
       fullInstallationFile = m_core.downloadManager()->getOutputDirectory() + "/" + installationFile;
     }
     if (QFile::exists(fullInstallationFile)) {
-      m_core.installMod(fullInstallationFile, true, modInfo, modInfo->name());
+      m_core.installMod(fullInstallationFile, -1, true, modInfo, modInfo->name());
     }
     else {
       QMessageBox::information(m_parent, tr("Failed"), tr("Installation file no longer exists"));

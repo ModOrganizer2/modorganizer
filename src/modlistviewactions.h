@@ -31,9 +31,10 @@ public:
     PluginListView* pluginView,
     QObject* nxmReceiver);
 
-  // install the mod from the given archive
+  // install the mod from the given archive before "above" the mod with
+  // the given index
   //
-  void installMod(const QString& archivePath = "") const;
+  void installMod(const QString& archivePath = "", const QModelIndex& index = QModelIndex()) const;
 
   // create an empty mod/a separator before the given mod or at
   // the end of the list if the index is invalid
