@@ -24,13 +24,13 @@ void ModListGlobalContextMenu::populate(OrganizerCore& core, ModListView* view, 
 {
   clear();
 
-
   auto modIndex = index.data(ModList::IndexRole);
   if (modIndex.isValid() && view->sortColumn() == ModList::COL_PRIORITY) {
     auto info = ModInfo::getByIndex(modIndex.toInt());
     if (!info->isBackup()) {
 
-
+      // the mod are not created/installed at the same position depending
+      // on the clicked mod and the sort order
       QString installText = tr("Install mod above... ");
       QString createText = tr("Create empty mod above");
       if (info->isSeparator()) {
@@ -41,6 +41,7 @@ void ModListGlobalContextMenu::populate(OrganizerCore& core, ModListView* view, 
         installText = tr("Install mod below... ");
         createText = tr("Create empty mod below");
       }
+
       addAction(installText, [=]() { view->actions().installMod("", index); });
       addAction(createText, [=]() { view->actions().createEmptyMod(index); });
       addAction(tr("Create separator above"), [=]() { view->actions().createSeparator(index); });
