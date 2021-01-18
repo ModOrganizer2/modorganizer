@@ -48,7 +48,7 @@ bool canPreviewFile(
     return false;
   }
 
-  const auto ext = QFileInfo(filename).suffix();
+  const auto ext = QFileInfo(filename).suffix().toLower();
   return pluginContainer.previewGenerator().previewSupported(ext);
 }
 
