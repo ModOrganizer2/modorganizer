@@ -524,7 +524,7 @@ void PluginList::readLockedOrderFrom(const QString &fileName)
       m_LockedOrder[pluginName] = priority;
       continue;
     }
-    int pluginIndex = it->second; //TODO: uh.... check this
+    int pluginIndex = it->second;
 
     // Do not allow locking forced plugins
     if (m_ESPs[pluginIndex].forceEnabled)
