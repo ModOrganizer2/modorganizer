@@ -261,7 +261,7 @@ void FileTree::activate(FileTreeItem* item)
 
   if (tryPreview) {
     const QFileInfo fi(item->realPath());
-    if (m_plugins.previewGenerator().previewSupported(fi.suffix())) {
+    if (m_plugins.previewGenerator().previewSupported(fi.suffix().toLower())) {
       preview(item);
       return;
     }
