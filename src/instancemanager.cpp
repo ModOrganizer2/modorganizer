@@ -28,7 +28,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "createinstancedialogpages.h"
 #include "shared/appconfig.h"
 #include "shared/util.h"
-#include "shared/error_report.h"
 #include <report.h>
 #include <iplugingame.h>
 #include <utility.h>
@@ -896,7 +895,7 @@ SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
       // unreadable ini, there's not much that can be done, select another
       // instance
 
-      MOShared::criticalOnTop(
+      reportError(
         QObject::tr("Cannot open instance '%1', failed to read INI file %2.")
         .arg(instance.name()).arg(instance.iniPath()));
 
@@ -911,7 +910,7 @@ SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
       //
       // ask the user for the game managed by this instance
 
-      MOShared::criticalOnTop(
+      reportError(
         QObject::tr(
           "Cannot open instance '%1', the managed game was not found in the INI "
           "file %2. Select the game managed by this instance.")
@@ -925,7 +924,7 @@ SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
       // there is no plugin that can handle the game name/directory from the
       // ini, so this instance is unusable
 
-      MOShared::criticalOnTop(
+      reportError(
         QObject::tr(
           "Cannot open instance '%1', the game plugin '%2' doesn't exist. It "
           "may have been deleted by an antivirus. Select another instance.")
@@ -939,7 +938,7 @@ SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
       // the game directory doesn't exist or the plugin doesn't recognize it;
       // ask the user for the game managed by this instance
 
-      MOShared::criticalOnTop(
+      reportError(
         QObject::tr(
           "Cannot open instance '%1', the game directory '%2' doesn't exist or "
           "the game plugin '%3' doesn't recognize it. Select the game managed "

@@ -5,7 +5,6 @@
 #include "multiprocess.h"
 #include "loglist.h"
 #include "shared/util.h"
-#include "shared/error_report.h"
 #include "shared/appconfig.h"
 #include <log.h>
 #include <report.h>
@@ -807,7 +806,7 @@ std::optional<int> RunCommand::runPostOrganizer(OrganizerCore& core)
 
         if (itor == exes.end()) {
           // not found
-          MOShared::criticalOnTop(
+          reportError(
             QObject::tr("Executable '%1' not found in instance '%2'.")
               .arg(program)
               .arg(InstanceManager::singleton().currentInstance()->name()));
@@ -833,7 +832,7 @@ std::optional<int> RunCommand::runPostOrganizer(OrganizerCore& core)
 
     const auto r = p.run();
     if (r == ProcessRunner::Error) {
-      MOShared::criticalOnTop(
+      reportError(
         QObject::tr("Failed to run '%1'. The logs might have more information.").arg(program));
 
       return 1;
@@ -842,7 +841,7 @@ std::optional<int> RunCommand::runPostOrganizer(OrganizerCore& core)
     return 0;
   }
   catch (const std::exception &e) {
-    MOShared::criticalOnTop(
+    reportError(
       QObject::tr("Failed to run '%1'. The logs might have more information. %2")
         .arg(program).arg(e.what()));
 

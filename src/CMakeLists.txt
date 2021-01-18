@@ -212,12 +212,9 @@ add_filter(NAME src/utilities GROUPS
 	shared/appconfig
 	bbcode
 	csvbuilder
-	shared/error_report
-	shared/leaktrace
 	persistentcookiejar
 	serverinfo
 	spawn
-	shared/stackdata
 	shared/util
 	usvfsconnector
 	shared/windows_error

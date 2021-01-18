@@ -37,7 +37,6 @@
 #include "shared/filesorigin.h"
 #include "shared/fileentry.h"
 #include "shared/util.h"
-#include "shared/error_report.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -562,7 +561,7 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
 
     log::error("picked profile '{}' instead", QDir(profileDir).dirName());
 
-    MOShared::criticalOnTop(
+    reportError(
       tr("The selected profile '%1' does not exist. The profile '%2' will be used instead")
         .arg(profileName).arg(QDir(profileDir).dirName()));
   }
@@ -812,7 +811,7 @@ ModInfo::Ptr OrganizerCore::installDownload(int index, int priority)
       }
     }
   } catch (const std::exception &e) {
-    reportError(e.what());
+    reportError(QString(e.what()));
   }
 
   return nullptr;

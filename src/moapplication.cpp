@@ -32,7 +32,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "sanitychecks.h"
 #include "mainwindow.h"
 #include "messagedialog.h"
-#include "shared/error_report.h"
 #include "shared/util.h"
 #include <iplugingame.h>
 #include <report.h>
@@ -204,7 +203,7 @@ int MOApplication::setup(MOMultiProcess& multiProcess)
   setProperty("dataPath", dataPath);
 
   if (!setLogDirectory(dataPath)) {
-    reportError("Failed to create log folder");
+    reportError(tr("Failed to create log folder."));
     InstanceManager::singleton().clearCurrentInstance();
     return 1;
   }
@@ -271,7 +270,7 @@ int MOApplication::setup(MOMultiProcess& multiProcess)
 
   m_core.reset(new OrganizerCore(*m_settings));
   if (!m_core->bootstrap()) {
-    reportError("failed to set up data paths");
+    reportError(tr("Failed to set up data paths."));
     InstanceManager::singleton().clearCurrentInstance();
     return 1;
   }
@@ -412,6 +411,30 @@ void MOApplication::externalMessage(const QString& message)
       return;
     }
 
+    if (auto i=cl.instance()) {
+      const auto ci = InstanceManager::singleton().currentInstance();
+
+      if (*i != ci->name()) {
+        reportError(tr(
+          "This shortcut or command line is for instance '%1', but the current "
+          "instance is '%2'.")
+            .arg(*i).arg(ci->name()));
+
+        return;
+      }
+    }
+
+    if (auto p=cl.profile()) {
+      if (*p != m_core->profileName()) {
+        reportError(tr(
+          "This shortcut or command line is for profile '%1', but the current "
+          "profile is '%2'.")
+            .arg(*p).arg(m_core->profileName()));
+
+        return;
+      }
+    }
+
     cl.runPostOrganizer(*m_core);
   }
 }
@@ -436,11 +459,11 @@ std::unique_ptr<Instance> MOApplication::getCurrentInstance()
       m.clearOverrides();
 
       if (m.hasAnyInstances()) {
-        MOShared::criticalOnTop(QObject::tr(
+        reportError(QObject::tr(
           "Instance at '%1' not found. Select another instance.")
           .arg(currentInstance->directory()));
       } else {
-        MOShared::criticalOnTop(QObject::tr(
+        reportError(QObject::tr(
           "Instance at '%1' not found. You must create a new instance")
           .arg(currentInstance->directory()));
       }
