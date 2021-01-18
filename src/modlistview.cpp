@@ -657,6 +657,11 @@ bool ModListView::moveSelection(int key)
   }
 
   m_core->modList()->shiftModsPriority(sourceRows, offset);
+
+  auto current = indexModelToView(key == Qt::Key_Up ? sourceRows.first() : sourceRows.last());
+  selectionModel()->setCurrentIndex(current, QItemSelectionModel::NoUpdate);
+  scrollTo(current);
+
   return true;
 }
 
