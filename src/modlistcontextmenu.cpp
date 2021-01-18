@@ -24,24 +24,31 @@ void ModListGlobalContextMenu::populate(OrganizerCore& core, ModListView* view, 
 {
   clear();
 
-  addAction(tr("Install Mod..."), [=]() { view->actions().installMod(); });
-
   auto modIndex = index.data(ModList::IndexRole);
   if (modIndex.isValid() && view->sortColumn() == ModList::COL_PRIORITY) {
     auto info = ModInfo::getByIndex(modIndex.toInt());
     if (!info->isBackup()) {
-      QString text = tr("Create empty mod above");
+
+      // the mod are not created/installed at the same position depending
+      // on the clicked mod and the sort order
+      QString installText = tr("Install mod above... ");
+      QString createText = tr("Create empty mod above");
       if (info->isSeparator()) {
-        text = tr("Create empty mod inside");
+        installText = tr("Install mod inside... ");
+        createText = tr("Create empty mod inside");
       }
       else if (view->sortOrder() == Qt::DescendingOrder) {
-        text = tr("Create empty mod below");
+        installText = tr("Install mod below... ");
+        createText = tr("Create empty mod below");
       }
-      addAction(text, [=]() { view->actions().createEmptyMod(index); });
+
+      addAction(installText, [=]() { view->actions().installMod("", index); });
+      addAction(createText, [=]() { view->actions().createEmptyMod(index); });
       addAction(tr("Create separator above"), [=]() { view->actions().createSeparator(index); });
     }
   }
   else {
+    addAction(tr("Install mod..."), [=]() { view->actions().installMod(); });
     addAction(tr("Create empty mod"), [=]() { view->actions().createEmptyMod(); });
     addAction(tr("Create separator"), [=]() { view->actions().createSeparator(); });
   }

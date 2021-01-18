@@ -31,13 +31,20 @@ public:
     PluginListView* pluginView,
     QObject* nxmReceiver);
 
-  // install the mod from the given archive
+  // install mod, create an empty mod or a separator with at priority based on the
+  // index and the current sorting of the view
+  // - if the list is not sorted by priority or the index is invalid, use the
+  //   highest priority
+  // - otherwise
+  //   - create separators above the given index (the priority is not the
+  //     same depending on the current sorting)
+  //   - create/install mods above or below other mods depending on the sort order, or
+  //     at the end of the separator if index corresponds to the separator
   //
-  void installMod(const QString& archivePath = "") const;
-
-  // create an empty mod/a separator before the given mod or at
-  // the end of the list if the index is invalid
+  // if the archivePath is empty for installMod, ask the user for the archive
+  // to install
   //
+  void installMod(const QString& archivePath = "", const QModelIndex& index = QModelIndex()) const;
   void createEmptyMod(const QModelIndex& index = QModelIndex()) const;
   void createSeparator(const QModelIndex& index = QModelIndex()) const;
 
@@ -132,6 +139,11 @@ signals:
   void originModified(int originId) const;
 
 private:
+
+  // find the priority where to install or create a mod for the
+  // given index (e.g. above, below, inside separator or at the end)
+  //
+  int findInstallPriority(const QModelIndex& current) const;
 
   // move the contents of the overwrite to the given path
   //
