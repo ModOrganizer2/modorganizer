@@ -1377,7 +1377,7 @@ void ModListView::timerEvent(QTimerEvent* event)
     if (state() == QAbstractItemView::DraggingState
       && viewport()->rect().contains(pos)) {
       QModelIndex index = indexAt(pos);
-      setExpanded(index, true);
+      setExpanded(index, !m_core->settings().interface().autoCollapseOnHover() || !isExpanded(index));
     }
     m_openTimer.stop();
   }

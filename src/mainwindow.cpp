@@ -2191,6 +2191,10 @@ void MainWindow::directory_refreshed()
 
 void MainWindow::modInstalled(const QString &modName)
 {
+  if (!m_OrganizerCore.settings().interface().checkUpdateAfterInstallation()) {
+    return;
+  }
+
   unsigned int index = ModInfo::getIndex(modName);
 
   if (index == UINT_MAX) {

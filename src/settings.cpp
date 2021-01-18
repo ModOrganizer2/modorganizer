@@ -2238,6 +2238,26 @@ void InterfaceSettings::setSaveFilters(bool b)
   set(m_Settings, "Settings", "save_filters", b);
 }
 
+bool InterfaceSettings::autoCollapseOnHover() const
+{
+  return get<bool>(m_Settings, "Settings", "auto_collapse_on_hover", false);
+}
+
+void InterfaceSettings::setAutoCollapseOnHover(bool b)
+{
+  set(m_Settings, "Settings", "auto_collapse_on_hover", b);
+}
+
+bool InterfaceSettings::checkUpdateAfterInstallation() const
+{
+  return get<bool>(m_Settings, "Settings", "autocheck_update_install", true);
+}
+
+void InterfaceSettings::setCheckUpdateAfterInstallation(bool b)
+{
+  set(m_Settings, "Settings", "autocheck_update_install", b);
+}
+
 bool InterfaceSettings::compactDownloads() const
 {
   return get<bool>(m_Settings, "Settings", "compact_downloads", false);

@@ -282,6 +282,35 @@ If you disable this feature, MO will only display official DLCs this way. Please
              </widget>
             </item>
             <item>
+             <widget class="QCheckBox" name="checkUpdateInstallBox">
+              <property name="toolTip">
+               <string>Check if updates are available for mods after installing them.</string>
+              </property>
+              <property name="whatsThis">
+               <string>Check if updates are available for mods after installing them.</string>
+              </property>
+              <property name="text">
+               <string>Check for updates when installing mods</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="autoCollapseDelayBox">
+              <property name="toolTip">
+               <string>Automatically collapse separators, categories or nexus ids after a delay when hovering them during drag.</string>
+              </property>
+              <property name="whatsThis">
+               <string>Automatically collapse separators, categories or nexus ids after a delay when hovering them during drag.</string>
+              </property>
+              <property name="text">
+               <string>Automatically collapse items during drag on hover</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <spacer name="verticalSpacer_9">
               <property name="orientation">
                <enum>Qt::Vertical</enum>
@@ -349,19 +378,6 @@ If you disable this feature, MO will only display official DLCs this way. Please
                      <widget class="QLabel" name="label_35">
                       <property name="text">
                        <string>Show icons on separators</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="0" colspan="3">
-                     <widget class="QCheckBox" name="collapsibleSeparatorsPerProfileBox">
-                      <property name="toolTip">
-                       <string>Do not share the collapse/expanded state of separators between profiles.</string>
-                      </property>
-                      <property name="whatsThis">
-                       <string>Do not share the collapse/expanded state of separators between profiles.</string>
-                      </property>
-                      <property name="text">
-                       <string>Profile-specific collapse states for separators</string>
                       </property>
                      </widget>
                     </item>
@@ -458,6 +474,19 @@ If you disable this feature, MO will only display official DLCs this way. Please
                       </property>
                       <property name="checked">
                        <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="0" colspan="5">
+                     <widget class="QCheckBox" name="collapsibleSeparatorsPerProfileBox">
+                      <property name="toolTip">
+                       <string>Do not share the collapse/expanded state of separators between profiles.</string>
+                      </property>
+                      <property name="whatsThis">
+                       <string>Do not share the collapse/expanded state of separators between profiles.</string>
+                      </property>
+                      <property name="text">
+                       <string>Profile-specific collapse states for separators</string>
                       </property>
                      </widget>
                     </item>
