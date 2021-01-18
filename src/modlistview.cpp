@@ -658,8 +658,9 @@ bool ModListView::moveSelection(int key)
 
   m_core->modList()->shiftModsPriority(sourceRows, offset);
 
-  // reset the selection and the index
-  setSelected(cindex, sourceRows);
+  auto current = indexModelToView(key == Qt::Key_Up ? sourceRows.first() : sourceRows.last());
+  selectionModel()->setCurrentIndex(current, QItemSelectionModel::NoUpdate);
+  scrollTo(current);
 
   return true;
 }
@@ -682,27 +683,25 @@ void ModListView::updateGroupByProxy()
 {
   int groupIndex = ui.groupBy->currentIndex();
   auto* previousModel = m_sortProxy->sourceModel();
-  QAbstractProxyModel* nextProxy = nullptr;
 
+  QAbstractItemModel* nextModel = m_core->modList();
   if (groupIndex == GroupBy::CATEGORY) {
-    nextProxy = m_byCategoryProxy;
+    nextModel = m_byCategoryProxy;
   }
   else if (groupIndex == GroupBy::NEXUS_ID) {
-    nextProxy = m_byNexusIdProxy;
+    nextModel = m_byNexusIdProxy;
   }
   else if (m_core->settings().interface().collapsibleSeparators(m_sortProxy->sortOrder())
     && m_sortProxy->sortColumn() == ModList::COL_PRIORITY) {
     m_byPriorityProxy->setSortOrder(m_sortProxy->sortOrder());
-    nextProxy = m_byPriorityProxy;
-  }
-
-  QAbstractItemModel* nextModel = m_core->modList();
-  if (nextProxy) {
-    nextProxy->setSourceModel(m_core->modList());
-    nextModel = nextProxy;
+    nextModel = m_byPriorityProxy;
   }
 
   if (nextModel != previousModel) {
+
+    if (auto* proxy = dynamic_cast<QAbstractProxyModel*>(nextModel)) {
+      proxy->setSourceModel(m_core->modList());
+    }
     m_sortProxy->setSourceModel(nextModel);
 
     // reset the source model of the old proxy because we do not want to
@@ -711,17 +710,18 @@ void ModListView::updateGroupByProxy()
     if (auto* proxy = qobject_cast<QAbstractProxyModel*>(previousModel)) {
       proxy->setSourceModel(nullptr);
     }
-  }
 
-  // expand items previously expanded
-  refreshExpandedItems();
+    // expand items previously expanded
+    refreshExpandedItems();
 
-  if (hasCollapsibleSeparators()) {
-    ui.filterSeparators->setCurrentIndex(ModListSortProxy::SeparatorFilter);
-    ui.filterSeparators->setEnabled(false);
-  }
-  else {
-    ui.filterSeparators->setEnabled(true);
+    if (hasCollapsibleSeparators()) {
+      ui.filterSeparators->setCurrentIndex(ModListSortProxy::SeparatorFilter);
+      ui.filterSeparators->setEnabled(false);
+    }
+    else {
+      ui.filterSeparators->setEnabled(true);
+    }
+
   }
 }
 
@@ -1356,17 +1356,10 @@ void ModListView::dropEvent(QDropEvent* event)
   // is no way to deduce this except using dropIndicatorPosition())
   emit dropEntered(event->mimeData(), isExpanded(index), static_cast<DropPosition>(dropIndicatorPosition()));
 
-  ModListDropInfo dropInfo(event->mimeData(), *m_core);
-
   // see selectedIndexes()
-  auto [current, selected] = this->selected();
   m_inDragMoveEvent = true;
   QTreeView::dropEvent(event);
   m_inDragMoveEvent = false;
-
-  if (dropInfo.isModDrop()) {
-    setSelected(current, selected);
-  }
 }
 
 void ModListView::timerEvent(QTimerEvent* event)
