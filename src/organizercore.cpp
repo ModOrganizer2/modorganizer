@@ -744,7 +744,7 @@ ModInfo::Ptr OrganizerCore::installDownload(int index, int priority)
     GuessedValue<QString> modName;
 
     // see if there already are mods with the specified mod id
-    if (modID != 0) {
+    if (modID > 0) {
       std::vector<ModInfo::Ptr> modInfo = ModInfo::getByModID(gameName, modID);
       for (auto iter = modInfo.begin(); iter != modInfo.end(); ++iter) {
         std::vector<ModInfo::EFlag> flags = (*iter)->getFlags();
