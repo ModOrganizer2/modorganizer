@@ -493,12 +493,8 @@ void Profile::refreshModStatus()
 
   // User has a mod named some variation of "overwrite".  Tell them about it.
   if (warnAboutOverwrite) {
-    QMessageBox::warning(
-      nullptr,
-      tr("Overwrite mod conflict"),
-      tr("At least one mod named \"overwrite\" was detected, disabled, and moved to the lowest priority on the mod list. "
-         "You may want to rename this mod and enable it again.")
-      );
+    reportError(tr("A mod named \"overwrite\" was detected, disabled, and moved to the highest priority on the mod list. "
+                   "You may want to rename this mod and enable it again."));
     // also, mark the mod-list as changed
     modStatusModified = true;
   }
