@@ -54,7 +54,7 @@ public slots:
 protected slots:
 
   void onModelRowsRemoved(const QModelIndex& parent, int first, int last);
-  void onModelLayoutChanged(const QList<QPersistentModelIndex>& parents, LayoutChangeHint hint);
+  void onModelLayoutChanged(const QList<QPersistentModelIndex>& parents = {}, LayoutChangeHint hint = LayoutChangeHint::NoLayoutChangeHint);
   void onModelReset();
   void onModelDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles = QVector<int>());
 

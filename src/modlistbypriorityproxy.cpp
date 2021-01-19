@@ -41,7 +41,10 @@ void ModListByPriorityProxy::setProfile(Profile* profile)
 
 void ModListByPriorityProxy::setSortOrder(Qt::SortOrder order)
 {
-  m_sortOrder = order;
+  if (m_sortOrder != order) {
+    m_sortOrder = order;
+    onModelLayoutChanged();
+  }
 }
 
 void ModListByPriorityProxy::buildMapping()
