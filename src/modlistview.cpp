@@ -509,8 +509,6 @@ void ModListView::onModFilterActive(bool filterActive)
 
 void ModListView::updateModCount()
 {
-  TimeThis tt("updateModCount");
-
   int activeCount = 0;
   int visActiveCount = 0;
   int backupCount = 0;
@@ -786,7 +784,7 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   connect(this, &ModListView::dragEntered, core.modList(), &ModList::onDragEnter);
   connect(this, &ModListView::dropEntered, m_byPriorityProxy, &ModListByPriorityProxy::onDropEnter);
 
-  connect(model(), &QAbstractItemModel::layoutChanged, this, &ModListView::updateModCount);
+  connect(m_sortProxy, &ModListSortProxy::filterInvalidated, this, &ModListView::updateModCount);
 
   connect(header(), &QHeaderView::sortIndicatorChanged, [=](int, Qt::SortOrder) { verticalScrollBar()->repaint(); });
   connect(header(), &QHeaderView::sectionResized, [=](int logicalIndex, int oldSize, int newSize) {
