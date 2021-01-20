@@ -343,6 +343,9 @@ public:
 
   void debugDump() const;
 
+
+  Profile& operator=(const Profile& reference) = delete;
+
 signals:
 
   /**
@@ -376,9 +379,6 @@ private:
   };
 
 private:
-  Profile& operator=(const Profile &reference); // not implemented
-
-  void initTimer();
 
   void updateIndices();
 
@@ -388,7 +388,6 @@ private:
   void mergeTweak(const QString &tweakName, const QString &tweakedIni) const;
   void mergeTweaks(ModInfo::Ptr modInfo, const QString &tweakedIni) const;
   void touchFile(QString fileName);
-  void finishChangeStatus() const;
 
   static void renameModInList(QFile &modList, const QString &oldName, const QString &newName);
 
@@ -400,11 +399,14 @@ private:
 
   const MOBase::IPluginGame *m_GamePlugin;
 
-  mutable QByteArray m_LastModlistHash;
   std::vector<ModStatus> m_ModStatus;
   std::map<int, unsigned int> m_ModIndexByPriority;
-  unsigned int m_NumRegularMods;
 
+  // "regular" here means mods with modifiable priority (i.e. not backups
+  // or overwrite)
+  std::size_t m_NumRegularMods;
+
+  mutable QByteArray m_LastModlistHash;
   MOBase::DelayedFileWriter m_ModListWriter;
 
 };
