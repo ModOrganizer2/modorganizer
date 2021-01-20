@@ -1209,8 +1209,12 @@ void MainWindow::showEvent(QShowEvent *event)
     m_WasVisible = true;
     updateProblemsButton();
 
-    // Notify plugin that the MO2 is ready:
+    // notify plugins that the MO2 is ready
     m_PluginContainer.startPlugins(this);
+
+    // forces a log list refresh to display startup logs
+    ui->logList->reset();
+    ui->logList->scrollToBottom();
   }
 }
 
