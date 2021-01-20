@@ -337,10 +337,10 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     }
     else if (column == COL_PRIORITY) {
       if (modInfo->isBackup()) {
-        return ModInfo::BACKUP_PRIORITY;
+        return BACKUP_PRIORITY;
       }
       else if (modInfo->isOverwrite()) {
-        return ModInfo::OVERWRITE_PRIORITY;
+        return OVERWRITE_PRIORITY;
       }
       else {
         return m_Profile->getModPriority(modIndex);
@@ -367,10 +367,10 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
   }
   else if (role == PriorityRole) {
     if (modInfo->isBackup()) {
-      return ModInfo::BACKUP_PRIORITY;
+      return BACKUP_PRIORITY;
     }
     else if (modInfo->isOverwrite()) {
-      return ModInfo::OVERWRITE_PRIORITY;
+      return OVERWRITE_PRIORITY;
     }
     else {
       return m_Profile->getModPriority(modIndex);

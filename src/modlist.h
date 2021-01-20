@@ -366,9 +366,14 @@ private:
   //
   int dropPriority(int row, const QModelIndex& parent) const;
 
-private slots:
-
 private:
+
+  // the priority of backups and overwrite for sorting (and display, although
+  // those are not displayed), these do not correspond to the actual priority
+  // in the mod list
+  //
+  static constexpr int BACKUP_PRIORITY = -1;
+  static constexpr int OVERWRITE_PRIORITY = std::numeric_limits<int>::max();
 
   struct TModInfo {
     TModInfo(unsigned int index, ModInfo::Ptr modInfo)

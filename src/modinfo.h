@@ -103,12 +103,6 @@ public: // Type definitions:
     MOD_CC
   };
 
-  // the priority of backups and overwrite from a mod list point of
-  // view, these do not correspond to the actual priority in the profile
-  //
-  static constexpr int BACKUP_PRIORITY = -1;
-  static constexpr int OVERWRITE_PRIORITY = std::numeric_limits<int>::max();
-
 
 public: // Static functions:
 
