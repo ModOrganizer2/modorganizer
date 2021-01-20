@@ -128,32 +128,6 @@ QString ModList::makeInternalName(ModInfo::Ptr info, QString name) const
   return name;
 }
 
-QVariant ModList::getOverwriteData(int column, int role) const
-{
-  switch (role) {
-    case Qt::DisplayRole: {
-      if (column == 0) {
-        return "Overwrite";
-      } else {
-        return QVariant();
-      }
-    } break;
-    case Qt::CheckStateRole: {
-      if (column == 0) {
-        return Qt::Checked;
-      } else {
-        return QVariant();
-      }
-    } break;
-    case Qt::TextAlignmentRole: return QVariant(Qt::AlignCenter | Qt::AlignVCenter);
-    case GroupingRole: return -1;
-    case Qt::ForegroundRole: return QBrush(Qt::red);
-    case Qt::ToolTipRole: return tr("This entry contains files that have been created inside the virtual data tree (i.e. by the construction kit)");
-    default: return QVariant();
-  }
-}
-
-
 QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
 {
   switch (flag) {
