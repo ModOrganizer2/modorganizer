@@ -251,12 +251,6 @@ public:
   int nexusId() const override { return m_NexusID; }
 
   /**
-   * @return the fixed priority of mods of this type or INT_MIN if the priority of mods
-   *         needs to be user-modifiable
-   */
-  virtual int getFixedPriority() const override { return std::numeric_limits<int>::min(); }
-
-  /**
    * @return true if the mod can be updated
    */
   virtual bool canBeUpdated() const override;

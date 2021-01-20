@@ -223,8 +223,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       return version;
     }
     else if (column == COL_PRIORITY) {
-      int priority = modInfo->getFixedPriority();
-      if (priority != INT_MIN) {
+      if (modInfo->isBackup() || modInfo->isOverwrite()) {
         return QVariant(); // hide priority for mods where it's fixed
       }
       else {
@@ -337,9 +336,11 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
     }
     else if (column == COL_PRIORITY) {
-      int priority = modInfo->getFixedPriority();
-      if (priority != INT_MIN) {
-        return priority;
+      if (modInfo->isBackup()) {
+        return ModInfo::BACKUP_PRIORITY;
+      }
+      else if (modInfo->isOverwrite()) {
+        return ModInfo::OVERWRITE_PRIORITY;
       }
       else {
         return m_Profile->getModPriority(modIndex);
@@ -365,9 +366,11 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     return modInfo->gameName();
   }
   else if (role == PriorityRole) {
-    int priority = modInfo->getFixedPriority();
-    if (priority != std::numeric_limits<int>::min()) {
-      return priority;
+    if (modInfo->isBackup()) {
+      return ModInfo::BACKUP_PRIORITY;
+    }
+    else if (modInfo->isOverwrite()) {
+      return ModInfo::OVERWRITE_PRIORITY;
     }
     else {
       return m_Profile->getModPriority(modIndex);
@@ -687,7 +690,7 @@ Qt::ItemFlags ModList::flags(const QModelIndex &modelIndex) const
   }
   if (modelIndex.isValid()) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modelIndex.row());
-    if (modInfo->getFixedPriority() == INT_MIN) {
+    if (!modInfo->isFixedPriority()) {
       result |= Qt::ItemIsDragEnabled;
       result |= Qt::ItemIsUserCheckable;
       if ((modelIndex.column() == COL_PRIORITY) ||
@@ -743,8 +746,9 @@ void ModList::changeModPriority(std::vector<int> sourceIndices, int newPriority)
        iter != sourceIndices.end(); ++iter) {
     int oldPriority = m_Profile->getModPriority(*iter);
     if (oldPriority > newPriority) {
-      m_Profile->setModPriority(*iter, newPriority);
-      m_ModMoved(ModInfo::getByIndex(*iter)->name(), oldPriority, newPriority);
+      if (m_Profile->setModPriority(*iter, newPriority)) {
+        m_ModMoved(ModInfo::getByIndex(*iter)->name(), oldPriority, newPriority);
+      }
     }
   }
 
@@ -770,8 +774,9 @@ void ModList::changeModPriority(std::vector<int> sourceIndices, int newPriority)
     iter != sourceIndices.end(); ++iter) {
     int oldPriority = m_Profile->getModPriority(*iter);
     if (oldPriority < newPriority) {
-      m_Profile->setModPriority(*iter, newPriority);
-      m_ModMoved(ModInfo::getByIndex(*iter)->name(), oldPriority, newPriority);
+      if (m_Profile->setModPriority(*iter, newPriority)) {
+        m_ModMoved(ModInfo::getByIndex(*iter)->name(), oldPriority, newPriority);
+      }
     }
   }
 
@@ -901,11 +906,8 @@ QStringList ModList::allModsByProfilePriority(MOBase::IProfile* profile) const
     m_Organizer->currentProfile() : static_cast<Profile*>(profile);
 
   QStringList res;
-  for (int i = mo2Profile->getPriorityMinimum();
-    i < mo2Profile->getPriorityMinimum() + (int)mo2Profile->numRegularMods();
-    ++i) {
-    int modIndex = mo2Profile->modIndexByPriority(i);
-    auto modInfo = ModInfo::getByIndex(modIndex);
+  for (auto& [priority, index] : mo2Profile->getAllIndexesByPriority()) {
+    auto modInfo = ModInfo::getByIndex(index);
     if (!modInfo->isBackup() && !modInfo->isOverwrite()) {
       res.push_back(modInfo->internalName());
     }
@@ -1008,16 +1010,13 @@ int ModList::priority(const QString &name) const
 
 bool ModList::setPriority(const QString &name, int newPriority)
 {
-  if ((newPriority < 0) || (newPriority >= static_cast<int>(m_Profile->numRegularMods()))) {
-    return false;
-  }
-
-  unsigned int modIndex = ModInfo::getIndex(name);
-  if (modIndex == UINT_MAX) {
+  unsigned int index = ModInfo::getIndex(name);
+  if (index == UINT_MAX) {
     return false;
   } else {
-    m_Profile->setModPriority(modIndex, newPriority);
-    notifyChange(modIndex);
+    if (m_Profile->setModPriority(index, newPriority)) {
+      notifyChange(index);
+    }
     return true;
   }
 }
@@ -1074,14 +1073,14 @@ int ModList::dropPriority(int row, const QModelIndex& parent) const
 
   int newPriority = 0;
   {
-    if ((row < 0) || (row > static_cast<int>(m_Profile->numRegularMods()))) {
-      newPriority = m_Profile->numRegularMods() + 1;
+    if (row < 0 || row >= rowCount()) {
+      newPriority = std::numeric_limits<int>::max();
     }
     else {
       newPriority = m_Profile->getModPriority(row);
     }
     if (newPriority == -1) {
-      newPriority = m_Profile->numRegularMods() + 1;
+      newPriority = std::numeric_limits<int>::max();
     }
   }
 
@@ -1408,8 +1407,7 @@ void ModList::shiftModsPriority(const QModelIndexList& indices, int offset)
   std::vector<int> notify;
   for (auto index : allIndex) {
     int newPriority = m_Profile->getModPriority(index) + offset;
-    if ((newPriority >= 0) && (newPriority < static_cast<int>(m_Profile->numRegularMods()))) {
-      m_Profile->setModPriority(index, newPriority);
+    if (m_Profile->setModPriority(index, newPriority)) {
       notify.push_back(index);
     }
   }

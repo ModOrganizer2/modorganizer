@@ -647,16 +647,15 @@ void ModListView::onExternalFolderDropped(const QUrl& url, int priority)
 
 bool ModListView::moveSelection(int key)
 {
-  auto [cindex, sourceRows] = selected();
+  auto rows = selectionModel()->selectedRows();
+  const QPersistentModelIndex current(key == Qt::Key_Up ? rows.first() : rows.last());
 
   int offset = key == Qt::Key_Up ? -1 : 1;
   if (m_sortProxy->sortOrder() == Qt::DescendingOrder) {
     offset = -offset;
   }
 
-  m_core->modList()->shiftModsPriority(sourceRows, offset);
-
-  auto current = indexModelToView(key == Qt::Key_Up ? sourceRows.first() : sourceRows.last());
+  m_core->modList()->shiftModsPriority(indexViewToModel(rows), offset);
   selectionModel()->setCurrentIndex(current, QItemSelectionModel::NoUpdate);
   scrollTo(current);
 

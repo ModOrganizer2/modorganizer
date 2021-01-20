@@ -103,6 +103,12 @@ public: // Type definitions:
     MOD_CC
   };
 
+  // the priority of backups and overwrite from a mod list point of
+  // view, these do not correspond to the actual priority in the profile
+  //
+  static constexpr int BACKUP_PRIORITY = -1;
+  static constexpr int OVERWRITE_PRIORITY = std::numeric_limits<int>::max();
+
 
 public: // Static functions:
 
@@ -602,12 +608,9 @@ public: // Methods after this do not come from IModInterface:
    */
   virtual void ignoreUpdate(bool ignore) = 0;
 
-  /**
-   * @return the fixed priority of mods of this type or INT_MIN if the priority of mods
-   *     needs to be user-modifiable. Can be < 0 to force a priority below user-modifable mods
-   *     or INT_MAX to force priority above all user-modifiables.
-   */
-  virtual int getFixedPriority() const = 0;
+  // check if this mod has a fixed priority (i.e. that cannot be modified by users)
+  //
+  bool isFixedPriority() const { return isBackup() || isOverwrite(); }
 
   /**
    * @return true if the mod is always enabled.

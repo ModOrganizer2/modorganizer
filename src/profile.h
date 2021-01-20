@@ -262,11 +262,6 @@ public:
   size_t numMods() const { return m_ModStatus.size(); }
 
   /**
-   * @return the number of mods that can be enabled and where the priority can be modified
-   */
-  unsigned int numRegularMods() const { return m_NumRegularMods; }
-
-  /**
    * @brief retrieve the mod index based on the priority
    *
    * @param priority priority to look up
@@ -293,17 +288,17 @@ public:
    **/
   void setModsEnabled(const QList<unsigned int> &modsToEnable, const QList<unsigned int> &modsToDisable);
 
-  /**
-   * change the priority of a mod. Of course this also changes the priority of other mods.
-   * The priority of the mods in the range ]old, new priority] are shifted so that no gaps
-   * are possible.
-   *
-   * @param index index of the mod to change
-   * @param newPriority the new priority value
-   *
-   * @todo what happens if the new priority is outside the range?
-   **/
-  void setModPriority(unsigned int index, int &newPriority);
+  // set the priority of a mod, and the priority of other mods in the range
+  // [old priority, new priority] such that no gaps are possible
+  //
+  // the priority is clamped in the range of valid priority (>= 0, and lower than
+  // the number of "regular" mods)
+  //
+  // the function returns true if the priority was changed, or false if the mod
+  // was already at the given priority (or if the priority of the mod cannot be
+  // set)
+  //
+  bool setModPriority(unsigned int index, int& newPriority);
 
   /**
    * @brief determine if a mod is enabled
@@ -364,7 +359,7 @@ signals:
    **/
   void modStatusChanged(QList<unsigned int> index);
 
-public slots:
+protected slots:
 
   // should only be called by DelayedFileWriter, use writeModlist() and writeModlistNow() instead
   void doWriteModlist();
@@ -374,9 +369,8 @@ private:
   class ModStatus {
     friend class Profile;
   public:
-    ModStatus() : m_Overwrite(false), m_Enabled(false), m_Priority(-1) {}
+    ModStatus() : m_Enabled(false), m_Priority(-1) {}
   private:
-    bool m_Overwrite;
     bool m_Enabled;
     int m_Priority;
   };
