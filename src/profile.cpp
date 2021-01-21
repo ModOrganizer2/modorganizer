@@ -269,7 +269,7 @@ void Profile::createTweakedIniFile()
     return;
   }
 
-  for (auto& [priority, index] : m_ModIndexByPriority) {
+  for (const auto& [priority, index] : m_ModIndexByPriority) {
     if (m_ModStatus[index].m_Enabled) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
       mergeTweaks(modInfo, tweakedIni);
