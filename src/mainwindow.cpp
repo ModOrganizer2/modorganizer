@@ -313,6 +313,12 @@ MainWindow::MainWindow(Settings &settings
 
   setupModList();
   ui->espList->setup(m_OrganizerCore, this, ui);
+  connect(m_OrganizerCore.modList(), &ModList::modPrioritiesChanged, [this]() {
+    m_DataTab->updateTree();
+  });
+  connect(m_OrganizerCore.modList(), &ModList::modStatesChanged, [this]() {
+    m_DataTab->updateTree();
+  });
 
   ui->bsaList->setLocalMoveOnly(true);
   ui->bsaList->setHeaderHidden(true);

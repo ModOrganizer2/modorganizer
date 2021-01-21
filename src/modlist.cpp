@@ -1433,4 +1433,6 @@ void ModList::setActive(const QModelIndexList& indices, bool active)
   else {
     m_Profile->setModsEnabled({}, mods);
   }
+
+  emit modStatesChanged(indices);
 }
