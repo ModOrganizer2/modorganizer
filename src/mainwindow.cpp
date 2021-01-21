@@ -1213,6 +1213,15 @@ void MainWindow::showEvent(QShowEvent *event)
     m_PluginContainer.startPlugins(this);
 
     // forces a log list refresh to display startup logs
+    //
+    // since the log list is not visible until this point, the automatic
+    // resize of columns seems to break the log list (since Qt 5.15.1 or
+    // 5.15.2), an make the list empty on startup (in debug the list is not
+    // empty because some logs are added after the log list becomes visible)
+    //
+    // the reset() forces a re-computation of the column size, thus properly
+    // the logs that are already in the log model
+    //
     ui->logList->reset();
     ui->logList->scrollToBottom();
   }
