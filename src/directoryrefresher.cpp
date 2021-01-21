@@ -415,7 +415,7 @@ void DirectoryRefresher::addMultipleModsFilesToStructure(
 
   for (std::size_t i=0; i<entries.size(); ++i) {
     const auto& e = entries[i];
-    const int prio = static_cast<int>(i + 1);
+    const int prio = e.priority + 1;
 
     if constexpr (DirectoryStats::EnableInstrumentation) {
       stats[i].mod = entries[i].modName.toStdString();
