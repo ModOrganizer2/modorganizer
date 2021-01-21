@@ -714,12 +714,11 @@ void ModList::changeModPriority(std::vector<int> sourceIndices, int newPriority)
   });
 
   // move mods that are decreasing in priority
-  for (std::vector<int>::const_iterator iter = sourceIndices.begin();
-       iter != sourceIndices.end(); ++iter) {
-    int oldPriority = m_Profile->getModPriority(*iter);
+  for (const auto& index : sourceIndices) {
+    int oldPriority = m_Profile->getModPriority(index);
     if (oldPriority > newPriority) {
-      if (m_Profile->setModPriority(*iter, newPriority)) {
-        m_ModMoved(ModInfo::getByIndex(*iter)->name(), oldPriority, newPriority);
+      if (m_Profile->setModPriority(index, newPriority)) {
+        m_ModMoved(ModInfo::getByIndex(index)->name(), oldPriority, newPriority);
       }
     }
   }
@@ -732,9 +731,8 @@ void ModList::changeModPriority(std::vector<int> sourceIndices, int newPriority)
 
   // if at least one mod is increasing in priority, the target index is
   // that of the row BELOW the dropped location, otherwise it's the one above
-  for (std::vector<int>::const_iterator iter = sourceIndices.begin();
-    iter != sourceIndices.end(); ++iter) {
-    int oldPriority = m_Profile->getModPriority(*iter);
+  for (const auto& index : sourceIndices) {
+    int oldPriority = m_Profile->getModPriority(index);
     if (oldPriority < newPriority) {
       --newPriority;
       break;
@@ -742,12 +740,11 @@ void ModList::changeModPriority(std::vector<int> sourceIndices, int newPriority)
   }
 
   // move mods that are increasing in priority
-  for (std::vector<int>::const_iterator iter = sourceIndices.begin();
-    iter != sourceIndices.end(); ++iter) {
-    int oldPriority = m_Profile->getModPriority(*iter);
+  for (const auto& index : sourceIndices) {
+    int oldPriority = m_Profile->getModPriority(index);
     if (oldPriority < newPriority) {
-      if (m_Profile->setModPriority(*iter, newPriority)) {
-        m_ModMoved(ModInfo::getByIndex(*iter)->name(), oldPriority, newPriority);
+      if (m_Profile->setModPriority(index, newPriority)) {
+        m_ModMoved(ModInfo::getByIndex(index)->name(), oldPriority, newPriority);
       }
     }
   }
