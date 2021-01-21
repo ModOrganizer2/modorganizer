@@ -211,7 +211,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       return version;
     }
     else if (column == COL_PRIORITY) {
-      if (modInfo->isBackup() || modInfo->isOverwrite()) {
+      if (modInfo->isFixedPriority()) {
         return QVariant(); // hide priority for mods where it's fixed
       }
       else {
