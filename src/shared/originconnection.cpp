@@ -88,19 +88,6 @@ FilesOrigin& OriginConnection::getByName(const std::wstring &name)
   }
 }
 
-void OriginConnection::changePriorityLookup(int oldPriority, int newPriority)
-{
-  std::scoped_lock lock(m_Mutex);
-
-  auto iter = m_OriginsPriorityMap.find(oldPriority);
-
-  if (iter != m_OriginsPriorityMap.end()) {
-    OriginID idx = iter->second;
-    m_OriginsPriorityMap.erase(iter);
-    m_OriginsPriorityMap[newPriority] = idx;
-  }
-}
-
 void OriginConnection::changeNameLookup(const std::wstring &oldName, const std::wstring &newName)
 {
   std::scoped_lock lock(m_Mutex);
@@ -137,7 +124,6 @@ FilesOrigin& OriginConnection::createOriginNoLock(
     .first;
 
   m_OriginsNameMap.insert({originName, newID});
-  m_OriginsPriorityMap.insert({priority, newID});
 
   return itor->second;
 }
