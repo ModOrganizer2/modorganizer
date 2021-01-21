@@ -232,20 +232,18 @@ void Profile::doWriteModlist()
 
     for (auto iter = m_ModIndexByPriority.crbegin(); iter != m_ModIndexByPriority.crend(); iter++) {
       // the priority order was inverted on load so it has to be inverted again
-      unsigned int index = iter->second;
-      if (index != UINT_MAX) {
-        ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-        if (!modInfo->isFixedPriority()) {
-          if (modInfo->isForeign()) {
-            file->write("*");
-          } else if (m_ModStatus[index].m_Enabled) {
-            file->write("+");
-          } else {
-            file->write("-");
-          }
-          file->write(modInfo->name().toUtf8());
-          file->write("\r\n");
+      const auto index = iter->second;
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
+      if (!modInfo->isFixedPriority()) {
+        if (modInfo->isForeign()) {
+          file->write("*");
+        } else if (m_ModStatus[index].m_Enabled) {
+          file->write("+");
+        } else {
+          file->write("-");
         }
+        file->write(modInfo->name().toUtf8());
+        file->write("\r\n");
       }
     }
 
@@ -587,13 +585,10 @@ void Profile::updateIndices()
 std::vector<std::tuple<QString, QString, int> > Profile::getActiveMods()
 {
   std::vector<std::tuple<QString, QString, int> > result;
-  for (std::map<int, unsigned int>::const_iterator iter = m_ModIndexByPriority.begin(); iter != m_ModIndexByPriority.end(); iter++ ) {
-    if ((iter->second != UINT_MAX) && m_ModStatus[iter->second].m_Enabled) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(iter->second);
-      if (modInfo->hasFlag(ModInfo::FLAG_OVERWRITE))
-        result.push_back(std::make_tuple(modInfo->internalName(), modInfo->absolutePath(), std::numeric_limits<int>::max()));
-      else
-        result.push_back(std::make_tuple(modInfo->internalName(), modInfo->absolutePath(), m_ModStatus[iter->second].m_Priority));
+  for (const auto& [priority, index] : m_ModIndexByPriority) {
+    if (m_ModStatus[index].m_Enabled) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
+      result.push_back(std::make_tuple(modInfo->internalName(), modInfo->absolutePath(), m_ModStatus[index].m_Priority));
     }
   }
 
