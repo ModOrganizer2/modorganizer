@@ -262,15 +262,6 @@ public:
   size_t numMods() const { return m_ModStatus.size(); }
 
   /**
-   * @brief retrieve the mod index based on the priority
-   *
-   * @param priority priority to look up
-   * @return the index of the mod
-   * @throw std::exception an exception is thrown if there is no mod with the specified priority
-   **/
-  unsigned int modIndexByPriority(int priority) const;
-
-  /**
    * @brief enable or disable a mod
    *
    * @param index index of the mod to enable/disable
@@ -332,8 +323,6 @@ public:
 
   QList<QVariantMap> settingsByArray(const QString &prefix) const;
   void storeSettingsByArray(const QString &prefix, const QList<QVariantMap> &values);
-
-  int getPriorityMinimum() const;
 
   bool forcedLibrariesEnabled(const QString &executable) const;
   void setForcedLibrariesEnabled(const QString &executable, bool enabled);

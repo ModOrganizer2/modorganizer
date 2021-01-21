@@ -600,17 +600,6 @@ std::vector<std::tuple<QString, QString, int> > Profile::getActiveMods()
   return result;
 }
 
-
-unsigned int Profile::modIndexByPriority(int priority) const
-{
-  try {
-    return m_ModIndexByPriority.at(priority);
-  } catch (std::out_of_range) {
-    throw MyException(tr("invalid priority %1").arg(priority));
-  }
-}
-
-
 void Profile::setModEnabled(unsigned int index, bool enabled)
 {
   if (index >= m_ModStatus.size()) {
@@ -698,7 +687,7 @@ bool Profile::setModPriority(unsigned int index, int &newPriority)
     return false;
   }
 
-  for (auto& [priority, index] : m_ModIndexByPriority) {
+  for (const auto& [priority, index] : m_ModIndexByPriority) {
     if (newPriority < oldPriority && priority >= newPriority && priority < oldPriority) {
       m_ModStatus.at(index).m_Priority += 1;
     }
@@ -1083,11 +1072,6 @@ void Profile::storeSettingsByArray(const QString &prefix, const QList<QVariantMa
     }
   }
   m_Settings->endArray();
-}
-
-int Profile::getPriorityMinimum() const
-{
-  return m_ModIndexByPriority.begin()->first;
 }
 
 bool Profile::forcedLibrariesEnabled(const QString &executable) const
