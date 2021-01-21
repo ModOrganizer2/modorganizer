@@ -168,20 +168,6 @@ QString ModList::getConflictFlagText(ModInfo::EConflictFlag flag, ModInfo::Ptr m
   }
 }
 
-int ModList::modPriority(unsigned int index) const
-{
-  auto info = ModInfo::getByIndex(index);
-  if (info->isBackup()) {
-    return BACKUP_PRIORITY;
-  }
-  else if (info->isOverwrite()) {
-    return OVERWRITE_PRIORITY;
-  }
-  else {
-    return m_Profile->getModPriority(index);
-  }
-}
-
 QVariant ModList::data(const QModelIndex &modelIndex, int role) const
 {
   if (m_Profile == nullptr) return QVariant();
@@ -323,9 +309,6 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         return QVariant();
       }
     }
-    else if (column == COL_PRIORITY) {
-      return modPriority(modIndex);
-    }
     else {
       return modInfo->nexusId();
     }
@@ -346,7 +329,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     return modInfo->gameName();
   }
   else if (role == PriorityRole) {
-    return modPriority(modIndex);
+    return m_Profile->getModPriority(modIndex);
   }
   else if (role == Qt::FontRole) {
     QFont result;
@@ -580,9 +563,6 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
       case COL_PRIORITY: {
         bool ok = false;
         int newPriority = value.toInt(&ok);
-        if (ok && newPriority < 0) {
-          newPriority = 0;
-        }
         if (ok) {
           changeModPriority(modID, newPriority);
           result = true;

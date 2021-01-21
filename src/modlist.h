@@ -335,21 +335,6 @@ signals:
 
 private:
 
-  // the priority of backups and overwrite for sorting (and display, although
-  // those are not displayed), these do not correspond to the actual priority
-  // in the mod list
-  //
-  static constexpr int BACKUP_PRIORITY = -1;
-  static constexpr int OVERWRITE_PRIORITY = std::numeric_limits<int>::max();
-
-  // retrieve the priority of a mod for the purpose of display (i.e. sorting
-  // or grouping)
-  //
-  // this can be different from the priority in the profile (e.g. for backups
-  // or overwrite)
-  //
-  int modPriority(unsigned int index) const;
-
   // retrieve the display name of a mod or convert from a user-provided
   // name to internal name
   //
