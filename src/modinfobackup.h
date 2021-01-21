@@ -20,6 +20,7 @@ public:
   virtual void setNexusID(int) override {}
   virtual void endorse(bool) override {}
   virtual void ignoreUpdate(bool) override {}
+  virtual bool alwaysDisabled() const override { return true; }
   virtual bool canBeUpdated() const override { return false; }
   virtual QDateTime getExpires() const override { return QDateTime(); }
   virtual bool canBeEnabled() const override { return false; }

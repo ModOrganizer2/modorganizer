@@ -606,10 +606,10 @@ public: // Methods after this do not come from IModInterface:
   //
   bool isFixedPriority() const { return isBackup() || isOverwrite(); }
 
-  /**
-   * @return true if the mod is always enabled.
-   */
+  // check if this mod should always be enabled or disabled
+  //
   virtual bool alwaysEnabled() const { return false; }
+  virtual bool alwaysDisabled() const { return false; }
 
   /**
    * @return true if the mod can be updated.

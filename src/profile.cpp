@@ -602,10 +602,14 @@ void Profile::setModEnabled(unsigned int index, bool enabled)
   }
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
+
   // we could quit in the following case, this shouldn't be a change anyway,
   // but at least this allows the situation to be fixed in case of an error
   if (modInfo->alwaysEnabled()) {
     enabled = true;
+  }
+  if (modInfo->alwaysDisabled()) {
+    enabled = false;
   }
 
   if (enabled != m_ModStatus[index].m_Enabled) {
@@ -614,12 +618,15 @@ void Profile::setModEnabled(unsigned int index, bool enabled)
   }
 }
 
-void Profile::setModsEnabled(const QList<unsigned int> &modsToEnable, const QList<unsigned int> &modsToDisable)
+void Profile::setModsEnabled(const QList<unsigned int>& modsToEnable, const QList<unsigned int>& modsToDisable)
 {
   QList<unsigned int> dirtyMods;
   for (auto idx : modsToEnable) {
     if (idx >= m_ModStatus.size()) {
       log::error("invalid mod index: {}", idx);
+      continue;
+    }
+    if (ModInfo::getByIndex(idx)->alwaysDisabled()) {
       continue;
     }
     if (!m_ModStatus[idx].m_Enabled) {
