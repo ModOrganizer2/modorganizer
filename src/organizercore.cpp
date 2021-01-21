@@ -1943,7 +1943,7 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString &profileName,
 
   bool overwriteActive = false;
 
-  for (auto mod : profile.getActiveMods()) {
+  for (const auto& mod : profile.getActiveMods()) {
     if (std::get<0>(mod).compare("overwrite", Qt::CaseInsensitive) == 0) {
       continue;
     }

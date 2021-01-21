@@ -591,7 +591,7 @@ std::vector<std::tuple<QString, QString, int> > Profile::getActiveMods()
     if ((iter->second != UINT_MAX) && m_ModStatus[iter->second].m_Enabled) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(iter->second);
       if (modInfo->hasFlag(ModInfo::FLAG_OVERWRITE))
-        result.push_back(std::make_tuple(modInfo->internalName(), modInfo->absolutePath(), INT_MAX));
+        result.push_back(std::make_tuple(modInfo->internalName(), modInfo->absolutePath(), std::numeric_limits<int>::max()));
       else
         result.push_back(std::make_tuple(modInfo->internalName(), modInfo->absolutePath(), m_ModStatus[iter->second].m_Priority));
     }

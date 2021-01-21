@@ -243,7 +243,7 @@ public:
    *
    * @return list of active mods sorted by priority (ascending). "first" is the mod name, "second" is its path
    **/
-  std::vector<std::tuple<QString, QString, int> > getActiveMods();
+  std::vector<std::tuple<QString, QString, int>> getActiveMods();
 
   /**
    * @brief retrieve a mod of the indexes ordered by priority
