@@ -434,42 +434,6 @@ void ModListView::onModPrioritiesChanged(const QModelIndexList& indices)
     }
   }
 
-  for (unsigned int i = 0; i < m_core->currentProfile()->numMods(); ++i) {
-    int priority = m_core->currentProfile()->getModPriority(i);
-    if (m_core->currentProfile()->modEnabled(i)) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
-      // priorities in the directory structure are one higher because data is 0
-      m_core->directoryStructure()->getOriginByName(MOBase::ToWString(modInfo->internalName())).setPriority(priority + 1);
-    }
-  }
-  m_core->refreshBSAList();
-  m_core->currentProfile()->writeModlist();
-  m_core->directoryStructure()->getFileRegister()->sortOrigins();
-
-  for (auto& idx : indices) {
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
-    // clear caches on all mods conflicting with the moved mod
-    for (int i : modInfo->getModOverwrite()) {
-      ModInfo::getByIndex(i)->clearCaches();
-    }
-    for (int i : modInfo->getModOverwritten()) {
-      ModInfo::getByIndex(i)->clearCaches();
-    }
-    for (int i : modInfo->getModArchiveOverwrite()) {
-      ModInfo::getByIndex(i)->clearCaches();
-    }
-    for (int i : modInfo->getModArchiveOverwritten()) {
-      ModInfo::getByIndex(i)->clearCaches();
-    }
-    for (int i : modInfo->getModArchiveLooseOverwrite()) {
-      ModInfo::getByIndex(i)->clearCaches();
-    }
-    for (int i : modInfo->getModArchiveLooseOverwritten()) {
-      ModInfo::getByIndex(i)->clearCaches();
-    }
-    // update conflict check on the moved mod
-    modInfo->doConflictCheck();
-  }
   setOverwriteMarkers(selectionModel()->selectedRows());
 }
 
