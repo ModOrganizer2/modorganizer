@@ -602,9 +602,10 @@ public: // Methods after this do not come from IModInterface:
    */
   virtual void ignoreUpdate(bool ignore) = 0;
 
-  // check if this mod has a fixed priority (i.e. that cannot be modified by users)
+  // check if the priority of this mod is not user-modifiable (i.e.
+  // computed by MO2 automatically)
   //
-  bool isFixedPriority() const { return isBackup() || isOverwrite(); }
+  bool hasAutomaticPriority() const { return isBackup() || isOverwrite(); }
 
   // check if this mod should always be enabled or disabled
   //

@@ -234,7 +234,7 @@ void Profile::doWriteModlist()
       // the priority order was inverted on load so it has to be inverted again
       const auto index = iter->second;
       ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-      if (!modInfo->isFixedPriority()) {
+      if (!modInfo->hasAutomaticPriority()) {
         if (modInfo->isForeign()) {
           file->write("*");
         } else if (m_ModStatus[index].m_Enabled) {
@@ -460,7 +460,7 @@ void Profile::refreshModStatus()
 
     // find the mod and check that this is a regular mod (and not a backup)
     ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
-    if (modIndex < m_ModStatus.size() && !info->isFixedPriority()) {
+    if (modIndex < m_ModStatus.size() && !info->hasAutomaticPriority()) {
       m_ModStatus[modIndex].m_Enabled = enabled;
       if (m_ModStatus[modIndex].m_Priority == -1) {
         if (static_cast<size_t>(index) >= m_ModStatus.size()) {
@@ -527,7 +527,7 @@ void Profile::refreshModStatus()
     int offset = topInsert * -1;
     for (size_t i = 0; i < m_ModStatus.size(); ++i) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(static_cast<unsigned int>(i));
-      if (modInfo->isFixedPriority()) {
+      if (modInfo->hasAutomaticPriority()) {
         continue;
       }
 
@@ -674,7 +674,7 @@ int Profile::getModPriority(unsigned int index) const
 
 bool Profile::setModPriority(unsigned int index, int &newPriority)
 {
-  if (ModInfo::getByIndex(index)->isFixedPriority()) {
+  if (ModInfo::getByIndex(index)->hasAutomaticPriority()) {
     // can't change priority of overwrite/backups
     return false;
   }

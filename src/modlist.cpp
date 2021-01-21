@@ -197,7 +197,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       return version;
     }
     else if (column == COL_PRIORITY) {
-      if (modInfo->isFixedPriority()) {
+      if (modInfo->hasAutomaticPriority()) {
         return QVariant(); // hide priority for mods where it's fixed
       }
       else {
@@ -642,7 +642,7 @@ Qt::ItemFlags ModList::flags(const QModelIndex &modelIndex) const
   }
   if (modelIndex.isValid()) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modelIndex.row());
-    if (!modInfo->isFixedPriority()) {
+    if (!modInfo->hasAutomaticPriority()) {
       result |= Qt::ItemIsDragEnabled;
       result |= Qt::ItemIsUserCheckable;
       if ((modelIndex.column() == COL_PRIORITY) ||
