@@ -539,12 +539,12 @@ void ModListViewActions::displayModInformation(ModInfo::Ptr modInfo, unsigned in
 
 void ModListViewActions::sendModsToTop(const QModelIndexList& indexes) const
 {
-  m_core.modList()->changeModsPriority(indexes, 0);
+  m_core.modList()->changeModsPriority(indexes, Profile::MinimumPriority);
 }
 
 void ModListViewActions::sendModsToBottom(const QModelIndexList& indexes) const
 {
-  m_core.modList()->changeModsPriority(indexes, std::numeric_limits<int>::max());
+  m_core.modList()->changeModsPriority(indexes, Profile::MaximumPriority);
 }
 
 void ModListViewActions::sendModsToPriority(const QModelIndexList& indexes) const
@@ -580,7 +580,7 @@ void ModListViewActions::sendModsToSeparator(const QModelIndexList& indexes) con
     if (!result.isEmpty()) {
       result += "_separator";
 
-      int newPriority = std::numeric_limits<int>::max();
+      int newPriority = Profile::MaximumPriority;
       bool foundSection = false;
       for (auto mod : m_core.modList()->allModsByProfilePriority()) {
         unsigned int modIndex = ModInfo::getIndex(mod);

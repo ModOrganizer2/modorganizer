@@ -52,7 +52,14 @@ class Profile : public QObject, public MOBase::IProfile
 
 public:
 
-  typedef boost::shared_ptr<Profile> Ptr;
+  using Ptr = boost::shared_ptr<Profile>;
+
+public:
+
+  // the minimum and maximum priority achievable by mods
+  //
+  static constexpr int MinimumPriority = 0;
+  static constexpr int MaximumPriority = std::numeric_limits<int>::max();
 
 public:
 
@@ -283,7 +290,8 @@ public:
   // [old priority, new priority] such that no gaps are possible
   //
   // the priority is clamped in the range of valid priority (>= 0, and lower than
-  // the number of "regular" mods)
+  // the number of "regular" mods), you should use MinimumPriority or MaximumPriority
+  // to send a mod to the "top" or "bottom" of the priority list
   //
   // the function returns true if the priority was changed, or false if the mod
   // was already at the given priority (or if the priority of the mod cannot be

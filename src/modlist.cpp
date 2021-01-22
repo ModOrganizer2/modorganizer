@@ -1023,13 +1023,10 @@ int ModList::dropPriority(int row, const QModelIndex& parent) const
   int newPriority = 0;
   {
     if (row < 0 || row >= rowCount()) {
-      newPriority = std::numeric_limits<int>::max();
+      newPriority = Profile::MaximumPriority;
     }
     else {
       newPriority = m_Profile->getModPriority(row);
-    }
-    if (newPriority == -1) {
-      newPriority = std::numeric_limits<int>::max();
     }
   }
 
