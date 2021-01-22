@@ -39,9 +39,11 @@ private slots:
    */
   MOBase::IPlugin* plugin(QTreeWidgetItem *pluginItem) const;
 
-  constexpr static int ROLE_PLUGIN = Qt::UserRole;
-  constexpr static int ROLE_SETTINGS = Qt::UserRole + 1;
-  constexpr static int ROLE_DESCRIPTIONS = Qt::UserRole + 2;
+  enum {
+    PluginRole = Qt::UserRole,
+    SettingsRole = Qt::UserRole + 1,
+    DescriptionsRole = Qt::UserRole + 2
+  };
 
 private:
 

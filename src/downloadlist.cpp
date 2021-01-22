@@ -99,7 +99,7 @@ Qt::ItemFlags DownloadList::flags(const QModelIndex& idx) const
 QMimeData* DownloadList::mimeData(const QModelIndexList& indexes) const
 {
   QMimeData* result = QAbstractItemModel::mimeData(indexes);
-  result->setData("text/plain", ModListDropInfo::DOWNLOAD_TEXT);
+  result->setData("text/plain", ModListDropInfo::DownloadText);
   return result;
 }
 

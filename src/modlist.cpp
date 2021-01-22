@@ -677,7 +677,7 @@ QStringList ModList::mimeTypes() const
 QMimeData *ModList::mimeData(const QModelIndexList &indexes) const
 {
   QMimeData *result = QAbstractItemModel::mimeData(indexes);
-  result->setData("text/plain", ModListDropInfo::MOD_TEXT);
+  result->setData("text/plain", ModListDropInfo::ModText);
   return result;
 }
 
