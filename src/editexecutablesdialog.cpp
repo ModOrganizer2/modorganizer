@@ -141,9 +141,10 @@ void EditExecutablesDialog::loadForcedLibraries()
   const auto* p = m_organizerCore.currentProfile();
 
   for (const auto& e : m_executablesList) {
-    if (p->forcedLibrariesEnabled(e.title())) {
-      m_forcedLibraries.set(e.title(), true, p->determineForcedLibraries(e.title()));
-    }
+    m_forcedLibraries.set(
+      e.title(),
+      p->forcedLibrariesEnabled(e.title()),
+      p->determineForcedLibraries(e.title()));
   }
 }
 
@@ -242,8 +243,8 @@ bool EditExecutablesDialog::commitChanges()
     }
 
     if (auto libraryList=m_forcedLibraries.find(e.title())) {
-      if (libraryList && libraryList->enabled && !libraryList->value.empty()) {
-        profile->setForcedLibrariesEnabled(e.title(), true);
+      if (libraryList && !libraryList->value.empty()) {
+        profile->setForcedLibrariesEnabled(e.title(), libraryList->enabled);
         profile->storeForcedLibraries(e.title(), libraryList->value);
       }
     }
