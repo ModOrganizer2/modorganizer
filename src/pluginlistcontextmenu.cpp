@@ -18,14 +18,16 @@ PluginListContextMenu::PluginListContextMenu(
   if (view->selectionModel()->hasSelection()) {
     m_selected = view->indexViewToModel(view->selectionModel()->selectedRows());
   }
-  else {
+  else if (index.isValid()) {
     m_selected = { index };
   }
 
-  addAction(tr("Enable selected"), [=]() { m_core.pluginList()->setEnabled(m_selected, true); });
-  addAction(tr("Disable selected"), [=]() { m_core.pluginList()->setEnabled(m_selected, false); });
+  if (!m_selected.isEmpty()) {
+    addAction(tr("Enable selected"), [=]() { m_core.pluginList()->setEnabled(m_selected, true); });
+    addAction(tr("Disable selected"), [=]() { m_core.pluginList()->setEnabled(m_selected, false); });
 
-  addSeparator();
+    addSeparator();
+  }
 
   addAction(tr("Enable all"), [=]() {
     if (QMessageBox::question(
@@ -42,43 +44,47 @@ PluginListContextMenu::PluginListContextMenu(
     }
   });
 
-  addSeparator();
+  if (!m_selected.isEmpty()) {
+    addSeparator();
+    addMenu(createSendToContextMenu());
 
-  addMenu(createSendToContextMenu());
-  addSeparator();
+    addSeparator();
 
-  bool hasLocked = false;
-  bool hasUnlocked = false;
-  for (auto& idx : m_selected) {
-    if (m_core.pluginList()->isEnabled(idx.row())) {
-      if (m_core.pluginList()->isESPLocked(idx.row())) {
-        hasLocked = true;
+    bool hasLocked = false;
+    bool hasUnlocked = false;
+    for (auto& idx : m_selected) {
+      if (m_core.pluginList()->isEnabled(idx.row())) {
+        if (m_core.pluginList()->isESPLocked(idx.row())) {
+          hasLocked = true;
+        }
+        else {
+          hasUnlocked = true;
+        }
       }
-      else {
-        hasUnlocked = true;
-      }
+    }
+
+    if (hasLocked) {
+      addAction(tr("Unlock load order"), [=]() { setESPLock(m_selected, false); });
+    }
+    if (hasUnlocked) {
+      addAction(tr("Lock load order"), [=]() { setESPLock(m_selected, true); });
     }
   }
 
-  if (hasLocked) {
-    addAction(tr("Unlock load order"), [=]() { setESPLock(m_selected, false); });
-  }
-  if (hasUnlocked) {
-    addAction(tr("Lock load order"), [=]() { setESPLock(m_selected, true); });
-  }
+  if (m_index.isValid()) {
+    addSeparator();
 
-  addSeparator();
+    unsigned int modInfoIndex = ModInfo::getIndex(m_core.pluginList()->origin(m_index.data().toString()));
+    // this is to avoid showing the option on game files like skyrim.esm
+    if (modInfoIndex != UINT_MAX) {
+      addAction(tr("Open Origin in Explorer"), [=]() { openOriginExplorer(m_selected); });
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(modInfoIndex);
+      std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
-  unsigned int modInfoIndex = ModInfo::getIndex(m_core.pluginList()->origin(m_index.data().toString()));
-  // this is to avoid showing the option on game files like skyrim.esm
-  if (modInfoIndex != UINT_MAX) {
-    addAction(tr("Open Origin in Explorer"), [=]() { openOriginExplorer(m_selected); });
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(modInfoIndex);
-    std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-
-    if (!modInfo->isForeign() && m_selected.size() == 1) {
-      QAction* infoAction = addAction(tr("Open Origin Info..."), [=]() { openOriginInformation(index); });
-      setDefaultAction(infoAction);
+      if (!modInfo->isForeign() && m_selected.size() == 1) {
+        QAction* infoAction = addAction(tr("Open Origin Info..."), [=]() { openOriginInformation(index); });
+        setDefaultAction(infoAction);
+      }
     }
   }
 
