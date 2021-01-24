@@ -131,9 +131,6 @@ public slots:
 
 protected:
 
-  friend class ModListContextMenu;
-  friend class ModListViewActions;
-
   // map from/to the view indexes to the model
   //
   QModelIndex indexModelToView(const QModelIndex& index) const;
@@ -183,13 +180,73 @@ protected slots:
 
   void commitData(QWidget* editor) override;
 
-private:
+private: // friend classes
 
   friend class ModConflictIconDelegate;
-  friend class ModFlagIconDelegate;
   friend class ModContentIconDelegate;
+  friend class ModFlagIconDelegate;
+  friend class ModListContextMenu;
   friend class ModListStyledItemDelegate;
+  friend class ModListViewActions;
   friend class ModListViewMarkingScrollBar;
+
+private: // private structures
+
+  struct ModListViewUi {
+    // the group by combo box
+    QComboBox* groupBy;
+
+    // the mod counter
+    QLCDNumber* counter;
+
+    // filters related
+    QLineEdit* filter;
+    QLabel* currentCategory;
+    QPushButton* clearFilters;
+    QComboBox* filterSeparators;
+
+    // the plugin list (for highligths)
+    PluginListView* pluginList;
+  };
+
+  struct MarkerInfos {
+    // conflicts
+    std::set<unsigned int> overwrite;
+    std::set<unsigned int> overwritten;
+    std::set<unsigned int> archiveOverwrite;
+    std::set<unsigned int> archiveOverwritten;
+    std::set<unsigned int> archiveLooseOverwrite;
+    std::set<unsigned int> archiveLooseOverwritten;
+
+    // selected plugins
+    std::set<unsigned int> highlight;
+  };
+
+  struct ModCounters {
+    int active = 0;
+    int backup = 0;
+    int foreign = 0;
+    int separator = 0;
+    int regular = 0;
+
+    struct {
+      int active = 0;
+      int backup = 0;
+      int foreign = 0;
+      int separator = 0;
+      int regular = 0;
+    } visible;
+  };
+
+  // index in the groupby combo
+  //
+  enum GroupBy {
+    NONE = 0,
+    CATEGORY = 1,
+    NEXUS_ID = 2
+  };
+
+private: // private functions
 
   void onModPrioritiesChanged(const QModelIndexList& indices);
   void onModInstalled(const QString& modName);
@@ -229,6 +286,10 @@ private:
   QList<QString> contentsIcons(const QModelIndex& index, bool* forceCompact = nullptr) const;
   QString contentsTooltip(const QModelIndex& index) const;
 
+  // compute the counters for mods according to the current filter
+  //
+  ModCounters counters() const;
+
   // get/set the selected items on the view, this method return/take indices
   // from the mod list model, not the view, so it's safe to restore
   //
@@ -244,33 +305,7 @@ private:
   //
   void updateGroupByProxy();
 
-  // index in the groupby combo
-  //
-  enum GroupBy {
-    NONE = 0,
-    CATEGORY = 1,
-    NEXUS_ID = 2
-  };
-
-private:
-
-  struct ModListViewUi
-  {
-    // the group by combo box
-    QComboBox* groupBy;
-
-    // the mod counter
-    QLCDNumber* counter;
-
-    // filters related
-    QLineEdit* filter;
-    QLabel* currentCategory;
-    QPushButton* clearFilters;
-    QComboBox* filterSeparators;
-
-    // the plugin list (for highligths)
-    PluginListView* pluginList;
-  };
+public: // member variables
 
   OrganizerCore* m_core;
   std::unique_ptr<FilterList> m_filters;
@@ -291,19 +326,7 @@ private:
   // losing them on model reset
   std::map<QAbstractItemModel*, std::set<QString>> m_collapsed;
 
-  struct MarkerInfos {
-    // conflicts
-    std::set<unsigned int> overwrite;
-    std::set<unsigned int> overwritten;
-    std::set<unsigned int> archiveOverwrite;
-    std::set<unsigned int> archiveOverwritten;
-    std::set<unsigned int> archiveLooseOverwrite;
-    std::set<unsigned int> archiveLooseOverwritten;
-
-    // selected plugins
-    std::set<unsigned int> highlight;
-  } m_markers;
-
+  MarkerInfos m_markers;
   ViewMarkingScrollBar* m_scrollbar;
 
   bool m_inDragMoveEvent = false;

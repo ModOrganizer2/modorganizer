@@ -207,10 +207,16 @@ void ModListViewActions::createSeparator(const QModelIndex& index) const
 
 void ModListViewActions::setAllMatchingModsEnabled(bool enabled) const
 {
+  // number of mods to enable / disable
+  const auto counters = m_view->counters();
+  const auto count = enabled ?
+    counters.visible.regular - counters.visible.active : counters.visible.active;
+
+  // retrieve visible mods from the model view
   const auto allIndex = m_view->indexViewToModel(flatIndex(m_view->model()));
   const QString message = enabled ?
     tr("Really enable %1 mod(s)?") : tr("Really disable %1 mod(s)?");
-  if (QMessageBox::question(m_parent, tr("Confirm"), message.arg(allIndex.size()),
+  if (QMessageBox::question(m_parent, tr("Confirm"), message.arg(count),
     QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     m_core.modList()->setActive(allIndex, enabled);
   }

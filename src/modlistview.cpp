@@ -471,67 +471,52 @@ void ModListView::onModFilterActive(bool filterActive)
   }
 }
 
-void ModListView::updateModCount()
+ModListView::ModCounters ModListView::counters() const
 {
-  int activeCount = 0;
-  int visActiveCount = 0;
-  int backupCount = 0;
-  int visBackupCount = 0;
-  int foreignCount = 0;
-  int visForeignCount = 0;
-  int separatorCount = 0;
-  int visSeparatorCount = 0;
-  int regularCount = 0;
-  int visRegularCount = 0;
-
-  QStringList allMods = m_core->modList()->allMods();
+  ModCounters c;
 
   auto hasFlag = [](std::vector<ModInfo::EFlag> flags, ModInfo::EFlag filter) {
     return std::find(flags.begin(), flags.end(), filter) != flags.end();
   };
 
-  bool isEnabled;
-  bool isVisible;
-  for (QString mod : allMods) {
-    int modIndex = ModInfo::getIndex(mod);
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-    std::vector<ModInfo::EFlag> modFlags = modInfo->getFlags();
-    isEnabled = m_core->currentProfile()->modEnabled(modIndex);
-    isVisible = m_sortProxy->filterMatchesMod(modInfo, isEnabled);
 
-    for (auto flag : modFlags) {
-      switch (flag) {
-      case ModInfo::FLAG_BACKUP: backupCount++;
-        if (isVisible)
-          visBackupCount++;
-        break;
-      case ModInfo::FLAG_FOREIGN: foreignCount++;
-        if (isVisible)
-          visForeignCount++;
-        break;
-      case ModInfo::FLAG_SEPARATOR: separatorCount++;
-        if (isVisible)
-          visSeparatorCount++;
-        break;
-      }
+  for (unsigned int index = 0; index < ModInfo::getNumMods(); ++index) {
+    auto info = ModInfo::getByIndex(index);
+    const auto flags = info->getFlags();
+
+    const bool enabled = m_core->currentProfile()->modEnabled(index);
+    const bool visible = m_sortProxy->filterMatchesMod(info, enabled);
+
+    if (info->isBackup()) {
+      c.backup++;
+      if (visible) c.visible.backup++;
     }
-
-    if (!hasFlag(modFlags, ModInfo::FLAG_BACKUP) &&
-      !hasFlag(modFlags, ModInfo::FLAG_FOREIGN) &&
-      !hasFlag(modFlags, ModInfo::FLAG_SEPARATOR) &&
-      !hasFlag(modFlags, ModInfo::FLAG_OVERWRITE)) {
-      if (isEnabled) {
-        activeCount++;
-        if (isVisible)
-          visActiveCount++;
+    else if (info->isForeign()) {
+      c.foreign++;
+      if (visible) c.visible.foreign++;
+    }
+    else if (info->isSeparator()) {
+      c.separator++;
+      if (visible) c.visible.separator++;
+    }
+    else if (!info->isOverwrite()) {
+      c.regular++;
+      if (visible) c.visible.regular++;
+      if (enabled) {
+        c.active++;
+        if (visible) c.visible.active++;
       }
-      if (isVisible)
-        visRegularCount++;
-      regularCount++;
     }
   }
 
-  ui.counter->display(visActiveCount);
+  return c;
+}
+
+void ModListView::updateModCount()
+{
+  const auto c = counters();
+
+  ui.counter->display(c.visible.active);
   ui.counter->setToolTip(tr("<table cellspacing=\"5\">"
     "<tr><th>Type</th><th>All</th><th>Visible</th>"
     "<tr><td>Enabled mods:&emsp;</td><td align=right>%1 / %2</td><td align=right>%3 / %4</td></tr>"
@@ -539,16 +524,16 @@ void ModListView::updateModCount()
     "<tr><td>Mod backups:&emsp;</td><td align=right>%7</td><td align=right>%8</td></tr>"
     "<tr><td>Separators:&emsp;</td><td align=right>%9</td><td align=right>%10</td></tr>"
     "</table>")
-    .arg(activeCount)
-    .arg(regularCount)
-    .arg(visActiveCount)
-    .arg(visRegularCount)
-    .arg(foreignCount)
-    .arg(visForeignCount)
-    .arg(backupCount)
-    .arg(visBackupCount)
-    .arg(separatorCount)
-    .arg(visSeparatorCount)
+    .arg(c.active)
+    .arg(c.regular)
+    .arg(c.visible.active)
+    .arg(c.visible.regular)
+    .arg(c.foreign)
+    .arg(c.visible.foreign)
+    .arg(c.backup)
+    .arg(c.visible.backup)
+    .arg(c.separator)
+    .arg(c.visible.separator)
   );
 }
 
