@@ -939,7 +939,7 @@ void ModListView::onCustomContextMenuRequested(const QPoint& pos)
       ModListGlobalContextMenu(*m_core, this).exec(viewport()->mapToGlobal(pos));
     }
     else {
-      ModListContextMenu(contextIdx, *m_core, *m_categories, this).exec(viewport()->mapToGlobal(pos));
+      ModListContextMenu(contextIdx, *m_core, m_categories, this).exec(viewport()->mapToGlobal(pos));
     }
   }
   catch (const std::exception& e) {

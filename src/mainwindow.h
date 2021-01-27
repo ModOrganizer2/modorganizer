@@ -144,6 +144,8 @@ public slots:
 
   void directory_refreshed();
 
+  void requestNexusCategories();
+
 signals:
 
   /**
@@ -254,7 +256,7 @@ private:
 
   QAction *m_ContextAction;
 
-  CategoryFactory &m_CategoryFactory;
+  CategoryFactory *m_CategoryFactory;
 
   QTimer m_CheckBSATimer;
   QTimer m_SaveMetaTimer;

@@ -256,13 +256,12 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       else {
         int category = modInfo->primaryCategory();
         if (category != -1) {
-          CategoryFactory &categoryFactory = CategoryFactory::instance();
-          if (categoryFactory.categoryExists(category)) {
+          CategoryFactory *categoryFactory = CategoryFactory::instance();
+          if (categoryFactory->categoryExists(category)) {
             try {
-              int categoryIdx = categoryFactory.getCategoryIndex(category);
-              return categoryFactory.getCategoryName(categoryIdx);
-            }
-            catch (const std::exception &e) {
+              int categoryIdx = categoryFactory->getCategoryIndex(category);
+              return categoryFactory->getCategoryName(categoryIdx);
+            } catch (const std::exception &e) {
               log::error("failed to retrieve category name: {}", e.what());
               return QString();
             }
@@ -325,9 +324,9 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     if (column == COL_CATEGORY) {
       QVariantList categoryNames;
       std::set<int> categories = modInfo->getCategories();
-      CategoryFactory &categoryFactory = CategoryFactory::instance();
+      CategoryFactory *categoryFactory = CategoryFactory::instance();
       for (auto iter = categories.begin(); iter != categories.end(); ++iter) {
-        categoryNames.append(categoryFactory.getCategoryName(categoryFactory.getCategoryIndex(*iter)));
+        categoryNames.append(categoryFactory->getCategoryName(categoryFactory->getCategoryIndex(*iter)));
       }
       if (categoryNames.count() != 0) {
         return categoryNames;
@@ -505,16 +504,15 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       const std::set<int> &categories = modInfo->getCategories();
       std::wostringstream categoryString;
       categoryString << ToWString(tr("Categories: <br>"));
-      CategoryFactory &categoryFactory = CategoryFactory::instance();
+      CategoryFactory *categoryFactory = CategoryFactory::instance();
       for (std::set<int>::const_iterator catIter = categories.begin();
            catIter != categories.end(); ++catIter) {
         if (catIter != categories.begin()) {
           categoryString << " , ";
         }
         try {
-          categoryString << "<span style=\"white-space: nowrap;\"><i>" << ToWString(categoryFactory.getCategoryName(categoryFactory.getCategoryIndex(*catIter))) << "</font></span>";
-        }
-        catch (const std::exception &e) {
+          categoryString << "<span style=\"white-space: nowrap;\"><i>" << ToWString(categoryFactory->getCategoryName(categoryFactory->getCategoryIndex(*catIter))) << "</font></span>";
+        } catch (const std::exception &e) {
           log::error("failed to generate tooltip: {}", e.what());
           return QString();
         }

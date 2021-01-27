@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "categories.h"
 #include "categoriesdialog.h"
+#include "plugincontainer.h"
 #include "settings.h"
 #include "organizercore.h"
 #include <utility.h>
@@ -425,7 +426,7 @@ void FilterList::checkCriteria()
 
 void FilterList::editCategories()
 {
-  CategoriesDialog dialog(qApp->activeWindow());
+  CategoriesDialog dialog(&m_core.pluginContainer(), qApp->activeWindow());
 
   if (dialog.exec() == QDialog::Accepted) {
     dialog.commitChanges();

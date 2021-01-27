@@ -39,7 +39,7 @@ class ModListChangeCategoryMenu : public QMenu
 public:
 
   ModListChangeCategoryMenu(
-    CategoryFactory& categories, ModInfo::Ptr mod, QMenu* parent = nullptr);
+    CategoryFactory* categories, ModInfo::Ptr mod, QMenu* parent = nullptr);
 
   // return a list of pair <category id, enabled> from the menu
   //
@@ -50,7 +50,7 @@ private:
   // populate the tree with the category, using the enabled/disabled state from the
   // given mod
   //
-  bool populate(QMenu* menu, CategoryFactory& categories, ModInfo::Ptr mod, int targetId = 0);
+  bool populate(QMenu* menu, CategoryFactory* categories, ModInfo::Ptr mod, int targetId = 0);
 
   // internal implementation of categories() for recursion
   //
@@ -62,7 +62,7 @@ class ModListPrimaryCategoryMenu : public QMenu
   Q_OBJECT
 public:
 
-  ModListPrimaryCategoryMenu(CategoryFactory& categories, ModInfo::Ptr mod, QMenu* parent = nullptr);
+  ModListPrimaryCategoryMenu(CategoryFactory* categories, ModInfo::Ptr mod, QMenu* parent = nullptr);
 
   // return the selected primary category
   //
@@ -72,7 +72,7 @@ private:
 
   // populate the categories
   //
-  void populate(const CategoryFactory& categories, ModInfo::Ptr mod);
+  void populate(const CategoryFactory* categories, ModInfo::Ptr mod);
 
 };
 
@@ -85,7 +85,7 @@ public:
   // creates a new context menu, the given index is the one for the click and should be valid
   //
   ModListContextMenu(
-    const QModelIndex& index, OrganizerCore& core, CategoryFactory& categories, ModListView* modListView);
+    const QModelIndex& index, OrganizerCore& core, CategoryFactory* categories, ModListView* modListView);
 
 private:
 
@@ -111,7 +111,7 @@ private:
   void addRegularActions(ModInfo::Ptr mod);
 
   OrganizerCore& m_core;
-  CategoryFactory& m_categories;
+  CategoryFactory* m_categories;
   QModelIndex m_index;
   QModelIndexList m_selected;
   ModListView* m_view;
