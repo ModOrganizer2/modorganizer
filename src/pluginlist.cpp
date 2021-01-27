@@ -55,6 +55,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <algorithm>
 #include <stdexcept>
 
+#include "organizercore.h"
 
 using namespace MOBase;
 using namespace MOShared;
@@ -94,8 +95,9 @@ static QString TruncateString(const QString& text)
 }
 
 
-PluginList::PluginList(QObject *parent)
-  : QAbstractItemModel(parent)
+PluginList::PluginList(OrganizerCore& organizer)
+  : QAbstractItemModel(&organizer)
+  , m_Organizer(organizer)
   , m_FontMetrics(QFont())
 {
   connect(this, SIGNAL(writePluginsList()), this, SLOT(generatePluginIndexes()));
@@ -133,19 +135,19 @@ QString PluginList::getColumnToolTip(int column)
   }
 }
 
-void PluginList::highlightPlugins(const QItemSelectionModel *selection, const MOShared::DirectoryEntry &directoryEntry, const Profile &profile)
+void PluginList::highlightPlugins(
+  const std::vector<unsigned int>& modIndices,
+  const MOShared::DirectoryEntry &directoryEntry)
 {
+  auto* profile = m_Organizer.currentProfile();
+
   for (auto &esp : m_ESPs) {
     esp.modSelected = false;
   }
 
-  for (QModelIndex idx : selection->selectedRows(ModList::COL_PRIORITY)) {
-    int modIndex = idx.data(Qt::UserRole + 1).toInt();
-    if (modIndex == UINT_MAX)
-      continue;
-
+  for (auto& modIndex : modIndices) {
     ModInfo::Ptr selectedMod = ModInfo::getByIndex(modIndex);
-    if (!selectedMod.isNull() && profile.modEnabled(modIndex)) {
+    if (!selectedMod.isNull() && profile->modEnabled(modIndex)) {
       QDir dir(selectedMod->absolutePath());
       QStringList plugins = dir.entryList(QStringList() << "*.esp" << "*.esm" << "*.esl");
       const MOShared::FilesOrigin& origin = directoryEntry.getOriginByName(selectedMod->internalName().toStdWString());
@@ -153,8 +155,8 @@ void PluginList::highlightPlugins(const QItemSelectionModel *selection, const MO
         for (auto plugin : plugins) {
           MOShared::FileEntryPtr file = directoryEntry.findFile(plugin.toStdWString());
           if (file && file->getOrigin() != origin.getID()) {
-            const std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = file->getAlternatives();
-            if (std::find_if(alternatives.begin(), alternatives.end(), [&](const std::pair<int, std::pair<std::wstring, int>>& element) { return element.first == origin.getID(); }) == alternatives.end())
+            const auto alternatives = file->getAlternatives();
+            if (std::find_if(alternatives.begin(), alternatives.end(), [&](const FileAlternative& element) { return element.originID() == origin.getID(); }) == alternatives.end())
               continue;
           }
           std::map<QString, int>::iterator iter = m_ESPsByName.find(plugin.toLower());
@@ -267,7 +269,7 @@ void PluginList::refresh(const QString &profileName
   updateIndices();
 
   if (gamePlugins) {
-    gamePlugins->readPluginLists(this);
+    gamePlugins->readPluginLists(m_Organizer.managedGameOrganizer()->pluginList());
   }
 
   testMasters();
@@ -336,94 +338,89 @@ int PluginList::findPluginByPriority(int priority)
   return -1;
 }
 
-void PluginList::enableSelected(const QItemSelectionModel *selectionModel)
+void PluginList::setEnabled(const QModelIndexList& indices, bool enabled)
 {
-  if (selectionModel->hasSelection()) {
-    QStringList dirty;
-    for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
-      int rowIndex = findPluginByPriority(row.data().toInt());
-      if (!m_ESPs[rowIndex].enabled) {
-        m_ESPs[rowIndex].enabled = true;
-        dirty.append(m_ESPs[rowIndex].name);
-      }
+  QStringList dirty;
+  for (auto& idx : indices) {
+    if (m_ESPs[idx.row()].enabled != enabled) {
+      m_ESPs[idx.row()].enabled = enabled;
+      dirty.append(m_ESPs[idx.row()].name);
     }
-    if (!dirty.isEmpty()) {
-      emit writePluginsList();
-      pluginStatesChanged(dirty, IPluginList::PluginState::STATE_ACTIVE);
-    }
+  }
+  if (!dirty.isEmpty()) {
+    emit writePluginsList();
+    pluginStatesChanged(dirty,
+      enabled ? IPluginList::PluginState::STATE_ACTIVE : IPluginList::PluginState::STATE_INACTIVE);
   }
 }
 
-void PluginList::disableSelected(const QItemSelectionModel *selectionModel)
+void PluginList::setEnabledAll(bool enabled)
 {
-  if (selectionModel->hasSelection()) {
-    QStringList dirty;
-    for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
-      int rowIndex = findPluginByPriority(row.data().toInt());
-      if (!m_ESPs[rowIndex].forceEnabled && m_ESPs[rowIndex].enabled) {
-        m_ESPs[rowIndex].enabled = false;
-        dirty.append(m_ESPs[rowIndex].name);
-      }
+  QStringList dirty;
+  for (ESPInfo &info : m_ESPs) {
+    if (info.enabled != enabled) {
+      info.enabled = enabled;
+      dirty.append(info.name);
     }
-    if (!dirty.isEmpty()) {
-      emit writePluginsList();
-      pluginStatesChanged(dirty, IPluginList::PluginState::STATE_INACTIVE);
-    }
+  }
+  if (!dirty.isEmpty()) {
+    emit writePluginsList();
+    pluginStatesChanged(dirty,
+      enabled ? IPluginList::PluginState::STATE_ACTIVE : IPluginList::PluginState::STATE_INACTIVE);
   }
 }
 
-
-void PluginList::enableAll()
+void PluginList::sendToPriority(const QModelIndexList& indices, int newPriority)
 {
-  if (QMessageBox::question(nullptr, tr("Confirm"), tr("Really enable all plugins?"),
-                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    QStringList dirty;
-    for (ESPInfo &info : m_ESPs) {
-      if (!info.enabled) {
-        info.enabled = true;
-        dirty.append(info.name);
-      }
+  std::vector<int> pluginsToMove;
+  for (auto& idx : indices) {
+    if (!m_ESPs[idx.row()].forceEnabled) {
+      pluginsToMove.push_back(idx.row());
     }
-    if (!dirty.isEmpty()) {
-      emit writePluginsList();
-      pluginStatesChanged(dirty, IPluginList::PluginState::STATE_ACTIVE);
-    }
+  }
+  if (pluginsToMove.size()) {
+    changePluginPriority(pluginsToMove, newPriority);
   }
 }
 
-
-void PluginList::disableAll()
+void PluginList::shiftPluginsPriority(const QModelIndexList& indices, int offset)
 {
-  if (QMessageBox::question(nullptr, tr("Confirm"), tr("Really disable all plugins?"),
-                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    QStringList dirty;
-    for (ESPInfo &info : m_ESPs) {
-      if (!info.forceEnabled && info.enabled) {
-        info.enabled = false;
-        dirty.append(info.name);
-      }
-    }
-    if (!dirty.isEmpty()) {
-      emit writePluginsList();
-      pluginStatesChanged(dirty, IPluginList::PluginState::STATE_INACTIVE);
+  // retrieve the plugin index and sort them by priority to avoid issue
+  // when moving them
+  std::vector<int> allIndex;
+  for (auto& idx : indices) {
+    allIndex.push_back(idx.row());
+  }
+  std::sort(allIndex.begin(), allIndex.end(), [=](int lhs, int rhs) {
+    bool cmp = m_ESPs[lhs].priority < m_ESPs[rhs].priority;
+    return offset > 0 ? !cmp : cmp;
+    });
+
+  for (auto index : allIndex) {
+    int newPriority = m_ESPs[index].priority + offset;
+    if (newPriority >= 0 && newPriority < rowCount()) {
+      setPluginPriority(index, newPriority);
     }
   }
+
+  refreshLoadOrder();
 }
 
-void PluginList::sendToPriority(const QItemSelectionModel *selectionModel, int newPriority)
+void PluginList::toggleState(const QModelIndexList& indices)
 {
-  if (selectionModel->hasSelection()) {
-    std::vector<int> pluginsToMove;
-    for (auto row: selectionModel->selectedRows(COL_PRIORITY)) {
-      int rowIndex = findPluginByPriority(row.data().toInt());
-      if (!m_ESPs[rowIndex].forceEnabled) {
-        pluginsToMove.push_back(rowIndex);
-      }
+  QModelIndex minRow, maxRow;
+  for (auto& idx : indices) {
+    if (!minRow.isValid() || (idx.row() < minRow.row())) {
+      minRow = idx;
     }
-    if (pluginsToMove.size()) {
-      changePluginPriority(pluginsToMove, newPriority);
+    if (!maxRow.isValid() || (idx.row() > maxRow.row())) {
+      maxRow = idx;
     }
+    int oldState = idx.data(Qt::CheckStateRole).toInt();
+    setData(idx, oldState == Qt::Unchecked ? Qt::Checked : Qt::Unchecked, Qt::CheckStateRole);
   }
+
+  emit dataChanged(minRow, maxRow);
 }
 
 bool PluginList::isEnabled(const QString &name)
@@ -489,41 +486,88 @@ void PluginList::readLockedOrderFrom(const QString &fileName)
   }
 
   file.open(QIODevice::ReadOnly);
-
   int lineNumber = 0;
-  while (!file.atEnd()) {
-    ++lineNumber;
+  while (!file.atEnd())
+  {
     QByteArray line = file.readLine();
-    if ((line.size() > 0) && (line.at(0) != '#')) {
-      QList<QByteArray> fields = line.split('|');
-      if (fields.count() == 2) {
-        int priority = fields.at(1).trimmed().toInt();
-        QString name = QString::fromUtf8(fields.at(0));
-        // Avoid locking a force-enabled plugin
-        if (!m_ESPs[m_ESPsByName.at(name)].forceEnabled) {
-          // Is this an open and unclaimed priority?
-          if (m_ESPs[m_ESPsByPriority.at(priority)].forceEnabled ||
-             std::find_if(m_LockedOrder.begin(), m_LockedOrder.end(), [&](const std::pair<QString, int> &a) { return a.second == priority; }) != m_LockedOrder.end()) {
-            // Attempt to find a priority but step over force-enabled plugins and already-set locks
-            int calcPriority = priority;
-            do {
-              ++calcPriority;
-            } while (calcPriority < m_ESPsByPriority.size() || (m_ESPs[m_ESPsByPriority.at(calcPriority)].forceEnabled &&
-                     std::find_if(m_LockedOrder.begin(), m_LockedOrder.end(), [&](const std::pair<QString, int> &a) { return a.second == calcPriority; }) != m_LockedOrder.end()));
-            // If we have a match, we can reassign the priority...
-            if (calcPriority < m_ESPsByPriority.size())
-              m_LockedOrder[name] = calcPriority;
-          } else {
-            m_LockedOrder[name] = priority;
-          }
-        }
-      } else {
-        log::error("locked order file: invalid line #{} '{}'", lineNumber, QString::fromUtf8(line));
-        reportError(tr("The file containing locked plugin indices is broken"));
+    ++lineNumber;
+
+    // Skip empty lines or commented out lines (#)
+    if ((line.size() <= 0) || (line.at(0) == '#'))
+    {
+      continue;
+    }
+
+    QList<QByteArray> fields = line.split('|');
+    if (fields.count() != 2)
+    {
+      // Don't know how to parse this so run away
+      log::error("locked order file: invalid line #{}: {}", lineNumber, QString::fromUtf8(line).trimmed());
+      continue;
+    }
+
+    // Read the plugin name and priority
+    QString pluginName = QString::fromUtf8(fields.at(0));
+    int priority = fields.at(1).trimmed().toInt();
+    if (priority < 0)
+    {
+      // WTF do you mean a negative priority?
+      log::error("locked order file: invalid line #{}: {}", lineNumber, QString::fromUtf8(line).trimmed());
+      continue;
+    }
+
+    // Determine the index of the plugin
+    auto it = m_ESPsByName.find(pluginName);
+    if (it == m_ESPsByName.end())
+    {
+      // Plugin does not exist in the current set of plugins
+      m_LockedOrder[pluginName] = priority;
+      continue;
+    }
+    int pluginIndex = it->second;
+
+    // Do not allow locking forced plugins
+    if (m_ESPs[pluginIndex].forceEnabled)
+    {
+      continue;
+    }
+
+    // If the priority is larger than the number of plugins, just keep it locked
+    if (priority >= m_ESPsByPriority.size())
+    {
+      m_LockedOrder[pluginName] = priority;
+      continue;
+    }
+
+    // These are some helper functions for figuring out what is already locked
+    auto findLocked = [&](const std::pair<QString, int>& a) { return a.second == priority; };
+    auto alreadyLocked = [&](){ return std::find_if(m_LockedOrder.begin(), m_LockedOrder.end(), findLocked) != m_LockedOrder.end(); };
+
+    // See if we can just set the given priority
+    if (!m_ESPs[priority].forceEnabled && !alreadyLocked())
+    {
+      m_LockedOrder[pluginName] = priority;
+      continue;
+    }
+
+    // Find the next higher priority we can set the plugin to
+    while (++priority < m_ESPs.size())
+    {
+      if (!m_ESPs[priority].forceEnabled && !alreadyLocked())
+      {
+        m_LockedOrder[pluginName] = priority;
         break;
       }
     }
-  }
+
+    // See if we walked off the end of the plugin list
+    if (priority >= m_ESPs.size())
+    {
+      // I guess go ahead and lock it here at the end of the list?
+      m_LockedOrder[pluginName] = priority;
+      continue;
+    }
+  } /* while (!file.atEnd()) */
   file.close();
 }
 
@@ -539,14 +583,13 @@ void PluginList::writeLockedOrder(const QString &fileName) const
   file.commit();
 }
 
-
 void PluginList::saveTo(const QString &lockedOrderFileName
                         , const QString& deleterFileName
                         , bool hideUnchecked) const
 {
   GamePlugins *gamePlugins = m_GamePlugin->feature<GamePlugins>();
   if (gamePlugins) {
-    gamePlugins->writePluginLists(this);
+    gamePlugins->writePluginLists(m_Organizer.managedGameOrganizer()->pluginList());
   }
 
   writeLockedOrder(lockedOrderFileName);
@@ -801,7 +844,7 @@ bool PluginList::setPriority(const QString& name, int newPriority) {
 
   int rowIndex = findPluginByPriority(oldPriority);
 
-  // We need to increment newPriority if its above the old one, otherwise the 
+  // We need to increment newPriority if its above the old one, otherwise the
   // plugin is place right below the new priority.
   if (oldPriority < newPriority) {
     newPriority += 1;
@@ -875,13 +918,12 @@ QString PluginList::origin(const QString &name) const
   }
 }
 
-bool PluginList::onPluginStateChanged(const std::function<void(const std::map<QString, PluginStates>&)>& func)
+boost::signals2::connection PluginList::onPluginStateChanged(const std::function<void(const std::map<QString, PluginStates>&)>& func)
 {
-  auto conn = m_PluginStateChanged.connect(func);
-  return conn.connected();
+  return m_PluginStateChanged.connect(func);
 }
 
-void PluginList::pluginStatesChanged(QStringList const& pluginNames, IPluginList::PluginStates state) const {
+void PluginList::pluginStatesChanged(QStringList const& pluginNames, PluginStates state) const {
   if (pluginNames.isEmpty()) {
     return;
   }
@@ -892,19 +934,15 @@ void PluginList::pluginStatesChanged(QStringList const& pluginNames, IPluginList
   m_PluginStateChanged(infos);
 }
 
-bool PluginList::onRefreshed(const std::function<void ()> &callback)
+boost::signals2::connection PluginList::onRefreshed(const std::function<void ()> &callback)
 {
-  auto conn = m_Refreshed.connect(callback);
-  return conn.connected();
+  return m_Refreshed.connect(callback);
 }
 
-
-bool PluginList::onPluginMoved(const std::function<void (const QString &, int, int)> &func)
+boost::signals2::connection PluginList::onPluginMoved(const std::function<void (const QString &, int, int)> &func)
 {
-  auto conn = m_PluginMoved.connect(func);
-  return conn.connected();
+  return m_PluginMoved.connect(func);
 }
-
 
 void PluginList::updateIndices()
 {
@@ -952,7 +990,6 @@ void PluginList::generatePluginIndexes()
   emit esplist_changed();
 }
 
-
 int PluginList::rowCount(const QModelIndex &parent) const
 {
   if (!parent.isValid()) {
@@ -966,7 +1003,6 @@ int PluginList::columnCount(const QModelIndex &) const
 {
   return COL_LASTCOLUMN + 1;
 }
-
 
 void PluginList::testMasters()
 {
@@ -999,7 +1035,7 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     return checkstateData(modelIndex);
   } else if (role == Qt::ForegroundRole) {
     return foregroundData(modelIndex);
-  } else if (role == Qt::BackgroundRole || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
+  } else if (role == Qt::BackgroundRole) {
     return backgroundData(modelIndex);
   } else if (role == Qt::FontRole) {
     return fontData(modelIndex);
@@ -1351,6 +1387,7 @@ bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int
         result = true;
       }
       refreshLoadOrder();
+      emit writePluginsList();
     }
   }
 
@@ -1372,7 +1409,6 @@ bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int
   return result;
 }
 
-
 QVariant PluginList::headerData(int section, Qt::Orientation orientation,
                              int role) const
 {
@@ -1385,7 +1421,6 @@ QVariant PluginList::headerData(int section, Qt::Orientation orientation,
   }
   return QAbstractItemModel::headerData(section, orientation, role);
 }
-
 
 Qt::ItemFlags PluginList::flags(const QModelIndex &modelIndex) const
 {
@@ -1406,7 +1441,6 @@ Qt::ItemFlags PluginList::flags(const QModelIndex &modelIndex) const
 
   return result;
 }
-
 
 void PluginList::setPluginPriority(int row, int &newPriority)
 {
@@ -1464,7 +1498,6 @@ void PluginList::setPluginPriority(int row, int &newPriority)
 
   updateIndices();
 }
-
 
 void PluginList::changePluginPriority(std::vector<int> rows, int newPriority)
 {
@@ -1562,82 +1595,6 @@ QModelIndex PluginList::parent(const QModelIndex&) const
 {
   return QModelIndex();
 }
-
-
-bool PluginList::eventFilter(QObject *obj, QEvent *event)
-{
-  if (event->type() == QEvent::KeyPress) {
-    QAbstractItemView *itemView = qobject_cast<QAbstractItemView*>(obj);
-
-    if (itemView == nullptr) {
-      return QAbstractItemModel::eventFilter(obj, event);
-    }
-
-    QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-    // ctrl+up and ctrl+down -> increase or decrease priority of selected plugins
-    if ((keyEvent->modifiers() == Qt::ControlModifier) &&
-        ((keyEvent->key() == Qt::Key_Up) || (keyEvent->key() == Qt::Key_Down))) {
-      QItemSelectionModel *selectionModel = itemView->selectionModel();
-      const QSortFilterProxyModel *proxyModel = qobject_cast<const QSortFilterProxyModel*>(selectionModel->model());
-      if (proxyModel != nullptr) {
-        int diff = -1;
-        if (((keyEvent->key() == Qt::Key_Up) && (proxyModel->sortOrder() == Qt::DescendingOrder)) ||
-            ((keyEvent->key() == Qt::Key_Down) && (proxyModel->sortOrder() == Qt::AscendingOrder))) {
-          diff = 1;
-        }
-        QModelIndexList rows = selectionModel->selectedRows();
-        // remove elements that aren't supposed to be movable
-        QMutableListIterator<QModelIndex> iter(rows);
-        while (iter.hasNext()) {
-          if ((iter.next().flags() & Qt::ItemIsDragEnabled) == 0) {
-            iter.remove();
-          }
-        }
-        if (keyEvent->key() == Qt::Key_Down) {
-          for (int i = 0; i < rows.size() / 2; ++i) {
-            rows.swapItemsAt(i, rows.size() - i - 1);
-          }
-        }
-        for (QModelIndex idx : rows) {
-          idx = proxyModel->mapToSource(idx);
-          int newPriority = m_ESPs[idx.row()].priority + diff;
-          if ((newPriority >= 0) && (newPriority < rowCount())) {
-            setPluginPriority(idx.row(), newPriority);
-          }
-        }
-        refreshLoadOrder();
-      }
-      return true;
-    } else if (keyEvent->key() == Qt::Key_Space) {
-      QItemSelectionModel *selectionModel = itemView->selectionModel();
-      const QSortFilterProxyModel *proxyModel = qobject_cast<const QSortFilterProxyModel*>(selectionModel->model());
-      QList<QPersistentModelIndex> indices;
-      for (QModelIndex idx : selectionModel->selectedRows()) {
-        indices.append(idx);
-      }
-
-      QModelIndex minRow, maxRow;
-      for (QModelIndex idx : indices) {
-        if (proxyModel != nullptr) {
-          idx = proxyModel->mapToSource(idx);
-        }
-        if (!minRow.isValid() || (idx.row() < minRow.row())) {
-          minRow = idx;
-        }
-        if (!maxRow.isValid() || (idx.row() > maxRow.row())) {
-          maxRow = idx;
-        }
-        int oldState = idx.data(Qt::CheckStateRole).toInt();
-        setData(idx, oldState == Qt::Unchecked ? Qt::Checked : Qt::Unchecked, Qt::CheckStateRole);
-      }
-      emit dataChanged(minRow, maxRow);
-
-      return true;
-    }
-  }
-  return QAbstractItemModel::eventFilter(obj, event);
-}
-
 
 PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
                              const QString &originName, const QString &fullPath,

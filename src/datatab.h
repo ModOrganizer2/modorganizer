@@ -1,3 +1,6 @@
+#ifndef MODORGANIZER_DATATAB_INCLUDED
+#define MODORGANIZER_DATATAB_INCLUDED
+
 #include "modinfodialogfwd.h"
 #include "modinfo.h"
 #include <filterwidget.h>
@@ -58,3 +61,5 @@ private:
   void updateOptions();
   void ensureFullyLoaded();
 };
+
+#endif // MODORGANIZER_DATATAB_INCLUDED

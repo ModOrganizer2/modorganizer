@@ -32,7 +32,6 @@ public:
   virtual void setIsEndorsed(bool) override {}
   virtual void setNeverEndorse() override {}
   virtual void setIsTracked(bool) override {}
-  virtual bool remove() override { return false; }
   virtual void endorse(bool) override {}
   virtual void track(bool) override {}
   virtual bool isEmpty() const override { return false; }
@@ -49,6 +48,7 @@ public:
   virtual bool validated() const override { return false; }
   virtual QString gameName() const override { return ""; }
   virtual int nexusId() const override { return -1; }
+  virtual bool isForeign() const override { return true; }
   virtual QDateTime getExpires() const override { return QDateTime(); }
   virtual std::vector<QString> getIniTweaks() const override { return std::vector<QString>(); }
   virtual std::vector<ModInfo::EFlag> getFlags() const override;
@@ -80,9 +80,8 @@ public:
 protected:
   ModInfoForeign(const QString &modName, const QString &referenceFile,
                  const QStringList &archives, ModInfo::EModType modType,
-                 const MOBase::IPluginGame *gamePlugin,
-                 MOShared::DirectoryEntry **directoryStructure, PluginContainer *pluginContainer);  
-  
+                 OrganizerCore &core);
+
 private:
 
   QString m_Name;

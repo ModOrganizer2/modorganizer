@@ -42,74 +42,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
-//These two classes give the save-transfer box a smidgin of useful info even
-//if save game isn't supported yet.
-namespace {
-
-class DummySave : public ISaveGame
-{
-public:
-  DummySave(QString const &filename) :
-    m_File(filename)
-  {}
-
-  ~DummySave() {}
-
-  virtual QString getFilename() const override
-  {
-    return m_File;
-  }
-
-  virtual QDateTime getCreationTime() const override
-  {
-    return QFileInfo(m_File).birthTime();
-  }
-
-  virtual QString getSaveGroupIdentifier() const override
-  {
-    return m_File;
-  }
-
-  virtual QStringList allFiles() const override
-  {
-    return { m_File };
-  }
-
-  virtual bool hasScriptExtenderFile() const override
-  {
-      return false;
-  }
-
-private:
-  QString m_File;
-};
-
-class DummyInfo : public SaveGameInfo
-{
-public:
-  virtual MOBase::ISaveGame const *getSaveGameInfo(QString const &file) const override
-  {
-    return new DummySave(file);
-  }
-
-  virtual MissingAssets getMissingAssets(QString const &) const override
-  {
-    return {};
-  }
-
-  MOBase::ISaveGameInfoWidget *getSaveGameWidget(QWidget *) const override
-  {
-    return nullptr;
-  }
-
-  virtual bool hasScriptExtenderSave(QString const &file) const override
-  {
-    return false;
-  }
-};
-
-} //end anonymous namespace
-
 TransferSavesDialog::TransferSavesDialog(const Profile &profile, IPluginGame const *gamePlugin, QWidget *parent)
   : TutorableDialog("TransferSaves", parent)
   , ui(new Ui::TransferSavesDialog)
@@ -263,7 +195,7 @@ void TransferSavesDialog::on_globalCharacterList_currentTextChanged(const QStrin
   SaveCollection::const_iterator saveList = m_GlobalSaves.find(currentText);
   if (saveList != m_GlobalSaves.end()) {
     for (SaveListItem const &save : saveList->second) {
-      ui->globalSavesList->addItem(QFileInfo(save->getFilename()).fileName());
+      ui->globalSavesList->addItem(QFileInfo(save->getFilepath()).fileName());
     }
   }
 }
@@ -276,7 +208,7 @@ void TransferSavesDialog::on_localCharacterList_currentTextChanged(const QString
   SaveCollection::const_iterator saveList = m_LocalSaves.find(currentText);
   if (saveList != m_LocalSaves.end()) {
     for (SaveListItem const &save : saveList->second) {
-      ui->localSavesList->addItem(QFileInfo(save->getFilename()).fileName());
+      ui->localSavesList->addItem(QFileInfo(save->getFilepath()).fileName());
     }
   }
 }
@@ -285,34 +217,13 @@ void TransferSavesDialog::refreshSaves(SaveCollection &saveCollection, QString c
 {
   saveCollection.clear();
 
-  SaveGameInfo const *info = m_GamePlugin->feature<SaveGameInfo>();
-  if (info == nullptr) {
-    static DummyInfo dummyInfo;
-    info = &dummyInfo;
-  }
-
-  QStringList filters;
-  filters << QString("*.") + m_GamePlugin->savegameExtension();
-
-  QDir savesDir(savedir);
-  savesDir.setNameFilters(QStringList() << QString("*.") + m_GamePlugin->savegameExtension());
-  savesDir.setFilter(QDir::Files);
-  QDirIterator it(savesDir, QDirIterator::Subdirectories);
-  log::debug("reading save games from {}", savesDir.absolutePath());
-
-  QFileInfoList files;
-  while (it.hasNext()) {
-    it.next();
-    files.append(it.fileInfo());
-  }
-  std::sort(files.begin(), files.end(), [](auto const& lhs, auto const& rhs) {
-    return lhs.fileTime(QFileDevice::FileModificationTime) < rhs.fileTime(QFileDevice::FileModificationTime);
+  auto saves = m_GamePlugin->listSaves(savedir);
+  std::sort(saves.begin(), saves.end(), [](auto const& lhs, auto const& rhs) {
+    return lhs->getCreationTime() > rhs->getCreationTime();
     });
 
-  for (const QFileInfo &file: files) {
-    MOBase::ISaveGame const *save = info->getSaveGameInfo(file.absoluteFilePath());
-    saveCollection[save->getSaveGroupIdentifier()].push_back(
-                                std::unique_ptr<MOBase::ISaveGame const>(save));
+  for (auto& save: saves) {
+    saveCollection[save->getSaveGroupIdentifier()].push_back(save);
   }
 }
 
@@ -334,7 +245,7 @@ void TransferSavesDialog::refreshCharacters(const SaveCollection &saveCollection
 }
 
 bool TransferSavesDialog::transferCharacters(
-    QString const &character, char const *message, 
+    QString const &character, char const *message,
     QDir const& sourceDirectory,
     SaveList &saves,
     QDir const& destination,

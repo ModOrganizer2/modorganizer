@@ -250,7 +250,7 @@ public:
    *
    * @return map of indexes by priority
    **/
-  std::map<int, unsigned int> getAllIndexesByPriority() { return m_ModIndexByPriority; }
+  const std::map<int, unsigned int>& getAllIndexesByPriority() { return m_ModIndexByPriority; }
 
   /**
    * retrieve the number of mods for which this object has status information.

@@ -520,7 +520,7 @@ std::vector<QAction*> ConflictsTab::createGotoActions(const ConflictItem* item)
 
   // add all alternatives
   for (const auto& alt : file->getAlternatives()) {
-    const auto& o = ds.getOriginByID(alt.first);
+    const auto& o = ds.getOriginByID(alt.originID());
     if (o.getID() != origin()->getID()) {
       mods.push_back(ToQString(o.getName()));
     }
@@ -559,12 +559,15 @@ GeneralConflictsTab::GeneralConflictsTab(
 
   m_filterOverwrite.setEdit(ui->overwriteLineEdit);
   m_filterOverwrite.setList(ui->overwriteTree);
+  m_filterOverwrite.setUseSourceSort(true);
 
   m_filterOverwritten.setEdit(ui->overwrittenLineEdit);
   m_filterOverwritten.setList(ui->overwrittenTree);
+  m_filterOverwritten.setUseSourceSort(true);
 
   m_filterNoConflicts.setEdit(ui->noConflictLineEdit);
   m_filterNoConflicts.setList(ui->noConflictTree);
+  m_filterNoConflicts.setUseSourceSort(true);
 
   QObject::connect(
     ui->overwriteTree, &QTreeView::doubleClicked,
@@ -593,6 +596,8 @@ GeneralConflictsTab::GeneralConflictsTab(
 
 void GeneralConflictsTab::clear()
 {
+  m_counts.clear();
+
   m_overwriteModel->clear();
   m_overwrittenModel->clear();
   m_noConflictModel->clear();
@@ -626,10 +631,6 @@ bool GeneralConflictsTab::update()
 {
   clear();
 
-  int numNonConflicting = 0;
-  int numOverwrite = 0;
-  int numOverwritten = 0;
-
   if (m_tab->origin() != nullptr) {
     const auto rootPath = m_tab->mod().absolutePath();
 
@@ -640,29 +641,68 @@ bool GeneralConflictsTab::update()
 
       bool archive = false;
       const int fileOrigin = file->getOrigin(archive);
+
+      ++m_counts.numTotalFiles;
+
       const auto& alternatives = file->getAlternatives();
 
       if (fileOrigin == m_tab->origin()->getID()) {
+        // current mod is primary origin, the winner
+        (archive) ? ++m_counts.numTotalArchive : ++m_counts.numTotalLoose;
+
         if (!alternatives.empty()) {
           m_overwriteModel->add(createOverwriteItem(
               file->getIndex(), archive,
               std::move(fileName), std::move(relativeName), alternatives));
 
-          ++numOverwrite;
+          ++m_counts.numOverwrite;
+          if (archive) {
+            ++m_counts.numOverwriteArchive;
+          }
+          else {
+            ++m_counts.numOverwriteLoose;
+          }
         } else {
           // otherwise, put the file in the noconflict tree
             m_noConflictModel->add(createNoConflictItem(
             file->getIndex(), archive,
               std::move(fileName), std::move(relativeName)));
 
-          ++numNonConflicting;
+          ++m_counts.numNonConflicting;
+          if (archive) {
+            ++m_counts.numNonConflictingArchive;
+          }
+          else {
+            ++m_counts.numNonConflictingLoose;
+          }
         }
       } else {
+        auto currId = m_tab->origin()->getID();
+        auto currModAlt = std::find_if(alternatives.begin(), alternatives.end(),
+          [&currId](auto const& alt) {
+            return currId == alt.originID();
+          });
+
+        if (currModAlt == alternatives.end()) {
+          log::error("Mod {} not found in the list of origins for file {}", m_tab->origin()->getName(), fileName);
+          continue;
+        }
+
+        bool currModFileArchive = currModAlt->isFromArchive();
+
         m_overwrittenModel->add(createOverwrittenItem(
           file->getIndex(), fileOrigin, archive,
           std::move(fileName), std::move(relativeName)));
 
-        ++numOverwritten;
+        ++m_counts.numOverwritten;
+        if (currModFileArchive) {
+          ++m_counts.numOverwrittenArchive;
+          ++m_counts.numTotalArchive;
+        }
+        else {
+          ++m_counts.numOverwrittenLoose;
+          ++m_counts.numTotalLoose;
+        }
       }
     }
 
@@ -671,11 +711,9 @@ bool GeneralConflictsTab::update()
     m_noConflictModel->finished();
   }
 
-  ui->overwriteCount->display(numOverwrite);
-  ui->overwrittenCount->display(numOverwritten);
-  ui->noConflictCount->display(numNonConflicting);
+  updateUICounters();
 
-  return (numOverwrite > 0 || numOverwritten > 0);
+  return (m_counts.numOverwrite > 0 || m_counts.numOverwritten > 0);
 }
 
 ConflictItem GeneralConflictsTab::createOverwriteItem(
@@ -690,10 +728,10 @@ ConflictItem GeneralConflictsTab::createOverwriteItem(
       altString += L", ";
     }
 
-    altString += ds.getOriginByID(alt.first).getName();
+    altString += ds.getOriginByID(alt.originID()).getName();
   }
 
-  auto origin = ToQString(ds.getOriginByID(alternatives.back().first).getName());
+  auto origin = ToQString(ds.getOriginByID(alternatives.back().originID()).getName());
 
   return ConflictItem(
     ToQString(altString), std::move(relativeName), QString(), index,
@@ -721,6 +759,68 @@ ConflictItem GeneralConflictsTab::createOverwrittenItem(
   return ConflictItem(
     QString(), std::move(relativeName), std::move(after),
     index, std::move(fileName), true, std::move(altOrigin), archive);
+}
+
+QString percent(int a, int b) {
+  if (b == 0) {
+    return QString::number(0, 'f', 2);
+  }
+  return QString::number((((float)a / (float)b) * 100), 'f', 2);
+}
+
+void GeneralConflictsTab::updateUICounters()
+{
+  ui->overwriteCount->display(m_counts.numOverwrite);
+  ui->overwrittenCount->display(m_counts.numOverwritten);
+  ui->noConflictCount->display(m_counts.numNonConflicting);
+
+  QString tooltipBase = tr("<table cellspacing=\"5\">"
+    "<tr><th>Type</th><th>%1</th><th>Total</th><th>Percent</th></tr>"
+    "<tr><td>Loose files:&emsp;</td>"
+    "<td align=right>%2</td><td align=right>%3</td><td align=right>%4%</td></tr>"
+    "<tr><td>Archive files:&emsp;</td>"
+    "<td align=right>%5</td><td align=right>%6</td><td align=right>%7%</td></tr>"
+    "<tr><td>Combined:&emsp;</td>"
+    "<td align=right>%8</td><td align=right>%9</td><td align=right>%10%</td></tr>"
+    "</table>");
+
+  QString tooltipOverwrite = tooltipBase.arg(tr("Winning"))
+    .arg(m_counts.numOverwriteLoose)
+    .arg(m_counts.numTotalLoose)
+    .arg(percent(m_counts.numOverwriteLoose, m_counts.numTotalLoose))
+    .arg(m_counts.numOverwriteArchive)
+    .arg(m_counts.numTotalArchive)
+    .arg(percent(m_counts.numOverwriteArchive, m_counts.numTotalArchive))
+    .arg(m_counts.numOverwrite)
+    .arg(m_counts.numTotalFiles)
+    .arg(percent(m_counts.numOverwrite, m_counts.numTotalFiles));
+
+  QString tooltipOverwritten = tooltipBase.arg(tr("Losing"))
+    .arg(m_counts.numOverwrittenLoose)
+    .arg(m_counts.numTotalLoose)
+    .arg(percent(m_counts.numOverwrittenLoose, m_counts.numTotalLoose))
+    .arg(m_counts.numOverwrittenArchive)
+    .arg(m_counts.numTotalArchive)
+    .arg(percent(m_counts.numOverwrittenArchive, m_counts.numTotalArchive))
+    .arg(m_counts.numOverwritten)
+    .arg(m_counts.numTotalFiles)
+    .arg(percent(m_counts.numOverwritten, m_counts.numTotalFiles));
+
+
+  QString tooltipNonConflict = tooltipBase.arg(tr("Non conflicting"))
+    .arg(m_counts.numNonConflictingLoose)
+    .arg(m_counts.numTotalLoose)
+    .arg(percent(m_counts.numNonConflictingLoose, m_counts.numTotalLoose))
+    .arg(m_counts.numNonConflictingArchive)
+    .arg(m_counts.numTotalArchive)
+    .arg(percent(m_counts.numNonConflictingArchive, m_counts.numTotalArchive))
+    .arg(m_counts.numNonConflicting)
+    .arg(m_counts.numTotalFiles)
+    .arg(percent(m_counts.numNonConflicting, m_counts.numTotalFiles));
+
+  ui->overwriteCount->setToolTip(tooltipOverwrite);
+  ui->overwrittenCount->setToolTip(tooltipOverwritten);
+  ui->noConflictCount->setToolTip(tooltipNonConflict);
 }
 
 void GeneralConflictsTab::onOverwriteActivated(const QModelIndex& index)
@@ -789,9 +889,9 @@ AdvancedConflictsTab::AdvancedConflictsTab(
     m_tab(tab), ui(pui), m_core(oc),
     m_model(new AdvancedConflictListModel(ui->conflictsAdvancedList))
 {
-
   m_filter.setEdit(ui->conflictsAdvancedFilter);
   m_filter.setList(ui->conflictsAdvancedList);
+  m_filter.setUseSourceSort(true);
 
   // left-elide the overwrites column so that the nearest are visible
   ui->conflictsAdvancedList->setItemDelegateForColumn(
@@ -886,82 +986,111 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
 
   std::wstring before, after;
 
+  auto currOrigin = m_tab->origin();
+  bool isCurrOrigArchive = archive;
+
   if (!alternatives.empty()) {
     const bool showAllAlts = ui->conflictsAdvancedShowAll->isChecked();
 
     int beforePrio = 0;
     int afterPrio = std::numeric_limits<int>::max();
 
-    for (const auto& alt : alternatives)
-    {
-      const auto& altOrigin = ds.getOriginByID(alt.first);
+    if (currOrigin->getID() == fileOrigin) {
+      // current origin is the active winner, all alternatives go in 'before'
 
       if (showAllAlts) {
-        // fills 'before' and 'after' with all the alternatives that come
-        // before and after this mod in terms of priority
-
-        if (altOrigin.getPriority() < m_tab->origin()->getPriority()) {
-          // add all the mods having a lower priority than this one
+        for (const auto& alt : alternatives)
+        {
+          const auto& altOrigin = ds.getOriginByID(alt.originID());
           if (!before.empty()) {
             before += L", ";
           }
 
           before += altOrigin.getName();
-        } else if (altOrigin.getPriority() > m_tab->origin()->getPriority()) {
-          // add all the mods having a higher priority than this one
-          if (!after.empty()) {
-            after += L", ";
-          }
-
-          after += altOrigin.getName();
-        }
-      } else {
-        // keep track of the nearest mods that come before and after this one
-        // in terms of priority
-
-        if (altOrigin.getPriority() < m_tab->origin()->getPriority()) {
-          // the alternative has a lower priority than this mod
-
-          if (altOrigin.getPriority() > beforePrio) {
-            // the alternative has a higher priority and therefore is closer
-            // to this mod, use it
-            before = altOrigin.getName();
-            beforePrio = altOrigin.getPriority();
-          }
-        }
-
-        if (altOrigin.getPriority() > m_tab->origin()->getPriority()) {
-          // the alternative has a higher priority than this mod
-
-          if (altOrigin.getPriority() < afterPrio) {
-            // the alternative has a lower priority and there is closer
-            // to this mod, use it
-            after = altOrigin.getName();
-            afterPrio = altOrigin.getPriority();
-          }
         }
       }
+      else {
+        // only add nearest, which is the last element of alternatives
+        const auto& altOrigin = ds.getOriginByID(alternatives.back().originID());
+
+        before += altOrigin.getName();
+      }
+
     }
+    else {
+      // current mod is one of the alternatives, find its position
 
-    // the primary origin is never in the list of alternatives, so it has to
-    // be handled separately
-    //
-    // if 'after' is not empty, it means at least one alternative with a higher
-    // priority than this mod was found; if the user only wants to see the
-    // nearest mods, it's not worth checking for the primary origin because it
-    // will always have a higher priority than the alternatives (or it wouldn't
-    // be the primary)
-    if (after.empty() || showAllAlts) {
-      const FilesOrigin& realOrigin = ds.getOriginByID(fileOrigin);
+      auto currOrgId = currOrigin->getID();
 
-      // if no mods overwrite this file, the primary origin is the same as this
-      // mod, so ignore that
-      if (realOrigin.getID() != m_tab->origin()->getID()) {
+      auto currModIter = std::find_if(alternatives.begin(), alternatives.end(),
+        [&currOrgId](auto const& alt) {
+          return currOrgId == alt.originID();
+      });
+
+      if (currModIter == alternatives.end()) {
+        log::error("Mod {} not found in the list of origins for file {}", currOrigin->getName(), fileName);
+        return {};
+      }
+
+      isCurrOrigArchive = currModIter->isFromArchive();
+
+      if (showAllAlts) {
+        // fills 'before' and 'after' with all the alternatives that come
+        // before and after the current mod, trusting the alternatives vector to be
+        // already sorted correctly
+
+        for (auto iter = alternatives.begin(); iter != alternatives.end(); iter++) {
+
+          const auto& altOrigin = ds.getOriginByID(iter->originID());
+
+          if (iter < currModIter) {
+            // mod comes before current
+
+            if (!before.empty()) {
+              before += L", ";
+            }
+
+            before += altOrigin.getName();
+          }
+          else if (iter > currModIter) {
+            // mod comes after current
+
+            if (!after.empty()) {
+              after += L", ";
+            }
+
+            after += altOrigin.getName();
+          }
+        }
+
+        // also add the active winner origin (the one outside alternatives) to 'after'
         if (!after.empty()) {
           after += L", ";
         }
+        after += ds.getOriginByID(fileOrigin).getName();
 
-        after += realOrigin.getName();
+
+      }
+      else {
+        // only show nearest origins
+
+        // before
+        if (currModIter > alternatives.begin()) {
+          auto previousOrigId = (currModIter-1)->originID();
+          before += ds.getOriginByID(previousOrigId).getName();
+        }
+
+        // after
+        if (currModIter < (alternatives.end() - 1)) {
+          auto followingOrigId = (currModIter + 1)->originID();
+          after += ds.getOriginByID(followingOrigId).getName();
+        }
+        else {
+          // current mod is last of alternatives, so closest to the active winner
+
+          after += ds.getOriginByID(fileOrigin).getName();
+        }
+
       }
     }
   }
@@ -981,5 +1110,5 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
 
   return ConflictItem(
     std::move(beforeQS), std::move(relativeName), std::move(afterQS),
-    index, std::move(fileName), hasAlts, QString(), archive);
+    index, std::move(fileName), hasAlts, QString(), isCurrOrigArchive);
 }

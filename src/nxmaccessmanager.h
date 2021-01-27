@@ -33,6 +33,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace MOBase { class IPluginGame; }
 namespace Ui { class ValidationProgressDialog; }
 class NXMAccessManager;
+class Settings;
 
 class NexusSSOLogin
 {
@@ -146,7 +147,7 @@ public:
   std::function<FinishedCallback> finished;
   std::function<void (const ValidationAttempt&)> attemptFinished;
 
-  NexusKeyValidator(NXMAccessManager& am);
+  NexusKeyValidator(Settings* s, NXMAccessManager& am);
   ~NexusKeyValidator();
 
   void start(const QString& key, Behaviour b);
@@ -157,11 +158,13 @@ public:
   const ValidationAttempt* currentAttempt() const;
 
 private:
+  Settings* m_settings;
   NXMAccessManager& m_manager;
   QString m_key;
   std::vector<std::unique_ptr<ValidationAttempt>> m_attempts;
 
   void createAttempts(const std::vector<std::chrono::seconds>& timeouts);
+  std::vector<std::chrono::seconds> getTimeouts() const;
 
   bool nextTry();
   void onAttemptSuccess(const ValidationAttempt& a, const APIUserAccount& u);
@@ -178,7 +181,7 @@ class ValidationProgressDialog : public QDialog
   Q_OBJECT;
 
 public:
-  ValidationProgressDialog(NexusKeyValidator& v);
+  ValidationProgressDialog(Settings* s, NexusKeyValidator& v);
 
   void setParentWidget(QWidget* w);
 
@@ -191,6 +194,7 @@ protected:
 
 private:
   std::unique_ptr<Ui::ValidationProgressDialog> ui;
+  Settings* m_settings;
   NexusKeyValidator& m_validator;
   QTimer* m_updateTimer;
   bool m_first;
@@ -209,7 +213,7 @@ class NXMAccessManager : public QNetworkAccessManager
 {
   Q_OBJECT
 public:
-  NXMAccessManager(QObject *parent, const QString &moVersion);
+  NXMAccessManager(QObject *parent, Settings* s, const QString &moVersion);
 
   void setTopLevelWidget(QWidget* w);
 
@@ -264,6 +268,7 @@ private:
   };
 
   QWidget* m_TopLevel;
+  Settings* m_Settings;
   mutable std::unique_ptr<ValidationProgressDialog> m_ProgressDialog;
   QString m_MOVersion;
   NexusKeyValidator m_validator;

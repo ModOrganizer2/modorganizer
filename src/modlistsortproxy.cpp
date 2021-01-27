@@ -18,6 +18,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "modlistsortproxy.h"
+#include "modlistbypriorityproxy.h"
+#include "modlistdropinfo.h"
 #include "modinfo.h"
 #include "profile.h"
 #include "messagedialog.h"
@@ -69,41 +71,9 @@ void ModListSortProxy::setCriteria(const std::vector<Criteria>& criteria)
   if (changed || isForUpdates) {
     m_Criteria = criteria;
     updateFilterActive();
-    invalidate();
+    invalidateFilter();
+    emit filterInvalidated();
   }
-}
-
-Qt::ItemFlags ModListSortProxy::flags(const QModelIndex &modelIndex) const
-{
-  Qt::ItemFlags flags = sourceModel()->flags(mapToSource(modelIndex));
-
-  return flags;
-}
-
-void ModListSortProxy::enableAllVisible()
-{
-  if (m_Profile == nullptr) return;
-
-  QList<unsigned int> modsToEnable;
-  for (int i = 0; i < this->rowCount(); ++i) {
-    int modID = mapToSource(index(i, 0)).data(Qt::UserRole + 1).toInt();
-    modsToEnable.append(modID);
-  }
-  m_Profile->setModsEnabled(modsToEnable, QList<unsigned int>());
-  invalidate();
-}
-
-void ModListSortProxy::disableAllVisible()
-{
-  if (m_Profile == nullptr) return;
-
-  QList<unsigned int> modsToDisable;
-  for (int i = 0; i < this->rowCount(); ++i) {
-    int modID = mapToSource(index(i, 0)).data(Qt::UserRole + 1).toInt();
-    modsToDisable.append(modID);
-  }
-  m_Profile->setModsEnabled(QList<unsigned int>(), modsToDisable);
-  invalidate();
 }
 
 unsigned long ModListSortProxy::flagsId(const std::vector<ModInfo::EFlag> &flags) const
@@ -133,12 +103,17 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
                                 const QModelIndex &right) const
 {
   if (sourceModel()->hasChildren(left) || sourceModel()->hasChildren(right)) {
-    return QSortFilterProxyModel::lessThan(left, right);
+    // when sorting by priority, we do not want to use the parent lessThan because
+    // it uses the display role which can be inconsistent (e.g. for backups)
+    if (sortColumn() != ModList::COL_PRIORITY) {
+      return QSortFilterProxyModel::lessThan(left, right);
+    }
   }
 
   bool lOk, rOk;
-  int leftIndex  = left.data(Qt::UserRole + 1).toInt(&lOk);
-  int rightIndex = right.data(Qt::UserRole + 1).toInt(&rOk);
+  int leftIndex  = left.data(ModList::IndexRole).toInt(&lOk);
+  int rightIndex = right.data(ModList::IndexRole).toInt(&rOk);
+
   if (!lOk || !rOk) {
     return false;
   }
@@ -146,18 +121,7 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
   ModInfo::Ptr leftMod = ModInfo::getByIndex(leftIndex);
   ModInfo::Ptr rightMod = ModInfo::getByIndex(rightIndex);
 
-  bool lt = false;
-
-  {
-    QModelIndex leftPrioIdx = left.sibling(left.row(), ModList::COL_PRIORITY);
-    QVariant leftPrio = leftPrioIdx.data();
-    if (!leftPrio.isValid()) leftPrio = left.data(Qt::UserRole);
-    QModelIndex rightPrioIdx = right.sibling(right.row(), ModList::COL_PRIORITY);
-    QVariant rightPrio = rightPrioIdx.data();
-    if (!rightPrio.isValid()) rightPrio = right.data(Qt::UserRole);
-
-    lt = leftPrio.toInt() < rightPrio.toInt();
-  }
+  bool lt = left.data(ModList::PriorityRole).toInt() < right.data(ModList::PriorityRole).toInt();
 
   switch (left.column()) {
     case ModList::COL_FLAGS: {
@@ -264,7 +228,8 @@ void ModListSortProxy::updateFilter(const QString& filter)
 {
   m_Filter = filter;
   updateFilterActive();
-  invalidate();
+  invalidateFilter();
+  emit filterInvalidated();
 }
 
 bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EConflictFlag> &flags) const
@@ -315,7 +280,6 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
 
 bool ModListSortProxy::optionsMatchMod(ModInfo::Ptr info, bool) const
 {
-
   return true;
 }
 
@@ -383,7 +347,7 @@ bool ModListSortProxy::categoryMatchesMod(
       b = (hasConflictFlag(info->getConflictFlags()));
       break;
     }
-	
+
     case CategoryFactory::HasHiddenFiles:
     {
       b = (info->hasFlag(ModInfo::FLAG_HIDDEN_FILES));
@@ -583,27 +547,44 @@ void ModListSortProxy::setOptions(
   if (m_FilterMode != mode || separators != m_FilterSeparators) {
     m_FilterMode = mode;
     m_FilterSeparators = separators;
-    this->invalidate();
+    invalidateFilter();
+    emit filterInvalidated();
   }
 }
 
-bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) const
+bool ModListSortProxy::filterAcceptsRow(int source_row, const QModelIndex &parent) const
 {
   if (m_Profile == nullptr) {
     return false;
   }
 
-  if (row >= static_cast<int>(m_Profile->numMods())) {
-    log::warn("invalid row index: {}", row);
+  if (source_row >= static_cast<int>(m_Profile->numMods())) {
+    log::warn("invalid row index: {}", source_row);
     return false;
   }
 
-  QModelIndex idx = sourceModel()->index(row, 0, parent);
+  QModelIndex idx = sourceModel()->index(source_row, 0, parent);
   if (!idx.isValid()) {
     log::debug("invalid mod index");
     return false;
   }
+
+  unsigned int index = ULONG_MAX;
+  {
+    bool ok = false;
+    index = idx.data(ModList::IndexRole).toInt(&ok);
+    if (!ok) {
+      index = ULONG_MAX;
+    }
+  }
+
   if (sourceModel()->hasChildren(idx)) {
+    // we need to check the separator itself first
+    if (index < ModInfo::getNumMods() && ModInfo::getByIndex(index)->isSeparator()) {
+      if (filterMatchesMod(ModInfo::getByIndex(index), false)) {
+        return true;
+      }
+    }
     for (int i = 0; i < sourceModel()->rowCount(idx); ++i) {
       if (filterAcceptsRow(i, idx)) {
         return true;
@@ -612,45 +593,82 @@ bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) cons
 
     return false;
   } else {
-    bool modEnabled = idx.sibling(row, 0).data(Qt::CheckStateRole).toInt() == Qt::Checked;
-    unsigned int index = idx.data(Qt::UserRole + 1).toInt();
+    bool modEnabled = idx.sibling(source_row, 0).data(Qt::CheckStateRole).toInt() == Qt::Checked;
     return filterMatchesMod(ModInfo::getByIndex(index), modEnabled);
   }
+}
+
+bool ModListSortProxy::sourceIsByPriorityProxy() const
+{
+  return dynamic_cast<ModListByPriorityProxy*>(sourceModel()) != nullptr;
+}
+
+bool ModListSortProxy::canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const
+{
+  ModListDropInfo dropInfo(data, *m_Organizer);
+
+  if (!dropInfo.isLocalFileDrop() && sortColumn() != ModList::COL_PRIORITY) {
+    return false;
+  }
+
+  // disable drop install with group proxy, except the one for collapsible separator
+  // - it would be nice to be able to "install to category" or something like that but
+  //   it's a bit more complicated since the drop position is based on the category, so
+  //   just disabling for now
+  if (dropInfo.isDownloadDrop()) {
+    // maybe there is a cleaner way?
+    if (qobject_cast<QtGroupingProxy*>(sourceModel())) {
+      return false;
+    }
+  }
+
+  // see dropMimeData for details
+  if (sortOrder() == Qt::DescendingOrder && row != -1 && !sourceIsByPriorityProxy()) {
+    --row;
+  }
+
+  return QSortFilterProxyModel::canDropMimeData(data, action, row, column, parent);
 }
 
 bool ModListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action,
                                     int row, int column, const QModelIndex &parent)
 {
-  if (!data->hasUrls() && (sortColumn() != ModList::COL_PRIORITY)) {
+  ModListDropInfo dropInfo(data, *m_Organizer);
+
+  if (!dropInfo.isLocalFileDrop() && sortColumn() != ModList::COL_PRIORITY) {
     QWidget *wid = qApp->activeWindow()->findChild<QTreeView*>("modList");
     MessageDialog::showMessage(tr("Drag&Drop is only supported when sorting by priority"), wid);
     return false;
   }
-  if ((row == -1) && (column == -1)) {
+
+  if (row == -1 && column == -1) {
     return sourceModel()->dropMimeData(data, action, -1, -1, mapToSource(parent));
   }
+
   // in the regular model, when dropping between rows, the row-value passed to
-  // the sourceModel is inconsistent between ascending and descending ordering.
-  // This should fix that
-  if (sortOrder() == Qt::DescendingOrder) {
+  // the sourceModel is inconsistent between ascending and descending ordering
+  //
+  // we want to fix that, but we cannot do it for the by-priority proxy because
+  // it messes up with non top-level items, so we simply forward the row and the
+  // by-priority proxy will fix the row for us
+  if (sortOrder() == Qt::DescendingOrder && row != -1 && !sourceIsByPriorityProxy()) {
     --row;
   }
 
-  QModelIndex proxyIndex = index(row, column, parent);
-  QModelIndex sourceIndex = mapToSource(proxyIndex);
-  return this->sourceModel()->dropMimeData(data, action, sourceIndex.row(), sourceIndex.column(),
-                                           sourceIndex.parent());
+  return QSortFilterProxyModel::dropMimeData(data, action, row, column, parent);
 }
 
 void ModListSortProxy::setSourceModel(QAbstractItemModel *sourceModel)
 {
   QSortFilterProxyModel::setSourceModel(sourceModel);
-  QtGroupingProxy *proxy = qobject_cast<QtGroupingProxy*>(sourceModel);
+  QAbstractProxyModel *proxy = qobject_cast<QAbstractProxyModel*>(sourceModel);
   if (proxy != nullptr) {
     sourceModel = proxy->sourceModel();
   }
-  connect(sourceModel, SIGNAL(aboutToChangeData()), this, SLOT(aboutToChangeData()), Qt::UniqueConnection);
-  connect(sourceModel, SIGNAL(postDataChanged()), this, SLOT(postDataChanged()), Qt::UniqueConnection);
+  if (sourceModel) {
+    connect(sourceModel, SIGNAL(aboutToChangeData()), this, SLOT(aboutToChangeData()), Qt::UniqueConnection);
+    connect(sourceModel, SIGNAL(postDataChanged()), this, SLOT(postDataChanged()), Qt::UniqueConnection);
+  }
 }
 
 void ModListSortProxy::aboutToChangeData()

@@ -308,6 +308,29 @@ QDateTime Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
     QTime(utc.wHour, utc.wMinute, utc.wSecond, utc.wMilliseconds));
 }
 
+bool Module::interesting() const
+{
+  static const auto windir = []() -> QString {
+    try
+    {
+      return QDir::toNativeSeparators(
+        MOBase::getKnownFolder(FOLDERID_Windows).path()) + "\\";
+    }
+    catch(...)
+    {
+      return "c:\\windows\\";
+    }
+  }();
+
+
+  if (m_path.startsWith(windir, Qt::CaseInsensitive)) {
+    return false;
+  }
+
+  return true;
+}
+
+
 QString Module::getMD5() const
 {
   static const std::set<QString> ignore = {

@@ -33,7 +33,7 @@ class PluginContainer;
 class OrganizerCore;
 class Settings;
 class ModInfoDialogTab;
-class MainWindow;
+class ModListView;
 
 /**
  * this is a larger dialog used to visualise information about the mod.
@@ -52,8 +52,8 @@ class ModInfoDialog : public MOBase::TutorableDialog
 
 public:
   ModInfoDialog(
-    MainWindow* mw, OrganizerCore* core, PluginContainer* plugin,
-    ModInfo::Ptr mod);
+    OrganizerCore& core, PluginContainer& plugin,
+    ModInfo::Ptr mod, ModListView* view, QWidget* parent = nullptr);
 
   ~ModInfoDialog();
 
@@ -70,6 +70,10 @@ signals:
   // emitted when a tab changes the origin
   //
   void originModified(int originID);
+
+  // emitted when the mod of the dialog is changed
+  //
+  void modChanged(unsigned int modIndex);
 
 protected:
   // forwards to tryClose()
@@ -115,10 +119,10 @@ private:
   };
 
   std::unique_ptr<Ui::ModInfoDialog> ui;
-  MainWindow* m_mainWindow;
+  OrganizerCore& m_core;
+  PluginContainer& m_plugin;
+  ModListView* m_modListView;
   ModInfo::Ptr m_mod;
-  OrganizerCore* m_core;
-  PluginContainer* m_plugin;
   std::vector<TabInfo> m_tabs;
 
   // initial tab requested by the main window when the dialog is opened; whether

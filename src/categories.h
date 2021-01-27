@@ -145,7 +145,7 @@ public:
    * @param parentID the parent id to test for
    * @return true if id is a child of parentID
    **/
-  bool isDecendantOf(int id, int parentID) const;
+  bool isDescendantOf(int id, int parentID) const;
 
   /**
    * @brief test if the specified category has child categories
@@ -238,7 +238,8 @@ private:
   std::map<int, NexusCategory> m_NexusMap;
 
 private:
-
+  // called by isDescendantOf()
+  bool isDescendantOfImpl(int id, int parentID, std::set<int>& seen) const;
 };
 
 

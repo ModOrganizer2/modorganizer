@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include "shared/appconfig.h"
+#include "copyeventfilter.h"
 #include <log.h>
 #include <QTreeView>
 #include <deque>
@@ -40,6 +41,8 @@ public:
   void clear();
 
   const std::deque<MOBase::log::Entry>& entries() const;
+
+  QString formattedMessage(const QModelIndex& index) const;
 
 protected:
   QModelIndex index(int row, int column, const QModelIndex& parent) const override;
@@ -77,9 +80,15 @@ public:
 private:
   OrganizerCore* m_core;
   QTimer m_timer;
+  CopyEventFilter m_copyFilter;
 
   void onContextMenu(const QPoint& pos);
   void onNewEntry();
 };
+
+
+void logToStdout(bool b);
+void initLogging();
+bool setLogDirectory(const QString& dir);
 
 #endif // LOGBUFFER_H

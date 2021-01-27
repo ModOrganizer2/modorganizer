@@ -23,8 +23,12 @@ public:
     return {};
   }
 
-  int rowCount(const QModelIndex& ={}) const override
+  int rowCount(const QModelIndex& index={}) const override
   {
+    // no child nodes
+    if (index.isValid())
+      return 0;
+
     return static_cast<int>(m_files.size());
   }
 
@@ -198,7 +202,7 @@ void GenericFilesTab::select(const QModelIndex& index)
   }
 
   m_editor->setEnabled(true);
-  m_editor->load(m_model->fullPath(m_filter.map(index)));
+  m_editor->load(m_model->fullPath(m_filter.mapToSource(index)));
 }
 
 

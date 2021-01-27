@@ -5,6 +5,11 @@
 #include "plugincontainer.h"
 #include "settings.h"
 #include "glob_matching.h"
+#include "downloadmanagerproxy.h"
+#include "modlistproxy.h"
+#include "pluginlistproxy.h"
+#include "proxyutils.h"
+#include "shared/util.h"
 
 #include <QObject>
 #include <QApplication>
@@ -13,16 +18,55 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-OrganizerProxy::OrganizerProxy(OrganizerCore *organizer, PluginContainer *pluginContainer, const QString &pluginName)
+OrganizerProxy::OrganizerProxy(OrganizerCore* organizer, PluginContainer* pluginContainer, MOBase::IPlugin* plugin)
   : m_Proxied(organizer)
   , m_PluginContainer(pluginContainer)
-  , m_PluginName(pluginName)
+  , m_Plugin(plugin)
+  , m_DownloadManagerProxy(std::make_unique<DownloadManagerProxy>(this, organizer->downloadManager()))
+  , m_ModListProxy(std::make_unique<ModListProxy>(this, organizer->modList()))
+  , m_PluginListProxy(std::make_unique<PluginListProxy>(this, organizer->pluginList())) { }
+
+OrganizerProxy::~OrganizerProxy()
 {
+  disconnectSignals();
+}
+
+void OrganizerProxy::connectSignals()
+{
+  m_Connections.push_back(m_Proxied->onAboutToRun(callSignalIfPluginActive(this, m_AboutToRun, true)));
+  m_Connections.push_back(m_Proxied->onFinishedRun(callSignalIfPluginActive(this, m_FinishedRun)));
+  m_Connections.push_back(m_Proxied->onProfileCreated(callSignalIfPluginActive(this, m_ProfileCreated)));
+  m_Connections.push_back(m_Proxied->onProfileRenamed(callSignalIfPluginActive(this, m_ProfileRenamed)));
+  m_Connections.push_back(m_Proxied->onProfileRemoved(callSignalIfPluginActive(this, m_ProfileRemoved)));
+  m_Connections.push_back(m_Proxied->onProfileChanged(callSignalIfPluginActive(this, m_ProfileChanged)));
+
+  m_Connections.push_back(m_Proxied->onUserInterfaceInitialized(callSignalAlways(m_UserInterfaceInitialized)));
+  m_Connections.push_back(m_Proxied->onPluginSettingChanged(callSignalAlways(m_PluginSettingChanged)));
+  m_Connections.push_back(m_Proxied->onPluginEnabled(callSignalAlways(m_PluginEnabled)));
+  m_Connections.push_back(m_Proxied->onPluginDisabled(callSignalAlways(m_PluginDisabled)));
+
+  // Connect the child proxies.
+  m_DownloadManagerProxy->connectSignals();
+  m_ModListProxy->connectSignals();
+  m_PluginListProxy->connectSignals();
+}
+
+void OrganizerProxy::disconnectSignals()
+{
+  // Disconnect the child proxies.
+  m_DownloadManagerProxy->disconnectSignals();
+  m_ModListProxy->disconnectSignals();
+  m_PluginListProxy->disconnectSignals();
+
+  for (auto& conn : m_Connections) {
+    conn.disconnect();
+  }
+  m_Connections.clear();
 }
 
 IModRepositoryBridge *OrganizerProxy::createNexusBridge() const
 {
-  return new NexusBridge(m_PluginContainer, m_PluginName);
+  return new NexusBridge(m_PluginContainer, m_Plugin->name());
 }
 
 QString OrganizerProxy::profileName() const
@@ -60,11 +104,6 @@ VersionInfo OrganizerProxy::appVersion() const
   return m_Proxied->appVersion();
 }
 
-IModInterface *OrganizerProxy::getMod(const QString &name) const
-{
-  return m_Proxied->getMod(name);
-}
-
 IPluginGame *OrganizerProxy::getGame(const QString &gameName) const
 {
   return m_Proxied->getGame(gameName);
@@ -75,14 +114,19 @@ IModInterface *OrganizerProxy::createMod(MOBase::GuessedValue<QString> &name)
   return m_Proxied->createMod(name);
 }
 
-bool OrganizerProxy::removeMod(IModInterface *mod)
-{
-  return m_Proxied->removeMod(mod);
-}
-
 void OrganizerProxy::modDataChanged(IModInterface *mod)
 {
   m_Proxied->modDataChanged(mod);
+}
+
+bool OrganizerProxy::isPluginEnabled(QString const& pluginName) const
+{
+  return m_PluginContainer->isEnabled(pluginName);
+}
+
+bool OrganizerProxy::isPluginEnabled(IPlugin* plugin) const
+{
+  return m_PluginContainer->isEnabled(plugin);
 }
 
 QVariant OrganizerProxy::pluginSetting(const QString &pluginName, const QString &key) const
@@ -107,7 +151,7 @@ void OrganizerProxy::setPersistent(const QString &pluginName, const QString &key
 
 QString OrganizerProxy::pluginDataPath() const
 {
-  return m_Proxied->pluginDataPath();
+  return OrganizerCore::pluginDataPath();
 }
 
 HANDLE OrganizerProxy::startApplication(
@@ -136,7 +180,7 @@ HANDLE OrganizerProxy::startApplication(
   return runner.stealProcessHandle().release();
 }
 
-bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
+bool OrganizerProxy::waitForApplication(HANDLE handle, bool refresh, LPDWORD exitCode) const
 {
   const auto pid = ::GetProcessId(handle);
 
@@ -146,8 +190,14 @@ bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
 
   auto runner = m_Proxied->processRunner();
 
+  ProcessRunner::WaitFlags waitFlags = ProcessRunner::ForceWait;
+
+  if (refresh) {
+    waitFlags |= ProcessRunner::TriggerRefresh | ProcessRunner::WaitForRefresh;
+  }
+
   const auto r = runner
-    .setWaitForCompletion(ProcessRunner::ForceWait, UILocker::OutputRequired)
+    .setWaitForCompletion(waitFlags, UILocker::OutputRequired)
     .attachToProcess(handle);
 
   if (exitCode) {
@@ -171,44 +221,14 @@ bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
   }
 }
 
-bool OrganizerProxy::onAboutToRun(const std::function<bool (const QString &)> &func)
+void OrganizerProxy::refresh(bool saveChanges)
 {
-  return m_Proxied->onAboutToRun(func);
-}
-
-bool OrganizerProxy::onFinishedRun(const std::function<void (const QString &, unsigned int)> &func)
-{
-  return m_Proxied->onFinishedRun(func);
-}
-
-bool OrganizerProxy::onModInstalled(const std::function<void (const QString &)> &func)
-{
-  return m_Proxied->onModInstalled(func);
-}
-
-bool OrganizerProxy::onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func)
-{
-  return m_Proxied->onUserInterfaceInitialized(func);
-}
-
-bool OrganizerProxy::onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func)
-{
-  return m_Proxied->onProfileChanged(func);
-}
-
-bool OrganizerProxy::onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func)
-{
-  return m_Proxied->onPluginSettingChanged(func);
-}
-
-void OrganizerProxy::refreshModList(bool saveChanges)
-{
-  m_Proxied->refreshModList(saveChanges);
+  m_Proxied->refresh(saveChanges);
 }
 
 IModInterface *OrganizerProxy::installMod(const QString &fileName, const QString &nameSuggestion)
 {
-  return m_Proxied->installMod(fileName, false, nullptr, nameSuggestion);
+  return m_Proxied->installMod(fileName, -1, false, nullptr, nameSuggestion);
 }
 
 QString OrganizerProxy::resolvePath(const QString &fileName) const
@@ -254,17 +274,17 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerProxy::findFileInfos(const QString 
 
 MOBase::IDownloadManager *OrganizerProxy::downloadManager() const
 {
-  return m_Proxied->downloadManager();
+  return m_DownloadManagerProxy.get();
 }
 
 MOBase::IPluginList *OrganizerProxy::pluginList() const
 {
-  return m_Proxied->pluginList();
+  return m_PluginListProxy.get();
 }
 
 MOBase::IModList *OrganizerProxy::modList() const
 {
-  return m_Proxied->modList();
+  return m_ModListProxy.get();
 }
 
 MOBase::IProfile *OrganizerProxy::profile() const
@@ -277,7 +297,74 @@ MOBase::IPluginGame const *OrganizerProxy::managedGame() const
   return m_Proxied->managedGame();
 }
 
-QStringList OrganizerProxy::modsSortedByProfilePriority() const
+// CALLBACKS
+
+bool OrganizerProxy::onAboutToRun(const std::function<bool(const QString&)>& func)
 {
-  return m_Proxied->modsSortedByProfilePriority();
+  return m_Proxied->onAboutToRun(MOShared::callIfPluginActive(this, func, true)).connected();
+}
+
+bool OrganizerProxy::onFinishedRun(const std::function<void(const QString&, unsigned int)>& func)
+{
+  return m_Proxied->onFinishedRun(MOShared::callIfPluginActive(this, func)).connected();
+}
+
+bool OrganizerProxy::onProfileCreated(std::function<void(IProfile*)> const& func)
+{
+  return m_ProfileCreated.connect(func).connected();
+}
+
+bool OrganizerProxy::onProfileRenamed(std::function<void(IProfile*, QString const&, QString const&)> const& func)
+{
+  return m_ProfileRenamed.connect(func).connected();
+}
+
+bool OrganizerProxy::onProfileRemoved(std::function<void(QString const&)> const& func)
+{
+  return m_ProfileRemoved.connect(func).connected();
+}
+
+bool OrganizerProxy::onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func)
+{
+  return m_ProfileChanged.connect(func).connected();
+}
+
+bool OrganizerProxy::onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func)
+{
+  // Always call this one to allow plugin to initialize themselves even when not active:
+  return m_UserInterfaceInitialized.connect(func).connected();
+}
+
+// Always call these one, otherwise plugin cannot detect they are being enabled / disabled:
+bool OrganizerProxy::onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func)
+{
+  return m_PluginSettingChanged.connect(func).connected();
+}
+
+bool OrganizerProxy::onPluginEnabled(std::function<void(const IPlugin*)> const& func)
+{
+  return m_PluginEnabled.connect(func).connected();
+}
+
+bool OrganizerProxy::onPluginEnabled(const QString& pluginName, std::function<void()> const& func)
+{
+  return onPluginEnabled([=](const IPlugin* plugin) {
+    if (plugin->name().compare(pluginName, Qt::CaseInsensitive) == 0) {
+      func();
+    }
+    });
+}
+
+bool OrganizerProxy::onPluginDisabled(std::function<void(const IPlugin*)> const& func)
+{
+  return m_PluginDisabled.connect(func).connected();
+}
+
+bool OrganizerProxy::onPluginDisabled(const QString& pluginName, std::function<void()> const& func)
+{
+  return onPluginDisabled([=](const IPlugin* plugin) {
+    if (plugin->name().compare(pluginName, Qt::CaseInsensitive) == 0) {
+      func();
+    }
+  });
 }

@@ -211,7 +211,19 @@ void DirectoryEntry::addFromBSA(
   }
 
   BSA::Archive archive;
-  BSA::EErrorCode res = archive.read(ToString(archivePath, false).c_str(), false);
+  BSA::EErrorCode res = BSA::ERROR_NONE;
+
+  try
+  {
+    // read() can return an error, but it can also throw if the file is not a
+    // valid bsa
+    res = archive.read(ToString(archivePath, false).c_str(), false);
+  }
+  catch(std::exception& e)
+  {
+    log::error("invalid bsa '{}', error {}", archivePath, e.what());
+    return;
+  }
 
   if ((res != BSA::ERROR_NONE) && (res != BSA::ERROR_INVALIDHASHES)) {
     log::error("invalid bsa '{}', error {}", archivePath, res);
@@ -636,7 +648,7 @@ void DirectoryEntry::addFiles(
       onDirectoryEnd((Context*)pcx, path);
     },
 
-    [](void* pcx, std::wstring_view path, FILETIME ft)
+    [](void* pcx, std::wstring_view path, FILETIME ft, uint64_t)
     {
       onFile((Context*)pcx, path, ft);
     }

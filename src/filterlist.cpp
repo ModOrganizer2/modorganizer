@@ -2,7 +2,6 @@
 #include "ui_mainwindow.h"
 #include "categories.h"
 #include "categoriesdialog.h"
-#include "plugincontainer.h"
 #include "settings.h"
 #include "organizercore.h"
 #include <utility.h>
@@ -13,7 +12,14 @@ using Criteria = ModListSortProxy::Criteria;
 
 class FilterList::CriteriaItem : public QTreeWidgetItem
 {
+
+  static constexpr int IDRole = Qt::UserRole;
+  static constexpr int TypeRole = Qt::UserRole + 1;
+
 public:
+
+  static constexpr int StateRole = Qt::UserRole + 2;
+
   enum States
   {
     FirstState = 0,
@@ -59,27 +65,40 @@ public:
 
   void nextState()
   {
-    m_state = static_cast<States>(m_state + 1);
-    if (m_state > LastState) {
-      m_state = FirstState;
+    auto s = static_cast<States>(m_state + 1);
+    if (s > LastState) {
+      s = FirstState;
     }
-
-    updateState();
+    setState(s);
   }
 
   void previousState()
   {
-    m_state = static_cast<States>(m_state - 1);
-    if (m_state < FirstState) {
-      m_state = LastState;
+    auto s = static_cast<States>(m_state - 1);
+    if (s < FirstState) {
+      s = LastState;
     }
+    setState(s);
+  }
 
-    updateState();
+  QVariant data(int column, int role) const
+  {
+    if (role == StateRole) {
+      return m_state;
+    }
+    return QTreeWidgetItem::data(column, role);
+  }
+
+  void setData(int column, int role, const QVariant& value) {
+    if (role == StateRole) {
+      setState(static_cast<States>(value.toInt()));
+    }
+    else {
+      QTreeWidgetItem::setData(column, role, value);
+    }
   }
 
 private:
-  const int IDRole = Qt::UserRole;
-  const int TypeRole = Qt::UserRole + 1;
 
   FilterList* m_list;
   States m_state;
@@ -182,8 +201,8 @@ private:
 };
 
 
-FilterList::FilterList(Ui::MainWindow* ui, OrganizerCore* organizer, PluginContainer* pluginContainer, CategoryFactory* factory)
-  : ui(ui), m_Organizer(organizer), m_pluginContainer(pluginContainer), m_factory(factory)
+FilterList::FilterList(Ui::MainWindow* ui, OrganizerCore& core, CategoryFactory& factory)
+  : ui(ui), m_core(core), m_factory(factory)
 {
   auto* eventFilter = new CriteriaItemFilter(
     ui->filters, [&](auto* item, int dir){ return cycleItem(item, dir); });
@@ -213,10 +232,20 @@ FilterList::FilterList(Ui::MainWindow* ui, OrganizerCore* organizer, PluginConta
 void FilterList::restoreState(const Settings& s)
 {
   s.widgets().restoreIndex(ui->filtersSeparators);
+  s.widgets().restoreChecked(ui->filtersAnd);
+  s.widgets().restoreChecked(ui->filtersOr);
+
+  if (m_core.settings().interface().saveFilters()) {
+    s.widgets().restoreTreeCheckState(ui->filters, CriteriaItem::StateRole);
+  }
+  checkCriteria();
 }
 
 void FilterList::saveState(Settings& s) const
 {
+  s.widgets().saveTreeCheckState(ui->filters, CriteriaItem::StateRole);
+  s.widgets().saveChecked(ui->filtersAnd);
+  s.widgets().saveChecked(ui->filtersOr);
   s.widgets().saveIndex(ui->filtersSeparators);
 }
 
@@ -235,7 +264,7 @@ QTreeWidgetItem* FilterList::addCriteriaItem(
 
 void FilterList::addContentCriteria()
 {
-  m_Organizer->modDataContents().forEachContent([this](auto const& content) {
+  m_core.modDataContents().forEachContent([this](auto const& content) {
     addCriteriaItem(
       nullptr, QString("<%1>").arg(tr("Contains %1").arg(content.name())),
       content.id(), ModListSortProxy::TypeContent);
@@ -244,15 +273,15 @@ void FilterList::addContentCriteria()
 
 void FilterList::addCategoryCriteria(QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID)
 {
-  const auto count = static_cast<unsigned int>(m_factory->numCategories());
+  const auto count = static_cast<unsigned int>(m_factory.numCategories());
   for (unsigned int i = 1; i < count; ++i) {
-    if (m_factory->getParentID(i) == targetID) {
-      int categoryID = m_factory->getCategoryID(i);
+    if (m_factory.getParentID(i) == targetID) {
+      int categoryID = m_factory.getCategoryID(i);
       if (categoriesUsed.find(categoryID) != categoriesUsed.end()) {
         QTreeWidgetItem *item =
-          addCriteriaItem(root, m_factory->getCategoryName(i),
+          addCriteriaItem(root, m_factory.getCategoryName(i),
             categoryID, ModListSortProxy::TypeCategory);
-        if (m_factory->hasChildren(i)) {
+        if (m_factory.hasChildren(i)) {
           addCategoryCriteria(item, categoriesUsed, categoryID);
         }
       }
@@ -265,7 +294,7 @@ void FilterList::addSpecialCriteria(int type)
   const auto sc = static_cast<CategoryFactory::SpecialCategories>(type);
 
   addCriteriaItem(
-    nullptr, m_factory->getSpecialCategoryName(sc),
+    nullptr, m_factory.getSpecialCategoryName(sc),
     type, ModListSortProxy::TypeSpecial);
 }
 
@@ -303,7 +332,7 @@ void FilterList::refresh()
           log::warn("cycle in categories: {}", SetJoin(cycleTest, ", "));
           break;
         }
-        currentID = m_factory->getParentID(m_factory->getCategoryIndex(currentID));
+        currentID = m_factory.getParentID(m_factory.getCategoryIndex(currentID));
       }
     }
   }
@@ -396,7 +425,7 @@ void FilterList::checkCriteria()
 
 void FilterList::editCategories()
 {
-  CategoriesDialog dialog(m_pluginContainer, qApp->activeWindow());
+  CategoriesDialog dialog(qApp->activeWindow());
 
   if (dialog.exec() == QDialog::Accepted) {
     dialog.commitChanges();

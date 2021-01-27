@@ -18,35 +18,41 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "previewgenerator.h"
+
 #include <QFileInfo>
 #include <QLabel>
 #include <QImageReader>
 #include <QTextEdit>
 #include <utility.h>
 
-PreviewGenerator::PreviewGenerator()
-{
-  m_MaxSize = QGuiApplication::primaryScreen()->size() * 0.8;
-}
+#include "plugincontainer.h"
 
-void PreviewGenerator::registerPlugin(MOBase::IPluginPreview *plugin)
-{
-  for (const QString &extension : plugin->supportedExtensions()) {
-    m_PreviewPlugins.insert(std::make_pair(extension, plugin));
-  }
+using namespace MOBase;
+
+PreviewGenerator::PreviewGenerator(const PluginContainer& pluginContainer) :
+  m_PluginContainer(pluginContainer) {
+  m_MaxSize = QGuiApplication::primaryScreen()->size() * 0.8;
 }
 
 bool PreviewGenerator::previewSupported(const QString &fileExtension) const
 {
-  return m_PreviewPlugins.find(fileExtension.toLower()) != m_PreviewPlugins.end();
+  auto& previews = m_PluginContainer.plugins<IPluginPreview>();
+  for (auto* preview : previews) {
+    if (preview->supportedExtensions().contains(fileExtension)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 QWidget *PreviewGenerator::genPreview(const QString &fileName) const
 {
-  auto iter = m_PreviewPlugins.find(QFileInfo(fileName).suffix().toLower());
-  if (iter != m_PreviewPlugins.end()) {
-    return iter->second->genFilePreview(fileName, m_MaxSize);
-  } else {
-    return nullptr;
+  const QString ext = QFileInfo(fileName).suffix().toLower();
+  auto& previews = m_PluginContainer.plugins<IPluginPreview>();
+  for (auto* preview : previews) {
+    if (m_PluginContainer.isEnabled(preview) && preview->supportedExtensions().contains(ext)) {
+      return preview->genFilePreview(fileName, m_MaxSize);
+    }
   }
+  return nullptr;
 }

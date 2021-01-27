@@ -1282,7 +1282,7 @@ p, li { white-space: pre-wrap; }
              <item>
               <layout class="QVBoxLayout" name="downloadLayout">
                <item>
-                <widget class="DownloadListWidget" name="downloadView">
+                <widget class="DownloadListView" name="downloadView">
                  <property name="minimumSize">
                   <size>
                    <width>320</width>
@@ -1361,7 +1361,7 @@ p, li { white-space: pre-wrap; }
                 </spacer>
                </item>
                <item>
-                <widget class="MOBase::LineEditClear" name="downloadFilterEdit">
+                <widget class="QLineEdit" name="downloadFilterEdit">
                  <property name="toolTip">
                   <string>Filter the list of downloads.</string>
                  </property>
@@ -1411,7 +1411,9 @@ p, li { white-space: pre-wrap; }
    <addaction name="actionChange_Game"/>
    <addaction name="actionInstallMod"/>
    <addaction name="actionNexus"/>
+   <addaction name="actionModPage"/>
    <addaction name="actionAdd_Profile"/>
+   <addaction name="action_Refresh"/>
    <addaction name="actionModify_Executables"/>
    <addaction name="actionTool"/>
    <addaction name="actionSettings"/>
@@ -1481,6 +1483,7 @@ p, li { white-space: pre-wrap; }
      <addaction name="actionToolBarTextOnly"/>
      <addaction name="actionToolBarIconsAndText"/>
     </widget>
+    <addaction name="action_Refresh"/>
     <addaction name="menuToolbars"/>
     <addaction name="actionViewLog"/>
     <addaction name="separator"/>
@@ -1546,6 +1549,9 @@ p, li { white-space: pre-wrap; }
        </property>
        <property name="alternatingRowColors">
         <bool>true</bool>
+       </property>
+       <property name="selectionMode">
+        <enum>QAbstractItemView::ExtendedSelection</enum>
        </property>
        <property name="rootIsDecorated">
         <bool>false</bool>
@@ -1684,6 +1690,27 @@ p, li { white-space: pre-wrap; }
     <string>Ctrl+N</string>
    </property>
   </action>
+  <action name="actionModPage">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/MO/gui/resources/internet-web-browser.png</normaloff>:/MO/gui/resources/internet-web-browser.png</iconset>
+   </property>
+   <property name="text">
+    <string>Browse Mod Page</string>
+   </property>
+   <property name="iconText">
+    <string>Browse Mod Page</string>
+   </property>
+   <property name="toolTip">
+    <string>Browse Mod Page</string>
+   </property>
+   <property name="statusTip">
+    <string>Browse Mod Page</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
+  </action>
   <action name="actionUpdate">
    <property name="enabled">
     <bool>false</bool>
@@ -1768,16 +1795,16 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/instance_switch</normaloff>:/MO/gui/instance_switch</iconset>
    </property>
    <property name="text">
-    <string>&amp;Change Game...</string>
+    <string>Manage Instan&amp;ces...</string>
    </property>
    <property name="iconText">
-    <string>&amp;Change Game</string>
+    <string>Manage Instan&amp;ces...</string>
    </property>
    <property name="toolTip">
-    <string>Open the Instance selection dialog to manage a different Game</string>
+    <string>Open the instance manager window to manage a different instance</string>
    </property>
    <property name="statusTip">
-    <string>Open the Instance selection dialog to manage a different Game</string>
+    <string>Open the instance manager window to manage a different instance</string>
    </property>
   </action>
   <action name="actionExit">
@@ -1874,9 +1901,26 @@ p, li { white-space: pre-wrap; }
     <string>Log</string>
    </property>
   </action>
+  <action name="action_Refresh">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/MO/gui/resources/view-refresh.png</normaloff>:/MO/gui/resources/view-refresh.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Refresh</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
+  <customwidget>
+   <class>LinkLabel</class>
+   <extends>QLabel</extends>
+   <header location="global">linklabel.h</header>
+  </customwidget>
   <customwidget>
    <class>MOBase::LineEditClear</class>
    <extends>QLineEdit</extends>
@@ -1898,11 +1942,6 @@ p, li { white-space: pre-wrap; }
    <header>lcdnumber.h</header>
   </customwidget>
   <customwidget>
-   <class>DownloadListWidget</class>
-   <extends>QTreeView</extends>
-   <header>downloadlistwidget.h</header>
-  </customwidget>
-  <customwidget>
    <class>MOBase::SortableTreeWidget</class>
    <extends>QWidget</extends>
    <header>sortabletreewidget.h</header>
@@ -1918,9 +1957,9 @@ p, li { white-space: pre-wrap; }
    <header>statusbar.h</header>
   </customwidget>
   <customwidget>
-   <class>LinkLabel</class>
-   <extends>QLabel</extends>
-   <header location="global">linklabel.h</header>
+   <class>DownloadListView</class>
+   <extends>QTreeView</extends>
+   <header>downloadlistview.h</header>
   </customwidget>
  </customwidgets>
  <resources>

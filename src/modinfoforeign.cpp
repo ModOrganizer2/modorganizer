@@ -42,14 +42,11 @@ QString ModInfoForeign::getDescription() const
   return tr("This pseudo mod represents content managed outside MO. It isn't modified by MO.");
 }
 
-ModInfoForeign::ModInfoForeign(const QString &modName,
-                               const QString &referenceFile,
-                               const QStringList &archives,
-                               ModInfo::EModType modType,
-                               const MOBase::IPluginGame* gamePlugin,
-                               DirectoryEntry **directoryStructure,
-                               PluginContainer *pluginContainer)
-    : ModInfoWithConflictInfo(pluginContainer, gamePlugin, directoryStructure),
+ModInfoForeign::ModInfoForeign(
+  const QString &modName, const QString &referenceFile,
+  const QStringList &archives, ModInfo::EModType modType,
+  OrganizerCore& core)
+    : ModInfoWithConflictInfo(core),
       m_ReferenceFile(referenceFile), m_Archives(archives), m_ModType(modType)
 {
   m_CreationTime = QFileInfo(referenceFile).birthTime();

@@ -1,5 +1,8 @@
 #include "modinfodialogconflictsmodels.h"
 #include "modinfodialog.h"
+#include <utility.h>
+
+using MOBase::naturalCompare;
 
 ConflictItem::ConflictItem(
     QString before, QString relativeName, QString after,

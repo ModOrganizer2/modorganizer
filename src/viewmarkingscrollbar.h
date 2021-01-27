@@ -1,21 +1,25 @@
 #ifndef VIEWMARKINGSCROLLBAR_H
 #define VIEWMARKINGSCROLLBAR_H
 
+#include <QTreeView>
 #include <QScrollBar>
-#include <QAbstractItemModel>
 
 
 class ViewMarkingScrollBar : public QScrollBar
 {
 public:
-  static const int DEFAULT_ROLE = Qt::UserRole + 42;
-public:
-  ViewMarkingScrollBar(QAbstractItemModel *model, QWidget *parent = 0, int role = DEFAULT_ROLE);
+  ViewMarkingScrollBar(QTreeView* view, int role);
+
 protected:
-  virtual void paintEvent(QPaintEvent *event);
+  void paintEvent(QPaintEvent *event) override;
+
+  // retrieve the color of the marker for the given index
+  //
+  virtual QColor color(const QModelIndex& index) const;
+
 private:
-  QAbstractItemModel *m_Model;
-  int m_Role;
+  QTreeView* m_view;
+  int m_role;
 };
 
 

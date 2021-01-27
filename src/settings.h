@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SETTINGS_H
 
 #include "loadmechanism.h"
+#include "envdump.h"
 #include <filterwidget.h>
 #include <lootcli/lootcli.h>
 #include <questionboxmemory.h>
@@ -169,7 +170,7 @@ public:
 
   // assumes the given widget is a top-level
   //
-  void centerOnMainWindowMonitor(QWidget* w);
+  void centerOnMainWindowMonitor(QWidget* w) const;
 
   // saves the monitor number of the given window
   //
@@ -195,7 +196,21 @@ private:
 class WidgetSettings
 {
 public:
-  WidgetSettings(QSettings& s);
+  // globalInstance is forwarded from the Settings constructor; WidgetSettings
+  // has the callbacks used by QuestionBoxMemory and those are global, so they
+  // should only be set by the global instance
+  //
+  WidgetSettings(QSettings& s, bool globalInstance);
+
+  // tree item check - this saves the list of expanded items based on the given role
+  //
+  void saveTreeCheckState(const QTreeView* tv, int role = Qt::CheckStateRole);
+  void restoreTreeCheckState(QTreeView* tv, int role = Qt::CheckStateRole) const;
+
+  // tree state - this saves the list of expanded items based on the given role
+  //
+  void saveTreeExpandState(const QTreeView* tv, int role = Qt::DisplayRole);
+  void restoreTreeExpandState(QTreeView* tv, int role = Qt::DisplayRole) const;
 
   // selected index for a combobox
   //
@@ -299,9 +314,10 @@ public:
   //
   void clearPlugins();
 
-  // adds the given plugin to the list and loads all of its settings
+  // adds/removes the given plugin to the list and loads all of its settings
   //
   void registerPlugin(MOBase::IPlugin *plugin);
+  void unregisterPlugin(MOBase::IPlugin* plugin);
 
   // returns all the registered plugins
   //
@@ -391,6 +407,9 @@ private:
 class PathSettings
 {
 public:
+  // %BASE_DIR%
+  static const QString BaseDirVariable;
+
   PathSettings(QSettings& settings);
 
   QString base() const;
@@ -418,6 +437,15 @@ public:
   std::map<QString, QString> recent() const;
   void setRecent(const std::map<QString, QString>& map);
 
+
+  // resolves %BASE_DIR%
+  //
+  static QString resolve(const QString& path, const QString& baseDir);
+
+  // returns %BASE_DIR%/dirName
+  //
+  static QString makeDefaultPath(const QString dirName);
+
 private:
   QSettings& m_Settings;
 
@@ -429,7 +457,10 @@ private:
 class NetworkSettings
 {
 public:
-  NetworkSettings(QSettings& settings);
+  // globalInstance is forwarded from the Settings constructor; NetworkSettings
+  // will set the global URL custom command
+  //
+  NetworkSettings(QSettings& settings, bool globalInstance);
 
   // whether the user has disabled online features
   //
@@ -459,6 +490,16 @@ public:
   //
   void updateFromOldMap();
 
+  // whether to use a custom command to open links
+  //
+  bool useCustomBrowser() const;
+  void setUseCustomBrowser(bool b);
+
+  // custom command to open links
+  //
+  QString customBrowserCommand() const;
+  void setCustomBrowserCommand(const QString& s);
+
   void dump() const;
 
 private:
@@ -467,6 +508,10 @@ private:
   // for pre 2.2.1 ini files
   //
   ServerList serversFromOldMap() const;
+
+  // sets the custom command in uibase, called when the settings change
+  //
+  void updateCustomBrowser();
 };
 
 
@@ -486,24 +531,6 @@ class NexusSettings
 public:
   NexusSettings(Settings& parent, QSettings& settings);
 
-  // if the key exists from the credentials store, puts it in `apiKey` and
-  // returns true; otherwise, returns false and leaves `apiKey` untouched
-  //
-  bool apiKey(QString& apiKey) const;
-
-  // sets the api key in the credentials store, removes it if empty; returns
-  // false on errors
-  //
-  bool setApiKey(const QString& apiKey);
-
-  // removes the api key from the credentials store; returns false on errors
-  //
-  bool clearApiKey();
-
-  // returns whether an API key is currently stored
-  //
-  bool hasApiKey() const;
-
   // returns whether endorsement integration is enabled
   //
   bool endorsementIntegration() const;
@@ -514,6 +541,11 @@ public:
   EndorsementState endorsementState() const;
   void setEndorsementState(EndorsementState s);
 
+  // returns whether tracked integration is enabled
+  //
+  bool trackedIntegration() const;
+  void setTrackedIntegration(bool b) const;
+
   // registers MO as the handler for nxm links
   //
   // if 'force' is true, the registration dialog will be shown even if the user
@@ -522,6 +554,10 @@ public:
   void registerAsNXMHandler(bool force);
 
   std::vector<std::chrono::seconds> validationTimeouts() const;
+
+  // dumps nxmhandler stuff
+  //
+  void dump() const;
 
 private:
   Settings& m_Parent;
@@ -585,6 +621,49 @@ public:
   std::optional<QString> styleName() const;
   void setStyleName(const QString& name);
 
+  // whether to use collapsible separators when possible
+  //
+  bool collapsibleSeparators(Qt::SortOrder order) const;
+  void setCollapsibleSeparators(bool ascending, bool descending);
+
+  // whether to highlight mod conflicts and plugins on collapsed
+  // separators
+  //
+  bool collapsibleSeparatorsHighlightTo() const;
+  void setCollapsibleSeparatorsHighlightTo(bool b);
+
+  // whether to highlight mod conflicts and plugins from separators
+  // when selected but collapsed
+  //
+  bool collapsibleSeparatorsHighlightFrom() const;
+  void setCollapsibleSeparatorsHighlightFrom(bool b);
+
+  // whether to show icons on collapsed separators
+  //
+  bool collapsibleSeparatorsIcons(int column) const;
+  void setCollapsibleSeparatorsIcons(int column, bool show);
+
+  // whether each profile should have its own expansion state
+  //
+  bool collapsibleSeparatorsPerProfile() const;
+  void setCollapsibleSeparatorsPerProfile(bool b);
+
+  // whether to save/restore filter states between runs
+  //
+  bool saveFilters() const;
+  void setSaveFilters(bool b);
+
+  // whether to collapse groups (separators, categories, ...) after
+  // a delay when hovering (similar to auto-expand)
+  //
+  bool autoCollapseOnHover() const;
+  void setAutoCollapseOnHover(bool b);
+
+  // whether to check for update after installing a mod
+  //
+  bool checkUpdateAfterInstallation() const;
+  void setCheckUpdateAfterInstallation(bool b);
+
   // whether to show compact downloads
   //
   bool compactDownloads() const;
@@ -594,6 +673,11 @@ public:
   //
   bool metaDownloads() const;
   void setMetaDownloads(bool b);
+
+  // whether to hide downloads after installing them
+  //
+  bool hideDownloadsAfterInstallation() const;
+  void setHideDownloadsAfterInstallation(bool b);
 
   // whether the API counter should be hidden
   //
@@ -653,13 +737,13 @@ public:
 
   // crash dump type for both MO and usvfs
   //
-  CrashDumpsType crashDumpsType() const;
-  void setCrashDumpsType(CrashDumpsType type);
+  env::CoreDumpTypes coreDumpType() const;
+  void setCoreDumpType(env::CoreDumpTypes type);
 
   // maximum number of dump files keps, for both MO and usvfs
   //
-  int crashDumpsMax() const;
-  void setCrashDumpsMax(int n);
+  int maxCoreDumps() const;
+  void setMaxCoreDumps(int n);
 
   std::chrono::seconds spawnDelay() const;
   void setSpawnDelay(std::chrono::seconds t);
@@ -677,10 +761,32 @@ class Settings : public QObject
   Q_OBJECT;
 
 public:
-  Settings(const QString& path);
+  // there is one Settings global object for MO when an instance is loaded, but
+  // other Settings objects are required in several places, such as in the
+  // Instance class, the instance dialogs, etc.
+  //
+  // any Settings object created with globalInstance==false won't set the
+  // singleton
+  //
+  // some sub-objects like WidgetSettings and NetworkSettings need to know
+  // whether they were created from a globalInstance, see their constructor
+  //
+  // @param path           path to an ini file
+  // @param globalInsance  whether this is the global instance; creates the
+  //                       singleton and asserts if it already exists
+  //
+  Settings(const QString& path, bool globalInstance=false);
   ~Settings();
 
-  static Settings &instance();
+
+  // throws if there is no global Settings instance
+  //
+  static Settings& instance();
+
+  // returns null if there is no global Settings instance
+  //
+  static Settings* maybeInstance();
+
 
   // name of the ini file
   //
@@ -784,6 +890,10 @@ public:
   //
   QSettings::Status sync() const;
 
+  // last status of the ini file
+  //
+  QSettings::Status iniStatus() const;
+
   void dump() const;
 
 public slots:
@@ -812,6 +922,49 @@ private:
   SteamSettings m_Steam;
   InterfaceSettings m_Interface;
   DiagnosticsSettings m_Diagnostics;
+};
+
+
+// manages global settings in the registry
+//
+class GlobalSettings
+{
+public:
+  // migrates the old settings from the Tannin key to the new one
+  static void updateRegistryKey();
+
+  static QString currentInstance();
+  static void setCurrentInstance(const QString& s);
+
+  static bool hideCreateInstanceIntro();
+  static void setHideCreateInstanceIntro(bool b);
+
+  static bool hideTutorialQuestion();
+  static void setHideTutorialQuestion(bool b);
+
+  // if the key exists from the credentials store, puts it in `apiKey` and
+  // returns true; otherwise, returns false and leaves `apiKey` untouched
+  //
+  static bool nexusApiKey(QString& apiKey);
+
+  // sets the api key in the credentials store, removes it if empty; returns
+  // false on errors
+  //
+  static bool setNexusApiKey(const QString& apiKey);
+
+  // removes the api key from the credentials store; returns false on errors
+  //
+  static bool clearNexusApiKey();
+
+  // returns whether an API key is currently stored
+  //
+  static bool hasNexusApiKey();
+
+  // resets anything that the user can disable
+  static void resetDialogs();
+
+private:
+  static QSettings settings();
 };
 
 

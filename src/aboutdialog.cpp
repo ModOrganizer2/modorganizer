@@ -120,5 +120,5 @@ void AboutDialog::on_creditsList_currentItemChanged(QListWidgetItem *current, QL
 
 void AboutDialog::on_sourceText_linkActivated(const QString &link)
 {
-  emit linkClicked(link);
+  MOBase::shell::Open(QUrl(link));
 }

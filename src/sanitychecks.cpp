@@ -1,9 +1,13 @@
+#include "sanitychecks.h"
 #include "env.h"
 #include "envmodule.h"
 #include "settings.h"
 #include <iplugingame.h>
 #include <log.h>
 #include <utility.h>
+
+namespace sanity
+{
 
 using namespace MOBase;
 
@@ -216,46 +220,53 @@ int checkMissingFiles()
 
 int checkBadOSDs(const env::Module& m)
 {
-  // these dlls seems to interfere mostly with dialogs, like the mod info
-  // dialog: it renders dialogs fully white and makes it impossible to interact
-  // with them
+  // these dlls seem to interfere mostly with dialogs, like the mod info
+  // dialog: they render some dialogs fully white and make it impossible to
+  // interact with them
   //
-  // the dlls is usually loaded on startup, but there has been some  reports
-  // where it got loaded later, so this is also called every time a new module
+  // the dlls is usually loaded on startup, but there has been some reports
+  // where they got loaded later, so this is also called every time a new module
   // is loaded into this process
 
-  const char* nahimic =
-    "Nahimic (also known as SonicSuite, SonicRadar, SteelSeries, A-Volute, etc.)";
+  const std::string nahimic =
+    "Nahimic (also known as SonicSuite, SonicRadar, "
+    "SteelSeries, A-Volute, etc.)";
 
-  static const std::map<QString, QString> names = {
-    {"NahimicOSD.dll",         nahimic},
-    {"nahimicmsiosd.dll",      nahimic},
-    {"cassinimlkosd.dll",      nahimic},
-    {"SS3DevProps.dll",        nahimic},
-    {"ss2devprops.dll",        nahimic},
-    {"ss2osd.dll",             nahimic},
-    {"RTSSHooks64.dll",        "RivaTuner Statistics Server"},
-    {"SSAudioOSD.dll",         "SteelSeries Audio"},
-    {"specialk64.dll",         "SpecialK"},
-    {"corsairosdhook.x64.dll", "Corsair Utility Engine"},
-    {"gtii-osd64-vk.dll",      "ASUS GPU Tweak 2"},
-    {"easyhook64.dll",         "Razer Cortex"},
-    {"k_fps64.dll",            "Razer Cortex"}
+  auto p = [](std::string re, std::string s) {
+    return std::make_pair(std::regex(re, std::regex::icase), s);
+  };
+
+  static const std::vector<std::pair<std::regex, std::string>> list = {
+    p("nahimic(.*)osd\\.dll",       nahimic),
+    p("cassini(.*)osd\\.dll",       nahimic),
+    p(".+devprops.*.dll",           nahimic),
+    p("ss2osd\\.dll",               nahimic),
+    p("RTSSHooks64\\.dll",          "RivaTuner Statistics Server"),
+    p("SSAudioOSD\\.dll",           "SteelSeries Audio"),
+    p("specialk64\\.dll",           "SpecialK"),
+    p("corsairosdhook\\.x64\\.dll", "Corsair Utility Engine"),
+    p("gtii-osd64-vk\\.dll",        "ASUS GPU Tweak 2"),
+    p("easyhook64\\.dll",           "Razer Cortex"),
+    p("k_fps64\\.dll",              "Razer Cortex"),
+    p("fw1fontwrapper\\.dll",       "Gigabyte 3D OSD"),
+    p("gfxhook64\\.dll",            "Gigabyte 3D OSD")
   };
 
   const QFileInfo file(m.path());
   int n = 0;
 
-  for (auto&& p : names) {
-    if (file.fileName().compare(p.first, Qt::CaseInsensitive) == 0) {
+  for (auto&& p : list) {
+    std::smatch m;
+    const auto filename = file.fileName().toStdString();
+
+    if (std::regex_match(filename, m, p.first)) {
       log::warn("{}", QObject::tr(
         "%1 is loaded.\nThis program is known to cause issues with "
         "Mod Organizer, such as freezing or blank windows. Consider "
         "uninstalling it.")
-        .arg(p.second));
+        .arg(QString::fromStdString(p.second)));
 
       log::warn("{}", file.absoluteFilePath());
-
       ++n;
     }
   }
@@ -268,7 +279,8 @@ int checkUsvfsIncompatibilites(const env::Module& m)
   // these dlls seems to interfere with usvfs
 
   static const std::map<QString, QString> names = {
-    {"mactype64.dll", "Mactype"}
+    {"mactype64.dll", "Mactype"},
+    {"epclient64.dll", "Citrix ICA Client"}
   };
 
   const QFileInfo file(m.path());
@@ -279,7 +291,7 @@ int checkUsvfsIncompatibilites(const env::Module& m)
       log::warn("{}", QObject::tr(
         "%1 is loaded. This program is known to cause issues with "
         "Mod Organizer and its virtual filesystem, such script extenders "
-        "refusing to run. Consider uninstalling it.")
+        "or others programs refusing to run. Consider uninstalling it.")
         .arg(p.second));
 
       log::warn("{}", file.absoluteFilePath());
@@ -368,7 +380,7 @@ int checkProtected(const QDir& d, const QString& what)
   return 0;
 }
 
-int checkPathsForSanity(IPluginGame& game, const Settings& s)
+int checkPaths(IPluginGame& game, const Settings& s)
 {
   log::debug("checking paths");
 
@@ -390,7 +402,7 @@ int checkPathsForSanity(IPluginGame& game, const Settings& s)
   return n;
 }
 
-void sanityChecks(const env::Environment& e)
+void checkEnvironment(const env::Environment& e)
 {
   log::debug("running sanity checks...");
 
@@ -404,3 +416,5 @@ void sanityChecks(const env::Environment& e)
     "sanity checks done, {}",
     (n > 0 ? "problems were found" : "everything looks okay"));
 }
+
+} // namespace

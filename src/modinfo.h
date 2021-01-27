@@ -21,8 +21,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define MODINFO_H
 
 #include "imodinterface.h"
+#include "ifiletree.h"
 #include "versioninfo.h"
 
+class OrganizerCore;
 class PluginContainer;
 class QDir;
 class QDateTime;
@@ -107,12 +109,9 @@ public: // Static functions:
   /**
    * @brief Read the mod directory and Mod ModInfo objects for all subdirectories.
    */
-  static void updateFromDisc(const QString &modDirectory,
-                             MOShared::DirectoryEntry **directoryStructure,
-                             PluginContainer *pluginContainer,
-                             bool displayForeign,
-                             std::size_t refreshThreadCount,
-                             MOBase::IPluginGame const *game);
+  static void updateFromDisc(
+    const QString &modDirectory, OrganizerCore& core,
+    bool displayForeign, std::size_t refreshThreadCount);
 
   static void clear() { s_Collection.clear(); s_ModsByName.clear(); s_ModsByModID.clear(); }
 
@@ -178,6 +177,11 @@ public: // Static functions:
   static unsigned int getIndex(const QString &name);
 
   /**
+   * @brief Retrieve the overwrite mod.
+   */
+  static ModInfo::Ptr getOverwrite() { return s_Overwrite; }
+
+  /**
    * @brief Find the first mod that fulfills the filter function (after no particular order).
    *
    * @param filter A function to filter mods by. Should return true for a match.
@@ -190,8 +194,7 @@ public: // Static functions:
    * @brief Run a limited batch of mod update checks for "newest version" information.
    *
    */
-  static void manualUpdateCheck(
-    PluginContainer *pluginContainer, QObject *receiver, std::multimap<QString, int> IDs);
+  static void manualUpdateCheck(QObject *receiver, std::multimap<QString, int> IDs);
 
   /**
    * @brief Query nexus information for every mod and update the "newest version" information.
@@ -205,30 +208,6 @@ public: // Static functions:
    */
   static std::set<ModInfo::Ptr> filteredMods(
     QString gameName, QVariantList updateData, bool addOldMods = false, bool markUpdated = false);
-
-  /**
-   * @brief Create a new mod from the specified directory and add it to the collection.
-   *
-   * @param dir Directory to create from.
-   *
-   * @return pointer to the info-structure of the newly created/added mod.
-   */
-  static ModInfo::Ptr createFrom(
-    PluginContainer *pluginContainer, const MOBase::IPluginGame *game,
-    const QDir &dir, MOShared::DirectoryEntry **directoryStructure);
-
-  /**
-   * @brief Create a new "foreign-managed" mod from a tuple of plugin and archives.
-   *
-   * @param espName Name of the plugin.
-   * @param bsaNames Names of archives.
-   *
-   * @return a new mod.
-   */
-  static ModInfo::Ptr createFromPlugin(
-    const QString &modName, const QString &espName, const QStringList &bsaNames,
-    ModInfo::EModType modType, const MOBase::IPluginGame* game,
-    MOShared::DirectoryEntry **directoryStructure, PluginContainer *pluginContainer);
 
   /**
    * @brief Check wheter a name corresponds to a separator or not,
@@ -368,6 +347,42 @@ public: // IModInterface implementations / Re-declaration
    */
   virtual MOBase::EndorsedState endorsedState() const override { return MOBase::EndorsedState::ENDORSED_NEVER; }
 
+  /**
+   * @brief Retrieve a file tree corresponding to the underlying disk content
+   *     of this mod.
+   *
+   * The file tree should not be cached since it is already cached and updated when
+   * required.
+   *
+   * @return a file tree representing the content of this mod.
+   */
+  virtual std::shared_ptr<const MOBase::IFileTree> fileTree() const = 0;
+
+  /**
+   * @return true if this object represents a regular mod.
+   */
+  virtual bool isRegular() const { return false; }
+
+  /**
+   * @return true if this object represents the overwrite mod.
+   */
+  virtual bool isOverwrite() const { return false; }
+
+  /**
+   * @return true if this object represents a backup.
+   */
+  virtual bool isBackup() const { return false; }
+
+  /**
+   * @return true if this object represents a separator.
+   */
+  virtual bool isSeparator() const { return false; }
+
+  /**
+   * @return true if this object represents a foreign mod.
+   */
+  virtual bool isForeign() const { return false; }
+
 public: // Mutable operations:
 
   /**
@@ -451,20 +466,7 @@ public: // Mutable operations:
    */
   virtual bool setName(const QString& name) = 0;
 
-  /**
-   * @brief Deletes the mod from the disc. This does not update the global ModInfo structure or
-   *     indices.
-   *
-   * @return true on success, false otherwise.
-   */
-  virtual bool remove() = 0;
-
 public: // Methods after this do not come from IModInterface:
-
-  /**
-   * @return true if this mod is a regular mod, false otherwise.
-   */
-  virtual bool isRegular() const { return false; }
 
   /**
    * @return true if this mod is empty, false otherwise.
@@ -790,6 +792,19 @@ public: // Methods after this do not come from IModInterface:
   virtual void setCustomURL(QString const&) {}
 
   /**
+   * @brief Sets the URL for this mod.
+   *
+   * In practice, this is a shortcut for setHasCustomURL followed by
+   * setCustomURL.
+   *
+   * @param url The new URL.
+   */
+  void setUrl(QString const& url) override {
+    setHasCustomURL(true);
+    setCustomURL(url);
+  }
+
+  /**
    * If hasCustomURL() is true and getCustomURL() is not empty, tries to parse
    * the url using QUrl::fromUserInput() and returns it. Otherwise, returns an
    * empty QUrl.
@@ -854,46 +869,35 @@ public: // Nexus stuff
 
 public: // Conflicts
 
-  /**
-   * @return retrieve list of mods (as mod index) that are overwritten by this one.
-   *    Updates may be delayed.
-   */
-  virtual std::set<unsigned int> getModOverwrite() const {
-    return std::set<unsigned int>(); }
+  // retrieve the list of mods (as mod index) that are overwritten by this one.
+  // Updates may be delayed.
+  //
+  virtual const std::set<unsigned int>& getModOverwrite() const { return s_EmptySet; }
 
-  /**
-   * @return list of mods (as mod index) that overwrite this one. Updates may be delayed.
-   */
-  virtual std::set<unsigned int> getModOverwritten() const {
-    return std::set<unsigned int>(); }
+  // retrieve the list of mods (as mod index) that overwrite this one.
+  // Updates may be delayed.
+  //
+  virtual const std::set<unsigned int>& getModOverwritten() const { return s_EmptySet; }
 
-  /**
-   * @return retrieve list of mods (as mod index) with archives that are overwritten by
-   *     this one. Updates may be delayed
-   */
-  virtual std::set<unsigned int> getModArchiveOverwrite() const {
-    return std::set<unsigned int>(); }
+  // retrieve the list of mods (as mod index) with archives that are overwritten by
+  // this one. Updates may be delayed
+  //
+  virtual const std::set<unsigned int>& getModArchiveOverwrite() const { return s_EmptySet; }
 
-  /**
-   * @return list of mods (as mod index) with archives that overwrite this one. Updates
-   *     may be delayed.
-   */
-  virtual std::set<unsigned int> getModArchiveOverwritten() const {
-    return std::set<unsigned int>(); }
+  // retrieve the list of mods (as mod index) with archives that overwrite this one. Updates
+  // may be delayed.
+  //
+  virtual const std::set<unsigned int>& getModArchiveOverwritten() const { return s_EmptySet; }
 
-  /**
-   * @return the list of mods (as mod index) with archives that are overwritten by loose
-   *     files of this mod. Updates may be delayed.
-   */
-  virtual std::set<unsigned int> getModArchiveLooseOverwrite() const {
-    return std::set<unsigned int>(); }
+  // retrieve the list of mods (as mod index) with archives that are overwritten by loose
+  // files of this mod. Updates may be delayed.
+  //
+  virtual const std::set<unsigned int>& getModArchiveLooseOverwrite() const { return s_EmptySet; }
 
-  /**
-   * @return the list of mods (as mod index) with loose files that overwrite this one's
-   *     archive files. Updates may be delayed.
-   */
-  virtual std::set<unsigned int> getModArchiveLooseOverwritten() const {
-    return std::set<unsigned int>(); }
+  // retrieve the list of mods (as mod index) with loose files that overwrite this one's
+  // archive files. Updates may be delayed.
+  //
+  virtual const std::set<unsigned int>& getModArchiveLooseOverwritten() const { return s_EmptySet; }
 
   /**
    * @brief Update conflict information.
@@ -921,7 +925,7 @@ protected:
   /**
    *
    */
-  ModInfo(PluginContainer *pluginContainer);
+  ModInfo(OrganizerCore& core);
 
   /**
    * @brief Prefetch content for this mod.
@@ -931,32 +935,63 @@ protected:
    * using multiple threads for all the mods.
    */
   virtual void prefetch() = 0;
-
-  static void updateIndices();
   static bool ByName(const ModInfo::Ptr &LHS, const ModInfo::Ptr &RHS);
 
 protected:
 
-  static std::vector<ModInfo::Ptr> s_Collection;
-  static std::map<QString, unsigned int> s_ModsByName;
+  // the mod list
+  OrganizerCore& m_Core;
+
+  // the index of the mod in s_Collection, only valid after updateIndices()
+  int m_Index;
 
   int m_PrimaryCategory;
   std::set<int> m_Categories;
-
   MOBase::VersionInfo m_Version;
-
   bool m_PluginSelected = false;
 
-private:
+  // empty set that can be returned in overwrite functions by
+  // default
+  static const std::set<unsigned int> s_EmptySet;
 
-  static void createFromOverwrite(PluginContainer* pluginContainer,
-    const MOBase::IPluginGame* game,
-    MOShared::DirectoryEntry** directoryStructure);
+protected:
 
-private:
+  friend class OrganizerCore;
+
+  /**
+   * @brief Create a new mod from the specified directory and add it to the collection.
+   *
+   * @param dir Directory to create from.
+   *
+   * @return pointer to the info-structure of the newly created/added mod.
+   */
+  static ModInfo::Ptr createFrom(const QDir& dir, OrganizerCore& core);
+
+  /**
+   * @brief Create a new "foreign-managed" mod from a tuple of plugin and archives.
+   *
+   * @param espName Name of the plugin.
+   * @param bsaNames Names of archives.
+   *
+   * @return a new mod.
+   */
+  static ModInfo::Ptr createFromPlugin(
+    const QString& modName, const QString& espName, const QStringList& bsaNames,
+    ModInfo::EModType modType, OrganizerCore& core);
+
+  static ModInfo::Ptr createFromOverwrite(OrganizerCore& core);
+
+  // update the m_Index attribute of all mods and the various mapping
+  //
+  static void updateIndices();
+
+protected:
 
   static QMutex s_Mutex;
-  static std::map<std::pair<QString, int>, std::vector<unsigned int> > s_ModsByModID;
+  static std::vector<ModInfo::Ptr> s_Collection;
+  static ModInfo::Ptr s_Overwrite;
+  static std::map<QString, unsigned int, MOBase::FileNameComparator> s_ModsByName;
+  static std::map<std::pair<QString, int>, std::vector<unsigned int>> s_ModsByModID;
   static int s_NextID;
 
 };

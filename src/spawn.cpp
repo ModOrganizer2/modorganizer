@@ -164,9 +164,14 @@ QString makeContent(const SpawnParameters& sp, DWORD code)
   } else if (code == ERROR_FILE_NOT_FOUND) {
     return QObject::tr("The file '%1' does not exist.")
       .arg(QDir::toNativeSeparators(sp.binary.absoluteFilePath()));
-  } else {
-    return QString::fromStdWString(formatSystemMessage(code));
+  } else if (code == ERROR_DIRECTORY) {
+    if (!sp.currentDirectory.exists()) {
+      return QObject::tr("The working directory '%1' does not exist.")
+        .arg(QDir::toNativeSeparators(sp.currentDirectory.absolutePath()));
+    }
   }
+
+  return QString::fromStdWString(formatSystemMessage(code));
 }
 
 QMessageBox::StandardButton badSteamReg(
@@ -488,7 +493,7 @@ DWORD spawn(const SpawnParameters& sp, HANDLE& processHandle)
   }
 
   const QString moPath = QCoreApplication::applicationDirPath();
-  const auto oldPath = env::addPath(QDir::toNativeSeparators(moPath));
+  const auto oldPath = env::appendToPath(QDir::toNativeSeparators(moPath));
 
   PROCESS_INFORMATION pi = {};
   BOOL success = FALSE;

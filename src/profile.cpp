@@ -22,7 +22,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfo.h"
 #include "settings.h"
 #include <utility.h>
-#include "shared/error_report.h"
 #include "shared/appconfig.h"
 #include <iplugingame.h>
 #include <report.h>
@@ -382,6 +381,8 @@ void Profile::refreshModStatus()
 
   std::set<QString> namesRead;
 
+  bool warnAboutOverwrite = false;
+
   // load mods from file and update enabled state and priority for them
   int index = 0;
   while (!file.atEnd()) {
@@ -405,6 +406,9 @@ void Profile::refreshModStatus()
     }
     if (modName.size() > 0) {
       QString lookupName = modName;
+      if (modName.compare("overwrite", Qt::CaseInsensitive) == 0) {
+        warnAboutOverwrite = true;
+      }
       if (namesRead.find(lookupName) != namesRead.end()) {
         continue;
       } else {
@@ -486,6 +490,15 @@ void Profile::refreshModStatus()
 
   file.close();
   updateIndices();
+
+  // User has a mod named some variation of "overwrite".  Tell them about it.
+  if (warnAboutOverwrite) {
+    reportError(tr("A mod named \"overwrite\" was detected, disabled, and moved to the highest priority on the mod list. "
+                   "You may want to rename this mod and enable it again."));
+    // also, mark the mod-list as changed
+    modStatusModified = true;
+  }
+
   if (modStatusModified) {
     m_ModListWriter.write();
   }
@@ -633,14 +646,22 @@ void Profile::setModPriority(unsigned int index, int &newPriority)
     return;
   }
 
-  for (std::map<int, unsigned int>::iterator iter = m_ModIndexByPriority.begin(); iter != m_ModIndexByPriority.end(); iter++) {
-    if (newPriority < oldPriority && iter->first >= newPriority && iter->first < oldPriority) {
-      m_ModStatus.at(iter->second).m_Priority += 1;
+  // we need to put the mod before backups
+  auto it = std::find_if(m_ModIndexByPriority.begin(), m_ModIndexByPriority.end(), [](auto&& p) {
+    return ModInfo::getByIndex(p.second)->isBackup();
+  });
+  if (it != m_ModIndexByPriority.end() && it->first <= newPriority) {
+    newPriority = it->first - 1;
+  }
+
+  for (auto& [priority, index] : m_ModIndexByPriority) {
+    if (newPriority < oldPriority && priority >= newPriority && priority < oldPriority) {
+      m_ModStatus.at(index).m_Priority += 1;
     }
-    else if (newPriority > oldPriority && iter->first <= newPriority && iter->first > oldPriority) {
-      m_ModStatus.at(iter->second).m_Priority -= 1;
+    else if (newPriority > oldPriority && priority <= newPriority && priority > oldPriority) {
+      m_ModStatus.at(index).m_Priority -= 1;
     }
-    lastPriority = std::max(lastPriority, iter->first);
+    lastPriority = std::max(lastPriority, priority);
   }
 
   newPriority = std::min(newPriority, lastPriority);
@@ -1123,10 +1144,6 @@ void Profile::debugDump() const
 
 
   for (const auto& status : m_ModStatus) {
-    if (status.m_Overwrite) {
-      continue;
-    }
-
     auto index = m_ModIndexByPriority.find(status.m_Priority);
     if (index == m_ModIndexByPriority.end()) {
       log::error("mod with priority {} not in priority map", status.m_Priority);
@@ -1136,6 +1153,10 @@ void Profile::debugDump() const
     auto m = ModInfo::getByIndex(index->second);
     if (!m) {
       log::error("mod index {} with priority {} not found", index->second, status.m_Priority);
+      continue;
+    }
+
+    if (m->hasFlag(ModInfo::FLAG_OVERWRITE)) {
       continue;
     }
 

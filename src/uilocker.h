@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MODORGANIZER_UILOCKER_INCLUDED
+#define MODORGANIZER_UILOCKER_INCLUDED
 
 #include <QMainWindow>
 #include <mutex>
@@ -94,3 +95,5 @@ private:
   void enableAll();
   void disable(QWidget* w);
 };
+
+#endif  // MODORGANIZER_UILOCKER_INCLUDED

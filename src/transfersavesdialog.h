@@ -80,9 +80,10 @@ private:
 
   MOBase::IPluginGame const *m_GamePlugin;
 
-  typedef std::unique_ptr<MOBase::ISaveGame const> SaveListItem;
-  typedef std::vector<SaveListItem> SaveList;
-  typedef std::map<QString, SaveList> SaveCollection;
+  using SaveListItem = std::shared_ptr<const MOBase::ISaveGame>;
+  using SaveList = std::vector<SaveListItem>;
+  using SaveCollection = std::map<QString, SaveList>;
+
   SaveCollection m_GlobalSaves;
   SaveCollection m_LocalSaves;
 

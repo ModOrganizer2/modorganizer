@@ -77,23 +77,10 @@ public:
 
   void setProfile(Profile *profile);
 
-
-  virtual Qt::ItemFlags flags(const QModelIndex &modelIndex) const;
-  virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action,
-                            int row, int column, const QModelIndex &parent);
+  bool canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const override;
+  bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) override;
 
   virtual void setSourceModel(QAbstractItemModel *sourceModel) override;
-
-
-  /**
-   * @brief enable all mods visible under the current filter
-   **/
-  void enableAllVisible();
-
-  /**
-   * @brief disable all mods visible under the current filter
-   **/
-  void disableAllVisible();
 
   /**
    * @brief tests if a filtere matches for a mod
@@ -110,6 +97,9 @@ public:
 
   void setCriteria(const std::vector<Criteria>& criteria);
   void setOptions(FilterMode mode, SeparatorsMode separators);
+
+  auto filterMode() const { return m_FilterMode; }
+  auto separatorsMode() const { return m_FilterSeparators; }
 
   /**
    * @brief tests if the specified index has child nodes
@@ -134,6 +124,7 @@ public slots:
 signals:
 
   void filterActive(bool active);
+  void filterInvalidated();
 
 protected:
 
@@ -148,6 +139,10 @@ private:
   void updateFilterActive();
   bool filterMatchesModAnd(ModInfo::Ptr info, bool enabled) const;
   bool filterMatchesModOr(ModInfo::Ptr info, bool enabled) const;
+
+  // check if the source model is the by-priority proxy
+  //
+  bool sourceIsByPriorityProxy() const;
 
 private slots:
 

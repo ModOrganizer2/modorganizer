@@ -11,13 +11,14 @@ namespace Ui {
 class ProblemsDialog;
 }
 
+class PluginContainer;
 
 class ProblemsDialog : public QDialog
 {
   Q_OBJECT
 
 public:
-  explicit ProblemsDialog(std::vector<QObject*> pluginObjects, QWidget *parent = 0);
+  explicit ProblemsDialog(PluginContainer const& pluginContainer, QWidget *parent = 0);
   ~ProblemsDialog();
 
   // also saves and restores geometry
@@ -37,7 +38,7 @@ private slots:
 
 private:
   Ui::ProblemsDialog *ui;
-  std::vector<QObject *> m_PluginObjects;
+  const PluginContainer& m_PluginContainer;
   bool m_hasProblems;
 };
 

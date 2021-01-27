@@ -202,7 +202,7 @@ void FileTree::open(FileTreeItem* item)
   m_core.processRunner()
     .setFromFile(m_tree->window(), targetInfo)
     .setHooked(false)
-    .setWaitForCompletion(ProcessRunner::Refresh)
+    .setWaitForCompletion(ProcessRunner::TriggerRefresh)
     .run();
 }
 
@@ -226,7 +226,7 @@ void FileTree::openHooked(FileTreeItem* item)
   m_core.processRunner()
     .setFromFile(m_tree->window(), targetInfo)
     .setHooked(true)
-    .setWaitForCompletion(ProcessRunner::Refresh)
+    .setWaitForCompletion(ProcessRunner::TriggerRefresh)
     .run();
 }
 
@@ -261,7 +261,7 @@ void FileTree::activate(FileTreeItem* item)
 
   if (tryPreview) {
     const QFileInfo fi(item->realPath());
-    if (m_plugins.previewGenerator().previewSupported(fi.suffix())) {
+    if (m_plugins.previewGenerator().previewSupported(fi.suffix().toLower())) {
       preview(item);
       return;
     }
@@ -591,16 +591,16 @@ bool FileTree::showShellMenu(QPoint pos)
       }
 
       for (auto&& alt : alts) {
-        auto itor = menus.find(alt.first);
+        auto itor = menus.find(alt.originID());
         if (itor == menus.end()) {
-          itor = menus.emplace(alt.first, mw).first;
+          itor = menus.emplace(alt.originID(), mw).first;
         }
 
-        const auto fullPath = file->getFullPath(alt.first);
+        const auto fullPath = file->getFullPath(alt.originID());
         if (fullPath.empty()) {
           log::error(
             "file {} not found in origin {}",
-            item->dataRelativeFilePath(), alt.first);
+            item->dataRelativeFilePath(), alt.originID());
 
           continue;
         }

@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFile>
 #include <QListWidget>
 #include <QNetworkReply>
+#include <QMetaEnum>
 #include <QNetworkAccessManager>
 #ifndef Q_MOC_RUN
 #include <boost/signals2.hpp>
@@ -43,17 +44,40 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 class QSortFilterProxyModel;
 class PluginContainer;
 class OrganizerCore;
+class ModListDropInfo;
 
 /**
  * Model presenting an overview of the installed mod
  * This is used in a view in the main window of MO. It combines general information about
  * the mods from ModInfo with status information from the Profile
  **/
-class ModList : public QAbstractItemModel, public MOBase::IModList
+class ModList : public QAbstractItemModel
 {
   Q_OBJECT
 
 public:
+
+  enum ModListRole {
+
+    // data(GroupingRole) contains the "group" role - This is used by the
+    // category and Nexus ID grouping proxy (but not the ByPriority proxy)
+    GroupingRole = Qt::UserRole,
+
+    IndexRole = Qt::UserRole + 1,
+
+    // data(AggrRole) contains aggregation information (for
+    // grouping I assume?)
+    AggrRole = Qt::UserRole + 2,
+
+    GameNameRole = Qt::UserRole + 3,
+    PriorityRole = Qt::UserRole + 4,
+
+    // marking role for the scrollbar
+    ScrollMarkRole = Qt::UserRole + 5,
+
+    // this is the first available role
+    ModUserRole = Qt::UserRole + 6
+  };
 
   enum EColumn {
     COL_NAME,
@@ -70,8 +94,10 @@ public:
     COL_LASTCOLUMN = COL_NOTES,
   };
 
-  typedef boost::signals2::signal<void (const std::map<QString, ModStates>&)> SignalModStateChanged;
-  typedef boost::signals2::signal<void (const QString &, int, int)> SignalModMoved;
+  using SignalModInstalled = boost::signals2::signal<void(MOBase::IModInterface*)>;
+  using SignalModRemoved = boost::signals2::signal<void(QString const&)>;
+  using SignalModStateChanged = boost::signals2::signal<void (const std::map<QString, MOBase::IModList::ModStates>&)>;
+  using SignalModMoved = boost::signals2::signal<void (const QString &, int, int)>;
 
 public:
 
@@ -109,11 +135,7 @@ public:
   void changeModPriority(int sourceIndex, int newPriority);
   void changeModPriority(std::vector<int> sourceIndices, int newPriority);
 
-  void setOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten);
   void setPluginContainer(PluginContainer *pluginContainer);
-
-  void setArchiveOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten);
-  void setArchiveLooseOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten);
 
   bool modInfoAboutToChange(ModInfo::Ptr info);
   void modInfoChanged(ModInfo::Ptr info);
@@ -122,7 +144,23 @@ public:
 
   int timeElapsedSinceLastChecked() const;
 
-  void highlightMods(const QItemSelectionModel *selection, const MOShared::DirectoryEntry &directoryEntry);
+public:
+
+  /**
+   * @brief Notify the mod list that the given mod has been installed. This is used
+   * to notify the plugin that registered through onModInstalled().
+   *
+   * @param mod The installed mod.
+   */
+  void notifyModInstalled(MOBase::IModInterface *mod) const;
+
+  /**
+   * @brief Notify the mod list that a mod has been removed. This is used
+   * to notify the plugin that registered through onModRemoved().
+   *
+   * @param modName Name of the removed mod.
+   */
+  void notifyModRemoved(QString const& modName) const;
 
   /**
    * @brief Notify the mod list that the state of the specified mods has changed. This is used
@@ -135,31 +173,40 @@ public:
 public:
 
   /// \copydoc MOBase::IModList::displayName
-  virtual QString displayName(const QString &internalName) const override;
+  QString displayName(const QString &internalName) const;
 
   /// \copydoc MOBase::IModList::allMods
-  virtual QStringList allMods() const override;
+  QStringList allMods() const;
+  QStringList allModsByProfilePriority(MOBase::IProfile* profile = nullptr) const;
+
+  // \copydoc MOBase::IModList::getMod
+  MOBase::IModInterface* getMod(const QString& name) const;
+
+  // \copydoc MOBase::IModList::remove
+  bool removeMod(MOBase::IModInterface* mod);
+
+  // \copydoc MOBase::IModList::renameMod
+  MOBase::IModInterface* renameMod(MOBase::IModInterface* mod, const QString& name);
 
   /// \copydoc MOBase::IModList::state
-  virtual ModStates state(const QString &name) const override;
+  MOBase::IModList::ModStates state(const QString &name) const;
 
   /// \copydoc MOBase::IModList::setActive
-  virtual bool setActive(const QString &name, bool active) override;
+  bool setActive(const QString &name, bool active);
 
   /// \copydoc MOBase::IModList::setActive
-  int setActive(const QStringList& names, bool active) override;
+  int setActive(const QStringList& names, bool active);
 
   /// \copydoc MOBase::IModList::priority
-  virtual int priority(const QString &name) const override;
+  int priority(const QString &name) const;
 
   /// \copydoc MOBase::IModList::setPriority
-  virtual bool setPriority(const QString &name, int newPriority) override;
+  bool setPriority(const QString &name, int newPriority);
 
-  /// \copydoc MOBase::IModList::onModStateChanged
-  virtual bool onModStateChanged(const std::function<void(const std::map<QString, ModStates>&)>& func) override;
-
-  /// \copydoc MOBase::IModList::onModMoved
-  virtual bool onModMoved(const std::function<void (const QString &, int, int)> &func) override;
+  boost::signals2::connection onModInstalled(const std::function<void(MOBase::IModInterface*)>& func);
+  boost::signals2::connection onModRemoved(const std::function<void(QString const&)>& func);
+  boost::signals2::connection onModStateChanged(const std::function<void(const std::map<QString, MOBase::IModList::ModStates>&)>& func);
+  boost::signals2::connection onModMoved(const std::function<void (const QString &, int, int)> &func);
 
 public: // implementation of virtual functions of QAbstractItemModel
 
@@ -170,11 +217,13 @@ public: // implementation of virtual functions of QAbstractItemModel
   virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
   virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
   virtual Qt::ItemFlags flags(const QModelIndex &modelIndex) const;
-  virtual Qt::DropActions supportedDropActions() const { return Qt::MoveAction | Qt::CopyAction; }
-  virtual QStringList mimeTypes() const;
-  virtual QMimeData *mimeData(const QModelIndexList &indexes) const;
-  virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
-  virtual bool removeRows(int row, int count, const QModelIndex &parent);
+  virtual bool removeRows(int row, int count, const QModelIndex& parent);
+
+  Qt::DropActions supportedDropActions() const override { return Qt::MoveAction | Qt::CopyAction; }
+  QStringList mimeTypes() const override;
+  QMimeData *mimeData(const QModelIndexList &indexes) const override;
+  bool canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const override;
+  bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) override;
 
   virtual QModelIndex index(int row, int column,
                             const QModelIndex &parent = QModelIndex()) const;
@@ -184,21 +233,36 @@ public: // implementation of virtual functions of QAbstractItemModel
 
 public slots:
 
-  void dropModeUpdate(bool dropOnItems);
+  void onDragEnter(const QMimeData* data);
 
-  void enableSelected(const QItemSelectionModel *selectionModel);
+  // enable/disable mods at the given indices.
+  //
+  void setActive(const QModelIndexList& indices, bool active);
 
-  void disableSelected(const QItemSelectionModel *selectionModel);
+  // shift the priority of mods at the given indices by the given offset
+  //
+  void shiftModsPriority(const QModelIndexList& indices, int offset);
+
+  // change the priority of the mods specified by the given indices
+  //
+  void changeModsPriority(const QModelIndexList& indices, int priority);
+
+  // toggle the active state of mods at the given indices
+  //
+  bool toggleState(const QModelIndexList& indices);
 
 signals:
 
-  /**
-   * @brief emitted whenever the sorting in the list was changed by the user
-   *
-   * the sorting of the list can only be manually changed if the list is sorted by priority
-   * in which case the move is intended to change the priority of a mod
-   **/
-  void modorder_changed();
+  // emitted when the priority of one or multiple mods have changed
+  //
+  // the sorting of the list can only be manually changed if the list is sorted by priority
+  // in which case the move is intended to change the priority of a mod.
+  //
+  void modPrioritiesChanged(const QModelIndexList& indices);
+
+  // emitted when the state (active/inactive) of one or multiple mods have changed
+  //
+  void modStatesChanged(const QModelIndexList& indices);
 
   /**
    * @brief emitted when the model wants a text to be displayed by the UI
@@ -235,34 +299,9 @@ signals:
   void modUninstalled(const QString &fileName);
 
   /**
-   * @brief emitted whenever a row in the list has changed
-   *
-   * @param index the index of the changed field
-   * @param role role of the field that changed
-   * @note this signal must only be emitted if the row really did change.
-   *       Slots handling this signal therefore do not have to verify that a change has happened
-   **/
-  void modlistChanged(const QModelIndex &index, int role);
-
-  /**
-  * @brief emitted whenever multiple row sin the list has changed
-  *
-  * @param indicies the list of indicies of the changed field
-  * @param role role of the field that changed
-  * @note this signal must only be emitted if the row really did change.
-  *       Slots handling this signal therefore do not have to verify that a change has happened
-  **/
-  void modlistChanged(const QModelIndexList &indicies, int role);
-
-  /**
    * @brief QML seems to handle overloaded signals poorly - create unique signal for tutorials
    */
   void tutorialModlistUpdate();
-
-  /**
-   * @brief emitted to have all selected mods deleted
-   */
-  void removeSelectedMods();
 
   /**
    * @brief fileMoved emitted when a file is moved from one mod to another
@@ -281,12 +320,26 @@ signals:
 
   void postDataChanged();
 
-protected:
+  // emitted when an item is dropped from the download list, the row is from the
+  // download list
+  //
+  void downloadArchiveDropped(int row, int priority);
 
-  // event filter, handles event from the header and the tree view itself
-  bool eventFilter(QObject *obj, QEvent *event);
+  // emitted when an external archive is dropped on the mod list
+  //
+  void externalArchiveDropped(const QUrl& url, int priority);
+
+  // emitted when an external folder is dropped on the mod list
+  //
+  void externalFolderDropped(const QUrl& url, int priority);
 
 private:
+
+  // retrieve the display name of a mod or convert from a user-provided
+  // name to internal name
+  //
+  QString getDisplayName(ModInfo::Ptr info) const;
+  QString makeInternalName(ModInfo::Ptr info, QString name) const;
 
   QVariant getOverwriteData(int column, int role) const;
 
@@ -296,10 +349,6 @@ private:
 
   QString getColumnToolTip(int column) const;
 
-  QVariantList contentsToIcons(const std::set<int> &contentIds) const;
-
-  QString contentsToToolTip(const std::set<int> &contentsIds) const;
-
   ModList::EColumn getEnabledColumn(int index) const;
 
   QVariant categoryData(int categoryID, int column, int role) const;
@@ -307,17 +356,15 @@ private:
 
   bool renameMod(int index, const QString &newName);
 
-  bool dropURLs(const QMimeData *mimeData, int row, const QModelIndex &parent);
+  MOBase::IModList::ModStates state(unsigned int modIndex) const;
 
-  bool dropMod(const QMimeData *mimeData, int row, const QModelIndex &parent);
+  // handle dropping of local URLs files
+  //
+  bool dropLocalFiles(const ModListDropInfo& dropInfo, int row, const QModelIndex& parent);
 
-  ModStates state(unsigned int modIndex) const;
-
-  bool moveSelection(QAbstractItemView *itemView, int direction);
-
-  bool deleteSelection(QAbstractItemView *itemView);
-
-  bool toggleSelection(QAbstractItemView *itemView);
+  // return the priority of the mod for a drop event
+  //
+  int dropPriority(int row, const QModelIndex& parent) const;
 
 private slots:
 
@@ -335,7 +382,7 @@ private:
 
   struct TModInfoChange {
     QString name;
-    QFlags<IModList::ModState> state;
+    QFlags<MOBase::IModList::ModState> state;
   };
 
 private:
@@ -348,22 +395,16 @@ private:
 
   mutable bool m_Modified;
   bool m_InNotifyChange;
+  bool m_DropOnMod = false;
 
   QFontMetrics m_FontMetrics;
 
-  bool m_DropOnItems;
-
-  std::set<unsigned int> m_Overwrite;
-  std::set<unsigned int> m_Overwritten;
-  std::set<unsigned int> m_ArchiveOverwrite;
-  std::set<unsigned int> m_ArchiveOverwritten;
-  std::set<unsigned int> m_ArchiveLooseOverwrite;
-  std::set<unsigned int> m_ArchiveLooseOverwritten;
-
   TModInfoChange m_ChangeInfo;
 
-  SignalModStateChanged m_ModStateChanged;
+  SignalModInstalled m_ModInstalled;
   SignalModMoved m_ModMoved;
+  SignalModRemoved m_ModRemoved;
+  SignalModStateChanged m_ModStateChanged;
 
   QElapsedTimer m_LastCheck;
 

@@ -20,6 +20,7 @@ NexusTab::NexusTab(ModInfoDialogTabContext cx) :
 {
   ui->modID->setValidator(new QIntValidator(ui->modID));
   ui->endorse->setVisible(core().settings().nexus().endorsementIntegration());
+  ui->track->setVisible(core().settings().nexus().trackedIntegration());
 
   connect(ui->modID, &QLineEdit::editingFinished, [&]{ onModIDChanged(); });
   connect(
@@ -141,8 +142,8 @@ void NexusTab::updateWebpage()
   const int modID = mod().nexusId();
 
   if (isValidModID(modID)) {
-    const QString nexusLink = NexusInterface::instance(&plugin())
-      ->getModURL(modID, mod().gameName());
+    const QString nexusLink = NexusInterface::instance()
+      .getModURL(modID, mod().gameName());
 
     ui->visitNexus->setToolTip(nexusLink);
     refreshData(modID);
@@ -216,11 +217,11 @@ void NexusTab::onModChanged()
       padding-top: 20px;
       padding-bottom: 20px;
     }
-    
+
     img {
       max-width: 100%;
     }
-  
+
     figure.quote {
       position: relative;
       padding: 24px;
@@ -256,7 +257,7 @@ void NexusTab::onModChanged()
       display: inline-block;
       cursor: pointer;
     }
-  
+
     details summary::-webkit-details-marker {
       display:none;
     }
@@ -267,7 +268,7 @@ void NexusTab::onModChanged()
 
     a
     {
-      /*should avoid overflow with long links forcing wordwrap regardless of spaces*/  
+      /*should avoid overflow with long links forcing wordwrap regardless of spaces*/
       overflow-wrap: break-word;
       word-wrap: break-word;
 
@@ -324,7 +325,7 @@ void NexusTab::onSourceGameChanged()
 
   for (auto game : plugin().plugins<MOBase::IPluginGame>()) {
     if (game->gameName() == ui->sourceGame->currentText()) {
-      mod().setGameName(game->gameShortName()); 
+      mod().setGameName(game->gameShortName());
       mod().setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
       refreshData(mod().nexusId());
       return;
@@ -360,8 +361,8 @@ void NexusTab::onVisitNexus()
   const int modID = mod().nexusId();
 
   if (isValidModID(modID)) {
-    const QString nexusLink = NexusInterface::instance(&plugin())
-      ->getModURL(modID, mod().gameName());
+    const QString nexusLink = NexusInterface::instance()
+      .getModURL(modID, mod().gameName());
 
     shell::Open(QUrl(nexusLink));
   }
@@ -410,7 +411,7 @@ void NexusTab::onCustomURLChanged()
 
 void NexusTab::onVisitCustomURL()
 {
-  const auto url = mod().parseCustomURL();
+  const QUrl url = mod().parseCustomURL();
   if (url.isValid()) {
     shell::Open(url);
   }

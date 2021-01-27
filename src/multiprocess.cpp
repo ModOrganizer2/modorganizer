@@ -1,23 +1,4 @@
-/*
-Copyright (C) 2012 Sebastian Herbord. All rights reserved.
-
-This file is part of Mod Organizer.
-
-Mod Organizer is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Mod Organizer is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-#include "singleinstance.h"
+#include "multiprocess.h"
 #include "utility.h"
 #include <report.h>
 #include <log.h>
@@ -28,33 +9,28 @@ static const int s_Timeout = 5000;
 
 using MOBase::reportError;
 
-SingleInstance::SingleInstance(bool forcePrimary, QObject *parent) :
-  QObject(parent), m_PrimaryInstance(false)
+MOMultiProcess::MOMultiProcess(bool allowMultiple, QObject *parent) :
+  QObject(parent), m_Ephemeral(false), m_OwnsSM(false)
 {
   m_SharedMem.setKey(s_Key);
+
   if (!m_SharedMem.create(1)) {
-    if (forcePrimary) {
-      while (m_SharedMem.error() == QSharedMemory::AlreadyExists) {
-        Sleep(500);
-        if (m_SharedMem.create(1)) {
-          m_PrimaryInstance = true;
-          break;
-        }
+    if (m_SharedMem.error() == QSharedMemory::AlreadyExists) {
+      if (!allowMultiple) {
+        m_SharedMem.attach();
+        m_Ephemeral = true;
       }
     }
 
-    if (m_SharedMem.error() == QSharedMemory::AlreadyExists) {
-      m_SharedMem.attach();
-      m_PrimaryInstance = false;
-    }
     if ((m_SharedMem.error() != QSharedMemory::NoError) &&
         (m_SharedMem.error() != QSharedMemory::AlreadyExists)) {
       throw MOBase::MyException(tr("SHM error: %1").arg(m_SharedMem.errorString()));
     }
   } else {
-    m_PrimaryInstance = true;
+    m_OwnsSM = true;
   }
-  if (m_PrimaryInstance) {
+
+  if (m_OwnsSM) {
     connect(&m_Server, SIGNAL(newConnection()), this, SLOT(receiveMessage()), Qt::QueuedConnection);
     // has to be called before listen
     m_Server.setSocketOptions(QLocalServer::WorldAccessOption);
@@ -63,9 +39,9 @@ SingleInstance::SingleInstance(bool forcePrimary, QObject *parent) :
 }
 
 
-void SingleInstance::sendMessage(const QString &message)
+void MOMultiProcess::sendMessage(const QString &message)
 {
-  if (m_PrimaryInstance) {
+  if (m_OwnsSM) {
     // nobody there to receive the message
     return;
   }
@@ -77,19 +53,19 @@ void SingleInstance::sendMessage(const QString &message)
       Sleep(250);
     }
 
-    // other instance may be just starting up
+    // other process may be just starting up
     socket.connectToServer(s_Key, QIODevice::WriteOnly);
     connected = socket.waitForConnected(s_Timeout);
   }
 
   if (!connected) {
-    reportError(tr("failed to connect to running instance: %1").arg(socket.errorString()));
+    reportError(tr("failed to connect to running process: %1").arg(socket.errorString()));
     return;
   }
 
   socket.write(message.toUtf8());
   if (!socket.waitForBytesWritten(s_Timeout)) {
-    reportError(tr("failed to communicate with running instance: %1").arg(socket.errorString()));
+    reportError(tr("failed to communicate with running process: %1").arg(socket.errorString()));
     return;
   }
 
@@ -97,8 +73,7 @@ void SingleInstance::sendMessage(const QString &message)
   socket.waitForDisconnected();
 }
 
-
-void SingleInstance::receiveMessage()
+void MOMultiProcess::receiveMessage()
 {
   QLocalSocket *socket = m_Server.nextPendingConnection();
   if (!socket) {
@@ -113,10 +88,10 @@ void SingleInstance::receiveMessage()
 
     if (av <= 0) {
       MOBase::log::error(
-        "failed to receive data from secondary instance: {}",
+        "failed to receive data from secondary process: {}",
         socket->errorString());
 
-      reportError(tr("failed to receive data from secondary instance: %1").arg(socket->errorString()));
+      reportError(tr("failed to receive data from secondary process: %1").arg(socket->errorString()));
       return;
     }
   }

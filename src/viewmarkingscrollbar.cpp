@@ -1,20 +1,32 @@
 #include "viewmarkingscrollbar.h"
+#include "modelutils.h"
 #include <QStyle>
 #include <QStyleOptionSlider>
 #include <QPainter>
 
-ViewMarkingScrollBar::ViewMarkingScrollBar(QAbstractItemModel *model, QWidget *parent, int role)
-  : QScrollBar(parent)
-  , m_Model(model)
-  , m_Role(role)
+using namespace MOShared;
+
+ViewMarkingScrollBar::ViewMarkingScrollBar(QTreeView* view, int role)
+  : QScrollBar(view)
+  , m_view(view)
+  , m_role(role)
 {
   // not implemented for horizontal sliders
   Q_ASSERT(this->orientation() == Qt::Vertical);
 }
 
-void ViewMarkingScrollBar::paintEvent(QPaintEvent *event)
+QColor ViewMarkingScrollBar::color(const QModelIndex& index) const
 {
-  if (m_Model == nullptr) {
+  auto data = index.data(m_role);
+  if (data.canConvert<QColor>()) {
+    return data.value<QColor>();
+  }
+  return QColor();
+}
+
+void ViewMarkingScrollBar::paintEvent(QPaintEvent* event)
+{
+  if (m_view->model() == nullptr) {
     return;
   }
   QScrollBar::paintEvent(event);
@@ -27,15 +39,16 @@ void ViewMarkingScrollBar::paintEvent(QPaintEvent *event)
   QRect handleRect = style()->subControlRect(QStyle::CC_ScrollBar, &styleOption, QStyle::SC_ScrollBarSlider, this);
   QRect innerRect = style()->subControlRect(QStyle::CC_ScrollBar, &styleOption, QStyle::SC_ScrollBarGroove, this);
 
-  painter.translate(innerRect.topLeft() + QPoint(0, 3));
-  qreal scale = static_cast<qreal>(innerRect.height() - 3) / static_cast<qreal>(m_Model->rowCount());
+  auto indices = visibleIndex(m_view, 0);
 
-  for (int i = 0; i < m_Model->rowCount(); ++i) {
-    QVariant data = m_Model->data(m_Model->index(i, 0), m_Role);
-    if (data.isValid()) {
-      QColor col = data.value<QColor>();
-      painter.setPen(col);
-      painter.setBrush(col);
+  painter.translate(innerRect.topLeft() + QPoint(0, 3));
+  qreal scale = static_cast<qreal>(innerRect.height() - 3) / static_cast<qreal>(indices.size());
+
+  for (int i = 0; i < indices.size(); ++i) {
+    QColor color = this->color(indices[i]);
+    if (color.isValid()) {
+      painter.setPen(color);
+      painter.setBrush(color);
       painter.drawRect(QRect(2, i * scale - 2, handleRect.width() - 5, 3));
     }
   }

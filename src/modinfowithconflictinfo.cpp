@@ -5,6 +5,7 @@
 #include "shared/fileentry.h"
 #include <filesystem>
 
+#include "organizercore.h"
 #include "iplugingame.h"
 #include "moddatachecker.h"
 #include "qdirfiletree.h"
@@ -13,13 +14,12 @@ using namespace MOBase;
 using namespace MOShared;
 namespace fs = std::filesystem;
 
-ModInfoWithConflictInfo::ModInfoWithConflictInfo(
-  PluginContainer *pluginContainer, const MOBase::IPluginGame* gamePlugin, DirectoryEntry **directoryStructure)
-  : ModInfo(pluginContainer), m_GamePlugin(gamePlugin), 
+ModInfoWithConflictInfo::ModInfoWithConflictInfo(OrganizerCore& core) :
+  ModInfo(core),
   m_FileTree([this]() { return QDirFileTree::makeTree(absolutePath()); }),
   m_Valid([this]() { return doIsValid(); }),
   m_Contents([this]() { return doGetContents(); }),
-  m_DirectoryStructure(directoryStructure), m_HasLooseOverwrite(false), m_HasHiddenFiles(false) {}
+  m_HasLooseOverwrite(false), m_HasHiddenFiles(false) {}
 
 void ModInfoWithConflictInfo::clearCaches()
 {
@@ -27,7 +27,7 @@ void ModInfoWithConflictInfo::clearCaches()
 }
 
 std::vector<ModInfo::EFlag> ModInfoWithConflictInfo::getFlags() const
-{ 
+{
   std::vector<ModInfo::EFlag> result = std::vector<ModInfo::EFlag>();
   if (hasHiddenFiles()) {
     result.push_back(ModInfo::FLAG_HIDDEN_FILES);
@@ -95,8 +95,8 @@ void ModInfoWithConflictInfo::doConflictCheck() const
   bool hasHiddenFiles = false;
 
   int dataID = 0;
-  if ((*m_DirectoryStructure)->originExists(L"data")) {
-    dataID = (*m_DirectoryStructure)->getOriginByName(L"data").getID();
+  if (m_Core.directoryStructure()->originExists(L"data")) {
+    dataID = m_Core.directoryStructure()->getOriginByName(L"data").getID();
   }
 
   std::wstring name = ToWString(this->name());
@@ -106,8 +106,8 @@ void ModInfoWithConflictInfo::doConflictCheck() const
   m_ArchiveConflictState = CONFLICT_NONE;
   m_ArchiveConflictLooseState = CONFLICT_NONE;
 
-  if ((*m_DirectoryStructure)->originExists(name)) {
-    FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
+  if (m_Core.directoryStructure()->originExists(name)) {
+    FilesOrigin &origin = m_Core.directoryStructure()->getOriginByName(name);
     std::vector<FileEntryPtr> files = origin.getFiles();
     std::set<const DirectoryEntry*> checkedDirs;
 
@@ -145,19 +145,18 @@ void ModInfoWithConflictInfo::doConflictCheck() const
       }
 
       auto alternatives = file->getAlternatives();
-      if ((alternatives.size() == 0) || (alternatives.back().first == dataID)) {
+      if ((alternatives.size() == 0) || (alternatives.back().originID() == dataID)) {
         // no alternatives -> no conflict
         providesAnything = true;
       } else {
         // Get the archive data for the current mod
-        bool found = file->getOrigin() == origin.getID();
-        std::pair<std::wstring, int> archiveData;
-        if (found)
+        DataArchiveOrigin archiveData;
+        if (file->getOrigin() == origin.getID())
           archiveData = file->getArchive();
         else {
-          for (auto alts : alternatives) {
-            if (alts.first == origin.getID()) {
-              archiveData = alts.second;
+          for (const auto& alt : alternatives) {
+            if (alt.originID() == origin.getID()) {
+              archiveData = alt.archive();
               break;
             }
           }
@@ -165,27 +164,29 @@ void ModInfoWithConflictInfo::doConflictCheck() const
 
         // If this is not the origin then determine the correct overwrite
         if (file->getOrigin() != origin.getID()) {
-          FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(file->getOrigin());
+          FilesOrigin &altOrigin = m_Core.directoryStructure()->getOriginByID(file->getOrigin());
           unsigned int altIndex = ModInfo::getIndex(ToQString(altOrigin.getName()));
-          if (file->getArchive().first.size() == 0)
-            if (archiveData.first.size() == 0)
+          if (!file->isFromArchive()) {
+            if (!archiveData.isValid())
               m_OverwrittenList.insert(altIndex);
             else
               m_ArchiveLooseOverwrittenList.insert(altIndex);
-          else
-              m_ArchiveOverwrittenList.insert(altIndex);
+          }
+          else {
+            m_ArchiveOverwrittenList.insert(altIndex);
+          }
         } else {
           providesAnything = true;
         }
 
         // Sort out the alternatives
-        for (auto altInfo : alternatives) {
-          if ((altInfo.first != dataID) && (altInfo.first != origin.getID())) {
-            FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(altInfo.first);
+        for (const auto& altInfo : alternatives) {
+          if ((altInfo.originID() != dataID) && (altInfo.originID() != origin.getID())) {
+            FilesOrigin &altOrigin = m_Core.directoryStructure()->getOriginByID(altInfo.originID());
             QString altOriginName = ToQString(altOrigin.getName());
             unsigned int altIndex = ModInfo::getIndex(altOriginName);
-            if (altInfo.second.first.size() == 0) {
-              if (archiveData.first.size() == 0) {
+            if (!altInfo.isFromArchive()) {
+              if (!archiveData.isValid()) {
                 if (origin.getPriority() > altOrigin.getPriority()) {
                   m_OverwriteList.insert(altIndex);
                 } else {
@@ -195,12 +196,12 @@ void ModInfoWithConflictInfo::doConflictCheck() const
                 m_ArchiveLooseOverwrittenList.insert(altIndex);
               }
             } else {
-              if (archiveData.first.size() == 0) {
+              if (!archiveData.isValid()) {
                 m_ArchiveLooseOverwriteList.insert(altIndex);
               } else {
-                if (archiveData.second > altInfo.second.second) {
+                if (archiveData.order() > altInfo.archive().order()) {
                   m_ArchiveOverwriteList.insert(altIndex);
-                } else if (archiveData.second < altInfo.second.second) {
+                } else if (archiveData.order() < altInfo.archive().order()) {
                   m_ArchiveOverwrittenList.insert(altIndex);
                 }
               }
@@ -275,8 +276,8 @@ ModInfoWithConflictInfo::EConflictType ModInfoWithConflictInfo::isLooseArchiveCo
 bool ModInfoWithConflictInfo::isRedundant() const
 {
   std::wstring name = ToWString(this->name());
-  if ((*m_DirectoryStructure)->originExists(name)) {
-    FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
+  if (m_Core.directoryStructure()->originExists(name)) {
+    FilesOrigin &origin = m_Core.directoryStructure()->getOriginByName(name);
     std::vector<FileEntryPtr> files = origin.getFiles();
     bool ignore = false;
     for (auto iter = files.begin(); iter != files.end(); ++iter) {
@@ -310,21 +311,21 @@ void ModInfoWithConflictInfo::diskContentModified() {
 void ModInfoWithConflictInfo::prefetch() {
   // Populating the tree to 1-depth (IFileTree is lazy, so size() forces the
   // tree to populate the first level):
-  contentFileTree()->size();
+  fileTree()->size();
 }
 
 bool ModInfoWithConflictInfo::doIsValid() const {
-  auto mdc = m_GamePlugin->feature<ModDataChecker>();
+  auto mdc = m_Core.managedGame()->feature<ModDataChecker>();
 
   if (mdc) {
-    auto qdirfiletree = contentFileTree();
+    auto qdirfiletree = fileTree();
     return mdc->dataLooksValid(qdirfiletree) == ModDataChecker::CheckReturn::VALID;
   }
 
   return true;
 }
 
-std::shared_ptr<const IFileTree> ModInfoWithConflictInfo::contentFileTree() const {
+std::shared_ptr<const IFileTree> ModInfoWithConflictInfo::fileTree() const {
   return m_FileTree.value();
 }
 

@@ -254,7 +254,7 @@ void ImagesTab::select(std::size_t i, Visibility v)
 
     ui->imagesPath->setText(QDir::toNativeSeparators(f->path()));
     ui->imagesExplore->setEnabled(true);
-    if (plugin().previewGenerator().previewSupported(QString::fromStdWString(std::filesystem::path(f->path().toStdWString()).extension().wstring()).remove(0,1)))
+    if (plugin().previewGenerator().previewSupported(QFileInfo(f->path()).suffix().toLower()))
       ui->previewPluginButton->setEnabled(true);
     else
       ui->previewPluginButton->setEnabled(false);

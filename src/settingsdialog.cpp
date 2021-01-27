@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settingsdialogpaths.h"
 #include "settingsdialogplugins.h"
 #include "settingsdialogsteam.h"
+#include "settingsdialoguserinterface.h"
 #include "settingsdialogworkarounds.h"
 
 using namespace MOBase;
@@ -38,7 +39,8 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings& setti
 {
   ui->setupUi(this);
 
-  m_tabs.push_back(std::unique_ptr<SettingsTab>(new GeneralSettingsTab(settings, m_pluginContainer, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(new GeneralSettingsTab(settings, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(new UserInterfaceSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new PathsSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new DiagnosticsSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new NexusSettingsTab(settings, *this)));
@@ -114,7 +116,7 @@ QString SettingsDialog::getColoredButtonStyleSheet() const
 void SettingsDialog::accept()
 {
   QString newModPath = ui->modDirEdit->text();
-  newModPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+  newModPath = PathSettings::resolve(newModPath, ui->baseDirEdit->text());
 
   if ((QDir::fromNativeSeparators(newModPath) !=
        QDir::fromNativeSeparators(

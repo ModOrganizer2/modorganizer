@@ -8,5 +8,102 @@ file={m_wsFile}
  loaded={m_loaded}
  expanded={m_expanded}
 }}</DisplayString></Type>
+	<Type Name="QFileInfoPrivate">
+		<DisplayString Condition="0 == this">&lt;null&gt;</DisplayString>
+		<DisplayString>{fileEntry}</DisplayString>
+		<StringView>fileEntry</StringView>
+		<Expand>
+			<Item Name="QSharedData">*((Qt5Core.dll!QSharedData *) this)</Item>
+			<Item Name="fileEntry">fileEntry</Item>
+			<!--
+        <Item Name="metaData">metaData</Item>
+        <Item Name="fileListsInitialized">fileListsInitialized</Item>
+        <Item Name="fileEngine">fileEngine</Item>
+        <Item Name="fileNames">fileNames</Item>
+        <Item Name="fileOwners">fileOwners</Item>
+        <Item Name="cachedFlags">cachedFlags</Item>
+        <Item Name="isDefaultConstructed">isDefaultConstructed</Item>
+        <Item Name="cache_enabled">cache_enabled</Item>
+        <Item Name="fileFlags">fileFlags</Item>
+        <Item Name="fileSize">fileSize</Item>
+        <Item Name="fileTimes">fileTimes</Item>
+        -->
+		</Expand>
+	</Type>
 
+
+	<Type Name="QFileInfo">
+		<DisplayString>{*((Qt5Core.dll!QFileInfoPrivate *) d_ptr.d)}</DisplayString>
+		<StringView>*((Qt5Core.dll!QFileInfoPrivate *) d_ptr.d)</StringView>
+		<Expand>
+			<Item Name="QFileInfoPrivate">*((Qt5Core.dll!QFileInfoPrivate *) d_ptr.d)</Item>
+		</Expand>
+	</Type>
+
+
+	<Type Name="QFileSystemEntry">
+		<DisplayString Condition="0 == this">&lt;null&gt;</DisplayString>
+		<DisplayString>{m_filePath}</DisplayString>
+		<StringView>m_filePath</StringView>
+		<!--
+    <Expand>
+        <Item Name="m_filePath">m_filePath</Item>
+        <Item Name="m_nativeFilePath">m_nativeFilePath</Item>
+        <Item Name="m_lastSeparator">m_lastSeparator</Item>
+        <Item Name="m_firstDotInFileName">m_firstDotInFileName</Item>
+        <Item Name="m_lastDotInFileName">m_lastDotInFileName</Item>
+    </Expand>
+    -->
+	</Type>
+
+
+	<Type Name="QDirPrivate">
+		<DisplayString Condition="0 == this">&lt;null&gt;</DisplayString>
+		<DisplayString>{dirEntry}</DisplayString>
+		<StringView>dirEntry</StringView>
+		<Expand>
+			<Item Name="QSharedData">*((Qt5Core.dll!QSharedData *) this)</Item>
+			<Item Name="dirEntry">dirEntry</Item>
+			<Item Name="nameFilters">nameFilters</Item>
+			<Item Name="absoluteDirEntry">absoluteDirEntry</Item>
+			<!--
+        <Item Name="metaData">metaData</Item>
+        <Item Name="fileListsInitialized">fileListsInitialized</Item>
+        <Item Name="fileEngine">fileEngine</Item>
+        <Item Name="files">files</Item>
+        <Item Name="fileInfos">fileInfos</Item>
+        <Item Name="sort">sort</Item>
+        <Item Name="filters">filters</Item>
+        -->
+		</Expand>
+	</Type>
+
+
+	<Type Name="QDir">
+		<DisplayString>{*((Qt5Core.dll!QDirPrivate *) d_ptr.d)}</DisplayString>
+		<StringView>*((Qt5Core.dll!QDirPrivate *) d_ptr.d)</StringView>
+		<Expand>
+			<Item Name="QDirPrivate">*((Qt5Core.dll!QDirPrivate *) d_ptr.d)</Item>
+		</Expand>
+	</Type>
+
+
+	<Type Name="QFilePrivate">
+		<DisplayString Condition="0 == this">&lt;null&gt;</DisplayString>
+		<DisplayString>{fileName}</DisplayString>
+		<StringView>fileName</StringView>
+		<Expand>
+			<Item Name="QFileDevice">*((Qt5Core.dll!QFileDevice *) this)</Item>
+			<Item Name="fileName">fileName</Item>
+		</Expand>
+	</Type>
+
+
+	<Type Name="QFile">
+		<DisplayString>{*((Qt5Core.dll!QFilePrivate *) d_ptr.d)}</DisplayString>
+		<StringView>*((Qt5Core.dll!QFilePrivate *) d_ptr.d)</StringView>
+		<Expand>
+			<Item Name="QFilePrivate">*((Qt5Core.dll!QFilePrivate *) d_ptr.d)</Item>
+		</Expand>
+	</Type>
 </AutoVisualizer>

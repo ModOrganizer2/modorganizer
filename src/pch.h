@@ -48,7 +48,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/assign.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/fusion/algorithm/iteration/for_each.hpp>
 #include <boost/fusion/container.hpp>
@@ -64,6 +64,7 @@
 #include <boost/thread.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <boost/program_options.hpp>
 
 // openssl
 #include <tlhelp32.h>
@@ -88,6 +89,7 @@
 #include <QColorDialog>
 #include <QComboBox>
 #include <QCommandLinkButton>
+#include <QCompleter>
 #include <QContextMenuEvent>
 #include <QCoreApplication>
 #include <QCryptographicHash>

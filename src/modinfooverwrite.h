@@ -34,7 +34,6 @@ public:
   virtual void setIsEndorsed(bool) override {}
   virtual void setNeverEndorse() override {}
   virtual void setIsTracked(bool) override {}
-  virtual bool remove() override { return false; }
   virtual void endorse(bool) override {}
   virtual void track(bool) override {}
   virtual bool alwaysEnabled() const override { return true; }
@@ -52,6 +51,7 @@ public:
   virtual int getFixedPriority() const override { return std::numeric_limits<int>::max(); }
   virtual QString gameName() const override { return ""; }
   virtual int nexusId() const override { return -1; }
+  virtual bool isOverwrite() const override { return true; }
   virtual QDateTime getExpires() const override { return QDateTime(); }
   virtual std::vector<QString> getIniTweaks() const override { return std::vector<QString>(); }
   virtual std::vector<ModInfo::EFlag> getFlags() const override;
@@ -77,7 +77,7 @@ public:
   virtual std::map<QString, QVariant> clearPluginSettings(const QString& pluginName) override { return {}; }
 
 private:
-  ModInfoOverwrite(PluginContainer *pluginContainer, const MOBase::IPluginGame* game, MOShared::DirectoryEntry **directoryStructure);
+  ModInfoOverwrite(OrganizerCore& core);
 
 };
 

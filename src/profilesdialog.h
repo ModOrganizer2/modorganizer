@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "tutorabledialog.h"
 class Profile;
+class OrganizerCore;
 
 class QListWidget;
 class QListWidgetItem;
@@ -46,9 +47,10 @@ public:
   * @brief constructor
   *
   * @param profileName currently enabled profile
+  * @param organizer
   * @param parent parent widget
   **/
- explicit ProfilesDialog(const QString &profileName, MOBase::IPluginGame const *game, QWidget *parent = 0);
+ explicit ProfilesDialog(const QString &profileName, OrganizerCore &organizer, QWidget *parent = 0);
   ~ProfilesDialog();
 
   // also saves and restores geometry
@@ -60,6 +62,28 @@ public:
    * @todo the notion of a fail state makes little sense in the current dialog
    **/
   bool failed() const { return m_FailState; }
+
+  // if the dialog was closed with the 'select' button, returns the name of the
+  // selected profile; if the dialog was closed with 'cancel', returns empty
+  //
+  std::optional<QString> selectedProfile() const;
+
+signals:
+
+  /**
+   * @brief Signal emitted when a profile is created.
+   */
+  void profileCreated(Profile* profile);
+
+  /**
+   * @brief Signal emitted when a profile is renamed.
+   */
+  void profileRenamed(Profile* profile, QString const& oldName, QString const& newName);
+
+  /**
+   * @brief Signal emitted when a profile has been removed.
+   */
+  void profileRemoved(QString const& profileName);
 
 protected:
 
@@ -76,7 +100,8 @@ private:
 
 private slots:
 
-  void on_closeButton_clicked();
+  void on_close_clicked();
+  void on_select_clicked();
 
   void on_addProfileButton_clicked();
 
@@ -85,6 +110,7 @@ private slots:
   void on_copyProfileButton_clicked();
 
   void on_profilesList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+  void on_profilesList_itemActivated(QListWidgetItem* item);
 
   void on_removeProfileButton_clicked();
 
@@ -100,6 +126,7 @@ private:
   bool m_FailState;
   MOBase::IPluginGame const *m_Game;
   QString m_ActiveProfileName;
+  std::optional<QString> m_Selected;
 };
 
 #endif // PROFILESDIALOG_H

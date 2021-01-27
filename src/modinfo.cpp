@@ -27,6 +27,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "categories.h"
 #include "modinfodialog.h"
+#include "organizercore.h"
+#include "modlist.h"
 #include "overwriteinfodialog.h"
 #include "versioninfo.h"
 #include "thread_utils.h"
@@ -37,6 +39,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <scriptextender.h>
 #include <unmanagedmods.h>
 #include <log.h>
+#include <report.h>
 
 #include <QApplication>
 #include <QDirIterator>
@@ -46,8 +49,10 @@ using namespace MOBase;
 using namespace MOShared;
 
 
+const std::set<unsigned int> ModInfo::s_EmptySet;
 std::vector<ModInfo::Ptr> ModInfo::s_Collection;
-std::map<QString, unsigned int> ModInfo::s_ModsByName;
+ModInfo::Ptr ModInfo::s_Overwrite;
+std::map<QString, unsigned int, MOBase::FileNameComparator> ModInfo::s_ModsByName;
 std::map<std::pair<QString, int>, std::vector<unsigned int>> ModInfo::s_ModsByModID;
 int ModInfo::s_NextID;
 QMutex ModInfo::s_Mutex(QMutex::Recursive);
@@ -78,18 +83,19 @@ bool ModInfo::isRegularName(const QString& name)
 }
 
 
-ModInfo::Ptr ModInfo::createFrom(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, const QDir &dir, DirectoryEntry **directoryStructure)
+ModInfo::Ptr ModInfo::createFrom(const QDir &dir, OrganizerCore& core)
 {
   QMutexLocker locker(&s_Mutex);
   ModInfo::Ptr result;
 
   if (isBackupName(dir.dirName())) {
-    result = ModInfo::Ptr(new ModInfoBackup(pluginContainer, game, dir, directoryStructure));
+    result = ModInfo::Ptr(new ModInfoBackup(dir, core));
   } else if (isSeparatorName(dir.dirName())) {
-    result = Ptr(new ModInfoSeparator(pluginContainer, game, dir, directoryStructure));
+    result = Ptr(new ModInfoSeparator(dir, core));
   } else {
-    result = ModInfo::Ptr(new ModInfoRegular(pluginContainer, game, dir, directoryStructure));
+    result = ModInfo::Ptr(new ModInfoRegular(dir, core));
   }
+  result->m_Index = s_Collection.size();
   s_Collection.push_back(result);
   return result;
 }
@@ -98,23 +104,21 @@ ModInfo::Ptr ModInfo::createFromPlugin(const QString &modName,
                                        const QString &espName,
                                        const QStringList &bsaNames,
                                        ModInfo::EModType modType,
-                                       const MOBase::IPluginGame* game,
-                                       DirectoryEntry **directoryStructure,
-                                       PluginContainer *pluginContainer) {
+                                       OrganizerCore& core) {
   QMutexLocker locker(&s_Mutex);
-  ModInfo::Ptr result = ModInfo::Ptr(
-      new ModInfoForeign(modName, espName, bsaNames, modType, game, directoryStructure, pluginContainer));
+  ModInfo::Ptr result = ModInfo::Ptr(new ModInfoForeign(modName, espName, bsaNames, modType, core));
+  result->m_Index = s_Collection.size();
   s_Collection.push_back(result);
   return result;
 }
 
-void ModInfo::createFromOverwrite(PluginContainer *pluginContainer,
-                                  const MOBase::IPluginGame* game,
-                                  MOShared::DirectoryEntry **directoryStructure)
+ModInfo::Ptr ModInfo::createFromOverwrite(OrganizerCore& core)
 {
   QMutexLocker locker(&s_Mutex);
-
-  s_Collection.push_back(ModInfo::Ptr(new ModInfoOverwrite(pluginContainer, game, directoryStructure)));
+  ModInfo::Ptr overwrite = ModInfo::Ptr(new ModInfoOverwrite(core));
+  overwrite->m_Index = s_Collection.size();
+  s_Collection.push_back(overwrite);
+  return overwrite;
 }
 
 unsigned int ModInfo::getNumMods()
@@ -174,10 +178,20 @@ bool ModInfo::removeMod(unsigned int index)
   QMutexLocker locker(&s_Mutex);
 
   if (index >= s_Collection.size()) {
-    throw MyException(tr("remove: invalid mod index %1").arg(index));
+    throw Exception(tr("remove: invalid mod index %1").arg(index));
   }
-  // update the indices first
+
   ModInfo::Ptr modInfo = s_Collection[index];
+
+  // remove the actual mod (this is the most likely to fail so we do this first)
+  if (modInfo->isRegular()) {
+    if (!shellDelete(QStringList(modInfo->absolutePath()), true)) {
+      reportError(tr("remove: failed to delete mod '%1' directory").arg(modInfo->name()));
+      return false;
+    }
+  }
+
+  // update the indices
   s_ModsByName.erase(s_ModsByName.find(modInfo->name()));
 
   auto iter = s_ModsByModID.find(std::pair<QString, int>(modInfo->gameName(), modInfo->nexusId()));
@@ -186,12 +200,6 @@ bool ModInfo::removeMod(unsigned int index)
     indices.erase(std::remove(indices.begin(), indices.end(), index), indices.end());
     s_ModsByModID[std::pair<QString, int>(modInfo->gameName(), modInfo->nexusId())] = indices;
   }
-
-  // physically remove the mod directory
-  //TODO the return value is ignored because the indices were already removed here, so stopping
-  // would cause data inconsistencies. Instead we go through with the removal but the mod will show up
-  // again if the user refreshes
-  modInfo->remove();
 
   // finally, remove the mod from the collection
   s_Collection.erase(s_Collection.begin() + index);
@@ -225,28 +233,27 @@ unsigned int ModInfo::findMod(const boost::function<bool (ModInfo::Ptr)> &filter
 }
 
 
-void ModInfo::updateFromDisc(const QString &modDirectory,
-                             DirectoryEntry **directoryStructure,
-                             PluginContainer *pluginContainer,
-                             bool displayForeign,
-                             std::size_t refreshThreadCount,
-                             MOBase::IPluginGame const *game)
+void ModInfo::updateFromDisc(
+  const QString& modsDirectory, OrganizerCore& core,
+  bool displayForeign, std::size_t refreshThreadCount)
 {
   TimeThis tt("ModInfo::updateFromDisc()");
 
   QMutexLocker lock(&s_Mutex);
   s_Collection.clear();
   s_NextID = 0;
+  s_Overwrite = nullptr;
 
   { // list all directories in the mod directory and make a mod out of each
-    QDir mods(QDir::fromNativeSeparators(modDirectory));
+    QDir mods(QDir::fromNativeSeparators(modsDirectory));
     mods.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
     QDirIterator modIter(mods);
     while (modIter.hasNext()) {
-      createFrom(pluginContainer, game, QDir(modIter.next()), directoryStructure);
+      createFrom(QDir(modIter.next()), core);
     }
   }
 
+  auto* game = core.managedGame();
   UnmanagedMods *unmanaged = game->feature<UnmanagedMods>();
   if (unmanaged != nullptr) {
     for (const QString &modName : unmanaged->mods(!displayForeign)) {
@@ -256,17 +263,14 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
       createFromPlugin(unmanaged->displayName(modName),
                        unmanaged->referenceFile(modName).absoluteFilePath(),
                        unmanaged->secondaryFiles(modName),
-                       modType,
-                       game,
-                       directoryStructure,
-                       pluginContainer);
+                       modType, core);
     }
   }
 
-  createFromOverwrite(pluginContainer, game, directoryStructure);
+  s_Overwrite = createFromOverwrite(core);
 
   std::sort(s_Collection.begin(), s_Collection.end(), ModInfo::ByName);
-  
+
   parallelMap(std::begin(s_Collection), std::end(s_Collection), &ModInfo::prefetch, refreshThreadCount);
 
   updateIndices();
@@ -283,14 +287,15 @@ void ModInfo::updateIndices()
     QString modName = s_Collection[i]->internalName();
     QString game = s_Collection[i]->gameName();
     int modID = s_Collection[i]->nexusId();
+    s_Collection[i]->m_Index = i;
     s_ModsByName[modName] = i;
     s_ModsByModID[std::pair<QString, int>(game, modID)].push_back(i);
   }
 }
 
 
-ModInfo::ModInfo(PluginContainer *pluginContainer)
-  : m_PrimaryCategory(-1)
+ModInfo::ModInfo(OrganizerCore& core)
+  : m_PrimaryCategory(-1), m_Core(core)
 {
 }
 
@@ -348,19 +353,19 @@ bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
     }
 
     for (auto game : organizedGames)
-      NexusInterface::instance(pluginContainer)->requestUpdates(game.second, receiver, QVariant(), game.first, QString());
+      NexusInterface::instance().requestUpdates(game.second, receiver, QVariant(), game.first, QString());
   } else if (earliest < QDateTime::currentDateTimeUtc().addMonths(-1)) {
     for (auto gameName : games)
-      NexusInterface::instance(pluginContainer)->requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::MONTH, receiver, QVariant(true), QString());
+      NexusInterface::instance().requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::MONTH, receiver, QVariant(true), QString());
   } else if (earliest < QDateTime::currentDateTimeUtc().addDays(-7)) {
     for (auto gameName : games)
-      NexusInterface::instance(pluginContainer)->requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::MONTH, receiver, QVariant(false), QString());
+      NexusInterface::instance().requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::MONTH, receiver, QVariant(false), QString());
   } else if (earliest < QDateTime::currentDateTimeUtc().addDays(-1)) {
     for (auto gameName : games)
-      NexusInterface::instance(pluginContainer)->requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::WEEK, receiver, QVariant(false), QString());
+      NexusInterface::instance().requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::WEEK, receiver, QVariant(false), QString());
   } else {
     for (auto gameName : games)
-      NexusInterface::instance(pluginContainer)->requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::DAY, receiver, QVariant(false), QString());
+      NexusInterface::instance().requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::DAY, receiver, QVariant(false), QString());
   }
 
   return updatesAvailable;
@@ -400,7 +405,7 @@ std::set<QSharedPointer<ModInfo>> ModInfo::filteredMods(QString gameName, QVaria
   return finalMods;
 }
 
-void ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *receiver, std::multimap<QString, int> IDs)
+void ModInfo::manualUpdateCheck(QObject *receiver, std::multimap<QString, int> IDs)
 {
   std::vector<QSharedPointer<ModInfo>> mods;
   std::set<std::pair<QString, int>> organizedGames;
@@ -438,7 +443,7 @@ void ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *recei
     }
 
     for (auto game : organizedGames) {
-      NexusInterface::instance(pluginContainer)->requestUpdates(game.second, receiver, QVariant(), game.first, QString());
+      NexusInterface::instance().requestUpdates(game.second, receiver, QVariant(), game.first, QString());
     }
   } else {
     log::info("None of the selected mods can be updated.");
@@ -458,16 +463,16 @@ void ModInfo::setPluginSelected(const bool &isSelected)
 
 void ModInfo::addCategory(const QString &categoryName)
 {
-  int id = CategoryFactory::instance()->getCategoryID(categoryName);
+  int id = CategoryFactory::instance().getCategoryID(categoryName);
   if (id == -1) {
-    id = CategoryFactory::instance()->addCategory(categoryName, std::vector<CategoryFactory::NexusCategory>(), 0);
+    id = CategoryFactory::instance().addCategory(categoryName, std::vector<int>(), 0);
   }
   setCategory(id, true);
 }
 
 bool ModInfo::removeCategory(const QString &categoryName)
 {
-  int id = CategoryFactory::instance()->getCategoryID(categoryName);
+  int id = CategoryFactory::instance().getCategoryID(categoryName);
   if (id == -1) {
     return false;
   }
@@ -482,9 +487,9 @@ QStringList ModInfo::categories() const
 {
   QStringList result;
 
-  CategoryFactory *catFac = CategoryFactory::instance();
+  CategoryFactory &catFac = CategoryFactory::instance();
   for (int id : m_Categories) {
-    result.append(catFac->getCategoryName(catFac->getCategoryIndex(id)));
+    result.append(catFac.getCategoryName(catFac.getCategoryIndex(id)));
   }
 
   return result;
@@ -516,7 +521,7 @@ bool ModInfo::categorySet(int categoryID) const
 {
   for (std::set<int>::const_iterator iter = m_Categories.begin(); iter != m_Categories.end(); ++iter) {
     if ((*iter == categoryID) ||
-        (CategoryFactory::instance()->isDecendantOf(*iter, categoryID))) {
+        (CategoryFactory::instance().isDescendantOf(*iter, categoryID))) {
       return true;
     }
   }

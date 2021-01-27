@@ -21,7 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_modinfodialog.h"
 #include "plugincontainer.h"
 #include "organizercore.h"
-#include "mainwindow.h"
+#include "modlistview.h"
 #include "modinfodialogtextfiles.h"
 #include "modinfodialogimages.h"
 #include "modinfodialogesps.h"
@@ -40,30 +40,6 @@ namespace fs = std::filesystem;
 const int max_scan_for_context_menu = 50;
 
 
-int naturalCompare(const QString& a, const QString& b)
-{
-  static QCollator c = []{
-    QCollator c;
-    c.setNumericMode(true);
-    c.setCaseSensitivity(Qt::CaseInsensitive);
-    return c;
-  }();
-
-
-  // todo: remove this once the fix is released
-  // see https://bugreports.qt.io/projects/QTBUG/issues/QTBUG-81673
-  // and https://codereview.qt-project.org/c/qt/qtbase/+/287966/5/src/corelib/text/qcollator_win.cpp
-  if (!a.size()) {
-    return b.size() ? -1 : 0;
-  }
-  if (!b.size()) {
-    return +1;
-  }
-
-
-  return c.compare(a, b);
-}
-
 bool canPreviewFile(
   const PluginContainer& pluginContainer,
   bool isArchive, const QString& filename)
@@ -72,7 +48,7 @@ bool canPreviewFile(
     return false;
   }
 
-  const auto ext = QFileInfo(filename).suffix();
+  const auto ext = QFileInfo(filename).suffix().toLower();
   return pluginContainer.previewGenerator().previewSupported(ext);
 }
 
@@ -198,19 +174,31 @@ bool ModInfoDialog::TabInfo::isVisible() const
   return (realPos != -1);
 }
 
-
 ModInfoDialog::ModInfoDialog(
-  MainWindow* mw, OrganizerCore* core, PluginContainer* plugin,
-  ModInfo::Ptr mod) :
-    TutorableDialog("ModInfoDialog", mw),
-    ui(new Ui::ModInfoDialog), m_mainWindow(mw),
-    m_core(core), m_plugin(plugin), m_initialTab(ModInfoTabIDs::None),
+  OrganizerCore& core, PluginContainer& plugin,
+  ModInfo::Ptr mod, ModListView* modListView, QWidget *parent) :
+    TutorableDialog("ModInfoDialog", parent),
+    ui(new Ui::ModInfoDialog),
+    m_core(core),
+    m_plugin(plugin),
+    m_modListView(modListView),
+    m_initialTab(ModInfoTabIDs::None),
     m_arrangingTabs(false)
 {
   ui->setupUi(this);
 
-  auto* sc = new QShortcut(QKeySequence::Delete, this);
-  connect(sc, &QShortcut::activated, [&]{ onDeleteShortcut(); });
+  {
+    auto* sc = new QShortcut(QKeySequence::Delete, this);
+    connect(sc, &QShortcut::activated, [&] { onDeleteShortcut(); });
+  }
+  {
+    auto* sc = new QShortcut(QKeySequence::MoveToNextPage, this);
+    connect(sc, &QShortcut::activated, [&] { onNextMod(); });
+  }
+  {
+    auto* sc = new QShortcut(QKeySequence::MoveToPreviousPage, this);
+    connect(sc, &QShortcut::activated, [&] { onPreviousMod(); });
+  }
 
   setMod(mod);
   createTabs();
@@ -228,7 +216,7 @@ template <class T>
 std::unique_ptr<ModInfoDialogTab> createTab(ModInfoDialog& d, ModInfoTabIDs id)
 {
   return std::make_unique<T>(ModInfoDialogTabContext(
-    *d.m_core, *d.m_plugin, &d, d.ui.get(), id, d.m_mod, d.getOrigin()));
+    d.m_core, d.m_plugin, &d, d.ui.get(), id, d.m_mod, d.getOrigin()));
 }
 
 void ModInfoDialog::createTabs()
@@ -293,7 +281,7 @@ int ModInfoDialog::exec()
   update(true);
 
   if (noCustomTabRequested) {
-    m_core->settings().widgets().restoreIndex(ui->tabWidget);
+    m_core.settings().widgets().restoreIndex(ui->tabWidget);
   }
 
   const int r = TutorableDialog::exec();
@@ -454,7 +442,7 @@ void ModInfoDialog::reAddTabs(
   Q_ASSERT(visibility.size() == m_tabs.size());
 
   // ordered tab names from settings
-  const auto orderedNames = m_core->settings().geometry().modInfoTabOrder();
+  const auto orderedNames = m_core.settings().geometry().modInfoTabOrder();
 
   // whether the tabs can be sorted
   //
@@ -610,7 +598,7 @@ void ModInfoDialog::feedFiles(std::vector<TabInfo*>& interestedTabs)
 
 void ModInfoDialog::setTabsColors()
 {
-  const auto p = m_mainWindow->palette();
+  const auto p = m_modListView->parentWidget()->palette();
 
   for (const auto& tabInfo : m_tabs) {
     if (!tabInfo.isVisible()) {
@@ -643,7 +631,7 @@ void ModInfoDialog::switchToTab(ModInfoTabIDs id)
 
 MOShared::FilesOrigin* ModInfoDialog::getOrigin()
 {
-  auto* ds = m_core->directoryStructure();
+  auto* ds = m_core.directoryStructure();
 
   if (!ds->originExists(m_mod->name().toStdWString())) {
     return nullptr;
@@ -663,7 +651,7 @@ void ModInfoDialog::saveState() const
 
   // save state for each tab
   for (const auto& tabInfo : m_tabs) {
-    tabInfo.tab->saveState(m_core->settings());
+    tabInfo.tab->saveState(m_core.settings());
   }
 }
 
@@ -674,7 +662,7 @@ void ModInfoDialog::restoreState()
 
   // restore state for each tab
   for (const auto& tabInfo : m_tabs) {
-    tabInfo.tab->restoreState(m_core->settings());
+    tabInfo.tab->restoreState(m_core.settings());
   }
 }
 
@@ -702,9 +690,9 @@ void ModInfoDialog::saveTabOrder() const
     names += ui->tabWidget->widget(i)->objectName();
   }
 
-  m_core->settings().geometry().setModInfoTabOrder(names);
+  m_core.settings().geometry().setModInfoTabOrder(names);
   // save last opened index
-  m_core->settings().widgets().saveIndex(ui->tabWidget);
+  m_core.settings().widgets().saveIndex(ui->tabWidget);
 }
 
 void ModInfoDialog::onOriginModified(int originID)
@@ -800,22 +788,31 @@ void ModInfoDialog::onTabMoved()
 
 void ModInfoDialog::onNextMod()
 {
-  auto mod = m_mainWindow->nextModInList();
+  auto index = m_modListView->nextMod(ModInfo::getIndex(m_mod->name()));
+  if (!index) {
+    return;
+  }
+  auto mod = ModInfo::getByIndex(*index);
   if (!mod || mod == m_mod) {
     return;
   }
 
   setMod(mod);
   update();
+
+  emit modChanged(*index);
 }
 
 void ModInfoDialog::onPreviousMod()
 {
-  auto mod = m_mainWindow->previousModInList();
-  if (!mod || mod == m_mod) {
+  auto index = m_modListView->prevMod(ModInfo::getIndex(m_mod->name()));
+  if (!index) {
     return;
   }
+  auto mod = ModInfo::getByIndex(*index);
 
   setMod(mod);
   update();
+
+  emit modChanged(*index);
 }

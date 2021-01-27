@@ -51,6 +51,28 @@ private:
   FilterWidget m_filterOverwritten;
   FilterWidget m_filterNoConflicts;
 
+  struct GeneralConflictNumbers
+  {
+    int numTotalFiles = 0;
+    int numTotalLoose = 0;
+    int numTotalArchive = 0;
+    int numNonConflicting = 0;
+    int numNonConflictingLoose = 0;
+    int numNonConflictingArchive = 0;
+    int numOverwrite = 0;
+    int numOverwriteLoose = 0;
+    int numOverwriteArchive = 0;
+    int numOverwritten = 0;
+    int numOverwrittenLoose = 0;
+    int numOverwrittenArchive = 0;
+
+    void clear() {
+      *this = {};
+    };
+  };
+
+  GeneralConflictNumbers m_counts;
+
   ConflictItem createOverwriteItem(
     MOShared::FileIndex index, bool archive,
     QString fileName, QString relativeName,
@@ -63,6 +85,8 @@ private:
   ConflictItem createOverwrittenItem(
     MOShared::FileIndex index, int fileOrigin, bool archive,
     QString fileName, QString relativeName);
+
+  void updateUICounters();
 
   void onOverwriteActivated(const QModelIndex& index);
   void onOverwrittenActivated(const QModelIndex& index);

@@ -1,22 +1,14 @@
 #include "modflagicondelegate.h"
+#include "modlist.h"
+#include "modlistview.h"
 #include <log.h>
 #include <QList>
 
 using namespace MOBase;
 
-ModFlagIconDelegate::ModFlagIconDelegate(QObject *parent, int logicalIndex, int compactSize)
-  : IconDelegate(parent)
-  , m_LogicalIndex(logicalIndex)
-  , m_CompactSize(compactSize)
-  , m_Compact(false)
+ModFlagIconDelegate::ModFlagIconDelegate(ModListView* view, int column, int compactSize)
+  : IconDelegate(view, column, compactSize), m_view(view)
 {
-}
-
-void ModFlagIconDelegate::columnResized(int logicalIndex, int, int newSize)
-{
-  if (logicalIndex == m_LogicalIndex) {
-    m_Compact = newSize < m_CompactSize;
-  }
 }
 
 QList<QString> ModFlagIconDelegate::getIconsForFlags(
@@ -39,11 +31,12 @@ QList<QString> ModFlagIconDelegate::getIconsForFlags(
 
 QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const
 {
-  QVariant modid = index.data(Qt::UserRole + 1);
+  QVariant modid = index.data(ModList::IndexRole);
 
   if (modid.isValid()) {
-    ModInfo::Ptr info = ModInfo::getByIndex(modid.toInt());
-    return getIconsForFlags(info->getFlags(), m_Compact);
+    bool compact;
+    auto flags = m_view->modFlags(index, &compact);
+    return getIconsForFlags(flags, compact || this->compact());
   }
 
   return {};
@@ -71,7 +64,7 @@ QString ModFlagIconDelegate::getFlagIcon(ModInfo::EFlag flag)
 
 size_t ModFlagIconDelegate::getNumIcons(const QModelIndex &index) const
 {
-  unsigned int modIdx = index.data(Qt::UserRole + 1).toInt();
+  unsigned int modIdx = index.data(ModList::IndexRole).toInt();
   if (modIdx < ModInfo::getNumMods()) {
     ModInfo::Ptr info = ModInfo::getByIndex(modIdx);
     std::vector<ModInfo::EFlag> flags = info->getFlags();
@@ -85,7 +78,7 @@ size_t ModFlagIconDelegate::getNumIcons(const QModelIndex &index) const
 QSize ModFlagIconDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &modelIndex) const
 {
   size_t count = getNumIcons(modelIndex);
-  unsigned int index = modelIndex.data(Qt::UserRole + 1).toInt();
+  unsigned int index = modelIndex.data(ModList::IndexRole).toInt();
   QSize result;
   if (index < ModInfo::getNumMods()) {
     result = QSize(static_cast<int>(count) * 40, 20);

@@ -56,7 +56,7 @@ bool MarkdownPage::acceptNavigationRequest(const QUrl &url, NavigationType, bool
   static const QStringList allowed = {"qrc", "data"};
 
   if (!allowed.contains(url.scheme())) {
-    QDesktopServices::openUrl(url);
+    shell::Open(url);
     return false;
   }
 

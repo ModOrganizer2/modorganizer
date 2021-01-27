@@ -48,8 +48,8 @@ const QString NexusSSO("wss://sso.nexusmods.com");
 const QString NexusSSOPage("https://www.nexusmods.com/sso?id=%1&application=modorganizer2");
 
 
-ValidationProgressDialog::ValidationProgressDialog(NexusKeyValidator& v)
-  : m_validator(v), m_updateTimer(nullptr), m_first(true)
+ValidationProgressDialog::ValidationProgressDialog(Settings* s, NexusKeyValidator& v)
+  : m_settings(s), m_validator(v), m_updateTimer(nullptr), m_first(true)
 {
   ui.reset(new Ui::ValidationProgressDialog);
   ui->setupUi(this);
@@ -98,7 +98,10 @@ void ValidationProgressDialog::stop()
 void ValidationProgressDialog::showEvent(QShowEvent* e)
 {
   if (m_first) {
-    Settings::instance().geometry().centerOnMainWindowMonitor(this);
+    if (m_settings) {
+      m_settings->geometry().centerOnMainWindowMonitor(this);
+    }
+
     m_first = false;
   }
 }
@@ -300,7 +303,7 @@ void NexusSSOLogin::onMessage(const QString& s)
     // first answer
 
     // open browser
-    const auto url = NexusSSOPage.arg(m_guid);
+    const QUrl url = NexusSSOPage.arg(m_guid);
     shell::Open(url);
 
     m_timeout.stop();
@@ -373,7 +376,7 @@ void ValidationAttempt::start(NXMAccessManager& m, const QString& key)
   m_timeout.start();
 
   log::debug(
-    "validator: attempt started with timeout of {} seconds", timeout().count());
+    "nexus: attempt started with timeout of {} seconds", timeout().count());
 }
 
 bool ValidationAttempt::sendRequest(
@@ -455,11 +458,11 @@ void ValidationAttempt::onFinished()
     return;
   }
 
-  log::debug("validator attempt: request has finished");
+  log::debug("nexus: request has finished");
 
   if (!m_reply) {
     // shouldn't happen
-    log::error("validator attempt: reply is null");
+    log::error("nexus: reply is null");
     setFailure(HardError, QObject::tr("Internal error"));
     return;
   }
@@ -469,7 +472,7 @@ void ValidationAttempt::onFinished()
 
   if (code == 0) {
     // request wasn't even sent
-    log::error("validator attempt: code is 0");
+    log::error("nexus: code is 0");
     setFailure(SoftError, m_reply->errorString());
     return;
   }
@@ -536,7 +539,7 @@ void ValidationAttempt::onFinished()
 
 void ValidationAttempt::onSslErrors(const QList<QSslError>& errors)
 {
-  log::error("validator attempt: ssl errors");
+  log::error("nexus: ssl errors");
 
   for (auto& e : errors) {
     log::error("  . {}", e.errorString());
@@ -554,7 +557,7 @@ void ValidationAttempt::setFailure(Result r, const QString& error)
 {
   if (r != Cancelled) {
     // don't spam the log
-    log::error("validator attempt: {}", error);
+    log::error("nexus: {}", error);
   }
 
   cleanup();
@@ -569,7 +572,7 @@ void ValidationAttempt::setFailure(Result r, const QString& error)
 
 void ValidationAttempt::setSuccess(const APIUserAccount& user)
 {
-  log::debug("validator attempt successful");
+  log::debug("nexus connection successful");
   cleanup();
 
   m_result = Success;
@@ -592,8 +595,8 @@ void ValidationAttempt::cleanup()
 }
 
 
-NexusKeyValidator::NexusKeyValidator(NXMAccessManager& am)
-  : m_manager(am)
+NexusKeyValidator::NexusKeyValidator(Settings* s, NXMAccessManager& am)
+  : m_settings(s), m_manager(am)
 {
 }
 
@@ -602,16 +605,25 @@ NexusKeyValidator::~NexusKeyValidator()
   cancel();
 }
 
+std::vector<std::chrono::seconds> NexusKeyValidator::getTimeouts() const
+{
+  if (m_settings) {
+    return m_settings->nexus().validationTimeouts();
+  } else {
+    return {10s, 15s, 20s};
+  }
+}
+
 void NexusKeyValidator::start(const QString& key, Behaviour b)
 {
   if (isActive()) {
-    log::debug("validator: trying to start while ongoing; ignoring");
+    log::debug("nexus: trying to start while ongoing; ignoring");
     return;
   }
 
   m_key = key;
 
-  const auto timeouts = Settings::instance().nexus().validationTimeouts();
+  const auto timeouts = getTimeouts();
 
   switch (b)
   {
@@ -643,7 +655,7 @@ void NexusKeyValidator::createAttempts(
 
 void NexusKeyValidator::cancel()
 {
-  log::debug("validator: cancelled");
+  log::debug("nexus: connection cancelled");
 
   for (auto&& a : m_attempts) {
     a->cancel();
@@ -755,10 +767,11 @@ void NexusKeyValidator::setFinished(
 }
 
 
-NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
+NXMAccessManager::NXMAccessManager(QObject *parent, Settings* s, const QString &moVersion)
   : QNetworkAccessManager(parent)
+  , m_Settings(s)
   , m_MOVersion(moVersion)
-  , m_validator(*this)
+  , m_validator(s, *this)
   , m_validationState(NotChecked)
 {
   m_validator.finished = [&](auto&& r, auto&& m, auto&& u) {
@@ -769,8 +782,10 @@ NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
     onValidatorAttemptFinished(a);
   };
 
-  setCookieJar(new PersistentCookieJar(QDir::fromNativeSeparators(
-    Settings::instance().paths().cache() + "/nexus_cookies.dat")));
+  if (m_Settings) {
+    setCookieJar(new PersistentCookieJar(QDir::fromNativeSeparators(
+      m_Settings->paths().cache() + "/nexus_cookies.dat")));
+  }
 
   if (networkAccessible() == QNetworkAccessManager::UnknownAccessibility) {
     // why is this necessary all of a sudden?
@@ -920,6 +935,11 @@ void NXMAccessManager::apiCheck(const QString &apiKey, bool force)
     return;
   }
 
+  if (m_Settings && m_Settings->network().offlineMode()) {
+    m_validationState = NotChecked;
+    return;
+  }
+
   if (force) {
     m_validationState = NotChecked;
   }
@@ -963,7 +983,7 @@ void NXMAccessManager::clearApiKey()
 void NXMAccessManager::startProgress()
 {
   if (!m_ProgressDialog) {
-    m_ProgressDialog.reset(new ValidationProgressDialog(m_validator));
+    m_ProgressDialog.reset(new ValidationProgressDialog(m_Settings, m_validator));
   }
 
   m_ProgressDialog->start();

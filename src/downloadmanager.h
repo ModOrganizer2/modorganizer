@@ -37,6 +37,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStringList>
 #include <QFileSystemWatcher>
 #include <QSettings>
+#include <boost/signals2.hpp>
 
 namespace MOBase { class IPluginGame; }
 
@@ -47,7 +48,7 @@ class OrganizerCore;
 /*!
  * \brief manages downloading of files and provides progress information for gui elements
  **/
-class DownloadManager : public MOBase::IDownloadManager
+class DownloadManager : public QObject
 {
   Q_OBJECT
 
@@ -103,7 +104,9 @@ private:
     bool m_Hidden;
 
     static DownloadInfo *createNew(const MOBase::ModRepositoryFileInfo *fileInfo, const QStringList &URLs);
-    static DownloadInfo *createFromMeta(const QString &filePath, bool showHidden, const QString outputDirectory);
+    static DownloadInfo *createFromMeta(
+      const QString &filePath, bool showHidden, const QString outputDirectory,
+      std::optional<uint64_t> fileSize={});
 
     /**
      * @brief rename the file
@@ -125,6 +128,10 @@ private:
   private:
     DownloadInfo() : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_SpeedDiff(std::tuple<int,int,int,int,int>(0,0,0,0,0)), m_HasData(false) {}
   };
+
+  friend class DownloadManagerProxy;
+
+  using SignalDownloadCallback = boost::signals2::signal<void(int)>;
 
 public:
 
@@ -176,12 +183,6 @@ public:
    * @return current download directory
    **/
   QString getOutputDirectory() const { return m_OutputDirectory; }
-
-  /**
-   * @brief set the list of supported extensions
-   * @param extensions list of supported extensions
-   */
-  void setSupportedExtensions(const QStringList &extensions);
 
   /**
    * @brief sets whether hidden files are to be shown after all
@@ -367,11 +368,16 @@ public:
    */
   void refreshList();
 
-  virtual int startDownloadURLs(const QStringList &urls);
+public: // IDownloadManager interface:
 
-  virtual int startDownloadNexusFile(int modID, int fileID);
+  int startDownloadURLs(const QStringList &urls);
+  int startDownloadNexusFile(int modID, int fileID);
+  QString downloadPath(int id);
 
-  virtual QString downloadPath(int id);
+  boost::signals2::connection onDownloadComplete(const std::function<void(int)>& callback);
+  boost::signals2::connection onDownloadPaused(const std::function<void(int)>& callback);
+  boost::signals2::connection onDownloadFailed(const std::function<void(int)>& callback);
+  boost::signals2::connection onDownloadRemoved(const std::function<void(int)>& callback);
 
   /**
    * @brief retrieve a download index from the filename
@@ -383,7 +389,7 @@ public:
 
   void pauseAll();
 
-signals:
+Q_SIGNALS:
 
   void aboutToUpdate();
 
@@ -550,11 +556,15 @@ private:
   QVector<DownloadInfo*> m_ActiveDownloads;
 
   QString m_OutputDirectory;
-  QStringList m_SupportedExtensions;
   std::set<int> m_RequestIDs;
   QVector<int> m_AlphabeticalTranslation;
 
   QFileSystemWatcher m_DirWatcher;
+
+  SignalDownloadCallback m_DownloadComplete;
+  SignalDownloadCallback m_DownloadPaused;
+  SignalDownloadCallback m_DownloadFailed;
+  SignalDownloadCallback m_DownloadRemoved;
 
   //The dirWatcher is actually triggering off normal Mo operations such as deleting downloads or editing .meta files
   //so it needs to be disabled during operations that are known to cause the creation or deletion of files in the Downloads folder.

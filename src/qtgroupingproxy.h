@@ -47,12 +47,13 @@ public:
   };
 
 public:
-  explicit QtGroupingProxy( QAbstractItemModel *model, QModelIndex rootNode = QModelIndex(),
+  explicit QtGroupingProxy( QModelIndex rootNode = QModelIndex(),
                             int groupedColumn = -1, int groupedRole = Qt::DisplayRole,
                             unsigned int flags = 0,
                             int aggregateRole = Qt::DisplayRole);
   ~QtGroupingProxy();
 
+  void setSourceModel(QAbstractItemModel* model) override;
   void setGroupedColumn( int groupedColumn );
 
   /* QAbstractProxyModel methods */
@@ -79,22 +80,6 @@ public:
   virtual QModelIndex addEmptyGroup( const RowData &data );
   virtual bool removeGroup( const QModelIndex &idx );
 
-  QStringList expandedState();
-
-signals:
-  void expandItem(const QModelIndex &index);
-
-public slots:
-  /**
-   * @brief update expanded state
-   * @param index index of the expanded/collapsed item (from the base model!)
-   */
-  void expanded(const QModelIndex &index);
-  /**
-   * @brief update expanded state
-   * @param index index of the expanded/collapsed item (from the base model!)
-   */
-  void collapsed(const QModelIndex &index);
 protected slots:
   virtual void buildTree();
 
@@ -158,7 +143,6 @@ protected:
   void dumpGroups() const;
 
 private:
-  QSet<QString> m_expandedItems;
   unsigned int m_flags;
   int m_groupedRole;
 

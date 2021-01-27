@@ -26,8 +26,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "imoinfo.h"
 #include "iuserinterface.h"
 #include "modinfo.h"
+#include "modlistbypriorityproxy.h"
 #include "modlistsortproxy.h"
-#include "savegameinfo.h"
 #include "tutorialcontrol.h"
 #include "plugincontainer.h" //class PluginContainer;
 #include "iplugingame.h" //namespace MOBase { class IPluginGame; }
@@ -39,6 +39,8 @@ class CategoryFactory;
 class OrganizerCore;
 class FilterList;
 class DataTab;
+class DownloadsTab;
+class SavesTab;
 class BrowserDialog;
 
 class PluginListSortProxy;
@@ -46,7 +48,6 @@ namespace BSA { class Archive; }
 
 namespace MOBase { class IPluginModPage; }
 namespace MOBase { class IPluginTool; }
-namespace MOBase { class ISaveGame; }
 
 namespace MOShared { class DirectoryEntry; }
 
@@ -122,22 +123,10 @@ public:
 
   bool addProfile();
   void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives);
-  void refreshSaveList();
-
-  void setModListSorting(int index);
-  void setESPListSorting(int index);
 
   void saveArchiveList();
 
-  void registerPluginTool(MOBase::IPluginTool *tool, QString name = QString(), QMenu *menu = nullptr);
-  void registerPluginTools(std::vector<MOBase::IPluginTool *> toolPlugins);
-  void registerModPage(MOBase::IPluginModPage *modPage);
-
-  void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);
-
   void installTranslator(const QString &name);
-
-  virtual void disconnectPlugins();
 
   void displayModInformation(
     ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tabID) override;
@@ -150,52 +139,29 @@ public:
 
   virtual MOBase::DelayedFileWriterBase &archivesWriter() override { return m_ArchiveListWriter; }
 
-  ModInfo::Ptr nextModInList();
-  ModInfo::Ptr previousModInList();
-
 public slots:
-  void modorder_changed();
-  void esplist_changed();
   void refresherProgress(const DirectoryRefreshProgress* p);
 
   void directory_refreshed();
 
-  void toolPluginInvoke();
-  void modPagePluginInvoke();
-
-  void requestNexusCategories();
-
 signals:
-
-  /**
-   * @brief emitted after the information dialog has been closed
-   */
-  void modInfoDisplayed();
 
   /**
    * @brief emitted when the selected style changes
    */
   void styleChanged(const QString &styleFile);
 
-  /**
-   * @brief emitted when the user interface has been completely initialized
-   */
-  void userInterfaceInitialized();
-
-
-  void modListDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
-
   void checkForProblemsDone();
 
 protected:
 
-  virtual void showEvent(QShowEvent *event);
-  virtual void paintEvent(QPaintEvent* event);
-  virtual void closeEvent(QCloseEvent *event);
-  virtual bool eventFilter(QObject *obj, QEvent *event);
-  virtual void resizeEvent(QResizeEvent *event);
-  virtual void dragEnterEvent(QDragEnterEvent *event);
-  virtual void dropEvent(QDropEvent *event);
+  void showEvent(QShowEvent *event) override;
+  void paintEvent(QPaintEvent* event) override;
+  void closeEvent(QCloseEvent *event) override;
+  bool eventFilter(QObject *obj, QEvent *event) override;
+  void resizeEvent(QResizeEvent *event) override;
+  void dragEnterEvent(QDragEnterEvent *event) override;
+  void dropEvent(QDropEvent *event) override;
   void keyReleaseEvent(QKeyEvent *event) override;
 
 private slots:
@@ -214,7 +180,12 @@ private:
   void setToolbarSize(const QSize& s);
   void setToolbarButtonStyle(Qt::ToolButtonStyle s);
 
+  void registerModPage(MOBase::IPluginModPage* modPage);
+  void registerPluginTool(MOBase::IPluginTool* tool, QString name = QString(), QMenu* menu = nullptr);
+
   void updateToolbarMenu();
+  void updateToolMenu();
+  void updateModPageMenu();
   void updateViewMenu();
 
   QMenu* createPopupMenu() override;
@@ -222,32 +193,8 @@ private:
 
   bool refreshProfiles(bool selectProfile = true);
   void refreshExecutablesList();
-  void installMod(QString fileName = "");
 
   bool modifyExecutablesDialog(int selection);
-  void displayModInformation(int row, ModInfoTabIDs tab=ModInfoTabIDs::None);
-
-  /**
-   * Sets category selections from menu; for multiple mods, this will only apply
-   * the changes made in the menu (which is the delta between the current menu selection and the reference mod)
-   * @param menu the menu after editing by the user
-   * @param modRow index of the mod to edit
-   * @param referenceRow row of the reference mod
-   */
-  void addRemoveCategoriesFromMenu(QMenu *menu, int modRow, int referenceRow);
-
-  /**
-   * Sets category selections from menu; for multiple mods, this will completely
-   * replace the current set of categories on each selected with those selected in the menu
-   * @param menu the menu after editing by the user
-   * @param modRow index of the mod to edit
-   */
-  void replaceCategoriesFromMenu(QMenu *menu, int modRow);
-
-  bool populateMenuCategories(QMenu *menu, int targetID);
-
-  void initDownloadView();
-  void updateDownloadView();
 
   // remove invalid category-references from mods
   void fixCategories();
@@ -259,11 +206,7 @@ private:
 
   void setCategoryListVisible(bool visible);
 
-  void displaySaveGameInfo(QListWidgetItem *newItem);
-
   bool errorReported(QString &logFile);
-
-  void updateESPLock(bool locked);
 
   static void setupNetworkProxy(bool activate);
   void activateProxy(bool activate);
@@ -271,20 +214,9 @@ private:
   bool createBackup(const QString &filePath, const QDateTime &time);
   QString queryRestore(const QString &filePath);
 
-  void initModListContextMenu(QMenu *menu);
-  void addModSendToContextMenu(QMenu *menu);
-  void addPluginSendToContextMenu(QMenu *menu);
-
   QMenu *openFolderMenu();
 
-  QDir currentSavesDir() const;
-
-  void startMonitorSaves();
-  void stopMonitorSaves();
-
   void dropLocalFile(const QUrl &url, const QString &outputDir, bool move);
-
-  void sendSelectedModsToPriority(int newPriority);
 
   void toggleMO2EndorseState();
   void toggleUpdateAction();
@@ -308,8 +240,9 @@ private:
 
   MOBase::TutorialControl m_Tutorial;
 
-  std::unique_ptr<FilterList> m_Filters;
   std::unique_ptr<DataTab> m_DataTab;
+  std::unique_ptr<DownloadsTab> m_DownloadsTab;
+  std::unique_ptr<SavesTab> m_SavesTab;
 
   int m_OldProfileIndex;
 
@@ -317,20 +250,11 @@ private:
 
   QStringList m_DefaultArchives;
 
-  ModListSortProxy *m_ModListSortProxy;
-
-  PluginListSortProxy *m_PluginListSortProxy;
-
   int m_OldExecutableIndex;
 
-  int m_ContextRow;
-  QPersistentModelIndex m_ContextIdx;
-  QTreeWidgetItem *m_ContextItem;
   QAction *m_ContextAction;
 
-  QAction* m_browseModPage;
-
-  CategoryFactory *m_CategoryFactory;
+  CategoryFactory &m_CategoryFactory;
 
   QTimer m_CheckBSATimer;
   QTimer m_SaveMetaTimer;
@@ -339,8 +263,6 @@ private:
   QFuture<void> m_MetaSave;
 
   QTime m_StartTime;
-  //SaveGameInfoWidget *m_CurrentSaveView;
-  MOBase::ISaveGameInfoWidget *m_CurrentSaveView;
 
   OrganizerCore &m_OrganizerCore;
   PluginContainer &m_PluginContainer;
@@ -350,11 +272,7 @@ private:
 
   std::unique_ptr<BrowserDialog> m_IntegratedBrowser;
 
-  QFileSystemWatcher m_SavesWatcher;
-
   QByteArray m_ArchiveListHash;
-
-  bool m_DidUpdateMasterList;
 
   MOBase::DelayedFileWriter m_ArchiveListWriter;
 
@@ -373,7 +291,6 @@ private:
   Executable* getSelectedExecutable();
 
 private slots:
-
   void updateWindowTitle(const APIUserAccount& user);
   void showMessage(const QString &message);
   void showError(const QString &message);
@@ -385,83 +302,21 @@ private slots:
   void wikiTriggered();
   void discordTriggered();
   void tutorialTriggered();
-  void extractBSATriggered();
+  void extractBSATriggered(QTreeWidgetItem* item);
 
-  //modlist shortcuts
-  void openExplorer_activated();
   void refreshProfile_activated();
-
-  // modlist context menu
-  void installMod_clicked();
-  void createEmptyMod_clicked();
-  void createSeparator_clicked();
-  void restoreBackup_clicked();
-  void renameMod_clicked();
-  void removeMod_clicked();
-  void setColor_clicked();
-  void resetColor_clicked();
-  void backupMod_clicked();
-  void reinstallMod_clicked();
-  void endorse_clicked();
-  void dontendorse_clicked();
-  void unendorse_clicked();
-  void track_clicked();
-  void untrack_clicked();
-  void ignoreMissingData_clicked();
-  void markConverted_clicked();
-  void restoreHiddenFiles_clicked();
-  void visitOnNexus_clicked();
-  void visitWebPage_clicked();
-  void visitNexusOrWebPage_clicked();
-  void openExplorer_clicked();
-  void openPluginOriginExplorer_clicked();
-  void openOriginInformation_clicked();
-  void information_clicked();
-  void enableSelectedMods_clicked();
-  void disableSelectedMods_clicked();
-  void sendSelectedModsToTop_clicked();
-  void sendSelectedModsToBottom_clicked();
-  void sendSelectedModsToPriority_clicked();
-  void sendSelectedModsToSeparator_clicked();
-  // savegame context menu
-  void deleteSavegame_clicked();
-  void fixMods_clicked(SaveGameInfo::MissingAssets const &missingAssets);
-  // data-tree context menu
-
-  // pluginlist context menu
-  void enableSelectedPlugins_clicked();
-  void disableSelectedPlugins_clicked();
-  void sendSelectedPluginsToTop_clicked();
-  void sendSelectedPluginsToBottom_clicked();
-  void sendSelectedPluginsToPriority_clicked();
 
   void linkToolbar();
   void linkDesktop();
   void linkMenu();
 
   void languageChange(const QString &newLanguage);
-  void saveSelectionChanged(QListWidgetItem *newItem);
 
   void windowTutorialFinished(const QString &windowName);
 
   BSA::EErrorCode extractBSA(BSA::Archive &archive, BSA::Folder::Ptr folder, const QString &destination, QProgressDialog &extractProgress);
 
-  void createModFromOverwrite();
-  /**
-   * @brief sends the content of the overwrite folder to an already existing mod
-   */
-  void moveOverwriteContentToExistingMod();
-  /**
-   * @brief actually sends the content of the overwrite folder to specified mod
-   */
-  void doMoveOverwriteContentToMod(const QString &modAbsolutePath);
-  void clearOverwrite();
-
   // nexus related
-  void checkModsForUpdates();
-
-  void linkClicked(const QString &url);
-
   void updateAvailable();
 
   void actionEndorseMO();
@@ -471,14 +326,7 @@ private slots:
 
   void originModified(int originID);
 
-  void addRemoveCategories_MenuHandler();
-  void replaceCategories_MenuHandler();
-
-  void addPrimaryCategoryCandidates();
-
   void modInstalled(const QString &modName);
-
-  void modUpdateCheck(std::multimap<QString, int> IDs);
 
   void finishUpdateInfo();
 
@@ -493,36 +341,13 @@ private slots:
 
   void onRequestsChanged(const APIStats& stats, const APIUserAccount& user);
 
-  void deselectFilters();
-  void refreshFilters();
-  void onFiltersCriteria(const std::vector<ModListSortProxy::Criteria>& filters);
-  void onFiltersOptions(
-    ModListSortProxy::FilterMode mode, ModListSortProxy::SeparatorsMode sep);
-
-  void displayModInformation(const QString &modName, ModInfoTabIDs tabID);
-  void visitNexusOrWebPage(const QModelIndex& idx);
-
   void modRenamed(const QString &oldName, const QString &newName);
   void modRemoved(const QString &fileName);
 
-  void hideSaveGameInfo();
-
   void hookUpWindowTutorials();
+  bool shouldStartTutorial() const;
 
-  void resumeDownload(int downloadIndex);
-  void endorseMod(ModInfo::Ptr mod);
-  void unendorseMod(ModInfo::Ptr mod);
-  void trackMod(ModInfo::Ptr mod, bool doTrack);
-  void cancelModListEditor();
-
-  void lockESPIndex();
-  void unlockESPIndex();
-
-  void enableVisibleMods();
-  void disableVisibleMods();
-  void exportModListCSV();
   void openInstanceFolder();
-  void openLogsFolder();
   void openInstallFolder();
 	void openPluginsFolder();
   void openStylesheetsFolder();
@@ -549,18 +374,9 @@ private slots:
 
   void updateStyle(const QString &style);
 
-  void modlistChanged(const QModelIndex &index, int role);
-  void modlistChanged(const QModelIndexList &indicies, int role);
-  void fileMoved(const QString &filePath, const QString &oldOriginName, const QString &newOriginName);
-
-
-  void modFilterActive(bool active);
-  void espFilterChanged(const QString &filter);
-  void downloadFilterChanged(const QString &filter);
-
-  void expandModList(const QModelIndex &index);
-
   void resizeLists(bool pluginListCustom);
+
+  void fileMoved(const QString& filePath, const QString& oldOriginName, const QString& newOriginName);
 
   /**
    * @brief allow columns in mod list and plugin list to be resized
@@ -568,31 +384,17 @@ private slots:
   void allowListResize();
 
   void toolBar_customContextMenuRequested(const QPoint &point);
-  void removeFromToolbar();
-  void overwriteClosed(int);
+  void removeFromToolbar(QAction* action);
 
-  void changeVersioningScheme();
-  void checkModUpdates_clicked();
-  void ignoreUpdate();
-  void unignoreUpdate();
-
-  void refreshSavesIfOpen();
   void about();
 
-  void modListSortIndicatorChanged(int column, Qt::SortOrder order);
-  void modListSectionResized(int logicalIndex, int oldSize, int newSize);
-
-  void modlistSelectionsChanged(const QItemSelection &current);
-  void esplistSelectionsChanged(const QItemSelection &current);
-
   void resetActionIcons();
-  void updateModCount();
-  void updatePluginCount();
 
 private slots: // ui slots
   // actions
   void on_actionAdd_Profile_triggered();
   void on_actionInstallMod_triggered();
+  void on_action_Refresh_triggered();
   void on_actionModify_Executables_triggered();
   void on_actionNexus_triggered();
   void on_actionNotifications_triggered();
@@ -612,25 +414,15 @@ private slots: // ui slots
 
   void on_centralWidget_customContextMenuRequested(const QPoint &pos);
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
-  void on_clearFiltersButton_clicked();
-  void on_btnRefreshDownloads_clicked();
   void on_executablesListBox_currentIndexChanged(int index);
-  void on_modList_customContextMenuRequested(const QPoint &pos);
-  void on_modList_doubleClicked(const QModelIndex &index);
-  void on_listOptionsBtn_pressed();
-  void on_espList_doubleClicked(const QModelIndex &index);
   void on_profileBox_currentIndexChanged(int index);
-  void on_savegameList_customContextMenuRequested(const QPoint &pos);
   void on_startButton_clicked();
   void on_tabWidget_currentChanged(int index);
 
-  void on_espList_customContextMenuRequested(const QPoint &pos);
   void on_displayCategoriesBtn_toggled(bool checked);
-  void on_groupCombo_currentIndexChanged(int index);
   void on_linkButton_pressed();
   void on_showHiddenBox_toggled(bool checked);
   void on_bsaList_itemChanged(QTreeWidgetItem *item, int column);
-  void on_bossButton_clicked();
 
   void on_saveButton_clicked();
   void on_restoreButton_clicked();
@@ -638,8 +430,11 @@ private slots: // ui slots
   void on_saveModsButton_clicked();
   void on_managedArchiveLabel_linkHovered(const QString &link);
 
+  void onPluginRegistrationChanged();
+
   void storeSettings();
   void readSettings();
+
   void setupModList();
 };
 

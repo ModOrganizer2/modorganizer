@@ -13,6 +13,7 @@
 #include "moshortcut.h"
 #include "processrunner.h"
 #include "uilocker.h"
+#include "envdump.h"
 #include <imoinfo.h>
 #include <iplugindiagnose.h>
 #include <versioninfo.h>
@@ -60,9 +61,12 @@ class OrganizerCore : public QObject, public MOBase::IPluginDiagnose
 
 private:
 
+  friend class OrganizerProxy;
+
   struct SignalCombinerAnd
   {
-    typedef bool result_type;
+    using result_type = bool;
+
     template<typename InputIterator>
     bool operator()(InputIterator first, InputIterator last) const
     {
@@ -78,12 +82,15 @@ private:
 
 private:
 
-  using SignalAboutToRunApplication = boost::signals2::signal<bool (const QString&), SignalCombinerAnd>;
-  using SignalFinishedRunApplication = boost::signals2::signal<void (const QString&, unsigned int)>;
-  using SignalModInstalled = boost::signals2::signal<void (const QString&)>;
-  using SignalUserInterfaceInitialized = boost::signals2::signal<void (QMainWindow*)>;
-  using SignalProfileChanged = boost::signals2::signal<void (MOBase::IProfile *, MOBase::IProfile *)>;
-  using SignalPluginSettingChanged = boost::signals2::signal<void (QString const&, const QString& key, const QVariant&, const QVariant&)>;
+  using SignalAboutToRunApplication = boost::signals2::signal<bool(const QString&), SignalCombinerAnd>;
+  using SignalFinishedRunApplication = boost::signals2::signal<void(const QString&, unsigned int)>;
+  using SignalUserInterfaceInitialized = boost::signals2::signal<void(QMainWindow*)>;
+  using SignalProfileCreated = boost::signals2::signal<void(MOBase::IProfile*)>;
+  using SignalProfileRenamed = boost::signals2::signal<void(MOBase::IProfile*, QString const&, QString const&)>;
+  using SignalProfileRemoved = boost::signals2::signal<void(QString const&)>;
+  using SignalProfileChanged = boost::signals2::signal<void(MOBase::IProfile *, MOBase::IProfile *)>;
+  using SignalPluginSettingChanged = boost::signals2::signal<void(QString const&, const QString& key, const QVariant&, const QVariant&)>;
+  using SignalPluginEnabled = boost::signals2::signal<void(const MOBase::IPlugin*)>;
 
 public:
 
@@ -189,16 +196,12 @@ public:
   };
 
 public:
-
-  static bool isNxmLink(const QString &link) { return link.startsWith("nxm://", Qt::CaseInsensitive); }
-
   OrganizerCore(Settings &settings);
 
   ~OrganizerCore();
 
   void setUserInterface(IUserInterface* ui);
   void connectPlugins(PluginContainer *container);
-  void disconnectPlugins();
 
   void setManagedGame(MOBase::IPluginGame *game);
 
@@ -225,10 +228,18 @@ public:
 
   MOBase::VersionInfo getVersion() const { return m_Updater.getVersion(); }
 
-  ModListSortProxy *createModListProxyModel();
-  PluginListSortProxy *createPluginListProxyModel();
+  // return the plugin container
+  //
+  PluginContainer& pluginContainer() const;
 
   MOBase::IPluginGame const *managedGame() const;
+
+  /**
+   * @brief Retrieve the organizer proxy of the currently managed game.
+   *
+   */
+  MOBase::IOrganizer const* managedGameOrganizer() const;
+
 
   /**
    * @return the list of contents for the currently managed game, or an empty vector
@@ -278,17 +289,17 @@ public:
   void prepareVFS();
 
   void updateVFSParams(
-    MOBase::log::Levels logLevel, CrashDumpsType crashDumpsType,
-    const QString& crashDumpsPath, std::chrono::seconds spawnDelay,
+    MOBase::log::Levels logLevel, env::CoreDumpTypes coreDumpType,
+    const QString& coreDumpsPath, std::chrono::seconds spawnDelay,
     QString executableBlacklist);
 
   void setLogLevel(MOBase::log::Levels level);
 
   bool cycleDiagnostics();
 
-  static CrashDumpsType getGlobalCrashDumpsType() { return m_globalCrashDumpsType; }
-  static void setGlobalCrashDumpsType(CrashDumpsType crashDumpsType);
-  static std::wstring crashDumpsPath();
+  static env::CoreDumpTypes getGlobalCoreDumpType();
+  static void setGlobalCoreDumpType(env::CoreDumpTypes type);
+  static std::wstring getGlobalCoreDumpPath();
 
 public:
   MOBase::IModRepositoryBridge *createNexusBridge() const;
@@ -299,17 +310,15 @@ public:
   QString basePath() const;
   QString modsPath() const;
   MOBase::VersionInfo appVersion() const;
-  MOBase::IModInterface *getMod(const QString &name) const;
   MOBase::IPluginGame *getGame(const QString &gameName) const;
   MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
-  bool removeMod(MOBase::IModInterface *mod);
   void modDataChanged(MOBase::IModInterface *mod);
   QVariant pluginSetting(const QString &pluginName, const QString &key) const;
   void setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value);
   QVariant persistent(const QString &pluginName, const QString &key, const QVariant &def) const;
   void setPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync);
-  QString pluginDataPath() const;
-  virtual MOBase::IModInterface *installMod(const QString &fileName, bool reinstallation, ModInfo::Ptr currentMod, const QString &initModName);
+  static QString pluginDataPath();
+  virtual MOBase::IModInterface *installMod(const QString &fileName, int priority, bool reinstallation, ModInfo::Ptr currentMod, const QString &initModName);
   QString resolvePath(const QString &fileName) const;
   QStringList listDirectories(const QString &directoryName) const;
   QStringList findFiles(const QString &path, const std::function<bool (const QString &)> &filter) const;
@@ -318,26 +327,18 @@ public:
   DownloadManager *downloadManager();
   PluginList *pluginList();
   ModList *modList();
-  void refreshModList(bool saveChanges = true);
-  QStringList modsSortedByProfilePriority() const;
+  void refresh(bool saveChanges = true);
 
-
-  bool onModInstalled(const std::function<void(const QString&)>& func);
-  bool onAboutToRun(const std::function<bool(const QString&)>& func);
-  bool onFinishedRun(const std::function<void(const QString&, unsigned int)>& func);
-  bool onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func);
-  bool onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func);
-  bool onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func);
-
-  bool getArchiveParsing() const
-  {
-    return m_ArchiveParsing;
-  }
-
-  void setArchiveParsing(bool archiveParsing)
-  {
-    m_ArchiveParsing = archiveParsing;
-  }
+  boost::signals2::connection onAboutToRun(const std::function<bool(const QString&)>& func);
+  boost::signals2::connection onFinishedRun(const std::function<void(const QString&, unsigned int)>& func);
+  boost::signals2::connection onUserInterfaceInitialized(std::function<void(QMainWindow*)> const& func);
+  boost::signals2::connection onProfileCreated(std::function<void(MOBase::IProfile*)> const& func);
+  boost::signals2::connection onProfileRenamed(std::function<void(MOBase::IProfile*, QString const&, QString const&)> const& func);
+  boost::signals2::connection onProfileRemoved(std::function<void(QString const&)> const& func);
+  boost::signals2::connection onProfileChanged(std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func);
+  boost::signals2::connection onPluginSettingChanged(std::function<void(QString const&, const QString& key, const QVariant&, const QVariant&)> const& func);
+  boost::signals2::connection onPluginEnabled(std::function<void(const MOBase::IPlugin*)> const& func);
+  boost::signals2::connection onPluginDisabled(std::function<void(const MOBase::IPlugin*)> const& func);
 
 public: // IPluginDiagnose interface
 
@@ -350,7 +351,6 @@ public: // IPluginDiagnose interface
 public slots:
 
   void profileRefresh();
-  void externalMessage(const QString &message);
 
   void syncOverwrite();
 
@@ -358,7 +358,9 @@ public slots:
 
   void refreshLists();
 
-  void installDownload(int downloadIndex);
+  ModInfo::Ptr installDownload(int downloadIndex, int priority = -1);
+  ModInfo::Ptr installArchive(const QString& archivePath, int priority = -1, bool reinstallation = false,
+    ModInfo::Ptr currentMod = nullptr, const QString& modName = QString());
 
   void modStatusChanged(unsigned int index);
   void modStatusChanged(QList<unsigned int> index);
@@ -367,19 +369,28 @@ public slots:
 
   void userInterfaceInitialized();
 
+  void profileCreated(MOBase::IProfile* profile);
+  void profileRenamed(MOBase::IProfile* profile, QString const& oldName, QString const& newName);
+  void profileRemoved(QString const& profileName);
+
   bool nexusApi(bool retry = false);
 
 signals:
 
-  /**
-   * @brief emitted after a mod has been installed
-   * @node this is currently only used for tutorials
-   */
+  // emitted after a mod has been installed
+  //
   void modInstalled(const QString &modName);
 
+  // emitted when the managed game changes
+  //
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
-  void close();
+  // emitted when the profile is changed, before notifying plugins
+  //
+  // the new profile can be stored but the old one is temporary and
+  // should not be
+  //
+  void profileChanged(Profile* oldProfile, Profile* newProfile);
 
   // Notify that the directory structure is ready to be used on the main thread
   // Use queued connections
@@ -390,12 +401,8 @@ private:
   void saveCurrentProfile();
   void storeSettings();
 
-  bool queryApi(QString &apiKey);
-
   void updateModActiveState(int index, bool active);
   void updateModsActiveState(const QList<unsigned int> &modIndices, bool active);
-
-  bool testForSteam(bool *found, bool *access);
 
   bool createDirectory(const QString &path);
 
@@ -440,10 +447,14 @@ private:
 
   SignalAboutToRunApplication m_AboutToRun;
   SignalFinishedRunApplication m_FinishedRun;
-  SignalModInstalled m_ModInstalled;
   SignalUserInterfaceInitialized m_UserInterfaceInitialized;
+  SignalProfileCreated m_ProfileCreated;
+  SignalProfileRenamed m_ProfileRenamed;
+  SignalProfileRemoved m_ProfileRemoved;
   SignalProfileChanged m_ProfileChanged;
   SignalPluginSettingChanged m_PluginSettingChanged;
+  SignalPluginEnabled m_PluginEnabled;
+  SignalPluginEnabled m_PluginDisabled;
 
   ModList m_ModList;
   PluginList m_PluginList;
@@ -469,14 +480,11 @@ private:
 
   bool m_DirectoryUpdate;
   bool m_ArchivesInit;
-  bool m_ArchiveParsing{ m_Settings.archiveParsing() };
 
   MOBase::DelayedFileWriter m_PluginListsWriter;
   UsvfsConnector m_USVFS;
 
   UILocker m_UILocker;
-
-  static CrashDumpsType m_globalCrashDumpsType;
 };
 
 #endif // ORGANIZERCORE_H

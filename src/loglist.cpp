@@ -19,11 +19,18 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "loglist.h"
 #include "organizercore.h"
+#include "copyeventfilter.h"
+#include "env.h"
 
 using namespace MOBase;
 
 static LogModel* g_instance = nullptr;
 const std::size_t MaxLines = 1000;
+
+static std::unique_ptr<env::Console> m_console;
+static bool m_stdout = false;
+static std::mutex m_stdoutMutex;
+
 
 LogModel::LogModel()
 {
@@ -43,6 +50,14 @@ void LogModel::add(MOBase::log::Entry e)
 {
   QMetaObject::invokeMethod(
     this, [this, e]{ onEntryAdded(std::move(e)); }, Qt::QueuedConnection);
+}
+
+QString LogModel::formattedMessage(const QModelIndex& index) const
+{
+  if (!index.isValid()) {
+    return "";
+  }
+  return QString::fromStdString(m_entries[index.row()].formattedMessage);
 }
 
 void LogModel::clear()
@@ -160,7 +175,9 @@ QVariant LogModel::headerData(int, Qt::Orientation, int) const
 
 
 LogList::LogList(QWidget* parent)
-  : QTreeView(parent), m_core(nullptr)
+  : QTreeView(parent),
+  m_core(nullptr),
+  m_copyFilter(this, [=](auto&& index) { return LogModel::instance().formattedMessage(index); })
 {
   setModel(&LogModel::instance());
 
@@ -180,6 +197,8 @@ LogList::LogList(QWidget* parent)
 
   m_timer.setSingleShot(true);
   connect(&m_timer, &QTimer::timeout, [&]{ scrollToBottom(); });
+
+  installEventFilter(&m_copyFilter);
 }
 
 void LogList::onNewEntry()
@@ -196,8 +215,7 @@ void LogList::copyToClipboard()
 {
   std::string s;
 
-  auto* m = static_cast<LogModel*>(model());
-  for (const auto& e : m->entries()) {
+  for (const auto& e : LogModel::instance().entries()) {
     s += e.formattedMessage + "\n";
   }
 
@@ -224,6 +242,7 @@ QMenu* LogList::createMenu(QWidget* parent)
 {
   auto* menu = new QMenu(parent);
 
+  menu->addAction(tr("Copy"), [&]{ m_copyFilter.copySelection(); });
   menu->addAction(tr("&Copy all"), [&]{ copyToClipboard(); });
   menu->addSeparator();
   menu->addAction(tr("C&lear all"), [&]{ clear(); });
@@ -261,4 +280,115 @@ void LogList::onContextMenu(const QPoint& pos)
 {
   auto* menu = createMenu(this);
   menu->popup(viewport()->mapToGlobal(pos));
+}
+
+
+log::Levels convertQtLevel(QtMsgType t)
+{
+  switch (t)
+  {
+    case QtDebugMsg:
+      return log::Debug;
+
+    case QtWarningMsg:
+      return log::Warning;
+
+    case QtCriticalMsg:  // fall-through
+    case QtFatalMsg:
+      return log::Error;
+
+    case QtInfoMsg:  // fall-through
+    default:
+      return log::Info;
+  }
+}
+
+void qtLogCallback(
+  QtMsgType type, const QMessageLogContext& context, const QString& message)
+{
+  std::string_view file = "";
+
+  if (type != QtDebugMsg) {
+    if (context.file) {
+      file = context.file;
+
+      const auto lastSep = file.find_last_of("/\\");
+      if (lastSep != std::string_view::npos) {
+        file = {context.file + lastSep + 1};
+      }
+    }
+  }
+
+  if (file.empty()) {
+    log::log(
+      convertQtLevel(type), "{}",
+      message.toStdString());
+  } else {
+    log::log(
+      convertQtLevel(type), "[{}:{}] {}",
+      file, context.line, message.toStdString());
+  }
+}
+
+void logToStdout(bool b)
+{
+  m_stdout = b;
+
+  // logging to stdout is already set up in uibase by log::createDefault(),
+  // all it needs is to redirect stdout to the console, which is done by
+  // creating an env::Console object
+
+  if (m_stdout) {
+    m_console.reset(new env::Console);
+  } else {
+    m_console.reset();
+  }
+}
+
+void initLogging()
+{
+  LogModel::create();
+
+  log::LoggerConfiguration conf;
+  conf.maxLevel = MOBase::log::Debug;
+  conf.pattern = "%^[%Y-%m-%d %H:%M:%S.%e %L] %v%$";
+  conf.utc = true;
+
+  log::createDefault(conf);
+
+  log::getDefault().setCallback(
+    [](log::Entry e){ LogModel::instance().add(e); });
+
+  qInstallMessageHandler(qtLogCallback);
+}
+
+bool createAndMakeWritable(const std::wstring &subPath) {
+  QString const dataPath = qApp->property("dataPath").toString();
+  QString fullPath = dataPath + "/" + QString::fromStdWString(subPath);
+
+  if (!QDir(fullPath).exists() && !QDir().mkdir(fullPath)) {
+    QMessageBox::critical(nullptr, QObject::tr("Error"),
+      QObject::tr("Failed to create \"%1\". Your user "
+        "account probably lacks permission.")
+      .arg(fullPath));
+    return false;
+  } else {
+    return true;
+  }
+}
+
+bool setLogDirectory(const QString& dir)
+{
+  const auto logFile =
+    dir + "/" +
+    QString::fromStdWString(AppConfig::logPath()) + "/" +
+    QString::fromStdWString(AppConfig::logFileName());
+
+  if (!createAndMakeWritable(AppConfig::logPath())) {
+    return false;
+  }
+
+  log::getDefault().setFile(MOBase::log::File::single(logFile.toStdWString()));
+
+  return true;
 }

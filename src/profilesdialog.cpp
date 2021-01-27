@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "shared/appconfig.h"
 #include "bsainvalidation.h"
 #include "iplugingame.h"
+#include "organizercore.h"
 #include "profile.h"
 #include "profileinputdialog.h"
 #include "report.h"
@@ -49,11 +50,11 @@ using namespace MOShared;
 Q_DECLARE_METATYPE(Profile::Ptr)
 
 
-ProfilesDialog::ProfilesDialog(const QString &profileName, MOBase::IPluginGame const *game, QWidget *parent)
+ProfilesDialog::ProfilesDialog(const QString &profileName, OrganizerCore &organizer, QWidget *parent)
   : TutorableDialog("Profiles", parent)
   , ui(new Ui::ProfilesDialog)
   , m_FailState(false)
-  , m_Game(game)
+  , m_Game(organizer.managedGame())
   , m_ActiveProfileName("")
 {
   ui->setupUi(this);
@@ -72,17 +73,21 @@ ProfilesDialog::ProfilesDialog(const QString &profileName, MOBase::IPluginGame c
     }
   }
 
-  BSAInvalidation *invalidation = game->feature<BSAInvalidation>();
+  BSAInvalidation *invalidation = m_Game->feature<BSAInvalidation>();
 
   if (invalidation == nullptr) {
     ui->invalidationBox->setToolTip(tr("Archive invalidation isn't required for this game."));
     ui->invalidationBox->setEnabled(false);
   }
 
-  if (!game->feature<LocalSavegames>()) {
+  if (!m_Game->feature<LocalSavegames>()) {
     ui->localSavesBox->setToolTip(tr("This game does not support profile-specific game saves."));
     ui->localSavesBox->setEnabled(false);
   }
+
+  connect(this, &ProfilesDialog::profileCreated, &organizer, &OrganizerCore::profileCreated);
+  connect(this, &ProfilesDialog::profileRenamed, &organizer, &OrganizerCore::profileRenamed);
+  connect(this, &ProfilesDialog::profileRemoved, &organizer, &OrganizerCore::profileRemoved);
 }
 
 ProfilesDialog::~ProfilesDialog()
@@ -110,11 +115,29 @@ void ProfilesDialog::showEvent(QShowEvent *event)
   }
 }
 
-void ProfilesDialog::on_closeButton_clicked()
+void ProfilesDialog::on_close_clicked()
 {
   close();
 }
 
+void ProfilesDialog::on_select_clicked()
+{
+  const Profile::Ptr currentProfile = ui->profilesList->currentItem()
+    ->data(Qt::UserRole)
+    .value<Profile::Ptr>();
+
+  if (!currentProfile) {
+    return;
+  }
+
+  m_Selected = currentProfile->name();
+  close();
+}
+
+std::optional<QString> ProfilesDialog::selectedProfile() const
+{
+  return m_Selected;
+}
 
 QListWidgetItem *ProfilesDialog::addItem(const QString &name)
 {
@@ -133,9 +156,12 @@ void ProfilesDialog::createProfile(const QString &name, bool useDefaultSettings)
 {
   try {
     QListWidgetItem *newItem = new QListWidgetItem(name, ui->profilesList);
-    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(new Profile(name, m_Game, useDefaultSettings))));
+    auto profile = Profile::Ptr(new Profile(name, m_Game, useDefaultSettings));
+    newItem->setData(Qt::UserRole, QVariant::fromValue(profile));
     ui->profilesList->addItem(newItem);
     m_FailState = false;
+    ui->profilesList->setCurrentItem(newItem);
+    emit profileCreated(profile.get());
   } catch (const std::exception&) {
     m_FailState = true;
     throw;
@@ -146,9 +172,12 @@ void ProfilesDialog::createProfile(const QString &name, const Profile &reference
 {
   try {
     QListWidgetItem *newItem = new QListWidgetItem(name, ui->profilesList);
-    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(Profile::createPtrFrom(name, reference, m_Game))));
+    auto profile = Profile::Ptr(Profile::createPtrFrom(name, reference, m_Game));
+    newItem->setData(Qt::UserRole, QVariant::fromValue(profile));
     ui->profilesList->addItem(newItem);
     m_FailState = false;
+    ui->profilesList->setCurrentItem(newItem);
+    emit profileCreated(profile.get());
   } catch (const std::exception&) {
     m_FailState = true;
     throw;
@@ -231,6 +260,8 @@ void ProfilesDialog::on_removeProfileButton_clicked()
         log::warn("regular delete failed too");
       }
     }
+
+    emit profileRemoved(profileToDelete->name());
   }
 }
 
@@ -238,6 +269,12 @@ void ProfilesDialog::on_removeProfileButton_clicked()
 void ProfilesDialog::on_renameButton_clicked()
 {
   Profile::Ptr currentProfile = ui->profilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
+
+  if (currentProfile->name() == m_ActiveProfileName) {
+    QMessageBox::warning(this, tr("Renaming active profile"),
+      tr("The active profile cannot be renamed. Please change to a different profile first."));
+    return;
+  }
 
   bool valid = false;
   QString name;
@@ -254,7 +291,11 @@ void ProfilesDialog::on_renameButton_clicked()
   }
 
   ui->profilesList->currentItem()->setText(name);
+
+  QString oldName = currentProfile->name();
   currentProfile->rename(name);
+
+  emit profileRenamed(currentProfile.get(), oldName, name);
 }
 
 
@@ -325,6 +366,11 @@ void ProfilesDialog::on_profilesList_currentItemChanged(QListWidgetItem *current
     ui->removeProfileButton->setEnabled(false);
     ui->renameButton->setEnabled(false);
   }
+}
+
+void ProfilesDialog::on_profilesList_itemActivated(QListWidgetItem* item)
+{
+  on_select_clicked();
 }
 
 void ProfilesDialog::on_localSavesBox_stateChanged(int state)

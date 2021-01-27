@@ -153,7 +153,7 @@ InterestingProcess findInterestingProcessInTrees(const env::Process& root)
   }
 
   auto isHidden = [&](auto&& p) {
-    for (auto h : hiddenList) {
+    for (auto& h : hiddenList) {
       if (p.name().contains(h, Qt::CaseInsensitive)) {
         return true;
       }
@@ -228,7 +228,7 @@ const std::chrono::milliseconds Infinite(-1);
 // waits for completion, times out after `wait` if not Infinite
 //
 std::optional<ProcessRunner::Results> timedWait(
-  HANDLE handle, DWORD pid, UILocker::Session& ls,
+  HANDLE handle, DWORD pid, UILocker::Session* ls,
   std::chrono::milliseconds wait, std::atomic<bool>& interrupt)
 {
   using namespace std::chrono;
@@ -249,35 +249,38 @@ std::optional<ProcessRunner::Results> timedWait(
 
     // the process is still running
 
-    // check the lock widget
-    switch (ls.result())
-    {
-      case UILocker::StillLocked:
+    // check the lock widget; the session can be null when running shortcuts
+    // with locking disabled, in which case the user cannot force unlock
+    if (ls) {
+      switch (ls->result())
       {
-        break;
-      }
+        case UILocker::StillLocked:
+        {
+          break;
+        }
 
-      case UILocker::ForceUnlocked:
-      {
-        log::debug("waiting for {} force unlocked by user", pid);
-        return ProcessRunner::ForceUnlocked;
-      }
+        case UILocker::ForceUnlocked:
+        {
+          log::debug("waiting for {} force unlocked by user", pid);
+          return ProcessRunner::ForceUnlocked;
+        }
 
-      case UILocker::Cancelled:
-      {
-        log::debug("waiting for {} cancelled by user", pid);
-        return ProcessRunner::Cancelled;
-      }
+        case UILocker::Cancelled:
+        {
+          log::debug("waiting for {} cancelled by user", pid);
+          return ProcessRunner::Cancelled;
+        }
 
-      case UILocker::NoResult:  // fall-through
-      default:
-      {
-        // shouldn't happen
-        log::debug(
-          "unexpected result {} while waiting for {}",
-          static_cast<int>(ls.result()), pid);
+        case UILocker::NoResult:  // fall-through
+        default:
+        {
+          // shouldn't happen
+          log::debug(
+            "unexpected result {} while waiting for {}",
+            static_cast<int>(ls->result()), pid);
 
-        return ProcessRunner::Error;
+          return ProcessRunner::Error;
+        }
       }
     }
 
@@ -296,7 +299,7 @@ std::optional<ProcessRunner::Results> timedWait(
 }
 
 ProcessRunner::Results waitForProcessesThreadImpl(
-  HANDLE job, UILocker::Session& ls, std::atomic<bool>& interrupt)
+  HANDLE job, UILocker::Session* ls, std::atomic<bool>& interrupt)
 {
   using namespace std::chrono;
 
@@ -315,8 +318,11 @@ ProcessRunner::Results waitForProcessesThreadImpl(
       return ProcessRunner::Completed;
     }
 
-    // update the lock widget
-    ls.setInfo(ip.p.pid(), ip.p.name());
+    // update the lock widget; the session can be null when running shortcuts
+    // with locking disabled
+    if (ls) {
+      ls->setInfo(ip.p.pid(), ip.p.name());
+    }
 
     if (ip.p.pid() != currentPID) {
       // log any change in the process being waited for
@@ -354,15 +360,19 @@ ProcessRunner::Results waitForProcessesThreadImpl(
 }
 
 void waitForProcessesThread(
-  ProcessRunner::Results& result, HANDLE job, UILocker::Session& ls,
+  ProcessRunner::Results& result, HANDLE job, UILocker::Session* ls,
   std::atomic<bool>& interrupt)
 {
   result = waitForProcessesThreadImpl(job, ls, interrupt);
-  ls.unlock();
+
+  // the session can be null when running shortcuts with locking disabled
+  if (ls) {
+    ls->unlock();
+  }
 }
 
 ProcessRunner::Results waitForProcesses(
-  const std::vector<HANDLE>& initialProcesses, UILocker::Session& ls)
+  const std::vector<HANDLE>& initialProcesses, UILocker::Session* ls)
 {
   if (initialProcesses.empty()) {
     // nothing to wait for
@@ -415,7 +425,7 @@ ProcessRunner::Results waitForProcesses(
 
   auto* t = QThread::create(
     waitForProcessesThread,
-    std::ref(results), monitor, std::ref(ls), std::ref(interrupt));
+    std::ref(results), monitor, ls, std::ref(interrupt));
 
   QEventLoop events;
   QObject::connect(t, &QThread::finished, [&]{
@@ -436,7 +446,7 @@ ProcessRunner::Results waitForProcesses(
 }
 
 ProcessRunner::Results waitForProcess(
-  HANDLE initialProcess, LPDWORD exitCode, UILocker::Session& ls)
+  HANDLE initialProcess, LPDWORD exitCode, UILocker::Session* ls)
 {
   std::vector<HANDLE> processes = {initialProcess};
 
@@ -511,6 +521,13 @@ ProcessRunner& ProcessRunner::setWaitForCompletion(
 {
   m_waitFlags = flags;
   m_lockReason = reason;
+
+  if (m_waitFlags.testFlag(WaitForRefresh) && !m_waitFlags.testFlag(TriggerRefresh)) {
+    log::warn(
+      "process runner: WaitForRefresh without TriggerRefresh "
+      "makes no sense, will be ignored");
+  }
+
   return *this;
 }
 
@@ -586,13 +603,16 @@ ProcessRunner& ProcessRunner::setFromExecutable(const Executable& exe)
 
 ProcessRunner& ProcessRunner::setFromShortcut(const MOShortcut& shortcut)
 {
-  const auto currentInstance = InstanceManager::instance().currentInstance();
+  const auto currentInstance = InstanceManager::singleton().currentInstance();
 
-  if (shortcut.hasInstance() && shortcut.instance() != currentInstance) {
-    throw std::runtime_error(
-      QString("Refusing to run executable from different instance %1:%2")
-      .arg(shortcut.instance(),shortcut.executable())
-      .toLocal8Bit().constData());
+  if (currentInstance)
+  {
+    if (shortcut.hasInstance() && shortcut.instance() != currentInstance->name()) {
+      throw std::runtime_error(
+        QString("Refusing to run executable from different instance %1:%2")
+        .arg(shortcut.instance(),shortcut.executable())
+        .toLocal8Bit().constData());
+    }
   }
 
   const Executable& exe = m_core.executablesList()->get(shortcut.executable());
@@ -812,8 +832,8 @@ bool ProcessRunner::shouldRefresh(Results r) const
   //  2) the mod info dialog is not set up to deal with refreshes, so that
   //     it will crash because the old DirectoryEntry's are still being used
   //     in the list
-  if (!m_waitFlags.testFlag(Refresh)) {
-    log::debug("not refreshing because the flag isn't set");
+  if (!m_waitFlags.testFlag(TriggerRefresh)) {
+    log::debug("process runner: not refreshing because the flag isn't set");
     return false;
   }
 
@@ -821,13 +841,13 @@ bool ProcessRunner::shouldRefresh(Results r) const
   {
     case Completed:
     {
-      log::debug("refreshing because the process completed");
+      log::debug("process runner: refreshing because the process completed");
       return true;
     }
 
     case ForceUnlocked:
     {
-      log::debug("refreshing because the ui was force unlocked");
+      log::debug("process runner: refreshing because the ui was force unlocked");
       return true;
     }
 
@@ -859,8 +879,10 @@ ProcessRunner::Results ProcessRunner::postRun()
     m_lockReason = UILocker::LockUI;
   }
 
+  const bool lockEnabled = m_core.settings().interface().lockGUI();
+
   if (mustWait) {
-    if (!m_core.settings().interface().lockGUI()) {
+    if (!lockEnabled) {
       // at least tell the user what's going on
       log::debug(
         "locking is disabled, but the output of the application is required; "
@@ -874,22 +896,55 @@ ProcessRunner::Results ProcessRunner::postRun()
       return Running;
     }
 
-    if (!m_core.settings().interface().lockGUI()) {
+    if (!lockEnabled) {
       // disabling locking is like clicking on unlock immediately
-      log::debug("not waiting for process because locking is disabled");
+      log::debug(
+        "process runner: not waiting for process because "
+        "locking is disabled");
+
       return ForceUnlocked;
     }
   }
 
   auto r = Error;
 
-  withLock([&](auto& ls) {
-    r = waitForProcess(m_handle.get(), &m_exitCode, ls);
-  });
+  if (mustWait && m_lockReason == UILocker::PreventExit && !lockEnabled) {
+    // this happens when running shortcuts and locking is disabled
+    //
+    // MO must stay alive until all processes are dead or child processes
+    // may not get hooked properly, but the user has disabled locking the ui
+    //
+    // this is a bit of an edge case, but that means the user wants to run
+    // shortcuts without seeing the lock dialog, so allow them to do that
+    //
+    // MO will be running in the background with no visual feedback, but that's
+    // how it is
+    r = waitForProcess(m_handle.get(), &m_exitCode, nullptr);
+  } else {
+    withLock([&](auto& ls) {
+      r = waitForProcess(m_handle.get(), &m_exitCode, &ls);
+    });
+  }
 
   if (shouldRefresh(r)) {
+    QEventLoop loop;
+    const bool wait = m_waitFlags.testFlag(WaitForRefresh);
+
+    if (wait) {
+      QObject::connect(
+        &m_core, &OrganizerCore::directoryStructureReady,
+        &loop, &QEventLoop::quit,
+        Qt::ConnectionType::QueuedConnection);
+    }
+
     m_core.afterRun(m_sp.binary, m_exitCode);
-  }
+
+    if (wait) {
+      log::debug("process runner: waiting until refresh finishes");
+      loop.exec();
+      log::debug("process runner: refresh is done");
+    }
+}
 
   return r;
 }
@@ -937,7 +992,7 @@ ProcessRunner::Results ProcessRunner::waitForAllUSVFSProcessesWithLock(
         return;
       }
 
-      r = waitForProcesses(processes, ls);
+      r = waitForProcesses(processes, &ls);
 
       if (r != Completed) {
         // error, cancelled, or unlocked

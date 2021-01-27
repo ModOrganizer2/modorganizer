@@ -236,7 +236,8 @@ QString get(const QString& name);
 QString set(const QString& name, const QString& value);
 
 QString path();
-QString addPath(const QString& s);
+QString appendToPath(const QString& s);
+QString prependToPath(const QString& s);
 QString setPath(const QString& s);
 
 
@@ -300,21 +301,17 @@ struct Association
 Association getAssociation(const QFileInfo& file);
 
 
-enum class CoreDumpTypes
-{
-  Mini = 1,
-  Data,
-  Full
-};
-
-// creates a minidump file for this process
+// returns whether the given value exists
 //
-bool coredump(CoreDumpTypes type);
+bool registryValueExists(const QString& key, const QString& value);
 
-// finds another process with the same name as this one and creates a minidump
-// file for it
+// deletes a registry key if it's empty or only contains empty keys
 //
-bool coredumpOther(CoreDumpTypes type);
+void deleteRegistryKeyIfEmpty(const QString& name);
+
+// returns the path to this process
+//
+std::filesystem::path thisProcessPath();
 
 } // namespace env
 

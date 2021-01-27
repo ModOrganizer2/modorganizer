@@ -12,17 +12,17 @@ The project took up speed again after a few more coders showed up in late 2017, 
 ## Help Wanted!
 Mod Organizer 2 is an open project in the hands of the community, there are problems that need to be solved and things that could be added. MO2 really needs developers and if you have the programming skills and some free time you can really improve the experience of the modding community.
 
-To have more information, please join the open MO2 Development discord server :* [ModOrganizerDevs](https://discord.gg/vD2ZbfX)
+To have more information, please join the open MO2 Development discord server: [Mod Organizer 2](https://discord.gg/vD2ZbfX)
 If you want to help translate MO2 to your language you should join the discord server too and head to the #translation channel.
-To setup a development environment on your machine, there is the [umbrella project](https://github.com/Modorganizer2/modorganizer-umbrella) that handles that.
-If you want to submit your code changes, please use a good formating style like the default one in Visual Studio.
+To setup a development environment on your machine, there is the [mob project](https://github.com/modorganizer2/mob) that handles that.
+If you want to submit your code changes, please use a good formatting style like the default one in Visual Studio.
 
 Through the work of a few people of the community MO2 has come quite far, now it needs some more of those people to go further.
 
 ## Reporting Issues:
-Issues should be reported to the GitHub page or on the open discord server: [ModOrganizerDevs](https://discord.gg/vD2ZbfX). Here is also where dev builds are tested, bugs are reported and investigated, suggestions are discussed and a lot more.
+Issues should be reported to the GitHub page or on the open discord server: [Mod Organizer 2](https://discord.gg/vD2ZbfX). Here is also where dev builds are tested, bugs are reported and investigated, suggestions are discussed and a lot more.
 
-Credits to Tannin, LePresidente, Silarn, erasmux, AL12, LostDragonist, AnyOldName3 and many others for the development.
+Credits to Tannin, LePresidente, Silarn, erasmux, AL12, LostDragonist, AnyOldName3, isa, Holt59 and many others for the development.
 
 ## Download Location
 
@@ -35,11 +35,11 @@ Credits to Tannin, LePresidente, Silarn, erasmux, AL12, LostDragonist, AnyOldNam
 
 ## Building
 
-Please refer to [Modorganizer2/modorganizer-umbrella](https://github.com/Modorganizer2/modorganizer-umbrella) for build instructions.
+Please refer to [Modorganizer2/mob](https://github.com/modorganizer2/mob) for build instructions.
 
 ## Other Repositories
 
-MO2 consists of multiple repositories on github. The Umbrella project will download them automatically as required. They should however also be buildable individually.
+MO2 consists of multiple repositories on github. The mob project will download them automatically as required. They should however also be buildable individually.
 Here is a complete list:
 
 * https://github.com/LePresidente/cpython-1
@@ -47,6 +47,7 @@ Here is a complete list:
 * https://github.com/ModOrganizer2/githubpp
 * https://github.com/ModOrganizer2/modorganizer
 * https://github.com/ModOrganizer2/modorganizer-archive
+* https://github.com/ModOrganizer2/modorganizer-basic_games
 * https://github.com/ModOrganizer2/modorganizer-bsatk
 * https://github.com/ModOrganizer2/modorganizer-bsa_extractor
 * https://github.com/ModOrganizer2/modorganizer-check_fnis
@@ -68,11 +69,13 @@ Here is a complete list:
 * https://github.com/ModOrganizer2/modorganizer-game_skyrimVR
 * https://github.com/ModOrganizer2/modorganizer-game_ttw
 * https://github.com/ModOrganizer2/modorganizer-installer_bain
+* https://github.com/ModOrganizer2/modorganizer-installer_wizard
 * https://github.com/ModOrganizer2/modorganizer-installer_bundle
 * https://github.com/ModOrganizer2/modorganizer-installer_fomod
 * https://github.com/ModOrganizer2/modorganizer-installer_fomod_csharp
 * https://github.com/ModOrganizer2/modorganizer-installer_manual
 * https://github.com/ModOrganizer2/modorganizer-installer_ncc
+* https://github.com/ModOrganizer2/modorganizer-installer_omod
 * https://github.com/ModOrganizer2/modorganizer-installer_quick
 * https://github.com/ModOrganizer2/modorganizer-lootcli
 * https://github.com/ModOrganizer2/modorganizer-NCC

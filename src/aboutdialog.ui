@@ -220,6 +220,11 @@
                 <string notr="true">isa</string>
                </property>
               </item>
+              <item>
+               <property name="text">
+                <string>Holt59</string>
+               </property>
+              </item>
              </widget>
             </item>
            </layout>
@@ -254,11 +259,6 @@
               <item>
                <property name="text">
                 <string notr="true">przester</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Holt59</string>
                </property>
               </item>
              </widget>
@@ -431,22 +431,17 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">6788</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">blacksol</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string notr="true">DoubleYou</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Drew Warwick</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">deathneko11</string>
+                <string notr="true">BlueAmulet</string>
                </property>
               </item>
               <item>
@@ -457,6 +452,21 @@
               <item>
                <property name="text">
                 <string notr="true">Brixified</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">deathneko11</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">DoubleYou</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Drew Warwick</string>
                </property>
               </item>
               <item>
@@ -481,6 +491,11 @@
               </item>
               <item>
                <property name="text">
+                <string>Luca|EzioTheDeadPoet</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">ogrotten</string>
                </property>
               </item>
@@ -491,7 +506,17 @@
               </item>
               <item>
                <property name="text">
+                <string>Patchier</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">PurpleFez</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Qudix</string>
                </property>
               </item>
               <item>
@@ -511,6 +536,11 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">Trosski</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">Uhuru</string>
                </property>
               </item>
@@ -521,12 +551,12 @@
               </item>
               <item>
                <property name="text">
-                <string notr="true">z929669</string>
+                <string notr="true">thosrtanner</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string notr="true">thosrtanner</string>
+                <string notr="true">z929669</string>
                </property>
               </item>
              </widget>

@@ -66,6 +66,10 @@ public:
   //
   QString timestampString() const;
 
+  // returns false for modules in the Windows root directory
+  //
+  bool interesting() const;
+
   // returns a string with all the above information on one line
   //
   QString toString() const;

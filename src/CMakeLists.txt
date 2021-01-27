@@ -11,12 +11,13 @@ endif()
 
 add_filter(NAME src/application GROUPS
 	iuserinterface
+	commandline
 	main
 	moapplication
 	moshortcut
+	multiprocess
 	sanitychecks
 	selfupdater
-	singleinstance
 )
 
 add_filter(NAME src/browser GROUPS
@@ -29,12 +30,11 @@ add_filter(NAME src/core GROUPS
     categoriestable
 	archivefiletree
 	installationmanager
-	instancemanager
 	loadmechanism
 	nexusinterface
 	nxmaccessmanager
 	organizercore
-	organizerproxy
+	plugincontainer
 	apiuseraccount
 	processrunner
 	qdirfiletree
@@ -64,13 +64,13 @@ add_filter(NAME src/dialogs GROUPS
 
 add_filter(NAME src/downloads GROUPS
 	downloadlist
-	downloadlistsortproxy
-	downloadlistwidget
+	downloadlistview
 	downloadmanager
 )
 
 add_filter(NAME src/env GROUPS
 	env
+	envdump
 	envfs
 	envmetrics
 	envmodule
@@ -85,6 +85,13 @@ add_filter(NAME src/executables GROUPS
 	editexecutablesdialog
 )
 
+add_filter(NAME src/instances GROUPS
+	createinstancedialog
+	createinstancedialogpages
+	instancemanager
+	instancemanagerdialog
+)
+
 add_filter(NAME src/loot GROUPS
 	loot
 	lootdialog
@@ -92,12 +99,13 @@ add_filter(NAME src/loot GROUPS
 
 add_filter(NAME src/mainwindow GROUPS
 	datatab
+	downloadstab
 	iconfetcher
 	filetree
 	filetreeitem
 	filetreemodel
-	filterlist
 	mainwindow
+	savestab
 	statusbar
 )
 
@@ -124,17 +132,34 @@ add_filter(NAME src/modinfo/dialog GROUPS
 	modinfodialogtab
 	modinfodialogtextfiles
 )
+
+add_filter(NAME src/modinfo/dialog/widgets GROUPS
+	modidlineedit
+)
+
 add_filter(NAME src/modlist GROUPS
 	modlist
+	modlistdropinfo
 	modlistsortproxy
+	modlistbypriorityproxy
+)
+
+add_filter(NAME src/modlist/view GROUPS
+	filterlist
 	modlistview
+	modlistviewactions
+	modlistcontextmenu
+	modflagicondelegate
+	modcontenticondelegate
+	modconflicticondelegate
+	modlistversiondelegate
 )
 
 add_filter(NAME src/plugins GROUPS
-	plugincontainer
 	pluginlist
 	pluginlistsortproxy
 	pluginlistview
+	pluginlistcontextmenu
 )
 
 add_filter(NAME src/previews GROUPS
@@ -146,6 +171,14 @@ add_filter(NAME src/profiles GROUPS
 	profile
 	profileinputdialog
 	profilesdialog
+)
+
+add_filter(NAME src/proxies GROUPS
+	downloadmanagerproxy
+	modlistproxy
+	organizerproxy
+	pluginlistproxy
+	proxyutils
 )
 
 add_filter(NAME src/register GROUPS
@@ -172,23 +205,23 @@ add_filter(NAME src/settingsdialog GROUPS
 	settingsdialogplugins
 	settingsdialogsteam
 	settingsdialogworkarounds
+	settingsdialoguserinterface
+	disableproxyplugindialog
 )
 
 add_filter(NAME src/utilities GROUPS
 	shared/appconfig
 	bbcode
 	csvbuilder
-	shared/error_report
-	shared/leaktrace
 	persistentcookiejar
 	serverinfo
 	spawn
-	shared/stackdata
 	shared/util
 	usvfsconnector
 	shared/windows_error
 	thread_utils
 	json
+	glob_matching
 )
 
 add_filter(NAME src/widgets GROUPS
@@ -199,13 +232,12 @@ add_filter(NAME src/widgets GROUPS
 	lcdnumber
 	loglist
 	loghighlighter
-	modflagicondelegate
-	modconflicticondelegate
-	modidlineedit
 	noeditdelegate
 	qtgroupingproxy
 	texteditor
 	viewmarkingscrollbar
+	modelutils
+	copyeventfilter
 )
 
 
@@ -216,17 +248,17 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt5
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt5"
         DESTINATION bin/dlls
         RENAME dlls.manifest)
 
 install(FILES ${qm_files} DESTINATION bin/translations)
 
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/stylesheets
-                  ${CMAKE_CURRENT_SOURCE_DIR}/tutorials
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/stylesheets"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/tutorials"
         DESTINATION bin)
 
 deploy_qt(BINARIES ModOrganizer.exe uibase.dll plugins/bsa_packer.dll)
 
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../qdds.dll DESTINATION bin/dlls/imageformats)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/markdown.html DESTINATION bin/resources)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../qdds.dll" DESTINATION bin/dlls/imageformats)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/markdown.html" DESTINATION bin/resources)
