@@ -256,8 +256,9 @@ void CategoriesDialog::removeCategory_clicked()
 
 void CategoriesDialog::nexusRefresh_clicked()
 {
-  NexusInterface *nexus = NexusInterface::instance(m_PluginContainer);
-  nexus->requestGameInfo(Settings::instance().game().plugin()->gameShortName(), this, QVariant(), QString());
+  NexusInterface &nexus = NexusInterface::instance();
+  nexus.setPluginContainer(m_PluginContainer);
+  nexus.requestGameInfo(Settings::instance().game().plugin()->gameShortName(), this, QVariant(), QString());
 }
 
 
@@ -307,7 +308,7 @@ void CategoriesDialog::nxmGameInfoAvailable(QString gameName, QVariant, QVariant
 {
   QVariantMap result = resultData.toMap();
   QVariantList categories = result["categories"].toList();
-  auto catFactory = CategoryFactory::instance();
+  CategoryFactory *catFactory = CategoryFactory::instance();
   QListWidget* list = ui->nexusCategoryList;
   list->clear();
   for (auto category : categories) {

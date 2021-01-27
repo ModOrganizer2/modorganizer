@@ -303,6 +303,8 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
     m_Filters.get(), &FilterList::optionsChanged,
     [&](auto&& mode, auto&& sep) { onFiltersOptions(mode, sep); });
 
+  m_CategoryFactory->loadCategories();
+
   ui->logList->setCore(m_OrganizerCore);
 
   setupToolbar();
@@ -418,6 +420,8 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
           this, SLOT(nxmDownloadURLs(QString, int, int, QVariant, QVariant, int)));
   connect(&NexusInterface::instance(), SIGNAL(needLogin()), &m_OrganizerCore,
           SLOT(nexusApi()));
+
+  connect(CategoryFactory::instance(), SIGNAL(requestNexusCategories()), this, SLOT(requestNexusCategories()));
 
   connect(CategoryFactory::instance(), SIGNAL(requestNexusCategories()), this, SLOT(requestNexusCategories()));
 
@@ -552,7 +556,7 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
 
 void MainWindow::setupModList()
 {
-  ui->modList->setup(m_OrganizerCore, m_CategoryFactory, this, ui);
+  ui->modList->setup(m_OrganizerCore, *m_CategoryFactory, this, ui);
 
   connect(&ui->modList->actions(), &ModListViewActions::overwriteCleared, [=]() {
     scheduleCheckForProblems();

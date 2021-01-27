@@ -100,7 +100,7 @@ void ModListGlobalContextMenu::populate(OrganizerCore& core, ModListView* view,
   });
 }
 
-ModListChangeCategoryMenu::ModListChangeCategoryMenu(CategoryFactory& categories,
+ModListChangeCategoryMenu::ModListChangeCategoryMenu(CategoryFactory* categories,
                                                      ModInfo::Ptr mod, QMenu* parent)
     : QMenu(tr("Change Categories"), parent)
 {
@@ -131,24 +131,24 @@ ModListChangeCategoryMenu::categories(const QMenu* menu) const
   return cats;
 }
 
-bool ModListChangeCategoryMenu::populate(QMenu* menu, CategoryFactory& factory,
+bool ModListChangeCategoryMenu::populate(QMenu* menu, CategoryFactory* factory,
                                          ModInfo::Ptr mod, int targetId)
 {
   const std::set<int>& categories = mod->getCategories();
 
   bool childEnabled = false;
 
-  for (unsigned int i = 1; i < factory.numCategories(); ++i) {
-    if (factory.getParentID(i) == targetId) {
+  for (unsigned int i = 1; i < factory->numCategories(); ++i) {
+    if (factory->getParentID(i) == targetId) {
       QMenu* targetMenu = menu;
-      if (factory.hasChildren(i)) {
-        targetMenu = menu->addMenu(factory.getCategoryName(i).replace('&', "&&"));
+      if (factory->hasChildren(i)) {
+        targetMenu = menu->addMenu(factory->getCategoryName(i).replace('&', "&&"));
       }
 
-      int id = factory.getCategoryID(i);
+      int id = factory->getCategoryID(i);
       QScopedPointer<QCheckBox> checkBox(new QCheckBox(targetMenu));
       bool enabled = categories.find(id) != categories.end();
-      checkBox->setText(factory.getCategoryName(i).replace('&', "&&"));
+      checkBox->setText(factory->getCategoryName(i).replace('&', "&&"));
       if (enabled) {
         childEnabled = true;
       }
@@ -159,8 +159,8 @@ bool ModListChangeCategoryMenu::populate(QMenu* menu, CategoryFactory& factory,
       checkableAction->setData(id);
       targetMenu->addAction(checkableAction.take());
 
-      if (factory.hasChildren(i)) {
-        if (populate(targetMenu, factory, mod, factory.getCategoryID(i)) || enabled) {
+      if (factory->hasChildren(i)) {
+        if (populate(targetMenu, factory, mod, factory->getCategoryID(i)) || enabled) {
           targetMenu->setIcon(QIcon(":/MO/gui/resources/check.png"));
         }
       }
@@ -169,7 +169,7 @@ bool ModListChangeCategoryMenu::populate(QMenu* menu, CategoryFactory& factory,
   return childEnabled;
 }
 
-ModListPrimaryCategoryMenu::ModListPrimaryCategoryMenu(CategoryFactory& categories,
+ModListPrimaryCategoryMenu::ModListPrimaryCategoryMenu(CategoryFactory* categories,
                                                        ModInfo::Ptr mod, QMenu* parent)
     : QMenu(tr("Primary Category"), parent)
 {
@@ -178,7 +178,7 @@ ModListPrimaryCategoryMenu::ModListPrimaryCategoryMenu(CategoryFactory& categori
   });
 }
 
-void ModListPrimaryCategoryMenu::populate(const CategoryFactory& factory,
+void ModListPrimaryCategoryMenu::populate(const CategoryFactory* factory,
                                           ModInfo::Ptr mod)
 {
   clear();
@@ -216,7 +216,7 @@ int ModListPrimaryCategoryMenu::primaryCategory() const
 }
 
 ModListContextMenu::ModListContextMenu(const QModelIndex& index, OrganizerCore& core,
-                                       CategoryFactory& categories, ModListView* view)
+                                       CategoryFactory* categories, ModListView* view)
     : QMenu(view), m_core(core), m_categories(categories),
       m_index(index.model() == view->model() ? view->indexViewToModel(index) : index),
       m_view(view), m_actions(view->actions())

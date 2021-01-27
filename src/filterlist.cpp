@@ -426,7 +426,7 @@ void FilterList::checkCriteria()
 
 void FilterList::editCategories()
 {
-  CategoriesDialog dialog(m_pluginContainer, qApp->activeWindow());
+  CategoriesDialog dialog(&m_core.pluginContainer(), qApp->activeWindow());
 
   if (dialog.exec() == QDialog::Accepted) {
     dialog.commitChanges();
