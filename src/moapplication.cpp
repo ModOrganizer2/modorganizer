@@ -398,7 +398,7 @@ void MOApplication::externalMessage(const QString& message)
         .run();
     }
   } else if (isNxmLink(message)) {
-    MessageDialog::showMessage(tr("Download started"), qApp->activeWindow());
+    MessageDialog::showMessage(tr("Download started"), qApp->activeWindow(), false);
     m_core->downloadRequestedNXM(message);
   } else {
     cl::CommandLine cl;
