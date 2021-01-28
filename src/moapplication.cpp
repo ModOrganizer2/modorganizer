@@ -183,7 +183,7 @@ void MOApplication::firstTimeSetup(MOMultiProcess& multiProcess)
     Qt::QueuedConnection);
 }
 
-int MOApplication::setup(MOMultiProcess& multiProcess)
+int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
 {
   TimeThis tt("MOApplication setup()");
 
@@ -192,7 +192,7 @@ int MOApplication::setup(MOMultiProcess& multiProcess)
   MOBase::details::setPluginDataPath(OrganizerCore::pluginDataPath());
 
   // figuring out the current instance
-  m_instance = getCurrentInstance();
+  m_instance = getCurrentInstance(forceSelect);
   if (!m_instance) {
     return 1;
   }
@@ -439,12 +439,12 @@ void MOApplication::externalMessage(const QString& message)
   }
 }
 
-std::unique_ptr<Instance> MOApplication::getCurrentInstance()
+std::unique_ptr<Instance> MOApplication::getCurrentInstance(bool forceSelect)
 {
   auto& m = InstanceManager::singleton();
   auto currentInstance = m.currentInstance();
 
-  if (!currentInstance)
+  if (forceSelect || !currentInstance)
   {
     // clear any overrides that might have been given on the command line
     m.clearOverrides();
