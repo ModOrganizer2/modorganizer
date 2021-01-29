@@ -15,12 +15,8 @@ private:
   void addLanguages();
   void selectLanguage();
 
-  void addStyles();
-  void selectStyle();
-
   void resetDialogs();
 
-  void onExploreStyles();
   void onEditCategories();
   void onResetDialogs();
 };

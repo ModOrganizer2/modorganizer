@@ -8,12 +8,26 @@
 WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
   : SettingsTab(s, d)
 {
-  ui->appIDEdit->setText(settings().steam().appID());
-
+  // options
   ui->forceEnableBox->setChecked(settings().game().forceEnableCoreFiles());
   ui->lockGUIBox->setChecked(settings().interface().lockGUI());
   ui->enableArchiveParsingBox->setChecked(settings().archiveParsing());
 
+  // steam
+  QString username, password;
+  settings().steam().login(username, password);
+
+  ui->appIDEdit->setText(settings().steam().appID());
+  ui->steamUserEdit->setText(username);
+  ui->steamPassEdit->setText(password);
+
+  // network
+  ui->offlineBox->setChecked(settings().network().offlineMode());
+  ui->proxyBox->setChecked(settings().network().useProxy());
+  ui->useCustomBrowser->setChecked(settings().network().useCustomBrowser());
+  ui->browserCommand->setText(settings().network().customBrowserCommand());
+
+  // buttons
   m_ExecutableBlacklist = settings().executablesBlacklist();
 
   QObject::connect(ui->bsaDateBtn, &QPushButton::clicked, [&]{ on_bsaDateBtn_clicked(); });
@@ -23,15 +37,26 @@ WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
 
 void WorkaroundsSettingsTab::update()
 {
+  // options
+  settings().game().setForceEnableCoreFiles(ui->forceEnableBox->isChecked());
+  settings().interface().setLockGUI(ui->lockGUIBox->isChecked());
+  settings().setArchiveParsing(ui->enableArchiveParsingBox->isChecked());
+
+  // steam
   if (ui->appIDEdit->text() != settings().game().plugin()->steamAPPId()) {
     settings().steam().setAppID(ui->appIDEdit->text());
   } else {
     settings().steam().setAppID("");
   }
+  settings().steam().setLogin(ui->steamUserEdit->text(), ui->steamPassEdit->text());
 
-  settings().game().setForceEnableCoreFiles(ui->forceEnableBox->isChecked());
-  settings().interface().setLockGUI(ui->lockGUIBox->isChecked());
-  settings().setArchiveParsing(ui->enableArchiveParsingBox->isChecked());
+  // network
+  settings().network().setOfflineMode(ui->offlineBox->isChecked());
+  settings().network().setUseProxy(ui->proxyBox->isChecked());
+  settings().network().setUseCustomBrowser(ui->useCustomBrowser->isChecked());
+  settings().network().setCustomBrowserCommand(ui->browserCommand->text());
+
+  // buttons
   settings().setExecutablesBlacklist(m_ExecutableBlacklist);
 }
 

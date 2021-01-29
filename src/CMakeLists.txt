@@ -202,9 +202,9 @@ add_filter(NAME src/settingsdialog GROUPS
 	settingsdialognexus
 	settingsdialogpaths
 	settingsdialogplugins
-	settingsdialogsteam
 	settingsdialogworkarounds
-	settingsdialoguserinterface
+	settingsdialogmodlist
+	settingsdialogtheme
 	disableproxyplugindialog
 )
 
