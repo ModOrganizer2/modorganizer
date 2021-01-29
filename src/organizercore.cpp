@@ -5,7 +5,6 @@
 #include "imoinfo.h"
 #include "iplugingame.h"
 #include "iuserinterface.h"
-#include "loadmechanism.h"
 #include "messagedialog.h"
 #include "modlistsortproxy.h"
 #include "modrepositoryfileinfo.h"

@@ -29,7 +29,6 @@ add_filter(NAME src/core GROUPS
 	categories
 	archivefiletree
 	installationmanager
-	loadmechanism
 	nexusinterface
 	nxmaccessmanager
 	organizercore

@@ -20,7 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#include "loadmechanism.h"
 #include "envdump.h"
 #include <filterwidget.h>
 #include <lootcli/lootcli.h>
@@ -86,7 +85,6 @@ public:
 private:
   QSettings& m_Settings;
   const MOBase::IPluginGame* m_GamePlugin;
-  LoadMechanism m_LoadMechanism;
 };
 
 
