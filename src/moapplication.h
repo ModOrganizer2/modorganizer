@@ -47,7 +47,7 @@ public:
   // called from main() each time MO "restarts", loads settings, plugins,
   // OrganizerCore and the current instance
   //
-  int setup(MOMultiProcess& multiProcess);
+  int setup(MOMultiProcess& multiProcess, bool forceSelect);
 
   // shows splash, starts an api check, shows the main window and blocks until
   // MO exits
@@ -85,7 +85,7 @@ private:
   std::unique_ptr<OrganizerCore> m_core;
 
   void externalMessage(const QString& message);
-  std::unique_ptr<Instance> getCurrentInstance();
+  std::unique_ptr<Instance> getCurrentInstance(bool forceSelect);
   std::optional<int> setupInstanceLoop(Instance& currentInstance, PluginContainer& pc);
   void purgeOldFiles();
 };

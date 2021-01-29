@@ -80,6 +80,8 @@ int run(int argc, char *argv[])
   // stuff that's done only once, even if MO restarts in the loop below
   app.firstTimeSetup(multiProcess);
 
+  // force the "Select instance" dialog on startup (only for first loop)
+  bool pick = cl.pick();
 
   // MO runs in a loop because it can be restarted in several ways, such as
   // when switching instances or changing some settings
@@ -100,7 +102,8 @@ int run(int argc, char *argv[])
 
       // set up plugins, OrganizerCore, etc.
       {
-        const auto r = app.setup(multiProcess);
+        const auto r = app.setup(multiProcess, pick);
+        pick = false;
 
         if (r == RestartExitCode) {
           // resets things when MO is "restarted"
