@@ -934,11 +934,6 @@ QString Profile::getArchivesFileName() const
   return QDir::cleanPath(m_Directory.absoluteFilePath("archives.txt"));
 }
 
-QString Profile::getDeleterFileName() const
-{
-  return QDir::cleanPath(m_Directory.absoluteFilePath("hide_plugins.txt"));
-}
-
 QString Profile::getIniFileName() const
 {
   auto iniFiles = m_GamePlugin->iniFiles();

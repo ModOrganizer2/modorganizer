@@ -10,19 +10,6 @@ WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
 {
   ui->appIDEdit->setText(settings().steam().appID());
 
-  LoadMechanism::EMechanism mechanismID = settings().game().loadMechanismType();
-  int index = 0;
-
-  if (settings().game().loadMechanism().isDirectLoadingSupported()) {
-    ui->mechanismBox->addItem(QObject::tr("Mod Organizer"), LoadMechanism::LOAD_MODORGANIZER);
-    if (mechanismID == LoadMechanism::LOAD_MODORGANIZER) {
-      index = ui->mechanismBox->count() - 1;
-    }
-  }
-
-  ui->mechanismBox->setCurrentIndex(index);
-
-  ui->hideUncheckedBox->setChecked(settings().game().hideUncheckedPlugins());
   ui->forceEnableBox->setChecked(settings().game().forceEnableCoreFiles());
   ui->lockGUIBox->setChecked(settings().interface().lockGUI());
   ui->enableArchiveParsingBox->setChecked(settings().archiveParsing());
@@ -42,10 +29,6 @@ void WorkaroundsSettingsTab::update()
     settings().steam().setAppID("");
   }
 
-  settings().game().setLoadMechanism(static_cast<LoadMechanism::EMechanism>(
-    ui->mechanismBox->itemData(ui->mechanismBox->currentIndex()).toInt()));
-
-  settings().game().setHideUncheckedPlugins(ui->hideUncheckedBox->isChecked());
   settings().game().setForceEnableCoreFiles(ui->forceEnableBox->isChecked());
   settings().interface().setLockGUI(ui->lockGUIBox->isChecked());
   settings().setArchiveParsing(ui->enableArchiveParsingBox->isChecked());
