@@ -33,8 +33,6 @@ FilesOrigin::FilesOrigin(
 
 void FilesOrigin::setPriority(int priority)
 {
-  m_OriginConnection.lock()->changePriorityLookup(m_Priority, priority);
-
   m_Priority = priority;
 }
 

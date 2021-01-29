@@ -313,6 +313,15 @@ MainWindow::MainWindow(Settings &settings
 
   setupModList();
   ui->espList->setup(m_OrganizerCore, this, ui);
+  connect(m_OrganizerCore.modList(), &ModList::modPrioritiesChanged, [this]() {
+    onDirectoryStructureChanged();
+  });
+  connect(m_OrganizerCore.modList(), &ModList::modStatesChanged, [this]() {
+    onDirectoryStructureChanged();
+  });
+  connect(m_OrganizerCore.modList(), &QAbstractItemModel::rowsRemoved, [this]() {
+    onDirectoryStructureChanged();
+  });
 
   ui->bsaList->setLocalMoveOnly(true);
   ui->bsaList->setHeaderHidden(true);
@@ -385,7 +394,7 @@ MainWindow::MainWindow(Settings &settings
 
   connect(&m_PluginContainer, SIGNAL(diagnosisUpdate()), this, SLOT(scheduleCheckForProblems()));
 
-  connect(m_OrganizerCore.directoryRefresher(), SIGNAL(refreshed()), this, SLOT(directory_refreshed()));
+  connect(m_OrganizerCore.directoryRefresher(), &DirectoryRefresher::refreshed, [this] { onDirectoryStructureChanged(); });
   connect(
     m_OrganizerCore.directoryRefresher(),
     &DirectoryRefresher::progress,
@@ -2191,15 +2200,12 @@ void MainWindow::refresherProgress(const DirectoryRefreshProgress* p)
   }
 }
 
-void MainWindow::directory_refreshed()
+void MainWindow::onDirectoryStructureChanged()
 {
   // some problem-reports may rely on the virtual directory tree so they need to be updated
   // now
   scheduleCheckForProblems();
-
-  if (ui->tabWidget->currentWidget() == ui->dataTab) {
-    m_DataTab->updateTree();
-  }
+  m_DataTab->updateTree();
 }
 
 void MainWindow::modInstalled(const QString &modName)

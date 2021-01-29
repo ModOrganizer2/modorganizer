@@ -48,7 +48,6 @@ public:
   virtual QString installationFile() const override { return ""; }
   virtual bool converted() const override { return false; }
   virtual bool validated() const override { return false; }
-  virtual int getFixedPriority() const override { return std::numeric_limits<int>::max(); }
   virtual QString gameName() const override { return ""; }
   virtual int nexusId() const override { return -1; }
   virtual bool isOverwrite() const override { return true; }

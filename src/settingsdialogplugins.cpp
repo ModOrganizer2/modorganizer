@@ -40,18 +40,18 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginConta
     QTreeWidgetItem* listItem = new QTreeWidgetItem(
       topItems.at(m_pluginContainer->topImplementedInterface(plugin)));
     listItem->setData(0, Qt::DisplayRole, plugin->localizedName());
-    listItem->setData(0, ROLE_PLUGIN, QVariant::fromValue((void*)plugin));
-    listItem->setData(0, ROLE_SETTINGS, settings().plugins().settings(plugin->name()));
-    listItem->setData(0, ROLE_DESCRIPTIONS, settings().plugins().descriptions(plugin->name()));
+    listItem->setData(0, PluginRole, QVariant::fromValue((void*)plugin));
+    listItem->setData(0, SettingsRole, settings().plugins().settings(plugin->name()));
+    listItem->setData(0, DescriptionsRole, settings().plugins().descriptions(plugin->name()));
 
     // Handle child item:
     auto children = m_pluginContainer->requirements(plugin).children();
     for (auto* child : children) {
       QTreeWidgetItem* childItem = new QTreeWidgetItem(listItem);
       childItem->setData(0, Qt::DisplayRole, child->localizedName());
-      childItem->setData(0, ROLE_PLUGIN, QVariant::fromValue((void*)child));
-      childItem->setData(0, ROLE_SETTINGS, settings().plugins().settings(child->name()));
-      childItem->setData(0, ROLE_DESCRIPTIONS, settings().plugins().descriptions(child->name()));
+      childItem->setData(0, PluginRole, QVariant::fromValue((void*)child));
+      childItem->setData(0, SettingsRole, settings().plugins().settings(child->name()));
+      childItem->setData(0, DescriptionsRole, settings().plugins().descriptions(child->name()));
 
       handledNames.insert(child->name());
     }
@@ -174,7 +174,7 @@ void PluginsSettingsTab::filterPluginList()
 
 IPlugin* PluginsSettingsTab::plugin(QTreeWidgetItem* pluginItem) const
 {
-  return static_cast<IPlugin*>(qvariant_cast<void*>(pluginItem->data(0, ROLE_PLUGIN)));
+  return static_cast<IPlugin*>(qvariant_cast<void*>(pluginItem->data(0, PluginRole)));
 }
 
 void PluginsSettingsTab::update()
@@ -185,7 +185,7 @@ void PluginsSettingsTab::update()
     for (int j = 0; j < topLevelItem->childCount(); ++j) {
       auto* item = topLevelItem->child(j);
       settings().plugins().setSettings(
-        plugin(item)->name(), item->data(0, ROLE_SETTINGS).toMap());
+        plugin(item)->name(), item->data(0, SettingsRole).toMap());
     }
   }
 
@@ -209,7 +209,7 @@ void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
 {
   // Retrieve the plugin:
   auto *item = ui->pluginsList->currentItem();
-  if (!item || !item->data(0, ROLE_PLUGIN).isValid()) {
+  if (!item || !item->data(0, PluginRole).isValid()) {
     return;
   }
   IPlugin* plugin = this->plugin(item);
@@ -278,7 +278,7 @@ void PluginsSettingsTab::on_pluginsList_currentItemChanged(QTreeWidgetItem *curr
 {
   storeSettings(previous);
 
-  if (!current->data(0, ROLE_PLUGIN).isValid()) {
+  if (!current->data(0, PluginRole).isValid()) {
     return;
   }
 
@@ -325,8 +325,8 @@ void PluginsSettingsTab::on_pluginsList_currentItemChanged(QTreeWidgetItem *curr
     }
   }
 
-  QVariantMap settings = current->data(0, ROLE_SETTINGS).toMap();
-  QVariantMap descriptions = current->data(0, ROLE_DESCRIPTIONS).toMap();
+  QVariantMap settings = current->data(0, SettingsRole).toMap();
+  QVariantMap descriptions = current->data(0, DescriptionsRole).toMap();
   ui->pluginSettingsList->setEnabled(settings.count() != 0);
   for (auto iter = settings.begin(); iter != settings.end(); ++iter) {
     QTreeWidgetItem *newItem = new QTreeWidgetItem(QStringList(iter.key()));
@@ -359,14 +359,14 @@ void PluginsSettingsTab::deleteBlacklistItem()
 
 void PluginsSettingsTab::storeSettings(QTreeWidgetItem *pluginItem)
 {
-  if (pluginItem != nullptr && pluginItem->data(0, ROLE_PLUGIN).isValid()) {
-    QVariantMap settings = pluginItem->data(0, ROLE_SETTINGS).toMap();
+  if (pluginItem != nullptr && pluginItem->data(0, PluginRole).isValid()) {
+    QVariantMap settings = pluginItem->data(0, SettingsRole).toMap();
 
     for (int i = 0; i < ui->pluginSettingsList->topLevelItemCount(); ++i) {
       const QTreeWidgetItem *item = ui->pluginSettingsList->topLevelItem(i);
       settings[item->text(0)] = item->data(1, Qt::DisplayRole);
     }
 
-    pluginItem->setData(0, ROLE_SETTINGS, settings);
+    pluginItem->setData(0, SettingsRole, settings);
   }
 }

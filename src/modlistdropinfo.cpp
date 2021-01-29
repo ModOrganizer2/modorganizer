@@ -48,8 +48,8 @@ ModListDropInfo::ModListDropInfo(const QMimeData* mimeData, OrganizerCore& core)
         }
       }
 
-      if (mimeData->text() != ModListDropInfo::MOD_TEXT) {
-        if (mimeData->text() == ModListDropInfo::DOWNLOAD_TEXT && m_rows.size() == 1) {
+      if (mimeData->text() != ModListDropInfo::ModText) {
+        if (mimeData->text() == ModListDropInfo::DownloadText && m_rows.size() == 1) {
           m_download = m_rows[0];
         }
         m_rows = {};

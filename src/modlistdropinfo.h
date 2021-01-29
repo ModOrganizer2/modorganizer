@@ -18,8 +18,8 @@ public:
   // text value for the mime-data for the various possible
   // origin (not for external drops)
   //
-  static constexpr const char* MOD_TEXT = "mod";
-  static constexpr const char* DOWNLOAD_TEXT = "download";
+  static constexpr const char* ModText = "mod";
+  static constexpr const char* DownloadText = "download";
 
 public:
 

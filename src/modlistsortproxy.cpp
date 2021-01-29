@@ -215,7 +215,12 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
       }
     } break;
     case ModList::COL_PRIORITY: {
-      // nop, already compared by priority
+      if (leftMod->isBackup() != rightMod->isBackup()) {
+        lt = leftMod->isBackup();
+      }
+      else if (leftMod->isOverwrite() != rightMod->isOverwrite()) {
+        lt = rightMod->isOverwrite();
+      }
     } break;
     default: {
       log::warn("Sorting is not defined for column {}", left.column());

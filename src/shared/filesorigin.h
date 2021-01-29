@@ -22,8 +22,8 @@ public:
   FilesOrigin(const FilesOrigin&) = delete;
   FilesOrigin& operator=(const FilesOrigin&) = delete;
 
-  // sets priority for this origin, but it will overwrite the existing mapping
-  // for this priority, the previous origin will no longer be referenced
+  // sets priority for this origin (does not automatically refresh
+  // the structure)
   void setPriority(int priority);
 
   int getPriority() const

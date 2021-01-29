@@ -119,6 +119,7 @@ OrganizerCore::OrganizerCore(Settings &settings)
   connect(&m_ModList, SIGNAL(removeOrigin(QString)), this,
           SLOT(removeOrigin(QString)));
   connect(&m_ModList, &ModList::modStatesChanged, [=] { currentProfile()->writeModlist(); });
+  connect(&m_ModList, &ModList::modPrioritiesChanged, [this](auto&& indexes) { modPrioritiesChanged(indexes); });
 
   connect(NexusInterface::instance().getAccessManager(),
           SIGNAL(validateSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
@@ -581,8 +582,8 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
 
   m_Settings.game().setSelectedProfileName(m_CurrentProfile->name());
 
-  connect(m_CurrentProfile.get(), SIGNAL(modStatusChanged(uint)), this, SLOT(modStatusChanged(uint)));
-  connect(m_CurrentProfile.get(), SIGNAL(modStatusChanged(QList<uint>)), this, SLOT(modStatusChanged(QList<uint>)));
+  connect(m_CurrentProfile.get(), qOverload<uint>(&Profile::modStatusChanged), [this](auto&& index) { modStatusChanged(index); });
+  connect(m_CurrentProfile.get(), qOverload<QList<uint>>(&Profile::modStatusChanged), [this](auto&& indexes) { modStatusChanged(indexes); });
   refreshDirectoryStructure();
 
   m_CurrentProfile->debugDump();
@@ -1565,6 +1566,46 @@ void OrganizerCore::profileRefresh()
   refresh();
 }
 
+void OrganizerCore::modPrioritiesChanged(const QModelIndexList& indices)
+{
+  for (unsigned int i = 0; i < currentProfile()->numMods(); ++i) {
+    int priority = currentProfile()->getModPriority(i);
+    if (currentProfile()->modEnabled(i)) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
+      // priorities in the directory structure are one higher because data is 0
+      directoryStructure()->getOriginByName(MOBase::ToWString(modInfo->internalName())).setPriority(priority + 1);
+    }
+  }
+  refreshBSAList();
+  currentProfile()->writeModlist();
+  directoryStructure()->getFileRegister()->sortOrigins();
+
+  for (auto& idx : indices) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+    // clear caches on all mods conflicting with the moved mod
+    for (int i : modInfo->getModOverwrite()) {
+      ModInfo::getByIndex(i)->clearCaches();
+    }
+    for (int i : modInfo->getModOverwritten()) {
+      ModInfo::getByIndex(i)->clearCaches();
+    }
+    for (int i : modInfo->getModArchiveOverwrite()) {
+      ModInfo::getByIndex(i)->clearCaches();
+    }
+    for (int i : modInfo->getModArchiveOverwritten()) {
+      ModInfo::getByIndex(i)->clearCaches();
+    }
+    for (int i : modInfo->getModArchiveLooseOverwrite()) {
+      ModInfo::getByIndex(i)->clearCaches();
+    }
+    for (int i : modInfo->getModArchiveLooseOverwritten()) {
+      ModInfo::getByIndex(i)->clearCaches();
+    }
+    // update conflict check on the moved mod
+    modInfo->doConflictCheck();
+  }
+}
+
 void OrganizerCore::modStatusChanged(unsigned int index)
 {
   try {
@@ -1943,7 +1984,7 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString &profileName,
 
   bool overwriteActive = false;
 
-  for (auto mod : profile.getActiveMods()) {
+  for (const auto& mod : profile.getActiveMods()) {
     if (std::get<0>(mod).compare("overwrite", Qt::CaseInsensitive) == 0) {
       continue;
     }

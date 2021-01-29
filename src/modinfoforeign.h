@@ -63,7 +63,6 @@ public:
   virtual QDateTime getNexusLastModified() const override { return QDateTime(); }
   virtual void setNexusLastModified(QDateTime) override {}
   virtual QString getNexusDescription() const override { return QString(); }
-  virtual int getFixedPriority() const override { return std::numeric_limits<int>::min(); }
   virtual QStringList archives(bool = false) override { return m_Archives; }
   virtual QStringList stealFiles() const override { return m_Archives + QStringList(m_ReferenceFile); }
   virtual bool alwaysEnabled() const override { return true; }

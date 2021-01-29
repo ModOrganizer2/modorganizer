@@ -142,8 +142,6 @@ public:
 public slots:
   void refresherProgress(const DirectoryRefreshProgress* p);
 
-  void directory_refreshed();
-
 signals:
 
   /**
@@ -168,6 +166,11 @@ private slots:
   void on_actionChange_Game_triggered();
 
 private:
+
+  // update data tab and schedule a problem check after a directory
+  // structure update
+  //
+  void onDirectoryStructureChanged();
 
   void cleanup();
 

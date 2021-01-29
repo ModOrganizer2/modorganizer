@@ -341,18 +341,11 @@ private:
   QString getDisplayName(ModInfo::Ptr info) const;
   QString makeInternalName(ModInfo::Ptr info, QString name) const;
 
-  QVariant getOverwriteData(int column, int role) const;
-
   QString getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const;
 
   QString getConflictFlagText(ModInfo::EConflictFlag flag, ModInfo::Ptr modInfo) const;
 
   QString getColumnToolTip(int column) const;
-
-  ModList::EColumn getEnabledColumn(int index) const;
-
-  QVariant categoryData(int categoryID, int column, int role) const;
-  QVariant modData(int modID, int modelColumn, int role) const;
 
   bool renameMod(int index, const QString &newName);
 
@@ -365,8 +358,6 @@ private:
   // return the priority of the mod for a drop event
   //
   int dropPriority(int row, const QModelIndex& parent) const;
-
-private slots:
 
 private:
 

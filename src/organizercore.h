@@ -362,6 +362,7 @@ public slots:
   ModInfo::Ptr installArchive(const QString& archivePath, int priority = -1, bool reinstallation = false,
     ModInfo::Ptr currentMod = nullptr, const QString& modName = QString());
 
+  void modPrioritiesChanged(QModelIndexList const& indexes);
   void modStatusChanged(unsigned int index);
   void modStatusChanged(QList<unsigned int> index);
   void requestDownload(const QUrl &url, QNetworkReply *reply);
