@@ -180,12 +180,8 @@ public:
    * @brief save the plugin status to the specified file
    *
    * @param lockedOrderFileName path of the lockedorder.txt to write to
-   * @param deleterFileName file to receive a list of files to hide from the virtual data tree. This is used to hide unchecked plugins if "hideUnchecked" is true
-   * @param hideUnchecked if true, plugins that aren't enabled will be hidden from the virtual data directory
    **/
-  void saveTo(const QString &lockedOrderFileName
-              , const QString &deleterFileName
-              , bool hideUnchecked) const;
+  void saveTo(const QString &lockedOrderFileName) const;
 
   /**
    * @brief save the current load order

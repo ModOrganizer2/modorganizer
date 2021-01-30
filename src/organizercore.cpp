@@ -5,7 +5,6 @@
 #include "imoinfo.h"
 #include "iplugingame.h"
 #include "iuserinterface.h"
-#include "loadmechanism.h"
 #include "messagedialog.h"
 #include "modlistsortproxy.h"
 #include "modrepositoryfileinfo.h"
@@ -1863,9 +1862,7 @@ void OrganizerCore::savePluginList()
     });
     return;
   }
-  m_PluginList.saveTo(m_CurrentProfile->getLockedOrderFileName(),
-                      m_CurrentProfile->getDeleterFileName(),
-                      m_Settings.game().hideUncheckedPlugins());
+  m_PluginList.saveTo(m_CurrentProfile->getLockedOrderFileName());
   m_PluginList.saveLoadOrder(*m_DirectoryStructure);
 }
 
@@ -1878,7 +1875,6 @@ void OrganizerCore::saveCurrentProfile()
   m_CurrentProfile->writeModlist();
   m_CurrentProfile->createTweakedIniFile();
   saveCurrentLists();
-  m_Settings.game().loadMechanism().activate(m_Settings.game().loadMechanismType());
   storeSettings();
 }
 

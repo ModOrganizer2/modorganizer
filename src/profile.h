@@ -190,12 +190,6 @@ public:
   QString getArchivesFileName() const;
 
   /**
-   * @return the path of the delete file in this profile
-   * @note the deleter file lists plugins that should be hidden from the game and other tools
-   **/
-  QString getDeleterFileName() const;
-
-  /**
    * @return the path of the ini file in this profile
    * @todo since the game can contain multiple ini files (i.e. skyrim.ini skyrimprefs.ini)
    *       the concept of this function is somewhat broken

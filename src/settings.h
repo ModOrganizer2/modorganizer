@@ -20,7 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#include "loadmechanism.h"
 #include "envdump.h"
 #include <filterwidget.h>
 #include <lootcli/lootcli.h>
@@ -83,26 +82,9 @@ public:
   std::optional<QString> selectedProfileName() const;
   void setSelectedProfileName(const QString& name);
 
-  // load mechanism type
-  //
-  LoadMechanism::EMechanism loadMechanismType() const;
-  void setLoadMechanism(LoadMechanism::EMechanism m);
-
-  // load mechanism object
-  //
-  const LoadMechanism& loadMechanism() const;
-  LoadMechanism& loadMechanism();
-
-  // whether the user wants unchecked plugins (esp, esm) to be hidden from
-  // the virtual data directory
-  //
-  bool hideUncheckedPlugins() const;
-  void setHideUncheckedPlugins(bool b);
-
 private:
   QSettings& m_Settings;
   const MOBase::IPluginGame* m_GamePlugin;
-  LoadMechanism m_LoadMechanism;
 };
 
 

@@ -612,62 +612,6 @@ void GameSettings::setSelectedProfileName(const QString& name)
   set(m_Settings, "General", "selected_profile", name.toUtf8());
 }
 
-LoadMechanism::EMechanism GameSettings::loadMechanismType() const
-{
-  const auto def = LoadMechanism::LOAD_MODORGANIZER;
-
-  const auto i = get<LoadMechanism::EMechanism>(m_Settings,
-    "Settings", "load_mechanism", def);
-
-  switch (i)
-  {
-    // ok
-    case LoadMechanism::LOAD_MODORGANIZER:  // fall-through
-    {
-      break;
-    }
-
-    default:
-    {
-      log::error(
-        "invalid load mechanism {}, reverting to {}",
-        static_cast<int>(i), toString(def));
-
-      set(m_Settings, "Settings", "load_mechanism", def);
-
-      return def;
-    }
-  }
-
-  return i;
-}
-
-void GameSettings::setLoadMechanism(LoadMechanism::EMechanism m)
-{
-  set(m_Settings, "Settings", "load_mechanism", m);
-}
-
-const LoadMechanism& GameSettings::loadMechanism() const
-{
-  return m_LoadMechanism;
-}
-
-LoadMechanism& GameSettings::loadMechanism()
-{
-  return m_LoadMechanism;
-}
-
-bool GameSettings::hideUncheckedPlugins() const
-{
-  return get<bool>(m_Settings, "Settings", "hide_unchecked_plugins", false);
-}
-
-void GameSettings::setHideUncheckedPlugins(bool b)
-{
-  set(m_Settings, "Settings", "hide_unchecked_plugins", b);
-}
-
-
 GeometrySettings::GeometrySettings(QSettings& s)
   : m_Settings(s), m_Reset(false)
 {

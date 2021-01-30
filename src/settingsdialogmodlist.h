@@ -1,15 +1,15 @@
-#ifndef SETTINGSDIALOGUSERINTERFACE_H
-#define SETTINGSDIALOGUSERINTERFACE_H
+#ifndef SETTINGSDIALOGMODLIST_H
+#define SETTINGSDIALOGMODLIST_H
 
 #include <QCheckBox>
 
 #include "settingsdialog.h"
 #include "settings.h"
 
-class UserInterfaceSettingsTab : public SettingsTab
+class ModListSettingsTab : public SettingsTab
 {
 public:
-  UserInterfaceSettingsTab(Settings& settings, SettingsDialog& dialog);
+  ModListSettingsTab(Settings& settings, SettingsDialog& dialog);
 
   void update() override;
 
