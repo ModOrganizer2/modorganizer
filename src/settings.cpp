@@ -2128,8 +2128,7 @@ void InterfaceSettings::setStyleName(const QString& name)
 bool InterfaceSettings::collapsibleSeparators(Qt::SortOrder order) const
 {
   return get<bool>(m_Settings, "Settings",
-    order == Qt::AscendingOrder ? "collapsible_separators_asc" : "collapsible_separators_dsc",
-    order == Qt::AscendingOrder);
+    order == Qt::AscendingOrder ? "collapsible_separators_asc" : "collapsible_separators_dsc", true);
 }
 
 void InterfaceSettings::setCollapsibleSeparators(bool ascending, bool descending)
