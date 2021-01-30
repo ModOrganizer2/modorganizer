@@ -183,6 +183,12 @@ void Settings::processUpdates(
     m_Network.updateFromOldMap();
   });
 
+  version({ 2, 4, 0 }, [&] {
+    // removed
+    remove(m_Settings, "Settings", "hide_unchecked_plugins");
+    remove(m_Settings, "Settings", "load_mechanism");
+  });
+
   //save version in all case
   set(m_Settings, "General", "version", currentVersion.toString());
 
