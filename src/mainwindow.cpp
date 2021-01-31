@@ -394,10 +394,9 @@ MainWindow::MainWindow(Settings &settings
 
   connect(&m_PluginContainer, SIGNAL(diagnosisUpdate()), this, SLOT(scheduleCheckForProblems()));
 
-  connect(m_OrganizerCore.directoryRefresher(), &DirectoryRefresher::refreshed, [this] { onDirectoryStructureChanged(); });
-  connect(
-    m_OrganizerCore.directoryRefresher(),
-    &DirectoryRefresher::progress,
+  connect(&m_OrganizerCore, &OrganizerCore::directoryStructureReady,
+    this, &MainWindow::onDirectoryStructureChanged);
+  connect(m_OrganizerCore.directoryRefresher(), &DirectoryRefresher::progress,
     this, &MainWindow::refresherProgress);
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(error(QString)), this, SLOT(showError(QString)));
 
