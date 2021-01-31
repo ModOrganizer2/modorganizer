@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef PLUGINLIST_H
 #define PLUGINLIST_H
 
+#include <ifiletree.h>
 #include <ipluginlist.h>
 #include "profile.h"
 #include "loot.h"
@@ -325,9 +326,9 @@ private:
     QString author;
     QString description;
     bool hasIni;
-    std::set<QString> archives;
-    std::set<QString> masters;
-    mutable std::set<QString> masterUnset;
+    std::set<QString, MOBase::FileNameComparator> archives;
+    std::set<QString, MOBase::FileNameComparator> masters;
+    mutable std::set<QString, MOBase::FileNameComparator> masterUnset;
 
     bool operator < (const ESPInfo& str) const
     {
@@ -377,12 +378,12 @@ private:
   std::vector<ESPInfo> m_ESPs;
   mutable std::map<QString, QByteArray> m_LastSaveHash;
 
-  std::map<QString, int> m_ESPsByName;
+  std::map<QString, int, MOBase::FileNameComparator> m_ESPsByName;
   std::vector<int> m_ESPsByPriority;
 
-  std::map<QString, int> m_LockedOrder;
+  std::map<QString, int, MOBase::FileNameComparator> m_LockedOrder;
 
-  std::map<QString, AdditionalInfo> m_AdditionalInfo; // maps esp names to boss information
+  std::map<QString, AdditionalInfo, MOBase::FileNameComparator> m_AdditionalInfo; // maps esp names to boss information
 
   QString m_CurrentProfile;
   QFontMetrics m_FontMetrics;
