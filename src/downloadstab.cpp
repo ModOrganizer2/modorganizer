@@ -9,8 +9,7 @@ DownloadsTab::DownloadsTab(OrganizerCore& core, Ui::MainWindow* mwui)
       mwui->btnRefreshDownloads, mwui->downloadView, mwui->showHiddenBox,
       mwui->downloadFilterEdit}
 {
-  DownloadList *sourceModel = new DownloadList(
-    m_core.downloadManager(), ui.list);
+  DownloadList *sourceModel = new DownloadList(m_core, ui.list);
 
   ui.list->setModel(sourceModel);
   ui.list->setManager(m_core.downloadManager());
@@ -56,7 +55,6 @@ void DownloadsTab::update()
     ui.list->setStyleSheet("DownloadListView::item { padding: 16px 4px; }");
   }
 
-  ui.list->setMetaDisplay(m_core.settings().interface().metaDownloads());
   ui.list->style()->unpolish(ui.list);
   ui.list->style()->polish(ui.list);
   qobject_cast<DownloadListHeader*>(ui.list->header())->customResizeSections();

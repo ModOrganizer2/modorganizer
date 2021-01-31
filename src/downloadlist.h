@@ -22,7 +22,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QAbstractTableModel>
 
+class OrganizerCore;
 class DownloadManager;
+class Settings;
 
 
 /**
@@ -51,15 +53,7 @@ public:
 
 public:
 
-  /**
-   * @brief constructor
-   *
-   * @param manager the download manager processing downloads
-   * @param parent parent object Defaults to 0.
-   **/
-  explicit DownloadList(DownloadManager *manager, QObject *parent = 0);
-
-  void setMetaDisplay(bool metaDisplay);
+  explicit DownloadList(OrganizerCore& core, QObject *parent = 0);
 
   /**
    * @brief retrieve the number of rows to display. Invoked by Qt
@@ -103,8 +97,8 @@ public slots:
 
 private:
 
-  DownloadManager *m_Manager;
-  bool m_MetaDisplay;
+  DownloadManager& m_manager;
+  Settings& m_settings;
 };
 
 #endif // DOWNLOADLIST_H
