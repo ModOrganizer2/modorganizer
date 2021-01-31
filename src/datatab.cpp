@@ -128,7 +128,7 @@ void DataTab::doUpdateTree()
     }
   }
 
-  m_needUpdate = true;
+  m_needUpdate = false;
 }
 
 void DataTab::ensureFullyLoaded()
