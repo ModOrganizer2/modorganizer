@@ -74,7 +74,6 @@ public:
 
   void setManager(DownloadManager *manager);
   void setSourceModel(DownloadList *sourceModel);
-  void setMetaDisplay(bool metaDisplay);
 
 signals:
   void installDownload(int index);

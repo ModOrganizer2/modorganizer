@@ -159,12 +159,6 @@ void DownloadListView::setSourceModel(DownloadList *sourceModel)
   m_SourceModel = sourceModel;
 }
 
-void DownloadListView::setMetaDisplay(bool metaDisplay)
-{
-  if (m_SourceModel != nullptr)
-    m_SourceModel->setMetaDisplay(metaDisplay);
-}
-
 void DownloadListView::onDoubleClick(const QModelIndex &index)
 {
   QModelIndex sourceIndex = qobject_cast<QSortFilterProxyModel*>(model())->mapToSource(index);
