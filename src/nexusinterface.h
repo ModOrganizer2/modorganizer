@@ -169,7 +169,7 @@ public:
   void cleanup();
 
   /**
-   * @brief clear webcache and cookies associated with this access manager
+   * @brief clear webcache associated with this access manager
    */
   void clearCache();
 

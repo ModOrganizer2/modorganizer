@@ -30,7 +30,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <moassert.h>
 
 #include <QApplication>
-#include <QNetworkCookieJar>
 #include <QJsonDocument>
 #include <QRegularExpression>
 
@@ -699,7 +698,6 @@ void NexusInterface::cleanup()
 void NexusInterface::clearCache()
 {
   m_DiskCache->clear();
-  m_AccessManager->clearCookies();
 }
 
 void NexusInterface::nextRequest()

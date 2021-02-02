@@ -1274,7 +1274,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
              <item>
               <widget class="QPushButton" name="clearCacheButton">
                <property name="toolTip">
-                <string>Remove cache and cookies.</string>
+                <string>Remove cache.</string>
                </property>
                <property name="text">
                 <string>Clear Cache</string>

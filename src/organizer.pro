@@ -73,7 +73,6 @@ SOURCES += \
     serverinfo.cpp \
     browserview.cpp \
     browserdialog.cpp \
-    persistentcookiejar.cpp \
     noeditdelegate.cpp \
     previewgenerator.cpp \
     previewdialog.cpp \
@@ -151,7 +150,6 @@ HEADERS  += \
     serverinfo.h \
     browserview.h \
     browserdialog.h \
-    persistentcookiejar.h \
     noeditdelegate.h \
     previewgenerator.h \
     previewdialog.h \

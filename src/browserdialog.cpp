@@ -23,15 +23,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "browserview.h"
 #include "messagedialog.h"
 #include "report.h"
-#include "persistentcookiejar.h"
 #include "settings.h"
 
 #include <utility.h>
 #include <log.h>
 
 #include <QWebEngineSettings>
-#include <QNetworkCookieJar>
-#include <QNetworkCookie>
 #include <QMenu>
 #include <QInputDialog>
 #include <QWebEngineHistory>
@@ -47,9 +44,6 @@ BrowserDialog::BrowserDialog(QWidget *parent)
   , m_AccessManager(new QNetworkAccessManager(this))
 {
   ui->setupUi(this);
-
-  m_AccessManager->setCookieJar(new PersistentCookieJar(
-    QDir::fromNativeSeparators(Settings::instance().paths().cache() + "/cookies.dat")));
 
   Qt::WindowFlags flags = windowFlags() | Qt::WindowMaximizeButtonHint | Qt::WindowMinimizeButtonHint;
   Qt::WindowFlags helpFlag = Qt::WindowContextHelpButtonHint;

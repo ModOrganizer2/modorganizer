@@ -211,7 +211,6 @@ add_filter(NAME src/utilities GROUPS
 	shared/appconfig
 	bbcode
 	csvbuilder
-	persistentcookiejar
 	serverinfo
 	spawn
 	shared/util

@@ -25,14 +25,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "report.h"
 #include "utility.h"
 #include "selfupdater.h"
-#include "persistentcookiejar.h"
 #include "settings.h"
 #include <QMessageBox>
 #include <QPushButton>
 #include <QNetworkProxy>
 #include <QNetworkRequest>
-#include <QNetworkCookie>
-#include <QNetworkCookieJar>
 #include <QCoreApplication>
 #include <QDir>
 #include <QUrlQuery>
@@ -782,11 +779,6 @@ NXMAccessManager::NXMAccessManager(QObject *parent, Settings* s, const QString &
     onValidatorAttemptFinished(a);
   };
 
-  if (m_Settings) {
-    setCookieJar(new PersistentCookieJar(QDir::fromNativeSeparators(
-      m_Settings->paths().cache() + "/nexus_cookies.dat")));
-  }
-
   if (networkAccessible() == QNetworkAccessManager::UnknownAccessibility) {
     // why is this necessary all of a sudden?
     setNetworkAccessible(QNetworkAccessManager::Accessible);
@@ -822,26 +814,6 @@ QNetworkReply *NXMAccessManager::createRequest(
     return QNetworkAccessManager::createRequest(operation, request, device);;
   } else {
     return QNetworkAccessManager::createRequest(operation, request, device);
-  }
-}
-
-void NXMAccessManager::showCookies() const
-{
-  QUrl url(NexusBaseUrl + "/");
-  for (const QNetworkCookie &cookie : cookieJar()->cookiesForUrl(url)) {
-    log::debug("{} - {} (expires: {})",
-           cookie.name().constData(), cookie.value().constData(),
-           cookie.expirationDate().toString());
-  }
-}
-
-void NXMAccessManager::clearCookies()
-{
-  PersistentCookieJar *jar = qobject_cast<PersistentCookieJar*>(cookieJar());
-  if (jar != nullptr) {
-    jar->clear();
-  } else {
-    log::warn("failed to clear cookies, invalid cookie jar");
   }
 }
 
