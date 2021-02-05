@@ -313,16 +313,6 @@ MainWindow::MainWindow(Settings &settings
 
   setupModList();
   ui->espList->setup(m_OrganizerCore, this, ui);
-  connect(m_OrganizerCore.modList(), &ModList::modPrioritiesChanged, [this]() {
-    onDirectoryStructureChanged();
-  });
-  connect(m_OrganizerCore.modList(), &ModList::modStatesChanged, [this]() {
-    onDirectoryStructureChanged();
-  });
-  connect(m_OrganizerCore.modList(), &QAbstractItemModel::rowsRemoved, [this]() {
-    onDirectoryStructureChanged();
-  });
-
   ui->bsaList->setLocalMoveOnly(true);
   ui->bsaList->setHeaderHidden(true);
 
