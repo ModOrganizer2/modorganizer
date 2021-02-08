@@ -129,7 +129,7 @@ void SelfUpdater::testForUpdate(const Settings& settings)
         auto lastKey = mreleases.begin()->first;
         if (lastKey > this->m_MOVersion) {
 
-          // Fill m_UpdateCandidates with version strictly greater than the 
+          // Fill m_UpdateCandidates with version strictly greater than the
           // current version:
           m_UpdateCandidates.clear();
           for (auto p : mreleases) {
@@ -182,7 +182,7 @@ void SelfUpdater::startUpdate()
     }
 
     // Stop including pre-release as soon as we find a non-prerelease:
-    if (!release["prelease"].toBool()) {
+    if (!release["prerelease"].toBool()) {
       includePreRelease = false;
     }
 
