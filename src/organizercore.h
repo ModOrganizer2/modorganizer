@@ -405,6 +405,11 @@ private:
   void updateModActiveState(int index, bool active);
   void updateModsActiveState(const QList<unsigned int> &modIndices, bool active);
 
+  // clear the conflict caches of all the given mods, and the mods in conflict
+  // with the given mods
+  //
+  void clearCaches(std::vector<unsigned int> const& indices) const;
+
   bool createDirectory(const QString &path);
 
   QString oldMO1HookDll() const;

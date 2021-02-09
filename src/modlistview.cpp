@@ -689,7 +689,10 @@ void ModListView::setup(OrganizerCore& core, CategoryFactory& factory, MainWindo
   connect(m_core, &OrganizerCore::profileChanged, this, &ModListView::onProfileChanged);
   connect(core.modList(), &ModList::modPrioritiesChanged, [=](auto&& indices) { onModPrioritiesChanged(indices); });
   connect(core.modList(), &ModList::clearOverwrite, [=] { m_actions->clearOverwrite(); });
-  connect(core.modList(), &ModList::modStatesChanged, [=] { updateModCount(); });
+  connect(core.modList(), &ModList::modStatesChanged, [=] {
+    updateModCount();
+    setOverwriteMarkers(selectionModel()->selectedRows());
+  });
   connect(core.modList(), &ModList::modelReset, [=] { clearOverwriteMarkers(); });
 
   // proxy for various group by
