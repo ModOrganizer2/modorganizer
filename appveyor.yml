@@ -52,10 +52,10 @@ build_script:
     if($LastExitCode -ne 0) { $host.SetShouldExit($LastExitCode )  }
 test: off
 artifacts:
-- path: '\modorganizer-build\install\bin'
+- path: '\modorganizer-build\install\bin\ModOrganizer.exe'
   name: Mod.Organizer-$(APPVEYOR_BUILD_VERSION)
-- path: '\modorganizer-build\install\pdb'
-  name: PDBs-Mod.Organizer-$(APPVEYOR_BUILD_VERSION)
+- path: '\modorganizer-build\install\pdb\ModOrganizer.pdb'
+  name: PDB-Mod.Organizer-$(APPVEYOR_BUILD_VERSION)
 deploy: off
 on_success:
 - ps: >-
