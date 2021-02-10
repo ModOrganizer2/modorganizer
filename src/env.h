@@ -233,12 +233,12 @@ private:
 // environment variables
 //
 QString get(const QString& name);
-QString set(const QString& name, const QString& value);
+void set(const QString& name, const QString& value);
 
 QString path();
 QString appendToPath(const QString& s);
 QString prependToPath(const QString& s);
-QString setPath(const QString& s);
+void setPath(const QString& s);
 
 
 class Service
