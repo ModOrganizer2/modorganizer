@@ -2951,7 +2951,6 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
   }
   std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameNameReal, modID);
   for (auto mod : modsList) {
-    bool foundUpdate = false;
     QDateTime now = QDateTime::currentDateTimeUtc();
     QDateTime updateTarget = mod->getExpires();
     if (now >= updateTarget) {
@@ -2959,7 +2958,6 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
       // with an older version than the main mod version.
       if (mod->getNexusFileStatus() != 3 && mod->getNexusFileStatus() != 5) {
         mod->setNewestVersion(result["version"].toString());
-        foundUpdate = true;
       }
       // update the LastNexusUpdate time in any case since we did perform the check.
       mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
