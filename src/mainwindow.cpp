@@ -2979,9 +2979,7 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
     mod->setNexusLastModified(QDateTime::fromSecsSinceEpoch(result["updated_timestamp"].toInt(), Qt::UTC));
     mod->saveMeta();
 
-    if (foundUpdate) {
-      m_OrganizerCore.modList()->notifyChange(ModInfo::getIndex(mod->name()));
-    }
+    m_OrganizerCore.modList()->notifyChange(ModInfo::getIndex(mod->name()));
   }
 }
 
