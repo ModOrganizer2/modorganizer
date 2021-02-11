@@ -20,9 +20,9 @@ DataTab::DataTab(
   QWidget* parent, Ui::MainWindow* mwui) :
     m_core(core), m_pluginContainer(pc), m_parent(parent),
     ui{
-      mwui->dataTabRefresh, mwui->dataTree,
+      mwui->tabWidget, mwui->dataTab, mwui->dataTabRefresh, mwui->dataTree,
       mwui->dataTabShowOnlyConflicts, mwui->dataTabShowFromArchives},
-    m_firstActivation(true)
+    m_needUpdate(true)
 {
   m_filetree.reset(new FileTree(core, m_pluginContainer, ui.tree));
   m_filter.setUseSourceSort(true);
@@ -85,10 +85,14 @@ void DataTab::restoreState(const Settings& s)
 
 void DataTab::activated()
 {
-  if (m_firstActivation) {
-    m_firstActivation = false;
+  if (m_needUpdate) {
     updateTree();
   }
+}
+
+bool DataTab::isActive() const
+{
+  return ui.tabs->currentWidget() == ui.tab;
 }
 
 void DataTab::onRefresh()
@@ -103,6 +107,16 @@ void DataTab::onRefresh()
 
 void DataTab::updateTree()
 {
+  if (isActive()) {
+    doUpdateTree();
+  }
+  else {
+    m_needUpdate = true;
+  }
+}
+
+void DataTab::doUpdateTree()
+{
   m_filetree->model()->setEnabled(true);
   m_filetree->refresh();
 
@@ -113,6 +127,8 @@ void DataTab::updateTree()
       m->invalidate();
     }
   }
+
+  m_needUpdate = false;
 }
 
 void DataTab::ensureFullyLoaded()

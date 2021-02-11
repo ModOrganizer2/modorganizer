@@ -318,6 +318,9 @@ public:
   //
   std::string usage(const Command* c=nullptr) const;
 
+  // whether --pick was given
+  //
+  bool pick() const;
 
   // whether --multiple was given
   //

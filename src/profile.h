@@ -52,7 +52,14 @@ class Profile : public QObject, public MOBase::IProfile
 
 public:
 
-  typedef boost::shared_ptr<Profile> Ptr;
+  using Ptr = boost::shared_ptr<Profile>;
+
+public:
+
+  // the minimum and maximum priority achievable by mods
+  //
+  static constexpr int MinimumPriority = 0;
+  static constexpr int MaximumPriority = std::numeric_limits<int>::max();
 
 public:
 
@@ -183,12 +190,6 @@ public:
   QString getArchivesFileName() const;
 
   /**
-   * @return the path of the delete file in this profile
-   * @note the deleter file lists plugins that should be hidden from the game and other tools
-   **/
-  QString getDeleterFileName() const;
-
-  /**
    * @return the path of the ini file in this profile
    * @todo since the game can contain multiple ini files (i.e. skyrim.ini skyrimprefs.ini)
    *       the concept of this function is somewhat broken
@@ -243,7 +244,7 @@ public:
    *
    * @return list of active mods sorted by priority (ascending). "first" is the mod name, "second" is its path
    **/
-  std::vector<std::tuple<QString, QString, int> > getActiveMods();
+  std::vector<std::tuple<QString, QString, int>> getActiveMods();
 
   /**
    * @brief retrieve a mod of the indexes ordered by priority
@@ -260,20 +261,6 @@ public:
    * @return number of mods for which the profile has status information
    **/
   size_t numMods() const { return m_ModStatus.size(); }
-
-  /**
-   * @return the number of mods that can be enabled and where the priority can be modified
-   */
-  unsigned int numRegularMods() const { return m_NumRegularMods; }
-
-  /**
-   * @brief retrieve the mod index based on the priority
-   *
-   * @param priority priority to look up
-   * @return the index of the mod
-   * @throw std::exception an exception is thrown if there is no mod with the specified priority
-   **/
-  unsigned int modIndexByPriority(int priority) const;
 
   /**
    * @brief enable or disable a mod
@@ -293,17 +280,18 @@ public:
    **/
   void setModsEnabled(const QList<unsigned int> &modsToEnable, const QList<unsigned int> &modsToDisable);
 
-  /**
-   * change the priority of a mod. Of course this also changes the priority of other mods.
-   * The priority of the mods in the range ]old, new priority] are shifted so that no gaps
-   * are possible.
-   *
-   * @param index index of the mod to change
-   * @param newPriority the new priority value
-   *
-   * @todo what happens if the new priority is outside the range?
-   **/
-  void setModPriority(unsigned int index, int &newPriority);
+  // set the priority of a mod, and the priority of other mods in the range
+  // [old priority, new priority] such that no gaps are possible
+  //
+  // the priority is clamped in the range of valid priority (>= 0, and lower than
+  // the number of "regular" mods), you should use MinimumPriority or MaximumPriority
+  // to send a mod to the "top" or "bottom" of the priority list
+  //
+  // the function returns true if the priority was changed, or false if the mod
+  // was already at the given priority (or if the priority of the mod cannot be
+  // set)
+  //
+  bool setModPriority(unsigned int index, int& newPriority);
 
   /**
    * @brief determine if a mod is enabled
@@ -338,8 +326,6 @@ public:
   QList<QVariantMap> settingsByArray(const QString &prefix) const;
   void storeSettingsByArray(const QString &prefix, const QList<QVariantMap> &values);
 
-  int getPriorityMinimum() const;
-
   bool forcedLibrariesEnabled(const QString &executable) const;
   void setForcedLibrariesEnabled(const QString &executable, bool enabled);
   QList<MOBase::ExecutableForcedLoadSetting> determineForcedLibraries(const QString &executable) const;
@@ -347,6 +333,9 @@ public:
   void removeForcedLibraries(const QString &executable);
 
   void debugDump() const;
+
+
+  Profile& operator=(const Profile& reference) = delete;
 
 signals:
 
@@ -364,7 +353,7 @@ signals:
    **/
   void modStatusChanged(QList<unsigned int> index);
 
-public slots:
+protected slots:
 
   // should only be called by DelayedFileWriter, use writeModlist() and writeModlistNow() instead
   void doWriteModlist();
@@ -374,17 +363,13 @@ private:
   class ModStatus {
     friend class Profile;
   public:
-    ModStatus() : m_Overwrite(false), m_Enabled(false), m_Priority(-1) {}
+    ModStatus() : m_Enabled(false), m_Priority(-1) {}
   private:
-    bool m_Overwrite;
     bool m_Enabled;
     int m_Priority;
   };
 
 private:
-  Profile& operator=(const Profile &reference); // not implemented
-
-  void initTimer();
 
   void updateIndices();
 
@@ -394,7 +379,6 @@ private:
   void mergeTweak(const QString &tweakName, const QString &tweakedIni) const;
   void mergeTweaks(ModInfo::Ptr modInfo, const QString &tweakedIni) const;
   void touchFile(QString fileName);
-  void finishChangeStatus() const;
 
   static void renameModInList(QFile &modList, const QString &oldName, const QString &newName);
 
@@ -406,11 +390,14 @@ private:
 
   const MOBase::IPluginGame *m_GamePlugin;
 
-  mutable QByteArray m_LastModlistHash;
   std::vector<ModStatus> m_ModStatus;
   std::map<int, unsigned int> m_ModIndexByPriority;
-  unsigned int m_NumRegularMods;
 
+  // "regular" here means mods with modifiable priority (i.e. not backups
+  // or overwrite)
+  std::size_t m_NumRegularMods;
+
+  mutable QByteArray m_LastModlistHash;
   MOBase::DelayedFileWriter m_ModListWriter;
 
 };

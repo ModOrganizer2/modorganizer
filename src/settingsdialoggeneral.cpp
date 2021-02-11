@@ -11,19 +11,23 @@ using namespace MOBase;
 GeneralSettingsTab::GeneralSettingsTab(Settings& s, PluginContainer *pluginContainer, SettingsDialog& d)
   : SettingsTab(s, d), m_PluginContainer(pluginContainer)
 {
+  // language
   addLanguages();
   selectLanguage();
 
-  addStyles();
-  selectStyle();
+  // download list
+  ui->compactBox->setChecked(settings().interface().compactDownloads());
+  ui->showMetaBox->setChecked(settings().interface().metaDownloads());
+  ui->hideDownloadInstallBox->setChecked(settings().interface().hideDownloadsAfterInstallation());
 
-  ui->centerDialogs->setChecked(settings().geometry().centerDialogs());
-  ui->changeGameConfirmation->setChecked(settings().interface().showChangeGameConfirmation());
-  ui->doubleClickPreviews->setChecked(settings().interface().doubleClicksOpenPreviews());
+  // updates
   ui->checkForUpdates->setChecked(settings().checkForUpdates());
   ui->usePrereleaseBox->setChecked(settings().usePrereleases());
 
-  QObject::connect(ui->exploreStyles, &QPushButton::clicked, [&]{ onExploreStyles(); });
+  // miscellaneous
+  ui->centerDialogs->setChecked(settings().geometry().centerDialogs());
+  ui->changeGameConfirmation->setChecked(settings().interface().showChangeGameConfirmation());
+  ui->doubleClickPreviews->setChecked(settings().interface().doubleClicksOpenPreviews());
 
   QObject::connect(
     ui->categoriesBtn, &QPushButton::clicked, [&]{ onEditCategories(); });
@@ -34,6 +38,7 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, PluginContainer *pluginConta
 
 void GeneralSettingsTab::update()
 {
+  // language
   const QString oldLanguage = settings().interface().language();
   const QString newLanguage = ui->languageBox->itemData(
     ui->languageBox->currentIndex()).toString();
@@ -43,20 +48,19 @@ void GeneralSettingsTab::update()
     emit settings().languageChanged(newLanguage);
   }
 
-  const QString oldStyle = settings().interface().styleName().value_or("");
-  const QString newStyle = ui->styleBox->itemData(
-    ui->styleBox->currentIndex()).toString();
+  // download list
+  settings().interface().setCompactDownloads(ui->compactBox->isChecked());
+  settings().interface().setMetaDownloads(ui->showMetaBox->isChecked());
+  settings().interface().setHideDownloadsAfterInstallation(ui->hideDownloadInstallBox->isChecked());
 
-  if (oldStyle != newStyle) {
-    settings().interface().setStyleName(newStyle);
-    emit settings().styleChanged(newStyle);
-  }
+  // updates
+  settings().setCheckForUpdates(ui->checkForUpdates->isChecked());
+  settings().setUsePrereleases(ui->usePrereleaseBox->isChecked());
 
+  // miscellaneous
   settings().geometry().setCenterDialogs(ui->centerDialogs->isChecked());
   settings().interface().setShowChangeGameConfirmation(ui->changeGameConfirmation->isChecked());
   settings().interface().setDoubleClicksOpenPreviews(ui->doubleClickPreviews->isChecked());
-  settings().setCheckForUpdates(ui->checkForUpdates->isChecked());
-  settings().setUsePrereleases(ui->usePrereleaseBox->isChecked());
 }
 
 void GeneralSettingsTab::addLanguages()
@@ -127,50 +131,10 @@ void GeneralSettingsTab::selectLanguage()
   }
 }
 
-void GeneralSettingsTab::addStyles()
-{
-  ui->styleBox->addItem("None", "");
-  for (auto&& key : QStyleFactory::keys()) {
-    ui->styleBox->addItem(key, key);
-  }
-
-  ui->styleBox->insertSeparator(ui->styleBox->count());
-
-  QDirIterator iter(
-    QCoreApplication::applicationDirPath() + "/" +
-      QString::fromStdWString(AppConfig::stylesheetsPath()),
-        QStringList("*.qss"),
-    QDir::Files);
-
-  while (iter.hasNext()) {
-    iter.next();
-
-    ui->styleBox->addItem(
-      iter.fileInfo().completeBaseName(),
-      iter.fileName());
-  }
-}
-
-void GeneralSettingsTab::selectStyle()
-{
-  const int currentID = ui->styleBox->findData(
-    settings().interface().styleName().value_or(""));
-
-  if (currentID != -1) {
-    ui->styleBox->setCurrentIndex(currentID);
-  }
-}
-
 void GeneralSettingsTab::resetDialogs()
 {
   settings().widgets().resetQuestionButtons();
   GlobalSettings::resetDialogs();
-}
-
-void GeneralSettingsTab::onExploreStyles()
-{
-  QString ssPath = QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::stylesheetsPath());
-  shell::Explore(ssPath);
 }
 
 void GeneralSettingsTab::onEditCategories()

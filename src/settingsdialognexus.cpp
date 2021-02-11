@@ -295,13 +295,9 @@ void NexusConnectionUI::updateState()
 NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
   : SettingsTab(s, d)
 {
-  ui->offlineBox->setChecked(settings().network().offlineMode());
-  ui->proxyBox->setChecked(settings().network().useProxy());
   ui->endorsementBox->setChecked(settings().nexus().endorsementIntegration());
   ui->trackedBox->setChecked(settings().nexus().trackedIntegration());
   ui->hideAPICounterBox->setChecked(settings().interface().hideAPICounter());
-  ui->useCustomBrowser->setChecked(settings().network().useCustomBrowser());
-  ui->browserCommand->setText(settings().network().customBrowserCommand());
 
   // display server preferences
   for (const auto& server : s.network().servers()) {
@@ -358,13 +354,9 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
 
 void NexusSettingsTab::update()
 {
-  settings().network().setOfflineMode(ui->offlineBox->isChecked());
-  settings().network().setUseProxy(ui->proxyBox->isChecked());
   settings().nexus().setEndorsementIntegration(ui->endorsementBox->isChecked());
   settings().nexus().setTrackedIntegration(ui->trackedBox->isChecked());
   settings().interface().setHideAPICounter(ui->hideAPICounterBox->isChecked());
-  settings().network().setUseCustomBrowser(ui->useCustomBrowser->isChecked());
-  settings().network().setCustomBrowserCommand(ui->browserCommand->text());
 
   auto servers = settings().network().servers();
 

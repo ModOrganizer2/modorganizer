@@ -234,7 +234,7 @@ bool ModListByPriorityProxy::canDropMimeData(const QMimeData* data, Qt::DropActi
     bool hasSeparator = false;
     unsigned int firstRowIndex = -1;
 
-    int firstRowPriority = INT_MAX;
+    int firstRowPriority = Profile::MaximumPriority;
     for (auto sourceRow : dropInfo.rows()) {
       hasSeparator = hasSeparator || ModInfo::getByIndex(sourceRow)->isSeparator();
       if (m_sortOrder == Qt::AscendingOrder && m_profile->getModPriority(sourceRow) < firstRowPriority

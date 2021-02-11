@@ -344,6 +344,9 @@ void CommandLine::createOptions()
     ("multiple",
       "allow multiple MO processes to run; see below")
 
+    ("pick",
+      "show the select instance dialog on startup")
+
     ("logs",
       "duplicates the logs to stdout")
 
@@ -422,6 +425,11 @@ std::string CommandLine::usage(const Command* c) const
   }
 
   return oss.str();
+}
+
+bool CommandLine::pick() const
+{
+  return (m_vm.count("pick") > 0);
 }
 
 bool CommandLine::multiple() const

@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef PLUGINLIST_H
 #define PLUGINLIST_H
 
+#include <ifiletree.h>
 #include <ipluginlist.h>
 #include "profile.h"
 #include "loot.h"
@@ -180,12 +181,8 @@ public:
    * @brief save the plugin status to the specified file
    *
    * @param lockedOrderFileName path of the lockedorder.txt to write to
-   * @param deleterFileName file to receive a list of files to hide from the virtual data tree. This is used to hide unchecked plugins if "hideUnchecked" is true
-   * @param hideUnchecked if true, plugins that aren't enabled will be hidden from the virtual data directory
    **/
-  void saveTo(const QString &lockedOrderFileName
-              , const QString &deleterFileName
-              , bool hideUnchecked) const;
+  void saveTo(const QString &lockedOrderFileName) const;
 
   /**
    * @brief save the current load order
@@ -329,9 +326,9 @@ private:
     QString author;
     QString description;
     bool hasIni;
-    std::set<QString> archives;
-    std::set<QString> masters;
-    mutable std::set<QString> masterUnset;
+    std::set<QString, MOBase::FileNameComparator> archives;
+    std::set<QString, MOBase::FileNameComparator> masters;
+    mutable std::set<QString, MOBase::FileNameComparator> masterUnset;
 
     bool operator < (const ESPInfo& str) const
     {
@@ -381,12 +378,12 @@ private:
   std::vector<ESPInfo> m_ESPs;
   mutable std::map<QString, QByteArray> m_LastSaveHash;
 
-  std::map<QString, int> m_ESPsByName;
+  std::map<QString, int, MOBase::FileNameComparator> m_ESPsByName;
   std::vector<int> m_ESPsByPriority;
 
-  std::map<QString, int> m_LockedOrder;
+  std::map<QString, int, MOBase::FileNameComparator> m_LockedOrder;
 
-  std::map<QString, AdditionalInfo> m_AdditionalInfo; // maps esp names to boss information
+  std::map<QString, AdditionalInfo, MOBase::FileNameComparator> m_AdditionalInfo; // maps esp names to boss information
 
   QString m_CurrentProfile;
   QFontMetrics m_FontMetrics;

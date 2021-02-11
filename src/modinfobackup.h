@@ -19,8 +19,8 @@ public:
   virtual void setGameName(const QString& gameName) override {}
   virtual void setNexusID(int) override {}
   virtual void endorse(bool) override {}
-  virtual int getFixedPriority() const override { return -1; }
   virtual void ignoreUpdate(bool) override {}
+  virtual bool alwaysDisabled() const override { return true; }
   virtual bool canBeUpdated() const override { return false; }
   virtual QDateTime getExpires() const override { return QDateTime(); }
   virtual bool canBeEnabled() const override { return false; }

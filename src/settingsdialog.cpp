@@ -24,8 +24,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settingsdialognexus.h"
 #include "settingsdialogpaths.h"
 #include "settingsdialogplugins.h"
-#include "settingsdialogsteam.h"
-#include "settingsdialoguserinterface.h"
+#include "settingsdialogmodlist.h"
+#include "settingsdialogtheme.h"
 #include "settingsdialogworkarounds.h"
 
 using namespace MOBase;
@@ -40,11 +40,11 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings& setti
   ui->setupUi(this);
 
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new GeneralSettingsTab(settings, m_pluginContainer, *this)));
-  m_tabs.push_back(std::unique_ptr<SettingsTab>(new UserInterfaceSettingsTab(settings, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(new ThemeSettingsTab(settings, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(new ModListSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new PathsSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new DiagnosticsSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new NexusSettingsTab(settings, *this)));
-  m_tabs.push_back(std::unique_ptr<SettingsTab>(new SteamSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsSettingsTab(settings, m_pluginContainer, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsSettingsTab(settings, *this)));
 }

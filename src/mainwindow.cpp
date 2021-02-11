@@ -315,7 +315,6 @@ MainWindow::MainWindow(Settings &settings
 
   setupModList();
   ui->espList->setup(m_OrganizerCore, this, ui);
-
   ui->bsaList->setLocalMoveOnly(true);
   ui->bsaList->setHeaderHidden(true);
 
@@ -387,10 +386,9 @@ MainWindow::MainWindow(Settings &settings
 
   connect(&m_PluginContainer, SIGNAL(diagnosisUpdate()), this, SLOT(scheduleCheckForProblems()));
 
-  connect(m_OrganizerCore.directoryRefresher(), SIGNAL(refreshed()), this, SLOT(directory_refreshed()));
-  connect(
-    m_OrganizerCore.directoryRefresher(),
-    &DirectoryRefresher::progress,
+  connect(&m_OrganizerCore, &OrganizerCore::directoryStructureReady,
+    this, &MainWindow::onDirectoryStructureChanged);
+  connect(m_OrganizerCore.directoryRefresher(), &DirectoryRefresher::progress,
     this, &MainWindow::refresherProgress);
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(error(QString)), this, SLOT(showError(QString)));
 
@@ -2195,15 +2193,12 @@ void MainWindow::refresherProgress(const DirectoryRefreshProgress* p)
   }
 }
 
-void MainWindow::directory_refreshed()
+void MainWindow::onDirectoryStructureChanged()
 {
   // some problem-reports may rely on the virtual directory tree so they need to be updated
   // now
   scheduleCheckForProblems();
-
-  if (ui->tabWidget->currentWidget() == ui->dataTab) {
-    m_DataTab->updateTree();
-  }
+  m_DataTab->updateTree();
 }
 
 void MainWindow::modInstalled(const QString &modName)

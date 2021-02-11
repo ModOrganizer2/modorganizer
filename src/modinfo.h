@@ -602,17 +602,15 @@ public: // Methods after this do not come from IModInterface:
    */
   virtual void ignoreUpdate(bool ignore) = 0;
 
-  /**
-   * @return the fixed priority of mods of this type or INT_MIN if the priority of mods
-   *     needs to be user-modifiable. Can be < 0 to force a priority below user-modifable mods
-   *     or INT_MAX to force priority above all user-modifiables.
-   */
-  virtual int getFixedPriority() const = 0;
+  // check if the priority of this mod is not user-modifiable (i.e.
+  // computed by MO2 automatically)
+  //
+  bool hasAutomaticPriority() const { return isBackup() || isOverwrite(); }
 
-  /**
-   * @return true if the mod is always enabled.
-   */
+  // check if this mod should always be enabled or disabled
+  //
   virtual bool alwaysEnabled() const { return false; }
+  virtual bool alwaysDisabled() const { return false; }
 
   /**
    * @return true if the mod can be updated.

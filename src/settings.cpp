@@ -183,6 +183,12 @@ void Settings::processUpdates(
     m_Network.updateFromOldMap();
   });
 
+  version({ 2, 4, 0 }, [&] {
+    // removed
+    remove(m_Settings, "Settings", "hide_unchecked_plugins");
+    remove(m_Settings, "Settings", "load_mechanism");
+  });
+
   //save version in all case
   set(m_Settings, "General", "version", currentVersion.toString());
 
@@ -611,62 +617,6 @@ void GameSettings::setSelectedProfileName(const QString& name)
 {
   set(m_Settings, "General", "selected_profile", name.toUtf8());
 }
-
-LoadMechanism::EMechanism GameSettings::loadMechanismType() const
-{
-  const auto def = LoadMechanism::LOAD_MODORGANIZER;
-
-  const auto i = get<LoadMechanism::EMechanism>(m_Settings,
-    "Settings", "load_mechanism", def);
-
-  switch (i)
-  {
-    // ok
-    case LoadMechanism::LOAD_MODORGANIZER:  // fall-through
-    {
-      break;
-    }
-
-    default:
-    {
-      log::error(
-        "invalid load mechanism {}, reverting to {}",
-        static_cast<int>(i), toString(def));
-
-      set(m_Settings, "Settings", "load_mechanism", def);
-
-      return def;
-    }
-  }
-
-  return i;
-}
-
-void GameSettings::setLoadMechanism(LoadMechanism::EMechanism m)
-{
-  set(m_Settings, "Settings", "load_mechanism", m);
-}
-
-const LoadMechanism& GameSettings::loadMechanism() const
-{
-  return m_LoadMechanism;
-}
-
-LoadMechanism& GameSettings::loadMechanism()
-{
-  return m_LoadMechanism;
-}
-
-bool GameSettings::hideUncheckedPlugins() const
-{
-  return get<bool>(m_Settings, "Settings", "hide_unchecked_plugins", false);
-}
-
-void GameSettings::setHideUncheckedPlugins(bool b)
-{
-  set(m_Settings, "Settings", "hide_unchecked_plugins", b);
-}
-
 
 GeometrySettings::GeometrySettings(QSettings& s)
   : m_Settings(s), m_Reset(false)
@@ -2178,8 +2128,7 @@ void InterfaceSettings::setStyleName(const QString& name)
 bool InterfaceSettings::collapsibleSeparators(Qt::SortOrder order) const
 {
   return get<bool>(m_Settings, "Settings",
-    order == Qt::AscendingOrder ? "collapsible_separators_asc" : "collapsible_separators_dsc",
-    order == Qt::AscendingOrder);
+    order == Qt::AscendingOrder ? "collapsible_separators_asc" : "collapsible_separators_dsc", true);
 }
 
 void InterfaceSettings::setCollapsibleSeparators(bool ascending, bool descending)

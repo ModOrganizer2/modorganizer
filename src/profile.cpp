@@ -230,23 +230,20 @@ void Profile::doWriteModlist()
       return;
     }
 
-    for (std::map<int, unsigned int>::const_reverse_iterator iter = m_ModIndexByPriority.crbegin(); iter != m_ModIndexByPriority.crend(); iter++ ) {
+    for (auto iter = m_ModIndexByPriority.crbegin(); iter != m_ModIndexByPriority.crend(); iter++) {
       // the priority order was inverted on load so it has to be inverted again
-      unsigned int index = iter->second;
-      if (index != UINT_MAX) {
-        ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-        std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-        if ((modInfo->getFixedPriority() == INT_MIN)) {
-          if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
-            file->write("*");
-          } else if (m_ModStatus[index].m_Enabled) {
-            file->write("+");
-          } else {
-            file->write("-");
-          }
-          file->write(modInfo->name().toUtf8());
-          file->write("\r\n");
+      const auto index = iter->second;
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
+      if (!modInfo->hasAutomaticPriority()) {
+        if (modInfo->isForeign()) {
+          file->write("*");
+        } else if (m_ModStatus[index].m_Enabled) {
+          file->write("+");
+        } else {
+          file->write("-");
         }
+        file->write(modInfo->name().toUtf8());
+        file->write("\r\n");
       }
     }
 
@@ -270,10 +267,9 @@ void Profile::createTweakedIniFile()
     return;
   }
 
-  for (int i = getPriorityMinimum(); i < getPriorityMinimum() + (int)numRegularMods(); ++i) {
-    unsigned int idx = modIndexByPriority(i);
-    if (m_ModStatus[idx].m_Enabled) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(idx);
+  for (const auto& [priority, index] : m_ModIndexByPriority) {
+    if (m_ModStatus[index].m_Enabled) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
       mergeTweaks(modInfo, tweakedIni);
     }
   }
@@ -368,6 +364,38 @@ void Profile::renameModInList(QFile &modList, const QString &oldName, const QStr
 
 void Profile::refreshModStatus()
 {
+  // this function refreshes mod status (enabled/disabled) and priority
+  // using the profile mod list file and the mods in the mods folder using
+  // the following steps
+  //
+  // 1) the mod list file is read and mods status/priority are updated by
+  //    considering the content of the file (for status) and the order (for
+  //    priority), missing or invalid mods are discarded (with a warning)
+  // 2) the priority are reversed to match the plugin list (highest wins)
+  //    since the mod list is written in reverse order
+  // 3) at the same time, new mods (not in the mod list file) are added
+  //    - foreign mods are given low priority (below 0)
+  //    - regular mods are given high priority (above mods from the mod list)
+  // 4) the priority are shifted to ensure that the minimum priority is 0
+  // 5) the priority of backups are computed such that the first backup is
+  //    above all regular mods
+  //
+  // in the context of the profile, "regular mods" means a mod whose priority
+  // can be set by the user (i.e. not a backup or overwrite)
+  //
+  // this method ensures that the mods priority is as follow
+  //
+  //   0   mod1
+  //   1   mod2
+  //       ...
+  //   K-1 modK (K = m_NumRegularMods)
+  //   K   backup1
+  //   K+1 backup2
+  //       ...
+  //   N-2 backupX
+  //   N-1 overwrite (N = number of mods)
+  //
+
   writeModlistNow(true); // if there are pending changes write them first
 
   QFile file(getModlistFileName());
@@ -387,6 +415,8 @@ void Profile::refreshModStatus()
   int index = 0;
   while (!file.atEnd()) {
     QByteArray line = file.readLine().trimmed();
+
+    // find the mod name and the enabled status
     bool enabled = true;
     QString modName;
     if (line.length() == 0) {
@@ -398,89 +428,106 @@ void Profile::refreshModStatus()
     } else if (line.at(0) == '-') {
       enabled = false;
       modName = QString::fromUtf8(line.mid(1).trimmed().constData());
-    } else if ((line.at(0) == '+')
-               || (line.at(0) == '*')) {
+    } else if (line.at(0) == '+' || line.at(0) == '*') {
       modName = QString::fromUtf8(line.mid(1).trimmed().constData());
     } else {
       modName = QString::fromUtf8(line.trimmed().constData());
     }
-    if (modName.size() > 0) {
-      QString lookupName = modName;
-      if (modName.compare("overwrite", Qt::CaseInsensitive) == 0) {
-        warnAboutOverwrite = true;
-      }
-      if (namesRead.find(lookupName) != namesRead.end()) {
-        continue;
-      } else {
-        namesRead.insert(lookupName);
-      }
-      unsigned int modIndex = ModInfo::getIndex(lookupName);
-      if (modIndex != UINT_MAX) {
-        ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
-        if ((modIndex < m_ModStatus.size())
-            && (info->getFixedPriority() == INT_MIN)) {
-          m_ModStatus[modIndex].m_Enabled = enabled;
-          if (m_ModStatus[modIndex].m_Priority == -1) {
-            if (static_cast<size_t>(index) >= m_ModStatus.size()) {
-              throw MyException(tr("invalid mod index: %1").arg(index));
-            }
-            m_ModStatus[modIndex].m_Priority = index++;
-          }
-        } else {
-          log::warn(
-            "no mod state for \"{}\" (profile \"{}\")",
-            modName, m_Directory.path());
-          // need to rewrite the modlist to fix this
-          modStatusModified = true;
-        }
-      } else {
-        log::debug(
-          "mod not found: \"{}\" (profile \"{}\")",
-          modName, m_Directory.path());
-        // need to rewrite the modlist to fix this
-        modStatusModified = true;
-      }
+
+    if (modName.isEmpty()) {
+      continue;
     }
-  }
 
-  int numKnownMods = index;
+    if (modName.compare("overwrite", Qt::CaseInsensitive) == 0) {
+      warnAboutOverwrite = true;
+    }
 
+    // check if the name was already read
+    if (namesRead.find(modName) != namesRead.end()) {
+      continue;
+    }
+    namesRead.insert(modName);
+
+    unsigned int modIndex = ModInfo::getIndex(modName);
+    if (modIndex == UINT_MAX) {
+      log::debug(
+        "mod not found: \"{}\" (profile \"{}\")",
+        modName, m_Directory.path());
+      // need to rewrite the modlist to fix this
+      modStatusModified = true;
+      continue;
+    }
+
+    // find the mod and check that this is a regular mod (and not a backup)
+    ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
+    if (modIndex < m_ModStatus.size() && !info->hasAutomaticPriority()) {
+      m_ModStatus[modIndex].m_Enabled = enabled;
+      if (m_ModStatus[modIndex].m_Priority == -1) {
+        if (static_cast<size_t>(index) >= m_ModStatus.size()) {
+          throw Exception(tr("invalid mod index: %1").arg(index));
+        }
+        m_ModStatus[modIndex].m_Priority = index++;
+      }
+    } else {
+      log::warn(
+        "no mod state for \"{}\" (profile \"{}\")",
+        modName, m_Directory.path());
+      // need to rewrite the modlist to fix this
+      modStatusModified = true;
+    }
+
+  } // while (!file.atEnd())
+
+  file.close();
+
+  const int numKnownMods = index;
   int topInsert = 0;
 
-  // invert priority order to match that of the pluginlist. Also
-  // give priorities to mods not referenced in the profile
+  // invert priority order to match that of the pluginlist, also
+  // give priorities to mods not referenced in the profile and
+  // count the number of regular mods
+  m_NumRegularMods = 0;
   for (size_t i = 0; i < m_ModStatus.size(); ++i) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(static_cast<int>(i));
     if (modInfo->alwaysEnabled()) {
       m_ModStatus[i].m_Enabled = true;
     }
 
-    if (modInfo->getFixedPriority() == INT_MAX) {
+    if (modInfo->isOverwrite()) {
+      m_ModStatus[i].m_Priority = m_ModStatus.size() - 1;
       continue;
     }
 
     if (m_ModStatus[i].m_Priority != -1) {
       m_ModStatus[i].m_Priority = numKnownMods - m_ModStatus[i].m_Priority - 1;
+      ++m_NumRegularMods;
     } else {
       if (static_cast<size_t>(index) >= m_ModStatus.size()) {
-        throw MyException(tr("invalid mod index: %1").arg(index));
+        throw Exception(tr("invalid mod index: %1").arg(index));
       }
-      if (modInfo->hasFlag(ModInfo::FLAG_FOREIGN)) {
+
+      // skip backups on purpose to avoid inserting backups in-between
+      // regular mods
+      if (modInfo->isForeign()) {
         m_ModStatus[i].m_Priority = --topInsert;
-      } else {
+        ++m_NumRegularMods;
+      } else if (!modInfo->isBackup()) {
         m_ModStatus[i].m_Priority = index++;
+        ++m_NumRegularMods;
       }
+
       // also, mark the mod-list as changed
       modStatusModified = true;
     }
   }
-  // to support insertion of new mods at the top we may now have mods with negative priority. shift them all up
-  // to align priority with 0
+
+  // to support insertion of new mods at the top we may now have mods with negative priority,
+  // so shift them all up to align priority with 0
   if (topInsert < 0) {
     int offset = topInsert * -1;
     for (size_t i = 0; i < m_ModStatus.size(); ++i) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(static_cast<unsigned int>(i));
-      if (modInfo->getFixedPriority() == INT_MAX) {
+      if (modInfo->hasAutomaticPriority()) {
         continue;
       }
 
@@ -488,7 +535,15 @@ void Profile::refreshModStatus()
     }
   }
 
-  file.close();
+  // set the backups priority
+  int backupPriority = m_NumRegularMods;
+  for (size_t i = 0; i < m_ModStatus.size(); ++i) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(static_cast<unsigned int>(i));
+    if (modInfo->isBackup()) {
+      m_ModStatus[i].m_Priority = backupPriority++;
+    }
+  }
+
   updateIndices();
 
   // User has a mod named some variation of "overwrite".  Tell them about it.
@@ -519,17 +574,10 @@ void Profile::dumpModStatus() const
 
 void Profile::updateIndices()
 {
-  m_NumRegularMods = 0;
   m_ModIndexByPriority.clear();
   for (unsigned int i = 0; i < m_ModStatus.size(); ++i) {
     int priority = m_ModStatus[i].m_Priority;
-    if (priority == INT_MIN) {
-      // don't assign this to mapping at all, it's probably the overwrite mod
-      continue;
-    } else {
-      ++m_NumRegularMods;
-      m_ModIndexByPriority[priority] = i;
-    }
+    m_ModIndexByPriority[priority] = i;
   }
 }
 
@@ -537,29 +585,15 @@ void Profile::updateIndices()
 std::vector<std::tuple<QString, QString, int> > Profile::getActiveMods()
 {
   std::vector<std::tuple<QString, QString, int> > result;
-  for (std::map<int, unsigned int>::const_iterator iter = m_ModIndexByPriority.begin(); iter != m_ModIndexByPriority.end(); iter++ ) {
-    if ((iter->second != UINT_MAX) && m_ModStatus[iter->second].m_Enabled) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(iter->second);
-      if (modInfo->hasFlag(ModInfo::FLAG_OVERWRITE))
-        result.push_back(std::make_tuple(modInfo->internalName(), modInfo->absolutePath(), INT_MAX));
-      else
-        result.push_back(std::make_tuple(modInfo->internalName(), modInfo->absolutePath(), m_ModStatus[iter->second].m_Priority));
+  for (const auto& [priority, index] : m_ModIndexByPriority) {
+    if (m_ModStatus[index].m_Enabled) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
+      result.push_back(std::make_tuple(modInfo->internalName(), modInfo->absolutePath(), m_ModStatus[index].m_Priority));
     }
   }
 
   return result;
 }
-
-
-unsigned int Profile::modIndexByPriority(int priority) const
-{
-  try {
-    return m_ModIndexByPriority.at(priority);
-  } catch (std::out_of_range) {
-    throw MyException(tr("invalid priority %1").arg(priority));
-  }
-}
-
 
 void Profile::setModEnabled(unsigned int index, bool enabled)
 {
@@ -568,10 +602,14 @@ void Profile::setModEnabled(unsigned int index, bool enabled)
   }
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
+
   // we could quit in the following case, this shouldn't be a change anyway,
   // but at least this allows the situation to be fixed in case of an error
   if (modInfo->alwaysEnabled()) {
     enabled = true;
+  }
+  if (modInfo->alwaysDisabled()) {
+    enabled = false;
   }
 
   if (enabled != m_ModStatus[index].m_Enabled) {
@@ -580,12 +618,15 @@ void Profile::setModEnabled(unsigned int index, bool enabled)
   }
 }
 
-void Profile::setModsEnabled(const QList<unsigned int> &modsToEnable, const QList<unsigned int> &modsToDisable)
+void Profile::setModsEnabled(const QList<unsigned int>& modsToEnable, const QList<unsigned int>& modsToDisable)
 {
   QList<unsigned int> dirtyMods;
   for (auto idx : modsToEnable) {
     if (idx >= m_ModStatus.size()) {
       log::error("invalid mod index: {}", idx);
+      continue;
+    }
+    if (ModInfo::getByIndex(idx)->alwaysDisabled()) {
       continue;
     }
     if (!m_ModStatus[idx].m_Enabled) {
@@ -631,30 +672,24 @@ int Profile::getModPriority(unsigned int index) const
 }
 
 
-void Profile::setModPriority(unsigned int index, int &newPriority)
+bool Profile::setModPriority(unsigned int index, int &newPriority)
 {
-  if (m_ModStatus.at(index).m_Overwrite) {
-    // can't change priority of the overwrite
-    return;
+  if (ModInfo::getByIndex(index)->hasAutomaticPriority()) {
+    // can't change priority of overwrite/backups
+    return false;
   }
+
+  newPriority = std::clamp(newPriority, 0, static_cast<int>(m_NumRegularMods) - 1);
 
   int oldPriority = m_ModStatus.at(index).m_Priority;
   int lastPriority = INT_MIN;
 
   if (newPriority == oldPriority) {
     // nothing to do
-    return;
+    return false;
   }
 
-  // we need to put the mod before backups
-  auto it = std::find_if(m_ModIndexByPriority.begin(), m_ModIndexByPriority.end(), [](auto&& p) {
-    return ModInfo::getByIndex(p.second)->isBackup();
-  });
-  if (it != m_ModIndexByPriority.end() && it->first <= newPriority) {
-    newPriority = it->first - 1;
-  }
-
-  for (auto& [priority, index] : m_ModIndexByPriority) {
+  for (const auto& [priority, index] : m_ModIndexByPriority) {
     if (newPriority < oldPriority && priority >= newPriority && priority < oldPriority) {
       m_ModStatus.at(index).m_Priority += 1;
     }
@@ -669,6 +704,8 @@ void Profile::setModPriority(unsigned int index, int &newPriority)
 
   updateIndices();
   m_ModListWriter.write();
+
+  return true;
 }
 
 Profile *Profile::createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame const *gamePlugin)
@@ -897,11 +934,6 @@ QString Profile::getArchivesFileName() const
   return QDir::cleanPath(m_Directory.absoluteFilePath("archives.txt"));
 }
 
-QString Profile::getDeleterFileName() const
-{
-  return QDir::cleanPath(m_Directory.absoluteFilePath("hide_plugins.txt"));
-}
-
 QString Profile::getIniFileName() const
 {
   auto iniFiles = m_GamePlugin->iniFiles();
@@ -1037,11 +1069,6 @@ void Profile::storeSettingsByArray(const QString &prefix, const QList<QVariantMa
     }
   }
   m_Settings->endArray();
-}
-
-int Profile::getPriorityMinimum() const
-{
-  return m_ModIndexByPriority.begin()->first;
 }
 
 bool Profile::forcedLibrariesEnabled(const QString &executable) const

@@ -992,9 +992,6 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
   if (!alternatives.empty()) {
     const bool showAllAlts = ui->conflictsAdvancedShowAll->isChecked();
 
-    int beforePrio = 0;
-    int afterPrio = std::numeric_limits<int>::max();
-
     if (currOrigin->getID() == fileOrigin) {
       // current origin is the active winner, all alternatives go in 'before'
 
