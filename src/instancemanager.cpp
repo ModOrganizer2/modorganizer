@@ -48,7 +48,7 @@ Instance::Instance(QString dir, bool portable, QString profileName) :
 {
 }
 
-QString Instance::name() const
+QString Instance::displayName() const
 {
   if (isPortable())
     return QObject::tr("Portable");
@@ -105,7 +105,7 @@ bool Instance::isActive() const
     if (m_portable) {
       return i->isPortable();
     } else {
-      return (i->name() == name());
+      return (i->displayName() == displayName());
     }
   }
 
@@ -822,7 +822,7 @@ SetupInstanceResults selectGame(Instance& instance, PluginContainer& pc)
   CreateInstanceDialog dlg(pc, nullptr);
 
   // only show the game page
-  dlg.setSinglePage<cid::GamePage>(instance.name());
+  dlg.setSinglePage<cid::GamePage>(instance.displayName());
 
   dlg.show();
   dlg.activateWindow();
@@ -860,7 +860,7 @@ SetupInstanceResults selectVariant(Instance& instance, PluginContainer& pc)
     instance.gamePlugin(), instance.gameDirectory());
 
   // only show the variant page
-  dlg.setSinglePage<cid::VariantsPage>(instance.name());
+  dlg.setSinglePage<cid::VariantsPage>(instance.displayName());
 
   dlg.show();
   dlg.activateWindow();
@@ -897,7 +897,7 @@ SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
 
       reportError(
         QObject::tr("Cannot open instance '%1', failed to read INI file %2.")
-        .arg(instance.name()).arg(instance.iniPath()));
+        .arg(instance.displayName()).arg(instance.iniPath()));
 
       return SetupInstanceResults::SelectAnother;
     }
@@ -914,7 +914,7 @@ SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
         QObject::tr(
           "Cannot open instance '%1', the managed game was not found in the INI "
           "file %2. Select the game managed by this instance.")
-        .arg(instance.name()).arg(instance.iniPath()));
+        .arg(instance.displayName()).arg(instance.iniPath()));
 
       return selectGame(instance, pc);
     }
@@ -928,7 +928,7 @@ SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
         QObject::tr(
           "Cannot open instance '%1', the game plugin '%2' doesn't exist. It "
           "may have been deleted by an antivirus. Select another instance.")
-        .arg(instance.name()).arg(instance.gameName()));
+        .arg(instance.displayName()).arg(instance.gameName()));
 
       return SetupInstanceResults::SelectAnother;
     }
@@ -943,7 +943,7 @@ SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
           "Cannot open instance '%1', the game directory '%2' doesn't exist or "
           "the game plugin '%3' doesn't recognize it. Select the game managed "
           "by this instance.")
-        .arg(instance.name())
+        .arg(instance.displayName())
         .arg(instance.gameDirectory())
         .arg(instance.gameName()));
 
