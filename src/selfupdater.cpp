@@ -165,9 +165,11 @@ void SelfUpdater::startUpdate()
 
   auto latestRelease = m_UpdateCandidates.begin()->second;
 
-  UpdateDialog dialog(m_Parent, tr("New update available (%1 -> %2)")
-                                .arg(MOShared::createVersionInfo().displayString(3))
-                                .arg(latestRelease["tag_name"].toString()));
+  UpdateDialog dialog(m_Parent);
+  dialog.setVersions(
+    MOShared::createVersionInfo().displayString(3),
+    latestRelease["tag_name"].toString()
+  );
 
   // We concatenate release details. We only include pre-release if those are
   // the latest release:

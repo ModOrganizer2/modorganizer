@@ -13,10 +13,11 @@ class UpdateDialog : public QDialog
   Q_OBJECT;
 
 public:
-  UpdateDialog(QWidget* parent, const QString& title);
+  UpdateDialog(QWidget* parent);
   ~UpdateDialog();
 
   void setChangeLogs(const QString& text);
+  void setVersions(const QString& oldVersion, const QString& newVersion);
 
 private:
   std::unique_ptr<Ui::UpdateDialog> ui;

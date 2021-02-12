@@ -6,12 +6,11 @@
 
 using namespace MOBase;
 
-UpdateDialog::UpdateDialog(QWidget* parent, const QString& title) :
+UpdateDialog::UpdateDialog(QWidget* parent) :
   QDialog(parent, Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint), ui(new Ui::UpdateDialog)
 {
   // Basic UI stuff
   ui->setupUi(this);
-  setWindowTitle(title);
   connect(ui->installButton, &QPushButton::pressed, this, [&]{ done(QDialog::Accepted); });
   connect(ui->cancelButton, &QPushButton::pressed, this, [&]{ done(QDialog::Rejected); });
 
@@ -56,4 +55,13 @@ UpdateDialog::~UpdateDialog() = default;
 void UpdateDialog::setChangeLogs(const QString& text)
 {
   m_changeLogs.setText(text);
+}
+
+void UpdateDialog::setVersions(const QString& oldVersion, const QString& newVersion)
+{
+  ui->updateLabel->setText(
+    tr("Mod Organizer %1 is available.  The current version is %2.  Updating will not affect your mods or profiles.")
+    .arg(newVersion)
+    .arg(oldVersion)
+  );
 }

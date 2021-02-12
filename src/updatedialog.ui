@@ -17,7 +17,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string notr="true">New update available (xxxx)</string>
+   <string notr="true">Update available</string>
   </property>
   <property name="sizeGripEnabled">
    <bool>true</bool>
@@ -27,7 +27,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,1">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0,1,0">
+    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0,1">
      <property name="spacing">
       <number>0</number>
      </property>
@@ -80,39 +80,13 @@
      </item>
      <item>
       <widget class="QLabel" name="updateLabel">
-       <property name="minimumSize">
-        <size>
-         <width>400</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>400</width>
-         <height>16777215</height>
-        </size>
-       </property>
        <property name="text">
-        <string>Do you want to install the update?  All your mods and setup will be left untouched.
-Select Show Details option to see the full change-log.</string>
+        <string notr="true">Update text placeholder</string>
        </property>
        <property name="wordWrap">
         <bool>true</bool>
        </property>
       </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
      </item>
     </layout>
    </item>
@@ -121,7 +95,7 @@ Select Show Details option to see the full change-log.</string>
      <item>
       <widget class="QToolButton" name="detailsButton">
        <property name="text">
-        <string>Show Details...</string>
+        <string>Changelog</string>
        </property>
       </widget>
      </item>
