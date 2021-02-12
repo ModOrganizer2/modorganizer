@@ -32,6 +32,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <versioninfo.h>
 #include <report.h>
 #include "shared/util.h"
+#include "updatedialog.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -129,7 +130,7 @@ void SelfUpdater::testForUpdate(const Settings& settings)
         auto lastKey = mreleases.begin()->first;
         if (lastKey > this->m_MOVersion) {
 
-          // Fill m_UpdateCandidates with version strictly greater than the 
+          // Fill m_UpdateCandidates with version strictly greater than the
           // current version:
           m_UpdateCandidates.clear();
           for (auto p : mreleases) {
@@ -164,10 +165,11 @@ void SelfUpdater::startUpdate()
 
   auto latestRelease = m_UpdateCandidates.begin()->second;
 
-  QMessageBox query(QMessageBox::Question,
-                    tr("New update available (%1)")
-                        .arg(latestRelease["tag_name"].toString()), tr("Do you want to install update? All your mods and setup will be left untouched.\nSelect Show Details option to see the full change-log."),
-                    QMessageBox::Yes | QMessageBox::Cancel, m_Parent);
+  UpdateDialog dialog(m_Parent);
+  dialog.setVersions(
+    MOShared::createVersionInfo().displayString(3),
+    latestRelease["tag_name"].toString()
+  );
 
   // We concatenate release details. We only include pre-release if those are
   // the latest release:
@@ -182,28 +184,20 @@ void SelfUpdater::startUpdate()
     }
 
     // Stop including pre-release as soon as we find a non-prerelease:
-    if (!release["prelease"].toBool()) {
+    if (!release["prerelease"].toBool()) {
       includePreRelease = false;
     }
 
-    details += "\n# " + release["tag_name"].toString() + "\n---\n";
+    details += "\n## " + release["name"].toString() + "\n---\n";
     details += release["body"].toString();
   }
 
   // Need to call setDetailedText to create the QTextEdit and then be able to retrieve it:
-  query.setDetailedText(details);
-  QTextEdit* textEdit = query.findChild<QTextEdit*>();
+  dialog.setChangeLogs(details);
 
-  // If we have the text edit, we can call setMarkdown to get proper formatting.
-  if (textEdit) {
-    textEdit->setMarkdown(details);
-  }
+  int res = dialog.exec();
 
-  query.button(QMessageBox::Yes)->setText(tr("Install"));
-
-  int res = query.exec();
-
-  if (query.result() == QMessageBox::Yes) {
+  if (dialog.result() == QDialog::Accepted) {
     bool found = false;
     for (const QJsonValue &assetVal : latestRelease["assets"].toArray()) {
       QJsonObject asset = assetVal.toObject();

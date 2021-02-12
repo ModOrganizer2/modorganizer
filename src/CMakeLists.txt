@@ -18,6 +18,7 @@ add_filter(NAME src/application GROUPS
 	multiprocess
 	sanitychecks
 	selfupdater
+	updatedialog
 )
 
 add_filter(NAME src/browser GROUPS

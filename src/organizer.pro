@@ -83,6 +83,7 @@ SOURCES += \
     modflagicondelegate.cpp \
     genericicondelegate.cpp \
     organizerproxy.cpp \
+    updatedialog.cpp \
     viewmarkingscrollbar.cpp \
     plugincontainer.cpp \
     organizercore.cpp \
@@ -161,6 +162,7 @@ HEADERS  += \
     modflagicondelegate.h \
     genericicondelegate.h \
     organizerproxy.h \
+    updatedialog.h \
     viewmarkingscrollbar.h \
     plugincontainer.h \
     organizercore.h \
@@ -203,7 +205,8 @@ FORMS    += \
     aboutdialog.ui \
     listdialog.ui \
     forcedloaddialog.ui \
-    forcedloaddialogwidget.ui
+    forcedloaddialogwidget.ui \
+    updatedialog.ui
 
 RESOURCES += \
     resources.qrc \
