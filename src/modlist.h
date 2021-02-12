@@ -258,11 +258,11 @@ signals:
   // the sorting of the list can only be manually changed if the list is sorted by priority
   // in which case the move is intended to change the priority of a mod.
   //
-  void modPrioritiesChanged(const QModelIndexList& indices);
+  void modPrioritiesChanged(const QModelIndexList& indices) const;
 
   // emitted when the state (active/inactive) of one or multiple mods have changed
   //
-  void modStatesChanged(const QModelIndexList& indices);
+  void modStatesChanged(const QModelIndexList& indices) const;
 
   /**
    * @brief emitted when the model wants a text to be displayed by the UI

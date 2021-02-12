@@ -897,11 +897,6 @@ public: // Conflicts
   //
   virtual const std::set<unsigned int>& getModArchiveLooseOverwritten() const { return s_EmptySet; }
 
-  /**
-   * @brief Update conflict information.
-   */
-  virtual void doConflictCheck() const {}
-
 public slots:
 
   /**
