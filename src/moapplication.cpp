@@ -392,10 +392,14 @@ void MOApplication::externalMessage(const QString& message)
 
   if (moshortcut.isValid()) {
     if(moshortcut.hasExecutable()) {
-      m_core->processRunner()
-        .setFromShortcut(moshortcut)
-        .setWaitForCompletion(ProcessRunner::TriggerRefresh)
-        .run();
+      try {
+        m_core->processRunner()
+          .setFromShortcut(moshortcut)
+          .setWaitForCompletion(ProcessRunner::TriggerRefresh)
+          .run();
+      } catch(std::exception&) {
+        // user was already warned
+      }
     }
   } else if (isNxmLink(message)) {
     MessageDialog::showMessage(tr("Download started"), qApp->activeWindow(), false);
@@ -414,11 +418,11 @@ void MOApplication::externalMessage(const QString& message)
     if (auto i=cl.instance()) {
       const auto ci = InstanceManager::singleton().currentInstance();
 
-      if (*i != ci->name()) {
+      if (*i != ci->displayName()) {
         reportError(tr(
           "This shortcut or command line is for instance '%1', but the current "
           "instance is '%2'.")
-            .arg(*i).arg(ci->name()));
+            .arg(*i).arg(ci->displayName()));
 
         return;
       }

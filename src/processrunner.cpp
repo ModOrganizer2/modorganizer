@@ -4,6 +4,7 @@
 #include "iuserinterface.h"
 #include "envmodule.h"
 #include "env.h"
+#include <report.h>
 #include <iplugingame.h>
 #include <log.h>
 
@@ -607,16 +608,30 @@ ProcessRunner& ProcessRunner::setFromShortcut(const MOShortcut& shortcut)
 
   if (currentInstance)
   {
-    if (shortcut.hasInstance() && shortcut.instance() != currentInstance->name()) {
-      throw std::runtime_error(
-        QString("Refusing to run executable from different instance %1:%2")
-        .arg(shortcut.instance(),shortcut.executable())
-        .toLocal8Bit().constData());
+    if (shortcut.hasInstance() && !shortcut.isForInstance(*currentInstance)) {
+      MOBase::reportError(QObject::tr(
+        "This shortcut is for instance '%1' but Mod Organizer is currently "
+        "running for '%2'. Exit Mod Organizer before running the shortcut or "
+        "change the active instance.")
+        .arg(shortcut.instanceDisplayName())
+        .arg(currentInstance->displayName()));
+
+      throw std::exception();
     }
   }
 
-  const Executable& exe = m_core.executablesList()->get(shortcut.executable());
-  setFromExecutable(exe);
+  const auto* exes = m_core.executablesList();
+  const auto exe = exes->find(shortcut.executableName());
+
+  if (exe != exes->end()) {
+    setFromExecutable(*exe);
+  } else {
+    MOBase::reportError(QObject::tr(
+      "Executable '%1' does not exist in instance '%2'.")
+      .arg(shortcut.executableName()).arg(currentInstance->displayName()));
+
+    throw std::exception();
+  }
 
   return *this;
 }

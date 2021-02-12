@@ -251,7 +251,7 @@ std::optional<int> CommandLine::runPostApplication(MOApplication& a)
     env::Console c;
 
     if (auto i=InstanceManager::singleton().currentInstance()) {
-      std::cout << i->name().toStdString() << "\n";
+      std::cout << i->displayName().toStdString() << "\n";
     } else {
       std::cout << "no instance configured\n";
     }
@@ -289,9 +289,8 @@ std::optional<int> CommandLine::runPostOrganizer(OrganizerCore& core)
 
         return 0;
       }
-      catch (const std::exception &e) {
-        reportError(
-          QObject::tr("failed to start shortcut: %1").arg(e.what()));
+      catch (std::exception&) {
+        // user was already warned
         return 1;
       }
     }
@@ -451,7 +450,7 @@ std::optional<QString> CommandLine::instance() const
   // note that moshortcut:// overrides -i
 
   if (m_shortcut.isValid() && m_shortcut.hasInstance()) {
-    return m_shortcut.instance();
+    return m_shortcut.instanceName();
   } else if (m_vm.count("instance")) {
     return QString::fromStdString(m_vm["instance"].as<std::string>());
   }
@@ -817,7 +816,7 @@ std::optional<int> RunCommand::runPostOrganizer(OrganizerCore& core)
           reportError(
             QObject::tr("Executable '%1' not found in instance '%2'.")
               .arg(program)
-              .arg(InstanceManager::singleton().currentInstance()->name()));
+              .arg(InstanceManager::singleton().currentInstance()->displayName()));
 
           return 1;
         }

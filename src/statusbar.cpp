@@ -155,7 +155,7 @@ void StatusBar::updateNormalMessage(OrganizerCore& core)
 
   QString instance = "?";
   if (auto i=InstanceManager::singleton().currentInstance())
-    instance = i->name();
+    instance = i->displayName();
 
   QString profile = core.profileName();
 

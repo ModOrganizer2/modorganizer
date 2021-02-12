@@ -1,25 +1,5 @@
-/*
-Copyright (C) 2016 Sebastian Herbord. All rights reserved.
-
-This file is part of Mod Organizer.
-
-Mod Organizer is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Mod Organizer is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-
 #include "moshortcut.h"
-
+#include "instancemanager.h"
 
 MOShortcut::MOShortcut(const QString& link)
   : m_valid(link.startsWith("moshortcut://"))
@@ -38,6 +18,51 @@ MOShortcut::MOShortcut(const QString& link)
       m_executable = link.mid(start);
 	if(!(m_executable==""))
 		m_hasExecutable=true;
+  }
+}
+
+bool MOShortcut::isValid() const
+{
+  return m_valid;
+}
+
+bool MOShortcut::hasInstance() const
+{
+  return m_hasInstance;
+}
+
+bool MOShortcut::hasExecutable() const
+{
+  return m_hasExecutable;
+}
+
+QString MOShortcut::instanceDisplayName() const
+{
+  return (m_instance == "" ? QObject::tr("Portable") : m_instance);
+}
+
+const QString& MOShortcut::instanceName() const
+{
+  return m_instance;
+}
+
+const QString& MOShortcut::executableName() const
+{
+  return m_executable;
+}
+
+bool MOShortcut::isForInstance(const Instance& i) const
+{
+  if (!m_hasInstance) {
+    // no instance name was specified, so the current one is fine
+    return true;
+  }
+
+  if (m_instance == "") {
+    // empty instance name means portable
+    return i.isPortable();
+  } else {
+    return (i.displayName() == m_instance);
   }
 }
 

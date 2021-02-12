@@ -3,21 +3,42 @@
 
 #include <QString>
 
+class Instance;
+
 class MOShortcut
 {
 public:
   MOShortcut(const QString& link={});
 
-  /// true iff intialized using a valid moshortcut link
-  bool isValid() const { return m_valid; }
+  // true if initialized using a valid moshortcut link
+  //
+  bool isValid() const;
 
-  bool hasInstance() const { return m_hasInstance; }
+  // whether an instance name was given
+  //
+  bool hasInstance() const;
 
-  bool hasExecutable() const { return m_hasExecutable; }
+  // whether an executable name was given
+  //
+  bool hasExecutable() const;
 
-  const QString& instance() const { return m_instance; }
+  // name of the instance given, "Portable" for portable; undefined if
+  // hasInstance() returns false
+  //
+  QString instanceDisplayName() const;
 
-  const QString& executable() const { return m_executable; }
+  // name of the instance given, empty for portable; undefined if hasInstance()
+  // returns false
+  //
+  const QString& instanceName() const;
+
+  // name of the executable given
+  //
+  const QString& executableName() const;
+
+  // whether this shortcut is for the given instance
+  //
+  bool isForInstance(const Instance& i) const;
 
   QString toString() const;
 
