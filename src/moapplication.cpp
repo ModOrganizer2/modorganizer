@@ -492,7 +492,7 @@ std::optional<int> MOApplication::setupInstanceLoop(
       continue;
     } else if (setupResult == SetupInstanceResults::SelectAnother) {
       InstanceManager::singleton().clearCurrentInstance();
-      return RestartExitCode;
+      return ReselectExitCode;
     } else {
       return 1;
     }
