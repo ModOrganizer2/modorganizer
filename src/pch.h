@@ -268,3 +268,6 @@
 #include <QtPlugin>
 #include <QtTest/QtTest>
 #include <QStandardPaths>
+
+// curl
+#include <curl/curl.h>
