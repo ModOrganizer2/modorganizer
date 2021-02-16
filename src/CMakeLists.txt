@@ -65,6 +65,7 @@ add_filter(NAME src/downloads GROUPS
 	downloadlist
 	downloadlistview
 	downloadmanager
+	downloadmanager2
 )
 
 add_filter(NAME src/env GROUPS
