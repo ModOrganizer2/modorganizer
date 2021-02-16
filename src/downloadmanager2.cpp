@@ -317,20 +317,66 @@ fs::path unfinished(const fs::path& p)
 
 
 CurlDownloader::Download::Download(std::string url, fs::path file) :
-  url(std::move(url)), file(std::move(file)), handle(defer),
-  bytes(0), bytesPerSecond(0)
+  m_url(std::move(url)), m_file(std::move(file)), m_handle(defer),
+  m_state(Stopped), m_bytes(0), m_bytesPerSecond(0)
 {
+}
+
+CURL* CurlDownloader::Download::setup()
+{
+  if (!m_handle.create()) {
+    log::error("curl: easy init failed for {}", debug_name());
+    return nullptr;
+  }
+
+  auto* h = m_handle.get();
+
+  curl_easy_setopt(h, CURLOPT_URL, m_url.c_str());
+  curl_easy_setopt(h, CURLOPT_NOPROGRESS, 0);
+  curl_easy_setopt(h, CURLOPT_XFERINFOFUNCTION, &s_xfer);
+  curl_easy_setopt(h, CURLOPT_XFERINFODATA, this);
+  curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, &s_header);
+  curl_easy_setopt(h, CURLOPT_HEADERDATA, this);
+  curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, &s_write);
+  curl_easy_setopt(h, CURLOPT_WRITEDATA, this);
+  curl_easy_setopt(h, CURLOPT_FOLLOWLOCATION, 1);
+
+  curl_easy_setopt(h, CURLOPT_VERBOSE, 1);
+  curl_easy_setopt(h, CURLOPT_DEBUGFUNCTION, &s_debug);
+
+  const auto rf = resumeFrom();
+  if (rf > 0) {
+    log::debug("curl: {} resume from {}", debug_name(), rf);
+    curl_easy_setopt(h, CURLOPT_RESUME_FROM_LARGE, (curl_off_t)rf);
+  }
+
+  return h;
+}
+
+CURL* CurlDownloader::Download::handle() const
+{
+  return m_handle.get();
+}
+
+CurlDownloader::Download::States CurlDownloader::Download::state() const
+{
+  return m_state;
+}
+
+std::string CurlDownloader::Download::debug_name() const
+{
+  return m_file.filename().string();
 }
 
 std::size_t CurlDownloader::Download::resumeFrom()
 {
-  const auto p = unfinished(file);
+  const auto p = unfinished(m_file);
 
   if (fs::exists(p)) {
-    const auto s = out.open(p, true);
+    const auto s = m_out.open(p, true);
 
     if (s == -1) {
-      log::error("curl: failed to open {}, no resume", file);
+      log::error("curl: failed to open {}, no resume", m_file);
       return 0;
     }
 
@@ -340,17 +386,17 @@ std::size_t CurlDownloader::Download::resumeFrom()
   return 0;
 }
 
-int CurlDownloader::Download::xfer(
+bool CurlDownloader::Download::xfer(
   curl_off_t dltotal, curl_off_t dlnow,
   curl_off_t ultotal, curl_off_t ulnow)
 {
-  return 0;
+  return (m_state == Running);
 }
 
 bool CurlDownloader::Download::header(std::string_view sv)
 {
   //log::debug("curl: header {} bytes '{}'", sv.size(), sv);
-  return true;
+  return (m_state == Running);
 }
 
 bool CurlDownloader::Download::write(std::string_view data)
@@ -359,57 +405,78 @@ bool CurlDownloader::Download::write(std::string_view data)
 
   //log::debug("curl: write {} bytes", data.size());
 
-  if (!out.opened()) {
-    if (out.open(unfinished(file), false) == -1) {
+  if (!m_out.opened()) {
+    if (m_out.open(unfinished(m_file), false) == -1) {
       return false;
     }
   }
 
-  if (!out.write(data)) {
+  if (!m_out.write(data)) {
     return false;
   }
 
 
-  bytes += data.size();
+  m_bytes += data.size();
 
   const auto now = hr_clock::now();
 
-  if (lastCheck == hr_clock::time_point()) {
-    lastCheck = now;
+  if (m_lastCheck == hr_clock::time_point()) {
+    m_lastCheck = now;
   } else {
-    const auto d = (now - lastCheck);
+    const auto d = (now - m_lastCheck);
     if (duration_cast<seconds>(d) >= seconds(1)) {
       const double s = duration_cast<milliseconds>(d).count() / 1000.0;
-      bytesPerSecond = bytes / s;
-      bytes = 0;
-      lastCheck = now;
+      m_bytesPerSecond = m_bytes / s;
+      m_bytes = 0;
+      m_lastCheck = now;
     }
   }
 
-  return true;
+  return (m_state == Running);
+}
+
+void CurlDownloader::Download::start()
+{
+  m_state = Running;
+}
+
+void CurlDownloader::Download::stop()
+{
+  m_state = Stopping;
 }
 
 bool CurlDownloader::Download::finish()
 {
-  if (!out.opened()) {
-    return true;
+  bool b = true;
+
+  if (m_out.opened() && m_state == Running) {
+    b = rename();
   }
 
-  out.close();
+  m_state = Stopped;
 
-  const auto from = unfinished(file);
-  const auto to = file;
+  return b;
+}
 
-  if (fs::exists(to)) {
-    log::error("curl: can't rename {} to {}, already exists", from, to);
+bool CurlDownloader::Download::rename()
+{
+  m_out.close();
+
+  const auto from = unfinished(m_file);
+
+  if (fs::exists(m_file)) {
+    log::error("curl: can't rename {} to {}, already exists", from, m_file);
     return false;
   }
 
   std::error_code ec;
-  fs::rename(from, to, ec);
+  fs::rename(from, m_file, ec);
 
   if (ec) {
-    log::error("curl: failed to rename {} to {}, {}", from, to, ec.message());
+    log::error(
+      "curl: failed to rename {} to {}, {}",
+      from, m_file, ec.message());
+
     return false;
   }
 
@@ -423,8 +490,9 @@ void CurlDownloader::Download::debug(curl_infotype t, std::string_view data)
 
 
 CurlDownloader::CurlDownloader() :
-  m_global(curlGlobal()), m_queuedCount(0),
-  m_cancel(false), m_stop(false), m_finished(false)
+  m_global(curlGlobal()),
+  m_cancel(false), m_stop(false), m_finished(false),
+  m_maxActive(NoMaxActive), m_maxSpeed(0)
 {
   m_thread = std::thread([&]{ run(); });
 }
@@ -458,9 +526,28 @@ void CurlDownloader::join()
   }
 }
 
-std::size_t CurlDownloader::queued() const
+void CurlDownloader::maxActive(std::size_t n)
 {
-  return m_queuedCount;
+  if (n != m_maxActive) {
+    const std::size_t old = m_maxActive;
+    m_maxActive = (n == 0 ? NoMaxActive : n);
+
+    log::debug(
+      "curl: changed maxActive from {} to {}",
+      (old == NoMaxActive ? "none" : std::to_string(old)),
+      (n == NoMaxActive ? "none" : std::to_string(n)));
+  }
+
+  m_cv.notify_one();
+}
+
+void CurlDownloader::maxSpeed(std::size_t s)
+{
+  if (s != m_maxSpeed) {
+    log::debug("curl: changed maxSpeed from {} to {}", m_maxSpeed, s);
+    m_maxSpeed = s;
+    m_cv.notify_one();
+  }
 }
 
 bool CurlDownloader::finished() const
@@ -485,6 +572,8 @@ std::shared_ptr<CurlDownloader::Download> CurlDownloader::add(
 void CurlDownloader::run()
 {
   try {
+    std::size_t oldMaxSpeed = m_maxSpeed;
+
     for (;;) {
       checkCancel();
 
@@ -497,6 +586,14 @@ void CurlDownloader::run()
       perform();
       checkCancel();
 
+      {
+        const std::size_t newMaxSpeed = m_maxSpeed;
+        if (newMaxSpeed != oldMaxSpeed) {
+          oldMaxSpeed = newMaxSpeed;
+          setLimits();
+        }
+      }
+
       if (m_active.empty() && m_queued.empty()) {
         if (m_stop) {
           log::debug("curl: finished, must stop, breaking");
@@ -505,7 +602,7 @@ void CurlDownloader::run()
           log::debug("curl: nothing to do, sleeping");
 
           std::unique_lock lock(m_tempMutex);
-          m_cv.wait(lock, [&]{ return !m_temp.empty() || m_cancel; });
+          m_cv.wait(lock);
 
           log::debug("curl: woke up");
         }
@@ -544,8 +641,6 @@ void CurlDownloader::checkTemp()
       m_queued.end(),
       std::make_move_iterator(temp.begin()),
       std::make_move_iterator(temp.end()));
-
-    m_queuedCount = m_queued.size();
   }
 }
 
@@ -571,14 +666,12 @@ void CurlDownloader::perform()
     if (msg->msg == CURLMSG_DONE) {
       bool found = false;
 
-      auto itor = std::find_if(
-        m_active.begin(), m_active.end(),
-        [&](auto&& d) { return d->handle.get() == msg->easy_handle; });
+      auto itor = m_activeMap.find(msg->easy_handle);
 
-      if (itor == m_active.end()) {
-        log::error("curl: finished, but not in list");
+      if (itor == m_activeMap.end()) {
+        log::error("curl: {} finished, but not in list", (void*)msg->easy_handle);
       } else {
-        log::debug("curl: finished {}", (*itor)->url);
+        log::debug("curl: finished {}", (*itor->second)->debug_name());
       }
 
       mr = curl_multi_remove_handle(m_handle.get(), msg->easy_handle);
@@ -586,9 +679,15 @@ void CurlDownloader::perform()
         log::error("curl: failed to remove easy handle, {}", curlError(mr));
       }
 
-      if (itor != m_active.end()) {
-        (*itor)->finish();
-        m_active.erase(itor);
+      if (itor != m_activeMap.end()) {
+        const auto stopping = ((*itor->second)->state() == Download::Stopping);
+
+        (*itor->second)->finish();
+
+        if (!stopping) {
+          m_active.erase(itor->second);
+          m_activeMap.erase(itor);
+        }
       }
     }
   }
@@ -606,32 +705,103 @@ void CurlDownloader::poll()
 
 void CurlDownloader::checkQueue()
 {
-  const std::size_t max = 3;
+  const std::size_t max = m_maxActive;
+  bool changed = false;
 
-  if (m_queued.empty()) {
-    return;
+  if (moveStoppedToQueue()) {
+    changed = true;
   }
 
-  std::size_t q = 0;
-  bool added = false;
+  stopOverMax(max);
 
-  while (m_active.size() < max && q < m_queued.size()) {
-    auto d = m_queued[q];
-    log::debug("curl: activating #{} {}", q, d->url);
+  if (addFromQueue(max)) {
+    changed = true;
+  }
 
-    if (start(d)) {
-      m_queued.erase(m_queued.begin() + q);
-      m_queuedCount = m_queued.size();
-      m_active.push_back(std::move(d));
-      added = true;
+  if (changed) {
+    setLimits();
+  }
+}
+
+bool CurlDownloader::moveStoppedToQueue()
+{
+  bool changed = false;
+  auto itor = m_active.begin();
+
+  while (itor != m_active.end()) {
+    auto d = *itor;
+
+    if (d->state() == Download::Stopped) {
+      log::debug("curl: {} stopped, moving to queue", d->debug_name());
+
+      auto mitor = m_activeMap.find(d->handle());
+      if (mitor == m_activeMap.end()) {
+        log::error("curl: {} not found in active map", d->debug_name());
+      } else {
+        m_activeMap.erase(mitor);
+      }
+
+      itor = m_active.erase(itor);
+      m_queued.push_back(std::move(d));
+
+      changed = true;
     } else {
-      log::debug("curl: failed to active #{} {}", q, d->url);
+      ++itor;
     }
   }
 
-  if (added) {
-    setLimits();
+  return changed;
+}
+
+void CurlDownloader::stopOverMax(std::size_t max)
+{
+  std::size_t runningCount = 0;
+
+  for (auto&& d : m_active) {
+    if (d->state() == Download::Running) {
+      ++runningCount;
+    }
   }
+
+  if (runningCount > max) {
+    log::debug("curl: running count {} over {}, stopping", runningCount, max);
+
+    for (auto itor=m_active.rbegin(); itor!=m_active.rend(); ++itor) {
+      auto d = *itor;
+      if (d->state() == Download::Running) {
+        log::debug("curl: stopping {}", d->debug_name());
+        d->stop();
+
+        --runningCount;
+        if (runningCount <= max) {
+          break;
+        }
+      }
+    }
+  }
+}
+
+bool CurlDownloader::addFromQueue(std::size_t max)
+{
+  bool changed = false;
+  auto q = m_queued.begin();
+
+  while (m_active.size() < max && q != m_queued.end()) {
+    std::shared_ptr<Download> d = *q;
+    log::debug("curl: activating {}", d->debug_name());
+
+    if (start(d)) {
+      q = m_queued.erase(q);
+      m_active.push_back(d);
+      m_activeMap.emplace(d->handle(), std::prev(m_active.end()));
+      changed = true;
+    } else {
+      log::debug("curl: failed to active {}", d->debug_name());
+      ++q;
+    }
+  }
+
+  return changed;
 }
 
 void CurlDownloader::setLimits()
@@ -640,53 +810,34 @@ void CurlDownloader::setLimits()
     return;
   }
 
-  const std::size_t max = 1024 * 500;
-  const curl_off_t maxPer = max / m_active.size();
+  const std::size_t maxSpeed = m_maxSpeed;
+  const curl_off_t maxPer = maxSpeed / m_active.size();
 
   log::debug(
     "curl: setting limits max={} count={} maxPer={}",
-    max, m_active.size(), maxPer);
+    maxSpeed, m_active.size(), maxPer);
 
   for (auto&& d : m_active) {
-    curl_easy_setopt(d->handle.get(), CURLOPT_MAX_RECV_SPEED_LARGE, maxPer);
+    curl_easy_setopt(d->handle(), CURLOPT_MAX_RECV_SPEED_LARGE, maxPer);
   }
 }
 
 bool CurlDownloader::start(std::shared_ptr<Download> d)
 {
-  if (!d->handle.create()) {
-    log::error("curl: easy init failed");
+  auto* h = d->setup();
+  if (!h) {
     return false;
   }
 
-  auto* h = d->handle.get();
-
-  curl_easy_setopt(h, CURLOPT_URL, d->url.c_str());
-  curl_easy_setopt(h, CURLOPT_NOPROGRESS, 0);
-  curl_easy_setopt(h, CURLOPT_XFERINFOFUNCTION, &s_xfer);
-  curl_easy_setopt(h, CURLOPT_XFERINFODATA, d.get());
-  curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, &s_header);
-  curl_easy_setopt(h, CURLOPT_HEADERDATA, d.get());
-  curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, &s_write);
-  curl_easy_setopt(h, CURLOPT_WRITEDATA, d.get());
-  curl_easy_setopt(h, CURLOPT_FOLLOWLOCATION, 1);
-
-  curl_easy_setopt(h, CURLOPT_VERBOSE, 1);
-  curl_easy_setopt(h, CURLOPT_DEBUGFUNCTION, &s_debug);
-
-  const auto rf = d->resumeFrom();
-  if (rf > 0) {
-    log::debug("curl: {} resume from {}", d->file, rf);
-    curl_easy_setopt(h, CURLOPT_RESUME_FROM_LARGE, (curl_off_t)rf);
-  }
-
-  log::debug("curl: adding {} to multi handle", d->url);
+  log::debug("curl: adding {} to multi handle", d->debug_name());
 
   const auto r = curl_multi_add_handle(m_handle.get(), h);
   if (r != CURLM_OK) {
     log::error("curl: failed to add easy handle, {}", curlError(r));
     return false;
   }
+
+  d->start();
 
   return true;
 }
@@ -696,7 +847,10 @@ int CurlDownloader::s_xfer(
   curl_off_t dltotal, curl_off_t dlnow,
   curl_off_t ultotal, curl_off_t ulnow)
 {
-  return static_cast<Download*>(p)->xfer(dltotal, dlnow, ultotal, ulnow);
+  const auto b = static_cast<Download*>(p)->xfer(
+    dltotal, dlnow, ultotal, ulnow);
+
+  return (b ? 0 : -1);
 }
 
 size_t CurlDownloader::s_header(char* data, size_t size, size_t n, void* p)

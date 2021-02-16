@@ -17,6 +17,8 @@ public:
   struct defer_t {};
   static const defer_t defer;
 
+  static const std::size_t NoMaxActive =
+    std::numeric_limits<std::size_t>::max();
 
   class EasyHandle
   {
@@ -77,29 +79,49 @@ public:
   };
 
 
-  struct Download
+  class Download
   {
-    std::string url;
-    fs::path file;
-    EasyHandle handle;
-    FileHandle out;
-
-    hr_clock::time_point lastCheck;
-    std::size_t bytes;
-    std::atomic<double> bytesPerSecond;
+  public:
+    enum States
+    {
+      Stopped = 0,
+      Running,
+      Stopping
+    };
 
     Download(std::string url, fs::path file);
 
-    std::size_t resumeFrom();
+    CURL* setup();
+
+    CURL* handle() const;
+    States state() const;
+    std::string debug_name() const;
+
+    void start();
+    void stop();
     bool finish();
 
-    int xfer(
+    bool xfer(
       curl_off_t dltotal, curl_off_t dlnow,
       curl_off_t ultotal, curl_off_t ulnow);
 
     bool header(std::string_view sv);
     bool write(std::string_view data);
     void debug(curl_infotype t, std::string_view data);
+
+  private:
+    std::string m_url;
+    fs::path m_file;
+    EasyHandle m_handle;
+    FileHandle m_out;
+    States m_state;
+
+    hr_clock::time_point m_lastCheck;
+    std::size_t m_bytes;
+    std::atomic<double> m_bytesPerSecond;
+
+    std::size_t resumeFrom();
+    bool rename();
   };
 
 
@@ -110,32 +132,44 @@ public:
   void stop();
   void join();
 
-  std::size_t queued() const;
+  void maxActive(std::size_t n);
+  void maxSpeed(std::size_t bytesPerSecond);
+
   bool finished() const;
 
   std::shared_ptr<Download> add(std::string url, fs::path file);
 
 private:
+  using DownloadList = std::list<std::shared_ptr<Download>>;
+
   std::shared_ptr<CurlGlobalHandle> m_global;
   MultiHandle m_handle;
 
-  std::atomic<std::size_t> m_queuedCount;
   std::vector<std::shared_ptr<Download>> m_temp;
   std::mutex m_tempMutex;
 
   std::thread m_thread;
   std::atomic<bool> m_cancel, m_stop, m_finished;
   std::condition_variable m_cv;
-  std::vector<std::shared_ptr<Download>> m_queued, m_active;
+  DownloadList m_queued, m_active;
+  std::map<CURL*, DownloadList::iterator> m_activeMap;
+
+  std::atomic<std::size_t> m_maxActive, m_maxSpeed;
+
 
   void run();
   void checkTemp();
   void perform();
   void poll();
-  void checkQueue();
   bool start(std::shared_ptr<Download> d);
   void setLimits();
   void checkCancel();
+
+  void checkQueue();
+  bool moveStoppedToQueue();
+  void stopOverMax(std::size_t max);
+  bool addFromQueue(std::size_t max);
+
 
   static int s_xfer(
     void* p,
