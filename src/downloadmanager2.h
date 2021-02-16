@@ -86,7 +86,8 @@ public:
     {
       Stopped = 0,
       Running,
-      Stopping
+      Stopping,
+      Finished
     };
 
     Download(std::string url, fs::path file);
@@ -166,7 +167,8 @@ private:
   void checkCancel();
 
   void checkQueue();
-  bool moveStoppedToQueue();
+  bool cleanupActive();
+  DownloadList::iterator removeFromActive(DownloadList::iterator itor);
   void stopOverMax(std::size_t max);
   bool addFromQueue(std::size_t max);
 

@@ -451,9 +451,15 @@ bool CurlDownloader::Download::finish()
 
   if (m_out.opened() && m_state == Running) {
     b = rename();
+  } else {
+    m_out.close();
   }
 
-  m_state = Stopped;
+  if (m_state == Running) {
+    m_state = Finished;
+  } else {
+    m_state = Stopped;
+  }
 
   return b;
 }
@@ -680,14 +686,7 @@ void CurlDownloader::perform()
       }
 
       if (itor != m_activeMap.end()) {
-        const auto stopping = ((*itor->second)->state() == Download::Stopping);
-
         (*itor->second)->finish();
-
-        if (!stopping) {
-          m_active.erase(itor->second);
-          m_activeMap.erase(itor);
-        }
       }
     }
   }
@@ -708,7 +707,7 @@ void CurlDownloader::checkQueue()
   const std::size_t max = m_maxActive;
   bool changed = false;
 
-  if (moveStoppedToQueue()) {
+  if (cleanupActive()) {
     changed = true;
   }
 
@@ -723,7 +722,7 @@ void CurlDownloader::checkQueue()
   }
 }
 
-bool CurlDownloader::moveStoppedToQueue()
+bool CurlDownloader::cleanupActive()
 {
   bool changed = false;
   auto itor = m_active.begin();
@@ -733,17 +732,12 @@ bool CurlDownloader::moveStoppedToQueue()
 
     if (d->state() == Download::Stopped) {
       log::debug("curl: {} stopped, moving to queue", d->debug_name());
-
-      auto mitor = m_activeMap.find(d->handle());
-      if (mitor == m_activeMap.end()) {
-        log::error("curl: {} not found in active map", d->debug_name());
-      } else {
-        m_activeMap.erase(mitor);
-      }
-
-      itor = m_active.erase(itor);
-      m_queued.push_back(std::move(d));
-
+      itor = removeFromActive(itor);
+      m_queued.push_front(std::move(d));
+      changed = true;
+    } else if (d->state() == Download::Finished) {
+      log::debug("curl: {} finished, removing from list", d->debug_name());
+      itor = removeFromActive(itor);
       changed = true;
     } else {
       ++itor;
@@ -751,6 +745,20 @@ bool CurlDownloader::moveStoppedToQueue()
   }
 
   return changed;
+}
+
+CurlDownloader::DownloadList::iterator CurlDownloader::removeFromActive(
+  DownloadList::iterator itor)
+{
+  auto mitor = m_activeMap.find((*itor)->handle());
+
+  if (mitor == m_activeMap.end()) {
+    log::error("curl: {} not found in active map", (*itor)->debug_name());
+  } else {
+    m_activeMap.erase(mitor);
+  }
+
+  return m_active.erase(itor);
 }
 
 void CurlDownloader::stopOverMax(std::size_t max)
