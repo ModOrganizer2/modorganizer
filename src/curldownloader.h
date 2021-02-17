@@ -139,7 +139,7 @@ private:
 class Downloader
 {
 public:
-  static const std::size_t NoMaxActive =
+  static const std::size_t NoLimit =
     std::numeric_limits<std::size_t>::max();
 
   Downloader();
