@@ -93,11 +93,11 @@ public:
 
   Download(std::string url, fs::path file);
 
-  CURL* setup();
+  CURL* setup(curl_off_t maxSpeed);
 
   CURL* handle() const;
   States state() const;
-  std::string debug_name() const;
+  std::string debugName() const;
 
   void start();
   void stop();
@@ -149,7 +149,6 @@ public:
   void stop();
   void join();
 
-  void maxActive(std::size_t n);
   void maxSpeed(std::size_t bytesPerSecond);
 
   bool finished() const;
@@ -168,10 +167,10 @@ private:
   std::thread m_thread;
   std::atomic<bool> m_cancel, m_stop, m_finished;
   std::condition_variable m_cv;
-  DownloadList m_queued, m_active;
-  std::map<CURL*, DownloadList::iterator> m_activeMap;
+  DownloadList m_list;
+  std::map<CURL*, DownloadList::iterator> m_map;
 
-  std::atomic<std::size_t> m_maxActive, m_maxSpeed;
+  std::atomic<std::size_t> m_maxSpeed;
 
 
   void run();
@@ -187,6 +186,7 @@ private:
   DownloadList::iterator removeFromActive(DownloadList::iterator itor);
   void stopOverMax(std::size_t max);
   bool addFromQueue(std::size_t max);
+  curl_off_t maxSpeedPer() const;
 };
 
 } // namespace

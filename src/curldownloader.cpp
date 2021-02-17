@@ -15,74 +15,15 @@ static std::weak_ptr<GlobalHandle> g_curlHandle;
 const defer_t defer;
 
 
-class LogWrapper
+log::LogWrapper& curlLog()
 {
-public:
-  LogWrapper(log::Logger& lg, std::string prefix, bool enabled=true)
-    : m_lg(lg), m_enabled(enabled), m_prefix(std::move(prefix))
-  {
-  }
-
-  void enabled(bool b)
-  {
-    m_enabled = b;
-  }
-
-  bool enabled() const
-  {
-    return m_enabled;
-  }
-
-  template <class F, class... Args>
-  void debug(F&& format, Args&&... args) noexcept
-  {
-    log(log::Debug, std::forward<F>(format), std::forward<Args>(args)...);
-  }
-
-  template <class F, class... Args>
-  void info(F&& format, Args&&... args) noexcept
-  {
-    log(log::Info, std::forward<F>(format), std::forward<Args>(args)...);
-  }
-
-  template <class F, class... Args>
-  void warn(F&& format, Args&&... args) noexcept
-  {
-    log(log::Warning, std::forward<F>(format), std::forward<Args>(args)...);
-  }
-
-  template <class F, class... Args>
-  void error(F&& format, Args&&... args) noexcept
-  {
-    log(log::Error, std::forward<F>(format), std::forward<Args>(args)...);
-  }
-
-  template <class F, class... Args>
-  void log(log::Levels lv, F&& format, Args&&... args) noexcept
-  {
-    if (!m_enabled) {
-      return;
-    }
-
-    m_lg.log(lv, m_prefix + std::forward<F>(format), std::forward<Args>(args)...);
-  }
-
-private:
-  log::Logger& m_lg;
-  bool m_enabled;
-  std::string m_prefix;
-};
-
-
-LogWrapper& curlLog()
-{
-  static LogWrapper lg(log::getDefault(), "curl: ");
+  static log::LogWrapper lg(log::getDefault(), "curl: ");
   return lg;
 }
 
-LogWrapper& curlLogV()
+log::LogWrapper& curlLogV()
 {
-  static LogWrapper lg(log::getDefault(), "curl: ", false);
+  static log::LogWrapper lg(log::getDefault(), "curl: ", false);
   return lg;
 }
 
@@ -401,10 +342,10 @@ Download::Download(std::string url, fs::path file) :
 {
 }
 
-CURL* Download::setup()
+CURL* Download::setup(curl_off_t maxSpeed)
 {
   if (!m_handle.create()) {
-    curlLog().error("easy init failed for {}", debug_name());
+    curlLog().error("easy init failed for {}", debugName());
     return nullptr;
   }
 
@@ -419,13 +360,14 @@ CURL* Download::setup()
   curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, &s_write);
   curl_easy_setopt(h, CURLOPT_WRITEDATA, this);
   curl_easy_setopt(h, CURLOPT_FOLLOWLOCATION, 1);
+  curl_easy_setopt(h, CURLOPT_MAX_RECV_SPEED_LARGE, maxSpeed);
 
   curl_easy_setopt(h, CURLOPT_VERBOSE, 1);
   curl_easy_setopt(h, CURLOPT_DEBUGFUNCTION, &s_debug);
 
   const auto rf = resumeFrom();
   if (rf > 0) {
-    curlLog().debug("{} resume from {}", debug_name(), rf);
+    curlLog().debug("{} resume from {}", debugName(), rf);
     curl_easy_setopt(h, CURLOPT_RESUME_FROM_LARGE, (curl_off_t)rf);
   }
 
@@ -442,7 +384,7 @@ Download::States Download::state() const
   return m_state;
 }
 
-std::string Download::debug_name() const
+std::string Download::debugName() const
 {
   return m_file.filename().string();
 }
@@ -611,7 +553,7 @@ int Download::s_debug(
 Downloader::Downloader() :
   m_global(curlGlobal()),
   m_cancel(false), m_stop(false), m_finished(false),
-  m_maxActive(NoLimit), m_maxSpeed(NoLimit)
+  m_maxSpeed(NoLimit)
 {
   m_thread = std::thread([&]{ run(); });
 }
@@ -645,25 +587,16 @@ void Downloader::join()
   }
 }
 
-void Downloader::maxActive(std::size_t n)
-{
-  if (n != m_maxActive) {
-    const std::size_t old = m_maxActive;
-    m_maxActive = (n == 0 ? NoLimit : n);
-
-    curlLog().debug(
-      "changed maxActive from {} to {}",
-      (old == NoLimit ? "none" : std::to_string(old)),
-      (n == NoLimit ? "none" : std::to_string(n)));
-  }
-
-  m_cv.notify_one();
-}
-
 void Downloader::maxSpeed(std::size_t s)
 {
-  if (s != m_maxSpeed) {
-    curlLog().debug("changed maxSpeed from {} to {}", m_maxSpeed, s);
+  const std::size_t old = m_maxSpeed;
+
+  if (s != old) {
+    curlLog().debug(
+      "changed maxSpeed from {} to {}",
+      (old == NoLimit ? "unlimited" : std::to_string(old)),
+      (s == NoLimit ? "unlimited" : std::to_string(s)));
+
     m_maxSpeed = s;
     m_cv.notify_one();
   }
@@ -679,7 +612,7 @@ std::shared_ptr<Download> Downloader::add(
 {
   auto d = std::make_shared<Download>(std::move(url), std::move(file));
 
-  curlLog().debug("adding {}", d->debug_name());
+  curlLog().debug("adding {}", d->debugName());
 
   {
     std::scoped_lock lock(m_tempMutex);
@@ -715,7 +648,7 @@ void Downloader::run()
         }
       }
 
-      if (m_active.empty() && m_queued.empty()) {
+      if (m_list.empty()) {
         if (m_stop) {
           curlLog().debug("finished, must stop, breaking");
           break;
@@ -727,11 +660,15 @@ void Downloader::run()
 
           curlLog().debug("woke up");
         }
-      } else if (!m_active.empty()) {
+      } else if (!m_list.empty()) {
         poll();
       }
     }
   } catch (Cancelled&) {
+  } catch (std::exception& e) {
+    curlLog().error("uncaught exception in curl downloader thread: {}", e.what());
+  } catch (...) {
+    curlLog().error("unknown exception in curl downloader thread");
   }
 
   m_finished = true;
@@ -758,10 +695,11 @@ void Downloader::checkTemp()
   if (!temp.empty()) {
     curlLog().debug("{} new downloads", temp.size());
 
-    m_queued.insert(
-      m_queued.end(),
-      std::make_move_iterator(temp.begin()),
-      std::make_move_iterator(temp.end()));
+    for (auto& d : temp) {
+      start(d);
+      m_list.push_back(d);
+      m_map.emplace(d->handle(), std::prev(m_list.end()));
+    }
   }
 }
 
@@ -787,12 +725,12 @@ void Downloader::perform()
     if (msg->msg == CURLMSG_DONE) {
       bool found = false;
 
-      auto itor = m_activeMap.find(msg->easy_handle);
+      auto itor = m_map.find(msg->easy_handle);
 
-      if (itor == m_activeMap.end()) {
+      if (itor == m_map.end()) {
         curlLog().error("{} finished, but not in list", (void*)msg->easy_handle);
       } else {
-        curlLog().debug("finished {}", (*itor->second)->debug_name());
+        curlLog().debug("finished {}", (*itor->second)->debugName());
       }
 
       mr = curl_multi_remove_handle(m_handle.get(), msg->easy_handle);
@@ -800,7 +738,7 @@ void Downloader::perform()
         curlLog().error("failed to remove easy handle, {}", curlError(mr));
       }
 
-      if (itor != m_activeMap.end()) {
+      if (itor != m_map.end()) {
         (*itor->second)->finish();
       }
     }
@@ -819,16 +757,9 @@ void Downloader::poll()
 
 void Downloader::checkQueue()
 {
-  const std::size_t max = m_maxActive;
   bool changed = false;
 
   if (cleanupActive()) {
-    changed = true;
-  }
-
-  stopOverMax(max);
-
-  if (addFromQueue(max)) {
     changed = true;
   }
 
@@ -840,18 +771,13 @@ void Downloader::checkQueue()
 bool Downloader::cleanupActive()
 {
   bool changed = false;
-  auto itor = m_active.begin();
+  auto itor = m_list.begin();
 
-  while (itor != m_active.end()) {
+  while (itor != m_list.end()) {
     auto d = *itor;
 
-    if (d->state() == Download::Stopped) {
-      curlLog().debug("{} stopped, moving to queue", d->debug_name());
-      itor = removeFromActive(itor);
-      m_queued.push_front(std::move(d));
-      changed = true;
-    } else if (d->state() == Download::Finished) {
-      curlLog().debug("{} finished, removing from list", d->debug_name());
+    if (d->state() == Download::Finished) {
+      curlLog().debug("{} finished, removing from list", d->debugName());
       itor = removeFromActive(itor);
       changed = true;
     } else {
@@ -865,98 +791,59 @@ bool Downloader::cleanupActive()
 Downloader::DownloadList::iterator Downloader::removeFromActive(
   DownloadList::iterator itor)
 {
-  auto mitor = m_activeMap.find((*itor)->handle());
+  auto mitor = m_map.find((*itor)->handle());
 
-  if (mitor == m_activeMap.end()) {
-    curlLog().error("{} not found in active map", (*itor)->debug_name());
+  if (mitor == m_map.end()) {
+    curlLog().error("{} not found in active map", (*itor)->debugName());
   } else {
-    m_activeMap.erase(mitor);
+    m_map.erase(mitor);
   }
 
-  return m_active.erase(itor);
+  return m_list.erase(itor);
 }
 
-void Downloader::stopOverMax(std::size_t max)
+curl_off_t Downloader::maxSpeedPer() const
 {
-  std::size_t runningCount = 0;
+  const std::size_t maxSpeed = m_maxSpeed;
 
-  for (auto&& d : m_active) {
-    if (d->state() == Download::Running) {
-      ++runningCount;
-    }
+  if (m_list.empty()) {
+    return maxSpeed;
   }
 
-  if (runningCount > max) {
-    curlLog().debug("running count {} over {}, stopping", runningCount, max);
-
-    for (auto itor=m_active.rbegin(); itor!=m_active.rend(); ++itor) {
-      auto d = *itor;
-      if (d->state() == Download::Running) {
-        curlLog().debug("stopping {}", d->debug_name());
-        d->stop();
-
-        --runningCount;
-        if (runningCount <= max) {
-          break;
-        }
-      }
-    }
-  }
-}
-
-bool Downloader::addFromQueue(std::size_t max)
-{
-  bool changed = false;
-  auto q = m_queued.begin();
-
-  while (m_active.size() < max && q != m_queued.end()) {
-    std::shared_ptr<Download> d = *q;
-    curlLog().debug("activating {}", d->debug_name());
-
-    if (start(d)) {
-      q = m_queued.erase(q);
-      m_active.push_back(d);
-      m_activeMap.emplace(d->handle(), std::prev(m_active.end()));
-      changed = true;
-    } else {
-      curlLog().debug("failed to active {}", d->debug_name());
-      ++q;
-    }
+  if (maxSpeed == NoLimit) {
+    return 0;
   }
 
-  return changed;
+  return (maxSpeed / m_list.size());
 }
 
 void Downloader::setLimits()
 {
-  if (m_active.empty()) {
+  if (m_list.empty()) {
     return;
   }
 
-  const std::size_t maxSpeed = m_maxSpeed;
-  const curl_off_t maxPer = (maxSpeed == NoLimit ? 0 : maxSpeed / m_active.size());
+  const curl_off_t maxPer = maxSpeedPer();
 
-  if (maxSpeed == NoLimit) {
+  if (maxPer == 0) {
     curlLogV().debug("setting speed limit to unlimited");
   } else {
-    curlLogV().debug(
-      "setting speed limit to max={} count={} maxPer={}",
-      maxSpeed, m_active.size(), maxPer);
+    curlLog().debug("setting speed limit per download to {}", maxPer);
   }
 
-  for (auto&& d : m_active) {
+  for (auto&& d : m_list) {
     curl_easy_setopt(d->handle(), CURLOPT_MAX_RECV_SPEED_LARGE, maxPer);
   }
 }
 
 bool Downloader::start(std::shared_ptr<Download> d)
 {
-  auto* h = d->setup();
+  auto* h = d->setup(maxSpeedPer());
   if (!h) {
     return false;
   }
 
-  curlLogV().debug("adding {} to multi handle", d->debug_name());
+  curlLogV().debug("adding {} to multi handle", d->debugName());
 
   const auto r = curl_multi_add_handle(m_handle.get(), h);
   if (r != CURLM_OK) {
