@@ -603,9 +603,16 @@ Process getProcessTreeFromProcess(HANDLE h)
 
 std::vector<DWORD> processesInJob(HANDLE h)
 {
-  for (int tries=0; tries<5; ++tries) {
-    DWORD maxIds = 100;
+  const int MaxTries = 5;
 
+  // doubled MaxTries times on failure
+  DWORD maxIds = 100;
+
+  // for logging
+  DWORD lastCount=0, lastAssigned=0;
+
+
+  for (int tries=0; tries<MaxTries; ++tries) {
     const DWORD idsSize = sizeof(ULONG_PTR) * maxIds;
     const DWORD bufferSize = sizeof(JOBOBJECT_BASIC_PROCESS_ID_LIST) + idsSize;
 
@@ -617,8 +624,10 @@ std::vector<DWORD> processesInJob(HANDLE h)
 
     if (!r) {
       const auto e = GetLastError();
-      log::error("failed to get process ids in job, {}", formatSystemMessage(e));
-      return {};
+      if (e != ERROR_MORE_DATA) {
+        log::error("failed to get process ids in job, {}", formatSystemMessage(e));
+        return {};
+      }
     }
 
     if (ids->NumberOfProcessIdsInList >= ids->NumberOfAssignedProcesses) {
@@ -632,9 +641,16 @@ std::vector<DWORD> processesInJob(HANDLE h)
 
     // try again with a larger buffer
     maxIds *= 2;
+
+    // for logging
+    lastCount = ids->NumberOfProcessIdsInList;
+    lastAssigned = ids->NumberOfAssignedProcesses;
   }
 
-  log::error("failed to get processes in job, can't get a buffer large enough");
+  log::error(
+    "failed to get processes in job, can't get a buffer large enough, "
+    "{}/{} ids", lastCount, lastAssigned);
+
   return {};
 }
 

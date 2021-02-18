@@ -74,6 +74,7 @@ enum class Exit
 };
 
 const int RestartExitCode = INT_MAX;
+const int ReselectExitCode = INT_MAX - 1;
 
 using ExitFlags = QFlags<Exit>;
 Q_DECLARE_OPERATORS_FOR_FLAGS(ExitFlags);

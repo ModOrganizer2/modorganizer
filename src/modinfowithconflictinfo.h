@@ -54,14 +54,12 @@ public:
    */
   void clearCaches() override;
 
-  const std::set<unsigned int>& getModOverwrite() const override { return m_OverwriteList; }
-  const std::set<unsigned int>& getModOverwritten() const override { return m_OverwrittenList; }
-  const std::set<unsigned int>& getModArchiveOverwrite() const override { return m_ArchiveOverwriteList; }
-  const std::set<unsigned int>& getModArchiveOverwritten() const override { return m_ArchiveOverwrittenList; }
-  const std::set<unsigned int>& getModArchiveLooseOverwrite() const override { return m_ArchiveLooseOverwriteList; }
-  const std::set<unsigned int>& getModArchiveLooseOverwritten() const override { return m_ArchiveLooseOverwrittenList; }
-
-  void doConflictCheck() const override;
+  const std::set<unsigned int>& getModOverwrite() const override { return m_Conflicts.value().m_OverwriteList; }
+  const std::set<unsigned int>& getModOverwritten() const override { return m_Conflicts.value().m_OverwrittenList; }
+  const std::set<unsigned int>& getModArchiveOverwrite() const override { return m_Conflicts.value().m_ArchiveOverwriteList; }
+  const std::set<unsigned int>& getModArchiveOverwritten() const override { return m_Conflicts.value().m_ArchiveOverwrittenList; }
+  const std::set<unsigned int>& getModArchiveLooseOverwrite() const override { return m_Conflicts.value().m_ArchiveLooseOverwriteList; }
+  const std::set<unsigned int>& getModArchiveLooseOverwritten() const override { return m_Conflicts.value().m_ArchiveLooseOverwrittenList; }
 
 public slots:
 
@@ -72,11 +70,8 @@ public slots:
 
 protected:
 
-  /**
-   * @brief Check if the content of this mod is valid.
-   *
-   * @return true if the content is valid, false otherwise.
-   **/
+  // check if the content of this mod is valid
+  //
   virtual bool doIsValid() const;
 
   /**
@@ -136,23 +131,27 @@ protected:
 
 private:
 
+  struct Conflicts {
+    EConflictType m_CurrentConflictState = CONFLICT_NONE;
+    EConflictType m_ArchiveConflictState = CONFLICT_NONE;
+    EConflictType m_ArchiveConflictLooseState = CONFLICT_NONE;
+    bool m_HasLooseOverwrite = false;
+    bool m_HasHiddenFiles = false;
+
+    std::set<unsigned int> m_OverwriteList;   // indices of mods overritten by this mod
+    std::set<unsigned int> m_OverwrittenList; // indices of mods overwriting this mod
+    std::set<unsigned int> m_ArchiveOverwriteList;   // indices of mods with archive files overritten by this mod
+    std::set<unsigned int> m_ArchiveOverwrittenList; // indices of mods with archive files overwriting this mod
+    std::set<unsigned int> m_ArchiveLooseOverwriteList; // indices of mods with archives being overwritten by this mod's loose files
+    std::set<unsigned int> m_ArchiveLooseOverwrittenList; // indices of mods with loose files overwriting this mod's archive files
+  };
+
+  Conflicts doConflictCheck() const;
+
   MOBase::MemoizedLocked<std::shared_ptr<const MOBase::IFileTree>> m_FileTree;
   MOBase::MemoizedLocked<bool> m_Valid;
   MOBase::MemoizedLocked<std::set<int>> m_Contents;
-
-  mutable EConflictType m_CurrentConflictState;
-  mutable EConflictType m_ArchiveConflictState;
-  mutable EConflictType m_ArchiveConflictLooseState;
-  mutable bool m_HasLooseOverwrite;
-  mutable bool m_HasHiddenFiles;
-  mutable QTime m_LastConflictCheck;
-
-  mutable std::set<unsigned int> m_OverwriteList;   // indices of mods overritten by this mod
-  mutable std::set<unsigned int> m_OverwrittenList; // indices of mods overwriting this mod
-  mutable std::set<unsigned int> m_ArchiveOverwriteList;   // indices of mods with archive files overritten by this mod
-  mutable std::set<unsigned int> m_ArchiveOverwrittenList; // indices of mods with archive files overwriting this mod
-  mutable std::set<unsigned int> m_ArchiveLooseOverwriteList; // indices of mods with archives being overwritten by this mod's loose files
-  mutable std::set<unsigned int> m_ArchiveLooseOverwrittenList; // indices of mods with loose files overwriting this mod's archive files
+  MOBase::MemoizedLocked<Conflicts> m_Conflicts;
 
 };
 

@@ -19,11 +19,11 @@ ModInfoWithConflictInfo::ModInfoWithConflictInfo(OrganizerCore& core) :
   m_FileTree([this]() { return QDirFileTree::makeTree(absolutePath()); }),
   m_Valid([this]() { return doIsValid(); }),
   m_Contents([this]() { return doGetContents(); }),
-  m_HasLooseOverwrite(false), m_HasHiddenFiles(false) {}
+  m_Conflicts([this]() { return doConflictCheck(); }) { }
 
 void ModInfoWithConflictInfo::clearCaches()
 {
-  m_LastConflictCheck = QTime();
+  m_Conflicts.invalidate();
 }
 
 std::vector<ModInfo::EFlag> ModInfoWithConflictInfo::getFlags() const
@@ -82,14 +82,9 @@ std::vector<ModInfo::EConflictFlag> ModInfoWithConflictInfo::getConflictFlags() 
 }
 
 
-void ModInfoWithConflictInfo::doConflictCheck() const
+ModInfoWithConflictInfo::Conflicts ModInfoWithConflictInfo::doConflictCheck() const
 {
-  m_OverwriteList.clear();
-  m_OverwrittenList.clear();
-  m_ArchiveOverwriteList.clear();
-  m_ArchiveOverwrittenList.clear();
-  m_ArchiveLooseOverwriteList.clear();
-  m_ArchiveLooseOverwrittenList.clear();
+  Conflicts conflicts;
 
   bool providesAnything = false;
   bool hasHiddenFiles = false;
@@ -101,10 +96,6 @@ void ModInfoWithConflictInfo::doConflictCheck() const
 
   std::wstring name = ToWString(this->name());
   const std::wstring hideExt = ToWString(ModInfo::s_HiddenExt);
-
-  m_CurrentConflictState = CONFLICT_NONE;
-  m_ArchiveConflictState = CONFLICT_NONE;
-  m_ArchiveConflictLooseState = CONFLICT_NONE;
 
   if (m_Core.directoryStructure()->originExists(name)) {
     FilesOrigin &origin = m_Core.directoryStructure()->getOriginByName(name);
@@ -168,12 +159,12 @@ void ModInfoWithConflictInfo::doConflictCheck() const
           unsigned int altIndex = ModInfo::getIndex(ToQString(altOrigin.getName()));
           if (!file->isFromArchive()) {
             if (!archiveData.isValid())
-              m_OverwrittenList.insert(altIndex);
+              conflicts.m_OverwrittenList.insert(altIndex);
             else
-              m_ArchiveLooseOverwrittenList.insert(altIndex);
+              conflicts.m_ArchiveLooseOverwrittenList.insert(altIndex);
           }
           else {
-            m_ArchiveOverwrittenList.insert(altIndex);
+            conflicts.m_ArchiveOverwrittenList.insert(altIndex);
           }
         } else {
           providesAnything = true;
@@ -188,21 +179,21 @@ void ModInfoWithConflictInfo::doConflictCheck() const
             if (!altInfo.isFromArchive()) {
               if (!archiveData.isValid()) {
                 if (origin.getPriority() > altOrigin.getPriority()) {
-                  m_OverwriteList.insert(altIndex);
+                  conflicts.m_OverwriteList.insert(altIndex);
                 } else {
-                  m_OverwrittenList.insert(altIndex);
+                  conflicts.m_OverwrittenList.insert(altIndex);
                 }
               } else {
-                m_ArchiveLooseOverwrittenList.insert(altIndex);
+                conflicts.m_ArchiveLooseOverwrittenList.insert(altIndex);
               }
             } else {
               if (!archiveData.isValid()) {
-                m_ArchiveLooseOverwriteList.insert(altIndex);
+                conflicts.m_ArchiveLooseOverwriteList.insert(altIndex);
               } else {
                 if (archiveData.order() > altInfo.archive().order()) {
-                  m_ArchiveOverwriteList.insert(altIndex);
+                  conflicts.m_ArchiveOverwriteList.insert(altIndex);
                 } else if (archiveData.order() < altInfo.archive().order()) {
-                  m_ArchiveOverwrittenList.insert(altIndex);
+                  conflicts.m_ArchiveOverwrittenList.insert(altIndex);
                 }
               }
             }
@@ -210,66 +201,51 @@ void ModInfoWithConflictInfo::doConflictCheck() const
         }
       }
     }
-    m_LastConflictCheck = QTime::currentTime();
 
     if (files.size() != 0) {
       if (!providesAnything)
-        m_CurrentConflictState = CONFLICT_REDUNDANT;
-      else if (!m_OverwriteList.empty() && !m_OverwrittenList.empty())
-        m_CurrentConflictState = CONFLICT_MIXED;
-      else if (!m_OverwriteList.empty())
-        m_CurrentConflictState = CONFLICT_OVERWRITE;
-      else if (!m_OverwrittenList.empty())
-        m_CurrentConflictState = CONFLICT_OVERWRITTEN;
+        conflicts.m_CurrentConflictState = CONFLICT_REDUNDANT;
+      else if (!conflicts.m_OverwriteList.empty() && !conflicts.m_OverwrittenList.empty())
+        conflicts.m_CurrentConflictState = CONFLICT_MIXED;
+      else if (!conflicts.m_OverwriteList.empty())
+        conflicts.m_CurrentConflictState = CONFLICT_OVERWRITE;
+      else if (!conflicts.m_OverwrittenList.empty())
+        conflicts.m_CurrentConflictState = CONFLICT_OVERWRITTEN;
 
-      if (!m_ArchiveOverwriteList.empty() && !m_ArchiveOverwrittenList.empty())
-        m_ArchiveConflictState = CONFLICT_MIXED;
-      else if (!m_ArchiveOverwriteList.empty())
-        m_ArchiveConflictState = CONFLICT_OVERWRITE;
-      else if (!m_ArchiveOverwrittenList.empty())
-        m_ArchiveConflictState = CONFLICT_OVERWRITTEN;
+      if (!conflicts.m_ArchiveOverwriteList.empty() && !conflicts.m_ArchiveOverwrittenList.empty())
+        conflicts.m_ArchiveConflictState = CONFLICT_MIXED;
+      else if (!conflicts.m_ArchiveOverwriteList.empty())
+        conflicts.m_ArchiveConflictState = CONFLICT_OVERWRITE;
+      else if (!conflicts.m_ArchiveOverwrittenList.empty())
+        conflicts.m_ArchiveConflictState = CONFLICT_OVERWRITTEN;
 
-      if (!m_ArchiveLooseOverwrittenList.empty() && !m_ArchiveLooseOverwriteList.empty())
-        m_ArchiveConflictLooseState = CONFLICT_MIXED;
-      else if (!m_ArchiveLooseOverwrittenList.empty())
-        m_ArchiveConflictLooseState = CONFLICT_OVERWRITTEN;
-      else if (!m_ArchiveLooseOverwriteList.empty())
-        m_ArchiveConflictLooseState = CONFLICT_OVERWRITE;
+      if (!conflicts.m_ArchiveLooseOverwrittenList.empty() && !conflicts.m_ArchiveLooseOverwriteList.empty())
+        conflicts.m_ArchiveConflictLooseState = CONFLICT_MIXED;
+      else if (!conflicts.m_ArchiveLooseOverwrittenList.empty())
+        conflicts.m_ArchiveConflictLooseState = CONFLICT_OVERWRITTEN;
+      else if (!conflicts.m_ArchiveLooseOverwriteList.empty())
+        conflicts.m_ArchiveConflictLooseState = CONFLICT_OVERWRITE;
 
-      m_HasHiddenFiles = hasHiddenFiles;
+      conflicts.m_HasHiddenFiles = hasHiddenFiles;
     }
   }
+
+  return conflicts;
 }
 
 ModInfoWithConflictInfo::EConflictType ModInfoWithConflictInfo::isConflicted() const
 {
-  // this is costy so cache the result
-  QTime now = QTime::currentTime();
-  if (m_LastConflictCheck.isNull() || (m_LastConflictCheck.secsTo(now) > 10)) {
-    doConflictCheck();
-  }
-
-  return m_CurrentConflictState;
+  return m_Conflicts.value().m_CurrentConflictState;
 }
 
 ModInfoWithConflictInfo::EConflictType ModInfoWithConflictInfo::isArchiveConflicted() const
 {
-  QTime now = QTime::currentTime();
-  if (m_LastConflictCheck.isNull() || (m_LastConflictCheck.secsTo(now) > 10)) {
-    doConflictCheck();
-  }
-
-  return m_ArchiveConflictState;
+  return m_Conflicts.value().m_ArchiveConflictState;
 }
 
 ModInfoWithConflictInfo::EConflictType ModInfoWithConflictInfo::isLooseArchiveConflicted() const
 {
-  QTime now = QTime::currentTime();
-  if (m_LastConflictCheck.isNull() || (m_LastConflictCheck.secsTo(now) > 10)) {
-    doConflictCheck();
-  }
-
-  return m_ArchiveConflictLooseState;
+  return m_Conflicts.value().m_ArchiveConflictLooseState;
 }
 
 
@@ -294,12 +270,7 @@ bool ModInfoWithConflictInfo::isRedundant() const
 
 bool ModInfoWithConflictInfo::hasHiddenFiles() const
 {
-  QTime now = QTime::currentTime();
-  if (m_LastConflictCheck.isNull() || (m_LastConflictCheck.secsTo(now) > 10)) {
-    doConflictCheck();
-  }
-
-  return m_HasHiddenFiles;
+  return m_Conflicts.value().m_HasHiddenFiles;
 }
 
 void ModInfoWithConflictInfo::diskContentModified() {

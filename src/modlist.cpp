@@ -547,7 +547,6 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
       m_Profile->setModEnabled(modID, enabled);
       m_Modified = true;
       m_LastCheck.restart();
-      emit modStatesChanged({ index });
       emit tutorialModlistUpdate();
     }
     result = true;
@@ -995,11 +994,15 @@ void ModList::notifyModRemoved(QString const& modName) const
 
 void ModList::notifyModStateChanged(QList<unsigned int> modIndices) const
 {
+  QModelIndexList indices;
   std::map<QString, IModList::ModStates> mods;
   for (auto modIndex : modIndices) {
+    indices.append(index(modIndex, 0));
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
     mods.emplace(modInfo->name(), state(modIndex));
   }
+
+  emit modStatesChanged(indices);
   m_ModStateChanged(mods);
 }
 
@@ -1402,7 +1405,6 @@ bool ModList::toggleState(const QModelIndexList& indices)
 
   m_Profile->setModsEnabled(modsToEnable, modsToDisable);
 
-  emit modStatesChanged(indices);
   emit tutorialModlistUpdate();
 
   m_Modified = true;
@@ -1428,6 +1430,4 @@ void ModList::setActive(const QModelIndexList& indices, bool active)
   else {
     m_Profile->setModsEnabled({}, mods);
   }
-
-  emit modStatesChanged(indices);
 }

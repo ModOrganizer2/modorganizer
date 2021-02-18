@@ -418,9 +418,9 @@ QString prependToPath(const QString& s)
   return old;
 }
 
-QString setPath(const QString& s)
+void setPath(const QString& s)
 {
-  return set("PATH", s);
+  set("PATH", s);
 }
 
 QString get(const QString& name)
@@ -457,11 +457,9 @@ QString get(const QString& name)
   return QString::fromWCharArray(buffer.get(), realSize);
 }
 
-QString set(const QString& n, const QString& v)
+void set(const QString& n, const QString& v)
 {
-  auto old = get(n);
   ::SetEnvironmentVariableW(n.toStdWString().c_str(), v.toStdWString().c_str());
-  return old;
 }
 
 

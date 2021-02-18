@@ -132,9 +132,14 @@ public:
   // returns the instance name; this is the directory name or "Portable" for
   // portable instances
   //
+  // be careful when using this function to check whether two instances are the
+  // same, some parts of MO use an empty string to represent portable instances,
+  // but this function will return "Portable" for them; it's safer to check
+  // for isPortable() first
+  //
   // can be called without setup()
   //
-  QString name() const;
+  QString displayName() const;
 
   // returns either:
   //   1) the game name from the INI, if readFromIni() was called;

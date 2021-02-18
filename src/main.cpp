@@ -80,7 +80,8 @@ int run(int argc, char *argv[])
   // stuff that's done only once, even if MO restarts in the loop below
   app.firstTimeSetup(multiProcess);
 
-  // force the "Select instance" dialog on startup (only for first loop)
+  // force the "Select instance" dialog on startup, only for first loop or when
+  // the current instance cannot be used
   bool pick = cl.pick();
 
   // MO runs in a loop because it can be restarted in several ways, such as
@@ -105,12 +106,16 @@ int run(int argc, char *argv[])
         const auto r = app.setup(multiProcess, pick);
         pick = false;
 
-        if (r == RestartExitCode) {
+        if (r == RestartExitCode || r == ReselectExitCode) {
           // resets things when MO is "restarted"
           app.resetForRestart();
 
           // don't reprocess command line
           cl.clear();
+
+          if (r == ReselectExitCode) {
+            pick = true;
+          }
 
           continue;
         } else if (r != 0) {

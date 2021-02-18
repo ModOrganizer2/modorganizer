@@ -221,7 +221,7 @@ void InstanceManagerDialog::updateInstances()
 
   // sort first, prepend portable after so it's always on top
   std::sort(m_instances.begin(), m_instances.end(), [](auto&& a, auto&& b) {
-    return (MOBase::naturalCompare(a->name(), b->name()) < 0);
+    return (MOBase::naturalCompare(a->displayName(), b->displayName()) < 0);
   });
 
   if (m.portableInstanceExists()) {
@@ -249,7 +249,7 @@ void InstanceManagerDialog::updateList()
   for (std::size_t i=0; i<m_instances.size(); ++i) {
     const auto& ii = *m_instances[i];
 
-    auto* item = new QStandardItem(ii.name());
+    auto* item = new QStandardItem(ii.displayName());
     item->setIcon(instanceIcon(m_pc, ii));
 
     m_model->appendRow(item);
@@ -295,7 +295,7 @@ void InstanceManagerDialog::select(std::size_t i)
 void InstanceManagerDialog::select(const QString& name)
 {
   for (std::size_t i=0; i<m_instances.size(); ++i) {
-    if (m_instances[i]->name() == name) {
+    if (m_instances[i]->displayName() == name) {
       select(i);
       return;
     }
@@ -310,7 +310,7 @@ void InstanceManagerDialog::selectActiveInstance()
 
   if (active) {
     for (std::size_t i=0; i<m_instances.size(); ++i) {
-      if (m_instances[i]->name() == active->name()) {
+      if (m_instances[i]->displayName() == active->displayName()) {
         select(i);
 
         ui->list->scrollTo(
@@ -340,7 +340,7 @@ void InstanceManagerDialog::openSelectedInstance()
   if (to.isPortable()) {
     InstanceManager::singleton().setCurrentInstance("");
   } else {
-    InstanceManager::singleton().setCurrentInstance(to.name());
+    InstanceManager::singleton().setCurrentInstance(to.displayName());
   }
 
   if (m_restartOnSelect) {
@@ -372,7 +372,7 @@ bool InstanceManagerDialog::confirmSwitch(const Instance& to)
   const auto r = dlg
     .title(tr("Switching instances"))
     .main(tr("Mod Organizer must restart to manage the instance '%1'.")
-      .arg(to.name()))
+      .arg(to.displayName()))
     .content(tr("This confirmation can be disabled in the settings."))
     .icon(QMessageBox::Question)
     .button({tr("Restart Mod Organizer"), QMessageBox::Ok})
@@ -401,7 +401,7 @@ void InstanceManagerDialog::rename()
 
   // getting new name
   const auto newName = getInstanceName(
-    this, tr("Rename instance"), "", tr("Instance name"), i->name());
+    this, tr("Rename instance"), "", tr("Instance name"), i->displayName());
 
   if (newName.isEmpty()) {
     return;
@@ -661,7 +661,7 @@ const Instance* InstanceManagerDialog::singleSelection() const
 
 void InstanceManagerDialog::fillData(const Instance& ii)
 {
-  ui->name->setText(ii.name());
+  ui->name->setText(ii.displayName());
   ui->location->setText(ii.directory());
   ui->baseDirectory->setText(ii.baseDirectory());
   ui->gameName->setText(ii.gameName());

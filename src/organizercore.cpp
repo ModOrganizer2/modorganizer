@@ -1565,6 +1565,45 @@ void OrganizerCore::profileRefresh()
   refresh();
 }
 
+void OrganizerCore::clearCaches(std::vector<unsigned int> const& indices) const
+{
+  const auto insert = [](auto& dest, const auto& from) {
+    dest.insert(from.begin(), from.end());
+  };
+  std::set<unsigned int> allIndices;
+  for (const auto index : indices) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
+
+    if (m_CurrentProfile->modEnabled(index)) {
+      // if the mod is enabled, we need to first clear its cache so that
+      // getModOverwrite(), ..., returns the newly conflicting mods (in case
+      // the mod just got enabled)
+      modInfo->clearCaches();
+      insert(allIndices, modInfo->getModOverwrite());
+      insert(allIndices, modInfo->getModOverwritten());
+      insert(allIndices, modInfo->getModArchiveOverwrite());
+      insert(allIndices, modInfo->getModArchiveOverwritten());
+      insert(allIndices, modInfo->getModArchiveLooseOverwrite());
+      insert(allIndices, modInfo->getModArchiveLooseOverwritten());
+    }
+    else {
+      // if the mod is disabled, we need to first fetch the conflicting
+      // mods, and then clear the cache
+      insert(allIndices, modInfo->getModOverwrite());
+      insert(allIndices, modInfo->getModOverwritten());
+      insert(allIndices, modInfo->getModArchiveOverwrite());
+      insert(allIndices, modInfo->getModArchiveOverwritten());
+      insert(allIndices, modInfo->getModArchiveLooseOverwrite());
+      insert(allIndices, modInfo->getModArchiveLooseOverwritten());
+      modInfo->clearCaches();
+    }
+  }
+
+  for (auto& index : allIndices) {
+    ModInfo::getByIndex(index)->clearCaches();
+  }
+}
+
 void OrganizerCore::modPrioritiesChanged(const QModelIndexList& indices)
 {
   for (unsigned int i = 0; i < currentProfile()->numMods(); ++i) {
@@ -1579,30 +1618,13 @@ void OrganizerCore::modPrioritiesChanged(const QModelIndexList& indices)
   currentProfile()->writeModlist();
   directoryStructure()->getFileRegister()->sortOrigins();
 
+  std::vector<unsigned int> vindices;
+
   for (auto& idx : indices) {
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
-    // clear caches on all mods conflicting with the moved mod
-    for (int i : modInfo->getModOverwrite()) {
-      ModInfo::getByIndex(i)->clearCaches();
-    }
-    for (int i : modInfo->getModOverwritten()) {
-      ModInfo::getByIndex(i)->clearCaches();
-    }
-    for (int i : modInfo->getModArchiveOverwrite()) {
-      ModInfo::getByIndex(i)->clearCaches();
-    }
-    for (int i : modInfo->getModArchiveOverwritten()) {
-      ModInfo::getByIndex(i)->clearCaches();
-    }
-    for (int i : modInfo->getModArchiveLooseOverwrite()) {
-      ModInfo::getByIndex(i)->clearCaches();
-    }
-    for (int i : modInfo->getModArchiveLooseOverwritten()) {
-      ModInfo::getByIndex(i)->clearCaches();
-    }
-    // update conflict check on the moved mod
-    modInfo->doConflictCheck();
+    vindices.push_back(idx.data(ModList::IndexRole).toInt());
   }
+
+  clearCaches(vindices);
 }
 
 void OrganizerCore::modStatusChanged(unsigned int index)
@@ -1622,7 +1644,6 @@ void OrganizerCore::modStatusChanged(unsigned int index)
         m_UserInterface->archivesWriter().write();
       }
     }
-    modInfo->clearCaches();
 
     for (unsigned int i = 0; i < m_CurrentProfile->numMods(); ++i) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
@@ -1637,7 +1658,7 @@ void OrganizerCore::modStatusChanged(unsigned int index)
     m_DirectoryStructure->getFileRegister()->sortOrigins();
 
     refreshLists();
-
+    clearCaches({ index });
     m_ModList.notifyModStateChanged({ index });
 
   } catch (const std::exception &e) {
@@ -1649,18 +1670,17 @@ void OrganizerCore::modStatusChanged(QList<unsigned int> index) {
   try {
     QMap<unsigned int, ModInfo::Ptr> modsToEnable;
     QMap<unsigned int, ModInfo::Ptr> modsToDisable;
+    std::vector<unsigned int> vindices;
     for (auto idx : index) {
       if (m_CurrentProfile->modEnabled(idx)) {
         modsToEnable[idx] = ModInfo::getByIndex(idx);
       } else {
         modsToDisable[idx] = ModInfo::getByIndex(idx);
       }
+      vindices.push_back(idx);
     }
     if (!modsToEnable.isEmpty()) {
       updateModsInDirectoryStructure(modsToEnable);
-      for (auto modInfo : modsToEnable.values()) {
-        modInfo->clearCaches();
-      }
     }
     if (!modsToDisable.isEmpty()) {
       updateModsActiveState(modsToDisable.keys(), false);
@@ -1689,8 +1709,9 @@ void OrganizerCore::modStatusChanged(QList<unsigned int> index) {
     m_DirectoryStructure->getFileRegister()->sortOrigins();
 
     refreshLists();
-
+    clearCaches(vindices);
     m_ModList.notifyModStateChanged(index);
+
   } catch (const std::exception &e) {
     reportError(tr("failed to update mod list: %1").arg(e.what()));
   }
