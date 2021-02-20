@@ -952,6 +952,12 @@ void PluginContainer::reloadPlugin(QString const& filepath)
 
 void PluginContainer::unloadPlugins()
 {
+  if (m_Organizer) {
+    // clearPlugins() must be called before loadPlugins() since it actually
+    // loads the blacklist
+    m_Organizer->settings().plugins().clearPlugins();
+  }
+
   bf::for_each(m_Plugins, [](auto& t) { t.second.clear(); });
   bf::for_each(m_AccessPlugins, [](auto& t) { t.second.clear(); });
   m_Requirements.clear();
