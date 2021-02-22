@@ -232,8 +232,8 @@ void forEachEntryImpl(
 
   if (status < 0) {
     log::error(
-      "NtOpenFile() failed for '{}', {}",
-      toString(poa), formatSystemMessage(status));
+      "failed to open directory '{}': {}",
+      toString(poa), formatNtMessage(status));
 
     return;
   }
@@ -264,8 +264,9 @@ void forEachEntryImpl(
       break;
     } else if (status < 0) {
       log::error(
-        "NtQueryDirectoryFile() failed for '{}', {}",
-        toString(poa), formatSystemMessage(status));
+        "failed to read directory '{}': {}",
+        toString(poa), formatNtMessage(status));
+
       break;
     }
 
@@ -321,6 +322,23 @@ void forEachEntryImpl(
   }
 }
 
+std::wstring makeNtPath(const std::wstring& path)
+{
+  constexpr const wchar_t* nt_prefix = L"\\??\\";
+  constexpr const wchar_t* nt_unc_prefix = L"\\??\\UNC\\";
+  constexpr const wchar_t* share_prefix = L"\\\\";
+
+  if (path.starts_with(nt_prefix)) {
+    // already an nt path
+    return path;
+  } else if (path.starts_with(share_prefix)) {
+    // network shared need \??\UNC\ as a prefix
+    return nt_unc_prefix + path.substr(2);
+  } else {
+    // prepend the \??\ prefix
+    return nt_prefix + path;
+  }
+}
 
 void DirectoryWalker::forEachEntry(
   const std::wstring& path, void* cx,
@@ -335,7 +353,7 @@ void DirectoryWalker::forEachEntry(
     NtClose = (NtClose_type)::GetProcAddress(m.get(), "NtClose");
   }
 
-  const std::wstring ntpath = std::wstring(L"\\??\\") + path;
+  const std::wstring ntpath = makeNtPath(path);
 
   UNICODE_STRING ObjectName = {};
   ObjectName.Buffer = const_cast<wchar_t*>(ntpath.c_str());
