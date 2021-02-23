@@ -192,7 +192,7 @@ void SavesTab::refreshSaveList()
 
     ui.list->clear();
     for (auto& save: m_SaveGames) {
-      ui.list->addItem(savesDir.relativeFilePath(save->getFilepath()));
+      ui.list->addItem(save->getName());
     }
   }
   catch(std::exception& e)
