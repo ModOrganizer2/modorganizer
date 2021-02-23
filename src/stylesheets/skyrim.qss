@@ -559,11 +559,11 @@ QProgressBar {
   QProgressBar::chunk {
     background: url(./skyrim/progress-bar-chunk.png) center center repeat-x qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #95BED9, stop:0.78781 #6EB9CE); }
 
-DownloadListWidget[downloadView=standard]::item {
+DownloadListView[downloadView=standard]::item {
 	padding: 15px;
 }
 
-DownloadListWidget[downloadView=compact]::item {
+DownloadListView[downloadView=compact]::item {
 	padding: 4px;
 }
 

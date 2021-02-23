@@ -635,53 +635,43 @@ QWidget#downloadTab QAbstractScrollArea
 	background: #242424;
 }
 
-DownloadListWidget QFrame,
-DownloadListWidgetCompact,
-DownloadListWidgetCompact QLabel
+DownloadListView QFrame
 {
 	/* an entry on the Downloads tab */
 	background: #141414;
 }
 
-DownloadListWidget QFrame#frame
+DownloadListView QFrame#frame
 {
 	/* outer box of an entry on the Downloads tab */
 	border: 2px solid #141414;
 }
 
-DownloadListWidget QLabel#installLabel
+DownloadListView QLabel#installLabel
 {
 	color: none;
 }
 
-DownloadListWidget QFrame:clicked
+DownloadListView QFrame:clicked
 {
 	background: #242424;
 }
 
 /* compact downloads view */
 
-DownloadListWidgetCompact,
-DownloadListWidgetCompact QLabel
-{
-	/* an entry on the Downloads tab */
-	background: #141414;
-	padding: 4px;
-}
-
-DownloadListWidget[downloadView=standard]::item {
+DownloadListView[downloadView=standard]::item {
 	padding: 16px;
 }
 
-DownloadListWidget[downloadView=compact]::item {
+DownloadListView[downloadView=compact]::item {
 	padding: 4px;
 }
 
-DownloadListWidget::item:hover {
+DownloadListView::item:hover {
     padding: 0px;
 }
 
-DownloadListWidget::item:selected {
+DownloadListView::item:selected {
     padding: 0px;
 }
 

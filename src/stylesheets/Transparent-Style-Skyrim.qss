@@ -225,10 +225,10 @@ QHeaderView::down-arrow{
      background-color:rgba(154,154,0,0.3);
      padding: 3px;
 }
-/*#DownloadListWidget{
+/*#DownloadListView{
 }
 */
- #DownloadListWidget{
+ #DownloadListView{
      outline: 1px solid #e8e8e8;
      border: 0px solid #9a9a00;
 }
