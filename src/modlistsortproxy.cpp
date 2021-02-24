@@ -108,6 +108,12 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
     if (sortColumn() != ModList::COL_PRIORITY) {
       return QSortFilterProxyModel::lessThan(left, right);
     }
+    else if (qobject_cast<QtGroupingProxy*>(sourceModel())) {
+      // if the underlying proxy is a QtGroupingProxy we need to rely on
+      // Qt::DisplayRole because the other roles are not correctly handled
+      // by that kind of proxy
+      return left.data(Qt::DisplayRole).toInt() < right.data(Qt::DisplayRole).toInt();
+    }
   }
 
   bool lOk, rOk;
