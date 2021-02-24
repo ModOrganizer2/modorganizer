@@ -512,6 +512,8 @@ void MainWindow::setupModList()
 
   connect(&ui->modList->actions(), &ModListViewActions::overwriteCleared, [=]() { scheduleCheckForProblems(); });
   connect(&ui->modList->actions(), &ModListViewActions::originModified, this, &MainWindow::originModified);
+  connect(&ui->modList->actions(), &ModListViewActions::modInfoDisplayed, this, &MainWindow::modInfoDisplayed);
+
   connect(m_OrganizerCore.modList(), &ModList::modPrioritiesChanged, [&]() { m_ArchiveListWriter.write(); });
 }
 
