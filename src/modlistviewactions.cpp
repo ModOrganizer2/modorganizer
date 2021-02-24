@@ -520,6 +520,7 @@ void ModListViewActions::displayModInformation(ModInfo::Ptr modInfo, unsigned in
 
     modInfo->saveMeta();
     m_core.modList()->modInfoChanged(modInfo);
+    emit modInfoDisplayed();
   }
 
   if (m_core.currentProfile()->modEnabled(modIndex) && !modInfo->isForeign()) {

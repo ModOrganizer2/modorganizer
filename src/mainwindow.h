@@ -143,6 +143,9 @@ public slots:
   void refresherProgress(const DirectoryRefreshProgress* p);
 
 signals:
+  // emitted after the information dialog has been closed, used by tutorials
+  //
+  void modInfoDisplayed();
 
   /**
    * @brief emitted when the selected style changes
