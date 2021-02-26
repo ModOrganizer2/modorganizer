@@ -568,47 +568,72 @@ void ModListViewActions::sendModsToPriority(const QModelIndexList& indexes) cons
 void ModListViewActions::sendModsToSeparator(const QModelIndexList& indexes) const
 {
   QStringList separators;
-  auto indexesByPriority = m_core.currentProfile()->getAllIndexesByPriority();
-  for (auto iter = indexesByPriority.begin(); iter != indexesByPriority.end(); iter++) {
-    if ((iter->second != UINT_MAX)) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(iter->second);
+  const auto& ibp = m_core.currentProfile()->getAllIndexesByPriority();
+  for (const auto& [priority, index] : ibp) {
+    if (index < ModInfo::getNumMods()) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
       if (modInfo->isSeparator()) {
-        separators << modInfo->name().chopped(10);  // Chops the "_separator" away from the name
+        separators << modInfo->name().chopped(10);  // chops the "_separator" away from the name
       }
     }
+  }
+
+  // in descending order, reverse the separator
+  if (m_view->sortOrder() == Qt::DescendingOrder) {
+    std::reverse(separators.begin(), separators.end());
   }
 
   ListDialog dialog(m_parent);
   dialog.setWindowTitle("Select a separator...");
   dialog.setChoices(separators);
 
-  if (dialog.exec() == QDialog::Accepted) {
-    QString result = dialog.getChoice();
-    if (!result.isEmpty()) {
-      result += "_separator";
+  if (dialog.exec() != QDialog::Accepted) {
+    return;
+  }
 
-      int newPriority = Profile::MaximumPriority;
-      bool foundSection = false;
-      for (auto mod : m_core.modList()->allModsByProfilePriority()) {
-        unsigned int modIndex = ModInfo::getIndex(mod);
-        ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-        if (!foundSection && result.compare(mod) == 0) {
-          foundSection = true;
-        }
-        else if (foundSection && modInfo->isSeparator()) {
-          newPriority = m_core.currentProfile()->getModPriority(modIndex);
-          break;
-        }
-      }
+  const QString result = dialog.getChoice();
+  if (result.isEmpty()) {
+    return;
+  }
 
-      if (indexes.size() == 1
-        && m_core.currentProfile()->getModPriority(indexes[0].data(ModList::IndexRole).toInt()) < newPriority) {
-        --newPriority;
-      }
+  const auto sepPriority = m_core.currentProfile()->getModPriority(
+    ModInfo::getIndex(result + "_separator"));
 
-      m_core.modList()->changeModsPriority(indexes, newPriority);
+  auto isSeparator = [](const auto& p) {
+    return ModInfo::getByIndex(p.second)->isSeparator();
+  };
+
+
+  // start right after/before the current priority and look for the next
+  // separator
+  int priority = -1;
+  if (m_view->sortOrder() == Qt::AscendingOrder) {
+    auto it = std::find_if(ibp.find(sepPriority + 1), ibp.end(), isSeparator);
+    if (it != ibp.end()) {
+      priority = it->first;
+    }
+    else {
+      priority = Profile::MaximumPriority;
     }
   }
+  else {
+    auto it = std::find_if(--std::reverse_iterator{ ibp.find(sepPriority - 1) }, ibp.rend(), isSeparator);
+    if (it != ibp.rend()) {
+      priority = it->first + 1;
+    }
+    else {
+      // create "before" priority 0, i.e. at the end in descending priority.
+      priority = Profile::MinimumPriority;
+    }
+  }
+
+  // when the priority of a single mod is incremented, we need to shift the
+  // target priority, otherwise we will miss the target by one
+  if (indexes.size() == 1 && indexes[0].data(ModList::PriorityRole).toInt() < sepPriority) {
+    priority--;
+  }
+
+  m_core.modList()->changeModsPriority(indexes, priority);
 }
 
 void ModListViewActions::sendModsToFirstConflict(const QModelIndexList& indexes) const
