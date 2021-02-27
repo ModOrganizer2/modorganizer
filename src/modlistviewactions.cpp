@@ -145,9 +145,10 @@ void ModListViewActions::createEmptyMod(const QModelIndex& index) const
     return;
   }
 
+  // find the priority before refresh() otherwise the index might not be valid
+  const int newPriority = findInstallPriority(index);
   m_core.refresh();
 
-  const int newPriority = findInstallPriority(index);
   const auto mIndex = ModInfo::getIndex(name);
   if (newPriority >= 0) {
     m_core.modList()->changeModPriority(mIndex, newPriority);
