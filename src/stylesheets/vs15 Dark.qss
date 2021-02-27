@@ -44,6 +44,7 @@ QListView::item:disabled,
 #dataTree::item,
 QTreeView#modList::item,
 QTreeWidget#categoriesTree::item,
+#savegameList::item,
 #tabConflicts QTreeWidget::item {
   padding: 0.3em 0; }
 

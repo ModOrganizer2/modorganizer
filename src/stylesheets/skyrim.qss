@@ -47,7 +47,8 @@ QTreeView::item {
 #modList::item,
 #settingsTree::item,
 #pluginSettingsList::item,
-#espList::item {
+#espList::item,
+#savegameList::item {
   min-height: 34px;
   padding: 0; }
   #modList::item QComboBox,

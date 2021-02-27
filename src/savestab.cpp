@@ -30,10 +30,8 @@ SavesTab::SavesTab(QWidget* window, OrganizerCore& core, Ui::MainWindow* mwui)
     [&](auto pos){ onContextMenu(pos); });
 
   connect(
-    ui.list, &QListWidget::itemEntered,
+    ui.list, &QTreeWidget::itemEntered,
     [&](auto* item){ saveSelectionChanged(item); });
-
-  ui.list->installEventFilter(this);
 }
 
 bool SavesTab::eventFilter(QObject* object, QEvent* e)
@@ -52,7 +50,7 @@ bool SavesTab::eventFilter(QObject* object, QEvent* e)
   return false;
 }
 
-void SavesTab::displaySaveGameInfo(QListWidgetItem *newItem)
+void SavesTab::displaySaveGameInfo(QTreeWidgetItem *newItem)
 {
   // don't display the widget if the main window doesn't have focus
   //
@@ -76,7 +74,7 @@ void SavesTab::displaySaveGameInfo(QListWidgetItem *newItem)
     }
   }
 
-  m_CurrentSaveView->setSave(*m_SaveGames[ui.list->row(newItem)]);
+  m_CurrentSaveView->setSave(*m_SaveGames[ui.list->indexOfTopLevelItem(newItem)]);
 
   QWindow *window = m_CurrentSaveView->window()->windowHandle();
   QRect screenRect;
@@ -104,7 +102,7 @@ void SavesTab::displaySaveGameInfo(QListWidgetItem *newItem)
 }
 
 
-void SavesTab::saveSelectionChanged(QListWidgetItem *newItem)
+void SavesTab::saveSelectionChanged(QTreeWidgetItem *newItem)
 {
   if (newItem == nullptr) {
     hideSaveGameInfo();
@@ -192,7 +190,9 @@ void SavesTab::refreshSaveList()
 
     ui.list->clear();
     for (auto& save: m_SaveGames) {
-      ui.list->addItem(savesDir.relativeFilePath(save->getFilepath()));
+      auto relpath = savesDir.relativeFilePath(save->getFilepath());
+      auto display = save->getName();
+      ui.list->addTopLevelItem(new QTreeWidgetItem(ui.list, { display, relpath }));
     }
   }
   catch(std::exception& e)
@@ -211,7 +211,7 @@ void SavesTab::deleteSavegame()
 
   int count = 0;
 
-  for (const QModelIndex &idx : ui.list->selectionModel()->selectedIndexes()) {
+  for (const QModelIndex &idx : ui.list->selectionModel()->selectedRows()) {
 
     auto& saveGame = m_SaveGames[idx.row()];
 
@@ -253,8 +253,8 @@ void SavesTab::onContextMenu(const QPoint& pos)
   if (info != nullptr) {
     QAction* action = menu.addAction(tr("Fix enabled mods..."));
     action->setEnabled(false);
-    if (selection->selectedIndexes().count() == 1) {
-      auto& save = m_SaveGames[selection->selectedIndexes()[0].row()];
+    if (selection->selectedRows().count() == 1) {
+      auto& save = m_SaveGames[selection->selectedRows()[0].row()];
       SaveGameInfo::MissingAssets missing = info->getMissingAssets(*save);
       if (missing.size() != 0) {
         connect(action, &QAction::triggered, this, [this, missing] { fixMods(missing); });
@@ -263,7 +263,7 @@ void SavesTab::onContextMenu(const QPoint& pos)
     }
   }
 
-  QString deleteMenuLabel = tr("Delete %n save(s)", "", selection->selectedIndexes().count());
+  QString deleteMenuLabel = tr("Delete %n save(s)", "", selection->selectedRows().count());
   menu.addAction(deleteMenuLabel, [&]{ deleteSavegame(); });
 
   menu.addAction(tr("Open in Explorer..."), [&]{ openInExplorer(); });
@@ -300,7 +300,7 @@ void SavesTab::openInExplorer()
 {
   const SaveGameInfo* info = m_core.managedGame()->feature<SaveGameInfo>();
 
-  const auto sel = ui.list->selectionModel()->selectedIndexes();
+  const auto sel = ui.list->selectionModel()->selectedRows();
   if (sel.empty()) {
     return;
   }

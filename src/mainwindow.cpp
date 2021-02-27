@@ -351,6 +351,7 @@ MainWindow::MainWindow(Settings &settings
   }
 
   settings.geometry().restoreState(ui->downloadView->header());
+  settings.geometry().restoreState(ui->savegameList->header());
 
   ui->splitter->setStretchFactor(0, 3);
   ui->splitter->setStretchFactor(1, 2);
@@ -2005,6 +2006,7 @@ void MainWindow::storeSettings()
 
   s.geometry().saveState(ui->espList->header());
   s.geometry().saveState(ui->downloadView->header());
+  s.geometry().saveState(ui->savegameList->header());
 
   s.widgets().saveIndex(ui->executablesListBox);
   s.widgets().saveIndex(ui->tabWidget);

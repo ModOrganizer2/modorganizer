@@ -24,7 +24,7 @@ public:
   SavesTab(QWidget* window, OrganizerCore& core, Ui::MainWindow* ui);
 
   void refreshSaveList();
-  void displaySaveGameInfo(QListWidgetItem *newItem);
+  void displaySaveGameInfo(QTreeWidgetItem *newItem);
 
   QDir currentSavesDir() const;
 
@@ -40,7 +40,7 @@ private:
   {
     QTabWidget* mainTabs;
     QWidget* tab;
-    QListWidget* list;
+    QTreeWidget* list;
   };
 
   QWidget* m_window;
@@ -55,7 +55,7 @@ private:
 
   void onContextMenu(const QPoint &pos);
   void deleteSavegame();
-  void saveSelectionChanged(QListWidgetItem *newItem);
+  void saveSelectionChanged(QTreeWidgetItem *newItem);
   void fixMods(SaveGameInfo::MissingAssets const &missingAssets);
   void refreshSavesIfOpen();
   void openInExplorer();
