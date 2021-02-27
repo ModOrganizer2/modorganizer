@@ -112,6 +112,10 @@ signals:
 
 public slots:
 
+  // invalidate (refresh) the filter (similar to a layout changed event)
+  //
+  void invalidateFilter();
+
   // set the filter criteria/options for mods
   //
   void setFilterCriteria(const std::vector<ModListSortProxy::Criteria>& criteria);

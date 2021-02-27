@@ -406,23 +406,23 @@ SaveGameInfoWidget {
  * Downloads
  */
 
- DownloadListWidget QLabel#installLabel {
+ DownloadListView QLabel#installLabel {
     color: none;
 }
 
-DownloadListWidget[downloadView=standard]::item {
+DownloadListView[downloadView=standard]::item {
     padding: 16px;
 }
 
-DownloadListWidget[downloadView=compact]::item {
+DownloadListView[downloadView=compact]::item {
     padding: 4px;
 }
 
-DownloadListWidget::item:hover {
+DownloadListView::item:hover {
     padding: 0px;
 }
 
-DownloadListWidget::item:selected {
+DownloadListView::item:selected {
     padding: 0px;
 }
 

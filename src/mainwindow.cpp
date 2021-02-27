@@ -516,6 +516,8 @@ void MainWindow::setupModList()
 
   connect(&ui->modList->actions(), &ModListViewActions::overwriteCleared, [=]() { scheduleCheckForProblems(); });
   connect(&ui->modList->actions(), &ModListViewActions::originModified, this, &MainWindow::originModified);
+  connect(&ui->modList->actions(), &ModListViewActions::modInfoDisplayed, this, &MainWindow::modInfoDisplayed);
+
   connect(m_OrganizerCore.modList(), &ModList::modPrioritiesChanged, [&]() { m_ArchiveListWriter.write(); });
 }
 
@@ -2832,41 +2834,37 @@ void MainWindow::nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVa
   }
   QVariantList resultList = resultData.toList();
 
-  QFutureWatcher<std::pair<QString, std::set<QSharedPointer<ModInfo>>>> *watcher = new QFutureWatcher<std::pair<QString, std::set<QSharedPointer<ModInfo>>>>();
-  QObject::connect(watcher, &QFutureWatcher<std::set<QSharedPointer<ModInfo>>>::finished, this, &MainWindow::finishUpdateInfo);
-  QFuture<std::pair<QString, std::set<QSharedPointer<ModInfo>>>> future = QtConcurrent::run([=]() -> std::pair<QString, std::set<QSharedPointer<ModInfo>>> {
-    return std::make_pair(gameNameReal, ModInfo::filteredMods(gameNameReal, resultList, userData.toBool(), true));
+  auto* watcher = new QFutureWatcher<NxmUpdateInfoData>();
+  QObject::connect(watcher, &QFutureWatcher<NxmUpdateInfoData>::finished, [this, watcher]() {
+    finishUpdateInfo(watcher->result());
+    watcher->deleteLater();
+  });
+  auto future = QtConcurrent::run([=]() {
+    return NxmUpdateInfoData{ gameNameReal, ModInfo::filteredMods(gameNameReal, resultList, userData.toBool(), true) };
   });
   watcher->setFuture(future);
+  ui->modList->invalidateFilter();
 }
 
-void MainWindow::finishUpdateInfo()
+void MainWindow::finishUpdateInfo(const NxmUpdateInfoData& data)
 {
-  QFutureWatcher<std::pair<QString, std::set<QSharedPointer<ModInfo>>>> *watcher = static_cast<QFutureWatcher<std::pair<QString, std::set<QSharedPointer<ModInfo>>>> *>(sender());
-
-  QString game = watcher->result().first;
-  auto finalMods = watcher->result().second;
-
-  if (finalMods.empty()) {
-    log::info("{}", tr("None of your %1 mods appear to have had recent file updates.").arg(game));
+  if (data.finalMods.empty()) {
+    log::info("{}", tr("None of your %1 mods appear to have had recent file updates.").arg(data.game));
   }
 
   std::set<std::pair<QString, int>> organizedGames;
-  for (auto mod : finalMods) {
+  for (auto& mod : data.finalMods) {
     if (mod->canBeUpdated()) {
       organizedGames.insert(std::make_pair<QString, int>(mod->gameName().toLower(), mod->nexusId()));
     }
-    m_OrganizerCore.modList()->notifyChange(ModInfo::getIndex(mod->name()));
   }
 
-  if (!finalMods.empty() && organizedGames.empty())
+  if (!data.finalMods.empty() && organizedGames.empty())
     log::warn("{}", tr("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests."));
 
-  for (auto game : organizedGames)
+  for (const auto& game : organizedGames) {
     NexusInterface::instance().requestUpdates(game.second, this, QVariant(), game.first, QString());
-
-  disconnect(sender());
-  delete sender();
+  }
 }
 
 void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
@@ -2941,12 +2939,14 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
     if (foundUpdate) {
       // Just get the standard data updates for endorsements and descriptions
       mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
-      m_OrganizerCore.modList()->notifyChange(ModInfo::getIndex(mod->name()));
     } else {
       // Scrape mod data here so we can use the mod version if no file update was located
       requiresInfo = true;
     }
   }
+
+  // invalidate the filter to display mods with an update
+  ui->modList->invalidateFilter();
 
   if (requiresInfo)
     NexusInterface::instance().requestModInfo(gameNameReal, modID, this, QVariant(), QString());

@@ -952,6 +952,16 @@ void PluginContainer::reloadPlugin(QString const& filepath)
 
 void PluginContainer::unloadPlugins()
 {
+  if (m_Organizer) {
+    // this will clear several structures that can hold on to pointers to
+    // plugins, as well as read the plugin blacklist from the ini file, which
+    // is used in loadPlugins() below to skip plugins
+    //
+    // note that the first thing loadPlugins() does is call unloadPlugins(),
+    // so this makes sure the blacklist is always available
+    m_Organizer->settings().plugins().clearPlugins();
+  }
+
   bf::for_each(m_Plugins, [](auto& t) { t.second.clear(); });
   bf::for_each(m_AccessPlugins, [](auto& t) { t.second.clear(); });
   m_Requirements.clear();

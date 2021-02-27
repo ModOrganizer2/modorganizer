@@ -299,6 +299,11 @@ std::optional<unsigned int> ModListView::prevMod(unsigned int  modIndex) const
   return {};
 }
 
+void ModListView::invalidateFilter()
+{
+  m_sortProxy->invalidate();
+}
+
 void ModListView::setFilterCriteria(const std::vector<ModListSortProxy::Criteria>& criteria)
 {
   m_sortProxy->setCriteria(criteria);

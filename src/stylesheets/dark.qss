@@ -374,15 +374,15 @@ QTreeView::branch:open:has-children:has-siblings
   image: url(:/stylesheet/branch-open.png);
 }
 
-DownloadListWidget QLabel#installLabel {
+DownloadListView QLabel#installLabel {
   color: none;
 }
 
-DownloadListWidget[downloadView=standard]::item {
+DownloadListView[downloadView=standard]::item {
 	padding: 16px;
 }
 
-DownloadListWidget[downloadView=compact]::item {
+DownloadListView[downloadView=compact]::item {
 	padding: 4px;
 }
 

@@ -547,7 +547,7 @@ QHeaderView::up-arrow {
   image: url(./vs15/sort-asc.png);
   margin-bottom: -37px; }
 
-DownloadListWidget QHeaderView::up-arrow {
+DownloadListView QHeaderView::up-arrow {
   margin-bottom: -47px; }
 
 QHeaderView::down-arrow {
@@ -621,11 +621,11 @@ QProgressBar {
 QProgressBar::chunk {
   background: #06B025; }
 
-DownloadListWidget[downloadView=standard]::item {
+DownloadListView[downloadView=standard]::item {
 	padding: 16px;
 }
 
-DownloadListWidget[downloadView=compact]::item {
+DownloadListView[downloadView=compact]::item {
 	padding: 4px;
 }
 

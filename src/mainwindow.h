@@ -145,6 +145,9 @@ public slots:
   void requestNexusCategories();
 
 signals:
+  // emitted after the information dialog has been closed, used by tutorials
+  //
+  void modInfoDisplayed();
 
   /**
    * @brief emitted when the selected style changes
@@ -225,6 +228,13 @@ private:
 
   void toggleMO2EndorseState();
   void toggleUpdateAction();
+
+  // update info
+  struct NxmUpdateInfoData {
+    QString game;
+    std::set<ModInfo::Ptr> finalMods;
+  };
+  void finishUpdateInfo(const NxmUpdateInfoData& data);
 
 private:
 
@@ -333,10 +343,10 @@ private slots:
 
   void modInstalled(const QString &modName);
 
-  void finishUpdateInfo();
+  // update info
+  void nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVariant resultData, int requestID);
 
   void nxmEndorsementsAvailable(QVariant userData, QVariant resultData, int);
-  void nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVariant resultData, int requestID);
   void nxmUpdatesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmModInfoAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int);
