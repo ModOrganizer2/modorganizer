@@ -543,7 +543,7 @@ void PluginList::readLockedOrderFrom(const QString &fileName)
     auto alreadyLocked = [&](){ return std::find_if(m_LockedOrder.begin(), m_LockedOrder.end(), findLocked) != m_LockedOrder.end(); };
 
     // See if we can just set the given priority
-    if (!m_ESPs[priority].forceEnabled && !alreadyLocked())
+    if (!m_ESPs[m_ESPsByPriority.at(priority)].forceEnabled && !alreadyLocked())
     {
       m_LockedOrder[pluginName] = priority;
       continue;
@@ -552,7 +552,7 @@ void PluginList::readLockedOrderFrom(const QString &fileName)
     // Find the next higher priority we can set the plugin to
     while (++priority < m_ESPs.size())
     {
-      if (!m_ESPs[priority].forceEnabled && !alreadyLocked())
+      if (!m_ESPs[m_ESPsByPriority.at(priority)].forceEnabled && !alreadyLocked())
       {
         m_LockedOrder[pluginName] = priority;
         break;
