@@ -565,33 +565,68 @@ QList<T> findChildrenImmediate(QWidget* parent)
 
 void UILocker::disableAll()
 {
-  const auto topLevels = QApplication::topLevelWidgets();
+  // the goal is to disable the main window and any dialog that's opened,
+  // without disabling the overlay itself
+  //
+  // the overlay might be a regular widget overlayed on top of a window, or an
+  // actual dialog if a shortcut is launched when MO isn't running
 
-  for (auto* w : topLevels) {
+  // top level widgets include the main window and dialogs
+  for (auto* w : QApplication::topLevelWidgets()) {
     if (auto* mw=dynamic_cast<QMainWindow*>(w)) {
+      // this is the main window, disable the central widgets and the stuff
+      // around it
+
       disable(mw->centralWidget());
       disable(mw->menuBar());
       disable(mw->statusBar());
 
+      // every toolbar
       for (auto* tb : findChildrenImmediate<QToolBar*>(w)) {
         disable(tb);
       }
 
+      // every docked widget
       for (auto* d : findChildrenImmediate<QDockWidget*>(w)) {
         disable(d);
       }
     }
 
+
     if (auto* d=dynamic_cast<QDialog*>(w)) {
-      // don't disable stuff if this dialog is the overlay, which happens when
-      // there's no ui
-      if (d != m_ui->topLevel()) {
-        // no central widget, just disable the children, except for the overlay
-        for (auto* child : findChildrenImmediate<QWidget*>(d)) {
-          if (child != m_ui->topLevel()) {
-            disable(child);
-          }
+      // this is a dialog
+
+      if (d == m_ui->topLevel()) {
+        // but it's the overlay itself, skip it; this happens if a shortcut is
+        // launched but MO itself isn't running, in which case the lock ui is
+        // a dialog, not an overlay
+        continue;
+      }
+
+      // disable all the dialog's immediate children, except for the overlay
+      // itself or other dialogs
+      for (auto* child : findChildrenImmediate<QWidget*>(d)) {
+        if (child == m_ui->topLevel()) {
+          // this is the overlay itself, skip it
+          continue;
         }
+
+        if (dynamic_cast<QDialog*>(child)) {
+          // this is a child dialog, skip it
+          //
+          // this typically happens when there's a second level modal dialog,
+          // like the create instance dialog that's opened from the instance
+          // manager
+          //
+          // the lock overlay is probably a child of that dialog, so disabling
+          // the dialog would also disable the buttons on the lock overlay
+          //
+          // since this is a dialog, it will be part of `topLevel` from the main
+          // loop and will be handled correctly later
+          continue;
+        }
+
+        disable(child);
       }
     }
   }
