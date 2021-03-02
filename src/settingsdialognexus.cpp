@@ -295,6 +295,10 @@ void NexusConnectionUI::updateState()
 NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
   : SettingsTab(s, d)
 {
+  // Set scrollarea to transparent
+  ui->nexusScrollArea->setStyleSheet("QScrollArea { background-color: transparent; }");
+  ui->nexusScrollAreaWidgetContents->setStyleSheet("background-color: transparent;");
+
   ui->endorsementBox->setChecked(settings().nexus().endorsementIntegration());
   ui->trackedBox->setChecked(settings().nexus().trackedIntegration());
   ui->hideAPICounterBox->setChecked(settings().interface().hideAPICounter());
