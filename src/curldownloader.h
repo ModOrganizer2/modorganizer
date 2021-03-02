@@ -1,6 +1,8 @@
 #ifndef MODORGANIZER_CURLDOWNLOADER_INCLUDED
 #define MODORGANIZER_CURLDOWNLOADER_INCLUDED
 
+#include <ipluginrepository.h>
+
 namespace dm::curl
 {
 
@@ -80,28 +82,25 @@ private:
 };
 
 
-class Download
+class Download : public MOBase::IDownload
 {
 public:
-  enum States
-  {
-    Stopped = 0,
-    Running,
-    Stopping,
-    Finished
-  };
-
   Download(std::string url, fs::path file);
 
   CURL* setup(curl_off_t maxSpeed);
 
   CURL* handle() const;
-  States state() const;
+  States state() const override;
+  Stats stats() const override;
+  std::string stealBuffer();
+  const std::string& buffer() const override;
+  int httpCode() const;
+  std::string error() const;
   std::string debugName() const;
 
   void start();
-  void stop();
-  bool finish();
+  void stop() override;
+  bool finish(CURLcode code);
 
   bool xfer(
     curl_off_t dltotal, curl_off_t dlnow,
@@ -116,11 +115,14 @@ private:
   fs::path m_file;
   EasyHandle m_handle;
   FileHandle m_out;
+  std::string m_buffer;
   States m_state;
+  std::string m_error;
 
   hr_clock::time_point m_lastCheck;
   std::size_t m_bytes;
   std::atomic<double> m_bytesPerSecond;
+  std::atomic<double> m_progress;
 
   std::size_t resumeFrom();
   bool rename();
@@ -136,7 +138,7 @@ private:
 };
 
 
-class Downloader
+class Downloader : public MOBase::IDownloader
 {
 public:
   static const std::size_t NoLimit =
@@ -153,7 +155,8 @@ public:
 
   bool finished() const;
 
-  std::shared_ptr<Download> add(std::string url, fs::path file);
+  std::shared_ptr<MOBase::IDownload> add(
+    std::string url, fs::path file) override;
 
 private:
   using DownloadList = std::list<std::shared_ptr<Download>>;

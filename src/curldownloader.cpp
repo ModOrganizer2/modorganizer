@@ -337,8 +337,9 @@ bool FileHandle::write(std::string_view sv)
 
 
 Download::Download(std::string url, fs::path file) :
-  m_url(std::move(url)), m_file(std::move(file)), m_handle(defer),
-  m_state(Stopped), m_bytes(0), m_bytesPerSecond(0)
+  m_url(std::move(url)), m_file(std::move(file)),
+  m_handle(defer), m_state(Stopped), m_bytes(0),
+  m_bytesPerSecond(0), m_progress(0)
 {
 }
 
@@ -348,6 +349,8 @@ CURL* Download::setup(curl_off_t maxSpeed)
     curlLog().error("easy init failed for {}", debugName());
     return nullptr;
   }
+
+  m_buffer = {};
 
   auto* h = m_handle.get();
 
@@ -384,13 +387,64 @@ Download::States Download::state() const
   return m_state;
 }
 
+Download::Stats Download::stats() const
+{
+  Stats s;
+
+  s.bytesPerSecond = m_bytesPerSecond;
+  s.progress = m_progress;
+
+  return s;
+}
+
+std::string Download::error() const
+{
+  return m_error;
+}
+
+std::string Download::stealBuffer()
+{
+  return std::move(m_buffer);
+}
+
+const std::string& Download::buffer() const
+{
+  return m_buffer;
+}
+
+int Download::httpCode() const
+{
+  if (m_handle.get() == nullptr) {
+    return -1;
+  }
+
+  long c = 0;
+  curl_easy_getinfo(m_handle.get(), CURLINFO_RESPONSE_CODE, &c);
+
+  return static_cast<int>(c);
+}
+
 std::string Download::debugName() const
 {
-  return m_file.filename().string();
+  const auto p = m_url.find_last_of("/");
+  if (p == std::string::npos) {
+    return m_url;
+  }
+
+  const auto p2 = m_url.find_first_of("?#", p);
+  if (p2 == std::string::npos) {
+    return m_url.substr(p + 1);
+  } else {
+    return m_url.substr(p + 1, p2 - p - 1);
+  }
 }
 
 std::size_t Download::resumeFrom()
 {
+  if (m_file.empty()) {
+    return 0;
+  }
+
   const auto p = unfinished(m_file);
 
   if (fs::exists(p)) {
@@ -411,6 +465,14 @@ bool Download::xfer(
   curl_off_t dltotal, curl_off_t dlnow,
   curl_off_t ultotal, curl_off_t ulnow)
 {
+  double d = -1;
+
+  if (dltotal > 0) {
+    d = static_cast<double>(dlnow) / dltotal * 100;
+  }
+
+  m_progress = d;
+
   return (m_state == Running);
 }
 
@@ -426,16 +488,19 @@ bool Download::write(std::string_view data)
 
   //curlLog().debug("write {} bytes", data.size());
 
-  if (!m_out.opened()) {
-    if (m_out.open(unfinished(m_file), false) == -1) {
+  if (m_file.empty()) {
+    m_buffer.append(data.begin(), data.end());
+  } else {
+    if (!m_out.opened()) {
+      if (m_out.open(unfinished(m_file), false) == -1) {
+        return false;
+      }
+    }
+
+    if (!m_out.write(data)) {
       return false;
     }
   }
-
-  if (!m_out.write(data)) {
-    return false;
-  }
-
 
   m_bytes += data.size();
 
@@ -466,20 +531,26 @@ void Download::stop()
   m_state = Stopping;
 }
 
-bool Download::finish()
+bool Download::finish(CURLcode code)
 {
   bool b = true;
 
-  if (m_out.opened() && m_state == Running) {
-    b = rename();
-  } else {
-    m_out.close();
-  }
-
   if (m_state == Running) {
+    if (code == CURLE_OK) {
+      if (m_out.opened()) {
+        b = rename();
+      }
+
+      curlLog().debug("finished {}", debugName());
+    } else {
+      m_error = curl_easy_strerror(code);
+      curlLog().error("{} errored: {}", debugName(), m_error);
+    }
+
     m_state = Finished;
   } else {
     m_state = Stopped;
+    m_out.close();
   }
 
   return b;
@@ -607,7 +678,7 @@ bool Downloader::finished() const
   return m_finished;
 }
 
-std::shared_ptr<Download> Downloader::add(
+std::shared_ptr<MOBase::IDownload> Downloader::add(
   std::string url, fs::path file)
 {
   auto d = std::make_shared<Download>(std::move(url), std::move(file));
@@ -729,8 +800,6 @@ void Downloader::perform()
 
       if (itor == m_map.end()) {
         curlLog().error("{} finished, but not in list", (void*)msg->easy_handle);
-      } else {
-        curlLog().debug("finished {}", (*itor->second)->debugName());
       }
 
       mr = curl_multi_remove_handle(m_handle.get(), msg->easy_handle);
@@ -739,7 +808,7 @@ void Downloader::perform()
       }
 
       if (itor != m_map.end()) {
-        (*itor->second)->finish();
+        (*itor->second)->finish(msg->data.result);
       }
     }
   }

@@ -1,6 +1,21 @@
 #include "downloadmanager2.h"
 #include "curldownloader.h"
+#include "plugincontainer.h"
 #include <log.h>
+
+static std::unique_ptr<dm::DownloadManager2> g_dm;
+
+
+void testDM(PluginContainer& pc)
+{
+}
+
+
+void dmAdd(const QString& url)
+{
+  g_dm->add(url);
+}
+
 
 namespace dm
 {
@@ -13,21 +28,158 @@ log::LogWrapper& dmLog()
   return lg;
 }
 
-
-Download::Download(QUrl url)
-  : m_url(std::move(url)), m_state(None)
+QString toString(Download::States s)
 {
-  m_file = "c:\\tmp\\dm\\" + m_url.fileName();
+  using S = Download::States;
+
+  switch (s)
+  {
+    case S::None: return "none";
+    case S::Queueing: return "queueing";
+    case S::Queued: return "queued";
+    case S::Finished: return "finished";
+    case S::Errored: return "errored";
+    case S::Running: return "running";
+    case S::Pausing: return "pausing";
+    case S::Paused: return "paused";
+    case S::Cancelling: return "cancelling";
+    case S::Cancelled: return "cancelled";
+
+    default:
+    {
+      const auto n = static_cast<std::underlying_type_t<Download::States>>(s);
+      return QString::fromStdString("?" + std::to_string(n));
+    }
+  }
 }
 
-const QUrl& Download::url() const
+
+class DefaultDownload : public IRepositoryDownload
 {
-  return m_url;
+public:
+  DefaultDownload(const QString& what, IDownloader* d)
+    : m_what(what), m_downloader(d), m_first(true)
+  {
+    setState(States::Downloading);
+    m_dl = d->add(what.toStdString(), downloadFilename(what).toStdString());
+  }
+
+  QString downloadFilename(const QString& what) const
+  {
+    return QUrl(what).fileName();
+  }
+
+  void tick() override
+  {
+    if (!m_dl) {
+      return;
+    }
+
+    if (m_dl->state() == IDownload::Finished) {
+      setState(States::Finished);
+      m_dl = {};
+      return;
+    }
+  }
+
+  void stop() override
+  {
+    if (m_dl) {
+      setState(States::Stopping);
+      m_dl->stop();
+    } else {
+      setState(States::Finished);
+    }
+  }
+
+  double progress() const override
+  {
+    if (m_dl) {
+      return m_dl->stats().progress;
+    } else {
+      return -1;
+    }
+  }
+
+private:
+  const QString m_what;
+  IDownloader* m_downloader;
+  std::shared_ptr<MOBase::IDownload> m_dl;
+  bool m_first;
+};
+
+
+class DefaultRepository : public IPluginRepository
+{
+public:
+  enum States
+  {
+    RealFile = 1
+  };
+
+
+  bool init(MOBase::IOrganizer*) override
+  {
+    return true;
+  }
+
+  QString name() const override
+  {
+    return "Default Repository";
+  }
+
+  QString localizedName() const override
+  {
+    return QObject::tr("Default Repository");
+  }
+
+  QString author() const override
+  {
+    return "The Mod Organizer Team";
+  }
+
+  QString description() const override
+  {
+    return "";
+  }
+
+  MOBase::VersionInfo version() const override
+  {
+    return VersionInfo(1, 0, 0, VersionInfo::RELEASE_FINAL);
+  }
+
+  QList<PluginSetting> settings() const override
+  {
+    return {};
+  }
+
+  bool canHandleDownload(const QString& what) const override
+  {
+    return true;
+  }
+
+  QString downloadFilename(const QString& what) const override
+  {
+    return QUrl(what).fileName();
+  }
+
+  std::unique_ptr<IRepositoryDownload> download(
+    const QString& what, IDownloader* d) override
+  {
+    return std::make_unique<DefaultDownload>(what, d);
+  }
+};
+
+static DefaultRepository g_defaultRepo;
+
+Download::Download(DownloadManager2& dm, IPluginRepository& repo, QString what)
+  : m_dm(dm), m_repo(repo), m_what(std::move(what)), m_state(None)
+{
 }
 
-const QString& Download::file() const
+const QString& Download::what() const
 {
-  return m_file;
+  return m_what;
 }
 
 Download::States Download::state() const
@@ -35,19 +187,31 @@ Download::States Download::state() const
   return m_state;
 }
 
-void Download::start(std::shared_ptr<curl::Download> d)
+void Download::setState(States s)
 {
-  m_state = Running;
-  m_download = d;
+  if (m_state != s) {
+    dmLog().debug(
+      "{} state changed from {} to {}",
+      debugName(), toString(m_state), toString(s));
+
+    m_state = s;
+  }
+}
+
+bool Download::start()
+{
+  setState(Running);
+  m_download = m_repo.download(m_what, &m_dm.downloader());
+  return (m_download.get() != nullptr);
 }
 
 void Download::cancel()
 {
   if (m_download) {
     m_download->stop();
-    m_state = Cancelling;
+    setState(Cancelling);
   } else {
-    m_state = Cancelled;
+    setState(Cancelled);
   }
 }
 
@@ -55,9 +219,9 @@ void Download::pause()
 {
   if (m_download) {
     m_download->stop();
-    m_state = Pausing;
+    setState(Pausing);
   } else {
-    m_state = Paused;
+    setState(Paused);
   }
 }
 
@@ -65,54 +229,93 @@ void Download::queue()
 {
   if (m_download) {
     m_download->stop();
-    m_state = Queueing;
+    setState(Queueing);
   } else {
-    m_state = Queued;
+    setState(Queued);
   }
 }
 
 void Download::tick()
 {
-  if (m_download) {
-    if (m_state == Cancelling) {
-      if (m_download->state() == curl::Download::Stopped) {
-        m_state = Cancelled;
+  using S = IRepositoryDownload::States;
+
+  if (!m_download) {
+    return;
+  }
+
+  m_download->tick();
+
+  switch (m_state)
+  {
+    case Cancelling:
+    {
+      if (m_download->state() == S::Finished) {
+        setState(Cancelled);
         m_download = {};
       }
-    } else if (m_state == Pausing) {
-      if (m_download->state() == curl::Download::Stopped) {
-        m_state = Paused;
+
+      break;
+    }
+
+    case Pausing:
+    {
+      if (m_download->state() == S::Finished) {
+        setState(Paused);
         m_download = {};
       }
-    } else if (m_state == Queueing) {
-      if (m_download->state() == curl::Download::Stopped) {
-        m_state = Queued;
+
+      break;
+    }
+
+    case Queueing:
+    {
+      if (m_download->state() == S::Finished) {
+        setState(Queued);
         m_download = {};
       }
-    } else if (m_download->state() == curl::Download::Finished) {
-      m_state = Finished;
-      m_download = {};
-    } else {
-      m_state = Running;
+
+      break;
+    }
+
+    default:
+    {
+      if (m_download->state() == S::Finished) {
+        const auto e = m_download->error();
+
+        if (e == IRepositoryDownload::NoError) {
+          setState(Finished);
+        } else {
+          setState(Errored);
+          m_error = QString("%1").arg(e);
+          m_download = {};
+        }
+      } else {
+        setState(Running);
+        std::cout << m_download->progress() << "\n";
+      }
     }
   }
 }
 
 QString Download::debugName() const
 {
-  return m_url.fileName();
+  return QUrl(m_what).fileName();
 }
 
 
-DownloadManager2::DownloadManager2() :
-  m_maxActive(NoLimit), m_maxSpeed(NoLimit), m_hasActive(false),
-  m_downloader(new curl::Downloader)
+DownloadManager2::DownloadManager2(PluginContainer& pc) :
+  m_stop(false), m_pc(pc), m_maxActive(NoLimit), m_maxSpeed(NoLimit),
+  m_hasActive(false), m_downloader(new curl::Downloader)
 {
   m_thread = std::thread([&]{ run(); });
 }
 
 DownloadManager2::~DownloadManager2()
 {
+  m_stop = true;
+  if (m_thread.joinable()) {
+    m_thread.join();
+  }
 }
 
 void DownloadManager2::maxActive(std::size_t n)
@@ -139,12 +342,23 @@ void DownloadManager2::maxSpeed(std::size_t bytesPerSecond)
   m_downloader->maxSpeed(bytesPerSecond);
 }
 
-void DownloadManager2::add(const QUrl& url)
+void DownloadManager2::add(QString what)
 {
-  dmLog().debug("adding {}", url.toString());
+  dmLog().debug("adding {}", what);
 
-  std::scoped_lock lock(m_tempMutex);
-  m_temp.push_back(std::make_shared<Download>(url));
+  IPluginRepository* repo = &g_defaultRepo;
+
+  for (auto* p : m_pc.plugins<IPluginRepository>()) {
+    if (p->canHandleDownload(what)) {
+      repo = p;
+      break;
+    }
+  }
+
+  {
+    std::scoped_lock lock(m_tempMutex);
+    m_temp.push_back(std::make_shared<Download>(*this, *repo, std::move(what)));
+  }
 }
 
 bool DownloadManager2::hasActive() const
@@ -152,10 +366,15 @@ bool DownloadManager2::hasActive() const
   return m_hasActive;
 }
 
+curl::Downloader& DownloadManager2::downloader()
+{
+  return *m_downloader;
+}
+
 void DownloadManager2::run()
 {
   try {
-    for (;;) {
+    while (!m_stop) {
       checkTemp();
       checkQueue();
 
@@ -279,7 +498,7 @@ void DownloadManager2::addFromQueue(std::size_t max)
     std::shared_ptr<Download> d = *q;
     dmLog().debug("activating {}", d->debugName());
 
-    if (start(d)) {
+    if (d->start()) {
       q = m_queued.erase(q);
       m_active.push_back(d);
     } else {
@@ -287,15 +506,6 @@ void DownloadManager2::addFromQueue(std::size_t max)
       ++q;
     }
   }
-}
-
-bool DownloadManager2::start(std::shared_ptr<Download> d)
-{
-  d->start(m_downloader->add(
-    d->url().toString().toStdString(),
-    fs::path(d->file().toStdWString())));
-
-  return true;
 }
 
 } // namespace

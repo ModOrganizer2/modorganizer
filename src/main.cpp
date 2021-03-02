@@ -7,6 +7,7 @@
 #include "instancemanager.h"
 #include "thread_utils.h"
 #include "shared/util.h"
+#include "downloadmanager2.h"
 #include <report.h>
 #include <log.h>
 

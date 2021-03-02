@@ -13,6 +13,7 @@ class IUserInterface;
 #include <ipluginproxy.h>
 #include <iplugininstaller.h>
 #include <ipluginfilemapper.h>
+#include <ipluginrepository.h>
 #include <QtPlugin>
 #include <QPluginLoader>
 #include <QFile>
@@ -142,7 +143,8 @@ private:
     boost::fusion::pair<MOBase::IPluginPreview, std::vector<MOBase::IPluginPreview*>>,
     boost::fusion::pair<MOBase::IPluginTool, std::vector<MOBase::IPluginTool*>>,
     boost::fusion::pair<MOBase::IPluginProxy, std::vector<MOBase::IPluginProxy*>>,
-    boost::fusion::pair<MOBase::IPluginFileMapper, std::vector<MOBase::IPluginFileMapper*>>
+    boost::fusion::pair<MOBase::IPluginFileMapper, std::vector<MOBase::IPluginFileMapper*>>,
+    boost::fusion::pair<MOBase::IPluginRepository, std::vector<MOBase::IPluginRepository*>>
   >;
 
   using AccessPluginMap = boost::fusion::map<
@@ -166,9 +168,9 @@ private:
     boost::mp11::mp_transform<
       std::add_pointer_t,
       boost::mp11::mp_list<
-        MOBase::IPluginGame, MOBase::IPluginInstaller, MOBase::IPluginModPage, MOBase::IPluginPreview,
-        MOBase::IPluginProxy, MOBase::IPluginTool, MOBase::IPluginDiagnose, MOBase::IPluginFileMapper,
-        MOBase::IPlugin
+        MOBase::IPluginGame, MOBase::IPluginInstaller, MOBase::IPluginModPage, MOBase::IPluginRepository,
+        MOBase::IPluginPreview, MOBase::IPluginProxy, MOBase::IPluginTool, MOBase::IPluginDiagnose,
+        MOBase::IPluginFileMapper, MOBase::IPlugin
       >
     >;
 

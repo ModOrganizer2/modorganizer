@@ -81,6 +81,7 @@ template <> struct PluginTypeName<MOBase::IPluginPreview> { static QString value
 template <> struct PluginTypeName<MOBase::IPluginTool> { static QString value() { return QT_TR_NOOP("Tool"); } };
 template <> struct PluginTypeName<MOBase::IPluginProxy> { static QString value() { return QT_TR_NOOP("Proxy"); } };
 template <> struct PluginTypeName<MOBase::IPluginFileMapper> { static QString value() { return QT_TR_NOOP("File Mapper"); } };
+template <> struct PluginTypeName<MOBase::IPluginRepository> { static QString value() { return QT_TR_NOOP("Repository"); } };
 
 
 QStringList PluginContainer::pluginInterfaces()
@@ -508,6 +509,16 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString& filepat
       bf::at_key<IPluginModPage>(m_Plugins).push_back(modPage);
       emit pluginRegistered(modPage);
       return modPage;
+    }
+  }
+  { // repo plugin
+    IPluginRepository *repo = qobject_cast<IPluginRepository*>(plugin);
+    if (repo) {
+      if (initPlugin(repo, pluginProxy, skipInit)) {
+        bf::at_key<IPluginRepository>(m_Plugins).push_back(repo);
+        emit pluginRegistered(repo);
+        return repo;
+      }
     }
   }
   { // game plugin
