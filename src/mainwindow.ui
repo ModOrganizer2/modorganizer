@@ -1199,7 +1199,7 @@ p, li { white-space: pre-wrap; }
               <number>0</number>
              </property>
              <item>
-              <widget class="QListWidget" name="savegameList">
+              <widget class="QTreeWidget" name="savegameList">
                <property name="contextMenuPolicy">
                 <enum>Qt::CustomContextMenu</enum>
                </property>
@@ -1215,6 +1215,9 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;If you click &amp;quot;Fix Mods...&amp;quot; in the context menu, MO will try to activate all mods and esps to fix those missing esps. It will not disable anything!&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
+               <property name="sizeAdjustPolicy">
+                <enum>QAbstractScrollArea::AdjustIgnored</enum>
+               </property>
                <property name="alternatingRowColors">
                 <bool>true</bool>
                </property>
@@ -1224,9 +1227,43 @@ p, li { white-space: pre-wrap; }
                <property name="selectionBehavior">
                 <enum>QAbstractItemView::SelectRows</enum>
                </property>
-               <property name="uniformItemSizes">
+               <property name="indentation">
+                <number>0</number>
+               </property>
+               <property name="rootIsDecorated">
+                <bool>false</bool>
+               </property>
+               <property name="uniformRowHeights">
                 <bool>true</bool>
                </property>
+               <property name="sortingEnabled">
+                <bool>false</bool>
+               </property>
+               <property name="columnCount">
+                <number>2</number>
+               </property>
+               <attribute name="headerCascadingSectionResizes">
+                <bool>false</bool>
+               </attribute>
+               <attribute name="headerStretchLastSection">
+                <bool>false</bool>
+               </attribute>
+               <column>
+                <property name="text">
+                 <string>Name</string>
+                </property>
+                <property name="textAlignment">
+                 <set>AlignLeading|AlignVCenter</set>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>File</string>
+                </property>
+                <property name="textAlignment">
+                 <set>AlignLeading|AlignVCenter</set>
+                </property>
+               </column>
               </widget>
              </item>
             </layout>
