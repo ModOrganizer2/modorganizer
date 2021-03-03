@@ -15,10 +15,6 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
   addLanguages();
   selectLanguage();
 
-  // Set scrollarea to transparent
-  ui->generalScrollArea->setStyleSheet("QScrollArea { background-color: transparent; }");
-  ui->generalScrollAreaWidgetContents->setStyleSheet("background-color: transparent;");
-
   // download list
   ui->compactBox->setChecked(settings().interface().compactDownloads());
   ui->showMetaBox->setChecked(settings().interface().metaDownloads());

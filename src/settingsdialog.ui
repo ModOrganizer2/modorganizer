@@ -26,6 +26,10 @@
       <layout class="QGridLayout" name="gridLayout" rowstretch="0">
        <item row="0" column="0">
         <widget class="QScrollArea" name="generalScrollArea">
+         <property name="styleSheet">
+          <string notr="true">#generalScrollArea { background-color: transparent; }
+#generalScrollAreaWidgetContents { background-color: transparent; }</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
          </property>
@@ -45,7 +49,7 @@
            </rect>
           </property>
           <property name="autoFillBackground">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_8">
            <property name="leftMargin">
@@ -987,6 +991,10 @@ If you disable this feature, MO will only display official DLCs this way. Please
       <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0">
        <item>
         <widget class="QScrollArea" name="nexusScrollArea">
+         <property name="styleSheet">
+          <string notr="true">#nexusScrollArea { background-color: transparent; }
+#nexusScrollAreaWidgetContents { background-color: transparent; }</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
          </property>
@@ -1006,7 +1014,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
            </rect>
           </property>
           <property name="autoFillBackground">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_34">
            <property name="leftMargin">
@@ -1663,6 +1671,10 @@ If you disable this feature, MO will only display official DLCs this way. Please
       <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
         <widget class="QScrollArea" name="workaroundScrollArea">
+         <property name="styleSheet">
+          <string notr="true">#workaroundScrollArea { background-color: transparent; }
+#workaroundScrollAreaWidgetContents { background-color: transparent; }</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
          </property>
@@ -1682,7 +1694,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
            </rect>
           </property>
           <property name="autoFillBackground">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_6">
            <property name="leftMargin">

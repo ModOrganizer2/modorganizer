@@ -8,10 +8,6 @@
 WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
   : SettingsTab(s, d)
 {
-  // Set scrollarea to transparent
-  ui->workaroundScrollArea->setStyleSheet("QScrollArea { background-color: transparent; }");
-  ui->workaroundScrollAreaWidgetContents->setStyleSheet("background-color: transparent;");
-
   // options
   ui->forceEnableBox->setChecked(settings().game().forceEnableCoreFiles());
   ui->lockGUIBox->setChecked(settings().interface().lockGUI());
