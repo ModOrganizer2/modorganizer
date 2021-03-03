@@ -6,8 +6,12 @@
 static std::unique_ptr<dm::DownloadManager2> g_dm;
 
 
-void testDM(PluginContainer& pc)
+std::optional<int> testDM(PluginContainer& pc)
 {
+  g_dm.reset(new dm::DownloadManager2(pc));
+  //g_dm->maxSpeed(1024 * 300);
+  //g_dm->maxActive(1);
+  return {};
 }
 
 
@@ -61,7 +65,11 @@ public:
     : m_what(what), m_downloader(d), m_first(true)
   {
     setState(States::Downloading);
-    m_dl = d->add(what.toStdString(), downloadFilename(what).toStdString());
+
+    IDownload::Info info;
+    info.outputFile = downloadFilename(what);
+
+    m_dl = d->add(what, info);
   }
 
   QString downloadFilename(const QString& what) const
@@ -279,16 +287,15 @@ void Download::tick()
 
     default:
     {
-      if (m_download->state() == S::Finished) {
+      if (m_download->state() == S::Errored) {
         const auto e = m_download->error();
 
-        if (e == IRepositoryDownload::NoError) {
-          setState(Finished);
-        } else {
-          setState(Errored);
-          m_error = QString("%1").arg(e);
-          m_download = {};
-        }
+        setState(Errored);
+        m_error = QString("%1").arg(e);
+        m_download = {};
+      }
+      else if (m_download->state() == S::Finished) {
+        setState(Finished);
       } else {
         setState(Running);
         std::cout << m_download->progress() << "\n";

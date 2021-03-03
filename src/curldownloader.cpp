@@ -336,8 +336,8 @@ bool FileHandle::write(std::string_view sv)
 }
 
 
-Download::Download(std::string url, fs::path file) :
-  m_url(std::move(url)), m_file(std::move(file)),
+Download::Download(std::string url, Info info) :
+  m_url(std::move(url)), m_info(std::move(info)),
   m_handle(defer), m_state(Stopped), m_bytes(0),
   m_bytesPerSecond(0), m_progress(0)
 {
@@ -367,6 +367,22 @@ CURL* Download::setup(curl_off_t maxSpeed)
 
   curl_easy_setopt(h, CURLOPT_VERBOSE, 1);
   curl_easy_setopt(h, CURLOPT_DEBUGFUNCTION, &s_debug);
+
+  if (!m_info.headers.isEmpty()) {
+    curl_slist* headers = nullptr;
+
+    for (auto&& h : m_info.headers) {
+      const QString s = h.first + ": " + h.second;
+      headers = curl_slist_append(headers, s.toStdString().c_str());
+    }
+
+    curl_easy_setopt(h, CURLOPT_HTTPHEADER, headers);
+    m_headers.reset(headers);
+  }
+
+  if (!m_info.userAgent.isEmpty()) {
+    curl_easy_setopt(h, CURLOPT_USERAGENT, m_info.userAgent.toStdString().c_str());
+  }
 
   const auto rf = resumeFrom();
   if (rf > 0) {
@@ -407,9 +423,9 @@ std::string Download::stealBuffer()
   return std::move(m_buffer);
 }
 
-const std::string& Download::buffer() const
+QByteArray Download::buffer() const
 {
-  return m_buffer;
+  return QByteArray(m_buffer.data(), m_buffer.size());
 }
 
 int Download::httpCode() const
@@ -441,17 +457,17 @@ std::string Download::debugName() const
 
 std::size_t Download::resumeFrom()
 {
-  if (m_file.empty()) {
+  if (outputFile().empty()) {
     return 0;
   }
 
-  const auto p = unfinished(m_file);
+  const auto p = unfinished(outputFile());
 
   if (fs::exists(p)) {
     const auto s = m_out.open(p, true);
 
     if (s == -1) {
-      curlLog().error("failed to open {}, no resume", m_file);
+      curlLog().error("failed to open {}, no resume", outputFile());
       return 0;
     }
 
@@ -459,6 +475,11 @@ std::size_t Download::resumeFrom()
   }
 
   return 0;
+}
+
+fs::path Download::outputFile() const
+{
+  return m_info.outputFile.toStdString();
 }
 
 bool Download::xfer(
@@ -488,11 +509,11 @@ bool Download::write(std::string_view data)
 
   //curlLog().debug("write {} bytes", data.size());
 
-  if (m_file.empty()) {
+  if (outputFile().empty()) {
     m_buffer.append(data.begin(), data.end());
   } else {
     if (!m_out.opened()) {
-      if (m_out.open(unfinished(m_file), false) == -1) {
+      if (m_out.open(unfinished(outputFile()), false) == -1) {
         return false;
       }
     }
@@ -560,20 +581,20 @@ bool Download::rename()
 {
   m_out.close();
 
-  const auto from = unfinished(m_file);
+  const auto from = unfinished(outputFile());
 
-  if (fs::exists(m_file)) {
-    curlLog().error("can't rename {} to {}, already exists", from, m_file);
+  if (fs::exists(outputFile())) {
+    curlLog().error("can't rename {} to {}, already exists", from, outputFile());
     return false;
   }
 
   std::error_code ec;
-  fs::rename(from, m_file, ec);
+  fs::rename(from, outputFile(), ec);
 
   if (ec) {
     curlLog().error(
       "failed to rename {} to {}, {}",
-      from, m_file, ec.message());
+      from, outputFile(), ec.message());
 
     return false;
   }
@@ -679,9 +700,10 @@ bool Downloader::finished() const
 }
 
 std::shared_ptr<MOBase::IDownload> Downloader::add(
-  std::string url, fs::path file)
+  const QUrl& url, const MOBase::IDownload::Info& info)
 {
-  auto d = std::make_shared<Download>(std::move(url), std::move(file));
+  auto d = std::make_shared<Download>(
+    url.toString().toStdString(), std::move(info));
 
   curlLog().debug("adding {}", d->debugName());
 

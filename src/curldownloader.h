@@ -82,10 +82,23 @@ private:
 };
 
 
+struct SListDeleter
+{
+  void operator()(curl_slist* p)
+  {
+    if (p) {
+      curl_slist_free_all(p);
+    }
+  }
+};
+
+using SList = std::unique_ptr<curl_slist, SListDeleter>;
+
+
 class Download : public MOBase::IDownload
 {
 public:
-  Download(std::string url, fs::path file);
+  Download(std::string url, Info info);
 
   CURL* setup(curl_off_t maxSpeed);
 
@@ -93,8 +106,8 @@ public:
   States state() const override;
   Stats stats() const override;
   std::string stealBuffer();
-  const std::string& buffer() const override;
-  int httpCode() const;
+  QByteArray buffer() const override;
+  int httpCode() const override;
   std::string error() const;
   std::string debugName() const;
 
@@ -112,9 +125,10 @@ public:
 
 private:
   std::string m_url;
-  fs::path m_file;
+  Info m_info;
   EasyHandle m_handle;
   FileHandle m_out;
+  SList m_headers;
   std::string m_buffer;
   States m_state;
   std::string m_error;
@@ -126,6 +140,7 @@ private:
 
   std::size_t resumeFrom();
   bool rename();
+  fs::path outputFile() const;
 
   static int s_xfer(
     void* p,
@@ -156,7 +171,7 @@ public:
   bool finished() const;
 
   std::shared_ptr<MOBase::IDownload> add(
-    std::string url, fs::path file) override;
+    const QUrl& url, const MOBase::IDownload::Info& info={}) override;
 
 private:
   using DownloadList = std::list<std::shared_ptr<Download>>;
