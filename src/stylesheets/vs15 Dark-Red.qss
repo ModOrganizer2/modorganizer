@@ -509,12 +509,6 @@ QScrollBar::left-arrow:horizontal:hover {
 QScrollBar::left-arrow:horizontal:disabled {
   image: url(./vs15/scrollbar-left-disabled.png); }
 
-/* Scroll Area #QScrollArea*/
-QScrollArea {
-  border-color: #3F3F46;
-  border-style: solid;
-  border-width: 1px; }
-
 /* Header Rows and Tables (Configure Mod Categories) #QTableView, #QHeaderView */
 QTableView {
   gridline-color: #3F3F46;
