@@ -1246,7 +1246,7 @@ p, li { white-space: pre-wrap; }
                 <bool>false</bool>
                </attribute>
                <attribute name="headerStretchLastSection">
-                <bool>false</bool>
+                <bool>true</bool>
                </attribute>
                <column>
                 <property name="text">
