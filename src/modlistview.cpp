@@ -347,6 +347,9 @@ QModelIndexList ModListView::indexViewToModel(const QModelIndexList& index) cons
 QModelIndex ModListView::nextIndex(const QModelIndex& index) const
 {
   auto* model = index.model();
+  if (!model) {
+    return {};
+  }
 
   if (model->rowCount(index) > 0) {
     return model->index(0, index.column(), index);
@@ -372,6 +375,10 @@ QModelIndex ModListView::prevIndex(const QModelIndex& index) const
   }
 
   auto* model = index.model();
+  if (!model) {
+    return {};
+  }
+
   auto prev = model->index((index.row() - 1) % model->rowCount(index.parent()), index.column(), index.parent());
 
   if (model->rowCount(prev) > 0) {
