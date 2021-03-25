@@ -42,9 +42,10 @@ namespace bf = boost::fusion;
 //   the one corresponding to the currently managed games.
 // - If a plugin has a master plugin (IPlugin::master()), it cannot be enabled/disabled by users,
 //   and will follow the enabled/disabled state of its parent.
-// - Each plugin has an "enabled" setting stored in persistence. A plugin is considered disabled
-//   if the setting is false.
-// - If the setting is true or does not exist, a plugin is considered disabled if one of its
+// - Each plugin has an "enabled" setting stored in persistence.  If the setting does not exist,
+//   the plugin's enabledByDefault is used instead.
+// - A plugin is considered disabled if the setting is false.
+// - If the setting is true, a plugin is considered disabled if one of its
 //   requirements is not met.
 // - Users cannot enable a plugin if one of its requirements is not met.
 //
@@ -599,7 +600,7 @@ bool PluginContainer::isEnabled(IPlugin* plugin) const
   }
 
   // Check if the plugin is enabled:
-  if (!m_Organizer->persistent(plugin->name(), "enabled", true).toBool()) {
+  if (!m_Organizer->persistent(plugin->name(), "enabled", plugin->enabledByDefault()).toBool()) {
     return false;
   }
 

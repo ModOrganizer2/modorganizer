@@ -44,6 +44,7 @@ QListView::item:disabled,
 #bsaList::item,
 #dataTree::item,
 QTreeView#modList::item,
+#savegameList::item,
 QTreeWidget#categoriesTree::item,
 #tabConflicts QTreeWidget::item {
   padding: 0.3em 0; }
@@ -507,12 +508,6 @@ QScrollBar::left-arrow:horizontal:hover {
 
 QScrollBar::left-arrow:horizontal:disabled {
   image: url(./vs15/scrollbar-left-disabled.png); }
-
-/* Scroll Area #QScrollArea*/
-QScrollArea {
-  border-color: #3F3F46;
-  border-style: solid;
-  border-width: 1px; }
 
 /* Header Rows and Tables (Configure Mod Categories) #QTableView, #QHeaderView */
 QTableView {

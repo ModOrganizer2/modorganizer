@@ -226,7 +226,7 @@ bool DownloadList::lessThanPredicate(const QModelIndex &left, const QModelIndex 
   if ((leftIndex < m_manager.numTotalDownloads())
       && (rightIndex < m_manager.numTotalDownloads())) {
     if (left.column() == DownloadList::COL_NAME) {
-      return m_manager.getFileName(left.row()).compare(m_manager.getFileName(right.row()), Qt::CaseInsensitive) < 0;
+      return left.data(Qt::DisplayRole).toString().compare(right.data(Qt::DisplayRole).toString(), Qt::CaseInsensitive) < 0;
     } else if (left.column() == DownloadList::COL_MODNAME) {
       QString leftName, rightName;
 
@@ -275,7 +275,7 @@ bool DownloadList::lessThanPredicate(const QModelIndex &left, const QModelIndex 
       if (leftState == rightState)
         return m_manager.getFileTime(left.row()) < m_manager.getFileTime(right.row());
       else
-        return leftState > rightState;
+        return leftState < rightState;
     } else if (left.column() == DownloadList::COL_SIZE) {
       return m_manager.getFileSize(left.row()) < m_manager.getFileSize(right.row());
     } else if (left.column() == DownloadList::COL_FILETIME) {
