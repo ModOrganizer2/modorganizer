@@ -2,7 +2,7 @@
 name: Game support Request
 about: Request support for a new game
 title: Add support for game [GAME NAME]
-labels: 'additional games support, Feature Request, area: mo2 game plugins'
+labels: 'Feature Request, additional games support, area: mo2 game plugins'
 assignees: ''
 
 ---
@@ -18,7 +18,7 @@ assignees: ''
 - **Nexus ID [optional]:** ID of the game on Nexus (you can usually find this in Nexus URL).
 - **Executable:** Name of the main executable for the game (relative to the game folder).
 - **Launcher [optional]:** Name of the game launcher (relative to the game folder).
-- **Data path:** Path to the data folder of the game (relative to the game folder).
+- **Data path:** Path to the data folder of the game (relative to the game folder). Please note that the Virtual Files System often does not work for top level dlls or exe files.
 - **Documents path:** Path to folder containing INI files, etc., for the game (usually under "My Games", or the game folder itself).
 - **Saves directory [optional]:** Path to the folder containing save games (this default to the path above).
 - **Save extension [optional]:** Extension of the saves
