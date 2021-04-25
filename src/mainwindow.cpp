@@ -1440,28 +1440,28 @@ void MainWindow::registerModPage(IPluginModPage *modPage)
   ui->actionModPage->menu()->addAction(action);
 }
 
-void MainWindow::registerNexusPages(const QStringList& gamePluginNames)
+bool MainWindow::registerNexusPage(const QString& gameName)
 {
-  for (QString gameName : gamePluginNames) {
-    // Get the plugin
-    IPluginGame* plugin = m_OrganizerCore.getGame(gameName);
-    if (plugin == nullptr)
-      continue;
+  // Get the plugin
+  IPluginGame* plugin = m_OrganizerCore.getGame(gameName);
+  if (plugin == nullptr)
+    return false;
 
-    // Create an action
-    QAction* action = new QAction(
-        plugin ? plugin->gameIcon() : QIcon(),
-        QObject::tr("Visit %1 on Nexus").arg(plugin ? plugin->gameName() : gameName),
-        this);
+  // Create an action
+  QAction* action = new QAction(
+      plugin->gameIcon(),
+      QObject::tr("Visit %1 on Nexus").arg(plugin->gameName()),
+      this);
 
-    // Bind the action
-    connect(action, &QAction::triggered, this, [this, gameName]() {
-      shell::Open(QUrl(NexusInterface::instance().getGameURL(gameName)));
-    }, Qt::QueuedConnection);
+  // Bind the action
+  connect(action, &QAction::triggered, this, [this, gameName]() {
+    shell::Open(QUrl(NexusInterface::instance().getGameURL(gameName)));
+  }, Qt::QueuedConnection);
 
-    // Add the action
-    ui->actionModPage->menu()->addAction(action);
-  }
+  // Add the action
+  ui->actionModPage->menu()->addAction(action);
+
+  return true;
 }
 
 void MainWindow::updateModPageMenu()
@@ -1490,16 +1490,23 @@ void MainWindow::updateModPageMenu()
     registerModPage(modPagePlugin);
   }
 
-  // Determine the applicable game plugins
-  QStringList gamePluginNames;
-  gamePluginNames.append(m_OrganizerCore.managedGame()->gameShortName());
-  gamePluginNames.append(m_OrganizerCore.managedGame()->validShortNames());
+  // Add the primary game (with a separator)
+  registerNexusPage(m_OrganizerCore.managedGame()->gameShortName());
+  ui->actionModPage->menu()->addSeparator();
 
-  // Register Nexus pages
-  registerNexusPages(gamePluginNames);
+  // Add the secondary games (sorted)
+  bool secondaryGameAdded = false;
+  QStringList secondaryGames = m_OrganizerCore.managedGame()->validShortNames();
+  secondaryGames.sort(Qt::CaseInsensitive);
+  for (auto gameName : secondaryGames)
+  {
+    if (registerNexusPage(gameName)) {
+      secondaryGameAdded = true;
+    }
+  }
 
   // No mod page plugin and the menu was visible:
-  bool keepOriginalAction = modPagePlugins.size() == 0 && gamePluginNames.count() <= 1;
+  bool keepOriginalAction = modPagePlugins.size() == 0 && !secondaryGameAdded;
   if (keepOriginalAction) {
     ui->toolBar->insertAction(ui->actionAdd_Profile, ui->actionNexus);
   }
