@@ -1440,12 +1440,36 @@ void MainWindow::registerModPage(IPluginModPage *modPage)
   ui->actionModPage->menu()->addAction(action);
 }
 
+void MainWindow::registerNexusPages(const QStringList& gamePluginNames)
+{
+  for (QString gameName : gamePluginNames) {
+    // Get the plugin
+    IPluginGame* plugin = m_OrganizerCore.getGame(gameName);
+    if (plugin == nullptr)
+      continue;
+
+    // Create an action
+    QAction* action = new QAction(
+        plugin ? plugin->gameIcon() : QIcon(),
+        QObject::tr("Visit %1 on Nexus").arg(plugin ? plugin->gameName() : gameName),
+        this);
+
+    // Bind the action
+    connect(action, &QAction::triggered, this, [this, gameName]() {
+      shell::Open(QUrl(NexusInterface::instance().getGameURL(gameName)));
+    }, Qt::QueuedConnection);
+
+    // Add the action
+    ui->actionModPage->menu()->addAction(action);
+  }
+}
+
 void MainWindow::updateModPageMenu()
 {
   // Clear the menu:
   ui->actionModPage->menu()->clear();
-  ui->actionModPage->menu()->addAction(ui->actionNexus);
 
+  // Determine the loaded mod page plugins
   std::vector<IPluginModPage*> modPagePlugins = m_PluginContainer.plugins<IPluginModPage>();
 
   // Sort the plugins by display name
@@ -1466,14 +1490,23 @@ void MainWindow::updateModPageMenu()
     registerModPage(modPagePlugin);
   }
 
+  // Determine the applicable game plugins
+  QStringList gamePluginNames;
+  gamePluginNames.append(m_OrganizerCore.managedGame()->gameShortName());
+  gamePluginNames.append(m_OrganizerCore.managedGame()->validShortNames());
+
+  // Register Nexus pages
+  registerNexusPages(gamePluginNames);
+
   // No mod page plugin and the menu was visible:
-  if (modPagePlugins.empty()) {
+  bool keepOriginalAction = modPagePlugins.size() == 0 && gamePluginNames.count() <= 1;
+  if (keepOriginalAction) {
     ui->toolBar->insertAction(ui->actionAdd_Profile, ui->actionNexus);
   }
   else {
     ui->toolBar->removeAction(ui->actionNexus);
   }
-  ui->actionModPage->setVisible(!modPagePlugins.empty());
+  ui->actionModPage->setVisible(!keepOriginalAction);
 }
 
 void MainWindow::startExeAction()
