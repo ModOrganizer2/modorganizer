@@ -2148,6 +2148,15 @@ void MainWindow::on_actionAdd_Profile_triggered()
     profilesDialog.exec();
     m_SavesTab->refreshSaveList(); // since the save list may now be outdated we have to refresh it completely
 
+    if (profilesDialog.selectedProfile())
+    {
+      // Change profile while blocking signals to prevent extra signals being sent
+      // Doesn't matter much as refreshProfiles() is being called after this
+      ui->profileBox->blockSignals(true);
+      ui->profileBox->setCurrentText(profilesDialog.selectedProfile().value());
+      ui->profileBox->blockSignals(false);
+    }
+
     if (refreshProfiles() && !profilesDialog.failed()) {
       break;
     }
