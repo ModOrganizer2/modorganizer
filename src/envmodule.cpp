@@ -130,7 +130,7 @@ Module::FileInfo Module::getFileInfo() const
       return {};
     }
 
-    log::error(
+    log::debug(
       "GetFileVersionInfoSizeW() failed on '{}', {}",
       m_path, formatSystemMessage(e));
 
@@ -268,7 +268,7 @@ QDateTime Module::getTimestamp(const VS_FIXEDFILEINFO& fi) const
     if (h.get() == INVALID_HANDLE_VALUE) {
       const auto e = GetLastError();
 
-      log::error(
+      log::debug(
         "can't open file '{}' for timestamp, {}",
         m_path, formatSystemMessage(e));
 
