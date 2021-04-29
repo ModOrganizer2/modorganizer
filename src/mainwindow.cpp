@@ -1440,12 +1440,36 @@ void MainWindow::registerModPage(IPluginModPage *modPage)
   ui->actionModPage->menu()->addAction(action);
 }
 
+bool MainWindow::registerNexusPage(const QString& gameName)
+{
+  // Get the plugin
+  IPluginGame* plugin = m_OrganizerCore.getGame(gameName);
+  if (plugin == nullptr)
+    return false;
+
+  // Create an action
+  QAction* action = new QAction(
+      plugin->gameIcon(),
+      QObject::tr("Visit %1 on Nexus").arg(plugin->gameName()),
+      this);
+
+  // Bind the action
+  connect(action, &QAction::triggered, this, [this, gameName]() {
+    shell::Open(QUrl(NexusInterface::instance().getGameURL(gameName)));
+  }, Qt::QueuedConnection);
+
+  // Add the action
+  ui->actionModPage->menu()->addAction(action);
+
+  return true;
+}
+
 void MainWindow::updateModPageMenu()
 {
   // Clear the menu:
   ui->actionModPage->menu()->clear();
-  ui->actionModPage->menu()->addAction(ui->actionNexus);
 
+  // Determine the loaded mod page plugins
   std::vector<IPluginModPage*> modPagePlugins = m_PluginContainer.plugins<IPluginModPage>();
 
   // Sort the plugins by display name
@@ -1466,14 +1490,30 @@ void MainWindow::updateModPageMenu()
     registerModPage(modPagePlugin);
   }
 
+  // Add the primary game (with a separator)
+  registerNexusPage(m_OrganizerCore.managedGame()->gameShortName());
+  ui->actionModPage->menu()->addSeparator();
+
+  // Add the secondary games (sorted)
+  bool secondaryGameAdded = false;
+  QStringList secondaryGames = m_OrganizerCore.managedGame()->validShortNames();
+  secondaryGames.sort(Qt::CaseInsensitive);
+  for (auto gameName : secondaryGames)
+  {
+    if (registerNexusPage(gameName)) {
+      secondaryGameAdded = true;
+    }
+  }
+
   // No mod page plugin and the menu was visible:
-  if (modPagePlugins.empty()) {
+  bool keepOriginalAction = modPagePlugins.size() == 0 && !secondaryGameAdded;
+  if (keepOriginalAction) {
     ui->toolBar->insertAction(ui->actionAdd_Profile, ui->actionNexus);
   }
   else {
     ui->toolBar->removeAction(ui->actionNexus);
   }
-  ui->actionModPage->setVisible(!modPagePlugins.empty());
+  ui->actionModPage->setVisible(!keepOriginalAction);
 }
 
 void MainWindow::startExeAction()
