@@ -8,6 +8,7 @@
 #include <iplugingame.h>
 #include <report.h>
 #include <utility.h>
+#include "filesystemutilities.h"
 
 namespace cid
 {
@@ -856,7 +857,7 @@ QString NamePage::selectedInstanceName() const
   }
 
   const auto text = ui->instanceName->text().trimmed();
-  return InstanceManager::singleton().sanitizeInstanceName(text);
+  return MOBase::sanitizeFileName(text);
 }
 
 void NamePage::onChanged()
@@ -883,7 +884,7 @@ bool NamePage::checkName(QString parentDir, QString name)
   if (name.isEmpty()) {
     empty = true;
   } else {
-    if (InstanceManager::singleton().validInstanceName(name)) {
+    if (MOBase::validFileName(name)) {
       exists = QDir(parentDir).exists(name);
     } else {
       invalid = true;
@@ -1108,7 +1109,7 @@ bool PathsPage::checkPath(
   } else {
     const QDir d(path);
 
-    if (m.validInstanceName(d.dirName())) {
+    if (MOBase::validFileName(d.dirName())) {
       if (m_dlg.rawCreationInfo().type == CreateInstanceDialog::Portable) {
         // the default data path for a portable instance is the application
         // directory, so it's not an error if it exists
