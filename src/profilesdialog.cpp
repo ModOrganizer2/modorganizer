@@ -28,7 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "profileinputdialog.h"
 #include "report.h"
 #include "transfersavesdialog.h"
-#include "utility.h"
+#include "filesystemutilities.h"
 #include "settings.h"
 #include "localsavegames.h"
 

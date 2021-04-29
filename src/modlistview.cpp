@@ -5,7 +5,7 @@
 
 #include <widgetutility.h>
 
-#include <utility.h>
+#include "filesystemutilities.h"
 #include <report.h>
 
 #include "ui_mainwindow.h"
