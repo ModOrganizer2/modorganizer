@@ -90,7 +90,9 @@ function setupTooptips() {
   tooltipAction("actionChange_Game", qsTr("Change/manage MO2 instances or switch to portable mode."))
   tooltipAction("actionInstallMod", qsTr("Browse to and manually install a mod from an archive on your computer."))
   tooltipAction("actionNexus", qsTr("Automatically open NexusMods to browse and install mods via the API."))
+  tooltipAction("actionModPage", qsTr("Automatically open NexusMods to browse and install mods via the API."))
   tooltipAction("actionAdd_Profile", qsTr("Manage your MO2 profiles."))
+  tooltipAction("action_Refresh", qsTr("Refresh everything."))
   tooltipAction("actionModify_Executables", qsTr("Open the executable editor to add and modify applications you wish to run with MO2."))
   tooltipAction("actionTool", qsTr("Select from a collection of additional tools, such as an INI editor, integrated FNIS updater, and more."))
   tooltipAction("actionSettings", qsTr("Configure Mod Organizer."))
@@ -136,5 +138,3 @@ function getTutorialSteps() {
         }
     ]
 }
-
-

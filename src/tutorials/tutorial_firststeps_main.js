@@ -72,8 +72,10 @@ function getTutorialSteps()
         tutorial.text = qsTr("There are a few ways to get mods into ModOrganizer. "
                            + "If you associated MO with NXM links in the settings you can now use your regular browser to send downloads from Nexus to MO. "
                            + "Click on \"Nexus\" to open nexus, find a mod and click the green download buttons on Nexus saying \"Download with Manager\".")
-        if (tutorialControl.waitForAction("actionNexus")) {
+        if (tutorialControl.waitForAction("actionNexus") &&
+            tutorialControl.waitForAction("actionModPage")) {
             highlightAction("actionNexus", true)
+            highlightAction("actionModPage", true)
         } else {
           console.error("browser action broken")
           waitForClick()

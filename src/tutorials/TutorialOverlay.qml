@@ -55,7 +55,10 @@ Rectangle  {
 
   Connections {
     target: manager
-    onTabChanged: tabChanged(index)
+    function onTabChanged(index)
+    {
+      tabChanged(index)
+    }
   }
 
   Tooltip {
