@@ -158,14 +158,14 @@ protected:
         currentName = std::get<0>(p)[0];
       }
 
-      // If the name is different, we need to create a directory from what we have 
+      // If the name is different, we need to create a directory from what we have
       // accumulated:
       if (currentName != std::get<0>(p)[0]) {
 
         // We may or may not have an index here, it depends on the type of archive (some archives list
         // intermediate non-empty folders, some don't):
         entries.push_back(std::make_shared<ArchiveFileTreeImpl>(parent, currentName, currentIndex, std::move(currentFiles)));
-        
+
         currentFiles.clear(); // Back to a valid state.
 
         // Reset the index:
@@ -200,7 +200,7 @@ protected:
     if (currentName != "") {
       entries.push_back(std::make_shared<ArchiveFileTreeImpl>(parent, currentName, currentIndex, std::move(currentFiles)));
     }
-    
+
     // Let the parent class sort the entries:
     return false;
   }
@@ -214,7 +214,7 @@ private:
   mutable std::vector<File> m_Files;
 };
 
-std::shared_ptr<ArchiveFileTree> ArchiveFileTree::makeTree(Archive const& archive) 
+std::shared_ptr<ArchiveFileTree> ArchiveFileTree::makeTree(Archive const& archive)
 {
   auto const& data = archive.getFileList();
 
@@ -222,9 +222,16 @@ std::shared_ptr<ArchiveFileTree> ArchiveFileTree::makeTree(Archive const& archiv
   files.reserve(data.size());
 
   for (size_t i = 0; i < data.size(); ++i) {
+    // Ignore "." and ".." as they're useless and muck things up
+    if (data[i]->getArchiveFilePath().compare(L".") == 0 ||
+      data[i]->getArchiveFilePath().compare(L"..") == 0)
+    {
+      continue;
+    }
+
     files.push_back(std::make_tuple(
-      QString::fromStdWString(data[i]->getArchiveFilePath()).replace("\\", "/").split("/", Qt::SkipEmptyParts), 
-      data[i]->isDirectory(), 
+      QString::fromStdWString(data[i]->getArchiveFilePath()).replace("\\", "/").split("/", Qt::SkipEmptyParts),
+      data[i]->isDirectory(),
       (int) i));
   }
 
