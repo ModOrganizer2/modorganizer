@@ -380,6 +380,23 @@ int checkProtected(const QDir& d, const QString& what)
   return 0;
 }
 
+int checkMicrosoftStore(const QDir& gameDir)
+{
+  const QStringList pathsToCheck = {
+    "/ModifiableWindowsApps/",
+    "/WindowsApps/",
+  };
+  for (auto badPath : pathsToCheck) {
+    if (gameDir.path().contains(badPath))
+    {
+      log::warn("the game is installed with the Microsoft Store / Gamepass and is not supported");
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
 int checkPaths(IPluginGame& game, const Settings& s)
 {
   log::debug("checking paths");
@@ -387,6 +404,7 @@ int checkPaths(IPluginGame& game, const Settings& s)
   int n = 0;
 
   n += checkProtected(game.gameDirectory(), "the game");
+  n += checkMicrosoftStore(game.gameDirectory());
   n += checkProtected(QApplication::applicationDirPath(), "Mod Organizer");
 
   if (checkProtected(s.paths().base(), "the instance base directory")) {
