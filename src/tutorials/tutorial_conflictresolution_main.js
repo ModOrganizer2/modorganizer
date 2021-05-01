@@ -76,7 +76,7 @@ function getTutorialSteps() {
             tutorial.text = qsTr("... here, if you mark the highlighted control, the tree will only display files in conflict. "
                                  +"In the right column, it says which mod currently provides the mod (because it has highest priority) "
                                  +"and if you hover your mouse over that info, it will list which other mods contains it.")
-            highlightItem("conflictsCheckBox", false)
+            highlightItem("dataTabShowOnlyConflicts", false)
             waitForClick()
         },
         function() {
