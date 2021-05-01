@@ -10,6 +10,7 @@
 #include <utility.h>
 #include <report.h>
 #include <iplugingame.h>
+#include "filesystemutilities.h"
 
 using namespace MOBase;
 
@@ -109,10 +110,10 @@ QString getInstanceName(
 
     if (text->text().isEmpty()) {
       error->setText("");
-    } else if (!m.validInstanceName(text->text())) {
+    } else if (!MOBase::validFileName(text->text())) {
       error->setText(QObject::tr("The instance name must be a valid folder name."));
     } else {
-      const auto name = m.sanitizeInstanceName(text->text());
+      const auto name = MOBase::sanitizeFileName(text->text());
 
       if ((name != oldName) && m.instanceExists(text->text())) {
         error->setText(QObject::tr("An instance with this name already exists."));
@@ -136,7 +137,7 @@ QString getInstanceName(
     return {};
   }
 
-  return m.sanitizeInstanceName(text->text());
+  return MOBase::sanitizeFileName(text->text());
 }
 
 

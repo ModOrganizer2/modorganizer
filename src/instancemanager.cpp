@@ -32,6 +32,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <iplugingame.h>
 #include <utility.h>
 #include <log.h>
+#include "filesystemutilities.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -721,7 +722,7 @@ const MOBase::IPluginGame* InstanceManager::gamePluginForDirectory(
 
 QString InstanceManager::makeUniqueName(const QString& instanceName) const
 {
-  const QString sanitized = sanitizeInstanceName(instanceName);
+  const QString sanitized = MOBase::sanitizeFileName(instanceName);
 
   // trying "name (N)"
   QString name = sanitized;
@@ -741,35 +742,6 @@ bool InstanceManager::instanceExists(const QString& instanceName) const
   const QDir root = globalInstancesRootPath();
   return root.exists(instanceName);
 }
-
-QString InstanceManager::sanitizeInstanceName(const QString &name) const
-{
-  QString new_name = name;
-
-  // Restrict the allowed characters
-  new_name = new_name.remove(QRegExp("[^A-Za-z0-9 _=+;!@#$%^'\\-\\.\\[\\]\\{\\}\\(\\)]"));
-
-  // Don't end in spaces and periods
-  new_name = new_name.remove(QRegExp("\\.*$"));
-  new_name = new_name.remove(QRegExp(" *$"));
-
-  // Recurse until stuff stops changing
-  if (new_name != name) {
-    return sanitizeInstanceName(new_name);
-  }
-  return new_name;
-}
-
-bool InstanceManager::validInstanceName(const QString& instanceName) const
-{
-  if (instanceName.isEmpty()) {
-    return false;
-  }
-
-  return (instanceName == sanitizeInstanceName(instanceName));
-}
-
-
 
 std::unique_ptr<Instance> selectInstance()
 {

@@ -33,6 +33,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "shared/util.h"
 #include <utility.h>
 #include <report.h>
+#include "filesystemutilities.h"
 
 #include <QTimer>
 #include <QFileInfo>
@@ -1456,7 +1457,7 @@ void DownloadManager::markUninstalled(QString fileName)
 
 QString DownloadManager::getDownloadFileName(const QString &baseName, bool rename) const
 {
-  QString fullPath = m_OutputDirectory + "/" + baseName;
+  QString fullPath = m_OutputDirectory + "/" + MOBase::sanitizeFileName(baseName);
   if (QFile::exists(fullPath) && rename) {
     int i = 1;
     while (QFile::exists(QString("%1/%2_%3").arg(m_OutputDirectory).arg(i).arg(baseName))) {
@@ -1476,7 +1477,7 @@ QString DownloadManager::getFileNameFromNetworkReply(QNetworkReply *reply)
 
     std::cmatch result;
     if (std::regex_search(reply->rawHeader("Content-Disposition").constData(), result, exp)) {
-      return QString::fromUtf8(result.str(1).c_str());
+      return MOBase::sanitizeFileName(QString::fromUtf8(result.str(1).c_str()));
     }
   }
 

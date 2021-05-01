@@ -34,7 +34,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "shared/filesorigin.h"
 
 #include "shared/appconfig.h"
-#include <utility.h>
+#include "filesystemutilities.h"
 #include <report.h>
 
 #include <QFileInfo>

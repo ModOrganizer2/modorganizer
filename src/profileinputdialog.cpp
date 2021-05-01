@@ -19,7 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "profileinputdialog.h"
 #include "ui_profileinputdialog.h"
-#include <utility.h>
+#include "filesystemutilities.h"
 
 ProfileInputDialog::ProfileInputDialog(QWidget *parent) :
   QDialog(parent),
