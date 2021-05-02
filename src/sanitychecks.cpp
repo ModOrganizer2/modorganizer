@@ -389,7 +389,8 @@ int checkMicrosoftStore(const QDir& gameDir)
   for (auto badPath : pathsToCheck) {
     if (gameDir.path().contains(badPath))
     {
-      log::warn("the game is installed with the Microsoft Store / Gamepass and is not supported");
+      log::error("This game is not supported by Mod Organizer.");
+      log::error("Games installed through the Microsoft Store will not work properly.");
       return 1;
     }
   }

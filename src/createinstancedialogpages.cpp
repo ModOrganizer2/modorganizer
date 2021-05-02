@@ -293,7 +293,7 @@ void GamePage::select(IPluginGame* game, const QString& dir)
   Game* checked = findGame(game);
 
   if (checked) {
-    if (!checked->installed) {
+    if (!checked->installed || (detectMicrosoftStore(checked->dir) && !confirmMicrosoftStore(checked->dir, checked->game))) {
       if (dir.isEmpty()) {
         // the selected game has no installation directory and none was given,
         // ask the user
@@ -303,6 +303,9 @@ void GamePage::select(IPluginGame* game, const QString& dir)
             .arg(game->gameName()));
 
         if (path.isEmpty()) {
+          // cancelled
+          checked = nullptr;
+        } else if (detectMicrosoftStore(path) && !confirmMicrosoftStore(path, game)) {
           // cancelled
           checked = nullptr;
         } else {
@@ -349,6 +352,13 @@ void GamePage::selectCustom()
     &m_dlg, QObject::tr("Find game installation"));
 
   if (path.isEmpty()) {
+    // reselect the previous button
+    selectButton(m_selection);
+    return;
+  }
+
+  // Microsoft store games are not supported
+  if (detectMicrosoftStore(path) && !confirmMicrosoftStore(path, nullptr)) {
     // reselect the previous button
     selectButton(m_selection);
     return;
@@ -594,6 +604,11 @@ GamePage::Game* GamePage::checkInstallation(const QString& path, Game* g)
     return g;
   }
 
+  if (detectMicrosoftStore(path) && confirmMicrosoftStore(path, g->game)) {
+    // okay
+    return g;
+  }
+
   // the selected game can't use that folder, find another one
   IPluginGame* otherGame = nullptr;
 
@@ -638,6 +653,35 @@ GamePage::Game* GamePage::checkInstallation(const QString& path, Game* g)
   updateButton(g);
 
   return g;
+}
+
+bool GamePage::detectMicrosoftStore(const QString& path)
+{
+  return path.contains("/ModifiableWindowsApps/") ||
+         path.contains("/WindowsApps/");
+}
+
+bool GamePage::confirmMicrosoftStore(const QString& path, IPluginGame* game)
+{
+  const auto r = TaskDialog(&m_dlg)
+    .title(QObject::tr("Microsoft Store game"))
+    .main(QObject::tr("Microsoft Store game"))
+    .content(QObject::tr(
+      "The folder %1 seems to be a Microsoft Store game install.  Games"
+      " installed through the Microsoft Store are not supported by Mod Organizer"
+      " and will not work properly.")
+      .arg(path))
+    .button({
+      game ? QObject::tr("Use this folder for %1").arg(game->gameName())
+           : QObject::tr("Use this folder"),
+      QObject::tr("I know what I'm doing"),
+      QMessageBox::Ignore})
+    .button({
+      QObject::tr("Cancel"),
+      QMessageBox::Cancel})
+    .exec();
+
+  return (r == QMessageBox::Ignore);
 }
 
 bool GamePage::confirmUnknown(const QString& path, IPluginGame* game)
