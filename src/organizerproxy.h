@@ -49,8 +49,9 @@ public: // IOrganizer interface
   virtual QStringList listDirectories(const QString &directoryName) const;
   virtual QStringList findFiles(const QString &path, const std::function<bool(const QString &)> &filter) const override;
   virtual QStringList findFiles(const QString &path, const QStringList &globFilters) const override;
-  virtual QStringList getFileOrigins(const QString &fileName) const;
-  virtual QList<FileInfo> findFileInfos(const QString &path, const std::function<bool(const FileInfo&)> &filter) const;
+  virtual QStringList getFileOrigins(const QString &fileName) const override;
+  virtual QList<FileInfo> findFileInfos(const QString &path, const std::function<bool(const FileInfo&)> &filter) const override;
+  virtual std::shared_ptr<const MOBase::IFileTree> virtualFileTree() const override;
 
   virtual MOBase::IDownloadManager *downloadManager() const;
   virtual MOBase::IPluginList *pluginList() const;

@@ -11,6 +11,7 @@
 #include "executableslist.h"
 #include "usvfsconnector.h"
 #include "moshortcut.h"
+#include "memoizedlock.h"
 #include "processrunner.h"
 #include "uilocker.h"
 #include "envdump.h"
@@ -476,6 +477,7 @@ private:
 
   std::unique_ptr<DirectoryRefresher> m_DirectoryRefresher;
   MOShared::DirectoryEntry *m_DirectoryStructure;
+  MOBase::MemoizedLocked<std::shared_ptr<const MOBase::IFileTree>> m_VirtualFileTree;
 
   DownloadManager m_DownloadManager;
   InstallationManager m_InstallationManager;

@@ -32,6 +32,7 @@
 #include "envmodule.h"
 #include "envfs.h"
 #include "directoryrefresher.h"
+#include "virtualfiletree.h"
 #include "shared/directoryentry.h"
 #include "shared/filesorigin.h"
 #include "shared/fileentry.h"
@@ -97,6 +98,7 @@ OrganizerCore::OrganizerCore(Settings &settings)
   , m_PluginList(*this)
   , m_DirectoryRefresher(new DirectoryRefresher(settings.refreshThreadCount()))
   , m_DirectoryStructure(new DirectoryEntry(L"data", nullptr, 0))
+  , m_VirtualFileTree([this]() { return VirtualFileTree::makeTree(m_DirectoryStructure); })
   , m_DownloadManager(&NexusInterface::instance(), this)
   , m_DirectoryUpdate(false)
   , m_ArchivesInit(false)
@@ -1521,6 +1523,7 @@ void OrganizerCore::directory_refreshed()
   }
 
   std::swap(m_DirectoryStructure, newStructure);
+  m_VirtualFileTree.invalidate();
 
   if (m_StructureDeleter.joinable()) {
     m_StructureDeleter.join();
