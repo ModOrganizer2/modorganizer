@@ -41,10 +41,12 @@ public:
    * @brief Create a new file tree representing the given directory.
    *
    * @param directory Directory to represent.
+   * @param ignoreRootMeta If true, the meta.ini file in the root folder will
+   *   be ignored.
    *
    * @return a file tree representing the given directory.
    */
-  static std::shared_ptr<const QDirFileTree> makeTree(QDir directory);
+  static std::shared_ptr<const QDirFileTree> makeTree(QDir directory, bool ignoreRootMeta = true);
 
 protected:
 
