@@ -491,9 +491,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString& filepat
     if (diagnose != nullptr) {
       bf::at_key<IPluginDiagnose>(m_Plugins).push_back(diagnose);
       bf::at_key<IPluginDiagnose>(m_AccessPlugins)[diagnose] = pluginObj;
-      m_DiagnosisConnections.push_back(
-        diagnose->onInvalidated([&] () { emit diagnosisUpdate(); })
-      );
+      diagnose->onInvalidated([&]() { emit diagnosisUpdate(); });
     }
   }
   { // file mapper plugin
@@ -966,11 +964,6 @@ void PluginContainer::unloadPlugins()
   bf::for_each(m_Plugins, [](auto& t) { t.second.clear(); });
   bf::for_each(m_AccessPlugins, [](auto& t) { t.second.clear(); });
   m_Requirements.clear();
-
-  for (const boost::signals2::connection& connection : m_DiagnosisConnections) {
-    connection.disconnect();
-  }
-  m_DiagnosisConnections.clear();
 
   while (!m_PluginLoaders.empty()) {
     QPluginLoader* loader = m_PluginLoaders.back();
