@@ -139,10 +139,10 @@ void GeneralSettingsTab::resetDialogs()
 
 void GeneralSettingsTab::onEditCategories()
 {
-  CategoriesDialog dialog(&dialog());
+  CategoriesDialog catDialog(&dialog());
 
-  if (dialog.exec() == QDialog::Accepted) {
-    dialog.commitChanges();
+  if (catDialog.exec() == QDialog::Accepted) {
+    catDialog.commitChanges();
   }
 }
 
