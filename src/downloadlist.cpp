@@ -273,7 +273,7 @@ bool DownloadList::lessThanPredicate(const QModelIndex &left, const QModelIndex 
       DownloadManager::DownloadState leftState = m_manager.getState(left.row());
       DownloadManager::DownloadState rightState = m_manager.getState(right.row());
       if (leftState == rightState)
-        return m_manager.getFileTime(left.row()) < m_manager.getFileTime(right.row());
+        return m_manager.getFileTime(left.row()) > m_manager.getFileTime(right.row());
       else
         return leftState < rightState;
     } else if (left.column() == DownloadList::COL_SIZE) {
