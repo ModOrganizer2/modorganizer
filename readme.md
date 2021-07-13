@@ -12,7 +12,7 @@ The project took up speed again after a few more coders showed up in late 2017, 
 ## Help Wanted!
 Mod Organizer 2 is an open project in the hands of the community, there are problems that need to be solved and things that could be added. MO2 really needs developers and if you have the programming skills and some free time you can really improve the experience of the modding community.
 
-To have more information, please join the open MO2 Development discord server: [Mod Organizer 2](https://discord.gg/vD2ZbfX)
+To have more information, please join the open MO2 Development discord server: [Mod Organizer 2](https://discord.gg/6GKR9jZ)
 If you want to help translate MO2 to your language you should join the discord server too and head to the #translation channel.
 To setup a development environment on your machine, there is the [mob project](https://github.com/modorganizer2/mob) that handles that.
 If you want to submit your code changes, please use a good formatting style like the default one in Visual Studio.
@@ -20,7 +20,7 @@ If you want to submit your code changes, please use a good formatting style like
 Through the work of a few people of the community MO2 has come quite far, now it needs some more of those people to go further.
 
 ## Reporting Issues:
-Issues should be reported to the GitHub page or on the open discord server: [Mod Organizer 2](https://discord.gg/vD2ZbfX). Here is also where dev builds are tested, bugs are reported and investigated, suggestions are discussed and a lot more.
+Issues should be reported to the GitHub page or on the open discord server: [Mod Organizer 2](https://discord.gg/6GKR9jZ). Here is also where dev builds are tested, bugs are reported and investigated, suggestions are discussed and a lot more.
 
 Credits to Tannin, LePresidente, Silarn, erasmux, AL12, LostDragonist, AnyOldName3, isa, Holt59 and many others for the development.
 

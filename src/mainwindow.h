@@ -189,6 +189,7 @@ private:
   void setToolbarButtonStyle(Qt::ToolButtonStyle s);
 
   void registerModPage(MOBase::IPluginModPage* modPage);
+  bool registerNexusPage(const QString& gameName);
   void registerPluginTool(MOBase::IPluginTool* tool, QString name = QString(), QMenu* menu = nullptr);
 
   void updateToolbarMenu();

@@ -38,6 +38,7 @@ add_filter(NAME src/core GROUPS
 	apiuseraccount
 	processrunner
 	qdirfiletree
+	virtualfiletree
 	uilocker
 )
 

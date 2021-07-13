@@ -21,7 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "modinfo.h"
 #include "settings.h"
-#include <utility.h>
+#include "filesystemutilities.h"
 #include "shared/appconfig.h"
 #include <iplugingame.h>
 #include <report.h>

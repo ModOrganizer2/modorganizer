@@ -2,6 +2,7 @@
 #include "env.h"
 #include "executableslist.h"
 #include "instancemanager.h"
+#include "filesystemutilities.h"
 #include <utility.h>
 #include <log.h>
 
@@ -147,7 +148,7 @@ Shortcut::Shortcut(const Executable& exe)
 {
   const auto i = *InstanceManager::singleton().currentInstance();
 
-  m_name = exe.title();
+  m_name = MOBase::sanitizeFileName(exe.title());
   m_target = QFileInfo(qApp->applicationFilePath()).absoluteFilePath();
 
   m_arguments = QString("\"moshortcut://%1:%2\"")
@@ -165,7 +166,7 @@ Shortcut::Shortcut(const Executable& exe)
 
 Shortcut& Shortcut::name(const QString& s)
 {
-  m_name = s;
+  m_name = MOBase::sanitizeFileName(s);
   return *this;
 }
 

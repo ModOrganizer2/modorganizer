@@ -476,7 +476,6 @@ private:
   std::map<MOBase::IPlugin*, PluginRequirements> m_Requirements;
 
   std::map<QString, MOBase::IPluginGame*> m_SupportedGames;
-  std::vector<boost::signals2::connection> m_DiagnosisConnections;
   QStringList m_FailedPlugins;
   std::vector<QPluginLoader*> m_PluginLoaders;
 

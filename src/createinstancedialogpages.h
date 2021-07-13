@@ -354,6 +354,15 @@ private:
   MOBase::IPluginGame* confirmOtherGame(
     const QString& path,
     MOBase::IPluginGame* selectedGame, MOBase::IPluginGame* guessedGame);
+
+  // detects if the given path likely contains a Microsoft Store game
+  //
+  bool detectMicrosoftStore(const QString& path);
+
+  // tells the user that the path probably contains a Microsoft Store game that
+  // is not supported, returns true if the user decides to accept anyway.
+  //
+  bool confirmMicrosoftStore(const QString& path, MOBase::IPluginGame* game);
 };
 
 

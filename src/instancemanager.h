@@ -305,10 +305,6 @@ public:
   //
   std::vector<QString> globalInstancePaths() const;
 
-  // returns `name` modified so that it is a valid instance name
-  //
-  QString sanitizeInstanceName(const QString &name) const;
-
   // sanitizes the given instance name and either
   // 1) returns it if there is no instance with this name
   // 2) tries to add " (N)" at the end until it works
@@ -320,12 +316,6 @@ public:
   // returns whether a global instance with this name already exists
   //
   bool instanceExists(const QString& instanceName) const;
-
-  // returns whether the given instance name would be a valid name; this does
-  // not check whether the instance already exists, it's basiscally just a check
-  // against what sanitizeInstanceName() returns
-  //
-  bool validInstanceName(const QString& instanceName) const;
 
   // returns the absolute path of a global instance with the given name; this
   // does not check if the name is valid or if exists

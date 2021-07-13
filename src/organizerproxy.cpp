@@ -272,6 +272,11 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerProxy::findFileInfos(const QString 
   return m_Proxied->findFileInfos(path, filter);
 }
 
+std::shared_ptr<const MOBase::IFileTree> OrganizerProxy::virtualFileTree() const
+{
+  return m_Proxied->m_VirtualFileTree.value();
+}
+
 MOBase::IDownloadManager *OrganizerProxy::downloadManager() const
 {
   return m_DownloadManagerProxy.get();

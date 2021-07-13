@@ -24,29 +24,31 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ifiletree.h"
 
+namespace MOShared
+{
+  class DirectoryEntry;
+}
 
 /**
- * @brief Class that expose a directory on the drive, using QDir, as a `MOBase::IFileTree`.
+ * @brief Class that expose the VFS main directory structure as a `MOBase::IFileTree`.
  *
- * The tree is lazily populated: each subtree is only populated (from the disk) when needed,
+ * The tree is lazily populated: each subtree is only populated when needed,
  * as specified by IFileTree.
  *
  * This class does not expose mutable operations, so any mutable operations will
  * fail.
  */
-class QDirFileTree : public MOBase::IFileTree {
+class VirtualFileTree : public MOBase::IFileTree {
 public:
 
   /**
-   * @brief Create a new file tree representing the given directory.
+   * @brief Create a new file tree representing the given VFS directory.
    *
-   * @param directory Directory to represent.
-   * @param ignoreRootMeta If true, the meta.ini file in the root folder will
-   *   be ignored.
+   * @param root Root directory.
    *
-   * @return a file tree representing the given directory.
+   * @return a file tree representing the VFS directory.
    */
-  static std::shared_ptr<const QDirFileTree> makeTree(QDir directory, bool ignoreRootMeta = true);
+  static std::shared_ptr<const VirtualFileTree> makeTree(const MOShared::DirectoryEntry* root);
 
 protected:
 

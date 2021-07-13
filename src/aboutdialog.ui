@@ -471,6 +471,11 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">foresto</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">GamerPoet</string>
                </property>
               </item>

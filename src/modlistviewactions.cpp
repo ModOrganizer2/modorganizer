@@ -8,7 +8,7 @@
 
 #include <log.h>
 #include <report.h>
-#include <utility.h>
+#include "filesystemutilities.h"
 
 #include "categories.h"
 #include "filedialogmemory.h"
