@@ -1223,6 +1223,7 @@ QString DownloadManager::getFileTypeString(int fileType)
     case 4: return tr("Old");
     case 5: return tr("Miscellaneous");
     case 6: return tr("Deleted");
+    case 7: return tr("Archived");
     default: return tr("Unknown");
   }
 }
@@ -1723,7 +1724,8 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
         {return lhs.toMap()["uploaded_timestamp"].toInt() > rhs.toMap()["uploaded_timestamp"].toInt();});
       for (QVariant file : files) {
         QVariantMap fileInfo = file.toMap();
-        if (fileInfo["category_id"].toInt() != 6)
+        if (fileInfo["category_id"].toInt() != NexusInterface::FileStatus::REMOVED &&
+          fileInfo["category_id"].toInt() != NexusInterface::FileStatus::ARCHIVED)
           selection.addChoice(fileInfo["file_name"].toString(), "", file);
       }
       if (selection.exec() == QDialog::Accepted) {
@@ -1958,7 +1960,8 @@ void DownloadManager::nxmFileInfoFromMd5Available(QString gameName, QVariant use
       auto results = resultlist[i].toMap();
       auto fileDetails = results["file_details"].toMap();
 
-      if (fileDetails["category_id"].toInt() != 6) { //6 = deleted
+      if (fileDetails["category_id"].toInt() != NexusInterface::FileStatus::REMOVED &&
+          fileDetails["category_id"].toInt() != NexusInterface::FileStatus::ARCHIVED) {
         if (chosenIdx < 0) {
           chosenIdx = i; //intentional to not break in order to check other results
         } else {
