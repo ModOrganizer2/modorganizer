@@ -440,10 +440,12 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
                           "(i.e. due to a bug) or the author uses a non-standard versioning scheme and that newest version is actually newer. "
                           "Either way you may want to \"upgrade\".");
       }
-      if (modInfo->getNexusFileStatus() == 4) {
+      if (modInfo->getNexusFileStatus() == NexusInterface::FileStatus::OLD_VERSION) {
         text += "<br>" + tr("This file has been marked as \"Old\". There is most likely an updated version of this file available.");
       }
-      else if (modInfo->getNexusFileStatus() == 6) {
+      else if (modInfo->getNexusFileStatus() == NexusInterface::FileStatus::REMOVED ||
+               modInfo->getNexusFileStatus() == NexusInterface::FileStatus::ARCHIVED || 
+               modInfo->getNexusFileStatus() == NexusInterface::FileStatus::ARCHIVED_HIDDEN) {
         text += "<br>" + tr("This file has been marked as \"Deleted\"! You may want to check for an update or remove the nexus ID from this mod!");
       }
       if (modInfo->nexusId() > 0) {
