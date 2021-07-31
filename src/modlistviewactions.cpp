@@ -12,6 +12,7 @@
 #include "categories.h"
 #include "csvbuilder.h"
 #include "directoryrefresher.h"
+#include "downloadmanager.h"
 #include "filedialogmemory.h"
 #include "filterlist.h"
 #include "listdialog.h"
@@ -256,6 +257,23 @@ void ModListViewActions::checkModsForUpdates() const
 
     m_filters.setSelection(
         {{ModListSortProxy::TypeSpecial, CategoryFactory::UpdateAvailable, false}});
+  }
+}
+
+void ModListViewActions::assignCategories() const
+{
+  for (auto mod : m_core.modList()->allMods()) {
+    ModInfo::Ptr modInfo = ModInfo::getByName(mod);
+    for (auto category : modInfo->categories()) {
+      modInfo->removeCategory(category);
+    }
+    QString file = modInfo->installationFile();
+    auto download = m_core.downloadManager()->getDownloadIndex(file);
+    if (download >= 0) {
+      int nexusCategory = m_core.downloadManager()->getCategoryID(download);
+      int category = CategoryFactory::instance()->resolveNexusID(nexusCategory);
+      modInfo->setCategory(CategoryFactory::instance()->getCategoryID(category), true);
+    }
   }
 }
 

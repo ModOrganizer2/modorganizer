@@ -94,6 +94,9 @@ void ModListGlobalContextMenu::populate(OrganizerCore& core, ModListView* view,
   addAction(tr("Check for updates"), [=]() {
     view->actions().checkModsForUpdates();
   });
+  addAction(tr("Auto assign categories"), [=]() {
+   view->actions().assignCategories();
+  });
   addAction(tr("Refresh"), &core, &OrganizerCore::profileRefresh);
   addAction(tr("Export to csv..."), [=]() {
     view->actions().exportModListCSV();
