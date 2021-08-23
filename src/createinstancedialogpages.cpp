@@ -474,7 +474,7 @@ void GamePage::updateButton(Game* g)
     return;
   }
 
-  g->button->setText(g->game->gameName());
+  g->button->setText(g->game->gameName().replace("&", "&&"));
   g->button->setIcon(g->game->gameIcon());
 
   if (g->installed) {
