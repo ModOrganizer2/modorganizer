@@ -3019,6 +3019,11 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
         }
       }
     }
+    else {
+      // No installedFile means we don't know what to look at for a version so
+      // just get the global mod version
+      requiresInfo = true;
+    }
 
     if (newModStatus > 0) {
       mod->setNexusFileStatus(newModStatus);
