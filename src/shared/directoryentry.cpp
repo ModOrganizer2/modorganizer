@@ -675,7 +675,17 @@ void DirectoryEntry::onDirectoryEnd(Context* cx, std::wstring_view path)
 void DirectoryEntry::onFile(Context* cx, std::wstring_view path, FILETIME ft)
 {
   elapsed(cx->stats.fileTimes, [&]{
-    cx->current.top()->insert(path, cx->origin, ft, L"", -1, cx->stats);
+    auto f = cx->current.top()->insert(path, cx->origin, ft, L"", -1, cx->stats);
+
+    if (f) {
+      // the file might already be in the register and it might have come from
+      // an archive, which sets the file size if it's available (see addFiles()
+      // just below)
+      //
+      // so the file size might be stale here because the file is being
+      // overridden by another mod, make sure to clear it
+      f->setFileSize(FileEntry::NoFileSize, FileEntry::NoFileSize);
+    }
   });
 }
 
