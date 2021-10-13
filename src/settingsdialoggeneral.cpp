@@ -27,6 +27,7 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
   // miscellaneous
   ui->centerDialogs->setChecked(settings().geometry().centerDialogs());
   ui->changeGameConfirmation->setChecked(settings().interface().showChangeGameConfirmation());
+  ui->showMenubarOnAlt->setChecked(settings().interface().showMenubarOnAlt());
   ui->doubleClickPreviews->setChecked(settings().interface().doubleClicksOpenPreviews());
 
   QObject::connect(
@@ -60,6 +61,7 @@ void GeneralSettingsTab::update()
   // miscellaneous
   settings().geometry().setCenterDialogs(ui->centerDialogs->isChecked());
   settings().interface().setShowChangeGameConfirmation(ui->changeGameConfirmation->isChecked());
+  settings().interface().setShowMenubarOnAlt(ui->showMenubarOnAlt->isChecked());
   settings().interface().setDoubleClicksOpenPreviews(ui->doubleClickPreviews->isChecked());
 }
 

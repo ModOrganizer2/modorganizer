@@ -3645,10 +3645,14 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
 {
   // if the ui is locked, ignore the ALT key event
   // alt-tabbing out of a game triggers this
-  if (!UILocker::instance().locked()) {
-    // if the menubar is hidden, pressing Alt will make it visible
+  auto& uilocker = UILocker::instance();
+  auto& settings = Settings::instance();
+  if (!uilocker.locked()) {
+    // if the menubar is hidden and showMenuBarOnAlt is true,
+    // pressing Alt will make it visible
     if (event->key() == Qt::Key_Alt) {
-      if (!ui->menuBar->isVisible()) {
+      bool showMenubarOnAlt = settings.interface().showMenubarOnAlt();
+      if (showMenubarOnAlt && !ui->menuBar->isVisible()) {
         ui->menuBar->show();
       }
     }

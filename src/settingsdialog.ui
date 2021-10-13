@@ -23,7 +23,7 @@
       <attribute name="title">
        <string>General</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout" rowstretch="0">
+      <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0">
        <item row="0" column="0">
         <widget class="QScrollArea" name="generalScrollArea">
          <property name="styleSheet">
@@ -44,8 +44,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>778</width>
-            <height>501</height>
+            <width>780</width>
+            <height>502</height>
            </rect>
           </property>
           <property name="autoFillBackground">
@@ -95,16 +95,6 @@
                 </property>
                </spacer>
               </item>
-              <item row="0" column="0">
-               <widget class="QComboBox" name="languageBox">
-                <property name="toolTip">
-                 <string>The language of the user interface.</string>
-                </property>
-                <property name="whatsThis">
-                 <string>The language of the user interface.</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="1">
                <widget class="LinkLabel" name="label_33">
                 <property name="toolTip">
@@ -115,6 +105,16 @@
                 </property>
                 <property name="openExternalLinks">
                  <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QComboBox" name="languageBox">
+                <property name="toolTip">
+                 <string>The language of the user interface.</string>
+                </property>
+                <property name="whatsThis">
+                 <string>The language of the user interface.</string>
                 </property>
                </widget>
               </item>
@@ -239,6 +239,19 @@
                <widget class="QCheckBox" name="changeGameConfirmation">
                 <property name="text">
                  <string>Show confirmation when changing instance</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="showMenubarOnAlt">
+                <property name="toolTip">
+                 <string>Show the menubar when the Alt key is pressed</string>
+                </property>
+                <property name="whatsThis">
+                 <string>Show the menubar when the Alt key is pressed</string>
+                </property>
+                <property name="text">
+                 <string>Show menubar when pressing Alt</string>
                 </property>
                </widget>
               </item>
@@ -1009,8 +1022,8 @@ If you disable this feature, MO will only display official DLCs this way. Please
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>778</width>
-            <height>501</height>
+            <width>780</width>
+            <height>502</height>
            </rect>
           </property>
           <property name="autoFillBackground">
@@ -1689,8 +1702,8 @@ If you disable this feature, MO will only display official DLCs this way. Please
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>778</width>
-            <height>482</height>
+            <width>780</width>
+            <height>483</height>
            </rect>
           </property>
           <property name="autoFillBackground">

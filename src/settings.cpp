@@ -2301,6 +2301,16 @@ void InterfaceSettings::setShowChangeGameConfirmation(bool b)
   set(m_Settings, "Settings", "show_change_game_confirmation", b);
 }
 
+bool InterfaceSettings::showMenubarOnAlt() const
+{
+  return get<bool>(m_Settings, "Settings", "show_menubar_on_alt", true);
+}
+
+void InterfaceSettings::setShowMenubarOnAlt(bool b)
+{
+  set(m_Settings, "Settings", "show_menubar_on_alt", b);
+}
+
 bool InterfaceSettings::doubleClicksOpenPreviews() const
 {
   return get<bool>(m_Settings, "Settings", "double_click_previews", true);
