@@ -601,9 +601,7 @@ QString InstanceManager::iniPath(const QString& instanceDir) const
 
 std::vector<QString> InstanceManager::globalInstancePaths() const
 {
-  const std::set<QString> ignore = {
-    "cache", "qtwebengine",
-  };
+  const std::set<QString> ignore = { "qtwebengine" };
 
   const QDir root(globalInstancesRootPath());
   const auto dirs = root.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
