@@ -40,11 +40,7 @@ public:
     // the BuildLab entry from the registry, may be empty
     QString buildLab;
 
-    // product name such as "Windows 10 Pro", may not be in English, may be
-    // empty
-    QString productName;
-
-    // release ID such as 1809, may be mepty
+    // release ID such as 1809, may be empty
     QString ID;
 
     // some sub-build number, undocumented, may be empty
