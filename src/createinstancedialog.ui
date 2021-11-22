@@ -67,7 +67,7 @@
      <property name="currentIndex">
       <number>0</number>
      </property>
-     <widget class="QWidget" name="page_10">
+     <widget class="QWidget" name="page_1">
       <layout class="QVBoxLayout" name="verticalLayout_21">
        <item>
         <widget class="QLabel" name="label_15">
@@ -115,7 +115,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="page">
+     <widget class="QWidget" name="page_2">
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
         <widget class="QWidget" name="widget_7" native="true">
@@ -226,7 +226,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="page_2">
+     <widget class="QWidget" name="page_3">
       <layout class="QVBoxLayout" name="verticalLayout_7">
        <item>
         <widget class="QWidget" name="widget_5" native="true">
@@ -367,7 +367,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="page_9">
+     <widget class="QWidget" name="page_4">
       <layout class="QVBoxLayout" name="verticalLayout_19">
        <item>
         <widget class="QWidget" name="widget_16" native="true">
@@ -594,7 +594,7 @@
             <property name="currentIndex">
              <number>0</number>
             </property>
-            <widget class="QWidget" name="page_7">
+            <widget class="QWidget" name="page_6_simple">
              <layout class="QVBoxLayout" name="verticalLayout_12">
               <property name="leftMargin">
                <number>0</number>
@@ -676,7 +676,7 @@
               </item>
              </layout>
             </widget>
-            <widget class="QWidget" name="page_8">
+            <widget class="QWidget" name="page_6_advanced">
              <layout class="QVBoxLayout" name="verticalLayout_13">
               <property name="leftMargin">
                <number>0</number>
@@ -906,7 +906,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="page_3">
+     <widget class="QWidget" name="page_7">
       <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
         <widget class="QWidget" name="widget_4" native="true">
@@ -1048,7 +1048,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="page_11">
+     <widget class="QWidget" name="page_8">
       <layout class="QVBoxLayout" name="verticalLayout_22">
        <item>
         <widget class="QWidget" name="widget_18" native="true">
@@ -1232,6 +1232,38 @@
    <header location="global">linklabel.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>next</tabstop>
+  <tabstop>cancel</tabstop>
+  <tabstop>hideIntro</tabstop>
+  <tabstop>createGlobal</tabstop>
+  <tabstop>createPortable</tabstop>
+  <tabstop>scrollArea_3</tabstop>
+  <tabstop>showAllGames</tabstop>
+  <tabstop>gamesFilter</tabstop>
+  <tabstop>scrollArea_2</tabstop>
+  <tabstop>instanceName</tabstop>
+  <tabstop>location</tabstop>
+  <tabstop>browseLocation</tabstop>
+  <tabstop>advancedPathOptions</tabstop>
+  <tabstop>base</tabstop>
+  <tabstop>browseBase</tabstop>
+  <tabstop>downloads</tabstop>
+  <tabstop>browseDownloads</tabstop>
+  <tabstop>mods</tabstop>
+  <tabstop>browseMods</tabstop>
+  <tabstop>profiles</tabstop>
+  <tabstop>browseProfiles</tabstop>
+  <tabstop>overwrite</tabstop>
+  <tabstop>browseOverwrite</tabstop>
+  <tabstop>nexusConnect</tabstop>
+  <tabstop>nexusManual</tabstop>
+  <tabstop>nexusLog</tabstop>
+  <tabstop>review</tabstop>
+  <tabstop>creationLog</tabstop>
+  <tabstop>launch</tabstop>
+  <tabstop>back</tabstop>
+ </tabstops>
  <resources>
   <include location="resources.qrc"/>
  </resources>
