@@ -1447,15 +1447,20 @@ bool MainWindow::registerNexusPage(const QString& gameName)
   if (plugin == nullptr)
     return false;
 
+  // Get the gameURL
+  QString gameURL = NexusInterface::instance().getGameURL(gameName);
+  if (gameURL.isEmpty())
+    return false;
+
   // Create an action
   QAction* action = new QAction(
       plugin->gameIcon(),
-      QObject::tr("Visit %1 on Nexus").arg(plugin->gameName()),
+      QObject::tr("Visit %1 on Nexus").arg(gameName),
       this);
 
   // Bind the action
-  connect(action, &QAction::triggered, this, [this, gameName]() {
-    shell::Open(QUrl(NexusInterface::instance().getGameURL(gameName)));
+  connect(action, &QAction::triggered, this, [this, gameURL]() {
+    shell::Open(QUrl(gameURL));
   }, Qt::QueuedConnection);
 
   // Add the action
@@ -1479,7 +1484,7 @@ void MainWindow::updateModPageMenu()
     }
   );
 
-  // Remove disabled plugins:
+  // Remove disabled plugins
   modPagePlugins.erase(
     std::remove_if(std::begin(modPagePlugins), std::end(modPagePlugins), [&](auto* tool) {
       return !m_PluginContainer.isEnabled(tool);
@@ -1490,23 +1495,35 @@ void MainWindow::updateModPageMenu()
     registerModPage(modPagePlugin);
   }
 
-  // Add the primary game (with a separator)
-  registerNexusPage(m_OrganizerCore.managedGame()->gameShortName());
-  ui->actionModPage->menu()->addSeparator();
+  QStringList registeredSources;
+
+  // Add the primary game
+  QString gameShortName = m_OrganizerCore.managedGame()->gameShortName();
+  if (registerNexusPage(gameShortName))
+    registeredSources << gameShortName;
+
+  // Add the primary sources
+  for (auto gameName : m_OrganizerCore.managedGame()->primarySources())
+  {
+    if (!registeredSources.contains(gameName) && registerNexusPage(gameName))
+      registeredSources << gameName;
+  }
+
+  // Add a separator if needed
+  if (registeredSources.length() > 0)
+    ui->actionModPage->menu()->addSeparator();
 
   // Add the secondary games (sorted)
-  bool secondaryGameAdded = false;
   QStringList secondaryGames = m_OrganizerCore.managedGame()->validShortNames();
   secondaryGames.sort(Qt::CaseInsensitive);
   for (auto gameName : secondaryGames)
   {
-    if (registerNexusPage(gameName)) {
-      secondaryGameAdded = true;
-    }
+    if (!registeredSources.contains(gameName) && registerNexusPage(gameName))
+      registeredSources << gameName;
   }
 
-  // No mod page plugin and the menu was visible:
-  bool keepOriginalAction = modPagePlugins.size() == 0 && !secondaryGameAdded;
+  // No mod page plugin and the menu was visible
+  bool keepOriginalAction = modPagePlugins.size() == 0 && registeredSources.length() <= 1;
   if (keepOriginalAction) {
     ui->toolBar->insertAction(ui->actionAdd_Profile, ui->actionNexus);
   }
