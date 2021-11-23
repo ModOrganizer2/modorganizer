@@ -1646,7 +1646,7 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
   }
 }
 
-bool MainWindow::refreshProfiles(bool selectProfile)
+bool MainWindow::refreshProfiles(bool selectProfile, QString newProfile)
 {
   QComboBox* profileBox = findChild<QComboBox*>("profileBox");
 
@@ -1675,7 +1675,12 @@ bool MainWindow::refreshProfiles(bool selectProfile)
 
   if (selectProfile) {
     if (profileBox->count() > 1) {
-      profileBox->setCurrentText(currentProfileName);
+      if (newProfile.isEmpty()) {
+        profileBox->setCurrentText(currentProfileName);
+      }
+      else {
+        profileBox->setCurrentText(newProfile);
+      }
       if (profileBox->currentIndex() == 0) {
         profileBox->setCurrentIndex(1);
       }
@@ -2188,16 +2193,7 @@ void MainWindow::on_actionAdd_Profile_triggered()
     profilesDialog.exec();
     m_SavesTab->refreshSaveList(); // since the save list may now be outdated we have to refresh it completely
 
-    if (profilesDialog.selectedProfile())
-    {
-      // Change profile while blocking signals to prevent extra signals being sent
-      // Doesn't matter much as refreshProfiles() is being called after this
-      ui->profileBox->blockSignals(true);
-      ui->profileBox->setCurrentText(profilesDialog.selectedProfile().value());
-      ui->profileBox->blockSignals(false);
-    }
-
-    if (refreshProfiles() && !profilesDialog.failed()) {
+    if (refreshProfiles(true, profilesDialog.selectedProfile().value()) && !profilesDialog.failed()) {
       break;
     }
   }
