@@ -42,6 +42,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QTextCodec>
 #include <QFileInfo>
 #include <QListWidgetItem>
@@ -201,9 +202,9 @@ void PluginList::refresh(const QString &profileName
     }
     QString filename = ToQString(current->getName());
 
-    QString extension = filename.right(3).toLower();
-
-    if ((extension == "esp") || (extension == "esm") || (extension == "esl")) {
+    if (filename.endsWith(".esp", Qt::CaseInsensitive) ||
+        filename.endsWith(".esm", Qt::CaseInsensitive) ||
+        filename.endsWith(".esl", Qt::CaseInsensitive)) {
 
       availablePlugins.append(filename);
 
