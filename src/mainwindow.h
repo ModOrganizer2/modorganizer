@@ -198,7 +198,7 @@ private:
   QMenu* createPopupMenu() override;
   void activateSelectedProfile();
 
-  bool refreshProfiles(bool selectProfile = true);
+  bool refreshProfiles(bool selectProfile = true, QString newProfile = QString());
   void refreshExecutablesList();
 
   bool modifyExecutablesDialog(int selection);

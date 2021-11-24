@@ -94,11 +94,6 @@ QString WindowsInfo::toString() const
     sl.push_back(m_release.buildLab);
   }
 
-  // product name
-  if (!m_release.productName.isEmpty()) {
-    sl.push_back(m_release.productName);
-  }
-
   // elevated
   QString elevated = "?";
   if (m_elevated.has_value()) {
@@ -187,11 +182,11 @@ WindowsInfo::Release WindowsInfo::getRelease() const
     }
   }
 
-  // localized name of windows, such as "Windows 10 Pro"
-  r.productName = settings.value("ProductName", "").toString();
-
   // release ID, such as 1803
-  r.ID = settings.value("ReleaseId", "").toString();
+  r.ID = settings.value("DisplayVersion", "").toString();
+  if (r.ID.isEmpty()) {
+    r.ID = settings.value("ReleaseId", "").toString();
+  }
 
   // some other build number, shown in winver.exe
   r.UBR = settings.value("UBR", 0).toUInt();

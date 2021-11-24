@@ -271,6 +271,7 @@ QString Settings::executablesBlacklist() const
     << "Discord.exe"
     << "GalaxyClient.exe"
     << "Spotify.exe"
+    << "Brave.exe"
     ).join(";");
 
   return get<QString>(m_Settings, "Settings", "executable_blacklist", def);

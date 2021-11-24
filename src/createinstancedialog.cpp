@@ -341,28 +341,25 @@ void CreateInstanceDialog::finish()
       s.game().setEdition(ci.gameVariant);
     }
 
-    if (ci.type == Global) {
-      if (ci.paths.base != ci.dataPath) {
-        s.paths().setBase(ci.paths.base);
-      }
-
-      if (ci.paths.downloads != cid::makeDefaultPath(AppConfig::downloadPath())) {
-        s.paths().setDownloads(ci.paths.downloads);
-      }
-
-      if (ci.paths.mods != cid::makeDefaultPath(AppConfig::modsPath())) {
-        s.paths().setMods(ci.paths.mods);
-      }
-
-      if (ci.paths.profiles != cid::makeDefaultPath(AppConfig::profilesPath())) {
-        s.paths().setProfiles(ci.paths.profiles);
-      }
-
-      if (ci.paths.overwrite != cid::makeDefaultPath(AppConfig::overwritePath())) {
-        s.paths().setOverwrite(ci.paths.overwrite);
-      }
+    if (ci.paths.base != ci.dataPath) {
+      s.paths().setBase(ci.paths.base);
     }
 
+    if (ci.paths.downloads != cid::makeDefaultPath(AppConfig::downloadPath())) {
+      s.paths().setDownloads(ci.paths.downloads);
+    }
+
+    if (ci.paths.mods != cid::makeDefaultPath(AppConfig::modsPath())) {
+      s.paths().setMods(ci.paths.mods);
+    }
+
+    if (ci.paths.profiles != cid::makeDefaultPath(AppConfig::profilesPath())) {
+      s.paths().setProfiles(ci.paths.profiles);
+    }
+
+    if (ci.paths.overwrite != cid::makeDefaultPath(AppConfig::overwritePath())) {
+      s.paths().setOverwrite(ci.paths.overwrite);
+    }
 
     logCreation(tr("Writing %1...").arg(ci.iniPath));
 
