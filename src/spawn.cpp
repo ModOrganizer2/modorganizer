@@ -625,8 +625,10 @@ bool startSteam(QWidget* parent)
   // See if username and password supplied. If so, pass them into steam.
   QString username, password;
   if (Settings::instance().steam().login(username, password)) {
-    MOBase::log::getDefault().addToBlacklist(username.toStdString(), "STEAM_USERNAME");
-    MOBase::log::getDefault().addToBlacklist(password.toStdString(), "STEAM_PASSWORD");
+    if (username.length() > 0)
+      MOBase::log::getDefault().addToBlacklist(username.toStdString(), "STEAM_USERNAME");
+    if (password.length() > 0)
+      MOBase::log::getDefault().addToBlacklist(password.toStdString(), "STEAM_PASSWORD");
     sp.arguments = makeSteamArguments(username, password);
   }
 

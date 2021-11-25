@@ -17,8 +17,10 @@ WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
   // steam
   QString username, password;
   settings().steam().login(username, password);
-  MOBase::log::getDefault().addToBlacklist(username.toStdString(), "STEAM_USERNAME");
-  MOBase::log::getDefault().addToBlacklist(password.toStdString(), "STEAM_PASSWORD");
+  if (username.length() > 0)
+    MOBase::log::getDefault().addToBlacklist(username.toStdString(), "STEAM_USERNAME");
+  if (password.length() > 0)
+    MOBase::log::getDefault().addToBlacklist(password.toStdString(), "STEAM_PASSWORD");
 
   ui->appIDEdit->setText(settings().steam().appID());
   ui->steamUserEdit->setText(username);

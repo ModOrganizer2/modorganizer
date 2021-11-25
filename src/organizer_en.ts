@@ -7362,7 +7362,7 @@ This program is known to cause issues with Mod Organizer, such as freezing or bl
         <location filename="spawn.cpp" line="366"/>
         <location filename="spawn.cpp" line="393"/>
         <location filename="spawn.cpp" line="429"/>
-        <location filename="settingsdialogworkarounds.cpp" line="137"/>
+        <location filename="settingsdialogworkarounds.cpp" line="139"/>
         <location filename="settingsdialognexus.cpp" line="268"/>
         <location filename="settingsdialognexus.cpp" line="276"/>
         <location filename="createinstancedialogpages.cpp" line="680"/>
@@ -7455,12 +7455,12 @@ This program is known to cause issues with Mod Organizer, such as freezing or bl
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialogworkarounds.cpp" line="86"/>
+        <location filename="settingsdialogworkarounds.cpp" line="88"/>
         <source>Executables Blacklist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialogworkarounds.cpp" line="87"/>
+        <location filename="settingsdialogworkarounds.cpp" line="89"/>
         <source>Enter one executable per line to be blacklisted from the virtual file system.
 Mods and other virtualized files will not be visible to these executables and
 any executables launched by them.
@@ -7471,14 +7471,14 @@ Example:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialogworkarounds.cpp" line="132"/>
-        <location filename="settingsdialogworkarounds.cpp" line="133"/>
-        <location filename="settingsdialogworkarounds.cpp" line="136"/>
+        <location filename="settingsdialogworkarounds.cpp" line="134"/>
+        <location filename="settingsdialogworkarounds.cpp" line="135"/>
+        <location filename="settingsdialogworkarounds.cpp" line="138"/>
         <source>Restart Mod Organizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialogworkarounds.cpp" line="134"/>
+        <location filename="settingsdialogworkarounds.cpp" line="136"/>
         <source>Geometries will be reset to their default values.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7682,22 +7682,22 @@ You can restart Mod Organizer as administrator and try launching the program aga
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="658"/>
+        <location filename="spawn.cpp" line="660"/>
         <source>Waiting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="659"/>
+        <location filename="spawn.cpp" line="661"/>
         <source>Please press OK once you&apos;re logged into steam.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="967"/>
+        <location filename="spawn.cpp" line="969"/>
         <source>Select binary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="968"/>
+        <location filename="spawn.cpp" line="970"/>
         <source>Binary</source>
         <translation type="unfinished"></translation>
     </message>
