@@ -160,6 +160,8 @@ MOApplication::MOApplication(int& argc, char** argv)
 {
   TimeThis tt("MOApplication()");
 
+  qputenv("QML_DISABLE_DISK_CACHE", "true");
+
   connect(&m_styleWatcher, &QFileSystemWatcher::fileChanged, [&](auto&& file){
     log::debug("style file '{}' changed, reloading", file);
     updateStyle(file);

@@ -688,6 +688,11 @@ public:
   bool showChangeGameConfirmation() const;
   void setShowChangeGameConfirmation(bool b);
 
+  // whether to show the menubar when pressing the Alt key
+  //
+  bool showMenubarOnAlt() const;
+  void setShowMenubarOnAlt(bool b);
+
   // whether double-clicks on files should try to open previews first
   //
   bool doubleClicksOpenPreviews() const;

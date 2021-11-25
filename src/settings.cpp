@@ -271,6 +271,7 @@ QString Settings::executablesBlacklist() const
     << "Discord.exe"
     << "GalaxyClient.exe"
     << "Spotify.exe"
+    << "Brave.exe"
     ).join(";");
 
   return get<QString>(m_Settings, "Settings", "executable_blacklist", def);
@@ -2299,6 +2300,16 @@ bool InterfaceSettings::showChangeGameConfirmation() const
 void InterfaceSettings::setShowChangeGameConfirmation(bool b)
 {
   set(m_Settings, "Settings", "show_change_game_confirmation", b);
+}
+
+bool InterfaceSettings::showMenubarOnAlt() const
+{
+  return get<bool>(m_Settings, "Settings", "show_menubar_on_alt", true);
+}
+
+void InterfaceSettings::setShowMenubarOnAlt(bool b)
+{
+  set(m_Settings, "Settings", "show_menubar_on_alt", b);
 }
 
 bool InterfaceSettings::doubleClicksOpenPreviews() const

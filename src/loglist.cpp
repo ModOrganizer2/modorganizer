@@ -359,6 +359,8 @@ void initLogging()
   log::getDefault().setCallback(
     [](log::Entry e){ LogModel::instance().add(e); });
 
+  log::getDefault().addToBlacklist(getenv("USERNAME"), "USERNAME");
+
   qInstallMessageHandler(qtLogCallback);
 }
 

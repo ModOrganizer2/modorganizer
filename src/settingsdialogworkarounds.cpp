@@ -4,6 +4,7 @@
 #include "settings.h"
 #include <report.h>
 #include <iplugingame.h>
+#include <log.h>
 
 WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
   : SettingsTab(s, d)
@@ -16,6 +17,8 @@ WorkaroundsSettingsTab::WorkaroundsSettingsTab(Settings& s, SettingsDialog& d)
   // steam
   QString username, password;
   settings().steam().login(username, password);
+  MOBase::log::getDefault().addToBlacklist(username.toStdString(), "STEAM_USERNAME");
+  MOBase::log::getDefault().addToBlacklist(password.toStdString(), "STEAM_PASSWORD");
 
   ui->appIDEdit->setText(settings().steam().appID());
   ui->steamUserEdit->setText(username);

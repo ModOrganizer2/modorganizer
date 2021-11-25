@@ -1073,7 +1073,7 @@ void Profile::storeSettingsByArray(const QString &prefix, const QList<QVariantMa
 
 bool Profile::forcedLibrariesEnabled(const QString &executable) const
 {
-  return setting("forced_libraries", executable + "/enabled", false).toBool();
+  return setting("forced_libraries", executable + "/enabled", true).toBool();
 }
 
 void Profile::setForcedLibrariesEnabled(const QString &executable, bool enabled)

@@ -385,7 +385,13 @@ QString NexusInterface::getGameURL(QString gameName) const
 {
   IPluginGame *game = getGame(gameName);
   if (game != nullptr) {
-    return "https://www.nexusmods.com/" + game->gameNexusName().toLower();
+    QString gameNexusName = game->gameNexusName().toLower();
+    if (gameNexusName.isEmpty()) {
+      return "";
+    }
+    else {
+      return "https://www.nexusmods.com/" + gameNexusName;
+    }
   } else {
     log::error("getGameURL can't find plugin for {}", gameName);
     return "";
