@@ -220,7 +220,7 @@ void PluginList::refresh(const QString &profileName
         FilesOrigin &origin = baseDirectory.getOriginByID(current->getOrigin(archive));
 
         //name without extension
-        QString baseName = QFileInfo(filename).baseName();
+        QString baseName = QFileInfo(filename).completeBaseName();
 
         QString iniPath = baseName + ".ini";
         bool hasIni = baseDirectory.findFile(ToWString(iniPath)).get() != nullptr;

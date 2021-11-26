@@ -265,6 +265,11 @@ void DirectoryRefresher::stealModFilesIntoStructure(
   for (const QString &filename : stealFiles) {
     if (filename.isEmpty()) {
       log::warn("Trying to find file with no name");
+      log::warn(" . modName: {}", modName);
+      log::warn(" . directory: {}", directory);
+      log::warn(" . priority: {}", priority);
+      for (int i = 0; i < stealFiles.length(); ++i)
+        log::warn(" . stealFiles[{}]: {}", i, stealFiles[i]);
       continue;
     }
     QFileInfo fileInfo(filename);

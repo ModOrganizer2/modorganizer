@@ -679,7 +679,7 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>DirectoryRefresher</name>
     <message>
-        <location filename="directoryrefresher.cpp" line="457"/>
+        <location filename="directoryrefresher.cpp" line="462"/>
         <source>failed to read mod (%1): %2</source>
         <translation type="unfinished"></translation>
     </message>

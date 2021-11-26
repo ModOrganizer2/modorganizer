@@ -1782,7 +1782,7 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
   auto hasAssociatedPlugin = [&](const QString &bsaName) -> bool {
     for (const QString &pluginName : plugins) {
       QFileInfo pluginInfo(pluginName);
-      if (bsaName.startsWith(QFileInfo(pluginName).baseName(), Qt::CaseInsensitive)
+      if (bsaName.startsWith(QFileInfo(pluginName).completeBaseName(), Qt::CaseInsensitive)
         && (m_OrganizerCore.pluginList()->state(pluginInfo.fileName()) == IPluginList::STATE_ACTIVE)) {
         return true;
       }
@@ -2951,11 +2951,11 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
         if (fileData["file_name"].toString().compare(installedFile, Qt::CaseInsensitive) == 0) {
           foundFileData = fileData;
           newModStatus = foundFileData["category_id"].toInt();
-          
+
           if (newModStatus != NexusInterface::FileStatus::OLD_VERSION &&
               newModStatus != NexusInterface::FileStatus::REMOVED &&
               newModStatus != NexusInterface::FileStatus::ARCHIVED) {
-            
+
             // since the file is still active if there are no updates for it, use this as current version
             validNewVersion = foundFileData["version"].toString();
           }
@@ -3022,10 +3022,10 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
           }
         }
       }
-      
+
       // if there were no active direct file updates for the installedFile
-      if (!foundActiveUpdate) { 
-        // get the global mod version in case the file isn't an optional 
+      if (!foundActiveUpdate) {
+        // get the global mod version in case the file isn't an optional
         if (newModStatus != NexusInterface::FileStatus::OPTIONAL_FILE &&
             newModStatus != NexusInterface::FileStatus::MISCELLANEOUS) {
           requiresInfo = true;
@@ -3061,7 +3061,7 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
   QVariantMap result = resultData.toMap();
   QString gameNameReal;
   bool foundUpdate = false;
-  
+
   for (IPluginGame *game : m_PluginContainer.plugins<IPluginGame>()) {
     if (game->gameNexusName() == gameName) {
       gameNameReal = game->gameShortName();
@@ -3077,8 +3077,8 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
 
     // if file is still listed as optional or miscellaneous don't update the version as often optional files are left
     // with an older version than the main mod version.
-    if (!result["version"].toString().isEmpty() && 
-        mod->getNexusFileStatus() != NexusInterface::FileStatus::OPTIONAL_FILE && 
+    if (!result["version"].toString().isEmpty() &&
+        mod->getNexusFileStatus() != NexusInterface::FileStatus::OPTIONAL_FILE &&
         mod->getNexusFileStatus() != NexusInterface::FileStatus::MISCELLANEOUS) {
 
       mod->setNewestVersion(result["version"].toString());
@@ -3101,7 +3101,7 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
       else
         mod->setIsEndorsed(false);
     }
-    
+
     mod->setLastNexusQuery(QDateTime::currentDateTimeUtc());
     mod->setNexusLastModified(QDateTime::fromSecsSinceEpoch(result["updated_timestamp"].toInt(), Qt::UTC));
 
