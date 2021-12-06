@@ -38,7 +38,7 @@ FileRenamer::RenameResults FileRenamer::rename(const QString& oldName, const QSt
         log::debug("removing {}", newName);
 
         // user wants to replace the file, so remove it
-        const auto r = shell::Delete(newName);
+        const auto r = shell::Delete(QFileInfo(newName));
 
         if (!r.success()) {
           log::error("failed to remove '{}': {}", newName, r.toString());
@@ -68,7 +68,7 @@ FileRenamer::RenameResults FileRenamer::rename(const QString& oldName, const QSt
   }
 
   // target either didn't exist or was removed correctly
-  const auto r = shell::Rename(oldName, newName);
+  const auto r = shell::Rename(QFileInfo(oldName), QFileInfo(newName));
 
   if (!r.success()) {
     log::error(

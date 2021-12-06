@@ -234,8 +234,8 @@ void ImagesTab::getSupportedFormats()
     }
 
     // make sure it starts with a dot
-    if (s[0] != ".") {
-      s = "." + s;
+    if (s[0] != '.') {
+      s = '.' + s;
     }
 
     m_supportedFormats.emplace_back(std::move(s));

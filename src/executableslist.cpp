@@ -94,7 +94,7 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, const Settings& s)
 
     setExecutable(Executable()
       .title(map["title"].toString())
-      .binaryInfo(map["binary"].toString())
+      .binaryInfo(QFileInfo(map["binary"].toString()))
       .arguments(map["arguments"].toString())
       .steamAppID(map["steamAppID"].toString())
       .workingDirectory(map["workingDirectory"].toString())

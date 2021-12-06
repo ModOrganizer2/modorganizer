@@ -114,8 +114,8 @@ namespace MOShared {
 
         while (str_it != str_end)
         {
-          CharT current_pat = 0;
-          CharT current_str = -1;
+          CharT current_pat = QChar(0);
+          CharT current_str = QChar(-1);
           if (pat_it != pat_end)
           {
             current_pat = case_sensitive ? *pat_it : traits::tolower(*pat_it);

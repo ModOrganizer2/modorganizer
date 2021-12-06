@@ -174,16 +174,18 @@ void BrowserDialog::titleChanged(const QString &title)
 
 QString BrowserDialog::guessFileName(const QString &url)
 {
-  QRegExp uploadsExp(QString("https://.+/uploads/([^/]+)$"));
-  if (uploadsExp.indexIn(url) != -1) {
+  QRegularExpression uploadsExp(QString("https://.+/uploads/([^/]+)$"));
+  auto match = uploadsExp.match(url);
+  if (match.hasMatch()) {
     // these seem to be premium downloads
-    return uploadsExp.cap(1);
+    return match.captured(1);
   }
 
-  QRegExp filesExp(QString("https://.+\\?file=([^&]+)"));
-  if (filesExp.indexIn(url) != -1) {
+  QRegularExpression filesExp(QString("https://.+\\?file=([^&]+)"));
+  match = filesExp.match(url);
+  if (match.hasMatch()) {
     // a regular manual download?
-    return filesExp.cap(1);
+    return match.captured(1);
   }
   return "unknown";
 }
@@ -196,13 +198,13 @@ void BrowserDialog::unsupportedContent(QNetworkReply *reply)
       log::error("sender not a page");
       return;
     }
-    BrowserView *view = qobject_cast<BrowserView*>(page->view());
+    /*browserview *view = qobject_cast<browserview*>(page->view());
     if (view == nullptr) {
       log::error("no view?");
       return;
-    }
+    }*/
 
-    emit requestDownload(view->url(), reply);
+    emit requestDownload(page->url(), reply);
   } catch (const std::exception &e) {
     if (isVisible()) {
       MessageDialog::showMessage(tr("failed to start download"), this);

@@ -568,7 +568,7 @@ bool FileTree::showShellMenu(QPoint pos)
         .arg(item->realPath()));
     }
 
-    itor->second.addFile(item->realPath());
+    itor->second.addFile(QFileInfo(item->realPath()));
     ++totalFiles;
 
     if (item->isConflicted()) {
@@ -611,7 +611,7 @@ bool FileTree::showShellMenu(QPoint pos)
             .arg(QString::fromStdWString(fullPath)));
         }
 
-        itor->second.addFile(QString::fromStdWString(fullPath));
+        itor->second.addFile(QFileInfo(QString::fromStdWString(fullPath)));
       }
     }
   }

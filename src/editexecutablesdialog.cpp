@@ -482,7 +482,7 @@ void EditExecutablesDialog::save()
     e->title(newTitle);
   }
 
-  e->binaryInfo(ui->binary->text());
+  e->binaryInfo(QFileInfo(ui->binary->text()));
   e->workingDirectory(ui->workingDirectory->text());
   e->arguments(ui->arguments->text());
 

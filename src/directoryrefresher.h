@@ -34,8 +34,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
  **/
 class DirectoryRefresher : public QObject
 {
-
-  Q_OBJECT
+  Q_OBJECT;
 
 public:
   struct EntryInfo
@@ -54,11 +53,8 @@ public:
     int priority;
   };
 
-  DirectoryRefresher(std::size_t threadCount);
 
-  // noncopyable
-  DirectoryRefresher(const DirectoryRefresher&) = delete;
-  DirectoryRefresher& operator=(const DirectoryRefresher&) = delete;
+  DirectoryRefresher(std::size_t threadCount);
 
   /**
    * @brief retrieve the updated directory structure
@@ -82,7 +78,7 @@ public:
    * @param modDirectory the mod directory
    * @note this function could be obsoleted easily by storing absolute paths in the parameter to setMods. This is legacy
    */
-  void setModDirectory(const QString &modDirectory);
+  //void setModDirectory(const QString &modDirectory);
 
   /**
    * @brief remove files from the directory structure that are known to be irrelevant to the game
@@ -157,9 +153,9 @@ private:
 };
 
 
-class DirectoryRefreshProgress : QObject
+class DirectoryRefreshProgress : public QObject
 {
-  Q_OBJECT;
+  Q_OBJECT
 
 public:
   DirectoryRefreshProgress(DirectoryRefresher* r) :

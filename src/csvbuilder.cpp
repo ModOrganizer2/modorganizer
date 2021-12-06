@@ -4,7 +4,7 @@
 CSVBuilder::CSVBuilder(QIODevice *target)
   : m_Out(target), m_Separator(','), m_LineBreak(BREAK_CRLF)
 {
-  m_Out.setCodec("UTF-8");
+  m_Out.setEncoding(QStringConverter::Encoding::Utf8);
 
   m_QuoteMode[TYPE_INTEGER] = QUOTE_NEVER;
   m_QuoteMode[TYPE_FLOAT] = QUOTE_NEVER;

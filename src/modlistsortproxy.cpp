@@ -462,13 +462,13 @@ bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
     bool display = false;
     QString filterCopy = QString(m_Filter);
     filterCopy.replace("||", ";").replace("OR", ";").replace("|", ";");
-    QStringList ORList = filterCopy.split(";", QString::SkipEmptyParts);
+    QStringList ORList = filterCopy.split(";", Qt::SkipEmptyParts);
 
     bool segmentGood = true;
 
     //split in ORSegments that internally use AND logic
     for (auto& ORSegment : ORList) {
-      QStringList ANDKeywords = ORSegment.split(" ", QString::SkipEmptyParts);
+      QStringList ANDKeywords = ORSegment.split(" ", Qt::SkipEmptyParts);
       segmentGood = true;
       bool foundKeyword = false;
 

@@ -114,7 +114,7 @@ void LootDialog::addOutput(const QString& s)
     return;
   }
 
-  const auto lines = s.split(QRegExp("[\\r\\n]"), QString::SkipEmptyParts);
+  const auto lines = s.split(QRegularExpression("[\\r\\n]"), Qt::SkipEmptyParts);
 
   for (auto&& line : lines) {
     if (line.isEmpty()) {

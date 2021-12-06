@@ -72,7 +72,7 @@ void GeneralSettingsTab::addLanguages()
     QString::fromStdWString(AppConfig::translationPrefix()) +
     "_([a-z]{2,3}(_[A-Z]{2,2})?).qm";
 
-  const QRegExp exp(pattern);
+  const QRegularExpression exp(QRegularExpression::anchoredPattern(pattern));
 
   QDirIterator iter(
     QCoreApplication::applicationDirPath() + "/translations",
@@ -84,11 +84,12 @@ void GeneralSettingsTab::addLanguages()
     iter.next();
 
     const QString file = iter.fileName();
-    if (!exp.exactMatch(file)) {
+    auto match = exp.match(file);
+    if (!match.hasMatch()) {
       continue;
     }
 
-    const QString languageCode = exp.cap(1);
+    const QString languageCode = match.captured(1);
     const QLocale locale(languageCode);
 
     QString languageString = QString("%1 (%2)")
@@ -103,7 +104,7 @@ void GeneralSettingsTab::addLanguages()
       }
     }
 
-    languages.push_back({languageString, exp.cap(1)});
+    languages.push_back({languageString, match.captured(1)});
   }
 
   if (!ui->languageBox->findText("English")) {

@@ -786,11 +786,6 @@ NXMAccessManager::NXMAccessManager(QObject *parent, Settings* s, const QString &
     setCookieJar(new PersistentCookieJar(QDir::fromNativeSeparators(
       m_Settings->paths().cache() + "/nexus_cookies.dat")));
   }
-
-  if (networkAccessible() == QNetworkAccessManager::UnknownAccessibility) {
-    // why is this necessary all of a sudden?
-    setNetworkAccessible(QNetworkAccessManager::Accessible);
-  }
 }
 
 void NXMAccessManager::setTopLevelWidget(QWidget* w)

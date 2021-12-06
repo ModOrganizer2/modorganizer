@@ -284,7 +284,7 @@ void TextEditor::resizeEvent(QResizeEvent* e)
 void TextEditor::paintLineNumbers(QPaintEvent* e, const QColor& textColor)
 {
   QStyleOption opt;
-  opt.init(m_lineNumbers);
+  opt.initFrom(m_lineNumbers);
 
   QPainter painter(m_lineNumbers);
 

@@ -229,7 +229,7 @@ QString StatusBarAction::cleanupActionText(const QString& original) const
 {
   QString s = original;
 
-  s.replace(QRegExp("\\&([^&])"), "\\1");  // &Item -> Item
+  s.replace(QRegularExpression("\\&([^&])"), "\\1");  // &Item -> Item
   s.replace("&&", "&"); // &&Item -> &Item
 
   if (s.endsWith("...")) {

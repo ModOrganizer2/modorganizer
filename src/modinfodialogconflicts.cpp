@@ -245,7 +245,7 @@ void ConflictsTab::openItems(QTreeView* tree, bool hooked)
 void ConflictsTab::openItem(const ConflictItem* item, bool hooked)
 {
   core().processRunner()
-    .setFromFile(parentWidget(), item->fileName())
+    .setFromFile(parentWidget(), QFileInfo(item->fileName()))
     .setHooked(hooked)
     .setWaitForCompletion()
     .run();

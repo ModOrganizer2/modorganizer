@@ -115,7 +115,7 @@ protected:
           * reordered when rows are inserted or removed.
           * TODO:use some auto-incrementing container class (steveire's?) for the list
           */
-  QHash<quint32, QList<int> > m_groupHash;
+  QMap<quint32, QList<int> > m_groupMap;
   /** The data cache of the groups.
           * This can be pre-loaded with data in belongsTo()
           */

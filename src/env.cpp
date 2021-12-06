@@ -801,7 +801,7 @@ std::pair<QString, QString> splitExeAndArguments(const QString& cmd)
     }
   } else {
     // no double-quotes, find the first whitespace
-    exeEnd = cmd.indexOf(QRegExp("\\s"));
+    exeEnd = cmd.indexOf(QRegularExpression("\\s"));
     if (exeEnd == -1) {
       exeEnd = cmd.size();
     }
@@ -844,7 +844,7 @@ Association getAssociation(const QFileInfo& targetInfo)
 
   log::debug("split into exe='{}' and cmd='{}'", p.first, p.second);
 
-  return {p.first, *cmd, p.second};
+  return {QFileInfo(p.first), *cmd, p.second};
 }
 
 
@@ -1108,7 +1108,7 @@ DWORD findOtherPid()
   // going through processes, trying to find one with the same name and a
   // different pid than this process has
   for (const auto& p : processes) {
-    if (p.name() == filename) {
+    if (p.name().toStdWString() == filename) {
       if (p.pid() != thisPid) {
         return p.pid();
       }

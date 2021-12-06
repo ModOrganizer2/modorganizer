@@ -139,7 +139,7 @@ QVariant LogModel::data(const QModelIndex& index, int role) const
       const std::time_t tt = s.count();
       const int frac = static_cast<int>(ms.count() % 1000);
 
-      const auto time = QDateTime::fromTime_t(tt).time().addMSecs(frac);
+      const auto time = QDateTime::fromSecsSinceEpoch(tt).time().addMSecs(frac);
       return time.toString("hh:mm:ss.zzz");
     } else if (index.column() == 2) {
       return QString::fromStdString(e.message);

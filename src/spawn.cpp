@@ -252,7 +252,7 @@ void helperFailed(
   const std::wstring& cwd, const std::wstring& args)
 {
   SpawnParameters sp;
-  sp.binary = QString::fromStdWString(binary);
+  sp.binary = QFileInfo(QString::fromStdWString(binary));
   sp.currentDirectory.setPath(QString::fromStdWString(cwd));
   sp.arguments = QString::fromStdWString(args);
 
@@ -620,7 +620,7 @@ bool startSteam(QWidget* parent)
   }
 
   SpawnParameters sp;
-  sp.binary = exe;
+  sp.binary = QFileInfo(exe);
 
   // See if username and password supplied. If so, pass them into steam.
   QString username, password;
@@ -911,7 +911,7 @@ QFileInfo getCmdPath()
 {
   const auto p = env::get("COMSPEC");
   if (!p.isEmpty()) {
-    return p;
+    return QFileInfo(p);
   }
 
   QString systemDirectory;
@@ -930,7 +930,7 @@ QFileInfo getCmdPath()
     systemDirectory = "C:\\Windows\\System32\\";
   }
 
-  return systemDirectory + "cmd.exe";
+  return QFileInfo(systemDirectory + "cmd.exe");
 }
 
 FileExecutionTypes getFileExecutionType(const QFileInfo& target)
