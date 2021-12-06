@@ -54,6 +54,7 @@ public:
     int priority;
   };
 
+
   DirectoryRefresher(std::size_t threadCount);
 
   /**
