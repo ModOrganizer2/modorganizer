@@ -649,7 +649,7 @@ ProcessRunner& ProcessRunner::setFromFileOrExecutable(
     throw MyException(QObject::tr("No profile set"));
   }
 
-  setBinary(executable);
+  setBinary(QFileInfo(executable));
   setArguments(args.join(" "));
   setCurrentDirectory(cwd);
   setProfileName(profileOverride);
@@ -659,7 +659,7 @@ ProcessRunner& ProcessRunner::setFromFileOrExecutable(
 
     if (m_sp.binary.isRelative()) {
       // relative path, should be relative to game directory
-      setBinary(m_core.managedGame()->gameDirectory().absoluteFilePath(executable));
+      setBinary(QFileInfo(m_core.managedGame()->gameDirectory().absoluteFilePath(executable)));
     }
 
     if (cwd == "") {

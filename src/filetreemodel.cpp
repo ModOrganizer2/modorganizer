@@ -1100,8 +1100,8 @@ QVariant FileTreeModel::displayData(const FileTreeItem* item, int column) const
     case LastModified:
     {
       if (auto d=item->lastModified()) {
-        if (d->isValid()) {
-          return d->toString(Qt::SystemLocaleDate);
+        if (d.has_value() && d.value().isValid()) {
+          return QLocale::system().toString(d.value(), QLocale::ShortFormat);
         }
       }
 

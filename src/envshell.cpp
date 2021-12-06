@@ -70,9 +70,9 @@ public:
   {
   }
 
-  bool nativeEventFilter(const QByteArray& type, void* m, long* lresultOut) override
+  bool nativeEventFilter(const QByteArray& eventType, void* message, qintptr* result) override
   {
-    MSG* msg = (MSG*)m;
+    MSG* msg = (MSG*)message;
     if (!msg) {
       return false;
     }
@@ -81,8 +81,8 @@ public:
 
     const bool r = m_f(msg->hwnd, msg->message, msg->wParam, msg->lParam, &lr);
 
-    if (lresultOut) {
-      *lresultOut = lr;
+    if (result) {
+      *result = lr;
     }
 
     return r;

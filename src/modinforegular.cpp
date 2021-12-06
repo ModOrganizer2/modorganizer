@@ -186,7 +186,7 @@ void ModInfoRegular::readMeta()
 
   QString categoriesString = metaFile.value("category", "").toString();
 
-  QStringList categories = categoriesString.split(',', QString::SkipEmptyParts);
+  QStringList categories = categoriesString.split(',', Qt::SkipEmptyParts);
   for (QStringList::iterator iter = categories.begin(); iter != categories.end(); ++iter) {
     bool ok = false;
     int categoryID = iter->toInt(&ok);

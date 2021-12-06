@@ -232,10 +232,6 @@ int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
     purgeOldFiles();
   }
 
-  QWindowsWindowFunctions::setWindowActivationBehavior(
-    QWindowsWindowFunctions::AlwaysActivateWindow);
-
-
   // loading settings
   m_settings.reset(new Settings(m_instance->iniPath(), true));
   log::getDefault().setLevel(m_settings->diagnostics().logLevel());

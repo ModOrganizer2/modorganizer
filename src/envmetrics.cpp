@@ -4,7 +4,7 @@
 #include <shellscalingapi.h>
 #include <log.h>
 #include <utility.h>
-#include <QDesktopWidget>
+#include <QScreen>
 
 namespace env
 {

@@ -172,7 +172,7 @@ void FileTreeTab::onOpen()
 
   const auto path = m_fs->filePath(selection);
   core().processRunner()
-    .setFromFile(parentWidget(), path)
+    .setFromFile(parentWidget(), QFileInfo(path))
     .setHooked(false)
     .setWaitForCompletion()
     .run();
@@ -187,7 +187,7 @@ void FileTreeTab::onRunHooked()
 
   const auto path = m_fs->filePath(selection);
   core().processRunner()
-    .setFromFile(parentWidget(), path)
+    .setFromFile(parentWidget(), QFileInfo(path))
     .setHooked(true)
     .setWaitForCompletion()
     .run();

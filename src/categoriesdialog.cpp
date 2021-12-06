@@ -23,7 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include "settings.h"
 #include <QItemDelegate>
-#include <QRegExpValidator>
+#include <QRegularExpressionValidator>
 #include <QLineEdit>
 #include <QMenu>
 
@@ -134,7 +134,7 @@ void CategoriesDialog::commitChanges()
   for (int i = 0; i < ui->categoriesTable->rowCount(); ++i) {
     int index = ui->categoriesTable->verticalHeader()->logicalIndex(i);
     QString nexusIDString = ui->categoriesTable->item(index, 2)->text();
-    QStringList nexusIDStringList = nexusIDString.split(',', QString::SkipEmptyParts);
+    QStringList nexusIDStringList = nexusIDString.split(',', Qt::SkipEmptyParts);
     std::vector<int> nexusIDs;
     for (QStringList::iterator iter = nexusIDStringList.begin();
          iter != nexusIDStringList.end(); ++iter) {
@@ -189,7 +189,7 @@ void CategoriesDialog::fillTable()
 
 
   table->setItemDelegateForColumn(0, new ValidatingDelegate(this, new NewIDValidator(m_IDs)));
-  table->setItemDelegateForColumn(2, new ValidatingDelegate(this, new QRegExpValidator(QRegExp("([0-9]+)?(,[0-9]+)*"), this)));
+  table->setItemDelegateForColumn(2, new ValidatingDelegate(this, new QRegularExpressionValidator(QRegularExpression("([0-9]+)?(,[0-9]+)*"), this)));
   table->setItemDelegateForColumn(3, new ValidatingDelegate(this, new ExistingIDValidator(m_IDs)));
 
   int row = 0;

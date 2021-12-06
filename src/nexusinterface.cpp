@@ -103,7 +103,7 @@ void NexusBridge::nxmFilesAvailable(QString gameName, int modID, QVariant userDa
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
 
-    QList<ModRepositoryFileInfo> fileInfoList;
+    QList<ModRepositoryFileInfo*> fileInfoList;
 
     QVariantMap resultInfo = resultData.toMap();
     QList resultList = resultInfo["files"].toList();
@@ -118,7 +118,7 @@ void NexusBridge::nxmFilesAvailable(QString gameName, int modID, QVariant userDa
       temp.categoryID = fileInfo["category_id"].toInt();
       temp.fileID = fileInfo["file_id"].toInt();
       temp.fileSize = fileInfo["size"].toInt();
-      fileInfoList.append(temp);
+      fileInfoList.append(&temp);
     }
 
     emit filesAvailable(gameName, modID, userData, fileInfoList);
@@ -325,7 +325,7 @@ void NexusInterface::interpretNexusFileName(const QString &fileName, QString &mo
   if (query) {
     SelectionDialog selection(tr("Please pick the mod ID for \"%1\"").arg(fileName));
     int index = 0;
-    auto splits = fileName.split(QRegExp("[^0-9]"), QString::KeepEmptyParts);
+    auto splits = fileName.split(QRegularExpression("[^0-9]"), Qt::KeepEmptyParts);
     for (auto substr : splits) {
       bool ok = false;
       int value = substr.toInt(&ok);

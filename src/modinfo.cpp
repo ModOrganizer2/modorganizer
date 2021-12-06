@@ -55,7 +55,7 @@ ModInfo::Ptr ModInfo::s_Overwrite;
 std::map<QString, unsigned int, MOBase::FileNameComparator> ModInfo::s_ModsByName;
 std::map<std::pair<QString, int>, std::vector<unsigned int>> ModInfo::s_ModsByModID;
 int ModInfo::s_NextID;
-QMutex ModInfo::s_Mutex(QMutex::Recursive);
+QRecursiveMutex ModInfo::s_Mutex;
 
 QString ModInfo::s_HiddenExt(".mohidden");
 
@@ -67,14 +67,14 @@ bool ModInfo::ByName(const ModInfo::Ptr &LHS, const ModInfo::Ptr &RHS)
 
 bool ModInfo::isSeparatorName(const QString& name)
 {
-  static QRegExp separatorExp(".*_separator");
-  return separatorExp.exactMatch(name);
+  static QRegularExpression separatorExp(QRegularExpression::anchoredPattern(".*_separator"));
+  return separatorExp.match(name).hasMatch();
 }
 
 bool ModInfo::isBackupName(const QString& name)
 {
-  static QRegExp backupExp(".*backup[0-9]*");
-  return backupExp.exactMatch(name);
+  static QRegularExpression backupExp(QRegularExpression::anchoredPattern(".*backup[0-9]*"));
+  return backupExp.match(name).hasMatch();
 }
 
 bool ModInfo::isRegularName(const QString& name)

@@ -29,7 +29,7 @@ class PluginContainer;
 class QDir;
 class QDateTime;
 
-#include <QMutex>
+#include <QRecursiveMutex>
 #include <QSharedPointer>
 #include <QString>
 #include <QStringList>
@@ -980,7 +980,7 @@ protected:
 
 protected:
 
-  static QMutex s_Mutex;
+  static QRecursiveMutex s_Mutex;
   static std::vector<ModInfo::Ptr> s_Collection;
   static ModInfo::Ptr s_Overwrite;
   static std::map<QString, unsigned int, MOBase::FileNameComparator> s_ModsByName;

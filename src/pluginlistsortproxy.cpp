@@ -72,7 +72,7 @@ bool PluginListSortProxy::lessThan(const QModelIndex &left,
       } else {
         for (int i = 0; i < lhsList.size(); ++i) {
           if (lhsList.at(i) != rhsList.at(i)) {
-            return lhsList.at(i) < rhsList.at(i);
+            return lhsList.at(i).toString() < rhsList.at(i).toString();
           }
         }
         return false;
@@ -122,13 +122,13 @@ bool PluginListSortProxy::filterMatchesPlugin(const QString &plugin) const
     bool display = false;
     QString filterCopy = QString(m_CurrentFilter);
     filterCopy.replace("||", ";").replace("OR", ";").replace("|", ";");
-    QStringList ORList = filterCopy.split(";", QString::SkipEmptyParts);
+    QStringList ORList = filterCopy.split(";", Qt::SkipEmptyParts);
 
     bool segmentGood = true;
 
     //split in ORSegments that internally use AND logic
     for (auto& ORSegment : ORList) {
-      QStringList ANDKeywords = ORSegment.split(" ", QString::SkipEmptyParts);
+      QStringList ANDKeywords = ORSegment.split(" ", Qt::SkipEmptyParts);
       segmentGood = true;
 
       //check each word in the segment for match, each word needs to be matched but it doesn't matter where.

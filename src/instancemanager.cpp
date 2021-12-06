@@ -590,7 +590,7 @@ QString InstanceManager::instancePath(const QString& instanceName) const
 QString InstanceManager::globalInstancesRootPath() const
 {
   return QDir::fromNativeSeparators(
-        QStandardPaths::writableLocation(QStandardPaths::DataLocation));
+        QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation));
 }
 
 QString InstanceManager::iniPath(const QString& instanceDir) const

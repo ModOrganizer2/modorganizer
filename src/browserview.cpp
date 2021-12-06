@@ -22,7 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QEvent>
 #include <QKeyEvent>
 #include <QNetworkDiskCache>
-#include <QWebEngineContextMenuData>
+#include <QWebEngineContextMenuRequest>
 #include <QWebEngineSettings>
 #include <QMenu>
 #include <Shlwapi.h>
@@ -55,7 +55,7 @@ bool BrowserView::eventFilter(QObject *obj, QEvent *event)
     }
   } else if (event->type() == QEvent::MouseButtonPress) {
     QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
-    if (mouseEvent->button() == Qt::MidButton) {
+    if (mouseEvent->button() == Qt::MouseButton::MiddleButton) {
       mouseEvent->ignore();
       return true;
     }

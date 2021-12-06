@@ -714,7 +714,7 @@ void Loot::deleteReportFile()
 {
   if (QFile::exists(LootReportPath)) {
     log::debug("deleting temporary loot report '{}'", LootReportPath);
-    const auto r = shell::Delete(LootReportPath);
+    const auto r = shell::Delete(QFileInfo(LootReportPath));
 
     if (!r) {
       log::error(

@@ -1428,17 +1428,20 @@ void OrganizerCore::requestDownload(const QUrl &url, QNetworkReply *reply)
     QString gameName = "";
     int modID  = 0;
     int fileID = 0;
-    QRegExp nameExp("www\\.nexusmods\\.com/(\\a+)/");
-    if (nameExp.indexIn(url.toString()) != -1) {
-      gameName = nameExp.cap(1);
+    QRegularExpression nameExp("www\\.nexusmods\\.com/(\\a+)/");
+    auto match = nameExp.match(url.toString());
+    if (match.hasMatch()) {
+      gameName = match.captured(1);
     }
-    QRegExp modExp("mods/(\\d+)");
-    if (modExp.indexIn(url.toString()) != -1) {
-      modID = modExp.cap(1).toInt();
+    QRegularExpression modExp("mods/(\\d+)");
+    match = modExp.match(url.toString());
+    if (match.hasMatch()) {
+      modID = match.captured(1).toInt();
     }
-    QRegExp fileExp("fid=(\\d+)");
-    if (fileExp.indexIn(reply->url().toString()) != -1) {
-      fileID = fileExp.cap(1).toInt();
+    QRegularExpression fileExp("fid=(\\d+)");
+    match = fileExp.match(url.toString());
+    if (match.hasMatch()) {
+      fileID = match.captured(1).toInt();
     }
     m_DownloadManager.addDownload(reply,
                                   new ModRepositoryFileInfo(gameName, modID, fileID));

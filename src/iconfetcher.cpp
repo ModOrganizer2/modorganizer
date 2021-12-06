@@ -53,7 +53,7 @@ QVariant IconFetcher::icon(const QString& path) const
       return m_quickCache.file;
     }
 
-    return extensionIcon(path.midRef(dot));
+    return extensionIcon(QStringView{path}.mid(dot));
   }
 }
 
@@ -110,7 +110,7 @@ void IconFetcher::checkCache(Cache& cache)
 
   std::map<QString, QPixmap> map;
   for (auto&& ext : queue) {
-    map.emplace(std::move(ext), getPixmapIcon(ext));
+    map.emplace(std::move(ext), getPixmapIcon(QFileInfo(ext)));
   }
 
   {
@@ -145,7 +145,7 @@ QVariant IconFetcher::fileIcon(const QString& path) const
   return {};
 }
 
-QVariant IconFetcher::extensionIcon(const QStringRef& ext) const
+QVariant IconFetcher::extensionIcon(const QStringView& ext) const
 {
   {
     std::scoped_lock lock(m_extensionCache.mapMutex);

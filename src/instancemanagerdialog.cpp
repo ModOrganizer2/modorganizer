@@ -416,7 +416,7 @@ void InstanceManagerDialog::rename()
 
   log::info("renaming {} to {}", src, dest);
 
-  const auto r = shell::Rename(src, dest, false);
+  const auto r = shell::Rename(QFileInfo(src), QFileInfo(dest), false);
 
   if (!r) {
     QMessageBox::critical(

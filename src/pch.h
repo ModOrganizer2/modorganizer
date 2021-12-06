@@ -184,9 +184,8 @@
 #include <QQueue>
 #include <QRadioButton>
 #include <QRect>
-#include <QRegExp>
-#include <QRegExpValidator>
 #include <QRegularExpression>
+#include <QRegularExpressionValidator>
 #include <QResizeEvent>
 #include <QScopedArrayPointer>
 #include <QScopedPointer>
@@ -243,7 +242,7 @@
 #include <QVariantMap>
 #include <QVector>
 #include <QVersionNumber>
-#include <QWebEngineContextMenuData>
+#include <QWebEngineContextMenuRequest>
 #include <QWebEngineHistory>
 #include <QWebEnginePage>
 #include <QWebEngineProfile>
@@ -263,7 +262,6 @@
 #include <QtDebug>
 #include <QtGlobal>
 #include <QtGui/QtGui>
-#include <QtPlatformHeaders/QWindowsWindowFunctions>
 #include <QtPlugin>
 #include <QtTest/QtTest>
 #include <QStandardPaths>

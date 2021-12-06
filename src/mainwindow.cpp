@@ -387,8 +387,8 @@ MainWindow::MainWindow(Settings &settings
 
   connect(&m_OrganizerCore, &OrganizerCore::directoryStructureReady,
     this, &MainWindow::onDirectoryStructureChanged);
-  connect(m_OrganizerCore.directoryRefresher(), &DirectoryRefresher::progress,
-    this, &MainWindow::refresherProgress);
+  connect(m_OrganizerCore.directoryRefresher(), SIGNAL(progress(DirectoryRefreshProgress*)),
+    this, SLOT(refresherProgress(DirectoryRefreshProgress*)));
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(error(QString)), this, SLOT(showError(QString)));
 
   connect(&m_OrganizerCore.settings(), SIGNAL(languageChanged(QString)), this, SLOT(languageChange(QString)));

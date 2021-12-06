@@ -160,7 +160,7 @@ void CategoryFactory::saveCategories()
     QByteArray line;
     line.append(QByteArray::number(iter->m_ID)).append("|")
         .append(iter->m_Name.toUtf8()).append("|")
-        .append(VectorJoin(iter->m_NexusIDs, ",")).append("|")
+        .append(VectorJoin(iter->m_NexusIDs, ",").toUtf8()).append("|")
         .append(QByteArray::number(iter->m_ParentID)).append("\n");
     categoryFile.write(line);
   }
