@@ -259,6 +259,4 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/stylesheets"
         DESTINATION bin)
 
 deploy_qt(BINARIES ModOrganizer.exe uibase.dll plugins/bsa_packer.dll)
-
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../qdds.dll" DESTINATION bin/dlls/imageformats)
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/markdown.html" DESTINATION bin/resources)
