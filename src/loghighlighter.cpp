@@ -18,7 +18,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "loghighlighter.h"
-#include <QRegExp>
 
 LogHighlighter::LogHighlighter(QObject *parent) :
     QSyntaxHighlighter(parent)

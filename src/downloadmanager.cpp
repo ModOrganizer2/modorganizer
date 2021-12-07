@@ -37,7 +37,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QTimer>
 #include <QFileInfo>
-#include <QRegExp>
 #include <QDirIterator>
 #include <QDesktopServices>
 #include <QInputDialog>
@@ -1684,9 +1683,10 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
   // this may muck up the file name comparison
   QString alternativeLocalName = info->m_FileName;
 
-  QRegExp expression("^\\d_(.*)$");
-  if (expression.indexIn(alternativeLocalName) == 0) {
-    alternativeLocalName = expression.cap(1);
+  QRegularExpression expression("^\\d_(.*)$");
+  auto match = expression.match(alternativeLocalName);
+  if (match.hasMatch()) {
+    alternativeLocalName = match.captured(1);
   }
 
   bool found = false;

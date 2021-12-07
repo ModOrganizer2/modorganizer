@@ -107,10 +107,14 @@ bool TextEditor::save()
   file.open(QIODevice::WriteOnly);
   file.resize(0);
 
-  QTextCodec* codec = QTextCodec::codecForName(m_encoding.toUtf8());
+  auto codec = QStringConverter::encodingForName(m_encoding.toLocal8Bit());
+  if (!codec.has_value())
+    return false;
+  QStringEncoder encoder(codec.value());
+
   QString data = toPlainText().replace("\n", "\r\n");
 
-  file.write(codec->fromUnicode(data));
+  file.write(encoder.encode(data));
   document()->setModified(false);
 
   return true;

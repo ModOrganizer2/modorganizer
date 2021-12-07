@@ -220,7 +220,6 @@
 #include <QTableWidget>
 #include <QTemporaryFile>
 #include <QTextBrowser>
-#include <QTextCodec>
 #include <QTextDocument>
 #include <QTextEdit>
 #include <QTextStream>
