@@ -2209,7 +2209,7 @@ void MainWindow::on_actionAdd_Profile_triggered()
     profilesDialog.exec();
     m_SavesTab->refreshSaveList(); // since the save list may now be outdated we have to refresh it completely
 
-    if (refreshProfiles(true, profilesDialog.selectedProfile().value()) && !profilesDialog.failed()) {
+    if (refreshProfiles(true, profilesDialog.selectedProfile().value_or("")) && !profilesDialog.failed()) {
       break;
     }
   }
