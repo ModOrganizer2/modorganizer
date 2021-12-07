@@ -45,6 +45,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPainter>
 #include <QStyleOption>
 #include <QDebug>
+#include <QSSLSocket>
 
 // see addDllsToPath() below
 #pragma comment(linker, "/manifestDependency:\"" \
@@ -256,6 +257,9 @@ int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
     sanity::checkIncompatibleModule(m);
   }));
 
+  auto sslBuildVersion = QSslSocket::sslLibraryBuildVersionString();
+  auto sslVersion = QSslSocket::sslLibraryVersionString();
+  log::debug("SSL Build Version: {}, SSL Runtime Version {}", sslBuildVersion, sslVersion);
 
   // nexus interface
   tt.start("MOApplication::doOneRun() NexusInterface");

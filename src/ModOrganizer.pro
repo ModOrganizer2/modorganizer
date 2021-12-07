@@ -40,6 +40,10 @@ greaterThan(QT_MAJOR_VERSION, 4) {
   QTLIBNAMES += Core Declarative Gui Network OpenGL Script Sql Svg Webkit Xml XmlPatterns
 }
 
+greaterThan(QT_MAJOR_VERSION, 5) {
+  QTLIBNAMES += OpenGLWidgets
+}
+
 QTLIBSUFFIX = $${QT_MAJOR_VERSION}.dll
 CONFIG(debug, debug|release): QTLIBSUFFIX = "d$${QTLIBSUFFIX}" # Can't use Debug: .. here, it ignores the line - no idea why, as it works in BossDummy.pro
 
