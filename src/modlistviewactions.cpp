@@ -4,7 +4,6 @@
 #include <QGroupBox>
 #include <QInputDialog>
 #include <QLabel>
-#include <QRegExp>
 
 #include <log.h>
 #include <report.h>
@@ -1147,10 +1146,11 @@ void ModListViewActions::openExplorer(const QModelIndexList& index) const
 
 void ModListViewActions::restoreBackup(const QModelIndex& index) const
 {
-  QRegExp backupRegEx("(.*)_backup[0-9]*$");
+  QRegularExpression backupRegEx("(.*)_backup[0-9]*$");
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index.data(ModList::IndexRole).toInt());
-  if (backupRegEx.indexIn(modInfo->name()) != -1) {
-    QString regName = backupRegEx.cap(1);
+  auto match = backupRegEx.match(modInfo->name());
+  if (match.hasMatch()) {
+    QString regName = match.captured(1);
     QDir modDir(QDir::fromNativeSeparators(m_core.settings().paths().mods()));
     if (!modDir.exists(regName) ||
       (QMessageBox::question(m_parent, tr("Overwrite?"),

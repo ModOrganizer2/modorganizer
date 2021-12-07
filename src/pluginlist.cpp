@@ -43,7 +43,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QTextCodec>
 #include <QFileInfo>
 #include <QListWidgetItem>
 #include <QRegularExpression>

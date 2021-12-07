@@ -40,7 +40,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileInfo>
 #include <QLibrary>
 #include <QInputDialog>
-#include <QRegExp>
 #include <QDir>
 #include <QMessageBox>
 #include <QSettings>

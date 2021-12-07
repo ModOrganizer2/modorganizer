@@ -45,7 +45,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QNetworkReply>
 #include <QProcess>
 #include <QProgressDialog>
-#include <QRegExp>
 #include <QStringList>
 #include <QTimer>
 #include <QUrl>

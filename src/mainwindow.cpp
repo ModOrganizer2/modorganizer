@@ -132,7 +132,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPushButton>
 #include <QRadioButton>
 #include <QRect>
-#include <QRegExp>
 #include <QResizeEvent>
 #include <QScopedPointer>
 #include <QSizePolicy>
@@ -3472,14 +3471,16 @@ QString MainWindow::queryRestore(const QString &filePath)
   QFileInfoList files = pluginFileInfo.absoluteDir().entryInfoList(QStringList(pattern), QDir::Files, QDir::Name);
 
   SelectionDialog dialog(tr("Choose backup to restore"), this);
-  QRegExp exp(pluginFileInfo.fileName() + PATTERN_BACKUP_REGEX);
-  QRegExp exp2(pluginFileInfo.fileName() + "\\.(.*)");
+  QRegularExpression exp(QRegularExpression::anchoredPattern(pluginFileInfo.fileName() + PATTERN_BACKUP_REGEX));
+  QRegularExpression exp2(QRegularExpression::anchoredPattern(pluginFileInfo.fileName() + "\\.(.*)"));
   for(const QFileInfo &info : boost::adaptors::reverse(files)) {
-    if (exp.exactMatch(info.fileName())) {
-      QDateTime time = QDateTime::fromString(exp.cap(1), PATTERN_BACKUP_DATE);
-      dialog.addChoice(time.toString(), "", exp.cap(1));
-    } else if (exp2.exactMatch(info.fileName())) {
-      dialog.addChoice(exp2.cap(1), "", exp2.cap(1));
+    auto match = exp.match(info.fileName());
+    auto match2 = exp2.match(info.fileName());
+    if (match.hasMatch()) {
+      QDateTime time = QDateTime::fromString(match.captured(1), PATTERN_BACKUP_DATE);
+      dialog.addChoice(time.toString(), "", match.captured(1));
+    } else if (match2.hasMatch()) {
+      dialog.addChoice(match2.captured(1), "", match2.captured(1));
     }
   }
 
