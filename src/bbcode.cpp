@@ -114,7 +114,7 @@ public:
 
 private:
   BBCodeMap()
-    : m_TagNameExp("^[a-zA-Z*]*=?")
+    : m_TagNameExp("[a-zA-Z*]*=?")
   {
     m_TagMap["b"]      = std::make_pair(QRegularExpression("\\[b\\](.*)\\[/b\\]"),
                                         "<b>\\1</b>");
