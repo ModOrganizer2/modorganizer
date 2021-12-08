@@ -386,8 +386,8 @@ MainWindow::MainWindow(Settings &settings
 
   connect(&m_OrganizerCore, &OrganizerCore::directoryStructureReady,
     this, &MainWindow::onDirectoryStructureChanged);
-  connect(m_OrganizerCore.directoryRefresher(), SIGNAL(progress(DirectoryRefreshProgress*)),
-    this, SLOT(refresherProgress(DirectoryRefreshProgress*)));
+  connect(m_OrganizerCore.directoryRefresher(), SIGNAL(progress(const DirectoryRefreshProgress*)),
+    this, SLOT(refresherProgress(const DirectoryRefreshProgress*)));
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(error(QString)), this, SLOT(showError(QString)));
 
   connect(&m_OrganizerCore.settings(), SIGNAL(languageChanged(QString)), this, SLOT(languageChange(QString)));
@@ -3217,9 +3217,9 @@ void MainWindow::nxmDownloadURLs(QString, int, int, QVariant, QVariant resultDat
   m_OrganizerCore.settings().network().updateServers(servers);
 }
 
-void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, int, QNetworkReply::NetworkError error, const QString &errorString)
+void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, int, int errorCode, const QString &errorString)
 {
-  if (error == QNetworkReply::ContentAccessDenied || error == QNetworkReply::ContentNotFoundError) {
+  if (errorCode == QNetworkReply::ContentAccessDenied || errorCode == QNetworkReply::ContentNotFoundError) {
     log::debug("{}", tr("Mod ID %1 no longer seems to be available on Nexus.").arg(modID));
 
     // update last checked timestamp on orphaned mods as well to avoid repeating requests
@@ -3236,7 +3236,7 @@ void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, in
       mod->setLastNexusQuery(QDateTime::currentDateTimeUtc());
     }
   } else {
-    MessageDialog::showMessage(tr("Request to Nexus failed: %1").arg(errorString), this);
+    MessageDialog::showMessage(tr("Error %1: Request to Nexus failed: %2").arg(errorCode).arg(errorString), this);
   }
 }
 

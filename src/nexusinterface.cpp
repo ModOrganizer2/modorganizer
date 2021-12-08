@@ -179,12 +179,12 @@ void NexusBridge::nxmTrackingToggled(QString gameName, int modID, QVariant userD
   }
 }
 
-void NexusBridge::nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorMessage)
+void NexusBridge::nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, int errorCode, const QString &errorMessage)
 {
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
-    emit requestFailed(gameName, modID, fileID, userData, error, errorMessage);
+    emit requestFailed(gameName, modID, fileID, userData, errorCode, errorMessage);
   }
 }
 
@@ -440,8 +440,8 @@ int NexusInterface::requestDescription(QString gameName, int modID, QObject *rec
   connect(this, SIGNAL(nxmDescriptionAvailable(QString, int, QVariant, QVariant, int)),
     receiver, SLOT(nxmDescriptionAvailable(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -461,8 +461,8 @@ int NexusInterface::requestModInfo(QString gameName, int modID, QObject *receive
   connect(this, SIGNAL(nxmModInfoAvailable(QString, int, QVariant, QVariant, int)),
     receiver, SLOT(nxmModInfoAvailable(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -482,8 +482,8 @@ int NexusInterface::requestUpdateInfo(QString gameName, NexusInterface::UpdatePe
   connect(this, SIGNAL(nxmUpdateInfoAvailable(QString, QVariant, QVariant, int)),
     receiver, SLOT(nxmUpdateInfoAvailable(QString, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -509,8 +509,8 @@ int NexusInterface::requestUpdates(const int &modID, QObject *receiver, QVariant
   connect(this, SIGNAL(nxmUpdatesAvailable(QString, int, QVariant, QVariant, int)),
     receiver, SLOT(nxmUpdatesAvailable(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -544,8 +544,8 @@ int NexusInterface::requestFiles(QString gameName, int modID, QObject *receiver,
   connect(this, SIGNAL(nxmFilesAvailable(QString, int, QVariant, QVariant, int)),
     receiver, SLOT(nxmFilesAvailable(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -566,8 +566,8 @@ int NexusInterface::requestFileInfo(QString gameName, int modID, int fileID, QOb
   connect(this, SIGNAL(nxmFileInfoAvailable(QString, int, int, QVariant, QVariant, int)),
     receiver, SLOT(nxmFileInfoAvailable(QString, int, int, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -583,8 +583,8 @@ int NexusInterface::requestDownloadURL(QString gameName, int modID, int fileID, 
   connect(this, SIGNAL(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)),
           receiver, SLOT(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString,int,int,QVariant,int,QNetworkReply::NetworkError,QString)),
-          receiver, SLOT(nxmRequestFailed(QString,int,int,QVariant,int,QNetworkReply::NetworkError,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString,int,int,QVariant,int,int,QString)),
+          receiver, SLOT(nxmRequestFailed(QString,int,int,QVariant,int,int,QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -598,8 +598,8 @@ int NexusInterface::requestEndorsementInfo(QObject *receiver, QVariant userData,
   connect(this, SIGNAL(nxmEndorsementsAvailable(QVariant, QVariant, int)),
     receiver, SLOT(nxmEndorsementsAvailable(QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -620,8 +620,8 @@ int NexusInterface::requestToggleEndorsement(QString gameName, int modID, QStrin
   connect(this, SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
     receiver, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -635,8 +635,8 @@ int NexusInterface::requestTrackingInfo(QObject *receiver, QVariant userData, co
   connect(this, SIGNAL(nxmTrackedModsAvailable(QVariant, QVariant, int)),
     receiver, SLOT(nxmTrackedModsAvailable(QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -657,8 +657,8 @@ int NexusInterface::requestToggleTracking(QString gameName, int modID, bool trac
   connect(this, SIGNAL(nxmTrackingToggled(QString, int, QVariant, bool, int)),
     receiver, SLOT(nxmTrackingToggled(QString, int, QVariant, bool, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -676,8 +676,8 @@ int NexusInterface::requestInfoFromMd5(QString gameName, QByteArray &hash, QObje
   connect(this, SIGNAL(nxmFileInfoFromMd5Available(QString, QVariant, QVariant, int)),
       receiver, SLOT(nxmFileInfoFromMd5Available(QString, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -842,7 +842,7 @@ void NexusInterface::nextRequest()
 
   connect(info.m_Reply, SIGNAL(finished()), this, SLOT(requestFinished()));
   if (!info.m_IgnoreGenericErrorHandler)
-    connect(info.m_Reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(requestError(QNetworkReply::NetworkError)));
+    connect(info.m_Reply, SIGNAL(errorOccurred(QNetworkReply::NetworkError)), this, SLOT(requestError(QNetworkReply::NetworkError)));
   connect(info.m_Timeout, SIGNAL(timeout()), this, SLOT(requestTimeout()));
   info.m_Timeout->start();
   m_ActiveRequest.push_back(info);
@@ -861,6 +861,7 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
   auto error = reply->error();
   if (error != QNetworkReply::NoError) {
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    QString errorMsg = reply->errorString();
 
     if (iter->m_AllowedErrors.contains(error) && iter->m_AllowedErrors[error].contains(statusCode)) {
       // These errors are allows to silently happen.  They should be handled in nxmRequestFailed below.
@@ -875,11 +876,20 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
       }
 
       emit requestsChanged(getAPIStats(), m_User);
-      log::warn("Error: {}", reply->errorString());
+      log::warn("Error: {}", errorMsg);
     } else {
-      log::warn("request failed: {}", reply->errorString());
+      QByteArray data = reply->readAll();
+      if (!data.isEmpty()) {
+        QJsonDocument responseDoc = QJsonDocument::fromJson(data);
+        if (!responseDoc.isNull()) {
+          auto result = responseDoc.toVariant().toMap();
+          auto error = result.find("error");
+          if (error != result.end())
+            errorMsg = result.value("error").toString();
+        }
+      }
     }
-    emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, reply->error(), reply->errorString());
+    emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, statusCode, errorMsg);
   } else {
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode == 301) {

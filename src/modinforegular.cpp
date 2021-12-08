@@ -60,8 +60,8 @@ ModInfoRegular::ModInfoRegular(const QDir &path, OrganizerCore& core)
           , this, SLOT(nxmEndorsementToggled(QString,int,QVariant,QVariant)));
   connect(&m_NexusBridge, SIGNAL(trackingToggled(QString,int,QVariant,bool))
           , this, SLOT(nxmTrackingToggled(QString,int,QVariant,bool)));
-  connect(&m_NexusBridge, SIGNAL(requestFailed(QString,int,int,QVariant,QNetworkReply::NetworkError,QString))
-          , this, SLOT(nxmRequestFailed(QString,int,int,QVariant,QNetworkReply::NetworkError,QString)));
+  connect(&m_NexusBridge, SIGNAL(requestFailed(QString,int,int,QVariant,int,QString))
+          , this, SLOT(nxmRequestFailed(QString,int,int,QVariant,int,QString)));
 }
 
 
@@ -371,7 +371,7 @@ void ModInfoRegular::nxmTrackingToggled(QString, int, QVariant, bool tracked)
 }
 
 
-void ModInfoRegular::nxmRequestFailed(QString, int, int, QVariant userData, QNetworkReply::NetworkError error, const QString &errorMessage)
+void ModInfoRegular::nxmRequestFailed(QString, int, int, QVariant userData, int errorCode, const QString &errorMessage)
 {
   QString fullMessage = errorMessage;
   if (userData.canConvert<int>() && (userData.toInt() == 1)) {
