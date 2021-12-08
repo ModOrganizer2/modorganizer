@@ -258,7 +258,7 @@ void NexusTab::onModChanged()
       cursor: pointer;
     }
 
-    details summary::-webkit-details-marker {
+    details summary::marker {
       display:none;
     }
 
