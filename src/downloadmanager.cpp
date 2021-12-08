@@ -532,7 +532,7 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
   }
 
   connect(newDownload->m_Reply, SIGNAL(downloadProgress(qint64, qint64)), this, SLOT(downloadProgress(qint64, qint64)));
-  connect(newDownload->m_Reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(downloadError(QNetworkReply::NetworkError)));
+  connect(newDownload->m_Reply, SIGNAL(errorOccurred(QNetworkReply::NetworkError)), this, SLOT(downloadError(QNetworkReply::NetworkError)));
   connect(newDownload->m_Reply, SIGNAL(readyRead()), this, SLOT(downloadReadyRead()));
   connect(newDownload->m_Reply, SIGNAL(metaDataChanged()), this, SLOT(metaDataChanged()));
 
@@ -2020,7 +2020,7 @@ void DownloadManager::nxmFileInfoFromMd5Available(QString gameName, QVariant use
 }
 
 
-void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString)
+void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, int errorCode, const QString &errorString)
 {
   std::set<int>::iterator idIter = m_RequestIDs.find(requestID);
   if (idIter == m_RequestIDs.end()) {

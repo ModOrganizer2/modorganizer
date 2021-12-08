@@ -473,7 +473,7 @@ public slots:
 
   void nxmFileInfoFromMd5Available(QString gameName, QVariant userData, QVariant resultData, int requestID);
 
-  void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
+  void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, int errorCode, const QString &errorString);
 
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
