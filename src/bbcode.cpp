@@ -50,6 +50,8 @@ public:
       }
 
       int closeTagPos = 0;
+      int nextTagPos = 0;
+      int nextTagSearchIndex = input.indexOf("]");
       int closeTagLength = 0;
       if (tagName == "*") {
         // ends at the next bullet point
@@ -60,8 +62,15 @@ public:
         closeTagPos = 6;
         // leave closeTagLength at 0 because there is no close tag to skip over
       } else {
+        QRegularExpression nextTag(QString("\\[%1[=\\]]?").arg(tagName), QRegularExpression::CaseInsensitiveOption);
         QString closeTag = QString("[/%1]").arg(tagName);
         closeTagPos = input.indexOf(closeTag, 0, Qt::CaseInsensitive);
+        nextTagPos = nextTag.match(input, nextTagSearchIndex).capturedStart(0);
+        while (nextTagPos != -1 && closeTagPos != -1 && nextTagPos < closeTagPos) {
+          closeTagPos = input.indexOf(closeTag, closeTagPos + closeTag.size(), Qt::CaseInsensitive);
+          nextTagSearchIndex = input.indexOf("]", nextTagPos);
+          nextTagPos = nextTag.match(input, nextTagSearchIndex).capturedStart(0);
+        }
         if (closeTagPos == -1) {
           // workaround to improve compatibility: add fake closing tag
           input.append(closeTag);
@@ -73,6 +82,7 @@ public:
       if (closeTagPos > -1) {
         length = closeTagPos + closeTagLength;
         QString temp = input.mid(0, length);
+        tagIter->second.first.setPatternOptions(QRegularExpression::PatternOption::DotMatchesEverythingOption);
         auto match = tagIter->second.first.match(temp);
         if (match.hasMatch()) {
           if (tagIter->second.second.isEmpty()) {
