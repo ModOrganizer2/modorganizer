@@ -1114,231 +1114,236 @@ File %3:	%4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="972"/>
-        <location filename="downloadmanager.cpp" line="1031"/>
+        <location filename="downloadmanager.cpp" line="971"/>
+        <location filename="downloadmanager.cpp" line="1030"/>
         <source>query: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="994"/>
+        <location filename="downloadmanager.cpp" line="993"/>
         <source>Please enter the nexus mod id</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="994"/>
+        <location filename="downloadmanager.cpp" line="993"/>
         <source>Mod ID:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1005"/>
+        <location filename="downloadmanager.cpp" line="1004"/>
         <source>Please select the source game code for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1064"/>
+        <location filename="downloadmanager.cpp" line="1063"/>
         <source>Hashing download file &apos;%1&apos;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1065"/>
+        <location filename="downloadmanager.cpp" line="1064"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1094"/>
+        <location filename="downloadmanager.cpp" line="1093"/>
         <source>VisitNexus: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1115"/>
+        <location filename="downloadmanager.cpp" line="1114"/>
         <source>Nexus ID for this Mod is unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1122"/>
+        <location filename="downloadmanager.cpp" line="1121"/>
         <source>OpenFile: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1166"/>
+        <location filename="downloadmanager.cpp" line="1165"/>
         <source>OpenFileInDownloadsFolder: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1201"/>
+        <location filename="downloadmanager.cpp" line="1200"/>
         <source>get pending: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1210"/>
+        <location filename="downloadmanager.cpp" line="1209"/>
         <source>get path: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1219"/>
+        <location filename="downloadmanager.cpp" line="1218"/>
         <source>Main</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1220"/>
+        <location filename="downloadmanager.cpp" line="1219"/>
         <source>Update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1221"/>
+        <location filename="downloadmanager.cpp" line="1220"/>
         <source>Optional</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1222"/>
+        <location filename="downloadmanager.cpp" line="1221"/>
         <source>Old</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1223"/>
+        <location filename="downloadmanager.cpp" line="1222"/>
         <source>Miscellaneous</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1224"/>
+        <location filename="downloadmanager.cpp" line="1223"/>
         <source>Deleted</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1225"/>
+        <location filename="downloadmanager.cpp" line="1224"/>
         <source>Archived</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1226"/>
+        <location filename="downloadmanager.cpp" line="1225"/>
         <source>Unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1233"/>
+        <location filename="downloadmanager.cpp" line="1232"/>
         <source>display name: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1253"/>
+        <location filename="downloadmanager.cpp" line="1252"/>
         <source>file name: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1262"/>
+        <location filename="downloadmanager.cpp" line="1261"/>
         <source>file time: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1281"/>
+        <location filename="downloadmanager.cpp" line="1280"/>
         <source>file size: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1291"/>
+        <location filename="downloadmanager.cpp" line="1290"/>
         <source>progress: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1301"/>
+        <location filename="downloadmanager.cpp" line="1300"/>
         <source>state: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1311"/>
+        <location filename="downloadmanager.cpp" line="1310"/>
         <source>infocomplete: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1326"/>
-        <location filename="downloadmanager.cpp" line="1334"/>
-        <location filename="downloadmanager.cpp" line="1347"/>
+        <location filename="downloadmanager.cpp" line="1325"/>
+        <location filename="downloadmanager.cpp" line="1333"/>
+        <location filename="downloadmanager.cpp" line="1346"/>
         <source>mod id: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1355"/>
+        <location filename="downloadmanager.cpp" line="1354"/>
         <source>ishidden: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1364"/>
+        <location filename="downloadmanager.cpp" line="1363"/>
         <source>file info: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1374"/>
+        <location filename="downloadmanager.cpp" line="1373"/>
         <source>mark installed: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1419"/>
+        <location filename="downloadmanager.cpp" line="1418"/>
         <source>mark uninstalled: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1591"/>
+        <location filename="downloadmanager.cpp" line="1580"/>
+        <source>%1% - %2 - ~%3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="1590"/>
         <source>Memory allocation error (in processing progress event).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1601"/>
+        <location filename="downloadmanager.cpp" line="1600"/>
         <source>Memory allocation error (in processing downloaded data).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1718"/>
+        <location filename="downloadmanager.cpp" line="1717"/>
         <source>Information updated</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1720"/>
-        <location filename="downloadmanager.cpp" line="1738"/>
+        <location filename="downloadmanager.cpp" line="1719"/>
+        <location filename="downloadmanager.cpp" line="1737"/>
         <source>No matching file found on Nexus! Maybe this file is no longer available or it was renamed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1722"/>
+        <location filename="downloadmanager.cpp" line="1721"/>
         <source>No file on Nexus matches the selected file by name. Please manually choose the correct one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1901"/>
+        <location filename="downloadmanager.cpp" line="1900"/>
         <source>No download server available. Please try again later.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2068"/>
+        <location filename="downloadmanager.cpp" line="2067"/>
         <source>Failed to request file info from nexus: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2095"/>
+        <location filename="downloadmanager.cpp" line="2094"/>
         <source>Warning: Content type is: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2100"/>
+        <location filename="downloadmanager.cpp" line="2099"/>
         <source>Download header content length: %1 downloaded file size: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2102"/>
+        <location filename="downloadmanager.cpp" line="2101"/>
         <source>Download failed: %1 (%2)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2124"/>
+        <location filename="downloadmanager.cpp" line="2123"/>
         <source>We were unable to download the file due to errors after four retries. There may be an issue with the Nexus servers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2207"/>
+        <location filename="downloadmanager.cpp" line="2206"/>
         <source>failed to re-open %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="2252"/>
+        <location filename="downloadmanager.cpp" line="2251"/>
         <source>Unable to write download to drive (return %1).
 Check the drive&apos;s available storage.
 
@@ -9344,6 +9349,27 @@ On Windows XP:
     <message>
         <location filename="nxmaccessmanager.cpp" line="143"/>
         <source>Trying again...</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>uibase</name>
+    <message>
+        <location filename="../../uibase/src/utility.cpp" line="1155"/>
+        <source>h</source>
+        <extracomment>Time remaining hours</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/utility.cpp" line="1158"/>
+        <source>m</source>
+        <extracomment>Time remaining minutes</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/utility.cpp" line="1161"/>
+        <source>s</source>
+        <extracomment>Time remaining seconds</extracomment>
         <translation type="unfinished"></translation>
     </message>
 </context>

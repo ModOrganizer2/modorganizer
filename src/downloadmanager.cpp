@@ -942,11 +942,10 @@ void DownloadManager::resumeDownloadInt(int index)
       QByteArray rangeHeader = "bytes=" + QByteArray::number(info->m_ResumePos) + "-";
       request.setRawHeader("Range", rangeHeader);
     }
-    std::get<0>(info->m_SpeedDiff) = 0;
-    std::get<1>(info->m_SpeedDiff) = 0;
-    std::get<2>(info->m_SpeedDiff) = 0;
-    std::get<3>(info->m_SpeedDiff) = 0;
-    std::get<4>(info->m_SpeedDiff) = 0;
+    info->m_DownloadLast = 0;
+    info->m_DownloadTimeLast = 0;
+    info->m_DownloadAcc = accumulator_set<int, stats<tag::rolling_mean>>(tag::rolling_window::window_size = 500);
+    info->m_DownloadTimeAcc = accumulator_set<int, stats<tag::rolling_mean>>(tag::rolling_window::window_size = 500);
     log::debug("resume at {} bytes", info->m_ResumePos);
     startDownload(m_NexusInterface->getAccessManager()->get(request), info, true);
   }
@@ -1568,20 +1567,20 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
         info->m_Progress.first = ((info->m_ResumePos + bytesReceived) * 100) / (info->m_ResumePos + bytesTotal);
 
         int elapsed = info->m_StartTime.elapsed();
-        std::get<0>(info->m_SpeedDiff) = bytesReceived - std::get<2>(info->m_SpeedDiff);
-        std::get<1>(info->m_SpeedDiff) = elapsed - std::get<3>(info->m_SpeedDiff);
-        std::get<2>(info->m_SpeedDiff) = bytesReceived;
-        std::get<3>(info->m_SpeedDiff) = elapsed;
-
-        double calc = ((double)std::get<0>(info->m_SpeedDiff)) / (((double)(std::get<1>(info->m_SpeedDiff)) / 5000.0));
-        std::get<4>(info->m_SpeedDiff) = ((calc*0.5) + (std::get<4>(info->m_SpeedDiff)*1.5)) / 2;
+        info->m_DownloadAcc(bytesReceived - info->m_DownloadLast);
+        info->m_DownloadLast = bytesReceived;
+        info->m_DownloadTimeAcc(elapsed - info->m_DownloadTimeLast);
+        info->m_DownloadTimeLast = elapsed;
 
         // calculate the download speed
-        const double speed = (std::get<4>(info->m_SpeedDiff) * 1000.0) / (5 * 1000);
+        const double speed = rolling_mean(info->m_DownloadAcc) / (rolling_mean(info->m_DownloadTimeAcc) / 1000.0);;
 
-        info->m_Progress.second = QString::fromLatin1("%1% - %2")
+        const int remaining = (bytesTotal - bytesReceived) / speed * 1000;
+
+        info->m_Progress.second = tr("%1% - %2 - ~%3")
           .arg(info->m_Progress.first)
-          .arg(MOBase::localizedByteSpeed(speed));
+          .arg(MOBase::localizedByteSpeed(speed))
+          .arg(MOBase::localizedTimeRemaining(remaining));
 
         TaskProgressManager::instance().updateProgress(info->m_TaskProgressId, bytesReceived, bytesTotal);
         emit update(index);
@@ -2227,7 +2226,7 @@ void DownloadManager::managedGameChanged(MOBase::IPluginGame const *managedGame)
 void DownloadManager::checkDownloadTimeout()
 {
   for (int i = 0; i < m_ActiveDownloads.size(); ++i) {
-    if (m_ActiveDownloads[i]->m_StartTime.elapsed() - std::get<3>(m_ActiveDownloads[i]->m_SpeedDiff) > 5 * 1000 &&
+    if (m_ActiveDownloads[i]->m_StartTime.elapsed() - m_ActiveDownloads[i]->m_DownloadTimeLast > 5 * 1000 &&
         m_ActiveDownloads[i]->m_State == STATE_DOWNLOADING && m_ActiveDownloads[i]->m_Reply != nullptr &&
         m_ActiveDownloads[i]->m_Reply->isOpen()) {
       pauseDownload(i);
