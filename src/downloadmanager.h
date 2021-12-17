@@ -38,6 +38,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileSystemWatcher>
 #include <QSettings>
 #include <boost/signals2.hpp>
+#include <boost/accumulators/accumulators.hpp>
+#include <boost/accumulators/statistics.hpp>
+#include <boost/accumulators/statistics/rolling_mean.hpp>
+using namespace boost::accumulators;
 
 namespace MOBase { class IPluginGame; }
 
@@ -75,6 +79,10 @@ private:
 
   struct DownloadInfo {
     ~DownloadInfo() { delete m_FileInfo; }
+    accumulator_set<int, stats<tag::rolling_mean>> m_DownloadAcc;
+    accumulator_set<int, stats<tag::rolling_mean>> m_DownloadTimeAcc;
+    int m_DownloadLast;
+    int m_DownloadTimeLast;
     unsigned int m_DownloadID;
     QString m_FileName;
     QFile m_Output;
@@ -82,7 +90,6 @@ private:
     QElapsedTimer m_StartTime;
     qint64 m_PreResumeSize;
     std::pair<int, QString> m_Progress;
-    std::tuple<int, int, int, int, int> m_SpeedDiff;
     bool m_HasData;
     DownloadState m_State;
     int m_CurrentUrl;
@@ -126,7 +133,10 @@ private:
   private:
     static unsigned int s_NextDownloadID;
   private:
-    DownloadInfo() : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_SpeedDiff(std::tuple<int,int,int,int,int>(0,0,0,0,0)), m_HasData(false) {}
+    DownloadInfo() : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_HasData(false),
+      m_DownloadTimeLast(0), m_DownloadLast(0),
+      m_DownloadAcc(tag::rolling_window::window_size = 500),
+      m_DownloadTimeAcc(tag::rolling_window::window_size = 500) {}
   };
 
   friend class DownloadManagerProxy;
