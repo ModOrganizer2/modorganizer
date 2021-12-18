@@ -55,92 +55,77 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="272"/>
+        <location filename="aboutdialog.ui" line="277"/>
         <source>Translators</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="297"/>
+        <location filename="aboutdialog.ui" line="307"/>
         <source>Cyb3r (Dutch)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="307"/>
+        <location filename="aboutdialog.ui" line="332"/>
         <source>fruttyx (French)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="322"/>
+        <location filename="aboutdialog.ui" line="347"/>
         <source>Yoplala (French)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="327"/>
+        <location filename="aboutdialog.ui" line="357"/>
         <source>Faron (German)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="342"/>
+        <location filename="aboutdialog.ui" line="377"/>
         <source>yohru (Japanese)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="347"/>
+        <location filename="aboutdialog.ui" line="382"/>
         <source>Mordan (Greek)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="360"/>
+        <location filename="aboutdialog.ui" line="395"/>
         <source>Yoosk (Polish)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="365"/>
+        <location filename="aboutdialog.ui" line="400"/>
         <source>Brgodfx (Portuguese)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="370"/>
+        <location filename="aboutdialog.ui" line="405"/>
         <source>zDas (Portuguese)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="390"/>
+        <location filename="aboutdialog.ui" line="425"/>
         <source>Jax (Swedish)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="395"/>
+        <location filename="aboutdialog.ui" line="430"/>
         <source>Nubbie (Swedish)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="405"/>
+        <location filename="aboutdialog.ui" line="445"/>
         <source>...and all other contributors!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="419"/>
+        <location filename="aboutdialog.ui" line="459"/>
         <source>Other Supporters &amp;&amp; Contributors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="429"/>
-        <source>Tannin (Original Creator)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="aboutdialog.ui" line="499"/>
-        <source>Luca|EzioTheDeadPoet</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="aboutdialog.ui" line="514"/>
-        <source>Patchier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="aboutdialog.ui" line="596"/>
+        <location filename="aboutdialog.ui" line="666"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
