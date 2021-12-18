@@ -436,6 +436,7 @@ bool DownloadManager::addDownload(const QStringList &URLs, QString gameName,
   log::debug("selected download url: {}", preferredUrl.toString());
   QNetworkRequest request(preferredUrl);
   request.setHeader(QNetworkRequest::UserAgentHeader, m_NexusInterface->getAccessManager()->userAgent());
+  request.setAttribute(QNetworkRequest::Http2AllowedAttribute, false);
   return addDownload(m_NexusInterface->getAccessManager()->get(request), URLs, fileName, gameName, modID, fileID, fileInfo);
 }
 
