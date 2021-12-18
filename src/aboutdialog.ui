@@ -127,7 +127,7 @@
          <item>
           <widget class="QLabel" name="label_3">
            <property name="text">
-            <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright © 2011-2016 Sebastian Herbord&lt;br/&gt;Copyright © 2016-2019 Mod Organizer 2 Contributors&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright © 2011-2016 Sebastian Herbord&lt;br/&gt;Copyright © 2016-2021 Mod Organizer 2 Contributors&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
@@ -261,6 +261,11 @@
                 <string notr="true">przester</string>
                </property>
               </item>
+              <item>
+               <property name="text">
+                <string notr="true">Qudix</string>
+               </property>
+              </item>
              </widget>
             </item>
            </layout>
@@ -294,7 +299,27 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">Meiton (Czech)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string>Cyb3r (Dutch)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">madmedic (Dutch)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Ilja (Finnish)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Mikmet (Finnish)</string>
                </property>
               </item>
               <item>
@@ -324,6 +349,11 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">CircleOfDao (German)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string>Faron (German)</string>
                </property>
               </item>
@@ -335,6 +365,11 @@
               <item>
                <property name="text">
                 <string notr="true">Xahtax (German)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Ypselon (German)</string>
                </property>
               </item>
               <item>
@@ -402,6 +437,11 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">Kato (Turkish)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string>...and all other contributors!</string>
                </property>
                <property name="toolTip">
@@ -426,7 +466,7 @@
               </property>
               <item>
                <property name="text">
-                <string>Tannin (Original Creator)</string>
+                <string notr="true">Tannin (Original Creator)</string>
                </property>
               </item>
               <item>
@@ -456,7 +496,17 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">ddbb07</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">deathneko11</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">dekart811</string>
                </property>
               </item>
               <item>
@@ -467,6 +517,21 @@
               <item>
                <property name="text">
                 <string notr="true">Drew Warwick</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">erri120</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">ianpatt</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Falsellyu</string>
                </property>
               </item>
               <item>
@@ -496,7 +561,17 @@
               </item>
               <item>
                <property name="text">
-                <string>Luca|EzioTheDeadPoet</string>
+                <string notr="true">JayLCypher</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">jimfcarroll</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Luca|EzioTheDeadPoet</string>
                </property>
               </item>
               <item>
@@ -511,17 +586,12 @@
               </item>
               <item>
                <property name="text">
-                <string>Patchier</string>
+                <string notr="true">Patchier</string>
                </property>
               </item>
               <item>
                <property name="text">
                 <string notr="true">PurpleFez</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">Qudix</string>
                </property>
               </item>
               <item>
