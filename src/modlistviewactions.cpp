@@ -1100,6 +1100,20 @@ void ModListViewActions::willNotEndorsed(const QModelIndexList& indices) const
   }
 }
 
+void ModListViewActions::remapCategory(const QModelIndexList& indices) const
+{
+  for (auto& idx : indices) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(ModList::IndexRole).toInt());
+
+    int downloadIndex = m_core.downloadManager()->getDownloadIndex(modInfo->installationFile());
+    if (downloadIndex >= 0) {
+      auto downloadInfo = m_core.downloadManager()->getFileInfo(downloadIndex);
+      unsigned int categoryIndex = CategoryFactory::instance()->resolveNexusID(downloadInfo->categoryID);
+      modInfo->setPrimaryCategory(CategoryFactory::instance()->getCategoryID(categoryIndex));
+    }
+  }
+}
+
 void ModListViewActions::setColor(const QModelIndexList& indices,
                                   const QModelIndex& refIndex) const
 {

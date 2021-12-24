@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_categoriesdialog.h"
 #include "utility.h"
 #include "nexusinterface.h"
+#include "messagedialog.h"
 #include <QItemDelegate>
 #include <QLineEdit>
 #include <QMenu>
@@ -318,6 +319,12 @@ void CategoriesDialog::nxmGameInfoAvailable(QString gameName, QVariant, QVariant
     nexusItem->setData(Qt::UserRole, catMap["category_id"].toInt());
     list->addItem(nexusItem.take());
   }
+}
+
+
+void CategoriesDialog::nxmRequestFailed(QString, int, int, QVariant, int, int errorCode, const QString& errorMessage)
+{
+  MessageDialog::showMessage(tr("Error %1: Request to Nexus failed: %2").arg(errorCode).arg(errorMessage), this);
 }
 
 
