@@ -3,11 +3,12 @@
 
 #include "settingsdialog.h"
 #include "settings.h"
+#include "plugincontainer.h"
 
 class GeneralSettingsTab : public SettingsTab
 {
 public:
-  GeneralSettingsTab(Settings& settings, SettingsDialog& dialog);
+  GeneralSettingsTab(Settings& settings, PluginContainer *pluginContainer, SettingsDialog& dialog);
 
   void update();
 
@@ -19,6 +20,10 @@ private:
 
   void onEditCategories();
   void onResetDialogs();
+
+private:
+  PluginContainer* m_PluginContainer;
+
 };
 
 #endif // SETTINGSDIALOGGENERAL_H

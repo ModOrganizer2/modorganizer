@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "categories.h"
 #include "utility.h"
 #include "settings.h"
+#include "nexusinterface.h"
 #include <QItemDelegate>
 #include <QRegularExpressionValidator>
 #include <QLineEdit>
@@ -97,12 +98,14 @@ private:
 };
 
 
-CategoriesDialog::CategoriesDialog(QWidget *parent)
-  : TutorableDialog("Categories", parent), ui(new Ui::CategoriesDialog)
+CategoriesDialog::CategoriesDialog(PluginContainer *pluginContainer, QWidget *parent)
+  : TutorableDialog("Categories", parent), ui(new Ui::CategoriesDialog), m_PluginContainer(pluginContainer)
 {
   ui->setupUi(this);
   fillTable();
   connect(ui->categoriesTable, SIGNAL(cellChanged(int,int)), this, SLOT(cellChanged(int,int)));
+  connect(ui->nexusRefresh, SIGNAL(clicked()), this, SLOT(nexusRefresh_clicked()));
+  connect(ui->nexusImportButton, SIGNAL(clicked()), this, SLOT(nexusImport_clicked()));
 }
 
 CategoriesDialog::~CategoriesDialog()
@@ -128,28 +131,26 @@ void CategoriesDialog::cellChanged(int row, int)
 
 void CategoriesDialog::commitChanges()
 {
-  CategoryFactory &categories = CategoryFactory::instance();
-  categories.reset();
+  CategoryFactory *categories = CategoryFactory::instance();
+  categories->reset();
 
   for (int i = 0; i < ui->categoriesTable->rowCount(); ++i) {
     int index = ui->categoriesTable->verticalHeader()->logicalIndex(i);
-    QString nexusIDString = ui->categoriesTable->item(index, 2)->text();
-    QStringList nexusIDStringList = nexusIDString.split(',', Qt::SkipEmptyParts);
-    std::vector<int> nexusIDs;
-    for (QStringList::iterator iter = nexusIDStringList.begin();
-         iter != nexusIDStringList.end(); ++iter) {
-      nexusIDs.push_back(iter->toInt());
+    QVariantList nexusData = ui->categoriesTable->item(index, 3)->data(Qt::UserRole).toList();
+    std::vector<CategoryFactory::NexusCategory> nexusCats;
+    for (auto nexusCat : nexusData) {
+      nexusCats.push_back(CategoryFactory::NexusCategory(nexusCat.toList()[0].toString(), nexusCat.toList()[1].toInt()));
     }
 
-    categories.addCategory(
+    categories->addCategory(
           ui->categoriesTable->item(index, 0)->text().toInt(),
           ui->categoriesTable->item(index, 1)->text(),
-          nexusIDs,
-          ui->categoriesTable->item(index, 3)->text().toInt());
+          nexusCats,
+          ui->categoriesTable->item(index, 2)->text().toInt());
   }
-  categories.setParents();
+  categories->setParents();
 
-  categories.saveCategories();
+  categories->saveCategories();
 }
 
 
@@ -168,33 +169,23 @@ void CategoriesDialog::refreshIDs()
 
 void CategoriesDialog::fillTable()
 {
-  CategoryFactory &categories = CategoryFactory::instance();
+  CategoryFactory *categories = CategoryFactory::instance();
   QTableWidget *table = ui->categoriesTable;
+  QListWidget *list = ui->nexusCategoryList;
 
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
   table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
   table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
   table->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Fixed);
-  table->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Fixed);
+  table->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
   table->verticalHeader()->setSectionsMovable(true);
   table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-#else
-  table->horizontalHeader()->setResizeMode(0, QHeaderView::Fixed);
-  table->horizontalHeader()->setResizeMode(1, QHeaderView::Stretch);
-  table->horizontalHeader()->setResizeMode(2, QHeaderView::Fixed);
-  table->horizontalHeader()->setResizeMode(3, QHeaderView::Fixed);
-  table->verticalHeader()->setMovable(true);
-  table->verticalHeader()->setResizeMode(QHeaderView::Fixed);
-#endif
-
-
   table->setItemDelegateForColumn(0, new ValidatingDelegate(this, new NewIDValidator(m_IDs)));
-  table->setItemDelegateForColumn(2, new ValidatingDelegate(this, new QRegularExpressionValidator(QRegularExpression("([0-9]+)?(,[0-9]+)*"), this)));
-  table->setItemDelegateForColumn(3, new ValidatingDelegate(this, new ExistingIDValidator(m_IDs)));
+  table->setItemDelegateForColumn(2, new ValidatingDelegate(this, new ExistingIDValidator(m_IDs)));
+  table->setItemDelegateForColumn(3, new ValidatingDelegate(this, new QRegularExpressionValidator(QRegularExpression("([0-9]+)?(,[0-9]+)*"), this)));
 
   int row = 0;
-  for (std::vector<CategoryFactory::Category>::const_iterator iter = categories.m_Categories.begin();
-       iter != categories.m_Categories.end(); ++iter, ++row) {
+  for (std::vector<CategoryFactory::Category>::const_iterator iter = categories->m_Categories.begin();
+       iter != categories->m_Categories.end(); ++iter, ++row) {
     const CategoryFactory::Category &category = *iter;
     if (category.m_ID == 0) {
       --row;
@@ -207,14 +198,36 @@ void CategoriesDialog::fillTable()
     idItem->setData(Qt::DisplayRole, category.m_ID);
 
     QScopedPointer<QTableWidgetItem> nameItem(new QTableWidgetItem(category.m_Name));
-    QScopedPointer<QTableWidgetItem> nexusIDItem(new QTableWidgetItem(MOBase::VectorJoin(category.m_NexusIDs, ",")));
     QScopedPointer<QTableWidgetItem> parentIDItem(new QTableWidgetItem());
     parentIDItem->setData(Qt::DisplayRole, category.m_ParentID);
+    QScopedPointer<QTableWidgetItem> nexusCatItem(new QTableWidgetItem());
 
     table->setItem(row, 0, idItem.take());
     table->setItem(row, 1, nameItem.take());
-    table->setItem(row, 2, nexusIDItem.take());
-    table->setItem(row, 3, parentIDItem.take());
+    table->setItem(row, 2, parentIDItem.take());
+    table->setItem(row, 3, nexusCatItem.take());
+  }
+
+  for (auto nexusCat : categories->m_NexusMap)
+  {
+    QScopedPointer<QListWidgetItem> nexusItem(new QListWidgetItem());
+    nexusItem->setData(Qt::DisplayRole, nexusCat.second.m_Name);
+    nexusItem->setData(Qt::UserRole, nexusCat.second.m_ID);
+    list->addItem(nexusItem.take());
+    auto item = table->item(categories->resolveNexusID(nexusCat.first)-1, 3);
+    if (item != nullptr) {
+      auto itemData = item->data(Qt::UserRole).toList();
+      QVariantList newData;
+      newData.append(nexusCat.second.m_Name);
+      newData.append(nexusCat.second.m_ID);
+      itemData.insert(itemData.length(), newData);
+      QStringList names;
+      for (auto cat : itemData) {
+        names.append(cat.toList()[0].toString());
+      }
+      item->setData(Qt::UserRole, itemData);
+      item->setData(Qt::DisplayRole, names.join(", "));
+    }
   }
 
   refreshIDs();
@@ -228,14 +241,81 @@ void CategoriesDialog::addCategory_clicked()
   ui->categoriesTable->setVerticalHeaderItem(row, new QTableWidgetItem("  "));
   ui->categoriesTable->setItem(row, 0, new QTableWidgetItem(QString::number(++m_HighestID)));
   ui->categoriesTable->setItem(row, 1, new QTableWidgetItem("new"));
-  ui->categoriesTable->setItem(row, 2, new QTableWidgetItem(""));
-  ui->categoriesTable->setItem(row, 3, new QTableWidgetItem("0"));
+  ui->categoriesTable->setItem(row, 2, new QTableWidgetItem("0"));
+  ui->categoriesTable->setItem(row, 3, new QTableWidgetItem(""));
 }
 
 
 void CategoriesDialog::removeCategory_clicked()
 {
   ui->categoriesTable->removeRow(m_ContextRow);
+}
+
+
+void CategoriesDialog::nexusRefresh_clicked()
+{
+  NexusInterface &nexus = NexusInterface::instance();
+  nexus.setPluginContainer(m_PluginContainer);
+  nexus.requestGameInfo(Settings::instance().game().plugin()->gameShortName(), this, QVariant(), QString());
+}
+
+
+void CategoriesDialog::nexusImport_clicked()
+{
+  if (QMessageBox::question(nullptr, tr("Import Nexus Categories?"),
+    tr("This will overwrite your existing categories with the loaded Nexus categories."),
+    QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    QTableWidget* table = ui->categoriesTable;
+    QListWidget* list = ui->nexusCategoryList;
+
+    table->setRowCount(0);
+    refreshIDs();
+    int row = 0;
+    for (int i = 0; i < list->count(); ++i) {
+      row = table->rowCount();
+      table->insertRow(table->rowCount());
+      //    table->setVerticalHeaderItem(row, new QTableWidgetItem("  "));
+
+      QScopedPointer<QTableWidgetItem> idItem(new QTableWidgetItem());
+      idItem->setData(Qt::DisplayRole, ++m_HighestID);
+
+      QScopedPointer<QTableWidgetItem> nameItem(new QTableWidgetItem(list->item(i)->data(Qt::DisplayRole).toString()));
+      QStringList nexusLabel;
+      QVariantList nexusData;
+      nexusLabel.append(list->item(i)->data(Qt::DisplayRole).toString());
+      QVariantList data;
+      data.append(QVariant(list->item(i)->data(Qt::DisplayRole).toString()));
+      data.append(QVariant(list->item(i)->data(Qt::UserRole).toInt()));
+      nexusData.insert(nexusData.size(), data);
+      QScopedPointer<QTableWidgetItem> nexusCatItem(new QTableWidgetItem(nexusLabel.join(", ")));
+      nexusCatItem->setData(Qt::UserRole, nexusData);
+      QScopedPointer<QTableWidgetItem> parentIDItem(new QTableWidgetItem());
+      parentIDItem->setData(Qt::DisplayRole, 0);
+
+      table->setItem(row, 0, idItem.take());
+      table->setItem(row, 1, nameItem.take());
+      table->setItem(row, 2, parentIDItem.take());
+      table->setItem(row, 3, nexusCatItem.take());
+    }
+    refreshIDs();
+  }
+}
+
+
+void CategoriesDialog::nxmGameInfoAvailable(QString gameName, QVariant, QVariant resultData, int)
+{
+  QVariantMap result = resultData.toMap();
+  QVariantList categories = result["categories"].toList();
+  CategoryFactory *catFactory = CategoryFactory::instance();
+  QListWidget* list = ui->nexusCategoryList;
+  list->clear();
+  for (auto category : categories) {
+    auto catMap = category.toMap();
+    QScopedPointer<QListWidgetItem> nexusItem(new QListWidgetItem());
+    nexusItem->setData(Qt::DisplayRole, catMap["name"].toString());
+    nexusItem->setData(Qt::UserRole, catMap["category_id"].toInt());
+    list->addItem(nexusItem.take());
+  }
 }
 
 

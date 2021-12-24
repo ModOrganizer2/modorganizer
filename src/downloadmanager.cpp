@@ -1260,6 +1260,19 @@ QString DownloadManager::getFileName(int index) const
   return m_ActiveDownloads.at(index)->m_FileName;
 }
 
+int DownloadManager::getDownloadIndex(QString filename) const
+{
+  auto file = std::find_if(m_ActiveDownloads.begin(), m_ActiveDownloads.end(), [=](DownloadManager::DownloadInfo *const val) {
+      if (val->m_FileName == filename) return true;
+      return false;
+    });
+  if (file != m_ActiveDownloads.end()) {
+    int fileIndex = m_ActiveDownloads.indexOf(*file);
+    return fileIndex;
+  }
+  return -1;
+}
+
 QDateTime DownloadManager::getFileTime(int index) const
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
@@ -1330,6 +1343,14 @@ int DownloadManager::getModID(int index) const
     throw MyException(tr("mod id: invalid download index %1").arg(index));
   }
   return m_ActiveDownloads.at(index)->m_FileInfo->modID;
+}
+
+int DownloadManager::getCategoryID(int index) const
+{
+  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
+    throw MyException(tr("mod id: invalid download index %1").arg(index));
+  }
+  return m_ActiveDownloads.at(index)->m_FileInfo->categoryID;
 }
 
 QString DownloadManager::getDisplayGameName(int index) const

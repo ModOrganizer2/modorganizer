@@ -6,18 +6,51 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>553</width>
+    <width>735</width>
     <height>444</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Categories</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
-    <widget class="QTableWidget" name="categoriesTable">
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="4" column="3">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="5">
+    <widget class="QPushButton" name="nexusRefresh">
+     <property name="text">
+      <string>Refresh from Nexus</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="4">
+    <widget class="QPushButton" name="nexusImportButton">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>&lt;-- Import Nexus Cats</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="3">
+    <widget class="CategoriesTable" name="categoriesTable">
      <property name="contextMenuPolicy">
       <enum>Qt::CustomContextMenu</enum>
+     </property>
+     <property name="acceptDrops">
+      <bool>true</bool>
      </property>
      <property name="dragEnabled">
       <bool>false</bool>
@@ -26,7 +59,7 @@
       <bool>false</bool>
      </property>
      <property name="dragDropMode">
-      <enum>QAbstractItemView::NoDragDrop</enum>
+      <enum>QAbstractItemView::DropOnly</enum>
      </property>
      <property name="defaultDropAction">
       <enum>Qt::IgnoreAction</enum>
@@ -46,14 +79,14 @@
      <attribute name="horizontalHeaderVisible">
       <bool>true</bool>
      </attribute>
+     <attribute name="horizontalHeaderMinimumSectionSize">
+      <number>26</number>
+     </attribute>
      <attribute name="horizontalHeaderDefaultSectionSize">
       <number>100</number>
      </attribute>
      <attribute name="horizontalHeaderHighlightSections">
       <bool>true</bool>
-     </attribute>
-     <attribute name="horizontalHeaderMinimumSectionSize">
-      <number>26</number>
      </attribute>
      <attribute name="horizontalHeaderStretchLastSection">
       <bool>false</bool>
@@ -85,7 +118,15 @@
      </column>
      <column>
       <property name="text">
-       <string>Nexus IDs</string>
+       <string>Parent ID</string>
+      </property>
+      <property name="toolTip">
+       <string>If set, the category is defined as a sub-category of another one. Parent ID needs to be a valid category ID.</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Nexus Categories</string>
       </property>
       <property name="toolTip">
        <string>Comma-Separated list of Nexus IDs to be matched to the internal ID.</string>
@@ -100,28 +141,48 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;To find out a category id used by the nexus, visit the categories list of the nexus page and hover over the links there.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
      </column>
-     <column>
-      <property name="text">
-       <string>Parent ID</string>
-      </property>
-      <property name="toolTip">
-       <string>If set, the category is defined as a sub-category of another one. Parent ID needs to be a valid category ID.</string>
-      </property>
-     </column>
     </widget>
    </item>
-   <item>
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+   <item row="0" column="4" colspan="2">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="toolTip">
+      <string>Drag &amp; drop nexus categories from this pane onto the target category on the left.</string>
      </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     <property name="layoutDirection">
+      <enum>Qt::LeftToRight</enum>
      </property>
+     <property name="title">
+      <string>Nexus Categories</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QListWidget" name="nexusCategoryList">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="dragEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="dragDropMode">
+         <enum>QAbstractItemView::DragOnly</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CategoriesTable</class>
+   <extends>QTableWidget</extends>
+   <header>categoriestable.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

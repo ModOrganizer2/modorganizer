@@ -14,7 +14,7 @@ public:
 
 private:
   void add(
-    const CategoryFactory& factory, const std::set<int>& enabledCategories,
+    const CategoryFactory* factory, const std::set<int>& enabledCategories,
     QTreeWidgetItem* root, int rootLevel);
 
   void updatePrimary();

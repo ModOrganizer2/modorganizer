@@ -39,7 +39,7 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings& setti
 {
   ui->setupUi(this);
 
-  m_tabs.push_back(std::unique_ptr<SettingsTab>(new GeneralSettingsTab(settings, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(new GeneralSettingsTab(settings, m_pluginContainer, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new ThemeSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new ModListSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new PathsSettingsTab(settings, *this)));

@@ -142,6 +142,8 @@ public:
 public slots:
   void refresherProgress(const DirectoryRefreshProgress* p);
 
+  void requestNexusCategories();
+
 signals:
   // emitted after the information dialog has been closed, used by tutorials
   //
@@ -268,7 +270,7 @@ private:
 
   QAction *m_ContextAction;
 
-  CategoryFactory &m_CategoryFactory;
+  CategoryFactory *m_CategoryFactory;
 
   QTimer m_CheckBSATimer;
   QTimer m_SaveMetaTimer;

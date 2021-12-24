@@ -28,6 +28,7 @@ add_filter(NAME src/browser GROUPS
 
 add_filter(NAME src/core GROUPS
 	categories
+    categoriestable
 	archivefiletree
 	installationmanager
 	nexusinterface

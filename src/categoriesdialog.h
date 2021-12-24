@@ -21,6 +21,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define CATEGORIESDIALOG_H
 
 #include "tutorabledialog.h"
+#include "categories.h"
+#include "plugincontainer.h"
 #include <set>
 
 namespace Ui {
@@ -36,7 +38,7 @@ class CategoriesDialog : public MOBase::TutorableDialog
 
 public:
 
-  explicit CategoriesDialog(QWidget *parent = 0);
+  explicit CategoriesDialog(PluginContainer *pluginContainer, QWidget *parent = 0);
   ~CategoriesDialog();
 
   // also saves and restores geometry
@@ -49,11 +51,20 @@ public:
    **/
   void commitChanges();
 
+public slots:
+
+  void nxmGameInfoAvailable(QString gameName, QVariant, QVariant resultData, int);
+
+signals:
+  void refreshNexusCategories();
+
 private slots:
 
   void on_categoriesTable_customContextMenuRequested(const QPoint &pos);
   void addCategory_clicked();
   void removeCategory_clicked();
+  void nexusRefresh_clicked();
+  void nexusImport_clicked();
   void cellChanged(int row, int column);
 
 private:
@@ -64,10 +75,12 @@ private:
 private:
 
   Ui::CategoriesDialog *ui;
+  PluginContainer *m_PluginContainer;
   int m_ContextRow;
 
   int m_HighestID;
   std::set<int> m_IDs;
+  std::vector<CategoryFactory::NexusCategory> m_NexusCategories;
 
 };
 

@@ -649,9 +649,9 @@ InstallationResult InstallationManager::install(
 
     version = metaFile.value("version", "").toString();
     newestVersion = metaFile.value("newestVersion", "").toString();
-    unsigned int categoryIndex = CategoryFactory::instance().resolveNexusID(
+    unsigned int categoryIndex = CategoryFactory::instance()->resolveNexusID(
         metaFile.value("category", 0).toInt());
-    categoryID = CategoryFactory::instance().getCategoryID(categoryIndex);
+    categoryID = CategoryFactory::instance()->getCategoryID(categoryIndex);
     repository = metaFile.value("repository", "").toString();
     fileCategoryID = metaFile.value("fileCategory", 1).toInt();
   }

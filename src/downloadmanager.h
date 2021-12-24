@@ -275,6 +275,14 @@ public:
   QString getFileName(int index) const;
 
   /**
+   * @brief retrieve the file index from the filename
+   *
+   * @param filename the filename of the download
+   * @return the index of the file
+   */
+  int getDownloadIndex(QString filename) const;
+
+  /**
    * @brief retrieve the file size of the download specified by index
    *
    * @param index index of the file to look up
@@ -323,6 +331,14 @@ public:
    * @return the nexus mod id
    **/
   int getModID(int index) const;
+
+  /**
+   * @brief retrieve the nexus category id of the download specified by index
+   *
+   * @param index index of the file to look up
+   * @return the nexus category id
+   */
+  int getCategoryID(int index) const;
 
   /**
    * @brief retrieve the displayable game name of the download specified by the index

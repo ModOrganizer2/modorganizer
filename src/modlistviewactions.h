@@ -13,6 +13,7 @@ class MainWindow;
 class ModListView;
 class PluginListView;
 class OrganizerCore;
+class DownloadManager;
 
 class ModListViewActions : public QObject
 {
@@ -56,6 +57,10 @@ public:
   //
   void checkModsForUpdates() const;
   void checkModsForUpdates(const QModelIndexList& indices) const;
+
+  // auto-assign categories based on nexus ID
+  //
+  void assignCategories() const;
 
   // start the "Export Mod List" dialog
   //

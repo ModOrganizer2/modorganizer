@@ -301,6 +301,8 @@ MainWindow::MainWindow(Settings &settings
     ui->statusBar->setAPI(ni.getAPIStats(), ni.getAPIUserAccount());
   }
 
+  m_CategoryFactory->loadCategories();
+
   ui->logList->setCore(m_OrganizerCore);
 
 
@@ -400,6 +402,8 @@ MainWindow::MainWindow(Settings &settings
   connect(&NexusInterface::instance(), SIGNAL(requestNXMDownload(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
   connect(&NexusInterface::instance(), SIGNAL(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(QString,int,int,QVariant,QVariant,int)));
   connect(&NexusInterface::instance(), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusApi()));
+
+  connect(CategoryFactory::instance(), SIGNAL(requestNexusCategories()), this, SLOT(requestNexusCategories()));
 
   connect(
     NexusInterface::instance().getAccessManager(),
@@ -508,7 +512,7 @@ MainWindow::MainWindow(Settings &settings
 
 void MainWindow::setupModList()
 {
-  ui->modList->setup(m_OrganizerCore, m_CategoryFactory, this, ui);
+  ui->modList->setup(m_OrganizerCore, *m_CategoryFactory, this, ui);
 
   connect(&ui->modList->actions(), &ModListViewActions::overwriteCleared, [=]() { scheduleCheckForProblems(); });
   connect(&ui->modList->actions(), &ModListViewActions::originModified, this, &MainWindow::originModified);
@@ -1931,7 +1935,7 @@ void MainWindow::fixCategories()
     std::set<int> categories = modInfo->getCategories();
     for (std::set<int>::iterator iter = categories.begin();
          iter != categories.end(); ++iter) {
-      if (!m_CategoryFactory.categoryExists(*iter)) {
+      if (!m_CategoryFactory->categoryExists(*iter)) {
         modInfo->setCategory(*iter, false);
       }
     }
@@ -2706,6 +2710,15 @@ void MainWindow::originModified(int originID)
     origin.getName(), origin.getPath(), origin.getPriority(), dummy);
 
   DirectoryRefresher::cleanStructure(m_OrganizerCore.directoryStructure());
+}
+
+void MainWindow::requestNexusCategories()
+{
+  CategoriesDialog dialog(&m_PluginContainer, this);
+
+  if (dialog.exec() == QDialog::Accepted) {
+    dialog.commitChanges();
+  }
 }
 
 void MainWindow::updateAvailable()
