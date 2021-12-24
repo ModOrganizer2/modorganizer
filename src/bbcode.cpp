@@ -146,6 +146,8 @@ private:
                                         "<font style=\"font-family: \\1;\">\\2</font>");
     m_TagMap["center"] = std::make_pair(QRegularExpression("\\[center\\](.*)\\[/center\\]"),
                                         "<div align=\"center\">\\1</div>");
+    m_TagMap["right"] = std::make_pair(QRegularExpression("\\[right\\](.*)\\[/right\\]"),
+                                        "<div align=\"right\">\\1</div>");
     m_TagMap["quote"]  = std::make_pair(QRegularExpression("\\[quote\\](.*)\\[/quote\\]"),
                                         "<figure class=\"quote\"><blockquote>\\1</blockquote></figure>");
     m_TagMap["quote="] = std::make_pair(QRegularExpression("\\[quote=([^\\]]*)\\](.*)\\[/quote\\]"),
