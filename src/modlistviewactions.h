@@ -98,6 +98,7 @@ public:
   void setTracked(const QModelIndexList& indices, bool tracked) const;
   void setEndorsed(const QModelIndexList& indices, bool endorsed) const;
   void willNotEndorsed(const QModelIndexList& indices) const;
+  void remapCategory(const QModelIndexList& indices) const;
 
   // set/reset color of the given selection, using the given reference index (index
   // at which the context menu was shown)

@@ -691,8 +691,8 @@ int NexusInterface::requestGameInfo(QString gameName, QObject* receiver, QVarian
   connect(this, SIGNAL(nxmGameInfoAvailable(QString, QVariant, QVariant, int)),
     receiver, SLOT(nxmGameInfoAvailable(QString, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;

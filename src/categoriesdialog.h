@@ -54,6 +54,7 @@ public:
 public slots:
 
   void nxmGameInfoAvailable(QString gameName, QVariant, QVariant resultData, int);
+  void nxmRequestFailed(QString, int, int, QVariant, int, int errorCode, const QString& errorMessage);
 
 signals:
   void refreshNexusCategories();
