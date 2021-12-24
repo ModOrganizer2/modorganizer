@@ -949,8 +949,8 @@ void DownloadManager::resumeDownloadInt(int index)
     }
     info->m_DownloadLast = 0;
     info->m_DownloadTimeLast = 0;
-    info->m_DownloadAcc = accumulator_set<int, stats<tag::rolling_mean>>(tag::rolling_window::window_size = 500);
-    info->m_DownloadTimeAcc = accumulator_set<int, stats<tag::rolling_mean>>(tag::rolling_window::window_size = 500);
+    info->m_DownloadAcc = accumulator_set<int, stats<tag::rolling_mean>>(tag::rolling_window::window_size = 200);
+    info->m_DownloadTimeAcc = accumulator_set<int, stats<tag::rolling_mean>>(tag::rolling_window::window_size = 200);
     log::debug("resume at {} bytes", info->m_ResumePos);
     startDownload(m_NexusInterface->getAccessManager()->get(request), info, true);
   }
