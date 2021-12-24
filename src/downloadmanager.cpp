@@ -43,6 +43,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 #include <QCoreApplication>
 #include <QTextDocument>
+#include <QHttp2Configuration>
 
 #include <boost/bind/bind.hpp>
 #include <regex>
@@ -434,9 +435,12 @@ bool DownloadManager::addDownload(const QStringList &URLs, QString gameName,
 
   QUrl preferredUrl = QUrl::fromEncoded(URLs.first().toLocal8Bit());
   log::debug("selected download url: {}", preferredUrl.toString());
+  QHttp2Configuration h2Conf;
+  h2Conf.setSessionReceiveWindowSize(16777215); // 16 MiB, based on Chrome and Firefox values
+  h2Conf.setStreamReceiveWindowSize(16777215);
   QNetworkRequest request(preferredUrl);
   request.setHeader(QNetworkRequest::UserAgentHeader, m_NexusInterface->getAccessManager()->userAgent());
-  request.setAttribute(QNetworkRequest::Http2AllowedAttribute, false);
+  request.setHttp2Configuration(h2Conf);
   return addDownload(m_NexusInterface->getAccessManager()->get(request), URLs, fileName, gameName, modID, fileID, fileInfo);
 }
 
