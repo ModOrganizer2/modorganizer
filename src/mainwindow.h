@@ -142,8 +142,6 @@ public:
 public slots:
   void refresherProgress(const DirectoryRefreshProgress* p);
 
-  void requestNexusCategories();
-
 signals:
   // emitted after the information dialog has been closed, used by tutorials
   //
@@ -344,6 +342,8 @@ private slots:
 
   void modInstalled(const QString &modName);
 
+  void importCategories(bool);
+
   // update info
   void nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVariant resultData, int requestID);
 
@@ -353,6 +353,7 @@ private slots:
   void nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int);
   void nxmTrackedModsAvailable(QVariant userData, QVariant resultData, int);
   void nxmDownloadURLs(QString, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
+  void nxmGameInfoAvailable(QString gameName, QVariant, QVariant resultData, int);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, int errorCode, const QString &errorString);
 
   void onRequestsChanged(const APIStats& stats, const APIUserAccount& user);
