@@ -106,6 +106,8 @@ public:
    **/
   void saveCategories();
 
+  void setNexusCategories(std::vector<CategoryFactory::NexusCategory>& nexusCats);
+
   int addCategory(const QString& name, const std::vector<NexusCategory>& nexusCats, int parentID);
 
   /**
@@ -211,14 +213,6 @@ public:
    * @return path to the file that contains the nexus category mappings
    */
   static QString nexusMappingFilePath();
-
-public slots:
-
-  void mapNexusCategories(QString, QVariant, QVariant data);
-
-signals:
-
-  void requestNexusCategories();
 
 private:
   explicit CategoryFactory();

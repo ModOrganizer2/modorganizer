@@ -151,6 +151,7 @@ CategoryFactory* CategoryFactory::instance()
 void CategoryFactory::reset()
 {
   m_Categories.clear();
+  m_NexusMap.clear();
   m_IDMap.clear();
   // 28 =
   // 43 = Savegames (makes no sense to install them through MO)
@@ -265,22 +266,78 @@ void CategoryFactory::addCategory(int id, const QString& name, const std::vector
   m_IDMap[id] = index;
 }
 
+void CategoryFactory::setNexusCategories(std::vector<CategoryFactory::NexusCategory>& nexusCats)
+{
+  m_NexusMap.empty();
+  for (auto nexusCat : nexusCats) {
+    m_NexusMap.insert_or_assign(nexusCat.m_ID, nexusCat);
+  }
+
+  saveCategories();
+}
+
 
 void CategoryFactory::loadDefaultCategories()
 {
   // the order here is relevant as it defines the order in which the
   // mods appear in the combo box
-  //if (QMessageBox::question(nullptr, tr("Load Nexus Categories?"),
-  //  tr("This is either a new or old instance which lacks modern Nexus category mappings. Would you like to import and map categories from Nexus now?"),
-  //  QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-  //  emit requestNexusCategories();
-  //}
-}
-
-
-void CategoryFactory::mapNexusCategories(QString, QVariant, QVariant result)
-{
-
+  addCategory(1, "Animations", 0);
+  addCategory(52, "Poses", 1);
+  addCategory(2, "Armour", 0);
+  addCategory(53, "Power Armor", 2);
+  addCategory(3, "Audio", 0);
+  addCategory(38, "Music", 0);
+  addCategory(39, "Voice", 0);
+  addCategory(5, "Clothing", 0);
+  addCategory(41, "Jewelry", 5);
+  addCategory(42, "Backpacks", 5);
+  addCategory(6, "Collectables", 0);
+  addCategory(28, "Companions", 0);
+  addCategory(7, "Creatures, Mounts, & Vehicles", 0);
+  addCategory(8, "Factions", 0);
+  addCategory(9, "Gameplay", 0);
+  addCategory(27, "Combat", 9);
+  addCategory(43, "Crafting", 9);
+  addCategory(48, "Overhauls", 9);
+  addCategory(49, "Perks", 9);
+  addCategory(54, "Radio", 9);
+  addCategory(55, "Shouts", 9);
+  addCategory(22, "Skills & Levelling", 9);
+  addCategory(58, "Weather & Lighting", 9);
+  addCategory(44, "Equipment", 43);
+  addCategory(45, "Home/Settlement", 43);
+  addCategory(10, "Body, Face, & Hair", 0);
+  addCategory(39, "Tattoos", 10);
+  addCategory(40, "Character Presets", 0);
+  addCategory(11, "Items", 0);
+  addCategory(32, "Mercantile", 0);
+  addCategory(37, "Ammo", 11);
+  addCategory(19, "Weapons", 11);
+  addCategory(36, "Weapon & Armour Sets", 11);
+  addCategory(23, "Player Homes", 0);
+  addCategory(25, "Castles & Mansions", 23);
+  addCategory(51, "Settlements", 23);
+  addCategory(12, "Locations", 0);
+  addCategory(4, "Cities", 12);
+  addCategory(31, "Landscape Changes", 0);
+  addCategory(29, "Environment", 0);
+  addCategory(30, "Immersion", 0);
+  addCategory(20, "Magic", 0);
+  addCategory(21, "Models & Textures", 0);
+  addCategory(33, "Modders resources", 0);
+  addCategory(13, "NPCs", 0);
+  addCategory(24, "Bugfixes", 0);
+  addCategory(14, "Patches", 24);
+  addCategory(35, "Utilities", 0);
+  addCategory(26, "Cheats", 0);
+  addCategory(15, "Quests", 0);
+  addCategory(16, "Races & Classes", 0);
+  addCategory(34, "Stealth", 0);
+  addCategory(17, "UI", 0);
+  addCategory(18, "Visuals", 0);
+  addCategory(50, "Pip-Boy", 18);
+  addCategory(46, "Shader Presets", 0);
+  addCategory(47, "Miscellaneous", 0);
 }
 
 int CategoryFactory::getParentID(unsigned int index) const
@@ -442,10 +499,11 @@ unsigned int CategoryFactory::resolveNexusID(int nexusID) const
 {
   auto result = m_NexusMap.find(nexusID);
   if (result != m_NexusMap.end()) {
-    log::debug(tr("nexus category id {} maps to internal {}").toStdString(), nexusID, result->second.m_ID);
-    return m_IDMap.at(result->second.m_CategoryID);
-  } else {
-    log::debug(tr("nexus category id {} not mapped").toStdString(), nexusID);
-    return 0U;
+    if (m_IDMap.count(result->second.m_CategoryID)) {
+      log::debug(tr("nexus category id {} maps to internal {}").toStdString(), nexusID, m_IDMap.at(result->second.m_CategoryID));
+      return m_IDMap.at(result->second.m_CategoryID);
+    }
   }
+  log::debug(tr("nexus category id {} not mapped").toStdString(), nexusID);
+  return 0U;
 }
