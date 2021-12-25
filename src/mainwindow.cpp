@@ -423,8 +423,6 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
 
   connect(CategoryFactory::instance(), SIGNAL(requestNexusCategories()), this, SLOT(requestNexusCategories()));
 
-  connect(CategoryFactory::instance(), SIGNAL(requestNexusCategories()), this, SLOT(requestNexusCategories()));
-
   connect(
     NexusInterface::instance(&pluginContainer)->getAccessManager(),
     SIGNAL(credentialsReceived(const APIUserAccount&)),
@@ -1286,6 +1284,28 @@ void MainWindow::showEvent(QShowEvent* event)
                                  QMessageBox::Ok);
         gameSupportTriggered();
       }
+
+      QMessageBox newCatDialog;
+      newCatDialog.setWindowTitle("Import Categories");
+      newCatDialog.setText(tr("Please choose how to handle the default category setup.\n\n"
+        "If you've already connected to Nexus, you can automatically import Nexus categories for this game (if applicable). Otherwise, use the old Mod Organizer default category structure, or leave the categories blank."));
+      QPushButton importBtn(tr("&Import Nexus Categories"));
+      connect(&importBtn, &QPushButton::clicked, this, &MainWindow::importCategories);
+      QPushButton defaultBtn(tr("Use &Default Categories"));
+      QPushButton cancelBtn(tr("Do &Nothing"));
+      if (NexusInterface::instance().getAccessManager()->validated()) {
+        newCatDialog.addButton(&importBtn, QMessageBox::ButtonRole::AcceptRole);
+      }
+      newCatDialog.addButton(&defaultBtn, QMessageBox::ButtonRole::AcceptRole);
+      newCatDialog.addButton(&cancelBtn, QMessageBox::ButtonRole::RejectRole);
+      newCatDialog.exec();
+      disconnect(&importBtn, &QPushButton::clicked, this, &MainWindow::importCategories);
+      if (newCatDialog.clickedButton() == &cancelBtn) {
+        m_CategoryFactory->reset();
+      } else if (newCatDialog.clickedButton() == &defaultBtn) {
+        m_CategoryFactory->loadCategories();
+      }
+      m_CategoryFactory->saveCategories();
 
       m_OrganizerCore.settings().setFirstStart(false);
     }
@@ -2390,6 +2410,13 @@ void MainWindow::modInstalled(const QString& modName)
   // force an update to happen
   ui->modList->actions().checkModsForUpdates(
       {m_OrganizerCore.modList()->index(index, 0)});
+}
+
+void MainWindow::importCategories(bool)
+{
+  NexusInterface& nexus = NexusInterface::instance();
+  nexus.setPluginContainer(&m_OrganizerCore.pluginContainer());
+  nexus.requestGameInfo(Settings::instance().game().plugin()->gameShortName(), this, QVariant(), QString());
 }
 
 void MainWindow::showMessage(const QString& message)
@@ -4515,6 +4542,29 @@ void MainWindow::nxmDownloadURLs(QString, int, int, QVariant, QVariant resultDat
   }
 
   m_OrganizerCore.settings().network().updateServers(servers);
+}
+
+void MainWindow::nxmGameInfoAvailable(QString gameName, QVariant, QVariant resultData, int)
+{
+  QVariantMap result = resultData.toMap();
+  QVariantList categories = result["categories"].toList();
+  CategoryFactory* catFactory = CategoryFactory::instance();
+  catFactory->reset();
+  for (auto category : categories) {
+    auto catMap = category.toMap();
+    std::vector<CategoryFactory::NexusCategory> nexusCat;
+    nexusCat.push_back(
+      CategoryFactory::NexusCategory(
+        catMap["name"].toString(),
+        catMap["category_id"].toInt()
+      )
+    );
+    catFactory->addCategory(
+      catMap["name"].toString(),
+      nexusCat,
+      0
+    );
+  }
 }
 
 void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, int,
