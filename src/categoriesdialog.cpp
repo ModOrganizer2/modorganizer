@@ -149,7 +149,20 @@ void CategoriesDialog::commitChanges()
           nexusCats,
           ui->categoriesTable->item(index, 2)->text().toInt());
   }
+
   categories->setParents();
+
+  std::vector<CategoryFactory::NexusCategory> nexusCats;
+  for (int i = 0; i < ui->nexusCategoryList->count(); ++i) {
+      nexusCats.push_back(
+        CategoryFactory::NexusCategory(
+          ui->nexusCategoryList->item(i)->data(Qt::DisplayRole).toString(),
+          ui->nexusCategoryList->item(i)->data(Qt::UserRole).toInt()
+        )
+      );
+  }
+
+  categories->setNexusCategories(nexusCats);
 
   categories->saveCategories();
 }
