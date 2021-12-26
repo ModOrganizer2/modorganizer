@@ -270,7 +270,7 @@ void CategoryFactory::setNexusCategories(std::vector<CategoryFactory::NexusCateg
 {
   m_NexusMap.empty();
   for (auto nexusCat : nexusCats) {
-    m_NexusMap.insert_or_assign(nexusCat.m_ID, nexusCat);
+    m_NexusMap.emplace(nexusCat.m_ID, nexusCat);
   }
 
   saveCategories();
