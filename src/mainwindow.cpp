@@ -2167,7 +2167,7 @@ void MainWindow::wikiTriggered()
 
 void MainWindow::discordTriggered()
 {
-  shell::Open(QUrl("https://discord.gg/cYwdcxj"));
+  shell::Open(QUrl("https://discord.gg/6GKR9jZ"));
 }
 
 void MainWindow::issueTriggered()
