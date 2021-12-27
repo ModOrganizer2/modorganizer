@@ -326,6 +326,8 @@ private:
   std::atomic<bool> m_ProblemsCheckRequired;
   std::mutex m_CheckForProblemsMutex;
 
+  QVersionNumber m_LastVersion;
+
   Executable* getSelectedExecutable();
 
 private slots:

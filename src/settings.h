@@ -923,6 +923,9 @@ public:
   static bool hideTutorialQuestion();
   static void setHideTutorialQuestion(bool b);
 
+  static bool hideCategoryReminder();
+  static void setHideCategoryReminder(bool b);
+
   // if the key exists from the credentials store, puts it in `apiKey` and
   // returns true; otherwise, returns false and leaves `apiKey` untouched
   //
