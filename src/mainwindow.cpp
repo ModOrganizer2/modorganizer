@@ -1207,7 +1207,6 @@ void MainWindow::showEvent(QShowEvent *event)
       newCatDialog.setText(tr("Please choose how to handle the default category setup.\n\n"
         "If you've already connected to Nexus, you can automatically import Nexus categories for this game (if applicable). Otherwise, use the old Mod Organizer default category structure, or leave the categories blank."));
       QPushButton importBtn(tr("&Import Nexus Categories"));
-      connect(&importBtn, &QPushButton::clicked, this, &MainWindow::importCategories);
       QPushButton defaultBtn(tr("Use &Default Categories"));
       QPushButton cancelBtn(tr("Do &Nothing"));
       if (NexusInterface::instance().getAccessManager()->validated()) {
@@ -1216,8 +1215,9 @@ void MainWindow::showEvent(QShowEvent *event)
       newCatDialog.addButton(&defaultBtn, QMessageBox::ButtonRole::AcceptRole);
       newCatDialog.addButton(&cancelBtn, QMessageBox::ButtonRole::RejectRole);
       newCatDialog.exec();
-      disconnect(&importBtn, &QPushButton::clicked, this, &MainWindow::importCategories);
-      if (newCatDialog.clickedButton() == &cancelBtn) {
+      if (newCatDialog.clickedButton() == &importBtn) {
+        importCategories(false);
+      } else if (newCatDialog.clickedButton() == &cancelBtn) {
         m_CategoryFactory->reset();
       } else if (newCatDialog.clickedButton() == &defaultBtn) {
         m_CategoryFactory->loadCategories();
@@ -1225,6 +1225,43 @@ void MainWindow::showEvent(QShowEvent *event)
       m_CategoryFactory->saveCategories();
 
       m_OrganizerCore.settings().setFirstStart(false);
+    } else {
+      auto& settings = m_OrganizerCore.settings();
+      if (m_LastVersion < QVersionNumber(2, 5) && !GlobalSettings::hideCategoryReminder()) {
+        QMessageBox migrateCatDialog;
+        migrateCatDialog.setWindowTitle("Category Updates");
+        migrateCatDialog.setText(
+          tr(
+            "This is your first time running version 2.5 or higher with an old MO2 instance. The category system now relies on an updated system to map Nexus categories.\n\n"
+            "In order to assign Nexus categories automatically, you will need to import the Nexus categories for the currently managed game and map them to your preferred category structure.\n\n"
+            "You can either manually open the category editor, via the Settings dialog or the category filter sidebar, and set up the mappings as you see fit, or you can automatically import and map the categories as defined on Nexus.\n\n"
+            "As a final option, you can disable Nexus category mapping altogether, which can be changed at any time in the Settings dialog."
+          )
+        );
+        QPushButton importBtn(tr("&Import Nexus Categories"));
+        QPushButton openSettingsBtn(tr("&Open Categories Dialog"));
+        QPushButton showTutorialBtn(tr("&Show Tutorial"));
+        QPushButton closeBtn(tr("&Close"));
+        QCheckBox dontShow(tr("&Don't show this again"));
+        if (NexusInterface::instance().getAccessManager()->validated()) {
+          migrateCatDialog.addButton(&importBtn, QMessageBox::ButtonRole::AcceptRole);
+        }
+        migrateCatDialog.addButton(&openSettingsBtn, QMessageBox::ButtonRole::AcceptRole);
+        migrateCatDialog.addButton(&showTutorialBtn, QMessageBox::ButtonRole::AcceptRole);
+        migrateCatDialog.addButton(&closeBtn, QMessageBox::ButtonRole::RejectRole);
+        migrateCatDialog.setCheckBox(&dontShow);
+        migrateCatDialog.exec();
+        if (migrateCatDialog.clickedButton() == &importBtn) {
+          importCategories(dontShow.isChecked());
+        } else if (migrateCatDialog.clickedButton() == &openSettingsBtn) {
+          this->ui->filtersEdit->click();
+        } else if (migrateCatDialog.clickedButton() == &showTutorialBtn) {
+          // TODO: Implement tutorial
+        }
+        if (dontShow.isChecked()) {
+          GlobalSettings::setHideCategoryReminder(true);
+        }
+      }
     }
 
     m_OrganizerCore.settings().widgets().restoreIndex(ui->groupCombo);
@@ -2040,6 +2077,8 @@ void MainWindow::processUpdates() {
 
   const auto lastVersion = settings.version().value_or(earliest);
   const auto currentVersion = m_OrganizerCore.getVersion().asQVersionNumber();
+
+  m_LastVersion = lastVersion;
 
   settings.processUpdates(currentVersion, lastVersion);
 
