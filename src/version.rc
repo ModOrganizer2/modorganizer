@@ -4,7 +4,7 @@
 // Otherwise, if letters are used in VER_FILEVERSION_STR, uses the full MOBase::VersionInfo parser
 // Otherwise, uses the numbers from VER_FILEVERSION and sets the release type as pre-alpha
 #define VER_FILEVERSION     2,5,0
-#define VER_FILEVERSION_STR "2.5.0-qt6dev1\0"
+#define VER_FILEVERSION_STR "2.5.0-alpha1\0"
 
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION     VER_FILEVERSION
