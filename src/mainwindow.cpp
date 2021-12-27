@@ -1045,6 +1045,12 @@ void MainWindow::createHelpMenu()
   connect(wikiAction, SIGNAL(triggered()), this, SLOT(wikiTriggered()));
   menu->addAction(wikiAction);
 
+  if(!m_OrganizerCore.managedGame()->getSupportURL().isEmpty()) {
+    QAction *gameSupportAction = new QAction(tr("Game Support Wiki"), menu);
+    connect(gameSupportAction, SIGNAL(triggered()), this, SLOT(gameSupportTriggered()));
+    menu->addAction(gameSupportAction);
+  }
+
   QAction *discordAction = new QAction(tr("Chat on Discord"), menu);
   connect(discordAction, SIGNAL(triggered()), this, SLOT(discordTriggered()));
   menu->addAction(discordAction);
@@ -1149,7 +1155,7 @@ bool MainWindow::shouldStartTutorial() const
     QMessageBox::Question, tr("Show tutorial?"),
     tr("You are starting Mod Organizer for the first time. "
       "Do you want to show a tutorial of its basic features? If you choose "
-      "no you can always start the tutorial from the \"Help\"-menu."),
+      "no you can always start the tutorial from the \"Help\" menu."),
     QMessageBox::Yes | QMessageBox::No);
 
   dlg.setCheckBox(new QCheckBox(tr("Never ask to show tutorials")));
@@ -1199,6 +1205,13 @@ void MainWindow::showEvent(QShowEvent *event)
         pos.ry() += ui->toolBar->height();
         QWhatsThis::showText(pos,
             QObject::tr("Please use \"Help\" from the toolbar to get usage instructions to all elements"));
+      }
+
+      if (!m_OrganizerCore.managedGame()->getSupportURL().isEmpty()) {
+        QMessageBox::information(this, tr("Game Support Wiki"),
+          tr("Do you know how to mod this game? Do you need to learn? There's a game support wiki available! "
+             "Click OK to open the wiki. In the future, you can access this link from the \"Help\" menu."), QMessageBox::Ok);
+        gameSupportTriggered();
       }
 
       m_OrganizerCore.settings().setFirstStart(false);
@@ -2163,6 +2176,11 @@ void MainWindow::helpTriggered()
 void MainWindow::wikiTriggered()
 {
   shell::Open(QUrl("https://modorganizer2.github.io/"));
+}
+
+void MainWindow::gameSupportTriggered()
+{
+  shell::Open(QUrl(m_OrganizerCore.managedGame()->getSupportURL()));
 }
 
 void MainWindow::discordTriggered()
