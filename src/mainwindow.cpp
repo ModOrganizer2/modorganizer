@@ -2939,7 +2939,7 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
   for (auto mod : modsList) {
     QString validNewVersion;
     int newModStatus = -1;
-    QString installedFile = mod->installationFile();
+    QString installedFile = QFileInfo(mod->installationFile()).fileName();
 
     if (!installedFile.isEmpty()) {
       QVariantMap foundFileData;
