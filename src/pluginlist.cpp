@@ -1485,8 +1485,35 @@ void PluginList::setPluginPriority(int row, int &newPriority, bool isForced)
     }
   }
 
+  int oldPriority = m_ESPs.at(row).priority;
+  if (newPriorityTemp < oldPriority) { // moving up
+    // don't allow plugins to be moved above their masters
+    for (auto master : m_ESPs[row].masters) {
+      auto iter = m_ESPsByName.find(master);
+      if (iter != m_ESPsByName.end()) {
+        int masterPriority = m_ESPs[iter->second].priority;
+        if (masterPriority >= newPriorityTemp)
+        {
+          newPriorityTemp = masterPriority + 1;
+        }
+      }
+    }
+  }
+  else if (newPriorityTemp > oldPriority) { // moving down
+    // don't allow masters to be moved below their children
+    //for (auto idx : m_ESPsByPriority) {
+    for (int i = oldPriority + 1; i <= newPriorityTemp; i++) {
+      PluginList::ESPInfo* otherInfo = &m_ESPs.at(m_ESPsByPriority[i]);
+      for (auto master : otherInfo->masters) {
+        if (master.compare(m_ESPs[row].name, Qt::CaseInsensitive) == 0) {
+          newPriorityTemp = otherInfo->priority - 1;
+          break;
+        }
+      }
+    }
+  }
+
   try {
-    int oldPriority = m_ESPs.at(row).priority;
     if (newPriorityTemp > oldPriority) {
       // priority is higher than the old, so the gap we left is in lower priorities
       for (int i = oldPriority + 1; i <= newPriorityTemp; ++i) {
