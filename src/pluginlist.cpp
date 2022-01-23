@@ -272,6 +272,9 @@ void PluginList::refresh(const QString &profileName
     gamePlugins->readPluginLists(m_Organizer.managedGameOrganizer()->pluginList());
   }
 
+  fixPrimaryPlugins();
+  fixPluginRelationships();
+
   testMasters();
 
   updateIndices();
@@ -285,6 +288,80 @@ void PluginList::refresh(const QString &profileName
                    this->index(static_cast<int>(m_ESPs.size()), columnCount()));
 
   m_Refreshed();
+}
+
+void PluginList::fixPrimaryPlugins()
+{
+  if (!m_Organizer.settings().game().forceEnableCoreFiles()) {
+    return;
+  }
+
+  // This function ensures that the primary plugins are first and in the correct order
+  QStringList primaryPlugins = m_Organizer.managedGame()->primaryPlugins();
+  int prio = 0;
+  bool somethingChanged = false;
+  for (QString plugin : primaryPlugins) {
+    std::map<QString, int>::iterator iter = m_ESPsByName.find(plugin);
+    // Plugin is present?
+    if (iter != m_ESPsByName.end()) {
+      if (prio != m_ESPs[iter->second].priority) {
+        // Priority is wrong! Fix it!
+        int newPrio = prio;
+        setPluginPriority(iter->second, newPrio, true /* isForced */);
+        somethingChanged = true;
+      }
+      prio++;
+    }
+  }
+
+  if (somethingChanged) {
+    writePluginsList();
+  }
+}
+
+void PluginList::fixPluginRelationships()
+{
+  TimeThis timer("PluginList::fixPluginRelationships");
+
+  // Count the types of plugins
+  int masterCount = 0;
+  for (auto plugin : m_ESPs) {
+    if (plugin.isLight || plugin.isMaster) {
+      masterCount++;
+    }
+  }
+
+  // Ensure masters are up top and normal plugins are down below
+  for (int i = 0; i < m_ESPs.size(); i++) {
+    ESPInfo& plugin = m_ESPs[i];
+    if (plugin.isLight || plugin.isMaster) {
+      if (plugin.priority > masterCount) {
+        int newPriority = masterCount + 1;
+        setPluginPriority(i, newPriority);
+      }
+    }
+    else {
+      if (plugin.priority < masterCount) {
+        int newPriority = masterCount + 1;
+        setPluginPriority(i, newPriority);
+      }
+    }
+  }
+
+  // Ensure master/child relationships are observed
+  for (int i = 0; i < m_ESPs.size(); i++) {
+    ESPInfo& plugin = m_ESPs[i];
+    int newPriority = plugin.priority;
+    for (auto master : plugin.masters) {
+      auto iter = m_ESPsByName.find(master);
+      if (iter != m_ESPsByName.end()) {
+        newPriority = std::max(newPriority, m_ESPs[iter->second].priority);
+      }
+    }
+    if (newPriority != plugin.priority) {
+      setPluginPriority(i, newPriority);
+    }
+  }
 }
 
 void PluginList::fixPriorities()
@@ -1423,7 +1500,7 @@ Qt::ItemFlags PluginList::flags(const QModelIndex &modelIndex) const
   return result;
 }
 
-void PluginList::setPluginPriority(int row, int &newPriority)
+void PluginList::setPluginPriority(int row, int &newPriority, bool isForced)
 {
   int newPriorityTemp = newPriority;
 
@@ -1454,25 +1531,55 @@ void PluginList::setPluginPriority(int row, int &newPriority)
     }
   }
 
-  try {
-    int oldPriority = m_ESPs.at(row).priority;
-    if (newPriorityTemp > oldPriority) {
-      // priority is higher than the old, so the gap we left is in lower priorities
-      for (int i = oldPriority + 1; i <= newPriorityTemp; ++i) {
-        --m_ESPs.at(m_ESPsByPriority.at(i)).priority;
+  int oldPriority = m_ESPs.at(row).priority;
+  if (newPriorityTemp < oldPriority) { // moving up
+    // don't allow plugins to be moved above their masters
+    for (auto master : m_ESPs[row].masters) {
+      auto iter = m_ESPsByName.find(master);
+      if (iter != m_ESPsByName.end()) {
+        int masterPriority = m_ESPs[iter->second].priority;
+        if (masterPriority >= newPriorityTemp)
+        {
+          newPriorityTemp = masterPriority + 1;
+        }
       }
-      emit dataChanged(index(oldPriority + 1, 0), index(newPriorityTemp, columnCount()));
-    } else {
-      for (int i = newPriorityTemp; i < oldPriority; ++i) {
-        ++m_ESPs.at(m_ESPsByPriority.at(i)).priority;
-      }
-      emit dataChanged(index(newPriorityTemp, 0), index(oldPriority - 1, columnCount()));
-      ++newPriority;
     }
+  }
+  else if (newPriorityTemp > oldPriority) { // moving down
+    // don't allow masters to be moved below their children
+    //for (auto idx : m_ESPsByPriority) {
+    for (int i = oldPriority + 1; i <= newPriorityTemp; i++) {
+      PluginList::ESPInfo* otherInfo = &m_ESPs.at(m_ESPsByPriority[i]);
+      for (auto master : otherInfo->masters) {
+        if (master.compare(m_ESPs[row].name, Qt::CaseInsensitive) == 0) {
+          newPriorityTemp = otherInfo->priority - 1;
+          break;
+        }
+      }
+    }
+  }
 
-    m_ESPs.at(row).priority = newPriorityTemp;
-    emit dataChanged(index(row, 0), index(row, columnCount()));
-    m_PluginMoved(m_ESPs[row].name, oldPriority, newPriorityTemp);
+  try {
+    if (newPriorityTemp != oldPriority) {
+      if (newPriorityTemp > oldPriority) {
+        // priority is higher than the old, so the gap we left is in lower priorities
+        for (int i = oldPriority + 1; i <= newPriorityTemp; ++i) {
+          --m_ESPs.at(m_ESPsByPriority.at(i)).priority;
+        }
+        emit dataChanged(index(oldPriority + 1, 0), index(newPriorityTemp, columnCount()));
+      }
+      else {
+        for (int i = newPriorityTemp; i < oldPriority; ++i) {
+          ++m_ESPs.at(m_ESPsByPriority.at(i)).priority;
+        }
+        emit dataChanged(index(newPriorityTemp, 0), index(oldPriority - 1, columnCount()));
+        ++newPriority;
+      }
+
+      m_ESPs.at(row).priority = newPriorityTemp;
+      emit dataChanged(index(row, 0), index(row, columnCount()));
+      m_PluginMoved(m_ESPs[row].name, oldPriority, newPriorityTemp);
+    }
   } catch (const std::out_of_range&) {
     reportError(tr("failed to restore load order for %1").arg(m_ESPs[row].name));
   }
@@ -1490,11 +1597,11 @@ void PluginList::changePluginPriority(std::vector<int> rows, int newPriority)
 
   // don't try to move plugins before force-enabled plugins
   for (std::vector<ESPInfo>::const_iterator iter = m_ESPs.begin();
-       iter != m_ESPs.end(); ++iter) {
+    iter != m_ESPs.end(); ++iter) {
     if (iter->forceEnabled) {
-      newPriority = std::max(newPriority, iter->priority+1);
+      newPriority = std::max(newPriority, iter->priority + 1);
     }
-    maxPriority = std::max(maxPriority, iter->priority+1);
+    maxPriority = std::max(maxPriority, iter->priority + 1);
     minPriority = std::min(minPriority, iter->priority);
   }
 
