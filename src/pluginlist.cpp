@@ -272,6 +272,8 @@ void PluginList::refresh(const QString &profileName
     gamePlugins->readPluginLists(m_Organizer.managedGameOrganizer()->pluginList());
   }
 
+  fixPrimaryPlugins();
+
   testMasters();
 
   updateIndices();
@@ -285,6 +287,35 @@ void PluginList::refresh(const QString &profileName
                    this->index(static_cast<int>(m_ESPs.size()), columnCount()));
 
   m_Refreshed();
+}
+
+void PluginList::fixPrimaryPlugins()
+{
+  if (!m_Organizer.settings().game().forceEnableCoreFiles()) {
+    return;
+  }
+
+  // This function ensures that the primary plugins are first and in the correct order
+  QStringList primaryPlugins = m_Organizer.managedGame()->primaryPlugins();
+  int prio = 0;
+  bool somethingChanged = false;
+  for (QString plugin : primaryPlugins) {
+    std::map<QString, int>::iterator iter = m_ESPsByName.find(plugin);
+    // Plugin is present?
+    if (iter != m_ESPsByName.end()) {
+      if (prio != m_ESPs[iter->second].priority) {
+        // Priority is wrong! Fix it!
+        int newPrio = prio;
+        setPluginPriority(iter->second, newPrio, true /* isForced */);
+        somethingChanged = true;
+      }
+      prio++;
+    }
+  }
+
+  if (somethingChanged) {
+    writePluginsList();
+  }
 }
 
 void PluginList::fixPriorities()
@@ -1423,7 +1454,7 @@ Qt::ItemFlags PluginList::flags(const QModelIndex &modelIndex) const
   return result;
 }
 
-void PluginList::setPluginPriority(int row, int &newPriority)
+void PluginList::setPluginPriority(int row, int &newPriority, bool isForced)
 {
   int newPriorityTemp = newPriority;
 
@@ -1490,11 +1521,11 @@ void PluginList::changePluginPriority(std::vector<int> rows, int newPriority)
 
   // don't try to move plugins before force-enabled plugins
   for (std::vector<ESPInfo>::const_iterator iter = m_ESPs.begin();
-       iter != m_ESPs.end(); ++iter) {
+    iter != m_ESPs.end(); ++iter) {
     if (iter->forceEnabled) {
-      newPriority = std::max(newPriority, iter->priority+1);
+      newPriority = std::max(newPriority, iter->priority + 1);
     }
-    maxPriority = std::max(maxPriority, iter->priority+1);
+    maxPriority = std::max(maxPriority, iter->priority + 1);
     minPriority = std::min(minPriority, iter->priority);
   }
 

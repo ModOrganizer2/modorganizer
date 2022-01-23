@@ -353,11 +353,12 @@ private:
   void writeLockedOrder(const QString &fileName) const;
 
   void readLockedOrderFrom(const QString &fileName);
-  void setPluginPriority(int row, int &newPriority);
+  void setPluginPriority(int row, int &newPriority, bool isForced=false);
   void changePluginPriority(std::vector<int> rows, int newPriority);
 
   void testMasters();
 
+  void fixPrimaryPlugins();
   void fixPriorities();
 
   int findPluginByPriority(int priority);
