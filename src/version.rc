@@ -24,7 +24,7 @@ BEGIN
         VALUE "FileDescription",  "Mod Organizer 2 GUI\0"
         VALUE "OriginalFilename", "ModOrganizer.exe\0"
         VALUE "InternalName", "ModOrganizer2\0"
-        VALUE "LegalCopyright", "Copyright 2011-2016 Sebastian Herbord\r\nCopyright 2016-2021 Mod Organizer 2 contributors\0"
+        VALUE "LegalCopyright", "Copyright 2011-2016 Sebastian Herbord\r\nCopyright 2016-2022 Mod Organizer 2 contributors\0"
         VALUE "ProductName",      "Mod Organizer 2\0"
         VALUE "ProductVersion", VER_FILEVERSION_STR
       END
