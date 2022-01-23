@@ -305,8 +305,7 @@ bool PluginListView::toggleSelectionState()
 
 bool PluginListView::event(QEvent* event)
 {
-  auto* profile = m_core->currentProfile();
-  if (event->type() == QEvent::KeyPress && profile) {
+  if (event->type() == QEvent::KeyPress) {
     QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
 
     if (keyEvent->modifiers() == Qt::ControlModifier
