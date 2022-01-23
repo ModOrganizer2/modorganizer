@@ -360,6 +360,7 @@ private:
 
   void fixPrimaryPlugins();
   void fixPriorities();
+  void fixPluginRelationships();
 
   int findPluginByPriority(int priority);
 
