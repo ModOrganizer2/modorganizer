@@ -933,6 +933,17 @@ bool PluginList::isMaster(const QString &name) const
   }
 }
 
+bool PluginList::isMasterFlagged(const QString& name) const
+{
+  auto iter = m_ESPsByName.find(name);
+  if (iter == m_ESPsByName.end()) {
+    return false;
+  }
+  else {
+    return m_ESPs[iter->second].isMasterFlagged;
+  }
+}
+
 bool PluginList::isLight(const QString &name) const
 {
   auto iter = m_ESPsByName.find(name);
@@ -1693,8 +1704,9 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
 {
   try {
     ESP::File file(ToWString(fullPath));
-    isMaster = file.isMaster();
     auto extension = name.right(3).toLower();
+    isMaster = (extension == "esm");
+    isMasterFlagged = file.isMaster();
     isLight = lightPluginsAreSupported && (extension == "esl");
     isLightFlagged = lightPluginsAreSupported && file.isLight();
 
@@ -1707,6 +1719,7 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
   } catch (const std::exception &e) {
     log::error("failed to parse plugin file {}: {}", fullPath, e.what());
     isMaster = false;
+    isMasterFlagged = false;
     isLight = false;
     isLightFlagged = false;
   }

@@ -233,6 +233,7 @@ public:
   int loadOrder(const QString &name) const;
   bool setPriority(const QString& name, int newPriority);
   bool isMaster(const QString &name) const;
+  bool isMasterFlagged(const QString& name) const;
   bool isLight(const QString &name) const;
   bool isLightFlagged(const QString &name) const;
   QStringList masters(const QString &name) const;
@@ -320,6 +321,7 @@ private:
     FILETIME time;
     QString originName;
     bool isMaster;
+    bool isMasterFlagged;
     bool isLight;
     bool isLightFlagged;
     bool modSelected;

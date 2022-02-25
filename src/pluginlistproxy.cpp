@@ -68,6 +68,21 @@ bool PluginListProxy::isMaster(const QString& name) const
   return m_Proxied->isMaster(name);
 }
 
+bool PluginListProxy::isMasterFlagged(const QString& name) const
+{
+  return m_Proxied->isMasterFlagged(name);
+}
+
+bool PluginListProxy::isLight(const QString& name) const
+{
+  return m_Proxied->isLight(name);
+}
+
+bool PluginListProxy::isLightFlagged(const QString& name) const
+{
+  return m_Proxied->isLightFlagged(name);
+}
+
 QStringList PluginListProxy::masters(const QString& name) const
 {
   return m_Proxied->masters(name);

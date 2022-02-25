@@ -22,6 +22,9 @@ public:
   int loadOrder(const QString& name) const override;
   void setLoadOrder(const QStringList& pluginList) override;
   bool isMaster(const QString& name) const override;
+  bool isMasterFlagged(const QString& name) const override;
+  bool isLight(const QString& name) const override;
+  bool isLightFlagged(const QString& name) const override;
   QStringList masters(const QString& name) const override;
   QString origin(const QString& name) const override;
   bool onRefreshed(const std::function<void()>& callback) override;
