@@ -63,9 +63,9 @@ void PluginListProxy::setLoadOrder(const QStringList& pluginList)
   return m_Proxied->setLoadOrder(pluginList);
 }
 
-bool PluginListProxy::isMaster(const QString& name) const
+bool PluginListProxy::isMasterFile(const QString& name) const
 {
-  return m_Proxied->isMaster(name);
+  return m_Proxied->isMasterFile(name);
 }
 
 bool PluginListProxy::isMasterFlagged(const QString& name) const
@@ -73,14 +73,19 @@ bool PluginListProxy::isMasterFlagged(const QString& name) const
   return m_Proxied->isMasterFlagged(name);
 }
 
-bool PluginListProxy::isLight(const QString& name) const
+bool PluginListProxy::isLightFile(const QString& name) const
 {
-  return m_Proxied->isLight(name);
+  return m_Proxied->isLightFile(name);
 }
 
 bool PluginListProxy::isLightFlagged(const QString& name) const
 {
   return m_Proxied->isLightFlagged(name);
+}
+
+bool PluginListProxy::isMaster(const QString& name) const
+{
+  return m_Proxied->isMasterFlagged(name);
 }
 
 QStringList PluginListProxy::masters(const QString& name) const

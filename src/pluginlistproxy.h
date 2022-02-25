@@ -21,15 +21,18 @@ public:
   bool setPriority(const QString& name, int newPriority) override;
   int loadOrder(const QString& name) const override;
   void setLoadOrder(const QStringList& pluginList) override;
-  bool isMaster(const QString& name) const override;
+  bool isMasterFile(const QString& name) const override;
   bool isMasterFlagged(const QString& name) const override;
-  bool isLight(const QString& name) const override;
+  bool isLightFile(const QString& name) const override;
   bool isLightFlagged(const QString& name) const override;
   QStringList masters(const QString& name) const override;
   QString origin(const QString& name) const override;
   bool onRefreshed(const std::function<void()>& callback) override;
   bool onPluginMoved(const std::function<void(const QString&, int, int)>& func) override;
   bool onPluginStateChanged(const std::function<void(const std::map<QString, PluginStates>&)>& func) override;
+
+  // DEPRECATED
+  [[deprecated]] bool isMaster(const QString& name) const override;
 
 private:
 

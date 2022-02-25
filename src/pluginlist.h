@@ -232,9 +232,9 @@ public:
   int priority(const QString &name) const;
   int loadOrder(const QString &name) const;
   bool setPriority(const QString& name, int newPriority);
-  bool isMaster(const QString &name) const;
+  bool isMasterFile(const QString &name) const;
   bool isMasterFlagged(const QString& name) const;
-  bool isLight(const QString &name) const;
+  bool isLightFile(const QString &name) const;
   bool isLightFlagged(const QString &name) const;
   QStringList masters(const QString &name) const;
   QString origin(const QString &name) const;
@@ -320,9 +320,9 @@ private:
     int loadOrder;
     FILETIME time;
     QString originName;
-    bool isMaster;
+    bool isMasterFile;
     bool isMasterFlagged;
-    bool isLight;
+    bool isLightFile;
     bool isLightFlagged;
     bool modSelected;
     QString author;
