@@ -76,7 +76,7 @@ void PluginListView::updatePluginCount()
       activeLightMasterCount += active;
       activeVisibleCount += visible && active;
     }
-    else if (list->isMaster(plugin)) {
+    else if (list->isMaster(plugin) || list->isMasterFlagged(plugin)) {
       masterCount++;
       activeMasterCount += active;
       activeVisibleCount += visible && active;
