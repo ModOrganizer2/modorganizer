@@ -232,7 +232,7 @@ void CategoryFactory::loadDefaultCategories()
   addCategory(44, "Equipment", { 1, 44 }, 43);
   addCategory(45, "Home/Settlement", { 1, 45 }, 43);
   addCategory(10, "Body, Face, & Hair", { 2, 17, 26 }, 0);
-  addCategory(39, "Tattoos", { 1, 57 }, 10);
+  addCategory(56, "Tattoos", { 1, 57 }, 10);
   addCategory(40, "Character Presets", { 1, 58 }, 0);
   addCategory(11, "Items", { 2, 27, 85 }, 0);
   addCategory(32, "Mercantile", { 2, 23, 69 }, 0);
