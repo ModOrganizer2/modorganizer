@@ -62,27 +62,6 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-static bool ByName(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS)
-{
-  return LHS.name.toUpper() < RHS.name.toUpper();
-}
-
-static bool ByPriority(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS)
-{
-  if (LHS.isMasterFlagged && !RHS.isMasterFlagged) {
-    return true;
-  } else if (!LHS.isMasterFlagged && RHS.isMasterFlagged) {
-    return false;
-  } else {
-    return LHS.priority < RHS.priority;
-  }
-}
-
-static bool ByDate(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS)
-{
-  return QFileInfo(LHS.fullPath).lastModified() < QFileInfo(RHS.fullPath).lastModified();
-}
-
 static QString TruncateString(const QString& text)
 {
   QString new_text = text;
@@ -326,7 +305,9 @@ void PluginList::fixPluginRelationships()
   // Count the types of plugins
   int masterCount = 0;
   for (auto plugin : m_ESPs) {
-    if (plugin.hasLightExtension || plugin.isMasterFlagged) {
+    if (plugin.hasLightExtension ||
+        plugin.hasMasterExtension ||
+        plugin.isMasterFlagged) {
       masterCount++;
     }
   }
@@ -334,7 +315,9 @@ void PluginList::fixPluginRelationships()
   // Ensure masters are up top and normal plugins are down below
   for (int i = 0; i < m_ESPs.size(); i++) {
     ESPInfo& plugin = m_ESPs[i];
-    if (plugin.hasLightExtension || plugin.isMasterFlagged) {
+    if (plugin.hasLightExtension ||
+        plugin.hasMasterExtension ||
+        plugin.isMasterFlagged) {
       if (plugin.priority > masterCount) {
         int newPriority = masterCount + 1;
         setPluginPriority(i, newPriority);
@@ -1181,10 +1164,12 @@ QVariant PluginList::fontData(const QModelIndex &modelIndex) const
 
   QFont result;
 
-  if (m_ESPs[index].hasMasterExtension || m_ESPs[index].isMasterFlagged) {
+  if (m_ESPs[index].hasMasterExtension ||
+      m_ESPs[index].isMasterFlagged ||
+      m_ESPs[index].hasLightExtension) {
     result.setItalic(true);
     result.setWeight(QFont::Bold);
-  } else if (m_ESPs[index].hasLightExtension || m_ESPs[index].isLightFlagged) {
+  } else if (m_ESPs[index].isLightFlagged) {
     result.setItalic(true);
   }
 
@@ -1524,18 +1509,22 @@ void PluginList::setPluginPriority(int row, int &newPriority, bool isForced)
   else if (newPriorityTemp >= static_cast<int>(m_ESPsByPriority.size()))
     newPriorityTemp = static_cast<int>(m_ESPsByPriority.size()) - 1;
 
-  if (!m_ESPs[row].isMasterFlagged && !m_ESPs[row].hasLightExtension) {
+  if (!m_ESPs[row].isMasterFlagged &&
+      !m_ESPs[row].hasLightExtension &&
+      !m_ESPs[row].hasMasterExtension) {
     // don't allow esps to be moved above esms
     while ((newPriorityTemp < static_cast<int>(m_ESPsByPriority.size() - 1)) &&
             (m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).isMasterFlagged ||
-             m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).hasLightExtension)) {
+             m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).hasLightExtension ||
+             m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).hasMasterExtension)) {
       ++newPriorityTemp;
     }
   } else {
     // don't allow esms to be moved below esps
     while ((newPriorityTemp > 0) &&
            !m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).isMasterFlagged &&
-           !m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).hasLightExtension) {
+           !m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).hasLightExtension &&
+           !m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).hasMasterExtension) {
       --newPriorityTemp;
     }
     // also don't allow "regular" esms to be moved above primary plugins
@@ -1561,7 +1550,6 @@ void PluginList::setPluginPriority(int row, int &newPriority, bool isForced)
   }
   else if (newPriorityTemp > oldPriority) { // moving down
     // don't allow masters to be moved below their children
-    //for (auto idx : m_ESPsByPriority) {
     for (int i = oldPriority + 1; i <= newPriorityTemp; i++) {
       PluginList::ESPInfo* otherInfo = &m_ESPs.at(m_ESPsByPriority[i]);
       for (auto master : otherInfo->masters) {
