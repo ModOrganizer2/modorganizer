@@ -344,10 +344,6 @@ private:
     Loot::Plugin loot;
   };
 
-  friend bool ByName(const ESPInfo& LHS, const ESPInfo& RHS);
-  friend bool ByDate(const ESPInfo& LHS, const ESPInfo& RHS);
-  friend bool ByPriority(const ESPInfo& LHS, const ESPInfo& RHS);
-
 private:
 
   void syncLoadOrder();
