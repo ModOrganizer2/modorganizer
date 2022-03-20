@@ -326,7 +326,7 @@ void PluginList::fixPluginRelationships()
   // Count the types of plugins
   int masterCount = 0;
   for (auto plugin : m_ESPs) {
-    if (plugin.isLightFile || plugin.isMasterFlagged) {
+    if (plugin.hasLightExtension || plugin.isMasterFlagged) {
       masterCount++;
     }
   }
@@ -334,7 +334,7 @@ void PluginList::fixPluginRelationships()
   // Ensure masters are up top and normal plugins are down below
   for (int i = 0; i < m_ESPs.size(); i++) {
     ESPInfo& plugin = m_ESPs[i];
-    if (plugin.isLightFile || plugin.isMasterFlagged) {
+    if (plugin.hasLightExtension || plugin.isMasterFlagged) {
       if (plugin.priority > masterCount) {
         int newPriority = masterCount + 1;
         setPluginPriority(i, newPriority);
@@ -923,47 +923,6 @@ int PluginList::loadOrder(const QString &name) const
   }
 }
 
-bool PluginList::isMasterFile(const QString &name) const
-{
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
-    return false;
-  } else {
-    return m_ESPs[iter->second].isMasterFile;
-  }
-}
-
-bool PluginList::isMasterFlagged(const QString& name) const
-{
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
-    return false;
-  }
-  else {
-    return m_ESPs[iter->second].isMasterFlagged;
-  }
-}
-
-bool PluginList::isLightFile(const QString &name) const
-{
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
-    return false;
-  } else {
-    return m_ESPs[iter->second].isLightFile;
-  }
-}
-
-bool PluginList::isLightFlagged(const QString &name) const
-{
-  auto iter = m_ESPsByName.find(name);
-  if (iter == m_ESPsByName.end()) {
-    return false;
-  } else {
-    return m_ESPs[iter->second].isLightFlagged;
-  }
-}
-
 QStringList PluginList::masters(const QString &name) const
 {
   auto iter = m_ESPsByName.find(name);
@@ -985,6 +944,50 @@ QString PluginList::origin(const QString &name) const
     return QString();
   } else {
     return m_ESPs[iter->second].originName;
+  }
+}
+
+bool PluginList::hasMasterExtension(const QString& name) const
+{
+  auto iter = m_ESPsByName.find(name);
+  if (iter == m_ESPsByName.end()) {
+    return false;
+  }
+  else {
+    return m_ESPs[iter->second].hasMasterExtension;
+  }
+}
+
+bool PluginList::hasLightExtension(const QString& name) const
+{
+  auto iter = m_ESPsByName.find(name);
+  if (iter == m_ESPsByName.end()) {
+    return false;
+  }
+  else {
+    return m_ESPs[iter->second].hasLightExtension;
+  }
+}
+
+bool PluginList::isMasterFlagged(const QString& name) const
+{
+  auto iter = m_ESPsByName.find(name);
+  if (iter == m_ESPsByName.end()) {
+    return false;
+  }
+  else {
+    return m_ESPs[iter->second].isMasterFlagged;
+  }
+}
+
+bool PluginList::isLightFlagged(const QString& name) const
+{
+  auto iter = m_ESPsByName.find(name);
+  if (iter == m_ESPsByName.end()) {
+    return false;
+  }
+  else {
+    return m_ESPs[iter->second].isLightFlagged;
   }
 }
 
@@ -1049,7 +1052,7 @@ void PluginList::generatePluginIndexes()
       ++numSkipped;
       continue;
     }
-    if (lightPluginsSupported && (m_ESPs[i].isLightFile || m_ESPs[i].isLightFlagged)) {
+    if (lightPluginsSupported && (m_ESPs[i].hasLightExtension || m_ESPs[i].isLightFlagged)) {
       int ESLpos = 254 + ((numESLs + 1) / 4096);
       m_ESPs[i].index = QString("%1:%2").arg(ESLpos, 2, 16, QChar('0')).arg((numESLs) % 4096, 3, 16, QChar('0')).toUpper();
       ++numESLs;
@@ -1178,10 +1181,10 @@ QVariant PluginList::fontData(const QModelIndex &modelIndex) const
 
   QFont result;
 
-  if (m_ESPs[index].isMasterFile || m_ESPs[index].isMasterFlagged) {
+  if (m_ESPs[index].hasMasterExtension || m_ESPs[index].isMasterFlagged) {
     result.setItalic(true);
     result.setWeight(QFont::Bold);
-  } else if (m_ESPs[index].isLightFile || m_ESPs[index].isLightFlagged) {
+  } else if (m_ESPs[index].hasLightExtension || m_ESPs[index].isLightFlagged) {
     result.setItalic(true);
   }
 
@@ -1263,7 +1266,7 @@ QVariant PluginList::tooltipData(const QModelIndex &modelIndex) const
           "be added to your game settings, overwriting in case of conflicts.");
     }
 
-    if (esp.isLightFlagged && !esp.isLightFile) {
+    if (esp.isLightFlagged && !esp.hasLightExtension) {
       toolTip +=
         "<br><br>" + tr(
           "This ESP is flagged as an ESL. It will adhere to the ESP load "
@@ -1385,7 +1388,7 @@ QVariant PluginList::iconData(const QModelIndex &modelIndex) const
     result.append(":/MO/gui/archive_conflict_neutral");
   }
 
-  if (esp.isLightFlagged && !esp.isLightFile) {
+  if (esp.isLightFlagged && !esp.hasLightExtension) {
     result.append(":/MO/gui/awaiting");
   }
 
@@ -1521,18 +1524,18 @@ void PluginList::setPluginPriority(int row, int &newPriority, bool isForced)
   else if (newPriorityTemp >= static_cast<int>(m_ESPsByPriority.size()))
     newPriorityTemp = static_cast<int>(m_ESPsByPriority.size()) - 1;
 
-  if (!m_ESPs[row].isMasterFlagged && !m_ESPs[row].isLightFile) {
+  if (!m_ESPs[row].isMasterFlagged && !m_ESPs[row].hasLightExtension) {
     // don't allow esps to be moved above esms
     while ((newPriorityTemp < static_cast<int>(m_ESPsByPriority.size() - 1)) &&
             (m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).isMasterFlagged ||
-             m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).isLightFile)) {
+             m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).hasLightExtension)) {
       ++newPriorityTemp;
     }
   } else {
     // don't allow esms to be moved below esps
     while ((newPriorityTemp > 0) &&
            !m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).isMasterFlagged &&
-           !m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).isLightFile) {
+           !m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).hasLightExtension) {
       --newPriorityTemp;
     }
     // also don't allow "regular" esms to be moved above primary plugins
@@ -1705,9 +1708,9 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
   try {
     ESP::File file(ToWString(fullPath));
     auto extension = name.right(3).toLower();
-    isMasterFile = (extension == "esm");
+    hasMasterExtension = (extension == "esm");
+    hasLightExtension = lightPluginsAreSupported && (extension == "esl");
     isMasterFlagged = file.isMaster();
-    isLightFile = lightPluginsAreSupported && (extension == "esl");
     isLightFlagged = lightPluginsAreSupported && file.isLight();
 
     author = QString::fromLatin1(file.author().c_str());
@@ -1718,9 +1721,9 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
     }
   } catch (const std::exception &e) {
     log::error("failed to parse plugin file {}: {}", fullPath, e.what());
-    isMasterFile = false;
+    hasMasterExtension = false;
+    hasLightExtension = false;
     isMasterFlagged = false;
-    isLightFile = false;
     isLightFlagged = false;
   }
 }

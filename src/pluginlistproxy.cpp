@@ -63,26 +63,6 @@ void PluginListProxy::setLoadOrder(const QStringList& pluginList)
   return m_Proxied->setLoadOrder(pluginList);
 }
 
-bool PluginListProxy::isMasterFile(const QString& name) const
-{
-  return m_Proxied->isMasterFile(name);
-}
-
-bool PluginListProxy::isMasterFlagged(const QString& name) const
-{
-  return m_Proxied->isMasterFlagged(name);
-}
-
-bool PluginListProxy::isLightFile(const QString& name) const
-{
-  return m_Proxied->isLightFile(name);
-}
-
-bool PluginListProxy::isLightFlagged(const QString& name) const
-{
-  return m_Proxied->isLightFlagged(name);
-}
-
 bool PluginListProxy::isMaster(const QString& name) const
 {
   return m_Proxied->isMasterFlagged(name);
@@ -111,4 +91,24 @@ bool PluginListProxy::onPluginMoved(const std::function<void(const QString&, int
 bool PluginListProxy::onPluginStateChanged(const std::function<void(const std::map<QString, PluginStates>&)> &func)
 {
   return m_PluginStateChanged.connect(func).connected();
+}
+
+bool PluginListProxy::hasMasterExtension(const QString& name) const
+{
+  return m_Proxied->hasMasterExtension(name);
+}
+
+bool PluginListProxy::hasLightExtension(const QString& name) const
+{
+  return m_Proxied->hasLightExtension(name);
+}
+
+bool PluginListProxy::isMasterFlagged(const QString& name) const
+{
+  return m_Proxied->isMasterFlagged(name);
+}
+
+bool PluginListProxy::isLightFlagged(const QString& name) const
+{
+  return m_Proxied->isLightFlagged(name);
 }

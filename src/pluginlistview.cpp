@@ -71,12 +71,12 @@ void PluginListView::updatePluginCount()
   for (QString plugin : list->pluginNames()) {
     bool active = list->isEnabled(plugin);
     bool visible = m_sortProxy->filterMatchesPlugin(plugin);
-    if (list->isLightFile(plugin) || list->isLightFlagged(plugin)) {
+    if (list->hasLightExtension(plugin) || list->isLightFlagged(plugin)) {
       lightMasterCount++;
       activeLightMasterCount += active;
       activeVisibleCount += visible && active;
     }
-    else if (list->isMasterFile(plugin) || list->isMasterFlagged(plugin)) {
+    else if (list->hasMasterExtension(plugin) || list->isMasterFlagged(plugin)) {
       masterCount++;
       activeMasterCount += active;
       activeVisibleCount += visible && active;

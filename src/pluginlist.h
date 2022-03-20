@@ -232,13 +232,14 @@ public:
   int priority(const QString &name) const;
   int loadOrder(const QString &name) const;
   bool setPriority(const QString& name, int newPriority);
-  bool isMasterFile(const QString &name) const;
-  bool isMasterFlagged(const QString& name) const;
-  bool isLightFile(const QString &name) const;
-  bool isLightFlagged(const QString &name) const;
   QStringList masters(const QString &name) const;
   QString origin(const QString &name) const;
   void setLoadOrder(const QStringList& pluginList);
+
+  bool hasMasterExtension(const QString& name) const;
+  bool hasLightExtension(const QString& name) const;
+  bool isMasterFlagged(const QString& name) const;
+  bool isLightFlagged(const QString& name) const;
 
   boost::signals2::connection onRefreshed(const std::function<void()>& callback);
   boost::signals2::connection onPluginMoved(const std::function<void(const QString&, int, int)>& func);
@@ -320,9 +321,9 @@ private:
     int loadOrder;
     FILETIME time;
     QString originName;
-    bool isMasterFile;
+    bool hasMasterExtension;
+    bool hasLightExtension;
     bool isMasterFlagged;
-    bool isLightFile;
     bool isLightFlagged;
     bool modSelected;
     QString author;
