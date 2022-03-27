@@ -359,7 +359,8 @@ void initLogging()
   log::getDefault().setCallback(
     [](log::Entry e){ LogModel::instance().add(e); });
 
-  log::getDefault().addToBlacklist(getenv("USERNAME"), "USERNAME");
+  log::getDefault().addToBlacklist(std::string("\\") + getenv("USERNAME"), "\\USERNAME");
+  log::getDefault().addToBlacklist(std::string("/") + getenv("USERNAME"), "/USERNAME");
 
   qInstallMessageHandler(qtLogCallback);
 }
