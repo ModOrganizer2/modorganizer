@@ -150,12 +150,12 @@ public:
 
   void setFileSize(uint64_t size)
   {
-    m_fileSize.override(size);
+    m_fileSize.set(size);
   }
 
   void setCompressedFileSize(uint64_t compressedSize)
   {
-    m_compressedFileSize.override(compressedSize);
+    m_compressedFileSize.set(compressedSize);
   }
 
   const QString& realPath() const
@@ -243,7 +243,6 @@ private:
   {
     std::optional<T> value;
     bool failed = false;
-    bool overridden = false;
 
     bool empty() const
     {
@@ -254,29 +253,18 @@ private:
     {
       value = std::move(t);
       failed = false;
-      overridden = false;
-    }
-
-    void override(T t)
-    {
-      value = std::move(t);
-      failed = false;
-      overridden = true;
     }
 
     void fail()
     {
       value = {};
       failed = true;
-      overridden = false;
     }
 
     void reset()
     {
-      if (!overridden) {
-        value = {};
-        failed = false;
-      }
+      value = {};
+      failed = false;
     }
   };
 
