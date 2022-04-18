@@ -19,7 +19,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "moapplication.h"
 #include "settings.h"
-#include "env.h"
 #include "commandline.h"
 #include "instancemanager.h"
 #include "organizercore.h"
