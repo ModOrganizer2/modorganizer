@@ -71,12 +71,12 @@ void PluginListView::updatePluginCount()
   for (QString plugin : list->pluginNames()) {
     bool active = list->isEnabled(plugin);
     bool visible = m_sortProxy->filterMatchesPlugin(plugin);
-    if (list->isLight(plugin) || list->isLightFlagged(plugin)) {
+    if (list->hasLightExtension(plugin) || list->isLightFlagged(plugin)) {
       lightMasterCount++;
       activeLightMasterCount += active;
       activeVisibleCount += visible && active;
     }
-    else if (list->isMaster(plugin)) {
+    else if (list->hasMasterExtension(plugin) || list->isMasterFlagged(plugin)) {
       masterCount++;
       activeMasterCount += active;
       activeVisibleCount += visible && active;
@@ -305,8 +305,7 @@ bool PluginListView::toggleSelectionState()
 
 bool PluginListView::event(QEvent* event)
 {
-  auto* profile = m_core->currentProfile();
-  if (event->type() == QEvent::KeyPress && profile) {
+  if (event->type() == QEvent::KeyPress) {
     QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
 
     if (keyEvent->modifiers() == Qt::ControlModifier

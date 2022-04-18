@@ -2229,7 +2229,7 @@ void MainWindow::wikiTriggered()
 
 void MainWindow::discordTriggered()
 {
-  shell::Open(QUrl("https://discord.gg/cYwdcxj"));
+  shell::Open(QUrl("https://discord.gg/6GKR9jZ"));
 }
 
 void MainWindow::issueTriggered()
@@ -3008,7 +3008,7 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
   for (auto mod : modsList) {
     QString validNewVersion;
     int newModStatus = -1;
-    QString installedFile = mod->installationFile();
+    QString installedFile = QFileInfo(mod->installationFile()).fileName();
 
     if (!installedFile.isEmpty()) {
       QVariantMap foundFileData;

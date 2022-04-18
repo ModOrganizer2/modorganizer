@@ -232,12 +232,14 @@ public:
   int priority(const QString &name) const;
   int loadOrder(const QString &name) const;
   bool setPriority(const QString& name, int newPriority);
-  bool isMaster(const QString &name) const;
-  bool isLight(const QString &name) const;
-  bool isLightFlagged(const QString &name) const;
   QStringList masters(const QString &name) const;
   QString origin(const QString &name) const;
   void setLoadOrder(const QStringList& pluginList);
+
+  bool hasMasterExtension(const QString& name) const;
+  bool hasLightExtension(const QString& name) const;
+  bool isMasterFlagged(const QString& name) const;
+  bool isLightFlagged(const QString& name) const;
 
   boost::signals2::connection onRefreshed(const std::function<void()>& callback);
   boost::signals2::connection onPluginMoved(const std::function<void(const QString&, int, int)>& func);
@@ -319,8 +321,9 @@ private:
     int loadOrder;
     FILETIME time;
     QString originName;
-    bool isMaster;
-    bool isLight;
+    bool hasMasterExtension;
+    bool hasLightExtension;
+    bool isMasterFlagged;
     bool isLightFlagged;
     bool modSelected;
     QString author;
@@ -341,10 +344,6 @@ private:
     Loot::Plugin loot;
   };
 
-  friend bool ByName(const ESPInfo& LHS, const ESPInfo& RHS);
-  friend bool ByDate(const ESPInfo& LHS, const ESPInfo& RHS);
-  friend bool ByPriority(const ESPInfo& LHS, const ESPInfo& RHS);
-
 private:
 
   void syncLoadOrder();
@@ -353,12 +352,14 @@ private:
   void writeLockedOrder(const QString &fileName) const;
 
   void readLockedOrderFrom(const QString &fileName);
-  void setPluginPriority(int row, int &newPriority);
+  void setPluginPriority(int row, int &newPriority, bool isForced=false);
   void changePluginPriority(std::vector<int> rows, int newPriority);
 
   void testMasters();
 
+  void fixPrimaryPlugins();
   void fixPriorities();
+  void fixPluginRelationships();
 
   int findPluginByPriority(int priority);
 
