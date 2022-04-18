@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DIRECTORYREFRESHER_H
 #define DIRECTORYREFRESHER_H
 
+#include "shared/directoryentry.h"
 #include "shared/fileregisterfwd.h"
 #include "profile.h"
 #include <QObject>

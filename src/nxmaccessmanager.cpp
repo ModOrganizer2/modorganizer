@@ -18,7 +18,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "nxmaccessmanager.h"
-#include "ui_validationprogressdialog.h"
 #include "iplugingame.h"
 #include "nexusinterface.h"
 #include "nxmurl.h"

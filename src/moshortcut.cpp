@@ -1,5 +1,4 @@
 #include "moshortcut.h"
-#include "instancemanager.h"
 
 MOShortcut::MOShortcut(const QString& link)
   : m_valid(link.startsWith("moshortcut://"))

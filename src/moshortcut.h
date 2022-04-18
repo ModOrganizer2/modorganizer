@@ -2,8 +2,7 @@
 #define MODORGANIZER_MOSHORTCUT_INCLUDED
 
 #include <QString>
-
-class Instance;
+#include "instancemanager.h"
 
 class MOShortcut
 {

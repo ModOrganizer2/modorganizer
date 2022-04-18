@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QApplication>
 #include <QFileSystemWatcher>
+#include "env.h"
 
 class Settings;
 class MOMultiProcess;
@@ -31,7 +32,6 @@ class OrganizerCore;
 class NexusInterface;
 
 namespace MOBase { class IPluginGame; }
-namespace env { class ModuleNotification; }
 
 class MOApplication : public QApplication
 {
