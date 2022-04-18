@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "env.h"
 #include <QApplication>
 #include <QFileSystemWatcher>
+#include "env.h"
 
 class Settings;
 class MOMultiProcess;
