@@ -1,15 +1,31 @@
 cmake_minimum_required(VERSION 3.16)
 
-# appveyor does not build modorganizer in its standard location, so use
-# DEPENDENCIES_DIR to find cmake_common
-if(DEFINED DEPENDENCIES_DIR)
-	include(${DEPENDENCIES_DIR}/modorganizer_super/cmake_common/src.cmake)
-else()
-	include(../../cmake_common/src.cmake)
-endif()
+add_executable(organizer)
+mo2_configure_executable(organizer
+	WARNINGS OFF
+	EXTRA_TRANSLATIONS ${MO2_UIBASE_PATH}/src
+	PRIVATE_DEPENDS
+		uibase githubpp bsatk esptk archive usvfs lootcli boost::program_options
+		Qt::WebEngineWidgets Qt::WebSockets)
+target_link_libraries(organizer PUBLIC Shlwapi)
+set_target_properties(organizer PROPERTIES OUTPUT_NAME "ModOrganizer")
+mo2_install_target(organizer)
 
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt5"
+		DESTINATION bin/dlls
+		RENAME dlls.manifest)
 
-add_filter(NAME src/application GROUPS
+install(DIRECTORY
+	"${CMAKE_CURRENT_SOURCE_DIR}/stylesheets"
+	"${CMAKE_CURRENT_SOURCE_DIR}/tutorials"
+	DESTINATION bin)
+
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/markdown.html"
+	DESTINATION bin/resources)
+
+mo2_deploy_qt(BINARIES ModOrganizer.exe uibase.dll plugins/bsa_packer.dll)
+
+mo2_add_filter(NAME src/application GROUPS
 	iuserinterface
 	commandline
 	main
@@ -21,12 +37,12 @@ add_filter(NAME src/application GROUPS
 	updatedialog
 )
 
-add_filter(NAME src/browser GROUPS
+mo2_add_filter(NAME src/browser GROUPS
 	browserdialog
 	browserview
 )
 
-add_filter(NAME src/core GROUPS
+mo2_add_filter(NAME src/core GROUPS
 	categories
 	archivefiletree
 	installationmanager
@@ -41,7 +57,7 @@ add_filter(NAME src/core GROUPS
 	uilocker
 )
 
-add_filter(NAME src/dialogs GROUPS
+mo2_add_filter(NAME src/dialogs GROUPS
 	aboutdialog
 	activatemodsdialog
 	categoriesdialog
@@ -62,13 +78,13 @@ add_filter(NAME src/dialogs GROUPS
 	waitingonclosedialog
 )
 
-add_filter(NAME src/downloads GROUPS
+mo2_add_filter(NAME src/downloads GROUPS
 	downloadlist
 	downloadlistview
 	downloadmanager
 )
 
-add_filter(NAME src/env GROUPS
+mo2_add_filter(NAME src/env GROUPS
 	env
 	envdump
 	envfs
@@ -80,24 +96,24 @@ add_filter(NAME src/env GROUPS
 	envwindows
 )
 
-add_filter(NAME src/executables GROUPS
+mo2_add_filter(NAME src/executables GROUPS
 	executableslist
 	editexecutablesdialog
 )
 
-add_filter(NAME src/instances GROUPS
+mo2_add_filter(NAME src/instances GROUPS
 	createinstancedialog
 	createinstancedialogpages
 	instancemanager
 	instancemanagerdialog
 )
 
-add_filter(NAME src/loot GROUPS
+mo2_add_filter(NAME src/loot GROUPS
 	loot
 	lootdialog
 )
 
-add_filter(NAME src/mainwindow GROUPS
+mo2_add_filter(NAME src/mainwindow GROUPS
 	datatab
 	downloadstab
 	iconfetcher
@@ -109,7 +125,7 @@ add_filter(NAME src/mainwindow GROUPS
 	statusbar
 )
 
-add_filter(NAME src/modinfo GROUPS
+mo2_add_filter(NAME src/modinfo GROUPS
 	modinfo
 	modinfobackup
 	modinfoforeign
@@ -119,7 +135,7 @@ add_filter(NAME src/modinfo GROUPS
 	modinfowithconflictinfo
 )
 
-add_filter(NAME src/modinfo/dialog GROUPS
+mo2_add_filter(NAME src/modinfo/dialog GROUPS
 	modinfodialog
 	modinfodialogcategories
 	modinfodialogconflicts
@@ -133,18 +149,18 @@ add_filter(NAME src/modinfo/dialog GROUPS
 	modinfodialogtextfiles
 )
 
-add_filter(NAME src/modinfo/dialog/widgets GROUPS
+mo2_add_filter(NAME src/modinfo/dialog/widgets GROUPS
 	modidlineedit
 )
 
-add_filter(NAME src/modlist GROUPS
+mo2_add_filter(NAME src/modlist GROUPS
 	modlist
 	modlistdropinfo
 	modlistsortproxy
 	modlistbypriorityproxy
 )
 
-add_filter(NAME src/modlist/view GROUPS
+mo2_add_filter(NAME src/modlist/view GROUPS
 	filterlist
 	modlistview
 	modlistviewactions
@@ -155,25 +171,25 @@ add_filter(NAME src/modlist/view GROUPS
 	modlistversiondelegate
 )
 
-add_filter(NAME src/plugins GROUPS
+mo2_add_filter(NAME src/plugins GROUPS
 	pluginlist
 	pluginlistsortproxy
 	pluginlistview
 	pluginlistcontextmenu
 )
 
-add_filter(NAME src/previews GROUPS
+mo2_add_filter(NAME src/previews GROUPS
 	previewdialog
 	previewgenerator
 )
 
-add_filter(NAME src/profiles GROUPS
+mo2_add_filter(NAME src/profiles GROUPS
 	profile
 	profileinputdialog
 	profilesdialog
 )
 
-add_filter(NAME src/proxies GROUPS
+mo2_add_filter(NAME src/proxies GROUPS
 	downloadmanagerproxy
 	modlistproxy
 	organizerproxy
@@ -181,7 +197,7 @@ add_filter(NAME src/proxies GROUPS
 	proxyutils
 )
 
-add_filter(NAME src/register GROUPS
+mo2_add_filter(NAME src/register GROUPS
 	shared/directoryentry
 	shared/fileentry
 	shared/filesorigin
@@ -191,12 +207,12 @@ add_filter(NAME src/register GROUPS
 	directoryrefresher
 )
 
-add_filter(NAME src/settings GROUPS
+mo2_add_filter(NAME src/settings GROUPS
 	settings
 	settingsutilities
 )
 
-add_filter(NAME src/settingsdialog GROUPS
+mo2_add_filter(NAME src/settingsdialog GROUPS
 	settingsdialog
 	settingsdialogdiagnostics
 	settingsdialoggeneral
@@ -209,7 +225,7 @@ add_filter(NAME src/settingsdialog GROUPS
 	disableproxyplugindialog
 )
 
-add_filter(NAME src/utilities GROUPS
+mo2_add_filter(NAME src/utilities GROUPS
 	shared/appconfig
 	bbcode
 	csvbuilder
@@ -224,7 +240,7 @@ add_filter(NAME src/utilities GROUPS
 	glob_matching
 )
 
-add_filter(NAME src/widgets GROUPS
+mo2_add_filter(NAME src/widgets GROUPS
 	colortable
 	genericicondelegate
 	filerenamer
@@ -239,24 +255,3 @@ add_filter(NAME src/widgets GROUPS
 	modelutils
 	copyeventfilter
 )
-
-
-requires_project(game_features githubpp bsatk esptk archive usvfs)
-
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-	${modorganizer_super_path}/lootcli/include
-)
-
-
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt5"
-        DESTINATION bin/dlls
-        RENAME dlls.manifest)
-
-install(FILES ${qm_files} DESTINATION bin/translations)
-
-install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/stylesheets"
-                  "${CMAKE_CURRENT_SOURCE_DIR}/tutorials"
-        DESTINATION bin)
-
-deploy_qt(BINARIES ModOrganizer.exe uibase.dll plugins/bsa_packer.dll)
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/markdown.html" DESTINATION bin/resources)
