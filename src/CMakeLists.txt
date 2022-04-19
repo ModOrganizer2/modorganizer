@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 add_executable(organizer)
 mo2_configure_executable(organizer
 	WARNINGS OFF
-	EXTRA_TRANSLATIONS ${MO2_UIBASE_PATH}/src
+	EXTRA_TRANSLATIONS ${MO2_SUPER_PATH}/game_gamebryo/src ${MO2_UIBASE_PATH}/src
 	PRIVATE_DEPENDS
 		uibase githubpp bsatk esptk archive usvfs lootcli boost::program_options
 		Qt::WebEngineWidgets Qt::WebSockets)

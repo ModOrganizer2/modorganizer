@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2020 Mikaël Capelle. All rights reserved.
+Copyright (C) 2020 MikaÃ«l Capelle. All rights reserved.
 
 This file is part of Mod Organizer.
 
