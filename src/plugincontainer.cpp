@@ -467,8 +467,8 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString& filepat
       }
     }
     else {
-      log::warn("Trying to register two plugins with the name '{}', the second one will not be registered.",
-        pluginObj->name());
+      log::warn("Trying to register two plugins with the name '{}' (from {} and {}), the second one will not be registered.",
+        pluginObj->name(), this->filepath(other), QDir::cleanPath(filepath));
       return nullptr;
     }
   }
@@ -481,6 +481,7 @@ IPlugin* PluginContainer::registerPlugin(QObject *plugin, const QString& filepat
   bf::at_key<QObject>(m_Plugins).push_back(plugin);
 
   plugin->setProperty("filepath", QDir::cleanPath(filepath));
+  plugin->setParent(this);
 
   if (m_Organizer) {
     m_Organizer->settings().plugins().registerPlugin(pluginObj);
@@ -920,6 +921,8 @@ void PluginContainer::unloadPlugin(MOBase::IPlugin* plugin, QObject* object)
     }
 
   }
+
+  object->deleteLater();
 
   // Do this at the end.
   m_Requirements.erase(plugin);
