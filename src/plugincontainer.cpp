@@ -823,11 +823,44 @@ QObject* PluginContainer::loadQtPlugin(const QString& filepath)
   return nullptr;
 }
 
+std::optional<QString> PluginContainer::isQtPluginFolder(const QString& filepath) const {
+
+  if (!QFileInfo(filepath).isDir()) {
+    return {};
+  }
+
+  QDirIterator iter(filepath, QDir::Files | QDir::NoDotAndDotDot);
+  while (iter.hasNext()) {
+    iter.next();
+    const auto filePath = iter.filePath();
+
+    // not a library, skip
+    if (!QLibrary::isLibrary(filePath)) {
+      continue;
+    }
+
+    // check if we have proper metadata - this does not load the plugin (metaData() should
+    // be very lightweight)
+    const QPluginLoader loader(filePath);
+    if (!loader.metaData().isEmpty()) {
+      return filePath;
+    }
+  }
+
+  return {};
+}
+
 void PluginContainer::loadPlugin(QString const& filepath)
 {
   std::vector<QObject*> plugins;
   if (QFileInfo(filepath).isFile() && QLibrary::isLibrary(filepath)) {
     QObject* plugin = loadQtPlugin(filepath);
+    if (plugin) {
+      plugins.push_back(plugin);
+    }
+  }
+  else if (auto p = isQtPluginFolder(filepath)) {
+    QObject* plugin = loadQtPlugin(*p);
     if (plugin) {
       plugins.push_back(plugin);
     }
@@ -1049,7 +1082,7 @@ void PluginContainer::loadPlugins()
 
   QString pluginPath = qApp->applicationDirPath() + "/" + ToQString(AppConfig::pluginPath());
   log::debug("looking for plugins in {}", QDir::toNativeSeparators(pluginPath));
-  QDirIterator iter(pluginPath, QDir::Files | QDir::NoDotAndDotDot);
+  QDirIterator iter(pluginPath, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
 
   while (iter.hasNext()) {
     iter.next();
@@ -1075,6 +1108,9 @@ void PluginContainer::loadPlugins()
     QString filepath = iter.filePath();
     if (QLibrary::isLibrary(filepath)) {
       loadQtPlugin(filepath);
+    }
+    else if (auto p = isQtPluginFolder(filepath)) {
+      loadQtPlugin(*p);
     }
   }
 
