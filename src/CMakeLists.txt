@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 add_executable(organizer)
+set_target_properties(organizer PROPERTIES OUTPUT_NAME "ModOrganizer")
 mo2_configure_executable(organizer
 	WARNINGS OFF
 	EXTRA_TRANSLATIONS ${MO2_SUPER_PATH}/game_gamebryo/src ${MO2_UIBASE_PATH}/src
@@ -8,7 +9,6 @@ mo2_configure_executable(organizer
 		uibase githubpp bsatk esptk archive usvfs lootcli boost::program_options
 		Qt::WebEngineWidgets Qt::WebSockets)
 target_link_libraries(organizer PUBLIC Shlwapi)
-set_target_properties(organizer PROPERTIES OUTPUT_NAME "ModOrganizer")
 mo2_install_target(organizer)
 
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt5"
