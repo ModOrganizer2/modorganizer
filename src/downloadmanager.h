@@ -79,10 +79,10 @@ private:
 
   struct DownloadInfo {
     ~DownloadInfo() { delete m_FileInfo; }
-    accumulator_set<int, stats<tag::rolling_mean>> m_DownloadAcc;
-    accumulator_set<int, stats<tag::rolling_mean>> m_DownloadTimeAcc;
-    int m_DownloadLast;
-    int m_DownloadTimeLast;
+    accumulator_set<qint64, stats<tag::rolling_mean>> m_DownloadAcc;
+    accumulator_set<qint64, stats<tag::rolling_mean>> m_DownloadTimeAcc;
+    qint64 m_DownloadLast;
+    qint64 m_DownloadTimeLast;
     unsigned int m_DownloadID;
     QString m_FileName;
     QFile m_Output;
