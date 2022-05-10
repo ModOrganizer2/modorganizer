@@ -91,14 +91,6 @@ QAbstractItemView[filtered=true] {
   border: 2px solid #f00 !important;
 }
 
-QAbstractItemView::item {
-  background: #1e1e1e;
-}
-
-QAbstractItemView::item:alternate {
-  background: #262626;
-}
-
 QAbstractItemView,
 QListView,
 QTreeView {
