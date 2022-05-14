@@ -740,7 +740,7 @@ QProgressBar {
   text-align: center;
   border-style: solid;
   border-width: 1px;
-  margin: 0 10px;
+  margin: 0px;
 }
 
 QProgressBar::chunk {
