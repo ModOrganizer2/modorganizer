@@ -20,9 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "credentialsdialog.h"
 #include "ui_credentialsdialog.h"
 
-CredentialsDialog::CredentialsDialog(QWidget *parent) :
-  QDialog(parent),
-  ui(new Ui::CredentialsDialog)
+CredentialsDialog::CredentialsDialog(QWidget* parent)
+    : QDialog(parent), ui(new Ui::CredentialsDialog)
 {
   ui->setupUi(this);
 }

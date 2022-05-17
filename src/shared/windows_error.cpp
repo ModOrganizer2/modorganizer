@@ -20,7 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "windows_error.h"
 #include <sstream>
 
-namespace MOShared {
+namespace MOShared
+{
 
 std::string windows_error::constructMessage(const std::string& input, int inErrorCode)
 {
@@ -33,17 +34,19 @@ std::string windows_error::constructMessage(const std::string& input, int inErro
 
   // TODO: the message is not english?
   if (FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                     nullptr, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&buffer, 0, nullptr) == 0) {
+                     nullptr, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                     (LPSTR)&buffer, 0, nullptr) == 0) {
     finalMessage << " (errorcode " << errorCode << ")";
   } else {
     LPSTR lastChar = buffer + strlen(buffer) - 2;
-    *lastChar = '\0';
+    *lastChar      = '\0';
     finalMessage << " (" << buffer << " [" << errorCode << "])";
-    LocalFree(buffer); // allocated by FormatMessage
+    LocalFree(buffer);  // allocated by FormatMessage
   }
 
-  ::SetLastError(errorCode); // restore error code because FormatMessage might have modified it
+  ::SetLastError(
+      errorCode);  // restore error code because FormatMessage might have modified it
   return finalMessage.str();
 }
 
-} // namespace MOShared
+}  // namespace MOShared

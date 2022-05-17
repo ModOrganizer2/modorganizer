@@ -1,10 +1,13 @@
 #ifndef MODORGANIZER_INSTANCEMANAGERDIALOG_INCLUDED
 #define MODORGANIZER_INSTANCEMANAGERDIALOG_INCLUDED
 
-#include <filterwidget.h>
 #include <QDialog>
+#include <filterwidget.h>
 
-namespace Ui { class InstanceManagerDialog; };
+namespace Ui
+{
+class InstanceManagerDialog;
+};
 
 class Instance;
 class PluginContainer;
@@ -16,8 +19,7 @@ class InstanceManagerDialog : public QDialog
   Q_OBJECT
 
 public:
-  explicit InstanceManagerDialog(
-    PluginContainer& pc, QWidget *parent = nullptr);
+  explicit InstanceManagerDialog(PluginContainer& pc, QWidget* parent = nullptr);
 
   ~InstanceManagerDialog();
 
@@ -54,7 +56,6 @@ public:
   //
   void exploreGame();
 
-
   // converts the selected, portable instance to a global one; not implemented
   //
   void convertToGlobal();
@@ -71,12 +72,10 @@ public:
   //
   void deleteInstance();
 
-
   // sets whether the dialog should restart MO when selecting an instance; this
   // is false on startup when no instances exist
   //
   void setRestartOnSelect(bool b);
-
 
   // saves geometry
   //
@@ -113,7 +112,6 @@ private:
   //
   bool confirmSwitch(const Instance& to);
 
-
   // returns the index of selected instance, NoSelection if none
   //
   std::size_t singleSelectionIndex() const;
@@ -144,4 +142,4 @@ private:
   bool doDelete(const QStringList& files, bool recycle);
 };
 
-#endif // MODORGANIZER_INSTANCEMANAGERDIALOG_INCLUDED
+#endif  // MODORGANIZER_INSTANCEMANAGERDIALOG_INCLUDED

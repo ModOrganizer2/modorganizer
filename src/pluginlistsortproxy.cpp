@@ -19,16 +19,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "pluginlistsortproxy.h"
 #include "messagedialog.h"
-#include <QMenu>
-#include <QCheckBox>
 #include <QApplication>
-#include <QWidgetAction>
+#include <QCheckBox>
+#include <QMenu>
 #include <QTreeView>
+#include <QWidgetAction>
 
-
-PluginListSortProxy::PluginListSortProxy(QObject *parent)
-  : QSortFilterProxyModel(parent),
-    m_SortIndex(0), m_SortOrder(Qt::AscendingOrder)
+PluginListSortProxy::PluginListSortProxy(QObject* parent)
+    : QSortFilterProxyModel(parent), m_SortIndex(0), m_SortOrder(Qt::AscendingOrder)
 {
   m_EnabledColumns.set(PluginList::COL_NAME);
   m_EnabledColumns.set(PluginList::COL_PRIORITY);
@@ -45,7 +43,7 @@ void PluginListSortProxy::setEnabledColumns(unsigned int columns)
   emit layoutChanged();
 }
 
-void PluginListSortProxy::updateFilter(const QString &filter)
+void PluginListSortProxy::updateFilter(const QString& filter)
 {
   m_CurrentFilter = filter;
   invalidateFilter();
@@ -53,85 +51,89 @@ void PluginListSortProxy::updateFilter(const QString &filter)
 
 bool PluginListSortProxy::filterAcceptsRow(int row, const QModelIndex&) const
 {
-  return filterMatchesPlugin(sourceModel()->data(sourceModel()->index(row, 0)).toString());
+  return filterMatchesPlugin(
+      sourceModel()->data(sourceModel()->index(row, 0)).toString());
 }
 
-bool PluginListSortProxy::lessThan(const QModelIndex &left,
-                                   const QModelIndex &right) const
+bool PluginListSortProxy::lessThan(const QModelIndex& left,
+                                   const QModelIndex& right) const
 {
-  PluginList *plugins = qobject_cast<PluginList*>(sourceModel());
+  PluginList* plugins = qobject_cast<PluginList*>(sourceModel());
   switch (left.column()) {
-    case PluginList::COL_NAME: {
-      return QString::compare(plugins->getName(left.row()), plugins->getName(right.row()), Qt::CaseInsensitive) < 0;
-    } break;
-    case PluginList::COL_FLAGS: {
-      QVariantList lhsList = left.data(Qt::UserRole + 1).toList();
-      QVariantList rhsList = right.data(Qt::UserRole + 1).toList();
-      if (lhsList.size() != rhsList.size()) {
-        return lhsList.size() < rhsList.size();
-      } else {
-        for (int i = 0; i < lhsList.size(); ++i) {
-          if (lhsList.at(i) != rhsList.at(i)) {
-            return lhsList.at(i).toString() < rhsList.at(i).toString();
-          }
+  case PluginList::COL_NAME: {
+    return QString::compare(plugins->getName(left.row()), plugins->getName(right.row()),
+                            Qt::CaseInsensitive) < 0;
+  } break;
+  case PluginList::COL_FLAGS: {
+    QVariantList lhsList = left.data(Qt::UserRole + 1).toList();
+    QVariantList rhsList = right.data(Qt::UserRole + 1).toList();
+    if (lhsList.size() != rhsList.size()) {
+      return lhsList.size() < rhsList.size();
+    } else {
+      for (int i = 0; i < lhsList.size(); ++i) {
+        if (lhsList.at(i) != rhsList.at(i)) {
+          return lhsList.at(i).toString() < rhsList.at(i).toString();
         }
-        return false;
       }
-    } break;
-    case PluginList::COL_MODINDEX: {
-      QString leftVal = plugins->getIndexPriority(left.row());
-      QString rightVal = plugins->getIndexPriority(right.row());
-      return leftVal < rightVal;
-    } break;
-    default: {
-      return plugins->getPriority(left.row()) < plugins->getPriority(right.row());
-    } break;
+      return false;
+    }
+  } break;
+  case PluginList::COL_MODINDEX: {
+    QString leftVal  = plugins->getIndexPriority(left.row());
+    QString rightVal = plugins->getIndexPriority(right.row());
+    return leftVal < rightVal;
+  } break;
+  default: {
+    return plugins->getPriority(left.row()) < plugins->getPriority(right.row());
+  } break;
   }
 }
 
-bool PluginListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action,
-                                       int row, int column, const QModelIndex &parent)
+bool PluginListSortProxy::dropMimeData(const QMimeData* data, Qt::DropAction action,
+                                       int row, int column, const QModelIndex& parent)
 {
-    if ((sortColumn() != PluginList::COL_PRIORITY)
-        && (sortColumn() != PluginList::COL_MODINDEX)) {
-      QWidget *wid = qApp->activeWindow()->findChild<QTreeView*>("espList");
-      MessageDialog::showMessage(tr("Drag&Drop is only supported when sorting by priority or mod index"), wid);
-      return false;
-    }
+  if ((sortColumn() != PluginList::COL_PRIORITY) &&
+      (sortColumn() != PluginList::COL_MODINDEX)) {
+    QWidget* wid = qApp->activeWindow()->findChild<QTreeView*>("espList");
+    MessageDialog::showMessage(
+        tr("Drag&Drop is only supported when sorting by priority or mod index"), wid);
+    return false;
+  }
 
-    if ((row == -1) && (column == -1)) {
-      return this->sourceModel()->dropMimeData(data, action, -1, -1, mapToSource(parent));
-    }
-    // in the regular model, when dropping between rows, the row-value passed to
-    // the sourceModel is inconsistent between ascending and descending ordering.
-    // This should fix that
-    if (sortOrder() == Qt::DescendingOrder) {
-      --row;
-    }
+  if ((row == -1) && (column == -1)) {
+    return this->sourceModel()->dropMimeData(data, action, -1, -1, mapToSource(parent));
+  }
+  // in the regular model, when dropping between rows, the row-value passed to
+  // the sourceModel is inconsistent between ascending and descending ordering.
+  // This should fix that
+  if (sortOrder() == Qt::DescendingOrder) {
+    --row;
+  }
 
-    QModelIndex proxyIndex = index(row, column, parent);
-    QModelIndex sourceIndex = mapToSource(proxyIndex);
-    return this->sourceModel()->dropMimeData(data, action, sourceIndex.row(), sourceIndex.column(),
-                                             sourceIndex.parent());
+  QModelIndex proxyIndex  = index(row, column, parent);
+  QModelIndex sourceIndex = mapToSource(proxyIndex);
+  return this->sourceModel()->dropMimeData(data, action, sourceIndex.row(),
+                                           sourceIndex.column(), sourceIndex.parent());
 }
 
-bool PluginListSortProxy::filterMatchesPlugin(const QString &plugin) const
+bool PluginListSortProxy::filterMatchesPlugin(const QString& plugin) const
 {
   if (!m_CurrentFilter.isEmpty()) {
 
-    bool display = false;
+    bool display       = false;
     QString filterCopy = QString(m_CurrentFilter);
     filterCopy.replace("||", ";").replace("OR", ";").replace("|", ";");
     QStringList ORList = filterCopy.split(";", Qt::SkipEmptyParts);
 
     bool segmentGood = true;
 
-    //split in ORSegments that internally use AND logic
+    // split in ORSegments that internally use AND logic
     for (auto& ORSegment : ORList) {
       QStringList ANDKeywords = ORSegment.split(" ", Qt::SkipEmptyParts);
-      segmentGood = true;
+      segmentGood             = true;
 
-      //check each word in the segment for match, each word needs to be matched but it doesn't matter where.
+      // check each word in the segment for match, each word needs to be matched but it
+      // doesn't matter where.
       for (auto& currentKeyword : ANDKeywords) {
         if (!plugin.contains(currentKeyword, Qt::CaseInsensitive)) {
           segmentGood = false;
@@ -140,14 +142,14 @@ bool PluginListSortProxy::filterMatchesPlugin(const QString &plugin) const
       }
 
       if (segmentGood) {
-        //the last AND loop didn't break so the ORSegments is true so mod matches filter
+        // the last AND loop didn't break so the ORSegments is true so mod matches
+        // filter
         return true;
       }
 
-    }//for ORList loop
+    }  // for ORList loop
 
     return false;
-  }
-  else
+  } else
     return true;
 }

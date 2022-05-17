@@ -14,7 +14,7 @@ class WindowsInfo
 public:
   struct Version
   {
-    DWORD major=0, minor=0, build=0;
+    DWORD major = 0, minor = 0, build = 0;
 
     QString toString() const
     {
@@ -23,16 +23,10 @@ public:
 
     friend bool operator==(const Version& a, const Version& b)
     {
-      return
-        a.major == b.major &&
-        a.minor == b.minor &&
-        a.build == b.build;
+      return a.major == b.major && a.minor == b.minor && a.build == b.build;
     }
 
-    friend bool operator!=(const Version& a, const Version& b)
-    {
-      return !(a == b);
-    }
+    friend bool operator!=(const Version& a, const Version& b) { return !(a == b); }
   };
 
   struct Release
@@ -46,12 +40,8 @@ public:
     // some sub-build number, undocumented, may be empty
     DWORD UBR;
 
-    Release()
-      : UBR(0)
-    {
-    }
+    Release() : UBR(0) {}
   };
-
 
   WindowsInfo();
 
@@ -102,6 +92,6 @@ private:
   std::optional<bool> getElevated() const;
 };
 
-} // namespace
+}  // namespace env
 
-#endif // ENV_WINDOWS_H
+#endif  // ENV_WINDOWS_H

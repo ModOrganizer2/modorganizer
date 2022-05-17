@@ -22,19 +22,22 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <map>
 
-#include <versioninfo.h>
 #include <github.h>
+#include <versioninfo.h>
 
 class Archive;
 class NexusInterface;
 class PluginContainer;
-namespace MOBase { class IPluginGame; }
+namespace MOBase
+{
+class IPluginGame;
+}
 
 #include <QFile>
 #include <QObject>
 #include <QString>
 #include <QVariant>
-#include <QtGlobal> //for qint64
+#include <QtGlobal>  //for qint64
 
 class QNetworkReply;
 class QProgressDialog;
@@ -48,14 +51,15 @@ class Settings;
  * 2. if the updateAvailable() signal is received, allow the user to start the update
  * 3. if the user start the update, call startUpdate()
  * 4. startUpdate() will first query a list of files, try to determine if there is an
- *    incremental update. If not, the user will have to confirm the download of a full download.
- *    Once the correct file is selected, it is downloaded.
- * 5. before the downloaded file is extracted, existing files that are going to be replaced are
- *    moved to "update_backup" on because files that are currently open can't be replaced.
+ *    incremental update. If not, the user will have to confirm the download of a full
+ *download. Once the correct file is selected, it is downloaded.
+ * 5. before the downloaded file is extracted, existing files that are going to be
+ *replaced are moved to "update_backup" on because files that are currently open can't
+ *be replaced.
  * 6. the update is extracted and then deleted
  * 7. finally, a restart is requested via signal.
- * 8. at restart, Mod Organizer will remove the update_backup directory since none of the files
- *    should now be open
+ * 8. at restart, Mod Organizer will remove the update_backup directory since none of
+ *the files should now be open
  *
  * @todo use NexusBridge
  **/
@@ -65,7 +69,6 @@ class SelfUpdater : public QObject
   Q_OBJECT
 
 public:
-
   /**
    * @brief constructor
    *
@@ -73,17 +76,17 @@ public:
    * @param parent parent widget
    * @todo passing the nexus interface is unneccessary
    **/
-  explicit SelfUpdater(NexusInterface *nexusInterface);
+  explicit SelfUpdater(NexusInterface* nexusInterface);
 
   virtual ~SelfUpdater();
 
-  void setUserInterface(QWidget *widget);
+  void setUserInterface(QWidget* widget);
 
-  void setPluginContainer(PluginContainer *pluginContainer);
+  void setPluginContainer(PluginContainer* pluginContainer);
 
   /**
-  * @brief request information about the current version
-  **/
+   * @brief request information about the current version
+   **/
   void testForUpdate(const Settings& settings);
 
   /**
@@ -112,14 +115,13 @@ signals:
   /**
    * @brief emitted if a message of the day was received
    **/
-  void motdAvailable(const QString &motd);
+  void motdAvailable(const QString& motd);
 
 private:
-
-  void openOutputFile(const QString &fileName);
-  void download(const QString &downloadLink);
+  void openOutputFile(const QString& fileName);
+  void download(const QString& downloadLink);
   void installUpdate();
-  void report7ZipError(const QString &errorMessage);
+  void report7ZipError(const QString& errorMessage);
   void showProgress();
   void closeProgress();
 
@@ -131,23 +133,21 @@ private slots:
   void downloadCancel();
 
 private:
-
-  QWidget *m_Parent;
+  QWidget* m_Parent;
   MOBase::VersionInfo m_MOVersion;
-  NexusInterface *m_Interface;
+  NexusInterface* m_Interface;
   QFile m_UpdateFile;
-  QNetworkReply *m_Reply;
-  QProgressDialog *m_Progress { nullptr };
+  QNetworkReply* m_Reply;
+  QProgressDialog* m_Progress{nullptr};
   bool m_Canceled;
   int m_Attempts;
 
   GitHub m_GitHub;
 
-  // Map from version to release, in decreasing order (first element is the latest release):
+  // Map from version to release, in decreasing order (first element is the latest
+  // release):
   using CandidatesMap = std::map<MOBase::VersionInfo, QJsonObject, std::greater<>>;
   CandidatesMap m_UpdateCandidates;
-
 };
 
-
-#endif // SELFUPDATER_H
+#endif  // SELFUPDATER_H

@@ -18,17 +18,17 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "editexecutablesdialog.h"
-#include "ui_editexecutablesdialog.h"
 #include "filedialogmemory.h"
-#include "modlist.h"
 #include "forcedloaddialog.h"
+#include "modlist.h"
 #include "organizercore.h"
 #include "spawn.h"
+#include "ui_editexecutablesdialog.h"
 
 #include <QMessageBox>
 #include <Shellapi.h>
-#include <utility.h>
 #include <algorithm>
+#include <utility.h>
 
 using namespace MOBase;
 using namespace MOShared;
@@ -36,32 +36,25 @@ using namespace MOShared;
 class IgnoreChanges
 {
 public:
-  IgnoreChanges(EditExecutablesDialog* d)
-    : m_dialog(d)
+  IgnoreChanges(EditExecutablesDialog* d) : m_dialog(d)
   {
     m_dialog->m_settingUI = true;
   }
 
-  ~IgnoreChanges()
-  {
-    m_dialog->m_settingUI = false;
-  }
+  ~IgnoreChanges() { m_dialog->m_settingUI = false; }
 
-  IgnoreChanges(const IgnoreChanges&) = delete;
+  IgnoreChanges(const IgnoreChanges&)            = delete;
   IgnoreChanges& operator=(const IgnoreChanges&) = delete;
 
 private:
   EditExecutablesDialog* m_dialog;
 };
 
-
-EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, int sel, QWidget* parent)
-  : TutorableDialog("EditExecutables", parent)
-  , ui(new Ui::EditExecutablesDialog)
-  , m_organizerCore(oc)
-  , m_originalExecutables(*oc.executablesList())
-  , m_executablesList(*oc.executablesList())
-  , m_settingUI(false)
+EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, int sel,
+                                             QWidget* parent)
+    : TutorableDialog("EditExecutables", parent), ui(new Ui::EditExecutablesDialog),
+      m_organizerCore(oc), m_originalExecutables(*oc.executablesList()),
+      m_executablesList(*oc.executablesList()), m_settingUI(false)
 {
   ui->setupUi(this);
   ui->splitter->setSizes({200, 1});
@@ -71,15 +64,12 @@ EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, int sel, QWidget
   loadCustomOverwrites();
   loadForcedLibraries();
 
-
   QStringList modNames;
 
   for (auto&& m : m_organizerCore.modList()->allMods()) {
     auto mod = ModInfo::getByName(m);
-    if (!mod->hasAnyOfTheseFlags({ ModInfo::FLAG_FOREIGN,
-                                   ModInfo::FLAG_BACKUP,
-                                   ModInfo::FLAG_OVERWRITE,
-                                   ModInfo::FLAG_SEPARATOR })) {
+    if (!mod->hasAnyOfTheseFlags({ModInfo::FLAG_FOREIGN, ModInfo::FLAG_BACKUP,
+                                  ModInfo::FLAG_OVERWRITE, ModInfo::FLAG_SEPARATOR})) {
       ui->mods->addItem(m);
       modNames.push_back(m);
     }
@@ -90,7 +80,6 @@ EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, int sel, QWidget
   c->setCompletionMode(QCompleter::UnfilteredPopupCompletion);
   ui->mods->setCompleter(c);
 
-
   fillList();
   setDirty(false);
 
@@ -99,20 +88,42 @@ EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, int sel, QWidget
   }
 
   auto* m = new QMenu;
-  m->addAction(tr("Add from file..."), [&]{ addFromFile(); });
-  m->addAction(tr("Add empty"), [&]{ addEmpty(); });
-  m->addAction(tr("Clone selected"), [&]{ clone(); });
+  m->addAction(tr("Add from file..."), [&] {
+    addFromFile();
+  });
+  m->addAction(tr("Add empty"), [&] {
+    addEmpty();
+  });
+  m->addAction(tr("Clone selected"), [&] {
+    clone();
+  });
   ui->add->setMenu(m);
 
   // some widgets need to do more than just save() and have their own handler
-  connect(ui->binary, &QLineEdit::textChanged, [&]{ save(); });
-  connect(ui->workingDirectory, &QLineEdit::textChanged, [&]{ save(); });
-  connect(ui->arguments, &QLineEdit::textChanged, [&]{ save(); });
-  connect(ui->steamAppID, &QLineEdit::textChanged, [&]{ save(); });
-  connect(ui->mods, &QComboBox::currentTextChanged, [&]{ save(); });
-  connect(ui->useApplicationIcon, &QCheckBox::toggled, [&]{ save(); });
-  connect(ui->hide, &QCheckBox::toggled, [&]{ save(); });
-  connect(ui->list->model(), &QAbstractItemModel::rowsMoved, [&]{ saveOrder(); });
+  connect(ui->binary, &QLineEdit::textChanged, [&] {
+    save();
+  });
+  connect(ui->workingDirectory, &QLineEdit::textChanged, [&] {
+    save();
+  });
+  connect(ui->arguments, &QLineEdit::textChanged, [&] {
+    save();
+  });
+  connect(ui->steamAppID, &QLineEdit::textChanged, [&] {
+    save();
+  });
+  connect(ui->mods, &QComboBox::currentTextChanged, [&] {
+    save();
+  });
+  connect(ui->useApplicationIcon, &QCheckBox::toggled, [&] {
+    save();
+  });
+  connect(ui->hide, &QCheckBox::toggled, [&] {
+    save();
+  });
+  connect(ui->list->model(), &QAbstractItemModel::rowsMoved, [&] {
+    saveOrder();
+  });
 }
 
 EditExecutablesDialog::~EditExecutablesDialog() = default;
@@ -141,10 +152,8 @@ void EditExecutablesDialog::loadForcedLibraries()
   const auto* p = m_organizerCore.currentProfile();
 
   for (const auto& e : m_executablesList) {
-    m_forcedLibraries.set(
-      e.title(),
-      p->forcedLibrariesEnabled(e.title()),
-      p->determineForcedLibraries(e.title()));
+    m_forcedLibraries.set(e.title(), p->forcedLibrariesEnabled(e.title()),
+                          p->determineForcedLibraries(e.title()));
   }
 }
 
@@ -199,16 +208,15 @@ bool EditExecutablesDialog::checkOutputMods(const ExecutablesList& exes)
 
     if (modName && modName->enabled) {
       if (modName->value.isEmpty()) {
-        QMessageBox::critical(
-          this, tr("Empty output mod"),
-          tr("The output mod for %2 is empty.").arg(e.title()));
+        QMessageBox::critical(this, tr("Empty output mod"),
+                              tr("The output mod for %2 is empty.").arg(e.title()));
 
         return false;
       } else if (ModInfo::getIndex(modName->value) == UINT_MAX) {
-        QMessageBox::critical(
-          this, tr("Output mod not found"),
-          tr("The output mod '%1' for %2 does not exist.")
-            .arg(modName->value).arg(e.title()));
+        QMessageBox::critical(this, tr("Output mod not found"),
+                              tr("The output mod '%1' for %2 does not exist.")
+                                  .arg(modName->value)
+                                  .arg(e.title()));
 
         return false;
       }
@@ -236,13 +244,13 @@ bool EditExecutablesDialog::commitChanges()
 
   // set the new custom overwrites and forced libraries
   for (const auto& e : newExecutables) {
-    if (auto modName=m_customOverwrites.find(e.title())) {
+    if (auto modName = m_customOverwrites.find(e.title())) {
       if (modName && modName->enabled) {
         profile->storeSetting("custom_overwrites", e.title(), modName->value);
       }
     }
 
-    if (auto libraryList=m_forcedLibraries.find(e.title())) {
+    if (auto libraryList = m_forcedLibraries.find(e.title())) {
       if (libraryList && !libraryList->value.empty()) {
         profile->setForcedLibrariesEnabled(e.title(), libraryList->enabled);
         profile->storeForcedLibraries(e.title(), libraryList->value);
@@ -260,7 +268,7 @@ bool EditExecutablesDialog::commitChanges()
 
 void EditExecutablesDialog::setDirty(bool b)
 {
-  if (auto* button=ui->buttons->button(QDialogButtonBox::Apply)) {
+  if (auto* button = ui->buttons->button(QDialogButtonBox::Apply)) {
     button->setEnabled(b);
   }
 }
@@ -268,8 +276,8 @@ void EditExecutablesDialog::setDirty(bool b)
 void EditExecutablesDialog::selectIndex(int i)
 {
   if (i >= 0 && i < ui->list->count()) {
-    ui->list->selectionModel()->setCurrentIndex(
-      ui->list->model()->index(i, 0), QItemSelectionModel::ClearAndSelect);
+    ui->list->selectionModel()->setCurrentIndex(ui->list->model()->index(i, 0),
+                                                QItemSelectionModel::ClearAndSelect);
   }
 }
 
@@ -292,7 +300,7 @@ Executable* EditExecutablesDialog::selectedExe()
   }
 
   const auto& title = item->text();
-  auto itor = m_executablesList.find(title);
+  auto itor         = m_executablesList.find(title);
 
   if (itor == m_executablesList.end()) {
     return nullptr;
@@ -305,7 +313,7 @@ void EditExecutablesDialog::fillList()
 {
   ui->list->clear();
 
-  for(const auto& exe : m_executablesList) {
+  for (const auto& exe : m_executablesList) {
     ui->list->addItem(createListItem(exe));
   }
 
@@ -322,8 +330,7 @@ QListWidgetItem* EditExecutablesDialog::createListItem(const Executable& exe)
   return new QListWidgetItem(exe.title());
 }
 
-void EditExecutablesDialog::updateUI(
-  const QListWidgetItem* item, const Executable* e)
+void EditExecutablesDialog::updateUI(const QListWidgetItem* item, const Executable* e)
 {
   // the ui is currently being set, ignore changes
   IgnoreChanges c(this);
@@ -337,8 +344,7 @@ void EditExecutablesDialog::updateUI(
   setButtons(item, e);
 }
 
-void EditExecutablesDialog::setButtons(
-  const QListWidgetItem* item, const Executable* e)
+void EditExecutablesDialog::setButtons(const QListWidgetItem* item, const Executable* e)
 {
   // add and remove are always enabled
 
@@ -405,10 +411,9 @@ void EditExecutablesDialog::setEdits(const Executable& e)
       modIndex = ui->mods->findText(modName->value);
 
       if (modIndex == -1) {
-        log::warn(
-          "executable '{}' uses mod '{}' as a custom overwrite, but that mod "
-          "doesn't exist",
-          e.title(), modName->value);
+        log::warn("executable '{}' uses mod '{}' as a custom overwrite, but that mod "
+                  "doesn't exist",
+                  e.title(), modName->value);
       }
     }
 
@@ -420,7 +425,7 @@ void EditExecutablesDialog::setEdits(const Executable& e)
   }
 
   {
-    const auto libraryList = m_forcedLibraries.find(e.title());
+    const auto libraryList        = m_forcedLibraries.find(e.title());
     const bool hasForcedLibraries = (libraryList && libraryList->enabled);
 
     ui->forceLoadLibraries->setChecked(hasForcedLibraries);
@@ -557,10 +562,10 @@ void EditExecutablesDialog::on_reset_clicked()
 {
   const auto title = tr("Reset plugin executables");
 
-  const auto text = tr(
-    "This will restore all the executables provided by the game plugin. If "
-    "there are existing executables with the same names, they will be "
-    "automatically renamed and left unchanged.");
+  const auto text =
+      tr("This will restore all the executables provided by the game plugin. If "
+         "there are existing executables with the same names, they will be "
+         "automatically renamed and left unchanged.");
 
   const auto buttons = QMessageBox::Ok | QMessageBox::Cancel;
 
@@ -596,14 +601,12 @@ void EditExecutablesDialog::on_remove_clicked()
   const int currentRow = ui->list->row(item);
   delete item;
 
-
   m_customOverwrites.remove(exe->title());
   m_forcedLibraries.remove(exe->title());
 
   // removing from main list, must be done last because it invalidates the
   // exe pointer
   m_executablesList.remove(exe->title());
-
 
   // reselecting the same row as before, or the last one
   if (currentRow >= ui->list->count()) {
@@ -678,7 +681,7 @@ void EditExecutablesDialog::on_title_textChanged(const QString& original)
 
   // once the executable is saved, the list item must be changed to match the
   // new name
-  if (auto* i=selectedItem()) {
+  if (auto* i = selectedItem()) {
     i->setText(s);
   }
 }
@@ -790,7 +793,7 @@ void EditExecutablesDialog::setBinary(const QFileInfo& binary)
 
   // setting title if some variation of "New Executable"
   if (ui->title->text().startsWith(tr("New Executable"), Qt::CaseInsensitive)) {
-    const auto prefix = binary.completeBaseName();
+    const auto prefix   = binary.completeBaseName();
     const auto newTitle = m_executablesList.makeNonConflictingTitle(prefix);
 
     if (newTitle) {
@@ -802,8 +805,8 @@ void EditExecutablesDialog::setBinary(const QFileInfo& binary)
 void EditExecutablesDialog::on_browseWorkingDirectory_clicked()
 {
   QString dirName = FileDialogMemory::getExistingDirectory(
-    "editExecutableDirectory", this, tr("Select a directory"),
-    ui->workingDirectory->text());
+      "editExecutableDirectory", this, tr("Select a directory"),
+      ui->workingDirectory->text());
 
   if (dirName.isNull()) {
     // cancelled
@@ -823,7 +826,7 @@ void EditExecutablesDialog::on_configureLibraries_clicked()
 
   ForcedLoadDialog dialog(m_organizerCore.managedGame(), this);
 
-  if (auto libraryList=m_forcedLibraries.find(e->title())) {
+  if (auto libraryList = m_forcedLibraries.find(e->title())) {
     dialog.setValues(libraryList->value);
   }
 
@@ -849,12 +852,10 @@ void EditExecutablesDialog::on_buttons_clicked(QAbstractButton* b)
 QFileInfo EditExecutablesDialog::browseBinary(const QString& initial)
 {
   const QString Filters =
-    tr("Executables (*.exe *.bat *.jar)") + ";;" +
-    tr("All Files (*.*)");
+      tr("Executables (*.exe *.bat *.jar)") + ";;" + tr("All Files (*.*)");
 
   const auto f = FileDialogMemory::getOpenFileName(
-    "editExecutableBinary", this, tr("Select an executable"),
-    initial, Filters);
+      "editExecutableBinary", this, tr("Select an executable"), initial, Filters);
 
   if (f.isNull()) {
     return {};
@@ -869,10 +870,10 @@ void EditExecutablesDialog::setJarBinary(const QFileInfo& binary)
 
   if (java.isEmpty()) {
     QMessageBox::information(
-      this, tr("Java required"),
-      tr("MO requires Java to run this application. If you already "
-         "have it installed, select javaw.exe from that installation as "
-         "the binary."));
+        this, tr("Java required"),
+        tr("MO requires Java to run this application. If you already "
+           "have it installed, select javaw.exe from that installation as "
+           "the binary."));
   }
 
   {
@@ -881,7 +882,8 @@ void EditExecutablesDialog::setJarBinary(const QFileInfo& binary)
 
     ui->binary->setText(java);
     ui->workingDirectory->setText(QDir::toNativeSeparators(binary.absolutePath()));
-    ui->arguments->setText("-jar \"" + QDir::toNativeSeparators(binary.absoluteFilePath()) + "\"");
+    ui->arguments->setText("-jar \"" +
+                           QDir::toNativeSeparators(binary.absoluteFilePath()) + "\"");
   }
 
   save();

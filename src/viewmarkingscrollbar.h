@@ -1,9 +1,8 @@
 #ifndef VIEWMARKINGSCROLLBAR_H
 #define VIEWMARKINGSCROLLBAR_H
 
-#include <QTreeView>
 #include <QScrollBar>
-
+#include <QTreeView>
 
 class ViewMarkingScrollBar : public QScrollBar
 {
@@ -11,7 +10,7 @@ public:
   ViewMarkingScrollBar(QTreeView* view, int role);
 
 protected:
-  void paintEvent(QPaintEvent *event) override;
+  void paintEvent(QPaintEvent* event) override;
 
   // retrieve the color of the marker for the given index
   //
@@ -22,5 +21,4 @@ private:
   int m_role;
 };
 
-
-#endif // VIEWMARKINGSCROLLBAR_H
+#endif  // VIEWMARKINGSCROLLBAR_H

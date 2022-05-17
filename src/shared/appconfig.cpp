@@ -19,15 +19,21 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "appconfig.h"
 
-namespace AppConfig {
+namespace AppConfig
+{
 
 #define PARWSTRING wstring
-#define APPPARAM(partype, parid, value) partype parid () { return value; }
+#define APPPARAM(partype, parid, value)                                                \
+  partype parid()                                                                      \
+  {                                                                                    \
+    return value;                                                                      \
+  }
 #include "appconfig.inc"
 
-namespace MOShared {
+namespace MOShared
+{
 #undef PARWSTRING
 #undef APPPARAM
 
-}
-} // namespace MOShared
+}  // namespace MOShared
+}  // namespace AppConfig

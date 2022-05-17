@@ -12,25 +12,24 @@ class OrganizerCore;
 
 // small class that extract information from mimeData
 //
-class ModListDropInfo {
+class ModListDropInfo
+{
 public:
-
   // text value for the mime-data for the various possible
   // origin (not for external drops)
   //
-  static constexpr const char* ModText = "mod";
+  static constexpr const char* ModText      = "mod";
   static constexpr const char* DownloadText = "download";
 
 public:
-
-  struct RelativeUrl {
+  struct RelativeUrl
+  {
     const QUrl url;
     const QString relativePath;
     const QString originName;
   };
 
 public:
-
   ModListDropInfo(const QMimeData* mimeData, OrganizerCore& core);
 
   // returns true if this drop is valid
@@ -68,7 +67,6 @@ public:
   const auto& externalUrl() const { return m_url; }
 
 private:
-
   friend class ModList;
 
   // retrieve the relative path of file and its origin given a URL from Mime data
@@ -77,10 +75,9 @@ private:
   std::optional<RelativeUrl> relativeUrl(const QUrl&) const;
 
 private:
-
   // rows for drag&drop between views
   std::vector<int> m_rows;
-  int m_download; // -1 if invalid
+  int m_download;  // -1 if invalid
 
   // local URLs from the data (relative path + origin name)
   std::vector<RelativeUrl> m_localUrls;

@@ -1,11 +1,11 @@
 #ifndef MODINFODIALOGIMAGES_H
 #define MODINFODIALOGIMAGES_H
 
-#include "modinfodialogtab.h"
 #include "filterwidget.h"
-#include <QScrollBar>
-#include "plugincontainer.h"
+#include "modinfodialogtab.h"
 #include "organizercore.h"
+#include "plugincontainer.h"
+#include <QScrollBar>
 
 using namespace MOBase;
 
@@ -33,7 +33,6 @@ protected:
 private:
   ImagesTab* m_tab = nullptr;
 };
-
 
 // widget inside the scroller, calls ImagesTab::paintThumbnailArea() when
 // needed and also forwards mouse clicks and tooltip events
@@ -75,7 +74,6 @@ private:
   ImagesTab* m_tab = nullptr;
 };
 
-
 // a widget that draws an image scaled to fit while keeping the aspect ratio
 //
 class ScalableImage : public QWidget
@@ -83,7 +81,7 @@ class ScalableImage : public QWidget
   Q_OBJECT;
 
 public:
-  ScalableImage(QString path={});
+  ScalableImage(QString path = {});
 
   // sets the image to draw
   void setImage(const QString& path);
@@ -109,14 +107,12 @@ private:
   QColor m_borderColor, m_backgroundColor;
 };
 
-
 struct Theme
 {
   QColor borderColor, backgroundColor, textColor;
   QColor highlightBackgroundColor, highlightTextColor;
   QFont font;
 };
-
 
 struct Metrics
 {
@@ -140,7 +136,6 @@ struct Metrics
 
   Metrics();
 };
-
 
 // handles all the geometry calculations by ImagesTab for painting or handling
 // mouse clicks
@@ -227,12 +222,10 @@ private:
   // rectangle of the first thumbnail on top
   const QRect m_topRect;
 
-
   // calculates the top rectangle
   //
   QRect calcTopRect() const;
 };
-
 
 class File
 {
@@ -258,7 +251,6 @@ private:
   bool needsLoad(const Geometry& geo) const;
   void load(const Geometry& geo);
 };
-
 
 class Files
 {
@@ -296,7 +288,6 @@ private:
   bool m_filtered;
 };
 
-
 struct PaintContext
 {
   mutable QPainter painter;
@@ -308,8 +299,7 @@ struct PaintContext
   PaintContext(QWidget* w, Geometry geo);
 };
 
-} // namespace
-
+}  // namespace ImagesTabHelpers
 
 class ImagesTab : public ModInfoDialogTab
 {
@@ -335,12 +325,12 @@ private:
   };
 
   using ScalableImage = ImagesTabHelpers::ScalableImage;
-  using Files = ImagesTabHelpers::Files;
-  using File = ImagesTabHelpers::File;
-  using Theme = ImagesTabHelpers::Theme;
-  using Metrics = ImagesTabHelpers::Metrics;
-  using PaintContext = ImagesTabHelpers::PaintContext;
-  using Geometry = ImagesTabHelpers::Geometry;
+  using Files         = ImagesTabHelpers::Files;
+  using File          = ImagesTabHelpers::File;
+  using Theme         = ImagesTabHelpers::Theme;
+  using Metrics       = ImagesTabHelpers::Metrics;
+  using PaintContext  = ImagesTabHelpers::PaintContext;
+  using Geometry      = ImagesTabHelpers::Geometry;
 
   ScalableImage* m_image;
   std::vector<QString> m_supportedFormats;
@@ -366,7 +356,7 @@ private:
   void onPreviewButton();
   void onFilterChanged();
 
-  void select(std::size_t i, Visibility v=Visibility::Full);
+  void select(std::size_t i, Visibility v = Visibility::Full);
   void moveSelection(int by);
   void ensureVisible(std::size_t i, Visibility v);
 
@@ -387,4 +377,4 @@ private:
   void updateScrollbar();
 };
 
-#endif // MODINFODIALOGIMAGES_H
+#endif  // MODINFODIALOGIMAGES_H

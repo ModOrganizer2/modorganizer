@@ -1,23 +1,22 @@
 #include "statusbar.h"
-#include "nexusinterface.h"
-#include "settings.h"
-#include "organizercore.h"
 #include "instancemanager.h"
+#include "nexusinterface.h"
+#include "organizercore.h"
+#include "settings.h"
 #include "ui_mainwindow.h"
 
-StatusBar::StatusBar(QWidget* parent) :
-  QStatusBar(parent), ui(nullptr), m_normal(new QLabel),
-  m_progress(new QProgressBar), m_progressSpacer1(new QWidget),
-  m_progressSpacer2(new QWidget), m_notifications(nullptr), m_update(nullptr),
-  m_api(new QLabel)
-{
-}
+StatusBar::StatusBar(QWidget* parent)
+    : QStatusBar(parent), ui(nullptr), m_normal(new QLabel),
+      m_progress(new QProgressBar), m_progressSpacer1(new QWidget),
+      m_progressSpacer2(new QWidget), m_notifications(nullptr), m_update(nullptr),
+      m_api(new QLabel)
+{}
 
 void StatusBar::setup(Ui::MainWindow* mainWindowUI, const Settings& settings)
 {
-  ui = mainWindowUI;
+  ui              = mainWindowUI;
   m_notifications = new StatusBarAction(ui->actionNotifications);
-  m_update = new StatusBarAction(ui->actionUpdate);
+  m_update        = new StatusBarAction(ui->actionUpdate);
 
   addWidget(m_normal);
 
@@ -26,12 +25,11 @@ void StatusBar::setup(Ui::MainWindow* mainWindowUI, const Settings& settings)
   addPermanentWidget(m_progress);
 
   m_progressSpacer2->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  addPermanentWidget(m_progressSpacer2,0);
+  addPermanentWidget(m_progressSpacer2, 0);
 
   addPermanentWidget(m_notifications);
   addPermanentWidget(m_update);
   addPermanentWidget(m_api);
-
 
   m_progress->setTextVisible(true);
   m_progress->setRange(0, 100);
@@ -43,12 +41,12 @@ void StatusBar::setup(Ui::MainWindow* mainWindowUI, const Settings& settings)
 
   m_api->setObjectName("apistats");
   m_api->setToolTip(QObject::tr(
-    "This tracks the number of queued Nexus API requests, as well as the "
-    "remaining daily and hourly requests. The Nexus API limits you to a pool "
-    "of requests per day and requests per hour. It is dynamically updated "
-    "every time a request is completed. If you run out of requests, you will "
-    "be unable to queue downloads, check updates, parse mod info, or even log "
-    "in. Both pools must be consumed before this happens."));
+      "This tracks the number of queued Nexus API requests, as well as the "
+      "remaining daily and hourly requests. The Nexus API limits you to a pool "
+      "of requests per day and requests per hour. It is dynamically updated "
+      "every time a request is completed. If you run out of requests, you will "
+      "be unable to queue downloads, check updates, parse mod info, or even log "
+      "in. Both pools must be consumed before this happens."));
 
   clearMessage();
   setProgress(-1);
@@ -59,7 +57,7 @@ void StatusBar::setup(Ui::MainWindow* mainWindowUI, const Settings& settings)
 
 void StatusBar::setProgress(int percent)
 {
-  bool visible =true;
+  bool visible = true;
 
   if (percent < 0 || percent >= 100) {
     clearMessage();
@@ -88,23 +86,23 @@ void StatusBar::setAPI(const APIStats& stats, const APIUserAccount& user)
   QString backgroundColor;
 
   if (user.type() == APIUserAccountTypes::None) {
-    text = "API: not logged in";
-    textColor = "";
+    text            = "API: not logged in";
+    textColor       = "";
     backgroundColor = "";
   } else {
     text = QString("API: Queued: %1 | Daily: %2 | Hourly: %3")
-      .arg(stats.requestsQueued)
-      .arg(user.limits().remainingDailyRequests)
-      .arg(user.limits().remainingHourlyRequests);
+               .arg(stats.requestsQueued)
+               .arg(user.limits().remainingDailyRequests)
+               .arg(user.limits().remainingHourlyRequests);
 
     if (user.remainingRequests() > 500) {
-      textColor = "white";
+      textColor       = "white";
       backgroundColor = "darkgreen";
     } else if (user.remainingRequests() > 200) {
-      textColor = "black";
+      textColor       = "black";
       backgroundColor = "rgb(226, 192, 0)";  // yellow
     } else {
-      textColor = "white";
+      textColor       = "white";
       backgroundColor = "darkred";
     }
   }
@@ -154,15 +152,12 @@ void StatusBar::updateNormalMessage(OrganizerCore& core)
   }
 
   QString instance = "?";
-  if (auto i=InstanceManager::singleton().currentInstance())
+  if (auto i = InstanceManager::singleton().currentInstance())
     instance = i->displayName();
 
   QString profile = core.profileName();
 
-  const auto s = QString("%1 - %2 - %3")
-    .arg(game)
-    .arg(instance)
-    .arg(profile);
+  const auto s = QString("%1 - %2 - %3").arg(game).arg(instance).arg(profile);
 
   m_normal->setText(s);
 }
@@ -198,9 +193,8 @@ void StatusBar::visibilityChanged(bool visible)
   ui->centralWidget->layout()->setContentsMargins(m);
 }
 
-
 StatusBarAction::StatusBarAction(QAction* action)
-  : m_action(action), m_icon(new QLabel), m_text(new QLabel)
+    : m_action(action), m_icon(new QLabel), m_text(new QLabel)
 {
   setLayout(new QHBoxLayout);
   layout()->setContentsMargins(0, 0, 0, 0);
@@ -230,7 +224,7 @@ QString StatusBarAction::cleanupActionText(const QString& original) const
   QString s = original;
 
   s.replace(QRegularExpression("\\&([^&])"), "\\1");  // &Item -> Item
-  s.replace("&&", "&"); // &&Item -> &Item
+  s.replace("&&", "&");                               // &&Item -> &Item
 
   if (s.endsWith("...")) {
     s = s.left(s.size() - 3);

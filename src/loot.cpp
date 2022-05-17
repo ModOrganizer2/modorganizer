@@ -1,23 +1,21 @@
 #include "loot.h"
-#include "lootdialog.h"
-#include "spawn.h"
-#include "organizercore.h"
 #include "json.h"
+#include "lootdialog.h"
+#include "organizercore.h"
+#include "spawn.h"
 #include <log.h>
 #include <report.h>
 
 using namespace MOBase;
 using namespace json;
 
-static QString LootReportPath = QDir::temp().absoluteFilePath("lootreport.json");
+static QString LootReportPath  = QDir::temp().absoluteFilePath("lootreport.json");
 static const DWORD PipeTimeout = 500;
-
 
 class AsyncPipe
 {
 public:
-  AsyncPipe()
-    : m_ioPending(false)
+  AsyncPipe() : m_ioPending(false)
   {
     std::fill(std::begin(m_buffer), std::end(m_buffer), 0);
     std::memset(&m_ov, 0, sizeof(m_ov));
@@ -68,17 +66,17 @@ private:
     static const wchar_t* PipeName = L"\\\\.\\pipe\\lootcli_pipe";
 
     SECURITY_ATTRIBUTES sa = {};
-    sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-    sa.bInheritHandle = TRUE;
+    sa.nLength             = sizeof(SECURITY_ATTRIBUTES);
+    sa.bInheritHandle      = TRUE;
 
     env::HandlePtr pipe;
 
     // creating pipe
     {
-      HANDLE pipeHandle = ::CreateNamedPipe(
-        PipeName, PIPE_ACCESS_DUPLEX|FILE_FLAG_OVERLAPPED,
-        PIPE_TYPE_BYTE|PIPE_READMODE_BYTE|PIPE_WAIT,
-        1, 50'000, 50'000, PipeTimeout, &sa);
+      HANDLE pipeHandle =
+          ::CreateNamedPipe(PipeName, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+                            PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, 50'000,
+                            50'000, PipeTimeout, &sa);
 
       if (pipeHandle == INVALID_HANDLE_VALUE) {
         const auto e = GetLastError();
@@ -93,9 +91,9 @@ private:
       // duplicating the handle to read from it
       HANDLE outputRead = INVALID_HANDLE_VALUE;
 
-      const auto r = DuplicateHandle(
-        GetCurrentProcess(), pipe.get(), GetCurrentProcess(), &outputRead,
-        0, TRUE, DUPLICATE_SAME_ACCESS);
+      const auto r =
+          DuplicateHandle(GetCurrentProcess(), pipe.get(), GetCurrentProcess(),
+                          &outputRead, 0, TRUE, DUPLICATE_SAME_ACCESS);
 
       if (!r) {
         const auto e = GetLastError();
@@ -106,11 +104,9 @@ private:
       m_stdout.reset(outputRead);
     }
 
-
     // creating handle to pipe which is passed to CreateProcess()
-    HANDLE outputWrite = ::CreateFileW(
-      PipeName, FILE_WRITE_DATA|SYNCHRONIZE, 0,
-      &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    HANDLE outputWrite = ::CreateFileW(PipeName, FILE_WRITE_DATA | SYNCHRONIZE, 0, &sa,
+                                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 
     if (outputWrite == INVALID_HANDLE_VALUE) {
       const auto e = GetLastError();
@@ -128,25 +124,21 @@ private:
     if (!::ReadFile(m_stdout.get(), m_buffer, bufferSize, &bytesRead, &m_ov)) {
       const auto e = GetLastError();
 
-      switch (e)
-      {
-        case ERROR_IO_PENDING:
-        {
-          m_ioPending = true;
-          break;
-        }
+      switch (e) {
+      case ERROR_IO_PENDING: {
+        m_ioPending = true;
+        break;
+      }
 
-        case ERROR_BROKEN_PIPE:
-        {
-          // broken pipe probably means lootcli is finished
-          break;
-        }
+      case ERROR_BROKEN_PIPE: {
+        // broken pipe probably means lootcli is finished
+        break;
+      }
 
-        default:
-        {
-          log::error("{}", formatSystemMessage(e));
-          break;
-        }
+      default: {
+        log::error("{}", formatSystemMessage(e));
+        break;
+      }
       }
 
       return {};
@@ -170,29 +162,24 @@ private:
     if (!::GetOverlappedResult(m_stdout.get(), &m_ov, &bytesRead, FALSE)) {
       const auto e = GetLastError();
 
-      switch (e)
-      {
-        case ERROR_IO_INCOMPLETE:
-        {
-          break;
-        }
+      switch (e) {
+      case ERROR_IO_INCOMPLETE: {
+        break;
+      }
 
-        case WAIT_TIMEOUT:
-        {
-          break;
-        }
+      case WAIT_TIMEOUT: {
+        break;
+      }
 
-        case ERROR_BROKEN_PIPE:
-        {
-          // broken pipe probably means lootcli is finished
-          break;
-        }
+      case ERROR_BROKEN_PIPE: {
+        // broken pipe probably means lootcli is finished
+        break;
+      }
 
-        default:
-        {
-          log::error("GetOverlappedResult failed, {}", formatSystemMessage(e));
-          break;
-        }
+      default: {
+        log::error("GetOverlappedResult failed, {}", formatSystemMessage(e));
+        break;
+      }
       }
 
       return {};
@@ -205,29 +192,26 @@ private:
   }
 };
 
-
-
 log::Levels levelFromLoot(lootcli::LogLevels level)
 {
   using LC = lootcli::LogLevels;
 
-  switch (level)
-  {
-    case LC::Trace:  // fall-through
-    case LC::Debug:
-      return log::Debug;
+  switch (level) {
+  case LC::Trace:  // fall-through
+  case LC::Debug:
+    return log::Debug;
 
-    case LC::Info:
-      return log::Info;
+  case LC::Info:
+    return log::Info;
 
-    case LC::Warning:
-      return log::Warning;
+  case LC::Warning:
+    return log::Warning;
 
-    case LC::Error:
-      return log::Error;
+  case LC::Error:
+    return log::Error;
 
-    default:
-      return log::Info;
+  default:
+    return log::Info;
   }
 }
 
@@ -318,9 +302,9 @@ QString Loot::Report::errorsMarkdown() const
 QString Loot::Stats::toMarkdown() const
 {
   return QString("`stats: %1s, lootcli %2, loot %3`")
-    .arg(QString::number(time / 1000.0, 'f', 2))
-    .arg(lootcliVersion)
-    .arg(lootVersion);
+      .arg(QString::number(time / 1000.0, 'f', 2))
+      .arg(lootcliVersion)
+      .arg(lootVersion);
 }
 
 QString Loot::Plugin::toMarkdown() const
@@ -376,7 +360,7 @@ QString Loot::Dirty::toString(bool isClean) const
 {
   if (isClean) {
     return QObject::tr("Verified clean by %1")
-      .arg(cleaningUtility.isEmpty() ? "?" : cleaningUtility);
+        .arg(cleaningUtility.isEmpty() ? "?" : cleaningUtility);
   }
 
   QString s = cleaningString();
@@ -395,35 +379,32 @@ QString Loot::Dirty::toMarkdown(bool isClean) const
 
 QString Loot::Dirty::cleaningString() const
 {
-  return QObject::tr("%1 found %2 ITM record(s), %3 deleted reference(s) and %4 deleted navmesh(es).")
-    .arg(cleaningUtility.isEmpty() ? "?" : cleaningUtility)
-    .arg(itm)
-    .arg(deletedReferences)
-    .arg(deletedNavmesh);
+  return QObject::tr("%1 found %2 ITM record(s), %3 deleted reference(s) and %4 "
+                     "deleted navmesh(es).")
+      .arg(cleaningUtility.isEmpty() ? "?" : cleaningUtility)
+      .arg(itm)
+      .arg(deletedReferences)
+      .arg(deletedNavmesh);
 }
 
 QString Loot::Message::toMarkdown() const
 {
   QString s;
 
-  switch (type)
-  {
-    case log::Error:
-    {
-      s += "**" + QObject::tr("Error") + "**: ";
-      break;
-    }
+  switch (type) {
+  case log::Error: {
+    s += "**" + QObject::tr("Error") + "**: ";
+    break;
+  }
 
-    case log::Warning:
-    {
-      s += "**" + QObject::tr("Warning") + "**: ";
-      break;
-    }
+  case log::Warning: {
+    s += "**" + QObject::tr("Warning") + "**: ";
+    break;
+  }
 
-    default:
-    {
-      break;
-    }
+  default: {
+    break;
+  }
   }
 
   s += text;
@@ -431,11 +412,9 @@ QString Loot::Message::toMarkdown() const
   return s;
 }
 
-
 Loot::Loot(OrganizerCore& core)
-  : m_core(core), m_thread(nullptr), m_cancel(false), m_result(false)
-{
-}
+    : m_core(core), m_thread(nullptr), m_cancel(false), m_result(false)
+{}
 
 Loot::~Loot()
 {
@@ -469,43 +448,42 @@ bool Loot::start(QWidget* parent, bool didUpdateMasterList)
 
   // starting thread
   log::debug("starting loot thread");
-  m_thread.reset(QThread::create([&]{ lootThread(); }));
+  m_thread.reset(QThread::create([&] {
+    lootThread();
+  }));
   m_thread->start();
 
   return true;
 }
 
-bool Loot::spawnLootcli(
-  QWidget* parent, bool didUpdateMasterList, env::HandlePtr stdoutHandle)
+bool Loot::spawnLootcli(QWidget* parent, bool didUpdateMasterList,
+                        env::HandlePtr stdoutHandle)
 {
   const auto logLevel = m_core.settings().diagnostics().lootLogLevel();
 
   QStringList parameters;
-  parameters
-    << "--game"
-    << m_core.managedGame()->gameShortName()
+  parameters << "--game" << m_core.managedGame()->gameShortName()
 
-    << "--gamePath"
-    << QString("\"%1\"").arg(m_core.managedGame()->gameDirectory().absolutePath())
+             << "--gamePath"
+             << QString("\"%1\"").arg(
+                    m_core.managedGame()->gameDirectory().absolutePath())
 
-    << "--pluginListPath"
-    << QString("\"%1/loadorder.txt\"").arg(m_core.profilePath())
+             << "--pluginListPath"
+             << QString("\"%1/loadorder.txt\"").arg(m_core.profilePath())
 
-    << "--logLevel"
-    << QString::fromStdString(lootcli::logLevelToString(logLevel))
+             << "--logLevel"
+             << QString::fromStdString(lootcli::logLevelToString(logLevel))
 
-    << "--out"
-    << QString("\"%1\"").arg(LootReportPath)
+             << "--out" << QString("\"%1\"").arg(LootReportPath)
 
-    << "--language"
-    << m_core.settings().interface().language();
+             << "--language" << m_core.settings().interface().language();
 
   if (didUpdateMasterList) {
     parameters << "--skipUpdateMasterlist";
   }
 
   spawn::SpawnParameters sp;
-  sp.binary = QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe");
+  sp.binary    = QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe");
   sp.arguments = parameters.join(" ");
   sp.currentDirectory.setPath(qApp->applicationDirPath() + "/loot");
   sp.hooked = true;
@@ -558,8 +536,7 @@ const std::vector<QString>& Loot::warnings() const
 
 void Loot::lootThread()
 {
-  try
-  {
+  try {
     m_result = false;
 
     if (waitForCompletion()) {
@@ -567,16 +544,13 @@ void Loot::lootThread()
     }
 
     m_report = createReport();
-  }
-  catch(...)
-  {
+  } catch (...) {
     log::error("unhandled exception in loot thread");
   }
 
   log::debug("finishing loot thread");
   emit finished();
 }
-
 
 bool Loot::waitForCompletion()
 {
@@ -629,14 +603,15 @@ bool Loot::waitForCompletion()
   }
 
   if (exitCode != 0UL) {
-    emit log(log::Levels::Error, tr("Loot failed. Exit code was: 0x%1").arg(exitCode, 0, 16));
+    emit log(log::Levels::Error,
+             tr("Loot failed. Exit code was: 0x%1").arg(exitCode, 0, 16));
     return false;
   }
 
   return true;
 }
 
-void Loot::processStdout(const std::string &lootOut)
+void Loot::processStdout(const std::string& lootOut)
 {
   emit output(QString::fromStdString(lootOut));
 
@@ -671,27 +646,24 @@ void Loot::processStdout(const std::string &lootOut)
 
 void Loot::processMessage(const lootcli::Message& m)
 {
-  switch (m.type)
-  {
-    case lootcli::MessageType::Log:
-    {
-      const auto level = levelFromLoot(m.logLevel);
+  switch (m.type) {
+  case lootcli::MessageType::Log: {
+    const auto level = levelFromLoot(m.logLevel);
 
-      if (level == log::Error) {
-        m_errors.push_back(QString::fromStdString(m.log));
-      } else if (level == log::Warning) {
-        m_warnings.push_back(QString::fromStdString(m.log));
-      }
-
-      emit log(level, QString::fromStdString(m.log));
-      break;
+    if (level == log::Error) {
+      m_errors.push_back(QString::fromStdString(m.log));
+    } else if (level == log::Warning) {
+      m_warnings.push_back(QString::fromStdString(m.log));
     }
 
-    case lootcli::MessageType::Progress:
-    {
-      emit progress(m.progress);
-      break;
-    }
+    emit log(level, QString::fromStdString(m.log));
+    break;
+  }
+
+  case lootcli::MessageType::Progress: {
+    emit progress(m.progress);
+    break;
+  }
   }
 }
 
@@ -699,8 +671,8 @@ Loot::Report Loot::createReport() const
 {
   Report r;
 
-  r.okay = m_result;
-  r.errors = m_errors;
+  r.okay     = m_result;
+  r.errors   = m_errors;
   r.warnings = m_warnings;
 
   if (m_result) {
@@ -717,9 +689,8 @@ void Loot::deleteReportFile()
     const auto r = shell::Delete(QFileInfo(LootReportPath));
 
     if (!r) {
-      log::error(
-        "failed to remove temporary loot json report '{}': {}",
-        LootReportPath, r.toString());
+      log::error("failed to remove temporary loot json report '{}': {}", LootReportPath,
+                 r.toString());
     }
   }
 }
@@ -730,10 +701,9 @@ void Loot::processOutputFile(Report& r) const
 
   QFile outFile(LootReportPath);
   if (!outFile.open(QIODevice::ReadOnly)) {
-    emit log(
-      MOBase::log::Error,
-      QString("failed to open file, %1 (error %2)")
-        .arg(outFile.errorString()).arg(outFile.error()));
+    emit log(MOBase::log::Error, QString("failed to open file, %1 (error %2)")
+                                     .arg(outFile.errorString())
+                                     .arg(outFile.error()));
 
     return;
   }
@@ -741,10 +711,8 @@ void Loot::processOutputFile(Report& r) const
   QJsonParseError e;
   const QJsonDocument doc = QJsonDocument::fromJson(outFile.readAll(), &e);
   if (doc.isNull()) {
-    emit log(
-      MOBase::log::Error,
-      QString("invalid json, %1 (error %2)")
-        .arg(e.errorString()).arg(e.error));
+    emit log(MOBase::log::Error,
+             QString("invalid json, %1 (error %2)").arg(e.errorString()).arg(e.error));
 
     return;
   }
@@ -754,8 +722,8 @@ void Loot::processOutputFile(Report& r) const
   const QJsonObject object = doc.object();
 
   r.messages = reportMessages(getOpt<QJsonArray>(object, "messages"));
-  r.plugins = reportPlugins(getOpt<QJsonArray>(object, "plugins"));
-  r.stats = reportStats(getWarn<QJsonObject>(object, "stats"));
+  r.plugins  = reportPlugins(getOpt<QJsonArray>(object, "plugins"));
+  r.stats    = reportStats(getWarn<QJsonObject>(object, "stats"));
 }
 
 std::vector<Loot::Plugin> Loot::reportPlugins(const QJsonArray& plugins) const
@@ -812,8 +780,8 @@ Loot::Plugin Loot::reportPlugin(const QJsonObject& plugin) const
     p.missingMasters = reportStringArray(getOpt<QJsonArray>(plugin, "missingMasters"));
   }
 
-  p.loadsArchive = getOpt(plugin, "loadsArchive", false);
-  p.isMaster = getOpt(plugin, "isMaster", false);
+  p.loadsArchive  = getOpt(plugin, "loadsArchive", false);
+  p.isMaster      = getOpt(plugin, "isMaster", false);
   p.isLightMaster = getOpt(plugin, "isLightMaster", false);
 
   return p;
@@ -823,9 +791,9 @@ Loot::Stats Loot::reportStats(const QJsonObject& stats) const
 {
   Stats s;
 
-  s.time = getWarn<qint64>(stats, "time");
+  s.time           = getWarn<qint64>(stats, "time");
   s.lootcliVersion = getWarn<QString>(stats, "lootcliVersion");
-  s.lootVersion = getWarn<QString>(stats, "lootVersion");
+  s.lootVersion    = getWarn<QString>(stats, "lootVersion");
 
   return s;
 }
@@ -877,7 +845,7 @@ std::vector<Loot::File> Loot::reportFiles(const QJsonArray& array) const
 
     File f;
 
-    f.name = getWarn<QString>(o, "name");
+    f.name        = getWarn<QString>(o, "name");
     f.displayName = getOpt<QString>(o, "displayName");
 
     if (!f.name.isEmpty()) {
@@ -897,12 +865,12 @@ std::vector<Loot::Dirty> Loot::reportDirty(const QJsonArray& array) const
 
     Dirty d;
 
-    d.crc = getWarn<qint64>(o, "crc");
-    d.itm = getOpt<qint64>(o, "itm");
+    d.crc               = getWarn<qint64>(o, "crc");
+    d.itm               = getOpt<qint64>(o, "itm");
     d.deletedReferences = getOpt<qint64>(o, "deletedReferences");
-    d.deletedNavmesh = getOpt<qint64>(o, "deletedNavmesh");
-    d.cleaningUtility = getOpt<QString>(o, "cleaningUtility");
-    d.info = getOpt<QString>(o, "info");
+    d.deletedNavmesh    = getOpt<qint64>(o, "deletedNavmesh");
+    d.cleaningUtility   = getOpt<QString>(o, "cleaningUtility");
+    d.info              = getOpt<QString>(o, "info");
 
     v.emplace_back(std::move(d));
   }
@@ -926,7 +894,6 @@ std::vector<QString> Loot::reportStringArray(const QJsonArray& array) const
   return v;
 }
 
-
 bool runLoot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
 {
   core.savePluginList();
@@ -942,10 +909,10 @@ bool runLoot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList)
     dialog.exec();
 
     return dialog.result();
-  } catch (const UsvfsConnectorException &e) {
+  } catch (const UsvfsConnectorException& e) {
     log::debug("{}", e.what());
     return false;
-  } catch (const std::exception &e) {
+  } catch (const std::exception& e) {
     reportError(QObject::tr("failed to run loot: %1").arg(e.what()));
     return false;
   }

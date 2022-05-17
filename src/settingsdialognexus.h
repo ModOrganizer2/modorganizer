@@ -1,9 +1,9 @@
 #ifndef SETTINGSDIALOGNEXUS_H
 #define SETTINGSDIALOGNEXUS_H
 
+#include "nxmaccessmanager.h"
 #include "settings.h"
 #include "settingsdialog.h"
-#include "nxmaccessmanager.h"
 
 // used by the settings dialog and the create instance dialog
 //
@@ -12,13 +12,9 @@ class NexusConnectionUI : public QObject
   Q_OBJECT;
 
 public:
-  NexusConnectionUI(
-    QWidget* parent,
-    Settings* s,
-    QAbstractButton* connectButton,
-    QAbstractButton* disconnectButton,
-    QAbstractButton* manualButton,
-    QListWidget* logList);
+  NexusConnectionUI(QWidget* parent, Settings* s, QAbstractButton* connectButton,
+                    QAbstractButton* disconnectButton, QAbstractButton* manualButton,
+                    QListWidget* logList);
 
   void connect();
   void manual();
@@ -50,11 +46,9 @@ private:
   void onSSOKeyChanged(const QString& key);
   void onSSOStateChanged(NexusSSOLogin::States s, const QString& e);
 
-  void onValidatorFinished(
-    ValidationAttempt::Result r, const QString& message,
-    std::optional<APIUserAccount> useR);
+  void onValidatorFinished(ValidationAttempt::Result r, const QString& message,
+                           std::optional<APIUserAccount> useR);
 };
-
 
 class NexusSettingsTab : public SettingsTab
 {
@@ -73,4 +67,4 @@ private:
   void browseCustomBrowser();
 };
 
-#endif // SETTINGSDIALOGNEXUS_H
+#endif  // SETTINGSDIALOGNEXUS_H

@@ -19,17 +19,12 @@ class ModListViewActions : public QObject
   Q_OBJECT
 
 public:
-
   // currently passing the main window itself because a lots of stuff needs it but
   // it would be nice to avoid passing it at some point
   //
-  ModListViewActions(
-    OrganizerCore& core,
-    FilterList& filters,
-    CategoryFactory& categoryFactory,
-    ModListView* view,
-    PluginListView* pluginView,
-    QObject* nxmReceiver);
+  ModListViewActions(OrganizerCore& core, FilterList& filters,
+                     CategoryFactory& categoryFactory, ModListView* view,
+                     PluginListView* pluginView, QObject* nxmReceiver);
 
   // install mod, create an empty mod or a separator with at priority based on the
   // index and the current sorting of the view
@@ -44,7 +39,8 @@ public:
   // if the archivePath is empty for installMod, ask the user for the archive
   // to install
   //
-  void installMod(const QString& archivePath = "", const QModelIndex& index = QModelIndex()) const;
+  void installMod(const QString& archivePath = "",
+                  const QModelIndex& index   = QModelIndex()) const;
   void createEmptyMod(const QModelIndex& index = QModelIndex()) const;
   void createSeparator(const QModelIndex& index = QModelIndex()) const;
 
@@ -63,11 +59,15 @@ public:
 
   // display mod information
   //
-  void displayModInformation(const QString& modName, ModInfoTabIDs tabID = ModInfoTabIDs::None) const;
-  void displayModInformation(unsigned int index, ModInfoTabIDs tab = ModInfoTabIDs::None) const;
-  void displayModInformation(ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tabID = ModInfoTabIDs::None) const;
+  void displayModInformation(const QString& modName,
+                             ModInfoTabIDs tabID = ModInfoTabIDs::None) const;
+  void displayModInformation(unsigned int index,
+                             ModInfoTabIDs tab = ModInfoTabIDs::None) const;
+  void displayModInformation(ModInfo::Ptr modInfo, unsigned int modIndex,
+                             ModInfoTabIDs tabID = ModInfoTabIDs::None) const;
 
-  // move mods to top/bottom, start the "Send to priority" and "Send to separator" dialog
+  // move mods to top/bottom, start the "Send to priority" and "Send to separator"
+  // dialog
   //
   void sendModsToTop(const QModelIndexList& index) const;
   void sendModsToBottom(const QModelIndexList& index) const;
@@ -106,13 +106,14 @@ public:
   //   on the reference is different
   //
   void setCategories(const QModelIndexList& selected, const QModelIndex& ref,
-    const std::vector<std::pair<int, bool>>& categories) const;
+                     const std::vector<std::pair<int, bool>>& categories) const;
 
   // set the primary category of the mods in the given list, adding the appropriate
   // category to the mods unless force is false, in which case the primary category
   // is set only on mods that have this category
   //
-  void setPrimaryCategory(const QModelIndexList& selected, int category, bool force = true);
+  void setPrimaryCategory(const QModelIndexList& selected, int category,
+                          bool force = true);
 
   // open the Windows explorer for the specified mods
   //
@@ -143,7 +144,6 @@ signals:
   void modInfoDisplayed() const;
 
 private:
-
   // find the priority where to install or create a mod for the
   // given index (e.g. above, below, inside separator or at the end)
   //
@@ -155,19 +155,20 @@ private:
 
   // set the category of the given mod based on the given array
   //
-  void setCategories(ModInfo::Ptr mod, const std::vector<std::pair<int, bool>>& categories) const;
+  void setCategories(ModInfo::Ptr mod,
+                     const std::vector<std::pair<int, bool>>& categories) const;
 
-  // set the category of the given mod if the category from the reference mod does not match
-  // the one in the array of categories
+  // set the category of the given mod if the category from the reference mod does not
+  // match the one in the array of categories
   //
-  void setCategoriesIf(ModInfo::Ptr mod, ModInfo::Ptr ref, const std::vector<std::pair<int, bool>>& categories) const;
+  void setCategoriesIf(ModInfo::Ptr mod, ModInfo::Ptr ref,
+                       const std::vector<std::pair<int, bool>>& categories) const;
 
   // check the given mods from update, the map should map game names to nexus ID
   //
   void checkModsForUpdates(std::multimap<QString, int> const& IDs) const;
 
 private:
-
   OrganizerCore& m_core;
   FilterList& m_filters;
   CategoryFactory& m_categories;

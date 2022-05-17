@@ -1,23 +1,24 @@
 #include "filerenamer.h"
-#include <utility.h>
-#include <log.h>
-#include <QMessageBox>
 #include <QFileInfo>
+#include <QMessageBox>
+#include <log.h>
+#include <utility.h>
 
 using namespace MOBase;
 
 FileRenamer::FileRenamer(QWidget* parent, QFlags<RenameFlags> flags)
-  : m_parent(parent), m_flags(flags)
+    : m_parent(parent), m_flags(flags)
 {
   // sanity check for flags
-  if ((m_flags & (HIDE|UNHIDE)) == 0) {
+  if ((m_flags & (HIDE | UNHIDE)) == 0) {
     log::error("renameFile() missing hide flag");
     // doesn't really matter, it's just for text
     m_flags = HIDE;
   }
 }
 
-FileRenamer::RenameResults FileRenamer::rename(const QString& oldName, const QString& newName)
+FileRenamer::RenameResults FileRenamer::rename(const QString& oldName,
+                                               const QString& newName)
 {
   log::debug("renaming {} to {}", oldName, newName);
 
@@ -28,42 +29,42 @@ FileRenamer::RenameResults FileRenamer::rename(const QString& oldName, const QSt
     auto answer = confirmReplace(newName);
 
     switch (answer) {
-      case DECISION_SKIP: {
-        // user wants to skip this file
+    case DECISION_SKIP: {
+      // user wants to skip this file
+      log::debug("skipping {}", oldName);
+      return RESULT_SKIP;
+    }
+
+    case DECISION_REPLACE: {
+      log::debug("removing {}", newName);
+
+      // user wants to replace the file, so remove it
+      const auto r = shell::Delete(QFileInfo(newName));
+
+      if (!r.success()) {
+        log::error("failed to remove '{}': {}", newName, r.toString());
+
+        // removal failed, warn the user and allow canceling
+        if (!removeFailed(newName, r)) {
+          log::debug("canceling {}", oldName);
+          // user wants to cancel
+          return RESULT_CANCEL;
+        }
+
+        // ignore this file and continue on
         log::debug("skipping {}", oldName);
         return RESULT_SKIP;
       }
 
-      case DECISION_REPLACE: {
-        log::debug("removing {}", newName);
+      break;
+    }
 
-        // user wants to replace the file, so remove it
-        const auto r = shell::Delete(QFileInfo(newName));
-
-        if (!r.success()) {
-          log::error("failed to remove '{}': {}", newName, r.toString());
-
-          // removal failed, warn the user and allow canceling
-          if (!removeFailed(newName, r)) {
-            log::debug("canceling {}", oldName);
-            // user wants to cancel
-            return RESULT_CANCEL;
-          }
-
-          // ignore this file and continue on
-          log::debug("skipping {}", oldName);
-          return RESULT_SKIP;
-        }
-
-        break;
-      }
-
-      case DECISION_CANCEL:  // fall-through
-      default: {
-        // user wants to stop
-        log::debug("canceling");
-        return RESULT_CANCEL;
-      }
+    case DECISION_CANCEL:  // fall-through
+    default: {
+      // user wants to stop
+      log::debug("canceling");
+      return RESULT_CANCEL;
+    }
     }
   }
 
@@ -71,9 +72,7 @@ FileRenamer::RenameResults FileRenamer::rename(const QString& oldName, const QSt
   const auto r = shell::Rename(QFileInfo(oldName), QFileInfo(newName));
 
   if (!r.success()) {
-    log::error(
-      "failed to rename '{}' to '{}': {}",
-      oldName, newName, r.toString());
+    log::error("failed to rename '{}' to '{}': {}", oldName, newName, r.toString());
 
     // renaming failed, warn the user and allow canceling
     if (!renameFailed(oldName, newName, r)) {
@@ -98,8 +97,7 @@ FileRenamer::RenameDecision FileRenamer::confirmReplace(const QString& newName)
     // user wants to silently replace all
     log::debug("user has selected replace all");
     return DECISION_REPLACE;
-  }
-  else if (m_flags & REPLACE_NONE) {
+  } else if (m_flags & REPLACE_NONE) {
     // user wants to silently skip all
     log::debug("user has selected replace none");
     return DECISION_SKIP;
@@ -108,10 +106,11 @@ FileRenamer::RenameDecision FileRenamer::confirmReplace(const QString& newName)
   QString text;
 
   if (m_flags & HIDE) {
-    text = QObject::tr("The hidden file \"%1\" already exists. Replace it?").arg(newName);
-  }
-  else if (m_flags & UNHIDE) {
-    text = QObject::tr("The visible file \"%1\" already exists. Replace it?").arg(newName);
+    text =
+        QObject::tr("The hidden file \"%1\" already exists. Replace it?").arg(newName);
+  } else if (m_flags & UNHIDE) {
+    text =
+        QObject::tr("The visible file \"%1\" already exists. Replace it?").arg(newName);
   }
 
   auto buttons = QMessageBox::Yes | QMessageBox::No;
@@ -120,34 +119,34 @@ FileRenamer::RenameDecision FileRenamer::confirmReplace(const QString& newName)
     buttons |= QMessageBox::YesToAll | QMessageBox::NoToAll | QMessageBox::Cancel;
   }
 
-  const auto answer = QMessageBox::question(
-    m_parent, QObject::tr("Replace file?"), text, buttons);
+  const auto answer =
+      QMessageBox::question(m_parent, QObject::tr("Replace file?"), text, buttons);
 
   switch (answer) {
-    case QMessageBox::Yes:
-      log::debug("user wants to replace");
-      return DECISION_REPLACE;
+  case QMessageBox::Yes:
+    log::debug("user wants to replace");
+    return DECISION_REPLACE;
 
-    case QMessageBox::No:
-      log::debug("user wants to skip");
-      return DECISION_SKIP;
+  case QMessageBox::No:
+    log::debug("user wants to skip");
+    return DECISION_SKIP;
 
-    case QMessageBox::YesToAll:
-      log::debug("user wants to replace all");
-      // remember the answer
-      m_flags |= REPLACE_ALL;
-      return DECISION_REPLACE;
+  case QMessageBox::YesToAll:
+    log::debug("user wants to replace all");
+    // remember the answer
+    m_flags |= REPLACE_ALL;
+    return DECISION_REPLACE;
 
-    case QMessageBox::NoToAll:
-      log::debug("user wants to replace none");
-      // remember the answer
-      m_flags |= REPLACE_NONE;
-      return DECISION_SKIP;
+  case QMessageBox::NoToAll:
+    log::debug("user wants to replace none");
+    // remember the answer
+    m_flags |= REPLACE_NONE;
+    return DECISION_SKIP;
 
-    case QMessageBox::Cancel:  // fall-through
-    default:
-      log::debug("user wants to cancel");
-      return DECISION_CANCEL;
+  case QMessageBox::Cancel:  // fall-through
+  default:
+    log::debug("user wants to cancel");
+    return DECISION_CANCEL;
   }
 }
 
@@ -160,10 +159,8 @@ bool FileRenamer::removeFailed(const QString& name, const shell::Result& r)
   }
 
   const auto answer = QMessageBox::critical(
-    m_parent,
-    QObject::tr("File operation failed"),
-    QObject::tr("Failed to remove \"%1\": %2").arg(name).arg(r.toString()),
-    buttons);
+      m_parent, QObject::tr("File operation failed"),
+      QObject::tr("Failed to remove \"%1\": %2").arg(name).arg(r.toString()), buttons);
 
   if (answer == QMessageBox::Cancel) {
     // user wants to stop
@@ -176,8 +173,8 @@ bool FileRenamer::removeFailed(const QString& name, const shell::Result& r)
   return true;
 }
 
-bool FileRenamer::renameFailed(
-  const QString& oldName, const QString& newName, const shell::Result& r)
+bool FileRenamer::renameFailed(const QString& oldName, const QString& newName,
+                               const shell::Result& r)
 {
   QMessageBox::StandardButtons buttons = QMessageBox::Ok;
   if (m_flags & MULTIPLE) {
@@ -185,17 +182,15 @@ bool FileRenamer::renameFailed(
     buttons |= QMessageBox::Cancel;
   }
 
-  const auto answer = QMessageBox::critical(
-    m_parent,
-    QObject::tr("File operation failed"),
-    QObject::tr(
-      "Failed to rename file: %1.\r\n\r\n"
-      "Source:\r\n\"%2\"\r\n\r\n"
-      "Destination:\r\n\"%3\"")
-        .arg(r.toString())
-        .arg(QDir::toNativeSeparators(oldName))
-        .arg(QDir::toNativeSeparators(newName)),
-     buttons);
+  const auto answer =
+      QMessageBox::critical(m_parent, QObject::tr("File operation failed"),
+                            QObject::tr("Failed to rename file: %1.\r\n\r\n"
+                                        "Source:\r\n\"%2\"\r\n\r\n"
+                                        "Destination:\r\n\"%3\"")
+                                .arg(r.toString())
+                                .arg(QDir::toNativeSeparators(oldName))
+                                .arg(QDir::toNativeSeparators(newName)),
+                            buttons);
 
   if (answer == QMessageBox::Cancel) {
     // user wants to stop

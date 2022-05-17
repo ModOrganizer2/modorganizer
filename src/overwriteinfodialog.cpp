@@ -18,20 +18,20 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "overwriteinfodialog.h"
-#include "ui_overwriteinfodialog.h"
-#include "report.h"
-#include "utility.h"
 #include "organizercore.h"
-#include <QMessageBox>
+#include "report.h"
+#include "ui_overwriteinfodialog.h"
+#include "utility.h"
 #include <QMenu>
+#include <QMessageBox>
 #include <QShortcut>
 #include <Shlwapi.h>
 
 using namespace MOBase;
 
-OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget *parent)
-  : QDialog(parent), ui(new Ui::OverwriteInfoDialog), m_FileSystemModel(nullptr),
-    m_DeleteAction(nullptr), m_RenameAction(nullptr), m_OpenAction(nullptr)
+OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget* parent)
+    : QDialog(parent), ui(new Ui::OverwriteInfoDialog), m_FileSystemModel(nullptr),
+      m_DeleteAction(nullptr), m_RenameAction(nullptr), m_OpenAction(nullptr)
 {
   ui->setupUi(this);
 
@@ -44,9 +44,9 @@ OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget *parent)
   ui->filesView->setRootIndex(m_FileSystemModel->index(modInfo->absolutePath()));
   ui->filesView->setColumnWidth(0, 250);
 
-  m_DeleteAction = new QAction(tr("&Delete"), ui->filesView);
-  m_RenameAction = new QAction(tr("&Rename"), ui->filesView);
-  m_OpenAction = new QAction(tr("&Open"), ui->filesView);
+  m_DeleteAction    = new QAction(tr("&Delete"), ui->filesView);
+  m_RenameAction    = new QAction(tr("&Rename"), ui->filesView);
+  m_OpenAction      = new QAction(tr("&Open"), ui->filesView);
   m_NewFolderAction = new QAction(tr("&New Folder"), ui->filesView);
 
   new QShortcut(QKeySequence::Delete, this, SLOT(delete_activated()));
@@ -54,7 +54,8 @@ OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget *parent)
   QObject::connect(m_DeleteAction, SIGNAL(triggered()), this, SLOT(deleteTriggered()));
   QObject::connect(m_RenameAction, SIGNAL(triggered()), this, SLOT(renameTriggered()));
   QObject::connect(m_OpenAction, SIGNAL(triggered()), this, SLOT(openTriggered()));
-  QObject::connect(m_NewFolderAction, SIGNAL(triggered()), this, SLOT(createDirectoryTriggered()));
+  QObject::connect(m_NewFolderAction, SIGNAL(triggered()), this,
+                   SLOT(createDirectoryTriggered()));
 }
 
 OverwriteInfoDialog::~OverwriteInfoDialog()
@@ -91,11 +92,12 @@ void OverwriteInfoDialog::setModInfo(ModInfo::Ptr modInfo)
   if (QDir(modInfo->absolutePath()).exists()) {
     m_FileSystemModel->setRootPath(modInfo->absolutePath());
   } else {
-    throw MyException(tr("mod not found: %1").arg(qUtf8Printable(modInfo->absolutePath())));
+    throw MyException(
+        tr("mod not found: %1").arg(qUtf8Printable(modInfo->absolutePath())));
   }
 }
 
-bool OverwriteInfoDialog::recursiveDelete(const QModelIndex &index)
+bool OverwriteInfoDialog::recursiveDelete(const QModelIndex& index)
 {
   for (int childRow = 0; childRow < m_FileSystemModel->rowCount(index); ++childRow) {
     QModelIndex childIndex = m_FileSystemModel->index(childRow, 0, index);
@@ -118,8 +120,7 @@ bool OverwriteInfoDialog::recursiveDelete(const QModelIndex &index)
   return true;
 }
 
-
-void OverwriteInfoDialog::deleteFile(const QModelIndex &index)
+void OverwriteInfoDialog::deleteFile(const QModelIndex& index)
 {
 
   bool res = m_FileSystemModel->isDir(index) ? recursiveDelete(index)
@@ -132,33 +133,35 @@ void OverwriteInfoDialog::deleteFile(const QModelIndex &index)
 
 void OverwriteInfoDialog::delete_activated()
 {
-	if (ui->filesView->hasFocus()) {
-		QItemSelectionModel *selection = ui->filesView->selectionModel();
+  if (ui->filesView->hasFocus()) {
+    QItemSelectionModel* selection = ui->filesView->selectionModel();
 
-		if (selection->hasSelection() && selection->selectedRows().count() >= 1) {
+    if (selection->hasSelection() && selection->selectedRows().count() >= 1) {
 
-			if (selection->selectedRows().count() == 0) {
-				return;
-			}
-			else if (selection->selectedRows().count() == 1) {
-				QString fileName = m_FileSystemModel->fileName(selection->selectedRows().at(0));
-				if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete \"%1\"?").arg(fileName),
-					QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
-					return;
-				}
-			}
-			else {
-				if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete the selected files?"),
-					QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
-					return;
-				}
-			}
+      if (selection->selectedRows().count() == 0) {
+        return;
+      } else if (selection->selectedRows().count() == 1) {
+        QString fileName = m_FileSystemModel->fileName(selection->selectedRows().at(0));
+        if (QMessageBox::question(
+                this, tr("Confirm"),
+                tr("Are you sure you want to delete \"%1\"?").arg(fileName),
+                QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+          return;
+        }
+      } else {
+        if (QMessageBox::question(
+                this, tr("Confirm"),
+                tr("Are you sure you want to delete the selected files?"),
+                QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+          return;
+        }
+      }
 
-			foreach(QModelIndex index, selection->selectedRows()) {
-				deleteFile(index);
-			}
-		}
-	}
+      foreach (QModelIndex index, selection->selectedRows()) {
+        deleteFile(index);
+      }
+    }
+  }
 }
 
 void OverwriteInfoDialog::deleteTriggered()
@@ -167,44 +170,44 @@ void OverwriteInfoDialog::deleteTriggered()
     return;
   } else if (m_FileSelection.count() == 1) {
     QString fileName = m_FileSystemModel->fileName(m_FileSelection.at(0));
-    if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete \"%1\"?").arg(fileName),
-                              QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+    if (QMessageBox::question(
+            this, tr("Confirm"),
+            tr("Are you sure you want to delete \"%1\"?").arg(fileName),
+            QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
       return;
     }
   } else {
-    if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete the selected files?"),
+    if (QMessageBox::question(this, tr("Confirm"),
+                              tr("Are you sure you want to delete the selected files?"),
                               QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
       return;
     }
   }
 
-  foreach(QModelIndex index, m_FileSelection) {
+  foreach (QModelIndex index, m_FileSelection) {
     deleteFile(index);
   }
 }
 
-
 void OverwriteInfoDialog::renameTriggered()
 {
   QModelIndex selection = m_FileSelection.at(0);
-  QModelIndex index = selection.sibling(selection.row(), 0);
+  QModelIndex index     = selection.sibling(selection.row(), 0);
   if (!index.isValid() || m_FileSystemModel->isReadOnly()) {
-      return;
+    return;
   }
 
   ui->filesView->edit(index);
 }
 
-
-void OverwriteInfoDialog::openFile(const QModelIndex &index)
+void OverwriteInfoDialog::openFile(const QModelIndex& index)
 {
   shell::Open(m_FileSystemModel->filePath(index));
 }
 
-
 void OverwriteInfoDialog::openTriggered()
 {
-  foreach(QModelIndex idx, m_FileSelection) {
+  foreach (QModelIndex idx, m_FileSelection) {
     openFile(idx);
   }
 }
@@ -213,17 +216,17 @@ void OverwriteInfoDialog::createDirectoryTriggered()
 {
   QModelIndex selection = m_FileSelection.at(0);
 
-  QModelIndex index = m_FileSystemModel->isDir(selection) ? selection
-                                                          : selection.parent();
+  QModelIndex index =
+      m_FileSystemModel->isDir(selection) ? selection : selection.parent();
   index = index.sibling(index.row(), 0);
 
   QString name = tr("New Folder");
   QString path = m_FileSystemModel->filePath(index).append("/");
 
   QModelIndex existingIndex = m_FileSystemModel->index(path + name);
-  int suffix = 1;
+  int suffix                = 1;
   while (existingIndex.isValid()) {
-    name = tr("New Folder") + QString::number(suffix++);
+    name          = tr("New Folder") + QString::number(suffix++);
     existingIndex = m_FileSystemModel->index(path + name);
   }
 
@@ -242,10 +245,10 @@ void OverwriteInfoDialog::on_explorerButton_clicked()
   shell::Explore(m_ModInfo->absolutePath());
 }
 
-void OverwriteInfoDialog::on_filesView_customContextMenuRequested(const QPoint &pos)
+void OverwriteInfoDialog::on_filesView_customContextMenuRequested(const QPoint& pos)
 {
-  QItemSelectionModel *selectionModel = ui->filesView->selectionModel();
-  m_FileSelection = selectionModel->selectedRows(0);
+  QItemSelectionModel* selectionModel = ui->filesView->selectionModel();
+  m_FileSelection                     = selectionModel->selectedRows(0);
 
   QMenu menu(ui->filesView);
 
@@ -253,7 +256,7 @@ void OverwriteInfoDialog::on_filesView_customContextMenuRequested(const QPoint &
 
   bool hasFiles = false;
 
-  foreach(QModelIndex idx, m_FileSelection) {
+  foreach (QModelIndex idx, m_FileSelection) {
     if (m_FileSystemModel->fileInfo(idx).isFile()) {
       hasFiles = true;
       break;

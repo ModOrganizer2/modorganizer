@@ -4,13 +4,15 @@
 #include "createinstancedialog.h"
 #include <filterwidget.h>
 
+#include <QCommandLinkButton>
 #include <QLabel>
 #include <QLineEdit>
-#include <QCommandLinkButton>
 
-namespace MOBase { class IPluginGame; }
+namespace MOBase
+{
+class IPluginGame;
+}
 class NexusConnectionUI;
-
 
 namespace cid
 {
@@ -18,7 +20,6 @@ namespace cid
 // returns "%base_dir%/dir"
 //
 QString makeDefaultPath(const std::wstring& dir);
-
 
 // remembers the original text of the given label and, if it contains a %1,
 // sets it in setText()
@@ -41,7 +42,6 @@ private:
   QLabel* m_label;
   QString m_original;
 };
-
 
 // one page in the wizard
 //
@@ -81,12 +81,10 @@ public:
   //
   void next();
 
-
   // called from the dialog when an action is requested on the current page;
   // returns true when handled
   //
   virtual bool action(CreateInstanceDialog::Actions a);
-
 
   // returns the instance type
   //
@@ -119,7 +117,6 @@ protected:
   bool m_skip;
   bool m_firstActivation;
 
-
   // called every time a page is shown in the screen; `firstTime` is true for
   // first activation
   //
@@ -129,7 +126,6 @@ protected:
   //
   virtual bool doSkip() const;
 };
-
 
 // introduction page, can be disabled by a global setting
 //
@@ -147,7 +143,6 @@ private:
   // which would be unexpected
   bool m_skip;
 };
-
 
 // instance type page
 //
@@ -180,7 +175,6 @@ protected:
 private:
   CreateInstanceDialog::Types m_type;
 };
-
 
 // game plugin page, displays a list of command buttons for each game, along
 // with a "browse" button for custom directories and filtering stuff
@@ -221,14 +215,13 @@ public:
   // returns the selected game directory
   QString selectedGameLocation() const override;
 
-
   // selects the given game and toggles its associated button; the game
   // directory can be overridden
   //
   // pops up a directory selection dialog if `dir` is empty and the plugin
   // hasn't detected the game
   //
-  void select(MOBase::IPluginGame* game, const QString& dir={});
+  void select(MOBase::IPluginGame* game, const QString& dir = {});
 
   // pops up a directory selection dialog and looks for a plugin to manage
   // it
@@ -260,9 +253,8 @@ private:
     // or by the user
     bool installed = false;
 
-
     Game(MOBase::IPluginGame* g);
-    Game(const Game&) = delete;
+    Game(const Game&)            = delete;
     Game& operator=(const Game&) = delete;
   };
 
@@ -275,7 +267,6 @@ private:
 
   // filter
   MOBase::FilterWidget m_filter;
-
 
   // returns a list of all the game plugins sorted with natsort
   //
@@ -319,7 +310,6 @@ private:
   //
   QCommandLinkButton* createCustomButton();
 
-
   // clears the button list and adds all the buttons to it, depending on
   // filtering and stuff
   //
@@ -351,9 +341,9 @@ private:
   //   2) use the selection anyway, selectedGame is returned; or
   //   3) cancel, null is returned
   //
-  MOBase::IPluginGame* confirmOtherGame(
-    const QString& path,
-    MOBase::IPluginGame* selectedGame, MOBase::IPluginGame* guessedGame);
+  MOBase::IPluginGame* confirmOtherGame(const QString& path,
+                                        MOBase::IPluginGame* selectedGame,
+                                        MOBase::IPluginGame* guessedGame);
 
   // detects if the given path likely contains a Microsoft Store game
   //
@@ -364,7 +354,6 @@ private:
   //
   bool confirmMicrosoftStore(const QString& path, MOBase::IPluginGame* game);
 };
-
 
 // game variants page; displays a list of command buttons for game variants, as
 // reported by the game plugin
@@ -408,11 +397,9 @@ private:
   // selected variant
   QString m_selection;
 
-
   // fills the list with buttons
   void fillList();
 };
-
 
 // instance name page; displays a textbox where the user can enter a name and
 // does basic checks to make sure the name is valid and not a duplicate
@@ -461,7 +448,6 @@ private:
   // whether the instance name is valid
   bool m_okay;
 
-
   // called when the user modifies the textbox, remember that it has changed and
   // calls verify()
   //
@@ -476,7 +462,6 @@ private:
   //
   bool checkName(QString parentDir, QString name);
 };
-
 
 // instance paths page; shows a single textbox for the base directory, or a
 // series of textboxes for all the configurable paths if the advanced checkbox
@@ -523,7 +508,6 @@ private:
   // whether the paths are valid
   bool m_okay;
 
-
   // called when the user changes any textbox, checks the path and updates nav
   //
   void onChanged();
@@ -547,9 +531,8 @@ private:
   // returns false if the path is invalid or already exists, sets the given
   // labels accordingly
   //
-  bool checkPath(
-    QString path,
-    PlaceholderLabel& existsLabel, PlaceholderLabel& invalidLabel);
+  bool checkPath(QString path, PlaceholderLabel& existsLabel,
+                 PlaceholderLabel& invalidLabel);
 
   // replaces %base_dir% in the given path by whatever's in the base path
   // textbox
@@ -573,7 +556,6 @@ private:
   //
   void setIfEmpty(QLineEdit* e, const QString& path, bool force);
 };
-
 
 // nexus connection page; this reuses the ui found in the settings dialog and
 // is skipped if there's already an api key in the credentials manager
@@ -603,7 +585,6 @@ private:
   bool m_skip;
 };
 
-
 // shows a text log of all the creation parameters
 //
 class ConfirmationPage : public Page
@@ -626,6 +607,6 @@ private:
   QString dirLine(const QString& caption, const QString& path) const;
 };
 
-} // namespace
+}  // namespace cid
 
-#endif // MODORGANIZER_CREATEINSTANCEDIALOGPAGES_INCLUDED
+#endif  // MODORGANIZER_CREATEINSTANCEDIALOGPAGES_INCLUDED

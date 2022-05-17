@@ -1,14 +1,13 @@
 #include "modinfodialogtab.h"
-#include "ui_modinfodialog.h"
-#include "texteditor.h"
 #include "modinfo.h"
 #include "shared/filesorigin.h"
+#include "texteditor.h"
+#include "ui_modinfodialog.h"
 
-ModInfoDialogTab::ModInfoDialogTab(ModInfoDialogTabContext cx) :
-  ui(cx.ui), m_core(cx.core), m_plugin(cx.plugin), m_parent(cx.parent),
-  m_origin(cx.origin), m_tabID(cx.id), m_hasData(false), m_firstActivation(true)
-{
-}
+ModInfoDialogTab::ModInfoDialogTab(ModInfoDialogTabContext cx)
+    : ui(cx.ui), m_core(cx.core), m_plugin(cx.plugin), m_parent(cx.parent),
+      m_origin(cx.origin), m_tabID(cx.id), m_hasData(false), m_firstActivation(true)
+{}
 
 void ModInfoDialogTab::activated()
 {
@@ -77,7 +76,7 @@ bool ModInfoDialogTab::usesOriginFiles() const
 
 void ModInfoDialogTab::setMod(ModInfoPtr mod, MOShared::FilesOrigin* origin)
 {
-  m_mod = mod;
+  m_mod    = mod;
   m_origin = origin;
 }
 
@@ -148,20 +147,26 @@ void ModInfoDialogTab::setFocus()
   emit wantsFocus();
 }
 
-
-NotesTab::NotesTab(ModInfoDialogTabContext cx)
-   : ModInfoDialogTab(std::move(cx))
+NotesTab::NotesTab(ModInfoDialogTabContext cx) : ModInfoDialogTab(std::move(cx))
 {
-  connect(ui->comments, &QLineEdit::editingFinished, [&]{ onComments(); });
-  connect(ui->notes, &HTMLEditor::editingFinished, [&]{ onNotes(); });
-  connect(ui->setColorButton, &QPushButton::clicked, [&] { onSetColor(); });
-  connect(ui->resetColorButton, &QPushButton::clicked, [&] { onResetColor(); });
+  connect(ui->comments, &QLineEdit::editingFinished, [&] {
+    onComments();
+  });
+  connect(ui->notes, &HTMLEditor::editingFinished, [&] {
+    onNotes();
+  });
+  connect(ui->setColorButton, &QPushButton::clicked, [&] {
+    onSetColor();
+  });
+  connect(ui->resetColorButton, &QPushButton::clicked, [&] {
+    onResetColor();
+  });
 }
 
 void NotesTab::updateCommentsColor(bool clear)
 {
   QPalette commentPalette = QPalette();
-  
+
   if (!clear) {
     auto modColor = mod().color();
     if (modColor.isValid()) {
@@ -183,7 +188,7 @@ void NotesTab::clear()
 void NotesTab::update()
 {
   const auto comments = mod().comments();
-  const auto notes = mod().notes();
+  const auto notes    = mod().notes();
 
   ui->comments->setText(comments);
   ui->notes->setText(notes);
@@ -220,7 +225,7 @@ void NotesTab::onSetColor()
   dialog.setOption(QColorDialog::ShowAlphaChannel);
 
   QColor currentColor = mod().color();
-  
+
   if (currentColor.isValid()) {
     dialog.setCurrentColor(currentColor);
   }
@@ -253,8 +258,6 @@ bool NotesTab::usesOriginFiles() const
 
 void NotesTab::checkHasData()
 {
-  setHasData(
-    !ui->comments->text().isEmpty() ||
-    !ui->notes->toPlainText().isEmpty() ||
-    mod().color().isValid());
+  setHasData(!ui->comments->text().isEmpty() || !ui->notes->toPlainText().isEmpty() ||
+             mod().color().isValid());
 }

@@ -43,7 +43,6 @@ public:
     Cancelled
   };
 
-
   class Session
   {
   public:
@@ -61,7 +60,6 @@ public:
     DWORD m_pid;
     QString m_name;
   };
-
 
   UILocker();
   ~UILocker();

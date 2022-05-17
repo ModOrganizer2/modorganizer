@@ -1,13 +1,13 @@
 #include "settingsdialogdiagnostics.h"
-#include "ui_settingsdialog.h"
-#include "shared/appconfig.h"
 #include "organizercore.h"
+#include "shared/appconfig.h"
+#include "ui_settingsdialog.h"
 #include <log.h>
 
 using namespace MOBase;
 
 DiagnosticsSettingsTab::DiagnosticsSettingsTab(Settings& s, SettingsDialog& d)
-  : SettingsTab(s, d)
+    : SettingsTab(s, d)
 {
   setLogLevel();
   setLootLogLevel();
@@ -15,16 +15,16 @@ DiagnosticsSettingsTab::DiagnosticsSettingsTab(Settings& s, SettingsDialog& d)
 
   ui->dumpsMaxEdit->setValue(settings().diagnostics().maxCoreDumps());
 
-  QString logsPath = qApp->property("dataPath").toString()
-    + "/" + QString::fromStdWString(AppConfig::logPath());
+  QString logsPath = qApp->property("dataPath").toString() + "/" +
+                     QString::fromStdWString(AppConfig::logPath());
 
   ui->diagnosticsExplainedLabel->setText(
-    ui->diagnosticsExplainedLabel->text()
-    .replace("LOGS_FULL_PATH", logsPath)
-    .replace("LOGS_DIR", QString::fromStdWString(AppConfig::logPath()))
-    .replace("DUMPS_FULL_PATH", QString::fromStdWString(OrganizerCore::getGlobalCoreDumpPath()))
-    .replace("DUMPS_DIR", QString::fromStdWString(AppConfig::dumpsDir()))
-  );
+      ui->diagnosticsExplainedLabel->text()
+          .replace("LOGS_FULL_PATH", logsPath)
+          .replace("LOGS_DIR", QString::fromStdWString(AppConfig::logPath()))
+          .replace("DUMPS_FULL_PATH",
+                   QString::fromStdWString(OrganizerCore::getGlobalCoreDumpPath()))
+          .replace("DUMPS_DIR", QString::fromStdWString(AppConfig::dumpsDir())));
 }
 
 void DiagnosticsSettingsTab::setLogLevel()
@@ -38,7 +38,7 @@ void DiagnosticsSettingsTab::setLogLevel()
 
   const auto sel = settings().diagnostics().logLevel();
 
-  for (int i=0; i<ui->logLevelBox->count(); ++i) {
+  for (int i = 0; i < ui->logLevelBox->count(); ++i) {
     if (ui->logLevelBox->itemData(i) == sel) {
       ui->logLevelBox->setCurrentIndex(i);
       break;
@@ -50,7 +50,9 @@ void DiagnosticsSettingsTab::setLootLogLevel()
 {
   using L = lootcli::LogLevels;
 
-  auto v = [](L level) { return QVariant(static_cast<int>(level)); };
+  auto v = [](L level) {
+    return QVariant(static_cast<int>(level));
+  };
 
   ui->lootLogLevel->clear();
 
@@ -62,7 +64,7 @@ void DiagnosticsSettingsTab::setLootLogLevel()
 
   const auto sel = settings().diagnostics().lootLogLevel();
 
-  for (int i=0; i<ui->lootLogLevel->count(); ++i) {
+  for (int i = 0; i < ui->lootLogLevel->count(); ++i) {
     if (ui->lootLogLevel->itemData(i) == v(sel)) {
       ui->lootLogLevel->setCurrentIndex(i);
       break;
@@ -83,10 +85,9 @@ void DiagnosticsSettingsTab::setCrashDumpTypesBox()
   add(QObject::tr("Data"), env::CoreDumpTypes::Data);
   add(QObject::tr("Full"), env::CoreDumpTypes::Full);
 
-  const auto current = static_cast<int>(
-    settings().diagnostics().coreDumpType());
+  const auto current = static_cast<int>(settings().diagnostics().coreDumpType());
 
-  for (int i=0; i<ui->dumpsTypeBox->count(); ++i) {
+  for (int i = 0; i < ui->dumpsTypeBox->count(); ++i) {
     if (ui->dumpsTypeBox->itemData(i) == current) {
       ui->dumpsTypeBox->setCurrentIndex(i);
       break;
@@ -97,13 +98,13 @@ void DiagnosticsSettingsTab::setCrashDumpTypesBox()
 void DiagnosticsSettingsTab::update()
 {
   settings().diagnostics().setLogLevel(
-    static_cast<log::Levels>(ui->logLevelBox->currentData().toInt()));
+      static_cast<log::Levels>(ui->logLevelBox->currentData().toInt()));
 
   settings().diagnostics().setCoreDumpType(
-    static_cast<env::CoreDumpTypes>(ui->dumpsTypeBox->currentData().toInt()));
+      static_cast<env::CoreDumpTypes>(ui->dumpsTypeBox->currentData().toInt()));
 
   settings().diagnostics().setMaxCoreDumps(ui->dumpsMaxEdit->value());
 
   settings().diagnostics().setLootLogLevel(
-    static_cast<lootcli::LogLevels>(ui->lootLogLevel->currentData().toInt()));
+      static_cast<lootcli::LogLevels>(ui->lootLogLevel->currentData().toInt()));
 }

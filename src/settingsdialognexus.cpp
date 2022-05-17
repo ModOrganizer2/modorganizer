@@ -1,39 +1,49 @@
 #include "settingsdialognexus.h"
-#include "ui_settingsdialog.h"
-#include "ui_nexusmanualkey.h"
+#include "log.h"
 #include "nexusinterface.h"
 #include "serverinfo.h"
-#include "log.h"
+#include "ui_nexusmanualkey.h"
+#include "ui_settingsdialog.h"
 #include <utility.h>
 
 using namespace MOBase;
 
 template <typename T>
-class ServerItem : public QListWidgetItem {
+class ServerItem : public QListWidgetItem
+{
 public:
-  ServerItem(const QString &text, int sortRole = Qt::DisplayRole, QListWidget *parent = 0, int type = Type)
-    : QListWidgetItem(text, parent, type), m_SortRole(sortRole) {}
+  ServerItem(const QString& text, int sortRole = Qt::DisplayRole,
+             QListWidget* parent = 0, int type = Type)
+      : QListWidgetItem(text, parent, type), m_SortRole(sortRole)
+  {}
 
-  virtual bool operator< ( const QListWidgetItem & other ) const {
+  virtual bool operator<(const QListWidgetItem& other) const
+  {
     return this->data(m_SortRole).value<T>() < other.data(m_SortRole).value<T>();
   }
+
 private:
   int m_SortRole;
 };
-
 
 class NexusManualKeyDialog : public QDialog
 {
 public:
   NexusManualKeyDialog(QWidget* parent)
-    : QDialog(parent), ui(new Ui::NexusManualKeyDialog)
+      : QDialog(parent), ui(new Ui::NexusManualKeyDialog)
   {
     ui->setupUi(this);
     ui->key->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
 
-    connect(ui->openBrowser, &QPushButton::clicked, [&]{ openBrowser(); });
-    connect(ui->paste, &QPushButton::clicked, [&]{ paste(); });
-    connect(ui->clear, &QPushButton::clicked, [&]{ clear(); });
+    connect(ui->openBrowser, &QPushButton::clicked, [&] {
+      openBrowser();
+    });
+    connect(ui->paste, &QPushButton::clicked, [&] {
+      paste();
+    });
+    connect(ui->clear, &QPushButton::clicked, [&] {
+      clear();
+    });
   }
 
   void accept() override
@@ -42,10 +52,7 @@ public:
     QDialog::accept();
   }
 
-  const QString& key() const
-  {
-    return m_key;
-  }
+  const QString& key() const { return m_key; }
 
   void openBrowser()
   {
@@ -60,41 +67,37 @@ public:
     }
   }
 
-  void clear()
-  {
-    ui->key->clear();
-  }
+  void clear() { ui->key->clear(); }
 
 private:
   std::unique_ptr<Ui::NexusManualKeyDialog> ui;
   QString m_key;
 };
 
-
-NexusConnectionUI::NexusConnectionUI(
-  QWidget* parent,
-  Settings* s,
-  QAbstractButton* connectButton,
-  QAbstractButton* disconnectButton,
-  QAbstractButton* manualButton,
-  QListWidget* logList) :
-    m_parent(parent),
-    m_settings(s),
-    m_connect(connectButton),
-    m_disconnect(disconnectButton),
-    m_manual(manualButton),
-    m_log(logList)
+NexusConnectionUI::NexusConnectionUI(QWidget* parent, Settings* s,
+                                     QAbstractButton* connectButton,
+                                     QAbstractButton* disconnectButton,
+                                     QAbstractButton* manualButton,
+                                     QListWidget* logList)
+    : m_parent(parent), m_settings(s), m_connect(connectButton),
+      m_disconnect(disconnectButton), m_manual(manualButton), m_log(logList)
 {
   if (m_connect) {
-    QObject::connect(m_connect, &QPushButton::clicked, [&]{ connect(); });
+    QObject::connect(m_connect, &QPushButton::clicked, [&] {
+      connect();
+    });
   }
 
   if (m_disconnect) {
-    QObject::connect(m_disconnect, &QPushButton::clicked, [&]{ disconnect(); });
+    QObject::connect(m_disconnect, &QPushButton::clicked, [&] {
+      disconnect();
+    });
   }
 
   if (m_manual) {
-    QObject::connect(manualButton, &QPushButton::clicked, [&]{ manual(); });
+    QObject::connect(manualButton, &QPushButton::clicked, [&] {
+      manual();
+    });
   }
 
   if (GlobalSettings::hasNexusApiKey()) {
@@ -116,11 +119,11 @@ void NexusConnectionUI::connect()
   if (!m_nexusLogin) {
     m_nexusLogin.reset(new NexusSSOLogin);
 
-    m_nexusLogin->keyChanged = [&](auto&& s){
+    m_nexusLogin->keyChanged = [&](auto&& s) {
       onSSOKeyChanged(s);
     };
 
-    m_nexusLogin->stateChanged = [&](auto&& s, auto&& e){
+    m_nexusLogin->stateChanged = [&](auto&& s, auto&& e) {
       onSSOStateChanged(s, e);
     };
   }
@@ -163,7 +166,7 @@ void NexusConnectionUI::validateKey(const QString& key)
 {
   if (!m_nexusValidator) {
     m_nexusValidator.reset(new NexusKeyValidator(
-      m_settings, *NexusInterface::instance().getAccessManager()));
+        m_settings, *NexusInterface::instance().getAccessManager()));
 
     m_nexusValidator->finished = [&](auto&& r, auto&& m, auto&& u) {
       onValidatorFinished(r, m, u);
@@ -184,8 +187,7 @@ void NexusConnectionUI::onSSOKeyChanged(const QString& key)
   }
 }
 
-void NexusConnectionUI::onSSOStateChanged(
-  NexusSSOLogin::States s, const QString& e)
+void NexusConnectionUI::onSSOStateChanged(NexusSSOLogin::States s, const QString& e)
 {
   if (s != NexusSSOLogin::Finished) {
     // finished state is handled in onSSOKeyChanged()
@@ -199,9 +201,9 @@ void NexusConnectionUI::onSSOStateChanged(
   updateState();
 }
 
-void NexusConnectionUI::onValidatorFinished(
-  ValidationAttempt::Result r, const QString& message,
-  std::optional<APIUserAccount> user)
+void NexusConnectionUI::onValidatorFinished(ValidationAttempt::Result r,
+                                            const QString& message,
+                                            std::optional<APIUserAccount> user)
 {
   if (user) {
     NexusInterface::instance().setUserAccount(*user);
@@ -254,7 +256,7 @@ bool NexusConnectionUI::clearKey()
 
 void NexusConnectionUI::updateState()
 {
-  auto setButton = [&](QAbstractButton* b, bool enabled, QString caption={}) {
+  auto setButton = [&](QAbstractButton* b, bool enabled, QString caption = {}) {
     if (b) {
       b->setEnabled(enabled);
       if (!caption.isEmpty()) {
@@ -267,15 +269,13 @@ void NexusConnectionUI::updateState()
     // api key is in the process of being retrieved
     setButton(m_connect, true, QObject::tr("Cancel"));
     setButton(m_disconnect, false);
-    setButton(m_manual, false,QObject::tr("Enter API Key Manually"));
-  }
-  else if (m_nexusValidator && m_nexusValidator->isActive()) {
+    setButton(m_manual, false, QObject::tr("Enter API Key Manually"));
+  } else if (m_nexusValidator && m_nexusValidator->isActive()) {
     // api key is in the process of being tested
     setButton(m_connect, false, QObject::tr("Connect to Nexus"));
     setButton(m_disconnect, false);
     setButton(m_manual, true, QObject::tr("Cancel"));
-  }
-  else if (GlobalSettings::hasNexusApiKey()) {
+  } else if (GlobalSettings::hasNexusApiKey()) {
     // api key is present
     setButton(m_connect, false, QObject::tr("Connect to Nexus"));
     setButton(m_disconnect, true);
@@ -290,10 +290,7 @@ void NexusConnectionUI::updateState()
   emit stateChanged();
 }
 
-
-
-NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
-  : SettingsTab(s, d)
+NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d) : SettingsTab(s, d)
 {
   ui->endorsementBox->setChecked(settings().nexus().endorsementIntegration());
   ui->trackedBox->setChecked(settings().nexus().trackedIntegration());
@@ -312,7 +309,7 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
       descriptor += QString(" (%1)").arg(MOBase::localizedByteSpeed(averageSpeed));
     }
 
-    QListWidgetItem *newItem = new ServerItem<int>(descriptor, Qt::UserRole + 1);
+    QListWidgetItem* newItem = new ServerItem<int>(descriptor, Qt::UserRole + 1);
 
     newItem->setData(Qt::UserRole, server.name());
     newItem->setData(Qt::UserRole + 1, server.preferred());
@@ -326,27 +323,33 @@ NexusSettingsTab::NexusSettingsTab(Settings& s, SettingsDialog& d)
     ui->preferredServersList->sortItems(Qt::DescendingOrder);
   }
 
-  m_connectionUI.reset(new NexusConnectionUI(
-    &dialog(),
-    &settings(),
-    ui->nexusConnect,
-    ui->nexusDisconnect,
-    ui->nexusManualKey,
-    ui->nexusLog));
+  m_connectionUI.reset(new NexusConnectionUI(&dialog(), &settings(), ui->nexusConnect,
+                                             ui->nexusDisconnect, ui->nexusManualKey,
+                                             ui->nexusLog));
 
   QObject::connect(
-    m_connectionUI.get(), &NexusConnectionUI::stateChanged, &d,
-    [&]{ updateNexusData(); }, Qt::QueuedConnection);
+      m_connectionUI.get(), &NexusConnectionUI::stateChanged, &d,
+      [&] {
+        updateNexusData();
+      },
+      Qt::QueuedConnection);
 
-  QObject::connect(
-    m_connectionUI.get(), &NexusConnectionUI::keyChanged, &d,
-    [&]{ dialog().setExitNeeded(Exit::Restart); });
+  QObject::connect(m_connectionUI.get(), &NexusConnectionUI::keyChanged, &d, [&] {
+    dialog().setExitNeeded(Exit::Restart);
+  });
 
-
-  QObject::connect(ui->clearCacheButton, &QPushButton::clicked, [&]{ clearCache(); });
-  QObject::connect(ui->associateButton, &QPushButton::clicked, [&]{ associate(); });
-  QObject::connect(ui->useCustomBrowser, &QCheckBox::clicked, [&]{ updateCustomBrowser(); });
-  QObject::connect(ui->browseCustomBrowser, &QPushButton::clicked, [&]{ browseCustomBrowser(); });
+  QObject::connect(ui->clearCacheButton, &QPushButton::clicked, [&] {
+    clearCache();
+  });
+  QObject::connect(ui->associateButton, &QPushButton::clicked, [&] {
+    associate();
+  });
+  QObject::connect(ui->useCustomBrowser, &QCheckBox::clicked, [&] {
+    updateCustomBrowser();
+  });
+  QObject::connect(ui->browseCustomBrowser, &QPushButton::clicked, [&] {
+    browseCustomBrowser();
+  });
 
   updateNexusData();
   updateCustomBrowser();
@@ -382,7 +385,8 @@ void NexusSettingsTab::update()
   const int count = ui->preferredServersList->count();
 
   for (int i = 0; i < count; ++i) {
-    const QString key = ui->preferredServersList->item(i)->data(Qt::UserRole).toString();
+    const QString key =
+        ui->preferredServersList->item(i)->data(Qt::UserRole).toString();
     const int newPreferred = count - i;
 
     bool found = false;
@@ -397,9 +401,8 @@ void NexusSettingsTab::update()
     }
 
     if (!found) {
-      log::error(
-        "while setting preference to {}, server '{}' not found",
-        newPreferred, key);
+      log::error("while setting preference to {}, server '{}' not found", newPreferred,
+                 key);
     }
   }
 
@@ -427,12 +430,12 @@ void NexusSettingsTab::updateNexusData()
     ui->nexusAccount->setText(localizedUserAccountType(user.type()));
 
     ui->nexusDailyRequests->setText(QString("%1/%2")
-      .arg(user.limits().remainingDailyRequests)
-      .arg(user.limits().maxDailyRequests));
+                                        .arg(user.limits().remainingDailyRequests)
+                                        .arg(user.limits().maxDailyRequests));
 
     ui->nexusHourlyRequests->setText(QString("%1/%2")
-      .arg(user.limits().remainingHourlyRequests)
-      .arg(user.limits().maxHourlyRequests));
+                                         .arg(user.limits().remainingHourlyRequests)
+                                         .arg(user.limits().maxHourlyRequests));
   } else {
     ui->nexusUserID->setText(QObject::tr("N/A"));
     ui->nexusName->setText(QObject::tr("N/A"));
@@ -447,15 +450,14 @@ void NexusSettingsTab::updateCustomBrowser()
   ui->browserCommand->setEnabled(ui->useCustomBrowser->isChecked());
 }
 
-void NexusSettingsTab::browseCustomBrowser ()
+void NexusSettingsTab::browseCustomBrowser()
 {
   const QString Filters =
-    QObject::tr("Executables (*.exe)") + ";;" +
-    QObject::tr("All Files (*.*)");
+      QObject::tr("Executables (*.exe)") + ";;" + QObject::tr("All Files (*.*)");
 
   QString file = QFileDialog::getOpenFileName(
-    parentWidget(), QObject::tr("Select the browser executable"),
-    ui->browserCommand->text(), Filters);
+      parentWidget(), QObject::tr("Select the browser executable"),
+      ui->browserCommand->text(), Filters);
 
   if (file.isNull() || file == "") {
     return;

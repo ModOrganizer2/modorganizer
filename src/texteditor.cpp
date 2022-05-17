@@ -1,16 +1,15 @@
 #include "texteditor.h"
 #include "utility.h"
-#include <log.h>
 #include <QSplitter>
+#include <log.h>
 
 using namespace MOBase;
 
-TextEditor::TextEditor(QWidget* parent) :
-  QPlainTextEdit(parent),
-  m_toolbar(nullptr), m_lineNumbers(nullptr), m_highlighter(nullptr),
-  m_dirty(false), m_loading(false)
+TextEditor::TextEditor(QWidget* parent)
+    : QPlainTextEdit(parent), m_toolbar(nullptr), m_lineNumbers(nullptr),
+      m_highlighter(nullptr), m_dirty(false), m_loading(false)
 {
-  m_toolbar = new TextEditorToolbar(*this);
+  m_toolbar     = new TextEditorToolbar(*this);
   m_lineNumbers = new TextEditorLineNumbers(*this);
   m_highlighter = new TextEditorHighlighter(document());
 
@@ -19,13 +18,13 @@ TextEditor::TextEditor(QWidget* parent) :
 
   emit modified(false);
 
-  connect(
-    document(), &QTextDocument::modificationChanged,
-    [&](bool b){ onModified(b); });
+  connect(document(), &QTextDocument::modificationChanged, [&](bool b) {
+    onModified(b);
+  });
 
-  connect(
-    this, &QPlainTextEdit::cursorPositionChanged,
-    [&]{ highlightCurrentLine(); });
+  connect(this, &QPlainTextEdit::cursorPositionChanged, [&] {
+    highlightCurrentLine();
+  });
 }
 
 void TextEditor::setDefaultStyle()
@@ -42,12 +41,12 @@ void TextEditor::setDefaultStyle()
   {
     auto w = std::make_unique<QWidget>();
 
-    if (auto* s=style()) {
+    if (auto* s = style()) {
       s->polish(w.get());
     }
 
-    textColor = w->palette().color(QPalette::WindowText);
-    altTextColor = w->palette().color(QPalette::Disabled, QPalette::WindowText);
+    textColor       = w->palette().color(QPalette::WindowText);
+    altTextColor    = w->palette().color(QPalette::Disabled, QPalette::WindowText);
     backgroundColor = w->palette().color(QPalette::Window);
   }
 
@@ -170,10 +169,10 @@ void TextEditor::setBackgroundColor(const QColor& c)
   m_highlighter->setBackgroundColor(c);
 
   setStyleSheet(QString("QPlainTextEdit{ background-color: rgba(%1, %2, %3, %4); }")
-    .arg(c.redF() * 255)
-    .arg(c.greenF() * 255)
-    .arg(c.blueF() * 255)
-    .arg(c.alphaF()));
+                    .arg(c.redF() * 255)
+                    .arg(c.greenF() * 255)
+                    .arg(c.blueF() * 255)
+                    .arg(c.alphaF()));
 }
 
 QColor TextEditor::textColor() const
@@ -245,20 +244,19 @@ QWidget* TextEditor::wrapEditWidget()
   // wrapping the QPlainTextEdit into a new widget so the toolbar can be
   // displayed above it
 
-  if (auto* parentLayout=parentWidget()->layout()) {
+  if (auto* parentLayout = parentWidget()->layout()) {
     // the edit's parent has a regular layout, replace the edit by the new
     // widget and delete the QLayoutItem that's returned as it's not needed
     delete parentLayout->replaceWidget(this, widget.get());
 
-  } else if (auto* splitter=qobject_cast<QSplitter*>(parentWidget())) {
+  } else if (auto* splitter = qobject_cast<QSplitter*>(parentWidget())) {
     // the edit's parent is a QSplitter, which doesn't have a layout; replace
     // the edit by using its index in the splitter
     auto index = splitter->indexOf(this);
 
     if (index == -1) {
-      log::error(
-        "TextEditor: cannot wrap edit widget to display a toolbar, "
-        "parent is a splitter, but widget isn't in it");
+      log::error("TextEditor: cannot wrap edit widget to display a toolbar, "
+                 "parent is a splitter, but widget isn't in it");
 
       return nullptr;
     }
@@ -267,9 +265,8 @@ QWidget* TextEditor::wrapEditWidget()
 
   } else {
     // unknown parent
-    log::error(
-      "TextEditor: cannot wrap edit widget to display a toolbar, "
-      "no parent or parent has no layout");
+    log::error("TextEditor: cannot wrap edit widget to display a toolbar, "
+               "no parent or parent has no layout");
 
     return nullptr;
   }
@@ -282,7 +279,8 @@ void TextEditor::resizeEvent(QResizeEvent* e)
   QPlainTextEdit::resizeEvent(e);
 
   QRect cr = contentsRect();
-  m_lineNumbers->setGeometry(QRect(cr.left(), cr.top(), m_lineNumbers->areaWidth(), cr.height()));
+  m_lineNumbers->setGeometry(
+      QRect(cr.left(), cr.top(), m_lineNumbers->areaWidth(), cr.height()));
 }
 
 void TextEditor::paintLineNumbers(QPaintEvent* e, const QColor& textColor)
@@ -293,23 +291,22 @@ void TextEditor::paintLineNumbers(QPaintEvent* e, const QColor& textColor)
   QPainter painter(m_lineNumbers);
 
   QTextBlock block = firstVisibleBlock();
-  int blockNumber = block.blockNumber();
-  int top = (int) blockBoundingGeometry(block).translated(contentOffset()).top();
-  int bottom = top + (int) blockBoundingRect(block).height();
+  int blockNumber  = block.blockNumber();
+  int top    = (int)blockBoundingGeometry(block).translated(contentOffset()).top();
+  int bottom = top + (int)blockBoundingRect(block).height();
 
   while (block.isValid() && top <= e->rect().bottom()) {
     if (block.isVisible() && bottom >= e->rect().top()) {
       QString number = QString::number(blockNumber + 1);
       painter.setPen(textColor);
 
-      painter.drawText(
-        0, top, m_lineNumbers->width() - 3, fontMetrics().height(),
-        Qt::AlignRight, number);
+      painter.drawText(0, top, m_lineNumbers->width() - 3, fontMetrics().height(),
+                       Qt::AlignRight, number);
     }
 
-    block = block.next();
-    top = bottom;
-    bottom = top + (int) blockBoundingRect(block).height();
+    block  = block.next();
+    top    = bottom;
+    bottom = top + (int)blockBoundingRect(block).height();
     ++blockNumber;
   }
 }
@@ -333,13 +330,10 @@ void TextEditor::highlightCurrentLine()
   setExtraSelections(extraSelections);
 }
 
-
-TextEditorHighlighter::TextEditorHighlighter(QTextDocument* doc) :
-  QSyntaxHighlighter(doc),
-  m_background(QColor("transparent")),
-  m_text(QColor("black"))
-{
-}
+TextEditorHighlighter::TextEditorHighlighter(QTextDocument* doc)
+    : QSyntaxHighlighter(doc), m_background(QColor("transparent")),
+      m_text(QColor("black"))
+{}
 
 QColor TextEditorHighlighter::backgroundColor() const
 {
@@ -377,14 +371,17 @@ void TextEditorHighlighter::changed()
   rehighlight();
 }
 
-
 TextEditorLineNumbers::TextEditorLineNumbers(TextEditor& editor)
-  : QFrame(&editor), m_editor(editor)
+    : QFrame(&editor), m_editor(editor)
 {
   setFont(editor.font());
 
-  connect(&m_editor, &QPlainTextEdit::blockCountChanged, [&]{ updateAreaWidth(); });
-  connect(&m_editor, &QPlainTextEdit::updateRequest, [&](auto&& rect, int dy){ updateArea(rect, dy); });
+  connect(&m_editor, &QPlainTextEdit::blockCountChanged, [&] {
+    updateAreaWidth();
+  });
+  connect(&m_editor, &QPlainTextEdit::updateRequest, [&](auto&& rect, int dy) {
+    updateArea(rect, dy);
+  });
 
   updateAreaWidth();
 }
@@ -397,7 +394,7 @@ QSize TextEditorLineNumbers::sizeHint() const
 int TextEditorLineNumbers::areaWidth() const
 {
   int digits = 1;
-  int max = std::max(1, m_editor.blockCount());
+  int max    = std::max(1, m_editor.blockCount());
 
   while (max >= 10) {
     max /= 10;
@@ -447,7 +444,7 @@ void TextEditorLineNumbers::updateAreaWidth()
   m_editor.setViewportMargins(areaWidth(), 0, 0, 0);
 }
 
-void TextEditorLineNumbers::updateArea(const QRect &rect, int dy)
+void TextEditorLineNumbers::updateArea(const QRect& rect, int dy)
 {
   if (dy) {
     scroll(0, dy);
@@ -460,32 +457,35 @@ void TextEditorLineNumbers::updateArea(const QRect &rect, int dy)
   }
 }
 
-
-TextEditorToolbar::TextEditorToolbar(TextEditor& editor) :
-  m_editor(editor), m_save(nullptr), m_wordWrap(nullptr), m_explore(nullptr),
-  m_path(nullptr)
+TextEditorToolbar::TextEditorToolbar(TextEditor& editor)
+    : m_editor(editor), m_save(nullptr), m_wordWrap(nullptr), m_explore(nullptr),
+      m_path(nullptr)
 {
-  m_save = new QAction(
-    QIcon(":/MO/gui/save"), QObject::tr("&Save"), &editor);
+  m_save = new QAction(QIcon(":/MO/gui/save"), QObject::tr("&Save"), &editor);
 
   m_save->setShortcutContext(Qt::WidgetWithChildrenShortcut);
   m_save->setShortcut(Qt::CTRL + Qt::Key_S);
   m_editor.addAction(m_save);
 
-  m_wordWrap = new QAction(
-    QIcon(":/MO/gui/word-wrap"), QObject::tr("&Word wrap"), &editor);
+  m_wordWrap =
+      new QAction(QIcon(":/MO/gui/word-wrap"), QObject::tr("&Word wrap"), &editor);
 
   m_wordWrap->setCheckable(true);
 
-  m_explore = new QAction(
-    QObject::tr("&Open in Explorer"), &editor);
+  m_explore = new QAction(QObject::tr("&Open in Explorer"), &editor);
 
   m_path = new QLineEdit;
   m_path->setReadOnly(true);
 
-  QObject::connect(m_save, &QAction::triggered, [&]{ m_editor.save(); });
-  QObject::connect(m_wordWrap, &QAction::triggered, [&]{ m_editor.toggleWordWrap(); });
-  QObject::connect(m_explore, &QAction::triggered, [&]{ m_editor.explore(); });
+  QObject::connect(m_save, &QAction::triggered, [&] {
+    m_editor.save();
+  });
+  QObject::connect(m_wordWrap, &QAction::triggered, [&] {
+    m_editor.toggleWordWrap();
+  });
+  QObject::connect(m_explore, &QAction::triggered, [&] {
+    m_editor.explore();
+  });
 
   auto* layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
@@ -505,9 +505,15 @@ TextEditorToolbar::TextEditorToolbar(TextEditor& editor) :
 
   layout->addWidget(m_path);
 
-  QObject::connect(&m_editor, &TextEditor::modified, [&](bool b){ onTextModified(b); });
-  QObject::connect(&m_editor, &TextEditor::wordWrapChanged, [&](bool b){ onWordWrap(b); });
-  QObject::connect(&m_editor, &TextEditor::loaded, [&](QString f){ onLoaded(f); });
+  QObject::connect(&m_editor, &TextEditor::modified, [&](bool b) {
+    onTextModified(b);
+  });
+  QObject::connect(&m_editor, &TextEditor::wordWrapChanged, [&](bool b) {
+    onWordWrap(b);
+  });
+  QObject::connect(&m_editor, &TextEditor::loaded, [&](QString f) {
+    onLoaded(f);
+  });
 }
 
 void TextEditorToolbar::onTextModified(bool b)

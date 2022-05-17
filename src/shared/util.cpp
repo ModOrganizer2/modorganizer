@@ -18,9 +18,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "util.h"
-#include "windows_error.h"
-#include "../mainwindow.h"
 #include "../env.h"
+#include "../mainwindow.h"
+#include "windows_error.h"
 #include <log.h>
 #include <usvfs.h>
 #include <usvfs_version.h>
@@ -30,28 +30,28 @@ using namespace MOBase;
 namespace MOShared
 {
 
-bool FileExists(const std::string &filename)
+bool FileExists(const std::string& filename)
 {
   DWORD dwAttrib = ::GetFileAttributesA(filename.c_str());
 
   return (dwAttrib != INVALID_FILE_ATTRIBUTES);
 }
 
-bool FileExists(const std::wstring &filename)
+bool FileExists(const std::wstring& filename)
 {
   DWORD dwAttrib = ::GetFileAttributesW(filename.c_str());
 
   return (dwAttrib != INVALID_FILE_ATTRIBUTES);
 }
 
-bool FileExists(const std::wstring &searchPath, const std::wstring &filename)
+bool FileExists(const std::wstring& searchPath, const std::wstring& filename)
 {
   std::wstringstream stream;
   stream << searchPath << "\\" << filename;
   return FileExists(stream.str());
 }
 
-std::string ToString(const std::wstring &source, bool utf8)
+std::string ToString(const std::wstring& source, bool utf8)
 {
   std::string result;
   if (source.length() > 0) {
@@ -59,20 +59,23 @@ std::string ToString(const std::wstring &source, bool utf8)
     if (!utf8) {
       codepage = AreFileApisANSI() ? GetACP() : GetOEMCP();
     }
-    int sizeRequired = ::WideCharToMultiByte(codepage, 0, &source[0], -1, nullptr, 0, nullptr, nullptr);
+    int sizeRequired = ::WideCharToMultiByte(codepage, 0, &source[0], -1, nullptr, 0,
+                                             nullptr, nullptr);
     if (sizeRequired == 0) {
       throw windows_error("failed to convert string to multibyte");
     }
-    // the size returned by WideCharToMultiByte contains zero termination IF -1 is specified for the length.
-    // we don't want that \0 in the string because then the length field would be wrong. Because madness
+    // the size returned by WideCharToMultiByte contains zero termination IF -1 is
+    // specified for the length. we don't want that \0 in the string because then the
+    // length field would be wrong. Because madness
     result.resize(sizeRequired - 1, '\0');
-    ::WideCharToMultiByte(codepage, 0, &source[0], (int)source.size(), &result[0], sizeRequired, nullptr, nullptr);
+    ::WideCharToMultiByte(codepage, 0, &source[0], (int)source.size(), &result[0],
+                          sizeRequired, nullptr, nullptr);
   }
 
   return result;
 }
 
-std::wstring ToWString(const std::string &source, bool utf8)
+std::wstring ToWString(const std::string& source, bool utf8)
 {
   std::wstring result;
   if (source.length() > 0) {
@@ -80,53 +83,51 @@ std::wstring ToWString(const std::string &source, bool utf8)
     if (!utf8) {
       codepage = AreFileApisANSI() ? GetACP() : GetOEMCP();
     }
-    int sizeRequired
-        = ::MultiByteToWideChar(codepage, 0, source.c_str(),
-                                static_cast<int>(source.length()), nullptr, 0);
+    int sizeRequired = ::MultiByteToWideChar(
+        codepage, 0, source.c_str(), static_cast<int>(source.length()), nullptr, 0);
     if (sizeRequired == 0) {
       throw windows_error("failed to convert string to wide character");
     }
     result.resize(sizeRequired, L'\0');
     ::MultiByteToWideChar(codepage, 0, source.c_str(),
-                          static_cast<int>(source.length()), &result[0],
-                          sizeRequired);
+                          static_cast<int>(source.length()), &result[0], sizeRequired);
   }
 
   return result;
 }
 
 static std::locale loc("");
-static auto locToLowerW = [] (wchar_t in) -> wchar_t {
+static auto locToLowerW = [](wchar_t in) -> wchar_t {
   return std::tolower(in, loc);
 };
 
-static auto locToLower = [] (char in) -> char {
+static auto locToLower = [](char in) -> char {
   return std::tolower(in, loc);
 };
 
 std::string& ToLowerInPlace(std::string& text)
 {
-  CharLowerBuffA(const_cast<CHAR *>(text.c_str()), static_cast<DWORD>(text.size()));
+  CharLowerBuffA(const_cast<CHAR*>(text.c_str()), static_cast<DWORD>(text.size()));
   return text;
 }
 
 std::string ToLowerCopy(const std::string& text)
 {
   std::string result(text);
-  CharLowerBuffA(const_cast<CHAR *>(result.c_str()), static_cast<DWORD>(result.size()));
+  CharLowerBuffA(const_cast<CHAR*>(result.c_str()), static_cast<DWORD>(result.size()));
   return result;
 }
 
 std::wstring& ToLowerInPlace(std::wstring& text)
 {
-  CharLowerBuffW(const_cast<WCHAR *>(text.c_str()), static_cast<DWORD>(text.size()));
+  CharLowerBuffW(const_cast<WCHAR*>(text.c_str()), static_cast<DWORD>(text.size()));
   return text;
 }
 
 std::wstring ToLowerCopy(const std::wstring& text)
 {
   std::wstring result(text);
-  CharLowerBuffW(const_cast<WCHAR *>(result.c_str()), static_cast<DWORD>(result.size()));
+  CharLowerBuffW(const_cast<WCHAR*>(result.c_str()), static_cast<DWORD>(result.size()));
   return result;
 }
 
@@ -142,20 +143,19 @@ bool CaseInsenstiveComparePred(wchar_t lhs, wchar_t rhs)
   return std::tolower(lhs, loc) == std::tolower(rhs, loc);
 }
 
-bool CaseInsensitiveEqual(const std::wstring &lhs, const std::wstring &rhs)
+bool CaseInsensitiveEqual(const std::wstring& lhs, const std::wstring& rhs)
 {
-  return (lhs.length() == rhs.length())
-      && std::equal(lhs.begin(), lhs.end(),
-                    rhs.begin(),
-                    [] (wchar_t lhs, wchar_t rhs) -> bool {
+  return (lhs.length() == rhs.length()) &&
+         std::equal(lhs.begin(), lhs.end(), rhs.begin(),
+                    [](wchar_t lhs, wchar_t rhs) -> bool {
                       return std::tolower(lhs, loc) == std::tolower(rhs, loc);
                     });
 }
 
-VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName)
+VS_FIXEDFILEINFO GetFileVersion(const std::wstring& fileName)
 {
   DWORD handle = 0UL;
-  DWORD size = ::GetFileVersionInfoSizeW(fileName.c_str(), &handle);
+  DWORD size   = ::GetFileVersionInfoSizeW(fileName.c_str(), &handle);
   if (size == 0) {
     throw windows_error("failed to determine file version info size");
   }
@@ -167,7 +167,7 @@ VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName)
       throw windows_error("failed to determine file version info");
     }
 
-    void *versionInfoPtr = nullptr;
+    void* versionInfoPtr   = nullptr;
     UINT versionInfoLength = 0;
     if (!::VerQueryValue(buffer.get(), L"\\", &versionInfoPtr, &versionInfoLength)) {
       throw windows_error("failed to determine file version");
@@ -180,10 +180,10 @@ VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName)
   }
 }
 
-std::wstring GetFileVersionString(const std::wstring &fileName)
+std::wstring GetFileVersionString(const std::wstring& fileName)
 {
   DWORD handle = 0UL;
-  DWORD size = ::GetFileVersionInfoSizeW(fileName.c_str(), &handle);
+  DWORD size   = ::GetFileVersionInfoSizeW(fileName.c_str(), &handle);
   if (size == 0) {
     throw windows_error("failed to determine file version info size");
   }
@@ -196,14 +196,14 @@ std::wstring GetFileVersionString(const std::wstring &fileName)
     }
 
     LPVOID strBuffer = nullptr;
-    UINT strLength = 0;
-    if (!::VerQueryValue(buffer.get(), L"\\StringFileInfo\\040904B0\\ProductVersion", &strBuffer, &strLength)) {
+    UINT strLength   = 0;
+    if (!::VerQueryValue(buffer.get(), L"\\StringFileInfo\\040904B0\\ProductVersion",
+                         &strBuffer, &strLength)) {
       throw windows_error("failed to determine file version");
     }
 
     return std::wstring((LPCTSTR)strBuffer);
-  }
-  catch (...) {
+  } catch (...) {
     throw;
   }
 }
@@ -212,45 +212,35 @@ VersionInfo createVersionInfo()
 {
   VS_FIXEDFILEINFO version = GetFileVersion(env::thisProcessPath().native());
 
-  if (version.dwFileFlags & VS_FF_PRERELEASE)
-  {
+  if (version.dwFileFlags & VS_FF_PRERELEASE) {
     // Pre-release builds need annotating
-    QString versionString = QString::fromStdWString(
-      GetFileVersionString(env::thisProcessPath().native()));
+    QString versionString =
+        QString::fromStdWString(GetFileVersionString(env::thisProcessPath().native()));
 
-    // The pre-release flag can be set without the string specifying what type of pre-release
+    // The pre-release flag can be set without the string specifying what type of
+    // pre-release
     bool noLetters = true;
-    for (QChar character : versionString)
-    {
-      if (character.isLetter())
-      {
+    for (QChar character : versionString) {
+      if (character.isLetter()) {
         noLetters = false;
         break;
       }
     }
 
-    if (noLetters)
-    {
+    if (noLetters) {
       // Default to pre-alpha when release type is unspecified
-      return VersionInfo(version.dwFileVersionMS >> 16,
-                         version.dwFileVersionMS & 0xFFFF,
-                         version.dwFileVersionLS >> 16,
-                         version.dwFileVersionLS & 0xFFFF,
-                         VersionInfo::RELEASE_PREALPHA);
-    }
-    else
-    {
+      return VersionInfo(
+          version.dwFileVersionMS >> 16, version.dwFileVersionMS & 0xFFFF,
+          version.dwFileVersionLS >> 16, version.dwFileVersionLS & 0xFFFF,
+          VersionInfo::RELEASE_PREALPHA);
+    } else {
       // Trust the string to make sense
       return VersionInfo(versionString);
     }
-  }
-  else
-  {
+  } else {
     // Non-pre-release builds just need their version numbers reading
-    return VersionInfo(version.dwFileVersionMS >> 16,
-                       version.dwFileVersionMS & 0xFFFF,
-                       version.dwFileVersionLS >> 16,
-                       version.dwFileVersionLS & 0xFFFF);
+    return VersionInfo(version.dwFileVersionMS >> 16, version.dwFileVersionMS & 0xFFFF,
+                       version.dwFileVersionLS >> 16, version.dwFileVersionLS & 0xFFFF);
   }
 }
 
@@ -260,7 +250,7 @@ QString getUsvfsDLLVersion()
   // directly; until then, using GetProcAddress() allows for mixing up devbuilds
   // and usvfs dlls
 
-  using USVFSVersionStringType = const char* WINAPI ();
+  using USVFSVersionStringType = const char* WINAPI();
 
   QString s;
 
@@ -268,7 +258,7 @@ QString getUsvfsDLLVersion()
 
   if (m) {
     auto* f = reinterpret_cast<USVFSVersionStringType*>(
-      ::GetProcAddress(m, "USVFSVersionString"));
+        ::GetProcAddress(m, "USVFSVersionString"));
 
     if (f) {
       s = f();
@@ -286,7 +276,7 @@ QString getUsvfsDLLVersion()
 
 QString getUsvfsVersionString()
 {
-  const QString dll = getUsvfsDLLVersion();
+  const QString dll    = getUsvfsDLLVersion();
   const QString header = USVFS_VERSION_STRING;
 
   QString usvfsVersion;
@@ -300,10 +290,7 @@ QString getUsvfsVersionString()
 
 void SetThisThreadName(const QString& s)
 {
-  using SetThreadDescriptionType = HRESULT (
-    HANDLE hThread,
-    PCWSTR lpThreadDescription
-  );
+  using SetThreadDescriptionType = HRESULT(HANDLE hThread, PCWSTR lpThreadDescription);
 
   static SetThreadDescriptionType* SetThreadDescription = [] {
     SetThreadDescriptionType* p = nullptr;
@@ -314,7 +301,7 @@ void SetThisThreadName(const QString& s)
     }
 
     p = reinterpret_cast<SetThreadDescriptionType*>(
-      GetProcAddress(kernel32.get(), "SetThreadDescription"));
+        GetProcAddress(kernel32.get(), "SetThreadDescription"));
 
     return p;
   }();
@@ -324,13 +311,12 @@ void SetThisThreadName(const QString& s)
   }
 }
 
-
 char shortcutChar(const QAction* a)
 {
   const auto text = a->text();
-  char shortcut = 0;
+  char shortcut   = 0;
 
-  for (int i=0; i<text.size(); ++i) {
+  for (int i = 0; i < text.size(); ++i) {
     const auto c = text[i];
     if (c == '&') {
       if (i >= (text.size() - 1)) {
@@ -350,7 +336,7 @@ void checkDuplicateShortcuts(const QMenu& m)
 {
   const auto actions = m.actions();
 
-  for (int i=0; i<actions.size(); ++i) {
+  for (int i = 0; i < actions.size(); ++i) {
     const auto* action1 = actions[i];
     if (action1->isSeparator()) {
       continue;
@@ -361,7 +347,7 @@ void checkDuplicateShortcuts(const QMenu& m)
       continue;
     }
 
-    for (int j=i+1; j<actions.size(); ++j) {
+    for (int j = i + 1; j < actions.size(); ++j) {
       const auto* action2 = actions[j];
       if (action2->isSeparator()) {
         continue;
@@ -370,9 +356,8 @@ void checkDuplicateShortcuts(const QMenu& m)
       const char shortcut2 = shortcutChar(action2);
 
       if (shortcut1 == shortcut2) {
-        log::error(
-          "duplicate shortcut {} for {} and {}",
-          shortcut1, action1->text(), action2->text());
+        log::error("duplicate shortcut {} for {} and {}", shortcut1, action1->text(),
+                   action2->text());
 
         break;
       }
@@ -380,16 +365,15 @@ void checkDuplicateShortcuts(const QMenu& m)
   }
 }
 
-} // namespace MOShared
+}  // namespace MOShared
 
-
-static bool g_exiting = false;
+static bool g_exiting  = false;
 static bool g_canClose = false;
 
 MainWindow* findMainWindow()
 {
   for (auto* tl : qApp->topLevelWidgets()) {
-    if (auto* mw=dynamic_cast<MainWindow*>(tl)) {
+    if (auto* mw = dynamic_cast<MainWindow*>(tl)) {
       return mw;
     }
   }
@@ -404,10 +388,12 @@ bool ExitModOrganizer(ExitFlags e)
   }
 
   g_exiting = true;
-  Guard g([&]{ g_exiting = false; });
+  Guard g([&] {
+    g_exiting = false;
+  });
 
   if (!e.testFlag(Exit::Force)) {
-    if (auto* mw=findMainWindow()) {
+    if (auto* mw = findMainWindow()) {
       if (!mw->canExit()) {
         return false;
       }
@@ -436,7 +422,6 @@ void ResetExitFlag()
 {
   g_exiting = false;
 }
-
 
 bool isNxmLink(const QString& link)
 {

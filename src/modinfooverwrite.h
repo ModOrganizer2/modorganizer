@@ -15,7 +15,6 @@ class ModInfoOverwrite : public ModInfoWithConflictInfo
   friend class ModInfo;
 
 public:
-
   virtual bool updateAvailable() const override { return false; }
   virtual bool updateIgnored() const override { return false; }
   virtual bool downgradeAvailable() const override { return false; }
@@ -52,7 +51,10 @@ public:
   virtual int nexusId() const override { return -1; }
   virtual bool isOverwrite() const override { return true; }
   virtual QDateTime getExpires() const override { return QDateTime(); }
-  virtual std::vector<QString> getIniTweaks() const override { return std::vector<QString>(); }
+  virtual std::vector<QString> getIniTweaks() const override
+  {
+    return std::vector<QString>();
+  }
   virtual std::vector<ModInfo::EFlag> getFlags() const override;
   virtual std::vector<ModInfo::EConflictFlag> getConflictFlags() const override;
   virtual int getHighlight() const override;
@@ -70,14 +72,29 @@ public:
   virtual void addInstalledFile(int, int) override {}
   virtual std::set<std::pair<int, int>> installedFiles() const override { return {}; }
 
-  virtual QVariant pluginSetting(const QString& pluginName, const QString& key, const QVariant& defaultValue) const override { return defaultValue; }
-  virtual std::map<QString, QVariant> pluginSettings(const QString& pluginName) const override { return {}; }
-  virtual bool setPluginSetting(const QString& pluginName, const QString& key, const QVariant& value) override { return false; }
-  virtual std::map<QString, QVariant> clearPluginSettings(const QString& pluginName) override { return {}; }
+  virtual QVariant pluginSetting(const QString& pluginName, const QString& key,
+                                 const QVariant& defaultValue) const override
+  {
+    return defaultValue;
+  }
+  virtual std::map<QString, QVariant>
+  pluginSettings(const QString& pluginName) const override
+  {
+    return {};
+  }
+  virtual bool setPluginSetting(const QString& pluginName, const QString& key,
+                                const QVariant& value) override
+  {
+    return false;
+  }
+  virtual std::map<QString, QVariant>
+  clearPluginSettings(const QString& pluginName) override
+  {
+    return {};
+  }
 
 private:
   ModInfoOverwrite(OrganizerCore& core);
-
 };
 
-#endif // MODINFOOVERWRITE_H
+#endif  // MODINFOOVERWRITE_H

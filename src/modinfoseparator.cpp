@@ -29,8 +29,6 @@ QString ModInfoSeparator::name() const
   return ModInfoRegular::name();
 }
 
-
 ModInfoSeparator::ModInfoSeparator(const QDir& path, OrganizerCore& core)
-  : ModInfoRegular(path, core)
-{
-}
+    : ModInfoRegular(path, core)
+{}

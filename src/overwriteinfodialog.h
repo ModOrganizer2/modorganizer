@@ -24,7 +24,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDialog>
 #include <QFileSystemModel>
 
-namespace Ui {
+namespace Ui
+{
 class OverwriteInfoDialog;
 }
 
@@ -33,17 +34,19 @@ class OverwriteFileSystemModel : public QFileSystemModel
   Q_OBJECT;
 
 public:
-  OverwriteFileSystemModel(QObject *parent)
-    : QFileSystemModel(parent), m_RegularColumnCount(0) {}
+  OverwriteFileSystemModel(QObject* parent)
+      : QFileSystemModel(parent), m_RegularColumnCount(0)
+  {}
 
-  virtual int columnCount(const QModelIndex &parent) const {
+  virtual int columnCount(const QModelIndex& parent) const
+  {
     m_RegularColumnCount = QFileSystemModel::columnCount(parent);
     return m_RegularColumnCount;
   }
 
-  virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const {
-    if ((orientation == Qt::Horizontal) &&
-      (section >= m_RegularColumnCount)) {
+  virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const
+  {
+    if ((orientation == Qt::Horizontal) && (section >= m_RegularColumnCount)) {
       if (role == Qt::DisplayRole) {
         return tr("Overwrites");
       } else {
@@ -54,7 +57,8 @@ public:
     }
   }
 
-  virtual QVariant data(const QModelIndex &index, int role) const {
+  virtual QVariant data(const QModelIndex& index, int role) const
+  {
     if (index.column() == m_RegularColumnCount + 0) {
       if (role == Qt::DisplayRole) {
         return tr("not implemented");
@@ -70,14 +74,12 @@ private:
   mutable int m_RegularColumnCount;
 };
 
-
 class OverwriteInfoDialog : public QDialog
 {
   Q_OBJECT
 
 public:
-
-  explicit OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget *parent = 0);
+  explicit OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget* parent = 0);
   ~OverwriteInfoDialog();
 
   ModInfo::Ptr modInfo() const { return m_ModInfo; }
@@ -94,10 +96,9 @@ protected:
   void showEvent(QShowEvent* e) override;
 
 private:
-
-  void openFile(const QModelIndex &index);
-  bool recursiveDelete(const QModelIndex &index);
-  void deleteFile(const QModelIndex &index);
+  void openFile(const QModelIndex& index);
+  bool recursiveDelete(const QModelIndex& index);
+  void deleteFile(const QModelIndex& index);
 
 private slots:
 
@@ -109,20 +110,18 @@ private slots:
   void createDirectoryTriggered();
 
   void on_explorerButton_clicked();
-  void on_filesView_customContextMenuRequested(const QPoint &pos);
+  void on_filesView_customContextMenuRequested(const QPoint& pos);
 
 private:
-
-  Ui::OverwriteInfoDialog *ui;
-  QFileSystemModel *m_FileSystemModel;
+  Ui::OverwriteInfoDialog* ui;
+  QFileSystemModel* m_FileSystemModel;
   QModelIndexList m_FileSelection;
-  QAction *m_DeleteAction;
-  QAction *m_RenameAction;
-  QAction *m_OpenAction;
-  QAction *m_NewFolderAction;
+  QAction* m_DeleteAction;
+  QAction* m_RenameAction;
+  QAction* m_OpenAction;
+  QAction* m_NewFolderAction;
 
   ModInfo::Ptr m_ModInfo;
-
 };
 
-#endif // OVERWRITEINFODIALOG_H
+#endif  // OVERWRITEINFODIALOG_H

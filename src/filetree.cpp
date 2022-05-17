@@ -1,10 +1,10 @@
 #include "filetree.h"
-#include "filetreemodel.h"
-#include "filetreeitem.h"
-#include "organizercore.h"
 #include "envshell.h"
-#include "shared/fileentry.h"
+#include "filetreeitem.h"
+#include "filetreemodel.h"
+#include "organizercore.h"
 #include "shared/directoryentry.h"
+#include "shared/fileentry.h"
 #include "shared/filesorigin.h"
 #include <log.h>
 #include <widgetutility.h>
@@ -12,11 +12,10 @@
 using namespace MOShared;
 using namespace MOBase;
 
-
 bool canPreviewFile(const PluginContainer& pc, const FileEntry& file)
 {
-  return canPreviewFile(
-    pc, file.isFromArchive(), QString::fromStdWString(file.getName()));
+  return canPreviewFile(pc, file.isFromArchive(),
+                        QString::fromStdWString(file.getName()));
 }
 
 bool canRunFile(const FileEntry& file)
@@ -31,21 +30,18 @@ bool canOpenFile(const FileEntry& file)
 
 bool isHidden(const FileEntry& file)
 {
-  return (QString::fromStdWString(file.getName()).endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive));
+  return (QString::fromStdWString(file.getName())
+              .endsWith(ModInfo::s_HiddenExt, Qt::CaseInsensitive));
 }
 
 bool canExploreFile(const FileEntry& file);
 bool canHideFile(const FileEntry& file);
 bool canUnhideFile(const FileEntry& file);
 
-
 class MenuItem
 {
 public:
-  MenuItem(QString s={})
-    : m_action(new QAction(std::move(s)))
-  {
-  }
+  MenuItem(QString s = {}) : m_action(new QAction(std::move(s))) {}
 
   MenuItem& caption(const QString& s)
   {
@@ -120,9 +116,8 @@ private:
   }
 };
 
-
 FileTree::FileTree(OrganizerCore& core, PluginContainer& pc, QTreeView* tree)
-  : m_core(core), m_plugins(pc), m_tree(tree), m_model(new FileTreeModel(core))
+    : m_core(core), m_plugins(pc), m_tree(tree), m_model(new FileTreeModel(core))
 {
   m_tree->sortByColumn(0, Qt::AscendingOrder);
   m_tree->setModel(m_model);
@@ -130,21 +125,21 @@ FileTree::FileTree(OrganizerCore& core, PluginContainer& pc, QTreeView* tree)
 
   MOBase::setCustomizableColumns(m_tree);
 
-  connect(
-    m_tree, &QTreeView::customContextMenuRequested,
-    [&](auto pos){ onContextMenu(pos); });
+  connect(m_tree, &QTreeView::customContextMenuRequested, [&](auto pos) {
+    onContextMenu(pos);
+  });
 
-  connect(
-    m_tree, &QTreeView::expanded,
-    [&](auto&& index){ onExpandedChanged(index, true); });
+  connect(m_tree, &QTreeView::expanded, [&](auto&& index) {
+    onExpandedChanged(index, true);
+  });
 
-  connect(
-    m_tree, &QTreeView::collapsed,
-    [&](auto&& index){ onExpandedChanged(index, false); });
+  connect(m_tree, &QTreeView::collapsed, [&](auto&& index) {
+    onExpandedChanged(index, false);
+  });
 
-  connect(
-    m_tree, &QTreeView::activated,
-    [&](auto&& index){ onItemActivated(index); });
+  connect(m_tree, &QTreeView::activated, [&](auto&& index) {
+    onItemActivated(index);
+  });
 }
 
 FileTreeModel* FileTree::model()
@@ -200,10 +195,10 @@ void FileTree::open(FileTreeItem* item)
   const QFileInfo targetInfo(path);
 
   m_core.processRunner()
-    .setFromFile(m_tree->window(), targetInfo)
-    .setHooked(false)
-    .setWaitForCompletion(ProcessRunner::TriggerRefresh)
-    .run();
+      .setFromFile(m_tree->window(), targetInfo)
+      .setHooked(false)
+      .setWaitForCompletion(ProcessRunner::TriggerRefresh)
+      .run();
 }
 
 void FileTree::openHooked(FileTreeItem* item)
@@ -224,10 +219,10 @@ void FileTree::openHooked(FileTreeItem* item)
   const QFileInfo targetInfo(path);
 
   m_core.processRunner()
-    .setFromFile(m_tree->window(), targetInfo)
-    .setHooked(true)
-    .setWaitForCompletion(ProcessRunner::TriggerRefresh)
-    .run();
+      .setFromFile(m_tree->window(), targetInfo)
+      .setHooked(true)
+      .setWaitForCompletion(ProcessRunner::TriggerRefresh)
+      .run();
 }
 
 void FileTree::preview(FileTreeItem* item)
@@ -256,8 +251,7 @@ void FileTree::activate(FileTreeItem* item)
     return;
   }
 
-  const auto tryPreview =
-    m_core.settings().interface().doubleClicksOpenPreviews();
+  const auto tryPreview = m_core.settings().interface().doubleClicksOpenPreviews();
 
   if (tryPreview) {
     const QFileInfo fi(item->realPath());
@@ -284,38 +278,34 @@ void FileTree::addAsExecutable(FileTreeItem* item)
   const QFileInfo target(path);
   const auto fec = spawn::getFileExecutionContext(m_tree->window(), target);
 
-  switch (fec.type)
-  {
-    case spawn::FileExecutionTypes::Executable:
-    {
-      const QString name = QInputDialog::getText(
-        m_tree->window(), tr("Enter Name"),
-        tr("Enter a name for the executable"), QLineEdit::Normal,
-        target.completeBaseName());
+  switch (fec.type) {
+  case spawn::FileExecutionTypes::Executable: {
+    const QString name = QInputDialog::getText(
+        m_tree->window(), tr("Enter Name"), tr("Enter a name for the executable"),
+        QLineEdit::Normal, target.completeBaseName());
 
-      if (!name.isEmpty()) {
-        //Note: If this already exists, you'll lose custom settings
-        m_core.executablesList()->setExecutable(Executable()
-          .title(name)
-          .binaryInfo(fec.binary)
-          .arguments(fec.arguments)
-          .workingDirectory(target.absolutePath()));
+    if (!name.isEmpty()) {
+      // Note: If this already exists, you'll lose custom settings
+      m_core.executablesList()->setExecutable(
+          Executable()
+              .title(name)
+              .binaryInfo(fec.binary)
+              .arguments(fec.arguments)
+              .workingDirectory(target.absolutePath()));
 
-        emit executablesChanged();
-      }
-
-      break;
+      emit executablesChanged();
     }
 
-    case spawn::FileExecutionTypes::Other:  // fall-through
-    default:
-    {
-      QMessageBox::information(
-        m_tree->window(), tr("Not an executable"),
-        tr("This is not a recognized executable."));
+    break;
+  }
 
-      break;
-    }
+  case spawn::FileExecutionTypes::Other:  // fall-through
+  default: {
+    QMessageBox::information(m_tree->window(), tr("Not an executable"),
+                             tr("This is not a recognized executable."));
+
+    break;
+  }
   }
 }
 
@@ -357,7 +347,7 @@ void FileTree::openModInfo(FileTreeItem* item)
   }
 
   const auto& origin = m_core.directoryStructure()->getOriginByID(originID);
-  const auto& name = QString::fromStdWString(origin.getName());
+  const auto& name   = QString::fromStdWString(origin.getName());
 
   unsigned int index = ModInfo::getIndex(name);
   if (index == UINT_MAX) {
@@ -386,9 +376,8 @@ void FileTree::toggleVisibility(bool visible, FileTreeItem* item)
 
   if (visible) {
     if (!currentName.endsWith(ModInfo::s_HiddenExt)) {
-      log::error(
-        "cannot unhide '{}', doesn't end with '{}'",
-        currentName, ModInfo::s_HiddenExt);
+      log::error("cannot unhide '{}', doesn't end with '{}'", currentName,
+                 ModInfo::s_HiddenExt);
 
       return;
     }
@@ -396,9 +385,8 @@ void FileTree::toggleVisibility(bool visible, FileTreeItem* item)
     newName = currentName.left(currentName.size() - ModInfo::s_HiddenExt.size());
   } else {
     if (currentName.endsWith(ModInfo::s_HiddenExt)) {
-      log::error(
-        "cannot hide '{}', already ends with '{}'",
-        currentName, ModInfo::s_HiddenExt);
+      log::error("cannot hide '{}', already ends with '{}'", currentName,
+                 ModInfo::s_HiddenExt);
 
       return;
     }
@@ -408,9 +396,8 @@ void FileTree::toggleVisibility(bool visible, FileTreeItem* item)
 
   log::debug("attempting to rename '{}' to '{}'", currentName, newName);
 
-  FileRenamer renamer(
-    m_tree->window(),
-    (visible ? FileRenamer::UNHIDE : FileRenamer::HIDE));
+  FileRenamer renamer(m_tree->window(),
+                      (visible ? FileRenamer::UNHIDE : FileRenamer::HIDE));
 
   if (renamer.rename(currentName, newName) == FileRenamer::RESULT_OK) {
     emit originModified(item->originID());
@@ -428,7 +415,8 @@ void FileTree::unhide(FileTreeItem* item)
   toggleVisibility(true, item);
 }
 
-class DumpFailed {};
+class DumpFailed
+{};
 
 void FileTree::dumpToFile() const
 {
@@ -445,7 +433,7 @@ void FileTree::dumpToFile() const
 
 void FileTree::onExpandedChanged(const QModelIndex& index, bool expanded)
 {
-  if (auto* item=m_model->itemFromIndex(proxiedIndex(index))) {
+  if (auto* item = m_model->itemFromIndex(proxiedIndex(index))) {
     item->setExpanded(expanded);
   }
 }
@@ -460,7 +448,7 @@ void FileTree::onItemActivated(const QModelIndex& index)
   activate(item);
 }
 
-void FileTree::onContextMenu(const QPoint &pos)
+void FileTree::onContextMenu(const QPoint& pos)
 {
   const auto m = QApplication::keyboardModifiers();
 
@@ -473,11 +461,9 @@ void FileTree::onContextMenu(const QPoint &pos)
     const auto index = m_tree->indexAt(pos);
 
     if (!m_tree->selectionModel()->isSelected(index)) {
-      m_tree->selectionModel()->select(
-        index,
-        QItemSelectionModel::ClearAndSelect |
-        QItemSelectionModel::Rows |
-        QItemSelectionModel::Current);
+      m_tree->selectionModel()->select(index, QItemSelectionModel::ClearAndSelect |
+                                                  QItemSelectionModel::Rows |
+                                                  QItemSelectionModel::Current);
     }
 
     // if no shell menu was available, continue on and show the regular
@@ -489,12 +475,12 @@ void FileTree::onContextMenu(const QPoint &pos)
 
   QMenu menu;
 
-  if (auto* item=singleSelection()) {
+  if (auto* item = singleSelection()) {
     if (item->isDirectory()) {
       addDirectoryMenus(menu, *item);
     } else {
       const auto file = m_core.directoryStructure()->searchFile(
-        item->dataRelativeFilePath().toStdWString(), nullptr);
+          item->dataRelativeFilePath().toStdWString(), nullptr);
 
       if (file) {
         addFileMenus(menu, *file, item->originID());
@@ -512,7 +498,7 @@ QMainWindow* getMainWindow(QWidget* w)
   QWidget* p = w;
 
   while (p) {
-    if (auto* mw=dynamic_cast<QMainWindow*>(p)) {
+    if (auto* mw = dynamic_cast<QMainWindow*>(p)) {
       return mw;
     }
 
@@ -528,7 +514,7 @@ bool FileTree::showShellMenu(QPoint pos)
 
   // menus by origin
   std::map<int, env::ShellMenu> menus;
-  int totalFiles = 0;
+  int totalFiles   = 0;
   bool warnOnEmpty = true;
 
   for (auto&& index : m_tree->selectionModel()->selectedRows()) {
@@ -540,9 +526,7 @@ bool FileTree::showShellMenu(QPoint pos)
     if (item->isDirectory()) {
       warnOnEmpty = false;
 
-      log::warn(
-        "directories do not have shell menus; '{}' selected",
-        item->filename());
+      log::warn("directories do not have shell menus; '{}' selected", item->filename());
 
       continue;
     }
@@ -550,9 +534,8 @@ bool FileTree::showShellMenu(QPoint pos)
     if (item->isFromArchive()) {
       warnOnEmpty = false;
 
-      log::warn(
-        "files from archives do not have shell menus; '{}' selected",
-        item->filename());
+      log::warn("files from archives do not have shell menus; '{}' selected",
+                item->filename());
 
       continue;
     }
@@ -563,9 +546,8 @@ bool FileTree::showShellMenu(QPoint pos)
     }
 
     if (!QFile::exists(item->realPath())) {
-      log::error("{}",
-        tr("File '%1' does not exist, you may need to refresh.")
-        .arg(item->realPath()));
+      log::error("{}", tr("File '%1' does not exist, you may need to refresh.")
+                           .arg(item->realPath()));
     }
 
     itor->second.addFile(QFileInfo(item->realPath()));
@@ -573,21 +555,19 @@ bool FileTree::showShellMenu(QPoint pos)
 
     if (item->isConflicted()) {
       const auto file = m_core.directoryStructure()->searchFile(
-        item->dataRelativeFilePath().toStdWString(), nullptr);
+          item->dataRelativeFilePath().toStdWString(), nullptr);
 
       if (!file) {
-        log::error(
-          "file '{}' not found, data path={}, real path={}",
-          item->filename(), item->dataRelativeFilePath(), item->realPath());
+        log::error("file '{}' not found, data path={}, real path={}", item->filename(),
+                   item->dataRelativeFilePath(), item->realPath());
 
         continue;
       }
 
       const auto alts = file->getAlternatives();
       if (alts.empty()) {
-        log::warn(
-          "file '{}' has no alternative origins but is marked as conflicted",
-          item->dataRelativeFilePath());
+        log::warn("file '{}' has no alternative origins but is marked as conflicted",
+                  item->dataRelativeFilePath());
       }
 
       for (auto&& alt : alts) {
@@ -598,17 +578,15 @@ bool FileTree::showShellMenu(QPoint pos)
 
         const auto fullPath = file->getFullPath(alt.originID());
         if (fullPath.empty()) {
-          log::error(
-            "file {} not found in origin {}",
-            item->dataRelativeFilePath(), alt.originID());
+          log::error("file {} not found in origin {}", item->dataRelativeFilePath(),
+                     alt.originID());
 
           continue;
         }
 
         if (!QFile::exists(QString::fromStdWString(fullPath))) {
-          log::error("{}",
-            tr("File '%1' does not exist, you may need to refresh.")
-            .arg(QString::fromStdWString(fullPath)));
+          log::error("{}", tr("File '%1' does not exist, you may need to refresh.")
+                               .arg(QString::fromStdWString(fullPath)));
         }
 
         itor->second.addFile(QFileInfo(QString::fromStdWString(fullPath)));
@@ -624,8 +602,7 @@ bool FileTree::showShellMenu(QPoint pos)
     }
 
     return false;
-  }
-  else if (menus.size() == 1) {
+  } else if (menus.size() == 1) {
     auto& menu = menus.begin()->second;
     menu.exec(m_tree->viewport()->mapToGlobal(pos));
   } else {
@@ -676,40 +653,50 @@ void FileTree::addFileMenus(QMenu& menu, const FileEntry& file, int originID)
   const QFileInfo target(QString::fromStdWString(file.getFullPath()));
 
   MenuItem(tr("&Add as Executable"))
-    .callback([&]{ addAsExecutable(); })
-    .hint(tr("Add this file to the executables list"))
-    .disabledHint(tr("This file is not executable"))
-    .enabled(getFileExecutionType(target) == FileExecutionTypes::Executable)
-    .addTo(menu);
+      .callback([&] {
+        addAsExecutable();
+      })
+      .hint(tr("Add this file to the executables list"))
+      .disabledHint(tr("This file is not executable"))
+      .enabled(getFileExecutionType(target) == FileExecutionTypes::Executable)
+      .addTo(menu);
 
   MenuItem(tr("Reveal in E&xplorer"))
-    .callback([&]{ exploreOrigin(); })
-    .hint(tr("Opens the file in Explorer"))
-    .disabledHint(tr("This file is in an archive"))
-    .enabled(!file.isFromArchive())
-    .addTo(menu);
+      .callback([&] {
+        exploreOrigin();
+      })
+      .hint(tr("Opens the file in Explorer"))
+      .disabledHint(tr("This file is in an archive"))
+      .enabled(!file.isFromArchive())
+      .addTo(menu);
 
   MenuItem(tr("Open &Mod Info"))
-    .callback([&]{ openModInfo(); })
-    .hint(tr("Opens the Mod Info Window"))
-    .disabledHint(tr("This file is not in a managed mod"))
-    .enabled(originID != 0)
-    .addTo(menu);
+      .callback([&] {
+        openModInfo();
+      })
+      .hint(tr("Opens the Mod Info Window"))
+      .disabledHint(tr("This file is not in a managed mod"))
+      .enabled(originID != 0)
+      .addTo(menu);
 
   if (isHidden(file)) {
     MenuItem(tr("&Un-Hide"))
-      .callback([&]{ unhide(); })
-      .hint(tr("Un-hides the file"))
-      .disabledHint(tr("This file is in an archive"))
-      .enabled(!file.isFromArchive())
-      .addTo(menu);
+        .callback([&] {
+          unhide();
+        })
+        .hint(tr("Un-hides the file"))
+        .disabledHint(tr("This file is in an archive"))
+        .enabled(!file.isFromArchive())
+        .addTo(menu);
   } else {
     MenuItem(tr("&Hide"))
-      .callback([&]{ hide(); })
-      .hint(tr("Hides the file"))
-      .disabledHint(tr("This file is in an archive"))
-      .enabled(!file.isFromArchive())
-      .addTo(menu);
+        .callback([&] {
+          hide();
+        })
+        .hint(tr("Hides the file"))
+        .disabledHint(tr("This file is in an archive"))
+        .enabled(!file.isFromArchive())
+        .addTo(menu);
   }
 }
 
@@ -722,43 +709,48 @@ void FileTree::addOpenMenus(QMenu& menu, const MOShared::FileEntry& file)
   const QFileInfo target(QString::fromStdWString(file.getFullPath()));
 
   if (getFileExecutionType(target) == FileExecutionTypes::Executable) {
-    openMenu
-      .caption(tr("&Execute"))
-      .callback([&]{ open(); })
-      .hint(tr("Launches this program"))
-      .disabledHint(tr("This file is in an archive"))
-      .enabled(!file.isFromArchive());
+    openMenu.caption(tr("&Execute"))
+        .callback([&] {
+          open();
+        })
+        .hint(tr("Launches this program"))
+        .disabledHint(tr("This file is in an archive"))
+        .enabled(!file.isFromArchive());
 
-    openHookedMenu
-      .caption(tr("Execute with &VFS"))
-      .callback([&]{ openHooked(); })
-      .hint(tr("Launches this program hooked to the VFS"))
-      .disabledHint(tr("This file is in an archive"))
-      .enabled(!file.isFromArchive());
+    openHookedMenu.caption(tr("Execute with &VFS"))
+        .callback([&] {
+          openHooked();
+        })
+        .hint(tr("Launches this program hooked to the VFS"))
+        .disabledHint(tr("This file is in an archive"))
+        .enabled(!file.isFromArchive());
   } else {
-    openMenu
-      .caption(tr("&Open"))
-      .callback([&]{ open(); })
-      .hint(tr("Opens this file with its default handler"))
-      .disabledHint(tr("This file is in an archive"))
-      .enabled(!file.isFromArchive());
+    openMenu.caption(tr("&Open"))
+        .callback([&] {
+          open();
+        })
+        .hint(tr("Opens this file with its default handler"))
+        .disabledHint(tr("This file is in an archive"))
+        .enabled(!file.isFromArchive());
 
-    openHookedMenu
-      .caption(tr("Open with &VFS"))
-      .callback([&]{ openHooked(); })
-      .hint(tr("Opens this file with its default handler hooked to the VFS"))
-      .disabledHint(tr("This file is in an archive"))
-      .enabled(!file.isFromArchive());
+    openHookedMenu.caption(tr("Open with &VFS"))
+        .callback([&] {
+          openHooked();
+        })
+        .hint(tr("Opens this file with its default handler hooked to the VFS"))
+        .disabledHint(tr("This file is in an archive"))
+        .enabled(!file.isFromArchive());
   }
 
   MenuItem previewMenu(tr("&Preview"));
   previewMenu
-    .callback([&]{ preview(); })
-    .hint(tr("Previews this file within Mod Organizer"))
-    .disabledHint(tr(
-      "This file is in an archive or has no preview handler "
-      "associated with it"))
-    .enabled(canPreviewFile(m_plugins, file));
+      .callback([&] {
+        preview();
+      })
+      .hint(tr("Previews this file within Mod Organizer"))
+      .disabledHint(tr("This file is in an archive or has no preview handler "
+                       "associated with it"))
+      .enabled(canPreviewFile(m_plugins, file));
 
   if (m_core.settings().interface().doubleClicksOpenPreviews()) {
     previewMenu.addTo(menu);
@@ -771,7 +763,7 @@ void FileTree::addOpenMenus(QMenu& menu, const MOShared::FileEntry& file)
   }
 
   // bold the first enabled option, only first three are considered
-  for (int i=0; i<3; ++i) {
+  for (int i = 0; i < 3; ++i) {
     if (i >= menu.actions().size()) {
       break;
     }
@@ -792,29 +784,37 @@ void FileTree::addCommonMenus(QMenu& menu)
   menu.addSeparator();
 
   MenuItem(tr("&Save Tree to Text File..."))
-    .callback([&]{ dumpToFile(); })
-    .hint(tr("Writes the list of files to a text file"))
-    .addTo(menu);
+      .callback([&] {
+        dumpToFile();
+      })
+      .hint(tr("Writes the list of files to a text file"))
+      .addTo(menu);
 
   MenuItem(tr("&Refresh"))
-    .callback([&]{ refresh(); })
-    .hint(tr("Refreshes the list"))
-    .addTo(menu);
+      .callback([&] {
+        refresh();
+      })
+      .hint(tr("Refreshes the list"))
+      .addTo(menu);
 
   MenuItem(tr("Ex&pand All"))
-    .callback([&]{ expandAll(); })
-    .addTo(menu);
+      .callback([&] {
+        expandAll();
+      })
+      .addTo(menu);
 
   MenuItem(tr("&Collapse All"))
-    .callback([&]{ collapseAll(); })
-    .addTo(menu);
+      .callback([&] {
+        collapseAll();
+      })
+      .addTo(menu);
 }
 
 QModelIndex FileTree::proxiedIndex(const QModelIndex& index)
 {
   auto* model = m_tree->model();
 
-  if (auto* proxy=dynamic_cast<QSortFilterProxyModel*>(model)) {
+  if (auto* proxy = dynamic_cast<QSortFilterProxyModel*>(model)) {
     return proxy->mapToSource(index);
   } else {
     return index;

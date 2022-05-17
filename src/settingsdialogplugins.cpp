@@ -1,6 +1,6 @@
 #include "settingsdialogplugins.h"
-#include "ui_settingsdialog.h"
 #include "noeditdelegate.h"
+#include "ui_settingsdialog.h"
 #include <iplugin.h>
 
 #include "disableproxyplugindialog.h"
@@ -9,8 +9,9 @@
 
 using namespace MOBase;
 
-PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginContainer, SettingsDialog& d)
-  : SettingsTab(s, d), m_pluginContainer(pluginContainer)
+PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginContainer,
+                                       SettingsDialog& d)
+    : SettingsTab(s, d), m_pluginContainer(pluginContainer)
 {
   ui->pluginSettingsList->setStyleSheet("QTreeWidget::item {padding-right: 10px;}");
 
@@ -19,7 +20,7 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginConta
   pluginInterfaces.sort(Qt::CaseInsensitive);
   std::map<QString, QTreeWidgetItem*> topItems;
   for (QString interfaceName : pluginInterfaces) {
-    auto* item = new QTreeWidgetItem(ui->pluginsList, { interfaceName });
+    auto* item = new QTreeWidgetItem(ui->pluginsList, {interfaceName});
     item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
     auto font = item->font(0);
     font.setBold(true);
@@ -33,16 +34,18 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginConta
   // display plugin settings
   QSet<QString> handledNames;
   for (IPlugin* plugin : settings().plugins().plugins()) {
-    if (handledNames.contains(plugin->name()) || m_pluginContainer->requirements(plugin).master()) {
+    if (handledNames.contains(plugin->name()) ||
+        m_pluginContainer->requirements(plugin).master()) {
       continue;
     }
 
     QTreeWidgetItem* listItem = new QTreeWidgetItem(
-      topItems.at(m_pluginContainer->topImplementedInterface(plugin)));
+        topItems.at(m_pluginContainer->topImplementedInterface(plugin)));
     listItem->setData(0, Qt::DisplayRole, plugin->localizedName());
     listItem->setData(0, PluginRole, QVariant::fromValue((void*)plugin));
     listItem->setData(0, SettingsRole, settings().plugins().settings(plugin->name()));
-    listItem->setData(0, DescriptionsRole, settings().plugins().descriptions(plugin->name()));
+    listItem->setData(0, DescriptionsRole,
+                      settings().plugins().descriptions(plugin->name()));
 
     // Handle child item:
     auto children = m_pluginContainer->requirements(plugin).children();
@@ -51,7 +54,8 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginConta
       childItem->setData(0, Qt::DisplayRole, child->localizedName());
       childItem->setData(0, PluginRole, QVariant::fromValue((void*)child));
       childItem->setData(0, SettingsRole, settings().plugins().settings(child->name()));
-      childItem->setData(0, DescriptionsRole, settings().plugins().descriptions(child->name()));
+      childItem->setData(0, DescriptionsRole,
+                         settings().plugins().descriptions(child->name()));
 
       handledNames.insert(child->name());
     }
@@ -68,23 +72,28 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginContainer* pluginConta
   ui->pluginsList->sortByColumn(0, Qt::AscendingOrder);
 
   // display plugin blacklist
-  for (const QString &pluginName : settings().plugins().blacklist()) {
+  for (const QString& pluginName : settings().plugins().blacklist()) {
     ui->pluginBlacklist->addItem(pluginName);
   }
 
   m_filter.setEdit(ui->pluginFilterEdit);
 
-  QObject::connect(
-    ui->pluginsList, &QTreeWidget::currentItemChanged,
-    [&](auto* current, auto* previous) { on_pluginsList_currentItemChanged(current, previous); });
-  QObject::connect(
-    ui->enabledCheckbox, &QCheckBox::clicked,
-    [&](bool checked) { on_checkboxEnabled_clicked(checked); });
+  QObject::connect(ui->pluginsList, &QTreeWidget::currentItemChanged,
+                   [&](auto* current, auto* previous) {
+                     on_pluginsList_currentItemChanged(current, previous);
+                   });
+  QObject::connect(ui->enabledCheckbox, &QCheckBox::clicked, [&](bool checked) {
+    on_checkboxEnabled_clicked(checked);
+  });
 
-  QShortcut *delShortcut = new QShortcut(
-    QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
-  QObject::connect(delShortcut, &QShortcut::activated, &dialog(), [&] { deleteBlacklistItem(); });
-  QObject::connect(&m_filter, &FilterWidget::changed, [&] { filterPluginList(); });
+  QShortcut* delShortcut =
+      new QShortcut(QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
+  QObject::connect(delShortcut, &QShortcut::activated, &dialog(), [&] {
+    deleteBlacklistItem();
+  });
+  QObject::connect(&m_filter, &FilterWidget::changed, [&] {
+    filterPluginList();
+  });
 
   updateListItems();
   filterPluginList();
@@ -95,11 +104,11 @@ void PluginsSettingsTab::updateListItems()
   for (auto i = 0; i < ui->pluginsList->topLevelItemCount(); ++i) {
     auto* topLevelItem = ui->pluginsList->topLevelItem(i);
     for (auto j = 0; j < topLevelItem->childCount(); ++j) {
-      auto* item = topLevelItem->child(j);
+      auto* item   = topLevelItem->child(j);
       auto* plugin = this->plugin(item);
 
-      bool inactive = !m_pluginContainer->implementInterface<IPluginGame>(plugin)
-        && !m_pluginContainer->isEnabled(plugin);
+      bool inactive = !m_pluginContainer->implementInterface<IPluginGame>(plugin) &&
+                      !m_pluginContainer->isEnabled(plugin);
 
       auto font = item->font(0);
       font.setItalic(inactive);
@@ -109,12 +118,11 @@ void PluginsSettingsTab::updateListItems()
       }
     }
   }
-
 }
 
 void PluginsSettingsTab::filterPluginList()
 {
-  auto selectedItems = ui->pluginsList->selectedItems();
+  auto selectedItems              = ui->pluginsList->selectedItems();
   QTreeWidgetItem* firstNotHidden = nullptr;
 
   for (auto i = 0; i < ui->pluginsList->topLevelItemCount(); ++i) {
@@ -122,7 +130,7 @@ void PluginsSettingsTab::filterPluginList()
 
     bool found = false;
     for (auto j = 0; j < topLevelItem->childCount(); ++j) {
-      auto* item = topLevelItem->child(j);
+      auto* item   = topLevelItem->child(j);
       auto* plugin = this->plugin(item);
 
       // Check the item or the child - If any match (item or child), the whole
@@ -143,8 +151,7 @@ void PluginsSettingsTab::filterPluginList()
         if (firstNotHidden == nullptr) {
           firstNotHidden = item;
         }
-      }
-      else {
+      } else {
         item->setHidden(true);
       }
     }
@@ -159,17 +166,14 @@ void PluginsSettingsTab::filterPluginList()
     ui->noPluginLabel->setVisible(false);
     if (selectedItems.isEmpty()) {
       ui->pluginsList->setCurrentItem(firstNotHidden);
-    }
-    else if (selectedItems[0]->isHidden()) {
+    } else if (selectedItems[0]->isHidden()) {
       ui->pluginsList->setCurrentItem(firstNotHidden);
     }
-  }
-  else {
+  } else {
     ui->pluginDescription->setVisible(false);
     ui->pluginSettingsList->setVisible(false);
     ui->noPluginLabel->setVisible(true);
   }
-
 }
 
 IPlugin* PluginsSettingsTab::plugin(QTreeWidgetItem* pluginItem) const
@@ -181,17 +185,17 @@ void PluginsSettingsTab::update()
 {
   // transfer plugin settings to in-memory structure
   for (int i = 0; i < ui->pluginsList->topLevelItemCount(); ++i) {
-    auto *topLevelItem = ui->pluginsList->topLevelItem(i);
+    auto* topLevelItem = ui->pluginsList->topLevelItem(i);
     for (int j = 0; j < topLevelItem->childCount(); ++j) {
       auto* item = topLevelItem->child(j);
-      settings().plugins().setSettings(
-        plugin(item)->name(), item->data(0, SettingsRole).toMap());
+      settings().plugins().setSettings(plugin(item)->name(),
+                                       item->data(0, SettingsRole).toMap());
     }
   }
 
   // set plugin blacklist
   QStringList names;
-  for (QListWidgetItem *item : ui->pluginBlacklist->findItems("*", Qt::MatchWildcard)) {
+  for (QListWidgetItem* item : ui->pluginBlacklist->findItems("*", Qt::MatchWildcard)) {
     names.push_back(item->text());
   }
 
@@ -208,28 +212,28 @@ void PluginsSettingsTab::closing()
 void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
 {
   // Retrieve the plugin:
-  auto *item = ui->pluginsList->currentItem();
+  auto* item = ui->pluginsList->currentItem();
   if (!item || !item->data(0, PluginRole).isValid()) {
     return;
   }
-  IPlugin* plugin = this->plugin(item);
+  IPlugin* plugin          = this->plugin(item);
   const auto& requirements = m_pluginContainer->requirements(plugin);
 
   // User wants to enable:
   if (checked) {
     m_pluginContainer->setEnabled(plugin, true, false);
-  }
-  else {
+  } else {
     // Custom check for proxy + current game:
     if (m_pluginContainer->implementInterface<IPluginProxy>(plugin)) {
 
       // Current game:
       auto* game = m_pluginContainer->managedGame();
       if (m_pluginContainer->requirements(game).proxy() == plugin) {
-        QMessageBox::warning(
-          parentWidget(), QObject::tr("Cannot disable plugin"),
-          QObject::tr("The '%1' plugin is used by the current game plugin and cannot disabled.")
-          .arg(plugin->localizedName()), QMessageBox::Ok);
+        QMessageBox::warning(parentWidget(), QObject::tr("Cannot disable plugin"),
+                             QObject::tr("The '%1' plugin is used by the current game "
+                                         "plugin and cannot disabled.")
+                                 .arg(plugin->localizedName()),
+                             QMessageBox::Ok);
         ui->enabledCheckbox->setChecked(true);
         return;
       }
@@ -253,12 +257,14 @@ void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
         pluginNames.append(p->localizedName());
       }
       pluginNames.sort();
-      QString message = QObject::tr(
-        "<p>Disabling the '%1' plugin will also disable the following plugins:</p><ul>%1</ul><p>Do you want to continue?</p>")
-        .arg(plugin->localizedName()).arg("<li>" + pluginNames.join("</li><li>") + "</li>");
-      if (QMessageBox::warning(
-        parentWidget(), QObject::tr("Really disable plugin?"), message,
-        QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
+      QString message =
+          QObject::tr("<p>Disabling the '%1' plugin will also disable the following "
+                      "plugins:</p><ul>%1</ul><p>Do you want to continue?</p>")
+              .arg(plugin->localizedName())
+              .arg("<li>" + pluginNames.join("</li><li>") + "</li>");
+      if (QMessageBox::warning(parentWidget(), QObject::tr("Really disable plugin?"),
+                               message,
+                               QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
         ui->enabledCheckbox->setChecked(true);
         return;
       }
@@ -274,7 +280,8 @@ void PluginsSettingsTab::on_checkboxEnabled_clicked(bool checked)
   updateListItems();
 }
 
-void PluginsSettingsTab::on_pluginsList_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous)
+void PluginsSettingsTab::on_pluginsList_currentItemChanged(QTreeWidgetItem* current,
+                                                           QTreeWidgetItem* previous)
 {
   storeSettings(previous);
 
@@ -291,17 +298,18 @@ void PluginsSettingsTab::on_pluginsList_currentItemChanged(QTreeWidgetItem *curr
   // Checkbox, do not show for children or game plugins, disable
   // if the plugin cannot be enabled.
   ui->enabledCheckbox->setVisible(
-    !m_pluginContainer->implementInterface<IPluginGame>(plugin)
-    && plugin->master().isEmpty());
+      !m_pluginContainer->implementInterface<IPluginGame>(plugin) &&
+      plugin->master().isEmpty());
 
-  bool enabled = m_pluginContainer->isEnabled(plugin);
+  bool enabled       = m_pluginContainer->isEnabled(plugin);
   auto& requirements = m_pluginContainer->requirements(plugin);
-  auto problems = requirements.problems();
+  auto problems      = requirements.problems();
 
   if (m_pluginContainer->requirements(plugin).isCorePlugin()) {
     ui->enabledCheckbox->setDisabled(true);
     ui->enabledCheckbox->setToolTip(
-      QObject::tr("This plugin is required for Mod Organizer to work properly and cannot be disabled."));
+        QObject::tr("This plugin is required for Mod Organizer to work properly and "
+                    "cannot be disabled."));
   }
   // Plugin is enable or can be enabled.
   else if (enabled || problems.empty()) {
@@ -315,22 +323,22 @@ void PluginsSettingsTab::on_pluginsList_currentItemChanged(QTreeWidgetItem *curr
     ui->enabledCheckbox->setChecked(false);
     if (problems.size() == 1) {
       ui->enabledCheckbox->setToolTip(problems[0].shortDescription());
-    }
-    else {
+    } else {
       QStringList descriptions;
       for (auto& problem : problems) {
         descriptions.append(problem.shortDescription());
       }
-      ui->enabledCheckbox->setToolTip("<ul><li>" + descriptions.join("</li><li>") + "</li></ul>");
+      ui->enabledCheckbox->setToolTip("<ul><li>" + descriptions.join("</li><li>") +
+                                      "</li></ul>");
     }
   }
 
-  QVariantMap settings = current->data(0, SettingsRole).toMap();
+  QVariantMap settings     = current->data(0, SettingsRole).toMap();
   QVariantMap descriptions = current->data(0, DescriptionsRole).toMap();
   ui->pluginSettingsList->setEnabled(settings.count() != 0);
   for (auto iter = settings.begin(); iter != settings.end(); ++iter) {
-    QTreeWidgetItem *newItem = new QTreeWidgetItem(QStringList(iter.key()));
-    QVariant value = *iter;
+    QTreeWidgetItem* newItem = new QTreeWidgetItem(QStringList(iter.key()));
+    QVariant value           = *iter;
     QString description;
     {
       auto descriptionIter = descriptions.find(iter.key());
@@ -357,14 +365,14 @@ void PluginsSettingsTab::deleteBlacklistItem()
   ui->pluginBlacklist->takeItem(ui->pluginBlacklist->currentIndex().row());
 }
 
-void PluginsSettingsTab::storeSettings(QTreeWidgetItem *pluginItem)
+void PluginsSettingsTab::storeSettings(QTreeWidgetItem* pluginItem)
 {
   if (pluginItem != nullptr && pluginItem->data(0, PluginRole).isValid()) {
     QVariantMap settings = pluginItem->data(0, SettingsRole).toMap();
 
     for (int i = 0; i < ui->pluginSettingsList->topLevelItemCount(); ++i) {
-      const QTreeWidgetItem *item = ui->pluginSettingsList->topLevelItem(i);
-      settings[item->text(0)] = item->data(1, Qt::DisplayRole);
+      const QTreeWidgetItem* item = ui->pluginSettingsList->topLevelItem(i);
+      settings[item->text(0)]     = item->data(1, Qt::DisplayRole);
     }
 
     pluginItem->setData(0, SettingsRole, settings);

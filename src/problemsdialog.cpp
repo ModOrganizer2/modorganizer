@@ -1,29 +1,29 @@
 #include "problemsdialog.h"
-#include "ui_problemsdialog.h"
 #include "organizercore.h"
-#include <utility.h>
-#include <iplugin.h>
-#include <iplugindiagnose.h>
+#include "ui_problemsdialog.h"
 #include <QPushButton>
 #include <Shellapi.h>
+#include <iplugin.h>
+#include <iplugindiagnose.h>
+#include <utility.h>
 
 #include "plugincontainer.h"
 
 using namespace MOBase;
 
-
-ProblemsDialog::ProblemsDialog(const PluginContainer& pluginContainer, QWidget *parent) :
-  QDialog(parent), ui(new Ui::ProblemsDialog), m_PluginContainer(pluginContainer),
-  m_hasProblems(false)
+ProblemsDialog::ProblemsDialog(const PluginContainer& pluginContainer, QWidget* parent)
+    : QDialog(parent), ui(new Ui::ProblemsDialog), m_PluginContainer(pluginContainer),
+      m_hasProblems(false)
 {
   ui->setupUi(this);
 
   runDiagnosis();
 
-  connect(ui->problemsWidget, SIGNAL(itemSelectionChanged()), this, SLOT(selectionChanged()));
-  connect(ui->descriptionText, SIGNAL(anchorClicked(QUrl)), this, SLOT(urlClicked(QUrl)));
+  connect(ui->problemsWidget, SIGNAL(itemSelectionChanged()), this,
+          SLOT(selectionChanged()));
+  connect(ui->descriptionText, SIGNAL(anchorClicked(QUrl)), this,
+          SLOT(urlClicked(QUrl)));
 }
-
 
 ProblemsDialog::~ProblemsDialog()
 {
@@ -41,14 +41,14 @@ void ProblemsDialog::runDiagnosis()
   m_hasProblems = false;
   ui->problemsWidget->clear();
 
-  for (IPluginDiagnose *diagnose : m_PluginContainer.plugins<IPluginDiagnose>()) {
+  for (IPluginDiagnose* diagnose : m_PluginContainer.plugins<IPluginDiagnose>()) {
     if (!m_PluginContainer.isEnabled(diagnose)) {
       continue;
     }
 
     std::vector<unsigned int> activeProblems = diagnose->activeProblems();
     foreach (unsigned int key, activeProblems) {
-      QTreeWidgetItem *newItem = new QTreeWidgetItem();
+      QTreeWidgetItem* newItem = new QTreeWidgetItem();
       newItem->setText(0, diagnose->shortDescription(key));
       newItem->setData(0, Qt::UserRole, diagnose->fullDescription(key));
 
@@ -57,8 +57,9 @@ void ProblemsDialog::runDiagnosis()
 
       if (diagnose->hasGuidedFix(key)) {
         newItem->setText(1, tr("Fix"));
-        QPushButton *fixButton = new QPushButton(tr("Fix"));
-        fixButton->setProperty("fix", QVariant::fromValue(reinterpret_cast<void*>(diagnose)));
+        QPushButton* fixButton = new QPushButton(tr("Fix"));
+        fixButton->setProperty("fix",
+                               QVariant::fromValue(reinterpret_cast<void*>(diagnose)));
         fixButton->setProperty("key", key);
         connect(fixButton, SIGNAL(clicked()), this, SLOT(startFix()));
         ui->problemsWidget->setItemWidget(newItem, 1, fixButton);
@@ -92,22 +93,24 @@ void ProblemsDialog::selectionChanged()
 {
   QString text = ui->problemsWidget->currentItem()->data(0, Qt::UserRole).toString();
   ui->descriptionText->setText(text);
-  ui->descriptionText->setLineWrapMode(text.contains('\n') ? QTextEdit::NoWrap : QTextEdit::WidgetWidth);
+  ui->descriptionText->setLineWrapMode(text.contains('\n') ? QTextEdit::NoWrap
+                                                           : QTextEdit::WidgetWidth);
 }
 
 void ProblemsDialog::startFix()
 {
-  QObject *fixButton = QObject::sender();
+  QObject* fixButton = QObject::sender();
   if (fixButton == NULL) {
     log::warn("no button");
     return;
   }
-  IPluginDiagnose *plugin = reinterpret_cast<IPluginDiagnose*>(fixButton ->property("fix").value<void*>());
-  plugin->startGuidedFix(fixButton ->property("key").toUInt());
+  IPluginDiagnose* plugin =
+      reinterpret_cast<IPluginDiagnose*>(fixButton->property("fix").value<void*>());
+  plugin->startGuidedFix(fixButton->property("key").toUInt());
   runDiagnosis();
 }
 
-void ProblemsDialog::urlClicked(const QUrl &url)
+void ProblemsDialog::urlClicked(const QUrl& url)
 {
   shell::Open(url);
 }

@@ -26,7 +26,6 @@ class OrganizerCore;
 class DownloadManager;
 class Settings;
 
-
 /**
  * @brief model of the list of active and completed downloads
  **/
@@ -36,8 +35,8 @@ class DownloadList : public QAbstractTableModel
   Q_OBJECT
 
 public:
-
-  enum EColumn {
+  enum EColumn
+  {
     COL_NAME = 0,
     COL_STATUS,
     COL_SIZE,
@@ -52,8 +51,7 @@ public:
   };
 
 public:
-
-  explicit DownloadList(OrganizerCore& core, QObject *parent = 0);
+  explicit DownloadList(OrganizerCore& core, QObject* parent = 0);
 
   /**
    * @brief retrieve the number of rows to display. Invoked by Qt
@@ -61,11 +59,11 @@ public:
    * @param parent not relevant for this implementation
    * @return number of rows to display
    **/
-  virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
-  virtual int columnCount(const QModelIndex &parent) const;
+  virtual int rowCount(const QModelIndex& parent = QModelIndex()) const;
+  virtual int columnCount(const QModelIndex& parent) const;
 
-  QModelIndex index(int row, int column, const QModelIndex &parent) const;
-  QModelIndex parent(const QModelIndex &child) const;
+  QModelIndex index(int row, int column, const QModelIndex& parent) const;
+  QModelIndex parent(const QModelIndex& child) const;
   Qt::ItemFlags flags(const QModelIndex& idx) const override;
   QMimeData* mimeData(const QModelIndexList& indexes) const override;
 
@@ -76,13 +74,14 @@ public:
    *
    * @param index location to look up
    * @param role ... Defaults to Qt::DisplayRole.
-   * @return this implementation only returns the row, the QItemDelegate implementation is expected to fetch its information from the DownloadManager
+   * @return this implementation only returns the row, the QItemDelegate implementation
+   *is expected to fetch its information from the DownloadManager
    **/
-  virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+  virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const;
 
   // used in DownloadsTab as the sorting predicate for the filter widget
   //
-  bool lessThanPredicate(const QModelIndex &left, const QModelIndex &right);
+  bool lessThanPredicate(const QModelIndex& left, const QModelIndex& right);
 
 public slots:
 
@@ -96,9 +95,8 @@ public slots:
   void aboutToUpdate();
 
 private:
-
   DownloadManager& m_manager;
   Settings& m_settings;
 };
 
-#endif // DOWNLOADLIST_H
+#endif  // DOWNLOADLIST_H

@@ -3,7 +3,10 @@
 
 #include <filterwidget.h>
 
-namespace Ui { class MainWindow; }
+namespace Ui
+{
+class MainWindow;
+}
 class OrganizerCore;
 class DownloadListView;
 
@@ -33,4 +36,4 @@ private:
   void resumeDownload(int downloadIndex);
 };
 
-#endif // MODORGANIZER_DOWNLOADTAB_INCLUDED
+#endif  // MODORGANIZER_DOWNLOADTAB_INCLUDED

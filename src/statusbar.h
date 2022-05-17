@@ -1,16 +1,18 @@
 #ifndef MO_STATUSBAR_H
 #define MO_STATUSBAR_H
 
-#include <QStatusBar>
 #include <QProgressBar>
+#include <QStatusBar>
 
 struct APIStats;
 class APIUserAccount;
 class Settings;
 class OrganizerCore;
 
-namespace Ui { class MainWindow; }
-
+namespace Ui
+{
+class MainWindow;
+}
 
 class StatusBarAction : public QWidget
 {
@@ -30,13 +32,12 @@ private:
   QString cleanupActionText(const QString& s) const;
 };
 
-
 class StatusBar : public QStatusBar
 {
   Q_OBJECT;
 
 public:
-  StatusBar(QWidget* parent=nullptr);
+  StatusBar(QWidget* parent = nullptr);
 
   void setup(Ui::MainWindow* ui, const Settings& settings);
 
@@ -64,4 +65,4 @@ private:
   void visibilityChanged(bool visible);
 };
 
-#endif // MO_STATUSBAR_H
+#endif  // MO_STATUSBAR_H

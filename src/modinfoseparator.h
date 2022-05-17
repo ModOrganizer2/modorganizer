@@ -3,21 +3,19 @@
 
 #include "modinforegular.h"
 
-class ModInfoSeparator:
-    public ModInfoRegular
+class ModInfoSeparator : public ModInfoRegular
 {
   Q_OBJECT;
 
   friend class ModInfo;
 
 public:
-
   virtual bool updateAvailable() const override { return false; }
   virtual bool updateIgnored() const override { return false; }
   virtual bool downgradeAvailable() const override { return false; }
   virtual bool updateNXMInfo() override { return false; }
   virtual bool isValid() const override { return true; }
-  //TODO: Fix renaming method to avoid priority reset
+  // TODO: Fix renaming method to avoid priority reset
   virtual bool setName(const QString& name);
 
   virtual int nexusId() const override { return -1; }
@@ -28,7 +26,10 @@ public:
   virtual bool canBeUpdated() const override { return false; }
   virtual QDateTime getExpires() const override { return QDateTime(); }
   virtual bool canBeEnabled() const override { return false; }
-  virtual std::vector<QString> getIniTweaks() const override { return std::vector<QString>(); }
+  virtual std::vector<QString> getIniTweaks() const override
+  {
+    return std::vector<QString>();
+  }
   virtual std::vector<EFlag> getFlags() const override;
   virtual int getHighlight() const override;
   virtual QString getDescription() const override;
@@ -46,14 +47,13 @@ public:
   virtual void setNexusLastModified(QDateTime) override {}
   virtual QDateTime creationTime() const override { return QDateTime(); }
   virtual QString getNexusDescription() const override { return QString(); }
-  virtual void addInstalledFile(int /*modId*/, int /*fileId*/) override { }
+  virtual void addInstalledFile(int /*modId*/, int /*fileId*/) override {}
   virtual bool isSeparator() const override { return true; }
 
 protected:
   virtual bool doIsValid() const override { return true; }
 
 private:
-
   ModInfoSeparator(const QDir& path, OrganizerCore& core);
 };
 

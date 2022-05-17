@@ -20,14 +20,19 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MODINFODIALOG_H
 #define MODINFODIALOG_H
 
-
-#include "modinfo.h"
-#include "tutorabledialog.h"
 #include "filerenamer.h"
+#include "modinfo.h"
 #include "modinfodialogfwd.h"
+#include "tutorabledialog.h"
 
-namespace Ui { class ModInfoDialog; }
-namespace MOShared { class FilesOrigin; }
+namespace Ui
+{
+class ModInfoDialog;
+}
+namespace MOShared
+{
+class FilesOrigin;
+}
 
 class PluginContainer;
 class OrganizerCore;
@@ -47,13 +52,12 @@ class ModInfoDialog : public MOBase::TutorableDialog
   // to create ModInfoDialogTabContext
   //
   template <class T>
-  friend std::unique_ptr<ModInfoDialogTab> createTab(
-    ModInfoDialog& d, ModInfoTabIDs index);
+  friend std::unique_ptr<ModInfoDialogTab> createTab(ModInfoDialog& d,
+                                                     ModInfoTabIDs index);
 
 public:
-  ModInfoDialog(
-    OrganizerCore& core, PluginContainer& plugin,
-    ModInfo::Ptr mod, ModListView* view, QWidget* parent = nullptr);
+  ModInfoDialog(OrganizerCore& core, PluginContainer& plugin, ModInfo::Ptr mod,
+                ModListView* view, QWidget* parent = nullptr);
 
   ~ModInfoDialog();
 
@@ -110,7 +114,6 @@ private:
     // icon for this tab, see `widget`
     QIcon icon;
 
-
     TabInfo(std::unique_ptr<ModInfoDialogTab> tab);
 
     // returns whether this tab is part of the tab widget
@@ -137,11 +140,9 @@ private:
   // are not fired incorrectly
   bool m_arrangingTabs;
 
-
   // creates all the tabs and connects events
   //
   void createTabs();
-
 
   // saves the dialog state and calls saveState() on all tabs
   //
@@ -150,7 +151,6 @@ private:
   // restores the dialog state and calls restoreState() on all tabs
   //
   void restoreState();
-
 
   // sets the currently selected mod; resets first activation, but doesn't
   // update anything
@@ -165,19 +165,17 @@ private:
   //
   MOShared::FilesOrigin* getOrigin();
 
-
   // returns the currently selected tab, taking re-ordering in to account;
   // shouldn't be null, but could be
   //
   TabInfo* currentTab();
-
 
   // fully updates the dialog; sets the title, the tab visibility and updates
   // all the tabs; used when the current mod changes
   //
   // see setTabsVisibility() for firstTime
   //
-  void update(bool firstTime=false);
+  void update(bool firstTime = false);
 
   // builds the list of visible tabs; if the list is different from what's
   // currently displayed, or firstTime is true, forwards to reAddTabs()
@@ -191,7 +189,7 @@ private:
   // called by update(); clears tabs, feeds files and calls update() on all
   // tabs, then setTabsColors()
   //
-  void updateTabs(bool becauseOriginChanged=false);
+  void updateTabs(bool becauseOriginChanged = false);
 
   // goes through all files on the filesystem for the current mod and calls
   // feedFile() on every tab until one accepts it
@@ -203,17 +201,14 @@ private:
   //
   void setTabsColors();
 
-
   // called when the delete key is pressed anywhere in the dialog; forwards to
   // ModInfoDialogTab::deleteRequest() for the currently selected tab
   //
   void onDeleteShortcut();
 
-
   // finds the tab with the given id and selects it
   //
   void switchToTab(ModInfoTabIDs id);
-
 
   // saves the current tab order; used by saveState(), but also by
   // setTabsVisibility() to make sure any changes to order are saved before
@@ -225,7 +220,6 @@ private:
   // objected
   //
   bool tryClose();
-
 
   // called when the user clicks the close button; closing the dialog by other
   // means ends up in closeEvent(); forwards to tryClose()
@@ -257,4 +251,4 @@ private:
   void onOriginModified(int originID);
 };
 
-#endif // MODINFODIALOG_H
+#endif  // MODINFODIALOG_H

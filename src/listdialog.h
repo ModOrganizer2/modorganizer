@@ -3,7 +3,8 @@
 
 #include <QDialog>
 
-namespace Ui {
+namespace Ui
+{
 class ListDialog;
 }
 
@@ -12,7 +13,7 @@ class ListDialog : public QDialog
   Q_OBJECT
 
 public:
-  explicit ListDialog(QWidget *parent = nullptr);
+  explicit ListDialog(QWidget* parent = nullptr);
   ~ListDialog();
 
   // also saves and restores geometry
@@ -26,8 +27,8 @@ public slots:
   void on_filterEdit_textChanged(QString filter);
 
 private:
-  Ui::ListDialog *ui;
+  Ui::ListDialog* ui;
   QStringList m_Choices;
 };
 
-#endif // LISTDIALOG_H
+#endif  // LISTDIALOG_H

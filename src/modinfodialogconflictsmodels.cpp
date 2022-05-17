@@ -4,20 +4,14 @@
 
 using MOBase::naturalCompare;
 
-ConflictItem::ConflictItem(
-    QString before, QString relativeName, QString after,
-    MOShared::FileIndex index,  QString fileName,
-      bool hasAltOrigins, QString altOrigin,  bool archive) :
-      m_before(std::move(before)),
-      m_relativeName(std::move(relativeName)),
-      m_after(std::move(after)),
-      m_index(index),
-      m_fileName(std::move(fileName)),
-      m_hasAltOrigins(hasAltOrigins),
-      m_altOrigin(std::move(altOrigin)),
+ConflictItem::ConflictItem(QString before, QString relativeName, QString after,
+                           MOShared::FileIndex index, QString fileName,
+                           bool hasAltOrigins, QString altOrigin, bool archive)
+    : m_before(std::move(before)), m_relativeName(std::move(relativeName)),
+      m_after(std::move(after)), m_index(index), m_fileName(std::move(fileName)),
+      m_hasAltOrigins(hasAltOrigins), m_altOrigin(std::move(altOrigin)),
       m_isArchive(archive)
-{
-}
+{}
 
 const QString& ConflictItem::before() const
 {
@@ -89,10 +83,9 @@ bool ConflictItem::canExplore() const
   return canExploreFile(isArchive(), fileName());
 }
 
-
-ConflictListModel::ConflictListModel(QTreeView* tree, std::vector<Column> columns) :
-  m_tree(tree), m_columns(std::move(columns)),
-  m_sortColumn(-1), m_sortOrder(Qt::AscendingOrder)
+ConflictListModel::ConflictListModel(QTreeView* tree, std::vector<Column> columns)
+    : m_tree(tree), m_columns(std::move(columns)), m_sortColumn(-1),
+      m_sortOrder(Qt::AscendingOrder)
 {
   m_tree->setModel(this);
 }
@@ -133,8 +126,7 @@ int ConflictListModel::columnCount(const QModelIndex&) const
   return static_cast<int>(m_columns.size());
 }
 
-const ConflictItem* ConflictListModel::itemFromIndex(
-  const QModelIndex& index) const
+const ConflictItem* ConflictListModel::itemFromIndex(const QModelIndex& index) const
 {
   const auto row = index.row();
   if (row < 0) {
@@ -149,10 +141,9 @@ const ConflictItem* ConflictListModel::itemFromIndex(
   return &m_items[i];
 }
 
-QModelIndex ConflictListModel::indexFromItem(
-  const ConflictItem* item, int col)
+QModelIndex ConflictListModel::indexFromItem(const ConflictItem* item, int col)
 {
-  for (std::size_t i=0; i<m_items.size(); ++i) {
+  for (std::size_t i = 0; i < m_items.size(); ++i) {
     if (&m_items[i] == item) {
       return createIndex(static_cast<int>(i), col);
     }
@@ -214,7 +205,7 @@ QVariant ConflictListModel::headerData(int col, Qt::Orientation, int role) const
 void ConflictListModel::sort(int colIndex, Qt::SortOrder order)
 {
   m_sortColumn = colIndex;
-  m_sortOrder = order;
+  m_sortOrder  = order;
 
   emit layoutAboutToBeChanged({}, QAbstractItemModel::VerticalSortHint);
 
@@ -224,7 +215,7 @@ void ConflictListModel::sort(int colIndex, Qt::SortOrder order)
   const auto itemCount = oldList.size();
   oldItems.reserve(static_cast<std::size_t>(itemCount));
 
-  for (int i=0; i<itemCount; ++i) {
+  for (int i = 0; i < itemCount; ++i) {
     const QModelIndex& index = oldList[i];
     oldItems.push_back({itemFromIndex(index), index.column()});
   }
@@ -234,7 +225,7 @@ void ConflictListModel::sort(int colIndex, Qt::SortOrder order)
   QModelIndexList newList;
   newList.reserve(itemCount);
 
-  for (int i=0; i<itemCount; ++i) {
+  for (int i = 0; i < itemCount; ++i) {
     const auto& pair = oldItems[static_cast<std::size_t>(i)];
     newList.append(indexFromItem(pair.first, pair.second));
   }
@@ -299,38 +290,22 @@ void ConflictListModel::doSort()
   }
 }
 
-
 OverwriteConflictListModel::OverwriteConflictListModel(QTreeView* tree)
-  : ConflictListModel(tree, {
-    {tr("File"), &ConflictItem::relativeName},
-    {tr("Overwritten Mods"), &ConflictItem::before}
-    })
-{
-}
-
+    : ConflictListModel(tree, {{tr("File"), &ConflictItem::relativeName},
+                               {tr("Overwritten Mods"), &ConflictItem::before}})
+{}
 
 OverwrittenConflictListModel::OverwrittenConflictListModel(QTreeView* tree)
-  : ConflictListModel(tree, {
-    {tr("File"), &ConflictItem::relativeName},
-    {tr("Providing Mod"), &ConflictItem::after}
-    })
-{
-}
-
+    : ConflictListModel(tree, {{tr("File"), &ConflictItem::relativeName},
+                               {tr("Providing Mod"), &ConflictItem::after}})
+{}
 
 NoConflictListModel::NoConflictListModel(QTreeView* tree)
-  : ConflictListModel(tree, {
-    {tr("File"), &ConflictItem::relativeName}
-    })
-{
-}
-
+    : ConflictListModel(tree, {{tr("File"), &ConflictItem::relativeName}})
+{}
 
 AdvancedConflictListModel::AdvancedConflictListModel(QTreeView* tree)
-  : ConflictListModel(tree, {
-    {tr("Overwrites"), &ConflictItem::before},
-    {tr("File"), &ConflictItem::relativeName},
-    {tr("Overwritten By"), &ConflictItem::after}
-    })
-{
-}
+    : ConflictListModel(tree, {{tr("Overwrites"), &ConflictItem::before},
+                               {tr("File"), &ConflictItem::relativeName},
+                               {tr("Overwritten By"), &ConflictItem::after}})
+{}

@@ -18,26 +18,26 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "usvfsconnector.h"
-#include "settings.h"
-#include "organizercore.h"
 #include "envmodule.h"
+#include "organizercore.h"
+#include "settings.h"
 #include "shared/util.h"
-#include <memory>
-#include <sstream>
-#include <iomanip>
-#include <usvfs.h>
-#include <QTemporaryFile>
-#include <QProgressDialog>
-#include <QDateTime>
 #include <QCoreApplication>
+#include <QDateTime>
+#include <QProgressDialog>
+#include <QTemporaryFile>
+#include <iomanip>
+#include <memory>
 #include <qstandardpaths.h>
+#include <sstream>
+#include <usvfs.h>
 
 static const char SHMID[] = "mod_organizer_instance";
 using namespace MOBase;
 
-std::string to_hex(void *bufferIn, size_t bufferSize)
+std::string to_hex(void* bufferIn, size_t bufferSize)
 {
-  unsigned char *buffer = static_cast<unsigned char *>(bufferIn);
+  unsigned char* buffer = static_cast<unsigned char*>(bufferIn);
   std::ostringstream temp;
   temp << std::hex;
   for (size_t i = 0; i < bufferSize; ++i) {
@@ -51,22 +51,18 @@ std::string to_hex(void *bufferIn, size_t bufferSize)
   return temp.str();
 }
 
-
 LogWorker::LogWorker()
-  : m_Buffer(1024, '\0')
-  , m_QuitRequested(false)
-  , m_LogFile(qApp->property("dataPath").toString()
-              + QString("/logs/usvfs-%1.log")
-                    .arg(QDateTime::currentDateTimeUtc().toString(
-                        "yyyy-MM-dd_hh-mm-ss")))
+    : m_Buffer(1024, '\0'), m_QuitRequested(false),
+      m_LogFile(
+          qApp->property("dataPath").toString() +
+          QString("/logs/usvfs-%1.log")
+              .arg(QDateTime::currentDateTimeUtc().toString("yyyy-MM-dd_hh-mm-ss")))
 {
   m_LogFile.open(QIODevice::WriteOnly);
   log::debug("usvfs log messages are written to {}", m_LogFile.fileName());
 }
 
-LogWorker::~LogWorker()
-{
-}
+LogWorker::~LogWorker() {}
 
 void LogWorker::process()
 {
@@ -95,34 +91,33 @@ void LogWorker::exit()
 LogLevel toUsvfsLogLevel(log::Levels level)
 {
   switch (level) {
-    case log::Info:
-      return LogLevel::Info;
-    case log::Warning:
-      return LogLevel::Warning;
-    case log::Error:
-      return LogLevel::Error;
-    case log::Debug:  // fall-through
-    default:
-      return LogLevel::Debug;
+  case log::Info:
+    return LogLevel::Info;
+  case log::Warning:
+    return LogLevel::Warning;
+  case log::Error:
+    return LogLevel::Error;
+  case log::Debug:  // fall-through
+  default:
+    return LogLevel::Debug;
   }
 }
 
 CrashDumpsType toUsvfsCrashDumpsType(env::CoreDumpTypes type)
 {
-  switch (type)
-  {
-    case env::CoreDumpTypes::None:
-      return CrashDumpsType::None;
+  switch (type) {
+  case env::CoreDumpTypes::None:
+    return CrashDumpsType::None;
 
-    case env::CoreDumpTypes::Data:
-      return CrashDumpsType::Data;
+  case env::CoreDumpTypes::Data:
+    return CrashDumpsType::Data;
 
-    case env::CoreDumpTypes::Full:
-      return CrashDumpsType::Full;
+  case env::CoreDumpTypes::Full:
+    return CrashDumpsType::Full;
 
-    case env::CoreDumpTypes::Mini:
-    default:
-      return CrashDumpsType::Mini;
+  case env::CoreDumpTypes::Mini:
+  default:
+    return CrashDumpsType::Mini;
   }
 }
 
@@ -133,9 +128,10 @@ UsvfsConnector::UsvfsConnector()
   const auto& s = Settings::instance();
 
   const LogLevel logLevel = toUsvfsLogLevel(s.diagnostics().logLevel());
-  const auto dumpType = toUsvfsCrashDumpsType(s.diagnostics().coreDumpType());
-  const auto delay = duration_cast<milliseconds>(s.diagnostics().spawnDelay());
-  std::string dumpPath = MOShared::ToString(OrganizerCore::getGlobalCoreDumpPath(), true);
+  const auto dumpType     = toUsvfsCrashDumpsType(s.diagnostics().coreDumpType());
+  const auto delay        = duration_cast<milliseconds>(s.diagnostics().spawnDelay());
+  std::string dumpPath =
+      MOShared::ToString(OrganizerCore::getGlobalCoreDumpPath(), true);
 
   usvfsParameters* params = usvfsCreateParameters();
 
@@ -148,15 +144,12 @@ UsvfsConnector::UsvfsConnector()
 
   InitLogging(false);
 
-  log::debug(
-    "initializing usvfs:\n"
-    " . instance: {}\n"
-    " . log: {}\n"
-    " . dump: {} ({})",
-    SHMID,
-    usvfsLogLevelToString(logLevel),
-    dumpPath.c_str(),
-    usvfsCrashDumpTypeToString(dumpType));
+  log::debug("initializing usvfs:\n"
+             " . instance: {}\n"
+             " . log: {}\n"
+             " . dump: {} ({})",
+             SHMID, usvfsLogLevelToString(logLevel), dumpPath.c_str(),
+             usvfsCrashDumpTypeToString(dumpType));
 
   usvfsCreateVFS(params);
   usvfsFreeParameters(params);
@@ -185,8 +178,7 @@ UsvfsConnector::~UsvfsConnector()
   m_WorkerThread.wait();
 }
 
-
-void UsvfsConnector::updateMapping(const MappingType &mapping)
+void UsvfsConnector::updateMapping(const MappingType& mapping)
 {
   const auto start = std::chrono::high_resolution_clock::now();
 
@@ -197,7 +189,7 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
 
   int value = 0;
   int files = 0;
-  int dirs = 0;
+  int dirs  = 0;
 
   log::debug("Updating VFS mappings...");
 
@@ -214,11 +206,9 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
     }
 
     if (map.isDirectory) {
-      VirtualLinkDirectoryStatic(map.source.toStdWString().c_str(),
-                                 map.destination.toStdWString().c_str(),
-                                 (map.createTarget ? LINKFLAG_CREATETARGET : 0)
-                                     | LINKFLAG_RECURSIVE
-                                 );
+      VirtualLinkDirectoryStatic(
+          map.source.toStdWString().c_str(), map.destination.toStdWString().c_str(),
+          (map.createTarget ? LINKFLAG_CREATETARGET : 0) | LINKFLAG_RECURSIVE);
       ++dirs;
     } else {
       VirtualLinkFile(map.source.toStdWString().c_str(),
@@ -227,18 +217,18 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
     }
   }
 
-  const auto end = std::chrono::high_resolution_clock::now();
+  const auto end  = std::chrono::high_resolution_clock::now();
   const auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
-  log::debug(
-    "VFS mappings updated, linked {} dirs and {} files in {}ms",
-    dirs, files, time.count());
+  log::debug("VFS mappings updated, linked {} dirs and {} files in {}ms", dirs, files,
+             time.count());
 }
 
-void UsvfsConnector::updateParams(
-  MOBase::log::Levels logLevel, env::CoreDumpTypes coreDumpType,
-  const QString& crashDumpsPath, std::chrono::seconds spawnDelay,
-  QString executableBlacklist)
+void UsvfsConnector::updateParams(MOBase::log::Levels logLevel,
+                                  env::CoreDumpTypes coreDumpType,
+                                  const QString& crashDumpsPath,
+                                  std::chrono::seconds spawnDelay,
+                                  QString executableBlacklist)
 {
   using namespace std::chrono;
 
@@ -260,26 +250,24 @@ void UsvfsConnector::updateParams(
   }
 }
 
-void UsvfsConnector::updateForcedLibraries(const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries)
+void UsvfsConnector::updateForcedLibraries(
+    const QList<MOBase::ExecutableForcedLoadSetting>& forcedLibraries)
 {
   ClearLibraryForceLoads();
   for (auto setting : forcedLibraries) {
     if (setting.enabled()) {
-      ForceLoadLibrary(
-        setting.process().toStdWString().data(),
-        setting.library().toStdWString().data()
-      );
+      ForceLoadLibrary(setting.process().toStdWString().data(),
+                       setting.library().toStdWString().data());
     }
   }
 }
-
 
 std::vector<HANDLE> getRunningUSVFSProcesses()
 {
   std::vector<DWORD> pids;
 
   {
-    size_t count = 0;
+    size_t count  = 0;
     DWORD* buffer = nullptr;
     if (!::GetVFSProcessList2(&count, &buffer)) {
       log::error("failed to get usvfs process list");
@@ -296,13 +284,13 @@ std::vector<HANDLE> getRunningUSVFSProcesses()
   std::vector<HANDLE> v;
 
   const auto rights =
-    PROCESS_QUERY_LIMITED_INFORMATION |    // exit code, image name, etc.
-    SYNCHRONIZE |                          // wait functions
-    PROCESS_SET_QUOTA | PROCESS_TERMINATE; // add to job
+      PROCESS_QUERY_LIMITED_INFORMATION |     // exit code, image name, etc.
+      SYNCHRONIZE |                           // wait functions
+      PROCESS_SET_QUOTA | PROCESS_TERMINATE;  // add to job
 
   for (auto&& pid : pids) {
     if (pid == thisPid) {
-      continue; // obviously don't wait for MO process
+      continue;  // obviously don't wait for MO process
     }
 
     HANDLE handle = ::OpenProcess(rights, FALSE, pid);
@@ -310,9 +298,7 @@ std::vector<HANDLE> getRunningUSVFSProcesses()
     if (handle == INVALID_HANDLE_VALUE) {
       const auto e = GetLastError();
 
-      log::warn(
-        "failed to open usvfs process {}: {}",
-        pid, formatSystemMessage(e));
+      log::warn("failed to open usvfs process {}: {}", pid, formatSystemMessage(e));
 
       continue;
     }

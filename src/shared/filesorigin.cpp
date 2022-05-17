@@ -1,12 +1,12 @@
 #include "filesorigin.h"
-#include "originconnection.h"
-#include "fileregister.h"
 #include "fileentry.h"
+#include "fileregister.h"
+#include "originconnection.h"
 
 namespace MOShared
 {
 
-std::wstring tail(const std::wstring &source, const size_t count)
+std::wstring tail(const std::wstring& source, const size_t count)
 {
   if (count >= source.length()) {
     return source;
@@ -15,28 +15,24 @@ std::wstring tail(const std::wstring &source, const size_t count)
   return source.substr(source.length() - count);
 }
 
-
 FilesOrigin::FilesOrigin()
-  : m_ID(0), m_Disabled(false), m_Name(), m_Path(), m_Priority(0)
-{
-}
+    : m_ID(0), m_Disabled(false), m_Name(), m_Path(), m_Priority(0)
+{}
 
-FilesOrigin::FilesOrigin(
-  OriginID ID, const std::wstring &name, const std::wstring &path, int priority,
-  boost::shared_ptr<MOShared::FileRegister> fileRegister,
-  boost::shared_ptr<MOShared::OriginConnection> originConnection) :
-  m_ID(ID), m_Disabled(false), m_Name(name), m_Path(path),
-  m_Priority(priority), m_FileRegister(fileRegister),
-  m_OriginConnection(originConnection)
-{
-}
+FilesOrigin::FilesOrigin(OriginID ID, const std::wstring& name,
+                         const std::wstring& path, int priority,
+                         boost::shared_ptr<MOShared::FileRegister> fileRegister,
+                         boost::shared_ptr<MOShared::OriginConnection> originConnection)
+    : m_ID(ID), m_Disabled(false), m_Name(name), m_Path(path), m_Priority(priority),
+      m_FileRegister(fileRegister), m_OriginConnection(originConnection)
+{}
 
 void FilesOrigin::setPriority(int priority)
 {
   m_Priority = priority;
 }
 
-void FilesOrigin::setName(const std::wstring &name)
+void FilesOrigin::setName(const std::wstring& name)
 {
   m_OriginConnection.lock()->changeNameLookup(m_Name, name);
 
@@ -121,4 +117,4 @@ bool FilesOrigin::containsArchive(std::wstring archiveName)
   return false;
 }
 
-} //  namespace
+}  // namespace MOShared

@@ -29,10 +29,15 @@ class QListWidgetItem;
 #include <QObject>
 class QString;
 
-namespace Ui { class ProfilesDialog; }
+namespace Ui
+{
+class ProfilesDialog;
+}
 
-namespace MOBase { class IPluginGame; }
-
+namespace MOBase
+{
+class IPluginGame;
+}
 
 /**
  * @brief Dialog that can be used to create/delete/modify profiles
@@ -42,15 +47,15 @@ class ProfilesDialog : public MOBase::TutorableDialog
   Q_OBJECT
 
 public:
-
- /**
-  * @brief constructor
-  *
-  * @param profileName currently enabled profile
-  * @param organizer
-  * @param parent parent widget
-  **/
- explicit ProfilesDialog(const QString &profileName, OrganizerCore &organizer, QWidget *parent = 0);
+  /**
+   * @brief constructor
+   *
+   * @param profileName currently enabled profile
+   * @param organizer
+   * @param parent parent widget
+   **/
+  explicit ProfilesDialog(const QString& profileName, OrganizerCore& organizer,
+                          QWidget* parent = 0);
   ~ProfilesDialog();
 
   // also saves and restores geometry
@@ -86,17 +91,15 @@ signals:
   void profileRemoved(QString const& profileName);
 
 protected:
-
-  virtual void showEvent(QShowEvent *event);
+  virtual void showEvent(QShowEvent* event);
 
 private slots:
   void on_localIniFilesBox_stateChanged(int state);
 
 private:
-
-  QListWidgetItem *addItem(const QString &name);
-  void createProfile(const QString &name, bool useDefaultSettings);
-  void createProfile(const QString &name, const Profile &reference);
+  QListWidgetItem* addItem(const QString& name);
+  void createProfile(const QString& name, bool useDefaultSettings);
+  void createProfile(const QString& name, const Profile& reference);
 
 private slots:
 
@@ -109,7 +112,8 @@ private slots:
 
   void on_copyProfileButton_clicked();
 
-  void on_profilesList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+  void on_profilesList_currentItemChanged(QListWidgetItem* current,
+                                          QListWidgetItem* previous);
   void on_profilesList_itemActivated(QListWidgetItem* item);
 
   void on_removeProfileButton_clicked();
@@ -121,12 +125,12 @@ private slots:
   void on_renameButton_clicked();
 
 private:
-  Ui::ProfilesDialog *ui;
-  QListWidget *m_ProfilesList;
+  Ui::ProfilesDialog* ui;
+  QListWidget* m_ProfilesList;
   bool m_FailState;
-  MOBase::IPluginGame const *m_Game;
+  MOBase::IPluginGame const* m_Game;
   QString m_ActiveProfileName;
   std::optional<QString> m_Selected;
 };
 
-#endif // PROFILESDIALOG_H
+#endif  // PROFILESDIALOG_H

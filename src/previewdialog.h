@@ -3,7 +3,8 @@
 
 #include <QDialog>
 
-namespace Ui {
+namespace Ui
+{
 class PreviewDialog;
 }
 
@@ -12,14 +13,14 @@ class PreviewDialog : public QDialog
   Q_OBJECT
 
 public:
-  explicit PreviewDialog(const QString &fileName, QWidget *parent = 0);
+  explicit PreviewDialog(const QString& fileName, QWidget* parent = 0);
   ~PreviewDialog();
 
   // also saves and restores geometry
   //
   int exec() override;
 
-  void addVariant(const QString &modName, QWidget *widget);
+  void addVariant(const QString& modName, QWidget* widget);
   int numVariants() const;
 
 private slots:
@@ -33,8 +34,7 @@ private slots:
   void on_nextButton_clicked();
 
 private:
-
-  Ui::PreviewDialog *ui;
+  Ui::PreviewDialog* ui;
 };
 
-#endif // PREVIEWDIALOG_H
+#endif  // PREVIEWDIALOG_H

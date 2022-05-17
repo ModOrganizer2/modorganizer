@@ -1,9 +1,9 @@
 #include "lootdialog.h"
-#include "ui_lootdialog.h"
 #include "loot.h"
 #include "organizercore.h"
-#include <utility.h>
+#include "ui_lootdialog.h"
 #include <QWebChannel>
+#include <utility.h>
 
 using namespace MOBase;
 
@@ -12,15 +12,14 @@ QString progressToString(lootcli::Progress p)
   using P = lootcli::Progress;
 
   static const std::map<P, QString> map = {
-    {P::CheckingMasterlistExistence, QObject::tr("Checking masterlist existence")},
-    {P::UpdatingMasterlist,          QObject::tr("Updating masterlist")},
-    {P::LoadingLists,                QObject::tr("Loading lists")},
-    {P::ReadingPlugins,              QObject::tr("Reading plugins")},
-    {P::SortingPlugins,              QObject::tr("Sorting plugins")},
-    {P::WritingLoadorder,            QObject::tr("Writing loadorder.txt")},
-    {P::ParsingLootMessages,         QObject::tr("Parsing loot messages")},
-    {P::Done,                        QObject::tr("Done")}
-  };
+      {P::CheckingMasterlistExistence, QObject::tr("Checking masterlist existence")},
+      {P::UpdatingMasterlist, QObject::tr("Updating masterlist")},
+      {P::LoadingLists, QObject::tr("Loading lists")},
+      {P::ReadingPlugins, QObject::tr("Reading plugins")},
+      {P::SortingPlugins, QObject::tr("Sorting plugins")},
+      {P::WritingLoadorder, QObject::tr("Writing loadorder.txt")},
+      {P::ParsingLootMessages, QObject::tr("Parsing loot messages")},
+      {P::Done, QObject::tr("Done")}};
 
   auto itor = map.find(p);
   if (itor == map.end()) {
@@ -30,11 +29,7 @@ QString progressToString(lootcli::Progress p)
   }
 }
 
-
-MarkdownDocument::MarkdownDocument(QObject* parent)
-  : QObject(parent)
-{
-}
+MarkdownDocument::MarkdownDocument(QObject* parent) : QObject(parent) {}
 
 void MarkdownDocument::setText(const QString& text)
 {
@@ -45,13 +40,9 @@ void MarkdownDocument::setText(const QString& text)
   emit textChanged(m_text);
 }
 
+MarkdownPage::MarkdownPage(QObject* parent) : QWebEnginePage(parent) {}
 
-MarkdownPage::MarkdownPage(QObject* parent)
-  : QWebEnginePage(parent)
-{
-}
-
-bool MarkdownPage::acceptNavigationRequest(const QUrl &url, NavigationType, bool)
+bool MarkdownPage::acceptNavigationRequest(const QUrl& url, NavigationType, bool)
 {
   static const QStringList allowed = {"qrc", "data"};
 
@@ -63,28 +54,39 @@ bool MarkdownPage::acceptNavigationRequest(const QUrl &url, NavigationType, bool
   return true;
 }
 
-
-LootDialog::LootDialog(QWidget* parent, OrganizerCore& core, Loot& loot) :
-  QDialog(parent, Qt::WindowMaximizeButtonHint), ui(new Ui::LootDialog), m_core(core), m_loot(loot),
-  m_finished(false), m_cancelling(false)
+LootDialog::LootDialog(QWidget* parent, OrganizerCore& core, Loot& loot)
+    : QDialog(parent, Qt::WindowMaximizeButtonHint), ui(new Ui::LootDialog),
+      m_core(core), m_loot(loot), m_finished(false), m_cancelling(false)
 {
   createUI();
 
   QObject::connect(
-    &m_loot, &Loot::output, this,
-    [&](auto&& s){ addOutput(s); }, Qt::QueuedConnection);
+      &m_loot, &Loot::output, this,
+      [&](auto&& s) {
+        addOutput(s);
+      },
+      Qt::QueuedConnection);
 
   QObject::connect(
-    &m_loot, &Loot::progress,
-    this, [&](auto&& p){ setProgress(p); }, Qt::QueuedConnection);
+      &m_loot, &Loot::progress, this,
+      [&](auto&& p) {
+        setProgress(p);
+      },
+      Qt::QueuedConnection);
 
   QObject::connect(
-    &m_loot, &Loot::log, this,
-    [&](auto&& lv, auto&& s){ log(lv, s); }, Qt::QueuedConnection);
+      &m_loot, &Loot::log, this,
+      [&](auto&& lv, auto&& s) {
+        log(lv, s);
+      },
+      Qt::QueuedConnection);
 
   QObject::connect(
-    &m_loot, &Loot::finished, this,
-    [&]{ onFinished(); }, Qt::QueuedConnection);
+      &m_loot, &Loot::finished, this,
+      [&] {
+        onFinished();
+      },
+      Qt::QueuedConnection);
 }
 
 LootDialog::~LootDialog() = default;
@@ -208,7 +210,9 @@ void LootDialog::createUI()
 
   m_expander.set(ui->details, ui->detailsPanel);
   ui->openJsonReport->setEnabled(false);
-  connect(ui->openJsonReport, &QPushButton::clicked, [&]{ openReport(); });
+  connect(ui->openJsonReport, &QPushButton::clicked, [&] {
+    openReport();
+  });
 
   ui->buttons->setStandardButtons(QDialogButtonBox::Cancel);
 

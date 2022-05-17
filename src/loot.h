@@ -2,10 +2,10 @@
 #define MODORGANIZER_LOOT_H
 
 #include "envmodule.h"
+#include <QWidget>
 #include <log.h>
 #include <lootcli/lootcli.h>
 #include <windows.h>
-#include <QWidget>
 
 Q_DECLARE_METATYPE(lootcli::Progress);
 Q_DECLARE_METATYPE(MOBase::log::Levels);
@@ -34,10 +34,10 @@ public:
 
   struct Dirty
   {
-    qint64 crc=0;
-    qint64 itm=0;
-    qint64 deletedReferences=0;
-    qint64 deletedNavmesh=0;
+    qint64 crc               = 0;
+    qint64 itm               = 0;
+    qint64 deletedReferences = 0;
+    qint64 deletedNavmesh    = 0;
     QString cleaningUtility;
     QString info;
 
@@ -53,8 +53,8 @@ public:
     std::vector<Message> messages;
     std::vector<Dirty> dirty, clean;
     std::vector<QString> missingMasters;
-    bool loadsArchive = false;
-    bool isMaster = false;
+    bool loadsArchive  = false;
+    bool isMaster      = false;
     bool isLightMaster = false;
 
     QString toMarkdown() const;
@@ -83,7 +83,6 @@ public:
     QString successMarkdown() const;
     QString errorsMarkdown() const;
   };
-
 
   Loot(OrganizerCore& core);
   ~Loot();
@@ -114,13 +113,13 @@ private:
   std::vector<QString> m_errors, m_warnings;
   Report m_report;
 
-  bool spawnLootcli(
-    QWidget* parent, bool didUpdateMasterList, env::HandlePtr stdoutHandle);
+  bool spawnLootcli(QWidget* parent, bool didUpdateMasterList,
+                    env::HandlePtr stdoutHandle);
 
   void lootThread();
   bool waitForCompletion();
 
-  void processStdout(const std::string &lootOut);
+  void processStdout(const std::string& lootOut);
   void processMessage(const lootcli::Message& m);
 
   Report createReport() const;
@@ -138,7 +137,6 @@ private:
   std::vector<QString> reportStringArray(const QJsonArray& array) const;
 };
 
-
 bool runLoot(QWidget* parent, OrganizerCore& core, bool didUpdateMasterList);
 
-#endif // MODORGANIZER_LOOT_H
+#endif  // MODORGANIZER_LOOT_H
