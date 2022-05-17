@@ -1,14 +1,16 @@
 #ifndef MODORGANIZER_INSTANCEMANAGER_INCLUDED
 #define MODORGANIZER_INSTANCEMANAGER_INCLUDED
 
-#include <QString>
 #include <QSettings>
+#include <QString>
 
-namespace MOBase { class IPluginGame; }
+namespace MOBase
+{
+class IPluginGame;
+}
 
 class Settings;
 class PluginContainer;
-
 
 // represents an instance, either global or portable
 //
@@ -54,7 +56,6 @@ public:
     MissingVariant
   };
 
-
   // a file or directory owned by this instance, used by objectsForDeletion()
   //
   struct Object
@@ -67,11 +68,7 @@ public:
     // base directory, etc.
     bool mandatoryDelete;
 
-
-    Object(QString p, bool d=false)
-      : path(std::move(p)), mandatoryDelete(d)
-    {
-    }
+    Object(QString p, bool d = false) : path(std::move(p)), mandatoryDelete(d) {}
 
     // puts mandatory delete on top
     //
@@ -87,16 +84,13 @@ public:
     }
   };
 
-
-
   // an instance that lives in the given directory; `portable` must be `true`
   // if this is a portable instance
   //
   // `profileName` can be given to override what's in the INI; this typically
   // happens when the profile is overriden on the command line
   //
-  Instance(QString dir, bool portable, QString profileName={});
-
+  Instance(QString dir, bool portable, QString profileName = {});
 
   // reads in values from the INI if they were not given yet:
   //  - game name
@@ -110,7 +104,6 @@ public:
   //
   bool readFromIni();
 
-
   // finds the appropriate game plugin and sets it up so MO can use it; this
   // calls readFromIni() first
   //
@@ -119,7 +112,6 @@ public:
   //
   SetupResults setup(PluginContainer& plugins);
 
-
   // overrides the game name and directory
   //
   void setGame(const QString& name, const QString& dir);
@@ -127,7 +119,6 @@ public:
   // overrides the game variant
   //
   void setVariant(const QString& name);
-
 
   // returns the instance name; this is the directory name or "Portable" for
   // portable instances
@@ -218,7 +209,6 @@ private:
   void updateIni();
 };
 
-
 // manages global and portable instances
 //
 class InstanceManager
@@ -253,11 +243,11 @@ public:
   //
   // returns null if all of this fails
   //
-  const MOBase::IPluginGame* gamePluginForDirectory(
-    const QString& dir, const PluginContainer& plugins) const;
+  const MOBase::IPluginGame*
+  gamePluginForDirectory(const QString& dir, const PluginContainer& plugins) const;
 
-  MOBase::IPluginGame* gamePluginForDirectory(
-    const QString& dir, PluginContainer& plugins) const;
+  MOBase::IPluginGame* gamePluginForDirectory(const QString& dir,
+                                              PluginContainer& plugins) const;
 
   // clears the instance name from the registry; on restart, this will make MO
   // either select the portable instance if it exists, or display the instance
@@ -274,7 +264,7 @@ public:
   // sets the instance name in the registry so the same instance is opened next
   // time MO runs
   //
-  void setCurrentInstance(const QString &name);
+  void setCurrentInstance(const QString& name);
 
   // whether MO should allow the user to change the current instance from the
   // user interface
@@ -334,7 +324,6 @@ private:
   std::optional<QString> m_overrideInstanceName;
   std::optional<QString> m_overrideProfileName;
 };
-
 
 // see setupInstance()
 //

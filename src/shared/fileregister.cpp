@@ -1,8 +1,8 @@
 #include "fileregister.h"
-#include "fileentry.h"
 #include "directoryentry.h"
-#include "originconnection.h"
+#include "fileentry.h"
 #include "filesorigin.h"
+#include "originconnection.h"
 #include <log.h>
 
 namespace MOShared
@@ -11,9 +11,8 @@ namespace MOShared
 using namespace MOBase;
 
 FileRegister::FileRegister(boost::shared_ptr<OriginConnection> originConnection)
-  : m_OriginConnection(originConnection), m_NextIndex(0)
-{
-}
+    : m_OriginConnection(originConnection), m_NextIndex(0)
+{}
 
 bool FileRegister::indexValid(FileIndex index) const
 {
@@ -26,11 +25,11 @@ bool FileRegister::indexValid(FileIndex index) const
   return false;
 }
 
-FileEntryPtr FileRegister::createFile(
-  std::wstring name, DirectoryEntry *parent, DirectoryStats& stats)
+FileEntryPtr FileRegister::createFile(std::wstring name, DirectoryEntry* parent,
+                                      DirectoryStats& stats)
 {
   const auto index = generateIndex();
-  auto p = FileEntryPtr(new FileEntry(index, std::move(name), parent));
+  auto p           = FileEntryPtr(new FileEntry(index, std::move(name), parent));
 
   {
     std::scoped_lock lock(m_Mutex);
@@ -96,18 +95,19 @@ void FileRegister::removeOrigin(FileIndex index, OriginID originID)
     }
   }
 
-  log::error(QObject::tr("invalid file index for remove (for origin): {}").toStdString(), index);
+  log::error(
+      QObject::tr("invalid file index for remove (for origin): {}").toStdString(),
+      index);
 }
 
-void FileRegister::removeOriginMulti(
-  std::set<FileIndex> indices, OriginID originID)
+void FileRegister::removeOriginMulti(std::set<FileIndex> indices, OriginID originID)
 {
   std::vector<FileEntryPtr> removedFiles;
 
   {
     std::scoped_lock lock(m_Mutex);
 
-    for (auto iter = indices.begin(); iter != indices.end(); ) {
+    for (auto iter = indices.begin(); iter != indices.end();) {
       const auto index = *iter;
 
       if (index < m_Files.size()) {
@@ -140,13 +140,13 @@ void FileRegister::removeOriginMulti(
   // frequently the case
 
   std::set<DirectoryEntry*> parents;
-  for (const FileEntryPtr &file : removedFiles) {
+  for (const FileEntryPtr& file : removedFiles) {
     if (file->getParent() != nullptr) {
       parents.insert(file->getParent());
     }
   }
 
-  for (DirectoryEntry *parent : parents) {
+  for (DirectoryEntry* parent : parents) {
     parent->removeFiles(indices);
   }
 }
@@ -181,4 +181,4 @@ void FileRegister::unregisterFile(FileEntryPtr file)
   }
 }
 
-} // namespace
+}  // namespace MOShared

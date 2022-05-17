@@ -18,12 +18,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "profileinputdialog.h"
-#include "ui_profileinputdialog.h"
 #include "filesystemutilities.h"
+#include "ui_profileinputdialog.h"
 
-ProfileInputDialog::ProfileInputDialog(QWidget *parent) :
-  QDialog(parent),
-  ui(new Ui::ProfileInputDialog)
+ProfileInputDialog::ProfileInputDialog(QWidget* parent)
+    : QDialog(parent), ui(new Ui::ProfileInputDialog)
 {
   ui->setupUi(this);
 }
@@ -40,9 +39,7 @@ QString ProfileInputDialog::getName() const
   return result;
 }
 
-
 bool ProfileInputDialog::getPreferDefaultSettings() const
 {
   return ui->defaultSettingsBox->checkState() == Qt::Checked;
 }
-

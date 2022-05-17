@@ -8,24 +8,20 @@ namespace MOShared
 
 using namespace MOBase;
 
-OriginConnection::OriginConnection()
-  : m_NextID(0)
-{
-}
+OriginConnection::OriginConnection() : m_NextID(0) {}
 
 std::pair<FilesOrigin&, bool> OriginConnection::getOrCreate(
-  const std::wstring &originName, const std::wstring &directory, int priority,
-  const boost::shared_ptr<FileRegister>& fileRegister,
-  const boost::shared_ptr<OriginConnection>& originConnection,
-  DirectoryStats& stats)
+    const std::wstring& originName, const std::wstring& directory, int priority,
+    const boost::shared_ptr<FileRegister>& fileRegister,
+    const boost::shared_ptr<OriginConnection>& originConnection, DirectoryStats& stats)
 {
   std::unique_lock lock(m_Mutex);
 
   auto itor = m_OriginsNameMap.find(originName);
 
   if (itor == m_OriginsNameMap.end()) {
-    FilesOrigin& origin = createOriginNoLock(
-      originName, directory, priority, fileRegister, originConnection);
+    FilesOrigin& origin = createOriginNoLock(originName, directory, priority,
+                                             fileRegister, originConnection);
 
     return {origin, true};
   } else {
@@ -37,18 +33,19 @@ std::pair<FilesOrigin&, bool> OriginConnection::getOrCreate(
   }
 }
 
-FilesOrigin& OriginConnection::createOrigin(
-  const std::wstring &originName, const std::wstring &directory, int priority,
-  boost::shared_ptr<FileRegister> fileRegister,
-  boost::shared_ptr<OriginConnection> originConnection)
+FilesOrigin&
+OriginConnection::createOrigin(const std::wstring& originName,
+                               const std::wstring& directory, int priority,
+                               boost::shared_ptr<FileRegister> fileRegister,
+                               boost::shared_ptr<OriginConnection> originConnection)
 {
   std::scoped_lock lock(m_Mutex);
 
-  return createOriginNoLock(
-    originName, directory, priority, fileRegister, originConnection);
+  return createOriginNoLock(originName, directory, priority, fileRegister,
+                            originConnection);
 }
 
-bool OriginConnection::exists(const std::wstring &name)
+bool OriginConnection::exists(const std::wstring& name)
 {
   std::scoped_lock lock(m_Mutex);
   return m_OriginsNameMap.find(name) != m_OriginsNameMap.end();
@@ -73,7 +70,7 @@ const FilesOrigin* OriginConnection::findByID(OriginID ID) const
   }
 }
 
-FilesOrigin& OriginConnection::getByName(const std::wstring &name)
+FilesOrigin& OriginConnection::getByName(const std::wstring& name)
 {
   std::scoped_lock lock(m_Mutex);
 
@@ -83,12 +80,14 @@ FilesOrigin& OriginConnection::getByName(const std::wstring &name)
     return m_Origins[iter->second];
   } else {
     std::ostringstream stream;
-    stream << QObject::tr("invalid origin name: ").toStdString() << ToString(name, true);
+    stream << QObject::tr("invalid origin name: ").toStdString()
+           << ToString(name, true);
     throw std::runtime_error(stream.str());
   }
 }
 
-void OriginConnection::changeNameLookup(const std::wstring &oldName, const std::wstring &newName)
+void OriginConnection::changeNameLookup(const std::wstring& oldName,
+                                        const std::wstring& newName)
 {
   std::scoped_lock lock(m_Mutex);
 
@@ -99,7 +98,8 @@ void OriginConnection::changeNameLookup(const std::wstring &oldName, const std::
     m_OriginsNameMap.erase(iter);
     m_OriginsNameMap[newName] = idx;
   } else {
-    log::error(QObject::tr("failed to change name lookup from {} to {}").toStdString(), oldName, newName);
+    log::error(QObject::tr("failed to change name lookup from {} to {}").toStdString(),
+               oldName, newName);
   }
 }
 
@@ -109,23 +109,21 @@ OriginID OriginConnection::createID()
 }
 
 FilesOrigin& OriginConnection::createOriginNoLock(
-  const std::wstring &originName, const std::wstring &directory, int priority,
-  boost::shared_ptr<FileRegister> fileRegister,
-  boost::shared_ptr<OriginConnection> originConnection)
+    const std::wstring& originName, const std::wstring& directory, int priority,
+    boost::shared_ptr<FileRegister> fileRegister,
+    boost::shared_ptr<OriginConnection> originConnection)
 {
   OriginID newID = createID();
 
-  auto itor = m_Origins.emplace(
-    std::piecewise_construct,
-    std::forward_as_tuple(newID),
-    std::forward_as_tuple(
-      newID, originName, directory, priority,
-      fileRegister, originConnection))
-    .first;
+  auto itor = m_Origins
+                  .emplace(std::piecewise_construct, std::forward_as_tuple(newID),
+                           std::forward_as_tuple(newID, originName, directory, priority,
+                                                 fileRegister, originConnection))
+                  .first;
 
   m_OriginsNameMap.insert({originName, newID});
 
   return itor->second;
 }
 
-} // namespace
+}  // namespace MOShared

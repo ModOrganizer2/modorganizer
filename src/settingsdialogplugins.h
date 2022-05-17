@@ -9,16 +9,18 @@
 class PluginsSettingsTab : public SettingsTab
 {
 public:
-  PluginsSettingsTab(Settings& settings, PluginContainer* pluginContainer, SettingsDialog& dialog);
+  PluginsSettingsTab(Settings& settings, PluginContainer* pluginContainer,
+                     SettingsDialog& dialog);
 
   void update();
   void closing() override;
 
 private:
-  void on_pluginsList_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
+  void on_pluginsList_currentItemChanged(QTreeWidgetItem* current,
+                                         QTreeWidgetItem* previous);
   void on_checkboxEnabled_clicked(bool checked);
   void deleteBlacklistItem();
-  void storeSettings(QTreeWidgetItem *pluginItem);
+  void storeSettings(QTreeWidgetItem* pluginItem);
 
 private slots:
 
@@ -37,19 +39,19 @@ private slots:
    * @brief Retrieve the plugin associated to the given item in the list.
    *
    */
-  MOBase::IPlugin* plugin(QTreeWidgetItem *pluginItem) const;
+  MOBase::IPlugin* plugin(QTreeWidgetItem* pluginItem) const;
 
-  enum {
-    PluginRole = Qt::UserRole,
-    SettingsRole = Qt::UserRole + 1,
+  enum
+  {
+    PluginRole       = Qt::UserRole,
+    SettingsRole     = Qt::UserRole + 1,
     DescriptionsRole = Qt::UserRole + 2
   };
 
 private:
-
   PluginContainer* m_pluginContainer;
 
   MOBase::FilterWidget m_filter;
 };
 
-#endif // SETTINGSDIALOGPLUGINS_H
+#endif  // SETTINGSDIALOGPLUGINS_H

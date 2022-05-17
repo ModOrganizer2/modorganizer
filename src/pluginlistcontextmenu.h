@@ -15,11 +15,11 @@ class PluginListContextMenu : public QMenu
   Q_OBJECT
 
 public:
-
-  // creates a new context menu, the given index is the one for the click and should be valid
+  // creates a new context menu, the given index is the one for the click and should be
+  // valid
   //
-  PluginListContextMenu(
-    const QModelIndex& index, OrganizerCore& core, PluginListView* modListView);
+  PluginListContextMenu(const QModelIndex& index, OrganizerCore& core,
+                        PluginListView* modListView);
 
 signals:
 
@@ -28,7 +28,6 @@ signals:
   void openModInformation(unsigned int modIndex);
 
 public:
-
   // create the "Send to... " context menu
   //
   QMenu* createSendToContextMenu();
@@ -43,12 +42,10 @@ public:
   void openOriginExplorer(const QModelIndexList& indices);
   void openOriginInformation(const QModelIndex& index);
 
-
   OrganizerCore& m_core;
   QModelIndex m_index;
   QModelIndexList m_selected;
   PluginListView* m_view;
-
 };
 
 #endif

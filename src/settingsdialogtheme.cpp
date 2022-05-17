@@ -1,16 +1,15 @@
 #include "settingsdialogtheme.h"
-#include "ui_settingsdialog.h"
-#include "shared/appconfig.h"
 #include "categoriesdialog.h"
 #include "colortable.h"
 #include "modlist.h"
-#include <utility.h>
+#include "shared/appconfig.h"
+#include "ui_settingsdialog.h"
 #include <questionboxmemory.h>
+#include <utility.h>
 
 using namespace MOBase;
 
-ThemeSettingsTab::ThemeSettingsTab(Settings& s, SettingsDialog& d)
-  : SettingsTab(s, d)
+ThemeSettingsTab::ThemeSettingsTab(Settings& s, SettingsDialog& d) : SettingsTab(s, d)
 {
   // style
   addStyles();
@@ -19,17 +18,21 @@ ThemeSettingsTab::ThemeSettingsTab(Settings& s, SettingsDialog& d)
   // colors
   ui->colorTable->load(s);
 
-  QObject::connect(ui->resetColorsBtn, &QPushButton::clicked, [&] { ui->colorTable->resetColors(); });
+  QObject::connect(ui->resetColorsBtn, &QPushButton::clicked, [&] {
+    ui->colorTable->resetColors();
+  });
 
-  QObject::connect(ui->exploreStyles, &QPushButton::clicked, [&] { onExploreStyles(); });
+  QObject::connect(ui->exploreStyles, &QPushButton::clicked, [&] {
+    onExploreStyles();
+  });
 }
 
 void ThemeSettingsTab::update()
 {
   // style
   const QString oldStyle = settings().interface().styleName().value_or("");
-  const QString newStyle = ui->styleBox->itemData(
-    ui->styleBox->currentIndex()).toString();
+  const QString newStyle =
+      ui->styleBox->itemData(ui->styleBox->currentIndex()).toString();
 
   if (oldStyle != newStyle) {
     settings().interface().setStyleName(newStyle);
@@ -49,25 +52,21 @@ void ThemeSettingsTab::addStyles()
 
   ui->styleBox->insertSeparator(ui->styleBox->count());
 
-  QDirIterator iter(
-    QCoreApplication::applicationDirPath() + "/" +
-    QString::fromStdWString(AppConfig::stylesheetsPath()),
-    QStringList("*.qss"),
-    QDir::Files);
+  QDirIterator iter(QCoreApplication::applicationDirPath() + "/" +
+                        QString::fromStdWString(AppConfig::stylesheetsPath()),
+                    QStringList("*.qss"), QDir::Files);
 
   while (iter.hasNext()) {
     iter.next();
 
-    ui->styleBox->addItem(
-      iter.fileInfo().completeBaseName(),
-      iter.fileName());
+    ui->styleBox->addItem(iter.fileInfo().completeBaseName(), iter.fileName());
   }
 }
 
 void ThemeSettingsTab::selectStyle()
 {
-  const int currentID = ui->styleBox->findData(
-    settings().interface().styleName().value_or(""));
+  const int currentID =
+      ui->styleBox->findData(settings().interface().styleName().value_or(""));
 
   if (currentID != -1) {
     ui->styleBox->setCurrentIndex(currentID);
@@ -76,7 +75,7 @@ void ThemeSettingsTab::selectStyle()
 
 void ThemeSettingsTab::onExploreStyles()
 {
-  QString ssPath = QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::stylesheetsPath());
+  QString ssPath = QCoreApplication::applicationDirPath() + "/" +
+                   ToQString(AppConfig::stylesheetsPath());
   shell::Explore(ssPath);
 }
-

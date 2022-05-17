@@ -33,10 +33,11 @@ void FileDialogMemory::restore(const Settings& s)
   g_Cache = s.paths().recent();
 }
 
-QString FileDialogMemory::getOpenFileName(
-  const QString &dirID, QWidget *parent, const QString &caption,
-  const QString &dir, const QString &filter, QString *selectedFilter,
-  QFileDialog::Options options)
+QString FileDialogMemory::getOpenFileName(const QString& dirID, QWidget* parent,
+                                          const QString& caption, const QString& dir,
+                                          const QString& filter,
+                                          QString* selectedFilter,
+                                          QFileDialog::Options options)
 {
   QString currentDir = dir;
 
@@ -47,8 +48,8 @@ QString FileDialogMemory::getOpenFileName(
     }
   }
 
-  QString result = QFileDialog::getOpenFileName(
-    parent, caption, currentDir, filter, selectedFilter, options);
+  QString result = QFileDialog::getOpenFileName(parent, caption, currentDir, filter,
+                                                selectedFilter, options);
 
   if (!result.isNull()) {
     g_Cache[dirID] = QFileInfo(result).path();
@@ -57,10 +58,10 @@ QString FileDialogMemory::getOpenFileName(
   return result;
 }
 
-
-QString FileDialogMemory::getExistingDirectory(
-  const QString &dirID, QWidget *parent, const QString &caption,
-  const QString &dir, QFileDialog::Options options)
+QString FileDialogMemory::getExistingDirectory(const QString& dirID, QWidget* parent,
+                                               const QString& caption,
+                                               const QString& dir,
+                                               QFileDialog::Options options)
 {
   QString currentDir = dir;
 
@@ -71,8 +72,8 @@ QString FileDialogMemory::getExistingDirectory(
     }
   }
 
-  QString result = QFileDialog::getExistingDirectory(
-    parent, caption, currentDir, options);
+  QString result =
+      QFileDialog::getExistingDirectory(parent, caption, currentDir, options);
 
   if (!result.isNull()) {
     g_Cache[dirID] = result;

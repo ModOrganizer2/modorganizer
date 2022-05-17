@@ -3,17 +3,16 @@
 
 namespace env
 {
-  class Environment;
-  class Module;
-}
+class Environment;
+class Module;
+}  // namespace env
 
 namespace MOBase
 {
-  class IPluginGame;
+class IPluginGame;
 }
 
 class Settings;
-
 
 namespace sanity
 {
@@ -22,6 +21,6 @@ void checkEnvironment(const env::Environment& env);
 int checkIncompatibleModule(const env::Module& m);
 int checkPaths(MOBase::IPluginGame& game, const Settings& s);
 
-} // namespace
+}  // namespace sanity
 
 #endif  // MODORGANIZER_SANITYCHECKS_INCLUDED

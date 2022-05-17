@@ -2,25 +2,20 @@
 
 QString localizedUserAccountType(APIUserAccountTypes t)
 {
-  switch (t)
-  {
-    case APIUserAccountTypes::Regular:
-      return QObject::tr("Regular");
+  switch (t) {
+  case APIUserAccountTypes::Regular:
+    return QObject::tr("Regular");
 
-    case APIUserAccountTypes::Premium:
-      return QObject::tr("Premium");
+  case APIUserAccountTypes::Premium:
+    return QObject::tr("Premium");
 
-    case APIUserAccountTypes::None:  // fall-through
-    default:
-      return QObject::tr("None");
+  case APIUserAccountTypes::None:  // fall-through
+  default:
+    return QObject::tr("None");
   }
 }
 
-
-APIUserAccount::APIUserAccount()
-  : m_type(APIUserAccountTypes::None)
-{
-}
+APIUserAccount::APIUserAccount() : m_type(APIUserAccountTypes::None) {}
 
 bool APIUserAccount::isValid() const
 {
@@ -84,9 +79,7 @@ APIUserAccount& APIUserAccount::limits(const APILimits& limits)
 
 int APIUserAccount::remainingRequests() const
 {
-  return std::max(
-    m_limits.remainingDailyRequests,
-    m_limits.remainingHourlyRequests);
+  return std::max(m_limits.remainingDailyRequests, m_limits.remainingHourlyRequests);
 }
 
 bool APIUserAccount::shouldThrottle() const

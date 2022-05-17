@@ -11,7 +11,6 @@ class ModInfoBackup : public ModInfoRegular
   friend class ModInfo;
 
 public:
-
   virtual bool updateAvailable() const override { return false; }
   virtual bool updateIgnored() const override { return false; }
   virtual bool downgradeAvailable() const override { return false; }
@@ -24,7 +23,10 @@ public:
   virtual bool canBeUpdated() const override { return false; }
   virtual QDateTime getExpires() const override { return QDateTime(); }
   virtual bool canBeEnabled() const override { return false; }
-  virtual std::vector<QString> getIniTweaks() const override { return std::vector<QString>(); }
+  virtual std::vector<QString> getIniTweaks() const override
+  {
+    return std::vector<QString>();
+  }
   virtual std::vector<EFlag> getFlags() const override;
   virtual QString getDescription() const override;
   virtual int getNexusFileStatus() const override { return 0; }
@@ -41,10 +43,7 @@ public:
   virtual void addInstalledFile(int, int) override {}
 
 private:
-
   ModInfoBackup(const QDir& path, OrganizerCore& core);
-
 };
 
-
-#endif // MODINFOBACKUP_H
+#endif  // MODINFOBACKUP_H

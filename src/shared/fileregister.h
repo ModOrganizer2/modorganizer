@@ -2,8 +2,8 @@
 #define MO_REGISTER_FILESREGISTER_INCLUDED
 
 #include "fileregisterfwd.h"
-#include <mutex>
 #include <boost/shared_ptr.hpp>
+#include <mutex>
 
 namespace MOShared
 {
@@ -19,8 +19,8 @@ public:
 
   bool indexValid(FileIndex index) const;
 
-  FileEntryPtr createFile(
-    std::wstring name, DirectoryEntry *parent, DirectoryStats& stats);
+  FileEntryPtr createFile(std::wstring name, DirectoryEntry* parent,
+                          DirectoryStats& stats);
 
   FileEntryPtr getFile(FileIndex index) const;
 
@@ -48,6 +48,6 @@ private:
   FileIndex generateIndex();
 };
 
-} // namespace
+}  // namespace MOShared
 
-#endif // MO_REGISTER_FILESREGISTER_INCLUDED
+#endif  // MO_REGISTER_FILESREGISTER_INCLUDED

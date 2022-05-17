@@ -1,10 +1,10 @@
 #ifndef MODINFODIALOGTEXTFILES_H
 #define MODINFODIALOGTEXTFILES_H
 
-#include "modinfodialogtab.h"
 #include "filterwidget.h"
-#include <QSplitter>
+#include "modinfodialogtab.h"
 #include <QListView>
+#include <QSplitter>
 
 using namespace MOBase;
 
@@ -31,10 +31,8 @@ protected:
   FileListModel* m_model;
   FilterWidget m_filter;
 
-  GenericFilesTab(
-    ModInfoDialogTabContext cx,
-    QListView* list, QSplitter* splitter,
-    TextEditor* editor, QLineEdit* filter);
+  GenericFilesTab(ModInfoDialogTabContext cx, QListView* list, QSplitter* splitter,
+                  TextEditor* editor, QLineEdit* filter);
 
   virtual bool wantsFile(const QString& rootPath, const QString& fullPath) const = 0;
 
@@ -42,7 +40,6 @@ private:
   void onSelection(const QModelIndex& current, const QModelIndex& previous);
   void select(const QModelIndex& index);
 };
-
 
 class TextFilesTab : public GenericFilesTab
 {
@@ -53,7 +50,6 @@ protected:
   bool wantsFile(const QString& rootPath, const QString& fullPath) const override;
 };
 
-
 class IniFilesTab : public GenericFilesTab
 {
 public:
@@ -63,4 +59,4 @@ protected:
   bool wantsFile(const QString& rootPath, const QString& fullPath) const override;
 };
 
-#endif // MODINFODIALOGTEXTFILES_H
+#endif  // MODINFODIALOGTEXTFILES_H

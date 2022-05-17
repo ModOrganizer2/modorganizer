@@ -19,13 +19,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "loghighlighter.h"
 
-LogHighlighter::LogHighlighter(QObject *parent) :
-    QSyntaxHighlighter(parent)
-{
-}
+LogHighlighter::LogHighlighter(QObject* parent) : QSyntaxHighlighter(parent) {}
 
-
-void LogHighlighter::highlightBlock(const QString &text)
+void LogHighlighter::highlightBlock(const QString& text)
 {
   int spacePos = text.indexOf(" ");
   if (spacePos != -1) {

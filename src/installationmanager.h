@@ -20,28 +20,28 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef INSTALLATIONMANAGER_H
 #define INSTALLATIONMANAGER_H
 
+#include <guessedvalue.h>
 #include <ifiletree.h>
 #include <iinstallationmanager.h>
 #include <iplugininstaller.h>
-#include <guessedvalue.h>
 
 #include <QObject>
 #define WIN32_LEAN_AND_MEAN
+#include <QProgressDialog>
 #include <Windows.h>
 #include <archive.h>
-#include <QProgressDialog>
-#include <set>
-#include <map>
 #include <errorcodes.h>
+#include <map>
+#include <set>
 
 #include "modinfo.h"
 #include "plugincontainer.h"
 
 // contains installation result from the manager, internal class
 // for MO2 that is not forwarded to plugin
-class InstallationResult {
+class InstallationResult
+{
 public:
-
   // result status of the installation
   //
   auto result() const { return m_result; }
@@ -58,14 +58,17 @@ public:
 
   // check if the installation was a success
   //
-  explicit operator bool() const { return result() == MOBase::IPluginInstaller::EInstallResult::RESULT_SUCCESS; }
+  explicit operator bool() const
+  {
+    return result() == MOBase::IPluginInstaller::EInstallResult::RESULT_SUCCESS;
+  }
 
 private:
-
   friend class InstallationManager;
 
   // create a failed result
-  InstallationResult(MOBase::IPluginInstaller::EInstallResult result = MOBase::IPluginInstaller::EInstallResult::RESULT_FAILED);
+  InstallationResult(MOBase::IPluginInstaller::EInstallResult result =
+                         MOBase::IPluginInstaller::EInstallResult::RESULT_FAILED);
 
   MOBase::IPluginInstaller::EInstallResult m_result;
 
@@ -75,16 +78,13 @@ private:
   bool m_backup;
   bool m_merged;
   bool m_replaced;
-
 };
-
 
 class InstallationManager : public QObject, public MOBase::IInstallationManager
 {
   Q_OBJECT
 
 public:
-
   /**
    * @brief constructor
    *
@@ -94,23 +94,25 @@ public:
 
   virtual ~InstallationManager();
 
-  void setParentWidget(QWidget *widget);
+  void setParentWidget(QWidget* widget);
 
   /**
    * @brief Notify all installer plugins that an installation is about to start.
    *
    * @param archive Path to the archive that is going to be installed.
    * @param reinstallation True if this is a reinstallation, false otherwise.
-   * @param currentMod The installed mod corresponding to the archive being installed, or a null
-   *     if there is no such mod.
+   * @param currentMod The installed mod corresponding to the archive being installed,
+   * or a null if there is no such mod.
    */
-  void notifyInstallationStart(QString const& archive, bool reinstallation, ModInfo::Ptr currentMod);
+  void notifyInstallationStart(QString const& archive, bool reinstallation,
+                               ModInfo::Ptr currentMod);
 
   /**
    * @brief notify all installer plugins that an installation has ended.
    *
    * @param result The result of the installation process.
-   * @param currentMod The newly install mod, if result is SUCCESS, a null pointer otherwise.
+   * @param currentMod The newly install mod, if result is SUCCESS, a null pointer
+   * otherwise.
    */
   void notifyInstallationEnd(const InstallationResult& result, ModInfo::Ptr newMod);
 
@@ -119,7 +121,10 @@ public:
    * @param modsDirectory the mod directory
    * @note this is called a lot, probably redundantly
    */
-  void setModsDirectory(const QString &modsDirectory) { m_ModsDirectory = modsDirectory; }
+  void setModsDirectory(const QString& modsDirectory)
+  {
+    m_ModsDirectory = modsDirectory;
+  }
 
   /**
    *
@@ -130,17 +135,25 @@ public:
    * @brief update the directory where downloads are stored
    * @param downloadDirectory the download directory
    */
-  void setDownloadDirectory(const QString &downloadDirectory) { m_DownloadsDirectory = downloadDirectory; }
+  void setDownloadDirectory(const QString& downloadDirectory)
+  {
+    m_DownloadsDirectory = downloadDirectory;
+  }
 
   /**
    * @brief install a mod from an archive
    *
    * @param fileName absolute file name of the archive to install
-   * @param modName suggested name of the mod. If this is empty (the default), a name will be guessed based on the filename. The user will always have a chance to rename the mod
-   * @return true if the archive was installed, false if installation failed or was refused
-   * @exception std::exception an exception may be thrown if the archive can't be opened (maybe the format is invalid or the file is damaged)
+   * @param modName suggested name of the mod. If this is empty (the default), a name
+   *will be guessed based on the filename. The user will always have a chance to rename
+   *the mod
+   * @return true if the archive was installed, false if installation failed or was
+   *refused
+   * @exception std::exception an exception may be thrown if the archive can't be opened
+   *(maybe the format is invalid or the file is damaged)
    **/
-  InstallationResult install(const QString &fileName, MOBase::GuessedValue<QString> &modName, int modID = 0);
+  InstallationResult install(const QString& fileName,
+                             MOBase::GuessedValue<QString>& modName, int modID = 0);
 
   /**
    * @return true if the installation was canceled
@@ -157,7 +170,8 @@ public:
    *
    * @param errorCode an error code as returned by the archiving function
    * @return the error string
-   * @todo This function doesn't belong here, it is only public because the SelfUpdater class also uses "Archive" to get to the package.txt file
+   * @todo This function doesn't belong here, it is only public because the SelfUpdater
+   *class also uses "Archive" to get to the package.txt file
    **/
   static QString getErrorString(Archive::Error errorCode);
 
@@ -167,7 +181,8 @@ public:
   QStringList getSupportedExtensions() const override;
 
   /**
-   * @brief Extract the specified file from the currently opened archive to a temporary location.
+   * @brief Extract the specified file from the currently opened archive to a temporary
+   * location.
    *
    * This method cannot be used to extract directory.
    *
@@ -181,10 +196,12 @@ public:
    * @note The temporary file is automatically cleaned up after the installation.
    * @note This call can be very slow if the archive is large and "solid".
    */
-  QString extractFile(std::shared_ptr<const MOBase::FileTreeEntry> entry, bool silent = false) override;
+  QString extractFile(std::shared_ptr<const MOBase::FileTreeEntry> entry,
+                      bool silent = false) override;
 
   /**
-   * @brief Extract the specified files from the currently opened archive to a temporary location.
+   * @brief Extract the specified files from the currently opened archive to a temporary
+   * location.
    *
    * This method cannot be used to extract directory.
    *
@@ -198,20 +215,24 @@ public:
    * @note The temporary file is automatically cleaned up after the installation.
    * @note This call can be very slow if the archive is large and "solid".
    *
-   * The flatten argument is not present here while it is present in the deprecated QStringList
-   * version for multiple reasons: 1) it was never used, 2) it is kind of fishy because there
-   * is no way to know if a file is going to be overriden, 3) it is quite easy to flatten a
-   * IFileTree and thus to given a list of entries flattened (this was not possible with the
-   * QStringList version since these were based on the name of the file inside the archive).
+   * The flatten argument is not present here while it is present in the deprecated
+   * QStringList version for multiple reasons: 1) it was never used, 2) it is kind of
+   * fishy because there is no way to know if a file is going to be overriden, 3) it is
+   * quite easy to flatten a IFileTree and thus to given a list of entries flattened
+   * (this was not possible with the QStringList version since these were based on the
+   * name of the file inside the archive).
    */
-  QStringList extractFiles(std::vector<std::shared_ptr<const MOBase::FileTreeEntry>> const& entries, bool silent = false) override;
+  QStringList
+  extractFiles(std::vector<std::shared_ptr<const MOBase::FileTreeEntry>> const& entries,
+               bool silent = false) override;
 
   /**
    * @brief Create a new file on the disk corresponding to the given entry.
    *
-   * This method can be used by installer that needs to create files that are not in the original
-   * archive. At the end of the installation, if there are entries in the final tree that were used
-   * to create files, the corresponding files will be moved to the mod folder.
+   * This method can be used by installer that needs to create files that are not in the
+   * original archive. At the end of the installation, if there are entries in the final
+   * tree that were used to create files, the corresponding files will be moved to the
+   * mod folder.
    *
    * @param entry The entry for which a temporary file should be created.
    *
@@ -228,7 +249,9 @@ public:
    *
    * @return the installation result.
    */
-  MOBase::IPluginInstaller::EInstallResult installArchive(MOBase::GuessedValue<QString> &modName, const QString &archiveName, int modId = 0) override;
+  MOBase::IPluginInstaller::EInstallResult
+  installArchive(MOBase::GuessedValue<QString>& modName, const QString& archiveName,
+                 int modId = 0) override;
 
   /**
    * @param modName current possible names for the mod
@@ -237,17 +260,16 @@ public:
    */
   InstallationResult testOverwrite(MOBase::GuessedValue<QString>& modName);
 
-  QString generateBackupName(const QString &directoryName) const;
+  QString generateBackupName(const QString& directoryName) const;
 
 private:
-
   // actually perform the installation (write files to the disk, etc.), returns the
   // installation result
   //
-  InstallationResult doInstall(
-    MOBase::GuessedValue<QString> &modName, QString gameName,
-    int modID, const QString &version, const QString &newestVersion,
-    int categoryID, int fileCategoryID, const QString &repository);
+  InstallationResult doInstall(MOBase::GuessedValue<QString>& modName, QString gameName,
+                               int modID, const QString& version,
+                               const QString& newestVersion, int categoryID,
+                               int fileCategoryID, const QString& repository);
 
   /**
    * @brief Clean the list of created files by removing all entries that are not
@@ -257,7 +279,7 @@ private:
    */
   void cleanCreatedFiles(std::shared_ptr<const MOBase::IFileTree> fileTree);
 
-  bool ensureValidModName(MOBase::GuessedValue<QString> &name) const;
+  bool ensureValidModName(MOBase::GuessedValue<QString>& name) const;
 
   void postInstallCleanup();
 
@@ -281,17 +303,17 @@ signals:
   void progressUpdate();
 
   /**
- * @brief An existing mod has been replaced with a newly installed one.
- */
+   * @brief An existing mod has been replaced with a newly installed one.
+   */
   void modReplaced(const QString fileName);
 
 private:
-
-  struct CaseInsensitive {
-      bool operator() (const QString &LHS, const QString &RHS) const
-      {
-        return QString::compare(LHS, RHS, Qt::CaseInsensitive) < 0;
-      }
+  struct CaseInsensitive
+  {
+    bool operator()(const QString& LHS, const QString& RHS) const
+    {
+      return QString::compare(LHS, RHS, Qt::CaseInsensitive) < 0;
+    }
   };
 
   /**
@@ -305,16 +327,16 @@ private:
    * @return true if the extraction was successful, false if the extraciton was
    *     cancelled. If an error occured, an exception is thrown.
    */
-  bool extractFiles(QString extractPath, QString title, bool showFilenames, bool silent);
+  bool extractFiles(QString extractPath, QString title, bool showFilenames,
+                    bool silent);
 
 private:
-
   // The plugin container, mostly to check if installer are enabled or not.
-  const PluginContainer *m_PluginContainer;
+  const PluginContainer* m_PluginContainer;
 
   bool m_IsRunning;
 
-  QWidget *m_ParentWidget;
+  QWidget* m_ParentWidget;
 
   QString m_ModsDirectory;
   QString m_DownloadsDirectory;
@@ -330,5 +352,4 @@ private:
   std::set<QString> m_TempFilesToDelete;
 };
 
-
-#endif // INSTALLATIONMANAGER_H
+#endif  // INSTALLATIONMANAGER_H

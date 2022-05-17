@@ -23,24 +23,25 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDialog>
 #include <QUrl>
 
-namespace Ui {
+namespace Ui
+{
 class MotDDialog;
 }
 
 class MotDDialog : public QDialog
 {
   Q_OBJECT
-  
+
 public:
-  explicit MotDDialog(const QString &message, QWidget *parent = 0);
+  explicit MotDDialog(const QString& message, QWidget* parent = 0);
   ~MotDDialog();
-  
+
 private slots:
   void on_okButton_clicked();
-  void linkClicked(const QUrl &url);
+  void linkClicked(const QUrl& url);
 
 private:
-  Ui::MotDDialog *ui;
+  Ui::MotDDialog* ui;
 };
 
-#endif // MOTDDIALOG_H
+#endif  // MOTDDIALOG_H

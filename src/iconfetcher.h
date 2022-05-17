@@ -1,9 +1,9 @@
 #ifndef MODORGANIZER_ICONFETCHER_INCLUDED
 #define MODORGANIZER_ICONFETCHER_INCLUDED
-#include <set>
-#include <mutex>
 #include <QFileIconProvider>
 #include <QStringView>
+#include <mutex>
+#include <set>
 
 class IconFetcher
 {
@@ -45,7 +45,6 @@ private:
     bool m_queueAvailable = false;
   };
 
-
   const int m_iconSize;
   QFileIconProvider m_provider;
   std::thread m_thread;
@@ -55,7 +54,6 @@ private:
   mutable Cache m_extensionCache;
   mutable Cache m_fileCache;
   mutable Waiter m_waiter;
-
 
   bool hasOwnIcon(const QString& path) const;
 
@@ -74,4 +72,4 @@ private:
   QVariant extensionIcon(const QStringView& ext) const;
 };
 
-#endif // MODORGANIZER_ICONFETCHER_INCLUDED
+#endif  // MODORGANIZER_ICONFETCHER_INCLUDED

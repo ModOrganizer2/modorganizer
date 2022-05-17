@@ -2,10 +2,11 @@
 
 #include <QAbstractProxyModel>
 
-namespace MOShared {
+namespace MOShared
+{
 
-QModelIndexList flatIndex(
-  const QAbstractItemModel* model, int column, const QModelIndex& parent)
+QModelIndexList flatIndex(const QAbstractItemModel* model, int column,
+                          const QModelIndex& parent)
 {
   QModelIndexList index;
   for (std::size_t i = 0; i < model->rowCount(parent); ++i) {
@@ -15,7 +16,8 @@ QModelIndexList flatIndex(
   return index;
 }
 
-static QModelIndexList visibleIndexImpl(QTreeView* view, int column, const QModelIndex& parent)
+static QModelIndexList visibleIndexImpl(QTreeView* view, int column,
+                                        const QModelIndex& parent)
 {
   if (parent.isValid() && !view->isExpanded(parent)) {
     return {};
@@ -59,7 +61,8 @@ QModelIndex indexModelToView(const QModelIndex& index, const QAbstractItemView* 
   return qindex;
 }
 
-QModelIndexList indexModelToView(const QModelIndexList& index, const QAbstractItemView* view)
+QModelIndexList indexModelToView(const QModelIndexList& index,
+                                 const QAbstractItemView* view)
 {
   QModelIndexList result;
   for (auto& idx : index) {
@@ -72,16 +75,15 @@ QModelIndex indexViewToModel(const QModelIndex& index, const QAbstractItemModel*
 {
   if (index.model() == model) {
     return index;
-  }
-  else if (auto* proxy = qobject_cast<const QAbstractProxyModel*>(index.model())) {
+  } else if (auto* proxy = qobject_cast<const QAbstractProxyModel*>(index.model())) {
     return indexViewToModel(proxy->mapToSource(index), model);
-  }
-  else {
+  } else {
     return QModelIndex();
   }
 }
 
-QModelIndexList indexViewToModel(const QModelIndexList& index, const QAbstractItemModel* model)
+QModelIndexList indexViewToModel(const QModelIndexList& index,
+                                 const QAbstractItemModel* model)
 {
   QModelIndexList result;
   for (auto& idx : index) {
@@ -90,4 +92,4 @@ QModelIndexList indexViewToModel(const QModelIndexList& index, const QAbstractIt
   return result;
 }
 
-}
+}  // namespace MOShared

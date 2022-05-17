@@ -26,7 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace MOShared
 {
-  class DirectoryEntry;
+class DirectoryEntry;
 }
 
 /**
@@ -38,9 +38,9 @@ namespace MOShared
  * This class does not expose mutable operations, so any mutable operations will
  * fail.
  */
-class VirtualFileTree : public MOBase::IFileTree {
+class VirtualFileTree : public MOBase::IFileTree
+{
 public:
-
   /**
    * @brief Create a new file tree representing the given VFS directory.
    *
@@ -48,13 +48,15 @@ public:
    *
    * @return a file tree representing the VFS directory.
    */
-  static std::shared_ptr<const VirtualFileTree> makeTree(const MOShared::DirectoryEntry* root);
+  static std::shared_ptr<const VirtualFileTree>
+  makeTree(const MOShared::DirectoryEntry* root);
 
 protected:
-
   using IFileTree::IFileTree;
 
-  virtual bool doPopulate(std::shared_ptr<const IFileTree> parent, std::vector<std::shared_ptr<FileTreeEntry>>& entries) const = 0;
+  virtual bool
+  doPopulate(std::shared_ptr<const IFileTree> parent,
+             std::vector<std::shared_ptr<FileTreeEntry>>& entries) const = 0;
 };
 
 #endif

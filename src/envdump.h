@@ -12,7 +12,6 @@ enum class CoreDumpTypes
   Full
 };
 
-
 CoreDumpTypes coreDumpTypeFromString(const std::string& s);
 std::string toString(CoreDumpTypes type);
 
@@ -25,6 +24,6 @@ bool coredump(const wchar_t* dir, CoreDumpTypes type);
 //
 bool coredumpOther(CoreDumpTypes type);
 
-} // namespace
+}  // namespace env
 
 #endif  // MODORGANIZER_ENVDUMP_INCLUDED

@@ -3,8 +3,8 @@
 
 #include <QCheckBox>
 
-#include "settingsdialog.h"
 #include "settings.h"
+#include "settingsdialog.h"
 
 class ModListSettingsTab : public SettingsTab
 {
@@ -20,8 +20,7 @@ protected slots:
   void updateCollapsibleSeparatorsGroup();
 
 private:
-
   const std::map<int, QCheckBox*> m_columnToBox;
 };
 
-#endif // SETTINGSDIALOGGENERAL_H
+#endif  // SETTINGSDIALOGGENERAL_H

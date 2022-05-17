@@ -1,10 +1,10 @@
 #include "datatab.h"
-#include "ui_mainwindow.h"
-#include "settings.h"
-#include "organizercore.h"
-#include "messagedialog.h"
 #include "filetree.h"
 #include "filetreemodel.h"
+#include "messagedialog.h"
+#include "organizercore.h"
+#include "settings.h"
+#include "ui_mainwindow.h"
 #include <log.h>
 #include <report.h>
 
@@ -14,15 +14,16 @@ using namespace MOBase;
 // in mainwindow.cpp
 QString UnmanagedModName();
 
-
-DataTab::DataTab(
-  OrganizerCore& core, PluginContainer& pc,
-  QWidget* parent, Ui::MainWindow* mwui) :
-    m_core(core), m_pluginContainer(pc), m_parent(parent),
-    ui{
-      mwui->tabWidget, mwui->dataTab, mwui->dataTabRefresh, mwui->dataTree,
-      mwui->dataTabShowOnlyConflicts, mwui->dataTabShowFromArchives},
-    m_needUpdate(true)
+DataTab::DataTab(OrganizerCore& core, PluginContainer& pc, QWidget* parent,
+                 Ui::MainWindow* mwui)
+    : m_core(core), m_pluginContainer(pc),
+      m_parent(parent), ui{mwui->tabWidget,
+                           mwui->dataTab,
+                           mwui->dataTabRefresh,
+                           mwui->dataTree,
+                           mwui->dataTabShowOnlyConflicts,
+                           mwui->dataTabShowFromArchives},
+      m_needUpdate(true)
 {
   m_filetree.reset(new FileTree(core, m_pluginContainer, ui.tree));
   m_filter.setUseSourceSort(true);
@@ -31,37 +32,33 @@ DataTab::DataTab(
   m_filter.setList(mwui->dataTree);
   m_filter.setUpdateDelay(true);
 
-  if (auto* m=m_filter.proxyModel()) {
+  if (auto* m = m_filter.proxyModel()) {
     m->setDynamicSortFilter(false);
   }
 
-  connect(
-    &m_filter, &FilterWidget::aboutToChange,
-    [&]{ ensureFullyLoaded(); });
+  connect(&m_filter, &FilterWidget::aboutToChange, [&] {
+    ensureFullyLoaded();
+  });
 
-  connect(
-    ui.refresh, &QPushButton::clicked,
-    [&]{ onRefresh(); });
+  connect(ui.refresh, &QPushButton::clicked, [&] {
+    onRefresh();
+  });
 
-  connect(
-    ui.conflicts, &QCheckBox::toggled,
-    [&]{ onConflicts(); });
+  connect(ui.conflicts, &QCheckBox::toggled, [&] {
+    onConflicts();
+  });
 
-  connect(
-    ui.archives, &QCheckBox::toggled,
-    [&]{ onArchives(); });
+  connect(ui.archives, &QCheckBox::toggled, [&] {
+    onArchives();
+  });
 
-  connect(
-    m_filetree.get(), &FileTree::executablesChanged,
-    this, &DataTab::executablesChanged);
+  connect(m_filetree.get(), &FileTree::executablesChanged, this,
+          &DataTab::executablesChanged);
 
-  connect(
-    m_filetree.get(), &FileTree::originModified,
-    this, &DataTab::originModified);
+  connect(m_filetree.get(), &FileTree::originModified, this, &DataTab::originModified);
 
-  connect(
-    m_filetree.get(), &FileTree::displayModInformation,
-    this, &DataTab::displayModInformation);
+  connect(m_filetree.get(), &FileTree::displayModInformation, this,
+          &DataTab::displayModInformation);
 }
 
 void DataTab::saveState(Settings& s) const
@@ -109,8 +106,7 @@ void DataTab::updateTree()
 {
   if (isActive()) {
     doUpdateTree();
-  }
-  else {
+  } else {
     m_needUpdate = true;
   }
 }
@@ -123,7 +119,7 @@ void DataTab::doUpdateTree()
   if (!m_filter.empty()) {
     ensureFullyLoaded();
 
-    if (auto* m=m_filter.proxyModel()) {
+    if (auto* m = m_filter.proxyModel()) {
       m->invalidate();
     }
   }

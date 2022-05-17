@@ -1,143 +1,133 @@
 #ifndef MODORGANIZER_JSON_INCLUDED
 #define MODORGANIZER_JSON_INCLUDED
 
-#include <log.h>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
 #include <QJsonValue>
+#include <log.h>
 
 namespace json
 {
 
-class failed {};
-
+class failed
+{};
 
 namespace details
 {
 
-QString typeName(const QJsonValue& v)
-{
-  if (v.isUndefined()) {
-    return "undefined";
-  } else if (v.isNull()) {
-    return "null";
-  } else if (v.isArray()) {
-    return "an array";
-  } else if (v.isBool()) {
-    return "a bool";
-  } else if (v.isDouble()) {
-    return "a double";
-  } else if (v.isObject()) {
-    return "an object";
-  } else if (v.isString()) {
-    return "a string";
-  } else {
-    return "an unknown type";
-  }
-}
-
-QString typeName(const QJsonDocument& doc)
-{
-  if (doc.isEmpty()) {
-    return "empty";
-  } else if (doc.isNull()) {
-    return "null";
-  } else if (doc.isArray()) {
-    return "an array";
-  } else if (doc.isObject()) {
-    return "an object";
-  } else {
-    return "an unknown type";
-  }
-}
-
-
-template <class T>
-T convert(const QJsonValue& v) = delete;
-
-template <>
-bool convert<bool>(const QJsonValue& v)
-{
-  if (!v.isBool()) {
-    throw failed();
+  QString typeName(const QJsonValue& v)
+  {
+    if (v.isUndefined()) {
+      return "undefined";
+    } else if (v.isNull()) {
+      return "null";
+    } else if (v.isArray()) {
+      return "an array";
+    } else if (v.isBool()) {
+      return "a bool";
+    } else if (v.isDouble()) {
+      return "a double";
+    } else if (v.isObject()) {
+      return "an object";
+    } else if (v.isString()) {
+      return "a string";
+    } else {
+      return "an unknown type";
+    }
   }
 
-  return v.toBool();
-}
-
-template <>
-QJsonObject convert<QJsonObject>(const QJsonValue& v)
-{
-  if (!v.isObject()) {
-    throw failed();
+  QString typeName(const QJsonDocument& doc)
+  {
+    if (doc.isEmpty()) {
+      return "empty";
+    } else if (doc.isNull()) {
+      return "null";
+    } else if (doc.isArray()) {
+      return "an array";
+    } else if (doc.isObject()) {
+      return "an object";
+    } else {
+      return "an unknown type";
+    }
   }
 
-  return v.toObject();
-}
+  template <class T>
+  T convert(const QJsonValue& v) = delete;
 
-template <>
-QString convert<QString>(const QJsonValue& v)
-{
-  if (!v.isString()) {
-    throw failed();
+  template <>
+  bool convert<bool>(const QJsonValue& v)
+  {
+    if (!v.isBool()) {
+      throw failed();
+    }
+
+    return v.toBool();
   }
 
-  return v.toString();
-}
+  template <>
+  QJsonObject convert<QJsonObject>(const QJsonValue& v)
+  {
+    if (!v.isObject()) {
+      throw failed();
+    }
 
-template <>
-QJsonArray convert<QJsonArray>(const QJsonValue& v)
-{
-  if (!v.isArray()) {
-    throw failed();
+    return v.toObject();
   }
 
-  return v.toArray();
-}
+  template <>
+  QString convert<QString>(const QJsonValue& v)
+  {
+    if (!v.isString()) {
+      throw failed();
+    }
 
-template <>
-qint64 convert<qint64>(const QJsonValue& v)
-{
-  if (!v.isDouble()) {
-    throw failed();
+    return v.toString();
   }
 
-  return static_cast<qint64>(v.toDouble());
-}
+  template <>
+  QJsonArray convert<QJsonArray>(const QJsonValue& v)
+  {
+    if (!v.isArray()) {
+      throw failed();
+    }
 
-} // namespace
+    return v.toArray();
+  }
 
+  template <>
+  qint64 convert<qint64>(const QJsonValue& v)
+  {
+    if (!v.isDouble()) {
+      throw failed();
+    }
+
+    return static_cast<qint64>(v.toDouble());
+  }
+
+}  // namespace details
 
 template <class T>
 T convert(const QJsonValue& value, const char* what)
 {
-  try
-  {
+  try {
     return details::convert<T>(value);
-  }
-  catch(failed&)
-  {
-    MOBase::log::error(
-      "'{}' is a {}, not a {}",
-      what, details::typeName(value), typeid(T).name);
+  } catch (failed&) {
+    MOBase::log::error("'{}' is a {}, not a {}", what, details::typeName(value),
+                       typeid(T).name);
 
     throw;
   }
 }
 
 template <class T>
-T convertWarn(const QJsonValue& value, const char* what, T def={})
+T convertWarn(const QJsonValue& value, const char* what, T def = {})
 {
-  try
-  {
+  try {
     return details::convert<T>(value);
-  }
-  catch(failed&)
-  {
-    MOBase::log::warn(
-      "'{}' is a {}, not a {}",
-      what, details::typeName(value), typeid(T).name());
+  } catch (failed&) {
+    MOBase::log::warn("'{}' is a {}, not a {}", what, details::typeName(value),
+                      typeid(T).name());
 
     return def;
   }
@@ -155,7 +145,7 @@ T get(const QJsonObject& o, const char* e)
 }
 
 template <class T>
-T getWarn(const QJsonObject& o, const char* e, T def={})
+T getWarn(const QJsonObject& o, const char* e, T def = {})
 {
   if (!o.contains(e)) {
     MOBase::log::warn("property '{}' is missing", e);
@@ -166,7 +156,7 @@ T getWarn(const QJsonObject& o, const char* e, T def={})
 }
 
 template <class T>
-T getOpt(const QJsonObject& o, const char* e, T def={})
+T getOpt(const QJsonObject& o, const char* e, T def = {})
 {
   if (!o.contains(e)) {
     return def;
@@ -174,7 +164,6 @@ T getOpt(const QJsonObject& o, const char* e, T def={})
 
   return convertWarn<T>(o[e], e);
 }
-
 
 template <class Value>
 void requireObject(const Value& v, const char* what)
@@ -185,6 +174,6 @@ void requireObject(const Value& v, const char* what)
   }
 }
 
-} // namespace
+}  // namespace json
 
-#endif // MODORGANIZER_JSON_INCLUDED
+#endif  // MODORGANIZER_JSON_INCLUDED

@@ -30,8 +30,9 @@ class QWidget;
 
 #include <set>
 
-namespace Ui {
-    class ActivateModsDialog;
+namespace Ui
+{
+class ActivateModsDialog;
 }
 
 /**
@@ -42,13 +43,14 @@ class ActivateModsDialog : public MOBase::TutorableDialog
   Q_OBJECT
 
 public:
- /**
-  * @brief constructor
-  *
-  * @param missingPlugins a map containing missing plugins that need to be activated
-  * @param parent ... Defaults to 0.
-  **/
- explicit ActivateModsDialog(SaveGameInfo::MissingAssets const &missingAssets, QWidget *parent = 0);
+  /**
+   * @brief constructor
+   *
+   * @param missingPlugins a map containing missing plugins that need to be activated
+   * @param parent ... Defaults to 0.
+   **/
+  explicit ActivateModsDialog(SaveGameInfo::MissingAssets const& missingAssets,
+                              QWidget* parent = 0);
   ~ActivateModsDialog();
 
   /**
@@ -63,14 +65,15 @@ public:
   /**
    * @brief get a list of plugins that should be activated
    *
-   * @return set< QString > the plugins to activate. This contains only plugins that become available after enabling the mods retrieved with getModsToActivate
+   * @return set< QString > the plugins to activate. This contains only plugins that
+   *become available after enabling the mods retrieved with getModsToActivate
    **/
   std::set<QString> getESPsToActivate();
 
 private slots:
 
 private:
-  Ui::ActivateModsDialog *ui;
+  Ui::ActivateModsDialog* ui;
 };
 
-#endif // ACTIVATEMODSDIALOG_H
+#endif  // ACTIVATEMODSDIALOG_H

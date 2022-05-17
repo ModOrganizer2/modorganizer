@@ -22,13 +22,17 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "executableinfo.h"
 
-#include <vector>
 #include <optional>
+#include <vector>
 
 #include <QFileInfo>
 #include <QMetaType>
 
-namespace MOBase { class IPluginGame; class ExecutableInfo; }
+namespace MOBase
+{
+class IPluginGame;
+class ExecutableInfo;
+}  // namespace MOBase
 class Settings;
 
 /*!
@@ -46,11 +50,11 @@ public:
 
   Q_DECLARE_FLAGS(Flags, Flag);
 
-  Executable(QString title={});
+  Executable(QString title = {});
 
   /**
-  * @brief Executable from plugin
-  */
+   * @brief Executable from plugin
+   */
   Executable(const MOBase::ExecutableInfo& info, Flags flags);
 
   const QString& title() const;
@@ -83,14 +87,14 @@ private:
   Flags m_flags;
 };
 
-
 /*!
  * @brief List of executables configured to by started from MO
  **/
-class ExecutablesList {
+class ExecutablesList
+{
 public:
-  using vector_type = std::vector<Executable>;
-  using iterator = vector_type::iterator;
+  using vector_type    = std::vector<Executable>;
+  using iterator       = vector_type::iterator;
   using const_iterator = vector_type::const_iterator;
 
   /**
@@ -112,7 +116,7 @@ public:
    * @brief re-adds all the executables from the plugin and renames existing
    *        executables that are in the way
    **/
-  void resetFromPlugin(MOBase::IPluginGame const *game);
+  void resetFromPlugin(MOBase::IPluginGame const* game);
 
   /**
    * @brief writes the current list to the settings
@@ -126,7 +130,7 @@ public:
    * @return the executable
    * @exception runtime_error will throw an exception if the executable is not found
    **/
-  const Executable &get(const QString &title) const;
+  const Executable& get(const QString& title) const;
 
   /**
    * @brief find an executable by its name
@@ -135,7 +139,7 @@ public:
    * @return the executable
    * @exception runtime_error will throw an exception if the name is not correct
    **/
-  Executable &get(const QString &title);
+  Executable& get(const QString& title);
 
   /**
    * @brief find an executable by a fileinfo structure
@@ -143,26 +147,26 @@ public:
    * @return the executable
    * @exception runtime_error will throw an exception if the name is not correct
    */
-  Executable &getByBinary(const QFileInfo &info);
+  Executable& getByBinary(const QFileInfo& info);
 
   /**
    * @brief returns an iterator for the given executable by title, or end()
    */
-  iterator find(const QString &title, bool caseSensitive=true);
-  const_iterator find(const QString &title, bool caseSensitive=true) const;
+  iterator find(const QString& title, bool caseSensitive = true);
+  const_iterator find(const QString& title, bool caseSensitive = true) const;
 
   /**
    * @brief determine if an executable exists
    * @param title the title of the executable to look up
    * @return true if the executable exists, false otherwise
    **/
-  bool titleExists(const QString &title) const;
+  bool titleExists(const QString& title) const;
 
   /**
    * @brief add a new executable to the list
    * @param executable
    */
-  void setExecutable(const Executable &executable);
+  void setExecutable(const Executable& executable);
 
   /**
    * @brief remove the executable with the specified file name. This needs to
@@ -172,7 +176,7 @@ public:
    * @note if the executable name is invalid, nothing happens. There is no way
    *       to determine if this was successful
    **/
-  void remove(const QString &title);
+  void remove(const QString& title);
 
   /**
    * returns a title that starts with the given prefix and does not clash with
@@ -195,23 +199,21 @@ private:
 
   std::vector<Executable> m_Executables;
 
-
   /**
    * @brief add the executables preconfigured for this game
    **/
-  void addFromPlugin(MOBase::IPluginGame const *game, SetFlags flags);
+  void addFromPlugin(MOBase::IPluginGame const* game, SetFlags flags);
 
   /**
    * @brief add a new executable to the list
    * @param executable
    */
-  void setExecutable(const Executable &exe, SetFlags flags);
+  void setExecutable(const Executable& exe, SetFlags flags);
 
   /**
    * returns the executables provided by the game plugin
    **/
-  std::vector<Executable> getPluginExecutables(
-    MOBase::IPluginGame const *game) const;
+  std::vector<Executable> getPluginExecutables(MOBase::IPluginGame const* game) const;
 
   /**
    * called when MO is still using the old custom executables from 2.2.0
@@ -225,4 +227,4 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Executable::Flags)
 
-#endif // EXECUTABLESLIST_H
+#endif  // EXECUTABLESLIST_H

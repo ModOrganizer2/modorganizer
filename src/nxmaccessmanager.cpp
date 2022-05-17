@@ -21,40 +21,44 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "iplugingame.h"
 #include "nexusinterface.h"
 #include "nxmurl.h"
-#include "report.h"
-#include "utility.h"
-#include "selfupdater.h"
 #include "persistentcookiejar.h"
+#include "report.h"
+#include "selfupdater.h"
 #include "settings.h"
-#include <QMessageBox>
-#include <QPushButton>
-#include <QNetworkProxy>
-#include <QNetworkRequest>
-#include <QNetworkCookie>
-#include <QNetworkCookieJar>
+#include "utility.h"
 #include <QCoreApplication>
 #include <QDir>
-#include <QUrlQuery>
-#include <QThread>
-#include <QJsonDocument>
 #include <QJsonArray>
+#include <QJsonDocument>
+#include <QMessageBox>
+#include <QNetworkCookie>
+#include <QNetworkCookieJar>
+#include <QNetworkProxy>
+#include <QNetworkRequest>
+#include <QPushButton>
+#include <QThread>
+#include <QUrlQuery>
 
 using namespace MOBase;
 using namespace std::chrono_literals;
 
 const QString NexusBaseUrl("https://api.nexusmods.com/v1");
 const QString NexusSSO("wss://sso.nexusmods.com");
-const QString NexusSSOPage("https://www.nexusmods.com/sso?id=%1&application=modorganizer2");
-
+const QString
+    NexusSSOPage("https://www.nexusmods.com/sso?id=%1&application=modorganizer2");
 
 ValidationProgressDialog::ValidationProgressDialog(Settings* s, NexusKeyValidator& v)
-  : m_settings(s), m_validator(v), m_updateTimer(nullptr), m_first(true)
+    : m_settings(s), m_validator(v), m_updateTimer(nullptr), m_first(true)
 {
   ui.reset(new Ui::ValidationProgressDialog);
   ui->setupUi(this);
 
-  connect(ui->hide, &QPushButton::clicked, [&]{ onHide(); });
-  connect(ui->cancel, &QPushButton::clicked, [&]{ onCancel(); });
+  connect(ui->hide, &QPushButton::clicked, [&] {
+    onHide();
+  });
+  connect(ui->cancel, &QPushButton::clicked, [&] {
+    onCancel();
+  });
 }
 
 void ValidationProgressDialog::setParentWidget(QWidget* w)
@@ -75,7 +79,9 @@ void ValidationProgressDialog::start()
 {
   if (!m_updateTimer) {
     m_updateTimer = new QTimer(this);
-    connect(m_updateTimer, &QTimer::timeout, [&]{ onTimer(); });
+    connect(m_updateTimer, &QTimer::timeout, [&] {
+      onTimer();
+    });
     m_updateTimer->setInterval(100ms);
   }
 
@@ -138,7 +144,7 @@ void ValidationProgressDialog::updateProgress()
     ui->progress->setRange(0, 0);
   }
 
-  if (const auto* a=m_validator.lastAttempt()) {
+  if (const auto* a = m_validator.lastAttempt()) {
     ui->label->setText(a->message() + ". " + tr("Trying again..."));
   } else if (current) {
     ui->label->setText(tr("Connecting to Nexus..."));
@@ -147,76 +153,73 @@ void ValidationProgressDialog::updateProgress()
   }
 }
 
-
-NexusSSOLogin::NexusSSOLogin()
-  : m_keyReceived(false), m_active(false)
+NexusSSOLogin::NexusSSOLogin() : m_keyReceived(false), m_active(false)
 {
   m_timeout.setInterval(10s);
   m_timeout.setSingleShot(true);
 
-  QObject::connect(
-    &m_socket, &QWebSocket::connected,
-    [&]{ onConnected(); });
+  QObject::connect(&m_socket, &QWebSocket::connected, [&] {
+    onConnected();
+  });
 
-  QObject::connect(
-    &m_socket, qOverload<QAbstractSocket::SocketError>(&QWebSocket::error),
-    [&](auto&& e){ onError(e); });
+  QObject::connect(&m_socket,
+                   qOverload<QAbstractSocket::SocketError>(&QWebSocket::error),
+                   [&](auto&& e) {
+                     onError(e);
+                   });
 
-  QObject::connect(
-    &m_socket, &QWebSocket::sslErrors,
-    [&](auto&& errors){ onSslErrors(errors); });
+  QObject::connect(&m_socket, &QWebSocket::sslErrors, [&](auto&& errors) {
+    onSslErrors(errors);
+  });
 
-  QObject::connect(
-    &m_socket, &QWebSocket::textMessageReceived,
-    [&](auto&& s){ onMessage(s); });
+  QObject::connect(&m_socket, &QWebSocket::textMessageReceived, [&](auto&& s) {
+    onMessage(s);
+  });
 
-  QObject::connect(
-    &m_socket, &QWebSocket::disconnected,
-    [&]{ onDisconnected(); });
+  QObject::connect(&m_socket, &QWebSocket::disconnected, [&] {
+    onDisconnected();
+  });
 
-  QObject::connect(&m_timeout, &QTimer::timeout, [&]{ onTimeout(); });
+  QObject::connect(&m_timeout, &QTimer::timeout, [&] {
+    onTimeout();
+  });
 }
 
 QString NexusSSOLogin::stateToString(States s, const QString& e)
 {
-  switch (s)
-  {
-    case ConnectingToSSO:
-      return QObject::tr("Connecting to Nexus...");
+  switch (s) {
+  case ConnectingToSSO:
+    return QObject::tr("Connecting to Nexus...");
 
-    case WaitingForToken:
-      return QObject::tr("Waiting for Nexus...");
+  case WaitingForToken:
+    return QObject::tr("Waiting for Nexus...");
 
-    case WaitingForBrowser:
-      return
-        QObject::tr("Opened Nexus in browser.") + "\n" +
-        QObject::tr("Switch to your browser and accept the request.");
+  case WaitingForBrowser:
+    return QObject::tr("Opened Nexus in browser.") + "\n" +
+           QObject::tr("Switch to your browser and accept the request.");
 
-    case Finished:
-      return QObject::tr("Finished.");
+  case Finished:
+    return QObject::tr("Finished.");
 
-    case Timeout:
-      return
-        QObject::tr("No answer from Nexus.") + "\n" +
-        QObject::tr("A firewall might be blocking Mod Organizer.");
+  case Timeout:
+    return QObject::tr("No answer from Nexus.") + "\n" +
+           QObject::tr("A firewall might be blocking Mod Organizer.");
 
-    case ClosedByRemote:
-      return
-        QObject::tr("Nexus closed the connection.") + "\n" +
-        QObject::tr("A firewall might be blocking Mod Organizer.");
+  case ClosedByRemote:
+    return QObject::tr("Nexus closed the connection.") + "\n" +
+           QObject::tr("A firewall might be blocking Mod Organizer.");
 
-    case Cancelled:
-      return QObject::tr("Cancelled.");
+  case Cancelled:
+    return QObject::tr("Cancelled.");
 
-    case Error:  // fall-through
-    default:
-    {
-      if (e.isEmpty()) {
-        return QString("%1").arg(s);
-      } else {
-        return e;
-      }
+  case Error:  // fall-through
+  default: {
+    if (e.isEmpty()) {
+      return QString("%1").arg(s);
+    } else {
+      return e;
     }
+  }
   }
 }
 
@@ -272,7 +275,7 @@ void NexusSSOLogin::onConnected()
 
   boost::uuids::random_generator generator;
   boost::uuids::uuid sessionId = generator();
-  m_guid = boost::uuids::to_string(sessionId).c_str();
+  m_guid                       = boost::uuids::to_string(sessionId).c_str();
 
   QJsonObject data;
   data.insert(QString("id"), QJsonValue(m_guid));
@@ -285,13 +288,13 @@ void NexusSSOLogin::onConnected()
 void NexusSSOLogin::onMessage(const QString& s)
 {
   const QJsonDocument doc = QJsonDocument::fromJson(s.toUtf8());
-  const QVariantMap root = doc.object().toVariantMap();
+  const QVariantMap root  = doc.object().toVariantMap();
 
   if (!root["success"].toBool()) {
     close();
 
     setState(Error, QString("There was a problem with SSO initialization: %1")
-      .arg(root["error"].toString()));
+                        .arg(root["error"].toString()));
 
     return;
   }
@@ -355,14 +358,15 @@ void NexusSSOLogin::onTimeout()
   setState(Timeout);
 }
 
-
 ValidationAttempt::ValidationAttempt(std::chrono::seconds timeout)
-  : m_reply(nullptr), m_result(None)
+    : m_reply(nullptr), m_result(None)
 {
   m_timeout.setSingleShot(true);
   m_timeout.setInterval(timeout);
 
-  QObject::connect(&m_timeout, &QTimer::timeout, [&]{ onTimeout(); });
+  QObject::connect(&m_timeout, &QTimer::timeout, [&] {
+    onTimeout();
+  });
 }
 
 void ValidationAttempt::start(NXMAccessManager& m, const QString& key)
@@ -374,19 +378,19 @@ void ValidationAttempt::start(NXMAccessManager& m, const QString& key)
   m_elapsed.start();
   m_timeout.start();
 
-  log::debug(
-    "nexus: attempt started with timeout of {} seconds", timeout().count());
+  log::debug("nexus: attempt started with timeout of {} seconds", timeout().count());
 }
 
-bool ValidationAttempt::sendRequest(
-  NXMAccessManager& m, const QString& key)
+bool ValidationAttempt::sendRequest(NXMAccessManager& m, const QString& key)
 {
   const QString requestUrl(NexusBaseUrl + "/users/validate");
   QNetworkRequest request(requestUrl);
 
   request.setRawHeader("APIKEY", key.toUtf8());
-  request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader, m.userAgent().toUtf8());
-  request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
+  request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader,
+                    m.userAgent().toUtf8());
+  request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader,
+                    "application/json");
   request.setRawHeader("Protocol-Version", "1.0.0");
   request.setRawHeader("Application-Name", "MO2");
   request.setRawHeader("Application-Version", m.MOVersion().toUtf8());
@@ -398,13 +402,13 @@ bool ValidationAttempt::sendRequest(
     return false;
   }
 
-  QObject::connect(
-    m_reply, &QNetworkReply::finished,
-    [&]{ onFinished(); });
+  QObject::connect(m_reply, &QNetworkReply::finished, [&] {
+    onFinished();
+  });
 
-  QObject::connect(
-    m_reply, &QNetworkReply::sslErrors,
-    [&](auto&& errors){ onSslErrors(errors); });
+  QObject::connect(m_reply, &QNetworkReply::sslErrors, [&](auto&& errors) {
+    onSslErrors(errors);
+  });
 
   return true;
 }
@@ -443,7 +447,7 @@ const QString& ValidationAttempt::message() const
 std::chrono::seconds ValidationAttempt::timeout() const
 {
   return std::chrono::duration_cast<std::chrono::seconds>(
-    m_timeout.intervalAsDuration());
+      m_timeout.intervalAsDuration());
 }
 
 QElapsedTimer ValidationAttempt::elapsed() const
@@ -466,8 +470,8 @@ void ValidationAttempt::onFinished()
     return;
   }
 
-  const auto code = m_reply->attribute(
-    QNetworkRequest::HttpStatusCodeAttribute).toInt();
+  const auto code =
+      m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
   if (code == 0) {
     // request wasn't even sent
@@ -476,8 +480,8 @@ void ValidationAttempt::onFinished()
     return;
   }
 
-  const auto doc = QJsonDocument::fromJson(m_reply->readAll());
-  const auto headers = m_reply->rawHeaderPairs();
+  const auto doc       = QJsonDocument::fromJson(m_reply->readAll());
+  const auto headers   = m_reply->rawHeaderPairs();
   const auto httpError = m_reply->errorString();
 
   const QJsonObject data = doc.object();
@@ -516,8 +520,8 @@ void ValidationAttempt::onFinished()
     return;
   }
 
-  const int id = data.value("user_id").toInt();
-  const QString key = data.value("key").toString();
+  const int id       = data.value("user_id").toInt();
+  const QString key  = data.value("key").toString();
   const QString name = data.value("name").toString();
   const bool premium = data.value("is_premium").toBool();
 
@@ -526,12 +530,13 @@ void ValidationAttempt::onFinished()
     return;
   }
 
-  const auto user = APIUserAccount()
-    .apiKey(key)
-    .id(QString("%1").arg(id))
-    .name(name)
-    .type(premium ? APIUserAccountTypes::Premium : APIUserAccountTypes::Regular)
-    .limits(NexusInterface::parseLimits(headers));
+  const auto user =
+      APIUserAccount()
+          .apiKey(key)
+          .id(QString("%1").arg(id))
+          .name(name)
+          .type(premium ? APIUserAccountTypes::Premium : APIUserAccountTypes::Regular)
+          .limits(NexusInterface::parseLimits(headers));
 
   setSuccess(user);
 }
@@ -561,7 +566,7 @@ void ValidationAttempt::setFailure(Result r, const QString& error)
 
   cleanup();
 
-  m_result = r;
+  m_result  = r;
   m_message = error;
 
   if (failure) {
@@ -574,7 +579,7 @@ void ValidationAttempt::setSuccess(const APIUserAccount& user)
   log::debug("nexus connection successful");
   cleanup();
 
-  m_result = Success;
+  m_result  = Success;
   m_message = "";
 
   if (success) {
@@ -593,11 +598,9 @@ void ValidationAttempt::cleanup()
   }
 }
 
-
 NexusKeyValidator::NexusKeyValidator(Settings* s, NXMAccessManager& am)
-  : m_settings(s), m_manager(am)
-{
-}
+    : m_settings(s), m_manager(am)
+{}
 
 NexusKeyValidator::~NexusKeyValidator()
 {
@@ -624,26 +627,23 @@ void NexusKeyValidator::start(const QString& key, Behaviour b)
 
   const auto timeouts = getTimeouts();
 
-  switch (b)
-  {
-    case OneShot:
-    {
-      createAttempts({timeouts[0]});
-      break;
-    }
+  switch (b) {
+  case OneShot: {
+    createAttempts({timeouts[0]});
+    break;
+  }
 
-    case Retry:
-    {
-      createAttempts(timeouts);
-      break;
-    }
+  case Retry: {
+    createAttempts(timeouts);
+    break;
+  }
   }
 
   nextTry();
 }
 
 void NexusKeyValidator::createAttempts(
-  const std::vector<std::chrono::seconds>& timeouts)
+    const std::vector<std::chrono::seconds>& timeouts)
 {
   m_attempts.clear();
 
@@ -702,8 +702,12 @@ bool NexusKeyValidator::nextTry()
 {
   for (auto&& a : m_attempts) {
     if (!a->done()) {
-      a->success = [&](auto&& user){ onAttemptSuccess(*a, user); };
-      a->failure = [&]{ onAttemptFailure(*a); };
+      a->success = [&](auto&& user) {
+        onAttemptSuccess(*a, user);
+      };
+      a->failure = [&] {
+        onAttemptFailure(*a);
+      };
 
       a->start(m_manager, m_key);
       return true;
@@ -714,8 +718,8 @@ bool NexusKeyValidator::nextTry()
   return false;
 }
 
-void NexusKeyValidator::onAttemptSuccess(
-  const ValidationAttempt& a, const APIUserAccount& u)
+void NexusKeyValidator::onAttemptSuccess(const ValidationAttempt& a,
+                                         const APIUserAccount& u)
 {
   if (attemptFinished) {
     attemptFinished(a);
@@ -730,48 +734,40 @@ void NexusKeyValidator::onAttemptFailure(const ValidationAttempt& a)
     attemptFinished(a);
   }
 
-  switch (a.result())
-  {
-    case ValidationAttempt::SoftError:
-    {
-      if (!nextTry()) {
-        setFinished(a.result(), a.message(), {});
-      }
-
-      break;
-    }
-
-    case ValidationAttempt::HardError:
-    {
-      cancel();
+  switch (a.result()) {
+  case ValidationAttempt::SoftError: {
+    if (!nextTry()) {
       setFinished(a.result(), a.message(), {});
-      break;
     }
 
-    case ValidationAttempt::Cancelled:
-    {
-      setFinished(ValidationAttempt::Cancelled, QObject::tr("Cancelled"), {});
-      break;
-    }
+    break;
+  }
+
+  case ValidationAttempt::HardError: {
+    cancel();
+    setFinished(a.result(), a.message(), {});
+    break;
+  }
+
+  case ValidationAttempt::Cancelled: {
+    setFinished(ValidationAttempt::Cancelled, QObject::tr("Cancelled"), {});
+    break;
+  }
   }
 }
 
-void NexusKeyValidator::setFinished(
-  ValidationAttempt::Result r, const QString& message,
-  std::optional<APIUserAccount> user)
+void NexusKeyValidator::setFinished(ValidationAttempt::Result r, const QString& message,
+                                    std::optional<APIUserAccount> user)
 {
   if (finished) {
     finished(r, message, user);
   }
 }
 
-
-NXMAccessManager::NXMAccessManager(QObject *parent, Settings* s, const QString &moVersion)
-  : QNetworkAccessManager(parent)
-  , m_Settings(s)
-  , m_MOVersion(moVersion)
-  , m_validator(s, *this)
-  , m_validationState(NotChecked)
+NXMAccessManager::NXMAccessManager(QObject* parent, Settings* s,
+                                   const QString& moVersion)
+    : QNetworkAccessManager(parent), m_Settings(s), m_MOVersion(moVersion),
+      m_validator(s, *this), m_validationState(NotChecked)
 {
   m_validator.finished = [&](auto&& r, auto&& m, auto&& u) {
     onValidatorFinished(r, m, u);
@@ -783,7 +779,7 @@ NXMAccessManager::NXMAccessManager(QObject *parent, Settings* s, const QString &
 
   if (m_Settings) {
     setCookieJar(new PersistentCookieJar(QDir::fromNativeSeparators(
-      m_Settings->paths().cache() + "/nexus_cookies.dat")));
+        m_Settings->paths().cache() + "/nexus_cookies.dat")));
   }
 }
 
@@ -799,9 +795,9 @@ void NXMAccessManager::setTopLevelWidget(QWidget* w)
   }
 }
 
-QNetworkReply *NXMAccessManager::createRequest(
-    QNetworkAccessManager::Operation operation, const QNetworkRequest &request,
-    QIODevice *device)
+QNetworkReply*
+NXMAccessManager::createRequest(QNetworkAccessManager::Operation operation,
+                                const QNetworkRequest& request, QIODevice* device)
 {
   if (request.url().scheme() != "nxm") {
     return QNetworkAccessManager::createRequest(operation, request, device);
@@ -813,7 +809,8 @@ QNetworkReply *NXMAccessManager::createRequest(
     return QNetworkAccessManager::createRequest(QNetworkAccessManager::GetOperation,
                                                 QNetworkRequest(QUrl()));
   } else if (operation == PostOperation) {
-    return QNetworkAccessManager::createRequest(operation, request, device);;
+    return QNetworkAccessManager::createRequest(operation, request, device);
+    ;
   } else {
     return QNetworkAccessManager::createRequest(operation, request, device);
   }
@@ -822,16 +819,15 @@ QNetworkReply *NXMAccessManager::createRequest(
 void NXMAccessManager::showCookies() const
 {
   QUrl url(NexusBaseUrl + "/");
-  for (const QNetworkCookie &cookie : cookieJar()->cookiesForUrl(url)) {
-    log::debug("{} - {} (expires: {})",
-           cookie.name().constData(), cookie.value().constData(),
-           cookie.expirationDate().toString());
+  for (const QNetworkCookie& cookie : cookieJar()->cookiesForUrl(url)) {
+    log::debug("{} - {} (expires: {})", cookie.name().constData(),
+               cookie.value().constData(), cookie.expirationDate().toString());
   }
 }
 
 void NXMAccessManager::clearCookies()
 {
-  PersistentCookieJar *jar = qobject_cast<PersistentCookieJar*>(cookieJar());
+  PersistentCookieJar* jar = qobject_cast<PersistentCookieJar*>(cookieJar());
   if (jar != nullptr) {
     jar->clear();
   } else {
@@ -851,9 +847,9 @@ void NXMAccessManager::startValidationCheck(const QString& key)
   }
 }
 
-void NXMAccessManager::onValidatorFinished(
-  ValidationAttempt::Result r, const QString& message,
-  std::optional<APIUserAccount> user)
+void NXMAccessManager::onValidatorFinished(ValidationAttempt::Result r,
+                                           const QString& message,
+                                           std::optional<APIUserAccount> user)
 {
   stopProgress();
 
@@ -874,23 +870,20 @@ void NXMAccessManager::onValidatorFinished(
 void NXMAccessManager::onValidatorAttemptFinished(const ValidationAttempt& a)
 {
   if (!m_ProgressDialog) {
-    switch (a.result())
-    {
-      case ValidationAttempt::SoftError:
-      case ValidationAttempt::HardError:
-      {
-        startProgress();
-        break;
-      }
+    switch (a.result()) {
+    case ValidationAttempt::SoftError:
+    case ValidationAttempt::HardError: {
+      startProgress();
+      break;
+    }
 
-      case ValidationAttempt::None:
-      case ValidationAttempt::Success:
-      case ValidationAttempt::Cancelled:
-      default:
-      {
-        // don't show the dialog
-        break;
-      }
+    case ValidationAttempt::None:
+    case ValidationAttempt::Success:
+    case ValidationAttempt::Cancelled:
+    default: {
+      // don't show the dialog
+      break;
+    }
     }
   }
 }
@@ -923,7 +916,7 @@ bool NXMAccessManager::validateWaiting() const
   return m_validator.isActive();
 }
 
-void NXMAccessManager::apiCheck(const QString &apiKey, bool force)
+void NXMAccessManager::apiCheck(const QString& apiKey, bool force)
 {
   if (m_validator.isActive()) {
     return;
@@ -951,21 +944,24 @@ const QString& NXMAccessManager::MOVersion() const
   return m_MOVersion;
 }
 
-QString NXMAccessManager::userAgent(const QString &subModule) const
+QString NXMAccessManager::userAgent(const QString& subModule) const
 {
   QStringList comments;
   QString os;
   if (QSysInfo::productType() == "windows")
-    comments << ((QSysInfo::kernelType() == "winnt") ? "Windows_NT " : "Windows ") + QSysInfo::kernelVersion();
+    comments << ((QSysInfo::kernelType() == "winnt") ? "Windows_NT " : "Windows ") +
+                    QSysInfo::kernelVersion();
   else
     comments << QSysInfo::kernelType().left(1).toUpper() + QSysInfo::kernelType().mid(1)
-    << QSysInfo::productType().left(1).toUpper() + QSysInfo::kernelType().mid(1) + " " + QSysInfo::productVersion();
+             << QSysInfo::productType().left(1).toUpper() +
+                    QSysInfo::kernelType().mid(1) + " " + QSysInfo::productVersion();
   if (!subModule.isEmpty()) {
     comments << "module: " + subModule;
   }
   comments << ((QSysInfo::buildCpuArchitecture() == "x86_64") ? "x64" : "x86");
 
-  return  QString("Mod Organizer/%1 (%2) Qt/%3").arg(m_MOVersion, comments.join("; "), qVersion());
+  return QString("Mod Organizer/%1 (%2) Qt/%3")
+      .arg(m_MOVersion, comments.join("; "), qVersion());
 }
 
 void NXMAccessManager::clearApiKey()

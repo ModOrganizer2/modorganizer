@@ -20,19 +20,19 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DOWNLOADLISTWIDGET_H
 #define DOWNLOADLISTWIDGET_H
 
-#include "downloadmanager.h"
 #include "downloadlist.h"
-#include <QWidget>
+#include "downloadmanager.h"
+#include <QHeaderView>
 #include <QItemDelegate>
 #include <QLabel>
 #include <QProgressBar>
-#include <QTreeView>
-#include <QHeaderView>
 #include <QStyledItemDelegate>
+#include <QTreeView>
+#include <QWidget>
 
-
-namespace Ui {
-  class DownloadListView;
+namespace Ui
+{
+class DownloadListView;
 }
 
 class DownloadListView;
@@ -44,8 +44,8 @@ class DownloadProgressDelegate : public QStyledItemDelegate
 public:
   DownloadProgressDelegate(DownloadManager* manager, DownloadListView* list);
 
-  void paint(QPainter *painter, const QStyleOptionViewItem &option,
-    const QModelIndex &index) const override;
+  void paint(QPainter* painter, const QStyleOptionViewItem& option,
+             const QModelIndex& index) const override;
 
 private:
   DownloadManager* m_Manager;
@@ -57,11 +57,13 @@ class DownloadListHeader : public QHeaderView
   Q_OBJECT
 
 public:
-  explicit DownloadListHeader(Qt::Orientation orientation, QWidget *parent = nullptr) : QHeaderView(orientation, parent) {}
+  explicit DownloadListHeader(Qt::Orientation orientation, QWidget* parent = nullptr)
+      : QHeaderView(orientation, parent)
+  {}
   void customResizeSections();
 
 private:
-  void mouseReleaseEvent(QMouseEvent *event) override;
+  void mouseReleaseEvent(QMouseEvent* event) override;
 };
 
 class DownloadListView : public QTreeView
@@ -69,11 +71,11 @@ class DownloadListView : public QTreeView
   Q_OBJECT
 
 public:
-  explicit DownloadListView(QWidget *parent = 0);
+  explicit DownloadListView(QWidget* parent = 0);
   ~DownloadListView();
 
-  void setManager(DownloadManager *manager);
-  void setSourceModel(DownloadList *sourceModel);
+  void setManager(DownloadManager* manager);
+  void setSourceModel(DownloadList* sourceModel);
 
 signals:
   void installDownload(int index);
@@ -119,10 +121,10 @@ private slots:
   void issueQueryInfoMd5(int index);
 
 private:
-  DownloadManager *m_Manager;
-  DownloadList *m_SourceModel = 0;
+  DownloadManager* m_Manager;
+  DownloadList* m_SourceModel = 0;
 
-  void resizeEvent(QResizeEvent *event);
+  void resizeEvent(QResizeEvent* event);
 };
 
-#endif // DOWNLOADLISTWIDGET_H
+#endif  // DOWNLOADLISTWIDGET_H

@@ -1,15 +1,17 @@
 #ifndef MODORGANIZER_LOOTDIALOG_H
 #define MODORGANIZER_LOOTDIALOG_H
 
-#include <lootcli/lootcli.h>
-#include <log.h>
 #include <expanderwidget.h>
+#include <log.h>
+#include <lootcli/lootcli.h>
 
-namespace Ui { class LootDialog; }
+namespace Ui
+{
+class LootDialog;
+}
 
 class OrganizerCore;
 class Loot;
-
 
 class MarkdownDocument : public QObject
 {
@@ -17,32 +19,31 @@ class MarkdownDocument : public QObject
   Q_PROPERTY(QString text MEMBER m_text NOTIFY textChanged FINAL);
 
 public:
-  explicit MarkdownDocument(QObject* parent=nullptr);
+  explicit MarkdownDocument(QObject* parent = nullptr);
   void setText(const QString& text);
 
 signals:
-  void textChanged(const QString &text);
+  void textChanged(const QString& text);
 
 private:
   QString m_text;
 };
-
 
 class MarkdownPage : public QWebEnginePage
 {
   Q_OBJECT;
 
 public:
-  explicit MarkdownPage(QObject* parent=nullptr);
+  explicit MarkdownPage(QObject* parent = nullptr);
 
 protected:
-  bool acceptNavigationRequest(const QUrl &url, NavigationType, bool) override;
+  bool acceptNavigationRequest(const QUrl& url, NavigationType, bool) override;
 };
-
 
 class LootDialog : public QDialog
 {
   Q_OBJECT;
+
 public:
   LootDialog(QWidget* parent, OrganizerCore& core, Loot& loot);
   ~LootDialog();
@@ -76,4 +77,4 @@ private:
   void showReport();
 };
 
-#endif // MODORGANIZER_LOOTDIALOG_H
+#endif  // MODORGANIZER_LOOTDIALOG_H

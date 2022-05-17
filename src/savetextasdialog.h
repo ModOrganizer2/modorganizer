@@ -3,19 +3,20 @@
 
 #include <QDialog>
 
-namespace Ui {
+namespace Ui
+{
 class SaveTextAsDialog;
 }
 
 class SaveTextAsDialog : public QDialog
 {
   Q_OBJECT
-  
+
 public:
-  explicit SaveTextAsDialog(QWidget *parent = 0);
+  explicit SaveTextAsDialog(QWidget* parent = 0);
   ~SaveTextAsDialog();
 
-  void setText(const QString &text);
+  void setText(const QString& text);
 
 private slots:
   void on_closeBtn_clicked();
@@ -25,7 +26,7 @@ private slots:
   void on_saveAsBtn_clicked();
 
 private:
-  Ui::SaveTextAsDialog *ui;
+  Ui::SaveTextAsDialog* ui;
 };
 
-#endif // SAVETEXTASDIALOG_H
+#endif  // SAVETEXTASDIALOG_H

@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #define ABOUTDIALOG_H
 
 #include <QDialog>
@@ -28,8 +27,9 @@ class QListWidgetItem;
 
 #include <map>
 
-namespace Ui {
-  class AboutDialog;
+namespace Ui
+{
+class AboutDialog;
 }
 
 class AboutDialog : public QDialog
@@ -37,12 +37,12 @@ class AboutDialog : public QDialog
   Q_OBJECT
 
 public:
-  explicit AboutDialog(const QString &version, QWidget *parent = 0);
+  explicit AboutDialog(const QString& version, QWidget* parent = 0);
   ~AboutDialog();
 
 private:
-
-  enum Licenses {
+  enum Licenses
+  {
     LICENSE_NONE,
     LICENSE_LGPL3,
     LICENSE_LGPL21,
@@ -65,19 +65,17 @@ private:
   };
 
 private:
-
-  void addLicense(const QString &name, Licenses license);
+  void addLicense(const QString& name, Licenses license);
 
 private slots:
-  void on_creditsList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
-  void on_sourceText_linkActivated(const QString &link);
+  void on_creditsList_currentItemChanged(QListWidgetItem* current,
+                                         QListWidgetItem* previous);
+  void on_sourceText_linkActivated(const QString& link);
 
 private:
-
-  Ui::AboutDialog *ui;
+  Ui::AboutDialog* ui;
 
   std::map<int, QString> m_LicenseFiles;
-
 };
 
-#endif // ABOUTDIALOG_H
+#endif  // ABOUTDIALOG_H

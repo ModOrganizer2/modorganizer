@@ -1,14 +1,14 @@
 #include "createinstancedialogpages.h"
-#include "ui_createinstancedialog.h"
+#include "filesystemutilities.h"
 #include "instancemanager.h"
-#include "settings.h"
 #include "plugincontainer.h"
+#include "settings.h"
 #include "settingsdialognexus.h"
 #include "shared/appconfig.h"
+#include "ui_createinstancedialog.h"
 #include <iplugingame.h>
 #include <report.h>
 #include <utility.h>
-#include "filesystemutilities.h"
 
 namespace cid
 {
@@ -20,31 +20,27 @@ using MOBase::TaskDialog;
 //
 QString makeDefaultPath(const std::wstring& dir)
 {
-  return QDir::toNativeSeparators(PathSettings::makeDefaultPath(
-    QString::fromStdWString(dir)));
+  return QDir::toNativeSeparators(
+      PathSettings::makeDefaultPath(QString::fromStdWString(dir)));
 }
 
 QString toLocalizedString(CreateInstanceDialog::Types t)
 {
-  switch (t)
-  {
-    case CreateInstanceDialog::Global:
-      return QObject::tr("Global");
+  switch (t) {
+  case CreateInstanceDialog::Global:
+    return QObject::tr("Global");
 
-    case CreateInstanceDialog::Portable:
-      return QObject::tr("Portable");
+  case CreateInstanceDialog::Portable:
+    return QObject::tr("Portable");
 
-    default:
-      return QObject::tr("Instance type: %1").arg(QObject::tr("?"));
+  default:
+    return QObject::tr("Instance type: %1").arg(QObject::tr("?"));
   }
 }
 
-
-
 PlaceholderLabel::PlaceholderLabel(QLabel* label)
-  : m_label(label), m_original(label->text())
-{
-}
+    : m_label(label), m_original(label->text())
+{}
 
 void PlaceholderLabel::setText(const QString& arg)
 {
@@ -58,13 +54,10 @@ void PlaceholderLabel::setVisible(bool b)
   m_label->setVisible(b);
 }
 
-
-
-Page::Page(CreateInstanceDialog& dlg) :
-  ui(dlg.getUI()), m_dlg(dlg), m_pc(dlg.pluginContainer()),
-  m_skip(false), m_firstActivation(true)
-{
-}
+Page::Page(CreateInstanceDialog& dlg)
+    : ui(dlg.getUI()), m_dlg(dlg), m_pc(dlg.pluginContainer()), m_skip(false),
+      m_firstActivation(true)
+{}
 
 bool Page::ready() const
 {
@@ -114,7 +107,6 @@ bool Page::action(CreateInstanceDialog::Actions a)
   return false;
 }
 
-
 CreateInstanceDialog::Types Page::selectedInstanceType() const
 {
   // no-op
@@ -151,9 +143,8 @@ CreateInstanceDialog::Paths Page::selectedPaths() const
   return {};
 }
 
-
 IntroPage::IntroPage(CreateInstanceDialog& dlg)
-  : Page(dlg), m_skip(GlobalSettings::hideCreateInstanceIntro())
+    : Page(dlg), m_skip(GlobalSettings::hideCreateInstanceIntro())
 {
   QObject::connect(ui->hideIntro, &QCheckBox::toggled, [&] {
     GlobalSettings::setHideCreateInstanceIntro(ui->hideIntro->isChecked());
@@ -165,18 +156,15 @@ bool IntroPage::doSkip() const
   return m_skip;
 }
 
-
 TypePage::TypePage(CreateInstanceDialog& dlg)
-  : Page(dlg), m_type(CreateInstanceDialog::NoType)
+    : Page(dlg), m_type(CreateInstanceDialog::NoType)
 {
   // replace placeholders with actual paths
-  ui->createGlobal->setDescription(
-    ui->createGlobal->description()
-      .arg(InstanceManager::singleton().globalInstancesRootPath()));
+  ui->createGlobal->setDescription(ui->createGlobal->description().arg(
+      InstanceManager::singleton().globalInstancesRootPath()));
 
-  ui->createPortable->setDescription(
-    ui->createPortable->description()
-      .arg(InstanceManager::singleton().portablePath()));
+  ui->createPortable->setDescription(ui->createPortable->description().arg(
+      InstanceManager::singleton().portablePath()));
 
   // disable portable button if it already exists
   if (InstanceManager::singleton().portableInstanceExists()) {
@@ -187,11 +175,13 @@ TypePage::TypePage(CreateInstanceDialog& dlg)
     ui->portableExistsLabel->setVisible(false);
   }
 
-  QObject::connect(
-    ui->createGlobal, &QAbstractButton::clicked, [&]{ global(); });
+  QObject::connect(ui->createGlobal, &QAbstractButton::clicked, [&] {
+    global();
+  });
 
-  QObject::connect(
-    ui->createPortable, &QAbstractButton::clicked, [&]{ portable(); });
+  QObject::connect(ui->createPortable, &QAbstractButton::clicked, [&] {
+    portable();
+  });
 }
 
 bool TypePage::ready() const
@@ -231,26 +221,26 @@ void TypePage::doActivated(bool firstTime)
   }
 }
 
-
-GamePage::Game::Game(IPluginGame* g)
-  : game(g), installed(g->isInstalled())
+GamePage::Game::Game(IPluginGame* g) : game(g), installed(g->isInstalled())
 {
   if (installed) {
     dir = game->gameDirectory().path();
   }
 }
 
-
-GamePage::GamePage(CreateInstanceDialog& dlg)
-  : Page(dlg), m_selection(nullptr)
+GamePage::GamePage(CreateInstanceDialog& dlg) : Page(dlg), m_selection(nullptr)
 {
   createGames();
   fillList();
 
   m_filter.setEdit(ui->gamesFilter);
 
-  QObject::connect(&m_filter, &FilterWidget::changed, [&]{ fillList(); });
-  QObject::connect(ui->showAllGames, &QCheckBox::clicked, [&]{ fillList(); });
+  QObject::connect(&m_filter, &FilterWidget::changed, [&] {
+    fillList();
+  });
+  QObject::connect(ui->showAllGames, &QCheckBox::clicked, [&] {
+    fillList();
+  });
 }
 
 bool GamePage::ready() const
@@ -293,14 +283,14 @@ void GamePage::select(IPluginGame* game, const QString& dir)
   Game* checked = findGame(game);
 
   if (checked) {
-    if (!checked->installed || (detectMicrosoftStore(checked->dir) && !confirmMicrosoftStore(checked->dir, checked->game))) {
+    if (!checked->installed || (detectMicrosoftStore(checked->dir) &&
+                                !confirmMicrosoftStore(checked->dir, checked->game))) {
       if (dir.isEmpty()) {
         // the selected game has no installation directory and none was given,
         // ask the user
 
         const auto path = QFileDialog::getExistingDirectory(
-          &m_dlg, QObject::tr("Find game installation for %1")
-            .arg(game->gameName()));
+            &m_dlg, QObject::tr("Find game installation for %1").arg(game->gameName()));
 
         if (path.isEmpty()) {
           // cancelled
@@ -315,19 +305,18 @@ void GamePage::select(IPluginGame* game, const QString& dir)
 
           if (checked) {
             // plugin was found, remember this path
-            checked->dir = path;
+            checked->dir       = path;
             checked->installed = true;
           }
         }
       } else {
         // the selected game didn't detect anything, but a directory was given,
         // so use that
-       checked->dir = dir;
-       checked->installed = true;
+        checked->dir       = dir;
+        checked->installed = true;
       }
     }
   }
-
 
   // select this plugin, if any
   m_selection = checked;
@@ -348,8 +337,8 @@ void GamePage::select(IPluginGame* game, const QString& dir)
 
 void GamePage::selectCustom()
 {
-  const auto path = QFileDialog::getExistingDirectory(
-    &m_dlg, QObject::tr("Find game installation"));
+  const auto path =
+      QFileDialog::getExistingDirectory(&m_dlg, QObject::tr("Find game installation"));
 
   if (path.isEmpty()) {
     // reselect the previous button
@@ -368,7 +357,7 @@ void GamePage::selectCustom()
   for (auto& g : m_games) {
     if (g->game->looksValid(path)) {
       // found one
-      g->dir = path;
+      g->dir       = path;
       g->installed = true;
 
       // select it
@@ -399,11 +388,11 @@ void GamePage::warnUnrecognized(const QString& path)
   QMessageBox dlg(&m_dlg);
 
   dlg.setWindowTitle(QObject::tr("Unrecognized game"));
-  dlg.setText(QObject::tr(
-    "The folder %1 does not seem to contain a game Mod Organizer can "
-    "manage.").arg(path));
-  dlg.setInformativeText(
-    QObject::tr("See details for the list of supported games."));
+  dlg.setText(
+      QObject::tr("The folder %1 does not seem to contain a game Mod Organizer can "
+                  "manage.")
+          .arg(path));
+  dlg.setInformativeText(QObject::tr("See details for the list of supported games."));
   dlg.setDetailedText(supportedGames);
   dlg.setIcon(QMessageBox::Warning);
   dlg.setStandardButtons(QMessageBox::Ok);
@@ -533,7 +522,7 @@ void GamePage::clearButtons()
 
   // stretch widgets added with addStretch() are not in the parent widget,
   // they have to be deleted from the layout itself
-  while (auto* child=ly->takeAt(0))
+  while (auto* child = ly->takeAt(0))
     delete child;
 
   // add a stretch, buttons will be added before
@@ -552,8 +541,7 @@ QCommandLinkButton* GamePage::createCustomButton()
   auto* b = new QCommandLinkButton;
 
   b->setText(QObject::tr("Browse..."));
-  b->setDescription(
-    QObject::tr("The folder must contain a valid game installation"));
+  b->setDescription(QObject::tr("The folder must contain a valid game installation"));
 
   QObject::connect(b, &QAbstractButton::clicked, [&] {
     selectCustom();
@@ -647,7 +635,7 @@ GamePage::Game* GamePage::checkInstallation(const QString& path, Game* g)
   }
 
   // remember this path
-  g->dir = path;
+  g->dir       = path;
   g->installed = true;
 
   updateButton(g);
@@ -657,102 +645,91 @@ GamePage::Game* GamePage::checkInstallation(const QString& path, Game* g)
 
 bool GamePage::detectMicrosoftStore(const QString& path)
 {
-  return path.contains("/ModifiableWindowsApps/") ||
-         path.contains("/WindowsApps/");
+  return path.contains("/ModifiableWindowsApps/") || path.contains("/WindowsApps/");
 }
 
 bool GamePage::confirmMicrosoftStore(const QString& path, IPluginGame* game)
 {
-  const auto r = TaskDialog(&m_dlg)
-    .title(QObject::tr("Microsoft Store game"))
-    .main(QObject::tr("Microsoft Store game"))
-    .content(QObject::tr(
-      "The folder %1 seems to be a Microsoft Store game install.  Games"
-      " installed through the Microsoft Store are not supported by Mod Organizer"
-      " and will not work properly.")
-      .arg(path))
-    .button({
-      game ? QObject::tr("Use this folder for %1").arg(game->gameName())
-           : QObject::tr("Use this folder"),
-      QObject::tr("I know what I'm doing"),
-      QMessageBox::Ignore})
-    .button({
-      QObject::tr("Cancel"),
-      QMessageBox::Cancel})
-    .exec();
+  const auto r =
+      TaskDialog(&m_dlg)
+          .title(QObject::tr("Microsoft Store game"))
+          .main(QObject::tr("Microsoft Store game"))
+          .content(
+              QObject::tr(
+                  "The folder %1 seems to be a Microsoft Store game install.  Games"
+                  " installed through the Microsoft Store are not supported by Mod "
+                  "Organizer"
+                  " and will not work properly.")
+                  .arg(path))
+          .button({game ? QObject::tr("Use this folder for %1").arg(game->gameName())
+                        : QObject::tr("Use this folder"),
+                   QObject::tr("I know what I'm doing"), QMessageBox::Ignore})
+          .button({QObject::tr("Cancel"), QMessageBox::Cancel})
+          .exec();
 
   return (r == QMessageBox::Ignore);
 }
 
 bool GamePage::confirmUnknown(const QString& path, IPluginGame* game)
 {
-  const auto r = TaskDialog(&m_dlg)
-    .title(QObject::tr("Unrecognized game"))
-    .main(QObject::tr("Unrecognized game"))
-    .content(QObject::tr(
-      "The folder %1 does not seem to contain an installation for "
-      "<span style=\"white-space: nowrap; font-weight: bold;\">%2</span> or "
-      "for any other game Mod Organizer can manage.")
-      .arg(path)
-      .arg(game->gameName()))
-    .button({
-      QObject::tr("Use this folder for %1").arg(game->gameName()),
-      QObject::tr("I know what I'm doing"),
-      QMessageBox::Ignore})
-    .button({
-      QObject::tr("Cancel"),
-      QMessageBox::Cancel})
-    .exec();
+  const auto r =
+      TaskDialog(&m_dlg)
+          .title(QObject::tr("Unrecognized game"))
+          .main(QObject::tr("Unrecognized game"))
+          .content(
+              QObject::tr("The folder %1 does not seem to contain an installation for "
+                          "<span style=\"white-space: nowrap; font-weight: "
+                          "bold;\">%2</span> or "
+                          "for any other game Mod Organizer can manage.")
+                  .arg(path)
+                  .arg(game->gameName()))
+          .button({QObject::tr("Use this folder for %1").arg(game->gameName()),
+                   QObject::tr("I know what I'm doing"), QMessageBox::Ignore})
+          .button({QObject::tr("Cancel"), QMessageBox::Cancel})
+          .exec();
 
   return (r == QMessageBox::Ignore);
 }
 
-IPluginGame* GamePage::confirmOtherGame(
-  const QString& path,
-  IPluginGame* selectedGame, IPluginGame* guessedGame)
+IPluginGame* GamePage::confirmOtherGame(const QString& path, IPluginGame* selectedGame,
+                                        IPluginGame* guessedGame)
 {
-  const auto r = TaskDialog(&m_dlg)
-    .title(QObject::tr("Incorrect game"))
-    .main(QObject::tr("Incorrect game"))
-    .content(QObject::tr(
-      "The folder %1 seems to contain an installation for "
-      "<span style=\"white-space: nowrap; font-weight: bold;\">%2</span>, "
-      "not "
-      "<span style=\"white-space: nowrap; font-weight: bold;\">%3</span>.")
-      .arg(path)
-      .arg(guessedGame->gameName())
-      .arg(selectedGame->gameName()))
-    .button({
-      QObject::tr("Manage %1 instead").arg(guessedGame->gameName()),
-      QMessageBox::Ok})
-    .button({
-      QObject::tr("Use this folder for %1").arg(selectedGame->gameName()),
-      QObject::tr("I know what I'm doing"),
-      QMessageBox::Ignore})
-    .button({
-      QObject::tr("Cancel"),
-      QMessageBox::Cancel})
-    .exec();
+  const auto r =
+      TaskDialog(&m_dlg)
+          .title(QObject::tr("Incorrect game"))
+          .main(QObject::tr("Incorrect game"))
+          .content(
+              QObject::tr(
+                  "The folder %1 seems to contain an installation for "
+                  "<span style=\"white-space: nowrap; font-weight: bold;\">%2</span>, "
+                  "not "
+                  "<span style=\"white-space: nowrap; font-weight: bold;\">%3</span>.")
+                  .arg(path)
+                  .arg(guessedGame->gameName())
+                  .arg(selectedGame->gameName()))
+          .button({QObject::tr("Manage %1 instead").arg(guessedGame->gameName()),
+                   QMessageBox::Ok})
+          .button({QObject::tr("Use this folder for %1").arg(selectedGame->gameName()),
+                   QObject::tr("I know what I'm doing"), QMessageBox::Ignore})
+          .button({QObject::tr("Cancel"), QMessageBox::Cancel})
+          .exec();
 
-  switch (r)
-  {
-    case QMessageBox::Ok:
-      return guessedGame;
+  switch (r) {
+  case QMessageBox::Ok:
+    return guessedGame;
 
-    case QMessageBox::Ignore:
-      return selectedGame;
+  case QMessageBox::Ignore:
+    return selectedGame;
 
-    case QMessageBox::Cancel:
-    default:
-      return nullptr;
+  case QMessageBox::Cancel:
+  default:
+    return nullptr;
   }
 }
 
-
 VariantsPage::VariantsPage(CreateInstanceDialog& dlg)
-  : Page(dlg), m_previousGame(nullptr)
-{
-}
+    : Page(dlg), m_previousGame(nullptr)
+{}
 
 bool VariantsPage::ready() const
 {
@@ -780,7 +757,7 @@ void VariantsPage::doActivated(bool)
   if (m_previousGame != g) {
     // recreate the list, the game has changed
     m_previousGame = g;
-    m_selection = "";
+    m_selection    = "";
     fillList();
   }
 }
@@ -848,17 +825,17 @@ void VariantsPage::fillList()
   }
 }
 
-
-NamePage::NamePage(CreateInstanceDialog& dlg) :
-  Page(dlg), m_modified(false), m_okay(false),
-  m_label(ui->instanceNameLabel), m_exists(ui->instanceNameExists),
-  m_invalid(ui->instanceNameInvalid)
+NamePage::NamePage(CreateInstanceDialog& dlg)
+    : Page(dlg), m_modified(false), m_okay(false), m_label(ui->instanceNameLabel),
+      m_exists(ui->instanceNameExists), m_invalid(ui->instanceNameInvalid)
 {
-  QObject::connect(
-    ui->instanceName, &QLineEdit::textEdited, [&]{ onChanged(); });
+  QObject::connect(ui->instanceName, &QLineEdit::textEdited, [&] {
+    onChanged();
+  });
 
-  QObject::connect(
-    ui->instanceName, &QLineEdit::returnPressed, [&]{ next(); });
+  QObject::connect(ui->instanceName, &QLineEdit::returnPressed, [&] {
+    next();
+  });
 }
 
 bool NamePage::ready() const
@@ -913,15 +890,15 @@ void NamePage::onChanged()
 void NamePage::verify()
 {
   const auto root = InstanceManager::singleton().globalInstancesRootPath();
-  m_okay = checkName(root, ui->instanceName->text());
+  m_okay          = checkName(root, ui->instanceName->text());
   updateNavigation();
 }
 
 bool NamePage::checkName(QString parentDir, QString name)
 {
-  bool exists = false;
+  bool exists  = false;
   bool invalid = false;
-  bool empty = false;
+  bool empty   = false;
 
   name = name.trimmed();
 
@@ -954,22 +931,25 @@ bool NamePage::checkName(QString parentDir, QString name)
   return okay;
 }
 
-
-PathsPage::PathsPage(CreateInstanceDialog& dlg) :
-  Page(dlg), m_lastType(CreateInstanceDialog::NoType),
-  m_label(ui->pathsLabel),
-  m_simpleExists(ui->locationExists), m_simpleInvalid(ui->locationInvalid),
-  m_advancedExists(ui->advancedDirExists),
-  m_advancedInvalid(ui->advancedDirInvalid),
-  m_okay(false)
+PathsPage::PathsPage(CreateInstanceDialog& dlg)
+    : Page(dlg), m_lastType(CreateInstanceDialog::NoType), m_label(ui->pathsLabel),
+      m_simpleExists(ui->locationExists), m_simpleInvalid(ui->locationInvalid),
+      m_advancedExists(ui->advancedDirExists),
+      m_advancedInvalid(ui->advancedDirInvalid), m_okay(false)
 {
   auto setEdit = [&](QLineEdit* e) {
-    QObject::connect(e, &QLineEdit::textEdited, [&]{ onChanged(); });
-    QObject::connect(e, &QLineEdit::returnPressed, [&]{ next(); });
+    QObject::connect(e, &QLineEdit::textEdited, [&] {
+      onChanged();
+    });
+    QObject::connect(e, &QLineEdit::returnPressed, [&] {
+      next();
+    });
   };
 
   auto setBrowse = [&](QAbstractButton* b, QLineEdit* e) {
-    QObject::connect(b, &QAbstractButton::clicked, [this, e]{ browse(e); });
+    QObject::connect(b, &QAbstractButton::clicked, [this, e] {
+      browse(e);
+    });
   };
 
   setEdit(ui->location);
@@ -986,8 +966,9 @@ PathsPage::PathsPage(CreateInstanceDialog& dlg) :
   setBrowse(ui->browseProfiles, ui->profiles);
   setBrowse(ui->browseOverwrite, ui->overwrite);
 
-  QObject::connect(
-    ui->advancedPathOptions, &QCheckBox::clicked, [&]{ onAdvanced(); });
+  QObject::connect(ui->advancedPathOptions, &QCheckBox::clicked, [&] {
+    onAdvanced();
+  });
 
   ui->pathPages->setCurrentIndex(0);
 }
@@ -1008,7 +989,6 @@ void PathsPage::doActivated(bool firstTime)
   // regenerated
   const bool changed = (m_lastInstanceName != name) || (m_lastType != type);
 
-
   // generating and paths
   setPaths(name, changed);
   checkPaths();
@@ -1017,7 +997,7 @@ void PathsPage::doActivated(bool firstTime)
 
   m_label.setText(m_dlg.rawCreationInfo().game->gameName());
   m_lastInstanceName = name;
-  m_lastType = type;
+  m_lastType         = type;
 
   if (firstTime) {
     ui->location->setFocus();
@@ -1029,10 +1009,10 @@ CreateInstanceDialog::Paths PathsPage::selectedPaths() const
   CreateInstanceDialog::Paths p;
 
   if (ui->advancedPathOptions->isChecked()) {
-    p.base = ui->base->text();
+    p.base      = ui->base->text();
     p.downloads = ui->downloads->text();
-    p.mods = ui->mods->text();
-    p.profiles = ui->profiles->text();
+    p.mods      = ui->mods->text();
+    p.profiles  = ui->profiles->text();
     p.overwrite = ui->overwrite->text();
   } else {
     p.base = ui->location->text();
@@ -1061,16 +1041,14 @@ void PathsPage::checkPaths()
 {
   if (ui->advancedPathOptions->isChecked()) {
     // checking advanced paths
-    m_okay =
-      checkAdvancedPath(ui->base->text()) &&
-      checkAdvancedPath(resolve(ui->downloads->text())) &&
-      checkAdvancedPath(resolve(ui->mods->text())) &&
-      checkAdvancedPath(resolve(ui->profiles->text())) &&
-      checkAdvancedPath(resolve(ui->overwrite->text()));
+    m_okay = checkAdvancedPath(ui->base->text()) &&
+             checkAdvancedPath(resolve(ui->downloads->text())) &&
+             checkAdvancedPath(resolve(ui->mods->text())) &&
+             checkAdvancedPath(resolve(ui->profiles->text())) &&
+             checkAdvancedPath(resolve(ui->overwrite->text()));
   } else {
     // checking simple path
-    m_okay =
-      checkSimplePath(ui->location->text());
+    m_okay = checkSimplePath(ui->location->text());
   }
 }
 
@@ -1113,7 +1091,7 @@ void PathsPage::setPaths(const QString& name, bool force)
     basePath = InstanceManager::singleton().portablePath();
   } else {
     const auto root = InstanceManager::singleton().globalInstancesRootPath();
-    basePath = root + "/" + name;
+    basePath        = root + "/" + name;
   }
 
   basePath = QDir::toNativeSeparators(QDir::cleanPath(basePath));
@@ -1136,15 +1114,14 @@ void PathsPage::setIfEmpty(QLineEdit* e, const QString& path, bool force)
   }
 }
 
-bool PathsPage::checkPath(
-  QString path,
-  PlaceholderLabel& existsLabel, PlaceholderLabel& invalidLabel)
+bool PathsPage::checkPath(QString path, PlaceholderLabel& existsLabel,
+                          PlaceholderLabel& invalidLabel)
 {
   auto& m = InstanceManager::singleton();
 
-  bool exists = false;
+  bool exists  = false;
   bool invalid = false;
-  bool empty = false;
+  bool empty   = false;
 
   path = QDir::toNativeSeparators(path.trimmed());
 
@@ -1193,17 +1170,10 @@ bool PathsPage::checkPath(
   return okay;
 }
 
-
-NexusPage::NexusPage(CreateInstanceDialog& dlg)
-  : Page(dlg), m_skip(false)
+NexusPage::NexusPage(CreateInstanceDialog& dlg) : Page(dlg), m_skip(false)
 {
-  m_connectionUI.reset(new NexusConnectionUI(
-    &m_dlg,
-    dlg.settings(),
-    ui->nexusConnect,
-    nullptr,
-    ui->nexusManual,
-    ui->nexusLog));
+  m_connectionUI.reset(new NexusConnectionUI(&m_dlg, dlg.settings(), ui->nexusConnect,
+                                             nullptr, ui->nexusManual, ui->nexusLog));
 
   // just check it once, or connecting and then going back and forth would skip
   // the page, which would be unexpected
@@ -1223,11 +1193,7 @@ bool NexusPage::doSkip() const
   return m_skip;
 }
 
-
-ConfirmationPage::ConfirmationPage(CreateInstanceDialog& dlg)
-  : Page(dlg)
-{
-}
+ConfirmationPage::ConfirmationPage(CreateInstanceDialog& dlg) : Page(dlg) {}
 
 void ConfirmationPage::doActivated(bool)
 {
@@ -1241,11 +1207,9 @@ QString ConfirmationPage::makeReview() const
 
   const auto ci = m_dlg.rawCreationInfo();
 
-  lines.push_back(QObject::tr("Instance type: %1")
-    .arg(toLocalizedString(ci.type)));
+  lines.push_back(QObject::tr("Instance type: %1").arg(toLocalizedString(ci.type)));
 
-  lines.push_back(QObject::tr("Instance location: %1")
-    .arg(ci.dataPath));
+  lines.push_back(QObject::tr("Instance location: %1").arg(ci.dataPath));
 
   if (ci.type != CreateInstanceDialog::Portable) {
     lines.push_back(QObject::tr("Instance name: %1").arg(ci.instanceName));
@@ -1282,4 +1246,4 @@ QString ConfirmationPage::dirLine(const QString& caption, const QString& path) c
   return QString("  - %1: %2").arg(caption).arg(path);
 }
 
-} // namespace
+}  // namespace cid

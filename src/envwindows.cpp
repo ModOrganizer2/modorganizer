@@ -1,8 +1,8 @@
 #include "envwindows.h"
 #include "env.h"
 #include "envmodule.h"
-#include <utility.h>
 #include <log.h>
+#include <utility.h>
 
 namespace env
 {
@@ -19,10 +19,10 @@ WindowsInfo::WindowsInfo()
     return;
   } else {
     m_reported = getReportedVersion(ntdll.get());
-    m_real = getRealVersion(ntdll.get());
+    m_real     = getRealVersion(ntdll.get());
   }
 
-  m_release = getRelease();
+  m_release  = getRelease();
   m_elevated = getElevated();
 }
 
@@ -61,7 +61,7 @@ QString WindowsInfo::toString() const
   QStringList sl;
 
   const QString reported = m_reported.toString();
-  const QString real = m_real.toString();
+  const QString real     = m_real.toString();
 
   // version
   sl.push_back("version " + reported);
@@ -113,17 +113,17 @@ WindowsInfo::Version WindowsInfo::getReportedVersion(HINSTANCE ntdll) const
   //
   // there's still RtlGetVersion() though
 
-  using RtlGetVersionType = NTSTATUS (NTAPI)(PRTL_OSVERSIONINFOW);
+  using RtlGetVersionType = NTSTATUS(NTAPI)(PRTL_OSVERSIONINFOW);
 
-  auto* RtlGetVersion = reinterpret_cast<RtlGetVersionType*>(
-    GetProcAddress(ntdll, "RtlGetVersion"));
+  auto* RtlGetVersion =
+      reinterpret_cast<RtlGetVersionType*>(GetProcAddress(ntdll, "RtlGetVersion"));
 
   if (!RtlGetVersion) {
     log::error("RtlGetVersion() not found in ntdll.dll");
     return {};
   }
 
-  OSVERSIONINFOEX vi = {};
+  OSVERSIONINFOEX vi     = {};
   vi.dwOSVersionInfoSize = sizeof(vi);
 
   // this apparently never fails
@@ -140,17 +140,17 @@ WindowsInfo::Version WindowsInfo::getRealVersion(HINSTANCE ntdll) const
   // RtlGetNtVersionNumbers() is an undocumented function that seems to work
   // fine, but it might not in the future
 
-  using RtlGetNtVersionNumbersType = void (NTAPI)(DWORD*, DWORD*, DWORD*);
+  using RtlGetNtVersionNumbersType = void(NTAPI)(DWORD*, DWORD*, DWORD*);
 
   auto* RtlGetNtVersionNumbers = reinterpret_cast<RtlGetNtVersionNumbersType*>(
-    GetProcAddress(ntdll, "RtlGetNtVersionNumbers"));
+      GetProcAddress(ntdll, "RtlGetNtVersionNumbers"));
 
   if (!RtlGetNtVersionNumbers) {
     log::error("RtlGetNtVersionNumbers not found in ntdll.dll");
     return {};
   }
 
-  DWORD major=0, minor=0, build=0;
+  DWORD major = 0, minor = 0, build = 0;
   RtlGetNtVersionNumbers(&major, &minor, &build);
 
   // for whatever reason, the build number has 0xf0000000 set
@@ -168,8 +168,8 @@ WindowsInfo::Release WindowsInfo::getRelease() const
   // any of the other versions fail to work
 
   QSettings settings(
-    R"(HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion)",
-    QSettings::NativeFormat);
+      R"(HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion)",
+      QSettings::NativeFormat);
 
   Release r;
 
@@ -201,12 +201,12 @@ std::optional<bool> WindowsInfo::getElevated() const
   {
     HANDLE rawToken = 0;
 
-    if (!OpenProcessToken(GetCurrentProcess( ), TOKEN_QUERY, &rawToken)) {
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &rawToken)) {
       const auto e = GetLastError();
 
-      log::error(
-        "while trying to check if process is elevated, "
-        "OpenProcessToken() failed: {}", formatSystemMessage(e));
+      log::error("while trying to check if process is elevated, "
+                 "OpenProcessToken() failed: {}",
+                 formatSystemMessage(e));
 
       return {};
     }
@@ -215,14 +215,14 @@ std::optional<bool> WindowsInfo::getElevated() const
   }
 
   TOKEN_ELEVATION e = {};
-  DWORD size = sizeof(TOKEN_ELEVATION);
+  DWORD size        = sizeof(TOKEN_ELEVATION);
 
   if (!GetTokenInformation(token.get(), TokenElevation, &e, sizeof(e), &size)) {
     const auto e = GetLastError();
 
-    log::error(
-      "while trying to check if process is elevated, "
-      "GetTokenInformation() failed: {}", formatSystemMessage(e));
+    log::error("while trying to check if process is elevated, "
+               "GetTokenInformation() failed: {}",
+               formatSystemMessage(e));
 
     return {};
   }
@@ -230,4 +230,4 @@ std::optional<bool> WindowsInfo::getElevated() const
   return (e.TokenIsElevated != 0);
 }
 
-} // namespace
+}  // namespace env

@@ -1,12 +1,12 @@
 #include "modinfodialognexus.h"
-#include "ui_modinfodialog.h"
-#include "settings.h"
-#include "organizercore.h"
-#include "iplugingame.h"
 #include "bbcode.h"
-#include <versioninfo.h>
-#include <utility.h>
+#include "iplugingame.h"
+#include "organizercore.h"
+#include "settings.h"
+#include "ui_modinfodialog.h"
 #include <log.h>
+#include <utility.h>
+#include <versioninfo.h>
 
 using namespace MOBase;
 
@@ -15,28 +15,46 @@ bool isValidModID(int id)
   return (id > 0);
 }
 
-NexusTab::NexusTab(ModInfoDialogTabContext cx) :
-  ModInfoDialogTab(std::move(cx)), m_requestStarted(false), m_loading(false)
+NexusTab::NexusTab(ModInfoDialogTabContext cx)
+    : ModInfoDialogTab(std::move(cx)), m_requestStarted(false), m_loading(false)
 {
   ui->modID->setValidator(new QIntValidator(ui->modID));
   ui->endorse->setVisible(core().settings().nexus().endorsementIntegration());
   ui->track->setVisible(core().settings().nexus().trackedIntegration());
 
-  connect(ui->modID, &QLineEdit::editingFinished, [&]{ onModIDChanged(); });
-  connect(
-    ui->sourceGame,
-    static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-    [&]{ onSourceGameChanged(); });
-  connect(ui->version, &QLineEdit::editingFinished, [&]{ onVersionChanged(); });
+  connect(ui->modID, &QLineEdit::editingFinished, [&] {
+    onModIDChanged();
+  });
+  connect(ui->sourceGame,
+          static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [&] {
+            onSourceGameChanged();
+          });
+  connect(ui->version, &QLineEdit::editingFinished, [&] {
+    onVersionChanged();
+  });
 
-  connect(ui->refresh, &QPushButton::clicked, [&]{ onRefreshBrowser(); });
-  connect(ui->visitNexus, &QPushButton::clicked, [&]{ onVisitNexus(); });
-  connect(ui->endorse, &QPushButton::clicked, [&]{ onEndorse(); });
-  connect(ui->track, &QPushButton::clicked, [&]{ onTrack(); });
+  connect(ui->refresh, &QPushButton::clicked, [&] {
+    onRefreshBrowser();
+  });
+  connect(ui->visitNexus, &QPushButton::clicked, [&] {
+    onVisitNexus();
+  });
+  connect(ui->endorse, &QPushButton::clicked, [&] {
+    onEndorse();
+  });
+  connect(ui->track, &QPushButton::clicked, [&] {
+    onTrack();
+  });
 
-  connect(ui->hasCustomURL, &QCheckBox::toggled, [&]{ onCustomURLToggled(); });
-  connect(ui->customURL, &QLineEdit::editingFinished, [&]{ onCustomURLChanged(); });
-  connect(ui->visitCustomURL, &QPushButton::clicked, [&]{ onVisitCustomURL(); });
+  connect(ui->hasCustomURL, &QCheckBox::toggled, [&] {
+    onCustomURLToggled();
+  });
+  connect(ui->customURL, &QLineEdit::editingFinished, [&] {
+    onCustomURLChanged();
+  });
+  connect(ui->visitCustomURL, &QPushButton::clicked, [&] {
+    onVisitCustomURL();
+  });
 }
 
 NexusTab::~NexusTab()
@@ -72,9 +90,8 @@ void NexusTab::update()
   ui->modID->setText(QString("%1").arg(mod().nexusId()));
 
   QString gameName = mod().gameName();
-  ui->sourceGame->addItem(
-    core().managedGame()->gameName(),
-    core().managedGame()->gameShortName());
+  ui->sourceGame->addItem(core().managedGame()->gameName(),
+                          core().managedGame()->gameShortName());
 
   if (core().managedGame()->validShortNames().size() == 0) {
     ui->sourceGame->setDisabled(true);
@@ -94,13 +111,12 @@ void NexusTab::update()
   auto* page = new NexusTabWebpage(ui->browser);
   ui->browser->setPage(page);
 
-  connect(
-    page, &NexusTabWebpage::linkClicked,
-    [&](const QUrl& url){ shell::Open(url); });
+  connect(page, &NexusTabWebpage::linkClicked, [&](const QUrl& url) {
+    shell::Open(url);
+  });
 
-  ui->endorse->setEnabled(
-    (mod().endorsedState() == EndorsedState::ENDORSED_FALSE) ||
-    (mod().endorsedState() == EndorsedState::ENDORSED_NEVER));
+  ui->endorse->setEnabled((mod().endorsedState() == EndorsedState::ENDORSED_FALSE) ||
+                          (mod().endorsedState() == EndorsedState::ENDORSED_NEVER));
 
   setHasData(mod().nexusId() >= 0);
 }
@@ -116,8 +132,9 @@ void NexusTab::setMod(ModInfoPtr mod, MOShared::FilesOrigin* origin)
 
   ModInfoDialogTab::setMod(mod, origin);
 
-  m_modConnection = connect(
-    mod.data(), &ModInfo::modDetailsUpdated, [&]{ onModChanged(); });
+  m_modConnection = connect(mod.data(), &ModInfo::modDetailsUpdated, [&] {
+    onModChanged();
+  });
 }
 
 bool NexusTab::usesOriginFiles() const
@@ -129,8 +146,8 @@ void NexusTab::updateVersionColor()
 {
   if (mod().version() != mod().newestVersion()) {
     ui->version->setStyleSheet("color: red");
-    ui->version->setToolTip(tr("Current Version: %1").arg(
-      mod().newestVersion().canonicalString()));
+    ui->version->setToolTip(
+        tr("Current Version: %1").arg(mod().newestVersion().canonicalString()));
   } else {
     ui->version->setStyleSheet("color: green");
     ui->version->setToolTip(tr("No update available"));
@@ -142,8 +159,8 @@ void NexusTab::updateWebpage()
   const int modID = mod().nexusId();
 
   if (isValidModID(modID)) {
-    const QString nexusLink = NexusInterface::instance()
-      .getModURL(modID, mod().gameName());
+    const QString nexusLink =
+        NexusInterface::instance().getModURL(modID, mod().gameName());
 
     ui->visitNexus->setToolTip(nexusLink);
     refreshData(modID);
@@ -287,8 +304,7 @@ void NexusTab::onModChanged()
       page for it in the "Custom URL" box below.</p>
       </div>)"));
   } else {
-    descriptionAsHTML = descriptionAsHTML.arg(
-      BBCode::convertToHTML(nexusDescription));
+    descriptionAsHTML = descriptionAsHTML.arg(BBCode::convertToHTML(nexusDescription));
   }
 
   ui->browser->page()->setHtml(descriptionAsHTML);
@@ -305,7 +321,7 @@ void NexusTab::onModIDChanged()
   const int oldID = mod().nexusId();
   const int newID = ui->modID->text().toInt();
 
-  if (oldID != newID){
+  if (oldID != newID) {
     mod().setNexusID(newID);
     mod().setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
 
@@ -361,8 +377,8 @@ void NexusTab::onVisitNexus()
   const int modID = mod().nexusId();
 
   if (isValidModID(modID)) {
-    const QString nexusLink = NexusInterface::instance()
-      .getModURL(modID, mod().gameName());
+    const QString nexusLink =
+        NexusInterface::instance().getModURL(modID, mod().gameName());
 
     shell::Open(QUrl(nexusLink));
   }
@@ -372,14 +388,16 @@ void NexusTab::onEndorse()
 {
   // use modPtr() instead of mod() or this because the callback may be
   // executed after the dialog is closed
-  core().loggedInAction(parentWidget(), [m=modPtr()]{ m->endorse(true); });
+  core().loggedInAction(parentWidget(), [m = modPtr()] {
+    m->endorse(true);
+  });
 }
 
 void NexusTab::onTrack()
 {
   // use modPtr() instead of mod() or this because the callback may be
   // executed after the dialog is closed
-  core().loggedInAction(parentWidget(), [m=modPtr()] {
+  core().loggedInAction(parentWidget(), [m = modPtr()] {
     if (m->trackedState() == TrackedState::TRACKED_TRUE) {
       m->track(false);
     } else {

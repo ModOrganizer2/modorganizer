@@ -1,9 +1,9 @@
 #ifndef MODINFODIALOGCONFLICTS_H
 #define MODINFODIALOGCONFLICTS_H
 
-#include "modinfodialogtab.h"
 #include "expanderwidget.h"
 #include "filterwidget.h"
+#include "modinfodialogtab.h"
 #include "shared/fileregisterfwd.h"
 #include <QTreeWidget>
 #include <optional>
@@ -20,8 +20,7 @@ class GeneralConflictsTab : public QObject
   Q_OBJECT;
 
 public:
-  GeneralConflictsTab(
-    ConflictsTab* tab, Ui::ModInfoDialog* ui, OrganizerCore& oc);
+  GeneralConflictsTab(ConflictsTab* tab, Ui::ModInfoDialog* ui, OrganizerCore& oc);
 
   void clear();
   void saveState(Settings& s);
@@ -53,38 +52,34 @@ private:
 
   struct GeneralConflictNumbers
   {
-    int numTotalFiles = 0;
-    int numTotalLoose = 0;
-    int numTotalArchive = 0;
-    int numNonConflicting = 0;
-    int numNonConflictingLoose = 0;
+    int numTotalFiles            = 0;
+    int numTotalLoose            = 0;
+    int numTotalArchive          = 0;
+    int numNonConflicting        = 0;
+    int numNonConflictingLoose   = 0;
     int numNonConflictingArchive = 0;
-    int numOverwrite = 0;
-    int numOverwriteLoose = 0;
-    int numOverwriteArchive = 0;
-    int numOverwritten = 0;
-    int numOverwrittenLoose = 0;
-    int numOverwrittenArchive = 0;
+    int numOverwrite             = 0;
+    int numOverwriteLoose        = 0;
+    int numOverwriteArchive      = 0;
+    int numOverwritten           = 0;
+    int numOverwrittenLoose      = 0;
+    int numOverwrittenArchive    = 0;
 
-    void clear() {
-      *this = {};
-    };
+    void clear() { *this = {}; };
   };
 
   GeneralConflictNumbers m_counts;
 
-  ConflictItem createOverwriteItem(
-    MOShared::FileIndex index, bool archive,
-    QString fileName, QString relativeName,
-    const MOShared::AlternativesVector& alternatives);
+  ConflictItem createOverwriteItem(MOShared::FileIndex index, bool archive,
+                                   QString fileName, QString relativeName,
+                                   const MOShared::AlternativesVector& alternatives);
 
-  ConflictItem createNoConflictItem(
-    MOShared::FileIndex index, bool archive,
-    QString fileName, QString relativeName);
+  ConflictItem createNoConflictItem(MOShared::FileIndex index, bool archive,
+                                    QString fileName, QString relativeName);
 
-  ConflictItem createOverwrittenItem(
-    MOShared::FileIndex index, int fileOrigin, bool archive,
-    QString fileName, QString relativeName);
+  ConflictItem createOverwrittenItem(MOShared::FileIndex index, int fileOrigin,
+                                     bool archive, QString fileName,
+                                     QString relativeName);
 
   void updateUICounters();
 
@@ -92,14 +87,12 @@ private:
   void onOverwrittenActivated(const QModelIndex& index);
 };
 
-
 class AdvancedConflictsTab : public QObject
 {
   Q_OBJECT;
 
 public:
-  AdvancedConflictsTab(
-    ConflictsTab* tab, Ui::ModInfoDialog* ui, OrganizerCore& oc);
+  AdvancedConflictsTab(ConflictsTab* tab, Ui::ModInfoDialog* ui, OrganizerCore& oc);
 
   void clear();
   void saveState(Settings& s);
@@ -117,12 +110,10 @@ private:
   FilterWidget m_filter;
   ConflictListModel* m_model;
 
-  std::optional<ConflictItem> createItem(
-    MOShared::FileIndex index, int fileOrigin, bool archive,
-    QString fileName, QString relativeName,
-    const MOShared::AlternativesVector& alternatives);
+  std::optional<ConflictItem>
+  createItem(MOShared::FileIndex index, int fileOrigin, bool archive, QString fileName,
+             QString relativeName, const MOShared::AlternativesVector& alternatives);
 };
-
 
 class ConflictsTab : public ModInfoDialogTab
 {
@@ -146,18 +137,18 @@ public:
   void previewItem(const ConflictItem* item);
   void changeItemsVisibility(QTreeView* tree, bool visible);
 
-  void showContextMenu(const QPoint &pos, QTreeView* tree);
+  void showContextMenu(const QPoint& pos, QTreeView* tree);
 
 private:
   struct Actions
   {
-    QAction* hide = nullptr;
-    QAction* unhide = nullptr;
-    QAction* open = nullptr;
+    QAction* hide      = nullptr;
+    QAction* unhide    = nullptr;
+    QAction* open      = nullptr;
     QAction* runHooked = nullptr;
-    QAction* preview = nullptr;
-    QAction* explore = nullptr;
-    QMenu* gotoMenu = nullptr;
+    QAction* preview   = nullptr;
+    QAction* explore   = nullptr;
+    QMenu* gotoMenu    = nullptr;
 
     std::vector<QAction*> gotoActions;
   };
@@ -169,4 +160,4 @@ private:
   std::vector<QAction*> createGotoActions(const ConflictItem* item);
 };
 
-#endif // MODINFODIALOGCONFLICTS_H
+#endif  // MODINFODIALOGCONFLICTS_H

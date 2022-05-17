@@ -15,8 +15,8 @@ QDateTime ModInfoForeign::creationTime() const
 
 QString ModInfoForeign::absolutePath() const
 {
-  //I ought to store this, it's used elsewhere
-  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame *>();
+  // I ought to store this, it's used elsewhere
+  IPluginGame const* game = qApp->property("managed_game").value<IPluginGame*>();
   return game->dataDirectory().absolutePath();
 }
 
@@ -39,28 +39,28 @@ int ModInfoForeign::getHighlight() const
 
 QString ModInfoForeign::getDescription() const
 {
-  return tr("This pseudo mod represents content managed outside MO. It isn't modified by MO.");
+  return tr("This pseudo mod represents content managed outside MO. It isn't modified "
+            "by MO.");
 }
 
-ModInfoForeign::ModInfoForeign(
-  const QString &modName, const QString &referenceFile,
-  const QStringList &archives, ModInfo::EModType modType,
-  OrganizerCore& core)
-    : ModInfoWithConflictInfo(core),
-      m_ReferenceFile(referenceFile), m_Archives(archives), m_ModType(modType)
+ModInfoForeign::ModInfoForeign(const QString& modName, const QString& referenceFile,
+                               const QStringList& archives, ModInfo::EModType modType,
+                               OrganizerCore& core)
+    : ModInfoWithConflictInfo(core), m_ReferenceFile(referenceFile),
+      m_Archives(archives), m_ModType(modType)
 {
   m_CreationTime = QFileInfo(referenceFile).birthTime();
   switch (modType) {
   case ModInfo::EModType::MOD_DLC:
-    m_Name = tr("DLC: ") + modName;
+    m_Name         = tr("DLC: ") + modName;
     m_InternalName = QString("DLC: ") + modName;
     break;
   case ModInfo::EModType::MOD_CC:
-    m_Name = tr("Creation Club: ") + modName;
+    m_Name         = tr("Creation Club: ") + modName;
     m_InternalName = QString("Creation Club: ") + modName;
     break;
   default:
-    m_Name = tr("Unmanaged: ") + modName;
+    m_Name         = tr("Unmanaged: ") + modName;
     m_InternalName = QString("Unmanaged: ") + modName;
   }
 }

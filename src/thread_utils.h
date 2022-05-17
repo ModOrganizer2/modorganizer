@@ -1,16 +1,16 @@
 #ifndef MO2_THREAD_UTILS_H
 #define MO2_THREAD_UTILS_H
 
-#include <log.h>
 #include <functional>
+#include <log.h>
 #include <mutex>
 #include <thread>
 
 // in main.cpp
 void setExceptionHandlers();
 
-
-namespace MOShared {
+namespace MOShared
+{
 
 // starts an std::thread with an unhandled exception handler for core dumps
 // and a top-level catch
@@ -18,7 +18,7 @@ namespace MOShared {
 template <class F>
 std::thread startSafeThread(F&& f)
 {
-  return std::thread([f=std::forward<F>(f)] {
+  return std::thread([f = std::forward<F>(f)] {
     setExceptionHandlers();
     f();
   });
@@ -47,7 +47,7 @@ void parallelMap(It begin, It end, Callable callable, std::size_t nThreads)
   // Create the thread:
   //  - The mutex is only used to fetch/increment the iterator.
   //  - The callable is copied in each thread to avoid conflicts.
-  for (auto &thread: threads) {
+  for (auto& thread : threads) {
     thread = startSafeThread([&m, &begin, end, callable]() {
       while (true) {
         decltype(begin) it;
@@ -71,6 +71,6 @@ void parallelMap(It begin, It end, Callable callable, std::size_t nThreads)
   }
 }
 
-}
+}  // namespace MOShared
 
 #endif
