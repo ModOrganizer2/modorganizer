@@ -1,10 +1,13 @@
 // std
 #include <algorithm>
-#include <assert.h>
 #include <bitset>
+#include <cassert>
 #include <cstdarg>
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <ctime>
+#include <cwchar>
 #include <deque>
 #include <exception>
 #include <fstream>
@@ -20,24 +23,22 @@
 #include <regex>
 #include <set>
 #include <sstream>
-#include <stddef.h>
 #include <stdexcept>
-#include <string.h>
 #include <string>
 #include <thread>
 #include <tuple>
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <wchar.h>
 
 // windows
+#include <Windows.h>
+
 #include <DbgHelp.h>
 #include <LMCons.h>
 #include <Psapi.h>
 #include <Shellapi.h>
 #include <Shlwapi.h>
-#include <Windows.h>
 #include <eh.h>
 #include <shlobj.h>
 #include <tchar.h>
