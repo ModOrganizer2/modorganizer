@@ -584,8 +584,8 @@ public:
 
   // filename of the theme
   //
-  std::optional<QString> styleName() const;
-  void setStyleName(const QString& name);
+  std::optional<QString> themeName() const;
+  void setThemeName(const QString& name);
 
   // whether to use collapsible separators when possible
   //
@@ -872,7 +872,7 @@ signals:
   // these are fired from outside the settings, mostly by the settings dialog
   //
   void languageChanged(const QString& newLanguage);
-  void styleChanged(const QString& newStyle);
+  void themeChanged(const QString& themeIdentifier);
 
 private:
   static Settings* s_Instance;
