@@ -231,12 +231,13 @@ void setFilterShortcuts(QWidget* widget, QLineEdit* edit)
 
 MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
                        PluginContainer& pluginContainer, ThemeManager& themeManager,
-                       QWidget* parent)
+                       TranslationManager& translationManager, QWidget* parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), m_WasVisible(false),
       m_FirstPaint(true), m_linksSeparator(nullptr), m_Tutorial(this, "MainWindow"),
       m_OldProfileIndex(-1), m_OldExecutableIndex(-1),
       m_CategoryFactory(CategoryFactory::instance()), m_OrganizerCore(organizerCore),
       m_PluginContainer(pluginContainer), m_ThemeManager(themeManager),
+      m_TranslationManager(translationManager),
       m_ArchiveListWriter(std::bind(&MainWindow::saveArchiveList, this)),
       m_LinkToolbar(nullptr), m_LinkDesktop(nullptr), m_LinkStartMenu(nullptr),
       m_NumberOfProblems(0), m_ProblemsCheckRequired(false)
@@ -263,7 +264,7 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
   MOShared::SetThisThreadName("main");
 
   ui->setupUi(this);
-  languageChange(settings.interface().language());
+  onLanguageChanged(settings.interface().language());
   ui->statusBar->setup(ui, settings);
 
   {
@@ -385,8 +386,8 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(error(QString)), this,
           SLOT(showError(QString)));
 
-  connect(&m_OrganizerCore.settings(), SIGNAL(languageChanged(QString)), this,
-          SLOT(languageChange(QString)));
+  connect(&m_OrganizerCore.settings(), &Settings::languageChanged, this,
+          &MainWindow::onLanguageChanged);
   connect(&m_OrganizerCore.settings(), &Settings::themeChanged, this,
           &MainWindow::themeChanged);
 
@@ -499,9 +500,6 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
           [=](auto&& message) {
             showMessage(message);
           });
-  for (const QString& fileName : m_PluginContainer.pluginFileNames()) {
-    installTranslator(QFileInfo(fileName).baseName());
-  }
 
   updateModPageMenu();
 
@@ -2720,7 +2718,8 @@ void MainWindow::on_actionSettings_triggered()
   const bool oldCheckForUpdates = settings.checkForUpdates();
   const int oldMaxDumps         = settings.diagnostics().maxCoreDumps();
 
-  SettingsDialog dialog(&m_PluginContainer, m_ThemeManager, settings, this);
+  SettingsDialog dialog(&m_PluginContainer, m_ThemeManager, m_TranslationManager,
+                        settings, this);
   dialog.exec();
 
   auto e = dialog.exitNeeded();
@@ -2861,42 +2860,10 @@ void MainWindow::on_actionNexus_triggered()
   shell::Open(QUrl(NexusInterface::instance().getGameURL(gameName)));
 }
 
-void MainWindow::installTranslator(const QString& name)
+void MainWindow::onLanguageChanged(const QString& newLanguage)
 {
-  QTranslator* translator = new QTranslator(this);
-  QString fileName        = name + "_" + m_CurrentLanguage;
-  if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
-    if (m_CurrentLanguage.contains(QRegularExpression("^.*_(EN|en)(-.*)?$"))) {
-      log::debug("localization file %s not found", fileName);
-    }  // we don't actually expect localization files for English (en, en-us, en-uk, and
-       // any variation thereof)
-  }
+  m_TranslationManager.load(newLanguage.toStdString());
 
-  qApp->installTranslator(translator);
-  m_Translators.push_back(translator);
-}
-
-void MainWindow::languageChange(const QString& newLanguage)
-{
-  for (QTranslator* trans : m_Translators) {
-    qApp->removeTranslator(trans);
-  }
-  m_Translators.clear();
-
-  m_CurrentLanguage = newLanguage;
-
-  installTranslator("qt");
-  installTranslator("qtbase");
-  installTranslator(ToQString(AppConfig::translationPrefix()));
-  installTranslator("uibase");
-
-  // TODO: this will probably be changed once extension come out
-  installTranslator("game_gamebryo");
-  installTranslator("game_creation");
-
-  for (const QString& fileName : m_PluginContainer.pluginFileNames()) {
-    installTranslator(QFileInfo(fileName).baseName());
-  }
   ui->retranslateUi(this);
   log::debug("loaded language {}", newLanguage);
 

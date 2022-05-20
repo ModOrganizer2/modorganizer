@@ -312,7 +312,7 @@ void ThemeManager::extensionUnloaded(IExtension const& extension)
     }
 
     if (std::erase(m_baseThemes, theme) > 0) {
-      m_themeExtensionsByIdentifier.erase(theme->identifier());
+      m_baseThemesByIdentifier.erase(theme->identifier());
     }
   }
 

@@ -23,10 +23,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "shared/util.h"
 #include "tutorabledialog.h"
 
-class ThemeManager;
 class PluginContainer;
 class Settings;
 class SettingsDialog;
+class ThemeManager;
+class TranslationManager;
+
 namespace Ui
 {
 class SettingsDialog;
@@ -64,7 +66,9 @@ class SettingsDialog : public MOBase::TutorableDialog
   friend class SettingsTab;
 
 public:
-  explicit SettingsDialog(PluginContainer* pluginContainer, ThemeManager const& manager,
+  explicit SettingsDialog(PluginContainer* pluginContainer,
+                          ThemeManager const& themeManager,
+                          TranslationManager const& translationManager,
                           Settings& settings, QWidget* parent = 0);
 
   ~SettingsDialog();

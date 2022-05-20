@@ -4,6 +4,8 @@
 #include <QApplication>
 #include <QFileSystemWatcher>
 
+#include <theme.h>
+
 #include "extensionwatcher.h"
 
 class ThemeManager : public ExtensionWatcher
