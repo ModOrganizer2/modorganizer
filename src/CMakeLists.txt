@@ -132,13 +132,19 @@ mo2_add_filter(NAME src/core GROUPS
 	nexusinterface
 	nxmaccessmanager
 	organizercore
-	game_features
-	plugincontainer
 	apiuseraccount
 	processrunner
 	qdirfiletree
 	virtualfiletree
 	uilocker
+)
+
+mo2_add_filter(NAME src/extensions GROUPS
+	game_features
+	plugincontainer
+	thememanager
+	translationmanager
+	extensionconsumer
 )
 
 mo2_add_filter(NAME src/dialogs GROUPS

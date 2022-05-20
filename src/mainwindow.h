@@ -34,6 +34,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modlistsortproxy.h"
 #include "plugincontainer.h"
 #include "shared/fileregisterfwd.h"
+#include "thememanager.h"
 
 class Executable;
 class CategoryFactory;
@@ -126,7 +127,8 @@ class MainWindow : public QMainWindow, public IUserInterface
 
 public:
   explicit MainWindow(Settings& settings, OrganizerCore& organizerCore,
-                      PluginContainer& pluginContainer, QWidget* parent = 0);
+                      PluginContainer& pluginContainer, ThemeManager& manager,
+                      QWidget* parent = 0);
   ~MainWindow();
 
   void processUpdates();
@@ -166,7 +168,7 @@ signals:
   /**
    * @brief emitted when the selected style changes
    */
-  void styleChanged(const QString& styleFile);
+  void themeChanged(const QString& themeIdentifier);
 
   void checkForProblemsDone();
 
@@ -298,6 +300,7 @@ private:
 
   OrganizerCore& m_OrganizerCore;
   PluginContainer& m_PluginContainer;
+  ThemeManager& m_ThemeManager;
 
   QString m_CurrentLanguage;
   std::vector<QTranslator*> m_Translators;

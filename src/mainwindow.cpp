@@ -230,12 +230,13 @@ void setFilterShortcuts(QWidget* widget, QLineEdit* edit)
 }
 
 MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
-                       PluginContainer& pluginContainer, QWidget* parent)
+                       PluginContainer& pluginContainer, ThemeManager& themeManager,
+                       QWidget* parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), m_WasVisible(false),
       m_FirstPaint(true), m_linksSeparator(nullptr), m_Tutorial(this, "MainWindow"),
       m_OldProfileIndex(-1), m_OldExecutableIndex(-1),
       m_CategoryFactory(CategoryFactory::instance()), m_OrganizerCore(organizerCore),
-      m_PluginContainer(pluginContainer),
+      m_PluginContainer(pluginContainer), m_ThemeManager(themeManager),
       m_ArchiveListWriter(std::bind(&MainWindow::saveArchiveList, this)),
       m_LinkToolbar(nullptr), m_LinkDesktop(nullptr), m_LinkStartMenu(nullptr),
       m_NumberOfProblems(0), m_ProblemsCheckRequired(false)
@@ -386,8 +387,8 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
 
   connect(&m_OrganizerCore.settings(), SIGNAL(languageChanged(QString)), this,
           SLOT(languageChange(QString)));
-  connect(&m_OrganizerCore.settings(), SIGNAL(styleChanged(QString)), this,
-          SIGNAL(styleChanged(QString)));
+  connect(&m_OrganizerCore.settings(), &Settings::themeChanged, this,
+          &MainWindow::themeChanged);
 
   connect(m_OrganizerCore.updater(), SIGNAL(restart()), this, SLOT(close()));
   connect(m_OrganizerCore.updater(), SIGNAL(updateAvailable()), this,
@@ -1232,7 +1233,7 @@ void MainWindow::showEvent(QShowEvent* event)
     // by connecting the event here, changing the style setting will first be
     // handled by MOApplication, and then in updateStyle(), at which point the
     // stylesheet has already been set correctly
-    connect(this, SIGNAL(styleChanged(QString)), this, SLOT(updateStyle(QString)));
+    connect(this, &MainWindow::themeChanged, this, &MainWindow::updateStyle);
 
     // only the first time the window becomes visible
     m_Tutorial.registerControl();
@@ -1935,7 +1936,7 @@ void MainWindow::updateBSAList(const QStringList& defaultArchives,
   };
 
   for (FileEntryPtr current : files) {
-    QFileInfo fileInfo(ToQString(current->getName().c_str()));
+    QFileInfo fileInfo(ToQString(current->getName()));
 
     if (fileInfo.suffix().toLower() == "bsa" || fileInfo.suffix().toLower() == "ba2") {
       int index = activeArchives.indexOf(fileInfo.fileName());
@@ -2719,7 +2720,7 @@ void MainWindow::on_actionSettings_triggered()
   const bool oldCheckForUpdates = settings.checkForUpdates();
   const int oldMaxDumps         = settings.diagnostics().maxCoreDumps();
 
-  SettingsDialog dialog(&m_PluginContainer, settings, this);
+  SettingsDialog dialog(&m_PluginContainer, m_ThemeManager, settings, this);
   dialog.exec();
 
   auto e = dialog.exitNeeded();
@@ -3665,12 +3666,14 @@ void MainWindow::on_actionChange_Game_triggered()
 
 void MainWindow::setCategoryListVisible(bool visible)
 {
+  using namespace std::literals;
+
   if (visible) {
     ui->categoriesGroup->show();
-    ui->displayCategoriesBtn->setText(ToQString(L"\u00ab"));
+    ui->displayCategoriesBtn->setText(ToQString(L"\u00ab"sv));
   } else {
     ui->categoriesGroup->hide();
-    ui->displayCategoriesBtn->setText(ToQString(L"\u00bb"));
+    ui->displayCategoriesBtn->setText(ToQString(L"\u00bb"sv));
   }
 }
 
