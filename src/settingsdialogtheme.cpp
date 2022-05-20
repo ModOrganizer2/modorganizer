@@ -9,10 +9,12 @@
 
 using namespace MOBase;
 
-ThemeSettingsTab::ThemeSettingsTab(Settings& s, SettingsDialog& d) : SettingsTab(s, d)
+ThemeSettingsTab::ThemeSettingsTab(Settings& s, ThemeManager const& manager,
+                                   SettingsDialog& d)
+    : SettingsTab(s, d)
 {
   // style
-  addStyles();
+  addStyles(manager);
   selectStyle();
 
   // colors
@@ -21,61 +23,56 @@ ThemeSettingsTab::ThemeSettingsTab(Settings& s, SettingsDialog& d) : SettingsTab
   QObject::connect(ui->resetColorsBtn, &QPushButton::clicked, [&] {
     ui->colorTable->resetColors();
   });
-
-  QObject::connect(ui->exploreStyles, &QPushButton::clicked, [&] {
-    onExploreStyles();
-  });
 }
 
 void ThemeSettingsTab::update()
 {
   // style
-  const QString oldStyle = settings().interface().styleName().value_or("");
+  const QString oldStyle = settings().interface().themeName().value_or("");
   const QString newStyle =
       ui->styleBox->itemData(ui->styleBox->currentIndex()).toString();
 
   if (oldStyle != newStyle) {
-    settings().interface().setStyleName(newStyle);
-    emit settings().styleChanged(newStyle);
+    settings().interface().setThemeName(newStyle);
+    emit settings().themeChanged(newStyle);
   }
 
   // colors
   ui->colorTable->commitColors();
 }
 
-void ThemeSettingsTab::addStyles()
+void ThemeSettingsTab::addStyles(ThemeManager const& manager)
 {
   ui->styleBox->addItem("None", "");
-  for (auto&& key : QStyleFactory::keys()) {
-    ui->styleBox->addItem(key, key);
-  }
 
-  ui->styleBox->insertSeparator(ui->styleBox->count());
+  auto themes = manager.themes();
 
-  QDirIterator iter(QCoreApplication::applicationDirPath() + "/" +
-                        QString::fromStdWString(AppConfig::stylesheetsPath()),
-                    QStringList("*.qss"), QDir::Files);
+  std::sort(themes.begin(), themes.end(), [&manager](auto&& lhs, auto&& rhs) {
+    if (manager.isBuiltIn(lhs) == manager.isBuiltIn(rhs)) {
+      return lhs->name() < rhs->name();
+    } else {
+      // put built-in before others
+      return manager.isBuiltIn(rhs) < manager.isBuiltIn(lhs);
+    }
+  });
 
-  while (iter.hasNext()) {
-    iter.next();
+  bool separator = true;
+  for (auto&& theme : themes) {
+    if (separator && !manager.isBuiltIn(theme)) {
+      ui->styleBox->insertSeparator(ui->styleBox->count());
+      separator = false;
+    }
 
-    ui->styleBox->addItem(iter.fileInfo().completeBaseName(), iter.fileName());
+    ui->styleBox->addItem(ToQString(theme->identifier()), ToQString(theme->name()));
   }
 }
 
 void ThemeSettingsTab::selectStyle()
 {
   const int currentID =
-      ui->styleBox->findData(settings().interface().styleName().value_or(""));
+      ui->styleBox->findData(settings().interface().themeName().value_or(""));
 
   if (currentID != -1) {
     ui->styleBox->setCurrentIndex(currentID);
   }
-}
-
-void ThemeSettingsTab::onExploreStyles()
-{
-  QString ssPath = QCoreApplication::applicationDirPath() + "/" +
-                   ToQString(AppConfig::stylesheetsPath());
-  shell::Explore(ssPath);
 }

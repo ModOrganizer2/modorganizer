@@ -5,18 +5,19 @@
 
 #include "settings.h"
 #include "settingsdialog.h"
+#include "thememanager.h"
 
 class ThemeSettingsTab : public SettingsTab
 {
 public:
-  ThemeSettingsTab(Settings& settings, SettingsDialog& dialog);
+  ThemeSettingsTab(Settings& settings, ThemeManager const& manager,
+                   SettingsDialog& dialog);
 
   void update() override;
 
 private:
-  void addStyles();
+  void addStyles(ThemeManager const& manager);
   void selectStyle();
-  void onExploreStyles();
 };
 
 #endif  // SETTINGSDIALOGGENERAL_H

@@ -6,6 +6,7 @@
 #include "multiprocess.h"
 #include "organizercore.h"
 #include "shared/util.h"
+#include "thememanager.h"
 #include "thread_utils.h"
 #include <log.h>
 #include <report.h>

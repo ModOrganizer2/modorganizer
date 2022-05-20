@@ -24,12 +24,15 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QApplication>
 #include <QFileSystemWatcher>
 
-class Settings;
-class MOMultiProcess;
+#include "thememanager.h"
+
 class Instance;
-class PluginContainer;
-class OrganizerCore;
+class MOMultiProcess;
 class NexusInterface;
+class OrganizerCore;
+class PluginContainer;
+class Settings;
+class ThemeManager;
 
 namespace MOBase
 {
@@ -70,21 +73,14 @@ public:
   //
   bool notify(QObject* receiver, QEvent* event) override;
 
-public slots:
-  bool setStyleFile(const QString& style);
-
-private slots:
-  void updateStyle(const QString& fileName);
-
 private:
-  QFileSystemWatcher m_styleWatcher;
-  QString m_defaultStyle;
   std::unique_ptr<env::ModuleNotification> m_modules;
 
   std::unique_ptr<Instance> m_instance;
   std::unique_ptr<Settings> m_settings;
   std::unique_ptr<NexusInterface> m_nexus;
   std::unique_ptr<PluginContainer> m_plugins;
+  std::unique_ptr<ThemeManager> m_themes;
   std::unique_ptr<OrganizerCore> m_core;
 
   void externalMessage(const QString& message);
