@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileSystemWatcher>
 
 #include "thememanager.h"
+#include "translationmanager.h"
 
 class Instance;
 class MOMultiProcess;
@@ -81,6 +82,7 @@ private:
   std::unique_ptr<NexusInterface> m_nexus;
   std::unique_ptr<PluginContainer> m_plugins;
   std::unique_ptr<ThemeManager> m_themes;
+  std::unique_ptr<TranslationManager> m_translations;
   std::unique_ptr<OrganizerCore> m_core;
 
   void externalMessage(const QString& message);

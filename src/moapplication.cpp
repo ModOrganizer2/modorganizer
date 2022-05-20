@@ -210,7 +210,8 @@ int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
   tt.start("MOApplication::doOneRun() plugins");
   log::debug("initializing plugins");
 
-  m_themes = std::make_unique<ThemeManager>(this);
+  m_themes       = std::make_unique<ThemeManager>(this);
+  m_translations = std::make_unique<TranslationManager>(this);
 
   m_plugins = std::make_unique<PluginContainer>(m_core.get());
   m_plugins->loadPlugins();
@@ -283,7 +284,7 @@ int MOApplication::run(MOMultiProcess& multiProcess)
 
   {
     tt.start("MOApplication::doOneRun() MainWindow setup");
-    MainWindow mainWindow(*m_settings, *m_core, *m_plugins, *m_themes);
+    MainWindow mainWindow(*m_settings, *m_core, *m_plugins, *m_themes, *m_translations);
 
     // the nexus interface can show dialogs, make sure they're parented to the
     // main window

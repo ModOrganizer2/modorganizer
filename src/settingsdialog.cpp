@@ -31,17 +31,18 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 
 SettingsDialog::SettingsDialog(PluginContainer* pluginContainer,
-                               ThemeManager const& manager, Settings& settings,
-                               QWidget* parent)
+                               ThemeManager const& themeManager,
+                               TranslationManager const& translationManager,
+                               Settings& settings, QWidget* parent)
     : TutorableDialog("SettingsDialog", parent), ui(new Ui::SettingsDialog),
       m_settings(settings), m_exit(Exit::None), m_pluginContainer(pluginContainer)
 {
   ui->setupUi(this);
 
-  m_tabs.push_back(
-      std::unique_ptr<SettingsTab>(new GeneralSettingsTab(settings, *this)));
-  m_tabs.push_back(
-      std::unique_ptr<SettingsTab>(new ThemeSettingsTab(settings, manager, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(
+      new GeneralSettingsTab(settings, translationManager, *this)));
+  m_tabs.push_back(std::unique_ptr<SettingsTab>(
+      new ThemeSettingsTab(settings, themeManager, *this)));
   m_tabs.push_back(
       std::unique_ptr<SettingsTab>(new ModListSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new PathsSettingsTab(settings, *this)));

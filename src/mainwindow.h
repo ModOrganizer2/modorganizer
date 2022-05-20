@@ -32,6 +32,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "plugincontainer.h"  //class PluginContainer;
 #include "shared/fileregisterfwd.h"
 #include "thememanager.h"
+#include "translationmanager.h"
 #include "tutorialcontrol.h"
 #include <log.h>
 
@@ -126,8 +127,8 @@ class MainWindow : public QMainWindow, public IUserInterface
 
 public:
   explicit MainWindow(Settings& settings, OrganizerCore& organizerCore,
-                      PluginContainer& pluginContainer, ThemeManager& manager,
-                      QWidget* parent = 0);
+                      PluginContainer& pluginContainer, ThemeManager& themeManager,
+                      TranslationManager& translationManager, QWidget* parent = 0);
   ~MainWindow();
 
   void processUpdates();
@@ -139,8 +140,6 @@ public:
                      const QStringList& activeArchives);
 
   void saveArchiveList();
-
-  void installTranslator(const QString& name);
 
   void displayModInformation(ModInfo::Ptr modInfo, unsigned int modIndex,
                              ModInfoTabIDs tabID) override;
@@ -300,9 +299,7 @@ private:
   OrganizerCore& m_OrganizerCore;
   PluginContainer& m_PluginContainer;
   ThemeManager& m_ThemeManager;
-
-  QString m_CurrentLanguage;
-  std::vector<QTranslator*> m_Translators;
+  TranslationManager& m_TranslationManager;
 
   std::unique_ptr<BrowserDialog> m_IntegratedBrowser;
 
@@ -346,7 +343,7 @@ private slots:
   void linkDesktop();
   void linkMenu();
 
-  void languageChange(const QString& newLanguage);
+  void onLanguageChanged(const QString& newLanguage);
 
   void windowTutorialFinished(const QString& windowName);
 
