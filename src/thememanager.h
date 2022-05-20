@@ -66,6 +66,11 @@ private:
   //
   QString buildStyleSheet(std::shared_ptr<const MOBase::Theme> const& theme) const;
 
+  // patch the given stylesheet by replacing url() to be relative to the given folder
+  //
+  QString patchStyleSheet(QString stylesheet,
+                          std::filesystem::path const& folder) const;
+
   // watch files for the given theme (can be nullptr to stop watching)
   //
   void watchThemeFiles(std::shared_ptr<const MOBase::Theme> const& theme);

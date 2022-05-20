@@ -195,10 +195,66 @@ void ThemeManager::addQtThemes()
   }
 }
 
+namespace
+{
+QString readWholeFile(std::filesystem::path const& path)
+{
+  QFile file(path);
+  if (!file.open(QFile::ReadOnly | QFile::Text)) {
+    return {};
+  }
+
+  return QTextStream(&file).readAll();
+}
+}  // namespace
+
 QString ThemeManager::buildStyleSheet(std::shared_ptr<const Theme> const& theme) const
 {
-  // TODO:
-  return QString("file:///%1").arg(ToQString(absolute(theme->stylesheet()).native()));
+  // create the base stylesheet
+  QString stylesheet = patchStyleSheet(readWholeFile(theme->stylesheet()),
+                                       theme->stylesheet().parent_path());
+
+  for (auto&& globalExtension : m_globalExtensions) {
+    stylesheet += "\n" + patchStyleSheet(readWholeFile(globalExtension->stylesheet()),
+                                         globalExtension->stylesheet().parent_path());
+  }
+
+  auto it = m_themeExtensionsByIdentifier.find(theme->identifier());
+  if (it != m_themeExtensionsByIdentifier.end()) {
+    for (auto&& themExtension : m_themeExtensionsByIdentifier.at(theme->identifier())) {
+      stylesheet += "\n" + patchStyleSheet(readWholeFile(themExtension->stylesheet()),
+                                           themExtension->stylesheet().parent_path());
+    }
+  }
+
+  return stylesheet;
+}
+
+QString ThemeManager::patchStyleSheet(QString stylesheet,
+                                      std::filesystem::path const& folder) const
+{
+  // we try to extract url() from the stylesheet and replace them
+  QRegularExpression urlRegex(R"re((:|\s+)url\("?([^")]+)"?\))re");
+
+  QString newStyleSheet = "";
+  while (!stylesheet.isEmpty()) {
+    auto match = urlRegex.match(stylesheet);
+
+    if (match.hasMatch()) {
+      QFileInfo path(match.captured(2));
+      if (path.isRelative()) {
+        path = QFileInfo(QDir(folder), match.captured(2));
+      }
+      newStyleSheet += stylesheet.left(match.capturedStart()) + match.captured(1) +
+                       "url(\"" + path.absoluteFilePath() + "\")";
+      stylesheet = stylesheet.mid(match.capturedEnd());
+    } else {
+      newStyleSheet += stylesheet;
+      stylesheet = "";
+    }
+  }
+
+  return newStyleSheet;
 }
 
 void ThemeManager::watchThemeFiles(std::shared_ptr<const Theme> const& theme)
