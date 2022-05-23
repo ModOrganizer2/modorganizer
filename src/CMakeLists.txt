@@ -52,12 +52,6 @@ install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.debug.qt6"
 		CONFIGURATIONS Debug
 		RENAME dlls.manifest)
 
-if (NOT MO2_SKIP_STYLESHEETS_INSTALL)
-	install(
-		DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/stylesheets"
-		DESTINATION ${_bin})
-endif()
-
 if (NOT MO2_SKIP_TUTORIALS_INSTALL)
 	install(
 		DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tutorials"
@@ -144,7 +138,8 @@ mo2_add_filter(NAME src/extensions GROUPS
 	plugincontainer
 	thememanager
 	translationmanager
-	extensionconsumer
+	extensionmanager
+	extensionwatcher
 )
 
 mo2_add_filter(NAME src/dialogs GROUPS

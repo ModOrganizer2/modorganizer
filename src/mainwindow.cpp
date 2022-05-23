@@ -2904,7 +2904,7 @@ void MainWindow::motdReceived(const QString& motd)
   // don't show motd after 5 seconds, may be annoying. Hopefully the user's
   // internet connection is faster next time
   if (m_StartTime.secsTo(QTime::currentTime()) < 5) {
-    uint hash = qHash(motd);
+    unsigned int hash = static_cast<unsigned int>(qHash(motd));
     if (hash != m_OrganizerCore.settings().motdHash()) {
       MotDDialog dialog(motd);
       dialog.exec();
