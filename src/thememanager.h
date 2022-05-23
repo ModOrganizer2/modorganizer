@@ -8,7 +8,8 @@
 
 #include "extensionwatcher.h"
 
-class ThemeManager : public ExtensionWatcher
+class ThemeManager : public ExtensionWatcher<MOBase::ThemeExtension>,
+                     public ExtensionWatcher<MOBase::PluginExtension>
 {
 public:
   ThemeManager(QApplication* application);
@@ -38,10 +39,15 @@ public:
   }
 
 public:  // ExtensionWatcher
-  void extensionLoaded(MOBase::IExtension const& extension) override;
-  void extensionUnloaded(MOBase::IExtension const& extension) override;
-  void extensionEnabled(MOBase::IExtension const& extension) override;
-  void extensionDisabled(MOBase::IExtension const& extension) override;
+  void extensionLoaded(MOBase::ThemeExtension const& extension) override;
+  void extensionUnloaded(MOBase::ThemeExtension const& extension) override;
+  void extensionEnabled(MOBase::ThemeExtension const& extension) override;
+  void extensionDisabled(MOBase::ThemeExtension const& extension) override;
+
+  void extensionLoaded(MOBase::PluginExtension const& extension) override;
+  void extensionUnloaded(MOBase::PluginExtension const& extension) override;
+  void extensionEnabled(MOBase::PluginExtension const& extension) override;
+  void extensionDisabled(MOBase::PluginExtension const& extension) override;
 
 private:
   // reload the current style

@@ -40,7 +40,6 @@ int run(int argc, char* argv[])
   // must be after logging
   TimeThis tt("main() multiprocess");
 
-  QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
   MOApplication app(argc, argv);
 
   // check if the command line wants to run something right now

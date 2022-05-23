@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "moapplication.h"
 #include "commandline.h"
+#include "extensionmanager.h"
 #include "instancemanager.h"
 #include "loglist.h"
 #include "mainwindow.h"
@@ -212,6 +213,14 @@ int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
 
   m_themes       = std::make_unique<ThemeManager>(this);
   m_translations = std::make_unique<TranslationManager>(this);
+
+  m_extensions = std::make_unique<ExtensionManager>();
+  m_extensions->registerWatcher(*m_themes);
+  m_extensions->registerWatcher(*m_translations);
+
+  m_extensions->loadExtensions(
+      QDir(QCoreApplication::applicationDirPath() + "/extensions")
+          .filesystemAbsolutePath());
 
   m_plugins = std::make_unique<PluginContainer>(m_core.get());
   m_plugins->loadPlugins();
