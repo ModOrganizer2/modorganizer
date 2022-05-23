@@ -75,7 +75,7 @@ private:
 
   // the list of translations extensions
   std::unordered_map<std::string,
-                     std::vector<std::shared_ptr<const MOBase::TranslationExtension>>,
+                     std::vector<std::shared_ptr<const MOBase::TranslationAddition>>,
                      string_hash, string_equal>
       m_translationExtensions;
 };
