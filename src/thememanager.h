@@ -107,15 +107,8 @@ private:
                      string_equal>
       m_baseThemesByIdentifier;
 
-  // the list of theme extensions per theme identifier, for extension that
-  // have identifiers
-  std::unordered_map<std::string,
-                     std::vector<std::shared_ptr<const MOBase::ThemeExtension>>,
-                     string_hash, string_equal>
-      m_themeExtensionsByIdentifier;
-
   // theme extensions for all themes
-  std::vector<std::shared_ptr<const MOBase::ThemeExtension>> m_globalExtensions;
+  std::vector<std::shared_ptr<const MOBase::ThemeAddition>> m_additions;
 };
 
 #endif

@@ -214,16 +214,10 @@ QString ThemeManager::buildStyleSheet(std::shared_ptr<const Theme> const& theme)
   QString stylesheet = patchStyleSheet(readWholeFile(theme->stylesheet()),
                                        theme->stylesheet().parent_path());
 
-  for (auto&& globalExtension : m_globalExtensions) {
-    stylesheet += "\n" + patchStyleSheet(readWholeFile(globalExtension->stylesheet()),
-                                         globalExtension->stylesheet().parent_path());
-  }
-
-  auto it = m_themeExtensionsByIdentifier.find(theme->identifier());
-  if (it != m_themeExtensionsByIdentifier.end()) {
-    for (auto&& themExtension : m_themeExtensionsByIdentifier.at(theme->identifier())) {
-      stylesheet += "\n" + patchStyleSheet(readWholeFile(themExtension->stylesheet()),
-                                           themExtension->stylesheet().parent_path());
+  for (auto&& themeAddition : m_additions) {
+    if (themeAddition->isAdditionFor(*theme)) {
+      stylesheet += "\n" + patchStyleSheet(readWholeFile(themeAddition->stylesheet()),
+                                           themeAddition->stylesheet().parent_path());
     }
   }
 
@@ -274,12 +268,10 @@ void ThemeManager::watchThemeFiles(std::shared_ptr<const Theme> const& theme)
 
   themeFiles.append(ToQString(absolute(theme->stylesheet()).native()));
 
-  for (auto&& themeExtension : m_globalExtensions) {
-    themeFiles.append(ToQString(absolute(themeExtension->stylesheet()).native()));
-  }
-
-  for (auto&& themeExtension : m_themeExtensionsByIdentifier[theme->identifier()]) {
-    themeFiles.append(ToQString(absolute(themeExtension->stylesheet()).native()));
+  for (auto&& themeAddition : m_additions) {
+    if (themeAddition->isAdditionFor(*theme)) {
+      themeFiles.append(ToQString(absolute(themeAddition->stylesheet()).native()));
+    }
   }
 
   // add all files
@@ -292,15 +284,9 @@ void ThemeManager::extensionLoaded(IExtension const& extension)
     registerTheme(theme);
   }
 
-  for (const auto& themeExtension : extension.themeExtensions()) {
-    const auto identifier = themeExtension->baseIdentifier();
-
-    if (identifier.has_value()) {
-      m_themeExtensionsByIdentifier[*identifier].push_back(themeExtension);
-    } else {
-      m_globalExtensions.push_back(themeExtension);
-    }
-  }
+  const auto& themeAdditions = extension.themeAdditions();
+  m_additions.insert(m_additions.end(), std::begin(themeAdditions),
+                     std::end(themeAdditions));
 }
 
 void ThemeManager::extensionUnloaded(IExtension const& extension)
@@ -316,14 +302,8 @@ void ThemeManager::extensionUnloaded(IExtension const& extension)
     }
   }
 
-  for (const auto& themeExtension : extension.themeExtensions()) {
-    std::erase(m_globalExtensions, themeExtension);
-
-    if (themeExtension->baseIdentifier().has_value() &&
-        m_themeExtensionsByIdentifier.contains(*themeExtension->baseIdentifier())) {
-      std::erase(m_themeExtensionsByIdentifier[*themeExtension->baseIdentifier()],
-                 themeExtension);
-    }
+  for (const auto& themeAddition : extension.themeAdditions()) {
+    std::erase(m_additions, themeAddition);
   }
 }
 

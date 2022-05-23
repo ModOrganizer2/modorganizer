@@ -89,7 +89,7 @@ void TranslationManager::addOldFormatTranslations()
         continue;
       }
 
-      m_translationExtensions[code].push_back(std::make_shared<TranslationExtension>(
+      m_translationExtensions[code].push_back(std::make_shared<TranslationAddition>(
           code, std::vector{iter.fileInfo().filesystemFilePath()}));
     }
   }
@@ -184,7 +184,7 @@ void TranslationManager::extensionLoaded(IExtension const& extension)
     registerTranslation(translation);
   }
 
-  for (const auto& translationExtension : extension.translationExtensions()) {
+  for (const auto& translationExtension : extension.translationAdditions()) {
     const auto identifier = translationExtension->baseIdentifier();
     m_translationExtensions[identifier].push_back(translationExtension);
   }
@@ -203,7 +203,7 @@ void TranslationManager::extensionUnloaded(IExtension const& extension)
     }
   }
 
-  for (const auto& translationExtension : extension.translationExtensions()) {
+  for (const auto& translationExtension : extension.translationAdditions()) {
     if (m_translationExtensions.contains(translationExtension->baseIdentifier())) {
       std::erase(m_translationExtensions[translationExtension->baseIdentifier()],
                  translationExtension);
