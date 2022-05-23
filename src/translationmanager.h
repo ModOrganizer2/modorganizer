@@ -8,7 +8,8 @@
 
 #include "extensionwatcher.h"
 
-class TranslationManager : public ExtensionWatcher
+class TranslationManager : public ExtensionWatcher<MOBase::TranslationExtension>,
+                           public ExtensionWatcher<MOBase::PluginExtension>
 {
 public:
   TranslationManager(QApplication* application);
@@ -31,10 +32,15 @@ public:
   auto currentTranslation() const { return m_currentTranslation; }
 
 public:  // ExtensionWatcher
-  void extensionLoaded(MOBase::IExtension const& extension) override;
-  void extensionUnloaded(MOBase::IExtension const& extension) override;
-  void extensionEnabled(MOBase::IExtension const& extension) override;
-  void extensionDisabled(MOBase::IExtension const& extension) override;
+  void extensionLoaded(MOBase::TranslationExtension const& extension) override;
+  void extensionUnloaded(MOBase::TranslationExtension const& extension) override;
+  void extensionEnabled(MOBase::TranslationExtension const& extension) override;
+  void extensionDisabled(MOBase::TranslationExtension const& extension) override;
+
+  void extensionLoaded(MOBase::PluginExtension const& extension) override;
+  void extensionUnloaded(MOBase::PluginExtension const& extension) override;
+  void extensionEnabled(MOBase::PluginExtension const& extension) override;
+  void extensionDisabled(MOBase::PluginExtension const& extension) override;
 
 private:
   // register a translation

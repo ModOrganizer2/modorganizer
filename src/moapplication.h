@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QApplication>
 #include <QFileSystemWatcher>
 
+#include "extensionmanager.h"
 #include "thememanager.h"
 #include "translationmanager.h"
 
@@ -33,7 +34,6 @@ class NexusInterface;
 class OrganizerCore;
 class PluginContainer;
 class Settings;
-class ThemeManager;
 
 namespace MOBase
 {
@@ -80,6 +80,7 @@ private:
   std::unique_ptr<Instance> m_instance;
   std::unique_ptr<Settings> m_settings;
   std::unique_ptr<NexusInterface> m_nexus;
+  std::unique_ptr<ExtensionManager> m_extensions;
   std::unique_ptr<PluginContainer> m_plugins;
   std::unique_ptr<ThemeManager> m_themes;
   std::unique_ptr<TranslationManager> m_translations;

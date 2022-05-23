@@ -63,7 +63,7 @@ void ThemeSettingsTab::addStyles(ThemeManager const& manager)
       separator = false;
     }
 
-    ui->styleBox->addItem(ToQString(theme->identifier()), ToQString(theme->name()));
+    ui->styleBox->addItem(ToQString(theme->name()), ToQString(theme->identifier()));
   }
 }
 

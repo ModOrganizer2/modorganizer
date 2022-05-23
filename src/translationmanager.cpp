@@ -14,7 +14,7 @@ using namespace MOBase;
 TranslationManager::TranslationManager(QApplication* application) : m_app{application}
 {
   // TODO: remove this
-  addOldFormatTranslations();
+  // addOldFormatTranslations();
 
   registerTranslation(std::make_shared<Translation>(
       "en_US", "English", std::vector<std::filesystem::path>{}));
@@ -178,19 +178,14 @@ void TranslationManager::registerTranslation(
   m_translationByLanguage[translation->identifier()] = translation;
 }
 
-void TranslationManager::extensionLoaded(IExtension const& extension)
+void TranslationManager::extensionLoaded(TranslationExtension const& extension)
 {
   for (const auto& translation : extension.translations()) {
     registerTranslation(translation);
   }
-
-  for (const auto& translationExtension : extension.translationAdditions()) {
-    const auto identifier = translationExtension->baseIdentifier();
-    m_translationExtensions[identifier].push_back(translationExtension);
-  }
 }
 
-void TranslationManager::extensionUnloaded(IExtension const& extension)
+void TranslationManager::extensionUnloaded(TranslationExtension const& extension)
 {
   // remove translation, unload if needed
   for (const auto& translation : extension.translations()) {
@@ -202,21 +197,55 @@ void TranslationManager::extensionUnloaded(IExtension const& extension)
       m_translationByLanguage.erase(translation->identifier());
     }
   }
-
-  for (const auto& translationExtension : extension.translationAdditions()) {
-    if (m_translationExtensions.contains(translationExtension->baseIdentifier())) {
-      std::erase(m_translationExtensions[translationExtension->baseIdentifier()],
-                 translationExtension);
-    }
-  }
 }
 
-void TranslationManager::extensionEnabled(IExtension const& extension)
+void TranslationManager::extensionEnabled(TranslationExtension const& extension)
 {
   extensionLoaded(extension);
 }
 
-void TranslationManager::extensionDisabled(IExtension const& extension)
+void TranslationManager::extensionDisabled(TranslationExtension const& extension)
+{
+  extensionUnloaded(extension);
+}
+
+void TranslationManager::extensionLoaded(PluginExtension const& extension)
+{
+  for (const auto& translationExtension : extension.translationAdditions()) {
+    const auto identifier = translationExtension->baseIdentifier();
+    m_translationExtensions[identifier].push_back(translationExtension);
+  }
+}
+
+void TranslationManager::extensionUnloaded(PluginExtension const& extension)
+{
+  for (const auto& translationAddition : extension.translationAdditions()) {
+    if (m_translationExtensions.contains(translationAddition->baseIdentifier())) {
+      std::erase(m_translationExtensions[translationAddition->baseIdentifier()],
+                 translationAddition);
+    }
+
+    // unload translator if there is one
+    const auto& files = translationAddition->files();
+    const auto it     = std::find_if(
+        m_translators.begin(), m_translators.end(), [&files](const auto& translator) {
+          const auto path = QFileInfo(translator->filePath()).filesystemFilePath();
+          return std::find(files.begin(), files.end(), path) != files.end();
+        });
+
+    if (it != m_translators.end()) {
+      m_app->removeTranslator(it->get());
+      m_translators.erase(it);
+    }
+  }
+}
+
+void TranslationManager::extensionEnabled(PluginExtension const& extension)
+{
+  extensionLoaded(extension);
+}
+
+void TranslationManager::extensionDisabled(PluginExtension const& extension)
 {
   extensionUnloaded(extension);
 }

@@ -65,12 +65,15 @@ ThemeManager::ThemeManager(QApplication* application) : m_app{application}
   // add built-in themes
   addQtThemes();
 
-  // TODO: remove this
-  addOldFormatThemes();
-
-  // find the default theme
-  m_defaultTheme =
-      m_baseThemesByIdentifier.at(m_app->style()->objectName().toStdString());
+  // find the default theme - this might be a built-in Qt theme, or null, in which case
+  // we just create a default theme
+  if (auto it =
+          m_baseThemesByIdentifier.find(m_app->style()->objectName().toStdString());
+      it != m_baseThemesByIdentifier.end()) {
+    m_defaultTheme = it->second;
+  } else {
+    m_defaultTheme = std::make_shared<const Theme>("", "", std::filesystem::path{});
+  }
 
   // for ease, we set the empty identifier to the default theme
   m_baseThemesByIdentifier[""] = m_defaultTheme;
@@ -278,18 +281,14 @@ void ThemeManager::watchThemeFiles(std::shared_ptr<const Theme> const& theme)
   m_watcher.addPaths(themeFiles);
 }
 
-void ThemeManager::extensionLoaded(IExtension const& extension)
+void ThemeManager::extensionLoaded(ThemeExtension const& extension)
 {
   for (const auto& theme : extension.themes()) {
     registerTheme(theme);
   }
-
-  const auto& themeAdditions = extension.themeAdditions();
-  m_additions.insert(m_additions.end(), std::begin(themeAdditions),
-                     std::end(themeAdditions));
 }
 
-void ThemeManager::extensionUnloaded(IExtension const& extension)
+void ThemeManager::extensionUnloaded(ThemeExtension const& extension)
 {
   // remove theme, unload if needed
   for (const auto& theme : extension.themes()) {
@@ -301,18 +300,54 @@ void ThemeManager::extensionUnloaded(IExtension const& extension)
       m_baseThemesByIdentifier.erase(theme->identifier());
     }
   }
-
-  for (const auto& themeAddition : extension.themeAdditions()) {
-    std::erase(m_additions, themeAddition);
-  }
 }
 
-void ThemeManager::extensionEnabled(IExtension const& extension)
+void ThemeManager::extensionEnabled(ThemeExtension const& extension)
 {
   extensionLoaded(extension);
 }
 
-void ThemeManager::extensionDisabled(IExtension const& extension)
+void ThemeManager::extensionDisabled(ThemeExtension const& extension)
+{
+  extensionUnloaded(extension);
+}
+
+void ThemeManager::extensionLoaded(PluginExtension const& extension)
+{
+  bool needReload = false;
+  for (const auto& themeAddition : extension.themeAdditions()) {
+    m_additions.push_back(themeAddition);
+
+    // check if the addition is for the current theme
+    needReload = needReload || themeAddition->isAdditionFor(*m_currentTheme);
+  }
+
+  if (needReload) {
+    reload();
+  }
+}
+
+void ThemeManager::extensionUnloaded(PluginExtension const& extension)
+{
+  bool needReload = false;
+  for (const auto& themeAddition : extension.themeAdditions()) {
+    std::erase(m_additions, themeAddition);
+
+    // check if the addition is for the current theme
+    needReload = needReload || themeAddition->isAdditionFor(*m_currentTheme);
+  }
+
+  if (needReload) {
+    reload();
+  }
+}
+
+void ThemeManager::extensionEnabled(PluginExtension const& extension)
+{
+  extensionLoaded(extension);
+}
+
+void ThemeManager::extensionDisabled(PluginExtension const& extension)
 {
   extensionUnloaded(extension);
 }
