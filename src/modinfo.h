@@ -25,7 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "versioninfo.h"
 
 class OrganizerCore;
-class PluginContainer;
+class PluginManager;
 class QDir;
 class QDateTime;
 
@@ -215,7 +215,7 @@ public:  // Static functions:
    *
    * @return true if any mods are checked for update.
    */
-  static bool checkAllForUpdate(PluginContainer* pluginContainer, QObject* receiver);
+  static bool checkAllForUpdate(PluginManager* pluginManager, QObject* receiver);
 
   /**
    *

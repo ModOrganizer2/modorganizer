@@ -1,7 +1,7 @@
 #include "createinstancedialogpages.h"
 #include "filesystemutilities.h"
 #include "instancemanager.h"
-#include "plugincontainer.h"
+#include "pluginmanager.h"
 #include "settings.h"
 #include "settingsdialognexus.h"
 #include "shared/appconfig.h"
@@ -55,7 +55,7 @@ void PlaceholderLabel::setVisible(bool b)
 }
 
 Page::Page(CreateInstanceDialog& dlg)
-    : ui(dlg.getUI()), m_dlg(dlg), m_pc(dlg.pluginContainer()), m_skip(false),
+    : ui(dlg.getUI()), m_dlg(dlg), m_pc(dlg.pluginManager()), m_skip(false),
       m_firstActivation(true)
 {}
 

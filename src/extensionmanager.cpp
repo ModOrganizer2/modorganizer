@@ -46,3 +46,27 @@ void ExtensionManager::triggerWatchers(const MOBase::IExtension& extension) cons
     }
   });
 }
+
+const IExtension* ExtensionManager::extension(QString const& identifier) const
+{
+  // TODO: use a map for faster lookup
+  auto it = std::find_if(m_extensions.begin(), m_extensions.end(),
+                         [&identifier](const auto& ext) {
+                           return identifier.compare(ext->metadata().identifier(),
+                                                     Qt::CaseInsensitive) == 0;
+                         });
+
+  return it == m_extensions.end() ? nullptr : it->get();
+}
+
+bool ExtensionManager::isEnabled(MOBase::IExtension const& extension) const
+{
+  // TODO
+  return true;
+}
+
+bool ExtensionManager::isEnabled(QString const& identifier) const
+{
+  const auto* e = extension(identifier);
+  return e ? isEnabled(*e) : false;
+}

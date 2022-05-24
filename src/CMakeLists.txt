@@ -4,7 +4,7 @@ add_executable(organizer)
 set_target_properties(organizer PROPERTIES OUTPUT_NAME "ModOrganizer")
 mo2_configure_executable(organizer
 	WARNINGS OFF
-	EXTRA_TRANSLATIONS ${MO2_SUPER_PATH}/game_gamebryo/src ${MO2_UIBASE_PATH}/src
+	TRANSLATIONS ON
 	PRIVATE_DEPENDS
 		uibase githubpp bsatk esptk archive usvfs lootcli boost::program_options
 		Qt::WebEngineWidgets Qt::WebSockets)
@@ -44,6 +44,7 @@ mo2_add_filter(NAME src/browser GROUPS
 mo2_add_filter(NAME src/core GROUPS
 	categories
 	archivefiletree
+	inibakery
 	installationmanager
 	nexusinterface
 	nxmaccessmanager
@@ -61,6 +62,8 @@ mo2_add_filter(NAME src/extensions GROUPS
 	translationmanager
 	extensionmanager
 	extensionwatcher
+	pluginmanager
+	proxyqt
 )
 
 mo2_add_filter(NAME src/dialogs GROUPS

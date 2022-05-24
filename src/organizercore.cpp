@@ -17,7 +17,7 @@
 #include "modrepositoryfileinfo.h"
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
-#include "plugincontainer.h"
+#include "pluginmanager.h"
 #include "previewdialog.h"
 #include "profile.h"
 #include "shared/appconfig.h"
@@ -70,6 +70,7 @@
 #include <tuple>
 #include <utility>
 
+#include "inibakery.h"
 #include "organizerproxy.h"
 
 using namespace MOShared;
@@ -88,9 +89,9 @@ QStringList toStringList(InputIterator current, InputIterator end)
 }
 
 OrganizerCore::OrganizerCore(Settings& settings)
-    : m_UserInterface(nullptr), m_PluginContainer(nullptr), m_CurrentProfile(nullptr),
+    : m_UserInterface(nullptr), m_PluginManager(nullptr), m_CurrentProfile(nullptr),
       m_Settings(settings), m_Updater(&NexusInterface::instance()),
-      m_ModList(m_PluginContainer, this), m_PluginList(*this),
+      m_ModList(m_PluginManager, this), m_PluginList(*this),
       m_DirectoryRefresher(new DirectoryRefresher(settings.refreshThreadCount())),
       m_DirectoryStructure(new DirectoryEntry(L"data", nullptr, 0)),
       m_VirtualFileTree([this]() {
@@ -100,6 +101,9 @@ OrganizerCore::OrganizerCore(Settings& settings)
       m_ArchivesInit(false),
       m_PluginListsWriter(std::bind(&OrganizerCore::savePluginList, this))
 {
+  // need to initialize here for aboutToRun() to be callable
+  m_IniBakery = std::make_unique<IniBakery>(*this);
+
   env::setHandleCloserThreadCount(settings.refreshThreadCount());
   m_DownloadManager.setOutputDirectory(m_Settings.paths().downloads(), false);
 
@@ -210,7 +214,7 @@ void OrganizerCore::storeSettings()
 
 void OrganizerCore::updateExecutablesList()
 {
-  if (m_PluginContainer == nullptr) {
+  if (m_PluginManager == nullptr) {
     log::error("can't update executables list now");
     return;
   }
@@ -253,23 +257,23 @@ void OrganizerCore::checkForUpdates()
   }
 }
 
-void OrganizerCore::connectPlugins(PluginContainer* container)
+void OrganizerCore::connectPlugins(PluginManager* manager)
 {
-  m_PluginContainer = container;
-  m_Updater.setPluginContainer(m_PluginContainer);
-  m_InstallationManager.setPluginContainer(m_PluginContainer);
-  m_DownloadManager.setPluginContainer(m_PluginContainer);
-  m_ModList.setPluginContainer(m_PluginContainer);
+  m_PluginManager = manager;
+  m_Updater.setPluginManager(m_PluginManager);
+  m_InstallationManager.setPluginManager(m_PluginManager);
+  m_DownloadManager.setPluginManager(m_PluginManager);
+  m_ModList.setPluginManager(m_PluginManager);
 
   if (!m_GameName.isEmpty()) {
-    m_GamePlugin = m_PluginContainer->game(m_GameName);
+    m_GamePlugin = m_PluginManager->game(m_GameName);
     emit managedGameChanged(m_GamePlugin);
   }
 
-  connect(m_PluginContainer, &PluginContainer::pluginEnabled, [&](IPlugin* plugin) {
+  connect(m_PluginManager, &PluginManager::pluginEnabled, [&](IPlugin* plugin) {
     m_PluginEnabled(plugin);
   });
-  connect(m_PluginContainer, &PluginContainer::pluginDisabled, [&](IPlugin* plugin) {
+  connect(m_PluginManager, &PluginManager::pluginDisabled, [&](IPlugin* plugin) {
     m_PluginDisabled(plugin);
   });
 }
@@ -598,7 +602,7 @@ void OrganizerCore::setCurrentProfile(const QString& profileName)
 
 MOBase::IModRepositoryBridge* OrganizerCore::createNexusBridge() const
 {
-  return new NexusBridge(m_PluginContainer);
+  return new NexusBridge();
 }
 
 QString OrganizerCore::profileName() const
@@ -646,7 +650,7 @@ MOBase::VersionInfo OrganizerCore::appVersion() const
 
 MOBase::IPluginGame* OrganizerCore::getGame(const QString& name) const
 {
-  for (IPluginGame* game : m_PluginContainer->plugins<IPluginGame>()) {
+  for (IPluginGame* game : m_PluginManager->plugins<IPluginGame>()) {
     if (game != nullptr &&
         game->gameShortName().compare(name, Qt::CaseInsensitive) == 0)
       return game;
@@ -943,7 +947,7 @@ QStringList OrganizerCore::getFileOrigins(const QString& fileName) const
   if (file.get() != nullptr) {
     result.append(
         ToQString(m_DirectoryStructure->getOriginByID(file->getOrigin()).getName()));
-    foreach (const auto& i, file->getAlternatives()) {
+    for (const auto& i : file->getAlternatives()) {
       result.append(
           ToQString(m_DirectoryStructure->getOriginByID(i.originID()).getName()));
     }
@@ -1042,7 +1046,7 @@ bool OrganizerCore::previewFileWithAlternatives(QWidget* parent, QString fileNam
     if (QFile::exists(filePath)) {
       // it's very possible the file doesn't exist, because it's inside an archive. we
       // don't support that
-      QWidget* wid = m_PluginContainer->previewGenerator().genPreview(filePath);
+      QWidget* wid = m_PluginManager->previewGenerator().genPreview(filePath);
       if (wid == nullptr) {
         reportError(tr("failed to generate preview for %1").arg(filePath));
       } else {
@@ -1110,7 +1114,7 @@ bool OrganizerCore::previewFile(QWidget* parent, const QString& originName,
 
   PreviewDialog preview(path, parent);
 
-  QWidget* wid = m_PluginContainer->previewGenerator().genPreview(path);
+  QWidget* wid = m_PluginManager->previewGenerator().genPreview(path);
   if (wid == nullptr) {
     reportError(tr("Failed to generate preview for %1").arg(path));
     return false;
@@ -1403,11 +1407,11 @@ void OrganizerCore::loggedInAction(QWidget* parent, std::function<void()> f)
 
 void OrganizerCore::requestDownload(const QUrl& url, QNetworkReply* reply)
 {
-  if (!m_PluginContainer) {
+  if (!m_PluginManager) {
     return;
   }
-  for (IPluginModPage* modPage : m_PluginContainer->plugins<MOBase::IPluginModPage>()) {
-    if (m_PluginContainer->isEnabled(modPage)) {
+  for (IPluginModPage* modPage : m_PluginManager->plugins<MOBase::IPluginModPage>()) {
+    if (m_PluginManager->isEnabled(modPage)) {
       ModRepositoryFileInfo* fileInfo = new ModRepositoryFileInfo();
       if (modPage->handlesDownload(url, reply->url(), *fileInfo)) {
         fileInfo->repository = modPage->name();
@@ -1453,9 +1457,9 @@ void OrganizerCore::requestDownload(const QUrl& url, QNetworkReply* reply)
   }
 }
 
-PluginContainer& OrganizerCore::pluginContainer() const
+PluginManager& OrganizerCore::pluginManager() const
 {
-  return *m_PluginContainer;
+  return *m_PluginManager;
 }
 
 IPluginGame const* OrganizerCore::managedGame() const
@@ -1465,7 +1469,7 @@ IPluginGame const* OrganizerCore::managedGame() const
 
 IOrganizer const* OrganizerCore::managedGameOrganizer() const
 {
-  return m_PluginContainer->requirements(m_GamePlugin).m_Organizer;
+  return m_PluginManager->details(m_GamePlugin).proxy();
 }
 
 std::vector<QString> OrganizerCore::enabledArchives()
@@ -2034,10 +2038,17 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString& profileName,
   result.insert(result.end(), {QDir::toNativeSeparators(m_Settings.paths().overwrite()),
                                dataPath, true, customOverwrite.isEmpty()});
 
+  // ini bakery
+  {
+    const auto iniBakeryMapping = m_IniBakery->mappings();
+    result.reserve(result.size() + iniBakeryMapping.size());
+    result.insert(result.end(), iniBakeryMapping.begin(), iniBakeryMapping.end());
+  }
+
   for (MOBase::IPluginFileMapper* mapper :
-       m_PluginContainer->plugins<MOBase::IPluginFileMapper>()) {
+       m_PluginManager->plugins<MOBase::IPluginFileMapper>()) {
     IPlugin* plugin = dynamic_cast<IPlugin*>(mapper);
-    if (m_PluginContainer->isEnabled(plugin)) {
+    if (m_PluginManager->isEnabled(plugin)) {
       MappingType pluginMap = mapper->mappings();
       result.reserve(result.size() + pluginMap.size());
       result.insert(result.end(), pluginMap.begin(), pluginMap.end());

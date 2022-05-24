@@ -10,14 +10,14 @@ namespace Ui
 class ProblemsDialog;
 }
 
-class PluginContainer;
+class PluginManager;
 
 class ProblemsDialog : public QDialog
 {
   Q_OBJECT
 
 public:
-  explicit ProblemsDialog(PluginContainer const& pluginContainer, QWidget* parent = 0);
+  explicit ProblemsDialog(PluginManager const& pluginContainer, QWidget* parent = 0);
   ~ProblemsDialog();
 
   // also saves and restores geometry
@@ -37,7 +37,7 @@ private slots:
 
 private:
   Ui::ProblemsDialog* ui;
-  const PluginContainer& m_PluginContainer;
+  const PluginManager& m_PluginManager;
   bool m_hasProblems;
 };
 

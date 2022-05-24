@@ -27,7 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 class Archive;
 class NexusInterface;
-class PluginContainer;
+class PluginManager;
 namespace MOBase
 {
 class IPluginGame;
@@ -82,7 +82,7 @@ public:
 
   void setUserInterface(QWidget* widget);
 
-  void setPluginContainer(PluginContainer* pluginContainer);
+  void setPluginManager(PluginManager* pluginManager);
 
   /**
    * @brief request information about the current version

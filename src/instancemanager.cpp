@@ -20,10 +20,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "instancemanager.h"
 #include "createinstancedialog.h"
 #include "createinstancedialogpages.h"
+#include "extensionmanager.h"
 #include "filesystemutilities.h"
 #include "instancemanagerdialog.h"
 #include "nexusinterface.h"
-#include "plugincontainer.h"
+#include "pluginmanager.h"
 #include "selectiondialog.h"
 #include "settings.h"
 #include "shared/appconfig.h"
@@ -146,7 +147,7 @@ bool Instance::readFromIni()
   return true;
 }
 
-Instance::SetupResults Instance::setup(PluginContainer& plugins)
+Instance::SetupResults Instance::setup(PluginManager& plugins)
 {
   // read initial values from the ini
   if (!readFromIni()) {
@@ -208,7 +209,7 @@ void Instance::setVariant(const QString& name)
   m_gameVariant = name;
 }
 
-Instance::SetupResults Instance::getGamePlugin(PluginContainer& plugins)
+Instance::SetupResults Instance::getGamePlugin(PluginManager& plugins)
 {
   if (!m_gameName.isEmpty() && !m_gameDir.isEmpty()) {
     // normal case: both the name and dir are in the ini
@@ -607,15 +608,15 @@ bool InstanceManager::allowedToChangeInstance() const
 
 MOBase::IPluginGame*
 InstanceManager::gamePluginForDirectory(const QString& instanceDir,
-                                        PluginContainer& plugins) const
+                                        PluginManager& plugins) const
 {
   return const_cast<MOBase::IPluginGame*>(
-      gamePluginForDirectory(instanceDir, const_cast<const PluginContainer&>(plugins)));
+      gamePluginForDirectory(instanceDir, const_cast<const PluginManager&>(plugins)));
 }
 
 const MOBase::IPluginGame*
 InstanceManager::gamePluginForDirectory(const QString& instanceDir,
-                                        const PluginContainer& plugins) const
+                                        const PluginManager& plugins) const
 {
   const QString ini = iniPath(instanceDir);
 
@@ -699,9 +700,13 @@ std::unique_ptr<Instance> selectInstance()
   auto& m = InstanceManager::singleton();
 
   // since there is no instance currently active, load plugins with a null
-  // OrganizerCore; see PluginContainer::initPlugin()
+  // OrganizerCore; see PluginManager::initPlugin()
   NexusInterface ni(nullptr);
-  PluginContainer pc(nullptr);
+  ExtensionManager ec;
+  ec.loadExtensions(QDir(QCoreApplication::applicationDirPath() + "/extensions")
+                        .filesystemAbsolutePath());
+
+  PluginManager pc(ec, nullptr);
   pc.loadPlugins();
 
   if (m.hasAnyInstances()) {
@@ -740,7 +745,7 @@ std::unique_ptr<Instance> selectInstance()
 // this is used below in setupInstance() when the game directory is gone or
 // no plugins can recognize it
 //
-SetupInstanceResults selectGame(Instance& instance, PluginContainer& pc)
+SetupInstanceResults selectGame(Instance& instance, PluginManager& pc)
 {
   CreateInstanceDialog dlg(pc, nullptr);
 
@@ -772,7 +777,7 @@ SetupInstanceResults selectGame(Instance& instance, PluginContainer& pc)
 // or when a new variant has become supported by the plugin for a game the
 // user already has an instance for
 //
-SetupInstanceResults selectVariant(Instance& instance, PluginContainer& pc)
+SetupInstanceResults selectVariant(Instance& instance, PluginManager& pc)
 {
   CreateInstanceDialog dlg(pc, nullptr);
 
@@ -798,7 +803,7 @@ SetupInstanceResults selectVariant(Instance& instance, PluginContainer& pc)
   return SetupInstanceResults::TryAgain;
 }
 
-SetupInstanceResults setupInstance(Instance& instance, PluginContainer& pc)
+SetupInstanceResults setupInstance(Instance& instance, PluginManager& pc)
 {
   // set up the instance
   const auto setupResult = instance.setup(pc);

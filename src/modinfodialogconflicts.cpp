@@ -221,7 +221,7 @@ void ConflictsTab::activateItems(QTreeView* tree)
   forEachInSelection(tree, [&](const ConflictItem* item) {
     const auto path = item->fileName();
 
-    if (tryPreview && canPreviewFile(plugin(), item->isArchive(), path)) {
+    if (tryPreview && canPreviewFile(plugins(), item->isArchive(), path)) {
       previewItem(item);
     } else {
       openItem(item, false);
@@ -424,7 +424,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
     enableUnhide  = item->canUnhide();
     enableRun     = item->canRun();
     enableOpen    = item->canOpen();
-    enablePreview = item->canPreview(plugin());
+    enablePreview = item->canPreview(plugins());
     enableExplore = item->canExplore();
     enableGoto    = item->hasAlts();
   } else {

@@ -8,7 +8,7 @@
 
 #include "organizercore.h"
 
-class PluginContainer;
+class PluginManager;
 class DownloadManagerProxy;
 class ModListProxy;
 class PluginListProxy;
@@ -17,7 +17,7 @@ class OrganizerProxy : public MOBase::IOrganizer
 {
 
 public:
-  OrganizerProxy(OrganizerCore* organizer, PluginContainer* pluginContainer,
+  OrganizerProxy(OrganizerCore* organizer, PluginManager* pluginManager,
                  MOBase::IPlugin* plugin);
   ~OrganizerProxy();
 
@@ -110,7 +110,7 @@ public:  // IOrganizer interface
 
 protected:
   // The container needs access to some callbacks to simulate startup.
-  friend class PluginContainer;
+  friend class PluginManager;
 
   /**
    * @brief Connect the signals from this proxy and all the child proxies (plugin list,
@@ -127,7 +127,7 @@ protected:
 
 private:
   OrganizerCore* m_Proxied;
-  PluginContainer* m_PluginContainer;
+  PluginManager* m_PluginManager;
 
   MOBase::IPlugin* m_Plugin;
 

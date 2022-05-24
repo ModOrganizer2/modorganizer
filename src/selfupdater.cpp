@@ -26,7 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
 #include "organizercore.h"
-#include "plugincontainer.h"
+#include "pluginmanager.h"
 #include "settings.h"
 #include "shared/util.h"
 #include "updatedialog.h"
@@ -81,9 +81,9 @@ void SelfUpdater::setUserInterface(QWidget* widget)
   m_Parent = widget;
 }
 
-void SelfUpdater::setPluginContainer(PluginContainer* pluginContainer)
+void SelfUpdater::setPluginManager(PluginManager* pluginManager)
 {
-  m_Interface->setPluginContainer(pluginContainer);
+  m_Interface->setPluginManager(pluginManager);
 }
 
 void SelfUpdater::testForUpdate(const Settings& settings)

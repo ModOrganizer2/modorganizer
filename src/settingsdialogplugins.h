@@ -9,7 +9,7 @@
 class PluginsSettingsTab : public SettingsTab
 {
 public:
-  PluginsSettingsTab(Settings& settings, PluginContainer* pluginContainer,
+  PluginsSettingsTab(Settings& settings, PluginManager& pluginManager,
                      SettingsDialog& dialog);
 
   void update();
@@ -18,7 +18,6 @@ public:
 private:
   void on_pluginsList_currentItemChanged(QTreeWidgetItem* current,
                                          QTreeWidgetItem* previous);
-  void on_checkboxEnabled_clicked(bool checked);
   void deleteBlacklistItem();
   void storeSettings(QTreeWidgetItem* pluginItem);
 
@@ -49,7 +48,7 @@ private slots:
   };
 
 private:
-  PluginContainer* m_pluginContainer;
+  PluginManager* m_pluginManager;
 
   MOBase::FilterWidget m_filter;
 };

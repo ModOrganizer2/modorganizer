@@ -145,19 +145,19 @@ bool ModListChangeCategoryMenu::populate(QMenu* menu, CategoryFactory& factory,
         targetMenu = menu->addMenu(factory.getCategoryName(i).replace('&', "&&"));
       }
 
-      int id = factory.getCategoryID(i);
-      QScopedPointer<QCheckBox> checkBox(new QCheckBox(targetMenu));
-      bool enabled = categories.find(id) != categories.end();
+      int id              = factory.getCategoryID(i);
+      QCheckBox* checkBox = new QCheckBox(targetMenu);
+      bool enabled        = categories.find(id) != categories.end();
       checkBox->setText(factory.getCategoryName(i).replace('&', "&&"));
       if (enabled) {
         childEnabled = true;
       }
       checkBox->setChecked(enabled ? Qt::Checked : Qt::Unchecked);
 
-      QScopedPointer<QWidgetAction> checkableAction(new QWidgetAction(targetMenu));
-      checkableAction->setDefaultWidget(checkBox.take());
+      QWidgetAction* checkableAction = new QWidgetAction(targetMenu);
+      checkableAction->setDefaultWidget(checkBox);
       checkableAction->setData(id);
-      targetMenu->addAction(checkableAction.take());
+      targetMenu->addAction(checkableAction);
 
       if (factory.hasChildren(i)) {
         if (populate(targetMenu, factory, mod, factory.getCategoryID(i)) || enabled) {

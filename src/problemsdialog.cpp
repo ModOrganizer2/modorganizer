@@ -11,8 +11,8 @@
 
 using namespace MOBase;
 
-ProblemsDialog::ProblemsDialog(const PluginContainer& pluginContainer, QWidget* parent)
-    : QDialog(parent), ui(new Ui::ProblemsDialog), m_PluginContainer(pluginContainer),
+ProblemsDialog::ProblemsDialog(const PluginManager& pluginManager, QWidget* parent)
+    : QDialog(parent), ui(new Ui::ProblemsDialog), m_PluginManager(pluginManager),
       m_hasProblems(false)
 {
   ui->setupUi(this);
@@ -41,13 +41,13 @@ void ProblemsDialog::runDiagnosis()
   m_hasProblems = false;
   ui->problemsWidget->clear();
 
-  for (IPluginDiagnose* diagnose : m_PluginContainer.plugins<IPluginDiagnose>()) {
-    if (!m_PluginContainer.isEnabled(diagnose)) {
+  for (IPluginDiagnose* diagnose : m_PluginManager.plugins<IPluginDiagnose>()) {
+    if (!m_PluginManager.isEnabled(diagnose)) {
       continue;
     }
 
     std::vector<unsigned int> activeProblems = diagnose->activeProblems();
-    foreach (unsigned int key, activeProblems) {
+    for (const auto key : activeProblems) {
       QTreeWidgetItem* newItem = new QTreeWidgetItem();
       newItem->setText(0, diagnose->shortDescription(key));
       newItem->setData(0, Qt::UserRole, diagnose->fullDescription(key));

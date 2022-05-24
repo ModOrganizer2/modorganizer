@@ -49,7 +49,7 @@ class IPluginGame;
 }
 
 class NexusInterface;
-class PluginContainer;
+class PluginManager;
 class OrganizerCore;
 
 /*!
@@ -213,7 +213,7 @@ public:
    */
   void setShowHidden(bool showHidden);
 
-  void setPluginContainer(PluginContainer* pluginContainer);
+  void setPluginManager(PluginManager* pluginManager);
 
   /**
    * @brief download from an already open network connection
