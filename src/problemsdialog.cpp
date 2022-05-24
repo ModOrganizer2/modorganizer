@@ -7,8 +7,6 @@
 #include <iplugindiagnose.h>
 #include <utility.h>
 
-#include "plugincontainer.h"
-
 using namespace MOBase;
 
 ProblemsDialog::ProblemsDialog(const PluginManager& pluginManager, QWidget* parent)

@@ -4,7 +4,6 @@
 #include "messagedialog.h"
 #include "moddatacontent.h"
 #include "organizercore.h"
-#include "plugincontainer.h"
 #include "report.h"
 #include "settings.h"
 #include <iplugingame.h>

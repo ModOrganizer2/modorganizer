@@ -2,7 +2,6 @@
 #include "createinstancedialog.h"
 #include "filesystemutilities.h"
 #include "instancemanager.h"
-#include "plugincontainer.h"
 #include "selectiondialog.h"
 #include "settings.h"
 #include "shared/appconfig.h"

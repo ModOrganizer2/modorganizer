@@ -29,7 +29,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfo.h"
 #include "modlistbypriorityproxy.h"
 #include "modlistsortproxy.h"
-#include "plugincontainer.h"  //class PluginManager;
 #include "shared/fileregisterfwd.h"
 #include "thememanager.h"
 #include "translationmanager.h"

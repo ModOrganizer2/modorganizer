@@ -464,6 +464,8 @@ IPlugin* PluginManager::registerPlugin(const PluginExtension& extension,
 
 void PluginManager::loadPlugins()
 {
+  unloadPlugins();
+
   // TODO: order based on dependencies
   for (auto& extension : m_extensions.extensions()) {
     if (auto* pluginExtension = dynamic_cast<const PluginExtension*>(extension.get())) {
@@ -474,7 +476,7 @@ void PluginManager::loadPlugins()
 
 bool PluginManager::loadPlugins(const MOBase::PluginExtension& extension)
 {
-  unloadPlugins();
+  unloadPlugins(extension);
 
   // load plugins
   QList<QList<QObject*>> objects;
@@ -605,14 +607,13 @@ void PluginManager::unloadPlugins()
   m_supportedGames.clear();
 
   for (auto& loader : m_loaders) {
-    // TODO:
-    // loader->unloadAll();
+    loader->unloadAll();
   }
 }
 
 bool PluginManager::reloadPlugins(const MOBase::PluginExtension& extension)
 {
-  unloadPlugins(extension);
+  // load plugin already unload(), so no need to manually do it here
   return loadPlugins(extension);
 }
 
