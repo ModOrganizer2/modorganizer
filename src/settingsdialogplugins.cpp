@@ -159,14 +159,14 @@ IPlugin* PluginsSettingsTab::plugin(QTreeWidgetItem* pluginItem) const
 void PluginsSettingsTab::update()
 {
   // transfer plugin settings to in-memory structure
-  for (int i = 0; i < ui->pluginsList->topLevelItemCount(); ++i) {
-    auto* topLevelItem = ui->pluginsList->topLevelItem(i);
-    for (int j = 0; j < topLevelItem->childCount(); ++j) {
-      auto* item = topLevelItem->child(j);
-      settings().plugins().setSettings(plugin(item)->name(),
-                                       item->data(0, SettingsRole).toMap());
-    }
-  }
+  // for (int i = 0; i < ui->pluginsList->topLevelItemCount(); ++i) {
+  //  auto* topLevelItem = ui->pluginsList->topLevelItem(i);
+  //  for (int j = 0; j < topLevelItem->childCount(); ++j) {
+  //    auto* item = topLevelItem->child(j);
+  //    settings().plugins().setSettings(plugin(item)->name(),
+  //                                     item->data(0, SettingsRole).toMap());
+  //  }
+  //}
 
   // set plugin blacklist
   QStringList names;
