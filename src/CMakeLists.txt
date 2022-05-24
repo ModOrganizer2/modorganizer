@@ -57,7 +57,6 @@ mo2_add_filter(NAME src/core GROUPS
 )
 
 mo2_add_filter(NAME src/extensions GROUPS
-	plugincontainer
 	thememanager
 	translationmanager
 	extensionmanager
