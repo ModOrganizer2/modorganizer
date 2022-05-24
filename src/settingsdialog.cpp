@@ -30,12 +30,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-SettingsDialog::SettingsDialog(PluginContainer* pluginContainer,
+SettingsDialog::SettingsDialog(PluginManager& pluginManager,
                                ThemeManager const& themeManager,
                                TranslationManager const& translationManager,
                                Settings& settings, QWidget* parent)
     : TutorableDialog("SettingsDialog", parent), ui(new Ui::SettingsDialog),
-      m_settings(settings), m_exit(Exit::None), m_pluginContainer(pluginContainer)
+      m_settings(settings), m_exit(Exit::None), m_pluginManager(&pluginManager)
 {
   ui->setupUi(this);
 
@@ -50,14 +50,9 @@ SettingsDialog::SettingsDialog(PluginContainer* pluginContainer,
       std::unique_ptr<SettingsTab>(new DiagnosticsSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new NexusSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(
-      new PluginsSettingsTab(settings, m_pluginContainer, *this)));
+      new PluginsSettingsTab(settings, *m_pluginManager, *this)));
   m_tabs.push_back(
       std::unique_ptr<SettingsTab>(new WorkaroundsSettingsTab(settings, *this)));
-}
-
-PluginContainer* SettingsDialog::pluginContainer()
-{
-  return m_pluginContainer;
 }
 
 QWidget* SettingsDialog::parentWidgetForDialogs()

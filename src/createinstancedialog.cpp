@@ -95,7 +95,7 @@ private:
   std::vector<QDir> m_created;
 };
 
-CreateInstanceDialog::CreateInstanceDialog(const PluginContainer& pc, Settings* s,
+CreateInstanceDialog::CreateInstanceDialog(const PluginManager& pc, Settings* s,
                                            QWidget* parent)
     : QDialog(parent), ui(new Ui::CreateInstanceDialog), m_pc(pc), m_settings(s),
       m_switching(false), m_singlePage(false)
@@ -161,7 +161,7 @@ Ui::CreateInstanceDialog* CreateInstanceDialog::getUI()
   return ui.get();
 }
 
-const PluginContainer& CreateInstanceDialog::pluginContainer()
+const PluginManager& CreateInstanceDialog::pluginManager()
 {
   return m_pc;
 }

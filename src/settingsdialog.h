@@ -23,7 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "shared/util.h"
 #include "tutorabledialog.h"
 
-class PluginContainer;
+class PluginManager;
 class Settings;
 class SettingsDialog;
 class ThemeManager;
@@ -66,7 +66,7 @@ class SettingsDialog : public MOBase::TutorableDialog
   friend class SettingsTab;
 
 public:
-  explicit SettingsDialog(PluginContainer* pluginContainer,
+  explicit SettingsDialog(PluginManager& pluginManager,
                           ThemeManager const& themeManager,
                           TranslationManager const& translationManager,
                           Settings& settings, QWidget* parent = 0);
@@ -79,7 +79,6 @@ public:
    */
   QString getColoredButtonStyleSheet() const;
 
-  PluginContainer* pluginContainer();
   QWidget* parentWidgetForDialogs();
 
   void setExitNeeded(ExitFlags e);
@@ -95,7 +94,7 @@ private:
   Settings& m_settings;
   std::vector<std::unique_ptr<SettingsTab>> m_tabs;
   ExitFlags m_exit;
-  PluginContainer* m_pluginContainer;
+  PluginManager* m_pluginManager;
 };
 
 #endif  // SETTINGSDIALOG_H

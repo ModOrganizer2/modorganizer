@@ -25,12 +25,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTextEdit>
 #include <utility.h>
 
-#include "plugincontainer.h"
+#include "pluginmanager.h"
 
 using namespace MOBase;
 
-PreviewGenerator::PreviewGenerator(const PluginContainer& pluginContainer)
-    : m_PluginContainer(pluginContainer)
+PreviewGenerator::PreviewGenerator(const PluginManager& pluginManager)
+    : m_PluginManager(pluginManager)
 {
   m_MaxSize = QGuiApplication::primaryScreen()->size() * 0.8;
 }
@@ -38,7 +38,7 @@ PreviewGenerator::PreviewGenerator(const PluginContainer& pluginContainer)
 bool PreviewGenerator::previewSupported(const QString& fileExtension,
                                         const bool& isArchive) const
 {
-  auto& previews = m_PluginContainer.plugins<IPluginPreview>();
+  auto& previews = m_PluginManager.plugins<IPluginPreview>();
   for (auto* preview : previews) {
     if (preview->supportedExtensions().contains(fileExtension)) {
       if (!isArchive)
@@ -53,9 +53,9 @@ bool PreviewGenerator::previewSupported(const QString& fileExtension,
 QWidget* PreviewGenerator::genPreview(const QString& fileName) const
 {
   const QString ext = QFileInfo(fileName).suffix().toLower();
-  auto& previews    = m_PluginContainer.plugins<IPluginPreview>();
+  auto& previews    = m_PluginManager.plugins<IPluginPreview>();
   for (auto* preview : previews) {
-    if (m_PluginContainer.isEnabled(preview) &&
+    if (m_PluginManager.isEnabled(preview) &&
         preview->supportedExtensions().contains(ext)) {
       return preview->genFilePreview(fileName, m_MaxSize);
     }

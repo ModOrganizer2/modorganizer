@@ -20,7 +20,7 @@ class IPluginGame;
 }  // namespace MOBase
 
 class OrganizerCore;
-class PluginContainer;
+class PluginManager;
 
 /**
  * Class managing game features, either registered or from the game plugin.
@@ -33,7 +33,7 @@ public:
   /**
    *
    */
-  GameFeatures(OrganizerCore* core, PluginContainer* plugins);
+  GameFeatures(OrganizerCore* core, PluginManager* plugins);
 
   ~GameFeatures();
 
@@ -104,7 +104,7 @@ private:
   CombinedModDataChecker& modDataChecker() const;
   CombinedModDataContent& modDataContent() const;
 
-  PluginContainer& m_pluginContainer;
+  PluginManager& m_plugins;
 
   std::unordered_map<std::type_index, std::vector<GameFeatureWithData>> m_allFeatures;
   std::unordered_map<std::type_index, std::vector<std::shared_ptr<MOBase::GameFeature>>>

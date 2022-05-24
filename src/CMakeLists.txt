@@ -122,6 +122,7 @@ mo2_add_filter(NAME src/categories GROUPS
 mo2_add_filter(NAME src/core GROUPS
 	archivefiletree
 	githubpp
+	inibakery
 	installationmanager
 	nexusinterface
 	nxmaccessmanager
@@ -140,6 +141,8 @@ mo2_add_filter(NAME src/extensions GROUPS
 	translationmanager
 	extensionmanager
 	extensionwatcher
+	pluginmanager
+	proxyqt
 )
 
 mo2_add_filter(NAME src/dialogs GROUPS

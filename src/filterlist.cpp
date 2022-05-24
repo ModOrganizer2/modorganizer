@@ -2,7 +2,7 @@
 #include "categories.h"
 #include "categoriesdialog.h"
 #include "organizercore.h"
-#include "plugincontainer.h"
+#include "pluginmanager.h"
 #include "settings.h"
 #include "ui_mainwindow.h"
 #include <utility.h>

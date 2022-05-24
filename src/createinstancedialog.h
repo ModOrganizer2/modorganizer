@@ -16,7 +16,7 @@ namespace cid
 class Page;
 }
 
-class PluginContainer;
+class PluginManager;
 class Settings;
 
 // this is a wizard for creating a new instance, it is made out of Page objects,
@@ -90,13 +90,12 @@ public:
     ProfileSettings profileSettings;
   };
 
-  CreateInstanceDialog(const PluginContainer& pc, Settings* s,
-                       QWidget* parent = nullptr);
+  CreateInstanceDialog(const PluginManager& pc, Settings* s, QWidget* parent = nullptr);
 
   ~CreateInstanceDialog();
 
   Ui::CreateInstanceDialog* getUI();
-  const PluginContainer& pluginContainer();
+  const PluginManager& pluginManager();
   Settings* settings();
 
   // disables all the pages except for the given one, used on startup when some
@@ -185,7 +184,7 @@ public:
 
 private:
   std::unique_ptr<Ui::CreateInstanceDialog> ui;
-  const PluginContainer& m_pc;
+  const PluginManager& m_pc;
   Settings* m_settings;
   std::vector<std::unique_ptr<cid::Page>> m_pages;
   QString m_originalNext;

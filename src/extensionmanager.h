@@ -14,15 +14,28 @@
 class ExtensionManager
 {
 public:
+  // retrieve the list of currently loaded extensions
+  //
+  const auto& extensions() const { return m_extensions; }
+
+  // retrieve the extension with the given identifier, or a null pointer if there is
+  // none
+  //
+  // identifier are case insensitive
+  //
+  const MOBase::IExtension* extension(QString const& identifier) const;
+
+  // check if the given extension is enabled
+  //
+  bool isEnabled(MOBase::IExtension const& extension) const;
+  bool isEnabled(QString const& extension) const;
+
+public:
   // load all extensions from the given directory
   //
   // trigger all currently registered watchers
   //
   void loadExtensions(std::filesystem::path const& directory);
-
-  // retrieve the list of currently loaded extensions
-  //
-  const auto& extensions() const { return m_extensions; }
 
   // register an object implementing one or many watcher classes
   //

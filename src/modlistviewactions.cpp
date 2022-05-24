@@ -225,7 +225,7 @@ void ModListViewActions::checkModsForUpdates() const
   bool checkingModsForUpdate = false;
   if (NexusInterface::instance().getAccessManager()->validated()) {
     checkingModsForUpdate =
-        ModInfo::checkAllForUpdate(&m_core.pluginContainer(), m_receiver);
+        ModInfo::checkAllForUpdate(&m_core.pluginManager(), m_receiver);
     NexusInterface::instance().requestEndorsementInfo(m_receiver, QVariant(),
                                                       QString());
     NexusInterface::instance().requestTrackingInfo(m_receiver, QVariant(), QString());
@@ -568,7 +568,7 @@ void ModListViewActions::displayModInformation(ModInfo::Ptr modInfo,
   } else {
     modInfo->saveMeta();
 
-    ModInfoDialog dialog(m_core, m_core.pluginContainer(), modInfo, m_view, m_parent);
+    ModInfoDialog dialog(m_core, m_core.pluginManager(), modInfo, m_view, m_parent);
     connect(&dialog, &ModInfoDialog::originModified, this,
             &ModListViewActions::originModified);
     connect(&dialog, &ModInfoDialog::modChanged, [=](unsigned int index) {

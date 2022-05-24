@@ -230,13 +230,13 @@ void setFilterShortcuts(QWidget* widget, QLineEdit* edit)
 }
 
 MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
-                       PluginContainer& pluginContainer, ThemeManager& themeManager,
+                       PluginManager& pluginManager, ThemeManager& themeManager,
                        TranslationManager& translationManager, QWidget* parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), m_WasVisible(false),
       m_FirstPaint(true), m_linksSeparator(nullptr), m_Tutorial(this, "MainWindow"),
       m_OldProfileIndex(-1), m_OldExecutableIndex(-1),
       m_CategoryFactory(CategoryFactory::instance()), m_OrganizerCore(organizerCore),
-      m_PluginContainer(pluginContainer), m_ThemeManager(themeManager),
+      m_PluginManager(pluginManager), m_ThemeManager(themeManager),
       m_TranslationManager(translationManager),
       m_ArchiveListWriter(std::bind(&MainWindow::saveArchiveList, this)),
       m_LinkToolbar(nullptr), m_LinkDesktop(nullptr), m_LinkStartMenu(nullptr),
@@ -311,7 +311,7 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
       settings.geometry().restoreState(ui->espList->header());
 
   // data tab
-  m_DataTab.reset(new DataTab(m_OrganizerCore, m_PluginContainer, this, ui));
+  m_DataTab.reset(new DataTab(m_OrganizerCore, m_PluginManager, this, ui));
   m_DataTab->restoreState(settings);
 
   connect(m_DataTab.get(), &DataTab::executablesChanged, [&] {
@@ -375,8 +375,9 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
 
   updateSortButton();
 
-  connect(&m_PluginContainer, SIGNAL(diagnosisUpdate()), this,
-          SLOT(scheduleCheckForProblems()));
+  connect(&m_PluginManager, &PluginManager::diagnosePluginInvalidated, [this] {
+    scheduleCheckForProblems();
+  });
 
   connect(&m_OrganizerCore, &OrganizerCore::directoryStructureReady, this,
           &MainWindow::onDirectoryStructureChanged);
@@ -428,21 +429,21 @@ MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
   connect(ui->actionTool->menu(), &QMenu::aboutToShow, [&] {
     updateToolMenu();
   });
-  connect(&m_PluginContainer, &PluginContainer::pluginEnabled, this,
+  connect(&m_PluginManager, &PluginManager::pluginEnabled, this,
           [this](IPlugin* plugin) {
-            if (m_PluginContainer.implementInterface<IPluginModPage>(plugin)) {
+            if (m_PluginManager.implementInterface<IPluginModPage>(plugin)) {
               updateModPageMenu();
             }
           });
-  connect(&m_PluginContainer, &PluginContainer::pluginDisabled, this,
+  connect(&m_PluginManager, &PluginManager::pluginDisabled, this,
           [this](IPlugin* plugin) {
-            if (m_PluginContainer.implementInterface<IPluginModPage>(plugin)) {
+            if (m_PluginManager.implementInterface<IPluginModPage>(plugin)) {
               updateModPageMenu();
             }
           });
-  connect(&m_PluginContainer, &PluginContainer::pluginRegistered, this,
+  connect(&m_PluginManager, &PluginManager::pluginRegistered, this,
           &MainWindow::onPluginRegistrationChanged);
-  connect(&m_PluginContainer, &PluginContainer::pluginUnregistered, this,
+  connect(&m_PluginManager, &PluginManager::pluginUnregistered, this,
           &MainWindow::onPluginRegistrationChanged);
 
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this,
@@ -1024,9 +1025,9 @@ void MainWindow::checkForProblemsImpl()
     m_ProblemsCheckRequired = false;
     TimeThis tt("MainWindow::checkForProblemsImpl()");
     size_t numProblems = 0;
-    for (QObject* pluginObj : m_PluginContainer.plugins<QObject>()) {
+    for (QObject* pluginObj : m_PluginManager.plugins<QObject>()) {
       IPlugin* plugin = qobject_cast<IPlugin*>(pluginObj);
-      if (plugin == nullptr || m_PluginContainer.isEnabled(plugin)) {
+      if (plugin == nullptr || m_PluginManager.isEnabled(plugin)) {
         IPluginDiagnose* diagnose = qobject_cast<IPluginDiagnose*>(pluginObj);
         if (diagnose != nullptr)
           numProblems += diagnose->activeProblems().size();
@@ -1346,7 +1347,7 @@ void MainWindow::showEvent(QShowEvent* event)
     updateProblemsButton();
 
     // notify plugins that the MO2 is ready
-    m_PluginContainer.startPlugins(this);
+    m_PluginManager.startPlugins(this);
 
     // forces a log list refresh to display startup logs
     //
@@ -1513,7 +1514,7 @@ void MainWindow::updateToolMenu()
   // Clear the menu:
   ui->actionTool->menu()->clear();
 
-  std::vector<IPluginTool*> toolPlugins = m_PluginContainer.plugins<IPluginTool>();
+  std::vector<IPluginTool*> toolPlugins = m_PluginManager.plugins<IPluginTool>();
 
   // Sort the plugins by display name
   std::sort(std::begin(toolPlugins), std::end(toolPlugins),
@@ -1524,7 +1525,7 @@ void MainWindow::updateToolMenu()
   // Remove disabled plugins:
   toolPlugins.erase(std::remove_if(std::begin(toolPlugins), std::end(toolPlugins),
                                    [&](auto* tool) {
-                                     return !m_PluginContainer.isEnabled(tool);
+                                     return !m_PluginManager.isEnabled(tool);
                                    }),
                     toolPlugins.end());
 
@@ -1616,7 +1617,7 @@ void MainWindow::updateModPageMenu()
 
   // Determine the loaded mod page plugins
   std::vector<IPluginModPage*> modPagePlugins =
-      m_PluginContainer.plugins<IPluginModPage>();
+      m_PluginManager.plugins<IPluginModPage>();
 
   // Sort the plugins by display name
   std::sort(std::begin(modPagePlugins), std::end(modPagePlugins),
@@ -1628,7 +1629,7 @@ void MainWindow::updateModPageMenu()
   modPagePlugins.erase(std::remove_if(std::begin(modPagePlugins),
                                       std::end(modPagePlugins),
                                       [&](auto* tool) {
-                                        return !m_PluginContainer.isEnabled(tool);
+                                        return !m_PluginManager.isEnabled(tool);
                                       }),
                        modPagePlugins.end());
 
@@ -2442,7 +2443,7 @@ void MainWindow::modInstalled(const QString& modName)
 void MainWindow::importCategories(bool)
 {
   NexusInterface& nexus = NexusInterface::instance();
-  nexus.setPluginContainer(&m_OrganizerCore.pluginContainer());
+  nexus.setPluginManager(&m_OrganizerCore.pluginManager());
   nexus.requestGameInfo(Settings::instance().game().plugin()->gameShortName(), this,
                         QVariant(), QString());
 }
@@ -2718,8 +2719,8 @@ void MainWindow::on_actionSettings_triggered()
   const bool oldCheckForUpdates = settings.checkForUpdates();
   const int oldMaxDumps         = settings.diagnostics().maxCoreDumps();
 
-  SettingsDialog dialog(&m_PluginContainer, m_ThemeManager, m_TranslationManager,
-                        settings, this);
+  SettingsDialog dialog(m_PluginManager, m_ThemeManager, m_TranslationManager, settings,
+                        this);
   dialog.exec();
 
   auto e = dialog.exitNeeded();
@@ -2829,7 +2830,7 @@ void MainWindow::onPluginRegistrationChanged()
 void MainWindow::refreshNexusCategories(CategoriesDialog* dialog)
 {
   NexusInterface& nexus = NexusInterface::instance();
-  nexus.setPluginContainer(&m_PluginContainer);
+  nexus.setPluginManager(&m_PluginManager);
   if (!Settings::instance().game().plugin()->primarySources().isEmpty()) {
     nexus.requestGameInfo(
         Settings::instance().game().plugin()->primarySources().first(), dialog,
@@ -3084,7 +3085,7 @@ void MainWindow::nxmUpdateInfoAvailable(QString gameName, QVariant userData,
                                         QVariant resultData, int)
 {
   QString gameNameReal;
-  for (IPluginGame* game : m_PluginContainer.plugins<IPluginGame>()) {
+  for (IPluginGame* game : m_PluginManager.plugins<IPluginGame>()) {
     if (game->gameNexusName() == gameName) {
       gameNameReal = game->gameShortName();
       break;
@@ -3140,7 +3141,7 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
   QList fileUpdates      = resultInfo["file_updates"].toList();
   QString gameNameReal;
 
-  for (IPluginGame* game : m_PluginContainer.plugins<IPluginGame>()) {
+  for (IPluginGame* game : m_PluginManager.plugins<IPluginGame>()) {
     if (game->gameNexusName() == gameName) {
       gameNameReal = game->gameShortName();
       break;
@@ -3283,7 +3284,7 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
   QString gameNameReal;
   bool foundUpdate = false;
 
-  for (IPluginGame* game : m_PluginContainer.plugins<IPluginGame>()) {
+  for (IPluginGame* game : m_PluginManager.plugins<IPluginGame>()) {
     if (game->gameNexusName() == gameName) {
       gameNameReal = game->gameShortName();
       break;
@@ -3385,7 +3386,7 @@ void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultDa
 void MainWindow::nxmTrackedModsAvailable(QVariant userData, QVariant resultData, int)
 {
   QMap<QString, QString> gameNames;
-  for (auto game : m_PluginContainer.plugins<IPluginGame>()) {
+  for (auto game : m_PluginManager.plugins<IPluginGame>()) {
     gameNames[game->gameNexusName()] = game->gameShortName();
   }
 
@@ -3473,7 +3474,7 @@ void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, in
     // update last checked timestamp on orphaned mods as well to avoid repeating
     // requests
     QString gameNameReal;
-    for (IPluginGame* game : m_PluginContainer.plugins<IPluginGame>()) {
+    for (IPluginGame* game : m_PluginManager.plugins<IPluginGame>()) {
       if (game->gameNexusName() == gameName) {
         gameNameReal = game->gameShortName();
         break;
@@ -3619,7 +3620,7 @@ void MainWindow::on_actionNotifications_triggered()
 
   future.waitForFinished();
 
-  ProblemsDialog problems(m_PluginContainer, this);
+  ProblemsDialog problems(m_PluginManager, this);
   problems.exec();
 
   scheduleCheckForProblems();
@@ -3627,7 +3628,7 @@ void MainWindow::on_actionNotifications_triggered()
 
 void MainWindow::on_actionChange_Game_triggered()
 {
-  InstanceManagerDialog dlg(m_PluginContainer, this);
+  InstanceManagerDialog dlg(m_PluginManager, this);
   dlg.exec();
 }
 

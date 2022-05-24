@@ -32,7 +32,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfo.h"
 #include "modlistbypriorityproxy.h"
 #include "modlistsortproxy.h"
-#include "plugincontainer.h"
+#include "pluginmanager.h"  //class PluginManager;
 #include "shared/fileregisterfwd.h"
 #include "thememanager.h"
 #include "translationmanager.h"
@@ -128,7 +128,7 @@ class MainWindow : public QMainWindow, public IUserInterface
 
 public:
   explicit MainWindow(Settings& settings, OrganizerCore& organizerCore,
-                      PluginContainer& pluginContainer, ThemeManager& themeManager,
+                      PluginManager& pluginManager, ThemeManager& themeManager,
                       TranslationManager& translationManager, QWidget* parent = 0);
   ~MainWindow();
 
@@ -298,7 +298,7 @@ private:
   QTime m_StartTime;
 
   OrganizerCore& m_OrganizerCore;
-  PluginContainer& m_PluginContainer;
+  PluginManager& m_PluginManager;
   ThemeManager& m_ThemeManager;
   TranslationManager& m_TranslationManager;
 

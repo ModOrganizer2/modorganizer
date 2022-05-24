@@ -828,8 +828,9 @@ std::optional<int> ReloadPluginCommand::runPostOrganizer(OrganizerCore& core)
       QDir(qApp->applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()))
           .absoluteFilePath(name);
 
+  // TODO: reload extension, not plugin
   log::debug("reloading plugin from {}", filepath);
-  core.pluginContainer().reloadPlugin(filepath);
+  // core.pluginManager().reloadPlugin(filepath);
 
   return {};
 }
