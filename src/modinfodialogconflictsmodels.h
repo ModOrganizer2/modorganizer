@@ -1,6 +1,6 @@
 #include "shared/fileentry.h"
 
-class PluginContainer;
+class PluginManager;
 
 class ConflictItem
 {
@@ -25,7 +25,7 @@ public:
   bool canUnhide() const;
   bool canRun() const;
   bool canOpen() const;
-  bool canPreview(PluginContainer& pluginContainer) const;
+  bool canPreview(PluginManager& pluginManager) const;
   bool canExplore() const;
 
 private:

@@ -21,7 +21,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define CATEGORIESDIALOG_H
 
 #include "categories.h"
-#include "plugincontainer.h"
 #include "tutorabledialog.h"
 #include <set>
 
@@ -71,7 +70,6 @@ private:
 
 private:
   Ui::CategoriesDialog* ui;
-  PluginContainer* m_PluginContainer;
   int m_ContextRow;
 
   int m_HighestID;

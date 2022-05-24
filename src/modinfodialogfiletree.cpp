@@ -178,7 +178,7 @@ void FileTreeTab::onActivated()
   const auto path       = m_fs->filePath(selection);
   const auto tryPreview = core().settings().interface().doubleClicksOpenPreviews();
 
-  if (tryPreview && canPreviewFile(plugin(), false, path)) {
+  if (tryPreview && canPreviewFile(plugins(), false, path)) {
     onPreview();
   } else {
     onOpen();
@@ -446,7 +446,7 @@ void FileTreeTab::onContextMenu(const QPoint& pos)
       }
     }
 
-    enablePreview = canPreviewFile(plugin(), false, fileName);
+    enablePreview = canPreviewFile(plugins(), false, fileName);
     enableExplore = canExploreFile(false, fileName);
     enableHide    = canHideFile(false, fileName);
     enableUnhide  = canUnhideFile(false, fileName);

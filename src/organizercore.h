@@ -35,12 +35,13 @@
 #include <QThread>
 #include <QVariant>
 
+class IniBakery;
 class ModListSortProxy;
 class PluginListSortProxy;
 class Profile;
 class IUserInterface;
 class GameFeatures;
-class PluginContainer;
+class PluginManager;
 class DirectoryRefresher;
 
 namespace MOBase
@@ -244,7 +245,7 @@ public:
   ~OrganizerCore();
 
   void setUserInterface(IUserInterface* ui);
-  void connectPlugins(PluginContainer* container);
+  void connectPlugins(PluginManager* manager);
 
   void setManagedGame(MOBase::IPluginGame* game);
 
@@ -272,9 +273,9 @@ public:
 
   MOBase::Version getVersion() const { return m_Updater.getVersion(); }
 
-  // return the plugin container
+  // return the plugin manager
   //
-  PluginContainer& pluginContainer() const;
+  PluginManager& pluginManager() const;
 
   // return the game features
   GameFeatures& gameFeatures() const;
@@ -526,7 +527,8 @@ private:
 
 private:
   IUserInterface* m_UserInterface;
-  PluginContainer* m_PluginContainer;
+  PluginManager* m_PluginManager;
+  std::unique_ptr<IniBakery> m_IniBakery;
   QString m_GameName;
   MOBase::IPluginGame* m_GamePlugin;
   ModDataContentHolder m_Contents;

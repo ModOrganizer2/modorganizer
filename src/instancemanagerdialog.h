@@ -10,7 +10,7 @@ class InstanceManagerDialog;
 };
 
 class Instance;
-class PluginContainer;
+class PluginManager;
 
 // a dialog to manage existing instances
 //
@@ -19,7 +19,7 @@ class InstanceManagerDialog : public QDialog
   Q_OBJECT
 
 public:
-  explicit InstanceManagerDialog(PluginContainer& pc, QWidget* parent = nullptr);
+  explicit InstanceManagerDialog(PluginManager& pc, QWidget* parent = nullptr);
 
   ~InstanceManagerDialog();
 
@@ -90,7 +90,7 @@ private:
   static const std::size_t NoSelection = -1;
 
   std::unique_ptr<Ui::InstanceManagerDialog> ui;
-  PluginContainer& m_pc;
+  PluginManager& m_pc;
   std::vector<std::unique_ptr<Instance>> m_instances;
   MOBase::FilterWidget m_filter;
   QStandardItemModel* m_model;

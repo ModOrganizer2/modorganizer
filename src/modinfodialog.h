@@ -34,7 +34,7 @@ namespace MOShared
 class FilesOrigin;
 }
 
-class PluginContainer;
+class PluginManager;
 class OrganizerCore;
 class Settings;
 class ModInfoDialogTab;
@@ -56,7 +56,7 @@ class ModInfoDialog : public MOBase::TutorableDialog
                                                      ModInfoTabIDs index);
 
 public:
-  ModInfoDialog(OrganizerCore& core, PluginContainer& plugin, ModInfo::Ptr mod,
+  ModInfoDialog(OrganizerCore& core, PluginManager& plugins, ModInfo::Ptr mod,
                 ModListView* view, QWidget* parent = nullptr);
 
   ~ModInfoDialog();
@@ -123,7 +123,7 @@ private:
 
   std::unique_ptr<Ui::ModInfoDialog> ui;
   OrganizerCore& m_core;
-  PluginContainer& m_plugin;
+  PluginManager& m_plugins;
   ModListView* m_modListView;
   ModInfo::Ptr m_mod;
   std::vector<TabInfo> m_tabs;

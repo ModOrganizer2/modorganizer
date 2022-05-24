@@ -28,6 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
 #include "organizercore.h"
+#include "pluginmanager.h"
 #include "sanitychecks.h"
 #include "settings.h"
 #include "shared/appconfig.h"
@@ -222,7 +223,7 @@ int MOApplication::setup(MOMultiProcess& multiProcess, bool forceSelect)
       QDir(QCoreApplication::applicationDirPath() + "/extensions")
           .filesystemAbsolutePath());
 
-  m_plugins = std::make_unique<PluginContainer>(m_core.get());
+  m_plugins = std::make_unique<PluginManager>(*m_extensions, m_core.get());
   m_plugins->loadPlugins();
 
   // instance
@@ -420,7 +421,7 @@ std::unique_ptr<Instance> MOApplication::getCurrentInstance(bool forceSelect)
 }
 
 std::optional<int> MOApplication::setupInstanceLoop(Instance& currentInstance,
-                                                    PluginContainer& pc)
+                                                    PluginManager& pc)
 {
   for (;;) {
     const auto setupResult = setupInstance(currentInstance, pc);

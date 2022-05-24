@@ -32,7 +32,7 @@ class Instance;
 class MOMultiProcess;
 class NexusInterface;
 class OrganizerCore;
-class PluginContainer;
+class PluginManager;
 class Settings;
 
 namespace MOBase
@@ -81,14 +81,14 @@ private:
   std::unique_ptr<Settings> m_settings;
   std::unique_ptr<NexusInterface> m_nexus;
   std::unique_ptr<ExtensionManager> m_extensions;
-  std::unique_ptr<PluginContainer> m_plugins;
+  std::unique_ptr<PluginManager> m_plugins;
   std::unique_ptr<ThemeManager> m_themes;
   std::unique_ptr<TranslationManager> m_translations;
   std::unique_ptr<OrganizerCore> m_core;
 
   void externalMessage(const QString& message);
   std::unique_ptr<Instance> getCurrentInstance(bool forceSelect);
-  std::optional<int> setupInstanceLoop(Instance& currentInstance, PluginContainer& pc);
+  std::optional<int> setupInstanceLoop(Instance& currentInstance, PluginManager& pc);
   void purgeOldFiles();
 };
 
