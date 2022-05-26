@@ -249,6 +249,12 @@ bool PluginManager::isEnabled(MOBase::IPlugin* plugin) const
     return plugin == m_core->managedGame();
   }
 
+  // check the master of the group
+  const auto& d = details(plugin);
+  if (d.master() && d.master() != plugin) {
+    return isEnabled(d.master());
+  }
+
   return m_extensions.isEnabled(details(plugin).extension());
 }
 
@@ -486,8 +492,26 @@ bool PluginManager::loadPlugins(const MOBase::PluginExtension& extension)
   }
 
   for (auto& objectGroup : objects) {
+
+    // safety for min_element
+    if (objectGroup.isEmpty()) {
+      continue;
+    }
+
+    // find the best interface
+    auto it         = std::min_element(std::begin(objectGroup), std::end(objectGroup),
+                                       [&](auto const& lhs, auto const& rhs) {
+                                 return isBetterInterface(lhs, rhs);
+                               });
+    IPlugin* master = qobject_cast<IPlugin*>(*it);
+
+    // register plugins in the group
     for (auto* object : objectGroup) {
-      registerPlugin(extension, object, objectGroup);
+      IPlugin* plugin = registerPlugin(extension, object, objectGroup);
+
+      if (plugin) {
+        m_details.at(plugin).m_master = master;
+      }
     }
   }
 
@@ -689,14 +713,21 @@ std::vector<PluginManager::PluginLoaderPtr> PluginManager::makeLoaders()
 
   // load the python proxy
   {
-    auto pluginLoader = std::make_unique<QPluginLoader>(
-        QCoreApplication::applicationDirPath() + "/proxies/python/python_proxy.dll",
-        this);
+    const QString proxyPath =
+        QCoreApplication::applicationDirPath() + "/proxies/python";
+    auto pluginLoader =
+        std::make_unique<QPluginLoader>(proxyPath + "/python_proxy.dll", this);
 
     if (auto* object = pluginLoader->instance(); object) {
       auto loader = qobject_cast<MOBase::IPluginLoader*>(object);
-      loaders.push_back(
-          PluginLoaderPtr(loader, PluginLoaderDeleter{pluginLoader.release()}));
+      QString errorMessage;
+
+      if (loader->initialize(errorMessage)) {
+        loaders.push_back(
+            PluginLoaderPtr(loader, PluginLoaderDeleter{pluginLoader.release()}));
+      } else {
+        log::error("failed to initialize proxy from '{}': {}", proxyPath, errorMessage);
+      }
     }
   }
 

@@ -37,18 +37,15 @@ PluginsSettingsTab::PluginsSettingsTab(Settings& s, PluginManager& pluginManager
     extensionItem->setData(0, Qt::DisplayRole, extension->metadata().name());
     ui->pluginsList->addTopLevelItem(extensionItem);
 
-    QSet<QString> handledNames;
-
-    // Handle child item:
     for (auto* plugin : plugins) {
-      if (handledNames.contains(plugin->name())) {
+
+      // only show master
+      if (pluginManager.details(plugin).master() != plugin) {
         continue;
       }
 
       QTreeWidgetItem* pluginItem = new QTreeWidgetItem(extensionItem);
       pluginItem->setData(0, Qt::DisplayRole, plugin->localizedName());
-
-      handledNames.insert(plugin->name());
     }
   }
 
