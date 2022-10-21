@@ -949,8 +949,8 @@ void DownloadManager::resumeDownloadInt(int index)
     }
     info->m_DownloadLast = 0;
     info->m_DownloadTimeLast = 0;
-    info->m_DownloadAcc = accumulator_set<int, stats<tag::rolling_mean>>(tag::rolling_window::window_size = 200);
-    info->m_DownloadTimeAcc = accumulator_set<int, stats<tag::rolling_mean>>(tag::rolling_window::window_size = 200);
+    info->m_DownloadAcc = accumulator_set<qint64, stats<tag::rolling_mean>>(tag::rolling_window::window_size = 200);
+    info->m_DownloadTimeAcc = accumulator_set<qint64, stats<tag::rolling_mean>>(tag::rolling_window::window_size = 200);
     log::debug("resume at {} bytes", info->m_ResumePos);
     startDownload(m_NexusInterface->getAccessManager()->get(request), info, true);
   }
@@ -1592,7 +1592,7 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
         int oldProgress = info->m_Progress.first;
         info->m_Progress.first = ((info->m_ResumePos + bytesReceived) * 100) / (info->m_ResumePos + bytesTotal);
 
-        int elapsed = info->m_StartTime.elapsed();
+        qint64 elapsed = info->m_StartTime.elapsed();
         info->m_DownloadAcc(bytesReceived - info->m_DownloadLast);
         info->m_DownloadLast = bytesReceived;
         info->m_DownloadTimeAcc(elapsed - info->m_DownloadTimeLast);
@@ -1601,7 +1601,7 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
         // calculate the download speed
         const double speed = rolling_mean(info->m_DownloadAcc) / (rolling_mean(info->m_DownloadTimeAcc) / 1000.0);;
 
-        const int remaining = (bytesTotal - bytesReceived) / speed * 1000;
+        const qint64 remaining = (bytesTotal - bytesReceived) / speed * 1000;
 
         info->m_Progress.second = tr("%1% - %2 - ~%3")
           .arg(info->m_Progress.first)

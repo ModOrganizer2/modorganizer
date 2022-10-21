@@ -84,7 +84,7 @@ QAbstractItemView::item:selected:hover,
 QAbstractItemView::item:alternate:selected,
 QAbstractItemView::item:alternate:selected:hover {
   color: #f1f1f1;
-  background-color: #009933;
+  background-color: #bb4287;
 }
 
 QAbstractItemView[filtered=true] {
@@ -103,7 +103,7 @@ QAbstractItemView::item:disabled:hover,
 QAbstractItemView::item:alternate:disabled:hover QListView::item:hover,
 QTreeView::branch:hover,
 QTreeWidget::item:hover {
-  background-color: rgba(0, 153, 51, 0.3);
+  background-color: rgba(187, 66, 135, 0.3);
 }
 
 QAbstractItemView::item:selected:disabled,
@@ -111,12 +111,12 @@ QAbstractItemView::item:alternate:selected:disabled,
 QListView::item:selected:disabled,
 QTreeView::branch:selected:disabled,
 QTreeWidget::item:selected:disabled {
-  background-color: rgba(0, 153, 51, 0.3);
+  background-color: rgba(187, 66, 135, 0.3);
 }
 
 QTreeView::branch:selected,
 #bsaList::branch:selected {
-  background-color: #009933;
+  background-color: #bb4287;
 }
 
 QLabel {
@@ -124,7 +124,7 @@ QLabel {
 }
 
 LinkLabel {
-  qproperty-linkColor: #009933;
+  qproperty-linkColor: #bb4287;
 }
 
 /* Left Pane & File Trees #QTreeView, #QListView*/
@@ -157,7 +157,7 @@ QAbstractSpinBox:hover,
 QTextEdit:hover,
 QComboBox:hover,
 QComboBox:editable:hover {
-  border-color: #009933;
+  border-color: #bb4287;
 }
 
 QLineEdit:focus,
@@ -167,7 +167,7 @@ QComboBox:focus,
 QComboBox:editable:focus,
 QComboBox:on {
   background-color: #3f3f46;
-  border-color: #009933;
+  border-color: #bb4287;
 }
 
 QComboBox:on {
@@ -227,7 +227,7 @@ QComboBox::down-arrow {
 QComboBox QAbstractItemView {
   background-color: #1b1b1c;
   selection-background-color: #3f3f46;
-  border-color: #009933;
+  border-color: #bb4287;
   border-style: solid;
   border-width: 0 1px 1px 1px;
 }
@@ -259,7 +259,7 @@ QToolButton:hover, QToolButton:focus {
 }
 
 QToolButton:pressed {
-  background-color: #009933;
+  background-color: #bb4287;
 }
 
 QToolButton::menu-indicator {
@@ -308,14 +308,14 @@ QPushButton:checked,
 QPushButton:focus,
 QAbstractSpinBox::up-button:hover,
 QAbstractSpinBox::down-button:hover {
-  background-color: #009933;
+  background-color: #bb4287;
 }
 
 QPushButton:pressed,
 QPushButton:checked:hover,
 QAbstractSpinBox::up-button:pressed,
 QAbstractSpinBox::down-button:pressed {
-  background-color: #00b33c;
+  background-color: #a83b79;
 }
 
 QPushButton:disabled,
@@ -351,7 +351,7 @@ QSlider::handle:horizontal:focus:pressed,
 QSlider::handle:vertical:pressed,
 QSlider::handle:vertical:focus:pressed {
   background-color: #BEE6FD;
-  border-color: #00a838;
+  border-color: #bf498c;
 }
 
 QSlider::handle:horizontal:focus,
@@ -359,7 +359,7 @@ QSlider::handle:vertical:focus,
 QDialog QPushButton:focus,
 QDialog QPushButton:checked {
   background-color: #dddddd;
-  border-color: #009933;
+  border-color: #bb4287;
 }
 
 QDialog QPushButton:disabled,
@@ -393,7 +393,7 @@ QTreeView::indicator:hover,
 QCheckBox::indicator:hover,
 QRadioButton::indicator:hover {
   background-color: #3f3f46;
-  border-color: #009933;
+  border-color: #bb4287;
 }
 
 QGroupBox::indicator:checked,
@@ -619,7 +619,7 @@ QScrollBar::left-arrow:horizontal:disabled {
 /* Header Rows and Tables (Configure Mod Categories) #QTableView, #QHeaderView */
 QTableView {
   gridline-color: #3f3f46;
-  selection-background-color: #009933;
+  selection-background-color: #bb4287;
   selection-color: #f1f1f1;
 }
 
@@ -758,7 +758,7 @@ DownloadListView[downloadView=compact]::item {
 /* Right Pane and Tab Bars #QTabWidget, #QTabBar */
 QTabWidget::pane {
   border-color: #3f3f46;
-  border-top-color: #009933;
+  border-top-color: #bb4287;
   top: 0;
   border-style: solid;
   border-width: 1px;
@@ -775,12 +775,12 @@ QTabBar::tab {
 }
 
 QTabBar::tab:hover {
-  background-color: #00b33c;
+  background-color: #a83b79;
 }
 
 QTabBar::tab:selected,
 QTabBar::tab:selected:hover {
-  background-color: #009933;
+  background-color: #bb4287;
 }
 
 QTabBar::tab:disabled {
@@ -803,7 +803,7 @@ QTabBar QToolButton {
 }
 
 QTabBar QToolButton:hover {
-  border-color: #009933;
+  border-color: #bb4287;
   border-width: 1px;
   border-style: solid;
 }
@@ -852,12 +852,12 @@ QWidget#tabESPs QToolButton {
 
 QWidget#tabESPs QToolButton:hover {
   background-color: #BEE6FD;
-  border-color: #00a838;
+  border-color: #bf498c;
 }
 
 QWidget#tabESPs QToolButton:focus {
   background-color: #dddddd;
-  border-color: #009933;
+  border-color: #bb4287;
 }
 
 QWidget#tabESPs QToolButton:disabled {
@@ -897,7 +897,7 @@ QLineEdit#modFilterEdit {
 
 /* highlight unchecked BSAs */
 QWidget#bsaTab QTreeWidget::indicator:unchecked {
-  background-color: #009933;
+  background-color: #bb4287;
 }
 
 /* increase version text field */

@@ -396,6 +396,16 @@ private:
   // Load the Qt plugin from the given file.
   QObject* loadQtPlugin(const QString& filepath);
 
+  // check if a plugin is folder containing a Qt plugin, it is, return the path to the
+  // DLL containing the plugin in the folder, otherwise return an empty optional
+  //
+  // a Qt plugin folder is a folder with a DLL containing a library (not in a subdirectory),
+  // if multiple plugins are present, only the first one is returned
+  //
+  // extra DLLs are ignored by Qt so can be present in the folder
+  //
+  std::optional<QString> isQtPluginFolder(const QString& filepath) const;
+
   // See startPlugins for more details. This is simply an intermediate function
   // that can be used when loading plugins after initialization. This uses the
   // user interface in m_UserInterface.

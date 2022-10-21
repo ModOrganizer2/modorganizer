@@ -117,8 +117,8 @@ HRESULT IContextMenu_GetCommandString(
   }
 
   // Some context menu handlers have off-by-one bugs and will
-  // overflow the output buffer. Let’s artificially reduce the
-  // buffer size so a one-character overflow won’t corrupt memory.
+  // overflow the output buffer. Letï¿½s artificially reduce the
+  // buffer size so a one-character overflow wonï¿½t corrupt memory.
   if (cchMax <= 1) {
     return E_FAIL;
   }
@@ -140,7 +140,7 @@ HRESULT IContextMenu_GetCommandString(
   }
 
   if (FAILED(hr)) {
-    // try again with ANSI – pad the buffer with one extra character
+    // try again with ANSI ï¿½ pad the buffer with one extra character
     // to compensate for context menu handlers that overflow by
     // one character.
     LPSTR pszAnsi = (LPSTR)LocalAlloc(

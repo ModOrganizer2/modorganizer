@@ -316,6 +316,7 @@ private slots:
   void helpTriggered();
   void issueTriggered();
   void wikiTriggered();
+  void gameSupportTriggered();
   void discordTriggered();
   void tutorialTriggered();
   void extractBSATriggered(QTreeWidgetItem* item);
