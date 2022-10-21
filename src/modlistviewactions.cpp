@@ -264,15 +264,17 @@ void ModListViewActions::assignCategories() const
 {
   for (auto mod : m_core.modList()->allMods()) {
     ModInfo::Ptr modInfo = ModInfo::getByName(mod);
-    for (auto category : modInfo->categories()) {
-      modInfo->removeCategory(category);
-    }
     QString file = modInfo->installationFile();
     auto download = m_core.downloadManager()->getDownloadIndex(file);
     if (download >= 0) {
       int nexusCategory = m_core.downloadManager()->getCategoryID(download);
-      int category = CategoryFactory::instance()->resolveNexusID(nexusCategory);
-      modInfo->setCategory(CategoryFactory::instance()->getCategoryID(category), true);
+      int newCategory = CategoryFactory::instance()->resolveNexusID(nexusCategory);
+      if (newCategory != 0) {
+        for (auto category : modInfo->categories()) {
+          modInfo->removeCategory(category);
+        }
+      }
+      modInfo->setCategory(CategoryFactory::instance()->getCategoryID(newCategory), true);
     }
   }
 }
@@ -1109,7 +1111,8 @@ void ModListViewActions::remapCategory(const QModelIndexList& indices) const
     if (downloadIndex >= 0) {
       auto downloadInfo = m_core.downloadManager()->getFileInfo(downloadIndex);
       unsigned int categoryIndex = CategoryFactory::instance()->resolveNexusID(downloadInfo->categoryID);
-      modInfo->setPrimaryCategory(CategoryFactory::instance()->getCategoryID(categoryIndex));
+      if (categoryIndex != 0)
+        modInfo->setPrimaryCategory(CategoryFactory::instance()->getCategoryID(categoryIndex));
     }
   }
 }
