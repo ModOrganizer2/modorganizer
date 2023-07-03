@@ -10,6 +10,7 @@
 #include "downloadmanager.h"
 #include "executableslist.h"
 #include "usvfsconnector.h"
+#include "guessedvalue.h"
 #include "moshortcut.h"
 #include "memoizedlock.h"
 #include "processrunner.h"
@@ -399,6 +400,9 @@ signals:
   void directoryStructureReady();
 
 private:
+
+  std::pair<unsigned int, ModInfo::Ptr> doInstall(const QString& archivePath,
+    MOBase::GuessedValue<QString> modName, ModInfo::Ptr currentMod, int priority, bool reinstallation);
 
   void saveCurrentProfile();
   void storeSettings();
