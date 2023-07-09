@@ -3,7 +3,7 @@ on:
   push:
     branches: master
   pull_request:
-    types: [opened, reopened]
+    types: [opened, synchronize, reopened]
 jobs:
   build:
     runs-on: windows-2022
