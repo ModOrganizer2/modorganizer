@@ -31,13 +31,16 @@
 #include <vector>
 #include <wchar.h>
 
+// keep this header separated to avoid ordering issue since this must be
+// included before DbgHelp.h
+#include <Windows.h>
+
 // windows
 #include <DbgHelp.h>
 #include <LMCons.h>
 #include <Psapi.h>
 #include <Shellapi.h>
 #include <Shlwapi.h>
-#include <Windows.h>
 #include <eh.h>
 #include <shlobj.h>
 #include <tchar.h>
