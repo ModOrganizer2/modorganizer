@@ -1,13 +1,14 @@
 #include "modlistproxy.h"
+#include "modlist.h"
 #include "organizerproxy.h"
 #include "proxyutils.h"
-#include "modlist.h"
 
 using namespace MOBase;
 using namespace MOShared;
 
-ModListProxy::ModListProxy(OrganizerProxy* oproxy, ModList* modlist) :
-  m_OrganizerProxy(oproxy), m_Proxied(modlist) { }
+ModListProxy::ModListProxy(OrganizerProxy* oproxy, ModList* modlist)
+    : m_OrganizerProxy(oproxy), m_Proxied(modlist)
+{}
 
 ModListProxy::~ModListProxy()
 {
@@ -16,10 +17,14 @@ ModListProxy::~ModListProxy()
 
 void ModListProxy::connectSignals()
 {
-  m_Connections.push_back(m_Proxied->onModInstalled(callSignalIfPluginActive(m_OrganizerProxy, m_ModInstalled)));
-  m_Connections.push_back(m_Proxied->onModMoved(callSignalIfPluginActive(m_OrganizerProxy, m_ModMoved)));
-  m_Connections.push_back(m_Proxied->onModRemoved(callSignalIfPluginActive(m_OrganizerProxy, m_ModRemoved)));
-  m_Connections.push_back(m_Proxied->onModStateChanged(callSignalIfPluginActive(m_OrganizerProxy, m_ModStateChanged)));
+  m_Connections.push_back(m_Proxied->onModInstalled(
+      callSignalIfPluginActive(m_OrganizerProxy, m_ModInstalled)));
+  m_Connections.push_back(
+      m_Proxied->onModMoved(callSignalIfPluginActive(m_OrganizerProxy, m_ModMoved)));
+  m_Connections.push_back(m_Proxied->onModRemoved(
+      callSignalIfPluginActive(m_OrganizerProxy, m_ModRemoved)));
+  m_Connections.push_back(m_Proxied->onModStateChanged(
+      callSignalIfPluginActive(m_OrganizerProxy, m_ModStateChanged)));
 }
 
 void ModListProxy::disconnectSignals()
@@ -55,7 +60,8 @@ bool ModListProxy::removeMod(MOBase::IModInterface* mod)
   return m_Proxied->removeMod(mod);
 }
 
-MOBase::IModInterface* ModListProxy::renameMod(MOBase::IModInterface* mod, const QString& name)
+MOBase::IModInterface* ModListProxy::renameMod(MOBase::IModInterface* mod,
+                                               const QString& name)
 {
   return m_Proxied->renameMod(mod, name);
 }
@@ -95,7 +101,8 @@ bool ModListProxy::onModRemoved(const std::function<void(QString const&)>& func)
   return m_ModRemoved.connect(func).connected();
 }
 
-bool ModListProxy::onModStateChanged(const std::function<void(const std::map<QString, ModStates>&)>& func)
+bool ModListProxy::onModStateChanged(
+    const std::function<void(const std::map<QString, ModStates>&)>& func)
 {
   return m_ModStateChanged.connect(func).connected();
 }

@@ -18,41 +18,42 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "icondelegate.h"
-#include <log.h>
+#include <QDebug>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPainter>
-#include <QDebug>
 #include <QPixmapCache>
+#include <log.h>
 
 using namespace MOBase;
 
-IconDelegate::IconDelegate(QTreeView* view, int column, int compactSize) :
-  QStyledItemDelegate(view), m_column(column), m_compactSize(compactSize), m_compact(false)
+IconDelegate::IconDelegate(QTreeView* view, int column, int compactSize)
+    : QStyledItemDelegate(view), m_column(column), m_compactSize(compactSize),
+      m_compact(false)
 {
   if (view) {
-    connect(view->header(), &QHeaderView::sectionResized, [=](int column, int, int size) {
-      if (column == m_column) {
-        m_compact = size < m_compactSize;
-      }
-      });
+    connect(view->header(), &QHeaderView::sectionResized,
+            [=](int column, int, int size) {
+              if (column == m_column) {
+                m_compact = size < m_compactSize;
+              }
+            });
   }
 }
 
-void IconDelegate::paintIcons(
-  QPainter *painter, const QStyleOptionViewItem &option,
-  const QModelIndex &index, const QList<QString>& icons)
+void IconDelegate::paintIcons(QPainter* painter, const QStyleOptionViewItem& option,
+                              const QModelIndex& index, const QList<QString>& icons)
 {
   int x = 4;
   painter->save();
 
   int iconWidth = icons.size() > 0 ? ((option.rect.width() / icons.size()) - 4) : 16;
-  iconWidth = std::min(16, iconWidth);
+  iconWidth     = std::min(16, iconWidth);
 
   const int margin = (option.rect.height() - iconWidth) / 2;
 
   painter->translate(option.rect.topLeft());
-  for (const QString &iconId : icons) {
+  for (const QString& iconId : icons) {
     if (iconId.isEmpty()) {
       x += iconWidth + 4;
       continue;
@@ -73,15 +74,14 @@ void IconDelegate::paintIcons(
   painter->restore();
 }
 
-void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+void IconDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option,
+                         const QModelIndex& index) const
 {
   if (auto* w = qobject_cast<QAbstractItemView*>(parent())) {
     w->itemDelegate()->paint(painter, option, index);
-  }
-  else {
+  } else {
     QStyledItemDelegate::paint(painter, option, index);
   }
 
   paintIcons(painter, option, index, getIcons(index));
 }
-

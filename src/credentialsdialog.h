@@ -22,23 +22,24 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QDialog>
 
-namespace Ui {
+namespace Ui
+{
 class CredentialsDialog;
 }
 
 class CredentialsDialog : public QDialog
 {
   Q_OBJECT
-  
+
 public:
-  explicit CredentialsDialog(QWidget *parent = 0);
+  explicit CredentialsDialog(QWidget* parent = 0);
   ~CredentialsDialog();
 
   bool store() const;
   bool neverAsk() const;
 
 private:
-  Ui::CredentialsDialog *ui;
+  Ui::CredentialsDialog* ui;
 };
 
-#endif // CREDENTIALSDIALOG_H
+#endif  // CREDENTIALSDIALOG_H

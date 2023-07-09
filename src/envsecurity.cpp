@@ -1,13 +1,13 @@
 #include "envsecurity.h"
 #include "env.h"
 #include "envmodule.h"
-#include <utility.h>
 #include <log.h>
+#include <utility.h>
 
 #include <Wbemidl.h>
-#include <wscapi.h>
 #include <comdef.h>
 #include <netfw.h>
+#include <wscapi.h>
 #pragma comment(lib, "Wbemuuid.lib")
 
 #include <accctrl.h>
@@ -23,18 +23,16 @@ using namespace MOBase;
 class WMI
 {
 public:
-  class failed {};
+  class failed
+  {};
 
   WMI(const std::string& ns)
   {
-    try
-    {
+    try {
       createLocator();
       createService(ns);
       setSecurity();
-    }
-    catch(failed&)
-    {
+    } catch (failed&) {
     }
   }
 
@@ -50,13 +48,12 @@ public:
       return;
     }
 
-    for (;;)
-    {
+    for (;;) {
       COMPtr<IWbemClassObject> object;
 
       {
         IWbemClassObject* rawObject = nullptr;
-        ULONG count = 0;
+        ULONG count                 = 0;
         auto ret = enumerator->Next(WBEM_INFINITE, 1, &rawObject, &count);
 
         if (count == 0 || !rawObject) {
@@ -83,14 +80,12 @@ private:
   {
     void* rawLocator = nullptr;
 
-    const auto ret = CoCreateInstance(
-      CLSID_WbemLocator, nullptr, CLSCTX_INPROC_SERVER,
-      IID_IWbemLocator, &rawLocator);
+    const auto ret = CoCreateInstance(CLSID_WbemLocator, nullptr, CLSCTX_INPROC_SERVER,
+                                      IID_IWbemLocator, &rawLocator);
 
     if (FAILED(ret) || !rawLocator) {
-      log::error(
-        "CoCreateInstance for WbemLocator failed, {}",
-        formatSystemMessage(ret));
+      log::error("CoCreateInstance for WbemLocator failed, {}",
+                 formatSystemMessage(ret));
 
       throw failed();
     }
@@ -102,16 +97,14 @@ private:
   {
     IWbemServices* rawService = nullptr;
 
-    const auto res = m_locator->ConnectServer(
-      _bstr_t(ns.c_str()),
-      nullptr, nullptr, nullptr, 0, nullptr, nullptr,
-      &rawService);
+    const auto res =
+        m_locator->ConnectServer(_bstr_t(ns.c_str()), nullptr, nullptr, nullptr, 0,
+                                 nullptr, nullptr, &rawService);
 
     if (FAILED(res) || !rawService) {
       // don't log as error, seems to happen often for some people
-      log::debug(
-        "locator->ConnectServer() failed for namespace '{}', {}",
-        ns, formatSystemMessage(res));
+      log::debug("locator->ConnectServer() failed for namespace '{}', {}", ns,
+                 formatSystemMessage(res));
 
       throw failed();
     }
@@ -121,31 +114,25 @@ private:
 
   void setSecurity()
   {
-    auto ret = CoSetProxyBlanket(
-      m_service.get(), RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, nullptr,
-      RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, 0, EOAC_NONE);
+    auto ret = CoSetProxyBlanket(m_service.get(), RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE,
+                                 nullptr, RPC_C_AUTHN_LEVEL_CALL,
+                                 RPC_C_IMP_LEVEL_IMPERSONATE, 0, EOAC_NONE);
 
-    if (FAILED(ret))
-    {
+    if (FAILED(ret)) {
       log::error("CoSetProxyBlanket() failed, {}", formatSystemMessage(ret));
       throw failed();
     }
   }
 
-  COMPtr<IEnumWbemClassObject> getEnumerator(
-    const std::string& query)
+  COMPtr<IEnumWbemClassObject> getEnumerator(const std::string& query)
   {
     IEnumWbemClassObject* rawEnumerator = NULL;
 
     auto ret = m_service->ExecQuery(
-      bstr_t("WQL"),
-      bstr_t(query.c_str()),
-      WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
-      NULL,
-      &rawEnumerator);
+        bstr_t("WQL"), bstr_t(query.c_str()),
+        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &rawEnumerator);
 
-    if (FAILED(ret) || !rawEnumerator)
-    {
+    if (FAILED(ret) || !rawEnumerator) {
       log::error("query '{}' failed, {}", query, formatSystemMessage(ret));
       return {};
     }
@@ -154,14 +141,11 @@ private:
   }
 };
 
-
-SecurityProduct::SecurityProduct(
-  QUuid guid, QString name, int provider,
-  bool active, bool upToDate) :
-  m_guid(std::move(guid)), m_name(std::move(name)), m_provider(provider),
-  m_active(active), m_upToDate(upToDate)
-{
-}
+SecurityProduct::SecurityProduct(QUuid guid, QString name, int provider, bool active,
+                                 bool upToDate)
+    : m_guid(std::move(guid)), m_name(std::move(name)), m_provider(provider),
+      m_active(active), m_upToDate(upToDate)
+{}
 
 const QUuid& SecurityProduct::guid() const
 {
@@ -250,11 +234,9 @@ QString SecurityProduct::providerToString() const
   return ps.join("|");
 }
 
-
 std::optional<SecurityProduct> handleProduct(IWbemClassObject* o)
 {
   VARIANT prop;
-
 
   // guid
   auto ret = o->Get(L"instanceGuid", 0, &prop, 0, 0);
@@ -271,7 +253,6 @@ std::optional<SecurityProduct> handleProduct(IWbemClassObject* o)
   const QUuid guid(QString::fromWCharArray(prop.bstrVal));
   VariantClear(&prop);
 
-
   // display name
   QString displayName;
   ret = o->Get(L"displayName", 0, &prop, 0, 0);
@@ -286,10 +267,9 @@ std::optional<SecurityProduct> handleProduct(IWbemClassObject* o)
 
   VariantClear(&prop);
 
-
   // product state
   DWORD state = 0;
-  ret = o->Get(L"productState", 0, &prop, 0, 0);
+  ret         = o->Get(L"productState", 0, &prop, 0, 0);
 
   if (FAILED(ret)) {
     log::error("failed to get productState, {}", formatSystemMessage(ret));
@@ -309,12 +289,11 @@ std::optional<SecurityProduct> handleProduct(IWbemClassObject* o)
 
   VariantClear(&prop);
 
-
-  const auto provider = static_cast<int>((state >> 16) & 0xff);
-  const auto scanner = (state >> 8) & 0xff;
+  const auto provider    = static_cast<int>((state >> 16) & 0xff);
+  const auto scanner     = (state >> 8) & 0xff;
   const auto definitions = state & 0xff;
 
-  const bool active = ((scanner & 0x10) != 0);
+  const bool active   = ((scanner & 0x10) != 0);
   const bool upToDate = (definitions == 0);
 
   return SecurityProduct(guid, displayName, provider, active, upToDate);
@@ -328,7 +307,7 @@ std::vector<SecurityProduct> getSecurityProductsFromWMI()
   std::map<QUuid, SecurityProduct> map;
 
   auto f = [&](auto* o) {
-    if (auto p=handleProduct(o)) {
+    if (auto p = handleProduct(o)) {
       map.emplace(p->guid(), std::move(*p));
     }
   };
@@ -365,14 +344,12 @@ std::optional<SecurityProduct> getWindowsFirewall()
   {
     void* rawPolicy = nullptr;
 
-    hr = CoCreateInstance(
-      __uuidof(NetFwPolicy2), nullptr, CLSCTX_INPROC_SERVER,
-      __uuidof(INetFwPolicy2), &rawPolicy);
+    hr = CoCreateInstance(__uuidof(NetFwPolicy2), nullptr, CLSCTX_INPROC_SERVER,
+                          __uuidof(INetFwPolicy2), &rawPolicy);
 
     if (FAILED(hr) || !rawPolicy) {
-      log::error(
-        "CoCreateInstance for NetFwPolicy2 failed, {}",
-        formatSystemMessage(hr));
+      log::error("CoCreateInstance for NetFwPolicy2 failed, {}",
+                 formatSystemMessage(hr));
 
       return {};
     }
@@ -384,8 +361,7 @@ std::optional<SecurityProduct> getWindowsFirewall()
 
   if (policy) {
     hr = policy->get_FirewallEnabled(NET_FW_PROFILE2_PUBLIC, &enabledVariant);
-    if (FAILED(hr))
-    {
+    if (FAILED(hr)) {
       // EPT_S_NOT_REGISTERED is "There are no more endpoints available from the
       // endpoint mapper", which seems to happen sometimes on Windows 7 when the
       // firewall has been disabled, so treat it as such and don't log it
@@ -408,10 +384,9 @@ std::optional<SecurityProduct> getWindowsFirewall()
     return {};
   }
 
-  return SecurityProduct(
-    {}, "Windows Firewall", WSC_SECURITY_PROVIDER_FIREWALL, true, true);
+  return SecurityProduct({}, "Windows Firewall", WSC_SECURITY_PROVIDER_FIREWALL, true,
+                         true);
 }
-
 
 std::vector<SecurityProduct> getSecurityProducts()
 {
@@ -419,47 +394,39 @@ std::vector<SecurityProduct> getSecurityProducts()
 
   {
     auto fromWMI = getSecurityProductsFromWMI();
-    v.insert(
-      v.end(),
-      std::make_move_iterator(fromWMI.begin()),
-      std::make_move_iterator(fromWMI.end()));
+    v.insert(v.end(), std::make_move_iterator(fromWMI.begin()),
+             std::make_move_iterator(fromWMI.end()));
   }
 
-  if (auto p=getWindowsFirewall()) {
+  if (auto p = getWindowsFirewall()) {
     v.push_back(std::move(*p));
   }
 
   return v;
 }
 
-
 class failed
 {
 public:
   failed(DWORD e, QString what)
-    : m_what(what + ", " + QString::fromStdWString(formatSystemMessage(e)))
-  {
-  }
+      : m_what(what + ", " + QString::fromStdWString(formatSystemMessage(e)))
+  {}
 
-  QString what() const
-  {
-    return m_what;
-  }
+  QString what() const { return m_what; }
 
 private:
   QString m_what;
 };
 
-
 MallocPtr<SECURITY_DESCRIPTOR> getSecurityDescriptor(const QString& path)
 {
   const auto wpath = path.toStdWString();
-  BOOL ret = FALSE;
+  BOOL ret         = FALSE;
 
   DWORD length = 0;
-  ret = ::GetFileSecurityW(
-    wpath.c_str(), DACL_SECURITY_INFORMATION|OWNER_SECURITY_INFORMATION,
-    nullptr, 0, &length);
+  ret          = ::GetFileSecurityW(wpath.c_str(),
+                                    DACL_SECURITY_INFORMATION | OWNER_SECURITY_INFORMATION,
+                                    nullptr, 0, &length);
 
   if (!ret || length == 0) {
     const auto e = GetLastError();
@@ -478,13 +445,13 @@ MallocPtr<SECURITY_DESCRIPTOR> getSecurityDescriptor(const QString& path)
   }
 
   MallocPtr<SECURITY_DESCRIPTOR> sd(
-    static_cast<SECURITY_DESCRIPTOR*>(std::malloc(length)));
+      static_cast<SECURITY_DESCRIPTOR*>(std::malloc(length)));
 
   std::memset(sd.get(), 0, length);
 
-  ret = ::GetFileSecurityW(
-    wpath.c_str(), DACL_SECURITY_INFORMATION|OWNER_SECURITY_INFORMATION,
-    sd.get(), length, &length);
+  ret = ::GetFileSecurityW(wpath.c_str(),
+                           DACL_SECURITY_INFORMATION | OWNER_SECURITY_INFORMATION,
+                           sd.get(), length, &length);
 
   if (!ret) {
     const auto e = GetLastError();
@@ -496,9 +463,9 @@ MallocPtr<SECURITY_DESCRIPTOR> getSecurityDescriptor(const QString& path)
 
 PACL getDacl(SECURITY_DESCRIPTOR* sd)
 {
-  BOOL present = FALSE;
+  BOOL present       = FALSE;
   BOOL daclDefaulted = FALSE;
-  PACL acl = nullptr;
+  PACL acl           = nullptr;
 
   BOOL ret = ::GetSecurityDescriptorDacl(sd, &present, &acl, &daclDefaulted);
 
@@ -531,7 +498,7 @@ PSID getFileOwner(SECURITY_DESCRIPTOR* sd)
 
 MallocPtr<void> getCurrentUser()
 {
-  HANDLE hnd = ::GetCurrentProcess();
+  HANDLE hnd      = ::GetCurrentProcess();
   HANDLE rawToken = 0;
 
   BOOL ret = ::OpenProcessToken(hnd, TOKEN_QUERY, &rawToken);
@@ -543,7 +510,7 @@ MallocPtr<void> getCurrentUser()
   HandlePtr token(rawToken);
 
   DWORD retsize = 0;
-  ret = ::GetTokenInformation(token.get(), TokenUser, 0, 0, &retsize);
+  ret           = ::GetTokenInformation(token.get(), TokenUser, 0, 0, &retsize);
 
   if (!ret) {
     const auto e = GetLastError();
@@ -553,8 +520,8 @@ MallocPtr<void> getCurrentUser()
   }
 
   MallocPtr<void> tokenBuffer(std::malloc(retsize));
-  ret = ::GetTokenInformation(
-    token.get(), TokenUser, tokenBuffer.get(), retsize, &retsize);
+  ret = ::GetTokenInformation(token.get(), TokenUser, tokenBuffer.get(), retsize,
+                              &retsize);
 
   if (!ret) {
     const auto e = GetLastError();
@@ -562,7 +529,7 @@ MallocPtr<void> getCurrentUser()
   }
 
   PSID tokenSid = ((PTOKEN_USER)(tokenBuffer.get()))->User.Sid;
-  DWORD sidLen = ::GetLengthSid(tokenSid);
+  DWORD sidLen  = ::GetLengthSid(tokenSid);
   MallocPtr<void> currentUserSID((SID*)(malloc(sidLen)));
 
   ret = ::CopySid(sidLen, currentUserSID.get(), tokenSid);
@@ -581,7 +548,7 @@ ACCESS_MASK getEffectiveRights(ACL* dacl, PSID sid)
   BuildTrusteeWithSid(&trustee, sid);
 
   ACCESS_MASK access = 0;
-  DWORD ret = ::GetEffectiveRightsFromAclW(dacl, &trustee, &access);
+  DWORD ret          = ::GetEffectiveRightsFromAclW(dacl, &trustee, &access);
 
   if (ret != ERROR_SUCCESS) {
     throw failed(ret, "GetEffectiveRightsFromAclW()");
@@ -592,11 +559,11 @@ ACCESS_MASK getEffectiveRights(ACL* dacl, PSID sid)
 
 QString getUsername(PSID owner)
 {
-  DWORD nameSize=0, domainSize=0;
+  DWORD nameSize = 0, domainSize = 0;
   auto use = SidTypeUnknown;
 
-  BOOL ret = LookupAccountSidW(
-    nullptr, owner, nullptr, &nameSize, nullptr, &domainSize, &use);
+  BOOL ret =
+      LookupAccountSidW(nullptr, owner, nullptr, &nameSize, nullptr, &domainSize, &use);
 
   if (!ret) {
     const auto e = GetLastError();
@@ -606,18 +573,18 @@ QString getUsername(PSID owner)
     }
   }
 
-  auto wsName = std::make_unique<wchar_t[]>(nameSize);
+  auto wsName   = std::make_unique<wchar_t[]>(nameSize);
   auto wsDomain = std::make_unique<wchar_t[]>(domainSize);
 
-  ret = LookupAccountSidW(
-    nullptr, owner, wsName.get(), &nameSize, wsDomain.get(), &domainSize, &use);
+  ret = LookupAccountSidW(nullptr, owner, wsName.get(), &nameSize, wsDomain.get(),
+                          &domainSize, &use);
 
   if (!ret) {
     const auto e = GetLastError();
     throw failed(e, "LookupAccountSid()");
   }
 
-  const QString name = QString::fromWCharArray(wsName.get(), nameSize);
+  const QString name   = QString::fromWCharArray(wsName.get(), nameSize);
   const QString domain = QString::fromWCharArray(wsDomain.get(), domainSize);
 
   if (!name.isEmpty() && !domain.isEmpty()) {
@@ -720,10 +687,9 @@ FileRights makeFileRights(ACCESS_MASK m)
   }
 
   // 0x001f01ff
-  const auto normalRights =
-    STANDARD_RIGHTS_ALL |
-    FILE_GENERIC_READ | FILE_GENERIC_WRITE | FILE_GENERIC_EXECUTE |
-    FILE_DELETE_CHILD;
+  const auto normalRights = STANDARD_RIGHTS_ALL | FILE_GENERIC_READ |
+                            FILE_GENERIC_WRITE | FILE_GENERIC_EXECUTE |
+                            FILE_DELETE_CHILD;
 
   if (m == normalRights) {
     fr.normalRights = true;
@@ -736,13 +702,12 @@ FileSecurity getFileSecurity(const QString& path)
 {
   FileSecurity fs;
 
-  try
-  {
-    auto sd = getSecurityDescriptor(path);
-    auto dacl = getDacl(sd.get());
+  try {
+    auto sd          = getSecurityDescriptor(path);
+    auto dacl        = getDacl(sd.get());
     auto currentUser = getCurrentUser();
-    auto owner = getFileOwner(sd.get());
-    auto access = getEffectiveRights(dacl, currentUser.get());
+    auto owner       = getFileOwner(sd.get());
+    auto access      = getEffectiveRights(dacl, currentUser.get());
 
     fs.rights = makeFileRights(access);
 
@@ -751,12 +716,10 @@ FileSecurity getFileSecurity(const QString& path)
     } else {
       fs.owner = getUsername(owner);
     }
-  }
-  catch(failed& f)
-  {
+  } catch (failed& f) {
     fs.error = f.what();
   }
 
   return fs;
 }
-} // namespace
+}  // namespace env

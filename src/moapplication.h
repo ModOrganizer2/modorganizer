@@ -20,9 +20,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MOAPPLICATION_H
 #define MOAPPLICATION_H
 
+#include "env.h"
 #include <QApplication>
 #include <QFileSystemWatcher>
-#include "env.h"
 
 class Settings;
 class MOMultiProcess;
@@ -31,7 +31,10 @@ class PluginContainer;
 class OrganizerCore;
 class NexusInterface;
 
-namespace MOBase { class IPluginGame; }
+namespace MOBase
+{
+class IPluginGame;
+}
 
 class MOApplication : public QApplication
 {
@@ -90,22 +93,19 @@ private:
   void purgeOldFiles();
 };
 
-
 class MOSplash
 {
 public:
-  MOSplash(
-    const Settings& settings, const QString& dataPath,
-    const MOBase::IPluginGame* game);
+  MOSplash(const Settings& settings, const QString& dataPath,
+           const MOBase::IPluginGame* game);
 
   void close();
 
 private:
   std::unique_ptr<QSplashScreen> ss_;
 
-  QString getSplashPath(
-    const Settings& settings, const QString& dataPath,
-    const MOBase::IPluginGame* game) const;
+  QString getSplashPath(const Settings& settings, const QString& dataPath,
+                        const MOBase::IPluginGame* game) const;
 };
 
-#endif // MOAPPLICATION_H
+#endif  // MOAPPLICATION_H

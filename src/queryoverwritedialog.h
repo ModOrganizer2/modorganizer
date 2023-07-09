@@ -22,7 +22,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QDialog>
 
-namespace Ui {
+namespace Ui
+{
 class QueryOverwriteDialog;
 }
 
@@ -30,20 +31,22 @@ class QueryOverwriteDialog : public QDialog
 {
   Q_OBJECT
 public:
-  enum Action {
+  enum Action
+  {
     ACT_NONE,
     ACT_MERGE,
     ACT_REPLACE,
     ACT_RENAME
   };
 
-  enum Backup {
+  enum Backup
+  {
     BACKUP_NO,
     BACKUP_YES
   };
 
 public:
-  QueryOverwriteDialog(QWidget *parent, Backup b);
+  QueryOverwriteDialog(QWidget* parent, Backup b);
   ~QueryOverwriteDialog();
   bool backup() const;
   Action action() const { return m_Action; }
@@ -54,8 +57,8 @@ private slots:
   void on_cancelBtn_clicked();
 
 private:
-  Ui::QueryOverwriteDialog *ui;
+  Ui::QueryOverwriteDialog* ui;
   Action m_Action;
 };
 
-#endif // QUERYOVERWRITEDIALOG_H
+#endif  // QUERYOVERWRITEDIALOG_H

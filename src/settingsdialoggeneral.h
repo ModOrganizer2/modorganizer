@@ -1,8 +1,8 @@
 #ifndef SETTINGSDIALOGGENERAL_H
 #define SETTINGSDIALOGGENERAL_H
 
-#include "settingsdialog.h"
 #include "settings.h"
+#include "settingsdialog.h"
 
 class GeneralSettingsTab : public SettingsTab
 {
@@ -21,4 +21,4 @@ private:
   void onResetDialogs();
 };
 
-#endif // SETTINGSDIALOGGENERAL_H
+#endif  // SETTINGSDIALOGGENERAL_H

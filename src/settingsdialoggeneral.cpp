@@ -1,15 +1,15 @@
 #include "settingsdialoggeneral.h"
-#include "ui_settingsdialog.h"
-#include "shared/appconfig.h"
 #include "categoriesdialog.h"
 #include "colortable.h"
-#include <utility.h>
+#include "shared/appconfig.h"
+#include "ui_settingsdialog.h"
 #include <questionboxmemory.h>
+#include <utility.h>
 
 using namespace MOBase;
 
 GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
-  : SettingsTab(s, d)
+    : SettingsTab(s, d)
 {
   // language
   addLanguages();
@@ -18,7 +18,8 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
   // download list
   ui->compactBox->setChecked(settings().interface().compactDownloads());
   ui->showMetaBox->setChecked(settings().interface().metaDownloads());
-  ui->hideDownloadInstallBox->setChecked(settings().interface().hideDownloadsAfterInstallation());
+  ui->hideDownloadInstallBox->setChecked(
+      settings().interface().hideDownloadsAfterInstallation());
 
   // updates
   ui->checkForUpdates->setChecked(settings().checkForUpdates());
@@ -26,23 +27,27 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
 
   // miscellaneous
   ui->centerDialogs->setChecked(settings().geometry().centerDialogs());
-  ui->changeGameConfirmation->setChecked(settings().interface().showChangeGameConfirmation());
+  ui->changeGameConfirmation->setChecked(
+      settings().interface().showChangeGameConfirmation());
   ui->showMenubarOnAlt->setChecked(settings().interface().showMenubarOnAlt());
-  ui->doubleClickPreviews->setChecked(settings().interface().doubleClicksOpenPreviews());
+  ui->doubleClickPreviews->setChecked(
+      settings().interface().doubleClicksOpenPreviews());
 
-  QObject::connect(
-    ui->categoriesBtn, &QPushButton::clicked, [&]{ onEditCategories(); });
+  QObject::connect(ui->categoriesBtn, &QPushButton::clicked, [&] {
+    onEditCategories();
+  });
 
-  QObject::connect(
-    ui->resetDialogsButton, &QPushButton::clicked, [&]{ onResetDialogs(); });
+  QObject::connect(ui->resetDialogsButton, &QPushButton::clicked, [&] {
+    onResetDialogs();
+  });
 }
 
 void GeneralSettingsTab::update()
 {
   // language
   const QString oldLanguage = settings().interface().language();
-  const QString newLanguage = ui->languageBox->itemData(
-    ui->languageBox->currentIndex()).toString();
+  const QString newLanguage =
+      ui->languageBox->itemData(ui->languageBox->currentIndex()).toString();
 
   if (newLanguage != oldLanguage) {
     settings().interface().setLanguage(newLanguage);
@@ -52,7 +57,8 @@ void GeneralSettingsTab::update()
   // download list
   settings().interface().setCompactDownloads(ui->compactBox->isChecked());
   settings().interface().setMetaDownloads(ui->showMetaBox->isChecked());
-  settings().interface().setHideDownloadsAfterInstallation(ui->hideDownloadInstallBox->isChecked());
+  settings().interface().setHideDownloadsAfterInstallation(
+      ui->hideDownloadInstallBox->isChecked());
 
   // updates
   settings().setCheckForUpdates(ui->checkForUpdates->isChecked());
@@ -60,23 +66,23 @@ void GeneralSettingsTab::update()
 
   // miscellaneous
   settings().geometry().setCenterDialogs(ui->centerDialogs->isChecked());
-  settings().interface().setShowChangeGameConfirmation(ui->changeGameConfirmation->isChecked());
+  settings().interface().setShowChangeGameConfirmation(
+      ui->changeGameConfirmation->isChecked());
   settings().interface().setShowMenubarOnAlt(ui->showMenubarOnAlt->isChecked());
-  settings().interface().setDoubleClicksOpenPreviews(ui->doubleClickPreviews->isChecked());
+  settings().interface().setDoubleClicksOpenPreviews(
+      ui->doubleClickPreviews->isChecked());
 }
 
 void GeneralSettingsTab::addLanguages()
 {
   // matches the end of filenames for something like "_en.qm" or "_zh_CN.qm"
-  const QString pattern =
-    QString::fromStdWString(AppConfig::translationPrefix()) +
-    "_([a-z]{2,3}(_[A-Z]{2,2})?).qm";
+  const QString pattern = QString::fromStdWString(AppConfig::translationPrefix()) +
+                          "_([a-z]{2,3}(_[A-Z]{2,2})?).qm";
 
   const QRegularExpression exp(QRegularExpression::anchoredPattern(pattern));
 
-  QDirIterator iter(
-    QCoreApplication::applicationDirPath() + "/translations",
-    QDir::Files);
+  QDirIterator iter(QCoreApplication::applicationDirPath() + "/translations",
+                    QDir::Files);
 
   std::vector<std::pair<QString, QString>> languages;
 
@@ -84,7 +90,7 @@ void GeneralSettingsTab::addLanguages()
     iter.next();
 
     const QString file = iter.fileName();
-    auto match = exp.match(file);
+    auto match         = exp.match(file);
     if (!match.hasMatch()) {
       continue;
     }
@@ -93,8 +99,8 @@ void GeneralSettingsTab::addLanguages()
     const QLocale locale(languageCode);
 
     QString languageString = QString("%1 (%2)")
-      .arg(locale.nativeLanguageName())
-      .arg(locale.nativeCountryName());
+                                 .arg(locale.nativeLanguageName())
+                                 .arg(locale.nativeCountryName());
 
     if (locale.language() == QLocale::Chinese) {
       if (languageCode == "zh_TW") {
@@ -152,12 +158,11 @@ void GeneralSettingsTab::onEditCategories()
 void GeneralSettingsTab::onResetDialogs()
 {
   const auto r = QMessageBox::question(
-    parentWidget(),
-    QObject::tr("Confirm?"),
-    QObject::tr(
-      "This will reset all the choices you made to dialogs and make them all "
-      "visible again. Continue?"),
-    QMessageBox::Yes | QMessageBox::No);
+      parentWidget(), QObject::tr("Confirm?"),
+      QObject::tr(
+          "This will reset all the choices you made to dialogs and make them all "
+          "visible again. Continue?"),
+      QMessageBox::Yes | QMessageBox::No);
 
   if (r == QMessageBox::Yes) {
     resetDialogs();

@@ -28,13 +28,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QtGlobal>
 
-ActivateModsDialog::ActivateModsDialog(SaveGameInfo::MissingAssets const &missingAssets, QWidget *parent)
-  : TutorableDialog("ActivateMods", parent), ui(new Ui::ActivateModsDialog)
+ActivateModsDialog::ActivateModsDialog(SaveGameInfo::MissingAssets const& missingAssets,
+                                       QWidget* parent)
+    : TutorableDialog("ActivateMods", parent), ui(new Ui::ActivateModsDialog)
 {
   ui->setupUi(this);
 
-  QTableWidget *modsTable = findChild<QTableWidget*>("modsTable");
-  QHeaderView *headerView = modsTable->horizontalHeader();
+  QTableWidget* modsTable = findChild<QTableWidget*>("modsTable");
+  QHeaderView* headerView = modsTable->horizontalHeader();
   headerView->setSectionResizeMode(0, QHeaderView::Stretch);
   headerView->setSectionResizeMode(1, QHeaderView::Interactive);
 
@@ -49,7 +50,7 @@ ActivateModsDialog::ActivateModsDialog(SaveGameInfo::MissingAssets const &missin
       modsTable->setCellWidget(row, 1, new QLabel(tr("not found")));
     } else {
       QComboBox* combo = new QComboBox();
-      for (QString const &mod : espIter.value()) {
+      for (QString const& mod : espIter.value()) {
         combo->addItem(mod);
       }
       modsTable->setCellWidget(row, 1, combo);
@@ -57,20 +58,18 @@ ActivateModsDialog::ActivateModsDialog(SaveGameInfo::MissingAssets const &missin
   }
 }
 
-
 ActivateModsDialog::~ActivateModsDialog()
 {
   delete ui;
 }
 
-
 std::set<QString> ActivateModsDialog::getModsToActivate()
 {
   std::set<QString> result;
-  QTableWidget *modsTable = findChild<QTableWidget*>("modsTable");
+  QTableWidget* modsTable = findChild<QTableWidget*>("modsTable");
 
   for (int row = 0; row < modsTable->rowCount(); ++row) {
-    QComboBox *comboBox = dynamic_cast<QComboBox*>(modsTable->cellWidget(row, 1));
+    QComboBox* comboBox = dynamic_cast<QComboBox*>(modsTable->cellWidget(row, 1));
     if (comboBox != nullptr) {
       result.insert(comboBox->currentText());
     }
@@ -78,16 +77,15 @@ std::set<QString> ActivateModsDialog::getModsToActivate()
   return result;
 }
 
-
 std::set<QString> ActivateModsDialog::getESPsToActivate()
 {
   std::set<QString> result;
-  QTableWidget *modsTable = findChild<QTableWidget*>("modsTable");
+  QTableWidget* modsTable = findChild<QTableWidget*>("modsTable");
 
   for (int row = 0; row < modsTable->rowCount(); ++row) {
-    QComboBox *comboBox = dynamic_cast<QComboBox*>(modsTable->cellWidget(row, 1));
+    QComboBox* comboBox = dynamic_cast<QComboBox*>(modsTable->cellWidget(row, 1));
     if (comboBox != nullptr) {
-      QLabel *espName = dynamic_cast<QLabel*>(modsTable->cellWidget(row, 0));
+      QLabel* espName = dynamic_cast<QLabel*>(modsTable->cellWidget(row, 0));
 
       result.insert(espName->text());
     }

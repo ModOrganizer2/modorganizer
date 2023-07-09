@@ -21,10 +21,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SPAWN_H
 
 #define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <tchar.h>
-#include <QFileInfo>
 #include <QDir>
+#include <QFileInfo>
+#include <tchar.h>
+#include <windows.h>
 
 class Settings;
 
@@ -38,34 +38,32 @@ namespace spawn
  * @param currentDirectory the directory to use as the working directory to run in
  * @param logLevel log level to be used by the hook library. Ignored if hooked is false
  * @param hooked if set, the binary is started with mo injected
- * @param stdout if not equal to INVALID_HANDLE_VALUE, this is used as stdout for the process
- * @param stderr if not equal to INVALID_HANDLE_VALUE, this is used as stderr for the process
-*/
+ * @param stdout if not equal to INVALID_HANDLE_VALUE, this is used as stdout for the
+ * process
+ * @param stderr if not equal to INVALID_HANDLE_VALUE, this is used as stderr for the
+ * process
+ */
 struct SpawnParameters
 {
   QFileInfo binary;
   QString arguments;
   QDir currentDirectory;
   QString steamAppID;
-  bool hooked = false;
+  bool hooked   = false;
   HANDLE stdOut = INVALID_HANDLE_VALUE;
   HANDLE stdErr = INVALID_HANDLE_VALUE;
 };
 
+bool checkSteam(QWidget* parent, const SpawnParameters& sp, const QDir& gameDirectory,
+                const QString& steamAppID, const Settings& settings);
 
-bool checkSteam(
-  QWidget* parent, const SpawnParameters& sp,
-  const QDir& gameDirectory, const QString &steamAppID, const Settings& settings);
-
-bool checkBlacklist(
-  QWidget* parent, const SpawnParameters& sp, Settings& settings);
+bool checkBlacklist(QWidget* parent, const SpawnParameters& sp, Settings& settings);
 
 /**
  * @brief spawn a binary with Mod Organizer injected
  * @return the process handle
  **/
 HANDLE startBinary(QWidget* parent, const SpawnParameters& sp);
-
 
 enum class FileExecutionTypes
 {
@@ -82,13 +80,11 @@ struct FileExecutionContext
 
 QString findJavaInstallation(const QString& jarFile);
 
-FileExecutionContext getFileExecutionContext(
-  QWidget* parent, const QFileInfo& target);
+FileExecutionContext getFileExecutionContext(QWidget* parent, const QFileInfo& target);
 
 FileExecutionTypes getFileExecutionType(const QFileInfo& target);
 
-} // namespace
-
+}  // namespace spawn
 
 // convenience functions to work with the external helper program, which is used
 // to make changes on the system that require administrative rights, so that
@@ -98,24 +94,24 @@ namespace helper
 {
 
 /**
-* @brief sets the last modified time for all .bsa-files in the target directory well into the past
-* @param moPath absolute path to the modOrganizer base directory
-* @param dataPath the path taht contains the .bsa-files, usually the data directory of the game
-**/
-bool backdateBSAs(
-  QWidget* parent, const std::wstring &moPath, const std::wstring &dataPath);
+ * @brief sets the last modified time for all .bsa-files in the target directory well
+ *into the past
+ * @param moPath absolute path to the modOrganizer base directory
+ * @param dataPath the path taht contains the .bsa-files, usually the data directory of
+ *the game
+ **/
+bool backdateBSAs(QWidget* parent, const std::wstring& moPath,
+                  const std::wstring& dataPath);
 
 /**
-* @brief waits for the current process to exit and restarts it as an administrator
-* @param moPath absolute path to the modOrganizer base directory
-* @param moFile file name of modOrganizer
-* @param workingDir current working directory
-**/
-bool adminLaunch(
-  QWidget* parent, const std::wstring &moPath,
-  const std::wstring &moFile, const std::wstring &workingDir);
+ * @brief waits for the current process to exit and restarts it as an administrator
+ * @param moPath absolute path to the modOrganizer base directory
+ * @param moFile file name of modOrganizer
+ * @param workingDir current working directory
+ **/
+bool adminLaunch(QWidget* parent, const std::wstring& moPath,
+                 const std::wstring& moFile, const std::wstring& workingDir);
 
-} // namespace
+}  // namespace helper
 
-#endif // SPAWN_H
-
+#endif  // SPAWN_H

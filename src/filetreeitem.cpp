@@ -1,8 +1,8 @@
 #include "filetreeitem.h"
 #include "filetreemodel.h"
 #include "modinfo.h"
-#include "shared/util.h"
 #include "modinfodialogfwd.h"
+#include "shared/util.h"
 #include <log.h>
 #include <utility.h>
 
@@ -16,7 +16,7 @@ const QString& directoryFileType()
 {
   static const QString name = [] {
     const DWORD flags = SHGFI_TYPENAME;
-    SHFILEINFOW sfi = {};
+    SHFILEINFOW sfi   = {};
 
     // "." for the current directory, which should always exist
     const auto r = SHGetFileInfoW(L".", 0, &sfi, sizeof(sfi), flags);
@@ -24,9 +24,8 @@ const QString& directoryFileType()
     if (!r) {
       const auto e = GetLastError();
 
-      log::error(
-        "SHGetFileInfoW failed for folder file type, {}",
-        formatSystemMessage(e));
+      log::error("SHGetFileInfoW failed for folder file type, {}",
+                 formatSystemMessage(e));
 
       return QString("File folder");
     } else {
@@ -41,7 +40,7 @@ const QString& cachedFileTypeNoExtension()
 {
   static const QString name = [] {
     const DWORD flags = SHGFI_TYPENAME | SHGFI_USEFILEATTRIBUTES;
-    SHFILEINFOW sfi = {};
+    SHFILEINFOW sfi   = {};
 
     // dummy filename with no extension
     const auto r = SHGetFileInfoW(L"file", 0, &sfi, sizeof(sfi), flags);
@@ -49,9 +48,8 @@ const QString& cachedFileTypeNoExtension()
     if (!r) {
       const auto e = GetLastError();
 
-      log::error(
-        "SHGetFileInfoW failed for file without extension, {}",
-        formatSystemMessage(e));
+      log::error("SHGetFileInfoW failed for file without extension, {}",
+                 formatSystemMessage(e));
 
       return QString("File");
     } else {
@@ -80,7 +78,6 @@ const QString& cachedFileType(const std::wstring& file, bool isOnFilesystem)
     return itor->second;
   }
 
-
   DWORD flags = SHGFI_TYPENAME;
 
   if (!isOnFilesystem) {
@@ -90,16 +87,14 @@ const QString& cachedFileType(const std::wstring& file, bool isOnFilesystem)
   }
 
   SHFILEINFOW sfi = {};
-  const auto r = SHGetFileInfoW(file.c_str(), 0, &sfi, sizeof(sfi), flags);
+  const auto r    = SHGetFileInfoW(file.c_str(), 0, &sfi, sizeof(sfi), flags);
 
   QString s;
 
   if (!r) {
     const auto e = GetLastError();
 
-    log::error(
-      "SHGetFileInfoW failed for '{}', {}",
-      file, formatSystemMessage(e));
+    log::error("SHGetFileInfoW failed for '{}', {}", file, formatSystemMessage(e));
 
     s = cachedFileTypeNoExtension();
   } else {
@@ -109,51 +104,41 @@ const QString& cachedFileType(const std::wstring& file, bool isOnFilesystem)
   return map.emplace(sv, s).first->second;
 }
 
+FileTreeItem::FileTreeItem(FileTreeModel* model, FileTreeItem* parent,
+                           std::wstring dataRelativeParentPath, bool isDirectory,
+                           std::wstring file)
+    : m_model(model), m_parent(parent), m_indexGuess(NoIndexGuess),
+      m_virtualParentPath(QString::fromStdWString(dataRelativeParentPath)),
+      m_wsFile(file), m_wsLcFile(ToLowerCopy(file)), m_key(m_wsLcFile),
+      m_file(QString::fromStdWString(file)), m_isDirectory(isDirectory), m_originID(-1),
+      m_flags(NoFlags), m_loaded(false), m_expanded(false), m_sortingStale(true)
+{}
 
-
-FileTreeItem::FileTreeItem(
-  FileTreeModel* model, FileTreeItem* parent,
-  std::wstring dataRelativeParentPath, bool isDirectory, std::wstring file) :
-    m_model(model), m_parent(parent), m_indexGuess(NoIndexGuess),
-    m_virtualParentPath(QString::fromStdWString(dataRelativeParentPath)),
-    m_wsFile(file),
-    m_wsLcFile(ToLowerCopy(file)),
-    m_key(m_wsLcFile),
-    m_file(QString::fromStdWString(file)),
-    m_isDirectory(isDirectory),
-    m_originID(-1),
-    m_flags(NoFlags),
-    m_loaded(false),
-    m_expanded(false),
-    m_sortingStale(true)
-{
-}
-
-FileTreeItem::Ptr FileTreeItem::createFile(
-  FileTreeModel* model, FileTreeItem* parent,
-  std::wstring dataRelativeParentPath, std::wstring file)
+FileTreeItem::Ptr FileTreeItem::createFile(FileTreeModel* model, FileTreeItem* parent,
+                                           std::wstring dataRelativeParentPath,
+                                           std::wstring file)
 {
   return std::unique_ptr<FileTreeItem>(new FileTreeItem(
-    model, parent, std::move(dataRelativeParentPath), false, std::move(file)));
+      model, parent, std::move(dataRelativeParentPath), false, std::move(file)));
 }
 
-FileTreeItem::Ptr FileTreeItem::createDirectory(
-  FileTreeModel* model, FileTreeItem* parent,
-  std::wstring dataRelativeParentPath, std::wstring file)
+FileTreeItem::Ptr FileTreeItem::createDirectory(FileTreeModel* model,
+                                                FileTreeItem* parent,
+                                                std::wstring dataRelativeParentPath,
+                                                std::wstring file)
 {
   return std::unique_ptr<FileTreeItem>(new FileTreeItem(
-    model, parent, std::move(dataRelativeParentPath), true, std::move(file)));
+      model, parent, std::move(dataRelativeParentPath), true, std::move(file)));
 }
 
-void FileTreeItem::setOrigin(
-  int originID, const std::wstring& realPath, Flags flags,
-  const std::wstring& mod)
+void FileTreeItem::setOrigin(int originID, const std::wstring& realPath, Flags flags,
+                             const std::wstring& mod)
 {
-  m_originID = originID;
+  m_originID   = originID;
   m_wsRealPath = realPath;
-  m_realPath = QString::fromStdWString(realPath);
-  m_flags = flags;
-  m_mod = QString::fromStdWString(mod);
+  m_realPath   = QString::fromStdWString(realPath);
+  m_flags      = flags;
+  m_mod        = QString::fromStdWString(mod);
 
   m_fileSize.reset();
   m_lastModified.reset();
@@ -164,9 +149,8 @@ void FileTreeItem::setOrigin(
 void FileTreeItem::insert(FileTreeItem::Ptr child, std::size_t at)
 {
   if (at > m_children.size()) {
-    log::error(
-      "{}: can't insert child {} at {}, out of range",
-      debugName(), child->debugName(), at);
+    log::error("{}: can't insert child {} at {}, out of range", debugName(),
+               child->debugName(), at);
 
     return;
   }
@@ -193,11 +177,10 @@ void FileTreeItem::remove(std::size_t from, std::size_t n)
   }
 
   auto begin = m_children.begin() + from;
-  auto end = begin + n;
+  auto end   = begin + n;
 
   m_children.erase(begin, end);
 }
-
 
 template <class T>
 int threeWayCompare(T&& a, T&& b)
@@ -218,31 +201,26 @@ class FileTreeItem::Sorter
 public:
   static int compare(int column, const FileTreeItem* a, const FileTreeItem* b)
   {
-    switch (column)
-    {
-      case FileTreeModel::FileName:
-        return naturalCompare(a->m_file, b->m_file);
+    switch (column) {
+    case FileTreeModel::FileName:
+      return naturalCompare(a->m_file, b->m_file);
 
-      case FileTreeModel::ModName:
-        return naturalCompare(a->m_mod, b->m_mod);
+    case FileTreeModel::ModName:
+      return naturalCompare(a->m_mod, b->m_mod);
 
-      case FileTreeModel::FileType:
-        return naturalCompare(
-          a->fileType().value_or(QString()),
-          b->fileType().value_or(QString()));
+    case FileTreeModel::FileType:
+      return naturalCompare(a->fileType().value_or(QString()),
+                            b->fileType().value_or(QString()));
 
-      case FileTreeModel::FileSize:
-        return threeWayCompare(
-          a->fileSize().value_or(0),
-          b->fileSize().value_or(0));
+    case FileTreeModel::FileSize:
+      return threeWayCompare(a->fileSize().value_or(0), b->fileSize().value_or(0));
 
-      case FileTreeModel::LastModified:
-        return threeWayCompare(
-          a->lastModified().value_or(QDateTime()),
-          b->lastModified().value_or(QDateTime()));
+    case FileTreeModel::LastModified:
+      return threeWayCompare(a->lastModified().value_or(QDateTime()),
+                             b->lastModified().value_or(QDateTime()));
 
-      default:
-        return 0;
+    default:
+      return 0;
     }
   }
 };
@@ -271,7 +249,7 @@ void FileTreeItem::sort(int column, Qt::SortOrder order, bool force)
   }
 
   if (m_sortingStale || force) {
-    //log::debug("sorting is stale for {}, sorting now", debugName());
+    // log::debug("sorting is stale for {}, sorting now", debugName());
     m_sortingStale = false;
 
     std::sort(m_children.begin(), m_children.end(), [&](auto&& a, auto&& b) {
@@ -448,7 +426,7 @@ bool FileTreeItem::areChildrenVisible() const
 QString FileTreeItem::debugName() const
 {
   return QString("%1(ld=%2,cs=%3)")
-    .arg(virtualPath())
-    .arg(m_loaded)
-    .arg(m_children.size());
+      .arg(virtualPath())
+      .arg(m_loaded)
+      .arg(m_children.size());
 }

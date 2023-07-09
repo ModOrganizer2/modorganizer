@@ -6,24 +6,23 @@
 class OrganizerCore;
 class IUserInterface;
 
-#include <iplugindiagnose.h>
-#include <ipluginmodpage.h>
-#include <iplugingame.h>
-#include <iplugintool.h>
-#include <ipluginproxy.h>
-#include <iplugininstaller.h>
-#include <ipluginfilemapper.h>
-#include <QtPlugin>
-#include <QPluginLoader>
 #include <QFile>
+#include <QPluginLoader>
+#include <QtPlugin>
+#include <iplugindiagnose.h>
+#include <ipluginfilemapper.h>
+#include <iplugingame.h>
+#include <iplugininstaller.h>
+#include <ipluginmodpage.h>
+#include <ipluginproxy.h>
+#include <iplugintool.h>
 #ifndef Q_MOC_RUN
 #include <boost/fusion/container.hpp>
 #include <boost/fusion/include/at_key.hpp>
 #include <boost/mp11.hpp>
-#endif // Q_MOC_RUN
-#include <vector>
+#endif  // Q_MOC_RUN
 #include <memory>
-
+#include <vector>
 
 class OrganizerProxy;
 
@@ -31,9 +30,9 @@ class OrganizerProxy;
  * @brief Class that wrap multiple requirements for a plugin together. THis
  *     class owns the requirements.
  */
-class PluginRequirements {
+class PluginRequirements
+{
 public:
-
   /**
    * @return true if the plugin can be enabled (all requirements are met).
    */
@@ -76,8 +75,8 @@ public:
   std::vector<MOBase::IPluginRequirement::Problem> problems() const;
 
   /**
-   * @return the name of the games (gameName()) this plugin can be used with, or an empty
-   *     list if this plugin does not require particular games.
+   * @return the name of the games (gameName()) this plugin can be used with, or an
+   * empty list if this plugin does not require particular games.
    */
   QStringList requiredGames() const;
 
@@ -88,19 +87,20 @@ public:
   std::vector<MOBase::IPlugin*> requiredFor() const;
 
 private:
-
   // The list of "Core" plugins.
   static const std::set<QString> s_CorePlugins;
 
   // Accumulator version for requiredFor() to avoid infinite recursion.
-  void requiredFor(std::vector<MOBase::IPlugin*>& required, std::set<MOBase::IPlugin*>& visited) const;
+  void requiredFor(std::vector<MOBase::IPlugin*>& required,
+                   std::set<MOBase::IPlugin*>& visited) const;
 
   // Retrieve the requirements from the underlying plugin, take ownership on them
   // and store them. We cannot do this in the constructor because we want to have a
   // constructed object before calling init().
   void fetchRequirements();
 
-  // Set the master for this plugin. This is required to "fake" masters for proxied plugins.
+  // Set the master for this plugin. This is required to "fake" masters for proxied
+  // plugins.
   void setMaster(MOBase::IPlugin* master);
 
   friend class OrganizerCore;
@@ -114,12 +114,9 @@ private:
   OrganizerProxy* m_Organizer;
   std::vector<MOBase::IPlugin*> m_RequiredFor;
 
-  PluginRequirements(
-    PluginContainer* pluginContainer, MOBase::IPlugin* plugin,
-    OrganizerProxy* proxy, MOBase::IPluginProxy* pluginProxy);
-
+  PluginRequirements(PluginContainer* pluginContainer, MOBase::IPlugin* plugin,
+                     OrganizerProxy* proxy, MOBase::IPluginProxy* pluginProxy);
 };
-
 
 /**
  *
@@ -131,52 +128,50 @@ class PluginContainer : public QObject, public MOBase::IPluginDiagnose
   Q_INTERFACES(MOBase::IPluginDiagnose)
 
 private:
-
   using PluginMap = boost::fusion::map<
-    boost::fusion::pair<QObject, std::vector<QObject*>>,
-    boost::fusion::pair<MOBase::IPlugin, std::vector<MOBase::IPlugin*>>,
-    boost::fusion::pair<MOBase::IPluginDiagnose, std::vector<MOBase::IPluginDiagnose*>>,
-    boost::fusion::pair<MOBase::IPluginGame, std::vector<MOBase::IPluginGame*>>,
-    boost::fusion::pair<MOBase::IPluginInstaller, std::vector<MOBase::IPluginInstaller*>>,
-    boost::fusion::pair<MOBase::IPluginModPage, std::vector<MOBase::IPluginModPage*>>,
-    boost::fusion::pair<MOBase::IPluginPreview, std::vector<MOBase::IPluginPreview*>>,
-    boost::fusion::pair<MOBase::IPluginTool, std::vector<MOBase::IPluginTool*>>,
-    boost::fusion::pair<MOBase::IPluginProxy, std::vector<MOBase::IPluginProxy*>>,
-    boost::fusion::pair<MOBase::IPluginFileMapper, std::vector<MOBase::IPluginFileMapper*>>
-  >;
+      boost::fusion::pair<QObject, std::vector<QObject*>>,
+      boost::fusion::pair<MOBase::IPlugin, std::vector<MOBase::IPlugin*>>,
+      boost::fusion::pair<MOBase::IPluginDiagnose,
+                          std::vector<MOBase::IPluginDiagnose*>>,
+      boost::fusion::pair<MOBase::IPluginGame, std::vector<MOBase::IPluginGame*>>,
+      boost::fusion::pair<MOBase::IPluginInstaller,
+                          std::vector<MOBase::IPluginInstaller*>>,
+      boost::fusion::pair<MOBase::IPluginModPage, std::vector<MOBase::IPluginModPage*>>,
+      boost::fusion::pair<MOBase::IPluginPreview, std::vector<MOBase::IPluginPreview*>>,
+      boost::fusion::pair<MOBase::IPluginTool, std::vector<MOBase::IPluginTool*>>,
+      boost::fusion::pair<MOBase::IPluginProxy, std::vector<MOBase::IPluginProxy*>>,
+      boost::fusion::pair<MOBase::IPluginFileMapper,
+                          std::vector<MOBase::IPluginFileMapper*>>>;
 
   using AccessPluginMap = boost::fusion::map<
-    boost::fusion::pair<MOBase::IPluginDiagnose, std::map<MOBase::IPluginDiagnose*, MOBase::IPlugin*>>,
-    boost::fusion::pair<MOBase::IPluginFileMapper, std::map<MOBase::IPluginFileMapper*, MOBase::IPlugin*>>,
-    boost::fusion::pair<QString, std::map<QString, MOBase::IPlugin*>>
-  >;
+      boost::fusion::pair<MOBase::IPluginDiagnose,
+                          std::map<MOBase::IPluginDiagnose*, MOBase::IPlugin*>>,
+      boost::fusion::pair<MOBase::IPluginFileMapper,
+                          std::map<MOBase::IPluginFileMapper*, MOBase::IPlugin*>>,
+      boost::fusion::pair<QString, std::map<QString, MOBase::IPlugin*>>>;
 
   static const unsigned int PROBLEM_PLUGINSNOTLOADED = 1;
 
   /**
-  * This typedefs defines the order of plugin interface. This is increasing order of
-  * importance".
-  *
-  * @note IPlugin is the less important interface, followed by IPluginDiagnose and
-  *     IPluginFileMapper as those are usually implemented together with another interface.
-  *     Other interfaces are in a alphabetical order since it is unlikely a plugin will
-  *     implement multiple ones.
-  */
-  using PluginTypeOrder =
-    boost::mp11::mp_transform<
+   * This typedefs defines the order of plugin interface. This is increasing order of
+   * importance".
+   *
+   * @note IPlugin is the less important interface, followed by IPluginDiagnose and
+   *     IPluginFileMapper as those are usually implemented together with another
+   * interface. Other interfaces are in a alphabetical order since it is unlikely a
+   * plugin will implement multiple ones.
+   */
+  using PluginTypeOrder = boost::mp11::mp_transform<
       std::add_pointer_t,
       boost::mp11::mp_list<
-        MOBase::IPluginGame, MOBase::IPluginInstaller, MOBase::IPluginModPage, MOBase::IPluginPreview,
-        MOBase::IPluginProxy, MOBase::IPluginTool, MOBase::IPluginDiagnose, MOBase::IPluginFileMapper,
-        MOBase::IPlugin
-      >
-    >;
+          MOBase::IPluginGame, MOBase::IPluginInstaller, MOBase::IPluginModPage,
+          MOBase::IPluginPreview, MOBase::IPluginProxy, MOBase::IPluginTool,
+          MOBase::IPluginDiagnose, MOBase::IPluginFileMapper, MOBase::IPlugin>>;
 
-  static_assert(
-    boost::mp11::mp_size<PluginTypeOrder>::value == boost::mp11::mp_size<PluginContainer::PluginMap>::value - 1);
+  static_assert(boost::mp11::mp_size<PluginTypeOrder>::value ==
+                boost::mp11::mp_size<PluginContainer::PluginMap>::value - 1);
 
 public:
-
   /**
    * @brief Retrieved the (localized) names of the various plugin interfaces.
    *
@@ -185,7 +180,6 @@ public:
   static QStringList pluginInterfaces();
 
 public:
-
   PluginContainer(OrganizerCore* organizer);
   virtual ~PluginContainer();
 
@@ -226,8 +220,10 @@ public:
    * @tparam T The type of plugin to retrieve.
    */
   template <typename T>
-  const std::vector<T*> &plugins() const {
-    typename boost::fusion::result_of::at_key<const PluginMap, T>::type temp = boost::fusion::at_key<T>(m_Plugins);
+  const std::vector<T*>& plugins() const
+  {
+    typename boost::fusion::result_of::at_key<const PluginMap, T>::type temp =
+        boost::fusion::at_key<T>(m_Plugins);
     return temp;
   }
 
@@ -241,7 +237,8 @@ public:
    * @tparam The interface type.
    */
   template <typename T>
-  bool implementInterface(MOBase::IPlugin* plugin) const {
+  bool implementInterface(MOBase::IPlugin* plugin) const
+  {
     // We need a QObject to be able to qobject_cast<> to the plugin types:
     QObject* oPlugin = as_qobject(plugin);
 
@@ -335,22 +332,22 @@ public:
    *
    * @param plugin The plugin to retrieve the interface for.
    *
-   * @return the (localized) name of the most important interface implemented by this plugin.
+   * @return the (localized) name of the most important interface implemented by this
+   * plugin.
    */
   QString topImplementedInterface(MOBase::IPlugin* plugin) const;
 
   /**
    * @return the preview generator.
    */
-  const PreviewGenerator &previewGenerator() const;
+  const PreviewGenerator& previewGenerator() const;
 
   /**
    * @return the list of plugin file names, including proxied plugins.
    */
   QStringList pluginFileNames() const;
 
-public: // IPluginDiagnose interface
-
+public:  // IPluginDiagnose interface
   virtual std::vector<unsigned int> activeProblems() const;
   virtual QString shortDescription(unsigned int key) const;
   virtual QString fullDescription(unsigned int key) const;
@@ -374,7 +371,6 @@ signals:
   void diagnosisUpdate();
 
 private:
-
   friend class PluginRequirements;
 
   // Unload all the plugins.
@@ -391,7 +387,8 @@ private:
   QString filepath(MOBase::IPlugin* plugin) const;
 
   // Load plugins from the given filepath using the given proxy.
-  std::vector<QObject*> loadProxied(const QString& filepath, MOBase::IPluginProxy* proxy);
+  std::vector<QObject*> loadProxied(const QString& filepath,
+                                    MOBase::IPluginProxy* proxy);
 
   // Load the Qt plugin from the given file.
   QObject* loadQtPlugin(const QString& filepath);
@@ -399,8 +396,8 @@ private:
   // check if a plugin is folder containing a Qt plugin, it is, return the path to the
   // DLL containing the plugin in the folder, otherwise return an empty optional
   //
-  // a Qt plugin folder is a folder with a DLL containing a library (not in a subdirectory),
-  // if multiple plugins are present, only the first one is returned
+  // a Qt plugin folder is a folder with a DLL containing a library (not in a
+  // subdirectory), if multiple plugins are present, only the first one is returned
   //
   // extra DLLs are ignored by Qt so can be present in the folder
   //
@@ -465,18 +462,19 @@ private:
    *
    * @return true if the plugin was initialized correctly, false otherwise.
    */
-  bool initPlugin(MOBase::IPlugin *plugin, MOBase::IPluginProxy* proxy, bool skipInit);
+  bool initPlugin(MOBase::IPlugin* plugin, MOBase::IPluginProxy* proxy, bool skipInit);
 
-  void registerGame(MOBase::IPluginGame *game);
+  void registerGame(MOBase::IPluginGame* game);
   void unregisterGame(MOBase::IPluginGame* game);
 
-  MOBase::IPlugin* registerPlugin(QObject *pluginObj, const QString &fileName, MOBase::IPluginProxy *proxy);
+  MOBase::IPlugin* registerPlugin(QObject* pluginObj, const QString& fileName,
+                                  MOBase::IPluginProxy* proxy);
 
   // Core organizer, can be null (e.g. on first MO2 startup).
-  OrganizerCore *m_Organizer;
+  OrganizerCore* m_Organizer;
 
   // Main user interface, can be null until MW has been initialized.
-  IUserInterface *m_UserInterface;
+  IUserInterface* m_UserInterface;
 
   PluginMap m_Plugins;
 
@@ -494,5 +492,4 @@ private:
   QFile m_PluginsCheck;
 };
 
-
-#endif // PLUGINCONTAINER_H
+#endif  // PLUGINCONTAINER_H

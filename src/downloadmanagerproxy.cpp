@@ -1,13 +1,15 @@
 #include "downloadmanagerproxy.h"
 
-#include "proxyutils.h"
 #include "organizerproxy.h"
+#include "proxyutils.h"
 
 using namespace MOBase;
 using namespace MOShared;
 
-DownloadManagerProxy::DownloadManagerProxy(OrganizerProxy* oproxy, DownloadManager* downloadManager) :
-  m_OrganizerProxy(oproxy), m_Proxied(downloadManager) { }
+DownloadManagerProxy::DownloadManagerProxy(OrganizerProxy* oproxy,
+                                           DownloadManager* downloadManager)
+    : m_OrganizerProxy(oproxy), m_Proxied(downloadManager)
+{}
 
 DownloadManagerProxy::~DownloadManagerProxy()
 {
@@ -16,10 +18,14 @@ DownloadManagerProxy::~DownloadManagerProxy()
 
 void DownloadManagerProxy::connectSignals()
 {
-  m_Connections.push_back(m_Proxied->onDownloadComplete(callSignalIfPluginActive(m_OrganizerProxy, m_DownloadComplete)));
-  m_Connections.push_back(m_Proxied->onDownloadFailed(callSignalIfPluginActive(m_OrganizerProxy, m_DownloadFailed)));
-  m_Connections.push_back(m_Proxied->onDownloadRemoved(callSignalIfPluginActive(m_OrganizerProxy, m_DownloadRemoved)));
-  m_Connections.push_back(m_Proxied->onDownloadPaused(callSignalIfPluginActive(m_OrganizerProxy, m_DownloadPaused)));
+  m_Connections.push_back(m_Proxied->onDownloadComplete(
+      callSignalIfPluginActive(m_OrganizerProxy, m_DownloadComplete)));
+  m_Connections.push_back(m_Proxied->onDownloadFailed(
+      callSignalIfPluginActive(m_OrganizerProxy, m_DownloadFailed)));
+  m_Connections.push_back(m_Proxied->onDownloadRemoved(
+      callSignalIfPluginActive(m_OrganizerProxy, m_DownloadRemoved)));
+  m_Connections.push_back(m_Proxied->onDownloadPaused(
+      callSignalIfPluginActive(m_OrganizerProxy, m_DownloadPaused)));
 }
 
 void DownloadManagerProxy::disconnectSignals()

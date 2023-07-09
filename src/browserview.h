@@ -20,23 +20,21 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef NEXUSVIEW_H
 #define NEXUSVIEW_H
 
-
 class QEvent;
 class QUrl;
 class QWidget;
-#include <QWebEngineView>
 #include <QWebEnginePage>
+#include <QWebEngineView>
 
 /**
  * @brief web view used to display a nexus page
  **/
 class BrowserView : public QWebEngineView
 {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-
-  explicit BrowserView(QWidget *parent = 0);
+  explicit BrowserView(QWidget* parent = 0);
 
 signals:
 
@@ -45,14 +43,15 @@ signals:
    *
    * @param newView the view for the newly opened window
    **/
-  void initTab(BrowserView *newView);
+  void initTab(BrowserView* newView);
 
   /**
-   * @brief emitted when the user requests a link to be opened in a new tab by middle-clicking
+   * @brief emitted when the user requests a link to be opened in a new tab by
+   * middle-clicking
    *
    * @param url the url to open
    */
-  void openUrlInNewTab(const QUrl &url);
+  void openUrlInNewTab(const QUrl& url);
 
   /**
    * @brief Ctrl-f was clicked. The containing dialog should activate its find-facility
@@ -65,17 +64,13 @@ signals:
   void findAgain();
 
 protected:
+  virtual QWebEngineView* createWindow(QWebEnginePage::WebWindowType type);
 
-  virtual QWebEngineView *createWindow(QWebEnginePage::WebWindowType type);
-
-  virtual bool eventFilter(QObject *obj, QEvent *event);
-
+  virtual bool eventFilter(QObject* obj, QEvent* event);
 
 private:
-
   QString m_FindPattern;
   bool m_MiddleClick;
-
 };
 
-#endif // NEXUSVIEW_H
+#endif  // NEXUSVIEW_H

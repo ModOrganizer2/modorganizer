@@ -25,116 +25,87 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace env
 {
-  class DirectoryWalker;
-  struct Directory;
-  struct File;
-}
+class DirectoryWalker;
+struct Directory;
+struct File;
+}  // namespace env
 
 namespace std
 {
-  template <>
-  struct hash<MOShared::DirectoryEntryFileKey>
-  {
-    using argument_type = MOShared::DirectoryEntryFileKey;
-    using result_type = std::size_t;
+template <>
+struct hash<MOShared::DirectoryEntryFileKey>
+{
+  using argument_type = MOShared::DirectoryEntryFileKey;
+  using result_type   = std::size_t;
 
-    inline result_type operator()(const argument_type& key) const;
-  };
-}
-
+  inline result_type operator()(const argument_type& key) const;
+};
+}  // namespace std
 
 namespace MOShared
 {
 
 struct DirCompareByName
 {
-    bool operator()(const DirectoryEntry* a, const DirectoryEntry* b) const;
+  bool operator()(const DirectoryEntry* a, const DirectoryEntry* b) const;
 };
-
 
 class DirectoryEntry
 {
 public:
-    using SubDirectories = std::set<DirectoryEntry*, DirCompareByName>;
+  using SubDirectories = std::set<DirectoryEntry*, DirCompareByName>;
 
-    DirectoryEntry(
-    std::wstring name, DirectoryEntry* parent, OriginID originID);
+  DirectoryEntry(std::wstring name, DirectoryEntry* parent, OriginID originID);
 
-  DirectoryEntry(
-    std::wstring name, DirectoryEntry* parent, OriginID originID,
-    boost::shared_ptr<FileRegister> fileRegister,
-    boost::shared_ptr<OriginConnection> originConnection);
+  DirectoryEntry(std::wstring name, DirectoryEntry* parent, OriginID originID,
+                 boost::shared_ptr<FileRegister> fileRegister,
+                 boost::shared_ptr<OriginConnection> originConnection);
 
   ~DirectoryEntry();
 
   // noncopyable
-  DirectoryEntry(const DirectoryEntry&) = delete;
+  DirectoryEntry(const DirectoryEntry&)            = delete;
   DirectoryEntry& operator=(const DirectoryEntry&) = delete;
 
   void clear();
 
-  bool isPopulated() const
-  {
-    return m_Populated;
-  }
+  bool isPopulated() const { return m_Populated; }
 
-  bool isTopLevel() const
-  {
-    return m_TopLevel;
-  }
+  bool isTopLevel() const { return m_TopLevel; }
 
-  bool isEmpty() const
-  {
-    return m_Files.empty() && m_SubDirectories.empty();
-  }
+  bool isEmpty() const { return m_Files.empty() && m_SubDirectories.empty(); }
 
-  bool hasFiles() const
-  {
-    return !m_Files.empty();
-  }
+  bool hasFiles() const { return !m_Files.empty(); }
 
-  const DirectoryEntry* getParent() const
-  {
-    return m_Parent;
-  }
+  const DirectoryEntry* getParent() const { return m_Parent; }
 
   // add files to this directory (and subdirectories) from the specified origin.
   // That origin may exist or not
-  void addFromOrigin(
-    const std::wstring& originName,
-    const std::wstring& directory, int priority, DirectoryStats& stats);
+  void addFromOrigin(const std::wstring& originName, const std::wstring& directory,
+                     int priority, DirectoryStats& stats);
 
-  void addFromOrigin(
-    env::DirectoryWalker& walker, const std::wstring& originName,
-    const std::wstring& directory, int priority, DirectoryStats& stats);
+  void addFromOrigin(env::DirectoryWalker& walker, const std::wstring& originName,
+                     const std::wstring& directory, int priority,
+                     DirectoryStats& stats);
 
-  void addFromAllBSAs(
-    const std::wstring& originName, const std::wstring& directory,
-    int priority, const std::vector<std::wstring>& archives,
-    const std::set<std::wstring>& enabledArchives,
-    const std::vector<std::wstring>& loadOrder,
-    DirectoryStats& stats);
+  void addFromAllBSAs(const std::wstring& originName, const std::wstring& directory,
+                      int priority, const std::vector<std::wstring>& archives,
+                      const std::set<std::wstring>& enabledArchives,
+                      const std::vector<std::wstring>& loadOrder,
+                      DirectoryStats& stats);
 
-  void addFromBSA(
-    const std::wstring& originName, const std::wstring& directory,
-    const std::wstring& archivePath, int priority, int order,
-    DirectoryStats& stats);
+  void addFromBSA(const std::wstring& originName, const std::wstring& directory,
+                  const std::wstring& archivePath, int priority, int order,
+                  DirectoryStats& stats);
 
-  void addFromList(
-    const std::wstring& originName, const std::wstring& directory,
-    env::Directory& root, int priority, DirectoryStats& stats);
+  void addFromList(const std::wstring& originName, const std::wstring& directory,
+                   env::Directory& root, int priority, DirectoryStats& stats);
 
   void propagateOrigin(OriginID origin);
 
-  const std::wstring& getName() const
-  {
-    return m_Name;
-  }
+  const std::wstring& getName() const { return m_Name; }
 
-  boost::shared_ptr<FileRegister> getFileRegister()
-  {
-    return m_FileRegister;
-  }
+  boost::shared_ptr<FileRegister> getFileRegister() { return m_FileRegister; }
 
   bool originExists(const std::wstring& name) const;
   FilesOrigin& getOriginByID(OriginID ID) const;
@@ -145,10 +116,7 @@ public:
 
   std::vector<FileEntryPtr> getFiles() const;
 
-  const SubDirectories& getSubDirectories() const
-  {
-    return m_SubDirectories;
-  }
+  const SubDirectories& getSubDirectories() const { return m_SubDirectories; }
 
   template <class F>
   void forEachDirectory(F&& f) const
@@ -164,7 +132,7 @@ public:
   void forEachFile(F&& f) const
   {
     for (auto&& p : m_Files) {
-      if (auto file=m_FileRegister->getFile(p.second)) {
+      if (auto file = m_FileRegister->getFile(p.second)) {
         if (!f(*file)) {
           break;
         }
@@ -187,16 +155,17 @@ public:
     return m_FileRegister->getFile(index);
   }
 
-  DirectoryEntry* findSubDirectory(
-    const std::wstring& name, bool alreadyLowerCase=false) const;
+  DirectoryEntry* findSubDirectory(const std::wstring& name,
+                                   bool alreadyLowerCase = false) const;
 
   DirectoryEntry* findSubDirectoryRecursive(const std::wstring& path);
 
   /** retrieve a file in this directory by name.
-    * @param name name of the file
-    * @return fileentry object for the file or nullptr if no file matches
-    */
-  const FileEntryPtr findFile(const std::wstring& name, bool alreadyLowerCase=false) const;
+   * @param name name of the file
+   * @return fileentry object for the file or nullptr if no file matches
+   */
+  const FileEntryPtr findFile(const std::wstring& name,
+                              bool alreadyLowerCase = false) const;
   const FileEntryPtr findFile(const DirectoryEntryFileKey& key) const;
 
   bool hasFile(const std::wstring& name) const;
@@ -208,8 +177,8 @@ public:
   // if directory is not nullptr, the referenced variable will be set to the
   // path containing the file
   //
-  const FileEntryPtr searchFile(
-    const std::wstring& path, const DirectoryEntry** directory=nullptr) const;
+  const FileEntryPtr searchFile(const std::wstring& path,
+                                const DirectoryEntry** directory = nullptr) const;
 
   void removeFile(FileIndex index);
 
@@ -227,17 +196,17 @@ public:
 
   bool hasContentsFromOrigin(OriginID originID) const;
 
-  FilesOrigin& createOrigin(
-    const std::wstring& originName,
-    const std::wstring& directory, int priority, DirectoryStats& stats);
+  FilesOrigin& createOrigin(const std::wstring& originName,
+                            const std::wstring& directory, int priority,
+                            DirectoryStats& stats);
 
   void removeFiles(const std::set<FileIndex>& indices);
 
   void dump(const std::wstring& file) const;
 
 private:
-  using FilesMap = std::map<std::wstring, FileIndex>;
-  using FilesLookup = std::unordered_map<DirectoryEntryFileKey, FileIndex>;
+  using FilesMap             = std::map<std::wstring, FileIndex>;
+  using FilesLookup          = std::unordered_map<DirectoryEntryFileKey, FileIndex>;
   using SubDirectoriesLookup = std::unordered_map<std::wstring, DirectoryEntry*>;
 
   boost::shared_ptr<FileRegister> m_FileRegister;
@@ -257,36 +226,32 @@ private:
   mutable std::mutex m_FilesMutex;
   mutable std::mutex m_OriginsMutex;
 
+  FileEntryPtr insert(std::wstring_view fileName, FilesOrigin& origin,
+                      FILETIME fileTime, std::wstring_view archive, int order,
+                      DirectoryStats& stats);
 
-  FileEntryPtr insert(
-    std::wstring_view fileName, FilesOrigin& origin, FILETIME fileTime,
-    std::wstring_view archive, int order, DirectoryStats& stats);
+  FileEntryPtr insert(env::File& file, FilesOrigin& origin, std::wstring_view archive,
+                      int order, DirectoryStats& stats);
 
-  FileEntryPtr insert(
-    env::File& file, FilesOrigin& origin,
-    std::wstring_view archive, int order, DirectoryStats& stats);
+  void addFiles(env::DirectoryWalker& walker, FilesOrigin& origin,
+                const std::wstring& path, DirectoryStats& stats);
 
-  void addFiles(
-    env::DirectoryWalker& walker, FilesOrigin& origin,
-    const std::wstring& path, DirectoryStats& stats);
-
-  void addFiles(
-    FilesOrigin& origin, BSA::Folder::Ptr archiveFolder, FILETIME fileTime,
-    const std::wstring& archiveName, int order, DirectoryStats& stats);
+  void addFiles(FilesOrigin& origin, BSA::Folder::Ptr archiveFolder, FILETIME fileTime,
+                const std::wstring& archiveName, int order, DirectoryStats& stats);
 
   void addDir(FilesOrigin& origin, env::Directory& d, DirectoryStats& stats);
 
-  DirectoryEntry* getSubDirectory(
-    std::wstring_view name, bool create, DirectoryStats& stats,
-    OriginID originID = InvalidOriginID);
+  DirectoryEntry* getSubDirectory(std::wstring_view name, bool create,
+                                  DirectoryStats& stats,
+                                  OriginID originID = InvalidOriginID);
 
-  DirectoryEntry* getSubDirectory(
-    env::Directory& dir, bool create, DirectoryStats& stats,
-    OriginID originID = InvalidOriginID);
+  DirectoryEntry* getSubDirectory(env::Directory& dir, bool create,
+                                  DirectoryStats& stats,
+                                  OriginID originID = InvalidOriginID);
 
-  DirectoryEntry* getSubDirectoryRecursive(
-    const std::wstring& path, bool create, DirectoryStats& stats,
-    OriginID originID = InvalidOriginID);
+  DirectoryEntry* getSubDirectoryRecursive(const std::wstring& path, bool create,
+                                           DirectoryStats& stats,
+                                           OriginID originID = InvalidOriginID);
 
   void removeDirRecursive();
 
@@ -305,17 +270,15 @@ private:
   void dump(std::FILE* f, const std::wstring& parentPath) const;
 };
 
-} // namespace MOShared
-
+}  // namespace MOShared
 
 namespace std
 {
-  hash<MOShared::DirectoryEntryFileKey>::result_type
-  hash<MOShared::DirectoryEntryFileKey>::operator()(
-    const argument_type& key) const
-  {
-    return key.hash;
-  }
+hash<MOShared::DirectoryEntryFileKey>::result_type
+hash<MOShared::DirectoryEntryFileKey>::operator()(const argument_type& key) const
+{
+  return key.hash;
 }
+}  // namespace std
 
-#endif // MO_REGISTER_DIRECTORYENTRY_INCLUDED
+#endif  // MO_REGISTER_DIRECTORYENTRY_INCLUDED

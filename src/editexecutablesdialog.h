@@ -20,17 +20,18 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef EDITEXECUTABLESDIALOG_H
 #define EDITEXECUTABLESDIALOG_H
 
-#include "tutorabledialog.h"
-#include <QListWidgetItem>
 #include "executableslist.h"
-#include "profile.h"
 #include "iplugingame.h"
-#include <QTimer>
+#include "profile.h"
+#include "tutorabledialog.h"
 #include <QAbstractButton>
+#include <QListWidgetItem>
+#include <QTimer>
 #include <optional>
 
-namespace Ui {
-    class EditExecutablesDialog;
+namespace Ui
+{
+class EditExecutablesDialog;
 }
 
 class ModList;
@@ -48,10 +49,7 @@ public:
     bool enabled;
     T value;
 
-    Value(bool b, T&& v)
-      : enabled(b), value(std::forward<T>(v))
-    {
-    }
+    Value(bool b, T&& v) : enabled(b), value(std::forward<T>(v)) {}
   };
 
   /**
@@ -135,21 +133,20 @@ private:
   std::map<QString, Value> m_map;
 };
 
-
 /**
  * @brief Dialog to manage the list of executables
  **/
 class EditExecutablesDialog : public MOBase::TutorableDialog
 {
-    Q_OBJECT;
-    friend class IgnoreChanges;
+  Q_OBJECT;
+  friend class IgnoreChanges;
 
 public:
   using CustomOverwrites = ToggableMap<QString>;
-  using ForcedLibraries = ToggableMap<QList<MOBase::ExecutableForcedLoadSetting>>;
+  using ForcedLibraries  = ToggableMap<QList<MOBase::ExecutableForcedLoadSetting>>;
 
-  explicit EditExecutablesDialog(
-    OrganizerCore& oc, int selection=-1, QWidget* parent=nullptr);
+  explicit EditExecutablesDialog(OrganizerCore& oc, int selection = -1,
+                                 QWidget* parent = nullptr);
 
   ~EditExecutablesDialog();
 
@@ -207,7 +204,6 @@ private:
   // the executable's data into the UI, not from a user change
   bool m_settingUI;
 
-
   void loadCustomOverwrites();
   void loadForcedLibraries();
 
@@ -240,4 +236,4 @@ private:
   void setJarBinary(const QFileInfo& binary);
 };
 
-#endif // EDITEXECUTABLESDIALOG_H
+#endif  // EDITEXECUTABLESDIALOG_H

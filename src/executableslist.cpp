@@ -20,18 +20,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "executableslist.h"
 
 #include "iplugingame.h"
-#include "utility.h"
 #include "settings.h"
+#include "utility.h"
 #include <log.h>
 
-#include <QFileInfo>
-#include <QDir>
-#include <QDebug>
 #include <QCoreApplication>
-
+#include <QDebug>
+#include <QDir>
+#include <QFileInfo>
 
 #include <algorithm>
-
 
 using namespace MOBase;
 
@@ -93,12 +91,12 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, const Settings& s)
     }
 
     setExecutable(Executable()
-      .title(map["title"].toString())
-      .binaryInfo(QFileInfo(map["binary"].toString()))
-      .arguments(map["arguments"].toString())
-      .steamAppID(map["steamAppID"].toString())
-      .workingDirectory(map["workingDirectory"].toString())
-      .flags(flags));
+                      .title(map["title"].toString())
+                      .binaryInfo(QFileInfo(map["binary"].toString()))
+                      .arguments(map["arguments"].toString())
+                      .steamAppID(map["steamAppID"].toString())
+                      .workingDirectory(map["workingDirectory"].toString())
+                      .flags(flags));
   }
 
   addFromPlugin(game, IgnoreExisting);
@@ -116,14 +114,14 @@ void ExecutablesList::store(Settings& s)
   for (const auto& item : *this) {
     std::map<QString, QVariant> map;
 
-    map["title"] = item.title();
-    map["toolbar"] = item.isShownOnToolbar();
-    map["ownicon"] = item.usesOwnIcon();
-    map["hide"] = item.hide();
-    map["binary"] = item.binaryInfo().filePath();
-    map["arguments"] = item.arguments();
+    map["title"]            = item.title();
+    map["toolbar"]          = item.isShownOnToolbar();
+    map["ownicon"]          = item.usesOwnIcon();
+    map["hide"]             = item.hide();
+    map["binary"]           = item.binaryInfo().filePath();
+    map["arguments"]        = item.arguments();
     map["workingDirectory"] = item.workingDirectory();
-    map["steamAppID"] = item.steamAppID();
+    map["steamAppID"]       = item.steamAppID();
 
     v.push_back(std::move(map));
   }
@@ -131,14 +129,14 @@ void ExecutablesList::store(Settings& s)
   s.setExecutables(v);
 }
 
-std::vector<Executable> ExecutablesList::getPluginExecutables(
-  MOBase::IPluginGame const *game) const
+std::vector<Executable>
+ExecutablesList::getPluginExecutables(MOBase::IPluginGame const* game) const
 {
   Q_ASSERT(game != nullptr);
 
   std::vector<Executable> v;
 
-  for (const ExecutableInfo &info : game->executables()) {
+  for (const ExecutableInfo& info : game->executables()) {
     if (!info.isValid()) {
       continue;
     }
@@ -146,18 +144,19 @@ std::vector<Executable> ExecutablesList::getPluginExecutables(
     v.push_back({info, Executable::UseApplicationIcon});
   }
 
-  const QFileInfo eppBin(QCoreApplication::applicationDirPath() + "/explorer++/Explorer++.exe");
+  const QFileInfo eppBin(QCoreApplication::applicationDirPath() +
+                         "/explorer++/Explorer++.exe");
 
   if (eppBin.exists()) {
-    const auto args = QString("\"%1\"")
-      .arg(QDir::toNativeSeparators(game->dataDirectory().absolutePath()));
+    const auto args = QString("\"%1\"").arg(
+        QDir::toNativeSeparators(game->dataDirectory().absolutePath()));
 
     const auto exe = Executable()
-      .title("Explore Virtual Folder")
-      .binaryInfo(eppBin)
-      .arguments(args)
-      .workingDirectory(eppBin.absolutePath())
-      .flags(Executable::UseApplicationIcon);
+                         .title("Explore Virtual Folder")
+                         .binaryInfo(eppBin)
+                         .arguments(args)
+                         .workingDirectory(eppBin.absolutePath())
+                         .flags(Executable::UseApplicationIcon);
 
     v.push_back(exe);
   }
@@ -165,7 +164,7 @@ std::vector<Executable> ExecutablesList::getPluginExecutables(
   return v;
 }
 
-void ExecutablesList::resetFromPlugin(MOBase::IPluginGame const *game)
+void ExecutablesList::resetFromPlugin(MOBase::IPluginGame const* game)
 {
   log::debug("resetting plugin executables");
 
@@ -176,7 +175,7 @@ void ExecutablesList::resetFromPlugin(MOBase::IPluginGame const *game)
   }
 }
 
-void ExecutablesList::addFromPlugin(IPluginGame const *game, SetFlags flags)
+void ExecutablesList::addFromPlugin(IPluginGame const* game, SetFlags flags)
 {
   Q_ASSERT(game != nullptr);
 
@@ -185,7 +184,7 @@ void ExecutablesList::addFromPlugin(IPluginGame const *game, SetFlags flags)
   }
 }
 
-const Executable &ExecutablesList::get(const QString &title) const
+const Executable& ExecutablesList::get(const QString& title) const
 {
   for (const auto& exe : m_Executables) {
     if (exe.title() == title) {
@@ -193,17 +192,18 @@ const Executable &ExecutablesList::get(const QString &title) const
     }
   }
 
-  throw std::runtime_error(QString("executable not found: %1").arg(title).toLocal8Bit().constData());
+  throw std::runtime_error(
+      QString("executable not found: %1").arg(title).toLocal8Bit().constData());
 }
 
-Executable &ExecutablesList::get(const QString &title)
+Executable& ExecutablesList::get(const QString& title)
 {
   return const_cast<Executable&>(std::as_const(*this).get(title));
 }
 
-Executable &ExecutablesList::getByBinary(const QFileInfo &info)
+Executable& ExecutablesList::getByBinary(const QFileInfo& info)
 {
-  for (Executable &exe : m_Executables) {
+  for (Executable& exe : m_Executables) {
     if (exe.binaryInfo() == info) {
       return exe;
     }
@@ -211,7 +211,7 @@ Executable &ExecutablesList::getByBinary(const QFileInfo &info)
   throw std::runtime_error("invalid info");
 }
 
-ExecutablesList::iterator ExecutablesList::find(const QString &title, bool ci)
+ExecutablesList::iterator ExecutablesList::find(const QString& title, bool ci)
 {
   const auto cif = ci ? Qt::CaseInsensitive : Qt::CaseSensitive;
 
@@ -220,7 +220,8 @@ ExecutablesList::iterator ExecutablesList::find(const QString &title, bool ci)
   });
 }
 
-ExecutablesList::const_iterator ExecutablesList::find(const QString &title, bool ci) const
+ExecutablesList::const_iterator ExecutablesList::find(const QString& title,
+                                                      bool ci) const
 {
   const auto cif = ci ? Qt::CaseInsensitive : Qt::CaseSensitive;
 
@@ -229,18 +230,21 @@ ExecutablesList::const_iterator ExecutablesList::find(const QString &title, bool
   });
 }
 
-bool ExecutablesList::titleExists(const QString &title) const
+bool ExecutablesList::titleExists(const QString& title) const
 {
-  auto test = [&] (const Executable &exe) { return exe.title() == title; };
-  return std::find_if(m_Executables.begin(), m_Executables.end(), test) != m_Executables.end();
+  auto test = [&](const Executable& exe) {
+    return exe.title() == title;
+  };
+  return std::find_if(m_Executables.begin(), m_Executables.end(), test) !=
+         m_Executables.end();
 }
 
-void ExecutablesList::setExecutable(const Executable &exe)
+void ExecutablesList::setExecutable(const Executable& exe)
 {
   setExecutable(exe, MergeExisting);
 }
 
-void ExecutablesList::setExecutable(const Executable &exe, SetFlags flags)
+void ExecutablesList::setExecutable(const Executable& exe, SetFlags flags)
 {
   auto itor = find(exe.title());
 
@@ -252,16 +256,14 @@ void ExecutablesList::setExecutable(const Executable &exe, SetFlags flags)
     if (flags == MoveExisting) {
       const auto newTitle = makeNonConflictingTitle(exe.title());
       if (!newTitle) {
-        log::error(
-          "executable '{}' was in the way but could not be renamed",
-          exe.title());
+        log::error("executable '{}' was in the way but could not be renamed",
+                   exe.title());
 
         return;
       }
 
-      log::warn(
-        "executable '{}' was in the way and was renamed to '{}'",
-        itor->title(), *newTitle);
+      log::warn("executable '{}' was in the way and was renamed to '{}'", itor->title(),
+                *newTitle);
 
       itor->title(*newTitle);
       itor = end();
@@ -275,7 +277,7 @@ void ExecutablesList::setExecutable(const Executable &exe, SetFlags flags)
   }
 }
 
-void ExecutablesList::remove(const QString &title)
+void ExecutablesList::remove(const QString& title)
 {
   auto itor = find(title);
   if (itor != m_Executables.end()) {
@@ -283,14 +285,13 @@ void ExecutablesList::remove(const QString &title)
   }
 }
 
-std::optional<QString> ExecutablesList::makeNonConflictingTitle(
-  const QString& prefix)
+std::optional<QString> ExecutablesList::makeNonConflictingTitle(const QString& prefix)
 {
   const int max = 100;
 
   QString title = prefix;
 
-  for (int i=1; i<max; ++i) {
+  for (int i = 1; i < max; ++i) {
     if (!titleExists(title)) {
       return title;
     }
@@ -302,7 +303,7 @@ std::optional<QString> ExecutablesList::makeNonConflictingTitle(
   return {};
 }
 
-void ExecutablesList::upgradeFromCustom(MOBase::IPluginGame const *game)
+void ExecutablesList::upgradeFromCustom(MOBase::IPluginGame const* game)
 {
   log::debug("upgrading executables list");
 
@@ -328,7 +329,7 @@ void ExecutablesList::upgradeFromCustom(MOBase::IPluginGame const *game)
 
   for (const auto& exe : getPluginExecutables(game)) {
     auto itor = find(exe.title());
-    if (itor == end()){
+    if (itor == end()) {
       continue;
     }
 
@@ -359,33 +360,24 @@ void ExecutablesList::dump() const
       flags.push_back("hide");
     }
 
-    log::debug(
-      " . executable '{}'\n"
-      "    binary: {}\n"
-      "    arguments: {}\n"
-      "    steam ID: {}\n"
-      "    directory: {}\n"
-      "    flags: {} ({})",
-      e.title(), e.binaryInfo().filePath(), e.arguments(),
-      e.steamAppID(), e.workingDirectory(), flags.join("|"), e.flags());
+    log::debug(" . executable '{}'\n"
+               "    binary: {}\n"
+               "    arguments: {}\n"
+               "    steam ID: {}\n"
+               "    directory: {}\n"
+               "    flags: {} ({})",
+               e.title(), e.binaryInfo().filePath(), e.arguments(), e.steamAppID(),
+               e.workingDirectory(), flags.join("|"), e.flags());
   }
 }
 
+Executable::Executable(QString title) : m_title(title) {}
 
-Executable::Executable(QString title)
-  : m_title(title)
-{
-}
-
-Executable::Executable(const MOBase::ExecutableInfo& info, Flags flags) :
-  m_title(info.title()),
-  m_binaryInfo(info.binary()),
-  m_arguments(info.arguments().join(" ")),
-  m_steamAppID(info.steamAppID()),
-  m_workingDirectory(info.workingDirectory().path()),
-  m_flags(flags)
-{
-}
+Executable::Executable(const MOBase::ExecutableInfo& info, Flags flags)
+    : m_title(info.title()), m_binaryInfo(info.binary()),
+      m_arguments(info.arguments().join(" ")), m_steamAppID(info.steamAppID()),
+      m_workingDirectory(info.workingDirectory().path()), m_flags(flags)
+{}
 
 const QString& Executable::title() const
 {
@@ -482,10 +474,10 @@ void Executable::mergeFrom(const Executable& other)
   // this happens after executables are loaded from settings and plugin
   // executables are being added, or when users are modifying executables
 
-  m_title = other.title();
-  m_binaryInfo = other.binaryInfo();
-  m_arguments = other.arguments();
-  m_steamAppID = other.steamAppID();
+  m_title            = other.title();
+  m_binaryInfo       = other.binaryInfo();
+  m_arguments        = other.arguments();
+  m_steamAppID       = other.steamAppID();
   m_workingDirectory = other.workingDirectory();
-  m_flags = other.flags();
+  m_flags            = other.flags();
 }

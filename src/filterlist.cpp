@@ -1,23 +1,22 @@
 #include "filterlist.h"
-#include "ui_mainwindow.h"
 #include "categories.h"
 #include "categoriesdialog.h"
-#include "settings.h"
 #include "organizercore.h"
+#include "settings.h"
+#include "ui_mainwindow.h"
 #include <utility.h>
 
 using namespace MOBase;
 using CriteriaType = ModListSortProxy::CriteriaType;
-using Criteria = ModListSortProxy::Criteria;
+using Criteria     = ModListSortProxy::Criteria;
 
 class FilterList::CriteriaItem : public QTreeWidgetItem
 {
 
-  static constexpr int IDRole = Qt::UserRole;
+  static constexpr int IDRole   = Qt::UserRole;
   static constexpr int TypeRole = Qt::UserRole + 1;
 
 public:
-
   static constexpr int StateRole = Qt::UserRole + 2;
 
   enum States
@@ -32,7 +31,7 @@ public:
   };
 
   CriteriaItem(FilterList* list, QString name, CriteriaType type, int id)
-    : QTreeWidgetItem({"", name}), m_list(list), m_state(Inactive)
+      : QTreeWidgetItem({"", name}), m_list(list), m_state(Inactive)
   {
     setData(0, Qt::ToolTipRole, name);
     setData(0, TypeRole, type);
@@ -45,15 +44,9 @@ public:
     return static_cast<CriteriaType>(data(0, TypeRole).toInt());
   }
 
-  int id() const
-  {
-    return data(0, IDRole).toInt();
-  }
+  int id() const { return data(0, IDRole).toInt(); }
 
-  States state() const
-  {
-    return m_state;
-  }
+  States state() const { return m_state; }
 
   void setState(States s)
   {
@@ -89,17 +82,16 @@ public:
     return QTreeWidgetItem::data(column, role);
   }
 
-  void setData(int column, int role, const QVariant& value) {
+  void setData(int column, int role, const QVariant& value)
+  {
     if (role == StateRole) {
       setState(static_cast<States>(value.toInt()));
-    }
-    else {
+    } else {
       QTreeWidgetItem::setData(column, role, value);
     }
   }
 
 private:
-
   FilterList* m_list;
   States m_state;
 
@@ -107,40 +99,34 @@ private:
   {
     QIcon i;
 
-    switch (m_state)
-    {
-      case Inactive:
-      {
-        i = QIcon(":/MO/gui/unchecked-checkbox");
-        break;
-      }
+    switch (m_state) {
+    case Inactive: {
+      i = QIcon(":/MO/gui/unchecked-checkbox");
+      break;
+    }
 
-      case Active:
-      {
-        i = QIcon(":/MO/gui/checked-checkbox");
-        break;
-      }
+    case Active: {
+      i = QIcon(":/MO/gui/checked-checkbox");
+      break;
+    }
 
-      case Inverted:
-      {
-        i = QIcon(":/MO/gui/indeterminate-checkbox");
-        break;
-      }
+    case Inverted: {
+      i = QIcon(":/MO/gui/indeterminate-checkbox");
+      break;
+    }
     }
     setData(0, Qt::DecorationRole, i);
   }
 };
 
-
 class CriteriaItemFilter : public QObject
 {
 public:
-  using Callback = std::function<bool (QTreeWidgetItem*, int)>;
+  using Callback = std::function<bool(QTreeWidgetItem*, int)>;
 
   CriteriaItemFilter(QTreeWidget* tree, Callback f)
-    : QObject(tree), m_tree(tree), m_f(std::move(f))
-  {
-  }
+      : QObject(tree), m_tree(tree), m_f(std::move(f))
+  {}
 
   bool eventFilter(QObject* o, QEvent* e) override
   {
@@ -150,7 +136,8 @@ public:
     // viewport only and keyboard events from the tree only
 
     if (m_f) {
-      if (e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseButtonDblClick) {
+      if (e->type() == QEvent::MouseButtonPress ||
+          e->type() == QEvent::MouseButtonDblClick) {
         if (handleMouse(static_cast<QMouseEvent*>(e))) {
           return true;
         }
@@ -177,7 +164,7 @@ private:
 
     m_tree->setCurrentItem(item);
 
-    const auto dir = (e->button() == Qt::LeftButton ? 1 : - 1);
+    const auto dir = (e->button() == Qt::LeftButton ? 1 : -1);
 
     return m_f(item, dir);
   }
@@ -191,7 +178,7 @@ private:
       }
 
       const auto shiftPressed = (e->modifiers() & Qt::ShiftModifier);
-      const auto dir = (shiftPressed ? -1 : 1);
+      const auto dir          = (shiftPressed ? -1 : 1);
 
       return m_f(item, dir);
     }
@@ -200,33 +187,45 @@ private:
   }
 };
 
-
-FilterList::FilterList(Ui::MainWindow* ui, OrganizerCore& core, CategoryFactory& factory)
-  : ui(ui), m_core(core), m_factory(factory)
+FilterList::FilterList(Ui::MainWindow* ui, OrganizerCore& core,
+                       CategoryFactory& factory)
+    : ui(ui), m_core(core), m_factory(factory)
 {
-  auto* eventFilter = new CriteriaItemFilter(
-    ui->filters, [&](auto* item, int dir){ return cycleItem(item, dir); });
+  auto* eventFilter = new CriteriaItemFilter(ui->filters, [&](auto* item, int dir) {
+    return cycleItem(item, dir);
+  });
 
   ui->filters->installEventFilter(eventFilter);
   ui->filters->viewport()->installEventFilter(eventFilter);
 
-  connect(ui->filtersClear, &QPushButton::clicked, [&]{ clearSelection(); });
-  connect(ui->filtersEdit, &QPushButton::clicked, [&]{ editCategories(); });
-  connect(ui->filtersAnd, &QCheckBox::toggled, [&]{ onOptionsChanged(); });
-  connect(ui->filtersOr, &QCheckBox::toggled, [&]{ onOptionsChanged(); });
+  connect(ui->filtersClear, &QPushButton::clicked, [&] {
+    clearSelection();
+  });
+  connect(ui->filtersEdit, &QPushButton::clicked, [&] {
+    editCategories();
+  });
+  connect(ui->filtersAnd, &QCheckBox::toggled, [&] {
+    onOptionsChanged();
+  });
+  connect(ui->filtersOr, &QCheckBox::toggled, [&] {
+    onOptionsChanged();
+  });
 
-  connect(
-    ui->filtersSeparators, qOverload<int>(&QComboBox::currentIndexChanged),
-    [&]{ onOptionsChanged(); });
+  connect(ui->filtersSeparators, qOverload<int>(&QComboBox::currentIndexChanged), [&] {
+    onOptionsChanged();
+  });
 
   ui->filters->header()->setMinimumSectionSize(0);
   ui->filters->header()->resizeSection(0, 23);
   ui->categoriesSplitter->setCollapsible(0, false);
   ui->categoriesSplitter->setCollapsible(1, false);
 
-  ui->filtersSeparators->addItem(tr("Filter separators"), ModListSortProxy::SeparatorFilter);
-  ui->filtersSeparators->addItem(tr("Show separators"), ModListSortProxy::SeparatorShow);
-  ui->filtersSeparators->addItem(tr("Hide separators"), ModListSortProxy::SeparatorHide);
+  ui->filtersSeparators->addItem(tr("Filter separators"),
+                                 ModListSortProxy::SeparatorFilter);
+  ui->filtersSeparators->addItem(tr("Show separators"),
+                                 ModListSortProxy::SeparatorShow);
+  ui->filtersSeparators->addItem(tr("Hide separators"),
+                                 ModListSortProxy::SeparatorHide);
 }
 
 void FilterList::restoreState(const Settings& s)
@@ -249,9 +248,8 @@ void FilterList::saveState(Settings& s) const
   s.widgets().saveIndex(ui->filtersSeparators);
 }
 
-QTreeWidgetItem* FilterList::addCriteriaItem(
-  QTreeWidgetItem *root, const QString &name, int categoryID,
-  CriteriaType type)
+QTreeWidgetItem* FilterList::addCriteriaItem(QTreeWidgetItem* root, const QString& name,
+                                             int categoryID, CriteriaType type)
 {
   auto* item = new CriteriaItem(this, name, type, categoryID);
 
@@ -264,23 +262,26 @@ QTreeWidgetItem* FilterList::addCriteriaItem(
 
 void FilterList::addContentCriteria()
 {
-  m_core.modDataContents().forEachContent([this](auto const& content) {
-    addCriteriaItem(
-      nullptr, QString("<%1>").arg(tr("Contains %1").arg(content.name())),
-      content.id(), ModListSortProxy::TypeContent);
-  }, true);
+  m_core.modDataContents().forEachContent(
+      [this](auto const& content) {
+        addCriteriaItem(nullptr,
+                        QString("<%1>").arg(tr("Contains %1").arg(content.name())),
+                        content.id(), ModListSortProxy::TypeContent);
+      },
+      true);
 }
 
-void FilterList::addCategoryCriteria(QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID)
+void FilterList::addCategoryCriteria(QTreeWidgetItem* root,
+                                     const std::set<int>& categoriesUsed, int targetID)
 {
   const auto count = static_cast<unsigned int>(m_factory.numCategories());
   for (unsigned int i = 1; i < count; ++i) {
     if (m_factory.getParentID(i) == targetID) {
       int categoryID = m_factory.getCategoryID(i);
       if (categoriesUsed.find(categoryID) != categoriesUsed.end()) {
-        QTreeWidgetItem *item =
-          addCriteriaItem(root, m_factory.getCategoryName(i),
-            categoryID, ModListSortProxy::TypeCategory);
+        QTreeWidgetItem* item =
+            addCriteriaItem(root, m_factory.getCategoryName(i), categoryID,
+                            ModListSortProxy::TypeCategory);
         if (m_factory.hasChildren(i)) {
           addCategoryCriteria(item, categoriesUsed, categoryID);
         }
@@ -293,9 +294,8 @@ void FilterList::addSpecialCriteria(int type)
 {
   const auto sc = static_cast<CategoryFactory::SpecialCategories>(type);
 
-  addCriteriaItem(
-    nullptr, m_factory.getSpecialCategoryName(sc),
-    type, ModListSortProxy::TypeSpecial);
+  addCriteriaItem(nullptr, m_factory.getSpecialCategoryName(sc), type,
+                  ModListSortProxy::TypeSpecial);
 }
 
 void FilterList::refresh()
@@ -367,7 +367,7 @@ void FilterList::setSelection(const std::vector<Criteria>& criteria)
 
 void FilterList::clearSelection()
 {
-  for (int i=0; i<ui->filters->topLevelItemCount(); ++i) {
+  for (int i = 0; i < ui->filters->topLevelItemCount(); ++i) {
     auto* ci = dynamic_cast<CriteriaItem*>(ui->filters->topLevelItem(i));
     if (!ci) {
       continue;
@@ -402,16 +402,15 @@ std::vector<ModListSortProxy::Criteria> FilterList::selectedCriteria() const
 {
   std::vector<Criteria> criteria;
 
-  for (int i=0; i<ui->filters->topLevelItemCount(); ++i) {
+  for (int i = 0; i < ui->filters->topLevelItemCount(); ++i) {
     const auto* ci = dynamic_cast<CriteriaItem*>(ui->filters->topLevelItem(i));
     if (!ci) {
       continue;
     }
 
     if (ci->state() != CriteriaItem::Inactive) {
-      criteria.push_back({
-        ci->type(), ci->id(), (ci->state() == CriteriaItem::Inverted)
-      });
+      criteria.push_back(
+          {ci->type(), ci->id(), (ci->state() == CriteriaItem::Inverted)});
     }
   }
 
@@ -435,11 +434,11 @@ void FilterList::editCategories()
 
 void FilterList::onOptionsChanged()
 {
-  const auto mode = ui->filtersAnd->isChecked() ?
-    ModListSortProxy::FilterAnd: ModListSortProxy::FilterOr;
+  const auto mode = ui->filtersAnd->isChecked() ? ModListSortProxy::FilterAnd
+                                                : ModListSortProxy::FilterOr;
 
   const auto separators = static_cast<ModListSortProxy::SeparatorsMode>(
-    ui->filtersSeparators->currentData().toInt());
+      ui->filtersSeparators->currentData().toInt());
 
   emit optionsChanged(mode, separators);
 }

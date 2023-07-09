@@ -11,8 +11,8 @@ class ModListVersionDelegate : public QItemDelegate
 public:
   ModListVersionDelegate(ModListView* view, Settings& settings);
 
-  void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
-
+  void paint(QPainter* painter, const QStyleOptionViewItem& option,
+             const QModelIndex& index) const override;
 
 private:
   ModListView* m_view;

@@ -20,9 +20,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MODLISTSORTPROXY_H
 #define MODLISTSORTPROXY_H
 
+#include "modlist.h"
 #include <QSortFilterProxyModel>
 #include <bitset>
-#include "modlist.h"
 
 class Profile;
 class OrganizerCore;
@@ -38,7 +38,8 @@ public:
     FilterOr
   };
 
-  enum CriteriaType {
+  enum CriteriaType
+  {
     TypeSpecial,
     TypeCategory,
     TypeContent
@@ -59,28 +60,23 @@ public:
 
     bool operator==(const Criteria& other) const
     {
-      return
-        (type == other.type) &&
-        (id == other.id) &&
-        (inverse == other.inverse);
+      return (type == other.type) && (id == other.id) && (inverse == other.inverse);
     }
 
-    bool operator!=(const Criteria& other) const
-    {
-      return !(*this == other);
-    }
+    bool operator!=(const Criteria& other) const { return !(*this == other); }
   };
 
 public:
+  explicit ModListSortProxy(Profile* profile, OrganizerCore* organizer);
 
-  explicit ModListSortProxy(Profile *profile, OrganizerCore *organizer);
+  void setProfile(Profile* profile);
 
-  void setProfile(Profile *profile);
+  bool canDropMimeData(const QMimeData* data, Qt::DropAction action, int row,
+                       int column, const QModelIndex& parent) const override;
+  bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column,
+                    const QModelIndex& parent) override;
 
-  bool canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const override;
-  bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) override;
-
-  virtual void setSourceModel(QAbstractItemModel *sourceModel) override;
+  virtual void setSourceModel(QAbstractItemModel* sourceModel) override;
 
   /**
    * @brief tests if a filtere matches for a mod
@@ -106,7 +102,8 @@ public:
    * @param parent the node to test
    * @return true if there are child nodes
    */
-  virtual bool hasChildren ( const QModelIndex & parent = QModelIndex() ) const {
+  virtual bool hasChildren(const QModelIndex& parent = QModelIndex()) const
+  {
     return rowCount(parent) > 0;
   }
 
@@ -119,7 +116,7 @@ public:
 
 public slots:
 
-  void updateFilter(const QString &filter);
+  void updateFilter(const QString& filter);
 
 signals:
 
@@ -127,15 +124,13 @@ signals:
   void filterInvalidated();
 
 protected:
-
-  virtual bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
-  virtual bool filterAcceptsRow(int row, const QModelIndex &parent) const;
+  virtual bool lessThan(const QModelIndex& left, const QModelIndex& right) const;
+  virtual bool filterAcceptsRow(int row, const QModelIndex& parent) const;
 
 private:
-
-  unsigned long flagsId(const std::vector<ModInfo::EFlag> &flags) const;
+  unsigned long flagsId(const std::vector<ModInfo::EFlag>& flags) const;
   unsigned long conflictFlagsId(const std::vector<ModInfo::EConflictFlag>& flags) const;
-  bool hasConflictFlag(const std::vector<ModInfo::EConflictFlag> &flags) const;
+  bool hasConflictFlag(const std::vector<ModInfo::EConflictFlag>& flags) const;
   void updateFilterActive();
   bool filterMatchesModAnd(ModInfo::Ptr info, bool enabled) const;
   bool filterMatchesModOr(ModInfo::Ptr info, bool enabled) const;
@@ -169,4 +164,4 @@ private:
   bool contentMatchesMod(ModInfo::Ptr info, bool enabled, int content) const;
 };
 
-#endif // MODLISTSORTPROXY_H
+#endif  // MODLISTSORTPROXY_H

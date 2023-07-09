@@ -1,9 +1,9 @@
 #ifndef PROCESSRUNNER_H
 #define PROCESSRUNNER_H
 
+#include "envmodule.h"
 #include "spawn.h"
 #include "uilocker.h"
-#include "envmodule.h"
 #include <executableinfo.h>
 
 class OrganizerCore;
@@ -37,10 +37,10 @@ public:
 
   enum WaitFlag
   {
-    NoFlags   = 0x00,
+    NoFlags = 0x00,
 
     // the directory structure will be refreshed once the process has completed
-    TriggerRefresh   = 0x01,
+    TriggerRefresh = 0x01,
 
     // the process will be waited for even if locking is disabled or the
     // process is not hooked
@@ -65,26 +65,26 @@ public:
     ForCommandLine = TriggerRefresh | WaitForRefresh | ForceWait
   };
 
-  using WaitFlags = QFlags<WaitFlag>;
+  using WaitFlags       = QFlags<WaitFlag>;
   using ForcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>;
 
   ProcessRunner(OrganizerCore& core, IUserInterface* ui);
 
   // move only
-  ProcessRunner(ProcessRunner&&) = default;
+  ProcessRunner(ProcessRunner&&)                 = default;
   ProcessRunner& operator=(const ProcessRunner&) = delete;
-  ProcessRunner(const ProcessRunner&) = delete;
-  ProcessRunner& operator=(ProcessRunner&&) = delete;
+  ProcessRunner(const ProcessRunner&)            = delete;
+  ProcessRunner& operator=(ProcessRunner&&)      = delete;
 
-  ProcessRunner& setBinary(const QFileInfo &binary);
+  ProcessRunner& setBinary(const QFileInfo& binary);
   ProcessRunner& setArguments(const QString& arguments);
   ProcessRunner& setCurrentDirectory(const QDir& directory);
   ProcessRunner& setSteamID(const QString& steamID);
   ProcessRunner& setCustomOverwrite(const QString& customOverwrite);
   ProcessRunner& setForcedLibraries(const ForcedLibraries& forcedLibraries);
   ProcessRunner& setProfileName(const QString& profileName);
-  ProcessRunner& setWaitForCompletion(
-    WaitFlags flags=NoFlags, UILocker::Reasons reason=UILocker::LockUI);
+  ProcessRunner& setWaitForCompletion(WaitFlags flags          = NoFlags,
+                                      UILocker::Reasons reason = UILocker::LockUI);
   ProcessRunner& setHooked(bool b);
 
   // - if the target is an executable file, runs it hooked
@@ -113,13 +113,12 @@ public:
   //    if the executable is not found in the list, the binary is run solely
   //    based on the parameters given
   //
-  ProcessRunner& setFromFileOrExecutable(
-    const QString &executable,
-    const QStringList &args,
-    const QString &cwd={},
-    const QString &profile={},
-    const QString &forcedCustomOverwrite={},
-    bool ignoreCustomOverwrite=false);
+  ProcessRunner& setFromFileOrExecutable(const QString& executable,
+                                         const QStringList& args,
+                                         const QString& cwd                   = {},
+                                         const QString& profile               = {},
+                                         const QString& forcedCustomOverwrite = {},
+                                         bool ignoreCustomOverwrite           = false);
 
   // spawns the process and waits for it if required
   //
@@ -172,7 +171,6 @@ private:
   env::HandlePtr m_handle;
   DWORD m_exitCode;
 
-
   bool shouldRunShell() const;
   bool shouldRefresh(Results r) const;
 
@@ -190,9 +188,9 @@ private:
 
   // creates the lock widget and calls f()
   //
-  void withLock(std::function<void (UILocker::Session&)> f);
+  void withLock(std::function<void(UILocker::Session&)> f);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(ProcessRunner::WaitFlags);
 
-#endif // PROCESSRUNNER_H
+#endif  // PROCESSRUNNER_H

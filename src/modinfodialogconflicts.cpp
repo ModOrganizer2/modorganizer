@@ -1,13 +1,13 @@
 #include "modinfodialogconflicts.h"
-#include "ui_modinfodialog.h"
-#include "modinfodialogconflictsmodels.h"
 #include "modinfodialog.h"
-#include "utility.h"
-#include "settings.h"
+#include "modinfodialogconflictsmodels.h"
 #include "organizercore.h"
+#include "settings.h"
 #include "shared/directoryentry.h"
-#include "shared/filesorigin.h"
 #include "shared/fileentry.h"
+#include "shared/filesorigin.h"
+#include "ui_modinfodialog.h"
+#include "utility.h"
 
 using namespace MOShared;
 using namespace MOBase;
@@ -20,7 +20,7 @@ std::size_t smallSelectionSize(const QTreeView* tree)
 {
   const std::size_t too_many = std::numeric_limits<std::size_t>::max();
 
-  std::size_t n = 0;
+  std::size_t n   = 0;
   const auto* sel = tree->selectionModel();
 
   for (const auto& range : sel->selection()) {
@@ -63,18 +63,17 @@ void forEachInSelection(QTreeView* tree, F&& f)
   }
 }
 
-
-ConflictsTab::ConflictsTab(ModInfoDialogTabContext cx) :
-  ModInfoDialogTab(cx), // don't move, cx is used again
-  m_general(this, cx.ui, cx.core), m_advanced(this, cx.ui, cx.core)
+ConflictsTab::ConflictsTab(ModInfoDialogTabContext cx)
+    : ModInfoDialogTab(cx),  // don't move, cx is used again
+      m_general(this, cx.ui, cx.core), m_advanced(this, cx.ui, cx.core)
 {
-  connect(
-    &m_general, &GeneralConflictsTab::modOpen,
-    [&](const QString& name){ emitModOpen(name); });
+  connect(&m_general, &GeneralConflictsTab::modOpen, [&](const QString& name) {
+    emitModOpen(name);
+  });
 
-  connect(
-    &m_advanced, &AdvancedConflictsTab::modOpen,
-    [&](const QString& name){ emitModOpen(name); });
+  connect(&m_advanced, &AdvancedConflictsTab::modOpen, [&](const QString& name) {
+    emitModOpen(name);
+  });
 }
 
 void ConflictsTab::update()
@@ -114,7 +113,7 @@ bool ConflictsTab::canHandleUnmanaged() const
 void ConflictsTab::changeItemsVisibility(QTreeView* tree, bool visible)
 {
   bool changed = false;
-  bool stop = false;
+  bool stop    = false;
 
   const auto n = smallSelectionSize(tree);
 
@@ -132,7 +131,7 @@ void ConflictsTab::changeItemsVisibility(QTreeView* tree, bool visible)
   }
 
   QFlags<FileRenamer::RenameFlags> flags =
-    (visible ? FileRenamer::UNHIDE : FileRenamer::HIDE);
+      (visible ? FileRenamer::UNHIDE : FileRenamer::HIDE);
 
   if (n > 1) {
     flags |= FileRenamer::MULTIPLE;
@@ -179,22 +178,22 @@ void ConflictsTab::changeItemsVisibility(QTreeView* tree, bool visible)
     }
 
     switch (result) {
-      case FileRenamer::RESULT_OK: {
-        // will trigger a refresh at the end
-        changed = true;
-        break;
-      }
+    case FileRenamer::RESULT_OK: {
+      // will trigger a refresh at the end
+      changed = true;
+      break;
+    }
 
-      case FileRenamer::RESULT_SKIP: {
-        // nop
-        break;
-      }
+    case FileRenamer::RESULT_SKIP: {
+      // nop
+      break;
+    }
 
-      case FileRenamer::RESULT_CANCEL: {
-        // stop right now, but make sure to refresh if needed
-        stop = true;
-        break;
-      }
+    case FileRenamer::RESULT_CANCEL: {
+      // stop right now, but make sure to refresh if needed
+      stop = true;
+      break;
+    }
     }
 
     return true;
@@ -244,11 +243,12 @@ void ConflictsTab::openItems(QTreeView* tree, bool hooked)
 
 void ConflictsTab::openItem(const ConflictItem* item, bool hooked)
 {
-  core().processRunner()
-    .setFromFile(parentWidget(), QFileInfo(item->fileName()))
-    .setHooked(hooked)
-    .setWaitForCompletion()
-    .run();
+  core()
+      .processRunner()
+      .setFromFile(parentWidget(), QFileInfo(item->fileName()))
+      .setHooked(hooked)
+      .setWaitForCompletion()
+      .run();
 }
 
 void ConflictsTab::previewItems(QTreeView* tree)
@@ -276,7 +276,7 @@ void ConflictsTab::exploreItems(QTreeView* tree)
   });
 }
 
-void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
+void ConflictsTab::showContextMenu(const QPoint& pos, QTreeView* tree)
 {
   auto actions = createMenuActions(tree);
 
@@ -284,19 +284,20 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
 
   // open
   if (actions.open) {
-    connect(actions.open, &QAction::triggered, [&]{
+    connect(actions.open, &QAction::triggered, [&] {
       openItems(tree, false);
     });
   }
 
   // preview
   if (actions.preview) {
-    connect(actions.preview, &QAction::triggered, [&]{
+    connect(actions.preview, &QAction::triggered, [&] {
       previewItems(tree);
     });
   }
 
-  if ((actions.open && actions.open->isEnabled()) && (actions.preview && actions.preview->isEnabled())) {
+  if ((actions.open && actions.open->isEnabled()) &&
+      (actions.preview && actions.preview->isEnabled())) {
     if (Settings::instance().interface().doubleClicksOpenPreviews()) {
       menu.addAction(actions.preview);
       menu.addAction(actions.open);
@@ -316,7 +317,7 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
 
   // run hooked
   if (actions.runHooked) {
-    connect(actions.runHooked, &QAction::triggered, [&]{
+    connect(actions.runHooked, &QAction::triggered, [&] {
       openItems(tree, true);
     });
 
@@ -328,9 +329,9 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
     menu.addMenu(actions.gotoMenu);
 
     for (auto* a : actions.gotoActions) {
-      connect(a, &QAction::triggered, [&, name=a->text()]{
+      connect(a, &QAction::triggered, [&, name = a->text()] {
         emitModOpen(name);
-        });
+      });
 
       actions.gotoMenu->addAction(a);
     }
@@ -338,7 +339,7 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
 
   // explore
   if (actions.explore) {
-    connect(actions.explore, &QAction::triggered, [&]{
+    connect(actions.explore, &QAction::triggered, [&] {
       exploreItems(tree);
     });
 
@@ -349,7 +350,7 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
 
   // hide
   if (actions.hide) {
-    connect(actions.hide, &QAction::triggered, [&]{
+    connect(actions.hide, &QAction::triggered, [&] {
       changeItemsVisibility(tree, false);
     });
 
@@ -358,7 +359,7 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
 
   // unhide
   if (actions.unhide) {
-    connect(actions.unhide, &QAction::triggered, [&]{
+    connect(actions.unhide, &QAction::triggered, [&] {
       changeItemsVisibility(tree, true);
     });
 
@@ -369,7 +370,7 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
     if (actions.open || actions.preview || actions.runHooked) {
       // bold the first option
       auto* top = menu.actions()[0];
-      auto f = top->font();
+      auto f    = top->font();
       f.setBold(true);
       top->setFont(f);
     }
@@ -384,13 +385,13 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
     return {};
   }
 
-  bool enableHide = true;
-  bool enableUnhide = true;
-  bool enableRun = true;
-  bool enableOpen = true;
+  bool enableHide    = true;
+  bool enableUnhide  = true;
+  bool enableRun     = true;
+  bool enableOpen    = true;
   bool enablePreview = true;
   bool enableExplore = true;
-  bool enableGoto = true;
+  bool enableGoto    = true;
 
   const auto n = smallSelectionSize(tree);
 
@@ -410,29 +411,27 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
 
   auto modelSel = proxy->mapSelectionToSource(tree->selectionModel()->selection());
 
-
   if (n == 1) {
     // this is a single selection
-    const auto* item = model->getItem(static_cast<std::size_t>(
-      modelSel.indexes()[0].row()));
+    const auto* item =
+        model->getItem(static_cast<std::size_t>(modelSel.indexes()[0].row()));
 
     if (!item) {
       return {};
     }
 
-    enableHide = item->canHide();
-    enableUnhide = item->canUnhide();
-    enableRun = item->canRun();
-    enableOpen = item->canOpen();
+    enableHide    = item->canHide();
+    enableUnhide  = item->canUnhide();
+    enableRun     = item->canRun();
+    enableOpen    = item->canOpen();
     enablePreview = item->canPreview(plugin());
     enableExplore = item->canExplore();
-    enableGoto = item->hasAlts();
-  }
-  else {
+    enableGoto    = item->hasAlts();
+  } else {
     // this is a multiple selection, don't show open/preview so users don't open
     // a thousand files
-    enableRun = false;
-    enableOpen = false;
+    enableRun     = false;
+    enableOpen    = false;
     enablePreview = false;
 
     // can't explore multiple files
@@ -444,7 +443,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
     if (n <= max_small_selection) {
       // if the number of selected items is low, checking them to accurately
       // show the menu items is worth it
-      enableHide = false;
+      enableHide   = false;
       enableUnhide = false;
 
       forEachInSelection(tree, [&](const ConflictItem* item) {
@@ -469,10 +468,10 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
   Actions actions;
 
   if (enableRun) {
-    actions.open = new QAction(tr("&Execute"), parentWidget());
+    actions.open      = new QAction(tr("&Execute"), parentWidget());
     actions.runHooked = new QAction(tr("Execute with &VFS"), parentWidget());
   } else if (enableOpen) {
-    actions.open = new QAction(tr("&Open"), parentWidget());
+    actions.open      = new QAction(tr("&Open"), parentWidget());
     actions.runHooked = new QAction(tr("Open with &VFS"), parentWidget());
   }
 
@@ -494,8 +493,8 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
   actions.unhide->setEnabled(enableUnhide);
 
   if (enableGoto && n == 1) {
-    const auto* item = model->getItem(static_cast<std::size_t>(
-      modelSel.indexes()[0].row()));
+    const auto* item =
+        model->getItem(static_cast<std::size_t>(modelSel.indexes()[0].row()));
 
     actions.gotoActions = createGotoActions(item);
   }
@@ -513,7 +512,6 @@ std::vector<QAction*> ConflictsTab::createGotoActions(const ConflictItem* item)
   if (!file) {
     return {};
   }
-
 
   std::vector<QString> mods;
   const auto& ds = *core().directoryStructure();
@@ -534,7 +532,7 @@ std::vector<QAction*> ConflictsTab::createGotoActions(const ConflictItem* item)
 
   std::sort(mods.begin(), mods.end(), [](const auto& a, const auto& b) {
     return (QString::localeAwareCompare(a, b) < 0);
-    });
+  });
 
   std::vector<QAction*> actions;
 
@@ -545,13 +543,12 @@ std::vector<QAction*> ConflictsTab::createGotoActions(const ConflictItem* item)
   return actions;
 }
 
-
-GeneralConflictsTab::GeneralConflictsTab(
-  ConflictsTab* tab, Ui::ModInfoDialog* pui, OrganizerCore& oc) :
-    m_tab(tab), ui(pui), m_core(oc),
-    m_overwriteModel(new OverwriteConflictListModel(ui->overwriteTree)),
-    m_overwrittenModel(new OverwrittenConflictListModel(ui->overwrittenTree)),
-    m_noConflictModel(new NoConflictListModel(ui->noConflictTree))
+GeneralConflictsTab::GeneralConflictsTab(ConflictsTab* tab, Ui::ModInfoDialog* pui,
+                                         OrganizerCore& oc)
+    : m_tab(tab), ui(pui), m_core(oc),
+      m_overwriteModel(new OverwriteConflictListModel(ui->overwriteTree)),
+      m_overwrittenModel(new OverwrittenConflictListModel(ui->overwrittenTree)),
+      m_noConflictModel(new NoConflictListModel(ui->noConflictTree))
 {
   m_expanders.overwrite.set(ui->overwriteExpander, ui->overwriteTree, true);
   m_expanders.overwritten.set(ui->overwrittenExpander, ui->overwrittenTree, true);
@@ -569,29 +566,32 @@ GeneralConflictsTab::GeneralConflictsTab(
   m_filterNoConflicts.setList(ui->noConflictTree);
   m_filterNoConflicts.setUseSourceSort(true);
 
-  QObject::connect(
-    ui->overwriteTree, &QTreeView::doubleClicked,
-    [&](auto&&){ m_tab->activateItems(ui->overwriteTree); });
+  QObject::connect(ui->overwriteTree, &QTreeView::doubleClicked, [&](auto&&) {
+    m_tab->activateItems(ui->overwriteTree);
+  });
 
-  QObject::connect(
-    ui->overwrittenTree, &QTreeView::doubleClicked,
-    [&](auto&& item){ m_tab->activateItems(ui->overwrittenTree); });
+  QObject::connect(ui->overwrittenTree, &QTreeView::doubleClicked, [&](auto&& item) {
+    m_tab->activateItems(ui->overwrittenTree);
+  });
 
-  QObject::connect(
-    ui->noConflictTree, &QTreeView::doubleClicked,
-    [&](auto&& item){ m_tab->activateItems(ui->noConflictTree); });
+  QObject::connect(ui->noConflictTree, &QTreeView::doubleClicked, [&](auto&& item) {
+    m_tab->activateItems(ui->noConflictTree);
+  });
 
-  QObject::connect(
-    ui->overwriteTree, &QTreeView::customContextMenuRequested,
-    [&](const QPoint& p){ m_tab->showContextMenu(p, ui->overwriteTree); });
+  QObject::connect(ui->overwriteTree, &QTreeView::customContextMenuRequested,
+                   [&](const QPoint& p) {
+                     m_tab->showContextMenu(p, ui->overwriteTree);
+                   });
 
-  QObject::connect(
-    ui->overwrittenTree, &QTreeView::customContextMenuRequested,
-    [&](const QPoint& p){ m_tab->showContextMenu(p, ui->overwrittenTree); });
+  QObject::connect(ui->overwrittenTree, &QTreeView::customContextMenuRequested,
+                   [&](const QPoint& p) {
+                     m_tab->showContextMenu(p, ui->overwrittenTree);
+                   });
 
-  QObject::connect(
-    ui->noConflictTree, &QTreeView::customContextMenuRequested,
-    [&](const QPoint& p){ m_tab->showContextMenu(p, ui->noConflictTree); });
+  QObject::connect(ui->noConflictTree, &QTreeView::customContextMenuRequested,
+                   [&](const QPoint& p) {
+                     m_tab->showContextMenu(p, ui->noConflictTree);
+                   });
 }
 
 void GeneralConflictsTab::clear()
@@ -636,10 +636,11 @@ bool GeneralConflictsTab::update()
 
     for (const auto& file : m_tab->origin()->getFiles()) {
       // careful: these two strings are moved into createXItem() below
-      QString relativeName = QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
+      QString relativeName =
+          QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
       QString fileName = rootPath + relativeName;
 
-      bool archive = false;
+      bool archive         = false;
       const int fileOrigin = file->getOrigin(archive);
 
       ++m_counts.numTotalFiles;
@@ -651,55 +652,52 @@ bool GeneralConflictsTab::update()
         (archive) ? ++m_counts.numTotalArchive : ++m_counts.numTotalLoose;
 
         if (!alternatives.empty()) {
-          m_overwriteModel->add(createOverwriteItem(
-              file->getIndex(), archive,
-              std::move(fileName), std::move(relativeName), alternatives));
+          m_overwriteModel->add(
+              createOverwriteItem(file->getIndex(), archive, std::move(fileName),
+                                  std::move(relativeName), alternatives));
 
           ++m_counts.numOverwrite;
           if (archive) {
             ++m_counts.numOverwriteArchive;
-          }
-          else {
+          } else {
             ++m_counts.numOverwriteLoose;
           }
         } else {
           // otherwise, put the file in the noconflict tree
-            m_noConflictModel->add(createNoConflictItem(
-            file->getIndex(), archive,
-              std::move(fileName), std::move(relativeName)));
+          m_noConflictModel->add(createNoConflictItem(
+              file->getIndex(), archive, std::move(fileName), std::move(relativeName)));
 
           ++m_counts.numNonConflicting;
           if (archive) {
             ++m_counts.numNonConflictingArchive;
-          }
-          else {
+          } else {
             ++m_counts.numNonConflictingLoose;
           }
         }
       } else {
-        auto currId = m_tab->origin()->getID();
+        auto currId     = m_tab->origin()->getID();
         auto currModAlt = std::find_if(alternatives.begin(), alternatives.end(),
-          [&currId](auto const& alt) {
-            return currId == alt.originID();
-          });
+                                       [&currId](auto const& alt) {
+                                         return currId == alt.originID();
+                                       });
 
         if (currModAlt == alternatives.end()) {
-          log::error("Mod {} not found in the list of origins for file {}", m_tab->origin()->getName(), fileName);
+          log::error("Mod {} not found in the list of origins for file {}",
+                     m_tab->origin()->getName(), fileName);
           continue;
         }
 
         bool currModFileArchive = currModAlt->isFromArchive();
 
-        m_overwrittenModel->add(createOverwrittenItem(
-          file->getIndex(), fileOrigin, archive,
-          std::move(fileName), std::move(relativeName)));
+        m_overwrittenModel->add(createOverwrittenItem(file->getIndex(), fileOrigin,
+                                                      archive, std::move(fileName),
+                                                      std::move(relativeName)));
 
         ++m_counts.numOverwritten;
         if (currModFileArchive) {
           ++m_counts.numOverwrittenArchive;
           ++m_counts.numTotalArchive;
-        }
-        else {
+        } else {
           ++m_counts.numOverwrittenLoose;
           ++m_counts.numTotalLoose;
         }
@@ -717,8 +715,8 @@ bool GeneralConflictsTab::update()
 }
 
 ConflictItem GeneralConflictsTab::createOverwriteItem(
-  FileIndex index, bool archive, QString fileName, QString relativeName,
-  const MOShared::AlternativesVector& alternatives)
+    FileIndex index, bool archive, QString fileName, QString relativeName,
+    const MOShared::AlternativesVector& alternatives)
 {
   const auto& ds = *m_core.directoryStructure();
   std::wstring altString;
@@ -733,35 +731,34 @@ ConflictItem GeneralConflictsTab::createOverwriteItem(
 
   auto origin = ToQString(ds.getOriginByID(alternatives.back().originID()).getName());
 
-  return ConflictItem(
-    ToQString(altString), std::move(relativeName), QString(), index,
-    std::move(fileName), true, std::move(origin), archive);
+  return ConflictItem(ToQString(altString), std::move(relativeName), QString(), index,
+                      std::move(fileName), true, std::move(origin), archive);
 }
 
-ConflictItem GeneralConflictsTab::createNoConflictItem(
-  FileIndex index, bool archive, QString fileName, QString relativeName)
+ConflictItem GeneralConflictsTab::createNoConflictItem(FileIndex index, bool archive,
+                                                       QString fileName,
+                                                       QString relativeName)
 {
-  return ConflictItem(
-    QString(), std::move(relativeName), QString(), index,
-    std::move(fileName), false, QString(), archive);
+  return ConflictItem(QString(), std::move(relativeName), QString(), index,
+                      std::move(fileName), false, QString(), archive);
 }
 
-ConflictItem GeneralConflictsTab::createOverwrittenItem(
-  FileIndex index, int fileOrigin, bool archive,
-  QString fileName, QString relativeName)
+ConflictItem GeneralConflictsTab::createOverwrittenItem(FileIndex index, int fileOrigin,
+                                                        bool archive, QString fileName,
+                                                        QString relativeName)
 {
-  const auto& ds = *m_core.directoryStructure();
+  const auto& ds                = *m_core.directoryStructure();
   const FilesOrigin& realOrigin = ds.getOriginByID(fileOrigin);
 
-  QString after = ToQString(realOrigin.getName());
+  QString after     = ToQString(realOrigin.getName());
   QString altOrigin = after;
 
-  return ConflictItem(
-    QString(), std::move(relativeName), std::move(after),
-    index, std::move(fileName), true, std::move(altOrigin), archive);
+  return ConflictItem(QString(), std::move(relativeName), std::move(after), index,
+                      std::move(fileName), true, std::move(altOrigin), archive);
 }
 
-QString percent(int a, int b) {
+QString percent(int a, int b)
+{
   if (b == 0) {
     return QString::number(0, 'f', 2);
   }
@@ -774,49 +771,52 @@ void GeneralConflictsTab::updateUICounters()
   ui->overwrittenCount->display(m_counts.numOverwritten);
   ui->noConflictCount->display(m_counts.numNonConflicting);
 
-  QString tooltipBase = tr("<table cellspacing=\"5\">"
-    "<tr><th>Type</th><th>%1</th><th>Total</th><th>Percent</th></tr>"
-    "<tr><td>Loose files:&emsp;</td>"
-    "<td align=right>%2</td><td align=right>%3</td><td align=right>%4%</td></tr>"
-    "<tr><td>Archive files:&emsp;</td>"
-    "<td align=right>%5</td><td align=right>%6</td><td align=right>%7%</td></tr>"
-    "<tr><td>Combined:&emsp;</td>"
-    "<td align=right>%8</td><td align=right>%9</td><td align=right>%10%</td></tr>"
-    "</table>");
+  QString tooltipBase =
+      tr("<table cellspacing=\"5\">"
+         "<tr><th>Type</th><th>%1</th><th>Total</th><th>Percent</th></tr>"
+         "<tr><td>Loose files:&emsp;</td>"
+         "<td align=right>%2</td><td align=right>%3</td><td align=right>%4%</td></tr>"
+         "<tr><td>Archive files:&emsp;</td>"
+         "<td align=right>%5</td><td align=right>%6</td><td align=right>%7%</td></tr>"
+         "<tr><td>Combined:&emsp;</td>"
+         "<td align=right>%8</td><td align=right>%9</td><td align=right>%10%</td></tr>"
+         "</table>");
 
-  QString tooltipOverwrite = tooltipBase.arg(tr("Winning"))
-    .arg(m_counts.numOverwriteLoose)
-    .arg(m_counts.numTotalLoose)
-    .arg(percent(m_counts.numOverwriteLoose, m_counts.numTotalLoose))
-    .arg(m_counts.numOverwriteArchive)
-    .arg(m_counts.numTotalArchive)
-    .arg(percent(m_counts.numOverwriteArchive, m_counts.numTotalArchive))
-    .arg(m_counts.numOverwrite)
-    .arg(m_counts.numTotalFiles)
-    .arg(percent(m_counts.numOverwrite, m_counts.numTotalFiles));
+  QString tooltipOverwrite =
+      tooltipBase.arg(tr("Winning"))
+          .arg(m_counts.numOverwriteLoose)
+          .arg(m_counts.numTotalLoose)
+          .arg(percent(m_counts.numOverwriteLoose, m_counts.numTotalLoose))
+          .arg(m_counts.numOverwriteArchive)
+          .arg(m_counts.numTotalArchive)
+          .arg(percent(m_counts.numOverwriteArchive, m_counts.numTotalArchive))
+          .arg(m_counts.numOverwrite)
+          .arg(m_counts.numTotalFiles)
+          .arg(percent(m_counts.numOverwrite, m_counts.numTotalFiles));
 
-  QString tooltipOverwritten = tooltipBase.arg(tr("Losing"))
-    .arg(m_counts.numOverwrittenLoose)
-    .arg(m_counts.numTotalLoose)
-    .arg(percent(m_counts.numOverwrittenLoose, m_counts.numTotalLoose))
-    .arg(m_counts.numOverwrittenArchive)
-    .arg(m_counts.numTotalArchive)
-    .arg(percent(m_counts.numOverwrittenArchive, m_counts.numTotalArchive))
-    .arg(m_counts.numOverwritten)
-    .arg(m_counts.numTotalFiles)
-    .arg(percent(m_counts.numOverwritten, m_counts.numTotalFiles));
+  QString tooltipOverwritten =
+      tooltipBase.arg(tr("Losing"))
+          .arg(m_counts.numOverwrittenLoose)
+          .arg(m_counts.numTotalLoose)
+          .arg(percent(m_counts.numOverwrittenLoose, m_counts.numTotalLoose))
+          .arg(m_counts.numOverwrittenArchive)
+          .arg(m_counts.numTotalArchive)
+          .arg(percent(m_counts.numOverwrittenArchive, m_counts.numTotalArchive))
+          .arg(m_counts.numOverwritten)
+          .arg(m_counts.numTotalFiles)
+          .arg(percent(m_counts.numOverwritten, m_counts.numTotalFiles));
 
-
-  QString tooltipNonConflict = tooltipBase.arg(tr("Non conflicting"))
-    .arg(m_counts.numNonConflictingLoose)
-    .arg(m_counts.numTotalLoose)
-    .arg(percent(m_counts.numNonConflictingLoose, m_counts.numTotalLoose))
-    .arg(m_counts.numNonConflictingArchive)
-    .arg(m_counts.numTotalArchive)
-    .arg(percent(m_counts.numNonConflictingArchive, m_counts.numTotalArchive))
-    .arg(m_counts.numNonConflicting)
-    .arg(m_counts.numTotalFiles)
-    .arg(percent(m_counts.numNonConflicting, m_counts.numTotalFiles));
+  QString tooltipNonConflict =
+      tooltipBase.arg(tr("Non conflicting"))
+          .arg(m_counts.numNonConflictingLoose)
+          .arg(m_counts.numTotalLoose)
+          .arg(percent(m_counts.numNonConflictingLoose, m_counts.numTotalLoose))
+          .arg(m_counts.numNonConflictingArchive)
+          .arg(m_counts.numTotalArchive)
+          .arg(percent(m_counts.numNonConflictingArchive, m_counts.numTotalArchive))
+          .arg(m_counts.numNonConflicting)
+          .arg(m_counts.numTotalFiles)
+          .arg(percent(m_counts.numNonConflicting, m_counts.numTotalFiles));
 
   ui->overwriteCount->setToolTip(tooltipOverwrite);
   ui->overwrittenCount->setToolTip(tooltipOverwritten);
@@ -883,11 +883,10 @@ void GeneralConflictsTab::onOverwrittenActivated(const QModelIndex& index)
   }
 }
 
-
-AdvancedConflictsTab::AdvancedConflictsTab(
-  ConflictsTab* tab, Ui::ModInfoDialog* pui, OrganizerCore& oc) :
-    m_tab(tab), ui(pui), m_core(oc),
-    m_model(new AdvancedConflictListModel(ui->conflictsAdvancedList))
+AdvancedConflictsTab::AdvancedConflictsTab(ConflictsTab* tab, Ui::ModInfoDialog* pui,
+                                           OrganizerCore& oc)
+    : m_tab(tab), ui(pui), m_core(oc),
+      m_model(new AdvancedConflictListModel(ui->conflictsAdvancedList))
 {
   m_filter.setEdit(ui->conflictsAdvancedFilter);
   m_filter.setList(ui->conflictsAdvancedList);
@@ -895,33 +894,34 @@ AdvancedConflictsTab::AdvancedConflictsTab(
 
   // left-elide the overwrites column so that the nearest are visible
   ui->conflictsAdvancedList->setItemDelegateForColumn(
-    0, new ElideLeftDelegate(ui->conflictsAdvancedList));
+      0, new ElideLeftDelegate(ui->conflictsAdvancedList));
 
   // left-elide the file column to see filenames
   ui->conflictsAdvancedList->setItemDelegateForColumn(
-    1, new ElideLeftDelegate(ui->conflictsAdvancedList));
+      1, new ElideLeftDelegate(ui->conflictsAdvancedList));
 
   // don't elide the overwritten by column so that the nearest are visible
 
-  QObject::connect(
-    ui->conflictsAdvancedShowNoConflict, &QCheckBox::clicked,
-    [&]{ update(); });
+  QObject::connect(ui->conflictsAdvancedShowNoConflict, &QCheckBox::clicked, [&] {
+    update();
+  });
 
-  QObject::connect(
-    ui->conflictsAdvancedShowAll, &QRadioButton::clicked,
-    [&]{ update(); });
+  QObject::connect(ui->conflictsAdvancedShowAll, &QRadioButton::clicked, [&] {
+    update();
+  });
 
-  QObject::connect(
-    ui->conflictsAdvancedShowNearest, &QRadioButton::clicked,
-    [&]{ update(); });
+  QObject::connect(ui->conflictsAdvancedShowNearest, &QRadioButton::clicked, [&] {
+    update();
+  });
 
-  QObject::connect(
-    ui->conflictsAdvancedList, &QTreeView::activated,
-    [&]{ m_tab->activateItems(ui->conflictsAdvancedList); });
+  QObject::connect(ui->conflictsAdvancedList, &QTreeView::activated, [&] {
+    m_tab->activateItems(ui->conflictsAdvancedList);
+  });
 
-  QObject::connect(
-    ui->conflictsAdvancedList, &QTreeView::customContextMenuRequested,
-    [&](const QPoint& p){ m_tab->showContextMenu(p, ui->conflictsAdvancedList); });
+  QObject::connect(ui->conflictsAdvancedList, &QTreeView::customContextMenuRequested,
+                   [&](const QPoint& p) {
+                     m_tab->showContextMenu(p, ui->conflictsAdvancedList);
+                   });
 }
 
 void AdvancedConflictsTab::clear()
@@ -957,16 +957,16 @@ void AdvancedConflictsTab::update()
 
     for (const auto& file : files) {
       // careful: these two strings are moved into createItem() below
-      QString relativeName = QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
+      QString relativeName =
+          QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
       QString fileName = rootPath + relativeName;
 
-      bool archive = false;
-      const int fileOrigin = file->getOrigin(archive);
+      bool archive             = false;
+      const int fileOrigin     = file->getOrigin(archive);
       const auto& alternatives = file->getAlternatives();
 
-      auto item = createItem(
-        file->getIndex(), fileOrigin, archive,
-        std::move(fileName), std::move(relativeName), alternatives);
+      auto item = createItem(file->getIndex(), fileOrigin, archive, std::move(fileName),
+                             std::move(relativeName), alternatives);
 
       if (item) {
         m_model->add(std::move(*item));
@@ -977,16 +977,16 @@ void AdvancedConflictsTab::update()
   }
 }
 
-std::optional<ConflictItem> AdvancedConflictsTab::createItem(
-  FileIndex index, int fileOrigin, bool archive,
-  QString fileName, QString relativeName,
-  const MOShared::AlternativesVector& alternatives)
+std::optional<ConflictItem>
+AdvancedConflictsTab::createItem(FileIndex index, int fileOrigin, bool archive,
+                                 QString fileName, QString relativeName,
+                                 const MOShared::AlternativesVector& alternatives)
 {
   const auto& ds = *m_core.directoryStructure();
 
   std::wstring before, after;
 
-  auto currOrigin = m_tab->origin();
+  auto currOrigin        = m_tab->origin();
   bool isCurrOrigArchive = archive;
 
   if (!alternatives.empty()) {
@@ -996,8 +996,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
       // current origin is the active winner, all alternatives go in 'before'
 
       if (showAllAlts) {
-        for (const auto& alt : alternatives)
-        {
+        for (const auto& alt : alternatives) {
           const auto& altOrigin = ds.getOriginByID(alt.originID());
           if (!before.empty()) {
             before += L", ";
@@ -1005,27 +1004,26 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
 
           before += altOrigin.getName();
         }
-      }
-      else {
+      } else {
         // only add nearest, which is the last element of alternatives
         const auto& altOrigin = ds.getOriginByID(alternatives.back().originID());
 
         before += altOrigin.getName();
       }
 
-    }
-    else {
+    } else {
       // current mod is one of the alternatives, find its position
 
       auto currOrgId = currOrigin->getID();
 
       auto currModIter = std::find_if(alternatives.begin(), alternatives.end(),
-        [&currOrgId](auto const& alt) {
-          return currOrgId == alt.originID();
-      });
+                                      [&currOrgId](auto const& alt) {
+                                        return currOrgId == alt.originID();
+                                      });
 
       if (currModIter == alternatives.end()) {
-        log::error("Mod {} not found in the list of origins for file {}", currOrigin->getName(), fileName);
+        log::error("Mod {} not found in the list of origins for file {}",
+                   currOrigin->getName(), fileName);
         return {};
       }
 
@@ -1048,8 +1046,7 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
             }
 
             before += altOrigin.getName();
-          }
-          else if (iter > currModIter) {
+          } else if (iter > currModIter) {
             // mod comes after current
 
             if (!after.empty()) {
@@ -1066,14 +1063,12 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
         }
         after += ds.getOriginByID(fileOrigin).getName();
 
-
-      }
-      else {
+      } else {
         // only show nearest origins
 
         // before
         if (currModIter > alternatives.begin()) {
-          auto previousOrigId = (currModIter-1)->originID();
+          auto previousOrigId = (currModIter - 1)->originID();
           before += ds.getOriginByID(previousOrigId).getName();
         }
 
@@ -1081,13 +1076,11 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
         if (currModIter < (alternatives.end() - 1)) {
           auto followingOrigId = (currModIter + 1)->originID();
           after += ds.getOriginByID(followingOrigId).getName();
-        }
-        else {
+        } else {
           // current mod is last of alternatives, so closest to the active winner
 
           after += ds.getOriginByID(fileOrigin).getName();
         }
-
       }
     }
   }
@@ -1103,9 +1096,9 @@ std::optional<ConflictItem> AdvancedConflictsTab::createItem(
   }
 
   auto beforeQS = QString::fromStdWString(before);
-  auto afterQS = QString::fromStdWString(after);
+  auto afterQS  = QString::fromStdWString(after);
 
-  return ConflictItem(
-    std::move(beforeQS), std::move(relativeName), std::move(afterQS),
-    index, std::move(fileName), hasAlts, QString(), isCurrOrigArchive);
+  return ConflictItem(std::move(beforeQS), std::move(relativeName), std::move(afterQS),
+                      index, std::move(fileName), hasAlts, QString(),
+                      isCurrOrigArchive);
 }

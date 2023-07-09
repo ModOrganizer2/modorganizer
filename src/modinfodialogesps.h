@@ -28,4 +28,4 @@ private:
   void selectRow(QListView* list, int row);
 };
 
-#endif // MODINFODIALOGESPS_H
+#endif  // MODINFODIALOGESPS_H

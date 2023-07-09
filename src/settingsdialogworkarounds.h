@@ -17,8 +17,8 @@ public:
   // shows the blacklist dialog from the given string and returns the new
   // blacklist if the user accepted it
   //
-  static std::optional<QString> changeBlacklistLater(
-    QWidget* parent, const QString& current);
+  static std::optional<QString> changeBlacklistLater(QWidget* parent,
+                                                     const QString& current);
 
   void update();
 
@@ -30,4 +30,4 @@ private:
   void on_resetGeometryBtn_clicked();
 };
 
-#endif // SETTINGSDIALOGWORKAROUNDS_H
+#endif  // SETTINGSDIALOGWORKAROUNDS_H

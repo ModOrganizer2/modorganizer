@@ -1,10 +1,9 @@
 #ifndef MODORGANIZER_MOMULTIPROCESS_INCLUDED
 #define MODORGANIZER_MOMULTIPROCESS_INCLUDED
 
+#include <QLocalServer>
 #include <QObject>
 #include <QSharedMemory>
-#include <QLocalServer>
-
 
 /**
  * used to ensure only a single process of Mod Organizer is started and to
@@ -18,31 +17,25 @@ class MOMultiProcess : public QObject
 public:
   // `allowMultiple`: if another process is running, run this one
   // disconnected from the shared memory
-  explicit MOMultiProcess(bool allowMultiple, QObject *parent = 0);
+  explicit MOMultiProcess(bool allowMultiple, QObject* parent = 0);
 
   /**
    * @return true if this process's job is to forward data to the primary
    *              process through shared memory
    **/
-  bool ephemeral() const
-  {
-    return m_Ephemeral;
-  }
+  bool ephemeral() const { return m_Ephemeral; }
 
   // returns true if this is not the primary process, but was allowed because
   // of the AllowMultiple flag
   //
-  bool secondary() const
-  {
-    return !m_Ephemeral && !m_OwnsSM;
-  }
+  bool secondary() const { return !m_Ephemeral && !m_OwnsSM; }
 
   /**
    * send a message to the primary process. This can be used to transmit download urls
    *
    * @param message message to send
    **/
-  void sendMessage(const QString &message);
+  void sendMessage(const QString& message);
 
 signals:
 
@@ -51,7 +44,7 @@ signals:
    *
    * @param message the message we received
    **/
-  void messageSent(const QString &message);
+  void messageSent(const QString& message);
 
 public slots:
 
@@ -64,7 +57,6 @@ private:
   bool m_OwnsSM;
   QSharedMemory m_SharedMem;
   QLocalServer m_Server;
-
 };
 
-#endif // MODORGANIZER_MOMULTIPROCESS_INCLUDED
+#endif  // MODORGANIZER_MOMULTIPROCESS_INCLUDED

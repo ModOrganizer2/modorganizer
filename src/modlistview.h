@@ -5,16 +5,19 @@
 #include <set>
 #include <vector>
 
-#include <QLabel>
-#include <QTreeView>
 #include <QDragEnterEvent>
 #include <QLCDNumber>
+#include <QLabel>
+#include <QTreeView>
 
+#include "modlistsortproxy.h"
 #include "qtgroupingproxy.h"
 #include "viewmarkingscrollbar.h"
-#include "modlistsortproxy.h"
 
-namespace Ui { class MainWindow; }
+namespace Ui
+{
+class MainWindow;
+}
 
 class CategoryFactory;
 class FilterList;
@@ -30,17 +33,18 @@ class ModListView : public QTreeView
   Q_OBJECT
 
 public:
-
   // this is a public version of DropIndicatorPosition
-  enum DropPosition {
-    OnItem = DropIndicatorPosition::OnItem,
-    AboveItem = DropIndicatorPosition::AboveItem,
-    BelowItem = DropIndicatorPosition::BelowItem,
+  enum DropPosition
+  {
+    OnItem     = DropIndicatorPosition::OnItem,
+    AboveItem  = DropIndicatorPosition::AboveItem,
+    BelowItem  = DropIndicatorPosition::BelowItem,
     OnViewport = DropIndicatorPosition::OnViewport
   };
 
   // indiucate the groupby mode
-  enum class GroupByMode {
+  enum class GroupByMode
+  {
     NONE,
     SEPARATOR,
     CATEGORY,
@@ -50,7 +54,8 @@ public:
 public:
   explicit ModListView(QWidget* parent = 0);
 
-  void setup(OrganizerCore& core, CategoryFactory& factory, MainWindow* mw, Ui::MainWindow* mwui);
+  void setup(OrganizerCore& core, CategoryFactory& factory, MainWindow* mw,
+             Ui::MainWindow* mwui);
 
   // restore/save the state between session
   //
@@ -93,7 +98,8 @@ public:
   // focus the view, select the given index and scroll to it
   //
   void scrollToAndSelect(const QModelIndex& index);
-  void scrollToAndSelect(const QModelIndexList& indexes, const QModelIndex& current = QModelIndex());
+  void scrollToAndSelect(const QModelIndexList& indexes,
+                         const QModelIndex& current = QModelIndex());
 
   // refresh the view (to call when settings have been changed)
   //
@@ -119,7 +125,8 @@ public slots:
   // set the filter criteria/options for mods
   //
   void setFilterCriteria(const std::vector<ModListSortProxy::Criteria>& criteria);
-  void setFilterOptions(ModListSortProxy::FilterMode mode, ModListSortProxy::SeparatorsMode sep);
+  void setFilterOptions(ModListSortProxy::FilterMode mode,
+                        ModListSortProxy::SeparatorsMode sep);
 
   // update the mod counter
   //
@@ -134,7 +141,6 @@ public slots:
   void setHighlightedMods(const std::vector<unsigned int>& pluginIndices);
 
 protected:
-
   // map from/to the view indexes to the model
   //
   QModelIndex indexModelToView(const QModelIndex& index) const;
@@ -165,7 +171,8 @@ protected:
   // re-implemented to fix indentation with collapsible separators
   //
   QRect visualRect(const QModelIndex& index) const override;
-  void drawBranches(QPainter* painter, const QRect& rect, const QModelIndex& index) const override;
+  void drawBranches(QPainter* painter, const QRect& rect,
+                    const QModelIndex& index) const override;
 
   void timerEvent(QTimerEvent* event) override;
   void dragEnterEvent(QDragEnterEvent* event) override;
@@ -184,8 +191,7 @@ protected slots:
 
   void commitData(QWidget* editor) override;
 
-private: // friend classes
-
+private:  // friend classes
   friend class ModConflictIconDelegate;
   friend class ModContentIconDelegate;
   friend class ModFlagIconDelegate;
@@ -194,9 +200,9 @@ private: // friend classes
   friend class ModListViewActions;
   friend class ModListViewMarkingScrollBar;
 
-private: // private structures
-
-  struct ModListViewUi {
+private:  // private structures
+  struct ModListViewUi
+  {
     // the group by combo box
     QComboBox* groupBy;
 
@@ -213,7 +219,8 @@ private: // private structures
     PluginListView* pluginList;
   };
 
-  struct MarkerInfos {
+  struct MarkerInfos
+  {
     // conflicts
     std::set<unsigned int> overwrite;
     std::set<unsigned int> overwritten;
@@ -226,32 +233,34 @@ private: // private structures
     std::set<unsigned int> highlight;
   };
 
-  struct ModCounters {
-    int active = 0;
-    int backup = 0;
-    int foreign = 0;
+  struct ModCounters
+  {
+    int active    = 0;
+    int backup    = 0;
+    int foreign   = 0;
     int separator = 0;
-    int regular = 0;
+    int regular   = 0;
 
-    struct {
-      int active = 0;
-      int backup = 0;
-      int foreign = 0;
+    struct
+    {
+      int active    = 0;
+      int backup    = 0;
+      int foreign   = 0;
       int separator = 0;
-      int regular = 0;
+      int regular   = 0;
     } visible;
   };
 
   // index in the groupby combo
   //
-  enum GroupBy {
-    NONE = 0,
+  enum GroupBy
+  {
+    NONE     = 0,
     CATEGORY = 1,
     NEXUS_ID = 2
   };
 
-private: // private functions
-
+private:  // private functions
   void onModPrioritiesChanged(const QModelIndexList& indices);
   void onModInstalled(const QString& modName);
   void onModFilterActive(bool filterActive);
@@ -276,18 +285,19 @@ private: // private functions
 
   // retrieve the mod flags for the given index
   //
-  std::vector<ModInfo::EFlag> modFlags(
-    const QModelIndex& index, bool* forceCompact = nullptr) const;
+  std::vector<ModInfo::EFlag> modFlags(const QModelIndex& index,
+                                       bool* forceCompact = nullptr) const;
 
   // retrieve the conflicts flags for the given index
   //
-  std::vector<ModInfo::EConflictFlag> conflictFlags(
-    const QModelIndex& index, bool* forceCompact = nullptr) const;
+  std::vector<ModInfo::EConflictFlag> conflictFlags(const QModelIndex& index,
+                                                    bool* forceCompact = nullptr) const;
 
   // retrieve the content icons and tooltip for the given index
   //
   std::set<int> contents(const QModelIndex& index, bool* includeChildren) const;
-  QList<QString> contentsIcons(const QModelIndex& index, bool* forceCompact = nullptr) const;
+  QList<QString> contentsIcons(const QModelIndex& index,
+                               bool* forceCompact = nullptr) const;
   QString contentsTooltip(const QModelIndex& index) const;
 
   // compute the counters for mods according to the current filter
@@ -309,8 +319,7 @@ private: // private functions
   //
   void updateGroupByProxy();
 
-public: // member variables
-
+public:  // member variables
   OrganizerCore* m_core;
   std::unique_ptr<FilterList> m_filters;
   CategoryFactory* m_categories;
@@ -338,7 +347,6 @@ public: // member variables
   // replace the auto-expand timer from QTreeView to avoid
   // auto-collapsing
   QBasicTimer m_openTimer;
-
 };
 
-#endif // MODLISTVIEW_H
+#endif  // MODLISTVIEW_H

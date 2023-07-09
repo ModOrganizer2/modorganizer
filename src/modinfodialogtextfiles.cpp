@@ -1,7 +1,7 @@
 #include "modinfodialogtextfiles.h"
-#include "ui_modinfodialog.h"
 #include "modinfodialog.h"
 #include "settings.h"
+#include "ui_modinfodialog.h"
 #include <QMessageBox>
 
 class FileListModel : public QAbstractItemModel
@@ -13,17 +13,14 @@ public:
     endResetModel();
   }
 
-  QModelIndex index(int row, int col, const QModelIndex& ={}) const override
+  QModelIndex index(int row, int col, const QModelIndex& = {}) const override
   {
     return createIndex(row, col);
   }
 
-  QModelIndex parent(const QModelIndex&) const override
-  {
-    return {};
-  }
+  QModelIndex parent(const QModelIndex&) const override { return {}; }
 
-  int rowCount(const QModelIndex& index={}) const override
+  int rowCount(const QModelIndex& index = {}) const override
   {
     // no child nodes
     if (index.isValid())
@@ -32,10 +29,7 @@ public:
     return static_cast<int>(m_files.size());
   }
 
-  int columnCount(const QModelIndex& ={}) const override
-  {
-    return 1;
-  }
+  int columnCount(const QModelIndex& = {}) const override { return 1; }
 
   QVariant data(const QModelIndex& index, int role) const override
   {
@@ -92,22 +86,16 @@ private:
     QString fullPath;
     QString text;
 
-    File(QString fp, QString t)
-      : fullPath(std::move(fp)), text(std::move(t))
-    {
-    }
+    File(QString fp, QString t) : fullPath(std::move(fp)), text(std::move(t)) {}
   };
 
   std::deque<File> m_files;
 };
 
-
-GenericFilesTab::GenericFilesTab(
-  ModInfoDialogTabContext cx,
-  QListView* list, QSplitter* sp,
-  TextEditor* e, QLineEdit* filter) :
-    ModInfoDialogTab(std::move(cx)),
-    m_list(list), m_editor(e), m_splitter(sp), m_model(new FileListModel)
+GenericFilesTab::GenericFilesTab(ModInfoDialogTabContext cx, QListView* list,
+                                 QSplitter* sp, TextEditor* e, QLineEdit* filter)
+    : ModInfoDialogTab(std::move(cx)), m_list(list), m_editor(e), m_splitter(sp),
+      m_model(new FileListModel)
 {
   m_list->setModel(m_model);
   m_editor->setupToolbar();
@@ -119,9 +107,10 @@ GenericFilesTab::GenericFilesTab(
   m_filter.setEdit(filter);
   m_filter.setList(m_list);
 
-  QObject::connect(
-    m_list->selectionModel(), &QItemSelectionModel::currentRowChanged,
-    [&](auto current, auto previous){ onSelection(current, previous); });
+  QObject::connect(m_list->selectionModel(), &QItemSelectionModel::currentRowChanged,
+                   [&](auto current, auto previous) {
+                     onSelection(current, previous);
+                   });
 }
 
 void GenericFilesTab::clear()
@@ -140,10 +129,9 @@ bool GenericFilesTab::canClose()
   setFocus();
 
   const int res = QMessageBox::question(
-    parentWidget(),
-    QObject::tr("Save changes?"),
-    QObject::tr("Save changes to \"%1\"?").arg(m_editor->filename()),
-    QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+      parentWidget(), QObject::tr("Save changes?"),
+      QObject::tr("Save changes to \"%1\"?").arg(m_editor->filename()),
+      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
 
   if (res == QMessageBox::Cancel) {
     return false;
@@ -182,8 +170,8 @@ void GenericFilesTab::restoreState(const Settings& s)
   s.geometry().restoreState(m_splitter);
 }
 
-void GenericFilesTab::onSelection(
-  const QModelIndex& current, const QModelIndex& previous)
+void GenericFilesTab::onSelection(const QModelIndex& current,
+                                  const QModelIndex& previous)
 {
   if (!canClose()) {
     m_list->selectionModel()->select(previous, QItemSelectionModel::Current);
@@ -205,23 +193,14 @@ void GenericFilesTab::select(const QModelIndex& index)
   m_editor->load(m_model->fullPath(m_filter.mapToSource(index)));
 }
 
-
 TextFilesTab::TextFilesTab(ModInfoDialogTabContext cx)
-  : GenericFilesTab(cx,
-      cx.ui->textFileList, cx.ui->tabTextSplitter,
-      cx.ui->textFileEditor, cx.ui->textFileFilter)
-{
-}
+    : GenericFilesTab(cx, cx.ui->textFileList, cx.ui->tabTextSplitter,
+                      cx.ui->textFileEditor, cx.ui->textFileFilter)
+{}
 
 bool TextFilesTab::wantsFile(const QString& rootPath, const QString& fullPath) const
 {
-  static const QString extensions[] = {
-    ".txt",
-    ".json",
-    ".cfg",
-    ".log",
-    ".toml"
-  };
+  static const QString extensions[] = {".txt", ".json", ".cfg", ".log", ".toml"};
 
   for (const auto& e : extensions) {
     if (fullPath.endsWith(e, Qt::CaseInsensitive)) {
@@ -233,11 +212,9 @@ bool TextFilesTab::wantsFile(const QString& rootPath, const QString& fullPath) c
 }
 
 IniFilesTab::IniFilesTab(ModInfoDialogTabContext cx)
-  : GenericFilesTab(cx,
-      cx.ui->iniFileList, cx.ui->tabIniSplitter,
-      cx.ui->iniFileEditor, cx.ui->iniFileFilter)
-{
-}
+    : GenericFilesTab(cx, cx.ui->iniFileList, cx.ui->tabIniSplitter,
+                      cx.ui->iniFileEditor, cx.ui->iniFileFilter)
+{}
 
 bool IniFilesTab::wantsFile(const QString& rootPath, const QString& fullPath) const
 {

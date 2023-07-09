@@ -4,7 +4,10 @@
 #include "modinfo.h"
 #include "modinfodialogfwd.h"
 
-namespace MOShared { class FileEntry; }
+namespace MOShared
+{
+class FileEntry;
+}
 
 class OrganizerCore;
 class PluginContainer;
@@ -28,17 +31,17 @@ public:
   void expandAll();
   void collapseAll();
 
-  void open(FileTreeItem* item=nullptr);
-  void openHooked(FileTreeItem* item=nullptr);
-  void preview(FileTreeItem* item=nullptr);
-  void activate(FileTreeItem* item=nullptr);
+  void open(FileTreeItem* item = nullptr);
+  void openHooked(FileTreeItem* item = nullptr);
+  void preview(FileTreeItem* item = nullptr);
+  void activate(FileTreeItem* item = nullptr);
 
-  void addAsExecutable(FileTreeItem* item=nullptr);
-  void exploreOrigin(FileTreeItem* item=nullptr);
-  void openModInfo(FileTreeItem* item=nullptr);
+  void addAsExecutable(FileTreeItem* item = nullptr);
+  void exploreOrigin(FileTreeItem* item = nullptr);
+  void openModInfo(FileTreeItem* item = nullptr);
 
-  void hide(FileTreeItem* item=nullptr);
-  void unhide(FileTreeItem* item=nullptr);
+  void hide(FileTreeItem* item = nullptr);
+  void unhide(FileTreeItem* item = nullptr);
 
   void dumpToFile() const;
 
@@ -57,7 +60,7 @@ private:
 
   void onExpandedChanged(const QModelIndex& index, bool expanded);
   void onItemActivated(const QModelIndex& index);
-  void onContextMenu(const QPoint &pos);
+  void onContextMenu(const QPoint& pos);
   bool showShellMenu(QPoint pos);
 
   void addDirectoryMenus(QMenu& menu, FileTreeItem& item);
@@ -65,9 +68,9 @@ private:
   void addOpenMenus(QMenu& menu, const MOShared::FileEntry& file);
   void addCommonMenus(QMenu& menu);
 
-  void toggleVisibility(bool b, FileTreeItem* item=nullptr);
+  void toggleVisibility(bool b, FileTreeItem* item = nullptr);
 
   QModelIndex proxiedIndex(const QModelIndex& index);
 };
 
-#endif // MODORGANIZER_FILETREE_INCLUDED
+#endif  // MODORGANIZER_FILETREE_INCLUDED

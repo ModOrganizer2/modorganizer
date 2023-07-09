@@ -4,17 +4,19 @@
 #include "savegameinfo.h"
 #include <filterwidget.h>
 
-namespace Ui { class MainWindow; }
+namespace Ui
+{
+class MainWindow;
+}
 
 namespace MOBase
 {
-  class ISaveGame;
-  class ISaveGameInfoWidget;
-}
+class ISaveGame;
+class ISaveGameInfoWidget;
+}  // namespace MOBase
 
 class MainWindow;
 class OrganizerCore;
-
 
 class SavesTab : public QObject
 {
@@ -24,7 +26,7 @@ public:
   SavesTab(QWidget* window, OrganizerCore& core, Ui::MainWindow* ui);
 
   void refreshSaveList();
-  void displaySaveGameInfo(QTreeWidgetItem *newItem);
+  void displaySaveGameInfo(QTreeWidgetItem* newItem);
 
   QDir currentSavesDir() const;
 
@@ -48,17 +50,17 @@ private:
   SavesTabUi ui;
   MOBase::FilterWidget m_filter;
   std::vector<std::shared_ptr<const MOBase::ISaveGame>> m_SaveGames;
-  MOBase::ISaveGameInfoWidget *m_CurrentSaveView;
+  MOBase::ISaveGameInfoWidget* m_CurrentSaveView;
 
   QTimer m_SavesWatcherTimer;
   QFileSystemWatcher m_SavesWatcher;
 
-  void onContextMenu(const QPoint &pos);
+  void onContextMenu(const QPoint& pos);
   void deleteSavegame();
-  void saveSelectionChanged(QTreeWidgetItem *newItem);
-  void fixMods(SaveGameInfo::MissingAssets const &missingAssets);
+  void saveSelectionChanged(QTreeWidgetItem* newItem);
+  void fixMods(SaveGameInfo::MissingAssets const& missingAssets);
   void refreshSavesIfOpen();
   void openInExplorer();
 };
 
-#endif // MODORGANIZER_SAVESTAB_INCLUDED
+#endif  // MODORGANIZER_SAVESTAB_INCLUDED

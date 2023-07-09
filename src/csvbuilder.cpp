@@ -1,27 +1,21 @@
 #include "csvbuilder.h"
 
-
-CSVBuilder::CSVBuilder(QIODevice *target)
-  : m_Out(target), m_Separator(','), m_LineBreak(BREAK_CRLF)
+CSVBuilder::CSVBuilder(QIODevice* target)
+    : m_Out(target), m_Separator(','), m_LineBreak(BREAK_CRLF)
 {
   m_Out.setEncoding(QStringConverter::Encoding::Utf8);
 
   m_QuoteMode[TYPE_INTEGER] = QUOTE_NEVER;
-  m_QuoteMode[TYPE_FLOAT] = QUOTE_NEVER;
-  m_QuoteMode[TYPE_STRING] = QUOTE_ONDEMAND;
+  m_QuoteMode[TYPE_FLOAT]   = QUOTE_NEVER;
+  m_QuoteMode[TYPE_STRING]  = QUOTE_ONDEMAND;
 }
 
-
-CSVBuilder::~CSVBuilder()
-{
-
-}
-
+CSVBuilder::~CSVBuilder() {}
 
 void CSVBuilder::setFieldSeparator(char sep)
 {
   char oldSeparator = m_Separator;
-  m_Separator = sep;
+  m_Separator       = sep;
   try {
     checkFields(m_Fields);
   } catch (const CSVException&) {
@@ -30,20 +24,17 @@ void CSVBuilder::setFieldSeparator(char sep)
   }
 }
 
-
 void CSVBuilder::setLineBreak(CSVBuilder::ELineBreak lineBreak)
 {
   m_LineBreak = lineBreak;
 }
-
 
 void CSVBuilder::setEscapeMode(CSVBuilder::EFieldType type, CSVBuilder::EQuoteMode mode)
 {
   m_QuoteMode[type] = mode;
 }
 
-
-void CSVBuilder::setFields(const std::vector<std::pair<QString, EFieldType> > &fields)
+void CSVBuilder::setFields(const std::vector<std::pair<QString, EFieldType>>& fields)
 {
   std::vector<QString> fieldNames;
   std::map<QString, EFieldType> fieldTypes;
@@ -55,15 +46,13 @@ void CSVBuilder::setFields(const std::vector<std::pair<QString, EFieldType> > &f
 
   checkFields(fieldNames);
 
-  m_Fields = fieldNames;
+  m_Fields     = fieldNames;
   m_FieldTypes = fieldTypes;
   m_Defaults.clear();
   m_RowBuffer.clear();
-
 }
 
-
-void CSVBuilder::checkValue(const QString &field, const QVariant &value)
+void CSVBuilder::checkValue(const QString& field, const QVariant& value)
 {
   auto typeIter = m_FieldTypes.find(field);
   if (typeIter == m_FieldTypes.end()) {
@@ -71,31 +60,32 @@ void CSVBuilder::checkValue(const QString &field, const QVariant &value)
   }
 
   switch (typeIter->second) {
-    case TYPE_INTEGER: {
-      if (!value.canConvert<int>()) {
-        throw CSVException(QObject::tr("invalid type for \"%1\" (should be integer)").arg(field));
-      }
-    } break;
-    case TYPE_STRING: {
-      if (!value.canConvert<QString>()) {
-        throw CSVException(QObject::tr("invalid type for \"%1\" (should be string)").arg(field));
-      }
-    } break;
-    case TYPE_FLOAT: {
-      if (!value.canConvert<float>()) {
-        throw CSVException(QObject::tr("invalid type for \"%1\" (should be float)").arg(field));
-      }
-    } break;
+  case TYPE_INTEGER: {
+    if (!value.canConvert<int>()) {
+      throw CSVException(
+          QObject::tr("invalid type for \"%1\" (should be integer)").arg(field));
+    }
+  } break;
+  case TYPE_STRING: {
+    if (!value.canConvert<QString>()) {
+      throw CSVException(
+          QObject::tr("invalid type for \"%1\" (should be string)").arg(field));
+    }
+  } break;
+  case TYPE_FLOAT: {
+    if (!value.canConvert<float>()) {
+      throw CSVException(
+          QObject::tr("invalid type for \"%1\" (should be float)").arg(field));
+    }
+  } break;
   }
 }
 
-
-void CSVBuilder::setDefault(const QString &field, const QVariant &value)
+void CSVBuilder::setDefault(const QString& field, const QVariant& value)
 {
   checkValue(field, value);
   m_Defaults[field] = value;
 }
-
 
 void CSVBuilder::writeHeader()
 {
@@ -113,15 +103,13 @@ void CSVBuilder::writeHeader()
   m_Out.flush();
 }
 
-
-void CSVBuilder::setRowField(const QString &field, const QVariant &value)
+void CSVBuilder::setRowField(const QString& field, const QVariant& value)
 {
   checkValue(field, value);
   m_RowBuffer[field] = value;
 }
 
-
-void CSVBuilder::writeData(const std::map<QString, QVariant> &data, bool check)
+void CSVBuilder::writeData(const std::map<QString, QVariant>& data, bool check)
 {
   QString line;
   QTextStream temp(&line);
@@ -150,89 +138,81 @@ void CSVBuilder::writeData(const std::map<QString, QVariant> &data, bool check)
     }
 
     switch (m_FieldTypes[*iter]) {
-      case TYPE_INTEGER: {
-        quoteInsert(temp, val.toInt());
-      } break;
-      case TYPE_FLOAT: {
-        quoteInsert(temp, val.toFloat());
-      } break;
-      case TYPE_STRING: {
-        quoteInsert(temp, val.toString());
-      } break;
+    case TYPE_INTEGER: {
+      quoteInsert(temp, val.toInt());
+    } break;
+    case TYPE_FLOAT: {
+      quoteInsert(temp, val.toFloat());
+    } break;
+    case TYPE_STRING: {
+      quoteInsert(temp, val.toString());
+    } break;
     }
   }
   m_Out << line << lineBreak();
   m_Out.flush();
 }
 
-
-void CSVBuilder::quoteInsert(QTextStream &stream, int value)
+void CSVBuilder::quoteInsert(QTextStream& stream, int value)
 {
   switch (m_QuoteMode[TYPE_INTEGER]) {
-    case QUOTE_NEVER:
-    case QUOTE_ONDEMAND: {
-      stream << value;
-    } break;
-    case QUOTE_ALWAYS: {
-      stream << "\"" << value << "\"";
-    } break;
+  case QUOTE_NEVER:
+  case QUOTE_ONDEMAND: {
+    stream << value;
+  } break;
+  case QUOTE_ALWAYS: {
+    stream << "\"" << value << "\"";
+  } break;
   }
 }
 
-
-void CSVBuilder::quoteInsert(QTextStream &stream, float value)
+void CSVBuilder::quoteInsert(QTextStream& stream, float value)
 {
   switch (m_QuoteMode[TYPE_FLOAT]) {
-    case QUOTE_NEVER:
-    case QUOTE_ONDEMAND: {
-      stream << value;
-    } break;
-    case QUOTE_ALWAYS: {
-      stream << "\"" << value << "\"";
-    } break;
+  case QUOTE_NEVER:
+  case QUOTE_ONDEMAND: {
+    stream << value;
+  } break;
+  case QUOTE_ALWAYS: {
+    stream << "\"" << value << "\"";
+  } break;
   }
 }
 
-
-void CSVBuilder::quoteInsert(QTextStream &stream, const QString &value)
+void CSVBuilder::quoteInsert(QTextStream& stream, const QString& value)
 {
   switch (m_QuoteMode[TYPE_STRING]) {
-    case QUOTE_NEVER: {
-      stream << value;
-    } break;
-    case QUOTE_ONDEMAND: {
-      if (value.contains("[,\r\n]")) {
-        stream << "\"" << value.mid(0).replace("\"", "\"\"") << "\"";
-      } else {
-        stream << value;
-      }
-    } break;
-    case QUOTE_ALWAYS: {
+  case QUOTE_NEVER: {
+    stream << value;
+  } break;
+  case QUOTE_ONDEMAND: {
+    if (value.contains("[,\r\n]")) {
       stream << "\"" << value.mid(0).replace("\"", "\"\"") << "\"";
-    } break;
+    } else {
+      stream << value;
+    }
+  } break;
+  case QUOTE_ALWAYS: {
+    stream << "\"" << value.mid(0).replace("\"", "\"\"") << "\"";
+  } break;
   }
 }
-
 
 void CSVBuilder::writeRow()
 {
-  writeData(m_RowBuffer, false); // data was tested on input
+  writeData(m_RowBuffer, false);  // data was tested on input
   m_RowBuffer.clear();
 }
 
-
-void CSVBuilder::addRow(const std::map<QString, QVariant> &data)
+void CSVBuilder::addRow(const std::map<QString, QVariant>& data)
 {
   writeData(data, true);
 }
 
-
-void CSVBuilder::checkFields(const std::vector<QString> &fields)
+void CSVBuilder::checkFields(const std::vector<QString>& fields)
 {
   for (auto iter = fields.begin(); iter != fields.end(); ++iter) {
-    if (iter->contains(m_Separator) ||
-        iter->contains('\r') ||
-        iter->contains('\n') ||
+    if (iter->contains(m_Separator) || iter->contains('\r') || iter->contains('\n') ||
         iter->contains('"')) {
       throw CSVException(QObject::tr("invalid character in field \"%1\"").arg(*iter));
     }
@@ -241,7 +221,6 @@ void CSVBuilder::checkFields(const std::vector<QString> &fields)
     }
   }
 }
-
 
 /*
 
@@ -255,14 +234,17 @@ if(cell.contains(KDefaultEscapeChar) || cell.contains(KDefaultNewLine)
 m_currentLine->append(cell);
 }*/
 
-
-const char *CSVBuilder::lineBreak()
+const char* CSVBuilder::lineBreak()
 {
   switch (m_LineBreak) {
-    case BREAK_CR: return "\r";
-    case BREAK_CRLF: return "\r\n";
-    case BREAK_LF: return "\n";
-    default: return "\n"; // default shouldn't be necessary
+  case BREAK_CR:
+    return "\r";
+  case BREAK_CRLF:
+    return "\r\n";
+  case BREAK_LF:
+    return "\n";
+  default:
+    return "\n";  // default shouldn't be necessary
   }
 }
 

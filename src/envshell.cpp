@@ -9,46 +9,34 @@ namespace env
 using namespace MOBase;
 
 const int QCM_FIRST = 1;
-const int QCM_LAST = 0x7ff;
+const int QCM_LAST  = 0x7ff;
 
 class MenuFailed : public std::runtime_error
 {
 public:
   MenuFailed(HRESULT r, const std::string& what)
-    : runtime_error(fmt::format(
-      "{}, {}",
-      what, QString::fromStdWString(formatSystemMessage(r)).toStdString()))
-  {
-  }
+      : runtime_error(
+            fmt::format("{}, {}", what,
+                        QString::fromStdWString(formatSystemMessage(r)).toStdString()))
+  {}
 };
-
 
 class DummyMenu
 {
 public:
-  DummyMenu(QString s)
-    : m_what(s)
-  {
-  }
+  DummyMenu(QString s) : m_what(s) {}
 
-  const QString& what() const
-  {
-    return m_what;
-  }
+  const QString& what() const { return m_what; }
 
 private:
   QString m_what;
 };
 
-
 struct IdlsFreer
 {
   const std::vector<LPCITEMIDLIST>& v;
 
-  IdlsFreer(const std::vector<LPCITEMIDLIST>& v)
-    : v(v)
-  {
-  }
+  IdlsFreer(const std::vector<LPCITEMIDLIST>& v) : v(v) {}
 
   ~IdlsFreer()
   {
@@ -58,19 +46,16 @@ struct IdlsFreer
   }
 };
 
-
 class WndProcFilter : public QAbstractNativeEventFilter
 {
 public:
-  using function_type = std::function<
-    bool (HWND hwnd, UINT m, WPARAM wp, LPARAM lp, LRESULT* out)>;
+  using function_type =
+      std::function<bool(HWND hwnd, UINT m, WPARAM wp, LPARAM lp, LRESULT* out)>;
 
-  WndProcFilter(function_type f)
-    : m_f(std::move(f))
-  {
-  }
+  WndProcFilter(function_type f) : m_f(std::move(f)) {}
 
-  bool nativeEventFilter(const QByteArray& eventType, void* message, qintptr* result) override
+  bool nativeEventFilter(const QByteArray& eventType, void* message,
+                         qintptr* result) override
   {
     MSG* msg = (MSG*)message;
     if (!msg) {
@@ -92,9 +77,6 @@ private:
   function_type m_f;
 };
 
-
-
-
 HWND getHWND(QMainWindow* mw)
 {
   if (mw) {
@@ -107,9 +89,8 @@ HWND getHWND(QMainWindow* mw)
 // adapted from
 // https://devblogs.microsoft.com/oldnewthing/20040928-00/?p=37723
 //
-HRESULT IContextMenu_GetCommandString(
-  IContextMenu *pcm, UINT_PTR idCmd, UINT uFlags,
-  UINT *pwReserved, LPWSTR pszName, UINT cchMax)
+HRESULT IContextMenu_GetCommandString(IContextMenu* pcm, UINT_PTR idCmd, UINT uFlags,
+                                      UINT* pwReserved, LPWSTR pszName, UINT cchMax)
 {
   // Callers are expected to be using Unicode.
   if (!(uFlags & GCS_UNICODE)) {
@@ -130,8 +111,7 @@ HRESULT IContextMenu_GetCommandString(
   // doing anything.
   pszName[0] = L'\0';
 
-  HRESULT hr = pcm->GetCommandString(
-    idCmd, uFlags, pwReserved, (LPSTR)pszName, cchMax);
+  HRESULT hr = pcm->GetCommandString(idCmd, uFlags, pwReserved, (LPSTR)pszName, cchMax);
 
   if (SUCCEEDED(hr) && pszName[0] == L'\0') {
     // Rats, a buggy IContextMenu handler that returned success
@@ -143,14 +123,13 @@ HRESULT IContextMenu_GetCommandString(
     // try again with ANSI � pad the buffer with one extra character
     // to compensate for context menu handlers that overflow by
     // one character.
-    LPSTR pszAnsi = (LPSTR)LocalAlloc(
-      LMEM_FIXED, (cchMax + 1) * sizeof(CHAR));
+    LPSTR pszAnsi = (LPSTR)LocalAlloc(LMEM_FIXED, (cchMax + 1) * sizeof(CHAR));
 
     if (pszAnsi) {
       pszAnsi[0] = '\0';
 
-      hr = pcm->GetCommandString(
-        idCmd, uFlags & ~GCS_UNICODE, pwReserved, pszAnsi, cchMax);
+      hr = pcm->GetCommandString(idCmd, uFlags & ~GCS_UNICODE, pwReserved, pszAnsi,
+                                 cchMax);
 
       if (SUCCEEDED(hr) && pszAnsi[0] == '\0') {
         // Rats, a buggy IContextMenu handler that returned success
@@ -174,11 +153,7 @@ HRESULT IContextMenu_GetCommandString(
   return hr;
 }
 
-
-ShellMenu::ShellMenu(QMainWindow* mw)
-  : m_mw(mw)
-{
-}
+ShellMenu::ShellMenu(QMainWindow* mw) : m_mw(mw) {}
 
 void ShellMenu::addFile(QFileInfo fi)
 {
@@ -197,22 +172,21 @@ void ShellMenu::exec(const QPoint& pos)
     return;
   }
 
-  try
-  {
+  try {
     const auto hwnd = getHWND(m_mw);
 
     auto filter = std::make_unique<WndProcFilter>(
-      [&](HWND h, UINT m, WPARAM wp, LPARAM lp, LRESULT* out) {
-        return wndProc(h, m, wp, lp, out);
-    });
+        [&](HWND h, UINT m, WPARAM wp, LPARAM lp, LRESULT* out) {
+          return wndProc(h, m, wp, lp, out);
+        });
 
     QCoreApplication::instance()->installNativeEventFilter(filter.get());
 
-    const int cmd = TrackPopupMenuEx(
-      menu, TPM_RETURNCMD, pos.x(), pos.y(), hwnd, nullptr);
+    const int cmd =
+        TrackPopupMenuEx(menu, TPM_RETURNCMD, pos.x(), pos.y(), hwnd, nullptr);
 
     if (m_mw) {
-      if (auto* sb=m_mw->statusBar()) {
+      if (auto* sb = m_mw->statusBar()) {
         sb->clearMessage();
       }
     }
@@ -222,17 +196,12 @@ void ShellMenu::exec(const QPoint& pos)
     }
 
     invoke(pos, cmd - QCM_FIRST);
-  }
-  catch(MenuFailed& e)
-  {
+  } catch (MenuFailed& e) {
     if (m_files.size() == 1) {
-      log::error(
-        "can't exec shell menu for '{}': {}",
-        QDir::toNativeSeparators(m_files[0].absoluteFilePath()), e.what());
+      log::error("can't exec shell menu for '{}': {}",
+                 QDir::toNativeSeparators(m_files[0].absoluteFilePath()), e.what());
     } else {
-      log::error(
-        "can't exec shell menu for {} files: {}",
-        m_files.size(), e.what());
+      log::error("can't exec shell menu for {} files: {}", m_files.size(), e.what());
     }
   }
 }
@@ -279,21 +248,21 @@ bool ShellMenu::wndProc(HWND h, UINT m, WPARAM wp, LPARAM lp, LRESULT* out)
 // adapted from
 // https://devblogs.microsoft.com/oldnewthing/20040928-00/?p=37723
 //
-void ShellMenu::onMenuSelect(
-  HWND hwnd, HMENU hmenu, int item, HMENU hmenuPopup, UINT flags)
+void ShellMenu::onMenuSelect(HWND hwnd, HMENU hmenu, int item, HMENU hmenuPopup,
+                             UINT flags)
 {
   if (m_cm && item >= QCM_FIRST && item <= QCM_LAST) {
     WCHAR szBuf[MAX_PATH];
 
-    const auto r = IContextMenu_GetCommandString(
-      m_cm.get(), item - QCM_FIRST, GCS_HELPTEXTW, NULL, szBuf, MAX_PATH);
+    const auto r = IContextMenu_GetCommandString(m_cm.get(), item - QCM_FIRST,
+                                                 GCS_HELPTEXTW, NULL, szBuf, MAX_PATH);
 
     if (FAILED(r)) {
       lstrcpynW(szBuf, L"No help available.", MAX_PATH);
     }
 
     if (m_mw) {
-      if (auto* sb=m_mw->statusBar()) {
+      if (auto* sb = m_mw->statusBar()) {
         sb->showMessage(QString::fromWCharArray(szBuf));
       }
     }
@@ -307,8 +276,7 @@ void ShellMenu::create()
     return;
   }
 
-  try
-  {
+  try {
     auto idls = createIdls(m_files);
 
     if (idls.empty()) {
@@ -322,21 +290,14 @@ void ShellMenu::create()
 
     createContextMenu(array.get());
     createPopupMenu(m_cm.get());
-  }
-  catch(DummyMenu& dm)
-  {
+  } catch (DummyMenu& dm) {
     m_menu = createDummyMenu(dm.what());
-  }
-  catch(MenuFailed& e)
-  {
+  } catch (MenuFailed& e) {
     if (m_files.size() == 1) {
-      log::error(
-        "can't create shell menu for '{}': {}",
-        QDir::toNativeSeparators(m_files[0].absoluteFilePath()), e.what());
+      log::error("can't create shell menu for '{}': {}",
+                 QDir::toNativeSeparators(m_files[0].absoluteFilePath()), e.what());
     } else {
-      log::error(
-        "can't create shell menu for {} files: {}",
-        m_files.size(), e.what());
+      log::error("can't create shell menu for {} files: {}", m_files.size(), e.what());
     }
 
     m_menu = createDummyMenu(QObject::tr("No menu available"));
@@ -345,8 +306,7 @@ void ShellMenu::create()
 
 HMenuPtr ShellMenu::createDummyMenu(const QString& what)
 {
-  try
-  {
+  try {
     HMENU menu = CreatePopupMenu();
     if (!menu) {
       const auto e = GetLastError();
@@ -359,9 +319,7 @@ HMenuPtr ShellMenu::createDummyMenu(const QString& what)
     }
 
     return HMenuPtr(menu);
-  }
-  catch(MenuFailed& e)
-  {
+  } catch (MenuFailed& e) {
     log::error("{}", what);
     log::error("additionally, creating the dummy menu failed: {}", e.what());
 
@@ -369,8 +327,7 @@ HMenuPtr ShellMenu::createDummyMenu(const QString& what)
   }
 }
 
-std::vector<LPCITEMIDLIST> ShellMenu::createIdls(
-  const std::vector<QFileInfo>& files)
+std::vector<LPCITEMIDLIST> ShellMenu::createIdls(const std::vector<QFileInfo>& files)
 {
   std::vector<LPCITEMIDLIST> idls;
   std::optional<QDir> parent;
@@ -382,14 +339,13 @@ std::vector<LPCITEMIDLIST> ShellMenu::createIdls(
       parent = f.absoluteDir();
     } else {
       if (*parent != f.absoluteDir()) {
-        throw DummyMenu(QObject::tr(
-          "Selected files must be in the same directory"));
+        throw DummyMenu(QObject::tr("Selected files must be in the same directory"));
       }
     }
 
-    auto item = createShellItem(path);
+    auto item    = createShellItem(path);
     auto pidlist = getPersistIDList(item.get());
-    auto absIdl = getIDList(pidlist.get());
+    auto absIdl  = getIDList(pidlist.get());
 
     idls.push_back(absIdl.release());
   }
@@ -397,12 +353,11 @@ std::vector<LPCITEMIDLIST> ShellMenu::createIdls(
   return idls;
 }
 
-COMPtr<IShellItemArray> ShellMenu::createItemArray(
-  std::vector<LPCITEMIDLIST>& idls)
+COMPtr<IShellItemArray> ShellMenu::createItemArray(std::vector<LPCITEMIDLIST>& idls)
 {
   IShellItemArray* array = nullptr;
-  auto r = SHCreateShellItemArrayFromIDLists(
-    static_cast<UINT>(idls.size()), &idls[0], &array);
+  auto r = SHCreateShellItemArrayFromIDLists(static_cast<UINT>(idls.size()), &idls[0],
+                                             &array);
 
   if (FAILED(r)) {
     throw MenuFailed(r, "SHCreateShellItemArrayFromIDLists failed");
@@ -415,8 +370,8 @@ void ShellMenu::createContextMenu(IShellItemArray* array)
 {
   IContextMenu* cm = nullptr;
 
-  auto r = array->BindToHandler(
-    nullptr, BHID_SFUIObject, IID_IContextMenu, (void**)&cm);
+  auto r =
+      array->BindToHandler(nullptr, BHID_SFUIObject, IID_IContextMenu, (void**)&cm);
 
   if (FAILED(r)) {
     throw MenuFailed(r, "BindToHandler failed");
@@ -447,8 +402,7 @@ void ShellMenu::createPopupMenu(IContextMenu* cm)
     throw MenuFailed(e, "CreatePopupMenu failed");
   }
 
-  const auto r = cm->QueryContextMenu(
-    hmenu, 0, QCM_FIRST, QCM_LAST, CMF_EXTENDEDVERBS);
+  const auto r = cm->QueryContextMenu(hmenu, 0, QCM_FIRST, QCM_LAST, CMF_EXTENDEDVERBS);
 
   if (FAILED(r)) {
     throw MenuFailed(r, "QueryContextMenu failed");
@@ -461,8 +415,8 @@ COMPtr<IShellItem> ShellMenu::createShellItem(const std::wstring& path)
 {
   IShellItem* item = nullptr;
 
-  auto r = SHCreateItemFromParsingName(
-    path.c_str(), nullptr, IID_IShellItem, (void**)&item);
+  auto r =
+      SHCreateItemFromParsingName(path.c_str(), nullptr, IID_IShellItem, (void**)&item);
 
   if (FAILED(r)) {
     throw MenuFailed(r, "SHCreateItemFromParsingName failed");
@@ -474,7 +428,7 @@ COMPtr<IShellItem> ShellMenu::createShellItem(const std::wstring& path)
 COMPtr<IPersistIDList> ShellMenu::getPersistIDList(IShellItem* item)
 {
   IPersistIDList* idl = nullptr;
-  auto r = item->QueryInterface(IID_IPersistIDList, (void**)&idl);
+  auto r              = item->QueryInterface(IID_IPersistIDList, (void**)&idl);
 
   if (FAILED(r)) {
     throw MenuFailed(r, "QueryInterface IID_IPersistIDList failed");
@@ -486,7 +440,7 @@ COMPtr<IPersistIDList> ShellMenu::getPersistIDList(IShellItem* item)
 CoTaskMemPtr<LPITEMIDLIST> ShellMenu::getIDList(IPersistIDList* pidlist)
 {
   LPITEMIDLIST absIdl = nullptr;
-  auto r = pidlist->GetIDList(&absIdl);
+  auto r              = pidlist->GetIDList(&absIdl);
 
   if (FAILED(r)) {
     throw MenuFailed(r, "GetIDList failed");
@@ -501,12 +455,12 @@ void ShellMenu::invoke(const QPoint& p, int cmd)
 
   CMINVOKECOMMANDINFOEX info = {};
 
-  info.cbSize = sizeof(info);
-  info.fMask = CMIC_MASK_UNICODE | CMIC_MASK_PTINVOKE;
-  info.hwnd = hwnd;
-  info.lpVerb = MAKEINTRESOURCEA(cmd);
-  info.lpVerbW = MAKEINTRESOURCEW(cmd);
-  info.nShow = SW_SHOWNORMAL;
+  info.cbSize   = sizeof(info);
+  info.fMask    = CMIC_MASK_UNICODE | CMIC_MASK_PTINVOKE;
+  info.hwnd     = hwnd;
+  info.lpVerb   = MAKEINTRESOURCEA(cmd);
+  info.lpVerbW  = MAKEINTRESOURCEW(cmd);
+  info.nShow    = SW_SHOWNORMAL;
   info.ptInvoke = {p.x(), p.y()};
 
   // note: this calls the query version because the Qt even loop hasn't run
@@ -528,11 +482,8 @@ void ShellMenu::invoke(const QPoint& p, int cmd)
   }
 }
 
-
-ShellMenuCollection::ShellMenuCollection(QMainWindow* mw)
-  : m_mw(mw), m_active(nullptr)
-{
-}
+ShellMenuCollection::ShellMenuCollection(QMainWindow* mw) : m_mw(mw), m_active(nullptr)
+{}
 
 void ShellMenuCollection::addDetails(QString s)
 {
@@ -550,9 +501,7 @@ void ShellMenuCollection::exec(const QPoint& pos)
   if (!menu) {
     const auto e = GetLastError();
 
-    log::error(
-      "CreatePopupMenu for merged menus failed, {}",
-      formatSystemMessage(e));
+    log::error("CreatePopupMenu for merged menus failed, {}", formatSystemMessage(e));
 
     return;
   }
@@ -560,22 +509,19 @@ void ShellMenuCollection::exec(const QPoint& pos)
   if (!m_details.empty()) {
     for (auto&& d : m_details) {
       const auto s = d.toStdWString();
-      const auto r = AppendMenuW(menu, MF_STRING|MF_DISABLED, 0, s.c_str());
+      const auto r = AppendMenuW(menu, MF_STRING | MF_DISABLED, 0, s.c_str());
 
       if (!r) {
         const auto e = GetLastError();
-        log::error(
-          "AppendMenuW failed for details '{}', {}",
-          d, formatSystemMessage(e));
+        log::error("AppendMenuW failed for details '{}', {}", d,
+                   formatSystemMessage(e));
       }
     }
 
     const auto r = AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
     if (!r) {
       const auto e = GetLastError();
-      log::error(
-        "AppendMenuW failed for separator, {}",
-        formatSystemMessage(e));
+      log::error("AppendMenuW failed for separator, {}", formatSystemMessage(e));
     }
   }
 
@@ -585,16 +531,15 @@ void ShellMenuCollection::exec(const QPoint& pos)
       continue;
     }
 
-    const auto r = AppendMenuW(
-      menu, MF_POPUP | MF_STRING,
-      reinterpret_cast<UINT_PTR>(hmenu), m.name.toStdWString().c_str());
+    const auto r =
+        AppendMenuW(menu, MF_POPUP | MF_STRING, reinterpret_cast<UINT_PTR>(hmenu),
+                    m.name.toStdWString().c_str());
 
     if (!r) {
       const auto e = GetLastError();
 
-      log::error(
-        "AppendMenuW failed for merged menu {}, {}",
-        m.name, formatSystemMessage(e));
+      log::error("AppendMenuW failed for merged menu {}, {}", m.name,
+                 formatSystemMessage(e));
 
       continue;
     }
@@ -603,17 +548,17 @@ void ShellMenuCollection::exec(const QPoint& pos)
   auto hwnd = getHWND(m_mw);
 
   auto filter = std::make_unique<WndProcFilter>(
-    [&](HWND h, UINT m, WPARAM wp, LPARAM lp, LRESULT* out) {
-      return wndProc(h, m, wp, lp, out);
-  });
+      [&](HWND h, UINT m, WPARAM wp, LPARAM lp, LRESULT* out) {
+        return wndProc(h, m, wp, lp, out);
+      });
 
   QCoreApplication::instance()->installNativeEventFilter(filter.get());
 
-  const int cmd = TrackPopupMenuEx(
-    menu, TPM_RETURNCMD, pos.x(), pos.y(), hwnd, nullptr);
+  const int cmd =
+      TrackPopupMenuEx(menu, TPM_RETURNCMD, pos.x(), pos.y(), hwnd, nullptr);
 
   if (m_mw) {
-    if (auto* sb=m_mw->statusBar()) {
+    if (auto* sb = m_mw->statusBar()) {
       sb->clearMessage();
     }
   }
@@ -633,12 +578,11 @@ void ShellMenuCollection::exec(const QPoint& pos)
   m_active->menu.invoke(pos, realCmd);
 }
 
-bool ShellMenuCollection::wndProc(
-  HWND h, UINT m, WPARAM wp, LPARAM lp, LRESULT* out)
+bool ShellMenuCollection::wndProc(HWND h, UINT m, WPARAM wp, LPARAM lp, LRESULT* out)
 {
   if (m == WM_MENUSELECT) {
     auto* oldActive = m_active;
-    m_active = nullptr;
+    m_active        = nullptr;
 
     HANDLE_WM_MENUSELECT(h, wp, lp, onMenuSelect);
 
@@ -662,8 +606,8 @@ bool ShellMenuCollection::wndProc(
   return m_active->menu.wndProc(h, m, wp, lp, out);
 }
 
-void ShellMenuCollection::onMenuSelect(
-  HWND hwnd, HMENU hmenu, int item, HMENU hmenuPopup, UINT flags)
+void ShellMenuCollection::onMenuSelect(HWND hwnd, HMENU hmenu, int item,
+                                       HMENU hmenuPopup, UINT flags)
 {
   for (auto&& m : m_menus) {
     if (m.menu.getMenu() == hmenuPopup) {
@@ -673,4 +617,4 @@ void ShellMenuCollection::onMenuSelect(
   }
 }
 
-} // namespace
+}  // namespace env

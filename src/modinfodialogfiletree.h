@@ -21,14 +21,14 @@ private:
   struct Actions
   {
     QAction* newFolder = nullptr;
-    QAction* open = nullptr;
+    QAction* open      = nullptr;
     QAction* runHooked = nullptr;
-    QAction* preview = nullptr;
-    QAction* explore = nullptr;
-    QAction* rename = nullptr;
-    QAction* del = nullptr;
-    QAction* hide = nullptr;
-    QAction* unhide = nullptr;
+    QAction* preview   = nullptr;
+    QAction* explore   = nullptr;
+    QAction* rename    = nullptr;
+    QAction* del       = nullptr;
+    QAction* hide      = nullptr;
+    QAction* unhide    = nullptr;
   };
 
   QFileSystemModel* m_fs;
@@ -45,7 +45,7 @@ private:
   void onHide();
   void onUnhide();
   void onOpenInExplorer();
-  void onContextMenu(const QPoint &pos);
+  void onContextMenu(const QPoint& pos);
 
   QModelIndex singleSelection() const;
   bool deleteFile(const QModelIndex& index);
@@ -53,4 +53,4 @@ private:
   void changeVisibility(bool visible);
 };
 
-#endif // MODINFODIALOGFILETREE_H
+#endif  // MODINFODIALOGFILETREE_H

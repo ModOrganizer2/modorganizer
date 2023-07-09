@@ -24,7 +24,6 @@ private:
   void onLoaded(const QString& s);
 };
 
-
 // mostly from https://doc.qt.io/qt-5/qtwidgets-widgets-codeeditor-example.html
 //
 class TextEditorLineNumbers : public QFrame
@@ -46,16 +45,15 @@ public:
   void setBackgroundColor(const QColor& c);
 
 protected:
-  void paintEvent(QPaintEvent *event) override;
+  void paintEvent(QPaintEvent* event) override;
 
 private:
   TextEditor& m_editor;
   QColor m_background, m_text;
 
   void updateAreaWidth();
-  void updateArea(const QRect &rect, int dy);
+  void updateArea(const QRect& rect, int dy);
 };
-
 
 class TextEditorHighlighter : public QSyntaxHighlighter
 {
@@ -79,18 +77,18 @@ private:
   void changed();
 };
 
-
 class TextEditor : public QPlainTextEdit
 {
   Q_OBJECT;
   Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor);
   Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor);
-  Q_PROPERTY(QColor highlightBackgroundColor READ highlightBackgroundColor WRITE setHighlightBackgroundColor);
+  Q_PROPERTY(QColor highlightBackgroundColor READ highlightBackgroundColor WRITE
+                 setHighlightBackgroundColor);
 
   friend class TextEditorLineNumbers;
 
 public:
-  TextEditor(QWidget* parent=nullptr);
+  TextEditor(QWidget* parent = nullptr);
 
   void setupToolbar();
 
@@ -145,7 +143,6 @@ private:
   void paintLineNumbers(QPaintEvent* e, const QColor& textColor);
 };
 
-
 class HTMLEditor : public QTextEdit
 {
   Q_OBJECT;
@@ -162,4 +159,4 @@ protected:
 private:
 };
 
-#endif // MO_TEXTEDITOR_H
+#endif  // MO_TEXTEDITOR_H

@@ -20,19 +20,19 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CATEGORIES_H
 #define CATEGORIES_H
 
-
 #include <QString>
-#include <vector>
-#include <map>
 #include <functional>
-
+#include <map>
+#include <vector>
 
 /**
  * @brief Manage the available mod categories
- * @warning member functions of this class currently use a wild mix of ids and indexes to look up categories,
- *          optimized to where the request comes from. Therefore be very careful which of the two you have available
+ * @warning member functions of this class currently use a wild mix of ids and indexes
+ *to look up categories, optimized to where the request comes from. Therefore be very
+ *careful which of the two you have available
  **/
-class CategoryFactory {
+class CategoryFactory
+{
 
   friend class CategoriesDialog;
 
@@ -53,10 +53,13 @@ public:
   };
 
 public:
-  struct Category {
-    Category(int sortValue, int id, const QString &name, const std::vector<int> &nexusIDs, int parentID)
-      : m_SortValue(sortValue), m_ID(id), m_Name(name), m_HasChildren(false),
-        m_NexusIDs(nexusIDs), m_ParentID(parentID) {}
+  struct Category
+  {
+    Category(int sortValue, int id, const QString& name,
+             const std::vector<int>& nexusIDs, int parentID)
+        : m_SortValue(sortValue), m_ID(id), m_Name(name), m_HasChildren(false),
+          m_NexusIDs(nexusIDs), m_ParentID(parentID)
+    {}
     int m_SortValue;
     int m_ID;
     int m_ParentID;
@@ -64,13 +67,13 @@ public:
     QString m_Name;
     std::vector<int> m_NexusIDs;
 
-    friend bool operator<(const Category &LHS, const Category &RHS) {
+    friend bool operator<(const Category& LHS, const Category& RHS)
+    {
       return LHS.m_SortValue < RHS.m_SortValue;
     }
   };
 
 public:
-
   /**
    * @brief reset the list of categories
    **/
@@ -86,21 +89,21 @@ public:
    **/
   void saveCategories();
 
-  int addCategory(const QString &name, const std::vector<int> &nexusIDs, int parentID);
+  int addCategory(const QString& name, const std::vector<int>& nexusIDs, int parentID);
 
   /**
    * @brief retrieve the number of available categories
    *
    * @return unsigned int number of categories
    **/
-   size_t numCategories() const { return m_Categories.size(); }
+  size_t numCategories() const { return m_Categories.size(); }
 
   /**
    * @brief count all categories that match a specified filter
    * @param filter the filter to test
    * @return number of matching categories
    */
-  unsigned int countCategories(std::function<bool (const Category &category)> filter);
+  unsigned int countCategories(std::function<bool(const Category& category)> filter);
 
   /**
    * @brief get the id of the parent category
@@ -156,7 +159,7 @@ public:
    * @brief look up the id of a category by its name
    * @note O(n)
    */
-  int getCategoryID(const QString &name) const;
+  int getCategoryID(const QString& name) const;
 
   /**
    * @brief look up the index of a category by its id
@@ -175,13 +178,12 @@ public:
   unsigned int resolveNexusID(int nexusID) const;
 
 public:
-
   /**
    * @brief retrieve a reference to the singleton instance
    *
    * @return the reference to the singleton
    **/
-  static CategoryFactory &instance();
+  static CategoryFactory& instance();
 
   /**
    * @return path to the file that contains the categories list
@@ -189,20 +191,19 @@ public:
   static QString categoriesFilePath();
 
 private:
-
   CategoryFactory();
 
   void loadDefaultCategories();
 
-  void addCategory(int id, const QString &name, const std::vector<int> &nexusID, int parentID);
+  void addCategory(int id, const QString& name, const std::vector<int>& nexusID,
+                   int parentID);
 
   void setParents();
 
   static void cleanup();
 
 private:
-
-  static CategoryFactory *s_Instance;
+  static CategoryFactory* s_Instance;
 
   std::vector<Category> m_Categories;
   std::map<int, unsigned int> m_IDMap;
@@ -213,5 +214,4 @@ private:
   bool isDescendantOfImpl(int id, int parentID, std::set<int>& seen) const;
 };
 
-
-#endif // CATEGORIES_H
+#endif  // CATEGORIES_H

@@ -24,8 +24,8 @@ class LCDNumber : public QLCDNumber
   Q_OBJECT
 
 public:
-  LCDNumber(QWidget *parent = nullptr);
-  void mousePressEvent(QMouseEvent *event);
+  LCDNumber(QWidget* parent = nullptr);
+  void mousePressEvent(QMouseEvent* event);
 
 public slots:
   void showToolTip();

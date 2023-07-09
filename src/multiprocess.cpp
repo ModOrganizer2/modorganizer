@@ -1,16 +1,16 @@
 #include "multiprocess.h"
 #include "utility.h"
-#include <report.h>
-#include <log.h>
 #include <QLocalSocket>
+#include <log.h>
+#include <report.h>
 
-static const char s_Key[] = "mo-43d1a3ad-eeb0-4818-97c9-eda5216c29b5";
+static const char s_Key[]  = "mo-43d1a3ad-eeb0-4818-97c9-eda5216c29b5";
 static const int s_Timeout = 5000;
 
 using MOBase::reportError;
 
-MOMultiProcess::MOMultiProcess(bool allowMultiple, QObject *parent) :
-  QObject(parent), m_Ephemeral(false), m_OwnsSM(false)
+MOMultiProcess::MOMultiProcess(bool allowMultiple, QObject* parent)
+    : QObject(parent), m_Ephemeral(false), m_OwnsSM(false)
 {
   m_SharedMem.setKey(s_Key);
 
@@ -31,15 +31,15 @@ MOMultiProcess::MOMultiProcess(bool allowMultiple, QObject *parent) :
   }
 
   if (m_OwnsSM) {
-    connect(&m_Server, SIGNAL(newConnection()), this, SLOT(receiveMessage()), Qt::QueuedConnection);
+    connect(&m_Server, SIGNAL(newConnection()), this, SLOT(receiveMessage()),
+            Qt::QueuedConnection);
     // has to be called before listen
     m_Server.setSocketOptions(QLocalServer::WorldAccessOption);
     m_Server.listen(s_Key);
   }
 }
 
-
-void MOMultiProcess::sendMessage(const QString &message)
+void MOMultiProcess::sendMessage(const QString& message)
 {
   if (m_OwnsSM) {
     // nobody there to receive the message
@@ -48,7 +48,7 @@ void MOMultiProcess::sendMessage(const QString &message)
   QLocalSocket socket(this);
 
   bool connected = false;
-  for(int i = 0; i < 2 && !connected; ++i) {
+  for (int i = 0; i < 2 && !connected; ++i) {
     if (i > 0) {
       Sleep(250);
     }
@@ -59,13 +59,15 @@ void MOMultiProcess::sendMessage(const QString &message)
   }
 
   if (!connected) {
-    reportError(tr("failed to connect to running process: %1").arg(socket.errorString()));
+    reportError(
+        tr("failed to connect to running process: %1").arg(socket.errorString()));
     return;
   }
 
   socket.write(message.toUtf8());
   if (!socket.waitForBytesWritten(s_Timeout)) {
-    reportError(tr("failed to communicate with running process: %1").arg(socket.errorString()));
+    reportError(
+        tr("failed to communicate with running process: %1").arg(socket.errorString()));
     return;
   }
 
@@ -75,7 +77,7 @@ void MOMultiProcess::sendMessage(const QString &message)
 
 void MOMultiProcess::receiveMessage()
 {
-  QLocalSocket *socket = m_Server.nextPendingConnection();
+  QLocalSocket* socket = m_Server.nextPendingConnection();
   if (!socket) {
     return;
   }
@@ -87,11 +89,11 @@ void MOMultiProcess::receiveMessage()
     const auto av = socket->bytesAvailable();
 
     if (av <= 0) {
-      MOBase::log::error(
-        "failed to receive data from secondary process: {}",
-        socket->errorString());
+      MOBase::log::error("failed to receive data from secondary process: {}",
+                         socket->errorString());
 
-      reportError(tr("failed to receive data from secondary process: %1").arg(socket->errorString()));
+      reportError(tr("failed to receive data from secondary process: %1")
+                      .arg(socket->errorString()));
       return;
     }
   }

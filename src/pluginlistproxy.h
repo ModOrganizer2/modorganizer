@@ -1,15 +1,14 @@
 #ifndef PLUGINLISTPROXY_H
 #define PLUGINLISTPROXY_H
 
-#include <ipluginlist.h>
 #include "pluginlist.h"
+#include <ipluginlist.h>
 
 class OrganizerProxy;
 
 class PluginListProxy : public MOBase::IPluginList
 {
 public:
-
   PluginListProxy(OrganizerProxy* oproxy, PluginList* pluginlist);
   virtual ~PluginListProxy();
 
@@ -25,8 +24,10 @@ public:
   QString origin(const QString& name) const override;
 
   bool onRefreshed(const std::function<void()>& callback) override;
-  bool onPluginMoved(const std::function<void(const QString&, int, int)>& func) override;
-  bool onPluginStateChanged(const std::function<void(const std::map<QString, PluginStates>&)>& func) override;
+  bool
+  onPluginMoved(const std::function<void(const QString&, int, int)>& func) override;
+  bool onPluginStateChanged(
+      const std::function<void(const std::map<QString, PluginStates>&)>& func) override;
 
   bool hasMasterExtension(const QString& name) const override;
   bool hasLightExtension(const QString& name) const override;
@@ -34,7 +35,6 @@ public:
   bool isLightFlagged(const QString& name) const override;
 
 private:
-
   friend class OrganizerProxy;
 
   // See OrganizerProxy::connectSignals().
@@ -51,4 +51,4 @@ private:
   std::vector<boost::signals2::connection> m_Connections;
 };
 
-#endif // ORGANIZERPROXY_H
+#endif  // ORGANIZERPROXY_H

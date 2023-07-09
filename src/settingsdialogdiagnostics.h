@@ -17,4 +17,4 @@ private:
   void setCrashDumpTypesBox();
 };
 
-#endif // SETTINGSDIALOGDIAGNOSTICS_H
+#endif  // SETTINGSDIALOGDIAGNOSTICS_H

@@ -13,51 +13,54 @@ using namespace MOBase;
 
 enum class SecurityZone
 {
-  NoZone = -1,
+  NoZone     = -1,
   MyComputer = 0,
-  Intranet = 1,
-  Trusted = 2,
-  Internet = 3,
-  Untrusted = 4,
+  Intranet   = 1,
+  Trusted    = 2,
+  Internet   = 3,
+  Untrusted  = 4,
 };
 
 QString toCodeName(SecurityZone z)
 {
-  switch (z)
-  {
-    case SecurityZone::NoZone: return "NoZone";
-    case SecurityZone::MyComputer: return "MyComputer";
-    case SecurityZone::Intranet: return "Intranet";
-    case SecurityZone::Trusted: return "Trusted";
-    case SecurityZone::Internet: return "Internet";
-    case SecurityZone::Untrusted: return "Untrusted";
-    default: return "Unknown zone";
+  switch (z) {
+  case SecurityZone::NoZone:
+    return "NoZone";
+  case SecurityZone::MyComputer:
+    return "MyComputer";
+  case SecurityZone::Intranet:
+    return "Intranet";
+  case SecurityZone::Trusted:
+    return "Trusted";
+  case SecurityZone::Internet:
+    return "Internet";
+  case SecurityZone::Untrusted:
+    return "Untrusted";
+  default:
+    return "Unknown zone";
   }
 }
 
 QString toString(SecurityZone z)
 {
-  return QString("%1 (%2)")
-    .arg(toCodeName(z))
-    .arg(static_cast<int>(z));
+  return QString("%1 (%2)").arg(toCodeName(z)).arg(static_cast<int>(z));
 }
 
 // whether the given zone is considered blocked
 //
 bool isZoneBlocked(SecurityZone z)
 {
-  switch (z)
-  {
-    case SecurityZone::Internet:
-    case SecurityZone::Untrusted:
-      return true;
+  switch (z) {
+  case SecurityZone::Internet:
+  case SecurityZone::Untrusted:
+    return true;
 
-    case SecurityZone::NoZone:
-    case SecurityZone::MyComputer:
-    case SecurityZone::Intranet:
-    case SecurityZone::Trusted:
-    default:
-      return false;
+  case SecurityZone::NoZone:
+  case SecurityZone::MyComputer:
+  case SecurityZone::Intranet:
+  case SecurityZone::Trusted:
+  default:
+    return false;
   }
 }
 
@@ -72,7 +75,7 @@ bool isFileBlocked(const QFileInfo& fi)
   const auto key = "ZoneTransfer/ZoneId";
 
   // the path to the ADS is always `filename:Zone.Identifier`
-  const auto path = fi.absoluteFilePath();
+  const auto path    = fi.absoluteFilePath();
   const auto adsPath = path + ":" + ads;
 
   QFile f(adsPath);
@@ -99,7 +102,7 @@ bool isFileBlocked(const QFileInfo& fi)
   }
 
   // should be an int
-  bool ok = false;
+  bool ok      = false;
   const auto z = static_cast<SecurityZone>(v.toInt(&ok));
 
   if (!ok) {
@@ -114,10 +117,7 @@ bool isFileBlocked(const QFileInfo& fi)
   }
 
   // file is blocked
-  log::warn("{}", QObject::tr(
-    "'%1': file is blocked (%2)")
-    .arg(path)
-    .arg(toString(z)));
+  log::warn("{}", QObject::tr("'%1': file is blocked (%2)").arg(path).arg(toString(z)));
 
   return true;
 }
@@ -129,9 +129,8 @@ int checkBlockedFiles(const QDir& dir)
 
   if (!dir.exists()) {
     // shouldn't happen
-    log::error(
-      "while checking for blocked files, directory '{}' not found",
-      dir.absolutePath());
+    log::error("while checking for blocked files, directory '{}' not found",
+               dir.absolutePath());
 
     return 1;
   }
@@ -139,9 +138,8 @@ int checkBlockedFiles(const QDir& dir)
   const auto files = dir.entryInfoList(FileTypes, QDir::Files);
   if (files.empty()) {
     // shouldn't happen
-    log::error(
-      "while checking for blocked files, directory '{}' is empty",
-      dir.absolutePath());
+    log::error("while checking for blocked files, directory '{}' is empty",
+               dir.absolutePath());
 
     return 1;
   }
@@ -162,14 +160,7 @@ int checkBlocked()
 {
   // directories that contain executables; these need to be explicit because
   // portable instances might add billions of files in MO's directory
-  const QString dirs[] = {
-    ".",
-    "/dlls",
-    "/loot",
-    "/NCC",
-    "/platforms",
-    "/plugins"
-  };
+  const QString dirs[] = {".", "/dlls", "/loot", "/NCC", "/platforms", "/plugins"};
 
   log::debug("  . blocked files");
   const QString appDir = QCoreApplication::applicationDirPath();
@@ -187,16 +178,9 @@ int checkBlocked()
 int checkMissingFiles()
 {
   // files that are likely to be eaten
-  static const QStringList files({
-    "helper.exe",
-    "nxmhandler.exe",
-    "usvfs_proxy_x64.exe",
-    "usvfs_proxy_x86.exe",
-    "usvfs_x64.dll",
-    "usvfs_x86.dll",
-    "loot/loot.dll",
-    "loot/lootcli.exe"
-    });
+  static const QStringList files(
+      {"helper.exe", "nxmhandler.exe", "usvfs_proxy_x64.exe", "usvfs_proxy_x86.exe",
+       "usvfs_x64.dll", "usvfs_x86.dll", "loot/loot.dll", "loot/lootcli.exe"});
 
   log::debug("  . missing files");
   const auto dir = QCoreApplication::applicationDirPath();
@@ -208,8 +192,8 @@ int checkMissingFiles()
 
     if (!file.exists()) {
       log::warn("{}", QObject::tr(
-        "'%1' seems to be missing, an antivirus may have deleted it")
-        .arg(file.absoluteFilePath()));
+                          "'%1' seems to be missing, an antivirus may have deleted it")
+                          .arg(file.absoluteFilePath()));
 
       ++n;
     }
@@ -228,29 +212,27 @@ int checkBadOSDs(const env::Module& m)
   // where they got loaded later, so this is also called every time a new module
   // is loaded into this process
 
-  const std::string nahimic =
-    "Nahimic (also known as SonicSuite, SonicRadar, "
-    "SteelSeries, A-Volute, etc.)";
+  const std::string nahimic = "Nahimic (also known as SonicSuite, SonicRadar, "
+                              "SteelSeries, A-Volute, etc.)";
 
   auto p = [](std::string re, std::string s) {
     return std::make_pair(std::regex(re, std::regex::icase), s);
   };
 
   static const std::vector<std::pair<std::regex, std::string>> list = {
-    p("nahimic(.*)osd\\.dll",       nahimic),
-    p("cassini(.*)osd\\.dll",       nahimic),
-    p(".+devprops.*.dll",           nahimic),
-    p("ss2osd\\.dll",               nahimic),
-    p("RTSSHooks64\\.dll",          "RivaTuner Statistics Server"),
-    p("SSAudioOSD\\.dll",           "SteelSeries Audio"),
-    p("specialk64\\.dll",           "SpecialK"),
-    p("corsairosdhook\\.x64\\.dll", "Corsair Utility Engine"),
-    p("gtii-osd64-vk\\.dll",        "ASUS GPU Tweak 2"),
-    p("easyhook64\\.dll",           "Razer Cortex"),
-    p("k_fps64\\.dll",              "Razer Cortex"),
-    p("fw1fontwrapper\\.dll",       "Gigabyte 3D OSD"),
-    p("gfxhook64\\.dll",            "Gigabyte 3D OSD")
-  };
+      p("nahimic(.*)osd\\.dll", nahimic),
+      p("cassini(.*)osd\\.dll", nahimic),
+      p(".+devprops.*.dll", nahimic),
+      p("ss2osd\\.dll", nahimic),
+      p("RTSSHooks64\\.dll", "RivaTuner Statistics Server"),
+      p("SSAudioOSD\\.dll", "SteelSeries Audio"),
+      p("specialk64\\.dll", "SpecialK"),
+      p("corsairosdhook\\.x64\\.dll", "Corsair Utility Engine"),
+      p("gtii-osd64-vk\\.dll", "ASUS GPU Tweak 2"),
+      p("easyhook64\\.dll", "Razer Cortex"),
+      p("k_fps64\\.dll", "Razer Cortex"),
+      p("fw1fontwrapper\\.dll", "Gigabyte 3D OSD"),
+      p("gfxhook64\\.dll", "Gigabyte 3D OSD")};
 
   const QFileInfo file(m.path());
   int n = 0;
@@ -261,10 +243,10 @@ int checkBadOSDs(const env::Module& m)
 
     if (std::regex_match(filename, m, p.first)) {
       log::warn("{}", QObject::tr(
-        "%1 is loaded.\nThis program is known to cause issues with "
-        "Mod Organizer, such as freezing or blank windows. Consider "
-        "uninstalling it.")
-        .arg(QString::fromStdString(p.second)));
+                          "%1 is loaded.\nThis program is known to cause issues with "
+                          "Mod Organizer, such as freezing or blank windows. Consider "
+                          "uninstalling it.")
+                          .arg(QString::fromStdString(p.second)));
 
       log::warn("{}", file.absoluteFilePath());
       ++n;
@@ -279,20 +261,19 @@ int checkUsvfsIncompatibilites(const env::Module& m)
   // these dlls seems to interfere with usvfs
 
   static const std::map<QString, QString> names = {
-    {"mactype64.dll", "Mactype"},
-    {"epclient64.dll", "Citrix ICA Client"}
-  };
+      {"mactype64.dll", "Mactype"}, {"epclient64.dll", "Citrix ICA Client"}};
 
   const QFileInfo file(m.path());
   int n = 0;
 
   for (auto&& p : names) {
     if (file.fileName().compare(p.first, Qt::CaseInsensitive) == 0) {
-      log::warn("{}", QObject::tr(
-        "%1 is loaded. This program is known to cause issues with "
-        "Mod Organizer and its virtual filesystem, such script extenders "
-        "or others programs refusing to run. Consider uninstalling it.")
-        .arg(p.second));
+      log::warn(
+          "{}",
+          QObject::tr("%1 is loaded. This program is known to cause issues with "
+                      "Mod Organizer and its virtual filesystem, such script extenders "
+                      "or others programs refusing to run. Consider uninstalling it.")
+              .arg(p.second));
 
       log::warn("{}", file.absoluteFilePath());
 
@@ -330,13 +311,12 @@ std::vector<std::pair<QString, QString>> getSystemDirectories()
 {
   // folder ids and display names for logging
   const std::vector<std::pair<GUID, QString>> systemFolderIDs = {
-    {FOLDERID_ProgramFiles, "in Program Files"},
-    {FOLDERID_ProgramFilesX86, "in Program Files"},
-    {FOLDERID_Desktop, "on the desktop"},
-    {FOLDERID_OneDrive, "in OneDrive"},
-    {FOLDERID_Documents, "in Documents"},
-    {FOLDERID_Downloads, "in Downloads"}
-  };
+      {FOLDERID_ProgramFiles, "in Program Files"},
+      {FOLDERID_ProgramFilesX86, "in Program Files"},
+      {FOLDERID_Desktop, "on the desktop"},
+      {FOLDERID_OneDrive, "in OneDrive"},
+      {FOLDERID_Documents, "in Documents"},
+      {FOLDERID_Downloads, "in Downloads"}};
 
   std::vector<std::pair<QString, QString>> systemDirs;
 
@@ -366,10 +346,9 @@ int checkProtected(const QDir& d, const QString& what)
 
   for (auto&& sd : systemDirs) {
     if (path.startsWith(sd.first)) {
-      log::warn(
-        "{} is {}; this may cause issues because it's a special "
-        "system folder",
-        what, sd.second);
+      log::warn("{} is {}; this may cause issues because it's a special "
+                "system folder",
+                what, sd.second);
 
       log::debug("path '{}' starts with '{}'", path, sd.first);
 
@@ -383,12 +362,11 @@ int checkProtected(const QDir& d, const QString& what)
 int checkMicrosoftStore(const QDir& gameDir)
 {
   const QStringList pathsToCheck = {
-    "/ModifiableWindowsApps/",
-    "/WindowsApps/",
+      "/ModifiableWindowsApps/",
+      "/WindowsApps/",
   };
   for (auto badPath : pathsToCheck) {
-    if (gameDir.path().contains(badPath))
-    {
+    if (gameDir.path().contains(badPath)) {
       log::error("This game is not supported by Mod Organizer.");
       log::error("Games installed through the Microsoft Store will not work properly.");
       return 1;
@@ -431,9 +409,8 @@ void checkEnvironment(const env::Environment& e)
   n += checkMissingFiles();
   n += checkIncompatibilities(e);
 
-  log::debug(
-    "sanity checks done, {}",
-    (n > 0 ? "problems were found" : "everything looks okay"));
+  log::debug("sanity checks done, {}",
+             (n > 0 ? "problems were found" : "everything looks okay"));
 }
 
-} // namespace
+}  // namespace sanity

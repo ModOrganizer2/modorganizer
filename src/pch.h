@@ -7,8 +7,8 @@
 #include <ctime>
 #include <deque>
 #include <exception>
-#include <functional>
 #include <fstream>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <limits.h>
@@ -32,14 +32,14 @@
 #include <wchar.h>
 
 // windows
-#include <Windows.h>
 #include <DbgHelp.h>
-#include <eh.h>
 #include <LMCons.h>
 #include <Psapi.h>
 #include <Shellapi.h>
-#include <shlobj.h>
 #include <Shlwapi.h>
+#include <Windows.h>
+#include <eh.h>
+#include <shlobj.h>
 #include <tchar.h>
 #include <wincred.h>
 #include <windowsx.h>
@@ -55,6 +55,7 @@
 #include <boost/fusion/include/at_key.hpp>
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/fusion/sequence/intrinsic/at_key.hpp>
+#include <boost/program_options.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/scoped_array.hpp>
@@ -64,7 +65,6 @@
 #include <boost/thread.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <boost/program_options.hpp>
 
 // openssl
 #include <tlhelp32.h>
@@ -263,4 +263,3 @@
 #include <QtGui/QtGui>
 #include <QtPlugin>
 #include <QtTest/QtTest>
-#include <QStandardPaths>

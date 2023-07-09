@@ -19,58 +19,57 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "browserview.h"
 
+#include "utility.h"
 #include <QEvent>
 #include <QKeyEvent>
+#include <QMenu>
 #include <QNetworkDiskCache>
 #include <QWebEngineContextMenuRequest>
 #include <QWebEngineSettings>
-#include <QMenu>
 #include <Shlwapi.h>
-#include "utility.h"
 
-
-BrowserView::BrowserView(QWidget *parent)
-  : QWebEngineView(parent)
+BrowserView::BrowserView(QWidget* parent) : QWebEngineView(parent)
 {
   installEventFilter(this);
 
-  //page()->settings()->setMaximumPagesInCache(10);
+  // page()->settings()->setMaximumPagesInCache(10);
 }
 
-QWebEngineView *BrowserView::createWindow(QWebEnginePage::WebWindowType)
+QWebEngineView* BrowserView::createWindow(QWebEnginePage::WebWindowType)
 {
-  BrowserView *newView = new BrowserView(parentWidget());
+  BrowserView* newView = new BrowserView(parentWidget());
   emit initTab(newView);
   return newView;
 }
 
-bool BrowserView::eventFilter(QObject *obj, QEvent *event)
+bool BrowserView::eventFilter(QObject* obj, QEvent* event)
 {
   if (event->type() == QEvent::ShortcutOverride) {
-    QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+    QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
     if (keyEvent->matches(QKeySequence::Find)) {
       emit startFind();
     } else if (keyEvent->matches(QKeySequence::FindNext)) {
       emit findAgain();
     }
   } else if (event->type() == QEvent::MouseButtonPress) {
-    QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+    QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
     if (mouseEvent->button() == Qt::MouseButton::MiddleButton) {
       mouseEvent->ignore();
       return true;
     }
-//	TODO This is due to that QTWebEnginePage doesn't support QWebFrame anymore
-//   } else if (event->type() == QEvent::MouseButtonRelease) {
-//    QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
-//    if (mouseEvent->button() == Qt::MidButton) {
-//      QWebEngineContextMenuData hitTest = page()->hitTestContent(mouseEvent->pos());
-//      if (hitTest.linkUrl().isValid()) {
-//        emit openUrlInNewTab(hitTest.linkUrl());
-//      }
-//      mouseEvent->ignore();
-//
-//      return true;
-//    }
+    //	TODO This is due to that QTWebEnginePage doesn't support QWebFrame anymore
+    //   } else if (event->type() == QEvent::MouseButtonRelease) {
+    //    QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+    //    if (mouseEvent->button() == Qt::MidButton) {
+    //      QWebEngineContextMenuData hitTest =
+    //      page()->hitTestContent(mouseEvent->pos()); if (hitTest.linkUrl().isValid())
+    //      {
+    //        emit openUrlInNewTab(hitTest.linkUrl());
+    //      }
+    //      mouseEvent->ignore();
+    //
+    //      return true;
+    //    }
   }
   return QWebEngineView::eventFilter(obj, event);
 }

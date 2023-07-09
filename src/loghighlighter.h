@@ -28,18 +28,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
  **/
 class LogHighlighter : public QSyntaxHighlighter
 {
-    Q_OBJECT
+  Q_OBJECT
 public:
-    explicit LogHighlighter(QObject *parent = 0);
+  explicit LogHighlighter(QObject* parent = 0);
 
 signals:
 
 public slots:
 
 protected:
-
-  virtual void highlightBlock(const QString &text);
-
+  virtual void highlightBlock(const QString& text);
 };
 
-#endif // LOGHIGHLIGHTER_H
+#endif  // LOGHIGHLIGHTER_H

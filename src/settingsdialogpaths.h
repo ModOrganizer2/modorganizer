@@ -26,9 +26,9 @@ private:
   void on_overwriteDirEdit_editingFinished();
   void on_profilesDirEdit_editingFinished();
 
-  void normalizePath(QLineEdit *lineEdit);
+  void normalizePath(QLineEdit* lineEdit);
 
   QDir m_gameDir;
 };
 
-#endif // SETTINGSDIALOGPATHS_H
+#endif  // SETTINGSDIALOGPATHS_H

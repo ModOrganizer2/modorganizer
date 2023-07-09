@@ -4,8 +4,14 @@
 #include "modinfodialogfwd.h"
 #include <QObject>
 
-namespace MOShared { class FilesOrigin; }
-namespace Ui { class ModInfoDialog; }
+namespace MOShared
+{
+class FilesOrigin;
+}
+namespace Ui
+{
+class ModInfoDialog;
+}
 
 class Settings;
 class OrganizerCore;
@@ -22,20 +28,13 @@ struct ModInfoDialogTabContext
   ModInfoPtr mod;
   MOShared::FilesOrigin* origin;
 
-  ModInfoDialogTabContext(
-    OrganizerCore& core,
-    PluginContainer& plugin,
-    QWidget* parent,
-    Ui::ModInfoDialog* ui,
-    ModInfoTabIDs id,
-    ModInfoPtr mod,
-    MOShared::FilesOrigin* origin) :
-      core(core), plugin(plugin), parent(parent), ui(ui), id(id),
-      mod(mod), origin(origin)
-  {
-  }
+  ModInfoDialogTabContext(OrganizerCore& core, PluginContainer& plugin, QWidget* parent,
+                          Ui::ModInfoDialog* ui, ModInfoTabIDs id, ModInfoPtr mod,
+                          MOShared::FilesOrigin* origin)
+      : core(core), plugin(plugin), parent(parent), ui(ui), id(id), mod(mod),
+        origin(origin)
+  {}
 };
-
 
 // base class for all tabs in the mod info dialog
 //
@@ -72,11 +71,11 @@ class ModInfoDialogTab : public QObject
   Q_OBJECT;
 
 public:
-  ModInfoDialogTab(const ModInfoDialogTab&) = delete;
+  ModInfoDialogTab(const ModInfoDialogTab&)            = delete;
   ModInfoDialogTab& operator=(const ModInfoDialogTab&) = delete;
-  ModInfoDialogTab(ModInfoDialogTab&&) = default;
-  ModInfoDialogTab& operator=(ModInfoDialogTab&&) = default;
-  virtual ~ModInfoDialogTab() = default;
+  ModInfoDialogTab(ModInfoDialogTab&&)                 = default;
+  ModInfoDialogTab& operator=(ModInfoDialogTab&&)      = default;
+  virtual ~ModInfoDialogTab()                          = default;
 
   // called by ModInfoDialog every time this tab is selected; this will call
   // firstActivation() the first time it's called, until resetFirstActivation()
@@ -88,7 +87,6 @@ public:
   // activated() will call firstActivation() next time
   //
   void resetFirstActivation();
-
 
   // called when the selected mod changed, `mod` can never be empty, but
   // `origin` can (if the mod is not active, for example)
@@ -143,7 +141,6 @@ public:
   //
   virtual bool canClose();
 
-
   // called after the dialog is closed, tabs should save whatever UI state they
   // want
   //
@@ -154,7 +151,6 @@ public:
   //
   virtual void restoreState(const Settings& s);
 
-
   // called on the selected tab when the Delete key is pressed on the keyboard;
   // tabs _must_ check which widget currently has focus to decide whether this
   // should be handled or not; do not blindly delete stuff when this is called
@@ -162,7 +158,6 @@ public:
   // if the delete request was handled, this should return true
   //
   virtual bool deleteRequested();
-
 
   // return true if this tab can handle a separator mod, defaults to false;
   // when this returns false, the tab is removed from the widget entirely
@@ -188,7 +183,6 @@ public:
   //
   virtual bool usesOriginFiles() const;
 
-
   // returns the currently selected mod
   //
   ModInfo& mod() const;
@@ -201,7 +195,6 @@ public:
   // don't have an origin, like deactivated mods
   //
   MOShared::FilesOrigin* origin() const;
-
 
   // return this tab's ID
   //
@@ -279,7 +272,6 @@ private:
   bool m_firstActivation;
 };
 
-
 // the Notes tab
 //
 class NotesTab : public ModInfoDialogTab
@@ -307,4 +299,4 @@ private:
   void checkHasData();
 };
 
-#endif // MODINFODIALOGTAB_H
+#endif  // MODINFODIALOGTAB_H

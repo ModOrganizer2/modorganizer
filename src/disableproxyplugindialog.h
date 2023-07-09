@@ -24,20 +24,21 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ipluginproxy.h"
 
-namespace Ui { class DisableProxyPluginDialog; }
+namespace Ui
+{
+class DisableProxyPluginDialog;
+}
 
-class DisableProxyPluginDialog : public QDialog {
+class DisableProxyPluginDialog : public QDialog
+{
 public:
-
-  DisableProxyPluginDialog(
-    MOBase::IPlugin* proxyPlugin,
-    std::vector<MOBase::IPlugin*> const& required,
-    QWidget* parent = nullptr);
+  DisableProxyPluginDialog(MOBase::IPlugin* proxyPlugin,
+                           std::vector<MOBase::IPlugin*> const& required,
+                           QWidget* parent = nullptr);
 
 private slots:
 
   Ui::DisableProxyPluginDialog* ui;
-
 };
 
 #endif

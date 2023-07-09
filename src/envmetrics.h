@@ -54,7 +54,6 @@ private:
   void getSettings();
 };
 
-
 // holds various information about Windows metrics
 //
 class Metrics
@@ -76,6 +75,6 @@ private:
   void getDisplays();
 };
 
-} // namespace
+}  // namespace env
 
-#endif // ENV_METRICS_H
+#endif  // ENV_METRICS_H

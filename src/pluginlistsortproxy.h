@@ -20,49 +20,44 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef PLUGINLISTSORTPROXY_H
 #define PLUGINLISTSORTPROXY_H
 
-
-#include <bitset>
-#include <QSortFilterProxyModel>
 #include "pluginlist.h"
-
+#include <QSortFilterProxyModel>
+#include <bitset>
 
 class PluginListSortProxy : public QSortFilterProxyModel
 {
   Q_OBJECT
 public:
-
-  enum ESorting {
+  enum ESorting
+  {
     SORT_ASCENDING,
     SORT_DESCENDING
   };
 
 public:
-
-  explicit PluginListSortProxy(QObject *parent = 0);
+  explicit PluginListSortProxy(QObject* parent = 0);
 
   void setEnabledColumns(unsigned int columns);
 
-  virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
+  virtual bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row,
+                            int column, const QModelIndex& parent);
 
-  bool filterMatchesPlugin(const QString &plugin) const;
+  bool filterMatchesPlugin(const QString& plugin) const;
 
 public slots:
 
-  void updateFilter(const QString &filter);
+  void updateFilter(const QString& filter);
 
 protected:
-
-  virtual bool filterAcceptsRow(int row, const QModelIndex &parent) const;
-  virtual bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
+  virtual bool filterAcceptsRow(int row, const QModelIndex& parent) const;
+  virtual bool lessThan(const QModelIndex& left, const QModelIndex& right) const;
 
 private:
-
   int m_SortIndex;
   Qt::SortOrder m_SortOrder;
 
   std::bitset<PluginList::COL_LASTCOLUMN + 1> m_EnabledColumns;
   QString m_CurrentFilter;
-
 };
 
-#endif // PLUGINLISTSORTPROXY_H
+#endif  // PLUGINLISTSORTPROXY_H

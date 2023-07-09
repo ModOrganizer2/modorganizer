@@ -7,12 +7,14 @@
 class UILockerInterface
 {
 public:
-  UILockerInterface(QWidget* mainUI) :
-    m_mainUI(mainUI), m_target(nullptr), m_message(nullptr), m_info(nullptr),
-    m_buttons(nullptr), m_reason(UILocker::NoReason)
+  UILockerInterface(QWidget* mainUI)
+      : m_mainUI(mainUI), m_target(nullptr), m_message(nullptr), m_info(nullptr),
+        m_buttons(nullptr), m_reason(UILocker::NoReason)
   {
     m_timer.reset(new QTimer);
-    QObject::connect(m_timer.get(), &QTimer::timeout, [&]{ checkTarget(); });
+    QObject::connect(m_timer.get(), &QTimer::timeout, [&] {
+      checkTarget();
+    });
     m_timer->start(200);
 
     set();
@@ -93,17 +95,14 @@ public:
     m_info->setText(s);
   }
 
-  QWidget* topLevel()
-  {
-    return m_topLevel.data();
-   }
+  QWidget* topLevel() { return m_topLevel.data(); }
 
 private:
   class Filter : public QObject
   {
   public:
-    std::function<void ()> resized;
-    std::function<void ()> closed;
+    std::function<void()> resized;
+    std::function<void()> closed;
 
   protected:
     bool eventFilter(QObject* o, QEvent* e) override
@@ -122,7 +121,6 @@ private:
     }
   };
 
-
   std::unique_ptr<QTimer> m_timer;
   QWidget* m_mainUI;
   QWidget* m_target;
@@ -134,11 +132,7 @@ private:
   std::unique_ptr<Filter> m_filter;
   UILocker::Reasons m_reason;
 
-
-  bool hasMainUI() const
-  {
-    return (m_target != nullptr);
-  }
+  bool hasMainUI() const { return (m_target != nullptr); }
 
   QWidget* findTarget()
   {
@@ -160,7 +154,6 @@ private:
 
       return true;
     };
-
 
     // find a modal dialog
     QWidget* w = QApplication::activeModalWidget();
@@ -189,7 +182,7 @@ private:
     return m_mainUI;
   }
 
-  QWidget* createTransparentWidget(QWidget* parent=nullptr)
+  QWidget* createTransparentWidget(QWidget* parent = nullptr)
   {
     auto* w = new QWidget(parent);
 
@@ -212,8 +205,12 @@ private:
     m_topLevel->setGeometry(mainUI->rect());
 
     m_filter.reset(new Filter);
-    m_filter->resized = [=]{ m_topLevel->setGeometry(mainUI->rect()); };
-    m_filter->closed = [=]{ checkTarget(); };
+    m_filter->resized = [=] {
+      m_topLevel->setGeometry(mainUI->rect());
+    };
+    m_filter->closed = [=] {
+      checkTarget();
+    };
 
     mainUI->installEventFilter(m_filter.get());
 
@@ -235,7 +232,7 @@ private:
   QFrame* createFrame()
   {
     auto* frame = new QFrame;
-    auto* ly = new QVBoxLayout(frame);
+    auto* ly    = new QVBoxLayout(frame);
 
     if (hasMainUI()) {
       frame->setFrameStyle(QFrame::StyledPanel);
@@ -288,43 +285,37 @@ private:
     m_buttons->setLayout(new QHBoxLayout);
   }
 
-
   void updateMessage(UILocker::Reasons reason)
   {
-    switch (reason)
-    {
-      case UILocker::LockUI:
-      {
-        QString s;
+    switch (reason) {
+    case UILocker::LockUI: {
+      QString s;
 
-        if (hasMainUI()) {
-          s = QObject::tr(
-            "Mod Organizer is locked while the application is running.");
-        } else {
-          s = QObject::tr("Mod Organizer is currently running an application.");
-        }
-
-        m_message->setText(s);
-
-        break;
+      if (hasMainUI()) {
+        s = QObject::tr("Mod Organizer is locked while the application is running.");
+      } else {
+        s = QObject::tr("Mod Organizer is currently running an application.");
       }
 
-      case UILocker::OutputRequired:
-      {
-        m_message->setText(QObject::tr(
-          "The application must run to completion because its output is "
-          "required."));
+      m_message->setText(s);
 
-        break;
-      }
+      break;
+    }
 
-      case UILocker::PreventExit:
-      {
-        m_message->setText(QObject::tr(
+    case UILocker::OutputRequired: {
+      m_message->setText(
+          QObject::tr("The application must run to completion because its output is "
+                      "required."));
+
+      break;
+    }
+
+    case UILocker::PreventExit: {
+      m_message->setText(QObject::tr(
           "Mod Organizer is waiting on an application to close before exiting."));
 
-        break;
-      }
+      break;
+    }
     }
   }
 
@@ -333,40 +324,37 @@ private:
     MOBase::deleteChildWidgets(m_buttons);
     auto* ly = m_buttons->layout();
 
-    switch (reason)
-    {
-      case UILocker::LockUI: // fall-through
-      case UILocker::OutputRequired:
-      {
-        auto* unlock = new QPushButton(QObject::tr("Unlock"));
+    switch (reason) {
+    case UILocker::LockUI:  // fall-through
+    case UILocker::OutputRequired: {
+      auto* unlock = new QPushButton(QObject::tr("Unlock"));
 
-        QObject::connect(unlock, &QPushButton::clicked, [&]{
-          UILocker::instance().onForceUnlock();
-        });
+      QObject::connect(unlock, &QPushButton::clicked, [&] {
+        UILocker::instance().onForceUnlock();
+      });
 
-        ly->addWidget(unlock);
+      ly->addWidget(unlock);
 
-        break;
-      }
+      break;
+    }
 
-      case UILocker::PreventExit:
-      {
-        auto* exit = new QPushButton(QObject::tr("Exit Now"));
-        QObject::connect(exit, &QPushButton::clicked, [&]{
-          UILocker::instance().onForceUnlock();
-        });
+    case UILocker::PreventExit: {
+      auto* exit = new QPushButton(QObject::tr("Exit Now"));
+      QObject::connect(exit, &QPushButton::clicked, [&] {
+        UILocker::instance().onForceUnlock();
+      });
 
-        ly->addWidget(exit);
+      ly->addWidget(exit);
 
-        auto* cancel = new QPushButton(QObject::tr("Cancel"));
-        QObject::connect(cancel, &QPushButton::clicked, [&]{
-          UILocker::instance().onCancel();
-        });
+      auto* cancel = new QPushButton(QObject::tr("Cancel"));
+      QObject::connect(cancel, &QPushButton::clicked, [&] {
+        UILocker::instance().onCancel();
+      });
 
-        ly->addWidget(cancel);
+      ly->addWidget(cancel);
 
-        break;
-      }
+      break;
+    }
     }
   }
 };
@@ -378,7 +366,7 @@ UILocker::Session::~Session()
 
 void UILocker::Session::unlock()
 {
-  QMetaObject::invokeMethod(qApp, [this]{
+  QMetaObject::invokeMethod(qApp, [this] {
     UILocker::instance().unlock(this);
   });
 }
@@ -387,11 +375,11 @@ void UILocker::Session::setInfo(DWORD pid, const QString& name)
 {
   {
     std::scoped_lock lock(m_mutex);
-    m_pid = pid;
+    m_pid  = pid;
     m_name = name;
   }
 
-  QMetaObject::invokeMethod(qApp, [this]{
+  QMetaObject::invokeMethod(qApp, [this] {
     UILocker::instance().updateLabel();
   });
 }
@@ -413,12 +401,9 @@ UILocker::Results UILocker::Session::result() const
   return UILocker::instance().result();
 }
 
-
 static UILocker* g_instance = nullptr;
 
-
-UILocker::UILocker()
-  : m_parent(nullptr), m_result(NoResult)
+UILocker::UILocker() : m_parent(nullptr), m_result(NoResult)
 {
   Q_ASSERT(!g_instance);
   g_instance = this;
@@ -429,7 +414,7 @@ UILocker::~UILocker()
   const auto v = m_sessions;
 
   for (auto& wp : v) {
-    if (auto s=wp.lock()) {
+    if (auto s = wp.lock()) {
       unlock(s.get());
     }
   }
@@ -474,7 +459,7 @@ void UILocker::unlock(Session* s)
       break;
     }
 
-    if (auto ss=itor->lock()) {
+    if (auto ss = itor->lock()) {
       if (ss.get() == s) {
         itor = m_sessions.erase(itor);
         continue;
@@ -520,8 +505,8 @@ void UILocker::updateLabel()
 
   QStringList labels;
 
-  for (auto itor=m_sessions.rbegin(); itor!=m_sessions.rend(); ++itor) {
-    if (auto ss=itor->lock()) {
+  for (auto itor = m_sessions.rbegin(); itor != m_sessions.rend(); ++itor) {
+    if (auto ss = itor->lock()) {
       labels.push_back(QString("%1 (%2)").arg(ss->name()).arg(ss->pid()));
     }
   }
@@ -573,7 +558,7 @@ void UILocker::disableAll()
 
   // top level widgets include the main window and dialogs
   for (auto* w : QApplication::topLevelWidgets()) {
-    if (auto* mw=dynamic_cast<QMainWindow*>(w)) {
+    if (auto* mw = dynamic_cast<QMainWindow*>(w)) {
       // this is the main window, disable the central widgets and the stuff
       // around it
 
@@ -592,8 +577,7 @@ void UILocker::disableAll()
       }
     }
 
-
-    if (auto* d=dynamic_cast<QDialog*>(w)) {
+    if (auto* d = dynamic_cast<QDialog*>(w)) {
       // this is a dialog
 
       if (d == m_ui->topLevel()) {

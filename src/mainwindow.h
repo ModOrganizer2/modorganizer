@@ -24,14 +24,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "delayedfilewriter.h"
 #include "errorcodes.h"
 #include "imoinfo.h"
+#include "iplugingame.h"  //namespace MOBase { class IPluginGame; }
 #include "iuserinterface.h"
 #include "modinfo.h"
 #include "modlistbypriorityproxy.h"
 #include "modlistsortproxy.h"
-#include "tutorialcontrol.h"
-#include "plugincontainer.h" //class PluginContainer;
-#include "iplugingame.h" //namespace MOBase { class IPluginGame; }
+#include "plugincontainer.h"  //class PluginContainer;
 #include "shared/fileregisterfwd.h"
+#include "tutorialcontrol.h"
 #include <log.h>
 
 class Executable;
@@ -44,17 +44,31 @@ class SavesTab;
 class BrowserDialog;
 
 class PluginListSortProxy;
-namespace BSA { class Archive; }
+namespace BSA
+{
+class Archive;
+}
 
-namespace MOBase { class IPluginModPage; }
-namespace MOBase { class IPluginTool; }
+namespace MOBase
+{
+class IPluginModPage;
+}
+namespace MOBase
+{
+class IPluginTool;
+}
 
-namespace MOShared { class DirectoryEntry; }
+namespace MOShared
+{
+class DirectoryEntry;
+}
 
 #include <QByteArray>
 #include <QDir>
 #include <QFileInfo>
 #include <QFileSystemWatcher>
+#include <QFutureWatcher>
+#include <QHeaderView>
 #include <QList>
 #include <QMainWindow>
 #include <QObject>
@@ -64,11 +78,9 @@ namespace MOShared { class DirectoryEntry; }
 #include <QStringList>
 #include <QTime>
 #include <QTimer>
-#include <QHeaderView>
 #include <QVariant>
 #include <Qt>
 #include <QtConcurrent/QtConcurrentRun>
-#include <QFutureWatcher>
 
 class QAction;
 class QAbstractItemModel;
@@ -89,7 +101,7 @@ class QWidget;
 #include <boost/signals2.hpp>
 #endif
 
-//Sigh - just for HANDLE
+// Sigh - just for HANDLE
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
@@ -98,12 +110,12 @@ class QWidget;
 #include <string>
 #include <vector>
 
-namespace Ui {
-    class MainWindow;
+namespace Ui
+{
+class MainWindow;
 }
 
 class Settings;
-
 
 class MainWindow : public QMainWindow, public IUserInterface
 {
@@ -112,9 +124,8 @@ class MainWindow : public QMainWindow, public IUserInterface
   friend class OrganizerProxy;
 
 public:
-  explicit MainWindow(Settings &settings,
-                      OrganizerCore &organizerCore, PluginContainer &pluginContainer,
-                      QWidget *parent = 0);
+  explicit MainWindow(Settings& settings, OrganizerCore& organizerCore,
+                      PluginContainer& pluginContainer, QWidget* parent = 0);
   ~MainWindow();
 
   void processUpdates();
@@ -122,14 +133,15 @@ public:
   QMainWindow* mainWindow() override;
 
   bool addProfile();
-  void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives);
+  void updateBSAList(const QStringList& defaultArchives,
+                     const QStringList& activeArchives);
 
   void saveArchiveList();
 
-  void installTranslator(const QString &name);
+  void installTranslator(const QString& name);
 
-  void displayModInformation(
-    ModInfo::Ptr modInfo, unsigned int modIndex, ModInfoTabIDs tabID) override;
+  void displayModInformation(ModInfo::Ptr modInfo, unsigned int modIndex,
+                             ModInfoTabIDs tabID) override;
 
   bool canExit();
   void onBeforeClose();
@@ -137,7 +149,10 @@ public:
   virtual bool closeWindow();
   virtual void setWindowEnabled(bool enabled);
 
-  virtual MOBase::DelayedFileWriterBase &archivesWriter() override { return m_ArchiveListWriter; }
+  virtual MOBase::DelayedFileWriterBase& archivesWriter() override
+  {
+    return m_ArchiveListWriter;
+  }
 
 public slots:
   void refresherProgress(const DirectoryRefreshProgress* p);
@@ -150,26 +165,24 @@ signals:
   /**
    * @brief emitted when the selected style changes
    */
-  void styleChanged(const QString &styleFile);
+  void styleChanged(const QString& styleFile);
 
   void checkForProblemsDone();
 
 protected:
-
-  void showEvent(QShowEvent *event) override;
+  void showEvent(QShowEvent* event) override;
   void paintEvent(QPaintEvent* event) override;
-  void closeEvent(QCloseEvent *event) override;
-  bool eventFilter(QObject *obj, QEvent *event) override;
-  void resizeEvent(QResizeEvent *event) override;
-  void dragEnterEvent(QDragEnterEvent *event) override;
-  void dropEvent(QDropEvent *event) override;
-  void keyReleaseEvent(QKeyEvent *event) override;
+  void closeEvent(QCloseEvent* event) override;
+  bool eventFilter(QObject* obj, QEvent* event) override;
+  void resizeEvent(QResizeEvent* event) override;
+  void dragEnterEvent(QDragEnterEvent* event) override;
+  void dropEvent(QDropEvent* event) override;
+  void keyReleaseEvent(QKeyEvent* event) override;
 
 private slots:
   void on_actionChange_Game_triggered();
 
 private:
-
   // update data tab and schedule a problem check after a directory
   // structure update
   //
@@ -188,7 +201,8 @@ private:
 
   void registerModPage(MOBase::IPluginModPage* modPage);
   bool registerNexusPage(const QString& gameName);
-  void registerPluginTool(MOBase::IPluginTool* tool, QString name = QString(), QMenu* menu = nullptr);
+  void registerPluginTool(MOBase::IPluginTool* tool, QString name = QString(),
+                          QMenu* menu = nullptr);
 
   void updateToolbarMenu();
   void updateToolMenu();
@@ -206,44 +220,44 @@ private:
   // remove invalid category-references from mods
   void fixCategories();
 
-  bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
+  bool extractProgress(QProgressDialog& extractProgress, int percentage,
+                       std::string fileName);
 
   // Performs checks, sets the m_NumberOfProblems and signals checkForProblemsDone().
   void checkForProblemsImpl();
 
   void setCategoryListVisible(bool visible);
 
-  bool errorReported(QString &logFile);
+  bool errorReported(QString& logFile);
 
   static void setupNetworkProxy(bool activate);
   void activateProxy(bool activate);
 
-  bool createBackup(const QString &filePath, const QDateTime &time);
-  QString queryRestore(const QString &filePath);
+  bool createBackup(const QString& filePath, const QDateTime& time);
+  QString queryRestore(const QString& filePath);
 
-  QMenu *openFolderMenu();
+  QMenu* openFolderMenu();
 
-  void dropLocalFile(const QUrl &url, const QString &outputDir, bool move);
+  void dropLocalFile(const QUrl& url, const QString& outputDir, bool move);
 
   void toggleMO2EndorseState();
   void toggleUpdateAction();
 
   // update info
-  struct NxmUpdateInfoData {
+  struct NxmUpdateInfoData
+  {
     QString game;
     std::set<ModInfo::Ptr> finalMods;
   };
   void finishUpdateInfo(const NxmUpdateInfoData& data);
 
 private:
-
-  static const char *PATTERN_BACKUP_GLOB;
-  static const char *PATTERN_BACKUP_REGEX;
-  static const char *PATTERN_BACKUP_DATE;
+  static const char* PATTERN_BACKUP_GLOB;
+  static const char* PATTERN_BACKUP_REGEX;
+  static const char* PATTERN_BACKUP_DATE;
 
 private:
-
-  Ui::MainWindow *ui;
+  Ui::MainWindow* ui;
 
   bool m_WasVisible;
   bool m_FirstPaint;
@@ -260,15 +274,16 @@ private:
 
   int m_OldProfileIndex;
 
-  std::vector<QString> m_ModNameList; // the mod-list to go with the directory structure
+  std::vector<QString>
+      m_ModNameList;  // the mod-list to go with the directory structure
 
   QStringList m_DefaultArchives;
 
   int m_OldExecutableIndex;
 
-  QAction *m_ContextAction;
+  QAction* m_ContextAction;
 
-  CategoryFactory &m_CategoryFactory;
+  CategoryFactory& m_CategoryFactory;
 
   QTimer m_CheckBSATimer;
   QTimer m_SaveMetaTimer;
@@ -278,8 +293,8 @@ private:
 
   QTime m_StartTime;
 
-  OrganizerCore &m_OrganizerCore;
-  PluginContainer &m_PluginContainer;
+  OrganizerCore& m_OrganizerCore;
+  PluginContainer& m_PluginContainer;
 
   QString m_CurrentLanguage;
   std::vector<QTranslator*> m_Translators;
@@ -306,9 +321,8 @@ private:
 
 private slots:
   void updateWindowTitle(const APIUserAccount& user);
-  void showMessage(const QString &message);
-  void showError(const QString &message);
-
+  void showMessage(const QString& message);
+  void showError(const QString& message);
 
   // main window actions
   void helpTriggered();
@@ -325,11 +339,13 @@ private slots:
   void linkDesktop();
   void linkMenu();
 
-  void languageChange(const QString &newLanguage);
+  void languageChange(const QString& newLanguage);
 
-  void windowTutorialFinished(const QString &windowName);
+  void windowTutorialFinished(const QString& windowName);
 
-  BSA::EErrorCode extractBSA(BSA::Archive &archive, BSA::Folder::Ptr folder, const QString &destination, QProgressDialog &extractProgress);
+  BSA::EErrorCode extractBSA(BSA::Archive& archive, BSA::Folder::Ptr folder,
+                             const QString& destination,
+                             QProgressDialog& extractProgress);
 
   // nexus related
   void updateAvailable();
@@ -337,34 +353,39 @@ private slots:
   void actionEndorseMO();
   void actionWontEndorseMO();
 
-  void motdReceived(const QString &motd);
+  void motdReceived(const QString& motd);
 
   void originModified(int originID);
 
-  void modInstalled(const QString &modName);
+  void modInstalled(const QString& modName);
 
   // update info
-  void nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVariant resultData, int requestID);
+  void nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVariant resultData,
+                              int requestID);
 
   void nxmEndorsementsAvailable(QVariant userData, QVariant resultData, int);
-  void nxmUpdatesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
-  void nxmModInfoAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
+  void nxmUpdatesAvailable(QString gameName, int modID, QVariant userData,
+                           QVariant resultData, int requestID);
+  void nxmModInfoAvailable(QString gameName, int modID, QVariant userData,
+                           QVariant resultData, int requestID);
   void nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int);
   void nxmTrackedModsAvailable(QVariant userData, QVariant resultData, int);
-  void nxmDownloadURLs(QString, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
-  void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, int errorCode, const QString &errorString);
+  void nxmDownloadURLs(QString, int modID, int fileID, QVariant userData,
+                       QVariant resultData, int requestID);
+  void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData,
+                        int requestID, int errorCode, const QString& errorString);
 
   void onRequestsChanged(const APIStats& stats, const APIUserAccount& user);
 
-  void modRenamed(const QString &oldName, const QString &newName);
-  void modRemoved(const QString &fileName);
+  void modRenamed(const QString& oldName, const QString& newName);
+  void modRemoved(const QString& fileName);
 
   void hookUpWindowTutorials();
   bool shouldStartTutorial() const;
 
   void openInstanceFolder();
   void openInstallFolder();
-	void openPluginsFolder();
+  void openPluginsFolder();
   void openStylesheetsFolder();
   void openDownloadsFolder();
   void openModsFolder();
@@ -379,7 +400,8 @@ private slots:
   // Only visually update the problems icon.
   void updateProblemsButton();
 
-  // Queue a problem check to allow collapsing of multiple requests in short amount of time.
+  // Queue a problem check to allow collapsing of multiple requests in short amount of
+  // time.
   void scheduleCheckForProblems();
 
   // Perform the actual problem check in another thread.
@@ -387,25 +409,26 @@ private slots:
 
   void saveModMetas();
 
-  void updateStyle(const QString &style);
+  void updateStyle(const QString& style);
 
   void resizeLists(bool pluginListCustom);
 
-  void fileMoved(const QString& filePath, const QString& oldOriginName, const QString& newOriginName);
+  void fileMoved(const QString& filePath, const QString& oldOriginName,
+                 const QString& newOriginName);
 
   /**
    * @brief allow columns in mod list and plugin list to be resized
    */
   void allowListResize();
 
-  void toolBar_customContextMenuRequested(const QPoint &point);
+  void toolBar_customContextMenuRequested(const QPoint& point);
   void removeFromToolbar(QAction* action);
 
   void about();
 
   void resetActionIcons();
 
-private slots: // ui slots
+private slots:  // ui slots
   // actions
   void on_actionAdd_Profile_triggered();
   void on_actionInstallMod_triggered();
@@ -427,8 +450,8 @@ private slots: // ui slots
   void on_actionToolBarIconsAndText_triggered();
   void on_actionViewLog_triggered();
 
-  void on_centralWidget_customContextMenuRequested(const QPoint &pos);
-  void on_bsaList_customContextMenuRequested(const QPoint &pos);
+  void on_centralWidget_customContextMenuRequested(const QPoint& pos);
+  void on_bsaList_customContextMenuRequested(const QPoint& pos);
   void on_executablesListBox_currentIndexChanged(int index);
   void on_profileBox_currentIndexChanged(int index);
   void on_startButton_clicked();
@@ -437,13 +460,13 @@ private slots: // ui slots
   void on_displayCategoriesBtn_toggled(bool checked);
   void on_linkButton_pressed();
   void on_showHiddenBox_toggled(bool checked);
-  void on_bsaList_itemChanged(QTreeWidgetItem *item, int column);
+  void on_bsaList_itemChanged(QTreeWidgetItem* item, int column);
 
   void on_saveButton_clicked();
   void on_restoreButton_clicked();
   void on_restoreModsButton_clicked();
   void on_saveModsButton_clicked();
-  void on_managedArchiveLabel_linkHovered(const QString &link);
+  void on_managedArchiveLabel_linkHovered(const QString& link);
 
   void onPluginRegistrationChanged();
 
@@ -453,4 +476,4 @@ private slots: // ui slots
   void setupModList();
 };
 
-#endif // MAINWINDOW_H
+#endif  // MAINWINDOW_H

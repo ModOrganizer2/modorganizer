@@ -18,19 +18,19 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "modinfodialog.h"
-#include "ui_modinfodialog.h"
-#include "plugincontainer.h"
-#include "organizercore.h"
-#include "modlistview.h"
-#include "modinfodialogtextfiles.h"
-#include "modinfodialogimages.h"
-#include "modinfodialogesps.h"
-#include "modinfodialogconflicts.h"
 #include "modinfodialogcategories.h"
-#include "modinfodialognexus.h"
+#include "modinfodialogconflicts.h"
+#include "modinfodialogesps.h"
 #include "modinfodialogfiletree.h"
+#include "modinfodialogimages.h"
+#include "modinfodialognexus.h"
+#include "modinfodialogtextfiles.h"
+#include "modlistview.h"
+#include "organizercore.h"
+#include "plugincontainer.h"
 #include "shared/directoryentry.h"
 #include "shared/filesorigin.h"
+#include "ui_modinfodialog.h"
 #include <filesystem>
 
 using namespace MOBase;
@@ -39,10 +39,8 @@ namespace fs = std::filesystem;
 
 const int max_scan_for_context_menu = 50;
 
-
-bool canPreviewFile(
-  const PluginContainer& pluginContainer,
-  bool isArchive, const QString& filename)
+bool canPreviewFile(const PluginContainer& pluginContainer, bool isArchive,
+                    const QString& filename)
 {
   if (isArchive) {
     return false;
@@ -54,9 +52,7 @@ bool canPreviewFile(
 
 bool isExecutableFilename(const QString& filename)
 {
-  static const std::set<QString> exeExtensions = {
-    "exe", "cmd", "bat"
-  };
+  static const std::set<QString> exeExtensions = {"exe", "cmd", "bat"};
 
   const auto ext = QFileInfo(filename).suffix().toLower();
 
@@ -111,26 +107,26 @@ bool canUnhideFile(bool isArchive, const QString& filename)
   return true;
 }
 
-FileRenamer::RenameResults hideFile(FileRenamer& renamer, const QString &oldName)
+FileRenamer::RenameResults hideFile(FileRenamer& renamer, const QString& oldName)
 {
   const QString newName = oldName + ModInfo::s_HiddenExt;
   return renamer.rename(oldName, newName);
 }
 
-FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString &oldName)
+FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString& oldName)
 {
   QString newName = oldName.left(oldName.length() - ModInfo::s_HiddenExt.length());
   return renamer.rename(oldName, newName);
 }
 
-
-FileRenamer::RenameResults restoreHiddenFilesRecursive(FileRenamer& renamer, const QString& targetDir)
+FileRenamer::RenameResults restoreHiddenFilesRecursive(FileRenamer& renamer,
+                                                       const QString& targetDir)
 {
   FileRenamer::RenameResults results = FileRenamer::RESULT_OK;
-  QDir currentDir = targetDir;
-  for (QString hiddenFile : currentDir.entryList(
-    (QStringList() << "*" + ModInfo::s_HiddenExt),
-    QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot)) {
+  QDir currentDir                    = targetDir;
+  for (QString hiddenFile :
+       currentDir.entryList((QStringList() << "*" + ModInfo::s_HiddenExt),
+                            QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot)) {
 
     QString oldName = currentDir.absoluteFilePath(hiddenFile);
     QString newName = oldName.left(oldName.length() - ModInfo::s_HiddenExt.length());
@@ -163,51 +159,61 @@ FileRenamer::RenameResults restoreHiddenFilesRecursive(FileRenamer& renamer, con
   return results;
 }
 
-
 ModInfoDialog::TabInfo::TabInfo(std::unique_ptr<ModInfoDialogTab> tab)
-  : tab(std::move(tab)), realPos(-1), widget(nullptr)
-{
-}
+    : tab(std::move(tab)), realPos(-1), widget(nullptr)
+{}
 
 bool ModInfoDialog::TabInfo::isVisible() const
 {
   return (realPos != -1);
 }
 
-ModInfoDialog::ModInfoDialog(
-  OrganizerCore& core, PluginContainer& plugin,
-  ModInfo::Ptr mod, ModListView* modListView, QWidget *parent) :
-    TutorableDialog("ModInfoDialog", parent),
-    ui(new Ui::ModInfoDialog),
-    m_core(core),
-    m_plugin(plugin),
-    m_modListView(modListView),
-    m_initialTab(ModInfoTabIDs::None),
-    m_arrangingTabs(false)
+ModInfoDialog::ModInfoDialog(OrganizerCore& core, PluginContainer& plugin,
+                             ModInfo::Ptr mod, ModListView* modListView,
+                             QWidget* parent)
+    : TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog), m_core(core),
+      m_plugin(plugin), m_modListView(modListView), m_initialTab(ModInfoTabIDs::None),
+      m_arrangingTabs(false)
 {
   ui->setupUi(this);
 
   {
     auto* sc = new QShortcut(QKeySequence::Delete, this);
-    connect(sc, &QShortcut::activated, [&] { onDeleteShortcut(); });
+    connect(sc, &QShortcut::activated, [&] {
+      onDeleteShortcut();
+    });
   }
   {
     auto* sc = new QShortcut(QKeySequence::MoveToNextPage, this);
-    connect(sc, &QShortcut::activated, [&] { onNextMod(); });
+    connect(sc, &QShortcut::activated, [&] {
+      onNextMod();
+    });
   }
   {
     auto* sc = new QShortcut(QKeySequence::MoveToPreviousPage, this);
-    connect(sc, &QShortcut::activated, [&] { onPreviousMod(); });
+    connect(sc, &QShortcut::activated, [&] {
+      onPreviousMod();
+    });
   }
 
   setMod(mod);
   createTabs();
 
-  connect(ui->tabWidget, &QTabWidget::currentChanged, [&]{ onTabSelectionChanged(); });
-  connect(ui->tabWidget->tabBar(), &QTabBar::tabMoved, [&]{ onTabMoved(); });
-  connect(ui->close, &QPushButton::clicked, [&]{ onCloseButton(); });
-  connect(ui->previousMod, &QPushButton::clicked, [&]{ onPreviousMod(); });
-  connect(ui->nextMod, &QPushButton::clicked, [&]{ onNextMod(); });
+  connect(ui->tabWidget, &QTabWidget::currentChanged, [&] {
+    onTabSelectionChanged();
+  });
+  connect(ui->tabWidget->tabBar(), &QTabBar::tabMoved, [&] {
+    onTabMoved();
+  });
+  connect(ui->close, &QPushButton::clicked, [&] {
+    onCloseButton();
+  });
+  connect(ui->previousMod, &QPushButton::clicked, [&] {
+    onPreviousMod();
+  });
+  connect(ui->nextMod, &QPushButton::clicked, [&] {
+    onNextMod();
+  });
 }
 
 ModInfoDialog::~ModInfoDialog() = default;
@@ -216,7 +222,7 @@ template <class T>
 std::unique_ptr<ModInfoDialogTab> createTab(ModInfoDialog& d, ModInfoTabIDs id)
 {
   return std::make_unique<T>(ModInfoDialogTabContext(
-    d.m_core, d.m_plugin, &d, d.ui.get(), id, d.m_mod, d.getOrigin()));
+      d.m_core, d.m_plugin, &d, d.ui.get(), id, d.m_mod, d.getOrigin()));
 }
 
 void ModInfoDialog::createTabs()
@@ -242,29 +248,31 @@ void ModInfoDialog::createTabs()
 
   // for each tab in the widget; connects the widgets with the tab objects
   //
-  for (int i=0; i<count; ++i) {
+  for (int i = 0; i < count; ++i) {
     auto& tabInfo = m_tabs[static_cast<std::size_t>(i)];
 
     // remembering tab information so tabs can be removed and re-added
-    tabInfo.widget = ui->tabWidget->widget(i);
+    tabInfo.widget  = ui->tabWidget->widget(i);
     tabInfo.caption = ui->tabWidget->tabText(i);
-    tabInfo.icon = ui->tabWidget->tabIcon(i);
+    tabInfo.icon    = ui->tabWidget->tabIcon(i);
 
-    connect(
-      tabInfo.tab.get(), &ModInfoDialogTab::originModified,
-      [this](int originID){ onOriginModified(originID); });
+    connect(tabInfo.tab.get(), &ModInfoDialogTab::originModified, [this](int originID) {
+      onOriginModified(originID);
+    });
 
-    connect(
-      tabInfo.tab.get(), &ModInfoDialogTab::modOpen,
-      [&](const QString& name){ setMod(name); update(); });
+    connect(tabInfo.tab.get(), &ModInfoDialogTab::modOpen, [&](const QString& name) {
+      setMod(name);
+      update();
+    });
 
-    connect(
-      tabInfo.tab.get(), &ModInfoDialogTab::hasDataChanged,
-      [&]{ setTabsColors(); });
+    connect(tabInfo.tab.get(), &ModInfoDialogTab::hasDataChanged, [&] {
+      setTabsColors();
+    });
 
-    connect(
-      tabInfo.tab.get(), &ModInfoDialogTab::wantsFocus,
-      [&, id=tabInfo.tab->tabID()]{ switchToTab(id); });
+    connect(tabInfo.tab.get(), &ModInfoDialogTab::wantsFocus,
+            [&, id = tabInfo.tab->tabID()] {
+              switchToTab(id);
+            });
   }
 }
 
@@ -276,7 +284,7 @@ int ModInfoDialog::exec()
   // whether to select the first tab; if the main window requested a specific
   // tab, it is selected when encountered in update()
   const auto noCustomTabRequested = (m_initialTab == ModInfoTabIDs::None);
-  const auto requestedTab = m_initialTab;
+  const auto requestedTab         = m_initialTab;
 
   update(true);
 
@@ -369,7 +377,7 @@ void ModInfoDialog::update(bool firstTime)
   }
 
   if (ui->tabWidget->currentIndex() == oldTab) {
-    if (auto* tabInfo=currentTab()) {
+    if (auto* tabInfo = currentTab()) {
       // activated() has to be fired manually because the tab index hasn't been
       // changed
       tabInfo->tab->activated();
@@ -390,7 +398,7 @@ void ModInfoDialog::setTabsVisibility(bool firstTime)
 
   bool changed = false;
 
-  for (std::size_t i=0; i<m_tabs.size(); ++i) {
+  for (std::size_t i = 0; i < m_tabs.size(); ++i) {
     const auto& tabInfo = m_tabs[i];
 
     bool visible = true;
@@ -428,7 +436,7 @@ void ModInfoDialog::setTabsVisibility(bool firstTime)
 
   // remember selection, if any
   auto sel = ModInfoTabIDs::None;
-  if (const auto* tabInfo=currentTab()) {
+  if (const auto* tabInfo = currentTab()) {
     sel = tabInfo->tab->tabID();
   }
 
@@ -436,8 +444,7 @@ void ModInfoDialog::setTabsVisibility(bool firstTime)
   reAddTabs(visibility, sel);
 }
 
-void ModInfoDialog::reAddTabs(
-  const std::vector<bool>& visibility, ModInfoTabIDs sel)
+void ModInfoDialog::reAddTabs(const std::vector<bool>& visibility, ModInfoTabIDs sel)
 {
   Q_ASSERT(visibility.size() == m_tabs.size());
 
@@ -453,7 +460,7 @@ void ModInfoDialog::reAddTabs(
 
   // gathering visible tabs
   std::vector<TabInfo*> visibleTabs;
-  for (std::size_t i=0; i<m_tabs.size(); ++i) {
+  for (std::size_t i = 0; i < m_tabs.size(); ++i) {
     if (!visibility[i]) {
       // this tab is not visible, skip it
       continue;
@@ -478,15 +485,13 @@ void ModInfoDialog::reAddTabs(
 
   // sorting tabs
   if (canSort) {
-    std::sort(visibleTabs.begin(), visibleTabs.end(), [&](auto&& a, auto&& b){
+    std::sort(visibleTabs.begin(), visibleTabs.end(), [&](auto&& a, auto&& b) {
       // looking the names in the ordered list
-      auto aItor = std::find(
-        orderedNames.begin(), orderedNames.end(),
-        a->widget->objectName());
+      auto aItor =
+          std::find(orderedNames.begin(), orderedNames.end(), a->widget->objectName());
 
-      auto bItor = std::find(
-        orderedNames.begin(), orderedNames.end(),
-        b->widget->objectName());
+      auto bItor =
+          std::find(orderedNames.begin(), orderedNames.end(), b->widget->objectName());
 
       // this shouldn't happen, it was checked above
       Q_ASSERT(aItor != orderedNames.end() && bItor != orderedNames.end());
@@ -494,7 +499,6 @@ void ModInfoDialog::reAddTabs(
       return (aItor < bItor);
     });
   }
-
 
   // removing all tabs
   ui->tabWidget->clear();
@@ -505,7 +509,7 @@ void ModInfoDialog::reAddTabs(
   }
 
   // add visible tabs
-  for (std::size_t i=0; i<visibleTabs.size(); ++i) {
+  for (std::size_t i = 0; i < visibleTabs.size(); ++i) {
     auto& tabInfo = *visibleTabs[i];
 
     // remembering real position
@@ -548,7 +552,6 @@ void ModInfoDialog::updateTabs(bool becauseOriginChanged)
     // this tab should be updated
     interestedTabs.push_back(&tabInfo);
   }
-
 
   for (auto* tabInfo : interestedTabs) {
     // set the current mod
@@ -606,9 +609,9 @@ void ModInfoDialog::setTabsColors()
       continue;
     }
 
-    const QColor color = tabInfo.tab->hasData() ?
-      QColor::Invalid :
-      p.color(QPalette::Disabled, QPalette::WindowText);
+    const QColor color = tabInfo.tab->hasData()
+                             ? QColor::Invalid
+                             : p.color(QPalette::Disabled, QPalette::WindowText);
 
     ui->tabWidget->tabBar()->setTabTextColor(tabInfo.realPos, color);
   }
@@ -682,7 +685,7 @@ void ModInfoDialog::saveTabOrder() const
 
   QString names;
 
-  for (int i=0; i<ui->tabWidget->count(); ++i) {
+  for (int i = 0; i < ui->tabWidget->count(); ++i) {
     if (!names.isEmpty()) {
       names += " ";
     }
@@ -707,7 +710,7 @@ void ModInfoDialog::onOriginModified(int originID)
 void ModInfoDialog::onDeleteShortcut()
 {
   // forward the request to the current tab
-  if (auto* tabInfo=currentTab()) {
+  if (auto* tabInfo = currentTab()) {
     tabInfo->tab->deleteRequested();
   }
 }
@@ -753,7 +756,7 @@ void ModInfoDialog::onTabSelectionChanged()
   }
 
   // this will call firstActivation() on the tab if needed
-  if (auto* tabInfo=currentTab()) {
+  if (auto* tabInfo = currentTab()) {
     tabInfo->tab->activated();
   }
 }
@@ -766,7 +769,7 @@ void ModInfoDialog::onTabMoved()
   }
 
   // for each tab in the widget
-  for (int i=0; i<ui->tabWidget->count(); ++i) {
+  for (int i = 0; i < ui->tabWidget->count(); ++i) {
     const auto* w = ui->tabWidget->widget(i);
 
     bool found = false;
@@ -775,7 +778,7 @@ void ModInfoDialog::onTabMoved()
     for (auto& tabInfo : m_tabs) {
       if (tabInfo.widget == w) {
         tabInfo.realPos = i;
-        found = true;
+        found           = true;
         break;
       }
     }

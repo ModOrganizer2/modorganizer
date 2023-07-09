@@ -1,29 +1,23 @@
 #include "colortable.h"
-#include "modflagicondelegate.h"
 #include "modconflicticondelegate.h"
+#include "modflagicondelegate.h"
 #include "settings.h"
 
 class ColorItem;
 ColorItem* colorItemForRow(QTableWidget* table, int row);
 
-void paintBackground(
-  QTableWidget* table, QPainter* p, const QStyleOptionViewItem& option,
-  const QModelIndex& index);
-
+void paintBackground(QTableWidget* table, QPainter* p,
+                     const QStyleOptionViewItem& option, const QModelIndex& index);
 
 // delegate for the sample text column; paints the background color
 //
 class ColoredBackgroundDelegate : public QStyledItemDelegate
 {
 public:
-  ColoredBackgroundDelegate(QTableWidget* table)
-    : m_table(table)
-  {
-  }
+  ColoredBackgroundDelegate(QTableWidget* table) : m_table(table) {}
 
-  void paint(
-    QPainter* p, const QStyleOptionViewItem& option,
-    const QModelIndex& index) const override
+  void paint(QPainter* p, const QStyleOptionViewItem& option,
+             const QModelIndex& index) const override
   {
     paintBackground(m_table, p, option, index);
 
@@ -41,20 +35,15 @@ private:
   QTableWidget* m_table;
 };
 
-
 // delegate for the icons column; paints the background and icons
 //
 class FakeModFlagIconDelegate : public ModFlagIconDelegate
 {
 public:
-  explicit FakeModFlagIconDelegate(QTableWidget* table)
-    : m_table(table)
-  {
-  }
+  explicit FakeModFlagIconDelegate(QTableWidget* table) : m_table(table) {}
 
-  void paint(
-    QPainter* painter, const QStyleOptionViewItem& option,
-    const QModelIndex& index) const override
+  void paint(QPainter* painter, const QStyleOptionViewItem& option,
+             const QModelIndex& index) const override
   {
     paintBackground(m_table, painter, option, index);
     ModFlagIconDelegate::paintIcons(painter, option, index, getIcons(index));
@@ -63,12 +52,8 @@ public:
 protected:
   QList<QString> getIcons(const QModelIndex& index) const override
   {
-    const auto flags = {
-      ModInfo::FLAG_BACKUP,
-      ModInfo::FLAG_NOTENDORSED,
-      ModInfo::FLAG_NOTES,
-      ModInfo::FLAG_ALTERNATE_GAME
-    };
+    const auto flags = {ModInfo::FLAG_BACKUP, ModInfo::FLAG_NOTENDORSED,
+                        ModInfo::FLAG_NOTES, ModInfo::FLAG_ALTERNATE_GAME};
 
     return getIconsForFlags(flags, false);
   }
@@ -81,21 +66,16 @@ protected:
 private:
   QTableWidget* m_table;
 };
-
 
 // delegate for the icons column; paints the background and icons
 //
 class FakeModConflictIconDelegate : public ModConflictIconDelegate
 {
 public:
-  explicit FakeModConflictIconDelegate(QTableWidget* table)
-    : m_table(table)
-  {
-  }
+  explicit FakeModConflictIconDelegate(QTableWidget* table) : m_table(table) {}
 
-  void paint(
-    QPainter* painter, const QStyleOptionViewItem& option,
-    const QModelIndex& index) const override
+  void paint(QPainter* painter, const QStyleOptionViewItem& option,
+             const QModelIndex& index) const override
   {
     paintBackground(m_table, painter, option, index);
     ModFlagIconDelegate::paintIcons(painter, option, index, getIcons(index));
@@ -104,12 +84,10 @@ public:
 protected:
   QList<QString> getIcons(const QModelIndex& index) const override
   {
-    const auto flags = {
-      ModInfo::FLAG_CONFLICT_MIXED,
-      ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE,
-      ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN,
-      ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED
-    };
+    const auto flags = {ModInfo::FLAG_CONFLICT_MIXED,
+                        ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE,
+                        ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN,
+                        ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED};
 
     return getIconsForFlags(flags, false);
   }
@@ -123,18 +101,15 @@ private:
   QTableWidget* m_table;
 };
 
-
 // item used in the first column of the table
 //
 class ColorItem : public QTableWidgetItem
 {
 public:
-  ColorItem(
-    QString caption, QColor defaultColor,
-    std::function<QColor ()> get,
-    std::function<void (const QColor&)> commit) :
-      m_caption(std::move(caption)), m_default(defaultColor),
-      m_get(get), m_commit(commit)
+  ColorItem(QString caption, QColor defaultColor, std::function<QColor()> get,
+            std::function<void(const QColor&)> commit)
+      : m_caption(std::move(caption)), m_default(defaultColor), m_get(get),
+        m_commit(commit)
   {
     setText(m_caption);
     set(get());
@@ -142,17 +117,11 @@ public:
 
   // color caption
   //
-  const QString& caption() const
-  {
-    return m_caption;
-  }
+  const QString& caption() const { return m_caption; }
 
   // the current color
   //
-  QColor get() const
-  {
-    return m_temp;
-  }
+  QColor get() const { return m_temp; }
 
   // sets the current color, commit() must be called to save it
   //
@@ -168,26 +137,19 @@ public:
 
   // resets the current color, commit() must be called to save it
   //
-  bool reset()
-  {
-    return set(m_default);
-  }
+  bool reset() { return set(m_default); }
 
   // saves the current color
   //
-  void commit()
-  {
-    m_commit(m_temp);
-  }
+  void commit() { m_commit(m_temp); }
 
 private:
   const QString m_caption;
   const QColor m_default;
-  std::function<QColor ()> m_get;
-  std::function<void (const QColor&)> m_commit;
+  std::function<QColor()> m_get;
+  std::function<void(const QColor&)> m_commit;
   QColor m_temp;
 };
-
 
 ColorItem* colorItemForRow(QTableWidget* table, int row)
 {
@@ -199,27 +161,24 @@ void forEachColorItem(QTableWidget* table, F&& f)
 {
   const auto rowCount = table->rowCount();
 
-  for (int i=0; i<rowCount; ++i) {
-    if (auto* ci=colorItemForRow(table, i)) {
+  for (int i = 0; i < rowCount; ++i) {
+    if (auto* ci = colorItemForRow(table, i)) {
       f(ci);
     }
   }
 }
 
-void paintBackground(
-  QTableWidget* table, QPainter* p, const QStyleOptionViewItem& option,
-  const QModelIndex& index)
+void paintBackground(QTableWidget* table, QPainter* p,
+                     const QStyleOptionViewItem& option, const QModelIndex& index)
 {
-  if (auto* ci=colorItemForRow(table, index.row())) {
+  if (auto* ci = colorItemForRow(table, index.row())) {
     p->save();
     p->fillRect(option.rect, ci->get());
     p->restore();
   }
 }
 
-
-ColorTable::ColorTable(QWidget* parent)
-  : QTableWidget(parent), m_settings(nullptr)
+ColorTable::ColorTable(QWidget* parent) : QTableWidget(parent), m_settings(nullptr)
 {
   setColumnCount(4);
   setHorizontalHeaderLabels({"", "", "", ""});
@@ -228,9 +187,9 @@ ColorTable::ColorTable(QWidget* parent)
   setItemDelegateForColumn(2, new FakeModConflictIconDelegate(this));
   setItemDelegateForColumn(3, new FakeModFlagIconDelegate(this));
 
-  connect(
-    this, &QTableWidget::cellActivated,
-    [&]{ onColorActivated(); });
+  connect(this, &QTableWidget::cellActivated, [&] {
+    onColorActivated();
+  });
 }
 
 void ColorTable::load(Settings& s)
@@ -238,40 +197,58 @@ void ColorTable::load(Settings& s)
   m_settings = &s;
 
   addColor(
-    QObject::tr("Is overwritten (loose files)"),
-    QColor(0, 255, 0, 64),
-    [this]{ return m_settings->colors().modlistOverwrittenLoose(); },
-    [this](auto&& v){ m_settings->colors().setModlistOverwrittenLoose(v); });
+      QObject::tr("Is overwritten (loose files)"), QColor(0, 255, 0, 64),
+      [this] {
+        return m_settings->colors().modlistOverwrittenLoose();
+      },
+      [this](auto&& v) {
+        m_settings->colors().setModlistOverwrittenLoose(v);
+      });
 
   addColor(
-    QObject::tr("Is overwriting (loose files)"),
-    QColor(255, 0, 0, 64),
-    [this]{ return m_settings->colors().modlistOverwritingLoose(); },
-    [this](auto&& v){ m_settings->colors().setModlistOverwritingLoose(v); });
+      QObject::tr("Is overwriting (loose files)"), QColor(255, 0, 0, 64),
+      [this] {
+        return m_settings->colors().modlistOverwritingLoose();
+      },
+      [this](auto&& v) {
+        m_settings->colors().setModlistOverwritingLoose(v);
+      });
 
   addColor(
-    QObject::tr("Is overwritten (archives)"),
-    QColor(0, 255, 255, 64),
-    [this]{ return m_settings->colors().modlistOverwrittenArchive(); },
-    [this](auto&& v){ m_settings->colors().setModlistOverwrittenArchive(v); });
+      QObject::tr("Is overwritten (archives)"), QColor(0, 255, 255, 64),
+      [this] {
+        return m_settings->colors().modlistOverwrittenArchive();
+      },
+      [this](auto&& v) {
+        m_settings->colors().setModlistOverwrittenArchive(v);
+      });
 
   addColor(
-    QObject::tr("Is overwriting (archives)"),
-    QColor(255, 0, 255, 64),
-    [this]{ return m_settings->colors().modlistOverwritingArchive(); },
-    [this](auto&& v){ m_settings->colors().setModlistOverwritingArchive(v); });
+      QObject::tr("Is overwriting (archives)"), QColor(255, 0, 255, 64),
+      [this] {
+        return m_settings->colors().modlistOverwritingArchive();
+      },
+      [this](auto&& v) {
+        m_settings->colors().setModlistOverwritingArchive(v);
+      });
 
   addColor(
-    QObject::tr("Mod contains selected plugin"),
-    QColor(0, 0, 255, 64),
-    [this]{ return m_settings->colors().modlistContainsPlugin(); },
-    [this](auto&& v){ m_settings->colors().setModlistContainsPlugin(v); });
+      QObject::tr("Mod contains selected plugin"), QColor(0, 0, 255, 64),
+      [this] {
+        return m_settings->colors().modlistContainsPlugin();
+      },
+      [this](auto&& v) {
+        m_settings->colors().setModlistContainsPlugin(v);
+      });
 
   addColor(
-    QObject::tr("Plugin is contained in selected mod"),
-    QColor(0, 0, 255, 64),
-    [this]{ return m_settings->colors().pluginListContained(); },
-    [this](auto&& v){ m_settings->colors().setPluginListContained(v); });
+      QObject::tr("Plugin is contained in selected mod"), QColor(0, 0, 255, 64),
+      [this] {
+        return m_settings->colors().pluginListContained();
+      },
+      [this](auto&& v) {
+        m_settings->colors().setPluginListContained(v);
+      });
 }
 
 void ColorTable::resetColors()
@@ -296,10 +273,9 @@ void ColorTable::commitColors()
   });
 }
 
-void ColorTable::addColor(
-  const QString& text, const QColor& defaultColor,
-  std::function<QColor ()> get,
-  std::function<void (const QColor&)> commit)
+void ColorTable::addColor(const QString& text, const QColor& defaultColor,
+                          std::function<QColor()> get,
+                          std::function<void(const QColor&)> commit)
 {
   const auto r = rowCount();
   setRowCount(r + 1);
@@ -319,13 +295,13 @@ void ColorTable::onColorActivated()
   }
 
   const auto row = rows[0].row();
-  auto* ci = colorItemForRow(this, row);
+  auto* ci       = colorItemForRow(this, row);
   if (!ci) {
     return;
   }
 
   const QColor result = QColorDialog::getColor(
-    ci->get(), topLevelWidget(), ci->caption(), QColorDialog::ShowAlphaChannel);
+      ci->get(), topLevelWidget(), ci->caption(), QColorDialog::ShowAlphaChannel);
 
   if (result.isValid()) {
     ci->set(result);

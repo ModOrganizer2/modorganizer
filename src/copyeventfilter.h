@@ -22,9 +22,9 @@ class CopyEventFilter : public QObject
   Q_OBJECT
 
 public:
-
   CopyEventFilter(QAbstractItemView* view, int column = 0, int role = Qt::DisplayRole);
-  CopyEventFilter(QAbstractItemView* view, std::function<QString(const QModelIndex&)> format);
+  CopyEventFilter(QAbstractItemView* view,
+                  std::function<QString(const QModelIndex&)> format);
 
   // copy the selection of the view associated with this
   // event filter into the clipboard
@@ -34,10 +34,8 @@ public:
   bool eventFilter(QObject* sender, QEvent* event) override;
 
 private:
-
   QAbstractItemView* m_view;
   std::function<QString(const QModelIndex&)> m_format;
-
 };
 
 #endif

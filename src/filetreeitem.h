@@ -11,7 +11,7 @@ class FileTreeItem
   class Sorter;
 
 public:
-  using Ptr = std::unique_ptr<FileTreeItem>;
+  using Ptr      = std::unique_ptr<FileTreeItem>;
   using Children = std::vector<Ptr>;
 
   enum Flag
@@ -21,25 +21,21 @@ public:
     Conflicted  = 0x02
   };
 
-
   Q_DECLARE_FLAGS(Flags, Flag);
 
-  static Ptr createFile(
-    FileTreeModel* model, FileTreeItem* parent,
-    std::wstring dataRelativeParentPath, std::wstring file);
+  static Ptr createFile(FileTreeModel* model, FileTreeItem* parent,
+                        std::wstring dataRelativeParentPath, std::wstring file);
 
-  static Ptr createDirectory(
-    FileTreeModel* model, FileTreeItem* parent,
-    std::wstring dataRelativeParentPath, std::wstring file);
+  static Ptr createDirectory(FileTreeModel* model, FileTreeItem* parent,
+                             std::wstring dataRelativeParentPath, std::wstring file);
 
-  FileTreeItem(const FileTreeItem&) = delete;
+  FileTreeItem(const FileTreeItem&)            = delete;
   FileTreeItem& operator=(const FileTreeItem&) = delete;
-  FileTreeItem(FileTreeItem&&) = default;
-  FileTreeItem& operator=(FileTreeItem&&) = default;
+  FileTreeItem(FileTreeItem&&)                 = default;
+  FileTreeItem& operator=(FileTreeItem&&)      = default;
 
-  void setOrigin(
-    int originID, const std::wstring& realPath,
-    Flags flags, const std::wstring& mod);
+  void setOrigin(int originID, const std::wstring& realPath, Flags flags,
+                 const std::wstring& mod);
 
   void add(Ptr child)
   {
@@ -53,7 +49,7 @@ public:
   void insert(Itor begin, Itor end, std::size_t at)
   {
     std::size_t nextRowGuess = m_children.size();
-    for (auto itor=begin; itor!=end; ++itor) {
+    for (auto itor = begin; itor != end; ++itor) {
       (*itor)->m_indexGuess = nextRowGuess++;
     }
 
@@ -69,10 +65,7 @@ public:
     m_loaded = false;
   }
 
-  const Children& children() const
-  {
-    return m_children;
-  }
+  const Children& children() const { return m_children; }
 
   int childIndex(const FileTreeItem& item) const
   {
@@ -82,7 +75,7 @@ public:
       }
     }
 
-    for (std::size_t i=0; i<m_children.size(); ++i) {
+    for (std::size_t i = 0; i < m_children.size(); ++i) {
       if (m_children[i].get() == &item) {
         item.m_indexGuess = i;
         return static_cast<int>(i);
@@ -95,47 +88,23 @@ public:
   void sort(int column, Qt::SortOrder order, bool force);
   void makeSortingStale();
 
-  FileTreeItem* parent()
-  {
-    return m_parent;
-  }
+  FileTreeItem* parent() { return m_parent; }
 
-  int originID() const
-  {
-    return m_originID;
-  }
+  int originID() const { return m_originID; }
 
-  const QString& virtualParentPath() const
-  {
-    return m_virtualParentPath;
-  }
+  const QString& virtualParentPath() const { return m_virtualParentPath; }
 
   QString virtualPath() const;
 
-  const QString& filename() const
-  {
-    return m_file;
-  }
+  const QString& filename() const { return m_file; }
 
-  const std::wstring& filenameWs() const
-  {
-    return m_wsFile;
-  }
+  const std::wstring& filenameWs() const { return m_wsFile; }
 
-  const std::wstring& filenameWsLowerCase() const
-  {
-    return m_wsLcFile;
-  }
+  const std::wstring& filenameWsLowerCase() const { return m_wsLcFile; }
 
-  const MOShared::DirectoryEntryFileKey& key() const
-  {
-    return m_key;
-  }
+  const MOShared::DirectoryEntryFileKey& key() const { return m_key; }
 
-  const QString& mod() const
-  {
-    return m_mod;
-  }
+  const QString& mod() const { return m_mod; }
 
   QFont font() const;
 
@@ -148,44 +117,26 @@ public:
     return m_compressedFileSize.value;
   }
 
-  void setFileSize(uint64_t size)
-  {
-    m_fileSize.override(size);
-  }
+  void setFileSize(uint64_t size) { m_fileSize.override(size); }
 
   void setCompressedFileSize(uint64_t compressedSize)
   {
     m_compressedFileSize.override(compressedSize);
   }
 
-  const QString& realPath() const
-  {
-    return m_realPath;
-  }
+  const QString& realPath() const { return m_realPath; }
 
-  const QString& dataRelativeParentPath() const
-  {
-    return m_virtualParentPath;
-  }
+  const QString& dataRelativeParentPath() const { return m_virtualParentPath; }
 
   QString dataRelativeFilePath() const;
 
   QFileIconProvider::IconType icon() const;
 
-  bool isDirectory() const
-  {
-    return m_isDirectory;
-  }
+  bool isDirectory() const { return m_isDirectory; }
 
-  bool isFromArchive() const
-  {
-    return (m_flags & FromArchive);
-  }
+  bool isFromArchive() const { return (m_flags & FromArchive); }
 
-  bool isConflicted() const
-  {
-    return (m_flags & Conflicted);
-  }
+  bool isConflicted() const { return (m_flags & Conflicted); }
 
   bool isHidden() const;
 
@@ -202,16 +153,9 @@ public:
     return true;
   }
 
+  void setLoaded(bool b) { m_loaded = b; }
 
-  void setLoaded(bool b)
-  {
-    m_loaded = b;
-  }
-
-  bool isLoaded() const
-  {
-    return m_loaded;
-  }
+  bool isLoaded() const { return m_loaded; }
 
   void unload();
 
@@ -228,10 +172,7 @@ public:
     }
   }
 
-  bool isStrictlyExpanded() const
-  {
-    return m_expanded;
-  }
+  bool isStrictlyExpanded() const { return m_expanded; }
 
   bool areChildrenVisible() const;
 
@@ -242,46 +183,42 @@ private:
   struct Cached
   {
     std::optional<T> value;
-    bool failed = false;
+    bool failed     = false;
     bool overridden = false;
 
-    bool empty() const
-    {
-      return !failed && !value;
-    }
+    bool empty() const { return !failed && !value; }
 
     void set(T t)
     {
-      value = std::move(t);
-      failed = false;
+      value      = std::move(t);
+      failed     = false;
       overridden = false;
     }
 
     void override(T t)
     {
-      value = std::move(t);
-      failed = false;
+      value      = std::move(t);
+      failed     = false;
       overridden = true;
     }
 
     void fail()
     {
-      value = {};
-      failed = true;
+      value      = {};
+      failed     = true;
       overridden = false;
     }
 
     void reset()
     {
       if (!overridden) {
-        value = {};
+        value  = {};
         failed = false;
       }
     }
   };
 
-  static constexpr std::size_t NoIndexGuess =
-    std::numeric_limits<std::size_t>::max();
+  static constexpr std::size_t NoIndexGuess = std::numeric_limits<std::size_t>::max();
 
   FileTreeModel* m_model;
   FileTreeItem* m_parent;
@@ -309,13 +246,12 @@ private:
   bool m_sortingStale;
   Children m_children;
 
-
-  FileTreeItem(
-    FileTreeModel* model, FileTreeItem* parent,
-    std::wstring dataRelativeParentPath, bool isDirectory, std::wstring file);
+  FileTreeItem(FileTreeModel* model, FileTreeItem* parent,
+               std::wstring dataRelativeParentPath, bool isDirectory,
+               std::wstring file);
 
   void getFileType() const;
   void queueSort();
 };
 
-#endif // MODORGANIZER_FILETREEITEM_INCLUDED
+#endif  // MODORGANIZER_FILETREEITEM_INCLUDED

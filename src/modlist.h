@@ -20,26 +20,25 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MODLIST_H
 #define MODLIST_H
 
-#include "moddatacontent.h"
 #include "categories.h"
-#include "nexusinterface.h"
+#include "moddatacontent.h"
 #include "modinfo.h"
+#include "nexusinterface.h"
 #include "profile.h"
 
 #include <imodlist.h>
 
 #include <QFile>
 #include <QListWidget>
-#include <QNetworkReply>
 #include <QMetaEnum>
 #include <QNetworkAccessManager>
+#include <QNetworkReply>
 #ifndef Q_MOC_RUN
 #include <boost/signals2.hpp>
 #endif
+#include <QVector>
 #include <set>
 #include <vector>
-#include <QVector>
-
 
 class QSortFilterProxyModel;
 class PluginContainer;
@@ -48,16 +47,16 @@ class ModListDropInfo;
 
 /**
  * Model presenting an overview of the installed mod
- * This is used in a view in the main window of MO. It combines general information about
- * the mods from ModInfo with status information from the Profile
+ * This is used in a view in the main window of MO. It combines general information
+ *about the mods from ModInfo with status information from the Profile
  **/
 class ModList : public QAbstractItemModel
 {
   Q_OBJECT
 
 public:
-
-  enum ModListRole {
+  enum ModListRole
+  {
 
     // data(GroupingRole) contains the "group" role - This is used by the
     // category and Nexus ID grouping proxy (but not the ByPriority proxy)
@@ -79,7 +78,8 @@ public:
     ModUserRole = Qt::UserRole + 6
   };
 
-  enum EColumn {
+  enum EColumn
+  {
     COL_NAME,
     COL_CONFLICTFLAGS,
     COL_FLAGS,
@@ -94,18 +94,19 @@ public:
     COL_LASTCOLUMN = COL_NOTES,
   };
 
-  using SignalModInstalled = boost::signals2::signal<void(MOBase::IModInterface*)>;
-  using SignalModRemoved = boost::signals2::signal<void(QString const&)>;
-  using SignalModStateChanged = boost::signals2::signal<void (const std::map<QString, MOBase::IModList::ModStates>&)>;
-  using SignalModMoved = boost::signals2::signal<void (const QString &, int, int)>;
+  using SignalModInstalled    = boost::signals2::signal<void(MOBase::IModInterface*)>;
+  using SignalModRemoved      = boost::signals2::signal<void(QString const&)>;
+  using SignalModStateChanged = boost::signals2::signal<void(
+      const std::map<QString, MOBase::IModList::ModStates>&)>;
+  using SignalModMoved        = boost::signals2::signal<void(const QString&, int, int)>;
 
 public:
-
   /**
    * @brief constructor
-   * @todo ensure this view works without a profile set, otherwise there are intransparent dependencies on the initialisation order
+   * @todo ensure this view works without a profile set, otherwise there are
+   *intransparent dependencies on the initialisation order
    **/
-  ModList(PluginContainer *pluginContainer, OrganizerCore *parent);
+  ModList(PluginContainer* pluginContainer, OrganizerCore* parent);
 
   ~ModList();
 
@@ -114,7 +115,7 @@ public:
    *
    * @param profile the profile to use
    **/
-  void setProfile(Profile *profile);
+  void setProfile(Profile* profile);
 
   /**
    * @brief retrieve the current sorting mode
@@ -127,7 +128,7 @@ public:
    * @brief remove the specified mod without asking for confirmation
    * @param row the row to remove
    */
-  void removeRowForce(int row, const QModelIndex &parent);
+  void removeRowForce(int row, const QModelIndex& parent);
 
   void notifyChange(int rowStart, int rowEnd = -1);
   static QString getColumnName(int column);
@@ -135,7 +136,7 @@ public:
   void changeModPriority(int sourceIndex, int newPriority);
   void changeModPriority(std::vector<int> sourceIndices, int newPriority);
 
-  void setPluginContainer(PluginContainer *pluginContainer);
+  void setPluginContainer(PluginContainer* pluginContainer);
 
   bool modInfoAboutToChange(ModInfo::Ptr info);
   void modInfoChanged(ModInfo::Ptr info);
@@ -145,14 +146,13 @@ public:
   int timeElapsedSinceLastChecked() const;
 
 public:
-
   /**
    * @brief Notify the mod list that the given mod has been installed. This is used
    * to notify the plugin that registered through onModInstalled().
    *
    * @param mod The installed mod.
    */
-  void notifyModInstalled(MOBase::IModInterface *mod) const;
+  void notifyModInstalled(MOBase::IModInterface* mod) const;
 
   /**
    * @brief Notify the mod list that a mod has been removed. This is used
@@ -163,17 +163,16 @@ public:
   void notifyModRemoved(QString const& modName) const;
 
   /**
-   * @brief Notify the mod list that the state of the specified mods has changed. This is used
-   * to notify the plugin that registered through onModStateChanged().
+   * @brief Notify the mod list that the state of the specified mods has changed. This
+   * is used to notify the plugin that registered through onModStateChanged().
    *
    * @param modIndices Indices of the mods that changed.
    */
   void notifyModStateChanged(QList<unsigned int> modIndices) const;
 
 public:
-
   /// \copydoc MOBase::IModList::displayName
-  QString displayName(const QString &internalName) const;
+  QString displayName(const QString& internalName) const;
 
   /// \copydoc MOBase::IModList::allMods
   QStringList allMods() const;
@@ -189,47 +188,58 @@ public:
   MOBase::IModInterface* renameMod(MOBase::IModInterface* mod, const QString& name);
 
   /// \copydoc MOBase::IModList::state
-  MOBase::IModList::ModStates state(const QString &name) const;
+  MOBase::IModList::ModStates state(const QString& name) const;
 
   /// \copydoc MOBase::IModList::setActive
-  bool setActive(const QString &name, bool active);
+  bool setActive(const QString& name, bool active);
 
   /// \copydoc MOBase::IModList::setActive
   int setActive(const QStringList& names, bool active);
 
   /// \copydoc MOBase::IModList::priority
-  int priority(const QString &name) const;
+  int priority(const QString& name) const;
 
   /// \copydoc MOBase::IModList::setPriority
-  bool setPriority(const QString &name, int newPriority);
+  bool setPriority(const QString& name, int newPriority);
 
-  boost::signals2::connection onModInstalled(const std::function<void(MOBase::IModInterface*)>& func);
-  boost::signals2::connection onModRemoved(const std::function<void(QString const&)>& func);
-  boost::signals2::connection onModStateChanged(const std::function<void(const std::map<QString, MOBase::IModList::ModStates>&)>& func);
-  boost::signals2::connection onModMoved(const std::function<void (const QString &, int, int)> &func);
+  boost::signals2::connection
+  onModInstalled(const std::function<void(MOBase::IModInterface*)>& func);
+  boost::signals2::connection
+  onModRemoved(const std::function<void(QString const&)>& func);
+  boost::signals2::connection onModStateChanged(
+      const std::function<void(const std::map<QString, MOBase::IModList::ModStates>&)>&
+          func);
+  boost::signals2::connection
+  onModMoved(const std::function<void(const QString&, int, int)>& func);
 
-public: // implementation of virtual functions of QAbstractItemModel
-
-  virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
-  virtual bool hasChildren(const QModelIndex &parent = QModelIndex()) const;
-  virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
-  virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-  virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
-  virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
-  virtual Qt::ItemFlags flags(const QModelIndex &modelIndex) const;
+public:  // implementation of virtual functions of QAbstractItemModel
+  virtual int rowCount(const QModelIndex& parent = QModelIndex()) const;
+  virtual bool hasChildren(const QModelIndex& parent = QModelIndex()) const;
+  virtual int columnCount(const QModelIndex& parent = QModelIndex()) const;
+  virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const;
+  virtual bool setData(const QModelIndex& index, const QVariant& value,
+                       int role = Qt::EditRole);
+  virtual QVariant headerData(int section, Qt::Orientation orientation,
+                              int role = Qt::DisplayRole) const;
+  virtual Qt::ItemFlags flags(const QModelIndex& modelIndex) const;
   virtual bool removeRows(int row, int count, const QModelIndex& parent);
 
-  Qt::DropActions supportedDropActions() const override { return Qt::MoveAction | Qt::CopyAction; }
+  Qt::DropActions supportedDropActions() const override
+  {
+    return Qt::MoveAction | Qt::CopyAction;
+  }
   QStringList mimeTypes() const override;
-  QMimeData *mimeData(const QModelIndexList &indexes) const override;
-  bool canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const override;
-  bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) override;
+  QMimeData* mimeData(const QModelIndexList& indexes) const override;
+  bool canDropMimeData(const QMimeData* data, Qt::DropAction action, int row,
+                       int column, const QModelIndex& parent) const override;
+  bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column,
+                    const QModelIndex& parent) override;
 
   virtual QModelIndex index(int row, int column,
-                            const QModelIndex &parent = QModelIndex()) const;
-  virtual QModelIndex parent(const QModelIndex &child) const;
+                            const QModelIndex& parent = QModelIndex()) const;
+  virtual QModelIndex parent(const QModelIndex& child) const;
 
-  virtual QMap<int, QVariant> itemData(const QModelIndex &index) const;
+  virtual QMap<int, QVariant> itemData(const QModelIndex& index) const;
 
 public slots:
 
@@ -255,8 +265,8 @@ signals:
 
   // emitted when the priority of one or multiple mods have changed
   //
-  // the sorting of the list can only be manually changed if the list is sorted by priority
-  // in which case the move is intended to change the priority of a mod.
+  // the sorting of the list can only be manually changed if the list is sorted by
+  // priority in which case the move is intended to change the priority of a mod.
   //
   void modPrioritiesChanged(const QModelIndexList& indices) const;
 
@@ -269,7 +279,7 @@ signals:
    *
    * @param message the message to display
    **/
-  void showMessage(const QString &message);
+  void showMessage(const QString& message);
 
   /**
    * @brief signals change to the count of headers
@@ -280,26 +290,28 @@ signals:
    * @brief emitted to remove a file origin
    * @param name name of the orign to remove
    */
-  void removeOrigin(const QString &name);
+  void removeOrigin(const QString& name);
 
   /**
    * @brief emitted after a mod has been renamed
-   * This signal MUST be used to fix the mod names in profiles (except the active one) and to invalidate/refresh other
-   * structures that may have become invalid with the rename
+   * This signal MUST be used to fix the mod names in profiles (except the active one)
+   * and to invalidate/refresh other structures that may have become invalid with the
+   * rename
    *
    * @param oldName the old name of the mod
    * @param newName new name of the mod
    */
-  void modRenamed(const QString &oldName, const QString &newName);
+  void modRenamed(const QString& oldName, const QString& newName);
 
   /**
    * @brief emitted after a mod has been uninstalled
    * @param fileName filename of the mod being uninstalled
    */
-  void modUninstalled(const QString &fileName);
+  void modUninstalled(const QString& fileName);
 
   /**
-   * @brief QML seems to handle overloaded signals poorly - create unique signal for tutorials
+   * @brief QML seems to handle overloaded signals poorly - create unique signal for
+   * tutorials
    */
   void tutorialModlistUpdate();
 
@@ -309,11 +321,12 @@ signals:
    * @param oldOriginName name of the origin that previously contained the file
    * @param newOriginName name of the origin that now contains the file
    */
-  void fileMoved(const QString &relativePath, const QString &oldOriginName, const QString &newOriginName);
+  void fileMoved(const QString& relativePath, const QString& oldOriginName,
+                 const QString& newOriginName);
 
   /**
-  * @brief emitted to have the overwrite folder cleared
-  */
+   * @brief emitted to have the overwrite folder cleared
+   */
   void clearOverwrite();
 
   void aboutToChangeData();
@@ -334,7 +347,6 @@ signals:
   void externalFolderDropped(const QUrl& url, int priority);
 
 private:
-
   // retrieve the display name of a mod or convert from a user-provided
   // name to internal name
   //
@@ -347,23 +359,26 @@ private:
 
   QString getColumnToolTip(int column) const;
 
-  bool renameMod(int index, const QString &newName);
+  bool renameMod(int index, const QString& newName);
 
   MOBase::IModList::ModStates state(unsigned int modIndex) const;
 
   // handle dropping of local URLs files
   //
-  bool dropLocalFiles(const ModListDropInfo& dropInfo, int row, const QModelIndex& parent);
+  bool dropLocalFiles(const ModListDropInfo& dropInfo, int row,
+                      const QModelIndex& parent);
 
   // return the priority of the mod for a drop event
   //
   int dropPriority(int row, const QModelIndex& parent) const;
 
 private:
-
-  struct TModInfo {
+  struct TModInfo
+  {
     TModInfo(unsigned int index, ModInfo::Ptr modInfo)
-        : modInfo(modInfo), nameOrder(index), priorityOrder(0), modIDOrder(0), categoryOrder(0) {}
+        : modInfo(modInfo), nameOrder(index), priorityOrder(0), modIDOrder(0),
+          categoryOrder(0)
+    {}
     ModInfo::Ptr modInfo;
     unsigned int nameOrder;
     unsigned int priorityOrder;
@@ -371,17 +386,17 @@ private:
     unsigned int categoryOrder;
   };
 
-  struct TModInfoChange {
+  struct TModInfoChange
+  {
     QString name;
     QFlags<MOBase::IModList::ModState> state;
   };
 
 private:
+  OrganizerCore* m_Organizer;
+  Profile* m_Profile;
 
-  OrganizerCore *m_Organizer;
-  Profile *m_Profile;
-
-  NexusInterface *m_NexusInterface;
+  NexusInterface* m_NexusInterface;
   std::set<int> m_RequestIDs;
 
   mutable bool m_Modified;
@@ -399,9 +414,7 @@ private:
 
   QElapsedTimer m_LastCheck;
 
-  PluginContainer *m_PluginContainer;
-
+  PluginContainer* m_PluginContainer;
 };
 
-#endif // MODLIST_H
-
+#endif  // MODLIST_H

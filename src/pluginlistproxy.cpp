@@ -5,8 +5,9 @@
 using namespace MOBase;
 using namespace MOShared;
 
-PluginListProxy::PluginListProxy(OrganizerProxy* oproxy, PluginList* pluginlist) :
-  m_OrganizerProxy(oproxy), m_Proxied(pluginlist) { }
+PluginListProxy::PluginListProxy(OrganizerProxy* oproxy, PluginList* pluginlist)
+    : m_OrganizerProxy(oproxy), m_Proxied(pluginlist)
+{}
 
 PluginListProxy::~PluginListProxy()
 {
@@ -15,9 +16,12 @@ PluginListProxy::~PluginListProxy()
 
 void PluginListProxy::connectSignals()
 {
-  m_Connections.push_back(m_Proxied->onRefreshed(callSignalIfPluginActive(m_OrganizerProxy, m_Refreshed)));
-  m_Connections.push_back(m_Proxied->onPluginMoved(callSignalIfPluginActive(m_OrganizerProxy, m_PluginMoved)));
-  m_Connections.push_back(m_Proxied->onPluginStateChanged(callSignalIfPluginActive(m_OrganizerProxy, m_PluginStateChanged)));
+  m_Connections.push_back(
+      m_Proxied->onRefreshed(callSignalIfPluginActive(m_OrganizerProxy, m_Refreshed)));
+  m_Connections.push_back(m_Proxied->onPluginMoved(
+      callSignalIfPluginActive(m_OrganizerProxy, m_PluginMoved)));
+  m_Connections.push_back(m_Proxied->onPluginStateChanged(
+      callSignalIfPluginActive(m_OrganizerProxy, m_PluginStateChanged)));
 }
 
 void PluginListProxy::disconnectSignals()
@@ -83,12 +87,14 @@ bool PluginListProxy::onRefreshed(const std::function<void()>& func)
   return m_Refreshed.connect(func).connected();
 }
 
-bool PluginListProxy::onPluginMoved(const std::function<void(const QString&, int, int)>& func)
+bool PluginListProxy::onPluginMoved(
+    const std::function<void(const QString&, int, int)>& func)
 {
   return m_PluginMoved.connect(func).connected();
 }
 
-bool PluginListProxy::onPluginStateChanged(const std::function<void(const std::map<QString, PluginStates>&)> &func)
+bool PluginListProxy::onPluginStateChanged(
+    const std::function<void(const std::map<QString, PluginStates>&)>& func)
 {
   return m_PluginStateChanged.connect(func).connected();
 }

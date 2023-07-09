@@ -4,8 +4,8 @@
 #include <QString>
 
 /**
-* represents user account types on a mod provider website such as nexus
-*/
+ * represents user account types on a mod provider website such as nexus
+ */
 enum class APIUserAccountTypes
 {
   // not logged in
@@ -20,10 +20,9 @@ enum class APIUserAccountTypes
 
 QString localizedUserAccountType(APIUserAccountTypes t);
 
-
 /**
-* current limits imposed on the user account
-**/
+ * current limits imposed on the user account
+ **/
 struct APILimits
 {
   // maximum number of requests per day
@@ -39,20 +38,18 @@ struct APILimits
   int remainingHourlyRequests = 0;
 };
 
-
 /**
-* API statistics
-*/
+ * API statistics
+ */
 struct APIStats
 {
   // number of API requests currently queued
   int requestsQueued = 0;
 };
 
-
 /**
-* represents a user account on the mod provider website
-*/
+ * represents a user account on the mod provider website
+ */
 class APIUserAccount
 {
 public:
@@ -62,37 +59,35 @@ public:
 
   APIUserAccount();
 
-
   /**
    * whether the user is logged in
    */
   bool isValid() const;
 
   /**
-  * api key
-  */
+   * api key
+   */
   const QString& apiKey() const;
 
   /**
-  * user id
-  */
+   * user id
+   */
   const QString& id() const;
 
   /**
-  * user name
-  */
+   * user name
+   */
   const QString& name() const;
 
   /**
-  * account type
-  */
+   * account type
+   */
   APIUserAccountTypes type() const;
 
   /**
-  * current API limits
-  */
+   * current API limits
+   */
   const APILimits& limits() const;
-
 
   /**
    * sets the api key
@@ -100,41 +95,40 @@ public:
   APIUserAccount& apiKey(const QString& key);
 
   /**
-  * sets the user id
-  */
+   * sets the user id
+   */
   APIUserAccount& id(const QString& id);
 
   /**
-  * sets the user name
-  **/
+   * sets the user name
+   **/
   APIUserAccount& name(const QString& name);
 
   /**
-  * sets the account type
-  */
+   * sets the account type
+   */
   APIUserAccount& type(APIUserAccountTypes type);
 
   /**
-  * sets the current limits
-  */
+   * sets the current limits
+   */
   APIUserAccount& limits(const APILimits& limits);
 
-
   /**
-  * returns the number of remaining requests
-  */
+   * returns the number of remaining requests
+   */
   int remainingRequests() const;
 
   /**
-  * whether the number of remaining requests is low enough that further
-  * requests should be throttled
-  */
+   * whether the number of remaining requests is low enough that further
+   * requests should be throttled
+   */
   bool shouldThrottle() const;
 
   /**
-  * true if all the remaining requests have been used and the API will refuse
-  * further requests
-  */
+   * true if all the remaining requests have been used and the API will refuse
+   * further requests
+   */
   bool exhausted() const;
 
 private:
@@ -143,4 +137,4 @@ private:
   APILimits m_limits;
 };
 
-#endif // APIUSERACCOUNT_H
+#endif  // APIUSERACCOUNT_H

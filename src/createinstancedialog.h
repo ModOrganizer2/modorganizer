@@ -3,9 +3,18 @@
 
 #include <QDialog>
 
-namespace MOBase { class IPluginGame; }
-namespace Ui { class CreateInstanceDialog; };
-namespace cid { class Page; }
+namespace MOBase
+{
+class IPluginGame;
+}
+namespace Ui
+{
+class CreateInstanceDialog;
+};
+namespace cid
+{
+class Page;
+}
 
 class PluginContainer;
 class Settings;
@@ -71,9 +80,8 @@ public:
     Paths paths;
   };
 
-
-  CreateInstanceDialog(
-    const PluginContainer& pc, Settings* s, QWidget *parent = nullptr);
+  CreateInstanceDialog(const PluginContainer& pc, Settings* s,
+                       QWidget* parent = nullptr);
 
   ~CreateInstanceDialog();
 
@@ -87,7 +95,7 @@ public:
   void setSinglePage(const QString& instanceName)
   {
     for (auto&& p : m_pages) {
-      if (auto* tp=dynamic_cast<Page*>(p.get())) {
+      if (auto* tp = dynamic_cast<Page*>(p.get())) {
         tp->setSkip(false);
       } else {
         p->setSkip(true);
@@ -103,7 +111,7 @@ public:
   Page* getPage()
   {
     for (auto&& p : m_pages) {
-      if (auto* tp=dynamic_cast<Page*>(p.get())) {
+      if (auto* tp = dynamic_cast<Page*>(p.get())) {
         return tp;
       }
     }
@@ -111,11 +119,10 @@ public:
     return nullptr;
   }
 
-
   // moves to the next page; if `allowFinish` is true, calls finish() if
   // currently on the last page
   //
-  void next(bool allowFinish=true);
+  void next(bool allowFinish = true);
 
   // moves to the previous page, if any
   //
@@ -143,7 +150,6 @@ public:
   // creates the instance and closes the dialog
   //
   void finish();
-
 
   // updates the navigation buttons based on the current page
   //
@@ -176,10 +182,9 @@ private:
   bool m_switching;
   bool m_singlePage;
 
-
   // creates a shortcut for the given sequence
   //
-  void addShortcut(QKeySequence seq, std::function<void ()> f);
+  void addShortcut(QKeySequence seq, std::function<void()> f);
 
   // creates a shortcut for the given sequence and executes the action when
   // activated
@@ -219,4 +224,4 @@ private:
   }
 };
 
-#endif // MODORGANIZER_CREATEINSTANCEDIALOG_INCLUDED
+#endif  // MODORGANIZER_CREATEINSTANCEDIALOG_INCLUDED

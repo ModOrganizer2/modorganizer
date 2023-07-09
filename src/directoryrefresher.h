@@ -20,18 +20,19 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DIRECTORYREFRESHER_H
 #define DIRECTORYREFRESHER_H
 
+#include "profile.h"
 #include "shared/directoryentry.h"
 #include "shared/fileregisterfwd.h"
-#include "profile.h"
-#include <QObject>
 #include <QMutex>
+#include <QObject>
 #include <QStringList>
-#include <vector>
 #include <set>
 #include <tuple>
+#include <vector>
 
 /**
- * @brief used to asynchronously generate the virtual view of the combined data directory
+ * @brief used to asynchronously generate the virtual view of the combined data
+ *directory
  **/
 class DirectoryRefresher : public QObject
 {
@@ -40,12 +41,11 @@ class DirectoryRefresher : public QObject
 public:
   struct EntryInfo
   {
-    EntryInfo(const QString &modName, const QString &absolutePath,
-      const QStringList &stealFiles, const QStringList &archives, int priority)
-      : modName(modName), absolutePath(absolutePath), stealFiles(stealFiles)
-      , archives(archives), priority(priority)
-    {
-    }
+    EntryInfo(const QString& modName, const QString& absolutePath,
+              const QStringList& stealFiles, const QStringList& archives, int priority)
+        : modName(modName), absolutePath(absolutePath), stealFiles(stealFiles),
+          archives(archives), priority(priority)
+    {}
 
     QString modName;
     QString absolutePath;
@@ -53,7 +53,6 @@ public:
     QStringList archives;
     int priority;
   };
-
 
   DirectoryRefresher(std::size_t threadCount);
 
@@ -72,20 +71,23 @@ public:
    *
    * @param mods list of the mods to include
    **/
-  void setMods(const std::vector<std::tuple<QString, QString, int> > &mods, const std::set<QString> &managedArchives);
+  void setMods(const std::vector<std::tuple<QString, QString, int>>& mods,
+               const std::set<QString>& managedArchives);
 
   /**
    * @brief sets up the directory where mods are stored
    * @param modDirectory the mod directory
-   * @note this function could be obsoleted easily by storing absolute paths in the parameter to setMods. This is legacy
+   * @note this function could be obsoleted easily by storing absolute paths in the
+   * parameter to setMods. This is legacy
    */
-  //void setModDirectory(const QString &modDirectory);
+  // void setModDirectory(const QString &modDirectory);
 
   /**
-   * @brief remove files from the directory structure that are known to be irrelevant to the game
+   * @brief remove files from the directory structure that are known to be irrelevant to
+   * the game
    * @param the structure to clean
    */
-  static void cleanStructure(MOShared::DirectoryEntry *structure);
+  static void cleanStructure(MOShared::DirectoryEntry* structure);
 
   /**
    * @brief add files for a mod to the directory structure, including bsas
@@ -96,7 +98,9 @@ public:
    * @param stealFiles
    * @param archives
    */
-  void addModToStructure(MOShared::DirectoryEntry *directoryStructure, const QString &modName, int priority, const QString &directory, const QStringList &stealFiles, const QStringList &archives);
+  void addModToStructure(MOShared::DirectoryEntry* directoryStructure,
+                         const QString& modName, int priority, const QString& directory,
+                         const QStringList& stealFiles, const QStringList& archives);
 
   /**
    * @brief add only the bsas of a mod to the directory structure
@@ -106,7 +110,9 @@ public:
    * @param directory
    * @param archives
    */
-  void addModBSAToStructure(MOShared::DirectoryEntry *directoryStructure, const QString &modName, int priority, const QString &directory, const QStringList &archives);
+  void addModBSAToStructure(MOShared::DirectoryEntry* directoryStructure,
+                            const QString& modName, int priority,
+                            const QString& directory, const QStringList& archives);
 
   /**
    * @brief add only regular files ofr a mod to the directory structure
@@ -116,14 +122,13 @@ public:
    * @param directory
    * @param stealFiles
    */
-  void addModFilesToStructure(
-    MOShared::DirectoryEntry *directoryStructure, const QString &modName,
-    int priority, const QString &directory, const QStringList &stealFiles);
+  void addModFilesToStructure(MOShared::DirectoryEntry* directoryStructure,
+                              const QString& modName, int priority,
+                              const QString& directory, const QStringList& stealFiles);
 
-  void addMultipleModsFilesToStructure(
-    MOShared::DirectoryEntry *directoryStructure,
-    const std::vector<EntryInfo>& entries,
-    DirectoryRefreshProgress* progress=nullptr);
+  void addMultipleModsFilesToStructure(MOShared::DirectoryEntry* directoryStructure,
+                                       const std::vector<EntryInfo>& entries,
+                                       DirectoryRefreshProgress* progress = nullptr);
 
   void updateProgress(const DirectoryRefreshProgress* p);
 
@@ -137,7 +142,7 @@ public slots:
 signals:
 
   void progress(const DirectoryRefreshProgress* p);
-  void error(const QString &error);
+  void error(const QString& error);
   void refreshed();
 
 private:
@@ -148,34 +153,29 @@ private:
   std::size_t m_threadCount;
   std::size_t m_lastFileCount;
 
-  void stealModFilesIntoStructure(
-    MOShared::DirectoryEntry *directoryStructure, const QString &modName,
-    int priority, const QString &directory, const QStringList &stealFiles);
+  void stealModFilesIntoStructure(MOShared::DirectoryEntry* directoryStructure,
+                                  const QString& modName, int priority,
+                                  const QString& directory,
+                                  const QStringList& stealFiles);
 };
-
 
 class DirectoryRefreshProgress : public QObject
 {
   Q_OBJECT
 
 public:
-  DirectoryRefreshProgress(DirectoryRefresher* r) :
-    QObject(r), m_refresher(r), m_modCount(0), m_modDone(0), m_finished(false)
-  {
-  }
+  DirectoryRefreshProgress(DirectoryRefresher* r)
+      : QObject(r), m_refresher(r), m_modCount(0), m_modDone(0), m_finished(false)
+  {}
 
   void start(std::size_t modCount)
   {
     m_modCount = modCount;
-    m_modDone = 0;
+    m_modDone  = 0;
     m_finished = false;
   }
 
-
-  bool finished() const
-  {
-    return m_finished;
-  }
+  bool finished() const { return m_finished; }
 
   int percentDone() const
   {
@@ -183,17 +183,13 @@ public:
 
     if (m_modCount > 0) {
       const double d = static_cast<double>(m_modDone) / m_modCount;
-      percent = static_cast<int>(d * 100);
+      percent        = static_cast<int>(d * 100);
     }
 
     return percent;
   }
 
-
-  void finish()
-  {
-    m_finished = true;
-  }
+  void finish() { m_finished = true; }
 
   void addDone()
   {
@@ -208,4 +204,4 @@ private:
   bool m_finished;
 };
 
-#endif // DIRECTORYREFRESHER_H
+#endif  // DIRECTORYREFRESHER_H

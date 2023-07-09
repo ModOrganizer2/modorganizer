@@ -1,12 +1,13 @@
 #ifndef PLUGINLISTVIEW_H
 #define PLUGINLISTVIEW_H
 
-#include <QTreeView>
-#include <QDragEnterEvent>
 #include "viewmarkingscrollbar.h"
+#include <QDragEnterEvent>
+#include <QTreeView>
 
-namespace Ui {
-  class MainWindow;
+namespace Ui
+{
+class MainWindow;
 }
 
 class OrganizerCore;
@@ -39,7 +40,6 @@ protected slots:
   void onSortButtonClicked();
 
 protected:
-
   friend class PluginListContextMenu;
 
   // map from/to the view indexes to the model
@@ -63,7 +63,6 @@ protected:
   bool event(QEvent* event) override;
 
 private:
-
   struct PluginListViewUi
   {
     // the plguin counter
@@ -83,4 +82,4 @@ private:
   bool m_didUpdateMasterList;
 };
 
-#endif // PLUGINLISTVIEW_H
+#endif  // PLUGINLISTVIEW_H

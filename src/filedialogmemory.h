@@ -20,10 +20,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef FILEDIALOGMEMORY_H
 #define FILEDIALOGMEMORY_H
 
-
-#include <map>
-#include <QString>
 #include <QFileDialog>
+#include <QString>
+#include <map>
 
 class Settings;
 
@@ -35,15 +34,18 @@ public:
   static void save(Settings& settings);
   static void restore(const Settings& settings);
 
-  static QString getOpenFileName(
-    const QString &dirID, QWidget *parent = 0, const QString &caption = QString(),
-    const QString &dir = QString(), const QString &filter = QString(),
-    QString *selectedFilter = 0, QFileDialog::Options options = QFileDialog::Option(0));
+  static QString getOpenFileName(const QString& dirID, QWidget* parent = 0,
+                                 const QString& caption       = QString(),
+                                 const QString& dir           = QString(),
+                                 const QString& filter        = QString(),
+                                 QString* selectedFilter      = 0,
+                                 QFileDialog::Options options = QFileDialog::Option(0));
 
-  static QString getExistingDirectory(
-    const QString &dirID, QWidget *parent = 0, const QString &caption = QString(),
-    const QString &dir = QString(),
-    QFileDialog::Options options = QFileDialog::ShowDirsOnly);
+  static QString
+  getExistingDirectory(const QString& dirID, QWidget* parent = 0,
+                       const QString& caption       = QString(),
+                       const QString& dir           = QString(),
+                       QFileDialog::Options options = QFileDialog::ShowDirsOnly);
 };
 
-#endif // FILEDIALOGMEMORY_H
+#endif  // FILEDIALOGMEMORY_H
