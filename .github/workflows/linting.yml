@@ -1,5 +1,10 @@
 name: Lint ModOrganizer 2
-on: [push]
+
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
 jobs:
   lint:
     runs-on: ubuntu-latest
