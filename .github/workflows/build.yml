@@ -1,74 +1,20 @@
 name: Build ModOrganizer 2
+
 on:
   push:
     branches: master
   pull_request:
     types: [opened, synchronize, reopened]
+
 jobs:
   build:
     runs-on: windows-2022
     steps:
-      - name: Checkout mob
-        uses: actions/checkout@master
+      - name: Build ModOrganizer 2
+        uses: ModOrganizer2/build-with-mob-action@master
         with:
-          repository: modorganizer2/mob
-          path: ./mob
-      - name: Cache mob
-        id: cache-mob
-        uses: actions/cache@v3
-        with:
-          path: |
-            ./mob/mob.exe
-          key: ${{ runner.OS }}-mob-cache-${{ hashFiles('mob/.git/refs/heads/master') }}
-          restore-keys: |
-            ${{ runner.OS }}-mob-cache-
-      - if: ${{ steps.cache-mob.outputs.cache-hit != 'true' }}
-        name: Build mob
-        run: .\mob\bootstrap.ps1
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3
-        with:
-          version: 6.5.1
-          modules: qtpositioning qtwebchannel qtwebengine qtwebsockets
-          cache: true
-      - name: Cache dependencies
-        id: cache-dependencies
-        uses: actions/cache@v3
-        with:
-          # TODO: finer cache
-          path: |
-            ./install
-            ./build
-          key: ${{ runner.OS }}-mo2-dependencies-${{ hashFiles('mob/.git/refs/heads/master') }}
-          restore-keys: |
-            ${{ runner.OS }}-mo2-dependencies-
-      - if: ${{ steps.cache-dependencies.outputs.cache-hit != 'true' }}
-        name: Build dependencies with mob
-        run: .\mob\mob.exe
-          -l 4 -d .
-          build
-          7z zlib fmt gtest libbsarch libloot openssl libffi bzip2 python lz4 spdlog
-          boost boost-di sip pyqt pybind11 ss licenses explorerpp usvfs
-      - name: Build dependencies log
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-dependencies-log
-          path: |
-            mob.log
-      # TODO: cache this?
-      - name: Build cmake_common and uibase
-        run: .\mob\mob.exe -l 4 -d . build
-          --ignore-uncommitted-changes
-          --redownload --reextract --reconfigure --rebuild
-          cmake_common uibase
-      # TODO: cache this?
-      - name: Build ModOrganizer dependencies
-        run: .\mob\mob.exe -l 4 -d . build
-          --ignore-uncommitted-changes
-          --redownload --reextract --reconfigure --rebuild
-          githubpp bsatk esptk archive lootcli game_gamebryo
-      - uses: actions/checkout@v3
-        with:
-          path: ./build/modorganizer_super/modorganizer
-      - name: Build ModOrganizer
-        run: .\mob\mob.exe -l 5 -d . build --no-fetch-task --no-pull modorganizer
+          qt-modules: qtpositioning qtwebchannel qtwebengine qtwebsockets
+          mo2-third-parties:
+            7z zlib fmt gtest libbsarch libloot openssl libffi bzip2 python lz4 spdlog
+            boost boost-di sip pyqt pybind11 ss licenses explorerpp usvfs
+          mo2-dependencies: cmake_common uibase githubpp bsatk esptk archive lootcli game_gamebryo
