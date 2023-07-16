@@ -1,0 +1,13 @@
+{
+  "identifier": "nighteyes-theme",
+  "type": "theme",
+  "name": "Night Eyes Theme",
+  "description": "Night Eyes theme for ModOrganizer2.",
+  "version": "1.0.0",
+  "themes": {
+    "nighteyes": {
+      "name": "Night Eyes",
+      "path": "nigheyes.qss"
+    }
+  }
+}
