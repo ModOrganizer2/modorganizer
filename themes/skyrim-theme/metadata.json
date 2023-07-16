@@ -1,0 +1,13 @@
+{
+  "identifier": "skyrim-theme",
+  "type": "theme",
+  "name": "Skyrim Theme",
+  "description": "Skyrim theme for ModOrganizer2.",
+  "version": "1.0.0",
+  "themes": {
+    "skyrim": {
+      "name": "Skyrim",
+      "path": "skyrim.qss"
+    }
+  }
+}
