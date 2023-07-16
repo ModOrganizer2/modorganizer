@@ -25,8 +25,9 @@ QList<QList<QObject*>> ProxyQtLoader::load(const MOBase::PluginExtension& extens
 
   // TODO - retrieve plugins from extension instead of listing them
 
-  QDirIterator iter(QDir(extension.directory(), {}, QDir::NoSort,
-                         QDir::Files | QDir::NoDotAndDotDot));
+  QDirIterator iter(
+      QDir(extension.directory(), {}, QDir::NoSort, QDir::Files | QDir::NoDotAndDotDot),
+      QDirIterator::Subdirectories);
   while (iter.hasNext()) {
     iter.next();
     const auto filePath = iter.filePath();
