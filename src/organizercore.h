@@ -509,11 +509,6 @@ private:
   std::vector<Mapping> fileMapping(const QString& profile,
                                    const QString& customOverwrite);
 
-  std::vector<Mapping> fileMapping(const QString& dataPath, const QString& relPath,
-                                   const MOShared::DirectoryEntry* base,
-                                   const MOShared::DirectoryEntry* directoryEntry,
-                                   int createDestination);
-
 private slots:
 
   void onDirectoryRefreshed();
