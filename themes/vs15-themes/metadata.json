@@ -1,37 +1,39 @@
 {
-  "identifier": "vs15-dark-themes",
+  "id": "mo2-theme-vs15-dark",
   "type": "theme",
   "name": "VS15 Themes",
   "description": "Set of dark themes, inspired by Visual Studio, for ModOrganizer2.",
   "version": "1.0.0",
-  "themes": {
-    "vs15-dark-blue": {
-      "name": "VS15 - Dark Blue",
-      "path": "vs15 Dark-Blue.qss"
-    },
-    "vs15-dark-green": {
-      "name": "VS15 - Dark Green",
-      "path": "vs15 Dark-Green.qss"
-    },
-    "vs15-dark-orange": {
-      "name": "VS15 - Dark Orange",
-      "path": "vs15 Dark-Orange.qss"
-    },
-    "vs15-dark-pink": {
-      "name": "VS15 - Dark Pink",
-      "path": "vs15 Dark-Pink.qss"
-    },
-    "vs15-dark-purple": {
-      "name": "VS15 - Dark Purple",
-      "path": "vs15 Dark-Purple.qss"
-    },
-    "vs15-dark-red": {
-      "name": "VS15 - Dark Red",
-      "path": "vs15 Dark-Red.qss"
-    },
-    "vs15-dark-yellow": {
-      "name": "VS15 - Dark Yellow",
-      "path": "vs15 Dark-Yellow.qss"
+  "content": {
+    "themes": {
+      "vs15-dark-blue": {
+        "name": "VS15 - Dark Blue",
+        "path": "vs15 Dark-Blue.qss"
+      },
+      "vs15-dark-green": {
+        "name": "VS15 - Dark Green",
+        "path": "vs15 Dark-Green.qss"
+      },
+      "vs15-dark-orange": {
+        "name": "VS15 - Dark Orange",
+        "path": "vs15 Dark-Orange.qss"
+      },
+      "vs15-dark-pink": {
+        "name": "VS15 - Dark Pink",
+        "path": "vs15 Dark-Pink.qss"
+      },
+      "vs15-dark-purple": {
+        "name": "VS15 - Dark Purple",
+        "path": "vs15 Dark-Purple.qss"
+      },
+      "vs15-dark-red": {
+        "name": "VS15 - Dark Red",
+        "path": "vs15 Dark-Red.qss"
+      },
+      "vs15-dark-yellow": {
+        "name": "VS15 - Dark Yellow",
+        "path": "vs15 Dark-Yellow.qss"
+      }
     }
   }
 }

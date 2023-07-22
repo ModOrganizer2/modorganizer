@@ -1,13 +1,15 @@
 {
-  "identifier": "parchment-theme",
+  "id": "mo2-theme-parchment",
   "type": "theme",
   "name": "Parchment Theme",
   "description": "Parchment theme for ModOrganizer2.",
   "version": "1.0.0",
-  "themes": {
-    "parchment": {
-      "name": "Parchment",
-      "path": "parchment.qss"
+  "content": {
+    "themes": {
+      "parchment": {
+        "name": "Parchment",
+        "path": "parchment.qss"
+      }
     }
   }
 }

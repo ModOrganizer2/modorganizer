@@ -7,6 +7,11 @@
 
 class OrganizerCore;
 
+// small classes that deal with preparing profiles before runs for local saves, bsa
+// invalidation, etc., and providing mapping for local profile files when needed
+//
+// this class replaces the old INI Bakery plugin
+//
 class IniBakery
 {
 public:

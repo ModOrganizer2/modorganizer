@@ -1,13 +1,15 @@
 {
-  "identifier": "nighteyes-theme",
+  "id": "mo2-theme-nighteyes",
   "type": "theme",
   "name": "Night Eyes Theme",
   "description": "Night Eyes theme for ModOrganizer2.",
   "version": "1.0.0",
-  "themes": {
-    "nighteyes": {
-      "name": "Night Eyes",
-      "path": "nigheyes.qss"
+  "content": {
+    "themes": {
+      "nighteyes": {
+        "name": "Night Eyes",
+        "path": "nigheyes.qss"
+      }
     }
   }
 }
