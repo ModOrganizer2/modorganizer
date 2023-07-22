@@ -309,7 +309,7 @@ bool PluginManager::initPlugin(PluginExtension const& extension, IPlugin* plugin
 
   OrganizerProxy* proxy = nullptr;
   if (m_core) {
-    proxy = new OrganizerProxy(m_core, this, plugin);
+    proxy = new OrganizerProxy(m_core, m_extensions, this, plugin);
     proxy->setParent(as_qobject(plugin));
   }
 
