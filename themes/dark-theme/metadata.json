@@ -1,13 +1,15 @@
 {
-  "identifier": "dark-theme",
-  "type": "theme",
+  "id": "mo2-theme-dark",
   "name": "Dark Theme",
   "description": "Dark theme for ModOrganizer2.",
   "version": "1.0.0",
-  "themes": {
-    "dark": {
-      "name": "Dark",
-      "path": "dark.qss"
+  "type": "theme",
+  "content": {
+    "themes": {
+      "dark": {
+        "name": "Dark",
+        "path": "dark.qss"
+      }
     }
   }
 }

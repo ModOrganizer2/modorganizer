@@ -6,6 +6,8 @@ file(GLOB theme_directories
 
 foreach(theme_directory ${theme_directories})
     if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${theme_directory}")
-        install(DIRECTORY ${theme_directory} DESTINATION bin/extensions)
+        file(READ ${theme_directory}/metadata.json JSON_METADATA)
+        string(JSON theme_identifier GET ${JSON_METADATA} id)
+        install(DIRECTORY ${theme_directory}/ DESTINATION bin/extensions/${theme_identifier})
     endif()
 endforeach()
