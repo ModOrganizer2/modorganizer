@@ -23,8 +23,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "bsafolder.h"
 #include "delayedfilewriter.h"
 #include "errorcodes.h"
+#include "extensionmanager.h"
 #include "imoinfo.h"
-#include "iplugingame.h"  //namespace MOBase { class IPluginGame; }
+#include "iplugingame.h"
 #include "iuserinterface.h"
 #include "modinfo.h"
 #include "modlistbypriorityproxy.h"
@@ -127,7 +128,8 @@ class MainWindow : public QMainWindow, public IUserInterface
 
 public:
   explicit MainWindow(Settings& settings, OrganizerCore& organizerCore,
-                      PluginManager& pluginManager, ThemeManager& themeManager,
+                      ExtensionManager& extensionManager, PluginManager& pluginManager,
+                      ThemeManager& themeManager,
                       TranslationManager& translationManager, QWidget* parent = 0);
   ~MainWindow();
 
@@ -297,6 +299,7 @@ private:
   QTime m_StartTime;
 
   OrganizerCore& m_OrganizerCore;
+  ExtensionManager& m_ExtensionManager;
   PluginManager& m_PluginManager;
   ThemeManager& m_ThemeManager;
   TranslationManager& m_TranslationManager;
