@@ -279,6 +279,7 @@ mo2_add_filter(NAME src/proxies GROUPS
 	downloadmanagerproxy
 	gamefeaturesproxy
 	modlistproxy
+	extensionlistproxy
 	organizerproxy
 	pluginlistproxy
 	proxyutils
