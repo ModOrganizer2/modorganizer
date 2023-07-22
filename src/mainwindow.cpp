@@ -230,14 +230,15 @@ void setFilterShortcuts(QWidget* widget, QLineEdit* edit)
 }
 
 MainWindow::MainWindow(Settings& settings, OrganizerCore& organizerCore,
-                       PluginManager& pluginManager, ThemeManager& themeManager,
+                       ExtensionManager& extensionManager, PluginManager& pluginManager,
+                       ThemeManager& themeManager,
                        TranslationManager& translationManager, QWidget* parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), m_WasVisible(false),
       m_FirstPaint(true), m_linksSeparator(nullptr), m_Tutorial(this, "MainWindow"),
       m_OldProfileIndex(-1), m_OldExecutableIndex(-1),
       m_CategoryFactory(CategoryFactory::instance()), m_OrganizerCore(organizerCore),
-      m_PluginManager(pluginManager), m_ThemeManager(themeManager),
-      m_TranslationManager(translationManager),
+      m_ExtensionManager(extensionManager), m_PluginManager(pluginManager),
+      m_ThemeManager(themeManager), m_TranslationManager(translationManager),
       m_ArchiveListWriter(std::bind(&MainWindow::saveArchiveList, this)),
       m_LinkToolbar(nullptr), m_LinkDesktop(nullptr), m_LinkStartMenu(nullptr),
       m_NumberOfProblems(0), m_ProblemsCheckRequired(false)
@@ -2719,8 +2720,8 @@ void MainWindow::on_actionSettings_triggered()
   const bool oldCheckForUpdates = settings.checkForUpdates();
   const int oldMaxDumps         = settings.diagnostics().maxCoreDumps();
 
-  SettingsDialog dialog(m_PluginManager, m_ThemeManager, m_TranslationManager, settings,
-                        this);
+  SettingsDialog dialog(m_ExtensionManager, m_PluginManager, m_ThemeManager,
+                        m_TranslationManager, settings, this);
   dialog.exec();
 
   auto e = dialog.exitNeeded();

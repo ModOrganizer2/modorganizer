@@ -306,7 +306,8 @@ mo2_add_filter(NAME src/settingsdialog GROUPS
 	settingsdialoggeneral
 	settingsdialognexus
 	settingsdialogpaths
-	settingsdialogplugins
+	settingsdialogextensions
+	settingsdialogextensionrow
 	settingsdialogworkarounds
 	settingsdialogmodlist
 	settingsdialogtheme

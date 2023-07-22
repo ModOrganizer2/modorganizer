@@ -19,23 +19,24 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "settingsdialog.h"
 #include "settingsdialogdiagnostics.h"
+#include "settingsdialogextensions.h"
 #include "settingsdialoggeneral.h"
 #include "settingsdialogmodlist.h"
 #include "settingsdialognexus.h"
 #include "settingsdialogpaths.h"
-#include "settingsdialogplugins.h"
 #include "settingsdialogtheme.h"
 #include "settingsdialogworkarounds.h"
 #include "ui_settingsdialog.h"
 
 using namespace MOBase;
 
-SettingsDialog::SettingsDialog(PluginManager& pluginManager,
+SettingsDialog::SettingsDialog(ExtensionManager& extensionManager,
+                               PluginManager& pluginManager,
                                ThemeManager const& themeManager,
                                TranslationManager const& translationManager,
                                Settings& settings, QWidget* parent)
     : TutorableDialog("SettingsDialog", parent), ui(new Ui::SettingsDialog),
-      m_settings(settings), m_exit(Exit::None), m_pluginManager(&pluginManager)
+      m_settings(settings), m_exit(Exit::None)
 {
   ui->setupUi(this);
 
@@ -50,7 +51,7 @@ SettingsDialog::SettingsDialog(PluginManager& pluginManager,
       std::unique_ptr<SettingsTab>(new DiagnosticsSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(new NexusSettingsTab(settings, *this)));
   m_tabs.push_back(std::unique_ptr<SettingsTab>(
-      new PluginsSettingsTab(settings, *m_pluginManager, *this)));
+      new ExtensionsSettingsTab(settings, extensionManager, pluginManager, *this)));
   m_tabs.push_back(
       std::unique_ptr<SettingsTab>(new WorkaroundsSettingsTab(settings, *this)));
 }

@@ -294,7 +294,8 @@ int MOApplication::run(MOMultiProcess& multiProcess)
 
   {
     tt.start("MOApplication::doOneRun() MainWindow setup");
-    MainWindow mainWindow(*m_settings, *m_core, *m_plugins, *m_themes, *m_translations);
+    MainWindow mainWindow(*m_settings, *m_core, *m_extensions, *m_plugins, *m_themes,
+                          *m_translations);
 
     // the nexus interface can show dialogs, make sure they're parented to the
     // main window

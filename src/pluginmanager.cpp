@@ -73,7 +73,7 @@ PluginDetails::PluginDetails(PluginManager* manager, PluginExtension const& exte
 
 void PluginDetails::fetchRequirements()
 {
-  m_requirements = m_plugin->requirements();
+  // m_requirements = m_plugin->requirements();
 }
 
 std::vector<IPluginRequirement::Problem> PluginDetails::problems() const
