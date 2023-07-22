@@ -11,14 +11,16 @@
 class PluginManager;
 class DownloadManagerProxy;
 class ModListProxy;
+class ExtensionManager;
 class PluginListProxy;
+class ExtensionListProxy;
 
 class OrganizerProxy : public MOBase::IOrganizer
 {
 
 public:
-  OrganizerProxy(OrganizerCore* organizer, PluginManager* pluginManager,
-                 MOBase::IPlugin* plugin);
+  OrganizerProxy(OrganizerCore* organizer, const ExtensionManager& extensionManager,
+                 PluginManager* pluginManager, MOBase::IPlugin* plugin);
   ~OrganizerProxy();
 
 public:
@@ -87,7 +89,9 @@ public:  // IOrganizer interface
   virtual bool onProfileChanged(
       std::function<void(MOBase::IProfile*, MOBase::IProfile*)> const& func) override;
 
-  // Plugin related:
+  // Plugin/extension related:
+  virtual MOBase::IExtensionList& extensionList() const override;
+
   virtual bool isPluginEnabled(QString const& pluginName) const override;
   virtual bool isPluginEnabled(MOBase::IPlugin* plugin) const override;
   virtual QVariant pluginSetting(const QString& pluginName,
@@ -145,6 +149,7 @@ private:
   std::vector<boost::signals2::connection> m_Connections;
 
   std::unique_ptr<DownloadManagerProxy> m_DownloadManagerProxy;
+  std::unique_ptr<ExtensionListProxy> m_ExtensionListProxy;
   std::unique_ptr<ModListProxy> m_ModListProxy;
   std::unique_ptr<PluginListProxy> m_PluginListProxy;
 };

@@ -1,6 +1,8 @@
 #include "organizerproxy.h"
 
 #include "downloadmanagerproxy.h"
+#include "extensionlistproxy.h"
+#include "extensionmanager.h"
 #include "glob_matching.h"
 #include "modlistproxy.h"
 #include "organizercore.h"
@@ -17,11 +19,14 @@
 using namespace MOBase;
 using namespace MOShared;
 
-OrganizerProxy::OrganizerProxy(OrganizerCore* organizer, PluginManager* pluginManager,
-                               MOBase::IPlugin* plugin)
+OrganizerProxy::OrganizerProxy(OrganizerCore* organizer,
+                               const ExtensionManager& extensionManager,
+                               PluginManager* pluginManager, MOBase::IPlugin* plugin)
     : m_Proxied(organizer), m_PluginManager(pluginManager), m_Plugin(plugin),
       m_DownloadManagerProxy(
           std::make_unique<DownloadManagerProxy>(this, organizer->downloadManager())),
+      m_ExtensionListProxy(
+          std::make_unique<ExtensionListProxy>(this, extensionManager)),
       m_ModListProxy(std::make_unique<ModListProxy>(this, organizer->modList())),
       m_PluginListProxy(
           std::make_unique<PluginListProxy>(this, organizer->pluginList()))
@@ -128,6 +133,11 @@ IModInterface* OrganizerProxy::createMod(MOBase::GuessedValue<QString>& name)
 void OrganizerProxy::modDataChanged(IModInterface* mod)
 {
   m_Proxied->modDataChanged(mod);
+}
+
+MOBase::IExtensionList& OrganizerProxy::extensionList() const
+{
+  return *m_ExtensionListProxy;
 }
 
 bool OrganizerProxy::isPluginEnabled(QString const& pluginName) const

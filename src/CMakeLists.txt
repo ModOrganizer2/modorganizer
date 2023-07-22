@@ -200,6 +200,7 @@ mo2_add_filter(NAME src/profiles GROUPS
 mo2_add_filter(NAME src/proxies GROUPS
 	downloadmanagerproxy
 	modlistproxy
+	extensionlistproxy
 	organizerproxy
 	pluginlistproxy
 	proxyutils
