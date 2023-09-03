@@ -402,6 +402,11 @@ public:
    */
   void refreshList();
 
+  /**
+   * @brief Query infos for every download in the list
+   */
+  void queryDownloadListInfo();
+
 public:  // IDownloadManager interface:
   int startDownloadURLs(const QStringList& urls);
   int startDownloadNexusFile(int modID, int fileID);

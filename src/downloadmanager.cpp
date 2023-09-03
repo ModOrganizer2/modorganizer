@@ -440,6 +440,26 @@ void DownloadManager::refreshList()
   }
 }
 
+void DownloadManager::queryDownloadListInfo()
+{
+  TimeThis tt("DownloadManager::queryDownloadListInfos()");
+
+  startDisableDirWatcher();
+
+  log::info("Retrieving infos from every download (if possible)...");
+
+  // Just go through all active downloads to query infos
+  for (size_t i = 0; i < m_ActiveDownloads.size(); i++) {
+    if (isInfoIncomplete(i)) {
+      queryInfoMd5(i);
+    }
+  }
+
+  log::info("Files infos have been retrived successfully!");
+
+  endDisableDirWatcher();
+}
+
 bool DownloadManager::addDownload(const QStringList& URLs, QString gameName, int modID,
                                   int fileID, const ModRepositoryFileInfo* fileInfo)
 {
