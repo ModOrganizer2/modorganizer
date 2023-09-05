@@ -179,6 +179,8 @@ void PluginList::refresh(const QString& profileName,
   GamePlugins* gamePlugins   = m_GamePlugin->feature<GamePlugins>();
   const bool lightPluginsAreSupported =
       gamePlugins ? gamePlugins->lightPluginsAreSupported() : false;
+  const bool overridePluginsAreSupported =
+      gamePlugins ? gamePlugins->overridePluginsAreSupported() : false;
 
   m_CurrentProfile = profileName;
 
@@ -233,7 +235,7 @@ void PluginList::refresh(const QString& profileName,
 
         m_ESPs.push_back(ESPInfo(filename, forceEnabled, originName,
                                  ToQString(current->getFullPath()), hasIni,
-                                 loadedArchives, lightPluginsAreSupported));
+                                 loadedArchives, lightPluginsAreSupported, overridePluginsAreSupported));
         m_ESPs.rbegin()->priority = -1;
       } catch (const std::exception& e) {
         reportError(
@@ -990,6 +992,16 @@ bool PluginList::isLightFlagged(const QString& name) const
   }
 }
 
+bool PluginList::isOverrideFlagged(const QString& name) const
+{
+  auto iter = m_ESPsByName.find(name);
+  if (iter == m_ESPsByName.end()) {
+    return false;
+  } else {
+    return m_ESPs[iter->second].isOverrideFlagged;
+  }
+}
+
 boost::signals2::connection PluginList::onPluginStateChanged(
     const std::function<void(const std::map<QString, PluginStates>&)>& func)
 {
@@ -1049,6 +1061,8 @@ void PluginList::generatePluginIndexes()
   GamePlugins* gamePlugins = m_GamePlugin->feature<GamePlugins>();
   const bool lightPluginsSupported =
       gamePlugins ? gamePlugins->lightPluginsAreSupported() : false;
+  const bool overridePluginsSupported =
+      gamePlugins ? gamePlugins->overridePluginsAreSupported() : false;
 
   for (int l = 0; l < m_ESPs.size(); ++l) {
     int i = m_ESPsByPriority.at(l);
@@ -1065,6 +1079,8 @@ void PluginList::generatePluginIndexes()
                             .arg((numESLs) % 4096, 3, 16, QChar('0'))
                             .toUpper();
       ++numESLs;
+    } else if (overridePluginsSupported && m_ESPs[i].isOverrideFlagged) {
+      m_ESPs[i].index = QString("");
     } else {
       m_ESPs[i].index =
           QString("%1").arg(l - numESLs - numSkipped, 2, 16, QChar('0')).toUpper();
@@ -1705,7 +1721,7 @@ QModelIndex PluginList::parent(const QModelIndex&) const
 PluginList::ESPInfo::ESPInfo(const QString& name, bool enabled,
                              const QString& originName, const QString& fullPath,
                              bool hasIni, std::set<QString> archives,
-                             bool lightPluginsAreSupported)
+                             bool lightSupported, bool overrideSupported)
     : name(name), fullPath(fullPath), enabled(enabled), forceEnabled(enabled),
       priority(0), loadOrder(-1), originName(originName), hasIni(hasIni),
       archives(archives.begin(), archives.end()), modSelected(false)
@@ -1714,9 +1730,10 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool enabled,
     ESP::File file(ToWString(fullPath));
     auto extension     = name.right(3).toLower();
     hasMasterExtension = (extension == "esm");
-    hasLightExtension  = lightPluginsAreSupported && (extension == "esl");
+    hasLightExtension  = lightSupported && (extension == "esl");
     isMasterFlagged    = file.isMaster();
-    isLightFlagged     = lightPluginsAreSupported && file.isLight();
+    isOverrideFlagged  = overrideSupported && file.isOverride();
+    isLightFlagged     = lightSupported && !isOverrideFlagged && file.isLight(overrideSupported);
 
     author      = QString::fromLatin1(file.author().c_str());
     description = QString::fromLatin1(file.description().c_str());
@@ -1729,6 +1746,7 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool enabled,
     hasMasterExtension = false;
     hasLightExtension  = false;
     isMasterFlagged    = false;
+    isOverrideFlagged  = false;
     isLightFlagged     = false;
   }
 }

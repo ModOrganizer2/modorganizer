@@ -6007,92 +6007,92 @@ Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="240"/>
+        <location filename="pluginlist.cpp" line="242"/>
         <source>failed to update esp info for file %1 (source id: %2), error: %3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="398"/>
+        <location filename="pluginlist.cpp" line="400"/>
         <source>Plugin not found: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1222"/>
+        <location filename="pluginlist.cpp" line="1238"/>
         <source>Origin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1226"/>
+        <location filename="pluginlist.cpp" line="1242"/>
         <source>This plugin can&apos;t be disabled (enforced by the game).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1229"/>
+        <location filename="pluginlist.cpp" line="1245"/>
         <source>Author</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1234"/>
+        <location filename="pluginlist.cpp" line="1250"/>
         <source>Description</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1239"/>
+        <location filename="pluginlist.cpp" line="1255"/>
         <source>Missing Masters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1251"/>
+        <location filename="pluginlist.cpp" line="1267"/>
         <source>Enabled Masters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1257"/>
+        <location filename="pluginlist.cpp" line="1273"/>
         <source>Loads Archives</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1261"/>
+        <location filename="pluginlist.cpp" line="1277"/>
         <source>There are Archives connected to this plugin. Their assets will be added to your game, overwriting in case of conflicts following the plugin order. Loose files will always overwrite assets from Archives. (This flag only checks for Archives from the same mod as the plugin)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1270"/>
+        <location filename="pluginlist.cpp" line="1286"/>
         <source>Loads INI settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1273"/>
+        <location filename="pluginlist.cpp" line="1289"/>
         <source>There is an ini file connected to this plugin. Its settings will be added to your game settings, overwriting in case of conflicts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1279"/>
+        <location filename="pluginlist.cpp" line="1295"/>
         <source>This ESP is flagged as an ESL. It will adhere to the ESP load order but the records will be loaded in ESL space.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1311"/>
+        <location filename="pluginlist.cpp" line="1327"/>
         <source>Incompatible with %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1317"/>
+        <location filename="pluginlist.cpp" line="1333"/>
         <source>Depends on missing %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1325"/>
+        <location filename="pluginlist.cpp" line="1341"/>
         <source>Warning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1329"/>
+        <location filename="pluginlist.cpp" line="1345"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1602"/>
+        <location filename="pluginlist.cpp" line="1618"/>
         <source>failed to restore load order for %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7421,12 +7421,12 @@ Destination:<byte value="xd"/>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="697"/>
+        <location filename="pluginlist.cpp" line="699"/>
         <source>failed to access %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="711"/>
+        <location filename="pluginlist.cpp" line="713"/>
         <source>failed to set file time %1</source>
         <translation type="unfinished"></translation>
     </message>
