@@ -2015,8 +2015,8 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString& profileName,
 
     if (modPtr->isRegular()) {
       for (auto dataPath : dataPaths) {
-        result.insert(result.end(), { QDir::toNativeSeparators(std::get<1>(mod)),
-                                     dataPath, true, createTarget });
+        result.insert(result.end(), {QDir::toNativeSeparators(std::get<1>(mod)),
+                                     dataPath, true, createTarget});
       }
     }
   }
@@ -2039,12 +2039,9 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString& profileName,
   }
 
   for (auto dataPath : dataPaths) {
-    result.insert(result.end(), {
-                    QDir::toNativeSeparators(m_Settings.paths().overwrite()),
-                    dataPath,
-                    true,
-                    customOverwrite.isEmpty()
-      });
+    result.insert(result.end(),
+                  {QDir::toNativeSeparators(m_Settings.paths().overwrite()), dataPath,
+                   true, customOverwrite.isEmpty()});
   }
 
   for (MOBase::IPluginFileMapper* mapper :

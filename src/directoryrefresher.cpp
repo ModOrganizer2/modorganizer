@@ -475,7 +475,10 @@ void DirectoryRefresher::refresh()
 
     for (auto directory : game->secondaryDataDirectories().toStdMap()) {
       DirectoryStats dummy;
-      m_Root->addFromOrigin(directory.first.toStdWString(), QDir::toNativeSeparators(directory.second.absolutePath()).toStdWString(), 0, dummy);
+      m_Root->addFromOrigin(
+          directory.first.toStdWString(),
+          QDir::toNativeSeparators(directory.second.absolutePath()).toStdWString(), 0,
+          dummy);
     }
 
     std::sort(m_Mods.begin(), m_Mods.end(), [](auto lhs, auto rhs) {
