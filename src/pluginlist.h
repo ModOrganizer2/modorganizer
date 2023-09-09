@@ -313,14 +313,15 @@ signals:
 private:
   struct ESPInfo
   {
-    ESPInfo(const QString& name, bool enabled, const QString& originName,
-            const QString& fullPath, bool hasIni, std::set<QString> archives,
-            bool lightSupported, bool overrideSupported);
+    ESPInfo(const QString& name, bool enabled, bool forceDisabled,
+            const QString& originName, const QString& fullPath, bool hasIni,
+            std::set<QString> archives, bool lightSupported, bool overrideSupported);
 
     QString name;
     QString fullPath;
     bool enabled;
     bool forceEnabled;
+    bool forceDisabled;
     int priority;
     QString index;
     int loadOrder;

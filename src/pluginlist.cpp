@@ -205,6 +205,9 @@ void PluginList::refresh(const QString& profileName,
 
       bool forceEnabled = Settings::instance().game().forceEnableCoreFiles() &&
                           primaryPlugins.contains(filename, Qt::CaseInsensitive);
+      bool forceDisabled =
+          m_GamePlugin->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::None &&
+          !forceEnabled;
 
       bool archive = false;
       try {
@@ -233,9 +236,10 @@ void PluginList::refresh(const QString& profileName,
           originName           = modInfo->name();
         }
 
-        m_ESPs.push_back(ESPInfo(filename, forceEnabled, originName,
+        m_ESPs.push_back(ESPInfo(filename, forceEnabled, forceDisabled, originName,
                                  ToQString(current->getFullPath()), hasIni,
-                                 loadedArchives, lightPluginsAreSupported, overridePluginsAreSupported));
+                                 loadedArchives, lightPluginsAreSupported,
+                                 overridePluginsAreSupported));
         m_ESPs.rbegin()->priority = -1;
       } catch (const std::exception& e) {
         reportError(
@@ -390,7 +394,8 @@ void PluginList::enableESP(const QString& name, bool enable)
 
   if (iter != m_ESPsByName.end()) {
     auto enabled                 = m_ESPs[iter->second].enabled;
-    m_ESPs[iter->second].enabled = enable || m_ESPs[iter->second].forceEnabled;
+    m_ESPs[iter->second].enabled = (enable && !m_ESPs[iter->second].forceDisabled) ||
+                                   m_ESPs[iter->second].forceEnabled;
 
     emit writePluginsList();
     if (enabled != m_ESPs[iter->second].enabled) {
@@ -856,7 +861,8 @@ void PluginList::setState(const QString& name, PluginStates state)
   auto iter = m_ESPsByName.find(name);
   if (iter != m_ESPsByName.end()) {
     m_ESPs[iter->second].enabled =
-        (state == IPluginList::STATE_ACTIVE) || m_ESPs[iter->second].forceEnabled;
+        (state == IPluginList::STATE_ACTIVE && !m_ESPs[iter->second].forceDisabled) ||
+        m_ESPs[iter->second].forceEnabled;
   } else {
     log::warn("Plugin not found: {}", name);
   }
@@ -1171,7 +1177,7 @@ QVariant PluginList::checkstateData(const QModelIndex& modelIndex) const
 {
   const int index = modelIndex.row();
 
-  if (m_ESPs[index].forceEnabled) {
+  if (m_ESPs[index].forceEnabled || m_ESPs[index].forceDisabled) {
     return {};
   }
 
@@ -1294,6 +1300,11 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
       toolTip += "<br><br>" +
                  tr("This ESP is flagged as an ESL. It will adhere to the ESP load "
                     "order but the records will be loaded in ESL space.");
+    }
+
+    if (esp.forceDisabled) {
+      toolTip += "<br><br>" + tr("This game does not currently permit custom plugin "
+                                 "loading. There may be manual workarounds.");
     }
   }
 
@@ -1718,13 +1729,13 @@ QModelIndex PluginList::parent(const QModelIndex&) const
   return QModelIndex();
 }
 
-PluginList::ESPInfo::ESPInfo(const QString& name, bool enabled,
+PluginList::ESPInfo::ESPInfo(const QString& name, bool enabled, bool forceDisabled,
                              const QString& originName, const QString& fullPath,
                              bool hasIni, std::set<QString> archives,
                              bool lightSupported, bool overrideSupported)
     : name(name), fullPath(fullPath), enabled(enabled), forceEnabled(enabled),
-      priority(0), loadOrder(-1), originName(originName), hasIni(hasIni),
-      archives(archives.begin(), archives.end()), modSelected(false)
+      forceDisabled(forceDisabled), priority(0), loadOrder(-1), originName(originName),
+      hasIni(hasIni), archives(archives.begin(), archives.end()), modSelected(false)
 {
   try {
     ESP::File file(ToWString(fullPath));
@@ -1733,7 +1744,8 @@ PluginList::ESPInfo::ESPInfo(const QString& name, bool enabled,
     hasLightExtension  = lightSupported && (extension == "esl");
     isMasterFlagged    = file.isMaster();
     isOverrideFlagged  = overrideSupported && file.isOverride();
-    isLightFlagged     = lightSupported && !isOverrideFlagged && file.isLight(overrideSupported);
+    isLightFlagged =
+        lightSupported && !isOverrideFlagged && file.isLight(overrideSupported);
 
     author      = QString::fromLatin1(file.author().c_str());
     description = QString::fromLatin1(file.description().c_str());
