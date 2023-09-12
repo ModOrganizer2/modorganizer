@@ -23,7 +23,7 @@
       <attribute name="title">
        <string>General</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0">
+      <layout class="QGridLayout" name="gridLayout" rowstretch="0">
        <item row="0" column="0">
         <widget class="QScrollArea" name="generalScrollArea">
          <property name="styleSheet">
@@ -44,8 +44,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>780</width>
-            <height>502</height>
+            <width>761</width>
+            <height>550</height>
            </rect>
           </property>
           <property name="autoFillBackground">
@@ -198,6 +198,36 @@
                 </property>
                 <property name="text">
                  <string>Update to beta versions</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_8">
+             <property name="title">
+              <string>Profile Defaults</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_11">
+              <item>
+               <widget class="QCheckBox" name="localINIs">
+                <property name="text">
+                 <string>Local INIs</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="localSaves">
+                <property name="text">
+                 <string>Local Saves</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="automaticArchiveInvalidation">
+                <property name="text">
+                 <string>Automatic Archive Invalidation</string>
                 </property>
                </widget>
               </item>
@@ -1022,8 +1052,8 @@ If you disable this feature, MO will only display official DLCs this way. Please
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>780</width>
-            <height>502</height>
+            <width>778</width>
+            <height>497</height>
            </rect>
           </property>
           <property name="autoFillBackground">
@@ -1702,8 +1732,8 @@ If you disable this feature, MO will only display official DLCs this way. Please
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>780</width>
-            <height>483</height>
+            <width>778</width>
+            <height>475</height>
            </rect>
           </property>
           <property name="autoFillBackground">

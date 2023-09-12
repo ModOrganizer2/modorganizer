@@ -66,6 +66,15 @@ public:
     auto operator<=>(const Paths&) const = default;
   };
 
+  struct ProfileSettings
+  {
+    bool localInis;
+    bool localSaves;
+    bool archiveInvalidation;
+
+    auto operator<=>(const ProfileSettings&) const = default;
+  };
+
   // all the info filled in the various pages
   //
   struct CreationInfo
@@ -78,6 +87,7 @@ public:
     QString dataPath;
     QString iniPath;
     Paths paths;
+    ProfileSettings profileSettings;
   };
 
   CreateInstanceDialog(const PluginContainer& pc, Settings* s,

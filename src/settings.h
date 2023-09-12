@@ -810,6 +810,21 @@ public:
   bool usePrereleases() const;
   void setUsePrereleases(bool b);
 
+  // whether profiles should default to local INIs
+  //
+  bool profileLocalInis() const;
+  void setProfileLocalInis(bool b);
+
+  // whether profiles should default to local saves
+  //
+  bool profileLocalSaves() const;
+  void setProfileLocalSaves(bool b);
+
+  // whether profiles should default to automatic archive invalidation
+  //
+  bool profileArchiveInvalidation() const;
+  void setProfileArchiveInvalidation(bool b);
+
   // whether to use spascreen or not
   //
   bool useSplash() const;

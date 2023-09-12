@@ -25,6 +25,11 @@ GeneralSettingsTab::GeneralSettingsTab(Settings& s, SettingsDialog& d)
   ui->checkForUpdates->setChecked(settings().checkForUpdates());
   ui->usePrereleaseBox->setChecked(settings().usePrereleases());
 
+  // profile defaults
+  ui->localINIs->setChecked(settings().profileLocalInis());
+  ui->localSaves->setChecked(settings().profileLocalSaves());
+  ui->automaticArchiveInvalidation->setChecked(settings().profileArchiveInvalidation());
+
   // miscellaneous
   ui->centerDialogs->setChecked(settings().geometry().centerDialogs());
   ui->changeGameConfirmation->setChecked(
@@ -63,6 +68,11 @@ void GeneralSettingsTab::update()
   // updates
   settings().setCheckForUpdates(ui->checkForUpdates->isChecked());
   settings().setUsePrereleases(ui->usePrereleaseBox->isChecked());
+
+  // profile defaults
+  settings().setProfileLocalInis(ui->localINIs->isChecked());
+  settings().setProfileLocalSaves(ui->localSaves->isChecked());
+  settings().setProfileArchiveInvalidation(ui->automaticArchiveInvalidation->isChecked());
 
   // miscellaneous
   settings().geometry().setCenterDialogs(ui->centerDialogs->isChecked());
