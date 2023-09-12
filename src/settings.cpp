@@ -214,6 +214,36 @@ void Settings::setUsePrereleases(bool b)
   set(m_Settings, "Settings", "use_prereleases", b);
 }
 
+bool Settings::profileLocalInis() const
+{
+  return get<bool>(m_Settings, "Settings", "profile_local_inis", true);
+}
+
+void Settings::setProfileLocalInis(bool b)
+{
+  set(m_Settings, "Settings", "profile_local_inis", b);
+}
+
+bool Settings::profileLocalSaves() const
+{
+  return get<bool>(m_Settings, "Settings", "profile_local_saves", false);
+}
+
+void Settings::setProfileLocalSaves(bool b)
+{
+  set(m_Settings, "Settings", "profile_local_saves", b);
+}
+
+bool Settings::profileArchiveInvalidation() const
+{
+  return get<bool>(m_Settings, "Settings", "profile_archive_invalidation", false);
+}
+
+void Settings::setProfileArchiveInvalidation(bool b)
+{
+  set(m_Settings, "Settings", "profile_archive_invalidation", b);
+}
+
 bool Settings::useSplash() const
 {
   return get<bool>(m_Settings, "Settings", "use_splash", true);

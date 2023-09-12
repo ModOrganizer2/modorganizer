@@ -157,22 +157,37 @@ void Profile::findProfileSettings()
 {
   if (setting("", "LocalSaves") == QVariant()) {
     if (m_Directory.exists("saves")) {
-      storeSetting("", "LocalSaves", true);
+      if (!Settings::instance().profileLocalSaves()) {
+        m_Directory.rename("saves", "_saves");
+        storeSetting("", "LocalSaves", false);
+      } else {
+        storeSetting("", "LocalSaves", true);
+      }
     } else {
       if (m_Directory.exists("_saves")) {
-        m_Directory.rename("_saves", "saves");
+        if (Settings::instance().profileLocalSaves()) {
+          m_Directory.rename("_saves", "saves");
+          storeSetting("", "LocalSaves", true);
+        } else {
+          storeSetting("", "LocalSaves", false);
+        }
+      } else {
+        storeSetting("", "LocalSaves", Settings::instance().profileLocalSaves());
       }
-      storeSetting("", "LocalSaves", false);
     }
   }
 
-  if (setting("", "LocalSettings") == QVariant()) {
+  if (setting("", "LocalSettings") ==
+      QVariant()) {
     QString backupFile = getIniFileName() + "_";
     if (m_Directory.exists(backupFile)) {
-      storeSetting("", "LocalSettings", false);
-      m_Directory.rename(backupFile, getIniFileName());
-    } else {
       storeSetting("", "LocalSettings", true);
+      m_Directory.rename(backupFile, getIniFileName());
+    } else if (Settings::instance().profileLocalInis()) {
+      storeSetting("", "LocalSettings", true);
+      enableLocalSettings(true);
+    } else {
+      storeSetting("", "LocalSettings", false);
     }
   }
 
@@ -183,14 +198,23 @@ void Profile::findProfileSettings()
     if ((invalidation != nullptr) && (dataArchives != nullptr)) {
       for (const QString& archive : dataArchives->archives(this)) {
         if (invalidation->isInvalidationBSA(archive)) {
-          storeSetting("", "AutomaticArchiveInvalidation", true);
           found = true;
           break;
         }
       }
     }
-    if (!found) {
-      storeSetting("", "AutomaticArchiveInvalidation", false);
+    if (found) {
+      if (!Settings::instance().profileArchiveInvalidation()) {
+        deactivateInvalidation();
+      } else {
+        storeSetting("", "AutomaticArchiveInvalidation", true);
+      }
+    } else {
+      if (Settings::instance().profileArchiveInvalidation()) {
+        activateInvalidation();
+      } else {
+        storeSetting("", "AutomaticArchiveInvalidation", false);
+      }
     }
   }
 }
@@ -795,7 +819,9 @@ bool Profile::invalidationActive(bool* supported) const
     *supported = ((invalidation != nullptr) && (dataArchives != nullptr));
   }
 
-  return setting("", "AutomaticArchiveInvalidation", false).toBool();
+  return setting("", "AutomaticArchiveInvalidation",
+                 Settings::instance().profileArchiveInvalidation())
+      .toBool();
 }
 
 void Profile::deactivateInvalidation()
@@ -822,7 +848,7 @@ void Profile::activateInvalidation()
 
 bool Profile::localSavesEnabled() const
 {
-  return setting("", "LocalSaves", false).toBool();
+  return setting("", "LocalSaves", Settings::instance().profileLocalSaves()).toBool();
 }
 
 bool Profile::enableLocalSaves(bool enable)
@@ -856,7 +882,8 @@ bool Profile::enableLocalSaves(bool enable)
 
 bool Profile::localSettingsEnabled() const
 {
-  bool enabled = setting("", "LocalSettings", false).toBool();
+  bool enabled =
+      setting("", "LocalSettings", Settings::instance().profileLocalInis()).toBool();
   if (enabled) {
     QStringList missingFiles;
     for (QString file : m_GamePlugin->iniFiles()) {

@@ -110,6 +110,10 @@ public:
   //
   virtual CreateInstanceDialog::Paths selectedPaths() const;
 
+  // returns the profile settings
+  //
+  virtual CreateInstanceDialog::ProfileSettings profileSettings() const;
+
 protected:
   Ui::CreateInstanceDialog* ui;
   CreateInstanceDialog& m_dlg;
@@ -556,6 +560,26 @@ private:
   //
   void setIfEmpty(QLineEdit* e, const QString& path, bool force);
 };
+
+
+// default settings for profiles page; allow the user to set their preferred
+// defaults for the profile options
+//
+class ProfilePage : public Page
+{
+public:
+  ProfilePage(CreateInstanceDialog& dlg);
+
+  // always returns true, options are boolean
+  //
+  bool ready() const override;
+
+  CreateInstanceDialog::ProfileSettings profileSettings() const override;
+
+protected:
+
+};
+
 
 // nexus connection page; this reuses the ui found in the settings dialog and
 // is skipped if there's already an api key in the credentials manager
