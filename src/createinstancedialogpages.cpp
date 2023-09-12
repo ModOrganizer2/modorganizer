@@ -937,9 +937,7 @@ bool NamePage::checkName(QString parentDir, QString name)
   return okay;
 }
 
-ProfilePage::ProfilePage(CreateInstanceDialog& dlg)
-  : Page(dlg)
-{}
+ProfilePage::ProfilePage(CreateInstanceDialog& dlg) : Page(dlg) {}
 
 bool ProfilePage::ready() const
 {

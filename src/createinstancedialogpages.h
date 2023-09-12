@@ -561,7 +561,6 @@ private:
   void setIfEmpty(QLineEdit* e, const QString& path, bool force);
 };
 
-
 // default settings for profiles page; allow the user to set their preferred
 // defaults for the profile options
 //
@@ -577,9 +576,7 @@ public:
   CreateInstanceDialog::ProfileSettings profileSettings() const override;
 
 protected:
-
 };
-
 
 // nexus connection page; this reuses the ui found in the settings dialog and
 // is skipped if there's already an api key in the credentials manager

@@ -72,7 +72,8 @@ void GeneralSettingsTab::update()
   // profile defaults
   settings().setProfileLocalInis(ui->localINIs->isChecked());
   settings().setProfileLocalSaves(ui->localSaves->isChecked());
-  settings().setProfileArchiveInvalidation(ui->automaticArchiveInvalidation->isChecked());
+  settings().setProfileArchiveInvalidation(
+      ui->automaticArchiveInvalidation->isChecked());
 
   // miscellaneous
   settings().geometry().setCenterDialogs(ui->centerDialogs->isChecked());
