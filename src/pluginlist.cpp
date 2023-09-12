@@ -1177,7 +1177,7 @@ QVariant PluginList::checkstateData(const QModelIndex& modelIndex) const
 {
   const int index = modelIndex.row();
 
-  if (m_ESPs[index].forceEnabled || m_ESPs[index].forceDisabled) {
+  if (m_ESPs[index].forceEnabled) {
     return Qt::Checked;
   } else if (m_ESPs[index].forceDisabled) {
     return Qt::Unchecked;
@@ -1192,6 +1192,10 @@ QVariant PluginList::foregroundData(const QModelIndex& modelIndex) const
 
   if ((modelIndex.column() == COL_NAME) && m_ESPs[index].forceEnabled) {
     return QBrush(Qt::gray);
+  }
+
+  if ((modelIndex.column() == COL_NAME) && m_ESPs[index].forceDisabled) {
+    return QBrush(Qt::darkRed);
   }
 
   return {};
@@ -1277,15 +1281,14 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
                "</b>: " + TruncateString(SetJoin(enabledMasters, ", "));
   }
 
-  if (!esp.archives.empty() && esp.archives.size() < 6) {
+  if (!esp.archives.empty()) {
     QString archiveString =
         esp.archives.size() < 6
             ? TruncateString(
                   QStringList(esp.archives.begin(), esp.archives.end()).join(", ")) +
                   "<br>"
             : "";
-    toolTip += "<br><b>" + tr("Loads Archives") + "</b>: " +
-               archiveString +
+    toolTip += "<br><b>" + tr("Loads Archives") + "</b>: " + archiveString +
                tr("There are Archives connected to this plugin. Their assets will be "
                   "added to your game, overwriting in case of conflicts following the "
                   "plugin order. Loose files will always overwrite assets from "
@@ -1302,19 +1305,15 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
   }
 
   if (esp.isLightFlagged && !esp.hasLightExtension) {
+    QString type = esp.hasMasterExtension ? "ESM" : "ESP";
     toolTip +=
-        "<br><br>" + tr("This ESP is flagged as an ESL. It will adhere to the ESP load "
-                        "order but the records will be loaded in ESL space.");
+        "<br><br>" + tr("This %1 is flagged as an ESL. It will adhere to the %1 load "
+                        "order but the records will be loaded in ESL space.").arg(type);
   }
 
   if (esp.forceDisabled) {
     toolTip += "<br><br>" + tr("This game does not currently permit custom plugin "
                                "loading. There may be manual workarounds.");
-
-    if (esp.forceDisabled) {
-      toolTip += "<br><br>" + tr("This game does not currently permit custom plugin "
-                                 "loading. There may be manual workarounds.");
-    }
   }
 
   // additional info
