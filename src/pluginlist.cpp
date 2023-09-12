@@ -1178,7 +1178,9 @@ QVariant PluginList::checkstateData(const QModelIndex& modelIndex) const
   const int index = modelIndex.row();
 
   if (m_ESPs[index].forceEnabled || m_ESPs[index].forceDisabled) {
-    return {};
+    return Qt::Checked;
+  } else if (m_ESPs[index].forceDisabled) {
+    return Qt::Unchecked;
   }
 
   return m_ESPs[index].enabled ? Qt::Checked : Qt::Unchecked;
@@ -1246,61 +1248,68 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
   if (esp.forceEnabled) {
     toolTip += "<br><b><i>" +
                tr("This plugin can't be disabled (enforced by the game).") + "</i></b>";
-  } else {
-    if (!esp.author.isEmpty()) {
-      toolTip += "<br><b>" + tr("Author") + "</b>: " + TruncateString(esp.author);
-    }
+  }
 
-    if (esp.description.size() > 0) {
-      toolTip +=
-          "<br><b>" + tr("Description") + "</b>: " + TruncateString(esp.description);
-    }
+  if (!esp.author.isEmpty()) {
+    toolTip += "<br><b>" + tr("Author") + "</b>: " + TruncateString(esp.author);
+  }
 
-    if (esp.masterUnset.size() > 0) {
-      toolTip +=
-          "<br><b>" + tr("Missing Masters") + "</b>: " + "<b>" +
-          TruncateString(
-              QStringList(esp.masterUnset.begin(), esp.masterUnset.end()).join(", ")) +
-          "</b>";
-    }
+  if (esp.description.size() > 0) {
+    toolTip +=
+        "<br><b>" + tr("Description") + "</b>: " + TruncateString(esp.description);
+  }
 
-    std::set<QString> enabledMasters;
-    std::set_difference(esp.masters.begin(), esp.masters.end(), esp.masterUnset.begin(),
-                        esp.masterUnset.end(),
-                        std::inserter(enabledMasters, enabledMasters.end()));
+  if (esp.masterUnset.size() > 0) {
+    toolTip +=
+        "<br><b>" + tr("Missing Masters") + "</b>: " + "<b>" +
+        TruncateString(
+            QStringList(esp.masterUnset.begin(), esp.masterUnset.end()).join(", ")) +
+        "</b>";
+  }
 
-    if (!enabledMasters.empty()) {
-      toolTip += "<br><b>" + tr("Enabled Masters") +
-                 "</b>: " + TruncateString(SetJoin(enabledMasters, ", "));
-    }
+  std::set<QString> enabledMasters;
+  std::set_difference(esp.masters.begin(), esp.masters.end(), esp.masterUnset.begin(),
+                      esp.masterUnset.end(),
+                      std::inserter(enabledMasters, enabledMasters.end()));
 
-    if (!esp.archives.empty()) {
-      toolTip +=
-          "<br><b>" + tr("Loads Archives") + "</b>: " +
-          TruncateString(
-              QStringList(esp.archives.begin(), esp.archives.end()).join(", ")) +
-          "<br>" +
-          tr("There are Archives connected to this plugin. Their assets will be "
-             "added to your game, overwriting in case of conflicts following the "
-             "plugin order. Loose files will always overwrite assets from "
-             "Archives. (This flag only checks for Archives from the same mod as "
-             "the plugin)");
-    }
+  if (!enabledMasters.empty()) {
+    toolTip += "<br><b>" + tr("Enabled Masters") +
+               "</b>: " + TruncateString(SetJoin(enabledMasters, ", "));
+  }
 
-    if (esp.hasIni) {
-      toolTip +=
-          "<br><b>" + tr("Loads INI settings") +
-          "</b>: "
-          "<br>" +
-          tr("There is an ini file connected to this plugin. Its settings will "
-             "be added to your game settings, overwriting in case of conflicts.");
-    }
+  if (!esp.archives.empty() && esp.archives.size() < 6) {
+    QString archiveString =
+        esp.archives.size() < 6
+            ? TruncateString(
+                  QStringList(esp.archives.begin(), esp.archives.end()).join(", ")) +
+                  "<br>"
+            : "";
+    toolTip += "<br><b>" + tr("Loads Archives") + "</b>: " +
+               archiveString +
+               tr("There are Archives connected to this plugin. Their assets will be "
+                  "added to your game, overwriting in case of conflicts following the "
+                  "plugin order. Loose files will always overwrite assets from "
+                  "Archives. (This flag only checks for Archives from the same mod as "
+                  "the plugin)");
+  }
 
-    if (esp.isLightFlagged && !esp.hasLightExtension) {
-      toolTip += "<br><br>" +
-                 tr("This ESP is flagged as an ESL. It will adhere to the ESP load "
-                    "order but the records will be loaded in ESL space.");
-    }
+  if (esp.hasIni) {
+    toolTip += "<br><b>" + tr("Loads INI settings") +
+               "</b>: "
+               "<br>" +
+               tr("There is an ini file connected to this plugin. Its settings will "
+                  "be added to your game settings, overwriting in case of conflicts.");
+  }
+
+  if (esp.isLightFlagged && !esp.hasLightExtension) {
+    toolTip +=
+        "<br><br>" + tr("This ESP is flagged as an ESL. It will adhere to the ESP load "
+                        "order but the records will be loaded in ESL space.");
+  }
+
+  if (esp.forceDisabled) {
+    toolTip += "<br><br>" + tr("This game does not currently permit custom plugin "
+                               "loading. There may be manual workarounds.");
 
     if (esp.forceDisabled) {
       toolTip += "<br><br>" + tr("This game does not currently permit custom plugin "
@@ -1530,8 +1539,8 @@ Qt::ItemFlags PluginList::flags(const QModelIndex& modelIndex) const
   Qt::ItemFlags result = QAbstractItemModel::flags(modelIndex);
 
   if (modelIndex.isValid()) {
-    if (!m_ESPs[index].forceEnabled) {
-      result |= Qt::ItemIsUserCheckable | Qt::ItemIsDragEnabled;
+    if (!m_ESPs[index].forceEnabled && !m_ESPs[index].forceDisabled) {
+      result |= Qt::ItemIsDragEnabled;
     }
     if (modelIndex.column() == COL_PRIORITY) {
       result |= Qt::ItemIsEditable;
