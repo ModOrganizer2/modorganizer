@@ -1308,7 +1308,8 @@ QVariant PluginList::tooltipData(const QModelIndex& modelIndex) const
     QString type = esp.hasMasterExtension ? "ESM" : "ESP";
     toolTip +=
         "<br><br>" + tr("This %1 is flagged as an ESL. It will adhere to the %1 load "
-                        "order but the records will be loaded in ESL space.").arg(type);
+                        "order but the records will be loaded in ESL space.")
+                         .arg(type);
   }
 
   if (esp.forceDisabled) {
