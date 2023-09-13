@@ -177,8 +177,7 @@ void Profile::findProfileSettings()
     }
   }
 
-  if (setting("", "LocalSettings") ==
-      QVariant()) {
+  if (setting("", "LocalSettings") == QVariant()) {
     QString backupFile = getIniFileName() + "_";
     if (m_Directory.exists(backupFile)) {
       storeSetting("", "LocalSettings", true);
