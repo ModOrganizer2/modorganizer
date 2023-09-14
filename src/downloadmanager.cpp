@@ -431,6 +431,8 @@ bool DownloadManager::addDownload(const QStringList &URLs, QString gameName,
   QString fileName = QFileInfo(URLs.first()).fileName();
   if (fileName.isEmpty()) {
     fileName = "unknown";
+  } else {
+    fileName = QUrl::fromPercentEncoding(fileName.toUtf8());
   }
 
   QUrl preferredUrl = QUrl::fromEncoded(URLs.first().toLocal8Bit());
@@ -440,7 +442,10 @@ bool DownloadManager::addDownload(const QStringList &URLs, QString gameName,
   h2Conf.setStreamReceiveWindowSize(16777215);
   QNetworkRequest request(preferredUrl);
   request.setHeader(QNetworkRequest::UserAgentHeader, m_NexusInterface->getAccessManager()->userAgent());
+  request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
+  request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
   request.setHttp2Configuration(h2Conf);
+
   return addDownload(m_NexusInterface->getAccessManager()->get(request), URLs, fileName, gameName, modID, fileID, fileInfo);
 }
 
@@ -580,7 +585,10 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
       newDownload->m_State != STATE_READY &&
       newDownload->m_State != STATE_FETCHINGMODINFO &&
       reply->isFinished()) {
-      downloadFinished(indexByInfo(newDownload));
+      int index = indexByInfo(newDownload);
+      if (index >= 0) {
+        downloadFinished(index);
+      }
       return;
     }
   } else
@@ -916,7 +924,7 @@ void DownloadManager::resumeDownloadInt(int index)
 
   // Check for finished download;
   if (info->m_TotalSize <= info->m_Output.size() && info->m_Reply != nullptr
-      && info->m_Reply->isOpen() && info->m_Reply->isFinished() && info->m_State != STATE_ERROR) {
+      && info->m_Reply->isFinished() && info->m_State != STATE_ERROR) {
     setState(info, STATE_DOWNLOADING);
     downloadFinished(index);
     return;
@@ -1477,7 +1485,7 @@ QString DownloadManager::getDownloadFileName(const QString &baseName, bool renam
 QString DownloadManager::getFileNameFromNetworkReply(QNetworkReply *reply)
 {
   if (reply->hasRawHeader("Content-Disposition")) {
-    std::regex exp("filename=\"(.*)\"");
+    std::regex exp("filename=\"(.+)\"");
 
     std::cmatch result;
     if (std::regex_search(reply->rawHeader("Content-Disposition").constData(), result, exp)) {
@@ -2076,10 +2084,14 @@ void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID, 
 void DownloadManager::downloadFinished(int index)
 {
   DownloadInfo *info;
-  if (index)
+  if (index > 0)
     info = m_ActiveDownloads[index];
-  else
+  else {
     info = findDownload(this->sender(), &index);
+    if (info == nullptr && index == 0) {
+      info = m_ActiveDownloads[index];
+    }
+  }
 
   if (info != nullptr) {
     QNetworkReply *reply = info->m_Reply;

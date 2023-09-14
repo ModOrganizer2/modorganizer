@@ -342,6 +342,10 @@ public:
   //
   std::optional<QString> nxmLink() const;
 
+  // returns the direct download link, if any
+  //
+  std::optional<QString> downloadLink() const;
+  
   // returns the executable/binary, if any
   //
   std::optional<QString> executable() const;
@@ -358,6 +362,7 @@ private:
   po::variables_map m_vm;
   MOShortcut m_shortcut;
   std::optional<QString> m_nxmLink;
+  std::optional<QString> m_downloadLink;
   std::optional<QString> m_executable;
   QStringList m_untouched;
   Command* m_command;

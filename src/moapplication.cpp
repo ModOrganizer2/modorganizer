@@ -405,6 +405,9 @@ void MOApplication::externalMessage(const QString& message)
   } else if (isNxmLink(message)) {
     MessageDialog::showMessage(tr("Download started"), qApp->activeWindow(), false);
     m_core->downloadRequestedNXM(message);
+  } else if (message.startsWith("https://", Qt::CaseInsensitive) || message.startsWith("http://", Qt::CaseInsensitive)) {
+    MessageDialog::showMessage(tr("Download started"), qApp->activeWindow(), false);
+    m_core->downloadManager()->startDownloadURLs(QStringList() << message);
   } else {
     cl::CommandLine cl;
 
