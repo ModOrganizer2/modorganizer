@@ -435,6 +435,19 @@ bool DownloadManager::addDownload(const QStringList &URLs, QString gameName,
     fileName = QUrl::fromPercentEncoding(fileName.toUtf8());
   }
 
+  // Temporary URLs for S3-compatible storage are signed for a single method, removing the ability to make HEAD requests to such URLs.
+  // We can use the response-content-disposition GET parameter, setting the Content-Disposition header, to predetermine intended file name without a subrequest. 
+  if (fileName.contains("response-content-disposition=")) {
+    std::regex exp("filename=\"(.+)\"");
+    std::cmatch result;
+    if (std::regex_search(fileName.toStdString().c_str(), result, exp)) {
+      fileName = MOBase::sanitizeFileName(QString::fromUtf8(result.str(1).c_str()));
+      if (fileName.isEmpty()) {
+        fileName = "unknown";
+      }
+    }
+  }
+
   QUrl preferredUrl = QUrl::fromEncoded(URLs.first().toLocal8Bit());
   log::debug("selected download url: {}", preferredUrl.toString());
   QHttp2Configuration h2Conf;
