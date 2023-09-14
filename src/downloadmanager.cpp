@@ -215,7 +215,7 @@ DownloadManager::DownloadManager(NexusInterface* nexusInterface, QObject* parent
   connect(&m_DirWatcher, SIGNAL(directoryChanged(QString)), this,
           SLOT(directoryChanged(QString)));
   m_TimeoutTimer.setSingleShot(false);
-  // connect(&m_TimeoutTimer, SIGNAL(timeout()), this, SLOT(checkDownloadTimeout()));
+  connect(&m_TimeoutTimer, SIGNAL(timeout()), this, SLOT(checkDownloadTimeout()));
   m_TimeoutTimer.start(5 * 1000);
 }
 
@@ -1617,8 +1617,7 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 
         // calculate the download speed
         const double speed = rolling_mean(info->m_DownloadAcc) /
-                             (rolling_mean(info->m_DownloadTimeAcc) / 1000.0);
-        ;
+                             (rolling_mean(info->m_DownloadTimeAcc) / 1000.0);        
 
         const qint64 remaining = (bytesTotal - bytesReceived) / speed * 1000;
 
@@ -1629,6 +1628,7 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 
         TaskProgressManager::instance().updateProgress(info->m_TaskProgressId,
                                                        bytesReceived, bytesTotal);
+
         emit update(index);
       }
     }
@@ -2318,9 +2318,9 @@ void DownloadManager::checkDownloadTimeout()
         m_ActiveDownloads[i]->m_State == STATE_DOWNLOADING &&
         m_ActiveDownloads[i]->m_Reply != nullptr &&
         m_ActiveDownloads[i]->m_Reply->isOpen()) {
+      log::info("Lost connectivity to the server, pausing download: {}",
+                m_ActiveDownloads[i]->m_FileName);
       pauseDownload(i);
-      downloadFinished(i);
-      resumeDownload(i);
     }
   }
 }
